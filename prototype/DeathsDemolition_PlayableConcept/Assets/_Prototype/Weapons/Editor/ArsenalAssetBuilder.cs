@@ -490,28 +490,27 @@ namespace DD.Prototype.Weapons.EditorTools
         // ================================================================== first-person view poses (C-00 25.09)
 
         /// <summary>
-        /// The first-person view pose per classic (grip in the viewmodel camera's space, pitch / yaw, scale), tuned in the
-        /// Run scene at 1080p rest against the C-00 v2 target (lower right, ≈ 120–220 k px, grip and magazine on screen,
-        /// barrel converging on the crosshair 8 m out) — the framing C-00 approved in review, carried from S-01's former
-        /// screen transform (scale 0.75 about the bottom-left, shift −12 %) onto the identity transform: each weapon's grip,
-        /// barrel axis and up through that linear map give the rigid pose (silhouette IoU 0.81–0.89 against the reviewed frame);
-        /// measured by WeaponModelSliceTests.FP_GorusPozu_OnSilah_KadrajBandinda. S-06 fits the FP arms to them (B4b).
+        /// The first-person view pose per weapon (root = trigger blade in the viewmodel camera's space, pitch / yaw, scale) — v4
+        /// (C-00 25.09, hands in view): every weapon's grip socket (root + R·gripOffset·scale, where the right hand holds it) lands
+        /// on the same screen point, lower right at 1080p (1490, 880 from the top), so the hand and the trigger area show; the
+        /// depth sets the frame to ≈ 215 k px (band 180–260 k), the bore converges on the crosshair 8 m out, the left-hand point
+        /// (grip_l) is on screen. Measured by WeaponModelSliceTests.FP_GorusPozu_*; S-06's FP arms IK the hands onto them.
         /// </summary>
         private static readonly Dictionary<string, WeaponFpViewPose> FpPoses = new Dictionary<string, WeaponFpViewPose>
         {
-            { "ar_1", WeaponFpViewPose.At(0.252f, -0.150f, 0.35f, -1.12f, -1.89f, 0.841f) },
-            { "smg_1", WeaponFpViewPose.At(0.100f, -0.124f, 0.25f, -0.91f, -0.74f, 0.831f) },
-            { "sg_1", WeaponFpViewPose.At(0.196f, -0.126f, 0.35f, -0.94f, -1.47f, 0.837f) },
-            { "ar_2", WeaponFpViewPose.At(0.324f, -0.192f, 0.45f, -1.46f, -2.46f, 0.845f) },
-            { "smg_2", WeaponFpViewPose.At(0.252f, -0.126f, 0.35f, -0.94f, -1.89f, 0.841f) },
-            { "sg_2", WeaponFpViewPose.At(0.196f, -0.150f, 0.35f, -1.12f, -1.47f, 0.837f) },
-            { "lmg_1", WeaponFpViewPose.At(0.432f, -0.257f, 0.60f, -1.98f, -3.34f, 0.851f) },
-            { "lmg_2", WeaponFpViewPose.At(0.432f, -0.162f, 0.60f, -1.25f, -3.34f, 0.853f) },
-            { "sr_1", WeaponFpViewPose.At(0.252f, -0.173f, 0.35f, -1.30f, -1.89f, 0.840f) },
-            { "rl_1", WeaponFpViewPose.At(0.252f, -0.223f, 0.45f, -1.69f, -1.92f, 0.839f) },
-            // The two Specials in hand (C-00 25.09): same target, clear of S-09's Special ring block (their HUD while in hand).
-            { "sw_arc", WeaponFpViewPose.At(0.352f, -0.198f, 0.55f, -1.52f, -2.71f, 0.840f) },
-            { "sw_gel", WeaponFpViewPose.At(0.192f, -0.198f, 0.40f, -1.49f, -1.45f, 0.840f) },
+            { "ar_1", WeaponFpViewPose.At(0.162f, -0.093f, 0.314f, -0.27f, -1.21f, 0.841f) },
+            { "smg_1", WeaponFpViewPose.At(0.187f, -0.081f, 0.384f, -0.21f, -1.41f, 0.831f) },
+            { "sg_1", WeaponFpViewPose.At(0.158f, -0.089f, 0.331f, -0.22f, -1.18f, 0.837f) },
+            { "ar_2", WeaponFpViewPose.At(0.245f, -0.110f, 0.501f, -0.30f, -1.87f, 0.845f) },
+            { "smg_2", WeaponFpViewPose.At(0.170f, -0.057f, 0.320f, 2.92f, -1.27f, 0.841f) },
+            { "sg_2", WeaponFpViewPose.At(0.163f, -0.093f, 0.362f, -0.42f, -1.23f, 0.837f) },
+            { "lmg_1", WeaponFpViewPose.At(0.278f, -0.161f, 0.547f, -0.70f, -2.14f, 0.851f) },
+            { "lmg_2", WeaponFpViewPose.At(0.295f, -0.152f, 0.586f, -0.57f, -2.28f, 0.853f) },
+            { "sr_1", WeaponFpViewPose.At(0.162f, -0.093f, 0.339f, -0.28f, -1.21f, 0.840f) },
+            { "rl_1", WeaponFpViewPose.At(0.286f, -0.132f, 0.564f, -0.51f, -2.20f, 0.839f) },
+            // The two Specials in hand: the same target, clear of S-09's Special ring block (their HUD while in hand).
+            { "sw_arc", WeaponFpViewPose.At(0.268f, -0.143f, 0.487f, -0.59f, -2.05f, 0.840f) },
+            { "sw_gel", WeaponFpViewPose.At(0.252f, -0.132f, 0.458f, -0.55f, -1.92f, 0.840f) },
         };
 
         /// <summary>

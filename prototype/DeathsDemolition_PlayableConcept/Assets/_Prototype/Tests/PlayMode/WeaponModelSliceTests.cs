@@ -198,13 +198,19 @@ namespace DD.Prototype.Tests.PlayMode
                 Transform rig = mount.Find("ClassicWeaponRig");
                 Color32[] px = VmKare(vm, null);
                 int cov = 0, hudOverlap = 0, ring = 0;
+                int ox0 = KareW, ox1 = -1, oy0 = KareH, oy1 = -1;
                 long sx = 0, sy = 0;
                 for (int i = 0; i < px.Length; i++)
                 {
                     if (!(px[i].r < 240 || px[i].g > 15 || px[i].b < 240)) continue;
                     int u = i % KareW, v = i / KareW;   // row 0 = bottom
                     cov++; sx += u; sy += v;
-                    if (hudMask[i]) hudOverlap++;
+                    if (hudMask[i])
+                    {
+                        hudOverlap++;
+                        ox0 = Mathf.Min(ox0, u); ox1 = Mathf.Max(ox1, u); oy0 = Mathf.Min(oy0, KareH - 1 - v); oy1 = Mathf.Max(oy1, KareH - 1 - v);
+                    }
+
                     if (u >= RingX0 && u < RingX1 && v >= KareH - RingYTop1 && v < KareH - RingYTop0) ring++;
                 }
 
@@ -214,11 +220,17 @@ namespace DD.Prototype.Tests.PlayMode
                 Vector2 mag = magT != null ? Ekran(vm, magT.position) : grip;
                 float angle = Vector2.Angle(muzzle - grip, new Vector2(KareW * 0.5f, KareH * 0.5f) - grip);
                 bool gripIn = EkranIcinde(grip), magIn = EkranIcinde(mag);
+                WeaponDefinition def = _s.Controller.Classic.Definition;
+                Vector2 hand = Ekran(vm, rig.TransformPoint(def.GripOffset));
+                Transform foregrip = WeaponSocketContract.Find(rig, WeaponSocketContract.MarkerForegrip);
+                Vector2 left = foregrip != null ? Ekran(vm, foregrip.position) : hand;
                 string line = d.RosterKey + " cov " + cov + " px, centre (" + cx.ToString("0") + "," + (KareH - cy).ToString("0") + " from top), grip " + (gripIn ? "in" : "OUT") +
-                              ", mag " + (magT == null ? "n/a" : magIn ? "in" : "OUT") + ", barrel→centre " + angle.ToString("0") + "°, HUD overlap " + hudOverlap + " px, Special ring " + ring + " px";
+                              ", mag " + (magT == null ? "n/a" : magIn ? "in" : "OUT") + ", R hand (" + hand.x.ToString("0") + "," + (KareH - hand.y).ToString("0") + ") L hand (" + left.x.ToString("0") + "," +
+                              (KareH - left.y).ToString("0") + ") muzzle (" + muzzle.x.ToString("0") + "," + (KareH - muzzle.y).ToString("0") + "), barrel→centre " + angle.ToString("0") + "°, HUD overlap " + hudOverlap + " px" +
+                              (hudOverlap > 0 ? " (x " + ox0 + "–" + ox1 + ", y " + oy0 + "–" + oy1 + " from top)" : "") + ", Special ring " + ring + " px";
                 report.Add(line);
                 hudOverlapMax = Mathf.Max(hudOverlapMax, hudOverlap);
-                if (cov < 120000 || cov > 220000 || cx <= KareW * 0.5f || cy >= KareH * 0.5f || angle > 25f || !gripIn || !magIn || ring > 0 || (fpLayout && hudOverlap > 0)) wrong.Add(line);
+                if (cov < CovMin || cov > CovMax || cx <= KareW * 0.5f || cy >= KareH * 0.5f || angle > BarrelMaxDeg || !gripIn || !magIn || !SagElGorunur(hand) || !SolElGorunur(left) || ring > 0 || (fpLayout && hudOverlap > 0)) wrong.Add(line);
 
                 int col = n % 5, row = n / 5;
                 for (int y = 0; y < sh; y++)
@@ -254,6 +266,13 @@ namespace DD.Prototype.Tests.PlayMode
         private const int RingX0 = 850, RingX1 = 1086, RingYTop0 = 788, RingYTop1 = 1048;
 
         private static bool EkranIcinde(Vector2 p) => p.x > KareW * 0.01f && p.x < KareW * 0.99f && p.y > KareH * 0.01f && p.y < KareH * 0.99f;
+
+        // v4 FP target (C-00 25.09, hands in view): 180–260 k px; the right hand's grip socket in the lower-right quadrant with the
+        // hand above the bottom edge (≥ 80 px), the left hand's point (marker_foregrip) on screen above that edge, the barrel on the crosshair.
+        private const int CovMin = 180000, CovMax = 260000;
+        private const float BarrelMaxDeg = 15f;
+        private static bool SagElGorunur(Vector2 p) => p.x > KareW * 0.5f && p.x < KareW - 20f && p.y > 80f && p.y < KareH * 0.5f;
+        private static bool SolElGorunur(Vector2 p) => p.x > 100f && p.x < KareW - 60f && p.y > 80f && p.y < KareH - 100f;
 
         /// <summary>The HUD canvas drawn alone through an orthographic camera at 1920×1080, over black [0] and over white [1] (HudCoverageTests pattern).</summary>
         private static IEnumerator HudCiz(Canvas canvas, Color32[][] into)
@@ -424,10 +443,12 @@ namespace DD.Prototype.Tests.PlayMode
                 float cx = cov > 0 ? sx / (float)cov : 0f, cy = cov > 0 ? sy / (float)cov : 0f;
                 Vector2 grip = Ekran(vm, rig.position), muzzle = Ekran(vm, _s.Controller.SpecialRigMuzzle.position);
                 float angle = Vector2.Angle(muzzle - grip, new Vector2(KareW * 0.5f, KareH * 0.5f) - grip);
+                Vector2 hand = Ekran(vm, rig.TransformPoint(_s.Controller.Special.Definition.GripOffset));
                 string line = id + " cov " + cov + " px, centre (" + cx.ToString("0") + "," + (KareH - cy).ToString("0") + " from top), grip " + (EkranIcinde(grip) ? "in" : "OUT") +
-                              ", muzzle " + (EkranIcinde(muzzle) ? "in" : "OUT") + ", barrel→centre " + angle.ToString("0") + "°, HUD overlap " + hudOverlap + " px, Special ring " + ring + " px";
+                              ", muzzle " + (EkranIcinde(muzzle) ? "in" : "OUT") + ", R hand (" + hand.x.ToString("0") + "," + (KareH - hand.y).ToString("0") + "), barrel→centre " + angle.ToString("0") +
+                              "°, HUD overlap " + hudOverlap + " px, Special ring " + ring + " px";
                 report.Add(line + (fpLayout ? "" : " (S-09 FP layout not yet)"));
-                if (cov < 120000 || cov > 220000 || cx <= KareW * 0.5f || cy >= KareH * 0.5f || angle > 25f || !EkranIcinde(grip) || !EkranIcinde(muzzle) || ring > 0 || (fpLayout && hudOverlap > 0)) wrong.Add(line);
+                if (cov < CovMin || cov > CovMax || cx <= KareW * 0.5f || cy >= KareH * 0.5f || angle > BarrelMaxDeg || !EkranIcinde(grip) || !EkranIcinde(muzzle) || !SagElGorunur(hand) || ring > 0 || (fpLayout && hudOverlap > 0)) wrong.Add(line);
 
                 for (int y = 0; y < sh; y++)
                 {
