@@ -1130,6 +1130,92 @@ namespace DD.Prototype.Tests.PlayMode
             Debug.Log("[DD-TEST] wp072dec102 birds=" + ar.BirdCount + " drips=" + ar.EaveDripCount + " gusts=" + ar.GustCount + " leaf=" + ar.LeafDripCount + " wet=" + _d.Router.WetStepCount + " kulak=" + kulak);
         }
 
+        [UnityTest]
+        [Timeout(90000)]
+        public IEnumerator V6_VarsayilanDunya_YuzeyKoruSacakAkustik_SesYakalanir()
+        {
+            // C-00 25.09: World v5 (V6) is the default world — its surfaces, groves, eaves and acoustic spaces come from the world itself
+            // (nothing injected here), and the after-rain layers are heard on the default path.
+            GameObject world = GameObject.Find("[AP005 World]");
+            if (world == null || world.transform.Find("Greybox v6") == null)
+            {
+                Assert.Ignore("Varsayılan dünya V6 değil (" + DD.Prototype.World.WorldSourceSettings.Resolve() + ").");
+            }
+
+            AfterRainAmbience ar = _d.Ambience.AfterRain;
+            int tagged = world.GetComponentsInChildren<SurfaceTag>(true).Length;
+            Assert.GreaterOrEqual(tagged, 2000, "V6 yüzey etiketleri (kit örnekleri + greybox)");
+            Assert.GreaterOrEqual(AudioSurfaceHints.BambooGroves.Count, 1, "V6 bambu korusu (batı bandı)");
+            Assert.GreaterOrEqual(AudioSurfaceHints.EavePoints.Count, 40, "V6 saçak noktaları (çatı kenarları)");
+            Assert.AreEqual(SurfaceKind.Stone, YuzeyAltinda(new Vector3(0f, 0.05f, 30f)), "avlu arduvazı taş okunur");
+            Assert.AreEqual(AcousticSpace.Hall, AcousticSpaces.At(new Vector3(0f, 2.5f, 44f)), "R1 ana salon akustik haritada");
+
+            UnityEngine.Audio.AudioMixer mixer = _d.Bridge.Mixer;
+            string path = System.IO.Path.Combine(Application.temporaryCachePath, "wp072-v6-ambience.wav");
+            AudioOutputCapture cap = null;
+            int damla = ar.EaveDripCount, ruzgar = ar.GustCount;
+            try
+            {
+                mixer.SetFloat(AudioMixerBridge.VolumeParams[1], -80f);   // music out: the ambience alone
+                cap = AudioOutputCapture.Arm(_d.gameObject, path);
+
+                // The forecourt before the hall: drips from the hall's eave line.
+                _s.Rig.Teleport(new Vector3(0f, 0.1f, 33f), Quaternion.identity);
+                string eave = null;
+                float bitis = Time.realtimeSinceStartup + 6f;
+                while (Time.realtimeSinceStartup < bitis && eave == null)
+                {
+                    ar.ForceDue(false, true, false);
+                    yield return new WaitForSecondsRealtime(0.4f);
+                    if (ar.EaveDripCount > damla && ar.LastDrip.StartsWith("eave", StringComparison.Ordinal)) eave = ar.LastDrip;
+                }
+
+                Assert.IsNotNull(eave, "salon önünde saçak damlası: " + ar.LastDrip);
+
+                // Beside the west grove band: the rustle bed and a gust.
+                Vector3 koru = AudioSurfaceHints.BambooGroves[0];
+                _s.Rig.Teleport(new Vector3(-34f, 0.1f, Mathf.Clamp(koru.z, -20f, 20f)), Quaternion.identity);
+                bitis = Time.realtimeSinceStartup + 6f;
+                while (Time.realtimeSinceStartup < bitis && (ar.GustCount == ruzgar || !ar.GrovePlaying))
+                {
+                    ar.ForceDue(false, false, ar.GustCount == ruzgar);
+                    yield return new WaitForSecondsRealtime(0.4f);
+                }
+
+                Assert.Greater(ar.GustCount, ruzgar, "koru rüzgârı");
+                Assert.IsTrue(ar.GrovePlaying, "koru yatağı (" + koru + ")");
+                yield return new WaitForSecondsRealtime(1f);
+                long frames = cap.FramesWritten;
+                UnityEngine.Object.DestroyImmediate(cap);
+                cap = null;
+                foreach (var tap in UnityEngine.Object.FindObjectsOfType<AudioOutputTap>(true)) UnityEngine.Object.DestroyImmediate(tap);
+                if (frames == 0) Assert.Inconclusive("Ses çıkışı yok (batch/aygıt yok).");
+
+                byte[] raw = System.IO.File.ReadAllBytes(path);
+                int ch = raw[22] | (raw[23] << 8), rate = raw[24] | (raw[25] << 8) | (raw[26] << 16) | (raw[27] << 24);
+                int n = (raw.Length - 44) / (2 * ch);
+                var mono = new float[n];
+                for (int i = 0; i < n; i++)
+                {
+                    float sum = 0f;
+                    for (int c = 0; c < ch; c++) { int o = 44 + 2 * (i * ch + c); sum += (short)(raw[o] | (raw[o + 1] << 8)) / 32768f; }
+                    mono[i] = sum / ch;
+                }
+
+                float lufs = LoudnessMeter.Measure(mono, rate).IntegratedLufs;
+                Assert.Greater(lufs, -60f, "varsayılan yolda ortam katmanları duyulur");
+                Debug.Log("[DD-TEST] wp072.v6 tagged=" + tagged + " groves=" + AudioSurfaceHints.BambooGroves.Count + " eaves=" + AudioSurfaceHints.EavePoints.Count
+                          + " ponds=" + AudioSurfaceHints.PondCenters.Count + " eave=" + eave + " gusts=" + ar.GustCount + " leaf=" + ar.LeafDripCount
+                          + " capture " + (n / (float)rate).ToString("0.0") + " s " + lufs.ToString("0.0") + " LUFS-I (music out)");
+            }
+            finally
+            {
+                if (cap != null) UnityEngine.Object.DestroyImmediate(cap);
+                foreach (var tap in UnityEngine.Object.FindObjectsOfType<AudioOutputTap>(true)) UnityEngine.Object.DestroyImmediate(tap);
+                mixer.ClearFloat(AudioMixerBridge.VolumeParams[1]);
+            }
+        }
+
         // ================================================================== WP-068 dilim 11 · UI ses v3
 
         [UnityTest]

@@ -157,13 +157,20 @@ namespace DD.Prototype.Audio
 
         private static bool TryNearestEave(Vector3 listener, out Vector3 point)
         {
-            List<Vector3> eaves = AudioSurfaceHints.WindChimes;
             point = default;
-            float best = EaveRange * EaveRange; bool found = false;
-            for (int i = 0; i < eaves.Count; i++)
+            float best = EaveRange * EaveRange;
+            bool found = Nearest(AudioSurfaceHints.WindChimes, listener, ref best, ref point);   // AP005: the fūrin hang under the eaves
+            found |= Nearest(AudioSurfaceHints.EavePoints, listener, ref best, ref point);       // V6: the roof edges
+            return found;
+        }
+
+        private static bool Nearest(List<Vector3> points, Vector3 listener, ref float best, ref Vector3 point)
+        {
+            bool found = false;
+            for (int i = 0; i < points.Count; i++)
             {
-                float d = (eaves[i] - listener).sqrMagnitude;
-                if (d < best) { best = d; point = eaves[i]; found = true; }
+                float d = (points[i] - listener).sqrMagnitude;
+                if (d < best) { best = d; point = points[i]; found = true; }
             }
 
             return found;

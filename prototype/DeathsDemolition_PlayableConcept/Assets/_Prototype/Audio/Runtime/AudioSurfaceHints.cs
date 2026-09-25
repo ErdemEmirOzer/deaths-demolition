@@ -76,6 +76,9 @@ namespace DD.Prototype.Audio
         /// <summary>WP-065C: AP-017 fūrin wind chimes (eave hang points), registered by the world assembly; the ambience rings the nearest in the wind.</summary>
         public static readonly List<Vector3> WindChimes = new List<Vector3>(16);
 
+        /// <summary>WP-072 · DEC-102 on World v5 (V6): eave-line points (roof edges) for the after-rain eave drips; the fūrin points serve too.</summary>
+        public static readonly List<Vector3> EavePoints = new List<Vector3>(256);
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
         {
@@ -85,6 +88,7 @@ namespace DD.Prototype.Audio
             PondCenters.Clear();
             WindChimes.Clear();
             BambooGroves.Clear();
+            EavePoints.Clear();
         }
     }
 }

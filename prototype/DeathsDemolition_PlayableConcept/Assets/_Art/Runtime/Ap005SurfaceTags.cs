@@ -103,6 +103,12 @@ namespace DD.Art
                 return 0;
             }
 
+            // WP-072 · World v5 (V6, the default world since C-00 25.09): no placement instances — the AP-023 kit and the greybox.
+            if (bootstrap.Placement.instances.Count == 0 && bootstrap.transform.Find(V6GreyboxName) != null)
+            {
+                return ApplyV6(bootstrap);
+            }
+
             Transform instances = bootstrap.transform.Find(Ap005WorldBootstrap.InstancesName);
             if (instances == null)
             {
@@ -254,6 +260,219 @@ namespace DD.Art
 
         public const string FurinFamily = "furin_wind_chime";
 
+        // ---- WP-072 · World v5 on the v6 layout (World_V6_Greybox: GreyboxV6Builder + WorldV5Dress + WorldBoundaryBuilder)
+
+        /// <summary>GreyboxV6Builder.GreyboxRootName / WorldV5Dress.RoofOccluderName / WorldBoundaryBuilder names (editor assembly, not referenced here).</summary>
+        public const string V6GreyboxName = "Greybox v6", V6RoofOccluderName = "RoofOccluder", V6BoundaryName = "World Boundary (WP-038M)", V6PondRimsName = "Pond Rims";
+
+        /// <summary>WorldV5Ground.PlazaRects (world x0, z0, x1, z1): the wet slate plaza — the ground reads Stone inside, Dirt outside.</summary>
+        public static readonly Vector4[] V6PlazaRects =
+        {
+            new Vector4(-16f, -14f, 16f, 19.7f),
+            new Vector4(-4f, -18f, 4f, -14f),
+            new Vector4(-4f, 19.7f, 4f, 20.3f),
+            new Vector4(-25.7f, 20.3f, 25.7f, 37.5f),
+            new Vector4(-25.7f, 37.5f, -18f, 50.5f),
+            new Vector4(18f, 37.5f, 25.7f, 50.5f),
+        };
+
+        /// <summary>AP-023 kit family (SM_&lt;family&gt;_Vnn) → surface. Timber buildings, fences and trees = Wood; kerbs, rocks, lanterns, plaster walls = Stone.</summary>
+        public static readonly Dictionary<string, SurfaceKind> V6FamilySurface = new Dictionary<string, SurfaceKind>
+        {
+            { "palace_kit", SurfaceKind.Wood }, { "kairo_open", SurfaceKind.Wood }, { "kairo_bay", SurfaceKind.Wood }, { "yagura", SurfaceKind.Wood },
+            { "azumaya", SurfaceKind.Wood }, { "teahouse", SurfaceKind.Wood }, { "kura", SurfaceKind.Wood }, { "pavilion", SurfaceKind.Wood },
+            { "gates", SurfaceKind.Wood }, { "plank_bridge", SurfaceKind.Wood }, { "fence_kenninji", SurfaceKind.Wood }, { "fence_yotsume", SurfaceKind.Wood },
+            { "bamboo_v2", SurfaceKind.Wood }, { "sugi", SurfaceKind.Wood }, { "black_pine", SurfaceKind.Wood }, { "sakura_v2", SurfaceKind.Wood },
+            { "momiji", SurfaceKind.Wood },
+            { "wall_kit", SurfaceKind.Stone }, { "granite_kerb", SurfaceKind.Stone }, { "planter", SurfaceKind.Stone }, { "lantern_kasuga", SurfaceKind.Stone },
+            { "rock_large", SurfaceKind.Stone }, { "pond_rock", SurfaceKind.Stone }, { "slab_bridge", SurfaceKind.Stone }, { "pond_shore_pebble", SurfaceKind.Stone },
+            { "pond_shore_moss", SurfaceKind.Foliage }, { "groundcover", SurfaceKind.Foliage }, { "satsuki", SurfaceKind.Foliage }, { "lotus", SurfaceKind.Foliage },
+            { "pond_reeds", SurfaceKind.Foliage },
+        };
+
+        /// <summary>Greybox box material (Greybox_&lt;key&gt;) → surface, for the greybox boxes the dress keeps as collision.</summary>
+        public static SurfaceKind V6GreyboxSurface(string materialKey, string name)
+        {
+            switch (materialKey)
+            {
+                case "ground": return SurfaceKind.Dirt;
+                case "floor": return name.StartsWith("Planter_", System.StringComparison.Ordinal) ? SurfaceKind.Stone : SurfaceKind.Wood;
+                case "tree": return SurfaceKind.Wood;
+                case "water": return SurfaceKind.Water;
+                case "wall": case "roof": case "prop": return SurfaceKind.Stone;
+                default: return V6ByName(name);
+            }
+        }
+
+        private static SurfaceKind V6ByName(string name)
+        {
+            if (name.IndexOf("Floor", System.StringComparison.Ordinal) >= 0 || name.IndexOf("Stair", System.StringComparison.Ordinal) >= 0
+                || name.IndexOf("Deck", System.StringComparison.Ordinal) >= 0 || name.StartsWith("Bamboo_", System.StringComparison.Ordinal)) return SurfaceKind.Wood;
+            if (name == "Ground") return SurfaceKind.Dirt;
+            return SurfaceKind.Stone;   // roofs (tile), walls (plaster), everything else hard
+        }
+
+        /// <summary>SM_palace_kit_V20 → palace_kit.</summary>
+        public static string V6Family(string name)
+        {
+            if (!name.StartsWith("SM_", System.StringComparison.Ordinal)) return null;
+            int v = name.LastIndexOf("_V", System.StringComparison.Ordinal);
+            return v > 3 ? name.Substring(3, v - 3) : name.Substring(3);
+        }
+
+        public static bool InsideV6Plaza(Vector3 p)
+        {
+            for (int i = 0; i < V6PlazaRects.Length; i++)
+            {
+                Vector4 r = V6PlazaRects[i];
+                if (p.x > r.x && p.x < r.z && p.z > r.y && p.z < r.w) return true;
+            }
+
+            return false;
+        }
+
+        public static SurfaceKind RefineV6(Vector3 point, SurfaceKind resolved)
+        {
+            return resolved == SurfaceKind.Dirt && InsideV6Plaza(point) ? SurfaceKind.Stone : resolved;
+        }
+
+        private static readonly List<Collider> s_colliders = new List<Collider>(4096);
+
+        private static int ApplyV6(Ap005WorldBootstrap bootstrap)
+        {
+            Transform root = bootstrap.transform;
+            int added = 0;
+
+            // 1 · every kit instance root (SM_<family>_Vnn) by family; its colliders sit under it.
+            var stack = new Stack<Transform>();
+            stack.Push(root);
+            while (stack.Count > 0)
+            {
+                Transform t = stack.Pop();
+                string family = V6Family(t.name);
+                if (family != null)
+                {
+                    if (t.GetComponent<SurfaceTag>() == null)
+                    {
+                        if (!V6FamilySurface.TryGetValue(family, out SurfaceKind kind))
+                        {
+                            kind = SurfaceKind.Stone;
+                            if (s_unknown.Add(family)) UnknownFamilies++;
+                        }
+
+                        SurfaceTag tag = t.gameObject.AddComponent<SurfaceTag>();
+                        tag.Surface = kind;
+                        tag.Family = family;
+                        added++;
+                    }
+
+                    continue;
+                }
+
+                for (int i = 0; i < t.childCount; i++) stack.Push(t.GetChild(i));
+            }
+
+            // 2 · the colliders left untagged: greybox boxes (by their Greybox_<key> material), the dress's own pieces (hall floor, roofs).
+            // The world boundary (invisible walls, pond rims) stays untagged.
+            Transform boundary = root.Find(V6BoundaryName);
+            root.GetComponentsInChildren(true, s_colliders);
+            for (int i = 0; i < s_colliders.Count; i++)
+            {
+                Collider c = s_colliders[i];
+                if (c.isTrigger || (boundary != null && c.transform.IsChildOf(boundary)) || c.GetComponentInParent<SurfaceTag>() != null) continue;
+                var renderer = c.GetComponent<Renderer>();
+                string mat = renderer != null && renderer.sharedMaterial != null ? renderer.sharedMaterial.name : "";
+                string key = mat.StartsWith("Greybox_", System.StringComparison.Ordinal) ? mat.Substring(8) : "";
+                c.gameObject.AddComponent<SurfaceTag>().Surface = V6GreyboxSurface(key, c.name);
+                added++;
+            }
+
+            Tagged += added;
+            SurfaceResolver.Invalidate();
+            s_routes = null;
+            AudioSurfaceHints.Refine = RefineV6;
+            AudioSurfaceHints.FootstepVariant = null;
+            RegisterV6Hints(root, boundary);
+            s_colliders.Clear();
+            return added;
+        }
+
+        /// <summary>The ambience anchors on V6: bamboo groves (the grove band's greybox blocks), eave points (roof edges), pond centres (rim rings).</summary>
+        private static void RegisterV6Hints(Transform root, Transform boundary)
+        {
+            AudioSurfaceHints.WindChimes.Clear();   // no fūrin in World v5
+            AudioSurfaceHints.EavePoints.Clear();
+            var grove = new List<Vector3>(128);
+            var rims = new List<Vector3>(256);
+            Transform pondRims = boundary != null ? boundary.Find(V6PondRimsName) : null;
+            for (int i = 0; i < s_colliders.Count; i++)
+            {
+                Collider c = s_colliders[i];
+                if (c.name.StartsWith("Bamboo_", System.StringComparison.Ordinal))
+                {
+                    grove.Add(c.bounds.center);
+                }
+                else if (c.name == V6RoofOccluderName || c.name == "Hall_Roof")
+                {
+                    AddEaves(c.bounds);
+                }
+                else if (pondRims != null && c.transform.IsChildOf(pondRims))
+                {
+                    rims.Add(c.bounds.center);
+                }
+            }
+
+            Cluster(grove, 10f, 4, AudioSurfaceHints.BambooGroves);
+            Cluster(rims, 25f, 4, AudioSurfaceHints.PondCenters);
+        }
+
+        /// <summary>A roof's eave line: its footprint's edge every ~3 m at the eave height.</summary>
+        private static void AddEaves(Bounds b)
+        {
+            float y = b.min.y;
+            Vector3 lo = b.min, hi = b.max;
+            int nx = Mathf.Max(1, Mathf.RoundToInt((hi.x - lo.x) / 3f)), nz = Mathf.Max(1, Mathf.RoundToInt((hi.z - lo.z) / 3f));
+            for (int i = 0; i <= nx; i++)
+            {
+                float x = Mathf.Lerp(lo.x, hi.x, i / (float)nx);
+                AudioSurfaceHints.EavePoints.Add(new Vector3(x, y, lo.z));
+                AudioSurfaceHints.EavePoints.Add(new Vector3(x, y, hi.z));
+            }
+
+            for (int i = 1; i < nz; i++)
+            {
+                float z = Mathf.Lerp(lo.z, hi.z, i / (float)nz);
+                AudioSurfaceHints.EavePoints.Add(new Vector3(lo.x, y, z));
+                AudioSurfaceHints.EavePoints.Add(new Vector3(hi.x, y, z));
+            }
+        }
+
+        /// <summary>Greedy XZ clustering (as the AP005 groves): a point joins the first centre within <paramref name="radius"/>; centres of ≥ <paramref name="min"/> points.</summary>
+        private static void Cluster(List<Vector3> points, float radius, int min, List<Vector3> into)
+        {
+            into.Clear();
+            var sums = new List<Vector3>(16);
+            var counts = new List<int>(16);
+            for (int i = 0; i < points.Count; i++)
+            {
+                Vector3 p = points[i];
+                int hit = -1;
+                for (int g = 0; g < sums.Count; g++)
+                {
+                    Vector3 c = sums[g] / counts[g];
+                    if (new Vector3(c.x - p.x, 0f, c.z - p.z).sqrMagnitude <= radius * radius) { hit = g; break; }
+                }
+
+                if (hit < 0) { sums.Add(p); counts.Add(1); }
+                else { sums[hit] += p; counts[hit]++; }
+            }
+
+            for (int g = 0; g < sums.Count; g++)
+            {
+                if (counts[g] >= min) into.Add(sums[g] / counts[g]);
+            }
+        }
+
         /// <summary>Inside a stone route's strip the ground (Dirt) reads as Stone. Only the ground's own answer is refined.</summary>
         public static SurfaceKind RefineByRoute(Vector3 point, SurfaceKind resolved)
         {
@@ -330,7 +549,10 @@ namespace DD.Art
                     int added = Apply(bootstrap);
                     if (added > 0)
                     {
-                        Debug.Log("[AP005] SurfaceTags: " + added + " instances tagged from placement families (" + UnknownFamilies + " unknown families by role).");
+                        Debug.Log("[AP005] SurfaceTags: " + added + " instances tagged from placement families (" + UnknownFamilies + " unknown families by role)."
+                                  + (bootstrap.Placement != null && bootstrap.Placement.instances.Count == 0
+                                      ? " V6: groves " + AudioSurfaceHints.BambooGroves.Count + ", eave points " + AudioSurfaceHints.EavePoints.Count + ", ponds " + AudioSurfaceHints.PondCenters.Count
+                                      : ""));
                     }
                 }
             }
