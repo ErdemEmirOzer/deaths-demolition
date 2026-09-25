@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.IO;
 using DD.Prototype.Core.Boot;
+using DD.Prototype.Core.Config;
 using DD.Prototype.Economy;
 using DD.Prototype.Enemies;
 using DD.Prototype.PlayerSystem;
@@ -16,6 +17,8 @@ namespace DD.Prototype.UI
     /// Player-side screen captures for the UI quality gate (WP-022C, directive §14).
     ///
     ///   DeathsDemolition.app/Contents/MacOS/... -ddUiCapture selection -ddUiCaptureOut /tmp/sel.png -ddSize 1920x1080
+    ///
+    /// 12b: <c>menumatrix</c> (E3), <c>-ddUiKilledBy</c> (A8), <c>-ddUiCaptureWeapon</c> (B11), hudstates' reticle-floor and 4× crops (B7 / B11).
     ///
     /// Screens: <c>mainmenu</c>, <c>settings</c> / <c>profile</c> / <c>achievements</c> / <c>statistics</c> (main menu with that pane),
     /// <c>selection</c>, <c>pause</c> (a run, paused), <c>results</c> (a run ended by
@@ -49,6 +52,48 @@ namespace DD.Prototype.UI
         /// </summary>
         private const string RoundsFlag = "-ddUiCaptureRounds";
         private const string BotFlag = "-ddQaBot";
+
+        /// <summary>
+        /// 12b · A8 (AD R1-D SHOULD-5): <c>-ddUiKilledBy &lt;SourceId&gt;</c> names the killing blow of the staged
+        /// <c>results</c> death (default "ui-capture"); <c>longest</c> is the longest id in EnemyAttackState's SourceId table
+        /// (<see cref="LongestSourceId"/>, 24 characters - "Zombie.Standard.BiteGrab" ties it). With
+        /// <c>-ddUiCaptureRounds 10</c> the death lands in round 11: the results-mac frame of the H1 / ribbon rule.
+        /// </summary>
+        private const string KilledByFlag = "-ddUiKilledBy";
+        public const string LongestSourceId = "Zombie.Standard.Overhead";
+
+        /// <summary>
+        /// 12b · B11 (AD R1-B SHOULD-5): <c>-ddUiCaptureWeapon &lt;ClassicWeaponId&gt;</c> (e.g. <c>Sg2</c>, the Nami
+        /// shotgun) starts the staged run with that classic weapon instead of the selection's - a capture seam, it does
+        /// not ask the profile whether the weapon is unlocked.
+        /// </summary>
+        private const string WeaponFlag = "-ddUiCaptureWeapon";
+
+        private static string CaptureKilledBy()
+        {
+            string id = Arg(KilledByFlag);
+            if (string.IsNullOrEmpty(id))
+            {
+                return "ui-capture";
+            }
+
+            return string.Equals(id, "longest", StringComparison.OrdinalIgnoreCase) ? LongestSourceId : id;
+        }
+
+        private static void ApplyCaptureWeapon()
+        {
+            string name = Arg(WeaponFlag);
+            ClassicWeaponId id;
+            if (!string.IsNullOrEmpty(name) && Enum.TryParse(name, true, out id))
+            {
+                PrototypeUiFlow.SelectedWeapon = id;
+                Debug.Log("[UiCapture] classic weapon " + id);
+            }
+            else if (!string.IsNullOrEmpty(name))
+            {
+                Debug.LogWarning("[UiCapture] " + WeaponFlag + " " + name + ": not a ClassicWeaponId");
+            }
+        }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Boot()
@@ -562,6 +607,12 @@ namespace DD.Prototype.UI
                     yield break;
                 }
 
+                if (_screen == "menumatrix")
+                {
+                    yield return MenuMatrix();
+                    yield break;
+                }
+
                 if (_screen == "tree")
                 {
                     yield return TreeFrames();
@@ -603,6 +654,7 @@ namespace DD.Prototype.UI
                         PrototypeUiFlow.GoToSelection();
                         yield return UiCaptureAgent.WaitScene(PrototypeScenes.Selection, 20f);
                         yield return new WaitForSecondsRealtime(0.5f);
+                        ApplyCaptureWeapon();
                         PrototypeUiFlow.StartRun();
                         yield return UiCaptureAgent.WaitScene(PrototypeScenes.Run, 30f);
                         yield return UiCaptureAgent.WaitRunLive(20f);
@@ -650,7 +702,7 @@ namespace DD.Prototype.UI
                             if (rig != null && rig.Health != null)
                             {
                                 rig.Health.DiagnosisInvulnerable = false;
-                                rig.Health.ApplyDamage(rig.Health.Max * 10f, rig.transform.position + Vector3.forward, "ui-capture");
+                                rig.Health.ApplyDamage(rig.Health.Max * 10f, rig.transform.position + Vector3.forward, CaptureKilledBy());   // 12b · A8
                             }
 
                             yield return UiCaptureAgent.WaitScene(PrototypeScenes.Results, 30f);
@@ -1032,6 +1084,7 @@ namespace DD.Prototype.UI
                 PrototypeUiFlow.GoToSelection();
                 yield return UiCaptureAgent.WaitScene(PrototypeScenes.Selection, 20f);
                 yield return WaitFor(() => !UiCurtain.IsCovering, 10f);
+                ApplyCaptureWeapon();   // 12b · B11: -ddUiCaptureWeapon Sg2 - the Nami glyph at idle and LOW
                 PrototypeUiFlow.StartRun();
                 yield return UiCaptureAgent.WaitScene(PrototypeScenes.Run, 30f);
                 yield return UiCaptureAgent.WaitRunLive(20f);
@@ -1058,6 +1111,7 @@ namespace DD.Prototype.UI
 
                 yield return new WaitForSecondsRealtime(1.5f);
                 yield return Frame(folder, "hud-idle");
+                yield return Crop(folder, "crop-glyph-idle-x4", "WeaponIcon", 12f);   // 12b · B11 (AD R1-B SHOULD-5): the glyph at idle
                 yield return UiCaptureAgent.Coverage(folder, "hud-idle");
 
                 // AD 8b SHOULD-1: the reticle's states, staged on the live reticle.
@@ -1070,6 +1124,16 @@ namespace DD.Prototype.UI
                 UiMotion.ReducedMotion = true;
                 yield return StageReticle(folder, "reticle-rm", live, 3.5f, 0f, 0, live.AmmoInMagazine, false);
                 UiMotion.ReducedMotion = reduced;
+
+                // 12b · B7 (AD R1-A SHOULD-5): the spread floor (CurrentSpreadDegrees 0) - TP ring 14 px, FP 11.2 px - with a
+                // 4× centre crop; then the same with CENTRE DOT on (dot 4 / 3 px): the FP inner tick ends must keep 4 px from it.
+                yield return StageReticle(folder, "reticle-floor", live, 0f, 0f, 0, live.AmmoInMagazine, false);
+                yield return Crop(folder, "reticle-floor-x4", "Reticle", 40f);
+                bool dot = UiSettings.CentreDot;
+                UiSettings.CentreDot = true;
+                yield return StageReticle(folder, "reticle-floor-dot", live, 0f, 0f, 0, live.AmmoInMagazine, false);
+                yield return Crop(folder, "reticle-floor-dot-x4", "Reticle", 40f);
+                UiSettings.CentreDot = dot;
                 RunHudScreen.CaptureWeapon = null;
                 RunHudScreen.CaptureSpecialActive = false;
 
@@ -1141,6 +1205,7 @@ namespace DD.Prototype.UI
 
                     yield return new WaitForSecondsRealtime(0.3f);
                     yield return Frame(folder, "hud-ammo-low");
+                    yield return Crop(folder, "crop-glyph-low-x4", "WeaponIcon", 12f);   // 12b · B11: the glyph at LOW (α 0.70)
 
                     while (classic.Ammo > 0)
                     {
@@ -1156,6 +1221,7 @@ namespace DD.Prototype.UI
                     classic.TryBeginReload();
                     yield return WaitFor(() => classic.ReloadProgress01 >= 0.45f, 5f);
                     yield return Frame(folder, "hud-reload");
+                    yield return Crop(folder, "crop-reload-ring-x4", "ReloadRing", 8f);   // 12b · B11: the Focus400 ring mid-reload
                     yield return WaitFor(() => !classic.IsReloading, 5f);
                     yield return new WaitForSecondsRealtime(0.05f);
                     yield return Frame(folder, "hud-reloaded");
@@ -1684,6 +1750,114 @@ namespace DD.Prototype.UI
             {
                 yield return new WaitForEndOfFrame();
                 WritePng(Path.Combine(folder, name + ".png"));
+            }
+
+            /// <summary>
+            /// 12b (AD R1-A SHOULD-5, R1-B SHOULD-5): a 4× nearest-neighbour crop of this frame around a HUD element (the first
+            /// active one named <paramref name="element"/> under the RunHudScreen), <paramref name="margin"/> canvas px around
+            /// its rect, so a 1-2 px stroke can be judged. Without the element the crop is the screen centre.
+            /// </summary>
+            private static IEnumerator Crop(string folder, string name, string element, float margin)
+            {
+                yield return new WaitForEndOfFrame();
+                Texture2D frame = ScreenCapture.CaptureScreenshotAsTexture();
+                float toFrame = Screen.width > 0 ? frame.width / (float)Screen.width : 1f;
+                Rect area = new Rect(Screen.width * 0.5f - 64f, Screen.height * 0.5f - 64f, 128f, 128f);
+                RectTransform target = FindHud(element);
+                if (target != null)
+                {
+                    Canvas canvas = target.GetComponentInParent<Canvas>();
+                    float scale = canvas != null ? canvas.scaleFactor : 1f;
+                    var corners = new Vector3[4];
+                    target.GetWorldCorners(corners);
+                    Camera camera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null;
+                    Vector2 min = RectTransformUtility.WorldToScreenPoint(camera, corners[0]);
+                    Vector2 max = RectTransformUtility.WorldToScreenPoint(camera, corners[2]);
+                    float pad = margin * scale;
+                    area = Rect.MinMaxRect(Mathf.Min(min.x, max.x) - pad, Mathf.Min(min.y, max.y) - pad, Mathf.Max(min.x, max.x) + pad, Mathf.Max(min.y, max.y) + pad);
+                }
+
+                int x0 = Mathf.Clamp(Mathf.FloorToInt(area.xMin * toFrame), 0, frame.width - 1);
+                int y0 = Mathf.Clamp(Mathf.FloorToInt(area.yMin * toFrame), 0, frame.height - 1);
+                int x1 = Mathf.Clamp(Mathf.CeilToInt(area.xMax * toFrame), x0 + 1, frame.width);
+                int y1 = Mathf.Clamp(Mathf.CeilToInt(area.yMax * toFrame), y0 + 1, frame.height);
+                int w = x1 - x0, h = y1 - y0;
+                Color32[] source = frame.GetPixels32();
+                var zoom = new Texture2D(w * 4, h * 4, TextureFormat.RGBA32, false);
+                var pixels = new Color32[w * 4 * h * 4];
+                for (int y = 0; y < h * 4; y++)
+                {
+                    for (int x = 0; x < w * 4; x++)
+                    {
+                        pixels[y * w * 4 + x] = source[(y0 + y / 4) * frame.width + x0 + x / 4];
+                    }
+                }
+
+                zoom.SetPixels32(pixels);
+                zoom.Apply(false, false);
+                string path = Path.Combine(folder, name + ".png");
+                File.WriteAllBytes(path, zoom.EncodeToPNG());
+                Debug.Log(string.Format("[UiCapture] crop {0} · {1} at {2},{3} {4}x{5} px × 4", path, target != null ? element : "centre", x0, y0, w, h));
+                Destroy(zoom);
+                Destroy(frame);
+            }
+
+            private static RectTransform FindHud(string element)
+            {
+                RunHudScreen hud = FindObjectOfType<RunHudScreen>();
+                if (hud == null)
+                {
+                    return null;
+                }
+
+                foreach (RectTransform rect in hud.GetComponentsInChildren<RectTransform>(false))
+                {
+                    if (rect.name == element)
+                    {
+                        return rect;
+                    }
+                }
+
+                return null;
+            }
+
+            /// <summary>
+            /// 12b · E3 (§12 matrix, the menus' in-process part): <c>-ddUiCapture menumatrix</c> - the main menu and its
+            /// Settings pane at UI scale {0.9, 1.0, 1.2} × TextScale {1, 1.25} at this Player's resolution, the menu scene
+            /// reloaded for each (the scale applies to the next screen); frames <c>menu-ui1.2-ts1.25.png</c> /
+            /// <c>settings-ui1.2-ts1.25.png</c> in <c>-ddUiCaptureOut</c>. The resolutions (1080, 21:9, Mac, 16:10) are the
+            /// runner's, one Player launch each; the settings go to this process's own folder, as every capture's do.
+            /// </summary>
+            private IEnumerator MenuMatrix()
+            {
+                string folder = Path.HasExtension(_out) ? (Path.GetDirectoryName(_out) ?? Application.persistentDataPath) : _out;
+                Directory.CreateDirectory(folder);
+                foreach (float ui in new[] { 0.9f, 1f, 1.2f })
+                {
+                    foreach (float ts in new[] { 1f, 1.25f })
+                    {
+                        UiSettings.UiScale = ui;
+                        UiSettings.TextScale = ts;
+                        MainMenuScreen before = FindObjectOfType<MainMenuScreen>();
+                        PrototypeUiFlow.GoToMainMenu();
+                        yield return WaitFor(() => { MainMenuScreen now = FindObjectOfType<MainMenuScreen>(); return now != null && now != before; }, 30f);
+                        yield return WaitFor(() => !UiCurtain.IsCovering, 10f);
+                        yield return new WaitForSecondsRealtime(_delay);
+                        string tag = "ui" + ui.ToString("0.0#", System.Globalization.CultureInfo.InvariantCulture) + "-ts" + ts.ToString("0.0#", System.Globalization.CultureInfo.InvariantCulture);
+                        yield return Frame(folder, "menu-" + tag);
+
+                        MainMenuScreen menu = FindObjectOfType<MainMenuScreen>();
+                        if (menu != null)
+                        {
+                            menu.ShowPane(UiContext.Settings);
+                            yield return new WaitForSecondsRealtime(0.8f);
+                            yield return Frame(folder, "settings-" + tag);
+                        }
+                    }
+                }
+
+                Debug.Log("[UiCapture] menumatrix done · framebuffer " + Screen.width + "x" + Screen.height);
+                Application.Quit();
             }
 
             private static string Readout(string id)
