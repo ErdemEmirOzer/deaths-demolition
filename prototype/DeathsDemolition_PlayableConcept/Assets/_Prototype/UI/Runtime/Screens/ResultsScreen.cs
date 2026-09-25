@@ -313,17 +313,20 @@ namespace DD.Prototype.UI
             // What must follow the breakdown (AD 12b MUST-1 / 12c MUST-4: the first card, its "and N more", the forward
             // line - never traded for the breakdown): measured first, so the rows take what is left.
             float rowBand = UiFactory.ScaledBand(32f);
-            float nextLine = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption));
+            // A caption's band here is its line box: LineHeight(Caption) is already text-scaled (FontSize × TextScale), and
+            // ScaledBand over it scaled the text scale in twice (45 px for a 36 px line at 1.25) - 12c MUST-4's missing 13 px.
+            float captionBand = UiFactory.LineHeight(UiType.Caption);
+            float nextLine = captionBand;
             float after = (_model.AshEarned > 0 ? (int)UiSpace.S + UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Label)) : 0f)
                           + 2f * (int)UiSpace.M + UiTokens.StrokeHairline;
             float entry = UiFactory.ScaledBand(RewardEntryHeight);
-            float more = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption));
+            float more = captionBand;
             int listed = _model.NewUnlocks.Count + _model.NewAchievements.Count;
             float listFirst = listed == 0
                 ? UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Body))
                 : entry + (int)UiSpace.S + (listed > 1 ? more : 0f);
             float levelBlock = (int)UiSpace.M + UiFactory.ScaledBand(UiFactory.LineHeight(UiType.H3)) + (int)UiSpace.S + 14f
-                               + (int)UiSpace.XS + UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption));
+                               + (int)UiSpace.XS + captionBand;
             float forward = string.IsNullOrEmpty(_model.NextUnlockLine) ? 0f : nextLine;
             float tail = levelBlock + forward + after + listFirst + 2f * (int)UiSpace.XL;
             int rowsFit = Mathf.Max(0, Mathf.FloorToInt((blockRoom - stack.Cursor - tail) / rowBand));
@@ -366,7 +369,7 @@ namespace DD.Prototype.UI
             stack.Add((RectTransform)_xpBar.transform, 14f);
             stack.Gap(UiSpace.XS);
             TMP_Text barCaption = UiFactory.Label("BarCaption", host, _model.ProgressCaption, UiType.Caption, UiColor.TextSecondary);
-            stack.Add((RectTransform)barCaption.transform, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption)));
+            stack.Add((RectTransform)barCaption.transform, captionBand);
             // E26's forward look (12b, AD R1-D SHOULD-1): what the next level brings - only while the list below still gets its
             // first card and its "and N more" (or its one line: the empty state) inside the block's room (AD 12b MUST-1).
             if (!string.IsNullOrEmpty(_model.NextUnlockLine)
@@ -398,7 +401,12 @@ namespace DD.Prototype.UI
                 return stack.Cursor + 2f * (int)UiSpace.XL;
             }
 
-            int fits = Mathf.Max(0, Mathf.FloorToInt((room - more) / (entry + (int)UiSpace.S)));
+            // "and N more" is reserved only when not every entry fits (a single unlock gets its card, not "1 new").
+            int fits = Mathf.Max(0, Mathf.FloorToInt(room / (entry + (int)UiSpace.S)));
+            if (fits < total)
+            {
+                fits = Mathf.Max(0, Mathf.FloorToInt((room - more) / (entry + (int)UiSpace.S)));
+            }
             int shown = 0;
             for (int i = 0; i < _model.NewUnlocks.Count && shown < fits; i++, shown++)
             {
