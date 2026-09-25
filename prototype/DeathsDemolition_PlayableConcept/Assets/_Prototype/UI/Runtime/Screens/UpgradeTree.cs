@@ -555,6 +555,23 @@ namespace DD.Prototype.UI
             ShowDetail(_focus);
             LinkNavigation();
 
+            // A redraw reuses the seal buttons (a lane switch, a purchase): a focus left on a seal that now shows another
+            // node moves to the detailed one, so the ring and the card never name two nodes (AD R1-C MUST-4).
+            GameObject selected = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
+            for (int s = 0; s < _views.Length && selected != null; s++)
+            {
+                if (_views[s].Button.gameObject == selected && _views[s].Index != _focus)
+                {
+                    Selectable target = FocusTarget();
+                    if (target != null)
+                    {
+                        UiInput.Focus(target);
+                    }
+
+                    break;
+                }
+            }
+
             if (_opening)
             {
                 _opening = false;

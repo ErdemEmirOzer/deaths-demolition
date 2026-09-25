@@ -1338,7 +1338,7 @@ namespace DD.Prototype.UI
                 // forks and capstones whose effects are still pending in this build, so the frames show the designed states.
                 RunTreeEffects.TreatAllAsLive = true;
                 bool hearthShot = false;
-                for (int round = 1; round <= 4; round++)
+                for (int round = 1; round <= 5; round++)
                 {
                     yield return WaitFor(() => run.Phase == RunPhase.Fighting, 40f);
                     yield return new WaitForSecondsRealtime(0.5f);
@@ -1358,9 +1358,16 @@ namespace DD.Prototype.UI
                         yield break;
                     }
 
+                    if (round == 5)
+                    {
+                        yield return TreeStates(folder, run, tree);
+                        run.CloseUpgradeScreen();
+                        break;
+                    }
+
                     if (round == 1)
                     {
-                        yield return new WaitForSecondsRealtime(0.22f);
+                        yield return new WaitForSecondsRealtime(0.2f);
                         yield return Frame(folder, "tree-r1-opening");
                         yield return new WaitForSecondsRealtime(1.2f);
                         yield return Frame(folder, "tree-r1-open");
@@ -1432,6 +1439,101 @@ namespace DD.Prototype.UI
                 }
 
                 RunTreeEffects.TreatAllAsLive = false;
+            }
+
+            /// <summary>
+            /// AD R1-C MUST-5 / SHOULD-6: the states four shops of real play rarely line up, staged on the round-5 shop - a
+            /// weapon keystone owned (the gate opens, forks turn NEW, the Hearth opens), one fork side owned (its partner
+            /// CLOSED BY, REFORGE from round 5), one tier at its maximum (MAX), and 70 gold left (N GOLD SHORT on the dearer
+            /// nodes). Capture only: the tree state is written directly (RunTreeState.MarkOwned, the build's SetTier).
+            /// </summary>
+            private static IEnumerator TreeStates(string folder, RunDirector run, UiRunTreePanel tree)
+            {
+                RoundUpgradeShop shop = run.Shop;
+                RunTreeSnapshot snap = tree.Snapshot;
+                tree.SetLane(RunTreeLane.Weapon, false);
+                int keystone = First(snap, RunTreeLane.Weapon, RunTreeNodeKind.BranchKeystone, false);
+                if (keystone >= 0)
+                {
+                    shop.Tree.MarkOwned(keystone);
+                }
+
+                int fork = First(snap, RunTreeLane.Weapon, RunTreeNodeKind.Fork, false);
+                if (fork >= 0)
+                {
+                    shop.Tree.MarkOwned(fork);
+                }
+
+                int maxed = First(snap, RunTreeLane.Weapon, RunTreeNodeKind.Tier, true);
+                if (maxed >= 0 && shop.BuildForTree != null)
+                {
+                    shop.BuildForTree.SetTier(snap.Nodes[maxed].Branch, snap.Nodes[maxed].MaxTier);
+                }
+
+                run.Wallet.DebugSet(70);   // the wallet's Changed redraws the screen
+                yield return new WaitForSecondsRealtime(0.5f);
+                yield return Frame(folder, "tree-states-weapon");
+
+                int closed = FirstWith(tree.Snapshot, RunTreeNodeStatus.Excluded);
+                if (closed >= 0)
+                {
+                    tree.FocusNode(closed);
+                    yield return new WaitForSecondsRealtime(0.3f);
+                    yield return Frame(folder, "tree-states-closed");
+                }
+
+                if (maxed >= 0)
+                {
+                    tree.FocusNode(maxed);
+                    yield return new WaitForSecondsRealtime(0.3f);
+                    yield return Frame(folder, "tree-states-max");
+                }
+
+                int shortOf = FirstWith(tree.Snapshot, RunTreeNodeStatus.Unaffordable);
+                if (shortOf >= 0)
+                {
+                    tree.FocusNode(shortOf);
+                    yield return new WaitForSecondsRealtime(0.3f);
+                    yield return Frame(folder, "tree-states-short");
+                }
+
+                if (fork >= 0)
+                {
+                    tree.FocusNode(fork);
+                    yield return new WaitForSecondsRealtime(0.3f);
+                    yield return Frame(folder, "tree-states-reforge");
+                }
+
+                int hearth = tree.Snapshot.HearthIndex;
+                if (hearth >= 0)
+                {
+                    tree.FocusNode(hearth);
+                    yield return new WaitForSecondsRealtime(0.3f);
+                    yield return Frame(folder, "tree-states-hearth");
+                    tree.OnBuy();
+                    yield return new WaitForSecondsRealtime(0.35f);
+                    yield return Frame(folder, "tree-states-hearth-stoked");
+                }
+            }
+
+            /// <summary>The first node of a lane and kind (a tier: the first one; otherwise one neither owned nor closed).</summary>
+            private static int First(RunTreeSnapshot snap, RunTreeLane lane, RunTreeNodeKind kind, bool anyStatus)
+            {
+                for (int i = 0; i < snap.Count; i++)
+                {
+                    RunTreeNodeView n = snap.Nodes[i];
+                    if (n.Lane != lane || n.Kind != kind)
+                    {
+                        continue;
+                    }
+
+                    if (anyStatus || (n.Status != RunTreeNodeStatus.Purchased && n.Status != RunTreeNodeStatus.Excluded))
+                    {
+                        return i;
+                    }
+                }
+
+                return -1;
             }
 
             /// <summary>The offer's best buy for the staging: keystone, fork, capstone, then any affordable offered node.</summary>
