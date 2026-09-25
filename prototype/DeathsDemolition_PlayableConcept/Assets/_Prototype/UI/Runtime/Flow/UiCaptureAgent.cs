@@ -1301,7 +1301,13 @@ namespace DD.Prototype.UI
 
                 Rect figure;
                 bool thirdPerson = hud.PlayerFigureRect(out figure);
-                Vector2 canvas = ((RectTransform)hud.transform).rect.size;
+                Canvas screen = hud.GetComponentInChildren<Canvas>();   // the screen's canvas: the rects' space (centre origin)
+                if (screen == null)
+                {
+                    yield break;
+                }
+
+                Vector2 canvas = ((RectTransform)screen.transform).rect.size;
                 int id = 990100;
                 for (int step = 0; step < 3; step++)
                 {
