@@ -638,6 +638,12 @@ namespace DD.Prototype.UI
                     ShowPreviewScale(UiSettings.UiScale);
                 }, SettingsColumnWidth, SettingLabelWidth);
             AddSettingRow(ref stack, scale.transform);
+            if (!well)
+            {
+                // AD 12c SHOULD-6: where the preview well yields (6ab SHOULD-10), its "next screen" caption stays under the slider.
+                AddCaptionUnder(ref stack, content, "ScaleNote", "UI scale applies to the next screen you open.", 1, UiSpace.S);
+            }
+
             UiSwitch hudFrame = UiSwitch.Create("HudFrame", content, "HUD IN A 16:9 FRAME", UiSettings.HudFrame169,
                 on => UiSettings.HudFrame169 = on);   // 12c · B12 (AD 8-R SHOULD-A2)
             AddSettingRow(ref stack, hudFrame.transform);
@@ -716,7 +722,7 @@ namespace DD.Prototype.UI
                 BuildScalePreview(body, column);   // the rail's 24 px gutter is the gap (AD 6ab MUST-5: the block fits whole at 1.0)
             }
 
-            UiInput.ChainVertical(display.Button, scale, master, uiSounds, quality.Button,
+            UiInput.ChainVertical(display.Button, scale, hudFrame.Button, master, uiSounds, quality.Button,
                 lookSpeed, stickSpeed, invert.Button, fpFov, tpFov, shoulder.Button, bob, dot.Button,
                 telemetry.Button, hints.Button);
             UiInput.Focus(display.Button);

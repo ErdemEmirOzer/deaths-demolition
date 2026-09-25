@@ -631,6 +631,9 @@ namespace DD.Prototype.Tests.PlayMode
             Hareket(MoveDirection.Left);
             Assert.AreEqual(before, slider.Value, 0.02f, "sol hareket geri almalı");
 
+            // WP-068 12c · B12: HUD IN A 16:9 FRAME sits under UI SCALE in DISPLAY (not flipped here).
+            Hareket(MoveDirection.Down);
+            yield return SeciliBekle("HudFrame");
             Hareket(MoveDirection.Down);
             yield return SeciliBekle("Setting.MASTER VOLUME");
             // WP-068 slice 11 (S-08): UI SOUNDS sits under the master volume.
