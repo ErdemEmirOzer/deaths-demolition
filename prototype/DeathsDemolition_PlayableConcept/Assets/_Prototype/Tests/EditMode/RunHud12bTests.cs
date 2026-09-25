@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using DD.Prototype.UI;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace DD.Prototype.Tests.EditMode
 {
@@ -91,6 +93,65 @@ namespace DD.Prototype.Tests.EditMode
             // A stamp with nothing in the way stands where its body puts it.
             var free = new Vector2(400f, 120f);
             Assert.AreEqual(free, UiEnemyStatusMarkers.Resolve(free, new Vector2(110f, 28f), new Rect[0], 0, true, body), "no drift");
+        }
+
+        /// <summary>
+        /// B4 (AD R1-B SHOULD-2): the "&lt;SW&gt; ONLINE" line carries the Special's glyph at 48 px in the tint it is given,
+        /// inside the wipe's mask, 16 px left of the words, glyph and words centred as one line; the generic line and every
+        /// other banner carry none.
+        /// </summary>
+        [Test]
+        public void OnlineAfisi_Glif48_KelimelerinSolunda16_SatirOrtada_DigerAfislerdeYok()
+        {
+            float? clock = UiMotion.TestNow;
+            UiMotion.ResetForTests();
+            UiMotion.TestNow = 10f;
+            var host = new GameObject("BannerHost", typeof(RectTransform));
+            try
+            {
+                var root = (RectTransform)host.transform;
+                root.sizeDelta = new Vector2(1920f, 1080f);
+                var banner = new HudBanner(root, 196f);
+                banner.Show("SPECIAL WEAPON ONLINE", 10f);
+                Assert.IsFalse(banner.Glyph.enabled, "genel satırda glif yok (Special henüz adlanmadı)");
+
+                Color arc = UiTokens.Get(UiGlyphTints.ChainLightning);
+                banner.Retitle("RAIJU ONLINE", UiSprites.Disc, arc);
+                Image glyph = banner.Glyph;
+                Assert.IsTrue(glyph.enabled, "ONLINE satırı glifi taşır");
+                Assert.AreEqual(48f, HudBanner.GlyphSize);
+                Assert.AreEqual(16f, HudBanner.GlyphGap);
+                Assert.AreEqual(new Vector2(48f, 48f), glyph.rectTransform.sizeDelta, "48 px");
+                Assert.AreEqual(arc, glyph.color, "kimlik tonunda");
+                Assert.AreSame(banner.Clip, glyph.transform.parent, "silme maskesinin içinde: satır glifle açılır");
+
+                TMP_Text text = banner.Text;
+                float width = text.rectTransform.sizeDelta.x;
+                text.ForceMeshUpdate();
+                TMP_TextInfo info = text.textInfo;
+                Assert.Greater(info.characterCount, 0, "metin dizildi");
+                float wordsLeft = info.characterInfo[0].origin;
+                float wordsRight = info.characterInfo[info.characterCount - 1].xAdvance;
+                float glyphLeft = glyph.rectTransform.anchoredPosition.x - HudBanner.GlyphSize * 0.5f;
+                float glyphRight = glyphLeft + HudBanner.GlyphSize;
+                Assert.AreEqual(glyphRight + HudBanner.GlyphGap, wordsLeft, 2f, "glif kelimelerin 16 px solunda (± TMP yuvarlaması)");
+                Assert.AreEqual(width * 0.5f, (glyphLeft + wordsRight) * 0.5f, 2f, "glif + kelimeler tek satır olarak ortada");
+                Assert.GreaterOrEqual(glyphLeft, 0f, "glif afişin içinde");
+                Assert.LessOrEqual(wordsRight, width, "kelimeler afişin içinde");
+
+                banner.Show("ROUND 3", 11f);
+                Assert.IsFalse(banner.Glyph.enabled, "başka afiş glif taşımaz");
+                Assert.AreEqual(0f, text.margin.x, 0.001f, "kelimeler yeniden tam ortada");
+                banner.Show("SPECIAL WEAPON ONLINE", 12f);
+                banner.Retitle("NAMEKUJI ONLINE");
+                Assert.IsFalse(banner.Glyph.enabled, "glifsiz yeniden adlandırma glifi göstermez");
+            }
+            finally
+            {
+                Object.DestroyImmediate(host);
+                UiMotion.ResetForTests();
+                UiMotion.TestNow = clock;
+            }
         }
 
         private static Rect Grown(Rect r, float by)

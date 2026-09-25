@@ -1741,7 +1741,7 @@ namespace DD.Prototype.UI
 
                         _specialGlyph.enabled = glyph != null;
                         // N19: the Special's glyph wears its identity tint (Arc / Gel); the ring stays gold (DEC-097 reserve).
-                        _specialGlyph.color = UiTokens.Get(e.Id == SpecialWeaponId.Raiju ? UiGlyphTints.ChainLightning : UiGlyphTints.Gel);
+                        _specialGlyph.color = UiTokens.Get(SpecialTint(e.Id));
                         if (glyph != null)
                         {
                             UiPresets.StampIn(_specialGlyph.rectTransform);   // E14: the weapon's glyph stamps with the banner
@@ -2076,8 +2076,17 @@ namespace DD.Prototype.UI
             _bannerAwaitsSpecialName = false;
             if (!string.IsNullOrEmpty(state.DisplayName) && _bannerRemaining > 0f)
             {
-                _banner.Retitle(UiFactory.Clip(state.DisplayName.ToUpperInvariant(), 30) + " ONLINE");
+                // WP-068 12b (AD R1-B SHOULD-2): the line carries the Special's glyph, 48 px in its identity tint, stamping in
+                // with the name, left of the words (HudBanner.GlyphGap).
+                _banner.Retitle(UiFactory.Clip(state.DisplayName.ToUpperInvariant(), 30) + " ONLINE",
+                    UiArt.SpecialIcon(state.WeaponId), UiTokens.Get(SpecialTint(state.WeaponId)));
             }
+        }
+
+        /// <summary>N19: a Special's identity tint - Arc for Raiju, Gel for Namekuji (UiGlyphTints; the ring stays gold).</summary>
+        private static UiColor SpecialTint(SpecialWeaponId id)
+        {
+            return id == SpecialWeaponId.Raiju ? UiGlyphTints.ChainLightning : UiGlyphTints.Gel;
         }
 
         private void OnSpecialFinalSeconds(float remaining)

@@ -329,6 +329,21 @@ namespace DD.Prototype.Tests.PlayMode
                 DD.Prototype.Weapons.WeaponEvents.PublishSpecial(active, true);
                 yield return null;
                 StringAssert.Contains("RAIJU ONLINE", banner.text, "ilk adlı Active snapshot banner'ı yeniden adlandırır");
+                // WP-068 12b (AD R1-B SHOULD-2): the ONLINE line carries Raiju's glyph, 48 px in the Arc tint, left of the words.
+                {
+                    Image bannerGlyph = clip.Find("SpecialGlyph").GetComponent<Image>();
+                    Sprite raiju = UiArt.SpecialIcon(DD.Prototype.Core.Config.SpecialWeaponId.Raiju);
+                    Assert.AreEqual(raiju != null, bannerGlyph.enabled, "Raiju glifi varsa ONLINE satırında");
+                    if (raiju != null)
+                    {
+                        Assert.AreEqual(raiju.name, bannerGlyph.sprite.name, "afişte Raiju'nun kendi glifi");
+                        Assert.AreEqual(HudBanner.GlyphSize, bannerGlyph.rectTransform.sizeDelta.x, 0.01f, "48 px");
+                        Color arcTint = UiTokens.Get(UiGlyphTints.ChainLightning);
+                        Assert.AreEqual(arcTint.b, bannerGlyph.color.b, 0.01f, "Arc kimlik tonunda");
+                        Assert.Less(bannerGlyph.rectTransform.anchoredPosition.x, ((RectTransform)banner.transform).sizeDelta.x * 0.5f, "kelimelerin solunda");
+                    }
+                }
+
                 // E14 v3: one notch a round of the magazine, on the A4 132 ring.
                 Assert.AreEqual(3, hud.SpecialTickCount, "Special halkası şarjördeki mermi kadar bölüm taşır");
                 Image ringFill = null;

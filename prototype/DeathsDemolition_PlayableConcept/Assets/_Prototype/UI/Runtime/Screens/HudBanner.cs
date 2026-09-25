@@ -15,6 +15,9 @@ namespace DD.Prototype.UI
     /// Reduced motion: every step is Decor, so it appears and disappears statically.
     /// A new banner restarts the envelope; a retitle (the Special's name arriving) swaps the words in place, without a
     /// second wipe. Per frame there is one time compare (<see cref="Tick"/>).
+    /// WP-068 12b (AD R1-B SHOULD-2; N19 §1.1, E14 "glif Stamp"): the "&lt;SW&gt; ONLINE" line carries the Special's glyph,
+    /// <see cref="GlyphSize"/> px in its identity tint, <see cref="GlyphGap"/> px left of the words; glyph and words are
+    /// centred as one line, the glyph stamps in as the name lands and every other banner hides it.
     /// </summary>
     public sealed class HudBanner
     {
@@ -23,6 +26,11 @@ namespace DD.Prototype.UI
         public const float ExitDrop = 8f;
         private const float BrushPadding = 56f;
         private const float BrushHeight = 84f;
+
+        /// <summary>12b (AD R1-B SHOULD-2): the Special's glyph on its ONLINE line, and its gap to the words.</summary>
+        public const float GlyphSize = 48f;
+        public const float GlyphGap = 16f;
+        private static readonly Vector3 GlyphInk = new Vector3(0.25f, 0f, 0f);   // the HUD's SDF ink edge (RunHudScreen.Ink)
 
         /// <summary>TMP outline / dilate for 1.5 px of ink outside a 48 px letter (Display atlas 64 pt, gradient 9).</summary>
         private const float StrokeWidth = 0.22f;
@@ -34,6 +42,7 @@ namespace DD.Prototype.UI
         private readonly Image _brush;
         private readonly UiFx _brushFx;
         private readonly TMP_Text _text;
+        private readonly Image _glyph;
         private readonly CanvasGroup _group;
         private readonly Vector2 _home;
         private readonly float _height;
@@ -55,6 +64,12 @@ namespace DD.Prototype.UI
         public RectTransform Clip
         {
             get { return _clip; }
+        }
+
+        /// <summary>12b: the Special's glyph on the ONLINE line (enabled only there; tests, captures).</summary>
+        public Image Glyph
+        {
+            get { return _glyph; }
         }
 
         public Image Brush
@@ -126,6 +141,18 @@ namespace DD.Prototype.UI
             {
                 _text.fontSharedMaterial = stroke;
             }
+
+            // 12b: the Special's glyph, inside the wipe's mask (the line opens glyph first), turning about its centre for the
+            // Stamp. Placed by Fit; hidden until a retitle hands it a glyph.
+            _glyph = UiFactory.NewImage("SpecialGlyph", _clip, UiColor.TextPrimary, UiSprites.Disc);
+            _glyph.preserveAspect = true;
+            _glyph.raycastTarget = false;
+            var glyphRect = (RectTransform)_glyph.transform;
+            glyphRect.anchorMin = new Vector2(0f, 0.5f);
+            glyphRect.anchorMax = new Vector2(0f, 0.5f);
+            glyphRect.pivot = new Vector2(0.5f, 0.5f);
+            glyphRect.sizeDelta = new Vector2(GlyphSize, GlyphSize);
+            _glyph.enabled = false;
         }
 
         /// <summary>A new banner: the envelope restarts from the wipe.</summary>
@@ -135,6 +162,7 @@ namespace DD.Prototype.UI
             UiMotion.KillTarget(_root, false);
             UiMotion.KillTarget(_clip, false);
             _text.text = message;
+            _glyph.enabled = false;   // 12b: only the Special's ONLINE line carries a glyph
             Fit();
             _group.alpha = 1f;
             _root.anchoredPosition = _home;
@@ -149,16 +177,42 @@ namespace DD.Prototype.UI
             _exitAt = _endsAt - UiMotionTokens.Seconds(UiDuration.Screen);
         }
 
-        /// <summary>The words change in place (no second wipe); the brush follows their width.</summary>
+        /// <summary>The words change in place (no second wipe); the brush follows their width. No glyph.</summary>
         public void Retitle(string message)
         {
+            Retitle(message, null, Color.white);
+        }
+
+        /// <summary>
+        /// The words change in place and, when <paramref name="glyph"/> is given, the Special's glyph stands left of them in
+        /// <paramref name="tint"/> (its identity tint) and stamps in (1.12 → 1, Decor) - 12b, AD R1-B SHOULD-2.
+        /// </summary>
+        public void Retitle(string message, Sprite glyph, Color tint)
+        {
             _text.text = message;
+            if (glyph != null)
+            {
+                UiArt.SetGlyph(_glyph, glyph);   // keeps the SDF draw path on a swap
+                if (UiArt.IsGlyph(glyph))
+                {
+                    UiArt.ApplyGlyph(_glyph, GlyphInk);
+                }
+
+                _glyph.color = tint;
+            }
+
+            _glyph.enabled = glyph != null;
             float before = _width;
             Fit();
             if (!Mathf.Approximately(before, _width))
             {
                 // A longer name: the wipe (running or done) now opens to the new width.
                 UiMotion.Resize(_clip, new Vector2(_width, _height), UiDuration.Base, UiEase.Settle, UiMotionClass.Decor);
+            }
+
+            if (glyph != null)
+            {
+                UiPresets.StampIn((RectTransform)_glyph.transform);   // E14: the glyph stamps with the name
             }
         }
 
@@ -175,16 +229,29 @@ namespace DD.Prototype.UI
             return Mathf.Max(0f, _endsAt - now);
         }
 
-        /// <summary>The banner is as wide as its words (never under <see cref="Width"/>): root, words and the wipe's end all follow.</summary>
+        /// <summary>
+        /// The banner is as wide as its line (never under <see cref="Width"/>): root, words and the wipe's end all follow. With
+        /// the glyph the line is glyph + gap + words, centred as one: the words centre in the text rect past a left margin of
+        /// the glyph's lead, the glyph stands that lead before them (the text rect keeps the clip's full width).
+        /// </summary>
         private void Fit()
         {
+            _text.margin = Vector4.zero;   // measured bare: TMP counts its margins into the preferred width
             float words = Mathf.Ceil(_text.GetPreferredValues(_text.text).x);
-            _width = Mathf.Max(Width, words + 48f);
+            float lead = _glyph.enabled ? GlyphSize + GlyphGap : 0f;
+            _width = Mathf.Max(Width, lead + words + 48f);
             _root.sizeDelta = new Vector2(_width, _root.sizeDelta.y);
             _text.rectTransform.sizeDelta = new Vector2(_width, _height);
-            // Head from 56 px before the first letter; the tail (UiSprites.BrushRibbonTail) starts at the last letter.
+            if (lead > 0f)
+            {
+                _text.margin = new Vector4(lead, 0f, 0f, 0f);
+                ((RectTransform)_glyph.transform).anchoredPosition = new Vector2((_width - lead - words) * 0.5f + GlyphSize * 0.5f, 0f);
+            }
+
+            // Head from 56 px before the line (the glyph when it shows); the tail (UiSprites.BrushRibbonTail) starts at the
+            // last letter.
             var brushRect = (RectTransform)_brush.transform;
-            brushRect.sizeDelta = new Vector2(words + BrushPadding + UiSprites.BrushRibbonTail, BrushHeight);
+            brushRect.sizeDelta = new Vector2(lead + words + BrushPadding + UiSprites.BrushRibbonTail, BrushHeight);
             brushRect.anchoredPosition = new Vector2((UiSprites.BrushRibbonTail - BrushPadding) * 0.5f, 0f);
         }
 
