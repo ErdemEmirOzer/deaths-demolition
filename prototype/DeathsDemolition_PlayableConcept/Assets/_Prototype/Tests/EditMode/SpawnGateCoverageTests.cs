@@ -69,6 +69,8 @@ namespace DD.Prototype.Tests.EditMode
             }
             Debug.Log("[DD-OBS] wp076.b6c gatesFromStart " + gatesReachable + "/18 " + gateLog);
             int bandFail = 0, usefulFail = 0, unreachableCells = 0, flatBandFail = 0, flatUsefulFail = 0;
+            // S-05 request (25.09): the breakdown by 3 × 3 sectors (36 m each; x W/C/E, z S/C/N) so gate additions can be aimed
+            var secCells = new int[9]; var secBandFail = new int[9]; var secUsefulFail = new int[9]; var secBand = new int[9]; var secUseful = new int[9];
             var firstStd = new List<float>(); var firstRun = new List<float>(); var firstExe = new List<float>();
             int cells = 0, violations = 0, minBand = int.MaxValue, minUseful = int.MaxValue;
             for (float x = -Half; x <= Half; x += Step)
@@ -94,6 +96,10 @@ namespace DD.Prototype.Tests.EditMode
                     if (len >= SpawnModeTable.MinSpawnDistance[0] && len <= SpawnModeTable.HeavyTierMaxPath) nearestHeavy = Mathf.Min(nearestHeavy, len);
                 }
                 if (band < 4 || useful < 8) violations++;
+                int sec = Sector(c.position.x) + 3 * Sector(c.position.z);
+                secCells[sec]++; secBand[sec] += band; secUseful[sec] += useful;
+                if (band < 4) secBandFail[sec]++;
+                if (useful < 8) secUsefulFail[sec]++;
                 if (band < 4) bandFail++;
                 if (flatBand < 4) flatBandFail++;
                 if (flatUseful < 8) flatUsefulFail++;
@@ -104,6 +110,15 @@ namespace DD.Prototype.Tests.EditMode
             }
 
             float share = cells > 0 ? (float)violations / cells : 1f;
+            string[] secName = { "SW", "S", "SE", "W", "C", "E", "NW", "N", "NE" };
+            var secLog = new System.Text.StringBuilder("[DD-OBS] wp076.b6c sectors (cells / band<4 / useful<8 / mean band / mean useful):");
+            for (int k = 0; k < 9; k++)
+            {
+                if (secCells[k] == 0) continue;
+                secLog.Append(' ').Append(secName[k]).Append('=').Append(secCells[k]).Append('/').Append(secBandFail[k]).Append('/').Append(secUsefulFail[k])
+                      .Append('/').Append(((float)secBand[k] / secCells[k]).ToString("0.0")).Append('/').Append(((float)secUseful[k] / secCells[k]).ToString("0.0"));
+            }
+            Debug.Log(secLog.ToString());
             float mStd = Median(firstStd), mRun = Median(firstRun), mExe = Median(firstExe);
             Debug.Log("[DD-OBS] wp076.b6c cells=" + cells + " unreachableCells=" + unreachableCells + " bandFail=" + bandFail + " usefulFail=" + usefulFail + " flatBandFail=" + flatBandFail + " flatUsefulFail=" + flatUsefulFail + " violations=" + violations + " share=" + share.ToString("0.000") + " minBand=" + minBand + " minUseful=" + minUseful
                       + " firstContactMedian std=" + mStd.ToString("0.0") + "s runner=" + mRun.ToString("0.0") + "s exec=" + mExe.ToString("0.0") + "s");
@@ -114,6 +129,9 @@ namespace DD.Prototype.Tests.EditMode
             Assert.LessOrEqual(mRun, 12f, "Runner ilk temas medyanı ≤ 12 s");
             Assert.LessOrEqual(mExe, 35f, "Executioner ilk temas medyanı ≤ 35 s");
         }
+
+        /// <summary>0 / 1 / 2 for −54…−18 / −18…18 / 18…54 (x: W / C / E, z: S / C / N).</summary>
+        private static int Sector(float v) => v < -18f ? 0 : v > 18f ? 2 : 1;
 
         private static float Length(NavMeshPath p)
         {
