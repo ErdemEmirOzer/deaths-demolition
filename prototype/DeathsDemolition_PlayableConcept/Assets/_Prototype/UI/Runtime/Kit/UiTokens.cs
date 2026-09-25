@@ -198,7 +198,7 @@ namespace DD.Prototype.UI
         GoldLeaf,
         SilverLeaf,
 
-        /// <summary>WP-068 slice 5b (AD MUST-2): a hold control's progress sweep - Cream100 0.25 (the label stays ≥ 4.5:1 over it); never vermilion (registry).</summary>
+        /// <summary>WP-068 slice 5b (AD MUST-2): a hold control's progress sweep - Cream100 0.15 since 8a (the label stays ≥ 4.5:1 over it in linear light: 4.86 on SurfaceBase, 4.73 on the pressed SurfacePanel; 12b · D1); never vermilion (registry).</summary>
         HoldFill,
 
         /// <summary>
@@ -538,7 +538,16 @@ namespace DD.Prototype.UI
         public const float HudInkAlpha = 0.98f;
 
         public const float OpacityDisabled = 0.55f;
-        public const float OpacityScrimUnderDialog = 0.72f;
+
+        /// <summary>
+        /// The scrim a UiModal (the load-error dialog over the key art) and Pause's END RUN confirm lay under their
+        /// card. 12b · D1 (AD 8a carried MUST, raise α): the card's text is on its opaque SurfacePanel, so what the scrim
+        /// carries is the card's 3:1 boundary - its fill or its BorderStrong frame against the scrimmed world. At 0.72,
+        /// in linear light, a grey world (sRGB 0.71) left the better of the two at 2.81:1 (0.87 is the first α to hold 3:1
+        /// over the whole ramp); the round-end scrim's 0.88 keeps the frame ≥ 3.14:1 over every world up to the cream-white
+        /// one (UiTranslucentTokensTests sweeps the grey ramp).
+        /// </summary>
+        public const float OpacityScrimUnderDialog = 0.88f;
 
         /// <summary>
         /// Cream wash laid over a control while the pointer is on it. Low enough that it

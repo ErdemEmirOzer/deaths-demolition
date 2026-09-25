@@ -16,6 +16,13 @@ namespace DD.Prototype.UI
     ///
     /// Reduced Motion: the bands stay centred, the lanterns hold at their peak and the rain is
     /// frozen — nothing drifts or breathes.
+    ///
+    /// 12b · D1 (AD 8a carried MUST, measured with the pinned linear composite in
+    /// UiTranslucentTokensTests): the left third keeps SurfaceBase 0.55 (AD §14 MUST-5: fixed; S-05
+    /// clamped the plate for it, TextSecondary ≥ 4.6), and the text on it is TextSecondary or
+    /// brighter. The header block over the sky is <see cref="HeaderScrimAlpha"/> and spans from x 0
+    /// (AD 6ab MUST-2), and the text-safe scrim widens to the nav column where an ultrawide page puts
+    /// it past the third (<see cref="CoverColumn"/>).
     /// </summary>
     public sealed class UiBackdrop : MonoBehaviour
     {
@@ -28,6 +35,14 @@ namespace DD.Prototype.UI
         public const float BreathFloor = 0.55f;
         public const float ScrimAlpha = 0.55f;
         public const float TextSafeFraction = 1f / 3f;
+
+        /// <summary>
+        /// 12b · D1 (AD 8a carried MUST, a T10 pair under its floor is fixed by raising α): the header block over the
+        /// sky. In linear light (the GPU's blend) 0.55 left the subtitle at 2.0:1 and the Display title at 3.6:1 over
+        /// the pale sky at 21:9 / Mac × 1.25 (the sRGB estimate had passed them); the subtitle needs ≥ 0.88 at the
+        /// Mac crop, 0.90 keeps it ≥ 4.9:1 at every §12 matrix point with the lantern at its breath peak.
+        /// </summary>
+        public const float HeaderScrimAlpha = 0.90f;
 
         /// <summary>Soft edge of the text-safe scrim into the plate, as a fraction of the screen width.</summary>
         public const float ScrimFade = 0.08f;
@@ -48,6 +63,7 @@ namespace DD.Prototype.UI
         private RectTransform _mid;
         private RectTransform _near;
         private RawImage _lantern;
+        private RectTransform _thirdScrim;
         private RectTransform _thirdFade;
         private Vector2 _look;
         private bool _built;
@@ -127,6 +143,7 @@ namespace DD.Prototype.UI
             Image scrim = UiFactory.NewImage("TextSafeScrim", root, UiColor.SurfaceBase);
             RectTransform scrimRect = UiFactory.Fill((RectTransform)scrim.transform);
             scrimRect.anchorMax = new Vector2(TextSafeFraction, 1f);
+            _thirdScrim = scrimRect;
             SetAlpha(scrim, ScrimAlpha);
             // FadeLeft = opaque at its left edge, i.e. against the scrim (FadeRight ran the
             // other way and drew a seam at the fade's far edge - s6d frames).
@@ -141,33 +158,87 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>
-        /// AD 6ab MUST-2: the header's text-safe block. SurfaceBase 0.55 from the left third's
-        /// edge to <paramref name="right"/> px and from the top down to <paramref name="bottom"/>
-        /// px (root-local, measured from the top-left). It fades out over 8 % of the width to
-        /// the right and 8 % of the height below, so the Display title and subtitle read at
-        /// 21:9 and on a Mac, where the crop puts pale sky behind them. It joins the left-third
-        /// scrim without doubling it: that scrim's own fade starts under the block.
+        /// 12b · D1: where the page puts text past the left third (the nav column on an ultrawide page at UI 1.0 or
+        /// 0.9: its right edge 865 / 1007 px against a third of 853 / 948), the text-safe scrim widens to
+        /// <paramref name="right"/> px (root-local, from the left; the caller adds the parallax margin) and its fade
+        /// starts there, so no word sits on the fade. Nothing changes where the third already holds the column. Call
+        /// it before <see cref="CoverHeader"/>. The plate is clamped for T10 only to a third of its width
+        /// (menu_plates.json text_safe; S-05), so beyond it the scrim alone does not carry TextSecondary.
         /// </summary>
-        public void CoverHeader(float right, float bottom)
+        public void CoverColumn(float right)
         {
             Rect r = _root.rect;
-            float third = r.width * TextSafeFraction;
-            if (!_built || right <= third || bottom <= 0f)
+            if (!_built || _thirdScrim == null || r.width <= 1f)
             {
                 return;
             }
 
+            float edge = Mathf.Clamp01(right / r.width);
+            if (edge <= _thirdScrim.anchorMax.x)
+            {
+                return;
+            }
+
+            _thirdScrim.anchorMax = new Vector2(edge, _thirdScrim.anchorMax.y);
+            if (_thirdFade != null)
+            {
+                _thirdFade.anchorMin = new Vector2(edge, _thirdFade.anchorMin.y);
+                _thirdFade.anchorMax = new Vector2(edge + ScrimFade, _thirdFade.anchorMax.y);
+            }
+        }
+
+        /// <summary>The text-safe scrim's right edge (root-local px from the left): a third, or the nav column (tests).</summary>
+        public float TextSafeRight
+        {
+            get { return _thirdScrim != null && _root != null ? _thirdScrim.anchorMax.x * _root.rect.width : 0f; }
+        }
+
+        /// <summary>
+        /// AD 6ab MUST-2: the header's text-safe block. SurfaceBase <see cref="HeaderScrimAlpha"/> from x 0 to
+        /// <paramref name="right"/> px (at least the text-safe edge) and from the top down to <paramref name="bottom"/>
+        /// px (root-local, measured from the top-left). It fades out over 8 % of the width to the right and 8 % of the
+        /// height below, so the Display title and subtitle read at 21:9 and on a Mac, where the crop puts pale sky
+        /// behind them. It never doubles the left-third scrim: that scrim and its fade start under the block, and
+        /// below the block over the third the fade only closes the step from the block to the third's 0.55.
+        /// 12b · D1: from x 0 (the AD's own wording) because at the Mac's width crop the subtitle's left half lies
+        /// on plate texels past S-05's clamp (0.55 gave it 2.1:1 there).
+        /// </summary>
+        public void CoverHeader(float right, float bottom)
+        {
+            Rect r = _root.rect;
+            if (!_built || bottom <= 0f || r.width <= 1f)
+            {
+                return;
+            }
+
+            float safe = TextSafeRight;
+            right = Mathf.Max(right, safe);
+
             Image block = UiFactory.NewImage("HeaderScrim", _root, UiColor.SurfaceBase);
-            TopLeft((RectTransform)block.transform, third, 0f, right - third, bottom);
-            SetAlpha(block, ScrimAlpha);
+            TopLeft((RectTransform)block.transform, 0f, 0f, right, bottom);
+            SetAlpha(block, HeaderScrimAlpha);
 
             Image fadeRight = UiFactory.NewImage("HeaderFadeRight", _root, UiColor.SurfaceBase, UiSprites.FadeLeft);
             TopLeft((RectTransform)fadeRight.transform, right, 0f, r.width * ScrimFade, bottom);
-            SetAlpha(fadeRight, ScrimAlpha);
+            SetAlpha(fadeRight, HeaderScrimAlpha);
 
-            Image fadeDown = UiFactory.NewImage("HeaderFadeDown", _root, UiColor.SurfaceBase, UiSprites.FadeDown);
-            TopLeft((RectTransform)fadeDown.transform, third, bottom, right - third, r.height * ScrimFade);
-            SetAlpha(fadeDown, ScrimAlpha);
+            // Below the block over the text-safe column the third's own scrim continues, so this fade only adds
+            // the difference: SurfaceBase at (H − T) / (1 − T) over T composites to H at its top edge.
+            Image fadeDownSafe = UiFactory.NewImage("HeaderFadeDownSafe", _root, UiColor.SurfaceBase, UiSprites.FadeDown);
+            TopLeft((RectTransform)fadeDownSafe.transform, 0f, bottom, safe, r.height * ScrimFade);
+            SetAlpha(fadeDownSafe, (HeaderScrimAlpha - ScrimAlpha) / (1f - ScrimAlpha));
+
+            if (right > safe)
+            {
+                Image fadeDown = UiFactory.NewImage("HeaderFadeDown", _root, UiColor.SurfaceBase, UiSprites.FadeDown);
+                TopLeft((RectTransform)fadeDown.transform, safe, bottom, right - safe, r.height * ScrimFade);
+                SetAlpha(fadeDown, HeaderScrimAlpha);
+            }
+
+            if (_thirdScrim != null)
+            {
+                _thirdScrim.offsetMax = new Vector2(_thirdScrim.offsetMax.x, -bottom);
+            }
 
             if (_thirdFade != null)
             {

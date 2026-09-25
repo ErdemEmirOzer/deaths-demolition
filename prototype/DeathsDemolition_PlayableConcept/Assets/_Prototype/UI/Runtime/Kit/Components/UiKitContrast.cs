@@ -148,7 +148,7 @@ namespace DD.Prototype.UI
                     C("Card title / text", UiColor.TextPrimary, UiColor.SurfacePanel, Text),
                     C("Card supporting text", UiColor.TextSecondary, UiColor.SurfacePanel, Text),
                     C("Card text on the lifted fill", UiColor.TextSecondary, UiColor.SurfaceRaised, Text),
-                    C("Card bevel sheen (1.32:1 - the Elev cue; the frame carries the edge)", UiColor.SheenRim, UiColor.SurfacePanel, Decorative),
+                    C("Card bevel sheen (2.29:1 in linear light - the Elev cue; the frame carries the edge)", UiColor.SheenRim, UiColor.SurfacePanel, Decorative),
                 }
             },
             {
@@ -165,7 +165,7 @@ namespace DD.Prototype.UI
                     Over("Hold label over the HoldFill sweep", UiColor.TextPrimary, UiColor.HoldFill, UiColor.SurfaceBase, Text),
                     C("Disabled reason caption", UiColor.TextSecondary, UiColor.SurfaceRaised, Text),
                     C("Icon glyph", UiColor.TextPrimary, UiColor.SurfaceBase, Boundary),
-                    C("Secondary / Nav rest sheen (1 px lacquer cue; the border carries the edge)", UiColor.SheenRim, UiColor.SurfaceBase, Decorative),
+                    C("Secondary / Nav rest sheen (2.43:1 in linear light; 1 px lacquer cue, the border carries the edge)", UiColor.SheenRim, UiColor.SurfaceBase, Decorative),
                 }
             },
             { typeof(UiButtons), new UiContrastCase[0] }, // factory for UiButton (declared above)

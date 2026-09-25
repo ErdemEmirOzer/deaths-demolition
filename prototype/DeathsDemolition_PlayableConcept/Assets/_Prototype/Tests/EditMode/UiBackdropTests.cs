@@ -76,23 +76,49 @@ namespace DD.Prototype.Tests.EditMode
             }
         }
 
+        /// <summary>
+        /// AD 6ab MUST-2 + 12b · D1: the header block runs from x 0 to the title's right + 96 + 12 at HeaderScrimAlpha
+        /// (0.90); the left third's scrim and its fade start under it (never doubled), and below the block over the
+        /// third the fade adds only (H − T) / (1 − T), so it composites from 0.90 down to the third's fixed 0.55.
+        /// </summary>
         [Test]
-        public void BaslikBlogu_UcteBirinSaginda_KatlanmadanBirlesir()
+        public void BaslikBlogu_SoldanBaslar_UcteBirKatlanmaz_GecisKademesiz()
         {
             UiBackdrop backdrop = UiBackdrop.Create(_root);
-            backdrop.CoverHeader(500f, 200f);   // inside the left third (640): nothing to add
-            Assert.IsNull(backdrop.transform.Find("HeaderScrim"), "üçte bir içinde blok yok");
-
             backdrop.CoverHeader(952f, 232f);
             Transform block = backdrop.transform.Find("HeaderScrim");
             Assert.IsNotNull(block, "başlık bloğu");
             Assert.AreEqual(952f, backdrop.HeaderRight, 0.5f, "başlığın sağı + 96 + 12");
-            Assert.AreEqual(640f, ((RectTransform)block).anchoredPosition.x, 0.5f, "üçte birin kenarından başlar (üst üste binmez)");
-            Assert.AreEqual(UiBackdrop.ScrimAlpha, block.GetComponent<Image>().color.a, 1e-4f, "0,55");
+            Assert.AreEqual(0f, ((RectTransform)block).anchoredPosition.x, 0.5f, "x 0'dan başlar (AD 6ab MUST-2; Mac kırpmasında alt başlığın solu)");
+            Assert.AreEqual(UiBackdrop.HeaderScrimAlpha, block.GetComponent<Image>().color.a, 1e-4f, "0,90 (D1)");
+            Assert.AreEqual(0.90f, UiBackdrop.HeaderScrimAlpha, 1e-4f);
+            Assert.AreEqual(0.55f, UiBackdrop.ScrimAlpha, 1e-4f, "sol üçte bir 0,55 sabit (AD §14 MUST-5)");
             Assert.IsNotNull(backdrop.transform.Find("HeaderFadeRight"));
             Assert.IsNotNull(backdrop.transform.Find("HeaderFadeDown"));
+            Assert.AreEqual(-232f, ((RectTransform)backdrop.transform.Find("TextSafeScrim")).offsetMax.y, 0.5f, "üçte birin perdesi bloğun altında başlar (katlanmaz)");
             Assert.AreEqual(-232f, ((RectTransform)backdrop.transform.Find("TextSafeFade")).offsetMax.y, 0.5f, "üçte birin geçişi bloğun altında başlar");
             Assert.AreEqual(UiSprites.FadeLeft, backdrop.transform.Find("TextSafeFade").GetComponent<Image>().sprite, "geçiş perdeye bitişik tarafta opak");
+
+            Image safeFade = backdrop.transform.Find("HeaderFadeDownSafe").GetComponent<Image>();
+            float t = UiBackdrop.ScrimAlpha;
+            float top = 1f - (1f - t) * (1f - safeFade.color.a);
+            Assert.AreEqual(UiBackdrop.HeaderScrimAlpha, top, 1e-3f, "üçte bir üstünde geçiş bloğun α'sından başlar (kademe yok)");
+        }
+
+        /// <summary>12b · D1: where the spine runs past the third (21:9 at UI 1.0 / 0.9) the text-safe scrim widens to it; never narrower than the third.</summary>
+        [Test]
+        public void MetinGuvenliPerde_OmurgayaGenisler_UcteBirdenDarAlmaz()
+        {
+            UiBackdrop backdrop = UiBackdrop.Create(_root);
+            Assert.AreEqual(640f, backdrop.TextSafeRight, 0.5f, "üçte bir");
+            backdrop.CoverColumn(600f);
+            Assert.AreEqual(640f, backdrop.TextSafeRight, 0.5f, "üçte birin içindeki omurga bir şey değiştirmez");
+            backdrop.CoverColumn(700f);
+            Assert.AreEqual(700f, backdrop.TextSafeRight, 0.5f, "omurga + paralaks");
+            RectTransform fade = (RectTransform)backdrop.transform.Find("TextSafeFade");
+            Assert.AreEqual(700f / 1920f, fade.anchorMin.x, 1e-4f, "geçiş perdenin yeni kenarından başlar");
+            backdrop.CoverHeader(952f, 232f);
+            Assert.AreEqual(700f, ((RectTransform)backdrop.transform.Find("HeaderFadeDown")).anchoredPosition.x, 0.5f, "bloğun aşağı geçişi metin-güvenli kenardan");
         }
 
         [Test]

@@ -67,7 +67,23 @@ namespace DD.Prototype.UI
 
         private RectTransform _paneHost;
         private UiBackdrop _plates;
-        private const float HeaderBlockMargin = 96f;   // AD 6ab MUST-2: title right edge + 96
+        public const float HeaderBlockMargin = 96f;   // AD 6ab MUST-2: title right edge + 96
+
+        // The header and spine words that stand on the menu plate (12b · D1: UiTranslucentTokensTests lays them out
+        // and measures each over the brightest plate texel under it).
+        public const string HeaderEyebrow = "PLAYABLE CONCEPT · PROTOTYPE";
+        public const string HeaderTitle = "DEATHS DEMOLITION";
+        public const string HeaderSubtitle = "An old palace, a garden, and a crowd that never stops arriving.";
+        public const string PlayHintText = "Choose a skin and a classic weapon, then fight for the highest round you can reach.";
+        public const string NavGroupLabel = "PROGRESS";
+        public const string BuildNotePrefix = "Prototype build · ";
+
+        /// <summary>
+        /// 12b · D1 (T10: "TextSecondary ≥ 4.5:1 with the scrim" - the dimmest text the plate carries): the spine's
+        /// captions (PLAY hint, PROGRESS, the build line) stand on the plate, not on a card, so they are TextSecondary.
+        /// In linear light TextMuted measured 3.2:1 on S-05's clamped third at the fixed 0.55 scrim (AD §14 MUST-5).
+        /// </summary>
+        public const UiColor PlateCaption = UiColor.TextSecondary;
         private UiContext _pane = UiContext.Profile;
 
         private UiButton _profileTab;
@@ -96,16 +112,14 @@ namespace DD.Prototype.UI
         {
             BuildMenuPlate();
 
-            float headerHeight = BuildHeader(
-                "PLAYABLE CONCEPT · PROTOTYPE",
-                "DEATHS DEMOLITION",
-                "An old palace, a garden, and a crowd that never stops arriving.",
-                UiType.Display);
-            CoverHeader();
+            float headerHeight = BuildHeader(HeaderEyebrow, HeaderTitle, HeaderSubtitle, UiType.Display);
 
             float top = headerHeight + (int)UiSpace.XXL;
 
-            BuildNavigation(Column("Nav", 0f, 0.26f, top));
+            RectTransform nav = Column("Nav", 0f, 0.26f, top);
+            BuildNavigation(nav);
+            CoverColumn(nav);   // 12b · D1: before the header block, which starts its fade at the text-safe edge
+            CoverHeader();
             BuildPaneHost(Column("Pane", 0.29f, 1f, top));
 
             ShowPane(_pane);
@@ -198,6 +212,21 @@ namespace DD.Prototype.UI
             wash.transform.SetSiblingIndex(2);
         }
 
+
+        /// <summary>12b · D1: the text-safe scrim reaches the spine's right edge (+ 12 parallax) where an ultrawide page puts it past the third.</summary>
+        private void CoverColumn(RectTransform column)
+        {
+            if (_plates == null || column == null)
+            {
+                return;
+            }
+
+            var plateRect = (RectTransform)_plates.transform;
+            var corners = new Vector3[4];
+            column.GetWorldCorners(corners);
+            float right = plateRect.InverseTransformPoint(corners[2]).x - plateRect.rect.xMin;
+            _plates.CoverColumn(right + UiBackdrop.NearParallax);
+        }
 
         /// <summary>AD 6ab MUST-2: the header block from the left edge to the title's right edge + 96 (+ 12 parallax), down to the rule + 8 (+ 12).</summary>
         private void CoverHeader()
@@ -313,10 +342,7 @@ namespace DD.Prototype.UI
 
             // The PLAY caption at its measured height (≤ 2 lines at the column width; the old
             // fixed 3-line band pushed the tabs into QUIT at UI scale 1.2 × TextScale 1.25).
-            TMP_Text playHint = UiFactory.Label(
-                "PlayHint", column,
-                "Choose a skin and a classic weapon, then fight for the highest round you can reach.",
-                UiType.Caption, UiColor.TextMuted);
+            TMP_Text playHint = UiFactory.Label("PlayHint", column, PlayHintText, UiType.Caption, PlateCaption);
             float hintHeight = width > 1f
                 ? Mathf.Max(captionLine, Mathf.Ceil(playHint.GetPreferredValues(playHint.text, width, 0f).y))
                 : captionLine * 2f;
@@ -325,8 +351,8 @@ namespace DD.Prototype.UI
             TMP_Text build = UiFactory.Label(
                 "BuildNote", column,
                 // WP-025 version stamp (WP-022B binding): "wp-022-…-g1234567 · release · 2026-09-16".
-                "Prototype build · " + DD.Prototype.Core.Build.BuildInfo.Read().Label,
-                UiType.Caption, UiColor.TextMuted);
+                BuildNotePrefix + DD.Prototype.Core.Build.BuildInfo.Read().Label,
+                UiType.Caption, PlateCaption);
             float buildHeight = width > 1f
                 ? Mathf.Max(captionLine, Mathf.Ceil(build.GetPreferredValues(build.text, width, 0f).y))
                 : captionLine;
@@ -344,7 +370,7 @@ namespace DD.Prototype.UI
 
             stack.Cursor += rhythm.GroupGap;
             TMP_Text sectionLabel = UiFactory.Label(
-                "MenuLabel", column, "PROGRESS", UiType.Label, UiColor.TextMuted);
+                "MenuLabel", column, NavGroupLabel, UiType.Label, PlateCaption);
             stack.Add((RectTransform)sectionLabel.transform, labelHeight);
             stack.Gap(UiSpace.S);
 

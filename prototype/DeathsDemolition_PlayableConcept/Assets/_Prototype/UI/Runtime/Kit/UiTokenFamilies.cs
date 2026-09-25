@@ -58,14 +58,25 @@ namespace DD.Prototype.UI
 
     public static class UiMaterialSpec
     {
-        /// <summary>Sheen over a surface (area): ≤ 0.05, or TextMuted drops under 4.5:1 (measured: 0.06 → 4.56, 0.10 → 4.00).</summary>
-        public const float SheenFieldAlphaMax = 0.05f;
+        /// <summary>
+        /// Sheen over a surface (area, the Fx Sheen band): the most Cream100 a field may add under TextMuted on
+        /// SurfacePanel at 4.5:1. 12b · D1 (AD 8a carried MUST): re-measured with the pinned linear composite
+        /// (UiContrast.Composite, the GPU's blend) the old 0.05 gave 3.25:1 (0.06 → 3.01, 0.10 → 2.33; the sRGB
+        /// estimate had read 0.06 → 4.56) - the envelope is 0.014.
+        /// </summary>
+        public const float SheenFieldAlphaMax = 0.014f;
 
-        /// <summary>The 1 px top rim is an edge, outside the text envelope.</summary>
+        /// <summary>The 1 px top rim is an edge, outside the text envelope (text ≥ 8 px from it; 2.29:1 on SurfacePanel in linear light, a Decorative cue).</summary>
         public const float SheenRimAlpha = 0.10f;
 
         public const float WashiAlphaMin = 0.04f;
-        public const float WashiAlphaMax = 0.08f;
+
+        /// <summary>
+        /// 12b · D1: washi under TextSecondary on SurfacePanel, the tile's densest fibre (0.73 of the layer α) counted:
+        /// 0.08 measured 4.36:1 in linear light, 0.07 keeps 4.5:1 (0.0735 is the edge). TextMuted never stands on washi
+        /// (3.05-3.88:1 across the band), as it never stands on SurfaceRaised.
+        /// </summary>
+        public const float WashiAlphaMax = 0.07f;
 
         /// <summary>Kinpaku / ginpaku crackle tile under the gold chip and the Special ring (and ceremony for ginpaku).</summary>
         public const float LeafTileAlpha = 0.35f;
