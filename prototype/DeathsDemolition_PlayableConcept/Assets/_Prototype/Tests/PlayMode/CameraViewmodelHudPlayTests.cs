@@ -9,15 +9,16 @@ using UnityEngine.TestTools;
 namespace DD.Prototype.Tests.PlayMode
 {
     /// <summary>
-    /// WP-070V (S-09 AD R1-A MUST-2): in the real Run scene, the FP viewmodel's resting silhouette must stay
-    /// out of the HUD weapon cluster — bottom-right 420×150 plus a 24 px margin at 1920×1080 (16:9). The
-    /// FirstPersonView layer is rendered alone with the viewmodel camera's pose and projection; no covered pixel
-    /// may fall inside the rectangle. Positive control: with the screen
-    /// transform switched off the silhouette DOES overlap (the finding this fixes), so the check is not blind.
+    /// WP-070V → WP-070I (C-00 25.09): in the real Run scene, the FP viewmodel's resting silhouette must stay out of
+    /// the HUD weapon cluster as S-09 lays it out for first person — RunHudScreen.WeaponClusterRect(firstPerson: true,
+    /// canvas), 1920×1080 canvas, 16:9 (no fixed numbers here). The FirstPersonView layer is rendered alone with the
+    /// viewmodel camera's pose and projection; no covered pixel may fall inside the rectangle. Positive control: a
+    /// pixel the weapon really covers is moved onto the rectangle's centre with the viewmodel screen shift — the
+    /// overlap must then be seen, so the check is not blind whatever pose S-02 ships.
     /// </summary>
     public class CameraViewmodelHudPlayTests
     {
-        private const float RefW = 1920f, RefH = 1080f, ClusterW = 420f + 24f, ClusterH = 150f + 24f;
+        private const float RefW = 1920f, RefH = 1080f;
 
         [UnitySetUp]
         public IEnumerator Kur()
@@ -58,20 +59,22 @@ namespace DD.Prototype.Tests.PlayMode
             rig.Camera.aspect = RefW / RefH;
             vm.aspect = RefW / RefH;
 
-            CameraLayers.ViewmodelScreenScale = 1f;
-            CameraLayers.ViewmodelScreenShift = Vector2.zero;
+            Rect kume = DD.Prototype.UI.RunHudScreen.WeaponClusterRect(true, new Vector2(RefW, RefH));   // canvas px, top-left
             yield return null; yield return null;
-            Olcum ham = Olc(vm, "identity");
-            Debug.Log("[DD-TEST] wp070v.viewmodel identity " + ham);
-            Assert.Greater(ham.Kapli, 0, "FirstPersonView katmanında çizilen piksel yok — ölçüm kör.");
-            Assert.Greater(ham.Cakisan, 0, "Pozitif kontrol: dönüşümsüz dinlenme silüeti HUD kümesine girmeli (S-09 bulgusu).");
+            Olcum son = Olc(vm, kume, "default");
+            Debug.Log("[DD-TEST] wp070i.viewmodel default cluster=" + kume + " " + son);
+            Assert.Greater(son.Kapli, 0, "FirstPersonView katmanında çizilen piksel yok — ölçüm kör.");
+            Assert.AreEqual(0, son.Cakisan, "Dinlenme silüeti FP HUD silah kümesiyle çakışıyor: " + son);
 
-            CameraLayers.ViewmodelScreenScale = CameraLayers.DefaultViewmodelScreenScale;
-            CameraLayers.ViewmodelScreenShift = CameraLayers.DefaultViewmodelScreenShift;
+            // Positive control: move a pixel the weapon covers onto the cluster's centre (screen shift, fraction of the screen).
+            Vector2 hedef = new Vector2(kume.center.x / RefW, 1f - kume.center.y / RefH);
+            Vector2 ornek = new Vector2((son.Ornek.x + 0.5f) / W, (son.Ornek.y + 0.5f) / H);
+            CameraLayers.ViewmodelScreenShift = hedef - ornek;
             yield return null; yield return null;
-            Olcum son = Olc(vm, "default");
-            Debug.Log("[DD-TEST] wp070v.viewmodel default " + son);
-            Assert.AreEqual(0, son.Cakisan, "Dinlenme silüeti HUD silah kümesiyle çakışıyor: " + son);
+            Olcum kontrol = Olc(vm, kume, "control");
+            Debug.Log("[DD-TEST] wp070i.viewmodel control shift=" + CameraLayers.ViewmodelScreenShift + " " + kontrol);
+            Assert.Greater(kontrol.Cakisan, 0, "Pozitif kontrol: kümeye kaydırılan silüet çakışma olarak görülmeli — ölçüm kör.");
+            CameraLayers.ViewmodelScreenShift = CameraLayers.DefaultViewmodelScreenShift;
         }
 
         private const int W = 960, H = 540, Tolerance = 8;
@@ -80,6 +83,7 @@ namespace DD.Prototype.Tests.PlayMode
         {
             public int Kapli, Cakisan;
             public RectInt Kutu;
+            public Vector2Int Ornek;   // a covered pixel near the silhouette's centre (render-texture px, row 0 = bottom)
             public string Png;
             public override string ToString()
             {
@@ -92,7 +96,7 @@ namespace DD.Prototype.Tests.PlayMode
         // The viewmodel layer alone, drawn with the viewmodel camera's own pose and projection (incl. the WP-070V
         // screen transform), over black and over white: a pixel that differs from the background in either pass
         // is covered (HudCoverageTests pattern — independent of lighting and alpha).
-        private static Olcum Olc(Camera vm, string ad)
+        private static Olcum Olc(Camera vm, Rect kume, string ad)
         {
             var target = new RenderTexture(W, H, 24, RenderTextureFormat.ARGB32);
             var go = new GameObject("[WP070V-ViewmodelProbe]");
@@ -108,7 +112,9 @@ namespace DD.Prototype.Tests.PlayMode
             cam.projectionMatrix = vm.projectionMatrix;
             Color32[] siyah = Ciz(cam, target, Color.black);
             Color32[] beyaz = Ciz(cam, target, Color.white);
-            int kx = Mathf.CeilToInt(W * (1f - ClusterW / RefW)), ky = Mathf.FloorToInt(H * ClusterH / RefH);   // rows from the bottom
+            // cluster rect (canvas px, origin top-left) → render-texture px (row 0 = bottom)
+            int x0 = Mathf.FloorToInt(kume.xMin * W / RefW), x1 = Mathf.CeilToInt(kume.xMax * W / RefW);
+            int y0 = Mathf.FloorToInt(H - kume.yMax * H / RefH), y1 = Mathf.CeilToInt(H - kume.yMin * H / RefH);
             var o = new Olcum { Kutu = new RectInt(W, H, -W, -H) };
             int xMin = W, yMin = H, xMax = -1, yMax = -1;
             var png = new Texture2D(W, H, TextureFormat.RGBA32, false);
@@ -118,7 +124,7 @@ namespace DD.Prototype.Tests.PlayMode
                 Color32 a = siyah[i], b = beyaz[i];
                 bool kapli = a.r > Tolerance || a.g > Tolerance || a.b > Tolerance || b.r < 255 - Tolerance || b.g < 255 - Tolerance || b.b < 255 - Tolerance;
                 int x = i % W, y = i / W;   // ReadPixels row 0 = bottom
-                bool kumede = x >= kx && y < ky;
+                bool kumede = x >= x0 && x < x1 && y >= y0 && y < y1;
                 cik[i] = kapli ? (kumede ? new Color32(255, 0, 0, 255) : a) : (kumede ? new Color32(60, 0, 60, 255) : new Color32(0, 0, 0, 255));
                 if (!kapli) continue;
                 o.Kapli++;
@@ -126,6 +132,15 @@ namespace DD.Prototype.Tests.PlayMode
                 xMin = Mathf.Min(xMin, x); xMax = Mathf.Max(xMax, x); yMin = Mathf.Min(yMin, y); yMax = Mathf.Max(yMax, y);
             }
             if (xMax >= 0) o.Kutu = new RectInt(xMin, yMin, xMax - xMin + 1, yMax - yMin + 1);
+            // the covered pixel nearest the bounding box centre (a guaranteed-covered anchor for the positive control)
+            float cx = (xMin + xMax) * 0.5f, cy = (yMin + yMax) * 0.5f, best = float.MaxValue;
+            for (int i = 0; xMax >= 0 && i < siyah.Length; i++)
+            {
+                Color32 a = siyah[i], b = beyaz[i];
+                if (!(a.r > Tolerance || a.g > Tolerance || a.b > Tolerance || b.r < 255 - Tolerance || b.g < 255 - Tolerance || b.b < 255 - Tolerance)) continue;
+                float d = (i % W - cx) * (i % W - cx) + (i / W - cy) * (i / W - cy);
+                if (d < best) { best = d; o.Ornek = new Vector2Int(i % W, i / W); }
+            }
             png.SetPixels32(cik); png.Apply();
             o.Png = System.IO.Path.Combine(Application.temporaryCachePath, "wp070v-" + ad + ".png");
             System.IO.File.WriteAllBytes(o.Png, png.EncodeToPNG());

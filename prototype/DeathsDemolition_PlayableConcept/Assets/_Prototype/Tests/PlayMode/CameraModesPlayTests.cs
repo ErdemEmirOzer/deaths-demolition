@@ -253,6 +253,11 @@ namespace DD.Prototype.Tests.PlayMode
 
             // WP-070V: the viewmodel pass carries a screen transform; the mapped world point must be drawn at the
             // same screen position and depth by the world camera (both projections as the cameras use them).
+            // WP-070I: the default is identity now, so the mapping is exercised with an explicit non-identity transform.
+            CameraLayers.ViewmodelScreenScale = 0.8f;
+            CameraLayers.ViewmodelScreenPivot = new Vector2(0.3f, 0f);
+            CameraLayers.ViewmodelScreenShift = new Vector2(-0.1f, 0.02f);
+            yield return null;
             Transform ct = _rig.Camera.transform;
             foreach (Vector3 yerel in new[] { new Vector3(0.18f, -0.22f, 0.5f), new Vector3(-0.1f, 0.05f, 0.9f), new Vector3(0f, 0f, 2f) })
             {
@@ -270,6 +275,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.Less(Vector3.Distance(d0, CameraView.ViewmodelToWorld(d0)), 0.001f, "Özdeş dönüşüm + FOV kilidinde ViewmodelToWorld özdeşlik.");
             CameraLayers.ViewmodelScreenScale = CameraLayers.DefaultViewmodelScreenScale;
             CameraLayers.ViewmodelScreenShift = CameraLayers.DefaultViewmodelScreenShift;
+            CameraLayers.ViewmodelScreenPivot = CameraLayers.DefaultViewmodelScreenPivot;
 
             CameraModeService.Request(CameraMode.ThirdPerson, instant: true);
             yield return Kareler(2);

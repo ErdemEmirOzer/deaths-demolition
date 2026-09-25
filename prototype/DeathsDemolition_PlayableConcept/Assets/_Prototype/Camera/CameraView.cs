@@ -184,13 +184,14 @@ namespace DD.Prototype.CameraSystem
         /// (bottom-right 420×150 + 24 px at 1080). Until the FP arm rest pose (S-06 B4b) the viewmodel pass is
         /// drawn with a screen-space transform: scale about <see cref="ViewmodelScreenPivot"/> (screen fraction,
         /// 0,0 = bottom-left), then shift by <see cref="ViewmodelScreenShift"/> (screen fraction). The world is
-        /// not affected; <see cref="CameraView.ViewmodelToWorld"/> applies the same transform. Defaults from the
-        /// CameraViewmodelHudPlayTests sweep on the AP-013 rifle at rest: 0.75 / pivot bottom-left / −12 % → silhouette
-        /// x 566–1420, y 734–1080 at 1080 (56 px clear of the cluster; 0.75 / −10 % clears it by 2 px only).
+        /// not affected; <see cref="CameraView.ViewmodelToWorld"/> applies the same transform.
+        /// WP-070I (C-00 25.09): IDENTITY by default. The FP HUD weapon cluster moved to the bottom-left (S-09 R1-C) and
+        /// S-02's weapon-head fpView pose alone places the viewmodel; the old 0.75 / −12 % default pushed the weapon
+        /// towards the new cluster. The knobs stay for tests and tuning.
         /// </summary>
-        public const float DefaultViewmodelScreenScale = 0.75f;
+        public const float DefaultViewmodelScreenScale = 1f;
         public static readonly Vector2 DefaultViewmodelScreenPivot = new Vector2(0f, 0f);
-        public static readonly Vector2 DefaultViewmodelScreenShift = new Vector2(-0.12f, 0f);
+        public static readonly Vector2 DefaultViewmodelScreenShift = Vector2.zero;
 
         public static float ViewmodelScreenScale { get; set; } = DefaultViewmodelScreenScale;
         public static Vector2 ViewmodelScreenPivot { get; set; } = DefaultViewmodelScreenPivot;
