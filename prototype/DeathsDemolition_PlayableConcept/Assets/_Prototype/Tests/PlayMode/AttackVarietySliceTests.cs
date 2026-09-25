@@ -58,6 +58,7 @@ namespace DD.Prototype.Tests.PlayMode
             EnemyFactory.ClearAll();
             EnemyCombatEvents.ResetStatics();
             EnemyAttackState.ResetStatics();
+            ZombieEnemy.ResetClipEventStatics();   // WP-076: AP-022 attack_step / grab_end
             EnemyCombatEvents.Raised += Kaydet;
             yield return null;
 
@@ -101,7 +102,9 @@ namespace DD.Prototype.Tests.PlayMode
             sb.Append("peakWindups=" + AttackSlotBoard.PeakWindups + " grabs=" + GrabState.StartedCount + " escaped=" + GrabState.EscapedCount + " triples=" + triples);
             Debug.Log(sb.ToString());
 
+            Debug.Log("[DD-OBS] wp076.clipEvents steps=" + ZombieEnemy.ClipSteps + " grabEnds=" + ZombieEnemy.ClipGrabEnds + " grabs=" + GrabState.StartedCount);
             Assert.Greater(_beats.Count, 10, "the crowd swung");
+            Assert.Greater(ZombieEnemy.ClipSteps, 0, "AP-022 attack_step reached S-03 (clips in place, S-03 steps the body)");
             Assert.GreaterOrEqual(styles.Count, 2, "more than one style");
             Assert.AreEqual(0, triples, "never three of one style in a row");
             Assert.AreEqual(0, overhead, "Standard never overheads");

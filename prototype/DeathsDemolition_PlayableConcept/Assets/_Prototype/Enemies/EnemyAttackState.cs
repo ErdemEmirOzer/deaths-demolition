@@ -239,6 +239,30 @@ namespace DD.Prototype.Enemies
         /// </summary>
         public float ForwardImpulse { get; private set; }
 
+        // WP-076 · AP-022 clip events (S-06 WP-071 d9bc62ff): attack_step moves the body by the style's root step and
+        // replaces the timer dash for that swing; grab_end ends the hold (second bite share). Timers stay the fallback.
+        [PrototypeOnly(PendingDecisions.None, "WP-076 §1 root step per style on attack_step (m): Swipe, Lunge, Sweep, Overhead, BiteGrab; the Standard's lunge ×0.8.", true)]
+        public static readonly float[] StepMetres = { 0.35f, 1.4f, 0.25f, 0.5f, 0.25f };
+        public const float StandardLungeStepScale = 0.8f;
+        private bool _clipStepThisSwing;
+
+        /// <summary>The clip's attack_step for the current swing: the metres the body steps (0 = no swing / already stepped).</summary>
+        public float TakeClipStep(EnemyTier tier)
+        {
+            if (_phase == ZombieAttackPhase.None || _clipStepThisSwing) return 0f;
+            _clipStepThisSwing = true;
+            int i = Mathf.Clamp((int)_style, 0, StepMetres.Length - 1);
+            float m = StepMetres[i];
+            if (_style == ZombieAttackStyle.Lunge && tier == EnemyTier.Standard) m *= StandardLungeStepScale;
+            return m;
+        }
+
+        /// <summary>The clip's grab_end: the hold ends now (the timer is the fallback); the next Tick pays the second share.</summary>
+        public void OnClipGrabEnd()
+        {
+            if (_grabRemaining > 0f) _grabRemaining = 0.0001f;
+        }
+
         /// <summary>Normalised progress through the current phase, for the pose.</summary>
         public float PhaseProgress
         {
@@ -455,6 +479,7 @@ namespace DD.Prototype.Enemies
             _connectedThisSwing = false;
             ForwardImpulse = 0f;
             ActiveFramesThisSwing = 0;
+            _clipStepThisSwing = false;
         }
 
         // ====================================================================== tick
@@ -522,7 +547,7 @@ namespace DD.Prototype.Enemies
                 case ZombieAttackPhase.Active:
                     // The lunge carries the body forward for exactly as long as the hitbox
                     // is live, so the visible dash and the damage window are the same thing.
-                    ForwardImpulse = _lungeSpeed;
+                    ForwardImpulse = _clipStepThisSwing ? 0f : _lungeSpeed;   // WP-076: a clip step replaces the timer dash
                     ActiveFramesThisSwing++;
 
                     if (!_connectedThisSwing)

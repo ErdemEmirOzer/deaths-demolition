@@ -356,6 +356,7 @@ namespace DD.Prototype.Enemies
         private void OnDestroy()
         {
             UnregisterHitboxes();
+            UnbindClipEvents();   // WP-076
         }
 
         /// <summary>
@@ -586,6 +587,7 @@ namespace DD.Prototype.Enemies
             ResetShock();              // WP-076 B4
             ResetGel();                // WP-076 B5
             ResetRear();               // WP-076 B7
+            ResetClipStep();           // WP-076 clip events
             ResetOutOfWorld();         // WP-061K
             ResetWaiting();   // WP-050
             _noticed = false;   // WP-052
@@ -986,6 +988,7 @@ namespace DD.Prototype.Enemies
                 _attack.TrySelectAndBegin(ref ctx, ref _random);
             }
 
+            BindClipEvents();   // WP-076: AP-022 attack_step / grab_end (lazy; the driven visual finds its events after spawn)
             bool connected = _attack.Tick(dt, this, _tier, _animator);
             if (connected) NoteRearHit();   // WP-076 B8 telemetry
             RaiseAttackBeats(connected);   // WP-040 (ADR-040-1)
@@ -1034,6 +1037,7 @@ namespace DD.Prototype.Enemies
             _knockbackVelocity = Vector3.Lerp(_knockbackVelocity, Vector3.zero, Mathf.Clamp01(KnockbackDamping * dt));
             velocity += TickHitResponse(dt);   // WP-076 B3: class knockback (ease-out) + LMG sustained push
             velocity += gelVelocity;           // WP-076 B5: the gel slide keeps its momentum (no steering)
+            velocity += TickClipStep(dt);      // WP-076: the clip's attack_step root step (clips play in place)
 
             _verticalVelocity = _controller.isGrounded ? -2f : _verticalVelocity + Gravity * dt;
 
