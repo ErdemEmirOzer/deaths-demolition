@@ -597,7 +597,8 @@ namespace DD.Prototype.Tests.EditMode
                 PrototypeConfig.SetActive(klon);
                 var wallet = new DD.Prototype.Economy.GoldWallet();
                 wallet.InitializeForRun(7);
-                var shop = new RoundUpgradeShop { Random = new SeededUpgradeOfferRandom(3) }; // varsayılan yüklem (enjekte yok)
+                // varsayılan yüklem (enjekte yok); WP-077: sınıfsal dal kartı kapısı sınanır — ağaç düğüm kartları (RunTreeNodeCards) değil
+                var shop = new RoundUpgradeShop { Random = new SeededUpgradeOfferRandom(3), NodeCardsOverride = false };
                 bool teklifEdildi = false;
                 for (int round = 1; round <= 40 && !teklifEdildi; round++)
                 {

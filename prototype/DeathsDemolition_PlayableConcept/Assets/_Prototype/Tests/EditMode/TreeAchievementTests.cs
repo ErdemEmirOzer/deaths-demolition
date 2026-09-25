@@ -91,20 +91,46 @@ namespace DD.Prototype.Tests.EditMode
             return false;
         }
 
+        /// <summary>A copy of a shipped definition gated behind an effect no system reads (the "unwired = LOCKED" proof).</summary>
+        private static AchievementDefinition Kapili(string id)
+        {
+            AchievementDefinition d = Tanim(id);
+            return new AchievementDefinition
+            {
+                Id = d.Id, DisplayName = d.DisplayName, Description = d.Description, Condition = d.Condition, Threshold = d.Threshold,
+                TargetTier = d.TargetTier, Scope = d.Scope, Rarity = d.Rarity, RequiresEffect = "test.unwired.", Feat = d.Feat
+            };
+        }
+
         [Test]
         public void Katalog_SekizYeni_AgacKapiliOlanlarEtkiCanliOlanaDekGizli()
         {
             foreach (string id in Yeni) Assert.IsNotNull(Tanim(id), id);
-            Assert.IsFalse(Listede("first_capstone"), "doruk etkisi canlı değil → listelenmez");
-            Assert.IsFalse(Listede("hearth_20"), "keystone yok → Ocak ulaşılmaz");
-            Assert.IsFalse(Listede("both_special_links"), "bağ etkisi canlı olsa bile düğüm kartları kapalıyken satın alınamaz");
             Assert.IsTrue(Listede("mastery_5_any"), "ustalık kapısız");
             Assert.IsTrue(Listede("first_blood"));
 
-            RunTreeEffects.TreatAllAsLive = true;
-            foreach (string id in Yeni) Assert.IsTrue(Listede(id), id + " canlıyken listede");
-            RunTreeEffects.TreatAllAsLive = false;
-            Assert.IsFalse(Listede("full_lane"), "görünüm canlılık değişince yenilenir");
+            // K10b: every shipped tree effect is live and the offer sells node cards → the eight are listed.
+            if (RunTreeEffects.NodeCardsShipped)
+            {
+                foreach (string id in Yeni) Assert.IsTrue(Listede(id), id + " sevk edilen ağaçta listede");
+            }
+
+            // The rule itself: a tree achievement whose effect no system reads is neither listed nor evaluated.
+            try
+            {
+                AchievementCatalog.TestSeam.Override(new List<AchievementDefinition> { Kapili("first_capstone"), Tanim("first_blood") });
+                Assert.IsFalse(Listede("first_capstone"), "bağlanmamış etki → listelenmez");
+                Assert.IsTrue(Listede("first_blood"));
+                RunTreeEffects.TreatAllAsLive = true;
+                Assert.IsTrue(Listede("first_capstone"), "canlıyken listede");
+                RunTreeEffects.TreatAllAsLive = false;
+                Assert.IsFalse(Listede("first_capstone"), "görünüm canlılık değişince yenilenir");
+            }
+            finally
+            {
+                RunTreeEffects.TreatAllAsLive = false;
+                AchievementCatalog.TestSeam.Override(null);
+            }
         }
 
         [Test]
@@ -170,6 +196,20 @@ namespace DD.Prototype.Tests.EditMode
 
         [Test]
         public void EtkiCanliDegilken_AgacBasarimiVerilmez()
+        {
+            // K10b: the shipped tree is fully live, so the rule is proven on gated copies of two tree achievements.
+            AchievementCatalog.TestSeam.Override(new List<AchievementDefinition> { Kapili("first_capstone"), Kapili("hearth_20") });
+            try
+            {
+                KapiliKosu();
+            }
+            finally
+            {
+                AchievementCatalog.TestSeam.Override(null);
+            }
+        }
+
+        private static void KapiliKosu()
         {
             RunRewardReport r = ProfileService.ApplyRun(new RunSummary
             {
