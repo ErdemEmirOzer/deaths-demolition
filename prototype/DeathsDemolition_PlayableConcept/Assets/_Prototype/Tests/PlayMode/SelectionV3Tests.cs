@@ -67,6 +67,20 @@ namespace DD.Prototype.Tests.PlayMode
                 {
                     Assert.GreaterOrEqual(Bottom(Named(screen, block)), floor, (weapon ?? "seçili") + ": " + block + " kartın altına taşıyor");
                 }
+
+                // AD R1-B re-check: CORE never meets the last stat bar, and nothing on the stage is cut.
+                RectTransform core = Named(screen, "CoreBranches");
+                core.GetWorldCorners(s_corners);
+                float coreTop = s_corners[1].y;
+                Assert.Greater(Bottom(Named(screen, "Stat3")), coreTop, (weapon ?? "seçili") + ": son stat çubuğu CORE satırına giriyor");
+                foreach (TMPro.TMP_Text t in screen.StageTexts)
+                {
+                    if (t.isActiveAndEnabled && !string.IsNullOrEmpty(t.text))
+                    {
+                        t.ForceMeshUpdate();
+                        Assert.IsFalse(t.isTextTruncated, (weapon ?? "seçili") + ": " + t.name + " kesiliyor: " + t.text);
+                    }
+                }
             }
 
             RectTransform column = Named(screen, "Weapons");

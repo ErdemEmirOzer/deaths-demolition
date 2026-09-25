@@ -701,11 +701,13 @@ namespace DD.Prototype.UI
             _stageLayoutPending = false;
             float w = area.width;
             float h = area.height;
-            float bodyLine = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Body));
-            float captionLine = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption));
-            float labelLine = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Label));
-            float nameBand = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.H1));
-            float statLine = Mathf.Max(captionLine, labelLine);
+            // Line heights measured from the texts themselves (their font size already carries the TextScale; the
+            // ScaledBand metric would count it twice and plan a Mac stage ~25 % taller than it renders - AD R1-B re-check).
+            float bodyLine = LineOf(_stageDescription);
+            float captionLine = LineOf(_compareCaption);
+            float labelLine = LineOf(_stageClass);
+            float nameBand = LineOf(_stageName);
+            float statLine = Mathf.Max(LineOf(_statLabels[0]), LineOf(_statValues[0]));
 
             // The StatStrip: two by two while every label and value share a line; one column when any cannot (AD R1-B
             // MUST-2a: a value never wraps under its label).
@@ -719,7 +721,8 @@ namespace DD.Prototype.UI
             }
 
             float cellH = statLine + (int)UiSpace.XS + StatBarHeight;
-            float statsH = oneColumn ? cellH * 4f + (int)UiSpace.S * 3f : cellH * 2f + (int)UiSpace.M;
+            float rowGap = oneColumn ? (int)UiSpace.S : (int)UiSpace.M;
+            float statsH = oneColumn ? cellH * 4f + rowGap * 3f : cellH * 2f + rowGap;
             float coreH = Mathf.Max(CoreGlyphSize + 4f, captionLine);
             bool stateShown = !string.IsNullOrEmpty(_stateLine.text);
             float stateH = captionLine;
@@ -728,36 +731,48 @@ namespace DD.Prototype.UI
             float descH = string.IsNullOrEmpty(_stageDescription.text) ? 0f
                 : Mathf.Min(bodyLine * 5f, Mathf.Ceil(_stageDescription.GetPreferredValues(_stageDescription.text, w, 0f).y));
 
-            float glyph = StageGlyph;
+            // The class line ("LIGHT MACHINE GUN · AUTO") must hold one line beside the glyph: a narrow card takes the
+            // 96 glyph from the start (T3: nothing on the stage is cut).
+            float classW = _stageClass.GetPreferredValues(_stageClass.text).x;
+            float glyph = classW <= w - StageGlyph - (int)UiSpace.L ? StageGlyph : StageGlyphCompact;
             float gap = (int)UiSpace.L;
             bool showFlavour = flavourH > 0f;
             bool showCompare = compareH > 0f;
             bool roleBeside = true;
+            bool classBeside = true;
             float roleBelowH = 0f;
             float topH = glyph;
+            float BelowH()
+            {
+                return (classBeside ? 0f : (int)UiSpace.S + labelLine) + (roleBelowH > 0f ? (int)UiSpace.S + roleBelowH : 0f);
+            }
+
             void Identity()
             {
-                // The role sits beside the glyph when it holds one line there; otherwise it takes the card's width under
-                // the identity block (AD R1-B MUST-2a: no wrap beside the glyph).
+                // The class and the role sit beside the glyph when each holds one line there; otherwise they take the
+                // card's width under the identity block (AD R1-B MUST-2a: no wrap, no cut beside the glyph).
                 float textW = w - glyph - (int)UiSpace.L;
+                classBeside = classW <= textW;
                 float roleW = string.IsNullOrEmpty(_stageRole.text) ? 0f : _stageRole.GetPreferredValues(_stageRole.text).x;
                 roleBeside = roleW <= textW;
                 roleBelowH = roleBeside || roleW <= 0f ? 0f : Mathf.Min(bodyLine * 2f, Mathf.Ceil(_stageRole.GetPreferredValues(_stageRole.text, w, 0f).y));
-                topH = Mathf.Max(glyph, nameBand + labelLine + (roleBeside && roleW > 0f ? (int)UiSpace.S + bodyLine : 0f));
+                topH = Mathf.Max(glyph, nameBand + (classBeside ? labelLine : 0f) + (roleBeside && roleW > 0f ? (int)UiSpace.S + bodyLine : 0f));
             }
 
             float Total()
             {
-                return topH + (roleBelowH > 0f ? (int)UiSpace.S + roleBelowH : 0f) + gap + descH + (showFlavour ? (int)UiSpace.XS + flavourH : 0f)
+                return topH + BelowH() + gap + descH + (showFlavour ? (int)UiSpace.XS + flavourH : 0f)
                        + gap + statsH + (showCompare ? (int)UiSpace.S + compareH : 0f) + gap + coreH + (stateShown ? gap + stateH : 0f);
             }
 
+            // Yield order when short (AD R1-B re-check): the flavour line, the bar caption, the gaps, the glyph (96), and only
+            // then the description - never under three lines, so CORE's top stays >= the last bar + 12.
             Identity();
-            if (Total() > h) { gap = (int)UiSpace.S; }
             if (Total() > h) { showFlavour = false; }
             if (Total() > h) { showCompare = false; }
+            if (Total() > h) { gap = Mathf.Max((int)UiSpace.M, gap - (Total() - h) / 5f); }
             if (Total() > h) { glyph = StageGlyphCompact; Identity(); }
-            if (Total() > h) { descH = Mathf.Max(bodyLine * 2f, descH - (Total() - h)); }
+            if (Total() > h) { descH = Mathf.Max(Mathf.Min(descH, bodyLine * 3f), descH - (Total() - h)); }
 
             // Top group, from the top.
             float y = 0f;
@@ -770,16 +785,26 @@ namespace DD.Prototype.UI
             glyphRect.anchoredPosition = Vector2.zero;
             float textLeft = glyph + (int)UiSpace.L;
             SetTop(_stageName, textLeft, 0f, nameBand);
-            SetTop(_stageClass, textLeft, nameBand, labelLine);
-            if (roleBeside)
+            y += topH;
+            if (classBeside)
             {
-                SetTop(_stageRole, textLeft, nameBand + labelLine + (int)UiSpace.S, bodyLine);
-                _stageRole.enableWordWrapping = false;
-                y += topH;
+                SetTop(_stageClass, textLeft, nameBand, labelLine);
             }
             else
             {
-                y += topH + (int)UiSpace.S;
+                y += (int)UiSpace.S;
+                SetTop(_stageClass, 0f, y, labelLine);
+                y += labelLine;
+            }
+
+            if (roleBeside)
+            {
+                SetTop(_stageRole, textLeft, nameBand + (classBeside ? labelLine : 0f) + (int)UiSpace.S, bodyLine);
+                _stageRole.enableWordWrapping = false;
+            }
+            else
+            {
+                y += (int)UiSpace.S;
                 SetTop(_stageRole, 0f, y, roleBelowH);
                 _stageRole.enableWordWrapping = true;
                 y += roleBelowH;
@@ -806,12 +831,12 @@ namespace DD.Prototype.UI
                 if (oneColumn)
                 {
                     cell.sizeDelta = new Vector2(w, cellH);
-                    cell.anchoredPosition = new Vector2(0f, -(y + s * (cellH + (int)UiSpace.S)));
+                    cell.anchoredPosition = new Vector2(0f, -(y + s * (cellH + rowGap)));
                 }
                 else
                 {
                     cell.sizeDelta = new Vector2(cellW, cellH);
-                    cell.anchoredPosition = new Vector2((s % 2) * (cellW + (int)UiSpace.XL), -(y + (s / 2) * (cellH + (int)UiSpace.M)));
+                    cell.anchoredPosition = new Vector2((s % 2) * (cellW + (int)UiSpace.XL), -(y + (s / 2) * (cellH + rowGap)));
                 }
 
                 SetTop(_statLabels[s], 0f, 0f, statLine);
@@ -924,6 +949,11 @@ namespace DD.Prototype.UI
             _specialsNote.gameObject.SetActive(note);
             y += headH + (int)UiSpace.XS;
             Dock(_specialsRow, y, _tileHeight);
+        }
+
+        private static float LineOf(TMP_Text text)
+        {
+            return Mathf.Ceil(text.GetPreferredValues("Ag").y);
         }
 
         private static void Dock(RectTransform rect, float top, float height)
