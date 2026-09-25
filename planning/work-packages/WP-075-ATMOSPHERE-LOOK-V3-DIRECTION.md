@@ -111,6 +111,9 @@ Rezerv aksanlar değişmez: altın orb #FFC74D, vermilion #C4362B, sakura aksan�
 
 #### 1.4 Malzeme başına canlı-ama-doğal doygunluk hedefleri (post sonrası, güneş yaması / bulut gölgesi)
 
+> **DEC-101 notu (S-05, sahibi; 2026-09-25, C-00 kararı):** World v5 (v6 düzeni) tonu HF hedef kareleri gibi soğuk ve bulutlu (DEC-101, `planning/00-PROJECT-PLAN.md`). Bu bölümün canlı doygunluk / değer aralıkları, §1.3 pozlama değerleri, §6.1 "Açılma" reçetesi (LUT v2) ve AD S1'in ≤ %8 spekular alanı v5 için **bağlayıcı değil**; World_AP005 (v3 anahtarı) için geçerli kalır. v5'in **ton kapısı HF sayısal karşılaştırmasıdır**: `wp-074/tools/hf-compare.py` ile HF center / north / west karesine kare ortalaması L / b / C (ve hue / sat / V), L std, ortalama ΔE76 ve 3×3 bölge ΔE76; hedef, HF'ye ΔE'nin tur tur düşmesi. Işık oranı: güneş/bulut-gölgesi ≤ 1,35, gölgede ıslak arduvaz V 0,30–0,38. Okunabilirlik kapıları (K9–K12, DEC-077) değişmez. Yeni AD yok; sayısal kabul.
+
+
 | Malzeme | Hue | S (güneş / gölge) | V (güneş / gölge) | Kim taşır | Kural |
 |---|---|---|---|---|---|
 | Yosun | 85–95° | 0,50–0,58 / 0,42–0,48 | 0,40–0,48 / 0,30–0,36 | L (green +14) + I | Hedef yosunu stil kılavuzu 0,41'den doygun; s > 0,60 "neon" ret |
@@ -345,6 +348,8 @@ DEC-076 overview ve gameplay kareleri aynı B5 reçetesiyle derecelendirilir, g�
 | Y6 | presentation (WP-029 kadrajı) | DEC-076 overview | sunum |
 
 #### 9.2 Ölçülebilir ölçütler
+
+> DEC-101 (25.09): World v5 için K1–K3 ve K13 yerine HF sayısal karşılaştırması (§1.4 notu); K4–K12 ve K14–K16 geçerli.
 
 | # | Ölçüt | Yöntem | Eşik |
 |---|---|---|---|

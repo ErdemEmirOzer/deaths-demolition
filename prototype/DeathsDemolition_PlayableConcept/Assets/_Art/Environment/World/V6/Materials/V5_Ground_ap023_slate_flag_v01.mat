@@ -38,7 +38,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _AlbedoSaturation: 0.28
-    - _AlbedoValue: 2
+    - _AlbedoValue: 4
     - _Cull: 2
     - _NormalStrength: 1
     - _Occlusion: 1
@@ -54,7 +54,7 @@ Material:
     - _PuddleThreshold: 0.45
     - _TilePuddle: 0
     - _WetAlbedo: 0.82
-    - _WetSmoothness: 0.7
+    - _WetSmoothness: 0.78
     - _Wetness: 1
     m_Colors:
     - _AlbedoTint: {r: 0.86, g: 1, b: 1.19, a: 1}

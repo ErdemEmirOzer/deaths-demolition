@@ -23,13 +23,13 @@ namespace DD.Art.Pipeline.EditorTools
         public const float DriftCompassDegrees = 52f;
         /// <summary>DEC-101 (overcast like the HF targets): the cloud planes thicken (alpha^0.6; AD S3's 1.6 thinned them for a sunny
         /// sky) and darken to grey-blue; the sky band darkens (Panoramic tint); the distant plates fade into the DEC-076 haze colour
-        /// (aerial perspective: far 0.60 · mid 0.45 · near 0.30 · landmarks 0.50 · the NW cedars 0.35). The horizon plates' alpha stays 1.</summary>
+        /// (aerial perspective: far 0.72 · mid 0.58 · near 0.42 · landmarks 0.50 · the NW cedars 0.35). The horizon plates' alpha stays 1.</summary>
         public const float CloudAlphaPower = 0.6f;
         public static readonly Color CloudTint = new Color(0.62f, 0.66f, 0.72f, 1f);
-        public static readonly Color SkyBandTint = new Color(0.36f, 0.39f, 0.44f, 0.5f);
+        public static readonly Color SkyBandTint = new Color(0.44f, 0.47f, 0.52f, 0.5f);   // C-00 25.09: the plaza mirrors the sky (HF: bright overcast); the cloud planes carry the weight
         public const float CloudHaze = 0.40f;   // softens the sheet's cumulus edges toward HF's even overcast
         public const float SkyBandExposure = 0.9f;
-        public static readonly (string layer, float haze)[] PlateHaze = { ("far", 0.60f), ("mid", 0.45f), ("near", 0.30f) };
+        public static readonly (string layer, float haze)[] PlateHaze = { ("far", 0.72f), ("mid", 0.58f), ("near", 0.42f) };   // C-00 25.09: more aerial perspective
         public const float LandmarkHaze = 0.50f, ClusterHaze = 0.35f;
         public static string MeshFolder => GreyboxV6Builder.DataFolder + "/Sky";
 

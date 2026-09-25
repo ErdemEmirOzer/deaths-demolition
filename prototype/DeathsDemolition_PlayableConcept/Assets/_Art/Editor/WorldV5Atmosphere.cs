@@ -18,19 +18,27 @@ namespace DD.Art.Pipeline.EditorTools
     /// </summary>
     public static class WorldV5Atmosphere
     {
-        public const string ShaftGroupName = "Shafts (C4)", FogGroupName = "GroundFog (C5)", VistaMistGroupName = "VistaMist (DEC-101)";
+        public const string ShaftGroupName = "Shafts (C4)", FogGroupName = "GroundFog (C5)", VistaMistGroupName = "VistaMist (DEC-101)", GroveMistGroupName = "GroveMist (DEC-101)";
+        public const float GroveScatter = 0.35f;
+
+        /// <summary>DEC-101 (C-00: the west grove read too dark and clear): stand-level mist over the bamboo stands either side of the main
+        /// lane (not over the lanes, so the walk band keeps the Ek A ≤ 12 % local fog), y 3.5 m; High / Cinematic only.</summary>
+        public static readonly (Vector2 at, Vector2 size, float y, float alpha)[] GroveMist =
+        {
+            (new Vector2(-50.5f, 0f), new Vector2(5f, 50f), 3.5f, 0.10f), (new Vector2(-40f, 0f), new Vector2(3.5f, 50f), 3.5f, 0.10f),
+        };
 
         /// <summary>
         /// DEC-101 aerial perspective: mist sheets over the vista band outside the ring (58–90 m), two layers (y 3 m / 8 m), so the
-        /// sugi and the hills fade layer by layer like the HF frames. Outside the play area, so the ≤ 12 % local-fog rule (Ek A §5)
+        /// sugi and the hills fade layer by layer like the HF frames (0.10 / 0.08: the near forest stays dark, the plates carry the haze). Outside the play area, so the ≤ 12 % local-fog rule (Ek A §5)
         /// does not bind them; tiered 4 / 8 / 8.
         /// </summary>
         public static readonly (Vector2 at, Vector2 size, float y, float alpha)[] VistaMist =
         {
-            (new Vector2(0f, 74f), new Vector2(180f, 32f), 3f, 0.12f), (new Vector2(0f, -74f), new Vector2(180f, 32f), 3f, 0.12f),
-            (new Vector2(74f, 0f), new Vector2(32f, 116f), 3f, 0.12f), (new Vector2(-74f, 0f), new Vector2(32f, 116f), 3f, 0.12f),
-            (new Vector2(0f, 76f), new Vector2(180f, 28f), 8f, 0.10f), (new Vector2(0f, -76f), new Vector2(180f, 28f), 8f, 0.10f),
-            (new Vector2(76f, 0f), new Vector2(28f, 124f), 8f, 0.10f), (new Vector2(-76f, 0f), new Vector2(28f, 124f), 8f, 0.10f),
+            (new Vector2(0f, 74f), new Vector2(180f, 32f), 3f, 0.10f), (new Vector2(0f, -74f), new Vector2(180f, 32f), 3f, 0.10f),
+            (new Vector2(74f, 0f), new Vector2(32f, 116f), 3f, 0.10f), (new Vector2(-74f, 0f), new Vector2(32f, 116f), 3f, 0.10f),
+            (new Vector2(0f, 76f), new Vector2(180f, 28f), 8f, 0.08f), (new Vector2(0f, -76f), new Vector2(180f, 28f), 8f, 0.08f),
+            (new Vector2(76f, 0f), new Vector2(28f, 124f), 8f, 0.08f), (new Vector2(-76f, 0f), new Vector2(28f, 124f), 8f, 0.08f),
         };
         public const float CentreClear = 10f;
         public static string MeshFolder => GreyboxV6Builder.DataFolder + "/Atmosphere";
@@ -54,8 +62,8 @@ namespace DD.Art.Pipeline.EditorTools
         /// <summary>Fog sheets after the ponds (one per pond first): region, centre XZ, size XZ, height, peak alpha, noise scale, drift.</summary>
         public static readonly (string region, Vector2 at, Vector2 size, float y, float alpha, float noise, float speed)[] FogSheets =
         {
-            ("Bamboo", new Vector2(-45f, -12f), new Vector2(16f, 26f), 0.6f, 0.08f, 18f, 0.35f),
-            ("Bamboo", new Vector2(-45f, 14f), new Vector2(16f, 26f), 0.6f, 0.08f, 18f, 0.35f),
+            ("Bamboo", new Vector2(-45f, -12f), new Vector2(16f, 26f), 0.6f, 0.12f, 18f, 0.35f),   // DEC-101: 0.08 → 0.12 (the Ek A cap)
+            ("Bamboo", new Vector2(-45f, 14f), new Vector2(16f, 26f), 0.6f, 0.12f, 18f, 0.35f),
             ("Rear", new Vector2(0f, 52.5f), new Vector2(40f, 6f), 0.75f, 0.06f, 24f, 0.3f),
             ("Sakura", new Vector2(36f, 1f), new Vector2(18f, 14f), 0.5f, 0.04f, 20f, 0.4f),
             ("Causeway", new Vector2(-8f, -27f), new Vector2(10f, 14f), 0.4f, 0.10f, 20f, 0.4f),
@@ -77,7 +85,8 @@ namespace DD.Art.Pipeline.EditorTools
             {
                 var s = Shafts[i];
                 if (s.at.magnitude < CentreClear) throw new InvalidOperationException("shaft " + i + " inside the centre's 10 m (Ek A §3 ban)");
-                Material m = MaterialFor("V5_Shaft_" + s.region, "DD/ShaftCard", mat => mat.SetFloat("_PeakAlpha", s.alpha));
+                // DEC-101: under the overcast the bamboo shafts keep a faint scattering glow (MinLit 0.35); the rest light in the gaps only.
+                Material m = MaterialFor("V5_Shaft_" + s.region, "DD/ShaftCard", mat => { mat.SetFloat("_PeakAlpha", s.alpha); mat.SetFloat("_MinLit", s.region == "Bamboo" ? GroveScatter : 0f); });
                 // Scale: x = width, y = length (the shader reads both); z = length too, so the culling bounds hold the slanted shaft.
                 Piece(shafts, "Shaft_" + i.ToString("00") + "_" + s.region, new Vector3(s.at.x, s.top, s.at.y), new Vector3(s.width, s.length, s.length), shaftMesh, m);
                 n++;
@@ -119,6 +128,22 @@ namespace DD.Art.Pipeline.EditorTools
                     mat.SetFloat("_NoiseSpeed", 0.25f);
                 });
                 Piece(mist, "Mist_" + i.ToString("00"), new Vector3(v.at.x, v.y, v.at.y), new Vector3(v.size.x, 1f, v.size.y), fogMesh, m);
+                n++;
+            }
+
+            var grove = Group(dress, GroveMistGroupName);
+            grove.gameObject.AddComponent<AtmosphereTierGroup>().Configure(0, 2, 2, 0f, 1f, 1f);
+            for (int i = 0; i < GroveMist.Length; i++)
+            {
+                var v = GroveMist[i];
+                Material m = MaterialFor("V5_Fog_GroveMist", "DD/FogSheet", mat =>
+                {
+                    mat.SetFloat("_PeakAlpha", v.alpha);
+                    mat.SetFloat("_EdgeSoftness", 2f);
+                    mat.SetFloat("_NoiseScale", 12f);
+                    mat.SetFloat("_NoiseSpeed", 0.3f);
+                });
+                Piece(grove, "GroveMist_" + i.ToString("00"), new Vector3(v.at.x, v.y, v.at.y), new Vector3(v.size.x, 1f, v.size.y), fogMesh, m);
                 n++;
             }
 

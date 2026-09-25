@@ -28,6 +28,7 @@ Material:
     - _AlongFalloff: 0.35
     - _DepthFade: 0.8
     - _EdgeSoftness: 0.4
+    - _MinLit: 0
     - _NoiseScale: 5
     - _NoiseSpeed: 0.25
     - _PeakAlpha: 0.2

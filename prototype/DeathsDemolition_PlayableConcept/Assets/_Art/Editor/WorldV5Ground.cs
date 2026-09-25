@@ -82,11 +82,11 @@ namespace DD.Art.Pipeline.EditorTools
             // WP-075 AD S1: the slate read beige (hue ≈ 35°, V ≈ 0.70 in the sun) → value 2.5 → 2.0 with a cool tint (AlbedoTint), toward
             // #6C7680 (205–215°, V 0.42–0.52 sun / 0.30–0.38 shade); puddles only from the world field (3–6 m blobs, off the tile grid),
             // smoothness 0.72 in them and 0.55 on the wet body.
-            // DEC-101 (HF: a mirror-wet courtyard under a bright overcast sky): the wet body 0.55 → 0.70, puddles 0.72 → 0.86 and
+            // DEC-101 (HF: a mirror-wet courtyard under a bright overcast sky): the wet body 0.55 → 0.78, value 2.0 → 4.0 (C-00: slate under cloud V 0.30–0.38), puddles 0.72 → 0.86 and
             // larger (5.5 m, field 0.56 ≈ 40 % cover) — AD S1's ≤ 8 % specular area belonged to the sunny v3 key.
-            ("_NormalStrength", 1f), ("_Occlusion", 1f), ("_Wetness", 1f), ("_WetAlbedo", 0.82f), ("_WetSmoothness", 0.70f),
+            ("_NormalStrength", 1f), ("_Occlusion", 1f), ("_Wetness", 1f), ("_WetAlbedo", 0.82f), ("_WetSmoothness", 0.78f),
             ("_PuddleThreshold", 0.45f), ("_PuddleRamp", 0.15f), ("_PuddleSmoothness", 0.86f), ("_PuddleDarken", 0.85f), ("_TilePuddle", 0f),
-            ("_PuddleScale", 5.5f), ("_PuddleField", 0.56f), ("_PuddleFieldRamp", 0.06f), ("_AlbedoSaturation", 0.28f), ("_AlbedoValue", 2.0f),
+            ("_PuddleScale", 5.5f), ("_PuddleField", 0.56f), ("_PuddleFieldRamp", 0.06f), ("_AlbedoSaturation", 0.28f), ("_AlbedoValue", 4.0f),
             ("_PlanarStrength", 1f), ("_PlanarDistortion", 0.03f), ("_PlanarWet", 0.35f),
         };
 

@@ -16,6 +16,7 @@ Shader "DD/ShaftCard"
         _AlongFalloff("Brightness at the ground end (× top)", Range(0, 1)) = 0.35
         _DepthFade("Soft intersection (m)", Range(0.05, 3)) = 0.8
         _NearFade("Camera fade (start, end m)", Vector) = (4, 12, 0, 0)
+        _MinLit("Lit floor under cloud (DEC-101 grove scattering; 0 = the cookie alone)", Range(0, 1)) = 0
         _NoiseScale("Noise scale (m)", Range(0.5, 20)) = 5
         _NoiseSpeed("Noise speed (m/s)", Range(0, 2)) = 0.25
         _TierAlpha("Tier alpha (AtmosphereTierGroup)", Range(0, 1)) = 1
@@ -52,6 +53,7 @@ Shader "DD/ShaftCard"
                 half _AlongFalloff;
                 half _DepthFade;
                 float4 _NearFade;
+                half _MinLit;
             CBUFFER_END
 
             struct Attributes { float4 positionOS : POSITION; float2 uv : TEXCOORD0; UNITY_VERTEX_INPUT_INSTANCE_ID };
@@ -121,7 +123,7 @@ Shader "DD/ShaftCard"
                 half nearFade = saturate((input.screenPos.w - _NearFade.x) / max(_NearFade.y - _NearFade.x, 0.01));
                 half view = 1.0h - pow(saturate(input.axial), 4.0h);
                 half noise = lerp(0.6h, 1.0h, ShaftNoise(input.positionWS.xz / _NoiseScale + _Time.y * _NoiseSpeed));
-                half a = _PeakAlpha * _TierAlpha * input.lit * edge * along * noise * soft * nearFade * view;
+                half a = _PeakAlpha * _TierAlpha * max(input.lit, _MinLit) * edge * along * noise * soft * nearFade * view;
                 half3 c = min(_Color.rgb * a, 0.99h);
                 c = MixFogColor(c, half3(0, 0, 0), input.fogFactor);   // additive: fog fades it to nothing
                 return half4(c, 0);

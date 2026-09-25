@@ -29,7 +29,7 @@ Material:
     - _EdgeSoftness: 8
     - _NoiseScale: 32
     - _NoiseSpeed: 0.25
-    - _PeakAlpha: 0.1
+    - _PeakAlpha: 0.08
     - _TierAlpha: 1
     m_Colors:
     - _LitColor: {r: 0.81499994, g: 0.7609999, b: 0.66499996, a: 1}
