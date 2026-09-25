@@ -25,6 +25,8 @@ namespace DD.Prototype.Tests.PlayMode
         private GameObject _zemin, _govde, _hedef;
         private PrototypeCameraRig _rig;
         private CameraModeSettings _before;
+        private IInputSource _oncekiGirdi;
+        private CameraMode _oncekiMod;
 
         [UnitySetUp]
         public IEnumerator Kur()
@@ -45,10 +47,12 @@ namespace DD.Prototype.Tests.PlayMode
             _govde.transform.SetPositionAndRotation(Kok, Quaternion.identity);
             _hedef = new GameObject("CameraFollow");
             _hedef.transform.SetParent(_govde.transform, false);
+            _oncekiGirdi = InputSourceRegistry.Current;   // restored in teardown: the installer sets the real source once per process
             InputSourceRegistry.SetCurrent(new KameraBakisGirdisi());
             _rig = CameraRigFactory.EnsureRig(_hedef.transform);
             Assert.IsNotNull(_rig);
             _before = CameraModeService.Settings;
+            _oncekiMod = CameraModeService.Current;
             Time.captureDeltaTime = 1f / 60f;
             CameraModeService.Request(CameraMode.FirstPerson, instant: true);
             _rig.SetViewAngles(0f, 0f);
@@ -61,8 +65,9 @@ namespace DD.Prototype.Tests.PlayMode
         {
             Time.captureDeltaTime = 0f;
             CameraShakeService.StopAll();
-            InputSourceRegistry.Clear();
+            InputSourceRegistry.SetCurrent(_oncekiGirdi);   // not Clear(): later fixtures need the real source (S-01, as 34927489)
             if (_before != null) CameraModeService.ApplySettings(_before, false, true);
+            CameraModeService.Request(_oncekiMod, instant: true);   // the mode these tests forced (first person) does not leak either
             CameraModesFeel.ActiveRow = null;
             if (_rig != null) Object.Destroy(_rig.gameObject);
             if (_govde != null) Object.Destroy(_govde);
