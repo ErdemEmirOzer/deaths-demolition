@@ -18,7 +18,7 @@ namespace DD.Prototype.UI
     /// that open behind it start their intro on <see cref="Revealed"/> instead of Start().
     /// Slice 10a: the flow core with plain doors and ring. Slice 10b-1: the SCREEN group
     /// stands on the Look B plates (far; far + mid on the way into the run) under a
-    /// Sumi900 scrim 0.55 → 0.80, a tip strip bottom-left (U9, <see cref="UiLoadingTips"/>),
+    /// Sumi900 scrim 0.55 → 0.80 (R1-D: on the loading key art, the plates its fallback), a tip strip bottom-left (U9, <see cref="UiLoadingTips"/>),
     /// the 10 s stall notice, the Reduced Motion percent line, the load error modal and the
     /// S-08 cues (CurtainClosed from the flow, CurtainOpened here). The InkReveal ring stroke,
     /// the seal device, the ink variant and the boot hand-off are 10b-2.
@@ -112,11 +112,13 @@ namespace DD.Prototype.UI
         private RawImage _plateMid;
 
         /// <summary>
-        /// WP-068 R1-D (N20): the destination's painted key art - the sumi-e series of the round-end wallpaper, clamped to
-        /// L ≤ 0.024 so every word on the screen keeps its contrast. Over the plates, under the ring, labels and tip strip.
+        /// WP-068 R1-D (N20): the loading screen's key art - the rainy castle courtyard, the ronin, the horde at the gate
+        /// (Higgsfield). Full and rich except under the words: darkened there so the ring, the labels and the tip strip keep
+        /// their contrast (LoadingKeyArtTests). Over the plates, under the ring, labels and tip strip.
         /// </summary>
         private RawImage _keyArt;
         private UiTweenHandle _keyArtPush;
+        private ResourceRequest _keyArtLoad;
 
         /// <summary>The slow push-in over a load (AE-class motion, Decor: Reduced Motion holds it still).</summary>
         public const float KeyArtPushScale = 1.05f;
@@ -202,15 +204,16 @@ namespace DD.Prototype.UI
             get { return _keyArt != null && _keyArt.gameObject.activeSelf && _keyArt.texture != null; }
         }
 
+        /// <summary>The loading key art (Resources path).</summary>
+        public const string LoadingKeyArt = "UI/Wallpapers/loading_keyart";
+
         /// <summary>
-        /// The key art for a destination: the way into the run (the ronin climbing to the gate) and the way to the Results
-        /// (the ronin kneeling by his planted blade); the menus keep the Look B plates (the world itself).
+        /// The key art for a destination: one painted scene for every load (C-00 25.09, the user: no runtime frame of an
+        /// empty world behind the ring). The Look B plates stay only as the fallback when the art cannot load.
         /// </summary>
         public static string KeyArtFor(string scene)
         {
-            if (scene == PrototypeScenes.Run) return "UI/Wallpapers/loading_run";
-            if (scene == PrototypeScenes.Results) return "UI/Wallpapers/loading_results";
-            return null;
+            return LoadingKeyArt;
         }
 
         public bool MidPlateVisible
@@ -258,7 +261,10 @@ namespace DD.Prototype.UI
             _scrimFoot = UiFactory.NewImage("ScrimFoot", groupRect, UiColor.SurfaceInset, UiSprites.FadeUp);
             UiFactory.Fill((RectTransform)_scrimFoot.transform);
             _scrimFoot.color = WithAlpha(UiTokens.Get(UiColor.SurfaceInset), 1f - (1f - ScrimBottom) / (1f - ScrimTop));
-            _keyArt = Plate("KeyArt", groupRect);   // above the scrims: the art is already text-safe (clamped)
+            _keyArt = Plate("KeyArt", groupRect);   // above the scrims: the art is text-safe where the words sit
+            // Warm the art now (behind the boot seal): a synchronous load on the first SCREEN would hitch the group's
+            // first frame and eat its minimum display.
+            _keyArtLoad = Resources.LoadAsync<Texture2D>(LoadingKeyArt);
 
             // The ensō device (10b-2, §15.3): the dry ghost circle, the stroke drawn at real
             // progress whose last WetBand is still wet (cream 0.6 under the dry cream, so the band
@@ -520,6 +526,7 @@ namespace DD.Prototype.UI
             _scrimFoot.gameObject.SetActive(false);
             _plateFar.gameObject.SetActive(false);
             _plateMid.gameObject.SetActive(false);
+            HideKeyArt();
             SetTip(null);
             if (_stall != null)
             {
@@ -744,18 +751,20 @@ namespace DD.Prototype.UI
         /// <summary>Cover-fit: the texture fills the screen at any aspect without stretching (centre crop).</summary>
         private void CoverTexture(RawImage image, Texture texture)
         {
-            float screenAspect = _root.rect.width / Mathf.Max(1f, _root.rect.height);
-            float textureAspect = (float)texture.width / Mathf.Max(1, texture.height);
+            image.uvRect = CoverUv(_root.rect.width / Mathf.Max(1f, _root.rect.height), (float)texture.width / Mathf.Max(1, texture.height));
+        }
+
+        /// <summary>The part of a texture a cover-fit shows (centre crop), as a uvRect (LoadingKeyArtTests maps the words through it).</summary>
+        public static Rect CoverUv(float screenAspect, float textureAspect)
+        {
             if (screenAspect >= textureAspect)
             {
                 float h = textureAspect / screenAspect;
-                image.uvRect = new Rect(0f, (1f - h) * 0.5f, 1f, h);
+                return new Rect(0f, (1f - h) * 0.5f, 1f, h);
             }
-            else
-            {
-                float w = screenAspect / textureAspect;
-                image.uvRect = new Rect((1f - w) * 0.5f, 0f, w, 1f);
-            }
+
+            float w = screenAspect / textureAspect;
+            return new Rect((1f - w) * 0.5f, 0f, w, 1f);
         }
 
         private RectTransform Door(string name, float anchorMinX, float anchorMaxX)
@@ -852,11 +861,11 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>
-        /// SCREEN depth with its plate and tip: far plate always, the mid plate too on the way into
-        /// the run (the lanterns lit: where you are going); <paramref name="tip"/> null = no strip
+        /// SCREEN depth with its key art and tip (the plates - far always, mid too on the way into the
+        /// run - only when the art cannot load); <paramref name="tip"/> null = no strip
         /// (Boot, Results, the Pause abort). Reduced Motion shows the static RM line instead.
         /// </summary>
-        public void ShowGroup(string destination, string subline, string tip, bool midPlate, string keyArt = null)
+        public void ShowGroup(string destination, string subline, string tip, bool midPlate, string keyArt = LoadingKeyArt)
         {
             _eyebrow.text = "LOADING";
             _eyebrowState = "LOADING";
@@ -891,7 +900,9 @@ namespace DD.Prototype.UI
         private void ShowKeyArt(string resource)
         {
             UiMotion.Kill(_keyArtPush, false);
-            Texture2D art = string.IsNullOrEmpty(resource) ? null : Resources.Load<Texture2D>(resource);
+            Texture2D art = string.IsNullOrEmpty(resource)
+                ? null
+                : resource == LoadingKeyArt && _keyArtLoad != null ? _keyArtLoad.asset as Texture2D : Resources.Load<Texture2D>(resource);
             if (art == null)
             {
                 _keyArt.gameObject.SetActive(false);

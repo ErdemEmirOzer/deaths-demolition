@@ -267,8 +267,10 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void DokuSinifi_1024VeButce()
         {
-            string[] files = Directory.GetFiles(ArtFolder, "*.png", SearchOption.AllDirectories);
-            Assert.Greater(files.Length, 0, "UI PNG'leri bulunamadı: " + ArtFolder);
+            // PNG and JPEG sources both count (R1-D: the loading key art is a JPEG).
+            string[] files = System.Array.FindAll(Directory.GetFiles(ArtFolder, "*", SearchOption.AllDirectories),
+                f => f.EndsWith(".png", System.StringComparison.OrdinalIgnoreCase) || f.EndsWith(".jpg", System.StringComparison.OrdinalIgnoreCase));
+            Assert.Greater(files.Length, 0, "UI görselleri bulunamadı: " + ArtFolder);
 
             long total = 0;
             foreach (string file in files)

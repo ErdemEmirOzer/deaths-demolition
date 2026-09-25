@@ -14,9 +14,8 @@ namespace DD.Prototype.Tests.EditMode
     {
         private static readonly string[] SourcePaths =
         {
-            "Assets/_Prototype/UI/Art/Resources/UI/Wallpapers/upgrade_wallpaper.png",
-            "Assets/_Prototype/UI/Art/Resources/UI/Wallpapers/loading_run.png",       // R1-D (N20) key art
-            "Assets/_Prototype/UI/Art/Resources/UI/Wallpapers/loading_results.png"
+            "Assets/_Prototype/UI/Art/Resources/UI/Wallpapers/upgrade_wallpaper.png"
+            // the loading key art is full and rich, darkened only under the words: LoadingKeyArtTests
         };
         private const float LuminanceCeiling = 0.0245f;
 
@@ -54,12 +53,11 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(2560, art.width, "full size, never downsized");
             Assert.AreEqual(1440, art.height);
             Assert.AreEqual(1, art.mipmapCount, "a UI backdrop has no mips");
-            foreach (string key in new[] { UiCurtain.KeyArtFor(DD.Prototype.Core.Boot.PrototypeScenes.Run), UiCurtain.KeyArtFor(DD.Prototype.Core.Boot.PrototypeScenes.Results) })
-            {
-                Texture2D keyArt = Resources.Load<Texture2D>(key);
-                Assert.IsNotNull(keyArt, key);
-                Assert.AreEqual(1, keyArt.mipmapCount, key + ": no mips");
-            }
+            Texture2D keyArt = Resources.Load<Texture2D>(UiCurtain.LoadingKeyArt);
+            Assert.IsNotNull(keyArt, UiCurtain.LoadingKeyArt);
+            Assert.AreEqual(2560, keyArt.width, "the key art at full size");
+            Assert.AreEqual(1440, keyArt.height);
+            Assert.AreEqual(1, keyArt.mipmapCount, "the key art: no mips");
         }
     }
 }

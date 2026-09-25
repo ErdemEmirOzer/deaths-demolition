@@ -72,7 +72,7 @@ namespace DD.Prototype.Tests.PlayMode
             UiCurtain curtain = UiCurtain.Instance;
             float lastFill = 0f;
             float groupFrom = -1f, enteringAt = -1f;
-            bool heldWhileGroup = false, sawTip = false, sawPlate = false, sawWetBand = false, wetCream = false, sealAtRest = false;
+            bool heldWhileGroup = false, sawTip = false, sawArt = false, sawWetBand = false, wetCream = false, sealAtRest = false;
             float deadline = Time.realtimeSinceStartup + 60f;
             // IsLoading ends at activation; the doors open after it - watch until both are done.
             while ((PrototypeUiFlow.IsLoading || UiCurtain.IsCovering) && Time.realtimeSinceStartup < deadline)
@@ -86,7 +86,7 @@ namespace DD.Prototype.Tests.PlayMode
                 if (curtain.GroupVisible)
                 {
                     sawTip |= !string.IsNullOrEmpty(curtain.TipText);
-                    sawPlate |= curtain.PlateVisible;
+                    sawArt |= curtain.KeyArtVisible && !curtain.PlateVisible;
                     if (groupFrom < 0f) groupFrom = Time.realtimeSinceStartup;
                     Assert.GreaterOrEqual(curtain.RingFill, lastFill - 1e-4f, "halka geri gitmez");
                     lastFill = curtain.RingFill;
@@ -132,7 +132,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsTrue(File.Exists(_timingPath), "ölçüm load-timing.json'a yazıldı");
             Assert.IsFalse(File.Exists(_settingsPath), "yükleme ui-settings.json yazmaz (yalnız oyuncu ayar değiştirince)");
             Assert.IsTrue(sawTip, "10b: MainMenu → Selection ekranında ipucu şeridi");
-            Assert.IsTrue(sawPlate, "10b: SCREEN derinliği Look B plakası üstünde");
+            Assert.IsTrue(sawArt, "R1-D: SCREEN derinliği anahtar sanat üstünde (plakalar kenarda)");
             Assert.IsTrue(sawWetBand, "10b-2: ıslak uç darbenin son 0,04'ü, ilerlemede biter");
             Assert.IsTrue(wetCream, "AD 10b-2 MUST-1: ıslak uç krem α 0,6");
             Assert.IsTrue(sealAtRest, "10b-2: mühür yüklenirken dinlenme mürekkebinde (α 0,35)");
@@ -140,35 +140,30 @@ namespace DD.Prototype.Tests.PlayMode
         }
 
         /// <summary>
-        /// R1-D (N20): the way into the run and the way to the Results show their painted key art over the plates (the
-        /// plates step aside); the menus keep the plates; the ring-only depth shows neither.
+        /// R1-D (N20, C-00 25.09): every destination shows the one painted key art over the plates (the plates step aside;
+        /// no runtime frame of an empty world); the ring-only depth shows neither.
         /// </summary>
         [UnityTest]
         [Timeout(120000)]
-        public IEnumerator AnahtarSanat_KosuVeResults_MenulerPlaka_HalkaYalnizHicbiri()
+        public IEnumerator AnahtarSanat_HerHedefte_HalkaYalnizHicbiri()
         {
             PrototypeUiFlow.FastTransitions = true;
             yield return BootTanMainMenuye();
             PrototypeUiFlow.FastTransitions = false;
             UiCurtain curtain = UiCurtain.Instance;
             Assert.IsNotNull(curtain);
-            Assert.IsNotNull(UiCurtain.KeyArtFor(PrototypeScenes.Run));
-            Assert.IsNotNull(UiCurtain.KeyArtFor(PrototypeScenes.Results));
-            Assert.IsNull(UiCurtain.KeyArtFor(PrototypeScenes.MainMenu), "the menus keep the Look B plates");
+            foreach (string scene in new[] { PrototypeScenes.MainMenu, PrototypeScenes.Selection, PrototypeScenes.Run, PrototypeScenes.Results })
+            {
+                Assert.AreEqual(UiCurtain.LoadingKeyArt, UiCurtain.KeyArtFor(scene), scene);
+                curtain.ShowGroup(UiCurtain.DestinationFor(scene), string.Empty, null, scene == PrototypeScenes.Run, UiCurtain.KeyArtFor(scene));
+                yield return null;
+                Assert.IsTrue(curtain.KeyArtVisible, scene + ": the key art shows");
+                Assert.IsFalse(curtain.PlateVisible || curtain.MidPlateVisible, scene + ": the plates step aside under the opaque art");
+            }
 
-            curtain.ShowGroup(UiCurtain.DestinationFor(PrototypeScenes.Run), string.Empty, null, true, UiCurtain.KeyArtFor(PrototypeScenes.Run));
+            curtain.ShowGroup("ROUND 1", string.Empty);
             yield return null;
-            Assert.IsTrue(curtain.KeyArtVisible, "the run's key art shows");
-            Assert.IsFalse(curtain.PlateVisible, "the plates step aside under the opaque art");
-
-            curtain.ShowGroup(UiCurtain.DestinationFor(PrototypeScenes.MainMenu), string.Empty, null, false, UiCurtain.KeyArtFor(PrototypeScenes.MainMenu));
-            yield return null;
-            Assert.IsFalse(curtain.KeyArtVisible, "no key art for the menu");
-            Assert.IsTrue(curtain.PlateVisible, "the menu keeps its plate");
-
-            curtain.ShowGroup(UiCurtain.DestinationFor(PrototypeScenes.Results), string.Empty, null, false, UiCurtain.KeyArtFor(PrototypeScenes.Results));
-            yield return null;
-            Assert.IsTrue(curtain.KeyArtVisible, "the Results' key art shows");
+            Assert.IsTrue(curtain.KeyArtVisible, "the short overload shows the key art too");
             curtain.ShowRingOnly();
             yield return null;
             Assert.IsFalse(curtain.KeyArtVisible, "the ring-only depth shows no art");
@@ -245,7 +240,7 @@ namespace DD.Prototype.Tests.PlayMode
             {
                 sawInk |= curtain.InkCovering;
                 sawDoors |= curtain.DoorsShut && curtain.InkCovering;
-                sawPlateGroup |= curtain.GroupVisible && curtain.PlateVisible;
+                sawPlateGroup |= curtain.GroupVisible && (curtain.PlateVisible || curtain.KeyArtVisible);
                 if (curtain.InkCovering && !curtain.InkReceding && ResultsDrawn())
                 {
                     resultsDrawnUnderInk++;
@@ -259,7 +254,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(PrototypeScenes.Results, SceneManager.GetActiveScene().name, "Results açıldı");
             Assert.IsTrue(sawInk, "ölüm vuruşunda mürekkep sızdı");
             Assert.IsFalse(sawDoors, "mürekkep varyantında kapı çizilmez");
-            Assert.IsFalse(sawPlateGroup, "mürekkep varyantında plaka grubu yok");
+            Assert.IsFalse(sawPlateGroup, "mürekkep varyantında plaka / anahtar sanat grubu yok");
             Assert.IsFalse(curtain.InkCovering, "açılışta mürekkep çekildi");
             Assert.GreaterOrEqual(resultsDrawnUnderInk, 1, "AD 10b-2 MUST-2: Results mürekkep çekilmeden önce en az bir kare çizili (çekilme boş alan açmaz)");
         }
@@ -332,7 +327,7 @@ namespace DD.Prototype.Tests.PlayMode
                 float t0 = Time.realtimeSinceStartup;
                 SceneManager.LoadScene(PrototypeScenes.Boot, LoadSceneMode.Single);
                 yield return Bekle(() => UiCurtain.Instance != null && UiCurtain.Instance.BootVisible, 10f, "mühür görünmedi");
-                Assert.IsFalse(UiCurtain.Instance.GroupVisible && UiCurtain.Instance.PlateVisible, "mühür varyantında plaka yok");
+                Assert.IsFalse(UiCurtain.Instance.GroupVisible && (UiCurtain.Instance.PlateVisible || UiCurtain.Instance.KeyArtVisible), "mühür varyantında plaka / anahtar sanat yok");
                 yield return Bekle(() => SceneManager.GetActiveScene().name == PrototypeScenes.MainMenu && !UiCurtain.IsCovering, 30f, "ana menü açılmadı");
                 float revealed = Time.realtimeSinceStartup - t0;
                 Assert.AreEqual(1, bells, "tek BootLogo çanı (mühür teması)");
@@ -465,7 +460,7 @@ namespace DD.Prototype.Tests.PlayMode
             curtain.ShowGroup("ROUND 1", "ASSAULT RIFLE", "Unspent gold carries into the next round.", true);
             yield return null;
             Assert.AreEqual("ASSAULT RIFLE", curtain.SublineText, "koşuya giden alt satır silah adı");
-            Assert.IsTrue(curtain.MidPlateVisible, "koşuya giderken orta plaka (fenerler)");
+            Assert.IsTrue(curtain.KeyArtVisible, "koşuya giderken anahtar sanat (R1-D; plakalar yalnız yedek)");
             curtain.ShowStalled();
             Assert.IsTrue(curtain.StallVisible, "10 s takılma bildirimi");
 
