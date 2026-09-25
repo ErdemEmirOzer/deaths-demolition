@@ -441,5 +441,13 @@ namespace DD.Prototype.Tests.EditMode
             RunTreeHooks.CountWeaponHit(ClassicWeaponId.Lmg1, 0f);
             Assert.AreEqual(0, RunTreeHooks.CapHitCount);
         }
+
+        [Test]
+        public void Muhur_sg_2_HudKovanBasinaPellet_CekisBasinaDegil()
+        {
+            Kos(ClassicWeaponId.Sg2, "seal_sg_2");
+            Assert.AreEqual(20, RunTreeHooks.PelletCount(ClassicWeaponId.Sg2, 10, 2), "iki namlu dolu: çekişte 20");
+            Assert.AreEqual(10, RunTreeHooks.PelletCount(ClassicWeaponId.Sg2, 10, 1), "HUD kovan başına: 10 (namlu sayısından bağımsız)");
+        }
     }
 }

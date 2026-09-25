@@ -174,6 +174,12 @@ namespace DD.Prototype.Weapons
 
         public int PelletCount => _settings != null ? Mathf.Max(1, DD.Prototype.Rounds.RunTreeHooks.PelletCount(Id, _settings.PelletCount, InfiniteAmmo ? int.MaxValue : Ammo)) : 1;   // + WP-077 seal.sg_1 / fork.sg_1.y / seal.sg_2
 
+        /// <summary>
+        /// Pellets in ONE shell (the tree's extra pellets included, seal.sg_2's second barrel not) — what the HUD's
+        /// ammo ladder lays out. PelletCount is per trigger pull and doubles on sg_2 while two rounds are loaded.
+        /// </summary>
+        public int PelletsPerShell => _settings != null ? Mathf.Max(1, DD.Prototype.Rounds.RunTreeHooks.PelletCount(Id, _settings.PelletCount, 1)) : 1;
+
         /// <summary>Shotguns are Heavy, SMGs Light, everything else Medium. Gates hit-stop.</summary>
         public WeaponPower Power
         {

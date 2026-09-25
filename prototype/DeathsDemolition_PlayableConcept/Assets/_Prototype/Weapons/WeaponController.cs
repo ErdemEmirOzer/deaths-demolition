@@ -939,7 +939,7 @@ namespace DD.Prototype.Weapons
                 TemporarilyDisabled = _special.IsActive,
                 BuildDescription = _modifiers.DescribeBuild(),
                 CurrentSpreadDegrees = _classic.CurrentSpreadDegrees,   // WP-068 U12a honest reticle
-                PelletCount = _classic.PelletCount,
+                PelletCount = _classic.PelletsPerShell,   // WP-077: per shell — the ladder must not re-lay on every sg_2 seal pull
                 PelletRingDegrees = _classic.PelletRingDegrees,
                 ReserveAmmo = _classic.ReserveAmmo,
                 ReserveInfinite = _classic.ReserveInfinite,
