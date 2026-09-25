@@ -95,6 +95,9 @@ namespace DD.Prototype.Audio
         /// <summary>Cues refused by the retrigger gate. Usually the largest of the three.</summary>
         public int RetriggerBlockedCount { get; private set; }
 
+        /// <summary>Diagnosis: unscaled time this sound last started (−1 = never).</summary>
+        public float LastPlayedAt(AudioSoundId sound) => _lastPlayed.TryGetValue(sound, out float t) ? t : -1f;
+
         /// <summary>The last sound that lost. Names the victim, which is what makes the number useful.</summary>
         public AudioSoundId LastDropped { get; private set; }
 

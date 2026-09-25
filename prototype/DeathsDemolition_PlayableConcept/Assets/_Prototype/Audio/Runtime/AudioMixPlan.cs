@@ -789,6 +789,16 @@ namespace DD.Prototype.Audio
         }
 
         /// <summary>An ambience scatter one-shot. The lowest priority in the game, by design.</summary>
+        /// <summary>WP-072 · DEC-102: an eave / leaf drip — drops come 0.9–2.6 s apart and may overlap (the scatter's 1.5 s / 1 voice would drop half).</summary>
+        public static AudioPlacement AmbientDrip(AudioSoundId sound, float gain)
+        {
+            AudioPlacement p = AmbientOneShot(sound, gain);
+            p.MaxInstances = 3;
+            p.MinRetrigger = 0.25f;
+            p.PitchJitter = 0.08f;
+            return p;
+        }
+
         public static AudioPlacement AmbientOneShot(AudioSoundId sound, float gain)
         {
             return new AudioPlacement

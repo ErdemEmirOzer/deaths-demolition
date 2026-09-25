@@ -293,7 +293,12 @@ namespace DD.Prototype.Audio
             B(AudioEventSource.Animation, "anim.foot_l/foot_r → player, plate water_deep", AudioSoundId.FootstepWaterDeep, W, true, "waits for a wading-depth signal (the pond basin is not walkable; the surface reads shallow)", true),
             B(AudioEventSource.Animation, "anim.foot_l/foot_r → player, plate gravel", AudioSoundId.FootstepGravel, W, true, "AP015_ground_center plate = the gravel courtyard (WP-058B)"),
             B(AudioEventSource.Animation, "anim.foot_l/foot_r → player, plate pavement", AudioSoundId.FootstepPavement, W, true, "AP015_paving_* plates = cut stone (WP-058B)"),
-            B(AudioEventSource.Ambience, "scatter.thunder", AudioSoundId.AmbThunderDistant, A, true, "Look B: distant thunder every 40-90 s, far and low (v007)"),
+            B(AudioEventSource.Ambience, "scatter.thunder", AudioSoundId.AmbThunderDistant, A, true, "Look B: distant thunder every 40-90 s, far and low (v007) — off while DEC-102 AfterRainAmbience.SunnyAfterRain (birds instead)"),
+            // ---- WP-072 · DEC-102 post-rain sunny courtyard (AfterRainAmbience, AP-011 v022)
+            B(AudioEventSource.Ambience, "scatter.birds_distant", AudioSoundId.AmbBirdsDistant, A, true, "every 6-14 s, 25-40 m out and above the eaves; −8 dB while the listener is in a Hall / Corridor"),
+            B(AudioEventSource.Ambience, "scatter.eave_drip", AudioSoundId.AmbEaveDrip, A, true, "every 0.9-2.6 s at the nearest eave point (fūrin hang points ≤ 14 m); inside a space 2-4 m around; in the open a slower 3-9 m ring"),
+            B(AudioEventSource.Ambience, "zone.bamboo_grove / scatter.bamboo_gust / scatter.bamboo_drip", AudioSoundId.AmbBambooGroveLoop, A, true, "nearest grove ≤ 35 m (bamboo stalk / cluster clusters): 3D rustle bed, a gust every 12-26 s, leaf drips 0.4-0.9 s after it"),
+            B(AudioEventSource.Animation, "anim.foot_l/foot_r → player on wet stone (DEC-102)", AudioSoundId.FootstepWetLayer, W, true, "thin water-film layer under a Stone / Default step while WetLook (~ −5 dB)"),
             B(AudioEventSource.Ambience, "scatter.drip_slate", AudioSoundId.AmbDripSlate, A, true, "Look B: wet-slate drips in the scatter ring (v007)"),
             B(AudioEventSource.Ambience, "Pond.bed", AudioSoundId.AmbPondBed, A, true, "Look B: koi pond water bed at the pond (3D loop, distance-faded) (v007)"),
             B(AudioEventSource.Ambience, "WindChime.furin", AudioSoundId.AmbFurin, A, true, "WP-065C: AP-017 fūrin (eaves) ring with WorldWind.Strength, nearest chime ≤ 12 m, AmbienceDirector.TickFurin (v014)"),

@@ -83,6 +83,16 @@ namespace DD.Prototype.Audio
         private AudioSource _pond;
         private float _pondLevel;
         public int ThunderCount { get; private set; }
+
+        private readonly AfterRainAmbience _afterRain;
+
+        private System.Func<Vector3> _listenerAt;
+
+        /// <summary>The ear the world voices are heard from (the player-anchored listener, ADR-021-2).</summary>
+        public void SetListener(System.Func<Vector3> listener) => _listenerAt = listener;
+
+        /// <summary>WP-072 · DEC-102 post-rain sunny courtyard layers (test / F1).</summary>
+        public AfterRainAmbience AfterRain => _afterRain;
         public bool PondPlaying => _pond != null && _pond.isPlaying;
 
         private float _healClock;
@@ -181,6 +191,7 @@ namespace DD.Prototype.Audio
             _mixer = mixer;
             _worldPool = worldPool;
             _map = map;
+            _afterRain = new AfterRainAmbience(library, worldPool, root);   // WP-072 · DEC-102
 
             for (int i = 0; i < BedCount; i++)
             {
@@ -429,11 +440,24 @@ namespace DD.Prototype.Audio
             if (!WetLook)
             {
                 if (_pond != null && _pond.isPlaying) { _pond.Stop(); _pondLevel = 0f; }
+                _afterRain.Stop();
                 return;
             }
 
+            // WP-072 · DEC-102: the sun is out after the rain — birds, eave / bamboo drips and the grove instead of thunder.
+            if (AfterRainAmbience.SunnyAfterRain)
+            {
+                // The listener sits at the player's head (ADR-021-2), not at the camera: drips and grove are near the ear.
+                Vector3 listenerAt = _listenerAt != null ? _listenerAt() : (_root != null ? _root.position : Vector3.zero);
+                _afterRain.Tick(unscaledDeltaTime, busGain, _regionLevel, _phase == RunPhase.Fighting, listenerAt, _sources[Common].outputAudioMixerGroup);
+            }
+            else
+            {
+                _afterRain.Stop();
+            }
+
             _thunderCountdown -= unscaledDeltaTime;
-            if (_thunderCountdown <= 0f)
+            if (!AfterRainAmbience.SunnyAfterRain && _thunderCountdown <= 0f)
             {
                 _thunderCountdown = _rng.Range(ThunderMin, ThunderMax);
                 AudioClip clip = _library.Next(AudioSoundId.AmbThunderDistant, out int _);
@@ -634,6 +658,7 @@ namespace DD.Prototype.Audio
             }
 
             if (_pond != null) { _pond.Stop(); _pondLevel = 0f; }
+            _afterRain?.Stop();
             Started = false;
         }
 

@@ -1,5 +1,5 @@
 {
- "version": "ap011-v021",
+ "version": "ap011-v022",
  "package": "AP-011",
  "standard": {
   "sfxLufs": -18.0,
@@ -11,6 +11,77 @@
   "bitDepth": 24
  },
  "entries": [
+  {
+   "sound": "AmbBambooDrip",
+   "event": "scatter.bamboo_drip (DEC-102: drops shaken from bamboo leaves)",
+   "files": [
+    "AmbBambooDrip_01.wav",
+    "AmbBambooDrip_02.wav",
+    "AmbBambooDrip_03.wav",
+    "AmbBambooDrip_04.wav"
+   ],
+   "loop": false,
+   "lufs": -24.0,
+   "truePeakDb": -3.0,
+   "noiseFloorDb": -120.0,
+   "dcDb": -129.1,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -24.0,
+   "ceilingDbtp": -3.0,
+   "continuous": false,
+   "endSilenceDb": -240.0,
+   "layers": "derived (v005)",
+   "bus": "Ambience",
+   "spatial": true,
+   "provenance": "derived offline (AP-011 v022, WP-072 DEC-102, 0 cr) from v001–v006 ambience / footstep takes + synthesis · leaf shake (crackle burst) + 2–5 drops: leaf tap (mode 1.2–2.4 k) or soft ground pat (LP 1.5 k), occasional bead plink; IR_Open −20 dB"
+  },
+  {
+   "sound": "AmbBambooGroveLoop",
+   "event": "zone.bamboo_grove (loop bed, DEC-102, no rain)",
+   "files": [
+    "AmbBambooGroveLoop.wav"
+   ],
+   "loop": true,
+   "lufs": -25.95,
+   "truePeakDb": -6.54,
+   "noiseFloorDb": -120.0,
+   "dcDb": -220.6,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -25.95,
+   "ceilingDbtp": -1.5,
+   "continuous": true,
+   "endSilenceDb": -25.7,
+   "layers": "derived (v005)",
+   "bus": "Ambience",
+   "spatial": false,
+   "provenance": "derived offline (AP-011 v022, WP-072 DEC-102, 0 cr) from v001–v006 ambience / footstep takes + synthesis · wind curve 0.35 Hz → leaf crackle (Poisson × 4 band kernels) + leaf hiss 1.5–9 k + breeze 70–500 −9 dB + v001 amb_region_east HP 250 −8 dB + 2 synth culm creaks + 1 v001 creak +4 st; loopify 0.8 s"
+  },
+  {
+   "sound": "AmbBambooGust",
+   "event": "scatter.bamboo_gust (grove)",
+   "files": [
+    "AmbBambooGust_01.wav",
+    "AmbBambooGust_02.wav",
+    "AmbBambooGust_03.wav"
+   ],
+   "loop": false,
+   "lufs": -24.0,
+   "truePeakDb": -5.37,
+   "noiseFloorDb": -120.0,
+   "dcDb": -135.8,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -24.0,
+   "ceilingDbtp": -3.0,
+   "continuous": false,
+   "endSilenceDb": -240.0,
+   "layers": "derived (v005)",
+   "bus": "Ambience",
+   "spatial": true,
+   "provenance": "derived offline (AP-011 v022, WP-072 DEC-102, 0 cr) from v001–v006 ambience / footstep takes + synthesis · swell envelope (peak 0.5–0.9 s) driving the grove rustle (rate ≤ 900/s) + breeze; 2–3 modal culm knocks (430–720 Hz hollow) with swing-back; settle creak"
+  },
   {
    "sound": "AmbBambooKnock",
    "event": "scatter.bamboo",
@@ -34,6 +105,33 @@
    "bus": "Ambience",
    "spatial": true,
    "provenance": "derived offline (AP-011 v006, WP-021C, 0 cr) from exports/ImpactWood_01.wav, tone:800,1600@0.15"
+  },
+  {
+   "sound": "AmbBirdsDistant",
+   "event": "scatter.birds_distant (post-rain, sun out)",
+   "files": [
+    "AmbBirdsDistant_01.wav",
+    "AmbBirdsDistant_02.wav",
+    "AmbBirdsDistant_03.wav",
+    "AmbBirdsDistant_04.wav",
+    "AmbBirdsDistant_05.wav",
+    "AmbBirdsDistant_06.wav"
+   ],
+   "loop": false,
+   "lufs": -26.0,
+   "truePeakDb": -12.52,
+   "noiseFloorDb": -120.0,
+   "dcDb": -222.1,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -26.0,
+   "ceilingDbtp": -3.0,
+   "continuous": false,
+   "endSilenceDb": -240.0,
+   "layers": "derived (v005)",
+   "bus": "Ambience",
+   "spatial": true,
+   "provenance": "derived offline (AP-011 v022, WP-072 DEC-102, 0 cr) from v001–v006 ambience / footstep takes + synthesis · synthetic: 2 bush-warbler hoo-hokekyo suggestions, 2 sparrow chirp clusters, 2 white-eye twitters; HP 900, LP 5–6 k ×2, IR_Open wet −2…−4 dB"
   },
   {
    "sound": "AmbCommon",
@@ -103,6 +201,33 @@
    "bus": "Ambience",
    "spatial": true,
    "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from exports/AmbDrip_01.wav, exports/AmbDrip_02.wav, exports/ImpactWater_01.wav"
+  },
+  {
+   "sound": "AmbEaveDrip",
+   "event": "scatter.eave_drip (DEC-102 post-rain: eaves, wet slate / puddle)",
+   "files": [
+    "AmbEaveDrip_01.wav",
+    "AmbEaveDrip_02.wav",
+    "AmbEaveDrip_03.wav",
+    "AmbEaveDrip_04.wav",
+    "AmbEaveDrip_05.wav",
+    "AmbEaveDrip_06.wav"
+   ],
+   "loop": false,
+   "lufs": -22.0,
+   "truePeakDb": -3.0,
+   "noiseFloorDb": -120.0,
+   "dcDb": -117.4,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -22.0,
+   "ceilingDbtp": -3.0,
+   "continuous": false,
+   "endSilenceDb": -240.0,
+   "layers": "derived (v005)",
+   "bus": "Ambience",
+   "spatial": true,
+   "provenance": "derived offline (AP-011 v022, WP-072 DEC-102, 0 cr) from v001–v006 ambience / footstep takes + synthesis · eave drops: Minnaert plink 1.25–2.6 k (rising, 6–22 ms) + 1 ms wet tick + slate tap 1.1/2.6 k + spray; v001 amb_drip transients −10 dB; IR_Open −18 dB; 1–3 drops"
   },
   {
    "sound": "AmbFurin",
@@ -2591,6 +2716,31 @@
    "bus": "SFX-Player",
    "spatial": true,
    "provenance": "derived offline (AP-011 v007, WP-048, 0 cr) from exports/FootstepWater_01.wav, noise:white"
+  },
+  {
+   "sound": "FootstepWetLayer",
+   "event": "anim.foot_l/foot_r on stone while wet (DEC-102) — layered UNDER FootstepStone",
+   "files": [
+    "FootstepWetLayer_01.wav",
+    "FootstepWetLayer_02.wav",
+    "FootstepWetLayer_03.wav",
+    "FootstepWetLayer_04.wav"
+   ],
+   "loop": false,
+   "lufs": -22.0,
+   "truePeakDb": -3.0,
+   "noiseFloorDb": -120.0,
+   "dcDb": -130.6,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -22.0,
+   "ceilingDbtp": -3.0,
+   "continuous": false,
+   "endSilenceDb": -240.0,
+   "layers": "derived (v005)",
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "derived offline (AP-011 v022, WP-072 DEC-102, 0 cr) from v001–v006 ambience / footstep takes + synthesis · v001 footstep_water splash onsets HP 400 ×2 (no heel), +2.5…3.5 st, 30 ms hold + 40 ms decay; pink \"shlip\" 2–9 k −7 dB; spray −12 dB; ≤ 0.24 s"
   },
   {
    "sound": "FootstepWood",

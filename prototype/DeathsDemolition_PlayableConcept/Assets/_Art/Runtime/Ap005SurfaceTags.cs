@@ -148,6 +148,7 @@ namespace DD.Art
             AudioSurfaceHints.Refine = RefineByRoute;
             RegisterPond(placement);
             RegisterWindChimes(placement);
+            RegisterBambooGroves(placement);
             AudioSurfaceHints.FootstepVariant = FootstepVariantFor;   // WP-058B: AP-015P plate variants
             return added;
         }
@@ -207,6 +208,37 @@ namespace DD.Art
         }
 
         /// <summary>WP-065C: every AP-017 fūrin (hung under the eaves) → the ambience's wind-chime points.</summary>
+        /// <summary>
+        /// WP-072 · DEC-102: bamboo grove centres for the ambience's grove bed and gusts — the bamboo stalk / cluster
+        /// instances clustered greedily within 10 m; a grove needs ≥ 4 plants (a lone fence post is not a grove).
+        /// </summary>
+        private static void RegisterBambooGroves(WorldPlacementAsset placement)
+        {
+            AudioSurfaceHints.BambooGroves.Clear();
+            var sums = new System.Collections.Generic.List<Vector3>(16);
+            var counts = new System.Collections.Generic.List<int>(16);
+            for (int i = 0; i < placement.instances.Count; i++)
+            {
+                WorldPlacementAsset.Instance inst = placement.instances[i];
+                string key = Key(inst.family);
+                if (key != "bamboo_stalk" && key != "bamboo_cluster") continue;
+                int hit = -1;
+                for (int g = 0; g < sums.Count; g++)
+                {
+                    Vector3 c = sums[g] / counts[g];
+                    if ((new Vector3(c.x - inst.position.x, 0f, c.z - inst.position.z)).sqrMagnitude <= 100f) { hit = g; break; }
+                }
+
+                if (hit < 0) { sums.Add(inst.position); counts.Add(1); }
+                else { sums[hit] += inst.position; counts[hit]++; }
+            }
+
+            for (int g = 0; g < sums.Count; g++)
+            {
+                if (counts[g] >= 4) AudioSurfaceHints.BambooGroves.Add(sums[g] / counts[g]);
+            }
+        }
+
         private static void RegisterWindChimes(WorldPlacementAsset placement)
         {
             AudioSurfaceHints.WindChimes.Clear();

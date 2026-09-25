@@ -239,6 +239,7 @@ namespace DD.Prototype.Audio
             System.Func<Vector3> listenerPosition = () => _listener.Transform.position;
             _flight = new ProjectileFlightAudio(_library, _mixer, _bridge, _loopRoot, listenerPosition);   // WP-072 B5
             _world.SetListener(listenerPosition);
+            _ambience.SetListener(listenerPosition);   // WP-072 · DEC-102
             _router.SetListener(listenerPosition);
 
             _world.Capacity = _configuredBudget;

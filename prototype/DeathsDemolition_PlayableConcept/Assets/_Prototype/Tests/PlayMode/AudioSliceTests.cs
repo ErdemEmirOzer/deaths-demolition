@@ -368,7 +368,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(once + 1, r.FootstepCount, "foot_l ayak sesi üretmedi. " + AyakTani(events));
             // WP-021C: the surface under the rig is whatever the world's tags + routes say (Default still reads as stone).
             AudioSoundId beklenen = AyakBeklenen(_s.Rig.transform.position, out SurfaceKind altta);
-            Assert.AreEqual(beklenen, _d.LastPlayed, "Ayak sesi altındaki yüzeye/plakaya göre çalmalı (" + altta + ").");
+            Assert.AreEqual(beklenen, r.LastFootstep, "Ayak sesi altındaki yüzeye/plakaya göre çalmalı (" + altta + ").");   // DEC-102: the wet layer plays after it
             yield return new WaitForSecondsRealtime(0.2f);   // PlayerFootstep MinRetrigger 0.08 s
             int ikinci = r.FootstepCount;
             events.RaiseForTest(DD.Prototype.Characters.CharacterAnimationEvent.FootRight);
@@ -1053,6 +1053,81 @@ namespace DD.Prototype.Tests.PlayMode
             yield return new WaitForSeconds(0.4f);
             Assert.AreEqual(pops + 3, _d.RocketBlasts.Bomblets, "üç bombacık, üç küçük pop");
             Debug.Log("[DD-TEST] wp072rl1 duds=" + _d.RocketBlasts.Duds + " pops=" + _d.RocketBlasts.Bomblets);
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator YagmurSonrasi_Kuslar_SacakDamlasi_BambuKorusu_IslakAdim()
+        {
+            AfterRainAmbience ar = _d.Ambience.AfterRain;
+            Assert.IsTrue(AmbienceDirector.WetLook && AfterRainAmbience.SunnyAfterRain, "DEC-102: ıslak görünüm + güneşli yağmur sonrası");
+            if (!_d.Library.IsProduced(AudioSoundId.AmbBirdsDistant)) Assert.Fail("v022 ortam kimlikleri katalogda değil (AudioCatalogBuilder).");
+
+            Vector3 kulak = _s.Rig.transform.position + Vector3.up * 1.6f;
+            Vector3 koru = _s.Rig.transform.position + new Vector3(6f, 0f, 4f);
+            AudioSurfaceHints.BambooGroves.Add(koru);
+            int thunder = _d.Ambience.ThunderCount;
+            try
+            {
+                int kus = ar.BirdCount, damla = ar.EaveDripCount, ruzgar = ar.GustCount, yaprak = ar.LeafDripCount;
+                // A natural bird / drip just before may still hold the voice (MaxInstances, retrigger) — re-arm only the
+                // layers that have not played yet, up to 5 s (gust → leaf drips 0.4–0.9 s later).
+                float bitis = Time.realtimeSinceStartup + 5f;
+                do
+                {
+                    ar.ForceDue(ar.BirdCount == kus, ar.EaveDripCount == damla, ar.GustCount == ruzgar);
+                    yield return new WaitForSecondsRealtime(0.3f);
+                }
+                while (Time.realtimeSinceStartup < bitis
+                       && (ar.BirdCount == kus || ar.EaveDripCount == damla || ar.GustCount == ruzgar || ar.LeafDripCount == yaprak));
+
+                Assert.Greater(ar.BirdCount, kus, "uzak kuşlar (BirdLevel " + AfterRainAmbience.BirdLevel + ")");
+                Assert.Greater(ar.EaveDripCount, damla, "saçak damlası: " + ar.LastDrip);
+                Assert.Greater(ar.GustCount, ruzgar, "bambu korusunda rüzgâr");
+                Assert.Greater(ar.LeafDripCount, yaprak, "rüzgâr sonrası yaprak damlası");
+                Assert.IsTrue(ar.GrovePlaying, "35 m içindeki koru yatağı çalar");
+                Assert.AreEqual(thunder, _d.Ambience.ThunderCount, "güneşli yağmur sonrası: gök gürültüsü yok");
+
+                // Akustik harita: salonda kuş sesi kısılır (Hall = çatı altı).
+                System.Func<Vector3, AcousticSpace> onceki = AcousticSpaces.Resolver;
+                float oncekiKus = AfterRainAmbience.BirdLevel;
+                AcousticSpaces.Resolver = _ => AcousticSpace.Hall;
+                try
+                {
+                    ar.ForceDue();
+                    yield return null; yield return null;
+                    Assert.AreEqual(AcousticSpace.Hall, ar.LastSpace);
+
+                    // Tek ayar: BirdLevel = 0 → kuş yok (dinleme turu öncesi kapatma anahtarı).
+                    AfterRainAmbience.BirdLevel = 0f;
+                    int sessiz = ar.BirdCount;
+                    ar.ForceDue();
+                    yield return null; yield return null;
+                    Assert.AreEqual(sessiz, ar.BirdCount, "BirdLevel 0 kuşları kapatır");
+                }
+                finally
+                {
+                    AcousticSpaces.Resolver = onceki;
+                    AfterRainAmbience.BirdLevel = oncekiKus;
+                }
+            }
+            finally
+            {
+                AudioSurfaceHints.BambooGroves.Remove(koru);
+            }
+
+            // Islak arduvaz: taşta oyuncu adımının altına ince su katmanı.
+            var events = _s.Rig.GetComponentInChildren<DD.Prototype.Characters.CharacterAnimationEvents>(true);
+            if (events != null && AyakBeklenen(_s.Rig.transform.position, out SurfaceKind altta) != AudioSoundId.None
+                && (altta == SurfaceKind.Stone || altta == SurfaceKind.Default))
+            {
+                yield return new WaitForSecondsRealtime(0.2f);
+                int islak = _d.Router.WetStepCount;
+                events.RaiseForTest(DD.Prototype.Characters.CharacterAnimationEvent.FootLeft);
+                Assert.AreEqual(islak + 1, _d.Router.WetStepCount, "taşta ıslak adım katmanı");
+            }
+
+            Debug.Log("[DD-TEST] wp072dec102 birds=" + ar.BirdCount + " drips=" + ar.EaveDripCount + " gusts=" + ar.GustCount + " leaf=" + ar.LeafDripCount + " wet=" + _d.Router.WetStepCount + " kulak=" + kulak);
         }
 
         // ================================================================== WP-068 dilim 11 · UI ses v3

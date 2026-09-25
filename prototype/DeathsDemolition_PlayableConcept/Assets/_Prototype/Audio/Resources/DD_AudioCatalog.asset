@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21fa3465f8aa14f0bbac4a22d4a8238f, type: 3}
   m_Name: DD_AudioCatalog
   m_EditorClassIdentifier: 
-  _manifestVersion: ap011-v021
-  _sourceHash: 6ef8a30a9022520711d3651ba354e7b67f59f407a166c14e08d9754b2b69744c
+  _manifestVersion: ap011-v022
+  _sourceHash: dbde13a4ff718198fcaaff206b20ce549a3d64c1eb71ce017a9d53d859d7e525
   _entries:
   - Sound: 10
     Clips:
@@ -4970,6 +4970,115 @@ MonoBehaviour:
       \u221210 dB (~1 s)"
     NoiseFloorDb: -120
     DcDb: -183
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 570
+    Clips:
+    - {fileID: 8300000, guid: 887f0b9d99f6249b7b61cb046c723a7e, type: 3}
+    - {fileID: 8300000, guid: 141576a22382044b481198a52cf07c38, type: 3}
+    - {fileID: 8300000, guid: 1669dcd77f7554bc89c0fe77d71cc6fe, type: 3}
+    - {fileID: 8300000, guid: 58c7ddd8354824c7f90c615b75174b80, type: 3}
+    - {fileID: 8300000, guid: e59b4a1a3305c42d2804ec4f3f08a33b, type: 3}
+    - {fileID: 8300000, guid: 4f6ff7f8172ae427fbb0b75c45892ad8, type: 3}
+    Loop: 0
+    Lufs: -22
+    TruePeakDb: -3
+    Provenance: "derived offline (AP-011 v022, WP-072 DEC-102, 0 cr) from v001\u2013v006
+      ambience / footstep takes + synthesis \xB7 eave drops: Minnaert plink 1.25\u20132.6
+      k (rising, 6\u201322 ms) + 1 ms wet tick + slate tap 1.1/2.6 k + spray; v001
+      amb_drip transients \u221210 dB; IR_Open \u221218 dB; 1\u20133 drops"
+    NoiseFloorDb: -120
+    DcDb: -117.4
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 571
+    Clips:
+    - {fileID: 8300000, guid: a0869cb6076cf4124a5c29d51e8a59ed, type: 3}
+    - {fileID: 8300000, guid: 999622347a45f42f48a25fdd0647bfd8, type: 3}
+    - {fileID: 8300000, guid: 529fcab3d11024fa8a5d34a60c1d6319, type: 3}
+    - {fileID: 8300000, guid: e8c6deb05a9bc4673b7bf45a818db593, type: 3}
+    Loop: 0
+    Lufs: -24
+    TruePeakDb: -3
+    Provenance: "derived offline (AP-011 v022, WP-072 DEC-102, 0 cr) from v001\u2013v006
+      ambience / footstep takes + synthesis \xB7 leaf shake (crackle burst) + 2\u20135
+      drops: leaf tap (mode 1.2\u20132.4 k) or soft ground pat (LP 1.5 k), occasional
+      bead plink; IR_Open \u221220 dB"
+    NoiseFloorDb: -120
+    DcDb: -129.1
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 572
+    Clips:
+    - {fileID: 8300000, guid: ee909ef2c8fbb4c5bba567e1b22be26c, type: 3}
+    - {fileID: 8300000, guid: 0be5e1bbecdc34be49944ca9c11e4068, type: 3}
+    - {fileID: 8300000, guid: 4223fffcb43c6486ebc7821ada3f60b2, type: 3}
+    - {fileID: 8300000, guid: 3745a1a67596541139f2b47a8e6d17d7, type: 3}
+    Loop: 0
+    Lufs: -22
+    TruePeakDb: -3
+    Provenance: "derived offline (AP-011 v022, WP-072 DEC-102, 0 cr) from v001\u2013v006
+      ambience / footstep takes + synthesis \xB7 v001 footstep_water splash onsets
+      HP 400 \xD72 (no heel), +2.5\u20263.5 st, 30 ms hold + 40 ms decay; pink \"shlip\"
+      2\u20139 k \u22127 dB; spray \u221212 dB; \u2264 0.24 s"
+    NoiseFloorDb: -120
+    DcDb: -130.6
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 573
+    Clips:
+    - {fileID: 8300000, guid: 04566616ba9194ee09b226870b44e97e, type: 3}
+    Loop: 1
+    Lufs: -25.95
+    TruePeakDb: -6.54
+    Provenance: "derived offline (AP-011 v022, WP-072 DEC-102, 0 cr) from v001\u2013v006
+      ambience / footstep takes + synthesis \xB7 wind curve 0.35 Hz \u2192 leaf crackle
+      (Poisson \xD7 4 band kernels) + leaf hiss 1.5\u20139 k + breeze 70\u2013500
+      \u22129 dB + v001 amb_region_east HP 250 \u22128 dB + 2 synth culm creaks +
+      1 v001 creak +4 st; loopify 0.8 s"
+    NoiseFloorDb: -120
+    DcDb: -220.6
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 574
+    Clips:
+    - {fileID: 8300000, guid: 757805399b9e44530b9748dad2316793, type: 3}
+    - {fileID: 8300000, guid: fa3d6ee3066114ab6accbc3860114d01, type: 3}
+    - {fileID: 8300000, guid: 01e246932112a405d83e6c9ffc0637cf, type: 3}
+    Loop: 0
+    Lufs: -24
+    TruePeakDb: -5.37
+    Provenance: "derived offline (AP-011 v022, WP-072 DEC-102, 0 cr) from v001\u2013v006
+      ambience / footstep takes + synthesis \xB7 swell envelope (peak 0.5\u20130.9
+      s) driving the grove rustle (rate \u2264 900/s) + breeze; 2\u20133 modal culm
+      knocks (430\u2013720 Hz hollow) with swing-back; settle creak"
+    NoiseFloorDb: -120
+    DcDb: -135.8
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 575
+    Clips:
+    - {fileID: 8300000, guid: ceb110d67b9d6421bb97cf4de133d176, type: 3}
+    - {fileID: 8300000, guid: cbfdc07b9e9a1489f8274d721326d295, type: 3}
+    - {fileID: 8300000, guid: afe6a1386cffe43ec87ae44c7421b9e3, type: 3}
+    - {fileID: 8300000, guid: 2a22e35b016f34936843f15e35bac596, type: 3}
+    - {fileID: 8300000, guid: 64d3f8bb6b1784161bbc9cdea4bc1f8f, type: 3}
+    - {fileID: 8300000, guid: c166d1e9be455415eaefc94fff0083c6, type: 3}
+    Loop: 0
+    Lufs: -26
+    TruePeakDb: -12.52
+    Provenance: "derived offline (AP-011 v022, WP-072 DEC-102, 0 cr) from v001\u2013v006
+      ambience / footstep takes + synthesis \xB7 synthetic: 2 bush-warbler hoo-hokekyo
+      suggestions, 2 sparrow chirp clusters, 2 white-eye twitters; HP 900, LP 5\u20136
+      k \xD72, IR_Open wet \u22122\u2026\u22124 dB"
+    NoiseFloorDb: -120
+    DcDb: -222.1
     Clipped: 0
     BitDepth: 24
     Layers: derived (v005)

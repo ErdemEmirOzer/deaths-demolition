@@ -70,6 +70,9 @@ namespace DD.Prototype.Audio
         /// </summary>
         public static readonly List<Vector3> PondCenters = new List<Vector3>(4);
 
+        /// <summary>WP-072 · DEC-102: bamboo grove centres (clusters of bamboo stalk / cluster instances) for the grove bed and gusts.</summary>
+        public static readonly List<Vector3> BambooGroves = new List<Vector3>(8);
+
         /// <summary>WP-065C: AP-017 fūrin wind chimes (eave hang points), registered by the world assembly; the ambience rings the nearest in the wind.</summary>
         public static readonly List<Vector3> WindChimes = new List<Vector3>(16);
 
@@ -81,6 +84,7 @@ namespace DD.Prototype.Audio
             RefinedCount = 0;
             PondCenters.Clear();
             WindChimes.Clear();
+            BambooGroves.Clear();
         }
     }
 }

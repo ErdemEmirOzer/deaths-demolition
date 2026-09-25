@@ -83,6 +83,12 @@ namespace DD.Prototype.Audio
         public int PieceDropCount { get; private set; }
         public int BreakCount { get; private set; }
         public int FootstepCount { get; private set; }
+
+        /// <summary>The player's last step sound (the surface's own; the DEC-102 wet layer plays after it).</summary>
+        public AudioSoundId LastFootstep { get; private set; }
+
+        /// <summary>WP-072 · DEC-102: wet-slate layers played under player steps (tests).</summary>
+        public int WetStepCount { get; private set; }
         public int SettleCount { get; private set; }
         /// <summary>WP-021C: aggro growls (anim.rise_end) and UI event cues actually played.</summary>
         public int AggroCount { get; private set; }
@@ -600,6 +606,15 @@ namespace DD.Prototype.Audio
             if (_play(AudioMixPlan.PlayerFootstep(step, running), root, gain, 20))
             {
                 FootstepCount++;
+                LastFootstep = step;
+
+                // WP-072 · DEC-102: wet slate after the rain — a thin water-film layer under a stone step (~ −5 dB).
+                if (AmbienceDirector.WetLook && (surface == SurfaceKind.Stone || surface == SurfaceKind.Default)
+                    && _produced != null && _produced(AudioSoundId.FootstepWetLayer)
+                    && _play(AudioMixPlan.PlayerFootstep(AudioSoundId.FootstepWetLayer, running), root, gain * 0.55f, 18))
+                {
+                    WetStepCount++;
+                }
             }
         }
 

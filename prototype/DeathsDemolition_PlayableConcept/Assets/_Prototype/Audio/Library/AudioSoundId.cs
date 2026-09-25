@@ -431,6 +431,14 @@ namespace DD.Prototype.Audio
 
         // ---- WP-072 · WP-069 B3 rl_1 cluster bomblet + dud (AP-011 v021)
         BombletPop = 564,
-        RocketDud = 565
+        RocketDud = 565,
+
+        // ---- WP-072 · DEC-102 post-rain sunny courtyard: eave / bamboo drips, wet step layer, bamboo grove, distant birds (AP-011 v022)
+        AmbEaveDrip = 570,
+        AmbBambooDrip = 571,
+        FootstepWetLayer = 572,
+        AmbBambooGroveLoop = 573,
+        AmbBambooGust = 574,
+        AmbBirdsDistant = 575
     }
 }
