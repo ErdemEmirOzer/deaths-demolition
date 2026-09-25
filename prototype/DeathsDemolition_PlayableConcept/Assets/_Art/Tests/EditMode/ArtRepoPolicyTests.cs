@@ -29,7 +29,8 @@ namespace DD.Art.Tests.EditMode
         {
             ".cs", ".asmdef", ".asmref", ".json", ".md", ".txt", ".meta",
             ".asset", ".mat", ".prefab", ".unity", ".shader", ".hlsl", ".cginc", ".controller", ".mask", ".anim",
-            ".lighting"   // WP-029 LightingSettings (YAML text, like .asset); the binary LightingData.asset is covered by its own LFS rule
+            ".lighting",   // WP-029 LightingSettings (YAML text, like .asset); the binary LightingData.asset is covered by its own LFS rule
+            ".overrideController"   // WP-011C: AnimatorOverrideController is YAML text like .controller (S-06 924877cb; .gitattributes already text)
         };
 
         private static readonly Regex HexSha256 = new Regex("^[0-9a-f]{64}$", RegexOptions.Compiled);
