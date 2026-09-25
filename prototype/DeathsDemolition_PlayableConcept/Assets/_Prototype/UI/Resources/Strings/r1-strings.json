@@ -2014,5 +2014,9 @@
   "pause.run.build_none": {
     "en": "no upgrades",
     "tr": "geliştirme yok"
+  },
+  "tree.state.prereq_keystone": {
+    "en": "NEEDS A KEYSTONE",
+    "tr": "ÖNCE BİR KİLİT TAŞI"
   }
 }

@@ -587,10 +587,12 @@ S-09 (R1-B, 25.09, C-00 decision): the meta currency is **Ash** in `en` and **K�
 | `tree.refuse.reforge_used` | The run's one Reforge is spent. | Koşunun tek Yeniden Dövme hakkı kullanıldı. |
 | `tree.refuse.reforge_early` | Reforge opens from round 5. | Yeniden Dövme 5. round'dan itibaren açılır. |
 | `tree.refuse.no_run` | No run is in progress. | Süren bir koşu yok. |
+| `tree.state.prereq_keystone` | NEEDS A KEYSTONE | ÖNCE BİR KİLİT TAŞI |
 
 S-09 (R1-C, 25.09):
 - The in-run tree screen (N14) marks the nodes this offer sells with an OFFER chip and a gold ring (`tree.flag.offer`); a node that is open but not offered reads `tree.flag.not_offered` in the detail card.
 - `tree.lock.*` is the detail card's sentence for a LOCKED node, one per RunTreeLockReason (ProfileLocked, NotOnThisWeapon, NoSpecialYet, EffectPending).
+- `tree.state.prereq_keystone` is the Hearth's NEEDS word: its prerequisite is any weapon-lane keystone, not one parent.
 - `tree.refuse.*` is the footer sentence when a tree command is refused (RunTreeCommandResult). A refused card purchase keeps the shop's existing sentence for its cause.
 
 ## 10 · Pause · run so far (S-09, R1-C)

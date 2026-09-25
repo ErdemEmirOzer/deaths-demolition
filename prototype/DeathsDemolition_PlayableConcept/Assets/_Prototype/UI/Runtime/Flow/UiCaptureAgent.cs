@@ -1333,6 +1333,10 @@ namespace DD.Prototype.UI
 
                 run.Shop.NodeCardsOverride = true;
                 run.Wallet.DebugSet(3000);
+
+                // Capture only: S-04's effect seam (RunTreeEffects.TreatAllAsLive, as NodeCardTests) opens the keystones,
+                // forks and capstones whose effects are still pending in this build, so the frames show the designed states.
+                RunTreeEffects.TreatAllAsLive = true;
                 bool hearthShot = false;
                 for (int round = 1; round <= 4; round++)
                 {
@@ -1426,6 +1430,8 @@ namespace DD.Prototype.UI
 
                     run.CloseUpgradeScreen();
                 }
+
+                RunTreeEffects.TreatAllAsLive = false;
             }
 
             /// <summary>The offer's best buy for the staging: keystone, fork, capstone, then any affordable offered node.</summary>
@@ -1459,7 +1465,8 @@ namespace DD.Prototype.UI
                 for (int i = 0; i < snap.Count; i++)
                 {
                     RunTreeNodeView n = snap.Nodes[i];
-                    if (n.Lane != RunTreeLane.Weapon || n.Status != RunTreeNodeStatus.PrereqMissing)
+                    if (n.Lane != RunTreeLane.Weapon || n.Kind == RunTreeNodeKind.Hearth ||
+                        (n.Status != RunTreeNodeStatus.PrereqMissing && n.Status != RunTreeNodeStatus.Locked))
                     {
                         continue;
                     }

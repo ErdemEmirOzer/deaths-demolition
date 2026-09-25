@@ -41,6 +41,8 @@ namespace DD.Prototype.UI
         private const float CompactSealMax = 56f;
         private const float MinSeal = 40f;
         private const float EdgeGap = 24f;
+        private const float BuyWidth = 204f;
+        private const float BuyChrome = 132f;   // the prompt keycap, its gap and the button's side padding
 
         private sealed class NodeView
         {
@@ -85,6 +87,7 @@ namespace DD.Prototype.UI
         private TMP_Text _dName;
         private TMP_Text _dState;
         private TMP_Text _dDesc;
+        private TMP_Text _dNote;
         private RectTransform _dBuyRow;
         private RectTransform _dActions;
         private TMP_Text _dPrice;
@@ -96,6 +99,7 @@ namespace DD.Prototype.UI
         private float _pitchY = RowPitch;
         private float _seal = SealSize;
         private float _headSize = SealSize;
+        private float _innerWidth;
         private bool _compact;
         private float _nodeWidth = NodeWidth;
         private int _focus = -1;
@@ -160,6 +164,21 @@ namespace DD.Prototype.UI
         {
             NodeView v = ViewOf(index);
             return v != null ? v.Name : null;
+        }
+
+        /// <summary>
+        /// The offer sells this node now: an unbought card names it (a fork pair is one card; a tier node is sold by its
+        /// branch card). The snapshot's InOffer stays true after a tier's card is bought, so the screen asks the cards.
+        /// </summary>
+        public bool Offered(int index)
+        {
+            return _shop != null && index >= 0 && index < _snap.Count && _snap.Nodes[index].Kind != RunTreeNodeKind.Hearth &&
+                   CardOf(index, _snap.Nodes[index], out _) >= 0;
+        }
+
+        private int IndexOfView(RunTreeNodeView n)
+        {
+            return _snap.IndexOf(n.NodeId);
         }
 
         public bool OfferShownOn(int index)
@@ -307,6 +326,8 @@ namespace DD.Prototype.UI
             _dState.overflowMode = TextOverflowModes.Ellipsis;
             _dDesc = UiFactory.Label("Description", _dContent, string.Empty, UiType.Body, UiColor.TextSecondary);
             _dDesc.overflowMode = TextOverflowModes.Ellipsis;
+            _dNote = UiFactory.Label("Note", _dContent, string.Empty, UiType.Caption, UiColor.TextMuted);
+            _dNote.overflowMode = TextOverflowModes.Ellipsis;
 
             _dBuyRow = UiFactory.NewRect("BuyRow", _dContent);
             _dPrice = UiFactory.Numeric("Price", _dBuyRow, string.Empty, UiType.NumericM, UiColor.StateGold, TextAnchor.MiddleLeft, false);
@@ -416,11 +437,16 @@ namespace DD.Prototype.UI
             y += nameLine + (int)UiSpace.XS;
             Dock((RectTransform)_dState.transform, y, stateLine);
             y += stateLine + (int)UiSpace.M;
-            float descH = Mathf.Max(body, h - foot - (int)UiSpace.M - y);
+            // The rule note (two Caption lines) sits over the foot; the description takes the band between.
+            float note = LineOf(_dNote) * 2f;
+            float noteBottom = foot + (int)UiSpace.L;
+            DockBottom((RectTransform)_dNote.transform, noteBottom, note);
+            float descH = Mathf.Max(body, h - noteBottom - note - (int)UiSpace.S - y);
             Dock((RectTransform)_dDesc.transform, y, descH);
 
             DockBottom(_dActions, 0f, button);
             DockBottom(_dBuyRow, button + (int)UiSpace.S, button);
+            _innerWidth = _dContent.rect.width;
             if (_dPips != null)
             {
                 ((RectTransform)_dPips.transform).anchoredPosition = new Vector2(head + (int)UiSpace.L, -(int)UiSpace.XS);
@@ -522,17 +548,19 @@ namespace DD.Prototype.UI
             RunTreeNodeView n = _snap.Nodes[index];
             SetGlyph(v.Glyph, n);
             v.Name.text = string.IsNullOrEmpty(n.ShortName) ? n.DisplayName : n.ShortName;
-            bool owned = IsOwned(n);
+            bool owned = IsOwned(n) || (n.Kind == RunTreeNodeKind.Tier && n.OwnedTier > 0);
             bool dim = n.Status == RunTreeNodeStatus.Locked || n.Status == RunTreeNodeStatus.Excluded;
             bool waiting = n.Status == RunTreeNodeStatus.PrereqMissing;
-            bool forSale = n.InOffer && !owned;
+            bool forSale = Offered(index);
 
             // PD §5.1: shape + glyph + word, never colour alone. Owned = a cream seal with an ink glyph; open = an
             // inset seal ringed in cream; waiting = a muted ring; locked / closed = no fill, dim, the closed one struck.
             v.Fill.enabled = owned || n.Status == RunTreeNodeStatus.Available || n.Status == RunTreeNodeStatus.Unaffordable;
             v.Fill.color = UiTokens.Get(owned ? UiColor.TextPrimary : UiColor.SurfaceInset);
             v.Glyph.color = WithAlpha(UiTokens.Get(owned ? UiColor.SurfaceBase : UiColor.TextPrimary), dim ? 0.35f : waiting ? 0.6f : 1f);
-            v.Ring.sprite = n.Kind == RunTreeNodeKind.Capstone || n.Kind == RunTreeNodeKind.WeaponSeal ? UiSprites.RingEnso : UiSprites.Ring;
+            // The heavy ring is the offer's alone (gold); every other seal wears the thin one, the capstone / seal the ensō.
+            v.Ring.sprite = forSale ? UiSprites.Ring
+                : n.Kind == RunTreeNodeKind.Capstone || n.Kind == RunTreeNodeKind.WeaponSeal ? UiSprites.RingEnso : UiSprites.RingThin;
             UiColor ring = forSale ? UiColor.StateGold : owned ? UiColor.TextSecondary : dim || waiting ? UiColor.TextMuted : UiColor.TextPrimary;
             v.Ring.color = WithAlpha(UiTokens.Get(ring), dim ? 0.6f : 1f);
             v.Cross.gameObject.SetActive(n.Status == RunTreeNodeStatus.Excluded);
@@ -604,13 +632,15 @@ namespace DD.Prototype.UI
                     word = UiStrings.Get("tree.state.locked", "LOCKED");
                     break;
                 case RunTreeNodeStatus.PrereqMissing:
-                    word = UiStrings.Get("tree.state.prereq_missing", "NEEDS {node}").Replace("{node}", ShortOf(n.MissingParentIndex).ToUpperInvariant());
+                    word = n.MissingParentIndex >= 0
+                        ? UiStrings.Get("tree.state.prereq_missing", "NEEDS {node}").Replace("{node}", ShortOf(n.MissingParentIndex).ToUpperInvariant())
+                        : UiStrings.Get("tree.state.prereq_keystone", "NEEDS A KEYSTONE");
                     break;
                 case RunTreeNodeStatus.Available:
-                    word = UiStrings.Get("tree.state.available", "AVAILABLE") + " · " + n.Cost.ToString(CultureInfo.InvariantCulture);
+                    word = TierOwned(n) + UiStrings.Get("tree.state.available", "AVAILABLE") + " · " + n.Cost.ToString(CultureInfo.InvariantCulture);
                     break;
                 case RunTreeNodeStatus.Unaffordable:
-                    word = UiStrings.Get("tree.state.unaffordable", "{value} GOLD SHORT").Replace("{value}", n.Shortfall.ToString(CultureInfo.InvariantCulture));
+                    word = TierOwned(n) + UiStrings.Get("tree.state.unaffordable", "{value} GOLD SHORT").Replace("{value}", n.Shortfall.ToString(CultureInfo.InvariantCulture));
                     break;
                 case RunTreeNodeStatus.Purchased:
                     word = UiStrings.Get("tree.state.purchased", "OWNED") + (n.MaxTier > 1 ? " · " + n.OwnedTier + "/" + n.MaxTier : string.Empty);
@@ -627,6 +657,14 @@ namespace DD.Prototype.UI
             }
 
             return n.NewlyUnlocked ? UiStrings.Get("tree.flag.new", "NEW") + " · " + word : word;
+        }
+
+        /// <summary>"OWNED 1/5 · " in front of a tier that has more to buy, so the seal's cream fill has its word.</summary>
+        private static string TierOwned(RunTreeNodeView n)
+        {
+            return n.Kind == RunTreeNodeKind.Tier && n.OwnedTier > 0 && n.MaxTier > 1
+                ? UiStrings.Get("tree.state.purchased", "OWNED") + " " + n.OwnedTier + "/" + n.MaxTier + " · "
+                : string.Empty;
         }
 
         private string ShortOf(int index)
@@ -710,7 +748,7 @@ namespace DD.Prototype.UI
                 }
 
                 RunTreeNodeView n = _snap.Nodes[i];
-                if (n.InOffer && n.Status == RunTreeNodeStatus.Available)
+                if (Offered(i) && n.Status == RunTreeNodeStatus.Available)
                 {
                     return i;
                 }
@@ -890,6 +928,7 @@ namespace DD.Prototype.UI
                 _dKind.text = string.Empty;
                 _dName.text = string.Empty;
                 _dDesc.text = string.Empty;
+                _dNote.text = string.Empty;
                 _dState.text = string.Empty;
                 _dPrice.text = string.Empty;
                 _reforge.gameObject.SetActive(false);
@@ -908,13 +947,15 @@ namespace DD.Prototype.UI
             _dName.text = n.DisplayName;
             _dState.text = StateSentence(n);
             _dState.color = UiTokens.Get(n.Status == RunTreeNodeStatus.Unaffordable ? UiColor.StateWarning
-                : n.InOffer && !IsOwned(n) ? UiColor.StateGold : UiColor.TextPrimary);
+                : Offered(index) ? UiColor.StateGold : UiColor.TextPrimary);
             _dDesc.text = DescriptionOf(n);
+            _dNote.text = NoteOf(n);
 
-            bool buyable = n.Status == RunTreeNodeStatus.Available && (hearth || (n.InOffer && _shop != null && !_shop.IsLocked));
+            bool buyable = n.Status == RunTreeNodeStatus.Available && (hearth || (Offered(index) && !_shop.IsLocked));
             bool priced = n.Status != RunTreeNodeStatus.MaxTier && n.Status != RunTreeNodeStatus.Excluded && !(IsOwned(n) && n.MaxTier <= 1);
             _dPrice.text = priced ? n.Cost.ToString(CultureInfo.InvariantCulture) + " GOLD" : string.Empty;
             _buy.SetText(hearth ? UiStrings.Get("tree.action.stoke", "STOKE THE HEARTH") : "BUY");
+            FitBuy();
             _buy.SetInteractable(buyable);
             _pin.SetText(n.IsPinned ? UiStrings.Get("tree.action.unpin", "UNPIN") : UiStrings.Get("tree.action.pin", "PIN"));
             _pin.SetInteractable(n.IsPinned || (!IsOwned(n) && n.Status != RunTreeNodeStatus.Excluded && !hearth));
@@ -924,6 +965,20 @@ namespace DD.Prototype.UI
             {
                 _reforge.SetText(UiStrings.Get("tree.action.reforge", "REFORGE") + " · " + n.ReforgeCost.ToString(CultureInfo.InvariantCulture));
             }
+        }
+
+        /// <summary>BUY holds its word and its prompt: STOKE THE HEARTH widens it, up to 62 % of the card.</summary>
+        private void FitBuy()
+        {
+            float word = Mathf.Ceil(_buy.LabelText.GetPreferredValues(_buy.LabelText.text).x);
+            float width = Mathf.Max(BuyWidth, word + BuyChrome);
+            if (_innerWidth > 0f)
+            {
+                width = Mathf.Min(width, Mathf.Floor(_innerWidth * 0.62f));
+            }
+
+            ((RectTransform)_buy.transform).sizeDelta = new Vector2(width, UiTokens.TargetPreferred);
+            ((RectTransform)_dPrice.transform).offsetMax = new Vector2(-(width + (int)UiSpace.S), 0f);
         }
 
         private void SetPips(int count, int filled)
@@ -951,39 +1006,37 @@ namespace DD.Prototype.UI
             }
         }
 
-        private string DescriptionOf(RunTreeNodeView n)
+        private static string DescriptionOf(RunTreeNodeView n)
         {
-            string text = !string.IsNullOrEmpty(n.Description) ? n.Description
+            return !string.IsNullOrEmpty(n.Description) ? n.Description
                 : n.HasBranch ? UpgradeCardCatalog.Describe(n.Branch, n.OwnedTier) : string.Empty;
-            string note = null;
+        }
+
+        /// <summary>The node's rule in one muted line: the Hearth's allowance, a fork's exclusion or reforge, the pin's path.</summary>
+        private string NoteOf(RunTreeNodeView n)
+        {
             if (n.Kind == RunTreeNodeKind.Hearth)
             {
-                note = UiStrings.Get("tree.hearth.round", "{value} of {max} stokes this round")
+                return UiStrings.Get("tree.hearth.round", "{value} of {max} stokes this round")
                     .Replace("{value}", _snap.HearthThisRound.ToString(CultureInfo.InvariantCulture))
                     .Replace("{max}", _snap.HearthPerRound.ToString(CultureInfo.InvariantCulture));
             }
-            else if (n.Kind == RunTreeNodeKind.Fork)
+
+            if (n.Kind == RunTreeNodeKind.Fork)
             {
-                note = IsOwned(n) && n.ReforgeCost >= 0
+                return IsOwned(n) && n.ReforgeCost >= 0
                     ? UiStrings.Get("tree.reforge.caption", "Swap this fork's side once per run. The new side is paid in full.")
                     : UiStrings.Get("tree.fork.closed", "Taking one side closes the other for this run.");
             }
-            else if (n.IsPinned && _snap.PinPathCount > 0)
+
+            if (n.IsPinned && _snap.PinPathCount > 0)
             {
-                note = UiStrings.Get("tree.path_total", "Path total {value} gold").Replace("{value}", _snap.PinPathTotalCost.ToString(CultureInfo.InvariantCulture));
-            }
-            else if (!IsOwned(n) && n.Status != RunTreeNodeStatus.Excluded)
-            {
-                note = UiStrings.Get("tree.pin.caption", "A pinned node comes in the next offer once it is reachable.");
+                return UiStrings.Get("tree.path_total", "Path total {value} gold").Replace("{value}", _snap.PinPathTotalCost.ToString(CultureInfo.InvariantCulture));
             }
 
-            if (string.IsNullOrEmpty(note))
-            {
-                return text;
-            }
-
-            string muted = "<color=#" + ColorUtility.ToHtmlStringRGB(UiTokens.Get(UiColor.TextMuted)) + ">" + note + "</color>";
-            return string.IsNullOrEmpty(text) ? muted : text + "\n" + muted;
+            return !IsOwned(n) && n.Status != RunTreeNodeStatus.Excluded
+                ? UiStrings.Get("tree.pin.caption", "A pinned node comes in the next offer once it is reachable.")
+                : string.Empty;
         }
 
         private string StateSentence(RunTreeNodeView n)
@@ -1000,7 +1053,7 @@ namespace DD.Prototype.UI
                     }
 
                 case RunTreeNodeStatus.Available:
-                    if (n.Kind == RunTreeNodeKind.Hearth || n.InOffer)
+                    if (n.Kind == RunTreeNodeKind.Hearth || Offered(IndexOfView(n)))
                     {
                         return _shop != null && _shop.IsLocked && n.Kind != RunTreeNodeKind.Hearth
                             ? UiStrings.Get("tree.picks_used", "This round's picks are used.")
@@ -1156,7 +1209,7 @@ namespace DD.Prototype.UI
             for (int i = 0; i < _shop.Cards.Count; i++)
             {
                 UpgradeCardOffer card = _shop.Cards[i];
-                if (card.IsValid && card.IsNode && (card.NodeIndex == index || card.AltNodeIndex == index))
+                if (card.IsValid && !card.Purchased && card.IsNode && (card.NodeIndex == index || card.AltNodeIndex == index))
                 {
                     alternative = card.AltNodeIndex == index;
                     return i;
@@ -1168,7 +1221,7 @@ namespace DD.Prototype.UI
                 for (int i = 0; i < _shop.Cards.Count; i++)
                 {
                     UpgradeCardOffer card = _shop.Cards[i];
-                    if (card.IsValid && (!card.IsNode || card.NodeKind == RunTreeNodeKind.Tier) && card.Branch == n.Branch)
+                    if (card.IsValid && !card.Purchased && (!card.IsNode || card.NodeKind == RunTreeNodeKind.Tier) && card.Branch == n.Branch)
                     {
                         return i;
                     }
