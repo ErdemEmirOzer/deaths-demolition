@@ -29,3 +29,5 @@ RoundSpawnSliceTests
 SceneLoadDoubleTriggerTests
 SpecialWeaponLifecycleSliceTests
 ThreatSliceTests
+# Lifecycle (S-01, WP-079B): subscriber / hold / service leaks across two runs — ~24 s; caught 3 regressions 24–25.09
+LifecycleHardeningTests

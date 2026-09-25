@@ -1,5 +1,6 @@
 # WP-079 · test fixture → owning session (first matching regex wins; matched against the fixture class name).
 # regex	owner	area
+^(LifecycleHardening)	S-01	lifecycle leaks (S-01 routes to the breaking commit's owner)
 ^(Camera)	S-01	camera modes
 ^(ProjectIntegrity|BuildPipeline|HandoffIntegrity|MeshWinding|SceneLoadDoubleTrigger)	S-01	build / repo integrity
 ^(SpecialWeaponHud|Ui|Hud|MetaUi|LoadingScreen|RoundHudSync|RunHud|ResultsViewModel|PlayerHitDirectionHud)	S-09	UI
