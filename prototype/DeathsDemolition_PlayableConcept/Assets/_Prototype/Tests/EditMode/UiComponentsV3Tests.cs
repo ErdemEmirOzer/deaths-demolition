@@ -523,6 +523,40 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsFalse(view.Scrolls, "kısa içerik kaymaz");
         }
 
+        /// <summary>
+        /// 12b (AD R1-A SHOULD-7): LOOK SENSITIVITY 1–20 is a ruler - 1 px at every unit, 2 px at
+        /// 5 / 10 / 15 (the health strong-tick rule); a slider with few stops (UI SCALE's six)
+        /// keeps its 2 px detents (AD 5b MUST-3).
+        /// </summary>
+        [Test]
+        public void Kaydirici_Cetvel_BirimTik1px_Her5te2px_AzDuraktaHep2px()
+        {
+            UiSlider look = UiSlider.Create("Look", _root, "LOOK SENSITIVITY", 1f, 20f, 10f, 1f, v => Mathf.RoundToInt(v).ToString(), null);
+            int strong = 0;
+            for (int i = 1; i < 19; i++)
+            {
+                int value = 1 + i;
+                Transform tick = look.transform.Find("Rail/Tick" + i);
+                Assert.IsNotNull(tick, "birim tiki " + value);
+                float width = ((RectTransform)tick).sizeDelta.x;
+                bool major = value % UiSlider.MajorTickEvery == 0;
+                Assert.AreEqual(major ? UiSlider.MajorTickWidth : UiSlider.MinorTickWidth, width, 1e-4f, "tik " + value);
+                if (major) strong++;
+            }
+
+            Assert.AreEqual(3, strong, "5 / 10 / 15 güçlü");
+            Assert.AreEqual(1f, UiSlider.MinorTickWidth, 1e-4f);
+            Assert.AreEqual(2f, UiSlider.MajorTickWidth, 1e-4f);
+
+            UiSlider scale = UiSlider.Create("Scale", _root, "UI SCALE", 0.9f, 1.2f, 1f, 0.05f, null, null);
+            for (int i = 1; i < 6; i++)
+            {
+                Transform tick = scale.transform.Find("Rail/Tick" + i);
+                Assert.IsNotNull(tick, "UI SCALE durağı " + i);
+                Assert.AreEqual(UiSlider.MajorTickWidth, ((RectTransform)tick).sizeDelta.x, 1e-4f, "az duraklı kaydırıcı 2 px");
+            }
+        }
+
         [Test]
         public void Kaydirici_EsitsizDuraklar_EnYakinaOturur_OkDuraktanDuraga_IcDuraklaraTik()
         {

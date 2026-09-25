@@ -69,6 +69,23 @@ namespace DD.Prototype.Tests.EditMode
             }
         }
 
+        /// <summary>
+        /// 12b (AD R1-A SHOULD-7): STICK LOOK SPEED "180°/s", the FOV rows and the ACCURACY stat
+        /// print "°" in the Numeric face; the sign is the atlas's own glyph (Oswald), not a
+        /// fallback to the Text face, and it is not tabular (only digits share one advance).
+        /// </summary>
+        [Test]
+        public void Numeric_DereceIsareti_KendiAtlasinda()
+        {
+            StringAssert.Contains(UiFontBuilder.DegreeSign.ToString(), UiFontBuilder.NumericCharset, "Numeric karakter kümesi ° içerir");
+            TMP_FontAsset numeric = Load(UiFonts.NumericFontResource);
+            TMP_Character degree;
+            Assert.IsTrue(numeric.characterLookupTable.TryGetValue(UiFontBuilder.DegreeSign, out degree),
+                "Numeric SDF ° glifini kendi atlasında taşır (Build Font Assets yeniden koşulmalı)");
+            Assert.Greater(degree.glyph.glyphRect.width, 0, "° atlasta rasterleştirilmiş");
+            Assert.Greater(degree.glyph.metrics.horizontalAdvance, 0f, "° ilerlemesi var");
+        }
+
         [Test]
         public void Atlaslar_Tavan15MB_Alpha8()
         {

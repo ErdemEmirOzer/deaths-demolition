@@ -36,6 +36,18 @@ namespace DD.Prototype.UI
         /// <summary>Label x inside the row: the same as a framed row's (UiSwitch / UiStepper label offset XL − 4).</summary>
         public const float LabelInset = (int)UiSpace.XL - 4f;
 
+        /// <summary>
+        /// 12b (AD R1-A SHOULD-7): an even-step slider with more than this many stops is a ruler
+        /// (LOOK SENSITIVITY 1–20, HEAD BOB 5 %): its unit ticks are <see cref="MinorTickWidth"/>
+        /// and every <see cref="MajorTickEvery"/>th unit (value-anchored: 5, 10, 15 / 25, 50, 75 %)
+        /// is <see cref="MajorTickWidth"/> - the health strong-tick rule. Fewer stops (UI SCALE's
+        /// six, the uneven TEXT SCALE detents) keep 2 px detents (AD 5b MUST-3).
+        /// </summary>
+        public const int RulerStops = 10;
+        public const int MajorTickEvery = 5;
+        public const float MinorTickWidth = 1f;
+        public const float MajorTickWidth = 2f;
+
         private RectTransform _rail;
         private RectTransform _fill;
         private RectTransform _bead;
@@ -146,9 +158,10 @@ namespace DD.Prototype.UI
             int stops = _step > 0f ? Mathf.RoundToInt((_max - _min) / _step) : 0;
             if (stops >= 2 && stops <= 20)
             {
+                bool ruler = stops > RulerStops;
                 for (int i = 1; i < stops; i++)
                 {
-                    AddTick(i, (float)i / stops);
+                    AddTick(i, (float)i / stops, ruler && !IsMajorUnit(_min + i * _step, _step) ? MinorTickWidth : MajorTickWidth);
                 }
             }
 
@@ -175,15 +188,26 @@ namespace DD.Prototype.UI
             SetValue(value, false, false);
         }
 
-        /// <summary>2 px BorderStrong tick above the rail's rim at rail position <paramref name="t"/> (AD 5b MUST-3).</summary>
-        private void AddTick(int index, float t)
+        /// <summary>True when <paramref name="value"/> is a whole multiple of <see cref="MajorTickEvery"/> steps (a ruler's strong tick).</summary>
+        public static bool IsMajorUnit(float value, float step)
+        {
+            if (step <= 0f)
+            {
+                return true;
+            }
+
+            return Mathf.RoundToInt(value / step) % MajorTickEvery == 0;
+        }
+
+        /// <summary>BorderStrong tick above the rail's rim at rail position <paramref name="t"/>, 2 px (AD 5b MUST-3) or a ruler's 1 px unit (AD R1-A SHOULD-7).</summary>
+        private void AddTick(int index, float t, float width = MajorTickWidth)
         {
             Image tick = UiFactory.NewImage("Tick" + index, _rail, UiColor.BorderStrong, UiSprites.Solid);
             var tickRect = (RectTransform)tick.transform;
             tickRect.anchorMin = new Vector2(t, 0.5f);
             tickRect.anchorMax = tickRect.anchorMin;
             tickRect.pivot = new Vector2(0.5f, 0.5f);
-            tickRect.sizeDelta = new Vector2(2f, RailHeight + 6f);
+            tickRect.sizeDelta = new Vector2(width, RailHeight + 6f);
             if (_bead != null)
             {
                 tick.transform.SetSiblingIndex(_bead.GetSiblingIndex()); // under the bead

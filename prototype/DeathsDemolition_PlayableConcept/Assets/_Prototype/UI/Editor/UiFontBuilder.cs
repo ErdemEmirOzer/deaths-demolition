@@ -14,7 +14,7 @@ namespace DD.Prototype.UI.EditorTools
     ///
     ///   Display  Shippori Mincho B1 700 · 1024×512 @ 64 pt, padding 8 · caps, digits, punctuation
     ///   Text     Source Sans 3 400      · 1024×512 @ 44 pt, padding 6 · Latin-1 + typographic marks
-    ///   Numeric  Oswald 500             ·  512×512 @ 64 pt, padding 12 · digits + ": / % + − × . , x"
+    ///   Numeric  Oswald 500             ·  512×512 @ 64 pt, padding 12 · digits + ": / % + − × . , x °"
     ///
     /// Sources are the OFL TTFs under Assets/_Prototype/UI/Art/Fonts/&lt;Face&gt;/ (outside
     /// Resources, licence beside each); the assets land in Art/Resources/UI/Fonts/ as
@@ -36,7 +36,10 @@ namespace DD.Prototype.UI.EditorTools
         // "_" and "…": TMP asks every font for its underline and ellipsis glyphs when a label takes
         // the font; a static atlas without them logs a warning per label (p3: 4 870 warnings).
         public const string DisplayCharset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,:;!?'\"-–—()&/·×+%#’‘“”…_";
-        public const string NumericCharset = "0123456789 :/%+−-×.,x_…";
+        // 12b (AD R1-A SHOULD-7): "°" - STICK LOOK SPEED "180°/s", the FOV rows and the ACCURACY stat print
+        // their unit in the Numeric face; without it the sign fell back to the Text face (Oswald has U+00B0).
+        public const string NumericCharset = "0123456789 :/%+−-×.,x_…°";
+        public const char DegreeSign = '°';
         public const string Digits = "0123456789";
 
         public static string TextCharset
