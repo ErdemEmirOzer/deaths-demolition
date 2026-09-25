@@ -55,11 +55,9 @@ namespace DD.Prototype.Weapons
 
             for (int i = 0; i < LodCount; i++) s_lodScratch[i].Clear();
             Renderer[] renderers = go.GetComponentsInChildren<Renderer>(true);
-            Material body = BodyMaterialOf(renderers);
             for (int i = 0; i < renderers.Length; i++)
             {
                 renderers[i].shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
-                if (body != null) FillStraySlots(renderers[i], body);
                 int lod = LodIndexOf(renderers[i].name);
                 if (lod >= 0) s_lodScratch[lod].Add(renderers[i]);
             }
@@ -88,38 +86,6 @@ namespace DD.Prototype.Weapons
             for (int i = 0; i < LodCount; i++) s_lodScratch[i].Clear();
             s_groupScratch.Clear();
             return go;
-        }
-
-        /// <summary>The model's own body material (<c>M_AP021_&lt;key&gt;_body</c>), or null.</summary>
-        private static Material BodyMaterialOf(Renderer[] renderers)
-        {
-            for (int i = 0; i < renderers.Length; i++)
-            {
-                foreach (Material m in renderers[i].sharedMaterials)
-                {
-                    if (m != null && m.name.StartsWith(OwnMaterialPrefix, StringComparison.Ordinal) && m.name.EndsWith("_body", StringComparison.Ordinal)) return m;
-                }
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// WP-069 B4e: a slot that is not an AP-021 material — a sub-mesh the FBX left without one (lmg_1 part_trigger_LOD2,
-        /// P-07 batch B) comes in with the pipeline default "Lit" — takes the model's body material. Equip time only.
-        /// </summary>
-        private static void FillStraySlots(Renderer r, Material body)
-        {
-            Material[] materials = r.sharedMaterials;
-            bool changed = false;
-            for (int i = 0; i < materials.Length; i++)
-            {
-                if (materials[i] != null && materials[i].name.StartsWith(OwnMaterialPrefix, StringComparison.Ordinal)) continue;
-                materials[i] = body;
-                changed = true;
-            }
-
-            if (changed) r.sharedMaterials = materials;
         }
 
         /// <summary>0..2 for a renderer named <c>…_LOD0/1/2</c>, else -1.</summary>

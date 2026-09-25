@@ -7,7 +7,7 @@ using UnityEngine;
 namespace DD.Prototype.Tests.EditMode
 {
     /// <summary>
-    /// WP-069 B4d / B4e · the AP-021 (P-07 v002) classics — all ten — in DD_ClassicWeapons: an own-material entry per runtime id, the
+    /// WP-069 B4d / B4e · the AP-021 (P-07 v002/v003) classics — all ten — in DD_ClassicWeapons: an own-material entry per runtime id, the
     /// ADR-042-1 frame (Muzzle on +Z, Ejection on +X — a mirrored export fails), the contract sockets, three LODs within
     /// P-07's budget (20 000 / 6 000 / 1 800), the body material with its maps (MRA → derived URP mask).
     /// </summary>
@@ -61,7 +61,8 @@ namespace DD.Prototype.Tests.EditMode
             }
 
             Assert.IsNotNull(body, id + ": gövde malzemesi eşlenmedi");
-            // In hand every slot is an AP-021 material (a slot the FBX left empty takes the body — AuthoredWeaponModel, B4e).
+            // In hand every slot is an AP-021 material — straight from the FBX: an empty slot comes in as the pipeline "Lit" and fails
+            // (P-07 v003 filled lmg_1 part_trigger_LOD2; the B4e equip-time fill is gone).
             GameObject hand = ClassicWeaponVisualLibrary.Instantiate(e, Library.material, new[] { 0.12f, 0.05f, 0.01f });
             try
             {

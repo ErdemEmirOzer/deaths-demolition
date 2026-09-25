@@ -2,21 +2,21 @@
  "package": "AP-021",
  "owner": "P-07",
  "key": "smg_1",
- "version": "v002",
+ "version": "v003",
  "frame": "Unity frame at export (canonical — S-02 measured in the Run scene (C-00 T4, 25.09): Unity +Z barrel, +Y up, +X = shooter right)",
- "ad_verdict": "02-concept/AP021-AD-classics-B-verdict.md: KABUL_DUZELTMELERLE; open MUSTs (Blender-only, 0 kr, pending C-00 go after the quota pause): C1, C3, C4",
+ "ad_verdict": "02-concept/AP021-AD-classics-B-verdict.md: KABUL_DUZELTMELERLE -> v003: C1, C3 (notch floor 0.1013), C4 (nxy p95 0.023) done; open: pad front edge 0.72 mm (rear/ADS edge 0.26)",
  "files": [
   {
    "source": "asset-production/AP-021/exports/fbx/AP021_smg_1.fbx",
    "target": "_Prototype/Weapons/Arsenal/Models/AP021_smg_1/AP021_smg_1.fbx",
-   "bytes": 1074236,
-   "sha256": "ac2cef35ccfe04f916b5844351d818aedf6e1c07d859fea0e4e798de1dc67dae"
+   "bytes": 1075900,
+   "sha256": "53fbe8ed686450f2560ec8e7541691281cd6c462901907e3b2ae8992130f486e"
   },
   {
    "source": "asset-production/AP-021/exports/textures/smg_1/T_AP021_smg_1_BaseColor.png",
    "target": "_Prototype/Weapons/Arsenal/Models/AP021_smg_1/Textures/T_AP021_smg_1_BaseColor.png",
-   "bytes": 2813192,
-   "sha256": "8fc5a5d3c8a5dd220d1b33c07466abd156fa7ece7c7880e69fcc5ce0aa372863"
+   "bytes": 2816696,
+   "sha256": "5ac90ab93a2f4c139ea40d566472554d8055fa790d42f7bb195d0df5e352223e"
   },
   {
    "source": "asset-production/AP-021/exports/textures/smg_1/T_AP021_smg_1_Emissive.png",
@@ -27,14 +27,14 @@
   {
    "source": "asset-production/AP-021/exports/textures/smg_1/T_AP021_smg_1_MRA.png",
    "target": "_Prototype/Weapons/Arsenal/Models/AP021_smg_1/Textures/T_AP021_smg_1_MRA.png",
-   "bytes": 3299455,
-   "sha256": "a219a703a8e51523ace738ca9de51d6b8857a34726ba540723ea1856ab811c89"
+   "bytes": 3088128,
+   "sha256": "59b2fe567d15f4a6e9fee2534032879497894c8ea2fdd212b659f0a8e756886c"
   },
   {
    "source": "asset-production/AP-021/exports/textures/smg_1/T_AP021_smg_1_Normal.png",
    "target": "_Prototype/Weapons/Arsenal/Models/AP021_smg_1/Textures/T_AP021_smg_1_Normal.png",
-   "bytes": 1789335,
-   "sha256": "25ac79fecfb59ad56e514bb845c5bd8f4ac748a776a57a2dfbc74821593613c2"
+   "bytes": 1745732,
+   "sha256": "9b61c7502dd84dbec2beb5c8b9522413ab34823f188d5af91da74342f483c68e"
   }
  ]
 }

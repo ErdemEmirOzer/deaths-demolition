@@ -2,21 +2,21 @@
  "package": "AP-021",
  "owner": "P-07",
  "key": "ar_1",
- "version": "v002",
+ "version": "v003",
  "frame": "Unity frame at export (canonical — S-02 measured in the Run scene (C-00 T4, 25.09): Unity +Z barrel, +Y up, +X = shooter right)",
- "ad_verdict": "02-concept/AP021-AD-classics-B-verdict.md: KABUL_DUZELTMELERLE; open MUSTs (Blender-only, 0 kr, pending C-00 go after the quota pause): C1, C2, ar_1-M1, ar_1-M2",
+ "ad_verdict": "02-concept/AP021-AD-classics-B-verdict.md: KABUL_DUZELTMELERLE -> v003: C1, C2 (plane split, foreign 0), M2 (crown p95 0.56 -> 0.28 mm + b-2 nxy 0.009) done; M1 partial: wrist dihedral p95 33.7 -> 22.1 deg (target 8; remodel), smooth, sharp >= 60 deg, flat 0",
  "files": [
   {
    "source": "asset-production/AP-021/exports/fbx/AP021_ar_1.fbx",
    "target": "_Prototype/Weapons/Arsenal/Models/AP021_ar_1/AP021_ar_1.fbx",
-   "bytes": 1049836,
-   "sha256": "5cb90eaba7e146066c02ac21fb668eca94f4994c3a76df8c06a8457053c7947c"
+   "bytes": 1046844,
+   "sha256": "87ce040cdfa489d980fa927382dd5dc85e917c53040cb11a723bc25e19b454a8"
   },
   {
    "source": "asset-production/AP-021/exports/textures/ar_1/T_AP021_ar_1_BaseColor.png",
    "target": "_Prototype/Weapons/Arsenal/Models/AP021_ar_1/Textures/T_AP021_ar_1_BaseColor.png",
-   "bytes": 2869096,
-   "sha256": "fefc52baf75b4de61852c3fbf52dab32e7fba7261be690bc057618b00a1e2410"
+   "bytes": 2878214,
+   "sha256": "096238415d13116e8f0559f6dc8f9e59694ada2937cac1af261e06c66ef15aab"
   },
   {
    "source": "asset-production/AP-021/exports/textures/ar_1/T_AP021_ar_1_Emissive.png",
@@ -27,14 +27,14 @@
   {
    "source": "asset-production/AP-021/exports/textures/ar_1/T_AP021_ar_1_MRA.png",
    "target": "_Prototype/Weapons/Arsenal/Models/AP021_ar_1/Textures/T_AP021_ar_1_MRA.png",
-   "bytes": 2972875,
-   "sha256": "d7c83146cab02e63c131c42b97a0b795695ab542a53a0ff424a7eabfbe64b102"
+   "bytes": 2947800,
+   "sha256": "12a04118314c5ab6a9e8567ecb9e394b7ad5386957f21c1f334861ccad4dbd53"
   },
   {
    "source": "asset-production/AP-021/exports/textures/ar_1/T_AP021_ar_1_Normal.png",
    "target": "_Prototype/Weapons/Arsenal/Models/AP021_ar_1/Textures/T_AP021_ar_1_Normal.png",
-   "bytes": 1788861,
-   "sha256": "b2cab85033c076f0675f1dd8e5103a71ee6855a321d4980b89540f2e844a83de"
+   "bytes": 1771794,
+   "sha256": "cd1b9c7b4660c3461e59e15c5ae6f839db406b317c5aedaab2185c246e38a565"
   }
  ]
 }

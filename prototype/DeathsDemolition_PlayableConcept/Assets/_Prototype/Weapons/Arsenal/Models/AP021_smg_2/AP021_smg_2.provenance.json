@@ -2,33 +2,33 @@
  "package": "AP-021",
  "owner": "P-07",
  "key": "smg_2",
- "version": "v002",
+ "version": "v003",
  "frame": "Unity frame at export (canonical — S-02 measured in the Run scene (C-00 T4, 25.09): Unity +Z barrel, +Y up, +X = shooter right)",
- "ad_verdict": "02-concept/AP021-AD-classics-B-verdict.md: KABUL_DUZELTMELERLE; open MUSTs (Blender-only, 0 kr, pending C-00 go after the quota pause): C1, C3, C4, smg_2-M1",
+ "ad_verdict": "02-concept/AP021-AD-classics-B-verdict.md: KABUL_DUZELTMELERLE -> v003: C1, C3 (0.1015), C4 (0.027/0.029), M1 (procedural cap + 2 rings, closed) done",
  "files": [
   {
    "source": "asset-production/AP-021/exports/fbx/AP021_smg_2.fbx",
    "target": "_Prototype/Weapons/Arsenal/Models/AP021_smg_2/AP021_smg_2.fbx",
-   "bytes": 1111692,
-   "sha256": "72d27f9a733e195ff1ddc83a6f161b61ee239d13a32a12af8d15a255a7b7b5f3"
+   "bytes": 1116828,
+   "sha256": "5f6cc9dcb9debe38c31da599ea6788a79304677ffd1d4d057bb48abaa75373bb"
   },
   {
    "source": "asset-production/AP-021/exports/textures/smg_2/T_AP021_smg_2_BaseColor.png",
    "target": "_Prototype/Weapons/Arsenal/Models/AP021_smg_2/Textures/T_AP021_smg_2_BaseColor.png",
-   "bytes": 2407031,
-   "sha256": "e7f0b299445e2803e4cc3d5dabaa09281f0d3a1a809e9cd7c1109a2aa6143eef"
+   "bytes": 2466537,
+   "sha256": "ec7a72091b4241462d268ab48c3fcb96257b57a2eb487ed2f51759d5845aabfe"
   },
   {
    "source": "asset-production/AP-021/exports/textures/smg_2/T_AP021_smg_2_MRA.png",
    "target": "_Prototype/Weapons/Arsenal/Models/AP021_smg_2/Textures/T_AP021_smg_2_MRA.png",
-   "bytes": 2966599,
-   "sha256": "67216795995b6991bef1cf3b47cc7b72a55041378762b7048ae90cf3084039fc"
+   "bytes": 2986298,
+   "sha256": "0b1753b0a5a1ac08fb4da2f08b77e680d79596d61dd619d19e4fc7afa6b0e24d"
   },
   {
    "source": "asset-production/AP-021/exports/textures/smg_2/T_AP021_smg_2_Normal.png",
    "target": "_Prototype/Weapons/Arsenal/Models/AP021_smg_2/Textures/T_AP021_smg_2_Normal.png",
-   "bytes": 1565958,
-   "sha256": "91a2e810e1b4602c87945e30d4ae5a5fbb07920ce55482de06d20b486cb3b866"
+   "bytes": 1576619,
+   "sha256": "29c8344a7013807ae950348de109e49384bbf17d9380ef92d2093923d980cf94"
   }
  ]
 }

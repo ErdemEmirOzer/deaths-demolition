@@ -2,33 +2,33 @@
  "package": "AP-021",
  "owner": "P-07",
  "key": "sg_1",
- "version": "v002",
+ "version": "v003",
  "frame": "Unity frame at export (canonical — S-02 measured in the Run scene (C-00 T4, 25.09): Unity +Z barrel, +Y up, +X = shooter right)",
- "ad_verdict": "02-concept/AP021-AD-classics-B-verdict.md: KABUL; open MUSTs (Blender-only, 0 kr, pending C-00 go after the quota pause): C1",
+ "ad_verdict": "02-concept/AP021-AD-classics-B-verdict.md: KABUL; v003: C1 done",
  "files": [
   {
    "source": "asset-production/AP-021/exports/fbx/AP021_sg_1.fbx",
    "target": "_Prototype/Weapons/Arsenal/Models/AP021_sg_1/AP021_sg_1.fbx",
-   "bytes": 1106284,
-   "sha256": "cbd024ed1105561251c6c116a450fa0896b36804f8a03563ccf255bd43a18f00"
+   "bytes": 1107052,
+   "sha256": "d2ed7d93dc7970e1778e1868914b0b004e95d4a0cbad7c0d67f30a2b1991582b"
   },
   {
    "source": "asset-production/AP-021/exports/textures/sg_1/T_AP021_sg_1_BaseColor.png",
    "target": "_Prototype/Weapons/Arsenal/Models/AP021_sg_1/Textures/T_AP021_sg_1_BaseColor.png",
-   "bytes": 2700074,
-   "sha256": "049f204829077e11fed88e28cab3516604bab3ae598840b9df902a166066ac68"
+   "bytes": 2704366,
+   "sha256": "85974c2b04acceb2e81ee08b5eecf64905a28a0cbe49e0757d0ac65b6f56f4ad"
   },
   {
    "source": "asset-production/AP-021/exports/textures/sg_1/T_AP021_sg_1_MRA.png",
    "target": "_Prototype/Weapons/Arsenal/Models/AP021_sg_1/Textures/T_AP021_sg_1_MRA.png",
-   "bytes": 3013110,
-   "sha256": "c781ef83749ea4c79e579820216ad75709cd387b922b5c423f7e1bf416fb6cd0"
+   "bytes": 3020806,
+   "sha256": "9e44b1941ea029951f3dcf86b1feaa7c11a2af40364394fe968ada891663591a"
   },
   {
    "source": "asset-production/AP-021/exports/textures/sg_1/T_AP021_sg_1_Normal.png",
    "target": "_Prototype/Weapons/Arsenal/Models/AP021_sg_1/Textures/T_AP021_sg_1_Normal.png",
-   "bytes": 1723811,
-   "sha256": "0db2593a97fef46f31079749f7386e51646cb7881202565efa9cb443b2e43aa2"
+   "bytes": 1731610,
+   "sha256": "bfb8819e133205f78cb92cafdfecdd6fc3e55dc453a8e733906317c6cce6aee2"
   }
  ]
 }
