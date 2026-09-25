@@ -221,7 +221,23 @@ namespace DD.Art.Pipeline.EditorTools
         private static readonly Dictionary<string, GameObject> s_prefabs = new Dictionary<string, GameObject>(StringComparer.Ordinal);
 
         /// <summary>Greybox pieces the kit replaces (name prefixes under the greybox root).</summary>
-        public static readonly string[] ReplacedPrefixes = { "Hall_Plinth", "Hall_Stair", "R1_MainHall_", "RingWall_", "Court_", "Karamon_", "Lantern_", "Planter_", "Vista" };
+        public static readonly string[] ReplacedPrefixes = { "Hall_Plinth", "Hall_Stair", "R1_MainHall_", "RingWall_", "Court_", "Karamon_", "Lantern_", "Planter_", "Vista", "K3_", "K6_", "R6_Chumon_" };
+
+        /// <summary>
+        /// B5b-4 · The straight open kairō dressed with AP-023 bays (V01, rails off: the greybox corridors are entered from the side —
+        /// C-00 decision (b) waits for P-05's rail-less bay, the kit's own rail part is switched off per instance meanwhile). The kit
+        /// floor is walkable at 0.25 (the greybox deck), 4.74 m wide, posts every 2.4 m at ±2.1–2.37 (clear 4.2 ≥ the greybox 4.0).
+        /// K2 / K4 (angled joints) and K5 / K1 stay greybox.
+        /// </summary>
+        public static readonly (string id, Vector2 a, Vector2 b)[] KitKairo =
+        {
+            ("K3_CloisterWest", new Vector2(-22f, 22f), new Vector2(-22f, 36f)),
+            ("K3_CloisterEast", new Vector2(22f, 22f), new Vector2(22f, 36f)),
+            ("K6_RearKairo", new Vector2(-22f, 52.5f), new Vector2(22f, 52.5f)),
+        };
+
+        public const float KairoBay = 2.4f;
+        public const string KairoGroupName = "Kairo";
 
         public const string VistaGroupName = "VistaForest";
         /// <summary>The vista band (B5b-3): tree bases between these square radii — outside the tsuiji's outer face (55.6) to the vista edge.</summary>
@@ -249,6 +265,8 @@ namespace DD.Art.Pipeline.EditorTools
             Lanterns(dress);
             Planters(dress);
             Yagura(dress);
+            Kairo(dress);
+            Chumon(dress);
             Vista(dress);
             ArtSurfaceImporter.BuildHorizonPlates(dress.gameObject);   // AP-019 horizon rings (World_AP005's), until the C3 sky v2
             report.PlazaCells = WorldV5Ground.Build(dress, (parent, family, v, m, role) => Place(parent, family, v, m, Vector3.zero, role));
@@ -344,9 +362,11 @@ namespace DD.Art.Pipeline.EditorTools
                 n += Cap(court, new Vector2(x, 35.7f), new Vector2(0f, 1f));
             }
 
-            // Up to the chūmon's side walls (greybox R6, x ±4, 0.3 thick): the run ends in its centreline.
-            n += Run(court, new Vector2(-24.5f, 20f), new Vector2(-4.15f, 20f));
-            n += Run(court, new Vector2(24.5f, 20f), new Vector2(4.15f, 20f));
+            // B5b-4: up to 1.8 m short of the chūmon karamon's posts (x ±3.43) — its side passages, the greybox R6's 2 m E/W doors.
+            n += Run(court, new Vector2(-24.5f, 20f), new Vector2(-5.5f, 20f));
+            n += Cap(court, new Vector2(-5.5f, 20f), new Vector2(1f, 0f));
+            n += Run(court, new Vector2(24.5f, 20f), new Vector2(5.5f, 20f));
+            n += Cap(court, new Vector2(5.5f, 20f), new Vector2(-1f, 0f));
             return n;
         }
 
@@ -482,6 +502,53 @@ namespace DD.Art.Pipeline.EditorTools
             if (p.x > 40f && pick < 0.12) return ("momiji", 1);
             if ((p.x < -40f || p.y < -40f) && pick < 0.10) return ("black_pine", 4);
             return ("sugi", pick < 0.64 ? 1 : 2);
+        }
+
+        private static void Kairo(Transform dress)
+        {
+            var group = new GameObject(KairoGroupName).transform;
+            group.SetParent(dress, false);
+            foreach ((string id, Vector2 a, Vector2 b) in KitKairo)
+            {
+                float len = Vector2.Distance(a, b);
+                int n = Mathf.Max(1, Mathf.RoundToInt(len / KairoBay));
+                float s = len / (n * KairoBay);
+                Vector2 d = (b - a) / len;
+                float deg = Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg;
+                for (int i = 0; i < n; i++)
+                {
+                    Vector2 c = a + d * ((i + 0.5f) * len / n);
+                    GameObject bay = Place(group, "kairo_bay", 1, Mz(c.x, c.y, 0f, deg) * Matrix4x4.Scale(new Vector3(s, 1f, 1f)), Vector3.zero, "structure");
+                    bay.name = id + "_Bay_" + i.ToString("00");
+                    RailsOff(bay);
+                    Transform roof = bay.transform.Find(ArtLibraryPrefabBuilder.RoofName);
+                    if (roof != null) RoofOccluder(bay.transform, roof);
+                }
+            }
+        }
+
+        /// <summary>The bay's koran off: the rail part's renderers and its colliders (shells 0.25 → 1.1–1.5 m; posts reach 3.65, sills 0.1).</summary>
+        public static void RailsOff(GameObject bay)
+        {
+            Physics.SyncTransforms();
+            float y = bay.transform.position.y;
+            foreach (Transform t in bay.GetComponentsInChildren<Transform>(true))
+                if (t.name.StartsWith("rail_LOD", StringComparison.Ordinal)) t.gameObject.SetActive(false);
+            foreach (Collider c in bay.GetComponentsInChildren<Collider>(true))
+            {
+                Bounds b = c.bounds;
+                if (b.min.y - y > 0.2f && b.max.y - y > 0.9f && b.max.y - y < 1.5f) c.gameObject.SetActive(false);
+            }
+        }
+
+        private static void Chumon(Transform dress)
+        {
+            // R6 (x ±4, z 18…23) as a karamon on the north axis: 6.0 m clear S / N (the greybox doors are 5 m), the sides open between
+            // its front and back posts toward the 1.8 m wall gaps (the greybox E / W doors). A chūmon proper is a P-05 wish.
+            GameObject gate = Place(dress, "gates", 1, Mz(0f, 20.5f, 0f, 0f), Vector3.zero, "structure");
+            gate.name = "Chumon_Karamon";
+            Transform roof = gate.transform.Find(ArtLibraryPrefabBuilder.RoofName);
+            if (roof != null) RoofOccluder(gate.transform, roof);
         }
 
         // ---------------------------------------------------------------- helpers
