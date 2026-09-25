@@ -266,6 +266,25 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>
+        /// WP-068 12b (AD R1-A SHOULD-6, shoulder half) · the rear-edge arc: ArcSoft60's band with shoulders - the stroke
+        /// holds ≥ 0.5 of its peak out to 80 % of the chord (ArcSoft60's quadratic taper is 0.36 there, so the visible core
+        /// was ≈ 80 px of the 200 px sprite). The E17 damage wedge keeps ArcSoft60.
+        /// </summary>
+        public static Sprite ArcShouldered60
+        {
+            get { return GetOrCreate("arcShouldered60", () => CreateSoftArc(256, 60f, 0.75f, 4f)); }
+        }
+
+        /// <summary>
+        /// WP-068 12b (AD R1-C SHOULD-1) · the NEEDS seal ring: a dotted hairline of 20 round dots, so "waiting for a
+        /// prerequisite" is a shape of its own and not only a muted tint of AVAILABLE's solid ring.
+        /// </summary>
+        public static Sprite RingDotted
+        {
+            get { return GetOrCreate("ringDotted", () => CreateDottedRing(128, 0.05f, 20)); }
+        }
+
+        /// <summary>
         /// WP-068 slice 8b (AD 8a SHOULD-8) · the HUD panel fill with a translucent margin: 9-sliced, rounded like the card,
         /// the outer <see cref="PanelBandWidth"/> px at <see cref="PanelBandAlpha"/> of the fill, a 4 px ramp to full in the
         /// text zone. Tinted HudInk (0.98) the band renders 0.86: the world ghosts through the rim, never behind a glyph.
@@ -491,6 +510,31 @@ namespace DD.Prototype.UI
             return Finish(texture, Vector4.zero);
         }
 
+        private static Sprite CreateDottedRing(int size, float thicknessFraction, int dots)
+        {
+            Texture2D texture = NewTexture(size, size);
+            var pixels = new Color32[size * size];
+            float half = size * 0.5f;
+            float dot = size * thicknessFraction * 0.5f;          // dot radius = half the stroke
+            float mid = half - 1f - dot;
+            float period = 2f * Mathf.PI / dots;
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float dx = x + 0.5f - half, dy = y + 0.5f - half;
+                    float d = Mathf.Sqrt(dx * dx + dy * dy);
+                    float phase = Mathf.Repeat(Mathf.Atan2(dy, dx) + period * 0.5f, period) - period * 0.5f;   // to the nearest dot centre
+                    float along = phase * mid, across = d - mid;
+                    float alpha = Mathf.Clamp01(dot + 0.5f - Mathf.Sqrt(along * along + across * across));
+                    pixels[y * size + x] = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(alpha * 255f));
+                }
+            }
+
+            texture.SetPixels32(pixels);
+            return Finish(texture, Vector4.zero);
+        }
+
         private static Sprite CreateEnsoBrush(int size, float strokeFraction)
         {
             Texture2D texture = NewTexture(size, size);
@@ -551,7 +595,7 @@ namespace DD.Prototype.UI
             return Finish(texture, Vector4.zero);
         }
 
-        private static Sprite CreateSoftArc(int size, float spanDegrees, float innerFraction)
+        private static Sprite CreateSoftArc(int size, float spanDegrees, float innerFraction, float shoulderPower = 2f)
         {
             Texture2D texture = NewTexture(size, size);
             var pixels = new Color32[size * size];
@@ -568,7 +612,7 @@ namespace DD.Prototype.UI
                     float dx = x + 0.5f - half, dy = y + 0.5f - half;
                     float d = Mathf.Sqrt(dx * dx + dy * dy);
                     float angle = Mathf.Abs(Mathf.Atan2(dx, dy) * Mathf.Rad2Deg) / halfSpan;   // 0 centre, 1 ends
-                    float taper = Mathf.Clamp01(1f - angle * angle);                            // the wedge thins to its ends
+                    float taper = Mathf.Clamp01(1f - Mathf.Pow(angle, shoulderPower));          // the wedge thins to its ends (2: quadratic)
                     float across = Mathf.Clamp01(1f - Mathf.Abs(d - mid) / Mathf.Max(1f, halfWidth * Mathf.Lerp(0.35f, 1f, taper)));
                     float alpha = Mathf.SmoothStep(0f, 1f, across) * taper;                    // soft, brush-like edges
                     pixels[y * size + x] = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(alpha * 255f));
