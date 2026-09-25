@@ -47,7 +47,7 @@ namespace DD.Art.Tests.PlayMode
         [UnityTearDown]
         public IEnumerator UnityTearDown()
         {
-            PlayerSkinnedVisual.V3WeaponSets = true;
+            PlayerSkinnedVisual.V3WeaponSets = false;
             Time.captureDeltaTime = 0f;
             foreach (GameObject go in _temp) if (go != null) UnityEngine.Object.Destroy(go);
             _temp.Clear();

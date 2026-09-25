@@ -341,7 +341,7 @@ namespace DD.Art.Tests.PlayMode
             // weapon slots (no rebind: the base layer keeps its state and clock), reload picks tac / empty from the duration, the
             // burst weapon's fire clip starts once per burst.
             yield return RunAP005();
-            PlayerSkinnedVisual.V3WeaponSets = true;   // the default since the grip decision B + S-02 pose 5
+            PlayerSkinnedVisual.V3WeaponSets = true;   // C-00 25.09: TP v3 is off in the game until P-06's gripOffset re-export; this test turns it on
             try
             {
             PlayerSkinnedVisual pv = PlayerRegistry.Primary.GetComponentInChildren<PlayerSkinnedVisual>(true);
@@ -405,7 +405,7 @@ namespace DD.Art.Tests.PlayMode
             AnimatorClipInfo[] sci = pv.Animator.GetCurrentAnimatorClipInfo(over);
             StringAssert.Contains("tp_smg_idle_aim", sci.Length > 0 ? sci[0].clip.name : "-", "smg_1 AOC sınıf slotunu da değiştirir");
             }
-            finally { PlayerSkinnedVisual.V3WeaponSets = true; }
+            finally { PlayerSkinnedVisual.V3WeaponSets = false; }
         }
 
         [UnityTest]

@@ -346,13 +346,17 @@ namespace DD.Prototype.Characters
         // ---------------------------------------------------------------- WP-071 B4b per-weapon override controllers
 
         /// <summary>
-        /// WP-071 B4b: the v3 weapon path (on since the grip decision B — WeaponDefinition.gripOffset — and S-02's WeaponMountAlignment
-        /// pose 5 landed). Off = every weapon on the legacy class pose (A/B tests).
+        /// WP-071 B4b (C-00 25.09): the TP v3 weapon states — OFF until P-06's TP AR/SMG re-export on the per-weapon gripOffset (the
+        /// current v3 TP clips hold the old base grip: the stock sits 6.0 cm into the shoulder); TP plays the legacy class pose (stock
+        /// 0–1 mm, S-02). The FP arms (slice 5b) are independent of it: <see cref="FirstPersonV3Arms"/>.
         /// </summary>
-        public static bool V3WeaponSets = true;
+        public static bool V3WeaponSets = false;
+
+        /// <summary>WP-071 B4b: the FP viewmodel arms play their v3 sets whatever the TP path (C-00 25.09: FP v3 on).</summary>
+        public static bool FirstPersonV3Arms = true;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetV3Statics() => V3WeaponSets = true;
+        private static void ResetV3Statics() { V3WeaponSets = false; FirstPersonV3Arms = true; }
 
         private AnimatorOverrideController _runtimeOverrides;
         private readonly List<string> _setKeys = new List<string>();
@@ -393,7 +397,7 @@ namespace DD.Prototype.Characters
             _weaponDef = def;
             _burstStart = -1f;
             int k = V3WeaponSets && def != null && _runtimeOverrides != null ? _setKeys.IndexOf(def.AnimSet) : -1;
-            if (_fpArms != null) _fpArms.SetWeaponSet(k < 0 ? null : _setKeys[k], def != null ? def.FpViewPose.scale : 1f);
+            if (_fpArms != null) _fpArms.SetWeaponSet(FirstPersonV3Arms && def != null ? def.AnimSet : null, def != null ? def.FpViewPose.scale : 1f);
             if (k < 0)
             {
                 WeaponAnimSet = null;
@@ -457,12 +461,13 @@ namespace DD.Prototype.Characters
         /// <summary>Reload with the gameplay's tac / empty verdict (<paramref name="empty"/>; S-02 WeaponEvents.LastReloadEmpty).</summary>
         public void PlayReload(float seconds, bool empty)
         {
-            if (!_authored || _dying || _weapon == 3) return;
+            if (!_authored || _dying) return;
+            if (_fpArms != null) _fpArms.Reload(seconds, empty);   // the FP arms' own set, whatever the TP path
+            if (_weapon == 3) return;
             string clip;
             if (_weapon == CharacterAnimatorContract.WeaponPoseV3)
             {
                 _animator.SetBool(ReloadEmptyId, empty);
-                if (_fpArms != null) _fpArms.Reload(seconds, empty);
                 clip = CharacterAnimatorContract.PlayerWeaponClipV3(WeaponAnimSet, empty ? "reload_empty" : "reload_tac");
             }
             else clip = CharacterAnimatorContract.PlayerWeaponClip(_weapon, "reload");
@@ -518,20 +523,20 @@ namespace DD.Prototype.Characters
         public void PlayFire()
         {
             if (!_authored || _dying) return;
-            // WP-071 B4b: a burst weapon's v3 fire clip is the whole burst (P-06 ar_2: 3 kicks in 15 f) — only the burst's first shot starts it
-            if (_swHold == 0 && _weapon == CharacterAnimatorContract.WeaponPoseV3 && _weaponDef != null && _weaponDef.fire != null
-                && _weaponDef.fire.fireMode == DD.Prototype.Core.Weapons.WeaponFireMode.Burst)
+            // WP-071 B4b: a burst weapon's v3 fire clip (TP and FP) is the whole burst (P-06 ar_2: 3 kicks) — only the burst's first shot
+            // starts it. The shots arrive on frame boundaries (a 60 Hz frame can push the last one past count × interval): the window
+            // reaches half-way into the gap before the next burst (burstDelaySeconds), which frame jitter never crosses.
+            bool burstBeat = true;
+            if (_swHold == 0 && _weaponDef != null && _weaponDef.fire != null && _weaponDef.fire.fireMode == DD.Prototype.Core.Weapons.WeaponFireMode.Burst)
             {
-                // the burst's shots arrive on frame boundaries (a 60 Hz frame can push the last one past count × interval): the window
-                // reaches half-way into the gap before the next burst (burstDelaySeconds), which frame jitter never crosses
                 float now = Time.time, window = Mathf.Max(0, _weaponDef.fire.burstCount - 1) * _weaponDef.fire.burstIntervalSeconds + 0.5f * _weaponDef.fire.burstDelaySeconds;
-                if (_burstStart >= 0f && now - _burstStart <= window) return;
-                _burstStart = now;
+                burstBeat = !(_burstStart >= 0f && now - _burstStart <= window);
+                if (burstBeat) _burstStart = now;
             }
 
+            if (_swHold == 0 && _fpArms != null && (burstBeat || _fpArms.WeaponSet == null)) _fpArms.Fire();
+            if (_swHold == 0 && _weapon == CharacterAnimatorContract.WeaponPoseV3 && !burstBeat) return;   // the legacy TP recoil stays per shot
             FireTriggers++;
-            if (_swHold == 0 && _fpArms != null) _fpArms.Fire();
-
             _animator.SetTrigger(_swHold > 0 ? SwFireId : FireId);
         }
 

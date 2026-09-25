@@ -44,6 +44,19 @@ Silah kimlikleri (AP-021 blockout manifesti, P-07): `ar_1, ar_2, smg_1, smg_2, s
 
 ---
 
+### Uygulama notu (B4b, 25.09 — S-06, C-00 isteği): Humanoid ek transformlar
+
+- **Ölçüm:** Unity Humanoid klipleri avatar dışı (ek) transformların eğrilerini oynatmaz. `fp_camera`, `socket_weapon_r`, `ik_*`, twist ve `jaw` bunlara dahil. İçe alınan `AP022_fp_*` klibinde bu kemiklere 0 bağlama vardı; klip modelden maske alınarak (`CreateFromThisModel`) içe alındığında da sonuç aynıydı.
+- **Kural:** ek kemiğe yazılmış anahtara güvenilmez. Aşağıdakiler çalışma zamanında hesaplanır ya da veriden gelir:
+  - Twist: `TwistCorrector`.
+  - Çene: prosedürel sürücü.
+  - FP kamera ofseti: `FpCameraOffsets`, silah başına. Kaynak P-06 manifesti `weapon_layer.fp`.
+  - FP silah çerçevesi: Humanoid `RightHand` + set başına kalibrasyon. Dinlenme pozunda silah fpView'dadır; ölçüm 0,1 cm / 0,0°.
+- **P-06 için:** yeni bir ek kemik davranışı gerekiyorsa manifestte makinece okunur bir alan olarak da verilmelidir.
+- **Mod ayrımı (C-00 25.09):**
+  - FP v3 kolları açık.
+  - TP v3 AR/SMG, P-06'nın silah başı gripOffset'li yeniden dışa aktarımına kadar kapalı (`PlayerSkinnedVisual.V3WeaponSets`). Eski TP kliplerinde kundak omuza 6,0 cm giriyordu.
+
 ## 0 · Teşhisin özü (neden mevcut set AAA okumuyor)
 
 1. **Set prosedürel:** AP-009'un tamamı `AP009-build-clips-v001.py` ile parametrik (sinüs bob, sabit açı hedefleri, `lift_pow`, `drop_smooth`). Sonuç: her klipte **eşit aralıklama**, ease-in/out yok, çakışmalı hareket (overlap) yok, ikincil hareket yalnız `sec_*` verlet. TD'de 88 px'lik siluette kabul edilebilirdi; TP/FP'de (karakter 400–900 px) bu "robot" olarak okunur. Bu, tek tek klip kusurlarından önce gelen **set geneli MUST**tur: v3 elle keylenir (blokaj → spline → cila), betik yalnız dışa aktarım/doğrulama için kalır.
