@@ -50,6 +50,9 @@ MonoBehaviour:
   - family: bamboo_v2
     variation: V05
     prefab: {fileID: 7575755492904207036, guid: ff1ecc17d901746b7833889dff3a8910, type: 3}
+  - family: bamboo_v2
+    variation: V06
+    prefab: {fileID: 5511348540901668409, guid: 2417a2d4334cc44e3b4b4ae26a41bef1, type: 3}
   - family: black_pine
     variation: V01
     prefab: {fileID: 6105139514288745047, guid: d6ef21f52770040be8d72dd6fbec7d46, type: 3}
@@ -62,6 +65,12 @@ MonoBehaviour:
   - family: black_pine
     variation: V04
     prefab: {fileID: 3511023512904104799, guid: c0f922c411d6a4feab54f83eb49995a4, type: 3}
+  - family: black_pine
+    variation: V05
+    prefab: {fileID: 5351898128596437133, guid: 4862057ac09c24e0f8a566b96ff2133f, type: 3}
+  - family: chumon
+    variation: V01
+    prefab: {fileID: 5219941461077161306, guid: 1b1c1f67a502c4fc08daafde6bd0c279, type: 3}
   - family: engawa
     variation: V01
     prefab: {fileID: 7154829383467672485, guid: ad4617d4fbf55451189243f8863b0e22, type: 3}
@@ -161,6 +170,15 @@ MonoBehaviour:
   - family: interior_kit
     variation: V09
     prefab: {fileID: 5776151422223862588, guid: 053b6a34ae18d48cf9e648f7002097c3, type: 3}
+  - family: kairo_angle
+    variation: V01
+    prefab: {fileID: 2745427313628202579, guid: bd692f556cad64684980b9d0bf93f899, type: 3}
+  - family: kairo_angle
+    variation: V02
+    prefab: {fileID: 2901285288899235849, guid: 120658c151b6444cf8bead585c9d5a87, type: 3}
+  - family: kairo_angle
+    variation: V03
+    prefab: {fileID: 9062504118101190430, guid: 4e07c2593b77640b9b8fd90f7947993f, type: 3}
   - family: kairo_bay
     variation: V01
     prefab: {fileID: 7362984151606363328, guid: b6e0cb473d22848b6a295924e7cd91ef, type: 3}
@@ -182,6 +200,15 @@ MonoBehaviour:
   - family: kairo_bay
     variation: V07
     prefab: {fileID: 4174035431353034617, guid: c39b5c64f42ae43a08abb52d72745997, type: 3}
+  - family: kairo_door
+    variation: V01
+    prefab: {fileID: 2581004579405464497, guid: 8bfe558103886418f9e69e880d7a23a3, type: 3}
+  - family: kairo_end_chumon
+    variation: V01
+    prefab: {fileID: 4608601478061077808, guid: 2acca546d06b94a34b05a993c0e31700, type: 3}
+  - family: kairo_open
+    variation: V01
+    prefab: {fileID: 8045745488210780748, guid: 4c24046ca631f402f9ad0efc5f053fb0, type: 3}
   - family: komodaru
     variation: V01
     prefab: {fileID: 6622191855261438926, guid: c251f86a359e244fa954395e30e042ac, type: 3}
@@ -215,9 +242,24 @@ MonoBehaviour:
   - family: lantern_yukimi
     variation: V02
     prefab: {fileID: 4204623925386599097, guid: b13367980c82046c2a068aa001b00790, type: 3}
+  - family: lotus
+    variation: V01
+    prefab: {fileID: 6303748704467345608, guid: 8682d57fe32004fa6966e2d9c3ec6b35, type: 3}
+  - family: lotus
+    variation: V02
+    prefab: {fileID: 7921559863258830300, guid: 1ffd8ef50ac26441682422cbd4e4e3d9, type: 3}
+  - family: lotus
+    variation: V03
+    prefab: {fileID: 1315116599728429015, guid: 485bda57db7b54b08bb4adae7ded501b, type: 3}
   - family: momiji
     variation: V01
     prefab: {fileID: 7010080662066253375, guid: 1de0d832c25d1401a902cacf301273a8, type: 3}
+  - family: momiji
+    variation: V02
+    prefab: {fileID: 5395447230900307212, guid: 2427fe7c429ca41eea011ab172975d58, type: 3}
+  - family: momiji
+    variation: V03
+    prefab: {fileID: 5430118133469962092, guid: feb58ef37b6e04ea7b1e0b4dcfdccc01, type: 3}
   - family: nagamochi
     variation: V01
     prefab: {fileID: 2783110601688399293, guid: 5db9378b81ab64182a3351a291f459a8, type: 3}
@@ -383,6 +425,24 @@ MonoBehaviour:
   - family: pond_rock
     variation: V05
     prefab: {fileID: 9157186993987824868, guid: 4185dcb1762be414ba875ba0d554401b, type: 3}
+  - family: pond_shore_curve
+    variation: V01
+    prefab: {fileID: 7900570068463288524, guid: dea2f755cfc68428cb35078219335c1c, type: 3}
+  - family: pond_shore_curve
+    variation: V02
+    prefab: {fileID: 2178816824980849940, guid: 4b20ad19b82a048fe8cbed66ef30352a, type: 3}
+  - family: pond_shore_curve
+    variation: V03
+    prefab: {fileID: 3771276124693282790, guid: 8217523a821e9463491c1a9c67baef70, type: 3}
+  - family: pond_shore_curve
+    variation: V04
+    prefab: {fileID: 63300243756540805, guid: dbd57be5a44224fd1a339b7ab89352a2, type: 3}
+  - family: pond_shore_curve
+    variation: V05
+    prefab: {fileID: 577450870242548278, guid: 1d4552972158c46fc9f9e0439ebd2201, type: 3}
+  - family: pond_shore_curve
+    variation: V06
+    prefab: {fileID: 6148282427169319609, guid: 0ca1098cf14384c04be2e373a501737f, type: 3}
   - family: pond_shore_moss
     variation: V01
     prefab: {fileID: 6312566598920474175, guid: 0e6cab15ad8e7425d8fd32e0b17a4fad, type: 3}
@@ -434,6 +494,9 @@ MonoBehaviour:
   - family: sakura_v2
     variation: V03
     prefab: {fileID: 8312423179243496331, guid: 5320072cb0a634e339c3e96858054035, type: 3}
+  - family: sakura_v2
+    variation: V04
+    prefab: {fileID: 2197593029535354551, guid: 4cade1264455c446795e1448348a2a76, type: 3}
   - family: satsuki
     variation: V01
     prefab: {fileID: 7487996622066305182, guid: 44ae335e0af1c4a3d8abc8091d71fe2f, type: 3}
@@ -443,6 +506,12 @@ MonoBehaviour:
   - family: satsuki
     variation: V03
     prefab: {fileID: 4079095887146785765, guid: 6e62aee3f43ba4f4990f5a905fc35911, type: 3}
+  - family: satsuki
+    variation: V04
+    prefab: {fileID: 6420321164913686228, guid: a00b51a0eca2d419798a7733fcc60999, type: 3}
+  - family: satsuki
+    variation: V05
+    prefab: {fileID: 1772355375761450724, guid: f9832717383374ec79740781eacb1695, type: 3}
   - family: slab_bridge
     variation: V01
     prefab: {fileID: 7480434625271206540, guid: 1f47154427aa6478a9387ded0d279f4e, type: 3}
@@ -452,6 +521,9 @@ MonoBehaviour:
   - family: sugi
     variation: V02
     prefab: {fileID: 8778982038264742972, guid: ec778a48dc3414df5a4070181efd922d, type: 3}
+  - family: sugi
+    variation: V03
+    prefab: {fileID: 2837881265172054392, guid: b1a700676a0094db6a8904908913dd6d, type: 3}
   - family: taiko_bridge
     variation: V01
     prefab: {fileID: 1227948440994125655, guid: 53e2dfbdd822e4dab8d106dd6aa35b7e, type: 3}
@@ -503,6 +575,12 @@ MonoBehaviour:
   - family: wall_pier
     variation: V02
     prefab: {fileID: 8877365157463072761, guid: 9500dcb568bdb43ee858013c33d5c7ba, type: 3}
+  - family: waterfall_rock
+    variation: V01
+    prefab: {fileID: 6613409402802900215, guid: 14635ff894a0f44b792695417103e1ed, type: 3}
+  - family: waterfall_rock
+    variation: V02
+    prefab: {fileID: 3178603300390967113, guid: 62fb6d372fe3e4d9b9fed97068194fb5, type: 3}
   - family: weapon_crate
     variation: V01
     prefab: {fileID: 3569793401418752944, guid: 408dc946dad5b484c9f39e744a4117b7, type: 3}

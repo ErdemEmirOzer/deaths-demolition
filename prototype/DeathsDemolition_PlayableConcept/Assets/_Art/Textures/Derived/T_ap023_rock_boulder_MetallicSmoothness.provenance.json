@@ -1,7 +1,7 @@
 {
     "source": "Assets/_Art/Textures/Source/T_ap023_rock_boulder_Packed.png",
-    "sourceSha256": "66dbd67af52a86073a9b08f3c31f2265284b57134d925252fd6229f9f778fa68",
+    "sourceSha256": "d67c4a0f87e91fabf8685da4e2d2eb4d3df8df670ea4779bcfb2f9c93d448237",
     "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
-    "utc": "2026-09-24T21:42:01.2583010Z",
-    "outputSha256": "f8b22801b310b0d4ed6266c5c40bb4d52500c6fa096d92f08325c7d3b33ace70"
+    "utc": "2026-09-25T12:35:24.0129530Z",
+    "outputSha256": "47a19dd6b6788d1839f392896bd9d1db1f3c41bdce9b2395effe32bdc09a65b6"
 }

@@ -226,8 +226,8 @@ namespace DD.Art.Pipeline.EditorTools
                                                            "Bridge_", "Causeway", "Yard_", "R7_W_", "R7_E_", "R7_N_", "R7_S_", "Karesansui_" };
 
         /// <summary>
-        /// B5b-4 · The straight open kairō dressed with AP-023 bays (V01, rails off: the greybox corridors are entered from the side —
-        /// C-00 decision (b) waits for P-05's rail-less bay, the kit's own rail part is switched off per instance meanwhile). The kit
+        /// B5b-4 · The straight open kairō dressed with AP-023 bays (the greybox corridors are entered from the side — C-00 decision (b):
+        /// v007's rail-less kairo_open; the kit's own rail part was switched off per instance before it). The kit
         /// floor is walkable at 0.25 (the greybox deck), 4.74 m wide, posts every 2.4 m at ±2.1–2.37 (clear 4.2 ≥ the greybox 4.0).
         /// K2 / K4 (angled joints) and K5 / K1 stay greybox.
         /// </summary>
@@ -253,6 +253,7 @@ namespace DD.Art.Pipeline.EditorTools
         }
 
         public const float KairoBay = 2.4f;
+        public const string OpenBayFamily = "kairo_open";
         public const string KairoGroupName = "Kairo";
 
         public const string VistaGroupName = "VistaForest";
@@ -523,13 +524,14 @@ namespace DD.Art.Pipeline.EditorTools
             Place(group, "yagura", 1, Mz(VistaKeep.x, VistaKeep.y, 0f, 30f) * Matrix4x4.Scale(Vector3.one * 1.8f), Vector3.zero, "structure");
         }
 
-        /// <summary>Species by side: east (x > 40) 12 % sakura / momiji, west and south 10 % black pine, the rest sugi (V01 60 %, V02).</summary>
+        /// <summary>Species by side: east (x > 40) 12 % sakura / momiji, west and south 10 % black pine, the rest sugi (V01 / V02 / the
+        /// young V03 — v007: 50 / 32 / 18 %, a second canopy height). v007 adds sakura V04, momiji V02 / V03 and black pine V05.</summary>
         public static (string family, int variation) VistaSpecies(Vector2 p, double pick)
         {
-            if (p.x > 40f && pick < 0.08) return ("sakura_v2", 2);
-            if (p.x > 40f && pick < 0.12) return ("momiji", 1);
-            if ((p.x < -40f || p.y < -40f) && pick < 0.10) return ("black_pine", 4);
-            return ("sugi", pick < 0.64 ? 1 : 2);
+            if (p.x > 40f && pick < 0.08) return ("sakura_v2", pick < 0.04 ? 2 : 4);
+            if (p.x > 40f && pick < 0.12) return ("momiji", pick < 0.10 ? 2 : 3);
+            if ((p.x < -40f || p.y < -40f) && pick < 0.10) return ("black_pine", pick < 0.05 ? 4 : 5);
+            return ("sugi", pick < 0.60 ? 1 : pick < 0.82 ? 2 : 3);
         }
 
         private static void Kairo(Transform dress)
@@ -566,9 +568,11 @@ namespace DD.Art.Pipeline.EditorTools
                             }
                         }
 
-                        GameObject bay = Place(group, "kairo_bay", variation, Mz(c.x, c.y, 0f, yaw) * Matrix4x4.Scale(new Vector3(s, 1f, 1f)), Vector3.zero, "structure");
+                        // v007: the open bays are P-05's rail-less kairo_open (C-00 decision (b)); the closed / door bays stay kairo_bay V02 / V03.
+                        bool open = variation == 1;
+                        GameObject bay = Place(group, open ? OpenBayFamily : "kairo_bay", variation, Mz(c.x, c.y, 0f, yaw) * Matrix4x4.Scale(new Vector3(s, 1f, 1f)), Vector3.zero, "structure");
                         bay.name = id + "_Bay_" + (index++).ToString("00");
-                        RailsOff(bay);
+                        if (!open) RailsOff(bay);
                         Transform roof = bay.transform.Find(ArtLibraryPrefabBuilder.RoofName);
                         if (roof != null) RoofOccluder(bay.transform, roof);
                     }
@@ -643,7 +647,9 @@ namespace DD.Art.Pipeline.EditorTools
             foreach ((Vector3 p, float radius, bool great) in spots)
             {
                 double pick = rng.NextDouble(), yaw = rng.NextDouble() * 360.0, s = 0.9 + rng.NextDouble() * 0.25;
-                (string family, int v) = great ? ("sakura_v2", 1) : p.z > 34f ? ("black_pine", pick < 0.5 ? 1 : 4) : pick < 0.6 ? ("sakura_v2", pick < 0.3 ? 2 : 3) : ("momiji", 1);
+                // v007: + black pine V05, sakura V04, momiji V02 (7 m) / V03 (3 m)
+                (string family, int v) = great ? ("sakura_v2", 1) : p.z > 34f ? ("black_pine", pick < 0.34 ? 1 : pick < 0.67 ? 4 : 5)
+                    : pick < 0.6 ? ("sakura_v2", pick < 0.2 ? 2 : pick < 0.4 ? 3 : 4) : ("momiji", pick < 0.73 ? 1 : pick < 0.87 ? 2 : 3);
                 Place(group, family, v, Mz(p.x, p.z, 0f, (float)yaw) * Matrix4x4.Scale(Vector3.one * (great ? 1f : (float)s)), Vector3.zero, "vegetation");
             }
         }
@@ -652,6 +658,8 @@ namespace DD.Art.Pipeline.EditorTools
 
         public const string WaterMaterialPath = "Assets/_Art/Materials/M_water_v2.mat";
         public const string ShoreGroupName = "PondShores", BridgeGroupName = "Bridges", GroveGroupName = "BambooGrove", FenceGroupName = "Fences", KaresansuiGroupName = "Karesansui";
+        /// <summary>The grove's culm clumps: V01–V04 and v007's V06 (V05 is a 0.6 m shoot, not a clump).</summary>
+        public static readonly int[] GroveVariations = { 1, 2, 3, 4, 6 };
 
         private static void Ground(Transform greybox)
         {
@@ -691,8 +699,32 @@ namespace DD.Art.Pipeline.EditorTools
                         Visual(Place(group, "pond_reeds", 1 + rng.Next(4), Mz(r.x, r.z, 0f, (float)(rng.NextDouble() * 360.0)), Vector3.zero, "dressing"));
                     }
                 }
+
+                Lotus(group, w);
             }
         }
+
+        /// <summary>v007 · Lotus (hasu) clusters per pond: one per <see cref="LotusAreaPerCluster"/> m² of water, in drifts between 45 and 85 %
+        /// of the ellipse (clear of the shore strips and the open middle the planar reflection shows), on the water surface (the kit's
+        /// pivot is the water datum). Visual; their own rng so the shore sequence stays as it was.</summary>
+        private static void Lotus(Transform group, Transform water)
+        {
+            var rng = new System.Random(748 + water.GetSiblingIndex());
+            float area = Mathf.PI * water.localScale.x * water.localScale.z * 0.25f;
+            int drifts = Mathf.Clamp(Mathf.RoundToInt(area / (LotusAreaPerCluster * 3f)), 1, 6);
+            for (int d = 0; d < drifts; d++)
+            {
+                float t = (float)(rng.NextDouble() * Mathf.PI * 2.0), rad = 0.45f + (float)rng.NextDouble() * 0.30f;
+                for (int k = 0; k < 3; k++)
+                {
+                    float tk = t + (float)(rng.NextDouble() - 0.5) * 0.35f, rk = Mathf.Min(0.85f, rad + (float)(rng.NextDouble() - 0.5) * 0.15f);
+                    Vector3 p = water.TransformPoint(new Vector3(Mathf.Cos(tk) * 0.5f * rk, 0f, Mathf.Sin(tk) * 0.5f * rk));
+                    Visual(Place(group, "lotus", 1 + rng.Next(3), Mz(p.x, p.z, water.position.y, (float)(rng.NextDouble() * 360.0)), Vector3.zero, "dressing"));
+                }
+            }
+        }
+
+        public const float LotusAreaPerCluster = 12f;
 
         /// <summary>
         /// The C8 bridge as two plank spans (10.8 m each, x × 1.875 so the deck keeps the greybox 3 m: the C8 volume's width) and the C1
@@ -722,7 +754,7 @@ namespace DD.Art.Pipeline.EditorTools
             {
                 var c = new Vector2(x + (float)(rng.NextDouble() - 0.5) * 1.6f, z + (float)(rng.NextDouble() - 0.5) * 1.6f);
                 double yaw = rng.NextDouble() * 360.0, s = 0.9 + rng.NextDouble() * 0.3;
-                int v = 1 + rng.Next(4);
+                int v = GroveVariations[rng.Next(GroveVariations.Length)];
                 if (!GreyboxV6Builder.GroveCellSolid(c)) continue;
                 bool nearLane = false;
                 foreach (Vector2[] lane in GreyboxV6Builder.BambooLanes) nearLane |= GreyboxV6Builder.DistanceToPolyline(c, lane) < 3f;

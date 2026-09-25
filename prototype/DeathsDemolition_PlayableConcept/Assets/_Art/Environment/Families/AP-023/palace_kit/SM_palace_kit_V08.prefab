@@ -292,7 +292,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3093374070904181704}
-  - component: {fileID: 585443075720926541}
+  - component: {fileID: 3972828290048003052}
   m_Layer: 14
   m_Name: COL_0
   m_TagString: Untagged
@@ -315,7 +315,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 9005736443637100777}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &585443075720926541
+--- !u!65 &3972828290048003052
 BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -345,7 +345,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8947076523676829515}
-  - component: {fileID: 5328334562274773091}
+  - component: {fileID: 3116924221189174122}
   m_Layer: 14
   m_Name: COL_6
   m_TagString: Untagged
@@ -368,7 +368,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 9005736443637100777}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &5328334562274773091
+--- !u!65 &3116924221189174122
 BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

@@ -44,7 +44,7 @@ namespace DD.Art.Tests.EditMode
         public void BitkiMateryalleri_FoliageWindUzerinde_KesimVeCiftYuzDogru()
         {
             string[] roller = ArtLibraryMaterialRoles.RolesOn(ArtLibraryMaterialRoles.ShaderKind.FoliageWind);
-            Assert.AreEqual(21, roller.Length, "3 green cutout + 3 green solid + 3 sakura + bamboo_culm + AP-017 furin (WP-038L) = 11; + AP-023 v005 (WP-074 B5a): 9 atlases (bamboo_leaves, groundcover, hishigaki_card, momiji_sprigs, pine_needles, reeds_iris, sakura_sprigs, satsuki, violet_sprigs) + ap023_bamboo_culm = 21 rüzgâr rolü.");
+            Assert.AreEqual(23, roller.Length, "3 green cutout + 3 green solid + 3 sakura + bamboo_culm + AP-017 furin (WP-038L) = 11; + AP-023 v005 (WP-074 B5a): 9 atlases (bamboo_leaves, groundcover, hishigaki_card, momiji_sprigs, pine_needles, reeds_iris, sakura_sprigs, satsuki, violet_sprigs) + ap023_bamboo_culm = 21 rüzgâr rolü; v007: + lotus = 22; v008: + pine_needles_pad (single-sided) = 23.");
             var ihlaller = new List<string>();
             foreach (string rol in roller)
             {
@@ -54,7 +54,7 @@ namespace DD.Art.Tests.EditMode
                 ArtLibraryMaterialRoles.Spec spec = ArtLibraryMaterialRoles.Get(rol);
                 bool cutout = spec.Kind == ArtLibraryMaterialRoles.Kind.Cutout;
                 if (m.IsKeywordEnabled("_ALPHATEST_ON") != cutout) ihlaller.Add(rol + ": _ALPHATEST_ON " + m.IsKeywordEnabled("_ALPHATEST_ON") + " (beklenen " + cutout + ")");
-                if (Mathf.Abs(m.GetFloat("_Cull") - (cutout ? 0f : 2f)) > 0.01f) ihlaller.Add(rol + ": _Cull " + m.GetFloat("_Cull"));
+                if (Mathf.Abs(m.GetFloat("_Cull") - (cutout && !spec.SingleSided ? 0f : 2f)) > 0.01f) ihlaller.Add(rol + ": _Cull " + m.GetFloat("_Cull"));
                 if (Mathf.Abs(m.GetFloat("_AlphaToMask") - (cutout ? 1f : 0f)) > 0.01f) ihlaller.Add(rol + ": _AlphaToMask " + m.GetFloat("_AlphaToMask"));
                 if (Mathf.Abs(m.GetFloat("_WindScale") - 1f) > 0.01f) ihlaller.Add(rol + ": _WindScale " + m.GetFloat("_WindScale"));
                 if (Mathf.Abs(m.GetFloat("_BackfaceLighting") - 1f) > 0.01f) ihlaller.Add(rol + ": _BackfaceLighting " + m.GetFloat("_BackfaceLighting"));

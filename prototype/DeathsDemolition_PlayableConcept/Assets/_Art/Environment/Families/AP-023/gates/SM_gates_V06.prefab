@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5290674228560884029}
-  - component: {fileID: 3792393791425624087}
+  - component: {fileID: 6252849142940684221}
   m_Layer: 14
   m_Name: COL_1
   m_TagString: Untagged
@@ -32,7 +32,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 2018758079449350407}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!136 &3792393791425624087
+--- !u!136 &6252849142940684221
 CapsuleCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -100,7 +100,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5062604388097693834}
-  - component: {fileID: 1673298025279049072}
+  - component: {fileID: 3213739524012243435}
   m_Layer: 14
   m_Name: COL_0
   m_TagString: Untagged
@@ -123,7 +123,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 2018758079449350407}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!136 &1673298025279049072
+--- !u!136 &3213739524012243435
 CapsuleCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -210,6 +210,7 @@ MeshRenderer:
   - {fileID: 2100000, guid: a20c766eb5bb241ec895ee2f4ccdc05e, type: 2}
   - {fileID: 2100000, guid: a7afaad08f5b74bcf8b81b94b9c6d4f3, type: 2}
   - {fileID: 2100000, guid: a7b2ec32a336747edba8f5f2def09ce2, type: 2}
+  - {fileID: 2100000, guid: fde8095f7158a43c8a3bc4acaa7195a3, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

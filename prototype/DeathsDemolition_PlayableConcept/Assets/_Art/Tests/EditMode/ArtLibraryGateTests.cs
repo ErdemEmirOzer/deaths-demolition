@@ -90,8 +90,8 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(53, Manifest("AP-003B").VariationCount, "AP-003B 53 varyasyon");
             Assert.AreEqual(27, Manifest("AP-017").families.Count, "AP-017 27 aile (9 türev + 8 kırılabilir, WP-038B; + 3 prop + 1 kırılabilir, Faz 2 WP-038I; + 5 prop + 1 kırılabilir, Faz 2b WP-038L)");
             Assert.AreEqual(50, Manifest("AP-017").VariationCount, "AP-017 50 varyasyon (38 + 6 Faz 2 + 6 Faz 2b)");
-            Assert.AreEqual(51, Manifest("AP-023").families.Count, "AP-023 51 aile (WP-074 B5, manifest v004 44 + B5b-2 v005 7)");
-            Assert.AreEqual(166, Manifest("AP-023").VariationCount, "AP-023 166 varyasyon (v004 148 + v005 18)");
+            Assert.AreEqual(59, Manifest("AP-023").families.Count, "AP-023 59 aile (WP-074 B5, manifest v004 44 + B5b-2 v005 7 + v007 8)");
+            Assert.AreEqual(192, Manifest("AP-023").VariationCount, "AP-023 192 varyasyon (v004 148 + v005 18 + v007 26)");
 
             var hatalar = new List<string>();
             foreach ((string ap, ArtLibraryManifest.Family f, ArtLibraryManifest.Variation v) in Varyasyonlar())
@@ -150,7 +150,7 @@ namespace DD.Art.Tests.EditMode
                 }
             }
 
-            Assert.AreEqual(377, fbx, "143 + 12 (AP-005) + 6 (AP-005B, WP-017) + 38 (AP-017, WP-038B) + 6 (AP-017 Faz 2, WP-038I) + 6 (Faz 2b, WP-038L) + 166 (AP-023 v005, WP-074 B5 / B5b-2) = 377 kütüphane FBX");
+            Assert.AreEqual(403, fbx, "143 + 12 (AP-005) + 6 (AP-005B, WP-017) + 38 (AP-017, WP-038B) + 6 (AP-017 Faz 2, WP-038I) + 6 (Faz 2b, WP-038L) + 192 (AP-023 v007) = 403 kütüphane FBX");
             Assert.IsEmpty(hatalar, "İhlal (" + hatalar.Count + "):\n" + string.Join("\n", hatalar));
             Debug.Log("[DD-TEST] wp012.gate.fbx contract=ok fbx=" + fbx + " meshRefs=" + mesh);
         }
@@ -271,7 +271,7 @@ namespace DD.Art.Tests.EditMode
                 }
             }
 
-            Assert.AreEqual(341, prefabSayisi, "12 + 42 + 53 + 12 (AP-005) + 6 (AP-005B) + 50 (AP-017, Faz 1+2+2b) + 166 (AP-023 v005, WP-074 B5 / B5b-2) = 341 varyasyon prefabı");
+            Assert.AreEqual(367, prefabSayisi, "12 + 42 + 53 + 12 (AP-005) + 6 (AP-005B) + 50 (AP-017, Faz 1+2+2b) + 192 (AP-023 v007) = 367 varyasyon prefabı");
             Assert.IsEmpty(hatalar, "İhlal (" + hatalar.Count + "):\n" + string.Join("\n", hatalar));
             Debug.Log("[DD-TEST] wp012.gate.prefab count=" + prefabSayisi + " renderers=" + renderer);
         }
@@ -352,7 +352,7 @@ namespace DD.Art.Tests.EditMode
                 if (sapma > SinirToleransMetre) hatalar.Add(ap + " " + v.prefab + ": sapma " + (sapma * 1000f).ToString("0.0") + " mm (ölçüm " + olcum.min + ".." + olcum.max + ", manifest " + beklenen.min + ".." + beklenen.max + ")");
             }
 
-            Assert.AreEqual(341, sayi);   // WP-038I: + 6 AP-017 Phase 2 variations; WP-038L: + 6 Phase 2b; WP-074 B5: + 148 AP-023; B5b-2: + 18 v005
+            Assert.AreEqual(367, sayi);   // WP-038I: + 6 AP-017 Phase 2 variations; WP-038L: + 6 Phase 2b; WP-074 B5: + 148 AP-023; B5b-2: + 18 v005; v007: + 26
             Assert.IsEmpty(hatalar, "Eksen sözleşmesi ihlali (" + hatalar.Count + "):\n" + string.Join("\n", hatalar));
             Debug.Log("[DD-TEST] wp012.gate.aabb variations=" + sayi + " maxDeviationMm=" + (enBuyuk * 1000f).ToString("0.00"));
         }
@@ -421,7 +421,8 @@ namespace DD.Art.Tests.EditMode
                 if (spec.Shader == ArtLibraryMaterialRoles.ShaderKind.Water) continue;   // WP-013: su v1 kapısı ArtVfxGateTests'te (saydam, ayrı sözleşme)
                 bool cutout = spec.Kind == ArtLibraryMaterialRoles.Kind.Cutout || spec.AlphaCutout;   // WP-038L: the koi card sheet (BaseColor-only cutout)
                 if (mat.IsKeywordEnabled("_ALPHATEST_ON") != cutout) hatalar.Add(yol + ": _ALPHATEST_ON " + !cutout);
-                if (cutout && mat.GetFloat("_Cull") != 0f) hatalar.Add(yol + ": cutout çift taraflı olmalı (_Cull 0)");
+                if (cutout && !spec.SingleSided && mat.GetFloat("_Cull") != 0f) hatalar.Add(yol + ": cutout çift taraflı olmalı (_Cull 0)");
+                if (cutout && spec.SingleSided && mat.GetFloat("_Cull") != 2f) hatalar.Add(yol + ": tek taraflı cutout (v008 sugi taç pedi) _Cull 2 olmalı");
                 if (!cutout && mat.GetFloat("_Cull") != 2f) hatalar.Add(yol + ": _Cull " + mat.GetFloat("_Cull"));
                 if (mat.IsKeywordEnabled("_SURFACE_TYPE_TRANSPARENT")) hatalar.Add(yol + ": saydam olmamalı");
                 if (spec.HasBaseColorMap && mat.GetTexture("_BaseMap") == null) hatalar.Add(yol + ": _BaseMap yok");
@@ -507,7 +508,7 @@ namespace DD.Art.Tests.EditMode
                 toplam++;
             }
 
-            Assert.AreEqual(341, toplam);   // WP-038I: + 6 AP-017 Phase 2 variations; WP-038L: + 6 Phase 2b; WP-074 B5: + 148 AP-023; B5b-2: + 18 v005
+            Assert.AreEqual(367, toplam);   // WP-038I: + 6 AP-017 Phase 2 variations; WP-038L: + 6 Phase 2b; WP-074 B5: + 148 AP-023; B5b-2: + 18 v005; v007: + 26
         }
 
         [Test]

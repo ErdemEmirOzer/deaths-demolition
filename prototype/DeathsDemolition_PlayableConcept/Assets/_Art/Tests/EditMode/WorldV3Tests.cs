@@ -188,7 +188,7 @@ namespace DD.Art.Tests.EditMode
 
             Assert.AreEqual(14, bound, "6 AP-005B prop rolü + 4 AP-017 Faz 2 prop rolü (WP-038I) + 4 Faz 2b Lit prop rolü (WP-038L)");
             Assert.AreEqual(1, windRoles, "WP-038L: furin rüzgâr gölgelendiricisinde");
-            Assert.AreEqual(20, ap023, "WP-074 B5: AP-023 20 Lit karo rolü (ORM AO'lu; B5b-2 v005 + gravel)");
+            Assert.AreEqual(21, ap023, "WP-074 B5: AP-023 20 Lit karo rolü (ORM AO'lu; B5b-2 v005 + gravel); v007 + trim = 21");
             Assert.AreEqual(1, ap023Wind, "WP-074 B5: AP-023 bamboo_culm rüzgâr gölgelendiricisinde");
         }
     }

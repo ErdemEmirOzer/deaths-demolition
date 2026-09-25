@@ -92,7 +92,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5150824306377420020}
-  - component: {fileID: 4354195742244774060}
+  - component: {fileID: 2913567374036104460}
   m_Layer: 14
   m_Name: COL_0
   m_TagString: Untagged
@@ -115,7 +115,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 4315480511308790947}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &4354195742244774060
+--- !u!65 &2913567374036104460
 BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

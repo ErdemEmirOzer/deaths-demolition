@@ -283,6 +283,12 @@ namespace DD.Art.Pipeline.EditorTools
                     ApplyTextured(material, spec.TextureRole, spec);
                     material.SetColor(BaseColorId, EncodeForColorProperty(spec.Tint));
                     ApplyCutout(material, spec.Cutoff);
+                    if (spec.SingleSided)
+                    {
+                        material.SetFloat(CullId, 2f);
+                        material.doubleSidedGI = false;
+                    }
+
                     break;
 
                 case ArtLibraryMaterialRoles.Kind.BaseColorOnly:

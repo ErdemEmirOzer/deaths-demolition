@@ -333,7 +333,7 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(18, ArtFamilies.All.Length, "ArtFamilies.All 18 aile olmalı.");
             Assert.IsEmpty(eksik, "Beklenen FBX diskte yok (" + eksik.Count + "):\n" + string.Join("\n", eksik));
             Assert.IsEmpty(fazla, "Aile tablosunda karşılığı olmayan FBX (" + fazla.Count + "):\n" + string.Join("\n", fazla));
-            Assert.AreEqual(377, kutuphane, "Kütüphane FBX sayısı 48 (AP-002) + 42 (AP-003) + 53 (AP-003B) + 12 (AP-005, WP-014) + 6 (AP-005B, WP-017) + 38 (AP-017, WP-038B) + 6 (AP-017 Faz 2, WP-038I) + 6 (Faz 2b, WP-038L) = 211 olmalı. + 166 (AP-023 dünya v5 kiti v005, WP-074 B5 / B5b-2) = 377");
+            Assert.AreEqual(403, kutuphane, "Kütüphane FBX sayısı 48 (AP-002) + 42 (AP-003) + 53 (AP-003B) + 12 (AP-005, WP-014) + 6 (AP-005B, WP-017) + 38 (AP-017, WP-038B) + 6 (AP-017 Faz 2, WP-038I) + 6 (Faz 2b, WP-038L) = 211 olmalı. + 192 (AP-023 dünya v5 kiti v007: v005 166 + 26) = 403");
             Debug.Log("[DD-TEST] wp011.gate.fbxset count=" + diskte.Count + " (18x3 LOD + " + (beklenen.Count - 55 - kutuphane) + " collider + zemin + " + kutuphane + " kütüphane)");
         }
 
@@ -476,6 +476,7 @@ namespace DD.Art.Tests.EditMode
 
             // WP-074 B5 · AP-023 dünya v5 kiti: 30 doku rolü BaseColor; 21 karo rolü Normal + Packed + türetilmiş maske; 9 kart atlası
             // yalnız Normal (ORM yok, NoPackedMap) → 30 + 63 + 9 = 102 (B5b-2 v005: + gravel karo, + hishigaki kartı).
+            // v007 (WP-074): + trim karo (4K atlas: BaseColor + Normal + Packed + maske) + lotus kartı (BaseColor + Normal) → 32 + 66 + 10 = 108.
             int ap023 = 0;
             foreach (string rol in ArtLibraryMaterialRoles.TextureRoles())
                 if (rol.StartsWith(Ap023RolOnEki, StringComparison.Ordinal) && beklenen.Add(ArtPipelinePaths.SourceTexture(rol, "BaseColor"))) ap023++;
@@ -489,7 +490,7 @@ namespace DD.Art.Tests.EditMode
 
             foreach (string rol in ArtLibraryMaterialRoles.NormalOnlyTextureRoles())
                 if (beklenen.Add(ArtPipelinePaths.SourceTexture(rol, "Normal"))) ap023++;
-            Assert.AreEqual(102, ap023, "AP-023: 30 BaseColor + 21 × (Normal + Packed + türetilmiş maske) + 9 atlas Normal = 102");
+            Assert.AreEqual(108, ap023, "AP-023 v007: 32 BaseColor + 22 × (Normal + Packed + türetilmiş maske) + 10 atlas Normal = 108");
 
             // WP-074 B5b-2 · the AP-023 4K ground sets (plaza slate ×3, path granite ×2): BaseColor + Normal + packed Mask = 15.
             int zemin = 0;

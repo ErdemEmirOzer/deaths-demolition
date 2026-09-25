@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_ap023_trim_Packed.png",
+    "sourceSha256": "90efbf458c00d0eb11bbd51b562e5b9bbd2bdc8d8c6077bda84efb0bd8d0c9d9",
+    "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-25T12:35:25.9232720Z",
+    "outputSha256": "86bdbb409adbb97e1b061738419bc95a815ab4e188e192111b534448c573f772"
+}

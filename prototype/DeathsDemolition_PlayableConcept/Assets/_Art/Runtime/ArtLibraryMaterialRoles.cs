@@ -65,6 +65,8 @@ namespace DD.Art
             public float Cutoff = 0.5f;
             /// <summary>WP-038L · BaseColorOnly with an alpha cutout from the BaseColor alpha (the AP-017 koi card sheet: RGBA only, no normal / ORM).</summary>
             public bool AlphaCutout;
+            /// <summary>v008 · A cutout that renders its front faces only (the sugi crown pads: seen from below they vanish, the hanging fans read).</summary>
+            public bool SingleSided;
             /// <summary>WP-017 · Texture role of a tangent-space detail normal overlay (<c>T_&lt;role&gt;_Normal</c>, URP <c>_DetailNormalMap</c>); null = none.</summary>
             public string DetailNormalTextureRole;
             public float DetailNormalScale = 1f;
@@ -254,13 +256,14 @@ namespace DD.Art
             // its moss blend rides AP023_Mask G (a later shader pass). Straw is authored on the tatami maps (manifest role ap023_tatami).
             // v005 (WP-074 B5b-2): + gravel (tile) and the hishigaki fence card (atlas).
             foreach (string tile in new[] { "bamboo_old", "bark_pine", "bark_sakura", "copper", "granite", "granite_ashlar", "gravel", "moss", "namako", "pebble_beach", "plaster",
-                                             "plaster_interior", "roof_tiles", "rock_boulder", "stone_ashlar", "tatami", "vermilion", "washi", "wood_planks", "wood_timber" })
+                                             "plaster_interior", "roof_tiles", "rock_boulder", "stone_ashlar", "tatami", "trim", "vermilion", "washi", "wood_planks", "wood_timber" })
             {
                 var spec = new Spec { Role = "ap023_" + tile, Kind = Kind.Textured, TextureRole = "ap023_" + tile };
                 // WP-075 DEC-101 (HF-like overcast): the roofs read dark cool grey (the tiles took the warm sun as brown) and the plaster
                 // wet pale grey-beige, not bright cream (its sheet averages sRGB 0.79 / 0.77 / 0.73).
-                // DEC-102 (strong warm sun): cooler and darker still, so the sunlit tiles read warm dark grey, not brown.
-                if (tile == "roof_tiles") spec.Tint = new Color(0.62f, 0.70f, 0.88f, 1f);
+                // DEC-102 (strong warm sun) on v007's 4K kawara (dry #474B4F, the wet state baked at staging ≈ × 0.73 linear): only a
+                // cool bias against the warm sun — the texture carries the dark grey itself.
+                if (tile == "roof_tiles") spec.Tint = new Color(0.84f, 0.89f, 1.0f, 1f);
                 if (tile == "plaster") spec.Tint = new Color(0.54f, 0.55f, 0.57f, 1f);
                 rows.Add(spec);
             }
@@ -268,7 +271,7 @@ namespace DD.Art
             // DEC-101: the culms read as pale sticks in the dark grove — × 0.65.
             rows.Add(new Spec { Role = "ap023_bamboo_culm", Kind = Kind.Textured, TextureRole = "ap023_bamboo_culm", Shader = ShaderKind.FoliageWind, Tint = new Color(0.65f, 0.65f, 0.65f, 1f) });
             rows.Add(new Spec { Role = "ap023_rock_moss", Kind = Kind.Textured, TextureRole = "ap023_rock_boulder" });
-            foreach (string atlas in new[] { "bamboo_leaves", "groundcover", "hishigaki_card", "momiji_sprigs", "pine_needles", "reeds_iris", "sakura_sprigs", "satsuki", "violet_sprigs" })
+            foreach (string atlas in new[] { "bamboo_leaves", "groundcover", "hishigaki_card", "lotus", "momiji_sprigs", "pine_needles", "reeds_iris", "sakura_sprigs", "satsuki", "violet_sprigs" })
             {
                 var spec = new Spec { Role = "ap023_" + atlas, Kind = Kind.Cutout, TextureRole = "ap023_" + atlas, Shader = ShaderKind.FoliageWind, NoPackedMap = true, Smoothness = 0.40f };
                 // WP-075 AD MUST-1 (K4 value order: green under stone): sunlit bamboo leaves read V ≈ 0.80 / s ≈ 0.55 — the AD's × 0.70
@@ -276,6 +279,9 @@ namespace DD.Art
                 if (atlas == "bamboo_leaves") { spec.Tint = new Color(0.55f, 0.55f, 0.55f, 1f); spec.Smoothness = 0.25f; }   // C-00: the west read too dark at × 0.45
                 rows.Add(spec);
             }
+
+            // AP-023 v008 · the sugi LOD0 crown pads (AP023_M_pine_needles_pad_v001): the pine_needles atlas, front faces only.
+            rows.Add(new Spec { Role = "ap023_pine_needles_pad", Kind = Kind.Cutout, TextureRole = "ap023_pine_needles", Shader = ShaderKind.FoliageWind, NoPackedMap = true, Smoothness = 0.40f, SingleSided = true });
 
             rows.Add(new Spec { Role = "ap023_cloth", Kind = Kind.Flat, FlatLinearAlbedo = new Color(0.0273f, 0.0232f, 0.0194f, 1f), Smoothness = 0.20f });
             rows.Add(new Spec { Role = "ap023_foliage_core", Kind = Kind.Flat, FlatLinearAlbedo = new Color(0.022f, 0.040f, 0.016f, 1f), Smoothness = 0.25f });

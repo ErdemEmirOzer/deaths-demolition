@@ -383,6 +383,7 @@ namespace DD.Art.Pipeline.EditorTools
             { "ap023_bamboo_culm", TextureClass.Foliage },
             { "ap023_bamboo_leaves", TextureClass.Foliage },
             { "ap023_groundcover", TextureClass.Foliage },
+            { "ap023_lotus", TextureClass.Foliage },
             { "ap023_momiji_sprigs", TextureClass.Foliage },
             { "ap023_pine_needles", TextureClass.Foliage },
             { "ap023_reeds_iris", TextureClass.Foliage },
@@ -394,7 +395,8 @@ namespace DD.Art.Pipeline.EditorTools
             { "ap023_plaster", TextureClass.Structure },
             { "ap023_plaster_interior", TextureClass.Structure },
             { "ap023_rock_boulder", TextureClass.Structure },
-            { "ap023_roof_tiles", TextureClass.Structure },
+            { "ap023_roof_tiles", TextureClass.Hero },   // v006/v007: the 4K kawara (UV drop-in) on the hero palace / gates / kairō
+            { "ap023_trim", TextureClass.Hero },         // v006/v007: the 4K trim atlas (hero LOD0 timber / copper / vermilion / plaster faces)
             { "ap023_stone_ashlar", TextureClass.Structure },
             { "ap023_tatami", TextureClass.Structure },
             { "ap023_washi", TextureClass.Structure },
