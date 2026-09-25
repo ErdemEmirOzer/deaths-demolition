@@ -215,10 +215,9 @@ rows remain the recoloured fallback. Bound / pending per row: `planning/work-pac
 - Lantern point lights: ≤ 6 (range 1.6 m, 0.35, amber, no shadows) re-assigned every 0.5 s to the nearest lanterns
   within 26 m (S-05 budget: keep ≤ 2 m range, per-object limit 4 untouched); ±10 % alpha flicker on the flame cards.
 - Tide well implosion (`FieldEnded`): pond splash crown + a ring growing to the well radius (`PlayTideImplode`).
-- AP-014C (P-06, credit 0) staged as the `AP010C/` supplement (same v003 manifest schema, `SupplementManifests`): `sw_tide_well`
-  loop under the well from `FieldSpawned` to `FieldEnded`, `sw_tide_implode` at the end, `sw_ofuda_dart` frame at the seal +
-  the AP-014 thread tile on `LinkEffect` lines (tile mode, 12 cm) for the Netted body (three loops, `ReportOfudaNet`) and the
-  loom → seal trail (`ReportOfudaTrail`); `barrel_heat_distort_tile` (normal + A mask, linear, Repeat) drives HeatHaze
+- AP-014C (P-06, credit 0) staged as the `AP010C/` supplement (same v003 manifest schema, `SupplementManifests`). Its old
+  Special sheets (`sw_tide_well`, `sw_tide_implode`, `sw_ofuda_dart`) left with WP-073 B6's asset slice (25.09 — Raiju / Namekuji
+  draw procedurally); `barrel_heat_distort_tile` (normal + A mask, linear, Repeat) drives HeatHaze
   `_TileMode 1`. Casings: `AP013C/` FBX + 256 set → `ArtCasingBuilder` → `Resources/DD_Casings` (`CasingLibrary`),
   `CasingEffect` pool of 12 flung from the rig's Ejection socket per shot (ballistic, one bounce, 1.6 s).
 - AD round (Fable, 7 frames) MUSTs: Ofuda net as thread loops on the torso (the card was the thread tile — replaced with AP-014C); Kagura dust 1.2 m;
@@ -272,7 +271,7 @@ rows remain the recoloured fallback. Bound / pending per row: `planning/work-pac
 | gold (v003) | `goldpack_V01` + albedo/emissive, `card_gold_sparkle`, `card_gold_trail` | 1024² / 1024² / 512×2048 | 512² / 512² / 256×1024 | 1×1 | 0.28 / 0.6 / 1.0 m | emissive ×2 |
 | beacon (v003) | `beacon_column`, `beacon_ring`, `beacon_ring_anim` | 1024×4096 / 2048² / 2048² | 256×1024 / 1024² / 1024² | 1×1 / 1×1 / 4×4 · 16 · 16 · 1.0 loop | 1.2 × 6 m / 2.4 / 2.6 m | UV scroll 0.2/s |
 | vignette / HUD | `vignette_damage` (v003), `hud_marker` (v002) | 2048² / 256² | 1024² / 256² | 1×1 | screen | vermilion tint / sprite |
-| pending hooks (v003, in the catalog) | `spawn_dust`, `claw_swipe`, `dust_step`, `mag_drop` (+dust), `barrel_heat` (+distort), `chain_arc_sheet`, `ofuda_seal` (+burn), `straw_puff` (+cloud), `lantern_flame`, `player_death_overlay_pulse` | 256²–2048² | 256²–1024² | per manifest | per manifest | owners listed in the coverage matrix |
+| pending hooks (v003, in the catalog) | `spawn_dust`, `claw_swipe`, `dust_step`, `mag_drop` (+dust), `barrel_heat` (+distort), `chain_arc_sheet`, `straw_puff` (+cloud), `lantern_flame`, `player_death_overlay_pulse` | 256²–2048² | 256²–1024² | per manifest | per manifest | owners listed in the coverage matrix |
 
 Shipped estimate (EditMode `VfxDokulari_SozlesmeyeUyar_ButceIcinde`): main line 30.7 / 32 MB, AP-010B 37.5 / 60 MB, total ≈ 68 MB.
 

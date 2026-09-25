@@ -45,9 +45,9 @@ namespace DD.Art.Tests.EditMode
             var catalog = AssetDatabase.LoadAssetAtPath<VfxCatalog>(ArtVfxImporter.CatalogPath);
             Assert.IsNotNull(catalog, "DD_VfxCatalog yok (Run VFX Catalog koşmalı).");
             Dictionary<string, Dictionary<string, object>> manifest = ManifestRows();
-            Assert.AreEqual(113, manifest.Count, "Manifest v004 109 varlık (v003 108 + fb_armor_break, WP-047H) + AP010C 4 (WP-047E, AP-014C).");
+            Assert.AreEqual(108, manifest.Count, "Manifest v004 107 varlık (v003 108 + fb_armor_break, WP-047H − ofuda_seal / _burn, WP-073 B6) + AP010C 1 (barrel_heat_distort_tile; sw_tide_well / _implode, sw_ofuda_dart çıktı).");
             // WP-019b: 108 v003 manifest rows + the synthesized blood_droplet row; WP-047E: + 4 AP010C rows; WP-047H: + fb_armor_break (v004).
-            Assert.AreEqual(114, catalog.Entries.Count, "Katalog 113 manifest satırı + 1 sentez (blood_droplet).");
+            Assert.AreEqual(109, catalog.Entries.Count, "Katalog 108 manifest satırı + 1 sentez (blood_droplet).");
 
             var hatalar = new List<string>();
             var ids = new HashSet<string>(StringComparer.Ordinal);
@@ -123,7 +123,7 @@ namespace DD.Art.Tests.EditMode
             Debug.Log("[DD-TEST] wp019.vfxTextures count=" + n + " estMB=" + mb.ToString("F1") + " main=" + mbMain.ToString("F1") + "/" + ArtVfxContract.ShippedVfxBudgetMb +
                       " ap010b=" + mbBlood.ToString("F1") + "/" + ArtVfxContract.ShippedBloodBudgetMb);
             Assert.IsEmpty(ihlaller, "VFX doku sözleşme ihlali (" + ihlaller.Count + "):\n" + string.Join("\n", ihlaller));
-            Assert.AreEqual(115, n);   // PNGs (rows + emissive): WP-047E + AP010C 4; WP-047H + fb_armor_break sheet + emissive
+            Assert.AreEqual(110, n);   // PNGs (rows + emissive): WP-047E + AP010C 4; WP-047H + fb_armor_break sheet + emissive; WP-073 B6 − 5 old Special sheets
             Assert.LessOrEqual(mbMain, ArtVfxContract.ShippedVfxBudgetMb, "VFX ana satırı bütçeyi aşıyor (ADR-019-1).");
             Assert.LessOrEqual(mbBlood, ArtVfxContract.ShippedBloodBudgetMb, "AP-010B satırı bütçeyi aşıyor (C-00 kuyruk notu ≤ 60 MB).");
         }

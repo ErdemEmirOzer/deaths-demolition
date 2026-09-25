@@ -22,7 +22,7 @@ Every contract PNG (`Textures/Source|Derived/T_<role>_<Map>.png`) belongs to a d
 | Sky | 256 | off | `sky` (the 4×256 gradient `ArtSkyBuilder` writes) | A skybox has no renderer for the streaming system to rate |
 | Character | 2048 | on | `player`, `player_skin1/2b/3` (skin 2 = 2b Steel/Indigo, user 2026-09-16), `zombie_atlas` (WP-016), `zombie_armor` (AP-008, WP-017) | The one thing the camera frames at ~100 px; ADR-016-1 |
 | Weapon | 1024 | on | `sw_atlas` (AP-014 Special Weapons, WP-037B), `weapons` (AP-013 classic A/B/C set, WP-042B) | Held at character distance; 1K sources, never larger |
-| Vfx | 1024 | off | every `T_<name>_Sheet.png` (WP-037 · AP-014 `T_vfx_sw_*_Sheet`: flipbook / card / tile, sRGB + alpha coverage, `alphaIsTransparency`) — no table row needed | An effect shows on its first frame; streaming would show the lowest mip first |
+| Vfx | 1024 | off | every `T_<name>_Sheet.png` (WP-037 · the AP-014 `T_vfx_sw_*_Sheet` set left with WP-073 B6; flipbook / card / tile, sRGB + alpha coverage, `alphaIsTransparency`) — no table row needed | An effect shows on its first frame; streaming would show the lowest mip first |
 
 `roof_courses` (Structure) is the generated 256² tile-course detail normal for the AP-005B roof copy (`ArtTextureRepack.BuildRoofCourses`).
 

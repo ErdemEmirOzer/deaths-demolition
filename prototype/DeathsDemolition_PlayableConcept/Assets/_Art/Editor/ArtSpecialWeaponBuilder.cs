@@ -74,13 +74,10 @@ namespace DD.Art.Pipeline.EditorTools
             foreach (var s in Sheets) yield return VfxTextures + "/" + s.file;
         }
 
+        // WP-073 B6 asset slice (C-00 25.09): the AP-014 Kagura / Ofuda use sheets left with the old Specials — Raiju / Namekuji
+        // draw procedurally (ArcSystem / GelSystem). The sheet table stays as the library's (empty) contract.
         private static readonly (string usage, string file, int cols, int rows, float fps, float duration, bool loop, float world)[] Sheets =
-        {
-            ("sw_kagura_wave", "T_vfx_sw_kagura_ring_4x4_Sheet.png", 4, 4, 16f, 1.0f, false, 19f),
-            ("sw_ofuda_dart", "T_vfx_sw_ofuda_card_1x2_Sheet.png", 1, 2, 0f, 0f, false, 0.32f),
-            ("sw_ofuda_collapse", "T_vfx_sw_ofuda_collapse_4x4_Sheet.png", 4, 4, 32f, 0.5f, false, 3.2f),
-            ("sw_ofuda_web", "T_vfx_sw_ofuda_thread_tile_Sheet.png", 1, 1, 0f, 0f, true, 1f),
-        };
+            Array.Empty<(string, string, int, int, float, float, bool, float)>();
 
         [MenuItem("DD/Art/Run Special Weapons (WP-037)", priority = 306)]
         public static void BuildAll()

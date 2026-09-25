@@ -22,9 +22,9 @@
   "pool_lobes": "exports/AP010B-pool-lobes-v004.json"
  },
  "totals": {
-  "assets": 109,
-  "bytes": 48938091,
-  "mb": 48.94,
+  "assets": 107,
+  "bytes": 48863757,
+  "mb": 48.86,
   "limit_mb": 60,
   "within_limit": true,
   "v002_kept": 14
@@ -2929,88 +2929,6 @@
    "source_index": "wave2-v003",
    "bytes": 150864,
    "sha256": "8206c8003e6ac36f67917acec3dd68cf61f83b7e420b0cb1d11b60e391c07b90"
-  },
-  {
-   "slot": "AP010B_ofuda_seal",
-   "file": "AP010B/wave2/AP010B_ofuda_seal_512_v003.png",
-   "family": "weapon",
-   "kind": "card (blank talisman)",
-   "grid": [
-    1,
-    1
-   ],
-   "frames_used": 1,
-   "fps": 0,
-   "duration_s": 0.0,
-   "loop": false,
-   "size_px": [
-    512,
-    512
-   ],
-   "world_size_m": [
-    0.25,
-    0.75
-   ],
-   "colour_reserve": "special",
-   "emissive_file": null,
-   "capsule_cover_s": 0.0,
-   "usage_note": "blank talisman 160 x 480 px centred (pentagonal head 12 % of the height, 1:3), 4 px border band luma 0.88, NO text; 0.25 x 0.75 m camera-facing card hovering on the enemy chest; paper = Ofuda tint (0.96, 0.93, 0.84) baked with +-3 % fibre noise",
-   "blend": "alpha (paper hdr 1.2)",
-   "tint_rgb": {
-    "ofuda": [
-     0.96,
-     0.93,
-     0.84
-    ]
-   },
-   "hdr": 1.2,
-   "origin_uv": [
-    0.5,
-    0.5
-   ],
-   "mra_g": null,
-   "supersedes": null,
-   "source_index": "wave2-v003",
-   "bytes": 68707,
-   "sha256": "a3adf87763139727c8608cc29cab4111fc71cccea8f4d2c0a977afd5098ca437"
-  },
-  {
-   "slot": "AP010B_ofuda_seal_burn",
-   "file": "AP010B/wave2/AP010B_ofuda_seal_burn_4x4_v003.png",
-   "family": "weapon",
-   "kind": "burn-away mask sheet",
-   "grid": [
-    4,
-    4
-   ],
-   "frames_used": 16,
-   "fps": 30,
-   "duration_s": 0.5333,
-   "loop": false,
-   "size_px": [
-    1024,
-    1024
-   ],
-   "world_size_m": [
-    0.25,
-    0.75
-   ],
-   "colour_reserve": "none",
-   "emissive_file": null,
-   "capsule_cover_s": 0.0,
-   "usage_note": "frame n = remaining paper 255, ember band (+-0.03 of the height = 3-4 px) 128, gone 0; burn runs from the head downward with a noisy front (3-octave noise amp 18 % of the height), thresholds t = n/15 mapped over -0.21..1.21 so f0 = intact, f15 = gone; same UV layout as the card",
-   "blend": "mask (paper where > 0.75, ember where 0.25-0.75)",
-   "tint_rgb": null,
-   "hdr": null,
-   "origin_uv": [
-    0.5,
-    0.5
-   ],
-   "mra_g": null,
-   "supersedes": null,
-   "source_index": "wave2-v003",
-   "bytes": 5627,
-   "sha256": "264f12498bd101979bcb67732e2bc275a1a6815c782a3ae6bb5eadc7260055c6"
   },
   {
    "slot": "AP010B_weapon_expire",

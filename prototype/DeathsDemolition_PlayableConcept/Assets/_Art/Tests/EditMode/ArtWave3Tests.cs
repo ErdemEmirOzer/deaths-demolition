@@ -67,14 +67,17 @@ namespace DD.Art.Tests.EditMode
 
             var library = Resources.Load<SpecialWeaponVisualLibrary>(SpecialWeaponVisualLibrary.ResourcePath);
             Assert.IsNotNull(library, "DD_SpecialWeapons (WP-037B) yok");
-            foreach (string usage in new[] { VfxIds.SwKaguraWave, VfxIds.SwOfudaDart, VfxIds.SwOfudaCollapse, VfxIds.SwOfudaWeb })
+            // WP-073 B6 asset slice: the old Specials' use sheets left (Raiju / Namekuji draw procedurally) — none remain.
+            foreach (string usage in new[] { "sw_kagura_wave", "sw_ofuda_dart", "sw_ofuda_collapse", "sw_ofuda_web" })
             {
-                SpecialWeaponVisualLibrary.Sheet sheet = library.FindSheet(usage);
-                Assert.IsNotNull(sheet, usage + " sheet'i yok");
-                Assert.IsNotNull(sheet.texture, usage + " dokusu yok");
+                Assert.IsNull(library.FindSheet(usage), usage + " eski Special sheet'i hâlâ kütüphanede");
             }
 
-            Assert.AreEqual(19f, library.FindSheet(VfxIds.SwKaguraWave).worldSizeMetres, 0.01f, "Kagura ring 19 m (manifest)");
+            foreach (string id in new[] { "ofuda_seal", "ofuda_seal_burn", "sw_tide_well", "sw_tide_implode", "sw_ofuda_dart" })
+            {
+                Assert.IsNull(catalog.Find(id), id + " eski Special satırı hâlâ katalogda");
+            }
+
             Assert.AreEqual("sw_arc_orb", SpecialWeaponUsage.For(SpecialWeaponId.Raiju).FireVfxFamily);   // WP-069 B4 (DEC-094)
         }
 
