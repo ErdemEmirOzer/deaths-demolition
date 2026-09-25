@@ -57,6 +57,7 @@ namespace DD.Prototype.UI
             public GameObject Pin;
             public GameObject Offer;
             public GameObject New;
+            public TMP_Text Count;
             public TMP_Text Name;
             public TMP_Text State;
             public int Index = -1;
@@ -278,10 +279,14 @@ namespace DD.Prototype.UI
             crossRect.sizeDelta = new Vector2(0f, 3f);
             crossRect.localRotation = Quaternion.Euler(0f, 0f, 35f);
 
-            // Overlays: the pin at the seal's lower right, NEW as a dot at its upper right, OFFER as a chip across its top.
+            // Overlays: OFFER as a chip across the seal's top, NEW as a dot at its upper right, the pin at its lower left and
+            // a tier's owned count ("2/4", the skill-tree level badge) at its lower right.
             Sprite mark = UiArt.Icon("Seal.Mark");
             Image pin = UiFactory.NewImage("Pin", v.Seal, UiColor.TextPrimary, mark != null ? mark : UiSprites.Disc);
-            PlaceAnchored((RectTransform)pin.transform, new Vector2(1f, 0f), new Vector2(0.5f, 0.5f), new Vector2(-2f, 2f), new Vector2(20f, 20f));
+            PlaceAnchored((RectTransform)pin.transform, new Vector2(0f, 0f), new Vector2(0.5f, 0.5f), new Vector2(4f, 4f), new Vector2(20f, 20f));
+            v.Count = UiChips.Create("Count", v.Seal, UiChipKind.Neutral, "0/5", UiChipSize.Row);
+            var countRect = (RectTransform)v.Count.transform.parent;
+            PlaceAnchored(countRect, new Vector2(1f, 0f), new Vector2(0.5f, 0.5f), new Vector2(-4f, 4f), countRect.sizeDelta);
             v.Pin = pin.gameObject;
             Image dot = UiFactory.NewImage("New", v.Seal, UiColor.AccentSakura, UiSprites.Disc);   // the kit's NEW colour (UiChips)
             PlaceAnchored((RectTransform)dot.transform, new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-6f, -6f), new Vector2(10f, 10f));
@@ -572,6 +577,13 @@ namespace DD.Prototype.UI
             v.Pin.SetActive(n.IsPinned);
             v.Offer.SetActive(forSale);
             v.New.SetActive(n.NewlyUnlocked);
+            bool count = n.Kind == RunTreeNodeKind.Tier && n.OwnedTier > 0 && n.MaxTier > 1;
+            v.Count.transform.parent.gameObject.SetActive(count);
+            if (count)
+            {
+                v.Count.text = n.OwnedTier + "/" + n.MaxTier;
+            }
+
             v.Mark.enabled = index == _focus;
             v.Name.color = UiTokens.Get(dim ? UiColor.TextMuted : UiColor.TextPrimary);
             v.State.text = StateWord(n);
@@ -642,10 +654,10 @@ namespace DD.Prototype.UI
                         : UiStrings.Get("tree.state.prereq_keystone", "NEEDS A KEYSTONE");
                     break;
                 case RunTreeNodeStatus.Available:
-                    word = TierOwned(n) + UiStrings.Get("tree.state.available", "AVAILABLE") + " · " + n.Cost.ToString(CultureInfo.InvariantCulture);
+                    word = UiStrings.Get("tree.state.available", "AVAILABLE") + " · " + n.Cost.ToString(CultureInfo.InvariantCulture);
                     break;
                 case RunTreeNodeStatus.Unaffordable:
-                    word = TierOwned(n) + UiStrings.Get("tree.state.unaffordable", "{value} GOLD SHORT").Replace("{value}", n.Shortfall.ToString(CultureInfo.InvariantCulture));
+                    word = UiStrings.Get("tree.state.unaffordable", "{value} GOLD SHORT").Replace("{value}", n.Shortfall.ToString(CultureInfo.InvariantCulture));
                     break;
                 case RunTreeNodeStatus.Purchased:
                     word = UiStrings.Get("tree.state.purchased", "OWNED") + (n.MaxTier > 1 ? " · " + n.OwnedTier + "/" + n.MaxTier : string.Empty);
@@ -662,18 +674,6 @@ namespace DD.Prototype.UI
             }
 
             return n.NewlyUnlocked ? UiStrings.Get("tree.flag.new", "NEW") + " · " + word : word;
-        }
-
-        /// <summary>"OWNED 1/5 · " in front of a tier that has more to buy, so the seal's cream fill has its word.</summary>
-        private string TierOwned(RunTreeNodeView n)
-        {
-            if (n.Kind != RunTreeNodeKind.Tier || n.OwnedTier <= 0 || n.MaxTier <= 1)
-            {
-                return string.Empty;
-            }
-
-            string count = n.OwnedTier + "/" + n.MaxTier + " · ";
-            return _compact ? count : UiStrings.Get("tree.state.purchased", "OWNED") + " " + count;   // compact: the fill says owned
         }
 
         private string ShortOf(int index)
@@ -714,7 +714,7 @@ namespace DD.Prototype.UI
                     bool bothOwned = IsOwned(p) && IsOwned(c);
                     bool path = _onPath[child] && (_onPath[parent] || IsOwned(p));
                     bool dashed = c.Status == RunTreeNodeStatus.PrereqMissing && !IsOwned(p);
-                    _edges.Add(EdgeOut(p.Row, p.Column), EdgeIn(c.Row, c.Column), path ? 4f : bothOwned ? 2f : 1f, dashed && !path, path ? pinned : bothOwned ? owned : hair);
+                    AddEdge(p, c, path ? 4f : bothOwned ? 2f : 1f, dashed && !path, path ? pinned : bothOwned ? owned : hair);
                 }
             }
 
@@ -762,7 +762,7 @@ namespace DD.Prototype.UI
                 bool bothOwned = IsOwned(p) && IsOwned(c);
                 bool path = _onPath[cap] && (_onPath[seal] || IsOwned(p));
                 bool dashed = !IsOwned(p) && !path;
-                _edges.Add(EdgeOut(p.Row, p.Column), EdgeIn(c.Row, c.Column), path ? 4f : bothOwned ? 2f : 1f, dashed, path ? pinned : bothOwned ? owned : hair);
+                AddEdge(p, c, path ? 4f : bothOwned ? 2f : 1f, dashed, path ? pinned : bothOwned ? owned : hair);
             }
 
             if (gateTier > 0 && gateTier < Tiers)
@@ -784,6 +784,28 @@ namespace DD.Prototype.UI
 
         /// <summary>The keystone gate's x in the grid (-1 when the lane draws none) - tests.</summary>
         public float GateX => _gateX;
+
+        /// <summary>
+        /// Stacked rows join seal to seal in a straight line. Compact rows put words beside the seal, so a join across rows
+        /// runs as an elbow through the gutter before the child's tier instead of cutting over the words.
+        /// </summary>
+        private void AddEdge(RunTreeNodeView p, RunTreeNodeView c, float width, bool dashed, Color colour)
+        {
+            Vector2 a = EdgeOut(p.Row, p.Column);
+            Vector2 b = EdgeIn(c.Row, c.Column);
+            if (!_compact || p.Row == c.Row)
+            {
+                _edges.Add(a, b, width, dashed, colour);
+                return;
+            }
+
+            float gutter = c.Column * _pitchX - EdgeGap * 0.5f;
+            var g1 = new Vector2(gutter, a.y);
+            var g2 = new Vector2(gutter, b.y);
+            _edges.Add(a, g1, width, dashed, colour);
+            _edges.Add(g1 + new Vector2(0f, a.y > b.y ? width * 0.5f : -width * 0.5f), g2 + new Vector2(0f, a.y > b.y ? -width * 0.5f : width * 0.5f), width, dashed, colour);
+            _edges.Add(g2, b, width, dashed, colour);
+        }
 
         private Vector2 SealCentre(int row, int tier)
         {
