@@ -915,7 +915,7 @@ namespace DD.Art.Pipeline.EditorTools
             var set = AssetDatabase.LoadAssetAtPath<CharacterAnimationSet>(setPath);
             if (set == null) return;
             string baseSet = C.WeaponAnimSetsV3[0];
-            if (!clips.ContainsKey(C.PlayerFpClipV3(baseSet, "idle_aim"))) { set.ConfigureFirstPerson(null, null); EditorUtility.SetDirty(set); return; }
+            if (FpClipFor(clips, baseSet, "idle_aim") == null) { set.ConfigureFirstPerson(null, null); EditorUtility.SetDirty(set); return; }
             EnsureFolder(ArtCharacterContract.PlayerFolder + "/Generated");
             AnimatorController c = Fresh(PlayerFpController,
                 (C.Fire, AnimatorControllerParameterType.Trigger), (C.Reload, AnimatorControllerParameterType.Trigger), (C.ReloadRate, AnimatorControllerParameterType.Float),
@@ -926,24 +926,24 @@ namespace DD.Art.Pipeline.EditorTools
             ApplyLayer(c, 0, l => l.name = C.FpBaseLayer);
             AnimatorStateMachine sm = c.layers[0].stateMachine;
             AnimatorState aim = sm.AddState(C.AimV3State);
-            aim.motion = clips[C.PlayerFpClipV3(baseSet, "idle_aim")];
+            aim.motion = FpClipFor(clips, baseSet, "idle_aim");
             aim.writeDefaultValues = false;
             sm.defaultState = aim;
-            AnimatorState tac = OneShot(sm, C.ReloadTacState, clips[C.PlayerFpClipV3(baseSet, "reload_tac")], aim, 0.98f, 0.1f);
+            AnimatorState tac = OneShot(sm, C.ReloadTacState, FpClipFor(clips, baseSet, "reload_tac"), aim, 0.98f, 0.1f);
             tac.speedParameterActive = true; tac.speedParameter = C.ReloadRate;
             FromAny(sm, tac, 0.05f, (AnimatorConditionMode.If, 0f, C.Reload), (AnimatorConditionMode.IfNot, 0f, C.ReloadEmpty));
-            AnimatorState emp = OneShot(sm, C.ReloadEmptyState, clips[C.PlayerFpClipV3(baseSet, "reload_empty")], aim, 0.98f, 0.1f);
+            AnimatorState emp = OneShot(sm, C.ReloadEmptyState, FpClipFor(clips, baseSet, "reload_empty"), aim, 0.98f, 0.1f);
             emp.speedParameterActive = true; emp.speedParameter = C.ReloadRate;
             FromAny(sm, emp, 0.05f, (AnimatorConditionMode.If, 0f, C.Reload), (AnimatorConditionMode.If, 0f, C.ReloadEmpty));
-            AnimatorState sOut = OneShot(sm, C.SwitchOutV3State, clips[C.PlayerFpClipV3(baseSet, "switch_out")], aim, 0.98f, 0.05f);
+            AnimatorState sOut = OneShot(sm, C.SwitchOutV3State, FpClipFor(clips, baseSet, "switch_out"), aim, 0.98f, 0.05f);
             FromAny(sm, sOut, 0.03f, (AnimatorConditionMode.If, 0f, C.SwitchOut));
-            AnimatorState sIn = OneShot(sm, C.SwitchInV3State, clips[C.PlayerFpClipV3(baseSet, "switch_in")], aim, 0.98f, 0.1f);
+            AnimatorState sIn = OneShot(sm, C.SwitchInV3State, FpClipFor(clips, baseSet, "switch_in"), aim, 0.98f, 0.1f);
             FromAny(sm, sIn, 0.03f, (AnimatorConditionMode.If, 0f, C.SwitchIn));
 
             AnimatorControllerLayer add = AddLayer(c, C.FpAdditiveLayer, null, AnimatorLayerBlendingMode.Additive, false);
             AnimatorState addEmpty = add.stateMachine.AddState(C.EmptyState);
             add.stateMachine.defaultState = addEmpty;
-            AnimatorState fire = OneShot(add.stateMachine, C.FireV3State, clips[C.PlayerFpClipV3(baseSet, "fire")], addEmpty, 0.9f, 0.03f);
+            AnimatorState fire = OneShot(add.stateMachine, C.FireV3State, FpClipFor(clips, baseSet, "fire"), addEmpty, 0.9f, 0.03f);
             FromAny(add.stateMachine, fire, 0f, (AnimatorConditionMode.If, 0f, C.Fire));
 
             AnimatorControllerLayer swayL = AddLayer(c, C.FpSwayLayer, null, AnimatorLayerBlendingMode.Additive, false);
@@ -965,7 +965,7 @@ namespace DD.Art.Pipeline.EditorTools
             string folder = ArtCharacterContract.PlayerFolder + "/Generated";
             foreach (string animSet in C.WeaponAnimSetsV3)
             {
-                if (!clips.ContainsKey(C.PlayerFpClipV3(animSet, "fire"))) continue;
+                if (FpClipFor(clips, animSet, "fire") == null) continue;
                 string path = folder + "/DD_Player_FP_" + animSet + ".overrideController";
                 var aoc = AssetDatabase.LoadAssetAtPath<AnimatorOverrideController>(path);
                 if (aoc == null) { aoc = new AnimatorOverrideController(c); AssetDatabase.CreateAsset(aoc, path); }
@@ -974,7 +974,8 @@ namespace DD.Art.Pipeline.EditorTools
                 var pairs = new List<KeyValuePair<AnimationClip, AnimationClip>>();
                 foreach (string slot in ClassAndOwnSlots)
                 {
-                    if (!clips.TryGetValue(C.PlayerFpClipV3(baseSet, slot), out AnimationClip from)) continue;
+                    AnimationClip from = FpClipFor(clips, baseSet, slot);
+                    if (from == null) continue;
                     AnimationClip to = FpClipFor(clips, animSet, slot);
                     pairs.Add(new KeyValuePair<AnimationClip, AnimationClip>(from, to == null || to == from ? null : to));
                 }

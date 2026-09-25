@@ -92,8 +92,9 @@ namespace DD.Prototype.Characters
         public void Reload(float seconds, bool empty)
         {
             if (!Visible || WeaponSet == null) return;
-            string clip = CharacterAnimatorContract.PlayerFpClipV3(WeaponSet, empty ? "reload_empty" : "reload_tac");
-            float clipSeconds = _set.Find(clip)?.seconds ?? 0f;
+            string slot = empty ? "reload_empty" : "reload_tac";
+            CharacterAnimationSet.Entry e = _set.Find("AP022_fp_" + WeaponSet + "_" + slot) ?? _set.Find(CharacterAnimatorContract.PlayerFpClipV3(WeaponSet, slot));
+            float clipSeconds = e != null ? e.seconds : 0f;
             _animator.SetFloat(ReloadRateId, seconds > 0.05f && clipSeconds > 0.05f ? clipSeconds / seconds : 1f);
             _animator.SetBool(ReloadEmptyId, empty);
             _animator.SetTrigger(ReloadId);

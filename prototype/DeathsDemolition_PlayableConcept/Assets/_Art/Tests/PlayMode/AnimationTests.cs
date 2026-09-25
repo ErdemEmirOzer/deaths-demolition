@@ -470,7 +470,7 @@ namespace DD.Art.Tests.PlayMode
                 AnimatorClipInfo[] si = fp.Animator.GetCurrentAnimatorClipInfo(fpBase);
                 Debug.Log("[DD-TEST] wp071.fp anchorErr=" + (fp.LastAnchorError * 1000f).ToString("F2", CultureInfo.InvariantCulture) + " mm ar1 fpView root Δ=" + (posErr * 100f).ToString("F1", CultureInfo.InvariantCulture)
                           + " cm rotΔ=" + rotErr.ToString("F1", CultureInfo.InvariantCulture) + "° tpAxisConvention=" + tpConvention.ToString("F1", CultureInfo.InvariantCulture) + "° (pose " + pose.position.ToString("F3") + " / rig " + rootInAnchor.ToString("F3") + ", scale " + pose.scale.ToString("F2", CultureInfo.InvariantCulture) + ") smgSwitch=" + (si.Length > 0 ? si[0].clip.name : "-"));
-                StringAssert.Contains("fp_smg_switch_in", si.Length > 0 ? si[0].clip.name : "-", "smg_1 FP AOC");
+                StringAssert.Contains("fp_smg_1_switch_in", si.Length > 0 ? si[0].clip.name : "-", "smg_1 FP AOC");
                 // C-00 25.09: fpView owns FP placement — P-06's 5b rest lands the weapon on it (W13 ≤ 1.9 mm / 0.23°)
                 Assert.Less(posErr, 0.01f, "FP dinlenmede silah kökü fpView'da (≤ 1 cm)");
                 Assert.Less(rotErr, 1.5f, "FP dinlenmede silah dönüşü fpView'da (≤ 1,5°)");

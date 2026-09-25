@@ -166,12 +166,12 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(3, fp.layers.Length);
             Assert.AreEqual(C.FpBaseLayer, fp.layers[0].name); Assert.AreEqual(C.FpAdditiveLayer, fp.layers[1].name); Assert.AreEqual(C.FpSwayLayer, fp.layers[2].name);
             Assert.AreEqual(AnimatorLayerBlendingMode.Additive, fp.layers[1].blendingMode); Assert.AreEqual(AnimatorLayerBlendingMode.Additive, fp.layers[2].blendingMode);
-            Assert.AreEqual(set.Clip("AP022_fp_ar_idle_aim"), fp.layers[0].stateMachine.defaultState.motion, "FP dinlenme = ar sınıf idle_aim");
+            Assert.AreEqual(set.Clip("AP022_fp_ar_1_idle_aim"), fp.layers[0].stateMachine.defaultState.motion, "FP dinlenme = ar_1 idle_aim (taban set)");
             foreach (string st in new[] { C.ReloadTacState, C.ReloadEmptyState, C.SwitchInV3State, C.SwitchOutV3State }) Assert.IsNotNull(ArtAnimatorBuilder.FindState(fp, 0, st), "FP " + st);
             Assert.IsNotNull(ArtAnimatorBuilder.FindState(fp, 1, C.FireV3State), "FP Fire_V3");
             Assert.AreEqual(3, set.FpWeaponSets.Count, "FP AOC ar_1 / ar_2 / smg_1");
-            Assert.AreEqual(set.Clip("AP022_fp_smg_idle_aim"), set.FpWeaponSets[2].overrides[set.Clip("AP022_fp_ar_idle_aim")], "FP smg_1 sınıf slotu");
-            Assert.AreEqual(set.Clip("AP022_fp_ar_2_idle_aim"), set.FpWeaponSets[1].overrides[set.Clip("AP022_fp_ar_idle_aim")], "FP ar_2 kendi dinlenmesi (5b, silaha özel klip)");
+            Assert.AreEqual(set.Clip("AP022_fp_smg_1_idle_aim"), set.FpWeaponSets[2].overrides[set.Clip("AP022_fp_ar_1_idle_aim")], "FP smg_1 kendi dinlenmesi");
+            Assert.AreEqual(set.Clip("AP022_fp_ar_2_idle_aim"), set.FpWeaponSets[1].overrides[set.Clip("AP022_fp_ar_1_idle_aim")], "FP ar_2 kendi dinlenmesi (5b, silaha özel klip)");
             int rests = 6 + (v3 ? 1 : 0);
 
             Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 0, C.DeathState + "_0")); Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 0, C.DeathState + "_1"));
