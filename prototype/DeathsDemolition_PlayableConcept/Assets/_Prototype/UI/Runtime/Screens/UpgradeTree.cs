@@ -589,8 +589,13 @@ namespace DD.Prototype.UI
             var countRect = (RectTransform)v.Count.transform.parent;
             countRect.gameObject.SetActive(count);
             // Compact rows keep their words right of the seal: the badge sits under the seal's centre there.
-            PlaceAnchored(countRect, _compact ? new Vector2(0.5f, 0f) : new Vector2(1f, 0f), new Vector2(0.5f, 0.5f),
+            PlaceAnchored(countRect, _compact ? new Vector2(0.5f, 1f) : new Vector2(1f, 0f), new Vector2(0.5f, 0.5f),
                 _compact ? Vector2.zero : new Vector2(-4f, 4f), countRect.sizeDelta);
+
+            // Compact rows: the OFFER chip hangs under the seal (across its top it would cover the words beside it).
+            var offerRect = (RectTransform)v.Offer.transform;
+            PlaceAnchored(offerRect, _compact ? new Vector2(0.5f, 0f) : new Vector2(0.5f, 1f), _compact ? new Vector2(0.5f, 1f) : new Vector2(0.5f, 0.5f),
+                _compact ? new Vector2(0f, 6f) : Vector2.zero, offerRect.sizeDelta);
             if (count)
             {
                 v.Count.text = n.OwnedTier + "/" + n.MaxTier;
@@ -598,7 +603,7 @@ namespace DD.Prototype.UI
 
             v.Mark.enabled = index == _focus;
             v.Name.color = UiTokens.Get(dim ? UiColor.TextMuted : UiColor.TextPrimary);
-            _measureState = _compact ? null : v.State;
+            _measureState = v.State;
             v.State.text = StateWord(n);
             _measureState = null;
             if (_compact)
@@ -708,7 +713,10 @@ namespace DD.Prototype.UI
 
             string candidate = template.Length > 0 ? template.Replace("{node}", full.ToUpperInvariant()) : full;
             float width = line.rectTransform.rect.width;
-            if (width <= 0f || line.GetPreferredValues(candidate).x <= width)
+            bool fits = line.enableWordWrapping
+                ? line.GetPreferredValues(candidate, width, 0f).y <= TwoLines(line)   // compact: two lines beside the seal
+                : line.GetPreferredValues(candidate).x <= width;
+            if (width <= 0f || fits)
             {
                 return candidate;
             }
