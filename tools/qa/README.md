@@ -52,6 +52,12 @@ Kapı değerleri araç içinde değiştirilmez: perf ort. ≤ 8,0 ms ve temiz p9
 Kararlılık (MUST): `-ddQaBotStability` ile 2 tohum (61, 26) × 12/12 → `tools/qa/soak_gate.py <bot-summary.json> --rounds 12 --seed S --stability --player-log <player.log>`. Gerçek bot: kapı değil, `soak_gate.py --report <≥5 bot-summary.json>` dağılımı.
 Kapanış (`wp064_gate.py`, WP-064 r3): `--soak-dirs soak-61,soak-26 --seeds 61,26 --report-dirs <≥5>`; `rc.sh` bunları koşar. Kararlılık/rapor başka bir commit'in dev build'lerinden geliyorsa (S-10 `soak.sh` düzeni: `<kök>/build-<dizin>`, `<dizin>.wait.log`) `--soak-root <kök> --soak-commit <sha>` (dizin başına ayrı commit: `stab26-final@<sha>`) — perf/release `--commit` üzerinde kalır, rapor commit'leri dizin dizin yazar. Tavan release için; mod etiketi `release-lz4hc` / `release-win64-lz4hc` taban moda göre sayılır.
 
+## Kademe × mod perf matrisi (WP-078 §4, DEC-092 / DEC-100)
+
+- `python3 tools/qa/wp078_perf.py --bin <build> --out <kök> --commit <sha> [--tiers sinematik,yuksek] [--modes topdown,tp,fp]` — her pencere `wp064_run.py perf` (temiz host, defter) + `tools/userdata-guard.sh` snapshot/restore `--scope player`; Player'a `-ddQualityTier`, `-ddCameraMode`, TP/FP `-ddPilotCameraSweep 1`, `-ddUiDataRoot` ve `-ddTelemetryDir` kendi dizininde. Başka bir oyun Player'ı açıksa bekler, dokunmaz; guard uyuşmazlığında DURUR (exit 7 → C-00).
+- `python3 tools/qa/wp078_perf_report.py <kök>` — eşikler `tools/qa/perf-targets.json`'dan (Sinematik ≤ 33,3 / p99 ≤ 40, Yüksek ≤ 16,6 / 20, Performans ≤ 8,0 / 10; hepsi kapı, hücre başına ≥ 3 pencere); her tam pencere sayılır (en iyisi seçilmez), kademe/mod probe çıktısıyla eşleşmeyen pencere sayılmaz.
+- `-ddUiDataRoot <dizin>` (QaUiDataSandbox, dev + release-probe): ui-settings / load-timing / ui-hints oyuncunun klasörüne değil verilen dizine (C-00 §4.14 a). QaRunBot kendi koşularında bunu `<out>/ui-data` ile yapar.
+
 ## Kapanış listesi ekleri (C-00, 2026-09-17)
 
 Tam koşuda (`--quick` değil) aggregate'e elle eklenecek/ayrıca bakılacak maddeler: (1) `RegionalArmorSliceTests.VurusYolu_SifirAyirma` — WP-034 r2 / WP-036 üzerinde 12/16 KB aralıklı ayırma; kapanış koşusunda 3 tekrar, sonucu `qa-report.txt` altına not; (2) DEC-077 motor içi ölçüm (WP-036 devri) — `QaReadabilityGate` gerçek karışım değerleri bu ölçümün yerini tutar, WP-036'nın kendi ölçümüyle yan yana raporlanır; (3) release build 453 MB — tavan (450) kullanıcı kararı bekliyor, kapı değil, `build.sh release` boyutu rapora yazılır.
