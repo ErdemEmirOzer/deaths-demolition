@@ -259,6 +259,24 @@ namespace DD.Prototype.Tests.PlayMode
             foreach (RunTreeLane lane in new[] { RunTreeLane.Body, RunTreeLane.Weapon })
             {
                 tree.SetLane(lane, false);
+                var needs = new Dictionary<string, int>();
+                for (int i = 0; i < tree.Snapshot.Count; i++)
+                {
+                    TMP_Text word = tree.StateTextOf(i);
+                    RunTreeNodeView n = tree.Snapshot.Nodes[i];
+                    if (word != null && n.Status == RunTreeNodeStatus.PrereqMissing && n.MissingParentIndex >= 0 && word.text.StartsWith("NEEDS"))
+                    {
+                        // Two different prerequisites never print the same word (AD R1-C MUST-2: "NEEDS REGENERATION" ×2).
+                        string key = word.text.Replace("\n", " ");
+                        if (needs.TryGetValue(key, out int other) && other != n.MissingParentIndex && tree.Snapshot.Nodes[other].Kind == RunTreeNodeKind.Tier)
+                        {
+                            Assert.Fail("compact " + lane + ": '" + key + "' names two prerequisites");
+                        }
+
+                        needs[key] = n.MissingParentIndex;
+                    }
+                }
+
                 for (int i = 0; i < tree.Snapshot.Count; i++)
                 {
                     TMP_Text name = tree.NameTextOf(i);

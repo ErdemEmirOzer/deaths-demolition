@@ -789,7 +789,9 @@ namespace DD.Prototype.UI
                 return template + n.ShortName;
             }
 
-            if (string.IsNullOrEmpty(n.ShortName) || line == null)
+            // A tier's ShortName is its name cut at 12 characters ("Regeneration" for both regeneration branches): a word that
+            // names a tier keeps the full name and takes another line instead (AD R1-C MUST-2 re-check).
+            if (string.IsNullOrEmpty(n.ShortName) || line == null || n.Kind == RunTreeNodeKind.Tier)
             {
                 return template.Length > 0 ? template.Replace("{node}", full.ToUpperInvariant()) : full;
             }
@@ -834,6 +836,13 @@ namespace DD.Prototype.UI
             if (name + state > _boxH)
             {
                 name = Mathf.Max(_nameLine, _boxH - state);
+            }
+
+            // A long NEEDS word ("NEEDS REGENERATION DELAY") takes a third line while the name holds one.
+            float whole = Mathf.Ceil(v.State.GetPreferredValues(v.State.text, width, 0f).y);
+            if (whole > state && name <= _nameLine + 1f && _nameLine + whole <= _boxH)
+            {
+                state = whole;
             }
 
             name = Mathf.Max(name, _nameLine);
@@ -1289,6 +1298,7 @@ namespace DD.Prototype.UI
             _pin.SetInteractable(n.IsPinned || (!IsOwned(n) && n.Status != RunTreeNodeStatus.Excluded && !hearth));
             bool reforge = n.Kind == RunTreeNodeKind.Fork && IsOwned(n) && n.ReforgeCost >= 0;
             _reforge.gameObject.SetActive(reforge);
+            _reforge.SetInteractable(reforge && _snap.Gold >= n.ReforgeCost);
             if (reforge)
             {
                 _reforge.SetText(UiStrings.Get("tree.action.reforge", "REFORGE") + " · " + n.ReforgeCost.ToString(CultureInfo.InvariantCulture));
