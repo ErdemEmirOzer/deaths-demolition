@@ -420,13 +420,6 @@ namespace DD.Art.Tests.PlayMode
             var ar1 = DD.Prototype.Core.Weapons.Arsenal.Get("ar_1");
             var smg1 = DD.Prototype.Core.Weapons.Arsenal.Get("smg_1");
             pv.EquipWeapon(ar1, ar1.id);
-            // the socket bone's axes → weapon frame (manifest hands_in_weapon_frame): checked on the TP rest pose, where the mount
-            // (WeaponMountAlignment) holds the weapon level along the facing — a leftover FBX axis-convention constant would show here
-            yield return CharacterTests.Bekle(() => pv.Animator.GetCurrentAnimatorStateInfo(1).IsName(C.AimV3State) && !pv.Animator.IsInTransition(1), 3f, "TP Aim_V3 dinlenme");
-            for (int i = 0; i < 10; i++) yield return null;
-            var mountTp = pv.WeaponSocket.GetComponentInChildren<DD.Prototype.PlayerSystem.WeaponMountAlignment>();
-            Quaternion socketToWeapon = Quaternion.Inverse(pv.AnimationSet.FpWeaponSets[0].socketRotInWeapon);
-            float tpConvention = Quaternion.Angle(pv.WeaponSocket.rotation * socketToWeapon, mountTp.transform.rotation);
             DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.FirstPerson, instant: true);
             try
             {
@@ -448,6 +441,8 @@ namespace DD.Art.Tests.PlayMode
 
                 Assert.AreEqual(1, bodies, "tek gövde renderer");
                 Assert.AreSame(fp, FirstPersonArms.Shown);
+                yield return CharacterTests.Bekle(() => fp.FrameCalibrated, 5f, "FP el → silah çerçevesi dinlenmede kalibre");
+                yield return null;
                 Assert.AreSame(fp.WeaponFrame, DD.Prototype.Weapons.WeaponController.FirstPersonWeaponSocket, "S-02 kancası FP silah çerçevesi");
                 // S-02 hand-off measurement (fpView band): the weapon root the FP rig implies = frame − R·gripOffset, in anchor space
                 Vector3 rootWorld = fp.WeaponFrame.position - fp.WeaponFrame.rotation * (ar1.GripOffset * ar1.FpViewPose.scale);   // S-02's rule
@@ -458,8 +453,12 @@ namespace DD.Art.Tests.PlayMode
                 int fpBase = 0, fpAdd = 1;
                 pv.PlayFire();
                 yield return CharacterTests.Bekle(() => fp.Animator.GetCurrentAnimatorStateInfo(fpAdd).IsName(C.FireV3State), 1f, "FP Fire_V3");
+                Vector3 frameRest = anchor.InverseTransformPoint(fp.WeaponFrame.position);
                 pv.PlayReload(ar1.ammo.reloadEmptySeconds, true);
                 yield return CharacterTests.Bekle(() => fp.Animator.GetCurrentAnimatorStateInfo(fpBase).IsName(C.ReloadEmptyState), 1f, "FP ReloadEmpty");
+                float frameTravel = 0f;
+                for (int i = 0; i < 40; i++) { yield return null; frameTravel = Mathf.Max(frameTravel, Vector3.Distance(frameRest, anchor.InverseTransformPoint(fp.WeaponFrame.position))); }
+                Assert.Greater(frameTravel, 0.02f, "FP silah çerçevesi reload'da elle hareket eder");
                 AnimatorClipInfo[] ci = fp.Animator.GetCurrentAnimatorClipInfo(fpBase);
                 StringAssert.Contains("fp_ar_1_reload_empty", ci.Length > 0 ? ci[0].clip.name : "-");
                 pv.CancelReload();
@@ -469,7 +468,7 @@ namespace DD.Art.Tests.PlayMode
                 yield return CharacterTests.Bekle(() => fp.Animator.GetCurrentAnimatorStateInfo(fpBase).IsName(C.SwitchInV3State), 1f, "FP SwitchIn_V3");
                 AnimatorClipInfo[] si = fp.Animator.GetCurrentAnimatorClipInfo(fpBase);
                 Debug.Log("[DD-TEST] wp071.fp anchorErr=" + (fp.LastAnchorError * 1000f).ToString("F2", CultureInfo.InvariantCulture) + " mm ar1 fpView root Δ=" + (posErr * 100f).ToString("F1", CultureInfo.InvariantCulture)
-                          + " cm rotΔ=" + rotErr.ToString("F1", CultureInfo.InvariantCulture) + "° tpAxisConvention=" + tpConvention.ToString("F1", CultureInfo.InvariantCulture) + "° (pose " + pose.position.ToString("F3") + " / rig " + rootInAnchor.ToString("F3") + ", scale " + pose.scale.ToString("F2", CultureInfo.InvariantCulture) + ") smgSwitch=" + (si.Length > 0 ? si[0].clip.name : "-"));
+                          + " cm rotΔ=" + rotErr.ToString("F1", CultureInfo.InvariantCulture) + "° reloadFrameTravel=" + (frameTravel * 100f).ToString("F1", CultureInfo.InvariantCulture) + " cm (pose " + pose.position.ToString("F3") + " / rig " + rootInAnchor.ToString("F3") + ", scale " + pose.scale.ToString("F2", CultureInfo.InvariantCulture) + ") smgSwitch=" + (si.Length > 0 ? si[0].clip.name : "-"));
                 StringAssert.Contains("fp_smg_1_switch_in", si.Length > 0 ? si[0].clip.name : "-", "smg_1 FP AOC");
                 // C-00 25.09: fpView owns FP placement — P-06's 5b rest lands the weapon on it (W13 ≤ 1.9 mm / 0.23°)
                 Assert.Less(posErr, 0.01f, "FP dinlenmede silah kökü fpView'da (≤ 1 cm)");
@@ -480,7 +479,6 @@ namespace DD.Art.Tests.PlayMode
             for (int i = 0; i < 3; i++) yield return null;
             Assert.IsFalse(pv.FirstPersonArms.Visible, "TP'de FP kolları gizli");
             Assert.IsNull(DD.Prototype.Weapons.WeaponController.FirstPersonWeaponSocket, "TP'de kanca boş (fpView yedeği)");
-            Assert.Less(tpConvention, 15f, "soket→silah çerçevesi dönüşümü TP montajıyla uyuşmalı (eksen sözleşmesi)");
             Assert.IsNull(FirstPersonArms.Shown);
         }
 

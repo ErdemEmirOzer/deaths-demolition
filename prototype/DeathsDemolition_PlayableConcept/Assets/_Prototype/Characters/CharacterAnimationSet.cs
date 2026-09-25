@@ -336,6 +336,8 @@ namespace DD.Prototype.Characters
             /// <summary>WP-071 B4b-3: the socket bone's axes in the weapon frame (AP-022 hands_in_weapon_frame) — the FP weapon frame = socket · inverse(this).</summary>
             public bool hasSocketRot;
             public Quaternion socketRotInWeapon = Quaternion.identity;
+            /// <summary>WP-071 B4b-3: P-06's constant fp_camera offset of this weapon's FP clips (rig space: x right, z look) — Humanoid clips do not carry the extra-transform key, so it is data.</summary>
+            public Vector3 fpCameraOffset;
         }
 
         public IReadOnlyList<WeaponAnimSet> WeaponSets => _weaponSets;

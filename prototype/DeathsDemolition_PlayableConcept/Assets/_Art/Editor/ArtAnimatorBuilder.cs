@@ -987,7 +987,8 @@ namespace DD.Art.Pipeline.EditorTools
                 sets.Add(new CharacterAnimationSet.WeaponAnimSet
                 {
                     animSet = animSet, overrides = aoc, hasLeftHand = rest != null && rest.hasLeftHandInWeapon, leftHandInWeapon = rest != null ? rest.leftHandInWeapon : Vector3.zero,
-                    hasSocketRot = rest != null && rest.hasSocketRot, socketRotInWeapon = rest != null && rest.hasSocketRot ? rest.socketRotInWeapon : Quaternion.identity
+                    hasSocketRot = rest != null && rest.hasSocketRot, socketRotInWeapon = rest != null && rest.hasSocketRot ? rest.socketRotInWeapon : Quaternion.identity,
+                    fpCameraOffset = FpCameraOffsets.TryGetValue(animSet, out Vector3 camOffset) ? camOffset : Vector3.zero
                 });
             }
 
@@ -995,6 +996,16 @@ namespace DD.Art.Pipeline.EditorTools
             EditorUtility.SetDirty(set);
             Debug.Log(LogPrefix + "FP viewmodel controller: " + c.layers.Length + " layers, sets " + sets.Count);
         }
+
+        /// <summary>
+        /// AP-022 slice 5b (P-06 25.09, manifest weapon_layer.fp.anchor): fp_camera's constant per-weapon offset (Blender bone space x right,
+        /// y look → rig x, z). Unity drops a Humanoid clip's extra-transform curves (measured: 0 fp_camera bindings even with a model mask),
+        /// so the offset is applied by FirstPersonArms.Place from here.
+        /// </summary>
+        private static readonly Dictionary<string, Vector3> FpCameraOffsets = new Dictionary<string, Vector3>
+        {
+            { "ar_1", new Vector3(-0.08f, 0f, -0.16f) }, { "ar_2", new Vector3(-0.12f, 0f, -0.30f) }, { "smg_1", new Vector3(-0.04f, 0f, -0.06f) }
+        };
 
         private static AnimationClip FpClipFor(Dictionary<string, AnimationClip> clips, string animSet, string slot)
         {

@@ -34,7 +34,14 @@ namespace DD.Prototype.Characters
         private readonly List<string> _keys = new List<string>();
         private readonly List<List<KeyValuePair<AnimationClip, AnimationClip>>> _pairs = new List<List<KeyValuePair<AnimationClip, AnimationClip>>>();
         private int _swayLayer = -1;
-        private Quaternion _socketToWeapon = Quaternion.identity;
+        private Vector3 _cameraOffset;
+        private Transform _hand;
+        // hand → weapon frame per set, calibrated on the set's rest pose (P-06 contract: the rest weapon sits exactly on fpView)
+        private readonly Dictionary<string, Pose> _handToFrame = new Dictionary<string, Pose>();
+        private System.Func<DD.Prototype.Core.Weapons.WeaponDefinition> _weapon;
+        private int _restHash;
+        /// <summary>The set's hand → weapon frame is calibrated (the hook is published only then; before it S-02's fpView pose holds).</summary>
+        public bool FrameCalibrated => WeaponSet != null && _handToFrame.ContainsKey(WeaponSet);
         private string _applied;
 
         public string WeaponSet { get; private set; }
@@ -56,8 +63,10 @@ namespace DD.Prototype.Characters
         private Renderer _materialSource;
         private MaterialPropertyBlock _block;
 
-        public void Configure(GameObject modelAsset, CharacterAnimationSet set, System.Func<Vector3> velocity, System.Func<bool> alive, Renderer materialSource)
+        public void Configure(GameObject modelAsset, CharacterAnimationSet set, System.Func<Vector3> velocity, System.Func<bool> alive, Renderer materialSource,
+            System.Func<DD.Prototype.Core.Weapons.WeaponDefinition> weapon = null)
         {
+            _weapon = weapon;
             _materialSource = materialSource;
             _modelAsset = modelAsset;
             _set = set;
@@ -73,14 +82,14 @@ namespace DD.Prototype.Characters
         {
             RigScale = fpViewScale > 0.01f ? fpViewScale : 1f;
             WeaponSet = HasSet(animSet) ? animSet : null;
-            _socketToWeapon = Quaternion.identity;
+            _cameraOffset = Vector3.zero;
             for (int i = 0; WeaponSet != null && i < _set.FpWeaponSets.Count; i++)
             {
                 CharacterAnimationSet.WeaponAnimSet ws = _set.FpWeaponSets[i];
-                if (ws != null && ws.animSet == WeaponSet && ws.hasSocketRot) _socketToWeapon = Quaternion.Inverse(ws.socketRotInWeapon);
+                if (ws != null && ws.animSet == WeaponSet) _cameraOffset = ws.fpCameraOffset;
             }
 
-            if (_frame != null) _frame.localRotation = _socketToWeapon;
+            ApplyFrame();
             if (WeaponSet != null && _animator != null) Apply();
         }
 
@@ -143,17 +152,46 @@ namespace DD.Prototype.Characters
 
             Transform head = _animator.isHuman ? _animator.GetBoneTransform(HumanBodyBones.Head) : null;
             _fpCamera = head != null ? head.Find("fp_camera") : null;
-            Transform socket = FindDeep(_instance.transform, PlayerSkinnedVisual.WeaponSocketName);
-            if (socket != null)
+            // the weapon frame rides the Humanoid hand (socket_weapon_r is an extra transform: Unity drops its clip keys)
+            _hand = _animator.isHuman ? _animator.GetBoneTransform(HumanBodyBones.RightHand) : null;
+            if (_hand != null)
             {
                 _frame = new GameObject("fp_weapon_frame").transform;
-                _frame.SetParent(socket, false);
-                _frame.localRotation = _socketToWeapon;   // the weapon frame's axes (the socket bone's own axes are not the weapon's)
-                _frame.gameObject.layer = socket.gameObject.layer;
+                _frame.SetParent(_hand, false);
+                _frame.gameObject.layer = _hand.gameObject.layer;
             }
+
+            _restHash = Animator.StringToHash(CharacterAnimatorContract.AimV3State);
 
             _applied = null;
             _instance.SetActive(false);
+        }
+
+        /// <summary>
+        /// On the set's rest pose (base layer resting in Aim_V3 near its loop start, no transition) the weapon frame is where fpView puts
+        /// the grip socket: root = anchor · fpView.position, R = anchor · fpView.euler, socket = root + R·gripOffset·scale. Stored in the
+        /// hand's space once per set; from then on the frame follows the hand (reload / fire / switch).
+        /// </summary>
+        private void Calibrate(Transform anchor)
+        {
+            if (_hand == null || _frame == null || WeaponSet == null || _handToFrame.ContainsKey(WeaponSet) || _weapon == null) return;
+            DD.Prototype.Core.Weapons.WeaponDefinition def = _weapon();
+            if (def == null || def.AnimSet != WeaponSet) return;
+            if (_animator.IsInTransition(0)) return;
+            AnimatorStateInfo st = _animator.GetCurrentAnimatorStateInfo(0);
+            if (st.shortNameHash != _restHash || Mathf.Repeat(st.normalizedTime, 1f) > 0.1f) return;
+            var pose = def.FpViewPose;
+            Quaternion r = anchor.rotation * Quaternion.Euler(pose.euler);
+            Vector3 socket = anchor.TransformPoint(pose.position) + r * (def.GripOffset * pose.scale);
+            _handToFrame[WeaponSet] = new Pose(_hand.InverseTransformPoint(socket), Quaternion.Inverse(_hand.rotation) * r);
+            ApplyFrame();
+        }
+
+        private void ApplyFrame()
+        {
+            if (_frame == null) return;
+            if (WeaponSet != null && _handToFrame.TryGetValue(WeaponSet, out Pose p)) { _frame.localPosition = p.position; _frame.localRotation = p.rotation; }
+            else { _frame.localPosition = Vector3.zero; _frame.localRotation = Quaternion.identity; }
         }
 
         /// <summary>The TP body's albedo block (skin) onto the arms — call after a skin change.</summary>
@@ -188,8 +226,10 @@ namespace DD.Prototype.Characters
 
             if (!on) { Release(); LastAnchorError = float.NaN; return; }
             Shown = this;
-            DD.Prototype.Weapons.WeaponController.FirstPersonWeaponSocket = _frame;   // S-02 ce9f9d95: the FP weapon rides the arms (root = frame − R·gripOffset·scale)
             Place(anchor);
+            Calibrate(anchor);
+            // S-02 ce9f9d95: the FP weapon rides the arms (root = frame − R·gripOffset·scale) once the set's hand → weapon is known
+            DD.Prototype.Weapons.WeaponController.FirstPersonWeaponSocket = FrameCalibrated ? _frame : null;
             if (_swayLayer < 0) for (int i = 0; i < _animator.layerCount; i++) if (_animator.GetLayerName(i) == CharacterAnimatorContract.FpSwayLayer) _swayLayer = i;   // lazily: 0 layers before the Animator initialises (B4 lesson)
             if (_swayLayer >= 0)
             {
@@ -207,9 +247,10 @@ namespace DD.Prototype.Characters
             root.rotation = anchor.rotation;
             root.localScale = Vector3.one * RigScale;
             if (_fpCamera == null) { root.position = anchor.position; return; }
-            Vector3 local = root.InverseTransformPoint(_fpCamera.position);
+            // the virtual camera = fp_camera + the set's constant offset (P-06; right / look in the rig)
+            Vector3 local = root.InverseTransformPoint(_fpCamera.position) + _cameraOffset;
             root.position = anchor.position - root.rotation * Vector3.Scale(local, root.lossyScale);
-            LastAnchorError = Vector3.Distance(_fpCamera.position, anchor.position);
+            LastAnchorError = Vector3.Distance(root.TransformPoint(root.InverseTransformPoint(_fpCamera.position) + _cameraOffset), anchor.position);
         }
 
         // Hand the FP weapon back to S-02's fpView pose (only if it is ours).

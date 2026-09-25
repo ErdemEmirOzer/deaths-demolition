@@ -290,7 +290,7 @@ namespace DD.Prototype.Characters
                 if (_fpModel != null && _animation.FpController != null && _fpArms == null)
                 {
                     _fpArms = GetComponent<FirstPersonArms>() ?? gameObject.AddComponent<FirstPersonArms>();
-                    _fpArms.Configure(_fpModel, _animation, planarVelocity, () => _authored && !_dying, _renderers.Length > 0 ? _renderers[0] : null);
+                    _fpArms.Configure(_fpModel, _animation, planarVelocity, () => _authored && !_dying, _renderers.Length > 0 ? _renderers[0] : null, () => _weaponDef);
                 }
                 _animator.SetBool(AliveId, true);
                 _overrideLayer = -1;
