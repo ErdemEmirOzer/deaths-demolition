@@ -44,6 +44,7 @@ namespace DD.Prototype.Tests.EditMode
         public void TearDown()
         {
             RunTreeEffects.TreatAllAsLive = false;
+            RunTreeCatalog.TestSeam.Override(null);
             Object.DestroyImmediate(_config);
         }
 
@@ -221,9 +222,13 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void EtkisiBaglanmamis_Kilitli_Satilmaz_Teklife_Girmez()
         {
+            // K10b: every shipped node is wired, so the rule is proven on a catalog copy whose ar_1 seal names an unwired effect.
+            RunTreeCatalogDocument kopya = JsonUtility.FromJson<RunTreeCatalogDocument>(JsonUtility.ToJson(RunTreeCatalog.Document));
+            foreach (RunTreeCatalogWeapon w in kopya.weapons) if (w.slot == "ar_1") w.seal.effectId = "test.unwired";
+            RunTreeCatalog.TestSeam.Override(kopya);
             RunTreeState t = Agac();
             _rank.SetTier(UpgradeBranch.FireRate, 2);
-            int muhur = I(t, "seal_ar_1");   // K10b: the weapon keystones are live; the per-weapon seals are not yet
+            int muhur = I(t, "seal_ar_1");
             Assert.AreEqual(RunTreeNodeStatus.Locked, t.Status(muhur, _rank, 9999, out RunTreeLockReason neden, out _, out _));
             Assert.AreEqual(RunTreeLockReason.EffectPending, neden, "davranış kancası yok → dürüst kilit");
             Assert.IsFalse(t.IsOfferable(muhur, _rank));

@@ -86,6 +86,12 @@ namespace DD.Prototype.Rounds
         /// <summary>ks.body.evade: the move-speed factor this frame (above the weapon clamp; PlayerMotor multiplies it in).</summary>
         public static float MoveSpeedScale => Time.time < s_evadeUntil ? 1f + V.EvadeSpeedBonus : 1f;
 
+        /// <summary>
+        /// The tree's move-speed factor above PlayerMotor's weapon clamp (≤ 1): Evade, and the part of the weapon's own
+        /// factor above 1 that only a tree node can give (seal.smg_1 "move speed while firing ×1.1").
+        /// </summary>
+        public static float MoveSpeedScaleAbove(float weaponSpeedMultiplier) => MoveSpeedScale * Mathf.Max(1f, weaponSpeedMultiplier);
+
         /// <summary>cap.body.secondbreath: the player ignores hits for the few seconds after Second Wind caught a killing blow.</summary>
         public static bool PlayerInvulnerable => Time.time < s_invulnerableUntil;
 
@@ -151,6 +157,7 @@ namespace DD.Prototype.Rounds
         /// <summary>Idempotent (remove-then-add): safe after a test cleared a bus, never two copies.</summary>
         public static void EnsureHooked()
         {
+            EnsureWeaponStatsHooked();
             PlayerHealth.AnyDamaged -= OnPlayerDamaged;
             PlayerHealth.AnyDamaged += OnPlayerDamaged;
             DamageEvents.EnemyDied -= OnEnemyDied;

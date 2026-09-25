@@ -90,6 +90,29 @@ namespace DD.Prototype.Enemies
             return reaction.FlinchIntensity;
         }
 
+        /// <summary>
+        /// WP-077 cap.sg_1 (Ash Wall): a point-blank shove on this knockback path — <paramref name="metres"/> over
+        /// <paramref name="seconds"/> along the shot, the tier scale kept (Elite ×0.5, Ultra never). Replaces a shove in progress.
+        /// </summary>
+        public void ApplyTreeShove(Vector3 direction, float metres, float seconds)
+        {
+            if (!_alive || _dying || metres <= 0f || seconds <= 0f) return;
+            float scale = HitReactionProfiles.KnockbackTierScale(_tier);
+            Vector3 flat = direction; flat.y = 0f;
+            if (scale <= 0f || flat.sqrMagnitude < 1e-4f) return;
+            flat.Normalize();
+
+            if (!AttackSelector.Enabled)
+            {
+                _knockbackVelocity += flat * (2f * metres * scale / seconds);   // WP-002 path: the same distance as an initial speed
+                return;
+            }
+
+            _kbProfile = new KnockbackProfile(metres * scale, seconds);
+            _kbDirection = flat;
+            _kbTime = 0f;
+        }
+
         /// <summary>The displacement this frame adds on top of locomotion (knockback ease-out + suppression push); decays the state.</summary>
         private Vector3 TickHitResponse(float dt)
         {

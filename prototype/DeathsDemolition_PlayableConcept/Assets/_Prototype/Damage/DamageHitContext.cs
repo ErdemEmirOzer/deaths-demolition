@@ -38,6 +38,21 @@ namespace DD.Prototype.Damage
         /// <summary>That Special (valid when <see cref="FromSpecialWeapon"/>).</summary>
         public static SpecialWeaponId Special { get; private set; }
 
+        /// <summary>WP-077 K10b (cap.sg_1 Ash Wall): the plate on the struck region takes its whole remaining durability (breaks).</summary>
+        public static bool BreakPlate { get; private set; }
+
+        /// <summary>WP-077 K10b: a burning-ground tick (RunTreeGroundFire) — the body takes it without an explosion's stagger force.</summary>
+        public static bool GroundFire { get; private set; }
+
+        /// <summary>WP-077 K10b (seal / cap.sr_1, cap.ar_1): this classic hit passes regional armour. Call after <see cref="Set"/>.</summary>
+        public static void MarkIgnoreArmor() => IgnoreArmor = true;
+
+        /// <summary>WP-077 K10b (cap.sg_1): this hit breaks the struck region's plate. Call after <see cref="Set"/>.</summary>
+        public static void MarkBreakPlate() => BreakPlate = true;
+
+        /// <summary>WP-077 K10b: this area hit is a burning-ground tick. Call after <see cref="Set"/>.</summary>
+        public static void MarkGroundFire() => GroundFire = true;
+
         public static void Set(float headMultiplier, float armorMultiplier, bool fromClassicWeapon, ClassicWeaponId weapon, Collider hitCollider)
         {
             HeadMultiplier = headMultiplier > 0f ? headMultiplier : 1f;
@@ -47,6 +62,8 @@ namespace DD.Prototype.Damage
             HitCollider = hitCollider;
             IgnoreArmor = false;
             FromSpecialWeapon = false;
+            BreakPlate = false;
+            GroundFire = false;
         }
 
         /// <summary>WP-069 B4: a Special Weapon hit — neutral multipliers, optional armour bypass, the Special's id.</summary>
@@ -60,6 +77,8 @@ namespace DD.Prototype.Damage
             IgnoreArmor = ignoreArmor;
             FromSpecialWeapon = true;
             Special = special;
+            BreakPlate = false;
+            GroundFire = false;
         }
 
         public static void Clear()
@@ -72,6 +91,8 @@ namespace DD.Prototype.Damage
             IgnoreArmor = false;
             FromSpecialWeapon = false;
             Special = default;
+            BreakPlate = false;
+            GroundFire = false;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]

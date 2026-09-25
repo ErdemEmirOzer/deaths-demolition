@@ -155,6 +155,14 @@ namespace DD.Prototype.Weapons
         public Vector3 ContactPoint;
         public Vector3 ContactNormal;
 
+        // WP-077 K10b · the run tree tags this round at spawn (RunTreeHooks.OnProjectileSpawned); the hit path reads them.
+        /// <summary>RunTreeHooks.TreeRound* bits (armour bypass, unlimited pierce).</summary>
+        public int TreeFlags;
+        /// <summary>cap.ar_2: the round of its burst (1-based); cap.sg_2: its barrel (0 left, 1 right).</summary>
+        public int TreeOrdinal;
+        /// <summary>cap.sg_2: the barrel pair (left + right) this round belongs to.</summary>
+        public int TreeVolley;
+
         // "Already damaged" set (ADR-034-1), rows of ProjectileSystem's side table.
         public int TouchedCount;
 
@@ -347,6 +355,7 @@ namespace DD.Prototype.Weapons
             p.WobbleStepSeconds = launch.WobbleStepSeconds;
             p.ClusterBomblets = launch.ClusterBomblets;
             p.BlastTier = launch.BlastTier;
+            RunTreeHooks.OnProjectileSpawned(ref p);   // WP-077 K10b: cap.ar_1 / cap.sr_1 / cap.ar_2 / cap.sg_2 round tags
 
             s_order[s_liveCount++] = index;
             s_spawnedTotal++;
@@ -365,6 +374,7 @@ namespace DD.Prototype.Weapons
         {
             // WP-069 B4: the Specials' chains / effects run on the same scaled clock as the projectiles.
             SpecialImpacts.Tick(deltaTime);
+            RunTreeGroundFire.Tick(deltaTime);   // WP-077 K10b burning ground (Ash Cloud, Hibana)
 
             if (deltaTime <= 0f || s_liveCount == 0)
             {
@@ -419,6 +429,7 @@ namespace DD.Prototype.Weapons
                 s_stepping = false;
             }
 
+            RunTreeHooks.FlushTreeBlasts();   // WP-077 cap.sg_2: blasts queued by this step, each in its own transaction
             ApplyPending();
         }
 
@@ -590,6 +601,7 @@ namespace DD.Prototype.Weapons
         {
             Clear();
             SpecialImpacts.Clear();
+            RunTreeGroundFire.Clear();   // WP-077 K10b
         }
 
         private static void OnRunStarted(int startingRound)

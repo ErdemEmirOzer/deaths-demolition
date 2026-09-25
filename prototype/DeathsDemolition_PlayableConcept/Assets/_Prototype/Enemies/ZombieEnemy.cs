@@ -1320,7 +1320,7 @@ namespace DD.Prototype.Enemies
                 Region = result.Region,
                 Point = centre,
                 Direction = direction,
-                ImpactForce = DamageForce.ExplosionCore,
+                ImpactForce = DamageHitContext.GroundFire ? DamageForce.Chain : DamageForce.ExplosionCore,   // WP-077: a burning-ground tick never staggers
                 Source = DamageSourceKind.Explosion
             };
 
@@ -1381,12 +1381,14 @@ namespace DD.Prototype.Enemies
 
                 if (reaction.Stagger)
                 {
+                    reaction.StaggerDuration = DD.Prototype.Rounds.RunTreeHooks.TreeStaggerSeconds(reaction.StaggerDuration);   // WP-077 seal / fork.smg_2
                     _animator.BeginStagger(direction, reaction.StaggerIntensity, reaction.StaggerDuration, transform);
                     // WP-052 · Special B: the REQ-124 stagger reads as the Runner's stumble (v003 hit_special_stumble, base layer;
                     // S-06's PlayStumble hook — the block rig ignores it, the stagger timer is unchanged).
                     if (_tier == EnemyTier.Special) _animator.PlayStumble();
                     _attack.Cancel();
                     RaiseBeat(EnemyCombatEventKind.Stagger, point, direction, ArmorSlot.None, _animator.Driven, reaction.StaggerDuration);   // WP-040
+                    DD.Prototype.Rounds.RunTreeHooks.AfterTreeStagger(this);   // WP-077 seal.smg_2: a staggered Runner falls
                 }
             }
 

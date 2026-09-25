@@ -146,6 +146,7 @@ namespace DD.Prototype.Damage
                 // WP-069: the weapon's armour multiplier scales what the plate takes (sr_1 ×1.6 cracks, smg_1 ×0.7 scratches).
                 // WP-077 ks.armorbreak.plate: the first hit on an untouched plate lands harder.
                 float armorAmount = hit.Amount * DamageHitContext.ArmorMultiplier * DD.Prototype.Rounds.RunTreeHooks.PlateHitScale(Armor.Ratio(slot) >= 1f);
+                if (DamageHitContext.BreakPlate) armorAmount = Mathf.Max(armorAmount, Armor.Current(slot));   // WP-077 cap.sg_1 Ash Wall: the plate breaks
                 Armor.Absorb(slot, armorAmount, out float absorbed, out bool broke);
 
                 result.WasArmored = true;

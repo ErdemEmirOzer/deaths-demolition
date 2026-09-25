@@ -211,10 +211,16 @@ namespace DD.Prototype.Weapons
             float damage = e.blastDamage * (1f + BlastDamagePerTier * tier);
             float inner = e.innerRadius + BlastInnerPerTier * tier;
             float outer = e.outerRadius + BlastOuterPerTier * tier;
+            DD.Prototype.Rounds.RunTreeHooks.ShapeRocketBlast(weapon, ref damage, ref inner, ref outer);   // WP-077 fork.rl_1.x / fork.rl_1.y
             int group = FeelEventRouter.NextGroupId();
 
-            int transaction = Blast(weapon, origin, damage, inner, outer, e.falloffExponent, e.impulse, group, out int hits);
-            float self = HurtPlayer(weapon, origin, damage, inner, outer, e);
+            int split = DD.Prototype.Rounds.RunTreeHooks.RocketSplitCount(weapon);   // WP-077 cap.rl_1 Ash Rain
+            int hits;
+            int transaction = split > 1
+                ? SplitBlast(weapon, origin, damage, inner, outer, e.falloffExponent, e.impulse, group, split, out hits)
+                : Blast(weapon, origin, damage, inner, outer, e.falloffExponent, e.impulse, group, out hits);
+            float self = HurtPlayer(weapon, origin, damage, inner, outer, e);   // the unsplit blast's share (one hit on the player)
+            DD.Prototype.Rounds.RunTreeHooks.OnRocketBlast(weapon, origin, damage, outer);   // WP-077 ks.explosion.ashcloud / seal.rl_1 burning ground
 
             Detonations++;
             if (kind == RocketBlastKind.AirBurst) AirBursts++;
@@ -232,6 +238,31 @@ namespace DD.Prototype.Weapons
                 var b = new RocketBlastInfo(weapon, RocketBlastKind.Bomblet, at, normal, BombletDamage, BombletInner, BombletRadius, 0, bh, bs, bt);
                 Detonated?.Invoke(b);
             }
+        }
+
+        /// <summary>
+        /// WP-077 cap.rl_1 (Ash Rain): the blast as <paramref name="count"/> smaller ones on a ring around the impact
+        /// (RunTreeHooks.RocketSplit*: radius × 0.6, damage × 0.5, ring 0.45 × outer), each its own transaction — a body
+        /// between two takes both. Returns the first one's transaction; <paramref name="hits"/> sums them.
+        /// </summary>
+        private static int SplitBlast(ClassicWeaponId weapon, Vector3 origin, float damage, float inner, float outer, float exponent, float force, int group,
+            int count, out int hits)
+        {
+            hits = 0;
+            int first = 0;
+            float scale = DD.Prototype.Rounds.RunTreeHooks.RocketSplitRadiusScale;
+            float ring = outer * DD.Prototype.Rounds.RunTreeHooks.RocketSplitRingScale;
+            float phase = Random.value * 360f;
+            for (int i = 0; i < count; i++)
+            {
+                Vector3 at = origin + Quaternion.Euler(0f, phase + i * 360f / count, 0f) * Vector3.forward * ring;
+                int t = Blast(weapon, at, damage * DD.Prototype.Rounds.RunTreeHooks.RocketSplitDamageScale, inner * scale, outer * scale, exponent,
+                    force * scale, group, out int h);
+                hits += h;
+                if (i == 0) first = t;
+            }
+
+            return first;
         }
 
         /// <summary>One blast in its own damage transaction; every enemy inside <paramref name="outer"/> once, through the damage system's region split.</summary>

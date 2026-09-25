@@ -199,8 +199,19 @@ namespace DD.Prototype.Rounds
             "ks.piercing.line", "ks.ricochet.seeker", "ks.chain.web", "ks.firerate.warmup", "ks.reload.fullmag",
             "ks.armorbreak.plate", "ks.impact.stagger", "ks.cluster.seedling",
             "ks.body.evade", "ks.body.thickskin", "ks.body.breath", "ks.body.bloodstep",
-            "fork.body.ashstep", "fork.body.ironknee", "cap.body.secondbreath"
-            // + an effect id per hook as it lands (ks.explosion.ashcloud needs the burning-ground system; seals / forks / capstones per weapon)
+            "fork.body.ashstep", "fork.body.ironknee", "cap.body.secondbreath",
+            // K10b stage 2: burning ground (RunTreeGroundFire) + every weapon's seal / forks / capstone (RunTreeHooks.WeaponStats / .HitEffects)
+            "ks.explosion.ashcloud",
+            "seal.ar_1", "fork.ar_1.x", "fork.ar_1.y", "cap.ar_1",
+            "seal.smg_1", "fork.smg_1.x", "fork.smg_1.y", "cap.smg_1",
+            "seal.sg_1", "fork.sg_1.x", "fork.sg_1.y", "cap.sg_1",
+            "seal.ar_2", "fork.ar_2.x", "fork.ar_2.y", "cap.ar_2",
+            "seal.smg_2", "fork.smg_2.x", "fork.smg_2.y", "cap.smg_2",
+            "seal.sg_2", "fork.sg_2.x", "fork.sg_2.y", "cap.sg_2",
+            "seal.lmg_1", "fork.lmg_1.x", "fork.lmg_1.y", "cap.lmg_1",
+            "seal.lmg_2", "fork.lmg_2.x", "fork.lmg_2.y", "cap.lmg_2",
+            "seal.sr_1", "fork.sr_1.x", "fork.sr_1.y", "cap.sr_1",
+            "seal.rl_1", "fork.rl_1.x", "fork.rl_1.y", "cap.rl_1"
         };
 
         private static bool s_allLive;

@@ -193,16 +193,22 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
-        public void CanliListe_AshCloudHaric_UygulananlarCanli()
+        public void CanliListe_HerAgacEtkisiCanli()
         {
-            foreach (string id in new[] { "ks.piercing.line", "ks.chain.web", "ks.firerate.warmup", "ks.reload.fullmag", "ks.armorbreak.plate",
-                                          "ks.impact.stagger", "ks.cluster.seedling", "ks.ricochet.seeker", "ks.body.evade", "ks.body.thickskin",
-                                          "ks.body.breath", "ks.body.bloodstep", "fork.body.ashstep", "fork.body.ironknee", "cap.body.secondbreath" })
+            // K10b stage 2: every node of every weapon's lane, the body lane and the links has a live hook.
+            foreach (ClassicWeaponId silah in System.Enum.GetValues(typeof(ClassicWeaponId)))
             {
-                Assert.IsTrue(RunTreeEffects.IsLive(id), id);
+                foreach (string ozel in new[] { "sw_arc", "sw_gel" })
+                {
+                    RunTreeState t = Agac(silah);
+                    t.OnSpecialPickedUp(ozel);
+                    for (int i = 0; i < t.Graph.Count; i++)
+                    {
+                        if (t.Graph[i].Kind == RunTreeNodeKind.Tier) continue;
+                        Assert.IsTrue(RunTreeEffects.IsLive(t.EffectOf(i)), silah + "/" + t.Graph[i].Id + " (" + t.EffectOf(i) + ")");
+                    }
+                }
             }
-
-            Assert.IsFalse(RunTreeEffects.IsLive("ks.explosion.ashcloud"), "yanan zemin sistemi yok → kilitli");
         }
     }
 }

@@ -287,6 +287,9 @@ namespace DD.Prototype.Weapons
                 bool branchesNow = false;
                 Vector3 branchPoint = Vector3.zero;
                 float branchDamage = 0f;
+                bool treeChainNow = false;   // WP-077 cap.ar_2 / cap.smg_2: one forced chain after the segment
+                Vector3 treeChainPoint = Vector3.zero;
+                float treeChainDamage = 0f;
                 float speed = p.Velocity.magnitude;
 
                 for (int i = 0; i < count; i++)
@@ -357,12 +360,21 @@ namespace DD.Prototype.Weapons
                     DamageResult r;
                     try
                     {
+                        damage *= DD.Prototype.Rounds.RunTreeHooks.BeforeTreeHit(ref p, in target, region, point);   // WP-077 K10b: armour bypass, plate break, close range
                         r = ApplyHit(target, damage, region, point, direction,
                             p.Shot.ImpactForce, p.Shot.Source, p.Shot.Power, normal, p.Shot.PresentationGroupId);
                     }
                     finally
                     {
                         DamageHitContext.Clear();
+                    }
+
+                    int treeHit = DD.Prototype.Rounds.RunTreeHooks.AfterTreeHit(ref p, in target, region, point, direction, in r);   // WP-077 K10b
+                    if ((treeHit & DD.Prototype.Rounds.RunTreeHooks.TreeHitChain) != 0 && !treeChainNow)
+                    {
+                        treeChainNow = true;
+                        treeChainPoint = point;
+                        treeChainDamage = p.Shot.Damage * share;
                     }
 
                     if (!p.BranchesResolved && !branchesNow && !rocket)   // a rocket's branches are its blast (Blast / Cluster)
@@ -386,7 +398,8 @@ namespace DD.Prototype.Weapons
                     }
 
                     // A pierced shot is a weakened shot: piercing buys reach, not free damage (WP-077 ks.piercing.line: not through the first bodies).
-                    p.DamageScale *= DD.Prototype.Rounds.RunTreeHooks.PierceKeep(p.TouchedCount, p.PenetrationKeep);
+                    if ((treeHit & DD.Prototype.Rounds.RunTreeHooks.TreeHitKeepDamage) == 0)   // WP-077 cap.lmg_2: a plate break passes at full damage
+                        p.DamageScale *= DD.Prototype.Rounds.RunTreeHooks.PierceKeep(p.TouchedCount, p.PenetrationKeep);
                 }
 
                 if (branchesNow)
@@ -396,6 +409,16 @@ namespace DD.Prototype.Weapons
                     branches.Damage = branchDamage;
                     int before = s_touched.Count;
                     ResolveBranches(branches, branchPoint, ref result);
+                    for (int t = before; t < s_touched.Count; t++) p.AddTouched(s_touched[t]);
+                }
+
+                if (treeChainNow)
+                {
+                    ShotRequest chain = p.Shot;
+                    chain.Damage = treeChainDamage;
+                    DD.Prototype.Rounds.RunTreeHooks.ForcedChainRequest(ref chain);
+                    int before = s_touched.Count;
+                    ApplyChain(chain, treeChainPoint, ref result);
                     for (int t = before; t < s_touched.Count; t++) p.AddTouched(s_touched[t]);
                 }
 
@@ -607,6 +630,8 @@ namespace DD.Prototype.Weapons
 
                 HitFeedbackDirector.Instance.ReportEnemyHit(info);
             }
+
+            DD.Prototype.Rounds.RunTreeHooks.OnClassicExplosion(origin, totalDamage, radius);   // WP-077 ks.explosion.ashcloud
         }
 
         // ------------------------------------------------------------------ Special Weapon entry points

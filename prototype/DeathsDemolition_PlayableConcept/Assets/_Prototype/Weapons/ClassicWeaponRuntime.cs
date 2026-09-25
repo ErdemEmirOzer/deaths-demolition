@@ -66,6 +66,9 @@ namespace DD.Prototype.Weapons
         private float _reloadElapsed;
         private float _shellStartSeconds;
         private float _shellSeconds;
+        private int _roundsSinceReload = NoReloadYet;   // WP-077 fork.lmg_2.y: rounds fired since the last completed reload
+
+        private const int NoReloadYet = 1 << 20;
 
         // ------------------------------------------------------------------ identity
 
@@ -85,7 +88,7 @@ namespace DD.Prototype.Weapons
 
         public int Ammo { get; private set; }
 
-        public int MagazineSize => _settings != null ? Mathf.Max(1, _settings.MagazineSize) : 1;
+        public int MagazineSize => _settings != null ? Mathf.Max(1, DD.Prototype.Rounds.RunTreeHooks.MagazineSize(Id, _settings.MagazineSize)) : 1;   // + WP-077 fork.smg_1.x / seal.lmg_1
 
         /// <summary>
         /// WP-069 × WP-077 (link.arc.storm): put up to <paramref name="rounds"/> into the magazine — parked or in hand —,
@@ -147,13 +150,13 @@ namespace DD.Prototype.Weapons
                 }
 
                 float multiplier = _modifiers != null ? _modifiers.FireRateMultiplier : 1f;
-                return Mathf.Max(0.05f, _settings.FireRate * multiplier * DD.Prototype.Rounds.RunTreeHooks.FireRateScale(_stringSeconds));
+                return Mathf.Max(0.05f, _settings.FireRate * multiplier * DD.Prototype.Rounds.RunTreeHooks.WeaponFireRateScale(Id, _stringSeconds));
             }
         }
 
         public float ShotInterval => 1f / EffectiveFireRate;
 
-        private float ReloadMultiplier => _modifiers != null ? _modifiers.ReloadTimeMultiplier : 1f;
+        private float ReloadMultiplier => (_modifiers != null ? _modifiers.ReloadTimeMultiplier : 1f) * DD.Prototype.Rounds.RunTreeHooks.ReloadTimeScale(Id);   // + WP-077 fork.sg_2.y
 
         /// <summary>Reload duration after upgrades (the tactical one for a v3 magazine weapon).</summary>
         public float EffectiveReloadTime
@@ -169,7 +172,7 @@ namespace DD.Prototype.Weapons
             }
         }
 
-        public int PelletCount => _settings != null ? Mathf.Max(1, _settings.PelletCount) : 1;
+        public int PelletCount => _settings != null ? Mathf.Max(1, DD.Prototype.Rounds.RunTreeHooks.PelletCount(Id, _settings.PelletCount, InfiniteAmmo ? int.MaxValue : Ammo)) : 1;   // + WP-077 seal.sg_1 / fork.sg_1.y / seal.sg_2
 
         /// <summary>Shotguns are Heavy, SMGs Light, everything else Medium. Gates hit-stop.</summary>
         public WeaponPower Power
@@ -261,7 +264,7 @@ namespace DD.Prototype.Weapons
         {
             WeaponDefinition d = Definition;
             if (d == null) return 1f;
-            float m = firing ? Mathf.Max(0.1f, d.accuracy.moveSpeedMultiplier) : 1f;
+            float m = firing ? DD.Prototype.Rounds.RunTreeHooks.FiringMoveSpeed(Id, Mathf.Max(0.1f, d.accuracy.moveSpeedMultiplier)) : 1f;   // + WP-077 seal.smg_1 / fork.lmg_1.y
             float focus = CameraModeService.Current == CameraMode.TopDown ? d.accuracy.focusMoveSpeedMultiplier : d.accuracy.adsMoveSpeedMultiplier;
             return m * Mathf.Lerp(1f, Mathf.Max(0.1f, focus), _ads01);
         }
@@ -282,6 +285,7 @@ namespace DD.Prototype.Weapons
             _pressBuffer = 0f;
             _ads01 = 0f;
             _shotInString = 0;
+            _roundsSinceReload = NoReloadYet;
             _recoilYaw = 0f;
             _floorTimer = 0f;
             IsReloading = false;
@@ -416,6 +420,7 @@ namespace DD.Prototype.Weapons
             }
 
             LastReloadCompleted = true;
+            _roundsSinceReload = 0;
             WeaponEvents.PublishReloadCompleted();
             AudioEvents.Raise(CombatAudioEvent.ReloadEnd, Vector3.zero, 1f, 40);
         }
@@ -459,6 +464,7 @@ namespace DD.Prototype.Weapons
             ReloadRemaining = 0f;
             _shellSeconds = 0f;
             LastReloadCompleted = true;
+            _roundsSinceReload = 0;
             WeaponEvents.PublishReloadCompleted();
             AudioEvents.Raise(CombatAudioEvent.ReloadEnd, Vector3.zero, 1f, 40);
         }
@@ -483,7 +489,7 @@ namespace DD.Prototype.Weapons
                 return;
             }
 
-            _burstLeft = Mathf.Max(1, d.fire.burstCount);
+            _burstLeft = Mathf.Max(1, DD.Prototype.Rounds.RunTreeHooks.BurstCount(Id, d.fire.burstCount));   // + WP-077 fork.ar_2.y
         }
 
         /// <summary>WP-069 single fire: remember a press made during the cycle (fires when ready).</summary>
@@ -579,11 +585,13 @@ namespace DD.Prototype.Weapons
         {
             if (!InfiniteAmmo)
             {
-                Ammo = Mathf.Max(0, Ammo - 1);
+                // WP-077: seal.sg_2 takes both barrels' rounds, cap.lmg_1's free window none.
+                Ammo = Mathf.Max(0, Ammo - DD.Prototype.Rounds.RunTreeHooks.RoundsPerPull(Id, Ammo));
             }
 
+            if (_roundsSinceReload < NoReloadYet) _roundsSinceReload++;
             WeaponDefinition d = Definition;
-            float fireRateMult = (_modifiers != null ? Mathf.Max(0.05f, _modifiers.FireRateMultiplier) : 1f) * DD.Prototype.Rounds.RunTreeHooks.FireRateScale(_stringSeconds);
+            float fireRateMult = (_modifiers != null ? Mathf.Max(0.05f, _modifiers.FireRateMultiplier) : 1f) * DD.Prototype.Rounds.RunTreeHooks.WeaponFireRateScale(Id, _stringSeconds);
 
             // Add rather than assign, so a frame that fires twice does not lose the
             // second interval and the weapon cannot drift faster than its fire rate.
@@ -591,7 +599,7 @@ namespace DD.Prototype.Weapons
             {
                 _burstLeft--;
                 if (Ammo <= 0 && !InfiniteAmmo) _burstLeft = 0;
-                _cooldown += _burstLeft > 0 ? Mathf.Max(0.01f, d.fire.burstIntervalSeconds) : Mathf.Max(0.01f, d.fire.burstDelaySeconds / fireRateMult);
+                _cooldown += _burstLeft > 0 ? Mathf.Max(0.01f, d.fire.burstIntervalSeconds) : Mathf.Max(0.01f, d.fire.burstDelaySeconds * DD.Prototype.Rounds.RunTreeHooks.BurstDelayScale(Id) / fireRateMult);
             }
             else
             {
@@ -603,7 +611,7 @@ namespace DD.Prototype.Weapons
 
             if (d != null)
             {
-                float perShot = d.accuracy.bloomPerShot;
+                float perShot = DD.Prototype.Rounds.RunTreeHooks.BloomPerShot(Id, d.accuracy.bloomPerShot);   // + WP-077 fork.ar_1.y / seal.lmg_2
                 if (perShot < 0f && d.accuracy.settleFloorShare > 0f)
                 {
                     float floor = -HipAdsBase() * (1f - Mathf.Clamp01(d.accuracy.settleFloorShare));
@@ -662,7 +670,7 @@ namespace DD.Prototype.Weapons
             if (d == null) return Mathf.Max(0f, _settings.SpreadDegrees);
             int mode = (int)CameraModeService.Current;
             SpreadPair pair = d.SpreadFor(mode);
-            float hip = CameraModeService.Current == CameraMode.TopDown ? _settings.SpreadDegrees : pair.hip;
+            float hip = DD.Prototype.Rounds.RunTreeHooks.HipSpread(Id, CameraModeService.Current == CameraMode.TopDown ? _settings.SpreadDegrees : pair.hip);   // + WP-077 seal.lmg_2
             return Mathf.Max(0f, Mathf.Lerp(hip, pair.ads, _ads01));
         }
 
@@ -687,7 +695,7 @@ namespace DD.Prototype.Weapons
 
         /// <summary>Current cone half-angle including accumulated bloom (the settle curve may take it below the base).</summary>
         public float CurrentSpreadDegrees =>
-            _settings != null ? Mathf.Max(0f, BaseSpreadDegrees + _bloom) : 0f;
+            _settings != null ? Mathf.Max(0f, (BaseSpreadDegrees + DD.Prototype.Rounds.RunTreeHooks.Bloom(Id, _bloom, _shotInString)) * DD.Prototype.Rounds.RunTreeHooks.SpreadScale(Id)) : 0f;   // + WP-077 seal.ar_1 / fork.ar_1.x / fork.sg_1.x
 
         /// <summary>
         /// WP-069 ADR-069-1: how this weapon's projectiles fly (v3 projectile block; a fast straight
@@ -700,6 +708,7 @@ namespace DD.Prototype.Weapons
         {
             ProjectileLaunch launch = ProjectileLaunch.From(Definition, Id, Range);
             launch.PelletIndex = pelletIndex;
+            launch.HeadMultiplier = DD.Prototype.Rounds.RunTreeHooks.HeadMultiplier(Id, launch.HeadMultiplier);   // WP-077 seal.ar_2
             if (_modifiers != null)
             {
                 launch.ArmorMultiplier *= _modifiers.ArmorBreakMultiplier;   // WP-069 §6 ArmorBreak
@@ -814,7 +823,8 @@ namespace DD.Prototype.Weapons
             {
                 Origin = origin,
                 Direction = direction,
-                Damage = (_settings != null ? _settings.Damage : 1f) * (_modifiers != null ? _modifiers.DamageMultiplier : 1f),   // WP-077 Hearth
+                Damage = (_settings != null ? _settings.Damage : 1f) * (_modifiers != null ? _modifiers.DamageMultiplier : 1f)   // WP-077 Hearth
+                    * DD.Prototype.Rounds.RunTreeHooks.ShotDamageScale(Id, _move01, _sinceShot, _roundsSinceReload),   // WP-077 fork.lmg_1.x / fork.lmg_2.y / fork.sr_1.x
                 Range = Range,
                 // On the shared DamageForce scale, NOT the raw config knob. See WeaponImpulse.
                 ImpactForce = WeaponImpulse.ForClassic(_settings, _modifiers != null ? _modifiers.ImpactStaggerBonus : 0f),   // WP-069 §6 Impact
@@ -834,7 +844,7 @@ namespace DD.Prototype.Weapons
                 // Per-shot branches: the first pellet of a trigger pull carries them, the
                 // rest of the spread does not (WeaponBranchContract.ResolutionOf == PerShot).
                 request.RicochetChance = perShotCarrier ? m.RicochetChance : 0f;
-                request.RicochetBounces = perShotCarrier ? m.RicochetBounces : 0;
+                request.RicochetBounces = perShotCarrier ? DD.Prototype.Rounds.RunTreeHooks.RicochetBounces(Id, m.RicochetBounces) : 0;   // + WP-077 cap.smg_1
                 request.RicochetRadius = m.RicochetRadius;
                 request.RicochetDamageScale = m.RicochetDamageScale;
 

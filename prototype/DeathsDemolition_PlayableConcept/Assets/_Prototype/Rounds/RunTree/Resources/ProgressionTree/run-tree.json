@@ -984,7 +984,7 @@
     "id": "fork_sr_1_x",
     "shortName": "Hold Breath",
     "displayName": "Hold Breath",
-    "description": "Wait 1 s → ×2 damage.",
+    "description": "Wait 2.5 s → ×2 damage.",
     "effectId": "fork.sr_1.x",
     "cost": 90,
     "offerWeight": 1.2,
@@ -992,7 +992,7 @@
     "args": [
      {
       "name": "seconds",
-      "value": 1
+      "value": 2.5
      },
      {
       "name": "value",

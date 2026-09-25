@@ -310,7 +310,7 @@ namespace DD.Prototype.PlayerSystem
             float gelSpeed = Mathf.Lerp(1f, GelSpeedMultiplier, _gel01);
             float gelSteer = Mathf.Lerp(1f, GelSteerMultiplier, _gel01);
             // WP-077 ks.body.evade: the tree's speed burst after a hit rides above the weapon clamp.
-            Vector3 targetVelocity = desired * (_moveSpeed * Mathf.Clamp(WeaponSpeedMultiplier, 0.1f, 1f) * gelSpeed * DD.Prototype.Rounds.RunTreeHooks.MoveSpeedScale);
+            Vector3 targetVelocity = desired * (_moveSpeed * Mathf.Clamp(WeaponSpeedMultiplier, 0.1f, 1f) * gelSpeed * DD.Prototype.Rounds.RunTreeHooks.MoveSpeedScaleAbove(WeaponSpeedMultiplier));
 
             // Advances _planarVelocity AND returns the exact ground distance covered while
             // it was advancing, which is not the same thing as velocity * dt.
