@@ -11,8 +11,10 @@
 //              cosθ = dot(view ray camera → grain, −light travel direction): the narrow forward lobe is the "backlit dust"
 //              glint when the camera looks into the sun; the broad lobe keeps a sun-side sheen under DEC-102's HIGH sun, where
 //              a horizontal TP/FP view never gets within 30° of the sun and the narrow lobe alone would never fire.
-//   shaft    = inside one of S-05's shaft cards (_DD_AtmoShaftA/B, published by AtmosphereSystem from "Shafts (C4)"),
-//              radial falloff × along-shaft falloff × the card's peak weight — the grains in a shaft read as the shaft.
+//   shaft    = DEC-102, the volumetric field live (_DD_VL_Density.w): DD_ShaftMask(centre) — S-05's field density over its
+//              peak × the cloud cookie (grove > 0.8, plaza < 0.2), so the grains glint where the light shafts are;
+//              the field off (Performance): inside one of S-05's shaft cards (_DD_AtmoShaftA/B, published by AtmosphereSystem
+//              from "Shafts (C4)"), radial falloff × along-shaft falloff × the card's peak weight.
 //   sparkle  = a 3–7 Hz per-grain twinkle (pow 6 of a sine; phase from StableRandom.x), only where the sun reaches.
 //   colour   = vertex colour × (base + scatter + sparkle) + the sun's tone × (scatter + sparkle) × 0.35, ≤ _AtmoLight.z (HDR);
 //              in shade the colour leans 35 % toward the cool mist #D0D7DE (DEC-101: cool shadows, warmth only in the sun).
@@ -27,7 +29,8 @@
 // Soft particles (_DD_ATMO_SOFT, High / Cinematic: scene depth, _AtmoFade.z m), linear fog. Alpha blend, ZWrite off, no culling.
 // Vertex streams (AtmosphereSystem.Streams, in this order): Position, Color, UV, Center, StableRandomX, AgePercent, Rotation, SizeXYZ
 //   → TEXCOORD0 = (uv.xy, centre.xy) · TEXCOORD1 = (centre.z, random, age01, rotation rad) · TEXCOORD2 = size.xyz.
-// All-float CBUFFER (Metal, as DD/VFX Ribbon). Include order: URP Core → Lighting (shadows, main light) → depth → DD_CloudCookie.
+// All-float CBUFFER (Metal, as DD/VFX Ribbon). Include order: URP Core → Lighting (shadows, main light) → depth → DD_CloudCookie
+// → DD_VolumetricLight.
 Shader "DD/VFX Atmo"
 {
     Properties
@@ -68,6 +71,7 @@ Shader "DD/VFX Atmo"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
             #include "Assets/_Art/Shaders/DD_CloudCookie.hlsl"
+            #include "Assets/_Art/Shaders/DD_VolumetricLight.hlsl"   // after the cookie: DD_ShaftMask (S-05 205ef275)
 
             #define DD_ATMO_MAX_SHAFTS 20
 
@@ -204,6 +208,13 @@ Shader "DD/VFX Atmo"
                 float cookie = DD_CloudSunLit01(centreWS);
                 float litFloor;
                 float shaft = ShaftMask(centreWS, L, litFloor);
+                // DEC-102: while the volumetric field is live (Cinematic / High) the shafts are the field itself — its density
+                // over its peak × the cloud cookie — and the cards stay a Performance-only read (no cards there anyway).
+                if (_DD_VL_Density.w > 0.5)
+                {
+                    shaft = DD_ShaftMask(centreWS);
+                    litFloor = 0.0;
+                }
                 float sunVis = max(cookie, shaft * litFloor) * SunShadow(centreWS);
 
                 float3 V = normalize(centreWS - camPos);

@@ -19,12 +19,14 @@ namespace DD.Prototype.Feedback.Vfx
     /// ONE SYSTEM, FIVE DRAWS. Five world-space ParticleSystems, one per layer (<see cref="Layer"/>), one shader (DD/VFX Atmo, one
     /// material per layer). The systems never emit on their own (emission and shape off): this component emits every grain with
     /// <see cref="ParticleSystem.Emit(ParticleSystem.EmitParams, int)"/> at a point it picks from the WORLD'S OWN FEATURES — sakura
-    /// crowns, bamboo clumps, pond discs, the plaza slate, the roof eaves, the room interiors and S-05's shaft cards — found once when
+    /// crowns, bamboo clumps, pond discs, the plaza slate, the roof eaves, the room interiors and S-05's shaft cards (Performance) or,
+    /// while DEC-102's volumetric field is live, its regions (<see cref="Source.Volume"/>) — found once when
     /// the world is up (<see cref="Rescan"/>) and weighted every half second by distance to the player, so the density is where the
     /// player is and the grains belong to what is around them. Motion is Unity's: Noise (curl, strength 0.35 m/s, 0.18, two octaves,
     /// scroll 0.12), External Forces (the one WindZone of <see cref="WindDriver"/>: a gust that bends the bamboo carries the petals),
     /// a ground collision plane for petals and leaves (they land and lie ~6 s). Light is the shader's: the cloud cookie, the sun's
-    /// shadow map and S-05's shaft cards (published here as <c>_DD_AtmoShaftA/B</c>) decide where a grain glints.
+    /// shadow map and the shafts — DD_ShaftMask (the field's density × the cookie) while the field is live, else S-05's cards
+    /// (published here as <c>_DD_AtmoShaftA/B</c>) — decide where a grain glints.
     ///
     /// EYE LEVEL. In third and first person a near field (10 × 5 × 10 m, 3 m ahead of the camera) of fine motes is emitted into the
     /// mote layer — world-space, so it does not swim with the camera — and blends to interior dust within 1 s when the camera walks
@@ -84,10 +86,12 @@ namespace DD.Prototype.Feedback.Vfx
             Water = 6,       // steam: pond discs
             WetGround = 7,   // steam: the plaza slate
             Eave = 8,        // drips: roof eave lines (CameraOccluderClass Roof)
-            BambooTip = 9    // drips: the upper third of the bamboo clumps
+            BambooTip = 9,   // drips: the upper third of the bamboo clumps
+            Volume = 10      // motes: DEC-102 volumetric field regions (S-05 _DD_VL_Regions) — the shafts while the field is live
         }
 
-        public const int SourceCount = 10;
+        public const int SourceCount = 11;
+        public const int MaxVolumeRegions = 8;   // VolumetricLight.MaxRegions (DD.Art, which references us — mirrored here)
 
         private enum Shape : byte
         {
@@ -95,7 +99,8 @@ namespace DD.Prototype.Feedback.Vfx
             Crown = 1,
             ShaftVolume = 2,
             Ellipse = 3,
-            Line = 4
+            Line = 4,
+            Region = 5       // ellipsoid: Centre, Half = (radius xz, radius y, radius xz)
         }
 
         private struct Anchor
@@ -149,10 +154,12 @@ namespace DD.Prototype.Feedback.Vfx
         private static readonly int[] s_nearShare = { 100, 350, 1400 };
 
         // Source fractions inside a layer (renormalised over the sources that have an anchor in range).
-        private static readonly float[] s_sourceFraction = { 0.55f, 0.30f, 0.15f, 1f, 0.7f, 0.3f, 0.6f, 0.4f, 0.6f, 0.4f };
+        // Shaft (cards, Performance) and Volume (the field, Cinematic / High) are never live together: one 0.30 share.
+        private static readonly float[] s_sourceFraction = { 0.55f, 0.30f, 0.15f, 1f, 0.7f, 0.3f, 0.6f, 0.4f, 0.6f, 0.4f, 0.30f };
         private static readonly Layer[] s_sourceLayer =
         {
-            Layer.Motes, Layer.Motes, Layer.Motes, Layer.Petals, Layer.Leaves, Layer.Leaves, Layer.Steam, Layer.Steam, Layer.Drips, Layer.Drips
+            Layer.Motes, Layer.Motes, Layer.Motes, Layer.Petals, Layer.Leaves, Layer.Leaves, Layer.Steam, Layer.Steam, Layer.Drips, Layer.Drips,
+            Layer.Motes
         };
 
         public static int TargetLive(Layer layer, VfxTierLevel tier) => s_live[(int)layer, (int)tier];
@@ -300,6 +307,7 @@ namespace DD.Prototype.Feedback.Vfx
         public int CapOf(Layer layer) => _caps[(int)layer];
         public ParticleSystem SystemOf(Layer layer) => _systems[(int)layer];
         public int AnchorCount(Source source) => _sets[(int)source].All != null ? _sets[(int)source].All.Length : 0;
+        public int InRangeCount(Source source) => _sets[(int)source].Count;
 
         public int TotalLive
         {
@@ -552,7 +560,9 @@ namespace DD.Prototype.Feedback.Vfx
             ScanRoofs(list);
             ScanInteriors(list);
             ScanShafts(list);
+            ReserveVolumeRegions(list);
             _anchors = list.ToArray();
+            _volumeRead = false;
 
             var counts = new int[SourceCount];
             for (int i = 0; i < _anchors.Length; i++) counts[(int)_anchors[i].Source]++;
@@ -770,6 +780,57 @@ namespace DD.Prototype.Feedback.Vfx
             }
         }
 
+        // DEC-102: the volumetric field's regions (grove ×2, ponds, sakura, veranda, gate, rear, NE) become mote anchors. The
+        // field publishes them from DD.Art (which references this assembly), so they are read from its globals — lazily, the
+        // first weight refresh the field is live (it publishes in LateUpdate, after the world is built).
+        private static readonly int VlDensityId = Shader.PropertyToID("_DD_VL_Density");
+        private static readonly int VlRegionsId = Shader.PropertyToID("_DD_VL_Regions");
+        private static readonly int VlShapeId = Shader.PropertyToID("_DD_VL_RegionShape");
+        private static readonly int VlCountId = Shader.PropertyToID("_DD_VL_RegionCount");
+        private readonly List<Vector4> _vlRegions = new List<Vector4>(MaxVolumeRegions);
+        private readonly List<Vector4> _vlShapes = new List<Vector4>(MaxVolumeRegions);
+        private bool _volumeRead;
+
+        /// <summary>The DEC-102 volumetric field is on (Cinematic / High): shafts are the field, the cards are off.</summary>
+        public static bool FieldLive => Shader.GetGlobalVector(VlDensityId).w > 0.5f;
+
+        /// <summary>Field regions read into mote anchors (0 until the field is live).</summary>
+        public int VolumeRegions { get; private set; }
+
+        private static void ReserveVolumeRegions(List<Anchor> list)
+        {
+            for (int i = 0; i < MaxVolumeRegions; i++) list.Add(new Anchor { Source = Source.Volume, Shape = Shape.Region });
+        }
+
+        private void ReadVolumeRegions()
+        {
+            int n = Mathf.Min((int)Shader.GetGlobalFloat(VlCountId), MaxVolumeRegions);
+            if (n <= 0) return;   // not published yet: retry next refresh
+            Shader.GetGlobalVectorArray(VlRegionsId, _vlRegions);
+            Shader.GetGlobalVectorArray(VlShapeId, _vlShapes);
+            n = Mathf.Min(n, Mathf.Min(_vlRegions.Count, _vlShapes.Count));
+            float peak = 0f;
+            for (int i = 0; i < n; i++) peak = Mathf.Max(peak, _vlShapes[i].y);
+            int k = 0, filled = 0;
+            for (int i = 0; i < _anchors.Length && k < MaxVolumeRegions; i++)
+            {
+                if (_anchors[i].Source != Source.Volume) continue;
+                Vector4 r = k < n ? _vlRegions[k] : Vector4.zero;
+                Vector4 sh = k < n ? _vlShapes[k] : Vector4.zero;
+                float rxz = Mathf.Max(r.w, 0f), ry = Mathf.Max(sh.x, 0.5f);
+                bool valid = k < n && rxz > 0.5f && sh.y > 0f;
+                _anchors[i].Centre = new Vector3(r.x, r.y, r.z);
+                _anchors[i].Half = new Vector3(rxz, ry, rxz);
+                _anchors[i].Peak = valid && peak > 0f ? sh.y / peak : 0f;   // densest region = 1 (DD_ShaftMask's normalisation)
+                _anchors[i].Size = valid ? Mathf.PI * rxz * rxz : 0f;
+                if (valid) filled++;
+                k++;
+            }
+
+            VolumeRegions = filled;
+            _volumeRead = true;
+        }
+
         // ------------------------------------------------------------------ per frame (0 B)
 
         /// <summary>One frame: tier, weights (every 0.5 s), shaft publish (on tier change), player guard, emission for every layer.</summary>
@@ -836,11 +897,21 @@ namespace DD.Prototype.Feedback.Vfx
         {
             _weightClock = WeightRefreshSeconds;
             _weightFocus = focus;
+            bool field = FieldLive;
+            if (field && !_volumeRead) ReadVolumeRegions();
             for (int s = 0; s < SourceCount; s++)
             {
                 int[] all = _sets[s].All;
                 if (all == null) continue;
                 float range = s_looks[(int)s_sourceLayer[s]].Range;
+                // One shaft read at a time: the field's regions while it is live, S-05's cards (Performance) while it is off.
+                if ((s == (int)Source.Volume && !field) || (s == (int)Source.Shaft && field))
+                {
+                    _sets[s].Count = 0;
+                    _sets[s].Total = 0f;
+                    continue;
+                }
+
                 float total = 0f;
                 int n = 0;
                 int[] inRange = _sets[s].InRange;
@@ -849,10 +920,12 @@ namespace DD.Prototype.Feedback.Vfx
                 {
                     Anchor a = _anchors[all[k]];
                     if (a.Owner != null && !a.Owner.gameObject.activeInHierarchy) continue;   // a shaft card cut by the tier
-                    float d = DistanceXZ(a, focus);
+                    if (a.Size <= 0f) continue;                                               // an unfilled field region
+                    // A region is reached from its rim, not its centre (a grove 12 m across counts once the player nears it).
+                    float d = Mathf.Max(0f, DistanceXZ(a, focus) - (a.Shape == Shape.Region ? a.Half.x : 0f));
                     if (d > range) continue;
                     // Area / length × distance falloff (half weight at 20 m); a shaft counts 6 × its peak (the glint lives there).
-                    float w = a.Size * (a.Source == Source.Shaft ? 6f * a.Peak : 1f) / (1f + (d / 20f) * (d / 20f));
+                    float w = a.Size * (a.Source == Source.Shaft || a.Source == Source.Volume ? 6f * a.Peak : 1f) / (1f + (d / 20f) * (d / 20f));
                     total += w;
                     inRange[n] = all[k];
                     cum[n] = total;
@@ -1015,6 +1088,20 @@ namespace DD.Prototype.Feedback.Vfx
                     Vector3 up = Vector3.Cross(side, axis);
                     float ang = Next01() * 6.2831853f, rad = Mathf.Sqrt(Next01()) * a.Half.x;
                     pos = a.Centre + axis * (Next01() * a.Half.y) + side * (Mathf.Cos(ang) * rad) + up * (Mathf.Sin(ang) * rad);
+                    vel = new Vector3(Signed() * 0.02f, 0.03f, Signed() * 0.02f) + wind * 0.06f;
+                    colour = Color.Lerp(look.B, Color.white, 0.2f);
+                    frame = AtmosphereAtlas.Pollen;
+                    break;
+                }
+
+                case Shape.Region:
+                {
+                    // Denser toward the region's centre (the field falls off as (1 − q)²); in the air the camera sees, 0.3–6 m
+                    // over the player's floor and inside the region's own height.
+                    float ang = Next01() * 6.2831853f, rad = Next01() * a.Half.x * 0.85f;
+                    float lo = Mathf.Max(a.Centre.y - a.Half.y, _weightFocus.y + 0.3f), hi = Mathf.Min(a.Centre.y + a.Half.y, _weightFocus.y + 6f);
+                    if (hi <= lo) { lo = _weightFocus.y + 0.3f; hi = _weightFocus.y + 6f; }
+                    pos = new Vector3(a.Centre.x + Mathf.Cos(ang) * rad, Mathf.Lerp(lo, hi, Next01()), a.Centre.z + Mathf.Sin(ang) * rad);
                     vel = new Vector3(Signed() * 0.02f, 0.03f, Signed() * 0.02f) + wind * 0.06f;
                     colour = Color.Lerp(look.B, Color.white, 0.2f);
                     frame = AtmosphereAtlas.Pollen;

@@ -43,6 +43,41 @@ namespace DD.Prototype.Tests.PlayMode
             if (_world != null) Object.Destroy(_world);
             if (_camGo != null) Object.Destroy(_camGo);
             if (_player != null) Object.Destroy(_player);
+            Shader.SetGlobalVector("_DD_VL_Density", Vector4.zero);   // the DEC-102 field off again (as VolumetricLight.OnDisable)
+            Shader.SetGlobalFloat("_DD_VL_RegionCount", 0f);
+        }
+
+        // DEC-102 (S-05 205ef275): while the volumetric field is live its regions are the mote anchors and the cards are off; with
+        // the field off (Performance) the cards come back. The field is published as globals (DD.Art references this assembly).
+        [UnityTest]
+        public IEnumerator Dec102_AlanCanliyken_BolgelerCapa_KartlarKapali()
+        {
+            BuildWorld(3);
+            AtmosphereSystem sys = Attach();
+            yield return null;   // Start → Rescan
+            Assert.AreEqual(AtmosphereSystem.MaxVolumeRegions, sys.AnchorCount(AtmosphereSystem.Source.Volume), "8 bölge yeri ayrıldı");
+
+            var regions = new Vector4[AtmosphereSystem.MaxVolumeRegions];
+            var shapes = new Vector4[AtmosphereSystem.MaxVolumeRegions];
+            regions[0] = new Vector4(-8f, 2f, 6f, 6f);  shapes[0] = new Vector4(3f, 0.02f, 0f, 0f);   // a grove
+            regions[1] = new Vector4(8f, 2f, -6f, 5f);  shapes[1] = new Vector4(3f, 0.01f, 0f, 0f);   // a pond
+            Shader.SetGlobalVectorArray("_DD_VL_Regions", regions);
+            Shader.SetGlobalVectorArray("_DD_VL_RegionShape", shapes);
+            Shader.SetGlobalFloat("_DD_VL_RegionCount", 2f);
+            Shader.SetGlobalVector("_DD_VL_Density", new Vector4(0.0025f, 0.18f, 0f, 1f));
+            Assert.IsTrue(AtmosphereSystem.FieldLive);
+
+            for (int i = 0; i < 60; i++) sys.Step(1f / 30f);
+            yield return null;
+            Assert.AreEqual(2, sys.VolumeRegions, "iki bölge okundu");
+            Assert.AreEqual(2, sys.InRangeCount(AtmosphereSystem.Source.Volume), "alan canlı: bölgeler menzilde");
+            Assert.AreEqual(0, sys.InRangeCount(AtmosphereSystem.Source.Shaft), "alan canlı: kartlar kapalı");
+            Assert.Greater(sys.LiveCount(AtmosphereSystem.Layer.Motes), 0);
+
+            Shader.SetGlobalVector("_DD_VL_Density", Vector4.zero);   // Performance: the field is off
+            for (int i = 0; i < 30; i++) sys.Step(1f / 30f);
+            Assert.AreEqual(0, sys.InRangeCount(AtmosphereSystem.Source.Volume), "alan kapalı: bölge yok");
+            Assert.AreEqual(3, sys.InRangeCount(AtmosphereSystem.Source.Shaft), "alan kapalı: kartlar döndü");
         }
 
         [Test]
@@ -145,42 +180,88 @@ namespace DD.Prototype.Tests.PlayMode
             cam.fieldOfView = 60f;
             cam.targetTexture = rt;
             AtmosphereSystem sys = Attach();
+            // Full sun, whatever cookie the last world left bound (DEC-102's broken-cloud cookie put this point in a cloud shadow:
+            // steam, α floored in the shade, then read 0 px): the test measures the pixel clamp, not the weather.
+            Texture cookieWas = Shader.GetGlobalTexture("_DD_CloudCookie");
+            Vector4 uWas = Shader.GetGlobalVector("_DD_CloudCookieU"), vWas = Shader.GetGlobalVector("_DD_CloudCookieV");
+            Shader.SetGlobalTexture("_DD_CloudCookie", Texture2D.whiteTexture);
+            Shader.SetGlobalVector("_DD_CloudCookieU", Vector4.zero);
+            Shader.SetGlobalVector("_DD_CloudCookieV", Vector4.zero);
             yield return null;
             try
             {
+                var counts = new int[1];
                 foreach (AtmosphereSystem.Layer layer in new[] { AtmosphereSystem.Layer.Motes, AtmosphereSystem.Layer.Petals, AtmosphereSystem.Layer.Steam })
                 {
-                    for (int i = 0; i < 5; i++) { ParticleSystem other = sys.SystemOf((AtmosphereSystem.Layer)i); if (other != null) other.Clear(); }
                     ParticleSystem ps = sys.SystemOf(layer);
                     Assert.IsNotNull(ps, layer + " katmanı yok");
+                    // Shade floors to 1 and soft particles off: α independent of the sun's shadow map / cookie and of the depth texture
+                    // an earlier test left bound (this off-screen camera renders none) — the steam puff read 0–504 px across runs.
+                    Material mat = ps.GetComponent<ParticleSystemRenderer>().sharedMaterial;
+                    Vector4 lightWas = mat.GetVector("_AtmoLight"), twinkleWas = mat.GetVector("_AtmoTwinkle"), pxWas = mat.GetVector("_AtmoPx");
+                    bool softWas = mat.IsKeywordEnabled("_DD_ATMO_SOFT");
+                    mat.SetVector("_AtmoLight", new Vector4(lightWas.x, lightWas.y, lightWas.z, 1f));
+                    mat.SetVector("_AtmoTwinkle", new Vector4(twinkleWas.x, twinkleWas.y, twinkleWas.z, 1f));
+                    mat.DisableKeyword("_DD_ATMO_SOFT");
                     float size = layer == AtmosphereSystem.Layer.Steam ? 0.8f : layer == AtmosphereSystem.Layer.Petals ? 0.12f : 0.03f;
-                    var ep = new ParticleSystem.EmitParams { position = new Vector3(0f, 400f, 5f), velocity = Vector3.zero, startLifetime = 5f,
-                        startSize3D = new Vector3(size, size, 0f), startColor = new Color(1f, 1f, 1f, 0.3f) };
-                    ps.Emit(ep, 1);
-                    yield return null;
-                    yield return null;
-                    var prev = RenderTexture.active;
-                    RenderTexture.active = rt;
-                    var tex = new Texture2D(256, 256, TextureFormat.RGBA32, false);
-                    tex.ReadPixels(new Rect(0, 0, 256, 256), 0, 0);
-                    tex.Apply();
-                    RenderTexture.active = prev;
-                    int lit = 0;
-                    foreach (Color32 c in tex.GetPixels32()) if (c.r > 4 || c.g > 4 || c.b > 4) lit++;
-                    Object.Destroy(tex);
-                    // Expected footprint at 5 m on a 256 px, 60° frame: ≈ 44 px per metre → mote ≈ 1.5 px, petal ≈ 5 px, steam ≈ 35 px across.
-                    float expect = size * 44.3f;
-                    Debug.Log("[DD-TEST] wp073.b5 coverage " + layer + " lit=" + lit + " expected≈" + (expect * expect).ToString("F0") + " px");
-                    Assert.Less(lit, Mathf.Max(64f, expect * expect * 4f), layer + ": tek tane " + lit + " piksel kapladı (ekranı örtüyor)");
-                    if (layer == AtmosphereSystem.Layer.Steam) Assert.Greater(lit, expect * expect * 0.3f, "buhar pufu dünya boyunu korumalı (24 px tane tavanı uygulanmaz)");
+                    try
+                    {
+                        yield return RenderOne(sys, ps, size, rt, counts);
+                        int lit = counts[0];
+                        // Expected footprint at 5 m on a 256 px, 60° frame: ≈ 44 px per metre → mote ≈ 1.5 px, petal ≈ 5 px, steam ≈ 35 px across.
+                        float expect = size * 44.3f;
+                        Debug.Log("[DD-TEST] wp073.b5 coverage " + layer + " lit=" + lit + " expected≈" + (expect * expect).ToString("F0") + " px");
+                        Assert.Less(lit, Mathf.Max(64f, expect * expect * 4f), layer + ": tek tane " + lit + " piksel kapladı (ekranı örtüyor)");
+                        if (layer == AtmosphereSystem.Layer.Steam)
+                        {
+                            // A / B under the same light: the steam's own cap vs the grains' 24 px cap. The puff keeps its world size, so
+                            // capping it at 24 px must shrink it (a 35 px puff → 24 px ≈ half the area).
+                            mat.SetVector("_AtmoPx", new Vector4(pxWas.x, 24f, pxWas.z, pxWas.w));
+                            yield return RenderOne(sys, ps, size, rt, counts);
+                            Debug.Log("[DD-TEST] wp073.b5 coverage Steam capped24 lit=" + counts[0]);
+                            Assert.Greater(lit, 0, "buhar pufu çizilmedi");
+                            Assert.Greater(lit, counts[0] * 1.4f, "buhar pufu dünya boyunu korumalı (24 px tane tavanı uygulanmaz): " + lit + " / 24 px ile " + counts[0]);
+                        }
+                    }
+                    finally
+                    {
+                        mat.SetVector("_AtmoLight", lightWas);
+                        mat.SetVector("_AtmoTwinkle", twinkleWas);
+                        mat.SetVector("_AtmoPx", pxWas);
+                        if (softWas) mat.EnableKeyword("_DD_ATMO_SOFT");
+                    }
                 }
             }
             finally
             {
+                if (cookieWas != null) Shader.SetGlobalTexture("_DD_CloudCookie", cookieWas);
+                Shader.SetGlobalVector("_DD_CloudCookieU", uWas);
+                Shader.SetGlobalVector("_DD_CloudCookieV", vWas);
                 sys.CameraOverride = null;
                 rt.Release();
                 Object.Destroy(rt);
             }
+        }
+
+        // One grain of the layer 5 m ahead of the coverage camera, alone on screen; counts[0] = pixels brighter than 4/255.
+        private static IEnumerator RenderOne(AtmosphereSystem sys, ParticleSystem ps, float size, RenderTexture rt, int[] counts)
+        {
+            for (int i = 0; i < AtmosphereSystem.LayerCount; i++) { ParticleSystem other = sys.SystemOf((AtmosphereSystem.Layer)i); if (other != null) other.Clear(); }
+            var ep = new ParticleSystem.EmitParams { position = new Vector3(0f, 400f, 5f), velocity = Vector3.zero, startLifetime = 5f,
+                startSize3D = new Vector3(size, size, 0f), startColor = new Color(1f, 1f, 1f, 0.3f), rotation = 0f };
+            ps.Emit(ep, 1);
+            yield return null;
+            yield return null;
+            var prev = RenderTexture.active;
+            RenderTexture.active = rt;
+            var tex = new Texture2D(256, 256, TextureFormat.RGBA32, false);
+            tex.ReadPixels(new Rect(0, 0, 256, 256), 0, 0);
+            tex.Apply();
+            RenderTexture.active = prev;
+            int lit = 0;
+            foreach (Color32 c in tex.GetPixels32()) if (c.r > 4 || c.g > 4 || c.b > 4) lit++;
+            Object.Destroy(tex);
+            counts[0] = lit;
         }
 
         [UnityTest]
