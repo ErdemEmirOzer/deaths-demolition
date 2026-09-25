@@ -71,6 +71,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.Greater(fire.FlamesLive, 10, "alevler");
             Assert.Greater(fire.EmbersLive, 0, "köz");
             Assert.Greater(fire.GlowLive, 0, "zemin parıltısı");
+            Assert.AreEqual(1, fire.CharLive, "is diski (yangından 3 s uzun yaşar)");
             Assert.LessOrEqual(fire.FlamesLive, GroundFireSystem.FlameCap);
             ParticleSystem.Particle[] buffer = new ParticleSystem.Particle[GroundFireSystem.FlameCap];
             int n = fire.SystemOf(0).GetParticles(buffer);
@@ -82,7 +83,7 @@ namespace DD.Prototype.Tests.PlayMode
             VfxTier.Override = VfxTierLevel.Performance;
             yield return null;
             Assert.AreEqual(GroundFireSystem.FlameCap, fire.SystemOf(0).main.maxParticles);
-            Assert.AreEqual(90, GroundFireSystem.FlameCap);
+            Assert.AreEqual(120, GroundFireSystem.FlameCap);
 
             // Extinguished → out within OutSeconds, then the slot frees.
             RunTreeGroundFire.Clear();

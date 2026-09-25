@@ -11,15 +11,15 @@ namespace DD.Prototype.Feedback.Vfx
 {
     /// <summary>
     /// WP-073 · burning ground for S-04's K10b zones (<see cref="RunTreeGroundFire"/>: Ash Cloud / Hibana leave a blast area
-    /// burning 2–3 s). Per zone, on the ground under the blast: licking flames (the AP-010B lantern_flame 4 × 4 loop, additive,
-    /// hot yellow → orange → a dark red end), rising embers (HDR streaks), a flickering ground glow (a flat additive disc, the
-    /// top-down read), a thin dark smoke column (MuzzleSystem's shared smoke), one flickering fire light (MuzzleSystem.TrackLight,
+    /// burning 2–3 s). Per zone, on the ground under the blast: licking flames (the AP-010B lantern_flame 4 × 4 loop, alpha-blended
+    /// with an HDR core, hot yellow → orange → a dark red end, low on the ground), rising embers (HDR streaks), a flickering ground glow and a soot char disc that
+    /// outlives the fire by 3 s (the top-down read), a thin dark smoke column (MuzzleSystem's shared smoke), one flickering fire light (MuzzleSystem.TrackLight,
     /// the nearest zones) and, Cinematic only, a heat-haze card over the fire (DD/VFX HeatHaze, as the barrel haze).
     /// Lifecycle: 0.25 s ignition ramp, full while it burns, dying to a quarter over the last 0.7 s, then Extinguished: flames
     /// out in 0.6 s, a last ember burst and a smoke puff. Ash Cloud and Hibana on the same rocket ignite two zones at the same
     /// point: they share one visual zone (the larger radius, the later end).
     ///
-    /// Budget (DEC-100 Cinematic VFX ≤ 5.5 ms): three world-space ParticleSystems (flames / embers / glow, one draw each),
+    /// Budget (DEC-100 Cinematic VFX ≤ 5.5 ms): four world-space ParticleSystems (flames / embers / glow / char, one draw each),
     /// caps per tier below, no per-frame allocation; up to 3 haze quads (Cinematic) and the tier's light slots.
     /// </summary>
     public sealed class GroundFireSystem : MonoBehaviour
@@ -30,18 +30,22 @@ namespace DD.Prototype.Feedback.Vfx
         private static readonly int AlphaCapId = Shader.PropertyToID("_AlphaCap");
 
         // Caps / rates per tier (Performance, High, Cinematic).
-        public static int FlameCap => VfxTier.Pick(90, 220, 360);
+        public static int FlameCap => VfxTier.Pick(120, 260, 420);
         public static int EmberCap => VfxTier.Pick(40, 140, 260);
         public static int GlowCap => VfxTier.Pick(16, 32, 48);
+        public static int CharCap => MaxZones;
         public static int LightZones => VfxTier.Pick(1, 2, 3);
         public static int HazeZones => VfxTier.Pick(0, 0, 3);
-        public static float FlamesPerSquareMetre => VfxTier.Pick(0.7f, 1.2f, 1.7f);   // per second
+        public static float FlamesPerSquareMetre => VfxTier.Pick(1.0f, 1.8f, 2.5f);   // per second
         public static float EmbersPerSecond => VfxTier.Pick(4f, 9f, 14f);              // per zone of 10 m², clamped ×0.5–3
         public static float SmokeEvery => VfxTier.Pick(0f, 0.6f, 0.4f);                // seconds; 0 = none
 
-        private static readonly Color FlameTint = new Color(2.4f, 2.1f, 1.8f, 1f);        // HDR on the greyscale sheet (bloom)
+        // Alpha-blended, not additive: on the V6 plaza's light stone an additive flame washed out to a pale pink drop (first
+        // capture); a saturated orange over the ground with an HDR core (bloom) reads as fire on light and dark ground alike.
+        private static readonly Color FlameTint = new Color(2.0f, 1.55f, 1.2f, 1f);
+        private static readonly Color CharColour = new Color(0.10f, 0.07f, 0.055f, 0.62f);   // #1A120E soot under the fire
         private static readonly Color EmberColour = new Color(1f, 0.45f, 0.12f, 1f) * 6f;
-        private static readonly Color GlowColour = new Color(1f, 0.42f, 0.12f, 1f);
+        private static readonly Color GlowColour = new Color(1.6f, 0.62f, 0.16f, 1f);   // HDR warm orange, alpha-blended
         private static readonly Color LightColour = new Color(1f, 0.55f, 0.25f, 1f);
         private static readonly Color SmokeColour = new Color(0.18f, 0.165f, 0.157f, 0.35f);   // #2E2A28
 
@@ -61,8 +65,8 @@ namespace DD.Prototype.Feedback.Vfx
         private readonly Transform[] _haze = new Transform[3];
         private readonly MeshRenderer[] _hazeRenderers = new MeshRenderer[3];
         private MaterialPropertyBlock _hazeBlock;
-        private ParticleSystem _flames, _embers, _glow;
-        private Material _flameMat, _emberMat, _glowMat, _hazeMat;
+        private ParticleSystem _flames, _embers, _glow, _char;
+        private Material _flameMat, _emberMat, _glowMat, _charMat, _hazeMat;
         private Texture2D _dot, _soft;
         private VfxTierLevel _tier;
         private bool _tierApplied;
@@ -78,7 +82,8 @@ namespace DD.Prototype.Feedback.Vfx
         public int FlamesLive => _flames != null ? _flames.particleCount : 0;
         public int EmbersLive => _embers != null ? _embers.particleCount : 0;
         public int GlowLive => _glow != null ? _glow.particleCount : 0;
-        public ParticleSystem SystemOf(int layer) => layer == 0 ? _flames : layer == 1 ? _embers : _glow;
+        public int CharLive => _char != null ? _char.particleCount : 0;
+        public ParticleSystem SystemOf(int layer) => layer == 0 ? _flames : layer == 1 ? _embers : layer == 2 ? _glow : _char;
         public Camera CameraOverride { get; set; }
 
         public static GroundFireSystem Ensure()
@@ -118,6 +123,7 @@ namespace DD.Prototype.Feedback.Vfx
             DestroyIfSet(_flameMat);
             DestroyIfSet(_emberMat);
             DestroyIfSet(_glowMat);
+            DestroyIfSet(_charMat);
             DestroyIfSet(_hazeMat);
             DestroyIfSet(_dot);
             DestroyIfSet(_soft);
@@ -155,6 +161,7 @@ namespace DD.Prototype.Feedback.Vfx
             if (_flames != null) _flames.Clear();
             if (_embers != null) _embers.Clear();
             if (_glow != null) _glow.Clear();
+            if (_char != null) _char.Clear();
             for (int i = 0; i < _haze.Length; i++) if (_haze[i] != null) _haze[i].gameObject.SetActive(false);
             LiveZones = 0;
         }
@@ -201,6 +208,13 @@ namespace DD.Prototype.Feedback.Vfx
                 Seed = Next01() * 100f, NextGlow = now, NextSmoke = now + 0.15f
             };
             ZonesStarted++;
+            // The char: a dark soot disc that outlives the fire by 3 s (the burnt ground is what top-down reads after).
+            var charParams = new ParticleSystem.EmitParams
+            {
+                position = centre + Vector3.up * 0.015f, velocity = Vector3.zero, startSize = Mathf.Max(0.5f, info.Radius) * 2.1f,
+                startLifetime = info.Seconds + 3f, startColor = CharColour, rotation = Next01() * 360f
+            };
+            _char.Emit(charParams, 1);
         }
 
         /// <summary>RunTreeGroundFire.Extinguished.</summary>
@@ -315,8 +329,8 @@ namespace DD.Prototype.Feedback.Vfx
                 // Two overlapping 0.5 s discs every 0.25 s: a continuous glow whose brightness flickers per disc.
                 z.NextGlow = now + 0.25f;
                 float flicker = 0.8f + 0.4f * Mathf.PerlinNoise(now * 6f, z.Seed);
-                Color c = GlowColour * (flicker * Mathf.Max(k, z.Ending ? 0f : 0.1f));
-                c.a = 0.55f;
+                Color c = GlowColour * flicker;
+                c.a = 0.42f * Mathf.Max(k, z.Ending ? 0f : 0.1f);
                 var ep = new ParticleSystem.EmitParams
                 {
                     position = z.Centre + Vector3.up * 0.03f, velocity = Vector3.zero, startSize = z.Radius * 2.3f, startLifetime = 0.5f,
@@ -344,13 +358,15 @@ namespace DD.Prototype.Feedback.Vfx
         {
             Vector3 off = Disc(z.Radius * 0.92f);
             float edge = off.magnitude / Mathf.Max(z.Radius, 0.01f);   // taller in the middle, low tongues at the rim
-            float size = Mathf.Lerp(0.35f, 0.85f, Next01()) * (1f - 0.4f * edge) * (0.6f + 0.4f * k);
+            // Tongues licking the ground: small, taller than wide (1 : 1.7), their foot on the stone, a slow rise and a short life
+            // (the first capture's 0.8–1.4 m/s over 0.8 s lifted them a metre off the ground — floating drops).
+            float size = Mathf.Lerp(0.25f, 0.55f, Next01()) * (1f - 0.4f * edge) * (0.6f + 0.4f * k);
             var ep = new ParticleSystem.EmitParams
             {
-                position = z.Centre + off + Vector3.up * (size * 0.35f),
-                velocity = new Vector3(Signed() * 0.15f, Mathf.Lerp(0.8f, 1.4f, Next01()), Signed() * 0.15f) + Wind() * 0.3f,
-                startSize = size, startLifetime = Mathf.Lerp(0.45f, 0.8f, Next01()), rotation = Signed() * 15f,
-                startColor = new Color(1f, 1f, 1f, 0.6f + 0.4f * k)
+                position = z.Centre + off + Vector3.up * (size * 0.75f),
+                velocity = new Vector3(Signed() * 0.08f, Mathf.Lerp(0.35f, 0.7f, Next01()), Signed() * 0.08f) + Wind() * 0.2f,
+                startSize3D = new Vector3(size, size * 1.7f, 1f), startLifetime = Mathf.Lerp(0.35f, 0.6f, Next01()), rotation = Signed() * 10f,
+                startColor = new Color(1f, 1f, 1f, 0.7f + 0.3f * k)
             };
             _flames.Emit(ep, 1);
         }
@@ -462,6 +478,7 @@ namespace DD.Prototype.Feedback.Vfx
             SetCap(_flames, FlameCap);
             SetCap(_embers, EmberCap);
             SetCap(_glow, GlowCap);
+            SetCap(_char, CharCap);
         }
 
         private static void SetCap(ParticleSystem ps, int cap)
@@ -477,9 +494,10 @@ namespace DD.Prototype.Feedback.Vfx
             _soft = BuildDot(64, 1.4f);
 
             VfxCatalogEntry flameRow = VfxLibrary.Get(VfxIds.LanternFlame);
-            _flameMat = Additive("DD_GroundFireFlames (runtime)", flameRow != null && flameRow.Texture != null ? flameRow.Texture : (Texture)_soft, FlameTint);
-            _emberMat = Additive("DD_GroundFireEmbers (runtime)", _dot, Color.white);
-            _glowMat = Additive("DD_GroundFireGlow (runtime)", _soft, Color.white);
+            _flameMat = Particle("DD_GroundFireFlames (runtime)", flameRow != null && flameRow.Texture != null ? flameRow.Texture : (Texture)_soft, FlameTint, false);
+            _emberMat = Particle("DD_GroundFireEmbers (runtime)", _dot, Color.white, true);
+            _glowMat = Particle("DD_GroundFireGlow (runtime)", _soft, Color.white, false);
+            _charMat = Particle("DD_GroundFireChar (runtime)", _soft, Color.white, false);
 
             _flames = NewSystem("GroundFireFlames", _flameMat, ParticleSystemRenderMode.Billboard, -0.05f);
             ParticleSystem.TextureSheetAnimationModule sheet = _flames.textureSheetAnimation;
@@ -491,16 +509,21 @@ namespace DD.Prototype.Feedback.Vfx
             sheet.frameOverTime = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Linear(0f, 0f, 1f, 1f));
             sheet.startFrame = new ParticleSystem.MinMaxCurve(0f, 1f);   // normalised (0..1), a random phase per tongue
             sheet.cycleCount = 1;
+            ParticleSystemRenderer flameRenderer = _flames.GetComponent<ParticleSystemRenderer>();
+            flameRenderer.alignment = ParticleSystemRenderSpace.View;
+            ParticleSystem.MainModule fm = _flames.main;
+            fm.startSize3D = true;
             Gradient flameColour = new Gradient();
             flameColour.SetKeys(
-                new[] { new GradientColorKey(new Color(1f, 0.85f, 0.55f), 0f), new GradientColorKey(new Color(1f, 0.62f, 0.25f), 0.25f),
-                        new GradientColorKey(new Color(1f, 0.36f, 0.10f), 0.6f), new GradientColorKey(new Color(0.45f, 0.08f, 0.02f), 1f) },
-                new[] { new GradientAlphaKey(0f, 0f), new GradientAlphaKey(1f, 0.12f), new GradientAlphaKey(0.8f, 0.6f), new GradientAlphaKey(0f, 1f) });
+                new[] { new GradientColorKey(new Color(1f, 0.82f, 0.42f), 0f), new GradientColorKey(new Color(1f, 0.55f, 0.14f), 0.25f),
+                        new GradientColorKey(new Color(0.95f, 0.30f, 0.06f), 0.6f), new GradientColorKey(new Color(0.30f, 0.05f, 0.02f), 1f) },
+                new[] { new GradientAlphaKey(0f, 0f), new GradientAlphaKey(0.9f, 0.1f), new GradientAlphaKey(0.8f, 0.6f), new GradientAlphaKey(0f, 1f) });
             ParticleSystem.ColorOverLifetimeModule fc = _flames.colorOverLifetime;
             fc.enabled = true;
             fc.color = new ParticleSystem.MinMaxGradient(flameColour);
             ParticleSystem.SizeOverLifetimeModule fs = _flames.sizeOverLifetime;
             fs.enabled = true;
+            fs.separateAxes = false;
             fs.size = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(new Keyframe(0f, 0.6f), new Keyframe(0.3f, 1f), new Keyframe(1f, 0.55f)));
             ParticleSystem.NoiseModule fn = _flames.noise;
             fn.enabled = true;
@@ -534,6 +557,15 @@ namespace DD.Prototype.Feedback.Vfx
             ParticleSystem.ColorOverLifetimeModule gc = _glow.colorOverLifetime;
             gc.enabled = true;
             gc.color = new ParticleSystem.MinMaxGradient(glowAlpha);
+
+            _char = NewSystem("GroundFireChar", _charMat, ParticleSystemRenderMode.HorizontalBillboard, 0f);
+            _char.GetComponent<ParticleSystemRenderer>().sortingFudge = 40f;   // under the glow and the flames
+            Gradient charAlpha = new Gradient();
+            charAlpha.SetKeys(new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
+                new[] { new GradientAlphaKey(0f, 0f), new GradientAlphaKey(1f, 0.05f), new GradientAlphaKey(1f, 0.6f), new GradientAlphaKey(0f, 1f) });
+            ParticleSystem.ColorOverLifetimeModule cc = _char.colorOverLifetime;
+            cc.enabled = true;
+            cc.color = new ParticleSystem.MinMaxGradient(charAlpha);
 
             BuildHaze();
             ApplyTier(VfxTier.Current);
@@ -580,13 +612,13 @@ namespace DD.Prototype.Feedback.Vfx
             return s_quad;
         }
 
-        private static Material Additive(string name, Texture texture, Color baseColour)
+        private static Material Particle(string name, Texture texture, Color baseColour, bool additive)
         {
             var m = new Material(FeedbackMaterials.ParticleAlpha()) { name = name, hideFlags = HideFlags.DontSave };
             m.SetTexture("_BaseMap", texture);
             m.mainTexture = texture;
-            if (m.HasProperty("_Blend")) m.SetFloat("_Blend", 1f);
-            if (m.HasProperty("_DstBlend")) m.SetFloat("_DstBlend", (float)BlendMode.One);
+            if (additive && m.HasProperty("_Blend")) m.SetFloat("_Blend", 1f);
+            if (additive && m.HasProperty("_DstBlend")) m.SetFloat("_DstBlend", (float)BlendMode.One);
             if (m.HasProperty("_BaseColor")) m.SetColor("_BaseColor", baseColour);
             return m;
         }
