@@ -57,6 +57,27 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsTrue(UiSettings.CentreDot);
         }
 
+        /// <summary>
+        /// WP-068 12c · B12 (AD 8-R SHOULD-A2): the HUD's 16:9 frame - off in an older file and by default, kept once on;
+        /// the inset is half the width past 16:9 (21:9 canvas 2560 × 1080 → 320 a side), 0 on 16:9 or narrower and when off.
+        /// </summary>
+        [Test]
+        public void HudCercevesi169_VarsayilanKapali_Kalici_KenarPayi()
+        {
+            File.WriteAllText(Path.Combine(_dir, UiSettings.FileName), "{\"Version\":1,\"UiScale\":1.0}");
+            UiSettings.SetPathOverride(Path.Combine(_dir, UiSettings.FileName));
+            Assert.IsFalse(UiSettings.HudFrame169, "eski dosya: kapalı");
+            UiSettings.HudFrame169 = true;
+            UiSettings.SetPathOverride(Path.Combine(_dir, UiSettings.FileName));   // reload from disk
+            Assert.IsTrue(UiSettings.HudFrame169, "kalıcı");
+
+            Assert.AreEqual(320f, RunHudScreen.HudFrameInset(new Vector2(2560f, 1080f), true), 0.01f, "21:9");
+            Assert.AreEqual(0f, RunHudScreen.HudFrameInset(new Vector2(2560f, 1080f), false), 0.01f, "kapalı");
+            Assert.AreEqual(0f, RunHudScreen.HudFrameInset(new Vector2(1920f, 1080f), true), 0.01f, "16:9");
+            Assert.AreEqual(0f, RunHudScreen.HudFrameInset(new Vector2(1920f, 1247f), true), 0.01f, "Mac 16:10 daha dar");
+            Assert.AreEqual(440f, RunHudScreen.HudFrameInset(new Vector2(2800f, 1080f), true), 0.5f, "32:9'a yakın");
+        }
+
         [Test]
         public void KaliteKademesi_EskiAltiSeviyeUceEslenir_AyarBakisOlcegi()
         {

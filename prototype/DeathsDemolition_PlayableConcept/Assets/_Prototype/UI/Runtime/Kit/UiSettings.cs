@@ -59,6 +59,8 @@ namespace DD.Prototype.UI
         public float HeadBobScale = 1f;
         /// <summary>WP-070 §3.2: a small static dot at the screen centre in TP/FP (motion-sickness aid).</summary>
         public bool CentreDot;
+        /// <summary>WP-068 12c · B12 (AD 8-R SHOULD-A2): on a screen wider than 16:9 the HUD's corner clusters stand in a centred 16:9 frame.</summary>
+        public bool HudFrame169;
 
         public UiSettingsData Clamp()
         {
@@ -323,6 +325,26 @@ namespace DD.Prototype.UI
             }
         }
 
+        /// <summary>
+        /// WP-068 12c · B12: the HUD's corner clusters (gold, round, health, weapon) keep to a centred 16:9 frame on a wider
+        /// screen, so the eye need not travel to a 21:9 edge. Off by default; nothing changes on 16:9 or narrower.
+        /// </summary>
+        public static bool HudFrame169
+        {
+            get { EnsureLoaded(); return s_data.HudFrame169; }
+            set
+            {
+                EnsureLoaded();
+                if (value == s_data.HudFrame169)
+                {
+                    return;
+                }
+
+                s_data.HudFrame169 = value;
+                Persist();
+            }
+        }
+
         private static void SetCamera(ref int field, int value)
         {
             EnsureLoaded();
@@ -516,6 +538,7 @@ namespace DD.Prototype.UI
             s_data.Shoulder = loaded != null ? loaded.Shoulder : defaults.Shoulder;
             s_data.HeadBobScale = loaded != null ? loaded.HeadBobScale : defaults.HeadBobScale;
             s_data.CentreDot = loaded != null && loaded.CentreDot;
+            s_data.HudFrame169 = loaded != null && loaded.HudFrame169;
             int count = Mathf.Max(1, QualitySettings.names.Length);
             // DEC-100 (user, 25.09): with no saved choice the game opens on Cinematic (QualityTiers.DefaultTier); a saved
             // choice is kept as it is (no migration).
@@ -672,6 +695,7 @@ namespace DD.Prototype.UI
             s_data.Shoulder = defaults.Shoulder;
             s_data.HeadBobScale = defaults.HeadBobScale;
             s_data.CentreDot = defaults.CentreDot;
+            s_data.HudFrame169 = defaults.HudFrame169;
             Changed = null;
             CameraChanged = null;
             MasterVolumeChanged = null;

@@ -161,6 +161,12 @@ namespace DD.Prototype.UI
                 UiInputScheme.Force(DD.Prototype.Core.InputAbstraction.InputSchemeKind.Gamepad);
             }
 
+            // -ddUiHudFrame 1: the HUD's 16:9 frame on (12c · B12; process-local settings, never the player's file).
+            if (Arg("-ddUiHudFrame") == "1")
+            {
+                UiSettings.HudFrame169 = true;
+            }
+
             // -ddUiLook x,y: hold the menu backdrop's parallax at a corner (−1..1), AD 6ab frames.
             string look = Arg("-ddUiLook");
             if (!string.IsNullOrEmpty(look))

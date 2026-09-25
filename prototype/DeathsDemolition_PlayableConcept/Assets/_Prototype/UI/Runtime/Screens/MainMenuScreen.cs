@@ -638,6 +638,11 @@ namespace DD.Prototype.UI
                     ShowPreviewScale(UiSettings.UiScale);
                 }, SettingsColumnWidth, SettingLabelWidth);
             AddSettingRow(ref stack, scale.transform);
+            UiSwitch hudFrame = UiSwitch.Create("HudFrame", content, "HUD IN A 16:9 FRAME", UiSettings.HudFrame169,
+                on => UiSettings.HudFrame169 = on);   // 12c · B12 (AD 8-R SHOULD-A2)
+            AddSettingRow(ref stack, hudFrame.transform);
+            AddCaptionUnder(ref stack, content, "HudFrameNote",
+                "On a screen wider than 16:9, the HUD's corners move in to a centred 16:9 frame.", 1, UiSpace.S);
 
             AddSettingsSection(ref stack, content, "AUDIO", true);
             // Volumes are continuous (no detents; ← / → step 5 %), the UI scale has its six stops.

@@ -912,7 +912,7 @@ namespace DD.Prototype.UI
         /// <summary>A corner cluster: a root at the anchor (pivot at the same corner), listed for the tests.</summary>
         private RectTransform Cluster(string name, Vector2 anchor, Vector2 position, Vector2 size, bool posture)
         {
-            RectTransform root = InkRoot(name, anchor, anchor, position, size);
+            RectTransform root = InkRootOn(HudFrame, name, anchor, anchor, position, size);
             _clusters.Add(root);
             if (posture)
             {
@@ -933,6 +933,69 @@ namespace DD.Prototype.UI
             _backPlanes.Add(back);
             _backPlaneDepth.Add(depth);
             return back;
+        }
+
+        /// <summary>
+        /// WP-068 12c · B12: the corner clusters' parent - the whole canvas, or with <see cref="UiSettings.HudFrame169"/> on a
+        /// screen wider than 16:9 a centred 16:9 frame (the reticle, markers, stamps, damage edges and the centred rows stay on
+        /// the canvas). Built on first use, so it sits where the clusters' draw order puts it.
+        /// </summary>
+        private RectTransform HudFrame
+        {
+            get
+            {
+                if (_hudFrame == null)
+                {
+                    _hudFrame = UiFactory.NewRect("HudFrame", ScreenRect);
+                    UiFactory.Fill(_hudFrame);
+                    ApplyHudFrame();
+                }
+
+                return _hudFrame;
+            }
+        }
+
+        private RectTransform _hudFrame;
+        private float _hudFrameWidth = -1f;
+        private bool _hudFrameOn;
+
+        /// <summary>The frame's inset from each side, canvas px: half the width past 16:9 when on, else 0.</summary>
+        public static float HudFrameInset(Vector2 canvas, bool on)
+        {
+            if (!on || canvas.y <= 0f)
+            {
+                return 0f;
+            }
+
+            return Mathf.Max(0f, (canvas.x - canvas.y * 16f / 9f) * 0.5f);
+        }
+
+        /// <summary>The frame's current inset (tests, captures).</summary>
+        public float HudFrameInsetNow
+        {
+            get { return _hudFrame != null ? _hudFrame.offsetMin.x : 0f; }
+        }
+
+        /// <summary>Re-insets the frame when the setting or the canvas width changed (one compare a frame otherwise).</summary>
+        private void ApplyHudFrame()
+        {
+            if (_hudFrame == null)
+            {
+                return;
+            }
+
+            Vector2 canvas = ScreenRect.rect.size;
+            bool on = UiSettings.HudFrame169;
+            if (Mathf.Approximately(canvas.x, _hudFrameWidth) && on == _hudFrameOn)
+            {
+                return;
+            }
+
+            _hudFrameWidth = canvas.x;
+            _hudFrameOn = on;
+            float inset = HudFrameInset(canvas, on);
+            _hudFrame.offsetMin = new Vector2(inset, 0f);
+            _hudFrame.offsetMax = new Vector2(-inset, 0f);
         }
 
         private RectTransform InkRoot(string name, Vector2 anchor, Vector2 pivot, Vector2 position, Vector2 size)

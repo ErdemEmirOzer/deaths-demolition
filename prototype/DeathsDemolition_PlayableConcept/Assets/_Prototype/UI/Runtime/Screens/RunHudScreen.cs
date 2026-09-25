@@ -1071,6 +1071,7 @@ namespace DD.Prototype.UI
             UpdateBanner();
             UpdateThreat();
             UpdateInkPosture();   // 8-R: calm / danger
+            ApplyHudFrame();      // 12c · B12: the 16:9 frame follows the setting and the window
         }
 
         private void LateUpdate()
