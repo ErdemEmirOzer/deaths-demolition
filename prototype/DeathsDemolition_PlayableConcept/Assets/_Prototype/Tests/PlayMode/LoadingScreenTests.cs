@@ -227,7 +227,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.GreaterOrEqual(resultsDrawnUnderInk, 1, "AD 10b-2 MUST-2: Results mürekkep çekilmeden önce en az bir kare çizili (çekilme boş alan açmaz)");
         }
 
-        /// <summary>The Results screen is on screen at rest: its canvas and its three columns fully opaque.</summary>
+        /// <summary>The Results screen is on screen at rest: its canvas and its three blocks (tiles, report, rewards) fully opaque.</summary>
         private static bool ResultsDrawn()
         {
             ResultsScreen screen = Object.FindObjectOfType<ResultsScreen>();
@@ -240,7 +240,7 @@ namespace DD.Prototype.Tests.PlayMode
             int columns = 0;
             foreach (CanvasGroup group in groups)
             {
-                bool column = group.name == "Performance" || group.name == "Experience" || group.name == "Rewards";
+                bool column = group.name == "Tiles" || group.name == "Report" || group.name == "Rewards";   // R1-D Results v3 blocks
                 if ((column || group.GetComponent<Canvas>() != null) && group.alpha < 0.99f)
                 {
                     return false;

@@ -67,6 +67,21 @@ namespace DD.Prototype.UI
         /// keyboard and pad half of a hold control (<see cref="UiButton.ConfigureHold"/>).
         /// Same probe-once rule as <see cref="CancelPressed"/>.
         /// </summary>
+        /// <summary>
+        /// WP-068 R1-D: true on the frame Submit was pressed (Return / Space / gamepad south) - the Results choreography's
+        /// skip. Same probe-once rule as <see cref="CancelPressed"/>.
+        /// </summary>
+        public static bool SubmitPressed()
+        {
+            SubmitHeld();   // probes the button once
+            if (s_submitButtonState > 0)
+            {
+                return Input.GetButtonDown(SubmitButton);
+            }
+
+            return Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Space);
+        }
+
         public static bool SubmitHeld()
         {
             if (s_submitButtonState == 0)

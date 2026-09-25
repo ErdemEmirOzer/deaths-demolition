@@ -2030,5 +2030,49 @@
   "tree.gate.open": {
     "en": "KEYSTONE OWNED",
     "tr": "KİLİT TAŞI VAR"
+  },
+  "results.tile.round": {
+    "en": "ROUND",
+    "tr": "ROUND"
+  },
+  "results.tile.kills": {
+    "en": "KILLS",
+    "tr": "ÖLDÜRME"
+  },
+  "results.tile.gold": {
+    "en": "GOLD",
+    "tr": "ALTIN"
+  },
+  "results.tile.time": {
+    "en": "TIME",
+    "tr": "SÜRE"
+  },
+  "results.report": {
+    "en": "RUN REPORT",
+    "tr": "KOŞU RAPORU"
+  },
+  "results.combat": {
+    "en": "COMBAT",
+    "tr": "ÇATIŞMA"
+  },
+  "results.run": {
+    "en": "RUN",
+    "tr": "KOŞU"
+  },
+  "results.rewards": {
+    "en": "REWARDS",
+    "tr": "ÖDÜLLER"
+  },
+  "results.xp": {
+    "en": "EXPERIENCE",
+    "tr": "DENEYİM"
+  },
+  "results.new_best": {
+    "en": "NEW BEST · ROUND {value}",
+    "tr": "YENİ REKOR · ROUND {value}"
+  },
+  "results.empty": {
+    "en": "No new unlocks this run.",
+    "tr": "Bu koşuda yeni açılan yok."
   }
 }

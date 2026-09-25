@@ -214,6 +214,29 @@ namespace DD.Prototype.UI
 
         public string FooterNote = string.Empty;
 
+        // ---- WP-068 R1-D · E26 v3: the hero tiles, the report's weapon row, the reward reveal ----------------------
+
+        /// <summary>The four hero tiles (Round · Kills · Gold · Time), as numbers the counters roll to.</summary>
+        public int HeroRound;
+        public int HeroKills;
+        public int HeroGold;
+        public int HeroSeconds;
+
+        public ClassicWeaponId Weapon;
+        public string WeaponName = string.Empty;
+
+        /// <summary>The build as the HUD prints it ("P2 / FR1"), or "no upgrades".</summary>
+        public string BuildLine = string.Empty;
+
+        /// <summary>WP-077: Ash the run added to the PATH (0 unless the profile applied it).</summary>
+        public int AshEarned;
+
+        /// <summary>
+        /// The XP bar's value before the run, 0..1 of the same level; -1 when the run crossed a level (the "before" belongs
+        /// to another requirement, so the bar does not animate from it - E26: no fill animation without an honest start).
+        /// </summary>
+        public float ProgressBefore01 = -1f;
+
         // ---- empty state
         public string EmptyTitle = "There is no finished run to report.";
 
@@ -244,6 +267,19 @@ namespace DD.Prototype.UI
 
             model.HasRun = true;
             RunSummary summary = report.Summary;
+            model.HeroRound = Mathf.Max(0, summary.ReachedRound);
+            model.HeroKills = Mathf.Max(0, summary.TotalKills);
+            model.HeroGold = Mathf.Max(0, summary.GoldEarned);
+            model.HeroSeconds = Mathf.Max(0, Mathf.FloorToInt(summary.RunDuration));
+            model.Weapon = summary.Weapon;
+            model.WeaponName = weaponName != null ? weaponName(summary.Weapon) : summary.Weapon.ToString();
+            model.BuildLine = string.IsNullOrEmpty(summary.BuildDescription) || summary.BuildDescription == "Stock"
+                ? "no upgrades"
+                : UiFactory.Clip(summary.BuildDescription, BuildMaxCharacters);
+            model.AshEarned = Mathf.Max(0, report.AshEarned);
+            model.ProgressBefore01 = report.LevelBefore == report.LevelAfter && report.LevelRequirementAfter > 0
+                ? Mathf.Clamp01(report.XpIntoLevelBefore / (float)report.LevelRequirementAfter)
+                : -1f;
 
             // ---- header ------------------------------------------------------
             model.Eyebrow = DescribeEnding(summary);

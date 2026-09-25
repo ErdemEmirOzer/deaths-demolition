@@ -616,4 +616,25 @@ S-09 (R1-C, 25.09):
 - Direction E25's read-only strip on the Pause card: five value-over-label cells and the build line under them. The values come from the producers the HUD and Results already quote (RunEvents, the wallet, RunBuildState), so the three screens agree.
 - `pause.run.upgrades` counts the upgrades bought this run. The build line reads "WEAPON · build" and falls back to `pause.run.build_none`.
 
+## 11 · Results v3 (S-09, R1-D)
+
+| key | en | tr |
+| --- | --- | --- |
+| `results.tile.round` | ROUND | ROUND |
+| `results.tile.kills` | KILLS | ÖLDÜRME |
+| `results.tile.gold` | GOLD | ALTIN |
+| `results.tile.time` | TIME | SÜRE |
+| `results.report` | RUN REPORT | KOŞU RAPORU |
+| `results.combat` | COMBAT | ÇATIŞMA |
+| `results.run` | RUN | KOŞU |
+| `results.rewards` | REWARDS | ÖDÜLLER |
+| `results.xp` | EXPERIENCE | DENEYİM |
+| `results.new_best` | NEW BEST · ROUND {value} | YENİ REKOR · ROUND {value} |
+| `results.empty` | No new unlocks this run. | Bu koşuda yeni açılan yok. |
+
+S-09 (R1-D, 25.09):
+- The Results v3 blocks (direction E26): four hero tiles (Round · Kills · Gold · Time), RUN REPORT (COMBAT / RUN), and REWARDS (EXPERIENCE, PATH line `path.results.delta`, unlocks and achievements).
+- `results.new_best` is the sakura ribbon beside the title, the last beat of the choreography.
+- `results.empty` replaces the two old empty lines when the run unlocked nothing.
+
 <!-- TABLES:END -->
