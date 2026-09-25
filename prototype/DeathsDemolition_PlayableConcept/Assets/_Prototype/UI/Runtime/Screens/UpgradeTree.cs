@@ -39,6 +39,10 @@ namespace DD.Prototype.UI
         private const float TabHeight = 44f;
         private const float TabWidth = 168f;
         private const float CompactSealMax = 48f;
+
+        /// <summary>12b (AD R1-C SHOULD-1): the lock on a LOCKED seal, and the band a NEEDS glyph keeps of its outline (SDF units, 0.5 = edge).</summary>
+        private const float LockSize = 18f;
+        private const float HollowGlyphBand = 0.2f;   // ≈ 2.4 px of the 64 px cell (spread 6) - the ink outline is 0.25
         private const float MinSeal = 40f;
         private const float EdgeGap = 24f;
         private const float BuyWidth = 204f;
@@ -53,6 +57,7 @@ namespace DD.Prototype.UI
             public Image Ring;
             public Image Glyph;
             public Image Cross;
+            public Image Lock;
             public Image Mark;
             public GameObject Pin;
             public GameObject Offer;
@@ -78,7 +83,10 @@ namespace DD.Prototype.UI
         private TMP_Text _laneKeys;
         private TMP_Text _hearthCount;
         private RectTransform _grid;
-        private UiTreeEdges _edges;
+        // One edge Graphic per tier (12b, AD R1-C re-check PD §5.4): an edge inks in with the tier it leads into, so the
+        // Opening Beat never draws a join into an empty slot. Same material, no texture: the tiers still batch as one.
+        private readonly UiTreeEdges[] _edgeTiers = new UiTreeEdges[Tiers];
+        private readonly CanvasGroup[] _edgeGroups = new CanvasGroup[Tiers];
 
         private RectTransform _dContent;
         private RectTransform _dHead;
@@ -149,7 +157,20 @@ namespace DD.Prototype.UI
         public TMP_Text DetailName => _dName;
         public TMP_Text DetailState => _dState;
         public TMP_Text DetailDescription => _dDesc;
-        public UiTreeEdges Edges => _edges;
+        /// <summary>Edges drawn across the tiers (tests).</summary>
+        public int EdgeCount
+        {
+            get
+            {
+                int count = 0;
+                for (int t = 0; t < Tiers; t++)
+                {
+                    count += _edgeTiers[t] != null ? _edgeTiers[t].Count : 0;
+                }
+
+                return count;
+            }
+        }
         public RectTransform DetailRect => _detail;
         public RectTransform TreeRect => _tree;
 
@@ -245,15 +266,21 @@ namespace DD.Prototype.UI
             _grid.anchorMax = new Vector2(0f, 1f);
             _grid.pivot = new Vector2(0f, 1f);
 
-            var edgesGo = new GameObject("Edges", typeof(RectTransform), typeof(CanvasRenderer), typeof(UiTreeEdges));
-            var edgesRect = (RectTransform)edgesGo.transform;
-            edgesRect.SetParent(_grid, false);
-            edgesRect.anchorMin = new Vector2(0f, 1f);
-            edgesRect.anchorMax = new Vector2(0f, 1f);
-            edgesRect.pivot = new Vector2(0f, 1f);
-            edgesRect.anchoredPosition = Vector2.zero;
-            _edges = edgesGo.GetComponent<UiTreeEdges>();
-            _edges.raycastTarget = false;
+            for (int t = 0; t < Tiers; t++)
+            {
+                var edgesGo = new GameObject("Edges" + t, typeof(RectTransform), typeof(CanvasRenderer), typeof(UiTreeEdges), typeof(CanvasGroup));
+                var edgesRect = (RectTransform)edgesGo.transform;
+                edgesRect.SetParent(_grid, false);
+                edgesRect.anchorMin = new Vector2(0f, 1f);
+                edgesRect.anchorMax = new Vector2(0f, 1f);
+                edgesRect.pivot = new Vector2(0f, 1f);
+                edgesRect.anchoredPosition = Vector2.zero;
+                _edgeTiers[t] = edgesGo.GetComponent<UiTreeEdges>();
+                _edgeTiers[t].raycastTarget = false;
+                _edgeGroups[t] = edgesGo.GetComponent<CanvasGroup>();
+                _edgeGroups[t].interactable = false;
+                _edgeGroups[t].blocksRaycasts = false;
+            }
             _gateLabel = UiFactory.Label("GateLabel", _grid, string.Empty, UiType.Caption, UiColor.TextMuted, TextAnchor.LowerLeft);
             _gateLabel.enableWordWrapping = false;
             var gateRect = (RectTransform)_gateLabel.transform;
@@ -309,6 +336,18 @@ namespace DD.Prototype.UI
             Image dot = UiFactory.NewImage("New", v.Seal, UiColor.AccentSakura, UiSprites.Disc);   // the kit's NEW colour (UiChips)
             PlaceAnchored((RectTransform)dot.transform, new Vector2(0f, 0f), new Vector2(0.5f, 0.5f), new Vector2(6f, 6f), new Vector2(10f, 10f));
             v.New = dot.gameObject;
+            // 12b (AD R1-C SHOULD-1): LOCKED carries the kit's lock in the lower-left corner (NEW's corner - a locked node is
+            // never new), so the state has a shape of its own beside the hairline ring and the node keeps its glyph.
+            Sprite locked = UiArt.Icon("Shop.Locked");
+            v.Lock = UiFactory.NewImage("Lock", v.Seal, UiColor.TextMuted, locked != null ? locked : UiSprites.Disc);
+            v.Lock.raycastTarget = false;
+            PlaceAnchored(v.Lock.rectTransform, new Vector2(0f, 0f), new Vector2(0.5f, 0.5f), new Vector2(4f, 4f), new Vector2(LockSize, LockSize));
+            if (locked != null && UiArt.IsGlyph(locked))
+            {
+                UiArt.ApplyGlyph(v.Lock);
+            }
+
+            v.Lock.gameObject.SetActive(false);
             TMP_Text offer = UiChips.Create("Offer", v.Seal, UiChipKind.Value, UiStrings.Get("tree.flag.offer", "OFFER"), UiChipSize.Row);
             v.Offer = offer.transform.parent.gameObject;
             v.Group = v.Button.gameObject.AddComponent<CanvasGroup>();
@@ -408,7 +447,10 @@ namespace DD.Prototype.UI
 
             _grid.sizeDelta = new Vector2(_pitchX * Tiers, _pitchY * Rows);
             _grid.anchoredPosition = new Vector2(0f, -gridTop);
-            ((RectTransform)_edges.transform).sizeDelta = _grid.sizeDelta;
+            for (int t = 0; t < Tiers; t++)
+            {
+                ((RectTransform)_edgeTiers[t].transform).sizeDelta = _grid.sizeDelta;
+            }
 
             float boxH = _pitchY - (_compact ? 4f : 8f);
             _boxH = boxH;
@@ -587,6 +629,13 @@ namespace DD.Prototype.UI
                         UiPresets.StampIn(_views[s].Seal, delay);
                     }
                 }
+
+                for (int t = 0; t < Tiers; t++)
+                {
+                    // The joins into tier t ink in with tier t's seals (12b, PD §5.4).
+                    _edgeGroups[t].alpha = UiMotion.ReducedMotion ? 1f : 0f;
+                    UiMotion.Alpha(_edgeGroups[t], 1f, UiDuration.Fast, UiEase.Settle, UiMotionClass.Decor, t * OpeningBeatSeconds);
+                }
             }
         }
 
@@ -613,11 +662,11 @@ namespace DD.Prototype.UI
             }
 
             RunTreeNodeView n = _snap.Nodes[index];
-            SetGlyph(v.Glyph, n);
             bool owned = IsOwned(n) || (n.Kind == RunTreeNodeKind.Tier && n.OwnedTier > 0);
             bool dim = n.Status == RunTreeNodeStatus.Locked || n.Status == RunTreeNodeStatus.Excluded;
             bool waiting = n.Status == RunTreeNodeStatus.PrereqMissing;
             bool forSale = Offered(index);
+            SetGlyph(v.Glyph, n, waiting && !owned);
 
             // PD §5.1: shape + glyph + word, never colour alone. Owned = a cream seal with an ink glyph; open = an
             // inset seal ringed in cream; waiting = a muted ring; locked / closed = no fill, dim, the closed one struck.
@@ -625,10 +674,19 @@ namespace DD.Prototype.UI
             v.Fill.color = UiTokens.Get(owned ? UiColor.TextPrimary : UiColor.SurfaceInset);
             v.Glyph.color = WithAlpha(UiTokens.Get(owned ? UiColor.SurfaceBase : UiColor.TextPrimary), dim ? 0.35f : waiting ? 0.6f : 1f);
             // The heavy ring is the offer's alone (gold); every other seal wears the thin one, the capstone / seal the ensō.
+            // 12b (AD R1-C SHOULD-1): the three unbought states read by shape - AVAILABLE the solid ring, NEEDS a dotted
+            // hairline (and a hollow glyph), LOCKED the plain hairline (and the lock).
+            bool special = n.Kind == RunTreeNodeKind.Capstone || n.Kind == RunTreeNodeKind.WeaponSeal;
             v.Ring.sprite = forSale ? UiSprites.Ring
-                : n.Kind == RunTreeNodeKind.Capstone || n.Kind == RunTreeNodeKind.WeaponSeal ? UiSprites.RingEnso : UiSprites.RingThin;
-            UiColor ring = forSale ? UiColor.StateGold : owned ? UiColor.TextSecondary : dim || waiting ? UiColor.TextMuted : UiColor.TextPrimary;
+                : waiting && !owned ? UiSprites.RingDotted
+                : n.Status == RunTreeNodeStatus.Locked ? UiSprites.RingHairline
+                : special ? UiSprites.RingEnso : UiSprites.RingThin;
+            v.Lock.gameObject.SetActive(n.Status == RunTreeNodeStatus.Locked);
+            // MAX wears the ginpaku ring - silver leaf, the screen's one ceremony (12b, AD R1-C MUST-5 residual).
+            bool max = n.Kind == RunTreeNodeKind.Tier && n.MaxTier > 0 && n.OwnedTier >= n.MaxTier;
+            UiColor ring = forSale ? UiColor.StateGold : max ? UiColor.SilverLeaf : owned ? UiColor.TextSecondary : dim || waiting ? UiColor.TextMuted : UiColor.TextPrimary;
             v.Ring.color = WithAlpha(UiTokens.Get(ring), dim ? 0.6f : 1f);
+            SetLeaf(v.Ring, max && !forSale);
             v.Cross.gameObject.SetActive(n.Status == RunTreeNodeStatus.Excluded);
             v.New.SetActive(n.NewlyUnlocked);
             v.Pin.SetActive(n.IsPinned);
@@ -660,14 +718,15 @@ namespace DD.Prototype.UI
             if (_compact)
             {
                 // Compact rows carry OFFER and the owned count in the word (no room for chips beside the words).
-                if (count)
-                {
-                    word = n.OwnedTier + "/" + n.MaxTier + " · " + word;
-                }
-
+                string counted = count ? n.OwnedTier + "/" + n.MaxTier + " · " : string.Empty;
+                word = counted + word;
                 if (forSale)
                 {
-                    word = UiStrings.Get("tree.flag.offer", "OFFER") + " · " + word;
+                    // An offered node that can be bought reads "OFFER · 15" (or "OFFER · 2/4 · 15"): the price never sits
+                    // alone on a line below "OFFER · AVAILABLE ·" (12b, AD R1-C SHOULD-8 fallback; the static atlas has no
+                    // no-break space).
+                    word = UiStrings.Get("tree.flag.offer", "OFFER") + " · "
+                        + (n.Status == RunTreeNodeStatus.Available ? counted + n.Cost.ToString(CultureInfo.InvariantCulture) : word);
                 }
             }
 
@@ -682,13 +741,37 @@ namespace DD.Prototype.UI
                 : _compact && forSale ? UiColor.StateGold : dim ? UiColor.TextMuted : UiColor.TextSecondary);
         }
 
-        private static void SetGlyph(Image image, RunTreeNodeView n)
+        /// <summary>The ginpaku leaf on a MAX seal's ring (DD/UI/Fx Leaf, silver: x 0); off on every other seal.</summary>
+        private static void SetLeaf(Image ring, bool on)
+        {
+            UiFx fx = ring.GetComponent<UiFx>();
+            if (!on)
+            {
+                if (fx != null)
+                {
+                    fx.enabled = false;
+                }
+
+                return;
+            }
+
+            if (fx == null)
+            {
+                fx = ring.gameObject.AddComponent<UiFx>();
+            }
+
+            fx.Configure(UiFxMode.Leaf, UiDuration.Reveal, Vector3.zero);
+            fx.enabled = true;
+        }
+
+        private static void SetGlyph(Image image, RunTreeNodeView n, bool hollow)
         {
             Sprite glyph = GlyphOf(n);
             UiArt.SetGlyph(image, glyph != null ? glyph : UiSprites.Disc);
             if (UiArt.IsGlyph(image.sprite))
             {
-                UiArt.ApplyGlyph(image, new Vector3(0.25f, 0f, 0f));
+                // NEEDS draws the glyph outline-only (DD/UI/Fx SdfGlyph, a negative width = a hollow band; 12b AD R1-C SHOULD-1).
+                UiArt.ApplyGlyph(image, new Vector3(hollow ? -HollowGlyphBand : 0.25f, 0f, 0f));
             }
         }
 
@@ -871,7 +954,11 @@ namespace DD.Prototype.UI
 
         private void DrawEdges()
         {
-            _edges.Clear();
+            for (int t = 0; t < Tiers; t++)
+            {
+                _edgeTiers[t].Clear();
+            }
+
             Color hair = WithAlpha(UiTokens.Get(UiColor.TextMuted), 0.7f);
             Color owned = UiTokens.Get(UiColor.TextSecondary);
             Color pinned = UiTokens.Get(UiColor.TextPrimary);
@@ -960,7 +1047,7 @@ namespace DD.Prototype.UI
 
                     int row = _snap.Nodes[i].Row;
                     firstRow = Mathf.Min(firstRow, row);
-                    _edges.Add(new Vector2(x, -(row * _pitchY + 2f)), new Vector2(x, -(row * _pitchY + _pitchY - 10f)), keystoneOwned ? 2f : 1f,
+                    EdgesInto(gateTier).Add(new Vector2(x, -(row * _pitchY + 2f)), new Vector2(x, -(row * _pitchY + _pitchY - 10f)), keystoneOwned ? 2f : 1f,
                         !keystoneOwned, keystoneOwned ? owned : hair);
                 }
 
@@ -976,7 +1063,16 @@ namespace DD.Prototype.UI
                 }
             }
 
-            _edges.Commit();
+            for (int t = 0; t < Tiers; t++)
+            {
+                _edgeTiers[t].Commit();
+            }
+        }
+
+        /// <summary>The edge Graphic of the tier an edge leads into.</summary>
+        private UiTreeEdges EdgesInto(int tier)
+        {
+            return _edgeTiers[Mathf.Clamp(tier, 0, Tiers - 1)];
         }
 
         private float _gateX = -1f;
@@ -1011,18 +1107,19 @@ namespace DD.Prototype.UI
         {
             Vector2 a = EdgeOut(p.Row, p.Column);
             Vector2 b = EdgeIn(c.Row, c.Column);
+            UiTreeEdges edges = EdgesInto(c.Column);
             if (!_compact || p.Row == c.Row)
             {
-                _edges.Add(a, b, width, dashed, colour);
+                edges.Add(a, b, width, dashed, colour);
                 return;
             }
 
             float gutter = c.Column * _pitchX - EdgeGap * 0.5f;
             var g1 = new Vector2(gutter, a.y);
             var g2 = new Vector2(gutter, b.y);
-            _edges.Add(a, g1, width, dashed, colour);
-            _edges.Add(g1 + new Vector2(0f, a.y > b.y ? width * 0.5f : -width * 0.5f), g2 + new Vector2(0f, a.y > b.y ? -width * 0.5f : width * 0.5f), width, dashed, colour);
-            _edges.Add(g2, b, width, dashed, colour);
+            edges.Add(a, g1, width, dashed, colour);
+            edges.Add(g1 + new Vector2(0f, a.y > b.y ? width * 0.5f : -width * 0.5f), g2 + new Vector2(0f, a.y > b.y ? -width * 0.5f : width * 0.5f), width, dashed, colour);
+            edges.Add(g2, b, width, dashed, colour);
         }
 
         private Vector2 SealCentre(int row, int tier)
@@ -1270,7 +1367,7 @@ namespace DD.Prototype.UI
             }
 
             RunTreeNodeView n = _snap.Nodes[index];
-            SetGlyph(_dGlyph, n);
+            SetGlyph(_dGlyph, n, false);
             _dGlyph.color = UiTokens.Get(UiColor.TextPrimary);
             bool hearth = n.Kind == RunTreeNodeKind.Hearth;
             _dKind.text = UiStrings.Get("tree.kind." + n.Kind, n.Kind.ToString().ToUpperInvariant()) + "  ·  " +

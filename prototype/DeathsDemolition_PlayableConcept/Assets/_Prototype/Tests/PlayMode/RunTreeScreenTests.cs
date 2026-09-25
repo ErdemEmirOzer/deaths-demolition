@@ -94,7 +94,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.Greater(snap.Count, 0, "the snapshot has the run's tree");
             Assert.Greater(shop.Cards.Count, 0, "the offer has node cards");
             Assert.IsNotNull(tree.NodeButton(0, 0) ?? tree.NodeButton(1, 0) ?? tree.NodeButton(2, 0) ?? tree.NodeButton(3, 0), "tier 1 of the weapon lane is drawn");
-            Assert.Greater(tree.Edges.Count, 0, "the weapon lane draws its edges");
+            Assert.Greater(tree.EdgeCount, 0, "the weapon lane draws its edges");
             Assert.GreaterOrEqual(tree.GateX, 0f, "the keystone gate is drawn before the forks / seal / Hearth");
             Assert.IsTrue(tree.GateLabel.gameObject.activeSelf, "the gate carries its word (AD R1-C MUST-3b)");
             StringAssert.Contains("KEYSTONE", tree.GateLabel.text);

@@ -182,10 +182,10 @@ namespace DD.Prototype.UI
                     return UiArt.Icon("Upgrade." + glyph.Id) ?? UiArt.Medal(UiMedal.Rare);
                 case UnlockContentType.Title:
                     typeLabel = "TITLE";
-                    return UiArt.Medal(UiMedal.Rare);
+                    return UiArt.Icon("Unlock.Title") ?? UiArt.Medal(UiMedal.Rare);   // 12b (AD G1 SHOULD-3): its own G1 cell
                 case UnlockContentType.Badge:
                     typeLabel = "BADGE";
-                    return UiArt.Medal(UiMedal.Epic);
+                    return UiArt.Icon("Unlock.Badge") ?? UiArt.Medal(UiMedal.Rare);   // the sakura wreath (Epic) is the Epic medal's alone
                 case UnlockContentType.Indicator:
                     typeLabel = "HUD";
                     return UiArt.Reticle(true) ?? UiArt.Medal(UiMedal.Rare);

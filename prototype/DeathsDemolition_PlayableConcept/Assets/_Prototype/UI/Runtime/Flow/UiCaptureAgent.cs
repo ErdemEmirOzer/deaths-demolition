@@ -1002,8 +1002,10 @@ namespace DD.Prototype.UI
                 yield return Frame(folder, "ink-bleed");
                 yield return WaitFor(() => Time.realtimeSinceStartup - t0 >= 2.2f, 3f);
                 yield return Frame(folder, "ink-covered");
-                yield return WaitFor(() => curtain.KeyArtVisible && curtain.InkCovering, 8f);
+                Debug.Log("[UiCapture] ink-covered done at +" + (Time.realtimeSinceStartup - t0).ToString("F2") + " s after the death");
+                yield return WaitFor(() => curtain.GroupVisible && curtain.KeyArtVisible && curtain.InkCovering, 8f);
                 yield return new WaitForSecondsRealtime(0.8f);
+                Debug.Log("[UiCapture] ink-keyart · " + curtain.DebugState);
                 yield return Frame(folder, "ink-keyart");
                 // AD 10b-2 wanted: ENTERING at 360°, the frame before the recede starts.
                 yield return WaitFor(() => curtain.EyebrowText == "ENTERING", 20f);

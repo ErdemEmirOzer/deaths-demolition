@@ -209,10 +209,10 @@ namespace DD.Prototype.UI
             get { return _plateFar != null && _plateFar.gameObject.activeSelf && _plateFar.texture != null; }
         }
 
-        /// <summary>The destination's key art is on screen (tests, captures).</summary>
+        /// <summary>The destination's key art is on screen (tests, captures): in the hierarchy, so a hidden group's stale art does not count.</summary>
         public bool KeyArtVisible
         {
-            get { return _keyArt != null && _keyArt.gameObject.activeSelf && _keyArt.texture != null; }
+            get { return _keyArt != null && _keyArt.gameObject.activeInHierarchy && _keyArt.texture != null; }
         }
 
         /// <summary>The loading key art (Resources paths): the courtyard for every load, the wall for the way to the Results.</summary>
@@ -242,6 +242,18 @@ namespace DD.Prototype.UI
         public bool ErrorOpen
         {
             get { return _error != null && _error.IsOpen; }
+        }
+
+        /// <summary>The group's render state in one line (captures: why a frame shows what it shows).</summary>
+        public string DebugState
+        {
+            get
+            {
+                return "group=" + (_group != null && _group.gameObject.activeInHierarchy) + " a=" + (_group != null ? _group.alpha.ToString("F2") : "-")
+                       + " art=" + KeyArtVisible + " ring=" + DeviceVisible + " ringOnly=" + _ringOnly + " ink=" + _ink
+                       + " canvas=" + (_canvas != null && _canvas.enabled) + " inkIdx=" + (_inkLayer != null ? _inkLayer.GetSiblingIndex() : -1)
+                       + " groupIdx=" + (_group != null ? _group.transform.GetSiblingIndex() : -1) + " eyebrow=" + _eyebrowState;
+            }
         }
 
         /// <summary>The key art's current push-in scale (captures: the t 0 / t 4 s evidence).</summary>

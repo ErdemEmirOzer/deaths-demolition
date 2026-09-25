@@ -254,6 +254,14 @@ Shader "DD/UI/Fx"
                 float aa = max(fwidth(dist), 1e-4);
                 float edge = 0.5 + IN.prm.z;
                 float fillA = smoothstep(edge - aa, edge + aa, dist);
+                if (IN.prm.x < 0.0)
+                {
+                    // WP-068 12b (AD R1-C SHOULD-1): a negative width draws the glyph hollow - only a band that wide inside
+                    // its edge, in the tint (the tree's NEEDS state: an outline-only glyph).
+                    float innerA = smoothstep(edge - IN.prm.x - aa, edge - IN.prm.x + aa, dist);
+                    return half4(tint.rgb, saturate(fillA - innerA) * tint.a);
+                }
+
                 float ringA = IN.prm.x > 0.0 ? saturate(smoothstep(edge - IN.prm.x - aa, edge - IN.prm.x + aa, dist) - fillA) : 0.0;
                 float coreA = saturate(fillA + ringA);
                 float glowA = IN.prm.y > 0.0 ? saturate(smoothstep(edge - IN.prm.x - IN.prm.y, edge - IN.prm.x, dist) * 0.55 * _DD_Flash - coreA) : 0.0;

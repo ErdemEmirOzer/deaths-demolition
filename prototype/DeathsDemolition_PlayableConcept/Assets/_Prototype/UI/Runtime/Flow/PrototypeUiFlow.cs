@@ -355,6 +355,7 @@ namespace DD.Prototype.UI
                     // WP-068 12b (C-00 decision A): a slow load under the ink opens the Results key art inside it.
                     curtain.ShowInkGroup(UiCurtain.DestinationFor(sceneName), UiCurtain.KeyArtFor(sceneName));
                     ringShownAt = now;
+                    Debug.Log("[UI] Results key art opened in the ink at +" + (now - t0).ToString("F2") + " s (progress " + progress.ToString("F2") + ").");
                 }
 
                 if (ringShownAt >= 0f)
@@ -411,6 +412,11 @@ namespace DD.Prototype.UI
             if (stallError)
             {
                 curtain.HideError();
+            }
+
+            if (ink)
+            {
+                Debug.Log("[UI] Results load under the ink done at +" + (Time.unscaledTime - t0).ToString("F2") + " s (key art " + (ringShownAt >= 0f ? "shown" : "not needed") + ").");
             }
 
             // Activation: the seal step, the world is released, the scene may activate.
