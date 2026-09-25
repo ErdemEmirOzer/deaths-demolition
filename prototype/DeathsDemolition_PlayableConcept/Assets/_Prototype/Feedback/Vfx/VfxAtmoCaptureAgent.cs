@@ -42,7 +42,7 @@ namespace DD.Prototype.Feedback.Vfx
                 yield return null;
             }
 
-            yield return new WaitForSeconds(4f);
+            yield return new WaitForSeconds(8f);   // past the round-intro plate (AD B5: the FP frame at 4 s was the plate)
             string mode = CameraModeService.Current == CameraMode.FirstPerson ? "fp" : CameraModeService.Current == CameraMode.ThirdPerson ? "tp" : "topdown";
             string tier = VfxTier.Current.ToString().ToLowerInvariant();
             for (int n = 0; n < 6; n++)
