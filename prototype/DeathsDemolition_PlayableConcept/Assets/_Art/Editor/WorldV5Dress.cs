@@ -655,8 +655,9 @@ namespace DD.Art.Pipeline.EditorTools
 
         private static void Ground(Transform greybox)
         {
-            // The greybox ground (170 m box) in the kit's moss, 3 m tile; the ponds on the AP-015 water v2 (world-space: fits the discs).
-            Restyle(greybox, "Ground", "moss", 3f);
+            // The greybox ground (170 m box) on DD/GroundMoss (WP-075 C7b: graded kit moss, tone field, soil / gravel / leaf patches, path
+            // bands; WorldV5Moss); the ponds on the AP-015 water v2 (world-space: fits the discs).
+            WorldV5Moss.Apply(greybox);
             var water = AssetDatabase.LoadAssetAtPath<Material>(WaterMaterialPath);
             if (water == null) throw new InvalidOperationException("water v2 material missing: " + WaterMaterialPath);
             foreach (Transform t in Children(greybox))

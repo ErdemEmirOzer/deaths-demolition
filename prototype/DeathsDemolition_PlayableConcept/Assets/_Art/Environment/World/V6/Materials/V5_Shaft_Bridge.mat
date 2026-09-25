@@ -25,6 +25,8 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
+    - _AlongFalloff: 0.35
+    - _DepthFade: 0.8
     - _EdgeSoftness: 0.4
     - _NoiseScale: 5
     - _NoiseSpeed: 0.25
@@ -32,4 +34,5 @@ Material:
     - _TierAlpha: 1
     m_Colors:
     - _Color: {r: 1, g: 0.8, b: 0.54999995, a: 1}
+    - _NearFade: {r: 4, g: 12, b: 0, a: 0}
   m_BuildTextureStacks: []

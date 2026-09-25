@@ -489,6 +489,31 @@ namespace DD.Art.Tests.EditMode
                 Assert.IsTrue(AssetDatabase.Contains(c), c.GetType().Name + " profil alt varlığı");
         }
 
+        [Test]
+        public void Greybox_C7b_YosunZemin_DunyaUzayi_YolBantlari()
+        {
+            Open();
+            var ground = GameObject.Find(GreyboxV6Builder.GreyboxRootName).transform.Find("Ground")?.gameObject;
+            Assert.IsNotNull(ground, "greybox Ground");
+            Material m = ground.GetComponent<MeshRenderer>().sharedMaterial;
+            Assert.AreEqual(WorldV5Moss.ShaderName, m.shader.name);
+            Assert.AreEqual(WorldV5Moss.MaterialPath, AssetDatabase.GetAssetPath(m));
+            Assert.Less(m.GetFloat("_MossSaturation"), 0.8f, "yosun doygunluğu düşürüldü");
+            foreach (string slot in new[] { "_MossMap", "_MossNormal", "_GravelMap", "_EarthMap", "_PathMask" }) Assert.IsNotNull(m.GetTexture(slot), slot);
+            Assert.IsNull(AssetDatabase.LoadAssetAtPath<Material>(WorldV5Moss.OldMaterialPath), "eski Lit yosun kopyası silindi");
+
+            // The mask: gravel on a lane centre, soil only on its shoulder, nothing far from any path.
+            var mask = AssetDatabase.LoadAssetAtPath<Texture2D>(WorldV5Moss.MaskPath);
+            Assert.AreEqual(WorldV5Moss.MaskSize, mask.width);
+            Color Sample(Vector2 p) => mask.GetPixelBilinear((p.x + WorldV5Moss.MaskHalf) / (2f * WorldV5Moss.MaskHalf), (p.y + WorldV5Moss.MaskHalf) / (2f * WorldV5Moss.MaskHalf));
+            Assert.Greater(Sample(new Vector2(-45f, 5f)).r, 0.8f, "bambu ana yolu çakıl");
+            Color shoulder = Sample(new Vector2(-45f + 2.0f, 5f));   // the middle of the soil band (1.45 … 2.6 m)
+            Assert.Less(shoulder.r, 0.3f);
+            Assert.Greater(shoulder.g, 0.5f, "omuz toprak");
+            Color far = Sample(new Vector2(-70f, -70f));
+            Assert.Less(far.r + far.g, 0.02f, "yoldan uzak: yosun");
+        }
+
         private static int CountOf(string s, string token)
         {
             int n = 0;

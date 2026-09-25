@@ -25,16 +25,16 @@ namespace DD.Art.Pipeline.EditorTools
         /// <summary>Priority order (tier counts cut from the end): region, top point XZ, top height, length, width, peak alpha.</summary>
         public static readonly (string region, Vector2 at, float top, float length, float width, float alpha)[] Shafts =
         {
-            ("Bamboo", new Vector2(-45f, -20f), 11f, 12f, 2.0f, 0.26f), ("Bamboo", new Vector2(-45f, -6f), 12f, 14f, 2.5f, 0.26f),
-            ("Bamboo", new Vector2(-45f, 8f), 11f, 10f, 1.5f, 0.26f), ("Bamboo", new Vector2(-45f, 20f), 12f, 13f, 2.2f, 0.26f),
+            ("Bamboo", new Vector2(-45f, -20f), 11f, 12f, 2.0f, 0.22f), ("Bamboo", new Vector2(-45f, -6f), 12f, 14f, 2.5f, 0.22f),
+            ("Bamboo", new Vector2(-45f, 8f), 11f, 10f, 1.5f, 0.22f), ("Bamboo", new Vector2(-45f, 20f), 12f, 13f, 2.2f, 0.22f),
             ("Sakura", new Vector2(33f, 4f), 9f, 10f, 2.5f, 0.20f), ("Sakura", new Vector2(39f, -2f), 9f, 12f, 3.0f, 0.20f),
             ("Veranda", new Vector2(-10f, 37f), 7f, 8f, 1.5f, 0.18f), ("Veranda", new Vector2(10f, 37f), 7f, 9f, 1.5f, 0.18f),
             ("Bridge", new Vector2(4f, -24f), 9f, 8f, 2.0f, 0.14f), ("Kairo", new Vector2(-35.2f, 0f), 3.2f, 8f, 1.2f, 0.22f),
             // High ends here (10); Cinematic (r2: 20) adds the rest.
             ("Sakura", new Vector2(36f, 6f), 8f, 8f, 2.0f, 0.20f), ("Bridge", new Vector2(3f, -33f), 9f, 8f, 2.0f, 0.14f),
             ("Kairo", new Vector2(-35.2f, -1f), 3.2f, 7f, 1.2f, 0.22f), ("Kairo", new Vector2(-35.2f, 1f), 3.2f, 6f, 1.2f, 0.22f),
-            ("Pavilion", new Vector2(33f, -33f), 6f, 6f, 1.2f, 0.14f), ("Bamboo", new Vector2(-40f, -14f), 11f, 11f, 1.8f, 0.26f),
-            ("Bamboo", new Vector2(-40f, 14f), 11f, 12f, 2.0f, 0.26f), ("Sakura", new Vector2(42f, 6f), 9f, 10f, 2.5f, 0.20f),
+            ("Pavilion", new Vector2(33f, -33f), 6f, 6f, 1.2f, 0.14f), ("Bamboo", new Vector2(-40f, -14f), 11f, 11f, 1.8f, 0.22f),
+            ("Bamboo", new Vector2(-40f, 14f), 11f, 12f, 2.0f, 0.22f), ("Sakura", new Vector2(42f, 6f), 9f, 10f, 2.5f, 0.20f),
             ("Sakura", new Vector2(30f, -4f), 8f, 9f, 2.0f, 0.20f), ("Veranda", new Vector2(0f, 37f), 7f, 7f, 1.5f, 0.18f),
         };
 
