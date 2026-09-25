@@ -426,17 +426,17 @@ namespace DD.Art.Pipeline.EditorTools
             }
         }
 
-        /// <summary>v005 corner yagura just outside the ring corners (±59: the 7.6 m tower's inner face behind the tsuiji), facing in.</summary>
+        /// <summary>v005 corner yagura just outside the ring corners, at 1.25× (AD B5b SHOULD-3: they hold the corners): ±60.2 puts the 9.5 m tower's inner face behind the tsuiji, facing in.</summary>
         private static void Yagura(Transform dress)
         {
             // The modifier's own layer must be in the bake mask (NavMeshSurface.CollectSources skips it otherwise).
             var group = new GameObject("CornerYagura") { layer = PrototypeLayers.Environment }.transform;
             group.SetParent(dress, false);
-            const float c = 59f;
+            const float c = 60.2f, scale = 1.25f;
             // Vista only: out of the bake (their floors / roofs sit inside the NavMesh volume's ±58 m and would grow islands).
             group.gameObject.AddComponent<NavMeshModifier>().ignoreFromBuild = true;
             foreach ((float x, float y, float deg) in new[] { (-c, -c, 0f), (c, -c, 90f), (c, c, 180f), (-c, c, 270f) })
-                Place(group, "yagura", 1, Mz(x, y, 0f, deg), Vector3.zero, "structure");
+                Place(group, "yagura", 1, Mz(x, y, 0f, deg) * Matrix4x4.Scale(Vector3.one * scale), Vector3.zero, "structure");
         }
 
         // ---------------------------------------------------------------- helpers

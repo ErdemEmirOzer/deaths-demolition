@@ -264,7 +264,7 @@ namespace DD.Art.Tests.EditMode
             Assert.Greater(roof.GetComponentsInChildren<Renderer>(true).Length, 60, "üst çatı + mokoshi parçaları çatı tutucusunda");
 
             // B5b-2 · the slate plaza: every variant and every quarter turn in use, each sub-mesh on DD/GroundTiles with its set's three
-            // maps, 120 kerbs on the open edges (32 + 28 + 28 + 12 + 12 + 4 + 4 m), the four v005 planters in place of the boxes.
+            // maps and the AD values, a kerb module per metre of open edge on the wet kerb material, the four v005 planters in place of the boxes.
             Transform plaza = dress.transform.Find(WorldV5Ground.PlazaName);
             Assert.IsNotNull(plaza, "meydan");
             Mesh mesh = plaza.GetComponent<MeshFilter>().sharedMesh;
@@ -289,10 +289,16 @@ namespace DD.Art.Tests.EditMode
                 Assert.AreEqual(WorldV5Ground.ShaderName, mats[i].shader.name, mats[i].name);
                 foreach (string prop in new[] { "_BaseMap", "_NormalMap", "_MaskMap" })
                     StringAssert.Contains(WorldV5Ground.SlateSets[i], AssetDatabase.GetAssetPath(mats[i].GetTexture(prop)), mats[i].name + " " + prop);
+                foreach ((string name, float value) in WorldV5Ground.MaterialValues)
+                    Assert.AreEqual(value, mats[i].GetFloat(name), 1e-4f, mats[i].name + " " + name);
             }
 
-            Assert.AreEqual(120, dress.transform.Find(WorldV5Ground.KerbGroupName).childCount, "bordür");
-            Assert.AreEqual(WorldV5Ground.PlazaRects.Length, dress.transform.Find(WorldV5Ground.ProbeGroupName).GetComponentsInChildren<ReflectionProbe>().Length, "meydan yansıma probu");
+            Transform kerbs = dress.transform.Find(WorldV5Ground.KerbGroupName);
+            Assert.AreEqual(WorldV5Ground.KerbCount(), kerbs.childCount, "bordür");
+            foreach (Renderer r in kerbs.GetComponentsInChildren<Renderer>(true))
+                foreach (Material m in r.sharedMaterials)
+                    Assert.AreNotEqual(WorldV5Ground.KerbSourceMaterial, m.name, r.name + ": bordür ıslak granitte");
+            Assert.AreEqual(WorldV5Ground.ProbeRects.Length, dress.transform.Find(WorldV5Ground.ProbeGroupName).GetComponentsInChildren<ReflectionProbe>().Length, "meydan yansıma probu");
             int planters = 0;
             foreach (Transform t in dress.transform.Find("CentrePlanting"))
                 if (PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(t.gameObject).EndsWith("SM_planter_V07.prefab", System.StringComparison.Ordinal)) planters++;

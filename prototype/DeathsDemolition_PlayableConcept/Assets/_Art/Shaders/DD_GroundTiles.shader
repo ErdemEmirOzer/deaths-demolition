@@ -18,7 +18,14 @@ Shader "DD/GroundTiles"
         _WetSmoothness("Wet smoothness cap (AP-018)", Range(0, 0.6)) = 0.60
         _PuddleThreshold("Puddle threshold (mask × wetness)", Range(0, 1)) = 0.45
         _PuddleRamp("Puddle ramp width", Range(0.02, 0.5)) = 0.15
-        _PuddleSmoothness("Puddle smoothness", Range(0, 1)) = 0.85
+        _PuddleSmoothness("Puddle smoothness", Range(0, 1)) = 0.92
+        [Header(Clustered puddles, world space)]
+        _PuddleScale("Puddle field scale (m)", Range(2, 20)) = 7.0
+        _PuddleField("Puddle field threshold (0.62 ≈ 25 % cover)", Range(0.3, 0.95)) = 0.62
+        _PuddleFieldRamp("Puddle field edge", Range(0.01, 0.2)) = 0.06
+        [Header(Albedo grade)]
+        _AlbedoSaturation("Albedo saturation", Range(0, 1)) = 0.28
+        _AlbedoValue("Albedo value scale (linear)", Range(0.5, 4)) = 2.5
         _PuddleDarken("Puddle albedo scale", Range(0.5, 1)) = 0.85
         [HideInInspector] _Cull("__cull", Float) = 2.0
     }
@@ -48,12 +55,37 @@ Shader "DD/GroundTiles"
             half _PuddleRamp;
             half _PuddleSmoothness;
             half _PuddleDarken;
+            half _PuddleScale;
+            half _PuddleField;
+            half _PuddleFieldRamp;
+            half _AlbedoSaturation;
+            half _AlbedoValue;
             half _Cull;
         CBUFFER_END
 
         TEXTURE2D(_BaseMap);    SAMPLER(sampler_BaseMap);
         TEXTURE2D(_NormalMap);
         TEXTURE2D(_MaskMap);
+
+        // Clustered puddles (AD B5b MUST-2): 2-octave value noise in world XZ (7 m / 2.5 m), blobs of 3–5 m across cells.
+        float DDGroundHash(float2 p)
+        {
+            float3 p3 = frac(float3(p.xyx) * 0.1031);
+            p3 += dot(p3, p3.yzx + 33.33);
+            return frac((p3.x + p3.y) * p3.z);
+        }
+
+        float DDGroundValueNoise(float2 x)
+        {
+            float2 i = floor(x), f = frac(x), u = f * f * (3.0 - 2.0 * f);
+            float a = DDGroundHash(i), b = DDGroundHash(i + float2(1, 0)), c = DDGroundHash(i + float2(0, 1)), d = DDGroundHash(i + float2(1, 1));
+            return lerp(lerp(a, b, u.x), lerp(c, d, u.x), u.y);
+        }
+
+        half DDPuddleField(float2 xz)
+        {
+            return 0.65 * DDGroundValueNoise(xz / _PuddleScale) + 0.35 * DDGroundValueNoise(xz / (_PuddleScale * 0.36) + float2(17.3, 5.1));
+        }
         ENDHLSL
 
         Pass
@@ -138,8 +170,14 @@ Shader "DD/GroundTiles"
                 half4 mask = SAMPLE_TEXTURE2D(_MaskMap, sampler_BaseMap, input.uv);
                 half wet = saturate(mask.b * _Wetness);
                 half puddle = saturate((mask.a * _Wetness - _PuddleThreshold) / max(_PuddleRamp, 0.02h) + 0.5h);
+                half field = saturate((DDPuddleField(input.positionWS.xz) - _PuddleField) / max(_PuddleFieldRamp, 0.01h)) * _Wetness;
+                puddle = max(puddle, field);
+                wet = max(wet, saturate(field * 2.0h));
 
                 half3 albedo = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv).rgb;
+                // Grade (AD MUST-4): the P-05 slate is steel-blue (chroma ≈ 27 %, Y ≈ 0.09) — neutral wet grey, chroma ≤ 8 %, dry Y ≈ 0.22.
+                half luma = dot(albedo, half3(0.2126h, 0.7152h, 0.0722h));
+                albedo = lerp(luma.xxx, albedo, _AlbedoSaturation) * _AlbedoValue;
                 albedo *= lerp(1.0h, _WetAlbedo, wet);
                 albedo *= lerp(1.0h, _PuddleDarken, puddle);
 

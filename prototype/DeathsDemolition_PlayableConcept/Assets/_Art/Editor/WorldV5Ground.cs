@@ -9,10 +9,11 @@ namespace DD.Art.Pipeline.EditorTools
 {
     /// <summary>
     /// WP-074 B5b-2 · The World v5 plaza on the AP-023 4K slate (P-05 ground manifest v001, the HF-center target's wet flagstone
-    /// court). The plaza covers the centre square, the chūmon passage and the forecourt inside its walls. It is a mesh on a
-    /// global 4 m grid: each cell takes one of the three slate variants (a sub-mesh per variant material) and a 0 / 90 / 180 /
-    /// 270° UV rotation, both from a hash of the cell (P-05 AD SHOULD). The tile edges are grout lines, so mixed cells read as one
-    /// irregular flagstone court. The mesh lies 12 mm over the greybox ground and carries no collider, so the NavMesh is
+    /// court). The plaza runs wall to wall: the centre square up to the forecourt wall, the karamon axis, the chūmon threshold, the
+    /// forecourt and the strips beside the hall. It is a mesh on a global grid of 2 m cells (the 4 m texture tile at half size —
+    /// slabs 0.6–1.0 m, AD B5b MUST-3), odd rows shifted half a cell (SHOULD-2): each cell takes one of the three slate variants (a
+    /// sub-mesh per variant material) and a 0 / 90 / 180 / 270° UV rotation, both from a hash of the cell (P-05 AD SHOULD). The
+    /// tile edges are grout lines, so mixed cells read as one irregular flagstone court. The mesh lies 12 mm over the greybox ground and carries no collider, so the NavMesh is
     /// unchanged; its open edges get the kit's granite kerb (+0.15 m, a step under the 0.30 climb). Material: DD/GroundTiles
     /// (BaseColor + Normal 4K, the packed Mask R AO / G roughness / B wetness / A puddle). Each paved rect has a box-projected
     /// reflection probe, so the wet slate and the puddles reflect the court.
@@ -23,32 +24,61 @@ namespace DD.Art.Pipeline.EditorTools
         public const string KerbGroupName = "Plaza_Kerbs", ProbeGroupName = "Plaza_ReflectionProbes";
         public const int ProbeResolution = 512;
         public const string ShaderName = "DD/GroundTiles";
-        public const float Cell = 4f, Lift = 0.012f;
+        public const float Cell = 2f, Lift = 0.012f;
         public const int Seed = 743;
         public static readonly string[] SlateSets = { "ap023_slate_flag_v01", "ap023_slate_flag_v02", "ap023_slate_flag_v03" };
         public static string MeshPath => GreyboxV6Builder.DataFolder + "/V5_Plaza_Slate.asset";
 
         /// <summary>
-        /// The paved rectangles (world x0, z0, x1, z1), not overlapping: the centre square, the chūmon passage up to the
-        /// forecourt, and the forecourt inside its walls (inner faces x ±25.7, z 20.3) up to the hall's plinth front (z 37.5).
+        /// The paved rectangles (world x0, z0, x1, z1), not overlapping (AD B5b MUST-1: wall to wall, one paved axis): the centre
+        /// square up to the forecourt wall's south face (z 19.7), the karamon axis strip (8 m wide, z −18…−14), the chūmon threshold,
+        /// the forecourt inside its walls (inner faces x ±25.7, z 20.3) up to the hall's plinth front, and the strips beside the hall.
         /// </summary>
         public static readonly Vector4[] PlazaRects =
         {
-            new Vector4(-16f, -14f, 16f, 14f),
-            new Vector4(-4f, 14f, 4f, 20.3f),
+            new Vector4(-16f, -14f, 16f, 19.7f),
+            new Vector4(-4f, -18f, 4f, -14f),
+            new Vector4(-4f, 19.7f, 4f, 20.3f),
+            new Vector4(-25.7f, 20.3f, 25.7f, WorldV5Dress.HallFrontZ),
+            new Vector4(-25.7f, WorldV5Dress.HallFrontZ, -18f, WorldV5Dress.HallFrontZ + 13f),
+            new Vector4(18f, WorldV5Dress.HallFrontZ, 25.7f, WorldV5Dress.HallFrontZ + 13f),
+        };
+
+        /// <summary>Box-projected reflection probes: the centre square (with the axis strip) and the forecourt.</summary>
+        public static readonly Vector4[] ProbeRects =
+        {
+            new Vector4(-16f, -18f, 16f, 19.7f),
             new Vector4(-25.7f, 20.3f, 25.7f, WorldV5Dress.HallFrontZ),
         };
 
-        /// <summary>Open plaza edges that get kerbs (world XZ segments): the square's four sides around the passage, the passage sides up to R6.</summary>
+        /// <summary>Open plaza edges that get kerbs (world XZ segments): the square's sides around the axis strip, the strip, the hall-side strips' outer edges past the forecourt walls (z 36).</summary>
         public static readonly (Vector2 a, Vector2 b)[] KerbEdges =
         {
-            (new Vector2(-16f, -14f), new Vector2(16f, -14f)),
-            (new Vector2(-16f, -14f), new Vector2(-16f, 14f)),
-            (new Vector2(16f, -14f), new Vector2(16f, 14f)),
-            (new Vector2(-16f, 14f), new Vector2(-4f, 14f)),
-            (new Vector2(4f, 14f), new Vector2(16f, 14f)),
-            (new Vector2(-4f, 14f), new Vector2(-4f, 18f)),
-            (new Vector2(4f, 14f), new Vector2(4f, 18f)),
+            (new Vector2(-16f, -14f), new Vector2(-4f, -14f)),
+            (new Vector2(4f, -14f), new Vector2(16f, -14f)),
+            (new Vector2(-16f, -14f), new Vector2(-16f, 19.7f)),
+            (new Vector2(16f, -14f), new Vector2(16f, 19.7f)),
+            (new Vector2(-4f, -18f), new Vector2(-4f, -14f)),
+            (new Vector2(4f, -18f), new Vector2(4f, -14f)),
+            (new Vector2(-4f, -18f), new Vector2(4f, -18f)),
+            (new Vector2(-25.7f, 36f), new Vector2(-25.7f, WorldV5Dress.HallFrontZ + 13f)),
+            (new Vector2(25.7f, 36f), new Vector2(25.7f, WorldV5Dress.HallFrontZ + 13f)),
+        };
+
+        /// <summary>1 m kerb modules per edge (Kerbs: the edge length rounded, each stretched to fit).</summary>
+        public static int KerbCount()
+        {
+            int n = 0;
+            foreach ((Vector2 a, Vector2 b) in KerbEdges) n += Mathf.Max(1, Mathf.RoundToInt(Vector2.Distance(a, b)));
+            return n;
+        }
+
+        /// <summary>DD/GroundTiles values set on every ground material (AD B5b: MUST-2 clustered puddles and near-mirror water, MUST-4 grade).</summary>
+        public static readonly (string name, float value)[] MaterialValues =
+        {
+            ("_NormalStrength", 1f), ("_Occlusion", 1f), ("_Wetness", 1f), ("_WetAlbedo", 0.82f), ("_WetSmoothness", 0.60f),
+            ("_PuddleThreshold", 0.45f), ("_PuddleRamp", 0.15f), ("_PuddleSmoothness", 0.92f), ("_PuddleDarken", 0.85f),
+            ("_PuddleScale", 7f), ("_PuddleField", 0.62f), ("_PuddleFieldRamp", 0.06f), ("_AlbedoSaturation", 0.28f), ("_AlbedoValue", 2.5f),
         };
 
         /// <summary>The ground-set textures under the contract (T_&lt;set&gt;_BaseColor / _Normal / _Mask for every AP-023 ground set).</summary>
@@ -89,9 +119,9 @@ namespace DD.Art.Pipeline.EditorTools
             // B8 bake replaces them), 512 px (QUALITY-TIERS-V2 r2 Cinematic), 14 m tall.
             var probes = new GameObject(ProbeGroupName).transform;
             probes.SetParent(parent, false);
-            for (int i = 0; i < PlazaRects.Length; i++)
+            for (int i = 0; i < ProbeRects.Length; i++)
             {
-                Vector4 r = PlazaRects[i];
+                Vector4 r = ProbeRects[i];
                 var probe = new GameObject("PlazaProbe_" + i).AddComponent<ReflectionProbe>();
                 probe.transform.SetParent(probes, false);
                 probe.transform.position = new Vector3((r.x + r.z) * 0.5f, 3f, (r.y + r.w) * 0.5f);
@@ -108,12 +138,13 @@ namespace DD.Art.Pipeline.EditorTools
 
             var kerbs = new GameObject(KerbGroupName).transform;
             kerbs.SetParent(parent, false);
-            foreach ((Vector2 a, Vector2 b) in KerbEdges) Kerbs(kerbs, a, b, placeKit);
+            Material kerb = KerbMaterial();
+            foreach ((Vector2 a, Vector2 b) in KerbEdges) Kerbs(kerbs, a, b, placeKit, kerb);
             return cells;
         }
 
         /// <summary>1 m kerbs along an edge (the last one stretched to fit), centred 0.15 m outside the paving.</summary>
-        private static void Kerbs(Transform parent, Vector2 a, Vector2 b, Func<Transform, string, int, Matrix4x4, string, GameObject> placeKit)
+        private static void Kerbs(Transform parent, Vector2 a, Vector2 b, Func<Transform, string, int, Matrix4x4, string, GameObject> placeKit, Material kerb)
         {
             float len = Vector2.Distance(a, b);
             Vector2 d = (b - a) / len;
@@ -126,7 +157,9 @@ namespace DD.Art.Pipeline.EditorTools
             for (int i = 0; i < n; i++)
             {
                 Vector2 p = a + d * ((i + 0.5f) * scale) + side * 0.15f;
-                placeKit(parent, "granite_kerb", 1 + (i % 3 == 2 ? 2 : 0), Matrix4x4.TRS(new Vector3(p.x, p.y, 0f), Quaternion.AngleAxis(deg, Vector3.forward), new Vector3(scale, 1f, 1f)), "dressing");
+                GameObject k = placeKit(parent, "granite_kerb", 1 + (i % 3 == 2 ? 2 : 0), Matrix4x4.TRS(new Vector3(p.x, p.y, 0f), Quaternion.AngleAxis(deg, Vector3.forward), new Vector3(scale, 1f, 1f)), "dressing");
+                foreach (Renderer r in k.GetComponentsInChildren<Renderer>(true))
+                    r.sharedMaterials = Array.ConvertAll(r.sharedMaterials, m => m != null && m.name == KerbSourceMaterial ? kerb : m);
             }
         }
 
@@ -150,17 +183,18 @@ namespace DD.Art.Pipeline.EditorTools
             cells = 0;
             foreach (Vector4 r in rects)
             {
-                for (int cx = Mathf.FloorToInt(r.x / Cell); cx * Cell < r.z; cx++)
                 for (int cz = Mathf.FloorToInt(r.y / Cell); cz * Cell < r.w; cz++)
+                for (int cx = Mathf.FloorToInt((r.x - RowShift(cz)) / Cell); cx * Cell + RowShift(cz) < r.z; cx++)
                 {
-                    float x0 = Mathf.Max(r.x, cx * Cell), x1 = Mathf.Min(r.z, (cx + 1) * Cell), z0 = Mathf.Max(r.y, cz * Cell), z1 = Mathf.Min(r.w, (cz + 1) * Cell);
+                    float left = cx * Cell + RowShift(cz);
+                    float x0 = Mathf.Max(r.x, left), x1 = Mathf.Min(r.z, left + Cell), z0 = Mathf.Max(r.y, cz * Cell), z1 = Mathf.Min(r.w, (cz + 1) * Cell);
                     if (x1 - x0 < 1e-3f || z1 - z0 < 1e-3f) continue;
                     (int variant, int quarter) = CellPick(cx, cz, variants);
                     int b = verts.Count;
                     foreach (Vector2 c in new[] { new Vector2(x0, z0), new Vector2(x0, z1), new Vector2(x1, z1), new Vector2(x1, z0) })
                     {
                         verts.Add(new Vector3(c.x, 0f, c.y));
-                        uvs.Add(Turn(new Vector2(c.x / Cell - cx, c.y / Cell - cz), quarter));
+                        uvs.Add(Turn(new Vector2((c.x - left) / Cell, c.y / Cell - cz), quarter));
                     }
 
                     tris[variant].AddRange(new[] { b, b + 1, b + 2, b, b + 2, b + 3 });
@@ -184,6 +218,12 @@ namespace DD.Art.Pipeline.EditorTools
             if (created) AssetDatabase.CreateAsset(mesh, MeshPath);
             else EditorUtility.SetDirty(mesh);
             return mesh;
+        }
+
+        /// <summary>Odd rows run half a cell to the east (a running bond of cells: the grid stops reading).</summary>
+        public static float RowShift(int cz)
+        {
+            return (cz & 1) != 0 ? Cell * 0.5f : 0f;
         }
 
         /// <summary>Quarter turns of a tile UV about the tile centre.</summary>
@@ -215,7 +255,37 @@ namespace DD.Art.Pipeline.EditorTools
             m.SetTexture("_BaseMap", Load(set, "BaseColor"));
             m.SetTexture("_NormalMap", Load(set, "Normal"));
             m.SetTexture("_MaskMap", Load(set, "Mask"));
+            foreach ((string name, float value) in MaterialValues) m.SetFloat(name, value);
             m.enableInstancing = true;
+            EditorUtility.SetDirty(m);
+            return m;
+        }
+
+        public const string KerbSourceMaterial = "M_ap023_granite";
+
+        /// <summary>
+        /// V5_Kerb.mat: the kit granite, wet (AD B5b MUST-4 — the kerbs read as near-white outlines): base colour × 0.5 (top value
+        /// ≤ 0.40 linear) and the packed smoothness at full weight, the slate's wet read; the kit material itself is untouched.
+        /// </summary>
+        public static Material KerbMaterial()
+        {
+            var source = AssetDatabase.LoadAssetAtPath<Material>(ArtPipelinePaths.ArtRoot + "/Materials/" + KerbSourceMaterial + ".mat");
+            if (source == null) throw new InvalidOperationException(KerbSourceMaterial + " missing");
+            string path = GreyboxV6Builder.DataFolder + "/Materials/V5_Kerb.mat";
+            var m = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (m == null)
+            {
+                m = new Material(source);
+                AssetDatabase.CreateAsset(m, path);
+            }
+            else
+            {
+                m.shader = source.shader;
+                m.CopyPropertiesFromMaterial(source);
+            }
+
+            m.SetColor("_BaseColor", source.GetColor("_BaseColor") * 0.5f);
+            if (m.HasProperty("_Smoothness")) m.SetFloat("_Smoothness", 1f);
             EditorUtility.SetDirty(m);
             return m;
         }
