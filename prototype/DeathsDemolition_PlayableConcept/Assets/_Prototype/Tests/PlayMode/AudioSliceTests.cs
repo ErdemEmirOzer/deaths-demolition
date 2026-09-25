@@ -1305,16 +1305,29 @@ namespace DD.Prototype.Tests.PlayMode
                 };
                 cap = AudioOutputCapture.Arm(_d.gameObject, cuePath);
                 var at = new long[cues.Length];
+
+                // Paced on captured frames, not wall-clock: on a loaded machine (CI 2b300f06 ran beside a fullscreen dev
+                // Player) the mixer falls behind real time, and a wall-clock wait could stop the capture before the last
+                // cue's window was written — the clamped window then read as silence.
+                System.Collections.Generic.IEnumerator<object> Frames(long target)
+                {
+                    float limit = Time.realtimeSinceStartup + 5f;
+                    while (cap.FramesWritten < target && Time.realtimeSinceStartup < limit) yield return null;
+                }
+
                 for (int i = 0; i < cues.Length; i++)
                 {
-                    yield return new WaitForSecondsRealtime(0.5f);
+                    long from = i == 0 ? cap.FramesWritten : at[i - 1];
+                    yield return new WaitForSecondsRealtime(0.1f);
+                    yield return Frames(from + rate / 2);
                     at[i] = cap.FramesWritten;
                     DD.Prototype.UI.UiEvents.Raise(cues[i].e, cues[i].d);
                 }
 
-                yield return new WaitForSecondsRealtime(0.6f);
+                yield return Frames(at[cues.Length - 1] + (long)(0.6f * rate));
                 StopCapture();
                 float[] cue = ReadMono(cuePath, out rate);
+                Assert.GreaterOrEqual(cue.Length, at[cues.Length - 1] + (long)(0.45f * rate), "Yakalama son cue penceresinden önce bitti (ses hattı gerçek zamanın gerisinde).");
 
                 int win = rate / 10, hop = rate / 100, n = cue.Length;
                 var w = new float[win];
