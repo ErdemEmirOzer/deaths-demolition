@@ -44,6 +44,18 @@ namespace DD.Prototype.Tests.PlayMode
             SpecialWeaponGlow.Ensure();
         }
 
+        private SpecialWeaponSahne _sahne;
+
+        [UnityTearDown]
+        public IEnumerator SahneyiBitir()
+        {
+            if (_sahne != null)
+            {
+                yield return _sahne.Bitir();
+                _sahne = null;
+            }
+        }
+
         [TearDown]
         public void TearDown()
         {
@@ -392,6 +404,27 @@ namespace DD.Prototype.Tests.PlayMode
             SpecialWeaponUsageEvents.Publish(Gel(SpecialUsageKind.FieldSpawned, new Vector3(P.x, 0f, P.z), Vector3.up, 1.6f, 25f, 91000));
             Assert.AreEqual(chains + 1, arc.ChainArcs, "Raiju Hit → ArcSystem");
             Assert.AreEqual(puddles + 1, gel.PuddlesStarted, "Namekuji FieldSpawned → GelSystem");
+        }
+
+        // C-00 (25.09): a Special in hand plays no rifle flash, heat card or casing — PlayMuzzle hands it to ArcSystem / GelSystem
+        // (true = handled, so the director's WP-002 fallback card does not play either). A real pickup, not a flag.
+        [UnityTest]
+        public IEnumerator SpecialElde_TufekFlasi_Isi_Kovan_Yok()
+        {
+            _sahne = new SpecialWeaponSahne();
+            yield return _sahne.Kur();
+            yield return _sahne.SpawnEt(0.5f);
+            SpecialWeaponPickup pickup = _sahne.CanliPickup();
+            Assert.IsNotNull(pickup, "pickup doğmadı");
+            _sahne.PickupaGit(pickup);
+            yield return SpecialWeaponSahne.Bekle(() => _sahne.Controller.SpecialWeaponActive, SpecialWeaponSahne.FazZamanAsimi, "Special aktif olmadı.");
+
+            VfxDressing dressing = HitFeedbackDirector.Instance != null ? HitFeedbackDirector.Instance.Vfx : null;
+            Assert.IsNotNull(dressing, "sahnede VfxDressing yok");
+            int plays = dressing.MuzzlePlays;
+            Assert.IsTrue(dressing.PlayMuzzle(_sahne.Controller.transform, 1f), "Special namlusu işlenmiş sayılmalı (yedek kart oynamaz)");
+            Assert.AreEqual(plays, dressing.MuzzlePlays, "Special'da tüfek flaşı / ısı / kovan oynadı");
+            Assert.AreEqual("special", dressing.LastMuzzleNote);
         }
 
         // ------------------------------------------------------------------ 0 B
