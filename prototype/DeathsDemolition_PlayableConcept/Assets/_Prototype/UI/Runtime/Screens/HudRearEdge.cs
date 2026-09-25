@@ -106,14 +106,28 @@ namespace DD.Prototype.UI
 
         /// <summary>
         /// AD R1-A MUST-1: where the sprite goes for a bearing. The stroke's midpoint on the ellipse inset <see cref="EdgeInset"/>;
-        /// if its stroke would enter an avoided rect + <see cref="Clearance"/>, it lifts away from the nearer horizontal edge
-        /// (x unchanged - the bearing stays honest); the whole sprite stays <see cref="Clearance"/> inside the screen.
+        /// if its stroke would enter an avoided rect + <see cref="Clearance"/>, it moves away vertically (x unchanged - the
+        /// bearing stays honest); the whole sprite stays <see cref="Clearance"/> inside the screen.
+        /// WP-068 12b (AD R1-A SHOULD-10): in the lower half the move was always a lift; now, when the true point (the stroke's
+        /// midpoint on the ellipse) lies below the rect's centre, the stroke resolves downward past the rect's bottom edge -
+        /// but only where the sprite still fits between that edge and the screen's edge − 12 (with the FP cluster at the bottom
+        /// left, x 32–432 × y 820–960, there is seldom room, and then the lift stands). If the downward pass leaves the stroke
+        /// in any rect (one lower down lifts it back), the lift-only result is used, so the MUST-1 guarantees hold.
         /// </summary>
         public static Vector2 Place(float bearing, Vector2 canvasSize, Rect[] avoid, int count)
         {
+            Vector2 centre = Resolve(bearing, canvasSize, avoid, count, true);
+            return IsClear(centre, bearing, avoid, count) ? centre : Resolve(bearing, canvasSize, avoid, count, false);
+        }
+
+        /// <summary>As <see cref="Place(float, Vector2, Rect[], int)"/>, with the SHOULD-10 downward resolve on or off (tests compare the two).</summary>
+        public static Vector2 Resolve(float bearing, Vector2 canvasSize, Rect[] avoid, int count, bool resolveDownward)
+        {
             float r = bearing * Mathf.Deg2Rad;
             var u = new Vector2(Mathf.Sin(r), Mathf.Cos(r));
-            Vector2 centre = EdgePoint(bearing, canvasSize) - u * StrokeMidRadius;
+            Vector2 truePoint = EdgePoint(bearing, canvasSize);
+            Vector2 centre = truePoint - u * StrokeMidRadius;
+            float lowest = -canvasSize.y * 0.5f + Clearance + Size * 0.5f;   // the lowest centre the clamp below keeps
             for (int pass = 0; pass < 8; pass++)
             {
                 bool moved = false;
@@ -126,7 +140,14 @@ namespace DD.Prototype.UI
                         continue;
                     }
 
-                    centre.y += box.center.y < 0f ? clear.yMax - box.yMin : clear.yMin - box.yMax;
+                    float down = clear.yMin - box.yMax;
+                    float move = box.center.y < 0f ? clear.yMax - box.yMin : down;
+                    if (resolveDownward && move > 0f && truePoint.y < clear.center.y && centre.y + down >= lowest)
+                    {
+                        move = down;
+                    }
+
+                    centre.y += move;
                     box = StrokeBox(centre, bearing);
                     moved = true;
                 }
@@ -139,6 +160,21 @@ namespace DD.Prototype.UI
 
             float hx = canvasSize.x * 0.5f - Clearance - Size * 0.5f, hy = canvasSize.y * 0.5f - Clearance - Size * 0.5f;
             return new Vector2(Mathf.Clamp(centre.x, -hx, hx), Mathf.Clamp(centre.y, -hy, hy));
+        }
+
+        /// <summary>True when the stroke at <paramref name="centre"/> stays clear of every avoided rect + <see cref="Clearance"/>.</summary>
+        private static bool IsClear(Vector2 centre, float bearing, Rect[] avoid, int count)
+        {
+            Rect box = StrokeBox(centre, bearing);
+            for (int i = 0; i < count; i++)
+            {
+                if (box.Overlaps(Rect.MinMaxRect(avoid[i].xMin - Clearance, avoid[i].yMin - Clearance, avoid[i].xMax + Clearance, avoid[i].yMax + Clearance)))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         /// <param name="on">The BEHIND YOU threat is live (look modes only; the caller keeps top-down on the figure's ring).</param>

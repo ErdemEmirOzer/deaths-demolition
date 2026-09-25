@@ -187,6 +187,57 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsEmpty(failures, string.Join("\n", failures));
         }
 
+        /// <summary>
+        /// WP-068 12b (AD R1-A SHOULD-10): a true point below a rect's centre resolves downward past the rect's bottom edge
+        /// where the sprite fits under it (R1-A's 120° case), and the lift stands where it does not; the 64-bearing sweep above
+        /// runs the same Place.
+        /// </summary>
+        [Test]
+        public void ArkaYay_DogruNoktaDikdortgenOrtasininAltinda_AsagiCozulur_YerYoksaKalkar()
+        {
+            var canvas = new Vector2(1920f, 1080f);
+            float hh = canvas.y * 0.5f;
+
+            // R1-A's case: behind right (120°), a rect standing over the true point with room under it.
+            const float bearing = 120f;
+            Vector2 truth = HudRearEdge.EdgePoint(bearing, canvas);   // ≈ (748, −222)
+            Rect over = Rect.MinMaxRect(truth.x - 200f, truth.y - 20f, truth.x + 200f, truth.y + 160f);
+            Rect[] one = { over };
+            Vector2 down = HudRearEdge.Place(bearing, canvas, one, 1);
+            Vector2 lift = HudRearEdge.Resolve(bearing, canvas, one, 1, false);
+            Rect downBox = HudRearEdge.StrokeBox(down, bearing);
+            Rect liftBox = HudRearEdge.StrokeBox(lift, bearing);
+            Assert.AreEqual(lift.x, down.x, 0.001f, "x değişmez: yön dürüst kalır");
+            Assert.LessOrEqual(downBox.yMax, over.yMin - HudRearEdge.Clearance + 0.01f, "dikdörtgenin alt kenarının altına çözülür");
+            Assert.GreaterOrEqual(liftBox.yMin, over.yMax + HudRearEdge.Clearance - 0.01f, "eski kural üstüne kaldırırdı");
+            Assert.Less(Mathf.Abs(downBox.center.y - truth.y), Mathf.Abs(liftBox.center.y - truth.y) - 100f, "doğru noktaya ≥ 100 px daha yakın");
+            Assert.GreaterOrEqual(down.y - HudRearEdge.Size * 0.5f, -hh + HudRearEdge.Clearance - 0.01f, "sprite ekran kenarı − 12 içinde");
+
+            // No room: a rect near the bottom edge with the true point below its centre - the sprite would not fit under it.
+            Rect low = Rect.MinMaxRect(-150f, -500f, 150f, -380f);
+            Rect[] lowOnly = { low };
+            Assert.AreEqual(HudRearEdge.Resolve(180f, canvas, lowOnly, 1, false), HudRearEdge.Place(180f, canvas, lowOnly, 1), "yer yoksa kaldırma kalır");
+
+            // The live first-person layout (C-00 25.09): behind left at −146.25° the true point lies just under the weapon
+            // cluster's centre (x 32–432, y 820–960 from the top); the stroke now sits under the cluster, above the health block's
+            // column, instead of 210 px over it.
+            var fp = new[]
+            {
+                Rect.MinMaxRect(-928f, -hh + RunHudScreen.FpWeaponClusterBottom, -528f, -hh + RunHudScreen.FpWeaponClusterBottom + RunHudScreen.WeaponClusterHeight),
+                Rect.MinMaxRect(-928f, -hh + 32f, -548f, -hh + 142f),                                                  // health
+                new Rect(-HudRearEdge.PromptSlot.x * 0.5f, -hh + 24f, HudRearEdge.PromptSlot.x, HudRearEdge.PromptSlot.y),   // prompt slot
+            };
+            Vector2 fpAt = HudRearEdge.Place(-146.25f, canvas, fp, fp.Length);
+            Rect fpBox = HudRearEdge.StrokeBox(fpAt, -146.25f);
+            Assert.LessOrEqual(fpBox.yMax, fp[0].yMin - HudRearEdge.Clearance + 0.01f, "FP: kümenin altında");
+            for (int i = 0; i < fp.Length; i++)
+            {
+                Rect clear = Rect.MinMaxRect(fp[i].xMin - HudRearEdge.Clearance + 0.5f, fp[i].yMin - HudRearEdge.Clearance + 0.5f,
+                    fp[i].xMax + HudRearEdge.Clearance - 0.5f, fp[i].yMax + HudRearEdge.Clearance - 0.5f);
+                Assert.IsFalse(fpBox.Overlaps(clear), "FP: çizgi " + i + ". dikdörtgene girmez");
+            }
+        }
+
         [Test]
         public void SilahKumesi_HerModdaKosede_Parite()
         {
