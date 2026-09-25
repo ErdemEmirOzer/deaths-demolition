@@ -32,9 +32,9 @@ SHA=$(git -C "$DD_REPO" rev-parse --verify "$REF^{commit}" 2>/dev/null) || { ech
 for _ in $(seq 1 60); do pgrep -f "tools/compile-check.sh" >/dev/null || break; sleep 30; done
 # WP-043D: hold the single 'player' slot for the whole run — Player captures / bots share the audio device and
 # focus with the Editor PlayMode tests (a full-screen capture broke the UiV3 audio test); wrapped launches wait.
+OUT="$OUT_ROOT/$SHA"; mkdir -p "$OUT"; DD_TIMELINE="$OUT/timeline.txt"
 trap 'dd_slot_release player' EXIT
 dd_slot_acquire player
-OUT="$OUT_ROOT/$SHA"; mkdir -p "$OUT"; DD_TIMELINE="$OUT/timeline.txt"
 export DD_SLOT_TAG="main-ci"
 dd_log "main-ci sha=$SHA ci=$CI_DIR out=$OUT"
 
