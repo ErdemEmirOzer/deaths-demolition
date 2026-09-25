@@ -83,13 +83,14 @@ namespace DD.Prototype.UI
             }
 
             // The ending is the title; "RUN RESULTS" (and the name plate) the kicker; the loadout the line under it.
+            // 12b: the killing blow in words ("STANDARD ZOMBIE"), never the raw source id ("ZOMBIE.STANDARD.OVERHEAD").
             string ending = string.IsNullOrEmpty(_model.KilledBy)
                 ? _model.Eyebrow
-                : _model.Eyebrow + "  ·  " + UiFactory.Clip(_model.KilledBy, 32).ToUpperInvariant();
+                : _model.Eyebrow + "  ·  " + ResultsViewModel.KillerName(_model.KilledBy);
             string plate = CosmeticsViewModel.NamePlate(ProfileService.CosmeticsSource);
             string eyebrow = string.IsNullOrEmpty(plate) ? ResultsViewModel.Title : ResultsViewModel.Title + "  ·  " + plate.ToUpperInvariant();
-            float headerHeight = BuildHeader(eyebrow, ending, _model.Loadout);
-            BuildNewBest();
+            BuildNewBest();   // first: the ribbon's width bounds the title
+            float headerHeight = BuildHeader(eyebrow, ending, _model.Loadout, TitleTypeFor(ending));
 
             float top = headerHeight + (int)UiSpace.XL;
             RectTransform tiles = BuildTiles(top, out float tilesHeight);
@@ -165,6 +166,25 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>NEW BEST (E26): a sakura ribbon at the hero band's right, hidden until the last beat.</summary>
+        /// <summary>
+        /// AD R1-D SHOULD-5 (12b): the H1 yields before the ribbon moves - a title that would reach the NEW BEST ribbon
+        /// (+ XL) steps down to Display H2.
+        /// </summary>
+        private UiType TitleTypeFor(string title)
+        {
+            if (_newBest == null)
+            {
+                return UiType.H1;
+            }
+
+            float room = Content.rect.width - _newBest.sizeDelta.x - (int)UiSpace.XL;
+            TMP_Text probe = UiFactory.Label("TitleProbe", Content, title, UiType.H1, UiColor.TextPrimary, TextAnchor.LowerLeft);
+            float wide = probe.GetPreferredValues(title).x;
+            probe.gameObject.SetActive(false);
+            Destroy(probe.gameObject);
+            return wide > room ? UiType.H2 : UiType.H1;
+        }
+
         private void BuildNewBest()
         {
             if (string.IsNullOrEmpty(_model.BestRoundChip))

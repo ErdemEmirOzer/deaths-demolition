@@ -2090,5 +2090,21 @@
   "results.next_unlock_one": {
     "en": "Next unlock: {name} at level {level} · 1 level away",
     "tr": "Sıradaki açılış: {name}, seviye {level} · 1 seviye kaldı"
+  },
+  "results.killer.standard": {
+    "en": "STANDARD ZOMBIE",
+    "tr": "STANDART ZOMBİ"
+  },
+  "results.killer.special": {
+    "en": "SPECIAL ZOMBIE",
+    "tr": "ÖZEL ZOMBİ"
+  },
+  "results.killer.elite": {
+    "en": "ELITE ZOMBIE",
+    "tr": "ELİT ZOMBİ"
+  },
+  "results.killer.ultra": {
+    "en": "ULTRA ZOMBIE",
+    "tr": "ULTRA ZOMBİ"
   }
 }

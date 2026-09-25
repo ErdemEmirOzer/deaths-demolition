@@ -58,7 +58,8 @@ namespace DD.Prototype.Tests.PlayMode
         [Timeout(300000)]
         public IEnumerator Results_Mac_Atla_TumBloklarEkranda()
         {
-            yield return DieAndOpenResults(1.2f, 1.25f);
+            // A long unknown killer id: the H1 must yield (Display H2) before it reaches the NEW BEST ribbon (AD R1-D SHOULD-5).
+            yield return DieAndOpenResults(1.2f, 1.25f, "r1d-results-a-long-unknown-killing-blow-id");
             ResultsScreen screen = Object.FindObjectOfType<ResultsScreen>();
             yield return UiCurtain.WaitRevealed();
             screen.Skip();
@@ -66,9 +67,10 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(screen.Model.HeroKills, screen.Tile(1).Target, "the end state is the same after a skip");
             yield return null;
             AssertFits(screen, "mac");
+            AssertTitleClearsRibbon(screen, "mac");
         }
 
-        private static IEnumerator DieAndOpenResults(float uiScale, float textScale)
+        private static IEnumerator DieAndOpenResults(float uiScale, float textScale, string killer = "r1d-results")
         {
             LogAssert.ignoreFailingMessages = true;
             yield return BootTanMainMenuye();
@@ -82,9 +84,38 @@ namespace DD.Prototype.Tests.PlayMode
             yield return Bekle(() => RunEvents.Current.Phase == RunPhase.Fighting, 20f, "fighting");
             PlayerRig rig = PlayerRegistry.Primary;
             rig.Health.DiagnosisInvulnerable = false;
-            rig.Health.ApplyDamage(rig.Health.Max * 10f, rig.transform.position + Vector3.forward, "r1d-results");
+            rig.Health.ApplyDamage(rig.Health.Max * 10f, rig.transform.position + Vector3.forward, killer);
             yield return SahneyiBekle(PrototypeScenes.Results);
             yield return null;
+        }
+
+        /// <summary>The H1's printed words never reach the NEW BEST ribbon (when the run set one).</summary>
+        private static void AssertTitleClearsRibbon(ResultsScreen screen, string when)
+        {
+            TMP_Text title = null;
+            RectTransform ribbon = null;
+            foreach (TMP_Text text in screen.GetComponentsInChildren<TMP_Text>(false))
+            {
+                if (text.name == "Title")
+                {
+                    title = text;
+                }
+
+                if (text.transform.parent != null && text.transform.parent.name == "NewBest")
+                {
+                    ribbon = (RectTransform)text.transform.parent;
+                }
+            }
+
+            if (title == null || ribbon == null)
+            {
+                return;   // no new best on this run: nothing to clear
+            }
+
+            title.ForceMeshUpdate();
+            ribbon.GetWorldCorners(s_b);
+            float wordsRight = title.transform.TransformPoint(new Vector3(title.textBounds.max.x, 0f, 0f)).x;
+            Assert.Less(wordsRight, s_b[0].x, when + ": the title '" + title.text + "' stops before the NEW BEST ribbon");
         }
 
         /// <summary>Every visible word inside the screen and whole; the three blocks inside the page.</summary>

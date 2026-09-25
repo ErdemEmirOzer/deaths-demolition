@@ -59,6 +59,17 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void Results_OldurenVurus_KatmanAdi_HamKimlikDegil()
+        {
+            // 12b: the Results H1 names the attacker's tier, never EnemyAttackState's raw source id.
+            Assert.AreEqual("STANDARD ZOMBIE", ResultsViewModel.KillerName("Zombie.Standard.Overhead"));
+            Assert.AreEqual("ULTRA ZOMBIE", ResultsViewModel.KillerName("Zombie.Ultra.BiteGrab"));
+            Assert.AreEqual("ELITE ZOMBIE", ResultsViewModel.KillerName("Zombie.Elite"));
+            Assert.AreEqual("UI-CAPTURE", ResultsViewModel.KillerName("ui-capture"), "an unknown id prints as it came");
+            Assert.AreEqual(string.Empty, ResultsViewModel.KillerName(null));
+        }
+
+        [Test]
         public void Results_SiradakiAcilis_EnDusukUstSeviye_TekilCogul_YoksaBos()
         {
             // 12b (AD R1-D SHOULD-1): the lowest weapon / branch unlock above the level the run ended on; the v3 weapons that

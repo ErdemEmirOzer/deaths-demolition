@@ -198,6 +198,34 @@ namespace DD.Prototype.UI
             }
         }
 
+        /// <summary>
+        /// 12b: the killing blow in words for the Results H1 - "Zombie.&lt;Tier&gt;.&lt;Style&gt;" (EnemyAttackState's source ids)
+        /// becomes the tier's name from the R1 pack ("STANDARD ZOMBIE"); any other id prints as it came, upper case, clipped.
+        /// </summary>
+        public static string KillerName(string sourceId)
+        {
+            if (string.IsNullOrEmpty(sourceId))
+            {
+                return string.Empty;
+            }
+
+            const string Zombie = "Zombie.";
+            if (sourceId.StartsWith(Zombie, StringComparison.Ordinal))
+            {
+                int end = sourceId.IndexOf('.', Zombie.Length);
+                string tier = end > 0 ? sourceId.Substring(Zombie.Length, end - Zombie.Length) : sourceId.Substring(Zombie.Length);
+                switch (tier)
+                {
+                    case "Standard": return UiStrings.Get("results.killer.standard", "STANDARD ZOMBIE");
+                    case "Special": return UiStrings.Get("results.killer.special", "SPECIAL ZOMBIE");
+                    case "Elite": return UiStrings.Get("results.killer.elite", "ELITE ZOMBIE");
+                    case "Ultra": return UiStrings.Get("results.killer.ultra", "ULTRA ZOMBIE");
+                }
+            }
+
+            return UiFactory.Clip(sourceId, 32).ToUpperInvariant();
+        }
+
         /// <summary>The lowest weapon or branch unlock above <paramref name="level"/> (the profile's ladder), as the forward-look line.</summary>
         public static string NextUnlockFor(int level, IProfileLookup lookup)
         {
