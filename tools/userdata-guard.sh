@@ -1,5 +1,14 @@
 #!/bin/zsh
 # WP-066J · tools/userdata-guard.sh snapshot|restore <dir> [--scope all|editor|player]
+# WP-066N (§4.14 hole, 25.09: a snapshot taken during another session's live release-probe Player captured its transient
+#   Screenmanager values, and the restore wrote them back "verified"): with scope player/all (the default)
+#   · snapshot takes the single 'player' slot for the CALLER's shell (tools/slot.sh, DD_SLOT_OWNER) and holds it until
+#     restore — no other Player or player snapshot can start in the window (Players launched inside it by the same shell
+#     pass: the lock is re-entrant). Run snapshot → Player → restore from ONE shell/script;
+#   · snapshot refuses (30) while any Deaths Demolition Player is alive (pgrep on the executable path);
+#   · restore refuses (31, nothing written) when the snapshot's player PlayerPrefs deviate from the known-good display
+#     values (DD_GUARD_KNOWN_GOOD, default fullscreen mode 1, 1920×1080, window 0,0; ui-settings untouched) — tell C-00.
+#   main-ci snapshots with --scope editor (Editor tests cannot write the player area) and is unaffected.
 #
 # The one user-data guard standard (C-00, 2026-09-24): take a snapshot right before the run,
 # restore to THAT snapshot afterwards and remove whatever the run added. Never a fixed old
@@ -32,12 +41,16 @@
 #   (<dir>/players.log: utc, pid, command line — the .app path and -logFile name the session/run); it stops
 #   on restore (flag file removed; nothing is killed) or after 6 h. restore attributes each changed file
 #   (in or out of scope) to the Players alive at its mtime ± 10 s → <dir>/attribution.txt, one line per file.
+# Exit (WP-066N): 30 also = snapshot refused, a Player is running · 31 = restore refused, snapshot deviates from the
+#   known-good player display values.
 # Exit: 0 ok · 75 busy (a live foreign lock holder / live data kept changing) — nothing restored in that area · 30 restore did not reproduce the snapshot or a PlayerPrefs key not in it remains
 # (<dir>/extra-keys.txt) · 64 usage
 set -u
 source "${0:A:h}/dd-env.sh"
 CMD="${1:-}"; DIR="${2:-}"; SCOPE=all
 [ "${3:-}" = "--scope" ] && SCOPE="${4:-}"
+PLAYER_RE="${DD_GUARD_PLAYER_RE:-Contents/MacOS/(Deaths Demolition|DeathsDemolition)}"
+KNOWN_GOOD="${DD_GUARD_KNOWN_GOOD:-Screenmanager Fullscreen mode=1;Screenmanager Resolution Width=1920;Screenmanager Resolution Height=1080;Screenmanager Window Position X=0;Screenmanager Window Position Y=0}"
 [[ "$CMD" == (snapshot|restore) && -n "$DIR" && "$SCOPE" == (all|editor|player) ]] || { echo "usage: userdata-guard.sh snapshot|restore <dir> [--scope all|editor|player]" >&2; exit 64; }
 
 : "${DD_TIMELINE:=$DIR/timeline.txt}"; mkdir -p "$DIR"
@@ -119,8 +132,34 @@ snap_state_of() { local f
     echo "$(plist_digest "$SNAP/PR/p1.plist")  $P1 (launch-counter keys excluded)"; fi
 }
 
+# WP-066N: player-slot window + known-good display values.
+# Keys of the player domain plist ($1) that deviate from KNOWN_GOOD, one "key=actual (want expected)" per line.
+KG_CHECK='import plistlib, sys, os
+p, spec = sys.argv[1], sys.argv[2]
+if not os.path.isfile(p): sys.exit(0)
+d = plistlib.load(open(p, "rb"))
+for kv in spec.split(";"):
+    if "=" not in kv: continue
+    k, want = kv.split("=", 1)
+    if k in d and str(d[k]) != want: print("%s=%s (want %s)" % (k, d[k], want))'
+kg_deviation(){ python3 -c "$KG_CHECK" "$1" "$KNOWN_GOOD"; }
+release_player_slot(){ [ -f "$DIR/player-slot" ] || return 0; local t o; read -r t o < "$DIR/player-slot"
+  DD_SLOT_OWNER="$o" "$DD_SLOT" release player "$t" >/dev/null 2>&1; rm -f "$DIR/player-slot"; }
+
 if [ "$CMD" = snapshot ]; then
   [ -e "$SNAP" ] && { echo "userdata-guard: $SNAP exists — one snapshot per directory" >&2; exit 64; }
+  if in_scope player; then
+    PT="ug-$(printf '%s' "$DIR" | shasum | cut -c1-10)"; PO=$PPID
+    DD_SLOT_OWNER=$PO "$DD_SLOT" acquire player "$PT" > "$DIR/player-slot.out" 2>&1 || { dd_log "userdata-guard: player slot not acquired — $DIR/player-slot.out"; exit 75; }
+    printf '%s %s\n' "$PT" "$PO" > "$DIR/player-slot"
+    dd_log "userdata-guard: $(tail -1 "$DIR/player-slot.out") (held until restore, owner pid $PO)"
+    LIVE=$(pgrep -fl "$PLAYER_RE" 2>/dev/null)
+    if [ -n "$LIVE" ]; then
+      dd_log "userdata-guard: REFUSED — a Deaths Demolition Player is running; a snapshot now would capture its transient state: $(echo "$LIVE" | cut -c1-140 | tr '\n' ';')"
+      release_player_slot; exit 30
+    fi
+    DEV=$(kg_deviation "$P1"); [ -n "$DEV" ] && dd_log "WARNING userdata-guard: player display values already deviate from known-good (restore will refuse): $(echo "$DEV" | tr '\n' ';')"
+  fi
   wait_unlocked "$D1" "$D2" || exit 75
   try=1
   while :; do
@@ -154,6 +193,15 @@ if [ ! -f "$DIR/before-editor.txt" ]; then
 fi
 settle "$DOM1" "$P1"; settle "$DOM2" "$P2"
 rm -f "$DIR/.sampling"   # WP-066M: stops the sampler
+trap 'release_player_slot' EXIT   # WP-066N: the snapshot's player slot ends with this restore, whatever the outcome
+if in_scope player; then
+  DEV=$(kg_deviation "$SNAP/PR/p1.plist")
+  if [ -n "$DEV" ]; then
+    echo "$DEV" > "$DIR/known-good-deviation.txt"
+    dd_log "userdata-guard: REFUSED — the snapshot's player display values deviate from known-good; nothing restored, tell C-00: $(echo "$DEV" | tr '\n' ';')"
+    exit 31
+  fi
+fi
 LOCKDIRS=(); in_scope editor && LOCKDIRS+=("$D1"); in_scope player && LOCKDIRS+=("$D2")
 wait_unlocked "${LOCKDIRS[@]}" || { dd_log "userdata-guard: NOT restored — a live process holds the profile (retry when it exits)"; exit 75; }
 state > "$DIR/after-run.txt"

@@ -29,9 +29,18 @@ clean(){ local k=$1 f pid st; for f in "$BASE/$k"/* "$BASE/queue/$k"/*; do [ -e 
   if ! kill -0 "$pid" 2>/dev/null; then rm -f "$f"; continue; fi
   st=$(sed -n 's/^start=//p' "$f" 2>/dev/null); [ -n "$st" ] && [ "$st" != "$(pstart "$pid")" ] && rm -f "$f"; done; }
 oldest(){ ls "$BASE/queue/$1" 2>/dev/null | sort | head -1; }
-cmd=${1:-status}; kind=${2:-unity}; tag=${3:-anon}; owner=$PPID
+cmd=${1:-status}; kind=${2:-unity}; tag=${3:-anon}; owner=${DD_SLOT_OWNER:-$PPID}
+# WP-066N: DD_SLOT_OWNER lets a tool take the lock for its caller's shell (userdata-guard holds 'player' from snapshot to
+# restore); acquire is re-entrant — when the owner or one of its ancestors already holds a lock of this kind it returns at
+# once (a Player launched inside a guarded window must not wait for its own guard).
+kill -0 "$owner" 2>/dev/null || owner=$PPID
+is_ancestor(){ local a=$1 p=$2 n=0; while [ -n "$p" ] && [ "$p" -gt 1 ] 2>/dev/null && [ $n -lt 64 ]; do [ "$p" = "$a" ] && return 0; p=$(ps -o ppid= -p "$p" 2>/dev/null | tr -d ' '); n=$((n+1)); done; return 1; }
 case "$cmd" in
   acquire)
+    clean "$kind"
+    for held in "$BASE/$kind"/*; do [ -e "$held" ] || continue
+      if is_ancestor "${held##*.}" "$owner"; then echo "SLOT $kind reentrant -> $tag (held by ancestor pid ${held##*.}: $(basename "$held"))"; exit 0; fi
+    done
     start=$(date +%s); ostart=$(pstart "$owner")
     ticket=$(printf '%012d-%06d.%s.%s' "$start" "$owner" "$tag" "$owner")
     printf '%s %s\nstart=%s\n' "$(date -u +%FT%TZ)" "$tag" "$ostart" > "$BASE/queue/$kind/$ticket"
