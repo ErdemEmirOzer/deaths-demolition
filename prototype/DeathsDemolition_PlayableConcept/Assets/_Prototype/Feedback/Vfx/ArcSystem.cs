@@ -329,7 +329,10 @@ namespace DD.Prototype.Feedback.Vfx
             for (int k = 0; k < 3; k++)
             {
                 Vector3 a = Electrode(m, right, up, k), b = Electrode(m, right, up, (k + 1) % 3);
-                SpawnArc(ArcKind.Discharge, a, b, null, null, now, 0.20f, 5, 0.035f, 0.03f, 0.12f);
+                // Capture 1: 5 points at 3.5 cm read as a clean triangle (a UI glyph, not electricity) — 9 points at 9 cm, and a
+                // thinner second arc per edge on its own seed so the ring crackles.
+                SpawnArc(ArcKind.Discharge, a, b, null, null, now, 0.20f, 9, 0.09f, 0.03f, 0.12f);
+                SpawnArc(ArcKind.Discharge, a, b, null, null, now, 0.14f, 9, 0.12f, 0.015f, 0.06f);
             }
 
             _afterFlickerUntil = now + 0.20f + 0.5f;
