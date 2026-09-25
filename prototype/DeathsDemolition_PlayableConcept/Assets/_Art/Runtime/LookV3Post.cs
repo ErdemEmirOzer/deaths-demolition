@@ -53,6 +53,10 @@ namespace DD.Art
         private VolumeProfile _profile;
         private float _focus = 10f;
 
+        private void OnEnable() => ScreenAtmosphereFeature.WorldActive = true;    // the TP / FP screen-space shafts + height fog
+
+        private void OnDisable() => ScreenAtmosphereFeature.WorldActive = false;
+
         private void Start()
         {
             // The world's Global Volume (WorldAtmosphere.EnsureVolume, built in the bootstrap's Awake); not the death volume (priority 50).

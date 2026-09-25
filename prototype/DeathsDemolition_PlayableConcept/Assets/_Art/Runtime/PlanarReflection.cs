@@ -30,6 +30,9 @@ namespace DD.Art
         public float PlaneHeight { get => _planeHeight; set => _planeHeight = value; }
 
         /// <summary>Contract r2: the target's height in px per tier (0 = off).</summary>
+        /// <summary>The mirrored camera's name (the screen atmosphere skips it).</summary>
+        public const string CameraName = "DD Planar Reflection Camera";
+
         public static int HeightOf(QualityTier tier) => QualityTiers.Pick(tier, 0, 256, 1024);
 
         /// <summary>Contract r2: characters (player, enemies, ragdolls) reflect only at Cinematic.</summary>
@@ -131,7 +134,7 @@ namespace DD.Art
         private void EnsureCamera()
         {
             if (_reflection != null) return;
-            var go = new GameObject("DD Planar Reflection Camera") { hideFlags = HideFlags.HideAndDontSave };
+            var go = new GameObject(CameraName) { hideFlags = HideFlags.HideAndDontSave };
             _reflection = go.AddComponent<Camera>();
             _reflection.enabled = false;
             var data = go.AddComponent<UniversalAdditionalCameraData>();

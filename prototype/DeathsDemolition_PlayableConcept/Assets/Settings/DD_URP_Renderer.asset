@@ -53,7 +53,8 @@ MonoBehaviour:
   m_RendererFeatures:
   - {fileID: -6313153346129294515}
   - {fileID: 8331849840124178559}
-  m_RendererFeatureMap: 4d0b65ef7a2c63a87f307f1a49ada073
+  - {fileID: 7936219740369143369}
+  m_RendererFeatureMap: 4d0b65ef7a2c63a87f307f1a49ada07349462554ce1d236e
   m_UseNativeRenderPass: 0
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
   xrSystemData: {fileID: 11400000, guid: 60e1133243b97e347b653163a8c01b64, type: 2}
@@ -92,6 +93,20 @@ MonoBehaviour:
   m_CopyDepthMode: 1
   m_AccurateGbufferNormals: 0
   m_IntermediateTextureMode: 1
+--- !u!114 &7936219740369143369
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6b2a58b219fb4198b1b72ce1208a577, type: 3}
+  m_Name: DD Screen Atmosphere
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  _shader: {fileID: 4800000, guid: 3412e76f4400f47069103352c51fc1d1, type: 3}
 --- !u!114 &8331849840124178559
 MonoBehaviour:
   m_ObjectHideFlags: 0

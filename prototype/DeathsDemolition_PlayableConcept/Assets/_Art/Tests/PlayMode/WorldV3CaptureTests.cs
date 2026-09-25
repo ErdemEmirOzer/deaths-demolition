@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using DD.Art;
 using DD.Prototype.CameraSystem;
 using DD.Prototype.Core;
 using DD.Prototype.Core.Boot;
@@ -158,10 +159,20 @@ namespace DD.Art.Tests.PlayMode
             string dir = OutputDir();
             var manifest = new List<string> { "name,position,lookAt,vfov,file,warmFrames" };
             Time.captureDeltaTime = 1f / 60f;
+            float? phaseBefore = CloudShadowDriver.ForcedPhase;
             foreach (ArtVisualRegression.CameraPose pose in PosesFor())
             {
                 int warm = 0;
-                CameraModeService.Request(ModeFor(pose.name, out CameraMode mode) ? mode : CameraMode.TopDown, true);
+                bool look = ModeFor(pose.name, out CameraMode mode) && mode != CameraMode.TopDown;
+                CameraModeService.Request(look ? mode : CameraMode.TopDown, true);
+                // WP-075 C4 B: the screen shafts follow the cloud cookie at the camera — TP / FP frames are taken in a sun patch.
+                if (look && CloudShadowDriver.Active != null)
+                {
+                    LookReferenceTests.CookiePhases(CloudShadowDriver.Active, pose.position, out float litPhase, out float _, out float _, out float _);
+                    CloudShadowDriver.ForcedPhase = litPhase;
+                }
+                else CloudShadowDriver.ForcedPhase = phaseBefore;
+
                 yield return ArtVisualRegression.WarmStreaming(pose, W, H, 90, f => warm = f);
                 Time.timeScale = 0f;
                 try
@@ -169,6 +180,17 @@ namespace DD.Art.Tests.PlayMode
                     string file = Path.Combine(dir, pose.name + ".png");
                     Texture2D t = ArtVisualRegression.Capture(pose, W, H, true);
                     try { File.WriteAllBytes(file, t.EncodeToPNG()); } finally { UnityEngine.Object.DestroyImmediate(t); }
+                    if (look && ScreenAtmosphereFeature.WorldActive)
+                    {
+                        // WP-075 C4 B / C5: the same frame without the screen atmosphere (K9: shafts ≤ +0.08 V frame mean).
+                        ScreenAtmosphereFeature.WorldActive = false;
+                        try
+                        {
+                            Texture2D off = ArtVisualRegression.Capture(pose, W, H, true);
+                            try { File.WriteAllBytes(Path.Combine(dir, pose.name + "-noatmos.png"), off.EncodeToPNG()); } finally { UnityEngine.Object.DestroyImmediate(off); }
+                        }
+                        finally { ScreenAtmosphereFeature.WorldActive = true; }
+                    }
                     manifest.Add(pose.name + "," + V(pose.position) + "," + V(pose.lookAt) + "," + pose.verticalFov.ToString("F1", CultureInfo.InvariantCulture) + "," + Path.GetFileName(file) + "," + warm);
                 }
                 finally
@@ -179,6 +201,7 @@ namespace DD.Art.Tests.PlayMode
 
             Time.captureDeltaTime = 0f;
             CameraModeService.Request(CameraMode.TopDown, true);
+            CloudShadowDriver.ForcedPhase = phaseBefore;
             File.WriteAllLines(Path.Combine(dir, "world-v3-manifest.csv"), manifest);
             Debug.Log("[DD-TEST] wp020.captures frames=" + PosesFor().Length + " instances=" + Ap005WorldBootstrap.Last.Instances + " -> " + dir);
             // The AP005 placement count; another scene (DD_ART_CAPTURE_SCENE: the v6 dev scene, dressed in-scene) has no placement instances.

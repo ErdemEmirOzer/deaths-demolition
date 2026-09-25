@@ -514,6 +514,43 @@ namespace DD.Art.Tests.EditMode
             Assert.Less(far.r + far.g, 0.02f, "yoldan uzak: yosun");
         }
 
+        [Test]
+        public void Greybox_C4B_C5_EkranAtmosferi_KademeModu_YukseklikSisi()
+        {
+            // QUALITY-TIERS-V2 r2 §4.2: shafts 20 / 0.22 High, 48 / 0.40 Cinematic; height fog on in both; top-down and Performance: neither.
+            ScreenAtmosphereFeature.Rules cin = ScreenAtmosphereFeature.RulesFor(QualityTier.Sinematik, CameraMode.ThirdPerson);
+            Assert.IsTrue(cin.HeightFog);
+            Assert.AreEqual(48, cin.ShaftSamples);
+            Assert.AreEqual(0.40f, cin.ShaftPeak, 1e-4f);
+            ScreenAtmosphereFeature.Rules high = ScreenAtmosphereFeature.RulesFor(QualityTier.Yuksek, CameraMode.FirstPerson);
+            Assert.AreEqual(20, high.ShaftSamples);
+            Assert.AreEqual(0.22f, high.ShaftPeak, 1e-4f);
+            Assert.IsFalse(ScreenAtmosphereFeature.RulesFor(QualityTier.Sinematik, CameraMode.TopDown).HeightFog, "tepeden kapalı");
+            Assert.AreEqual(0, ScreenAtmosphereFeature.RulesFor(QualityTier.Performans, CameraMode.ThirdPerson).ShaftSamples, "Performans kapalı");
+
+            // Ek A §5.2: ≈ 9 % at 30 m, ≈ 12 % (cap) at 45 m from eye height; never over 12 %.
+            float at30 = ScreenAtmosphereFeature.HeightFogOpacity(1.7f, Vector3.forward, 30f), at45 = ScreenAtmosphereFeature.HeightFogOpacity(1.7f, Vector3.forward, 45f);
+            Assert.That(at30, Is.InRange(0.07f, 0.10f), "30 m");
+            Assert.That(at45, Is.InRange(0.10f, 0.12f), "45 m");
+            Assert.AreEqual(0.12f, ScreenAtmosphereFeature.HeightFogOpacity(1.7f, Vector3.forward, 400f), 1e-4f, "tavan");
+            Assert.Less(ScreenAtmosphereFeature.HeightFogOpacity(20f, Vector3.forward, 30f), at30, "yükseldikçe incelir");
+
+            // On the High and Cinematic renderers (shader bound for builds), not on Performance's.
+            foreach (string path in ScreenAtmosphereSetup.RendererPaths)
+            {
+                var data = AssetDatabase.LoadAssetAtPath<UnityEngine.Rendering.Universal.UniversalRendererData>(path);
+                ScreenAtmosphereFeature feature = null;
+                foreach (var f in data.rendererFeatures) if (f is ScreenAtmosphereFeature s) feature = s;
+                Assert.IsNotNull(feature, path);
+                Assert.IsTrue(feature.isActive, path);
+                Assert.AreEqual(ScreenAtmosphereFeature.ShaderName, feature.Shader.name, path);
+                Assert.IsTrue(AssetDatabase.Contains(feature), path + ": alt varlık");
+            }
+
+            var performance = AssetDatabase.LoadAssetAtPath<UnityEngine.Rendering.Universal.UniversalRendererData>("Assets/Settings/DD_URP_Renderer_Performance.asset");
+            foreach (var f in performance.rendererFeatures) Assert.IsFalse(f is ScreenAtmosphereFeature, "Performans renderer'ı");
+        }
+
         private static int CountOf(string s, string token)
         {
             int n = 0;
