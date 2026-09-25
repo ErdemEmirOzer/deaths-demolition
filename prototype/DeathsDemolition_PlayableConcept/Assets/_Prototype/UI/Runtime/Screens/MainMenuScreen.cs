@@ -757,13 +757,13 @@ namespace DD.Prototype.UI
                 return new[] { "DEFAULT" };
             }
 
-            var upper = new string[names.Length];
+            var labels = new string[names.Length];
             for (int i = 0; i < names.Length; i++)
             {
-                upper[i] = names[i].ToUpperInvariant();
+                labels[i] = UiSettings.QualityLabel(i);   // DEC-100: "CINEMATIC · 30 FPS", "HIGH · 60 FPS"
             }
 
-            return upper;
+            return labels;
         }
 
         /// <summary>A 56 px row at every TextScale: one line of Body at 1.25 (20 px) sits in it with room, and a taller row only pushes the pane into scrolling sooner.</summary>

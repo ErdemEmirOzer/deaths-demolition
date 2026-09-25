@@ -459,6 +459,23 @@ namespace DD.Prototype.UI
             return savedQuality;
         }
 
+        /// <summary>
+        /// DEC-100: the Settings label of a quality level - the level's name with its frame target (Cinematic "30 FPS", High
+        /// "60 FPS"; Performance carries none), upper case for the stepper.
+        /// </summary>
+        public static string QualityLabel(int index)
+        {
+            string[] names = QualitySettings.names;
+            if (names == null || names.Length == 0)
+            {
+                return "DEFAULT";
+            }
+
+            string name = QualityName(index).ToUpperInvariant();
+            QualityTier tier = QualityTiers.TierOfLevel(index, names.Length);
+            return tier == QualityTier.Sinematik ? name + " · 30 FPS" : tier == QualityTier.Yuksek ? name + " · 60 FPS" : name;
+        }
+
         public static string QualityName(int index)
         {
             string[] names = QualitySettings.names;
@@ -500,9 +517,11 @@ namespace DD.Prototype.UI
             s_data.HeadBobScale = loaded != null ? loaded.HeadBobScale : defaults.HeadBobScale;
             s_data.CentreDot = loaded != null && loaded.CentreDot;
             int count = Mathf.Max(1, QualitySettings.names.Length);
+            // DEC-100 (user, 25.09): with no saved choice the game opens on Cinematic (QualityTiers.DefaultTier); a saved
+            // choice is kept as it is (no migration).
             int quality = loaded != null && loaded.Quality >= 0
                 ? MigrateQuality(loaded.Quality, loaded.Version, QualitySettings.names.Length)
-                : QualitySettings.GetQualityLevel();
+                : QualityTiers.LevelOfTier(QualityTiers.DefaultTier, QualitySettings.names.Length);
             s_data.Quality = Mathf.Clamp(quality, 0, count - 1);
             s_data.Clamp();
             ApplyVolume();
