@@ -97,8 +97,14 @@ namespace DD.Prototype.UI
 
             RectTransform report = Column("Report", 0f, ReportShare, top, FooterHeight);
             RectTransform rewards = Column("Rewards", ReportShare + 0.02f, 1f, top, FooterHeight);
-            BuildReport(report);
-            BuildRewards(rewards);
+            float reportHeight = BuildReport(report);
+            float rewardsHeight = BuildRewards(rewards);
+
+            // E26: the blocks take their content's height (one height for both, capped by the room) - no empty card.
+            float room = Content.rect.height - top - FooterHeight - (int)UiSpace.XL;
+            float blocks = Mathf.Min(room, Mathf.Max(reportHeight, rewardsHeight));
+            TopBand(report, top, blocks);
+            TopBand(rewards, top, blocks);
 
             // The three blocks land in reading order (60 ms apart) after the screen fade; reduced motion → at rest.
             gameObject.AddComponent<UiStaggerIn>().Configure(new[]
@@ -179,7 +185,7 @@ namespace DD.Prototype.UI
 
         // ============================================================ run report
 
-        private void BuildReport(RectTransform column)
+        private float BuildReport(RectTransform column)
         {
             RectTransform card = UiFactory.FramedCard("Card", column, UiColor.BorderHairline, UiColor.SurfacePanel, UiFrame.Card);
             UiFactory.Fill(card);
@@ -224,20 +230,16 @@ namespace DD.Prototype.UI
 
             // COMBAT and RUN side by side: the report is wide, so the rows sit in two columns rather than one tall list.
             RectTransform rows = UiFactory.NewRect("Rows", host);
-            rows.anchorMin = new Vector2(0f, 0f);
-            rows.anchorMax = new Vector2(1f, 1f);
-            rows.offsetMin = new Vector2(0f, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption)) * 2f + (int)UiSpace.M);
-            rows.offsetMax = new Vector2(0f, -stack.Cursor);
+            int lines = Mathf.Max(_model.Combat.Count, _model.Economy.Count);
+            float rowsHeight = UiFactory.LineHeight(UiType.Label) + (int)UiSpace.XS + lines * UiFactory.ScaledBand(RowHeight);
+            stack.Add(rows, rowsHeight);
             BuildRowColumn(rows, 0f, 0.48f, UiStrings.Get("results.combat", "COMBAT"), _model.Combat, null);
             BuildRowColumn(rows, 0.52f, 1f, UiStrings.Get("results.run", "RUN"), _model.Economy, UiType.Body);
+            stack.Gap(UiSpace.M);
 
-            TMP_Text note = UiFactory.Label("Note", host, _model.CombatNote, UiType.Caption, UiColor.TextMuted, TextAnchor.LowerLeft);
-            var noteRect = (RectTransform)note.transform;
-            noteRect.anchorMin = new Vector2(0f, 0f);
-            noteRect.anchorMax = new Vector2(1f, 0f);
-            noteRect.pivot = new Vector2(0.5f, 0f);
-            noteRect.sizeDelta = new Vector2(0f, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption)) * 2f);
-            noteRect.anchoredPosition = Vector2.zero;
+            TMP_Text note = UiFactory.Label("Note", host, _model.CombatNote, UiType.Caption, UiColor.TextMuted);
+            stack.Add((RectTransform)note.transform, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption)) * 2f);
+            return stack.Cursor + 2f * (int)UiSpace.XXL;
         }
 
         private static void BuildRowColumn(RectTransform parent, float from, float to, string label, List<UiStatLine> lines, UiType? type)
@@ -259,7 +261,7 @@ namespace DD.Prototype.UI
 
         // ============================================================== rewards
 
-        private void BuildRewards(RectTransform column)
+        private float BuildRewards(RectTransform column)
         {
             RectTransform card = UiFactory.FramedCard("Card", column, UiColor.BorderHairline, UiColor.SurfacePanel, UiFrame.Card);
             UiFactory.Fill(card);
@@ -332,8 +334,8 @@ namespace DD.Prototype.UI
             if (total == 0)
             {
                 TMP_Text empty = UiFactory.Label("Empty", host, UiStrings.Get("results.empty", "No new unlocks this run."), UiType.Body, UiColor.TextMuted);
-                stack.Add((RectTransform)empty.transform, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Body)) * 2f);
-                return;
+                stack.Add((RectTransform)empty.transform, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Body)));
+                return stack.Cursor + 2f * (int)UiSpace.XL;
             }
 
             int fits = Mathf.Max(1, Mathf.FloorToInt((room - more) / (entry + (int)UiSpace.S)));
@@ -354,6 +356,8 @@ namespace DD.Prototype.UI
                     UiType.Caption, UiColor.TextSecondary);
                 stack.Add((RectTransform)rest.transform, more);
             }
+
+            return stack.Cursor + 2f * (int)UiSpace.XL;
         }
 
         private void AddReward(ref UiStack stack, RectTransform host, ProfileUnlockEntry entry, UiColor accent, bool achievement, float height)
@@ -655,6 +659,15 @@ namespace DD.Prototype.UI
         }
 
         // =================================================================== helpers
+
+        private static void TopBand(RectTransform rect, float top, float height)
+        {
+            rect.anchorMin = new Vector2(rect.anchorMin.x, 1f);
+            rect.anchorMax = new Vector2(rect.anchorMax.x, 1f);
+            rect.pivot = new Vector2(0.5f, 1f);
+            rect.offsetMin = new Vector2(rect.offsetMin.x, -(top + height));
+            rect.offsetMax = new Vector2(rect.offsetMax.x, -top);
+        }
 
         private static float LineOf(TMP_Text text)
         {
