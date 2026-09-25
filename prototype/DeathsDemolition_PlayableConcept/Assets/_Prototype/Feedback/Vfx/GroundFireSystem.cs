@@ -14,7 +14,8 @@ namespace DD.Prototype.Feedback.Vfx
     /// burning 2–3 s). Per zone, on the ground under the blast: licking flames (the AP-010B lantern_flame 4 × 4 loop, alpha-blended
     /// with an HDR core, hot yellow → orange → a dark red end, low on the ground), rising embers (HDR streaks), a flickering ground glow and a soot char disc that
     /// outlives the fire by 3 s (the top-down read), a thin dark smoke column (MuzzleSystem's shared smoke), one flickering fire light (MuzzleSystem.TrackLight,
-    /// the nearest zones) and, Cinematic only, a heat-haze card over the fire (DD/VFX HeatHaze, as the barrel haze).
+    /// the nearest zones) and, Cinematic only and only where the pipeline refracts (camera opaque texture), a
+    /// heat-haze card over the fire (DD/VFX HeatHaze, as the barrel haze).
     /// Lifecycle: 0.25 s ignition ramp, full while it burns, dying to a quarter over the last 0.7 s, then Extinguished: flames
     /// out in 0.6 s, a last ember burst and a smoke puff. Ash Cloud and Hibana on the same rocket ignite two zones at the same
     /// point: they share one visual zone (the larger radius, the later end).
@@ -79,6 +80,8 @@ namespace DD.Prototype.Feedback.Vfx
         public int ZonesMerged { get; private set; }
         public int LitZones { get; private set; }
         public int HazeShown { get; private set; }
+        /// <summary>The heat-haze card exists only when the pipeline gives the camera opaque texture (refraction).</summary>
+        public bool HazeRefracts { get; private set; }
         public int FlamesLive => _flames != null ? _flames.particleCount : 0;
         public int EmbersLive => _embers != null ? _embers.particleCount : 0;
         public int GlowLive => _glow != null ? _glow.particleCount : 0;
@@ -578,11 +581,15 @@ namespace DD.Prototype.Feedback.Vfx
             bool tile = data != null && data.Texture != null;
             if (!tile) data = VfxLibrary.Get(VfxIds.BarrelHeatDistort);
             if (shader == null || data == null || data.Texture == null) return;
+            // Refraction only: without the camera opaque texture the shader's shimmer fallback drew the card as a grey rectangle
+            // over the fire (capture 2, as the barrel haze in B1 AD MUST 2). WP-029's pipeline keeps the opaque texture off.
+            var urp = GraphicsSettings.currentRenderPipeline as UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset;
+            HazeRefracts = urp != null && urp.supportsCameraOpaqueTexture;
+            if (!HazeRefracts) return;
             _hazeMat = new Material(shader) { name = "DD_GroundFireHaze (runtime)", hideFlags = HideFlags.DontSave };
             _hazeMat.SetTexture("_Sheet", data.Texture);
             _hazeMat.SetFloat("_TileMode", tile ? 1f : 0f);
-            var urp = GraphicsSettings.currentRenderPipeline as UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset;
-            if (urp != null && urp.supportsCameraOpaqueTexture) _hazeMat.EnableKeyword("DD_OPAQUE_TEXTURE"); else _hazeMat.DisableKeyword("DD_OPAQUE_TEXTURE");
+            _hazeMat.EnableKeyword("DD_OPAQUE_TEXTURE");
             Mesh quad = VfxQuad();
             for (int i = 0; i < _haze.Length; i++)
             {
