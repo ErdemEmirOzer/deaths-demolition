@@ -1,11 +1,14 @@
+using DD.Prototype.Core.InputAbstraction;
 using DD.Prototype.UI;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace DD.Prototype.Tests.EditMode
 {
     /// <summary>
     /// M4-R1 N21 (user 24.09: "the in-game cursor is too big"): the pointer and the reticle at the ui-ux-designer's sizes.
+    /// 12b (AD G1 SHOULD-4): the hotspot at the tip at every size, Press bound on hold, hidden on pad / in the run.
     /// </summary>
     public sealed class UiCursorSizeTests
     {
@@ -82,6 +85,113 @@ namespace DD.Prototype.Tests.EditMode
                         Assert.Greater(midL, 0.75f, id + ": ok = krem gövde");
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// 12b (AD G1 SHOULD-4): the hotspot is the tip at every size. The OS only ever gets the 32 px texture built
+        /// from the 64 px master (24-31 px arrows, Mac's 28 pt among them), so one hotspot serves them all: nothing is
+        /// drawn above or left of the pixel diagonal next to it, the apex pixels lie within 1 px of it, and the
+        /// hotspot pixel itself is solid - in the Arrow and the Press art alike.
+        /// </summary>
+        [Test]
+        public void ImlecSicakNokta_HerBoyVeDurumdaOkunUcunda()
+        {
+            int hx = (int)UiCursor.Hotspot.x;
+            int hy = (int)UiCursor.Hotspot.y;
+            for (int h = UiCursor.MinArrowPx; h <= UiCursor.MaxArrowPx; h++)
+            {
+                foreach (bool pressed in new[] { false, true })
+                {
+                    string id = "H" + h + (pressed ? " press" : " arrow");
+                    Texture2D t = UiCursor.Sized(pressed, h);
+                    Assert.IsNotNull(t, id + ": V1 ana görseli yok");
+                    Assert.AreEqual(UiCursor.TextureSize, t.width, id + ": OS'a giden tek doku 32 px (tek sıcak nokta yeter)");
+
+                    Color32[] px = t.GetPixels32();
+                    int s = t.width;
+                    int xMin = s, yMin = s, apex = int.MaxValue;
+                    for (int y = 0; y < s; y++)
+                    {
+                        for (int x = 0; x < s; x++)
+                        {
+                            if (px[(s - 1 - y) * s + x].a <= 128)
+                            {
+                                continue;
+                            }
+
+                            xMin = Mathf.Min(xMin, x);
+                            yMin = Mathf.Min(yMin, y);
+                            apex = Mathf.Min(apex, x + y);
+                        }
+                    }
+
+                    Assert.That(xMin, Is.InRange(hx - 1, hx), id + ": sol kenar sıcak noktanın 1 px içinde");
+                    Assert.That(yMin, Is.InRange(hy - 1, hy), id + ": üst kenar sıcak noktanın 1 px içinde");
+                    for (int y = 0; y < s; y++)
+                    {
+                        for (int x = 0; x < s; x++)
+                        {
+                            if (x + y == apex && px[(s - 1 - y) * s + x].a > 128)
+                            {
+                                Assert.LessOrEqual(Mathf.Max(Mathf.Abs(x - hx), Mathf.Abs(y - hy)), 1, id + ": uç pikseli (" + x + "," + y + ") sıcak noktada");
+                            }
+                        }
+                    }
+
+                    Assert.Greater(px[(s - 1 - hy) * s + hx].a, 128, id + ": sıcak nokta pikseli dolu");
+                }
+            }
+        }
+
+        /// <summary>
+        /// 12b (AD G1 SHOULD-4): Press is bound while a kit control is held (UiButton, the UiSlider bead), released
+        /// on pointer-up; the pointer hides on a pad and in the run, drops the Press art when it hides mid-hold, and
+        /// the mouse move that flips the scheme back restores it as the Arrow.
+        /// </summary>
+        [Test]
+        public void ImlecBasili_TutulurkenBagli_PadVeKosudaGizli_FareGeriGetirir()
+        {
+            bool before = UiCursor.ContextVisible;
+            var root = new GameObject("Root", typeof(RectTransform));
+            try
+            {
+                UiInputScheme.Force(InputSchemeKind.KeyboardMouse);
+                UiCursor.SetContextVisible(true);
+                UiCursor.SetPressed(false);
+                var down = new PointerEventData(null) { button = PointerEventData.InputButton.Left };
+
+                UiButton button = UiFactory.Button("Play", root.transform, "PLAY", UiButtonVariant.Secondary, null);
+                button.OnPointerDown(down);
+                Assert.IsTrue(UiCursor.Pressed, "UiButton tutulurken Press");
+                button.OnPointerUp(down);
+                Assert.IsFalse(UiCursor.Pressed, "bırakınca Ok");
+
+                UiSlider slider = UiSlider.Create("Look", root.transform, "LOOK SENSITIVITY", 1f, 20f, 10f, 1f, null, null);
+                slider.OnPointerDown(down);
+                Assert.IsTrue(UiCursor.Pressed, "kaydırıcı boncuğu tutulurken Press");
+                slider.OnPointerUp(down);
+                Assert.IsFalse(UiCursor.Pressed, "boncuk bırakılınca Ok");
+
+                button.OnPointerDown(down);
+                UiInputScheme.Force(InputSchemeKind.Gamepad);
+                Assert.IsFalse(UiCursor.WantVisible, "pad gizler");
+                Assert.IsFalse(UiCursor.Pressed, "gizlenen imleç Press'te kalmaz");
+                UiInputScheme.Force(InputSchemeKind.KeyboardMouse);
+                Assert.IsTrue(UiCursor.WantVisible, "fare hareketi (şema dönüşü) geri getirir");
+                Assert.IsFalse(UiCursor.Pressed, "Ok olarak döner");
+
+                slider.OnPointerDown(down);
+                UiCursor.SetContextVisible(false);
+                Assert.IsFalse(UiCursor.WantVisible, "koşu bağlamı gizler");
+                Assert.IsFalse(UiCursor.Pressed, "koşuya geçiş Press'i bırakır");
+            }
+            finally
+            {
+                UiCursor.SetPressed(false);
+                UiCursor.SetContextVisible(before);
+                UiInputScheme.Release();
+                Object.DestroyImmediate(root);
             }
         }
 

@@ -340,8 +340,15 @@ namespace DD.Prototype.UI
             base.OnPointerDown(eventData);
             if (IsInteractable() && eventData.button == PointerEventData.InputButton.Left)
             {
+                UiCursor.SetPressed(true);   // 12b (AD G1 SHOULD-4): the V1 Press art while the bead is held, as on UiButton
                 DragTo(eventData);
             }
+        }
+
+        public override void OnPointerUp(PointerEventData eventData)
+        {
+            UiCursor.SetPressed(false);
+            base.OnPointerUp(eventData);
         }
 
         public void OnInitializePotentialDrag(PointerEventData eventData)
@@ -397,6 +404,7 @@ namespace DD.Prototype.UI
 
         protected override void OnDisable()
         {
+            UiCursor.SetPressed(false);   // a row that closes mid-drag never leaves the Press art up
             base.OnDisable();
             UiFocusBrackets.Release((RectTransform)transform);
         }

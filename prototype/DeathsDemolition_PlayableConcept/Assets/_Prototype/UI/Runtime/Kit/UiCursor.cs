@@ -19,13 +19,23 @@ namespace DD.Prototype.UI
     /// it, the run hides it (the reticle is the pointer), loading hides it; a pad hides it and the first mouse move
     /// (the scheme flips back) returns it. Screens and the curtain say what they want through
     /// <see cref="SetContextVisible"/> - nothing else writes <c>Cursor.visible</c>.
+    ///
+    /// 12b (AD G1 SHOULD-4): the Press art is bound while a kit control is held (UiButton, the UiSlider bead drag),
+    /// and a pointer that hides mid-hold (a pad took over, the run or the curtain hid it) drops the Press art, so the
+    /// mouse move that restores it always shows the Arrow.
     /// </summary>
     public static class UiCursor
     {
         public const string ArrowName = "Cursor.Arrow";
         public const string PressName = "Cursor.Press";
 
-        /// <summary>The tip, for every size (the AP-012 v004 manifest's 32 px hotspot).</summary>
+        /// <summary>
+        /// The tip, for every size (the AP-012 v004 manifest's 32 px hotspot). 12b (AD G1 SHOULD-4): one hotspot is
+        /// right because the OS only ever gets the <see cref="TextureSize"/> texture - N21 builds it at every arrow
+        /// height (24-31 px, and Mac's 28 pt) from the 64 px master, and <see cref="UiCursorArt"/> places the outlined
+        /// tip on this point; the 64 px master is a source, never a cursor, so the AD's "(2, 2) at 32 → (4, 4) at 64"
+        /// (the v004 32 / 64 pair) has no second texture to apply to. UiCursorSizeTests asserts the tip at every size.
+        /// </summary>
         public static readonly Vector2 Hotspot = new Vector2(2f, 1f);
 
         /// <summary>N21: the arrow's height on macOS, in points (fixed - points already normalise the backing).</summary>
@@ -128,6 +138,13 @@ namespace DD.Prototype.UI
         {
             EnsureInstalled();
             bool visible = WantVisible;
+            if (!visible && s_pressed)
+            {
+                // 12b (AD G1 SHOULD-4): a hidden pointer never returns in the Press art (its pointer-up may never come).
+                s_pressed = false;
+                ApplyTexture();
+            }
+
             if (Cursor.visible != visible)
             {
                 Cursor.visible = visible;
