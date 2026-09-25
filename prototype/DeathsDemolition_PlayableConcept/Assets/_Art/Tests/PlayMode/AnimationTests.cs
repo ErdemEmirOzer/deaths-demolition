@@ -410,10 +410,33 @@ namespace DD.Art.Tests.PlayMode
 
         [UnityTest]
         [Timeout(300000)]
+        public IEnumerator FpKollar_VarsayilanKapali_FpdeGizli_SilahFpViewda()
+        {
+            // C-00 26.09: the FP arms are OFF by default until P-06's FP arms v2 + finger clips — in first person no arms copy shows and the
+            // weapon keeps S-02's fpView (the FirstPersonWeaponSocket hook stays empty).
+            Assert.IsFalse(PlayerSkinnedVisual.FirstPersonV3Arms, "FP kolları varsayılan kapalı");
+            yield return RunAP005();
+            PlayerSkinnedVisual pv = PlayerRegistry.Primary.GetComponentInChildren<PlayerSkinnedVisual>(true);
+            var ar1 = DD.Prototype.Core.Weapons.Arsenal.Get("ar_1");
+            pv.EquipWeapon(ar1, ar1.id);
+            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.FirstPerson, instant: true);
+            try
+            {
+                for (int i = 0; i < 20; i++) yield return null;
+                Assert.IsTrue(pv.FirstPersonArms == null || !pv.FirstPersonArms.Visible, "FP kol kopyası görünür");
+                Assert.IsNull(FirstPersonArms.Shown, "FP kolları gösteriliyor");
+                Assert.IsNull(DD.Prototype.Weapons.WeaponController.FirstPersonWeaponSocket, "kanca boş olmalı (silah fpView'da)");
+            }
+            finally { DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.ThirdPerson, instant: true); }
+        }
+
+        [UnityTest]
+        [Timeout(300000)]
         public IEnumerator FpKollar_Viewmodel_fpCameraCapada_AtesReloadGecis_TPyeDonuste_Gizli()
         {
             // WP-071 B4b-3: in first person the FP arms copy sits on the viewmodel layer with fp_camera on the anchor, plays the
             // FP twins (fire additive, tac / empty reload, switch), shows only the LOD0 body (no head), and hides back in TP.
+            PlayerSkinnedVisual.FirstPersonV3Arms = true;   // the feature under test (default OFF, C-00 26.09)
             yield return RunAP005();
             PlayerSkinnedVisual pv = PlayerRegistry.Primary.GetComponentInChildren<PlayerSkinnedVisual>(true);
             Assert.IsNotNull(pv.FirstPersonArms, "FirstPersonArms bağlı değil");
@@ -474,7 +497,11 @@ namespace DD.Art.Tests.PlayMode
                 Assert.Less(posErr, 0.01f, "FP dinlenmede silah kökü fpView'da (≤ 1 cm)");
                 Assert.Less(rotErr, 1.5f, "FP dinlenmede silah dönüşü fpView'da (≤ 1,5°)");
             }
-            finally { DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.ThirdPerson, instant: true); }
+            finally
+            {
+                DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.ThirdPerson, instant: true);
+                PlayerSkinnedVisual.FirstPersonV3Arms = false;
+            }
 
             for (int i = 0; i < 3; i++) yield return null;
             Assert.IsFalse(pv.FirstPersonArms.Visible, "TP'de FP kolları gizli");

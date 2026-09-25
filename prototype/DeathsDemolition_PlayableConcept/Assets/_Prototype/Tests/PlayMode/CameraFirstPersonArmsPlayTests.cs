@@ -24,6 +24,7 @@ namespace DD.Prototype.Tests.PlayMode
         {
             LogAssert.ignoreFailingMessages = true;
             CameraModeService.ResetForTests();
+            DD.Prototype.Characters.PlayerSkinnedVisual.FirstPersonV3Arms = true;   // the FP arms feature under test (default OFF, C-00 26.09)
             yield return LifecycleTestKit.BootTanMainMenuye();
             SceneManager.LoadScene(PrototypeScenes.Run, LoadSceneMode.Single);
             yield return LifecycleTestKit.SahneyiBekle(PrototypeScenes.Run);
@@ -34,6 +35,7 @@ namespace DD.Prototype.Tests.PlayMode
         public IEnumerator Yik()
         {
             CameraModeService.ResetForTests();
+            DD.Prototype.Characters.PlayerSkinnedVisual.FirstPersonV3Arms = false;
             Cursor.lockState = CursorLockMode.None;
             yield return LifecycleTestKit.BootTanMainMenuye();
             LogAssert.ignoreFailingMessages = false;

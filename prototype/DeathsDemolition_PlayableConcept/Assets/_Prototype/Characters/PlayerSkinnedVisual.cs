@@ -352,11 +352,15 @@ namespace DD.Prototype.Characters
         /// </summary>
         public static bool V3WeaponSets = false;
 
-        /// <summary>WP-071 B4b: the FP viewmodel arms play their v3 sets whatever the TP path (C-00 25.09: FP v3 on).</summary>
-        public static bool FirstPersonV3Arms = true;
+        /// <summary>
+        /// WP-071 B4b: the FP viewmodel arms (a copy of the player model on the viewmodel layer) — OFF by default (C-00 26.09): fpView v4 / v5
+        /// moved the weapon up and forward and the B4b arms-only body cut (the kimono sleeve) now enters the frame half-way; the weapon
+        /// stays on fpView without arms. On again with P-06's FP arms v2 + finger-grip clips (the WP-071 fpik batch).
+        /// </summary>
+        public static bool FirstPersonV3Arms = false;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetV3Statics() { V3WeaponSets = false; FirstPersonV3Arms = true; }
+        private static void ResetV3Statics() { V3WeaponSets = false; FirstPersonV3Arms = false; }
 
         private AnimatorOverrideController _runtimeOverrides;
         private readonly List<string> _setKeys = new List<string>();
