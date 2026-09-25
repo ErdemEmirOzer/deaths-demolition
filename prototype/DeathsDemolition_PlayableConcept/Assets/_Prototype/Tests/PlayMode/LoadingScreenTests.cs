@@ -223,8 +223,8 @@ namespace DD.Prototype.Tests.PlayMode
 
         /// <summary>
         /// 10b-2 · E22 / §15.1 ink variant: a death bleeds ink from t 0.6 of the beat; the
-        /// Results load runs under it - no doors, no plate group - and Results opens as the ink
-        /// recedes.
+        /// Results load runs under it - no doors, never the Look B plates, never the Ø 160 ring alone (12b decision A: a
+        /// slow load opens the key art inside the ink instead) - and Results opens as the ink recedes.
         /// </summary>
         [UnityTest]
         [Timeout(240000)]
@@ -233,14 +233,15 @@ namespace DD.Prototype.Tests.PlayMode
             LogAssert.ignoreFailingMessages = true;
             yield return OlumeKadar();
             UiCurtain curtain = UiCurtain.Instance;
-            bool sawInk = false, sawDoors = false, sawPlateGroup = false;
+            bool sawInk = false, sawDoors = false, sawPlates = false, sawRingOnly = false;
             int resultsDrawnUnderInk = 0;
             float deadline = Time.realtimeSinceStartup + 60f;
             while (!(SceneManager.GetActiveScene().name == PrototypeScenes.Results && !UiCurtain.IsCovering) && Time.realtimeSinceStartup < deadline)
             {
                 sawInk |= curtain.InkCovering;
                 sawDoors |= curtain.DoorsShut && curtain.InkCovering;
-                sawPlateGroup |= curtain.GroupVisible && (curtain.PlateVisible || curtain.KeyArtVisible);
+                sawPlates |= curtain.GroupVisible && curtain.PlateVisible;
+                sawRingOnly |= curtain.RingOnlyVisible;
                 if (curtain.InkCovering && !curtain.InkReceding && ResultsDrawn())
                 {
                     resultsDrawnUnderInk++;
@@ -254,9 +255,47 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(PrototypeScenes.Results, SceneManager.GetActiveScene().name, "Results açıldı");
             Assert.IsTrue(sawInk, "ölüm vuruşunda mürekkep sızdı");
             Assert.IsFalse(sawDoors, "mürekkep varyantında kapı çizilmez");
-            Assert.IsFalse(sawPlateGroup, "mürekkep varyantında plaka / anahtar sanat grubu yok");
+            Assert.IsFalse(sawPlates, "mürekkep varyantında Look B plakası yok");
+            Assert.IsFalse(sawRingOnly, "12b karar A: mürekkepte tek başına Ø160 halka yok");
             Assert.IsFalse(curtain.InkCovering, "açılışta mürekkep çekildi");
             Assert.GreaterOrEqual(resultsDrawnUnderInk, 1, "AD 10b-2 MUST-2: Results mürekkep çekilmeden önce en az bir kare çizili (çekilme boş alan açmaz)");
+        }
+
+        /// <summary>
+        /// WP-068 12b (C-00 25.09, decision A): a Results load under the ink that runs past the ring threshold opens the
+        /// Results key art INSIDE the ink - the full ring Ø 240 and RUN RESULTS, no doors, no tip - and the group leaves
+        /// before the ink recedes into Results. (The fast path is the test above: the ink opens straight into Results.)
+        /// </summary>
+        [UnityTest]
+        [Timeout(240000)]
+        public IEnumerator Olum_YavasYukleme_ResultsAnahtarSanatiMurekkepteAcilir()
+        {
+            LogAssert.ignoreFailingMessages = true;
+            yield return OlumeKadar();
+            PrototypeUiFlow.ArtificialLoadSeconds = 3f;   // set during the death beat, before the Results load begins
+            UiCurtain curtain = UiCurtain.Instance;
+            bool sawArtInInk = false, sawDoors = false, groupDuringRecede = false, sawTip = false;
+            float deadline = Time.realtimeSinceStartup + 60f;
+            while (!(SceneManager.GetActiveScene().name == PrototypeScenes.Results && !UiCurtain.IsCovering) && Time.realtimeSinceStartup < deadline)
+            {
+                if (curtain.InkCovering && curtain.KeyArtVisible)
+                {
+                    sawArtInInk |= curtain.DeviceVisible && !curtain.RingOnlyVisible && curtain.DestinationText == "RUN RESULTS";
+                    sawTip |= !string.IsNullOrEmpty(curtain.TipText);
+                }
+
+                sawDoors |= curtain.DoorsShut && curtain.InkCovering;
+                groupDuringRecede |= curtain.InkReceding && curtain.GroupVisible;
+                yield return null;
+            }
+
+            yield return Bekle(() => !curtain.InkCovering, 3f, "mürekkep çekilmedi");
+            LogAssert.ignoreFailingMessages = false;
+            Assert.AreEqual(PrototypeScenes.Results, SceneManager.GetActiveScene().name, "Results açıldı");
+            Assert.IsTrue(sawArtInInk, "yavaş yüklemede Results anahtar sanatı mürekkebin içinde, tam halka Ø240 + RUN RESULTS");
+            Assert.IsFalse(sawTip, "Results yolunda ipucu yok");
+            Assert.IsFalse(sawDoors, "mürekkep varyantında kapı çizilmez");
+            Assert.IsFalse(groupDuringRecede, "grup mürekkep çekilmeden önce çıkar");
         }
 
         /// <summary>The Results screen is on screen at rest: its canvas and its three blocks (tiles, report, rewards) fully opaque.</summary>
@@ -463,14 +502,24 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsTrue(curtain.KeyArtVisible, "koşuya giderken anahtar sanat (R1-D; plakalar yalnız yedek)");
             curtain.ShowStalled();
             Assert.IsTrue(curtain.StallVisible, "10 s takılma bildirimi");
+            Assert.AreEqual(1f, curtain.StallRect.pivot.y, "ipucu varken bildirim şeridin altında asılı");
 
             bool primary = false;
             curtain.ShowError(PrototypeScenes.Run, false, "RETURN TO MAIN MENU", () => primary = true);
             Assert.IsTrue(curtain.ErrorOpen, "hata modalı açık");
+            Assert.IsFalse(curtain.DeviceVisible, "12b (AD R1-D SHOULD-7b): modal açıkken halka ve etiketler çekilir");
             Assert.AreEqual("the run", UiCurtain.SentenceFor(PrototypeScenes.Run));
             curtain.HideError();
             Assert.IsFalse(curtain.ErrorOpen);
+            Assert.IsTrue(curtain.DeviceVisible, "modal kapanınca halka geri gelir");
             Assert.IsFalse(primary, "birincil eylem yalnız basınca");
+
+            // 12b (AD R1-D SHOULD-7a): with no tip (the way to the Results) the notice takes the tip strip's own slot.
+            curtain.ShowGroup("RUN RESULTS", string.Empty, null, false, UiCurtain.ResultsKeyArt);
+            yield return null;
+            curtain.ShowStalled();
+            Assert.AreEqual(0f, curtain.StallRect.pivot.y, "ipucu yokken bildirim alttan hizalı");
+            Assert.AreEqual(UiCurtain.TipMargin, curtain.StallRect.anchoredPosition.y, 0.5f, "alt kenar 96 içeride (ipucu şeridinin yuvası)");
             curtain.Open(true);
         }
 

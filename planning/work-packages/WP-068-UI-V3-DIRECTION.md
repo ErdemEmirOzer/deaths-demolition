@@ -654,11 +654,11 @@ Bu altı madde dışında belge bağlayıcıdır; ekran dilimlerinin AD turu kar
 | geçiş | ölçülen | yüzey · varyant | arka plan (hepsi yerleşik, 0 MB) | eyebrow / hedef etiketi (UXW §2) | ipucu | asgari gösterim |
 |---|---|---|---|---|---|---|
 | Boot → MainMenu | 3,6 s | SCREEN · **mühür varyantı** (kapı yok; U7 mührü yükleme ekranıdır) | mürekkep `SurfaceBase` | — / wordmark `DEATHS DEMOLITION` + kicker | yok | mühür koreografisi 1,6 s |
-| MainMenu → Selection | 3,6 s | SCREEN · kapı + plaka | uzak plaka P1, cover, scrim 0,55→0,80 | `LOADING` / `BEFORE THE RUN` (Selection kicker'ı) | havuzdan | 1 200 ms |
-| Selection → Run | 4,1 s | SCREEN · kapı + plaka | uzak + orta plaka (fenerler yanık: gidilen yer) | `LOADING` / `ROUND 1` · alt satır silah `DisplayName` | havuzdan (en ağır yükleme, ipucunun yerini kazandığı tek yer) | 1 200 ms |
-| Run → Results | 3,6 s | SCREEN · **mürekkep varyantı** (E22 sızması kapının kapanışıdır; kapı çizilmez) | donmuş ölüm karesi (§6.4) + InkBleed | `LOADING` / `RUN RESULTS` | yok | ölüm vuruşu 2,4 s (`DeathResultsDelaySeconds`) |
-| Results → MainMenu | 3,6 s | SCREEN · kapı + plaka | uzak plaka P1 | `LOADING` / `MAIN MENU` | havuzdan (FACT) | 1 200 ms |
-| Run → MainMenu (Pause'dan iptal) | 3,6 s | SCREEN · kapı + plaka | donmuş pause karesi (blur) altında kapılar, scrim 0,72 | `LOADING` / `MAIN MENU` | **yok** (çıkıştan sonra koçluk yok) | 1 200 ms |
+| MainMenu → Selection | 3,6 s | SCREEN · kapı + anahtar sanat | **avlu anahtar sanatı** (R1-D / key art v2, 25.09: yağmurlu avlu, ronin, kapıdaki sürü), cover, 9 s'de %5 itiş | `LOADING` / `BEFORE THE RUN` (Selection kicker'ı) | havuzdan | 1 200 ms |
+| Selection → Run | 4,1 s | SCREEN · kapı + anahtar sanat | avlu anahtar sanatı | `LOADING` / `ROUND 1` · alt satır silah `DisplayName` | havuzdan (en ağır yükleme, ipucunun yerini kazandığı tek yer) | 1 200 ms |
+| Run → Results | 3,6 s | SCREEN · **mürekkep varyantı** (E22 sızması kapının kapanışıdır; kapı çizilmez) | InkBleed; yükleme 1,2 s'yi aşarsa **Results anahtar sanatı mürekkebin içinde açılır** (surdaki ronin; grup PaneIn Base 220, tam halka Ø 240 + etiketler; C-00 12b karar A — AD R1-D SHOULD-6); hızlı yükleme mürekkepten doğrudan Results'a | `LOADING` / `RUN RESULTS` | yok | ölüm vuruşu 2,4 s (`DeathResultsDelaySeconds`); sanat açıldıysa ≥ 0,6 s (`BootHandOffMinimumSeconds`), yapay bekleme yok |
+| Results → MainMenu | 3,6 s | SCREEN · kapı + anahtar sanat | avlu anahtar sanatı | `LOADING` / `MAIN MENU` | havuzdan (FACT) | 1 200 ms |
+| Run → MainMenu (Pause'dan iptal) | 3,6 s | SCREEN · kapı + anahtar sanat | avlu anahtar sanatı (donmuş kare gösterilmez) | `LOADING` / `MAIN MENU` | **yok** (çıkıştan sonra koçluk yok) | 1 200 ms |
 
 Kural: hiçbir sahne spekülatif yüklenmez (`LoadSceneAsync` iptal edilemez); yükleme yalnız geçiş isteğiyle başlar — ölüm vuruşu sırasında Results ön yüklemesi yok. Aynı anda tek yükleme: bekleyen yükleme varken `Load()` log satırıyla yok sayılır. Eşik tablosu `ui-settings.json`'da (profil değil), her tamamlanan yükleme süresini geri yazar.
 
@@ -673,7 +673,7 @@ Kural: hiçbir sahne spekülatif yüklenmez (`LoadSceneAsync` iptal edilemez); y
 7. **aktivasyon** — mühür `Stamp` (130 ms; temas t 90'da `ReleaseSimulation()` + `allowSceneActivation = true`), eyebrow `ENTERING`. `sceneLoaded` → `OnSceneLoaded` `s_transition++` + Run'da hand-off yeniden kurulur (değişmez). `op.isDone` → `yield return null` ×2: yeni sahne kapalı kapının **arkasında** bir kez render edilir; yeni ekranlar intro'yu `Start()`'ta değil `UiCurtain.Revealed`'da başlatır. Halka son 36°'yi bu iki karede Settle 220 ile kapatır.
 8. **açılış** — grup Exit Fast 140 → kapılar Settle 280; hedef ekranın `EnterScreen`'i kapılar %50 açıkken (t +140) başlar; `UiCurtainOpen` cue ilk açık karede; imleç ve raycast'ler ilk `EnterScreen` karesiyle döner; hedef ekranın odak hafızası `Revealed`'da uygulanır.
 
-**Anti-flicker:** grup asla < 600 ms görünmez; yükleme t < 500'de ≥ 0,9 bildirirse grup hiç gösterilmez, geçiş CURTAIN'e düşer (kapalı ≥ 300 ms tut, aç). **Beklenenden hızlı (SCREEN seçili):** halka 0,9'da açık kalır, asgari gösterim dolunca damga — dürüst, aktivasyon gerçekten ertelenmiştir. **Beklenenden yavaş (CURTAIN seçili, > 900 ms):** grup t 900'de geç girer, asgari gösterim girişten sayılır, süre geri yazılır. **Takılma:** ilerleme 10 s değişmezse ipucu altında `UiNotice Info` `loading.state.stalled`; ≥ 60 s hata modalı (§15.4). Ham yüklemeye eklenen gecikme ≈ 0,7 s (280 + 2 kare + 140 + 280).
+**Anti-flicker:** grup asla < 600 ms görünmez; yükleme t < 500'de ≥ 0,9 bildirirse grup hiç gösterilmez, geçiş CURTAIN'e düşer (kapalı ≥ 300 ms tut, aç). **Beklenenden hızlı (SCREEN seçili):** halka 0,9'da açık kalır, asgari gösterim dolunca damga — dürüst, aktivasyon gerçekten ertelenmiştir. **Beklenenden yavaş (CURTAIN seçili, > 900 ms):** grup t 900'de geç girer, asgari gösterim girişten sayılır, süre geri yazılır. **Takılma:** ilerleme 10 s değişmezse `UiNotice Info` `loading.state.stalled` — ipucu varken şeridin altında, yokken şeridin yuvasında (alt kenar 1080 − 96; 12b, AD R1-D SHOULD-7a); ≥ 60 s hata modalı (§15.4). Ham yüklemeye eklenen gecikme ≈ 0,7 s (280 + 2 kare + 140 + 280).
 
 **WP-061J:** `Load()` tek giriş kalır; `s_transition` istekte ve aktivasyonda artar → bekleyen `GoToResultsAfterDelay(scheduledAt)` uyuşmazlıkta vazgeçer, taze Run `s_resultsScheduled = false` ile yeniden kurar; additive dünya yüklemesi geçiş değildir. Results ön yüklenmediği için ölüm vuruşunda iptal bugünkü gibi davranır.
 
@@ -685,12 +685,12 @@ Kural: hiçbir sahne spekülatif yüklenmez (`LoadSceneAsync` iptal edilemez); y
 
 | durum | görünen |
 |---|---|
-| 0 | hayalet halka Cream100 α 0,12 (tam ensō, kuru); mühür cihazı içeride mürekkep α 0,35; `LOADING` |
+| 0 | hayalet halka Cream100 α 0,18 (tam ensō, kuru; 12b: 0,12 anahtar sanatın açık sıvasında çember okunmuyordu); mühür cihazı içeride mürekkep α 0,35; `LOADING` |
 | 0,5 | darbe 162°'ye çizilmiş; uçta 0,04 genişlik ıslak-kenar bandı koyulaşır (InkReveal); darbe `TextPrimary` krem, 14 px (fırça gibi 10–18 arası); ileride hayalet halka görünür |
 | 0,9 | darbe 324°'de; ensō'nun ağzı (36°) **açık** — iş bitmediği için daire kapanmaz |
 | aktivasyon | mühür Stamp (1,12→1,00, 130 ms, mürekkep → `TextPrimary`) adımı işaretler, eyebrow `ENTERING`; `sceneLoaded` sonrası son 36° Settle 220 ile kapanır, yeni sahnenin ilk karesi kapalı kapı arkasındayken → grup Exit 140 → kapılar açılır. Aktivasyon takılması damganın altına düşer, boş bekleyişe değil |
 
-Glint yok, altın yok, flaş yok: halka krem, mühür mürekkep, ıslak uç darbenin son 0,04'ü (krem α 0,6, ön kenarı ilerlemeden geriye titrer; ilerlemenin ötesinde piksel yok — AD 10b-2 MUST-1). Mürekkep varyantında aynı halka Ø 160, yalnız 1,2 s'den sonra belirir (mürekkebin içinde), aynı durumlar; kapı-yalnız yavaş yüklemeler §15.2'ye göre tam grubu 0,9 s'de alır (AD 10b-2 SHOULD-3).
+Glint yok, altın yok, flaş yok: halka krem, mühür mürekkep, ıslak uç darbenin son 0,04'ü (krem α 0,6, ön kenarı ilerlemeden geriye titrer; ilerlemenin ötesinde piksel yok — AD 10b-2 MUST-1). Mürekkep varyantında halka yalnız 1,2 s'den sonra belirir: Results anahtar sanatıyla birlikte, tam Ø 240 ve etiketlerle, mürekkebin içinde (12b karar A; Ø 160 tek halka artık yalnız kapı-yalnız CURTAIN derinliğinindir); grup mürekkep çekilmeden önce Exit 140 ile çıkar; kapı-yalnız yavaş yüklemeler §15.2'ye göre tam grubu 0,9 s'de alır (AD 10b-2 SHOULD-3).
 
 **Boot mührü → ilk yükleme (U7: her açılış + çan).** Boot ve ilk yükleme tek nesnedir: Boot sahnesi t0'da `LoadSceneAsync(MainMenu)`'yü aktivasyon tutarak başlatır, E1 koreografisi yükleme canvas'ında oynar: t0 mürekkep lekesi InkReveal 500 → t 0,55 mühür Stamp, temas t 0,64 = `BootLogo` çan (tek rin vuruşu) → t 0,70 wordmark Display 700 Clip wipe 280, kicker üstte → t 1,6'ya tut. **El verme t 1,6'da (ya da atlamada):** mühür Tint Vermilion600 → mürekkep `TextSecondary` 220 ms (vermilion logonundur, yükleme mührü mürekkeptir), wordmark Exit 140, `LOADING` aynı taban çizgisinde girer, ensō hayalet halkası mührün çevresinde **o anki** ilerlemede belirir (çoğu kez 0,9 — anında çizilir, damgalar). Menü t 1,6'dan önce hazırsa fazladan hiçbir şey görünmez: mühür tutması yüklemeyi yutar, t 1,6 damgası aktivasyondur. Atlama: boot tween'leri t = 1, çan 120 ms fade, halka gerçek ilerlemede — atlamak hazırlığı asla taklit etmez. Parlaklık > %20 sıçramaz, beyaz kare yok.
 
@@ -712,15 +712,16 @@ Glint yok, altın yok, flaş yok: halka krem, mühür mürekkep, ıslak uç darb
 
 | kalem | kaynak | MB | kr |
 |---|---|---|---|
-| uzak / orta plakalar | P1/P2 dilim 6 yakalaması (§7.1) | 0 yeni | 0 |
+| anahtar sanatlar (avlu: her yükleme; sur: Results) | Higgsfield gpt_image_2_5 high, 3 aday (R1-D / key art v2, 25.09), 2560×1440 JPEG q94 | 1,4 + 1,4 | 8,25 |
+| uzak / orta plakalar | P1/P2 dilim 6 yakalaması (§7.1); yalnız anahtar sanat yüklenemezse yedek | 0 yeni | 0 |
 | ensō darbesi + zaman haritası | A8 mürekkep kiti (üçüncü darbe, aynı 1024² BC4 sheet) | 0 yeni | 0 (A8'in 3'ü içinde) |
 | mühür cihazı | V2 vektör (G1 SDF hücresi) | 0 | 0 |
 | `Tooltip.Info` glifi | A3 | 0 | 0 |
 | kapılar | kumiko A6 + `Frame.Modal` | 0 | 0 |
 | ipucu dizeleri `loading.*` (27) + durum/hata (≈ 12) | UXW, kod | ≈ 0,01 | 0 |
-| **toplam** | | **+0,01 MB** | **+0 kr** (görsel 19 MUST / 32 tavan değişmez; U3 içinde) |
+| **toplam** | | **+2,8 MB** | **+8,25 kr** (kullanıcı talebi 25.09; UI sanat bütçesi 7,8 / 12 MiB) |
 
-Sumi-e yükleme plakası COULD kalır (Look B yakalaması anahtar sanattır; boyalı plaka ikinci bir hava olurdu).
+**Malzeme kuralı (12b, AD R1-D SHOULD-6 yerine yazılı):** yükleme ekranı hep boyalı anahtar sanatın üstündedir (dünya plakası ya da donmuş kare değil; kullanıcı 25.09: "neredeyse boş sahne"); sanat yalnız kelimelerin altında yerel perdeyle kararır (halka ≥ 3:1, etiket `TextSecondary` ≥ 4,5:1, ipucu şeridi ≥ 7:1 — `LoadingKeyArtTests`, 4 en-boy × itiş 1,00/1,05); mürekkep geçiştir, sanat onun içinde açılır; Look B plakaları yalnız yedektir, sanatla aynı karede asla.
 
 ### 15.7 Testler (T15–T19; dilim 10 kapısı)
 

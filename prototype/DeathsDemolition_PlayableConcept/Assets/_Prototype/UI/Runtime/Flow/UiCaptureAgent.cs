@@ -861,16 +861,24 @@ namespace DD.Prototype.UI
                 yield return WaitFor(() => !UiCurtain.IsCovering, 10f);
                 yield return new WaitForSecondsRealtime(0.5f);
 
-                // SCREEN depth into the run: mid plate, weapon sub-line, tip; the ensō at 0 / 0.5 /
-                // 0.9 (an artificial 3 s load, §15.7) and the seal's stamp at ENTERING (10b-2).
+                // SCREEN depth into the run: key art, weapon sub-line, tip; the ensō at 0 / 0.5 /
+                // 0.9 (an artificial 5 s load, §15.7), the push-in at t 0 / t 4 s (12b, AD R1-D SHOULD-8:
+                // scale logged, the edge moves (scale - 1) × half the width) and the seal's stamp at ENTERING (10b-2).
                 UiLoadTiming.RecordLoad(PrototypeScenes.Run, 5f);
-                PrototypeUiFlow.ArtificialLoadSeconds = 3f;
+                PrototypeUiFlow.ArtificialLoadSeconds = 5f;
                 PrototypeUiFlow.StartRun();
                 yield return WaitFor(() => curtain.GroupVisible && curtain.EyebrowText == "LOADING", 10f);
+                float groupAt = Time.realtimeSinceStartup;
+                yield return Frame(folder, "loading-run-t0");
+                Debug.Log("[UiCapture] loading-run-t0 keyArtScale=" + curtain.KeyArtScale.ToString("F4") + " t=" + (Time.realtimeSinceStartup - groupAt).ToString("F2"));
                 yield return new WaitForSecondsRealtime(0.25f);
                 yield return Frame(folder, "loading-run");
                 yield return WaitFor(() => curtain.WetFill >= 0.45f, 10f);
                 yield return Frame(folder, "loading-run-05");
+                yield return WaitFor(() => Time.realtimeSinceStartup - groupAt >= 4f, 10f);
+                yield return Frame(folder, "loading-run-t4");
+                Debug.Log("[UiCapture] loading-run-t4 keyArtScale=" + curtain.KeyArtScale.ToString("F4") + " t=" + (Time.realtimeSinceStartup - groupAt).ToString("F2")
+                          + " edge=" + ((curtain.KeyArtScale - 1f) * Screen.width * 0.5f).ToString("F1") + "px");
                 yield return WaitFor(() => curtain.EyebrowText == "ENTERING", 15f);
                 yield return new WaitForSecondsRealtime(0.1f);
                 yield return Frame(folder, "loading-run-entering");
@@ -959,8 +967,9 @@ namespace DD.Prototype.UI
 
             /// <summary>
             /// 10b-2 · <c>-ddUiCapture ink</c>: a real run ended by death - the ink bleeding
-            /// (t 1.0 of the beat), covered (t 2.2), the Ø 160 ring in the ink (the Results load
-            /// stretched to 3 s), the recede half way, and Results.
+            /// (t 1.0 of the beat), covered (t 2.2: what a fast load shows before Results), the Results key art opened
+            /// inside the ink with the ring Ø 240 (12b decision A; the Results load stretched to 3 s), the recede half way,
+            /// and Results.
             /// </summary>
             private IEnumerator InkFrames()
             {
@@ -993,9 +1002,9 @@ namespace DD.Prototype.UI
                 yield return Frame(folder, "ink-bleed");
                 yield return WaitFor(() => Time.realtimeSinceStartup - t0 >= 2.2f, 3f);
                 yield return Frame(folder, "ink-covered");
-                yield return WaitFor(() => curtain.RingOnlyVisible, 8f);
+                yield return WaitFor(() => curtain.KeyArtVisible && curtain.InkCovering, 8f);
                 yield return new WaitForSecondsRealtime(0.8f);
-                yield return Frame(folder, "ink-ring");
+                yield return Frame(folder, "ink-keyart");
                 // AD 10b-2 wanted: ENTERING at 360°, the frame before the recede starts.
                 yield return WaitFor(() => curtain.EyebrowText == "ENTERING", 20f);
                 yield return WaitFor(() => curtain.RingFill >= 0.999f || curtain.InkReceding, 2f);

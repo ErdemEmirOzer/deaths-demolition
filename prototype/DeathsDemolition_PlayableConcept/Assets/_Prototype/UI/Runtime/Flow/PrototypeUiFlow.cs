@@ -352,7 +352,8 @@ namespace DD.Prototype.UI
 
                 if (ink && ringShownAt < 0f && now - t0 >= InkRingSeconds && progress < LoadedProgress)
                 {
-                    curtain.ShowRingOnly(UiCurtain.DestinationFor(sceneName));
+                    // WP-068 12b (C-00 decision A): a slow load under the ink opens the Results key art inside it.
+                    curtain.ShowInkGroup(UiCurtain.DestinationFor(sceneName), UiCurtain.KeyArtFor(sceneName));
                     ringShownAt = now;
                 }
 

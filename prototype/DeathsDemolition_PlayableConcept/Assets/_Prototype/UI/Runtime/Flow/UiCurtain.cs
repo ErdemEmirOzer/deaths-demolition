@@ -50,7 +50,10 @@ namespace DD.Prototype.UI
 
         /// <summary>CURTAIN depth: the ring alone, Ø 160, once a curtain-only load passes 1.2 s (§15.3).</summary>
         public const float CurtainRingSize = 160f;
-        public const float GhostAlpha = 0.12f;
+
+        /// <summary>The dry ghost circle (the idle track). 12b (AD key art SHOULD-2): 0.12 → 0.18, so the track still reads as a
+        /// circle where it crosses pale plaster on the key art; the dry stroke (1.0) and the wet tip (0.6) stay well above it.</summary>
+        public const float GhostAlpha = 0.18f;
 
         /// <summary>Boot seal variant (E1, §15.3): the logo seal's size, the ink blot behind it, the wordmark's tracking.</summary>
         public const float BootSealSize = 240f;
@@ -189,6 +192,12 @@ namespace DD.Prototype.UI
             get { return _eyebrow != null ? _eyebrowState : string.Empty; }
         }
 
+        /// <summary>The destination label (tests).</summary>
+        public string DestinationText
+        {
+            get { return _destination != null ? _destination.text : string.Empty; }
+        }
+
         /// <summary>The tip on the strip (empty when none is shown).</summary>
         public string TipText
         {
@@ -233,6 +242,24 @@ namespace DD.Prototype.UI
         public bool ErrorOpen
         {
             get { return _error != null && _error.IsOpen; }
+        }
+
+        /// <summary>The key art's current push-in scale (captures: the t 0 / t 4 s evidence).</summary>
+        public float KeyArtScale
+        {
+            get { return _keyArt != null ? _keyArt.rectTransform.localScale.x : 1f; }
+        }
+
+        /// <summary>The ring and its label stack are on screen (tests: hidden under the error modal).</summary>
+        public bool DeviceVisible
+        {
+            get { return _ringGroup != null && _ringGroup.gameObject.activeInHierarchy; }
+        }
+
+        /// <summary>The stall notice's rect (tests: its slot).</summary>
+        public RectTransform StallRect
+        {
+            get { return _stall; }
         }
 
         public string SublineText
@@ -901,6 +928,17 @@ namespace DD.Prototype.UI
             UiPresets.PaneIn(_group, null, 0f);
         }
 
+        /// <summary>
+        /// E22 slow Results load (C-00 25.09, decision A; AD R1-D SHOULD-6): once the load under the ink runs past the ring
+        /// threshold, the Results key art opens INSIDE the ink - the group fades in over the ink field (PaneIn, Base) with the
+        /// full ring Ø 240 and its labels, no tip - instead of the Ø 160 ring alone. The group leaves (Exit, Fast) before the
+        /// ink recedes into Results (<see cref="Open"/>). A fast load never gets here: the ink opens straight into Results.
+        /// </summary>
+        public void ShowInkGroup(string destination, string keyArt)
+        {
+            ShowGroup(destination, string.Empty, null, false, keyArt);
+        }
+
         /// <summary>The key art (or none): cover-fit, over the plates, pushing in slowly while the load runs.</summary>
         private void ShowKeyArt(string resource)
         {
@@ -999,6 +1037,7 @@ namespace DD.Prototype.UI
         private void SetRingOnly(bool ringOnly)
         {
             _ringOnly = ringOnly;
+            _ringGroup.gameObject.SetActive(true);
             _scrim.gameObject.SetActive(!ringOnly);
             _scrimFoot.gameObject.SetActive(!ringOnly);
             _eyebrow.gameObject.SetActive(!ringOnly);
@@ -1022,10 +1061,13 @@ namespace DD.Prototype.UI
                 _stall = UiNotices.Notice("Stalled", _group.transform, UiNoticeKind.Info, UiLoadingTips.StalledLine, width);
                 _stall.anchorMin = new Vector2(0f, 0f);
                 _stall.anchorMax = new Vector2(0f, 0f);
-                _stall.pivot = new Vector2(0f, 1f);
-                _stall.anchoredPosition = new Vector2(TipMargin, TipMargin - (int)UiSpace.S);
             }
 
+            // Under the tip when there is one; in the tip's own slot (bottom edge 96 in) when there is none
+            // (12b, AD R1-D SHOULD-7a: it hung at the screen's foot on the way to the Results).
+            bool underTip = _tipStrip.gameObject.activeSelf;
+            _stall.pivot = new Vector2(0f, underTip ? 1f : 0f);
+            _stall.anchoredPosition = new Vector2(TipMargin, underTip ? TipMargin - (int)UiSpace.S : TipMargin);
             _stall.gameObject.SetActive(true);
         }
 
@@ -1050,6 +1092,9 @@ namespace DD.Prototype.UI
                 _stall.gameObject.SetActive(false);
             }
 
+            // The ring and its labels step out under the modal (12b, AD R1-D SHOULD-7b): the arc peeked over the modal's top
+            // edge and the destination sat on its bottom border. HideError puts back what was shown.
+            HideDevice();
             _error = onPrimary != null
                 ? UiModal.Create("LoadError", _root, UiModalSize.M, "THE NEXT SCREEN DID NOT LOAD", body, primaryLabel, UiButtonVariant.Primary, onPrimary, "QUIT", quit, false, true)
                 : UiModal.Create("LoadError", _root, UiModalSize.M, "THE NEXT SCREEN DID NOT LOAD", body, "QUIT", UiButtonVariant.Secondary, quit, null, null, false, true);
@@ -1063,6 +1108,28 @@ namespace DD.Prototype.UI
             {
                 Destroy(_error.gameObject);
                 _error = null;
+                RestoreDevice();
+            }
+        }
+
+        private readonly bool[] _deviceShown = new bool[4];
+
+        private void HideDevice()
+        {
+            GameObject[] parts = { _ringGroup.gameObject, _eyebrow.gameObject, _destination.gameObject, _subline.gameObject };
+            for (int i = 0; i < parts.Length; i++)
+            {
+                _deviceShown[i] = parts[i].activeSelf;
+                parts[i].SetActive(false);
+            }
+        }
+
+        private void RestoreDevice()
+        {
+            GameObject[] parts = { _ringGroup.gameObject, _eyebrow.gameObject, _destination.gameObject, _subline.gameObject };
+            for (int i = 0; i < parts.Length; i++)
+            {
+                parts[i].SetActive(_deviceShown[i]);
             }
         }
 
