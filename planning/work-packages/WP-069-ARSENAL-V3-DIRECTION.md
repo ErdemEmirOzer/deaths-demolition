@@ -293,6 +293,8 @@ Girdi: `00-BRIEF.md` · AP-013 konsept v001 (silüet sınıfları, palet, rezerv
 | K4 Kara barut | Her atış duman bırakır (erken dönem dünyası); duman α ≤ 0,35, yükselir, oyun alanını örtmez | namlu 1 m çevresi kümülatif α ≤ 0,25 |
 | K5 Canlılık (N19) | Klasik silahta **gövde değil olay** canlıdır (iz/flaş HDR ×5–×8, kord tonu, lake tonu çeşidi); Special'da **gövde de** canlıdır (pirinç, cam, jel, ark) | klasik silah ort. v ≤ 0,34; Special gövde altın bandı alanı ≤ %25 |
 
+**Silah çerçevesi — kanonik (T4, 25.09, ölçüldü: `WeaponModelSliceTests.HerSilah_Ejection_AticininSaginda_KovanSagaFirlar`):** Blender'da kök = kabza (tetik), namlu **−Y**, üst **+Z**, atıcının sağı / ejection portu **−X** (sol yan şarjör +X); dışa aktarım FBX `axis_forward −Z`, `axis_up Y`, `FBX_SCALE_UNITS`, Unity'de eksen pişirme kapalı; Unity'de kök = kabza, **+Z namlu, +Y üst, +X = atıcının SAĞI** (ejection portu; kovan soketin +X'ine fırlar).
+
 ### §1 · Arsenal görsel dili
 1. AP-013 "fantastik erken dönem" (fitil kilidi, serpantin, esmer demir, koyu lake, kord, kutu şarjör) 10 silaha **aynı üç malzeme ailesiyle** genişler; yeni sınıflar yeni malzeme getirmez, yeni **mekanizma parçası** getirir: LMG'de lake ahşap cephane sandığı + demir soğutma kanatları, sniper'da uzun demir dürbün tüpü + sürgü topuzu, launcher'da demir "hiya-zutsu" tüpü + kâğıt/kord sarılı roket.
 2. Aynı sınıftaki iki silah **en az 3 eksende** ayrılır: (a) 19,9 m'de ≥ 2 px'lik bir çıkıntı farkı (kafes/şarjör/tepsi/çan), (b) lake tonu Δv ≥ 0,10, (c) kord ailesi (kenevir / çivit / hurma), (d) iz rengi-oranı. Silah 1 = AP-013 mirası (kahve lake + kenevir), silah 2 = daha koyu ya da daha sıcak lake + farklı kord.

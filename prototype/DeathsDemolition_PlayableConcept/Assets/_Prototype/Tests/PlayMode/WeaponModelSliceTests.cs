@@ -65,6 +65,65 @@ namespace DD.Prototype.Tests.PlayMode
             }
         }
 
+        /// <summary>
+        /// WP-069 T4 (C-00: the P-06 ↔ P-07 frame question, one measured answer). In the Run scene, with every enabled
+        /// classic weapon in the player's hand, the Ejection socket sits on the SHOOTER'S RIGHT of the barrel line (a
+        /// centred port, e.g. a break-action breech, is allowed) and the casing throw — the socket's +X, which both
+        /// VfxDressing.EjectCasing and WeaponController.PublishMechanism read — points to the shooter's right. World-space
+        /// sign test against the character's right (it faces the aim) and the camera's right.
+        /// </summary>
+        [UnityTest]
+        [Timeout(120000)]
+        public IEnumerator HerSilah_Ejection_AticininSaginda_KovanSagaFirlar()
+        {
+            yield return Kur();
+            ClassicWeaponVisualLibrary lib = ClassicWeaponVisualLibrary.Current;
+            var binding = _s.Rig.GetComponentInChildren<PlayerWeaponBinding>();
+            Assert.IsNotNull(binding);
+            Transform mount = binding.WeaponMount;
+            Assert.IsNotNull(mount, "silah montaj noktası (socket_weapon_r) yok.");
+            Camera cam = DD.Prototype.Feedback.FeedbackCameraRef.Current;
+
+            var report = new List<string>();
+            var wrong = new List<string>();
+            var legacyLeft = new List<string>();
+            int measured = 0;
+            foreach (ClassicWeaponDefinition d in WeaponRoster.Enabled)
+            {
+                _s.Controller.EquipClassic(d.Id, _s.Config);
+                yield return new WaitForSeconds(0.5f);
+                Transform rigT = mount.Find("ClassicWeaponRig");
+                Assert.IsNotNull(rigT, d.RosterKey + ": ClassicWeaponRig montajda değil.");
+                Transform port = WeaponSocketContract.Find(rigT, WeaponSocketContract.Ejection);
+                ClassicWeaponVisualLibrary.Entry own = lib != null ? lib.Find(d.Id) : null;
+                string source = own != null && own.ownMaterials ? "AP-021" : "AP-013";
+                if (port == null)
+                {
+                    report.Add(d.RosterKey + " (" + source + ") Ejection yok");
+                    continue;
+                }
+
+                Vector3 right = _s.Rig.transform.right;
+                Vector3 barrel = (_s.Controller.Muzzle.position - mount.position).normalized;
+                Vector3 offset = port.position - mount.position;
+                float side = Vector3.Dot(offset - Vector3.Dot(offset, barrel) * barrel, right);   // off the barrel line, + = shooter's right
+                float throwDot = Vector3.Dot(port.right, right);
+                float throwCam = cam != null ? Vector3.Dot(port.right, cam.transform.right) : float.NaN;
+                string line = d.RosterKey + " (" + source + ") port " + (side * 100f).ToString("+0.0;-0.0") + " cm, throw·right " + throwDot.ToString("0.00") +
+                              ", throw·camRight " + throwCam.ToString("0.00");
+                report.Add(line);
+                measured++;
+                // AP-013 (P-06, M3) authored its port on Blender +X → Unity −X (measured −3.0…−3.5 cm, the shooter's left); P-07's
+                // AP-021 set replaces every classic model, so the legacy port side is listed, not failed — its throw must still go right.
+                if (throwDot < 0.5f || (source == "AP-021" && side < -0.005f)) wrong.Add(line);
+                else if (side < -0.005f) legacyLeft.Add(d.RosterKey);
+            }
+
+            Debug.Log("[DD-TEST] wp069.t4.eject " + string.Join(" | ", report) + " || AP-013 port left (legacy): " + string.Join(",", legacyLeft));
+            Assert.Greater(measured, 0, "Ejection soketli hiçbir silah ölçülmedi.");
+            Assert.IsEmpty(wrong, "Ejection / kovan atıcının SAĞINDA değil: " + string.Join(" | ", wrong));
+        }
+
         [UnityTest]
         [Timeout(120000)]
         public IEnumerator HerSilah_AP013Modeli_Elde_Soketler_OrtoKare_KundakOmuz()
