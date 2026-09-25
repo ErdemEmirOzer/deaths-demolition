@@ -507,6 +507,9 @@ namespace DD.Prototype.Weapons.EditorTools
             { "lmg_2", WeaponFpViewPose.At(0.432f, -0.162f, 0.60f, -1.25f, -3.34f, 0.853f) },
             { "sr_1", WeaponFpViewPose.At(0.252f, -0.173f, 0.35f, -1.30f, -1.89f, 0.840f) },
             { "rl_1", WeaponFpViewPose.At(0.252f, -0.223f, 0.45f, -1.69f, -1.92f, 0.839f) },
+            // The two Specials in hand (C-00 25.09): same target, clear of S-09's Special ring block (their HUD while in hand).
+            { "sw_arc", WeaponFpViewPose.At(0.352f, -0.198f, 0.55f, -1.52f, -2.71f, 0.840f) },
+            { "sw_gel", WeaponFpViewPose.At(0.192f, -0.198f, 0.40f, -1.49f, -1.45f, 0.840f) },
         };
 
         // ================================================================== asset writing

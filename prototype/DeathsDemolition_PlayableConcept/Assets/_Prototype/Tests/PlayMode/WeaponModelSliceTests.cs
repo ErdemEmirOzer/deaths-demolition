@@ -351,6 +351,113 @@ namespace DD.Prototype.Tests.PlayMode
             return new Vector2((clip.x / clip.w * 0.5f + 0.5f) * KareW, (clip.y / clip.w * 0.5f + 0.5f) * KareH);
         }
 
+        /// <summary>
+        /// WP-069 (C-00 25.09) · the two Specials in hand get the same first-person view pose: picked up (a constant random
+        /// source rolls Raiju / Namekuji), in FP the Special rig sits at its definition's pose and the frame at 1080p rest
+        /// meets the classics' target — 120–220 k px, centre lower right, grip and muzzle on screen, the barrel toward the
+        /// crosshair (≤ 25°), no pixel in S-09's Special ring block (their HUD while a Special is in hand); the HUD overlap
+        /// is asserted 0 once S-09's FP layout is in. Evidence: both frames on one sheet and each as the player sees it
+        /// with the HUD. Leaving FP puts the Special back on the hand.
+        /// </summary>
+        [UnityTest]
+        [Timeout(240000)]
+        public IEnumerator FP_GorusPozu_Special_KadrajBandinda()
+        {
+            const int Kucuk = 4;
+            int sw = KareW / Kucuk, sh = KareH / Kucuk;
+            var sheet = new Color32[sw * 2 * sh];
+            var report = new List<string>();
+            var wrong = new List<string>();
+            var seen = new List<SpecialWeaponId>();
+            int n = 0;
+            foreach (float rv in new[] { 0.1f, 0.9f })
+            {
+                if (_s != null) { yield return _s.Bitir(); _s = null; DD.Prototype.CameraSystem.CameraModeService.ResetForTests(); }
+                yield return Kur();
+                _s.Director.SetRandomSource(new SabitRastgele(rv));
+                yield return _s.SpawnEt(0.5f);
+                SpecialWeaponPickup pickup = _s.CanliPickup();
+                Assert.IsNotNull(pickup, "Special pickup yok.");
+                SpecialWeaponId id = pickup.WeaponId;
+                seen.Add(id);
+                _s.PickupaGit(pickup);
+                yield return SpecialWeaponSahne.Bekle(() => _s.Controller.SpecialWeaponActive, SpecialWeaponSahne.FazZamanAsimi, "Special aktif olmadı.");
+                yield return SpecialWeaponSahne.Bekle(() => !_s.Controller.PickupDonePending, 1.5f, "pickup_done / yedek");
+                DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.FirstPerson, instant: true);
+                yield return SpecialWeaponSahne.Kareler(40);
+                Transform mount = _s.Rig.GetComponentInChildren<PlayerWeaponBinding>().WeaponMount;
+                var alignment = mount.GetComponent<WeaponMountAlignment>();
+                yield return SpecialWeaponSahne.Bekle(() => alignment == null || (alignment.DeltaApplied && alignment.DeltaDegrees < 0.75f), 3f, id + ": dinlenme pozuna oturmadı");
+                var camRig = DD.Prototype.CameraSystem.PrototypeCameraRig.Active;
+                Camera vm = camRig.ViewmodelCamera;
+                Assert.IsNotNull(vm, "FP'de görüntü modeli kamerası yok.");
+                camRig.Camera.aspect = KareW / (float)KareH;
+                vm.aspect = KareW / (float)KareH;
+                yield return SpecialWeaponSahne.Kareler(3);
+                Assert.IsTrue(_s.Controller.SpecialFpViewPosed, id + ": FP görüş pozuna oturmadı.");
+
+                RunHudScreen hud = Object.FindObjectOfType<RunHudScreen>();
+                Assert.IsNotNull(hud, "Run HUD yok.");
+                Transform hudCanvas = hud.transform.Find(hud.GetType().Name + ".Canvas");
+                Assert.IsNotNull(hudCanvas != null ? hudCanvas.GetComponent<Canvas>() : null, "HUD canvas'ı yok.");
+                var hudPixels = new Color32[2][];
+                yield return HudCiz(hudCanvas.GetComponent<Canvas>(), hudPixels);
+                bool fpLayout = RunHudScreen.WeaponClusterPosition(Vector2.zero, true, KareH) != RunHudScreen.WeaponClusterPosition(Vector2.zero, false, KareH);
+
+                Transform rig = mount.Find("SpecialWeaponRig");
+                Color32[] px = VmKare(vm, null);
+                int cov = 0, ring = 0, hudOverlap = 0;
+                long sx = 0, sy = 0;
+                for (int i = 0; i < px.Length; i++)
+                {
+                    if (!(px[i].r < 240 || px[i].g > 15 || px[i].b < 240)) continue;
+                    int u = i % KareW, v = i / KareW;
+                    cov++; sx += u; sy += v;
+                    Color32 k = hudPixels[0][i], w = hudPixels[1][i];
+                    if (k.r > 8 || k.g > 8 || k.b > 8 || w.r < 247 || w.g < 247 || w.b < 247) hudOverlap++;
+                    if (u >= RingX0 && u < RingX1 && v >= KareH - RingYTop1 && v < KareH - RingYTop0) ring++;
+                }
+
+                float cx = cov > 0 ? sx / (float)cov : 0f, cy = cov > 0 ? sy / (float)cov : 0f;
+                Vector2 grip = Ekran(vm, rig.position), muzzle = Ekran(vm, _s.Controller.SpecialRigMuzzle.position);
+                float angle = Vector2.Angle(muzzle - grip, new Vector2(KareW * 0.5f, KareH * 0.5f) - grip);
+                string line = id + " cov " + cov + " px, centre (" + cx.ToString("0") + "," + (KareH - cy).ToString("0") + " from top), grip " + (EkranIcinde(grip) ? "in" : "OUT") +
+                              ", muzzle " + (EkranIcinde(muzzle) ? "in" : "OUT") + ", barrel→centre " + angle.ToString("0") + "°, HUD overlap " + hudOverlap + " px, Special ring " + ring + " px";
+                report.Add(line + (fpLayout ? "" : " (S-09 FP layout not yet)"));
+                if (cov < 120000 || cov > 220000 || cx <= KareW * 0.5f || cy >= KareH * 0.5f || angle > 25f || !EkranIcinde(grip) || !EkranIcinde(muzzle) || ring > 0 || (fpLayout && hudOverlap > 0)) wrong.Add(line);
+
+                for (int y = 0; y < sh; y++)
+                {
+                    for (int x = 0; x < sw; x++) sheet[y * sw * 2 + n * sw + x] = px[(y * Kucuk) * KareW + x * Kucuk];
+                }
+
+                YazPng(HudUstune(SahneKare(camRig.Camera), hudPixels), KareW, KareH, "wp069-fpview-hud-" + id + ".png");
+                n++;
+
+                DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.TopDown, instant: true);
+                yield return SpecialWeaponSahne.Kareler(10);
+                Assert.IsFalse(_s.Controller.SpecialFpViewPosed, id + ": FP'den çıkınca görüş pozu kalkmadı.");
+                Assert.Less(rig.localPosition.magnitude, 1e-4f, id + ": Special ele dönmedi (konum)");
+                Assert.AreEqual(1f, rig.localScale.x, 1e-4f, id + ": ölçek geri dönmedi");
+                camRig.Camera.ResetAspect();
+                vm.ResetAspect();
+            }
+
+            YazPng(sheet, sw * 2, sh, "wp069-fpview-special-sheet.png");
+            Debug.Log("[DD-TEST] wp069.fpview.special " + string.Join(" | ", report));
+            CollectionAssert.AreEquivalent(new[] { SpecialWeaponId.Raiju, SpecialWeaponId.Namekuji }, seen, "iki Special da ölçülmedi.");
+            Assert.IsEmpty(wrong, "Special FP kadrajı hedef bandın dışında: " + string.Join(" | ", wrong));
+        }
+
+        private sealed class SabitRastgele : ISpecialWeaponRandom
+        {
+            private readonly float _v;
+            public SabitRastgele(float v) { _v = v; }
+            public float Value() => _v;
+            public float Range(float min, float max) => min + (max - min) * _v;
+            public int Range(int min, int maxExclusive) => min;
+        }
+
         private const int KareW = 1920, KareH = 1080;
 
         /// <summary>

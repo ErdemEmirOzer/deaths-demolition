@@ -305,6 +305,7 @@ namespace DD.Prototype.Core.Weapons
                 case WeaponClass.Lmg: return At(0.432f, -0.257f, 0.60f, -1.98f, -3.34f, 0.851f);
                 case WeaponClass.Sniper: return At(0.252f, -0.173f, 0.35f, -1.30f, -1.89f, 0.840f);
                 case WeaponClass.Launcher: return At(0.252f, -0.223f, 0.45f, -1.69f, -1.92f, 0.839f);
+                case WeaponClass.Special: return At(0.352f, -0.198f, 0.55f, -1.52f, -2.71f, 0.840f);
                 default: return At(0.252f, -0.150f, 0.35f, -1.12f, -1.89f, 0.841f);
             }
         }

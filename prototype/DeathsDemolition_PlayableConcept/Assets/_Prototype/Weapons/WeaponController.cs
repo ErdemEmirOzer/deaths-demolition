@@ -1165,19 +1165,24 @@ namespace DD.Prototype.Weapons
         // ------------------------------------------------------------------ WP-069 · the FP view pose
 
         private readonly FpViewPoseState _classicFpPose = new FpViewPoseState();
+        private readonly FpViewPoseState _specialFpPose = new FpViewPoseState();
 
         /// <summary>WP-069 readout: the classic rig sits at its FP view pose this frame (tests).</summary>
         public bool ClassicFpViewPosed => _classicFpPose.Posed;
 
+        /// <summary>WP-069 readout: the Special rig sits at its FP view pose this frame (tests).</summary>
+        public bool SpecialFpViewPosed => _specialFpPose.Posed;
+
         /// <summary>Called by <see cref="FpViewPoseDriver"/> after the mount alignment and the grip IK (order 950).</summary>
         internal void ApplyFpViewPose()
         {
-            WeaponDefinition definition = _classic != null ? _classic.Definition : null;
-            _classicFpPose.Tick(_classicRig, definition, _motor != null ? _motor.transform : transform);
+            Transform character = _motor != null ? _motor.transform : transform;
+            _classicFpPose.Tick(_classicRig, _classic != null ? _classic.Definition : null, character);
+            _specialFpPose.Tick(_specialRig, _special.IsActive ? _special.Definition : null, character);
         }
 
         /// <summary>
-        /// WP-069 (C-00 25.09) · while the classic rig's weapon is on the <see cref="CameraLayers.FirstPersonView"/> layer it
+        /// WP-069 (C-00 25.09) · while a rig's weapon (classic, and the Special in hand) is on the <see cref="CameraLayers.FirstPersonView"/> layer it
         /// sits at its definition's <see cref="WeaponFpViewPose"/> relative to the viewmodel camera (grip position, rotation,
         /// scale) instead of the hidden third-person hand — TIMES the mount's animated deviation from its rest aim
         /// (WeaponMountAlignment: mount = facing × delta), so the fire kick and the reload travel still turn it. Stays a
