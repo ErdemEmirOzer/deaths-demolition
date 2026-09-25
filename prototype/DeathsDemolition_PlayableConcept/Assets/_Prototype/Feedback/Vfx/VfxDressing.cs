@@ -180,6 +180,7 @@ namespace DD.Prototype.Feedback.Vfx
                 ImpactSystem.Ensure(this);
                 ArcSystem.Ensure();           // WP-073 B6: Raiju (direction §2.1)
                 GelSystem.Ensure();           // WP-073 B6: Namekuji (§2.2)
+                GroundFireSystem.Ensure();    // WP-073: S-04's K10b burning ground (RunTreeGroundFire)
                 SpecialWeaponGlow.Ensure();   // WP-073 B6: the two models' emissive states
             }
             else
