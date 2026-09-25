@@ -79,8 +79,15 @@ namespace DD.Prototype.UI
         public const float FigureClearance = 24f;
 
         private const int ResolvePasses = 8;
+        private const float EdgeEpsilon = 0.01f;   // a chip resolved exactly onto an edge still counts as clear (float)
         private AvoidRects _avoidSource;
         private FigureRect _figureSource;
+        private FigureRect _bandSource;
+        private bool _hasBand;
+        private Rect _band;
+
+        /// <summary>AD 12c MUST-3: a stamp stands this far over the banner's band, never under the ribbon and never below it.</summary>
+        public const float BandClearance = 12f;
         private readonly Rect[] _avoid = new Rect[8];
         private int _avoidCount;
         private bool _hasFigure;
@@ -93,11 +100,13 @@ namespace DD.Prototype.UI
         /// <param name="canvasRect">The HUD canvas the chips' positions are measured on (centre origin).</param>
         /// <param name="avoid">WP-068 12b: the HUD's ink clusters (null: none).</param>
         /// <param name="figure">WP-068 12b: the player figure as the camera sees it (null: none).</param>
-        public void Configure(RectTransform canvasRect, AvoidRects avoid = null, FigureRect figure = null)
+        /// <param name="band">AD 12c MUST-3: the banner's band while a banner shows (null: none).</param>
+        public void Configure(RectTransform canvasRect, AvoidRects avoid = null, FigureRect figure = null, FigureRect band = null)
         {
             _canvas = canvasRect;
             _avoidSource = avoid;
             _figureSource = figure;
+            _bandSource = band;
             _chips = new RectTransform[PoolSize];
             _groups = new CanvasGroup[PoolSize];
             _glyphs = new Image[PoolSize];
@@ -288,7 +297,7 @@ namespace DD.Prototype.UI
         /// <summary>The chip's place past the clusters and the figure; the HUD's rects are read once a frame, on the first chip placed.</summary>
         private Vector2 Clear(Vector2 at, int i)
         {
-            if (_avoidSource == null && _figureSource == null)
+            if (_avoidSource == null && _figureSource == null && _bandSource == null)
             {
                 return at;
             }
@@ -298,9 +307,10 @@ namespace DD.Prototype.UI
                 _clearanceFrame = Time.frameCount;
                 _avoidCount = _avoidSource != null ? Mathf.Min(_avoidSource(_avoid), _avoid.Length) : 0;
                 _hasFigure = _figureSource != null && _figureSource(out _figure);
+                _hasBand = _bandSource != null && _bandSource(out _band);
             }
 
-            Vector2 placed = Resolve(at, _chips[i].sizeDelta, _avoid, _avoidCount, _hasFigure, _figure);
+            Vector2 placed = Resolve(at, _chips[i].sizeDelta, _avoid, _avoidCount, _hasFigure, _figure, _hasBand, _band);
             LastPlaced = new Rect(placed.x - _chips[i].sizeDelta.x * 0.5f, placed.y, _chips[i].sizeDelta.x, _chips[i].sizeDelta.y);
             return placed;
         }
@@ -322,6 +332,15 @@ namespace DD.Prototype.UI
         /// </summary>
         public static Vector2 Resolve(Vector2 at, Vector2 chipSize, Rect[] clusters, int count, bool hasFigure, Rect figure)
         {
+            return Resolve(at, chipSize, clusters, count, hasFigure, figure, false, default(Rect));
+        }
+
+        /// <summary>
+        /// As above, with AD 12c MUST-3's banner band: a chip that meets the band + <see cref="BandClearance"/> lifts to stand
+        /// that far over its top, whole - never under the ribbon (a glyph-tip sliver) and never below it (the fight's centre).
+        /// </summary>
+        public static Vector2 Resolve(Vector2 at, Vector2 chipSize, Rect[] clusters, int count, bool hasFigure, Rect figure, bool hasBand, Rect band)
+        {
             float half = chipSize.x * 0.5f;
             for (int pass = 0; pass < ResolvePasses; pass++)
             {
@@ -329,6 +348,12 @@ namespace DD.Prototype.UI
                 if (hasFigure && new Rect(at.x - half, at.y, chipSize.x, chipSize.y).Overlaps(Grown(figure, FigureClearance)))
                 {
                     at.y = figure.yMax + FigureClearance;
+                    moved = true;
+                }
+
+                if (hasBand && new Rect(at.x - half, at.y, chipSize.x, chipSize.y).Overlaps(Grown(band, BandClearance)))
+                {
+                    at.y = band.yMax + BandClearance + EdgeEpsilon;
                     moved = true;
                 }
 

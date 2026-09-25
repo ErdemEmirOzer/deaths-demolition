@@ -96,6 +96,28 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         /// <summary>
+        /// AD 12c MUST-3: the banner's band is an avoid rect that lifts - a stamp whose point falls in it stands whole
+        /// BandClearance over its top (1080: band 260–344 canvas y → bottom 356, i.e. ≤ 188 px from the top), never under the
+        /// ribbon and never below it; a stamp clear of it does not move.
+        /// </summary>
+        [Test]
+        public void DurumDamgasi_AfisBandinda_UsteKalkar_TamVeAralikli()
+        {
+            var band = new Rect(-450f, 260f, 900f, 84f);
+            var chip = new Vector2(90f, 28f);
+            foreach (float y in new[] { 250f, 290f, 302f, 340f })
+            {
+                Vector2 at = UiEnemyStatusMarkers.Resolve(new Vector2(0f, y), chip, new Rect[0], 0, false, default(Rect), true, band);
+                Assert.GreaterOrEqual(at.y, band.yMax + UiEnemyStatusMarkers.BandClearance, "y " + y + ": bandın üstünde, 12 px aralıkla");
+                Assert.LessOrEqual(540f - at.y, 188f, "1080'de alt kenar ≤ 188 (üstten)");
+            }
+
+            var free = new Vector2(0f, 120f);
+            Assert.AreEqual(free, UiEnemyStatusMarkers.Resolve(free, chip, new Rect[0], 0, false, default(Rect), true, band), "bandın dışında kıpırdamaz");
+            Assert.AreEqual(new Vector2(0f, 302f), UiEnemyStatusMarkers.Resolve(new Vector2(0f, 302f), chip, new Rect[0], 0, false, default(Rect), false, band), "afiş yokken kıpırdamaz");
+        }
+
+        /// <summary>
         /// AD 12b SHOULD-10: HudBanner.GlyphInkRight holds every Special glyph's empty right margin as the atlas has it -
         /// re-measured from the SDF file (alpha ≥ 0.5 = ink), within one texel - so the ink-to-ink gap holds per glyph.
         /// </summary>

@@ -744,7 +744,9 @@ namespace DD.Prototype.UI
             }
 
             int mode = (int)DD.Prototype.CameraSystem.CameraModeService.Current;
-            Vector2 size = ScreenRect.rect.size;
+            // AD 12c MUST-1: the cluster's own parent - the 16:9 frame when B12 is on - not the canvas (FP measured its left
+            // rail from the canvas's right edge and stood 320 px off the screen at 21:9 with the frame on).
+            Vector2 size = HudFrame.rect.size;
             if (mode == _layoutMode && size == _layoutSize)
             {
                 return;
@@ -819,8 +821,8 @@ namespace DD.Prototype.UI
 
         /// <summary>
         /// The rects a status stamp keeps clear of, in canvas px (centre origin): the ink clusters (live rects, the weapon
-        /// cluster in its mode's place) and the Special block while it shows. The banner is not one of them: the stamps sort
-        /// under it. UiEnemyStatusMarkers reads it once a frame, only while a stamp is placed.
+        /// cluster in its mode's place) and the Special block while it shows. The banner's band has its own rule
+        /// (<see cref="StatusStampBand"/>). UiEnemyStatusMarkers reads it once a frame, only while a stamp is placed.
         /// </summary>
         public int StatusStampAvoidRects(Rect[] into)
         {
@@ -836,6 +838,22 @@ namespace DD.Prototype.UI
             }
 
             return n;
+        }
+
+        /// <summary>
+        /// AD 12c MUST-3: the banner's band (round and Special banners alike) while one shows, canvas px (centre origin) - a
+        /// stamp in it lifts over it (UiEnemyStatusMarkers.BandClearance) instead of sorting under the ribbon.
+        /// </summary>
+        public bool StatusStampBand(out Rect band)
+        {
+            band = default(Rect);
+            if (_banner == null || _bannerRemaining <= 0f)
+            {
+                return false;
+            }
+
+            band = CanvasRectOf(_banner.Root);
+            return true;
         }
 
         /// <summary>

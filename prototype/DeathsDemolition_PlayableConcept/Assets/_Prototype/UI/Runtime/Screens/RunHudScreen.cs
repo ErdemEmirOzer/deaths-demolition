@@ -896,7 +896,7 @@ namespace DD.Prototype.UI
             RectTransform statusHost = UiFactory.NewRect("EnemyStatus", layer);
             UiFactory.Fill(statusHost);
             _enemyStatus = statusHost.gameObject.AddComponent<UiEnemyStatusMarkers>();
-            _enemyStatus.Configure(ScreenRect, StatusStampAvoidRects, PlayerFigureRect);
+            _enemyStatus.Configure(ScreenRect, StatusStampAvoidRects, PlayerFigureRect, StatusStampBand);
 
             // E14 / E21: the AP-010 diamond in view (56 → 40 px with distance), the EdgeMarker at the edge.
             _worldMarker = new UiWorldMarker(layer);
@@ -1047,6 +1047,7 @@ namespace DD.Prototype.UI
 
         private void Update()
         {
+            ApplyHudFrame();      // 12c · B12: the 16:9 frame follows the setting and the window (before anything lays out)
             if (!_healthBound)
             {
                 BindHealthSnapshot();
@@ -1071,7 +1072,6 @@ namespace DD.Prototype.UI
             UpdateBanner();
             UpdateThreat();
             UpdateInkPosture();   // 8-R: calm / danger
-            ApplyHudFrame();      // 12c · B12: the 16:9 frame follows the setting and the window
         }
 
         private void LateUpdate()
