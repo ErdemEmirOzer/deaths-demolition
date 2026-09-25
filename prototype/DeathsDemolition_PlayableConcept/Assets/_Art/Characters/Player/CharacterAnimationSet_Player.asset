@@ -481,6 +481,259 @@ MonoBehaviour:
     frames: 14
     events: raised=13
     stanceFrames: 0
+  - name: AP022_fp_ar_1_fire
+    clip: {fileID: -623603649343465320, guid: 4006d27a7149142178adfc2932c6a77c, type: 3}
+    loop: 0
+    seconds: 0.3
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: fp_additive
+    additive: 1
+    frames: 10
+    events: fire=0;eject=1
+    stanceFrames: 0
+  - name: AP022_fp_ar_1_reload_empty
+    clip: {fileID: -623603649343465320, guid: b37f878147ed645e78040dd16cb0f2e3, type: 3}
+    loop: 0
+    seconds: 2.1
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: fp_base
+    additive: 0
+    frames: 64
+    events: lh_release=3;mag_out=13;mag_in=34;reload_commit=34;charge=49;chamber=53;reload_cancel_point=55;lh_grab=56
+    stanceFrames: 0
+  - name: AP022_fp_ar_1_reload_tac
+    clip: {fileID: -623603649343465320, guid: 82c70d085ebdd49ea809c517adcb4d82, type: 3}
+    loop: 0
+    seconds: 1.6
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: fp_base
+    additive: 0
+    frames: 49
+    events: lh_release=4;mag_out=12;mag_in=30;reload_commit=30;reload_cancel_point=36;lh_grab=44
+    stanceFrames: 0
+  - name: AP022_fp_ar_2_fire
+    clip: {fileID: -623603649343465320, guid: f307d5923f29842c4b98eb3178903d54, type: 3}
+    loop: 0
+    seconds: 0.533
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: fp_additive
+    additive: 1
+    frames: 17
+    events: fire=0;eject=1
+    stanceFrames: 0
+  - name: AP022_fp_ar_2_reload_empty
+    clip: {fileID: -623603649343465320, guid: 368ae96b7992847d5b650f816fd3af82, type: 3}
+    loop: 0
+    seconds: 2.3
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: fp_base
+    additive: 0
+    frames: 70
+    events: lh_release=4;mag_out=15;mag_in=38;reload_commit=38;charge=55;chamber=59;reload_cancel_point=61;lh_grab=62
+    stanceFrames: 0
+  - name: AP022_fp_ar_2_reload_tac
+    clip: {fileID: -623603649343465320, guid: fa59c5374f7ff48438ee45f0f2199a65, type: 3}
+    loop: 0
+    seconds: 1.8
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: fp_base
+    additive: 0
+    frames: 55
+    events: lh_release=5;mag_out=14;mag_in=35;reload_commit=35;reload_cancel_point=40;lh_grab=50
+    stanceFrames: 0
+  - name: AP022_fp_ar_ads_idle
+    clip: {fileID: -623603649343465320, guid: ec611cd88a6024f9b995141c657df7b3, type: 3}
+    loop: 1
+    seconds: 2
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: fp_base
+    additive: 0
+    frames: 61
+    events: breath=0
+    stanceFrames: 0
+  - name: AP022_fp_ar_ads_in
+    clip: {fileID: -623603649343465320, guid: da925b95005384581a70ff59c6a35890, type: 3}
+    loop: 0
+    seconds: 0.233
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: fp_base
+    additive: 0
+    frames: 8
+    events: ads_ready=7
+    stanceFrames: 0
+  - name: AP022_fp_ar_ads_out
+    clip: {fileID: -623603649343465320, guid: cebadfccf05c44f019ed4a67b6fa0010, type: 3}
+    loop: 0
+    seconds: 0.167
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: fp_base
+    additive: 0
+    frames: 6
+    events: 
+    stanceFrames: 0
+  - name: AP022_fp_ar_idle_aim
+    clip: {fileID: -623603649343465320, guid: 08ace02992f014641bd2a198687cfc38, type: 3}
+    loop: 1
+    seconds: 4
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: fp_base
+    additive: 0
+    frames: 121
+    events: breath=0
+    stanceFrames: 0
+  - name: AP022_fp_ar_switch_in
+    clip: {fileID: -623603649343465320, guid: da04e399aae87438eb8ed176da2c9506, type: 3}
+    loop: 0
+    seconds: 0.433
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: fp_base
+    additive: 0
+    frames: 14
+    events: lh_grab=8;switch_ready=12
+    stanceFrames: 0
+  - name: AP022_fp_ar_switch_out
+    clip: {fileID: -623603649343465320, guid: cbbc7fab1349d4a2cb9c0378233bacfe, type: 3}
+    loop: 0
+    seconds: 0.3
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: fp_base
+    additive: 0
+    frames: 10
+    events: lh_release=1;switch_away=8
+    stanceFrames: 0
+  - name: AP022_fp_run_sway
+    clip: {fileID: -623603649343465320, guid: 7aef849dad7674f7390865b4d3472c69, type: 3}
+    loop: 1
+    seconds: 0.533
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: fp_additive
+    additive: 1
+    frames: 17
+    events: foot_l=0;foot_r=8
+    stanceFrames: 0
+  - name: AP022_fp_smg_1_fire
+    clip: {fileID: -623603649343465320, guid: c347354402aff487e9e6780042720979, type: 3}
+    loop: 0
+    seconds: 0.233
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: fp_additive
+    additive: 1
+    frames: 8
+    events: fire=0;eject=1
+    stanceFrames: 0
+  - name: AP022_fp_smg_1_reload_empty
+    clip: {fileID: -623603649343465320, guid: d4ed5928528c44c40898eb19d3ba1ac9, type: 3}
+    loop: 0
+    seconds: 2
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: fp_base
+    additive: 0
+    frames: 61
+    events: lh_release=3;mag_out=12;mag_in=31;reload_commit=31;charge=45;chamber=48;reload_cancel_point=50;lh_grab=51
+    stanceFrames: 0
+  - name: AP022_fp_smg_1_reload_tac
+    clip: {fileID: -623603649343465320, guid: 277b38313e97d46e8ae6e8624a46ca4b, type: 3}
+    loop: 0
+    seconds: 1.5
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: fp_base
+    additive: 0
+    frames: 46
+    events: lh_release=3;mag_out=10;mag_in=26;reload_commit=26;reload_cancel_point=32;lh_grab=38
+    stanceFrames: 0
+  - name: AP022_fp_smg_ads_idle
+    clip: {fileID: -623603649343465320, guid: c070e6cee5c774ea2b90c7159f3e2a6f, type: 3}
+    loop: 1
+    seconds: 2
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: fp_base
+    additive: 0
+    frames: 61
+    events: breath=0
+    stanceFrames: 0
+  - name: AP022_fp_smg_ads_in
+    clip: {fileID: -623603649343465320, guid: 0251a65431b0b49a98fb3f9df27baddd, type: 3}
+    loop: 0
+    seconds: 0.167
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: fp_base
+    additive: 0
+    frames: 6
+    events: ads_ready=5
+    stanceFrames: 0
+  - name: AP022_fp_smg_ads_out
+    clip: {fileID: -623603649343465320, guid: f739441e04dff4e3f86a85b63b9ea1c8, type: 3}
+    loop: 0
+    seconds: 0.133
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: fp_base
+    additive: 0
+    frames: 5
+    events: 
+    stanceFrames: 0
+  - name: AP022_fp_smg_idle_aim
+    clip: {fileID: -623603649343465320, guid: e5cb6612271834ba0ba9c09bd2dc2132, type: 3}
+    loop: 1
+    seconds: 4
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: fp_base
+    additive: 0
+    frames: 121
+    events: breath=0
+    stanceFrames: 0
+  - name: AP022_fp_smg_switch_in
+    clip: {fileID: -623603649343465320, guid: 854769ee3a373472cba087ef7dcf33a6, type: 3}
+    loop: 0
+    seconds: 0.367
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: fp_base
+    additive: 0
+    frames: 12
+    events: lh_grab=7;switch_ready=10
+    stanceFrames: 0
+  - name: AP022_fp_smg_switch_out
+    clip: {fileID: -623603649343465320, guid: e972160a1190e4f1c82ed970dfdd02b1, type: 3}
+    loop: 0
+    seconds: 0.233
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: fp_base
+    additive: 0
+    frames: 8
+    events: lh_release=1;switch_away=6
+    stanceFrames: 0
+  - name: AP022_fp_walk_sway
+    clip: {fileID: -623603649343465320, guid: c91dfa0e402fe452492d954dca4d6b9b, type: 3}
+    loop: 1
+    seconds: 0.533
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: fp_additive
+    additive: 1
+    frames: 17
+    events: foot_l=0;foot_r=8
+    stanceFrames: 0
   - name: AP022_tp_ar_1_fire
     clip: {fileID: -623603649343465320, guid: 963dfd765d9794c62a8c33ee5b005b36, type: 3}
     loop: 0
@@ -725,5 +978,19 @@ MonoBehaviour:
     leftHandInWeapon: {x: -0.0359, y: -0.0259, z: 0.2248}
   - animSet: smg_1
     overrides: {fileID: 22100000, guid: 1ef7273a2984a4287b1c5a2ef9e50f61, type: 2}
+    hasLeftHand: 1
+    leftHandInWeapon: {x: -0.0359, y: -0.0289, z: 0.2408}
+  _fpController: {fileID: 9100000, guid: ba82e1f143d99438ead8b62fb0b34261, type: 2}
+  _fpWeaponSets:
+  - animSet: ar_1
+    overrides: {fileID: 22100000, guid: 7cd469da406fb4c3cacb51bbc0161486, type: 2}
+    hasLeftHand: 1
+    leftHandInWeapon: {x: -0.0359, y: -0.0259, z: 0.2248}
+  - animSet: ar_2
+    overrides: {fileID: 22100000, guid: dd561f8520239403b91f7582a048f6e9, type: 2}
+    hasLeftHand: 1
+    leftHandInWeapon: {x: -0.0359, y: -0.0259, z: 0.2248}
+  - animSet: smg_1
+    overrides: {fileID: 22100000, guid: 2f54e485c3a6c48c1b9d5b046212f2b3, type: 2}
     hasLeftHand: 1
     leftHandInWeapon: {x: -0.0359, y: -0.0289, z: 0.2408}

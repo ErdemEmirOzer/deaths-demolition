@@ -481,6 +481,7 @@ namespace DD.Art.Pipeline.EditorTools
 
                 var visual = root.AddComponent<PlayerSkinnedVisual>();
                 visual.Configure(animator, group, renderers, weaponSocket, backSocket, animationSet, events, aimLayer, playerLook, playerFeet);
+                visual.ConfigureFirstPerson(model);   // WP-071 B4b-3: the FP viewmodel arms copy this model
 
                 EnsureFolder(Path.GetDirectoryName(PlayerPrefab).Replace('\\', '/'));
                 GameObject saved = PrefabUtility.SaveAsPrefabAsset(root, PlayerPrefab);

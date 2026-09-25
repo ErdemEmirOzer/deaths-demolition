@@ -33,6 +33,14 @@ namespace DD.Prototype.Characters
         [SerializeField] private Animator _animator;
         [SerializeField] private LODGroup _lodGroup;
         [SerializeField] private SkinnedMeshRenderer[] _renderers = new SkinnedMeshRenderer[0];
+        [Tooltip("WP-071 B4b-3: the player model asset the FP viewmodel arms are copied from (player_base.fbx).")]
+        [SerializeField] private GameObject _fpModel;
+        private FirstPersonArms _fpArms;
+        /// <summary>WP-071 B4b-3: the FP viewmodel arms (null without an FP set; tests).</summary>
+        public FirstPersonArms FirstPersonArms => _fpArms;
+
+        /// <summary>Editor (prefab builder): the model the FP arms copy.</summary>
+        public void ConfigureFirstPerson(GameObject model) => _fpModel = model;
         [SerializeField] private Transform _weaponSocket;
         [SerializeField] private Transform _backSocket;
         [SerializeField] private CharacterAnimationSet _animation;
@@ -279,6 +287,11 @@ namespace DD.Prototype.Characters
             if (_authored)
             {
                 BindWeaponSets();
+                if (_fpModel != null && _animation.FpController != null && _fpArms == null)
+                {
+                    _fpArms = GetComponent<FirstPersonArms>() ?? gameObject.AddComponent<FirstPersonArms>();
+                    _fpArms.Configure(_fpModel, _animation, planarVelocity, () => _authored && !_dying, _renderers.Length > 0 ? _renderers[0] : null);
+                }
                 _animator.SetBool(AliveId, true);
                 _overrideLayer = -1;
                 for (int i = 0; i < _animator.layerCount; i++) if (_animator.GetLayerName(i) == CharacterAnimatorContract.OverrideUpperLayer) _overrideLayer = i;
@@ -380,6 +393,7 @@ namespace DD.Prototype.Characters
             _weaponDef = def;
             _burstStart = -1f;
             int k = V3WeaponSets && def != null && _runtimeOverrides != null ? _setKeys.IndexOf(def.AnimSet) : -1;
+            if (_fpArms != null) _fpArms.SetWeaponSet(k < 0 ? null : _setKeys[k]);
             if (k < 0)
             {
                 WeaponAnimSet = null;
@@ -448,6 +462,7 @@ namespace DD.Prototype.Characters
             if (_weapon == CharacterAnimatorContract.WeaponPoseV3)
             {
                 _animator.SetBool(ReloadEmptyId, empty);
+                if (_fpArms != null) _fpArms.Reload(seconds, empty);
                 clip = CharacterAnimatorContract.PlayerWeaponClipV3(WeaponAnimSet, empty ? "reload_empty" : "reload_tac");
             }
             else clip = CharacterAnimatorContract.PlayerWeaponClip(_weapon, "reload");
@@ -469,8 +484,8 @@ namespace DD.Prototype.Characters
         }
 
         /// <summary>Weapon switch: the outgoing clip (switch_away event), then <see cref="SetWeapon"/> + <see cref="PlaySwitchIn"/> when S-02 swaps the mount.</summary>
-        public void PlaySwitchOut() { if (_authored && !_dying) _animator.SetTrigger(SwitchOutId); }
-        public void PlaySwitchIn() { if (_authored && !_dying) _animator.SetTrigger(SwitchInId); }
+        public void PlaySwitchOut() { if (_authored && !_dying) { _animator.SetTrigger(SwitchOutId); if (_fpArms != null) _fpArms.SwitchOut(); } }
+        public void PlaySwitchIn() { if (_authored && !_dying) { _animator.SetTrigger(SwitchInId); if (_fpArms != null) _fpArms.SwitchIn(); } }
         /// <summary>Weapon lowered / raised (lowered / raised events) — menu / results hand-off beats.</summary>
         public void PlayLower() { if (_authored && !_dying) _animator.SetTrigger(LowerId); }
         public void PlayRaise() { if (_authored && !_dying) _animator.SetTrigger(RaiseId); }
@@ -515,6 +530,7 @@ namespace DD.Prototype.Characters
             }
 
             FireTriggers++;
+            if (_swHold == 0 && _fpArms != null) _fpArms.Fire();
 
             _animator.SetTrigger(_swHold > 0 ? SwFireId : FireId);
         }
@@ -565,6 +581,7 @@ namespace DD.Prototype.Characters
             }
 
             _appliedSkin = skinIndex;
+            if (_fpArms != null) _fpArms.SyncSkin();
         }
 
         /// <summary>The albedo currently bound on the first renderer (tests).</summary>

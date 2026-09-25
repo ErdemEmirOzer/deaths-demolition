@@ -649,3 +649,5 @@ MonoBehaviour:
   _manifestSchema: AP009.clips-manifest.v008
   _locomotionReferenceSpeed: 1.485
   _weaponSets: []
+  _fpController: {fileID: 0}
+  _fpWeaponSets: []

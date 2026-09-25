@@ -37,6 +37,7 @@ namespace DD.Art.Pipeline.EditorTools
         public const string UpperBodyMask = MasksFolder + "/UpperBody.mask";
         public const string AimMask = MasksFolder + "/Aim.mask";
         public const string PlayerController = ArtCharacterContract.PlayerFolder + "/DD_Player.controller";
+        public const string PlayerFpController = ArtCharacterContract.PlayerFolder + "/Generated/DD_Player_FP.controller";   // WP-071 B4b-3
         public const string GeneratedFolder = ArtCharacterContract.ZombieFolder + "/Generated";   // WP-032 telegraph emphasis clips
         public const string ZombieController = ArtCharacterContract.ZombieFolder + "/DD_Zombie.controller";
         public const string PlayerSource = "AP-009D v004 (85 clips, AP009-clips-manifest.json) — WP-018/032B/032C generated controller";
@@ -87,6 +88,7 @@ namespace DD.Art.Pipeline.EditorTools
             WriteSet(ArtCharacterPrefabBuilder.PlayerAnimationSet, player, manifest, clips, unitySpeeds, "player", PlayerSource, playerReferenceSpeed,
                 clips[C.PlayerIdle], clips[C.PlayerWalkFwd], manifest[C.PlayerWalkFwd].speedMps);
             WriteWeaponSets(ArtCharacterPrefabBuilder.PlayerAnimationSet, player, clips, manifest);
+            WriteFirstPerson(ArtCharacterPrefabBuilder.PlayerAnimationSet, clips, manifest);
             WriteSet(ArtCharacterPrefabBuilder.ZombieAnimationSet, zombie, manifest, clips, unitySpeeds, "zombie", ZombieSource, manifest[C.ZombieShambleA].speedMps,
                 clips[C.ZombieIdleSway], clips[C.ZombieShambleA], manifest[C.ZombieShambleA].speedMps);
 
@@ -902,6 +904,92 @@ namespace DD.Art.Pipeline.EditorTools
         /// the weapon-own slots (fire / reload_tac / reload_empty) over the base controller, whose v3 states carry the first set's
         /// clips; the class slots stay the base clips. Written next to the player controller (Player/Generated).
         /// </summary>
+        /// <summary>
+        /// WP-071 B4b-3 (A6.4 #49): the FP viewmodel controller — fp_base (the arms pose: Aim_V3 rest, ReloadTac / ReloadEmpty at
+        /// ReloadRate, SwitchIn_V3 / SwitchOut_V3), fp_additive (Fire_V3 kick; S-07 owns the camera/arm-root spring), fp_sway
+        /// (walk ↔ run sway by FpRun, layer weight = speed share from code). Base clips = the first v3 set's; one AOC per set.
+        /// Nothing is built while the set has no FP clips.
+        /// </summary>
+        private static void WriteFirstPerson(string setPath, Dictionary<string, AnimationClip> clips, Dictionary<string, ArtAnimationClipContract.ClipSpec> manifest)
+        {
+            var set = AssetDatabase.LoadAssetAtPath<CharacterAnimationSet>(setPath);
+            if (set == null) return;
+            string baseSet = C.WeaponAnimSetsV3[0];
+            if (!clips.ContainsKey(C.PlayerFpClipV3(baseSet, "idle_aim"))) { set.ConfigureFirstPerson(null, null); EditorUtility.SetDirty(set); return; }
+            EnsureFolder(ArtCharacterContract.PlayerFolder + "/Generated");
+            AnimatorController c = Fresh(PlayerFpController,
+                (C.Fire, AnimatorControllerParameterType.Trigger), (C.Reload, AnimatorControllerParameterType.Trigger), (C.ReloadRate, AnimatorControllerParameterType.Float),
+                (C.ReloadEmpty, AnimatorControllerParameterType.Bool), (C.SwitchIn, AnimatorControllerParameterType.Trigger), (C.SwitchOut, AnimatorControllerParameterType.Trigger),
+                (C.FpRun, AnimatorControllerParameterType.Float), (C.Alive, AnimatorControllerParameterType.Bool));
+            SetDefault(c, C.ReloadRate, 1f);
+            SetDefault(c, C.Alive, true);
+            ApplyLayer(c, 0, l => l.name = C.FpBaseLayer);
+            AnimatorStateMachine sm = c.layers[0].stateMachine;
+            AnimatorState aim = sm.AddState(C.AimV3State);
+            aim.motion = clips[C.PlayerFpClipV3(baseSet, "idle_aim")];
+            aim.writeDefaultValues = false;
+            sm.defaultState = aim;
+            AnimatorState tac = OneShot(sm, C.ReloadTacState, clips[C.PlayerFpClipV3(baseSet, "reload_tac")], aim, 0.98f, 0.1f);
+            tac.speedParameterActive = true; tac.speedParameter = C.ReloadRate;
+            FromAny(sm, tac, 0.05f, (AnimatorConditionMode.If, 0f, C.Reload), (AnimatorConditionMode.IfNot, 0f, C.ReloadEmpty));
+            AnimatorState emp = OneShot(sm, C.ReloadEmptyState, clips[C.PlayerFpClipV3(baseSet, "reload_empty")], aim, 0.98f, 0.1f);
+            emp.speedParameterActive = true; emp.speedParameter = C.ReloadRate;
+            FromAny(sm, emp, 0.05f, (AnimatorConditionMode.If, 0f, C.Reload), (AnimatorConditionMode.If, 0f, C.ReloadEmpty));
+            AnimatorState sOut = OneShot(sm, C.SwitchOutV3State, clips[C.PlayerFpClipV3(baseSet, "switch_out")], aim, 0.98f, 0.05f);
+            FromAny(sm, sOut, 0.03f, (AnimatorConditionMode.If, 0f, C.SwitchOut));
+            AnimatorState sIn = OneShot(sm, C.SwitchInV3State, clips[C.PlayerFpClipV3(baseSet, "switch_in")], aim, 0.98f, 0.1f);
+            FromAny(sm, sIn, 0.03f, (AnimatorConditionMode.If, 0f, C.SwitchIn));
+
+            AnimatorControllerLayer add = AddLayer(c, C.FpAdditiveLayer, null, AnimatorLayerBlendingMode.Additive, false);
+            AnimatorState addEmpty = add.stateMachine.AddState(C.EmptyState);
+            add.stateMachine.defaultState = addEmpty;
+            AnimatorState fire = OneShot(add.stateMachine, C.FireV3State, clips[C.PlayerFpClipV3(baseSet, "fire")], addEmpty, 0.9f, 0.03f);
+            FromAny(add.stateMachine, fire, 0f, (AnimatorConditionMode.If, 0f, C.Fire));
+
+            AnimatorControllerLayer swayL = AddLayer(c, C.FpSwayLayer, null, AnimatorLayerBlendingMode.Additive, false);
+            if (clips.TryGetValue(C.FpWalkSway, out AnimationClip walk) && clips.TryGetValue(C.FpRunSway, out AnimationClip run))
+            {
+                AnimatorState sway = c.CreateBlendTreeInController(C.FpSwayState, out BlendTree tree, 2);
+                tree.blendType = BlendTreeType.Simple1D;
+                tree.blendParameter = C.FpRun;
+                tree.useAutomaticThresholds = false;
+                tree.children = new[] { Child1D(walk, 0f), Child1D(run, 1f) };
+                c.layers[2].stateMachine.defaultState = sway;
+            }
+
+            ApplyLayer(c, 1, l => { l.blendingMode = AnimatorLayerBlendingMode.Additive; l.defaultWeight = 1f; });
+            ApplyLayer(c, 2, l => { l.blendingMode = AnimatorLayerBlendingMode.Additive; l.defaultWeight = 0f; });   // weight from speed (code)
+            EditorUtility.SetDirty(c);
+
+            var sets = new List<CharacterAnimationSet.WeaponAnimSet>();
+            string folder = ArtCharacterContract.PlayerFolder + "/Generated";
+            foreach (string animSet in C.WeaponAnimSetsV3)
+            {
+                if (!clips.ContainsKey(C.PlayerFpClipV3(animSet, "fire"))) continue;
+                string path = folder + "/DD_Player_FP_" + animSet + ".overrideController";
+                var aoc = AssetDatabase.LoadAssetAtPath<AnimatorOverrideController>(path);
+                if (aoc == null) { aoc = new AnimatorOverrideController(c); AssetDatabase.CreateAsset(aoc, path); }
+                aoc.runtimeAnimatorController = c;
+                bool otherClass = C.WeaponClassOf(animSet) != C.WeaponClassOf(baseSet);
+                var pairs = new List<KeyValuePair<AnimationClip, AnimationClip>>();
+                foreach (string slot in otherClass ? ClassAndOwnSlots : C.WeaponOwnSlots)
+                {
+                    if (!clips.TryGetValue(C.PlayerFpClipV3(baseSet, slot), out AnimationClip from)) continue;
+                    clips.TryGetValue(C.PlayerFpClipV3(animSet, slot), out AnimationClip to);
+                    pairs.Add(new KeyValuePair<AnimationClip, AnimationClip>(from, animSet == baseSet ? null : to));
+                }
+
+                aoc.ApplyOverrides(pairs);
+                EditorUtility.SetDirty(aoc);
+                manifest.TryGetValue(C.PlayerFpClipV3(animSet, "idle_aim"), out ArtAnimationClipContract.ClipSpec rest);
+                sets.Add(new CharacterAnimationSet.WeaponAnimSet { animSet = animSet, overrides = aoc, hasLeftHand = rest != null && rest.hasLeftHandInWeapon, leftHandInWeapon = rest != null ? rest.leftHandInWeapon : Vector3.zero });
+            }
+
+            set.ConfigureFirstPerson(c, sets);
+            EditorUtility.SetDirty(set);
+            Debug.Log(LogPrefix + "FP viewmodel controller: " + c.layers.Length + " layers, sets " + sets.Count);
+        }
+
         private static readonly string[] ClassAndOwnSlots = { "idle_aim", "switch_in", "switch_out", "fire", "reload_tac", "reload_empty" };
 
         private static void WriteWeaponSets(string setPath, AnimatorController controller, Dictionary<string, AnimationClip> clips, Dictionary<string, ArtAnimationClipContract.ClipSpec> manifest)

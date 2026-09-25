@@ -410,6 +410,69 @@ namespace DD.Art.Tests.PlayMode
 
         [UnityTest]
         [Timeout(300000)]
+        public IEnumerator FpKollar_Viewmodel_fpCameraCapada_AtesReloadGecis_TPyeDonuste_Gizli()
+        {
+            // WP-071 B4b-3: in first person the FP arms copy sits on the viewmodel layer with fp_camera on the anchor, plays the
+            // FP twins (fire additive, tac / empty reload, switch), shows only the LOD0 body (no head), and hides back in TP.
+            yield return RunAP005();
+            PlayerSkinnedVisual pv = PlayerRegistry.Primary.GetComponentInChildren<PlayerSkinnedVisual>(true);
+            Assert.IsNotNull(pv.FirstPersonArms, "FirstPersonArms bağlı değil");
+            var ar1 = DD.Prototype.Core.Weapons.Arsenal.Get("ar_1");
+            var smg1 = DD.Prototype.Core.Weapons.Arsenal.Get("smg_1");
+            pv.EquipWeapon(ar1, ar1.id);
+            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.FirstPerson, instant: true);
+            try
+            {
+                FirstPersonArms fp = pv.FirstPersonArms;
+                yield return CharacterTests.Bekle(() => fp.Visible, 2f, "FP kolları görünür");
+                for (int i = 0; i < 10; i++) yield return null;
+                Transform anchor = DD.Prototype.CameraSystem.CameraView.ViewmodelAnchor;
+                Assert.IsNotNull(anchor);
+                Assert.Less(fp.LastAnchorError, 0.001f, "fp_camera çapada (m)");
+                Assert.AreEqual(DD.Prototype.CameraSystem.CameraLayers.FirstPersonView, fp.Animator.gameObject.layer, "FirstPersonView katmanı");
+                int bodies = 0;
+                foreach (SkinnedMeshRenderer r in fp.Animator.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+                {
+                    if (!r.enabled) continue;
+                    bodies++;
+                    StringAssert.DoesNotContain("Head", r.name, "baş FP'de çizilmez");
+                    StringAssert.Contains("LOD0", r.name, "yalnız LOD0 gövde");
+                }
+
+                Assert.AreEqual(1, bodies, "tek gövde renderer");
+                Assert.AreSame(fp, FirstPersonArms.Shown);
+                // S-02 hand-off measurement (fpView band): the weapon root the FP rig implies = frame − R·gripOffset, in anchor space
+                Vector3 rootWorld = fp.WeaponFrame.position - fp.WeaponFrame.rotation * ar1.GripOffset;
+                Vector3 rootInAnchor = anchor.InverseTransformPoint(rootWorld);
+                var pose = ar1.FpViewPose;
+                float posErr = Vector3.Distance(rootInAnchor, pose.position);
+                float rotErr = Quaternion.Angle(Quaternion.Inverse(anchor.rotation) * fp.WeaponFrame.rotation, Quaternion.Euler(pose.euler));
+                int fpBase = 0, fpAdd = 1;
+                pv.PlayFire();
+                yield return CharacterTests.Bekle(() => fp.Animator.GetCurrentAnimatorStateInfo(fpAdd).IsName(C.FireV3State), 1f, "FP Fire_V3");
+                pv.PlayReload(ar1.ammo.reloadEmptySeconds, true);
+                yield return CharacterTests.Bekle(() => fp.Animator.GetCurrentAnimatorStateInfo(fpBase).IsName(C.ReloadEmptyState), 1f, "FP ReloadEmpty");
+                AnimatorClipInfo[] ci = fp.Animator.GetCurrentAnimatorClipInfo(fpBase);
+                StringAssert.Contains("fp_ar_1_reload_empty", ci.Length > 0 ? ci[0].clip.name : "-");
+                pv.CancelReload();
+                pv.EquipWeapon(smg1, smg1.id);
+                Assert.AreEqual("smg_1", fp.WeaponSet);
+                pv.PlaySwitchIn();
+                yield return CharacterTests.Bekle(() => fp.Animator.GetCurrentAnimatorStateInfo(fpBase).IsName(C.SwitchInV3State), 1f, "FP SwitchIn_V3");
+                AnimatorClipInfo[] si = fp.Animator.GetCurrentAnimatorClipInfo(fpBase);
+                Debug.Log("[DD-TEST] wp071.fp anchorErr=" + (fp.LastAnchorError * 1000f).ToString("F2", CultureInfo.InvariantCulture) + " mm ar1 fpView root Δ=" + (posErr * 100f).ToString("F1", CultureInfo.InvariantCulture)
+                          + " cm rotΔ=" + rotErr.ToString("F1", CultureInfo.InvariantCulture) + "° (pose " + pose.position.ToString("F3") + " / rig " + rootInAnchor.ToString("F3") + ", scale " + pose.scale.ToString("F2", CultureInfo.InvariantCulture) + ") smgSwitch=" + (si.Length > 0 ? si[0].clip.name : "-"));
+                StringAssert.Contains("fp_smg_switch_in", si.Length > 0 ? si[0].clip.name : "-", "smg_1 FP AOC");
+            }
+            finally { DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.ThirdPerson, instant: true); }
+
+            for (int i = 0; i < 3; i++) yield return null;
+            Assert.IsFalse(pv.FirstPersonArms.Visible, "TP'de FP kolları gizli");
+            Assert.IsNull(FirstPersonArms.Shown);
+        }
+
+        [UnityTest]
+        [Timeout(300000)]
         public IEnumerator Twist_RigV002_SurucuBurulmasi_AgirlikKadarDagitilir()
         {
             // WP-071 · AP-022 rig v002: the eight twist bones follow their driver's twist × P-06's weight (−0.5 / +0.4 / +0.8 / −0.5).

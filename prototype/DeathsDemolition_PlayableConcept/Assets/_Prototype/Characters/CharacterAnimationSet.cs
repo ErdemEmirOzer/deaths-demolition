@@ -162,6 +162,11 @@ namespace DD.Prototype.Characters
         public static string WeaponClassOf(string animSet) { int u = animSet.IndexOf('_'); return u > 0 ? animSet.Substring(0, u) : animSet; }
         public static string PlayerWeaponClipV3(string animSet, string slot) =>
             "AP022_tp_" + (System.Array.IndexOf(WeaponOwnSlots, slot) >= 0 ? animSet : WeaponClassOf(animSet)) + "_" + slot;
+        /// <summary>WP-071 B4b-3 · AP-022 slice 5: the FP viewmodel twin of a v3 slot (same class / weapon split).</summary>
+        public static string PlayerFpClipV3(string animSet, string slot) =>
+            "AP022_fp_" + (System.Array.IndexOf(WeaponOwnSlots, slot) >= 0 ? animSet : WeaponClassOf(animSet)) + "_" + slot;
+        public const string FpWalkSway = "AP022_fp_walk_sway", FpRunSway = "AP022_fp_run_sway";
+        public const string FpBaseLayer = "fp_base", FpAdditiveLayer = "fp_additive", FpSwayLayer = "fp_sway", FpRun = "FpRun", FpSwayState = "Sway";
         public static string PlayerWeaponClip(int weapon, string kind) => "AP009_player_" + WeaponLetters[Mathf.Clamp(weapon, 0, 2)] + "_" + kind;   // idle_aim / fire / reload / switch_in / switch_out
         public const string ZombieIdleSway = "AP009_zombie_idle_sway";
         public const string ZombieIdleTwitch = "AP009_zombie_idle_twitch";
@@ -257,7 +262,7 @@ namespace DD.Prototype.Characters
             ZombieHitElectroLoopV3, ZombieDeathArcElectroV3, ZombieHitGelSlipV3
         };
 
-        public const int ClipCount = 120;   // WP-071: + AP-022 slice 1 (4 deaths + 6 attacks), slice 2a (electro loop, arc_electro death, gel_slip), slices 4a/4b (AR + SMG TP 21).   // WP-032G: + sw_hold_jewel (AP-009G v007). WP-032C: AP-009D v004 (v002 36 + 49: weapon A/B/C ×5, lower/raise ×3, sw hold ×2, pickup_upper, hurt ×2, death_side, tier hits ×12, armour breaks ×3, stumble, deaths ×4, rises ×2)
+        public const int ClipCount = 143;   // WP-071: + AP-022 slice 1 (4 deaths + 6 attacks), slice 2a (electro loop, arc_electro death, gel_slip), slices 4a/4b (AR + SMG TP 21), slice 5 (FP arms 23).   // WP-032G: + sw_hold_jewel (AP-009G v007). WP-032C: AP-009D v004 (v002 36 + 49: weapon A/B/C ×5, lower/raise ×3, sw hold ×2, pickup_upper, hurt ×2, death_side, tier hits ×12, armour breaks ×3, stumble, deaths ×4, rises ×2)
         public const int Fps = 30;
 
         /// <summary>The zombie death clips in DeathStyle order (0 fwd, 1 back, 2 side, 3 kneel; WP-032C: 4 side_R, 5 special_A, 6 special_B, 7 ultra).</summary>
@@ -331,6 +336,19 @@ namespace DD.Prototype.Characters
         }
 
         public IReadOnlyList<WeaponAnimSet> WeaponSets => _weaponSets;
+
+        [Tooltip("WP-071 B4b-3: the FP viewmodel controller (AP-022 slice 5 on the same PlayerRig; fp_camera = the viewmodel anchor) and its per-weapon override controllers.")]
+        [SerializeField] private RuntimeAnimatorController _fpController;
+        [SerializeField] private List<WeaponAnimSet> _fpWeaponSets = new List<WeaponAnimSet>();
+        public RuntimeAnimatorController FpController => _fpController;
+        public IReadOnlyList<WeaponAnimSet> FpWeaponSets => _fpWeaponSets;
+
+        /// <summary>Editor (builder): the FP viewmodel controller + sets.</summary>
+        public void ConfigureFirstPerson(RuntimeAnimatorController controller, List<WeaponAnimSet> sets)
+        {
+            _fpController = controller;
+            _fpWeaponSets = sets ?? new List<WeaponAnimSet>();
+        }
 
         /// <summary>WP-071 B4b: the override controller for a weapon's AnimSet key, or null (legacy pose path).</summary>
         public AnimatorOverrideController WeaponOverrides(string animSet)

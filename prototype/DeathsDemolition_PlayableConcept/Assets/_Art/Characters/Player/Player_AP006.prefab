@@ -1161,6 +1161,7 @@ MonoBehaviour:
   - {fileID: 2688074480673289670}
   - {fileID: 1798856926526498776}
   - {fileID: 1982315086431680745}
+  _fpModel: {fileID: 919132149155446097, guid: 261e740b51f494918aac84a67d803f63, type: 3}
   _weaponSocket: {fileID: 3431939398241300177}
   _backSocket: {fileID: 7864228941427982429}
   _animation: {fileID: 11400000, guid: 94d74f682f9ea4f399ef758aa27f6ada, type: 2}
