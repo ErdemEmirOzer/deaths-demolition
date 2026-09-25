@@ -138,14 +138,14 @@ namespace DD.Prototype.CameraSystem
             Row("ar_2", FeelWeight.W2, 0.30f, 0.20f, 1.4f, 0.84f, 20f, 0.07f, 0.10f, 3.5f),
             Row("smg_1", FeelWeight.W1, 0.25f, 0.12f, 0.8f, 0.48f, 24f, 0.05f, 0.06f, 2.0f),
             Row("smg_2", FeelWeight.W1, 0.30f, 0.15f, 0.9f, 0.54f, 24f, 0.05f, 0.06f, 2.2f),
-            Row("sg_1", FeelWeight.W3, 0.55f, 0.60f, 3.5f, 2.10f, 14f, 0.25f, 0.14f, 8.0f),
-            Row("sg_2", FeelWeight.W3, 0.60f, 0.70f, 4.0f, 2.40f, 14f, 0.28f, 0.16f, 9.0f),
+            Row("sg_1", FeelWeight.W2, 0.55f, 0.60f, 3.5f, 2.10f, 14f, 0.25f, 0.14f, 8.0f),
+            Row("sg_2", FeelWeight.W2, 0.60f, 0.70f, 4.0f, 2.40f, 14f, 0.28f, 0.16f, 9.0f),
             Row("lmg_1", FeelWeight.W3, 0.50f, 0.25f, 1.2f, 0.72f, 8f, 0.12f, 0f, 3.5f),
             Row("lmg_2", FeelWeight.W3, 0.60f, 0.22f, 1.1f, 0.66f, 8f, 0.11f, 0f, 3.2f),
-            Row("sr_1", FeelWeight.W4, 0.90f, 0.80f, 4.5f, 2.50f, 12f, 0.20f, 0.12f, 9.0f),
+            Row("sr_1", FeelWeight.W3, 0.90f, 0.80f, 4.5f, 2.50f, 12f, 0.20f, 0.12f, 9.0f),
             Row("rl_1", FeelWeight.W4, 1.00f, 1.20f, 6.0f, 3.60f, 9f, 0.40f, 0.30f, 12.0f),
             Row("sw_arc", FeelWeight.W2, 0.40f, 0.40f, 2.5f, 1.50f, 28f, 0.15f, 0.35f, 5.0f),
-            Row("sw_gel", FeelWeight.W1, 0.20f, 0.20f, 0.8f, 0.48f, 6f, 0.10f, 0.20f, 3.0f),
+            Row("sw_gel", FeelWeight.W3, 0.20f, 0.20f, 0.8f, 0.48f, 6f, 0.10f, 0.20f, 3.0f),
         };
 
         /// <summary>
@@ -179,7 +179,10 @@ namespace DD.Prototype.CameraSystem
             return weaponId != null && s_byId.TryGetValue(weaponId, out CameraWeaponFeelRow r) ? r : Weapons[0];
         }
 
-        private static readonly CameraWeaponFeelRow[] s_byClassic = new CameraWeaponFeelRow[32];
+        // WP-069 §4 weight classes (binding for A4.1): W1 smg_1/2 · W2 ar_1/2, sg_1/2, sw_arc · W3 lmg_1/2, sr_1, sw_gel · W4 rl_1.
+        // Special rounds carry runtime ids 100 (sw_arc) / 101 (sw_gel) (SpecialWeaponRuntime): mapped by id, not by Arsenal.
+        public const int SpecialArcRuntimeId = 100, SpecialGelRuntimeId = 101;
+        private static readonly CameraWeaponFeelRow[] s_byClassic = new CameraWeaponFeelRow[128];
 
         /// <summary>The row for a classic weapon (WP-069 Arsenal id), cached per id.</summary>
         public static CameraWeaponFeelRow For(ClassicWeaponId id)
@@ -188,8 +191,14 @@ namespace DD.Prototype.CameraSystem
             if (i < 0 || i >= s_byClassic.Length) return Weapons[0];
             CameraWeaponFeelRow row = s_byClassic[i];
             if (row != null) return row;
-            DD.Prototype.Core.Weapons.WeaponDefinition d = DD.Prototype.Core.Weapons.Arsenal.Get(id);
-            row = For(d != null ? d.weaponId : null);
+            if (i == SpecialArcRuntimeId) row = For("sw_arc");
+            else if (i == SpecialGelRuntimeId) row = For("sw_gel");
+            else
+            {
+                DD.Prototype.Core.Weapons.WeaponDefinition d = DD.Prototype.Core.Weapons.Arsenal.Get(id);
+                row = For(d != null ? d.weaponId : null);
+            }
+
             s_byClassic[i] = row;
             return row;
         }

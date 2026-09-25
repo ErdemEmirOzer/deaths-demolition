@@ -208,6 +208,14 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.Greater(maxRoll, 0.1f, "atış roll'u yok");
             Assert.LessOrEqual(maxRoll, CameraModesFeel.RollCapFpDeg + 0.01f, "FP roll tavanı 1,5°");
 
+            // WP-069 §4 weight classes and the Special runtime ids 100 / 101 (S-02 review).
+            Assert.AreEqual(FeelWeight.W2, CameraModesFeel.For("sg_1").Weight);
+            Assert.AreEqual(FeelWeight.W3, CameraModesFeel.For("sr_1").Weight);
+            Assert.AreEqual(FeelWeight.W3, CameraModesFeel.For("sw_gel").Weight);
+            Assert.AreEqual(FeelWeight.W4, CameraModesFeel.For("rl_1").Weight);
+            Assert.AreEqual("sw_arc", CameraModesFeel.For((ClassicWeaponId)CameraModesFeel.SpecialArcRuntimeId).WeaponId);
+            Assert.AreEqual("sw_gel", CameraModesFeel.For((ClassicWeaponId)CameraModesFeel.SpecialGelRuntimeId).WeaponId);
+
             // J7: every Arsenal weapon has its own row.
             foreach (ClassicWeaponId id in System.Enum.GetValues(typeof(ClassicWeaponId)))
             {
