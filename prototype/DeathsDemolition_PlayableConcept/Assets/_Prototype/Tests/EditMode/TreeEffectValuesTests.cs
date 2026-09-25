@@ -210,5 +210,25 @@ namespace DD.Prototype.Tests.EditMode
                 }
             }
         }
+
+        [Test]
+        public void U11_KademeSatiri_SimdiSonraki_MaksNaN()
+        {
+            Assert.IsTrue(RunTreeTierStats.TryGet(UpgradeBranch.FireRate, 0, "ar_1", out string etiket, out float simdi, out string birim));
+            Assert.AreEqual("stat.fire_rate", etiket);
+            Assert.AreEqual("%", birim);
+            Assert.AreEqual(0f, simdi, 1e-4f);
+            Assert.IsTrue(RunTreeTierStats.TryGet(UpgradeBranch.FireRate, 1, "ar_1", out _, out float sonraki, out _));
+            Assert.Greater(sonraki, simdi, "bir kademe fazlası daha yüksek");
+            Assert.IsTrue(RunTreeTierStats.TryGet(UpgradeBranch.RegenerationDelay, 1, "ar_1", out _, out float bekle1, out string saniye));
+            Assert.AreEqual("s", saniye);
+            Assert.IsTrue(RunTreeTierStats.TryGet(UpgradeBranch.RegenerationDelay, 2, "ar_1", out _, out float bekle2, out _));
+            Assert.Less(bekle2, bekle1, "bekleme kısalır");
+            Assert.IsFalse(RunTreeTierStats.TryGet(UpgradeBranch.Explosion, 1, "rl_1", out _, out _, out _), "rl_1 Blast satırsız");
+            foreach (UpgradeBranch b in System.Enum.GetValues(typeof(UpgradeBranch)))
+            {
+                if (RunTreeTierStats.TryGet(b, 1, "ar_1", out string e, out _, out _)) Assert.IsNotEmpty(e, b.ToString());
+            }
+        }
     }
 }

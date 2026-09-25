@@ -53,6 +53,11 @@ namespace DD.Prototype.Rounds
         /// <summary>K10b: the pack placeholders' values in DISPLAY units ({value} {count} {seconds} {radius} {range} {max} {base}); parallel arrays, shared (read-only). Empty for tiers.</summary>
         public string[] ArgNames;
         public float[] ArgValues;
+        /// <summary>K10b U11: a tier's before → after row — the stat label (pack key; empty = no row), the value now and at the next tier in display units, and the unit ("%", "s", "HP", "HP/s", ""). At MAX StatNext is NaN.</summary>
+        public string Stat;
+        public float StatNow;
+        public float StatNext;
+        public string StatUnit;
     }
 
     /// <summary>
@@ -187,6 +192,18 @@ namespace DD.Prototype.Rounds
                 v.UnseenRounds = tree.UnseenRounds(i);
                 v.ArgNames = tree.ArgNamesOf(i);
                 v.ArgValues = tree.ArgValuesOf(i);
+                v.Stat = string.Empty;
+                v.StatUnit = string.Empty;
+                v.StatNow = v.StatNext = float.NaN;
+                if (node.Kind == RunTreeNodeKind.Tier &&
+                    RunTreeTierStats.TryGet(node.Branch, v.OwnedTier, tree.Graph.WeaponSlot, out string stat, out float now, out string statUnit))
+                {
+                    v.Stat = stat;
+                    v.StatUnit = statUnit;
+                    v.StatNow = now;
+                    v.StatNext = v.OwnedTier >= node.MaxTier ? float.NaN
+                        : RunTreeTierStats.TryGet(node.Branch, v.OwnedTier + 1, tree.Graph.WeaponSlot, out _, out float next, out _) ? next : float.NaN;
+                }
                 if (v.ReforgeCost >= 0) ReforgeAvailable = true;
                 _previous[i] = status;
             }
