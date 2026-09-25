@@ -4,8 +4,8 @@
  "derived": "source FBX used directly (embed off, path STRIP, -Z/Y-up); roles ap023_<role>; roof parts fade (role roof); sloped box shells carry obb; LOD0 bounds from the geometry, receipt-checked",
  "sources": [
   {
-   "path": "asset-production/AP-023/exports/AP023-manifest-v010.json",
-   "sha256": "c92d8db43b75af3a4b687a112ed02be4fc60c564b0ea6901cccca49842868817"
+   "path": "asset-production/AP-023/exports/AP023-manifest-v011.json",
+   "sha256": "362647d0f4b663196dfee0a9752137bd70e4f2143eebda3942c1b6dd9db80c57"
   }
  ],
  "families": [
@@ -32693,14 +32693,14 @@
      "id": "V01",
      "prefab": "SM_sugi_V01",
      "boundsMin": [
-      -2.56614,
-      -2.45673,
+      -3.11079,
+      -3.10864,
       0.0
      ],
      "boundsMax": [
-      2.46976,
-      2.57407,
-      16.05
+      2.97075,
+      3.02425,
+      16.02542
      ],
      "parts": [
       {
@@ -32715,9 +32715,9 @@
           "ap023_pine_needles"
          ],
          "facesPerSlot": [
-          3144
+          3318
          ],
-         "triangles": 3144,
+         "triangles": 3318,
          "colourLayers": [
           "AP003_Wind"
          ],
@@ -32730,9 +32730,9 @@
           "ap023_pine_needles"
          ],
          "facesPerSlot": [
-          950
+          1010
          ],
-         "triangles": 950,
+         "triangles": 1010,
          "colourLayers": [
           "AP003_Wind"
          ],
@@ -32745,9 +32745,9 @@
           "ap023_pine_needles"
          ],
          "facesPerSlot": [
-          252
+          260
          ],
-         "triangles": 252,
+         "triangles": 260,
          "colourLayers": [
           "AP003_Wind"
          ],
@@ -32767,9 +32767,9 @@
           "ap023_bark_pine"
          ],
          "facesPerSlot": [
-          798
+          662
          ],
-         "triangles": 798,
+         "triangles": 662,
          "colourLayers": [],
          "windExpected": false
         },
@@ -32818,7 +32818,7 @@
          "max": [
           0.32516,
           0.32516,
-          1.77778
+          2.00101
          ],
          "positions": 8
         }
@@ -32833,14 +32833,14 @@
      "id": "V02",
      "prefab": "SM_sugi_V02",
      "boundsMin": [
-      -2.03833,
-      -1.92133,
+      -2.44128,
+      -2.51988,
       0.0
      ],
      "boundsMax": [
-      2.03722,
-      1.86846,
-      12.05
+      2.57841,
+      2.70525,
+      12.03209
      ],
      "parts": [
       {
@@ -32855,9 +32855,9 @@
           "ap023_pine_needles"
          ],
          "facesPerSlot": [
-          2060
+          2228
          ],
-         "triangles": 2060,
+         "triangles": 2228,
          "colourLayers": [
           "AP003_Wind"
          ],
@@ -32870,9 +32870,9 @@
           "ap023_pine_needles"
          ],
          "facesPerSlot": [
-          962
+          1020
          ],
-         "triangles": 962,
+         "triangles": 1020,
          "colourLayers": [
           "AP003_Wind"
          ],
@@ -32885,9 +32885,9 @@
           "ap023_pine_needles"
          ],
          "facesPerSlot": [
-          252
+          256
          ],
-         "triangles": 252,
+         "triangles": 256,
          "colourLayers": [
           "AP003_Wind"
          ],
@@ -32907,9 +32907,9 @@
           "ap023_bark_pine"
          ],
          "facesPerSlot": [
-          776
+          650
          ],
-         "triangles": 776,
+         "triangles": 650,
          "colourLayers": [],
          "windExpected": false
         },
@@ -32920,9 +32920,9 @@
           "ap023_bark_pine"
          ],
          "facesPerSlot": [
-          156
+          152
          ],
-         "triangles": 156,
+         "triangles": 152,
          "colourLayers": [],
          "windExpected": false
         },
@@ -32958,7 +32958,7 @@
          "max": [
           0.25414,
           0.25414,
-          2.0
+          2.11993
          ],
          "positions": 8
         }
@@ -32973,14 +32973,14 @@
      "id": "V03",
      "prefab": "SM_sugi_V03",
      "boundsMin": [
-      -1.75792,
-      -1.70328,
+      -2.06605,
+      -2.08146,
       0.0
      ],
      "boundsMax": [
-      1.89385,
-      1.68783,
-      8.05
+      1.97435,
+      2.0903,
+      8.01317
      ],
      "parts": [
       {
@@ -32995,9 +32995,9 @@
           "ap023_pine_needles"
          ],
          "facesPerSlot": [
-          1694
+          1830
          ],
-         "triangles": 1694,
+         "triangles": 1830,
          "colourLayers": [
           "AP003_Wind"
          ],
@@ -33010,9 +33010,9 @@
           "ap023_pine_needles"
          ],
          "facesPerSlot": [
-          856
+          894
          ],
-         "triangles": 856,
+         "triangles": 894,
          "colourLayers": [
           "AP003_Wind"
          ],
@@ -33025,9 +33025,9 @@
           "ap023_pine_needles"
          ],
          "facesPerSlot": [
-          238
+          254
          ],
-         "triangles": 238,
+         "triangles": 254,
          "colourLayers": [
           "AP003_Wind"
          ],
@@ -33047,9 +33047,9 @@
           "ap023_bark_pine"
          ],
          "facesPerSlot": [
-          708
+          612
          ],
-         "triangles": 708,
+         "triangles": 612,
          "colourLayers": [],
          "windExpected": false
         },
@@ -33098,7 +33098,7 @@
          "max": [
           0.15487,
           0.15487,
-          2.19675
+          1.77778
          ],
          "positions": 8
         }
