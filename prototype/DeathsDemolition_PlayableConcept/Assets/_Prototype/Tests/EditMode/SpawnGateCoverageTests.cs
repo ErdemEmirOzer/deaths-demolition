@@ -11,14 +11,13 @@ using UnityEngine.SceneManagement;
 namespace DD.Prototype.Tests.EditMode
 {
     /// <summary>
-    /// WP-076 B6c (2/2) · §5.4 the v6 spawn coverage on the real v6 NavMesh (World_V6_Greybox, S-05 WP-074 B1): the 18 gates
-    /// of spawn-gates-v6.json, a 2 m grid over the walkable ±54 m, only cells connected to the player start.
-    /// ASSERTED: every gate reachable from the start; first contact (nearest eligible gate: ≥ the 12 m floor, ≤ 75 m; the
-    /// Executioner ≤ 55 m) median Standard ≤ 20 s, Runner ≤ 12 s, Executioner ≤ 35 s at the config walk speeds.
-    /// REPORTED (not asserted — a world-layout decision, S-05 / C-00, 25.09 finding): the S-05 B4/B5 coverage — ≥ 4 gates
-    /// within 22–45 m and ≥ 8 within 75 m from every cell, violations ≤ 3 % — by path and by straight line. The v6 layout
-    /// measured 59 % / 15 % (path) and 47 % / 7 % (straight) at main aa91af13: the 12 edge gates sit 49–71 m from the
-    /// centre, so the centre band holds only the 6 inner gates. All numbers go to [DD-OBS] wp076.b6c for S-05 / S-10.
+    /// WP-076 B6c (2/2) · §5.4 the v6 spawn coverage on the real v6 NavMesh (World_V6_Greybox, S-05 WP-074 B1): the gates of
+    /// spawn-gates-v6.json, a 2 m grid over the walkable ±54 m, only cells connected to the player start.
+    /// ASSERTED (C-00 decision C + D, 25.09): 22 gates, all reachable from the start; ≥ 3 gates within 22–45 m and ≥ 8
+    /// within 75 m of path, violations ≤ 10 % of cells; first contact median (nearest eligible gate ≥ 12 m, ≤ 75 m; the
+    /// Executioner ≤ 55 m) Standard ≤ 20 s, Runner ≤ 12 s, Executioner ≤ 35 s at the config walk speeds.
+    /// REPORTED: the 3 % figure outside the corner belt (|x| and |z| ≤ 40 m), the straight-line variant and the 3 × 3
+    /// sector breakdown ([DD-OBS] wp076.b6c). The 25.09 measurement: 18 gates / band ≥ 4 → 62 %; C + D → 9.1 %.
     /// </summary>
     [Category("WP076")]
     public sealed class SpawnGateCoverageTests
@@ -26,6 +25,11 @@ namespace DD.Prototype.Tests.EditMode
         private const string ScenePath = "Assets/_Art/Scenes/World_V6_Greybox.unity";
         private const string GatesPath = "Assets/_Art/Environment/World/V6/spawn-gates-v6.json";
         private const float Half = 54f, Step = 2f;
+        // C-00 decision (25.09, option C + D): 22 gates (+ I_CloisterEast, I_ShoreWest, I_ServiceYardEast, I_PlazaSouthWest),
+        // band ≥ 3 gates in 22–45 m and ≥ 8 within 75 m; asserted target ≤ 10 % of cells by path; the 3 % figure stays an
+        // information line for the cells outside the corner belt (|x| or |z| > 40 m).
+        private const int GateCount = 22, BandMin = 3, UsefulMin = 8;
+        private const float MaxViolationShare = 0.10f, InfoShareOutsideCorners = 0.03f, CornerBelt = 40f;
 
         [System.Serializable] private sealed class GateFile { public Gate[] gates; }
         [System.Serializable] private sealed class Gate { public string id; public string kind; public float x; public float z; }
@@ -44,7 +48,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsTrue(File.Exists(ScenePath) && File.Exists(GatesPath), "v6 sahnesi / kapı verisi yok");
             _scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Additive);
             GateFile file = JsonUtility.FromJson<GateFile>(File.ReadAllText(GatesPath));
-            Assert.AreEqual(18, file.gates.Length, "18 kapı (12 kenar + 6 orta)");
+            Assert.AreEqual(GateCount, file.gates.Length, "22 kapı (12 kenar + 10 orta; C-00 C + D) — S-05 spawn-gates-v6.json v007-B");
 
             var gates = new List<Vector3>(18);
             foreach (Gate g in file.gates)
@@ -68,7 +72,7 @@ namespace DD.Prototype.Tests.EditMode
                 gateLog.Append(file.gates[i].id).Append('=').Append(ok ? Length(path).ToString("0") : "X").Append(' ');
             }
             Debug.Log("[DD-OBS] wp076.b6c gatesFromStart " + gatesReachable + "/18 " + gateLog);
-            int bandFail = 0, usefulFail = 0, unreachableCells = 0, flatBandFail = 0, flatUsefulFail = 0;
+            int bandFail = 0, usefulFail = 0, unreachableCells = 0, flatBandFail = 0, flatUsefulFail = 0, innerCells = 0, innerViolations = 0;
             // S-05 request (25.09): the breakdown by 3 × 3 sectors (36 m each; x W/C/E, z S/C/N) so gate additions can be aimed
             var secCells = new int[9]; var secBandFail = new int[9]; var secUsefulFail = new int[9]; var secBand = new int[9]; var secUseful = new int[9];
             var firstStd = new List<float>(); var firstRun = new List<float>(); var firstExe = new List<float>();
@@ -95,15 +99,17 @@ namespace DD.Prototype.Tests.EditMode
                     if (len >= SpawnModeTable.MinSpawnDistance[0] && len <= SpawnWorldProfile.V6MaxUseful) nearest = Mathf.Min(nearest, len);
                     if (len >= SpawnModeTable.MinSpawnDistance[0] && len <= SpawnModeTable.HeavyTierMaxPath) nearestHeavy = Mathf.Min(nearestHeavy, len);
                 }
-                if (band < 4 || useful < 8) violations++;
+                bool violated = band < BandMin || useful < UsefulMin;
+                if (violated) violations++;
+                if (Mathf.Abs(c.position.x) <= CornerBelt && Mathf.Abs(c.position.z) <= CornerBelt) { innerCells++; if (violated) innerViolations++; }
                 int sec = Sector(c.position.x) + 3 * Sector(c.position.z);
                 secCells[sec]++; secBand[sec] += band; secUseful[sec] += useful;
-                if (band < 4) secBandFail[sec]++;
-                if (useful < 8) secUsefulFail[sec]++;
-                if (band < 4) bandFail++;
-                if (flatBand < 4) flatBandFail++;
-                if (flatUseful < 8) flatUsefulFail++;
-                if (useful < 8) usefulFail++;
+                if (band < BandMin) secBandFail[sec]++;
+                if (useful < UsefulMin) secUsefulFail[sec]++;
+                if (band < BandMin) bandFail++;
+                if (flatBand < BandMin) flatBandFail++;
+                if (flatUseful < UsefulMin) flatUsefulFail++;
+                if (useful < UsefulMin) usefulFail++;
                 minBand = Mathf.Min(minBand, band); minUseful = Mathf.Min(minUseful, useful);
                 if (nearest < float.MaxValue) { firstStd.Add(nearest / speeds.Standard); firstRun.Add(nearest / speeds.Special); }
                 if (nearestHeavy < float.MaxValue) firstExe.Add(nearestHeavy / speeds.Ultra);
@@ -123,8 +129,11 @@ namespace DD.Prototype.Tests.EditMode
             Debug.Log("[DD-OBS] wp076.b6c cells=" + cells + " unreachableCells=" + unreachableCells + " bandFail=" + bandFail + " usefulFail=" + usefulFail + " flatBandFail=" + flatBandFail + " flatUsefulFail=" + flatUsefulFail + " violations=" + violations + " share=" + share.ToString("0.000") + " minBand=" + minBand + " minUseful=" + minUseful
                       + " firstContactMedian std=" + mStd.ToString("0.0") + "s runner=" + mRun.ToString("0.0") + "s exec=" + mExe.ToString("0.0") + "s");
             Assert.Greater(cells, 500, "v6 NavMesh ızgarası boş (sahne NavMesh'i yüklenmedi mi?)");
-            Assert.AreEqual(18, gatesReachable, "her kapı oyuncu başlangıcından yürünebilir");
-            if (share > 0.03f) Debug.LogWarning("[DD-OBS] wp076.b6c S-05 B4/B5 kapsam eşiği sağlanmıyor (ihlal " + share.ToString("P1") + " > %3) — dünya yerleşimi kararı S-05 / C-00'da");
+            Assert.AreEqual(GateCount, gatesReachable, "her kapı oyuncu başlangıcından yürünebilir");
+            float innerShare = innerCells > 0 ? (float)innerViolations / innerCells : 0f;
+            Debug.Log("[DD-OBS] wp076.b6c outsideCornerBelt cells=" + innerCells + " violations=" + innerViolations + " share=" + innerShare.ToString("0.000")
+                      + (innerShare > InfoShareOutsideCorners ? " (> 3 % information line)" : " (≤ 3 %)"));
+            Assert.LessOrEqual(share, MaxViolationShare, "C-00 C + D: yol mesafesiyle ihlal ≤ %10 (band ≥ 3 kapı 22–45 m, ≥ 8 kapı ≤ 75 m)");
             Assert.LessOrEqual(mStd, 20f, "Standard ilk temas medyanı ≤ 20 s");
             Assert.LessOrEqual(mRun, 12f, "Runner ilk temas medyanı ≤ 12 s");
             Assert.LessOrEqual(mExe, 35f, "Executioner ilk temas medyanı ≤ 35 s");
