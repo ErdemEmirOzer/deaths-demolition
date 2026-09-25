@@ -10,15 +10,18 @@ namespace DD.Art.Pipeline.EditorTools
 {
     /// <summary>
     /// WP-075 C6 · The World v5 (v6 layout) look profile: DD_Look_v5 is DD_Overcast_v1 (its Neutral tonemap / grade / bloom / grain /
-    /// vignette, copied once) with the colour lookup on LUT v2 "Islak Arduvaz, Açılma" (DD_Look_v2.png, WP-075 Ek A §6.1;
-    /// wp-074/tools/build-look-v2.py, ΔE gate in DD_Look_v2.recipe.json). World_AP005 keeps DD_Overcast_v1 + LUT v1 until World v5
-    /// replaces it. WP-075 C7: the post rules' Cinematic top-down baseline is written into this same profile (LookV3Post).
+    /// vignette, copied once) with the colour lookup on LUT v2b "Islak Arduvaz, Soğuk" — DEC-101 (user 25.09): the tone is cold like
+    /// the HF targets (cold blue-grey shadows, low saturation, dark wet ground, cold white point, contrast up, no milky lift; warmth
+    /// only in the sun-hit highlights and the shafts). v2b's global sliders are fitted to HF-center's mean Lab / chroma / L std
+    /// (wp-074/tools/build-look-v2b.py; the fit, the ΔE gate and the HF comparison in DD_Look_v2b.recipe.json); LUT v2 "Açılma"
+    /// (Ek A §6.1) stays as the fit's input. World_AP005 keeps DD_Overcast_v1 + LUT v1 until World v5 replaces it. WP-075 C7: the
+    /// post rules' Cinematic top-down baseline is written into this same profile (LookV3Post).
     /// </summary>
     public static class WorldV5Look
     {
         public const string ProfilePath = ArtLibraryPaths.LightingFolder + "/DD_Look_v5.asset";
-        public const string LutPath = LutBuilder.Folder + "/DD_Look_v2.png";
-        public const string RecipePath = LutBuilder.Folder + "/DD_Look_v2.recipe.json";
+        public const string LutPath = LutBuilder.Folder + "/DD_Look_v2b.png";
+        public const string RecipePath = LutBuilder.Folder + "/DD_Look_v2b.recipe.json";
 
         public static VolumeProfile EnsureProfile()
         {
