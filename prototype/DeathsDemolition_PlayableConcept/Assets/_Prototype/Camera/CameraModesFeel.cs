@@ -96,7 +96,8 @@ namespace DD.Prototype.CameraSystem
 
         // ---- explosion falloff (A4.5 §5.4)
         public const float ExplosionFullRange = 3.2f, ExplosionZeroRange = 12f, ExplosionFalloffPower = 1.5f;
-        public const float ExplosionFpDeg = 1.8f, ExplosionFpFovDeg = 3f, ExplosionFovRange = 5f, ExplosionTpMeters = 0.10f, ExplosionTpRollDeg = 2f;
+        public const float ExplosionFpDeg = 1.2f,   // AD (25.09) SHOULD 2: one rl event is A4.6's 1.2°, the 1.8° aggregate cap stays the cap
+                            ExplosionFpFovDeg = 3f, ExplosionFovRange = 5f, ExplosionTpMeters = 0.10f, ExplosionTpRollDeg = 2f;
 
         /// <summary>A(d) = (1 − sat((d − 3.2) / (12 − 3.2)))^1.5.</summary>
         public static float ExplosionFalloff(float distance)
@@ -144,7 +145,7 @@ namespace DD.Prototype.CameraSystem
             Row("lmg_2", FeelWeight.W3, 0.60f, 0.22f, 1.1f, 0.66f, 8f, 0.11f, 0f, 3.2f),
             Row("sr_1", FeelWeight.W3, 0.90f, 0.80f, 4.5f, 2.50f, 12f, 0.20f, 0.12f, 9.0f),
             Row("rl_1", FeelWeight.W4, 1.00f, 1.20f, 6.0f, 3.60f, 9f, 0.40f, 0.30f, 12.0f),
-            Row("sw_arc", FeelWeight.W2, 0.40f, 0.40f, 2.5f, 1.50f, 28f, 0.15f, 0.35f, 5.0f),
+            Row("sw_arc", FeelWeight.W2, 0.40f, 0.40f, 2.5f, 1.50f, 28f, 0.15f, 0.15f, 5.0f),   // AD (25.09) SHOULD 1: 0.25 s charge + 0.15 s release ≤ the 0.4 s rule
             Row("sw_gel", FeelWeight.W3, 0.20f, 0.20f, 0.8f, 0.48f, 6f, 0.10f, 0.20f, 3.0f),
         };
 
