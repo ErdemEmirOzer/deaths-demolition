@@ -283,12 +283,13 @@ namespace DD.Art.Tests.EditMode
 
             // The development build carries release + dev-only, in that order (pure function).
             string[] dev = DD.Prototype.Core.EditorTools.LifecycleProbeBuild.DevelopmentScenes(sahneler);
-            Assert.AreEqual(8, dev.Length);
+            Assert.AreEqual(9, dev.Length);
             Assert.AreEqual(ilkBes[0], dev[0], "dev build giriş sahnesi Boot");
             Assert.AreEqual(ArtLibraryPaths.Ap005WorldScene, dev[5]);
             Assert.AreEqual(ArtPipelinePaths.PilotScene, dev[6]);
             Assert.AreEqual(ArtLibraryPaths.ShowcaseScene, dev[7]);
-            Debug.Log("[DD-TEST] wp015.buildlist release=6 devOnly=2");
+            Assert.AreEqual(ArtLibraryPaths.GreyboxV6Scene, dev[8], "WP-074 B1: greybox dev build'de");
+            Debug.Log("[DD-TEST] wp015.buildlist release=6 devOnly=3");
         }
 
         /// <summary>WP-015 (ADR-015-1) → WP-075 C1 (ADR-015-1 v3): mipmap streaming is on at every quality level with its tier's budget (512 / 1024 / 2048 MB; Standalone default High).</summary>
