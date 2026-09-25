@@ -180,6 +180,33 @@ namespace DD.Prototype.Rounds
             return new[] { UpgradeBranch.Piercing, UpgradeBranch.FireRate, UpgradeBranch.ReloadSpeed };
         }
 
+        /// <summary>
+        /// The ≤ 12-character seal label of a tier node: designed, unique, whole words (a cut "Movement Spe" or two
+        /// "Regeneration" labels read as a bug). rl_1's Explosion tier is its Blast (WP-069 §6, pack A6).
+        /// </summary>
+        public static string TierShortName(UpgradeBranch branch, string weaponSlot, string fallback)
+        {
+            switch (branch)
+            {
+                case UpgradeBranch.Piercing: return "Piercing";
+                case UpgradeBranch.Ricochet: return "Ricochet";
+                case UpgradeBranch.Explosion: return weaponSlot == "rl_1" ? "Blast" : "Explosion";
+                case UpgradeBranch.Chain: return "Chain";
+                case UpgradeBranch.FireRate: return "Fire Rate";
+                case UpgradeBranch.ReloadSpeed: return "Reload Speed";
+                case UpgradeBranch.MovementSpeed: return "Move Speed";
+                case UpgradeBranch.MaximumHealth: return "Max Health";
+                case UpgradeBranch.RegenerationDelay: return "Regen Delay";
+                case UpgradeBranch.RegenerationRate: return "Regen Rate";
+                case UpgradeBranch.ArmorBreak: return "Armour Break";
+                case UpgradeBranch.Impact: return "Impact";
+                case UpgradeBranch.Cluster: return "Cluster";
+            }
+
+            string name = fallback ?? branch.ToString();
+            return name.Length <= RunTreeCatalog.ShortNameMax ? name : name.Substring(0, RunTreeCatalog.ShortNameMax);
+        }
+
         private int AddTier(RunTreeLane lane, int row, UpgradeBranch branch, PrototypeConfig config)
         {
             UpgradeBranchSettings s = config != null && config.Economy != null ? config.Economy.Find(branch) : null;
@@ -187,7 +214,7 @@ namespace DD.Prototype.Rounds
             var node = new RunTreeNode
             {
                 Id = TierId(branch),
-                ShortName = name.Length <= RunTreeCatalog.ShortNameMax ? name : name.Substring(0, RunTreeCatalog.ShortNameMax),
+                ShortName = TierShortName(branch, WeaponSlot, name),
                 DisplayName = name,
                 Description = string.Empty,   // tier cards describe themselves from the live tuning (UpgradeCardCatalog.Describe)
                 EffectId = "tier." + branch,

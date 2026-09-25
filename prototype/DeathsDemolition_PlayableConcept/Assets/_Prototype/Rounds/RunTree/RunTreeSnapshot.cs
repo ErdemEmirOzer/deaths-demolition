@@ -224,7 +224,7 @@ namespace DD.Prototype.Rounds
             IReadOnlyList<UpgradeCardOffer> cards = shop.Cards;
             for (int c = 0; c < cards.Count; c++)
             {
-                if (cards[c].IsValid && (!cards[c].IsNode || cards[c].NodeKind == RunTreeNodeKind.Tier) && cards[c].Branch == branch) return true;
+                if (cards[c].IsValid && !cards[c].Purchased && (!cards[c].IsNode || cards[c].NodeKind == RunTreeNodeKind.Tier) && cards[c].Branch == branch) return true;
             }
 
             return false;

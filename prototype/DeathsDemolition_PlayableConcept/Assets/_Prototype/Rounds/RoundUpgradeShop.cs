@@ -1165,7 +1165,7 @@ namespace DD.Prototype.Rounds
         {
             for (int c = 0; c < _cards.Count; c++)
             {
-                if (_cards[c].IsValid && _cards[c].IsNode && (_cards[c].NodeIndex == nodeIndex || _cards[c].AltNodeIndex == nodeIndex)) return true;
+                if (_cards[c].IsValid && !_cards[c].Purchased && _cards[c].IsNode && (_cards[c].NodeIndex == nodeIndex || _cards[c].AltNodeIndex == nodeIndex)) return true;
             }
 
             return false;

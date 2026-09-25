@@ -160,6 +160,38 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void KademeKisaAdlari_Benzersiz_TamKelime_OnIkiAlti()
+        {
+            var adlar = new HashSet<string>();
+            foreach (UpgradeBranch b in System.Enum.GetValues(typeof(UpgradeBranch)))
+            {
+                string kisa = RunTreeGraph.TierShortName(b, "ar_1", null);
+                Assert.LessOrEqual(kisa.Length, RunTreeCatalog.ShortNameMax, b.ToString());
+                Assert.IsTrue(adlar.Add(kisa), "tekrar eden kısa ad: " + kisa);
+                foreach (string kelime in kisa.Split(' ')) Assert.GreaterOrEqual(kelime.Length, 3, "kesik kelime: " + kisa);
+            }
+
+            Assert.AreEqual("Blast", RunTreeGraph.TierShortName(UpgradeBranch.Explosion, "rl_1", null));
+            RunTreeState t = Agac();
+            Assert.AreEqual("Move Speed", t.Graph[t.Graph.IndexOf(RunTreeGraph.TierId(UpgradeBranch.MovementSpeed))].ShortName);
+        }
+
+        [Test]
+        public void AnlikGoruntu_SatinAlinanKart_TekliftenDuser()
+        {
+            _dukkan.Open(1, _config, _cuzdan, _rank, 9);
+            Altin(5000);
+            int alinan = -1;
+            for (int c = 0; c < _dukkan.Cards.Count && alinan < 0; c++) if (_dukkan.TryPurchase(c)) alinan = c;
+            Assert.GreaterOrEqual(alinan, 0);
+            var s = new RunTreeSnapshot();
+            s.Refresh(_dukkan);
+            string id = RunTreeGraph.TierId(_dukkan.Cards[alinan].Branch);
+            int i = s.IndexOf(id);
+            if (i >= 0) Assert.IsFalse(s.Nodes[i].InOffer, id + " satın alındı → teklif dışında");
+        }
+
+        [Test]
         public void IcerikPaketi_HerDugumunAnahtari_Var()
         {
             // planning/content/r1-strings.json (R1 içerik paketi): her düğümün "<anahtar>.name|.desc" çifti bulunur.
