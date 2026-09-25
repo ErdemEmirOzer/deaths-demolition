@@ -5,7 +5,7 @@ namespace DD.Prototype.Feedback.Vfx
 {
     /// <summary>
     /// WP-073 B6 · The skin reactions the two Specials leave on a zombie (direction §2.1 "Çarpılma", §2.2 "Zombide jel"):
-    /// the electrocution rim — cyan #7FD3FF × 3, a 20 Hz square-wave flicker for the first 0.4 s then 8 Hz (flash / seizure
+    /// the electrocution rim — cyan #7FD3FF × 1.2 (the direction's × 3 washed the texture out, see ShockIntensity), a 20 Hz square-wave flicker for the first 0.4 s then 8 Hz (flash / seizure
     /// standard, A4.6: > 12 Hz only ≤ 0.4 s; Reduce flashes: no flicker, a steady 0.75), full for min(0.5 s, 42 % of the
     /// hold) and fading to 0 at its end (§4.2: ≤ 0.5 s at full intensity) — and the gel film, magenta #FF5FD2 × 0.8 fading
     /// to 0 over 6 s. Both are one MaterialPropertyBlock <c>_EmissionColor</c> on the body and bottom slots of every LOD
@@ -26,7 +26,10 @@ namespace DD.Prototype.Feedback.Vfx
         public const float FastFlickerSeconds = 0.4f;
         public const float FastFlickerHz = 20f, SlowFlickerHz = 8f;
 
-        private static readonly Vector4 ShockHdr = SpecialVfxAssets.Hdr(0x7FD3FF, 3f);
+        // ×1.2, not the direction's ×3 (C-00 25.09): URP Lit emission is flat, not a rim — at ×3 the first 0.5 s painted the
+        // whole body pale cyan and the texture vanished on the real AP-007 zombies (wp073-b6-captures21 sheet-skin.jpg).
+        public const float ShockIntensity = 1.2f;
+        private static readonly Vector4 ShockHdr = SpecialVfxAssets.Hdr(0x7FD3FF, ShockIntensity);
         private static readonly Vector4 GelHdr = SpecialVfxAssets.Hdr(0xFF5FD2, 0.8f);
         private static readonly int EmissionId = Shader.PropertyToID("_EmissionColor");
 

@@ -219,6 +219,9 @@ namespace DD.Prototype.Tests.PlayMode
             Vector4 on = ZombieSkinFx.ShockColour(0.01f, 1.2f, false);
             Vector4 off = ZombieSkinFx.ShockColour(0.03f, 1.2f, false);    // 0.03 × 20 = 0.6 → the low half
             Assert.Greater(on.x, off.x * 2f, "20 Hz kare dalga");
+            // C-00 25.09: the peak is #7FD3FF × 1.2 (× 3 washed the zombie texture out): blue (0xFF → linear 1) = 1.2.
+            Assert.AreEqual(1.2f, ZombieSkinFx.ShockIntensity, 1e-5f);
+            Assert.AreEqual(1.2f, on.z, 1e-3f, "çarpılma tepe değeri ×1,2");
             Assert.LessOrEqual(ZombieSkinFx.FastFlickerSeconds, 0.4f, "> 12 Hz yalnız ≤ 0,4 s");
             // After 0.4 s the square wave is 8 Hz: 0.45 × 8 = 3.6 → low half, 0.51 × 8 = 4.08 → high half.
             Assert.Greater(ZombieSkinFx.ShockColour(0.51f, 1.2f, false).x, ZombieSkinFx.ShockColour(0.45f, 1.2f, false).x, "8 Hz evre");
