@@ -38,7 +38,7 @@ namespace DD.Prototype.UI
 
         private const float TabHeight = 44f;
         private const float TabWidth = 168f;
-        private const float CompactSealMax = 56f;
+        private const float CompactSealMax = 48f;
         private const float MinSeal = 40f;
         private const float EdgeGap = 24f;
         private const float BuyWidth = 204f;
@@ -557,7 +557,7 @@ namespace DD.Prototype.UI
 
             RunTreeNodeView n = _snap.Nodes[index];
             SetGlyph(v.Glyph, n);
-            v.Name.text = string.IsNullOrEmpty(n.ShortName) ? n.DisplayName : n.ShortName;
+            v.Name.text = Fit(v.Name, string.Empty, n);
             bool owned = IsOwned(n) || (n.Kind == RunTreeNodeKind.Tier && n.OwnedTier > 0);
             bool dim = n.Status == RunTreeNodeStatus.Locked || n.Status == RunTreeNodeStatus.Excluded;
             bool waiting = n.Status == RunTreeNodeStatus.PrereqMissing;
@@ -578,7 +578,11 @@ namespace DD.Prototype.UI
             v.Offer.SetActive(forSale);
             v.New.SetActive(n.NewlyUnlocked);
             bool count = n.Kind == RunTreeNodeKind.Tier && n.OwnedTier > 0 && n.MaxTier > 1;
-            v.Count.transform.parent.gameObject.SetActive(count);
+            var countRect = (RectTransform)v.Count.transform.parent;
+            countRect.gameObject.SetActive(count);
+            // Compact rows keep their words right of the seal: the badge sits under the seal's centre there.
+            PlaceAnchored(countRect, _compact ? new Vector2(0.5f, 0f) : new Vector2(1f, 0f), new Vector2(0.5f, 0.5f),
+                _compact ? Vector2.zero : new Vector2(-4f, 4f), countRect.sizeDelta);
             if (count)
             {
                 v.Count.text = n.OwnedTier + "/" + n.MaxTier;
@@ -586,7 +590,9 @@ namespace DD.Prototype.UI
 
             v.Mark.enabled = index == _focus;
             v.Name.color = UiTokens.Get(dim ? UiColor.TextMuted : UiColor.TextPrimary);
+            _measureState = v.State;
             v.State.text = StateWord(n);
+            _measureState = null;
             v.State.color = UiTokens.Get(n.Status == RunTreeNodeStatus.Unaffordable ? UiColor.StateWarning : dim ? UiColor.TextMuted : UiColor.TextSecondary);
         }
 
@@ -650,7 +656,7 @@ namespace DD.Prototype.UI
                     break;
                 case RunTreeNodeStatus.PrereqMissing:
                     word = n.MissingParentIndex >= 0
-                        ? UiStrings.Get("tree.state.prereq_missing", "NEEDS {node}").Replace("{node}", ShortOf(n.MissingParentIndex).ToUpperInvariant())
+                        ? Needs("tree.state.prereq_missing", "NEEDS {node}", n.MissingParentIndex)
                         : UiStrings.Get("tree.state.prereq_keystone", "NEEDS A KEYSTONE");
                     break;
                 case RunTreeNodeStatus.Available:
@@ -663,7 +669,7 @@ namespace DD.Prototype.UI
                     word = UiStrings.Get("tree.state.purchased", "OWNED") + (n.MaxTier > 1 ? " · " + n.OwnedTier + "/" + n.MaxTier : string.Empty);
                     break;
                 case RunTreeNodeStatus.Excluded:
-                    word = UiStrings.Get("tree.state.excluded", "CLOSED BY {node}").Replace("{node}", ShortOf(n.ClosedByIndex).ToUpperInvariant());
+                    word = Needs("tree.state.excluded", "CLOSED BY {node}", n.ClosedByIndex);
                     break;
                 case RunTreeNodeStatus.MaxTier:
                     word = UiStrings.Get("tree.state.max_tier", "MAX");
@@ -676,15 +682,39 @@ namespace DD.Prototype.UI
             return n.NewlyUnlocked ? UiStrings.Get("tree.flag.new", "NEW") + " · " + word : word;
         }
 
-        private string ShortOf(int index)
+        /// <summary>
+        /// The node's full name where the measured line holds it, else its short name (S-04's ShortName clips a tier's name
+        /// at 12 characters: "Movement Spe", and both regeneration branches read "Regeneration").
+        /// </summary>
+        private static string Fit(TMP_Text line, string template, RunTreeNodeView n)
         {
-            if (index < 0 || index >= _snap.Count)
+            string full = string.IsNullOrEmpty(n.DisplayName) ? n.ShortName : n.DisplayName;
+            if (string.IsNullOrEmpty(n.ShortName) || line == null)
             {
-                return "?";
+                return template.Length > 0 ? template.Replace("{node}", full.ToUpperInvariant()) : full;
             }
 
-            RunTreeNodeView n = _snap.Nodes[index];
-            return string.IsNullOrEmpty(n.ShortName) ? n.DisplayName : n.ShortName;
+            string candidate = template.Length > 0 ? template.Replace("{node}", full.ToUpperInvariant()) : full;
+            float width = line.rectTransform.rect.width;
+            if (width <= 0f || line.GetPreferredValues(candidate).x <= width)
+            {
+                return candidate;
+            }
+
+            return template.Length > 0 ? template.Replace("{node}", n.ShortName.ToUpperInvariant()) : n.ShortName;
+        }
+
+        private TMP_Text _measureState;
+
+        /// <summary>NEEDS / CLOSED BY with the partner's name fitted to the node's state line.</summary>
+        private string Needs(string key, string fallback, int partner)
+        {
+            if (partner < 0 || partner >= _snap.Count)
+            {
+                return UiStrings.Get(key, fallback).Replace("{node}", "?");
+            }
+
+            return Fit(_measureState, UiStrings.Get(key, fallback), _snap.Nodes[partner]);
         }
 
         private void DrawEdges()
