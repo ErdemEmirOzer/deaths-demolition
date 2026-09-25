@@ -16,7 +16,7 @@ namespace DD.Prototype.UI
     /// A new banner restarts the envelope; a retitle (the Special's name arriving) swaps the words in place, without a
     /// second wipe. Per frame there is one time compare (<see cref="Tick"/>).
     /// WP-068 12b (AD R1-B SHOULD-2; N19 §1.1, E14 "glif Stamp"): the "&lt;SW&gt; ONLINE" line carries the Special's glyph,
-    /// <see cref="GlyphSize"/> px in its identity tint, <see cref="GlyphGap"/> px left of the words; glyph and words are
+    /// <see cref="GlyphSize"/> px in its identity tint, <see cref="GlyphGap"/> px of clear ground between its ink and the words'; glyph and words are
     /// centred as one line, the glyph stamps in as the name lands and every other banner hides it.
     /// </summary>
     public sealed class HudBanner
@@ -27,9 +27,24 @@ namespace DD.Prototype.UI
         private const float BrushPadding = 56f;
         private const float BrushHeight = 84f;
 
-        /// <summary>12b (AD R1-B SHOULD-2): the Special's glyph on its ONLINE line, and its gap to the words.</summary>
+        /// <summary>
+        /// 12b (AD R1-B SHOULD-2): the Special's glyph on its ONLINE line, and its gap to the words - ink to ink (AD 12b
+        /// SHOULD-10: the cell's empty right margin and the first letter's side bearing no longer add to it; 25 px read at
+        /// 1080 before). Layout px, so it scales with the UI scale and never with the text scale.
+        /// </summary>
         public const float GlyphSize = 48f;
         public const float GlyphGap = 16f;
+
+        /// <summary>
+        /// The empty share of a glyph cell right of its ink (alpha ≥ 0.5 in the SDF atlas), per sprite. Measured from the G1
+        /// atlas; RunHud12bTests re-measures every Special's cell from the file and fails on a drift or a missing entry.
+        /// </summary>
+        public static readonly System.Collections.Generic.Dictionary<string, float> GlyphInkRight =
+            new System.Collections.Generic.Dictionary<string, float>
+            {
+                { "Special.Raiju", 9f / 52f },
+                { "Special.Namekuji", 9f / 52f },
+            };
         private static readonly Vector3 GlyphInk = new Vector3(0.25f, 0f, 0f);   // the HUD's SDF ink edge (RunHudScreen.Ink)
 
         /// <summary>TMP outline / dilate for 1.5 px of ink outside a 48 px letter (Display atlas 64 pt, gradient 9).</summary>
@@ -252,7 +267,10 @@ namespace DD.Prototype.UI
         {
             _text.margin = Vector4.zero;   // measured bare: TMP counts its margins into the preferred width
             float words = Mathf.Ceil(_text.GetPreferredValues(_text.text).x);
-            float lead = _glyph.enabled ? GlyphSize + GlyphGap : 0f;
+            // SHOULD-10: the lead stops at the words' pen origin, so the ink-to-ink gap is GlyphGap.
+            float lead = _glyph.enabled
+                ? GlyphSize - GlyphInkRightPx(_glyph.sprite) + GlyphGap - LeadingBearing(_text)
+                : 0f;
             _width = Mathf.Max(Width, lead + words + 48f);
             _root.sizeDelta = new Vector2(_width, _root.sizeDelta.y);
             _text.rectTransform.sizeDelta = new Vector2(_width, _height);
@@ -267,6 +285,40 @@ namespace DD.Prototype.UI
             var brushRect = (RectTransform)_brush.transform;
             brushRect.sizeDelta = new Vector2(lead + words + BrushPadding + UiSprites.BrushRibbonTail, BrushHeight);
             brushRect.anchoredPosition = new Vector2((UiSprites.BrushRibbonTail - BrushPadding) * 0.5f, 0f);
+        }
+
+        /// <summary>The px between a <see cref="GlyphSize"/> box's right edge and its glyph's ink (preserveAspect, centred).</summary>
+        public static float GlyphInkRightPx(Sprite sprite)
+        {
+            if (sprite == null)
+            {
+                return 0f;
+            }
+
+            Rect cell = sprite.rect;
+            float drawn = cell.width >= cell.height ? GlyphSize : GlyphSize * cell.width / cell.height;
+            float share;
+            if (!GlyphInkRight.TryGetValue(sprite.name, out share))
+            {
+                share = 0f;
+            }
+
+            return (GlyphSize - drawn) * 0.5f + share * drawn;
+        }
+
+        /// <summary>The first letter's left side bearing at the text's size: where its ink starts past the pen origin.</summary>
+        public static float LeadingBearing(TMP_Text text)
+        {
+            string words = text.text;
+            TMP_FontAsset font = text.font;
+            TMP_Character character;
+            if (string.IsNullOrEmpty(words) || font == null || !font.characterLookupTable.TryGetValue(words[0], out character))
+            {
+                return 0f;
+            }
+
+            float scale = text.fontSize / font.faceInfo.pointSize * font.faceInfo.scale;
+            return Mathf.Max(0f, character.glyph.metrics.horizontalBearingX * scale);
         }
 
         /// <summary>The Display face with the house ink edge outside the letters (built once per process).</summary>

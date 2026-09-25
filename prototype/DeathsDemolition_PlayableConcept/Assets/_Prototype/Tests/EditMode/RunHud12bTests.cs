@@ -96,6 +96,52 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         /// <summary>
+        /// AD 12b SHOULD-10: HudBanner.GlyphInkRight holds every Special glyph's empty right margin as the atlas has it -
+        /// re-measured from the SDF file (alpha ≥ 0.5 = ink), within one texel - so the ink-to-ink gap holds per glyph.
+        /// </summary>
+        [Test]
+        public void OnlineAfisi_SpecialGlifleri_MurekkepPayi_AtlasIleEslesir()
+        {
+            foreach (DD.Prototype.Core.Config.SpecialWeaponId id in System.Enum.GetValues(typeof(DD.Prototype.Core.Config.SpecialWeaponId)))
+            {
+                Sprite sprite = UiArt.SpecialIcon(id);
+                Assert.IsNotNull(sprite, id + ": glif");
+                float share;
+                Assert.IsTrue(HudBanner.GlyphInkRight.TryGetValue(sprite.name, out share), sprite.name + ": GlyphInkRight girdisi yok");
+
+                string path = UnityEditor.AssetDatabase.GetAssetPath(sprite.texture);
+                var file = new Texture2D(2, 2);
+                try
+                {
+                    Assert.IsTrue(file.LoadImage(System.IO.File.ReadAllBytes(path)), path);
+                    Rect cell = sprite.rect;
+                    int x0 = (int)cell.x, y0 = (int)cell.y, w = (int)cell.width, h = (int)cell.height;
+                    int inkRight = -1;
+                    for (int x = w - 1; x >= 0 && inkRight < 0; x--)
+                    {
+                        for (int y = 0; y < h; y++)
+                        {
+                            if (file.GetPixel(x0 + x, y0 + y).a >= 0.5f)
+                            {
+                                inkRight = x;
+                                break;
+                            }
+                        }
+                    }
+
+                    Assert.GreaterOrEqual(inkRight, 0, sprite.name + ": hücrede mürekkep");
+                    float measured = (w - 1 - inkRight) / (float)w;
+                    Debug.Log("[DD-TEST] 12c.glyphInkRight " + sprite.name + " table=" + share.ToString("F3") + " atlas=" + measured.ToString("F3"));
+                    Assert.AreEqual(measured, share, 1f / w, sprite.name + ": tablo atlasla aynı (± 1 teksel)");
+                }
+                finally
+                {
+                    Object.DestroyImmediate(file);
+                }
+            }
+        }
+
+        /// <summary>
         /// B4 (AD R1-B SHOULD-2): the "&lt;SW&gt; ONLINE" line carries the Special's glyph at 48 px in the tint it is given,
         /// inside the wipe's mask, 16 px left of the words, glyph and words centred as one line; the generic line and every
         /// other banner carry none.
@@ -134,7 +180,12 @@ namespace DD.Prototype.Tests.EditMode
                 float wordsRight = info.characterInfo[info.characterCount - 1].xAdvance;
                 float glyphLeft = glyph.rectTransform.anchoredPosition.x - HudBanner.GlyphSize * 0.5f;
                 float glyphRight = glyphLeft + HudBanner.GlyphSize;
-                Assert.AreEqual(glyphRight + HudBanner.GlyphGap, wordsLeft, 2f, "glif kelimelerin 16 px solunda (± TMP yuvarlaması)");
+                // AD 12b SHOULD-10: ink to ink - the cell's empty right margin and the first letter's bearing do not count.
+                float bearing = HudBanner.LeadingBearing(text);
+                Assert.GreaterOrEqual(bearing, 0f);
+                Assert.Less(bearing, text.fontSize * 0.2f, "bir harf yan boşluğu, satır değil");
+                float glyphInk = glyphRight - HudBanner.GlyphInkRightPx(glyph.sprite);
+                Assert.AreEqual(glyphInk + HudBanner.GlyphGap, wordsLeft + bearing, 2f, "glif mürekkebi kelime mürekkebinin 16 px solunda (± TMP yuvarlaması)");
                 Assert.AreEqual(width * 0.5f, (glyphLeft + wordsRight) * 0.5f, 2f, "glif + kelimeler tek satır olarak ortada");
                 Assert.GreaterOrEqual(glyphLeft, 0f, "glif afişin içinde");
                 Assert.LessOrEqual(wordsRight, width, "kelimeler afişin içinde");
