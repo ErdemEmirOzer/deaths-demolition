@@ -59,6 +59,17 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void Agac_OnceSonra_BirimleriVeIsaretiYazar()
+        {
+            // 12b U11: display units as S-04 sends them - percentages signed, seconds / HP after the number, counts bare.
+            Assert.AreEqual("+20 %", UiRunTreePanel.StatText(20f, "%"));
+            Assert.AreEqual("−10 %", UiRunTreePanel.StatText(-10f, "%"));
+            Assert.AreEqual("4.5 s", UiRunTreePanel.StatText(4.5f, "s"));
+            Assert.AreEqual("2.5 HP/s", UiRunTreePanel.StatText(2.5f, "HP/s"));
+            Assert.AreEqual("3", UiRunTreePanel.StatText(3f, string.Empty));
+        }
+
+        [Test]
         public void Agac_Aciklama_PaketSatiri_ArgumanlarlaDolar_AcikKalirsaKatalog()
         {
             // K10b: the pack line filled from the node's args; a placeholder left open falls back to the catalog line.

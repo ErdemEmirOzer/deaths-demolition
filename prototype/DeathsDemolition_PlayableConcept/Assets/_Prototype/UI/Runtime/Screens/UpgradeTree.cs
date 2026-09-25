@@ -98,6 +98,9 @@ namespace DD.Prototype.UI
         private TMP_Text _dState;
         private TMP_Text _dDesc;
         private TMP_Text _dNote;
+        private RectTransform _dStatRow;   // 12b U11 (AD R1-C SHOULD-4): a tier's before → after row
+        private TMP_Text _dStatLabel;
+        private TMP_Text _dStatValue;
         private RectTransform _dBuyRow;
         private RectTransform _dActions;
         private TMP_Text _dPrice;
@@ -389,6 +392,12 @@ namespace DD.Prototype.UI
             _dDesc.overflowMode = TextOverflowModes.Ellipsis;
             _dNote = UiFactory.Label("Note", _dContent, string.Empty, UiType.Caption, UiColor.TextMuted);
             _dNote.overflowMode = TextOverflowModes.Ellipsis;
+            _dStatRow = UiFactory.NewRect("StatRow", _dContent);
+            _dStatLabel = UiFactory.Label("StatLabel", _dStatRow, string.Empty, UiType.Label, UiColor.TextSecondary, TextAnchor.MiddleLeft);
+            UiFactory.Fill(_dStatLabel.rectTransform);
+            _dStatValue = UiFactory.Label("StatValue", _dStatRow, string.Empty, UiType.BodyStrong, UiColor.TextPrimary, TextAnchor.MiddleRight);
+            UiFactory.Fill(_dStatValue.rectTransform);
+            _dStatRow.gameObject.SetActive(false);
 
             _dBuyRow = UiFactory.NewRect("BuyRow", _dContent);
             _dPrice = UiFactory.Numeric("Price", _dBuyRow, string.Empty, UiType.NumericM, UiColor.StateGold, TextAnchor.MiddleLeft, false);
@@ -529,7 +538,11 @@ namespace DD.Prototype.UI
             float note = TwoLines(_dNote);
             float noteBottom = foot + (int)UiSpace.L;
             DockBottom((RectTransform)_dNote.transform, noteBottom, note);
-            float descH = Mathf.Max(body, h - noteBottom - note - (int)UiSpace.S - y);
+            // 12b U11: the before → after row over the rule note (the band PD §5 reserves); the description keeps the rest.
+            float stat = LineOf(_dStatValue);
+            float statBottom = noteBottom + note + (int)UiSpace.S;
+            DockBottom(_dStatRow, statBottom, stat);
+            float descH = Mathf.Max(body, h - statBottom - stat - (int)UiSpace.S - y);
             Dock((RectTransform)_dDesc.transform, y, descH);
 
             DockBottom(_dActions, 0f, button);
@@ -1356,6 +1369,10 @@ namespace DD.Prototype.UI
             _dKind.text = UiStrings.Get("tree.kind." + n.Kind, n.Kind.ToString().ToUpperInvariant()) + "  ·  " +
                           UiStrings.Get(n.Lane == RunTreeLane.Weapon ? "tree.lane.weapon" : "tree.lane.body", n.Lane.ToString().ToUpperInvariant());
             SetPips(!hearth && n.MaxTier > 1 && n.MaxTier <= 6 ? n.MaxTier : 0, n.OwnedTier);
+            if (_dPips != null)
+            {
+                _dPips.SetGhost(n.Kind == RunTreeNodeKind.Tier && n.OwnedTier < n.MaxTier ? n.OwnedTier : -1);   // the tier a buy adds
+            }
 
             _dName.text = n.DisplayName;
             _dState.text = StateSentence(n);
@@ -1363,6 +1380,7 @@ namespace DD.Prototype.UI
                 : Offered(index) ? UiColor.StateGold : UiColor.TextPrimary);
             _dDesc.text = DescriptionOf(n);
             _dNote.text = NoteOf(n);
+            ShowStat(n);
 
             bool buyable = n.Status == RunTreeNodeStatus.Available && (hearth || (Offered(index) && !_shop.IsLocked));
             bool priced = n.Status != RunTreeNodeStatus.MaxTier && n.Status != RunTreeNodeStatus.Excluded && !(IsOwned(n) && n.MaxTier <= 1);
@@ -1406,6 +1424,35 @@ namespace DD.Prototype.UI
 
             ((RectTransform)_buy.transform).sizeDelta = new Vector2(width, UiTokens.TargetPreferred);
             ((RectTransform)_dPrice.transform).offsetMax = new Vector2(-(width + (int)UiSpace.S), 0f);
+        }
+
+        /// <summary>
+        /// 12b U11 (AD R1-C SHOULD-4; S-04 cb66c375): a tier's stat now → at the next tier, in display units ("RELOAD
+        /// −10 % → −20 %", "REGEN DELAY 4.5 s → 4 s"), "… · MAX" at the top; no row for nodes without a single number.
+        /// </summary>
+        private void ShowStat(RunTreeNodeView n)
+        {
+            bool show = !string.IsNullOrEmpty(n.Stat) && !float.IsNaN(n.StatNow);
+            _dStatRow.gameObject.SetActive(show);
+            if (!show)
+            {
+                return;
+            }
+
+            _dStatLabel.text = UiStrings.Get(n.Stat, n.Stat).ToUpperInvariant();
+            _dStatValue.text = float.IsNaN(n.StatNext)
+                ? StatText(n.StatNow, n.StatUnit) + " · " + UiStrings.Get("tree.state.max_tier", "MAX")
+                : StatText(n.StatNow, n.StatUnit) + "  →  " + StatText(n.StatNext, n.StatUnit);
+        }
+
+        /// <summary>A stat in display units: percentages signed ("+20 %", "−10 %"), seconds / HP / HP/s after the number, counts bare.</summary>
+        public static string StatText(float value, string unit)
+        {
+            string number = Mathf.Abs(value - Mathf.Round(value)) < 0.001f
+                ? Mathf.Abs(Mathf.RoundToInt(value)).ToString(CultureInfo.InvariantCulture)
+                : Mathf.Abs(value).ToString("0.#", CultureInfo.InvariantCulture);
+            string sign = value < 0f ? "−" : unit == "%" && value > 0f ? "+" : string.Empty;
+            return string.IsNullOrEmpty(unit) ? sign + number : sign + number + " " + unit;
         }
 
         private void SetPips(int count, int filled)

@@ -98,6 +98,7 @@ namespace DD.Prototype.UI
                 {
                     C("Filled pip", UiColor.TextPrimary, UiColor.SurfacePanel, Boundary),
                     C("Empty pip ring", UiColor.TextMuted, UiColor.SurfacePanel, Boundary),
+                    C("Ghost pip (the tier a buy adds)", UiColor.TextPrimary, UiColor.SurfacePanel, Boundary, UiPips.GhostAlpha),
                 }
             },
             {

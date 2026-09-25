@@ -10,15 +10,20 @@ namespace DD.Prototype.UI
     /// USAGE: small counts with a fixed ceiling (≤ 10) where the ceiling itself matters.
     /// DON'T: use gold (reserve) or colour to tell filled from empty.
     /// ACCESSIBILITY: filled vs empty is SHAPE (solid vs ring), readable in both palettes; a
-    /// newly filled pip stamps (Decor - Reduced Motion shows it filled at once).
+    /// newly filled pip stamps (Decor - Reduced Motion shows it filled at once). The ghost (12b, PD §5.3:
+    /// the tier a buy would add) is a solid pip at <see cref="GhostAlpha"/> - neither filled nor the empty ring.
     /// </summary>
     public sealed class UiPips : MonoBehaviour
     {
         public const float PipWidth = 8f;
         public const float PipHeight = 12f;
 
+        /// <summary>12b: the ghost pip's alpha (linear; TextPrimary over SurfacePanel ≈ 3.7:1, UiKitContrast).</summary>
+        public const float GhostAlpha = 0.2f;
+
         private Image[] _pips;
         private int _filled;
+        private int _ghost = -1;
 
         public int Filled
         {
@@ -67,6 +72,29 @@ namespace DD.Prototype.UI
             }
 
             _filled = filled;
+            if (_ghost >= _filled)
+            {
+                SetGhost(_ghost);
+            }
+        }
+
+        /// <summary>12b (AD R1-C SHOULD-4, PD §5.3): pip <paramref name="index"/> as a ghost - what a buy would add; −1 or a filled index clears it.</summary>
+        public void SetGhost(int index)
+        {
+            if (_ghost >= _filled && _ghost < _pips.Length)
+            {
+                _pips[_ghost].sprite = UiSprites.RingThin;
+                _pips[_ghost].color = UiTokens.Get(UiColor.TextMuted);
+            }
+
+            _ghost = index >= _filled && index < _pips.Length ? index : -1;
+            if (_ghost >= 0)
+            {
+                Color ghost = UiTokens.Get(UiColor.TextPrimary);
+                ghost.a = GhostAlpha;
+                _pips[_ghost].sprite = UiSprites.Chip;
+                _pips[_ghost].color = ghost;
+            }
         }
     }
 
