@@ -194,6 +194,6 @@ MonoBehaviour:
       - attach_top
       - attach_stock
     fpView:
-      position: {x: 0.968, y: -0.23, z: 0.6}
-      euler: {x: -11.45, y: 29.92, z: 0}
-      scale: 1
+      position: {x: 0.432, y: -0.257, z: 0.6}
+      euler: {x: -1.98, y: -3.34, z: 0}
+      scale: 0.851

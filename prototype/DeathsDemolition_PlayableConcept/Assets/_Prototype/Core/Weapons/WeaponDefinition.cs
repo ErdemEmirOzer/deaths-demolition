@@ -273,11 +273,12 @@ namespace DD.Prototype.Core.Weapons
     /// <summary>
     /// WP-069 · where the weapon sits in the first-person view (C-00, 25.09; v2 target after the review): the model root
     /// (grip) in the viewmodel camera's space — +X right, +Y up, +Z forward, metres — its rotation there (pitch, yaw) and
-    /// a uniform scale. Tuned at 1080p rest under S-01's viewmodel screen transform (WP-070V defaults: scale 0.75 about
-    /// the bottom-left corner, shift −12 %) and the FP field of view: the weapon reads in the lower right (≈ 120–220 k px,
-    /// grip and magazine on screen, a cut at the bottom / right edge is natural) and the barrel converges on the point
-    /// 8 m out that the transform puts at the crosshair. A change to that transform or the FP FOV means a retune
-    /// (WeaponModelSliceTests.FP_GorusPozu_OnSilah_KadrajBandinda measures it). S-06 fits the FP arms to these poses (B4b).
+    /// a uniform scale — the single owner of the FP weapon placement (C-00 25.09: S-01's WP-070V viewmodel screen
+    /// transform is identity). The framing is the one C-00 approved in review (the weapon reads in the lower right,
+    /// ≈ 120–220 k px, grip and magazine on screen, a cut at the bottom / right edge is natural, barrel converging on the
+    /// crosshair 8 m out), carried from the former transform into the poses. A change to the FP FOV or the viewmodel
+    /// transform means a retune (WeaponModelSliceTests.FP_GorusPozu_OnSilah_KadrajBandinda measures it). S-06 fits the FP
+    /// arms to these poses (B4b).
     /// An unset pose (z ≤ 0) falls back to <see cref="DefaultFor"/> the weapon class.
     /// </summary>
     [Serializable]
@@ -289,9 +290,9 @@ namespace DD.Prototype.Core.Weapons
 
         public bool IsSet => position.z > 0f && scale > 0f;
 
-        public static WeaponFpViewPose At(float x, float y, float z, float pitch, float yaw, float scale = 1f)
+        public static WeaponFpViewPose At(float x, float y, float z, float pitch, float yaw, float scale = 1f, float roll = 0f)
         {
-            return new WeaponFpViewPose { position = new Vector3(x, y, z), euler = new Vector3(pitch, yaw, 0f), scale = scale };
+            return new WeaponFpViewPose { position = new Vector3(x, y, z), euler = new Vector3(pitch, yaw, roll), scale = scale };
         }
 
         /// <summary>The class starting point (each weapon carries its own tuned pose; these are the first of each class).</summary>
@@ -299,12 +300,12 @@ namespace DD.Prototype.Core.Weapons
         {
             switch (cls)
             {
-                case WeaponClass.Smg: return At(0.297f, -0.118f, 0.25f, -9.99f, 32.46f);
-                case WeaponClass.Shotgun: return At(0.490f, -0.102f, 0.35f, -10.10f, 31.76f);
-                case WeaponClass.Lmg: return At(0.968f, -0.230f, 0.60f, -11.45f, 29.92f);
-                case WeaponClass.Sniper: return At(0.565f, -0.165f, 0.35f, -10.53f, 31.36f);
-                case WeaponClass.Launcher: return At(0.630f, -0.213f, 0.45f, -10.97f, 31.33f);
-                default: return At(0.565f, -0.134f, 0.35f, -10.34f, 31.36f);
+                case WeaponClass.Smg: return At(0.100f, -0.124f, 0.25f, -0.91f, -0.74f, 0.831f);
+                case WeaponClass.Shotgun: return At(0.196f, -0.126f, 0.35f, -0.94f, -1.47f, 0.837f);
+                case WeaponClass.Lmg: return At(0.432f, -0.257f, 0.60f, -1.98f, -3.34f, 0.851f);
+                case WeaponClass.Sniper: return At(0.252f, -0.173f, 0.35f, -1.30f, -1.89f, 0.840f);
+                case WeaponClass.Launcher: return At(0.252f, -0.223f, 0.45f, -1.69f, -1.92f, 0.839f);
+                default: return At(0.252f, -0.150f, 0.35f, -1.12f, -1.89f, 0.841f);
             }
         }
     }

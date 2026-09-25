@@ -139,12 +139,13 @@ namespace DD.Prototype.Tests.PlayMode
         /// <summary>
         /// WP-069 (C-00 25.09, v2 target) · the first-person view pose: with every classic in hand in FP the rig sits at its
         /// definition's <see cref="WeaponFpViewPose"/>, and the frame at 1080p rest (viewmodel layer, the viewmodel camera's
-        /// projection incl. S-01's screen transform) reads as a weapon, not a barrel tip — 120–220 k px, the silhouette's
+        /// projection — S-01's screen transform is identity) reads as a weapon, not a barrel tip — 120–220 k px, the silhouette's
         /// centre in the lower-right quadrant, the grip and the magazine marker on screen, the barrel toward the crosshair
         /// (≤ 25°), no pixel in S-09's Special ring block. The run HUD is drawn through its own camera (over black and white → its pixels and their alpha): its
         /// overlap with each weapon is measured, and asserted 0 once S-09's FP layout moves the weapon cluster
-        /// (RunHudScreen.WeaponClusterPosition differs in FP). Evidence: the ten frames on one sheet and weapon A composited
-        /// with the world and the HUD. Leaving FP puts the rig back on the hand.
+        /// (RunHudScreen.WeaponClusterPosition differs in FP). Evidence: the ten frames on one sheet and weapon A
+        /// as the player sees it — the camera's own world + viewmodel render with the HUD over it. Leaving FP puts the rig back
+        /// on the hand.
         /// </summary>
         [UnityTest]
         [Timeout(240000)]
@@ -227,7 +228,7 @@ namespace DD.Prototype.Tests.PlayMode
                     }
                 }
 
-                if (n == 0) YazPng(Birlestir(DunyaKare(camRig.Camera), px, hudPixels), KareW, KareH, "wp069-fpview-hud-" + d.RosterKey + ".png");
+                if (n == 0) YazPng(HudUstune(SahneKare(camRig.Camera), hudPixels), KareW, KareH, "wp069-fpview-hud-" + d.RosterKey + ".png");
                 n++;
             }
 
@@ -292,29 +293,34 @@ namespace DD.Prototype.Tests.PlayMode
             return px;
         }
 
-        /// <summary>The world as the FP camera sees it (its pose, FOV and layers) at 1920×1080.</summary>
-        private static Color32[] DunyaKare(Camera world)
+        /// <summary>The scene as the player sees it: the FP camera renders its own stack (world + the viewmodel overlay) at 1920×1080.</summary>
+        private static Color32[] SahneKare(Camera main)
         {
             var target = new RenderTexture(KareW, KareH, 24, RenderTextureFormat.ARGB32);
-            var go = new GameObject("[WP069-WorldProbe]");
-            go.transform.SetPositionAndRotation(world.transform.position, world.transform.rotation);
-            Camera cam = go.AddComponent<Camera>();
-            cam.enabled = false; cam.targetTexture = target; cam.cullingMask = world.cullingMask; cam.clearFlags = world.clearFlags; cam.backgroundColor = world.backgroundColor;
-            cam.fieldOfView = world.fieldOfView; cam.nearClipPlane = world.nearClipPlane; cam.farClipPlane = world.farClipPlane; cam.aspect = KareW / (float)KareH;
-            Color32[] px = CizRenk(cam, target, world.backgroundColor);
-            cam.targetTexture = null; Object.Destroy(go); target.Release(); Object.Destroy(target);
+            RenderTexture old = main.targetTexture;
+            main.targetTexture = target;
+            main.Render();
+            main.targetTexture = old;
+            RenderTexture previous = RenderTexture.active;
+            RenderTexture.active = target;
+            var read = new Texture2D(KareW, KareH, TextureFormat.RGBA32, false);
+            read.ReadPixels(new Rect(0, 0, KareW, KareH), 0, 0);
+            read.Apply();
+            RenderTexture.active = previous;
+            Color32[] px = read.GetPixels32();
+            Object.Destroy(read);
+            target.Release();
+            Object.Destroy(target);
             return px;
         }
 
-        /// <summary>World, then the view model where it covers (magenta key), then the HUD by its alpha (black / white passes).</summary>
-        private static Color32[] Birlestir(Color32[] world, Color32[] viewmodel, Color32[][] hud)
+        /// <summary>The HUD over a frame by its own alpha (black / white passes: alpha = 1 − (white − black), colour = black).</summary>
+        private static Color32[] HudUstune(Color32[] scene, Color32[][] hud)
         {
-            var o = new Color32[world.Length];
+            var o = new Color32[scene.Length];
             for (int i = 0; i < o.Length; i++)
             {
-                Color32 c = world[i];
-                Color32 v = viewmodel[i];
-                if (v.r < 240 || v.g > 15 || v.b < 240) c = v;
+                Color32 c = scene[i];
                 Color32 k = hud[0][i], w = hud[1][i];
                 float a = 1f - (w.g - k.g) / 255f;
                 if (a > 0.01f)

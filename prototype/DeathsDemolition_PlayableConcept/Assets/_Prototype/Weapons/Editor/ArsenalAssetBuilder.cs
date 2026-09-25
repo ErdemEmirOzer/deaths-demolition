@@ -489,22 +489,24 @@ namespace DD.Prototype.Weapons.EditorTools
 
         /// <summary>
         /// The first-person view pose per classic (grip in the viewmodel camera's space, pitch / yaw, scale), tuned in the
-        /// Run scene at 1080p rest against the C-00 v2 target (lower right, ≈ 120–220 k px — tuned to ≈ 165 k with margin,
-        /// grip and magazine on screen, barrel converging on the crosshair 8 m out through S-01's screen transform);
+        /// Run scene at 1080p rest against the C-00 v2 target (lower right, ≈ 120–220 k px, grip and magazine on screen,
+        /// barrel converging on the crosshair 8 m out) — the framing C-00 approved in review, carried from S-01's former
+        /// screen transform (scale 0.75 about the bottom-left, shift −12 %) onto the identity transform: each weapon's grip,
+        /// barrel axis and up through that linear map give the rigid pose (silhouette IoU 0.81–0.89 against the reviewed frame);
         /// measured by WeaponModelSliceTests.FP_GorusPozu_OnSilah_KadrajBandinda. S-06 fits the FP arms to them (B4b).
         /// </summary>
         private static readonly Dictionary<string, WeaponFpViewPose> FpPoses = new Dictionary<string, WeaponFpViewPose>
         {
-            { "ar_1", WeaponFpViewPose.At(0.565f, -0.134f, 0.35f, -10.34f, 31.36f) },
-            { "smg_1", WeaponFpViewPose.At(0.297f, -0.118f, 0.25f, -9.99f, 32.46f) },
-            { "sg_1", WeaponFpViewPose.At(0.490f, -0.102f, 0.35f, -10.10f, 31.76f) },
-            { "ar_2", WeaponFpViewPose.At(0.726f, -0.172f, 0.45f, -10.77f, 30.80f) },
-            { "smg_2", WeaponFpViewPose.At(0.565f, -0.102f, 0.35f, -10.14f, 31.36f) },
-            { "sg_2", WeaponFpViewPose.At(0.490f, -0.134f, 0.35f, -10.29f, 31.76f) },
-            { "lmg_1", WeaponFpViewPose.At(0.968f, -0.230f, 0.60f, -11.45f, 29.92f) },
-            { "lmg_2", WeaponFpViewPose.At(0.968f, -0.104f, 0.60f, -10.64f, 29.92f) },
-            { "sr_1", WeaponFpViewPose.At(0.565f, -0.165f, 0.35f, -10.53f, 31.36f) },
-            { "rl_1", WeaponFpViewPose.At(0.630f, -0.213f, 0.45f, -10.97f, 31.33f) },
+            { "ar_1", WeaponFpViewPose.At(0.252f, -0.150f, 0.35f, -1.12f, -1.89f, 0.841f) },
+            { "smg_1", WeaponFpViewPose.At(0.100f, -0.124f, 0.25f, -0.91f, -0.74f, 0.831f) },
+            { "sg_1", WeaponFpViewPose.At(0.196f, -0.126f, 0.35f, -0.94f, -1.47f, 0.837f) },
+            { "ar_2", WeaponFpViewPose.At(0.324f, -0.192f, 0.45f, -1.46f, -2.46f, 0.845f) },
+            { "smg_2", WeaponFpViewPose.At(0.252f, -0.126f, 0.35f, -0.94f, -1.89f, 0.841f) },
+            { "sg_2", WeaponFpViewPose.At(0.196f, -0.150f, 0.35f, -1.12f, -1.47f, 0.837f) },
+            { "lmg_1", WeaponFpViewPose.At(0.432f, -0.257f, 0.60f, -1.98f, -3.34f, 0.851f) },
+            { "lmg_2", WeaponFpViewPose.At(0.432f, -0.162f, 0.60f, -1.25f, -3.34f, 0.853f) },
+            { "sr_1", WeaponFpViewPose.At(0.252f, -0.173f, 0.35f, -1.30f, -1.89f, 0.840f) },
+            { "rl_1", WeaponFpViewPose.At(0.252f, -0.223f, 0.45f, -1.69f, -1.92f, 0.839f) },
         };
 
         // ================================================================== asset writing
