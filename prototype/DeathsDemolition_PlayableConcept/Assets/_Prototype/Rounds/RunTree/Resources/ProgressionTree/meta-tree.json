@@ -1,6 +1,6 @@
 {
  "schema": "dd-meta-tree-v1",
- "note": "WP-077 B2b (S-04): the meta PATH (DEC-095 layer 2). Prices DEC-098 (B3 simulation, audit #5): ring 1 = 150 Kül (one leaning 30 + passive column 1 3 × 40), ring 1+2 = 2 080, all = 5 830; PrototypeOnly until C-00 records it. Weapons: smg_1/sg_1 open on the level ladder (DEC-085, cost 0), the seven WP-069 meta weapons cost Ash behind a level gate; a node whose effect no system reads is LOCKED and cannot be bought (MetaTreeEffects).",
+ "note": "WP-077 B2b (S-04): the meta PATH (DEC-095 layer 2). Prices DEC-098 (B3 simulation, audit #5): ring 1 = 150 Ash (one leaning 30 + passive column 1 3 × 40), ring 1+2 = 2 080, all = 5 830; PrototypeOnly until C-00 records it. Weapons: smg_1/sg_1 open on the level ladder (DEC-085, cost 0), the seven WP-069 meta weapons cost Ash behind a level gate; a node whose effect no system reads is LOCKED and cannot be bought (MetaTreeEffects).",
  "nodes": [
   {
    "id": "w_ar_1",
