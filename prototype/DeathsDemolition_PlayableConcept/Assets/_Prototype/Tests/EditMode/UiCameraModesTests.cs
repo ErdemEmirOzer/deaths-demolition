@@ -202,6 +202,9 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsFalse(fp.Overlaps(viewmodel), "FP kümesi görüş modeline değmez");
             var health = Rect.MinMaxRect(32f, 1080f - 32f - 80f, 412f, 1048f);
             Assert.IsFalse(fp.Overlaps(health), "FP kümesi can bloğunun üstünde");
+            Assert.AreEqual(fp, RunHudScreen.WeaponClusterRect(DD.Prototype.CameraSystem.CameraMode.FirstPerson), "mod imzası = FP (referans tuval)");
+            Assert.AreEqual(RunHudScreen.WeaponClusterRect(false, canvas), RunHudScreen.WeaponClusterRect(DD.Prototype.CameraSystem.CameraMode.ThirdPerson, canvas), "TP köşe");
+            Assert.AreEqual(RunHudScreen.WeaponClusterRect(false, canvas), RunHudScreen.WeaponClusterRect(DD.Prototype.CameraSystem.CameraMode.TopDown, canvas), "TD köşe");
         }
 
         [Test]

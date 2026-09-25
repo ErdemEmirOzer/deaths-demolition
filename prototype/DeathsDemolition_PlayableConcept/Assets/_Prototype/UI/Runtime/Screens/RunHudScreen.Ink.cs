@@ -614,9 +614,25 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>
-        /// The cluster's rect for a camera mode, canvas px with the origin top-left (1920 × 1080: x 1488–1888, y 908–1048;
-        /// first person x 32–432, y 820–960). S-02's FP viewmodel test measures its 0 px overlap against it.
+        /// The cluster's rect for a camera mode, in canvas px with the origin at the TOP-LEFT and y pointing DOWN
+        /// (1920 × 1080: top-down / third person x 1488–1888, y 908–1048; first person x 32–432, y 820–960). Static: tests
+        /// call it without a scene. S-01 / S-02's FP viewmodel tests measure their 0 px overlap against it.
         /// </summary>
+        public static Rect WeaponClusterRect(DD.Prototype.CameraSystem.CameraMode mode, Vector2 canvasSize)
+        {
+            return WeaponClusterRect(mode == DD.Prototype.CameraSystem.CameraMode.FirstPerson, canvasSize);
+        }
+
+        /// <summary>The same on the 1920 × 1080 reference canvas (UI scale 1, 16:9): static, no scene or HUD instance needed.</summary>
+        public static Rect WeaponClusterRect(DD.Prototype.CameraSystem.CameraMode mode)
+        {
+            return WeaponClusterRect(mode, ReferenceCanvas);
+        }
+
+        /// <summary>The reference canvas the HUD is authored on (UI scale 1, 16:9).</summary>
+        public static readonly Vector2 ReferenceCanvas = new Vector2(1920f, 1080f);
+
+        /// <summary>As above for "first person or not".</summary>
         public static Rect WeaponClusterRect(bool firstPerson, Vector2 canvasSize)
         {
             float left = firstPerson ? InkMargin : canvasSize.x - InkMargin - WeaponClusterWidth;
