@@ -573,20 +573,23 @@ namespace DD.Art.Pipeline.EditorTools
             return report;
         }
 
-        public static LightingSettings EnsureLightingSettings()
+        public static LightingSettings EnsureLightingSettings() => EnsureLightingSettings(LightingSettingsPath, "DD_World_v1", LightmapResolution);
+
+        /// <summary>The bake settings (one recipe) at <paramref name="path"/>; WP-074 B8 World v5 keeps its own asset (DD_World_v5).</summary>
+        public static LightingSettings EnsureLightingSettings(string path, string name, float lightmapResolution)
         {
-            var settings = AssetDatabase.LoadAssetAtPath<LightingSettings>(LightingSettingsPath);
+            var settings = AssetDatabase.LoadAssetAtPath<LightingSettings>(path);
             if (settings == null)
             {
-                settings = new LightingSettings { name = "DD_World_v1" };
-                AssetDatabase.CreateAsset(settings, LightingSettingsPath);
+                settings = new LightingSettings { name = name };
+                AssetDatabase.CreateAsset(settings, path);
             }
 
             settings.bakedGI = true;
             settings.realtimeGI = false;
             settings.lightmapper = LightingSettings.Lightmapper.ProgressiveGPU;
             settings.mixedBakeMode = MixedLightingMode.IndirectOnly;
-            settings.lightmapResolution = LightmapResolution;
+            settings.lightmapResolution = lightmapResolution;
             settings.lightmapMaxSize = LightmapMaxSize;
             settings.lightmapPadding = LightmapPadding;
             settings.lightmapCompression = LightmapCompression.NormalQuality;

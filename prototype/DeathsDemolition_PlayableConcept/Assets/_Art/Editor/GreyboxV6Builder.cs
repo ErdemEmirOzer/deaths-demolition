@@ -172,12 +172,14 @@ namespace DD.Art.Pipeline.EditorTools
 
         public static void BuildCli()
         {
-            string report = Build(Array.IndexOf(System.Environment.GetCommandLineArgs(), "-ddGreyboxOnly") < 0);
+            string[] args = System.Environment.GetCommandLineArgs();
+            string report = Build(Array.IndexOf(args, "-ddGreyboxOnly") < 0, Array.IndexOf(args, "-ddBake") >= 0);
             Debug.Log("[GreyboxV6] " + report);
         }
 
         /// <param name="dress">WP-074 B5b-1: dress the layout with the AP-023 kit (<see cref="WorldV5Dress"/>) before the bake.</param>
-        public static string Build(bool dress = true)
+        /// <param name="bake">WP-074 B8: bake the scene's lighting after the build (WorldV5Lighting; needs a graphics device — the GPU lightmapper).</param>
+        public static string Build(bool dress = true, bool bake = false)
         {
             EnsureFolder(DataFolder);
             EnsureFolder(DataFolder + "/Materials");
@@ -234,7 +236,8 @@ namespace DD.Art.Pipeline.EditorTools
             RegisterDevScene();
             WriteJson();
             AssetDatabase.SaveAssets();
-            return boxes + " boxes" + (dressed != null ? " (" + dressed + ")" : "") + ", NavMesh " + triangles + " triangles, " + links + " island links, placement " + placement.spawnPoints.Count + " spawns / " + placement.weaponPoints.Count + " weapons -> " + ScenePath;
+            string baked = bake ? ", " + WorldV5Lighting.Bake(scene, root.transform) : "";
+            return boxes + " boxes" + (dressed != null ? " (" + dressed + ")" : "") + ", NavMesh " + triangles + " triangles, " + links + " island links, placement " + placement.spawnPoints.Count + " spawns / " + placement.weaponPoints.Count + " weapons -> " + ScenePath + baked;
         }
 
         // ---------------------------------------------------------------- pieces

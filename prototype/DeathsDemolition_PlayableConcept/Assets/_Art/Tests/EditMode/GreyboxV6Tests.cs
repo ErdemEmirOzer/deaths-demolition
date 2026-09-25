@@ -411,6 +411,31 @@ namespace DD.Art.Tests.EditMode
             Assert.IsEmpty(fails, string.Join("\n", fails));
         }
 
+        /// <summary>
+        /// WP-074 B8 · Lighting v5 baked with the scene: the report is OK and within budget, and the scene carries its light probes and
+        /// ≥ 18 baked 512 reflection probes; vegetation stays out of the lightmaps (probe-lit).
+        /// </summary>
+        [Test]
+        public void Greybox_B8_IsikV5_BakeRaporu_ButceIcinde_ProbelarSahnede()
+        {
+            Open();
+            Assert.IsTrue(File.Exists(WorldV5Lighting.ReportPath), "bake raporu yok (GreyboxV6Builder -ddBake)");
+            var report = JsonUtility.FromJson<WorldV5Lighting.Report>(File.ReadAllText(WorldV5Lighting.ReportPath));
+            Assert.IsTrue(report.ok, "bake");
+            Assert.IsTrue(report.withinBudget, "bütçe (içe aktarılmış) " + report.shippedBytes / 1048576 + " MB > " + report.budgetMb);
+            Assert.Greater(report.shippedBytes, 0L, "içe aktarılmış boyut ölçülmedi");
+            Assert.Greater(report.lightmapCount, 0);
+            Assert.IsNotNull(Object.FindObjectOfType<LightProbeGroup>(), "ışık probları");
+            int baked = 0;
+            foreach (ReflectionProbe probe in Object.FindObjectsOfType<ReflectionProbe>())
+                if (probe.mode == UnityEngine.Rendering.ReflectionProbeMode.Baked && probe.resolution == WorldV5Lighting.ReflectionResolution) baked++;
+            Assert.GreaterOrEqual(baked, 18, "pişmiş 512 yansıma probu");
+            foreach (Transform t in GameObject.Find(WorldV5Dress.VistaGroupName).transform)
+                if (!t.name.StartsWith("SM_yagura", System.StringComparison.Ordinal))   // the distant keep is a structure (lightmapped)
+                    Assert.AreEqual((StaticEditorFlags)0, GameObjectUtility.GetStaticEditorFlags(t.gameObject) & StaticEditorFlags.ContributeGI, t.name + " ışık haritasında");
+            Debug.Log("[DD-TEST] wp074.b8.bake " + report.lightmapCount + " lightmaps " + report.shippedBytes / 1048576 + " MB imported (" + report.bytes / 1048576 + " MB EXR), probes " + report.probes + ", reflection " + report.reflectionProbes + ", " + report.bakeSeconds.ToString("F0") + " s");
+        }
+
         private static int CountOf(string s, string token)
         {
             int n = 0;

@@ -849,11 +849,17 @@ namespace DD.Art.Pipeline.EditorTools
             go.transform.SetPositionAndRotation(WorldPlacementAsset.ToUnity(t.x, t.y, t.z), WorldPlacementAsset.ToUnityYaw(yaw));
             go.transform.localScale = new Vector3(cx.magnitude, cz.magnitude, cy.magnitude);
 
-            StaticEditorFlags flags = StaticEditorFlags.OccludeeStatic | StaticEditorFlags.ReflectionProbeStatic;
-            if (role != "dressing") flags |= StaticEditorFlags.ContributeGI;
-            if (!PlacementImporter.IsHeavyForStaticBatching(prefab)) flags |= StaticEditorFlags.BatchingStatic;
+            // PlacementImporter's policy: structures lightmapped (ContributeGI), dressing static but probe-lit, vegetation not static
+            // (it keeps its LOD cross-fade and GPU instancing; B8: 1 100 vista trees must not take lightmap charts).
+            StaticEditorFlags flags = StaticEditorFlags.OccludeeStatic;
+            if (role != "vegetation")
+            {
+                flags |= StaticEditorFlags.ReflectionProbeStatic;
+                if (role != "dressing") flags |= StaticEditorFlags.ContributeGI;
+                if (!PlacementImporter.IsHeavyForStaticBatching(prefab)) flags |= StaticEditorFlags.BatchingStatic;
+            }
             foreach (Transform c in go.GetComponentsInChildren<Transform>(true)) GameObjectUtility.SetStaticEditorFlags(c.gameObject, flags);
-            ArtLightingBake.ApplyLightmapLodPolicy(go, role != "dressing");
+            ArtLightingBake.ApplyLightmapLodPolicy(go, role != "dressing" && role != "vegetation");
             if (PlacementImporter.LowCasterRole(role) && PlacementImporter.ShadowCasterHeight(go) < PlacementImporter.LowCasterMaxHeight)
                 foreach (Renderer r in go.GetComponentsInChildren<Renderer>(true)) r.shadowCastingMode = ShadowCastingMode.Off;
             return go;
