@@ -1181,10 +1181,28 @@ namespace DD.Prototype.CameraSystem
             return Vector3.ClampMagnitude(offset, _maxLookAhead);
         }
 
+        // ------------------------------------------------------------ WP-073 B4 · S-07 feel state (CameraModesFeel values)
+
+        private Vector2 _recoilVelocity;
+        private Vector3 _kickVelocity;
+        private float _kickRollVelocity;
+        private float _fovPunchVelocity;
+        private float _fovRiseTarget;
+        private float _fovRiseLeft;
+        private float _bobAmount;
+        private float _landDip;
+        private float _landDipVelocity;
+        private bool _wasGrounded = true;
+        private float _airSeconds;
+
         /// <summary>
         /// WP-070 reactions (S-07 sink), drained before the pose is built: recoil joins the VIEW
-        /// (and therefore the aim ray this very frame) and returns at the recoil return rate;
-        /// kick / FOV punch are cosmetic (child node / lens) and never touch aim.
+        /// (and therefore the aim ray this very frame); kick / FOV punch are cosmetic (child node / lens) and never touch aim.
+        /// WP-073 B4 (direction A4.6): recoil returns on a critically damped spring (ω = 4.6 / the firing weapon's recovery,
+        /// %95 settle) inside the mode cap (FP 8°, TP 6°); kick and roll return on the weight class's spring (W1 14 Hz ζ 0.7 …
+        /// W4 6 Hz ζ 0.5) inside the roll cap (FP 1.5°, TP 1.0°); the FOV punch rises in ≤ 0.08 s (ease-out) and returns on a
+        /// 6 Hz ζ 0.8 spring (total ≤ +6°). The shake slider scales the cosmetic channels (≤ 0.5 → roll 0); reduced motion
+        /// zeroes them. Recoil (game) is never scaled.
         /// </summary>
         private void ConsumeReactions(CameraMode mode, float dt)
         {
@@ -1194,30 +1212,93 @@ namespace DD.Prototype.CameraSystem
             float kickRoll, fovPunch, fovSeconds;
             CameraReactions.Drain(out recoil, out kick, out kickRoll, out fovPunch, out fovSeconds);
 
+            CameraWeaponFeelRow row = CameraModesFeel.ActiveRow;
+            FeelSpring kickSpring = CameraModesFeel.KickSpring(row != null ? row.Weight : FeelWeight.W2);
             if (dt > 0f)
             {
-                _recoil = Vector2.MoveTowards(_recoil, Vector2.zero, _recoilReturnDegreesPerSecond * dt);
-                float k = 1f - Mathf.Exp(-_kickReturnRate * dt);
-                _kickOffset = Vector3.Lerp(_kickOffset, Vector3.zero, k);
-                _kickRoll = Mathf.Lerp(_kickRoll, 0f, k);
-            }
-
-            if (mode != CameraMode.TopDown)
-            {
-                _recoil += recoil;
-                if (fovPunch != 0f && !settings.ReducedMotion)
+                float omega = 4.6f / Mathf.Max(0.05f, row != null ? row.RecoverySeconds : CameraModesFeel.DefaultRecoverySeconds);
+                CriticalStep(ref _recoil.x, ref _recoilVelocity.x, omega, dt);
+                CriticalStep(ref _recoil.y, ref _recoilVelocity.y, omega, dt);
+                SpringStep(ref _kickOffset.x, ref _kickVelocity.x, kickSpring, dt);
+                SpringStep(ref _kickOffset.y, ref _kickVelocity.y, kickSpring, dt);
+                SpringStep(ref _kickOffset.z, ref _kickVelocity.z, kickSpring, dt);
+                SpringStep(ref _kickRoll, ref _kickRollVelocity, kickSpring, dt);
+                if (_fovRiseLeft > 0f)
                 {
-                    _fovPunch = fovPunch;
-                    _fovPunchDecayPerSecond = Mathf.Abs(fovPunch) / Mathf.Max(0.01f, fovSeconds);
+                    // Ease-out rise to the punch's peak, then the spring takes it home.
+                    float step = Mathf.Min(dt, _fovRiseLeft);
+                    _fovRiseLeft -= step;
+                    float t = 1f - _fovRiseLeft / CameraModesFeel.FovPunchPeakSeconds;
+                    float eased = 1f - (1f - t) * (1f - t) * (1f - t);
+                    _fovPunch = _fovRiseTarget * eased;
+                    _fovPunchVelocity = 0f;
+                }
+                else
+                {
+                    SpringStep(ref _fovPunch, ref _fovPunchVelocity, CameraModesFeel.FovReturn, dt);
                 }
             }
 
-            float cosmetic = settings.ReducedMotion ? 0f : 1f;
+            _fovPunchDecayPerSecond = 0f;   // the lens no longer decays linearly: the spring above owns the return
+            float slider = Mathf.Clamp(_shakeIntensity, 0f, 2f);
+            float cosmetic = settings.ReducedMotion ? 0f : slider;
+            float rollScale = settings.ReducedMotion || slider <= 0.5f ? 0f : slider;
+            if (mode != CameraMode.TopDown)
+            {
+                _recoil += recoil;
+                float cap = mode == CameraMode.FirstPerson ? CameraModesFeel.RecoilCapFpDeg : CameraModesFeel.RecoilCapTpDeg;
+                _recoil = Vector2.ClampMagnitude(_recoil, cap);
+                if (fovPunch != 0f && cosmetic > 0f)
+                {
+                    _fovRiseTarget = Mathf.Clamp(_fovPunch + fovPunch * Mathf.Min(1f, cosmetic), -CameraModesFeel.FovPunchCapDeg, CameraModesFeel.FovPunchCapDeg);
+                    _fovRiseLeft = CameraModesFeel.FovPunchPeakSeconds;
+                }
+            }
+
             float translation = mode == CameraMode.FirstPerson ? 0f : 1f;   // D-15: no FP translation
             _kickOffset += kick * translation * cosmetic;
-            _kickRoll += kickRoll * cosmetic;
+            _kickRoll += kickRoll * rollScale;
+            float rollCap = mode == CameraMode.FirstPerson ? CameraModesFeel.RollCapFpDeg : CameraModesFeel.RollCapTpDeg;
+            _kickRoll = Mathf.Clamp(_kickRoll, -rollCap, rollCap);
+            if (settings.ReducedMotion)
+            {
+                _fovPunch = 0f;
+                _fovRiseLeft = 0f;
+            }
         }
 
+        // Critically damped return to 0 (exact step): ζ = 1, natural frequency ω.
+        private static void CriticalStep(ref float x, ref float v, float omega, float dt)
+        {
+            float exp = Mathf.Exp(-omega * dt);
+            float temp = (v + omega * x) * dt;
+            v = (v - omega * temp) * exp;
+            x = (x + temp) * exp;
+        }
+
+        // Damped spring to 0 (semi-implicit Euler in ≤ 1/240 s substeps: stable up to 14 Hz at 20 fps).
+        private static void SpringStep(ref float x, ref float v, FeelSpring spring, float dt)
+        {
+            float omega = 2f * Mathf.PI * spring.Hz;
+            int steps = Mathf.Max(1, Mathf.CeilToInt(dt * 240f));
+            float h = dt / steps;
+            for (int i = 0; i < steps; i++)
+            {
+                v += (-2f * spring.Zeta * omega * v - omega * omega * x) * h;
+                x += v * h;
+            }
+
+            if (Mathf.Abs(x) < 1e-5f && Mathf.Abs(v) < 1e-4f) { x = 0f; v = 0f; }
+        }
+
+        /// <summary>
+        /// WP-073 B4 (direction A4.1 / A4.5): shake, bob and landing on the shake node. FP shake is rotation only (D-15):
+        /// the sampled metres become pitch / yaw at 12°/m inside the 1.8° aggregate cap. The bob is a step, not a sine —
+        /// trough at foot contact (ease-in quad), crest at push-off (ease-in-out sine) — walk 1.4 / 0.9 cm · 0.35° at
+        /// 1.8–2.0 Hz up to run 3.0 / 1.7 cm · 0.70° at 2.7–3.4 Hz (× 0.8 above 3 steps / s), faded out below 0.35 m/s in
+        /// 0.12 s; TP carries a quarter of it. Landing dips 1.5 cm (5 cm after ≥ 0.4 s airborne) on an 8 Hz ζ 0.6 spring.
+        /// At rest nothing moves: the FP rest silhouette is unchanged. Reduced motion: bob / roll / dip 0, shake × 0.3.
+        /// </summary>
         private void ApplyShake(float dt, CameraMode mode)
         {
             if (_shakeNode == null)
@@ -1229,7 +1310,7 @@ namespace DD.Prototype.CameraSystem
             float modeScale = Mathf.Max(0f, CameraModeService.CurrentProfile.ShakeScale);
             if (settings.ReducedMotion)
             {
-                modeScale *= 0.3f;
+                modeScale *= CameraModesFeel.ReducedShakeScale;
             }
 
             Vector3 localOffset;
@@ -1239,33 +1320,84 @@ namespace DD.Prototype.CameraSystem
                 mode == CameraMode.TopDown ? _fixedRotation : transform.rotation, out localOffset, out roll);
 
             Vector3 bob = Vector3.zero;
-            if (mode == CameraMode.FirstPerson && dt > 0f)
+            float bobRoll = 0f;
+            Vector3 shakeEuler = Vector3.zero;
+            if (mode != CameraMode.TopDown && dt > 0f)
             {
                 float speed01;
                 bool grounded;
                 if (!CameraReactions.ReadBob(out speed01, out grounded))
                 {
-                    // Nobody fed the bob this frame (S-07 feel layer not bound yet): estimate
-                    // locomotion from the feet's planar speed.
+                    // Nobody fed the bob this frame: estimate locomotion from the feet's planar speed.
                     Vector3 step = Feet - _lastFeet;
                     step.y = 0f;
                     speed01 = Mathf.Clamp01(step.magnitude / dt / Mathf.Max(0.1f, _bobReferenceSpeed));
-                    grounded = true;
+                    grounded = Mathf.Abs(Feet.y - _lastFeet.y) / dt < 1.5f;   // falling faster than 1.5 m/s = airborne
                 }
-                float amount = grounded ? speed01 * settings.HeadBobScale * (settings.ReducedMotion ? 0f : 1f) : 0f;
-                _bobPhase = Mathf.Repeat(_bobPhase + dt * _bobFrequencyHz * Mathf.Max(0.25f, speed01), 1f);
-                float wave = _bobPhase * Mathf.PI * 2f;
-                bob = new Vector3(Mathf.Sin(wave) * _bobLateral, Mathf.Abs(Mathf.Sin(wave)) * _bobVertical, 0f) * amount;
+
+                float speed = speed01 * _bobReferenceSpeed;
+                bool reduced = settings.ReducedMotion;
+                float target = grounded && speed >= CameraModesFeel.BobMinSpeed && !reduced ? 1f : 0f;
+                _bobAmount = Mathf.MoveTowards(_bobAmount, target, dt / CameraModesFeel.BobFadeSeconds);
+
+                float run01 = Mathf.InverseLerp(CameraModesFeel.BobWalkSpeed, CameraModesFeel.BobRunSpeed, speed);
+                BobFeel walk = CameraModesFeel.BobWalk, runBand = CameraModesFeel.BobRun;
+                float hz = Mathf.Lerp(Mathf.Lerp(walk.MinHz, walk.MaxHz, Mathf.InverseLerp(1.5f, CameraModesFeel.BobWalkSpeed, speed)),
+                    Mathf.Lerp(runBand.MinHz, runBand.MaxHz, run01), run01);
+                // One bob cycle = one stride (two steps): the phase advances at half the step cadence.
+                _bobPhase = Mathf.Repeat(_bobPhase + dt * hz * 0.5f, 1f);
+                float cadence = hz > CameraModesFeel.BobHighCadenceHz ? CameraModesFeel.BobHighCadenceScale : 1f;
+                float amp = _bobAmount * settings.HeadBobScale * cadence * (mode == CameraMode.ThirdPerson ? CameraModesFeel.BobTpScale : 1f);
+                float vertical = Mathf.Lerp(walk.VerticalCm, runBand.VerticalCm, run01) * 0.01f;
+                float lateral = Mathf.Lerp(walk.LateralCm, runBand.LateralCm, run01) * 0.01f;
+                float rollDeg = Mathf.Lerp(walk.RollDeg, runBand.RollDeg, run01);
+
+                // Step curve per step (two per stride), −1 … +1: from the contact trough (phase 0) an ease-in-out sine rises to
+                // the push-off crest, then the last 3 frames drop into the next contact (ease-in quad) — a footfall, not a wave.
+                float stepPhase = Mathf.Repeat(_bobPhase * 2f, 1f);
+                float contact = Mathf.Clamp(CameraModesFeel.BobContactFrames / 60f * hz * 2f, 0.1f, 0.4f);
+                float height;
+                if (stepPhase < 1f - contact)
+                {
+                    height = -Mathf.Cos(Mathf.PI * stepPhase / (1f - contact));
+                }
+                else
+                {
+                    float u = (stepPhase - (1f - contact)) / contact;
+                    height = 1f - 2f * u * u;
+                }
+
+                float side = Mathf.Sin(_bobPhase * Mathf.PI * 2f);   // lateral: toward the planted foot, once per stride
+                bob = new Vector3(side * lateral, height * vertical * 0.5f, 0f) * amp;
+                bobRoll = reduced ? 0f : side * rollDeg * amp;
+
+                // Landing dip.
+                if (!grounded) _airSeconds += dt;
+                if (grounded && !_wasGrounded && !reduced)
+                {
+                    _landDip = -(_airSeconds >= 0.4f ? CameraModesFeel.LandFallDipCm : CameraModesFeel.LandRunDipCm) * 0.01f;
+                    _landDipVelocity = 0f;
+                }
+
+                if (grounded) _airSeconds = 0f;
+                _wasGrounded = grounded;
+                SpringStep(ref _landDip, ref _landDipVelocity, CameraModesFeel.LandSpring, dt);
+                bob.y += _landDip;
             }
 
             if (mode == CameraMode.FirstPerson)
             {
-                localOffset = Vector3.zero;   // D-15: FP shake is rotation only
+                // D-15: FP shake is rotation only — metres → degrees (12°/m) inside the 1.8° aggregate cap.
+                Vector3 deg = new Vector3(-localOffset.y, localOffset.x, 0f) * CameraModesFeel.FpShakeDegreesPerMeter;
+                shakeEuler = Vector3.ClampMagnitude(deg, CameraModesFeel.FpShakeAggregateCapDeg);
+                localOffset = Vector3.zero;
             }
 
+            float rollCap = mode == CameraMode.FirstPerson ? CameraModesFeel.RollCapFpDeg : CameraModesFeel.RollCapTpDeg;
+            float totalRoll = mode == CameraMode.TopDown ? roll + _kickRoll : Mathf.Clamp(roll + _kickRoll + bobRoll, -rollCap, rollCap);
             _lastFeet = Feet;
             _shakeNode.localPosition = localOffset + _kickOffset + bob;
-            _shakeNode.localRotation = Quaternion.Euler(0f, 0f, roll + _kickRoll);
+            _shakeNode.localRotation = Quaternion.Euler(shakeEuler.x, shakeEuler.y, totalRoll);
         }
 
         // ----------------------------------------------------------------- aim query
