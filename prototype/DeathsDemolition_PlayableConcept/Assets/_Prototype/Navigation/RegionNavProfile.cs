@@ -132,6 +132,19 @@ namespace DD.Prototype.Navigation
         public static void RegisterSceneVolume(NavRegionVolume v) { if (v != null && !s_scene.Contains(v)) s_scene.Add(v); }
         public static void UnregisterSceneVolume(NavRegionVolume v) { s_scene.Remove(v); }
 
+        /// <summary>WP-076 B6c: the scene Gate volumes that open room <paramref name="roomId"/> (appended; caller clears). 0 allocation.</summary>
+        public static int CollectExits(string roomId, System.Collections.Generic.List<NavRegionVolume> into)
+        {
+            int n = 0;
+            if (into == null || string.IsNullOrEmpty(roomId)) return 0;
+            for (int i = 0; i < s_scene.Count; i++)
+            {
+                NavRegionVolume v = s_scene[i];
+                if (v != null && v.kind == NavRegionKind.Gate && v.roomId == roomId) { into.Add(v); n++; }
+            }
+            return n;
+        }
+
         /// <summary>The volume containing <paramref name="p"/>, or null. Allocation-free. Rooms lose to the gates/throats inside them.</summary>
         public NavRegionVolume Find(Vector3 p)
         {

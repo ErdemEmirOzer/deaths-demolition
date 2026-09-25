@@ -179,6 +179,7 @@ namespace DD.Prototype.Spawn
             breakdown.Region = RegionFactor(point.Region, inputs.PlayerRegion, config, tuning);
             if (inputs.InnerShare >= 0f && point.Definition != null)   // WP-076 B6: v6 inner gates (≤ 10 m ×0.25, share > 50 % ×0.7)
                 breakdown.Region *= SpawnWorldProfile.InnerFactor(point.Definition.Kind, point.StraightDistance, inputs.InnerShare);
+            breakdown.Region *= point.RoomFactor;   // WP-076 B6c §5.3: room exits alternate, inner gates press while in a room (1 outside)
 
             // ---------------------------------------------------------- 3. heading
             breakdown.Heading = HeadingFactor(point.WorldPosition, inputs, config, tuning);

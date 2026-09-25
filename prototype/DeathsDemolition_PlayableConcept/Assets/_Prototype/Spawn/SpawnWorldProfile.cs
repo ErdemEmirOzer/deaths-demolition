@@ -40,7 +40,9 @@ namespace DD.Prototype.Spawn
         public static void Refresh()
         {
             if (Override.HasValue) { IsV6 = Override.Value; return; }
-            bool v6 = AlwaysV6;
+            // WP-076 B6c: the world bootstrap's layout signal (S-05 WP-074 B1b) — the greybox and the World v5 scene share the
+            // v6 layout under different names; the scene-name check stays only as a fallback for a v6 scene without the signal
+            bool v6 = AlwaysV6 || DD.Prototype.World.WorldLayout.Current == DD.Prototype.World.WorldLayoutKind.V6;
             for (int i = 0; i < SceneManager.sceneCount && !v6; i++)
             {
                 Scene s = SceneManager.GetSceneAt(i);
@@ -48,6 +50,15 @@ namespace DD.Prototype.Spawn
             }
             IsV6 = v6;
         }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void BindLayout()
+        {
+            DD.Prototype.World.WorldLayout.Changed -= OnLayoutChanged;
+            DD.Prototype.World.WorldLayout.Changed += OnLayoutChanged;
+        }
+
+        private static void OnLayoutChanged(DD.Prototype.World.WorldLayoutKind layout) => Refresh();
 
         /// <summary>Writes the v6 distance values into <paramref name="target"/> (a per-round copy of the config).</summary>
         public static void ApplyV6(SpawnConfigSection target)

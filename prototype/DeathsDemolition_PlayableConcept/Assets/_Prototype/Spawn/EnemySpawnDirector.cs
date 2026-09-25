@@ -821,6 +821,7 @@ namespace DD.Prototype.Spawn
             point.LastUsedTime = Time.time;
             RearSpawnShare.Record(point.IsBehindCamera);   // WP-076 §5.1
             if (SpawnWorldProfile.IsV6) SpawnWorldProfile.RecordSpawn(point.Definition != null ? point.Definition.Kind : SpawnPointKind.Edge);   // WP-076 B6
+            SpawnRoomBalance.Record(point);   // WP-076 B6c: door-side memory while the player is in a room
             // WP-030 spawn visibility readout (DEC-023 counting is unchanged: the body is active from activation, rise included).
             _spawnsThisRun++;
             if (point.IsOnScreen) _onScreenSpawnsThisRun++;
@@ -1018,6 +1019,7 @@ namespace DD.Prototype.Spawn
             }
 
             UpdatePointDensity(points);
+            SpawnRoomBalance.Prepare(points, player.Position, SpawnWorldProfile.IsV6);   // WP-076 B6c §5.3 (v6 rooms only; factors 1 otherwise)
 
             // Strict first, then drop one gate at a time. Anything past the first pass is
             // rare and is reported, because it means the map or the tuning is squeezing the

@@ -69,6 +69,11 @@ namespace DD.Prototype.Spawn
         // ------------------------------------------------------------- last evaluation
 
         public float LastWeight { get; set; }
+
+        /// <summary>WP-076 B6c §5.3: room / door-side factor set before each draw while the player is inside a v6 room (1 otherwise).</summary>
+        public float RoomFactor { get; set; } = 1f;
+        /// <summary>WP-076 B6c: index (in the room's exit list) of the exit this point's bodies arrive through (−1 = none).</summary>
+        public int RoomExitIndex { get; set; } = -1;
         public string LastRejectReason { get; set; } = "not evaluated";
 
         public void ResetForRound()
