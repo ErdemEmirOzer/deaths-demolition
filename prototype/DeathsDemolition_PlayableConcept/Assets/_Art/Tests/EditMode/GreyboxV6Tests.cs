@@ -337,6 +337,18 @@ namespace DD.Art.Tests.EditMode
 
             Assert.AreEqual(expectedBays, bays, "kairō bölmesi");
             Assert.IsNotNull(dress.transform.Find("Chumon_Karamon"), "chūmon");
+
+            // B8 · the plaza's planar reflection at its surface; the mirror maps y → 2h − y; tiers off / 256 / 1024, characters at Cinematic only.
+            PlanarReflection planar = plaza.GetComponent<PlanarReflection>();
+            Assert.IsNotNull(planar, "planar yansıma");
+            Assert.AreEqual(WorldV5Ground.Lift, planar.PlaneHeight, 1e-5f);
+            Matrix4x4 mirror = PlanarReflection.Reflection(new Vector4(0f, 1f, 0f, -planar.PlaneHeight));
+            Vector3 p = mirror.MultiplyPoint(new Vector3(3f, 5f, -2f));
+            Assert.AreEqual(3f, p.x, 1e-4f); Assert.AreEqual(2f * planar.PlaneHeight - 5f, p.y, 1e-4f); Assert.AreEqual(-2f, p.z, 1e-4f);
+            Assert.AreEqual(0, PlanarReflection.HeightOf(QualityTier.Performans));
+            Assert.AreEqual(256, PlanarReflection.HeightOf(QualityTier.Yuksek));
+            Assert.AreEqual(1024, PlanarReflection.HeightOf(QualityTier.Sinematik));
+            Assert.IsTrue(PlanarReflection.CharactersIn(QualityTier.Sinematik) && !PlanarReflection.CharactersIn(QualityTier.Yuksek));
             Assert.IsEmpty(fails, string.Join("\n", fails));
         }
 

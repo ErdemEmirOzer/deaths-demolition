@@ -79,6 +79,7 @@ namespace DD.Art.Pipeline.EditorTools
             ("_NormalStrength", 1f), ("_Occlusion", 1f), ("_Wetness", 1f), ("_WetAlbedo", 0.82f), ("_WetSmoothness", 0.60f),
             ("_PuddleThreshold", 0.45f), ("_PuddleRamp", 0.15f), ("_PuddleSmoothness", 0.92f), ("_PuddleDarken", 0.85f),
             ("_PuddleScale", 7f), ("_PuddleField", 0.62f), ("_PuddleFieldRamp", 0.06f), ("_AlbedoSaturation", 0.28f), ("_AlbedoValue", 2.5f),
+            ("_PlanarStrength", 1f), ("_PlanarDistortion", 0.03f), ("_PlanarWet", 0.35f),
         };
 
         /// <summary>The ground-set textures under the contract (T_&lt;set&gt;_BaseColor / _Normal / _Mask for every AP-023 ground set).</summary>
@@ -113,6 +114,7 @@ namespace DD.Art.Pipeline.EditorTools
             for (int i = 0; i < SlateSets.Length; i++) materials[i] = GroundMaterial(SlateSets[i]);
             renderer.sharedMaterials = materials;
             renderer.shadowCastingMode = ShadowCastingMode.Off;   // a 12 mm skin over the ground casts nothing worth a draw
+            go.AddComponent<PlanarReflection>().PlaneHeight = Lift;   // B8: the court's mirror (tier-sized; Cinematic 1024 with characters)
             GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.BatchingStatic | StaticEditorFlags.OccludeeStatic | StaticEditorFlags.ReflectionProbeStatic);
 
             // The wet slate needs something to reflect: one box-projected probe per paved rect (realtime, rendered once on load — the

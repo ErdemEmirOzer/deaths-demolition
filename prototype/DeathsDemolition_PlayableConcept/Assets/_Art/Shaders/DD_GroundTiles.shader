@@ -19,13 +19,17 @@ Shader "DD/GroundTiles"
         _PuddleThreshold("Puddle threshold (mask × wetness)", Range(0, 1)) = 0.45
         _PuddleRamp("Puddle ramp width", Range(0.02, 0.5)) = 0.15
         _PuddleSmoothness("Puddle smoothness", Range(0, 1)) = 0.92
-        [Header(Clustered puddles, world space)]
+        [Header(Clustered puddles in world space)]
         _PuddleScale("Puddle field scale (m)", Range(2, 20)) = 7.0
         _PuddleField("Puddle field threshold (0.62 ≈ 25 % cover)", Range(0.3, 0.95)) = 0.62
         _PuddleFieldRamp("Puddle field edge", Range(0.01, 0.2)) = 0.06
         [Header(Albedo grade)]
         _AlbedoSaturation("Albedo saturation", Range(0, 1)) = 0.28
         _AlbedoValue("Albedo value scale (linear)", Range(0.5, 4)) = 2.5
+        [Header(Planar reflection B8)]
+        _PlanarStrength("Planar strength", Range(0, 1)) = 1.0
+        _PlanarDistortion("Planar distortion (normal)", Range(0, 0.1)) = 0.03
+        _PlanarWet("Planar on wet stone (× Fresnel)", Range(0, 1)) = 0.35
         _PuddleDarken("Puddle albedo scale", Range(0.5, 1)) = 0.85
         [HideInInspector] _Cull("__cull", Float) = 2.0
     }
@@ -60,12 +64,18 @@ Shader "DD/GroundTiles"
             half _PuddleFieldRamp;
             half _AlbedoSaturation;
             half _AlbedoValue;
+            half _PlanarStrength;
+            half _PlanarDistortion;
+            half _PlanarWet;
             half _Cull;
         CBUFFER_END
 
         TEXTURE2D(_BaseMap);    SAMPLER(sampler_BaseMap);
         TEXTURE2D(_NormalMap);
         TEXTURE2D(_MaskMap);
+        // WP-074 B8 · the planar reflection (DD.Art.PlanarReflection, globals; off where no plane publishes one).
+        TEXTURE2D(_DD_PlanarReflection);   SAMPLER(sampler_DD_PlanarReflection);
+        float _DD_PlanarReflectionOn;
 
         // Clustered puddles (AD B5b MUST-2): 2-octave value noise in world XZ (7 m / 2.5 m), blobs of 3–5 m across cells.
         float DDGroundHash(float2 p)
@@ -219,6 +229,17 @@ Shader "DD/GroundTiles"
                 inputData.shadowMask = SAMPLE_SHADOWMASK(input.staticLightmapUV);
 
                 half4 color = UniversalFragmentPBR(inputData, surfaceData);
+                if (_DD_PlanarReflectionOn > 0.5)
+                {
+                    // Standing water mirrors (≥ 50 % at the steep gameplay angles), wet stone by Fresnel only.
+                    float2 suv = inputData.normalizedScreenSpaceUV + normalTS.xy * _PlanarDistortion;
+                    half3 reflection = SAMPLE_TEXTURE2D(_DD_PlanarReflection, sampler_DD_PlanarReflection, suv).rgb;
+                    half ndv = saturate(dot(normalWS, inputData.viewDirectionWS));
+                    half fresnel = 0.02h + 0.98h * pow(1.0h - ndv, 5.0h);
+                    half w = saturate(max(puddle, _PlanarWet * wet) * lerp(fresnel, 1.0h, 0.5h * puddle)) * _PlanarStrength;
+                    color.rgb = lerp(color.rgb, reflection * lerp(1.0h, _PuddleDarken, puddle), w);
+                }
+
                 color.rgb = MixFog(color.rgb, inputData.fogCoord);
                 color.a = 1.0h;
                 return color;

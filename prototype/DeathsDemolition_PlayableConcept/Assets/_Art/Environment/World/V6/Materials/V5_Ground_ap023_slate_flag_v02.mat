@@ -42,6 +42,9 @@ Material:
     - _Cull: 2
     - _NormalStrength: 1
     - _Occlusion: 1
+    - _PlanarDistortion: 0.03
+    - _PlanarStrength: 1
+    - _PlanarWet: 0.35
     - _PuddleDarken: 0.85
     - _PuddleField: 0.62
     - _PuddleFieldRamp: 0.06
