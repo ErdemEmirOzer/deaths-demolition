@@ -63,7 +63,7 @@ namespace DD.Art.Pipeline.EditorTools
             public float lightmapResolution;
             public int contributeGI, probes, reflectionProbes, lightmapCount, budgetMb;
             public float bakeSeconds;
-            /// <summary>EXR on disk (uncompressed half float) and the imported textures' memory (BC6H + mips) — the budget reads the latter.</summary>
+            /// <summary>EXR on disk (uncompressed half float) and the imported textures' size (format × mips × faces) — the budget reads the latter.</summary>
             public long bytes, shippedBytes;
             public bool withinBudget, ok;
             public string[] files;
@@ -179,7 +179,7 @@ namespace DD.Art.Pipeline.EditorTools
                     bytes += new FileInfo(f).Length;
                     if (name.StartsWith("Lightmap-", StringComparison.Ordinal) && name.Contains("_comp_light")) lightmaps++;
                     var texture = AssetDatabase.LoadAssetAtPath<Texture>(folder + "/" + name);
-                    if (texture != null) shipped += UnityEngine.Profiling.Profiler.GetRuntimeMemorySizeLong(texture);
+                    if (texture != null) shipped += ImportedBytes(texture);
                 }
 
             files.Sort(StringComparer.Ordinal);
@@ -188,6 +188,19 @@ namespace DD.Art.Pipeline.EditorTools
             report.shippedBytes = shipped;
             report.lightmapCount = lightmaps;
             report.withinBudget = shipped <= (long)BudgetMb * 1048576L;
+        }
+
+        /// <summary>
+        /// The imported texture's size from its format and mip chain (× 6 faces for a cubemap). Deterministic: the profiler's runtime
+        /// size doubled right after a bake (the freshly imported textures still held their CPU copy).
+        /// </summary>
+        public static long ImportedBytes(Texture texture)
+        {
+            long total = 0;
+            int faces = texture is Cubemap ? 6 : 1;
+            for (int m = 0; m < Mathf.Max(1, texture.mipmapCount); m++)
+                total += (long)UnityEngine.Experimental.Rendering.GraphicsFormatUtility.ComputeMipmapSize(Mathf.Max(1, texture.width >> m), Mathf.Max(1, texture.height >> m), texture.graphicsFormat) * faces;
+            return total;
         }
 
         /// <summary>Batch: re-measure the existing bake (no re-bake) and rewrite the report.</summary>
