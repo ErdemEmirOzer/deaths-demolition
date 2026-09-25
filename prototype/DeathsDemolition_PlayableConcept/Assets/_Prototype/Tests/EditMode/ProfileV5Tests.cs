@@ -123,7 +123,7 @@ namespace DD.Prototype.Tests.EditMode
             string soy = v4.ProfileLineageId;
 
             ProfileMigration.Migrate(v4);
-            Assert.AreEqual(5, v4.SaveVersion);
+            Assert.AreEqual(ProfileData.CurrentVersion, v4.SaveVersion);
             Assert.AreEqual(9, v4.ProfileLevel, "K11: seviye yeni eğriyle yeniden hesaplanmaz");
             Assert.AreEqual(40, v4.XpIntoLevel);
             CollectionAssert.AreEqual(new[] { "ar_1", "smg_1" }, v4.UnlockedWeapons, "WP-069 anahtarları; açık silah kilitlenmez");

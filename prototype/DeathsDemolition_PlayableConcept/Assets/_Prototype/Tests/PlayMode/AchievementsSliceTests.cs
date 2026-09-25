@@ -181,7 +181,7 @@ namespace DD.Prototype.Tests.PlayMode
 
             // Diskte v4, RAM ile aynı; Results ekranı mevcut makbuzla uyumlu (UI değişmedi).
             ProfileData disk = Disk();
-            Assert.AreEqual(4, disk.SaveVersion);
+            Assert.AreEqual(ProfileData.CurrentVersion, disk.SaveVersion);
             Assert.AreEqual(ProfileService.Current.TotalKills, disk.TotalKills);
             CollectionAssert.AreEqual(ProfileService.Current.Achievements, disk.Achievements);
             ResultsScreen ekran = Object.FindObjectOfType<ResultsScreen>();
