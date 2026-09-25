@@ -184,6 +184,7 @@ namespace DD.Art.Pipeline.EditorTools
             if (m.shader != shader) m.shader = shader;
             ArtMaterialBuilder.ApplyCommonPublic(m);
             ArtCharacterPrefabBuilder.ApplyCharacterMapsPublic(m, baseMap, normal, ms);
+            ArtCharacterPrefabBuilder.EnableSpecialEmissionSlot(m);   // WP-076: S-07 shock / gel MPB slot
             m.SetTexture("_DetailMask", null); m.SetTexture("_DetailAlbedoMap", null); m.DisableKeyword("_DETAIL_MULX2"); m.DisableKeyword("_DETAIL_SCALED");
             m.SetTexture("_TierMask", mask);
             float clothK = cloth ? row.clothK : 0f, lacquerK = lacquer ? row.lacquerK : 0f;

@@ -87,6 +87,7 @@ namespace DD.Art.Pipeline.EditorTools
                 Material m = ArtCharacterPrefabBuilder.LoadOrCreateMaterialPublic(path, lit, Path.GetFileNameWithoutExtension(path));
                 ArtMaterialBuilder.ApplyCommonPublic(m);
                 ArtCharacterPrefabBuilder.ApplyCharacterMapsPublic(m, baseMap, normal, mask);
+                ArtCharacterPrefabBuilder.EnableSpecialEmissionSlot(m);   // WP-076: S-07 shock / gel MPB slot
                 if (tier > 0)
                 {
                     m.SetTexture("_DetailMask", detail);

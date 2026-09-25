@@ -190,6 +190,7 @@ namespace DD.Art.Pipeline.EditorTools
                 Material m = LoadOrCreateMaterial(path, lit, Path.GetFileNameWithoutExtension(path));
                 ArtMaterialBuilder.ApplyCommonPublic(m);
                 ApplyCharacterMaps(m, atlas, atlasNormal, atlasMask);
+                EnableSpecialEmissionSlot(m);   // WP-076: S-07 shock / gel MPB slot (black = unchanged look)
                 if (tier > 0)
                 {
                     m.SetTexture("_DetailMask", detailMask);
@@ -219,6 +220,7 @@ namespace DD.Art.Pipeline.EditorTools
                     Material m = LoadOrCreateMaterial(path, lit, Path.GetFileNameWithoutExtension(path));
                     ArtMaterialBuilder.ApplyCommonPublic(m);
                     ApplyCharacterMaps(m, cloth, clothNormal, clothMask);
+                    EnableSpecialEmissionSlot(m);   // WP-076: S-07 shock / gel MPB slot
                     if (tier > 0)
                     {
                         m.SetFloat("_DetailAlbedoMapScale", 1f);
@@ -251,6 +253,19 @@ namespace DD.Art.Pipeline.EditorTools
         }
 
         public static void ApplyCharacterMapsPublic(Material m, Texture2D baseMap, Texture2D normal, Texture2D mask) => ApplyCharacterMaps(m, baseMap, normal, mask);
+
+        /// <summary>
+        /// WP-076 (C-00 25.09 → S-07 WP-073 B6): every zombie material carries the _EMISSION variant with BLACK emission, so
+        /// S-07's per-renderer MaterialPropertyBlock (electric rim on a shocked body, gel film on a sliding one) has a slot to
+        /// write into. The default look is unchanged (black emission, EmissiveIsBlack GI flag); ApplyCommon switches
+        /// _EMISSION off, so call this after it.
+        /// </summary>
+        public static void EnableSpecialEmissionSlot(Material m)
+        {
+            m.SetColor("_EmissionColor", Color.black);
+            m.EnableKeyword("_EMISSION");
+            m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+        }
         public static Material LoadOrCreateMaterialPublic(string path, Shader shader, string name) => LoadOrCreateMaterial(path, shader, name);
 
         private static void ApplyCharacterMaps(Material m, Texture2D baseMap, Texture2D normal, Texture2D mask)
