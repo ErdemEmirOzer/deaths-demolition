@@ -94,7 +94,10 @@ namespace DD.Art.Pipeline.EditorTools
             // under DEC-101's weak overcast light; under the strong warm sun the plaza is dark wet slate (HF v002: L ≈ 35) and the glare
             // comes only toward the sun (the wet specular); the sky sheen on the wet body halved (the sky is blue now, not a bright deck).
             ("_SkyReflWet", 0.05f), ("_SkyReflPuddle", 0.30f),
-            ("_PuddleScale", 5.5f), ("_PuddleField", 0.56f), ("_PuddleFieldRamp", 0.10f), ("_AlbedoSaturation", 0.28f), ("_AlbedoValue", 1.1f),
+            // DEC-102 AD B3 (25.09: from above the mirror-wet read collapsed into puddle blobs and the dry slate blew to cream): the
+            // field 0.56 → 0.46 (≈ 40 → 63 % of the plaza mirror-wet; the shader's 2-octave field, 0.1 m sampling) and the dry slate
+            // value 1.1 → 1.0.
+            ("_PuddleScale", 5.5f), ("_PuddleField", 0.46f), ("_PuddleFieldRamp", 0.10f), ("_AlbedoSaturation", 0.28f), ("_AlbedoValue", 1.0f),
             ("_PlanarStrength", 1f), ("_PlanarDistortion", 0.03f), ("_PlanarWet", 0.35f),
         };
 
