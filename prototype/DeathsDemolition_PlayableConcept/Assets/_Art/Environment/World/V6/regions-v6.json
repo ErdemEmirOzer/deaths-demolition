@@ -9,7 +9,7 @@
     { "id": "west", "polygonXZ": [-55, -46, -26, -46, -26, 30, -28, 30, -28, 55, -55, 55] }
   ],
   "rooms": [
-    { "id": "R1_MainHall", "box": [-18, 38, 18, 49], "floor": 1.2, "exits": 5 },
+    { "id": "R1_MainHall", "box": [-16.5, 39, 16.5, 49], "floor": 1.2, "exits": 5 },
     { "id": "R2_EastPavilion", "box": [30, 24, 40, 32], "floor": 0, "exits": 3 },
     { "id": "R3_Kura", "box": [-44, 36, -34, 44], "floor": 0, "exits": 2 },
     { "id": "R4_TeaHouse", "box": [-36, -40, -28, -32], "floor": 0, "exits": 2 },

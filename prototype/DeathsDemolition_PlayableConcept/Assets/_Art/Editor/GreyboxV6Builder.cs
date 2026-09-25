@@ -23,6 +23,8 @@ namespace DD.Art.Pipeline.EditorTools
     /// verification, run systems), loaded into Run with <c>-ddWorldSource AP005 -ddWorldScene World_V6_Greybox</c>.
     /// NavMesh v5 keeps the WP-038 rules: climb 0.30, the ring (±55, NavMesh 0.5 m inside), pond rims, fall guard, island linker.
     /// Writes the data the stakeholders read: spawn-gates-v6.json (S-03), regions-v6.json (S-03), acoustic-spaces-v6.json (S-08).
+    /// WP-074 B5b-1: the scene is World v5's dev scene — <see cref="WorldV5Dress"/> dresses it with the AP-023 kit (its colliders
+    /// replace the boxes they dress) before the bake; <c>-ddGreyboxOnly</c> builds the bare boxes.
     /// Batch: <c>-executeMethod DD.Art.Pipeline.EditorTools.GreyboxV6Builder.BuildCli</c>. Deterministic; rebuilt in place.
     /// </summary>
     public static class GreyboxV6Builder
@@ -73,9 +75,10 @@ namespace DD.Art.Pipeline.EditorTools
 
         public static readonly Room[] Rooms =
         {
-            // R1 main hall on the 1.2 m plinth (§0 K2): 3 front doors + E + W (the rear door gave way to K6, see B1 note).
-            new Room { Id = "R1_MainHall", Acoustic = "Hall", X0 = -18f, X1 = 18f, Z0 = 38f, Z1 = 49f, Floor = PlinthHeight, Height = 6.5f,
-                Doors = new[] { new Door('S', -10f, 3f), new Door('S', 0f, 3f), new Door('S', 10f, 3f), new Door('E', 44f, 2.4f), new Door('W', 44f, 2.4f) } },
+            // R1 main hall on the 1.2 m plinth (§0 K2): 3 front doors + E + W (the rear door gave way to K6, see B1 note). WP-074 B5b-1:
+            // on the AP-023 hall's wall lines (x ±16.5, z 39…49) and open bays (front x −9 / 0 / 9 at 2.6 m clear, E/W z 44 at 2.3 m).
+            new Room { Id = "R1_MainHall", Acoustic = "Hall", X0 = -16.5f, X1 = 16.5f, Z0 = 39f, Z1 = 49f, Floor = PlinthHeight, Height = 6.5f,
+                Doors = new[] { new Door('S', -9f, 2.6f), new Door('S', 0f, 2.6f), new Door('S', 9f, 2.6f), new Door('E', 44f, 2.3f), new Door('W', 44f, 2.3f) } },
             new Room { Id = "R2_EastPavilion", Acoustic = "Hall", X0 = 30f, X1 = 40f, Z0 = 24f, Z1 = 32f, Height = 3.8f,
                 Doors = new[] { new Door('W', 28f, 2.4f), new Door('S', 35f, 2.4f), new Door('E', 28f, 2.4f) } },
             new Room { Id = "R3_Kura", Acoustic = "Hall", X0 = -44f, X1 = -34f, Z0 = 36f, Z1 = 44f, Height = 4f,
@@ -167,11 +170,12 @@ namespace DD.Art.Pipeline.EditorTools
 
         public static void BuildCli()
         {
-            string report = Build();
+            string report = Build(Array.IndexOf(System.Environment.GetCommandLineArgs(), "-ddGreyboxOnly") < 0);
             Debug.Log("[GreyboxV6] " + report);
         }
 
-        public static string Build()
+        /// <param name="dress">WP-074 B5b-1: dress the layout with the AP-023 kit (<see cref="WorldV5Dress"/>) before the bake.</param>
+        public static string Build(bool dress = true)
         {
             EnsureFolder(DataFolder);
             EnsureFolder(DataFolder + "/Materials");
@@ -203,6 +207,7 @@ namespace DD.Art.Pipeline.EditorTools
             boxes += BuildEast(g);
             boxes += BuildSouth(g, basins);
             boxes += BuildBamboo(g);
+            WorldV5Dress.Report dressed = dress ? WorldV5Dress.Apply(g, root.transform) : null;
 
             // WP-074 B1c · S-03 WP-076 B6 §5.2 region volumes (rooms, room exits, chokepoints).
             BuildRegionVolumes(root.transform);
@@ -227,7 +232,7 @@ namespace DD.Art.Pipeline.EditorTools
             RegisterDevScene();
             WriteJson();
             AssetDatabase.SaveAssets();
-            return boxes + " boxes, NavMesh " + triangles + " triangles, " + links + " island links, placement " + placement.spawnPoints.Count + " spawns / " + placement.weaponPoints.Count + " weapons -> " + ScenePath;
+            return boxes + " boxes" + (dressed != null ? " (" + dressed + ")" : "") + ", NavMesh " + triangles + " triangles, " + links + " island links, placement " + placement.spawnPoints.Count + " spawns / " + placement.weaponPoints.Count + " weapons -> " + ScenePath;
         }
 
         // ---------------------------------------------------------------- pieces

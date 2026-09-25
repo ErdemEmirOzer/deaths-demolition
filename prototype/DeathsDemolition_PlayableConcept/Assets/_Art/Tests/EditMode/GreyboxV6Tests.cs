@@ -197,6 +197,74 @@ namespace DD.Art.Tests.EditMode
             StringAssert.Contains("\"enclosure\": \"Hall\"", acoustic);
         }
 
+        /// <summary>
+        /// WP-074 B5b-1 · The AP-023 architecture shell (WorldV5Dress). Every dress piece is an AP-023 library prefab. The hall
+        /// carries the whole kit recipe with five open bays (3 front + E + W, on R1's doors). The ring has 4 corners + 4 × 27 tsuiji.
+        /// No greybox box is left where the kit stands. Every R1 door is a passage on the NavMesh: engawa → inside in under 4 m.
+        /// The hall roof fades as one (collider on CameraOccluder, the upper roof and mokoshi under it).
+        /// </summary>
+        [Test]
+        public void Greybox_V5Giydirme_AP023Kabugu_KutuKalmadi_KapilarGecit()
+        {
+            Open();
+            var fails = new List<string>();
+            GameObject dress = GameObject.Find(WorldV5Dress.RootName);
+            Assert.IsNotNull(dress, "giydirme kökü");
+            int instances = 0;
+            foreach (Transform t in dress.GetComponentsInChildren<Transform>(true))
+            {
+                if (!PrefabUtility.IsOutermostPrefabInstanceRoot(t.gameObject)) continue;
+                instances++;
+                string path = PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(t.gameObject);
+                if (path == null || !path.Contains("/AP-023/")) fails.Add("AP-023 dışı parça: " + t.name + " " + path);
+            }
+
+            int open = 0;
+            List<WorldV5Dress.KitPlacement> hall = WorldV5Dress.HallLayout((side, s, half) =>
+            {
+                bool o = WorldV5Dress.R1DoorOpens(side, s, half);
+                if (o) open++;
+                return o;
+            });
+            Assert.AreEqual(5, open, "açık bölme: 3 ön + D + B");
+            Transform hallRoot = dress.transform.Find("Hall_R1");
+            Assert.IsNotNull(hallRoot);
+            int hallInstances = 0;
+            foreach (Transform t in hallRoot.GetComponentsInChildren<Transform>(true))
+                if (PrefabUtility.IsOutermostPrefabInstanceRoot(t.gameObject)) hallInstances++;
+            Assert.AreEqual(hall.Count, hallInstances, "salon tarifi");
+            Assert.AreEqual(4 + 4 * 27, dress.transform.Find("RingWall").childCount, "halka tsuiji");
+            Debug.Log("[DD-TEST] wp074.b5b1.dress instances " + instances + " hall " + hallInstances + " open " + open);
+
+            foreach (Transform t in GameObject.Find(GreyboxV6Builder.GreyboxRootName).transform)
+                foreach (string prefix in WorldV5Dress.ReplacedPrefixes)
+                    if (t.name.StartsWith(prefix, System.StringComparison.Ordinal)) fails.Add("kutu kaldı: " + t.name);
+
+            GreyboxV6Builder.Room r1 = GreyboxV6Builder.Rooms[0];
+            var navPath = new NavMeshPath();
+            foreach (GreyboxV6Builder.Door d in r1.Doors)
+            {
+                Vector3 wall = d.Side == 'S' ? new Vector3(d.At, 0f, r1.Z0) : d.Side == 'E' ? new Vector3(r1.X1, 0f, d.At) : new Vector3(r1.X0, 0f, d.At);
+                Vector3 inward = d.Side == 'S' ? Vector3.forward : d.Side == 'E' ? Vector3.left : Vector3.right;
+                Vector3 outside = wall - inward * 0.8f + Vector3.up * 1.4f, inside = wall + inward * 1.0f + Vector3.up * 1.4f;
+                if (!NavMesh.SamplePosition(outside, out NavMeshHit a, 0.5f, NavMesh.AllAreas) || !NavMesh.SamplePosition(inside, out NavMeshHit b, 0.5f, NavMesh.AllAreas))
+                {
+                    fails.Add("R1 kapı " + d.Side + " " + d.At + ": iki yanında NavMesh yok");
+                    continue;
+                }
+
+                if (!NavMesh.CalculatePath(a.position, b.position, NavMesh.AllAreas, navPath) || navPath.status != NavMeshPathStatus.PathComplete || PathLength(navPath) > 4f)
+                    fails.Add("R1 kapı " + d.Side + " " + d.At + ": geçit değil (" + navPath.status + ", " + PathLength(navPath).ToString("F1") + " m)");
+            }
+
+            Transform roof = hallRoot.Find(WorldV5Dress.HallRoofName);
+            Assert.IsNotNull(roof);
+            Assert.AreEqual(PrototypeLayers.CameraOccluder, roof.gameObject.layer);
+            Assert.AreEqual(CameraOccluderKind.Roof, roof.GetComponent<CameraOccluderClass>().Kind);
+            Assert.Greater(roof.GetComponentsInChildren<Renderer>(true).Length, 60, "üst çatı + mokoshi parçaları çatı tutucusunda");
+            Assert.IsEmpty(fails, string.Join("\n", fails));
+        }
+
         private static int CountOf(string s, string token)
         {
             int n = 0;
