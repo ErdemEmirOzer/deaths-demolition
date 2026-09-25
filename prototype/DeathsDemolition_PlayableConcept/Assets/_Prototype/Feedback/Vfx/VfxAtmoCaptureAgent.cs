@@ -1,7 +1,9 @@
 using System;
 using System.Collections;
 using System.IO;
+using System.Collections.Generic;
 using DD.Prototype.CameraSystem;
+using DD.Prototype.PlayerSystem;
 using DD.Prototype.Weapons;
 using UnityEngine;
 
@@ -31,6 +33,29 @@ namespace DD.Prototype.Feedback.Vfx
             }
         }
 
+        private static bool PlaceInDensestRegion()
+        {
+            int n = (int)Shader.GetGlobalFloat("_DD_VL_RegionCount");
+            PlayerRig rig = PlayerRegistry.Primary;
+            if (n <= 0 || rig == null) return false;
+            var regions = new List<Vector4>(8);
+            var shapes = new List<Vector4>(8);
+            Shader.GetGlobalVectorArray("_DD_VL_Regions", regions);
+            Shader.GetGlobalVectorArray("_DD_VL_RegionShape", shapes);
+            int best = -1;
+            for (int i = 0; i < Mathf.Min(n, Mathf.Min(regions.Count, shapes.Count)); i++) if (best < 0 || shapes[i].y > shapes[best].y) best = i;
+            if (best < 0) return false;
+            Vector4 r = regions[best];
+            Vector3 centre = new Vector3(r.x, r.y, r.z);
+            Vector3 at = centre - Vector3.forward * (r.w * 0.6f);
+            int mask = (1 << 0) | (1 << DD.Prototype.Core.PrototypeLayers.Environment);
+            if (Physics.Raycast(new Vector3(at.x, centre.y + 30f, at.z), Vector3.down, out RaycastHit hit, 60f, mask, QueryTriggerInteraction.Ignore)) at = hit.point;
+            rig.Health.DiagnosisInvulnerable = true;
+            rig.Teleport(at, Quaternion.LookRotation(Vector3.forward));
+            Debug.Log("[VfxAtmoCapture] placed in region " + best + " centre " + centre.ToString("F1") + " radius " + r.w.ToString("F1") + " at " + at.ToString("F1"));
+            return true;
+        }
+
         private IEnumerator Start()
         {
             Directory.CreateDirectory(_folder);
@@ -43,6 +68,13 @@ namespace DD.Prototype.Feedback.Vfx
             }
 
             yield return new WaitForSeconds(8f);   // past the round-intro plate (AD B5: the FP frame at 4 s was the plate)
+            if (Array.IndexOf(Environment.GetCommandLineArgs(), "-ddVfxAtmoInRegion") >= 0)
+            {
+                // AD B5 MUST 4: a frame through a shaft — the player (invulnerable, evidence only) is moved to the rim of the
+                // densest region of the DEC-102 field, facing its centre, and the grains get 4 s to fill round the new focus.
+                if (PlaceInDensestRegion()) yield return new WaitForSeconds(4f);
+            }
+
             string mode = CameraModeService.Current == CameraMode.FirstPerson ? "fp" : CameraModeService.Current == CameraMode.ThirdPerson ? "tp" : "topdown";
             string tier = VfxTier.Current.ToString().ToLowerInvariant();
             for (int n = 0; n < 6; n++)
