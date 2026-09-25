@@ -271,48 +271,42 @@ namespace DD.Prototype.Core.Weapons
     }
 
     /// <summary>
-    /// WP-069 · where the weapon sits in the first-person view (C-00, 25.09): the model root (grip) in the viewmodel
-    /// camera's space — +X right, +Y up, +Z forward, metres — its rotation there and a uniform scale. The tuned values
-    /// aim the barrel at the crosshair <see cref="ConvergeMetres"/> out (<see cref="Converging"/>); the frame target at
-    /// 1080p rest: lower-right, 40–90 k px, barrel toward the centre, clear of the S-09 HUD weapon cluster. S-01's
-    /// viewmodel screen transform (WP-070V) applies on top; S-06 fits the FP arms to these poses (B4b). An unset pose
-    /// (z ≤ 0) falls back to <see cref="DefaultFor"/> the weapon class.
+    /// WP-069 · where the weapon sits in the first-person view (C-00, 25.09; v2 target after the review): the model root
+    /// (grip) in the viewmodel camera's space — +X right, +Y up, +Z forward, metres — its rotation there (pitch, yaw) and
+    /// a uniform scale. Tuned at 1080p rest under S-01's viewmodel screen transform (WP-070V defaults: scale 0.75 about
+    /// the bottom-left corner, shift −12 %) and the FP field of view: the weapon reads in the lower right (≈ 120–220 k px,
+    /// grip and magazine on screen, a cut at the bottom / right edge is natural) and the barrel converges on the point
+    /// 8 m out that the transform puts at the crosshair. A change to that transform or the FP FOV means a retune
+    /// (WeaponModelSliceTests.FP_GorusPozu_OnSilah_KadrajBandinda measures it). S-06 fits the FP arms to these poses (B4b).
+    /// An unset pose (z ≤ 0) falls back to <see cref="DefaultFor"/> the weapon class.
     /// </summary>
     [Serializable]
     public sealed class WeaponFpViewPose
     {
-        public const float ConvergeMetres = 8f;
-
         [Tooltip("Grip (model root) in the viewmodel camera's space, metres (+X right, +Y up, +Z forward).")] public Vector3 position;
-        [Tooltip("Model rotation in camera space, degrees (tuned: barrel at the crosshair 8 m out).")] public Vector3 euler;
-        [Tooltip("Uniform view-model scale (1 = authored; the big LMGs read smaller so they do not fill the screen).")] public float scale = 1f;
+        [Tooltip("Model rotation in camera space, degrees (pitch, yaw; tuned so the barrel meets the crosshair 8 m out).")] public Vector3 euler;
+        [Tooltip("Uniform view-model scale (1 = authored).")] public float scale = 1f;
 
         public bool IsSet => position.z > 0f && scale > 0f;
 
-        /// <summary>A pose at <paramref name="grip"/> whose barrel points at the crosshair <see cref="ConvergeMetres"/> out.</summary>
-        public static WeaponFpViewPose Converging(Vector3 grip, float scale)
+        public static WeaponFpViewPose At(float x, float y, float z, float pitch, float yaw, float scale = 1f)
         {
-            Vector3 e = Quaternion.LookRotation(new Vector3(0f, 0f, ConvergeMetres) - grip, Vector3.up).eulerAngles;
-            e = new Vector3(Mathf.DeltaAngle(0f, e.x), Mathf.DeltaAngle(0f, e.y), Mathf.DeltaAngle(0f, e.z));
-            return new WeaponFpViewPose { position = grip, euler = new Vector3(Round(e.x), Round(e.y), Round(e.z)), scale = scale };
+            return new WeaponFpViewPose { position = new Vector3(x, y, z), euler = new Vector3(pitch, yaw, 0f), scale = scale };
         }
 
-        /// <summary>The class starting point (each weapon carries its own tuned pose; these came from the first of the class).</summary>
+        /// <summary>The class starting point (each weapon carries its own tuned pose; these are the first of each class).</summary>
         public static WeaponFpViewPose DefaultFor(WeaponClass cls)
         {
             switch (cls)
             {
-                case WeaponClass.AssaultRifle: return Converging(new Vector3(0.26f, -0.20f, 0.08f), 0.85f);
-                case WeaponClass.Smg: return Converging(new Vector3(0.26f, -0.20f, 0.08f), 1f);
-                case WeaponClass.Shotgun: return Converging(new Vector3(0.26f, -0.20f, 0.08f), 0.85f);
-                case WeaponClass.Lmg: return Converging(new Vector3(0.44f, -0.30f, 0.25f), 0.70f);
-                case WeaponClass.Sniper: return Converging(new Vector3(0.38f, -0.30f, 0.25f), 1f);
-                case WeaponClass.Launcher: return Converging(new Vector3(0.38f, -0.30f, 0.15f), 1f);
-                default: return Converging(new Vector3(0.32f, -0.25f, 0.15f), 1f);
+                case WeaponClass.Smg: return At(0.297f, -0.118f, 0.25f, -9.99f, 32.46f);
+                case WeaponClass.Shotgun: return At(0.490f, -0.102f, 0.35f, -10.10f, 31.76f);
+                case WeaponClass.Lmg: return At(0.968f, -0.230f, 0.60f, -11.45f, 29.92f);
+                case WeaponClass.Sniper: return At(0.565f, -0.165f, 0.35f, -10.53f, 31.36f);
+                case WeaponClass.Launcher: return At(0.630f, -0.213f, 0.45f, -10.97f, 31.33f);
+                default: return At(0.565f, -0.134f, 0.35f, -10.34f, 31.36f);
             }
         }
-
-        private static float Round(float v) => Mathf.Round(v * 100f) / 100f;
     }
 
     [Serializable]

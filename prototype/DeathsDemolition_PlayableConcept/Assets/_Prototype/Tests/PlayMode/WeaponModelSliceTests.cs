@@ -123,7 +123,12 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsTrue(_s.Controller.SpecialViewmodelLodPinned, "FP'de Special LOD0'a sabitlenmedi.");
             report.Add(pickup.WeaponId + " " + LodKaniti(vm, sg, "special-" + pickup.WeaponId));
             DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.ThirdPerson, instant: true);
-            yield return SpecialWeaponSahne.Kareler(10);
+            // The pin follows the renderers' layer; the camera rig moves them off the FirstPersonView layer (a short TP boom can
+            // keep the player hidden a few frames) — wait for that, then the pin must be gone.
+            Renderer specialProbe = sg.GetComponentInChildren<Renderer>();
+            yield return SpecialWeaponSahne.Bekle(() => specialProbe == null || specialProbe.gameObject.layer != DD.Prototype.CameraSystem.CameraLayers.FirstPersonView, 3f,
+                "TP'de Special görüntü modeli katmanından çıkmadı (kamera rig'i)");
+            yield return SpecialWeaponSahne.Kareler(2);
             Assert.IsFalse(_s.Controller.SpecialViewmodelLodPinned, "FP'den çıkınca Special'ın LOD sabitlemesi kalkmadı.");
 
             camRig.Camera.ResetAspect();
@@ -132,14 +137,17 @@ namespace DD.Prototype.Tests.PlayMode
         }
 
         /// <summary>
-        /// WP-069 (C-00 25.09) · the first-person view pose: with every classic in hand in FP the rig sits at its
-        /// definition's <see cref="WeaponFpViewPose"/>, and the frame at 1080p rest (viewmodel layer, the viewmodel
-        /// camera's projection incl. S-01's screen transform) meets the target — 40–90 k px, the silhouette's centre in
-        /// the lower-right quadrant, the barrel toward the screen centre (≤ 30°), not one pixel in the S-09 HUD weapon
-        /// cluster (bottom-right 420×150 + 24 px). Leaving FP puts the rig back on the hand. The ten frames go on one sheet.
+        /// WP-069 (C-00 25.09, v2 target) · the first-person view pose: with every classic in hand in FP the rig sits at its
+        /// definition's <see cref="WeaponFpViewPose"/>, and the frame at 1080p rest (viewmodel layer, the viewmodel camera's
+        /// projection incl. S-01's screen transform) reads as a weapon, not a barrel tip — 120–220 k px, the silhouette's
+        /// centre in the lower-right quadrant, the grip and the magazine marker on screen, the barrel toward the crosshair
+        /// (≤ 25°), no pixel in S-09's Special ring block. The run HUD is drawn through its own camera (over black and white → its pixels and their alpha): its
+        /// overlap with each weapon is measured, and asserted 0 once S-09's FP layout moves the weapon cluster
+        /// (RunHudScreen.WeaponClusterPosition differs in FP). Evidence: the ten frames on one sheet and weapon A composited
+        /// with the world and the HUD. Leaving FP puts the rig back on the hand.
         /// </summary>
         [UnityTest]
-        [Timeout(180000)]
+        [Timeout(240000)]
         public IEnumerator FP_GorusPozu_OnSilah_KadrajBandinda()
         {
             yield return Kur();
@@ -154,35 +162,61 @@ namespace DD.Prototype.Tests.PlayMode
             camRig.Camera.aspect = KareW / (float)KareH;
             vm.aspect = KareW / (float)KareH;
 
-            const int ClusterW = 420 + 24, ClusterH = 150 + 24, Kucuk = 4;
+            // The run HUD alone (FP layout), its covered pixels and alpha.
+            yield return new WaitForSecondsRealtime(3f);   // past the round banner (transient, not the persistent HUD) — HudCoverageTests
+            RunHudScreen hud = Object.FindObjectOfType<RunHudScreen>();
+            Assert.IsNotNull(hud, "Run HUD yok — HUD'lu FP karesi ölçülemez.");
+            Transform hudCanvas = hud.transform.Find(hud.GetType().Name + ".Canvas");
+            Assert.IsNotNull(hudCanvas != null ? hudCanvas.GetComponent<Canvas>() : null, "HUD canvas'ı yok.");
+            var hudPixels = new Color32[2][];
+            yield return HudCiz(hudCanvas.GetComponent<Canvas>(), hudPixels);
+            bool[] hudMask = new bool[KareW * KareH];
+            for (int i = 0; i < hudMask.Length; i++)
+            {
+                Color32 k = hudPixels[0][i], w = hudPixels[1][i];
+                hudMask[i] = k.r > 8 || k.g > 8 || k.b > 8 || w.r < 247 || w.g < 247 || w.b < 247;
+            }
+
+            bool fpLayout = RunHudScreen.WeaponClusterPosition(Vector2.zero, true, KareH) != RunHudScreen.WeaponClusterPosition(Vector2.zero, false, KareH);
+            const int Kucuk = 4;
             int sw = KareW / Kucuk, sh = KareH / Kucuk;
             var sheet = new Color32[sw * 5 * sh * 2];
             var report = new List<string>();
             var wrong = new List<string>();
-            int n = 0;
+            int n = 0, hudOverlapMax = 0;
             foreach (ClassicWeaponDefinition d in WeaponRoster.Enabled)
             {
                 _s.Controller.EquipClassic(d.Id, _s.Config);
-                yield return SpecialWeaponSahne.Kareler(20);
+                // Rest: the switch clip has played out — the mount's deviation from its aim pose (the kick the pose keeps) settles.
+                var alignment = mount.GetComponent<WeaponMountAlignment>();
+                yield return SpecialWeaponSahne.Kareler(5);
+                yield return SpecialWeaponSahne.Bekle(() => alignment == null || (alignment.DeltaApplied && alignment.DeltaDegrees < 0.75f), 3f, d.RosterKey + ": dinlenme pozuna oturmadı");
+                yield return SpecialWeaponSahne.Kareler(2);
                 Assert.IsTrue(_s.Controller.ClassicFpViewPosed, d.RosterKey + ": FP görüş pozuna oturmadı.");
                 Transform rig = mount.Find("ClassicWeaponRig");
                 Color32[] px = VmKare(vm, null);
-                int cov = 0, cluster = 0;
+                int cov = 0, hudOverlap = 0, ring = 0;
                 long sx = 0, sy = 0;
                 for (int i = 0; i < px.Length; i++)
                 {
                     if (!(px[i].r < 240 || px[i].g > 15 || px[i].b < 240)) continue;
                     int u = i % KareW, v = i / KareW;   // row 0 = bottom
                     cov++; sx += u; sy += v;
-                    if (u >= KareW - ClusterW && v < ClusterH) cluster++;
+                    if (hudMask[i]) hudOverlap++;
+                    if (u >= RingX0 && u < RingX1 && v >= KareH - RingYTop1 && v < KareH - RingYTop0) ring++;
                 }
 
                 float cx = cov > 0 ? sx / (float)cov : 0f, cy = cov > 0 ? sy / (float)cov : 0f;
+                Transform magT = WeaponSocketContract.Find(rig, WeaponSocketContract.MarkerMag);
                 Vector2 grip = Ekran(vm, rig.position), muzzle = Ekran(vm, _s.Controller.Muzzle.position);
+                Vector2 mag = magT != null ? Ekran(vm, magT.position) : grip;
                 float angle = Vector2.Angle(muzzle - grip, new Vector2(KareW * 0.5f, KareH * 0.5f) - grip);
-                string line = d.RosterKey + " cov " + cov + " px, centre (" + cx.ToString("0") + "," + (KareH - cy).ToString("0") + " from top), barrel→centre " + angle.ToString("0") + "°, HUD " + cluster + " px";
+                bool gripIn = EkranIcinde(grip), magIn = EkranIcinde(mag);
+                string line = d.RosterKey + " cov " + cov + " px, centre (" + cx.ToString("0") + "," + (KareH - cy).ToString("0") + " from top), grip " + (gripIn ? "in" : "OUT") +
+                              ", mag " + (magT == null ? "n/a" : magIn ? "in" : "OUT") + ", barrel→centre " + angle.ToString("0") + "°, HUD overlap " + hudOverlap + " px, Special ring " + ring + " px";
                 report.Add(line);
-                if (cov < 40000 || cov > 90000 || cx <= KareW * 0.5f || cy >= KareH * 0.5f || angle > 30f || cluster > 0) wrong.Add(line);
+                hudOverlapMax = Mathf.Max(hudOverlapMax, hudOverlap);
+                if (cov < 120000 || cov > 220000 || cx <= KareW * 0.5f || cy >= KareH * 0.5f || angle > 25f || !gripIn || !magIn || ring > 0 || (fpLayout && hudOverlap > 0)) wrong.Add(line);
 
                 int col = n % 5, row = n / 5;
                 for (int y = 0; y < sh; y++)
@@ -193,16 +227,12 @@ namespace DD.Prototype.Tests.PlayMode
                     }
                 }
 
+                if (n == 0) YazPng(Birlestir(DunyaKare(camRig.Camera), px, hudPixels), KareW, KareH, "wp069-fpview-hud-" + d.RosterKey + ".png");
                 n++;
             }
 
-            var tex = new Texture2D(sw * 5, sh * 2, TextureFormat.RGBA32, false);
-            tex.SetPixels32(sheet);
-            tex.Apply();
-            string sheetPath = Path.Combine(EvidenceDir, "wp069-fpview-sheet.png");
-            File.WriteAllBytes(sheetPath, tex.EncodeToPNG());
-            Object.Destroy(tex);
-            Debug.Log("[DD-TEST] wp069.fpview " + string.Join(" | ", report) + " sheet=" + sheetPath);
+            YazPng(sheet, sw * 5, sh * 2, "wp069-fpview-sheet.png");
+            Debug.Log("[DD-TEST] wp069.fpview " + string.Join(" | ", report) + " || S-09 FP layout " + (fpLayout ? "present — overlap asserted" : "not yet — overlap measured only") + ", max HUD overlap " + hudOverlapMax + " px");
             Assert.AreEqual(10, n, "on klasik silahın hepsi ölçülmedi.");
             Assert.IsEmpty(wrong, "FP kadrajı hedef bandın dışında: " + string.Join(" | ", wrong));
 
@@ -215,6 +245,97 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(1f, back.localScale.x, 1e-4f, "ölçek geri dönmedi");
             camRig.Camera.ResetAspect();
             vm.ResetAspect();
+        }
+
+        // S-09 (25.09): the Special ring block E14 sits bottom-centre in every mode, x 850–1070, y 788–1048 from the top at
+        // 1080p; a view model inside its rows keeps x ≥ 1086. Checked by pixels whether or not a Special shows the ring.
+        private const int RingX0 = 850, RingX1 = 1086, RingYTop0 = 788, RingYTop1 = 1048;
+
+        private static bool EkranIcinde(Vector2 p) => p.x > KareW * 0.01f && p.x < KareW * 0.99f && p.y > KareH * 0.01f && p.y < KareH * 0.99f;
+
+        /// <summary>The HUD canvas drawn alone through an orthographic camera at 1920×1080, over black [0] and over white [1] (HudCoverageTests pattern).</summary>
+        private static IEnumerator HudCiz(Canvas canvas, Color32[][] into)
+        {
+            int layer = LayerMask.NameToLayer("UI");
+            Transform[] all = canvas.GetComponentsInChildren<Transform>(true);
+            var oldLayers = new int[all.Length];
+            for (int i = 0; i < all.Length; i++) { oldLayers[i] = all[i].gameObject.layer; all[i].gameObject.layer = layer; }
+            var target = new RenderTexture(KareW, KareH, 24, RenderTextureFormat.ARGB32);
+            var go = new GameObject("[WP069-HudProbe]");
+            Camera cam = go.AddComponent<Camera>();
+            cam.enabled = false; cam.targetTexture = target; cam.clearFlags = CameraClearFlags.SolidColor; cam.cullingMask = 1 << layer;
+            cam.orthographic = true; cam.nearClipPlane = 0.01f; cam.farClipPlane = 10f;
+            RenderMode oldMode = canvas.renderMode; Camera oldCamera = canvas.worldCamera; float oldPlane = canvas.planeDistance;
+            canvas.renderMode = RenderMode.ScreenSpaceCamera; canvas.worldCamera = cam; canvas.planeDistance = 1f;
+            yield return null;
+            yield return null;
+            Canvas.ForceUpdateCanvases();
+            into[0] = CizRenk(cam, target, Color.black);
+            into[1] = CizRenk(cam, target, Color.white);
+            canvas.renderMode = oldMode; canvas.worldCamera = oldCamera; canvas.planeDistance = oldPlane;
+            for (int i = 0; i < all.Length; i++) if (all[i] != null) all[i].gameObject.layer = oldLayers[i];
+            cam.targetTexture = null; Object.Destroy(go); target.Release(); Object.Destroy(target);
+        }
+
+        private static Color32[] CizRenk(Camera cam, RenderTexture target, Color zemin)
+        {
+            cam.backgroundColor = zemin;
+            cam.Render();
+            RenderTexture previous = RenderTexture.active;
+            RenderTexture.active = target;
+            var read = new Texture2D(KareW, KareH, TextureFormat.RGBA32, false);
+            read.ReadPixels(new Rect(0, 0, KareW, KareH), 0, 0);
+            read.Apply();
+            RenderTexture.active = previous;
+            Color32[] px = read.GetPixels32();
+            Object.Destroy(read);
+            return px;
+        }
+
+        /// <summary>The world as the FP camera sees it (its pose, FOV and layers) at 1920×1080.</summary>
+        private static Color32[] DunyaKare(Camera world)
+        {
+            var target = new RenderTexture(KareW, KareH, 24, RenderTextureFormat.ARGB32);
+            var go = new GameObject("[WP069-WorldProbe]");
+            go.transform.SetPositionAndRotation(world.transform.position, world.transform.rotation);
+            Camera cam = go.AddComponent<Camera>();
+            cam.enabled = false; cam.targetTexture = target; cam.cullingMask = world.cullingMask; cam.clearFlags = world.clearFlags; cam.backgroundColor = world.backgroundColor;
+            cam.fieldOfView = world.fieldOfView; cam.nearClipPlane = world.nearClipPlane; cam.farClipPlane = world.farClipPlane; cam.aspect = KareW / (float)KareH;
+            Color32[] px = CizRenk(cam, target, world.backgroundColor);
+            cam.targetTexture = null; Object.Destroy(go); target.Release(); Object.Destroy(target);
+            return px;
+        }
+
+        /// <summary>World, then the view model where it covers (magenta key), then the HUD by its alpha (black / white passes).</summary>
+        private static Color32[] Birlestir(Color32[] world, Color32[] viewmodel, Color32[][] hud)
+        {
+            var o = new Color32[world.Length];
+            for (int i = 0; i < o.Length; i++)
+            {
+                Color32 c = world[i];
+                Color32 v = viewmodel[i];
+                if (v.r < 240 || v.g > 15 || v.b < 240) c = v;
+                Color32 k = hud[0][i], w = hud[1][i];
+                float a = 1f - (w.g - k.g) / 255f;
+                if (a > 0.01f)
+                {
+                    a = Mathf.Clamp01(a);
+                    c = new Color32((byte)Mathf.Clamp(k.r + (1f - a) * c.r, 0, 255), (byte)Mathf.Clamp(k.g + (1f - a) * c.g, 0, 255), (byte)Mathf.Clamp(k.b + (1f - a) * c.b, 0, 255), 255);
+                }
+
+                o[i] = c;
+            }
+
+            return o;
+        }
+
+        private static void YazPng(Color32[] px, int w, int h, string ad)
+        {
+            var tex = new Texture2D(w, h, TextureFormat.RGBA32, false);
+            tex.SetPixels32(px);
+            tex.Apply();
+            File.WriteAllBytes(Path.Combine(EvidenceDir, ad), tex.EncodeToPNG());
+            Object.Destroy(tex);
         }
 
         /// <summary>A world point on the 1920×1080 viewmodel frame (row 0 = bottom), through the viewmodel camera's own matrices.</summary>

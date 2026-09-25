@@ -488,32 +488,32 @@ namespace DD.Prototype.Weapons.EditorTools
         // ================================================================== first-person view poses (C-00 25.09)
 
         /// <summary>
-        /// Grip position in the viewmodel camera's space + scale per classic, barrel converging on the crosshair 8 m out
-        /// (WeaponFpViewPose.Converging). Tuned in the Run scene at 1080p rest against the C-00 frame target (lower right,
-        /// 40–90 k px, barrel toward the centre, clear of the S-09 HUD weapon cluster) with margin; measured by
-        /// WeaponModelSliceTests.FP_GorusPozu_OnSilah_KadrajBandinda. S-06 fits the FP arms to them (B4b).
+        /// The first-person view pose per classic (grip in the viewmodel camera's space, pitch / yaw, scale), tuned in the
+        /// Run scene at 1080p rest against the C-00 v2 target (lower right, ≈ 120–220 k px — tuned to ≈ 165 k with margin,
+        /// grip and magazine on screen, barrel converging on the crosshair 8 m out through S-01's screen transform);
+        /// measured by WeaponModelSliceTests.FP_GorusPozu_OnSilah_KadrajBandinda. S-06 fits the FP arms to them (B4b).
         /// </summary>
-        private static readonly Dictionary<string, (float x, float y, float z, float s)> FpPoses = new Dictionary<string, (float, float, float, float)>
+        private static readonly Dictionary<string, WeaponFpViewPose> FpPoses = new Dictionary<string, WeaponFpViewPose>
         {
-            { "ar_1", (0.26f, -0.20f, 0.08f, 0.85f) },
-            { "smg_1", (0.26f, -0.20f, 0.15f, 0.85f) },
-            { "sg_1", (0.26f, -0.20f, 0.08f, 0.85f) },
-            { "ar_2", (0.38f, -0.30f, 0.25f, 1f) },
-            { "smg_2", (0.26f, -0.20f, 0.08f, 1f) },
-            { "sg_2", (0.38f, -0.30f, 0.25f, 1f) },
-            { "lmg_1", (0.44f, -0.30f, 0.25f, 0.70f) },
-            { "lmg_2", (0.26f, -0.25f, 0.15f, 0.60f) },
-            { "sr_1", (0.38f, -0.30f, 0.25f, 1f) },
-            { "rl_1", (0.38f, -0.30f, 0.15f, 1f) },
+            { "ar_1", WeaponFpViewPose.At(0.565f, -0.134f, 0.35f, -10.34f, 31.36f) },
+            { "smg_1", WeaponFpViewPose.At(0.297f, -0.118f, 0.25f, -9.99f, 32.46f) },
+            { "sg_1", WeaponFpViewPose.At(0.490f, -0.102f, 0.35f, -10.10f, 31.76f) },
+            { "ar_2", WeaponFpViewPose.At(0.726f, -0.172f, 0.45f, -10.77f, 30.80f) },
+            { "smg_2", WeaponFpViewPose.At(0.565f, -0.102f, 0.35f, -10.14f, 31.36f) },
+            { "sg_2", WeaponFpViewPose.At(0.490f, -0.134f, 0.35f, -10.29f, 31.76f) },
+            { "lmg_1", WeaponFpViewPose.At(0.968f, -0.230f, 0.60f, -11.45f, 29.92f) },
+            { "lmg_2", WeaponFpViewPose.At(0.968f, -0.104f, 0.60f, -10.64f, 29.92f) },
+            { "sr_1", WeaponFpViewPose.At(0.565f, -0.165f, 0.35f, -10.53f, 31.36f) },
+            { "rl_1", WeaponFpViewPose.At(0.630f, -0.213f, 0.45f, -10.97f, 31.33f) },
         };
 
         // ================================================================== asset writing
 
         private static WeaponDefinition Write(WeaponDefinition fresh)
         {
-            if (FpPoses.TryGetValue(fresh.weaponId, out (float x, float y, float z, float s) fp))
+            if (FpPoses.TryGetValue(fresh.weaponId, out WeaponFpViewPose fp))
             {
-                fresh.presentation.fpView = WeaponFpViewPose.Converging(new Vector3(fp.x, fp.y, fp.z), fp.s);
+                fresh.presentation.fpView = fp;
             }
 
             string path = Folder + "/" + fresh.name + ".asset";
