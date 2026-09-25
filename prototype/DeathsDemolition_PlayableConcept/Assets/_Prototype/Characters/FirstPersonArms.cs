@@ -64,9 +64,13 @@ namespace DD.Prototype.Characters
             _alive = alive;
         }
 
+        /// <summary>The rig's uniform scale = the weapon's fpView scale (C-00 25.09: fpView owns FP placement; the arms scale with the gun around fp_camera).</summary>
+        public float RigScale { get; private set; } = 1f;
+
         /// <summary>The weapon's FP set (WeaponDefinition.AnimSet) or null (no FP arms for this weapon: S-02's fpView pose path).</summary>
-        public void SetWeaponSet(string animSet)
+        public void SetWeaponSet(string animSet, float fpViewScale = 1f)
         {
+            RigScale = fpViewScale > 0.01f ? fpViewScale : 1f;
             WeaponSet = HasSet(animSet) ? animSet : null;
             if (WeaponSet != null && _animator != null) Apply();
         }
@@ -189,6 +193,7 @@ namespace DD.Prototype.Characters
         {
             Transform root = _instance.transform;
             root.rotation = anchor.rotation;
+            root.localScale = Vector3.one * RigScale;
             if (_fpCamera == null) { root.position = anchor.position; return; }
             Vector3 local = root.InverseTransformPoint(_fpCamera.position);
             root.position = anchor.position - root.rotation * Vector3.Scale(local, root.lossyScale);

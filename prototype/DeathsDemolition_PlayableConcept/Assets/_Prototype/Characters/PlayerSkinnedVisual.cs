@@ -393,7 +393,7 @@ namespace DD.Prototype.Characters
             _weaponDef = def;
             _burstStart = -1f;
             int k = V3WeaponSets && def != null && _runtimeOverrides != null ? _setKeys.IndexOf(def.AnimSet) : -1;
-            if (_fpArms != null) _fpArms.SetWeaponSet(k < 0 ? null : _setKeys[k]);
+            if (_fpArms != null) _fpArms.SetWeaponSet(k < 0 ? null : _setKeys[k], def != null ? def.FpViewPose.scale : 1f);
             if (k < 0)
             {
                 WeaponAnimSet = null;
