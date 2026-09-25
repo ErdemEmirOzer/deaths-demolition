@@ -154,8 +154,9 @@ namespace DD.Prototype.Feedback.Vfx
         private static readonly int[] s_nearShare = { 100, 350, 1400 };
 
         // Source fractions inside a layer (renormalised over the sources that have an anchor in range).
-        // Shaft (cards, Performance) and Volume (the field, Cinematic / High) are never live together: one 0.30 share.
-        private static readonly float[] s_sourceFraction = { 0.55f, 0.30f, 0.15f, 1f, 0.7f, 0.3f, 0.6f, 0.4f, 0.6f, 0.4f, 0.30f };
+        // Shaft (cards, Performance) and Volume (the field, Cinematic / High) are never live together. The field takes the larger
+        // share (0.45 against the cards' 0.30): the user wants the dust in the shaft volume (DEC-102, 25.09).
+        private static readonly float[] s_sourceFraction = { 0.55f, 0.30f, 0.15f, 1f, 0.7f, 0.3f, 0.6f, 0.4f, 0.6f, 0.4f, 0.45f };
         private static readonly Layer[] s_sourceLayer =
         {
             Layer.Motes, Layer.Motes, Layer.Motes, Layer.Petals, Layer.Leaves, Layer.Leaves, Layer.Steam, Layer.Steam, Layer.Drips, Layer.Drips,

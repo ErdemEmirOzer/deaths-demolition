@@ -221,7 +221,11 @@ Shader "DD/VFX Atmo"
                 float cosT = dot(V, -L);
                 float forward = 4.0 * pow(saturate(cosT), 8.0) * (0.5 + 0.5 * saturate(_DD_ShaftDir.w));
                 float broad = 0.6 * pow(saturate(0.5 + 0.5 * cosT), 4.0);
-                float scatter = (forward + broad) * sunVis * (1.0 + 1.5 * shaft) * _AtmoGlint;
+                // DEC-102 (user, 25.09 via C-00): dust and pollen shine inside the shaft volume — while the field is live a grain
+                // in a shaft scatters up to ×4 and carries up to ×1.5 α; between the shafts it recedes to ×0.7 α.
+                float fieldLive = step(0.5, _DD_VL_Density.w);
+                float shaftGain = lerp(1.5, 3.0, fieldLive);
+                float scatter = (forward + broad) * sunVis * (1.0 + shaftGain * shaft) * _AtmoGlint;
 
                 float hz = lerp(_AtmoTwinkle.x, _AtmoTwinkle.y, rnd);
                 float tw = 0.5 + 0.5 * sin(6.2831853 * (hz * t + rnd * 7.13));
@@ -250,7 +254,8 @@ Shader "DD/VFX Atmo"
                     guard = lerp(0.2, 1.0, smoothstep(r * 0.6, r, d));
                 }
 
-                o.color.a = input.color.a * nearFade * farFade * shadeAlpha * guard * sizeAlpha;
+                float shaftAlpha = lerp(1.0, lerp(0.7, 1.5, saturate(shaft * sunVis)), fieldLive);
+                o.color.a = saturate(input.color.a * nearFade * farFade * shadeAlpha * guard * sizeAlpha * shaftAlpha);
                 return o;
             }
 

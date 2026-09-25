@@ -188,6 +188,8 @@ namespace DD.Prototype.Tests.PlayMode
             Shader.SetGlobalVector("_DD_CloudCookieU", Vector4.zero);
             Shader.SetGlobalVector("_DD_CloudCookieV", Vector4.zero);
             yield return null;
+            // The system itself stays out of the measurement (its open-air field emits round the focus — here the camera).
+            sys.enabled = false;
             try
             {
                 var counts = new int[1];
@@ -234,6 +236,7 @@ namespace DD.Prototype.Tests.PlayMode
             }
             finally
             {
+                sys.enabled = true;
                 if (cookieWas != null) Shader.SetGlobalTexture("_DD_CloudCookie", cookieWas);
                 Shader.SetGlobalVector("_DD_CloudCookieU", uWas);
                 Shader.SetGlobalVector("_DD_CloudCookieV", vWas);
@@ -250,8 +253,10 @@ namespace DD.Prototype.Tests.PlayMode
             var ep = new ParticleSystem.EmitParams { position = new Vector3(0f, 400f, 5f), velocity = Vector3.zero, startLifetime = 5f,
                 startSize3D = new Vector3(size, size, 0f), startColor = new Color(1f, 1f, 1f, 0.3f), rotation = 0f };
             ps.Emit(ep, 1);
-            yield return null;
-            yield return null;
+            // Game time, not frames: steam and petals fade in over their first tenths of a second, and batch-mode frames can be
+            // a few ms each (two frames read 0 px in some runs, ~190 in others).
+            float t0 = Time.time;
+            while (Time.time - t0 < 0.8f) yield return null;   // past the 12 % fade-in of a 5 s life
             var prev = RenderTexture.active;
             RenderTexture.active = rt;
             var tex = new Texture2D(256, 256, TextureFormat.RGBA32, false);
