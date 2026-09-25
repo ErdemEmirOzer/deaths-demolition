@@ -1,7 +1,7 @@
 {
     "source": "Assets/_Art/Textures/Source/T_ap023_moss_Packed.png",
-    "sourceSha256": "5d83974f557c015cdd111f1927c5c9f2f224eff266abd50272c9ccd41d9e4e6a",
+    "sourceSha256": "5acfdb046f3f84aa10f2ffa6f6a975b7d887f4b61ced45f54b689efee66af05a",
     "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
-    "utc": "2026-09-24T21:41:56.7537820Z",
-    "outputSha256": "a216da00bdf0952890ffb99be17380d0149299f425a337de6999d26f6416421d"
+    "utc": "2026-09-25T01:36:22.4224820Z",
+    "outputSha256": "7ff57d0e8f3f50ee03f4c7321f7d15b18b8e2b924aa6880e26c7b166e3619095"
 }

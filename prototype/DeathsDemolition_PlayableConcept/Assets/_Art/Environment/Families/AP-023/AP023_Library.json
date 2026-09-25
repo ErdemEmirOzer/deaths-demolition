@@ -1,11 +1,11 @@
 {
  "ap": "AP-023",
- "version": "manifest v004 (AP023.manifest.v1, 44 families / 148 FBX)",
+ "version": "manifest v005 (AP023.manifest.v1, 51 families / 166 FBX)",
  "derived": "source FBX used directly (embed off, path STRIP, -Z/Y-up); roles ap023_<role>; roof parts fade (role roof); sloped box shells carry obb; LOD0 bounds from the geometry, receipt-checked",
  "sources": [
   {
-   "path": "asset-production/AP-023/exports/AP023-manifest-v004.json",
-   "sha256": "5126352f112a0a9e02035f5b64aaabaa99c45c230e6e57e005a4914d4a867dba"
+   "path": "asset-production/AP-023/exports/AP023-manifest-v005.json",
+   "sha256": "8d4042c5182f43e0b5b2eb4ef5c36645431954faebe8b2e6d85927f1349be2ae"
   }
  ],
  "families": [
@@ -2857,6 +2857,101 @@
    ]
   },
   {
+   "family": "fence_hishigaki",
+   "occluder": false,
+   "kind": "",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_fence_hishigaki_V01",
+     "boundsMin": [
+      -0.045,
+      -0.045,
+      -0.3
+     ],
+     "boundsMax": [
+      1.80635,
+      0.045,
+      1.25
+     ],
+     "parts": [
+      {
+       "name": "bamboo",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP023_fence_hishigaki_V01.fbx",
+         "object": "AP023_fence_hishigaki_V01_bamboo_LOD0",
+         "materials": [
+          "ap023_bamboo_old"
+         ],
+         "facesPerSlot": [
+          310
+         ],
+         "triangles": 310,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_fence_hishigaki_V01.fbx",
+         "object": "AP023_fence_hishigaki_V01_bamboo_LOD1",
+         "materials": [
+          "ap023_bamboo_old"
+         ],
+         "facesPerSlot": [
+          178
+         ],
+         "triangles": 178,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_fence_hishigaki_V01.fbx",
+         "object": "AP023_fence_hishigaki_V01_bamboo_LOD2",
+         "materials": [
+          "ap023_hishigaki_card"
+         ],
+         "facesPerSlot": [
+          30
+         ],
+         "triangles": 30,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP023_fence_hishigaki_V01.fbx",
+       "object": "AP023_fence_hishigaki_V01_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.0,
+          -0.05,
+          0.0
+         ],
+         "max": [
+          1.8,
+          0.05,
+          1.2
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ]
+    }
+   ]
+  },
+  {
    "family": "fence_kenninji",
    "occluder": false,
    "kind": "",
@@ -3480,6 +3575,147 @@
           0.05,
           0.05,
           1.15
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "garden_bench",
+   "occluder": false,
+   "kind": "",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_garden_bench_V01",
+     "boundsMin": [
+      -0.8,
+      -0.195,
+      0.0
+     ],
+     "boundsMax": [
+      0.8,
+      0.195,
+      0.485
+     ],
+     "parts": [
+      {
+       "name": "frame",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP023_garden_bench_V01.fbx",
+         "object": "AP023_garden_bench_V01_frame_LOD0",
+         "materials": [
+          "ap023_wood_timber"
+         ],
+         "facesPerSlot": [
+          36
+         ],
+         "triangles": 36,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_garden_bench_V01.fbx",
+         "object": "AP023_garden_bench_V01_frame_LOD1",
+         "materials": [
+          "ap023_wood_timber"
+         ],
+         "facesPerSlot": [
+          36
+         ],
+         "triangles": 36,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_garden_bench_V01.fbx",
+         "object": "AP023_garden_bench_V01_frame_LOD2",
+         "materials": [
+          "ap023_wood_timber"
+         ],
+         "facesPerSlot": [
+          24
+         ],
+         "triangles": 24,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "wood",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP023_garden_bench_V01.fbx",
+         "object": "AP023_garden_bench_V01_wood_LOD0",
+         "materials": [
+          "ap023_wood_planks"
+         ],
+         "facesPerSlot": [
+          24
+         ],
+         "triangles": 24,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_garden_bench_V01.fbx",
+         "object": "AP023_garden_bench_V01_wood_LOD1",
+         "materials": [
+          "ap023_wood_planks"
+         ],
+         "facesPerSlot": [
+          24
+         ],
+         "triangles": 24,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_garden_bench_V01.fbx",
+         "object": "AP023_garden_bench_V01_wood_LOD2",
+         "materials": [
+          "ap023_wood_planks"
+         ],
+         "facesPerSlot": [
+          12
+         ],
+         "triangles": 12,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP023_garden_bench_V01.fbx",
+       "object": "AP023_garden_bench_V01_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.8,
+          -0.2,
+          0.0
+         ],
+         "max": [
+          0.8,
+          0.2,
+          0.49
          ],
          "positions": 8
         }
@@ -16313,6 +16549,3208 @@
    ]
   },
   {
+   "family": "plank_bridge",
+   "occluder": false,
+   "kind": "",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_plank_bridge_V01",
+     "boundsMin": [
+      -1.50099,
+      -5.4,
+      -1.0
+     ],
+     "boundsMax": [
+      1.54378,
+      5.4,
+      1.61699
+     ],
+     "parts": [
+      {
+       "name": "abutment",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP023_plank_bridge_V01.fbx",
+         "object": "AP023_plank_bridge_V01_abutment_LOD0",
+         "materials": [
+          "ap023_stone_ashlar",
+          "ap023_rock_moss"
+         ],
+         "facesPerSlot": [
+          48,
+          1472
+         ],
+         "triangles": 1520,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_plank_bridge_V01.fbx",
+         "object": "AP023_plank_bridge_V01_abutment_LOD1",
+         "materials": [
+          "ap023_stone_ashlar",
+          "ap023_rock_moss"
+         ],
+         "facesPerSlot": [
+          48,
+          536
+         ],
+         "triangles": 584,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_plank_bridge_V01.fbx",
+         "object": "AP023_plank_bridge_V01_abutment_LOD2",
+         "materials": [
+          "ap023_stone_ashlar"
+         ],
+         "facesPerSlot": [
+          48
+         ],
+         "triangles": 48,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "deck",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP023_plank_bridge_V01.fbx",
+         "object": "AP023_plank_bridge_V01_deck_LOD0",
+         "materials": [
+          "ap023_wood_timber"
+         ],
+         "facesPerSlot": [
+          1176
+         ],
+         "triangles": 1176,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_plank_bridge_V01.fbx",
+         "object": "AP023_plank_bridge_V01_deck_LOD1",
+         "materials": [
+          "ap023_wood_planks"
+         ],
+         "facesPerSlot": [
+          188
+         ],
+         "triangles": 188,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_plank_bridge_V01.fbx",
+         "object": "AP023_plank_bridge_V01_deck_LOD2",
+         "materials": [
+          "ap023_wood_planks"
+         ],
+         "facesPerSlot": [
+          76
+         ],
+         "triangles": 76,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "frame",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP023_plank_bridge_V01.fbx",
+         "object": "AP023_plank_bridge_V01_frame_LOD0",
+         "materials": [
+          "ap023_wood_timber"
+         ],
+         "facesPerSlot": [
+          2596
+         ],
+         "triangles": 2596,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_plank_bridge_V01.fbx",
+         "object": "AP023_plank_bridge_V01_frame_LOD1",
+         "materials": [
+          "ap023_wood_timber"
+         ],
+         "facesPerSlot": [
+          756
+         ],
+         "triangles": 756,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_plank_bridge_V01.fbx",
+         "object": "AP023_plank_bridge_V01_frame_LOD2",
+         "materials": [
+          "ap023_wood_timber"
+         ],
+         "facesPerSlot": [
+          108
+         ],
+         "triangles": 108,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "rail",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP023_plank_bridge_V01.fbx",
+         "object": "AP023_plank_bridge_V01_rail_LOD0",
+         "materials": [
+          "ap023_wood_timber"
+         ],
+         "facesPerSlot": [
+          2320
+         ],
+         "triangles": 2320,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_plank_bridge_V01.fbx",
+         "object": "AP023_plank_bridge_V01_rail_LOD1",
+         "materials": [
+          "ap023_wood_timber"
+         ],
+         "facesPerSlot": [
+          720
+         ],
+         "triangles": 720,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_plank_bridge_V01.fbx",
+         "object": "AP023_plank_bridge_V01_rail_LOD2",
+         "materials": [
+          "ap023_wood_timber"
+         ],
+         "facesPerSlot": [
+          264
+         ],
+         "triangles": 264,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_abutN",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.8,
+          4.0,
+          -0.6
+         ],
+         "max": [
+          0.8,
+          4.9,
+          0.3
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "abutN",
+       "broken": false,
+       "navmesh": "walkable"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_abutS",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.8,
+          -4.9,
+          -0.6
+         ],
+         "max": [
+          0.8,
+          -4.0,
+          0.3
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "abutS",
+       "broken": false,
+       "navmesh": "walkable"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_deck00",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.8,
+          -4.0,
+          0.18
+         ],
+         "max": [
+          0.8,
+          -3.33333,
+          0.37765
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.0,
+           -3.666665,
+           0.278825
+          ],
+          "axisX": [
+           0.0,
+           0.9932851,
+           0.1156923
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           0.1156923,
+           -0.9932851
+          ],
+          "size": [
+           0.671177,
+           1.6,
+           0.119194
+          ]
+         }
+        }
+       ],
+       "part": "deck00",
+       "broken": false,
+       "navmesh": "walkable"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_deck01",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.8,
+          -3.33333,
+          0.25765
+         ],
+         "max": [
+          0.8,
+          -2.66667,
+          0.45
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.0,
+           -3.0,
+           0.353825
+          ],
+          "axisX": [
+           0.0,
+           0.9941626,
+           0.1078926
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           0.1078926,
+           -0.9941626
+          ],
+          "size": [
+           0.670574,
+           1.6,
+           0.1193
+          ]
+         }
+        }
+       ],
+       "part": "deck01",
+       "broken": false,
+       "navmesh": "walkable"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_deck02",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.8,
+          -2.66667,
+          0.33
+         ],
+         "max": [
+          0.8,
+          -2.0,
+          0.51213
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.0,
+           -2.333335,
+           0.421065
+          ],
+          "axisX": [
+           0.0,
+           0.9956855,
+           0.0927924
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           0.0927924,
+           -0.9956855
+          ],
+          "size": [
+           0.669559,
+           1.6,
+           0.119482
+          ]
+         }
+        }
+       ],
+       "part": "deck02",
+       "broken": false,
+       "navmesh": "walkable"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_deck03",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.8,
+          -2.0,
+          0.39213
+         ],
+         "max": [
+          0.8,
+          -1.33333,
+          0.55981
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.0,
+           -1.666665,
+           0.47597
+          ],
+          "axisX": [
+           0.0,
+           0.9974522,
+           0.0713374
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           0.0713374,
+           -0.9974522
+          ],
+          "size": [
+           0.668373,
+           1.6,
+           0.119694
+          ]
+         }
+        }
+       ],
+       "part": "deck03",
+       "broken": false,
+       "navmesh": "walkable"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_deck04",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.8,
+          -1.33333,
+          0.43981
+         ],
+         "max": [
+          0.8,
+          -0.66667,
+          0.58978
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.0,
+           -1.0,
+           0.514795
+          ],
+          "axisX": [
+           0.0,
+           0.998991,
+           0.0449101
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           0.0449101,
+           -0.998991
+          ],
+          "size": [
+           0.667333,
+           1.6,
+           0.119879
+          ]
+         }
+        }
+       ],
+       "part": "deck04",
+       "broken": false,
+       "navmesh": "walkable"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_deck05",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.8,
+          -0.66667,
+          0.46978
+         ],
+         "max": [
+          0.8,
+          0.0,
+          0.6
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.0,
+           -0.333335,
+           0.53489
+          ],
+          "axisX": [
+           0.0,
+           0.9998825,
+           0.0153281
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           0.0153281,
+           -0.9998825
+          ],
+          "size": [
+           0.666748,
+           1.6,
+           0.119986
+          ]
+         }
+        }
+       ],
+       "part": "deck05",
+       "broken": false,
+       "navmesh": "walkable"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_deck06",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.8,
+          0.0,
+          0.46978
+         ],
+         "max": [
+          0.8,
+          0.66667,
+          0.6
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.0,
+           0.333335,
+           0.53489
+          ],
+          "axisX": [
+           0.0,
+           0.9998825,
+           -0.0153281
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           -0.0153281,
+           -0.9998825
+          ],
+          "size": [
+           0.666748,
+           1.6,
+           0.119986
+          ]
+         }
+        }
+       ],
+       "part": "deck06",
+       "broken": false,
+       "navmesh": "walkable"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_deck07",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.8,
+          0.66667,
+          0.43981
+         ],
+         "max": [
+          0.8,
+          1.33333,
+          0.58978
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.0,
+           1.0,
+           0.514795
+          ],
+          "axisX": [
+           0.0,
+           0.998991,
+           -0.0449101
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           -0.0449101,
+           -0.998991
+          ],
+          "size": [
+           0.667333,
+           1.6,
+           0.119879
+          ]
+         }
+        }
+       ],
+       "part": "deck07",
+       "broken": false,
+       "navmesh": "walkable"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_deck08",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.8,
+          1.33333,
+          0.39213
+         ],
+         "max": [
+          0.8,
+          2.0,
+          0.55981
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.0,
+           1.666665,
+           0.47597
+          ],
+          "axisX": [
+           0.0,
+           0.9974522,
+           -0.0713374
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           -0.0713374,
+           -0.9974522
+          ],
+          "size": [
+           0.668373,
+           1.6,
+           0.119694
+          ]
+         }
+        }
+       ],
+       "part": "deck08",
+       "broken": false,
+       "navmesh": "walkable"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_deck09",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.8,
+          2.0,
+          0.33
+         ],
+         "max": [
+          0.8,
+          2.66667,
+          0.51213
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.0,
+           2.333335,
+           0.421065
+          ],
+          "axisX": [
+           0.0,
+           0.9956855,
+           -0.0927924
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           -0.0927924,
+           -0.9956855
+          ],
+          "size": [
+           0.669559,
+           1.6,
+           0.119482
+          ]
+         }
+        }
+       ],
+       "part": "deck09",
+       "broken": false,
+       "navmesh": "walkable"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_deck10",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.8,
+          2.66667,
+          0.25765
+         ],
+         "max": [
+          0.8,
+          3.33333,
+          0.45
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.0,
+           3.0,
+           0.353825
+          ],
+          "axisX": [
+           0.0,
+           0.9941626,
+           -0.1078926
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           -0.1078926,
+           -0.9941626
+          ],
+          "size": [
+           0.670574,
+           1.6,
+           0.1193
+          ]
+         }
+        }
+       ],
+       "part": "deck10",
+       "broken": false,
+       "navmesh": "walkable"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_deck11",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.8,
+          3.33333,
+          0.18
+         ],
+         "max": [
+          0.8,
+          4.0,
+          0.37765
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.0,
+           3.666665,
+           0.278825
+          ],
+          "axisX": [
+           0.0,
+           0.9932851,
+           -0.1156923
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           -0.1156923,
+           -0.9932851
+          ],
+          "size": [
+           0.671177,
+           1.6,
+           0.119194
+          ]
+         }
+        }
+       ],
+       "part": "deck11",
+       "broken": false,
+       "navmesh": "walkable"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_landN",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.90909,
+          4.9,
+          -0.3
+         ],
+         "max": [
+          0.90909,
+          5.4,
+          0.15
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "landN",
+       "broken": false,
+       "navmesh": "walkable"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_landS",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.90909,
+          -5.4,
+          -0.3
+         ],
+         "max": [
+          0.90909,
+          -4.9,
+          0.15
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "landS",
+       "broken": false,
+       "navmesh": "walkable"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_railL00",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.86061,
+          -4.0,
+          0.3
+         ],
+         "max": [
+          -0.78788,
+          -3.33333,
+          1.35765
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           -0.824245,
+           -3.666665,
+           0.828825
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.07273,
+           0.66667
+          ]
+         }
+        }
+       ],
+       "part": "railL00",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_railL01",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.86061,
+          -3.33333,
+          0.37765
+         ],
+         "max": [
+          -0.78788,
+          -2.66667,
+          1.43
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           -0.824245,
+           -3.0,
+           0.903825
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.07273,
+           0.66666
+          ]
+         }
+        }
+       ],
+       "part": "railL01",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_railL02",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.86061,
+          -2.66667,
+          0.45
+         ],
+         "max": [
+          -0.78788,
+          -2.0,
+          1.49213
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           -0.824245,
+           -2.333335,
+           0.971065
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.07273,
+           0.66667
+          ]
+         }
+        }
+       ],
+       "part": "railL02",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_railL03",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.86061,
+          -2.0,
+          0.51213
+         ],
+         "max": [
+          -0.78788,
+          -1.33333,
+          1.53981
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           -0.824245,
+           -1.666665,
+           1.02597
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.07273,
+           0.66667
+          ]
+         }
+        }
+       ],
+       "part": "railL03",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_railL04",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.86061,
+          -1.33333,
+          0.55981
+         ],
+         "max": [
+          -0.78788,
+          -0.66667,
+          1.56978
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           -0.824245,
+           -1.0,
+           1.064795
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.07273,
+           0.66666
+          ]
+         }
+        }
+       ],
+       "part": "railL04",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_railL05",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.86061,
+          -0.66667,
+          0.58978
+         ],
+         "max": [
+          -0.78788,
+          0.0,
+          1.58
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           -0.824245,
+           -0.333335,
+           1.08489
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.07273,
+           0.66667
+          ]
+         }
+        }
+       ],
+       "part": "railL05",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_railL06",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.86061,
+          0.0,
+          0.58978
+         ],
+         "max": [
+          -0.78788,
+          0.66667,
+          1.58
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           -0.824245,
+           0.333335,
+           1.08489
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.07273,
+           0.66667
+          ]
+         }
+        }
+       ],
+       "part": "railL06",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_railL07",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.86061,
+          0.66667,
+          0.55981
+         ],
+         "max": [
+          -0.78788,
+          1.33333,
+          1.56978
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           -0.824245,
+           1.0,
+           1.064795
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.07273,
+           0.66666
+          ]
+         }
+        }
+       ],
+       "part": "railL07",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_railL08",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.86061,
+          1.33333,
+          0.51213
+         ],
+         "max": [
+          -0.78788,
+          2.0,
+          1.53981
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           -0.824245,
+           1.666665,
+           1.02597
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.07273,
+           0.66667
+          ]
+         }
+        }
+       ],
+       "part": "railL08",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_railL09",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.86061,
+          2.0,
+          0.45
+         ],
+         "max": [
+          -0.78788,
+          2.66667,
+          1.49213
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           -0.824245,
+           2.333335,
+           0.971065
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.07273,
+           0.66667
+          ]
+         }
+        }
+       ],
+       "part": "railL09",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_railL10",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.86061,
+          2.66667,
+          0.37765
+         ],
+         "max": [
+          -0.78788,
+          3.33333,
+          1.43
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           -0.824245,
+           3.0,
+           0.903825
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.07273,
+           0.66666
+          ]
+         }
+        }
+       ],
+       "part": "railL10",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_railL11",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.86061,
+          3.33333,
+          0.3
+         ],
+         "max": [
+          -0.78788,
+          4.0,
+          1.35765
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           -0.824245,
+           3.666665,
+           0.828825
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.07273,
+           0.66667
+          ]
+         }
+        }
+       ],
+       "part": "railL11",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_railR00",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.78788,
+          -4.0,
+          0.3
+         ],
+         "max": [
+          0.86061,
+          -3.33333,
+          1.35765
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.824245,
+           -3.666665,
+           0.828825
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.07273,
+           0.66667
+          ]
+         }
+        }
+       ],
+       "part": "railR00",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_railR01",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.78788,
+          -3.33333,
+          0.37765
+         ],
+         "max": [
+          0.86061,
+          -2.66667,
+          1.43
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.824245,
+           -3.0,
+           0.903825
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.07273,
+           0.66666
+          ]
+         }
+        }
+       ],
+       "part": "railR01",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_railR02",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.78788,
+          -2.66667,
+          0.45
+         ],
+         "max": [
+          0.86061,
+          -2.0,
+          1.49213
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.824245,
+           -2.333335,
+           0.971065
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.07273,
+           0.66667
+          ]
+         }
+        }
+       ],
+       "part": "railR02",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_railR03",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.78788,
+          -2.0,
+          0.51213
+         ],
+         "max": [
+          0.86061,
+          -1.33333,
+          1.53981
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.824245,
+           -1.666665,
+           1.02597
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.07273,
+           0.66667
+          ]
+         }
+        }
+       ],
+       "part": "railR03",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_railR04",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.78788,
+          -1.33333,
+          0.55981
+         ],
+         "max": [
+          0.86061,
+          -0.66667,
+          1.56978
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.824245,
+           -1.0,
+           1.064795
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.07273,
+           0.66666
+          ]
+         }
+        }
+       ],
+       "part": "railR04",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_railR05",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.78788,
+          -0.66667,
+          0.58978
+         ],
+         "max": [
+          0.86061,
+          0.0,
+          1.58
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.824245,
+           -0.333335,
+           1.08489
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.07273,
+           0.66667
+          ]
+         }
+        }
+       ],
+       "part": "railR05",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_railR06",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.78788,
+          0.0,
+          0.58978
+         ],
+         "max": [
+          0.86061,
+          0.66667,
+          1.58
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.824245,
+           0.333335,
+           1.08489
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.07273,
+           0.66667
+          ]
+         }
+        }
+       ],
+       "part": "railR06",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_railR07",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.78788,
+          0.66667,
+          0.55981
+         ],
+         "max": [
+          0.86061,
+          1.33333,
+          1.56978
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.824245,
+           1.0,
+           1.064795
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.07273,
+           0.66666
+          ]
+         }
+        }
+       ],
+       "part": "railR07",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_railR08",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.78788,
+          1.33333,
+          0.51213
+         ],
+         "max": [
+          0.86061,
+          2.0,
+          1.53981
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.824245,
+           1.666665,
+           1.02597
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.07273,
+           0.66667
+          ]
+         }
+        }
+       ],
+       "part": "railR08",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_railR09",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.78788,
+          2.0,
+          0.45
+         ],
+         "max": [
+          0.86061,
+          2.66667,
+          1.49213
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.824245,
+           2.333335,
+           0.971065
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.07273,
+           0.66667
+          ]
+         }
+        }
+       ],
+       "part": "railR09",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_railR10",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.78788,
+          2.66667,
+          0.37765
+         ],
+         "max": [
+          0.86061,
+          3.33333,
+          1.43
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.824245,
+           3.0,
+           0.903825
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.07273,
+           0.66666
+          ]
+         }
+        }
+       ],
+       "part": "railR10",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_plank_bridge_V01.fbx",
+       "object": "AP023_plank_bridge_V01_COL_railR11",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.78788,
+          3.33333,
+          0.3
+         ],
+         "max": [
+          0.86061,
+          4.0,
+          1.35765
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.824245,
+           3.666665,
+           0.828825
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.07273,
+           0.66667
+          ]
+         }
+        }
+       ],
+       "part": "railR11",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "planter",
+   "occluder": false,
+   "kind": "",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_planter_V01",
+     "boundsMin": [
+      -0.5,
+      -0.18,
+      -0.1
+     ],
+     "boundsMax": [
+      0.5,
+      0.18,
+      0.6
+     ],
+     "parts": [
+      {
+       "name": "frame",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP023_planter_V01.fbx",
+         "object": "AP023_planter_V01_frame_LOD0",
+         "materials": [
+          "ap023_granite",
+          "ap023_granite_ashlar"
+         ],
+         "facesPerSlot": [
+          28,
+          12
+         ],
+         "triangles": 40,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_planter_V01.fbx",
+         "object": "AP023_planter_V01_frame_LOD1",
+         "materials": [
+          "ap023_granite",
+          "ap023_granite_ashlar"
+         ],
+         "facesPerSlot": [
+          12,
+          12
+         ],
+         "triangles": 24,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_planter_V01.fbx",
+         "object": "AP023_planter_V01_frame_LOD2",
+         "materials": [
+          "ap023_granite_ashlar"
+         ],
+         "facesPerSlot": [
+          12
+         ],
+         "triangles": 12,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP023_planter_V01.fbx",
+       "object": "AP023_planter_V01_frame_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.5,
+          -0.18,
+          -0.1
+         ],
+         "max": [
+          0.5,
+          0.18,
+          0.6
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "frame",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ]
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_planter_V02",
+     "boundsMin": [
+      -1.0,
+      -0.18,
+      -0.1
+     ],
+     "boundsMax": [
+      1.0,
+      0.18,
+      0.6
+     ],
+     "parts": [
+      {
+       "name": "frame",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP023_planter_V02.fbx",
+         "object": "AP023_planter_V02_frame_LOD0",
+         "materials": [
+          "ap023_granite",
+          "ap023_granite_ashlar"
+         ],
+         "facesPerSlot": [
+          28,
+          12
+         ],
+         "triangles": 40,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_planter_V02.fbx",
+         "object": "AP023_planter_V02_frame_LOD1",
+         "materials": [
+          "ap023_granite",
+          "ap023_granite_ashlar"
+         ],
+         "facesPerSlot": [
+          12,
+          12
+         ],
+         "triangles": 24,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_planter_V02.fbx",
+         "object": "AP023_planter_V02_frame_LOD2",
+         "materials": [
+          "ap023_granite_ashlar"
+         ],
+         "facesPerSlot": [
+          12
+         ],
+         "triangles": 12,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP023_planter_V02.fbx",
+       "object": "AP023_planter_V02_frame_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.0,
+          -0.18,
+          -0.1
+         ],
+         "max": [
+          1.0,
+          0.18,
+          0.6
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "frame",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ]
+    },
+    {
+     "id": "V03",
+     "prefab": "SM_planter_V03",
+     "boundsMin": [
+      -1.5,
+      -0.18,
+      -0.1
+     ],
+     "boundsMax": [
+      1.5,
+      0.18,
+      0.6
+     ],
+     "parts": [
+      {
+       "name": "frame",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP023_planter_V03.fbx",
+         "object": "AP023_planter_V03_frame_LOD0",
+         "materials": [
+          "ap023_granite",
+          "ap023_granite_ashlar"
+         ],
+         "facesPerSlot": [
+          28,
+          12
+         ],
+         "triangles": 40,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_planter_V03.fbx",
+         "object": "AP023_planter_V03_frame_LOD1",
+         "materials": [
+          "ap023_granite",
+          "ap023_granite_ashlar"
+         ],
+         "facesPerSlot": [
+          12,
+          12
+         ],
+         "triangles": 24,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_planter_V03.fbx",
+         "object": "AP023_planter_V03_frame_LOD2",
+         "materials": [
+          "ap023_granite_ashlar"
+         ],
+         "facesPerSlot": [
+          12
+         ],
+         "triangles": 12,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP023_planter_V03.fbx",
+       "object": "AP023_planter_V03_frame_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.5,
+          -0.18,
+          -0.1
+         ],
+         "max": [
+          1.5,
+          0.18,
+          0.6
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "frame",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ]
+    },
+    {
+     "id": "V04",
+     "prefab": "SM_planter_V04",
+     "boundsMin": [
+      -0.18,
+      -0.18,
+      -0.1
+     ],
+     "boundsMax": [
+      0.18,
+      0.18,
+      0.6
+     ],
+     "parts": [
+      {
+       "name": "frame",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP023_planter_V04.fbx",
+         "object": "AP023_planter_V04_frame_LOD0",
+         "materials": [
+          "ap023_granite",
+          "ap023_granite_ashlar"
+         ],
+         "facesPerSlot": [
+          28,
+          12
+         ],
+         "triangles": 40,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_planter_V04.fbx",
+         "object": "AP023_planter_V04_frame_LOD1",
+         "materials": [
+          "ap023_granite",
+          "ap023_granite_ashlar"
+         ],
+         "facesPerSlot": [
+          28,
+          12
+         ],
+         "triangles": 40,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_planter_V04.fbx",
+         "object": "AP023_planter_V04_frame_LOD2",
+         "materials": [
+          "ap023_granite",
+          "ap023_granite_ashlar"
+         ],
+         "facesPerSlot": [
+          12,
+          12
+         ],
+         "triangles": 24,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP023_planter_V04.fbx",
+       "object": "AP023_planter_V04_frame_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.18,
+          -0.18,
+          -0.1
+         ],
+         "max": [
+          0.18,
+          0.18,
+          0.6
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "frame",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ]
+    },
+    {
+     "id": "V05",
+     "prefab": "SM_planter_V05",
+     "boundsMin": [
+      -0.18,
+      -0.18,
+      -0.1
+     ],
+     "boundsMax": [
+      0.18,
+      0.18,
+      0.6
+     ],
+     "parts": [
+      {
+       "name": "frame",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP023_planter_V05.fbx",
+         "object": "AP023_planter_V05_frame_LOD0",
+         "materials": [
+          "ap023_granite",
+          "ap023_granite_ashlar"
+         ],
+         "facesPerSlot": [
+          12,
+          12
+         ],
+         "triangles": 24,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_planter_V05.fbx",
+         "object": "AP023_planter_V05_frame_LOD1",
+         "materials": [
+          "ap023_granite",
+          "ap023_granite_ashlar"
+         ],
+         "facesPerSlot": [
+          12,
+          12
+         ],
+         "triangles": 24,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_planter_V05.fbx",
+         "object": "AP023_planter_V05_frame_LOD2",
+         "materials": [
+          "ap023_granite",
+          "ap023_granite_ashlar"
+         ],
+         "facesPerSlot": [
+          12,
+          12
+         ],
+         "triangles": 24,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP023_planter_V05.fbx",
+       "object": "AP023_planter_V05_frame_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.18,
+          -0.18,
+          -0.1
+         ],
+         "max": [
+          0.18,
+          0.18,
+          0.6
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "frame",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ]
+    },
+    {
+     "id": "V06",
+     "prefab": "SM_planter_V06",
+     "boundsMin": [
+      -0.18,
+      -0.17554,
+      -0.1
+     ],
+     "boundsMax": [
+      0.18,
+      0.17554,
+      0.62
+     ],
+     "parts": [
+      {
+       "name": "frame",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP023_planter_V06.fbx",
+         "object": "AP023_planter_V06_frame_LOD0",
+         "materials": [
+          "ap023_granite",
+          "ap023_granite_ashlar"
+         ],
+         "facesPerSlot": [
+          46,
+          12
+         ],
+         "triangles": 58,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_planter_V06.fbx",
+         "object": "AP023_planter_V06_frame_LOD1",
+         "materials": [
+          "ap023_granite",
+          "ap023_granite_ashlar"
+         ],
+         "facesPerSlot": [
+          22,
+          12
+         ],
+         "triangles": 34,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_planter_V06.fbx",
+         "object": "AP023_planter_V06_frame_LOD2",
+         "materials": [
+          "ap023_granite",
+          "ap023_granite_ashlar"
+         ],
+         "facesPerSlot": [
+          22,
+          12
+         ],
+         "triangles": 34,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP023_planter_V06.fbx",
+       "object": "AP023_planter_V06_frame_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.19,
+          -0.19,
+          -0.1
+         ],
+         "max": [
+          0.19,
+          0.19,
+          0.6
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "frame",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ]
+    },
+    {
+     "id": "V07",
+     "prefab": "SM_planter_V07",
+     "boundsMin": [
+      -1.53,
+      -1.53,
+      -0.1
+     ],
+     "boundsMax": [
+      1.53,
+      1.53,
+      0.68
+     ],
+     "parts": [
+      {
+       "name": "fill",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP023_planter_V07.fbx",
+         "object": "AP023_planter_V07_fill_LOD0",
+         "materials": [
+          "ap023_moss"
+         ],
+         "facesPerSlot": [
+          28
+         ],
+         "triangles": 28,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_planter_V07.fbx",
+         "object": "AP023_planter_V07_fill_LOD1",
+         "materials": [
+          "ap023_moss"
+         ],
+         "facesPerSlot": [
+          28
+         ],
+         "triangles": 28,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_planter_V07.fbx",
+         "object": "AP023_planter_V07_fill_LOD2",
+         "materials": [
+          "ap023_moss"
+         ],
+         "facesPerSlot": [
+          28
+         ],
+         "triangles": 28,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "frame",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP023_planter_V07.fbx",
+         "object": "AP023_planter_V07_frame_LOD0",
+         "materials": [
+          "ap023_granite",
+          "ap023_granite_ashlar"
+         ],
+         "facesPerSlot": [
+          112,
+          48
+         ],
+         "triangles": 160,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_planter_V07.fbx",
+         "object": "AP023_planter_V07_frame_LOD1",
+         "materials": [
+          "ap023_granite",
+          "ap023_granite_ashlar"
+         ],
+         "facesPerSlot": [
+          48,
+          48
+         ],
+         "triangles": 96,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_planter_V07.fbx",
+         "object": "AP023_planter_V07_frame_LOD2",
+         "materials": [
+          "ap023_granite_ashlar"
+         ],
+         "facesPerSlot": [
+          48
+         ],
+         "triangles": 48,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP023_planter_V07.fbx",
+       "object": "AP023_planter_V07_frame_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.5,
+          -1.5,
+          -0.1
+         ],
+         "max": [
+          1.5,
+          1.5,
+          0.6
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "frame",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ]
+    },
+    {
+     "id": "V08",
+     "prefab": "SM_planter_V08",
+     "boundsMin": [
+      -2.03,
+      -3.03,
+      -0.1
+     ],
+     "boundsMax": [
+      2.03,
+      3.03,
+      0.68
+     ],
+     "parts": [
+      {
+       "name": "fill",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP023_planter_V08.fbx",
+         "object": "AP023_planter_V08_fill_LOD0",
+         "materials": [
+          "ap023_moss"
+         ],
+         "facesPerSlot": [
+          28
+         ],
+         "triangles": 28,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_planter_V08.fbx",
+         "object": "AP023_planter_V08_fill_LOD1",
+         "materials": [
+          "ap023_moss"
+         ],
+         "facesPerSlot": [
+          28
+         ],
+         "triangles": 28,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_planter_V08.fbx",
+         "object": "AP023_planter_V08_fill_LOD2",
+         "materials": [
+          "ap023_moss"
+         ],
+         "facesPerSlot": [
+          28
+         ],
+         "triangles": 28,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "frame",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP023_planter_V08.fbx",
+         "object": "AP023_planter_V08_frame_LOD0",
+         "materials": [
+          "ap023_granite",
+          "ap023_granite_ashlar"
+         ],
+         "facesPerSlot": [
+          112,
+          48
+         ],
+         "triangles": 160,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_planter_V08.fbx",
+         "object": "AP023_planter_V08_frame_LOD1",
+         "materials": [
+          "ap023_granite",
+          "ap023_granite_ashlar"
+         ],
+         "facesPerSlot": [
+          48,
+          48
+         ],
+         "triangles": 96,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_planter_V08.fbx",
+         "object": "AP023_planter_V08_frame_LOD2",
+         "materials": [
+          "ap023_granite_ashlar"
+         ],
+         "facesPerSlot": [
+          48
+         ],
+         "triangles": 48,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP023_planter_V08.fbx",
+       "object": "AP023_planter_V08_frame_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -2.0,
+          -3.0,
+          -0.1
+         ],
+         "max": [
+          2.0,
+          3.0,
+          0.6
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "frame",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ]
+    },
+    {
+     "id": "V09",
+     "prefab": "SM_planter_V09",
+     "boundsMin": [
+      -1.03,
+      -4.03,
+      -0.1
+     ],
+     "boundsMax": [
+      1.03,
+      4.03,
+      0.68
+     ],
+     "parts": [
+      {
+       "name": "fill",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP023_planter_V09.fbx",
+         "object": "AP023_planter_V09_fill_LOD0",
+         "materials": [
+          "ap023_moss"
+         ],
+         "facesPerSlot": [
+          28
+         ],
+         "triangles": 28,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_planter_V09.fbx",
+         "object": "AP023_planter_V09_fill_LOD1",
+         "materials": [
+          "ap023_moss"
+         ],
+         "facesPerSlot": [
+          28
+         ],
+         "triangles": 28,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_planter_V09.fbx",
+         "object": "AP023_planter_V09_fill_LOD2",
+         "materials": [
+          "ap023_moss"
+         ],
+         "facesPerSlot": [
+          28
+         ],
+         "triangles": 28,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "frame",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP023_planter_V09.fbx",
+         "object": "AP023_planter_V09_frame_LOD0",
+         "materials": [
+          "ap023_granite",
+          "ap023_granite_ashlar"
+         ],
+         "facesPerSlot": [
+          112,
+          48
+         ],
+         "triangles": 160,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_planter_V09.fbx",
+         "object": "AP023_planter_V09_frame_LOD1",
+         "materials": [
+          "ap023_granite",
+          "ap023_granite_ashlar"
+         ],
+         "facesPerSlot": [
+          48,
+          48
+         ],
+         "triangles": 96,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_planter_V09.fbx",
+         "object": "AP023_planter_V09_frame_LOD2",
+         "materials": [
+          "ap023_granite_ashlar"
+         ],
+         "facesPerSlot": [
+          48
+         ],
+         "triangles": 48,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP023_planter_V09.fbx",
+       "object": "AP023_planter_V09_frame_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.0,
+          -4.0,
+          -0.1
+         ],
+         "max": [
+          1.0,
+          4.0,
+          0.6
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "frame",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ]
+    }
+   ]
+  },
+  {
    "family": "pond_reeds",
    "occluder": false,
    "kind": "",
@@ -19360,6 +22798,293 @@
    ]
   },
   {
+   "family": "sugi",
+   "occluder": false,
+   "kind": "",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_sugi_V01",
+     "boundsMin": [
+      -2.95789,
+      -2.86728,
+      0.0
+     ],
+     "boundsMax": [
+      2.83525,
+      2.90871,
+      16.0
+     ],
+     "parts": [
+      {
+       "name": "foliage",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP023_sugi_V01.fbx",
+         "object": "AP023_sugi_V01_foliage_LOD0",
+         "materials": [
+          "ap023_pine_needles"
+         ],
+         "facesPerSlot": [
+          2142
+         ],
+         "triangles": 2142,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP023_sugi_V01.fbx",
+         "object": "AP023_sugi_V01_foliage_LOD1",
+         "materials": [
+          "ap023_pine_needles"
+         ],
+         "facesPerSlot": [
+          408
+         ],
+         "triangles": 408,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP023_sugi_V01.fbx",
+         "object": "AP023_sugi_V01_foliage_LOD2",
+         "materials": [
+          "ap023_pine_needles"
+         ],
+         "facesPerSlot": [
+          112
+         ],
+         "triangles": 112,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      },
+      {
+       "name": "trunk",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP023_sugi_V01.fbx",
+         "object": "AP023_sugi_V01_trunk_LOD0",
+         "materials": [
+          "ap023_bark_pine"
+         ],
+         "facesPerSlot": [
+          542
+         ],
+         "triangles": 542,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_sugi_V01.fbx",
+         "object": "AP023_sugi_V01_trunk_LOD1",
+         "materials": [
+          "ap023_bark_pine"
+         ],
+         "facesPerSlot": [
+          152
+         ],
+         "triangles": 152,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_sugi_V01.fbx",
+         "object": "AP023_sugi_V01_trunk_LOD2",
+         "materials": [
+          "ap023_bark_pine"
+         ],
+         "facesPerSlot": [
+          56
+         ],
+         "triangles": 56,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP023_sugi_V01.fbx",
+       "object": "AP023_sugi_V01_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.32516,
+          -0.32516,
+          0.8
+         ],
+         "max": [
+          0.32516,
+          0.32516,
+          1.77778
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ]
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_sugi_V02",
+     "boundsMin": [
+      -2.03176,
+      -2.11648,
+      0.0
+     ],
+     "boundsMax": [
+      2.15509,
+      2.03276,
+      12.0
+     ],
+     "parts": [
+      {
+       "name": "foliage",
+       "role": "lod",
+       "wind": true,
+       "lods": [
+        {
+         "fbx": "AP023_sugi_V02.fbx",
+         "object": "AP023_sugi_V02_foliage_LOD0",
+         "materials": [
+          "ap023_pine_needles"
+         ],
+         "facesPerSlot": [
+          1434
+         ],
+         "triangles": 1434,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP023_sugi_V02.fbx",
+         "object": "AP023_sugi_V02_foliage_LOD1",
+         "materials": [
+          "ap023_pine_needles"
+         ],
+         "facesPerSlot": [
+          228
+         ],
+         "triangles": 228,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        },
+        {
+         "fbx": "AP023_sugi_V02.fbx",
+         "object": "AP023_sugi_V02_foliage_LOD2",
+         "materials": [
+          "ap023_pine_needles"
+         ],
+         "facesPerSlot": [
+          68
+         ],
+         "triangles": 68,
+         "colourLayers": [
+          "AP003_Wind"
+         ],
+         "windExpected": true
+        }
+       ]
+      },
+      {
+       "name": "trunk",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP023_sugi_V02.fbx",
+         "object": "AP023_sugi_V02_trunk_LOD0",
+         "materials": [
+          "ap023_bark_pine"
+         ],
+         "facesPerSlot": [
+          548
+         ],
+         "triangles": 548,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_sugi_V02.fbx",
+         "object": "AP023_sugi_V02_trunk_LOD1",
+         "materials": [
+          "ap023_bark_pine"
+         ],
+         "facesPerSlot": [
+          156
+         ],
+         "triangles": 156,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_sugi_V02.fbx",
+         "object": "AP023_sugi_V02_trunk_LOD2",
+         "materials": [
+          "ap023_bark_pine"
+         ],
+         "facesPerSlot": [
+          56
+         ],
+         "triangles": 56,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP023_sugi_V02.fbx",
+       "object": "AP023_sugi_V02_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.25864,
+          -0.25864,
+          0.66667
+         ],
+         "max": [
+          0.25864,
+          0.25864,
+          2.0
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ]
+    }
+   ]
+  },
+  {
    "family": "taiko_bridge",
    "occluder": false,
    "kind": "",
@@ -21568,6 +25293,2220 @@
            1.082353,
            0.12,
            0.905435
+          ]
+         }
+        }
+       ],
+       "part": "railR11",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ]
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_taiko_bridge_V02",
+     "boundsMin": [
+      -1.7813,
+      -4.4,
+      -1.0
+     ],
+     "boundsMax": [
+      1.82409,
+      4.4,
+      2.415
+     ],
+     "parts": [
+      {
+       "name": "abutment",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP023_taiko_bridge_V02.fbx",
+         "object": "AP023_taiko_bridge_V02_abutment_LOD0",
+         "materials": [
+          "ap023_stone_ashlar",
+          "ap023_rock_moss"
+         ],
+         "facesPerSlot": [
+          48,
+          1472
+         ],
+         "triangles": 1520,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_taiko_bridge_V02.fbx",
+         "object": "AP023_taiko_bridge_V02_abutment_LOD1",
+         "materials": [
+          "ap023_stone_ashlar",
+          "ap023_rock_moss"
+         ],
+         "facesPerSlot": [
+          48,
+          536
+         ],
+         "triangles": 584,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_taiko_bridge_V02.fbx",
+         "object": "AP023_taiko_bridge_V02_abutment_LOD2",
+         "materials": [
+          "ap023_stone_ashlar"
+         ],
+         "facesPerSlot": [
+          48
+         ],
+         "triangles": 48,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "deck",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP023_taiko_bridge_V02.fbx",
+         "object": "AP023_taiko_bridge_V02_deck_LOD0",
+         "materials": [
+          "ap023_wood_timber"
+         ],
+         "facesPerSlot": [
+          924
+         ],
+         "triangles": 924,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_taiko_bridge_V02.fbx",
+         "object": "AP023_taiko_bridge_V02_deck_LOD1",
+         "materials": [
+          "ap023_wood_planks"
+         ],
+         "facesPerSlot": [
+          188
+         ],
+         "triangles": 188,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_taiko_bridge_V02.fbx",
+         "object": "AP023_taiko_bridge_V02_deck_LOD2",
+         "materials": [
+          "ap023_wood_planks"
+         ],
+         "facesPerSlot": [
+          76
+         ],
+         "triangles": 76,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "frame",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP023_taiko_bridge_V02.fbx",
+         "object": "AP023_taiko_bridge_V02_frame_LOD0",
+         "materials": [
+          "ap023_wood_timber"
+         ],
+         "facesPerSlot": [
+          2596
+         ],
+         "triangles": 2596,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_taiko_bridge_V02.fbx",
+         "object": "AP023_taiko_bridge_V02_frame_LOD1",
+         "materials": [
+          "ap023_wood_timber"
+         ],
+         "facesPerSlot": [
+          756
+         ],
+         "triangles": 756,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_taiko_bridge_V02.fbx",
+         "object": "AP023_taiko_bridge_V02_frame_LOD2",
+         "materials": [
+          "ap023_wood_timber"
+         ],
+         "facesPerSlot": [
+          108
+         ],
+         "triangles": 108,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "giboshi",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP023_taiko_bridge_V02.fbx",
+         "object": "AP023_taiko_bridge_V02_giboshi_LOD0",
+         "materials": [
+          "ap023_copper"
+         ],
+         "facesPerSlot": [
+          1140
+         ],
+         "triangles": 1140,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_taiko_bridge_V02.fbx",
+         "object": "AP023_taiko_bridge_V02_giboshi_LOD1",
+         "materials": [
+          "ap023_copper"
+         ],
+         "facesPerSlot": [
+          372
+         ],
+         "triangles": 372,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_taiko_bridge_V02.fbx",
+         "object": "AP023_taiko_bridge_V02_giboshi_LOD2",
+         "materials": [
+          "ap023_copper"
+         ],
+         "facesPerSlot": [
+          132
+         ],
+         "triangles": 132,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "rail",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP023_taiko_bridge_V02.fbx",
+         "object": "AP023_taiko_bridge_V02_rail_LOD0",
+         "materials": [
+          "ap023_wood_timber"
+         ],
+         "facesPerSlot": [
+          2752
+         ],
+         "triangles": 2752,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_taiko_bridge_V02.fbx",
+         "object": "AP023_taiko_bridge_V02_rail_LOD1",
+         "materials": [
+          "ap023_wood_timber"
+         ],
+         "facesPerSlot": [
+          768
+         ],
+         "triangles": 768,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_taiko_bridge_V02.fbx",
+         "object": "AP023_taiko_bridge_V02_rail_LOD2",
+         "materials": [
+          "ap023_wood_timber"
+         ],
+         "facesPerSlot": [
+          192
+         ],
+         "triangles": 192,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_abutN",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.0,
+          3.0,
+          -0.6
+         ],
+         "max": [
+          1.0,
+          3.9,
+          0.3
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "abutN",
+       "broken": false,
+       "navmesh": "walkable"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_abutS",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.0,
+          -3.9,
+          -0.6
+         ],
+         "max": [
+          1.0,
+          -3.0,
+          0.3
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "abutS",
+       "broken": false,
+       "navmesh": "walkable"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_deck00",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.0,
+          -3.0,
+          0.18
+         ],
+         "max": [
+          1.0,
+          -2.5,
+          0.53294
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.0,
+           -2.75,
+           0.35647
+          ],
+          "axisX": [
+           0.0,
+           0.9064562,
+           0.4222998
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           0.4222998,
+           -0.9064562
+          ],
+          "size": [
+           0.551599,
+           2.0,
+           0.108775
+          ]
+         }
+        }
+       ],
+       "part": "deck00",
+       "broken": false,
+       "navmesh": "walkable"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_deck01",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.0,
+          -2.5,
+          0.41294
+         ],
+         "max": [
+          1.0,
+          -2.0,
+          0.75
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.0,
+           -2.25,
+           0.58147
+          ],
+          "axisX": [
+           0.0,
+           0.9172922,
+           0.3982149
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           0.3982149,
+           -0.9172922
+          ],
+          "size": [
+           0.545083,
+           2.0,
+           0.110075
+          ]
+         }
+        }
+       ],
+       "part": "deck01",
+       "broken": false,
+       "navmesh": "walkable"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_deck02",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.0,
+          -2.0,
+          0.63
+         ],
+         "max": [
+          1.0,
+          -1.5,
+          0.9364
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.0,
+           -1.75,
+           0.7832
+          ],
+          "axisX": [
+           0.0,
+           0.9370052,
+           0.3493155
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           0.3493155,
+           -0.9370052
+          ],
+          "size": [
+           0.533615,
+           2.0,
+           0.112441
+          ]
+         }
+        }
+       ],
+       "part": "deck02",
+       "broken": false,
+       "navmesh": "walkable"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_deck03",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.0,
+          -1.5,
+          0.8164
+         ],
+         "max": [
+          1.0,
+          -1.0,
+          1.07942
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.0,
+           -1.25,
+           0.94791
+          ],
+          "axisX": [
+           0.0,
+           0.9614412,
+           0.2750106
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           0.2750106,
+           -0.9614412
+          ],
+          "size": [
+           0.520053,
+           2.0,
+           0.115373
+          ]
+         }
+        }
+       ],
+       "part": "deck03",
+       "broken": false,
+       "navmesh": "walkable"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_deck04",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.0,
+          -1.0,
+          0.95942
+         ],
+         "max": [
+          1.0,
+          -0.5,
+          1.16933
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.0,
+           -0.75,
+           1.064375
+          ],
+          "axisX": [
+           0.0,
+           0.9842142,
+           0.1769814
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           0.1769814,
+           -0.9842142
+          ],
+          "size": [
+           0.508019,
+           2.0,
+           0.118106
+          ]
+         }
+        }
+       ],
+       "part": "deck04",
+       "broken": false,
+       "navmesh": "walkable"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_deck05",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.0,
+          -0.5,
+          1.04933
+         ],
+         "max": [
+          1.0,
+          0.0,
+          1.2
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.0,
+           -0.25,
+           1.124665
+          ],
+          "axisX": [
+           0.0,
+           0.998124,
+           0.0612249
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           0.0612249,
+           -0.998124
+          ],
+          "size": [
+           0.50094,
+           2.0,
+           0.119775
+          ]
+         }
+        }
+       ],
+       "part": "deck05",
+       "broken": false,
+       "navmesh": "walkable"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_deck06",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.0,
+          0.0,
+          1.04933
+         ],
+         "max": [
+          1.0,
+          0.5,
+          1.2
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.0,
+           0.25,
+           1.124665
+          ],
+          "axisX": [
+           0.0,
+           0.998124,
+           -0.0612249
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           -0.0612249,
+           -0.998124
+          ],
+          "size": [
+           0.50094,
+           2.0,
+           0.119775
+          ]
+         }
+        }
+       ],
+       "part": "deck06",
+       "broken": false,
+       "navmesh": "walkable"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_deck07",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.0,
+          0.5,
+          0.95942
+         ],
+         "max": [
+          1.0,
+          1.0,
+          1.16933
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.0,
+           0.75,
+           1.064375
+          ],
+          "axisX": [
+           0.0,
+           0.9842142,
+           -0.1769814
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           -0.1769814,
+           -0.9842142
+          ],
+          "size": [
+           0.508019,
+           2.0,
+           0.118106
+          ]
+         }
+        }
+       ],
+       "part": "deck07",
+       "broken": false,
+       "navmesh": "walkable"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_deck08",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.0,
+          1.0,
+          0.8164
+         ],
+         "max": [
+          1.0,
+          1.5,
+          1.07942
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.0,
+           1.25,
+           0.94791
+          ],
+          "axisX": [
+           0.0,
+           0.9614412,
+           -0.2750106
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           -0.2750106,
+           -0.9614412
+          ],
+          "size": [
+           0.520053,
+           2.0,
+           0.115373
+          ]
+         }
+        }
+       ],
+       "part": "deck08",
+       "broken": false,
+       "navmesh": "walkable"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_deck09",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.0,
+          1.5,
+          0.63
+         ],
+         "max": [
+          1.0,
+          2.0,
+          0.9364
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.0,
+           1.75,
+           0.7832
+          ],
+          "axisX": [
+           0.0,
+           0.9370052,
+           -0.3493155
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           -0.3493155,
+           -0.9370052
+          ],
+          "size": [
+           0.533615,
+           2.0,
+           0.112441
+          ]
+         }
+        }
+       ],
+       "part": "deck09",
+       "broken": false,
+       "navmesh": "walkable"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_deck10",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.0,
+          2.0,
+          0.41294
+         ],
+         "max": [
+          1.0,
+          2.5,
+          0.75
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.0,
+           2.25,
+           0.58147
+          ],
+          "axisX": [
+           0.0,
+           0.9172922,
+           -0.3982149
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           -0.3982149,
+           -0.9172922
+          ],
+          "size": [
+           0.545083,
+           2.0,
+           0.110075
+          ]
+         }
+        }
+       ],
+       "part": "deck10",
+       "broken": false,
+       "navmesh": "walkable"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_deck11",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.0,
+          2.5,
+          0.18
+         ],
+         "max": [
+          1.0,
+          3.0,
+          0.53294
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.0,
+           2.75,
+           0.35647
+          ],
+          "axisX": [
+           0.0,
+           0.9064562,
+           -0.4222998
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           -0.4222998,
+           -0.9064562
+          ],
+          "size": [
+           0.551599,
+           2.0,
+           0.108775
+          ]
+         }
+        }
+       ],
+       "part": "deck11",
+       "broken": false,
+       "navmesh": "walkable"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_landN",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.13636,
+          3.9,
+          -0.3
+         ],
+         "max": [
+          1.13636,
+          4.4,
+          0.15
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "landN",
+       "broken": false,
+       "navmesh": "walkable"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_landS",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.13636,
+          -4.4,
+          -0.3
+         ],
+         "max": [
+          1.13636,
+          -3.9,
+          0.15
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "landS",
+       "broken": false,
+       "navmesh": "walkable"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_railL00",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.07576,
+          -3.0,
+          0.3
+         ],
+         "max": [
+          -0.98485,
+          -2.5,
+          1.51294
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           -1.030305,
+           -2.75,
+           0.90647
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.09091,
+           0.5
+          ]
+         }
+        }
+       ],
+       "part": "railL00",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_railL01",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.07576,
+          -2.5,
+          0.53294
+         ],
+         "max": [
+          -0.98485,
+          -2.0,
+          1.73
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           -1.030305,
+           -2.25,
+           1.13147
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.09091,
+           0.5
+          ]
+         }
+        }
+       ],
+       "part": "railL01",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_railL02",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.07576,
+          -2.0,
+          0.75
+         ],
+         "max": [
+          -0.98485,
+          -1.5,
+          1.9164
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           -1.030305,
+           -1.75,
+           1.3332
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.09091,
+           0.5
+          ]
+         }
+        }
+       ],
+       "part": "railL02",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_railL03",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.07576,
+          -1.5,
+          0.9364
+         ],
+         "max": [
+          -0.98485,
+          -1.0,
+          2.05942
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           -1.030305,
+           -1.25,
+           1.49791
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.09091,
+           0.5
+          ]
+         }
+        }
+       ],
+       "part": "railL03",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_railL04",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.07576,
+          -1.0,
+          1.07942
+         ],
+         "max": [
+          -0.98485,
+          -0.5,
+          2.14933
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           -1.030305,
+           -0.75,
+           1.614375
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.09091,
+           0.5
+          ]
+         }
+        }
+       ],
+       "part": "railL04",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_railL05",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.07576,
+          -0.5,
+          1.16933
+         ],
+         "max": [
+          -0.98485,
+          0.0,
+          2.18
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           -1.030305,
+           -0.25,
+           1.674665
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.09091,
+           0.5
+          ]
+         }
+        }
+       ],
+       "part": "railL05",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_railL06",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.07576,
+          0.0,
+          1.16933
+         ],
+         "max": [
+          -0.98485,
+          0.5,
+          2.18
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           -1.030305,
+           0.25,
+           1.674665
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.09091,
+           0.5
+          ]
+         }
+        }
+       ],
+       "part": "railL06",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_railL07",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.07576,
+          0.5,
+          1.07942
+         ],
+         "max": [
+          -0.98485,
+          1.0,
+          2.14933
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           -1.030305,
+           0.75,
+           1.614375
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.09091,
+           0.5
+          ]
+         }
+        }
+       ],
+       "part": "railL07",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_railL08",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.07576,
+          1.0,
+          0.9364
+         ],
+         "max": [
+          -0.98485,
+          1.5,
+          2.05942
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           -1.030305,
+           1.25,
+           1.49791
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.09091,
+           0.5
+          ]
+         }
+        }
+       ],
+       "part": "railL08",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_railL09",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.07576,
+          1.5,
+          0.75
+         ],
+         "max": [
+          -0.98485,
+          2.0,
+          1.9164
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           -1.030305,
+           1.75,
+           1.3332
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.09091,
+           0.5
+          ]
+         }
+        }
+       ],
+       "part": "railL09",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_railL10",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.07576,
+          2.0,
+          0.53294
+         ],
+         "max": [
+          -0.98485,
+          2.5,
+          1.73
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           -1.030305,
+           2.25,
+           1.13147
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.09091,
+           0.5
+          ]
+         }
+        }
+       ],
+       "part": "railL10",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_railL11",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.07576,
+          2.5,
+          0.3
+         ],
+         "max": [
+          -0.98485,
+          3.0,
+          1.51294
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           -1.030305,
+           2.75,
+           0.90647
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.09091,
+           0.5
+          ]
+         }
+        }
+       ],
+       "part": "railL11",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_railR00",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.98485,
+          -3.0,
+          0.3
+         ],
+         "max": [
+          1.07576,
+          -2.5,
+          1.51294
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           1.030305,
+           -2.75,
+           0.90647
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.09091,
+           0.5
+          ]
+         }
+        }
+       ],
+       "part": "railR00",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_railR01",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.98485,
+          -2.5,
+          0.53294
+         ],
+         "max": [
+          1.07576,
+          -2.0,
+          1.73
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           1.030305,
+           -2.25,
+           1.13147
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.09091,
+           0.5
+          ]
+         }
+        }
+       ],
+       "part": "railR01",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_railR02",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.98485,
+          -2.0,
+          0.75
+         ],
+         "max": [
+          1.07576,
+          -1.5,
+          1.9164
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           1.030305,
+           -1.75,
+           1.3332
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.09091,
+           0.5
+          ]
+         }
+        }
+       ],
+       "part": "railR02",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_railR03",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.98485,
+          -1.5,
+          0.9364
+         ],
+         "max": [
+          1.07576,
+          -1.0,
+          2.05942
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           1.030305,
+           -1.25,
+           1.49791
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.09091,
+           0.5
+          ]
+         }
+        }
+       ],
+       "part": "railR03",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_railR04",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.98485,
+          -1.0,
+          1.07942
+         ],
+         "max": [
+          1.07576,
+          -0.5,
+          2.14933
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           1.030305,
+           -0.75,
+           1.614375
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.09091,
+           0.5
+          ]
+         }
+        }
+       ],
+       "part": "railR04",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_railR05",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.98485,
+          -0.5,
+          1.16933
+         ],
+         "max": [
+          1.07576,
+          0.0,
+          2.18
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           1.030305,
+           -0.25,
+           1.674665
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.09091,
+           0.5
+          ]
+         }
+        }
+       ],
+       "part": "railR05",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_railR06",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.98485,
+          0.0,
+          1.16933
+         ],
+         "max": [
+          1.07576,
+          0.5,
+          2.18
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           1.030305,
+           0.25,
+           1.674665
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.09091,
+           0.5
+          ]
+         }
+        }
+       ],
+       "part": "railR06",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_railR07",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.98485,
+          0.5,
+          1.07942
+         ],
+         "max": [
+          1.07576,
+          1.0,
+          2.14933
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           1.030305,
+           0.75,
+           1.614375
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.09091,
+           0.5
+          ]
+         }
+        }
+       ],
+       "part": "railR07",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_railR08",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.98485,
+          1.0,
+          0.9364
+         ],
+         "max": [
+          1.07576,
+          1.5,
+          2.05942
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           1.030305,
+           1.25,
+           1.49791
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.09091,
+           0.5
+          ]
+         }
+        }
+       ],
+       "part": "railR08",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_railR09",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.98485,
+          1.5,
+          0.75
+         ],
+         "max": [
+          1.07576,
+          2.0,
+          1.9164
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           1.030305,
+           1.75,
+           1.3332
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.09091,
+           0.5
+          ]
+         }
+        }
+       ],
+       "part": "railR09",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_railR10",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.98485,
+          2.0,
+          0.53294
+         ],
+         "max": [
+          1.07576,
+          2.5,
+          1.73
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           1.030305,
+           2.25,
+           1.13147
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.09091,
+           0.5
+          ]
+         }
+        }
+       ],
+       "part": "railR10",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_taiko_bridge_V02.fbx",
+       "object": "AP023_taiko_bridge_V02_COL_railR11",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.98485,
+          2.5,
+          0.3
+         ],
+         "max": [
+          1.07576,
+          3.0,
+          1.51294
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           1.030305,
+           2.75,
+           0.90647
+          ],
+          "axisX": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "axisY": [
+           1.0,
+           0.0,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.98,
+           0.09091,
+           0.5
           ]
          }
         }
@@ -24612,6 +30551,413 @@
    ]
   },
   {
+   "family": "wall_pier",
+   "occluder": false,
+   "kind": "",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_wall_pier_V01",
+     "boundsMin": [
+      -0.52,
+      -0.52,
+      -0.1
+     ],
+     "boundsMax": [
+      0.52,
+      0.52,
+      3.31
+     ],
+     "parts": [
+      {
+       "name": "floor",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP023_wall_pier_V01.fbx",
+         "object": "AP023_wall_pier_V01_floor_LOD0",
+         "materials": [
+          "ap023_granite",
+          "ap023_granite_ashlar"
+         ],
+         "facesPerSlot": [
+          28,
+          12
+         ],
+         "triangles": 40,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_wall_pier_V01.fbx",
+         "object": "AP023_wall_pier_V01_floor_LOD1",
+         "materials": [
+          "ap023_granite",
+          "ap023_granite_ashlar"
+         ],
+         "facesPerSlot": [
+          28,
+          12
+         ],
+         "triangles": 40,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_wall_pier_V01.fbx",
+         "object": "AP023_wall_pier_V01_floor_LOD2",
+         "materials": [
+          "ap023_granite_ashlar"
+         ],
+         "facesPerSlot": [
+          12
+         ],
+         "triangles": 12,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "frame",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP023_wall_pier_V01.fbx",
+         "object": "AP023_wall_pier_V01_frame_LOD0",
+         "materials": [
+          "ap023_wood_timber"
+         ],
+         "facesPerSlot": [
+          84
+         ],
+         "triangles": 84,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_wall_pier_V01.fbx",
+         "object": "AP023_wall_pier_V01_frame_LOD1",
+         "materials": [
+          "ap023_wood_timber"
+         ],
+         "facesPerSlot": [
+          12
+         ],
+         "triangles": 12,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_wall_pier_V01.fbx",
+         "object": "AP023_wall_pier_V01_frame_LOD2",
+         "materials": [
+          "ap023_wood_timber"
+         ],
+         "facesPerSlot": [
+          12
+         ],
+         "triangles": 12,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "roof",
+       "role": "roof",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP023_wall_pier_V01.fbx",
+         "object": "AP023_wall_pier_V01_roof_LOD0",
+         "materials": [
+          "ap023_wood_planks",
+          "ap023_roof_tiles"
+         ],
+         "facesPerSlot": [
+          12,
+          74
+         ],
+         "triangles": 86,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_wall_pier_V01.fbx",
+         "object": "AP023_wall_pier_V01_roof_LOD1",
+         "materials": [
+          "ap023_wood_planks",
+          "ap023_roof_tiles"
+         ],
+         "facesPerSlot": [
+          12,
+          62
+         ],
+         "triangles": 74,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_wall_pier_V01.fbx",
+         "object": "AP023_wall_pier_V01_roof_LOD2",
+         "materials": [
+          "ap023_roof_tiles"
+         ],
+         "facesPerSlot": [
+          28
+         ],
+         "triangles": 28,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP023_wall_pier_V01.fbx",
+       "object": "AP023_wall_pier_V01_frame_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.33,
+          -0.33,
+          -0.1
+         ],
+         "max": [
+          0.33,
+          0.33,
+          2.75
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "frame",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ]
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_wall_pier_V02",
+     "boundsMin": [
+      -0.52,
+      -0.52,
+      -0.1
+     ],
+     "boundsMax": [
+      0.52,
+      0.52,
+      3.86
+     ],
+     "parts": [
+      {
+       "name": "floor",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP023_wall_pier_V02.fbx",
+         "object": "AP023_wall_pier_V02_floor_LOD0",
+         "materials": [
+          "ap023_granite",
+          "ap023_granite_ashlar"
+         ],
+         "facesPerSlot": [
+          28,
+          12
+         ],
+         "triangles": 40,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_wall_pier_V02.fbx",
+         "object": "AP023_wall_pier_V02_floor_LOD1",
+         "materials": [
+          "ap023_granite",
+          "ap023_granite_ashlar"
+         ],
+         "facesPerSlot": [
+          28,
+          12
+         ],
+         "triangles": 40,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_wall_pier_V02.fbx",
+         "object": "AP023_wall_pier_V02_floor_LOD2",
+         "materials": [
+          "ap023_granite_ashlar"
+         ],
+         "facesPerSlot": [
+          12
+         ],
+         "triangles": 12,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "frame",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP023_wall_pier_V02.fbx",
+         "object": "AP023_wall_pier_V02_frame_LOD0",
+         "materials": [
+          "ap023_wood_timber"
+         ],
+         "facesPerSlot": [
+          84
+         ],
+         "triangles": 84,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_wall_pier_V02.fbx",
+         "object": "AP023_wall_pier_V02_frame_LOD1",
+         "materials": [
+          "ap023_wood_timber"
+         ],
+         "facesPerSlot": [
+          12
+         ],
+         "triangles": 12,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_wall_pier_V02.fbx",
+         "object": "AP023_wall_pier_V02_frame_LOD2",
+         "materials": [
+          "ap023_wood_timber"
+         ],
+         "facesPerSlot": [
+          12
+         ],
+         "triangles": 12,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "roof",
+       "role": "roof",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP023_wall_pier_V02.fbx",
+         "object": "AP023_wall_pier_V02_roof_LOD0",
+         "materials": [
+          "ap023_wood_planks",
+          "ap023_roof_tiles"
+         ],
+         "facesPerSlot": [
+          12,
+          74
+         ],
+         "triangles": 86,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_wall_pier_V02.fbx",
+         "object": "AP023_wall_pier_V02_roof_LOD1",
+         "materials": [
+          "ap023_wood_planks",
+          "ap023_roof_tiles"
+         ],
+         "facesPerSlot": [
+          12,
+          62
+         ],
+         "triangles": 74,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_wall_pier_V02.fbx",
+         "object": "AP023_wall_pier_V02_roof_LOD2",
+         "materials": [
+          "ap023_roof_tiles"
+         ],
+         "facesPerSlot": [
+          28
+         ],
+         "triangles": 28,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP023_wall_pier_V02.fbx",
+       "object": "AP023_wall_pier_V02_frame_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.33,
+          -0.33,
+          -0.1
+         ],
+         "max": [
+          0.33,
+          0.33,
+          3.3
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "frame",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ]
+    }
+   ]
+  },
+  {
    "family": "weapon_crate",
    "occluder": false,
    "kind": "",
@@ -24719,6 +31065,312 @@
         }
        ],
        "part": "",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "family": "yagura",
+   "occluder": false,
+   "kind": "",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_yagura_V01",
+     "boundsMin": [
+      -3.80735,
+      -3.80735,
+      -0.2
+     ],
+     "boundsMax": [
+      3.80735,
+      3.80735,
+      9.61573
+     ],
+     "parts": [
+      {
+       "name": "floor",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP023_yagura_V01.fbx",
+         "object": "AP023_yagura_V01_floor_LOD0",
+         "materials": [
+          "ap023_granite",
+          "ap023_granite_ashlar"
+         ],
+         "facesPerSlot": [
+          12,
+          12
+         ],
+         "triangles": 24,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_yagura_V01.fbx",
+         "object": "AP023_yagura_V01_floor_LOD1",
+         "materials": [
+          "ap023_granite",
+          "ap023_granite_ashlar"
+         ],
+         "facesPerSlot": [
+          12,
+          12
+         ],
+         "triangles": 24,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_yagura_V01.fbx",
+         "object": "AP023_yagura_V01_floor_LOD2",
+         "materials": [
+          "ap023_granite",
+          "ap023_granite_ashlar"
+         ],
+         "facesPerSlot": [
+          12,
+          12
+         ],
+         "triangles": 24,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "frame",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP023_yagura_V01.fbx",
+         "object": "AP023_yagura_V01_frame_LOD0",
+         "materials": [
+          "ap023_wood_timber",
+          "ap023_plaster",
+          "ap023_lacquer"
+         ],
+         "facesPerSlot": [
+          1712,
+          96,
+          144
+         ],
+         "triangles": 1952,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_yagura_V01.fbx",
+         "object": "AP023_yagura_V01_frame_LOD1",
+         "materials": [
+          "ap023_wood_timber",
+          "ap023_plaster",
+          "ap023_lacquer"
+         ],
+         "facesPerSlot": [
+          720,
+          96,
+          144
+         ],
+         "triangles": 960,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_yagura_V01.fbx",
+         "object": "AP023_yagura_V01_frame_LOD2",
+         "materials": [
+          "ap023_wood_timber",
+          "ap023_plaster",
+          "ap023_lacquer"
+         ],
+         "facesPerSlot": [
+          288,
+          96,
+          144
+         ],
+         "triangles": 528,
+         "colourLayers": [
+          "AP023_Mask"
+         ],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "rafters",
+       "role": "roof",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP023_yagura_V01.fbx",
+         "object": "AP023_yagura_V01_rafters_LOD0",
+         "materials": [
+          "ap023_wood_timber"
+         ],
+         "facesPerSlot": [
+          1392
+         ],
+         "triangles": 1392,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_yagura_V01.fbx",
+         "object": "AP023_yagura_V01_rafters_LOD1",
+         "materials": [
+          "ap023_wood_timber"
+         ],
+         "facesPerSlot": [
+          720
+         ],
+         "triangles": 720,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_yagura_V01.fbx",
+         "object": "AP023_yagura_V01_rafters_LOD2",
+         "materials": [
+          "ap023_wood_timber"
+         ],
+         "facesPerSlot": [
+          96
+         ],
+         "triangles": 96,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "roof",
+       "role": "roof",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP023_yagura_V01.fbx",
+         "object": "AP023_yagura_V01_roof_LOD0",
+         "materials": [
+          "ap023_wood_planks",
+          "ap023_roof_tiles"
+         ],
+         "facesPerSlot": [
+          284,
+          8184
+         ],
+         "triangles": 8468,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_yagura_V01.fbx",
+         "object": "AP023_yagura_V01_roof_LOD1",
+         "materials": [
+          "ap023_wood_planks",
+          "ap023_roof_tiles"
+         ],
+         "facesPerSlot": [
+          108,
+          1980
+         ],
+         "triangles": 2088,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP023_yagura_V01.fbx",
+         "object": "AP023_yagura_V01_roof_LOD2",
+         "materials": [
+          "ap023_wood_planks",
+          "ap023_roof_tiles"
+         ],
+         "facesPerSlot": [
+          14,
+          182
+         ],
+         "triangles": 196,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP023_yagura_V01.fbx",
+       "object": "AP023_yagura_V01_floorblock_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -3.1,
+          -3.1,
+          -0.2
+         ],
+         "max": [
+          3.1,
+          3.1,
+          1.6
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "floorblock",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP023_yagura_V01.fbx",
+       "object": "AP023_yagura_V01_frame_COL",
+       "class": "blocking",
+       "shells": 2,
+       "shellBoxes": [
+        {
+         "min": [
+          -2.83,
+          -2.83,
+          1.6
+         ],
+         "max": [
+          2.83,
+          2.83,
+          4.8
+         ],
+         "positions": 8
+        },
+        {
+         "min": [
+          -2.32,
+          -2.12,
+          5.26473
+         ],
+         "max": [
+          2.32,
+          2.12,
+          7.86473
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "frame",
        "broken": false,
        "navmesh": "obstacle"
       }

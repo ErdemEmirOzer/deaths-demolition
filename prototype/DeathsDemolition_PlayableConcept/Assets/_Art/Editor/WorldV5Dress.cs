@@ -13,7 +13,8 @@ namespace DD.Art.Pipeline.EditorTools
     /// WP-074 B5b-1 · World v5 architecture shell: the AP-023 kit (manifest v004, B5a library) dresses the v6 greybox where the kit
     /// matches the layout. That covers the palace hall on its plinth (R1), built from the kit's own 36 × 13 recipe (AP023-build-
     /// architecture-b-v001.py hall_layout(), the AD-passed preview), with the R1 doors as open bays and no rear stair. It also covers
-    /// the ring tsuiji, the forecourt walls, the karamon, the axis lanterns and the centre planters. The kit's colliders replace the
+    /// the ring tsuiji, the forecourt walls, the karamon, the axis lanterns and the centre planters. B5b-2 (manifest v005): the slate
+    /// plaza (<see cref="WorldV5Ground"/>), the kit planters with pine islands, the corner yagura. The kit's colliders replace the
     /// greybox boxes they dress; GreyboxV6Builder bakes NavMesh v5 after this pass. Roofs keep the greybox roof contract (CameraOccluder
     /// layer, CameraOccluderClass Roof, out of the bake, collider for the top-down fade). The kairō (open bays carry koran rails), R2–R6,
     /// the pond and the planting stay greybox until their slices.
@@ -213,14 +214,17 @@ namespace DD.Art.Pipeline.EditorTools
         /// <summary>What the pass placed and removed (for the builder's report and the tests).</summary>
         public sealed class Report
         {
-            public int Instances, RemovedBoxes, HallPieces, WallPieces, OpenBays;
-            public override string ToString() => "dress v5: " + Instances + " AP-023 instances (hall " + HallPieces + ", walls " + WallPieces + ", " + OpenBays + " open bays), " + RemovedBoxes + " greybox boxes replaced";
+            public int Instances, RemovedBoxes, HallPieces, WallPieces, OpenBays, PlazaCells;
+            public override string ToString() => "dress v5: " + Instances + " AP-023 instances (hall " + HallPieces + ", walls " + WallPieces + ", " + OpenBays + " open bays), " + RemovedBoxes + " greybox boxes replaced, plaza " + PlazaCells + " cells";
         }
 
         private static readonly Dictionary<string, GameObject> s_prefabs = new Dictionary<string, GameObject>(StringComparer.Ordinal);
 
         /// <summary>Greybox pieces the kit replaces (name prefixes under the greybox root).</summary>
-        public static readonly string[] ReplacedPrefixes = { "Hall_Plinth", "Hall_Stair", "R1_MainHall_", "RingWall_", "Court_", "Karamon_", "Lantern_" };
+        public static readonly string[] ReplacedPrefixes = { "Hall_Plinth", "Hall_Stair", "R1_MainHall_", "RingWall_", "Court_", "Karamon_", "Lantern_", "Planter_" };
+
+        /// <summary>The four centre planters (greybox BuildArena corners), 3 × 3 m.</summary>
+        public static readonly Vector2[] PlanterCentres = { new Vector2(-9f, -9f), new Vector2(-9f, 9f), new Vector2(9f, -9f), new Vector2(9f, 9f) };
 
         public static Report Apply(Transform greybox, Transform worldRoot)
         {
@@ -237,7 +241,9 @@ namespace DD.Art.Pipeline.EditorTools
             report.WallPieces = RingWall(dress) + Forecourt(dress);
             Karamon(dress);
             Lanterns(dress);
-            Planters(dress, greybox);
+            Planters(dress);
+            Yagura(dress);
+            report.PlazaCells = WorldV5Ground.Build(dress, (parent, family, v, m, role) => Place(parent, family, v, m, Vector3.zero, role));
             report.Instances = CountInstances(dress);
             return report;
         }
@@ -393,31 +399,44 @@ namespace DD.Art.Pipeline.EditorTools
             var group = new GameObject("AxisLanterns").transform;
             group.SetParent(dress, false);
             int i = 0;
-            foreach (float z in new[] { 14f, 8f, -14.5f })
+            foreach (float z in new[] { 14f, 8f, -14.8f })   // B5b-2: the south pair 0.3 m further out, clear of the plaza kerb
             foreach (float x in new[] { -3f, 3f })
                 Place(group, "lantern_kasuga", 1 + (i++ % 2), Mz(x, z, 0f, x < 0f ? -90f : 90f), Vector3.zero, "structure");
         }
 
-        private static void Planters(Transform dress, Transform greybox)
+        private static void Planters(Transform dress)
         {
-            // The four centre planters keep their 0.45 m greybox box (obstacle), in granite, planted with satsuki and groundcover.
+            // v005 raised planters (AP023_planter V07, 3.06 m square, 0.6 m collider box — the greybox planter's obstacle) with a pine
+            // island on the moss fill: a black pine, satsuki and groundcover (the HF-center court's planted beds).
             var group = new GameObject("CentrePlanting").transform;
             group.SetParent(dress, false);
             var rng = new System.Random(742);
-            foreach (Transform t in new List<Transform>(Children(greybox)))
+            const float top = 0.6f;
+            for (int i = 0; i < PlanterCentres.Length; i++)
             {
-                if (!t.name.StartsWith("Planter_", StringComparison.Ordinal)) continue;
-                Restyle(greybox, t.name, "granite", 1.5f);
-                Vector3 c = t.position;
-                float top = t.localScale.y;
-                Place(group, "satsuki", 3, Mz(c.x, c.z, top, (float)(rng.NextDouble() * 360.0)), Vector3.zero, "dressing");
+                Vector2 c = PlanterCentres[i];
+                Place(group, "planter", 7, Mz(c.x, c.y, 0f, 90f * i), Vector3.zero, "structure");
+                Place(group, "black_pine", i % 2 == 0 ? 2 : 3, Mz(c.x + 0.2f, c.y - 0.1f, top, (float)(rng.NextDouble() * 360.0)), Vector3.zero, "vegetation");
                 for (int k = 0; k < 4; k++)
                 {
                     float a = k * Mathf.PI * 0.5f + (float)rng.NextDouble() * 0.6f, r = 0.8f + (float)rng.NextDouble() * 0.3f;
-                    Place(group, k % 2 == 0 ? "satsuki" : "groundcover", k % 2 == 0 ? 2 : 1 + k / 2, Mz(c.x + Mathf.Cos(a) * r, c.z + Mathf.Sin(a) * r, top, (float)(rng.NextDouble() * 360.0)),
+                    Place(group, k % 2 == 0 ? "satsuki" : "groundcover", k % 2 == 0 ? 2 : 1 + k / 2, Mz(c.x + Mathf.Cos(a) * r, c.y + Mathf.Sin(a) * r, top, (float)(rng.NextDouble() * 360.0)),
                         Vector3.zero, "dressing");
                 }
             }
+        }
+
+        /// <summary>v005 corner yagura just outside the ring corners (±59: the 7.6 m tower's inner face behind the tsuiji), facing in.</summary>
+        private static void Yagura(Transform dress)
+        {
+            // The modifier's own layer must be in the bake mask (NavMeshSurface.CollectSources skips it otherwise).
+            var group = new GameObject("CornerYagura") { layer = PrototypeLayers.Environment }.transform;
+            group.SetParent(dress, false);
+            const float c = 59f;
+            // Vista only: out of the bake (their floors / roofs sit inside the NavMesh volume's ±58 m and would grow islands).
+            group.gameObject.AddComponent<NavMeshModifier>().ignoreFromBuild = true;
+            foreach ((float x, float y, float deg) in new[] { (-c, -c, 0f), (c, -c, 90f), (c, c, 180f), (-c, c, 270f) })
+                Place(group, "yagura", 1, Mz(x, y, 0f, deg), Vector3.zero, "structure");
         }
 
         // ---------------------------------------------------------------- helpers
@@ -520,6 +539,7 @@ namespace DD.Art.Pipeline.EditorTools
             }
 
             m.SetTextureScale("_BaseMap", tiling);
+            if (m.HasProperty("_MainTex")) m.SetTextureScale("_MainTex", tiling);   // the legacy slot kept in step, so a rebuild is byte-stable
             EditorUtility.SetDirty(m);
             return m;
         }

@@ -368,6 +368,14 @@ namespace DD.Art.Pipeline.EditorTools
             { "ap023_granite_ashlar", TextureClass.Hero },
             { "ap023_moss", TextureClass.Ground },
             { "ap023_pebble_beach", TextureClass.Ground },
+            { "ap023_gravel", TextureClass.Ground },   // v005
+            { "ap023_hishigaki_card", TextureClass.Foliage },   // v005 fence card (LOD2)
+            // WP-074 B5b-2 · the 4K ground sets (Ap023GroundSets): plaza slate and path granite.
+            { "ap023_slate_flag_v01", TextureClass.Ground },
+            { "ap023_slate_flag_v02", TextureClass.Ground },
+            { "ap023_slate_flag_v03", TextureClass.Ground },
+            { "ap023_path_granite_v01", TextureClass.Ground },
+            { "ap023_path_granite_v02", TextureClass.Ground },
             { "ap023_bark_pine", TextureClass.Foliage },
             { "ap023_bark_sakura", TextureClass.Foliage },
             { "ap023_bamboo_culm", TextureClass.Foliage },
@@ -469,11 +477,18 @@ namespace DD.Art.Pipeline.EditorTools
             return size;
         }
 
-        /// <summary>WP-038 · Mask-role textures a material actually samples (the AP-015P water data maps); the AP packs / ID masks stay provenance-only.</summary>
+        /// <summary>
+        /// WP-074 B5b-2 · The AP-023 4K ground sets (P-05 ground manifest v001) the World v5 plaza and paths bind (DD/GroundTiles):
+        /// BaseColor and Normal at the Ground size (4096 = 1024 px/m on the 4 m slate tile), the packed Mask (R AO, G roughness,
+        /// B wetness, A puddle) at the Ground mask cap. The wet albedo is the albedo × 0.82 (linear) — a shader constant, not a map.
+        /// </summary>
+        public static readonly string[] Ap023GroundSets = { "ap023_slate_flag_v01", "ap023_slate_flag_v02", "ap023_slate_flag_v03", "ap023_path_granite_v01", "ap023_path_granite_v02" };
+
+        /// <summary>WP-038 · Mask-role textures a material actually samples (the AP-015P water data maps, WP-074 the AP-023 ground sets); the AP packs / ID masks stay provenance-only.</summary>
         public static bool IsBoundMask(string assetPath)
         {
             string slug = RoleSlugOf(assetPath);
-            return slug != null && (slug.StartsWith("water_", StringComparison.Ordinal) || slug.StartsWith("wet_", StringComparison.Ordinal));
+            return slug != null && (slug.StartsWith("water_", StringComparison.Ordinal) || slug.StartsWith("wet_", StringComparison.Ordinal) || Array.IndexOf(Ap023GroundSets, slug) >= 0);
         }
 
         /// <summary>Estimated bytes a texture occupies in the build (BC7/BC5 = 1 byte per texel, full mip chain), capped at the source size.</summary>

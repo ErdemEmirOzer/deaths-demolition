@@ -252,7 +252,8 @@ namespace DD.Art
             // (1,1,1,1) and stay still). Flat roles take the FBX material's linear diffuse. The lanterns' glow / paper inserts ship
             // their daytime albedo (#C8BBA8, 15:30 world); emission is a later look decision. rock_moss binds the rock_boulder maps —
             // its moss blend rides AP023_Mask G (a later shader pass). Straw is authored on the tatami maps (manifest role ap023_tatami).
-            foreach (string tile in new[] { "bamboo_old", "bark_pine", "bark_sakura", "copper", "granite", "granite_ashlar", "moss", "namako", "pebble_beach", "plaster",
+            // v005 (WP-074 B5b-2): + gravel (tile) and the hishigaki fence card (atlas).
+            foreach (string tile in new[] { "bamboo_old", "bark_pine", "bark_sakura", "copper", "granite", "granite_ashlar", "gravel", "moss", "namako", "pebble_beach", "plaster",
                                              "plaster_interior", "roof_tiles", "rock_boulder", "stone_ashlar", "tatami", "vermilion", "washi", "wood_planks", "wood_timber" })
             {
                 rows.Add(new Spec { Role = "ap023_" + tile, Kind = Kind.Textured, TextureRole = "ap023_" + tile });
@@ -260,7 +261,7 @@ namespace DD.Art
 
             rows.Add(new Spec { Role = "ap023_bamboo_culm", Kind = Kind.Textured, TextureRole = "ap023_bamboo_culm", Shader = ShaderKind.FoliageWind });
             rows.Add(new Spec { Role = "ap023_rock_moss", Kind = Kind.Textured, TextureRole = "ap023_rock_boulder" });
-            foreach (string atlas in new[] { "bamboo_leaves", "groundcover", "momiji_sprigs", "pine_needles", "reeds_iris", "sakura_sprigs", "satsuki", "violet_sprigs" })
+            foreach (string atlas in new[] { "bamboo_leaves", "groundcover", "hishigaki_card", "momiji_sprigs", "pine_needles", "reeds_iris", "sakura_sprigs", "satsuki", "violet_sprigs" })
             {
                 rows.Add(new Spec { Role = "ap023_" + atlas, Kind = Kind.Cutout, TextureRole = "ap023_" + atlas, Shader = ShaderKind.FoliageWind, NoPackedMap = true, Smoothness = 0.40f });
             }

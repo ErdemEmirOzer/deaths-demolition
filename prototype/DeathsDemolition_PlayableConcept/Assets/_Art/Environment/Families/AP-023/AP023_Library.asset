@@ -71,6 +71,9 @@ MonoBehaviour:
   - family: engawa
     variation: V03
     prefab: {fileID: 4078861586335208708, guid: 8750d792da3f34fab85e35428a3ed487, type: 3}
+  - family: fence_hishigaki
+    variation: V01
+    prefab: {fileID: 7493554344962172349, guid: b25c162a7a0684df9a4b56c6f4ca518c, type: 3}
   - family: fence_kenninji
     variation: V01
     prefab: {fileID: 7504818206663545330, guid: a0fac33a1f28541228620d4f1b02988f, type: 3}
@@ -89,6 +92,9 @@ MonoBehaviour:
   - family: fence_yotsume
     variation: V02
     prefab: {fileID: 2922121738937470794, guid: 0b4aa9709cb1047fa8d4529a3e81cd44, type: 3}
+  - family: garden_bench
+    variation: V01
+    prefab: {fileID: 3907428986918939571, guid: 8b6d5f33cefbe4da8a172b07244433cc, type: 3}
   - family: gates
     variation: V01
     prefab: {fileID: 5422841818897123838, guid: 3f952b73be45d4a33a089ed34089dd05, type: 3}
@@ -320,6 +326,36 @@ MonoBehaviour:
   - family: pavilion
     variation: V01
     prefab: {fileID: 3456212426142249216, guid: 619b02821c29a43098ae764e3f7a77eb, type: 3}
+  - family: plank_bridge
+    variation: V01
+    prefab: {fileID: 9130689115956858745, guid: 8161cba11c1a546dbacc8c3cc76b0048, type: 3}
+  - family: planter
+    variation: V01
+    prefab: {fileID: 6899325793832332486, guid: 936e565fbe0814ac89f67040620e8420, type: 3}
+  - family: planter
+    variation: V02
+    prefab: {fileID: 3567902320066751161, guid: 6f16b203b18ba444fa0012e6e6efe51a, type: 3}
+  - family: planter
+    variation: V03
+    prefab: {fileID: 994351477818176920, guid: 02fc9f3543b2d44158f2ad2e58e27b60, type: 3}
+  - family: planter
+    variation: V04
+    prefab: {fileID: 6228236030565256755, guid: e78ca4668eef9488199f4522c7bffce6, type: 3}
+  - family: planter
+    variation: V05
+    prefab: {fileID: 6072709399348162626, guid: 432e5e03ec6ea4e4b927b2238f54ed2e, type: 3}
+  - family: planter
+    variation: V06
+    prefab: {fileID: 5993762106238161753, guid: 678c2eb66e76b4a14b6d2b6e277c758c, type: 3}
+  - family: planter
+    variation: V07
+    prefab: {fileID: 6045280156116287469, guid: 883bd375d362841e08871ea74ec3c0d4, type: 3}
+  - family: planter
+    variation: V08
+    prefab: {fileID: 2377973732691559188, guid: 01b53276d55f8489285c6d74bee2a44e, type: 3}
+  - family: planter
+    variation: V09
+    prefab: {fileID: 4704947294837296094, guid: 86a7cfc123d654887b74eb0eebb961c1, type: 3}
   - family: pond_reeds
     variation: V01
     prefab: {fileID: 7645441451563576721, guid: 5f37f54fda5084a13b733cdb10b1f32d, type: 3}
@@ -410,9 +446,18 @@ MonoBehaviour:
   - family: slab_bridge
     variation: V01
     prefab: {fileID: 7480434625271206540, guid: 1f47154427aa6478a9387ded0d279f4e, type: 3}
+  - family: sugi
+    variation: V01
+    prefab: {fileID: 8645598689515197264, guid: 62e4b07205a0b4da7a453ad45ace3586, type: 3}
+  - family: sugi
+    variation: V02
+    prefab: {fileID: 8778982038264742972, guid: ec778a48dc3414df5a4070181efd922d, type: 3}
   - family: taiko_bridge
     variation: V01
     prefab: {fileID: 1227948440994125655, guid: 53e2dfbdd822e4dab8d106dd6aa35b7e, type: 3}
+  - family: taiko_bridge
+    variation: V02
+    prefab: {fileID: 7386100001190899115, guid: ed03d33ff57184c36b482e8d7c80da28, type: 3}
   - family: tawara
     variation: V01
     prefab: {fileID: 4115574853475872039, guid: de62b9ef31a664fcb8b96fd1c777da8b, type: 3}
@@ -452,9 +497,18 @@ MonoBehaviour:
   - family: wall_kit
     variation: V08
     prefab: {fileID: 3121125149865721152, guid: 316ed070a46d5447486f80a718742886, type: 3}
+  - family: wall_pier
+    variation: V01
+    prefab: {fileID: 232300929303881640, guid: dadcd3a8b61d44abaa61a462be4549d3, type: 3}
+  - family: wall_pier
+    variation: V02
+    prefab: {fileID: 8877365157463072761, guid: 9500dcb568bdb43ee858013c33d5c7ba, type: 3}
   - family: weapon_crate
     variation: V01
     prefab: {fileID: 3569793401418752944, guid: 408dc946dad5b484c9f39e744a4117b7, type: 3}
+  - family: yagura
+    variation: V01
+    prefab: {fileID: 3070125378710985085, guid: 677e6802204744e46b21ddfcd94139c1, type: 3}
   - family: yatsuhashi
     variation: V01
     prefab: {fileID: 8882717993483599277, guid: a938b983d471a491b8fa64abdb8b474f, type: 3}

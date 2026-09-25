@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_ap023_gravel_Packed.png",
+    "sourceSha256": "b988af016bb662b90ec8f83df4b0e80f1fa93c7373c4c7a5e5ddb6aa14dee69a",
+    "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-25T01:36:21.6798500Z",
+    "outputSha256": "0b2313e2f6e053ec5726dacfa3e0bb9ef6c3750bcf3e8460e3648d3c34a9eb82"
+}
