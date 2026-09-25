@@ -204,6 +204,24 @@ namespace DD.Prototype.UI
         private string _notice;
         private float _fade;
 
+        /// <summary>
+        /// WP-068 R1-C (user request 25.09): the round-end screen stands on an ink-wash wallpaper - a faded black silhouette of
+        /// the ronin before the ruined keep, the horde on the horizon (Higgsfield gpt_image_2_5, luminance-clamped: see
+        /// UpgradeWallpaperTests). 80 % of its width is shown, so the ronin stands in the gap between the tree and the
+        /// detail card and the keep's roofs rise over the header.
+        /// </summary>
+        protected override string BackdropArt
+        {
+            get { return UpgradeWallpaper; }
+        }
+
+        protected override float BackdropArtWidth
+        {
+            get { return 0.8f; }
+        }
+
+        public const string UpgradeWallpaper = "UI/Wallpapers/upgrade_wallpaper";
+
         protected override bool WantsUiCamera
         {
             // The run scene has a gameplay camera. Creating a second one would make the

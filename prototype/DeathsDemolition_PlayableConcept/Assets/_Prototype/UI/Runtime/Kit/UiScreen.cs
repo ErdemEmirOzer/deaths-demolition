@@ -54,6 +54,22 @@ namespace DD.Prototype.UI
             get { return true; }
         }
 
+        /// <summary>
+        /// WP-068 R1-C: an artwork wallpaper for the backdrop (a Resources path to a Texture2D), or null for the plain
+        /// base. The art replaces the sky veil; the ground veil, petals and foot rule stay over it. Its luminance ceiling
+        /// is the art's contract (see UpgradeWallpaperTests), so every text pair measured on SurfaceBase still holds.
+        /// </summary>
+        protected virtual string BackdropArt
+        {
+            get { return null; }
+        }
+
+        /// <summary>The share of the art's width shown, anchored to its bottom-right corner (1 = the whole image, cover-fit).</summary>
+        protected virtual float BackdropArtWidth
+        {
+            get { return 1f; }
+        }
+
         protected virtual bool WantsPageGrid
         {
             get { return true; }
@@ -174,13 +190,28 @@ namespace DD.Prototype.UI
             Image baseFill = UiFactory.NewImage("Base", backdrop, UiColor.SurfaceBase);
             UiFactory.Fill((RectTransform)baseFill.transform);
 
-            Image sky = UiFactory.NewImage("SkyVeil", backdrop, UiColor.AccentWisteria, UiSprites.FadeDown);
-            RectTransform skyRect = UiFactory.Fill((RectTransform)sky.transform);
-            skyRect.anchorMin = new Vector2(0f, 0.45f);
-            skyRect.anchorMax = new Vector2(1f, 1f);
-            skyRect.offsetMin = Vector2.zero;
-            skyRect.offsetMax = Vector2.zero;
-            SetAlpha(sky, 0.07f);
+            Texture2D art = string.IsNullOrEmpty(BackdropArt) ? null : Resources.Load<Texture2D>(BackdropArt);
+            if (art != null)
+            {
+                var artObject = new GameObject("Art", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage), typeof(UiBackdropArt));
+                var artRect = (RectTransform)artObject.transform;
+                artRect.SetParent(backdrop, false);
+                UiFactory.Fill(artRect);
+                RawImage image = artObject.GetComponent<RawImage>();
+                image.texture = art;
+                image.raycastTarget = false;
+                artObject.GetComponent<UiBackdropArt>().Configure(BackdropArtWidth);
+            }
+            else
+            {
+                Image sky = UiFactory.NewImage("SkyVeil", backdrop, UiColor.AccentWisteria, UiSprites.FadeDown);
+                RectTransform skyRect = UiFactory.Fill((RectTransform)sky.transform);
+                skyRect.anchorMin = new Vector2(0f, 0.45f);
+                skyRect.anchorMax = new Vector2(1f, 1f);
+                skyRect.offsetMin = Vector2.zero;
+                skyRect.offsetMax = Vector2.zero;
+                SetAlpha(sky, 0.07f);
+            }
 
             Image ground = UiFactory.NewImage("GroundVeil", backdrop, UiColor.SurfaceInset, UiSprites.FadeUp);
             RectTransform groundRect = UiFactory.Fill((RectTransform)ground.transform);
@@ -310,6 +341,49 @@ namespace DD.Prototype.UI
             column.offsetMin = new Vector2(0f, bottom);
             column.offsetMax = new Vector2(0f, -top);
             return column;
+        }
+    }
+
+    /// <summary>
+    /// The backdrop art's cover-fit: the image fills the screen at any aspect without stretching, anchored to its
+    /// bottom-right corner (the ground and the art's subject keep their place), showing <c>width</c> of the image's
+    /// width where the screen's aspect allows. Re-fits on a resize; no per-frame work.
+    /// </summary>
+    public sealed class UiBackdropArt : UIBehaviour
+    {
+        private float _width = 1f;
+
+        public void Configure(float width)
+        {
+            _width = Mathf.Clamp(width, 0.1f, 1f);
+            Fit();
+        }
+
+        protected override void OnRectTransformDimensionsChange()
+        {
+            Fit();
+        }
+
+        private void Fit()
+        {
+            var image = GetComponent<RawImage>();
+            var rect = (RectTransform)transform;
+            if (image == null || image.texture == null || rect.rect.height <= 0f)
+            {
+                return;
+            }
+
+            float texAspect = image.texture.width / (float)image.texture.height;
+            float screenAspect = rect.rect.width / rect.rect.height;
+            float w = _width;
+            float h = w * texAspect / screenAspect;
+            if (h > 1f)
+            {
+                h = 1f;
+                w = screenAspect / texAspect;
+            }
+
+            image.uvRect = new Rect(1f - w, 0f, w, h);
         }
     }
 }
