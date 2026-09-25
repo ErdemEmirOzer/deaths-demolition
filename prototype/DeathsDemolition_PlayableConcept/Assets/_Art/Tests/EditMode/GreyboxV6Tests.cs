@@ -303,6 +303,23 @@ namespace DD.Art.Tests.EditMode
             foreach (Transform t in dress.transform.Find("CentrePlanting"))
                 if (PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(t.gameObject).EndsWith("SM_planter_V07.prefab", System.StringComparison.Ordinal)) planters++;
             Assert.AreEqual(4, planters, "v005 saksı");
+
+            // B5b-3 · the vista: > 900 trees, every base in the 58–84 m band (outside the ring), out of the bake; the AP-019 horizon rings.
+            Transform vista = dress.transform.Find(WorldV5Dress.VistaGroupName);
+            Assert.IsNotNull(vista, "vista");
+            Assert.AreEqual(PrototypeLayers.Environment, vista.gameObject.layer, "modifier katmanı bake maskesinde");
+            Assert.IsTrue(vista.GetComponent<Unity.AI.Navigation.NavMeshModifier>().ignoreFromBuild);
+            int trees = 0;
+            foreach (Transform t in vista)
+            {
+                float band = Mathf.Max(Mathf.Abs(t.position.x), Mathf.Abs(t.position.z));
+                if (band < WorldV5Dress.VistaInner - 1e-3f || band > WorldV5Dress.VistaOuter + 1e-3f) fails.Add("vista bandı dışı: " + t.name + " " + t.position);
+                trees++;
+            }
+
+            Assert.Greater(trees, 900, "vista ağaç sayısı (3,5 m ızgara)");
+            Assert.IsNotNull(dress.transform.Find(ArtSurfaceImporter.SkyRootName), "ufuk halkaları");
+            Debug.Log("[DD-TEST] wp074.b5b3.vista trees " + trees);
             Assert.IsEmpty(fails, string.Join("\n", fails));
         }
 

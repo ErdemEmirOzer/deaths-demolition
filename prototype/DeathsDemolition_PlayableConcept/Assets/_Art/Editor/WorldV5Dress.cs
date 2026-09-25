@@ -221,7 +221,13 @@ namespace DD.Art.Pipeline.EditorTools
         private static readonly Dictionary<string, GameObject> s_prefabs = new Dictionary<string, GameObject>(StringComparer.Ordinal);
 
         /// <summary>Greybox pieces the kit replaces (name prefixes under the greybox root).</summary>
-        public static readonly string[] ReplacedPrefixes = { "Hall_Plinth", "Hall_Stair", "R1_MainHall_", "RingWall_", "Court_", "Karamon_", "Lantern_", "Planter_" };
+        public static readonly string[] ReplacedPrefixes = { "Hall_Plinth", "Hall_Stair", "R1_MainHall_", "RingWall_", "Court_", "Karamon_", "Lantern_", "Planter_", "Vista" };
+
+        public const string VistaGroupName = "VistaForest";
+        /// <summary>The vista band (B5b-3): tree bases between these square radii — outside the tsuiji's outer face (55.6) to the vista edge.</summary>
+        public const float VistaInner = 58f, VistaOuter = 84f, VistaSpacing = 3.5f;
+        /// <summary>The distant keep (HF-center's top-left tower): a yagura at 1.8× north-west beyond the ring.</summary>
+        public static readonly Vector2 VistaKeep = new Vector2(-70f, 74f);
 
         /// <summary>The four centre planters (greybox BuildArena corners), 3 × 3 m.</summary>
         public static readonly Vector2[] PlanterCentres = { new Vector2(-9f, -9f), new Vector2(-9f, 9f), new Vector2(9f, -9f), new Vector2(9f, 9f) };
@@ -243,6 +249,8 @@ namespace DD.Art.Pipeline.EditorTools
             Lanterns(dress);
             Planters(dress);
             Yagura(dress);
+            Vista(dress);
+            ArtSurfaceImporter.BuildHorizonPlates(dress.gameObject);   // AP-019 horizon rings (World_AP005's), until the C3 sky v2
             report.PlazaCells = WorldV5Ground.Build(dress, (parent, family, v, m, role) => Place(parent, family, v, m, Vector3.zero, role));
             report.Instances = CountInstances(dress);
             return report;
@@ -437,6 +445,43 @@ namespace DD.Art.Pipeline.EditorTools
             group.gameObject.AddComponent<NavMeshModifier>().ignoreFromBuild = true;
             foreach ((float x, float y, float deg) in new[] { (-c, -c, 0f), (c, -c, 90f), (c, c, 180f), (-c, c, 270f) })
                 Place(group, "yagura", 1, Mz(x, y, 0f, deg) * Matrix4x4.Scale(Vector3.one * scale), Vector3.zero, "structure");
+        }
+
+        /// <summary>
+        /// B5b-3 · The vista (55–85 m, walk-free) in place of the greybox boxes: a jittered 3.5 m grid of trees (a closed canopy, HF-center) in the square band
+        /// <see cref="VistaInner"/>…<see cref="VistaOuter"/> — sugi (cheap LODs, 12–16 m: the treeline over the tsuiji) with black
+        /// pine accents west / south and sakura / momiji east (the garden side) — and one distant keep. Out of the bake (layer
+        /// Environment so the modifier counts); clear of the corner yagura and the keep.
+        /// </summary>
+        private static void Vista(Transform dress)
+        {
+            var group = new GameObject(VistaGroupName) { layer = PrototypeLayers.Environment }.transform;
+            group.SetParent(dress, false);
+            group.gameObject.AddComponent<NavMeshModifier>().ignoreFromBuild = true;
+            var rng = new System.Random(744);
+            for (float x = -VistaOuter; x <= VistaOuter; x += VistaSpacing)
+            for (float z = -VistaOuter; z <= VistaOuter; z += VistaSpacing)
+            {
+                var p = new Vector2(x + (float)(rng.NextDouble() - 0.5) * VistaSpacing * 0.8f, z + (float)(rng.NextDouble() - 0.5) * VistaSpacing * 0.8f);
+                double pick = rng.NextDouble(), yaw = rng.NextDouble() * 360.0, s = 0.85 + rng.NextDouble() * 0.35;
+                float band = Mathf.Max(Mathf.Abs(p.x), Mathf.Abs(p.y));
+                if (band < VistaInner || band > VistaOuter) continue;
+                if (Vector2.Distance(new Vector2(Mathf.Abs(p.x), Mathf.Abs(p.y)), new Vector2(60.2f, 60.2f)) < 8f) continue;   // corner yagura
+                if (Vector2.Distance(p, VistaKeep) < 11f) continue;
+                (string family, int v) = VistaSpecies(p, pick);
+                Place(group, family, v, Mz(p.x, p.y, 0f, (float)yaw) * Matrix4x4.Scale(Vector3.one * (float)s), Vector3.zero, "vegetation");
+            }
+
+            Place(group, "yagura", 1, Mz(VistaKeep.x, VistaKeep.y, 0f, 30f) * Matrix4x4.Scale(Vector3.one * 1.8f), Vector3.zero, "structure");
+        }
+
+        /// <summary>Species by side: east (x > 40) 12 % sakura / momiji, west and south 10 % black pine, the rest sugi (V01 60 %, V02).</summary>
+        public static (string family, int variation) VistaSpecies(Vector2 p, double pick)
+        {
+            if (p.x > 40f && pick < 0.08) return ("sakura_v2", 2);
+            if (p.x > 40f && pick < 0.12) return ("momiji", 1);
+            if ((p.x < -40f || p.y < -40f) && pick < 0.10) return ("black_pine", 4);
+            return ("sugi", pick < 0.64 ? 1 : 2);
         }
 
         // ---------------------------------------------------------------- helpers
