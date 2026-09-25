@@ -199,3 +199,4 @@ MonoBehaviour:
       euler: {x: -0.56, y: -2.3, z: 0}
       scale: 0.875
     gripOffset: {x: 0, y: -0.045, z: -0.06}
+    fpLeftHandOffset: {x: 0, y: 0, z: 0}

@@ -341,6 +341,7 @@ namespace DD.Prototype.Core.Weapons
         public WeaponSockets sockets = new WeaponSockets();
         [Tooltip("WP-069: the first-person view pose (unset → the class default).")] public WeaponFpViewPose fpView = new WeaponFpViewPose();
         [Tooltip("WP-069 (grip decision B): the hand's mid-grip socket in the weapon frame; the model sits so this point lands on socket_weapon_r.")] public Vector3 gripOffset = WeaponGrip.DefaultOffset;
+        [Tooltip("WP-069 × WP-071 (C-00 25.09): first person — added to P-06's hands_in_weapon_frame LeftHand point (weapon frame, metres, before the fpView scale); zero keeps P-06's point.")] public Vector3 fpLeftHandOffset = Vector3.zero;
 
         /// <summary>The pose the first-person view uses: this weapon's own, or its class default.</summary>
         public WeaponFpViewPose FpViewPoseOr(WeaponClass cls) => fpView != null && fpView.IsSet ? fpView : WeaponFpViewPose.DefaultFor(cls);
@@ -433,6 +434,12 @@ namespace DD.Prototype.Core.Weapons
 
         /// <summary>WP-069 (grip decision B): the hand's mid-grip socket in the weapon frame.</summary>
         public Vector3 GripOffset => presentation.gripOffset;
+
+        /// <summary>
+        /// WP-069 × WP-071 (C-00 25.09): the first-person left-hand IK offset, added to P-06's hands_in_weapon_frame LeftHand point —
+        /// weapon frame (x right, y up, z barrel), metres, before the fpView scale. Zero keeps P-06's point.
+        /// </summary>
+        public Vector3 FpLeftHandOffset => presentation.fpLeftHandOffset;
 
         /// <summary>WP-069: the first-person view pose (own, or the class default).</summary>
         public WeaponFpViewPose FpViewPose => presentation.FpViewPoseOr(weaponClass);

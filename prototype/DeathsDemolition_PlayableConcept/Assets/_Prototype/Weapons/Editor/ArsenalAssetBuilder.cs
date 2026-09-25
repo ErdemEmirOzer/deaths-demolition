@@ -538,6 +538,19 @@ namespace DD.Prototype.Weapons.EditorTools
             { "rl_1", new Vector3(0f, -0.062f, -0.055f) },
         };
 
+        /// <summary>
+        /// WP-069 × WP-071 (C-00 25.09, S-06 f30 / f31): the first-person left hand, moved from P-06's hands_in_weapon_frame
+        /// LeftHand point so the left elbow leaves the frame and the arm stays ≤ 8.4 % of it (hand error 0.00 cm) — weapon
+        /// frame, metres, before the fpView scale. smg_2 keeps P-06's point (its grip_l already sits 8 cm lower). ar_2 is
+        /// provisional until P-06's FP left-arm pose (after 30.09): its elbow reads y 1084 px against the 1120 limit.
+        /// </summary>
+        private static readonly Dictionary<string, Vector3> FpLeftHandOffsets = new Dictionary<string, Vector3>
+        {
+            { "ar_1", new Vector3(0f, -0.08f, 0f) },
+            { "smg_1", new Vector3(0f, -0.08f, 0f) },
+            { "ar_2", new Vector3(0f, -0.08f, -0.14f) },
+        };
+
         // ================================================================== asset writing
 
         private static WeaponDefinition Write(WeaponDefinition fresh)
@@ -548,6 +561,7 @@ namespace DD.Prototype.Weapons.EditorTools
             }
 
             fresh.presentation.gripOffset = GripOffsets.TryGetValue(fresh.weaponId, out Vector3 grip) ? grip : WeaponGrip.DefaultOffset;
+            fresh.presentation.fpLeftHandOffset = FpLeftHandOffsets.TryGetValue(fresh.weaponId, out Vector3 leftHand) ? leftHand : Vector3.zero;
 
             string path = Folder + "/" + fresh.name + ".asset";
             WeaponDefinition existing = AssetDatabase.LoadAssetAtPath<WeaponDefinition>(path);

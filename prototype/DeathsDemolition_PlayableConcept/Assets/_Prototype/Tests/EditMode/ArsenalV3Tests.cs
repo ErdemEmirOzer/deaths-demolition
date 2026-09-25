@@ -68,6 +68,23 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void FpSolElOfseti_S06Degerleri_DigerleriSifir()
+        {
+            // WP-069 × WP-071 (C-00 25.09): the FP left-hand offsets S-06 measured (weapon frame, m, before the fpView scale).
+            var beklenen = new System.Collections.Generic.Dictionary<string, Vector3>
+            {
+                { "ar_1", new Vector3(0f, -0.08f, 0f) }, { "smg_1", new Vector3(0f, -0.08f, 0f) }, { "ar_2", new Vector3(0f, -0.08f, -0.14f) },
+            };
+            foreach (string id in new[] { "ar_1", "smg_1", "sg_1", "ar_2", "smg_2", "sg_2", "lmg_1", "lmg_2", "sr_1", "rl_1", "sw_arc", "sw_gel" })
+            {
+                DD.Prototype.Core.Weapons.WeaponDefinition d = DD.Prototype.Core.Weapons.Arsenal.Get(id);
+                Assert.IsNotNull(d, id);
+                Vector3 want = beklenen.TryGetValue(id, out Vector3 v) ? v : Vector3.zero;
+                Assert.Less(Vector3.Distance(d.FpLeftHandOffset, want), 1e-5f, id + ": FP sol el ofseti " + d.FpLeftHandOffset.ToString("F3"));
+            }
+        }
+
+        [Test]
         public void KonfigKopyasi_TanimSayilariniTasir_KonseySayilari()
         {
             PrototypeConfig config = Config;
