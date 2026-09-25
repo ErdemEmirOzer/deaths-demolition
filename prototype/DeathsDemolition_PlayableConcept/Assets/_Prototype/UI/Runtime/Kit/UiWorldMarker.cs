@@ -113,7 +113,7 @@ namespace DD.Prototype.UI
             UiHudInk.Apply(_distance);   // 8-R: over the world with no box - the caption carries its own ink
             _distanceRect = (RectTransform)_distance.transform;
             _distanceRect.pivot = new Vector2(0.5f, 1f);
-            _distanceRect.sizeDelta = new Vector2(160f, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption)));
+            _distanceRect.sizeDelta = new Vector2(160f, UiFactory.LineHeight(UiType.Caption));
 
             SetForm(0);
             _root.gameObject.SetActive(false);

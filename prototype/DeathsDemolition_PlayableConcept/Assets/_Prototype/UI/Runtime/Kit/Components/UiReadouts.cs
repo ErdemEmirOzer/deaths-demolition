@@ -331,7 +331,7 @@ namespace DD.Prototype.UI
             labelRect.anchorMin = new Vector2(0f, 0f);
             labelRect.anchorMax = new Vector2(1f, 0f);
             labelRect.pivot = new Vector2(0.5f, 0f);
-            labelRect.sizeDelta = new Vector2(0f, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Label)));
+            labelRect.sizeDelta = new Vector2(0f, UiFactory.LineHeight(UiType.Label));
             labelRect.anchoredPosition = Vector2.zero;
             return counter;
         }

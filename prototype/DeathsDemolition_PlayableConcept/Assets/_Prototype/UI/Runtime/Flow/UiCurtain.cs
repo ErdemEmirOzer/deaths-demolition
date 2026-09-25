@@ -768,7 +768,7 @@ namespace DD.Prototype.UI
 
             float width = Mathf.Min(TipMaxWidth, _root.rect.width - TipMargin * 2f);
             _tip.text = tip;
-            float textHeight = Mathf.Max(UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Body)),
+            float textHeight = Mathf.Max(UiFactory.LineHeight(UiType.Body),
                 Mathf.Ceil(_tip.GetPreferredValues(tip, width - (int)UiSpace.L * 2f, 0f).y));
             _tipStrip.sizeDelta = new Vector2(width, textHeight + (int)UiSpace.M * 2f);
         }

@@ -338,7 +338,7 @@ namespace DD.Prototype.UI
         {
             var stack = new UiStack(column);
             float width = column.rect.width;
-            float captionLine = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption));
+            float captionLine = UiFactory.LineHeight(UiType.Caption);
 
             // The PLAY caption at its measured height (≤ 2 lines at the column width; the old
             // fixed 3-line band pushed the tabs into QUIT at UI scale 1.2 × TextScale 1.25).
@@ -357,7 +357,7 @@ namespace DD.Prototype.UI
                 ? Mathf.Max(captionLine, Mathf.Ceil(build.GetPreferredValues(build.text, width, 0f).y))
                 : captionLine;
             float foot = UiTokens.TargetPreferred + (int)UiSpace.S + buildHeight;
-            float labelHeight = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Label));
+            float labelHeight = UiFactory.LineHeight(UiType.Label);
             NavRhythm rhythm = NavRhythmFor(column.rect.height, (int)UiSpace.S + hintHeight + labelHeight + foot);
 
             UiButton play = UiFactory.Button("Play", column, "PLAY", UiButtonVariant.Primary,
@@ -823,7 +823,7 @@ namespace DD.Prototype.UI
             }
 
             RectTransform head = UiFactory.NewRect("Section." + title, parent);
-            stack.Add(head, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Label)));
+            stack.Add(head, UiFactory.LineHeight(UiType.Label));
             TMP_Text label = UiFactory.Label("Label", head, title, UiType.Label, UiColor.TextMuted, TextAnchor.MiddleLeft);
             UiFactory.Fill(label.rectTransform);
             float x = Mathf.Ceil(label.GetPreferredValues(title).x) + (int)UiSpace.M;
@@ -851,7 +851,7 @@ namespace DD.Prototype.UI
             var stack = new UiStack(well);
 
             TMP_Text label = UiFactory.Label("Label", well, "PREVIEW", UiType.Label, UiColor.TextMuted);
-            stack.Add((RectTransform)label.transform, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Label)));
+            stack.Add((RectTransform)label.transform, UiFactory.LineHeight(UiType.Label));
             stack.Gap(UiSpace.S);
 
             float wellWidth = well.rect.width > 1f ? well.rect.width : PreviewMinWidth;
@@ -886,7 +886,7 @@ namespace DD.Prototype.UI
 
             stack.Gap(UiSpace.S);
             _previewCaption = UiFactory.Label("Caption", well, string.Empty, UiType.Caption, UiColor.TextMuted);
-            stack.Add((RectTransform)_previewCaption.transform, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption)) * 2f);
+            stack.Add((RectTransform)_previewCaption.transform, UiFactory.LineHeight(UiType.Caption) * 2f);
             ShowPreviewScale(UiSettings.UiScale);
         }
 
@@ -1374,7 +1374,7 @@ namespace DD.Prototype.UI
             float width = well.rect.width > 1f ? well.rect.width : PreviewMinWidth;
 
             TMP_Text label = UiFactory.Label("Label", well, "SAMPLE", UiType.Label, UiColor.TextMuted);
-            stack.Add((RectTransform)label.transform, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Label)));
+            stack.Add((RectTransform)label.transform, UiFactory.LineHeight(UiType.Label));
             stack.Gap(UiSpace.S);
 
             // The four state chips, two by two, filled from the current palette.
@@ -1404,7 +1404,7 @@ namespace DD.Prototype.UI
             // MUST-6): cracked heart + BarHealthLow bar + the value in StateDanger, in either
             // palette. A hit on the bar is the motion sample (ghost trail).
             bool low = SampleHealth < UiTokens.LowHealthFraction;
-            float labelBand = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Label));
+            float labelBand = UiFactory.LineHeight(UiType.Label);
             RectTransform healthRow = UiFactory.NewRect("HealthRow", well);
             stack.Add(healthRow, labelBand);
             Image heart = UiArt.IconImage("Heart", healthRow, low ? "Hud.LowHealth" : "Hud.Health", low ? UiColor.BarHealthLow : UiColor.BarHealth, labelBand);
@@ -1449,7 +1449,7 @@ namespace DD.Prototype.UI
 
             stack.Gap(UiSpace.S);
             TMP_Text note = UiFactory.Label("ScreenNote", well, "Damage edge and final-seconds bands at their peak.", UiType.Caption, UiColor.TextMuted);
-            stack.Add((RectTransform)note.transform, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption)) * 2f);
+            stack.Add((RectTransform)note.transform, UiFactory.LineHeight(UiType.Caption) * 2f);
             RefreshAccessibilitySample();
         }
 
@@ -1561,8 +1561,8 @@ namespace DD.Prototype.UI
             // off the pane when HINTS arrived) and clipped at 1.25. Unlaid-out parents keep the old band.
             float width = parent.rect.width;
             float height = width > 1f
-                ? Mathf.Max(UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption)), Mathf.Ceil(caption.GetPreferredValues(text, width, 0f).y))
-                : UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption)) * lines;
+                ? Mathf.Max(UiFactory.LineHeight(UiType.Caption), Mathf.Ceil(caption.GetPreferredValues(text, width, 0f).y))
+                : UiFactory.LineHeight(UiType.Caption) * lines;
             stack.Add((RectTransform)caption.transform, height);
             stack.Gap(after);
             return caption;
@@ -1612,7 +1612,7 @@ namespace DD.Prototype.UI
             // Results (a Numeric label drew "LEVEL" in the fallback sans beside an Oswald digit).
             TMP_Text level = UiFactory.Label(
                 "Level", _paneHost, model.LevelText, UiType.H2, UiColor.TextPrimary, TextAnchor.MiddleLeft);
-            stack.Add((RectTransform)level.transform, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.H2)));
+            stack.Add((RectTransform)level.transform, UiFactory.LineHeight(UiType.H2));
 
             stack.Gap(UiSpace.M);
 
@@ -1996,7 +1996,7 @@ namespace DD.Prototype.UI
 
             // The text bands come from the faces' line boxes at the TextScale (slice 3 made them taller: a fixed
             // 24 px title band and an 8 px in-progress description band truncated both lines to nothing).
-            float titleBand = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.H3));
+            float titleBand = UiFactory.LineHeight(UiType.H3);
             TMP_Text title = UiFactory.Label(
                 "Title", content, line.Title, UiType.H3,
                 line.Earned ? UiColor.TextPrimary : UiColor.TextSecondary, TextAnchor.UpperLeft);
@@ -2072,7 +2072,7 @@ namespace DD.Prototype.UI
         /// </summary>
         private static float AchievementRowHeightFor(bool earned)
         {
-            float text = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.H3)) + UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption));
+            float text = UiFactory.LineHeight(UiType.H3) + UiFactory.LineHeight(UiType.Caption);
             return Mathf.Max(AchievementRowHeight, (int)UiSpace.L * 2 + text + (earned ? 0f : ProgressBand));
         }
 

@@ -614,7 +614,7 @@ namespace DD.Prototype.UI
             // AD R1-B MUST-2b: under the ring, top-down - the time strip (ring bottom + 8), the usage row ("SHOTS 2 · HITS 5",
             // gold, strip + 8) and the name (usage + 4). Placed from the top, so a larger TextScale grows the block downward
             // into its own 260 px and never back over the strip.
-            float captionBand = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption));
+            float captionBand = UiFactory.LineHeight(UiType.Caption);
             float usageTop = UiFactory.LineHeight(UiType.Label) + (int)UiSpace.XS + SpecialRingSize + (int)UiSpace.S + SpecialCapHeight + (int)UiSpace.S;
             _specialUsage = UiFactory.Label(
                 "Usage", specialHost, string.Empty, UiType.Caption, UiColor.StateGold, TextAnchor.MiddleCenter);

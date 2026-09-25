@@ -233,7 +233,7 @@ namespace DD.Prototype.UI
             public void Text(string text, UiType type, UiColor colour, float width)
             {
                 TMP_Text label = UiFactory.Label("Text", _root, text, type, colour, TextAnchor.UpperLeft);
-                float height = UiFactory.ScaledBand(UiFactory.LineHeight(type));
+                float height = UiFactory.LineHeight(type);
                 Place(label.rectTransform, _x, width, height);
                 Y += height + (int)UiSpace.XS;
             }
@@ -242,7 +242,7 @@ namespace DD.Prototype.UI
             {
                 Y += (int)UiSpace.M;
                 RectTransform heading = UiFactory.Heading(title, _root, UiType.H3);
-                float height = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.H3));
+                float height = UiFactory.LineHeight(UiType.H3);
                 Place(heading, _x, _width, height);
                 Y += height + (int)UiSpace.S;
             }
@@ -310,13 +310,13 @@ namespace DD.Prototype.UI
                 titleRect.anchorMin = new Vector2(0f, 1f);
                 titleRect.anchorMax = new Vector2(1f, 1f);
                 titleRect.pivot = new Vector2(0.5f, 1f);
-                titleRect.sizeDelta = new Vector2(0f, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.H3)));
+                titleRect.sizeDelta = new Vector2(0f, UiFactory.LineHeight(UiType.H3));
                 TMP_Text body = UiFactory.Label("Body", card.Content, line, UiType.Body, UiColor.TextSecondary, TextAnchor.LowerLeft);
                 RectTransform bodyRect = body.rectTransform;
                 bodyRect.anchorMin = new Vector2(0f, 0f);
                 bodyRect.anchorMax = new Vector2(1f, 0f);
                 bodyRect.pivot = new Vector2(0.5f, 0f);
-                bodyRect.sizeDelta = new Vector2(0f, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Body)) * 2f);
+                bodyRect.sizeDelta = new Vector2(0f, UiFactory.LineHeight(UiType.Body) * 2f);
                 if (locked)
                 {
                     card.SetLocked(true);
@@ -373,7 +373,7 @@ namespace DD.Prototype.UI
 
             public void Counter(string caption, UiCounter counter)
             {
-                float height = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.NumericL));
+                float height = UiFactory.LineHeight(UiType.NumericL);
                 TMP_Text label = UiFactory.Label("Caption", _root, caption, UiType.Label, UiColor.TextSecondary, TextAnchor.MiddleLeft);
                 Place(label.rectTransform, _x, 96f, height);
                 Place((RectTransform)counter.transform, _x + 104f, _width - 104f, height);

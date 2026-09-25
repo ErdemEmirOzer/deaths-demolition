@@ -108,6 +108,46 @@ namespace DD.Prototype.Tests.EditMode
             }
         }
 
+        /// <summary>
+        /// 12d (C-00 25.09, kit-wide): a text band is the face's line box - LineHeight(type) is already the line at the current
+        /// text scale, so no UI source wraps it in ScaledBand (the pair counted TextScale twice: a Caption band 45 px for a
+        /// 36 px line at 1.25, a heading's band grown though its face is not). At 1.25 the band equals the line, never 1.25 ×.
+        /// </summary>
+        [Test]
+        public void MetinBandi_SatirKutusudur_OlcekIkiKezSayilmaz()
+        {
+            var offenders = new System.Collections.Generic.List<string>();
+            foreach (string path in System.IO.Directory.GetFiles("Assets/_Prototype/UI/Runtime", "*.cs", System.IO.SearchOption.AllDirectories))
+            {
+                string[] lines = System.IO.File.ReadAllLines(path);
+                for (int i = 0; i < lines.Length; i++)
+                {
+                    string line = lines[i].Replace(" ", string.Empty);
+                    if (line.Contains("ScaledBand(UiFactory.LineHeight(") || line.Contains("ScaledBand(LineHeight("))
+                    {
+                        offenders.Add(path + ":" + (i + 1));
+                    }
+                }
+            }
+
+            Assert.IsEmpty(offenders, "ScaledBand(LineHeight(…)) counts the text scale twice:\n" + string.Join("\n", offenders));
+
+            float scale = UiTokens.TextScale;
+            try
+            {
+                UiTokens.TextScale = 1.25f;
+                float caption = UiFactory.LineHeight(UiType.Caption);
+                float h3 = UiFactory.LineHeight(UiType.H3);
+                UiTokens.TextScale = 1f;
+                Assert.Greater(caption, UiFactory.LineHeight(UiType.Caption), "a Caption line grows with the text scale");
+                Assert.AreEqual(h3, UiFactory.LineHeight(UiType.H3), "a heading's face does not, nor its line");
+            }
+            finally
+            {
+                UiTokens.TextScale = scale;
+            }
+        }
+
         [Test]
         public void MetinBantlari_MetinOlcegiyleBuyur_1_0Degismez()
         {

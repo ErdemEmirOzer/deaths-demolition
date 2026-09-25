@@ -262,7 +262,7 @@ namespace DD.Prototype.UI
             stack.Gap(UiSpace.M);
 
             TMP_Text note = UiFactory.Label("Note", host, _model.CombatNote, UiType.Caption, UiColor.TextMuted);
-            stack.Add((RectTransform)note.transform, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption)) * 2f);
+            stack.Add((RectTransform)note.transform, UiFactory.LineHeight(UiType.Caption) * 2f);
             return stack.Cursor + 2f * (int)UiSpace.XL;
         }
 
@@ -297,7 +297,7 @@ namespace DD.Prototype.UI
 
             // EXPERIENCE: the label left, the total (sakura, NumericL) right, the breakdown under it.
             RectTransform xpRow = UiFactory.NewRect("Xp", host);
-            float xpLine = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.NumericL));
+            float xpLine = UiFactory.LineHeight(UiType.NumericL);
             stack.Add(xpRow, xpLine);
             TMP_Text xpLabel = UiFactory.Label("Label", xpRow, UiStrings.Get("results.xp", "EXPERIENCE"), UiType.Label, UiColor.TextMuted, TextAnchor.MiddleLeft);
             UiFactory.Fill((RectTransform)xpLabel.transform);
@@ -317,15 +317,15 @@ namespace DD.Prototype.UI
             // ScaledBand over it scaled the text scale in twice (45 px for a 36 px line at 1.25) - 12c MUST-4's missing 13 px.
             float captionBand = UiFactory.LineHeight(UiType.Caption);
             float nextLine = captionBand;
-            float after = (_model.AshEarned > 0 ? (int)UiSpace.S + UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Label)) : 0f)
+            float after = (_model.AshEarned > 0 ? (int)UiSpace.S + UiFactory.LineHeight(UiType.Label) : 0f)
                           + 2f * (int)UiSpace.M + UiTokens.StrokeHairline;
             float entry = UiFactory.ScaledBand(RewardEntryHeight);
             float more = captionBand;
             int listed = _model.NewUnlocks.Count + _model.NewAchievements.Count;
             float listFirst = listed == 0
-                ? UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Body))
+                ? UiFactory.LineHeight(UiType.Body)
                 : entry + (int)UiSpace.S + (listed > 1 ? more : 0f);
-            float levelBlock = (int)UiSpace.M + UiFactory.ScaledBand(UiFactory.LineHeight(UiType.H3)) + (int)UiSpace.S + 14f
+            float levelBlock = (int)UiSpace.M + UiFactory.LineHeight(UiType.H3) + (int)UiSpace.S + 14f
                                + (int)UiSpace.XS + captionBand;
             float forward = string.IsNullOrEmpty(_model.NextUnlockLine) ? 0f : nextLine;
             float tail = levelBlock + forward + after + listFirst + 2f * (int)UiSpace.XL;
@@ -345,7 +345,7 @@ namespace DD.Prototype.UI
 
             // The level line, LEVEL UP at its right (stamped in its beat), the bar revealed before → after.
             RectTransform levelRow = UiFactory.NewRect("Level", host);
-            stack.Add(levelRow, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.H3)));
+            stack.Add(levelRow, UiFactory.LineHeight(UiType.H3));
             TMP_Text level = UiFactory.Numeric("Line", levelRow, _model.LevelLine, UiType.H3, UiColor.TextPrimary, TextAnchor.MiddleLeft, false);
             UiFactory.Fill((RectTransform)level.transform);
             if (_model.LeveledUp)
@@ -384,7 +384,7 @@ namespace DD.Prototype.UI
                 stack.Gap(UiSpace.S);
                 TMP_Text ash = UiFactory.Label("Path", host,
                     UiStrings.Get("path.results.delta", "PATH +{value} Ash").Replace("{value}", _model.AshEarned.ToString()), UiType.Label, UiColor.TextPrimary);
-                stack.Add((RectTransform)ash.transform, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Label)));
+                stack.Add((RectTransform)ash.transform, UiFactory.LineHeight(UiType.Label));
             }
 
             stack.Gap(UiSpace.M);
@@ -397,7 +397,7 @@ namespace DD.Prototype.UI
             if (total == 0)
             {
                 TMP_Text empty = UiFactory.Label("Empty", host, UiStrings.Get("results.empty", "No new unlocks this run."), UiType.Body, UiColor.TextMuted);
-                stack.Add((RectTransform)empty.transform, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Body)));
+                stack.Add((RectTransform)empty.transform, UiFactory.LineHeight(UiType.Body));
                 return stack.Cursor + 2f * (int)UiSpace.XL;
             }
 

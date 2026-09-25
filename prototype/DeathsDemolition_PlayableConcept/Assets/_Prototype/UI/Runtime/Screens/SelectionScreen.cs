@@ -252,7 +252,7 @@ namespace DD.Prototype.UI
                 "SkinCaption", column,
                 "All three are available from the start and none of them changes a gameplay value.",
                 UiType.Caption, UiColor.TextMuted);
-            stack.Add((RectTransform)caption.transform, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption)) * 2f);
+            stack.Add((RectTransform)caption.transform, UiFactory.LineHeight(UiType.Caption) * 2f);
 
             stack.Gap(UiSpace.L);
 
@@ -279,7 +279,7 @@ namespace DD.Prototype.UI
                 // AD G1 MUST-3: "Cosmetic only" on top in its own line box, the name in the band below it, top-aligned and
                 // growing downward - the two-line name at Mac UI 1.2 × TextScale 1.25 never climbs into the caption.
                 float textLeft = PreviewSlotWidth + SwatchWidthNow + (int)UiSpace.XL + (int)UiSpace.L;
-                float captionBand = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption));
+                float captionBand = UiFactory.LineHeight(UiType.Caption);
                 RectTransform labelRect = (RectTransform)button.LabelText.transform;
                 // The name band sits under the caption row, below the SELECTED badge (30 px), so it takes the card's full
                 // width: at Mac UI 1.2 × TextScale 1.25 the badge reserve clipped "Ivory / Crimson".
@@ -431,7 +431,7 @@ namespace DD.Prototype.UI
             _weaponGlyphs = new Image[count];
             _weaponEnabled = new bool[count];
 
-            float rowHeight = Mathf.Max(WeaponRowHeight, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.H3)) + (int)UiSpace.M);
+            float rowHeight = Mathf.Max(WeaponRowHeight, UiFactory.LineHeight(UiType.H3) + (int)UiSpace.M);
             _rowHeight = rowHeight;
 
             for (int i = 0; i < count; i++)
@@ -522,8 +522,8 @@ namespace DD.Prototype.UI
         private void BuildSpecialTiles(RectTransform column, ref UiStack stack)
         {
             stack.Gap(UiSpace.M);
-            float band = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Label));
-            float captionBand = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption));
+            float band = UiFactory.LineHeight(UiType.Label);
+            float captionBand = UiFactory.LineHeight(UiType.Caption);
             RectTransform head = UiFactory.NewRect("SpecialsHead", column);
             _specialsHead = head;
             _specialsTitleBand = band;
@@ -930,7 +930,7 @@ namespace DD.Prototype.UI
 
             if (Need() > avail && n > 0)
             {
-                float floor = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.H3)) + (int)UiSpace.S;
+                float floor = UiFactory.LineHeight(UiType.H3) + (int)UiSpace.S;
                 rowH = Mathf.Max(floor, Mathf.Floor(rowH - (Need() - avail) / n));
             }
 

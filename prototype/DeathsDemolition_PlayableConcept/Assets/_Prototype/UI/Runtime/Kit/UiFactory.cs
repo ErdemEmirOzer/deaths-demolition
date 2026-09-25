@@ -388,11 +388,22 @@ namespace DD.Prototype.UI
             return label;
         }
 
+        /// <summary>
+        /// A fixed px band (a row, a chip, a card) grown with the text scale, for bands authored as constants. Never over
+        /// <see cref="LineHeight"/>: that is already the face's line at the current text scale (12d - the double count made
+        /// every Body / Label / Caption band 25 % too tall at 1.25 and headings' bands grow though their faces do not).
+        /// UiDefectSliceTests' census keeps the pair out of the UI sources.
+        /// </summary>
         public static float ScaledBand(float band)
         {
             return Mathf.Ceil(band * Mathf.Clamp(UiTokens.TextScale, 1f, 1.25f));
         }
 
+        /// <summary>
+        /// The line box of the face that draws <paramref name="type"/> at the current text scale: Body / BodyStrong / Label /
+        /// Caption sizes already carry TextScale (UiTokens.FontSize), headings and numerics keep their size. Use it as the band
+        /// as is - wrapping it in <see cref="ScaledBand"/> counts the text scale twice (12d).
+        /// </summary>
         public static float LineHeight(UiType type)
         {
             float raw = UiTokens.FontSize(type) * UiTokens.LineSpacing(type) * FaceLineRatio(type);

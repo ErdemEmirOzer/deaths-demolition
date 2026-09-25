@@ -126,7 +126,7 @@ namespace DD.Prototype.UI
             // E19: the chip is as tall as the glyph plus a 2 px margin, or the word's line at this TextScale if taller;
             // as wide as glyph + the longest word, never under the old 88.
             float glyph = glyphs ? GlyphSize : 0f;
-            float height = Mathf.Max(GlyphSize + 4f, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Label)));
+            float height = Mathf.Max(GlyphSize + 4f, UiFactory.LineHeight(UiType.Label));
             Sprite brush = UiFxGlobals.InkMask(UiInkChannel.Underline);
             for (int i = 0; i < PoolSize; i++)
             {

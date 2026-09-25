@@ -105,7 +105,7 @@ namespace DD.Prototype.UI
 
         public HudBanner(RectTransform parent, float topOffset)
         {
-            _height = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Banner));
+            _height = UiFactory.LineHeight(UiType.Banner);
             _root = UiFactory.NewRect("BannerRoot", parent);
             _root.anchorMin = new Vector2(0.5f, 1f);
             _root.anchorMax = new Vector2(0.5f, 1f);

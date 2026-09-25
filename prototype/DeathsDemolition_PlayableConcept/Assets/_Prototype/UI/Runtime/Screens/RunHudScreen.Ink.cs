@@ -154,7 +154,7 @@ namespace DD.Prototype.UI
             // Bands from the metrics at the TextScale (D6): the value row sits clear of the leaning stroke's highest point.
             const float strokeLength = 320f, strokeHeight = 26f, strokeCentre = 32f;
             float strokeTop = strokeCentre + strokeHeight * 0.5f + strokeLength * Mathf.Tan(HealthLean * Mathf.Deg2Rad);
-            float band = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.NumericL));
+            float band = UiFactory.LineHeight(UiType.NumericL);
             float row = strokeTop + 2f + band * 0.5f;
             RectTransform root = Cluster("Health", Vector2.zero, new Vector2(InkMargin, InkMargin), new Vector2(380f, row + band * 0.5f + 4f), true);
             _healthPanel = root;   // 8c · E22: the cluster that holds α 1 through the death dim
