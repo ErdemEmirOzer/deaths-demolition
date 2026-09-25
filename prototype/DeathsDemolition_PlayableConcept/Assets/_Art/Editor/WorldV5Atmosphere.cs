@@ -18,7 +18,20 @@ namespace DD.Art.Pipeline.EditorTools
     /// </summary>
     public static class WorldV5Atmosphere
     {
-        public const string ShaftGroupName = "Shafts (C4)", FogGroupName = "GroundFog (C5)";
+        public const string ShaftGroupName = "Shafts (C4)", FogGroupName = "GroundFog (C5)", VistaMistGroupName = "VistaMist (DEC-101)";
+
+        /// <summary>
+        /// DEC-101 aerial perspective: mist sheets over the vista band outside the ring (58–90 m), two layers (y 3 m / 8 m), so the
+        /// sugi and the hills fade layer by layer like the HF frames. Outside the play area, so the ≤ 12 % local-fog rule (Ek A §5)
+        /// does not bind them; tiered 4 / 8 / 8.
+        /// </summary>
+        public static readonly (Vector2 at, Vector2 size, float y, float alpha)[] VistaMist =
+        {
+            (new Vector2(0f, 74f), new Vector2(180f, 32f), 3f, 0.12f), (new Vector2(0f, -74f), new Vector2(180f, 32f), 3f, 0.12f),
+            (new Vector2(74f, 0f), new Vector2(32f, 116f), 3f, 0.12f), (new Vector2(-74f, 0f), new Vector2(32f, 116f), 3f, 0.12f),
+            (new Vector2(0f, 76f), new Vector2(180f, 28f), 8f, 0.10f), (new Vector2(0f, -76f), new Vector2(180f, 28f), 8f, 0.10f),
+            (new Vector2(76f, 0f), new Vector2(28f, 124f), 8f, 0.10f), (new Vector2(-76f, 0f), new Vector2(28f, 124f), 8f, 0.10f),
+        };
         public const float CentreClear = 10f;
         public static string MeshFolder => GreyboxV6Builder.DataFolder + "/Atmosphere";
 
@@ -90,6 +103,22 @@ namespace DD.Art.Pipeline.EditorTools
                     mat.SetFloat("_NoiseSpeed", f.speed);
                 });
                 Piece(fog, "Fog_" + i.ToString("00") + "_" + f.region, new Vector3(f.at.x, f.y, f.at.y), new Vector3(f.size.x, 1f, f.size.y), fogMesh, m);
+                n++;
+            }
+
+            var mist = Group(dress, VistaMistGroupName);
+            mist.gameObject.AddComponent<AtmosphereTierGroup>().Configure(4, 8, 8, 0.8f, 1f, 1f);
+            for (int i = 0; i < VistaMist.Length; i++)
+            {
+                var v = VistaMist[i];
+                Material m = MaterialFor("V5_Fog_VistaMist_" + (v.y < 5f ? "Low" : "High"), "DD/FogSheet", mat =>
+                {
+                    mat.SetFloat("_PeakAlpha", v.alpha);   // over the property's 0.12 play-area cap on purpose (outside the ring)
+                    mat.SetFloat("_EdgeSoftness", 8f);
+                    mat.SetFloat("_NoiseScale", 32f);
+                    mat.SetFloat("_NoiseSpeed", 0.25f);
+                });
+                Piece(mist, "Mist_" + i.ToString("00"), new Vector3(v.at.x, v.y, v.at.y), new Vector3(v.size.x, 1f, v.size.y), fogMesh, m);
                 n++;
             }
 

@@ -84,6 +84,18 @@ namespace DD.Prototype.World
         public static string SkyResourceFor(WorldLayoutKind layout) => layout == WorldLayoutKind.V6 ? SkyV2ResourceName : SharedSkyResourceName;
 
         /// <summary>
+        /// WP-075 · DEC-101 (user 2026-09-25): the v6 look is overcast like the HF targets — a weak, diffuse sun that breaks through only
+        /// in the cookie's gaps (the shafts' warm accents), more sky fill, denser distance haze (REQ-104's 52 m start and DEC-076's colour
+        /// kept; the end closes in). World_AP005 keeps the v3 key. Read by <see cref="ConfigureSun"/> (the bake and the runtime sun) and
+        /// <see cref="ApplyEnvironment"/>.
+        /// </summary>
+        public static class Overcast
+        {
+            public const float SunIntensityScale = 0.60f, SunShadowStrength = 0.55f, AmbientScale = 1.6f, FogEnd = 160f;
+            public static bool Active => WorldLayout.Current == WorldLayoutKind.V6;
+        }
+
+        /// <summary>
         /// WP-075 v3 key ("Islak Arduvaz — Açılma", direction Ek A §1.1): a low 4900 K sun, 33° up, from the WSW
         /// (compass 232°), light travelling toward 52° (NE) — a 1.8 m figure casts 2.8 m up-right in the top-down
         /// frame and the palace (north) shades outside the square. v2 was (42, 25, 0), 1.15, #FFF8EC.
@@ -113,6 +125,11 @@ namespace DD.Prototype.World
         {
             /// <summary>Resources name of AP-023's T_cloud_cookie (1024² R8, tileable; Assets/_Art/Resources/DD_CloudCookie.png).</summary>
             public const string CookieResourceName = "DD_CloudCookie";
+
+            /// <summary>WP-075 DEC-101: the v6 layout's overcast cookie (15 % gaps of 18–26 m; wp-074/tools/make-overcast-cookie.py).</summary>
+            public const string OvercastCookieResourceName = "DD_CloudCookie_Overcast";
+
+            public static string CookieResourceFor(WorldLayoutKind layout) => layout == WorldLayoutKind.V6 ? OvercastCookieResourceName : CookieResourceName;
 
             /// <summary>Ground footprint of one tile, both axes (the 90 m map sees 14 % of the pattern: no repetition read).</summary>
             public const float TileMeters = 240f;
@@ -361,12 +378,12 @@ namespace DD.Prototype.World
         {
             light.type = LightType.Directional;
             light.color = SunColor;
-            light.intensity = SunIntensity;
+            light.intensity = SunIntensity * (Overcast.Active ? Overcast.SunIntensityScale : 1f);
 
             // Soft shadows at half strength: an overcast sky has no hard sun, and a weak
             // shadow still grounds every object without eating the enemy silhouettes.
             light.shadows = LightShadows.Soft;
-            light.shadowStrength = SunShadowStrength;
+            light.shadowStrength = Overcast.Active ? Overcast.SunShadowStrength : SunShadowStrength;
             light.shadowBias = 0.06f;
             light.shadowNormalBias = 0.5f;
             light.shadowNearPlane = 0.2f;
@@ -404,9 +421,10 @@ namespace DD.Prototype.World
             ApplyFog();
 
             RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = AmbientSky;
-            RenderSettings.ambientEquatorColor = AmbientEquator;
-            RenderSettings.ambientGroundColor = AmbientGround;
+            float fill = Overcast.Active ? Overcast.AmbientScale : 1f;
+            RenderSettings.ambientSkyColor = AmbientSky * fill;
+            RenderSettings.ambientEquatorColor = AmbientEquator * fill;
+            RenderSettings.ambientGroundColor = AmbientGround * fill;
             RenderSettings.ambientIntensity = 1f;
 
             RenderSettings.defaultReflectionMode = DefaultReflectionMode.Skybox;
@@ -442,7 +460,7 @@ namespace DD.Prototype.World
             RenderSettings.fogMode = FogMode.Linear;
             RenderSettings.fogColor = FogColor;
             RenderSettings.fogStartDistance = FogStart;
-            RenderSettings.fogEndDistance = FogEnd;
+            RenderSettings.fogEndDistance = Overcast.Active ? Overcast.FogEnd : FogEnd;
         }
 
         // ------------------------------------------------------------------ volume

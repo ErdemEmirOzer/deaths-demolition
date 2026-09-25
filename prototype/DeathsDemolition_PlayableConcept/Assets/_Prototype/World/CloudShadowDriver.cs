@@ -90,10 +90,11 @@ namespace DD.Prototype.World
         public static CloudShadowDriver Attach(Light sun)
         {
             if (sun == null || !Application.isPlaying) return null;
-            var cookie = Resources.Load<Texture2D>(WorldAtmosphere.CloudShadow.CookieResourceName);
+            string name = WorldAtmosphere.CloudShadow.CookieResourceFor(WorldLayout.Current);   // DEC-101: v6 overcast
+            var cookie = Resources.Load<Texture2D>(name);
             if (cookie == null)
             {
-                Debug.LogWarning("[CloudShadow] Resources/" + WorldAtmosphere.CloudShadow.CookieResourceName + " missing: no cloud shadow.");
+                Debug.LogWarning("[CloudShadow] Resources/" + name + " missing: no cloud shadow.");
                 return null;
             }
 

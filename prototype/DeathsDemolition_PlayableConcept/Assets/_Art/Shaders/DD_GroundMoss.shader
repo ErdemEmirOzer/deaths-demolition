@@ -1,6 +1,6 @@
 // WP-075 C7b · DD/GroundMoss — the World v5 ground outside the plaza (the 170 m greybox ground box). C-00 note: the kit moss at a
 // flat 3 m tile read as a saturated, single-tone "golf green"; the HF frames show dark, wet, patterned moss broken by gravel, soil
-// and leaf patches and never bare ground. Everything is in world XZ (no box UVs): the AP-023 moss graded (saturation / value; AD MUST-1: hue 85–95°, V 0.40–0.48 in the sun, s ≤ 0.58 after LUT v2)
+// and leaf patches and never bare ground. Everything is in world XZ (no box UVs): the AP-023 moss graded (saturation / value; DEC-101: dark olive wet moss — no lawn — under the overcast v6 light and LUT v2b)
 // and toned by a 2-octave field between a dark blue-green and an olive tint (~14 m and ~5 m: a TP view must not read one lawn), soil (ADR-015-1 earth)
 // and gravel (AP-023) patches from a medium field (~6 m), leaf-litter flecks, and the path bands along the layout's lanes and
 // garden paths (_PathMask: R gravel core, G soil shoulder; WorldV5Ground.BuildPathMask) with a noise wobble so the edges are not
@@ -24,8 +24,8 @@ Shader "DD/GroundMoss"
         [Header(Moss grade)]
         _MossSaturation("Moss saturation", Range(0, 1.5)) = 0.66
         _MossValue("Moss value scale (linear)", Range(0.2, 4)) = 1.6
-        _TintDark("Tone field: dark end (linear)", Color) = (0.55, 0.78, 0.62, 1)
-        _TintLight("Tone field: light end (linear)", Color) = (0.85, 1.08, 0.72, 1)
+        _TintDark("Tone field: dark end (linear)", Color) = (0.62, 0.72, 0.50, 1)
+        _TintLight("Tone field: light end (linear)", Color) = (0.95, 1.02, 0.62, 1)
         _ToneScale("Tone field scale (m)", Range(5, 80)) = 14.0
         _ToneContrast("Tone field contrast", Range(0.5, 4)) = 3.0
         [Header(Patches)]

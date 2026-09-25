@@ -8,7 +8,9 @@ Shader "DD/SkyPlate"
         [MainTexture] _BaseMap("Plate (RGBA sheet)", 2D) = "white" {}
         [MainColor] _BaseColor("Tint", Color) = (1, 1, 1, 1)
         _ScrollUV("UV scroll per second (xy; WP-075 C3 cloud planes)", Vector) = (0, 0, 0, 0)
-        _AlphaPower("Alpha power (WP-075 AD S3: > 1 thins the cloud cover, 1 = the sheet)", Range(0.5, 4)) = 1
+        _AlphaPower("Alpha power (WP-075 AD S3: > 1 thins the cloud cover, < 1 thickens it; 1 = the sheet)", Range(0.3, 4)) = 1
+        _HazeColor("Haze colour (DEC-101 aerial perspective; DEC-076 fog colour)", Color) = (0.815, 0.843, 0.870, 1)
+        _Haze("Haze amount (0 = the sheet: the AP-019 plates unchanged)", Range(0, 1)) = 0
     }
 
     SubShader
@@ -38,6 +40,8 @@ Shader "DD/SkyPlate"
                 half4 _BaseColor;
                 float4 _ScrollUV;
                 half _AlphaPower;
+                half4 _HazeColor;
+                half _Haze;
             CBUFFER_END
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
 
@@ -67,7 +71,8 @@ Shader "DD/SkyPlate"
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 half4 c = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv) * _BaseColor;
-                c.a = pow(saturate(c.a), _AlphaPower);   // AD S3: fewer, larger clouds with blue windows (cover ≈ 80 → 60 %)
+                c.a = pow(saturate(c.a), _AlphaPower);   // AD S3 thinned the cover; DEC-101 thickens it (overcast)
+                c.rgb = lerp(c.rgb, _HazeColor.rgb, _Haze);   // DEC-101: distant layers fade into the haze
                 return c;   // no MixFog on purpose (AP-019 contract: fog-excluded)
             }
             ENDHLSL

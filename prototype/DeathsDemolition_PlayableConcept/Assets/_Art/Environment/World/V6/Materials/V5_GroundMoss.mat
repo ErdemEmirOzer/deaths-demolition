@@ -80,6 +80,6 @@ Material:
     - _GravelTint: {r: 1.05, g: 1.05, b: 1.05, a: 1}
     - _LeafTint: {r: 0.19999996, g: 0.09999997, b: 0.044999972, a: 1}
     - _PathBounds: {r: -85, g: -85, b: 170, a: 170}
-    - _TintDark: {r: 0.54999995, g: 0.78, b: 0.62, a: 1}
-    - _TintLight: {r: 0.85, g: 1.08, b: 0.72, a: 1}
+    - _TintDark: {r: 0.62, g: 0.72, b: 0.5, a: 1}
+    - _TintLight: {r: 0.95, g: 1.02, b: 0.62, a: 1}
   m_BuildTextureStacks: []

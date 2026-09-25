@@ -192,7 +192,8 @@ namespace DD.Art.Pipeline.EditorTools
             // WP-075 C6: the dressed World v5 takes its own look profile (LUT v2); the bare greybox keeps DD_Overcast_v1.
             VolumeProfile volume = dress ? WorldV5Look.EnsureProfile() : AssetDatabase.LoadAssetAtPath<VolumeProfile>(AssetDatabase.GUIDToAssetPath("e99c26b47c9984ab8adfa33bbddead21"));
             if (dress) ScreenAtmosphereSetup.Apply();   // WP-075 C4 B / C5: the TP / FP screen-space shafts + height fog feature
-            if (dress) ArtMaterialBuilder.BuildLibraryRole(ArtLibraryMaterialRoles.Get("ap023_bamboo_leaves"));   // AD MUST-1: the leaves × 0.70
+            if (dress)   // AD MUST-1 / DEC-101: the kit roles the v6 look retints (bamboo leaves, roof tiles, plaster)
+                foreach (string role in new[] { "ap023_bamboo_leaves", "ap023_bamboo_culm", "ap023_roof_tiles", "ap023_plaster" }) ArtMaterialBuilder.BuildLibraryRole(ArtLibraryMaterialRoles.Get(role));
 
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             var root = new GameObject(Ap005WorldBootstrap.RootName);

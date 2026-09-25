@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: V5_Fog_VistaMist_High
+  m_Shader: {fileID: 4800000, guid: 9a7f25ede59ad40ffa479e5c5f062661, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 1
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats:
+    - _DepthFade: 0.6
+    - _EdgeSoftness: 8
+    - _NoiseScale: 32
+    - _NoiseSpeed: 0.25
+    - _PeakAlpha: 0.1
+    - _TierAlpha: 1
+    m_Colors:
+    - _LitColor: {r: 0.81499994, g: 0.7609999, b: 0.66499996, a: 1}
+    - _ShadowColor: {r: 0.651, g: 0.694, b: 0.745, a: 1}
+  m_BuildTextureStacks: []

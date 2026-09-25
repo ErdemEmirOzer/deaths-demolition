@@ -256,17 +256,23 @@ namespace DD.Art
             foreach (string tile in new[] { "bamboo_old", "bark_pine", "bark_sakura", "copper", "granite", "granite_ashlar", "gravel", "moss", "namako", "pebble_beach", "plaster",
                                              "plaster_interior", "roof_tiles", "rock_boulder", "stone_ashlar", "tatami", "vermilion", "washi", "wood_planks", "wood_timber" })
             {
-                rows.Add(new Spec { Role = "ap023_" + tile, Kind = Kind.Textured, TextureRole = "ap023_" + tile });
+                var spec = new Spec { Role = "ap023_" + tile, Kind = Kind.Textured, TextureRole = "ap023_" + tile };
+                // WP-075 DEC-101 (HF-like overcast): the roofs read dark cool grey (the tiles took the warm sun as brown) and the plaster
+                // wet pale grey-beige, not bright cream (its sheet averages sRGB 0.79 / 0.77 / 0.73).
+                if (tile == "roof_tiles") spec.Tint = new Color(0.78f, 0.84f, 0.95f, 1f);
+                if (tile == "plaster") spec.Tint = new Color(0.54f, 0.55f, 0.57f, 1f);
+                rows.Add(spec);
             }
 
-            rows.Add(new Spec { Role = "ap023_bamboo_culm", Kind = Kind.Textured, TextureRole = "ap023_bamboo_culm", Shader = ShaderKind.FoliageWind });
+            // DEC-101: the culms read as pale sticks in the dark grove — × 0.55.
+            rows.Add(new Spec { Role = "ap023_bamboo_culm", Kind = Kind.Textured, TextureRole = "ap023_bamboo_culm", Shader = ShaderKind.FoliageWind, Tint = new Color(0.55f, 0.55f, 0.55f, 1f) });
             rows.Add(new Spec { Role = "ap023_rock_moss", Kind = Kind.Textured, TextureRole = "ap023_rock_boulder" });
             foreach (string atlas in new[] { "bamboo_leaves", "groundcover", "hishigaki_card", "momiji_sprigs", "pine_needles", "reeds_iris", "sakura_sprigs", "satsuki", "violet_sprigs" })
             {
                 var spec = new Spec { Role = "ap023_" + atlas, Kind = Kind.Cutout, TextureRole = "ap023_" + atlas, Shader = ShaderKind.FoliageWind, NoPackedMap = true, Smoothness = 0.40f };
                 // WP-075 AD MUST-1 (K4 value order: green under stone): sunlit bamboo leaves read V ≈ 0.80 / s ≈ 0.55 — the AD's × 0.70
-                // left the TP grove's green median level with the slate (0.45 / 0.44), so × 0.60; smoothness 0.25.
-                if (atlas == "bamboo_leaves") { spec.Tint = new Color(0.60f, 0.60f, 0.60f, 1f); spec.Smoothness = 0.25f; }
+                // left the TP grove's green median level with the slate (0.45 / 0.44); DEC-101 wants the grove dark: × 0.45; smoothness 0.25.
+                if (atlas == "bamboo_leaves") { spec.Tint = new Color(0.45f, 0.45f, 0.45f, 1f); spec.Smoothness = 0.25f; }
                 rows.Add(spec);
             }
 

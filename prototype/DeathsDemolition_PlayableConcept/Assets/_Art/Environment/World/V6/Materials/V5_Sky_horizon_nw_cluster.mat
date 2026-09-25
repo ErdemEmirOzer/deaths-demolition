@@ -30,7 +30,9 @@ Material:
     m_Ints: []
     m_Floats:
     - _AlphaPower: 1
+    - _Haze: 0.35
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _HazeColor: {r: 0.815, g: 0.843, b: 0.87, a: 1}
     - _ScrollUV: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []

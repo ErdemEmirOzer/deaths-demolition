@@ -21,8 +21,16 @@ namespace DD.Art.Pipeline.EditorTools
     {
         public const string RootName = "Sky v2 (C3)";
         public const float DriftCompassDegrees = 52f;
-        /// <summary>AD S3: cloud cover ≈ 80 → 60 % (alpha^1.6 on the cloud planes; the horizon plates stay at 1).</summary>
-        public const float CloudAlphaPower = 1.6f;
+        /// <summary>DEC-101 (overcast like the HF targets): the cloud planes thicken (alpha^0.6; AD S3's 1.6 thinned them for a sunny
+        /// sky) and darken to grey-blue; the sky band darkens (Panoramic tint); the distant plates fade into the DEC-076 haze colour
+        /// (aerial perspective: far 0.60 · mid 0.45 · near 0.30 · landmarks 0.50 · the NW cedars 0.35). The horizon plates' alpha stays 1.</summary>
+        public const float CloudAlphaPower = 0.6f;
+        public static readonly Color CloudTint = new Color(0.62f, 0.66f, 0.72f, 1f);
+        public static readonly Color SkyBandTint = new Color(0.36f, 0.39f, 0.44f, 0.5f);
+        public const float CloudHaze = 0.40f;   // softens the sheet's cumulus edges toward HF's even overcast
+        public const float SkyBandExposure = 0.9f;
+        public static readonly (string layer, float haze)[] PlateHaze = { ("far", 0.60f), ("mid", 0.45f), ("near", 0.30f) };
+        public const float LandmarkHaze = 0.50f, ClusterHaze = 0.35f;
         public static string MeshFolder => GreyboxV6Builder.DataFolder + "/Sky";
 
         public static readonly (string layer, int queue)[] PlateQueues = { ("far", 2896), ("mid", 2897), ("near", 2899) };
@@ -59,7 +67,10 @@ namespace DD.Art.Pipeline.EditorTools
         /// <summary>Builds the sky v2 dressing under <paramref name="dress"/>; the AP-019 rings must already be there (BuildHorizonPlates). Returns the objects placed.</summary>
         public static int Build(Transform dress)
         {
-            ArtSkyBuilder.BuildV2();
+            Material band = ArtSkyBuilder.BuildV2();
+            band.SetColor("_Tint", SkyBandTint);
+            band.SetFloat("_Exposure", SkyBandExposure);
+            EditorUtility.SetDirty(band);
             EnsureFolder(MeshFolder);
             int n = 0;
             Transform rings = dress.Find(ArtSurfaceImporter.SkyRootName);
@@ -68,7 +79,9 @@ namespace DD.Art.Pipeline.EditorTools
             {
                 Transform plate = rings.Find("Horizon_" + layer);
                 if (plate == null) throw new InvalidOperationException("Horizon_" + layer + " missing");
-                plate.GetComponent<MeshRenderer>().sharedMaterial = PlateMaterial("horizon_" + layer + "_v2", queue, Vector2.zero);
+                Material plateMaterial = PlateMaterial("horizon_" + layer + "_v2", queue, Vector2.zero);
+                foreach ((string l, float haze) in PlateHaze) if (l == layer) plateMaterial.SetFloat("_Haze", haze);
+                plate.GetComponent<MeshRenderer>().sharedMaterial = plateMaterial;
                 n++;
             }
 
@@ -81,6 +94,8 @@ namespace DD.Art.Pipeline.EditorTools
                     new[] { new Vector2(-c.half / c.tile, -c.half / c.tile), new Vector2(-c.half / c.tile, c.half / c.tile), new Vector2(c.half / c.tile, c.half / c.tile), new Vector2(c.half / c.tile, -c.half / c.tile) });
                 Material cloud = PlateMaterial(c.role, c.queue, drift * (c.speed / c.tile));
                 cloud.SetFloat("_AlphaPower", CloudAlphaPower);
+                cloud.SetColor("_BaseColor", CloudTint);
+                cloud.SetFloat("_Haze", CloudHaze);
                 Plate(root, c.name, new Vector3(0f, c.height, 0f), Quaternion.identity, mesh, cloud);
                 n++;
             }
@@ -88,6 +103,7 @@ namespace DD.Art.Pipeline.EditorTools
             foreach ((string name, string role, float compass, float radius, float height, int queue, bool flip) card in Cards)
             {
                 Material m = PlateMaterial(card.role, card.queue, Vector2.zero);
+                m.SetFloat("_Haze", card.role == "horizon_nw_cluster" ? ClusterHaze : LandmarkHaze);
                 Texture t = m.GetTexture("_BaseMap");
                 float width = card.height * t.width / Mathf.Max(1f, t.height);
                 float u0 = card.flip ? 1f : 0f, u1 = card.flip ? 0f : 1f;
@@ -139,6 +155,8 @@ namespace DD.Art.Pipeline.EditorTools
             m.SetColor("_BaseColor", Color.white);
             m.SetVector("_ScrollUV", new Vector4(scroll.x, scroll.y, 0f, 0f));
             m.SetFloat("_AlphaPower", 1f);
+            m.SetFloat("_Haze", 0f);
+            m.SetColor("_HazeColor", new Color(0.815f, 0.843f, 0.870f, 1f));   // DEC-076 fog colour (WorldAtmosphere.FogColor)
             m.renderQueue = queue;
             m.enableInstancing = false;
             EditorUtility.SetDirty(m);

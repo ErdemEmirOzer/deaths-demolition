@@ -4,6 +4,7 @@ using DD.Art.Pipeline.EditorTools;
 using DD.Prototype.CameraSystem;
 using DD.Prototype.Core;
 using DD.Prototype.Navigation;
+using DD.Prototype.World;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -549,6 +550,59 @@ namespace DD.Art.Tests.EditMode
 
             var performance = AssetDatabase.LoadAssetAtPath<UnityEngine.Rendering.Universal.UniversalRendererData>("Assets/Settings/DD_URP_Renderer_Performance.asset");
             foreach (var f in performance.rendererFeatures) Assert.IsFalse(f is ScreenAtmosphereFeature, "Performans renderer'ı");
+        }
+
+        [Test]
+        public void Greybox_DEC101_V6Bulutlu_ZayifGunes_SisVeGok()
+        {
+            // DEC-101 (user 25.09): the v6 layout is overcast — weak diffuse sun, more fill, closer haze, the overcast cookie.
+            WorldLayoutKind previous = WorldLayout.Current;
+            var go = new GameObject("DEC101 sun");
+            try
+            {
+                WorldLayout.SetCurrent(WorldLayoutKind.V6);
+                Light light = go.AddComponent<Light>();
+                WorldAtmosphere.ConfigureSun(light);
+                Assert.AreEqual(WorldAtmosphere.SunIntensity * WorldAtmosphere.Overcast.SunIntensityScale, light.intensity, 1e-4f);
+                Assert.AreEqual(WorldAtmosphere.Overcast.SunShadowStrength, light.shadowStrength, 1e-4f);
+                Assert.AreEqual(WorldAtmosphere.CloudShadow.OvercastCookieResourceName, WorldAtmosphere.CloudShadow.CookieResourceFor(WorldLayoutKind.V6));
+                WorldLayout.SetCurrent(WorldLayoutKind.Ap005);
+                WorldAtmosphere.ConfigureSun(light);
+                Assert.AreEqual(WorldAtmosphere.SunIntensity, light.intensity, 1e-4f, "World_AP005 v3 anahtarı değişmez");
+                Assert.AreEqual(WorldAtmosphere.CloudShadow.CookieResourceName, WorldAtmosphere.CloudShadow.CookieResourceFor(WorldLayoutKind.Ap005));
+            }
+            finally
+            {
+                Object.DestroyImmediate(go);
+                WorldLayout.SetCurrent(previous);
+            }
+
+            // The overcast cookie: 10–20 % sun (≥ 0.8), 0.40 under the cloud, imported by the cookie rules.
+            var png = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            try
+            {
+                Assert.IsTrue(png.LoadImage(File.ReadAllBytes(ArtImportContract.CloudCookieOvercastPath)), "overcast cookie PNG");
+                Color32[] px = png.GetPixels32();
+                int sun = 0, low = 255;
+                foreach (Color32 c in px) { if (c.r >= 204) sun++; low = Mathf.Min(low, c.r); }
+                Assert.That(sun / (float)px.Length, Is.InRange(0.10f, 0.20f), "açıklık payı");
+                Assert.AreEqual(102, low, 1, "bulut altı 0,40");
+            }
+            finally
+            {
+                Object.DestroyImmediate(png);
+            }
+
+            Assert.IsTrue(ArtImportContract.IsLightCookieTexture(ArtImportContract.CloudCookieOvercastPath));
+            Assert.IsNotNull(Resources.Load<Texture2D>(WorldAtmosphere.CloudShadow.OvercastCookieResourceName));
+
+            // The dressed scene: vista mist, thick grey-blue cloud planes, hazed horizon plates.
+            Open();
+            Assert.AreEqual(WorldV5Atmosphere.VistaMist.Length, GameObject.Find(WorldV5Atmosphere.VistaMistGroupName).transform.childCount, "vista sisi");
+            var clouds = GameObject.Find(WorldV5Dress.RootName).transform.Find(WorldV5Sky.RootName + "/Clouds_Near").GetComponent<MeshRenderer>().sharedMaterial;
+            Assert.Less(clouds.GetFloat("_AlphaPower"), 1f, "bulut örtüsü kalın");
+            var far = GameObject.Find(WorldV5Dress.RootName).transform.Find(ArtSurfaceImporter.SkyRootName + "/Horizon_far").GetComponent<MeshRenderer>().sharedMaterial;
+            Assert.Greater(far.GetFloat("_Haze"), 0.3f, "uzak katman sisli");
         }
 
         private static int CountOf(string s, string token)

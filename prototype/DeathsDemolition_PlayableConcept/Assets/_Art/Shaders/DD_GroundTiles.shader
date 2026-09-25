@@ -15,7 +15,7 @@ Shader "DD/GroundTiles"
         _Occlusion("AO strength", Range(0, 1)) = 1.0
         _Wetness("World wetness (0 dry … 1 the P-05 wet state)", Range(0, 1)) = 1.0
         _WetAlbedo("Wet albedo scale (linear; P-05 wetalbedo = 0.82)", Range(0.5, 1)) = 0.82
-        _WetSmoothness("Wet smoothness cap (AP-018)", Range(0, 0.6)) = 0.60
+        _WetSmoothness("Wet smoothness cap (AP-018; DEC-101 overcast mirror-wet: up to 0.8)", Range(0, 0.8)) = 0.60
         _PuddleThreshold("Puddle threshold (mask × wetness)", Range(0, 1)) = 0.45
         _PuddleRamp("Puddle ramp width", Range(0.02, 0.5)) = 0.15
         _PuddleSmoothness("Puddle smoothness", Range(0, 1)) = 0.92
