@@ -131,6 +131,59 @@ namespace DD.Prototype.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator TekTane_EkranKaplamasi_KucukKalir()
+        {
+            // One 3 cm mote 5 m ahead must cover a few pixels, never the frame (B5 capture haze regression).
+            _world = new GameObject("AtmoCoverageWorld");
+            var rt = new RenderTexture(256, 256, 24, RenderTextureFormat.ARGB32);
+            rt.Create();
+            _camGo = new GameObject("AtmoCoverageCamera");
+            Camera cam = _camGo.AddComponent<Camera>();
+            cam.transform.position = new Vector3(0f, 400f, 0f);
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = Color.black;
+            cam.fieldOfView = 60f;
+            cam.targetTexture = rt;
+            AtmosphereSystem sys = Attach();
+            yield return null;
+            try
+            {
+                foreach (AtmosphereSystem.Layer layer in new[] { AtmosphereSystem.Layer.Motes, AtmosphereSystem.Layer.Petals, AtmosphereSystem.Layer.Steam })
+                {
+                    for (int i = 0; i < 5; i++) { ParticleSystem other = sys.SystemOf((AtmosphereSystem.Layer)i); if (other != null) other.Clear(); }
+                    ParticleSystem ps = sys.SystemOf(layer);
+                    Assert.IsNotNull(ps, layer + " katmanı yok");
+                    float size = layer == AtmosphereSystem.Layer.Steam ? 0.8f : layer == AtmosphereSystem.Layer.Petals ? 0.12f : 0.03f;
+                    var ep = new ParticleSystem.EmitParams { position = new Vector3(0f, 400f, 5f), velocity = Vector3.zero, startLifetime = 5f,
+                        startSize3D = new Vector3(size, size, 0f), startColor = new Color(1f, 1f, 1f, 0.3f) };
+                    ps.Emit(ep, 1);
+                    yield return null;
+                    yield return null;
+                    var prev = RenderTexture.active;
+                    RenderTexture.active = rt;
+                    var tex = new Texture2D(256, 256, TextureFormat.RGBA32, false);
+                    tex.ReadPixels(new Rect(0, 0, 256, 256), 0, 0);
+                    tex.Apply();
+                    RenderTexture.active = prev;
+                    int lit = 0;
+                    foreach (Color32 c in tex.GetPixels32()) if (c.r > 4 || c.g > 4 || c.b > 4) lit++;
+                    Object.Destroy(tex);
+                    // Expected footprint at 5 m on a 256 px, 60° frame: ≈ 44 px per metre → mote ≈ 1.5 px, petal ≈ 5 px, steam ≈ 35 px across.
+                    float expect = size * 44.3f;
+                    Debug.Log("[DD-TEST] wp073.b5 coverage " + layer + " lit=" + lit + " expected≈" + (expect * expect).ToString("F0") + " px");
+                    Assert.Less(lit, Mathf.Max(64f, expect * expect * 4f), layer + ": tek tane " + lit + " piksel kapladı (ekranı örtüyor)");
+                    if (layer == AtmosphereSystem.Layer.Steam) Assert.Greater(lit, expect * expect * 0.3f, "buhar pufu dünya boyunu korumalı (24 px tane tavanı uygulanmaz)");
+                }
+            }
+            finally
+            {
+                sys.CameraOverride = null;
+                rt.Release();
+                Object.Destroy(rt);
+            }
+        }
+
+        [UnityTest]
         public IEnumerator YakinAlan_UcuncuSahis_KameraDibindeTaneYok()
         {
             BuildWorld(0);

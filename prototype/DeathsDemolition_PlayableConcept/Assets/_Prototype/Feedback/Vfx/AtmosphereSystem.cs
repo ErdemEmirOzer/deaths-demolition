@@ -320,6 +320,7 @@ namespace DD.Prototype.Feedback.Vfx
         public static AtmosphereSystem Attach(Transform parent)
         {
             if (Active != null) return Active;
+            if (Array.IndexOf(Environment.GetCommandLineArgs(), "-ddNoAtmoV3") >= 0) return null;   // A/B evidence: the world without B5
             var go = new GameObject("[Atmosphere v3 (WP-073 B5)]");
             if (parent != null) go.transform.SetParent(parent, false);
             return go.AddComponent<AtmosphereSystem>();
@@ -346,6 +347,30 @@ namespace DD.Prototype.Feedback.Vfx
 
             var streams = new List<ParticleSystemVertexStream>(Streams);   // start-up only
             for (int i = 0; i < LayerCount; i++) _systems[i] = CreateLayer((Layer)i, streams);
+            ApplyDebugArgs();
+        }
+
+        // Diagnostics (captures only): -ddAtmoLayers <bitmask of Layer> keeps only those layers, -ddAtmoHdrCap <v> overrides the HDR cap.
+        private void ApplyDebugArgs()
+        {
+            string[] args = Environment.GetCommandLineArgs();
+            for (int a = 0; a < args.Length - 1; a++)
+            {
+                if (args[a] == "-ddAtmoLayers" && int.TryParse(args[a + 1], out int mask))
+                {
+                    for (int i = 0; i < LayerCount; i++) if (_systems[i] != null && (mask & (1 << i)) == 0) _systems[i].gameObject.SetActive(false);
+                }
+                else if (args[a] == "-ddAtmoHdrCap" && float.TryParse(args[a + 1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float cap))
+                {
+                    for (int i = 0; i < LayerCount; i++)
+                    {
+                        if (_materials[i] == null || !_materials[i].HasProperty("_AtmoLight")) continue;
+                        Vector4 l = _materials[i].GetVector("_AtmoLight");
+                        l.z = cap;
+                        _materials[i].SetVector("_AtmoLight", l);
+                    }
+                }
+            }
         }
 
         private void Start()
@@ -476,7 +501,8 @@ namespace DD.Prototype.Feedback.Vfx
             material.SetVector(MotionId, look.Motion);
             material.SetVector(FadeId, look.Fade);
             material.SetVector(LightId, look.Light);
-            material.SetVector(PxId, new Vector4(1.5f, 24f, 0f, 0f));
+            // Grains / pieces: 1.5–24 px (HUD-safe, direction §4 #6). Steam is haze, not a grain: its puffs keep their world size.
+            material.SetVector(PxId, layer == Layer.Steam ? new Vector4(1.5f, 4096f, 0f, 0f) : new Vector4(1.5f, 24f, 0f, 0f));
             psr.sharedMaterial = material;
             _materials[(int)layer] = material;
 

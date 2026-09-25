@@ -35,7 +35,8 @@ namespace DD.Prototype.Feedback.Vfx
         {
             Directory.CreateDirectory(_folder);
             float deadline = Time.realtimeSinceStartup + 240f;
-            while ((WeaponRegistry.ActiveController == null || Camera.main == null || AtmosphereSystem.Active == null || !AtmosphereSystem.Active.Ready)
+            bool without = Array.IndexOf(Environment.GetCommandLineArgs(), "-ddNoAtmoV3") >= 0;   // A/B: the world without B5
+            while ((WeaponRegistry.ActiveController == null || Camera.main == null || (!without && (AtmosphereSystem.Active == null || !AtmosphereSystem.Active.Ready)))
                    && Time.realtimeSinceStartup < deadline)
             {
                 yield return null;

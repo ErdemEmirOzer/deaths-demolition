@@ -178,8 +178,10 @@ Shader "DD/VFX Atmo"
 
                 // Screen-size clamp [min px, max px]; an enlarged grain keeps its energy by losing alpha.
                 float viewZ = max(-TransformWorldToView(centreWS).z, 0.02);
-                float pxPerMetre = _ScreenParams.y * 0.5 * UNITY_MATRIX_P._m11 / viewZ;
-                float diameterPx = length(offset) * 1.4142 * pxPerMetre;
+                // |P11|: the projection's y scale is negative when the target is flipped (Metal / render textures) — a signed
+                // value made every grain's pixel size negative, the clamp's floor then enlarged it 15 000× (a full-screen quad).
+                float pxPerMetre = _ScreenParams.y * 0.5 * abs(UNITY_MATRIX_P._m11) / viewZ;
+                float diameterPx = max(length(offset) * 1.4142 * pxPerMetre, 1e-4);
                 float clamped = clamp(diameterPx, _AtmoPx.x, _AtmoPx.y);
                 float k = clamped / max(diameterPx, 1e-4);
                 offset *= k;
