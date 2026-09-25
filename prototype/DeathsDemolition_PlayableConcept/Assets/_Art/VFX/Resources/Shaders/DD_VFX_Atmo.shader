@@ -37,6 +37,7 @@ Shader "DD/VFX Atmo"
     {
         _MainTex("Atlas (AtmosphereAtlas, 4 x 2, procedural)", 2D) = "white" {}
         _AtmoAlpha("Alpha cap (grain 0.35, steam 0.12)", Float) = 0.35
+        _AtmoPollen("Mote layer: the Pollen frame is pollen (tumble 0.3 rev/s, ×1.2 in a shaft)", Float) = 0
         _AtmoGlint("Glint gain (motes 1, petals 0.5, steam 0.25)", Float) = 1
         _AtmoTwinkle("Twinkle: Hz min, Hz max, amount, shade alpha floor", Vector) = (3, 7, 0.45, 0.45)
         _AtmoMotion("Motion: tumble rev/s, sway Hz, sway m, uv swap", Vector) = (0, 0, 0, 0)
@@ -81,6 +82,7 @@ Shader "DD/VFX Atmo"
             CBUFFER_START(UnityPerMaterial)
                 float4 _MainTex_ST;
                 float _AtmoAlpha;
+                float _AtmoPollen;
                 float _AtmoGlint;
                 float4 _AtmoTwinkle;
                 float4 _AtmoMotion;
@@ -90,6 +92,7 @@ Shader "DD/VFX Atmo"
             CBUFFER_END
 
             // Globals written by AtmosphereSystem (WP-073 B5).
+            float _DD_AtmoForceShaft;                           // evidence: every grain reads as in a live shaft (-ddAtmoForceShaft)
             float4 _DD_AtmoGuard;                               // xyz player chest (world), w radius (0 = off: first person)
             float _DD_AtmoShaftCount;                           // active shaft cards this tier (≤ 20)
             float4 _DD_AtmoShaftA[DD_ATMO_MAX_SHAFTS];          // xyz card top (world), w radius (m)
@@ -114,6 +117,7 @@ Shader "DD/VFX Atmo"
                 float4 screenPos : TEXCOORD2;
                 float fogFactor : TEXCOORD3;
                 float face : TEXCOORD4;         // 1 front, lower on the back of a tumbling petal
+                float alphaCap : TEXCOORD5;     // _AtmoAlpha, 0.50 for a top-down grain in a shaft (AD B5 MUST 3)
             };
 
             float SunShadow(float3 positionWS)
@@ -164,16 +168,41 @@ Shader "DD/VFX Atmo"
                 float3 right = UNITY_MATRIX_V[0].xyz;
                 float3 up = UNITY_MATRIX_V[1].xyz;
                 float t = _Time.y;
+                float frame = floor(input.texcoord2.z + 0.5);
+                // AD B5 MUST 2: on the mote layer the Pollen frame (AtmosphereAtlas.Pollen = 1) is the pollen population.
+                float pollen = _AtmoPollen * (1.0 - step(0.5, abs(frame - 1.0)));
 
                 // Sway (petals): the whole card drifts sideways on a slow sine, per-grain phase.
                 if (_AtmoMotion.z > 0.0)
                     centreWS += right * (sin(6.2831853 * (_AtmoMotion.y * t + rnd)) * _AtmoMotion.z);
 
-                // Tumble: squash along the card's own in-plane axis by |cos φ|; the back face is darker.
-                o.face = 1.0;
-                if (_AtmoMotion.x > 0.0)
+                // Sun where the grain actually is: cloud cookie × realtime shadow; and the shafts. DEC-102: while the volumetric
+                // field is live (Cinematic / High) the shafts are the field itself — its density over its peak × the cloud cookie —
+                // and the cards stay a Performance-only read. -ddAtmoForceShaft (_DD_AtmoForceShaft) reads every grain as in a live
+                // shaft (evidence only).
+                float3 L = normalize(_DD_ShaftDir.xyz + float3(0.0, -1e-4, 0.0));   // direction the sunlight travels
+                float cookie = DD_CloudSunLit01(centreWS);
+                float litFloor;
+                float shaft = ShaftMask(centreWS, L, litFloor);
+                float fieldLive = max(step(0.5, _DD_VL_Density.w), _DD_AtmoForceShaft);
+                if (_DD_VL_Density.w > 0.5)
                 {
-                    float phi = 6.2831853 * (_AtmoMotion.x * (0.6 + 0.8 * rnd) * t + rnd * 3.7);
+                    shaft = DD_ShaftMask(centreWS);
+                    litFloor = 0.0;
+                }
+                shaft = max(shaft, _DD_AtmoForceShaft);
+                cookie = max(cookie, _DD_AtmoForceShaft);
+                float sunVis = max(cookie, shaft * litFloor) * SunShadow(centreWS);
+                float inShaft = saturate(shaft * sunVis) * fieldLive;   // 0..1: how much this grain sits in a lit shaft of the field
+                // AD B5 MUST 3: top-down (the guard radius 0.9 marks it) inside a shaft (mask ≥ 0.5): 2.5 px floor, α cap 0.50.
+                float topDownShaft = step(0.8, _DD_AtmoGuard.w) * step(0.5, inShaft);
+
+                // Tumble: squash along the card's own in-plane axis by |cos φ|; the back face is darker. Pollen tumbles at 0.3 rev/s.
+                o.face = 1.0;
+                float tumble = lerp(_AtmoMotion.x, 0.3, pollen);
+                if (tumble > 0.0)
+                {
+                    float phi = 6.2831853 * (tumble * (0.6 + 0.8 * rnd) * t + rnd * 3.7);
                     float c = cos(phi);
                     float3 axis = cos(rot) * right + sin(rot) * up;
                     offset -= axis * dot(offset, axis) * (1.0 - max(abs(c), 0.08));
@@ -186,7 +215,8 @@ Shader "DD/VFX Atmo"
                 // value made every grain's pixel size negative, the clamp's floor then enlarged it 15 000× (a full-screen quad).
                 float pxPerMetre = _ScreenParams.y * 0.5 * abs(UNITY_MATRIX_P._m11) / viewZ;
                 float diameterPx = max(length(offset) * 1.4142 * pxPerMetre, 1e-4);
-                float clamped = clamp(diameterPx, _AtmoPx.x, _AtmoPx.y);
+                float pxFloor = lerp(_AtmoPx.x, max(_AtmoPx.x, 2.5), topDownShaft);
+                float clamped = clamp(diameterPx, pxFloor, _AtmoPx.y);
                 float k = clamped / max(diameterPx, 1e-4);
                 offset *= k;
                 float sizeAlpha = k > 1.0 ? max(1.0 / k, 0.35) : 1.0;
@@ -199,31 +229,13 @@ Shader "DD/VFX Atmo"
                 // Atlas frame (4 × 2) from size.z; drips run along u on a stretched billboard.
                 float2 uv = input.texcoord0.xy;
                 if (_AtmoMotion.w > 0.5) uv = uv.yx;
-                float frame = floor(input.texcoord2.z + 0.5);
                 float2 cell = float2(fmod(frame, 4.0), floor(frame / 4.0));
                 o.uv = (cell + uv) * float2(0.25, 0.5);
-
-                // Sun where the grain actually is: cloud cookie × realtime shadow.
-                float3 L = normalize(_DD_ShaftDir.xyz + float3(0.0, -1e-4, 0.0));   // direction the sunlight travels
-                float cookie = DD_CloudSunLit01(centreWS);
-                float litFloor;
-                float shaft = ShaftMask(centreWS, L, litFloor);
-                // DEC-102: while the volumetric field is live (Cinematic / High) the shafts are the field itself — its density
-                // over its peak × the cloud cookie — and the cards stay a Performance-only read (no cards there anyway).
-                if (_DD_VL_Density.w > 0.5)
-                {
-                    shaft = DD_ShaftMask(centreWS);
-                    litFloor = 0.0;
-                }
-                float sunVis = max(cookie, shaft * litFloor) * SunShadow(centreWS);
 
                 float3 V = normalize(centreWS - camPos);
                 float cosT = dot(V, -L);
                 float forward = 4.0 * pow(saturate(cosT), 8.0) * (0.5 + 0.5 * saturate(_DD_ShaftDir.w));
                 float broad = 0.6 * pow(saturate(0.5 + 0.5 * cosT), 4.0);
-                // DEC-102 (user, 25.09 via C-00): dust and pollen shine inside the shaft volume — while the field is live a grain
-                // in a shaft scatters up to ×4 and carries up to ×1.5 α; between the shafts it recedes to ×0.7 α.
-                float fieldLive = step(0.5, _DD_VL_Density.w);
                 float shaftGain = lerp(1.5, 3.0, fieldLive);
                 float scatter = (forward + broad) * sunVis * (1.0 + shaftGain * shaft) * _AtmoGlint;
 
@@ -232,13 +244,16 @@ Shader "DD/VFX Atmo"
                 float sparkle = pow(tw, 6.0) * _AtmoTwinkle.z * sunVis * (0.4 + 0.6 * saturate(shaft * 2.0 + cookie * 0.5)) * _AtmoGlint;
 
                 float3 tone = _MainLightColor.rgb / max(max(_MainLightColor.r, max(_MainLightColor.g, _MainLightColor.b)), 1e-3);
-                float base = lerp(_AtmoLight.x, _AtmoLight.y, sunVis);
+                // AD B5 MUST 1: the shaft lift is view-independent — under DEC-102's high sun the scatter lobes are ~0 for every
+                // camera, so a grain at mask 1 carries ×2.6 on its base light (≥ 2.5× the same grain at mask 0), its HDR cap ×2.5.
+                float base = lerp(_AtmoLight.x, _AtmoLight.y, sunVis) * (1.0 + 1.6 * inShaft);
                 float3 albedo = lerp(lerp(input.color.rgb, kMist, 0.35), input.color.rgb, sunVis);
                 float3 rgb = albedo * (base + scatter + sparkle) + tone * (scatter + sparkle) * 0.35;
-                o.color.rgb = min(rgb, _AtmoLight.z);
+                rgb *= 1.0 + 0.2 * pollen * inShaft;   // pollen in a shaft: HDR ×1.2 (AD B5 MUST 2)
+                o.color.rgb = min(rgb, _AtmoLight.z * (1.0 + 1.5 * inShaft));
 
                 // Alpha: authored × shade floor (grains fade in the shade, steam shows where the sun warms the wet stone)
-                // × near / far fade × player guard × size energy.
+                // × near / far fade × player guard × size energy × the shaft (DEC-102: ×1.5 in a shaft, ×0.7 between).
                 float dist = length(centreWS - camPos);
                 float nearFade = saturate((dist - _AtmoFade.x) / max(_AtmoFade.y - _AtmoFade.x, 0.01));
                 float farFade = saturate((_AtmoFade.w - dist) / 10.0);
@@ -254,8 +269,9 @@ Shader "DD/VFX Atmo"
                     guard = lerp(0.2, 1.0, smoothstep(r * 0.6, r, d));
                 }
 
-                float shaftAlpha = lerp(1.0, lerp(0.7, 1.5, saturate(shaft * sunVis)), fieldLive);
+                float shaftAlpha = lerp(1.0, lerp(0.7, 1.5, inShaft), fieldLive);
                 o.color.a = saturate(input.color.a * nearFade * farFade * shadeAlpha * guard * sizeAlpha * shaftAlpha);
+                o.alphaCap = lerp(_AtmoAlpha, max(_AtmoAlpha, 0.5), topDownShaft);
                 return o;
             }
 
@@ -273,7 +289,7 @@ Shader "DD/VFX Atmo"
             #endif
 
                 rgb = MixFog(rgb, i.fogFactor);
-                return float4(rgb, min(a, _AtmoAlpha));
+                return float4(rgb, min(a, i.alphaCap));
             }
             ENDHLSL
         }

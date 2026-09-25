@@ -254,6 +254,8 @@ namespace DD.Prototype.Feedback.Vfx
         private static readonly int FadeId = Shader.PropertyToID("_AtmoFade");
         private static readonly int LightId = Shader.PropertyToID("_AtmoLight");
         private static readonly int PxId = Shader.PropertyToID("_AtmoPx");
+        private static readonly int PollenId = Shader.PropertyToID("_AtmoPollen");
+        private static readonly int ForceShaftId = Shader.PropertyToID("_DD_AtmoForceShaft");
         private const string SoftKeyword = "_DD_ATMO_SOFT";
 
         /// <summary>The vertex streams DD/VFX Atmo reads, in its TEXCOORD packing order.</summary>
@@ -359,10 +361,12 @@ namespace DD.Prototype.Feedback.Vfx
             ApplyDebugArgs();
         }
 
-        // Diagnostics (captures only): -ddAtmoLayers <bitmask of Layer> keeps only those layers, -ddAtmoHdrCap <v> overrides the HDR cap.
+        // Diagnostics (captures only): -ddAtmoLayers <bitmask of Layer> keeps only those layers, -ddAtmoHdrCap <v> overrides the HDR cap,
+        // -ddAtmoForceShaft reads every grain as inside a live shaft (mask 1: the FP evidence frame where V6 cannot render FP, AD MUST 4).
         private void ApplyDebugArgs()
         {
             string[] args = Environment.GetCommandLineArgs();
+            Shader.SetGlobalFloat(ForceShaftId, Array.IndexOf(args, "-ddAtmoForceShaft") >= 0 ? 1f : 0f);
             for (int a = 0; a < args.Length - 1; a++)
             {
                 if (args[a] == "-ddAtmoLayers" && int.TryParse(args[a + 1], out int mask))
@@ -512,6 +516,7 @@ namespace DD.Prototype.Feedback.Vfx
             material.SetVector(LightId, look.Light);
             // Grains / pieces: 1.5–24 px (HUD-safe, direction §4 #6). Steam is haze, not a grain: its puffs keep their world size.
             material.SetVector(PxId, layer == Layer.Steam ? new Vector4(1.5f, 4096f, 0f, 0f) : new Vector4(1.5f, 24f, 0f, 0f));
+            material.SetFloat(PollenId, layer == Layer.Motes ? 1f : 0f);   // the Pollen frame tumbles and lifts in a shaft (AD B5 MUST 2)
             psr.sharedMaterial = material;
             _materials[(int)layer] = material;
 
@@ -1069,7 +1074,8 @@ namespace DD.Prototype.Feedback.Vfx
                 // The open-air field: a box round the focus (the player), 0.3–6 m up.
                 Vector3 f = _weightFocus;
                 pos = new Vector3(f.x + Signed() * 30f, f.y + Mathf.Lerp(0.3f, 6f, Next01()), f.z + Signed() * 30f);
-                vel = new Vector3(Signed() * 0.03f, 0.05f + Signed() * 0.02f, Signed() * 0.03f) + wind * 0.1f;
+                MotePopulation(out colour, out size, out frame, out float rise);
+                vel = new Vector3(Signed() * 0.03f, rise + Signed() * 0.02f, Signed() * 0.03f) + wind * 0.1f;
                 Emit(li, ps, pos, vel, size, aspect, frame, colour, look, life, prefill);
                 return;
             }
@@ -1089,9 +1095,8 @@ namespace DD.Prototype.Feedback.Vfx
                     Vector3 up = Vector3.Cross(side, axis);
                     float ang = Next01() * 6.2831853f, rad = Mathf.Sqrt(Next01()) * a.Half.x;
                     pos = a.Centre + axis * (Next01() * a.Half.y) + side * (Mathf.Cos(ang) * rad) + up * (Mathf.Sin(ang) * rad);
-                    vel = new Vector3(Signed() * 0.02f, 0.03f, Signed() * 0.02f) + wind * 0.06f;
-                    colour = Color.Lerp(look.B, Color.white, 0.2f);
-                    frame = AtmosphereAtlas.Pollen;
+                    MotePopulation(out colour, out size, out frame, out float rise);
+                    vel = new Vector3(Signed() * 0.02f, rise, Signed() * 0.02f) + wind * 0.06f;
                     break;
                 }
 
@@ -1103,9 +1108,8 @@ namespace DD.Prototype.Feedback.Vfx
                     float lo = Mathf.Max(a.Centre.y - a.Half.y, _weightFocus.y + 0.3f), hi = Mathf.Min(a.Centre.y + a.Half.y, _weightFocus.y + 6f);
                     if (hi <= lo) { lo = _weightFocus.y + 0.3f; hi = _weightFocus.y + 6f; }
                     pos = new Vector3(a.Centre.x + Mathf.Cos(ang) * rad, Mathf.Lerp(lo, hi, Next01()), a.Centre.z + Mathf.Sin(ang) * rad);
-                    vel = new Vector3(Signed() * 0.02f, 0.03f, Signed() * 0.02f) + wind * 0.06f;
-                    colour = Color.Lerp(look.B, Color.white, 0.2f);
-                    frame = AtmosphereAtlas.Pollen;
+                    MotePopulation(out colour, out size, out frame, out float rise);
+                    vel = new Vector3(Signed() * 0.02f, rise, Signed() * 0.02f) + wind * 0.06f;
                     break;
                 }
 
@@ -1202,6 +1206,30 @@ namespace DD.Prototype.Feedback.Vfx
         {
             float fall = Mathf.Max(0.5f, height) / speed;
             return Mathf.Min(fall + rest, look.LifeMax + rest);
+        }
+
+        // AD (25.09) B5 MUST 2 — two populations of placed motes: dust #E6DCC8 2–3 cm (0.65) and pollen #EEDFB4 4–5 cm (0.35,
+        // the Pollen frame: the shader tumbles it at 0.3 rev/s and lifts it ×1.2 HDR in a shaft), pollen rising 0.03 m/s.
+        public const float PollenShare = 0.35f;
+        private static readonly Color s_dust = Hex(0xE6DCC8);
+        private static readonly Color s_pollen = Hex(0xEEDFB4);
+
+        private void MotePopulation(out Color colour, out float size, out byte frame, out float rise)
+        {
+            if (Next01() < PollenShare)
+            {
+                colour = s_pollen;
+                size = Mathf.Lerp(0.04f, 0.05f, Next01());
+                frame = AtmosphereAtlas.Pollen;
+                rise = 0.03f;
+            }
+            else
+            {
+                colour = s_dust;
+                size = Mathf.Lerp(0.02f, 0.03f, Next01());
+                frame = AtmosphereAtlas.Mote;
+                rise = 0.05f;
+            }
         }
 
         private void Emit(int li, ParticleSystem ps, Vector3 pos, Vector3 vel, float size, float aspect, byte frame, Color colour, Look look, float life, bool prefill)

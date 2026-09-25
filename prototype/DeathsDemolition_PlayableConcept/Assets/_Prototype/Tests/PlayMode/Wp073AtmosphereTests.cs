@@ -74,6 +74,22 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(0, sys.InRangeCount(AtmosphereSystem.Source.Shaft), "alan canlı: kartlar kapalı");
             Assert.Greater(sys.LiveCount(AtmosphereSystem.Layer.Motes), 0);
 
+            // AD B5 MUST 2: two populations — the Pollen frame is 4–5 cm pollen, the placed dust 2–3 cm (the near field keeps its
+            // finer motes on the Mote frame).
+            ParticleSystem motes = sys.SystemOf(AtmosphereSystem.Layer.Motes);
+            var grains = new ParticleSystem.Particle[motes.particleCount];
+            int n = motes.GetParticles(grains), pollen = 0, pollenInRange = 0;
+            for (int i = 0; i < n; i++)
+            {
+                Vector3 s3 = grains[i].startSize3D;
+                if (Mathf.RoundToInt(s3.z) != AtmosphereAtlas.Pollen) continue;
+                pollen++;
+                if (s3.y >= 0.0399f && s3.y <= 0.0501f) pollenInRange++;
+            }
+
+            Assert.Greater(pollen, 0, "polen yok");
+            Assert.AreEqual(pollen, pollenInRange, "polen 4–5 cm");
+
             Shader.SetGlobalVector("_DD_VL_Density", Vector4.zero);   // Performance: the field is off
             for (int i = 0; i < 30; i++) sys.Step(1f / 30f);
             Assert.AreEqual(0, sys.InRangeCount(AtmosphereSystem.Source.Volume), "alan kapalı: bölge yok");
