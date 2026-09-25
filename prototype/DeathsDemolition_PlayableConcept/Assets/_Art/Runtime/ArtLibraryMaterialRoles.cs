@@ -259,7 +259,8 @@ namespace DD.Art
                 var spec = new Spec { Role = "ap023_" + tile, Kind = Kind.Textured, TextureRole = "ap023_" + tile };
                 // WP-075 DEC-101 (HF-like overcast): the roofs read dark cool grey (the tiles took the warm sun as brown) and the plaster
                 // wet pale grey-beige, not bright cream (its sheet averages sRGB 0.79 / 0.77 / 0.73).
-                if (tile == "roof_tiles") spec.Tint = new Color(0.78f, 0.84f, 0.95f, 1f);
+                // DEC-102 (strong warm sun): cooler and darker still, so the sunlit tiles read warm dark grey, not brown.
+                if (tile == "roof_tiles") spec.Tint = new Color(0.62f, 0.70f, 0.88f, 1f);
                 if (tile == "plaster") spec.Tint = new Color(0.54f, 0.55f, 0.57f, 1f);
                 rows.Add(spec);
             }

@@ -14,6 +14,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Active: 1
   _shader: {fileID: 4800000, guid: 3412e76f4400f47069103352c51fc1d1, type: 3}
+--- !u!114 &-6740640792715599326
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8e05b63bc140a475ebc49839ac31dc60, type: 3}
+  m_Name: DD Volumetric Light
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  _shader: {fileID: 4800000, guid: cc711aced2f194c3ebd4cb936c2eedc2, type: 3}
 --- !u!114 &-6313153346129294515
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -68,7 +82,8 @@ MonoBehaviour:
   - {fileID: -6313153346129294515}
   - {fileID: 8331849840124178559}
   - {fileID: -8464823399907558258}
-  m_RendererFeatureMap: 4d0b65ef7a2c63a87f307f1a49ada0738e7c1862f7e7868a
+  - {fileID: -6740640792715599326}
+  m_RendererFeatureMap: 4d0b65ef7a2c63a87f307f1a49ada0738e7c1862f7e7868a22e2ad97e96e74a2
   m_UseNativeRenderPass: 0
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
   xrSystemData: {fileID: 11400000, guid: 60e1133243b97e347b653163a8c01b64, type: 2}

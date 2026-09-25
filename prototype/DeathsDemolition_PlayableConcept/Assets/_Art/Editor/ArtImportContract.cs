@@ -698,15 +698,15 @@ namespace DD.Art.Pipeline.EditorTools
         /// own importer rules (<see cref="ApplyLightCookie"/>), not the T_&lt;role&gt;_&lt;Map&gt; contract — the LUT / menu plate precedent.
         /// </summary>
         public const string CloudCookiePath = ArtRoot + "/Resources/DD_CloudCookie.png";
-        /// <summary>WP-075 DEC-101: the v6 layout's overcast cookie (wp-074/tools/make-overcast-cookie.py), same rules.</summary>
-        public const string CloudCookieOvercastPath = ArtRoot + "/Resources/DD_CloudCookie_Overcast.png";
+        /// <summary>WP-075 DEC-102: the v6 layout's broken-cloud cookie (wp-074/tools/make-cloud-cookie.py), same rules.</summary>
+        public const string CloudCookieBrokenPath = ArtRoot + "/Resources/DD_CloudCookie_Broken.png";
         public const int LightCookieMaxSize = 1024;
 
         public static bool IsLightCookieTexture(string assetPath)
         {
             if (assetPath == null) return false;
             string p = assetPath.Replace('\\', '/');
-            return p == CloudCookiePath || p == CloudCookieOvercastPath;
+            return p == CloudCookiePath || p == CloudCookieBrokenPath;
         }
 
         /// <summary>

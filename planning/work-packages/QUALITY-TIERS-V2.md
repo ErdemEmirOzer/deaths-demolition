@@ -53,20 +53,22 @@ public static class QualityTiers
 |---|---|---|---|---|
 | Gök bandı v2 + bulut düzlemleri | S-05 WP-075 | bant + 1 düzlem | bant + 2 düzlem | 2 düzlem + parallaks |
 | Bulut gölgesi cookie | S-05 | tam | tam | tam |
-| Huzme kartları | S-05 | 6, alfa ×0,7 | 10 | 20 |
-| Ekran-uzayı huzme (TP/FP) | S-05 | kapalı | 20 örnek, 0,22 | 48 örnek, 0,40 |
+| Hacimsel ışık (DEC-102: raymarch, ana ışık gölge haritası × bulut cookie, yükseklik + bölgesel sis yoğunluğu; tüm modlar) | S-05 WP-075 | kapalı | ¼ çözünürlük, 12 adım | ½ çözünürlük, 32 adım |
+| Huzme kartları | S-05 | 6, alfa ×0,7 (hacimsel ışığın yerine) | — (DEC-102: hacimsel) | — (DEC-102: hacimsel) |
+| Ekran-uzayı huzme (TP/FP) | S-05 | kapalı | — (DEC-102: hacimsel) | — (DEC-102: hacimsel) |
 | Yer sisi levhaları | S-05 | 4, alfa ×0,6 | 7, alfa ×0,8 | 10 |
 | Yükseklik sisi (TP/FP) | S-05 | kapalı | açık | açık |
 | Bitki yoğunluğu / impostor mesafesi | S-05 WP-074 | ×0,6 / 40 m | ×1,0 / 60 m | ×1,75 / 120 m |
 | Atmosfer parçacıkları (× cookie) | S-07 WP-073 | ×0,4 | ×0,7 | ×1,0 |
-| Eşzamanlı ragdoll (`RagdollProxyPool.Capacity`; taşan ölüm yazılı düşüş klibi; `-ddRagdoll`) | S-06 WP-071 (uygular) | 2 | 6 | 10 (S-03 / S-06 uzlaştı, C-00) |
-| Ceset tavanı / ömür (s); ceset–ceset çarpışması | S-06 | 6 / 2,5; ✘ | 10 / 4; ✔ | 16 / 6; ✔ |
-| Animasyon toplamı (40 zombi) | S-06 | — | ≈ 1,9 ms (toplam 16,0'ı aşarsa VFX'ten sonra kısılan: **≤ 1,6 ms**) | yalnız raporlanır |
-| Foot IK gövde/kare (ayak kilidi) | S-06 | 4 (yalnız oyuncu) | 12 (oyuncu + ≤ 8) | 24 (oyuncu + LOD0 zombi) |
-| İkincil zincir gövde/kare (`SecondaryChainDriver`) | S-06 | 16 | 40 | 60 |
-| Look-at gövde/kare | S-06 | 4 | 12 | 20 |
-| Twist çözümü | S-06 | yalnız oyuncu | oyuncu + LOD0 | oyuncu + LOD0 + LOD1 |
-| Animator tam kare mesafesi TP/FP (ötesi 15 Hz Far); tepeden Far LOD | S-06 | ≤ 14 m; ≥ 1 | ≤ 22 m; ≥ 2 | ≤ 30 m; ≥ 3 |
+| Eşzamanlı ragdoll (`RagdollProxyPool.Capacity`; taşan ölüm yazılı düşüş klibi; `-ddRagdoll`) | S-06 WP-071 (uygular) | 2 | 6 | 10 (S-03 / S-06 uzlaştı, C-00; S-06 önerisi 14 → S-03 / C-00 onayı bekliyor) |
+| Ceset tavanı / ömür (s); ceset–ceset çarpışması | S-06 | 6 / 2,5; ✘ | 10 / 4; ✔ | 24 / 8; ✔ (DEC-100, S-06 25.09) |
+| Animasyon toplamı (40 zombi) | S-06 | — | ≈ 1,9 ms (toplam 16,0'ı aşarsa VFX'ten sonra kısılan: **≤ 1,6 ms**) | **≤ 2,5 ms** (DEC-100, S-06 25.09) |
+| Foot IK gövde/kare (ayak kilidi) | S-06 | 4 (yalnız oyuncu) | 12 (oyuncu + ≤ 8) | oyuncu + tüm LOD0 (DEC-100) |
+| İkincil zincir gövde/kare (`SecondaryChainDriver`) | S-06 | 16 | 40 | 80 (DEC-100) |
+| Look-at gövde/kare | S-06 | 4 | 12 | 30 (DEC-100) |
+| Twist çözümü | S-06 | yalnız oyuncu | yalnız oyuncu | yalnız oyuncu (zombi rig v002'de twist kemiği yok; S-06 düzeltmesi 25.09) |
+| Zombi çene (rig v002 K10) | S-06 | kapalı | LOD0 | LOD0 + LOD1 |
+| Animator tam kare mesafesi TP/FP (ötesi 15 Hz Far); tepeden Far LOD | S-06 | ≤ 14 m; ≥ 1 | ≤ 22 m; ≥ 2 | ≤ 40 m; ≥ 4 (DEC-100) |
 | Yerinde dönüş/pivot klipleri | S-06 | ✘ (slerp) | ✔ | ✔ |
 | FP kol viewmodel Animator (≈ 0,15 ms) | S-06 | açık | açık | açık |
 | AI tick bütçesi (ragdoll hariç, 40 beden) `-ddAiV3` | S-03 WP-076 | 0,55 ms | 0,75 ms | 0,85 ms |

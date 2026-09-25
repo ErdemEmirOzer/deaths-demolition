@@ -64,7 +64,7 @@ Material:
     - _MossSaturation: 0.66
     - _MossSmoothness: 0.18
     - _MossTile: 3
-    - _MossValue: 1.6
+    - _MossValue: 0.95
     - _NormalStrength: 1
     - _PatchEdge: 0.08
     - _PatchScale: 6

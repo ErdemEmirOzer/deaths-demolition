@@ -1,0 +1,130 @@
+{
+  "version": 3,
+  "variant": "v3",
+  "name": "Yağmur Sonrası Güneş",
+  "decision": "DEC-102 (user 2026-09-25 via C-00): broken cloud, high warm sun, cold shadows",
+  "spec": "C-00 DEC-102 brief 25.09; DEC-101's material read kept; HF-variant targets pending (C-00) — recipe by hand",
+  "method": "wp-074/tools/build-look-v3.py on build-look-v2.py's local Lightroom-class grade",
+  "sliders": {
+    "temp": -10,
+    "tint": 0,
+    "exposure": -0.2,
+    "contrast": 12,
+    "highlights": -25,
+    "shadows": 2,
+    "whites": 0,
+    "blacks": -8,
+    "texture": 0,
+    "clarity": 0,
+    "dehaze": 0,
+    "vibrance": 4,
+    "saturation": -28,
+    "hsl": {
+      "hue": [
+        0,
+        -2,
+        -6,
+        -6,
+        0,
+        0,
+        0,
+        0
+      ],
+      "sat": [
+        -25,
+        -45,
+        -25,
+        0,
+        0,
+        14,
+        0,
+        0
+      ],
+      "lum": [
+        -6,
+        -16,
+        -8,
+        -15,
+        0,
+        -6,
+        0,
+        0
+      ]
+    },
+    "grading": {
+      "shadows": [
+        215,
+        22,
+        -4
+      ],
+      "midtones": [
+        210,
+        4,
+        0
+      ],
+      "highlights": [
+        40,
+        16,
+        3
+      ],
+      "blending": 60,
+      "balance": -10
+    },
+    "curve": [
+      [
+        0,
+        10
+      ],
+      [
+        32,
+        26
+      ],
+      [
+        64,
+        54
+      ],
+      [
+        128,
+        128
+      ],
+      [
+        192,
+        204
+      ],
+      [
+        255,
+        255
+      ]
+    ]
+  },
+  "lut": {
+    "file": "DD_Look_v3.png",
+    "size": 32,
+    "sha256": "de84ad9e7e42f55c63ebce89b8cddc0f53d3261be6bcd5b3705f81a2ab763fe7",
+    "layout": "URP ApplyLut2D 1024×32 (DD_Neutral_32.png)"
+  },
+  "appliedAfter": "DD_Look_v5 (the v6 look profile), colour lookup → v3",
+  "deltaEGate": {
+    "limitMean": 6,
+    "heroLimitMean": 4,
+    "frames": [
+      {
+        "frame": "v5-hf-center.png",
+        "meanDeltaE": 0.489,
+        "p95": 1.23
+      },
+      {
+        "frame": "v5-hf-west.png",
+        "meanDeltaE": 0.389,
+        "p95": 0.92
+      },
+      {
+        "frame": "v5-hf-north.png",
+        "meanDeltaE": 0.478,
+        "p95": 1.075
+      }
+    ],
+    "pass": true
+  },
+  "builtUtc": "2026-09-25T10:25:15Z"
+}

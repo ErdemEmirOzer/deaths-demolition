@@ -1,0 +1,112 @@
+using System;
+using DD.Prototype.World;
+using UnityEngine;
+
+namespace DD.Art
+{
+    /// <summary>
+    /// WP-075 · DEC-102 · The volumetric light field of the v6 world (on the World v5 dress root, built by WorldV5Atmosphere): a light
+    /// height haze plus regional volumes where the shafts should read (the bamboo grove, the ponds, the sakura court, the veranda, the
+    /// gates). It publishes the field every frame as shader globals (DD_VolumetricLight.hlsl) for <see cref="VolumetricLightFeature"/>'s
+    /// raymarch — and for S-07's atmosphere particles, which read the same density and sun visibility so dust and petals glow in the
+    /// shafts. CPU mirror: <see cref="DensityAt"/>, <see cref="SunDirection"/>, <see cref="Active"/>.
+    /// </summary>
+    public sealed class VolumetricLight : MonoBehaviour
+    {
+        [Serializable]
+        public struct Region
+        {
+            public Vector3 Centre;
+            public float RadiusXZ, RadiusY, Density;
+        }
+
+        public const int MaxRegions = 8;
+        public static readonly int DensityId = Shader.PropertyToID("_DD_VL_Density");
+        public static readonly int RegionsId = Shader.PropertyToID("_DD_VL_Regions");
+        public static readonly int RegionShapeId = Shader.PropertyToID("_DD_VL_RegionShape");
+        public static readonly int RegionCountId = Shader.PropertyToID("_DD_VL_RegionCount");
+        public static readonly int ScatterId = Shader.PropertyToID("_DD_VL_Scatter");
+
+        [Tooltip("Base haze density (1/m) at BaseHeight.")] public float BaseDensity = 0.0025f;
+        [Tooltip("Height falloff (1/m): the haze halves every ln2 / k metres.")] public float HeightFalloff = 0.18f;
+        public float BaseHeight = 0f;
+        [Tooltip("Sun colour × intensity × this = the scattered light.")] public float ScatterScale = 1.0f;
+        [Tooltip("Ambient (sky) scatter: RenderSettings' sky colour × this (the cold shadows).")] public float AmbientScatter = 0.35f;
+        public Region[] Regions = Array.Empty<Region>();
+
+        /// <summary>The live field (null when no v6 world is loaded).</summary>
+        public static VolumetricLight Current { get; private set; }
+
+        public static bool Active => Current != null && Current.isActiveAndEnabled;
+
+        /// <summary>Toward the sun (the main light's reverse), for particles and cameras.</summary>
+        public static Vector3 SunDirection
+        {
+            get
+            {
+                Light sun = CloudShadowDriver.Active != null ? CloudShadowDriver.Active.Sun : RenderSettings.sun;
+                return sun != null ? -sun.transform.forward : Vector3.up;
+            }
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics()
+        {
+            Current = null;
+            Shader.SetGlobalVector(DensityId, Vector4.zero);
+        }
+
+        private readonly Vector4[] _regions = new Vector4[MaxRegions];
+        private readonly Vector4[] _shapes = new Vector4[MaxRegions];
+
+        private void OnEnable()
+        {
+            Current = this;
+            Publish();
+        }
+
+        private void OnDisable()
+        {
+            if (Current == this) Current = null;
+            Shader.SetGlobalVector(DensityId, Vector4.zero);   // w 0: the field is off for every reader
+        }
+
+        private void LateUpdate() => Publish();
+
+        /// <summary>The field at a world point (1/m) — the CPU mirror of DD_VL_Density.</summary>
+        public float DensityAt(Vector3 p)
+        {
+            float d = BaseDensity * Mathf.Exp(-HeightFalloff * Mathf.Max(p.y - BaseHeight, 0f));
+            int n = Mathf.Min(Regions.Length, MaxRegions);
+            for (int i = 0; i < n; i++)
+            {
+                Region r = Regions[i];
+                float dx = (p.x - r.Centre.x) / Mathf.Max(r.RadiusXZ, 1e-3f), dz = (p.z - r.Centre.z) / Mathf.Max(r.RadiusXZ, 1e-3f);
+                float dy = (p.y - r.Centre.y) / Mathf.Max(r.RadiusY, 1e-3f);
+                float q = Mathf.Clamp01(1f - (dx * dx + dz * dz + dy * dy));
+                d += r.Density * q * q;
+            }
+
+            return d;
+        }
+
+        private void Publish()
+        {
+            int n = Mathf.Min(Regions.Length, MaxRegions);
+            for (int i = 0; i < MaxRegions; i++)
+            {
+                Region r = i < n ? Regions[i] : default;
+                _regions[i] = new Vector4(r.Centre.x, r.Centre.y, r.Centre.z, r.RadiusXZ);
+                _shapes[i] = new Vector4(r.RadiusY, r.Density, 0f, 0f);
+            }
+
+            Shader.SetGlobalVector(DensityId, new Vector4(BaseDensity, HeightFalloff, BaseHeight, 1f));
+            Shader.SetGlobalVectorArray(RegionsId, _regions);
+            Shader.SetGlobalVectorArray(RegionShapeId, _shapes);
+            Shader.SetGlobalFloat(RegionCountId, n);
+            Light sun = CloudShadowDriver.Active != null ? CloudShadowDriver.Active.Sun : RenderSettings.sun;
+            Color scatter = sun != null ? sun.color.linear * (sun.intensity * ScatterScale) : Color.black;
+            Shader.SetGlobalVector(ScatterId, new Vector4(scatter.r, scatter.g, scatter.b, AmbientScatter));
+        }
+    }
+}

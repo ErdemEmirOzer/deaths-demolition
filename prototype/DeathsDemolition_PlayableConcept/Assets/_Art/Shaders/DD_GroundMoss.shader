@@ -23,7 +23,7 @@ Shader "DD/GroundMoss"
         _EarthTile("Earth tile (m)", Range(0.5, 8)) = 4.0
         [Header(Moss grade)]
         _MossSaturation("Moss saturation", Range(0, 1.5)) = 0.66
-        _MossValue("Moss value scale (linear)", Range(0.2, 4)) = 1.6
+        _MossValue("Moss value scale (linear)", Range(0.2, 4)) = 0.95
         _TintDark("Tone field: dark end (linear)", Color) = (0.62, 0.72, 0.50, 1)
         _TintLight("Tone field: light end (linear)", Color) = (0.95, 1.02, 0.62, 1)
         _ToneScale("Tone field scale (m)", Range(5, 80)) = 14.0

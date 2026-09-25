@@ -73,12 +73,33 @@ namespace DD.Art.Pipeline.EditorTools
 
         public const float PondFogAlpha = 0.12f, PondFogY = 0.4f, PondFogNoise = 20f, PondFogSpeed = 0.4f;
 
+        /// <summary>DEC-102 volumetric field (VolumetricLight on the dress root): where the shafts should read — the bamboo grove, the
+        /// ponds, the sakura court, the veranda, the karamon forecourt, the rear kairō and the NE pines; the plaza centre stays clear
+        /// (Ek A K10: ≤ 3 % local fog around the top-down player).</summary>
+        public static readonly (Vector3 centre, float radiusXZ, float radiusY, float density)[] VolumeRegions =
+        {
+            (new Vector3(-45f, 3f, -14f), 14f, 6f, 0.022f), (new Vector3(-45f, 3f, 14f), 14f, 6f, 0.022f),
+            (new Vector3(-2f, 1.5f, -28f), 16f, 3f, 0.020f), (new Vector3(36f, 3f, 0f), 12f, 5f, 0.018f),
+            (new Vector3(0f, 4f, 34f), 16f, 5f, 0.012f), (new Vector3(0f, 3f, 20f), 8f, 4f, 0.012f),
+            (new Vector3(0f, 3f, 52f), 22f, 4f, 0.012f), (new Vector3(42f, 4f, 40f), 12f, 6f, 0.015f),
+        };
+
         public static int Build(Transform dress, Transform greybox)
         {
+            var field = dress.gameObject.AddComponent<VolumetricLight>();
+            field.BaseDensity = 0.0025f;
+            field.HeightFalloff = 0.18f;
+            field.ScatterScale = 0.55f;   // DEC-102 first frames read milky at 1.0
+            field.AmbientScatter = 0.2f;
+            field.Regions = new VolumetricLight.Region[VolumeRegions.Length];
+            for (int i = 0; i < VolumeRegions.Length; i++)
+                field.Regions[i] = new VolumetricLight.Region { Centre = VolumeRegions[i].centre, RadiusXZ = VolumeRegions[i].radiusXZ, RadiusY = VolumeRegions[i].radiusY, Density = VolumeRegions[i].density };
+
             EnsureFolder(MeshFolder);
             int n = 0;
             var shafts = Group(dress, ShaftGroupName);
-            shafts.gameObject.AddComponent<AtmosphereTierGroup>().Configure(6, 10, 20, 0.7f, 1f, 1f);
+            // DEC-102: the raymarched VolumetricLight carries the shafts on High / Cinematic; the cards stay as Performance's stand-in.
+            shafts.gameObject.AddComponent<AtmosphereTierGroup>().Configure(6, 0, 0, 0.7f, 1f, 1f);
             Mesh shaftMesh = Quad("SM_ShaftCard", new[] { new Vector3(-0.5f, 0f, 0f), new Vector3(-0.5f, 1f, 0f), new Vector3(0.5f, 1f, 0f), new Vector3(0.5f, 0f, 0f) },
                 new Bounds(Vector3.zero, Vector3.one * 2f));
             for (int i = 0; i < Shafts.Length; i++)

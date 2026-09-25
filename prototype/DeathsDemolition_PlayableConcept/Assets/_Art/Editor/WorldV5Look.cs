@@ -10,7 +10,8 @@ namespace DD.Art.Pipeline.EditorTools
 {
     /// <summary>
     /// WP-075 C6 · The World v5 (v6 layout) look profile: DD_Look_v5 is DD_Overcast_v1 (its Neutral tonemap / grade / bloom / grain /
-    /// vignette, copied once) with the colour lookup on LUT v2b "Islak Arduvaz, Soğuk" — DEC-101 (user 25.09): the tone is cold like
+    /// vignette, copied once) with the colour lookup on LUT v3 "Yağmur Sonrası Güneş" (DEC-102: broken cloud, high warm sun, cold shadows;
+    /// wp-074/tools/build-look-v3.py, by hand until the HF-variant targets arrive). Before it, LUT v2b "Islak Arduvaz, Soğuk" — DEC-101 (user 25.09): the tone is cold like
     /// the HF targets (cold blue-grey shadows, low saturation, dark wet ground, cold white point, contrast up, no milky lift; warmth
     /// only in the sun-hit highlights and the shafts). v2b's global sliders are fitted to HF-center's mean Lab / chroma / L std
     /// (wp-074/tools/build-look-v2b.py; the fit, the ΔE gate and the HF comparison in DD_Look_v2b.recipe.json); LUT v2 "Açılma"
@@ -20,8 +21,8 @@ namespace DD.Art.Pipeline.EditorTools
     public static class WorldV5Look
     {
         public const string ProfilePath = ArtLibraryPaths.LightingFolder + "/DD_Look_v5.asset";
-        public const string LutPath = LutBuilder.Folder + "/DD_Look_v2b.png";
-        public const string RecipePath = LutBuilder.Folder + "/DD_Look_v2b.recipe.json";
+        public const string LutPath = LutBuilder.Folder + "/DD_Look_v3.png";   // DEC-102 (was v2b, DEC-101)
+        public const string RecipePath = LutBuilder.Folder + "/DD_Look_v3.recipe.json";
 
         public static VolumeProfile EnsureProfile()
         {

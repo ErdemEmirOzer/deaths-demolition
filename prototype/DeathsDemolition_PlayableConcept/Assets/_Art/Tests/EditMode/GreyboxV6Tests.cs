@@ -387,7 +387,7 @@ namespace DD.Art.Tests.EditMode
             }
 
             Transform skyV2 = dress.transform.Find(WorldV5Sky.RootName);
-            Assert.AreEqual(WorldV5Sky.Clouds.Length + WorldV5Sky.Cards.Length, skyV2.childCount, "bulut düzlemi + nirengi kartı");
+            Assert.AreEqual(WorldV5Sky.Clouds.Length + WorldV5Sky.Cards.Length + 1, skyV2.childCount, "bulut düzlemi + nirengi kartı + güneş diski (DEC-102)");
             foreach ((string name, string role, float height, float half, float tile, float speed, int queue) c in WorldV5Sky.Clouds)
                 Assert.Greater(((Vector4)skyV2.Find(c.name).GetComponent<MeshRenderer>().sharedMaterial.GetVector("_ScrollUV")).magnitude, 0f, c.name + " sürüklenmiyor");
 
@@ -396,7 +396,8 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(WorldV5Atmosphere.Shafts.Length, shafts.childCount, "huzme kartı");
             Assert.AreEqual(3 + WorldV5Atmosphere.FogSheets.Length, fogSheets.childCount, "sis levhası (3 havuz + 7)");
             AtmosphereTierGroup shaftTier = shafts.GetComponent<AtmosphereTierGroup>(), fogTier = fogSheets.GetComponent<AtmosphereTierGroup>();
-            Assert.AreEqual(new[] { 6, 10, 20 }, new[] { shaftTier.CountOf(QualityTier.Performans), shaftTier.CountOf(QualityTier.Yuksek), shaftTier.CountOf(QualityTier.Sinematik) });
+            // DEC-102: the volumetric light carries the shafts on High / Cinematic; the cards are Performance's stand-in.
+            Assert.AreEqual(new[] { 6, 0, 0 }, new[] { shaftTier.CountOf(QualityTier.Performans), shaftTier.CountOf(QualityTier.Yuksek), shaftTier.CountOf(QualityTier.Sinematik) });
             Assert.AreEqual(new[] { 4, 7, 10 }, new[] { fogTier.CountOf(QualityTier.Performans), fogTier.CountOf(QualityTier.Yuksek), fogTier.CountOf(QualityTier.Sinematik) });
             foreach (Transform t in shafts)
             {
@@ -553,23 +554,24 @@ namespace DD.Art.Tests.EditMode
         }
 
         [Test]
-        public void Greybox_DEC101_V6Bulutlu_ZayifGunes_SisVeGok()
+        public void Greybox_DEC102_ParcaliBulut_YuksekGunes_HacimselIsik()
         {
-            // DEC-101 (user 25.09): the v6 layout is overcast — weak diffuse sun, more fill, closer haze, the overcast cookie.
+            // DEC-102 (user 25.09): the v6 sky is broken cloud under a high, strong sun; the shafts are the raymarched volumetric light.
             WorldLayoutKind previous = WorldLayout.Current;
-            var go = new GameObject("DEC101 sun");
+            var go = new GameObject("DEC102 sun");
             try
             {
                 WorldLayout.SetCurrent(WorldLayoutKind.V6);
                 Light light = go.AddComponent<Light>();
                 WorldAtmosphere.ConfigureSun(light);
-                Assert.AreEqual(WorldAtmosphere.SunIntensity * WorldAtmosphere.Overcast.SunIntensityScale, light.intensity, 1e-4f);
-                Assert.AreEqual(WorldAtmosphere.Overcast.SunShadowStrength, light.shadowStrength, 1e-4f);
-                Assert.AreEqual(WorldAtmosphere.CloudShadow.OvercastCookieResourceName, WorldAtmosphere.CloudShadow.CookieResourceFor(WorldLayoutKind.V6));
+                Assert.AreEqual(WorldAtmosphere.SunIntensity * WorldAtmosphere.V6Sky.SunIntensityScale, light.intensity, 1e-4f);
+                Assert.AreEqual(WorldAtmosphere.V6Sky.SunShadowStrength, light.shadowStrength, 1e-4f);
+                Assert.That(WorldAtmosphere.SunEulerFor(WorldLayoutKind.V6).x, Is.InRange(55f, 65f), "güneş yüksekliği");
+                Assert.AreEqual(WorldAtmosphere.CloudShadow.BrokenCookieResourceName, WorldAtmosphere.CloudShadow.CookieResourceFor(WorldLayoutKind.V6));
                 WorldLayout.SetCurrent(WorldLayoutKind.Ap005);
                 WorldAtmosphere.ConfigureSun(light);
                 Assert.AreEqual(WorldAtmosphere.SunIntensity, light.intensity, 1e-4f, "World_AP005 v3 anahtarı değişmez");
-                Assert.AreEqual(WorldAtmosphere.CloudShadow.CookieResourceName, WorldAtmosphere.CloudShadow.CookieResourceFor(WorldLayoutKind.Ap005));
+                Assert.AreEqual(WorldAtmosphere.SunEuler, WorldAtmosphere.SunEulerFor(WorldLayoutKind.Ap005));
             }
             finally
             {
@@ -577,15 +579,15 @@ namespace DD.Art.Tests.EditMode
                 WorldLayout.SetCurrent(previous);
             }
 
-            // The overcast cookie: 10–20 % sun (≥ 0.8), 0.40 under the cloud, imported by the cookie rules.
+            // The broken-cloud cookie: 40–60 % sun (≥ 0.8), 0.40 under a cloud, imported by the cookie rules.
             var png = new Texture2D(2, 2, TextureFormat.RGBA32, false);
             try
             {
-                Assert.IsTrue(png.LoadImage(File.ReadAllBytes(ArtImportContract.CloudCookieOvercastPath)), "overcast cookie PNG");
+                Assert.IsTrue(png.LoadImage(File.ReadAllBytes(ArtImportContract.CloudCookieBrokenPath)), "broken cookie PNG");
                 Color32[] px = png.GetPixels32();
                 int sun = 0, low = 255;
                 foreach (Color32 c in px) { if (c.r >= 204) sun++; low = Mathf.Min(low, c.r); }
-                Assert.That(sun / (float)px.Length, Is.InRange(0.10f, 0.20f), "açıklık payı");
+                Assert.That(sun / (float)px.Length, Is.InRange(0.40f, 0.60f), "açıklık payı");
                 Assert.AreEqual(102, low, 1, "bulut altı 0,40");
             }
             finally
@@ -593,15 +595,36 @@ namespace DD.Art.Tests.EditMode
                 Object.DestroyImmediate(png);
             }
 
-            Assert.IsTrue(ArtImportContract.IsLightCookieTexture(ArtImportContract.CloudCookieOvercastPath));
-            Assert.IsNotNull(Resources.Load<Texture2D>(WorldAtmosphere.CloudShadow.OvercastCookieResourceName));
+            Assert.IsTrue(ArtImportContract.IsLightCookieTexture(ArtImportContract.CloudCookieBrokenPath));
+            Assert.IsNotNull(Resources.Load<Texture2D>(WorldAtmosphere.CloudShadow.BrokenCookieResourceName));
 
-            // The dressed scene: vista mist, thick grey-blue cloud planes, hazed horizon plates.
+            // Tiers: Cinematic ½ × 32, High ¼ × 12, Performance off; the feature on the High and Cinematic renderers.
+            VolumetricLightFeature.Rules cin = VolumetricLightFeature.RulesFor(QualityTier.Sinematik), high = VolumetricLightFeature.RulesFor(QualityTier.Yuksek);
+            Assert.IsTrue(cin.On && cin.Downsample == 2 && cin.Steps == 32);
+            Assert.IsTrue(high.On && high.Downsample == 4 && high.Steps == 12);
+            Assert.IsFalse(VolumetricLightFeature.RulesFor(QualityTier.Performans).On);
+            foreach (string path in ScreenAtmosphereSetup.RendererPaths)
+            {
+                var data = AssetDatabase.LoadAssetAtPath<UnityEngine.Rendering.Universal.UniversalRendererData>(path);
+                VolumetricLightFeature feature = null;
+                foreach (var f in data.rendererFeatures) if (f is VolumetricLightFeature v) feature = v;
+                Assert.IsNotNull(feature, path);
+                Assert.AreEqual(VolumetricLightFeature.ShaderName, feature.Shader.name, path);
+            }
+
+            // The dressed scene: the field (regions, the plaza centre clear), the sun disc, sunlit broken clouds, hazed plates.
             Open();
+            var dress = GameObject.Find(WorldV5Dress.RootName);
+            var field = dress.GetComponent<VolumetricLight>();
+            Assert.IsNotNull(field, "VolumetricLight");
+            Assert.AreEqual(WorldV5Atmosphere.VolumeRegions.Length, field.Regions.Length);
+            Assert.Less(field.DensityAt(new Vector3(0f, 1.5f, 0f)), 0.004f, "meydan merkezi açık (K10)");
+            Assert.Greater(field.DensityAt(new Vector3(-45f, 3f, 14f)), 0.02f, "bambu korusu sisli");
+            Assert.IsNotNull(dress.transform.Find(WorldV5Sky.RootName + "/" + WorldV5Sky.SunDiscName).GetComponent<SunDisc>(), "güneş diski");
+            var clouds = dress.transform.Find(WorldV5Sky.RootName + "/Clouds_Near").GetComponent<MeshRenderer>().sharedMaterial;
+            Assert.Greater(clouds.GetFloat("_AlphaPower"), 1f, "parçalı bulut");
             Assert.AreEqual(WorldV5Atmosphere.VistaMist.Length, GameObject.Find(WorldV5Atmosphere.VistaMistGroupName).transform.childCount, "vista sisi");
-            var clouds = GameObject.Find(WorldV5Dress.RootName).transform.Find(WorldV5Sky.RootName + "/Clouds_Near").GetComponent<MeshRenderer>().sharedMaterial;
-            Assert.Less(clouds.GetFloat("_AlphaPower"), 1f, "bulut örtüsü kalın");
-            var far = GameObject.Find(WorldV5Dress.RootName).transform.Find(ArtSurfaceImporter.SkyRootName + "/Horizon_far").GetComponent<MeshRenderer>().sharedMaterial;
+            var far = dress.transform.Find(ArtSurfaceImporter.SkyRootName + "/Horizon_far").GetComponent<MeshRenderer>().sharedMaterial;
             Assert.Greater(far.GetFloat("_Haze"), 0.3f, "uzak katman sisli");
         }
 

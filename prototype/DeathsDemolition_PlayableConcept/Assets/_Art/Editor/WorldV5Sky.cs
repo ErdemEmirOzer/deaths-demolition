@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using DD.Prototype.Core;
+using DD.Prototype.World;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -24,11 +25,11 @@ namespace DD.Art.Pipeline.EditorTools
         /// <summary>DEC-101 (overcast like the HF targets): the cloud planes thicken (alpha^0.6; AD S3's 1.6 thinned them for a sunny
         /// sky) and darken to grey-blue; the sky band darkens (Panoramic tint); the distant plates fade into the DEC-076 haze colour
         /// (aerial perspective: far 0.72 · mid 0.58 · near 0.42 · landmarks 0.50 · the NW cedars 0.35). The horizon plates' alpha stays 1.</summary>
-        public const float CloudAlphaPower = 0.6f;
-        public static readonly Color CloudTint = new Color(0.82f, 0.85f, 0.90f, 1f);   // C-00: a bright overcast overhead (HF) — the planar / probes mirror it
-        public static readonly Color SkyBandTint = new Color(0.50f, 0.53f, 0.58f, 0.5f);   // C-00 25.09: the plaza mirrors the sky (HF: bright overcast); the cloud planes carry the weight
-        public const float CloudHaze = 0.40f;   // softens the sheet's cumulus edges toward HF's even overcast
-        public const float SkyBandExposure = 0.9f;
+        public const float CloudAlphaPower = 2.0f;   // DEC-102: broken cloud with blue gaps (1.3 still read clouded); DEC-101's 0.6 was overcast
+        public static readonly Color CloudTint = new Color(1.0f, 0.99f, 0.97f, 1f);   // DEC-102: sunlit cumulus under the high sun
+        public static readonly Color SkyBandTint = new Color(0.5f, 0.5f, 0.5f, 0.5f);   // DEC-102: the band's own blue (Panoramic neutral)   // C-00 25.09: the plaza mirrors the sky (HF: bright overcast); the cloud planes carry the weight
+        public const float CloudHaze = 0.12f;   // DEC-102: crisp sunlit cumulus (0.40 softened DEC-101's overcast)
+        public const float SkyBandExposure = 1.0f;
         public static readonly (string layer, float haze)[] PlateHaze = { ("far", 0.72f), ("mid", 0.58f), ("near", 0.42f) };   // C-00 25.09: more aerial perspective
         public const float LandmarkHaze = 0.50f, ClusterHaze = 0.35f;
         public static string MeshFolder => GreyboxV6Builder.DataFolder + "/Sky";
@@ -88,6 +89,7 @@ namespace DD.Art.Pipeline.EditorTools
             var root = new GameObject(RootName) { layer = PrototypeLayers.Environment }.transform;
             root.SetParent(dress, false);
             Vector2 drift = Compass(DriftCompassDegrees);
+            var cloudMaterials = new Dictionary<string, (Material material, float height, float tile)>();
             foreach ((string name, string role, float height, float half, float tile, float speed, int queue) c in Clouds)
             {
                 Mesh mesh = Quad("SM_sky_" + c.name, new[] { new Vector3(-c.half, 0f, -c.half), new Vector3(-c.half, 0f, c.half), new Vector3(c.half, 0f, c.half), new Vector3(c.half, 0f, -c.half) },
@@ -97,8 +99,21 @@ namespace DD.Art.Pipeline.EditorTools
                 cloud.SetColor("_BaseColor", CloudTint);
                 cloud.SetFloat("_Haze", CloudHaze);
                 Plate(root, c.name, new Vector3(0f, c.height, 0f), Quaternion.identity, mesh, cloud);
+                cloudMaterials[c.role] = (cloud, c.height, c.tile);
                 n++;
             }
+
+            // DEC-102: the high sun's disc and halo (DD/SunDisc; SunDisc re-places it per camera along the sun, inside the far clip).
+            float half = Mathf.Tan(SunHaloDegrees * Mathf.Deg2Rad) * SunDisc.Distance;
+            Mesh sunMesh = Quad("SM_sky_SunDisc", new[] { new Vector3(-half, -half, 0f), new Vector3(-half, half, 0f), new Vector3(half, half, 0f), new Vector3(half, -half, 0f) },
+                new[] { new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(1f, 0f) });
+            Material sunMaterial = SunDiscMaterial(Mathf.Tan(SunDiscDegrees * Mathf.Deg2Rad) / Mathf.Tan(SunHaloDegrees * Mathf.Deg2Rad), cloudMaterials["cloud_near"], cloudMaterials["cloud_far"]);
+            Vector3 toSun = -(Quaternion.Euler(WorldAtmosphere.V6Sky.SunEuler) * Vector3.forward);
+            Plate(root, SunDiscName, toSun * SunDisc.Distance, Quaternion.LookRotation(toSun), sunMesh, sunMaterial);
+            GameObject sunDisc = root.Find(SunDiscName).gameObject;
+            GameObjectUtility.SetStaticEditorFlags(sunDisc, 0);   // it moves with every camera
+            sunDisc.AddComponent<SunDisc>();
+            n++;
 
             foreach ((string name, string role, float compass, float radius, float height, int queue, bool flip) card in Cards)
             {
@@ -117,6 +132,40 @@ namespace DD.Art.Pipeline.EditorTools
             }
 
             return n;
+        }
+
+        public const string SunDiscName = "SunDisc";
+        public const float SunHaloDegrees = 22f, SunDiscDegrees = 0.6f;   // the real sun is 0.27°; 0.6° reads at 1080p before the bloom
+        public const int SunDiscQueue = 2896;   // after the cloud planes (2894 / 2895): the disc reads their cover itself (DD/SunDisc)
+
+        private static Material SunDiscMaterial(float discRadius, (Material material, float height, float tile) near, (Material material, float height, float tile) far)
+        {
+            Shader shader = Shader.Find("DD/SunDisc");
+            if (shader == null) throw new InvalidOperationException("DD/SunDisc missing");
+            string path = GreyboxV6Builder.DataFolder + "/Materials/V5_Sky_SunDisc.mat";
+            var m = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (m == null)
+            {
+                m = new Material(shader);
+                AssetDatabase.CreateAsset(m, path);
+            }
+
+            m.shader = shader;
+            m.SetFloat("_DiscRadius", discRadius);
+            m.SetTexture("_CloudNear", near.material.GetTexture("_BaseMap"));
+            m.SetTexture("_CloudFar", far.material.GetTexture("_BaseMap"));
+            m.SetVector("_CloudNearMap", CloudMap(near));
+            m.SetVector("_CloudFarMap", CloudMap(far));
+            m.SetFloat("_CloudAlphaPower", CloudAlphaPower);
+            m.renderQueue = SunDiscQueue;
+            EditorUtility.SetDirty(m);
+            return m;
+        }
+
+        private static Vector4 CloudMap((Material material, float height, float tile) sheet)
+        {
+            Vector4 scroll = sheet.material.GetVector("_ScrollUV");
+            return new Vector4(sheet.height, 1f / sheet.tile, scroll.x, scroll.y);
         }
 
         private static void Plate(Transform parent, string name, Vector3 position, Quaternion rotation, Mesh mesh, Material material)

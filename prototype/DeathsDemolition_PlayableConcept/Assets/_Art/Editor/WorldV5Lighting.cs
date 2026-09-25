@@ -83,10 +83,11 @@ namespace DD.Art.Pipeline.EditorTools
                     sun.transform.SetParent(root, false);
                 }
 
-                sun.transform.rotation = Quaternion.Euler(WorldAtmosphere.SunEuler);
+                sun.transform.rotation = Quaternion.Euler(WorldAtmosphere.SunEulerFor(WorldLayoutKind.V6));   // DEC-102: the high sun
                 WorldAtmosphere.ConfigureSun(sun);
                 sun.lightmapBakeType = LightmapBakeType.Mixed;
                 sun.bounceIntensity = 1f;
+                WorldV5SunFlare.Attach(sun);   // DEC-102: the strong sun's flare (occluded)
                 RenderSettings.sun = sun;
                 ArtLightingBake.ConfigureCharacterFill(root);
                 WorldAtmosphere.ApplyEnvironment();

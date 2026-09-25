@@ -56,7 +56,7 @@ namespace DD.Art
         /// <summary>Evidence-only A/B switches for the perf rows (WP-075 perf: planar and bake on their own rows): <c>-ddPlanar off</c>
         /// disables the planar reflection, <c>-ddBake off</c> drops the lightmaps and the baked reflection probes at load (light probes
         /// stay), <c>-ddScreenAtmos off</c> keeps the TP / FP screen atmosphere off. Nothing changes without a flag.</summary>
-        public const string PlanarFlag = "-ddPlanar", BakeFlag = "-ddBake", ScreenAtmosFlag = "-ddScreenAtmos";
+        public const string PlanarFlag = "-ddPlanar", BakeFlag = "-ddBake", ScreenAtmosFlag = "-ddScreenAtmos", VolumetricFlag = "-ddVolumetric";
 
         private static bool Off(string flag)
         {
@@ -66,7 +66,8 @@ namespace DD.Art
             return false;
         }
 
-        private void OnEnable() => ScreenAtmosphereFeature.WorldActive = !Off(ScreenAtmosFlag);    // the TP / FP screen-space shafts + height fog
+        // DEC-102: the raymarched volumetric light (VolumetricLight on this root) replaces the C4 B radial shafts and the §5.2 height fog.
+        private void OnEnable() => ScreenAtmosphereFeature.WorldActive = false;
 
         private void OnDisable() => ScreenAtmosphereFeature.WorldActive = false;
 
@@ -86,8 +87,10 @@ namespace DD.Art
 
         private static void ApplyEvidenceFlags()
         {
-            bool planar = Off(PlanarFlag), bake = Off(BakeFlag), screen = Off(ScreenAtmosFlag);
-            if (!planar && !bake && !screen) return;
+            bool planar = Off(PlanarFlag), bake = Off(BakeFlag), screen = Off(ScreenAtmosFlag), volumetric = Off(VolumetricFlag);
+            if (!planar && !bake && !screen && !volumetric) return;
+            if (volumetric)
+                foreach (VolumetricLight v in FindObjectsOfType<VolumetricLight>()) v.enabled = false;
             if (planar)
                 foreach (PlanarReflection p in FindObjectsOfType<PlanarReflection>()) p.enabled = false;
             if (bake)
@@ -97,7 +100,7 @@ namespace DD.Art
                     if (probe.mode == ReflectionProbeMode.Baked) probe.enabled = false;
             }
 
-            Debug.Log("[LookV3] evidence planar=" + (planar ? "off" : "on") + " bake=" + (bake ? "off" : "on") + " screenAtmos=" + (screen ? "off" : "on"));
+            Debug.Log("[LookV3] evidence planar=" + (planar ? "off" : "on") + " bake=" + (bake ? "off" : "on") + " screenAtmos=" + (screen ? "off" : "on") + " volumetric=" + (volumetric ? "off" : "on"));
         }
 
         private void OnDestroy()
