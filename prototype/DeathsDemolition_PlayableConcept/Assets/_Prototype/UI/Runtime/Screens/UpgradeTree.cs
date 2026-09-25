@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using DD.Prototype.Rounds;
 using TMPro;
@@ -727,27 +728,8 @@ namespace DD.Prototype.UI
             v.Name.text = _compact ? prefix + FullName(n) : Fit(v.Name, prefix, n, true);
 
             _measureState = v.State;
-            string word = StateWord(n);
-            if (_compact)
-            {
-                // Compact rows carry OFFER and the owned count in the word (no room for chips beside the words).
-                string counted = count ? n.OwnedTier + "/" + n.MaxTier + " · " : string.Empty;
-                word = counted + word;
-                if (!forSale && n.Status == RunTreeNodeStatus.Available && v.State.GetPreferredValues(word).x > v.State.rectTransform.rect.width)
-                {
-                    // AD 12b MUST-3: a word that would wrap yields its state word ("2/4 · 120") - the price never sits alone on a
-                    // line (the solid ring already says AVAILABLE).
-                    word = counted + n.Cost.ToString(CultureInfo.InvariantCulture);
-                }
-                if (forSale)
-                {
-                    // An offered node that can be bought reads "OFFER · 15" (or "OFFER · 2/4 · 15"): the price never sits
-                    // alone on a line below "OFFER · AVAILABLE ·" (12b, AD R1-C SHOULD-8 fallback; the static atlas has no
-                    // no-break space).
-                    word = UiStrings.Get("tree.flag.offer", "OFFER") + " · "
-                        + (n.Status == RunTreeNodeStatus.Available ? counted + n.Cost.ToString(CultureInfo.InvariantCulture) : word);
-                }
-            }
+            // Compact rows carry OFFER / NEW and the owned count in the word (no room for chips beside the words).
+            string word = _compact ? CompactWord(v.State, n, forSale, count) : StateWord(n);
 
             v.State.text = word;
             _measureState = null;
@@ -813,6 +795,108 @@ namespace DD.Prototype.UI
 
         private string StateWord(RunTreeNodeView n)
         {
+            string word = StateCore(n);
+            return n.NewlyUnlocked ? UiStrings.Get("tree.flag.new", "NEW") + " · " + word : word;
+        }
+
+        private readonly List<string> _compactTokens = new List<string>(6);
+
+        /// <summary>
+        /// A compact row's word, AD 12c MUST-2 (and 12b MUST-3 / R1-C SHOULD-8). Tokens in order: the chip word (OFFER, NEW),
+        /// the owned count (k/n), the state (AVAILABLE, "N GOLD SHORT", NEEDS …) and the price. On a line that would not
+        /// hold them only AVAILABLE yields (the solid ring already says it): never the chip word, k/n or the price ("NEW · 50",
+        /// "OFFER · 15", "2/4 · 120"). Still too wide, the word breaks only after a separator, so a phrase stays whole on
+        /// its line ("OFFER ·" / "40 GOLD SHORT") - the static atlas has no no-break space.
+        /// </summary>
+        private string CompactWord(TMP_Text state, RunTreeNodeView n, bool forSale, bool count)
+        {
+            List<string> tokens = _compactTokens;
+            tokens.Clear();
+            if (forSale)
+            {
+                tokens.Add(UiStrings.Get("tree.flag.offer", "OFFER"));
+            }
+
+            if (n.NewlyUnlocked)
+            {
+                tokens.Add(UiStrings.Get("tree.flag.new", "NEW"));
+            }
+
+            if (count)
+            {
+                tokens.Add(n.OwnedTier + "/" + n.MaxTier);
+            }
+
+            int available = -1;
+            if (n.Status == RunTreeNodeStatus.Available)
+            {
+                // An offered node's OFFER ring says AVAILABLE already: "OFFER · 15" (12b).
+                if (!forSale)
+                {
+                    available = tokens.Count;
+                    tokens.Add(UiStrings.Get("tree.state.available", "AVAILABLE"));
+                }
+
+                tokens.Add(n.Cost.ToString(CultureInfo.InvariantCulture));
+            }
+            else
+            {
+                tokens.Add(StateCore(n));
+            }
+
+            return CompactLine(tokens, available, text => state.GetPreferredValues(text).x, state.rectTransform.rect.width);
+        }
+
+        /// <summary>
+        /// The fitting rule of <see cref="CompactWord"/>, pure (tests): <paramref name="tokens"/> in order, the index of the
+        /// AVAILABLE token or −1, a one-line width measure and the line's width. Modifies <paramref name="tokens"/>.
+        /// </summary>
+        public static string CompactLine(List<string> tokens, int available, Func<string, float> measure, float width)
+        {
+            string line = JoinTokens(tokens, 0, tokens.Count);
+            if (width <= 0f || measure(line) <= width)
+            {
+                return line;
+            }
+
+            if (available >= 0)
+            {
+                tokens.RemoveAt(available);
+                line = JoinTokens(tokens, 0, tokens.Count);
+                if (measure(line) <= width)
+                {
+                    return line;
+                }
+            }
+
+            // Break after a separator, the last phrase alone on the second line where it fits ("NEW · 2/4 ·" / "80 GOLD SHORT").
+            for (int split = tokens.Count - 1; split >= 1; split--)
+            {
+                string head = JoinTokens(tokens, 0, split) + " ·";
+                string tail = JoinTokens(tokens, split, tokens.Count);
+                if (measure(head) <= width && measure(tail) <= width)
+                {
+                    return head + "\n" + tail;
+                }
+            }
+
+            return line;
+        }
+
+        private static string JoinTokens(List<string> tokens, int from, int to)
+        {
+            string line = string.Empty;
+            for (int i = from; i < to; i++)
+            {
+                line = i == from ? tokens[i] : line + " · " + tokens[i];
+            }
+
+            return line;
+        }
+
+        /// <summary>The state word alone (no NEW, no count): LOCKED, NEEDS …, AVAILABLE · price, N GOLD SHORT, OWNED, CLOSED BY …, MAX.</summary>
+        private string StateCore(RunTreeNodeView n)
+        {
             string word;
             switch (n.Status)
             {
@@ -846,7 +930,7 @@ namespace DD.Prototype.UI
                     break;
             }
 
-            return n.NewlyUnlocked ? UiStrings.Get("tree.flag.new", "NEW") + " · " + word : word;
+            return word;
         }
 
         /// <summary>
@@ -1376,8 +1460,10 @@ namespace DD.Prototype.UI
 
             _dName.text = n.DisplayName;
             _dState.text = StateSentence(n);
+            // AD 12c SHOULD-4 (§2.1): gold is the offer's; a picks-used notice on an offered node is not currency / price / offer.
+            bool picksUsed = n.Status == RunTreeNodeStatus.Available && n.Kind != RunTreeNodeKind.Hearth && _shop != null && _shop.IsLocked && Offered(index);
             _dState.color = UiTokens.Get(n.Status == RunTreeNodeStatus.Unaffordable ? UiColor.StateWarning
-                : Offered(index) ? UiColor.StateGold : UiColor.TextPrimary);
+                : picksUsed ? UiColor.TextSecondary : Offered(index) ? UiColor.StateGold : UiColor.TextPrimary);
             _dDesc.text = DescriptionOf(n);
             _dNote.text = NoteOf(n);
             ShowStat(n);

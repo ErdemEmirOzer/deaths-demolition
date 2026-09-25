@@ -69,6 +69,23 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual("3", UiRunTreePanel.StatText(3f, string.Empty));
         }
 
+        /// <summary>
+        /// AD 12c MUST-2: a compact tree row's word. AVAILABLE yields first and alone - never the chip word (OFFER / NEW), k/n
+        /// or the price ("NEW · 50", "2/4 · 120"); still too wide, it breaks only after a separator, the phrase whole on its
+        /// line ("OFFER ·" / "40 GOLD SHORT"). Measured here at 10 px a character.
+        /// </summary>
+        [Test]
+        public void AgacKompaktSatir_UygunKelimeOnceGider_IfadeBolunmez()
+        {
+            System.Func<string, float> measure = t => t.Length * 10f;
+            Assert.AreEqual("NEW · AVAILABLE · 50", UiRunTreePanel.CompactLine(new List<string> { "NEW", "AVAILABLE", "50" }, 1, measure, 400f), "sığıyorsa tamamı");
+            Assert.AreEqual("NEW · 50", UiRunTreePanel.CompactLine(new List<string> { "NEW", "AVAILABLE", "50" }, 1, measure, 120f), "Hearth: NEW kalır, AVAILABLE gider");
+            Assert.AreEqual("2/4 · 120", UiRunTreePanel.CompactLine(new List<string> { "2/4", "AVAILABLE", "120" }, 1, measure, 120f), "12b MUST-3");
+            Assert.AreEqual("OFFER ·\n40 GOLD SHORT", UiRunTreePanel.CompactLine(new List<string> { "OFFER", "40 GOLD SHORT" }, -1, measure, 140f), "kırılma yalnız ayraçtan sonra");
+            Assert.AreEqual("NEW · 2/4 ·\n80 GOLD SHORT", UiRunTreePanel.CompactLine(new List<string> { "NEW", "2/4", "80 GOLD SHORT" }, -1, measure, 140f), "son ifade tek başına ikinci satırda");
+            Assert.AreEqual("OFFER · 15", UiRunTreePanel.CompactLine(new List<string> { "OFFER", "15" }, -1, measure, 100f));
+        }
+
         [Test]
         public void Agac_Aciklama_PaketSatiri_ArgumanlarlaDolar_AcikKalirsaKatalog()
         {
