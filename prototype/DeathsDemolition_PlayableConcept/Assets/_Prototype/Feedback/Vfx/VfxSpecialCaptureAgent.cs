@@ -16,7 +16,8 @@ namespace DD.Prototype.Feedback.Vfx
     /// WP-073 B6 · AD evidence for the Special VFX: <c>-ddVfxSpecialCapture &lt;folder&gt;</c> rides along a run (QA bot or direct)
     /// and stages, at a readable ground point (FP 3.5 m, TP 5 m, top-down 3 m ahead of the player): the Raiju discharge ring, a
     /// slow orb in flight, a three-hop chain (between the nearest zombies when there are three, else between points), the
-    /// fizzle; the Namekuji blob in flight and a puddle at 1 s / 3 s — each framed as <c>&lt;mode&gt;-special-&lt;name&gt;.png</c>
+    /// fizzle; the Namekuji blob in flight and a puddle at 1 s / 3 s / 21 s; a chain through the nearest visible zombies (their
+    /// electric rim) and a gel film on one (S-03's _EMISSION slot) — each framed as <c>&lt;mode&gt;-special-&lt;name&gt;.png</c>
     /// with the systems' counters logged, then quits. Opt-in only.
     /// </summary>
     public sealed class VfxSpecialCaptureAgent : MonoBehaviour
@@ -100,8 +101,57 @@ namespace DD.Prototype.Feedback.Vfx
                 yield return Frame("gel-puddle-21s-drying", 0);
             }
 
+            // ---- Zombie skin (B6 × S-03's _EMISSION slot): a Raiju chain through the nearest visible zombies (their rim shocks)
+            // and a Namekuji hit on the first (its gel film) — ZombieSkinFx writes _EmissionColor only where the keyword lives.
+            ZombieEnemy[] near = NearestVisibleZombies(3);
+            if (near[0] != null)
+            {
+                Vector3 from = near[0].transform.position + Vector3.up * 1.2f - Vector3.forward * 2f;
+                for (int i = 0; i < near.Length && near[i] != null; i++)
+                {
+                    Vector3 to = near[i].transform.position + Vector3.up * 1.2f;
+                    var target = new DamageTarget { Root = near[i].transform, Id = near[i].GetInstanceID(), Height = 1.8f };
+                    arc.OnUsage(new SpecialUsageEvent(SpecialWeaponId.Raiju, SpecialUsageKind.Hit, "sw_arc_orb", from, to - from, 6f, 1.2f, i, target, 1f, 1f, 0));
+                    from = to;
+                }
+
+                yield return Frame("raiju-shock-zombies", 3);
+                yield return new WaitForSeconds(0.3f);
+                yield return Frame("raiju-shock-zombies-0.3s", 0);
+                yield return new WaitForSeconds(1.5f);
+
+                var gelTarget = new DamageTarget { Root = near[0].transform, Id = near[0].GetInstanceID(), Height = 1.8f };
+                gel.OnUsage(new SpecialUsageEvent(SpecialWeaponId.Namekuji, SpecialUsageKind.Hit, "sw_gel_blob", near[0].transform.position + Vector3.up * 1.2f,
+                    Vector3.forward, 1.6f, 0f, 0, gelTarget, 1f, 1f, 0));
+                yield return new WaitForSeconds(0.5f);
+                yield return Frame("gel-film-zombie", 0);
+            }
+            else
+            {
+                Debug.Log("[VfxSpecialCapture] no visible zombie for the skin frames");
+            }
+
             Debug.Log("[VfxSpecialCapture] done");
             Application.Quit(0);
+        }
+
+        // The n nearest living zombies inside the camera's view (evidence staging; allocates, capture only).
+        private static ZombieEnemy[] NearestVisibleZombies(int n)
+        {
+            var result = new ZombieEnemy[n];
+            Camera cam = Camera.main;
+            if (cam == null) return result;
+            ZombieEnemy[] all = FindObjectsOfType<ZombieEnemy>();
+            Array.Sort(all, (x, y) => (x.transform.position - cam.transform.position).sqrMagnitude.CompareTo((y.transform.position - cam.transform.position).sqrMagnitude));
+            int k = 0;
+            for (int i = 0; i < all.Length && k < n; i++)
+            {
+                if (!all[i].IsAlive) continue;
+                Vector3 v = cam.WorldToViewportPoint(all[i].transform.position + Vector3.up);
+                if (v.z > 1f && v.x > 0.1f && v.x < 0.9f && v.y > 0.1f && v.y < 0.9f) result[k++] = all[i];
+            }
+
+            return result;
         }
 
         private static void Spawn(ProjectileKind kind, int special, Vector3 at, Vector3 dir, float speed)
@@ -156,7 +206,8 @@ namespace DD.Prototype.Feedback.Vfx
             ArcSystem arc = ArcSystem.Instance;
             GelSystem gel = GelSystem.Instance;
             Debug.Log("[VfxSpecialCapture] " + file + " arcs=" + arc.LiveArcs + " branches=" + arc.LiveBranches + " orbs=" + arc.OrbsDrawn + " burns=" + arc.LiveBurns
-                + " shocks=" + arc.LiveShocks + " puddles=" + gel.LivePuddles + " blobs=" + gel.BlobsDrawn + " drops=" + gel.LiveDrops + " tier=" + VfxTier.Current);
+                + " shocks=" + arc.LiveShocks + " puddles=" + gel.LivePuddles + " blobs=" + gel.BlobsDrawn + " drops=" + gel.LiveDrops + " tier=" + VfxTier.Current
+                + " skin=" + ZombieSkinFx.ActiveCount + " skinBlocks=" + ZombieSkinFx.BlocksWritten + " skinNoEmission=" + ZombieSkinFx.SkippedNoEmission);
         }
     }
 }
