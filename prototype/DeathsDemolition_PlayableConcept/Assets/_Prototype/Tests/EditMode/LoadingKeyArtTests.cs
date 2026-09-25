@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using System.IO;
+using DD.Prototype.Core.Boot;
 using DD.Prototype.UI;
 using NUnit.Framework;
 using UnityEngine;
@@ -6,17 +8,20 @@ using UnityEngine;
 namespace DD.Prototype.Tests.EditMode
 {
     /// <summary>
-    /// WP-068 R1-D · the loading key art is full and rich, so its readability is proven where the words sit (C-00 25.09,
+    /// WP-068 R1-D · the loading key arts are full and rich, so their readability is proven where the words sit (C-00 25.09,
     /// the round-end wallpaper's method: the brightest pixel under each word). For each screen the curtain meets -
     /// 16:9 1080, the Mac 3024×1964 at UI 1.2 × text 1.25, 16:10 and 21:9 - the ring, the label stack and the tip strip are
     /// laid out from UiCurtain's own numbers, mapped through its cover-fit at push-in 1.00 and 1.05, and sampled on the file:
     ///   ring    the cream stroke (TextPrimary) ≥ 3:1 on the brightest pixel (WCAG 1.4.11: a graphic);
     ///   labels  TextSecondary (the dimmest word there: eyebrow, subline) ≥ 4.5:1 on the brightest pixel;
-    ///   tip     TextPrimary ≥ 7:1 on the strip (SurfaceBase 0.72, composited as the GPU does) over the brightest pixel.
+    ///   tip     TextPrimary ≥ 7:1 on the strip (SurfaceBase 0.72, composited as the GPU does) over the brightest pixel -
+    ///           not on the Results art: the way to the Results never shows a tip (PrototypeUiFlow.ShowsTip, asserted).
     /// </summary>
     public sealed class LoadingKeyArtTests
     {
-        private const string SourcePath = "Assets/_Prototype/UI/Art/Resources/UI/Wallpapers/loading_keyart.jpg";
+        private const string Folder = "Assets/_Prototype/UI/Art/Resources/UI/Wallpapers/";
+        private const string RunArt = Folder + "loading_keyart.jpg";
+        private const string ResultsArt = Folder + "loading_keyart_results.jpg";
 
         /// <summary>Half the label stack's width at text 1.0 (reference px). The widest destination, BEFORE THE RUN, is ~130 at Mac × 1.25.</summary>
         private const float LabelHalfWidth = 180f;
@@ -35,24 +40,56 @@ namespace DD.Prototype.Tests.EditMode
             new object[] { "21x9", 2560, 1080, 1f, 1f }
         };
 
+        private static IEnumerable<object[]> Cases()
+        {
+            foreach (string art in new[] { RunArt, ResultsArt })
+            {
+                foreach (object[] screen in Screens)
+                {
+                    yield return new object[] { art, screen[0], screen[1], screen[2], screen[3], screen[4] };
+                }
+            }
+        }
+
+        private static readonly Dictionary<string, Texture2D> s_arts = new Dictionary<string, Texture2D>();
         private static Texture2D s_art;
 
         [OneTimeSetUp]
         public void Load()
         {
-            s_art = new Texture2D(2, 2);
-            Assert.IsTrue(s_art.LoadImage(File.ReadAllBytes(SourcePath)), SourcePath);
+            foreach (string path in new[] { RunArt, ResultsArt })
+            {
+                var texture = new Texture2D(2, 2);
+                Assert.IsTrue(texture.LoadImage(File.ReadAllBytes(path)), path);
+                s_arts[path] = texture;
+            }
         }
 
         [OneTimeTearDown]
         public void Unload()
         {
-            Object.DestroyImmediate(s_art);
+            foreach (Texture2D texture in s_arts.Values)
+            {
+                Object.DestroyImmediate(texture);
+            }
+
+            s_arts.Clear();
         }
 
-        [TestCaseSource(nameof(Screens))]
-        public void AnahtarSanat_KelimelerinAltindaEnParlakPikselde_Okunur(string name, int width, int height, float uiScale, float textScale)
+        [TestCaseSource(nameof(Cases))]
+        public void AnahtarSanat_KelimelerinAltindaEnParlakPikselde_Okunur(string art, string name, int width, int height, float uiScale, float textScale)
         {
+            s_art = s_arts[art];
+            bool results = art == ResultsArt;
+            name = (results ? "results " : "run ") + name;
+            if (results)
+            {
+                foreach (string from in new[] { PrototypeScenes.Boot, PrototypeScenes.MainMenu, PrototypeScenes.Selection, PrototypeScenes.Run })
+                {
+                    Assert.IsFalse(PrototypeUiFlow.ShowsTip(from, PrototypeScenes.Results), "the way to the Results shows no tip (from " + from + ")");
+                }
+            }
+
             // The canvas the curtain draws on (UiFactory: reference 1920×1080 / UI scale, Expand).
             Vector2 reference = new Vector2(1920f, 1080f) / uiScale;
             float fit = Mathf.Min(width / reference.x, height / reference.y);
@@ -84,7 +121,10 @@ namespace DD.Prototype.Tests.EditMode
             Debug.Log("[DD-TEST] r1d.keyart " + name + " ring=" + ringRatio.ToString("F2") + " labels=" + labelRatio.ToString("F2") + " tip=" + tipRatio.ToString("F2"));
             Assert.GreaterOrEqual(ringRatio, 3f, name + ": the ring's cream stroke on the brightest pixel under it");
             Assert.GreaterOrEqual(labelRatio, 4.5f, name + ": TextSecondary on the brightest pixel under the labels");
-            Assert.GreaterOrEqual(tipRatio, 7f, name + ": TextPrimary on the tip strip over the brightest pixel under it");
+            if (!results)
+            {
+                Assert.GreaterOrEqual(tipRatio, 7f, name + ": TextPrimary on the tip strip over the brightest pixel under it");
+            }
         }
 
         /// <summary>The brightest texel under a canvas rect, through the cover-fit uvRect, at every push-in scale.</summary>

@@ -140,8 +140,8 @@ namespace DD.Prototype.Tests.PlayMode
         }
 
         /// <summary>
-        /// R1-D (N20, C-00 25.09): every destination shows the one painted key art over the plates (the plates step aside;
-        /// no runtime frame of an empty world); the ring-only depth shows neither.
+        /// R1-D (N20, C-00 25.09): every destination shows a painted key art over the plates - the Results their own (the
+        /// plates step aside; no runtime frame of an empty world); the ring-only depth shows neither.
         /// </summary>
         [UnityTest]
         [Timeout(120000)]
@@ -154,7 +154,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsNotNull(curtain);
             foreach (string scene in new[] { PrototypeScenes.MainMenu, PrototypeScenes.Selection, PrototypeScenes.Run, PrototypeScenes.Results })
             {
-                Assert.AreEqual(UiCurtain.LoadingKeyArt, UiCurtain.KeyArtFor(scene), scene);
+                Assert.AreEqual(scene == PrototypeScenes.Results ? UiCurtain.ResultsKeyArt : UiCurtain.LoadingKeyArt, UiCurtain.KeyArtFor(scene), scene);
                 curtain.ShowGroup(UiCurtain.DestinationFor(scene), string.Empty, null, scene == PrototypeScenes.Run, UiCurtain.KeyArtFor(scene));
                 yield return null;
                 Assert.IsTrue(curtain.KeyArtVisible, scene + ": the key art shows");

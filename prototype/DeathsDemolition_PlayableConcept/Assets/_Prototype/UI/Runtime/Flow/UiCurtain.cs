@@ -112,13 +112,15 @@ namespace DD.Prototype.UI
         private RawImage _plateMid;
 
         /// <summary>
-        /// WP-068 R1-D (N20): the loading screen's key art - the rainy castle courtyard, the ronin, the horde at the gate
-        /// (Higgsfield). Full and rich except under the words: darkened there so the ring, the labels and the tip strip keep
-        /// their contrast (LoadingKeyArtTests). Over the plates, under the ring, labels and tip strip.
+        /// WP-068 R1-D (N20): the loading screen's key art - the rainy castle courtyard, the ronin, the horde at the gate;
+        /// on the way to the Results the ronin on the wall as the horde pours in (Higgsfield). Full and rich except under
+        /// the words: darkened there so the ring, the labels and the tip strip keep their contrast (LoadingKeyArtTests).
+        /// Over the plates, under the ring, labels and tip strip.
         /// </summary>
         private RawImage _keyArt;
         private UiTweenHandle _keyArtPush;
         private ResourceRequest _keyArtLoad;
+        private ResourceRequest _resultsKeyArtLoad;
 
         /// <summary>The slow push-in over a load (AE-class motion, Decor: Reduced Motion holds it still).</summary>
         public const float KeyArtPushScale = 1.05f;
@@ -204,16 +206,18 @@ namespace DD.Prototype.UI
             get { return _keyArt != null && _keyArt.gameObject.activeSelf && _keyArt.texture != null; }
         }
 
-        /// <summary>The loading key art (Resources path).</summary>
+        /// <summary>The loading key art (Resources paths): the courtyard for every load, the wall for the way to the Results.</summary>
         public const string LoadingKeyArt = "UI/Wallpapers/loading_keyart";
+        public const string ResultsKeyArt = "UI/Wallpapers/loading_keyart_results";
 
         /// <summary>
-        /// The key art for a destination: one painted scene for every load (C-00 25.09, the user: no runtime frame of an
-        /// empty world behind the ring). The Look B plates stay only as the fallback when the art cannot load.
+        /// The key art for a destination: a painted scene for every load (C-00 25.09, the user: no runtime frame of an
+        /// empty world behind the ring) - the Results their own. The Look B plates stay only as the fallback when the art
+        /// cannot load.
         /// </summary>
         public static string KeyArtFor(string scene)
         {
-            return LoadingKeyArt;
+            return scene == PrototypeScenes.Results ? ResultsKeyArt : LoadingKeyArt;
         }
 
         public bool MidPlateVisible
@@ -265,6 +269,7 @@ namespace DD.Prototype.UI
             // Warm the art now (behind the boot seal): a synchronous load on the first SCREEN would hitch the group's
             // first frame and eat its minimum display.
             _keyArtLoad = Resources.LoadAsync<Texture2D>(LoadingKeyArt);
+            _resultsKeyArtLoad = Resources.LoadAsync<Texture2D>(ResultsKeyArt);
 
             // The ensō device (10b-2, §15.3): the dry ghost circle, the stroke drawn at real
             // progress whose last WetBand is still wet (cream 0.6 under the dry cream, so the band
@@ -900,9 +905,10 @@ namespace DD.Prototype.UI
         private void ShowKeyArt(string resource)
         {
             UiMotion.Kill(_keyArtPush, false);
+            ResourceRequest warmed = resource == LoadingKeyArt ? _keyArtLoad : resource == ResultsKeyArt ? _resultsKeyArtLoad : null;
             Texture2D art = string.IsNullOrEmpty(resource)
                 ? null
-                : resource == LoadingKeyArt && _keyArtLoad != null ? _keyArtLoad.asset as Texture2D : Resources.Load<Texture2D>(resource);
+                : warmed != null ? warmed.asset as Texture2D : Resources.Load<Texture2D>(resource);
             if (art == null)
             {
                 _keyArt.gameObject.SetActive(false);
