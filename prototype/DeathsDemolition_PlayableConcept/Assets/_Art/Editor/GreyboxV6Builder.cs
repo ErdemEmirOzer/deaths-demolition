@@ -189,7 +189,8 @@ namespace DD.Art.Pipeline.EditorTools
             var apPlacement = AssetDatabase.LoadAssetAtPath<WorldPlacementAsset>(ArtLibraryPaths.Ap005PlacementAsset);
             if (apPlacement == null) throw new InvalidOperationException("AP005 placement missing");
             List<(Vector2 centre, Vector2 semi, float yaw)> basins = PlacementImporter.BasinHoles(apPlacement);
-            VolumeProfile volume = AssetDatabase.LoadAssetAtPath<VolumeProfile>(AssetDatabase.GUIDToAssetPath("e99c26b47c9984ab8adfa33bbddead21"));
+            // WP-075 C6: the dressed World v5 takes its own look profile (LUT v2); the bare greybox keeps DD_Overcast_v1.
+            VolumeProfile volume = dress ? WorldV5Look.EnsureProfile() : AssetDatabase.LoadAssetAtPath<VolumeProfile>(AssetDatabase.GUIDToAssetPath("e99c26b47c9984ab8adfa33bbddead21"));
 
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             var root = new GameObject(Ap005WorldBootstrap.RootName);

@@ -436,6 +436,23 @@ namespace DD.Art.Tests.EditMode
             Debug.Log("[DD-TEST] wp074.b8.bake " + report.lightmapCount + " lightmaps " + report.shippedBytes / 1048576 + " MB imported (" + report.bytes / 1048576 + " MB EXR), probes " + report.probes + ", reflection " + report.reflectionProbes + ", " + report.bakeSeconds.ToString("F0") + " s");
         }
 
+        /// <summary>WP-075 C6 · The v6 look: the bootstrap's profile is DD_Look_v5 with the colour lookup on LUT v2 at full contribution; the recipe's ΔE gate passed.</summary>
+        [Test]
+        public void Greybox_C6_LutV2_ProfilBagli_DeltaEKapisi()
+        {
+            Open();
+            var bootstrap = Object.FindObjectOfType<Ap005WorldBootstrap>();
+            var profile = new SerializedObject(bootstrap).FindProperty("_volumeProfile").objectReferenceValue as UnityEngine.Rendering.VolumeProfile;
+            Assert.AreEqual(WorldV5Look.ProfilePath, AssetDatabase.GetAssetPath(profile));
+            Assert.IsTrue(profile.TryGet(out UnityEngine.Rendering.Universal.ColorLookup lookup) && lookup.active);
+            Assert.AreEqual(WorldV5Look.LutPath, AssetDatabase.GetAssetPath(lookup.texture.value));
+            Assert.AreEqual(1f, lookup.contribution.value, 1e-4f);
+            StringAssert.Contains("\"pass\": true", File.ReadAllText(WorldV5Look.RecipePath), "ΔE kapısı");
+            var importer = (TextureImporter)AssetImporter.GetAtPath(WorldV5Look.LutPath);
+            Assert.IsFalse(importer.sRGBTexture, "LUT sRGB kapalı (ApplyLut)");
+            Assert.IsFalse(importer.mipmapEnabled, "LUT mip yok");
+        }
+
         private static int CountOf(string s, string token)
         {
             int n = 0;
