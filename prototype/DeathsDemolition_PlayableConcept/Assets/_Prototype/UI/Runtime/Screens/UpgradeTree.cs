@@ -58,6 +58,7 @@ namespace DD.Prototype.UI
             public GameObject Offer;
             public GameObject New;
             public TMP_Text Count;
+            public CanvasGroup Group;
             public TMP_Text Name;
             public TMP_Text State;
             public int Index = -1;
@@ -93,6 +94,7 @@ namespace DD.Prototype.UI
         private RectTransform _dActions;
         private TMP_Text _dPrice;
         private UiButton _buy;
+        private UiPrompt _buyPrompt;
         private UiButton _pin;
         private UiButton _reforge;
 
@@ -101,6 +103,7 @@ namespace DD.Prototype.UI
         private float _seal = SealSize;
         private float _headSize = SealSize;
         private float _boxH;
+        private float _nameFontSize = -1f;
         private float _nameLine;
         private float _stateLine;
         private float _innerWidth;
@@ -124,6 +127,12 @@ namespace DD.Prototype.UI
 
         /// <summary>A command changed the offer: the screen redraws synchronously.</summary>
         public Action Changed;
+
+        /// <summary>The detail card changed its subject or its BUY: the screen hands the Primary role (one per screen).</summary>
+        public Action DetailShown;
+
+        /// <summary>BUY is the screen's live Primary (a buyable node is detailed).</summary>
+        public bool BuyLive => _buy != null && _buy.gameObject.activeSelf && _buy.IsInteractable();
 
         /// <summary>The screen's sentence for a refused card purchase.</summary>
         public Func<UpgradePurchaseResult, string> DescribePurchase;
@@ -225,7 +234,7 @@ namespace DD.Prototype.UI
             PlaceTopLeft((RectTransform)_tabWeapon.transform, 0f, 0f, TabWidth, TabHeight);
             PlaceTopLeft((RectTransform)_tabBody.transform, TabWidth + (int)UiSpace.S, 0f, TabWidth, TabHeight);
             _laneKeys = UiFactory.Label("LaneKeys", _tree, "Q / E", UiType.Caption, UiColor.TextMuted, TextAnchor.MiddleLeft);
-            PlaceTopLeft((RectTransform)_laneKeys.transform, TabWidth * 2f + (int)UiSpace.S + (int)UiSpace.L, 0f, 96f, TabHeight);
+            PlaceTopLeft((RectTransform)_laneKeys.transform, TabWidth * 2f + (int)UiSpace.S + (int)UiSpace.L, 0f, 60f, TabHeight);   // clear of the gate's word
             _hearthCount = UiFactory.Label("HearthCount", _tree, string.Empty, UiType.Label, UiColor.TextSecondary, TextAnchor.MiddleRight);
             PlaceAnchored((RectTransform)_hearthCount.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), Vector2.zero, new Vector2(260f, TabHeight));
             _hearthCount.enableWordWrapping = false;
@@ -244,6 +253,13 @@ namespace DD.Prototype.UI
             edgesRect.anchoredPosition = Vector2.zero;
             _edges = edgesGo.GetComponent<UiTreeEdges>();
             _edges.raycastTarget = false;
+            _gateLabel = UiFactory.Label("GateLabel", _grid, string.Empty, UiType.Caption, UiColor.TextMuted, TextAnchor.LowerLeft);
+            _gateLabel.enableWordWrapping = false;
+            var gateRect = (RectTransform)_gateLabel.transform;
+            gateRect.anchorMin = new Vector2(0f, 1f);
+            gateRect.anchorMax = new Vector2(0f, 1f);
+            gateRect.pivot = new Vector2(0f, 1f);
+            _gateLabel.gameObject.SetActive(false);
 
             for (int s = 0; s < _views.Length; s++)
             {
@@ -282,22 +298,19 @@ namespace DD.Prototype.UI
             crossRect.sizeDelta = new Vector2(0f, 3f);
             crossRect.localRotation = Quaternion.Euler(0f, 0f, 35f);
 
-            // Overlays: OFFER as a chip across the seal's top, NEW as a dot at its upper right, the pin at its lower left and
-            // a tier's owned count ("2/4", the skill-tree level badge) at its lower right.
+            // Overlays, one corner each (AD R1-C SHOULD-5 / SHOULD-2): OFFER upper-left, the pin upper-right outside the ring,
+            // NEW (sakura) lower-left, a tier's owned count ("2/4") lower-right. Compact rows move OFFER and the count into the
+            // state word (their words sit right of the seal) and the pin to the upper-left.
             Sprite mark = UiArt.Icon("Seal.Mark");
             Image pin = UiFactory.NewImage("Pin", v.Seal, UiColor.TextPrimary, mark != null ? mark : UiSprites.Disc);
-            PlaceAnchored((RectTransform)pin.transform, new Vector2(0f, 0f), new Vector2(0.5f, 0.5f), new Vector2(4f, 4f), new Vector2(20f, 20f));
-            v.Count = UiChips.Create("Count", v.Seal, UiChipKind.Neutral, "0/5", UiChipSize.Row);
-            var countRect = (RectTransform)v.Count.transform.parent;
-            PlaceAnchored(countRect, new Vector2(1f, 0f), new Vector2(0.5f, 0.5f), new Vector2(-4f, 4f), countRect.sizeDelta);
             v.Pin = pin.gameObject;
+            v.Count = UiChips.Create("Count", v.Seal, UiChipKind.Neutral, "0/5", UiChipSize.Row);
             Image dot = UiFactory.NewImage("New", v.Seal, UiColor.AccentSakura, UiSprites.Disc);   // the kit's NEW colour (UiChips)
-            PlaceAnchored((RectTransform)dot.transform, new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-6f, -6f), new Vector2(10f, 10f));
+            PlaceAnchored((RectTransform)dot.transform, new Vector2(0f, 0f), new Vector2(0.5f, 0.5f), new Vector2(6f, 6f), new Vector2(10f, 10f));
             v.New = dot.gameObject;
             TMP_Text offer = UiChips.Create("Offer", v.Seal, UiChipKind.Value, UiStrings.Get("tree.flag.offer", "OFFER"), UiChipSize.Row);
-            var offerRect = (RectTransform)offer.transform.parent;
-            PlaceAnchored(offerRect, new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f), Vector2.zero, offerRect.sizeDelta);
-            v.Offer = offerRect.gameObject;
+            v.Offer = offer.transform.parent.gameObject;
+            v.Group = v.Button.gameObject.AddComponent<CanvasGroup>();
 
             v.Name = UiFactory.Label("Name", v.Rect, string.Empty, UiType.Label, UiColor.TextPrimary, TextAnchor.MiddleCenter);
             v.Name.enableWordWrapping = false;
@@ -342,7 +355,7 @@ namespace DD.Prototype.UI
             RectTransform priceRect = UiFactory.Fill((RectTransform)_dPrice.transform);
             priceRect.offsetMax = new Vector2(-212f, 0f);
             _buy = UiFactory.Button("Buy", _dBuyRow, "BUY", UiButtonVariant.Primary, OnBuy);
-            UiInput.Prompt(_buy, UiPromptAction.Submit, true);
+            _buyPrompt = UiInput.Prompt(_buy, UiPromptAction.Submit, true);
             PlaceAnchored((RectTransform)_buy.transform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), Vector2.zero, new Vector2(204f, UiTokens.TargetPreferred));
 
             _dActions = UiFactory.NewRect("Actions", _dContent);
@@ -360,8 +373,14 @@ namespace DD.Prototype.UI
         /// </summary>
         private void Layout()
         {
+            if (_nameFontSize < 0f)
+            {
+                _nameFontSize = _views[0].Name.fontSize;
+            }
+
             float w = _tree.rect.width;
             float h = _tree.rect.height;
+            _views[0].Name.fontSize = _nameFontSize;
             float name = LineOf(_views[0].Name);
             float state = LineOf(_views[0].State);
             float gridTop = TabHeight + (int)UiSpace.M;
@@ -390,8 +409,13 @@ namespace DD.Prototype.UI
             _grid.anchoredPosition = new Vector2(0f, -gridTop);
             ((RectTransform)_edges.transform).sizeDelta = _grid.sizeDelta;
 
-            float boxH = _pitchY - 8f;
+            float boxH = _pitchY - (_compact ? 4f : 8f);
             _boxH = boxH;
+            if (_compact)
+            {
+                name = state;   // the compact name takes the state word's size (set below)
+            }
+
             _nameLine = name;
             _stateLine = state;
             for (int s = 0; s < _views.Length; s++)
@@ -404,6 +428,9 @@ namespace DD.Prototype.UI
                 v.Rect.sizeDelta = new Vector2(_nodeWidth, boxH);
                 v.Name.enableWordWrapping = _compact;
                 v.State.enableWordWrapping = _compact;
+                // Compact rows (AD R1-C MUST-2): the name steps down to the state word's size so two lines of each fit
+                // beside the seal; the word keeps its two lines first.
+                v.Name.fontSize = _compact ? v.State.fontSize : _nameFontSize;
                 if (_compact)
                 {
                     v.Rect.pivot = new Vector2(0f, 1f);
@@ -535,7 +562,11 @@ namespace DD.Prototype.UI
                 {
                     if (_views[s].Index >= 0)
                     {
-                        UiPresets.StampIn(_views[s].Seal, (s % Tiers) * OpeningBeatSeconds);   // PD §5.4 Opening Beat
+                        // PD §5.4 Opening Beat: each tier inks in 120 ms after the one before (≤ 600 ms), the seal stamping.
+                        float delay = (s % Tiers) * OpeningBeatSeconds;
+                        _views[s].Group.alpha = UiMotion.ReducedMotion ? 1f : 0f;
+                        UiMotion.Alpha(_views[s].Group, 1f, UiDuration.Fast, UiEase.Settle, UiMotionClass.Decor, delay);
+                        UiPresets.StampIn(_views[s].Seal, delay);
                     }
                 }
             }
@@ -565,7 +596,6 @@ namespace DD.Prototype.UI
 
             RunTreeNodeView n = _snap.Nodes[index];
             SetGlyph(v.Glyph, n);
-            v.Name.text = _compact ? FullName(n) : Fit(v.Name, string.Empty, n);
             bool owned = IsOwned(n) || (n.Kind == RunTreeNodeKind.Tier && n.OwnedTier > 0);
             bool dim = n.Status == RunTreeNodeStatus.Locked || n.Status == RunTreeNodeStatus.Excluded;
             bool waiting = n.Status == RunTreeNodeStatus.PrereqMissing;
@@ -582,20 +612,18 @@ namespace DD.Prototype.UI
             UiColor ring = forSale ? UiColor.StateGold : owned ? UiColor.TextSecondary : dim || waiting ? UiColor.TextMuted : UiColor.TextPrimary;
             v.Ring.color = WithAlpha(UiTokens.Get(ring), dim ? 0.6f : 1f);
             v.Cross.gameObject.SetActive(n.Status == RunTreeNodeStatus.Excluded);
-            v.Pin.SetActive(n.IsPinned);
-            v.Offer.SetActive(forSale);
             v.New.SetActive(n.NewlyUnlocked);
+            v.Pin.SetActive(n.IsPinned);
+            float pinSize = Mathf.Round(20f * Mathf.Max(1f, UiSettings.TextScale * 0.96f));
+            PlaceAnchored((RectTransform)v.Pin.transform, _compact ? new Vector2(0f, 1f) : new Vector2(1f, 1f), new Vector2(0.5f, 0.5f),
+                _compact ? new Vector2(-2f, 2f) : new Vector2(2f, 2f), new Vector2(pinSize, pinSize));
+            v.Offer.SetActive(forSale && !_compact);
+            var offerRect = (RectTransform)v.Offer.transform;
+            PlaceAnchored(offerRect, new Vector2(0f, 1f), new Vector2(0.5f, 0.5f), new Vector2(6f, -2f), offerRect.sizeDelta);
             bool count = n.Kind == RunTreeNodeKind.Tier && n.OwnedTier > 0 && n.MaxTier > 1;
             var countRect = (RectTransform)v.Count.transform.parent;
-            countRect.gameObject.SetActive(count);
-            // Compact rows keep their words right of the seal: the badge sits under the seal's centre there.
-            PlaceAnchored(countRect, _compact ? new Vector2(0.5f, 1f) : new Vector2(1f, 0f), new Vector2(0.5f, 0.5f),
-                _compact ? Vector2.zero : new Vector2(-4f, 4f), countRect.sizeDelta);
-
-            // Compact rows: the OFFER chip hangs under the seal, its right edge on the seal's, clear of the words beside it.
-            var offerRect = (RectTransform)v.Offer.transform;
-            PlaceAnchored(offerRect, _compact ? new Vector2(1f, 0f) : new Vector2(0.5f, 1f), _compact ? new Vector2(1f, 1f) : new Vector2(0.5f, 0.5f),
-                _compact ? new Vector2(0f, 6f) : Vector2.zero, offerRect.sizeDelta);
+            countRect.gameObject.SetActive(count && !_compact);
+            PlaceAnchored(countRect, new Vector2(1f, 0f), new Vector2(0.5f, 0.5f), new Vector2(-4f, 4f), countRect.sizeDelta);
             if (count)
             {
                 v.Count.text = n.OwnedTier + "/" + n.MaxTier;
@@ -603,14 +631,37 @@ namespace DD.Prototype.UI
 
             v.Mark.enabled = index == _focus;
             v.Name.color = UiTokens.Get(dim ? UiColor.TextMuted : UiColor.TextPrimary);
+
+            // PD §3.5: the pin path's steps are numbered before the label (1, 2 … the pinned node last).
+            int step = PathStep(index);
+            string prefix = step > 0 ? step.ToString(CultureInfo.InvariantCulture) + " · " : string.Empty;
+            v.Name.text = _compact ? prefix + FullName(n) : Fit(v.Name, prefix, n, true);
+
             _measureState = v.State;
-            v.State.text = StateWord(n);
+            string word = StateWord(n);
+            if (_compact)
+            {
+                // Compact rows carry OFFER and the owned count in the word (no room for chips beside the words).
+                if (count)
+                {
+                    word = n.OwnedTier + "/" + n.MaxTier + " · " + word;
+                }
+
+                if (forSale)
+                {
+                    word = UiStrings.Get("tree.flag.offer", "OFFER") + " · " + word;
+                }
+            }
+
+            v.State.text = word;
             _measureState = null;
             if (_compact)
             {
-                FitCompact(v);
+                FitCompact(v, n, prefix);
             }
-            v.State.color = UiTokens.Get(n.Status == RunTreeNodeStatus.Unaffordable ? UiColor.StateWarning : dim ? UiColor.TextMuted : UiColor.TextSecondary);
+
+            v.State.color = UiTokens.Get(n.Status == RunTreeNodeStatus.Unaffordable ? UiColor.StateWarning
+                : _compact && forSale ? UiColor.StateGold : dim ? UiColor.TextMuted : UiColor.TextSecondary);
         }
 
         private static void SetGlyph(Image image, RunTreeNodeView n)
@@ -672,7 +723,9 @@ namespace DD.Prototype.UI
                     word = UiStrings.Get("tree.state.locked", "LOCKED");
                     break;
                 case RunTreeNodeStatus.PrereqMissing:
-                    word = n.MissingParentIndex >= 0
+                    // Forks, the weapon seal and the Hearth open on ANY keystone of the lane (WP-077 §2.2): the word says
+                    // so rather than naming the cheapest one (AD R1-C MUST-3b).
+                    word = n.MissingParentIndex >= 0 && !Gated(n)
                         ? Needs("tree.state.prereq_missing", "NEEDS {node}", n.MissingParentIndex)
                         : UiStrings.Get("tree.state.prereq_keystone", "NEEDS A KEYSTONE");
                     break;
@@ -703,9 +756,21 @@ namespace DD.Prototype.UI
         /// The node's full name where the measured line holds it, else its short name (S-04's ShortName clips a tier's name
         /// at 12 characters: "Movement Spe", and both regeneration branches read "Regeneration").
         /// </summary>
-        private static string Fit(TMP_Text line, string template, RunTreeNodeView n)
+        private static string Fit(TMP_Text line, string template, RunTreeNodeView n, bool prefix = false)
         {
             string full = string.IsNullOrEmpty(n.DisplayName) ? n.ShortName : n.DisplayName;
+            if (prefix)
+            {
+                string whole = template + full;
+                if (string.IsNullOrEmpty(n.ShortName) || line == null || line.rectTransform.rect.width <= 0f ||
+                    line.GetPreferredValues(whole).x <= line.rectTransform.rect.width)
+                {
+                    return whole;
+                }
+
+                return template + n.ShortName;
+            }
+
             if (string.IsNullOrEmpty(n.ShortName) || line == null)
             {
                 return template.Length > 0 ? template.Replace("{node}", full.ToUpperInvariant()) : full;
@@ -735,14 +800,22 @@ namespace DD.Prototype.UI
         /// Compact rows (the Mac aspect) have the height the words beside a 48 px seal lack in width: the name and the state
         /// word take up to two lines each, the pair centred on the seal, so full names ("Regeneration Delay") always print.
         /// </summary>
-        private void FitCompact(NodeView v)
+        private void FitCompact(NodeView v, RunTreeNodeView n, string prefix)
         {
             float width = v.Name.rectTransform.rect.width;
             float name = Mathf.Min(TwoLines(v.Name), Mathf.Ceil(v.Name.GetPreferredValues(v.Name.text, width, 0f).y));
             float state = Mathf.Min(TwoLines(v.State), Mathf.Ceil(v.State.GetPreferredValues(v.State.text, width, 0f).y));
+            if (name + state > _boxH && n.Kind != RunTreeNodeKind.Tier && !string.IsNullOrEmpty(n.ShortName))
+            {
+                // The word keeps its two lines; the name yields first - to the designer's short name ("Full Mag"), never a
+                // clipped one (a tier's ShortName is its name cut at 12 characters, so tiers keep their full name).
+                v.Name.text = prefix + n.ShortName;
+                name = Mathf.Min(TwoLines(v.Name), Mathf.Ceil(v.Name.GetPreferredValues(v.Name.text, width, 0f).y));
+            }
+
             if (name + state > _boxH)
             {
-                state = _stateLine;
+                name = Mathf.Max(_nameLine, _boxH - state);
             }
 
             name = Mathf.Max(name, _nameLine);
@@ -793,10 +866,7 @@ namespace DD.Prototype.UI
                     }
 
                     RunTreeNodeView p = _snap.Nodes[parent];
-                    bool bothOwned = IsOwned(p) && IsOwned(c);
-                    bool path = _onPath[child] && (_onPath[parent] || IsOwned(p));
-                    bool dashed = c.Status == RunTreeNodeStatus.PrereqMissing && !IsOwned(p);
-                    AddEdge(p, c, path ? 4f : bothOwned ? 2f : 1f, dashed && !path, path ? pinned : bothOwned ? owned : hair);
+                    Link(p, c, _onPath[child] && (_onPath[parent] || HasOwned(p)), hair, owned, pinned);
                 }
             }
 
@@ -841,28 +911,67 @@ namespace DD.Prototype.UI
 
                 RunTreeNodeView p = _snap.Nodes[seal];
                 RunTreeNodeView c = _snap.Nodes[cap];
-                bool bothOwned = IsOwned(p) && IsOwned(c);
-                bool path = _onPath[cap] && (_onPath[seal] || IsOwned(p));
-                bool dashed = !IsOwned(p) && !path;
-                AddEdge(p, c, path ? 4f : bothOwned ? 2f : 1f, dashed, path ? pinned : bothOwned ? owned : hair);
+                Link(p, c, _onPath[cap] && (_onPath[seal] || HasOwned(p)), hair, owned, pinned);
             }
 
+            _gateLabel.gameObject.SetActive(false);
+            _gateX = -1f;
             if (gateTier > 0 && gateTier < Tiers)
             {
+                // The gate runs only beside the rows it guards (Purse, a tier-less row, is not behind it), with its word
+                // at its head: ANY KEYSTONE while shut, KEYSTONE OWNED once open (AD R1-C MUST-3b).
                 float x = _compact ? gateTier * _pitchX - EdgeGap * 0.5f : gateTier * _pitchX;
                 _gateX = x;
-                _edges.Add(new Vector2(x, -4f), new Vector2(x, -(Rows * _pitchY - 12f)), keystoneOwned ? 2f : 1f, !keystoneOwned,
-                    keystoneOwned ? owned : hair);
-            }
-            else
-            {
-                _gateX = -1f;
+                int firstRow = Rows;
+                for (int s = 0; s < _cell.Length; s++)
+                {
+                    int i = _cell[s];
+                    if (i < 0 || !Gated(_snap.Nodes[i]) || _snap.Nodes[i].Column < gateTier)
+                    {
+                        continue;
+                    }
+
+                    int row = _snap.Nodes[i].Row;
+                    firstRow = Mathf.Min(firstRow, row);
+                    _edges.Add(new Vector2(x, -(row * _pitchY + 2f)), new Vector2(x, -(row * _pitchY + _pitchY - 10f)), keystoneOwned ? 2f : 1f,
+                        !keystoneOwned, keystoneOwned ? owned : hair);
+                }
+
+                if (firstRow < Rows)
+                {
+                    _gateLabel.gameObject.SetActive(true);
+                    _gateLabel.text = keystoneOwned ? UiStrings.Get("tree.gate.open", "KEYSTONE OWNED") : UiStrings.Get("tree.gate.shut", "ANY KEYSTONE");
+                    _gateLabel.color = UiTokens.Get(keystoneOwned ? UiColor.TextSecondary : UiColor.TextMuted);
+                    var label = (RectTransform)_gateLabel.transform;
+                    float line = LineOf(_gateLabel);
+                    label.sizeDelta = new Vector2(_pitchX * 1.5f, line);
+                    label.anchoredPosition = new Vector2(x + 6f, -(firstRow * _pitchY) + line + 2f);
+                }
             }
 
             _edges.Commit();
         }
 
         private float _gateX = -1f;
+        private TMP_Text _gateLabel;
+
+        public TMP_Text GateLabel => _gateLabel;
+
+        /// <summary>
+        /// One edge's look (AD R1-C MUST-3a): dashed exactly while the child still NEEDS its prerequisite, 2 px once it is
+        /// met (the child opened and the parent carries a purchase), a hairline otherwise, and 4 px cream on the pin path.
+        /// </summary>
+        private void Link(RunTreeNodeView p, RunTreeNodeView c, bool path, Color hair, Color owned, Color pinned)
+        {
+            bool missing = c.Status == RunTreeNodeStatus.PrereqMissing;
+            bool met = !missing && c.Status != RunTreeNodeStatus.Locked && HasOwned(p);
+            AddEdge(p, c, path ? 4f : met ? 2f : 1f, missing && !path, path ? pinned : met ? owned : hair);
+        }
+
+        private static bool HasOwned(RunTreeNodeView n)
+        {
+            return IsOwned(n) || (n.Kind == RunTreeNodeKind.Tier && n.OwnedTier > 0);
+        }
 
         /// <summary>The keystone gate's x in the grid (-1 when the lane draws none) - tests.</summary>
         public float GateX => _gateX;
@@ -892,7 +1001,7 @@ namespace DD.Prototype.UI
         private Vector2 SealCentre(int row, int tier)
         {
             return _compact
-                ? new Vector2(tier * _pitchX + _seal * 0.5f, -(row * _pitchY + (_pitchY - 8f) * 0.5f))
+                ? new Vector2(tier * _pitchX + _seal * 0.5f, -(row * _pitchY + _boxH * 0.5f))
                 : new Vector2(tier * _pitchX + _pitchX * 0.5f, -(row * _pitchY + 4f + _seal * 0.5f));
         }
 
@@ -905,6 +1014,25 @@ namespace DD.Prototype.UI
         private Vector2 EdgeIn(int row, int tier)
         {
             return SealCentre(row, tier) - new Vector2(_seal * 0.5f + 6f, 0f);
+        }
+
+        private static bool Gated(RunTreeNodeView n)
+        {
+            return n.Kind == RunTreeNodeKind.Fork || n.Kind == RunTreeNodeKind.WeaponSeal || n.Kind == RunTreeNodeKind.Hearth;
+        }
+
+        /// <summary>1-based step of a node on the pin path (0 when it is not on it).</summary>
+        private int PathStep(int index)
+        {
+            for (int k = 0; k < _snap.PinPathCount; k++)
+            {
+                if (_snap.PinPath[k] == index)
+                {
+                    return k + 1;
+                }
+            }
+
+            return 0;
         }
 
         private static bool IsOwned(RunTreeNodeView n)
@@ -1110,6 +1238,7 @@ namespace DD.Prototype.UI
                 _dPrice.text = string.Empty;
                 _reforge.gameObject.SetActive(false);
                 SetPips(0, 0);
+                DetailShown?.Invoke();
                 return;
             }
 
@@ -1134,6 +1263,10 @@ namespace DD.Prototype.UI
             _buy.SetText(hearth ? UiStrings.Get("tree.action.stoke", "STOKE THE HEARTH") : "BUY");
             FitBuy();
             _buy.SetInteractable(buyable);
+            if (_buyPrompt != null)
+            {
+                _buyPrompt.gameObject.SetActive(buyable);   // the key chip follows the Primary (AD R1-C MUST-1)
+            }
             _pin.SetText(n.IsPinned ? UiStrings.Get("tree.action.unpin", "UNPIN") : UiStrings.Get("tree.action.pin", "PIN"));
             _pin.SetInteractable(n.IsPinned || (!IsOwned(n) && n.Status != RunTreeNodeStatus.Excluded && !hearth));
             bool reforge = n.Kind == RunTreeNodeKind.Fork && IsOwned(n) && n.ReforgeCost >= 0;
@@ -1142,6 +1275,8 @@ namespace DD.Prototype.UI
             {
                 _reforge.SetText(UiStrings.Get("tree.action.reforge", "REFORGE") + " · " + n.ReforgeCost.ToString(CultureInfo.InvariantCulture));
             }
+
+            DetailShown?.Invoke();
         }
 
         /// <summary>BUY holds its word and its prompt: STOKE THE HEARTH widens it, up to 62 % of the card.</summary>
@@ -1303,7 +1438,10 @@ namespace DD.Prototype.UI
             }
         }
 
-        /// <summary>Details a node (tests, and the seal's click); switches lanes when it lives in the other one.</summary>
+        /// <summary>
+        /// Details a node and gives its seal the focus (tests, captures, the seal's click, right-click pin), switching lanes
+        /// when it lives in the other one: the focus ring and the detail card always name the same node (AD R1-C MUST-4).
+        /// </summary>
         public void FocusNode(int index)
         {
             if (index < 0 || index >= _snap.Count)
@@ -1316,11 +1454,18 @@ namespace DD.Prototype.UI
             {
                 _lane = _snap.Nodes[index].Lane;
                 Refresh(_shop);
-                return;
+            }
+            else
+            {
+                ShowDetail(index);
+                LinkNavigation();
             }
 
-            ShowDetail(index);
-            LinkNavigation();
+            UiButton seal = ButtonOf(index);
+            if (seal != null && EventSystem.current != null && EventSystem.current.currentSelectedGameObject != seal.gameObject)
+            {
+                UiInput.Focus(seal);
+            }
         }
 
         private void OnNodeActivated(int slot)

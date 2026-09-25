@@ -589,12 +589,15 @@ S-09 (R1-B, 25.09, C-00 decision): the meta currency is **Ash** in `en` and **K�
 | `tree.refuse.no_run` | No run is in progress. | Süren bir koşu yok. |
 | `tree.state.prereq_keystone` | NEEDS A KEYSTONE | ÖNCE BİR KİLİT TAŞI |
 | `tree.action.stoke_short` | STOKE | YAK |
+| `tree.gate.shut` | ANY KEYSTONE | HERHANGİ BİR KİLİT TAŞI |
+| `tree.gate.open` | KEYSTONE OWNED | KİLİT TAŞI VAR |
 
 S-09 (R1-C, 25.09):
 - The in-run tree screen (N14) marks the nodes this offer sells with an OFFER chip and a gold ring (`tree.flag.offer`); a node that is open but not offered reads `tree.flag.not_offered` in the detail card.
 - `tree.lock.*` is the detail card's sentence for a LOCKED node, one per RunTreeLockReason (ProfileLocked, NotOnThisWeapon, NoSpecialYet, EffectPending).
 - `tree.state.prereq_keystone` is the Hearth's NEEDS word: its prerequisite is any weapon-lane keystone, not one parent.
 - `tree.action.stoke_short` replaces `tree.action.stoke` on BUY only when the detail card is too narrow for the full verb (Mac 1.2 × 1.25); the card's kind line and name already say HEARTH.
+- `tree.gate.*` is the word at the head of the keystone gate (the line before forks / seal / Hearth, which open on any keystone of the lane, WP-077 §2.2): shut / open. The gated nodes read `tree.state.prereq_keystone` (AD R1-C MUST-3b).
 - `tree.refuse.*` is the footer sentence when a tree command is refused (RunTreeCommandResult). A refused card purchase keeps the shop's existing sentence for its cause.
 
 ## 10 · Pause · run so far (S-09, R1-C)

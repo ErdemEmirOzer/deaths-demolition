@@ -2022,5 +2022,13 @@
   "tree.action.stoke_short": {
     "en": "STOKE",
     "tr": "YAK"
+  },
+  "tree.gate.shut": {
+    "en": "ANY KEYSTONE",
+    "tr": "HERHANGİ BİR KİLİT TAŞI"
+  },
+  "tree.gate.open": {
+    "en": "KEYSTONE OWNED",
+    "tr": "KİLİT TAŞI VAR"
   }
 }

@@ -132,6 +132,27 @@ namespace DD.Prototype.UI
             Refresh(false);
         }
 
+        /// <summary>The button's role (Primary / Secondary / …).</summary>
+        public UiButtonVariant Variant
+        {
+            get { return _variant; }
+        }
+
+        /// <summary>
+        /// WP-068 R1-C (AD MUST-1, §2.1 one Primary per screen): a screen may hand the Primary role between two controls
+        /// (the tree's BUY and CONTINUE); the palette follows at once.
+        /// </summary>
+        public void SetVariant(UiButtonVariant variant)
+        {
+            if (_variant == variant)
+            {
+                return;
+            }
+
+            _variant = variant;
+            Refresh(true);
+        }
+
         /// <summary>Marks this control as the current choice in its group.</summary>
         public void SetSelectedChoice(bool value)
         {

@@ -177,6 +177,7 @@ namespace DD.Prototype.UI
         /// <summary>WP-068 R1-C: the in-run tree, shown instead of the card row while the shop draws node cards (WP-077 K10a).</summary>
         private UiRunTreePanel _tree;
         private UiButton _undoButton;
+        private UiPrompt _continuePrompt;
 
         private GameObject _emptyPanel;
         private TMP_Text _emptyTitle;
@@ -756,7 +757,7 @@ namespace DD.Prototype.UI
 
             _continueButton = UiFactory.Button(
                 "Continue", footer, "CONTINUE", UiButtonVariant.Primary, CloseScreen);
-            UiInput.Prompt(_continueButton, UiPromptAction.Submit, true);
+            _continuePrompt = UiInput.Prompt(_continueButton, UiPromptAction.Submit, true);
             RectTransform rect = (RectTransform)_continueButton.transform;
             rect.anchorMin = new Vector2(1f, 0.5f);
             rect.anchorMax = new Vector2(1f, 0.5f);
@@ -794,7 +795,23 @@ namespace DD.Prototype.UI
             _tree.Refused = OnTreeRefused;
             _tree.Changed = OnTreeChanged;
             _tree.DescribePurchase = DescribeRefusal;
+            _tree.DetailShown = SyncPrimary;
             host.gameObject.SetActive(false);
+        }
+
+        /// <summary>
+        /// One Primary per screen (AD R1-C MUST-1): while the tree details a node BUY can buy, BUY is the Primary and
+        /// CONTINUE steps down to Secondary without its key chip; otherwise CONTINUE is the Primary. The card row keeps
+        /// CONTINUE as its Primary (its cards are tiles, not Primaries).
+        /// </summary>
+        private void SyncPrimary()
+        {
+            bool buy = TreeMode && _tree.BuyLive;
+            _continueButton.SetVariant(buy ? UiButtonVariant.Secondary : UiButtonVariant.Primary);
+            if (_continuePrompt != null)
+            {
+                _continuePrompt.gameObject.SetActive(!buy);
+            }
         }
 
         private bool TreeMode
@@ -1085,6 +1102,7 @@ namespace DD.Prototype.UI
             SetTreeMode(false);
             _undoButton.gameObject.SetActive(false);
             SetFooterNoteRoom(false);
+            SyncPrimary();
 
             // EMPTY. Every branch is at its maximum tier, or the economy section offers
             // none. A finished sentence, and CONTINUE still works.
@@ -1171,6 +1189,7 @@ namespace DD.Prototype.UI
             _treeWasLocked = shop.IsLocked;
             _tree.Refresh(shop);
             LinkTreeNavigation();
+            SyncPrimary();
         }
 
         private bool _treeWasLocked;
@@ -1614,6 +1633,7 @@ namespace DD.Prototype.UI
             SetTreeMode(false);
             _undoButton.gameObject.SetActive(false);
             SetFooterNoteRoom(false);
+            SyncPrimary();
             for (int i = 0; i < _slots.Length; i++)
             {
                 _slots[i].Button.gameObject.SetActive(false);

@@ -45,6 +45,7 @@ namespace DD.Prototype.Tests.PlayMode
             UiSettings.TextScale = 1f;
             UiSettings.UiScale = 1f;
             RunFlowClock.ClearHolds();
+            RunTreeEffects.TreatAllAsLive = false;
             if (RunDirector.Instance != null && RunDirector.Instance.Shop != null)
             {
                 RunDirector.Instance.Shop.NodeCardsOverride = null;
@@ -95,6 +96,8 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsNotNull(tree.NodeButton(0, 0) ?? tree.NodeButton(1, 0) ?? tree.NodeButton(2, 0) ?? tree.NodeButton(3, 0), "tier 1 of the weapon lane is drawn");
             Assert.Greater(tree.Edges.Count, 0, "the weapon lane draws its edges");
             Assert.GreaterOrEqual(tree.GateX, 0f, "the keystone gate is drawn before the forks / seal / Hearth");
+            Assert.IsTrue(tree.GateLabel.gameObject.activeSelf, "the gate carries its word (AD R1-C MUST-3b)");
+            StringAssert.Contains("KEYSTONE", tree.GateLabel.text);
 
             // Every node on screen carries a word (PD §5.1), and every node the offer sells its OFFER mark.
             for (int r = 0; r < UiRunTreePanel.Rows; r++)
@@ -130,7 +133,10 @@ namespace DD.Prototype.Tests.PlayMode
             // BUY through the card; the seal reads OWNED; UNDO LAST in the footer gives the gold back in full.
             Assert.GreaterOrEqual(bought, 0, "some offered node is affordable with 5000 gold");
             tree.FocusNode(bought);
+            Assert.AreEqual(tree.ButtonOf(bought).gameObject, EventSystem.current.currentSelectedGameObject, "focus = the detail's subject (MUST-4)");
             Assert.IsTrue(tree.BuyButton.IsInteractable(), "BUY is live on an offered, affordable node");
+            UiButton next = Named(screen, "Continue");
+            Assert.AreEqual(UiButtonVariant.Secondary, next.Variant, "one Primary: BUY is live, CONTINUE steps down (MUST-1)");
             int gold = shop.Gold;
             tree.OnBuy();
             yield return null;
@@ -145,6 +151,17 @@ namespace DD.Prototype.Tests.PlayMode
             Click(undo);
             yield return null;
             Assert.AreEqual(gold, shop.Gold, "UNDO refunds in full");
+            int locked = -1;
+            for (int i = 0; i < tree.Snapshot.Count && locked < 0; i++)
+            {
+                if (tree.Snapshot.Nodes[i].Lane == tree.Lane && tree.Snapshot.Nodes[i].Status == RunTreeNodeStatus.Locked) locked = i;
+            }
+
+            if (locked >= 0)
+            {
+                tree.FocusNode(locked);
+                Assert.AreEqual(UiButtonVariant.Primary, next.Variant, "nothing buyable detailed: CONTINUE is the Primary");
+            }
             Assert.IsFalse(undo.gameObject.activeInHierarchy, "one step of undo");
 
             // The Hearth is stoked directly, outside the cards, once a weapon-lane keystone opens it (WP-077 K3);
@@ -236,6 +253,7 @@ namespace DD.Prototype.Tests.PlayMode
             // wrap to two lines rather than cut a name ("Regeneration Delay" / "Regeneration Rate" must both print).
             var host = (RectTransform)tree.transform.parent;
             host.offsetMin += new Vector2(0f, 160f);
+            RunTreeEffects.TreatAllAsLive = true;   // keystones / forks read NEEDS <name> (their effects are pending in this build)
             tree.Refresh(RunDirector.Instance.Shop);
             Assert.IsTrue(tree.Compact, "a ~510 px host compacts the rows");
             foreach (RunTreeLane lane in new[] { RunTreeLane.Body, RunTreeLane.Weapon })
