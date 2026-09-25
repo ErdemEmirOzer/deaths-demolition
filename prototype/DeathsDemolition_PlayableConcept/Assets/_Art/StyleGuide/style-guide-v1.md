@@ -97,6 +97,22 @@ UI rezerv kuralları (WP-068 AD MUST 3):
 - Durum hiçbir zaman yalnız renkle taşınmaz: kelime + şekil (renk körlüğü paleti, WCAG 1.4.1).
 <!-- ui-tokens:end -->
 
+#### 2.2 UI · yarı saydam çiftler — doğrusal ışık (WP-068 12b D1, AD 8a taşınan MUST)
+
+Proje **Linear** renk uzayındadır: GPU UI katmanlarını doğrusal ışıkta harmanlar ve `UiContrast.Composite` aynı hesabı yapar. Önceki değerler sRGB uzayında tahmin edilmişti; bu tahmin koyu zemin üstündeki açık yarı saydam katmanları (parıltı, washi, fener) ve açık dünya üstündeki koyu perdeleri iyimser okur. Her çift `UiTranslucentTokensTests` ile yeniden ölçüldü; eşik altı çift metni taşıyarak değil α ile düzeltildi.
+
+| çift | değer | doğrusal ölçüm (eşik) |
+|---|---|---|
+| menü başlık bloğu, plakanın en parlak tekseli (21:9 / Mac × 1,25) | `SurfaceBase` **0,90**, x 0'dan (0,55'ten) | alt başlık ≥ 4,9, başlık ≥ 8,9 (4,5) |
+| sol üçte bir (T10, S-05 kenedi) | `SurfaceBase` 0,55 sabit; plakadaki en soluk metin `TextSecondary` | 4,60 (4,5); TextMuted 3,2 → plakada kullanılmaz |
+| parıltı alanı altında `TextMuted` (SurfacePanel) | `SheenFieldAlphaMax` **0,014** (0,05'ten) | 4,52 (4,5) |
+| `SheenRim` 1 px kenar | 0,10 | 2,29 panel / 2,43 taban (dekoratif; metin ≥ 8 px uzakta) |
+| washi, en yoğun lif (katmanın 0,73'ü), `TextSecondary` | `WashiAlphaMax` **0,07** (0,08'den) | 4,60 (4,5); TextMuted washi üstünde kullanılmaz |
+| kumiko kapılarda (`SurfaceInset`) | 0,045 | TextSecondary 5,33 · TextPrimary 9,69 |
+| `LanternGlow` nefes | 0,35 × 0,55–1 | altın bandına ΔE76 ≥ 28 (10); T10 tepe nefeste ölçülür |
+| modal kartının sınırı (dolgu ya da `BorderStrong` çerçeve), siyah → krem-beyaz dünya | diyalog perdesi **0,88** (0,72'den); `ScrimOverlay` 0,88 | ≥ 3,14 (3,0); 0,72'de 2,81 |
+| tutma etiketi `HoldFill` üstünde | 0,15 | dinlenme 4,86 · basılı 4,73 (4,5) |
+
 ### 2.3 Oynanış renkleri (kod değerleri sRGB; WP-015 worktree'de yeniden okundu)
 | Öğe | Değer `[kod]` | Dosya:satır | HSV `[AD hesabı]` | Rezerv sınıfı |
 |---|---|---|---|---|
