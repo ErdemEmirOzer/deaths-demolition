@@ -1326,22 +1326,32 @@ namespace DD.Prototype.UI
                     Vector2 point = step == 1 ? new Vector2(target.center.x, target.yMin + target.height * 0.6f) : target.center;
                     var viewport = new Vector3(point.x / canvas.x + 0.5f, point.y / canvas.y + 0.5f, 0f);
                     ZombieEnemy z = PlaceUnder(camera, viewport, rig);
+                    string how = "placed";
                     if (z == null)
                     {
-                        Debug.Log("[UiCapture] " + name + ": no live zombie could be placed under " + point);
+                        // The camera cannot see a standing head there: pin the stamp's true point on the nearest body.
+                        z = Nearest(rig);
+                        how = "pinned";
+                        UiEnemyStatusMarkers.CaptureZombie = z;
+                        UiEnemyStatusMarkers.CaptureTruePoint = point;
+                    }
+
+                    if (z == null)
+                    {
+                        Debug.Log("[UiCapture] " + name + ": no live zombie");
                         continue;
                     }
 
                     z.ApplyShock(id++, 4f);
                     yield return new WaitForSecondsRealtime(0.12f);
                     yield return Frame(folder, name);
-                    Debug.Log("[UiCapture] " + name + " target=" + target + " point=" + point + " stamp=" + UiEnemyStatusMarkers.LastPlaced);
+                    Debug.Log("[UiCapture] " + name + " (" + how + ") target=" + target + " point=" + point + " stamp=" + UiEnemyStatusMarkers.LastPlaced);
+                    UiEnemyStatusMarkers.CaptureZombie = null;
                     yield return new WaitForSecondsRealtime(0.5f);
                 }
             }
 
-            /// <summary>Moves the live zombie nearest the player so its stamp anchor projects to <paramref name="viewport"/>.</summary>
-            private static ZombieEnemy PlaceUnder(Camera camera, Vector3 viewport, PlayerRig rig)
+            private static ZombieEnemy Nearest(PlayerRig rig)
             {
                 System.Collections.Generic.IReadOnlyList<ZombieEnemy> live = ZombieEnemy.Live;
                 ZombieEnemy pick = null;
@@ -1357,6 +1367,13 @@ namespace DD.Prototype.UI
                     }
                 }
 
+                return pick;
+            }
+
+            /// <summary>Moves the live zombie nearest the player so its stamp anchor projects to <paramref name="viewport"/>.</summary>
+            private static ZombieEnemy PlaceUnder(Camera camera, Vector3 viewport, PlayerRig rig)
+            {
+                ZombieEnemy pick = Nearest(rig);
                 if (pick == null)
                 {
                     return null;

@@ -375,12 +375,34 @@ namespace DD.Prototype.UI
             return gel == GelState.Sliding ? State.Slide : gel != GelState.None ? State.Down : State.None;
         }
 
+        /// <summary>
+        /// Capture seam (12c, AD 12b SHOULD-2): this zombie's stamp takes <see cref="CaptureTruePoint"/> (canvas px, centre
+        /// origin) as its head point instead of the projection - for collisions a standing body cannot reach at a given camera
+        /// (a 2.1 m head never projects above the horizon of a camera over it, nor below the horizon of a first-person eye
+        /// under it). Placement past the clusters / figure runs as in play.
+        /// </summary>
+        public static ZombieEnemy CaptureZombie;
+
+        public static Vector2 CaptureTruePoint;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetCaptureSeam()
+        {
+            CaptureZombie = null;
+        }
+
         private static bool Project(Camera camera, ZombieEnemy z, Vector2 canvasSize, out Vector2 at)
         {
             at = Parked;
             if (camera == null)
             {
                 return false;
+            }
+
+            if (CaptureZombie != null && ReferenceEquals(z, CaptureZombie))
+            {
+                at = CaptureTruePoint;
+                return true;
             }
 
             Vector3 viewport = camera.WorldToViewportPoint(z.transform.position + Vector3.up * HeadHeight);
