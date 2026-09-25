@@ -20,7 +20,7 @@ namespace DD.Art
     public static class ArtLibraryPaths
     {
         /// <summary>The imported libraries, in production order (WP-012: AP-002/AP-003/AP-003B; WP-014: AP-005 modules).</summary>
-        public static readonly string[] Packages = { "AP-002", "AP-003", "AP-003B", "AP-005", "AP-005B", "AP-017" };   // WP-038B: AP-017 Phase 1 (derivatives + world breakables)
+        public static readonly string[] Packages = { "AP-002", "AP-003", "AP-003B", "AP-005", "AP-005B", "AP-017", "AP-023" };   // WP-038B: AP-017 Phase 1 (derivatives + world breakables); WP-074 B5: AP-023 world v5 kit
 
         // ------------------------------------------------------------ WP-014 world assembly
 

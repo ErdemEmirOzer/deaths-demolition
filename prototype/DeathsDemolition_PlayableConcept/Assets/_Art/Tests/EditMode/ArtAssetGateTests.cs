@@ -39,6 +39,7 @@ namespace DD.Art.Tests.EditMode
         /// <summary>AP-001'in 14 tekil dokusu: PBR seti (BaseColor+Normal+Packed) ve yalnız BaseColor taşıyan iki rol.</summary>
         private static readonly string[] PbrRoller = { "stone", "wood", "bark", "earth" };
         private static readonly string[] YalnizBaseColorRoller = { "plaster", "roof" };
+        private const string Ap023RolOnEki = "ap023_";   // WP-074 B5 · AP-023 dünya v5 kiti rolleri
 
         // ------------------------------------------------------------------ yardımcılar
 
@@ -332,7 +333,7 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(18, ArtFamilies.All.Length, "ArtFamilies.All 18 aile olmalı.");
             Assert.IsEmpty(eksik, "Beklenen FBX diskte yok (" + eksik.Count + "):\n" + string.Join("\n", eksik));
             Assert.IsEmpty(fazla, "Aile tablosunda karşılığı olmayan FBX (" + fazla.Count + "):\n" + string.Join("\n", fazla));
-            Assert.AreEqual(211, kutuphane, "Kütüphane FBX sayısı 48 (AP-002) + 42 (AP-003) + 53 (AP-003B) + 12 (AP-005, WP-014) + 6 (AP-005B, WP-017) + 38 (AP-017, WP-038B) + 6 (AP-017 Faz 2, WP-038I) + 6 (Faz 2b, WP-038L) = 211 olmalı.");
+            Assert.AreEqual(359, kutuphane, "Kütüphane FBX sayısı 48 (AP-002) + 42 (AP-003) + 53 (AP-003B) + 12 (AP-005, WP-014) + 6 (AP-005B, WP-017) + 38 (AP-017, WP-038B) + 6 (AP-017 Faz 2, WP-038I) + 6 (Faz 2b, WP-038L) = 211 olmalı. + 148 (AP-023 dünya v5 kiti, WP-074 B5) = 359");
             Debug.Log("[DD-TEST] wp011.gate.fbxset count=" + diskte.Count + " (18x3 LOD + " + (beklenen.Count - 55 - kutuphane) + " collider + zemin + " + kutuphane + " kütüphane)");
         }
 
@@ -405,12 +406,14 @@ namespace DD.Art.Tests.EditMode
             foreach (string rol in ArtLibraryMaterialRoles.TextureRoles())
             {
                 if (Array.IndexOf(ArtFamilies.MaterialRoles, rol) >= 0) continue; // stone (weathered) WP-011 dokularını paylaşır
+                if (rol.StartsWith(Ap023RolOnEki, StringComparison.Ordinal)) continue;   // WP-074 B5: aşağıda kendi bloğu
                 beklenen.Add(ArtPipelinePaths.SourceTexture(rol, "BaseColor"));
             }
 
             foreach (string rol in ArtLibraryMaterialRoles.PackedTextureRoles())
             {
                 if (Array.IndexOf(ArtFamilies.MaterialRoles, rol) >= 0) continue;
+                if (rol.StartsWith(Ap023RolOnEki, StringComparison.Ordinal)) continue;
                 beklenen.Add(ArtPipelinePaths.SourceTexture(rol, "Normal"));
                 beklenen.Add(ArtPipelinePaths.SourceTexture(rol, "Packed"));
                 beklenen.Add(ArtPipelinePaths.DerivedMask(rol));
@@ -470,6 +473,23 @@ namespace DD.Art.Tests.EditMode
             // WP-047E · AP-013C casings: BaseColor + Normal + MRA source + derived MetallicSmoothness = 4 → 170.
             foreach (string f in ArtCasingBuilder.TextureFiles()) beklenen.Add(f);
             Assert.AreEqual(212, beklenen.Count, "Beklenen doku kümesi 208 + 4 (WP-047E kovan seti) = 174 olmalı.");
+
+            // WP-074 B5 · AP-023 dünya v5 kiti: 28 doku rolü BaseColor; 20 karo rolü Normal + Packed + türetilmiş maske; 8 kart atlası
+            // yalnız Normal (ORM yok, NoPackedMap) → 28 + 60 + 8 = 96.
+            int ap023 = 0;
+            foreach (string rol in ArtLibraryMaterialRoles.TextureRoles())
+                if (rol.StartsWith(Ap023RolOnEki, StringComparison.Ordinal) && beklenen.Add(ArtPipelinePaths.SourceTexture(rol, "BaseColor"))) ap023++;
+            foreach (string rol in ArtLibraryMaterialRoles.PackedTextureRoles())
+            {
+                if (!rol.StartsWith(Ap023RolOnEki, StringComparison.Ordinal)) continue;
+                if (beklenen.Add(ArtPipelinePaths.SourceTexture(rol, "Normal"))) ap023++;
+                if (beklenen.Add(ArtPipelinePaths.SourceTexture(rol, "Packed"))) ap023++;
+                if (beklenen.Add(ArtPipelinePaths.DerivedMask(rol))) ap023++;
+            }
+
+            foreach (string rol in ArtLibraryMaterialRoles.NormalOnlyTextureRoles())
+                if (beklenen.Add(ArtPipelinePaths.SourceTexture(rol, "Normal"))) ap023++;
+            Assert.AreEqual(96, ap023, "AP-023: 28 BaseColor + 20 × (Normal + Packed + türetilmiş maske) + 8 atlas Normal = 96");
 
             // WP-019 (ADR-019-1): every PNG the AP-010 manifest ships (rows + their emissive layers).
             int vfx = 0;

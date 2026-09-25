@@ -144,8 +144,25 @@ namespace DD.Art
             public float[] min;
             public float[] max;
             public int positions;
+            /// <summary>WP-074 B5 · A box shell that is not axis-aligned (sloped deck segments, angled doors): its oriented box in Blender space; null / empty otherwise.</summary>
+            public Obb obb;
 
             public bool IsBox => positions <= 8;
+            public bool HasObb => obb != null && obb.size != null && obb.size.Length == 3 && obb.center != null && obb.axisX != null && obb.axisY != null;
+
+            /// <summary>
+            /// The oriented box in MESH space: centre and axes through (bx, by, −bz) — a reflection, so the third axis is rebuilt as
+            /// X × Y (a box is symmetric about its axes; the size along it is the recorded Z size).
+            /// </summary>
+            public void MeshSpaceObb(out Vector3 center, out Quaternion rotation, out Vector3 size)
+            {
+                center = new Vector3(obb.center[0], obb.center[1], -obb.center[2]);
+                var x = new Vector3(obb.axisX[0], obb.axisX[1], -obb.axisX[2]);
+                var y = new Vector3(obb.axisY[0], obb.axisY[1], -obb.axisY[2]);
+                Vector3 z = Vector3.Cross(x, y);
+                rotation = Quaternion.LookRotation(z, y);
+                size = new Vector3(obb.size[0], obb.size[1], obb.size[2]);
+            }
 
             /// <summary>
             /// The shell in Unity MESH space (the space of the Geometry child): the Import
@@ -159,6 +176,17 @@ namespace DD.Art
                 bounds.Encapsulate(b);
                 return bounds;
             }
+        }
+
+        /// <summary>WP-074 B5 · An oriented box (Blender space): centre, unit axes, full size along each axis.</summary>
+        [Serializable]
+        public sealed class Obb
+        {
+            public float[] center;
+            public float[] axisX;
+            public float[] axisY;
+            public float[] axisZ;
+            public float[] size;
         }
 
         public const string RoleLod = "lod";

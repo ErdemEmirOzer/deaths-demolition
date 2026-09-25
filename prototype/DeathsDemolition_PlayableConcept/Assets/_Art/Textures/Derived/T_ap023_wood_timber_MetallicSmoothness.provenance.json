@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_ap023_wood_timber_Packed.png",
+    "sourceSha256": "628afd77255b1ecb9b9c179a919ae199cc19ad6d40b50ee105aa9cddf6112b42",
+    "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-24T21:42:06.6707110Z",
+    "outputSha256": "3381fbc4996302b2114b7ff16b33cae5ea567c11942e4190b1fcaac4f9c728ff"
+}

@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_ap023_plaster_Packed.png",
+    "sourceSha256": "a1b92a572596cd6cbb51123ab0cf5948041aaabefd58946df97f84e912d45842",
+    "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-24T21:41:58.7201890Z",
+    "outputSha256": "14b9f6fa3be26ffa7b6faa1fe6e9bd0f949e3175b8113d25bc8883a0650370fe"
+}

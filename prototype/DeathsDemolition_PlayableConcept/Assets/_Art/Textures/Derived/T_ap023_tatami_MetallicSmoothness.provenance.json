@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_ap023_tatami_Packed.png",
+    "sourceSha256": "2baabdc64680d9246b75d83cbb058d2abd1759911165fb70104814a007d8a14b",
+    "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-24T21:42:03.3187540Z",
+    "outputSha256": "f35485c7f5fd73709a788454063835dc3382316654741859baff56ffaed006f2"
+}

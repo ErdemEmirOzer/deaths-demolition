@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_ap023_vermilion_Packed.png",
+    "sourceSha256": "c655a016f900aca5c1261f1feab6ad6384dd19716edf585198cf7f26d1045d64",
+    "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-24T21:42:04.0945460Z",
+    "outputSha256": "31636f9f41556a35115e3d0e7f597358c3f4d93c38b815dce47490f1a4225de8"
+}

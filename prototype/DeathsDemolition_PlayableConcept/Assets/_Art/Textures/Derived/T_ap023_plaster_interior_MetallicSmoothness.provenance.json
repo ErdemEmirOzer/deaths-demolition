@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_ap023_plaster_interior_Packed.png",
+    "sourceSha256": "1456fd7098f7a94350d7d4191ed48e7a389e616f7510f3fd7c8c826566306645",
+    "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-24T21:41:59.5698830Z",
+    "outputSha256": "a6f27bd53e0e92f2350edd802b1bffea482f5020bf15fda4e7fa3094d0fbbbae"
+}

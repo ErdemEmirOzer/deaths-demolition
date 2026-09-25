@@ -275,12 +275,12 @@ namespace DD.Art.Pipeline.EditorTools
             switch (spec.Kind)
             {
                 case ArtLibraryMaterialRoles.Kind.Textured:
-                    ApplyTextured(material, spec.TextureRole);
+                    ApplyTextured(material, spec.TextureRole, spec);
                     material.SetColor(BaseColorId, EncodeForColorProperty(spec.Tint));
                     break;
 
                 case ArtLibraryMaterialRoles.Kind.Cutout:
-                    ApplyTextured(material, spec.TextureRole);
+                    ApplyTextured(material, spec.TextureRole, spec);
                     material.SetColor(BaseColorId, EncodeForColorProperty(spec.Tint));
                     ApplyCutout(material, spec.Cutoff);
                     break;
@@ -522,10 +522,26 @@ namespace DD.Art.Pipeline.EditorTools
             m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
         }
 
-        private static void ApplyTextured(Material m, string role)
+        private static void ApplyTextured(Material m, string role, ArtLibraryMaterialRoles.Spec spec = null)
         {
             Texture2D baseMap = LoadTexture(ArtPipelinePaths.SourceTexture(role, "BaseColor"));
             Texture2D normal = LoadTexture(ArtPipelinePaths.SourceTexture(role, "Normal"));
+            if (spec != null && spec.NoPackedMap)
+            {
+                // WP-074 B5 · the AP-023 card atlases: albedo + normal, scalar smoothness (production roughness 0.6), metallic 0.
+                m.SetTexture(BaseMapId, baseMap);
+                m.SetColor(BaseColorId, Color.white);
+                m.SetTexture(BumpMapId, normal);
+                m.SetFloat(BumpScaleId, 1f);
+                m.SetTexture(MetallicGlossMapId, null);
+                m.SetFloat(MetallicId, 0f);
+                m.SetFloat(SmoothnessId, spec.Smoothness);
+                m.SetFloat(SmoothnessChannelId, 0f);
+                m.EnableKeyword("_NORMALMAP");
+                m.DisableKeyword("_METALLICSPECGLOSSMAP");
+                return;
+            }
+
             Texture2D mask = LoadTexture(ArtPipelinePaths.DerivedMask(role), "run ArtTextureRepack first");
 
             m.SetTexture(BaseMapId, baseMap);

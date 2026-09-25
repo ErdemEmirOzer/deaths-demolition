@@ -53,7 +53,8 @@ namespace DD.Art.Pipeline.EditorTools
             { "AP003B_", "AP-003B" },
             { "AP005_", "AP-005" },
             { "AP005B_", "AP-005B" },  // WP-017 · AP-005B prop families
-            { "AP017_", "AP-017" }     // WP-038B · AP-017 derivatives + world breakables
+            { "AP017_", "AP-017" },    // WP-038B · AP-017 derivatives + world breakables
+            { "AP023_", "AP-023" }     // WP-074 B5 · AP-023 world v5 kit (architecture, trees, pond, lanterns, props)
         };
 
         /// <summary>

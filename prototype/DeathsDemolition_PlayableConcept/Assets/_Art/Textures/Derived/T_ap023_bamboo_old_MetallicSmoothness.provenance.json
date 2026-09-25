@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_ap023_bamboo_old_Packed.png",
+    "sourceSha256": "dbf11ce66d5be3f127e4eed3ca2d1f6697d5031e7d4f702479881a3c7a0bf146",
+    "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-24T21:41:51.0616900Z",
+    "outputSha256": "95feb8db45e4fcd7c707035447fba262a174b5adfc4e830ec5f024c10eaed4fe"
+}

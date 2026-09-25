@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_ap023_granite_Packed.png",
+    "sourceSha256": "d85a587dcfd3113079356b833825d765d3c8315ca339385bb07589de9a432829",
+    "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-24T21:41:55.0062690Z",
+    "outputSha256": "b0d9d2b80ab851ad8c12cdef268afbb8b3fecd18441097f8a3d8894c66145742"
+}

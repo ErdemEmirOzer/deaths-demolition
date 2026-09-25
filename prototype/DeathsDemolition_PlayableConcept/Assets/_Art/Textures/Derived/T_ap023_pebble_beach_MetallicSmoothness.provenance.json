@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_ap023_pebble_beach_Packed.png",
+    "sourceSha256": "c612d2dfe3da7677f2f79031871b275ea14a1cb86af9d84ea26732fd394c6d03",
+    "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-24T21:41:57.8952200Z",
+    "outputSha256": "bb24b307218b1bb55d8b01f9f3e6a96720d809dbdddc4f2190cb9cda6007e044"
+}

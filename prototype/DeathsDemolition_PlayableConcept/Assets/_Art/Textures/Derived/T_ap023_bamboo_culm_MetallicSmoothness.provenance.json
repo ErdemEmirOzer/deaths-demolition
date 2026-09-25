@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_ap023_bamboo_culm_Packed.png",
+    "sourceSha256": "b0f475f368ca41c73da046b420d244ae8c1ee9aa5438b65a79f2d5787eb85b46",
+    "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-24T21:42:07.5080030Z",
+    "outputSha256": "09cc443a6500f6a4d927a47821f94b41acda6011bfb588d13928f549c00a9d6a"
+}

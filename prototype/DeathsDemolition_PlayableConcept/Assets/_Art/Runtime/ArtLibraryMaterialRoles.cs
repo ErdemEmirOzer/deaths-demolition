@@ -73,7 +73,10 @@ namespace DD.Art
 
             public bool HasDetailNormal => !string.IsNullOrEmpty(DetailNormalTextureRole);
 
-            public bool HasPackedMap => Kind == Kind.Textured || Kind == Kind.Cutout;
+            /// <summary>WP-074 B5 · Textured / Cutout without an ORM (the AP-023 card atlases ship albedo + normal only): scalar <see cref="Smoothness"/>, metallic 0, no derived mask.</summary>
+            public bool NoPackedMap;
+
+            public bool HasPackedMap => (Kind == Kind.Textured || Kind == Kind.Cutout) && !NoPackedMap;
             public bool HasNormalMap => Kind == Kind.Textured || Kind == Kind.Cutout;
             public bool HasBaseColorMap => Kind != Kind.Flat;
         }
@@ -137,6 +140,22 @@ namespace DD.Art
             {
                 Spec s = Rows[i];
                 if (s.HasPackedMap && !list.Contains(s.TextureRole))
+                {
+                    list.Add(s.TextureRole);
+                }
+            }
+
+            return list.ToArray();
+        }
+
+        /// <summary>WP-074 B5 · Texture roles with a Normal map but no Packed map (<see cref="Spec.NoPackedMap"/>; distinct, in row order).</summary>
+        public static string[] NormalOnlyTextureRoles()
+        {
+            var list = new List<string>();
+            for (int i = 0; i < Rows.Count; i++)
+            {
+                Spec s = Rows[i];
+                if (s.HasNormalMap && !s.HasPackedMap && !list.Contains(s.TextureRole))
                 {
                     list.Add(s.TextureRole);
                 }
@@ -227,6 +246,32 @@ namespace DD.Art
             rows.Add(new Spec { Role = "plaster_hf003_world", Kind = Kind.BaseColorOnly, TextureRole = "plaster_hf003", Smoothness = 0.10f, Tint = new Color(WorldPlasterTint, WorldPlasterTint, WorldPlasterTint, 1f) });
             rows.Add(new Spec { Role = "plaster_world", Kind = Kind.BaseColorOnly, TextureRole = "plaster", Smoothness = 0.10f, Tint = new Color(WorldPlasterTint, WorldPlasterTint, WorldPlasterTint, 1f) });
             rows.Add(new Spec { Role = "roof_world", Kind = Kind.BaseColorOnly, TextureRole = "roof", Smoothness = 0.22f, DetailNormalTextureRole = RoofCoursesTextureRole, DetailNormalScale = 1f, DetailTiling = RoofCoursesTiling });
+            // WP-074 B5 · AP-023 world v5 kit (P-05, manifest v004). Tile roles: albedo / normal / ORM (R occlusion, G roughness, B
+            // metallic) → the derived mask carries AO like the prop roles (ArtTextureRepack.CarriesOcclusion). Card atlases are RGBA
+            // cutouts on the wind path (their meshes carry AP003_Wind); bamboo culms sway (culms without the colour stream read
+            // (1,1,1,1) and stay still). Flat roles take the FBX material's linear diffuse. The lanterns' glow / paper inserts ship
+            // their daytime albedo (#C8BBA8, 15:30 world); emission is a later look decision. rock_moss binds the rock_boulder maps —
+            // its moss blend rides AP023_Mask G (a later shader pass). Straw is authored on the tatami maps (manifest role ap023_tatami).
+            foreach (string tile in new[] { "bamboo_old", "bark_pine", "bark_sakura", "copper", "granite", "granite_ashlar", "moss", "namako", "pebble_beach", "plaster",
+                                             "plaster_interior", "roof_tiles", "rock_boulder", "stone_ashlar", "tatami", "vermilion", "washi", "wood_planks", "wood_timber" })
+            {
+                rows.Add(new Spec { Role = "ap023_" + tile, Kind = Kind.Textured, TextureRole = "ap023_" + tile });
+            }
+
+            rows.Add(new Spec { Role = "ap023_bamboo_culm", Kind = Kind.Textured, TextureRole = "ap023_bamboo_culm", Shader = ShaderKind.FoliageWind });
+            rows.Add(new Spec { Role = "ap023_rock_moss", Kind = Kind.Textured, TextureRole = "ap023_rock_boulder" });
+            foreach (string atlas in new[] { "bamboo_leaves", "groundcover", "momiji_sprigs", "pine_needles", "reeds_iris", "sakura_sprigs", "satsuki", "violet_sprigs" })
+            {
+                rows.Add(new Spec { Role = "ap023_" + atlas, Kind = Kind.Cutout, TextureRole = "ap023_" + atlas, Shader = ShaderKind.FoliageWind, NoPackedMap = true, Smoothness = 0.40f });
+            }
+
+            rows.Add(new Spec { Role = "ap023_cloth", Kind = Kind.Flat, FlatLinearAlbedo = new Color(0.0273f, 0.0232f, 0.0194f, 1f), Smoothness = 0.20f });
+            rows.Add(new Spec { Role = "ap023_foliage_core", Kind = Kind.Flat, FlatLinearAlbedo = new Color(0.022f, 0.040f, 0.016f, 1f), Smoothness = 0.25f });
+            rows.Add(new Spec { Role = "ap023_iron", Kind = Kind.Flat, FlatLinearAlbedo = new Color(0.045f, 0.043f, 0.042f, 1f), Smoothness = 0.40f });
+            rows.Add(new Spec { Role = "ap023_lacquer", Kind = Kind.Flat, FlatLinearAlbedo = new Color(0.0116f, 0.0103f, 0.0086f, 1f), Smoothness = 0.65f });
+            rows.Add(new Spec { Role = "ap023_rope", Kind = Kind.Flat, FlatLinearAlbedo = new Color(0.012f, 0.011f, 0.010f, 1f), Smoothness = 0.15f });
+            rows.Add(new Spec { Role = "ap023_lantern_glow", Kind = Kind.Flat, FlatLinearAlbedo = new Color(0.578f, 0.497f, 0.392f, 1f), Smoothness = 0.30f });   // sRGB #C8BBA8
+            rows.Add(new Spec { Role = "ap023_lantern_paper", Kind = Kind.Flat, FlatLinearAlbedo = new Color(0.6155f, 0.4815f, 0.2786f, 1f), Smoothness = 0.25f });  // sRGB (0.807, 0.723, 0.565)
             return rows;
         }
 

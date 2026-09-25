@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_ap023_bark_sakura_Packed.png",
+    "sourceSha256": "aafea94c9fa0ca937ef8209977f4fae09c4048991c411e496d991621cd47eb7e",
+    "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-24T21:41:53.0471720Z",
+    "outputSha256": "40f2a4fbe744f03494aabe8741e9b4bd1ba5720d891656cdbc8f291be8cee445"
+}

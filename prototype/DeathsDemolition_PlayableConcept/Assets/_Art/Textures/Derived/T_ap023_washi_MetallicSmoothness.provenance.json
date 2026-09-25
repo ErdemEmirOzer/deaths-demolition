@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_ap023_washi_Packed.png",
+    "sourceSha256": "6f32f1cfb9a5809bfb1a5ed2afdcdf48936e8b2df9bdd018bf782bf0760bca49",
+    "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-24T21:42:05.0134040Z",
+    "outputSha256": "e202fbd9fcf3599d77dd89000aa8be818bd179264078aaa1d2ecf84bb9376158"
+}

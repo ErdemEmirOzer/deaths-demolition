@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_ap023_namako_Packed.png",
+    "sourceSha256": "d9ceca62faf8211b0c0684af4ff8e0fb24f5e29a3bb3f6983792ba97dae1ee00",
+    "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-24T21:41:57.2273270Z",
+    "outputSha256": "a3d88d7818247075b768f969c57ab3d1e39ab0778fa44a0f16880cc7bba82e2f"
+}

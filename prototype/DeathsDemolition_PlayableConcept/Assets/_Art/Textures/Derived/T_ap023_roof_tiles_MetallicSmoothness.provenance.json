@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_ap023_roof_tiles_Packed.png",
+    "sourceSha256": "c04146874637155f8ae816217b1a68611f0acc78b33fd4c6af382c1997cad1cf",
+    "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-24T21:42:00.3993800Z",
+    "outputSha256": "013e1e2e404740f5dd4d14332f76f1185066d30f471a54078d4b7eedbcfd5330"
+}

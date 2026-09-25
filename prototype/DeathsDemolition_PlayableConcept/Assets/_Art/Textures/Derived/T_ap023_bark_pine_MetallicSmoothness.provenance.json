@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_ap023_bark_pine_Packed.png",
+    "sourceSha256": "bc2358e587ea8934aa8403955c08bd40ff97796eef2d45094e5334522e30ecb0",
+    "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-24T21:41:52.1013180Z",
+    "outputSha256": "49209e8e14439174488c05b94fab9556a8e3a66dba352174d88d6b89d7440099"
+}

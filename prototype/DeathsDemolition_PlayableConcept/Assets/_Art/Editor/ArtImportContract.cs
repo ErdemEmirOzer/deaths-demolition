@@ -359,7 +359,37 @@ namespace DD.Art.Pipeline.EditorTools
             { "prop_furin_wind_chime", TextureClass.Prop },
             { "prop_hishaku_ladle_rack", TextureClass.Prop },
             { "prop_koi_shoal", TextureClass.Prop },
-            { "roof_courses", TextureClass.Structure }
+            { "roof_courses", TextureClass.Structure },
+            // WP-074 B5 · AP-023 world v5 kit (2K sources, namako 1K). Hero = the karamon / torii / lantern-set / palace-plinth stone and
+            // metal (ADR-015-1 v3 ≤ 24 sets); ground-cover surfaces Ground; bark, culms and card atlases Foliage; the rest Structure.
+            { "ap023_copper", TextureClass.Hero },
+            { "ap023_vermilion", TextureClass.Hero },
+            { "ap023_granite", TextureClass.Hero },
+            { "ap023_granite_ashlar", TextureClass.Hero },
+            { "ap023_moss", TextureClass.Ground },
+            { "ap023_pebble_beach", TextureClass.Ground },
+            { "ap023_bark_pine", TextureClass.Foliage },
+            { "ap023_bark_sakura", TextureClass.Foliage },
+            { "ap023_bamboo_culm", TextureClass.Foliage },
+            { "ap023_bamboo_leaves", TextureClass.Foliage },
+            { "ap023_groundcover", TextureClass.Foliage },
+            { "ap023_momiji_sprigs", TextureClass.Foliage },
+            { "ap023_pine_needles", TextureClass.Foliage },
+            { "ap023_reeds_iris", TextureClass.Foliage },
+            { "ap023_sakura_sprigs", TextureClass.Foliage },
+            { "ap023_satsuki", TextureClass.Foliage },
+            { "ap023_violet_sprigs", TextureClass.Foliage },
+            { "ap023_bamboo_old", TextureClass.Structure },
+            { "ap023_namako", TextureClass.Structure },
+            { "ap023_plaster", TextureClass.Structure },
+            { "ap023_plaster_interior", TextureClass.Structure },
+            { "ap023_rock_boulder", TextureClass.Structure },
+            { "ap023_roof_tiles", TextureClass.Structure },
+            { "ap023_stone_ashlar", TextureClass.Structure },
+            { "ap023_tatami", TextureClass.Structure },
+            { "ap023_washi", TextureClass.Structure },
+            { "ap023_wood_planks", TextureClass.Structure },
+            { "ap023_wood_timber", TextureClass.Structure }
         };
 
         public static IEnumerable<KeyValuePair<string, TextureClass>> TextureClassTable => ClassOfRoleTable;

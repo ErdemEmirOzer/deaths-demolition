@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_ap023_stone_ashlar_Packed.png",
+    "sourceSha256": "5a24ac2e63a16d14492444226f4a7f2163b5cd1482d593e807ad7e2768be691a",
+    "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-24T21:42:02.5867690Z",
+    "outputSha256": "cd2498cec49400e77836f6090b435a30b1c84f8bc85755392aedd4af9ed3bdcb"
+}

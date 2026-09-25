@@ -139,9 +139,11 @@ namespace DD.Art.Pipeline.EditorTools
                 for (int p = 0; p < variation.parts.Count; p++)
                 {
                     ArtLibraryManifest.Part part = variation.parts[p];
-                    if (part.lods == null || part.lods.Count != 3)
+                    // WP-074 B5: a detail part the production LOD rule drops at distance (AP-023 ropes, a fitting) carries LOD0 … LODn < 2
+                    // and shows in those LODs only.
+                    if (part.lods == null || part.lods.Count < 1 || part.lods.Count > 3)
                     {
-                        throw new InvalidOperationException("[ArtLibrary] " + variation.prefab + " part '" + part.name + "' must have 3 LODs.");
+                        throw new InvalidOperationException("[ArtLibrary] " + variation.prefab + " part '" + part.name + "' must have 1–3 LODs.");
                     }
 
                     Transform parent;
@@ -164,7 +166,7 @@ namespace DD.Art.Pipeline.EditorTools
                         sink = mainLods;
                     }
 
-                    for (int lod = 0; lod < 3; lod++)
+                    for (int lod = 0; lod < part.lods.Count; lod++)
                     {
                         ArtLibraryManifest.Lod entry = part.lods[lod];
                         Mesh mesh = LoadMesh(ap, family.family, entry.fbx, entry.@object);
@@ -432,6 +434,11 @@ namespace DD.Art.Pipeline.EditorTools
             public Bounds Bounds;
             public int Positions;
             public bool IsBox => Positions <= 8;
+            /// <summary>WP-074 B5 · an oriented box (mesh space) instead of <see cref="Bounds"/>: sloped deck segments stay a slope, not a step.</summary>
+            public bool Oriented;
+            public Vector3 ObbCenter;
+            public Quaternion ObbRotation;
+            public Vector3 ObbSize;
         }
 
         /// <summary>A hull shell at least this many times taller than wide, and no wider than <see cref="LeaningColumnMaxWidth"/>, is a culm: a capsule along its base→tip axis.</summary>
@@ -442,6 +449,20 @@ namespace DD.Art.Pipeline.EditorTools
 
         private static void BuildCollider(Transform parent, int index, Shell shellInfo, bool trigger)
         {
+            if (shellInfo.Oriented)
+            {
+                var obbGo = new GameObject("COL_" + index);
+                obbGo.transform.SetParent(parent, false);
+                obbGo.transform.localPosition = shellInfo.ObbCenter;
+                obbGo.transform.localRotation = shellInfo.ObbRotation;
+                obbGo.transform.localScale = Vector3.one;
+                var obbBox = obbGo.AddComponent<BoxCollider>();
+                obbBox.center = Vector3.zero;
+                obbBox.size = shellInfo.ObbSize;
+                obbBox.isTrigger = trigger;
+                return;
+            }
+
             Bounds shell = shellInfo.Bounds;
             if (TryBuildLeaningColumn(parent, index, shellInfo, trigger))
             {
@@ -566,7 +587,14 @@ namespace DD.Art.Pipeline.EditorTools
             for (int i = 0; i < collider.shellBoxes.Count; i++)
             {
                 ArtLibraryManifest.ShellBox box = collider.shellBoxes[i];
-                result.Add(new Shell { Bounds = box.MeshSpaceBounds(), Positions = box.positions });
+                var shell = new Shell { Bounds = box.MeshSpaceBounds(), Positions = box.positions };
+                if (box.HasObb)
+                {
+                    box.MeshSpaceObb(out shell.ObbCenter, out shell.ObbRotation, out shell.ObbSize);
+                    shell.Oriented = true;
+                }
+
+                result.Add(shell);
             }
 
             return result;

@@ -164,17 +164,18 @@ namespace DD.Art.Tests.EditMode
         [Test]
         public void PropMateryalleri_OrmV002_OcclusionBagli_TuretilmisMaskeGKanaliAO()
         {
-            int bound = 0, windRoles = 0;
+            int bound = 0, windRoles = 0, ap023 = 0, ap023Wind = 0;
             foreach (string role in ArtLibraryMaterialRoles.PackedTextureRoles())
             {
                 if (!ArtTextureRepack.CarriesOcclusion(role)) continue;
+                bool kit = role.StartsWith("ap023_", StringComparison.Ordinal);   // WP-074 B5: the AP-023 kit's ORM carries AO too
                 var m = AssetDatabase.LoadAssetAtPath<Material>(ArtPipelinePaths.Material(role));
                 Assert.IsNotNull(m, role);
                 if (ArtLibraryMaterialRoles.Get(role).Shader == ArtLibraryMaterialRoles.ShaderKind.FoliageWind)
                 {
                     // WP-038L: the AP-017 furin hangs on DD/Foliage Wind (no occlusion slot) — the derived mask still binds as MetallicSmoothness.
                     Assert.IsNotNull(m.GetTexture("_MetallicGlossMap"), role + ": _MetallicGlossMap");
-                    windRoles++;
+                    if (kit) ap023Wind++; else windRoles++;
                     continue;
                 }
                 Assert.IsNotNull(m.GetTexture("_OcclusionMap"), role + ": _OcclusionMap");
@@ -182,11 +183,13 @@ namespace DD.Art.Tests.EditMode
                 Assert.IsTrue(m.IsKeywordEnabled("_OCCLUSIONMAP"), role);
                 string prov = File.ReadAllText(ArtPipelinePaths.DerivedMaskProvenance(role));
                 Assert.IsTrue(prov.Contains("MetallicSmoothnessAO v2"), role + ": provenance v2");
-                bound++;
+                if (kit) ap023++; else bound++;
             }
 
             Assert.AreEqual(14, bound, "6 AP-005B prop rolü + 4 AP-017 Faz 2 prop rolü (WP-038I) + 4 Faz 2b Lit prop rolü (WP-038L)");
             Assert.AreEqual(1, windRoles, "WP-038L: furin rüzgâr gölgelendiricisinde");
+            Assert.AreEqual(19, ap023, "WP-074 B5: AP-023 19 Lit karo rolü (ORM AO'lu)");
+            Assert.AreEqual(1, ap023Wind, "WP-074 B5: AP-023 bamboo_culm rüzgâr gölgelendiricisinde");
         }
     }
 }

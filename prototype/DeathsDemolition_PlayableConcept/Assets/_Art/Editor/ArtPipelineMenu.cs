@@ -326,6 +326,31 @@ namespace DD.Art.Pipeline.EditorTools
         }
 
         /// <summary>
+        /// WP-074 B5 · The AP-023 world v5 kit (P-05 manifest v004, staged by wp-074/tools/stage-ap023.py): contract import, masks,
+        /// materials, one prefab per variation, the showcase. Batch: <c>-executeMethod …RunLibraryAp023</c>.
+        /// </summary>
+        [MenuItem(MenuRoot + "Run Library AP-023 (WP-074 B5)", priority = 308)]
+        public static void RunLibraryAp023()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                throw new InvalidOperationException(LogPrefix + "Run Library AP-023 cannot run in Play mode.");
+            }
+
+            Stopwatch total = Stopwatch.StartNew();
+            Debug.Log(LogPrefix + "Run Library AP-023: start (" + (Application.isBatchMode ? "batch" : "interactive") + ")");
+            LibraryStep(1, "Contract models (AP-023 FBX: mesh compression, lightmap UVs)", ReimportContractModels);
+            LibraryStep(2, "Contract textures (AP-023 tiles + atlases at the ADR-015-1 v3 classes)", ReimportContractTextures);
+            LibraryStep(3, "Library masks (AP-023 ORM → MetallicSmoothnessAO)", ArtTextureRepack.BuildAllLibrary);
+            LibraryStep(4, "Library materials (ap023_* roles)", ArtMaterialBuilder.BuildAllLibraryRoles);
+            LibraryStep(5, "AP-023 prefabs", () => ArtLibraryPrefabBuilder.BuildLibrary("AP-023"));
+            LibraryStep(6, "Rebuild library showcase", ArtLibraryShowcaseBuilder.Build);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log(LogPrefix + "Run Library AP-023: done in " + Seconds(total) + " s.");
+        }
+
+        /// <summary>
         /// WP-038 · The surface half of <see cref="RunWorldV4"/> only: surface materials (parameter round), the placement
         /// import with the AP-015P plates (scene, NavMesh with the water rows, build settings) and the bake preparation.
         /// Models, textures and prefabs are untouched — re-bake afterwards (<c>ArtLightingBake.BakeWorld</c>).

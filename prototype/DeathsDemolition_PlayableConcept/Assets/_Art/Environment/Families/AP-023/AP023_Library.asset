@@ -1,0 +1,460 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eb632164257994c5d995c181af152695, type: 3}
+  m_Name: AP023_Library
+  m_EditorClassIdentifier: 
+  ap: AP-023
+  items:
+  - family: azumaya
+    variation: V01
+    prefab: {fileID: 7522640209420957451, guid: a769758ab73034b88a98758700476a60, type: 3}
+  - family: bamboo_canopy
+    variation: V01
+    prefab: {fileID: 5777030262822012014, guid: ac4186e16c8e04fab9542db0eab07a0c, type: 3}
+  - family: bamboo_canopy
+    variation: V02
+    prefab: {fileID: 3323911960793087905, guid: 7094f9105b6e04ecfbdb039cff5c75f7, type: 3}
+  - family: bamboo_fallen
+    variation: V01
+    prefab: {fileID: 1265385045602595401, guid: 7f8d3a85bbd44498b95ff1a27f3f3021, type: 3}
+  - family: bamboo_stem
+    variation: V01
+    prefab: {fileID: 2924067696758517155, guid: 17ef234bec1654247bfd7840301c5524, type: 3}
+  - family: bamboo_stem
+    variation: V02
+    prefab: {fileID: 9046462598655342765, guid: a975712550ed64aff8ddb938cf539209, type: 3}
+  - family: bamboo_stem
+    variation: V03
+    prefab: {fileID: 5496725396986718528, guid: 1a31c845518ad4facbc1559efa9e6384, type: 3}
+  - family: bamboo_v2
+    variation: V01
+    prefab: {fileID: 2283221156886658877, guid: bbd9adfdb1b4b41d0870c2f03735cf5d, type: 3}
+  - family: bamboo_v2
+    variation: V02
+    prefab: {fileID: 4783818293282818672, guid: f2200cb9d1e2445c980d32e5280b3ef6, type: 3}
+  - family: bamboo_v2
+    variation: V03
+    prefab: {fileID: 503261031026552749, guid: 7210982f65f5d434cae9bf3e748ae188, type: 3}
+  - family: bamboo_v2
+    variation: V04
+    prefab: {fileID: 383499857558919420, guid: 2ebb648661c1a4ee1ac3cd8c0f387738, type: 3}
+  - family: bamboo_v2
+    variation: V05
+    prefab: {fileID: 7575755492904207036, guid: ff1ecc17d901746b7833889dff3a8910, type: 3}
+  - family: black_pine
+    variation: V01
+    prefab: {fileID: 6105139514288745047, guid: d6ef21f52770040be8d72dd6fbec7d46, type: 3}
+  - family: black_pine
+    variation: V02
+    prefab: {fileID: 3457087325085301500, guid: ab4990029847642b6b534e80ccbc9264, type: 3}
+  - family: black_pine
+    variation: V03
+    prefab: {fileID: 3961980017648349621, guid: 4c8ffb09fe689493cbb5a097ff9b54fe, type: 3}
+  - family: black_pine
+    variation: V04
+    prefab: {fileID: 3511023512904104799, guid: c0f922c411d6a4feab54f83eb49995a4, type: 3}
+  - family: engawa
+    variation: V01
+    prefab: {fileID: 7154829383467672485, guid: ad4617d4fbf55451189243f8863b0e22, type: 3}
+  - family: engawa
+    variation: V02
+    prefab: {fileID: 861341646163354187, guid: 4611dccac59fd4a50847af2eca9318b4, type: 3}
+  - family: engawa
+    variation: V03
+    prefab: {fileID: 4078861586335208708, guid: 8750d792da3f34fab85e35428a3ed487, type: 3}
+  - family: fence_kenninji
+    variation: V01
+    prefab: {fileID: 7504818206663545330, guid: a0fac33a1f28541228620d4f1b02988f, type: 3}
+  - family: fence_kenninji
+    variation: V02
+    prefab: {fileID: 4437040315249330008, guid: 222778caddba248699d22985658e620e, type: 3}
+  - family: fence_sodegaki
+    variation: V01
+    prefab: {fileID: 5360396458130154359, guid: abf26d110d8574d4ca194736d974d6e9, type: 3}
+  - family: fence_takegaki_gate
+    variation: V01
+    prefab: {fileID: 5881032114935361453, guid: 66ef6928d521342d3a5133656f02fda5, type: 3}
+  - family: fence_yotsume
+    variation: V01
+    prefab: {fileID: 5827316728840495474, guid: 9a55aaf365adb4e8481eecd90c0039e6, type: 3}
+  - family: fence_yotsume
+    variation: V02
+    prefab: {fileID: 2922121738937470794, guid: 0b4aa9709cb1047fa8d4529a3e81cd44, type: 3}
+  - family: gates
+    variation: V01
+    prefab: {fileID: 5422841818897123838, guid: 3f952b73be45d4a33a089ed34089dd05, type: 3}
+  - family: gates
+    variation: V02
+    prefab: {fileID: 3000493595839123867, guid: 83bf32a104c0a48429e6a4da5b4c38eb, type: 3}
+  - family: gates
+    variation: V03
+    prefab: {fileID: 3664307533175052301, guid: 1e94d4d257e244637b1d9beb7ad4e254, type: 3}
+  - family: gates
+    variation: V04
+    prefab: {fileID: 801279932337874525, guid: be2f1abf3fa814502990c5c2be5f5ed2, type: 3}
+  - family: gates
+    variation: V05
+    prefab: {fileID: 4729024307914422831, guid: 60516dc9a10ad4e19946a35c599dc220, type: 3}
+  - family: gates
+    variation: V06
+    prefab: {fileID: 8652018323853462591, guid: ffa927dd38cce4a429f2fb7f76e2eb69, type: 3}
+  - family: granite_kerb
+    variation: V01
+    prefab: {fileID: 6418882194423859166, guid: b42211912dc724050ad0b246e13f0060, type: 3}
+  - family: granite_kerb
+    variation: V02
+    prefab: {fileID: 5898318481825940235, guid: d6bc85284dd4241adb4c06d6b8472ba9, type: 3}
+  - family: granite_kerb
+    variation: V03
+    prefab: {fileID: 6565251799757258766, guid: 90758c12307a64277a727081ebf2c314, type: 3}
+  - family: groundcover
+    variation: V01
+    prefab: {fileID: 7786677860073697200, guid: 414caad00cb7e483b97e9d58cb0d67ed, type: 3}
+  - family: groundcover
+    variation: V02
+    prefab: {fileID: 876878102984816657, guid: 631524e9a00a842ef964b9827b28ec78, type: 3}
+  - family: groundcover
+    variation: V03
+    prefab: {fileID: 3406210293789081982, guid: b24e6e83eacca40668de950de113359a, type: 3}
+  - family: groundcover
+    variation: V04
+    prefab: {fileID: 4658885235201233549, guid: 07a70fcee971341ada4218ee26aebad6, type: 3}
+  - family: interior_kit
+    variation: V01
+    prefab: {fileID: 2550690747070019577, guid: 9b984ba6721624c34bc6e3ee0f0945a4, type: 3}
+  - family: interior_kit
+    variation: V02
+    prefab: {fileID: 316717676744847341, guid: 8c13364f4893244ccae249e13d9df9c9, type: 3}
+  - family: interior_kit
+    variation: V03
+    prefab: {fileID: 7433014270935445274, guid: d2ee1a5c7fb1945d7909c0d573ab0785, type: 3}
+  - family: interior_kit
+    variation: V04
+    prefab: {fileID: 2838296912580951598, guid: ad83c02a86551498083f3f8bb0101305, type: 3}
+  - family: interior_kit
+    variation: V05
+    prefab: {fileID: 2007793517817331149, guid: 4ec3b32ac401245d39ab42b4669809a3, type: 3}
+  - family: interior_kit
+    variation: V06
+    prefab: {fileID: 9032189588549032254, guid: f4e971d3d90a14b47bd810854ee69938, type: 3}
+  - family: interior_kit
+    variation: V07
+    prefab: {fileID: 8383182140165246326, guid: 6281b989efef145d5a010e8626961d30, type: 3}
+  - family: interior_kit
+    variation: V08
+    prefab: {fileID: 5638848477034934361, guid: dd312eff0dfb9463b9d39fdd7fda030a, type: 3}
+  - family: interior_kit
+    variation: V09
+    prefab: {fileID: 5776151422223862588, guid: 053b6a34ae18d48cf9e648f7002097c3, type: 3}
+  - family: kairo_bay
+    variation: V01
+    prefab: {fileID: 7362984151606363328, guid: b6e0cb473d22848b6a295924e7cd91ef, type: 3}
+  - family: kairo_bay
+    variation: V02
+    prefab: {fileID: 5526727040790223883, guid: c8bd2758b30f843b487d5b585a69d58e, type: 3}
+  - family: kairo_bay
+    variation: V03
+    prefab: {fileID: 770517424692039811, guid: 8943df9418a9c49de924bdb625e69a1c, type: 3}
+  - family: kairo_bay
+    variation: V04
+    prefab: {fileID: 6720110958627919127, guid: fce7a78e0136b47b297a717cf06f863e, type: 3}
+  - family: kairo_bay
+    variation: V05
+    prefab: {fileID: 2659627135275414737, guid: d1db24c6e5d924067889426f78564ca3, type: 3}
+  - family: kairo_bay
+    variation: V06
+    prefab: {fileID: 3401131543461180092, guid: af74190c4b78d4855abfa28bf2bb8183, type: 3}
+  - family: kairo_bay
+    variation: V07
+    prefab: {fileID: 4174035431353034617, guid: c39b5c64f42ae43a08abb52d72745997, type: 3}
+  - family: komodaru
+    variation: V01
+    prefab: {fileID: 6622191855261438926, guid: c251f86a359e244fa954395e30e042ac, type: 3}
+  - family: komodaru
+    variation: V02
+    prefab: {fileID: 963656827787753537, guid: 2f0762d23b7b245c589759b4905d3e23, type: 3}
+  - family: kura
+    variation: V01
+    prefab: {fileID: 5973900634507661864, guid: 56a7746a459a04782b16e987d587ceeb, type: 3}
+  - family: lantern_chochin
+    variation: V01
+    prefab: {fileID: 7900049836282929242, guid: 28c375441a83143009833ebf8fb35dc1, type: 3}
+  - family: lantern_kasuga
+    variation: V01
+    prefab: {fileID: 6722314107784276778, guid: d2149f3d8ceee453f9287b0a204f3d4a, type: 3}
+  - family: lantern_kasuga
+    variation: V02
+    prefab: {fileID: 2910466756649266751, guid: a8b7caafcc00b42739b1980721cdecff, type: 3}
+  - family: lantern_oribe
+    variation: V01
+    prefab: {fileID: 1947787100709679142, guid: a91058e7865ca4d3eb6fb4ee89f065c0, type: 3}
+  - family: lantern_oribe
+    variation: V02
+    prefab: {fileID: 5510141444143754664, guid: f81d4d77f4eb340be804afaaf5480fd8, type: 3}
+  - family: lantern_tsuri
+    variation: V01
+    prefab: {fileID: 6863791871615628582, guid: b712557369ad54372ad95734148d8cd0, type: 3}
+  - family: lantern_yukimi
+    variation: V01
+    prefab: {fileID: 4156274209192437591, guid: 3b8d76809c43e431d84339fc92b1a459, type: 3}
+  - family: lantern_yukimi
+    variation: V02
+    prefab: {fileID: 4204623925386599097, guid: b13367980c82046c2a068aa001b00790, type: 3}
+  - family: momiji
+    variation: V01
+    prefab: {fileID: 7010080662066253375, guid: 1de0d832c25d1401a902cacf301273a8, type: 3}
+  - family: nagamochi
+    variation: V01
+    prefab: {fileID: 2783110601688399293, guid: 5db9378b81ab64182a3351a291f459a8, type: 3}
+  - family: palace_kit
+    variation: V01
+    prefab: {fileID: 3421830654271083060, guid: 15f89c08c3b4f45be98e5d5610b6b3ed, type: 3}
+  - family: palace_kit
+    variation: V02
+    prefab: {fileID: 6193372102877257881, guid: f8fa72b3153994e7fb3e7f6d9ee7f65e, type: 3}
+  - family: palace_kit
+    variation: V03
+    prefab: {fileID: 6175972837426956328, guid: f0dc09e7c173f4928b6d7cb1a36a91a4, type: 3}
+  - family: palace_kit
+    variation: V04
+    prefab: {fileID: 6151088425764638223, guid: 59f92860a6d7c4cf1b14272651b6365c, type: 3}
+  - family: palace_kit
+    variation: V05
+    prefab: {fileID: 3726959661820759369, guid: 8586de2bd762d4795846e9c79f9cf61b, type: 3}
+  - family: palace_kit
+    variation: V06
+    prefab: {fileID: 2390109248914423618, guid: e29e3c89f73c04f45bd712f8e72200e9, type: 3}
+  - family: palace_kit
+    variation: V07
+    prefab: {fileID: 4620303092818458161, guid: e72fd70f703274f70891d06a5aeeeff6, type: 3}
+  - family: palace_kit
+    variation: V08
+    prefab: {fileID: 6559560946089408002, guid: eb0c10d7c42b64df785fd40eda7d9e48, type: 3}
+  - family: palace_kit
+    variation: V09
+    prefab: {fileID: 1433251506185889614, guid: 8a1154e7a8a964ddcb85f87eb1fbf7c2, type: 3}
+  - family: palace_kit
+    variation: V10
+    prefab: {fileID: 5583545774586634714, guid: 5dfa2578780e449098a499017c38a057, type: 3}
+  - family: palace_kit
+    variation: V11
+    prefab: {fileID: 8942963285698227452, guid: d34842ce8f3134fdc978bf0d67ff6b1c, type: 3}
+  - family: palace_kit
+    variation: V12
+    prefab: {fileID: 6131557438153650808, guid: 2db9a0685b3074e7094c25d0187376e9, type: 3}
+  - family: palace_kit
+    variation: V13
+    prefab: {fileID: 4719555413681600965, guid: b59215851a2cb4922b81a75832276276, type: 3}
+  - family: palace_kit
+    variation: V14
+    prefab: {fileID: 1249382413139879144, guid: 318700e90211243f29ec620d1e198402, type: 3}
+  - family: palace_kit
+    variation: V15
+    prefab: {fileID: 1737468599935073192, guid: 236398365bfdf4d588645ce0c2043d9d, type: 3}
+  - family: palace_kit
+    variation: V16
+    prefab: {fileID: 1148270935317811392, guid: b91faa96492af46309e304335c9f9a2e, type: 3}
+  - family: palace_kit
+    variation: V17
+    prefab: {fileID: 4881580101849313755, guid: d6c2775a58e084320946ab1f14ea1c90, type: 3}
+  - family: palace_kit
+    variation: V18
+    prefab: {fileID: 8427713525712711997, guid: 9e712b47c8fd04101a7e5558073da9cd, type: 3}
+  - family: palace_kit
+    variation: V19
+    prefab: {fileID: 7829868399257943933, guid: 8ba2a99165bc24463a7e4da9177bdad8, type: 3}
+  - family: palace_kit
+    variation: V20
+    prefab: {fileID: 2208718238997279363, guid: f276a7e0c13fb493fa51144b5059d396, type: 3}
+  - family: palace_kit
+    variation: V21
+    prefab: {fileID: 6235015867359229209, guid: 92124e84f2ab84083bbbb7b1cdf2b7fb, type: 3}
+  - family: palace_kit
+    variation: V22
+    prefab: {fileID: 4240006635916600130, guid: a3540d215717f410abd79b3666a33451, type: 3}
+  - family: palace_kit
+    variation: V23
+    prefab: {fileID: 7634868626762174399, guid: 8cbcfd7cdb52d42cfb94bc4bf47f4e23, type: 3}
+  - family: palace_kit
+    variation: V24
+    prefab: {fileID: 5408974435132679973, guid: 13b00dc2d75384353b33ce592164f2e1, type: 3}
+  - family: palace_kit
+    variation: V25
+    prefab: {fileID: 6370881532116849318, guid: d5623f274f94748f8b454245b6d92568, type: 3}
+  - family: palace_kit
+    variation: V26
+    prefab: {fileID: 4385789020651595876, guid: 44dfd295dffdb4e299f56214e7a6808f, type: 3}
+  - family: palace_kit
+    variation: V27
+    prefab: {fileID: 341194901809589007, guid: 5d690ebd095c149cb8c084ab95956c93, type: 3}
+  - family: palace_kit
+    variation: V28
+    prefab: {fileID: 8343139158380655483, guid: 9e1e9fe0ec4e94aeda90b2521b49c030, type: 3}
+  - family: palace_kit
+    variation: V29
+    prefab: {fileID: 7806495531431251641, guid: 01458b1aa3a9b47a0a78b7a17cf1e4a6, type: 3}
+  - family: palace_kit
+    variation: V30
+    prefab: {fileID: 2871030667540768323, guid: 351a0def430ea479f869b71a1906362b, type: 3}
+  - family: palace_kit
+    variation: V31
+    prefab: {fileID: 6368847320305322151, guid: 5122b559f48fe4fc5b00c05aae976001, type: 3}
+  - family: palace_kit
+    variation: V32
+    prefab: {fileID: 3091303737387904832, guid: ceed43e53fa3b47c8b72c75a43dafc96, type: 3}
+  - family: palace_kit
+    variation: V33
+    prefab: {fileID: 2605083292880246378, guid: 38ff08f7acd5d44ffb8be2a3c3153aea, type: 3}
+  - family: palace_kit
+    variation: V34
+    prefab: {fileID: 8177111037116935067, guid: 0f432dd817f07451d9d12301e947d78b, type: 3}
+  - family: pavilion
+    variation: V01
+    prefab: {fileID: 3456212426142249216, guid: 619b02821c29a43098ae764e3f7a77eb, type: 3}
+  - family: pond_reeds
+    variation: V01
+    prefab: {fileID: 7645441451563576721, guid: 5f37f54fda5084a13b733cdb10b1f32d, type: 3}
+  - family: pond_reeds
+    variation: V02
+    prefab: {fileID: 7630453304581905506, guid: 7a627a8276de441cab83edaa8ef1eed6, type: 3}
+  - family: pond_reeds
+    variation: V03
+    prefab: {fileID: 5980361547753287513, guid: 49ee5e655f8a64d698c0b29baaf2b8c5, type: 3}
+  - family: pond_reeds
+    variation: V04
+    prefab: {fileID: 6340925242459947962, guid: 172d450e8811f45db8a4d1b110b30ca8, type: 3}
+  - family: pond_rock
+    variation: V01
+    prefab: {fileID: 4145855200957900347, guid: 7f5160c2ebba14ec88cb01556d3a7c23, type: 3}
+  - family: pond_rock
+    variation: V02
+    prefab: {fileID: 4887887277065756960, guid: 94bd52cd7381d418d8d3a855e40dd630, type: 3}
+  - family: pond_rock
+    variation: V03
+    prefab: {fileID: 3762660855136179240, guid: fa4b0b4f167e54c2f9685b99ecd56a4d, type: 3}
+  - family: pond_rock
+    variation: V04
+    prefab: {fileID: 6906515845969673682, guid: 0f8ae2dbd7bc3455e94ff81726378ecb, type: 3}
+  - family: pond_rock
+    variation: V05
+    prefab: {fileID: 9157186993987824868, guid: 4185dcb1762be414ba875ba0d554401b, type: 3}
+  - family: pond_shore_moss
+    variation: V01
+    prefab: {fileID: 6312566598920474175, guid: 0e6cab15ad8e7425d8fd32e0b17a4fad, type: 3}
+  - family: pond_shore_moss
+    variation: V02
+    prefab: {fileID: 5911866663768935836, guid: 5b1688e4c0a9a4d55b936cf35d8de7a2, type: 3}
+  - family: pond_shore_moss
+    variation: V03
+    prefab: {fileID: 4838636489435904621, guid: 747197e9a744a4d229b3a68c57eae271, type: 3}
+  - family: pond_shore_pebble
+    variation: V01
+    prefab: {fileID: 1108472792927516392, guid: 489a177042bba4bec85992c3911a16b7, type: 3}
+  - family: pond_shore_pebble
+    variation: V02
+    prefab: {fileID: 8948785713295106207, guid: 1d3ca26db42f74a45ab4719d322cbc99, type: 3}
+  - family: pond_shore_pebble
+    variation: V03
+    prefab: {fileID: 1397790759456112328, guid: 8623fd71d450749efac08b9e2ccddf3e, type: 3}
+  - family: pond_stepstone
+    variation: V01
+    prefab: {fileID: 6618560238054666024, guid: e303665a2a6c043238b2b35c9045d878, type: 3}
+  - family: pond_stepstone
+    variation: V02
+    prefab: {fileID: 1504792219174877671, guid: e918bcab56f63412bb6ec1c7a968889b, type: 3}
+  - family: pond_stepstone
+    variation: V03
+    prefab: {fileID: 7269136078319974492, guid: 51151264af2884db583275e1d92c4373, type: 3}
+  - family: rock_large
+    variation: V01
+    prefab: {fileID: 2446138676660363805, guid: df006c35bdbde4ce9829aa8fc8d385f6, type: 3}
+  - family: rock_large
+    variation: V02
+    prefab: {fileID: 5993704869357170333, guid: 2a1b1221ef7914cccbd0de1fde073f9c, type: 3}
+  - family: rock_large
+    variation: V03
+    prefab: {fileID: 8011429660395392091, guid: c1e8da75d1e4e4ab39a2c2e50fa11178, type: 3}
+  - family: rock_large
+    variation: V04
+    prefab: {fileID: 8218808440517749706, guid: 602fd10abcdca4da6aeb1bc5705ef2d8, type: 3}
+  - family: rock_large
+    variation: V05
+    prefab: {fileID: 5764619486990319769, guid: 2dc34c5c0ffc2492ba3fa0ecf196f7d6, type: 3}
+  - family: sakura_v2
+    variation: V01
+    prefab: {fileID: 1138579666554851357, guid: b74792d8f90bd4851b0a11c36d6e0a89, type: 3}
+  - family: sakura_v2
+    variation: V02
+    prefab: {fileID: 1525610253471537223, guid: a9f0367cdd235441e88695fd3f4353e8, type: 3}
+  - family: sakura_v2
+    variation: V03
+    prefab: {fileID: 8312423179243496331, guid: 5320072cb0a634e339c3e96858054035, type: 3}
+  - family: satsuki
+    variation: V01
+    prefab: {fileID: 7487996622066305182, guid: 44ae335e0af1c4a3d8abc8091d71fe2f, type: 3}
+  - family: satsuki
+    variation: V02
+    prefab: {fileID: 3353680084416905218, guid: 77f2b8162b7994ca2b86aeb02f4e2a5b, type: 3}
+  - family: satsuki
+    variation: V03
+    prefab: {fileID: 4079095887146785765, guid: 6e62aee3f43ba4f4990f5a905fc35911, type: 3}
+  - family: slab_bridge
+    variation: V01
+    prefab: {fileID: 7480434625271206540, guid: 1f47154427aa6478a9387ded0d279f4e, type: 3}
+  - family: taiko_bridge
+    variation: V01
+    prefab: {fileID: 1227948440994125655, guid: 53e2dfbdd822e4dab8d106dd6aa35b7e, type: 3}
+  - family: tawara
+    variation: V01
+    prefab: {fileID: 4115574853475872039, guid: de62b9ef31a664fcb8b96fd1c777da8b, type: 3}
+  - family: tawara
+    variation: V02
+    prefab: {fileID: 8370762785755183312, guid: 7fd26d9874bba482b89b8832e4d40027, type: 3}
+  - family: teahouse
+    variation: V01
+    prefab: {fileID: 1328680190613393660, guid: 00809a89d9b704d35b2d0a8685ac22bc, type: 3}
+  - family: tsuridono
+    variation: V01
+    prefab: {fileID: 4703746013468496883, guid: 3fb20ec257a0447698aa030eee653697, type: 3}
+  - family: violet_tree
+    variation: V01
+    prefab: {fileID: 3000573033324903189, guid: 41f8d8cf5599f428580a5631e7425c33, type: 3}
+  - family: wall_kit
+    variation: V01
+    prefab: {fileID: 5854312463959718941, guid: 30690b9d420dd493192c69df24f39035, type: 3}
+  - family: wall_kit
+    variation: V02
+    prefab: {fileID: 7991875197086747973, guid: 9ef618b71899447f3bc0ee6ebd2b3b17, type: 3}
+  - family: wall_kit
+    variation: V03
+    prefab: {fileID: 5074539785014812981, guid: 7944e40e0608142d681611c440d52b97, type: 3}
+  - family: wall_kit
+    variation: V04
+    prefab: {fileID: 7822630498722331677, guid: 4917bbed32fca4c0290f35c6a510030d, type: 3}
+  - family: wall_kit
+    variation: V05
+    prefab: {fileID: 1031050376420160495, guid: f06f86be2d2e14ff6b3a1a011c75ccf4, type: 3}
+  - family: wall_kit
+    variation: V06
+    prefab: {fileID: 4222108325598219490, guid: e546e508ef9c24334b08a7d4ec4bbe29, type: 3}
+  - family: wall_kit
+    variation: V07
+    prefab: {fileID: 5263732692964678832, guid: 1c692b5bd8beb40d1ae90de1544f216d, type: 3}
+  - family: wall_kit
+    variation: V08
+    prefab: {fileID: 3121125149865721152, guid: 316ed070a46d5447486f80a718742886, type: 3}
+  - family: weapon_crate
+    variation: V01
+    prefab: {fileID: 3569793401418752944, guid: 408dc946dad5b484c9f39e744a4117b7, type: 3}
+  - family: yatsuhashi
+    variation: V01
+    prefab: {fileID: 8882717993483599277, guid: a938b983d471a491b8fa64abdb8b474f, type: 3}

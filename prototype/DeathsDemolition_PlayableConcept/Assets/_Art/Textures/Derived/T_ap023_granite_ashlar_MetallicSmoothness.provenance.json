@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_ap023_granite_ashlar_Packed.png",
+    "sourceSha256": "235299de5859e8b3cf4ca71c384b80745751ac272b68566662d5932db6aa8529",
+    "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-24T21:41:55.9200320Z",
+    "outputSha256": "fa9f49d26442120c0f300e2470cebc8dcb583f6685f563a6b0b83b087db58852"
+}
