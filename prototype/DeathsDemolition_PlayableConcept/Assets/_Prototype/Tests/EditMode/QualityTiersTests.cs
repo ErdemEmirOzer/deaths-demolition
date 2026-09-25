@@ -113,6 +113,7 @@ namespace DD.Prototype.Tests.EditMode
                 Assert.AreEqual(QualityTiers.LodBiasBase[t], level.FindPropertyRelative("lodBias").floatValue, 1e-4f, QualityTiers.LevelNames[t] + " lodBias");
                 Assert.AreEqual(QualityTiers.StreamingBudgetMb[t], level.FindPropertyRelative("streamingMipmapsMemoryBudget").floatValue, 1e-3f, QualityTiers.LevelNames[t] + " akış bütçesi");
                 Assert.AreEqual(pipelines[t], AssetDatabase.GetAssetPath(level.FindPropertyRelative("customRenderPipeline").objectReferenceValue), QualityTiers.LevelNames[t] + " URP varlığı");
+                Assert.AreEqual(new[] { 0, 2, 4 }[t], level.FindPropertyRelative("antiAliasing").intValue, QualityTiers.LevelNames[t] + " seviye MSAA = URP varlığı (Unity etkin seviyede eşitler)");
             }
 
             SerializedObject high = Asset(pipelines[1]), performance = Asset(pipelines[0]), cinematic = Asset(pipelines[2]);

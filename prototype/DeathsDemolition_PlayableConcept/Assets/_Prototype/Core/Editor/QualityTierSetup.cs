@@ -118,6 +118,9 @@ namespace DD.Prototype.Core.EditorTools
                 level.FindPropertyRelative("lodBias").floatValue = QualityTiers.LodBiasBase[t];
                 level.FindPropertyRelative("streamingMipmapsMemoryBudget").floatValue = QualityTiers.StreamingBudgetMb[t];
                 level.FindPropertyRelative("customRenderPipeline").objectReferenceValue = pipelines[t];
+                // The level's MSAA mirrors its URP asset (Unity re-syncs it whenever the level is active, so a mismatch dirties the file).
+                int samples = ((UniversalRenderPipelineAsset)pipelines[t]).msaaSampleCount;
+                level.FindPropertyRelative("antiAliasing").intValue = samples > 1 ? samples : 0;
             }
 
             so.FindProperty("m_CurrentQuality").intValue = (int)QualityTiers.DefaultTier;
