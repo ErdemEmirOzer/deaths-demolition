@@ -134,12 +134,35 @@ namespace DD.Prototype.Feedback
                     CameraRequests++;
                 }
                 bool localStop = index == globalStopWinner &&
-                    HitStopService.RequestForGroup(e.GroupId, e.HitStopSeconds,
+                    HitStopService.RequestForGroup(e.GroupId, ModeHitStop(e.Kind, e.HitStopSeconds),
                         snapshot.HitStop.minIntervalSeconds, snapshot.HitStop.presentationScale);
                 if (localStop) AcceptedLocalStops++;
                 FeelTelemetry.RecordResolved(e, localStop, snapshot.Revision);
             }
             s_count = 0;
+        }
+
+        /// <summary>
+        /// WP-073 B4 (direction A4.5 §5.1): in TP / FP the hit-stop comes from the camera-mode table — kill 18 / 15 ms, armour
+        /// break 35 / 30, heavy death 40 / 35, player heavy hit 20 / 15 — and FP never stops longer than 35 ms. Top-down keeps
+        /// the authored (live-editable) FeelConfig value; an event without a stop stays without one.
+        /// </summary>
+        public static float ModeHitStop(ImpactFeelId kind, float authored)
+        {
+            if (authored <= 0f) return 0f;
+            CameraMode mode = CameraModeService.Current;
+            if (mode == CameraMode.TopDown) return authored;
+            HitStopEventId id;
+            switch (kind)
+            {
+                case ImpactFeelId.Death: id = HitStopEventId.Kill; break;
+                case ImpactFeelId.HeavyDeath: id = HitStopEventId.HeavyDeath; break;
+                case ImpactFeelId.ArmorBreak: id = HitStopEventId.ArmorBreak; break;
+                case ImpactFeelId.PlayerDamage: id = HitStopEventId.PlayerHeavyHit; break;
+                default: return mode == CameraMode.FirstPerson ? Mathf.Min(authored, CameraModesFeel.HitStopFpCapSeconds) : authored;
+            }
+
+            return CameraModesFeel.HitStopSeconds(id, mode);
         }
 
         /// <summary>Production late-frame order: age prior tokens before resolving new requests.</summary>

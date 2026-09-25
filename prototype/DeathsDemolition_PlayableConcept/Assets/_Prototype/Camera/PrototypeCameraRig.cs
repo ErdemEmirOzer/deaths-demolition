@@ -1193,6 +1193,7 @@ namespace DD.Prototype.CameraSystem
         private float _landDip;
         private float _landDipVelocity;
         private bool _wasGrounded = true;
+        private int _bobFootFrame = -1;
         private float _airSeconds;
 
         /// <summary>
@@ -1344,8 +1345,14 @@ namespace DD.Prototype.CameraSystem
                 BobFeel walk = CameraModesFeel.BobWalk, runBand = CameraModesFeel.BobRun;
                 float hz = Mathf.Lerp(Mathf.Lerp(walk.MinHz, walk.MaxHz, Mathf.InverseLerp(1.5f, CameraModesFeel.BobWalkSpeed, speed)),
                     Mathf.Lerp(runBand.MinHz, runBand.MaxHz, run01), run01);
-                // One bob cycle = one stride (two steps): the phase advances at half the step cadence.
+                // One bob cycle = one stride (two steps): the phase advances at half the step cadence. J5: a footfall of the
+                // player's own animation locks it — the trough on the contact (left foot phase 0, right 0.5).
                 _bobPhase = Mathf.Repeat(_bobPhase + dt * hz * 0.5f, 1f);
+                if (CameraModesFeel.FootContactFrame > _bobFootFrame)
+                {
+                    _bobFootFrame = CameraModesFeel.FootContactFrame;
+                    _bobPhase = CameraModesFeel.FootContactLeft ? 0f : 0.5f;
+                }
                 float cadence = hz > CameraModesFeel.BobHighCadenceHz ? CameraModesFeel.BobHighCadenceScale : 1f;
                 float amp = _bobAmount * settings.HeadBobScale * cadence * (mode == CameraMode.ThirdPerson ? CameraModesFeel.BobTpScale : 1f);
                 float vertical = Mathf.Lerp(walk.VerticalCm, runBand.VerticalCm, run01) * 0.01f;

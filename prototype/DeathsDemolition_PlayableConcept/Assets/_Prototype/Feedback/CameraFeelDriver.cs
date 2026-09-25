@@ -77,6 +77,7 @@ namespace DD.Prototype.Feedback
             ProjectileEvents.Spawned += OnSpawned;
             HitFeedbackDirector.EnemyHitDressed += OnEnemyHitDressed;
             PlayerHealth.AnyDamaged += OnPlayerDamaged;
+            DD.Prototype.Characters.CharacterAnimationEvents.Any += OnAnimationEvent;
         }
 
         private void Unsubscribe()
@@ -84,7 +85,33 @@ namespace DD.Prototype.Feedback
             ProjectileEvents.Spawned -= OnSpawned;
             HitFeedbackDirector.EnemyHitDressed -= OnEnemyHitDressed;
             PlayerHealth.AnyDamaged -= OnPlayerDamaged;
+            DD.Prototype.Characters.CharacterAnimationEvents.Any -= OnAnimationEvent;
         }
+
+        // ------------------------------------------------------------------ J5 · the player's footfalls lock the bob phase
+
+        private Object _playerRoot;
+        private DD.Prototype.Characters.CharacterAnimationEvents _playerEvents;
+
+        private void OnAnimationEvent(DD.Prototype.Characters.CharacterAnimationEvents source, DD.Prototype.Characters.CharacterAnimationEvent e)
+        {
+            if (e != DD.Prototype.Characters.CharacterAnimationEvent.FootLeft && e != DD.Prototype.Characters.CharacterAnimationEvent.FootRight) return;
+            var player = PlayerRegistry.Primary;
+            if (player == null) return;
+            if (!ReferenceEquals(_playerRoot, player))
+            {
+                _playerRoot = player;
+                _playerEvents = player.GetComponentInChildren<DD.Prototype.Characters.CharacterAnimationEvents>(true);
+            }
+
+            if (source != null && source == _playerEvents)
+            {
+                CameraModesFeel.ReportFootContact(e == DD.Prototype.Characters.CharacterAnimationEvent.FootLeft);
+                FootContacts++;
+            }
+        }
+
+        public int FootContacts { get; private set; }
 
         // ------------------------------------------------------------------ fire
 

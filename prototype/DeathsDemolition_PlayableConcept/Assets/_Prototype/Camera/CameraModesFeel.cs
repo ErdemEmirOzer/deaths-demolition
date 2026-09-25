@@ -148,6 +148,19 @@ namespace DD.Prototype.CameraSystem
             Row("sw_gel", FeelWeight.W1, 0.20f, 0.20f, 0.8f, 0.48f, 6f, 0.10f, 0.20f, 3.0f),
         };
 
+        /// <summary>
+        /// WP-073 B4 J5: the player's last footfall (animation events foot_l / foot_r, reported by the S-07 driver) — the rig
+        /// locks the bob phase to it so the camera trough lands on the contact even when the feet slide.
+        /// </summary>
+        public static int FootContactFrame = -1;
+        public static bool FootContactLeft;
+
+        public static void ReportFootContact(bool left)
+        {
+            FootContactFrame = Time.frameCount;
+            FootContactLeft = left;
+        }
+
         /// <summary>The row of the weapon that fired last (set by the S-07 feel driver per shot; the rig's recoil return reads it).</summary>
         public static CameraWeaponFeelRow ActiveRow = null;
 

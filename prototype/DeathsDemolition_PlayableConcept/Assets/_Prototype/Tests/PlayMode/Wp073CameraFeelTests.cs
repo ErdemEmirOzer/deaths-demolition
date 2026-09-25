@@ -163,6 +163,31 @@ namespace DD.Prototype.Tests.PlayMode
 
         [UnityTest]
         [Timeout(60000)]
+        public IEnumerator J5_AyakTemasiBobCukuru_HitStopModTablosu()
+        {
+            // Walking: a reported footfall puts the camera in the bob trough on the next frame (J5: ≤ 1 frame).
+            for (int i = 0; i < 40; i++) { _govde.transform.position += Vector3.forward * (3f / 60f); yield return null; }
+            float lowest = float.MaxValue;
+            for (int i = 0; i < 40; i++) { _govde.transform.position += Vector3.forward * (3f / 60f); yield return null; lowest = Mathf.Min(lowest, Kamera.localPosition.y); }
+            _govde.transform.position += Vector3.forward * (3f / 60f);
+            CameraModesFeel.ReportFootContact(true);
+            yield return null;
+            float atContact = Kamera.localPosition.y;
+            Debug.Log("[DD-TEST] wp073.b4 J5 contact y=" + atContact + " lowest=" + lowest);
+            Assert.LessOrEqual(atContact, lowest + 0.002f, "ayak temasında kamera bob çukurunda olmalı");
+
+            // Hit-stop per mode (A4.5 §5.1): FP ≤ 35 ms from the table; top-down keeps the authored FeelConfig value.
+            Assert.AreEqual(0.015f, FeelEventRouter.ModeHitStop(ImpactFeelId.Death, 0.05f), 1e-4f, "FP öldürme 15 ms");
+            Assert.AreEqual(0.030f, FeelEventRouter.ModeHitStop(ImpactFeelId.ArmorBreak, 0.05f), 1e-4f, "FP zırh kırılması 30 ms");
+            Assert.AreEqual(0.035f, FeelEventRouter.ModeHitStop(ImpactFeelId.Explosion, 0.08f), 1e-4f, "FP tavanı 35 ms");
+            Assert.AreEqual(0f, FeelEventRouter.ModeHitStop(ImpactFeelId.Fire, 0f), 1e-6f, "durdurmasız olay durdurmasız kalır");
+            CameraModeService.Request(CameraMode.TopDown, instant: true);
+            yield return null;
+            Assert.AreEqual(0.05f, FeelEventRouter.ModeHitStop(ImpactFeelId.Death, 0.05f), 1e-4f, "tepeden: yazılan değer");
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
         public IEnumerator Atis_RollTavaninda_NisanOynamaz_HerSilahaSatir()
         {
             CameraFeelDriver driver = CameraFeelDriver.Ensure();
