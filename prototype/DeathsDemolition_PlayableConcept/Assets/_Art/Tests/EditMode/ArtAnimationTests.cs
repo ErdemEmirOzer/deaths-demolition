@@ -172,6 +172,15 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(3, set.FpWeaponSets.Count, "FP AOC ar_1 / ar_2 / smg_1");
             Assert.AreEqual(set.Clip("AP022_fp_smg_1_idle_aim"), set.FpWeaponSets[2].overrides[set.Clip("AP022_fp_ar_1_idle_aim")], "FP smg_1 kendi dinlenmesi");
             Assert.AreEqual(set.Clip("AP022_fp_ar_2_idle_aim"), set.FpWeaponSets[1].overrides[set.Clip("AP022_fp_ar_1_idle_aim")], "FP ar_2 kendi dinlenmesi (5b, silaha özel klip)");
+            // C-00 25.09 (S-05): a generated controller / AOC never references a GUID without an asset (deleted class FP clips, f8cdcebf)
+            var dangling = new List<string>();
+            foreach (string gen in System.IO.Directory.GetFiles("Assets/_Art/Characters/Player/Generated"))
+            {
+                if (!gen.EndsWith(".controller") && !gen.EndsWith(".overrideController")) continue;
+                foreach (System.Text.RegularExpressions.Match m in System.Text.RegularExpressions.Regex.Matches(System.IO.File.ReadAllText(gen), "guid: ([0-9a-f]{32})"))
+                    if (string.IsNullOrEmpty(AssetDatabase.GUIDToAssetPath(m.Groups[1].Value))) dangling.Add(System.IO.Path.GetFileName(gen) + " → " + m.Groups[1].Value);
+            }
+            Assert.IsEmpty(dangling, "üretilen oyuncu controller'ları varlığı olmayan GUID'e bağlı");
             int rests = 6 + (v3 ? 1 : 0);
 
             Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 0, C.DeathState + "_0")); Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 0, C.DeathState + "_1"));

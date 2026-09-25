@@ -899,6 +899,17 @@ namespace DD.Art.Pipeline.EditorTools
             return -1;
         }
 
+        // An AOC keeps its serialized pairs across rebuilds, including clips no longer in the controller (a deleted class FP clip
+        // stayed as a GUID without an asset, C-00 25.09); the pairs are rewritten from the current controller every build.
+        private static void ClearStalePairs(AnimatorOverrideController aoc)
+        {
+            var so = new SerializedObject(aoc);
+            SerializedProperty list = so.FindProperty("m_Clips");
+            if (list == null || list.arraySize == 0) return;
+            list.ClearArray();
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
         /// <summary>
         /// WP-071 B4b (K8 / A6.2): one AnimatorOverrideController per v3 animation set (WeaponDefinition.AnimSet), overriding only
         /// the weapon-own slots (fire / reload_tac / reload_empty) over the base controller, whose v3 states carry the first set's
@@ -970,6 +981,7 @@ namespace DD.Art.Pipeline.EditorTools
                 var aoc = AssetDatabase.LoadAssetAtPath<AnimatorOverrideController>(path);
                 if (aoc == null) { aoc = new AnimatorOverrideController(c); AssetDatabase.CreateAsset(aoc, path); }
                 aoc.runtimeAnimatorController = c;
+                ClearStalePairs(aoc);
                 // FP: every slot may have a weapon-specific clip (AP022_fp_<set>_<slot>, e.g. ar_2's own rest on its fpView) over the class one
                 var pairs = new List<KeyValuePair<AnimationClip, AnimationClip>>();
                 foreach (string slot in ClassAndOwnSlots)
@@ -1030,6 +1042,7 @@ namespace DD.Art.Pipeline.EditorTools
                 var aoc = AssetDatabase.LoadAssetAtPath<AnimatorOverrideController>(path);
                 if (aoc == null) { aoc = new AnimatorOverrideController(controller); AssetDatabase.CreateAsset(aoc, path); }
                 aoc.runtimeAnimatorController = controller;
+                ClearStalePairs(aoc);
                 // weapon slots always; the class slots too when the set is another class (smg_1 over the ar base)
                 bool otherClass = C.WeaponClassOf(animSet) != C.WeaponClassOf(baseSet);
                 var pairs = new List<KeyValuePair<AnimationClip, AnimationClip>>();
