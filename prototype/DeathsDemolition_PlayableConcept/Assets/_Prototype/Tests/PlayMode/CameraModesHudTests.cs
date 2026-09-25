@@ -66,7 +66,9 @@ namespace DD.Prototype.Tests.PlayMode
             yield return Bekle(() => !CameraModeService.IsTransitioning, 5f, "harman biter");
             yield return new WaitForSecondsRealtime(0.5f);   // the cluster's Base move
             float height = ((RectTransform)hud.WeaponCluster.parent).rect.height;
-            Assert.AreEqual(home.y, hud.WeaponCluster.anchoredPosition.y, 2f, "FP: silah kümesi köşede (WP-070V parite)");
+            Vector2 fpAt = RunHudScreen.WeaponClusterPosition(home, true, ((RectTransform)hud.WeaponCluster.parent).rect.size);
+            Assert.AreEqual(fpAt.x, hud.WeaponCluster.anchoredPosition.x, 2f, "FP: silah kümesi sol altta (C-00 25.09, görüş modeli v2)");
+            Assert.AreEqual(RunHudScreen.FpWeaponClusterBottom, hud.WeaponCluster.anchoredPosition.y, 2f, "FP: can bloğunun üstünde");
             Assert.IsTrue(hud.Reticle.DotShown);
 
             // AD R1-A MUST-1: BEHIND YOU straight behind the camera shows the edge arc on screen, its stroke above the bottom.

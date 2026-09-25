@@ -126,7 +126,7 @@ namespace DD.Prototype.Tests.EditMode
             foreach (var c in canvases)
             {
                 float hw = c.W * 0.5f, hh = c.H * 0.5f;
-                float fpLift = RunHudScreen.WeaponClusterPosition(new Vector2(-32f, 32f), true, c.H).y;
+                float fpBottom = RunHudScreen.WeaponClusterPosition(new Vector2(-32f, 32f), true, new Vector2(c.W, c.H)).y;
                 foreach (string variant in new[] { "base", "special", "fp", "special-prompt" })
                 {
                     var rects = new System.Collections.Generic.List<Rect>
@@ -136,7 +136,7 @@ namespace DD.Prototype.Tests.EditMode
                         Rect.MinMaxRect(-320f, hh - 110f - 30f, 320f, hh - 110f),                                        // chip row
                         Rect.MinMaxRect(-hw + 32f, -hh + 32f, -hw + 32f + 380f, -hh + 32f + 110f * c.Tall),             // health
                         variant == "fp"
-                            ? Rect.MinMaxRect(hw - 32f - 400f, -hh + fpLift, hw - 32f, -hh + fpLift + 140f * c.Tall)     // weapon (FP: the corner since WP-070V)
+                            ? Rect.MinMaxRect(-hw + 32f, -hh + fpBottom, -hw + 32f + 400f, -hh + fpBottom + 140f * c.Tall)  // weapon (FP: above the health block, C-00 25.09)
                             : Rect.MinMaxRect(hw - 32f - 400f, -hh + 32f, hw - 32f, -hh + 32f + 140f * c.Tall),         // weapon
                         new Rect(-HudRearEdge.PromptSlot.x * 0.5f, -hh + 24f, HudRearEdge.PromptSlot.x, HudRearEdge.PromptSlot.y),   // prompt slot
                     };
@@ -189,10 +189,19 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void SilahKumesi_HerModdaKosede_Parite()
         {
-            // WP-070V (S-01) keeps the FP viewmodel out of the cluster, so the R1-A interim lift is gone: parity in every mode.
+            // C-00 (25.09): S-02's FP viewmodel v2 owns the bottom right (x 1074–1918, y 502–1078 at 1080), so in first person
+            // the cluster stands above the health block; top-down and third person keep the corner.
             var home = new Vector2(-32f, 32f);
-            Assert.AreEqual(home, RunHudScreen.WeaponClusterPosition(home, false, 1080f), "TD / TP: köşe");
-            Assert.AreEqual(home, RunHudScreen.WeaponClusterPosition(home, true, 1080f), "FP: köşe (WP-070V)");
+            var canvas = new Vector2(1920f, 1080f);
+            Assert.AreEqual(home, RunHudScreen.WeaponClusterPosition(home, false, canvas), "TD / TP: köşe");
+            Assert.AreEqual(new Vector2(-1488f, 120f), RunHudScreen.WeaponClusterPosition(home, true, canvas), "FP: sol alt, can bloğunun üstü");
+            Assert.AreEqual(new Rect(1488f, 908f, 400f, 140f), RunHudScreen.WeaponClusterRect(false, canvas), "TP rect (üst-sol köken)");
+            Rect fp = RunHudScreen.WeaponClusterRect(true, canvas);
+            Assert.AreEqual(new Rect(32f, 820f, 400f, 140f), fp, "FP rect (üst-sol köken)");
+            var viewmodel = Rect.MinMaxRect(1074f, 502f, 1918f, 1078f);   // S-02 v2 (235d167a): the ten weapons' union
+            Assert.IsFalse(fp.Overlaps(viewmodel), "FP kümesi görüş modeline değmez");
+            var health = Rect.MinMaxRect(32f, 1080f - 32f - 80f, 412f, 1048f);
+            Assert.IsFalse(fp.Overlaps(health), "FP kümesi can bloğunun üstünde");
         }
 
         [Test]

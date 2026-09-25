@@ -209,7 +209,7 @@ namespace DD.Prototype.UI
 
         private void BuildRingWeapon()
         {
-            RectTransform root = Cluster("ClassicWeapon", new Vector2(1f, 0f), new Vector2(-InkMargin, InkMargin), new Vector2(400f, 140f), true);
+            RectTransform root = Cluster("ClassicWeapon", new Vector2(1f, 0f), new Vector2(-InkMargin, InkMargin), new Vector2(WeaponClusterWidth, WeaponClusterHeight), true);
             _weaponCluster = root;
             _weaponHome = root.anchoredPosition;
             RectTransform back = BackPlane(root);
@@ -582,20 +582,46 @@ namespace DD.Prototype.UI
 
         // ---- M4-R1 N2 per-mode layout and the rear-edge arc's clearances (AD R1-A MUST-1 / MUST-2)
 
-        // AD R1-A MUST-2 closed by S-01 WP-070V (5825f1c8): the FP viewmodel is drawn at 0.75 screen scale, 12 % left, so its
-        // rest silhouette (x 568–1422, y 744–1080 at 1080) never enters the weapon cluster. The cluster keeps its corner in
-        // every mode (parity); the interim FP lift is gone.
+        // AD R1-A MUST-2 closed by S-01 WP-070V (5825f1c8), then C-00 (25.09): S-02's FP viewmodel v2 grows into the bottom
+        // right (the ten weapons' union at 1080: x 1074–1918, y 502–1078 from the top). In first person the weapon cluster
+        // stands above the health block at the bottom left (x 32–432, y 820–960); top-down and third person keep the corner.
 
         private RectTransform _weaponCluster;
         private Vector2 _weaponHome;
         private int _layoutMode = -1;
-        private float _layoutHeight = -1f;
+        private Vector2 _layoutSize = new Vector2(-1f, -1f);
+
+        public const float WeaponClusterWidth = 400f;
+        public const float WeaponClusterHeight = 140f;
+
+        /// <summary>First person: the cluster's bottom edge above the health block (x 32, bottom 32, ≈ 80 tall), 8 px clear.</summary>
+        public const float FpWeaponClusterBottom = 120f;
         private readonly Rect[] _rearAvoid = new Rect[12];
 
-        /// <summary>Where the weapon cluster sits for a camera mode and canvas height: its corner in every mode since WP-070V (tests).</summary>
+        /// <summary>
+        /// Where the weapon cluster sits (anchor and pivot bottom-right, canvas px): its corner in top-down and third person,
+        /// above the health block at the bottom left in first person (the FP viewmodel owns the bottom right).
+        /// </summary>
+        public static Vector2 WeaponClusterPosition(Vector2 home, bool firstPerson, Vector2 canvasSize)
+        {
+            return firstPerson ? new Vector2(-(canvasSize.x - InkMargin - WeaponClusterWidth), FpWeaponClusterBottom) : home;
+        }
+
+        /// <summary>The height-only form callers used before C-00 25.09: a 16:9 canvas is assumed; prefer the size overload.</summary>
         public static Vector2 WeaponClusterPosition(Vector2 home, bool firstPerson, float canvasHeight)
         {
-            return home;
+            return WeaponClusterPosition(home, firstPerson, new Vector2(canvasHeight * 16f / 9f, canvasHeight));
+        }
+
+        /// <summary>
+        /// The cluster's rect for a camera mode, canvas px with the origin top-left (1920 × 1080: x 1488–1888, y 908–1048;
+        /// first person x 32–432, y 820–960). S-02's FP viewmodel test measures its 0 px overlap against it.
+        /// </summary>
+        public static Rect WeaponClusterRect(bool firstPerson, Vector2 canvasSize)
+        {
+            float left = firstPerson ? InkMargin : canvasSize.x - InkMargin - WeaponClusterWidth;
+            float bottom = firstPerson ? FpWeaponClusterBottom : InkMargin;
+            return new Rect(left, canvasSize.y - bottom - WeaponClusterHeight, WeaponClusterWidth, WeaponClusterHeight);
         }
 
         public RectTransform WeaponCluster
@@ -611,16 +637,16 @@ namespace DD.Prototype.UI
             }
 
             int mode = (int)DD.Prototype.CameraSystem.CameraModeService.Current;
-            float height = ScreenRect.rect.height;
-            if (mode == _layoutMode && Mathf.Approximately(height, _layoutHeight))
+            Vector2 size = ScreenRect.rect.size;
+            if (mode == _layoutMode && size == _layoutSize)
             {
                 return;
             }
 
             bool first = _layoutMode >= 0;
             _layoutMode = mode;
-            _layoutHeight = height;
-            Vector2 at = WeaponClusterPosition(_weaponHome, mode == (int)DD.Prototype.CameraSystem.CameraMode.FirstPerson, height);
+            _layoutSize = size;
+            Vector2 at = WeaponClusterPosition(_weaponHome, mode == (int)DD.Prototype.CameraSystem.CameraMode.FirstPerson, size);
             if (first)
             {
                 UiMotion.Move(_weaponCluster, at, UiDuration.Base, UiEase.Settle, UiMotionClass.Decor);
