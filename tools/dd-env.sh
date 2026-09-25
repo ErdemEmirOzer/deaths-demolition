@@ -34,3 +34,40 @@ DD_SLOT="$DD_TOOLS_DIR/slot.sh"; DD_SLOT_TAG="${DD_SLOT_TAG:-$(basename "$DD_REP
 dd_slot_acquire() { [ -x "$DD_SLOT" ] || return 0; local kind="${1:-unity}"; dd_log "slot: acquiring $kind slot as $DD_SLOT_TAG ($(dd_unity_count) Unity batch running)"; local out="${TMPDIR:-/tmp}/dd-slot-$$.txt"; "$DD_SLOT" acquire "$kind" "$DD_SLOT_TAG" > "$out"; dd_log "slot: $(cat "$out")"; rm -f "$out"; }
 dd_slot_release() { [ -x "$DD_SLOT" ] || return 0; local kind="${1:-unity}"; "$DD_SLOT" release "$kind" "$DD_SLOT_TAG" >/dev/null 2>&1; dd_log "slot: released $kind $DD_SLOT_TAG"; }
 dd_sha() { [ -f "$1" ] && shasum -a 256 "$1" | cut -d' ' -f1 || echo MISSING; }
+
+# WP-051D (C-00): Unity batch runs sometimes hang for hours after the OpenCL/lightmapper init (concurrent GPU load;
+# not the lighting settings). dd_unity_watched <log> <limitMin|0> <unity command…> runs the command (which must write
+# -logFile <log>) in the background and watches the log: no growth for DD_STALL_MIN (default 20) minutes = stall →
+# only that pid and its children are stopped, the log is kept as <log>.stallN and the run is retried ONCE; a second
+# stall returns 124. <limitMin> > 0 is the old total limit per attempt (also 124). DD_UNITY_OUTCOME = ok | killed |
+# stalled | stalled-retried-ok. DD_STALL_SEC / DD_STALL_TICK override the threshold / check interval (self-tests).
+dd_kill_tree() { pkill -P "$1" 2>/dev/null; kill "$1" 2>/dev/null; sleep 5; kill -9 "$1" 2>/dev/null; }
+dd_unity_watched() {
+  local log="$1" limit="$2"; shift 2
+  local stall=${DD_STALL_SEC:-$(( ${DD_STALL_MIN:-20} * 60 ))} tick=${DD_STALL_TICK:-15} attempt=1 upid size last quiet t0
+  DD_UNITY_OUTCOME=ok
+  while :; do
+    "$@" >/dev/null 2>&1 &
+    upid=$!; t0=$(date +%s); last=-1; quiet=0
+    while kill -0 $upid 2>/dev/null; do
+      sleep $tick
+      size=$(stat -f %z "$log" 2>/dev/null || echo 0)
+      if [ "$size" != "$last" ]; then last=$size; quiet=0; else quiet=$((quiet + tick)); fi
+      if [ "$limit" -gt 0 ] && [ $(( $(date +%s) - t0 )) -ge $(( limit * 60 )) ]; then
+        dd_log "WATCHDOG: ${limit} min passed — killing Unity pid $upid"; dd_kill_tree $upid; wait $upid 2>/dev/null
+        DD_UNITY_OUTCOME=killed; return 124
+      fi
+      if [ "$quiet" -ge "$stall" ]; then
+        dd_log "STALL: Unity pid $upid wrote nothing to its log for ${quiet}s (attempt $attempt) — stopping that pid only"
+        dd_kill_tree $upid; wait $upid 2>/dev/null
+        [ -f "$log" ] && mv "$log" "$log.stall$attempt"
+        if [ "$attempt" -ge 2 ]; then dd_log "STALL: the retry stalled too — giving up (exit 124)"; DD_UNITY_OUTCOME=stalled; return 124; fi
+        attempt=$((attempt + 1)); dd_log "STALL: retrying once"
+        continue 2
+      fi
+    done
+    wait $upid; local x=$?
+    [ "$attempt" -gt 1 ] && DD_UNITY_OUTCOME=stalled-retried-ok
+    return $x
+  done
+}

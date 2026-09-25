@@ -62,10 +62,13 @@ trap 'dd_slot_release' EXIT
 dd_slot_acquire
 
 T0=$(date +%s)
-"$DD_UNITY" -batchmode -nographics -quit -forgetProjectPath -projectPath "$DD_PROJECT" "${TARGS[@]}" \
+# WP-051D: log-stall watchdog (20 min silent → stop that pid, retry once; second stall → exit 124)
+dd_unity_watched "$LOG" 0 "$DD_UNITY" -batchmode -nographics -quit -forgetProjectPath -projectPath "$DD_PROJECT" "${TARGS[@]}" \
   -executeMethod DD.Prototype.Core.EditorTools.DdBuild.Build -ddMode "$MODE" -ddOut "$DDOUT" -ddReport "$BREPORT" "${CARGS[@]}" \
   -logFile "$LOG"
 X=$?; T1=$(date +%s)
+[ "$DD_UNITY_OUTCOME" != ok ] && dd_log "unity outcome=$DD_UNITY_OUTCOME"
+[ "$DD_UNITY_OUTCOME" = stalled ] && { dd_log "build stalled twice — exit 124"; exit 124; }
 APPKB=$( [ -d "$APP" ] && du -sk "$APP" | cut -f1 || echo 0 )
 ERRS=$(grep -c 'error CS' "$LOG" 2>/dev/null); ERRS=${ERRS:-0}
 dd_log "build exit=$X seconds=$((T1-T0)) appKB=$APPKB errorsCS=$ERRS"

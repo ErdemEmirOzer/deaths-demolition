@@ -28,15 +28,12 @@ dd_slot_acquire
 PLAT=$( [ "$MODE" = "editmode" ] && echo EditMode || echo PlayMode ); NOGFX=(); [ "$MODE" = "editmode" ] && NOGFX=(-nographics)
 FARGS=(); [ -n "$FILTER" ] && FARGS=(-testFilter "$FILTER")
 T0=$(date +%s)
-"$DD_UNITY" -batchmode "${NOGFX[@]}" -forgetProjectPath -projectPath "$DD_PROJECT" -runTests -testPlatform "$PLAT" "${FARGS[@]}" -testResults "$XML" -logFile "$LOG" >/dev/null 2>&1 &
-UPID=$!
-# watchdog: kill the editor (and its children) when the limit passes; leaves a KILLED marker in the timeline
-( sleep $((TMIN*60)); if kill -0 $UPID 2>/dev/null; then echo "$(date -u +%FT%TZ) WATCHDOG: ${TMIN} min passed — killing Unity pid $UPID" >> "$DD_TIMELINE"; pkill -P $UPID 2>/dev/null; kill $UPID 2>/dev/null; sleep 5; kill -9 $UPID 2>/dev/null; fi ) &
-WPID=$!
-wait $UPID; X=$?
-kill $WPID 2>/dev/null; wait $WPID 2>/dev/null
+# watchdogs (WP-051D dd_unity_watched): total limit TMIN per attempt + log-stall (20 min silent → stop that pid, retry once)
+dd_unity_watched "$LOG" "$TMIN" "$DD_UNITY" -batchmode "${NOGFX[@]}" -forgetProjectPath -projectPath "$DD_PROJECT" -runTests -testPlatform "$PLAT" "${FARGS[@]}" -testResults "$XML" -logFile "$LOG"
+X=$?
 T1=$(date +%s)
-KILLED=0; grep -q "WATCHDOG" "$DD_TIMELINE" 2>/dev/null && KILLED=1
+KILLED=0; case "$DD_UNITY_OUTCOME" in killed|stalled) KILLED=1 ;; esac
+[ "$DD_UNITY_OUTCOME" != ok ] && dd_log "unity outcome=$DD_UNITY_OUTCOME"
 ERRS=$(grep -c 'error CS' "$LOG" 2>/dev/null); ERRS=${ERRS:-0}
 if [ ! -f "$XML" ]; then dd_log "$MODE exit=$X seconds=$((T1-T0)) errorsCS=$ERRS NO XML killed=$KILLED"; [ "$KILLED" -eq 1 ] && exit 124; exit 2; fi
 SUM=$(grep -o 'total="[0-9]*" passed="[0-9]*" failed="[0-9]*"' "$XML" | head -1)
