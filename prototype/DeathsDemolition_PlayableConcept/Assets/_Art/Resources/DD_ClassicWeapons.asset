@@ -17,32 +17,62 @@ MonoBehaviour:
   material: {fileID: 2100000, guid: f3e3bac1519e7400e946ed89cdf7f087, type: 2}
   entries:
   - id: 0
-    rosterKey: A
-    model: {fileID: 919132149155446097, guid: dc5e52764518b4968b70a329a74f16d0, type: 3}
-    lodTriangles: 7c0b00009804000087010000
-    ownMaterials: 0
-    modelPackage: 
+    rosterKey: ar_1
+    model: {fileID: 919132149155446097, guid: d7027c15dd68a40058785793ab690b94, type: 3}
+    lodTriangles: 9d4a000082160000b7060000
+    ownMaterials: 1
+    modelPackage: AP-021
   - id: 1
-    rosterKey: B
-    model: {fileID: 919132149155446097, guid: 062d95a914fd94b9e9a247b09f6346f8, type: 3}
-    lodTriangles: 7c0b00009804000088010000
-    ownMaterials: 0
-    modelPackage: 
+    rosterKey: smg_1
+    model: {fileID: 919132149155446097, guid: ae4ce6d892f8440ad937622e9831bd4c, type: 3}
+    lodTriangles: 8c4a00006b160000ab060000
+    ownMaterials: 1
+    modelPackage: AP-021
   - id: 2
-    rosterKey: C
-    model: {fileID: 919132149155446097, guid: 0da70489feb144600b2ac3723723a24d, type: 3}
-    lodTriangles: 7c0b00009804000088010000
-    ownMaterials: 0
-    modelPackage: 
+    rosterKey: sg_1
+    model: {fileID: 919132149155446097, guid: fd99f5735e99c48519311a92cf49c549, type: 3}
+    lodTriangles: 5d4b000083160000b6060000
+    ownMaterials: 1
+    modelPackage: AP-021
   - id: 3
     rosterKey: ar_2
     model: {fileID: 919132149155446097, guid: afb10c9fe9d6948a28b2f91d24d404b0, type: 3}
     lodTriangles: db4a0000fc1500007b060000
     ownMaterials: 1
     modelPackage: AP-021
+  - id: 4
+    rosterKey: smg_2
+    model: {fileID: 919132149155446097, guid: 713aac54484324687a4f3f6122ac82db, type: 3}
+    lodTriangles: 454b000074160000aa060000
+    ownMaterials: 1
+    modelPackage: AP-021
   - id: 5
     rosterKey: sg_2
     model: {fileID: 919132149155446097, guid: d43ddebbdc3e94c8bb5feaab9e74f1b4, type: 3}
     lodTriangles: 624b000084160000bd060000
+    ownMaterials: 1
+    modelPackage: AP-021
+  - id: 6
+    rosterKey: lmg_1
+    model: {fileID: 919132149155446097, guid: 5f754d67018d5429eb6c0c7334e00d45, type: 3}
+    lodTriangles: 2b4b00004e16000088060000
+    ownMaterials: 1
+    modelPackage: AP-021
+  - id: 7
+    rosterKey: lmg_2
+    model: {fileID: 919132149155446097, guid: 9f2e715fe61be4a12877a8fe90a6f8f6, type: 3}
+    lodTriangles: 624b000086160000b9060000
+    ownMaterials: 1
+    modelPackage: AP-021
+  - id: 8
+    rosterKey: sr_1
+    model: {fileID: 919132149155446097, guid: 3fc2af443c0964f6e83de44ceeee002a, type: 3}
+    lodTriangles: 1b4b00004416000095060000
+    ownMaterials: 1
+    modelPackage: AP-021
+  - id: 9
+    rosterKey: rl_1
+    model: {fileID: 919132149155446097, guid: bbf359cc4eeca4b189eea52d57fca357, type: 3}
+    lodTriangles: 614b000087160000bc060000
     ownMaterials: 1
     modelPackage: AP-021

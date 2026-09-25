@@ -7,7 +7,7 @@ using UnityEngine;
 namespace DD.Prototype.Tests.EditMode
 {
     /// <summary>
-    /// WP-069 B4d · the AP-021 (P-07 v002) classics in DD_ClassicWeapons: an own-material entry per runtime id, the
+    /// WP-069 B4d / B4e · the AP-021 (P-07 v002) classics — all ten — in DD_ClassicWeapons: an own-material entry per runtime id, the
     /// ADR-042-1 frame (Muzzle on +Z, Ejection on +X — a mirrored export fails), the contract sockets, three LODs within
     /// P-07's budget (20 000 / 6 000 / 1 800), the body material with its maps (MRA → derived URP mask).
     /// </summary>
@@ -17,8 +17,16 @@ namespace DD.Prototype.Tests.EditMode
     {
         private static ClassicWeaponVisualLibrary Library => Resources.Load<ClassicWeaponVisualLibrary>(ClassicWeaponVisualLibrary.ResourcePath);
 
+        [TestCase(ClassicWeaponId.AssaultRifle)]
+        [TestCase(ClassicWeaponId.AutoSmg)]
+        [TestCase(ClassicWeaponId.CombatShotgun)]
         [TestCase(ClassicWeaponId.Ar2)]
+        [TestCase(ClassicWeaponId.Smg2)]
         [TestCase(ClassicWeaponId.Sg2)]
+        [TestCase(ClassicWeaponId.Lmg1)]
+        [TestCase(ClassicWeaponId.Lmg2)]
+        [TestCase(ClassicWeaponId.Sr1)]
+        [TestCase(ClassicWeaponId.Rl1)]
         public void Ap021Klasik_CerceveSoketLodVeMalzeme(ClassicWeaponId id)
         {
             ClassicWeaponVisualLibrary.Entry e = Library.Find(id);
@@ -34,7 +42,7 @@ namespace DD.Prototype.Tests.EditMode
 
             Vector3 muzzle = root.InverseTransformPoint(WeaponSocketContract.Find(root, WeaponSocketContract.Muzzle).position);
             Vector3 port = root.InverseTransformPoint(WeaponSocketContract.Find(root, WeaponSocketContract.Ejection).position);
-            Assert.Greater(muzzle.z, 0.4f, id + ": namlu +Z — " + muzzle.ToString("F3"));
+            Assert.Greater(muzzle.z, 0.3f, id + ": namlu +Z — " + muzzle.ToString("F3"));   // the compact smg_2 0.366 m; a barrel-up / mirrored export sits near 0 or below
             Assert.Less(Mathf.Abs(muzzle.x), 0.05f, id + ": namlu eksende");
             // The port sits on +X (ar_2's right-wall cover) or on the centre line (sg_2's break action ejects rearward) — never on -X (a mirrored export).
             Assert.GreaterOrEqual(port.x, -1e-3f, id + ": atım portu -X'te (aynalı dışa aktarım) — " + port.ToString("F3"));
@@ -53,6 +61,23 @@ namespace DD.Prototype.Tests.EditMode
             }
 
             Assert.IsNotNull(body, id + ": gövde malzemesi eşlenmedi");
+            // In hand every slot is an AP-021 material (a slot the FBX left empty takes the body — AuthoredWeaponModel, B4e).
+            GameObject hand = ClassicWeaponVisualLibrary.Instantiate(e, Library.material, new[] { 0.12f, 0.05f, 0.01f });
+            try
+            {
+                foreach (Renderer r in hand.GetComponentsInChildren<Renderer>(true))
+                {
+                    foreach (Material m in r.sharedMaterials)
+                    {
+                        Assert.IsTrue(m != null && m.name.StartsWith(AuthoredWeaponModel.OwnMaterialPrefix), id + ": " + r.name + " AP-021 malzemesi değil (" + (m != null ? m.name : "null") + ")");
+                    }
+                }
+            }
+            finally
+            {
+                Object.DestroyImmediate(hand);
+            }
+
             Assert.IsNotNull(body.GetTexture("_BaseMap"));
             Assert.IsNotNull(body.GetTexture("_BumpMap"));
             Assert.IsNotNull(body.GetTexture("_MetallicGlossMap"), "MRA'dan türetilmiş maske");

@@ -63,48 +63,32 @@ namespace DD.Prototype.Tests.EditMode
             }
         }
 
-        [TestCase(ClassicWeaponId.AssaultRifle, "A", "rifle")]
-        [TestCase(ClassicWeaponId.AutoSmg, "B", "carbine")]
-        [TestCase(ClassicWeaponId.CombatShotgun, "C", "shotgun")]
-        public void Silah_Model_LOD0_2_Butce_Soketler_Rijit(ClassicWeaponId id, string key, string stem)
+        /// <summary>
+        /// WP-069 B4e: since P-07's batch B every roster weapon carries its own AP-021 model (the AP-013 A/B/C entries gave
+        /// way on the same ids; Ap021ClassicModelGateTests checks frame, LODs, budget and material). Here: rigid, no
+        /// collider on the hand model, and every socket the definition names exists (attachments bind there).
+        /// </summary>
+        [Test]
+        public void HerSilah_Ap021Model_Rijit_TanimSoketleri()
         {
             ClassicWeaponVisualLibrary lib = Library;
             Assert.IsNotNull(lib);
-            ClassicWeaponVisualLibrary.Entry e = lib.Find(id);
-            Assert.IsNotNull(e, key + " girdisi yok.");
-            Assert.IsTrue(e.HasModel, key + " modeli bağlı değil.");
-            Assert.AreEqual(key, e.rosterKey);
-
-            GameObject model = e.model;
-            Assert.IsNull(model.GetComponentInChildren<SkinnedMeshRenderer>(true), key + ": rijit olmalı.");
-            Assert.IsNull(model.GetComponentInChildren<Collider>(true), key + ": el modelinde collider yok.");
-            var lodGroup = model.GetComponentInChildren<LODGroup>(true);
-            Assert.IsNotNull(lodGroup, key + ": import LODGroup (AP013_*_LOD0..2 adlandırması) yok.");
-            Assert.AreEqual(ClassicWeaponVisualLibrary.LodCount, lodGroup.lodCount, key + ": 3 LOD.");
-
-            for (int lod = 0; lod < ClassicWeaponVisualLibrary.LodCount; lod++)
+            int n = 0;
+            foreach (ClassicWeaponDefinition d in WeaponRoster.Enabled)
             {
-                Transform t = WeaponSocketContract.Find(model.transform, "AP013_" + key + "_" + stem + "_LOD" + lod);
-                Assert.IsNotNull(t, key + ": LOD" + lod + " nesnesi yok.");
-                var filter = t.GetComponent<MeshFilter>();
-                Assert.IsNotNull(filter, key + " LOD" + lod + " MeshFilter yok.");
-                Assert.IsNotNull(filter.sharedMesh);
-                int tris = filter.sharedMesh.triangles.Length / 3;
-                Assert.LessOrEqual(tris, WeaponSocketContract.TriangleBudget[lod], key + " LOD" + lod + " " + tris + " tri > bütçe " + WeaponSocketContract.TriangleBudget[lod]);
-                Assert.AreEqual(tris, e.lodTriangles[lod], key + " LOD" + lod + " kütüphane tri sayısı");
-                Assert.Greater(tris, 0);
+                ClassicWeaponVisualLibrary.Entry e = lib.Find(d.Id);
+                Assert.IsNotNull(e, d.RosterKey + " girdisi yok.");
+                Assert.IsTrue(e.HasModel && e.ownMaterials && e.modelPackage == "AP-021", d.RosterKey + ": AP-021 modeli bağlı değil.");
+                GameObject model = e.model;
+                Assert.IsNull(model.GetComponentInChildren<SkinnedMeshRenderer>(true), d.RosterKey + ": rijit olmalı.");
+                Assert.IsNull(model.GetComponentInChildren<Collider>(true), d.RosterKey + ": el modelinde collider yok.");
+                Assert.IsNotNull(WeaponSocketContract.Find(model.transform, d.MuzzleSocket), d.RosterKey + ": " + d.MuzzleSocket);
+                Assert.IsNotNull(WeaponSocketContract.Find(model.transform, d.EjectionSocket), d.RosterKey + ": " + d.EjectionSocket);
+                foreach (string socket in d.AttachmentSockets) Assert.IsNotNull(WeaponSocketContract.Find(model.transform, socket), d.RosterKey + ": " + socket);
+                n++;
             }
 
-            ClassicWeaponDefinition d = WeaponRoster.Find(id);
-            Assert.IsNotNull(d);
-            List<string> faults = WeaponSocketContract.Validate(model.transform, d.TypeClass);
-            Assert.IsEmpty(faults, key + " (AP-013): " + string.Join("; ", faults));
-
-            // Every socket the definition names exists on the model (attachments bind here later).
-            Assert.IsNotNull(WeaponSocketContract.Find(model.transform, d.MuzzleSocket), key + ": " + d.MuzzleSocket);
-            Assert.IsNotNull(WeaponSocketContract.Find(model.transform, d.EjectionSocket), key + ": " + d.EjectionSocket);
-            foreach (string s in d.AttachmentSockets) Assert.IsNotNull(WeaponSocketContract.Find(model.transform, s), key + ": " + s);
-            Debug.Log("[DD-TEST] wp042b.model " + key + " tris=" + string.Join("/", e.lodTriangles));
+            Assert.AreEqual(10, n, "WP-069: on klasik silah etkin.");
         }
 
         [Test]
@@ -119,7 +103,7 @@ namespace DD.Prototype.Tests.EditMode
                 if (!e.ownMaterials) ap013++;
             }
 
-            Assert.AreEqual(3, ap013, "AP-013 A/B/C — D için model üretilmez (DEC-083); AP-021 klasikleri ayrı girdiler (WP-069 B4d).");
+            Assert.AreEqual(0, ap013, "WP-069 B4e: on klasiğin hepsi AP-021; AP-013 A/B/C girdileri aynı kimliklerde yerini bıraktı (D için model yok, DEC-083).");
         }
     }
 }

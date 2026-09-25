@@ -1,0 +1,34 @@
+{
+ "package": "AP-021",
+ "owner": "P-07",
+ "key": "lmg_2",
+ "version": "v002",
+ "frame": "Unity frame at export (canonical — S-02 measured in the Run scene (C-00 T4, 25.09): Unity +Z barrel, +Y up, +X = shooter right)",
+ "ad_verdict": "02-concept/AP021-AD-classics-B-verdict.md: KABUL_DUZELTMELERLE; open MUSTs (Blender-only, 0 kr, pending C-00 go after the quota pause): C1, lmg_2-M7",
+ "files": [
+  {
+   "source": "asset-production/AP-021/exports/fbx/AP021_lmg_2.fbx",
+   "target": "_Prototype/Weapons/Arsenal/Models/AP021_lmg_2/AP021_lmg_2.fbx",
+   "bytes": 1167676,
+   "sha256": "0b73d9f68baf89bd1c42752e0825277e09fc3d0e3a9dc140df0d0b3da7787a76"
+  },
+  {
+   "source": "asset-production/AP-021/exports/textures/lmg_2/T_AP021_lmg_2_BaseColor.png",
+   "target": "_Prototype/Weapons/Arsenal/Models/AP021_lmg_2/Textures/T_AP021_lmg_2_BaseColor.png",
+   "bytes": 2194465,
+   "sha256": "ac200af2a346bafe0d3c13eda04dcb212aa6beb20cb72141fd62fb88c158edb5"
+  },
+  {
+   "source": "asset-production/AP-021/exports/textures/lmg_2/T_AP021_lmg_2_MRA.png",
+   "target": "_Prototype/Weapons/Arsenal/Models/AP021_lmg_2/Textures/T_AP021_lmg_2_MRA.png",
+   "bytes": 3311442,
+   "sha256": "54d1b0c192acb17049f919dc66746092b3643d85313bc1a5f3466e6155809061"
+  },
+  {
+   "source": "asset-production/AP-021/exports/textures/lmg_2/T_AP021_lmg_2_Normal.png",
+   "target": "_Prototype/Weapons/Arsenal/Models/AP021_lmg_2/Textures/T_AP021_lmg_2_Normal.png",
+   "bytes": 1842897,
+   "sha256": "10e5bae9d26251bb17d48a66b8a8b657127ee9284ca0efbf1b92a47fd2e45865"
+  }
+ ]
+}

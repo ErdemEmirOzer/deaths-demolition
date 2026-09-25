@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Prototype/Weapons/Arsenal/Models/AP021_smg_1/Textures/T_AP021_smg_1_MRA.png",
+    "sourceSha256": "a219a703a8e51523ace738ca9de51d6b8857a34726ba540723ea1856ab811c89",
+    "algorithm": "MetallicSmoothnessAO-MRA v1 (WP-042B): out.R = src.R (metallic), out.G = src.B (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness); 8-bit RGBA PNG, no resampling",
+    "utc": "2026-09-25T01:15:59.8913410Z",
+    "outputSha256": "29d3add5ae29e2e996c7221e7824b3e627afae215410480a01fcd4c23690cac0"
+}

@@ -54,11 +54,22 @@ namespace DD.Art.Pipeline.EditorTools
             (SpecialWeaponId.Namekuji, SpecialWeaponKeys.Namekuji),
         };
 
-        /// <summary>WP-069 B4d: the AP-021 classics in the project (P-07 v002, Unity frame at export).</summary>
+        /// <summary>
+        /// WP-069 B4d / B4e: the AP-021 classics in the project (P-07 v002, Unity frame at export) — all ten since batch B
+        /// (25.09); the AP-013 A/B/C entries give way to ar_1 / smg_1 / sg_1 on the same runtime ids.
+        /// </summary>
         public static readonly (ClassicWeaponId id, string key)[] Classics =
         {
+            (ClassicWeaponId.AssaultRifle, "ar_1"),
+            (ClassicWeaponId.AutoSmg, "smg_1"),
+            (ClassicWeaponId.CombatShotgun, "sg_1"),
             (ClassicWeaponId.Ar2, "ar_2"),
+            (ClassicWeaponId.Smg2, "smg_2"),
             (ClassicWeaponId.Sg2, "sg_2"),
+            (ClassicWeaponId.Lmg1, "lmg_1"),
+            (ClassicWeaponId.Lmg2, "lmg_2"),
+            (ClassicWeaponId.Sr1, "sr_1"),
+            (ClassicWeaponId.Rl1, "rl_1"),
         };
 
         public static string Folder(string key) => Root + "/AP021_" + key;

@@ -67,8 +67,8 @@ namespace DD.Prototype.Tests.PlayMode
         }
 
         /// <summary>
-        /// WP-069 T3 (S-01 WP-070V finding: the FP view drew AP013_A_rifle_LOD2). In FP the weapon in hand — classic A
-        /// (the finding), ar_2 (AP-021 merged group) and the Special — is pinned to LOD0 while it sits on the
+        /// WP-069 T3 (S-01 WP-070V finding: the FP view drew AP013_A_rifle_LOD2). In FP the weapon in hand — every classic
+        /// (all ten AP-021 models since B4e) and the Special — is pinned to LOD0 while it sits on the
         /// FirstPersonView layer, and released when the mode leaves FP. Pixel proof on the viewmodel layer alone (the
         /// viewmodel camera's pose and projection): the frame as drawn equals the LOD0 frame and differs from the LOD2
         /// frame; each weapon also writes a 1920×1080 FP close-up as evidence.
@@ -94,7 +94,6 @@ namespace DD.Prototype.Tests.PlayMode
             int classics = 0;
             foreach (ClassicWeaponDefinition d in WeaponRoster.Enabled)
             {
-                if (d.RosterKey != "A" && d.RosterKey != "ar_2") continue;
                 _s.Controller.EquipClassic(d.Id, _s.Config);
                 yield return SpecialWeaponSahne.Kareler(15);
                 LODGroup g = mount.Find("ClassicWeaponRig").GetComponentInChildren<LODGroup>();
@@ -104,7 +103,7 @@ namespace DD.Prototype.Tests.PlayMode
                 classics++;
             }
 
-            Assert.AreEqual(2, classics, "A ve ar_2 ölçülmedi.");
+            Assert.AreEqual(10, classics, "on klasik silahın hepsi ölçülmedi.");
             DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.TopDown, instant: true);
             yield return SpecialWeaponSahne.Kareler(10);
             Assert.IsFalse(_s.Controller.ClassicViewmodelLodPinned, "FP'den çıkınca klasik silahın LOD sabitlemesi kalkmadı.");
@@ -135,9 +134,10 @@ namespace DD.Prototype.Tests.PlayMode
         private const int KareW = 1920, KareH = 1080;
 
         /// <summary>
-        /// The group as pinned vs forced LOD0 / LOD(last): silhouettes on the viewmodel layer (coverage over a magenta
-        /// key — the lit colour carries per-render shading noise, the outline does not). The repeat render of the
-        /// same state is the noise floor; a PNG of the drawn frame is the evidence.
+        /// The group as pinned, on the viewmodel layer (coverage over a magenta key — the lit colour carries per-render
+        /// shading noise, the outline does not): the drawn silhouette equals the forced-LOD0 one within the repeat-render
+        /// noise, and with the LOD0 renderers switched off the weapon vanishes — only LOD0 draws (a silhouette-independent
+        /// proof; LOD0 vs LOD2 outlines can coincide in the FP framing). A PNG of the drawn frame is the evidence.
         /// </summary>
         private static string LodKaniti(Camera vm, LODGroup g, string ad)
         {
@@ -148,17 +148,27 @@ namespace DD.Prototype.Tests.PlayMode
             bool[] tekrar = Kapsama(VmKare(vm, null));
             g.ForceLOD(0);
             bool[] lod0 = Kapsama(VmKare(vm, null));
+            Renderer[] lod0Renderers = g.GetLODs()[0].renderers;
+            foreach (Renderer r in lod0Renderers) if (r != null) r.enabled = false;
+            bool[] lod0Kapali = Kapsama(VmKare(vm, null));
+            foreach (Renderer r in lod0Renderers) if (r != null) r.enabled = true;
             g.ForceLOD(last);
             bool[] lodSon = Kapsama(VmKare(vm, null));
             g.ForceLOD(0);   // back to the pin's state (FP)
-            int kapli = 0;
-            for (int i = 0; i < cizilen.Length; i++) if (cizilen[i]) kapli++;
+            int kapli = Say(cizilen), kalan = Say(lod0Kapali);
             int taban = Fark(cizilen, tekrar), farkLod0 = Fark(cizilen, lod0), farkSon = Fark(lod0, lodSon);
             int esik = Mathf.Max(50, 2 * taban);
             Assert.Greater(kapli, 1000, ad + ": görüntü modeli katmanında çizim yok — ölçüm kör.");
-            Assert.Greater(farkSon, 2 * esik, ad + ": LOD0 ile LOD" + last + " silüeti ayrışmıyor (" + farkSon + " px) — pozitif kontrol kör.");
             Assert.LessOrEqual(farkLod0, esik, ad + ": FP silüeti LOD0 silüeti değil (" + farkLod0 + " px, taban " + taban + ").");
-            return "coveredPx=" + kapli + " silhouette drawn≠LOD0 " + farkLod0 + " px (noise " + taban + "), LOD0≠LOD" + last + " " + farkSon + " px";
+            Assert.LessOrEqual(kalan, kapli / 20, ad + ": LOD0 kapalıyken " + kalan + "/" + kapli + " px çiziliyor — başka LOD de çiziliyor.");
+            return "coveredPx=" + kapli + " silhouette drawn≠LOD0 " + farkLod0 + " px (noise " + taban + "), LOD0 off → " + kalan + " px, LOD0≠LOD" + last + " " + farkSon + " px";
+        }
+
+        private static int Say(bool[] m)
+        {
+            int n = 0;
+            for (int i = 0; i < m.Length; i++) if (m[i]) n++;
+            return n;
         }
 
         private static bool[] Kapsama(Color32[] px)
