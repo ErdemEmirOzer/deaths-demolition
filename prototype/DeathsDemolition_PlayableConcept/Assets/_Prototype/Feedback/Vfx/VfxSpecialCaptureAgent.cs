@@ -110,7 +110,7 @@ namespace DD.Prototype.Feedback.Vfx
                 for (int i = 0; i < near.Length && near[i] != null; i++)
                 {
                     Vector3 to = near[i].transform.position + Vector3.up * 1.2f;
-                    var target = new DD.Prototype.Weapons.DamageTarget { Root = near[i].transform, Id = near[i].GetInstanceID(), Height = 1.8f };
+                    var target = new DD.Prototype.Weapons.DamageTarget { Receiver = near[i], Root = near[i].transform, Id = near[i].GetInstanceID(), Height = 1.8f };
                     arc.OnUsage(new SpecialUsageEvent(SpecialWeaponId.Raiju, SpecialUsageKind.Hit, "sw_arc_orb", from, to - from, 6f, 1.2f, i, target, 1f, 1f, 0));
                     from = to;
                 }
@@ -120,7 +120,7 @@ namespace DD.Prototype.Feedback.Vfx
                 yield return Frame("raiju-shock-zombies-0.3s", 0);
                 yield return new WaitForSeconds(1.5f);
 
-                var gelTarget = new DD.Prototype.Weapons.DamageTarget { Root = near[0].transform, Id = near[0].GetInstanceID(), Height = 1.8f };
+                var gelTarget = new DD.Prototype.Weapons.DamageTarget { Receiver = near[0], Root = near[0].transform, Id = near[0].GetInstanceID(), Height = 1.8f };
                 gel.OnUsage(new SpecialUsageEvent(SpecialWeaponId.Namekuji, SpecialUsageKind.Hit, "sw_gel_blob", near[0].transform.position + Vector3.up * 1.2f,
                     Vector3.forward, 1.6f, 0f, 0, gelTarget, 1f, 1f, 0));
                 yield return new WaitForSeconds(0.5f);
