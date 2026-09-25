@@ -222,7 +222,8 @@ namespace DD.Art.Pipeline.EditorTools
 
         /// <summary>Greybox pieces the kit replaces (name prefixes under the greybox root).</summary>
         public static readonly string[] ReplacedPrefixes = { "Hall_Plinth", "Hall_Stair", "R1_MainHall_", "RingWall_", "Court_", "Karamon_", "Lantern_", "Planter_", "Vista", "K3_", "K6_", "R6_Chumon_",
-                                                           "K1_", "K2_", "K4_", "K5_", "R2_", "R3_", "R4_", "R5_", "Tree_", "R7_Sakura_" };
+                                                           "K1_", "K2_", "K4_", "K5_", "R2_", "R3_", "R4_", "R5_", "Tree_", "R7_Sakura_",
+                                                           "Bridge_", "Causeway", "Yard_", "R7_W_", "R7_E_", "R7_N_", "R7_S_", "Karesansui_" };
 
         /// <summary>
         /// B5b-4 · The straight open kairō dressed with AP-023 bays (V01, rails off: the greybox corridors are entered from the side —
@@ -285,6 +286,12 @@ namespace DD.Art.Pipeline.EditorTools
             Chumon(dress);
             Buildings(dress);
             GardenTrees(dress, garden);
+            Ground(greybox);
+            Ponds(dress, greybox);
+            Bridges(dress);
+            Grove(dress, greybox);
+            Fences(dress);
+            Karesansui(dress);
             Vista(dress);
             ArtSurfaceImporter.BuildHorizonPlates(dress.gameObject);   // the AP-019 horizon rings (contract radii) …
             WorldV5Sky.Build(dress);                                    // … in sky v2 (WP-075 C3): v2 sheets, cloud planes, landmarks
@@ -638,6 +645,177 @@ namespace DD.Art.Pipeline.EditorTools
                 (string family, int v) = great ? ("sakura_v2", 1) : p.z > 34f ? ("black_pine", pick < 0.5 ? 1 : 4) : pick < 0.6 ? ("sakura_v2", pick < 0.3 ? 2 : 3) : ("momiji", 1);
                 Place(group, family, v, Mz(p.x, p.z, 0f, (float)yaw) * Matrix4x4.Scale(Vector3.one * (great ? 1f : (float)s)), Vector3.zero, "vegetation");
             }
+        }
+
+        // ---------------------------------------------------------------- B5b-5 (2): ground, water, bridges, grove, fences, rock garden
+
+        public const string WaterMaterialPath = "Assets/_Art/Materials/M_water_v2.mat";
+        public const string ShoreGroupName = "PondShores", BridgeGroupName = "Bridges", GroveGroupName = "BambooGrove", FenceGroupName = "Fences", KaresansuiGroupName = "Karesansui";
+
+        private static void Ground(Transform greybox)
+        {
+            // The greybox ground (170 m box) in the kit's moss, 3 m tile; the ponds on the AP-015 water v2 (world-space: fits the discs).
+            Restyle(greybox, "Ground", "moss", 3f);
+            var water = AssetDatabase.LoadAssetAtPath<Material>(WaterMaterialPath);
+            if (water == null) throw new InvalidOperationException("water v2 material missing: " + WaterMaterialPath);
+            foreach (Transform t in Children(greybox))
+                if (t.name.StartsWith("Pond", StringComparison.Ordinal) && t.name.EndsWith("_Water", StringComparison.Ordinal)) t.GetComponent<MeshRenderer>().sharedMaterial = water;
+        }
+
+        /// <summary>Moss / pebble shore pieces round each pond ellipse every ~3 m (tangent-aligned), boulders and reed clumps between — visual, no colliders (the rims are the NavMesh boundary).</summary>
+        private static void Ponds(Transform dress, Transform greybox)
+        {
+            var group = new GameObject(ShoreGroupName) { layer = PrototypeLayers.Environment }.transform;
+            group.SetParent(dress, false);
+            group.gameObject.AddComponent<NavMeshModifier>().ignoreFromBuild = true;
+            var rng = new System.Random(746);
+            foreach (Transform w in Children(greybox))
+            {
+                if (!w.name.StartsWith("Pond", StringComparison.Ordinal) || !w.name.EndsWith("_Water", StringComparison.Ordinal)) continue;
+                float perimeter = Mathf.PI * (w.localScale.x + w.localScale.z) * 0.5f;
+                int n = Mathf.Max(8, Mathf.RoundToInt(perimeter / 3f));
+                for (int i = 0; i < n; i++)
+                {
+                    float t = i * Mathf.PI * 2f / n;
+                    Vector3 p = w.TransformPoint(new Vector3(Mathf.Cos(t) * 0.5f, 0f, Mathf.Sin(t) * 0.5f));
+                    Vector3 q = w.TransformPoint(new Vector3(Mathf.Cos(t + 0.01f) * 0.5f, 0f, Mathf.Sin(t + 0.01f) * 0.5f));
+                    float deg = Mathf.Atan2(q.z - p.z, q.x - p.x) * Mathf.Rad2Deg;
+                    double pick = rng.NextDouble();
+                    Visual(Place(group, pick < 0.6 ? "pond_shore_moss" : "pond_shore_pebble", 1 + rng.Next(3), Mz(p.x, p.z, 0f, deg), Vector3.zero, "dressing"));
+                    if (pick < 0.25) Visual(Place(group, "pond_rock", 3 + rng.Next(3), Mz(p.x, p.z, 0f, (float)(rng.NextDouble() * 360.0)), Vector3.zero, "dressing"));
+                    if (pick > 0.8)
+                    {
+                        Vector3 r = w.TransformPoint(new Vector3(Mathf.Cos(t) * 0.42f, 0f, Mathf.Sin(t) * 0.42f));
+                        Visual(Place(group, "pond_reeds", 1 + rng.Next(4), Mz(r.x, r.z, 0f, (float)(rng.NextDouble() * 360.0)), Vector3.zero, "dressing"));
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// The C8 bridge as two plank spans (10.8 m each, x × 1.875 so the deck keeps the greybox 3 m: the C8 volume's width) and the C1
+        /// causeway as four granite slabs (× 1.72 → 2 m wide). Kit colliders (arched deck ≤ 0.6, landings 0.15).
+        /// </summary>
+        private static void Bridges(Transform dress)
+        {
+            var group = new GameObject(BridgeGroupName).transform;
+            group.SetParent(dress, false);
+            foreach (float z in new[] { -23.375f, -34.125f })
+                Place(group, "plank_bridge", 1, Mz(4f, z, 0f, 0f) * Matrix4x4.Scale(new Vector3(1.875f, 10.75f / 10.8f, 1f)), Vector3.zero, "structure");
+            for (int i = 0; i < 4; i++)
+                Place(group, "slab_bridge", 1, Mz(-8f, -33f + 1.625f + 3.25f * i, 0f, 0f) * Matrix4x4.Scale(new Vector3(1.72f, 3.25f / 3.56f, 1f)), Vector3.zero, "structure");
+        }
+
+        /// <summary>The west grove: its greybox blocks stay as the (invisible) collision, bamboo v2 clumps dress the solid cells, yotsume fences line the main lane — visual, no colliders.</summary>
+        private static void Grove(Transform dress, Transform greybox)
+        {
+            foreach (Transform t in Children(greybox))
+                if (t.name.StartsWith("Bamboo_", StringComparison.Ordinal)) t.GetComponent<MeshRenderer>().enabled = false;
+            var group = new GameObject(GroveGroupName) { layer = PrototypeLayers.Environment }.transform;
+            group.SetParent(dress, false);
+            group.gameObject.AddComponent<NavMeshModifier>().ignoreFromBuild = true;
+            var rng = new System.Random(747);
+            for (float x = -53.5f; x <= -38f; x += 3.2f)
+            for (float z = -29.5f; z <= 29.5f; z += 3.2f)
+            {
+                var c = new Vector2(x + (float)(rng.NextDouble() - 0.5) * 1.6f, z + (float)(rng.NextDouble() - 0.5) * 1.6f);
+                double yaw = rng.NextDouble() * 360.0, s = 0.9 + rng.NextDouble() * 0.3;
+                int v = 1 + rng.Next(4);
+                if (!GreyboxV6Builder.GroveCellSolid(c)) continue;
+                bool nearLane = false;
+                foreach (Vector2[] lane in GreyboxV6Builder.BambooLanes) nearLane |= GreyboxV6Builder.DistanceToPolyline(c, lane) < 3f;
+                if (nearLane) continue;
+                Visual(Place(group, "bamboo_v2", v, Mz(c.x, c.y, 0f, (float)yaw) * Matrix4x4.Scale(Vector3.one * (float)s), Vector3.zero, "vegetation"));
+            }
+
+            // The main lane (x −45) between its cross lanes: yotsume fence both sides, 1.8 m modules.
+            foreach (float side in new[] { -1.9f, 1.9f })
+            foreach ((float z0, float z1) in new[] { (-25f, -16.5f), (-11.5f, -2.5f), (2.5f, 11.5f), (16.5f, 25f) })
+                FenceRun(group, "fence_yotsume", new Vector2(-45f + side, z0), new Vector2(-45f + side, z1), true);
+        }
+
+        /// <summary>The service yard (1.8 m) and the R7 sakura court walls as kenninji fences on the same lines and gaps (kit colliders).</summary>
+        public static readonly (Vector2 a, Vector2 b, (float at, float width)[] gaps)[] FenceLines =
+        {
+            (new Vector2(-48f, 30f), new Vector2(-28f, 30f), new[] { (12f, 4f) }),
+            (new Vector2(-28f, 30f), new Vector2(-28f, 48f), new[] { (2f, 4f) }),
+            (new Vector2(-48f, 48f), new Vector2(-28f, 48f), new (float, float)[0]),
+            (new Vector2(-48f, 30f), new Vector2(-48f, 48f), new[] { (16f, 3f) }),
+            (new Vector2(27f, -8f), new Vector2(27f, 10f), new[] { (9f, 4f) }),
+            (new Vector2(45f, -8f), new Vector2(45f, 10f), new[] { (9f, 3.5f) }),
+            (new Vector2(27f, 10f), new Vector2(45f, 10f), new[] { (9f, 4f) }),
+            (new Vector2(27f, -8f), new Vector2(45f, -8f), new[] { (9f, 4f) }),
+        };
+
+        private static void Fences(Transform dress)
+        {
+            var group = new GameObject(FenceGroupName).transform;
+            group.SetParent(dress, false);
+            foreach ((Vector2 a, Vector2 b, (float at, float width)[] gaps) in FenceLines)
+            {
+                float len = Vector2.Distance(a, b);
+                Vector2 d = (b - a) / len;
+                float cursor = 0f;
+                foreach ((float at, float width) in gaps)
+                {
+                    if (at - width * 0.5f > cursor + 0.1f) FenceRun(group, "fence_kenninji", a + d * cursor, a + d * (at - width * 0.5f), false);
+                    cursor = at + width * 0.5f;
+                }
+
+                if (len > cursor + 0.1f) FenceRun(group, "fence_kenninji", a + d * cursor, b, false);
+            }
+        }
+
+        /// <summary>1.8 m fence modules (pivot at their left end, running +x) from a to b, stretched to fit.</summary>
+        private static void FenceRun(Transform parent, string family, Vector2 a, Vector2 b, bool visual)
+        {
+            float len = Vector2.Distance(a, b);
+            int n = Mathf.Max(1, Mathf.RoundToInt(len / 1.8f));
+            float w = len / n;
+            Vector2 d = (b - a) / len;
+            float deg = Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg;
+            for (int i = 0; i < n; i++)
+            {
+                Vector2 p = a + d * (i * w);
+                GameObject f = Place(parent, family, 1, Mz(p.x, p.y, 0f, deg) * Matrix4x4.Scale(new Vector3(w / 1.8f, 1f, 1f)), Vector3.zero, "structure");
+                if (visual) Visual(f);
+            }
+        }
+
+        /// <summary>The rock garden: raked gravel bed (x 12…28, z −30…−16), low stone walls on the greybox lines and gaps, five kit boulders.</summary>
+        private static void Karesansui(Transform dress)
+        {
+            var group = new GameObject(KaresansuiGroupName).transform;
+            group.SetParent(dress, false);
+            Slab(group, "Karesansui_Gravel", new Vector3(20f, 0.011f, -23f), new Vector3(16f, 0.02f, 14f), "gravel", 3f);
+            UnityEngine.Object.DestroyImmediate(group.Find("Karesansui_Gravel").GetComponent<Collider>());
+            foreach ((Vector2 a, Vector2 b) in new[] { (new Vector2(12f, -16f), new Vector2(16.5f, -16f)), (new Vector2(19.5f, -16f), new Vector2(28f, -16f)),
+                                                       (new Vector2(28f, -30f), new Vector2(28f, -23.5f)), (new Vector2(28f, -20.5f), new Vector2(28f, -16f)) })
+                LowWall(group, a, b);
+            var rng = new System.Random(748);
+            foreach (Vector2 rock in new[] { new Vector2(16f, -20f), new Vector2(22f, -19f), new Vector2(25f, -25f), new Vector2(15f, -27f), new Vector2(20f, -25.5f) })
+                Place(group, "rock_large", 3 + rng.Next(3), Mz(rock.x, rock.y, 0f, (float)(rng.NextDouble() * 360.0)), Vector3.zero, "structure");
+        }
+
+        /// <summary>Low stone wall (wall_kit V07, 3 m module, 0.9 m) from a to b, stretched to fit.</summary>
+        private static void LowWall(Transform parent, Vector2 a, Vector2 b)
+        {
+            float len = Vector2.Distance(a, b);
+            int n = Mathf.Max(1, Mathf.RoundToInt(len / 3f));
+            float w = len / n;
+            Vector2 d = (b - a) / len;
+            float deg = Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg;
+            for (int i = 0; i < n; i++)
+            {
+                Vector2 p = a + d * ((i + 0.5f) * w);
+                Place(parent, "wall_kit", 7, Mz(p.x, p.y, 0f, deg) * Matrix4x4.Scale(new Vector3(w / 3f, 1f, 1f)), Vector3.zero, "structure");
+            }
+        }
+
+        /// <summary>An instance made visual only: its colliders off (the greybox collision or the NavMesh boundary rules there).</summary>
+        private static void Visual(GameObject go)
+        {
+            foreach (Collider c in go.GetComponentsInChildren<Collider>(true)) c.gameObject.SetActive(false);
         }
 
         private static void Chumon(Transform dress)

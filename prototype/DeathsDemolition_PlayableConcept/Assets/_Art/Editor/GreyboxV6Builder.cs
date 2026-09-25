@@ -392,7 +392,7 @@ namespace DD.Art.Pipeline.EditorTools
             return n;
         }
 
-        private static bool GroveCellSolid(Vector2 c)
+        public static bool GroveCellSolid(Vector2 c)
         {
             foreach (Vector2[] lane in BambooLanes)
                 if (DistanceToPolyline(c, lane) < 1.5f + 0.71f) return false;

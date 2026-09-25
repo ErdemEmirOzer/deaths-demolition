@@ -344,6 +344,21 @@ namespace DD.Art.Tests.EditMode
                 if (b.Find(ArtLibraryPrefabBuilder.RoofName + "/" + WorldV5Dress.RoofOccluderName) == null) fails.Add("çatı soldurma yok: " + b.name);
             Assert.Greater(dress.transform.Find(WorldV5Dress.GardenGroupName).childCount, 20, "bahçe ağaçları");
 
+            // B5b-5 (2) · water v2 on the ponds, their shores, the kit bridges, the grove dressed over its (hidden) blocks, fences, rock garden.
+            foreach (Transform t in GameObject.Find(GreyboxV6Builder.GreyboxRootName).transform)
+            {
+                if (t.name.StartsWith("Pond", System.StringComparison.Ordinal) && t.name.EndsWith("_Water", System.StringComparison.Ordinal))
+                    Assert.AreEqual(WorldV5Dress.WaterMaterialPath, AssetDatabase.GetAssetPath(t.GetComponent<MeshRenderer>().sharedMaterial), t.name);
+                if (t.name.StartsWith("Bamboo_", System.StringComparison.Ordinal))
+                    Assert.IsFalse(t.GetComponent<MeshRenderer>().enabled, t.name + ": blok yalnız çarpışma");
+            }
+
+            Assert.Greater(dress.transform.Find(WorldV5Dress.ShoreGroupName).childCount, 20, "havuz kıyıları");
+            Assert.AreEqual(6, dress.transform.Find(WorldV5Dress.BridgeGroupName).childCount, "2 kalas + 4 levha köprü");
+            Assert.Greater(dress.transform.Find(WorldV5Dress.GroveGroupName).childCount, 40, "bambu kümeleri + çit");
+            Assert.Greater(dress.transform.Find(WorldV5Dress.FenceGroupName).childCount, 40, "kenninji çitleri");
+            Assert.IsNotNull(dress.transform.Find(WorldV5Dress.KaresansuiGroupName + "/Karesansui_Gravel"), "karesansui çakılı");
+
             // B8 · the plaza's planar reflection at its surface; the mirror maps y → 2h − y; tiers off / 256 / 1024, characters at Cinematic only.
             PlanarReflection planar = plaza.GetComponent<PlanarReflection>();
             Assert.IsNotNull(planar, "planar yansıma");

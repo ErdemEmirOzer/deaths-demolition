@@ -206,8 +206,19 @@ namespace DD.Prototype.World
             return Build(root, ProceduralSet());
         }
 
+        /// <summary>
+        /// WP-074 B5b-5 · The set the last <see cref="Build(Transform, MarkerSet)"/> placed (Spawns == null before any build).
+        /// WorldNavigation verifies these positions, not the prototype constants: in the v6 layout the constants' spots (±45 m
+        /// layout) are other places, and a kit boulder on one of them turned the check red while the real gates were fine.
+        /// </summary>
+        public static MarkerSet Current { get; private set; }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetCurrent() => Current = default;
+
         public static List<Vector2> Build(Transform root, MarkerSet set)
         {
+            Current = set;
             var keepOut = new List<Vector2>(set.Spawns.Length + set.Weapons.Length + 1);
 
             // The courtyard IS the origin, so the ring classifier needs no offset - but

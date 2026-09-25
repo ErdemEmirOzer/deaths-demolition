@@ -106,23 +106,25 @@ namespace DD.Prototype.World
 
             int failures = 0;
 
-            for (int i = 0; i < WorldMarkers.Spawns.Length; i++)
+            // The markers the world actually placed (WorldMarkers.Current); the prototype constants only before any build.
+            WorldMarkers.MarkerSet set = WorldMarkers.Current.Spawns != null ? WorldMarkers.Current : WorldMarkers.ProceduralSet();
+            for (int i = 0; i < set.Spawns.Length; i++)
             {
-                WorldMarkers.SpawnPlacement p = WorldMarkers.Spawns[i];
+                WorldMarkers.SpawnPlacement p = set.Spawns[i];
                 failures += CheckPoint(sb, p.Id, new Vector3(p.X, 0f, p.Z), startHit.position);
             }
 
-            for (int i = 0; i < WorldMarkers.Weapons.Length; i++)
+            for (int i = 0; i < set.Weapons.Length; i++)
             {
-                WorldMarkers.WeaponPlacement p = WorldMarkers.Weapons[i];
+                WorldMarkers.WeaponPlacement p = set.Weapons[i];
                 failures += CheckPoint(sb, p.Name, new Vector3(p.X, 0f, p.Z), startHit.position);
             }
 
             ok = ok && failures == 0;
 
             sb.Insert(0, "[World] NavMesh: " + triangles + " triangles, " +
-                         WorldMarkers.Spawns.Length + " spawn points, " +
-                         WorldMarkers.Weapons.Length + " weapon points, " +
+                         set.Spawns.Length + " spawn points, " +
+                         set.Weapons.Length + " weapon points, " +
                          failures + " unreachable" + (ok ? " -> OK\n" : " -> FAILED\n"));
 
             return sb.ToString();
