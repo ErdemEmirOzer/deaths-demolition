@@ -514,6 +514,28 @@ namespace DD.Prototype.Weapons.EditorTools
             { "sw_gel", WeaponFpViewPose.At(0.192f, -0.198f, 0.40f, -1.49f, -1.45f, 0.840f) },
         };
 
+        /// <summary>
+        /// WP-069 (C-00 25.09, grip decision B per weapon): the hand's mid-grip socket in each model's frame, measured on the
+        /// AP-021 LOD0 mesh — the centre of the hand region behind / below the trigger root (|x| ≤ 3.5 cm, y −0.5…−16 cm,
+        /// z 0…−14 cm). Two families: the stock wrist (ar_1, sg_1, sg_2, sr_1, lmg_1) sits just under the receiver, the
+        /// pistol grip (smg_1, ar_2, smg_2, lmg_2, rl_1) 4.5–6 cm lower; all ≈ 5 cm behind the trigger, where the base
+        /// (WeaponGrip.DefaultOffset, 0.5 cm) put the hand on the trigger — the stock sank 3.3 cm into the shoulder in the
+        /// v3 AR pose (S-06). Third person / top-down only; the FP view model keeps its fpView pose. The Specials keep the base.
+        /// </summary>
+        private static readonly Dictionary<string, Vector3> GripOffsets = new Dictionary<string, Vector3>
+        {
+            { "ar_1", new Vector3(0f, -0.013f, -0.025f) },
+            { "sg_1", new Vector3(0f, -0.015f, -0.054f) },
+            { "sg_2", new Vector3(0f, -0.015f, -0.078f) },
+            { "sr_1", new Vector3(0f, -0.014f, -0.054f) },
+            { "lmg_1", new Vector3(0f, -0.021f, -0.051f) },
+            { "smg_1", new Vector3(0f, -0.047f, -0.055f) },
+            { "ar_2", new Vector3(0f, -0.057f, -0.067f) },
+            { "smg_2", new Vector3(0f, -0.050f, -0.054f) },
+            { "lmg_2", new Vector3(0f, -0.045f, -0.060f) },
+            { "rl_1", new Vector3(0f, -0.062f, -0.055f) },
+        };
+
         // ================================================================== asset writing
 
         private static WeaponDefinition Write(WeaponDefinition fresh)
@@ -522,6 +544,8 @@ namespace DD.Prototype.Weapons.EditorTools
             {
                 fresh.presentation.fpView = fp;
             }
+
+            fresh.presentation.gripOffset = GripOffsets.TryGetValue(fresh.weaponId, out Vector3 grip) ? grip : WeaponGrip.DefaultOffset;
 
             string path = Folder + "/" + fresh.name + ".asset";
             WeaponDefinition existing = AssetDatabase.LoadAssetAtPath<WeaponDefinition>(path);
