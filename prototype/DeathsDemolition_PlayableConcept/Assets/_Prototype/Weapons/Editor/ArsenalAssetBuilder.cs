@@ -494,8 +494,9 @@ namespace DD.Prototype.Weapons.EditorTools
         /// (C-00 25.09, hands in view, the lens clear): v4 placed every grip socket (root + R·gripOffset·scale, where the right
         /// hand holds it) on one screen point, lower right at 1080p (1490, 880 from the top); v5 moves each weapon 6 cm forward
         /// along the view (smg_2 8 cm), so the socket comes to ≈ (1400–1440, 825–850) and the arms leave the lens, with the scale
-        /// raised (0.83–1.09) to keep the frame in the 180–260 k px band. smg_2's side magazine reaches ~490 px left of its grip,
-        /// so its socket stays at (1565, 800) to keep the crosshair clear. The bore converges on the crosshair 8 m out; the
+        /// raised (0.83–1.09) to keep the frame in the 180–260 k px band. smg_2's side magazine reaches ~490 px left of its grip:
+        /// a 15° inward cant swings it below the crosshair, so its socket can sit at (1460, 860) with the right wrist on screen
+        /// (S-06 measured it 37 px off the edge at (1565, 800)). The bore converges on the crosshair 8 m out; the
         /// left-hand point (grip_l) is on screen. Measured by WeaponModelSliceTests.FP_GorusPozu_*; S-06's FP arms IK onto them.
         /// </summary>
         private static readonly Dictionary<string, WeaponFpViewPose> FpPoses = new Dictionary<string, WeaponFpViewPose>
@@ -504,7 +505,7 @@ namespace DD.Prototype.Weapons.EditorTools
             { "smg_1", WeaponFpViewPose.At(0.187f, -0.081f, 0.444f, -0.21f, -1.42f, 0.830f) },
             { "sg_1", WeaponFpViewPose.At(0.158f, -0.089f, 0.391f, -0.19f, -1.19f, 0.894f) },
             { "ar_2", WeaponFpViewPose.At(0.245f, -0.110f, 0.561f, -0.29f, -1.89f, 0.873f) },
-            { "smg_2", WeaponFpViewPose.At(0.220f, -0.045f, 0.414f, 3.16f, -1.66f, 1.092f) },
+            { "smg_2", WeaponFpViewPose.At(0.170f, -0.069f, 0.414f, 2.96f, -1.16f, 1.092f, 15.0f) },
             { "sg_2", WeaponFpViewPose.At(0.163f, -0.093f, 0.422f, -0.41f, -1.23f, 0.890f) },
             { "lmg_1", WeaponFpViewPose.At(0.278f, -0.161f, 0.607f, -0.68f, -2.15f, 0.894f) },
             { "lmg_2", WeaponFpViewPose.At(0.295f, -0.152f, 0.646f, -0.56f, -2.30f, 0.875f) },
