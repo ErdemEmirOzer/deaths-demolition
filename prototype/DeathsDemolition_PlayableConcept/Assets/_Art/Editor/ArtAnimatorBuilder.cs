@@ -982,7 +982,12 @@ namespace DD.Art.Pipeline.EditorTools
                 aoc.ApplyOverrides(pairs);
                 EditorUtility.SetDirty(aoc);
                 manifest.TryGetValue(C.PlayerFpClipV3(animSet, "idle_aim"), out ArtAnimationClipContract.ClipSpec rest);
-                sets.Add(new CharacterAnimationSet.WeaponAnimSet { animSet = animSet, overrides = aoc, hasLeftHand = rest != null && rest.hasLeftHandInWeapon, leftHandInWeapon = rest != null ? rest.leftHandInWeapon : Vector3.zero });
+                if (rest == null) manifest.TryGetValue("AP022_fp_" + animSet + "_idle_aim", out rest);
+                sets.Add(new CharacterAnimationSet.WeaponAnimSet
+                {
+                    animSet = animSet, overrides = aoc, hasLeftHand = rest != null && rest.hasLeftHandInWeapon, leftHandInWeapon = rest != null ? rest.leftHandInWeapon : Vector3.zero,
+                    hasSocketRot = rest != null && rest.hasSocketRot, socketRotInWeapon = rest != null && rest.hasSocketRot ? rest.socketRotInWeapon : Quaternion.identity
+                });
             }
 
             set.ConfigureFirstPerson(c, sets);

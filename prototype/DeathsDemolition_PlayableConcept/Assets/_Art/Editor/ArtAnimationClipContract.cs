@@ -62,6 +62,9 @@ namespace DD.Art.Pipeline.EditorTools
             /// <summary>WP-071 B4b (AP-022 hands_in_weapon_frame.LeftHand.unity_pos): the left hand in the weapon frame on the class rest pose — the left-hand IK target.</summary>
             public bool hasLeftHandInWeapon;
             public UnityEngine.Vector3 leftHandInWeapon;
+            /// <summary>WP-071 B4b-3 (hands_in_weapon_frame.socket_weapon_r.unity_rot_of_bone_axes_xyzw): the socket bone's axes in the weapon frame.</summary>
+            public bool hasSocketRot;
+            public UnityEngine.Quaternion socketRotInWeapon;
 
             /// <summary>"name=frame;…" in manifest order (CharacterAnimationSet.Entry.events).</summary>
             public string EventsText()
@@ -142,6 +145,13 @@ namespace DD.Art.Pipeline.EditorTools
                 {
                     spec.hasLeftHandInWeapon = true;
                     spec.leftHandInWeapon = new UnityEngine.Vector3(ArtJson.AsFloat(up[0]), ArtJson.AsFloat(up[1]), ArtJson.AsFloat(up[2]));
+                }
+
+                if (ArtJson.Get(c, "hands_in_weapon_frame") is Dictionary<string, object> hw2 && ArtJson.Get(hw2, "socket_weapon_r") is Dictionary<string, object> sw
+                    && ArtJson.Get(sw, "unity_rot_of_bone_axes_xyzw") is List<object> sq && sq.Count == 4)
+                {
+                    spec.hasSocketRot = true;
+                    spec.socketRotInWeapon = new UnityEngine.Quaternion(ArtJson.AsFloat(sq[0]), ArtJson.AsFloat(sq[1]), ArtJson.AsFloat(sq[2]), ArtJson.AsFloat(sq[3])).normalized;
                 }
 
                 if (ArtJson.Get(c, "root_motion") is Dictionary<string, object> rm)

@@ -333,6 +333,9 @@ namespace DD.Prototype.Characters
             /// <summary>WP-071 B4b: the class rest pose's left hand in the weapon frame (AP-022 hands_in_weapon_frame) — the left-hand IK target.</summary>
             public bool hasLeftHand;
             public Vector3 leftHandInWeapon;
+            /// <summary>WP-071 B4b-3: the socket bone's axes in the weapon frame (AP-022 hands_in_weapon_frame) — the FP weapon frame = socket · inverse(this).</summary>
+            public bool hasSocketRot;
+            public Quaternion socketRotInWeapon = Quaternion.identity;
         }
 
         public IReadOnlyList<WeaponAnimSet> WeaponSets => _weaponSets;

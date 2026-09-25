@@ -34,6 +34,7 @@ namespace DD.Prototype.Characters
         private readonly List<string> _keys = new List<string>();
         private readonly List<List<KeyValuePair<AnimationClip, AnimationClip>>> _pairs = new List<List<KeyValuePair<AnimationClip, AnimationClip>>>();
         private int _swayLayer = -1;
+        private Quaternion _socketToWeapon = Quaternion.identity;
         private string _applied;
 
         public string WeaponSet { get; private set; }
@@ -72,6 +73,14 @@ namespace DD.Prototype.Characters
         {
             RigScale = fpViewScale > 0.01f ? fpViewScale : 1f;
             WeaponSet = HasSet(animSet) ? animSet : null;
+            _socketToWeapon = Quaternion.identity;
+            for (int i = 0; WeaponSet != null && i < _set.FpWeaponSets.Count; i++)
+            {
+                CharacterAnimationSet.WeaponAnimSet ws = _set.FpWeaponSets[i];
+                if (ws != null && ws.animSet == WeaponSet && ws.hasSocketRot) _socketToWeapon = Quaternion.Inverse(ws.socketRotInWeapon);
+            }
+
+            if (_frame != null) _frame.localRotation = _socketToWeapon;
             if (WeaponSet != null && _animator != null) Apply();
         }
 
@@ -138,6 +147,7 @@ namespace DD.Prototype.Characters
             {
                 _frame = new GameObject("fp_weapon_frame").transform;
                 _frame.SetParent(socket, false);
+                _frame.localRotation = _socketToWeapon;   // the weapon frame's axes (the socket bone's own axes are not the weapon's)
                 _frame.gameObject.layer = socket.gameObject.layer;
             }
 
@@ -168,15 +178,16 @@ namespace DD.Prototype.Characters
             Transform anchor = CameraView.ViewmodelAnchor;
             bool on = anchor != null && WeaponSet != null && (_alive == null || _alive());
             if (on && _instance == null) Build();
-            if (_instance == null) { if (Shown == this) Shown = null; return; }
+            if (_instance == null) { Release(); return; }
             if (_instance.activeSelf != on)
             {
                 _instance.SetActive(on);
                 if (on) { Apply(); _animator.Update(0f); }
             }
 
-            if (!on) { if (Shown == this) Shown = null; LastAnchorError = float.NaN; return; }
+            if (!on) { Release(); LastAnchorError = float.NaN; return; }
             Shown = this;
+            DD.Prototype.Weapons.WeaponController.FirstPersonWeaponSocket = _frame;   // S-02 ce9f9d95: the FP weapon rides the arms (root = frame − R·gripOffset·scale)
             Place(anchor);
             if (_swayLayer < 0) for (int i = 0; i < _animator.layerCount; i++) if (_animator.GetLayerName(i) == CharacterAnimatorContract.FpSwayLayer) _swayLayer = i;   // lazily: 0 layers before the Animator initialises (B4 lesson)
             if (_swayLayer >= 0)
@@ -200,16 +211,23 @@ namespace DD.Prototype.Characters
             LastAnchorError = Vector3.Distance(_fpCamera.position, anchor.position);
         }
 
+        // Hand the FP weapon back to S-02's fpView pose (only if it is ours).
+        private void Release()
+        {
+            if (Shown == this) Shown = null;
+            if (_frame != null && DD.Prototype.Weapons.WeaponController.FirstPersonWeaponSocket == _frame) DD.Prototype.Weapons.WeaponController.FirstPersonWeaponSocket = null;
+        }
+
         private void OnDisable()
         {
             if (_instance != null) _instance.SetActive(false);
-            if (Shown == this) Shown = null;
+            Release();
         }
 
         private void OnDestroy()
         {
+            Release();
             if (_instance != null) Destroy(_instance);
-            if (Shown == this) Shown = null;
         }
 
         private static Transform FindDeep(Transform t, string name)
