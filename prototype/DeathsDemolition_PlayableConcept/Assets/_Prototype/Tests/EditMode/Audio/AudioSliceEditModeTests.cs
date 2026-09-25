@@ -837,9 +837,12 @@ namespace DD.Prototype.Tests.EditMode.Audio
 
             map.ResetHysteresis();
             Assert.AreEqual(AcousticSpace.Hall, map.ResolveInMap(Merkez(hall)), "salon içi Hall");
-            // R1: z 38…49 — güney kenarı z = 38. 0,5 m dışarıda hâlâ Hall (1 m histerezis), 1,5 m'de Open.
-            Assert.AreEqual(AcousticSpace.Hall, map.ResolveInMap(new Vector3(0f, hall.floor + 1.6f, 37.5f)), "eşikte 0,5 m dışarı: histerezis");
-            Assert.AreEqual(AcousticSpace.Open, map.ResolveInMap(new Vector3(0f, hall.floor + 1.6f, 36.5f)), "1,5 m dışarı: Open");
+            // Güney kenarı poligondan (S-05 yerleşimi kayabilir: WP-074 B5b-1 z 38 → 39). 0,5 m dışarıda hâlâ Hall (1 m histerezis), 1,5 m'de Open.
+            float guney = float.MaxValue;
+            for (int i = 1; i < hall.polygonXZ.Length; i += 2) guney = Mathf.Min(guney, hall.polygonXZ[i]);
+            float ortaX = Merkez(hall).x;
+            Assert.AreEqual(AcousticSpace.Hall, map.ResolveInMap(new Vector3(ortaX, hall.floor + 1.6f, guney - 0.5f)), "eşikte 0,5 m dışarı: histerezis");
+            Assert.AreEqual(AcousticSpace.Open, map.ResolveInMap(new Vector3(ortaX, hall.floor + 1.6f, guney - 1.5f)), "1,5 m dışarı: Open");
             map.ResetHysteresis();
             Assert.AreEqual(AcousticSpace.Corridor, map.ResolveInMap(Merkez(corridor)), corridor.id + " Corridor");
             Assert.AreEqual(AcousticSpace.Open, map.ResolveInMap(new Vector3(0f, 2f, -200f)), "harita dışı Open");

@@ -12,19 +12,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ba64e44008fd433583b197b4018e544, type: 3}
   m_Name: DD_AcousticSpaces
   m_EditorClassIdentifier: 
-  _sourceHash: 2e80696c484e0e72
+  _sourceHash: f60ba4ae4bb7bd2f
   _worldScene: World_V6_Greybox
   _spaces:
   - id: R1_MainHall
     enclosure: 2
     polygonXZ:
-    - -18
-    - 38
-    - 18
-    - 38
-    - 18
+    - -16.5
+    - 39
+    - 16.5
+    - 39
+    - 16.5
     - 49
-    - -18
+    - -16.5
     - 49
     floor: 1.2
     ceiling: 7.7
