@@ -10,7 +10,8 @@ namespace DD.Prototype.Core.EditorTools
     /// High, Cinematic — each with its own URP asset. High keeps today's look: the "Ultra" level it replaces (lodBias 2) and
     /// DD_URP_PipelineAsset unchanged; only its texture streaming budget moves 160 → 1024 MB (ADR-015-1 v3). Performance =
     /// render scale 0.85, MSAA off, hard shadows 45 m / 2 cascades, a renderer copy without SSAO, lodBias 1, 512 MB.
-    /// Cinematic = MSAA 4×, 4096 shadow map, lodBias 2.5, 2048 MB. Default level High on every platform. Idempotent:
+    /// Cinematic (DEC-100, the default on every platform) = MSAA 4×, 4096 soft (high) shadows 120 m / 4 cascades, lodBias 3,
+    /// 3072 MB, its own renderer copy with SSAO 2.0 / 0.40 m, depth-normals, high blur and samples. Idempotent:
     /// <c>-executeMethod DD.Prototype.Core.EditorTools.QualityTierSetup.ApplyCli</c>.
     /// </summary>
     public static class QualityTierSetup
@@ -20,6 +21,9 @@ namespace DD.Prototype.Core.EditorTools
         public const string CinematicPipelinePath = "Assets/Settings/DD_URP_Cinematic.asset";
         public const string HighRendererPath = "Assets/Settings/DD_URP_Renderer.asset";
         public const string PerformanceRendererPath = "Assets/Settings/DD_URP_Renderer_Performance.asset";
+        public const string CinematicRendererPath = "Assets/Settings/DD_URP_Renderer_Cinematic.asset";
+        /// <summary>Cinematic SSAO (QUALITY-TIERS-V2 r2 §4.1): intensity, radius (m).</summary>
+        public const float CinematicSsaoIntensity = 2.0f, CinematicSsaoRadius = 0.40f;
         public const string SsaoFeatureName = "ScreenSpaceAmbientOcclusion";
         private const string QualitySettingsPath = "ProjectSettings/QualitySettings.asset";
 
@@ -34,6 +38,7 @@ namespace DD.Prototype.Core.EditorTools
             if (!File.Exists(PerformanceRendererPath)) AssetDatabase.CopyAsset(HighRendererPath, PerformanceRendererPath);
             if (!File.Exists(PerformancePipelinePath)) AssetDatabase.CopyAsset(HighPipelinePath, PerformancePipelinePath);
             if (!File.Exists(CinematicPipelinePath)) AssetDatabase.CopyAsset(HighPipelinePath, CinematicPipelinePath);
+            if (!File.Exists(CinematicRendererPath)) AssetDatabase.CopyAsset(HighRendererPath, CinematicRendererPath);
 
             var performanceRenderer = AssetDatabase.LoadAssetAtPath<UniversalRendererData>(PerformanceRendererPath);
             foreach (ScriptableRendererFeature feature in performanceRenderer.rendererFeatures)
@@ -57,8 +62,33 @@ namespace DD.Prototype.Core.EditorTools
             so = new SerializedObject(cinematic);
             so.FindProperty("m_MSAA").intValue = (int)MsaaQuality._4x;
             so.FindProperty("m_MainLightShadowmapResolution").intValue = 4096;
+            so.FindProperty("m_ShadowDistance").floatValue = QualityTiers.ShadowDistanceCap[(int)QualityTier.Sinematik];
+            so.FindProperty("m_ShadowCascadeCount").intValue = QualityTiers.ShadowCascadeCap[(int)QualityTier.Sinematik];
+            so.FindProperty("m_SoftShadowsSupported").boolValue = true;
+            SetEnum(so.FindProperty("m_SoftShadowQuality"), "High");
+            var cinematicRenderer = AssetDatabase.LoadAssetAtPath<UniversalRendererData>(CinematicRendererPath);
+            SerializedProperty cinematicRenderers = so.FindProperty("m_RendererDataList");
+            cinematicRenderers.arraySize = 1;
+            cinematicRenderers.GetArrayElementAtIndex(0).objectReferenceValue = cinematicRenderer;
             so.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(cinematic);
+            foreach (ScriptableRendererFeature feature in cinematicRenderer.rendererFeatures)
+            {
+                if (feature == null || feature.name != SsaoFeatureName) continue;
+                var ssao = new SerializedObject(feature);
+                ssao.FindProperty("m_Settings.Intensity").floatValue = CinematicSsaoIntensity;
+                ssao.FindProperty("m_Settings.Radius").floatValue = CinematicSsaoRadius;
+                ssao.FindProperty("m_Settings.Downsample").boolValue = false;
+                SetEnum(ssao.FindProperty("m_Settings.Source"), "DepthNormals");
+                SetEnum(ssao.FindProperty("m_Settings.NormalSamples"), "High");
+                SetEnum(ssao.FindProperty("m_Settings.Samples"), "High");
+                SetEnum(ssao.FindProperty("m_Settings.BlurQuality"), "High");
+                ssao.ApplyModifiedPropertiesWithoutUndo();
+                feature.SetActive(true);
+                EditorUtility.SetDirty(feature);
+            }
+
+            EditorUtility.SetDirty(cinematicRenderer);
 
             var high = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(HighPipelinePath);
             ApplyLevels(new Object[] { performance, high, cinematic });
@@ -90,17 +120,26 @@ namespace DD.Prototype.Core.EditorTools
                 level.FindPropertyRelative("customRenderPipeline").objectReferenceValue = pipelines[t];
             }
 
-            so.FindProperty("m_CurrentQuality").intValue = (int)QualityTier.Yuksek;
+            so.FindProperty("m_CurrentQuality").intValue = (int)QualityTiers.DefaultTier;
             SerializedProperty defaults = so.FindProperty("m_PerPlatformDefaultQuality");
             if (defaults != null && defaults.isArray)
                 for (int i = 0; i < defaults.arraySize; i++)
                 {
                     SerializedProperty second = defaults.GetArrayElementAtIndex(i).FindPropertyRelative("second");
-                    if (second != null) second.intValue = (int)QualityTier.Yuksek;
+                    if (second != null) second.intValue = (int)QualityTiers.DefaultTier;
                 }
 
             so.ApplyModifiedPropertiesWithoutUndo();
-            QualitySettings.SetQualityLevel((int)QualityTier.Yuksek, false);
+            QualitySettings.SetQualityLevel((int)QualityTiers.DefaultTier, false);
+        }
+
+        /// <summary>Sets a serialized enum by its name (URP keeps these enums internal).</summary>
+        private static void SetEnum(SerializedProperty property, string name)
+        {
+            if (property == null) throw new System.InvalidOperationException("serialized enum missing: " + name);
+            int index = System.Array.IndexOf(property.enumNames, name);
+            if (index < 0) throw new System.InvalidOperationException(property.propertyPath + " has no value " + name);
+            property.enumValueIndex = index;
         }
     }
 }

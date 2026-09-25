@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DD.Prototype.Core
 {
-    /// <summary>WP-075 · Quality tier v2 (planning/work-packages/QUALITY-TIERS-V2.md §1): Performans ≤ 8,0 ms, Yüksek ≤ 16,6 ms (DEC-092), Sinematik.</summary>
+    /// <summary>WP-075 · Quality tier v2 (planning/work-packages/QUALITY-TIERS-V2.md §1): Performans ≤ 8,0 ms, Yüksek ≤ 16,6 ms (DEC-092), Sinematik ≤ 33,3 ms — the default (DEC-100).</summary>
     public enum QualityTier
     {
         Performans = 0,
@@ -23,14 +23,17 @@ namespace DD.Prototype.Core
     {
         public const int LevelCount = 3;
 
+        /// <summary>DEC-100 (user, 2026-09-25): the game's default tier is Cinematic — 30 fps (avg ≤ 33.3 / p99 ≤ 40 ms), top quality; High (60 fps, DEC-092) and Performance stay selectable.</summary>
+        public const QualityTier DefaultTier = QualityTier.Sinematik;
+
         /// <summary>QualitySettings level names by tier (player-facing; the settings screen upper-cases them).</summary>
         public static readonly string[] LevelNames = { "Performance", "High", "Cinematic" };
 
-        /// <summary>Contract §3: LOD bias base, shadow distance cap (m), cascade cap, texture streaming budget (MB, ADR-015-1 v3).</summary>
-        public static readonly float[] LodBiasBase = { 1f, 2f, 2.5f };
-        public static readonly float[] ShadowDistanceCap = { 45f, 60f, 80f };
+        /// <summary>Contract §3: LOD bias base, shadow distance cap (m), cascade cap, texture streaming budget (MB, ADR-015-1 v3). Cinematic r2 (DEC-100): 3.0 / 120 m / 4 / 3072.</summary>
+        public static readonly float[] LodBiasBase = { 1f, 2f, 3f };
+        public static readonly float[] ShadowDistanceCap = { 45f, 60f, 120f };
         public static readonly int[] ShadowCascadeCap = { 2, 4, 4 };
-        public static readonly int[] StreamingBudgetMb = { 512, 1024, 2048 };
+        public static readonly int[] StreamingBudgetMb = { 512, 1024, 3072 };
 
         /// <summary>Raised with the new tier when the active level moves to another tier.</summary>
         public static event Action<QualityTier> Changed;
@@ -70,7 +73,7 @@ namespace DD.Prototype.Core
         /// <summary>Tier of a QualitySettings level in a layout of <paramref name="levelCount"/> levels (3 = direct; otherwise thirds).</summary>
         public static QualityTier TierOfLevel(int level, int levelCount)
         {
-            if (levelCount <= 0) return QualityTier.Yuksek;
+            if (levelCount <= 0) return DefaultTier;
             level = Mathf.Clamp(level, 0, levelCount - 1);
             if (levelCount == LevelCount) return (QualityTier)level;
             return (QualityTier)Mathf.Clamp(level * LevelCount / levelCount, 0, LevelCount - 1);

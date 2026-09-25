@@ -29,7 +29,8 @@ namespace DD.Prototype.Tests.EditMode
             QualityTier[] six = { QualityTier.Performans, QualityTier.Performans, QualityTier.Yuksek, QualityTier.Yuksek, QualityTier.Sinematik, QualityTier.Sinematik };
             for (int i = 0; i < 6; i++) Assert.AreEqual(six[i], QualityTiers.TierOfLevel(i, 6), "altı seviye " + i);
             Assert.AreEqual(QualityTier.Sinematik, QualityTiers.TierOfLevel(9, 3), "taşan indeks kıskaçlanır");
-            Assert.AreEqual(QualityTier.Yuksek, QualityTiers.TierOfLevel(0, 0));
+            Assert.AreEqual(QualityTiers.DefaultTier, QualityTiers.TierOfLevel(0, 0));
+            Assert.AreEqual(QualityTier.Sinematik, QualityTiers.DefaultTier, "DEC-100: varsayılan Sinematik");
             Assert.AreEqual("y", QualityTiers.Pick(QualityTier.Yuksek, "p", "y", "s"));
             Assert.AreEqual("p", QualityTiers.Pick(QualityTier.Performans, "p", "y", "s"));
             Assert.AreEqual("s", QualityTiers.Pick(QualityTier.Sinematik, "p", "y", "s"));
@@ -78,12 +79,14 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void Kademe_ModFormulu_LodBiasGolgeKaskat_SozlesmeTablosu()
         {
-            // §3: Yüksek → Tepeden 2,0 / TP 1,2 / FP 1,4; Performans her modda 1,0; Sinematik FP 1,75.
+            // §3: Yüksek → Tepeden 2,0 / TP 1,2 / FP 1,4; Performans her modda 1,0; Sinematik (r2, DEC-100) TP 1,8 / FP 2,1.
             Assert.AreEqual(2f, QualityTiers.LodBias(QualityTier.Yuksek, 1f), 1e-4f);
             Assert.AreEqual(1.2f, QualityTiers.LodBias(QualityTier.Yuksek, 0.6f), 1e-4f);
             Assert.AreEqual(1.4f, QualityTiers.LodBias(QualityTier.Yuksek, 0.7f), 1e-4f);
             Assert.AreEqual(1f, QualityTiers.LodBias(QualityTier.Performans, 0.6f), 1e-4f);
-            Assert.AreEqual(1.75f, QualityTiers.LodBias(QualityTier.Sinematik, 0.7f), 1e-4f);
+            Assert.AreEqual(2.1f, QualityTiers.LodBias(QualityTier.Sinematik, 0.7f), 1e-4f);
+            Assert.AreEqual(1.8f, QualityTiers.LodBias(QualityTier.Sinematik, 0.6f), 1e-4f);
+            Assert.AreEqual(120f, QualityTiers.ShadowDistance(QualityTier.Sinematik, 200f), 1e-4f);
             // gölge = min(kademe tavanı, mod): Tepeden 60/2, TP 60/3, FP 70/4.
             Assert.AreEqual(60f, QualityTiers.ShadowDistance(QualityTier.Yuksek, 70f), 1e-4f);
             Assert.AreEqual(45f, QualityTiers.ShadowDistance(QualityTier.Performans, 60f), 1e-4f);
@@ -94,11 +97,14 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
-        public void Proje_UcSeviye_VarsayilanHigh_HerSeviyeKendiUrpVarligi()
+        public void Proje_UcSeviye_VarsayilanCinematic_HerSeviyeKendiUrpVarligi()
         {
             CollectionAssert.AreEqual(QualityTiers.LevelNames, QualitySettings.names, "seviye adları");
             SerializedObject qs = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/QualitySettings.asset")[0]);
-            Assert.AreEqual((int)QualityTier.Yuksek, qs.FindProperty("m_CurrentQuality").intValue, "varsayılan seviye High");
+            Assert.AreEqual((int)QualityTier.Sinematik, qs.FindProperty("m_CurrentQuality").intValue, "varsayılan seviye Cinematic (DEC-100)");
+            SerializedProperty defaults = qs.FindProperty("m_PerPlatformDefaultQuality");
+            for (int i = 0; i < defaults.arraySize; i++)
+                Assert.AreEqual((int)QualityTier.Sinematik, defaults.GetArrayElementAtIndex(i).FindPropertyRelative("second").intValue, "platform varsayılanı Cinematic");
             SerializedProperty levels = qs.FindProperty("m_QualitySettings");
             string[] pipelines = { "Assets/Settings/DD_URP_Performance.asset", "Assets/Settings/DD_URP_PipelineAsset.asset", "Assets/Settings/DD_URP_Cinematic.asset" };
             for (int t = 0; t < 3; t++)
@@ -127,10 +133,29 @@ namespace DD.Prototype.Tests.EditMode
             foreach (Object sub in AssetDatabase.LoadAllAssetsAtPath("Assets/Settings/DD_URP_Renderer_Performance.asset"))
                 if (sub != null && sub.name == "ScreenSpaceAmbientOcclusion") ssaoOff = !new SerializedObject(sub).FindProperty("m_Active").boolValue;
             Assert.IsTrue(ssaoOff, "Performance renderer SSAO kapalı");
-            // Cinematic §4.1.
+            // Cinematic §4.1 (r2, DEC-100): 4096 soft (high) shadows 120 m / 4 cascades, its own renderer with SSAO 2.0 / 0.40 m.
             Assert.AreEqual(4, cinematic.FindProperty("m_MSAA").intValue, "MSAA 4×");
             Assert.AreEqual(4096, cinematic.FindProperty("m_MainLightShadowmapResolution").intValue);
-            Assert.AreEqual("Assets/Settings/DD_URP_Renderer.asset", AssetDatabase.GetAssetPath(cinematic.FindProperty("m_RendererDataList").GetArrayElementAtIndex(0).objectReferenceValue));
+            Assert.AreEqual(120f, cinematic.FindProperty("m_ShadowDistance").floatValue, 1e-3f);
+            Assert.AreEqual(4, cinematic.FindProperty("m_ShadowCascadeCount").intValue);
+            Assert.IsTrue(cinematic.FindProperty("m_SoftShadowsSupported").boolValue);
+            SerializedProperty soft = cinematic.FindProperty("m_SoftShadowQuality");
+            Assert.AreEqual("High", soft.enumNames[soft.enumValueIndex]);
+            Assert.AreEqual("Assets/Settings/DD_URP_Renderer_Cinematic.asset", AssetDatabase.GetAssetPath(cinematic.FindProperty("m_RendererDataList").GetArrayElementAtIndex(0).objectReferenceValue));
+            bool ssaoCinematic = false;
+            foreach (Object sub in AssetDatabase.LoadAllAssetsAtPath("Assets/Settings/DD_URP_Renderer_Cinematic.asset"))
+            {
+                if (sub == null || sub.name != "ScreenSpaceAmbientOcclusion") continue;
+                var ssao = new SerializedObject(sub);
+                Assert.IsTrue(ssao.FindProperty("m_Active").boolValue, "Cinematic SSAO açık");
+                Assert.AreEqual(2.0f, ssao.FindProperty("m_Settings.Intensity").floatValue, 1e-4f);
+                Assert.AreEqual(0.40f, ssao.FindProperty("m_Settings.Radius").floatValue, 1e-4f);
+                SerializedProperty blur = ssao.FindProperty("m_Settings.BlurQuality");
+                Assert.AreEqual("High", blur.enumNames[blur.enumValueIndex]);
+                ssaoCinematic = true;
+            }
+
+            Assert.IsTrue(ssaoCinematic, "Cinematic renderer SSAO");
         }
     }
 }
