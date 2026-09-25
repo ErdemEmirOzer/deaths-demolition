@@ -606,7 +606,9 @@ namespace DD.Prototype.Feedback.Vfx
 
                 Source source;
                 if (Has(name, "sakura") || Has(mat, "sakura")) source = Source.Sakura;
-                else if (Has(name, "bamboo") && !Has(name, "fence")) source = Source.Bamboo;
+                // Bamboo by owner or material (the v6 world places AP-023 prefabs whose materials carry the name: M_ap023_bamboo_*);
+                // never S-05's shaft / fog cards (Shaft_NN_Bamboo, V5_Fog_Bamboo) or fences.
+                else if ((Has(name, "bamboo") || Has(mat, "bamboo")) && !Has(name, "fence") && !Has(name, "shaft") && !Has(mat, "shaft") && !Has(name, "fog") && !Has(mat, "fog")) source = Source.Bamboo;
                 else if (Has(name, "momiji") || Has(name, "maple")) source = Source.BroadLeaf;
                 else if ((name.StartsWith("Pond", StringComparison.Ordinal) && name.EndsWith("_Water", StringComparison.Ordinal)) || Has(mat, "water")) source = Source.Water;
                 else if (name == PlazaName) source = Source.WetGround;
@@ -690,7 +692,20 @@ namespace DD.Prototype.Feedback.Vfx
                 CameraOccluderClass roof = roofs[i];
                 if (roof == null || roof.Kind != CameraOccluderKind.Roof) continue;
                 var box = roof.GetComponent<BoxCollider>();
-                if (box == null) continue;
+                if (box == null)
+                {
+                    // No box (v6 roofs carry mesh colliders): the roof renderers' world bounds — their bottom face is the eave line.
+                    Renderer[] parts = roof.GetComponentsInChildren<Renderer>(false);   // start-up only
+                    if (parts.Length == 0) continue;
+                    Bounds rb = parts[0].bounds;
+                    for (int k = 1; k < parts.Length; k++) rb.Encapsulate(parts[k].bounds);
+                    Vector3 mn = rb.min, mx = rb.max;
+                    AddEave(list, new Vector3(mn.x, mn.y, mn.z), new Vector3(mx.x, mn.y, mn.z));
+                    AddEave(list, new Vector3(mx.x, mn.y, mn.z), new Vector3(mx.x, mn.y, mx.z));
+                    AddEave(list, new Vector3(mx.x, mn.y, mx.z), new Vector3(mn.x, mn.y, mx.z));
+                    AddEave(list, new Vector3(mn.x, mn.y, mx.z), new Vector3(mn.x, mn.y, mn.z));
+                    continue;
+                }
 
                 // The eave rectangle: the collider box's bottom face, in the roof's own (possibly yawed) frame.
                 Transform t = roof.transform;
@@ -902,7 +917,9 @@ namespace DD.Prototype.Feedback.Vfx
             int live = ps.particleCount;
             float meanLife = 0.5f * (look.LifeMin + look.LifeMax);
             if (look.Collide) meanLife += 6f;   // petals / leaves: the fall is added per grain; the mean fall is ≈ the rest time
-            _accumulator[li] += target / meanLife * dt;
+            // Open-loop rate from the mean life, plus a closed-loop term that refills a deficit over ≈ 2 s: the petals' real life
+            // (fall + rest) is shorter than the estimate, so the open loop alone settled at about half the target (capture 1).
+            _accumulator[li] += target / meanLife * dt + Mathf.Max(0, target - live) * dt * 0.5f;
             int n = (int)_accumulator[li];
             _accumulator[li] -= n;
 
