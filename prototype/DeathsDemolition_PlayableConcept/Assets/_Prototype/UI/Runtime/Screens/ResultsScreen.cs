@@ -100,9 +100,10 @@ namespace DD.Prototype.UI
             RectTransform rewards = Column("Rewards", ReportShare + 0.02f, 1f, top, FooterHeight);
             // E26: the blocks take their content's height (one height for both, capped by the room) - no empty card. The
             // reward cards are fitted against the same capped room, so none is ever clipped by the cap.
-            // AD 12c MUST-4: the room runs to the footer's own band (one Primary tall) + XL - FooterHeight's spare 40 px had
-            // left ≈ 120 px unused over MAIN MENU at Mac while the first unlock card was dropped for room.
-            float room = Content.rect.height - top - UiTokens.TargetPreferred - (int)UiSpace.XL;
+            // AD 12c MUST-4: the room runs to the footer's own band (one Primary tall) + L - FooterHeight's spare 40 px and
+            // the XL gap had left ≈ 120 px unused over MAIN MENU at Mac while the first unlock card and the Next-unlock line
+            // were dropped for room.
+            float room = Content.rect.height - top - UiTokens.TargetPreferred - (int)UiSpace.L;
             float reportHeight = BuildReport(report);
             float rewardsHeight = BuildRewards(rewards, room);
 
