@@ -229,7 +229,7 @@ namespace DD.Prototype.UI
             _weaponIcon = InkGlyph("WeaponIcon", host, "Weapon.AssaultRifle", UiColor.TextPrimary, WeaponGlyph);
             Place(_weaponIcon.rectTransform, new Vector2(1f, 0f), new Vector2(0.5f, 0.5f), ringCentre, new Vector2(WeaponGlyph, WeaponGlyph));
 
-            float edge = -(WeaponRing + 16f);
+            float edge = -(WeaponRing + RingGap);
             BuildInkAmmo(root, host, back, edge);
 
             // T2 (calm only): the weapon and its build on one line (AD 8-R SHOULD-A1).
@@ -238,6 +238,8 @@ namespace DD.Prototype.UI
             _classicName = InkText("Name", calm, "—", UiType.Caption, UiColor.TextSecondary, TextAnchor.MiddleRight);
             UiFactory.Fill(_classicName.rectTransform);
             _calmOnly.Add(UiFactory.Group(calm.gameObject));
+            _weaponCalm = calm;
+            LayWeaponCluster(false);
         }
 
         /// <summary>
@@ -246,8 +248,8 @@ namespace DD.Prototype.UI
         /// </summary>
         private void BuildInkAmmo(RectTransform root, RectTransform host, RectTransform back, float edge)
         {
-            const float countWidth = 170f;
-            const float ladderWidth = 230f;
+            const float countWidth = CountWidth;
+            const float ladderWidth = LadderWidth;
             var anchor = new Vector2(1f, 0f);
             float ladderLeft = edge - ladderWidth;
             float captionLeft = edge - countWidth;
@@ -263,10 +265,12 @@ namespace DD.Prototype.UI
             Image brush = UiFactory.NewImage("Brush", under, UiColor.HudInk, BrushSprite());
             UiFactory.Fill(brush.rectTransform);
             Depth(brush);
+            _ladderBrush = under;
 
             RectTransform ladder = UiFactory.NewRect("Ladder", host);
             Place(ladder, anchor, new Vector2(0f, 0f), new Vector2(ladderLeft, 14f), new Vector2(ladderWidth, LadderHeight));
             ladder.localRotation = Quaternion.Euler(0f, 0f, -StrokeLean);
+            _ladderHome = ladder.anchoredPosition;
             _ladderBack = LadderImage("Back", ladder, UiColor.TextMuted);
             _ladderFill = LadderImage("Fill", ladder, UiColor.TextPrimary);
             _ladderWidth = ladderWidth;
@@ -286,6 +290,7 @@ namespace DD.Prototype.UI
             suspended.fontStyle = FontStyles.Bold;
             Place(suspended.rectTransform, anchor, new Vector2(0f, 0.5f), new Vector2(captionLeft, 92f), new Vector2(220f, ReloadPromptSize + 6f));
             _suspendedChip = suspended.gameObject;
+            _suspendedRect = suspended.rectTransform;
             _suspendedChip.SetActive(false);
 
             // The ring carries the reload; the linear bar stays for the presenter's contract, unseen.
@@ -645,6 +650,84 @@ namespace DD.Prototype.UI
             get { return _weaponCluster; }
         }
 
+        // ---- WP-068 12b (AD FP cluster SHOULD-1): the weapon cluster's internals, right-anchored or mirrored
+
+        private const float CountWidth = 170f;
+        private const float LadderWidth = 230f;
+        private const float RingGap = 16f;
+
+        /// <summary>First person: the count (and the words above it) start this far in from the box's left - x 100 at 1080.</summary>
+        public const float FpCountInset = 68f;
+
+        /// <summary>First person: the ladder runs x 100–295 and ends with the health brush under it (55–305).</summary>
+        public const float FpLadderWidth = 195f;
+
+        private RectTransform _ladderBrush;
+        private RectTransform _suspendedRect;
+        private RectTransform _weaponCalm;
+        private Vector2 _ladderHome;
+        private int _clusterMirrored = -1;
+
+        /// <summary>The weapon cluster's internals are mirrored (first person; tests).</summary>
+        public bool WeaponClusterMirrored => _clusterMirrored == 1;
+
+        /// <summary>
+        /// The weapon cluster's internals for its place. Top-down and third person keep the corner layout: the ring at the
+        /// screen's edge, the count, ladder and words running inward from it, right-anchored. First person (the cluster above
+        /// the health block at the bottom left) mirrors it so the column has one left rail, as AD FP cluster SHOULD-1 laid out:
+        /// - the ring at the box's left end (x 32–92 at 1080) over the heart, the glyph in it;
+        /// - the count 8 px right of the ring (x 100), the ladder under it ending with the health brush (x 100–295 over 55–305),
+        ///   both strokes leaning toward the centre - the TD lean mirrored, the inner end held;
+        /// - the state word (LOW / EMPTY + prompt, or SUSPENDED) and the calm weapon line above, left-aligned with the count.
+        /// The box, its rect (WeaponClusterRect) and everything tested against it stay as they are. Runs only on a change.
+        /// </summary>
+        private void LayWeaponCluster(bool mirrored)
+        {
+            int want = mirrored ? 1 : 0;
+            if (_reloadRing == null || want == _clusterMirrored)
+            {
+                return;
+            }
+
+            _clusterMirrored = want;
+            Vector2 anchor = mirrored ? Vector2.zero : new Vector2(1f, 0f);
+            float edge = -(WeaponRing + RingGap);   // top-down / third person: where the count ends
+            var ringCentre = new Vector2(mirrored ? WeaponRing * 0.5f : -WeaponRing * 0.5f, WeaponRing * 0.5f + 8f);
+            Place((RectTransform)_reloadRing.transform, anchor, new Vector2(0.5f, 0.5f), ringCentre, new Vector2(WeaponRing, WeaponRing));
+            Place(_weaponIcon.rectTransform, anchor, new Vector2(0.5f, 0.5f), ringCentre, new Vector2(WeaponGlyph, WeaponGlyph));
+
+            float ladderWidth = mirrored ? FpLadderWidth : LadderWidth;
+            float wordsLeft = mirrored ? FpCountInset : edge - CountWidth;
+            Place((RectTransform)_ammoCounter.transform, anchor, mirrored ? Vector2.zero : new Vector2(1f, 0f),
+                new Vector2(mirrored ? FpCountInset : edge, 30f), new Vector2(CountWidth, 48f));
+
+            // The ladder and its brush turn about their inner end (toward the screen's centre), which holds its height.
+            float lean = mirrored ? StrokeLean : -StrokeLean;
+            float inner = mirrored ? FpCountInset + ladderWidth : edge - LadderWidth;
+            Place(_ladderBrush, anchor, new Vector2(mirrored ? 1f : 0f, 0.5f), new Vector2(inner + (mirrored ? 8f : -8f), 20f), new Vector2(ladderWidth + 16f, 14f));
+            _ladderBrush.localRotation = Quaternion.Euler(0f, 0f, lean);
+            RectTransform ladder = (RectTransform)_ladderBack.transform.parent;
+            _ladderHome = new Vector2(inner, 14f);
+            Place(ladder, anchor, new Vector2(mirrored ? 1f : 0f, 0f), _ladderHome, new Vector2(ladderWidth, LadderHeight));
+            ladder.localRotation = Quaternion.Euler(0f, 0f, lean);
+            if (!Mathf.Approximately(ladderWidth, _ladderWidth))
+            {
+                _ladderWidth = ladderWidth;
+                if (_ladderMagazine > 0)
+                {
+                    int shown = _ladderShown;
+                    LayLadder(_ladderMagazine, _ladderPellets);   // the pitch follows the new width
+                    FillLadder(shown);
+                }
+            }
+
+            Vector2 row = new Vector2(220f, ReloadPromptSize + 6f);
+            Place(_reloadCaption.rectTransform, anchor, new Vector2(0f, 0.5f), new Vector2(wordsLeft, 92f), row);
+            Place(_suspendedRect, anchor, new Vector2(0f, 0.5f), new Vector2(wordsLeft, 92f), row);
+            Place(_weaponCalm, anchor, mirrored ? Vector2.zero : new Vector2(1f, 0f), new Vector2(mirrored ? FpCountInset : edge, 118f), new Vector2(340f, 18f));
+            _classicName.alignment = UiFactory.Align(mirrored ? TextAnchor.MiddleLeft : TextAnchor.MiddleRight);
+        }
+
         private void ApplyModeLayout()
         {
             if (_weaponCluster == null)
@@ -662,6 +745,7 @@ namespace DD.Prototype.UI
             bool first = _layoutMode >= 0;
             _layoutMode = mode;
             _layoutSize = size;
+            LayWeaponCluster(mode == (int)DD.Prototype.CameraSystem.CameraMode.FirstPerson);   // 12b: FP mirrors the internals
             Vector2 at = WeaponClusterPosition(_weaponHome, mode == (int)DD.Prototype.CameraSystem.CameraMode.FirstPerson, size);
             if (first)
             {

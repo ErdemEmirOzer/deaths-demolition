@@ -722,7 +722,11 @@ namespace DD.Prototype.UI
         /// <summary>E23: how far a prompt rises as it enters.</summary>
         public const float PromptRise = 4f;
 
-        /// <summary>E11: the trigger on an empty magazine - the ladder kicks 4 px and settles (Decor: none under reduced motion).</summary>
+        /// <summary>
+        /// E11: the trigger on an empty magazine - the ladder kicks 4 px outward and settles (Decor: none under reduced motion).
+        /// WP-068 12b: it settles on its laid-out home (the 8-R ladder is not at x 0 - it used to land there, past the cluster's
+        /// edge), and the kick mirrors with the first-person layout.
+        /// </summary>
         private void OnDryFire()
         {
             RectTransform ladder = _ladderBack != null ? (RectTransform)_ladderBack.transform.parent : null;
@@ -732,9 +736,8 @@ namespace DD.Prototype.UI
             }
 
             UiMotion.KillTarget(ladder, false);
-            Vector2 home = new Vector2(0f, ladder.anchoredPosition.y);
-            ladder.anchoredPosition = home + new Vector2(4f, 0f);
-            UiMotion.Move(ladder, home, UiDuration.Fast, UiEase.Settle, UiMotionClass.Decor);
+            ladder.anchoredPosition = _ladderHome + new Vector2(WeaponClusterMirrored ? -4f : 4f, 0f);
+            UiMotion.Move(ladder, _ladderHome, UiDuration.Fast, UiEase.Settle, UiMotionClass.Decor);
         }
 
         private void FillLadder(int rounds)

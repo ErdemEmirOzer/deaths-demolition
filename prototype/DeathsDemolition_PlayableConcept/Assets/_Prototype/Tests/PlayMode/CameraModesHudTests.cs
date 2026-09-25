@@ -13,6 +13,7 @@ namespace DD.Prototype.Tests.PlayMode
     /// <summary>
     /// M4-R1 N2 (WP-070 §5.1, §4.5): the Pause CAMERA selector switches the live camera and saves the choice; after the
     /// blend the run HUD aims down the screen centre with the look-mode reticle, and top-down comes back unchanged.
+    /// WP-068 12b: first person mirrors the weapon cluster's internals onto one left rail; top-down restores the corner layout.
     /// </summary>
     public sealed class CameraModesHudTests
     {
@@ -71,6 +72,24 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(RunHudScreen.FpWeaponClusterBottom, hud.WeaponCluster.anchoredPosition.y, 2f, "FP: can bloğunun üstünde");
             Assert.IsTrue(hud.Reticle.DotShown);
 
+            // WP-068 12b (AD FP cluster SHOULD-1): in first person the cluster's internals mirror onto one left rail - the ring at
+            // the box's left end, the count 8 px right of it (x 100 at 1080), the ladder under it ending at x 295, the state word
+            // left-aligned with the count. The box itself is the one asserted above.
+            {
+                RectTransform cluster = hud.WeaponCluster;
+                Assert.IsTrue(hud.WeaponClusterMirrored, "FP: iç düzen aynalı");
+                Rect ring = LocalRect(cluster, cluster.Find("Back/ReloadRing"));
+                Rect ammo = LocalRect(cluster, cluster.Find("Content/Ammo"));
+                Rect ladder = LocalRect(cluster, cluster.Find("Content/Ladder"));
+                Rect caption = LocalRect(cluster, cluster.Find("Content/ReloadCaption"));
+                float left = cluster.rect.xMin;
+                Assert.AreEqual(left, ring.xMin, 2f, "FP: halka kutunun sol ucunda (x 32)");
+                Assert.Less(ring.xMax, ammo.xMin, "FP: halka sayının solunda");
+                Assert.AreEqual(left + RunHudScreen.FpCountInset, ammo.xMin, 1f, "FP: sayı halkanın 8 px sağında (x 100)");
+                Assert.AreEqual(ammo.xMin, caption.xMin, 1f, "FP: durum kelimesi sayıyla sola hizalı");
+                Assert.AreEqual(left + RunHudScreen.FpCountInset + RunHudScreen.FpLadderWidth, ladder.xMax, 2f, "FP: merdiven can fırçasıyla biter (x 295)");
+            }
+
             // AD R1-A MUST-1: BEHIND YOU straight behind the camera shows the edge arc on screen, its stroke above the bottom.
             Vector3 forward = Vector3.ProjectOnPlane(Camera.main.transform.forward, Vector3.up).normalized;
             RunHudScreen.CaptureRearDirection = -forward;
@@ -93,10 +112,32 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsFalse(hud.Reticle.DotShown, "tepeden: nokta yok");
             yield return new WaitForSecondsRealtime(0.5f);
             Assert.AreEqual(home.y, hud.WeaponCluster.anchoredPosition.y, 2f, "tepeden: küme köşesine döner");
+            Assert.IsFalse(hud.WeaponClusterMirrored, "tepeden: köşe düzeni geri (12b)");
+            Rect tdRing = LocalRect(hud.WeaponCluster, hud.WeaponCluster.Find("Back/ReloadRing"));
+            Assert.AreEqual(hud.WeaponCluster.rect.xMax, tdRing.xMax, 3.5f, "tepeden: halka ekran kenarında (paralaks ≤ 3 px)");
             Assert.AreEqual(0, UiSettings.CameraMode);
 
             PrototypeUiFlow.AbortRunToMainMenu();
             yield return SahneyiBekle(PrototypeScenes.MainMenu);
+        }
+
+        /// <summary>A child's box in <paramref name="space"/>'s local units (its world corners brought back; a turned child's bounds).</summary>
+        private static Rect LocalRect(RectTransform space, Transform target)
+        {
+            Assert.IsNotNull(target, "silah kümesi alt öğesi bulunamadı");
+            var corners = new Vector3[4];
+            ((RectTransform)target).GetWorldCorners(corners);
+            float xMin = float.MaxValue, yMin = float.MaxValue, xMax = float.MinValue, yMax = float.MinValue;
+            for (int i = 0; i < 4; i++)
+            {
+                Vector3 p = space.InverseTransformPoint(corners[i]);
+                xMin = Mathf.Min(xMin, p.x);
+                yMin = Mathf.Min(yMin, p.y);
+                xMax = Mathf.Max(xMax, p.x);
+                yMax = Mathf.Max(yMax, p.y);
+            }
+
+            return Rect.MinMaxRect(xMin, yMin, xMax, yMax);
         }
     }
 }
