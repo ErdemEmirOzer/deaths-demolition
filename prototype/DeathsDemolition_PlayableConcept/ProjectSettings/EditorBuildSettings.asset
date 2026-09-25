@@ -23,13 +23,13 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/_Art/Scenes/World_AP005.unity
     guid: 17e4cbf1a7b66410eb516841d26a3e1d
+  - enabled: 1
+    path: Assets/_Art/Scenes/World_V6_Greybox.unity
+    guid: 2afaebde573d0428c96966afda288bb6
   - enabled: 0
     path: Assets/_Art/Scenes/Pilot/AP001_GoldenSlice.unity
     guid: eb051461970544542bf14347fa241352
   - enabled: 0
     path: Assets/_Art/Scenes/AP_LibraryShowcase.unity
     guid: e891086ccc63d42e8b31b148e79afaf8
-  - enabled: 0
-    path: Assets/_Art/Scenes/World_V6_Greybox.unity
-    guid: 2afaebde573d0428c96966afda288bb6
   m_configObjects: {}

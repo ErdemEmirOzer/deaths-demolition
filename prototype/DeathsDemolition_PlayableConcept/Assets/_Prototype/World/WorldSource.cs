@@ -8,17 +8,20 @@ namespace DD.Prototype.World
     ///
     ///   Procedural   the M0 blockout WorldBuilder assembles on Awake (the fallback and the A/B reference)
     ///   AP005        the authored AP-005 world scene, loaded additively into Run (World_AP005.unity)
+    ///   V6           World v5 on the v6 layout (World_V6_Greybox.unity: the AP-023 dress, DEC-101 / 102 light), loaded the same way —
+    ///                the default world since C-00 25.09 (the user's build had shown the old map); AP005 stays behind the flag
     /// </summary>
     public enum WorldSource
     {
         Procedural = 0,
-        AP005 = 1
+        AP005 = 1,
+        V6 = 2
     }
 
     /// <summary>
     /// WP-014 · The run-world switch as a ScriptableObject in Resources (ADR-014-1): not a
     /// ProjectSetting, not a scene reference — one asset the art pipeline writes and the
-    /// Run scene reads on Awake. A command-line flag (<c>-ddWorldSource Procedural|AP005</c>)
+    /// Run scene reads on Awake. A command-line flag (<c>-ddWorldSource Procedural|AP005|V6</c>)
     /// or the <c>DD_WORLD_SOURCE</c> environment variable overrides it for measurements and
     /// A/B runs without touching the asset; the resolved value is logged once.
     /// </summary>
@@ -33,8 +36,10 @@ namespace DD.Prototype.World
         /// slot (the World v5 greybox <c>World_V6_Greybox</c>, dev builds only) — spawn simulation and bot soak, not a player setting.</summary>
         public const string SceneFlag = "-ddWorldScene";
         public const string SceneEnvironmentVariable = "DD_WORLD_SCENE";
+        /// <summary>The scene <see cref="WorldSource.V6"/> loads (World v5, the default world since C-00 25.09).</summary>
+        public const string V6SceneName = "World_V6_Greybox";
 
-        [Tooltip("The world the Run scene loads. Procedural = M0 blockout (fallback); AP005 = the authored world scene.")]
+        [Tooltip("The world the Run scene loads. Procedural = M0 blockout (fallback); AP005 = World_AP005; V6 = World v5 (World_V6_Greybox, the default).")]
         [SerializeField] private WorldSource _source = WorldSource.Procedural;
 
         [Tooltip("Scene loaded additively into Run when the source is AP005. Must be in the build settings.")]
@@ -69,6 +74,8 @@ namespace DD.Prototype.World
                 source = parsed;
                 origin = "override '" + forced + "'";
             }
+
+            if (source == WorldSource.V6) sceneName = V6SceneName;
 
             string sceneOverride = Arg(SceneFlag);
             if (string.IsNullOrEmpty(sceneOverride)) sceneOverride = Environment.GetEnvironmentVariable(SceneEnvironmentVariable);

@@ -6,6 +6,7 @@ using System.Text;
 using DD.Prototype.CameraSystem;
 using DD.Prototype.Core;
 using DD.Prototype.Navigation;
+using DD.Prototype.World;
 using Unity.AI.Navigation;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -806,13 +807,16 @@ namespace DD.Art.Pipeline.EditorTools
             return placement;
         }
 
+        /// <summary>C-00 25.09: World v5 is the default world — a release entry right after World_AP005 (the release list stays contiguous:
+        /// Boot … Results, World_AP005, World_V6_Greybox, then the dev-only pilot and showcase), and DD_WorldSource on V6.</summary>
         private static void RegisterDevScene()
         {
-            // Dev-only entry (disabled): dev builds include it (LifecycleProbeBuild.DevelopmentScenes), release builds never.
             var scenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
-            if (scenes.Exists(s => s.path == ScenePath)) return;
-            scenes.Add(new EditorBuildSettingsScene(ScenePath, false));
+            scenes.RemoveAll(s => s.path == ScenePath);
+            int at = scenes.FindIndex(s => s.path == ArtLibraryPaths.Ap005WorldScene);
+            scenes.Insert(at >= 0 ? at + 1 : scenes.Count, new EditorBuildSettingsScene(ScenePath, true));
             EditorBuildSettings.scenes = scenes.ToArray();
+            PlacementImporter.EnsureWorldSourceAsset(WorldSource.V6);
         }
 
         private static void WriteJson()

@@ -243,7 +243,7 @@ namespace DD.Art.Tests.EditMode
                 yollar.Add((s.enabled ? "" : "[kapalı] ") + s.path);
             }
 
-            Assert.AreEqual(9, sahneler.Length, "Build Settings'te tam 9 giriş olmalı (5 prototip + AP-005 dünyası etkin; pilot + vitrin + World v6 greybox kapalı); " + sahneler.Length + " var:\n" + string.Join("\n", yollar));
+            Assert.AreEqual(9, sahneler.Length, "Build Settings'te tam 9 giriş olmalı (5 prototip + AP-005 dünyası + World v5 (V6) etkin; pilot + vitrin kapalı); " + sahneler.Length + " var:\n" + string.Join("\n", yollar));
 
             for (int i = 0; i < ilkBes.Length; i++)
             {
@@ -257,20 +257,20 @@ namespace DD.Art.Tests.EditMode
             Assert.IsTrue(File.Exists(sahneler[5].path), "AP-005 dünya sahnesi diskte yok: " + sahneler[5].path);
             Assert.AreEqual(ArtLibraryPaths.Ap005WorldSceneName, Path.GetFileNameWithoutExtension(sahneler[5].path), "AP-005 sahne adı sözleşmeyle aynı olmalı.");
 
-            Assert.AreEqual(ArtPipelinePaths.PilotScene, sahneler[6].path, "7. giriş pilot olmalı (dev-only).");
-            Assert.IsFalse(sahneler[6].enabled, "Pilot sahne release listesinde olmamalı (ADR-015-2: yalnız dev build).");
-            Assert.IsTrue(File.Exists(sahneler[6].path), "Pilot sahne diskte yok: " + sahneler[6].path);
-            Assert.AreEqual(ArtPipelinePaths.PilotSceneName, Path.GetFileNameWithoutExtension(sahneler[6].path), "Pilot sahne adı sözleşmeyle aynı olmalı.");
+            // C-00 25.09: World v5 (the v6 layout, World_V6_Greybox) is the default world — a release entry right after World_AP005
+            // (GreyboxV6Builder registers it; DD_WorldSource on V6); World_AP005 stays behind -ddWorldSource AP005.
+            Assert.AreEqual(ArtLibraryPaths.GreyboxV6Scene, sahneler[6].path, "7. giriş World v5 (V6) olmalı (varsayılan dünya).");
+            Assert.IsTrue(sahneler[6].enabled, "World v5 release listesinde etkin olmalı (varsayılan dünya, C-00 25.09).");
+            Assert.IsTrue(File.Exists(sahneler[6].path), "World v5 sahnesi diskte yok: " + sahneler[6].path);
 
-            Assert.AreEqual(ArtLibraryPaths.ShowcaseScene, sahneler[7].path, "8. giriş vitrin olmalı (dev-only).");
-            Assert.IsFalse(sahneler[7].enabled, "Vitrin release listesinde olmamalı (ADR-015-2: yalnız dev build).");
-            Assert.IsTrue(File.Exists(sahneler[7].path), "Vitrin sahnesi diskte yok: " + sahneler[7].path);
+            Assert.AreEqual(ArtPipelinePaths.PilotScene, sahneler[7].path, "8. giriş pilot olmalı (dev-only).");
+            Assert.IsFalse(sahneler[7].enabled, "Pilot sahne release listesinde olmamalı (ADR-015-2: yalnız dev build).");
+            Assert.IsTrue(File.Exists(sahneler[7].path), "Pilot sahne diskte yok: " + sahneler[7].path);
+            Assert.AreEqual(ArtPipelinePaths.PilotSceneName, Path.GetFileNameWithoutExtension(sahneler[7].path), "Pilot sahne adı sözleşmeyle aynı olmalı.");
 
-            // WP-074 B1: the World v6 greybox is dev-only (GreyboxV6Builder registers it disabled; a dev build adds it through
-            // DD_BUILD_EXTRA_SCENES), never in the release list.
-            Assert.AreEqual(ArtLibraryPaths.GreyboxV6Scene, sahneler[8].path, "9. giriş World v6 greybox olmalı (dev-only).");
-            Assert.IsFalse(sahneler[8].enabled, "Greybox release listesinde olmamalı.");
-            Assert.IsTrue(File.Exists(sahneler[8].path), "Greybox sahnesi diskte yok: " + sahneler[8].path);
+            Assert.AreEqual(ArtLibraryPaths.ShowcaseScene, sahneler[8].path, "9. giriş vitrin olmalı (dev-only).");
+            Assert.IsFalse(sahneler[8].enabled, "Vitrin release listesinde olmamalı (ADR-015-2: yalnız dev build).");
+            Assert.IsTrue(File.Exists(sahneler[8].path), "Vitrin sahnesi diskte yok: " + sahneler[8].path);
 
             // Release list contiguous: no enabled entry after a disabled one.
             bool disabledSeen = false;
@@ -286,10 +286,10 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(9, dev.Length);
             Assert.AreEqual(ilkBes[0], dev[0], "dev build giriş sahnesi Boot");
             Assert.AreEqual(ArtLibraryPaths.Ap005WorldScene, dev[5]);
-            Assert.AreEqual(ArtPipelinePaths.PilotScene, dev[6]);
-            Assert.AreEqual(ArtLibraryPaths.ShowcaseScene, dev[7]);
-            Assert.AreEqual(ArtLibraryPaths.GreyboxV6Scene, dev[8], "WP-074 B1: greybox dev build'de");
-            Debug.Log("[DD-TEST] wp015.buildlist release=6 devOnly=3");
+            Assert.AreEqual(ArtLibraryPaths.GreyboxV6Scene, dev[6], "World v5 (V6) release listesinde, dev build'de de");
+            Assert.AreEqual(ArtPipelinePaths.PilotScene, dev[7]);
+            Assert.AreEqual(ArtLibraryPaths.ShowcaseScene, dev[8]);
+            Debug.Log("[DD-TEST] wp015.buildlist release=7 devOnly=2");
         }
 
         /// <summary>WP-015 (ADR-015-1) → WP-075 C1 (ADR-015-1 v3): mipmap streaming is on at every quality level with its tier's budget (512 / 1024 / 2048 MB; Standalone default High).</summary>

@@ -64,7 +64,7 @@ namespace DD.Prototype.World
             // and the probes, which all key on that name.
             WorldSource source = WorldSourceSettings.Resolve(out string worldScene);
             ActiveSource = source;
-            if (source == WorldSource.AP005 && _buildOnAwake)
+            if ((source == WorldSource.AP005 || source == WorldSource.V6) && _buildOnAwake)   // an authored world scene (V6 the default)
             {
                 if (Application.CanStreamedLevelBeLoaded(worldScene))
                 {
@@ -73,7 +73,7 @@ namespace DD.Prototype.World
                     return;
                 }
 
-                Debug.LogError("[World] WorldSource AP005 but scene '" + worldScene + "' is not in the build settings; falling back to the procedural world.", this);
+                Debug.LogError("[World] WorldSource " + source + " but scene '" + worldScene + "' is not in the build settings; falling back to the procedural world.", this);
                 ActiveSource = WorldSource.Procedural;
             }
 

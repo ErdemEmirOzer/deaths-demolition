@@ -143,6 +143,16 @@ namespace DD.Prototype.Tests.EditMode
             SerializedProperty soft = cinematic.FindProperty("m_SoftShadowQuality");
             Assert.AreEqual("High", soft.enumNames[soft.enumValueIndex]);
             Assert.AreEqual("Assets/Settings/DD_URP_Renderer_Cinematic.asset", AssetDatabase.GetAssetPath(cinematic.FindProperty("m_RendererDataList").GetArrayElementAtIndex(0).objectReferenceValue));
+            // C-00 25.09: every tier carries the feature-free planar renderer at index 1 (the planar reflection's nested render; the
+            // tier renderer's SSAO threw in release players).
+            foreach (SerializedObject tierAsset in new[] { performance, high, cinematic })
+            {
+                SerializedProperty list = tierAsset.FindProperty("m_RendererDataList");
+                Assert.AreEqual(2, list.arraySize, tierAsset.targetObject.name + " renderer listesi");
+                Object planarRenderer = list.GetArrayElementAtIndex(1).objectReferenceValue;
+                Assert.AreEqual("Assets/Settings/DD_URP_Renderer_Planar.asset", AssetDatabase.GetAssetPath(planarRenderer), tierAsset.targetObject.name);
+                Assert.AreEqual(0, new SerializedObject(planarRenderer).FindProperty("m_RendererFeatures").arraySize, "planar renderer özelliksiz");
+            }
             bool ssaoCinematic = false;
             foreach (Object sub in AssetDatabase.LoadAllAssetsAtPath("Assets/Settings/DD_URP_Renderer_Cinematic.asset"))
             {

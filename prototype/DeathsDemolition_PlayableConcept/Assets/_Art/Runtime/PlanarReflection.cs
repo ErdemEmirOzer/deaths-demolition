@@ -143,7 +143,14 @@ namespace DD.Art
             data.antialiasing = AntialiasingMode.None;
             data.requiresColorOption = CameraOverrideOption.Off;
             data.requiresDepthOption = CameraOverrideOption.Off;
+            // C-00 25.09 (World v5 the default world): the nested render runs on a feature-free renderer — through the tier's own
+            // renderer its SSAO pass threw a NullReferenceException every frame in release players (the camera stack aborted, the run
+            // stayed behind the loading curtain); the reflection needs no AO, decals or DD passes.
+            data.SetRenderer(PlanarRendererIndex);
         }
+
+        /// <summary>DD_URP_Renderer_Planar (no renderer features), the second entry of every tier's pipeline asset.</summary>
+        public const int PlanarRendererIndex = 1;
 
         private void Release()
         {

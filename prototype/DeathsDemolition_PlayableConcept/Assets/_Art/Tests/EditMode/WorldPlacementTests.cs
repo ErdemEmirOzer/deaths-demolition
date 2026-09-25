@@ -506,9 +506,17 @@ namespace DD.Art.Tests.EditMode
             Assert.IsNotNull(settings, "WorldSource varlığı yok: " + ArtLibraryPaths.WorldSourceAsset);
             Assert.AreEqual(ArtLibraryPaths.Ap005WorldSceneName, settings.Ap005SceneName);
             Assert.AreEqual(settings, Resources.Load<WorldSourceSettings>(WorldSourceSettings.ResourceName), "Resources adı");
+            // C-00 25.09: World v5 (V6) is the default world; AP005 stays behind the flag / env override.
+            Assert.AreEqual(WorldSource.V6, settings.Source, "varsayılan dünya V6 (World v5)");
             string before = Environment.GetEnvironmentVariable(WorldSourceSettings.EnvironmentVariable);
+            string sceneBefore = Environment.GetEnvironmentVariable(WorldSourceSettings.SceneEnvironmentVariable);
             try
             {
+                Environment.SetEnvironmentVariable(WorldSourceSettings.EnvironmentVariable, null);
+                Environment.SetEnvironmentVariable(WorldSourceSettings.SceneEnvironmentVariable, null);
+                Assert.AreEqual(WorldSource.V6, WorldSourceSettings.Resolve(out string defaultScene), "bayraksız yol V6");
+                Assert.AreEqual(WorldSourceSettings.V6SceneName, defaultScene);
+                Assert.AreEqual(ArtLibraryPaths.GreyboxV6SceneName, WorldSourceSettings.V6SceneName);
                 Environment.SetEnvironmentVariable(WorldSourceSettings.EnvironmentVariable, "AP005");
                 Assert.AreEqual(WorldSource.AP005, WorldSourceSettings.Resolve(out string scene));
                 Assert.AreEqual(ArtLibraryPaths.Ap005WorldSceneName, scene);
@@ -518,6 +526,7 @@ namespace DD.Art.Tests.EditMode
             finally
             {
                 Environment.SetEnvironmentVariable(WorldSourceSettings.EnvironmentVariable, before);
+                Environment.SetEnvironmentVariable(WorldSourceSettings.SceneEnvironmentVariable, sceneBefore);
             }
 
             Debug.Log("[DD-TEST] wp014.worldsource asset=" + settings.Source);
