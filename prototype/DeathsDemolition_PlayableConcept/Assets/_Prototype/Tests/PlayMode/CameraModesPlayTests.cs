@@ -57,6 +57,7 @@ namespace DD.Prototype.Tests.PlayMode
         private GameObject _engel;
         private PrototypeCameraRig _rig;
         private KameraBakisGirdisi _girdi;
+        private IInputSource _oncekiGirdi;
 
         [UnitySetUp]
         public IEnumerator Kur()
@@ -91,6 +92,7 @@ namespace DD.Prototype.Tests.PlayMode
             _hedef.transform.SetParent(_govde.transform, false);
 
             _girdi = new KameraBakisGirdisi();
+            _oncekiGirdi = InputSourceRegistry.Current;   // WP-079C: restored in teardown (the installer sets it once per process)
             InputSourceRegistry.SetCurrent(_girdi);
 
             _rig = CameraRigFactory.EnsureRig(_hedef.transform);
@@ -105,7 +107,7 @@ namespace DD.Prototype.Tests.PlayMode
         {
             Time.captureDeltaTime = 0f;
             CameraShakeService.StopAll();
-            InputSourceRegistry.Clear();
+            InputSourceRegistry.SetCurrent(_oncekiGirdi);   // not Clear(): later fixtures (LifecycleHardening) need the real source
             if (_rig != null) UnityEngine.Object.Destroy(_rig.gameObject);
             if (_engel != null) UnityEngine.Object.Destroy(_engel);
             if (_govde != null) UnityEngine.Object.Destroy(_govde);

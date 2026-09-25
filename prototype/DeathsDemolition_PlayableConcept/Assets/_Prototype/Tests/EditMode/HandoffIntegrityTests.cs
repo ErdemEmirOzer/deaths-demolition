@@ -282,7 +282,9 @@ namespace DD.Prototype.Tests.EditMode
 
             Regex nitelikli = string.IsNullOrEmpty(k.Tip)
                 ? null
-                : new Regex(@"(?<![\w.])" + Regex.Escape(k.Tip) + @"\s*\.\s*" + Regex.Escape(k.Ad) + @"\s*\(");
+                // WP-079C: a namespace-qualified call (DD.….Vfx.AtmosphereSystem.Attach) is a call — only a word
+                // character may not precede the type name; the bare-name pattern below stays strict.
+                : new Regex(@"(?<!\w)" + Regex.Escape(k.Tip) + @"\s*\.\s*" + Regex.Escape(k.Ad) + @"\s*\(");
             var niteliksiz = new Regex(@"(?<![\w.])" + Regex.Escape(k.Ad) + @"\s*\(");
 
             foreach (string p in KaynakDosyalar())
