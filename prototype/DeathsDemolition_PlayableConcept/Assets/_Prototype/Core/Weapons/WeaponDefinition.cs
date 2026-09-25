@@ -300,13 +300,13 @@ namespace DD.Prototype.Core.Weapons
         {
             switch (cls)
             {
-                case WeaponClass.Smg: return At(0.187f, -0.081f, 0.384f, -0.21f, -1.41f, 0.831f);
-                case WeaponClass.Shotgun: return At(0.158f, -0.089f, 0.331f, -0.22f, -1.18f, 0.837f);
-                case WeaponClass.Lmg: return At(0.278f, -0.161f, 0.547f, -0.70f, -2.14f, 0.851f);
-                case WeaponClass.Sniper: return At(0.162f, -0.093f, 0.339f, -0.28f, -1.21f, 0.840f);
-                case WeaponClass.Launcher: return At(0.286f, -0.132f, 0.564f, -0.51f, -2.20f, 0.839f);
-                case WeaponClass.Special: return At(0.268f, -0.143f, 0.487f, -0.59f, -2.05f, 0.840f);
-                default: return At(0.162f, -0.093f, 0.314f, -0.27f, -1.21f, 0.841f);
+                case WeaponClass.Smg: return At(0.187f, -0.081f, 0.444f, -0.21f, -1.42f, 0.830f);
+                case WeaponClass.Shotgun: return At(0.158f, -0.089f, 0.391f, -0.19f, -1.19f, 0.894f);
+                case WeaponClass.Lmg: return At(0.278f, -0.161f, 0.607f, -0.68f, -2.15f, 0.894f);
+                case WeaponClass.Sniper: return At(0.162f, -0.093f, 0.399f, -0.26f, -1.22f, 0.905f);
+                case WeaponClass.Launcher: return At(0.286f, -0.132f, 0.624f, -0.50f, -2.22f, 0.860f);
+                case WeaponClass.Special: return At(0.268f, -0.143f, 0.547f, -0.56f, -2.06f, 0.892f);
+                default: return At(0.162f, -0.093f, 0.374f, -0.23f, -1.22f, 0.924f);
             }
         }
     }
