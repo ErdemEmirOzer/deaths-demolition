@@ -1203,6 +1203,7 @@ namespace DD.Prototype.Weapons
         /// WP-069 × WP-071 B4b (C-00 25.09): the first-person arms' weapon socket while S-06's FirstPersonArms is active (it
         /// sets this; null otherwise). With it the FP weapon follows the arms — root = socket − R·gripOffset (× the pose's
         /// scale), R the socket's rotation, no added kick (the clip carries it); without it the fpView pose places the weapon.
+        /// The socket belongs to the classic's FP set: a Special in hand ignores it and keeps its own fpView pose.
         /// fpView stays the authoring target and the single owner of FP placement: P-06's FP rest clip puts the weapon at the
         /// fpView pose, and FP_GorusPozu gates the frame with the arms on too.
         /// </summary>
@@ -1218,8 +1219,9 @@ namespace DD.Prototype.Weapons
         internal void ApplyFpViewPose()
         {
             Transform character = _motor != null ? _motor.transform : transform;
-            _classicFpPose.Tick(_classicRig, _classic != null ? _classic.Definition : null, character);
-            _specialFpPose.Tick(_specialRig, _special.IsActive ? _special.Definition : null, character);
+            _classicFpPose.Tick(_classicRig, _classic != null ? _classic.Definition : null, character, true);
+            // the arms' socket is the classic's FP set — a Special in hand keeps its own fpView pose
+            _specialFpPose.Tick(_specialRig, _special.IsActive ? _special.Definition : null, character, false);
         }
 
         /// <summary>
@@ -1237,7 +1239,7 @@ namespace DD.Prototype.Weapons
 
             public bool Posed => _posed;
 
-            public void Tick(WeaponVisualRig rig, WeaponDefinition definition, Transform character)
+            public void Tick(WeaponVisualRig rig, WeaponDefinition definition, Transform character, bool followArms)
             {
                 if (rig == null)
                 {
@@ -1266,7 +1268,7 @@ namespace DD.Prototype.Weapons
                 }
 
                 WeaponFpViewPose pose = definition.FpViewPose;
-                Transform armSocket = FirstPersonWeaponSocket;
+                Transform armSocket = followArms ? FirstPersonWeaponSocket : null;
                 if (armSocket != null && armSocket.gameObject.activeInHierarchy)
                 {
                     Quaternion r = armSocket.rotation;

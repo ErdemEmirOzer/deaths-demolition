@@ -375,6 +375,8 @@ namespace DD.Prototype.Tests.PlayMode
             {
                 if (_s != null) { yield return _s.Bitir(); _s = null; DD.Prototype.CameraSystem.CameraModeService.ResetForTests(); }
                 yield return Kur();
+                // ar_1 has an FP arms set (S-06 B4b): its arms' socket is the classic's, the Special in hand keeps its own fpView pose.
+                _s.Controller.EquipClassic(ClassicWeaponId.AssaultRifle, _s.Config);
                 _s.Director.SetRandomSource(new SabitRastgele(rv));
                 yield return _s.SpawnEt(0.5f);
                 SpecialWeaponPickup pickup = _s.CanliPickup();
@@ -470,8 +472,11 @@ namespace DD.Prototype.Tests.PlayMode
         {
             yield return Kur();
             Transform mount = _s.Rig.GetComponentInChildren<PlayerWeaponBinding>().WeaponMount;
+            // A weapon without an FP arms set (lmg_1): S-06's FirstPersonArms would write the socket every frame over the stand-in.
+            _s.Controller.EquipClassic(ClassicWeaponId.Lmg1, _s.Config);
             DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.FirstPerson, instant: true);
             yield return SpecialWeaponSahne.Kareler(30);
+            Assert.IsNull(FirstPersonArms.Shown, "lmg_1 için FP kolları görünür (set yok beklenir)");
             Transform anchor = DD.Prototype.CameraSystem.CameraView.ViewmodelAnchor;
             Assert.IsNotNull(anchor, "FP'de görüntü modeli çapası yok.");
             WeaponDefinition def = _s.Controller.Classic.Definition;
