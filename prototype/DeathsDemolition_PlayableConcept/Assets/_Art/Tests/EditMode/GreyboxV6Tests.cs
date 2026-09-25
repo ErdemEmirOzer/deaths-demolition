@@ -368,6 +368,25 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(WorldV5Sky.Clouds.Length + WorldV5Sky.Cards.Length, skyV2.childCount, "bulut düzlemi + nirengi kartı");
             foreach ((string name, string role, float height, float half, float tile, float speed, int queue) c in WorldV5Sky.Clouds)
                 Assert.Greater(((Vector4)skyV2.Find(c.name).GetComponent<MeshRenderer>().sharedMaterial.GetVector("_ScrollUV")).magnitude, 0f, c.name + " sürüklenmiyor");
+
+            // WP-075 C4 / C5 · shafts (20; none within 10 m of the centre) and fog sheets (one per pond + 7), tier-cut, visual only.
+            Transform shafts = dress.transform.Find(WorldV5Atmosphere.ShaftGroupName), fogSheets = dress.transform.Find(WorldV5Atmosphere.FogGroupName);
+            Assert.AreEqual(WorldV5Atmosphere.Shafts.Length, shafts.childCount, "huzme kartı");
+            Assert.AreEqual(3 + WorldV5Atmosphere.FogSheets.Length, fogSheets.childCount, "sis levhası (3 havuz + 7)");
+            AtmosphereTierGroup shaftTier = shafts.GetComponent<AtmosphereTierGroup>(), fogTier = fogSheets.GetComponent<AtmosphereTierGroup>();
+            Assert.AreEqual(new[] { 6, 10, 20 }, new[] { shaftTier.CountOf(QualityTier.Performans), shaftTier.CountOf(QualityTier.Yuksek), shaftTier.CountOf(QualityTier.Sinematik) });
+            Assert.AreEqual(new[] { 4, 7, 10 }, new[] { fogTier.CountOf(QualityTier.Performans), fogTier.CountOf(QualityTier.Yuksek), fogTier.CountOf(QualityTier.Sinematik) });
+            foreach (Transform t in shafts)
+            {
+                if (new Vector2(t.position.x, t.position.z).magnitude < WorldV5Atmosphere.CentreClear) fails.Add("merkezde huzme: " + t.name);
+                Assert.AreEqual("DD/ShaftCard", t.GetComponent<MeshRenderer>().sharedMaterial.shader.name);
+            }
+
+            foreach (Transform t in fogSheets)
+            {
+                Assert.IsNull(t.GetComponent<Collider>(), t.name + " çarpışmasız");
+                Assert.LessOrEqual(t.GetComponent<MeshRenderer>().sharedMaterial.GetFloat("_PeakAlpha"), 0.12f + 1e-4f, t.name + " ≤ %12");
+            }
             Assert.IsEmpty(fails, string.Join("\n", fails));
         }
 

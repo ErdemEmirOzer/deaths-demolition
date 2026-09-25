@@ -270,6 +270,7 @@ namespace DD.Art.Pipeline.EditorTools
             Vista(dress);
             ArtSurfaceImporter.BuildHorizonPlates(dress.gameObject);   // the AP-019 horizon rings (contract radii) …
             WorldV5Sky.Build(dress);                                    // … in sky v2 (WP-075 C3): v2 sheets, cloud planes, landmarks
+            WorldV5Atmosphere.Build(dress, greybox);                    // WP-075 C4 shaft cards + C5 ground fog sheets (tiered)
             report.PlazaCells = WorldV5Ground.Build(dress, (parent, family, v, m, role) => Place(parent, family, v, m, Vector3.zero, role));
             report.Instances = CountInstances(dress);
             return report;
