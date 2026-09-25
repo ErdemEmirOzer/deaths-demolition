@@ -776,6 +776,16 @@ namespace DD.Prototype.UI
             }
         }
 
+        /// <summary>
+        /// Capture seam (12c, AD 12b SHOULD-2): raises a banner now and returns its box on the canvas (px, centre origin) -
+        /// the band a status stamp sorts under.
+        /// </summary>
+        public Rect CaptureBanner(string message)
+        {
+            ShowBanner(message);
+            return CanvasRectOf(_banner.Root);
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetCaptureSeams()
         {

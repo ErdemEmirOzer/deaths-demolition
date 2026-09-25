@@ -42,7 +42,8 @@ namespace DD.Prototype.UI
     {
         public const int PoolSize = 16;
         public const float GlyphSize = 24f;
-        private const float HeadHeight = 2.1f;
+        /// <summary>The stamp's anchor over a zombie's feet, metres (captures stage it by this height).</summary>
+        public const float HeadHeight = 2.1f;
         private const float MinChipWidth = 88f;
         private static readonly Vector2 Parked = new Vector2(-10000f, -10000f);
         private static readonly Vector3[] s_corners = new Vector3[4];
@@ -299,8 +300,13 @@ namespace DD.Prototype.UI
                 _hasFigure = _figureSource != null && _figureSource(out _figure);
             }
 
-            return Resolve(at, _chips[i].sizeDelta, _avoid, _avoidCount, _hasFigure, _figure);
+            Vector2 placed = Resolve(at, _chips[i].sizeDelta, _avoid, _avoidCount, _hasFigure, _figure);
+            LastPlaced = new Rect(placed.x - _chips[i].sizeDelta.x * 0.5f, placed.y, _chips[i].sizeDelta.x, _chips[i].sizeDelta.y);
+            return placed;
         }
+
+        /// <summary>The last stamp this frame resolved, canvas px (centre origin; bottom edge at y) - capture logs.</summary>
+        public static Rect LastPlaced { get; private set; }
 
         /// <summary>
         /// WP-068 12b · where a stamp stands, in canvas px with the origin at the centre. <paramref name="at"/> is the head point

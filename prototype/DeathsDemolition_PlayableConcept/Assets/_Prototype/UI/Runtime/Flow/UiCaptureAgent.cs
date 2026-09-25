@@ -1235,7 +1235,22 @@ namespace DD.Prototype.UI
                     yield return new WaitForSecondsRealtime(0.4f);
                     yield return Frame(folder, "hud-low-health");
                     yield return UiCaptureAgent.Coverage(folder, "hud-low-health");
+
+                    // 12c (AD 12b SHOULD-3, B10): ammo and health both LOW - "LOW AMMO" over "LOW" in the one column.
+                    if (classic != null)
+                    {
+                        int lowAmmo = Mathf.Max(1, Mathf.FloorToInt(classic.MagazineSize * RunHudViewModel.LowAmmoFraction));
+                        while (classic.Ammo > lowAmmo)
+                        {
+                            classic.ConsumeShot();
+                        }
+
+                        yield return new WaitForSecondsRealtime(0.3f);
+                        yield return Frame(folder, "hud-both-low");
+                    }
                 }
+
+                yield return StampCollisions(folder, rig);
 
                 yield return SpecialStates(folder, rig);
 
@@ -1252,6 +1267,122 @@ namespace DD.Prototype.UI
 
                 Debug.Log("[UiCapture] hudstates done · framebuffer " + Screen.width + "x" + Screen.height);
                 Application.Quit();
+            }
+
+            /// <summary>
+            /// 12c (AD 12b SHOULD-2, B1 / B2): status stamps staged where their true point collides - a zombie is placed so its
+            /// stamp anchor (<see cref="UiEnemyStatusMarkers.HeadHeight"/> over its feet) projects onto the target, then shocked:
+            /// - <c>stamp-banner</c>: inside the banner's box, with the banner up (the stamp sorts under it);
+            /// - <c>stamp-figure</c> (third person): on the player figure (it lifts to the figure + 24);
+            /// - <c>stamp-cluster</c>: inside the bottom-left ink cluster (it leaves toward the middle, + 12).
+            /// Each frame logs the target and where the stamp resolved.
+            /// </summary>
+            private static IEnumerator StampCollisions(string folder, PlayerRig rig)
+            {
+                RunHudScreen hud = UnityEngine.Object.FindObjectOfType<RunHudScreen>();
+                Camera camera = Camera.main;
+                if (hud == null || camera == null || rig == null)
+                {
+                    yield break;
+                }
+
+                var clusters = new Rect[8];
+                int n = hud.StatusStampAvoidRects(clusters);
+                Rect corner = default(Rect);
+                float best = float.MaxValue;
+                for (int i = 0; i < n; i++)
+                {
+                    if (clusters[i].center.x + clusters[i].center.y < best)
+                    {
+                        best = clusters[i].center.x + clusters[i].center.y;
+                        corner = clusters[i];
+                    }
+                }
+
+                Rect figure;
+                bool thirdPerson = hud.PlayerFigureRect(out figure);
+                Vector2 canvas = ((RectTransform)hud.transform).rect.size;
+                int id = 990100;
+                for (int step = 0; step < 3; step++)
+                {
+                    string name = step == 0 ? "stamp-banner" : step == 1 ? "stamp-figure" : "stamp-cluster";
+                    if (step == 1 && !thirdPerson)
+                    {
+                        continue;
+                    }
+
+                    Rect target = step == 0 ? hud.CaptureBanner("ROUND 4") : step == 1 ? figure : corner;
+                    if (step == 2 && n == 0)
+                    {
+                        continue;
+                    }
+
+                    Vector2 point = step == 1 ? new Vector2(target.center.x, target.yMin + target.height * 0.6f) : target.center;
+                    var viewport = new Vector3(point.x / canvas.x + 0.5f, point.y / canvas.y + 0.5f, 0f);
+                    ZombieEnemy z = PlaceUnder(camera, viewport, rig);
+                    if (z == null)
+                    {
+                        Debug.Log("[UiCapture] " + name + ": no live zombie could be placed under " + point);
+                        continue;
+                    }
+
+                    z.ApplyShock(id++, 4f);
+                    yield return new WaitForSecondsRealtime(0.12f);
+                    yield return Frame(folder, name);
+                    Debug.Log("[UiCapture] " + name + " target=" + target + " point=" + point + " stamp=" + UiEnemyStatusMarkers.LastPlaced);
+                    yield return new WaitForSecondsRealtime(0.5f);
+                }
+            }
+
+            /// <summary>Moves the live zombie nearest the player so its stamp anchor projects to <paramref name="viewport"/>.</summary>
+            private static ZombieEnemy PlaceUnder(Camera camera, Vector3 viewport, PlayerRig rig)
+            {
+                System.Collections.Generic.IReadOnlyList<ZombieEnemy> live = ZombieEnemy.Live;
+                ZombieEnemy pick = null;
+                float nearest = float.MaxValue;
+                for (int i = 0; live != null && i < live.Count; i++)
+                {
+                    ZombieEnemy z = live[i];
+                    float d = z != null && z.IsAlive ? (z.transform.position - rig.transform.position).sqrMagnitude : float.MaxValue;
+                    if (d < nearest)
+                    {
+                        nearest = d;
+                        pick = z;
+                    }
+                }
+
+                if (pick == null)
+                {
+                    return null;
+                }
+
+                Ray ray = camera.ViewportPointToRay(viewport);
+                float anchorY = pick.transform.position.y + UiEnemyStatusMarkers.HeadHeight;
+                if (Mathf.Abs(ray.direction.y) < 1e-4f)
+                {
+                    return null;
+                }
+
+                float t = (anchorY - ray.origin.y) / ray.direction.y;
+                if (t <= 0.5f || t > 80f)
+                {
+                    return null;   // the anchor plane is behind the camera or past the playable ground
+                }
+
+                Vector3 anchor = ray.GetPoint(t);
+                var controller = pick.GetComponent<CharacterController>();
+                if (controller != null)
+                {
+                    controller.enabled = false;
+                }
+
+                pick.transform.position = new Vector3(anchor.x, pick.transform.position.y, anchor.z);
+                if (controller != null)
+                {
+                    controller.enabled = true;
+                }
+
+                return pick;
             }
 
             /// <summary>
