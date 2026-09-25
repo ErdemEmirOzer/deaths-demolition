@@ -97,11 +97,12 @@ namespace DD.Prototype.UI
 
             RectTransform report = Column("Report", 0f, ReportShare, top, FooterHeight);
             RectTransform rewards = Column("Rewards", ReportShare + 0.02f, 1f, top, FooterHeight);
-            float reportHeight = BuildReport(report);
-            float rewardsHeight = BuildRewards(rewards);
-
-            // E26: the blocks take their content's height (one height for both, capped by the room) - no empty card.
+            // E26: the blocks take their content's height (one height for both, capped by the room) - no empty card. The
+            // reward cards are fitted against the same capped room, so none is ever clipped by the cap.
             float room = Content.rect.height - top - FooterHeight - (int)UiSpace.XL;
+            float reportHeight = BuildReport(report);
+            float rewardsHeight = BuildRewards(rewards, room);
+
             float blocks = Mathf.Min(room, Mathf.Max(reportHeight, rewardsHeight));
             TopBand(report, top, blocks);
             TopBand(rewards, top, blocks);
@@ -261,7 +262,7 @@ namespace DD.Prototype.UI
 
         // ============================================================== rewards
 
-        private float BuildRewards(RectTransform column)
+        private float BuildRewards(RectTransform column, float blockRoom)
         {
             RectTransform card = UiFactory.FramedCard("Card", column, UiColor.BorderHairline, UiColor.SurfacePanel, UiFrame.Card);
             UiFactory.Fill(card);
@@ -337,7 +338,7 @@ namespace DD.Prototype.UI
             // Unlocks first, then achievements, as many cards as the column holds (measured); the rest summarised.
             float entry = UiFactory.ScaledBand(RewardEntryHeight);
             float more = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption));
-            float room = host.rect.height - stack.Cursor;
+            float room = blockRoom - 2f * (int)UiSpace.XL - stack.Cursor;
             int total = _model.NewUnlocks.Count + _model.NewAchievements.Count;
             if (total == 0)
             {
@@ -346,7 +347,7 @@ namespace DD.Prototype.UI
                 return stack.Cursor + 2f * (int)UiSpace.XL;
             }
 
-            int fits = Mathf.Max(1, Mathf.FloorToInt((room - more) / (entry + (int)UiSpace.S)));
+            int fits = Mathf.Max(0, Mathf.FloorToInt((room - more) / (entry + (int)UiSpace.S)));
             int shown = 0;
             for (int i = 0; i < _model.NewUnlocks.Count && shown < fits; i++, shown++)
             {
@@ -360,8 +361,11 @@ namespace DD.Prototype.UI
 
             if (total > shown)
             {
-                TMP_Text rest = UiFactory.Label("More", host, ResultsViewModel.Overflow(total - shown + ResultsViewModel.MaxRewardEntries),
-                    UiType.Caption, UiColor.TextSecondary);
+                // No card fits (a short screen at Mac): one line names them instead of a card cut by the block.
+                string line = shown == 0
+                    ? UiStrings.Get("results.unlocked_count", "{value} new, already added to your profile").Replace("{value}", total.ToString())
+                    : ResultsViewModel.Overflow(total - shown + ResultsViewModel.MaxRewardEntries);
+                TMP_Text rest = UiFactory.Label("More", host, line, UiType.Caption, UiColor.TextSecondary);
                 stack.Add((RectTransform)rest.transform, more);
             }
 

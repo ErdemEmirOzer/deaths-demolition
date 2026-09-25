@@ -2074,5 +2074,9 @@
   "results.empty": {
     "en": "No new unlocks this run.",
     "tr": "Bu koşuda yeni açılan yok."
+  },
+  "results.unlocked_count": {
+    "en": "{value} new, already added to your profile",
+    "tr": "{value} yeni, profiline zaten eklendi"
   }
 }

@@ -631,6 +631,7 @@ S-09 (R1-C, 25.09):
 | `results.xp` | EXPERIENCE | DENEYİM |
 | `results.new_best` | NEW BEST · ROUND {value} | YENİ REKOR · ROUND {value} |
 | `results.empty` | No new unlocks this run. | Bu koşuda yeni açılan yok. |
+| `results.unlocked_count` | {value} new, already added to your profile | {value} yeni, profiline zaten eklendi |
 
 S-09 (R1-D, 25.09):
 - The Results v3 blocks (direction E26): four hero tiles (Round · Kills · Gold · Time), RUN REPORT (COMBAT / RUN), and REWARDS (EXPERIENCE, PATH line `path.results.delta`, unlocks and achievements).
