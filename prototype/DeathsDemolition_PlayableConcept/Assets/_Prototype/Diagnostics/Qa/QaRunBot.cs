@@ -254,7 +254,12 @@ namespace DD.Prototype.Qa
             private float _lastTrace = -999f;
             // WP-064B escape planner state
             private const int PlannerDirections = 16;
-            private const float RingMargin = 45f;   // WP-038M playable ring inner face (±45 m)
+            /// <summary>Playable ring inner face: WP-074 B1 <see cref="DD.Art.WorldBounds"/> (V6 ±55) when the world has one, else the
+            /// WP-038M ±45 m ring (AP-005).</summary>
+            private static float RingMargin
+            {
+                get { DD.Art.WorldBounds b = DD.Art.WorldBounds.Active; return b != null && b.HalfExtent > 1f ? b.HalfExtent : 45f; }
+            }
             // Environment + CameraOccluder + Ignore Raycast (ring, pond rims). A property: PrototypeLayers calls NameToLayer,
             // which Unity forbids in a MonoBehaviour's (static) field initializer — soak 8 died on that before round 1.
             private static int BodyBlockMask => PrototypeLayers.AimBlockMask | (1 << 2);

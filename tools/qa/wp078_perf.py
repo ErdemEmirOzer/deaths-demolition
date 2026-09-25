@@ -43,6 +43,48 @@ def player_up():
     return any(line.strip().endswith(PLAYER_EXE) for line in out.splitlines())
 
 
+PLAYER_PREFS_DOMAIN = "com.Deaths-Demolition.Deaths-Demolition---Playable-Concept"
+ENGINE_KEYS = ("Screenmanager",)          # + UnitySelectMonitor: Unity writes the window state on every Player exit
+IGNORED_KEYS = ("unity.player_session_count", "unity.player_sessionid")
+
+
+def export_prefs(target):
+    subprocess.run(["defaults", "export", PLAYER_PREFS_DOMAIN, str(target)], capture_output=True)
+
+
+def changed_prefs(before, after):
+    """Keys that differ between two PlayerPrefs plists (launch counters ignored)."""
+    import plistlib
+
+    def load(path):
+        try:
+            with open(path, "rb") as handle:
+                return plistlib.load(handle)
+        except Exception:
+            return {}
+    a, b = load(before), load(after)
+    return sorted(k for k in set(a) | set(b) if k not in IGNORED_KEYS and a.get(k) != b.get(k))
+
+
+def guard_verdict(ug, restore_text, after_plist):
+    """C-00 25.09: the guard must verify its restore (verified=1); a touched file is acceptable only when it is the player's
+    PlayerPrefs plist and every changed key is Unity's own window state, which the guard restores exactly."""
+    import re
+    fields = dict(re.findall(r"(\w+)=(\S+)", restore_text.strip().splitlines()[-1] if restore_text.strip() else ""))
+    if fields.get("verified") != "1":
+        return False, "guard verified!=1"
+    oos = ug / "out-of-scope-changed.txt"
+    if oos.is_file() and oos.stat().st_size > 0:
+        return False, "out-of-scope changes"
+    if fields.get("touched") in ("0", None):
+        return True, "touched=0"
+    keys = changed_prefs(ug / "snap" / "PR" / "p1.plist", after_plist)
+    (ug / "prefs-diff.txt").write_text("\n".join(keys) + "\n", encoding="utf-8")
+    engine = keys and all(k.startswith(ENGINE_KEYS) or k == "UnitySelectMonitor" for k in keys)
+    return (True, f"touched={fields.get('touched')} engine window keys only") if engine and fields.get("touched") == "1" \
+        else (False, f"touched={fields.get('touched')} keys={keys}")
+
+
 def guard(command, directory):
     args = [str(REPO / "tools" / "userdata-guard.sh"), command, str(directory)]
     if command == "restore":
@@ -129,13 +171,14 @@ def main():
             return 7
         run = subprocess.run(command, capture_output=True, text=True)
         (root / "ug" / (cell.name + ".wp064-run.out")).write_text(run.stdout + run.stderr, encoding="utf-8")
+        export_prefs(ug / "prefs-after-run.plist")
         restore = guard("restore", ug)
         (ug / "restore.txt").write_text(restore.stdout + restore.stderr, encoding="utf-8")
-        oos = ug / "out-of-scope-changed.txt"
-        if restore.returncode != 0 or (oos.is_file() and oos.stat().st_size > 0):
-            note(f"STOP {cell.name}: guard restore exit {restore.returncode}, out-of-scope changes {oos.is_file() and oos.stat().st_size > 0} — report to C-00")
+        ok, why = guard_verdict(ug, restore.stdout, ug / "prefs-after-run.plist")
+        if restore.returncode != 0 or not ok:
+            note(f"STOP {cell.name}: guard restore exit {restore.returncode}, {why} — report to C-00")
             return 7
-        note(f"{cell.name} wp064_run exit {run.returncode} · guard ok")
+        note(f"{cell.name} wp064_run exit {run.returncode} · guard ok ({why})")
         if run.returncode in (2, 64, 66):
             note(f"STOP {cell.name}: wp064_run usage/input error (exit {run.returncode}) — see ug/<cell>.wp064-run.out")
             return 64
