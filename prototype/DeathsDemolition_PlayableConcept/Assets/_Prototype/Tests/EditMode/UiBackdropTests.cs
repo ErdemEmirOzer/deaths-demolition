@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using DD.Prototype.UI;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -172,6 +173,69 @@ namespace DD.Prototype.Tests.EditMode
             if (backdrop.LanternAlpha > 0f)
             {
                 Assert.AreEqual(UiBackdrop.LanternPeak, backdrop.LanternAlpha, 1e-4f, "RM: fener tepede sabit");
+            }
+        }
+
+        /// <summary>
+        /// AD 12b SHOULD-5: a backdrop petal keeps out of the words. The keep-out gathers each live label's glyph bounds (not
+        /// its box) in the petals' space, padded; a petal square touching one shows 0 of its alpha, one a feather away shows
+        /// all of it, and the fade between is linear in the gap.
+        /// </summary>
+        [Test]
+        public void Yapraklar_KelimelerinAltinaGirmez_TuyBoyuncaSoner()
+        {
+            Assert.AreEqual(0f, UiTextKeepOut.Gap(new Rect(0f, 0f, 10f, 10f), new Rect(5f, 5f, 10f, 10f)), 1e-4f, "örtüşme = 0");
+            Assert.AreEqual(5f, UiTextKeepOut.Gap(new Rect(0f, 0f, 10f, 10f), new Rect(15f, 0f, 10f, 10f)), 1e-4f);
+            Assert.AreEqual(5f, UiTextKeepOut.Gap(new Rect(0f, 0f, 10f, 10f), new Rect(13f, 14f, 10f, 10f)), 1e-4f, "köşeden köşeye");
+            var rects = new[] { new Rect(0f, 0f, 100f, 20f) };
+            Assert.AreEqual(0f, UiTextKeepOut.VisibilityAmong(new Rect(50f, 10f, 40f, 40f), rects, 1, 40f), 1e-4f, "kelime üstünde görünmez");
+            Assert.AreEqual(0.5f, UiTextKeepOut.VisibilityAmong(new Rect(120f, 0f, 40f, 40f), rects, 1, 40f), 1e-4f, "tüyün ortası");
+            Assert.AreEqual(1f, UiTextKeepOut.VisibilityAmong(new Rect(200f, 0f, 40f, 40f), rects, 1, 40f), 1e-4f, "tüyün dışında tam");
+            Assert.AreEqual(1f, UiTextKeepOut.VisibilityAmong(new Rect(0f, 0f, 4f, 4f), rects, 0, 40f), 1e-4f, "kelime yoksa tam");
+
+            var host = new GameObject("KeepOutHost", typeof(RectTransform), typeof(Canvas));
+            try
+            {
+                var root = (RectTransform)host.transform;
+                root.sizeDelta = new Vector2(1920f, 1080f);
+                RectTransform backdrop = UiFactory.NewRect("Backdrop", root);
+                UiFactory.Fill(backdrop);
+                RectTransform page = UiFactory.NewRect("Page", root);
+                UiFactory.Fill(page);
+                TMP_Text label = UiFactory.Label("Words", page, "ROUND COMPLETE", UiType.H2, UiColor.TextPrimary, TextAnchor.MiddleLeft);
+                var labelRect = label.rectTransform;
+                labelRect.anchorMin = labelRect.anchorMax = new Vector2(0.5f, 0.5f);
+                labelRect.sizeDelta = new Vector2(1200f, 60f);   // a wide box: only the glyphs count
+                labelRect.anchoredPosition = new Vector2(-200f, 300f);
+                label.ForceMeshUpdate();
+
+                var keepOut = new UiTextKeepOut(root, backdrop);
+                Assert.AreEqual(0f, keepOut.Visibility(new Rect(-790f, 290f, 60f, 60f)), 1e-4f, "ilk harfin üstünde");
+                Assert.AreEqual(1, keepOut.Count, "tek etiket");
+                Rect words = keepOut.RectAt(0);
+                Assert.Less(words.width, 1200f, "kutu değil glifler");
+                Assert.AreEqual(1f, keepOut.Visibility(new Rect(words.xMax + UiTextKeepOut.Feather + 1f, 290f, 60f, 60f)), 1e-4f, "kelimelerin sağında, tüyün ötesinde");
+                Assert.AreEqual(1f, keepOut.Visibility(new Rect(-790f, -300f, 60f, 60f)), 1e-4f, "boş zeminde tam");
+
+                Image petal = UiFactory.NewImage("Petal", backdrop, UiColor.AccentSakura, UiSprites.Petal);
+                petal.rectTransform.sizeDelta = new Vector2(60f, 60f);
+                petal.rectTransform.anchoredPosition = new Vector2(words.center.x, words.center.y);
+                Color c = petal.color;
+                c.a = 0.08f;
+                petal.color = c;
+                UiDrift drift = petal.gameObject.AddComponent<UiDrift>();
+                drift.Configure(petal.rectTransform, Vector2.zero, 0f, 900f, 620f);
+                drift.KeepOut(petal, keepOut);
+                drift.ApplyKeepOut();
+                Assert.AreEqual(0f, petal.color.a, 1e-4f, "kelimenin üstündeki yaprak görünmez");
+                Assert.AreEqual(0f, drift.Visibility, 1e-4f);
+                petal.rectTransform.anchoredPosition = new Vector2(-790f, -300f);
+                drift.ApplyKeepOut();
+                Assert.AreEqual(0.08f, petal.color.a, 1e-4f, "boş zeminde tam alfası");
+            }
+            finally
+            {
+                Object.DestroyImmediate(host);
             }
         }
     }

@@ -221,7 +221,7 @@ namespace DD.Prototype.UI
             groundRect.offsetMax = Vector2.zero;
             SetAlpha(ground, 0.55f);
 
-            BuildPetals(backdrop);
+            BuildPetals(backdrop, new UiTextKeepOut(ScreenRect, backdrop));
 
             // Cream hairline (WP-022): the foot rule is decoration, not a third vermilion.
             Image rule = UiFactory.NewImage("FootRule", backdrop, UiColor.TextSecondary);
@@ -234,8 +234,11 @@ namespace DD.Prototype.UI
             SetAlpha(rule, 0.35f);
         }
 
-        /// <summary>PROTOTYPE-ONLY: six petals is the entire atmosphere budget of a menu.</summary>
-        private static void BuildPetals(RectTransform parent)
+        /// <summary>
+        /// PROTOTYPE-ONLY: six petals is the entire atmosphere budget of a menu. AD 12b SHOULD-5: they keep out of
+        /// the screen's words (<see cref="UiTextKeepOut"/>) - no text is ever set on a petal, and no petal drifts under one.
+        /// </summary>
+        private static void BuildPetals(RectTransform parent, UiTextKeepOut keepOut)
         {
             const int petalCount = 6;
             const float span = 900f;
@@ -253,12 +256,14 @@ namespace DD.Prototype.UI
 
                 SetAlpha(petal, Random.Range(0.05f, 0.10f));
 
-                petal.gameObject.AddComponent<UiDrift>().Configure(
+                UiDrift drift = petal.gameObject.AddComponent<UiDrift>();
+                drift.Configure(
                     rect,
                     new Vector2(Random.Range(-9f, -3f), Random.Range(-16f, -7f)),
                     Random.Range(-11f, 11f),
                     span,
                     top);
+                drift.KeepOut(petal, keepOut);
             }
         }
 

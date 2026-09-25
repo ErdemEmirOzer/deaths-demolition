@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -99,6 +101,10 @@ namespace DD.Prototype.UI
         private float _spin;
         private float _resetAbove;
         private float _spanX;
+        private Graphic _graphic;
+        private float _alpha;
+        private float _shown = -1f;
+        private UiTextKeepOut _keepOut;
 
         public void Configure(RectTransform rect, Vector2 velocity, float spin, float spanX, float resetAbove)
         {
@@ -109,6 +115,21 @@ namespace DD.Prototype.UI
             _resetAbove = resetAbove;
         }
 
+        /// <summary>AD 12b SHOULD-5: the graphic fades out wherever it nears a word (its alpha now is its full alpha).</summary>
+        public void KeepOut(Graphic graphic, UiTextKeepOut keepOut)
+        {
+            _graphic = graphic;
+            _alpha = graphic != null ? graphic.color.a : 0f;
+            _keepOut = keepOut;
+            _shown = -1f;
+        }
+
+        /// <summary>The share of its full alpha the graphic shows now (1 without a keep-out).</summary>
+        public float Visibility
+        {
+            get { return _keepOut == null || _alpha <= 0f ? 1f : Mathf.Clamp01(_shown / _alpha); }
+        }
+
         private void Update()
         {
             if (_rect == null)
@@ -116,21 +137,187 @@ namespace DD.Prototype.UI
                 return;
             }
 
-            if (UiSettings.ReducedMotion)
+            // Reduced Motion: petals stand still - but a still petal keeps out of the words all the same.
+            if (!UiSettings.ReducedMotion)
             {
-                return; // petals stand still
+                float dt = Time.unscaledDeltaTime;
+                _rect.anchoredPosition += _velocity * dt;
+                _rect.localRotation = Quaternion.Euler(0f, 0f, _rect.localEulerAngles.z + _spin * dt);
+
+                if (_rect.anchoredPosition.y < -_resetAbove)
+                {
+                    _rect.anchoredPosition = new Vector2(
+                        Random.Range(-_spanX, _spanX),
+                        _resetAbove);
+                }
             }
 
-            float dt = Time.unscaledDeltaTime;
-            _rect.anchoredPosition += _velocity * dt;
-            _rect.localRotation = Quaternion.Euler(0f, 0f, _rect.localEulerAngles.z + _spin * dt);
+            ApplyKeepOut();
+        }
 
-            if (_rect.anchoredPosition.y < -_resetAbove)
+        /// <summary>Sets the alpha for where the graphic is now (every frame from Update; tests call it directly).</summary>
+        public void ApplyKeepOut()
+        {
+            if (_keepOut == null || _graphic == null)
             {
-                _rect.anchoredPosition = new Vector2(
-                    Random.Range(-_spanX, _spanX),
-                    _resetAbove);
+                return;
             }
+
+            // The petal spins, so its whole square (not the silhouette) is what must stay clear.
+            Vector2 size = _rect.rect.size;
+            Vector3 at = _rect.localPosition;
+            var box = new Rect(at.x - size.x * 0.5f, at.y - size.y * 0.5f, size.x, size.y);
+            float alpha = _alpha * _keepOut.Visibility(box);
+            if (_shown >= 0f && Mathf.Abs(alpha - _shown) < 0.002f)
+            {
+                return; // no vertex rebuild for a change nobody sees
+            }
+
+            _shown = alpha;
+            Color c = _graphic.color;
+            c.a = alpha;
+            _graphic.color = c;
+        }
+    }
+
+    /// <summary>
+    /// AD 12b SHOULD-5 (the 6ab MUST-3 rule carried to the paper screens): the backdrop's petals keep out of the
+    /// words. The wallpaper's clamp leaves them no light to spend - on its brightest texel (L 0.0245) TextMuted is
+    /// already at 4.7:1, and even a 0.02 sakura petal over it drops that to 4.2:1 - so instead of a dimmer petal, no
+    /// petal lies under a letter: every live TMP_Text on the screen gives its glyph bounds (padded by
+    /// <see cref="Pad"/>) in the backdrop's space, gathered at most every <see cref="RefreshSeconds"/>, and a petal's
+    /// alpha falls to 0 over <see cref="Feather"/> px as its square nears one. Words on an opaque panel count too;
+    /// the petal is under the panel there, so hiding it costs nothing.
+    /// </summary>
+    public sealed class UiTextKeepOut
+    {
+        public const float Pad = 8f;
+        public const float Feather = 40f;
+        public const float RefreshSeconds = 0.25f;
+
+        private static readonly Vector3[] Corners = new Vector3[4];
+
+        private readonly RectTransform _source;
+        private readonly RectTransform _space;
+        private readonly List<TMP_Text> _texts = new List<TMP_Text>(64);
+        private Rect[] _rects = new Rect[64];
+        private int _count;
+        private int _refreshFrame = -1;
+        private float _nextRefresh = float.NegativeInfinity;
+
+        /// <param name="source">The root whose words count (the screen).</param>
+        /// <param name="space">The petals' parent: the rects are in its local space.</param>
+        public UiTextKeepOut(RectTransform source, RectTransform space)
+        {
+            _source = source;
+            _space = space;
+        }
+
+        /// <summary>The words gathered at the last refresh (tests, capture logs).</summary>
+        public int Count
+        {
+            get { return _count; }
+        }
+
+        public Rect RectAt(int index)
+        {
+            return _rects[index];
+        }
+
+        /// <summary>The share of a petal's alpha it may show with its square at <paramref name="petal"/> (0 over a word).</summary>
+        public float Visibility(Rect petal)
+        {
+            RefreshIfDue();
+            return VisibilityAmong(petal, _rects, _count, Feather);
+        }
+
+        /// <summary>Forces the next <see cref="Visibility"/> to re-gather the words (a screen that just reflowed).</summary>
+        public void Invalidate()
+        {
+            _nextRefresh = float.NegativeInfinity;
+            _refreshFrame = -1;
+        }
+
+        public static float VisibilityAmong(Rect petal, Rect[] rects, int count, float feather)
+        {
+            float nearest = float.PositiveInfinity;
+            for (int i = 0; i < count; i++)
+            {
+                float gap = Gap(petal, rects[i]);
+                if (gap <= 0f)
+                {
+                    return 0f;
+                }
+
+                if (gap < nearest)
+                {
+                    nearest = gap;
+                }
+            }
+
+            return feather <= 0f ? 1f : Mathf.Clamp01(nearest / feather);
+        }
+
+        /// <summary>The distance between two rects, 0 when they touch or overlap.</summary>
+        public static float Gap(Rect a, Rect b)
+        {
+            float dx = Mathf.Max(0f, Mathf.Max(b.xMin - a.xMax, a.xMin - b.xMax));
+            float dy = Mathf.Max(0f, Mathf.Max(b.yMin - a.yMax, a.yMin - b.yMax));
+            return Mathf.Sqrt(dx * dx + dy * dy);
+        }
+
+        private void RefreshIfDue()
+        {
+            float now = Time.unscaledTime;
+            if (_refreshFrame == Time.frameCount || now < _nextRefresh)
+            {
+                return;
+            }
+
+            _refreshFrame = Time.frameCount;
+            _nextRefresh = now + RefreshSeconds;
+            _count = 0;
+            if (_source == null || _space == null)
+            {
+                return;
+            }
+
+            _source.GetComponentsInChildren(false, _texts);
+            for (int i = 0; i < _texts.Count; i++)
+            {
+                TMP_Text text = _texts[i];
+                if (!text.enabled || text.color.a <= 0.01f)
+                {
+                    continue;
+                }
+
+                Bounds bounds = text.textBounds; // the glyphs, not the box: a wide label box is not a word
+                if (bounds.size.x <= 0f || bounds.size.y <= 0f)
+                {
+                    continue;
+                }
+
+                Transform t = text.transform;
+                Vector3 min = bounds.min;
+                Vector3 max = bounds.max;
+                Corners[0] = _space.InverseTransformPoint(t.TransformPoint(new Vector3(min.x, min.y, 0f)));
+                Corners[1] = _space.InverseTransformPoint(t.TransformPoint(new Vector3(min.x, max.y, 0f)));
+                Corners[2] = _space.InverseTransformPoint(t.TransformPoint(new Vector3(max.x, max.y, 0f)));
+                Corners[3] = _space.InverseTransformPoint(t.TransformPoint(new Vector3(max.x, min.y, 0f)));
+                float xMin = Mathf.Min(Mathf.Min(Corners[0].x, Corners[1].x), Mathf.Min(Corners[2].x, Corners[3].x));
+                float xMax = Mathf.Max(Mathf.Max(Corners[0].x, Corners[1].x), Mathf.Max(Corners[2].x, Corners[3].x));
+                float yMin = Mathf.Min(Mathf.Min(Corners[0].y, Corners[1].y), Mathf.Min(Corners[2].y, Corners[3].y));
+                float yMax = Mathf.Max(Mathf.Max(Corners[0].y, Corners[1].y), Mathf.Max(Corners[2].y, Corners[3].y));
+
+                if (_count == _rects.Length)
+                {
+                    System.Array.Resize(ref _rects, _rects.Length * 2);
+                }
+
+                _rects[_count++] = Rect.MinMaxRect(xMin - Pad, yMin - Pad, xMax + Pad, yMax + Pad);
+            }
+
+            _texts.Clear();
         }
     }
 
