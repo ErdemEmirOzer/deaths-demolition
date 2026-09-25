@@ -1903,6 +1903,10 @@
     "en": "SLICK",
     "tr": "KAYGAN"
   },
+  "hud.ammo.low": {
+    "en": "LOW AMMO",
+    "tr": "AZ MERMİ"
+  },
   "selection.specials.title": {
     "en": "SPECIAL WEAPONS",
     "tr": "ÖZEL SİLAHLAR"

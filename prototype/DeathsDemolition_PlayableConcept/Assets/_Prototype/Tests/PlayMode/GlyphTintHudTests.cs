@@ -55,6 +55,13 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(want.b, weapon.color.b, 0.01f, "B");
             Assert.AreEqual(1f, weapon.color.a, 0.01f, "dolu şarjörde tam alfa (LOW / EMPTY 0,70)");
 
+            // WP-068 12b (AD FP cluster SHOULD-2): the ammo word is the pack's "LOW AMMO" and fits the cluster's word slot.
+            Assert.AreEqual(UiStrings.Get("hud.ammo.low", "LOW AMMO"), hud.AmmoLowWord, "paket metni hud.ammo.low");
+            TMPro.TMP_Text caption = null;
+            foreach (TMPro.TMP_Text t in hud.GetComponentsInChildren<TMPro.TMP_Text>(true)) if (t.name == "ReloadCaption") caption = t;
+            Assert.IsNotNull(caption, "ReloadCaption");
+            Assert.LessOrEqual(Mathf.Ceil(caption.GetPreferredValues(hud.AmmoLowWord).x), caption.rectTransform.rect.width, "LOW AMMO kelime yuvasına sığar");
+
             // N19 §2: in gel the SLICK hint takes the E23 slot - Status.Sliding in the gel tint + the pack word, no box.
             Assert.IsFalse(hud.SlickShown, "jel yokken ipucu yok");
             RunHudScreen.CaptureSlick = true;

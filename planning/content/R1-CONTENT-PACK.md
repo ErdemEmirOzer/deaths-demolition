@@ -18,7 +18,7 @@ Docs only: nothing here touches a Unity asset or a C# file. All numbers that WP-
 | PATH labels | 28 | 28 (`path.*`) |
 | Loading-screen tips | **30** | 30 (`tips.001`–`tips.030`) |
 | Camera-mode labels (Pause selector + camera settings) | 15 | 15 (`camera.*`) |
-| HUD status stamps + gel hint (S-09 R1-B) | 4 | 4 (`hud.*`) |
+| HUD status stamps + gel hint (S-09 R1-B) + the ammo LOW word (S-09 12b) | 5 | 5 (`hud.*`) |
 | Selection stage labels (S-09 R1-B) | 7 | 7 (`selection.*`) |
 | New achievements (weapons + Specials) | **12** | 24 (`achievement.*`) |
 | **Total** | | **483** |
@@ -536,7 +536,7 @@ Key `achievement.<id>.name` / `.desc`. Threshold column is a proposal for S-04 (
 | `tetsui_runners` | Hammer Down | Çekiç İndi | Stop {count} Runners with Tetsui in one run. | Bir koşuda Tetsui ile {count} Runner durdur. | SingleRun | Uncommon | 15 | new: TierKills(Special) per weapon |
 | `full_arsenal` | Ten Answers | On Cevap | Reach round {round} with each of the ten classic weapons. | On klasik silahın her biriyle {round}. rounda ulaş. | Lifetime | Epic | 10 | new: ReachRoundPerWeapon |
 
-## 7 · HUD status stamps and the gel hint (S-09, R1-B)
+## 7 · HUD status stamps, the gel hint and the ammo word (S-09, R1-B / 12b)
 
 | key | en | tr |
 | --- | --- | --- |
@@ -544,11 +544,16 @@ Key `achievement.<id>.name` / `.desc`. Threshold column is a proposal for S-04 (
 | `hud.status.slide` | SLIDE | KAYMA |
 | `hud.status.down` | DOWN | YERDE |
 | `hud.slick` | SLICK | KAYGAN |
+| `hud.ammo.low` | LOW AMMO | AZ MERMİ |
 
 S-09 (R1-B, 25.09):
 - Added for N19 / DEC-094. The stamps replace NET / DAZED, which went with the old Specials. SHOCK marks a body held by Raiju's chain. SLIDE marks a body the gel is carrying. DOWN marks a body that falls, lies or gets up.
 - `hud.slick` is the player's own hint in the bottom-centre prompt slot while they stand in gel (N19-DIRECTION §2). One word, like the stamps. It gives no duration, because the puddle has none to show.
 - The stamp chip is as wide as its longest word; `tr` YERDE and KAYMA fit the same chip at TextScale 1.25.
+
+S-09 (12b, 25.09, AD FP cluster SHOULD-2):
+- `hud.ammo.low` replaces the bare "LOW" over the magazine count, in every camera mode. In first person the weapon cluster stands on the health block, so the health LOW (coral) and the ammo word (amber) share one column; the noun keeps one word from meaning two things in one group. Health keeps its bare LOW beside the heart.
+- It sits in the weapon cluster's 220 px word slot, the same slot as EMPTY and SUSPENDED; LOW AMMO fits it at TextScale 1.25.
 
 ## 8 · Selection (S-09, R1-B)
 

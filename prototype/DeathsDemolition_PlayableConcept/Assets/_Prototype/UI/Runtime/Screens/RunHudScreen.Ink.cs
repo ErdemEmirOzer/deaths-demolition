@@ -243,7 +243,7 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>
-        /// The count ("24" NumericXL over "/ 30"), the ladder on an ink brush, the LOW / EMPTY word with the reload prompt, and
+        /// The count ("24" NumericXL over "/ 30"), the ladder on an ink brush, the LOW AMMO / EMPTY word with the reload prompt, and
         /// SUSPENDED in the same slot (one slot, one word - AD 8-R MUST-1). <paramref name="edge"/> is where the count ends.
         /// </summary>
         private void BuildInkAmmo(RectTransform root, RectTransform host, RectTransform back, float edge)
@@ -256,6 +256,10 @@ namespace DD.Prototype.UI
 
             _ammoCounter = UiCounter.Create("Ammo", host, UiCounterStyle.Fraction, 0, UiType.NumericXL, UiColor.TextPrimary, 0);
             Place((RectTransform)_ammoCounter.transform, anchor, new Vector2(1f, 0f), new Vector2(edge, 30f), new Vector2(countWidth, 48f));
+
+            // WP-068 12b (AD FP cluster SHOULD-2): the ammo word carries its noun in every mode - in first person it shares a
+            // column with the health LOW. Read once from the R1 pack (hud.ammo.low).
+            _ammoLowWord = UiStrings.Get("hud.ammo.low", "LOW AMMO");
             _ammoValue = _ammoCounter.ValueText;
             InkAll(_ammoCounter.gameObject);
 
@@ -666,7 +670,11 @@ namespace DD.Prototype.UI
         private RectTransform _suspendedRect;
         private RectTransform _weaponCalm;
         private Vector2 _ladderHome;
+        private string _ammoLowWord = "LOW AMMO";
         private int _clusterMirrored = -1;
+
+        /// <summary>The weapon cluster's LOW word (12b: "LOW AMMO", the pack's hud.ammo.low; tests).</summary>
+        public string AmmoLowWord => _ammoLowWord;
 
         /// <summary>The weapon cluster's internals are mirrored (first person; tests).</summary>
         public bool WeaponClusterMirrored => _clusterMirrored == 1;
@@ -678,7 +686,7 @@ namespace DD.Prototype.UI
         /// - the ring at the box's left end (x 32–92 at 1080) over the heart, the glyph in it;
         /// - the count 8 px right of the ring (x 100), the ladder under it ending with the health brush (x 100–295 over 55–305),
         ///   both strokes leaning toward the centre - the TD lean mirrored, the inner end held;
-        /// - the state word (LOW / EMPTY + prompt, or SUSPENDED) and the calm weapon line above, left-aligned with the count.
+        /// - the state word (LOW AMMO / EMPTY + prompt, or SUSPENDED) and the calm weapon line above, left-aligned with the count.
         /// The box, its rect (WeaponClusterRect) and everything tested against it stay as they are. Runs only on a change.
         /// </summary>
         private void LayWeaponCluster(bool mirrored)

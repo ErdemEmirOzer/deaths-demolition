@@ -194,6 +194,17 @@ namespace DD.Prototype.Tests.EditMode
             return at / peak;
         }
 
+        /// <summary>
+        /// B10 (AD FP cluster SHOULD-2): the ammo LOW word carries its noun - the pack's hud.ammo.low, read by the HUD in every
+        /// mode (in first person it shares a column with the health LOW).
+        /// </summary>
+        [Test]
+        public void MermiDusukKelimesi_IsminiTasir_PakettenOkunur()
+        {
+            Assert.IsTrue(UiStrings.Has("hud.ammo.low"), "R1 paketi hud.ammo.low");
+            Assert.AreEqual("LOW AMMO", UiStrings.Get("hud.ammo.low"), "en: LOW AMMO");
+        }
+
         private static Rect Grown(Rect r, float by)
         {
             return Rect.MinMaxRect(r.xMin - by, r.yMin - by, r.xMax + by, r.yMax + by);

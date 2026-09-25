@@ -1548,7 +1548,7 @@ namespace DD.Prototype.UI
 
                     default:
                         _reloadBar.SetValue(1f, true);
-                        _reloadCaption.text = low ? "LOW" : string.Empty;
+                        _reloadCaption.text = low ? _ammoLowWord : string.Empty;   // 12b: "LOW AMMO" (AD FP cluster SHOULD-2)
                         _reloadCaption.color = UiTokens.Get(UiColor.StateWarning);
                         if (_shownReload == RunHudReloadState.Reloading)
                         {
