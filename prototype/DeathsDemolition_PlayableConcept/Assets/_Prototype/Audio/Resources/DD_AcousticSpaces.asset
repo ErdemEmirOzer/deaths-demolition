@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ba64e44008fd433583b197b4018e544, type: 3}
   m_Name: DD_AcousticSpaces
   m_EditorClassIdentifier: 
-  _sourceHash: f60ba4ae4bb7bd2f
+  _sourceHash: 8bba1b29c856ff22
   _worldScene: World_V6_Greybox
   _spaces:
   - id: R1_MainHall
@@ -31,16 +31,16 @@ MonoBehaviour:
   - id: R2_EastPavilion
     enclosure: 2
     polygonXZ:
-    - 30
-    - 24
-    - 40
-    - 24
-    - 40
-    - 32
-    - 30
-    - 32
-    floor: 0
-    ceiling: 3.8
+    - 30.8
+    - 24.8
+    - 39.2
+    - 24.8
+    - 39.2
+    - 31.2
+    - 30.8
+    - 31.2
+    floor: 0.25
+    ceiling: 4.05
   - id: R3_Kura
     enclosure: 2
     polygonXZ:
@@ -52,21 +52,21 @@ MonoBehaviour:
     - 44
     - -44
     - 44
-    floor: 0
-    ceiling: 4
+    floor: 0.3
+    ceiling: 4.3
   - id: R4_TeaHouse
     enclosure: 2
     polygonXZ:
-    - -36
-    - -40
-    - -28
-    - -40
-    - -28
-    - -32
-    - -36
-    - -32
-    floor: 0
-    ceiling: 3.6
+    - -35
+    - -39
+    - -29
+    - -39
+    - -29
+    - -33
+    - -35
+    - -33
+    floor: 0.45
+    ceiling: 4.05
   - id: R5_Azumaya
     enclosure: 1
     polygonXZ:
