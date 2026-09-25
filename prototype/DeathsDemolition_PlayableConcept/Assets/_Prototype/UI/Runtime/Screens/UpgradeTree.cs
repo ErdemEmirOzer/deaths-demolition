@@ -368,6 +368,11 @@ namespace DD.Prototype.UI
             // puts the seal beside them.
             float stackedSeal = _pitchY - 8f - 4f - name - state - 4f;
             _compact = stackedSeal < 48f;
+            if (_compact)
+            {
+                _pitchX = Mathf.Floor(w / Tiers);   // the words sit beside the seal: give them the host's width
+            }
+
             _seal = _compact
                 ? Mathf.Clamp(_pitchY - 12f, MinSeal, CompactSealMax)
                 : Mathf.Min(SealSize, stackedSeal);
@@ -660,11 +665,15 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>"OWNED 1/5 · " in front of a tier that has more to buy, so the seal's cream fill has its word.</summary>
-        private static string TierOwned(RunTreeNodeView n)
+        private string TierOwned(RunTreeNodeView n)
         {
-            return n.Kind == RunTreeNodeKind.Tier && n.OwnedTier > 0 && n.MaxTier > 1
-                ? UiStrings.Get("tree.state.purchased", "OWNED") + " " + n.OwnedTier + "/" + n.MaxTier + " · "
-                : string.Empty;
+            if (n.Kind != RunTreeNodeKind.Tier || n.OwnedTier <= 0 || n.MaxTier <= 1)
+            {
+                return string.Empty;
+            }
+
+            string count = n.OwnedTier + "/" + n.MaxTier + " · ";
+            return _compact ? count : UiStrings.Get("tree.state.purchased", "OWNED") + " " + count;   // compact: the fill says owned
         }
 
         private string ShortOf(int index)
@@ -709,8 +718,72 @@ namespace DD.Prototype.UI
                 }
             }
 
+            // The rules the parents do not carry (RunTreeState.PrereqMet): the capstone waits on the lane's weapon seal, and
+            // forks, the seal and the Hearth open on ANY keystone of the lane - a gate line in the gutter before them,
+            // dashed while it is shut, solid once a keystone is owned.
+            int seal = -1;
+            int gateTier = Tiers;
+            bool keystoneOwned = false;
+            for (int s = 0; s < _cell.Length; s++)
+            {
+                int i = _cell[s];
+                if (i < 0)
+                {
+                    continue;
+                }
+
+                RunTreeNodeView n = _snap.Nodes[i];
+                if (n.Kind == RunTreeNodeKind.WeaponSeal)
+                {
+                    seal = i;
+                }
+
+                if (n.Kind == RunTreeNodeKind.BranchKeystone && IsOwned(n))
+                {
+                    keystoneOwned = true;
+                }
+
+                if (n.Kind == RunTreeNodeKind.Fork || n.Kind == RunTreeNodeKind.WeaponSeal || n.Kind == RunTreeNodeKind.Hearth)
+                {
+                    gateTier = Mathf.Min(gateTier, n.Column);
+                }
+            }
+
+            for (int s = 0; s < _cell.Length && seal >= 0; s++)
+            {
+                int cap = _cell[s];
+                if (cap < 0 || _snap.Nodes[cap].Kind != RunTreeNodeKind.Capstone)
+                {
+                    continue;
+                }
+
+                RunTreeNodeView p = _snap.Nodes[seal];
+                RunTreeNodeView c = _snap.Nodes[cap];
+                bool bothOwned = IsOwned(p) && IsOwned(c);
+                bool path = _onPath[cap] && (_onPath[seal] || IsOwned(p));
+                bool dashed = !IsOwned(p) && !path;
+                _edges.Add(EdgeOut(p.Row, p.Column), EdgeIn(c.Row, c.Column), path ? 4f : bothOwned ? 2f : 1f, dashed, path ? pinned : bothOwned ? owned : hair);
+            }
+
+            if (gateTier > 0 && gateTier < Tiers)
+            {
+                float x = _compact ? gateTier * _pitchX - EdgeGap * 0.5f : gateTier * _pitchX;
+                _gateX = x;
+                _edges.Add(new Vector2(x, -4f), new Vector2(x, -(Rows * _pitchY - 12f)), keystoneOwned ? 2f : 1f, !keystoneOwned,
+                    keystoneOwned ? owned : hair);
+            }
+            else
+            {
+                _gateX = -1f;
+            }
+
             _edges.Commit();
         }
+
+        private float _gateX = -1f;
+
+        /// <summary>The keystone gate's x in the grid (-1 when the lane draws none) - tests.</summary>
+        public float GateX => _gateX;
 
         private Vector2 SealCentre(int row, int tier)
         {
@@ -971,6 +1044,13 @@ namespace DD.Prototype.UI
         private void FitBuy()
         {
             float word = Mathf.Ceil(_buy.LabelText.GetPreferredValues(_buy.LabelText.text).x);
+            if (_innerWidth > 0f && word + BuyChrome > Mathf.Floor(_innerWidth * 0.62f) && _buy.LabelText.text != "BUY")
+            {
+                // The narrow card (Mac 1.2 × 1.25): the short verb; the name and kind above already say HEARTH.
+                _buy.SetText(UiStrings.Get("tree.action.stoke_short", "STOKE"));
+                word = Mathf.Ceil(_buy.LabelText.GetPreferredValues(_buy.LabelText.text).x);
+            }
+
             float width = Mathf.Max(BuyWidth, word + BuyChrome);
             if (_innerWidth > 0f)
             {

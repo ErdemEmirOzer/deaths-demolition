@@ -2018,5 +2018,9 @@
   "tree.state.prereq_keystone": {
     "en": "NEEDS A KEYSTONE",
     "tr": "ÖNCE BİR KİLİT TAŞI"
+  },
+  "tree.action.stoke_short": {
+    "en": "STOKE",
+    "tr": "YAK"
   }
 }

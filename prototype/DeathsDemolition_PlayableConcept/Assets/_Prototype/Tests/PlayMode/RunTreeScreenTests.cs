@@ -94,6 +94,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.Greater(shop.Cards.Count, 0, "the offer has node cards");
             Assert.IsNotNull(tree.NodeButton(0, 0) ?? tree.NodeButton(1, 0) ?? tree.NodeButton(2, 0) ?? tree.NodeButton(3, 0), "tier 1 of the weapon lane is drawn");
             Assert.Greater(tree.Edges.Count, 0, "the weapon lane draws its edges");
+            Assert.GreaterOrEqual(tree.GateX, 0f, "the keystone gate is drawn before the forks / seal / Hearth");
 
             // Every node on screen carries a word (PD §5.1), and every node the offer sells its OFFER mark.
             for (int r = 0; r < UiRunTreePanel.Rows; r++)
@@ -137,6 +138,7 @@ namespace DD.Prototype.Tests.PlayMode
             RunTreeNodeStatus after = tree.Snapshot.Nodes[bought].Status;
             Assert.IsTrue(after == RunTreeNodeStatus.Purchased || after == RunTreeNodeStatus.MaxTier || tree.Snapshot.Nodes[bought].OwnedTier > 0,
                 "the bought node is owned (" + after + ")");
+            Assert.IsFalse(tree.OfferShownOn(bought), "a bought card's node no longer reads OFFER");
             UiButton undo = Named(screen, "Undo");
             Assert.IsTrue(undo.gameObject.activeInHierarchy, "UNDO LAST shows after a purchase");
             StringAssert.Contains("+", undo.LabelText.text, "UNDO names its refund");
