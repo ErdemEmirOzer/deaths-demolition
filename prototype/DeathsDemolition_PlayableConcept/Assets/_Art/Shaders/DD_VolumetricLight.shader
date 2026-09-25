@@ -1,7 +1,7 @@
 // WP-075 · DEC-102 · Hidden/DD/VolumetricLight — the passes of DD.Art.VolumetricLightFeature.
 //   0 Raymarch   low resolution (½ Cinematic, ¼ High): from the camera to the scene depth (≤ _VL_March.y m), _VL_March.x steps with
 //                interleaved-gradient jitter; per step the DEC-102 density field (DD_VolumetricLight.hlsl), URP's main-light shadow map
-//                (MainLightRealtimeShadow: trees, bamboo, eaves and gates cut the shafts; 1 beyond the shadow distance) × the cloud
+//                (MainLightRealtimeShadow, one hard tap: trees, bamboo, eaves and gates cut the shafts; 1 beyond the shadow distance) × the cloud
 //                cookie (DD_CloudSunLit01: a cloud puts a shaft out), a two-lobe phase (Henyey-Greenstein g + an isotropic share so
 //                the top-down camera still reads the shafts) and a cold ambient scatter in the shadows. rgb = in-scatter, a = the
 //                transmittance.
@@ -48,7 +48,8 @@ Shader "Hidden/DD/VolumetricLight"
             #pragma vertex Vert
             #pragma fragment FragMarch
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE
-            #pragma multi_compile_fragment _ _SHADOWS_SOFT
+            // No _SHADOWS_SOFT on purpose: one hard shadow tap per step (URP's high-quality tent is 16 taps, × 32 steps per
+            // pixel); the per-pixel jitter and the depth-weighted upsample soften the edges.
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             #include "DD_CloudCookie.hlsl"
