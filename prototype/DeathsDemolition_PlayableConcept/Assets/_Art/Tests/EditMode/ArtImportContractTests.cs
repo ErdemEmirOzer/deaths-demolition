@@ -253,6 +253,53 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(ArtImportContract.FormatOf(ArtImportContract.TextureRole.BaseColor), ArtImportContract.FormatOf(ArtImportContract.TextureRole.Sheet));
         }
 
+        /// <summary>
+        /// WP-075 (S-07 WP-073 B2 finding) · A grey-only sheet PNG (no alpha channel, no tRNS) takes its coverage from the grey
+        /// (FromGrayScale) instead of importing opaque. RGBA / grey+alpha / tRNS sheets keep FromInput. The other alpha roles are
+        /// unchanged, and so is every sheet in the project (each carries its alpha).
+        /// </summary>
+        [Test]
+        public void Sheet_AlfaKanaliYoksa_GriTondanAlfa_DigerRollerDegismez()
+        {
+            byte[] Png(byte colourType, bool trns)
+            {
+                var b = new List<byte> { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 13 };
+                b.AddRange(System.Text.Encoding.ASCII.GetBytes("IHDR"));
+                b.AddRange(new byte[] { 0, 0, 0, 64, 0, 0, 0, 64, 8, colourType, 0, 0, 0, 0, 0, 0, 0 });
+                if (trns) { b.AddRange(new byte[] { 0, 0, 0, 2 }); b.AddRange(System.Text.Encoding.ASCII.GetBytes("tRNS")); b.AddRange(new byte[] { 0, 0, 0, 0, 0, 0 }); }
+                b.AddRange(new byte[] { 0, 0, 0, 0 });
+                b.AddRange(System.Text.Encoding.ASCII.GetBytes("IDAT"));
+                b.AddRange(new byte[] { 0, 0, 0, 0 });
+                return b.ToArray();
+            }
+
+            Assert.AreEqual(false, ArtImportContract.PngHasAlpha(Png(0, false)), "gri");
+            Assert.AreEqual(false, ArtImportContract.PngHasAlpha(Png(2, false)), "RGB");
+            Assert.AreEqual(true, ArtImportContract.PngHasAlpha(Png(4, false)), "gri+alfa");
+            Assert.AreEqual(true, ArtImportContract.PngHasAlpha(Png(6, false)), "RGBA");
+            Assert.AreEqual(true, ArtImportContract.PngHasAlpha(Png(0, true)), "gri + tRNS");
+            Assert.IsNull(ArtImportContract.PngHasAlpha(new byte[40]), "PNG değil");
+
+            const ArtImportContract.TextureRole sheet = ArtImportContract.TextureRole.Sheet;
+            Assert.AreEqual(TextureImporterAlphaSource.FromGrayScale, ArtImportContract.AlphaSourceOf(sheet, false, false));
+            Assert.AreEqual(TextureImporterAlphaSource.FromInput, ArtImportContract.AlphaSourceOf(sheet, false, true));
+            Assert.AreEqual(TextureImporterAlphaSource.FromInput, ArtImportContract.AlphaSourceOf(ArtImportContract.TextureRole.MetallicSmoothness, false, false));
+            Assert.AreEqual(TextureImporterAlphaSource.FromInput, ArtImportContract.AlphaSourceOf(ArtImportContract.TextureRole.BaseColor, true, true), "cutout");
+            Assert.AreEqual(TextureImporterAlphaSource.None, ArtImportContract.AlphaSourceOf(ArtImportContract.TextureRole.BaseColor, false, false));
+
+            var sheets = new List<string>();
+            foreach (string guid in AssetDatabase.FindAssets("t:Texture2D", new[] { "Assets" }))
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                if (!ArtImportContract.IsContractTexture(path) || ArtImportContract.RoleOf(path) != sheet || !(AssetImporter.GetAtPath(path) is TextureImporter importer)) continue;
+                sheets.Add(System.IO.Path.GetFileName(path) + " " + importer.alphaSource);
+                Assert.AreEqual(ArtImportContract.AlphaSourceOf(sheet, false, ArtImportContract.SourceHasAlpha(importer)), importer.alphaSource, path);
+            }
+
+            Debug.Log("[DD-TEST] wp075.sheet-alpha " + sheets.Count + ": " + string.Join(", ", sheets));
+            Assert.GreaterOrEqual(sheets.Count, 9);
+        }
+
         [Test]
         public void DokuSinifi_HerMalzemeRolununDokuRolu_Tabloda()
         {

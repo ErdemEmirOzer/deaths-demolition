@@ -601,6 +601,57 @@ namespace DD.Art.Pipeline.EditorTools
             return role == TextureRole.MetallicSmoothness || role == TextureRole.Mask || role == TextureRole.DetailMask || role == TextureRole.Sheet;
         }
 
+        /// <summary>
+        /// WP-075 (S-07 WP-073 B2 finding) · The importer's alpha source. None for a role without alpha data; FromInput for the
+        /// data roles and a cutout BaseColor. The exception is a VFX sheet authored as a grey-only PNG (no alpha channel, no tRNS):
+        /// its coverage is the grey itself, so it takes FromGrayScale. FromInput would import it opaque, and a blended sheet then
+        /// draws as a black square (the water ring).
+        /// </summary>
+        public static TextureImporterAlphaSource AlphaSourceOf(TextureRole role, bool cutout, bool sourceHasAlpha)
+        {
+            if (!KeepsAlpha(role) && !cutout) return TextureImporterAlphaSource.None;
+            return role == TextureRole.Sheet && !sourceHasAlpha ? TextureImporterAlphaSource.FromGrayScale : TextureImporterAlphaSource.FromInput;
+        }
+
+        /// <summary>
+        /// Whether the source file carries alpha. A PNG is decided from its own header: colour type 4 / 6, or a tRNS chunk before
+        /// the image data. That is the same answer on the first import, when the importer's cached source info
+        /// (DoesSourceTextureHaveAlpha) does not exist yet, and on every later one. Other formats ask the importer.
+        /// </summary>
+        public static bool SourceHasAlpha(TextureImporter importer)
+        {
+            string path = importer.assetPath;
+            if (path.EndsWith(".png", StringComparison.OrdinalIgnoreCase) && System.IO.File.Exists(path))
+            {
+                bool? png = PngHasAlpha(System.IO.File.ReadAllBytes(path));
+                if (png.HasValue) return png.Value;
+            }
+
+            return importer.DoesSourceTextureHaveAlpha();
+        }
+
+        /// <summary>PNG header: true for grey+alpha / RGBA or a tRNS chunk before IDAT, false otherwise; null when the bytes are not a PNG.</summary>
+        public static bool? PngHasAlpha(byte[] bytes)
+        {
+            byte[] signature = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
+            if (bytes == null || bytes.Length < 33) return null;
+            for (int i = 0; i < 8; i++)
+                if (bytes[i] != signature[i]) return null;
+            byte colourType = bytes[25];
+            if (colourType == 4 || colourType == 6) return true;
+            // Chunks after IHDR (length, type, data, crc) up to the first IDAT: a tRNS gives grey / RGB / indexed images transparency.
+            for (int at = 33; at + 8 <= bytes.Length;)
+            {
+                int length = (bytes[at] << 24) | (bytes[at + 1] << 16) | (bytes[at + 2] << 8) | bytes[at + 3];
+                string type = System.Text.Encoding.ASCII.GetString(bytes, at + 4, 4);
+                if (type == "tRNS") return true;
+                if (type == "IDAT" || type == "IEND" || length < 0) break;
+                at += 12 + length;
+            }
+
+            return false;
+        }
+
         public static TextureImporterFormat FormatOf(TextureRole role)
         {
             return role == TextureRole.Normal ? StandaloneNormalFormat
@@ -883,8 +934,9 @@ namespace DD.Art.Pipeline.EditorTools
             bool sheet = role == TextureRole.Sheet;
             changed |= Set(importer.alphaIsTransparency, cutout || sheet, v => importer.alphaIsTransparency = v);
             // The mask keeps its alpha (smoothness) and a cutout BaseColor keeps its opacity;
-            // every other colour/normal/packed map carries none worth keeping.
-            TextureImporterAlphaSource alpha = KeepsAlpha(role) || cutout ? TextureImporterAlphaSource.FromInput : TextureImporterAlphaSource.None;
+            // every other colour/normal/packed map carries none worth keeping. A sheet without a
+            // source alpha takes its coverage from the grey (AlphaSourceOf).
+            TextureImporterAlphaSource alpha = AlphaSourceOf(role, cutout, role != TextureRole.Sheet || SourceHasAlpha(importer));
             changed |= Set(importer.alphaSource, alpha, v => importer.alphaSource = v);
             // Cutout mips keep their coverage at the clip threshold (WP-012 art review: leaf
             // cards thinned to skeletons past ~30 m because box-filtered mip alpha shrinks).
@@ -966,7 +1018,7 @@ namespace DD.Art.Pipeline.EditorTools
             TextureImporterFormat format = FormatOf(role);
             bool cutout = KeepsCutoutAlpha(importer.assetPath);
             bool sheet = role == TextureRole.Sheet;
-            TextureImporterAlphaSource alpha = KeepsAlpha(role) || cutout ? TextureImporterAlphaSource.FromInput : TextureImporterAlphaSource.None;
+            TextureImporterAlphaSource alpha = AlphaSourceOf(role, cutout, !sheet || SourceHasAlpha(importer));
 
             TextureClass? roleClass = ClassifiedClassOf(importer.assetPath);
             if (role != TextureRole.Unknown && roleClass == null)
