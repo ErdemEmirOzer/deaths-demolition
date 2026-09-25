@@ -117,7 +117,10 @@ Shader "DD/VFX Gel"
 
                 if (_Additive > 0.5)
                 {
-                    float3 glow = colour.rgb * (0.35 + fres) + rim.rgb * fres;
+                    // AD B6 MUST 2: a plasma shell, not a disc — the centre is ≈ 0 (fresnel only), the rim peaks just inside the
+                    // silhouette and fades at the very edge so the low-poly outline never reads.
+                    float edgeFade = saturate((1.0 - fres) * 6.0);
+                    float3 glow = (colour.rgb * 0.6 + rim.rgb) * fres * edgeFade;
                     return float4(MixFogColor(glow, float3(0, 0, 0), i.fog), 1.0);
                 }
 

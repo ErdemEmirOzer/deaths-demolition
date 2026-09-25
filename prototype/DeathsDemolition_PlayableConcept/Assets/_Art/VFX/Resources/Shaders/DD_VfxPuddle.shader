@@ -142,8 +142,8 @@ Shader "DD/VFX Puddle"
                 float hy = SAMPLE_TEXTURE2D(_Atlas, sampler_Atlas, cellUV + dv).r - SAMPLE_TEXTURE2D(_Atlas, sampler_Atlas, cellUV - dv).r;
                 float2 p = i.uv * 6.0;
                 float w = 6.2831853 * 0.15;
-                float2 ripple = 0.06 * float2(sin(p.x * 3.1 + t * w), cos(p.y * 2.7 - t * w))
-                              + 0.04 * float2(sin((p.x + p.y) * 5.3 - t * w * 0.7), cos((p.x - p.y) * 4.1 + t * w * 0.7));
+                float2 ripple = 0.12 * float2(sin(p.x * 3.1 + t * w), cos(p.y * 2.7 - t * w))
+                              + 0.08 * float2(sin((p.x + p.y) * 5.3 - t * w * 0.7), cos((p.x - p.y) * 4.1 + t * w * 0.7));
                 ripple *= (1.0 - dry);
                 float3 nOS = normalize(float3(-hx * 4.0 + ripple.x, 1.0, -hy * 4.0 + ripple.y));
                 float3 N = TransformObjectToWorldNormal(nOS);
@@ -161,6 +161,14 @@ Shader "DD/VFX Puddle"
                 float3 albedo = lerp(_GelColor.rgb * 0.35, _DryColor.rgb, dry) * lerp(0.85, 1.1, s.b);
                 float3 col = albedo * (ndl * light.color + SampleSH(N)) + spec * light.color * (1.0 - dry) + env;
 
+                // AD B6 MUST 4: the overcast sky's sheen — a fresnel-weighted sky reflection (brighter toward the far side) and a
+                // soft "sky light" highlight that the two ripple layers move across the surface: glossy gel, not paint.
+                float3 sky = SampleSH(float3(0.0, 1.0, 0.0)) * 1.6;
+                float sheen = pow(1.0 - saturate(dot(N, V)), 3.0) * smooth;
+                float3 skyDir = normalize(float3(0.0, 1.0, 0.0) + V * 0.6);
+                float glint = pow(saturate(dot(reflect(-V, N), skyDir)), 48.0) * smooth;
+                col += (sky * (0.35 + 1.4 * sheen) + sky * glint * 2.5) * (1.0 - dry);
+
                 // Emission: × 0.6 with the 0.3 Hz pulse, gone by the end of drying.
                 float pulse = 1.0 + 0.25 * fancy * sin(t * 6.2831853 * _PulseHz);
                 col += _GelColor.rgb * _Emission * pulse * (1.0 - dry);
@@ -175,21 +183,24 @@ Shader "DD/VFX Puddle"
                     float ph = frac(t / period + h);
                     if (ph < 0.05)
                     {
+                        // AD B6 MUST 4: a bubble is a bright speck (#FFFFFF × 2, ≈ 0.03–0.05 m), swelling then popping.
                         float2 c = cell + 0.3 + 0.4 * float2(Hash21(cell + 1.7), Hash21(cell + 3.1));
                         float r = length(g - c);
-                        float grow = ph / 0.05 * 0.35;
-                        float ring = saturate(1.0 - abs(r - grow) / 0.05) * (1.0 - ph / 0.05);
-                        col += (_GelColor.rgb * 0.8 + light.color * 0.6) * ring * (1.0 - dry);
+                        float size = 0.09 * (0.6 + 0.4 * sin(ph / 0.05 * 3.14159));
+                        float speck = saturate(1.0 - r / max(size, 1e-3));
+                        col += float3(2.0, 2.0, 2.0) * speck * speck * (1.0 - dry);
                     }
                 }
 
                 // Cracks while drying (strongest at the rim), and the rim band that never disappears.
                 col *= 1.0 - s.g * dry * 0.6;
-                float edge = smoothstep(0.02, 0.10, cover) * (1.0 - smoothstep(0.10, 0.30, cover));
-                col += _RimColor.rgb * _RimIntensity * edge * lerp(1.0, 0.35, dry);
-                col = lerp(col, col * 0.55, edge * dry);   // dried: the rim reads as a dark crust line
+                // AD B6 MUST 5: the edge is its own colour, not the fill's — a thin #B040FF × 1.5 band (≈ 0.06–0.10 m on a 1.6 m
+                // puddle) that REPLACES the fill there; dried, it becomes a dark crust line. Danger stays readable in every phase.
+                float edge = smoothstep(0.02, 0.05, cover) * (1.0 - smoothstep(0.08, 0.15, cover));
+                float3 band = lerp(_RimColor.rgb * _RimIntensity, _DryColor.rgb * 0.35, dry);
+                col = lerp(col, band, edge);
 
-                float alpha = inside * lerp(0.92, 0.80, dry) * prm.w;
+                float alpha = max(inside * lerp(0.92, 0.80, dry), edge) * prm.w;
                 return float4(MixFog(col, i.fog), alpha);
             }
             ENDHLSL

@@ -94,6 +94,8 @@ namespace DD.Prototype.Feedback.Vfx
                 yield return Frame("gel-puddle-1s", 0);
                 yield return new WaitForSeconds(2f);
                 yield return Frame("gel-puddle-3s", 0);
+                yield return new WaitForSeconds(18f);                  // 21 s of 25: the drying phase (AD B6 MUST 5)
+                yield return Frame("gel-puddle-21s-drying", 0);
             }
 
             Debug.Log("[VfxSpecialCapture] done");

@@ -67,9 +67,10 @@ namespace DD.Prototype.Feedback.Vfx
         // Direction §2.1 palette (sRGB hex → linear HDR).
         private static readonly Vector4 CoreHdr = SpecialVfxAssets.Hdr(0xEAF6FF, 8f);
         private static readonly Vector4 HaloHdr = SpecialVfxAssets.Hdr(0xA08CFF, 1.5f, 0.35f);
-        private static readonly Vector4 BranchHdr = SpecialVfxAssets.Hdr(0x7FD3FF, 4f);
+        private static readonly Vector4 BranchHdr = SpecialVfxAssets.Hdr(0x7FD3FF, 2.5f);   // AD B6 MUST 3: × 4 tone-mapped to white; × 2.5 keeps the cyan
         private static readonly Vector4 GroundHdr = SpecialVfxAssets.Hdr(0xBFE9FF, 6f);
         private static readonly Vector4 OrbCoreHdr = SpecialVfxAssets.Hdr(0xEAF6FF, 10f);
+        private static readonly Vector4 ShellRimHdr = SpecialVfxAssets.Hdr(0x7FD3FF, 3f);   // the shell's edge; its body tint (OrbShellHdr) leans #A08CFF
         private static readonly Vector4 OrbShellHdr = SpecialVfxAssets.Hdr(0x7FD3FF, 4f);
         private static readonly Vector4 OrbRim = SpecialVfxAssets.Hdr(0x7FD3FF, 2f, 2f);
         private static readonly Color LightColour = SpecialVfxAssets.Srgb(0x7FD3FF);
@@ -105,7 +106,7 @@ namespace DD.Prototype.Feedback.Vfx
         private struct Branch
         {
             public bool Alive;
-            public Vector3 A, B;
+            public Vector3 A, B, Kink;
             public float Born;
         }
 
@@ -326,13 +327,17 @@ namespace DD.Prototype.Feedback.Vfx
         {
             if (!MuzzlePose(fallbackOrigin, fallbackForward, out Vector3 m, out Vector3 fwd, out Vector3 right, out Vector3 up)) return;
             Discharges++;
+            // AD B6 MUST 1: three OPEN arcs, never a closed outline — each leaves its electrode toward the next one and stops at
+            // 55–85 % of the gap, bowed out of the ring (±0.03–0.05 m jitter, 2 octaves, re-sampled every 30 ms), with tip sparks.
             for (int k = 0; k < 3; k++)
             {
                 Vector3 a = Electrode(m, right, up, k), b = Electrode(m, right, up, (k + 1) % 3);
-                // Capture 1: 5 points at 3.5 cm read as a clean triangle (a UI glyph, not electricity) — 9 points at 9 cm, and a
-                // thinner second arc per edge on its own seed so the ring crackles.
-                SpawnArc(ArcKind.Discharge, a, b, null, null, now, 0.20f, 9, 0.09f, 0.03f, 0.12f);
-                SpawnArc(ArcKind.Discharge, a, b, null, null, now, 0.14f, 9, 0.12f, 0.015f, 0.06f);
+                uint h = (uint)(Discharges * 131 + k * 17);
+                Vector3 outward = ((a + b) * 0.5f - m).normalized;
+                Vector3 end = Vector3.Lerp(a, b, Mathf.Lerp(0.55f, 0.85f, SpecialVfxAssets.Hash01(h))) + outward * 0.06f + fwd * (0.05f * SpecialVfxAssets.Hash01(h + 3u));
+                SpawnArc(ArcKind.Discharge, a, end, null, null, now, Mathf.Lerp(0.14f, 0.20f, SpecialVfxAssets.Hash01(h + 5u)), 7, 0.04f, 0.03f, 0.12f);
+                ImpactSystem.Instance?.EmitSparks(end, outward + fwd * 0.5f, 2, SparkColour, 1.5f, 3f, 0.08f, 0.16f);
+                SparksAsked += 2;
             }
 
             _afterFlickerUntil = now + 0.20f + 0.5f;
@@ -562,7 +567,7 @@ namespace DD.Prototype.Feedback.Vfx
             int k = 2 + (int)(SpecialVfxAssets.Hash01(seed) * (n - 4));
             Vector3 start = _pts[ai * MaxPoints + k];
             float phi = SpecialVfxAssets.Hash01(seed * 3u + 1u) * Mathf.PI * 2f;
-            float tilt = Mathf.Lerp(35f, 60f, SpecialVfxAssets.Hash01(seed * 5u + 2u)) * Mathf.Deg2Rad;
+            float tilt = Mathf.Lerp(35f, 70f, SpecialVfxAssets.Hash01(seed * 5u + 2u)) * Mathf.Deg2Rad;
             Vector3 perp = side * Mathf.Cos(phi) + side2 * Mathf.Sin(phi);
             Vector3 bdir = dir * Mathf.Cos(tilt) + perp * Mathf.Sin(tilt);
             float blen = len * Mathf.Lerp(0.25f, 0.40f, SpecialVfxAssets.Hash01(seed * 7u + 3u));
@@ -570,7 +575,9 @@ namespace DD.Prototype.Feedback.Vfx
             {
                 int j = (_nextBranch + i) % MaxBranches;
                 if (_branches[j].Alive) continue;
-                _branches[j] = new Branch { Alive = true, A = start, B = start + bdir * blen, Born = now };
+                // AD B6 MUST 3: staggered (born 0–30 ms late, grows over 20 ms) so no frame shows every branch at full length.
+                _branches[j] = new Branch { Alive = true, A = start, B = start + bdir * blen, Born = now + 0.03f * SpecialVfxAssets.Hash01(seed * 11u + 5u),
+                    Kink = perp * (blen * Mathf.Lerp(-0.18f, 0.18f, SpecialVfxAssets.Hash01(seed * 13u + 7u))) };
                 _nextBranch = (j + 1) % MaxBranches;
                 BranchesSpawned++;
                 return;
@@ -627,7 +634,9 @@ namespace DD.Prototype.Feedback.Vfx
                 if (SpecialVfxAssets.Hash01(h) < 0.3f && MuzzlePose(Vector3.zero, Vector3.forward, out Vector3 em, out _, out Vector3 eRight, out Vector3 eUp))
                 {
                     int k = (int)(SpecialVfxAssets.Hash01(h * 3u) * 3f) % 3;
-                    SpawnArc(ArcKind.Discharge, Electrode(em, eRight, eUp, k), Electrode(em, eRight, eUp, (k + 1) % 3), null, null, now, 0.04f, 4, 0.03f, 0.02f, 0f);
+                    Vector3 ea = Electrode(em, eRight, eUp, k), eb = Electrode(em, eRight, eUp, (k + 1) % 3);
+                    // An open flicker with a random gap (AD B6 MUST 1): never electrode to electrode.
+                    SpawnArc(ArcKind.Discharge, ea, Vector3.Lerp(ea, eb, Mathf.Lerp(0.35f, 0.7f, SpecialVfxAssets.Hash01(h * 7u))), null, null, now, 0.04f, 5, 0.035f, 0.02f, 0f);
                 }
             }
 
@@ -646,7 +655,7 @@ namespace DD.Prototype.Feedback.Vfx
 
             for (int i = 0; i < MaxBranches; i++)
             {
-                if (_branches[i].Alive && now - _branches[i].Born > BranchSeconds) _branches[i].Alive = false;
+                if (_branches[i].Alive && now - _branches[i].Born > BranchSeconds + 0.03f) _branches[i].Alive = false;
             }
 
             for (int i = 0; i < MaxBurns; i++)
@@ -748,7 +757,13 @@ namespace DD.Prototype.Feedback.Vfx
             for (int i = 0; i < MaxBranches; i++)
             {
                 if (!_branches[i].Alive) continue;
-                Seg(ref _nCore, CoreCapacity, _cHead, _cTail, _cHc, _cTc, _cSpan, _cExtra, _branches[i].A, _branches[i].B, 0.02f, BranchHdr, 1f, 1.5f, fpFlag);
+                float age = now - _branches[i].Born;
+                if (age < 0f) continue;                                   // not born yet (stagger)
+                float grow = Mathf.Clamp01(age / 0.02f);
+                Vector3 ba = _branches[i].A, bb = Vector3.Lerp(ba, _branches[i].B, grow);
+                Vector3 mid = Vector3.Lerp(ba, bb, 0.5f) + _branches[i].Kink * grow;
+                Seg(ref _nCore, CoreCapacity, _cHead, _cTail, _cHc, _cTc, _cSpan, _cExtra, ba, mid, 0.02f, BranchHdr, 1f, 1.5f, fpFlag);
+                Seg(ref _nCore, CoreCapacity, _cHead, _cTail, _cHc, _cTc, _cSpan, _cExtra, mid, bb, 0.014f, BranchHdr, 0.8f, 1.5f, fpFlag);
             }
 
             DrawOrbs(now, fp, fpFlag);
@@ -829,7 +844,7 @@ namespace DD.Prototype.Feedback.Vfx
                     _shellM[orbs] = Matrix4x4.TRS(pos, Quaternion.Euler(0f, now * 90f, now * 40f), Vector3.one * (0.45f * ripple));
                     _shellCol[orbs] = OrbShellHdr * hdr;
                     _shellCol[orbs].w = 1f;
-                    _shellRim[orbs] = new Vector4(OrbShellHdr.x, OrbShellHdr.y, OrbShellHdr.z, 1.5f);
+                    _shellRim[orbs] = new Vector4(ShellRimHdr.x, ShellRimHdr.y, ShellRimHdr.z, 2.5f);   // AD B6 MUST 2: fresnel power 2.5
                     _shellWob[orbs] = new Vector4(0.02f, 4f, gen * 0.61f, 1f);
                     orbs++;
                 }
@@ -921,7 +936,7 @@ namespace DD.Prototype.Feedback.Vfx
                 float age = now - _burns[i].Born;
                 float fade = Mathf.Clamp01((BurnSeconds - age) / 2f);   // the last 2 s fade
                 _burnM[n] = Matrix4x4.TRS(_burns[i].Pos, _burns[i].Rot, new Vector3(_burns[i].Size, 1f, _burns[i].Size));
-                _burnP[n] = new Vector4(age / BurnSeconds, _burns[i].Variant, 0f, 0.6f * fade);   // #2A2420 α 0.6
+                _burnP[n] = new Vector4(age / BurnSeconds, _burns[i].Variant, 0f, 0.8f * fade);   // #2A2420 α 0.8 (AD B6 SHOULD 6: 0.6 vanished on dark slate)
                 n++;
             }
 
