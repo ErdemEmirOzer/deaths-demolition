@@ -35,6 +35,11 @@ namespace DD.Prototype.UI
         private static readonly Vector2 OffScreen = new Vector2(-10000f, -10000f);
 
         private readonly Image _arc;
+        private readonly Image _backing;
+
+        /// <summary>12b (D2): the backing's size over the arc's, and its alpha as a share of the arc's (HudInk rims, never a slab).</summary>
+        public const float BackingScale = 1.06f;
+        public const float BackingShare = 0.7f;
         private bool _shown;
         private float _alpha = -1f;
         private float _angle = float.NaN;
@@ -42,6 +47,12 @@ namespace DD.Prototype.UI
 
         public HudRearEdge(RectTransform layer)
         {
+            // 12b (D2): the HudInk backing first, so it draws under the coral stroke and rims it on light ground.
+            _backing = UiFactory.NewImage("RearEdgeBacking", layer, UiColor.HudInk, UiSprites.ArcShoulderedBacking60);
+            _backing.raycastTarget = false;
+            _backing.rectTransform.sizeDelta = new Vector2(Size * BackingScale, Size * BackingScale);
+            _backing.rectTransform.anchoredPosition = OffScreen;
+            _backing.canvasRenderer.SetAlpha(0f);
             _arc = UiFactory.NewImage("RearEdge", layer, UiColor.StateDanger, UiSprites.ArcShouldered60);
             _arc.raycastTarget = false;
             _arc.rectTransform.sizeDelta = new Vector2(Size, Size);
@@ -203,12 +214,14 @@ namespace DD.Prototype.UI
                 {
                     _angle = bearing;
                     rect.localRotation = Quaternion.Euler(0f, 0f, -bearing);   // the sprite's arc faces up at 0°
+                    _backing.rectTransform.localRotation = rect.localRotation;
                 }
 
                 if (float.IsNaN(_at.x) || (at - _at).sqrMagnitude > 0.25f)   // NaN compares false: the first show must place
                 {
                     _at = at;
                     rect.anchoredPosition = at;
+                    _backing.rectTransform.anchoredPosition = at;
                 }
             }
 
@@ -221,6 +234,7 @@ namespace DD.Prototype.UI
             _shown = on;
             _alpha = alpha;
             UiMotion.TintAlpha(_arc, alpha, UiDuration.Fast, on ? UiEase.Settle : UiEase.Exit, UiMotionClass.Decor);
+            UiMotion.TintAlpha(_backing, alpha * BackingShare, UiDuration.Fast, on ? UiEase.Settle : UiEase.Exit, UiMotionClass.Decor);
         }
     }
 }

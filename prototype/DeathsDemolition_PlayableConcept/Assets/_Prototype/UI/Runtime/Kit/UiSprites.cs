@@ -279,6 +279,16 @@ namespace DD.Prototype.UI
         /// WP-068 12b (AD R1-C SHOULD-1) · the NEEDS seal ring: a dotted hairline of 20 round dots, so "waiting for a
         /// prerequisite" is a shape of its own and not only a muted tint of AVAILABLE's solid ring.
         /// </summary>
+        /// <summary>
+        /// WP-068 12b (D2, the translucent re-measure) · the rear-edge arc's HudInk backing: a wider band (0.66 of the radius
+        /// to the rim) over a slightly wider span, drawn behind ArcShouldered60 at 1.06 × its size so it rims the coral stroke
+        /// on both sides - over a cream-white world the stroke alone reached 1.57:1 and no α could lift it to 3:1.
+        /// </summary>
+        public static Sprite ArcShoulderedBacking60
+        {
+            get { return GetOrCreate("arcShoulderedBacking60", () => CreateSoftArc(256, 66f, 0.66f, 4f)); }
+        }
+
         public static Sprite RingDotted
         {
             get { return GetOrCreate("ringDotted", () => CreateDottedRing(128, 0.05f, 20)); }

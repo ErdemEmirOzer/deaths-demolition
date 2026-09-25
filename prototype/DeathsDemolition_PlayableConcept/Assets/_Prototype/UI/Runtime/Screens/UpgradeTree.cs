@@ -682,11 +682,11 @@ namespace DD.Prototype.UI
                 : n.Status == RunTreeNodeStatus.Locked ? UiSprites.RingHairline
                 : special ? UiSprites.RingEnso : UiSprites.RingThin;
             v.Lock.gameObject.SetActive(n.Status == RunTreeNodeStatus.Locked);
-            // MAX wears the ginpaku ring - silver leaf, the screen's one ceremony (12b, AD R1-C MUST-5 residual).
+            // MAX wears the ginpaku ring - the silver-leaf colour (12b, AD R1-C MUST-5 residual). No Leaf glint: the Opening
+            // Beat's seal stamp is the shop's one ceremony kind (§14 MUST-4, UiOrnamentCensusTests).
             bool max = n.Kind == RunTreeNodeKind.Tier && n.MaxTier > 0 && n.OwnedTier >= n.MaxTier;
             UiColor ring = forSale ? UiColor.StateGold : max ? UiColor.SilverLeaf : owned ? UiColor.TextSecondary : dim || waiting ? UiColor.TextMuted : UiColor.TextPrimary;
             v.Ring.color = WithAlpha(UiTokens.Get(ring), dim ? 0.6f : 1f);
-            SetLeaf(v.Ring, max && !forSale);
             v.Cross.gameObject.SetActive(n.Status == RunTreeNodeStatus.Excluded);
             v.New.SetActive(n.NewlyUnlocked);
             v.Pin.SetActive(n.IsPinned);
@@ -739,29 +739,6 @@ namespace DD.Prototype.UI
 
             v.State.color = UiTokens.Get(n.Status == RunTreeNodeStatus.Unaffordable ? UiColor.StateWarning
                 : _compact && forSale ? UiColor.StateGold : dim ? UiColor.TextMuted : UiColor.TextSecondary);
-        }
-
-        /// <summary>The ginpaku leaf on a MAX seal's ring (DD/UI/Fx Leaf, silver: x 0); off on every other seal.</summary>
-        private static void SetLeaf(Image ring, bool on)
-        {
-            UiFx fx = ring.GetComponent<UiFx>();
-            if (!on)
-            {
-                if (fx != null)
-                {
-                    fx.enabled = false;
-                }
-
-                return;
-            }
-
-            if (fx == null)
-            {
-                fx = ring.gameObject.AddComponent<UiFx>();
-            }
-
-            fx.Configure(UiFxMode.Leaf, UiDuration.Reveal, Vector3.zero);
-            fx.enabled = true;
         }
 
         private static void SetGlyph(Image image, RunTreeNodeView n, bool hollow)

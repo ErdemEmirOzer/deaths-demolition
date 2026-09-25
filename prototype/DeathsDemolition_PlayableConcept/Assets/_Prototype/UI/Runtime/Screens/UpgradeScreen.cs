@@ -693,9 +693,9 @@ namespace DD.Prototype.UI
 
         /// <summary>
         /// The tier ladder: MaxTier pips in a recessed well. Owned tiers are filled in
-        /// AccentPrimary (3.53:1 on SurfaceInset), the tier this card sells is marked in
-        /// TextSecondary, the rest are a hairline. Buying the card turns one more pip
-        /// accent-coloured, which is the screen's instant confirmation that the gold did
+        /// cream (TextPrimary; 12b: AccentPrimary is the one Primary's alone, §2.1), the tier this
+        /// card sells is marked in TextSecondary, the rest are a hairline. Buying the card turns
+        /// one more pip cream, which is the screen's instant confirmation that the gold did
         /// something.
         /// </summary>
         private static Image[] BuildPipLadder(RectTransform body, ref UiStack stack)
@@ -1512,7 +1512,7 @@ namespace DD.Prototype.UI
 
                 int tier = i + 1;
                 UiColor token = tier <= card.OwnedTier
-                    ? UiColor.AccentPrimary
+                    ? UiColor.TextPrimary
                     : tier == card.NextTier && !card.Purchased
                         ? UiColor.TextSecondary
                         : UiColor.BorderHairline;
