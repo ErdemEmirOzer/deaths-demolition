@@ -5,6 +5,7 @@ using System.IO;
 using System.Text;
 using DD.Prototype.CameraSystem;
 using DD.Prototype.Core;
+using DD.Prototype.Navigation;
 using Unity.AI.Navigation;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -202,6 +203,9 @@ namespace DD.Art.Pipeline.EditorTools
             boxes += BuildEast(g);
             boxes += BuildSouth(g, basins);
             boxes += BuildBamboo(g);
+
+            // WP-074 B1c · S-03 WP-076 B6 §5.2 region volumes (rooms, room exits, chokepoints).
+            BuildRegionVolumes(root.transform);
 
             WorldPlacementAsset placement = WritePlacement(apPlacement);
             var bootstrap = root.AddComponent<Ap005WorldBootstrap>();
@@ -401,6 +405,93 @@ namespace DD.Art.Pipeline.EditorTools
             foreach (Gate gate in Gates) if (Vector2.Distance(p, gate.Position) < 4f) return false;
             foreach (Vector2 w in WeaponPositions) if (Vector2.Distance(p, w) < 3f) return false;
             return true;
+        }
+
+        /// <summary>S-03 §5.2 room capacities (bodies queued before a room counts as full; R5 azumaya open, R7 the sakura court).</summary>
+        public static readonly Dictionary<string, int> RoomCapacity = new Dictionary<string, int>(StringComparer.Ordinal)
+        {
+            { "R1_MainHall", 8 }, { "R2_EastPavilion", 6 }, { "R3_Kura", 6 }, { "R4_TeaHouse", 4 }, { "R5_Azumaya", 3 }, { "R6_Chumon", 3 }, { R7Id, 8 }
+        };
+
+        public const string R7Id = "R7_SakuraCourt", RegionGroupName = "Region Volumes";
+        /// <summary>A door no wider than this is a chokepoint (Ek B §3.3: clear width ≤ 2.5 m).</summary>
+        public const float ChokepointWidth = 2.5f;
+
+        /// <summary>
+        /// WP-074 B1c · The region volumes S-03's router reads (NavRegionMarker, WP-076 B6 §5.2): a Room per room (R1–R6 + the R7 sakura
+        /// court; capacity per <see cref="RoomCapacity"/>, cost 1.0); a Gate per room door (roomId = the room): a chokepoint door
+        /// (≤ 2.5 m) queues 2 (≤ 2.2 m) or 3 (2.4 m) at cost 1.15 with the nearest ≥ 3.5 m opening within 15 m as its alternative, a
+        /// wider door is an exit only (capacity 0, cost 1.0); the C8 bridge (Bridge, 2, 1.35), the C1 stepping causeway (Corridor, 1,
+        /// 1.3) and the closed K1 kairō (Corridor, 6, 1.3). World-axis boxes; the markers register themselves in play.
+        /// </summary>
+        public static int BuildRegionVolumes(Transform root)
+        {
+            var group = new GameObject(RegionGroupName).transform;
+            group.SetParent(root, false);
+            var openings = new List<(string room, string id, Vector3 centre, float width, char side, float floor)>();
+            foreach (Room r in Rooms)
+            {
+                if (r.Doors == null) continue;
+                var perSide = new Dictionary<char, int>();
+                foreach (Door d in r.Doors)
+                {
+                    perSide.TryGetValue(d.Side, out int k);
+                    perSide[d.Side] = k + 1;
+                    Vector3 c = d.Side == 'S' ? new Vector3(d.At, r.Floor, r.Z0) : d.Side == 'N' ? new Vector3(d.At, r.Floor, r.Z1)
+                        : d.Side == 'W' ? new Vector3(r.X0, r.Floor, d.At) : new Vector3(r.X1, r.Floor, d.At);
+                    openings.Add((r.Id, r.Id + "_" + d.Side + k, c, d.Width, d.Side, r.Floor));
+                }
+            }
+
+            // R7 great sakura court: 1.8 m walls at x 27…45 / z −8…10, one gate per wall 9 m along (BuildEast).
+            openings.Add((R7Id, R7Id + "_W0", new Vector3(27f, 0f, 1f), 4f, 'W', 0f));
+            openings.Add((R7Id, R7Id + "_E0", new Vector3(45f, 0f, 1f), 3.5f, 'E', 0f));
+            openings.Add((R7Id, R7Id + "_N0", new Vector3(36f, 0f, 10f), 4f, 'N', 0f));
+            openings.Add((R7Id, R7Id + "_S0", new Vector3(36f, 0f, -8f), 4f, 'S', 0f));
+
+            int n = 0;
+            foreach (Room r in Rooms)
+            {
+                float h = r.Height;
+                Marker(group, r.Id, NavRegionKind.Room, new Vector3((r.X0 + r.X1) * 0.5f, r.Floor + h * 0.5f, (r.Z0 + r.Z1) * 0.5f), new Vector3(r.X1 - r.X0, h, r.Z1 - r.Z0),
+                    1f, RoomCapacity[r.Id], null, "");
+                n++;
+            }
+
+            Marker(group, R7Id, NavRegionKind.Room, new Vector3(36f, 2f, 1f), new Vector3(18f, 4f, 18f), 1f, RoomCapacity[R7Id], null, "");
+            n++;
+            foreach (var o in openings)
+            {
+                bool choke = o.width <= ChokepointWidth + 1e-3f;
+                Vector3? alt = null;
+                if (choke)
+                {
+                    float best = 15f;
+                    foreach (var other in openings)
+                    {
+                        if (other.id == o.id || other.width < 3.5f - 1e-3f) continue;
+                        float dist = Vector3.Distance(other.centre, o.centre);
+                        if (dist <= best) { best = dist; alt = other.centre; }
+                    }
+                }
+
+                Vector3 size = o.side == 'S' || o.side == 'N' ? new Vector3(o.width, 2.4f, 1.6f) : new Vector3(1.6f, 2.4f, o.width);
+                Marker(group, o.id, NavRegionKind.Gate, o.centre + Vector3.up * 1.2f, size, choke ? 1.15f : 1f, choke ? (o.width <= 2.2f + 1e-3f ? 2 : 3) : 0, alt, o.room);
+                n++;
+            }
+
+            Marker(group, "C8_Bridge", NavRegionKind.Bridge, new Vector3(4f, 0.25f + 1.2f, -28.75f), new Vector3(3f, 2.4f, 21.5f), 1.35f, 2, null, "");
+            Marker(group, "C1_SteppingCauseway", NavRegionKind.Corridor, new Vector3(-8f, 0.2f + 1.2f, -26.5f), new Vector3(2f, 2.4f, 13f), 1.3f, 1, null, "");
+            Marker(group, "K1_WestKairo", NavRegionKind.Corridor, new Vector3(-33f, KairoFloor + 1.7f, 2f), new Vector3(5.2f, 3.4f, 36f), 1.3f, 6, null, "");
+            return n + 3;
+        }
+
+        private static void Marker(Transform group, string id, NavRegionKind kind, Vector3 centre, Vector3 size, float cost, int capacity, Vector3? alternative, string roomId)
+        {
+            var go = new GameObject("Region_" + id);
+            go.transform.SetParent(group, false);
+            go.transform.position = centre;
+            go.AddComponent<NavRegionMarker>().Configure(id, kind, size, null, cost, capacity, alternative.HasValue, alternative ?? Vector3.zero, roomId);
         }
 
         private static int BuildRoom(Transform g, Room r)
@@ -673,6 +764,20 @@ namespace DD.Art.Pipeline.EditorTools
                 foreach (Gate gate in Gates)
                     if (gate.OldId == old.id)
                         placement.spawnPoints.Add(new WorldPlacementAsset.Point { id = old.id, position = new Vector3(gate.Position.x, 0f, gate.Position.y), weight = old.weight });
+            // WP-074 B1b · the v6 layout (WorldLayout.Current) and the six inner gates (S-03 WP-076 B6: SpawnPointMarker Kind = Inner,
+            // ids from spawn-gates-v6.json) at their floor height — a ray from 2.5 m (under the roofs) to the deck (corridors +0.25).
+            placement.layout = "v6";
+            placement.innerSpawnPoints = new List<WorldPlacementAsset.Point>();
+            Physics.SyncTransforms();
+            int floorMask = ~((1 << PrototypeLayers.CameraOccluder) | (1 << 2));
+            foreach (Gate gate in Gates)
+            {
+                if (gate.Kind != "inner") continue;
+                var from = new Vector3(gate.Position.x, 2.5f, gate.Position.y);
+                float y = Physics.Raycast(from, Vector3.down, out RaycastHit hit, 5f, floorMask, QueryTriggerInteraction.Ignore) ? hit.point.y : 0f;
+                placement.innerSpawnPoints.Add(new WorldPlacementAsset.Point { id = gate.Id, position = new Vector3(gate.Position.x, y, gate.Position.y), weight = 1f });
+            }
+
             placement.weaponPoints = new List<WorldPlacementAsset.Point>();
             for (int i = 0; i < ap.weaponPoints.Count && i < WeaponPositions.Length; i++)
                 placement.weaponPoints.Add(new WorldPlacementAsset.Point { id = ap.weaponPoints[i].id, position = new Vector3(WeaponPositions[i].x, 0f, WeaponPositions[i].y), weight = ap.weaponPoints[i].weight });

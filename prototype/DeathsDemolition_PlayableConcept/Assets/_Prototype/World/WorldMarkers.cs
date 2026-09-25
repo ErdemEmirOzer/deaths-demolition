@@ -56,13 +56,20 @@ namespace DD.Prototype.World
             public readonly float X;
             public readonly float Z;
             public readonly string Where;
+            /// <summary>WP-074 B1b · edge gate (default) or an inner gate (S-03 v6 rules; SpawnPointMarker._kind).</summary>
+            public readonly SpawnPointKind Kind;
 
-            public SpawnPlacement(string id, float x, float z, string where)
+            public SpawnPlacement(string id, float x, float z, string where) : this(id, x, z, where, SpawnPointKind.Edge)
+            {
+            }
+
+            public SpawnPlacement(string id, float x, float z, string where, SpawnPointKind kind)
             {
                 Id = id;
                 X = x;
                 Z = z;
                 Where = where;
+                Kind = kind;
             }
         }
 
@@ -234,6 +241,7 @@ namespace DD.Prototype.World
                     "\"_overrideRegion\":false," +
                     "\"_baseWeightOverride\":-1.0," +
                     "\"_pointEnabled\":true," +
+                    "\"_kind\":" + (int)p.Kind + "," +
                     "\"_gizmoRadius\":1.2}", marker);
 
                 go.SetActive(true);

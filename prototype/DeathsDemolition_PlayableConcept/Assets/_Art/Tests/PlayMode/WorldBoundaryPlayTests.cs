@@ -565,6 +565,12 @@ namespace DD.Art.Tests.PlayMode
             _rig.Health.DiagnosisInvulnerable = true;
             Assert.IsNotNull(WorldBounds.Active, "WorldBounds yok");
             Assert.AreEqual(55f, WorldBounds.Active.HalfExtent, 1e-3f);
+            // WP-074 B1b: the live layout and the six inner gates (S-03 WP-076 B6 reads both).
+            Assert.AreEqual(WorldLayoutKind.V6, WorldLayout.Current, "WorldLayout.Current v6");
+            int innerMarkers = 0;
+            foreach (SpawnPointMarker m in UnityEngine.Object.FindObjectsOfType<SpawnPointMarker>()) if (m.Kind == SpawnPointKind.Inner) innerMarkers++;
+            Assert.AreEqual(6, innerMarkers, "orta kapı marker'ı (Kind = Inner)");
+            Assert.AreEqual(30, UnityEngine.Object.FindObjectsOfType<DD.Prototype.Navigation.NavRegionMarker>().Length, "B1c bölge hacimleri (7 oda + 20 çıkış + 3 darboğaz)");
             yield return null;
             Time.captureDeltaTime = 1f / 60f;
             _girdi = new Girdi();

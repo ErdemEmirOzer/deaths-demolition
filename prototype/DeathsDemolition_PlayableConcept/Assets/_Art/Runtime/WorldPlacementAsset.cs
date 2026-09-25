@@ -125,6 +125,10 @@ namespace DD.Art
         public List<Route> routes = new List<Route>();
         public List<Marker> markers = new List<Marker>();
         public List<Point> spawnPoints = new List<Point>();
+        /// <summary>WP-074 B1b · v6 inner spawn gates (S-03 WP-076 B6: SpawnPointMarker Kind = Inner, ids from spawn-gates-v6.json); empty for AP-005.</summary>
+        public List<Point> innerSpawnPoints = new List<Point>();
+        /// <summary>WP-074 B1b · the world layout this placement lays out: "v6" (the ±55 greybox / World v5) or empty / "ap005" (±45) — <c>WorldLayout.Current</c>.</summary>
+        public string layout = "";
         public List<Point> weaponPoints = new List<Point>();
         public Vector3 playerStart;
         public List<Region> regions = new List<Region>();

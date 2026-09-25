@@ -113,6 +113,8 @@ namespace DD.Art
 
             report.Append("[AP005] Atmosphere: ").Append(_buildAtmosphere ? "sun + volume + wind + " + driftFields + " drift fields" : "off").Append(".\n");
 
+            // WP-074 B1b: the live layout before the markers register (S-03's SpawnWorldProfile refreshes on WorldLayout.Changed).
+            WorldLayout.SetCurrent(LayoutOf(_placement));
             WorldMarkers.Build(root, _placement != null ? MarkerSetFrom(_placement) : WorldMarkers.ProceduralSet());
 
             // The baked NavMesh is registered by NavMeshSurface.OnEnable, which runs AFTER this
@@ -194,12 +196,19 @@ namespace DD.Art
         /// off-route flag stays the design's (WorldMarkers.Weapons) since placement.json
         /// carries only the weight.
         /// </summary>
+        /// <summary>WP-074 B1b · The layout a placement lays out ("v6" → V6; anything else, or no placement → the ±45 AP-005 layout).</summary>
+        public static WorldLayoutKind LayoutOf(WorldPlacementAsset placement)
+        {
+            return placement != null && string.Equals(placement.layout, "v6", StringComparison.OrdinalIgnoreCase) ? WorldLayoutKind.V6 : WorldLayoutKind.Ap005;
+        }
+
         public static WorldMarkers.MarkerSet MarkerSetFrom(WorldPlacementAsset placement)
         {
+            int inner = placement.innerSpawnPoints != null ? placement.innerSpawnPoints.Count : 0;
             var set = new WorldMarkers.MarkerSet
             {
-                Spawns = new WorldMarkers.SpawnPlacement[placement.spawnPoints.Count],
-                SpawnPositions = new Vector3[placement.spawnPoints.Count],
+                Spawns = new WorldMarkers.SpawnPlacement[placement.spawnPoints.Count + inner],
+                SpawnPositions = new Vector3[placement.spawnPoints.Count + inner],
                 Weapons = new WorldMarkers.WeaponPlacement[placement.weaponPoints.Count],
                 WeaponPositions = new Vector3[placement.weaponPoints.Count],
                 PlayerStart = placement.playerStart
@@ -210,6 +219,15 @@ namespace DD.Art
                 WorldPlacementAsset.Point p = placement.spawnPoints[i];
                 set.Spawns[i] = new WorldMarkers.SpawnPlacement(p.id, p.position.x, p.position.z, "AP-005 placement");
                 set.SpawnPositions[i] = p.position + Vector3.up * 0.05f;
+            }
+
+            // WP-074 B1b · v6 inner gates (S-03 WP-076 B6: Kind = Inner; the registry adds ids its table does not list).
+            for (int i = 0; i < inner; i++)
+            {
+                WorldPlacementAsset.Point p = placement.innerSpawnPoints[i];
+                int k = placement.spawnPoints.Count + i;
+                set.Spawns[k] = new WorldMarkers.SpawnPlacement(p.id, p.position.x, p.position.z, "v6 inner gate", DD.Prototype.Spawn.SpawnPointKind.Inner);
+                set.SpawnPositions[k] = p.position + Vector3.up * 0.05f;
             }
 
             for (int i = 0; i < placement.weaponPoints.Count; i++)

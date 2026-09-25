@@ -3,6 +3,7 @@ using System.IO;
 using DD.Art.Pipeline.EditorTools;
 using DD.Prototype.CameraSystem;
 using DD.Prototype.Core;
+using DD.Prototype.Navigation;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -93,6 +94,81 @@ namespace DD.Art.Tests.EditMode
             }
 
             Debug.Log("[DD-TEST] wp074.b1.spawns " + string.Join(" | ", log));
+            Assert.IsEmpty(fails, string.Join("\n", fails));
+        }
+
+        /// <summary>WP-074 B1b · the v6 layout signal and the six inner gates (S-03 WP-076 B6): on the deck, on the NavMesh, a full path to the start.</summary>
+        [Test]
+        public void Greybox_V6Katman_OrtaKapilar_AltiInner_ZemindeVeBaslangicaUlasir()
+        {
+            WorldPlacementAsset placement = Open();
+            Assert.AreEqual("v6", placement.layout);
+            Assert.AreEqual(DD.Prototype.World.WorldLayoutKind.V6, Ap005WorldBootstrap.LayoutOf(placement));
+            Assert.AreEqual(DD.Prototype.World.WorldLayoutKind.Ap005, Ap005WorldBootstrap.LayoutOf(AssetDatabase.LoadAssetAtPath<WorldPlacementAsset>(ArtLibraryPaths.Ap005PlacementAsset)), "AP005 ±45 düzeni");
+            var expected = new List<string>();
+            foreach (GreyboxV6Builder.Gate g in GreyboxV6Builder.Gates) if (g.Kind == "inner") expected.Add(g.Id);
+            Assert.AreEqual(6, expected.Count);
+            Assert.AreEqual(expected, placement.innerSpawnPoints.ConvertAll(p => p.id), "orta kapı id'leri spawn-gates-v6.json ile aynı");
+            Vector3 seed = Seed(placement);
+            var path = new NavMeshPath();
+            var fails = new List<string>();
+            foreach (WorldPlacementAsset.Point p in placement.innerSpawnPoints)
+            {
+                if (p.position.y < -0.05f || p.position.y > 0.4f) fails.Add(p.id + " zemin yüksekliği " + p.position.y);
+                if (!NavMesh.SamplePosition(p.position, out NavMeshHit h, 1f, NavMesh.AllAreas)) { fails.Add(p.id + " NavMesh dışı"); continue; }
+                if (!NavMesh.CalculatePath(h.position, seed, NavMesh.AllAreas, path) || path.status != NavMeshPathStatus.PathComplete) fails.Add(p.id + " " + path.status);
+            }
+
+            Assert.IsEmpty(fails, string.Join("\n", fails));
+            StringAssert.Contains("\"id\": \"I_HallRear\"", File.ReadAllText(GreyboxV6Builder.SpawnGatesJson));
+        }
+
+        /// <summary>WP-074 B1c · S-03's region volumes (WP-076 B6 §5.2): 7 rooms, 20 room exits, the three chokepoint runs, S-03's values.</summary>
+        [Test]
+        public void Greybox_BolgeHacimleri_7Oda_20Cikis_3Darbogaz_S03Degerleri()
+        {
+            Open();
+            var rooms = new Dictionary<string, NavRegionVolume>();
+            var gates = new List<NavRegionVolume>();
+            var other = new List<NavRegionVolume>();
+            foreach (NavRegionMarker m in Object.FindObjectsOfType<NavRegionMarker>())
+            {
+                m.Register();   // edit time: build the volume from the serialized fields (S-03 note), read, drop
+                NavRegionVolume v = m.Volume;
+                m.Unregister();
+                if (v.kind == NavRegionKind.Room) rooms[v.id] = v;
+                else if (v.kind == NavRegionKind.Gate) gates.Add(v);
+                else other.Add(v);
+            }
+
+            Assert.AreEqual(7, rooms.Count, "R1–R6 + R7");
+            Assert.AreEqual(20, gates.Count, "oda çıkışı");
+            Assert.AreEqual(3, other.Count, "C8 köprü + C1 geçit + K1");
+            var fails = new List<string>();
+            var noAlt = new List<string>();
+            var exits = new Dictionary<string, int>();
+            foreach (KeyValuePair<string, NavRegionVolume> r in rooms)
+                if (r.Value.capacity != GreyboxV6Builder.RoomCapacity[r.Key] || Mathf.Abs(r.Value.costMultiplier - 1f) > 1e-4f) fails.Add(r.Key + " kapasite/maliyet");
+            foreach (NavRegionVolume g in gates)
+            {
+                if (!rooms.ContainsKey(g.roomId)) { fails.Add(g.id + " roomId '" + g.roomId + "'"); continue; }
+                exits[g.roomId] = (exits.TryGetValue(g.roomId, out int e) ? e : 0) + 1;
+                float width = Mathf.Max(g.size.x, g.size.z);
+                bool choke = width <= GreyboxV6Builder.ChokepointWidth + 1e-3f;
+                int cap = choke ? (width <= 2.2f + 1e-3f ? 2 : 3) : 0;
+                if (g.capacity != cap || Mathf.Abs(g.costMultiplier - (choke ? 1.15f : 1f)) > 1e-4f) fails.Add(g.id + " " + width + " m: kapasite " + g.capacity + " maliyet " + g.costMultiplier);
+                if (choke && !g.hasAlternative) noAlt.Add(g.id);
+                if (!NavMesh.SamplePosition(g.center - Vector3.up * 1.2f, out _, 1.5f, NavMesh.AllAreas)) fails.Add(g.id + " NavMesh dışı");
+            }
+
+            foreach (GreyboxV6Builder.Room r in GreyboxV6Builder.Rooms)
+                if (r.Walls && (!exits.TryGetValue(r.Id, out int e) || e < 2)) fails.Add(r.Id + " < 2 çıkış hacmi");
+            NavRegionVolume bridge = other.Find(v => v.kind == NavRegionKind.Bridge);
+            Assert.IsNotNull(bridge);
+            Assert.AreEqual(2, bridge.capacity); Assert.AreEqual(1.35f, bridge.costMultiplier, 1e-4f);
+            Assert.AreEqual(6, other.Find(v => v.id == "K1_WestKairo").capacity);
+            Assert.AreEqual(1, other.Find(v => v.id == "C1_SteppingCauseway").capacity);
+            Debug.Log("[DD-TEST] wp074.b1c.regions rooms 7 gates " + gates.Count + " chokepoints without a ≥ 3.5 m alternative within 15 m: " + (noAlt.Count == 0 ? "none" : string.Join(", ", noAlt)));
             Assert.IsEmpty(fails, string.Join("\n", fails));
         }
 

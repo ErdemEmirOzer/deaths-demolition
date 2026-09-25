@@ -67,6 +67,26 @@ MonoBehaviour:
   - id: NW_ServiceGate
     position: {x: -46, y: 0, z: 46}
     weight: 1
+  innerSpawnPoints:
+  - id: I_WestKairoSouth
+    position: {x: -33, y: 0, z: -18.5}
+    weight: 1
+  - id: I_CloisterWest
+    position: {x: -22, y: 0.25, z: 24}
+    weight: 1
+  - id: I_ShoreEast
+    position: {x: 18, y: 0, z: -30}
+    weight: 1
+  - id: I_GreatSakuraSouth
+    position: {x: 36, y: 0, z: -10.5}
+    weight: 1
+  - id: I_ServiceYardSouth
+    position: {x: -36, y: 0, z: 31.5}
+    weight: 1
+  - id: I_HallRear
+    position: {x: 0, y: 0.25000003, z: 52.5}
+    weight: 1
+  layout: v6
   weaponPoints:
   - id: SW_CourtyardNorth
     position: {x: 0, y: 0, z: 30}

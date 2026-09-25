@@ -46,8 +46,41 @@ namespace DD.Prototype.World
     /// EVERY NUMBER IN THIS FILE IS PROTOTYPE-ONLY AND INVENTED. The request fixes the
     /// 90x90 m size, the five regions and the rules; it never gives a coordinate.
     /// </summary>
+    /// <summary>WP-074 B1b · Which world layout is live: the ±45 map (procedural Run / World_AP005) or the v6 ±55 layout (greybox now, the World v5 scene later).</summary>
+    public enum WorldLayoutKind
+    {
+        Ap005 = 0,
+        V6 = 1
+    }
+
     public static class WorldLayout
     {
+        // ----------------------------------------------------------------- live layout (WP-074 B1b)
+
+        /// <summary>
+        /// The layout of the world that is loaded, set by the world bootstrap from its placement asset (<c>layout</c> "v6"); S-03's
+        /// SpawnWorldProfile reads it (v6 band 22–45 m, MaxUseful 75, inner gates) instead of a scene name — the greybox and the later
+        /// World v5 scene are different scenes with the same layout. Defaults to <see cref="WorldLayoutKind.Ap005"/>.
+        /// </summary>
+        public static WorldLayoutKind Current { get; private set; } = WorldLayoutKind.Ap005;
+
+        /// <summary>Raised with the new layout when <see cref="Current"/> changes.</summary>
+        public static event System.Action<WorldLayoutKind> Changed;
+
+        public static void SetCurrent(WorldLayoutKind layout)
+        {
+            if (Current == layout) return;
+            Current = layout;
+            Changed?.Invoke(layout);
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetCurrent()
+        {
+            Current = WorldLayoutKind.Ap005;
+            Changed = null;
+        }
+
         // ----------------------------------------------------------------- extents
 
         public const float MapSize = 90f;
