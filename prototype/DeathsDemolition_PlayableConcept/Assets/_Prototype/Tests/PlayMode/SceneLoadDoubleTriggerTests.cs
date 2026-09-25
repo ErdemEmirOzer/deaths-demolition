@@ -70,6 +70,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(1, AktifSayi<EventSystem>(), "MainMenu'de EventSystem sayısı 1 değil.");
             int loadedAfterBoot = AboneSayisi(typeof(SceneManager), "sceneLoaded");
             int activeAfterBoot = AboneSayisi(typeof(SceneManager), "activeSceneChanged");
+            Dictionary<string, int> activeTipBoot = AboneAnahtarlari(typeof(SceneManager), "activeSceneChanged");
 
             PrototypeUiFlow.GoToSelection();
             yield return SahneyiBekle(PrototypeScenes.Selection);
@@ -114,7 +115,24 @@ namespace DD.Prototype.Tests.PlayMode
             Debug.Log("[DD-TEST] sceneLoaded.subs before=" + sceneLoadedBefore + " afterBoot=" + loadedAfterBoot + " after=" + loadedAfter +
                       " | activeSceneChanged before=" + activeBefore + " afterBoot=" + activeAfterBoot + " after=" + activeAfter);
             Assert.AreEqual(loadedAfterBoot, loadedAfter, "sceneLoaded abone sayısı tam döngüde büyüdü (kanca birikimi).");
-            Assert.AreEqual(activeAfterBoot, activeAfter, "activeSceneChanged abone sayısı tam döngüde büyüdü.");
+            // WP-079E: process-lifetime singletons (VFX systems, pools, feel drivers…) subscribe once, lazily, on their first Run
+            // — in an isolated run that raised the count after the cycle without any leak. A leak is a subscriber that appears
+            // MORE times than before (a second subscription); a first-time singleton is logged, not failed.
+            Dictionary<string, int> activeTipSon = AboneAnahtarlari(typeof(SceneManager), "activeSceneChanged");
+            var ciftAbone = new List<string>(); var yeniTekil = new List<string>();
+            foreach (KeyValuePair<string, int> kv in activeTipSon)
+            {
+                int once; activeTipBoot.TryGetValue(kv.Key, out once);
+                if (kv.Value > Mathf.Max(once, 1)) ciftAbone.Add(kv.Key + " ×" + kv.Value + " (boot " + once + ")");
+                else if (once == 0) yeniTekil.Add(kv.Key);
+            }
+            Debug.Log("[DD-TEST] activeSceneChanged first-time singletons=" + string.Join(",", yeniTekil));
+            Assert.IsEmpty(ciftAbone, "activeSceneChanged'e aynı abone birden çok kez eklendi (sızıntı): " + string.Join("; ", ciftAbone));
+            // Positive control: a handler subscribed twice must show up as a duplicate.
+            SceneManager.activeSceneChanged += KontrolAbone; SceneManager.activeSceneChanged += KontrolAbone;
+            int kontrol; AboneAnahtarlari(typeof(SceneManager), "activeSceneChanged").TryGetValue("SceneLoadDoubleTriggerTests.KontrolAbone(s)", out kontrol);
+            SceneManager.activeSceneChanged -= KontrolAbone; SceneManager.activeSceneChanged -= KontrolAbone;
+            Assert.AreEqual(2, kontrol, "pozitif kontrol: çift abone sayılmalı — ölçüm kör");
 
             // 2) Kendi sayacı: her yükleme tam bir kez; ardışık tekrar yok.
             string sira = string.Join(" -> ", _yuklemeler);
@@ -122,8 +140,10 @@ namespace DD.Prototype.Tests.PlayMode
             // WP-014/WP-020 (S-05, WP-039 P4): with WorldSource = AP005 the Run scene loads the
             // world scene ADDITIVELY right after itself (WorldBootstrap). That is the one legitimate
             // additive load; it does not change the active scene and must happen exactly once per Run.
+            // WP-079E: V6 (the default world since C-00 25.09) loads its authored scene (World_V6_Greybox) the same way.
             string dunyaSahnesi;
-            bool ap005 = WorldSourceSettings.Resolve(out dunyaSahnesi) == WorldSource.AP005;
+            WorldSource kaynak = WorldSourceSettings.Resolve(out dunyaSahnesi);
+            bool ap005 = kaynak == WorldSource.AP005 || kaynak == WorldSource.V6;
             var beklenenListe = new List<string>
             {
                 PrototypeScenes.Boot, PrototypeScenes.MainMenu, PrototypeScenes.Selection, PrototypeScenes.Run
@@ -163,5 +183,23 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(_yuklemeler.Count - additive, _aktifDegisim, "activeSceneChanged sayısı tekil yükleme sayısıyla eşit olmalı (additive dünya sahnesi aktif sahneyi değiştirmez).");
             Debug.Log("[DD-TEST] sceneLoadSingle=OK");
         }
+
+        // WP-079E: subscriber key → count ("DeclaringType.Method" + instance / static).
+        private static Dictionary<string, int> AboneAnahtarlari(System.Type tip, string eventAdi)
+        {
+            var sonuc = new Dictionary<string, int>();
+            var alan = tip.GetField(eventAdi, System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
+            Assert.IsNotNull(alan, tip.Name + "." + eventAdi + " backing field bulunamadı");
+            var d = alan.GetValue(null) as System.Delegate;
+            if (d == null) return sonuc;
+            foreach (System.Delegate x in d.GetInvocationList())
+            {
+                string k = (x.Method.DeclaringType != null ? x.Method.DeclaringType.Name : "?") + "." + x.Method.Name + (x.Target == null ? "(s)" : "(i)");
+                int n; sonuc.TryGetValue(k, out n); sonuc[k] = n + 1;
+            }
+            return sonuc;
+        }
+
+        private static void KontrolAbone(Scene a, Scene b) { }
     }
 }
