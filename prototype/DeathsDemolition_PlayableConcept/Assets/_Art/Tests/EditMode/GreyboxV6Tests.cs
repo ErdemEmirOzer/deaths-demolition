@@ -361,6 +361,13 @@ namespace DD.Art.Tests.EditMode
             Assert.Greater(dress.transform.Find(WorldV5Dress.ShoreGroupName).childCount, 20, "havuz kıyıları");
             Assert.AreEqual(6, dress.transform.Find(WorldV5Dress.BridgeGroupName).childCount, "2 kalas + 4 levha köprü");
             Assert.Greater(dress.transform.Find(WorldV5Dress.GroveGroupName).childCount, 40, "bambu kümeleri + çit");
+            // DEC-102 AD E: NE / SE side doors — 4 doors × (void + 3 frame pieces), visual only, on the tsuiji's inner face.
+            Transform doors = dress.transform.Find(WorldV5Dress.SideDoorGroupName);
+            Assert.IsNotNull(doors, "köşe yan kapıları");
+            Assert.AreEqual(16, doors.childCount, "4 kapı × (boşluk + 3 çerçeve)");
+            Assert.AreEqual(0, doors.GetComponentsInChildren<Collider>(true).Length, "yan kapılar yalnız görsel");
+            foreach (var spot in WorldV5Dress.SideDoorSpots())
+                Assert.AreEqual(WorldV5Dress.RingCentreline - 0.30f, Mathf.Max(Mathf.Abs(spot.at.x), Mathf.Abs(spot.at.y)), 1e-4f, "iç yüzde");
             Assert.Greater(dress.transform.Find(WorldV5Dress.FenceGroupName).childCount, 40, "kenninji çitleri");
             Assert.IsNotNull(dress.transform.Find(WorldV5Dress.KaresansuiGroupName + "/Karesansui_Gravel"), "karesansui çakılı");
 

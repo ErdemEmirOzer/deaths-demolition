@@ -288,6 +288,7 @@ namespace DD.Art.Pipeline.EditorTools
 
             report.HallPieces = Hall(dress, greybox, report);
             report.WallPieces = RingWall(dress) + Forecourt(dress);
+            SideDoors(dress);
             Karamon(dress);
             Lanterns(dress);
             Planters(dress);
@@ -379,6 +380,54 @@ namespace DD.Art.Pipeline.EditorTools
             n += Run(ring, new Vector2(-c, -c + 1.5f), new Vector2(-c, c - 1.5f));
             n += Run(ring, new Vector2(c, -c + 1.5f), new Vector2(c, c - 1.5f));
             return n;
+        }
+
+        /// <summary>DEC-102 AD E (C-00 25.09): single-leaf side doors in the ring tsuiji by the NE and SE corners, where the corner spawn
+        /// gates (NE_Corner, SE_Shore) sit — the spawns read as coming through the wall, not a gate motif: on both runs of each corner,
+        /// <see cref="SideDoorOffset"/> m from the corner, <see cref="SideDoorWidth"/> × <see cref="SideDoorHeight"/> m under the continuous
+        /// cap, a dark void (the flat cloth, L ≤ 25) in a timber frame on the inner face. Visual only: no collider, out of the NavMesh bake.</summary>
+        public const float SideDoorOffset = 6f, SideDoorWidth = 1.4f, SideDoorHeight = 2.0f, SideDoorFrame = 0.14f;
+        public const string SideDoorGroupName = "SideDoors";
+
+        /// <summary>The door centres on the tsuiji's inner face (x, z) and their inward normals: NE north run, NE east run, SE south run, SE east run.</summary>
+        public static (Vector2 at, Vector2 inward)[] SideDoorSpots()
+        {
+            float face = RingCentreline - 0.30f, along = RingCentreline - SideDoorOffset;
+            return new[]
+            {
+                (new Vector2(along, face), new Vector2(0f, -1f)), (new Vector2(face, along), new Vector2(-1f, 0f)),
+                (new Vector2(along, -face), new Vector2(0f, 1f)), (new Vector2(face, -along), new Vector2(-1f, 0f)),
+            };
+        }
+
+        private static void SideDoors(Transform dress)
+        {
+            var group = new GameObject(SideDoorGroupName) { layer = PrototypeLayers.Environment }.transform;
+            group.SetParent(dress, false);
+            group.gameObject.AddComponent<NavMeshModifier>().ignoreFromBuild = true;
+            foreach ((Vector2 at, Vector2 inward) in SideDoorSpots())
+            {
+                Quaternion q = Quaternion.LookRotation(new Vector3(inward.x, 0f, inward.y), Vector3.up);   // local +z = into the court
+                Vector3 c = new Vector3(at.x, 0f, at.y), t = q * Vector3.right, n = q * Vector3.forward;
+                float w = SideDoorWidth, h = SideDoorHeight, f = SideDoorFrame;
+                DoorPiece(group, "SideDoor_Void", "cloth", c + n * 0.02f + Vector3.up * (h * 0.5f), q, new Vector3(w, h, 0.04f));
+                foreach (float side in new[] { -1f, 1f })
+                    DoorPiece(group, "SideDoor_Frame", "wood_timber", c + n * 0.05f + t * (side * (w + f) * 0.5f) + Vector3.up * ((h + f) * 0.5f), q, new Vector3(f, h + f, 0.10f));
+                DoorPiece(group, "SideDoor_Frame", "wood_timber", c + n * 0.05f + Vector3.up * (h + f * 0.5f), q, new Vector3(w + 2f * f, f, 0.10f));
+            }
+        }
+
+        private static void DoorPiece(Transform parent, string name, string role, Vector3 centre, Quaternion rotation, Vector3 size)
+        {
+            var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            UnityEngine.Object.DestroyImmediate(go.GetComponent<Collider>());
+            go.name = name;
+            go.layer = PrototypeLayers.Environment;
+            go.transform.SetParent(parent, false);
+            go.transform.SetPositionAndRotation(centre, rotation);
+            go.transform.localScale = size;
+            go.GetComponent<MeshRenderer>().sharedMaterial = BoxMaterial(name, role, Vector2.one);
+            GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.BatchingStatic | StaticEditorFlags.OccludeeStatic);
         }
 
         private static int Forecourt(Transform dress)
