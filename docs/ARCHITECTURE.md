@@ -11,6 +11,7 @@ This document describes the runtime architecture of the Unity project in `protot
 5. [Allocation and performance rules](#5-allocation-and-performance-rules)
 6. [Save and profile durability](#6-save-and-profile-durability)
 7. [Diagnostics and automation hooks](#7-diagnostics-and-automation-hooks)
+8. [Build, CI and user-data safety](#8-build-ci-and-user-data-safety)
 
 ---
 
@@ -66,7 +67,7 @@ Inside the Runtime assembly, each folder has its own namespace and a narrow cros
   4. Loads the first scene. `PrototypeBootFlags` decides which one: session override → define → `-ddDirectToRun` → config → PlayerPrefs.
 - **Config:** `PrototypeConfig` (`P/Core/Config/`) is the single data layer, split into Economy, Enemy, Feedback, Player, Progression, Round and Weapon sections. Placeholder values that are not yet approved carry `[PrototypeOnly(...)]` (`P/Core/Config/PrototypeOnlyAttribute.cs`). The census of these values is kept in `PROTOTYPE-ONLY.md`.
 - **Run scene composition:**
-  - `WorldBootstrap` (`P/World/`) builds or loads the world. `WorldSource` is Procedural or AP005; AP005 loads `A/Scenes/World_AP005.unity` additively and falls back to Procedural.
+  - `WorldBootstrap` (`P/World/`) builds or loads the world. `WorldSource { Procedural, AP005, V6 }`; the default comes from `A/Resources/DD_WorldSource.asset` and is **V6**, which loads `A/Scenes/World_V6_Greybox.unity` additively (§3.9). `-ddWorldSource` or `DD_WORLD_SOURCE` override it; the startup log prints `[World] WorldSource = …`.
   - `RunSystemsInstaller` (`P/Rounds/`) wires the run systems.
   - `PrototypeUiInstaller` (`P/UI/Runtime/Flow/`) injects the screens.
 - **UI is generated in code.** `UiFactory` (`P/UI/Runtime/Kit/UiFactory.cs`) builds the canvases, and `UiSceneBuilder` (`P/UI/Editor/`) generates the meta scenes. No screen is hand-laid in a scene.
@@ -75,7 +76,7 @@ Inside the Runtime assembly, each folder has its own namespace and a narrow cros
 
 ## 3. Key data contracts
 
-### 3.1 WeaponDefinition v3 (WP-069 B1)
+### 3.1 WeaponDefinition v3 (WP-069)
 
 `P/Core/Weapons/WeaponDefinition.cs` is a ScriptableObject created from the menu *Deaths Demolition/Weapon Definition v3*. "v3" is the contract generation named in the doc comment; there is no serialized version field.
 
@@ -90,8 +91,9 @@ Inside the Runtime assembly, each folder has its own namespace and a narrow cros
   - `WeaponIdMigration` maps legacy ids.
   - `CreateLegacySettings()` converts a definition to the M3 `ClassicWeaponSettings`, so the older systems keep working.
 - **Authoring:** assets are written deterministically by `P/Weapons/Editor/ArsenalAssetBuilder.cs`.
-- **Shipped weapons:** `WD_ar_1` (Auto, 510 rpm, 30 rounds), `WD_smg_1` (Auto, 780 rpm, 42 rounds), `WD_sg_1` (8 pellets, 7 shells).
-- *Planned (WP-069 B2+):* seven more classic weapons and the two new Specials. The `explosive`, `rocket`, `arcChain` and `gelPuddle` blocks exist in the schema, but no runtime code reads them yet.
+- **Catalog (12 definitions):** ten classics — `ar_1` Hinawa, `ar_2` Sanren, `smg_1` Shippū, `smg_2` Tetsui, `sg_1` Rappa, `sg_2` Nitō, `lmg_1` Mukade, `lmg_2` Kurogane, `sr_1` Tomi, `rl_1` Bōhiya — and the two DEC-094 Specials in the Special slot, `sw_arc` Raijū (chain lightning) and `sw_gel` Namekuji (slick gel). Balance numbers are DEC-097 as amended by DEC-099.
+- **Blocks in use:** `rocket` and `explosive` drive `rl_1` (blast, dud and cluster rules, `P/Weapons/RocketImpacts.cs`); `arcChain` and `gelPuddle` drive the Specials (`SpecialImpacts`, `SpecialLinks`, `SpecialGelEffects`).
+- **First-person pose:** `presentation.fpView` (`WeaponFpViewPose`, with a per-class `DefaultFor`) positions each weapon in the first-person view; `P/Weapons/FpViewPoseDriver.cs` applies it.
 
 ### 3.2 ProjectileSystem (ADR-069-1)
 
@@ -107,6 +109,7 @@ Inside the Runtime assembly, each folder has its own namespace and a narrow cros
   - Hits resolve through the same path as hitscan shots, inside one `DamageTransaction` resumed each step.
   - Each projectile keeps an inline set of up to 8 bodies it has already damaged (ADR-034-1).
   - Penetration budget: `TargetsLeft = 1 + PierceTargets + Penetration`.
+- **Kinds:** `ProjectileKind { Bullet, Pellet, Rocket, Orb, Gel }` — Bullet for rifles, SMGs, LMGs and the sniper, Pellet for shotguns, Rocket for `rl_1`, Orb for Raijū and Gel for Namekuji.
 - **Firing:** `WeaponController` calls `ProjectileSystem.Spawn(request, _classic.Launch(i))` once per pellet.
 - **Events:** `ProjectileEvents` (`Spawned`, `Impact`, `Expired`) carry struct payloads.
 - **Tests:** `P/Tests/EditMode/ArsenalV3Tests.cs`, `P/Tests/PlayMode/ProjectileSliceTests.cs`. Test hooks are `Step`, `SimulateFor` and `Clear`, and the system clears itself on scene unload.
@@ -128,12 +131,15 @@ The types live in Core (`P/Core/Camera/CameraModeTypes.cs`) and the service in R
   - Transition times: TopDown↔Third 0.45 s, Third↔First 0.30 s, TopDown↔First 0.55 s; 0 with reduced motion.
   - The service never writes to disk. Look preferences are saved through `InputPreferences` (`P/Core/Input/`) and reach the service through `CameraInputPreferencesBridge`.
 - **Aim:** in third- and first-person, `PlayerWeaponBinding` aims at the camera's 3D aim point (`CameraAimRay` in `P/Camera/CameraReactions.cs`).
-- **Start mode:** the command-line flag `-ddCameraMode topdown|tp|fp` overrides it (`ResolveStartMode()`).
+- **Start mode:** top-down by default; the player changes mode from the pause menu, and the command-line flag `-ddCameraMode topdown|tp|fp` overrides it (`ResolveStartMode()`).
+- **Feel per mode:** `P/Camera/CameraModesFeel.cs` and `P/Feedback/CameraFeelDriver.cs` (WP-073 B4) scale kick and shake per mode.
+- **First-person arms:** `P/Characters/FirstPersonArms.cs` renders a copy of the player rig on the `FirstPersonView` layer while the world body stays shadow-only. It ships disabled (`PlayerSkinnedVisual.FirstPersonV3Arms = false`) until the hand-orientation pass lands.
 
-### 3.4 QualityTiers (quality tiers v2, WP-075 C1)
+### 3.4 QualityTiers (quality tiers v2, WP-075, DEC-100)
 
 `P/Core/Quality/QualityTiers.cs` defines `enum QualityTier { Performans, Yuksek, Sinematik }`, shown in the UI as Performance / High / Cinematic. Each tier has its own URP asset, configured by `P/Core/Editor/QualityTierSetup.cs`.
 
+- **Default:** `QualityTiers.DefaultTier = QualityTier.Sinematik`, and `QualitySettings` defaults to level 2 on every platform (DEC-100: Cinematic at 30 fps; High at 60 fps and Performance remain selectable).
 - **Current** is derived from `QualitySettings.GetQualityLevel()`, and `Changed` is raised when it changes.
 - **`Pick<T>(p, h, c)`** is the only way a feature reads a tier value, so no call site hard-codes one.
 - **Built-in caps:**
@@ -149,7 +155,7 @@ The types live in Core (`P/Core/Camera/CameraModeTypes.cs`) and the service in R
 - **Ownership** (from the contract, `planning/work-packages/QUALITY-TIERS-V2.md`): S-05 writes the global render settings and S-01 writes the camera-local ones. Every feature owner has its own row in the contract (animation, AI, VFX, projectiles) and reads it through `Pick`.
 - **Tests:** `P/Tests/EditMode/QualityTiersTests.cs`.
 
-### 3.5 Animation event contract v3 (WP-071 B1)
+### 3.5 Animation event contract v3 (WP-071)
 
 - **Runtime side** (`P/Characters/CharacterAnimationEvents.cs`, "THE ANIMATION EVENT CONTRACT", ADR-018-1):
   - `enum CharacterAnimationEvent` covers the v1 events (fire, hit windows, footsteps, death end, rise end…), the WP-032C mechanism events, the v3 events with an int payload (foot lift-off, `grab_start` / `grab_end`, `attack_recover`, `ragdoll_handoff`, weapon mechanism steps…), and the AP-022 additions `fall_start` and `telegraph_start`.
@@ -166,23 +172,16 @@ The types live in Core (`P/Core/Camera/CameraModeTypes.cs`) and the service in R
 - **Animator parameters** are fixed by `CharacterAnimatorContract` (`P/Characters/CharacterAnimationSet.cs`), and controllers are generated from `CharacterAnimationSet` by `A/Editor/ArtAnimatorBuilder.cs`.
 - **Clip-driven attack timing:** the enemy attack state machine uses the clip's `hit_window_start` / `hit_window_end` events to move from Windup to Active to Recovery, and falls back to timers when there is no clip (`P/Enemies/EnemyAttackState.cs`, `IAttackWindowSink`).
 
-### 3.6 Death impulse and ragdoll hand-off
+### 3.6 Death impulse and ragdoll hand-off (WP-076, DEC-096)
 
-- **Current contract (on main):**
-  - Interface: `IZombieAnimationDriver.SetDeathImpulse(Vector3 worldPush, float intensity)` (`P/Characters/IZombieAnimationDriver.cs:41`), which must be called before `PlayDeath`.
-  - Caller: `ZombieAnimator.BeginDeath` (`P/Enemies/ZombieAnimator.cs:484`). It passes the killing hit's direction, with `DamageHit.ImpactForce` (in `DamageForce` units) as the intensity.
-- **Consumer:** `ZombieSkinnedVisual` (`P/Characters/ZombieSkinnedVisual.cs:401`).
-  1. It flattens and stores the push.
-  2. At the `ragdoll_handoff` event, or on a timer per death family, it acquires a proxy skeleton from `RagdollProxyPool` with velocity = push × `Clamp(1 + 0.9·intensity, 1.4, 4.5)`.
-  3. The death family comes from `ZombieDeathFamily` (`P/Characters/ZombieDeathFamilies.cs`): FallBack, FallForward, SpinSide, LegsOut, UltraTimber, ArcElectro, GelSlip.
+- **Contract:** `readonly struct DeathImpulse` (`P/Damage/DeathImpulse.cs`) carries the unit direction, force (in `DamageForce` units, after the knockback governor), `DamageSourceKind`, `WeaponClass`, body region, world hit point, flat body speed and a `ZombieBodyState`. `DeathImpulse.Build` guarantees a unit direction (falling back to the body's forward), force ≥ 0 and speed ≥ 0.
+- **Split of ownership:** S-03 (AI) fills it once in `Die()` and hands it to the animation driver through `IZombieAnimationDriver.SetDeathImpulse(in DeathImpulse)` before `BeginDeath`; S-03 knows no bones. S-06 (animation) picks the death family, onset, ragdoll hand-off and settle from it. After death, gameplay never attaches to the body again, and one owner (S-03) controls corpse lifetime.
+- **Consumer:** `ZombieSkinnedVisual` (`P/Characters/ZombieSkinnedVisual.cs`) chooses a family from `ZombieDeathFamily` (FallBack, FallForward, SpinSide, LegsOut, UltraTimber, ArcElectro, GelSlip) and, at the `ragdoll_handoff` event or on a per-family timer, acquires a proxy skeleton from `RagdollProxyPool`.
 - **`RagdollProxyPool`** (`P/Characters/RagdollProxyPool.cs`):
   - Zombies carry no Rigidbody. The pool holds proxy skeletons of 11 bodies and 10 joints each.
   - Default capacity is 6 concurrent ragdolls, with a hard maximum of 10.
   - A proxy stays active for 0.5–3.0 s and its pose is copied onto the zombie's bones in LateUpdate.
   - When the pool is exhausted, the authored death clip plays instead.
-- *Planned (WP-076 direction §2.1, DEC-096):* a `readonly struct DeathImpulse` in `DD.Prototype.Damage` (`P/Damage/DeathImpulse.cs`) replaces the `(Vector3, float)` pair.
-  - S-03 (AI) supplies the impulse from `Die()`, and S-06 (animation) picks the family and ragdoll. After death, gameplay never attaches to the body again.
-  - A single owner (S-03) controls corpse lifetime.
 
 ### 3.7 Damage contract
 
@@ -197,7 +196,7 @@ How damage resolves:
 - **Armour** (`ArmorSet`, `RegionalDamageBody`): an armoured region sends the whole hit into its plate, and any damage left over once the plate breaks is discarded.
 - **Explosions** spread their damage over the regions by configured shares, with linear falloff to the rim (`HitscanEngine.Explode`).
 
-### 3.8 Attack selection (WP-076 B1)
+### 3.8 Attack selection and Special reactions (WP-076)
 
 `P/Enemies/AttackStyles.cs` contains four pieces:
 - **`AttackStyleProfile`:** per-style multipliers, normalised to each tier's signature style (Standard Swipe, Special Lunge, Elite Sweep, Ultra Overhead).
@@ -211,6 +210,25 @@ How damage resolves:
 - **`GrabState`:** at most one grab on the player.
   - The bite pays 60 % of its damage on hit and 40 % at the end of the grab.
   - A single hit with impact ≥ 0.85 on the holder breaks the grab.
+- **Special reactions:** Raijū electrocutes bodies (`P/Enemies/ZombieShock.cs`). Namekuji puddles register in `GelPuddleRegistry`, and `ZombieGel` runs a slide → fall → downed → get-up machine; by DEC-096 zombies do not avoid the puddles.
+- **Rear awareness:** `ZombieRear` marks a body as rear when it is out of the camera view and in the view's rear half-plane, and gives it a `RearLevel`; `RearSpawnShare` tracks the share of recent spawns that came up behind the camera and penalises rear spawn points above each camera mode's cap.
+- **Round logs:** `AiV3RoundLog` and `SpawnRoundLog` write a per-round summary for tuning.
+
+### 3.9 World V6 (WP-074)
+
+- **Scene:** `A/Scenes/World_V6_Greybox.unity`, in the build list and loaded additively by `WorldBootstrap` when `WorldSource` is V6 (the default). `WorldLayout.Current` tells runtime systems which layout is active.
+- **Built by code:** `A/Editor/GreyboxV6Builder.cs` builds the ±55 m layout (ring wall height 2.4 m, vista to 85 m), bakes NavMesh v5 (2,734 triangles), and writes `spawn-gates-v6.json` (22 gates: 12 outer, 10 inner; player starts and weapon points), `regions-v6.json` (5 regions, rooms R1–R6) and `acoustic-spaces-v6.json`. `A/Editor/WorldV5Dress.cs` places the AP-023 architecture and planting kit: the palace hall, *kairō* corridors, the *chūmon*, rooms, ponds, the west bamboo grove, the 1,143-tree vista band and the side doors at the corner spawns. `WorldV5Lighting`, `WorldV5Sky`, `WorldV5Ground`, `WorldV5Moss` and `WorldV5Look` finish it. It runs headlessly (`GreyboxV6Builder.BuildCli`, `-ddBake` for lighting).
+- **Spawning in V6:** `SpawnWorldProfile.Resolve(layout, v6SceneLoaded)` is a pure function that picks the V6 gate table; `SpawnRoomBalance` spreads spawns across rooms.
+- **Look (DEC-101/102):** `P/World/WorldAtmosphere.cs` sets the sun at 50° elevation in the north-north-west and a broken-cloud cookie; `A/Runtime/` holds the URP features (`ScreenAtmosphereFeature`, `LookV3Post`, `PlanarReflection`) and a separate renderer for the planar reflection pass. Volumetric shafts are a tier row: full on Cinematic, reduced on High, off on Performance.
+
+### 3.10 Progression tree v2 (WP-077, DEC-095/098)
+
+- **In-run tree:** `P/Rounds/RunTree/` loads `run-tree.json` (schema `dd-run-tree-v1`) into `RunTreeCatalog` / `RunTreeGraph`; `RunTreeState` is the per-run purchase state. `RunTreeHooks` (weapon stats, hit effects), `RunTreeEffectValues`, `RunTreeTierStats` and `RunTreeGroundFire` apply the effects. With `RunTreeNodeCards` on (the shipped config), `RoundUpgradeShop` offers tree nodes as its three cards, and a pinned path guarantees its next step (K1 hybrid offer).
+- **Meta path:** `P/Profile/MetaPath/` (`MetaPathCatalog`, `MetaPathRules`, `MetaPathSnapshot`) reads `meta-tree.json` (`dd-meta-tree-v1`, 38 nodes) and is persisted through `ProfileService.Meta` inside the profile commit (§6). Selection and the run director query it for weapon locks.
+
+### 3.11 Acoustic spaces (WP-072)
+
+- `enum AcousticSpace { Open, Corridor, Hall }` and the static resolver `AcousticSpaces.Resolver` live in `P/Audio/Runtime/WeaponFireAudio.cs`. `AcousticSpaceMap` (`Resources/DD_AcousticSpaces.asset`) is baked from `acoustic-spaces-v6.json` by the audio catalog builder: rooms resolve to Hall and corridors to Corridor, with 1 m hysteresis, and the map answers only while the V6 scene is loaded. Weapon fire picks its wet tail per space.
 
 ---
 
@@ -261,7 +279,7 @@ sequenceDiagram
 
 1. **Fighting.** `EnemySpawnDirector` (`P/Spawn/`) resolves a `RoundPlan` (pool total, target active, ceiling ≤ 40). Every 0.45 s, `SpawnRefillClock` spawns up to 2 bodies while `RoundLedger.CanSpawn` allows it. Spawn points are picked by `SpawnPointSelector` / `SpawnWeightCalculator`, and `SpawnRelaxation` loosens the rules when no point qualifies. The spawn weighting reads `ThreatDirector`'s layer through `ThreatLevelFeed` (`P/Navigation/`).
 2. **RoundComplete.** The round is complete when the pool is empty and nothing is alive (corpses do not count). The freeze is a named hold on `RunFlowClock` and never touches `Time.timeScale`. `GoldService.CollectOutstanding` credits any gold still on the floor.
-3. **Upgrading.** `RoundUpgradeShop` offers three priced cards from `UpgradeOfferPolicy`, with one paid reroll before a purchase.
+3. **Upgrading.** `RoundUpgradeShop` offers three priced cards — nodes of the in-run tree (§3.10) — with one paid reroll before a purchase.
 4. **Countdown.** Three seconds with the simulation running, then back to Fighting.
 5. **Dead.** Player death ends the run. `RunEvents.RunEnded(RunSummary)` → `ProfileRunCommitter` commits synchronously (§6) → Results.
 
@@ -304,6 +322,7 @@ The rules are written in the code and enforced by allocation scans and performan
   - Path repaths share a budget (`NavPathFollower`, every 0.35 s).
   - `CharacterAnimatorLod` culls animators off screen and steps them manually at distance.
 - **Performance targets:**
+  - DEC-100: on the default Cinematic tier, mean ≤ 33.3 ms and p99 ≤ 40 ms at 1080p (30 fps).
   - DEC-092: on the High tier, mean ≤ 16.6 ms and p99 ≤ 20 ms at 1080p.
   - Performance tier: mean ≤ 8.0 ms and p99 ≤ 10 ms.
   - They are measured with `PilotPerfProbe` in clean windows by `tools/qa/regression.sh`.
@@ -374,3 +393,18 @@ Failures never throw; they return a `ProfileSaveResult`.
 - **Telemetry** (`P/Diagnostics/Telemetry/RunTelemetry.cs`): schema `dd-run-telemetry-v1`, local JSON under 200 KB, preallocated buffers, no identity data. `-ddTelemetry 0` disables it.
 - **Crash log** (`P/Diagnostics/CrashLogReporter.cs`): writes local text files with the home directory and account name masked, keeps the newest 10 files, and uploads nothing.
 - **Build stamp** (`P/Core/Build/BuildInfo.cs`): reads `Resources/build-info.json`, which `tools/build.sh` stamps and then restores to its placeholder.
+
+---
+
+## 8. Build, CI and user-data safety
+
+Several agent sessions share one Mac, one Unity install and the real player's profile. The scripts in `tools/` encode the rules that make that safe (reference: `tools/README.md`).
+
+- **Machine slots** (`tools/slot.sh`): a FIFO lock shared by every session — 2 Unity batch editors (3 when swap and load are low), 1 heavy Blender job, 1 smoke run and 1 `player` slot. Locks record the owner's pid and start time, so a reused pid reads as stale; acquisition is re-entrant for child processes of the owner.
+- **Stall watchdog** (`dd_unity_watched` in `tools/dd-env.sh`): a Unity batch run whose log stops growing for 20 minutes is killed (its own pid only), retried once, then reported as 124.
+- **Compile gate** (`tools/compile-check.sh`): after a multi-session batch, opens the project in batchmode in the CI checkout with a warm Library and counts `error CS` lines. Green requires Unity exit 0 **and** a compile trace in the log; "Multiple Unity instances" is reported busy (75), and a non-zero exit without CS errors is "did not run" (3), never green.
+- **Main CI** (`tools/main-ci.sh`): a detached CI worktree at the commit under test runs the full EditMode suite and the PlayMode core suites (`tools/ci-suites.txt`), holding the `player` slot for the whole run. `summary.md` maps each red test to its owner session (`tools/ci-owners.tsv`) and flags reds that are new since the previous run.
+- **User-data guard** (`tools/userdata-guard.sh`): every PlayMode or Player run is wrapped as snapshot → run → restore in one shell. Restore writes back exactly the snapshot, deletes keys the run added, and hash-verifies the result. A player-scope window holds the `player` slot, refuses to start while a game Player is alive (exit 30), and refuses to restore display settings that deviate from known-good values (exit 31, nothing written). Only the coordinator may change user data outside this.
+- **Player launches** (`tools/player-run.sh`): every Player — captures, bots, perf probes — goes through the `player` slot, so no two Players share the audio device and focus, and none runs during CI.
+- **Release** (`tools/build.sh release --smoke`): LZ4HC build, footprint against the 5 GB cap (DEC-093), then a flagless smoke run that checks the main menu, the run scene, zero exceptions, the default world line in the log, and that user data came back unchanged.
+

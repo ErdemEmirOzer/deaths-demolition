@@ -84,3 +84,6 @@
 *.dylib binary
 *.a    binary
 *.bundle binary
+
+# Portfolio screenshots: small JPGs in plain Git so README images render from any clone (C-00 26.09)
+docs/images/*.jpg -filter binary
