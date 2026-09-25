@@ -144,32 +144,29 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
-        public void KullanimSheetleri_DortAile_Bagli()
+        public void KullanimSheetleri_VfxSozlesmesi_V3Aileleri()
         {
+            // Every sheet the library still carries follows the VFX import contract (cap read from ArtVfxContract /
+            // ADR-015-1, never pinned here): T_*_Sheet.png, alpha kept as coverage, never streamed, sRGB. The retired
+            // Kagura / Ofuda sheets leave with S-07's WP-073 B6; the Raiju / Namekuji sheets bind to the v3 families below.
             SpecialWeaponVisualLibrary lib = Library;
-            foreach (string usage in new[] { "sw_kagura_wave", "sw_ofuda_dart", "sw_ofuda_collapse", "sw_ofuda_web" })
+            foreach (SpecialWeaponVisualLibrary.Sheet s in lib.sheets)
             {
-                SpecialWeaponVisualLibrary.Sheet s = lib.FindSheet(usage);
-                Assert.IsNotNull(s, usage + " sheet'i yok.");
-                Assert.IsNotNull(s.texture, usage + " dokusu bağlı değil.");
+                Assert.IsNotNull(s.texture, s.usage + " dokusu bağlı değil.");
                 Assert.Greater(s.columns * s.rows, 0);
-
-                // Import contract Sheet role (WP-037): T_*_Sheet.png, Vfx class — ADR-015-1 v3 (WP-074 B2) cap 2048 (the 1K sheets stay 1K), alpha kept as coverage, never streamed.
                 string path = UnityEditor.AssetDatabase.GetAssetPath(s.texture);
-                StringAssert.EndsWith("_Sheet.png", path, usage + " sheet adı sözleşme dışı.");
+                StringAssert.EndsWith("_Sheet.png", path, s.usage + " sheet adı sözleşme dışı.");
                 var importer = UnityEditor.AssetImporter.GetAtPath(path) as UnityEditor.TextureImporter;
                 Assert.IsNotNull(importer, path);
-                Assert.AreEqual(2048, importer.maxTextureSize, path + " Vfx sınıfı 2048 (ADR-015-1 v3).");
+                int cap = DD.Art.Pipeline.EditorTools.ArtVfxContract.IsVfxTexture(path)
+                    ? DD.Art.Pipeline.EditorTools.ArtVfxContract.MaxSizeOf(path)
+                    : DD.Art.Pipeline.EditorTools.ArtImportContract.MaxTextureSizeOf(path);
+                Assert.AreEqual(cap, importer.maxTextureSize, path + " sözleşme tavanı.");
                 Assert.AreEqual(UnityEditor.TextureImporterAlphaSource.FromInput, importer.alphaSource, path + " alfa (kaplama) korunur.");
                 Assert.IsTrue(importer.alphaIsTransparency, path + " alfa saydamlık.");
                 Assert.IsFalse(importer.streamingMipmaps, path + " efekt dokusu stream edilmez.");
                 Assert.IsTrue(importer.sRGBTexture, path + " renk (sRGB).");
             }
-
-            SpecialWeaponVisualLibrary.Sheet ring = lib.FindSheet("sw_kagura_wave");
-            Assert.AreEqual(1024, ring.texture.width);
-            Assert.AreEqual(16, ring.columns * ring.rows, "Kagura ring 4×4.");
-            Assert.AreEqual(1.0f, ring.durationSeconds, 1e-4f);
 
             // WP-069 B4: the runtime table names the v3 families (S-07's sw_arc / sw_gel sheets bind to these); the AP-014
             // sheets above stay in the library until S-07 retires them.

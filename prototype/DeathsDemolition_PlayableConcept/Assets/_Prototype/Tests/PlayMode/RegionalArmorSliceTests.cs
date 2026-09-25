@@ -15,8 +15,8 @@ using DD.Prototype.Weapons;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.Profiling;
 using UnityEngine.TestTools;
+using UnityEngine.TestTools.Constraints;   // WP-051C: Is.Not.AllocatingGCMemory() extension
 using BodyRegion = DD.Prototype.Damage.BodyRegion;
 
 namespace DD.Prototype.Tests.PlayMode
@@ -345,6 +345,9 @@ namespace DD.Prototype.Tests.PlayMode
 
         // ============================================================== [#27] L21 + [#21] L22 + [#25]
 
+        /// <summary>ZombieAnimator.DrivenDeathFallbackSeconds (private, S-03): the longest a death clip / ragdoll holds a corpse before its countdown starts.</summary>
+        private const float DeathClipCeilingSeconds = 4.5f;
+
         [UnityTest]
         [Category("WP006")]
         [Timeout(300000)]
@@ -376,8 +379,9 @@ namespace DD.Prototype.Tests.PlayMode
 
             // [#25] pause: zırh/can/yaşam durumu donar. Pozitif kontrol: aynı anda bir ceset pause altında 1.2 s gerçek
             // zaman boyunca sahnede kalır; pause kalkınca geri sayım koşar ve ceset havuza döner — donma gerçekten
-            // simülasyonu durdurmasaydı ceset pause içinde kaybolurdu. WP-054 / WP-076 v2: geri sayım artık kademe ×
-            // kalite × titreşimle birkaç saniye (LastCorpseLinger) — bekleme onun üstüne ölüm klibi payı.
+            // simülasyonu durdurmasaydı ceset pause içinde kaybolurdu. DEC-096 / WP-076 v2 (S-03 bulgusu): geri sayım ölüm
+            // klibi / ragdoll bittikten sonra başlar (sürülen gövde yedeği ≤ 4,5 s) ve kademe × kalite × titreşim kadar sürer
+            // (LastCorpseLinger) — bekleme ikisinin toplamı + 1,5 s pay, her kademede.
             z.FitArmorComposition(true, false, true);
             Vur(z, BodyRegion.Head, 5f);
             float kask = z.Armor.Current(ArmorSlot.Helmet);
@@ -407,7 +411,8 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.Greater(donmusKare, 10, "Pause penceresinde yeterli kare gözlenmedi.");
             RunFlowClock.RemoveHold(RunFlowClock.PauseHold);
             yield return null;
-            yield return Bekle(() => !ceset.IsSpawned, ceset.LastCorpseLinger + 3f, "Pause kalktıktan sonra ceset geri sayımı koşmadı (pozitif kontrol; linger " + ceset.LastCorpseLinger.ToString("0.0") + " s).");
+            yield return Bekle(() => !ceset.IsSpawned, DeathClipCeilingSeconds + ceset.LastCorpseLinger + 1.5f,
+                "Pause kalktıktan sonra ceset geri sayımı koşmadı (pozitif kontrol; linger " + ceset.LastCorpseLinger.ToString("0.0") + " s).");
             Debug.Log("[DD-TEST] wp006.pause frozenFrames=" + donmusKare + " corpseDespawnedAfterResume=" + !ceset.IsSpawned);
 
             // [#21] havuza dön → ikinci yaşam: eski zırh/kırık/geçiş durumu yok.
@@ -754,70 +759,88 @@ namespace DD.Prototype.Tests.PlayMode
                 z.Armor.Equip(ArmorSlot.Leg, 100000f);
             }
 
-            // Isınma: ilk vuruşlar tek seferlik önbellekleri (resolver, liste kapasiteleri, sayaç sözlükleri) doldurur;
-            // sayaç ısınmadan önce açılır ki pencere içinde kendi listesi/sözlüğü büyümesin.
-            var sayac = new OlaySayaci(2048);
-            for (int i = 0; i < 20; i++)
+            // Isınma (WP-069): üç tam pencere, üç karede. Tek karelik ısınma ölçülen pencereye iki şey bırakıyordu:
+            // kare başına dolan geri bildirim bütçesinin ilk kez açtığı dallar (editörde Mono JIT ilk çağrıda derler;
+            // IL2CPP'de yok) ve 20 vuruşun görmediği patlama dalları. Sayaç ısınmadan önce açılır, kapasitesi tüm
+            // koşuyu taşır ki kendi listesi pencere içinde büyümesin.
+            var sayac = new OlaySayaci(8192);
+            for (int w = 0; w < 3; w++)
             {
-                Vur(zombiler[i % 4], BodyRegion.UpperBody, 1f);
-                HitscanEngine.Explode(merkez + Vector3.up * 0.9f, 1f, 3f);
+                Pencere(zombiler, merkez);
+                yield return null;
             }
-            yield return null;
 
-            // Ölçüm yöntemi (WP-005 §35 + test-06 T06-02): iki sayaç birlikte okunur — GC.GetTotalMemory(false)
-            // ve Profiler.GetMonoUsedSizeLong(). İki pozitif kontrol kalibre eder: A = tek 64 KB blok (büyük nesne
-            // sınıfı), B = 300 küçük nesne (~96 B; vuruş başına kaçak ayırmanın sınıfı). B'yi gören sayaç "küçük
-            // ayırmaya duyarlı" sayılır ve pencere onunla değerlendirilir; hiçbiri görmüyorsa yalnız büyük sınıf
-            // kanıtlanır ve sonuç gözlem sınıfında loglanır (kanıt boşluğu gizlenmez).
+            // Ölçüm (WP-051C): bu iş parçacığının GC.Alloc kaydedicisi — pencere 0 örnek. Pozitif kontrol kaydedicinin
+            // küçük bir ayırmayı gördüğünü kanıtlar; beş pencere beş karede koşar (bütçe her karede yeniden dolar).
             using (sayac)
             {
-                long a0 = GC.GetTotalMemory(false); long m0 = Profiler.GetMonoUsedSizeLong();
-                var yemA = new byte[64 * 1024];
-                long kontrolA_gc = GC.GetTotalMemory(false) - a0; long kontrolA_mono = Profiler.GetMonoUsedSizeLong() - m0;
+                object yem = null;
+                Assert.That(() => { yem = new object[8]; }, UnityEngine.TestTools.Constraints.Is.AllocatingGCMemory(), "pozitif kontrol: kayıtçı ayırmayı görmeli");
+                Assert.IsNotNull(yem);
 
-                long b0 = GC.GetTotalMemory(false); long n0 = Profiler.GetMonoUsedSizeLong();
-                var yemB = new object[300];
-                for (int i = 0; i < yemB.Length; i++) yemB[i] = new byte[80];
-                long kontrolB_gc = GC.GetTotalMemory(false) - b0; long kontrolB_mono = Profiler.GetMonoUsedSizeLong() - n0;
-                bool kucukDuyarliGc = kontrolB_gc > 0, kucukDuyarliMono = kontrolB_mono > 0;
-                Assert.Greater(kontrolA_gc + kontrolA_mono, 0, "Hiçbir sayaç 64 KB bloğu görmedi — ölçüm geçersiz (yem " + yemA.Length + "/" + yemB.Length + ").");
-
-                long gen0Once = GC.CollectionCount(0);
-                long gOnce = GC.GetTotalMemory(false); long mOnce = Profiler.GetMonoUsedSizeLong();
-                int olayOnce = sayac.Damaged.Count;
-                for (int i = 0; i < 300; i++)
+                for (int w = 0; w < 5; w++)
                 {
-                    ZombieEnemy z = zombiler[i % 4];
-                    Vur(z, (BodyRegion)(i % 3), 1f);
-                }
-                for (int i = 0; i < 30; i++)
-                {
-                    HitscanEngine.Explode(merkez + Vector3.up * 0.9f, 1f, 3f);
-                }
-                long farkGc = GC.GetTotalMemory(false) - gOnce; long farkMono = Profiler.GetMonoUsedSizeLong() - mOnce;
-                long gen0 = GC.CollectionCount(0) - gen0Once;
-                int olaylar = sayac.Damaged.Count - olayOnce;
-
-                // Pencere gerçekten koştu: 300 doğrudan + 30 patlama × 4 beden = 420 hasar olayı.
-                Assert.AreEqual(300 + 30 * 4, olaylar, "Ölçüm penceresinde beklenen hasar olayı sayısı üretilmedi (pencere boş koşmuş olabilir).");
-
-                string sinif = kucukDuyarliMono ? "mono-kucuk-duyarli" : kucukDuyarliGc ? "gc-kucuk-duyarli" : "yalniz-buyuk-sinif-GOZLEM";
-                Debug.Log("[DD-OBS] wp006.alloc controlA(64KB) gc=" + kontrolA_gc + " mono=" + kontrolA_mono + " B; controlB(300x80B) gc=" + kontrolB_gc + " mono=" + kontrolB_mono +
-                          " B; window(300 direct + 30 explode, " + olaylar + " events) gc=" + farkGc + " mono=" + farkMono + " B gen0=" + gen0 + " class=" + sinif +
-                          " dup=" + ZombieEnemy.DuplicateApplicationCount);
-
-                if (kucukDuyarliMono)
-                {
-                    Assert.LessOrEqual(farkMono, 4 * 1024, "Vuruş/patlama yolu küçük nesne ayırdı (mono " + farkMono + " B / " + olaylar + " olay).");
+                    int olayOnce = sayac.Damaged.Count;
+                    Assert.That(() => Pencere(zombiler, merkez), UnityEngine.TestTools.Constraints.Is.Not.AllocatingGCMemory(),
+                        "Vuruş/patlama yolu ayırdı (pencere " + w + ": 300 doğrudan + 30 patlama; bu iş parçacığında GC.Alloc örneği).");
+                    // Pencere gerçekten koştu: 300 doğrudan + 30 patlama × 4 beden = 420 hasar olayı.
+                    Assert.AreEqual(300 + 30 * 4, sayac.Damaged.Count - olayOnce, "Pencere " + w + " beklenen hasar olayı sayısını üretmedi (boş koşmuş olabilir).");
+                    yield return null;
                 }
 
-                if (kucukDuyarliGc)
+                // İşaret halkası (WP-069): isabet noktası test zemininde çoğu zaman kameranın önünde değil (işaret çıkmaz),
+                // bu yüzden halkanın 12 yuvası kameranın önünde birer kez, her seferinde önceki işaret söndükten sonra açılır;
+                // her açılış 0 örnek ve görünür (boş ölçüm geçmez). Ön ısıtma olmadan her yuvanın ilk açılışı uGUI tuval
+                // kümesini büyütüyordu.
+                HitMarkerLayer isaretler = UnityEngine.Object.FindObjectOfType<HitMarkerLayer>();
+                Camera kamera = FeedbackCameraRef.Current;
+                Assert.IsNotNull(isaretler, "HitMarkerLayer yok — işaret ölçümü koşamaz.");
+                Assert.IsNotNull(kamera, "Geri bildirim kamerası yok — işaret ölçümü koşamaz.");
+                for (int p = 0; p < 12; p++)
                 {
-                    Assert.LessOrEqual(farkGc, 4 * 1024, "Vuruş/patlama yolu küçük nesne ayırdı (gc " + farkGc + " B / " + olaylar + " olay).");
+                    yield return Duraklat(0.25f);
+                    Assert.AreEqual(0, AktifIsaret(isaretler), "Önceki işaret sönmedi (ömür 0,17 sn).");
+                    Vector3 onde = kamera.transform.position + kamera.transform.forward * 4f;
+                    Assert.That(() => { isaretler.Show(onde, HitFeedbackTier.FleshHit); }, UnityEngine.TestTools.Constraints.Is.Not.AllocatingGCMemory(),
+                        "İşaret yuvası " + p + " ilk açılışta ayırdı (uGUI tuval kümesi büyümesi).");
+                    Assert.AreEqual(1, AktifIsaret(isaretler), "İşaret görünmedi — ölçüm boş koştu (yuva " + p + ").");
                 }
 
-                Assert.LessOrEqual(farkGc, 16 * 1024, "Vuruş/patlama yolu yığını büyüttü (" + farkGc + " B / " + olaylar + " olay).");
-                Assert.AreEqual(0, gen0, "Ölçüm penceresinde gen0 GC koştu (ayırma baskısı).");
+                Debug.Log("[DD-OBS] wp006.alloc thread-recorder windows=5x(300 direct + 30 explode) markerSlots=12 events=" + sayac.Damaged.Count + " dup=" + ZombieEnemy.DuplicateApplicationCount);
+            }
+        }
+
+        private static IEnumerator Duraklat(float saniye)
+        {
+            float t0 = Time.realtimeSinceStartup;
+            while (Time.realtimeSinceStartup - t0 < saniye)
+            {
+                yield return null;
+            }
+        }
+
+        private static int AktifIsaret(HitMarkerLayer katman)
+        {
+            int n = 0;
+            for (int i = 0; i < katman.transform.childCount; i++)
+            {
+                Transform c = katman.transform.GetChild(i);
+                if (c.name == "HitMarker" && c.gameObject.activeSelf) n++;
+            }
+
+            return n;
+        }
+
+        private static void Pencere(List<ZombieEnemy> zombiler, Vector3 merkez)
+        {
+            for (int i = 0; i < 300; i++)
+            {
+                Vur(zombiler[i % 4], (BodyRegion)(i % 3), 1f);
+            }
+
+            for (int i = 0; i < 30; i++)
+            {
+                HitscanEngine.Explode(merkez + Vector3.up * 0.9f, 1f, 3f);
             }
         }
 

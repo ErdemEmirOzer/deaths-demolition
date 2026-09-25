@@ -66,6 +66,18 @@ namespace DD.Prototype.Feedback
         {
             BuildCanvas();
             BuildMarkers();
+            PrewarmRegistry();
+        }
+
+        /// <summary>
+        /// WP-069 (hit path 0 B): every marker shown and hidden once at load. uGUI registers a stroke with the canvas's
+        /// graphic set on its first enable (a disable keeps it there), so without this the set's list / dictionary grew
+        /// during play, the first time each ring slot showed — a lazy allocation on the hit path.
+        /// </summary>
+        private void PrewarmRegistry()
+        {
+            for (int i = 0; i < _markers.Length; i++) _markers[i].Root.gameObject.SetActive(true);
+            for (int i = 0; i < _markers.Length; i++) _markers[i].Root.gameObject.SetActive(false);
         }
 
         private void BuildCanvas()
