@@ -718,6 +718,76 @@ namespace DD.Prototype.UI
             return n;
         }
 
+        // ---- WP-068 12b · the status stamps' clear path (AD 8c new for 12b, AD R1-B SHOULD-4)
+
+        /// <summary>The player figure's height and half width, metres: the capsule as the camera sees it, cap and hair included.</summary>
+        public const float FigureHeight = 1.9f;
+        public const float FigureHalfWidth = 0.45f;
+        private static readonly Vector3[] s_figure = new Vector3[4];
+
+        /// <summary>
+        /// The rects a status stamp keeps clear of, in canvas px (centre origin): the ink clusters (live rects, the weapon
+        /// cluster in its mode's place) and the Special block while it shows. The banner is not one of them: the stamps sort
+        /// under it. UiEnemyStatusMarkers reads it once a frame, only while a stamp is placed.
+        /// </summary>
+        public int StatusStampAvoidRects(Rect[] into)
+        {
+            int n = 0;
+            for (int i = 0; i < _clusters.Count && n < into.Length; i++)
+            {
+                into[n++] = CanvasRectOf(_clusters[i]);
+            }
+
+            if (_specialBlock != null && _specialBlock.activeInHierarchy && n < into.Length)
+            {
+                into[n++] = CanvasRectOf((RectTransform)_specialBlock.transform);
+            }
+
+            return n;
+        }
+
+        /// <summary>
+        /// The player figure on the canvas (px, centre origin): the box round the feet and the head, each ± the figure's half
+        /// width along the camera's right. False in first person (no figure on screen) or without a player or camera.
+        /// </summary>
+        public bool PlayerFigureRect(out Rect figure)
+        {
+            figure = default(Rect);
+            DD.Prototype.PlayerSystem.PlayerRig rig = DD.Prototype.PlayerSystem.PlayerRegistry.Primary;
+            Camera camera = Camera.main;
+            if (rig == null || camera == null || DD.Prototype.CameraSystem.CameraModeService.Current == DD.Prototype.CameraSystem.CameraMode.FirstPerson)
+            {
+                return false;
+            }
+
+            Vector3 feet = rig.transform.position;
+            Vector3 side = camera.transform.right * FigureHalfWidth;
+            Vector3 head = feet + Vector3.up * FigureHeight;
+            s_figure[0] = feet - side;
+            s_figure[1] = feet + side;
+            s_figure[2] = head - side;
+            s_figure[3] = head + side;
+            Vector2 size = ScreenRect.rect.size;
+            float xMin = float.MaxValue, yMin = float.MaxValue, xMax = float.MinValue, yMax = float.MinValue;
+            for (int i = 0; i < s_figure.Length; i++)
+            {
+                Vector3 v = camera.WorldToViewportPoint(s_figure[i]);
+                if (v.z <= 0f)
+                {
+                    return false;
+                }
+
+                float x = (v.x - 0.5f) * size.x, y = (v.y - 0.5f) * size.y;
+                xMin = Mathf.Min(xMin, x);
+                xMax = Mathf.Max(xMax, x);
+                yMin = Mathf.Min(yMin, y);
+                yMax = Mathf.Max(yMax, y);
+            }
+
+            figure = Rect.MinMaxRect(xMin, yMin, xMax, yMax);
+            return true;
+        }
+
         /// <summary>The marker-avoid rects in canvas px (test readout: the sweep checks the marker never meets one).</summary>
         public int MarkerAvoidRects(Rect[] into)
         {

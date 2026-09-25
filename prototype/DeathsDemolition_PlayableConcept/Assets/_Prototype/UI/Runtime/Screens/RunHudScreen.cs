@@ -872,13 +872,19 @@ namespace DD.Prototype.UI
             layer.gameObject.AddComponent<Canvas>();
 
             // WP-022I: enemy status markers (NET / DAZED) share the marker canvas.
+            // WP-068 12b: they keep clear of the ink clusters (AD 8c, new for 12b) and of the player figure (AD R1-B SHOULD-4).
             RectTransform statusHost = UiFactory.NewRect("EnemyStatus", layer);
             UiFactory.Fill(statusHost);
             _enemyStatus = statusHost.gameObject.AddComponent<UiEnemyStatusMarkers>();
-            _enemyStatus.Configure(ScreenRect);
+            _enemyStatus.Configure(ScreenRect, StatusStampAvoidRects, PlayerFigureRect);
 
             // E14 / E21: the AP-010 diamond in view (56 → 40 px with distance), the EdgeMarker at the edge.
             _worldMarker = new UiWorldMarker(layer);
+
+            // WP-068 12b (AD R1-B SHOULD-4): the stamps sort under the banner. SHOCK was drawn over "SPECIAL WEAPON ON THE
+            // FIELD" because the marker canvas came after the banner; the banner now follows it (the reticle layer and the
+            // threat chips are built after, so they stay on top).
+            _banner.Root.SetAsLastSibling();
         }
 
         /// <summary>The Special's world marker (test readout).</summary>

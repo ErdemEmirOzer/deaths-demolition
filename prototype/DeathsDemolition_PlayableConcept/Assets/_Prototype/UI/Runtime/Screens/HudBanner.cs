@@ -46,6 +46,12 @@ namespace DD.Prototype.UI
             get { return _text; }
         }
 
+        /// <summary>The banner's root (WP-068 12b, AD R1-B SHOULD-4: the HUD sorts it above the world-bound stamps).</summary>
+        public RectTransform Root
+        {
+            get { return _root; }
+        }
+
         public RectTransform Clip
         {
             get { return _clip; }

@@ -33,6 +33,10 @@ namespace DD.Prototype.UI
     /// only when a marker's state changes, and an unused chip is parked off-screen rather
     /// than SetActive-toggled (the WP-022 reticle lesson - no canvas rebuild), at group alpha 0
     /// so it is not drawn either (HUD budget: a group at alpha 0 costs no draw, PilotPerfProbe 04h).
+    ///
+    /// WP-068 12b · where a stamp may stand (<see cref="Resolve"/>): never on an ink cluster (AD 8c "new for 12b") and never on
+    /// the player's figure (AD R1-B SHOULD-4). The HUD hands both in through <see cref="Configure"/>, read once a frame and
+    /// only while a chip is placed; the stamps' layer sorts under the banner (the HUD's order).
     /// </summary>
     public sealed class UiEnemyStatusMarkers : MonoBehaviour
     {
@@ -61,12 +65,38 @@ namespace DD.Prototype.UI
         private RectTransform _canvas;
         private float _exitSeconds;
 
+        /// <summary>WP-068 12b: fills <paramref name="into"/> with the rects a stamp keeps clear of (canvas px, centre origin); returns the count.</summary>
+        public delegate int AvoidRects(Rect[] into);
+
+        /// <summary>WP-068 12b: the player figure's rect on the canvas (px, centre origin); false when no figure is on screen.</summary>
+        public delegate bool FigureRect(out Rect figure);
+
+        /// <summary>AD 8c (new for 12b): a stamp keeps this far from an ink cluster - the edge marker's clearance.</summary>
+        public const float ClusterClearance = UiWorldMarker.ClusterClearance;
+
+        /// <summary>AD R1-B SHOULD-4: a stamp that comes this close to the player figure lifts to the band above it.</summary>
+        public const float FigureClearance = 24f;
+
+        private const int ResolvePasses = 8;
+        private AvoidRects _avoidSource;
+        private FigureRect _figureSource;
+        private readonly Rect[] _avoid = new Rect[8];
+        private int _avoidCount;
+        private bool _hasFigure;
+        private Rect _figure;
+        private int _clearanceFrame = -1;
+
         /// <summary>Markers bound to a body in the last update (test readout; a fading chip no longer counts).</summary>
         public int VisibleCount { get; private set; }
 
-        public void Configure(RectTransform canvasRect)
+        /// <param name="canvasRect">The HUD canvas the chips' positions are measured on (centre origin).</param>
+        /// <param name="avoid">WP-068 12b: the HUD's ink clusters (null: none).</param>
+        /// <param name="figure">WP-068 12b: the player figure as the camera sees it (null: none).</param>
+        public void Configure(RectTransform canvasRect, AvoidRects avoid = null, FigureRect figure = null)
         {
             _canvas = canvasRect;
+            _avoidSource = avoid;
+            _figureSource = figure;
             _chips = new RectTransform[PoolSize];
             _groups = new CanvasGroup[PoolSize];
             _glyphs = new Image[PoolSize];
@@ -186,7 +216,7 @@ namespace DD.Prototype.UI
                 Vector2 at;
                 if (state != State.None && Project(camera, z, canvasSize, out at))
                 {
-                    _chips[i].anchoredPosition = at;
+                    _chips[i].anchoredPosition = Clear(at, i);
                     ReportAvoid(z, _chips[i]);
                     if (state != _shown[i])
                     {
@@ -229,7 +259,7 @@ namespace DD.Prototype.UI
                     _owner[slot] = z;
                     _owned[slot] = true;
                     _leftAt[slot] = -1f;
-                    _chips[slot].anchoredPosition = at;
+                    _chips[slot].anchoredPosition = Clear(at, slot);
                     ReportAvoid(z, _chips[slot]);
                     Style(slot, state);
                     UiMotion.KillTarget(_groups[slot], false);
@@ -252,6 +282,74 @@ namespace DD.Prototype.UI
             chip.GetWorldCorners(s_corners);
             UiWorldNumbers.ReportAvoidRect(z.GetInstanceID(),
                 Rect.MinMaxRect(s_corners[0].x, s_corners[0].y, s_corners[2].x, s_corners[2].y));
+        }
+
+        /// <summary>The chip's place past the clusters and the figure; the HUD's rects are read once a frame, on the first chip placed.</summary>
+        private Vector2 Clear(Vector2 at, int i)
+        {
+            if (_avoidSource == null && _figureSource == null)
+            {
+                return at;
+            }
+
+            if (_clearanceFrame != Time.frameCount)
+            {
+                _clearanceFrame = Time.frameCount;
+                _avoidCount = _avoidSource != null ? Mathf.Min(_avoidSource(_avoid), _avoid.Length) : 0;
+                _hasFigure = _figureSource != null && _figureSource(out _figure);
+            }
+
+            return Resolve(at, _chips[i].sizeDelta, _avoid, _avoidCount, _hasFigure, _figure);
+        }
+
+        /// <summary>
+        /// WP-068 12b · where a stamp stands, in canvas px with the origin at the centre. <paramref name="at"/> is the head point
+        /// the chip rises from (its pivot is the bottom centre), <paramref name="chipSize"/> its size. x never changes: the stamp
+        /// stays over its body's column (the E19 projection rule). Only y resolves:
+        /// - AD R1-B SHOULD-4: a chip that meets the player figure + <see cref="FigureClearance"/> lifts to the band above it.
+        ///   Nothing is drawn on the player model (the 8-R slot map), and the pooled crowd follows the same rule.
+        /// - AD 8c (new for 12b): a chip that meets an ink cluster + <see cref="ClusterClearance"/> (the edge marker's
+        ///   AvoidOnEdge clearance) leaves it toward the middle of the screen: above a cluster in the lower half, below one in
+        ///   the upper half.
+        /// Up to 8 passes, so a chip moved off one rect checks the others again (first person: off the health block, then off
+        /// the weapon cluster above it). Allocation-free; public for the sweep test.
+        /// </summary>
+        public static Vector2 Resolve(Vector2 at, Vector2 chipSize, Rect[] clusters, int count, bool hasFigure, Rect figure)
+        {
+            float half = chipSize.x * 0.5f;
+            for (int pass = 0; pass < ResolvePasses; pass++)
+            {
+                bool moved = false;
+                if (hasFigure && new Rect(at.x - half, at.y, chipSize.x, chipSize.y).Overlaps(Grown(figure, FigureClearance)))
+                {
+                    at.y = figure.yMax + FigureClearance;
+                    moved = true;
+                }
+
+                for (int i = 0; i < count; i++)
+                {
+                    Rect clear = Grown(clusters[i], ClusterClearance);
+                    if (!new Rect(at.x - half, at.y, chipSize.x, chipSize.y).Overlaps(clear))
+                    {
+                        continue;
+                    }
+
+                    at.y = clear.center.y < 0f ? clear.yMax : clear.yMin - chipSize.y;
+                    moved = true;
+                }
+
+                if (!moved)
+                {
+                    break;
+                }
+            }
+
+            return at;
+        }
+
+        private static Rect Grown(Rect r, float by)
+        {
+            return Rect.MinMaxRect(r.xMin - by, r.yMin - by, r.xMax + by, r.yMax + by);
         }
 
         private static State StateOf(ZombieEnemy z)
