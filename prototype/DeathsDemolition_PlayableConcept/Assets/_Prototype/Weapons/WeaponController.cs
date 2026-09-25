@@ -1161,6 +1161,88 @@ namespace DD.Prototype.Weapons
         /// <summary>WP-042B readout: which model the classic rig carries (tests / probe).</summary>
         public ClassicModelKind ClassicModelSource { get; private set; }
 
+        // ------------------------------------------------------------------ WP-069 T3 · the FP weapon at LOD0
+
+        private readonly ViewmodelLodPin _classicLodPin = new ViewmodelLodPin();
+        private readonly ViewmodelLodPin _specialLodPin = new ViewmodelLodPin();
+
+        /// <summary>WP-069 T3 readout: the classic rig's LODGroup is pinned to LOD0 (its weapon is on the FirstPersonView layer).</summary>
+        public bool ClassicViewmodelLodPinned => _classicLodPin.Pinned;
+
+        /// <summary>WP-069 T3 readout: the same for the Special rig.</summary>
+        public bool SpecialViewmodelLodPinned => _specialLodPin.Pinned;
+
+        private void LateUpdate()
+        {
+            _classicLodPin.Tick(_classicRig);
+            _specialLodPin.Tick(_specialRig);
+        }
+
+        /// <summary>
+        /// WP-069 T3 (S-01 WP-070V finding: the FP view drew AP013_A_rifle_LOD2). While a rig's weapon sits on the
+        /// <see cref="CameraLayers.FirstPersonView"/> layer — the camera rig's FP presentation, blend edges included — its
+        /// LODGroup is pinned to LOD0 with no cross-fade (the builders' animated CrossFade otherwise dithers the view model
+        /// through the switch); off that layer the distance pick and the group's own fade come back. Per frame, no
+        /// allocation; a model swap (equip, Special) destroys the old group and the next frame reads the new one.
+        /// </summary>
+        private sealed class ViewmodelLodPin
+        {
+            private LODGroup _group;
+            private Renderer _probe;
+            private bool _pinned;
+            private LODFadeMode _fadeMode;
+            private bool _animateFade;
+
+            public bool Pinned => _pinned && _group != null;
+
+            public void Tick(WeaponVisualRig rig)
+            {
+                if (rig == null)
+                {
+                    return;
+                }
+
+                if (_group == null || _probe == null || !_probe.gameObject.activeInHierarchy)
+                {
+                    if (_group != null && _pinned) Release();   // a hidden group is not left pinned
+                    _group = rig.GetComponentInChildren<LODGroup>(false);
+                    _probe = _group != null ? _group.GetComponentInChildren<Renderer>(false) : null;
+                    _pinned = false;
+                    if (_probe == null)
+                    {
+                        return;
+                    }
+                }
+
+                bool firstPerson = _probe.gameObject.layer == CameraLayers.FirstPersonView;
+                if (firstPerson == _pinned)
+                {
+                    return;
+                }
+
+                if (firstPerson)
+                {
+                    _fadeMode = _group.fadeMode;
+                    _animateFade = _group.animateCrossFading;
+                    _group.fadeMode = LODFadeMode.None;
+                    _group.ForceLOD(0);
+                }
+                else
+                {
+                    Release();
+                }
+
+                _pinned = firstPerson;
+            }
+
+            private void Release()
+            {
+                _group.ForceLOD(-1);
+                _group.fadeMode = _fadeMode;
+                _group.animateCrossFading = _animateFade;
+            }
+        }
+
         // ------------------------------------------------------------------ WP-042 · mechanism slots
 
         /// <summary>Timer fallback for the slots (casing after the pump, reload marks by progress, pickup hand-off timeout).</summary>

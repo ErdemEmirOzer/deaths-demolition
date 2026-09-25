@@ -40,6 +40,7 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             RunFlowClock.ClearHolds();
+            DD.Prototype.CameraSystem.CameraModeService.ResetForTests();   // WP-069 T3 switches to FP
             if (SceneManager.GetActiveScene().name != PrototypeScenes.MainMenu)
             {
                 PrototypeUiFlow.GoToMainMenu();
@@ -63,6 +64,149 @@ namespace DD.Prototype.Tests.PlayMode
                 Directory.CreateDirectory(dir);
                 return dir;
             }
+        }
+
+        /// <summary>
+        /// WP-069 T3 (S-01 WP-070V finding: the FP view drew AP013_A_rifle_LOD2). In FP the weapon in hand — classic A
+        /// (the finding), ar_2 (AP-021 merged group) and the Special — is pinned to LOD0 while it sits on the
+        /// FirstPersonView layer, and released when the mode leaves FP. Pixel proof on the viewmodel layer alone (the
+        /// viewmodel camera's pose and projection): the frame as drawn equals the LOD0 frame and differs from the LOD2
+        /// frame; each weapon also writes a 1920×1080 FP close-up as evidence.
+        /// </summary>
+        [UnityTest]
+        [Timeout(180000)]
+        public IEnumerator FP_SilahLod0_KlasikVeSpecial_ModDegisinceSerbest()
+        {
+            yield return Kur();
+            var binding = _s.Rig.GetComponentInChildren<PlayerWeaponBinding>();
+            Assert.IsNotNull(binding);
+            Transform mount = binding.WeaponMount;
+            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.FirstPerson, instant: true);
+            yield return SpecialWeaponSahne.Kareler(60);
+            var camRig = DD.Prototype.CameraSystem.PrototypeCameraRig.Active;
+            Assert.IsNotNull(camRig, "kamera rig'i yok");
+            Camera vm = camRig.ViewmodelCamera;
+            Assert.IsNotNull(vm, "FP'de görüntü modeli kamerası yok.");
+            camRig.Camera.aspect = KareW / (float)KareH;
+            vm.aspect = KareW / (float)KareH;
+
+            var report = new List<string>();
+            int classics = 0;
+            foreach (ClassicWeaponDefinition d in WeaponRoster.Enabled)
+            {
+                if (d.RosterKey != "A" && d.RosterKey != "ar_2") continue;
+                _s.Controller.EquipClassic(d.Id, _s.Config);
+                yield return SpecialWeaponSahne.Kareler(15);
+                LODGroup g = mount.Find("ClassicWeaponRig").GetComponentInChildren<LODGroup>();
+                Assert.IsNotNull(g, d.RosterKey + ": LODGroup yok.");
+                Assert.IsTrue(_s.Controller.ClassicViewmodelLodPinned, d.RosterKey + ": FP'de LOD0'a sabitlenmedi.");
+                report.Add(d.RosterKey + " " + LodKaniti(vm, g, "classic-" + d.RosterKey));
+                classics++;
+            }
+
+            Assert.AreEqual(2, classics, "A ve ar_2 ölçülmedi.");
+            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.TopDown, instant: true);
+            yield return SpecialWeaponSahne.Kareler(10);
+            Assert.IsFalse(_s.Controller.ClassicViewmodelLodPinned, "FP'den çıkınca klasik silahın LOD sabitlemesi kalkmadı.");
+
+            // The Special: picked up top-down (the kit's walk), then FP again, then TP releases it.
+            yield return _s.SpawnEt(0.5f);
+            SpecialWeaponPickup pickup = _s.CanliPickup();
+            Assert.IsNotNull(pickup, "Special pickup yok.");
+            _s.PickupaGit(pickup);
+            yield return SpecialWeaponSahne.Bekle(() => _s.Controller.SpecialWeaponActive, SpecialWeaponSahne.FazZamanAsimi, "Special aktif olmadı.");
+            yield return SpecialWeaponSahne.Bekle(() => !_s.Controller.PickupDonePending, 1.5f, "pickup_done / yedek");
+            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.FirstPerson, instant: true);
+            yield return SpecialWeaponSahne.Kareler(15);
+            Assert.IsTrue(_s.Controller.SpecialRigVisible, "Special rig görünmüyor.");
+            LODGroup sg = _s.Controller.SpecialRigBody.GetComponentInChildren<LODGroup>();
+            Assert.IsNotNull(sg, "Special modelinde LODGroup yok.");
+            Assert.IsTrue(_s.Controller.SpecialViewmodelLodPinned, "FP'de Special LOD0'a sabitlenmedi.");
+            report.Add(pickup.WeaponId + " " + LodKaniti(vm, sg, "special-" + pickup.WeaponId));
+            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.ThirdPerson, instant: true);
+            yield return SpecialWeaponSahne.Kareler(10);
+            Assert.IsFalse(_s.Controller.SpecialViewmodelLodPinned, "FP'den çıkınca Special'ın LOD sabitlemesi kalkmadı.");
+
+            camRig.Camera.ResetAspect();
+            vm.ResetAspect();
+            Debug.Log("[DD-TEST] wp069.t3.fp-lod " + string.Join(" | ", report));
+        }
+
+        private const int KareW = 1920, KareH = 1080;
+
+        /// <summary>
+        /// The group as pinned vs forced LOD0 / LOD(last): silhouettes on the viewmodel layer (coverage over a magenta
+        /// key — the lit colour carries per-render shading noise, the outline does not). The repeat render of the
+        /// same state is the noise floor; a PNG of the drawn frame is the evidence.
+        /// </summary>
+        private static string LodKaniti(Camera vm, LODGroup g, string ad)
+        {
+            int last = g.lodCount - 1;
+            Assert.Greater(last, 0, ad + ": tek LOD — ölçüm anlamsız.");
+            VmKare(vm, null);   // warm-up: the probe's first render
+            bool[] cizilen = Kapsama(VmKare(vm, ad + "-fp-1080p"));
+            bool[] tekrar = Kapsama(VmKare(vm, null));
+            g.ForceLOD(0);
+            bool[] lod0 = Kapsama(VmKare(vm, null));
+            g.ForceLOD(last);
+            bool[] lodSon = Kapsama(VmKare(vm, null));
+            g.ForceLOD(0);   // back to the pin's state (FP)
+            int kapli = 0;
+            for (int i = 0; i < cizilen.Length; i++) if (cizilen[i]) kapli++;
+            int taban = Fark(cizilen, tekrar), farkLod0 = Fark(cizilen, lod0), farkSon = Fark(lod0, lodSon);
+            int esik = Mathf.Max(50, 2 * taban);
+            Assert.Greater(kapli, 1000, ad + ": görüntü modeli katmanında çizim yok — ölçüm kör.");
+            Assert.Greater(farkSon, 2 * esik, ad + ": LOD0 ile LOD" + last + " silüeti ayrışmıyor (" + farkSon + " px) — pozitif kontrol kör.");
+            Assert.LessOrEqual(farkLod0, esik, ad + ": FP silüeti LOD0 silüeti değil (" + farkLod0 + " px, taban " + taban + ").");
+            return "coveredPx=" + kapli + " silhouette drawn≠LOD0 " + farkLod0 + " px (noise " + taban + "), LOD0≠LOD" + last + " " + farkSon + " px";
+        }
+
+        private static bool[] Kapsama(Color32[] px)
+        {
+            var m = new bool[px.Length];
+            for (int i = 0; i < px.Length; i++) m[i] = px[i].r < 240 || px[i].g > 15 || px[i].b < 240;   // anything but the magenta key
+            return m;
+        }
+
+        private static int Fark(bool[] a, bool[] b)
+        {
+            int n = 0;
+            for (int i = 0; i < a.Length; i++) if (a[i] != b[i]) n++;
+            return n;
+        }
+
+        /// <summary>The FirstPersonView layer alone at 1920×1080 over a magenta key, with the viewmodel camera's pose and projection.</summary>
+        private static Color32[] VmKare(Camera vm, string png)
+        {
+            var target = new RenderTexture(KareW, KareH, 24, RenderTextureFormat.ARGB32);
+            var go = new GameObject("[WP069T3-LodProbe]");
+            go.transform.SetPositionAndRotation(vm.transform.position, vm.transform.rotation);
+            Camera cam = go.AddComponent<Camera>();
+            cam.enabled = false;
+            cam.targetTexture = target;
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = new Color32(255, 0, 255, 255);
+            cam.cullingMask = 1 << DD.Prototype.CameraSystem.CameraLayers.FirstPersonView;
+            cam.nearClipPlane = vm.nearClipPlane;
+            cam.farClipPlane = vm.farClipPlane;
+            cam.fieldOfView = vm.fieldOfView;
+            cam.aspect = KareW / (float)KareH;
+            cam.projectionMatrix = vm.projectionMatrix;
+            cam.Render();
+            RenderTexture previous = RenderTexture.active;
+            RenderTexture.active = target;
+            var read = new Texture2D(KareW, KareH, TextureFormat.RGBA32, false);
+            read.ReadPixels(new Rect(0, 0, KareW, KareH), 0, 0);
+            read.Apply();
+            RenderTexture.active = previous;
+            Color32[] px = read.GetPixels32();
+            if (png != null) File.WriteAllBytes(Path.Combine(EvidenceDir, "wp069-t3-" + png + ".png"), read.EncodeToPNG());
+            Object.Destroy(read);
+            cam.targetTexture = null;
+            Object.Destroy(go);
+            target.Release();
+            Object.Destroy(target);
+            return px;
         }
 
         /// <summary>
