@@ -154,6 +154,46 @@ namespace DD.Prototype.Tests.EditMode
             }
         }
 
+        /// <summary>
+        /// B5 (AD R1-A SHOULD-6, the shoulder half): the rear-edge arc wears ArcShouldered60, whose stroke holds ≥ 0.5 of its
+        /// peak out to 80 % of the chord (ArcSoft60 fell to ≈ 0.38 there); the E17 damage wedge keeps ArcSoft60.
+        /// </summary>
+        [Test]
+        public void KenarYayi_OmuzluSprite_Kirisin80inde_YariTepe_HasarKamasiEski()
+        {
+            var host = new GameObject("ArcHost", typeof(RectTransform));
+            try
+            {
+                var layer = (RectTransform)host.transform;
+                var edge = new HudRearEdge(layer);
+                var arcs = new HudPlayerArcs(layer);
+                Assert.AreSame(UiSprites.ArcShouldered60, edge.Arc.sprite, "kenar yayı omuzlu sprite");
+                Assert.AreSame(UiSprites.ArcSoft60, arcs.DamageArc.sprite, "E17 hasar kaması ArcSoft60'ta kalır");
+            }
+            finally
+            {
+                Object.DestroyImmediate(host);
+            }
+
+            // Along the stroke's mid radius: the peak at 12 o'clock, then the point at 80 % of the chord (sin θ = 0.4).
+            float shouldered = ChordRatio(UiSprites.ArcShouldered60.texture, 0.4f);
+            float soft = ChordRatio(UiSprites.ArcSoft60.texture, 0.4f);
+            Assert.GreaterOrEqual(shouldered, 0.5f, "omuzlu yay kirişin %80'inde tepe değerinin ≥ yarısı");
+            Assert.Less(soft, 0.5f, "ArcSoft60 orada yarının altındaydı (≈ 80 px çekirdek)");
+        }
+
+        /// <summary>Alpha at chord fraction <paramref name="halfChord"/> (of the radius) over alpha at the apex, on the band's mid radius.</summary>
+        private static float ChordRatio(Texture2D texture, float halfChord)
+        {
+            float half = texture.width * 0.5f;
+            float outer = half - 2f, inner = outer * 0.75f, mid = (inner + outer) * 0.5f;
+            float theta = Mathf.Asin(halfChord);
+            float peak = texture.GetPixelBilinear(0.5f, (half + mid) / texture.height).a;
+            float at = texture.GetPixelBilinear((half + mid * Mathf.Sin(theta)) / texture.width, (half + mid * Mathf.Cos(theta)) / texture.height).a;
+            Assert.Greater(peak, 0.5f, "tepe noktası çizginin üstünde");
+            return at / peak;
+        }
+
         private static Rect Grown(Rect r, float by)
         {
             return Rect.MinMaxRect(r.xMin - by, r.yMin - by, r.xMax + by, r.yMax + by);

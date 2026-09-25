@@ -18,8 +18,11 @@ namespace DD.Prototype.UI
         public const float ThirdPersonAlpha = 0.45f;   // AD R1-A SHOULD-6: 0.36 was a whisper on slate
         public const float OutOfViewMarginDegrees = 10f;
 
-        // AD R1-A MUST-1: ArcSoft60 draws its stroke between 0.75 and 0.98 of the half-size, ±30° about "up". The stroke's
+        // AD R1-A MUST-1: the soft arc draws its stroke between 0.75 and 0.98 of the half-size, ±30° about "up". The stroke's
         // midpoint - not the sprite's pivot - sits on the inset ellipse, and avoidance works on the stroke's own box.
+        // WP-068 12b (AD R1-A SHOULD-6, the shoulder half): the edge arc is UiSprites.ArcShouldered60 - the same band and span
+        // (so the box below holds), but the stroke keeps ≥ 0.5 of its peak out to 80 % of the chord instead of the ≈ 80 px core
+        // ArcSoft60's quadratic taper left of the 200 px mark. The E17 damage wedge (HudPlayerArcs) keeps ArcSoft60.
         public const float StrokeMidRadius = Size * 0.5f * 0.984f * 0.875f;   // ≈ 86 px
         private const float StrokeInner = Size * 0.5f * 0.984f * 0.75f;
         private const float StrokeOuter = Size * 0.5f * 0.984f;
@@ -38,7 +41,7 @@ namespace DD.Prototype.UI
 
         public HudRearEdge(RectTransform layer)
         {
-            _arc = UiFactory.NewImage("RearEdge", layer, UiColor.StateDanger, UiSprites.ArcSoft60);
+            _arc = UiFactory.NewImage("RearEdge", layer, UiColor.StateDanger, UiSprites.ArcShouldered60);
             _arc.raycastTarget = false;
             _arc.rectTransform.sizeDelta = new Vector2(Size, Size);
             _arc.rectTransform.anchoredPosition = OffScreen;
@@ -48,6 +51,12 @@ namespace DD.Prototype.UI
         public bool Shown
         {
             get { return _shown; }
+        }
+
+        /// <summary>The arc's image (tests: its sprite).</summary>
+        public Image Arc
+        {
+            get { return _arc; }
         }
 
         /// <summary>The arc's placement in canvas px (tests: on screen, not parked).</summary>

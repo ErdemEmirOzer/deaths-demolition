@@ -37,6 +37,12 @@ namespace DD.Prototype.UI
             get { return _rearShown; }
         }
 
+        /// <summary>The E17 damage wedge's image (tests: it keeps ArcSoft60 while the rear edge arc takes the shouldered one).</summary>
+        public Image DamageArc
+        {
+            get { return _damage; }
+        }
+
         public HudPlayerArcs(RectTransform layer)
         {
             _root = UiFactory.NewRect("PlayerArcs", layer);
