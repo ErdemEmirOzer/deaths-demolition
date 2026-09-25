@@ -38,7 +38,7 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(C.ClipCount, m.Count);
             int player = 0, zombie = 0;
             foreach (var s in m.Values) { if (s.target == "player") player++; else if (s.target == "zombie") zombie++; }
-            Assert.AreEqual(42, player); Assert.AreEqual(57, zombie);   // WP-071: + AP-022 slice 1 (10) + slice 2a (3)   // WP-032G: + sw_hold_jewel (AP-009G v007)   // WP-032C: v004 = 85 (weapon A/B/C ×5, sw hold ×2, pickup_upper, hurt ×2, death_side, lower/raise; tier hits ×12, armour breaks ×3, stumble, deaths ×4, rises ×2)
+            Assert.AreEqual(63, player); Assert.AreEqual(57, zombie);   // WP-071: + AP-022 slice 1 (10) + slice 2a (3) + 4a/4b AR+SMG TP (21)   // WP-032G: + sw_hold_jewel (AP-009G v007)   // WP-032C: v004 = 85 (weapon A/B/C ×5, sw hold ×2, pickup_upper, hurt ×2, death_side, lower/raise; tier hits ×12, armour breaks ×3, stumble, deaths ×4, rises ×2)
             foreach (string name in C.PlayerClips) Assert.IsTrue(m.ContainsKey(name), name);
             foreach (string name in C.ZombieClips) Assert.IsTrue(m.ContainsKey(name), name);
             // Every manifest event name is in the contract table.
@@ -149,7 +149,10 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(set.Clip("AP022_tp_ar_1_reload_tac"), ArtAnimatorBuilder.FindState(c, 1, C.ReloadTacState).motion, "taban = ilk set (ar_1)");
             Assert.IsTrue(ArtAnimatorBuilder.FindState(c, 1, C.ReloadEmptyState).speedParameterActive, "ReloadEmpty ReloadRate ile");
             Assert.AreEqual(set.Clip("AP022_tp_ar_1_fire"), ArtAnimatorBuilder.FindState(c, 2, C.FireV3State).motion);
-            Assert.AreEqual(2, set.WeaponSets.Count, "ar_1 + ar_2 AOC");
+            Assert.AreEqual(3, set.WeaponSets.Count, "ar_1 + ar_2 + smg_1 AOC");
+            AnimatorOverrideController smg = set.WeaponOverrides("smg_1");
+            Assert.AreEqual(set.Clip("AP022_tp_smg_idle_aim"), smg[set.Clip("AP022_tp_ar_idle_aim")], "smg_1 AOC sınıf slotu (başka sınıf)");
+            Assert.AreEqual(set.Clip("AP022_tp_smg_1_reload_empty"), smg[set.Clip("AP022_tp_ar_1_reload_empty")], "smg_1 AOC reload_empty");
             AnimatorOverrideController ar2 = set.WeaponOverrides("ar_2");
             Assert.IsNotNull(ar2); Assert.AreEqual(c, ar2.runtimeAnimatorController);
             Assert.AreEqual(set.Clip("AP022_tp_ar_2_reload_empty"), ar2[set.Clip("AP022_tp_ar_1_reload_empty")], "ar_2 AOC reload_empty");
@@ -359,7 +362,7 @@ namespace DD.Art.Tests.EditMode
         {
             var player = AssetDatabase.LoadAssetAtPath<CharacterAnimationSet>(ArtCharacterPrefabBuilder.PlayerAnimationSet);
             var zombie = AssetDatabase.LoadAssetAtPath<CharacterAnimationSet>(ArtCharacterPrefabBuilder.ZombieAnimationSet);
-            Assert.AreEqual(42, player.Clips.Count); Assert.AreEqual(57, zombie.Clips.Count);   // WP-071 + AP-022 slice 1 + 2a   // WP-032C v004
+            Assert.AreEqual(63, player.Clips.Count); Assert.AreEqual(57, zombie.Clips.Count);   // WP-071 + AP-022 slice 1 + 2a + 4a/4b   // WP-032C v004
             Assert.AreEqual(ArtAnimationClipContract.ManifestSchema, player.ManifestSchema); Assert.AreEqual(ArtAnimationClipContract.ManifestSchema, zombie.ManifestSchema);
             var m = Manifest();
             foreach (var set in new[] { player, zombie })

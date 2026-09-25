@@ -341,7 +341,7 @@ namespace DD.Art.Tests.PlayMode
             // weapon slots (no rebind: the base layer keeps its state and clock), reload picks tac / empty from the duration, the
             // burst weapon's fire clip starts once per burst.
             yield return RunAP005();
-            PlayerSkinnedVisual.V3WeaponSets = true;   // dormant in the game until the grip decision + S-02's mount v3 pose
+            PlayerSkinnedVisual.V3WeaponSets = true;   // the default since the grip decision B + S-02 pose 5
             try
             {
             PlayerSkinnedVisual pv = PlayerRegistry.Primary.GetComponentInChildren<PlayerSkinnedVisual>(true);
@@ -395,8 +395,17 @@ namespace DD.Art.Tests.PlayMode
             Assert.AreEqual(1, burst, "ar_2 burst: 3 mermi → 1 fire klibi");
             Assert.AreEqual(1, second, "sonraki burst yeniden başlar");
             Assert.AreEqual(3, auto, "ar_1 auto: mermi başına kick");
+            // smg_1: another class — its AOC also swaps the class slots (idle_aim / switch) over the ar base
+            var smg1 = DD.Prototype.Core.Weapons.Arsenal.Get("smg_1");
+            Assert.IsNotNull(smg1);
+            pv.EquipWeapon(smg1, smg1.id);
+            Assert.AreEqual("smg_1", pv.WeaponAnimSet);
+            yield return CharacterTests.Bekle(() => pv.Animator.GetCurrentAnimatorStateInfo(over).IsName(C.AimV3State), 1f, "smg Aim_V3");
+            for (int i = 0; i < 5; i++) yield return null;
+            AnimatorClipInfo[] sci = pv.Animator.GetCurrentAnimatorClipInfo(over);
+            StringAssert.Contains("tp_smg_idle_aim", sci.Length > 0 ? sci[0].clip.name : "-", "smg_1 AOC sınıf slotunu da değiştirir");
             }
-            finally { PlayerSkinnedVisual.V3WeaponSets = false; }
+            finally { PlayerSkinnedVisual.V3WeaponSets = true; }
         }
 
         [UnityTest]

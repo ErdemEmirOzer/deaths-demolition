@@ -59,6 +59,9 @@ namespace DD.Art.Pipeline.EditorTools
             public readonly List<int> eventValues = new List<int>();
             /// <summary>WP-071 (AP-022): the clip authors travel on the Hips (XZ) / a heading change (yaw) — extracted as root motion instead of baked.</summary>
             public bool rootXZ, rootYaw;
+            /// <summary>WP-071 B4b (AP-022 hands_in_weapon_frame.LeftHand.unity_pos): the left hand in the weapon frame on the class rest pose — the left-hand IK target.</summary>
+            public bool hasLeftHandInWeapon;
+            public UnityEngine.Vector3 leftHandInWeapon;
 
             /// <summary>"name=frame;…" in manifest order (CharacterAnimationSet.Entry.events).</summary>
             public string EventsText()
@@ -132,6 +135,13 @@ namespace DD.Art.Pipeline.EditorTools
                         int n = ArtJson.AsInt(sf, "stance_frames");
                         spec.stanceFrames = spec.stanceFrames == 0 ? n : Math.Min(spec.stanceFrames, n);
                     }
+                }
+
+                if (ArtJson.Get(c, "hands_in_weapon_frame") is Dictionary<string, object> hw && ArtJson.Get(hw, "LeftHand") is Dictionary<string, object> lh
+                    && ArtJson.Get(lh, "unity_pos") is List<object> up && up.Count == 3)
+                {
+                    spec.hasLeftHandInWeapon = true;
+                    spec.leftHandInWeapon = new UnityEngine.Vector3(ArtJson.AsFloat(up[0]), ArtJson.AsFloat(up[1]), ArtJson.AsFloat(up[2]));
                 }
 
                 if (ArtJson.Get(c, "root_motion") is Dictionary<string, object> rm)

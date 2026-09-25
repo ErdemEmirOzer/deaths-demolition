@@ -86,7 +86,7 @@ namespace DD.Art.Pipeline.EditorTools
 
             WriteSet(ArtCharacterPrefabBuilder.PlayerAnimationSet, player, manifest, clips, unitySpeeds, "player", PlayerSource, playerReferenceSpeed,
                 clips[C.PlayerIdle], clips[C.PlayerWalkFwd], manifest[C.PlayerWalkFwd].speedMps);
-            WriteWeaponSets(ArtCharacterPrefabBuilder.PlayerAnimationSet, player, clips);
+            WriteWeaponSets(ArtCharacterPrefabBuilder.PlayerAnimationSet, player, clips, manifest);
             WriteSet(ArtCharacterPrefabBuilder.ZombieAnimationSet, zombie, manifest, clips, unitySpeeds, "zombie", ZombieSource, manifest[C.ZombieShambleA].speedMps,
                 clips[C.ZombieIdleSway], clips[C.ZombieShambleA], manifest[C.ZombieShambleA].speedMps);
 
@@ -902,7 +902,9 @@ namespace DD.Art.Pipeline.EditorTools
         /// the weapon-own slots (fire / reload_tac / reload_empty) over the base controller, whose v3 states carry the first set's
         /// clips; the class slots stay the base clips. Written next to the player controller (Player/Generated).
         /// </summary>
-        private static void WriteWeaponSets(string setPath, AnimatorController controller, Dictionary<string, AnimationClip> clips)
+        private static readonly string[] ClassAndOwnSlots = { "idle_aim", "switch_in", "switch_out", "fire", "reload_tac", "reload_empty" };
+
+        private static void WriteWeaponSets(string setPath, AnimatorController controller, Dictionary<string, AnimationClip> clips, Dictionary<string, ArtAnimationClipContract.ClipSpec> manifest)
         {
             var set = AssetDatabase.LoadAssetAtPath<CharacterAnimationSet>(setPath);
             if (set == null) return;
@@ -917,17 +919,24 @@ namespace DD.Art.Pipeline.EditorTools
                 var aoc = AssetDatabase.LoadAssetAtPath<AnimatorOverrideController>(path);
                 if (aoc == null) { aoc = new AnimatorOverrideController(controller); AssetDatabase.CreateAsset(aoc, path); }
                 aoc.runtimeAnimatorController = controller;
+                // weapon slots always; the class slots too when the set is another class (smg_1 over the ar base)
+                bool otherClass = C.WeaponClassOf(animSet) != C.WeaponClassOf(baseSet);
                 var pairs = new List<KeyValuePair<AnimationClip, AnimationClip>>();
-                foreach (string slot in C.WeaponOwnSlots)
+                foreach (string slot in otherClass ? ClassAndOwnSlots : C.WeaponOwnSlots)
                 {
-                    AnimationClip from = clips[C.PlayerWeaponClipV3(baseSet, slot)];
+                    if (!clips.TryGetValue(C.PlayerWeaponClipV3(baseSet, slot), out AnimationClip from)) continue;
                     clips.TryGetValue(C.PlayerWeaponClipV3(animSet, slot), out AnimationClip to);
                     pairs.Add(new KeyValuePair<AnimationClip, AnimationClip>(from, animSet == baseSet ? null : to));
                 }
 
                 aoc.ApplyOverrides(pairs);
                 EditorUtility.SetDirty(aoc);
-                sets.Add(new CharacterAnimationSet.WeaponAnimSet { animSet = animSet, overrides = aoc });
+                manifest.TryGetValue(C.PlayerWeaponClipV3(animSet, "idle_aim"), out ArtAnimationClipContract.ClipSpec rest);
+                sets.Add(new CharacterAnimationSet.WeaponAnimSet
+                {
+                    animSet = animSet, overrides = aoc,
+                    hasLeftHand = rest != null && rest.hasLeftHandInWeapon, leftHandInWeapon = rest != null ? rest.leftHandInWeapon : Vector3.zero
+                });
             }
 
             set.ConfigureWeaponSets(sets);

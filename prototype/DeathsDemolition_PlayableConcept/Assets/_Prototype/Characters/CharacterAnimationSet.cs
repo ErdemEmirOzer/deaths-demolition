@@ -158,7 +158,7 @@ namespace DD.Prototype.Characters
         public static readonly string[] WeaponClassSlots = { "idle_aim", "ads_in", "ads_idle", "ads_out", "switch_in", "switch_out" };
         public static readonly string[] WeaponOwnSlots = { "fire", "reload_tac", "reload_empty" };
         /// <summary>The v3 animation sets present (WeaponDefinition.AnimSet keys); the first one is the base controller's default.</summary>
-        public static readonly string[] WeaponAnimSetsV3 = { "ar_1", "ar_2" };
+        public static readonly string[] WeaponAnimSetsV3 = { "ar_1", "ar_2", "smg_1" };
         public static string WeaponClassOf(string animSet) { int u = animSet.IndexOf('_'); return u > 0 ? animSet.Substring(0, u) : animSet; }
         public static string PlayerWeaponClipV3(string animSet, string slot) =>
             "AP022_tp_" + (System.Array.IndexOf(WeaponOwnSlots, slot) >= 0 ? animSet : WeaponClassOf(animSet)) + "_" + slot;
@@ -230,7 +230,12 @@ namespace DD.Prototype.Characters
             "AP009_player_B_weapon_lower", "AP009_player_B_weapon_raise", "AP009_player_C_weapon_lower", "AP009_player_C_weapon_raise",
             "AP009_player_A_idle_aim", "AP009_player_A_fire", "AP009_player_A_reload", "AP009_player_A_switch_in", "AP009_player_A_switch_out",
             "AP009_player_B_idle_aim", "AP009_player_B_fire", "AP009_player_B_reload", "AP009_player_B_switch_in", "AP009_player_B_switch_out",
-            "AP009_player_C_idle_aim", "AP009_player_C_fire", "AP009_player_C_reload", "AP009_player_C_switch_in", "AP009_player_C_switch_out"
+            "AP009_player_C_idle_aim", "AP009_player_C_fire", "AP009_player_C_reload", "AP009_player_C_switch_in", "AP009_player_C_switch_out",
+            // WP-071 AP-022 slices 4a/4b (30 fps): AR + SMG class sets, ar_1 / ar_2 / smg_1 weapon slots (+ ADS: in / idle / out)
+            "AP022_tp_ar_idle_aim", "AP022_tp_ar_ads_in", "AP022_tp_ar_ads_idle", "AP022_tp_ar_ads_out", "AP022_tp_ar_switch_in", "AP022_tp_ar_switch_out",
+            "AP022_tp_ar_1_fire", "AP022_tp_ar_1_reload_tac", "AP022_tp_ar_1_reload_empty", "AP022_tp_ar_2_fire", "AP022_tp_ar_2_reload_tac", "AP022_tp_ar_2_reload_empty",
+            "AP022_tp_smg_idle_aim", "AP022_tp_smg_ads_in", "AP022_tp_smg_ads_idle", "AP022_tp_smg_ads_out", "AP022_tp_smg_switch_in", "AP022_tp_smg_switch_out",
+            "AP022_tp_smg_1_fire", "AP022_tp_smg_1_reload_tac", "AP022_tp_smg_1_reload_empty"
         };
 
         public static readonly string[] ZombieClips =
@@ -252,7 +257,7 @@ namespace DD.Prototype.Characters
             ZombieHitElectroLoopV3, ZombieDeathArcElectroV3, ZombieHitGelSlipV3
         };
 
-        public const int ClipCount = 99;   // WP-071: + AP-022 slice 1 (4 deaths + 6 attacks), slice 2a (electro loop, arc_electro death, gel_slip).   // WP-032G: + sw_hold_jewel (AP-009G v007). WP-032C: AP-009D v004 (v002 36 + 49: weapon A/B/C ×5, lower/raise ×3, sw hold ×2, pickup_upper, hurt ×2, death_side, tier hits ×12, armour breaks ×3, stumble, deaths ×4, rises ×2)
+        public const int ClipCount = 120;   // WP-071: + AP-022 slice 1 (4 deaths + 6 attacks), slice 2a (electro loop, arc_electro death, gel_slip), slices 4a/4b (AR + SMG TP 21).   // WP-032G: + sw_hold_jewel (AP-009G v007). WP-032C: AP-009D v004 (v002 36 + 49: weapon A/B/C ×5, lower/raise ×3, sw hold ×2, pickup_upper, hurt ×2, death_side, tier hits ×12, armour breaks ×3, stumble, deaths ×4, rises ×2)
         public const int Fps = 30;
 
         /// <summary>The zombie death clips in DeathStyle order (0 fwd, 1 back, 2 side, 3 kneel; WP-032C: 4 side_R, 5 special_A, 6 special_B, 7 ultra).</summary>
@@ -320,6 +325,9 @@ namespace DD.Prototype.Characters
         {
             public string animSet;
             public AnimatorOverrideController overrides;
+            /// <summary>WP-071 B4b: the class rest pose's left hand in the weapon frame (AP-022 hands_in_weapon_frame) — the left-hand IK target.</summary>
+            public bool hasLeftHand;
+            public Vector3 leftHandInWeapon;
         }
 
         public IReadOnlyList<WeaponAnimSet> WeaponSets => _weaponSets;

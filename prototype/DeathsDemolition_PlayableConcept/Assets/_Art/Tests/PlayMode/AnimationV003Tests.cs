@@ -47,6 +47,7 @@ namespace DD.Art.Tests.PlayMode
         [UnityTearDown]
         public IEnumerator UnityTearDown()
         {
+            PlayerSkinnedVisual.V3WeaponSets = true;
             Time.captureDeltaTime = 0f;
             foreach (GameObject go in _temp) if (go != null) UnityEngine.Object.Destroy(go);
             _temp.Clear();
@@ -104,6 +105,7 @@ namespace DD.Art.Tests.PlayMode
         [Timeout(300000)]
         public IEnumerator Silah_AimKatmani_Fire_Reload_Olaylari_Switch_SpecialHold()
         {
+            PlayerSkinnedVisual.V3WeaponSets = false;   // WP-071 B4b: this test pins the legacy A/B/C pose path (the v3 sets have their own test)
             yield return MainMenu();
             Vector3 velocity = Vector3.zero;
             PlayerSkinnedVisual pv = PlayerOnStage(() => velocity);

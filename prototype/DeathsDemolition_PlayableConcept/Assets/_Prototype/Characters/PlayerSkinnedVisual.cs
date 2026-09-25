@@ -333,18 +333,17 @@ namespace DD.Prototype.Characters
         // ---------------------------------------------------------------- WP-071 B4b per-weapon override controllers
 
         /// <summary>
-        /// WP-071 B4b: the v3 weapon path is DORMANT until its dependencies land — C-00's grip-point decision (P-06 authors the hand at
-        /// mid-grip, the mount still puts the model origin on the socket: the left hand misses the foregrip by ~3.3 cm) and S-02's
-        /// WeaponMountAlignment v3 pose (without it the weapon keeps no reload / switch delta). Off = every weapon on the legacy class
-        /// pose, exactly as before; tests switch it on.
+        /// WP-071 B4b: the v3 weapon path (on since the grip decision B — WeaponDefinition.gripOffset — and S-02's WeaponMountAlignment
+        /// pose 5 landed). Off = every weapon on the legacy class pose (A/B tests).
         /// </summary>
-        public static bool V3WeaponSets;
+        public static bool V3WeaponSets = true;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetV3Statics() => V3WeaponSets = false;
+        private static void ResetV3Statics() => V3WeaponSets = true;
 
         private AnimatorOverrideController _runtimeOverrides;
         private readonly List<string> _setKeys = new List<string>();
+        private readonly List<int> _setIndex = new List<int>();
         private readonly List<List<KeyValuePair<AnimationClip, AnimationClip>>> _setOverrides = new List<List<KeyValuePair<AnimationClip, AnimationClip>>>();
         private DD.Prototype.Core.Weapons.WeaponDefinition _weaponDef;
         private float _burstStart = -1f;
@@ -370,6 +369,7 @@ namespace DD.Prototype.Characters
                 var pairs = new List<KeyValuePair<AnimationClip, AnimationClip>>(ws.overrides.overridesCount);
                 ws.overrides.GetOverrides(pairs);
                 _setKeys.Add(ws.animSet);
+                _setIndex.Add(i);
                 _setOverrides.Add(pairs);
             }
         }
@@ -383,12 +383,15 @@ namespace DD.Prototype.Characters
             if (k < 0)
             {
                 WeaponAnimSet = null;
+                if (_gripIk != null) _gripIk.SetHandInWeapon(false, Vector3.zero);
                 SetWeapon(DD.Prototype.Core.Weapons.Arsenal.LegacyPoseIndex(id));
                 return;
             }
 
             if (WeaponAnimSet != _setKeys[k]) _runtimeOverrides.ApplyOverrides(_setOverrides[k]);
             WeaponAnimSet = _setKeys[k];
+            CharacterAnimationSet.WeaponAnimSet ws = _animation.WeaponSets[_setIndex[k]];
+            if (_gripIk != null) _gripIk.SetHandInWeapon(ws.hasLeftHand, ws.leftHandInWeapon);
             SetWeapon(CharacterAnimatorContract.WeaponPoseV3);
         }
 
@@ -398,7 +401,7 @@ namespace DD.Prototype.Characters
             if (_weaponDef == null || _weaponDef.ammo == null) return false;
             return Mathf.Abs(seconds - _weaponDef.ammo.reloadEmptySeconds) < Mathf.Abs(seconds - _weaponDef.ammo.reloadTacSeconds);
         }
-        private void OnReloadStarted(float duration) => PlayReload(duration);
+        private void OnReloadStarted(float duration) => PlayReload(duration, WeaponEvents.LastReloadEmpty);   // S-02 d3f3b52e: written just before the event
         private void OnReloadInterrupted() => CancelReload();
         private void OnSpecialEnded() => SetSpecialHold(0);
 
@@ -435,13 +438,15 @@ namespace DD.Prototype.Characters
         }
 
         /// <summary>Reload: the weapon's clip rate-scaled so mag_out / mag_in / chamber land inside <paramref name="seconds"/> (WeaponConfig.ReloadTime).</summary>
-        public void PlayReload(float seconds)
+        public void PlayReload(float seconds) => PlayReload(seconds, IsEmptyReload(seconds));
+
+        /// <summary>Reload with the gameplay's tac / empty verdict (<paramref name="empty"/>; S-02 WeaponEvents.LastReloadEmpty).</summary>
+        public void PlayReload(float seconds, bool empty)
         {
             if (!_authored || _dying || _weapon == 3) return;
             string clip;
             if (_weapon == CharacterAnimatorContract.WeaponPoseV3)
             {
-                bool empty = IsEmptyReload(seconds);
                 _animator.SetBool(ReloadEmptyId, empty);
                 clip = CharacterAnimatorContract.PlayerWeaponClipV3(WeaponAnimSet, empty ? "reload_empty" : "reload_tac");
             }

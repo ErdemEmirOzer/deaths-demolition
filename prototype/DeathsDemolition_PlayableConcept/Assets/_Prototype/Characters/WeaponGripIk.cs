@@ -27,7 +27,22 @@ namespace DD.Prototype.Characters
         private Animator _animator;
         private Transform _searchRoot;
         private Func<bool> _gate;
-        private Transform _upper, _lower, _hand, _grip;
+        private Transform _upper, _lower, _hand, _grip, _weaponFrame;
+        private bool _hasHandInWeapon;
+        private Vector3 _handInWeapon;
+
+        /// <summary>
+        /// WP-071 B4b: the v3 set's left-hand point in the weapon frame (AP-022 hands_in_weapon_frame — P-06 authors the palm on the
+        /// handguard, not on the model's grip_l, and ar_2's grip_l is out of the class stance's reach). Off = the model's grip marker.
+        /// </summary>
+        public void SetHandInWeapon(bool has, Vector3 pointInWeaponFrame)
+        {
+            _hasHandInWeapon = has;
+            _handInWeapon = pointInWeaponFrame;
+        }
+
+        /// <summary>The model root the weapon frame is read from (AP021_&lt;id&gt;; tests).</summary>
+        public Transform WeaponFrame => _weaponFrame;
         private float _weight, _searchClock;
         private bool _eventReleased;
 
@@ -62,15 +77,17 @@ namespace DD.Prototype.Characters
             {
                 _searchClock = SearchInterval;
                 _grip = FindGrip(_searchRoot);
+                _weaponFrame = FindFrame(_searchRoot);
             }
 
             GateOpen = _gate == null || _gate();
             bool on = Enabled && _grip != null && _grip.gameObject.activeInHierarchy && !_eventReleased && GateOpen;
             _weight = Mathf.MoveTowards(_weight, on ? 1f : 0f, dt / BlendSeconds);
             if (_weight <= 0f || _grip == null) { LastError = float.NaN; return; }
-            Vector3 target = Vector3.Lerp(_hand.position, _grip.position, _weight);
+            Vector3 goal = _hasHandInWeapon && _weaponFrame != null ? _weaponFrame.TransformPoint(_handInWeapon) : _grip.position;
+            Vector3 target = Vector3.Lerp(_hand.position, goal, _weight);
             Solve(_upper, _lower, _hand, target);
-            LastError = Vector3.Distance(_hand.position, _grip.position);
+            LastError = Vector3.Distance(_hand.position, goal);
         }
 
         /// <summary>Analytic two-bone IK in world space (the bend plane is the current one: the elbow keeps its side).</summary>
@@ -97,6 +114,20 @@ namespace DD.Prototype.Characters
             b.rotation = r1 * b.rotation;          // the elbow first (child), then the shoulder carries it
             a.rotation = r2 * r0 * a.rotation;
             c.rotation = handRot;                   // the hand keeps its animated orientation
+        }
+
+        // The AP-021 model root (AP021_<id>, S-02 mounts it so gripOffset lands on the socket): the weapon frame of hands_in_weapon_frame.
+        private static Transform FindFrame(Transform t)
+        {
+            if (t == null) return null;
+            if (t.name.StartsWith("AP021_", StringComparison.Ordinal) && t.gameObject.activeInHierarchy) return t;
+            for (int i = 0; i < t.childCount; i++)
+            {
+                Transform r = FindFrame(t.GetChild(i));
+                if (r != null) return r;
+            }
+
+            return null;
         }
 
         private static Transform FindGrip(Transform root)
