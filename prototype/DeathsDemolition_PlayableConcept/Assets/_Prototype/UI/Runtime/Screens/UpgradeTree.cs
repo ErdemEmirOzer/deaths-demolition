@@ -186,6 +186,7 @@ namespace DD.Prototype.UI
         public bool Offered(int index)
         {
             return _shop != null && index >= 0 && index < _snap.Count && _snap.Nodes[index].Kind != RunTreeNodeKind.Hearth &&
+                   _snap.Nodes[index].Status != RunTreeNodeStatus.MaxTier && !IsOwned(_snap.Nodes[index]) &&
                    CardOf(index, _snap.Nodes[index], out _) >= 0;
         }
 
