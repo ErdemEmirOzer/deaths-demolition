@@ -127,7 +127,8 @@ namespace DD.Prototype.Tests.EditMode
             {
                 float hw = c.W * 0.5f, hh = c.H * 0.5f;
                 float fpBottom = RunHudScreen.WeaponClusterPosition(new Vector2(-32f, 32f), true, new Vector2(c.W, c.H)).y;
-                foreach (string variant in new[] { "base", "special", "fp", "special-prompt" })
+                // AD FP cluster SHOULD-3: first person with the Special block (and its prompt row) up as well.
+                foreach (string variant in new[] { "base", "special", "fp", "special-prompt", "fp-special", "fp-special-prompt" })
                 {
                     var rects = new System.Collections.Generic.List<Rect>
                     {
@@ -135,17 +136,17 @@ namespace DD.Prototype.Tests.EditMode
                         Rect.MinMaxRect(-120f, hh - 24f - 56f, 120f, hh - 24f),                                          // seal
                         Rect.MinMaxRect(-320f, hh - 110f - 30f, 320f, hh - 110f),                                        // chip row
                         Rect.MinMaxRect(-hw + 32f, -hh + 32f, -hw + 32f + 380f, -hh + 32f + 110f * c.Tall),             // health
-                        variant == "fp"
+                        variant.StartsWith("fp")
                             ? Rect.MinMaxRect(-hw + 32f, -hh + fpBottom, -hw + 32f + 400f, -hh + fpBottom + 140f * c.Tall)  // weapon (FP: above the health block, C-00 25.09)
                             : Rect.MinMaxRect(hw - 32f - 400f, -hh + 32f, hw - 32f, -hh + 32f + 140f * c.Tall),         // weapon
                         new Rect(-HudRearEdge.PromptSlot.x * 0.5f, -hh + 24f, HudRearEdge.PromptSlot.x, HudRearEdge.PromptSlot.y),   // prompt slot
                     };
-                    if (variant == "special" || variant == "special-prompt")
+                    if (variant.Contains("special"))
                     {
                         rects.Add(Rect.MinMaxRect(-110f, -hh + 24f, 110f, -hh + 24f + 260f));                           // Special ring block (R1-B: 260)
                     }
 
-                    if (variant == "special-prompt")
+                    if (variant.EndsWith("special-prompt"))
                     {
                         // AD R1-B MUST-3: the prompt / SLICK row closed onto the Special block at gap 8.
                         float row = -hh + 24f + 260f + 8f;
