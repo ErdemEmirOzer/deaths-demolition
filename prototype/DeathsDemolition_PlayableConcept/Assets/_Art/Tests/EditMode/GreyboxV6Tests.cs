@@ -628,7 +628,10 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(WorldV5Atmosphere.VolumeRegions.Length, field.Regions.Length);
             Assert.Less(field.DensityAt(new Vector3(0f, 1.5f, 0f)), 0.004f, "meydan merkezi açık (K10)");
             Assert.Greater(field.DensityAt(new Vector3(-45f, 3f, 14f)), 0.02f, "bambu korusu sisli");
-            Assert.Greater(field.DensityAt(new Vector3(10f, 30f, -10f)), 0.0007f, "r2: pus 30 m'ye uzanır (bulut açıklığından sütunlar tepeden okunur)");
+            // r3 (AD MUST-B1/C1 25.09): the eye-level base haze 0.0035 → 0.0010 (it veiled the roofs and the treeline); the lifted band
+            // (0.0015 at 18 ± 9 m, unchanged) carries the top-down columns, so the haze still reaches 30 m.
+            Assert.Greater(field.DensityAt(new Vector3(10f, 30f, -10f)), 0.00045f, "r2/r3: pus 30 m'ye uzanır (bulut açıklığından sütunlar tepeden okunur)");
+            Assert.Less(field.BaseDensity, 0.0015f, "r3: göz hizası perdesi ince (AD MUST-B1/C1)");
             Assert.LessOrEqual(field.AmbientScatter, 0.1f, "r2: sütun aralarında gök saçılması düşük (sütunlar gölgeden ayrılır)");
             // S-07 sözleşmesi (DD_ShaftMask, C-00 25.09): tepe yoğunluğuna göre 0..1 — meydan huzme dışı, koru huzmenin içinde.
             Assert.Greater(field.PeakDensity(), 0f, "tepe yoğunluğu");

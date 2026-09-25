@@ -263,7 +263,10 @@ namespace DD.Art
                 // wet pale grey-beige, not bright cream (its sheet averages sRGB 0.79 / 0.77 / 0.73).
                 // DEC-102 r2 (C-00 25.09: the roofs read brown in the default-path frame; HF v002 shows dark grey-blue kawara) on v007's 4K
                 // kawara (dry #474B4F, wet baked ≈ × 0.73 linear): a cool tint that cancels the ≈ 4000 K sun (1 / 0.84 / 0.66) and darkens.
-                if (tile == "roof_tiles") spec.Tint = new Color(0.58f, 0.68f, 0.90f, 1f);
+                // DEC-102 AD MUST-C1 (25.09: sun-lit roof patch L ≤ 38, b ≤ +6; HF L35 a1 b3): the "brown roofs" were wood_planks on the
+                // kawara faces (ArtLibraryPrefabBuilder.MatchSlotsByFaces); on the tiles the AD's tint (0.50, 0.60, 0.85), the bake's
+                // smoothness kept (a glossier wet roof mirrors the cool zenith, a rougher one caught the sun 40° off: × 0.75 read b +9).
+                if (tile == "roof_tiles") spec.Tint = new Color(0.50f, 0.60f, 0.85f, 1f);
                 if (tile == "plaster") spec.Tint = new Color(0.54f, 0.55f, 0.57f, 1f);
                 rows.Add(spec);
             }
@@ -277,11 +280,15 @@ namespace DD.Art
                 // WP-075 AD MUST-1 (K4 value order: green under stone): sunlit bamboo leaves read V ≈ 0.80 / s ≈ 0.55 — the AD's × 0.70
                 // left the TP grove's green median level with the slate (0.45 / 0.44); DEC-101 wants the grove dark: × 0.45; smoothness 0.25.
                 if (atlas == "bamboo_leaves") { spec.Tint = new Color(0.70f, 0.70f, 0.70f, 1f); spec.Smoothness = 0.25f; }   // DEC-102 r2: 0.55 → 0.70 (HF v002 west: a sunlit grove)   // C-00: the west read too dark at × 0.45
+                // DEC-102 AD MUST-B1 (backlit treeline: crowns L ≤ 45, green): the dark needle atlas (L 23) read pale khaki at 60–150 m —
+                // the grazing cards mirrored the sky round the sun at 0.40 (needles are matte: 0.15) and the shaded crowns lost their green
+                // under the cool ambient (× 0.70 / 1.00 / 0.60 keeps them green).
+                if (atlas == "pine_needles") { spec.Smoothness = 0.15f; spec.Tint = new Color(0.70f, 1.00f, 0.60f, 1f); }
                 rows.Add(spec);
             }
 
             // AP-023 v008 · the sugi LOD0 crown pads (AP023_M_pine_needles_pad_v001): the pine_needles atlas, front faces only.
-            rows.Add(new Spec { Role = "ap023_pine_needles_pad", Kind = Kind.Cutout, TextureRole = "ap023_pine_needles", Shader = ShaderKind.FoliageWind, NoPackedMap = true, Smoothness = 0.40f, SingleSided = true });
+            rows.Add(new Spec { Role = "ap023_pine_needles_pad", Kind = Kind.Cutout, TextureRole = "ap023_pine_needles", Shader = ShaderKind.FoliageWind, NoPackedMap = true, Smoothness = 0.15f, Tint = new Color(0.70f, 1.00f, 0.60f, 1f), SingleSided = true });
 
             rows.Add(new Spec { Role = "ap023_cloth", Kind = Kind.Flat, FlatLinearAlbedo = new Color(0.0273f, 0.0232f, 0.0194f, 1f), Smoothness = 0.20f });
             rows.Add(new Spec { Role = "ap023_foliage_core", Kind = Kind.Flat, FlatLinearAlbedo = new Color(0.022f, 0.040f, 0.016f, 1f), Smoothness = 0.25f });

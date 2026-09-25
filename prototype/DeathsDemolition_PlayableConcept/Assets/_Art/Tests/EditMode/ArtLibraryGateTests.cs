@@ -255,6 +255,11 @@ namespace DD.Art.Tests.EditMode
                         var beklenen = new List<string>();
                         for (int i = 0; i < l.materials.Length; i++)
                             if (l.facesPerSlot == null || i >= l.facesPerSlot.Length || l.facesPerSlot[i] > 0 || l.materials.Length == mf.sharedMesh.subMeshCount) beklenen.Add(l.materials[i]);
+                        // DEC-102 AD MUST-C1: the sub-mesh order is the importer's, not always the manifest's (AP-023 roofs came tiles-first);
+                        // where the face counts place every sub-mesh, that placement is the expectation — and each sub-mesh's triangles must
+                        // equal its slot's face count (the geometry check the old order-only rule missed: the kawara drew wood_planks).
+                        string[] yuzle = ArtLibraryPrefabBuilder.MatchSlotsByFaces(mf.sharedMesh, l.materials, l.facesPerSlot);
+                        if (yuzle != null) beklenen = new List<string>(yuzle);
                         Material[] mats = mr.sharedMaterials;
                         if (mats.Length != mf.sharedMesh.subMeshCount) hatalar.Add(on + ": " + ad + " " + mats.Length + " malzeme / " + mf.sharedMesh.subMeshCount + " sub-mesh");
                         if (mats.Length != beklenen.Count) hatalar.Add(on + ": " + ad + " " + mats.Length + " malzeme ≠ manifest " + beklenen.Count + " (" + string.Join(",", l.materials) + ")");

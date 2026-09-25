@@ -377,6 +377,12 @@ namespace DD.Art.Pipeline.EditorTools
                 chosen = used.ToArray();
             }
 
+            // DEC-102 AD MUST-C1 (25.09): Unity's FBX importer does not keep Blender's slot order for every mesh — the AP-023 roof parts
+            // came in tiles-first, so the 1016 kawara faces drew wood_planks (the "brown roofs"). Match each sub-mesh to its slot by the
+            // manifest's face count (triangles); equal counts keep the manifest order; no match keeps the old order.
+            string[] byFaces = MatchSlotsByFaces(mesh, roles, entry.facesPerSlot);
+            if (byFaces != null) chosen = byFaces;
+
             var materials = new Material[chosen.Length];
             for (int i = 0; i < chosen.Length; i++)
             {
@@ -390,6 +396,31 @@ namespace DD.Art.Pipeline.EditorTools
             }
 
             return materials;
+        }
+
+        /// <summary>The manifest role of each sub-mesh, matched by triangle count against <paramref name="faces"/> (slots without faces
+        /// are dropped by the importer); among equal counts the manifest order holds. Null when the counts cannot place every sub-mesh
+        /// (no face counts, a different total, a count no slot has) — the caller keeps the manifest order.</summary>
+        public static string[] MatchSlotsByFaces(Mesh mesh, string[] roles, int[] faces)
+        {
+            if (mesh == null || roles == null || faces == null || faces.Length != roles.Length) return null;
+            var slots = new List<int>();
+            for (int i = 0; i < roles.Length; i++) if (faces[i] > 0) slots.Add(i);
+            if (slots.Count != mesh.subMeshCount) return null;
+            var chosen = new string[mesh.subMeshCount];
+            var taken = new bool[roles.Length];
+            for (int sub = 0; sub < mesh.subMeshCount; sub++)
+            {
+                UnityEngine.Rendering.SubMeshDescriptor d = mesh.GetSubMesh(sub);
+                if (d.topology != MeshTopology.Triangles) return null;
+                int tris = d.indexCount / 3, pick = -1;
+                foreach (int slot in slots) if (!taken[slot] && faces[slot] == tris) { pick = slot; break; }
+                if (pick < 0) return null;
+                taken[pick] = true;
+                chosen[sub] = roles[pick];
+            }
+
+            return chosen;
         }
 
         private static Mesh LoadMesh(string ap, string family, string fbx, string objectName)

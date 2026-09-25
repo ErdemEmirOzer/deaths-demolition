@@ -82,7 +82,7 @@ namespace DD.Art.Pipeline.EditorTools
             (new Vector3(-45f, 3f, -14f), 14f, 6f, 0.030f), (new Vector3(-45f, 3f, 14f), 14f, 6f, 0.030f),
             (new Vector3(-2f, 1.5f, -28f), 16f, 3f, 0.026f), (new Vector3(36f, 3f, 0f), 12f, 5f, 0.022f),
             (new Vector3(0f, 4f, 34f), 16f, 5f, 0.018f), (new Vector3(0f, 3f, 20f), 8f, 4f, 0.016f),
-            (new Vector3(0f, 3f, 52f), 22f, 4f, 0.014f), (new Vector3(42f, 4f, 40f), 12f, 6f, 0.018f),
+            (new Vector3(0f, 3f, 52f), 22f, 4f, 0.006f), (new Vector3(42f, 4f, 40f), 12f, 6f, 0.018f),
             (new Vector3(-20f, 3f, 29f), 7f, 4f, 0.020f), (new Vector3(20f, 3f, 29f), 7f, 4f, 0.020f),
         };
 
@@ -91,9 +91,9 @@ namespace DD.Art.Pipeline.EditorTools
             var field = dress.gameObject.AddComponent<VolumetricLight>();
             // r2: a taller haze (halves every ~15 m, not ~4 m) so the crepuscular columns from the cloud gaps reach ~40 m and read from
             // the top-down camera; the ambient share low so the columns stand out of the shade (0.2 read milky-flat between them).
-            field.BaseDensity = 0.0035f;
+            field.BaseDensity = 0.0010f;   // DEC-102 AD MUST-B1/C1 (25.09): the eye-level veil toward the sun washed the roofs and the treeline (0.0035)
             field.HeightFalloff = 0.045f;
-            field.ScatterScale = 0.5f;   // DEC-102 first frames read milky at 1.0; r2 0.7 washed the backlit HF views (Δ mean +0.13, contrast 0.21 → 0.15)
+            field.ScatterScale = 0.30f;   // DEC-102 first frames read milky at 1.0; r2 0.7 washed the backlit HF views (Δ mean +0.13, contrast 0.21 → 0.15); AD 25.09 0.5 → 0.30 (the warm in-scatter outshone the dark crowns at 60–90 m)
             field.AmbientScatter = 0.06f;
             // r2: the lifted band (18 ± 9 m) — the crepuscular columns from the cloud gaps read from the top-down camera (C-00 25.09).
             field.BandHeight = 18f;

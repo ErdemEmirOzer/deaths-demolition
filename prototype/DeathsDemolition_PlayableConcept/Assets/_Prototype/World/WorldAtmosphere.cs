@@ -96,7 +96,8 @@ namespace DD.Prototype.World
         /// </summary>
         public static class V6Sky
         {
-            public const float SunIntensityScale = 1.45f, SunShadowStrength = 0.92f, FogEnd = 185f;
+            // DEC-102 AD MUST-B1 (25.09): fog 52–185 m greyed the treeline at 60–90 m; it starts past the vista now (the plates carry the far haze).
+            public const float SunIntensityScale = 1.45f, SunShadowStrength = 0.92f, FogStart = 90f, FogEnd = 300f;
             public static readonly Vector3 SunEuler = new Vector3(50f, 160f, 0f);   // 50° up (C-00: 45–55° — high, the shafts read); light toward the SSE: the sun in the NNW
             public static readonly Color SunColor = new Color(1.0f, 0.84f, 0.66f);   // ≈ 4000 K (the v3 key's 4900 K read cold against HF)
             public static readonly Color AmbientTint = new Color(0.74f, 0.85f, 1.06f, 1f);   // cold shadows, a little deeper
@@ -474,7 +475,7 @@ namespace DD.Prototype.World
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.Linear;
             RenderSettings.fogColor = FogColor;
-            RenderSettings.fogStartDistance = FogStart;
+            RenderSettings.fogStartDistance = V6Sky.Active ? V6Sky.FogStart : FogStart;
             RenderSettings.fogEndDistance = V6Sky.Active ? V6Sky.FogEnd : FogEnd;
         }
 
