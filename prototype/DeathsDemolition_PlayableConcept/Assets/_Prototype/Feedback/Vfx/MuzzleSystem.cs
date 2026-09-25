@@ -134,7 +134,7 @@ namespace DD.Prototype.Feedback.Vfx
             main.loop = false;
             main.playOnAwake = false;
             main.simulationSpace = ParticleSystemSimulationSpace.World;
-            main.maxParticles = 96;
+            main.maxParticles = 160;
             main.startSpeed = 0f;
             main.gravityModifier = -0.02f;
             main.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
@@ -229,7 +229,7 @@ namespace DD.Prototype.Feedback.Vfx
             // ---- smoke: one shared world emitter, 0.3 m ahead of the muzzle (never inside the viewmodel)
             if (_smoke != null && p.SmokeSeconds > 0f)
             {
-                float life = p.SmokeSeconds * VfxTier.Pick(0.3f, 0.625f, 1f);
+                float life = p.SmokeSeconds * VfxTier.Pick(0.3f, 0.625f, 1.3f);   // DEC-100: Cinematic smoke lingers
                 Vector3 fwd = muzzle.forward;
                 Vector3 at = MuzzlePoint(muzzle, firstPerson) + fwd * 0.3f;
                 if (firstPerson && FeedbackCameraRef.TryGetPosition(out Vector3 eye))

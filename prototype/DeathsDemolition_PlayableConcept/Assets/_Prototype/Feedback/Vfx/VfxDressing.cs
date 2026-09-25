@@ -22,7 +22,7 @@ namespace DD.Prototype.Feedback.Vfx
     {
         public const int FlipbookCapacity = 48;
         /// <summary>WP-073 B2 (direction §5): impact marks 64 / 128 / 256 by tier (read at configure).</summary>
-        public static int DecalCapacity => VfxTier.Pick(64, 128, 256);
+        public static int DecalCapacity => VfxTier.Pick(64, 128, 384);   // DEC-100: Cinematic 384
         public const int FragmentBurstCapacity = 8;
         public const int SmokeBurstCapacity = 8;
 
@@ -30,7 +30,7 @@ namespace DD.Prototype.Feedback.Vfx
         private const float ImpactSurfaceLift = 0.03f;
         private const float DecalSecondsEnvironment = 12f;
         /// <summary>WP-073 B2: environment marks 8 s on Performance, 12 s above (direction §5).</summary>
-        private static float ImpactDecalSeconds => VfxTier.Current == VfxTierLevel.Performance ? 8f : DecalSecondsEnvironment;
+        private static float ImpactDecalSeconds => VfxTier.Pick(8f, DecalSecondsEnvironment, 20f);   // DEC-100: Cinematic marks stay 20 s
         private const float DecalSecondsSplat = 30f;
         private const float DecalSecondsScorch = 12f;
         private const float DecalSecondsSplinter = 8f;
@@ -51,7 +51,7 @@ namespace DD.Prototype.Feedback.Vfx
         private PrototypePool<AtlasBurstEffect> _straw;
         private PrototypePool<CasingEffect> _casings;
         /// <summary>WP-073 B1: the casing pool (direction §1.3: 24 / 48 / 96 by tier; the pool is sized once, at the tier in effect).</summary>
-        public static int CasingCapacity => VfxTier.Pick(24, 48, 96);
+        public static int CasingCapacity => VfxTier.Pick(24, 48, 128);   // DEC-100: Cinematic 128
         public int CasingsEjected { get; private set; }
         public PrototypePool<CasingEffect> CasingPool => _casings;
         private readonly LanternFlames _lanterns = new LanternFlames();

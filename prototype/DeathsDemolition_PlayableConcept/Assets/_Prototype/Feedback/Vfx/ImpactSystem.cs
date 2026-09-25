@@ -48,7 +48,7 @@ namespace DD.Prototype.Feedback.Vfx
         private Texture2D _dot;
         private Material _debrisMaterial;
         private Material _sparkMaterial;
-        private readonly float[] _recent = new float[48];
+        private readonly float[] _recent = new float[64];
         private int _recentNext;
 
         public static ImpactSystem Instance => s_instance;
@@ -87,8 +87,8 @@ namespace DD.Prototype.Feedback.Vfx
             }
         }
 
-        public static float TierScale => VfxTier.Pick(0.4f, 1f, 1.3f);
-        public static int ConcurrentCap => VfxTier.Pick(24, 40, 48);
+        public static float TierScale => VfxTier.Pick(0.4f, 1f, 1.6f);   // DEC-100: Cinematic is the default (30 fps, VFX ≤ 5.5 ms)
+        public static int ConcurrentCap => VfxTier.Pick(24, 40, 64);
 
         /// <summary>Whether this hit lights its point (metal / armour; Cinematic every calibre, High heavy only, Performance never).</summary>
         public static bool WantsLight(SurfaceKind surface, WeaponCaliber calibre, VfxTierLevel tier)
@@ -403,13 +403,13 @@ namespace DD.Prototype.Feedback.Vfx
             if (_debris != null)
             {
                 ParticleSystem.MainModule m = _debris.main;
-                m.maxParticles = VfxTier.Pick(160, 400, 520);
+                m.maxParticles = VfxTier.Pick(160, 400, 800);
             }
 
             if (_sparks != null)
             {
                 ParticleSystem.MainModule m = _sparks.main;
-                m.maxParticles = VfxTier.Pick(64, 200, 260);
+                m.maxParticles = VfxTier.Pick(64, 200, 400);
             }
         }
 

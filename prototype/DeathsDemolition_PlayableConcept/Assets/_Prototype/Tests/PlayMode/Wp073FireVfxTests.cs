@@ -203,7 +203,7 @@ namespace DD.Prototype.Tests.PlayMode
                 foreach (GameObject g in others) Object.Destroy(g);
                 Assert.AreEqual(48, VfxDressing.CasingCapacity, "Yüksek kovan havuzu 48");
                 VfxTier.Override = VfxTierLevel.Cinematic;
-                Assert.AreEqual(96, VfxDressing.CasingCapacity);
+                Assert.AreEqual(128, VfxDressing.CasingCapacity, "DEC-100: Sinematik kovan havuzu 128");
             }
             finally
             {

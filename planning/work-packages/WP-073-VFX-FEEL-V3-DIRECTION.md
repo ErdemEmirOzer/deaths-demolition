@@ -174,6 +174,7 @@ Toplam VFX (GPU+CPU, 1080p, referans Mac): **Sinematik ≤ 5,5 ms · Yüksek ≤
 | Atmosfer canlı / draw | 3 000 / 6 | 1 800 / 6 | 600 / 4 | 0,60 |
 | Toplam | ≤ 5,5 | **≤ 3,0** | ≤ 1,2 | |
 Ayırma: tüm sistemler önceden boyutlu havuz, MPB dizileri statik, NonAlloc sorgu; ayırma testi WP-059D kalıbı (tek karede N olay + kontrol + pozitif kontrol), 0 B hedef.
+**Δ DEC-100 (kullanıcı 25.09; QUALITY-TIERS-V2 r2):** varsayılan kademe Sinematik, 30 fps (ort ≤ 33,3 / p99 ≤ 40 ms), Sinematik kapılı; VFX ≤ 5,5 ms. Sinematik sütunu cömertleşti: darbe parçacık ×1,6 / eşzamanlı 64, enkaz 800 + kıvılcım 400 canlı, decal 384 · 20 s, kovan 128, namlu dumanı ömrü ×1,3 (160 canlı); ışık tavanı 8 ve kan sisi ≤ 2 (okunurluk) aynen; atmosfer B5'te (DEC-102). Yüksek / Performans sütunları değişmedi.
 
 ## 6 · Varlık istekleri (bu pakette kredi yok; hepsi Blender / prosedürel / yeniden kullanım)
 | # | Varlık | Kaynak | Boyut | Kullanım |
