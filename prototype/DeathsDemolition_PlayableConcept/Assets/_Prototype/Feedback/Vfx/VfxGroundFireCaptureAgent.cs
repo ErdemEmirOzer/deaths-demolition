@@ -12,7 +12,7 @@ namespace DD.Prototype.Feedback.Vfx
     /// <summary>
     /// WP-073 · AD evidence for the burning ground: <c>-ddVfxGroundFireCapture &lt;folder&gt;</c> rides along a run and ignites
     /// one K10b zone (radius 3 m, 3 s, a token 0.001 dps) at a readable ground point (FP 4 m, TP 6 m, top-down 3 m ahead of the
-    /// player), framing it at ignition (0.3 s), full (1.2 s), dying (2.6 s) and out (3.3 s) as
+    /// player), framing it at ignition (0.3 s), full (1.2 s), dying (2.6 s), out (3.3 s) and the char 2 s later (5.3 s) as
     /// <c>&lt;mode&gt;-groundfire-&lt;name&gt;.png</c> with the system's counters logged, then quits. The player is held invulnerable
     /// (evidence only, as UiCaptureAgent). Opt-in only.
     /// </summary>
@@ -60,6 +60,8 @@ namespace DD.Prototype.Feedback.Vfx
                 yield return Frame("dying");
                 yield return new WaitForSeconds(0.7f);
                 yield return Frame("out");
+                yield return new WaitForSeconds(2.0f);
+                yield return Frame("char-out+2s");   // the char holds 3 s past the fire (AD MUST 4)
             }
 
             Debug.Log("[VfxGroundFireCapture] done");
@@ -100,7 +102,7 @@ namespace DD.Prototype.Feedback.Vfx
             File.WriteAllBytes(file, frame.EncodeToPNG());
             Destroy(frame);
             GroundFireSystem g = GroundFireSystem.Instance;
-            Debug.Log("[VfxGroundFireCapture] " + file + " zones=" + g.LiveZones + " flames=" + g.FlamesLive + " embers=" + g.EmbersLive + " glow=" + g.GlowLive
+            Debug.Log("[VfxGroundFireCapture] " + file + " zones=" + g.LiveZones + " flames=" + g.FlamesLive + " embers=" + g.EmbersLive + " glow=" + g.GlowLive + " char=" + g.CharLive + " shimmer=" + g.ShimmerLive
                 + " lit=" + g.LitZones + " haze=" + g.HazeShown + " tier=" + VfxTier.Current);
         }
     }
