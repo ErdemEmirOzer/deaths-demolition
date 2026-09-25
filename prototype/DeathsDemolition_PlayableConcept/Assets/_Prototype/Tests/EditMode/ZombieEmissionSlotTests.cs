@@ -6,8 +6,9 @@ namespace DD.Prototype.Tests.EditMode
 {
     /// <summary>
     /// WP-076 (C-00 25.09 → S-07 WP-073 B6): every AP-007 zombie material carries the _EMISSION variant so S-07's
-    /// MaterialPropertyBlock (electric rim, gel film) shows; the emission colour is black and GI treats it as black, so
-    /// the default look is unchanged.
+    /// MaterialPropertyBlock (electric rim, gel film) shows; the emission colour is black and it feeds no GI (flag None — URP
+    /// Lit's validator strips _EMISSION under EmissiveIsBlack), so the default look is unchanged. Also checked after a
+    /// reimport: the keyword survives URP's material validation.
     /// </summary>
     [Category("WP076")]
     public sealed class ZombieEmissionSlotTests
@@ -23,7 +24,7 @@ namespace DD.Prototype.Tests.EditMode
                 Assert.IsTrue(m.IsKeywordEnabled("_EMISSION"), m.name + ": _EMISSION kapalı (S-07 MPB görünmez)");
                 Color e = m.GetColor("_EmissionColor");
                 Assert.IsTrue(e.r == 0f && e.g == 0f && e.b == 0f, m.name + ": emission siyah değil (varsayılan görünüm değişir)");
-                Assert.IsTrue((m.globalIlluminationFlags & MaterialGlobalIlluminationFlags.EmissiveIsBlack) != 0, m.name + ": GI siyah değil");
+                Assert.AreEqual(0, (int)(m.globalIlluminationFlags & (MaterialGlobalIlluminationFlags.RealtimeEmissive | MaterialGlobalIlluminationFlags.BakedEmissive)), m.name + ": emission GI'ya katılıyor");
             }
         }
     }

@@ -257,14 +257,15 @@ namespace DD.Art.Pipeline.EditorTools
         /// <summary>
         /// WP-076 (C-00 25.09 → S-07 WP-073 B6): every zombie material carries the _EMISSION variant with BLACK emission, so
         /// S-07's per-renderer MaterialPropertyBlock (electric rim on a shocked body, gel film on a sliding one) has a slot to
-        /// write into. The default look is unchanged (black emission, EmissiveIsBlack GI flag); ApplyCommon switches
-        /// _EMISSION off, so call this after it.
+        /// write into. The default look is unchanged (black emission, no GI contribution); ApplyCommon switches _EMISSION off,
+        /// so call this after it. The GI flag is None, NOT EmissiveIsBlack: URP Lit's material validation
+        /// (MaterialEditor.FixupEmissiveFlag → BaseShaderGUI) turns _EMISSION off whenever the flag is EmissiveIsBlack.
         /// </summary>
         public static void EnableSpecialEmissionSlot(Material m)
         {
             m.SetColor("_EmissionColor", Color.black);
             m.EnableKeyword("_EMISSION");
-            m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+            m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
         }
         public static Material LoadOrCreateMaterialPublic(string path, Shader shader, string name) => LoadOrCreateMaterial(path, shader, name);
 
