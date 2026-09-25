@@ -193,8 +193,8 @@ MonoBehaviour:
       - attach_top
       - attach_stock
     fpView:
-      position: {x: 0.245, y: -0.11, z: 0.561}
-      euler: {x: -0.29, y: -1.89, z: 0}
+      position: {x: 0.245, y: -0.14, z: 0.521}
+      euler: {x: -0.52, y: -1.88, z: 0}
       scale: 0.873
     gripOffset: {x: 0, y: -0.057, z: -0.067}
-    fpLeftHandOffset: {x: 0, y: -0.08, z: -0.14}
+    fpLeftHandOffset: {x: 0, y: 0, z: 0}

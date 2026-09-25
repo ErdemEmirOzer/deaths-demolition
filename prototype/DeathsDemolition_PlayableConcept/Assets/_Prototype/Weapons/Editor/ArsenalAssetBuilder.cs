@@ -504,7 +504,7 @@ namespace DD.Prototype.Weapons.EditorTools
             { "ar_1", WeaponFpViewPose.At(0.162f, -0.093f, 0.374f, -0.23f, -1.22f, 0.924f) },
             { "smg_1", WeaponFpViewPose.At(0.187f, -0.081f, 0.444f, -0.21f, -1.42f, 0.830f) },
             { "sg_1", WeaponFpViewPose.At(0.158f, -0.089f, 0.391f, -0.19f, -1.19f, 0.894f) },
-            { "ar_2", WeaponFpViewPose.At(0.245f, -0.110f, 0.561f, -0.29f, -1.89f, 0.873f) },
+            { "ar_2", WeaponFpViewPose.At(0.245f, -0.140f, 0.521f, -0.52f, -1.88f, 0.873f) },   // v6 (C-00 26.09, P-06): 4 cm nearer, 3 cm lower
             { "smg_2", WeaponFpViewPose.At(0.170f, -0.069f, 0.414f, 2.96f, -1.16f, 1.092f, 15.0f) },
             { "sg_2", WeaponFpViewPose.At(0.163f, -0.093f, 0.422f, -0.41f, -1.23f, 0.890f) },
             { "lmg_1", WeaponFpViewPose.At(0.278f, -0.161f, 0.607f, -0.68f, -2.15f, 0.894f) },
@@ -539,17 +539,11 @@ namespace DD.Prototype.Weapons.EditorTools
         };
 
         /// <summary>
-        /// WP-069 × WP-071 (C-00 25.09, S-06 f30 / f31): the first-person left hand, moved from P-06's hands_in_weapon_frame
-        /// LeftHand point so the left elbow leaves the frame and the arm stays ≤ 8.4 % of it (hand error 0.00 cm) — weapon
-        /// frame, metres, before the fpView scale. smg_2 keeps P-06's point (its grip_l already sits 8 cm lower). ar_2 is
-        /// provisional until P-06's FP left-arm pose (after 30.09): its elbow reads y 1084 px against the 1120 limit.
+        /// WP-069 × WP-071 · the first-person left-hand offset per weapon, added to P-06's hands_in_weapon_frame LeftHand point
+        /// (weapon frame, metres, before the fpView scale). All zero since C-00 26.09: P-06 places the left hand in the clip
+        /// itself (S-06's f30 / f31 values of 25.09 — ar_1 / smg_1 (0, −0.08, 0), ar_2 (0, −0.08, −0.14) — are retired).
         /// </summary>
-        private static readonly Dictionary<string, Vector3> FpLeftHandOffsets = new Dictionary<string, Vector3>
-        {
-            { "ar_1", new Vector3(0f, -0.08f, 0f) },
-            { "smg_1", new Vector3(0f, -0.08f, 0f) },
-            { "ar_2", new Vector3(0f, -0.08f, -0.14f) },
-        };
+        private static readonly Dictionary<string, Vector3> FpLeftHandOffsets = new Dictionary<string, Vector3>();
 
         // ================================================================== asset writing
 

@@ -68,13 +68,10 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
-        public void FpSolElOfseti_S06Degerleri_DigerleriSifir()
+        public void FpSolElOfseti_HepsiSifir_P06KliptenYerlestirir()
         {
-            // WP-069 × WP-071 (C-00 25.09): the FP left-hand offsets S-06 measured (weapon frame, m, before the fpView scale).
-            var beklenen = new System.Collections.Generic.Dictionary<string, Vector3>
-            {
-                { "ar_1", new Vector3(0f, -0.08f, 0f) }, { "smg_1", new Vector3(0f, -0.08f, 0f) }, { "ar_2", new Vector3(0f, -0.08f, -0.14f) },
-            };
+            // WP-069 × WP-071 (C-00 26.09): P-06 places the FP left hand in the clip — every weapon's offset is zero.
+            var beklenen = new System.Collections.Generic.Dictionary<string, Vector3>();
             foreach (string id in new[] { "ar_1", "smg_1", "sg_1", "ar_2", "smg_2", "sg_2", "lmg_1", "lmg_2", "sr_1", "rl_1", "sw_arc", "sw_gel" })
             {
                 DD.Prototype.Core.Weapons.WeaponDefinition d = DD.Prototype.Core.Weapons.Arsenal.Get(id);
