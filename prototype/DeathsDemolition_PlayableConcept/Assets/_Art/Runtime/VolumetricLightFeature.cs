@@ -10,7 +10,7 @@ namespace DD.Art
     /// WP-075 · DEC-102 · Realistic sun shafts: a raymarched volumetric light (Hidden/DD/VolumetricLight) on the High and Cinematic
     /// renderers — URP's main-light shadow map × the cloud cookie through <see cref="VolumetricLight"/>'s density field, so the shafts
     /// fall where the trees, bamboo, eaves and gates open to the sun and go out under a cloud. Every camera mode (the phase keeps an
-    /// isotropic share for the top-down camera). QUALITY-TIERS-V2: Cinematic ½ resolution × 32 steps, High ¼ × 12, Performance off
+    /// isotropic share for the top-down camera). QUALITY-TIERS-V2: Cinematic ⅓ resolution × 20 steps, High ¼ × 12, Performance off
     /// (the card shafts stand in there). One low-resolution march (RGBA16F: in-scatter, transmittance) and one blended full-screen
     /// composite before the transparents; only while a v6 world's field is live, never for the planar camera.
     /// </summary>
@@ -31,9 +31,10 @@ namespace DD.Art
         {
             return tier switch
             {
-                // r2: 24 steps (was 32) — the quadratic spacing keeps the near shafts; release players had 63 / 198 frames over 33 ms in
-                // top-down / FP at 32 (p99 42.5 / 54.3 against the ≤ 40 gate), the steps are the march's linear cost.
-                QualityTier.Sinematik => new Rules { On = true, Downsample = 2, Steps = 24, MaxDistance = 70f },
+                // r3 (C-00 25.09, FP p99 ≤ 40 uncapped): ⅓ resolution × 20 steps (was ½ × 24; r2 32 → 24). FP is GPU-bound — the main
+                // thread is flat at ~9.7 ms, the p99 is Metal present back-pressure; on a quiet machine ½ × 24 cost ~4 ms (1.5 fixed + 2.5
+                // march) and straddled the gate (p99 38.9–44.2), ⅓ × 20 held 34.4. The quadratic spacing keeps the near shafts.
+                QualityTier.Sinematik => new Rules { On = true, Downsample = 3, Steps = 20, MaxDistance = 70f },
                 QualityTier.Yuksek => new Rules { On = true, Downsample = 4, Steps = 12, MaxDistance = 50f },
                 _ => new Rules { On = false },
             };

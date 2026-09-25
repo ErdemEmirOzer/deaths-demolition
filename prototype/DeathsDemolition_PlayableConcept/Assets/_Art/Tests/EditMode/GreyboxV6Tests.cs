@@ -364,7 +364,7 @@ namespace DD.Art.Tests.EditMode
             Assert.Greater(dress.transform.Find(WorldV5Dress.FenceGroupName).childCount, 40, "kenninji çitleri");
             Assert.IsNotNull(dress.transform.Find(WorldV5Dress.KaresansuiGroupName + "/Karesansui_Gravel"), "karesansui çakılı");
 
-            // B8 · the plaza's planar reflection at its surface; the mirror maps y → 2h − y; tiers off / 256 / 1024, characters at Cinematic only.
+            // B8 · the plaza's planar reflection at its surface; the mirror maps y → 2h − y; tiers off / 256 / 768 (r3), characters at Cinematic only.
             PlanarReflection planar = plaza.GetComponent<PlanarReflection>();
             Assert.IsNotNull(planar, "planar yansıma");
             Assert.AreEqual(WorldV5Ground.Lift, planar.PlaneHeight, 1e-5f);
@@ -373,7 +373,7 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(3f, p.x, 1e-4f); Assert.AreEqual(2f * planar.PlaneHeight - 5f, p.y, 1e-4f); Assert.AreEqual(-2f, p.z, 1e-4f);
             Assert.AreEqual(0, PlanarReflection.HeightOf(QualityTier.Performans));
             Assert.AreEqual(256, PlanarReflection.HeightOf(QualityTier.Yuksek));
-            Assert.AreEqual(1024, PlanarReflection.HeightOf(QualityTier.Sinematik));
+            Assert.AreEqual(768, PlanarReflection.HeightOf(QualityTier.Sinematik));
             Assert.IsTrue(PlanarReflection.CharactersIn(QualityTier.Sinematik) && !PlanarReflection.CharactersIn(QualityTier.Yuksek));
 
             // WP-075 C3 · the v6 layout's skybox (DEC-102 r2: sky_v3's panorama), the rings on the v2 sheets in queue order, the landmarks.
@@ -606,9 +606,9 @@ namespace DD.Art.Tests.EditMode
             Assert.IsNotNull(skyV3, "r2: gök panoraması malzemesi");
             Assert.AreEqual(ArtSkyBuilder.SkyDec102SourcePath, AssetDatabase.GetAssetPath(skyV3.GetTexture("_MainTex")), "r2: sky_v3 panoraması");
 
-            // Tiers: Cinematic ½ × 24 (r2), High ¼ × 12, Performance off; the feature on the High and Cinematic renderers.
+            // Tiers: Cinematic ⅓ × 20 (r3, FP p99), High ¼ × 12, Performance off; the feature on the High and Cinematic renderers.
             VolumetricLightFeature.Rules cin = VolumetricLightFeature.RulesFor(QualityTier.Sinematik), high = VolumetricLightFeature.RulesFor(QualityTier.Yuksek);
-            Assert.IsTrue(cin.On && cin.Downsample == 2 && cin.Steps == 24);   // r2: 24 (release p99)
+            Assert.IsTrue(cin.On && cin.Downsample == 3 && cin.Steps == 20);   // r3: ⅓ × 20 (release FP p99)
             Assert.IsTrue(high.On && high.Downsample == 4 && high.Steps == 12);
             Assert.IsFalse(VolumetricLightFeature.RulesFor(QualityTier.Performans).On);
             foreach (string path in ScreenAtmosphereSetup.RendererPaths)

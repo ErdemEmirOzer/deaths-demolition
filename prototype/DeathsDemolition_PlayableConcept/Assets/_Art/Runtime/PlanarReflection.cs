@@ -33,7 +33,7 @@ namespace DD.Art
         /// <summary>The mirrored camera's name (the screen atmosphere skips it).</summary>
         public const string CameraName = "DD Planar Reflection Camera";
 
-        public static int HeightOf(QualityTier tier) => QualityTiers.Pick(tier, 0, 256, 1024);
+        public static int HeightOf(QualityTier tier) => QualityTiers.Pick(tier, 0, 256, 768);   // r3 (C-00 25.09): Cinematic 1024 → 768, the FP p99 gate
 
         /// <summary>Contract r2: characters (player, enemies, ragdolls) reflect only at Cinematic.</summary>
         public static bool CharactersIn(QualityTier tier) => tier == QualityTier.Sinematik;

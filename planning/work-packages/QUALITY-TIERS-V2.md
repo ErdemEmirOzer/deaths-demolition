@@ -43,7 +43,7 @@ public static class QualityTiers
 | Vinyet | açık | açık | açık |
 | DoF / motion blur (TP/FP) | kapalı | kapalı | WP-075 Ek A §7 |
 | Yansıma probları | 6 × 128 | 10 × 128 | ≥ 16 × 512 (saray, avlu, kapılar, havuzlar, kairō) |
-| Planar (koi havuzları) | kapalı (prob) | 256 px, karakter yok | 1024 px + karakter |
+| Planar (koi havuzları) | kapalı (prob) | 256 px, karakter yok | 768 px + karakter (r3: 1024 → 768, FP p99 kapısı) |
 | Doku akış bütçesi (ADR-015-1 v3) | 512 MB, `globalTextureMipmapLimit` 1 izinli | 1024 MB | 3072 MB (4K zemin/kahraman tam mip) |
 | Lightmap / probe yoğunluğu (B8) | tek bake, üç kademede ortak | aynı | aynı |
 | LUT v2 (DD_Look_v2) | açık | açık | açık |
@@ -53,7 +53,7 @@ public static class QualityTiers
 |---|---|---|---|---|
 | Gök bandı v2 + bulut düzlemleri | S-05 WP-075 | bant + 1 düzlem | bant + 2 düzlem | 2 düzlem + parallaks |
 | Bulut gölgesi cookie | S-05 | tam | tam | tam |
-| Hacimsel ışık (DEC-102: raymarch, ana ışık gölge haritası × bulut cookie, yükseklik + bölgesel sis yoğunluğu; tüm modlar) | S-05 WP-075 | kapalı | ¼ çözünürlük, 12 adım | ½ çözünürlük, 24 adım (karesel aralık; r2: 32 adım release p99 kapısını kırdı) |
+| Hacimsel ışık (DEC-102: raymarch, ana ışık gölge haritası × bulut cookie, yükseklik + bölgesel sis yoğunluğu; tüm modlar) | S-05 WP-075 | kapalı | ¼ çözünürlük, 12 adım | ⅓ çözünürlük, 20 adım (karesel aralık; r2: 32 → 24; r3 25.09: FP GPU-bağımlı, ½ × 24 sessiz makinede p99 38,9–44,2 → ⅓ × 20) |
 | Huzme kartları | S-05 | 6, alfa ×0,7 (hacimsel ışığın yerine) | — (DEC-102: hacimsel) | — (DEC-102: hacimsel) |
 | Ekran-uzayı huzme (TP/FP) | S-05 | kapalı | — (DEC-102: hacimsel) | — (DEC-102: hacimsel) |
 | Yer sisi levhaları | S-05 | 4, alfa ×0,6 | 7, alfa ×0,8 | 10 |
