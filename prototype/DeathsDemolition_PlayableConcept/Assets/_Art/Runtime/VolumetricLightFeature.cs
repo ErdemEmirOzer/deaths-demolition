@@ -50,7 +50,9 @@ namespace DD.Art
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
-            if (!VolumetricLight.Active || renderingData.cameraData.cameraType != CameraType.Game || renderingData.cameraData.camera.name == PlanarReflection.CameraName) return;
+            // The world's base cameras only: not the planar reflection, not an overlay (the FP viewmodel — its base already carries the
+            // shafts; composited again it hazes the whole screen twice), not a single-layer probe (PlanarReflection.RendersWorld).
+            if (!VolumetricLight.Active || renderingData.cameraData.camera.name == PlanarReflection.CameraName || !PlanarReflection.RendersWorld(renderingData.cameraData.camera)) return;
             Rules rules = RulesFor(QualityTiers.Current);
             if (!rules.On) return;
             if (_material == null)

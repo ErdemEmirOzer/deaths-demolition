@@ -54,9 +54,22 @@ namespace DD.Art
 
         private void OnTier(QualityTier tier) => Release();
 
+        /// <summary>
+        /// A camera that draws the world: a Game camera, the base of its stack, with the Environment layer in its culling mask. The FP
+        /// viewmodel overlay (FirstPersonView only) and single-layer probes are not — the reflection (and the volumetric light, which
+        /// asks the same) would run for them again: a second planar render per FP frame, and the volumetric composite over the whole
+        /// overlay (S-06 25.09: the viewmodel coverage probe read 100 % after World v5 became the default world).
+        /// </summary>
+        public static bool RendersWorld(Camera cam)
+        {
+            if (cam == null || cam.cameraType != CameraType.Game || (cam.cullingMask & (1 << PrototypeLayers.Environment)) == 0) return false;
+            var data = cam.GetComponent<UniversalAdditionalCameraData>();
+            return data == null || data.renderType == CameraRenderType.Base;
+        }
+
         private void OnBeginCamera(ScriptableRenderContext context, Camera cam)
         {
-            if (s_rendering || cam == _reflection || cam.cameraType != CameraType.Game) return;
+            if (s_rendering || cam == _reflection || !RendersWorld(cam)) return;
             QualityTier tier = QualityTiers.Current;
             int height = HeightOf(tier);
             Shader.SetGlobalFloat(s_enabled, 0f);   // never sampled while the reflection itself renders
