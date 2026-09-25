@@ -283,9 +283,10 @@ namespace DD.Art
             { "azumaya", SurfaceKind.Wood }, { "teahouse", SurfaceKind.Wood }, { "kura", SurfaceKind.Wood }, { "pavilion", SurfaceKind.Wood },
             { "gates", SurfaceKind.Wood }, { "plank_bridge", SurfaceKind.Wood }, { "fence_kenninji", SurfaceKind.Wood }, { "fence_yotsume", SurfaceKind.Wood },
             { "bamboo_v2", SurfaceKind.Wood }, { "sugi", SurfaceKind.Wood }, { "black_pine", SurfaceKind.Wood }, { "sakura_v2", SurfaceKind.Wood },
-            { "momiji", SurfaceKind.Wood },
+            { "momiji", SurfaceKind.Wood }, { "kairo_angle", SurfaceKind.Wood }, { "chumon", SurfaceKind.Wood },   // v007-B: angled kairō corners, the chūmon
             { "wall_kit", SurfaceKind.Stone }, { "granite_kerb", SurfaceKind.Stone }, { "planter", SurfaceKind.Stone }, { "lantern_kasuga", SurfaceKind.Stone },
             { "rock_large", SurfaceKind.Stone }, { "pond_rock", SurfaceKind.Stone }, { "slab_bridge", SurfaceKind.Stone }, { "pond_shore_pebble", SurfaceKind.Stone },
+            { "pond_shore_curve", SurfaceKind.Stone }, { "waterfall_rock", SurfaceKind.Stone },
             { "pond_shore_moss", SurfaceKind.Foliage }, { "groundcover", SurfaceKind.Foliage }, { "satsuki", SurfaceKind.Foliage }, { "lotus", SurfaceKind.Foliage },
             { "pond_reeds", SurfaceKind.Foliage },
         };

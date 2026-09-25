@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ba64e44008fd433583b197b4018e544, type: 3}
   m_Name: DD_AcousticSpaces
   m_EditorClassIdentifier: 
-  _sourceHash: 8bba1b29c856ff22
+  _sourceHash: b1a15d1fc40d9fa5
   _worldScene: World_V6_Greybox
   _spaces:
   - id: R1_MainHall
@@ -83,13 +83,13 @@ MonoBehaviour:
   - id: R6_Chumon
     enclosure: 1
     polygonXZ:
-    - -4
+    - -4.8
     - 18
-    - 4
+    - 4.8
     - 18
-    - 4
+    - 4.8
     - 23
-    - -4
+    - -4.8
     - 23
     floor: 0
     ceiling: 5
@@ -109,27 +109,40 @@ MonoBehaviour:
   - id: K2_NorthWestLink#0
     enclosure: 1
     polygonXZ:
-    - -31.373
-    - 18.838
-    - -26.373
-    - 25.838
-    - -29.627
-    - 28.162
-    - -34.627
-    - 21.162
+    - -31
+    - 20
+    - -31
+    - 23.6
+    - -35
+    - 23.6
+    - -35
+    - 20
     floor: 0
     ceiling: 3.65
   - id: K2_NorthWestLink#1
     enclosure: 1
     polygonXZ:
-    - -26.336
-    - 25.891
-    - -24.336
-    - 28.891
-    - -27.664
-    - 31.109
-    - -29.664
-    - 28.109
+    - -31.586
+    - 22.186
+    - -26.495
+    - 27.277
+    - -29.323
+    - 30.105
+    - -34.414
+    - 25.014
+    floor: 0
+    ceiling: 3.65
+  - id: K2_NorthWestLink#2
+    enclosure: 1
+    polygonXZ:
+    - -27.909
+    - 26.691
+    - -24.309
+    - 26.691
+    - -24.309
+    - 30.691
+    - -27.909
+    - 30.691
     floor: 0
     ceiling: 3.65
   - id: K3_CloisterWest
@@ -161,14 +174,14 @@ MonoBehaviour:
   - id: K4_EastKairo#0
     enclosure: 1
     polygonXZ:
-    - 24.211
-    - 29.106
-    - 28.211
-    - 21.106
-    - 31.789
-    - 22.894
-    - 27.789
-    - 30.894
+    - 23.649
+    - 29
+    - 28.268
+    - 21
+    - 31.732
+    - 23
+    - 27.113
+    - 31
     floor: 0
     ceiling: 3.65
   - id: K4_EastKairo#1
@@ -176,9 +189,9 @@ MonoBehaviour:
     polygonXZ:
     - 30
     - 20
-    - 44
+    - 45.381
     - 20
-    - 44
+    - 45.381
     - 24
     - 30
     - 24
@@ -187,14 +200,14 @@ MonoBehaviour:
   - id: K4_EastKairo#2
     enclosure: 1
     polygonXZ:
-    - 42.4
-    - 20.8
-    - 48.4
-    - 12.8
-    - 51.6
-    - 15.2
-    - 45.6
-    - 23.2
+    - 43.649
+    - 21
+    - 48.268
+    - 13
+    - 51.732
+    - 15
+    - 47.113
+    - 23
     floor: 0
     ceiling: 3.65
   - id: K5_SouthShore
