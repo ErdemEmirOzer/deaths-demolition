@@ -498,7 +498,7 @@ namespace DD.Art.Tests.EditMode
             Material m = ground.GetComponent<MeshRenderer>().sharedMaterial;
             Assert.AreEqual(WorldV5Moss.ShaderName, m.shader.name);
             Assert.AreEqual(WorldV5Moss.MaterialPath, AssetDatabase.GetAssetPath(m));
-            Assert.Less(m.GetFloat("_MossSaturation"), 0.8f, "yosun doygunluğu düşürüldü");
+            Assert.LessOrEqual(m.GetFloat("_MossSaturation"), 0.8f, "yosun doygunluğu (AD MUST-1: karede s ≤ 0,58)");
             foreach (string slot in new[] { "_MossMap", "_MossNormal", "_GravelMap", "_EarthMap", "_PathMask" }) Assert.IsNotNull(m.GetTexture(slot), slot);
             Assert.IsNull(AssetDatabase.LoadAssetAtPath<Material>(WorldV5Moss.OldMaterialPath), "eski Lit yosun kopyası silindi");
 

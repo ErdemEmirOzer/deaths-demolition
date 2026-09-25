@@ -38,7 +38,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _AlbedoSaturation: 0.28
-    - _AlbedoValue: 2.5
+    - _AlbedoValue: 2
     - _Cull: 2
     - _NormalStrength: 1
     - _Occlusion: 1
@@ -46,14 +46,16 @@ Material:
     - _PlanarStrength: 1
     - _PlanarWet: 0.35
     - _PuddleDarken: 0.85
-    - _PuddleField: 0.62
+    - _PuddleField: 0.66
     - _PuddleFieldRamp: 0.06
     - _PuddleRamp: 0.15
-    - _PuddleScale: 7
-    - _PuddleSmoothness: 0.92
+    - _PuddleScale: 4.5
+    - _PuddleSmoothness: 0.72
     - _PuddleThreshold: 0.45
+    - _TilePuddle: 0
     - _WetAlbedo: 0.82
-    - _WetSmoothness: 0.6
+    - _WetSmoothness: 0.55
     - _Wetness: 1
-    m_Colors: []
+    m_Colors:
+    - _AlbedoTint: {r: 0.86, g: 1, b: 1.19, a: 1}
   m_BuildTextureStacks: []

@@ -26,6 +26,8 @@ Shader "DD/GroundTiles"
         [Header(Albedo grade)]
         _AlbedoSaturation("Albedo saturation", Range(0, 1)) = 0.28
         _AlbedoValue("Albedo value scale (linear)", Range(0.5, 4)) = 2.5
+        _AlbedoTint("Albedo tint (linear; WP-075 AD S1: the wet slate reads blue-grey 205–215°, not beige)", Color) = (1, 1, 1, 1)
+        _TilePuddle("Per-tile puddle mask weight (AD S1: 0 = puddles only from the world field, off the tile grid)", Range(0, 1)) = 1
         [Header(Planar reflection B8)]
         _PlanarStrength("Planar strength", Range(0, 1)) = 1.0
         _PlanarDistortion("Planar distortion (normal)", Range(0, 0.1)) = 0.03
@@ -64,6 +66,8 @@ Shader "DD/GroundTiles"
             half _PuddleFieldRamp;
             half _AlbedoSaturation;
             half _AlbedoValue;
+            half4 _AlbedoTint;
+            half _TilePuddle;
             half _PlanarStrength;
             half _PlanarDistortion;
             half _PlanarWet;
@@ -179,7 +183,7 @@ Shader "DD/GroundTiles"
 
                 half4 mask = SAMPLE_TEXTURE2D(_MaskMap, sampler_BaseMap, input.uv);
                 half wet = saturate(mask.b * _Wetness);
-                half puddle = saturate((mask.a * _Wetness - _PuddleThreshold) / max(_PuddleRamp, 0.02h) + 0.5h);
+                half puddle = saturate((mask.a * _Wetness - _PuddleThreshold) / max(_PuddleRamp, 0.02h) + 0.5h) * _TilePuddle;
                 half field = saturate((DDPuddleField(input.positionWS.xz) - _PuddleField) / max(_PuddleFieldRamp, 0.01h)) * _Wetness;
                 puddle = max(puddle, field);
                 wet = max(wet, saturate(field * 2.0h));
@@ -187,7 +191,7 @@ Shader "DD/GroundTiles"
                 half3 albedo = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv).rgb;
                 // Grade (AD MUST-4): the P-05 slate is steel-blue (chroma ≈ 27 %, Y ≈ 0.09) — neutral wet grey, chroma ≤ 8 %, dry Y ≈ 0.22.
                 half luma = dot(albedo, half3(0.2126h, 0.7152h, 0.0722h));
-                albedo = lerp(luma.xxx, albedo, _AlbedoSaturation) * _AlbedoValue;
+                albedo = lerp(luma.xxx, albedo, _AlbedoSaturation) * _AlbedoValue * _AlbedoTint.rgb;
                 albedo *= lerp(1.0h, _WetAlbedo, wet);
                 albedo *= lerp(1.0h, _PuddleDarken, puddle);
 

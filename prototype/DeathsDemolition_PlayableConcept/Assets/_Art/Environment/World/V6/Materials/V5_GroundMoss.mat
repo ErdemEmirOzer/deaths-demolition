@@ -59,27 +59,27 @@ Material:
     - _GravelCover: 0.05
     - _GravelSmoothness: 0.22
     - _GravelTile: 2
-    - _LeafCover: 0.1
+    - _LeafCover: 0.16
     - _LeafScale: 0.9
-    - _MossSaturation: 0.65
+    - _MossSaturation: 0.66
     - _MossSmoothness: 0.18
     - _MossTile: 3
-    - _MossValue: 0.75
+    - _MossValue: 1.6
     - _NormalStrength: 1
     - _PatchEdge: 0.08
     - _PatchScale: 6
     - _PathWobble: 0.6
-    - _SoilCover: 0.12
-    - _ToneContrast: 2.4
-    - _ToneScale: 22
+    - _SoilCover: 0.18
+    - _ToneContrast: 3
+    - _ToneScale: 14
     - _WetAlbedo: 0.82
-    - _WetSmoothness: 0.52
+    - _WetSmoothness: 0.22
     - _Wetness: 1
     m_Colors:
     - _EarthTint: {r: 0.62, g: 0.54999995, b: 0.4699999, a: 1}
     - _GravelTint: {r: 1.05, g: 1.05, b: 1.05, a: 1}
     - _LeafTint: {r: 0.19999996, g: 0.09999997, b: 0.044999972, a: 1}
     - _PathBounds: {r: -85, g: -85, b: 170, a: 170}
-    - _TintDark: {r: 0.62, g: 0.74, b: 0.7, a: 1}
-    - _TintLight: {r: 1.12, g: 1.06, b: 0.8, a: 1}
+    - _TintDark: {r: 0.54999995, g: 0.78, b: 0.62, a: 1}
+    - _TintLight: {r: 0.85, g: 1.08, b: 0.72, a: 1}
   m_BuildTextureStacks: []

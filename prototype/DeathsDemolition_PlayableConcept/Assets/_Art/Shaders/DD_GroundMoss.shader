@@ -1,10 +1,10 @@
 // WP-075 C7b · DD/GroundMoss — the World v5 ground outside the plaza (the 170 m greybox ground box). C-00 note: the kit moss at a
 // flat 3 m tile read as a saturated, single-tone "golf green"; the HF frames show dark, wet, patterned moss broken by gravel, soil
-// and leaf patches and never bare ground. Everything is in world XZ (no box UVs): the AP-023 moss graded down (saturation / value)
-// and toned by a large-scale 2-octave field between a dark blue-green and an olive tint (~22 m and ~8 m), soil (ADR-015-1 earth)
+// and leaf patches and never bare ground. Everything is in world XZ (no box UVs): the AP-023 moss graded (saturation / value; AD MUST-1: hue 85–95°, V 0.40–0.48 in the sun, s ≤ 0.58 after LUT v2)
+// and toned by a 2-octave field between a dark blue-green and an olive tint (~14 m and ~5 m: a TP view must not read one lawn), soil (ADR-015-1 earth)
 // and gravel (AP-023) patches from a medium field (~6 m), leaf-litter flecks, and the path bands along the layout's lanes and
 // garden paths (_PathMask: R gravel core, G soil shoulder; WorldV5Ground.BuildPathMask) with a noise wobble so the edges are not
-// ruled. Wet throughout (the Islak Arduvaz look): albedo × _WetAlbedo, smoothness to the wet cap (≤ 0.60, AP-018). Lighting path
+// ruled. Wet throughout (the Islak Arduvaz look): albedo × _WetAlbedo, smoothness to the wet cap (0.22: moss is damp, not a mirror). Lighting path
 // and passes are DD/GroundTiles' (realtime + probes; the ground box is not lightmapped).
 Shader "DD/GroundMoss"
 {
@@ -22,21 +22,21 @@ Shader "DD/GroundMoss"
         _GravelTile("Gravel tile (m)", Range(0.5, 8)) = 2.0
         _EarthTile("Earth tile (m)", Range(0.5, 8)) = 4.0
         [Header(Moss grade)]
-        _MossSaturation("Moss saturation", Range(0, 1.5)) = 0.65
-        _MossValue("Moss value scale (linear)", Range(0.2, 2)) = 0.75
-        _TintDark("Tone field: dark end (linear)", Color) = (0.62, 0.74, 0.70, 1)
-        _TintLight("Tone field: light end (linear)", Color) = (1.12, 1.06, 0.80, 1)
-        _ToneScale("Tone field scale (m)", Range(5, 80)) = 22.0
-        _ToneContrast("Tone field contrast", Range(0.5, 4)) = 2.4
+        _MossSaturation("Moss saturation", Range(0, 1.5)) = 0.66
+        _MossValue("Moss value scale (linear)", Range(0.2, 4)) = 1.6
+        _TintDark("Tone field: dark end (linear)", Color) = (0.55, 0.78, 0.62, 1)
+        _TintLight("Tone field: light end (linear)", Color) = (0.85, 1.08, 0.72, 1)
+        _ToneScale("Tone field scale (m)", Range(5, 80)) = 14.0
+        _ToneContrast("Tone field contrast", Range(0.5, 4)) = 3.0
         [Header(Patches)]
         _PatchScale("Patch field scale (m)", Range(1, 20)) = 6.0
-        _SoilCover("Soil patch cover", Range(0, 0.5)) = 0.12
+        _SoilCover("Soil patch cover", Range(0, 0.5)) = 0.18
         _GravelCover("Gravel patch cover", Range(0, 0.5)) = 0.05
         _PatchEdge("Patch edge width", Range(0.01, 0.3)) = 0.08
         _EarthTint("Earth tint (linear)", Color) = (0.62, 0.55, 0.47, 1)
         _GravelTint("Gravel tint (linear)", Color) = (1.05, 1.05, 1.05, 1)
         _LeafScale("Leaf fleck scale (m)", Range(0.2, 4)) = 0.9
-        _LeafCover("Leaf fleck cover", Range(0, 0.4)) = 0.10
+        _LeafCover("Leaf fleck cover", Range(0, 0.4)) = 0.16
         _LeafTint("Leaf litter albedo (linear)", Color) = (0.20, 0.10, 0.045, 1)
         _PathWobble("Path edge wobble (m)", Range(0, 2)) = 0.6
         [Header(Surface)]
@@ -46,7 +46,7 @@ Shader "DD/GroundMoss"
         _EarthSmoothness("Earth smoothness", Range(0, 1)) = 0.14
         _Wetness("Wetness", Range(0, 1)) = 1.0
         _WetAlbedo("Wet albedo scale (linear)", Range(0.5, 1)) = 0.82
-        _WetSmoothness("Wet smoothness cap (AP-018)", Range(0, 0.6)) = 0.52
+        _WetSmoothness("Wet smoothness cap (AP-018; AD K4: 0.52 / 0.38 gave the TP view's sunlit moss a grazing sheen over the slate's value)", Range(0, 0.6)) = 0.22
         [HideInInspector] _Cull("__cull", Float) = 2.0
     }
 

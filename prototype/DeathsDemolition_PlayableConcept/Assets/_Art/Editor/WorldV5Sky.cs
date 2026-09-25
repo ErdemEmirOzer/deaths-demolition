@@ -21,14 +21,17 @@ namespace DD.Art.Pipeline.EditorTools
     {
         public const string RootName = "Sky v2 (C3)";
         public const float DriftCompassDegrees = 52f;
+        /// <summary>AD S3: cloud cover ≈ 80 → 60 % (alpha^1.6 on the cloud planes; the horizon plates stay at 1).</summary>
+        public const float CloudAlphaPower = 1.6f;
         public static string MeshFolder => GreyboxV6Builder.DataFolder + "/Sky";
 
         public static readonly (string layer, int queue)[] PlateQueues = { ("far", 2896), ("mid", 2897), ("near", 2899) };
 
         public static readonly (string name, string role, float height, float half, float tile, float speed, int queue)[] Clouds =
         {
-            ("Clouds_Far", "cloud_far", 900f, 6000f, 2000f / 6f, 5.0f, 2894),
-            ("Clouds_Near", "cloud_near", 500f, 4000f, 500f, 3.5f, 2895),
+            // WP-075 AD S3 (TP / FP read a 2–3° wallpaper): tiles × 3.5 — the near cumulus 8–20°, the far deck 25–45°.
+            ("Clouds_Far", "cloud_far", 900f, 6000f, 3.5f * 2000f / 6f, 5.0f, 2894),
+            ("Clouds_Near", "cloud_near", 500f, 4000f, 3.5f * 500f, 3.5f, 2895),
         };
 
         public static readonly (string name, string role, float compass, float radius, float height, int queue, bool flip)[] Cards =
@@ -76,7 +79,9 @@ namespace DD.Art.Pipeline.EditorTools
             {
                 Mesh mesh = Quad("SM_sky_" + c.name, new[] { new Vector3(-c.half, 0f, -c.half), new Vector3(-c.half, 0f, c.half), new Vector3(c.half, 0f, c.half), new Vector3(c.half, 0f, -c.half) },
                     new[] { new Vector2(-c.half / c.tile, -c.half / c.tile), new Vector2(-c.half / c.tile, c.half / c.tile), new Vector2(c.half / c.tile, c.half / c.tile), new Vector2(c.half / c.tile, -c.half / c.tile) });
-                Plate(root, c.name, new Vector3(0f, c.height, 0f), Quaternion.identity, mesh, PlateMaterial(c.role, c.queue, drift * (c.speed / c.tile)));
+                Material cloud = PlateMaterial(c.role, c.queue, drift * (c.speed / c.tile));
+                cloud.SetFloat("_AlphaPower", CloudAlphaPower);
+                Plate(root, c.name, new Vector3(0f, c.height, 0f), Quaternion.identity, mesh, cloud);
                 n++;
             }
 
@@ -133,6 +138,7 @@ namespace DD.Art.Pipeline.EditorTools
             m.SetTexture("_BaseMap", texture);
             m.SetColor("_BaseColor", Color.white);
             m.SetVector("_ScrollUV", new Vector4(scroll.x, scroll.y, 0f, 0f));
+            m.SetFloat("_AlphaPower", 1f);
             m.renderQueue = queue;
             m.enableInstancing = false;
             EditorUtility.SetDirty(m);

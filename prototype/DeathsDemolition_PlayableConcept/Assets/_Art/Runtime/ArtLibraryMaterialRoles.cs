@@ -263,7 +263,11 @@ namespace DD.Art
             rows.Add(new Spec { Role = "ap023_rock_moss", Kind = Kind.Textured, TextureRole = "ap023_rock_boulder" });
             foreach (string atlas in new[] { "bamboo_leaves", "groundcover", "hishigaki_card", "momiji_sprigs", "pine_needles", "reeds_iris", "sakura_sprigs", "satsuki", "violet_sprigs" })
             {
-                rows.Add(new Spec { Role = "ap023_" + atlas, Kind = Kind.Cutout, TextureRole = "ap023_" + atlas, Shader = ShaderKind.FoliageWind, NoPackedMap = true, Smoothness = 0.40f });
+                var spec = new Spec { Role = "ap023_" + atlas, Kind = Kind.Cutout, TextureRole = "ap023_" + atlas, Shader = ShaderKind.FoliageWind, NoPackedMap = true, Smoothness = 0.40f };
+                // WP-075 AD MUST-1 (K4 value order: green under stone): sunlit bamboo leaves read V ≈ 0.80 / s ≈ 0.55 — the AD's × 0.70
+                // left the TP grove's green median level with the slate (0.45 / 0.44), so × 0.60; smoothness 0.25.
+                if (atlas == "bamboo_leaves") { spec.Tint = new Color(0.60f, 0.60f, 0.60f, 1f); spec.Smoothness = 0.25f; }
+                rows.Add(spec);
             }
 
             rows.Add(new Spec { Role = "ap023_cloth", Kind = Kind.Flat, FlatLinearAlbedo = new Color(0.0273f, 0.0232f, 0.0194f, 1f), Smoothness = 0.20f });

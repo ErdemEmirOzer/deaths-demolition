@@ -33,7 +33,7 @@
         6,
         8,
         -10,
-        14,
+        6,
         6,
         8,
         4,
@@ -43,7 +43,7 @@
         0,
         2,
         8,
-        -4,
+        -8,
         0,
         -6,
         0,
@@ -104,7 +104,7 @@
   "lut": {
     "file": "DD_Look_v2.png",
     "size": 32,
-    "sha256": "812caa87bc5613bd72d415d258782d01c7d9a48f374b98332340151df3fc388c",
+    "sha256": "a73fdbdb6b72c7ce19e259c88b45810c8bde2517201ce8ad2ffcb5f3ddc770db",
     "layout": "URP ApplyLut2D 1024×32 (DD_Neutral_32.png)"
   },
   "appliedAfter": "the v6 look profile (DD_Look_v5: DD_Overcast_v1's Neutral tonemap / contrast / saturation / WB, colour lookup → v2)",
@@ -114,21 +114,21 @@
     "frames": [
       {
         "frame": "v5-hf-center.png",
-        "meanDeltaE": 0.57,
-        "p95": 1.099
+        "meanDeltaE": 0.555,
+        "p95": 1.103
       },
       {
         "frame": "gb-tp-plaza-hall.png",
-        "meanDeltaE": 0.612,
-        "p95": 1.254
+        "meanDeltaE": 0.597,
+        "p95": 1.198
       },
       {
         "frame": "v5-hf-south.png",
-        "meanDeltaE": 0.497,
-        "p95": 0.976
+        "meanDeltaE": 0.478,
+        "p95": 0.975
       }
     ],
     "pass": true
   },
-  "builtUtc": "2026-09-25T03:39:08Z"
+  "builtUtc": "2026-09-25T05:11:56Z"
 }

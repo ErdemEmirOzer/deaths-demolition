@@ -8,6 +8,7 @@ Shader "DD/SkyPlate"
         [MainTexture] _BaseMap("Plate (RGBA sheet)", 2D) = "white" {}
         [MainColor] _BaseColor("Tint", Color) = (1, 1, 1, 1)
         _ScrollUV("UV scroll per second (xy; WP-075 C3 cloud planes)", Vector) = (0, 0, 0, 0)
+        _AlphaPower("Alpha power (WP-075 AD S3: > 1 thins the cloud cover, 1 = the sheet)", Range(0.5, 4)) = 1
     }
 
     SubShader
@@ -36,6 +37,7 @@ Shader "DD/SkyPlate"
                 float4 _BaseMap_ST;
                 half4 _BaseColor;
                 float4 _ScrollUV;
+                half _AlphaPower;
             CBUFFER_END
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
 
@@ -65,6 +67,7 @@ Shader "DD/SkyPlate"
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 half4 c = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv) * _BaseColor;
+                c.a = pow(saturate(c.a), _AlphaPower);   // AD S3: fewer, larger clouds with blue windows (cover ≈ 80 → 60 %)
                 return c;   // no MixFog on purpose (AP-019 contract: fog-excluded)
             }
             ENDHLSL

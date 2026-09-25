@@ -121,6 +121,20 @@ namespace DD.Art.Tests.PlayMode
             return false;
         }
 
+        /// <summary>WP-075 AD S2 · an optional 10th CSV column: the cloud phase for that pose — lit / shadow at its look-at point.</summary>
+        public static string PhaseFor(string poseName)
+        {
+            string csv = Environment.GetEnvironmentVariable("DD_ART_CAPTURE_POSES");
+            if (string.IsNullOrEmpty(csv) || !File.Exists(csv)) return null;
+            foreach (string line in File.ReadAllLines(csv))
+            {
+                string[] f = line.Split(',');
+                if (f.Length >= 10 && f[0].Trim() == poseName) return f[9].Trim().ToLowerInvariant();
+            }
+
+            return null;
+        }
+
         public static string OutputDir()
         {
             string dir = Environment.GetEnvironmentVariable("DD_ART_CAPTURE_DIR");
@@ -166,7 +180,13 @@ namespace DD.Art.Tests.PlayMode
                 bool look = ModeFor(pose.name, out CameraMode mode) && mode != CameraMode.TopDown;
                 CameraModeService.Request(look ? mode : CameraMode.TopDown, true);
                 // WP-075 C4 B: the screen shafts follow the cloud cookie at the camera — TP / FP frames are taken in a sun patch.
-                if (look && CloudShadowDriver.Active != null)
+                string phase = PhaseFor(pose.name);
+                if ((phase == "lit" || phase == "shadow") && CloudShadowDriver.Active != null)
+                {
+                    LookReferenceTests.CookiePhases(CloudShadowDriver.Active, pose.lookAt, out float litPhase, out float shadowPhase, out float _, out float _);
+                    CloudShadowDriver.ForcedPhase = phase == "lit" ? litPhase : shadowPhase;
+                }
+                else if (look && CloudShadowDriver.Active != null)
                 {
                     LookReferenceTests.CookiePhases(CloudShadowDriver.Active, pose.position, out float litPhase, out float _, out float _, out float _);
                     CloudShadowDriver.ForcedPhase = litPhase;

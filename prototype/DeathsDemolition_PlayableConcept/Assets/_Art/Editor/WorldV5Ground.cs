@@ -74,11 +74,17 @@ namespace DD.Art.Pipeline.EditorTools
         }
 
         /// <summary>DD/GroundTiles values set on every ground material (AD B5b: MUST-2 clustered puddles and near-mirror water, MUST-4 grade).</summary>
+        /// <summary>AD S1 cool tint (linear, R/B ≈ 0.72 against the 4900 K sun and LUT v2's warm highlights; 0.64 overshot to 226° / s 0.29, 0.77 gave 206° / s 0.07).</summary>
+        public static readonly Color AlbedoTint = new Color(0.86f, 1.00f, 1.19f, 1f);
+
         public static readonly (string name, float value)[] MaterialValues =
         {
-            ("_NormalStrength", 1f), ("_Occlusion", 1f), ("_Wetness", 1f), ("_WetAlbedo", 0.82f), ("_WetSmoothness", 0.60f),
-            ("_PuddleThreshold", 0.45f), ("_PuddleRamp", 0.15f), ("_PuddleSmoothness", 0.92f), ("_PuddleDarken", 0.85f),
-            ("_PuddleScale", 7f), ("_PuddleField", 0.62f), ("_PuddleFieldRamp", 0.06f), ("_AlbedoSaturation", 0.28f), ("_AlbedoValue", 2.5f),
+            // WP-075 AD S1: the slate read beige (hue ≈ 35°, V ≈ 0.70 in the sun) → value 2.5 → 2.0 with a cool tint (AlbedoTint), toward
+            // #6C7680 (205–215°, V 0.42–0.52 sun / 0.30–0.38 shade); puddles only from the world field (3–6 m blobs, off the tile grid),
+            // smoothness 0.72 in them and 0.55 on the wet body.
+            ("_NormalStrength", 1f), ("_Occlusion", 1f), ("_Wetness", 1f), ("_WetAlbedo", 0.82f), ("_WetSmoothness", 0.55f),
+            ("_PuddleThreshold", 0.45f), ("_PuddleRamp", 0.15f), ("_PuddleSmoothness", 0.72f), ("_PuddleDarken", 0.85f), ("_TilePuddle", 0f),
+            ("_PuddleScale", 4.5f), ("_PuddleField", 0.66f), ("_PuddleFieldRamp", 0.06f), ("_AlbedoSaturation", 0.28f), ("_AlbedoValue", 2.0f),
             ("_PlanarStrength", 1f), ("_PlanarDistortion", 0.03f), ("_PlanarWet", 0.35f),
         };
 
@@ -258,6 +264,7 @@ namespace DD.Art.Pipeline.EditorTools
             m.SetTexture("_NormalMap", Load(set, "Normal"));
             m.SetTexture("_MaskMap", Load(set, "Mask"));
             foreach ((string name, float value) in MaterialValues) m.SetFloat(name, value);
+            m.SetColor("_AlbedoTint", AlbedoTint);
             m.enableInstancing = true;
             EditorUtility.SetDirty(m);
             return m;
