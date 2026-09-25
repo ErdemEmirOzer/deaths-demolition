@@ -313,7 +313,8 @@ namespace DD.Prototype.UI
             }
 
             stack.Gap(UiSpace.S);
-            _xpBar = UiFactory.Bar("XpBar", host, UiColor.BarXp, 14f);
+            // AD R1-D MUST-1: BarXp is Sakura400 - on Results sakura belongs to NEW / NEW BEST, so the bar fills cream.
+            _xpBar = UiFactory.Bar("XpBar", host, UiColor.TextPrimary, 14f);
             _xpBar.EnableGhost();
             _xpBar.SetValue(_model.ProgressBefore01 >= 0f ? _model.ProgressBefore01 : 0f, true);
             stack.Add((RectTransform)_xpBar.transform, 14f);
