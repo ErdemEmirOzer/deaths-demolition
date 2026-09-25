@@ -1,13 +1,15 @@
 using DD.Prototype.Core.Config;
 using DD.Prototype.Navigation;
 using DD.Prototype.Spawn;
+using DD.Prototype.World;
 using NUnit.Framework;
 using UnityEngine;
 
 namespace DD.Prototype.Tests.EditMode
 {
     /// <summary>
-    /// WP-076 B6 · the v6 world profile (C-00 decision A): off by default (no v6 scene in EditMode → AP005 values),
+    /// WP-076 B6 · the v6 world profile (C-00 decision A; V6 is the default world since afabd44f): the layout signal V6 or a
+    /// loaded v6 scene → v6, the AP005-forced layout without a v6 scene → AP005 values (Resolve, no editor-scene dependence),
     /// ApplyV6 writes the 22–45 / 75 m distances into a copy, inner gates weigh ×0.25 within 10 m and ×0.7 above a
     /// 50 % inner share of the last 24 spawns, edge gates and the profile-off case are untouched.
     /// </summary>
@@ -32,11 +34,14 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
-        public void VarsayilanKapali_V6Mesafeleri_Kopyaya()
+        public void V6Varsayilan_Ap005Zorlamali_V6Mesafeleri_Kopyaya()
         {
-            SpawnWorldProfile.Refresh();
-            Assert.IsFalse(SpawnWorldProfile.IsV6, "EditMode'da v6 sahnesi yok → AP005 değerleri");
+            Assert.IsTrue(SpawnWorldProfile.Resolve(WorldLayoutKind.V6, false), "varsayılan dünya V6 → v6 profili");
+            Assert.IsTrue(SpawnWorldProfile.Resolve(WorldLayoutKind.Ap005, true), "sinyalsiz v6 sahnesi → yedek yol v6");
+            Assert.IsFalse(SpawnWorldProfile.Resolve(WorldLayoutKind.Ap005, false), "AP005 zorlamalı → AP005 değerleri");
             Assert.IsFalse(SpawnWorldProfile.AlwaysV6, "C-00 (A): tek satır anahtarı kapalı");
+            SpawnWorldProfile.Override = false; SpawnWorldProfile.Refresh();
+            Assert.IsFalse(SpawnWorldProfile.IsV6, "Override false → AP005");
             SpawnWorldProfile.Override = true; SpawnWorldProfile.Refresh();
             Assert.IsTrue(SpawnWorldProfile.IsV6);
             var asil = new SpawnConfigSection();

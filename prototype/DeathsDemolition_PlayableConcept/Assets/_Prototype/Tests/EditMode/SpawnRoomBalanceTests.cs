@@ -17,7 +17,9 @@ namespace DD.Prototype.Tests.EditMode
     {
         private readonly List<GameObject> _made = new List<GameObject>();
 
-        [SetUp] public void SetUp() { RegionNavProfile.ResetStatics(); SpawnRoomBalance.ResetStatics(); SpawnWorldProfile.ResetStatics(); }
+        private WorldLayoutKind _layout;
+
+        [SetUp] public void SetUp() { _layout = WorldLayout.Current; RegionNavProfile.ResetStatics(); SpawnRoomBalance.ResetStatics(); SpawnWorldProfile.ResetStatics(); }
 
         [TearDown]
         public void TearDown()
@@ -25,7 +27,7 @@ namespace DD.Prototype.Tests.EditMode
             foreach (GameObject go in _made) { if (go != null) { go.GetComponent<NavRegionMarker>()?.Unregister(); Object.DestroyImmediate(go); } }
             _made.Clear();
             RegionNavProfile.ResetStatics(); SpawnRoomBalance.ResetStatics(); SpawnWorldProfile.ResetStatics();
-            WorldLayout.SetCurrent(WorldLayoutKind.Ap005);
+            WorldLayout.SetCurrent(_layout);
         }
 
         private void Hacim(Vector3 at, string id, NavRegionKind kind, Vector3 size, string roomId)
@@ -73,14 +75,12 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void Profil_WorldLayoutSinyalini_Izler()
         {
-            SpawnWorldProfile.Refresh();
-            Assert.IsFalse(SpawnWorldProfile.IsV6, "varsayılan Ap005");
             WorldLayout.SetCurrent(WorldLayoutKind.V6);
             SpawnWorldProfile.Refresh();
-            Assert.IsTrue(SpawnWorldProfile.IsV6, "S-05 sinyali V6 → v6 profili");
+            Assert.IsTrue(SpawnWorldProfile.IsV6, "S-05 sinyali V6 (varsayılan dünya) → v6 profili");
             WorldLayout.SetCurrent(WorldLayoutKind.Ap005);
             SpawnWorldProfile.Refresh();
-            Assert.IsFalse(SpawnWorldProfile.IsV6);
+            Assert.AreEqual(SpawnWorldProfile.AnyV6SceneLoaded(), SpawnWorldProfile.IsV6, "AP005 zorlamalı: v6 yalnız yüklü v6 sahnesinin yedek yolundan");
         }
     }
 }

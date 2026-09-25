@@ -42,13 +42,21 @@ namespace DD.Prototype.Spawn
             if (Override.HasValue) { IsV6 = Override.Value; return; }
             // WP-076 B6c: the world bootstrap's layout signal (S-05 WP-074 B1b) — the greybox and the World v5 scene share the
             // v6 layout under different names; the scene-name check stays only as a fallback for a v6 scene without the signal
-            bool v6 = AlwaysV6 || DD.Prototype.World.WorldLayout.Current == DD.Prototype.World.WorldLayoutKind.V6;
-            for (int i = 0; i < SceneManager.sceneCount && !v6; i++)
+            IsV6 = Resolve(DD.Prototype.World.WorldLayout.Current, AnyV6SceneLoaded());
+        }
+
+        /// <summary>The profile for a layout signal and whether a <see cref="V6ScenePrefix"/> scene is loaded (pure; tests).</summary>
+        public static bool Resolve(DD.Prototype.World.WorldLayoutKind layout, bool v6SceneLoaded)
+            => AlwaysV6 || layout == DD.Prototype.World.WorldLayoutKind.V6 || v6SceneLoaded;
+
+        public static bool AnyV6SceneLoaded()
+        {
+            for (int i = 0; i < SceneManager.sceneCount; i++)
             {
                 Scene s = SceneManager.GetSceneAt(i);
-                if (s.isLoaded && s.name.StartsWith(V6ScenePrefix, System.StringComparison.Ordinal)) v6 = true;
+                if (s.isLoaded && s.name.StartsWith(V6ScenePrefix, System.StringComparison.Ordinal)) return true;
             }
-            IsV6 = v6;
+            return false;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]

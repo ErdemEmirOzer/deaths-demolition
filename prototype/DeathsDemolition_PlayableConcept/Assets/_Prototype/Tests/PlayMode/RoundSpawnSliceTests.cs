@@ -47,6 +47,7 @@ namespace DD.Prototype.Tests.PlayMode
         private RunDirector _run;
         private EnemySpawnDirector _director;
         private PlayerRig _rig;
+        private float _sinir = MaxUseful;
 
         // ============================================================== kurulum
 
@@ -766,11 +767,15 @@ namespace DD.Prototype.Tests.PlayMode
             yield return YeniRound();
             _rig.Health.DiagnosisInvulnerable = true;
 
-            var rapor = new StringBuilder("[DD-TEST] wp003.p7\n");
+            // WP-076 (afabd44f): V6 varsayılan dünya — tur başı profil v6, sınır 75 m (AP005 zorlamalı yolda config'in 62 m'si)
+            Assert.IsTrue(SpawnWorldProfile.IsV6, "varsayılan dünya V6 değil");
+            _sinir = SpawnWorldProfile.IsV6 ? SpawnWorldProfile.V6MaxUseful : MaxUseful;
+            var rapor = new StringBuilder("[DD-TEST] wp003.p7 sınır=" + _sinir + "m\n");
 
             // Konum A: kuzeydoğu (taş yol köşesi yakını). Konum B: güneybatı (bambu girişi
             // kavşağı yakını). İkisi de halka üzerinde yürünebilir zemin; her birinde karşı
-            // taraftaki girişlerin yol mesafesi MaxUsefulDistance'ı (62 m) aşar.
+            // taraftaki girişlerin yol mesafesi etkin MaxUsefulDistance'ı aşar (V6: 75 m; A'dan
+            // SW_TeaHouse / W_Bamboo*, B'den NE_Corner / N_RearEast / E_Garden* düz çizgide 76–95 m).
             // WP-030: A, AP-005 dünyasında (WP-014) (20,16)'dan en uzak nokta 61,7 m kalıyordu (kapı
             // sınanmıyor — WP-018 tabanında da FAIL); köşeye taşındı: SW girişleri > 62 m.
             Vector3 konumA = new Vector3(25f, 0.1f, 21f);
@@ -875,7 +880,7 @@ namespace DD.Prototype.Tests.PlayMode
             {
                 SpawnPointRuntime p = noktalar[i];
                 agirliklar[p.Id] = p.LastWeight;
-                bool cokUzak = p.PathDistance > MaxUseful || p.PathStatus == NavPathStatus.Invalid && p.PathDistance > MaxUseful;
+                bool cokUzak = p.PathDistance > _sinir;
                 if (cokUzak)
                 {
                     uzakKume.Add(p.Id);
