@@ -267,6 +267,17 @@ namespace DD.Prototype.Profile
 
             candidate.SpecialWeaponPickups = SaturatingAdd(candidate.SpecialWeaponPickups, Math.Max(0, feats.SpecialWeaponPickups));
             candidate.FlawlessRounds = SaturatingAdd(candidate.FlawlessRounds, Math.Max(0, feats.FlawlessRounds));
+
+            // WP-077 A10: the run's weapon / Special feats — totals add up, "max" feats keep the best single event.
+            if (candidate.FeatLifetime == null || candidate.FeatLifetime.Length != DD.Prototype.Achievements.FeatKinds.Count) candidate.Sanitize();
+            for (int k = 0; k < DD.Prototype.Achievements.FeatKinds.Count; k++)
+            {
+                var kind = (DD.Prototype.Achievements.FeatKind)k;
+                int run = feats.Feat(kind);
+                candidate.FeatLifetime[k] = DD.Prototype.Achievements.FeatKinds.IsMax(kind)
+                    ? Math.Max(candidate.FeatLifetime[k], run)
+                    : SaturatingAdd(candidate.FeatLifetime[k], run);
+            }
         }
 
         /// <summary>Folds the run's counters into the candidate. Saturating everywhere.</summary>

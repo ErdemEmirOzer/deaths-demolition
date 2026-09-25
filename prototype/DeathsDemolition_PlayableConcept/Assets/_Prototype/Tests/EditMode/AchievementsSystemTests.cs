@@ -176,7 +176,7 @@ namespace DD.Prototype.Tests.EditMode
             // Tanım yalnız sayaç + eşik taşır; hiçbir alan oynanış değeri değildir (DEC-007). RequiresEffect (WP-077 B4)
             // yalnız görünürlük kapısıdır: ağaç etkisi canlı değilken başarım listelenmez.
             FieldInfo[] alanlar = typeof(AchievementDefinition).GetFields(BindingFlags.Public | BindingFlags.Instance);
-            CollectionAssert.AreEquivalent(new[] { "Id", "DisplayName", "Description", "Condition", "Threshold", "TargetTier", "Scope", "Rarity", "RequiresEffect" },
+            CollectionAssert.AreEquivalent(new[] { "Id", "DisplayName", "Description", "Condition", "Threshold", "TargetTier", "Scope", "Rarity", "RequiresEffect", "Feat" },
                 Array.ConvertAll(alanlar, f => f.Name));
         }
 

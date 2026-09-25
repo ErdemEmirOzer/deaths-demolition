@@ -167,6 +167,18 @@ namespace DD.Prototype.Profile
         /// <summary>WP-077: kills per weapon key (mastery M1–M5 gates).</summary>
         public List<WeaponMasteryEntry> WeaponMastery = new List<WeaponMasteryEntry>();
 
+        /// <summary>
+        /// WP-077 A10: lifetime weapon / Special feats by <see cref="DD.Prototype.Achievements.FeatKind"/> index — a total
+        /// for sum feats, the best single event for max feats (FeatKinds.IsMax). Absent in older files → zeros.
+        /// </summary>
+        public int[] FeatLifetime = new int[DD.Prototype.Achievements.FeatKinds.Count];
+
+        public int FeatTotal(DD.Prototype.Achievements.FeatKind kind)
+        {
+            int i = (int)kind;
+            return FeatLifetime != null && i >= 0 && i < FeatLifetime.Length ? FeatLifetime[i] : 0;
+        }
+
         // ---------------------------------------------------- replay authority (v3)
 
         /// <summary>
@@ -240,6 +252,7 @@ namespace DD.Prototype.Profile
             BestRunXp = Math.Max(0, BestRunXp);
             SpecialWeaponPickups = Math.Max(0, SpecialWeaponPickups);
             FlawlessRounds = Math.Max(0, FlawlessRounds);
+            FeatLifetime = CleanFeats(FeatLifetime);
 
             Achievements = Clean(Achievements);
             UnlockedWeapons = Clean(UnlockedWeapons);
@@ -306,9 +319,15 @@ namespace DD.Prototype.Profile
                 HighestRound < 0 || RunsPlayed < 0 || RoundsCompleted < 0 ||
                 StandardKills < 0 || SpecialKills < 0 || EliteKills < 0 || UltraKills < 0 ||
                 UnattributedKills < 0 || TotalKills < 0 || ArmorPiecesBroken < 0 || BestRunXp < 0 ||
-                SpecialWeaponPickups < 0 || FlawlessRounds < 0)
+                SpecialWeaponPickups < 0 || FlawlessRounds < 0 ||
+                FeatLifetime == null || FeatLifetime.Length != DD.Prototype.Achievements.FeatKinds.Count)
             {
                 return false;
+            }
+
+            for (int i = 0; i < FeatLifetime.Length; i++)
+            {
+                if (FeatLifetime[i] < 0) return false;
             }
 
             int attributed = ProfileProgression.SaturatingSum(StandardKills, SpecialKills, EliteKills, UltraKills);
@@ -390,6 +409,7 @@ namespace DD.Prototype.Profile
                 BestRunXp = BestRunXp,
                 SpecialWeaponPickups = SpecialWeaponPickups,
                 FlawlessRounds = FlawlessRounds,
+                FeatLifetime = CleanFeats(FeatLifetime),
                 Achievements = new List<string>(Achievements ?? new List<string>()),
                 UnlockedWeapons = new List<string>(UnlockedWeapons ?? new List<string>()),
                 UnlockedBranches = new List<string>(UnlockedBranches ?? new List<string>()),
@@ -530,6 +550,14 @@ namespace DD.Prototype.Profile
             }
 
             return true;
+        }
+
+        /// <summary>WP-077 A10: exactly FeatKinds.Count non-negative entries (a short / missing array grows with zeros).</summary>
+        private static int[] CleanFeats(int[] source)
+        {
+            var result = new int[DD.Prototype.Achievements.FeatKinds.Count];
+            for (int i = 0; source != null && i < source.Length && i < result.Length; i++) result[i] = Math.Max(0, source[i]);
+            return result;
         }
 
         /// <summary>Drops nulls, blanks and duplicates while preserving order.</summary>

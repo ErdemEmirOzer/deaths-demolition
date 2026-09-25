@@ -33,6 +33,7 @@ namespace DD.Prototype.Achievements
             public string Scope;
             public string Rarity;
             public string RequiresEffect;
+            public string Feat;
         }
 
         [Serializable]
@@ -210,6 +211,23 @@ namespace DD.Prototype.Achievements
                 return null;
             }
 
+            // WP-077 A10: a Feat rule names its feat; the arsenal count lives only in the profile.
+            FeatKind feat = FeatKind.RaijuChainMax;
+            if (condition == AchievementCondition.Feat)
+            {
+                if (string.IsNullOrEmpty(d.Feat) || !Enum.TryParse(d.Feat, false, out feat) || !Enum.IsDefined(typeof(FeatKind), feat))
+                {
+                    why = "unknown feat '" + d.Feat + "' for '" + d.Id + "'";
+                    return null;
+                }
+
+                if (feat == FeatKind.ArsenalRound10 && scope != AchievementScope.Lifetime)
+                {
+                    why = "feat ArsenalRound10 is lifetime only ('" + d.Id + "')";
+                    return null;
+                }
+            }
+
             AchievementRarity rarity = AchievementRarity.Common;
             if (!string.IsNullOrEmpty(d.Rarity) && (!Enum.TryParse(d.Rarity, false, out rarity) || !Enum.IsDefined(typeof(AchievementRarity), rarity)))
             {
@@ -227,7 +245,8 @@ namespace DD.Prototype.Achievements
                 TargetTier = tier,
                 Scope = scope,
                 Rarity = rarity,
-                RequiresEffect = d.RequiresEffect ?? string.Empty
+                RequiresEffect = d.RequiresEffect ?? string.Empty,
+                Feat = feat
             };
         }
 

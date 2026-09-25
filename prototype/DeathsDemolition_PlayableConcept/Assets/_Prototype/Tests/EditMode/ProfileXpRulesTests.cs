@@ -342,7 +342,9 @@ namespace DD.Prototype.Tests.EditMode
                 // WP-077 (şema v5): meta YOL — Kül (kazanılan/harcanan/bakiye), meta düğümler, respec, pin, "görüldü",
                 // tek seferlik Kül kilometre taşları, silah ustalığı (öldürme). Altın/koşu içi ağaç dosyaya girmez (REQ-018).
                 "AshBalance", "AshEarnedTotal", "AshSpentTotal", "MetaNodes", "MetaRespecCount", "MetaPinnedNode",
-                "MetaSeen", "AshMilestones", "WeaponMastery"
+                "MetaSeen", "AshMilestones", "WeaponMastery",
+                // WP-077 A10 (v5, eksikse sıfır): silah / Special feat sayaçları — başarım istatistiği, oynanış değeri değil (DEC-007).
+                "FeatLifetime"
             }, adlar, "ProfileData şeması değişti; kalıcılık sınırı yeniden gözden geçirilmeli");
             Assert.AreEqual(5, ProfileData.CurrentVersion);
             StringAssert.DoesNotContain("AppliedCompletionIds", json, "halka diske yazılmaz (v3)");

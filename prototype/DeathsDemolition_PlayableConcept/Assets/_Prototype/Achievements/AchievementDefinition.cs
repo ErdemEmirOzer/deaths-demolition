@@ -58,7 +58,10 @@ namespace DD.Prototype.Achievements
         SpecialLinkII = 16,
 
         /// <summary>WP-077: the highest mastery level (M1–M5) any one weapon has (lifetime only).</summary>
-        WeaponMastery = 17
+        WeaponMastery = 17,
+
+        /// <summary>WP-077 A10: a weapon / Special feat (<see cref="AchievementDefinition.Feat"/>): this run's value, or the lifetime one.</summary>
+        Feat = 18
     }
 
     /// <summary>Whether the threshold is measured over the whole profile or inside one run.</summary>
@@ -110,6 +113,9 @@ namespace DD.Prototype.Achievements
         /// (the tree's "unwired = LOCKED" rule, RunTreeEffects). Empty = always available.
         /// </summary>
         public string RequiresEffect = string.Empty;
+
+        /// <summary>WP-077 A10: which feat a <see cref="AchievementCondition.Feat"/> rule reads (a counter, never a gameplay value).</summary>
+        public FeatKind Feat;
 
         public bool IsUsable => !string.IsNullOrEmpty(Id) && Enum.IsDefined(typeof(AchievementCondition), Condition);
 

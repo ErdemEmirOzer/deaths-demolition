@@ -326,6 +326,126 @@
       "Threshold": 5,
       "Scope": "Lifetime",
       "Rarity": "Epic"
+    },
+    {
+      "Id": "raiju_full_chain",
+      "DisplayName": "Thunder Beast",
+      "Description": "Hit 8 enemies with one Raiju shot.",
+      "Condition": "Feat",
+      "Threshold": 8,
+      "Scope": "SingleRun",
+      "Rarity": "Uncommon",
+      "Feat": "RaijuChainMax"
+    },
+    {
+      "Id": "raiju_kills_100",
+      "DisplayName": "Storm Keeper",
+      "Description": "Defeat 100 enemies with Raiju in total.",
+      "Condition": "Feat",
+      "Threshold": 100,
+      "Scope": "Lifetime",
+      "Rarity": "Rare",
+      "Feat": "RaijuKills"
+    },
+    {
+      "Id": "raiju_grounded",
+      "DisplayName": "Grounded",
+      "Description": "Empty a full Raiju without shocking yourself.",
+      "Condition": "Feat",
+      "Threshold": 1,
+      "Scope": "SingleRun",
+      "Rarity": "Uncommon",
+      "Feat": "RaijuGrounded"
+    },
+    {
+      "Id": "namekuji_puddles",
+      "DisplayName": "Slick Courtyard",
+      "Description": "Have 8 gel puddles on the ground at once.",
+      "Condition": "Feat",
+      "Threshold": 8,
+      "Scope": "SingleRun",
+      "Rarity": "Rare",
+      "Feat": "PuddlesMax"
+    },
+    {
+      "Id": "namekuji_executioner",
+      "DisplayName": "Down Goes the Axe",
+      "Description": "Knock down an Executioner with Namekuji gel.",
+      "Condition": "Feat",
+      "Threshold": 1,
+      "Scope": "Lifetime",
+      "Rarity": "Uncommon",
+      "Feat": "GelKnockdownUltra"
+    },
+    {
+      "Id": "namekuji_skater",
+      "DisplayName": "Rain Skater",
+      "Description": "Defeat 25 enemies while they slide on gel in one run.",
+      "Condition": "Feat",
+      "Threshold": 25,
+      "Scope": "SingleRun",
+      "Rarity": "Rare",
+      "Feat": "GelSlideKills"
+    },
+    {
+      "Id": "tomi_line",
+      "DisplayName": "String of Pearls",
+      "Description": "Defeat 4 enemies with one Tomi shot.",
+      "Condition": "Feat",
+      "Threshold": 4,
+      "Scope": "SingleRun",
+      "Rarity": "Rare",
+      "Feat": "TomiKillsPerShotMax"
+    },
+    {
+      "Id": "bohiya_one_rocket",
+      "DisplayName": "Fire Arrow",
+      "Description": "Defeat 6 enemies with one Bohiya rocket.",
+      "Condition": "Feat",
+      "Threshold": 6,
+      "Scope": "SingleRun",
+      "Rarity": "Uncommon",
+      "Feat": "BohiyaKillsPerRocketMax"
+    },
+    {
+      "Id": "nito_double",
+      "DisplayName": "Both Blades",
+      "Description": "Defeat a Guard with both of Nito's barrels in one breath.",
+      "Condition": "Feat",
+      "Threshold": 1,
+      "Scope": "Lifetime",
+      "Rarity": "Uncommon",
+      "Feat": "NitoDoubleGuard"
+    },
+    {
+      "Id": "kurogane_plates",
+      "DisplayName": "Settled Iron",
+      "Description": "Break 10 armour pieces with one Kurogane magazine.",
+      "Condition": "Feat",
+      "Threshold": 10,
+      "Scope": "SingleRun",
+      "Rarity": "Rare",
+      "Feat": "KuroganePlatesPerMagMax"
+    },
+    {
+      "Id": "tetsui_runners",
+      "DisplayName": "Hammer Down",
+      "Description": "Stop 15 Runners with Tetsui in one run.",
+      "Condition": "Feat",
+      "Threshold": 15,
+      "Scope": "SingleRun",
+      "Rarity": "Uncommon",
+      "Feat": "TetsuiRunnerKills"
+    },
+    {
+      "Id": "full_arsenal",
+      "DisplayName": "Ten Answers",
+      "Description": "Reach round 10 with each classic weapon.",
+      "Condition": "Feat",
+      "Threshold": 10,
+      "Scope": "Lifetime",
+      "Rarity": "Epic",
+      "Feat": "ArsenalRound10"
     }
   ]
 }

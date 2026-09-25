@@ -78,6 +78,7 @@ namespace DD.Prototype.Achievements
         {
             s_token = string.IsNullOrEmpty(completionId) ? null : completionId;
             s_counters = RunFeatCounters.None;
+            s_counters.FeatValues = new int[FeatKinds.Count];
             s_damagedThisRound = false;
             s_roundOpen = false;
         }
@@ -88,6 +89,24 @@ namespace DD.Prototype.Achievements
             s_counters = RunFeatCounters.None;
             s_damagedThisRound = false;
             s_roundOpen = false;
+        }
+
+        // ------------------------------------------------------------- WP-077 A10 feats
+
+        /// <summary>A "max" feat: keeps the run's best single event (a chain, a shot, a rocket, a magazine). No run → ignored.</summary>
+        public static void RecordFeatMax(FeatKind kind, int value)
+        {
+            int i = (int)kind;
+            if (s_token == null || s_counters.FeatValues == null || i < 0 || i >= s_counters.FeatValues.Length) return;
+            if (value > s_counters.FeatValues[i]) s_counters.FeatValues[i] = value;
+        }
+
+        /// <summary>A "sum" feat: adds to the run's total. No run → ignored.</summary>
+        public static void AddFeat(FeatKind kind, int delta = 1)
+        {
+            int i = (int)kind;
+            if (s_token == null || s_counters.FeatValues == null || i < 0 || i >= s_counters.FeatValues.Length || delta <= 0) return;
+            s_counters.FeatValues[i] = s_counters.FeatValues[i] > int.MaxValue - delta ? int.MaxValue : s_counters.FeatValues[i] + delta;
         }
 
         // ------------------------------------------------------------- observers

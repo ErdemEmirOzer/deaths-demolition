@@ -59,7 +59,22 @@ namespace DD.Prototype.Achievements
             long value = definition.Scope == AchievementScope.SingleRun
                 ? RunValue(input, feats, definition)
                 : LifetimeValue(candidate, definition);
-            return value >= Math.Max(1, definition.Threshold);
+
+            // WP-077 A10: "round 10 with each weapon" counts this run's weapon now (its first-R10 record is written after).
+            if (definition.Condition == AchievementCondition.Feat && definition.Feat == FeatKind.ArsenalRound10 && definition.Scope == AchievementScope.Lifetime &&
+                input.ReachedRound >= 10 && !string.IsNullOrEmpty(input.WeaponKey) && !candidate.Has(candidate.AshMilestones, "r10:" + input.WeaponKey))
+            {
+                value++;
+            }
+            int threshold = Math.Max(1, definition.Threshold);
+            if (definition.Condition == AchievementCondition.Feat && definition.Feat == FeatKind.ArsenalRound10)
+            {
+                // "each classic weapon": the weapons this build carries (rl_1 joins when the Arsenal enables it).
+                int carried = DD.Prototype.Core.Weapons.WeaponRoster.Enabled.Count;
+                if (carried > 0) threshold = Math.Min(threshold, carried);
+            }
+
+            return value >= threshold;
         }
 
         /// <summary>The lifetime counter a definition reads, for progress display (current / threshold).</summary>
@@ -86,8 +101,23 @@ namespace DD.Prototype.Achievements
                 case AchievementCondition.ProfileLevel: return profile.ProfileLevel;
                 case AchievementCondition.CapstoneWeapons: return profile.CapstoneWeaponCount;
                 case AchievementCondition.WeaponMastery: return MetaPathRules.MasteryLevel(profile.HighestMasteryKills);
+                case AchievementCondition.Feat: return definition.Feat == FeatKind.ArsenalRound10 ? CountRound10Weapons(profile) : profile.FeatTotal(definition.Feat);
                 default: return 0;
             }
+        }
+
+        /// <summary>WP-077 A10: classic weapons with a first-round-10 record (the profile's "r10:&lt;key&gt;" Kül milestones).</summary>
+        public static int CountRound10Weapons(ProfileData profile)
+        {
+            int n = 0;
+            if (profile == null || profile.AshMilestones == null) return 0;
+            for (int i = 0; i < profile.AshMilestones.Count; i++)
+            {
+                string m = profile.AshMilestones[i];
+                if (m != null && m.StartsWith("r10:", StringComparison.Ordinal)) n++;
+            }
+
+            return n;
         }
 
         /// <summary>The single-run counter a definition reads. RunsPlayed / ProfileLevel have no run value (0).</summary>
@@ -114,6 +144,7 @@ namespace DD.Prototype.Achievements
                 case AchievementCondition.HearthStacks: return input.TreeHearthStacks;
                 case AchievementCondition.TreeFullLanes: return input.TreeFullLanes;
                 case AchievementCondition.SpecialLinkII: return input.TreeLinkII;
+                case AchievementCondition.Feat: return feats.Feat(definition.Feat);
                 default: return 0;
             }
         }
