@@ -1218,6 +1218,7 @@ namespace DD.Prototype.Enemies
             DamageHit scaled = hit;
             Func<ZombieEnemy, float> incoming = IncomingDamageScale;
             if (incoming != null) scaled.Amount *= incoming(this);
+            scaled.Amount *= DD.Prototype.Rounds.RunTreeHooks.StaggeredScale(this);   // WP-077 ks.impact.stagger
 
             DamageResult result = _body.ApplyDirectHit(in scaled, config != null ? config.Enemies.Armor : null);
 
@@ -1299,6 +1300,7 @@ namespace DD.Prototype.Enemies
 
             Func<ZombieEnemy, float> incoming = IncomingDamageScale;
             if (incoming != null) totalDamage *= incoming(this);   // WP-069 × WP-077 link.gel.slickfloor
+            totalDamage *= DD.Prototype.Rounds.RunTreeHooks.StaggeredScale(this);   // WP-077 ks.impact.stagger
 
             DamageResult result = _body.ApplyExplosion(
                 totalDamage,

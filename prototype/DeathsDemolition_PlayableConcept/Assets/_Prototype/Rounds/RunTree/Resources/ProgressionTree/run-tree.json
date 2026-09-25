@@ -11,18 +11,25 @@
    "effectId": "ks.piercing.line",
    "cost": 110,
    "offerWeight": 1.4,
-   "effectValue": 0.0
+   "effectValue": 0.0,
+   "args": [
+    {
+     "name": "count",
+     "value": 2
+    }
+   ]
   },
   {
    "branch": "Ricochet",
    "id": "ks_ricochet",
    "shortName": "Seeker",
    "displayName": "Ricochet Master",
-   "description": "Ricochets turn toward the nearest enemy instead of a random one.",
+   "description": "Ricochets search twice as far for their next target.",
    "effectId": "ks.ricochet.seeker",
    "cost": 110,
    "offerWeight": 1.4,
-   "effectValue": 0.0
+   "effectValue": 0.0,
+   "args": []
   },
   {
    "branch": "Explosion",
@@ -33,7 +40,17 @@
    "effectId": "ks.explosion.ashcloud",
    "cost": 110,
    "offerWeight": 1.4,
-   "effectValue": 0.25
+   "effectValue": 0.25,
+   "args": [
+    {
+     "name": "seconds",
+     "value": 2
+    },
+    {
+     "name": "value",
+     "value": 25
+    }
+   ]
   },
   {
    "branch": "Chain",
@@ -44,7 +61,13 @@
    "effectId": "ks.chain.web",
    "cost": 110,
    "offerWeight": 1.4,
-   "effectValue": 0.0
+   "effectValue": 0.0,
+   "args": [
+    {
+     "name": "count",
+     "value": 2
+    }
+   ]
   },
   {
    "branch": "FireRate",
@@ -55,7 +78,17 @@
    "effectId": "ks.firerate.warmup",
    "cost": 110,
    "offerWeight": 1.4,
-   "effectValue": 0.2
+   "effectValue": 0.2,
+   "args": [
+    {
+     "name": "seconds",
+     "value": 1.5
+    },
+    {
+     "name": "value",
+     "value": 20
+    }
+   ]
   },
   {
    "branch": "ReloadSpeed",
@@ -66,7 +99,13 @@
    "effectId": "ks.reload.fullmag",
    "cost": 110,
    "offerWeight": 1.4,
-   "effectValue": 0.25
+   "effectValue": 0.25,
+   "args": [
+    {
+     "name": "value",
+     "value": 25
+    }
+   ]
   },
   {
    "branch": "ArmorBreak",
@@ -77,7 +116,13 @@
    "effectId": "ks.armorbreak.plate",
    "cost": 110,
    "offerWeight": 1.4,
-   "effectValue": 2.0
+   "effectValue": 2.0,
+   "args": [
+    {
+     "name": "value",
+     "value": 2
+    }
+   ]
   },
   {
    "branch": "Impact",
@@ -88,7 +133,13 @@
    "effectId": "ks.impact.stagger",
    "cost": 110,
    "offerWeight": 1.4,
-   "effectValue": 0.15
+   "effectValue": 0.15,
+   "args": [
+    {
+     "name": "value",
+     "value": 15
+    }
+   ]
   },
   {
    "branch": "Cluster",
@@ -99,7 +150,13 @@
    "effectId": "ks.cluster.seedling",
    "cost": 110,
    "offerWeight": 1.4,
-   "effectValue": 0.0
+   "effectValue": 0.0,
+   "args": [
+    {
+     "name": "count",
+     "value": 1
+    }
+   ]
   },
   {
    "branch": "MovementSpeed",
@@ -110,7 +167,17 @@
    "effectId": "ks.body.evade",
    "cost": 140,
    "offerWeight": 1.4,
-   "effectValue": 0.2
+   "effectValue": 0.2,
+   "args": [
+    {
+     "name": "value",
+     "value": 20
+    },
+    {
+     "name": "seconds",
+     "value": 2
+    }
+   ]
   },
   {
    "branch": "MaximumHealth",
@@ -121,7 +188,13 @@
    "effectId": "ks.body.thickskin",
    "cost": 140,
    "offerWeight": 1.4,
-   "effectValue": 0.3
+   "effectValue": 0.3,
+   "args": [
+    {
+     "name": "value",
+     "value": 30
+    }
+   ]
   },
   {
    "branch": "RegenerationDelay",
@@ -132,7 +205,13 @@
    "effectId": "ks.body.breath",
    "cost": 140,
    "offerWeight": 1.4,
-   "effectValue": 0.5
+   "effectValue": 0.5,
+   "args": [
+    {
+     "name": "value",
+     "value": 0.5
+    }
+   ]
   },
   {
    "branch": "RegenerationRate",
@@ -143,7 +222,13 @@
    "effectId": "ks.body.bloodstep",
    "cost": 140,
    "offerWeight": 1.4,
-   "effectValue": 2.0
+   "effectValue": 2.0,
+   "args": [
+    {
+     "name": "value",
+     "value": 2
+    }
+   ]
   }
  ],
  "bodyForks": [
@@ -155,7 +240,13 @@
    "effectId": "fork.body.ashstep",
    "cost": 100,
    "offerWeight": 1.2,
-   "effectValue": 0.15
+   "effectValue": 0.15,
+   "args": [
+    {
+     "name": "value",
+     "value": 15
+    }
+   ]
   },
   {
    "id": "fork_body_y",
@@ -165,7 +256,13 @@
    "effectId": "fork.body.ironknee",
    "cost": 100,
    "offerWeight": 1.2,
-   "effectValue": 0.2
+   "effectValue": 0.2,
+   "args": [
+    {
+     "name": "value",
+     "value": 20
+    }
+   ]
   }
  ],
  "bodyCapstone": {
@@ -176,7 +273,17 @@
   "effectId": "cap.body.secondbreath",
   "cost": 320,
   "offerWeight": 2.0,
-  "effectValue": 0.0
+  "effectValue": 0.0,
+  "args": [
+   {
+    "name": "value",
+    "value": 1
+   },
+   {
+    "name": "seconds",
+    "value": 2
+   }
+  ]
  },
  "purse": {
   "id": "purse",
@@ -186,7 +293,13 @@
   "effectId": "purse.gold",
   "cost": 60,
   "offerWeight": 0.8,
-  "effectValue": 0.1
+  "effectValue": 0.1,
+  "args": [
+   {
+    "name": "value",
+    "value": 10
+   }
+  ]
  },
  "hearth": {
   "id": "hearth",
@@ -199,7 +312,17 @@
   "effectValue": 0.02,
   "costStep": 30,
   "maxStacks": 20,
-  "perRound": 3
+  "perRound": 3,
+  "args": [
+   {
+    "name": "value",
+    "value": 2
+   },
+   {
+    "name": "max",
+    "value": 20
+   }
+  ]
  },
  "specialLinks": [
   {
@@ -212,7 +335,13 @@
    "effectId": "link.arc.conductor",
    "cost": 80,
    "offerWeight": 1.2,
-   "effectValue": 0.0
+   "effectValue": 0.0,
+   "args": [
+    {
+     "name": "count",
+     "value": 1
+    }
+   ]
   },
   {
    "special": "sw_arc",
@@ -224,7 +353,13 @@
    "effectId": "link.arc.storm",
    "cost": 160,
    "offerWeight": 1.2,
-   "effectValue": 0.1
+   "effectValue": 0.1,
+   "args": [
+    {
+     "name": "value",
+     "value": 10
+    }
+   ]
   },
   {
    "special": "sw_gel",
@@ -236,7 +371,13 @@
    "effectId": "link.gel.slickfloor",
    "cost": 80,
    "offerWeight": 1.2,
-   "effectValue": 0.15
+   "effectValue": 0.15,
+   "args": [
+    {
+     "name": "value",
+     "value": 15
+    }
+   ]
   },
   {
    "special": "sw_gel",
@@ -248,7 +389,13 @@
    "effectId": "link.gel.freeze",
    "cost": 160,
    "offerWeight": 1.2,
-   "effectValue": 1
+   "effectValue": 1,
+   "args": [
+    {
+     "name": "value",
+     "value": 1
+    }
+   ]
   }
  ],
  "weapons": [
@@ -262,7 +409,17 @@
     "effectId": "seal.ar_1",
     "cost": 150,
     "offerWeight": 1.4,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": [
+     {
+      "name": "count",
+      "value": 6
+     },
+     {
+      "name": "value",
+      "value": 50
+     }
+    ]
    },
    "forkX": {
     "id": "fork_ar_1_x",
@@ -272,7 +429,13 @@
     "effectId": "fork.ar_1.x",
     "cost": 90,
     "offerWeight": 1.2,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": [
+     {
+      "name": "value",
+      "value": 50
+     }
+    ]
    },
    "forkY": {
     "id": "fork_ar_1_y",
@@ -282,7 +445,17 @@
     "effectId": "fork.ar_1.y",
     "cost": 90,
     "offerWeight": 1.2,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": [
+     {
+      "name": "value",
+      "value": 15
+     },
+     {
+      "name": "bloom",
+      "value": 30
+     }
+    ]
    },
    "capstone": {
     "id": "cap_ar_1",
@@ -292,7 +465,13 @@
     "effectId": "cap.ar_1",
     "cost": 380,
     "offerWeight": 2.0,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": [
+     {
+      "name": "count",
+      "value": 5
+     }
+    ]
    }
   },
   {
@@ -305,7 +484,13 @@
     "effectId": "seal.smg_1",
     "cost": 150,
     "offerWeight": 1.4,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": [
+     {
+      "name": "value",
+      "value": 1.1
+     }
+    ]
    },
    "forkX": {
     "id": "fork_smg_1_x",
@@ -315,7 +500,13 @@
     "effectId": "fork.smg_1.x",
     "cost": 90,
     "offerWeight": 1.2,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": [
+     {
+      "name": "value",
+      "value": 1.5
+     }
+    ]
    },
    "forkY": {
     "id": "fork_smg_1_y",
@@ -325,7 +516,13 @@
     "effectId": "fork.smg_1.y",
     "cost": 90,
     "offerWeight": 1.2,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": [
+     {
+      "name": "seconds",
+      "value": 0.8
+     }
+    ]
    },
    "capstone": {
     "id": "cap_smg_1",
@@ -335,7 +532,13 @@
     "effectId": "cap.smg_1",
     "cost": 380,
     "offerWeight": 2.0,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": [
+     {
+      "name": "count",
+      "value": 2
+     }
+    ]
    }
   },
   {
@@ -348,7 +551,17 @@
     "effectId": "seal.sg_1",
     "cost": 150,
     "offerWeight": 1.4,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": [
+     {
+      "name": "base",
+      "value": 8
+     },
+     {
+      "name": "value",
+      "value": 10
+     }
+    ]
    },
    "forkX": {
     "id": "fork_sg_1_x",
@@ -358,7 +571,13 @@
     "effectId": "fork.sg_1.x",
     "cost": 90,
     "offerWeight": 1.2,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": [
+     {
+      "name": "value",
+      "value": 40
+     }
+    ]
    },
    "forkY": {
     "id": "fork_sg_1_y",
@@ -368,7 +587,13 @@
     "effectId": "fork.sg_1.y",
     "cost": 90,
     "offerWeight": 1.2,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": [
+     {
+      "name": "count",
+      "value": 2
+     }
+    ]
    },
    "capstone": {
     "id": "cap_sg_1",
@@ -378,7 +603,17 @@
     "effectId": "cap.sg_1",
     "cost": 380,
     "offerWeight": 2.0,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": [
+     {
+      "name": "range",
+      "value": 3
+     },
+     {
+      "name": "count",
+      "value": 1
+     }
+    ]
    }
   },
   {
@@ -391,7 +626,17 @@
     "effectId": "seal.ar_2",
     "cost": 150,
     "offerWeight": 1.4,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": [
+     {
+      "name": "base",
+      "value": 1.15
+     },
+     {
+      "name": "value",
+      "value": 1.5
+     }
+    ]
    },
    "forkX": {
     "id": "fork_ar_2_x",
@@ -401,7 +646,13 @@
     "effectId": "fork.ar_2.x",
     "cost": 90,
     "offerWeight": 1.2,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": [
+     {
+      "name": "value",
+      "value": 20
+     }
+    ]
    },
    "forkY": {
     "id": "fork_ar_2_y",
@@ -411,7 +662,17 @@
     "effectId": "fork.ar_2.y",
     "cost": 90,
     "offerWeight": 1.2,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": [
+     {
+      "name": "value",
+      "value": 4
+     },
+     {
+      "name": "base",
+      "value": 3
+     }
+    ]
    },
    "capstone": {
     "id": "cap_ar_2",
@@ -421,7 +682,8 @@
     "effectId": "cap.ar_2",
     "cost": 380,
     "offerWeight": 2.0,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": []
    }
   },
   {
@@ -434,7 +696,17 @@
     "effectId": "seal.smg_2",
     "cost": 150,
     "offerWeight": 1.4,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": [
+     {
+      "name": "base",
+      "value": 0.45
+     },
+     {
+      "name": "value",
+      "value": 0.7
+     }
+    ]
    },
    "forkX": {
     "id": "fork_smg_2_x",
@@ -444,7 +716,13 @@
     "effectId": "fork.smg_2.x",
     "cost": 90,
     "offerWeight": 1.2,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": [
+     {
+      "name": "value",
+      "value": 30
+     }
+    ]
    },
    "forkY": {
     "id": "fork_smg_2_y",
@@ -454,7 +732,13 @@
     "effectId": "fork.smg_2.y",
     "cost": 90,
     "offerWeight": 1.2,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": [
+     {
+      "name": "value",
+      "value": 15
+     }
+    ]
    },
    "capstone": {
     "id": "cap_smg_2",
@@ -464,7 +748,13 @@
     "effectId": "cap.smg_2",
     "cost": 380,
     "offerWeight": 2.0,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": [
+     {
+      "name": "count",
+      "value": 3
+     }
+    ]
    }
   },
   {
@@ -477,7 +767,13 @@
     "effectId": "seal.sg_2",
     "cost": 150,
     "offerWeight": 1.4,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": [
+     {
+      "name": "count",
+      "value": 20
+     }
+    ]
    },
    "forkX": {
     "id": "fork_sg_2_x",
@@ -487,7 +783,17 @@
     "effectId": "fork.sg_2.x",
     "cost": 90,
     "offerWeight": 1.2,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": [
+     {
+      "name": "value",
+      "value": 20
+     },
+     {
+      "name": "range",
+      "value": 4
+     }
+    ]
    },
    "forkY": {
     "id": "fork_sg_2_y",
@@ -497,7 +803,13 @@
     "effectId": "fork.sg_2.y",
     "cost": 90,
     "offerWeight": 1.2,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": [
+     {
+      "name": "value",
+      "value": 25
+     }
+    ]
    },
    "capstone": {
     "id": "cap_sg_2",
@@ -507,7 +819,8 @@
     "effectId": "cap.sg_2",
     "cost": 380,
     "offerWeight": 2.0,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": []
    }
   },
   {
@@ -520,7 +833,17 @@
     "effectId": "seal.lmg_1",
     "cost": 150,
     "offerWeight": 1.4,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": [
+     {
+      "name": "base",
+      "value": 100
+     },
+     {
+      "name": "value",
+      "value": 150
+     }
+    ]
    },
    "forkX": {
     "id": "fork_lmg_1_x",
@@ -530,7 +853,13 @@
     "effectId": "fork.lmg_1.x",
     "cost": 90,
     "offerWeight": 1.2,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": [
+     {
+      "name": "value",
+      "value": 25
+     }
+    ]
    },
    "forkY": {
     "id": "fork_lmg_1_y",
@@ -540,7 +869,8 @@
     "effectId": "fork.lmg_1.y",
     "cost": 90,
     "offerWeight": 1.2,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": []
    },
    "capstone": {
     "id": "cap_lmg_1",
@@ -550,7 +880,17 @@
     "effectId": "cap.lmg_1",
     "cost": 380,
     "offerWeight": 2.0,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": [
+     {
+      "name": "count",
+      "value": 40
+     },
+     {
+      "name": "seconds",
+      "value": 6
+     }
+    ]
    }
   },
   {
@@ -563,7 +903,21 @@
     "effectId": "seal.lmg_2",
     "cost": 150,
     "offerWeight": 1.4,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": [
+     {
+      "name": "value",
+      "value": 3
+     },
+     {
+      "name": "base",
+      "value": 6
+     },
+     {
+      "name": "spread",
+      "value": 0.9
+     }
+    ]
    },
    "forkX": {
     "id": "fork_lmg_2_x",
@@ -573,7 +927,13 @@
     "effectId": "fork.lmg_2.x",
     "cost": 90,
     "offerWeight": 1.2,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": [
+     {
+      "name": "value",
+      "value": 15
+     }
+    ]
    },
    "forkY": {
     "id": "fork_lmg_2_y",
@@ -583,7 +943,17 @@
     "effectId": "fork.lmg_2.y",
     "cost": 90,
     "offerWeight": 1.2,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": [
+     {
+      "name": "count",
+      "value": 10
+     },
+     {
+      "name": "value",
+      "value": 30
+     }
+    ]
    },
    "capstone": {
     "id": "cap_lmg_2",
@@ -593,7 +963,8 @@
     "effectId": "cap.lmg_2",
     "cost": 380,
     "offerWeight": 2.0,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": []
    }
   },
   {
@@ -606,7 +977,8 @@
     "effectId": "seal.sr_1",
     "cost": 150,
     "offerWeight": 1.4,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": []
    },
    "forkX": {
     "id": "fork_sr_1_x",
@@ -616,7 +988,17 @@
     "effectId": "fork.sr_1.x",
     "cost": 90,
     "offerWeight": 1.2,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": [
+     {
+      "name": "seconds",
+      "value": 1
+     },
+     {
+      "name": "value",
+      "value": 2
+     }
+    ]
    },
    "forkY": {
     "id": "fork_sr_1_y",
@@ -626,7 +1008,13 @@
     "effectId": "fork.sr_1.y",
     "cost": 90,
     "offerWeight": 1.2,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": [
+     {
+      "name": "value",
+      "value": 35
+     }
+    ]
    },
    "capstone": {
     "id": "cap_sr_1",
@@ -636,7 +1024,8 @@
     "effectId": "cap.sr_1",
     "cost": 380,
     "offerWeight": 2.0,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": []
    }
   },
   {
@@ -649,7 +1038,17 @@
     "effectId": "seal.rl_1",
     "cost": 150,
     "offerWeight": 1.4,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": [
+     {
+      "name": "seconds",
+      "value": 3
+     },
+     {
+      "name": "value",
+      "value": 4
+     }
+    ]
    },
    "forkX": {
     "id": "fork_rl_1_x",
@@ -659,7 +1058,17 @@
     "effectId": "fork.rl_1.x",
     "cost": 90,
     "offerWeight": 1.2,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": [
+     {
+      "name": "value",
+      "value": 30
+     },
+     {
+      "name": "radius",
+      "value": 75
+     }
+    ]
    },
    "forkY": {
     "id": "fork_rl_1_y",
@@ -669,7 +1078,13 @@
     "effectId": "fork.rl_1.y",
     "cost": 90,
     "offerWeight": 1.2,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": [
+     {
+      "name": "value",
+      "value": 25
+     }
+    ]
    },
    "capstone": {
     "id": "cap_rl_1",
@@ -679,7 +1094,13 @@
     "effectId": "cap.rl_1",
     "cost": 380,
     "offerWeight": 2.0,
-    "effectValue": 0.0
+    "effectValue": 0.0,
+    "args": [
+     {
+      "name": "count",
+      "value": 3
+     }
+    ]
    }
   }
  ]

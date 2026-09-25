@@ -680,8 +680,8 @@
     "tr": "Sekme Ustası"
   },
   "tree.run.key.ricochet.desc": {
-    "en": "Ricochets turn to the nearest enemy instead of a random one.",
-    "tr": "Sekmeler rastgele değil, en yakın düşmana yönelir."
+    "en": "Ricochets search twice as far for their next target.",
+    "tr": "Sekmeler bir sonraki hedefi iki kat uzakta arar."
   },
   "tree.run.key.explosion.name": {
     "en": "Ash Cloud",

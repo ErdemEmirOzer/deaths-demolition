@@ -57,6 +57,7 @@ namespace DD.Prototype.Weapons
         private float _ads01;
         private float _move01;
         private int _shotInString;
+        private float _stringSeconds;   // WP-077 ks.firerate.warmup: seconds of the current shot string (held fire)
         private float _recoilYaw;
         private float _recoilRecoverRate;
         private bool _emptyReload;
@@ -146,7 +147,7 @@ namespace DD.Prototype.Weapons
                 }
 
                 float multiplier = _modifiers != null ? _modifiers.FireRateMultiplier : 1f;
-                return Mathf.Max(0.05f, _settings.FireRate * multiplier);
+                return Mathf.Max(0.05f, _settings.FireRate * multiplier * DD.Prototype.Rounds.RunTreeHooks.FireRateScale(_stringSeconds));
             }
         }
 
@@ -343,6 +344,7 @@ namespace DD.Prototype.Weapons
             }
 
             _sinceShot += dt;
+            _stringSeconds = _shotInString > 0 ? _stringSeconds + dt : 0f;
             WeaponDefinition d = Definition;
 
             // Bloom returns to 0 (from above, or from the settle floor below) once the delay after the last shot passes.
@@ -403,6 +405,16 @@ namespace DD.Prototype.Weapons
             int take = ReserveInfinite ? needed : Mathf.Min(needed, _reserve);
             Ammo += take;
             if (!ReserveInfinite) _reserve -= take;
+
+            // WP-077 ks.reload.fullmag: a reload from empty loads past full (from the reserve like any round).
+            int extra = DD.Prototype.Rounds.RunTreeHooks.FullMagExtraRounds(_emptyReload, MagazineSize);
+            if (!ReserveInfinite) extra = Mathf.Min(extra, _reserve);
+            if (extra > 0)
+            {
+                Ammo += extra;
+                if (!ReserveInfinite) _reserve -= extra;
+            }
+
             LastReloadCompleted = true;
             WeaponEvents.PublishReloadCompleted();
             AudioEvents.Raise(CombatAudioEvent.ReloadEnd, Vector3.zero, 1f, 40);
@@ -571,7 +583,7 @@ namespace DD.Prototype.Weapons
             }
 
             WeaponDefinition d = Definition;
-            float fireRateMult = _modifiers != null ? Mathf.Max(0.05f, _modifiers.FireRateMultiplier) : 1f;
+            float fireRateMult = (_modifiers != null ? Mathf.Max(0.05f, _modifiers.FireRateMultiplier) : 1f) * DD.Prototype.Rounds.RunTreeHooks.FireRateScale(_stringSeconds);
 
             // Add rather than assign, so a frame that fires twice does not lose the
             // second interval and the weapon cannot drift faster than its fire rate.
@@ -696,7 +708,7 @@ namespace DD.Prototype.Weapons
                     // WP-069 B3 (§6): on a launcher the Explosion branch is the blast's size / damage, Cluster the bomblets (2 / 3 / 4).
                     if (UsesBlastSemantics) launch.BlastTier = _modifiers.GetTier(UpgradeBranch.Explosion);
                     int cluster = _modifiers.GetTier(UpgradeBranch.Cluster);
-                    launch.ClusterBomblets = cluster > 0 ? cluster + 1 : 0;
+                    launch.ClusterBomblets = cluster > 0 ? cluster + 1 + DD.Prototype.Rounds.RunTreeHooks.ClusterExtraBomblets : 0;   // + WP-077 ks.cluster.seedling
                 }
             }
 

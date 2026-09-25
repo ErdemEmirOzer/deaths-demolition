@@ -194,8 +194,13 @@ namespace DD.Prototype.Rounds
         {
             HearthDamage, PurseGold,
             // WP-069 × WP-077 (S-02 SpecialLinks): the four Special links, live with their hooks
-            LinkArcConductor, LinkArcStorm, LinkGelSlickFloor, LinkGelFreeze
-            // + an effect id per hook as it lands (player systems, keystones)
+            LinkArcConductor, LinkArcStorm, LinkGelSlickFloor, LinkGelFreeze,
+            // WP-077 K10b (S-04 RunTreeHooks): the weapon-lane keystones and the body lane
+            "ks.piercing.line", "ks.ricochet.seeker", "ks.chain.web", "ks.firerate.warmup", "ks.reload.fullmag",
+            "ks.armorbreak.plate", "ks.impact.stagger", "ks.cluster.seedling",
+            "ks.body.evade", "ks.body.thickskin", "ks.body.breath", "ks.body.bloodstep",
+            "fork.body.ashstep", "fork.body.ironknee", "cap.body.secondbreath"
+            // + an effect id per hook as it lands (ks.explosion.ashcloud needs the burning-ground system; seals / forks / capstones per weapon)
         };
 
         private static bool s_allLive;
@@ -228,6 +233,19 @@ namespace DD.Prototype.Rounds
         {
             RunDirector director = RunDirector.Instance;
             return director != null && director.Shop != null && director.Shop.Tree.OwnsEffect(effectId);
+        }
+
+        /// <summary>
+        /// K10b: the live run's resolved tree effects (runtime units) — the one read a gameplay hook makes on its hot
+        /// path: <c>RunTreeEffects.Active.PierceFullBodies</c>. <see cref="RunTreeEffectValues.None"/> outside a run.
+        /// </summary>
+        public static RunTreeEffectValues Active
+        {
+            get
+            {
+                RunDirector director = RunDirector.Instance;
+                return director != null && director.Shop != null && director.Shop.Tree.IsBuilt ? director.Shop.Tree.Values : RunTreeEffectValues.None;
+            }
         }
 
         public const string LinkArcConductor = "link.arc.conductor";

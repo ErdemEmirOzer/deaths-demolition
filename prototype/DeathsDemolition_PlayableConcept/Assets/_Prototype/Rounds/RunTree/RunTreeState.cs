@@ -45,6 +45,12 @@ namespace DD.Prototype.Rounds
         /// <summary>K10 Reforge ("Yeniden Dövme"): the earliest round and the one use per run.</summary>
         public const int ReforgeFromRound = 5;
 
+        /// <summary>K10b: the owned nodes' effects in runtime units, rebuilt on every ownership change (hooks read it).</summary>
+        public RunTreeEffectValues Values { get; } = new RunTreeEffectValues();
+
+        private string[] _link1Names = Array.Empty<string>(), _link2Names = Array.Empty<string>();
+        private float[] _link1Values = Array.Empty<float>(), _link2Values = Array.Empty<float>();
+
         /// <summary>K10: true once the run's one Reforge is spent.</summary>
         public bool ReforgeUsed { get; private set; }
         private PrototypeConfig _config;
@@ -73,6 +79,10 @@ namespace DD.Prototype.Rounds
             {
                 _owned[Graph.PurseIndex] = true;   // meta "Purse at Start"
             }
+
+            _link1Names = _link2Names = Array.Empty<string>();
+            _link1Values = _link2Values = Array.Empty<float>();
+            RecomputeValues();
         }
 
         // ------------------------------------------------------------------ queries
@@ -468,6 +478,7 @@ namespace DD.Prototype.Rounds
             RunTreeNodeKind k = Graph[i].Kind;
             if (k == RunTreeNodeKind.Tier || k == RunTreeNodeKind.Hearth || !_owned[i]) return false;
             _owned[i] = false;
+            RecomputeValues();
             return true;
         }
 
@@ -500,6 +511,7 @@ namespace DD.Prototype.Rounds
             _owned[i] = false;
             _owned[partner] = true;
             ReforgeUsed = true;
+            RecomputeValues();
             return true;
         }
 
@@ -556,6 +568,7 @@ namespace DD.Prototype.Rounds
             if (n.Kind == RunTreeNodeKind.Tier || n.Kind == RunTreeNodeKind.Hearth || _owned[i]) return false;
             _owned[i] = true;
             if (PinnedIndex == i) PinnedIndex = -1;
+            RecomputeValues();
             return true;
         }
 
@@ -629,6 +642,34 @@ namespace DD.Prototype.Rounds
             if (string.IsNullOrEmpty(LinkedSpecial) && !string.IsNullOrEmpty(specialKey))
             {
                 LinkedSpecial = specialKey;
+                RunTreeArgs.Split(RunTreeCatalog.FindLink(specialKey, 1)?.args, out _link1Names, out _link1Values);
+                RunTreeArgs.Split(RunTreeCatalog.FindLink(specialKey, 2)?.args, out _link2Names, out _link2Values);
+            }
+        }
+
+        /// <summary>K10b: a node's arg names / values (display units); links resolve through the linked Special.</summary>
+        public string[] ArgNamesOf(int i)
+        {
+            RunTreeNode n = Graph[i];
+            if (n.Kind != RunTreeNodeKind.SpecialLink) return n.ArgNames;
+            return n.LinkLevel >= 2 ? _link2Names : _link1Names;
+        }
+
+        public float[] ArgValuesOf(int i)
+        {
+            RunTreeNode n = Graph[i];
+            if (n.Kind != RunTreeNodeKind.SpecialLink) return n.ArgValues;
+            return n.LinkLevel >= 2 ? _link2Values : _link1Values;
+        }
+
+        /// <summary>Rebuilds <see cref="Values"/> from the owned nodes (called on every ownership change).</summary>
+        private void RecomputeValues()
+        {
+            Values.Reset(Graph != null ? Graph.WeaponSlot : string.Empty);
+            if (!IsBuilt) return;
+            for (int i = 0; i < Graph.Count; i++)
+            {
+                if (_owned[i]) Values.Apply(Graph[i]);
             }
         }
 

@@ -288,6 +288,23 @@ namespace DD.Prototype.PlayerSystem
             RaiseHealthChanged();
         }
 
+        private PlayerMotor _motor;
+
+        /// <summary>
+        /// WP-077 body lane (ks.body.bloodstep / ks.body.breath): a kill heals <paramref name="heal"/> (up to the
+        /// maximum) and cuts the regeneration wait by <paramref name="cutWaitSeconds"/>. Nothing while dead.
+        /// </summary>
+        public void ApplyTreeRecovery(float heal, float cutWaitSeconds)
+        {
+            if (_dead || !_initialised) return;
+            if (cutWaitSeconds > 0f && _timeSinceDamage < float.MaxValue * 0.5f) _timeSinceDamage += cutWaitSeconds;
+            if (heal > 0f && _current < _maxHealth)
+            {
+                _current = Mathf.Min(_maxHealth, _current + heal);
+                RaiseHealthChanged();
+            }
+        }
+
         // ------------------------------------------------------------------ damage
 
         /// <summary>Convenience overload for attackers that only know an amount and a position.</summary>
@@ -316,9 +333,25 @@ namespace DD.Prototype.PlayerSystem
                 return false;
             }
 
+            // WP-077 body lane: Second Wind's grace window, then Thick Skin / Ash Step / Iron Knee on the amount.
+            if (DD.Prototype.Rounds.RunTreeHooks.PlayerInvulnerable)
+            {
+                _timeSinceDamage = 0f;
+                return false;
+            }
+
+            if (_motor == null) _motor = GetComponentInParent<PlayerMotor>();
+            float amount = DD.Prototype.Rounds.RunTreeHooks.PlayerDamage(request.Amount, _current >= _maxHealth, _motor != null && _motor.Speed01 > 0.1f);
+
             float before = _current;
-            float applied = Mathf.Min(before, request.Amount);
-            _current = Mathf.Max(0f, before - request.Amount);
+            float applied = Mathf.Min(before, amount);
+            _current = Mathf.Max(0f, before - amount);
+            if (_current <= 0f && DD.Prototype.Rounds.RunTreeHooks.TrySecondWind(out float kept))
+            {
+                _current = Mathf.Min(_maxHealth, kept);   // WP-077 cap.body.secondbreath: once per run
+                applied = Mathf.Max(0f, before - _current);
+            }
+
             _timeSinceDamage = 0f;
 
             Vector3 point = request.WorldPoint == Vector3.zero ? transform.position : request.WorldPoint;

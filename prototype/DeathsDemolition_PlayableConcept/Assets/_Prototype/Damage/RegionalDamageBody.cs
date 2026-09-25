@@ -144,7 +144,8 @@ namespace DD.Prototype.Damage
             {
                 // ---- protected: nothing reaches health, no matter how big the hit is.
                 // WP-069: the weapon's armour multiplier scales what the plate takes (sr_1 ×1.6 cracks, smg_1 ×0.7 scratches).
-                float armorAmount = hit.Amount * DamageHitContext.ArmorMultiplier;
+                // WP-077 ks.armorbreak.plate: the first hit on an untouched plate lands harder.
+                float armorAmount = hit.Amount * DamageHitContext.ArmorMultiplier * DD.Prototype.Rounds.RunTreeHooks.PlateHitScale(Armor.Ratio(slot) >= 1f);
                 Armor.Absorb(slot, armorAmount, out float absorbed, out bool broke);
 
                 result.WasArmored = true;

@@ -223,10 +223,11 @@ namespace DD.Prototype.Tests.EditMode
         {
             RunTreeState t = Agac();
             _rank.SetTier(UpgradeBranch.FireRate, 2);
-            int ks = I(t, "ks_firerate");
-            Assert.AreEqual(RunTreeNodeStatus.Locked, t.Status(ks, _rank, 9999, out RunTreeLockReason neden, out _, out _));
+            int muhur = I(t, "seal_ar_1");   // K10b: the weapon keystones are live; the per-weapon seals are not yet
+            Assert.AreEqual(RunTreeNodeStatus.Locked, t.Status(muhur, _rank, 9999, out RunTreeLockReason neden, out _, out _));
             Assert.AreEqual(RunTreeLockReason.EffectPending, neden, "davranış kancası yok → dürüst kilit");
-            Assert.IsFalse(t.IsOfferable(ks, _rank));
+            Assert.IsFalse(t.IsOfferable(muhur, _rank));
+            Assert.IsTrue(t.IsOfferable(I(t, "ks_firerate"), _rank), "K10b: Isınma keystone'u canlı → satılır");
             Assert.AreEqual(RunTreeNodeStatus.Locked, Durum(t, "link_1"), "Special alınmadan bağ kilitli");
             Assert.AreEqual(RunTreeNodeStatus.Available, Durum(t, "purse"), "Kese canlı (B1)");
         }

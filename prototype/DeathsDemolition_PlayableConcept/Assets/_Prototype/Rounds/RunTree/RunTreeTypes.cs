@@ -125,6 +125,20 @@ namespace DD.Prototype.Rounds
         public int costStep;
         public int maxStacks;
         public int perRound;
+
+        /// <summary>
+        /// K10b: the node's named numbers — the R1 content pack placeholders ({value} {count} {seconds} {radius}
+        /// {range} {max} {base}) in DISPLAY units (a percent as 20, not 0.2), plus runtime-only extras. One source
+        /// for the card text and the effect hooks.
+        /// </summary>
+        public RunTreeCatalogArg[] args = new RunTreeCatalogArg[0];
+    }
+
+    [Serializable]
+    public sealed class RunTreeCatalogArg
+    {
+        public string name = string.Empty;
+        public float value;
     }
 
     [Serializable]
@@ -185,5 +199,39 @@ namespace DD.Prototype.Rounds
 
         /// <summary>R1 content pack key stem (planning/content/r1-strings.json, name / desc × en / tr). Links resolve per Special (RunTreeState.StringKeyOf).</summary>
         public string StringKey = string.Empty;
+
+        /// <summary>K10b: the catalog args (display units), parallel arrays; empty for tiers (their numbers come from the live tuning).</summary>
+        public string[] ArgNames = Array.Empty<string>();
+        public float[] ArgValues = Array.Empty<float>();
+
+        /// <summary>The named arg in display units, else <paramref name="fallback"/>. No allocation.</summary>
+        public float Arg(string name, float fallback = 0f) => RunTreeArgs.Find(ArgNames, ArgValues, name, fallback);
+    }
+
+    /// <summary>K10b: lookups over a node's parallel arg arrays (display units → runtime units).</summary>
+    public static class RunTreeArgs
+    {
+        public static float Find(string[] names, float[] values, string name, float fallback)
+        {
+            if (names == null || values == null) return fallback;
+            for (int i = 0; i < names.Length && i < values.Length; i++)
+            {
+                if (string.Equals(names[i], name, StringComparison.Ordinal)) return values[i];
+            }
+
+            return fallback;
+        }
+
+        public static void Split(RunTreeCatalogArg[] args, out string[] names, out float[] values)
+        {
+            int n = args != null ? args.Length : 0;
+            names = n == 0 ? Array.Empty<string>() : new string[n];
+            values = n == 0 ? Array.Empty<float>() : new float[n];
+            for (int i = 0; i < n; i++)
+            {
+                names[i] = args[i] != null ? args[i].name ?? string.Empty : string.Empty;
+                values[i] = args[i] != null ? args[i].value : 0f;
+            }
+        }
     }
 }

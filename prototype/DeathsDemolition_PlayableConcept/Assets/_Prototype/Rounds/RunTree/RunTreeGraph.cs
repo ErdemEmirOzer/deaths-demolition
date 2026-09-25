@@ -287,6 +287,7 @@ namespace DD.Prototype.Rounds
                 OfferWeight = c.offerWeight,
                 EffectValue = c.effectValue
             };
+            RunTreeArgs.Split(c.args, out node.ArgNames, out node.ArgValues);
             return Push(node);
         }
 

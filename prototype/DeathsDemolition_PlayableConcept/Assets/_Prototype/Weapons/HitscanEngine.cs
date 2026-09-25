@@ -385,8 +385,8 @@ namespace DD.Prototype.Weapons
                         break;
                     }
 
-                    // A pierced shot is a weakened shot: piercing buys reach, not free damage.
-                    p.DamageScale *= p.PenetrationKeep;
+                    // A pierced shot is a weakened shot: piercing buys reach, not free damage (WP-077 ks.piercing.line: not through the first bodies).
+                    p.DamageScale *= DD.Prototype.Rounds.RunTreeHooks.PierceKeep(p.TouchedCount, p.PenetrationKeep);
                 }
 
                 if (branchesNow)
@@ -473,6 +473,24 @@ namespace DD.Prototype.Weapons
 
                 HitFeedbackDirector.Instance.ReportLink(current, point, false);
 
+                // WP-077 ks.chain.web: the first jump splits — the extra arcs start where the chain did.
+                if (jump == 0)
+                {
+                    for (int extra = 1; extra < DD.Prototype.Rounds.RunTreeHooks.ChainFirstJumpTargets; extra++)
+                    {
+                        if (!TryFindNearestUntouched(from, request.ChainRadius, out DamageTarget fork, out Vector3 forkPoint)) break;
+                        s_touched.Add(fork.Id);
+                        Vector3 forkDirection = (forkPoint - from).normalized;
+                        DamageResult f = ApplyHit(
+                            fork, damage, BodyRegion.UpperBody, forkPoint, forkDirection,
+                            DamageForce.Chain, DamageSourceKind.Chain, WeaponPower.Light, -forkDirection, request.PresentationGroupId);
+                        result.EnemiesHit++;
+                        result.AnyKill |= f.Killed;
+                        result.AnyArmorBreak |= f.ArmorBroke;
+                        HitFeedbackDirector.Instance.ReportLink(from, forkPoint, false);
+                    }
+                }
+
                 current = point;
                 damage *= Mathf.Clamp(request.ChainDamageFalloff, 0.1f, 1f);
             }
@@ -485,7 +503,7 @@ namespace DD.Prototype.Weapons
 
             for (int bounce = 0; bounce < request.RicochetBounces; bounce++)
             {
-                if (!TryFindNearestUntouched(current, request.RicochetRadius, out DamageTarget next, out Vector3 point))
+                if (!TryFindNearestUntouched(current, DD.Prototype.Rounds.RunTreeHooks.RicochetRadius(request.RicochetRadius), out DamageTarget next, out Vector3 point))
                 {
                     return;
                 }

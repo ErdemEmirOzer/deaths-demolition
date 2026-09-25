@@ -248,7 +248,7 @@ Key: `tree.run.<id>.name` / `.desc`. Names ≤ 22 characters in both languages (
 | id | kind | name en | name tr | effect en | effect tr | source |
 | --- | --- | --- | --- | --- | --- | --- |
 | `key.piercing` | BranchKeystone | Clean Line | Hat | Piercing loses no damage through the first {count} bodies. | Delme, ilk {count} gövdede hasar kaybetmez. | WP-077 §2.3 Hat |
-| `key.ricochet` | BranchKeystone | Ricochet Master | Sekme Ustası | Ricochets turn to the nearest enemy instead of a random one. | Sekmeler rastgele değil, en yakın düşmana yönelir. | WP-077 §2.3 Sekme Ustası |
+| `key.ricochet` | BranchKeystone | Ricochet Master | Sekme Ustası | Ricochets search twice as far for their next target. | Sekmeler bir sonraki hedefi iki kat uzakta arar. | WP-077 §2.3 Sekme Ustası |
 | `key.explosion` | BranchKeystone | Ash Cloud | Kül Bulutu | Explosions leave ground that burns for {seconds} s at {value}% of the blast per second. | Patlamalar {seconds} sn yanan bir alan bırakır; saniyede patlamanın %{value}'i. | WP-077 §2.3 Kül Bulutu |
 | `key.chain` | BranchKeystone | Web | Ağ | The chain's first jump splits in {count}. | Zincirin ilk sıçraması {count}'ye çatallanır. | WP-077 §2.3 Ağ |
 | `key.fire_rate` | BranchKeystone | Warm-Up | Isınma | Hold the trigger for {seconds} s and fire rate rises by {value}%. | Tetiği {seconds} sn basılı tut; atış hızı %{value} artar. | WP-077 §2.3 Isınma |

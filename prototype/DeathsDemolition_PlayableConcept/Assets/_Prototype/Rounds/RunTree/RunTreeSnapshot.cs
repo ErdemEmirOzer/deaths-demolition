@@ -50,6 +50,9 @@ namespace DD.Prototype.Rounds
         public int ReforgeCost;
         /// <summary>K10: offers in a row this keystone / seal / capstone was left out of (luck guard ×2 from 3).</summary>
         public int UnseenRounds;
+        /// <summary>K10b: the pack placeholders' values in DISPLAY units ({value} {count} {seconds} {radius} {range} {max} {base}); parallel arrays, shared (read-only). Empty for tiers.</summary>
+        public string[] ArgNames;
+        public float[] ArgValues;
     }
 
     /// <summary>
@@ -182,6 +185,8 @@ namespace DD.Prototype.Rounds
                 v.ClosesIndex = tree.ForkPartner(i);
                 v.ReforgeCost = shop.ReforgeCost(i);
                 v.UnseenRounds = tree.UnseenRounds(i);
+                v.ArgNames = tree.ArgNamesOf(i);
+                v.ArgValues = tree.ArgValuesOf(i);
                 if (v.ReforgeCost >= 0) ReforgeAvailable = true;
                 _previous[i] = status;
             }
