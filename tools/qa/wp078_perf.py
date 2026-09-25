@@ -24,6 +24,19 @@ REPO = HERE.parent.parent
 PLAYER_EXE = "MacOS/Deaths Demolition - Playable Concept"
 
 
+def resolve_binary(path):
+    """wp064_run wants the Player executable; accept a build dir, an .app or the executable itself."""
+    p = Path(path).resolve()
+    if p.is_file():
+        return p
+    apps = [p] if p.suffix == ".app" else sorted(p.glob("*.app"))
+    for app in apps:
+        candidates = sorted((app / "Contents" / "MacOS").glob("*"))
+        if candidates:
+            return candidates[0]
+    return p
+
+
 def player_up():
     """A game Player process (executable path — other sessions' shells mention the name in their scripts)."""
     out = subprocess.run(["ps", "-Ao", "comm"], capture_output=True, text=True).stdout
@@ -81,6 +94,7 @@ def main():
     root.mkdir(parents=True, exist_ok=True)
     seconds = args.window_seconds or int(targets["windowSeconds"])
     runs = list(plan(targets, tiers, modes, args.windows))
+    binary = resolve_binary(args.bin)
     log = root / "wp078-perf.log"
 
     def note(text):
@@ -92,10 +106,10 @@ def main():
     note(f"plan {len(runs)} windows · tiers={tiers} modes={modes} commit={args.commit}")
     for position, (name, mode, index) in enumerate(runs):
         cell = root / f"perf-{name}-{mode}-{index}"
-        command = [sys.executable, str(HERE / "wp064_run.py"), "perf", "--bin", args.bin, "--out", str(cell),
+        command = [sys.executable, str(HERE / "wp064_run.py"), "perf", "--bin", str(binary), "--out", str(cell),
                    "--commit", args.commit, "--window", str(seconds), "--preflight-attempts", "30", "--preflight-wait", "60"]
-        for extra in window_args(name, mode, cell):
-            command += ["--extra-arg", extra]
+        # "--extra-arg=<flag>": argparse reads a separate value that starts with "-" as an option
+        command += [f"--extra-arg={extra}" for extra in window_args(name, mode, cell)]
         if args.dry_run:
             note("dry-run " + " ".join(command))
             continue
@@ -108,19 +122,23 @@ def main():
             time.sleep(60)
             waited += 60
 
-        snap = guard("snapshot", cell / "ug")
+        ug = root / "ug" / cell.name
+        snap = guard("snapshot", ug)
         if snap.returncode != 0:
             note(f"STOP {cell.name}: guard snapshot exit {snap.returncode}")
             return 7
         run = subprocess.run(command, capture_output=True, text=True)
-        (cell / "wp064-run.out").write_text(run.stdout + run.stderr, encoding="utf-8")
-        restore = guard("restore", cell / "ug")
-        (cell / "ug-restore.txt").write_text(restore.stdout + restore.stderr, encoding="utf-8")
-        oos = cell / "ug" / "out-of-scope-changed.txt"
+        (root / "ug" / (cell.name + ".wp064-run.out")).write_text(run.stdout + run.stderr, encoding="utf-8")
+        restore = guard("restore", ug)
+        (ug / "restore.txt").write_text(restore.stdout + restore.stderr, encoding="utf-8")
+        oos = ug / "out-of-scope-changed.txt"
         if restore.returncode != 0 or (oos.is_file() and oos.stat().st_size > 0):
             note(f"STOP {cell.name}: guard restore exit {restore.returncode}, out-of-scope changes {oos.is_file() and oos.stat().st_size > 0} — report to C-00")
             return 7
         note(f"{cell.name} wp064_run exit {run.returncode} · guard ok")
+        if run.returncode in (2, 64, 66):
+            note(f"STOP {cell.name}: wp064_run usage/input error (exit {run.returncode}) — see ug/<cell>.wp064-run.out")
+            return 64
         if position + 1 < len(runs):
             time.sleep(args.cooldown)
     note("done")
