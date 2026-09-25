@@ -694,6 +694,14 @@ namespace DD.Art.Pipeline.EditorTools
         public const string ShoreGroupName = "PondShores", BridgeGroupName = "Bridges", GroveGroupName = "BambooGrove", FenceGroupName = "Fences", KaresansuiGroupName = "Karesansui";
         /// <summary>The grove's culm clumps: V01–V04 and v007's V06 (V05 is a 0.6 m shoot, not a clump).</summary>
         public static readonly int[] GroveVariations = { 1, 2, 3, 4, 6 };
+        public const float GroveEdgeBand = 5f, GroveEdgeGap = 0.55f, GroveInnerGap = 0.25f;
+
+        /// <summary>0..1 from a grove cell position (deterministic, independent of the dress rng).</summary>
+        public static float GroveHash01(Vector2 c)
+        {
+            float h = Mathf.Sin(c.x * 12.9898f + c.y * 78.233f) * 43758.5453f;
+            return h - Mathf.Floor(h);
+        }
 
         private static void Ground(Transform greybox)
         {
@@ -848,9 +856,13 @@ namespace DD.Art.Pipeline.EditorTools
                 double yaw = rng.NextDouble() * 360.0, s = 0.9 + rng.NextDouble() * 0.3;
                 int v = GroveVariations[rng.Next(GroveVariations.Length)];
                 if (!GreyboxV6Builder.GroveCellSolid(c)) continue;
-                bool nearLane = false;
-                foreach (Vector2[] lane in GreyboxV6Builder.BambooLanes) nearLane |= GreyboxV6Builder.DistanceToPolyline(c, lane) < 3f;
-                if (nearLane) continue;
+                float laneDistance = float.MaxValue;
+                foreach (Vector2[] lane in GreyboxV6Builder.BambooLanes) laneDistance = Mathf.Min(laneDistance, GreyboxV6Builder.DistanceToPolyline(c, lane));
+                if (laneDistance < 3f) continue;
+                // DEC-102 AD B2 (25.09): canopy gaps so the sun reaches the lanes (HF west: clumped bamboo, big gaps) — a position hash (the
+                // rng sequence and every other clump stay put) leaves out GroveEdgeGap of the clumps within GroveEdgeBand m of a lane
+                // and GroveInnerGap deeper in.
+                if (GroveHash01(c) < (laneDistance < 3f + GroveEdgeBand ? GroveEdgeGap : GroveInnerGap)) continue;
                 Visual(Place(group, "bamboo_v2", v, Mz(c.x, c.y, 0f, (float)yaw) * Matrix4x4.Scale(Vector3.one * (float)s), Vector3.zero, "vegetation"));
             }
 

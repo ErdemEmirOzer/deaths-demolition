@@ -279,7 +279,7 @@ namespace DD.Art
                 var spec = new Spec { Role = "ap023_" + atlas, Kind = Kind.Cutout, TextureRole = "ap023_" + atlas, Shader = ShaderKind.FoliageWind, NoPackedMap = true, Smoothness = 0.40f };
                 // WP-075 AD MUST-1 (K4 value order: green under stone): sunlit bamboo leaves read V ≈ 0.80 / s ≈ 0.55 — the AD's × 0.70
                 // left the TP grove's green median level with the slate (0.45 / 0.44); DEC-101 wants the grove dark: × 0.45; smoothness 0.25.
-                if (atlas == "bamboo_leaves") { spec.Tint = new Color(0.70f, 0.70f, 0.70f, 1f); spec.Smoothness = 0.25f; }   // DEC-102 r2: 0.55 → 0.70 (HF v002 west: a sunlit grove)   // C-00: the west read too dark at × 0.45
+                if (atlas == "bamboo_leaves") { spec.Tint = new Color(1.25f, 1.30f, 0.95f, 1f); spec.Smoothness = 0.25f; }   // DEC-102 r2: 0.55 → 0.70 (HF v002 west: a sunlit grove)   // C-00: the west read too dark at × 0.45   // AD B2 25.09: sunlit leaves L 45–60, lime — the atlas is dark (linear G ≈ 0.2): × (1.25, 1.30, 0.95)
                 // DEC-102 AD MUST-B1 (backlit treeline: crowns L ≤ 45, green): the dark needle atlas (L 23) read pale khaki at 60–150 m —
                 // the grazing cards mirrored the sky round the sun at 0.40 (needles are matte: 0.15) and the shaded crowns lost their green
                 // under the cool ambient (× 0.70 / 1.00 / 0.60 keeps them green).
