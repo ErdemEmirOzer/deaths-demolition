@@ -30,6 +30,11 @@ namespace DD.Prototype.Feedback.Vfx
         public const float GrazingDot = 0.26f;   // |dir · normal| below this = a grazing hit (≈ 15°)
         public static readonly Color ImpactLightColour = new Color(1f, 0.878f, 0.69f, 1f);   // #FFE0B0
         public static readonly Color32 SprayColour = new Color32(217, 225, 230, 128);        // #D9E1E6 α 0.5
+        public static readonly Color32 StoneSprayColour = new Color32(217, 225, 230, 166);   // AD B2 MUST 2: the stone spray leads (α 0.65)
+        /// <summary>AD B2 MUST 1: the impact light on wet slate — 1.2 / 1.2 m (was 3 / 2 m: a clipped white disc), 2 frames, one at a time.</summary>
+        public const float ImpactLightIntensity = 1.2f, ImpactLightRange = 1.2f;
+        private static readonly Color32 ColdSpark = new Color32(96, 96, 96, 255);   // × the material's HDR ×4 ≈ ×1.5 (AD B2 MUST 2)
+        private static readonly Color32 HotSpark = new Color32(255, 255, 255, 255);
 
         // Atlas cells (4 × 4).
         private const int CellStone = 0, CellSplinter = 4, CellLacquer = 6, CellMud = 8, CellSpray = 10, CellGrey = 12;
@@ -182,9 +187,10 @@ namespace DD.Prototype.Feedback.Vfx
             switch (info.Surface)
             {
                 case SurfaceKind.Stone:
-                    Spray(p, n, Count(8, k), 1.5f, 3f, 0.03f, 0.06f, 0.15f, 0.25f);
+                    // Wet stone reads cold (AD B2 MUST 2): the spray leads, the two sparks are short (≈ 0.04 m) and dim.
+                    Spray(p, n, Count(8, k), 1.5f, 3f, 0.03f, 0.05f, 0.15f, 0.25f, StoneSprayColour);
                     Debris(CellStone, 4, p, n, Count(4, k), 0.6f, 2f, 4f, 0.02f, 0.045f, 0.5f, 0.9f);
-                    Sparks(p, Vector3.Lerp(n, bounce, 0.5f), Count(2, k), 3f, 6f, 0.12f, 0.22f);
+                    Sparks(p, Vector3.Lerp(n, bounce, 0.5f), Count(2, k), 1f, 1.4f, 0.1f, 0.18f, 0.55f, ColdSpark);
                     break;
                 case SurfaceKind.Wood:
                     Debris(CellSplinter, 2, p, n, Count(8, k), 0.7f, 2f, 4f, 0.035f, 0.08f, 0.5f, 0.9f);
@@ -215,8 +221,19 @@ namespace DD.Prototype.Feedback.Vfx
 
             if (grazing && (info.Surface == SurfaceKind.Stone || info.Surface == SurfaceKind.Metal || info.Surface == SurfaceKind.Armor || info.Surface == SurfaceKind.Default))
             {
-                // Ricochet read: a short ember streak along the bounce (0.6 m, 0.08 s), + sparks on metal / armour.
-                Sparks(p, bounce, 3, 7f, 8f, 0.07f, 0.09f, 0.08f);
+                // Ricochet (direction §1.4 column): stone one cool spark line; default three short embers (0.6 m, 0.08 s);
+                // metal embers + 3 sparks; armour embers + 6 sparks.
+                if (info.Surface == SurfaceKind.Stone)
+                {
+                    Sparks(p, bounce, 1, 5f, 6f, 0.07f, 0.09f, 0.05f, ColdSpark);
+                }
+                else
+                {
+                    Sparks(p, bounce, 3, 7f, 8f, 0.07f, 0.09f, 0.08f);
+                    if (info.Surface == SurfaceKind.Metal) Sparks(p, Vector3.Lerp(n, bounce, 0.7f), 3, 3f, 6f, 0.12f, 0.25f);
+                    else if (info.Surface == SurfaceKind.Armor) Sparks(p, Vector3.Lerp(n, bounce, 0.7f), 6, 3f, 6f, 0.12f, 0.25f);
+                }
+
                 Ricochets++;
             }
 
@@ -277,7 +294,7 @@ namespace DD.Prototype.Feedback.Vfx
         private void Light(Vector3 at)
         {
             MuzzleSystem lights = MuzzleSystem.Ensure();
-            if (lights != null && lights.FlashAt(at, ImpactLightColour, 3f, 2f, 2f / 60f, 0.05f))
+            if (lights != null && lights.FlashAt(at, ImpactLightColour, ImpactLightIntensity, ImpactLightRange, 2f / 60f, 0.05f, true))
             {
                 LightsAsked++;
             }
@@ -307,9 +324,14 @@ namespace DD.Prototype.Feedback.Vfx
 
         private void Spray(Vector3 at, Vector3 axis, int count, float speedMin, float speedMax, float sizeMin, float sizeMax, float lifeMin, float lifeMax)
         {
+            Spray(at, axis, count, speedMin, speedMax, sizeMin, sizeMax, lifeMin, lifeMax, SprayColour);
+        }
+
+        private void Spray(Vector3 at, Vector3 axis, int count, float speedMin, float speedMax, float sizeMin, float sizeMax, float lifeMin, float lifeMax, Color32 colour)
+        {
             if (_debris == null) return;
             SetCells(CellSpray, 2);
-            var e = new ParticleSystem.EmitParams { position = at, applyShapeToPosition = false, startColor = SprayColour };
+            var e = new ParticleSystem.EmitParams { position = at, applyShapeToPosition = false, startColor = colour };
             for (int i = 0; i < count; i++)
             {
                 e.velocity = (axis + Random.insideUnitSphere * 0.7f).normalized * Random.Range(speedMin, speedMax);
@@ -356,8 +378,13 @@ namespace DD.Prototype.Feedback.Vfx
 
         private void Sparks(Vector3 at, Vector3 axis, int count, float speedMin, float speedMax, float lifeMin, float lifeMax, float spread = 0.55f)
         {
+            Sparks(at, axis, count, speedMin, speedMax, lifeMin, lifeMax, spread, HotSpark);
+        }
+
+        private void Sparks(Vector3 at, Vector3 axis, int count, float speedMin, float speedMax, float lifeMin, float lifeMax, float spread, Color32 colour)
+        {
             if (_sparks == null) return;
-            var e = new ParticleSystem.EmitParams { position = at, applyShapeToPosition = false, startColor = Color.white };
+            var e = new ParticleSystem.EmitParams { position = at, applyShapeToPosition = false, startColor = colour };
             for (int i = 0; i < count; i++)
             {
                 e.velocity = (axis.normalized + Random.insideUnitSphere * spread).normalized * Random.Range(speedMin, speedMax);

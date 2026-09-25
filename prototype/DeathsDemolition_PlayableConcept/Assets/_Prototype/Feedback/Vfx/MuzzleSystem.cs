@@ -255,10 +255,20 @@ namespace DD.Prototype.Feedback.Vfx
         /// WP-073 B2: a short light at a world point (direction §1.4 impact light #FFE0B0 / 3 / 2 m / 2 frames) from the same
         /// pool, so impacts and muzzles share the tier's light cap (8 / 4 / 2). Reduce flashes: ×0.8, never above the muzzle's.
         /// </summary>
-        public bool FlashAt(Vector3 point, Color colour, float intensity, float range, float holdSeconds, float fadeSeconds)
+        public bool FlashAt(Vector3 point, Color colour, float intensity, float range, float holdSeconds, float fadeSeconds, bool exclusive = false)
         {
             float now = Time.time;
-            int slot = FreeLight(VfxTier.Current, now);
+            int slot = -1;
+            if (exclusive)
+            {
+                // AD B2 MUST 1: one impact light at a time — a lit one moves to the newest hit instead of stacking.
+                for (int i = 0; i < _lights.Length; i++)
+                {
+                    if (_lights[i].Light.enabled && _lights[i].Fixed) { slot = i; break; }
+                }
+            }
+
+            if (slot < 0) slot = FreeLight(VfxTier.Current, now);
             if (slot < 0) return false;
             ref MuzzleLight m = ref _lights[slot];
             m.Muzzle = null;

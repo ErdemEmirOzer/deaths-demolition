@@ -284,7 +284,7 @@ namespace DD.Prototype.Feedback.Vfx
             return true;
         }
 
-        private static readonly Color HeadMistTint = new Color(0.42f, 0.03f, 0.03f, 0.5f);
+        private static readonly Color HeadMistTint = new Color(0.478f, 0.07f, 0.07f, 0.5f);   // #7A1212 (AD B2 SHOULD 4: deeper, reads in fog)
 
         /// <summary>The blood of a kill: two cards, 36 droplets and the growing pool at the feet. The death sheet itself stays in <see cref="VfxDressing"/>.</summary>
         public bool PlayDeath(Vector3 feet, Vector3 point, Vector3 normal, Vector3 shotDirection, bool heavy)
