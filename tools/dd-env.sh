@@ -58,11 +58,11 @@ dd_unity_watched() {
         DD_UNITY_OUTCOME=killed; return 124
       fi
       if [ "$quiet" -ge "$stall" ]; then
-        dd_log "STALL: Unity pid $upid wrote nothing to its log for ${quiet}s (attempt $attempt) — stopping that pid only"
+        dd_log "WATCHDOG stall: Unity pid $upid wrote nothing to its log for ${quiet}s (attempt $attempt) — stopping that pid only"
         dd_kill_tree $upid; wait $upid 2>/dev/null
         [ -f "$log" ] && mv "$log" "$log.stall$attempt"
-        if [ "$attempt" -ge 2 ]; then dd_log "STALL: the retry stalled too — giving up (exit 124)"; DD_UNITY_OUTCOME=stalled; return 124; fi
-        attempt=$((attempt + 1)); dd_log "STALL: retrying once"
+        if [ "$attempt" -ge 2 ]; then dd_log "WATCHDOG stall: the retry stalled too — giving up (exit 124)"; DD_UNITY_OUTCOME=stalled; return 124; fi
+        attempt=$((attempt + 1)); dd_log "WATCHDOG stall: retrying once"
         continue 2
       fi
     done
