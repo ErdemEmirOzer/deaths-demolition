@@ -216,6 +216,20 @@ namespace DD.Prototype.UI
             }
         }
 
+        /// <summary>
+        /// Gone at once, no exit (12b, AD R1-C re-check): a panel opened over the HUD (the round-end shop, Pause) - a stamp
+        /// never lands under a panel, so a banner still exiting when the shop opens is cut rather than read through its band.
+        /// </summary>
+        public void Cut()
+        {
+            UiMotion.KillTarget(_group, false);
+            UiMotion.KillTarget(_root, false);
+            _group.alpha = 0f;
+            _root.anchoredPosition = _home;
+            _exitAt = -1f;
+            _endsAt = -1f;
+        }
+
         /// <summary>One frame: starts the exit at 2.12 s. Returns the seconds the banner has left (0 when gone).</summary>
         public float Tick(float now)
         {

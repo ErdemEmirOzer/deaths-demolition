@@ -2082,5 +2082,13 @@
   "results.unlocked_count": {
     "en": "{value} new, already added to your profile",
     "tr": "{value} yeni, profiline zaten eklendi"
+  },
+  "results.next_unlock": {
+    "en": "Next unlock: {name} at level {level} · {away} levels away",
+    "tr": "Sıradaki açılış: {name}, seviye {level} · {away} seviye kaldı"
+  },
+  "results.next_unlock_one": {
+    "en": "Next unlock: {name} at level {level} · 1 level away",
+    "tr": "Sıradaki açılış: {name}, seviye {level} · 1 seviye kaldı"
   }
 }

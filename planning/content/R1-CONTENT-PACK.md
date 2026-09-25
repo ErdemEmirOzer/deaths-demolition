@@ -637,10 +637,13 @@ S-09 (R1-C, 25.09):
 | `results.new_best` | NEW BEST · ROUND {value} | YENİ REKOR · ROUND {value} |
 | `results.empty` | No new unlocks this run. | Bu koşuda yeni açılan yok. |
 | `results.unlocked_count` | {value} new, already added to your profile | {value} yeni, profiline zaten eklendi |
+| `results.next_unlock` | Next unlock: {name} at level {level} · {away} levels away | Sıradaki açılış: {name}, seviye {level} · {away} seviye kaldı |
+| `results.next_unlock_one` | Next unlock: {name} at level {level} · 1 level away | Sıradaki açılış: {name}, seviye {level} · 1 seviye kaldı |
 
 S-09 (R1-D, 25.09):
 - The Results v3 blocks (direction E26): four hero tiles (Round · Kills · Gold · Time), RUN REPORT (COMBAT / RUN), and REWARDS (EXPERIENCE, PATH line `path.results.delta`, unlocks and achievements).
 - `results.new_best` is the sakura ribbon beside the title, the last beat of the choreography.
 - `results.empty` replaces the two old empty lines when the run unlocked nothing.
+- `results.next_unlock` (12b, AD R1-D SHOULD-1): the column's forward look under the XP caption - the lowest weapon or branch unlock above the level the run ended on; absent once every unlock is owned.
 
 <!-- TABLES:END -->

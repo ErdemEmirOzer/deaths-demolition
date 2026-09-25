@@ -322,6 +322,12 @@ namespace DD.Prototype.UI
             stack.Gap(UiSpace.XS);
             TMP_Text barCaption = UiFactory.Label("BarCaption", host, _model.ProgressCaption, UiType.Caption, UiColor.TextSecondary);
             stack.Add((RectTransform)barCaption.transform, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption)));
+            if (!string.IsNullOrEmpty(_model.NextUnlockLine))
+            {
+                // E26's forward look (12b, AD R1-D SHOULD-1): what the next level brings, in the empty state too.
+                TMP_Text next = UiFactory.Label("NextUnlock", host, _model.NextUnlockLine, UiType.Caption, UiColor.TextSecondary);
+                stack.Add((RectTransform)next.transform, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption)));
+            }
 
             if (_model.AshEarned > 0)
             {

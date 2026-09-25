@@ -76,6 +76,9 @@ namespace DD.Prototype.UI
         public string LevelLine = "LEVEL 1";
         public bool LeveledUp;
         public int LevelsGained;
+
+        /// <summary>12b (AD R1-D SHOULD-1, E26): "Next unlock: Hinawa at level 3 · 2 levels away", or empty when none is left.</summary>
+        public string NextUnlockLine = string.Empty;
         public float ProgressAfter01;
         public string ProgressCaption = string.Empty;
         public string LevelUpChip = string.Empty;
@@ -193,6 +196,48 @@ namespace DD.Prototype.UI
                     typeLabel = "COSMETIC";
                     return UiArt.Medal(UiMedal.Rare);
             }
+        }
+
+        /// <summary>The lowest weapon or branch unlock above <paramref name="level"/> (the profile's ladder), as the forward-look line.</summary>
+        public static string NextUnlockFor(int level, IProfileLookup lookup)
+        {
+            if (lookup == null)
+            {
+                return string.Empty;
+            }
+
+            int best = int.MaxValue;
+            string name = null;
+            foreach (ClassicWeaponId id in (ClassicWeaponId[])Enum.GetValues(typeof(ClassicWeaponId)))
+            {
+                int at = lookup.UnlockLevelFor(id);
+                if (at > level && at < best && at < ProfileService.NotInBuildUnlockLevel)
+                {
+                    best = at;
+                    name = lookup.WeaponDisplayName(id);
+                }
+            }
+
+            foreach (UpgradeBranch branch in (UpgradeBranch[])Enum.GetValues(typeof(UpgradeBranch)))
+            {
+                int at = lookup.UnlockLevelFor(branch);
+                if (at > level && at < best && at < ProfileService.NotInBuildUnlockLevel)
+                {
+                    best = at;
+                    name = lookup.BranchDisplayName(branch);
+                }
+            }
+
+            if (string.IsNullOrEmpty(name))
+            {
+                return string.Empty;
+            }
+
+            int away = best - level;
+            string line = away == 1
+                ? UiStrings.Get("results.next_unlock_one", "Next unlock: {name} at level {level} · 1 level away")
+                : UiStrings.Get("results.next_unlock", "Next unlock: {name} at level {level} · {away} levels away").Replace("{away}", away.ToString());
+            return line.Replace("{name}", name).Replace("{level}", best.ToString());
         }
 
         public UiMedal MedalFor(string achievementTitle)
@@ -342,6 +387,7 @@ namespace DD.Prototype.UI
 
             model.ProgressCaption = report.XpIntoLevelAfter + " / " + report.LevelRequirementAfter +
                                     " XP towards level " + (report.LevelAfter + 1);
+            model.NextUnlockLine = NextUnlockFor(report.LevelAfter, ProfileServiceLookup.Instance);
 
             model.LevelUpChip = report.LeveledUp
                 ? report.LevelsGained > 1 ? "LEVEL UP  x" + report.LevelsGained : "LEVEL UP"

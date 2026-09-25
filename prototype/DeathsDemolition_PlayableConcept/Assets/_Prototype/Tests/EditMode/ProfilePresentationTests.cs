@@ -59,6 +59,18 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void Results_SiradakiAcilis_EnDusukUstSeviye_TekilCogul_YoksaBos()
+        {
+            // 12b (AD R1-D SHOULD-1): the lowest weapon / branch unlock above the level the run ended on; the v3 weapons that
+            // sit off the profile ladder never count; nothing left = empty.
+            var lookup = new SahteLookup();
+            Assert.AreEqual("Next unlock: W-AutoSmg at level 2 · 1 level away", ResultsViewModel.NextUnlockFor(1, lookup));
+            StringAssert.Contains("at level 3 · 1 level away", ResultsViewModel.NextUnlockFor(2, lookup));
+            Assert.AreEqual(string.Empty, ResultsViewModel.NextUnlockFor(3, lookup), "every unlock owned: no line");
+            Assert.AreEqual(string.Empty, ResultsViewModel.NextUnlockFor(1, null));
+        }
+
+        [Test]
         public void Profil_SeviyeIlerlemeVeBasliklar()
         {
             var lookup = new SahteLookup();

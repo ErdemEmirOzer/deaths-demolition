@@ -2130,7 +2130,13 @@ namespace DD.Prototype.UI
         /// <summary>E13: the envelope runs on presets; this only starts the exit at its time and reports what is left.</summary>
         private void UpdateBanner()
         {
-            _bannerRemaining = _banner.Tick(Time.unscaledTime);
+            float now = Time.unscaledTime;
+            if (UiFrozenFrame.IsHeld && _banner.Live(now))
+            {
+                _banner.Cut();   // a panel is over the HUD (shop / Pause): the banner never reads through its band (12b)
+            }
+
+            _bannerRemaining = _banner.Tick(now);
         }
     }
 }
