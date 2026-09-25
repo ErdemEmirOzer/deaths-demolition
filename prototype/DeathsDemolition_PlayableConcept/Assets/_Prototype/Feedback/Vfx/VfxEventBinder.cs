@@ -14,8 +14,8 @@ namespace DD.Prototype.Feedback.Vfx
     /// (<see cref="EnemyCombatEvents"/>, WP-040 — attack_commit → claw swipe, spawn_rise →
     /// spawn dust; breaks / deaths keep their director path), the animation foot events
     /// (<see cref="CharacterAnimationEvents.Any"/>, WP-032B — dust_step with the surface tint,
-    /// throttled per body and by camera distance) and the weapon events (reload → mag drop,
-    /// Special Weapon use sheets). Owned by <see cref="VfxDressing"/>; every handler is
+    /// throttled per body and by camera distance) and the weapon events (reload → mag drop;
+    /// the Specials are ArcSystem / GelSystem's, WP-073 B6). Owned by <see cref="VfxDressing"/>; every handler is
     /// allocation-free (readonly-struct events, fixed tables, no closures — ADR-037-1).
     /// </summary>
     public sealed class VfxEventBinder
@@ -28,8 +28,6 @@ namespace DD.Prototype.Feedback.Vfx
 
         private readonly VfxDressing _owner;
         private readonly Dictionary<int, float> _lastStep = new Dictionary<int, float>(ThrottleCapacity);
-        // WP-047D: per-body throttle for the Special Hit events (the Tide well ticks every frame) + the well's centre for the arc.
-        private readonly Dictionary<int, float> _lastSpecialHit = new Dictionary<int, float>(ThrottleCapacity);
         private readonly RaycastHit[] _hits = new RaycastHit[1];
         private int _mask;
         private bool _subscribed;
@@ -45,10 +43,6 @@ namespace DD.Prototype.Feedback.Vfx
         public int MagDrops { get; private set; }
         public int PumpSmokes { get; private set; }
         public int BeatsSeen { get; private set; }
-        public int SpecialHits { get; private set; }
-        public int SpecialHitsThrottled { get; private set; }
-        public int ChainArcs { get; private set; }
-        public int TideImplodes { get; private set; }
 
         public VfxEventBinder(VfxDressing owner)
         {
@@ -93,7 +87,6 @@ namespace DD.Prototype.Feedback.Vfx
             EnemyCombatEvents.Raised += OnCombatBeat;
             CharacterAnimationEvents.Any += OnAnimationEvent;
             WeaponEvents.ReloadStarted += OnReloadStarted;
-            SpecialWeaponUsageEvents.Usage += OnSpecialUsage;
         }
 
         private void Disarm()
@@ -101,65 +94,6 @@ namespace DD.Prototype.Feedback.Vfx
             EnemyCombatEvents.Raised -= OnCombatBeat;
             CharacterAnimationEvents.Any -= OnAnimationEvent;
             WeaponEvents.ReloadStarted -= OnReloadStarted;
-            SpecialWeaponUsageEvents.Usage -= OnSpecialUsage;
-        }
-
-        // ------------------------------------------------------------------ WP-047D · Special Weapon usage (WP-056) → enemy reaction VFX (WP-055)
-
-        private void OnSpecialUsage(SpecialUsageEvent e)
-        {
-            switch (e.Kind)
-            {
-                // WP-069 B4 interim (S-02): the Ofuda dart / Tide well cases left with the two weapons; S-07's sw_arc /
-                // sw_gel sheets replace the Raiju / Namekuji mapping below (B6).
-                case SpecialUsageKind.Fired:
-                case SpecialUsageKind.FieldSpawned:
-                case SpecialUsageKind.FieldEnded:
-                    return;
-                case SpecialUsageKind.Hit:
-                    break;
-                default:
-                    return;
-            }
-
-            if (!e.Target.IsValid)
-            {
-                return;
-            }
-
-            Transform body = e.Target.Root;
-            int key = e.Target.Id;
-            float now = Time.time;
-            if (_lastSpecialHit.TryGetValue(key, out float last) && now - last < VfxDressing.SpecialHitThrottleSeconds)
-            {
-                SpecialHitsThrottled++;
-                return;
-            }
-
-            Vector3 feet = body.position;
-            bool played = false;
-            switch (e.Id)
-            {
-                case SpecialWeaponId.Raiju:
-                    // WP-069 B4 interim (S-02): the hop's arc from the previous body (e.Origin) to this one + the old hit puff.
-                    if (_owner.PlayChainArc(e.Origin, feet + Vector3.up * 0.9f)) ChainArcs++;
-                    played = _owner.PlayKaguraHit(feet, e.Direction);
-                    break;
-                case SpecialWeaponId.Namekuji:
-                    played = _owner.PlayKaguraHit(feet, e.Direction);
-                    break;
-            }
-
-            if (played)
-            {
-                if (_lastSpecialHit.Count >= ThrottleCapacity && !_lastSpecialHit.ContainsKey(key))
-                {
-                    _lastSpecialHit.Clear();
-                }
-
-                _lastSpecialHit[key] = now;
-                SpecialHits++;
-            }
         }
 
         /// <summary>Delayed effects (the magazine hits the ground, the pump vents after the shot).</summary>

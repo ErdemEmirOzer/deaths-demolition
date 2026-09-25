@@ -82,6 +82,12 @@ namespace DD.Prototype.Rendering
         [SerializeField, Tooltip("DD/VFX Atmo - atmosphere grains, petals, leaves, steam, drips (WP-073 B5).")]
         private Shader _vfxAtmo;
 
+        [SerializeField, Tooltip("DD/VFX Gel - Namekuji blob / droplets / canister, Raiju orb (WP-073 B6).")]
+        private Shader _vfxGel;
+
+        [SerializeField, Tooltip("DD/VFX Puddle - Namekuji puddles / splats, Raiju burn marks (WP-073 B6).")]
+        private Shader _vfxPuddle;
+
         [SerializeField]
         [Tooltip("Materials that exist only to keep runtime keyword variants out of the stripper.")]
         private Material[] _variantPins = new Material[0];
@@ -119,6 +125,8 @@ namespace DD.Prototype.Rendering
         /// <summary>DD/VFX Ribbon: tracer / glint ribbons (WP-073).</summary>
         public Shader VfxRibbon => _vfxRibbon;
         public Shader VfxAtmo => _vfxAtmo;
+        public Shader VfxGel => _vfxGel;
+        public Shader VfxPuddle => _vfxPuddle;
 
         /// <summary>Read-only view, for the build check and the tests.</summary>
         public Material[] VariantPins => _variantPins;
@@ -143,6 +151,8 @@ namespace DD.Prototype.Rendering
             if (_uiMaskTint == null) { eksik.Add("UiMaskTint"); }
             if (_vfxRibbon == null) { eksik.Add("VfxRibbon"); }
             if (_vfxAtmo == null) { eksik.Add("VfxAtmo"); }
+            if (_vfxGel == null) { eksik.Add("VfxGel"); }
+            if (_vfxPuddle == null) { eksik.Add("VfxPuddle"); }
 
             for (int i = 0; i < _variantPins.Length; i++)
             {

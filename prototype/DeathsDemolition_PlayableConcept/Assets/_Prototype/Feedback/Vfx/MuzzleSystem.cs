@@ -33,6 +33,8 @@ namespace DD.Prototype.Feedback.Vfx
             public bool FirstPerson;
             /// <summary>WP-073 B2: a light at a fixed world point (impact), not following a muzzle.</summary>
             public bool Fixed;
+            /// <summary>WP-073 B6: the key of a tracked light (the Raiju orb, the Namekuji blob); 0 = not tracked.</summary>
+            public int TrackKey;
         }
 
         private static MuzzleSystem s_instance;
@@ -200,6 +202,7 @@ namespace DD.Prototype.Feedback.Vfx
                 {
                     ref MuzzleLight m = ref _lights[slot];
                     m.Fixed = false;
+                    m.TrackKey = 0;
                     bool fresh = !m.Light.enabled || m.Muzzle != muzzle || !m.Sustained;
                     m.Muzzle = muzzle;
                     m.FirstPerson = firstPerson;
@@ -264,13 +267,14 @@ namespace DD.Prototype.Feedback.Vfx
                 // AD B2 MUST 1: one impact light at a time — a lit one moves to the newest hit instead of stacking.
                 for (int i = 0; i < _lights.Length; i++)
                 {
-                    if (_lights[i].Light.enabled && _lights[i].Fixed) { slot = i; break; }
+                    if (_lights[i].Light.enabled && _lights[i].Fixed && _lights[i].TrackKey == 0) { slot = i; break; }   // never a tracked one
                 }
             }
 
             if (slot < 0) slot = FreeLight(VfxTier.Current, now);
             if (slot < 0) return false;
             ref MuzzleLight m = ref _lights[slot];
+            m.TrackKey = 0;
             m.Muzzle = null;
             m.Fixed = true;
             m.FirstPerson = false;
@@ -300,6 +304,38 @@ namespace DD.Prototype.Feedback.Vfx
             if (_smoke == null) return false;
             var emit = new ParticleSystem.EmitParams { position = point, velocity = drift, startSize = size, startLifetime = seconds, startColor = colour };
             _smoke.Emit(emit, 1);
+            return true;
+        }
+
+        /// <summary>
+        /// WP-073 B6: a light that follows a moving source while the caller asks every frame (the Raiju orb / hop point, the
+        /// Namekuji blob) — one pool slot per key inside the tier cap (8 / 4 / 2); Start is refreshed per call, so FreeLight never
+        /// retires it as "oldest"; when the calls stop it fades out in 0.1 s. Reduce flashes: × 0.8.
+        /// </summary>
+        public bool TrackLight(int key, Vector3 point, Color colour, float intensity, float range)
+        {
+            float now = Time.time;
+            int slot = -1;
+            for (int i = 0; i < _lights.Length; i++)
+            {
+                if (_lights[i].Light.enabled && _lights[i].TrackKey == key) { slot = i; break; }
+            }
+
+            if (slot < 0)
+            {
+                slot = FreeLight(VfxTier.Current, now);
+                if (slot < 0) return false;
+                LightsStarted++;
+            }
+
+            ref MuzzleLight m = ref _lights[slot];
+            m.TrackKey = key; m.Muzzle = null; m.Fixed = true; m.FirstPerson = false; m.Sustained = false;
+            m.Start = now; m.LastShot = now; m.Hold = 0.02f; m.Fade = 0.1f;
+            m.Intensity = intensity * (GameFeelSettings.FlashScale < 0.99f ? 0.8f : 1f);
+            Light l = m.Light;
+            l.color = colour; l.range = range; l.shadows = LightShadows.None; l.intensity = m.Intensity;
+            l.transform.position = point;
+            l.enabled = true;
             return true;
         }
 

@@ -24,6 +24,8 @@ MonoBehaviour:
   _uiMaskTint: {fileID: 4800000, guid: f682339230cf0487ba87ae4c76afc11c, type: 3}
   _vfxRibbon: {fileID: 4800000, guid: 9ddc704f55a7b455ca52038990ab0d37, type: 3}
   _vfxAtmo: {fileID: 4800000, guid: 0edfcc0760c56452f924487aefa2c589, type: 3}
+  _vfxGel: {fileID: 4800000, guid: a8db77d8b7ea84b7b9b4ce11e984d40e, type: 3}
+  _vfxPuddle: {fileID: 4800000, guid: b5842799ba5de4c31856e41fb15ec147, type: 3}
   _variantPins:
   - {fileID: 2100000, guid: 5316f235dfaf74d858dcd86e980f607d, type: 2}
   - {fileID: 2100000, guid: 2870161f0c01a47e78842c1d4e286854, type: 2}
@@ -34,3 +36,5 @@ MonoBehaviour:
   - {fileID: 2100000, guid: 344dde0a91c844e359004f7456dd2dc8, type: 2}
   - {fileID: 2100000, guid: d4c9872cc07764c5a90ea3d0819b8de3, type: 2}
   - {fileID: 2100000, guid: 1f3b1bce7288444cba944f26bb25ea98, type: 2}
+  - {fileID: 2100000, guid: 1a938cd8d58c84bc1ab00b2599a57b92, type: 2}
+  - {fileID: 2100000, guid: 7e988ef18932a449ea6ba536715a2bb0, type: 2}

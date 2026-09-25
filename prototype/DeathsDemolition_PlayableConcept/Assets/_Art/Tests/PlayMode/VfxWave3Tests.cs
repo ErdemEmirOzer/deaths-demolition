@@ -191,24 +191,13 @@ namespace DD.Art.Tests.PlayMode
             Assert.Less(lifeB, lifeA * 0.75f, "B (SMG) kısa flaş: " + lifeB + " vs A " + lifeA);
             Assert.AreEqual(1, binder.PumpSmokes - pump0, "C (pompalı) pump dumanı");
 
-            // B · AP-014 sheets: Kagura ring on the shock ring, Ofuda collapse on the seal links (de-duplicated per frame).
-            // (Counted on their own counters: Wave3Played also takes the crowd's foot dust, which lands on any frame — WP-047E flake.)
-            int w3b = vfx.Wave3Played, rings0 = vfx.KaguraRings, collapses0 = vfx.OfudaCollapses;
-            fx.ReportShockRing(p, 4f, 0.34f);
+            // (WP-073 B6: the Kagura ring / Ofuda collapse sheets left with their Specials — DEC-094; Raiju / Namekuji in Wp073SpecialVfxTests.)
             yield return null;
-            int kagura = vfx.KaguraRings - rings0;
             // WP-073: the three swaps above came right after a flash — a muzzle card parented to the rebuilt model must have gone
             // back to the pool, not down with the model (a lost card was re-instantiated inside a later hit, ≈ 18 allocations).
             int lostCards = 0;
             foreach (FlipbookEffect card in vfx.FlipbookPool.Spawned) if (card == null) lostCards++;
             Assert.AreEqual(0, lostCards, "silah değişimi namlu kartını modelle birlikte yok etti (havuz sonra sıcak yolda büyür)");
-            fx.ReportSealLink(p, p + Vector3.right * 2f);
-            fx.ReportSealLink(p + Vector3.right * 2f, p);   // the closing link of a 2-body net: same bodies, no second burst
-            yield return null;
-            int ofuda = vfx.OfudaCollapses - collapses0;
-            Assert.AreEqual(1, kagura, "Kagura ring sheet");
-            Assert.AreEqual(2, ofuda, "Ofuda collapse: 2 sealed bodies, 4 link ends → 2 bursts");
-            Assert.GreaterOrEqual(vfx.SwSheets.MaterialsCreated, 2, "AP-014 runtime materials (kagura + collapse)");
 
             // D · lanterns: the scan lit the stone lanterns of the AP005 world.
             yield return new WaitForSeconds(0.2f);
@@ -237,8 +226,6 @@ namespace DD.Art.Tests.PlayMode
                 }
 
                 for (int i = 0; i < 8; i++) vfx.PlayDustStep(p + Vector3.right * (i % 4) * 0.3f, Vector3.up, Vector3.forward, i % 2 == 0 ? SurfaceKind.Stone : SurfaceKind.Dirt);
-                vfx.PlayOfudaCollapse(p, p + Vector3.right * 2f);
-                vfx.PlayKaguraRing(p, 4f, 0.34f);
             }
 
             // WP-073: three warm reps first (the flipbook pool wraps on the second) — see VfxBloodTests.
@@ -254,8 +241,8 @@ namespace DD.Art.Tests.PlayMode
             yield return null;
 
             Debug.Log("[DD-TEST] wp047.wave3 claws=" + binder.ClawSwipes + " spawnDust=" + binder.SpawnDusts + " steps=" + binder.FootSteps + "/" + binder.FootStepsThrottled +
-                      " mags=" + binder.MagDrops + " pump=" + binder.PumpSmokes + " lifeA=" + lifeA.ToString("F2") + " lifeB=" + lifeB.ToString("F2") + " kagura=" + kagura + " ofuda=" + ofuda +
-                      " lanterns=" + lanterns + " swMaterials=" + vfx.SwSheets.MaterialsCreated + " wave3=" + vfx.Wave3Played + " threadAlloc=none");
+                      " mags=" + binder.MagDrops + " pump=" + binder.PumpSmokes + " lifeA=" + lifeA.ToString("F2") + " lifeB=" + lifeB.ToString("F2") +
+                      " lanterns=" + lanterns + " wave3=" + vfx.Wave3Played + " threadAlloc=none");
 
             // Evidence for the AD round (post-fx on): swipe, spawn dust, muzzle C, kagura, lantern.
             string dir = Environment.GetEnvironmentVariable("DD_ART_CAPTURE_DIR");
@@ -283,10 +270,6 @@ namespace DD.Art.Tests.PlayMode
             ArtVisualRegression.CaptureToPng(near, W, H, Path.Combine(dir, "01-claw-spawndust-near-0.12s.png"), true);
             Debug.Log("[DD-TEST] wp047.ad claw actor=" + (actor == body ? "synthetic" : actor.name) + " at " + ap.ToString("F2"));
             yield return new WaitForSeconds(0.5f);
-            Vector3 ringAt = PlayerRegistry.Primary.transform.position;
-            fx.ReportShockRing(ringAt, 4f, 0.34f);
-            yield return new WaitForSeconds(0.2f);
-            ArtVisualRegression.CaptureToPng(new ArtVisualRegression.CameraPose("wave3_ring", ringAt + new Vector3(0f, 6f, -8f), ringAt, 50f), W, H, Path.Combine(dir, "02-kagura-ring-0.20s.png"), true);
             yield return new WaitForSeconds(0.6f);
             if (lanterns > 0)
             {
@@ -306,7 +289,7 @@ namespace DD.Art.Tests.PlayMode
 
             UnityEngine.Object.Destroy(body.gameObject);
             File.WriteAllText(Path.Combine(dir, "wave3-readout.txt"), "claws=" + binder.ClawSwipes + " spawnDust=" + binder.SpawnDusts + " steps=" + binder.FootSteps + " mags=" + binder.MagDrops + " pump=" + binder.PumpSmokes +
-                " kagura=" + kagura + " ofuda=" + ofuda + " lanterns=" + lanterns + " threadAlloc=none\n");
+                " lanterns=" + lanterns + " threadAlloc=none\n");
         }
 
         private static float LastMuzzleLife(VfxDressing vfx)
@@ -346,20 +329,18 @@ namespace DD.Art.Tests.PlayMode
             Assert.IsTrue(target.IsValid, "hedef geçersiz");
             Vector3 feet = bodyT.position;
 
-            // WP-069 B4 (S-02): Kagura / Ofuda / Tide left the game (DEC-094). Until S-07's sw_arc / sw_gel rows land, the binder's
-            // interim mapping is: Raiju Hit → the hop's chain arc (previous body → this one) + the ground puff; Namekuji Hit → the puff.
-            int hits0 = binder.SpecialHits, arcs0 = binder.ChainArcs, played0 = vfx.SpecialHitsPlayed;
+            // WP-073 B6: the Specials' own systems — a Raiju hop draws the chain arc (previous body → this one) and shocks the body;
+            // a Namekuji hit films it. Hops are never throttled per body (each hop is a different body).
+            ArcSystem arc = ArcSystem.Ensure();
+            GelSystem gel = GelSystem.Ensure();
+            int arcs0 = arc.ChainArcs, films0 = gel.Films;
             int casings0 = vfx.CasingsEjected;
             Vector3 well = feet + Vector3.right * 2.5f;
             SpecialWeaponUsageEvents.PublishHit(SpecialWeaponId.Raiju, "sw_arc_chain", target, well + Vector3.up * 0.9f, Vector3.forward, 2f, 0.8f, 0.3f);
-            Assert.AreEqual(1, binder.SpecialHits - hits0, "Raiju Hit → zemin tozu");
-            Assert.AreEqual(1, binder.ChainArcs - arcs0, "Raiju Hit → önceki bedenden zincir arkı");
-            SpecialWeaponUsageEvents.PublishHit(SpecialWeaponId.Raiju, "sw_arc_chain", target, well + Vector3.up * 0.9f, Vector3.forward, 2f, 0.8f, 0.3f);
-            Assert.AreEqual(1, binder.SpecialHits - hits0, "aynı bedene 0,3 s içinde ikinci Hit kısılmalı");
-            yield return new WaitForSeconds(VfxDressing.SpecialHitThrottleSeconds + 0.05f);
+            Assert.AreEqual(1, arc.ChainArcs - arcs0, "Raiju Hit → önceki bedenden zincir arkı");
+            Assert.GreaterOrEqual(arc.LiveShocks, 1, "Raiju Hit → beden elektrik çarpması");
             SpecialWeaponUsageEvents.PublishHit(SpecialWeaponId.Namekuji, "sw_gel_blob", target, feet + Vector3.up * 0.9f, Vector3.forward, 0f, 1f, 0f);
-            Assert.AreEqual(2, binder.SpecialHits - hits0, "Namekuji Hit → zemin tozu");
-            Assert.AreEqual(3, vfx.SpecialHitsPlayed - played0);   // Raiju arc + puff, Namekuji puff
+            Assert.AreEqual(1, gel.Films - films0, "Namekuji Hit → jel filmi");
 
             // Barrel heat: five rifle shots at the muzzle → strip visible; ~3 s later it has cooled off.
             Transform muzzle = WeaponRegistry.ActiveController != null ? WeaponRegistry.ActiveController.Muzzle : PlayerRegistry.Primary.transform;
@@ -372,7 +353,7 @@ namespace DD.Art.Tests.PlayMode
 
             // Water look: the koi pond (WP-038 DD/Water v2) is the splash tint's source in the AP005 world.
             Color splashTint = WaterLook.SplashTint;
-            Debug.Log("[DD-TEST] wp047d.special hits=" + (binder.SpecialHits - hits0) + " throttled=" + binder.SpecialHitsThrottled + " arcs=" + (binder.ChainArcs - arcs0) +
+            Debug.Log("[DD-TEST] wp047d.special arcs=" + (arc.ChainArcs - arcs0) + " films=" + (gel.Films - films0) +
                       " body=" + (z != null ? z.name : "player") + " heat=" + heatShown.ToString("F2") + " visible=" + vfx.BarrelHeatVisible +
                       " waterFound=" + WaterLook.Found + " splashTint=" + splashTint + " arcTint=" + WaterLook.ArcTint);
             Assert.IsTrue(WaterLook.Found, "AP005 dünyasında DD/Water v2 malzemesi bulunamadı (WP-038 koi havuzu)");
@@ -381,9 +362,7 @@ namespace DD.Art.Tests.PlayMode
             string dir = Environment.GetEnvironmentVariable("DD_ART_CAPTURE_DIR");
             if (string.IsNullOrEmpty(dir)) dir = Path.Combine(Application.temporaryCachePath, "wp047-captures");
             dir = Path.Combine(dir, "wave3"); Directory.CreateDirectory(dir);
-            vfx.PlayKaguraHit(feet + Vector3.left * 1.2f, Vector3.forward);
-            vfx.PlayTidePull(feet + Vector3.right * 1.2f, Vector3.right);
-            vfx.PlayChainArc(well + Vector3.up * 0.4f, feet + Vector3.right * 1.2f + Vector3.up * 0.9f);
+            SpecialWeaponUsageEvents.PublishHit(SpecialWeaponId.Raiju, "sw_arc_chain", target, well + Vector3.up * 0.9f, Vector3.forward, 2f, 0.8f, 0.3f);
             yield return new WaitForSeconds(0.08f);
             ArtVisualRegression.CaptureToPng(new ArtVisualRegression.CameraPose("wave3d_20m", feet + new Vector3(0f, 14f, -14.2f), feet + Vector3.up * 0.8f, 40f), W, H, Path.Combine(dir, "04-special-reactions-20m.png"), true);
             ArtVisualRegression.CaptureToPng(new ArtVisualRegression.CameraPose("wave3d_near", feet + new Vector3(2.2f, 1.5f, -2.4f), feet + Vector3.up * 0.9f, 42f), W, H, Path.Combine(dir, "05-special-reactions-near.png"), true);

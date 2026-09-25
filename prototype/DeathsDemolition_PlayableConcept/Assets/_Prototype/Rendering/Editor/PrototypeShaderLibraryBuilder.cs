@@ -32,6 +32,8 @@ namespace DD.Prototype.Rendering.EditorTools
         private const string UiMaskTintAd = "DD/UI/MaskTint";
         private const string VfxRibbonAd = "DD/VFX Ribbon";
         private const string VfxAtmoAd = "DD/VFX Atmo";
+        private const string VfxGelAd = "DD/VFX Gel";
+        private const string VfxPuddleAd = "DD/VFX Puddle";
 
         [MenuItem("Tools/Deaths Demolition/Rebuild Shader Library")]
         public static void Rebuild()
@@ -79,6 +81,8 @@ namespace DD.Prototype.Rendering.EditorTools
             Shader uiMaskTint = Bul(UiMaskTintAd, ref hata);
             Shader vfxRibbon = Bul(VfxRibbonAd, ref hata);
             Shader vfxAtmo = Bul(VfxAtmoAd, ref hata);
+            Shader vfxGel = Bul(VfxGelAd, ref hata);
+            Shader vfxPuddle = Bul(VfxPuddleAd, ref hata);
             if (hata != null)
             {
                 return false;
@@ -87,7 +91,7 @@ namespace DD.Prototype.Rendering.EditorTools
             KlasorKur(Klasor);
             KlasorKur(PinKlasor);
 
-            Material[] pins = PinleriKur(lit, unlit, particles, vfxRibbon);
+            Material[] pins = PinleriKur(lit, unlit, particles, vfxRibbon, vfxGel, vfxPuddle);
 
             var kitaplik = AssetDatabase.LoadAssetAtPath<PrototypeShaderLibrary>(Yol);
             if (kitaplik == null)
@@ -111,6 +115,8 @@ namespace DD.Prototype.Rendering.EditorTools
             so.FindProperty("_uiMaskTint").objectReferenceValue = uiMaskTint;
             so.FindProperty("_vfxRibbon").objectReferenceValue = vfxRibbon;
             so.FindProperty("_vfxAtmo").objectReferenceValue = vfxAtmo;
+            so.FindProperty("_vfxGel").objectReferenceValue = vfxGel;
+            so.FindProperty("_vfxPuddle").objectReferenceValue = vfxPuddle;
 
             SerializedProperty dizi = so.FindProperty("_variantPins");
             dizi.arraySize = pins.Length;
@@ -169,7 +175,7 @@ namespace DD.Prototype.Rendering.EditorTools
         /// without these the shaders ship with their opaque variant alone and everything
         /// that should fade draws solid. Each pin below mirrors one runtime configuration.
         /// </summary>
-        private static Material[] PinleriKur(Shader lit, Shader unlit, Shader particles, Shader vfxRibbon)
+        private static Material[] PinleriKur(Shader lit, Shader unlit, Shader particles, Shader vfxRibbon, Shader vfxGel, Shader vfxPuddle)
         {
             var pins = new List<Material>(6);
 
@@ -228,6 +234,11 @@ namespace DD.Prototype.Rendering.EditorTools
             {
                 pins.Add(Pin("Pin_VfxRibbon_Instanced", vfxRibbon, m => { m.enableInstancing = true; }));
             }
+
+            // WP-073 B6: the Namekuji blobs / droplets / Raiju orb (DD/VFX Gel) and puddles / splats / burns (DD/VFX Puddle) are
+            // instanced from runtime materials too.
+            if (vfxGel != null) pins.Add(Pin("Pin_VfxGel_Instanced", vfxGel, m => { m.enableInstancing = true; }));
+            if (vfxPuddle != null) pins.Add(Pin("Pin_VfxPuddle_Instanced", vfxPuddle, m => { m.enableInstancing = true; }));
 
             return pins.ToArray();
         }

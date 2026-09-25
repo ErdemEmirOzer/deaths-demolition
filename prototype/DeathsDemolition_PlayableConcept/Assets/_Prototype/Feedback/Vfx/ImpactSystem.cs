@@ -396,6 +396,13 @@ namespace DD.Prototype.Feedback.Vfx
             SparksEmitted += count;
         }
 
+        /// <summary>WP-073 B6: sparks from the shared additive emitter in the caller's colour (Raiju hop tips, fizzle, embers).</summary>
+        public void EmitSparks(Vector3 at, Vector3 axis, int count, Color32 colour, float speedMin, float speedMax, float lifeMin, float lifeMax)
+        {
+            if (count <= 0 || axis.sqrMagnitude < 1e-6f) return;
+            Sparks(at, axis, count, speedMin, speedMax, lifeMin, lifeMax, 0.55f, colour);
+        }
+
         // ------------------------------------------------------------------ build
 
         private void ApplyTier(VfxTierLevel tier)

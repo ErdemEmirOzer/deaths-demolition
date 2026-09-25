@@ -55,11 +55,10 @@ namespace DD.Prototype.Feedback.Vfx
         public int CasingsEjected { get; private set; }
         public PrototypePool<CasingEffect> CasingPool => _casings;
         private readonly LanternFlames _lanterns = new LanternFlames();
-        private readonly SpecialWeaponSheets _swSheets = new SpecialWeaponSheets();
         private static readonly List<VfxCatalogEntry> s_deathSheets = new List<VfxCatalogEntry>(4);
         private readonly Dictionary<int, BreakEventId> _breakIds = new Dictionary<int, BreakEventId>(64);
         public const int StrawBurstCapacity = 4;
-        /// <summary>WP-047 wave-3 effects played (claw swipe, spawn dust, dust step, mag drop, pump smoke, break debris, Kagura ring, Ofuda seal).</summary>
+        /// <summary>WP-047 wave-3 effects played (claw swipe, spawn dust, dust step, mag drop, pump smoke, break debris).</summary>
         public int Wave3Played { get; private set; }
         public string LastFootstepEffectId { get; private set; }
         public VfxEventBinder Binder => _binder;
@@ -67,7 +66,6 @@ namespace DD.Prototype.Feedback.Vfx
         public int MuzzlePlays { get; private set; }
         public string LastMuzzleNote { get; private set; } = string.Empty;
         public LanternFlames Lanterns => _lanterns;
-        public SpecialWeaponSheets SwSheets => _swSheets;
         private int _deathToggle;
         private Vector3 _lastBeaconPoint;
         private bool _wave2Subscribed;
@@ -180,6 +178,9 @@ namespace DD.Prototype.Feedback.Vfx
                 _barrelCards = FeedbackPoolWarmer.Warm(PoolService.GetOrCreate(Template<FlipbookEffect>(templateRoot, "FX_WP073_BarrelCard"),
                     2, 2, PoolExhaustedPolicy.RecycleOldest));
                 ImpactSystem.Ensure(this);
+                ArcSystem.Ensure();           // WP-073 B6: Raiju (direction §2.1)
+                GelSystem.Ensure();           // WP-073 B6: Namekuji (§2.2)
+                SpecialWeaponGlow.Ensure();   // WP-073 B6: the two models' emissive states
             }
             else
             {
@@ -233,181 +234,6 @@ namespace DD.Prototype.Feedback.Vfx
                 _lanterns.Tick(now);
                 TickBarrelHeat(now);
             }
-        }
-
-        // ------------------------------------------------------------------ WP-047D · enemy Special reactions (WP-055 / WP-056 Hit)
-
-        public const float SpecialHitThrottleSeconds = 0.30f;
-        public const float KaguraHitDustMetres = 1.2f;     // AD M2 (WP-047E): 0.6 → 1.2 m, alpha 0.5, ≥ 0.6 s
-        public const float KaguraHitDustSeconds = 0.6f;
-        public const float ChainArcThickness = 2.4f;        // AD M2: the bolt's height stretched so the core reads at 20 m
-        public const float ChainArcGain = 1.6f;
-        public const float TidePullStreakSize = 0.55f;
-        public const float ChainArcMinMetres = 1.5f, ChainArcMaxMetres = 3.5f;
-
-        public int SpecialHitsPlayed { get; private set; }
-        public int KaguraRings { get; private set; }
-        public int OfudaCollapses { get; private set; }
-
-        public static readonly Color ClawTargetTint = new Color(0.85f * 1.4f, 0.82f * 1.4f, 0.75f * 1.4f, 1f);
-
-        /// <summary>Block tint that lands the card on <see cref="ClawTargetTint"/> after the manifest tint multiplies it.</summary>
-        public static Color ClawTintFor(VfxCatalogEntry row)
-        {
-            Color m = row != null ? row.DefaultTint : Color.white;
-            return new Color(ClawTargetTint.r / Mathf.Max(0.05f, m.r), ClawTargetTint.g / Mathf.Max(0.05f, m.g), ClawTargetTint.b / Mathf.Max(0.05f, m.b), 1f);
-        }
-
-        /// <summary>Kagura wave front crossed a body (S-03 Dazed): a ground puff kicked off the feet in the front's direction.</summary>
-        public bool PlayKaguraHit(Vector3 feet, Vector3 direction)
-        {
-            if (!_ready || AuditMute || !VfxLibrary.TryGetPlayable(VfxIds.DustStep, out VfxCatalogEntry row))
-            {
-                return false;
-            }
-
-            FlipbookEffect fx = _flipbooks.Get(feet + Vector3.up * 0.03f, Quaternion.identity);
-            if (fx == null)
-            {
-                return false;
-            }
-
-            fx.Play(row, FlipbookEffect.Facing.CameraYaw, KaguraHitDustMetres, VfxLibrary.BeaconTint, 0.5f, 0.35f, KaguraHitDustSeconds);
-            fx.SetAlign(direction.sqrMagnitude > 1e-4f ? direction : Vector3.forward, true);
-            SpecialHitsPlayed++;
-            return true;
-        }
-
-        /// <summary>Tide well pull tick on a body (S-03 lean): a short splash streak dragged toward the well from the feet.</summary>
-        public bool PlayTidePull(Vector3 feet, Vector3 inward)
-        {
-            if (!_ready || AuditMute || !VfxLibrary.TryGetPlayable(VfxIds.WaterSplash, out VfxCatalogEntry row))
-            {
-                return false;
-            }
-
-            FlipbookEffect fx = _flipbooks.Get(feet + Vector3.up * 0.05f, Quaternion.identity);
-            if (fx == null)
-            {
-                return false;
-            }
-
-            fx.Play(row, FlipbookEffect.Facing.Camera, TidePullStreakSize, WaterLook.SplashTint, 0.85f, 0.3f);
-            fx.SetAlign(inward.sqrMagnitude > 1e-4f ? inward : Vector3.forward, true);
-            fx.SetStretch(1.7f, 0.7f);
-            SpecialHitsPlayed++;
-            return true;
-        }
-
-        private FlipbookEffect _tideWellCard;
-        public int TideWells { get; private set; }
-
-        /// <summary>Tide well spawned (WP-056 FieldSpawned): the AP-014C vortex loop under the well, ground-aligned 2 × radius, for the well's life.</summary>
-        public bool PlayTideWell(Vector3 centre, float radius, float seconds)
-        {
-            if (!_ready || AuditMute || !VfxLibrary.TryGetPlayable(VfxIds.SwTideWell, out VfxCatalogEntry row))
-            {
-                return false;
-            }
-
-            if (_tideWellCard != null && _tideWellCard.IsSpawned) _flipbooks.Release(_tideWellCard);
-            _tideWellCard = _flipbooks.Get(centre + Vector3.up * 0.04f, Quaternion.Euler(90f, 0f, 0f));
-            if (_tideWellCard == null)
-            {
-                return false;
-            }
-
-            float size = Mathf.Clamp(radius * 2f, 2f, row.WorldSizeMetres);
-            _tideWellCard.Play(row, FlipbookEffect.Facing.Fixed, size, Color.white, 0.9f, 0.15f, Mathf.Max(0.3f, seconds));
-            TideWells++;
-            return true;
-        }
-
-        /// <summary>Tide well imploded (WP-056 FieldEnded): the AP-014C implosion sheet (arms snap in, dust ring) + the pond splash crown and a wide ring.</summary>
-        public bool PlayTideImplode(Vector3 centre, float radius)
-        {
-            if (!_ready || AuditMute)
-            {
-                return false;
-            }
-
-            if (_tideWellCard != null && _tideWellCard.IsSpawned) { _flipbooks.Release(_tideWellCard); _tideWellCard = null; }
-            bool any = false;
-            if (VfxLibrary.TryGetPlayable(VfxIds.SwTideImplode, out VfxCatalogEntry implode))
-            {
-                FlipbookEffect fx = _flipbooks.Get(centre + Vector3.up * 0.05f, Quaternion.Euler(90f, 0f, 0f));
-                if (fx != null) { fx.Play(implode, FlipbookEffect.Facing.Fixed, Mathf.Clamp(radius * 2f, 2f, implode.WorldSizeMetres), Color.white, 1f, 0f); any = true; }
-            }
-
-            if (VfxLibrary.TryGetPlayable(VfxIds.WaterSplash, out VfxCatalogEntry splash))
-            {
-                FlipbookEffect fx = _flipbooks.Get(centre + Vector3.up * 0.05f, Quaternion.identity);
-                if (fx != null) { fx.Play(splash, FlipbookEffect.Facing.Camera, splash.WorldSizeMetres * 1.8f, WaterLook.ArcTint, 0.9f, 0.3f); any = true; }
-            }
-
-            if (VfxLibrary.TryGetPlayable(VfxIds.WaterSplashRing, out VfxCatalogEntry ring))
-            {
-                FlipbookEffect fx = _flipbooks.Get(centre + Vector3.up * 0.03f, Quaternion.Euler(90f, 0f, 0f));
-                if (fx != null)
-                {
-                    fx.Play(ring, FlipbookEffect.Facing.Fixed, Mathf.Clamp(radius * 1.6f, 1f, 6f), WaterLook.SplashTint, 0.7f, 0.4f);
-                    fx.SetGrow(radius * 0.4f, 0.25f);   // the ring collapses inward in the sheet; the card grows to the rim as the well empties
-                    any = true;
-                }
-            }
-
-            if (any) SpecialHitsPlayed++;
-            return any;
-        }
-
-        /// <summary>Ofuda dart (WP-056 Fired → Hit): the AP-014C dart frame at the seal, +U along the flight, gone in 0.15 s.</summary>
-        public bool PlayOfudaDart(Vector3 at, Vector3 flight)
-        {
-            if (!_ready || AuditMute || !VfxLibrary.TryGetPlayable(VfxIds.SwOfudaDartSheet, out VfxCatalogEntry row))
-            {
-                return false;
-            }
-
-            FlipbookEffect fx = _flipbooks.Get(at, Quaternion.identity);
-            if (fx == null)
-            {
-                return false;
-            }
-
-            fx.Play(row, FlipbookEffect.Facing.Camera, row.WorldSizeMetres, Color.white, 1f, 0.5f, 0.15f);
-            fx.HoldFrame(0);
-            fx.SetAlign(flight.sqrMagnitude > 1e-4f ? flight : Vector3.forward, true);
-            SpecialHitsPlayed++;
-            return true;
-        }
-
-        /// <summary>AP-010B `chain_arc_sheet` stretched between two points (Tide well → pulled body; manifest: 0.6–1.4× of 2.5 m).</summary>
-        public bool PlayChainArc(Vector3 from, Vector3 to)
-        {
-            if (!_ready || AuditMute || !VfxLibrary.TryGetPlayable(VfxIds.ChainArcSheet, out VfxCatalogEntry row))
-            {
-                return false;
-            }
-
-            Vector3 delta = to - from;
-            float length = delta.magnitude;
-            if (length < 0.2f)
-            {
-                return false;
-            }
-
-            FlipbookEffect fx = _flipbooks.Get((from + to) * 0.5f, Quaternion.identity);
-            if (fx == null)
-            {
-                return false;
-            }
-
-            Color arc = WaterLook.ArcTint * ChainArcGain; arc.a = 1f;
-            fx.Play(row, FlipbookEffect.Facing.Camera, Mathf.Clamp(length, ChainArcMinMetres, ChainArcMaxMetres), arc, 1f, 0f);
-            fx.SetAlign(delta / length, true);
-            fx.SetStretch(1f, ChainArcThickness);
-            SpecialHitsPlayed++;
-            return true;
         }
 
         // ------------------------------------------------------------------ WP-047D · barrel heat (AP-010B `barrel_heat` strip)
@@ -890,6 +716,15 @@ namespace DD.Prototype.Feedback.Vfx
                 return false;
             }
 
+            // WP-073 B6: a Special's muzzle is ArcSystem's discharge ring / GelSystem's nozzle curtain (from Fired); true = handled,
+            // so the director does not fall back to the WP-002 card either (it played the rifle card + heat + a casing before).
+            DD.Prototype.Weapons.WeaponController holder = DD.Prototype.Weapons.WeaponRegistry.ActiveController;
+            if (holder != null && holder.SpecialWeaponActive)
+            {
+                LastMuzzleNote = "special";
+                return true;
+            }
+
             FlipbookEffect fx = _flipbooks.Get(muzzle.position, muzzle.rotation, muzzle);
             if (fx == null)
             {
@@ -970,6 +805,16 @@ namespace DD.Prototype.Feedback.Vfx
         }
 
         // ------------------------------------------------------------------ WP-047 wave 3
+
+        public static readonly Color ClawTargetTint = new Color(0.85f * 1.4f, 0.82f * 1.4f, 0.75f * 1.4f, 1f);
+
+        /// <summary>Block tint that lands the card on <see cref="ClawTargetTint"/> after the manifest tint multiplies it.</summary>
+        public static Color ClawTintFor(VfxCatalogEntry row)
+        {
+            Color m = row != null ? row.DefaultTint : Color.white;
+            return new Color(ClawTargetTint.r / Mathf.Max(0.05f, m.r), ClawTargetTint.g / Mathf.Max(0.05f, m.g), ClawTargetTint.b / Mathf.Max(0.05f, m.b), 1f);
+        }
+
 
         /// <summary>attack_commit: the swipe card at the attack socket, +u along the strike (dark tint from the manifest).</summary>
         public bool PlayClawSwipe(Vector3 position, Vector3 direction, DD.Prototype.Core.Config.EnemyTier tier)
@@ -1109,85 +954,6 @@ namespace DD.Prototype.Feedback.Vfx
 
             puff.Play(2, 0.12f, 0.2f, 0.8f);
             Wave3Played++;
-            return true;
-        }
-
-        /// <summary>Kagura Bell wave: the AP-014 ring sheet on the ground, growing with the wave front (`ReportShockRing`).</summary>
-        public bool PlayKaguraRing(Vector3 origin, float radius, float travelSeconds)
-        {
-            if (!_ready || AuditMute)
-            {
-                return false;
-            }
-
-            SpecialWeaponSheets.Playable sheet = _swSheets.Get(VfxIds.SwKaguraWave);
-            if (sheet.Row == null)
-            {
-                return false;
-            }
-
-            FlipbookEffect fx = _flipbooks.Get(origin + Vector3.up * 0.06f, Quaternion.Euler(90f, 0f, 0f));
-            if (fx == null)
-            {
-                return false;
-            }
-
-            float size = Mathf.Min(sheet.Row.WorldSizeMetres, Mathf.Max(1f, radius * 2f));
-            fx.Play(sheet.Row, FlipbookEffect.Facing.Fixed, size, VfxLibrary.BeaconTint, 1f, 0.35f, Mathf.Max(sheet.Row.DurationSeconds, travelSeconds + 0.4f));
-            fx.SetGrow(0.5f, Mathf.Max(0.1f, travelSeconds));
-            Wave3Played++; KaguraRings++;
-            return true;
-        }
-
-        /// <summary>
-        /// Ofuda Loom collapse (`ReportSealLink` is raised once per link when the web is spent): the AP-014
-        /// collapse burst (flash core + paper flakes, 3.0 m sheet) at each sealed body, de-duplicated within
-        /// the frame so a closed net does not burst twice at the same body.
-        /// </summary>
-        public bool PlayOfudaCollapse(Vector3 from, Vector3 to)
-        {
-            if (!_ready || AuditMute)
-            {
-                return false;
-            }
-
-            SpecialWeaponSheets.Playable sheet = _swSheets.Get(VfxIds.SwOfudaCollapse);
-            if (sheet.Row == null)
-            {
-                return false;
-            }
-
-            bool any = false;
-            any |= OfudaBurstAt(sheet.Row, from);
-            any |= OfudaBurstAt(sheet.Row, to);
-            return any;
-        }
-
-        private readonly Vector3[] _ofudaRecent = new Vector3[8];
-        private int _ofudaRecentCount, _ofudaRecentFrame = -1;
-
-        private bool OfudaBurstAt(VfxCatalogEntry row, Vector3 point)
-        {
-            if (_ofudaRecentFrame != Time.frameCount)
-            {
-                _ofudaRecentFrame = Time.frameCount;
-                _ofudaRecentCount = 0;
-            }
-
-            for (int i = 0; i < _ofudaRecentCount; i++)
-            {
-                if ((_ofudaRecent[i] - point).sqrMagnitude < 0.09f) return false;
-            }
-
-            if (_ofudaRecentCount < _ofudaRecent.Length) _ofudaRecent[_ofudaRecentCount++] = point;
-            FlipbookEffect fx = _flipbooks.Get(point, Quaternion.identity);
-            if (fx == null)
-            {
-                return false;
-            }
-
-            fx.Play(row, FlipbookEffect.Facing.Camera, row.WorldSizeMetres * 0.6f, Color.white);   // 3.0 m sheet at 1.8 m: the flash core reads, the flakes stay inside the body
-            Wave3Played++; OfudaCollapses++;
             return true;
         }
 

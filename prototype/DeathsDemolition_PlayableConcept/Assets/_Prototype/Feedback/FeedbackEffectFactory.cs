@@ -35,9 +35,6 @@ namespace DD.Prototype.Feedback
         private static MuzzleFlashEffect s_muzzleTemplate;
         private static LinkEffect s_linkTemplate;
         private static BeaconEffect s_beaconTemplate;
-        private static ShockRingEffect s_shockRingTemplate;
-        private static SealGlyphEffect s_sealGlyphTemplate;
-        private static VortexEffect s_vortexTemplate;
 
 
         /// <summary>WP-019: the inactive template root, for the AP-010 pool templates.</summary>
@@ -107,21 +104,6 @@ namespace DD.Prototype.Feedback
         public static BeaconEffect BeaconTemplate => s_beaconTemplate != null
             ? s_beaconTemplate
             : s_beaconTemplate = BuildBeacon();
-
-        /// <summary>Kagura Bell pressure front (G-21). Two closed line loops.</summary>
-        public static ShockRingEffect ShockRingTemplate => s_shockRingTemplate != null
-            ? s_shockRingTemplate
-            : s_shockRingTemplate = BuildShockRing();
-
-        /// <summary>Ofuda Loom talisman (G-21). A paper strip with a burning band.</summary>
-        public static SealGlyphEffect SealGlyphTemplate => s_sealGlyphTemplate != null
-            ? s_sealGlyphTemplate
-            : s_sealGlyphTemplate = BuildSealGlyph();
-
-        /// <summary>Tide Jewel gravity well (G-21). Contracting surface rings and a core.</summary>
-        public static VortexEffect VortexTemplate => s_vortexTemplate != null
-            ? s_vortexTemplate
-            : s_vortexTemplate = BuildVortex();
 
         // ------------------------------------------------------------------- builders
 
@@ -299,71 +281,6 @@ namespace DD.Prototype.Feedback
             return line;
         }
 
-        private static ShockRingEffect BuildShockRing()
-        {
-            GameObject go = NewChild("FX_ShockRing");
-
-            BuildRingLine(go.transform, "Lead", 0.16f);
-            BuildRingLine(go.transform, "Echo", 0.09f);
-
-            return go.AddComponent<ShockRingEffect>();
-        }
-
-        private static SealGlyphEffect BuildSealGlyph()
-        {
-            GameObject go = NewChild("FX_SealGlyph");
-
-            // Alpha, not additive: an ofuda is a piece of paper. Additive would turn it
-            // into a glow, and a glow on a body in a crowd of forty reads as "this one is
-            // on fire", which is a different and wrong message.
-            GameObject paper = BuildPrimitive(PrimitiveType.Quad, "Paper");
-            paper.transform.SetParent(go.transform, false);
-            paper.transform.localScale = new Vector3(0.16f, 0.34f, 1f);
-            var paperRenderer = paper.GetComponent<MeshRenderer>();
-            paperRenderer.sharedMaterial = FeedbackMaterials.Alpha(Color.white);
-            paperRenderer.shadowCastingMode = ShadowCastingMode.Off;
-            paperRenderer.receiveShadows = false;
-
-            GameObject band = BuildPrimitive(PrimitiveType.Quad, "Band");
-            band.transform.SetParent(go.transform, false);
-            band.transform.localPosition = new Vector3(0f, -0.15f, -0.01f);
-            band.transform.localScale = new Vector3(0.18f, 0.05f, 1f);
-            var bandRenderer = band.GetComponent<MeshRenderer>();
-            bandRenderer.sharedMaterial = FeedbackMaterials.Additive(Color.white);
-            bandRenderer.shadowCastingMode = ShadowCastingMode.Off;
-            bandRenderer.receiveShadows = false;
-
-            return go.AddComponent<SealGlyphEffect>();
-        }
-
-        private static VortexEffect BuildVortex()
-        {
-            GameObject go = NewChild("FX_Vortex");
-
-            for (int i = 0; i < VortexEffect.Rings; i++)
-            {
-                BuildRingLine(go.transform, "Ring" + i, 0.13f);
-            }
-
-            GameObject core = BuildPrimitive(PrimitiveType.Cylinder, "Core");
-            core.transform.SetParent(go.transform, false);
-            core.transform.localScale = new Vector3(0.55f, 0.9f, 0.55f);
-            core.transform.localPosition = new Vector3(0f, 0.9f, 0f);
-            var coreRenderer = core.GetComponent<MeshRenderer>();
-            coreRenderer.sharedMaterial = FeedbackMaterials.Additive(Color.white);
-            coreRenderer.shadowCastingMode = ShadowCastingMode.Off;
-            coreRenderer.receiveShadows = false;
-
-            var light = go.AddComponent<Light>();
-            light.type = LightType.Point;
-            light.range = 10f;
-            light.intensity = 0f;
-            light.shadows = LightShadows.None;
-            light.enabled = false;
-
-            return go.AddComponent<VortexEffect>();
-        }
-
         /// <summary>Primitive without its collider. Effects must never touch physics.</summary>
         private static GameObject BuildPrimitive(PrimitiveType type, string name)
         {
@@ -393,9 +310,6 @@ namespace DD.Prototype.Feedback
             s_muzzleTemplate = null;
             s_linkTemplate = null;
             s_beaconTemplate = null;
-            s_shockRingTemplate = null;
-            s_sealGlyphTemplate = null;
-            s_vortexTemplate = null;
         }
     }
 }

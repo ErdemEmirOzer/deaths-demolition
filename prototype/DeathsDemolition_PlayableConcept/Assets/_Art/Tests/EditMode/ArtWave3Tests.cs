@@ -137,7 +137,6 @@ namespace DD.Art.Tests.EditMode
             VfxCatalogEntry arc = catalog.Find(VfxIds.ChainArcSheet);
             Assert.IsNotNull(arc, "chain_arc_sheet yok"); Assert.IsNotNull(arc.Material);
             Assert.AreEqual(2.5f, arc.WorldSizeMetres, 0.01f);
-            Assert.IsTrue(VfxDressing.ChainArcMinMetres < 2.5f && VfxDressing.ChainArcMaxMetres <= 2.5f * 1.4f + 0.01f, "arkın gerilme aralığı manifestin 0.6–1.4× bandında");
         }
     }
 }

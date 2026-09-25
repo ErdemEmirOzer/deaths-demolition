@@ -95,25 +95,6 @@ namespace DD.Prototype.Feedback
         [PrototypeOnly(PendingDecisions.None, "Muzzle flash colour.", true)]
         [SerializeField] private Color _muzzleColor = new Color(1f, 0.86f, 0.5f, 1f);
 
-        [Header("PROTOTYPE-ONLY Special Weapon palette (G-21) - shrine metal, paper, pond water")]
-        [PrototypeOnly(PendingDecisions.SpecialWeapon,
-            "Kagura Bell pressure front. Struck-bronze gold, the same family as the drop " +
-            "beacon and the palace fittings. Deliberately NOT a new hue: the sci-fi read " +
-            "comes from the behaviour, not from a colour the garden does not own.", true)]
-        [SerializeField] private Color _kaguraColor = new Color(1f, 0.86f, 0.46f, 0.95f);
-
-        [PrototypeOnly(PendingDecisions.SpecialWeapon,
-            "Ofuda seal. Unbleached shrine paper against cinnabar ink.", true)]
-        [SerializeField] private Color _ofudaColor = new Color(0.96f, 0.93f, 0.84f, 1f);
-
-        [PrototypeOnly(PendingDecisions.SpecialWeapon,
-            "Ofuda web link. Cinnabar, the colour of the ink and of a torii.", true)]
-        [SerializeField] private Color _ofudaLinkColor = new Color(0.86f, 0.28f, 0.22f, 1f);
-
-        [PrototypeOnly(PendingDecisions.SpecialWeapon,
-            "Tide Jewel well. Pond water under moonlight - the pond is already on the map.", true)]
-        [SerializeField] private Color _tideColor = new Color(0.55f, 0.78f, 0.86f, 0.9f);
-
         // ------------------------------------------------------------------ PROTOTYPE-ONLY budget extras
 
         [Header("PROTOTYPE-ONLY ceilings the central config does not carry")]
@@ -130,8 +111,7 @@ namespace DD.Prototype.Feedback
         [SerializeField] private int _maxExplosions = 8;
 
         [PrototypeOnly(PendingDecisions.SpecialWeapon,
-            "Max Special Weapon visuals alive at once, in their OWN family. Sized from the " +
-            "worst honest case: 12 live Ofuda seals plus the 11 links of a full collapse = 23.", true)]
+            "Special Weapon feedback budget (its own family; WP-073 B6 draws the Raiju / Namekuji VFX in their own systems).", true)]
         [SerializeField] private int _maxSpecialEffects = 24;
 
         [PrototypeOnly(PendingDecisions.None,
@@ -182,8 +162,6 @@ namespace DD.Prototype.Feedback
         private PrototypePool<TracerEffect> _tracerPool;
         private PrototypePool<MuzzleFlashEffect> _muzzlePool;
         private PrototypePool<LinkEffect> _linkPool;
-        private PrototypePool<ShockRingEffect> _shockRingPool;
-        private PrototypePool<SealGlyphEffect> _sealGlyphPool;
 
         private HitMarkerLayer _hitMarkers;
 
@@ -377,8 +355,6 @@ namespace DD.Prototype.Feedback
             _linkPool = Pool(FeedbackEffectFactory.LinkTemplate, Mathf.Max(2, _maxLinks));
 
             int specials = Mathf.Max(4, _maxSpecialEffects);
-            _shockRingPool = Pool(FeedbackEffectFactory.ShockRingTemplate, Mathf.Max(4, specials / 4));
-            _sealGlyphPool = Pool(FeedbackEffectFactory.SealGlyphTemplate, specials);
 
             // WP-068 E18: the numbers are an overlay layer (UiWorldNumbers, its own pool of 48), not a world pool.
             if (Application.isPlaying)
@@ -625,164 +601,6 @@ namespace DD.Prototype.Feedback
             // WP-019: no hit-stop on an explosion (only armour break and death, ADR-019-2).
             AudioEvents.RaiseCritical(CombatAudioEvent.Explosion, origin, 1f, 70);
         }
-
-        // ------------------------------------------------------------------ G-21 Special Weapons
-
-        /// <summary>Kagura Bell. One pressure front leaving the player.</summary>
-        public void ReportShockRing(Vector3 origin, float radius, float travelSeconds)
-        {
-            if (_shockRingPool == null)
-            {
-                return;
-            }
-
-            // Important: a front the player pulled the trigger for must never be the thing
-            // the budget drops, or the weapon appears to misfire.
-            if (!_budget.TryConsume(FeedbackCategory.SpecialWeapon, origin, true))
-            {
-                return;
-            }
-
-            bool sheet = _vfx.PlayKaguraRing(origin, radius, travelSeconds);   // WP-047 B: the AP-014 ring sheet grows with the front (placeholder ring stays under it)
-            ShockRingEffect ring = _shockRingPool.Get(origin, Quaternion.identity);
-            if (ring != null)
-            {
-                // AD (WP-047): under the sheet the two lines read as painted-on strokes at full alpha; 60 % keeps them as the leading edge.
-                Color lines = _kaguraColor;
-                if (sheet) lines.a *= 0.25f;   // AD WP-047E M4: under the AP-014 sheet the WP-002 lines are a debug edge, not the effect
-                ring.Play(origin, radius, travelSeconds, lines, 0.16f);
-            }
-
-        }
-
-        /// <summary>
-        /// Ofuda Loom. A talisman stuck to a body. Returns the effect so the seal registry
-        /// can consume it early when the web collapses; null means the budget refused.
-        /// </summary>
-        public SealGlyphEffect ReportSeal(Transform body, float height, int targetId, float seconds)
-        {
-            if (_sealGlyphPool == null || body == null)
-            {
-                return null;
-            }
-
-            if (!_budget.TryConsume(FeedbackCategory.SpecialWeapon, body.position, true))
-            {
-                return null;
-            }
-
-            SealGlyphEffect seal = _sealGlyphPool.Get(body.position, Quaternion.identity);
-            if (seal != null)
-            {
-                seal.Play(body, height, targetId, seconds, _ofudaColor);
-            }
-
-            return seal;
-        }
-
-        /// <summary>
-        /// Ofuda Loom. One strand of a collapsing web.
-        ///
-        /// Routed through the Special Weapon family rather than through
-        /// <see cref="FeedbackCategory.Link"/> on purpose: a twelve-seal collapse draws
-        /// eleven strands in ONE frame, and the Link family's per-frame cap is five. Half
-        /// a web is not a weaker version of the effect, it is a wrong one - the player
-        /// would count five links and see twelve enemies die.
-        /// </summary>
-        // ------------------------------------------------------------------ WP-047E · AP-014C Ofuda threads (thread tile on the link lines)
-
-        private Material _threadMaterial;
-        private bool _threadTried;
-        public int OfudaNets { get; private set; }
-        public int OfudaTrails { get; private set; }
-
-        private Material ThreadMaterial()
-        {
-            if (_threadTried) return _threadMaterial;
-            _threadTried = true;
-            // The AP-014 thread tile is staged by WP-037B as the `sw_ofuda_web` sheet (12 cm hemp + paper knots, tileable along U).
-            var library = DD.Prototype.Weapons.SpecialWeaponVisualLibrary.Current;
-            var sheet = library != null ? library.FindSheet(VfxIds.SwOfudaWeb) : null;
-            if (sheet == null || sheet.texture == null) return null;
-            _threadMaterial = FeedbackMaterials.Alpha(Color.white);
-            _threadMaterial = new Material(_threadMaterial) { name = "M_ofuda_thread (runtime)" };
-            _threadMaterial.mainTexture = sheet.texture;
-            _threadMaterial.mainTextureScale = new Vector2(1f / 0.12f, 1f);   // one tile per 12 cm of line
-            return _threadMaterial;
-        }
-
-        /// <summary>Netted body (WP-055 / WP-056 Hit): three thread loops around the torso for the seal's life.</summary>
-        public bool ReportOfudaNet(Transform body, Vector3 centre, float seconds)
-        {
-            if (_linkPool == null || body == null) return false;
-            Material thread = ThreadMaterial();
-            Vector3 right = body.right, fwd = body.forward;
-            bool any = false;
-            for (int loop = 0; loop < 3; loop++)
-            {
-                float y = -0.22f + loop * 0.22f;
-                float r = 0.30f - Mathf.Abs(loop - 1) * 0.04f;
-                Vector3 c = centre + Vector3.up * y;
-                Vector3 a = c + right * r + fwd * (r * 0.6f), b = c - right * r + fwd * (r * 0.6f), d = c - fwd * r;
-                any |= NetSegment(a, b, thread, seconds);
-                any |= NetSegment(b, d, thread, seconds);
-                any |= NetSegment(d, a, thread, seconds);
-            }
-
-            if (any) OfudaNets++;
-            return any;
-        }
-
-        private bool NetSegment(Vector3 from, Vector3 to, Material thread, float seconds)
-        {
-            LinkEffect link = _linkPool.Get(from, Quaternion.identity);
-            if (link == null) return false;
-            if (thread != null) link.SetThread(thread);
-            link.Play(from, to, VfxLibrary.OfudaCreamTint, thread != null ? 0.12f : 0.03f, 0.02f, Mathf.Max(0.3f, seconds));
-            return true;
-        }
-
-        /// <summary>Dart trail (Fired → Hit): the thread from the loom to the sealed body, 6 cm wide, gone in 0.25 s.</summary>
-        public bool ReportOfudaTrail(Vector3 from, Vector3 to)
-        {
-            if (_linkPool == null) return false;
-            LinkEffect link = _linkPool.Get(from, Quaternion.identity);
-            if (link == null) return false;
-            Material thread = ThreadMaterial();
-            if (thread != null) link.SetThread(thread);
-            link.Play(from, to, VfxLibrary.OfudaCreamTint, thread != null ? 0.06f : 0.02f, 0.03f, 0.25f);
-            OfudaTrails++;
-            return true;
-        }
-
-        public void ReportSealLink(Vector3 from, Vector3 to)
-        {
-            if (_linkPool == null)
-            {
-                return;
-            }
-
-            if (!_budget.TryConsume(FeedbackCategory.SpecialWeapon, from, true))
-            {
-                return;
-            }
-
-            _vfx.PlayOfudaCollapse(from, to);   // WP-047 B: AP-014 collapse burst at both sealed bodies (de-duplicated per frame)
-            LinkEffect link = _linkPool.Get(from, Quaternion.identity);
-            if (link != null)
-            {
-                link.Play(from, to, _ofudaLinkColor, 0.042f, 0.1f, 0.22f);
-            }
-        }
-
-        /// <summary>Tide Jewel. The colour the well and its implosion are drawn in.</summary>
-        public Color TideColor => _tideColor;
-
-        /// <summary>Kagura Bell colour, for the drop beacon and the held rig.</summary>
-        public Color KaguraColor => _kaguraColor;
-
-        /// <summary>Ofuda colour, for the drop beacon and the held rig.</summary>
-        public Color OfudaColor => _ofudaColor;
 
         /// <summary>Chain / ricochet connection. The "readable thin link" of the request.</summary>
         public void ReportLink(Vector3 from, Vector3 to, bool isRicochet)
