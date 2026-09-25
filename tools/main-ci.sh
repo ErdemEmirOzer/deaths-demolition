@@ -28,6 +28,8 @@ while [ $# -gt 0 ]; do case "$1" in
   *) echo "unknown option: $1" >&2; exit 64 ;; esac; shift; done
 
 SHA=$(git -C "$DD_REPO" rev-parse --verify "$REF^{commit}" 2>/dev/null) || { echo "unknown commit: $REF" >&2; exit 64; }
+# WP-043C: tools/compile-check.sh shares the checkout — wait (≤ 30 min) while one runs.
+for _ in $(seq 1 60); do pgrep -f "tools/compile-check.sh" >/dev/null || break; sleep 30; done
 OUT="$OUT_ROOT/$SHA"; mkdir -p "$OUT"; DD_TIMELINE="$OUT/timeline.txt"
 export DD_SLOT_TAG="main-ci"
 dd_log "main-ci sha=$SHA ci=$CI_DIR out=$OUT"
