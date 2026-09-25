@@ -292,6 +292,7 @@ namespace DD.Art.Pipeline.EditorTools
             m.SetFloat("_Smoothness", smoothness);
             m.SetFloat("_Surface", 1f);
             m.SetFloat("_Blend", 0f);
+            m.SetFloat("_BlendModePreserveSpecular", 0f);   // straight alpha as set below; URP's default 1 re-saves the asset premultiplied on load
             m.SetFloat("_AlphaClip", 0f);
             m.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
             m.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
