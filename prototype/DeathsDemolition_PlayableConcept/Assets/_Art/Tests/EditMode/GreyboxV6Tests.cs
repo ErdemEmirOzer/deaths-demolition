@@ -620,6 +620,10 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(WorldV5Atmosphere.VolumeRegions.Length, field.Regions.Length);
             Assert.Less(field.DensityAt(new Vector3(0f, 1.5f, 0f)), 0.004f, "meydan merkezi açık (K10)");
             Assert.Greater(field.DensityAt(new Vector3(-45f, 3f, 14f)), 0.02f, "bambu korusu sisli");
+            // S-07 sözleşmesi (DD_ShaftMask, C-00 25.09): tepe yoğunluğuna göre 0..1 — meydan huzme dışı, koru huzmenin içinde.
+            Assert.Greater(field.PeakDensity(), 0f, "tepe yoğunluğu");
+            Assert.Less(field.ShaftMaskAt(new Vector3(0f, 1.5f, 0f)), 0.2f, "meydan: huzme maskesi düşük");
+            Assert.Greater(field.ShaftMaskAt(new Vector3(-45f, 3f, 14f)), 0.8f, "koru: huzme maskesi yüksek");
             Assert.IsNotNull(dress.transform.Find(WorldV5Sky.RootName + "/" + WorldV5Sky.SunDiscName).GetComponent<SunDisc>(), "güneş diski");
             var clouds = dress.transform.Find(WorldV5Sky.RootName + "/Clouds_Near").GetComponent<MeshRenderer>().sharedMaterial;
             Assert.Greater(clouds.GetFloat("_AlphaPower"), 1f, "parçalı bulut");
