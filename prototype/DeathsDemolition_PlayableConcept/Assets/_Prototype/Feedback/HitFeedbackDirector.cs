@@ -283,7 +283,7 @@ namespace DD.Prototype.Feedback
             LastSceneRefill = _vfx.Refill() + FeedbackPoolWarmer.Refill(_impactPool) + FeedbackPoolWarmer.Refill(_bloodPool) +
                               FeedbackPoolWarmer.Refill(_armorHitPool) + FeedbackPoolWarmer.Refill(_armorBreakPool) + FeedbackPoolWarmer.Refill(_deathPool) +
                               FeedbackPoolWarmer.Refill(_explosionPool) + FeedbackPoolWarmer.Refill(_tracerPool) + FeedbackPoolWarmer.Refill(_muzzlePool) +
-                              FeedbackPoolWarmer.Refill(_linkPool) + FeedbackPoolWarmer.Refill(_shockRingPool) + FeedbackPoolWarmer.Refill(_sealGlyphPool);
+                              FeedbackPoolWarmer.Refill(_linkPool);   // the Kagura shock-ring / seal-glyph pools left with WP-073 B6 (47bf74c4)
             if (LastSceneRefill > 0) Debug.Log("[Feedback] scene change: " + LastSceneRefill + " pooled effects refilled (destroyed behind their pools' backs)");
         }
 
