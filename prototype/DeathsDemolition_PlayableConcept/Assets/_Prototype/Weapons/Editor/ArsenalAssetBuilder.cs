@@ -283,7 +283,8 @@ namespace DD.Prototype.Weapons.EditorTools
             d.projectile.maxLifetimeSeconds = 3f;
             d.projectile.sweepRadius = 0.35f;
             Spread(d, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 1f, 1f, 0.40f);
-            Recoil(d, 5f, RecoilYawPattern.None, new float[0], 1, 0.40f);
+            // WP-073 A4.2 (C-00 25.09): 1.2° ± 0.6 yaw, recovery 0.40 s — through AddRecoil like the classics (was 5°, unused).
+            Recoil(d, 1.2f, RecoilYawPattern.Random, new[] { 0.6f }, 1, 0.40f);
             WeaponArcChainBlock c = d.arcChain;
             c.maxTargets = 8;
             c.jumpRadius = 6f;
@@ -326,7 +327,8 @@ namespace DD.Prototype.Weapons.EditorTools
             d.projectile.maxLifetimeSeconds = 3f;
             d.projectile.sweepRadius = 0.25f;
             Spread(d, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 1f, 1f, 0.20f);
-            Recoil(d, 3f, RecoilYawPattern.None, new float[0], 1, 0.20f);
+            // WP-073 A4.2 (C-00 25.09): 0.5° ± 0.3 yaw, recovery 0.20 s (was 3°, unused).
+            Recoil(d, 0.5f, RecoilYawPattern.Random, new[] { 0.3f }, 1, 0.20f);
             WeaponGelPuddleBlock g = d.gelPuddle;
             g.directHitRules = new[]
             {

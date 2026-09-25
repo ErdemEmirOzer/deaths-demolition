@@ -45,6 +45,34 @@ namespace DD.Prototype.Weapons
         /// <summary>The weapon's v3 definition (null in a bare test without the Arsenal).</summary>
         public WeaponDefinition Definition => _def;
 
+        /// <summary>WP-069 × WP-073 A4.2: the last shot's camera recoil (pitch up / yaw right, degrees) — 0 when capped out.</summary>
+        public float LastRecoilPitch { get; private set; }
+        public float LastRecoilYaw { get; private set; }
+
+        private float _recoilAccum;
+
+        /// <summary>
+        /// WP-069 × WP-073 A4.2 (C-00 25.09): the Special's game recoil, the classic rule — pitch per shot, a yaw within
+        /// ± the definition's amplitude — with the accumulation held under recoilAccumulationCap × kick (S-02's cap; the
+        /// absolute FP / TP ceilings are the camera's). The accumulator drains over recoilRecoverySeconds (Tick).
+        /// </summary>
+        public void ApplyGameRecoil()
+        {
+            LastRecoilPitch = 0f;
+            LastRecoilYaw = 0f;
+            if (_def == null) return;
+            WeaponAccuracyBlock a = _def.accuracy;
+            float kick = Mathf.Max(0f, a.recoilPitchPerShot);
+            if (kick <= 0f) return;
+            float room = Mathf.Max(0f, Mathf.Max(1f, a.recoilAccumulationCap) * kick - _recoilAccum);
+            float pitch = Mathf.Min(kick, room);
+            _recoilAccum += pitch;
+            float amplitude = 0f;
+            if (a.recoilYawValues != null) for (int i = 0; i < a.recoilYawValues.Length; i++) amplitude = Mathf.Max(amplitude, Mathf.Abs(a.recoilYawValues[i]));
+            LastRecoilPitch = pitch;
+            LastRecoilYaw = a.recoilYawPattern == RecoilYawPattern.None || pitch <= 0f ? 0f : Random.Range(-amplitude, amplitude);
+        }
+
         /// <summary>Seconds of the time cap left. Only counts down while active.</summary>
         public float Remaining { get; private set; }
 
@@ -160,6 +188,7 @@ namespace DD.Prototype.Weapons
             _settings = settings;
             Id = id;
             _def = settings != null ? settings.Common(id).Definition : SpecialWeaponConfigSection.DefinitionOf(id);
+            _recoilAccum = 0f;   // WP-069 × WP-073 A4.2: a new Special starts with the recoil room full
 
             Duration = settings != null ? settings.CapSeconds(id) : (_def != null && _def.specialLifecycle.activeCapSeconds > 0f ? _def.specialLifecycle.activeCapSeconds : 11f);
             Remaining = Duration;
@@ -226,6 +255,12 @@ namespace DD.Prototype.Weapons
         /// </summary>
         public bool Tick(float dt)
         {
+            if (_recoilAccum > 0f && _def != null)
+            {
+                WeaponAccuracyBlock a = _def.accuracy;
+                _recoilAccum = Mathf.Max(0f, _recoilAccum - dt * Mathf.Max(0.01f, a.recoilPitchPerShot * Mathf.Max(1f, a.recoilAccumulationCap)) / Mathf.Max(0.05f, a.recoilRecoverySeconds));
+            }
+
             if (!IsActive)
             {
                 return false;

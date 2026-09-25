@@ -238,6 +238,39 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         /// <summary>[REQ-059][TM-32 eşi] Runtime, WeaponModifierState'i yapısal olarak göremez (mevcut yansıma testinin ikizi; kayıp 0).</summary>
+        /// <summary>
+        /// WP-069 × WP-073 A4.2 (C-00 25.09): a Special shot's camera recoil is the definition's kick (Raiju 1.2°, Namekuji
+        /// 0.5°) with a yaw inside ± its amplitude (0.6° / 0.3°); a burst never piles more than 4 × kick (S-02's accumulation
+        /// cap) and the room comes back over the recovery time.
+        /// </summary>
+        [Test]
+        public void SpecialRecoil_A42Degerleri_DortKickTavani_Toparlanir()
+        {
+            foreach ((SpecialWeaponId id, float kick, float yaw) in new[] { (SpecialWeaponId.Raiju, 1.2f, 0.6f), (SpecialWeaponId.Namekuji, 0.5f, 0.3f) })
+            {
+                var rt = new SpecialWeaponRuntime();
+                rt.Begin(_s, id);
+                Assert.IsNotNull(rt.Definition, id + ": tanım yok");
+                rt.ApplyGameRecoil();
+                Assert.AreEqual(kick, rt.LastRecoilPitch, 1e-4f, id + " pitch");
+                Assert.LessOrEqual(Mathf.Abs(rt.LastRecoilYaw), yaw + 1e-4f, id + " yaw");
+                float total = rt.LastRecoilPitch;
+                for (int i = 0; i < 10; i++)
+                {
+                    rt.ApplyGameRecoil();
+                    total += rt.LastRecoilPitch;
+                }
+
+                Assert.AreEqual(4f * kick, total, 1e-3f, id + ": birikim 4 × kick'te durmalı");
+                rt.ApplyGameRecoil();
+                Assert.AreEqual(0f, rt.LastRecoilPitch, 1e-4f, id + ": tavanda ek kick yok");
+                rt.Tick(rt.Definition.accuracy.recoilRecoverySeconds + 0.01f);
+                rt.ApplyGameRecoil();
+                Assert.AreEqual(kick, rt.LastRecoilPitch, 1e-4f, id + ": toparlanma süresinden sonra tam kick");
+                if (rt.IsActive) rt.End();
+            }
+        }
+
         [Test]
         public void ModifierState_YapisalOlarakGorunmez()
         {

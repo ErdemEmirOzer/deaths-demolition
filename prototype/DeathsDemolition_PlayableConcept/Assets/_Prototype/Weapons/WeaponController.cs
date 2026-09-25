@@ -796,6 +796,13 @@ namespace DD.Prototype.Weapons
             Vector3 aimPoint = hasAimPoint ? _playerAim.AimWorldPoint : origin + aim * 10f;
             _special.Fire(origin, aim, aimPoint, hasAimPoint);
 
+            // WP-069 × WP-073 A4.2 (C-00 25.09): the Special's game recoil through the classic path — look modes kick the camera.
+            _special.ApplyGameRecoil();
+            if (lookMode && (_special.LastRecoilPitch != 0f || _special.LastRecoilYaw != 0f))
+            {
+                CameraReactions.AddRecoil(_special.LastRecoilPitch, _special.LastRecoilYaw);
+            }
+
             ApplyFireShake(feelRow.shakeWeight, WeaponPower.Heavy, aim);
 
             AudioEvents.Raise(CombatAudioEvent.HeavyWeaponFire, origin, 1f, 60);

@@ -86,9 +86,10 @@ MonoBehaviour:
     moveSpeedMultiplier: 1
     adsMoveSpeedMultiplier: 0.75
     focusMoveSpeedMultiplier: 0.75
-    recoilPitchPerShot: 3
-    recoilYawPattern: 0
-    recoilYawValues: []
+    recoilPitchPerShot: 0.5
+    recoilYawPattern: 1
+    recoilYawValues:
+    - 0.3
     recoilStableShots: 1
     recoilRecoverySeconds: 0.2
     recoilAccumulationCap: 4
