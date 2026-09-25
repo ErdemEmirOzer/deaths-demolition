@@ -23,6 +23,7 @@ MonoBehaviour:
   _uiFrozenFrame: {fileID: 4800000, guid: 0fcc4ac4a84e84b58b56cf729982299d, type: 3}
   _uiMaskTint: {fileID: 4800000, guid: f682339230cf0487ba87ae4c76afc11c, type: 3}
   _vfxRibbon: {fileID: 4800000, guid: 9ddc704f55a7b455ca52038990ab0d37, type: 3}
+  _vfxAtmo: {fileID: 4800000, guid: 0edfcc0760c56452f924487aefa2c589, type: 3}
   _variantPins:
   - {fileID: 2100000, guid: 5316f235dfaf74d858dcd86e980f607d, type: 2}
   - {fileID: 2100000, guid: 2870161f0c01a47e78842c1d4e286854, type: 2}

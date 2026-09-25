@@ -54,6 +54,7 @@ namespace DD.Prototype.Rendering
 
         /// <summary>DD/VFX Ribbon: tracer / glint ribbons (WP-073).</summary>
         public static Shader VfxRibbon => Named(Library.VfxRibbon, "VfxRibbon");
+        public static Shader VfxAtmo => Named(Library.VfxAtmo, "VfxAtmo");
 
         /// <summary>
         /// True when the library is present and every reference is filled. Lets a caller

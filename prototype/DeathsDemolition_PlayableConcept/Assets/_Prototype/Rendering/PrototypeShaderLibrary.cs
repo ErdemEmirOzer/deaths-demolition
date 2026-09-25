@@ -79,6 +79,9 @@ namespace DD.Prototype.Rendering
         [Tooltip("DD/VFX Ribbon - tracer / glint ribbons (WP-073).")]
         private Shader _vfxRibbon;
 
+        [SerializeField, Tooltip("DD/VFX Atmo - atmosphere grains, petals, leaves, steam, drips (WP-073 B5).")]
+        private Shader _vfxAtmo;
+
         [SerializeField]
         [Tooltip("Materials that exist only to keep runtime keyword variants out of the stripper.")]
         private Material[] _variantPins = new Material[0];
@@ -115,6 +118,7 @@ namespace DD.Prototype.Rendering
 
         /// <summary>DD/VFX Ribbon: tracer / glint ribbons (WP-073).</summary>
         public Shader VfxRibbon => _vfxRibbon;
+        public Shader VfxAtmo => _vfxAtmo;
 
         /// <summary>Read-only view, for the build check and the tests.</summary>
         public Material[] VariantPins => _variantPins;
@@ -138,6 +142,7 @@ namespace DD.Prototype.Rendering
             if (_uiFrozenFrame == null) { eksik.Add("UiFrozenFrame"); }
             if (_uiMaskTint == null) { eksik.Add("UiMaskTint"); }
             if (_vfxRibbon == null) { eksik.Add("VfxRibbon"); }
+            if (_vfxAtmo == null) { eksik.Add("VfxAtmo"); }
 
             for (int i = 0; i < _variantPins.Length; i++)
             {

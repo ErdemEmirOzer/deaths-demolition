@@ -31,6 +31,7 @@ namespace DD.Prototype.Rendering.EditorTools
         private const string UiFrozenFrameAd = "Hidden/DD/UI/FrozenFrame";
         private const string UiMaskTintAd = "DD/UI/MaskTint";
         private const string VfxRibbonAd = "DD/VFX Ribbon";
+        private const string VfxAtmoAd = "DD/VFX Atmo";
 
         [MenuItem("Tools/Deaths Demolition/Rebuild Shader Library")]
         public static void Rebuild()
@@ -77,6 +78,7 @@ namespace DD.Prototype.Rendering.EditorTools
             Shader uiFrozenFrame = Bul(UiFrozenFrameAd, ref hata);
             Shader uiMaskTint = Bul(UiMaskTintAd, ref hata);
             Shader vfxRibbon = Bul(VfxRibbonAd, ref hata);
+            Shader vfxAtmo = Bul(VfxAtmoAd, ref hata);
             if (hata != null)
             {
                 return false;
@@ -108,6 +110,7 @@ namespace DD.Prototype.Rendering.EditorTools
             so.FindProperty("_uiFrozenFrame").objectReferenceValue = uiFrozenFrame;
             so.FindProperty("_uiMaskTint").objectReferenceValue = uiMaskTint;
             so.FindProperty("_vfxRibbon").objectReferenceValue = vfxRibbon;
+            so.FindProperty("_vfxAtmo").objectReferenceValue = vfxAtmo;
 
             SerializedProperty dizi = so.FindProperty("_variantPins");
             dizi.arraySize = pins.Length;
