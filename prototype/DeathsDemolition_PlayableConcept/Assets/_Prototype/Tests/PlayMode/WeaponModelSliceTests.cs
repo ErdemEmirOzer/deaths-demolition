@@ -555,6 +555,16 @@ namespace DD.Prototype.Tests.PlayMode
         }
 
         /// <summary>The FirstPersonView layer alone at 1920×1080 over a magenta key, with the viewmodel camera's pose and projection.</summary>
+        private static readonly List<Renderer> s_probeHidden = new List<Renderer>(32);
+
+        /// <summary>Waits until the weapon mount rests in its aim pose (the rest reference captured, the deviation settled) — at most 3 s.</summary>
+        private static IEnumerator Dinlenme(Transform mount, string key)
+        {
+            var alignment = mount.GetComponent<WeaponMountAlignment>();
+            yield return SpecialWeaponSahne.Kareler(3);
+            yield return SpecialWeaponSahne.Bekle(() => alignment == null || (alignment.DeltaApplied && alignment.DeltaDegrees < 0.75f), 3f, key + ": dinlenme pozuna oturmadı");
+        }
+
         private static Color32[] VmKare(Camera vm, string png)
         {
             var target = new RenderTexture(KareW, KareH, 24, RenderTextureFormat.ARGB32);
@@ -571,7 +581,21 @@ namespace DD.Prototype.Tests.PlayMode
             cam.fieldOfView = vm.fieldOfView;
             cam.aspect = KareW / (float)KareH;
             cam.projectionMatrix = vm.projectionMatrix;
+            // S-06 B4b: the FP arms share the FirstPersonView layer — the probe draws the weapons only (every renderer on the
+            // layer outside a WeaponVisualRig is off for this render).
+            s_probeHidden.Clear();
+            foreach (Renderer r in Object.FindObjectsOfType<Renderer>())
+            {
+                if (r.enabled && r.gameObject.layer == DD.Prototype.CameraSystem.CameraLayers.FirstPersonView && r.GetComponentInParent<WeaponVisualRig>() == null)
+                {
+                    r.enabled = false;
+                    s_probeHidden.Add(r);
+                }
+            }
+
             cam.Render();
+            for (int h = 0; h < s_probeHidden.Count; h++) if (s_probeHidden[h] != null) s_probeHidden[h].enabled = true;
+            s_probeHidden.Clear();
             RenderTexture previous = RenderTexture.active;
             RenderTexture.active = target;
             var read = new Texture2D(KareW, KareH, TextureFormat.RGBA32, false);
@@ -614,7 +638,7 @@ namespace DD.Prototype.Tests.PlayMode
             foreach (ClassicWeaponDefinition d in WeaponRoster.Enabled)
             {
                 _s.Controller.EquipClassic(d.Id, _s.Config);
-                yield return new WaitForSeconds(0.5f);
+                yield return Dinlenme(mount, d.RosterKey);
                 Transform rigT = mount.Find("ClassicWeaponRig");
                 Assert.IsNotNull(rigT, d.RosterKey + ": ClassicWeaponRig montajda değil.");
                 Transform port = WeaponSocketContract.Find(rigT, WeaponSocketContract.Ejection);
@@ -665,7 +689,7 @@ namespace DD.Prototype.Tests.PlayMode
             foreach (ClassicWeaponDefinition d in WeaponRoster.Enabled)
             {
                 _s.Controller.EquipClassic(d.Id, _s.Config);
-                yield return new WaitForSeconds(0.5f);   // the previous weapon's kick settles; the new model is in place
+                yield return Dinlenme(mount, d.RosterKey);   // the switch-in clip has played out (S-06 B4b SwitchIn_V3 ≈ 0.57 s); the new model is in place
                 Assert.AreEqual(WeaponController.ClassicModelKind.Authored, _s.Controller.ClassicModelSource, d.RosterKey + ": AP-013 modeli takılı değil.");
                 Assert.IsTrue(_s.Controller.ClassicRigHasAuthoredModel);
 
