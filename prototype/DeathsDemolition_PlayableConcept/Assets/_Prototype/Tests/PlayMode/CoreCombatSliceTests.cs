@@ -956,24 +956,42 @@ namespace DD.Prototype.Tests.PlayMode
                 // ---- oyuncu hasarı geri bildirimi
                 var oyuncuHasar = new List<PlayerDamageInfo>(4);
                 float flash = 0f;
-                int shakeSayisi = 0;
+                int bumpIstek = 0, bumpAlindi = 0, bumpHasarda = -1;
                 var feedback = _rig.GetComponent<PlayerDamageFeedback>();
                 Action<PlayerDamageInfo> pDinle = i =>
                 {
                     oyuncuHasar.Add(i);
-                    shakeSayisi = CameraShakeService.ActiveCount;
+                    if (bumpHasarda < 0) bumpHasarda = bumpIstek;
                     flash = feedback != null ? feedback.FlashStrength01 : -1f;
+                };
+                // The Bump is counted when it reaches the camera (the bridge's public handlers, forwarded untouched) and the
+                // service took it — not by sampling ActiveCount a frame later: the player-damage Bump lasts 0.15 s, so one
+                // long CI frame could end it before the sample (2b300f06 red; S-07 25.09).
+                Action<float, float, ShakeProfile> eskiShake = CameraShakeBridge.Handler;
+                Action<float, float, ShakeProfile, Vector3> eskiYonlu = CameraShakeBridge.DirectionalHandler;
+                CameraShakeBridge.Handler = (a, d, prof) =>
+                {
+                    eskiShake?.Invoke(a, d, prof);
+                    if (CameraShakeBridge.ToShakeKind(prof) != ShakeKind.Bump) return;
+                    bumpIstek++;
+                    if (CameraShakeService.ActiveCount > 0) bumpAlindi++;
+                };
+                CameraShakeBridge.DirectionalHandler = (a, d, prof, dir) =>
+                {
+                    eskiYonlu?.Invoke(a, d, prof, dir);
+                    if (CameraShakeBridge.ToShakeKind(prof) != ShakeKind.Bump) return;
+                    bumpIstek++;
+                    if (CameraShakeService.ActiveCount > 0) bumpAlindi++;
                 };
                 PlayerHealth.AnyDamaged += pDinle;
                 try
                 {
                     Assert.IsNotNull(Dogur(merkez + new Vector3(0f, 0f, 1.6f), merkez));
                     yield return Bekle(() => oyuncuHasar.Count > 0, 6f, "Zombi oyuncuya vuramadı.");
-                    // WP-062 presentation arbitration flushes once in LateUpdate. Sample the
-                    // camera service after that same-frame router boundary, not inside the
-                    // gameplay damage callback that deliberately precedes presentation.
+                    // WP-062 presentation arbitration flushes once in LateUpdate, after the gameplay damage callback that
+                    // deliberately precedes presentation: the Bump request lands at that same-frame router boundary.
                     yield return null;
-                    shakeSayisi = CameraShakeService.ActiveCount;
+                    int shakeSayisi = bumpIstek - bumpHasarda;
 
                     Assert.AreEqual(1, oyuncuHasar.Count);
                     Assert.AreEqual(1f, oyuncuHasar[0].HitDirection.magnitude, 0.01f, "HitDirection normalize değil.");
@@ -981,10 +999,13 @@ namespace DD.Prototype.Tests.PlayMode
                     StringAssert.StartsWith("Zombie.", oyuncuHasar[0].SourceId);
                     Assert.Greater(flash, 0f, "Hasar flaşı (görsel geri bildirim) yok.");
                     Assert.Greater(shakeSayisi, 0, "Hasar kamera Bump sarsıntısı üretmedi (DEC-031).");
+                    Assert.Greater(bumpAlindi, 0, "Bump kameraya ulaştı ama CameraShakeService almadı (alıcı yok?).");
                 }
                 finally
                 {
                     PlayerHealth.AnyDamaged -= pDinle;
+                    CameraShakeBridge.Handler = eskiShake;
+                    CameraShakeBridge.DirectionalHandler = eskiYonlu;
                 }
             }
             finally
