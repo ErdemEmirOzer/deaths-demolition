@@ -846,8 +846,30 @@ namespace DD.Prototype.Tests.EditMode.Audio
             map.ResetHysteresis();
             Assert.AreEqual(AcousticSpace.Corridor, map.ResolveInMap(Merkez(corridor)), corridor.id + " Corridor");
             Assert.AreEqual(AcousticSpace.Open, map.ResolveInMap(new Vector3(0f, 2f, -200f)), "harita dışı Open");
-            map.ResetHysteresis();
-            Assert.AreEqual(AcousticSpace.Open, map.Resolve(Merkez(hall)), "V6 sahnesi yüklü değilken (AP005) her yer Open");
+            // Resolve follows the world scene, whatever the suite order left open (CI c99971fb: a V6 EditMode test ran first):
+            // without World_V6_Greybox everything is Open (AP005), with it the map answers.
+            UnityEngine.SceneManagement.Scene v6 = UnityEngine.SceneManagement.SceneManager.GetSceneByName("World_V6_Greybox");
+            bool opened = false;
+            try
+            {
+                if (!v6.isLoaded)
+                {
+                    map.ResetHysteresis();
+                    Assert.AreEqual(AcousticSpace.Open, map.Resolve(Merkez(hall)), "V6 sahnesi yüklü değilken (AP005) her yer Open");
+                    string[] found = AssetDatabase.FindAssets("World_V6_Greybox t:Scene");
+                    Assert.IsNotEmpty(found, "World_V6_Greybox sahnesi yok");
+                    v6 = UnityEditor.SceneManagement.EditorSceneManager.OpenScene(AssetDatabase.GUIDToAssetPath(found[0]), UnityEditor.SceneManagement.OpenSceneMode.Additive);
+                    opened = true;
+                }
+
+                map.ResetHysteresis();
+                Assert.AreEqual(AcousticSpace.Hall, map.Resolve(Merkez(hall)), "V6 sahnesi yüklüyken harita cevap verir");
+            }
+            finally
+            {
+                map.ResetHysteresis();
+                if (opened) UnityEditor.SceneManagement.EditorSceneManager.CloseScene(v6, true);
+            }
         }
     }
 }

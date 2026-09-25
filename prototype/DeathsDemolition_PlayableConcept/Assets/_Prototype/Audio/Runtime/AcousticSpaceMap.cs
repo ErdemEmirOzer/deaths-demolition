@@ -87,7 +87,12 @@ namespace DD.Prototype.Audio
             return AcousticSpace.Open;
         }
 
-        public void ResetHysteresis() => _current = -1;
+        /// <summary>Forget the current space and the per-frame scene check (tests: EditMode frames do not advance).</summary>
+        public void ResetHysteresis()
+        {
+            _current = -1;
+            _sceneFrame = -1;
+        }
 
         private static bool InBand(Space s, Vector3 p) => p.y >= s.floor - VerticalSlack && p.y <= s.ceiling + VerticalSlack;
 
