@@ -235,6 +235,20 @@ namespace DD.Prototype.Rounds
         public const string LinkGelSlickFloor = "link.gel.slickfloor";
         public const string LinkGelFreeze = "link.gel.freeze";
 
+        /// <summary>
+        /// WP-077: the shipped config sells tree node cards (EconomyConfigSection.RunTreeNodeCards; F1 / tests: TreatAllAsLive).
+        /// Until then no non-tier node can be bought, so the tree achievements stay out of the list.
+        /// </summary>
+        public static bool NodeCardsShipped
+        {
+            get
+            {
+                if (TreatAllAsLive) return true;
+                DD.Prototype.Core.Config.PrototypeConfig config = DD.Prototype.Core.Config.PrototypeConfig.Active;
+                return config != null && config.Economy != null && config.Economy.RunTreeNodeCards;
+            }
+        }
+
         /// <summary>WP-077 B4: any live effect whose id starts with <paramref name="prefix"/> (achievement gates: "cap.", "ks.", "link.").</summary>
         public static bool AnyLive(string prefix)
         {

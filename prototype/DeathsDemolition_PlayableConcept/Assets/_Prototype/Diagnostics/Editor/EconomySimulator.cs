@@ -690,7 +690,7 @@ namespace DD.Prototype.Diagnostics.EditorTools
             for (int l = 1; l <= 5; l++) sb.Append("L").Append(l + 1).Append(' ').Append(r.xpToReachLevel[l - 1]).Append(l < 5 ? ", " : "\n\n");
             foreach (WeaponTrack w in r.weapons)
             {
-                sb.AppendLine("## " + w.rosterKey + " · " + w.weapon + " (unlock L" + w.unlockLevel + ", core " + w.coreBranches + ") — first buy R" + w.firstRoundWithAnyPurchase + ", core complete R" + w.firstRoundWithFullCoreTier1 + ", risk≥1 at R" + w.firstRiskRound);
+                sb.AppendLine("## " + w.rosterKey + " · " + w.weapon + " (unlock " + (w.unlockLevel >= ClassicWeaponSettings.NotOnProfileLadder ? "PATH" : "L" + w.unlockLevel) + ", core " + w.coreBranches + ") — first buy R" + w.firstRoundWithAnyPurchase + ", core complete R" + w.firstRoundWithFullCoreTier1 + ", risk≥1 at R" + w.firstRiskRound);
                 sb.AppendLine();
                 sb.AppendLine("| R | pool | S/Sp/E/U | armoured% | DPS single/crowd | clear s | TTK S/Sp/E/U (exp.) | gold +/− wallet | buy | build | XP cum → L | risk | special | threat/L |");
                 sb.AppendLine("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|");

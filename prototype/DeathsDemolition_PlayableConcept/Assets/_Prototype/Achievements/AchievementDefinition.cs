@@ -113,8 +113,12 @@ namespace DD.Prototype.Achievements
 
         public bool IsUsable => !string.IsNullOrEmpty(Id) && Enum.IsDefined(typeof(AchievementCondition), Condition);
 
-        /// <summary>Usable and its tree effect (if any) is live.</summary>
-        public bool IsAvailable => IsUsable && (string.IsNullOrEmpty(RequiresEffect) || DD.Prototype.Rounds.RunTreeEffects.AnyLive(RequiresEffect));
+        /// <summary>
+        /// Usable, and for a tree rule: its effect is live AND the round-end offer sells tree nodes (K10 node cards) —
+        /// a live link nobody can buy yet is still unearnable.
+        /// </summary>
+        public bool IsAvailable => IsUsable && (string.IsNullOrEmpty(RequiresEffect) ||
+                                                (DD.Prototype.Rounds.RunTreeEffects.AnyLive(RequiresEffect) && DD.Prototype.Rounds.RunTreeEffects.NodeCardsShipped));
 
         /// <summary>
         /// The WP-005 presentation shape the Achievements pane and its tests read

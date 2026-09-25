@@ -47,10 +47,16 @@ namespace DD.Prototype.Tests.EditMode
         public void SevkVerisi_RosterABC_GirisRoundlari_AcilisFiyatBandi()
         {
             EconomySimulator.Report r = EconomySimulator.Run(Secenekler());
-            Assert.AreEqual(3, r.weapons.Length, "A/B/C etkin, D devre dışı (DEC-083)");
+            // WP-069 B2b: the roster lists every enabled Arsenal classic — A/B/C on the level ladder, the rest meta PATH weapons.
+            Assert.AreEqual(DD.Prototype.Core.Weapons.WeaponRoster.Enabled.Count, r.weapons.Length, "her etkin roster silahı");
+            Assert.GreaterOrEqual(r.weapons.Length, 3);
             Assert.AreEqual("A", r.weapons[0].rosterKey); Assert.AreEqual(1, r.weapons[0].unlockLevel);
             Assert.AreEqual(3, r.weapons[1].unlockLevel, "B seviye 3 (DEC-085 Ö-3, roster verisi)");
             Assert.AreEqual(5, r.weapons[2].unlockLevel, "C seviye 5");
+            for (int i = 3; i < r.weapons.Length; i++)
+            {
+                Assert.AreEqual(ClassicWeaponSettings.NotOnProfileLadder, r.weapons[i].unlockLevel, r.weapons[i].rosterKey + ": meta YOL silahı, merdivende yok");
+            }
             CollectionAssert.AreEqual(new[] { 1, 3, 5, 8 }, r.introductionRound, "DEC-021/022 giriş roundları");
             PrototypeConfig config = PrototypeConfig.Active;
             for (int i = 0; i < 10; i++)

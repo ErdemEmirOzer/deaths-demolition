@@ -220,7 +220,7 @@
    "id": "link_arc_2",
    "shortName": "Storm",
    "displayName": "Storm",
-   "description": "Special kills refill 10% of the classic magazine.",
+   "description": "Each Raiju kill refills 10% of your classic magazine.",
    "effectId": "link.arc.storm",
    "cost": 160,
    "offerWeight": 1.2,

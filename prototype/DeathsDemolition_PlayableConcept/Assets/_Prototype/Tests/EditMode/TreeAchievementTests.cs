@@ -97,7 +97,7 @@ namespace DD.Prototype.Tests.EditMode
             foreach (string id in Yeni) Assert.IsNotNull(Tanim(id), id);
             Assert.IsFalse(Listede("first_capstone"), "doruk etkisi canlı değil → listelenmez");
             Assert.IsFalse(Listede("hearth_20"), "keystone yok → Ocak ulaşılmaz");
-            Assert.IsFalse(Listede("both_special_links"));
+            Assert.IsFalse(Listede("both_special_links"), "bağ etkisi canlı olsa bile düğüm kartları kapalıyken satın alınamaz");
             Assert.IsTrue(Listede("mastery_5_any"), "ustalık kapısız");
             Assert.IsTrue(Listede("first_blood"));
 
