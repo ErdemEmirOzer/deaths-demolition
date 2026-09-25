@@ -347,6 +347,7 @@ namespace DD.Prototype.Feedback
             FeelSnapshot feel = FeelRuntime.Current;
             OnFeelChanged(feel);
             _vfx.Configure(FeedbackEffectFactory.TemplateRoot);
+            CameraFeelDriver.Ensure();   // WP-073 B4: the camera juice (per-shot roll / FOV / kick, kill beat, damage nudge)
 
             int impacts = Capacity(feel, FeedbackCategory.Impact, 40);
             int armorHits = Capacity(feel, FeedbackCategory.ArmorHit, 40);
