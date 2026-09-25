@@ -15,22 +15,25 @@
 #          identical +/- hunks when git 3-way-merged the file) → else rollback and stop · git commit -C <source> (author, message, Co-Authored-By
 #          kept) · annotated tag · tools/post-integrate.sh <tag> (backup + cleanup dry-run + disk + LFS).
 #   Never: reset, rebase, push, add -A, branch/tag deletion. main HEAD changes only at the commit step.
-# Exit: 0 ok · 3 gate failed · 4 apply conflict (aborted, main unchanged) · 5 post-integrate failed · 64 usage
+#   --compile (WP-043C, with --apply): after the apply, tools/compile-check.sh compiles the new main HEAD in the
+#          main-ci checkout (batchmode -quit, errorsCS) — commits that compile alone can break main together.
+# Exit: 0 ok · 3 gate failed · 4 apply conflict (aborted, main unchanged) · 5 post-integrate failed · 6 main does not
+#       compile after the apply (--compile; main keeps the commit — revert or hotfix) · 64 usage
 set -u
 setopt nullglob
 source "${0:A:h}/dd-env.sh"
-SRC=""; TAG=""; APPLY=0; ALLOW=""; S01=0; MSG=""; NOPOST=0; VERBOSE=0
+SRC=""; TAG=""; APPLY=0; ALLOW=""; S01=0; MSG=""; NOPOST=0; VERBOSE=0; COMPILE=0
 say() { [ "$VERBOSE" -eq 1 ] && echo "$@"; return 0; }   # informational lines only with --verbose (HIZLI HAT §7: 3-line output)
 while [ $# -gt 0 ]; do
   case "$1" in
     --tag) TAG="$2"; shift ;; --apply) APPLY=1 ;; --allow-paths) ALLOW="$2"; shift ;; --s01) S01=1 ;;
-    --message) MSG="$2"; shift ;; --repo) DD_REPO="$2"; shift ;; --no-post) NOPOST=1 ;; --verbose|-v) VERBOSE=1 ;;
+    --message) MSG="$2"; shift ;; --repo) DD_REPO="$2"; shift ;; --no-post) NOPOST=1 ;; --compile) COMPILE=1 ;; --verbose|-v) VERBOSE=1 ;;
     -*) echo "unknown option: $1" >&2; exit 64 ;;
     *) [ -z "$SRC" ] && SRC="$1" || { echo "one source only" >&2; exit 64; } ;;
   esac
   shift
 done
-[ -n "$SRC" ] && [ -n "$TAG" ] || { echo "usage: integrate.sh <commit|branch> --tag <name> [--apply] [--allow-paths a,b] [--s01] [--message m] [--repo DIR] [--no-post] [--verbose]" >&2; exit 64; }
+[ -n "$SRC" ] && [ -n "$TAG" ] || { echo "usage: integrate.sh <commit|branch> --tag <name> [--apply] [--allow-paths a,b] [--s01] [--message m] [--repo DIR] [--no-post] [--compile] [--verbose]" >&2; exit 64; }
 G=(git -C "$DD_REPO")
 fail() { echo "GATE FAIL: $*"; FAILS=$((FAILS+1)); }
 # Clean rollback of a failed --no-commit pick without git reset: every path the pick touched goes back
@@ -246,5 +249,11 @@ if [ "$NOPOST" -eq 0 ] && [ -x "$DD_TOOLS_DIR/post-integrate.sh" ] && [ "$DD_REP
   PI=$(DD_REPO="$DD_REPO" "$DD_TOOLS_DIR/post-integrate.sh" "$TAG" 2>&1); PX=$?
   if [ "$VERBOSE" -eq 1 ]; then echo "$PI" | tail -6; else echo "post-integrate: $(echo "$PI" | grep -E '^(backup exit=|lfs pointers|OK  report=|.*NOT VERIFIED|.*CHECK FAILED)' | tr '\n' ' ' | cut -c1-160)"; fi
   [ "$PX" -eq 0 ] || { echo "post-integrate failed (exit $PX) — run with --verbose"; exit 5; }
+fi
+# WP-043C: optional compile gate on the new main HEAD (end of a batch).
+if [ "$COMPILE" -eq 1 ]; then
+  CC=$("$DD_TOOLS_DIR/compile-check.sh" "$(git -C "$DD_REPO" rev-parse HEAD)" 2>&1); CX=$?
+  echo "$CC" | grep -E '^RESULT:|error CS' | head -6
+  [ "$CX" -eq 0 ] || { echo "compile gate: main HEAD does not compile / check not run (exit $CX) — revert or hotfix before the next batch"; exit 6; }
 fi
 exit 0
