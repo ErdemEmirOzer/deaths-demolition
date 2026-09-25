@@ -91,6 +91,7 @@ namespace DD.Prototype.Audio
         private CasingAudio _casings;
         private SpecialAudio _special;
         private ImpactAudio _impacts;
+        private RocketBlastAudio _rocketBlasts;
         private ProjectileFlightAudio _flight;
         private readonly CombatAudioCue[] _heldImpacts = new CombatAudioCue[16];
         private AudioSnapshot _snapshotBeforePause = AudioSnapshot.Run;
@@ -162,6 +163,9 @@ namespace DD.Prototype.Audio
         /// <summary>WP-072 B3 test / F1 surface: the projectile impact voice.</summary>
         public ImpactAudio Impacts => _impacts;
 
+        /// <summary>WP-072 · rl_1 test / F1 surface: bomblet pops and duds.</summary>
+        public RocketBlastAudio RocketBlasts => _rocketBlasts;
+
         /// <summary>WP-072 B5 test / F1 surface: projectile flight loops.</summary>
         public ProjectileFlightAudio Flight => _flight;
 
@@ -224,6 +228,7 @@ namespace DD.Prototype.Audio
             _special = new SpecialAudio(_library, _mixer, _bridge, _loopRoot, PlayResolved);           // WP-072 B4
             _router.SetSpecialVoice(_special);
             _impacts = new ImpactAudio(_library, PlayResolved);                                        // WP-072 B3
+            _rocketBlasts = new RocketBlastAudio(_library, PlayResolved);                              // WP-072 · WP-069 B3 (rl_1)
             _router.SetProducedCheck(_library.IsProduced);
             BuildUiVoices();
             _signal.SetIgnoreListenerPause(true);   // WP-068 s11: the pause menu is heard
@@ -281,6 +286,7 @@ namespace DD.Prototype.Audio
             UnityEngine.SceneManagement.SceneManager.activeSceneChanged += OnActiveSceneChanged;   // re-arm cleared static buses
             _casings?.Enable();   // WP-072 B2
             _impacts?.Enable();   // WP-072 B3
+            _rocketBlasts?.Enable();
             _flight?.Enable();    // WP-072 B5
             AudioEvents.LoopStoppedAt += OnLoopStopped;
             AudioEvents.CueSuppressed += OnCueSuppressed;
@@ -311,6 +317,7 @@ namespace DD.Prototype.Audio
             UnityEngine.SceneManagement.SceneManager.activeSceneChanged -= OnActiveSceneChanged;
             _casings?.Disable();   // WP-072 B2
             _impacts?.Disable();   // WP-072 B3
+            _rocketBlasts?.Disable();
             _flight?.Disable();    // WP-072 B5
             AudioEvents.LoopStoppedAt -= OnLoopStopped;
             AudioEvents.CueSuppressed -= OnCueSuppressed;
@@ -389,6 +396,7 @@ namespace DD.Prototype.Audio
             if (!_paused) _weaponFire.Tick(dt);   // WP-072 B1: trigger release → body loop fade + tail
             if (!_paused) _casings.Tick();         // WP-072 B2: casings land after their fall
             if (!_paused) _flight.Tick(dt);        // WP-072 B5: rocket / orb / gel loops follow their projectile
+            if (!_paused) _rocketBlasts.Tick();    // WP-072 · rl_1: staggered bomblet pops
             if (!_paused) _special.Tick(dt);   // WP-072 B4: chain hops, shock / puddle loops
             TickUiVoices(dt);
 
@@ -406,6 +414,13 @@ namespace DD.Prototype.Audio
 
             // WP-072 B3: legacy surface cues no projectile impact replaced this frame play now (one frame late).
             int n = _impacts.DrainUnreplaced(_heldImpacts);
+            for (int i = 0; i < n; i++)
+            {
+                PlayCombatCue(_heldImpacts[i]);
+            }
+
+            // WP-072 · rl_1: explosions no bomblet replaced (the rocket's own blast, other sources) play now through the layers.
+            n = _rocketBlasts.DrainUnreplaced(_heldImpacts);
             for (int i = 0; i < n; i++)
             {
                 PlayCombatCue(_heldImpacts[i]);
@@ -534,6 +549,12 @@ namespace DD.Prototype.Audio
 
             // WP-072 B3: a world impact waits for the projectile's own calibre voice (same call chain, one line later).
             if (cue.Event >= CombatAudioEvent.SurfaceImpactDefault && cue.Event <= CombatAudioEvent.SurfaceImpactPaper && !_releasingHeld && _impacts.TryHold(cue))
+            {
+                return;
+            }
+
+            // WP-072 · rl_1: a blast waits for the frame — a cluster bomblet replaces its own cue with a small pop.
+            if (cue.Event == CombatAudioEvent.Explosion && !_releasingHeld && _rocketBlasts.TryHold(cue))
             {
                 return;
             }

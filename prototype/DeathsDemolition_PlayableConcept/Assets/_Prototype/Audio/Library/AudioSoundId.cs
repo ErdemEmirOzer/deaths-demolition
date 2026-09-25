@@ -427,6 +427,10 @@ namespace DD.Prototype.Audio
         RocketFlightLoop = 560,
         ExplosionNear = 561,
         ExplosionMid = 562,
-        ExplosionFar = 563
+        ExplosionFar = 563,
+
+        // ---- WP-072 · WP-069 B3 rl_1 cluster bomblet + dud (AP-011 v021)
+        BombletPop = 564,
+        RocketDud = 565
     }
 }

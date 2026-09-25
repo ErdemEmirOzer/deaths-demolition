@@ -1,5 +1,5 @@
 {
- "version": "ap011-v019",
+ "version": "ap011-v021",
  "package": "AP-011",
  "standard": {
   "sfxLufs": -18.0,
@@ -548,6 +548,31 @@
    "bus": "SFX-World",
    "spatial": true,
    "provenance": "seed_audio job d053c855 (1.1 cr) · attack_impact_body"
+  },
+  {
+   "sound": "BombletPop",
+   "event": "RocketImpacts.Detonated(Bomblet) — staggered 60–110 ms",
+   "files": [
+    "BombletPop_01.wav",
+    "BombletPop_02.wav",
+    "BombletPop_03.wav",
+    "BombletPop_04.wav"
+   ],
+   "loop": false,
+   "lufs": -18.34,
+   "truePeakDb": -3.0,
+   "noiseFloorDb": -120.0,
+   "dcDb": -157.0,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -18.0,
+   "ceilingDbtp": -3.0,
+   "continuous": false,
+   "endSilenceDb": -240.0,
+   "layers": "derived (v005)",
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "derived offline (AP-011 v021, WP-072, 0 cr) from v001 explosion / impact_metal / impact_dirt takes + synthetic fizzle · v001 explosion bursts +3.5…5 st, LPF 5 k, 0.6 s + 70 Hz thump −8 dB, tanh 2.5"
   },
   {
    "sound": "BreakBale",
@@ -4084,6 +4109,29 @@
    "bus": "SFX-Player",
    "spatial": true,
    "provenance": "seed_audio job 0708ccea (1.1 cr) · rifle_fire · EQ v011 (WP-060B, 0 cr): high-shelf +2 dB @ 4 kHz, low-shelf -1.5 dB @ 120 Hz"
+  },
+  {
+   "sound": "RocketDud",
+   "event": "RocketImpacts.Dud — unarmed rocket drops and fizzles (1.0 s)",
+   "files": [
+    "RocketDud_01.wav",
+    "RocketDud_02.wav"
+   ],
+   "loop": false,
+   "lufs": -24.76,
+   "truePeakDb": -1.5,
+   "noiseFloorDb": -120.0,
+   "dcDb": -183.0,
+   "clipped": 0,
+   "bitDepth": 24,
+   "targetLufs": -20.0,
+   "ceilingDbtp": -1.5,
+   "continuous": false,
+   "endSilenceDb": -240.0,
+   "layers": "derived (v005)",
+   "bus": "SFX-World",
+   "spatial": true,
+   "provenance": "derived offline (AP-011 v021, WP-072, 0 cr) from v001 explosion / impact_metal / impact_dirt takes + synthetic fizzle · impact_metal clank + impact_dirt thud −4 dB, then pink hiss HP 2 k falling + sparse crackles −10 dB (~1 s)"
   },
   {
    "sound": "RocketFlightLoop",

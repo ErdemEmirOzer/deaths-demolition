@@ -1015,6 +1015,46 @@ namespace DD.Prototype.Tests.PlayMode
             Debug.Log("[DD-TEST] wp072b5.flight started=" + _d.Flight.Started + " ended=" + _d.Flight.Ended);
         }
 
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator Rl1_Bombacik_KucukPatlamaDizisi_Dud_CizSesi()
+        {
+            if (!_d.RocketBlasts.Active)
+            {
+                Assert.Fail("v021 bombacık / dud kimlikleri katalogda değil (AudioCatalogBuilder).");
+            }
+
+            Vector3 gogus = _s.Rig.transform.position + Vector3.up * 1.39f;
+            void Firlat(Vector3 hedef, int bombacik)
+            {
+                var def = DD.Prototype.Core.Weapons.Arsenal.Get(DD.Prototype.Core.Config.ClassicWeaponId.Rl1);
+                var shot = new DD.Prototype.Weapons.ShotRequest
+                {
+                    Origin = gogus, Direction = (hedef - gogus).normalized, Damage = def.fire.damage, Range = def.projectile.maxRange,
+                    ImpactForce = def.projectile.impulse, Source = DD.Prototype.Damage.DamageSourceKind.Bullet,
+                    Power = DD.Prototype.Feedback.WeaponPower.Heavy, PierceDamageFalloff = 1f
+                };
+                var launch = DD.Prototype.Weapons.ProjectileLaunch.From(def, DD.Prototype.Core.Config.ClassicWeaponId.Rl1, def.projectile.maxRange);
+                launch.ClusterBomblets = bombacik;
+                DD.Prototype.Weapons.ProjectileSystem.Spawn(shot, launch);
+            }
+
+            // Kurma mesafesi (4 m) içinde yere: patlama yok, düşüp cızlar.
+            int duds = _d.RocketBlasts.Duds;
+            Firlat(_s.Zemin(0f, 2.5f), 0);
+            yield return SpecialWeaponSahne.Bekle(() => DD.Prototype.Weapons.RocketImpacts.Duds > 0 && _d.RocketBlasts.Duds > duds, 3f, "dud sesi yok");
+            Assert.AreEqual(AudioSoundId.RocketDud, _d.RocketBlasts.LastSound);
+
+            // Cluster 3: roketin patlaması mesafe katmanıyla bir kez, üç bombacık küçük pop dizisi (tam patlama yığını değil).
+            int pops = _d.RocketBlasts.Bomblets;
+            int detonations = DD.Prototype.Weapons.RocketImpacts.Detonations;
+            Firlat(_s.Zemin(0f, 14f), 3);
+            yield return SpecialWeaponSahne.Bekle(() => DD.Prototype.Weapons.RocketImpacts.Detonations > detonations, 4f, "roket patlamadı");
+            yield return new WaitForSeconds(0.4f);
+            Assert.AreEqual(pops + 3, _d.RocketBlasts.Bomblets, "üç bombacık, üç küçük pop");
+            Debug.Log("[DD-TEST] wp072rl1 duds=" + _d.RocketBlasts.Duds + " pops=" + _d.RocketBlasts.Bomblets);
+        }
+
         // ================================================================== WP-068 dilim 11 · UI ses v3
 
         [UnityTest]

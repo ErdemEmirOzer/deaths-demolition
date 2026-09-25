@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21fa3465f8aa14f0bbac4a22d4a8238f, type: 3}
   m_Name: DD_AudioCatalog
   m_EditorClassIdentifier: 
-  _manifestVersion: ap011-v019
-  _sourceHash: 565d87f24dbcdce6a80ce632c57ec2a9e06d0e47586885304b2852cd28090a61
+  _manifestVersion: ap011-v021
+  _sourceHash: 6ef8a30a9022520711d3651ba354e7b67f59f407a166c14e08d9754b2b69744c
   _entries:
   - Sound: 10
     Clips:
@@ -4937,6 +4937,39 @@ MonoBehaviour:
       2 k rumble, 40 ms attack, 2.0 s"
     NoiseFloorDb: -120
     DcDb: -118.4
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 564
+    Clips:
+    - {fileID: 8300000, guid: 66f854477ad6a424fad2815778295fd5, type: 3}
+    - {fileID: 8300000, guid: c59ce50c7b7cd4c1889d5db03007e93f, type: 3}
+    - {fileID: 8300000, guid: 06a196d20271b4e6485d14b450369db6, type: 3}
+    - {fileID: 8300000, guid: bdf960aa9a2914c669a9f0efe96cac85, type: 3}
+    Loop: 0
+    Lufs: -18.34
+    TruePeakDb: -3
+    Provenance: "derived offline (AP-011 v021, WP-072, 0 cr) from v001 explosion
+      / impact_metal / impact_dirt takes + synthetic fizzle \xB7 v001 explosion bursts
+      +3.5\u20265 st, LPF 5 k, 0.6 s + 70 Hz thump \u22128 dB, tanh 2.5"
+    NoiseFloorDb: -120
+    DcDb: -157
+    Clipped: 0
+    BitDepth: 24
+    Layers: derived (v005)
+  - Sound: 565
+    Clips:
+    - {fileID: 8300000, guid: 032bcb024baee4d5e91fab8d39ffa33b, type: 3}
+    - {fileID: 8300000, guid: d63702d8c8d664efba6d90d54f8482de, type: 3}
+    Loop: 0
+    Lufs: -24.76
+    TruePeakDb: -1.5
+    Provenance: "derived offline (AP-011 v021, WP-072, 0 cr) from v001 explosion
+      / impact_metal / impact_dirt takes + synthetic fizzle \xB7 impact_metal clank
+      + impact_dirt thud \u22124 dB, then pink hiss HP 2 k falling + sparse crackles
+      \u221210 dB (~1 s)"
+    NoiseFloorDb: -120
+    DcDb: -183
     Clipped: 0
     BitDepth: 24
     Layers: derived (v005)
