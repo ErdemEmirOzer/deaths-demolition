@@ -92,6 +92,82 @@ def guard(command, directory):
     return subprocess.run(args, capture_output=True, text=True)
 
 
+class QuietWindow:
+    """C-00 26.09: measure only in a quiet window — this process holds the 'player' slot (the guard, a child, re-enters it)
+    and three holder shells take every Unity slot, so no batch or Player of another session starts; before each window
+    load1 < load_max and no foreign Unity / Player process; a window batch lasts at most max_minutes, then everything is
+    released for a pause so the other sessions' queues move (FIFO), and taken again."""
+
+    def __init__(self, note, flag, load_max, max_minutes, pause_seconds):
+        self.note, self.flag, self.load_max = note, flag, load_max
+        self.max_seconds, self.pause = max_minutes * 60.0, pause_seconds
+        self.slot = str(REPO / "tools" / "slot.sh")
+        self.holders, self.started = [], None
+
+    def _status(self):
+        return subprocess.run([self.slot, "status"], capture_output=True, text=True).stdout
+
+    def _unity_all_ours(self):
+        lines = self._status().splitlines()
+        head = next((i for i, l in enumerate(lines) if l.startswith("== unity")), None)
+        if head is None:
+            return False
+        import re
+        m = re.search(r"\((\d+)/(\d+)\)", lines[head])
+        locks = []
+        for line in lines[head + 1:]:
+            if line.startswith("==") or line.strip().startswith("kuyruk"):
+                break
+            locks.append(line)
+        return bool(m) and int(m.group(1)) == int(m.group(2)) and locks and all("wp078-quiet" in l for l in locks)
+
+    def _host_quiet(self):
+        comm = subprocess.run(["ps", "-Ao", "comm"], capture_output=True, text=True).stdout.splitlines()
+        unity = [c for c in comm if c.strip().endswith("/MacOS/Unity")]
+        load = float(subprocess.run(["sysctl", "-n", "vm.loadavg"], capture_output=True, text=True).stdout.split()[1])
+        return not unity and not player_up() and load < self.load_max, f"load1 {load:.2f} foreign Unity {len(unity)}"
+
+    def acquire(self):
+        subprocess.run([self.slot, "acquire", "player", "wp078-perf"], capture_output=True, text=True)
+        self.flag.touch()
+        for i in (1, 2, 3):
+            script = (f'"{self.slot}" acquire unity wp078-quiet-{i} >/dev/null; while [ -f "{self.flag}" ]; do sleep 2; done; '
+                      f'"{self.slot}" release unity wp078-quiet-{i} >/dev/null')
+            self.holders.append(subprocess.Popen(["bash", "-c", script]))
+        while not self._unity_all_ours():
+            time.sleep(10)
+        while True:
+            quiet, why = self._host_quiet()
+            if quiet:
+                break
+            time.sleep(15)
+        self.started = time.monotonic()
+        self.note(f"quiet window: all Unity slots + player slot held, {why}")
+
+    def release(self):
+        if self.started is None:
+            return
+        self.flag.unlink(missing_ok=True)
+        for h in self.holders:
+            h.wait()
+        self.holders = []
+        subprocess.run([self.slot, "release", "player", "wp078-perf"], capture_output=True, text=True)
+        self.started = None
+        self.note("quiet window released")
+
+    def before_window(self, estimate_seconds):
+        if self.started is not None and time.monotonic() - self.started + estimate_seconds > self.max_seconds:
+            self.release()
+            time.sleep(self.pause)
+        if self.started is None:
+            self.acquire()
+        quiet, why = self._host_quiet()
+        while not quiet:                     # a Unity batch that was already running when the slots were taken
+            time.sleep(15)
+            quiet, why = self._host_quiet()
+        return why
+
+
 def window_args(tier_name, mode, cell):
     # -ddQualityTier takes the lower-case key (performans|yuksek|sinematik); the probe reports the enum (probeValue)
     args = ["-ddQualityTier", tier_name, "-ddCameraMode", mode,
@@ -122,6 +198,10 @@ def main():
     parser.add_argument("--cooldown", type=float, default=60.0)
     parser.add_argument("--player-wait", type=float, default=1800.0, help="seconds to wait for another game Player to close")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--no-quiet", action="store_true", help="do not take the Unity / player slots (smoke only; never for the gate)")
+    parser.add_argument("--load-max", type=float, default=6.0, help="C-00 26.09: measure only below this load1")
+    parser.add_argument("--quiet-minutes", type=float, default=25.0)
+    parser.add_argument("--quiet-pause", type=float, default=180.0)
     args = parser.parse_args()
 
     targets = json.loads(Path(args.targets).read_text(encoding="utf-8"))
@@ -146,10 +226,20 @@ def main():
             handle.write(line + "\n")
 
     note(f"plan {len(runs)} windows · tiers={tiers} modes={modes} commit={args.commit}")
+    quiet = None if (args.no_quiet or args.dry_run) else QuietWindow(note, root / ".quiet-hold", args.load_max, args.quiet_minutes, args.quiet_pause)
+    try:
+        return run_all(args, runs, root, binary, seconds, quiet, note)
+    finally:
+        if quiet is not None:
+            quiet.release()
+
+
+def run_all(args, runs, root, binary, seconds, quiet, note):
     for position, (name, mode, index) in enumerate(runs):
         cell = root / f"perf-{name}-{mode}-{index}"
         command = [sys.executable, str(HERE / "wp064_run.py"), "perf", "--bin", str(binary), "--out", str(cell),
-                   "--commit", args.commit, "--window", str(seconds), "--preflight-attempts", "30", "--preflight-wait", "60"]
+                   "--commit", args.commit, "--window", str(seconds), "--load-max", str(args.load_max),
+                   "--preflight-attempts", "3", "--preflight-wait", "20"]
         # "--extra-arg=<flag>": argparse reads a separate value that starts with "-" as an option
         command += [f"--extra-arg={extra}" for extra in window_args(name, mode, cell)]
         if args.dry_run:
@@ -165,6 +255,8 @@ def main():
             waited += 60
 
         ug = root / "ug" / cell.name
+        if quiet is not None:
+            note(f"{cell.name}: {quiet.before_window(seconds + 90)}")
         snap = guard("snapshot", ug)
         if snap.returncode != 0:
             note(f"STOP {cell.name}: guard snapshot exit {snap.returncode}")
@@ -183,7 +275,7 @@ def main():
             note(f"STOP {cell.name}: wp064_run usage/input error (exit {run.returncode}) — see ug/<cell>.wp064-run.out")
             return 64
         if position + 1 < len(runs):
-            time.sleep(args.cooldown)
+            time.sleep(args.cooldown if quiet is None else min(args.cooldown, 20.0))
     note("done")
     return 0
 
