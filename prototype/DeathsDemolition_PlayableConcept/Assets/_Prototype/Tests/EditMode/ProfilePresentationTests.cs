@@ -59,6 +59,26 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void Agac_Aciklama_PaketSatiri_ArgumanlarlaDolar_AcikKalirsaKatalog()
+        {
+            // K10b: the pack line filled from the node's args; a placeholder left open falls back to the catalog line.
+            Assert.AreEqual("Wait 2.5 s before the shot for ×2 damage.",
+                UiRunTreePanel.FillArgs("Wait {seconds} s before the shot for ×{value} damage.", new[] { "seconds", "value" }, new[] { 2.5f, 2f }));
+            var n = new DD.Prototype.Rounds.RunTreeNodeView
+            {
+                StringKey = "tree.run.fork.sr_1.x",
+                ArgNames = new[] { "seconds", "value" },
+                ArgValues = new[] { 2.5f, 2f },
+                Description = "catalog line",
+            };
+            StringAssert.Contains("2.5", UiRunTreePanel.DescriptionOf(n), "the pack line, filled");
+            StringAssert.DoesNotContain("{", UiRunTreePanel.DescriptionOf(n));
+            n.ArgNames = new string[0];
+            n.ArgValues = new float[0];
+            Assert.AreEqual("catalog line", UiRunTreePanel.DescriptionOf(n), "an open placeholder falls back to the catalog line");
+        }
+
+        [Test]
         public void Results_OldurenVurus_KatmanAdi_HamKimlikDegil()
         {
             // 12b: the Results H1 names the attacker's tier, never EnemyAttackState's raw source id.

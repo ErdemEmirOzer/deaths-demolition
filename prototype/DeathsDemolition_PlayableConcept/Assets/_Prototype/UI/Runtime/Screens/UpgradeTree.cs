@@ -1433,10 +1433,48 @@ namespace DD.Prototype.UI
             }
         }
 
-        private static string DescriptionOf(RunTreeNodeView n)
+        /// <summary>
+        /// WP-077 K10b (S-04): the pack's reviewed line (<c>&lt;StringKey&gt;.desc</c>) with the node's live args in display
+        /// units ({value} {count} {seconds} {radius} {range} {max} {base}) - one source for the card and the hooks. The
+        /// catalog line when the pack has none or a placeholder would stay open; tiers describe themselves from the live tuning.
+        /// </summary>
+        public static string DescriptionOf(RunTreeNodeView n)
         {
+            if (!string.IsNullOrEmpty(n.StringKey))
+            {
+                string line = UiStrings.Get(n.StringKey + ".desc", null);
+                if (!string.IsNullOrEmpty(line))
+                {
+                    line = FillArgs(line, n.ArgNames, n.ArgValues);
+                    if (line.IndexOf('{') < 0)
+                    {
+                        return line;
+                    }
+                }
+            }
+
             return !string.IsNullOrEmpty(n.Description) ? n.Description
                 : n.HasBranch ? UpgradeCardCatalog.Describe(n.Branch, n.OwnedTier) : string.Empty;
+        }
+
+        /// <summary>Each "{name}" → its value: whole numbers bare ("20"), others to one decimal ("2.5"), invariant culture.</summary>
+        public static string FillArgs(string line, string[] names, float[] values)
+        {
+            if (names == null || values == null)
+            {
+                return line;
+            }
+
+            for (int i = 0; i < names.Length && i < values.Length; i++)
+            {
+                float v = values[i];
+                string text = Mathf.Abs(v - Mathf.Round(v)) < 0.001f
+                    ? Mathf.RoundToInt(v).ToString(CultureInfo.InvariantCulture)
+                    : v.ToString("0.#", CultureInfo.InvariantCulture);
+                line = line.Replace("{" + names[i] + "}", text);
+            }
+
+            return line;
         }
 
         /// <summary>The node's rule in one muted line: the Hearth's allowance, a fork's exclusion or reforge, the pin's path.</summary>
