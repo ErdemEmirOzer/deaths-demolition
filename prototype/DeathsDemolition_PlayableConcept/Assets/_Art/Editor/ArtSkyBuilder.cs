@@ -56,10 +56,12 @@ namespace DD.Art.Pipeline.EditorTools
         public const string SkyBandSourcePath = ArtPipelinePaths.TexturesSource + "/T_skyband_BaseColor.png";
         public const int LatLongWidth = 2048, LatLongHeight = 1024;
 
-        private static byte[] BuildLatLongFromBand()
+        private static byte[] BuildLatLongFromBand() => BuildLatLongFromBand(SkyBandSourcePath);
+
+        private static byte[] BuildLatLongFromBand(string bandPath)
         {
             var band = new Texture2D(2, 2, TextureFormat.RGBA32, false, false);
-            if (!ImageConversion.LoadImage(band, File.ReadAllBytes(SkyBandSourcePath), false)) throw new System.InvalidOperationException("[ArtPipeline] cannot decode " + SkyBandSourcePath);
+            if (!ImageConversion.LoadImage(band, File.ReadAllBytes(bandPath), false)) throw new System.InvalidOperationException("[ArtPipeline] cannot decode " + bandPath);
             var tex = new Texture2D(LatLongWidth, LatLongHeight, TextureFormat.RGB24, false);
             var pixels = new Color32[LatLongWidth * LatLongHeight];
             int half = LatLongHeight / 2;
@@ -101,12 +103,23 @@ namespace DD.Art.Pipeline.EditorTools
             return png;
         }
 
-        public static Material Build()
+        /// <summary>WP-075 C3 · the v6 layout's sky (AP-023 sky band v2, P-05 sky-v2 manifest: lat-long upper half, no clouds — the clouds are planes).</summary>
+        public const string SkyBandV2SourcePath = ArtPipelinePaths.TexturesSource + "/T_skyband_v2_BaseColor.png";
+        public const string SkyV2TexturePath = ArtPipelinePaths.TexturesDerived + "/T_sky_v2_BaseColor.png";
+        public const string SkyV2MaterialPath = ArtPipelinePaths.ArtRoot + "/Resources/DD_Sky_v2.mat";
+
+        public static Material Build() => Build(SkyBandSourcePath, SkyTexturePath, SkyMaterialPath);
+
+        /// <summary>WP-075 C3 · DD_Sky_v2 (Resources): WorldAtmosphere puts it on the skybox when the live layout is v6.</summary>
+        public static Material BuildV2() => Build(SkyBandV2SourcePath, SkyV2TexturePath, SkyV2MaterialPath);
+
+        private static Material Build(string bandPath, string texturePath, string materialPath)
         {
+            string SkyBandSourcePath = bandPath, SkyTexturePath = texturePath, SkyMaterialPath = materialPath;
             EnsureFolder(ArtPipelinePaths.TexturesDerived);
             EnsureFolder(System.IO.Path.GetDirectoryName(SkyMaterialPath).Replace('\\', '/'));
 
-            byte[] png = File.Exists(SkyBandSourcePath) ? BuildLatLongFromBand() : BuildGradient();
+            byte[] png = File.Exists(SkyBandSourcePath) ? BuildLatLongFromBand(SkyBandSourcePath) : BuildGradient();
 
             bool changed = !File.Exists(SkyTexturePath) || !SameBytes(File.ReadAllBytes(SkyTexturePath), png);
             if (changed)

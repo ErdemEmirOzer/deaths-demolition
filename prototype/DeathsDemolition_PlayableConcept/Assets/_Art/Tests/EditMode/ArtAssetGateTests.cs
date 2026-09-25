@@ -496,6 +496,11 @@ namespace DD.Art.Tests.EditMode
             foreach (string f in WorldV5Ground.TextureFiles()) if (beklenen.Add(f)) zemin++;
             Assert.AreEqual(15, zemin, "AP-023 zemin setleri: 5 × (BaseColor + Normal + Mask)");
 
+            // WP-075 C3 · AP-023 sky v2 (v6 layout): band v2 + its derived lat-long, 3 horizon v2 sheets, 2 cloud sheets, 3 landmark + 1 NW cluster card = 11.
+            int gok = 0;
+            foreach (string f in WorldV5Sky.TextureFiles()) if (beklenen.Add(f)) gok++;
+            Assert.AreEqual(11, gok, "AP-023 gök v2 dokuları");
+
             // WP-019 (ADR-019-1): every PNG the AP-010 manifest ships (rows + their emissive layers).
             int vfx = 0;
             foreach (string f in ArtVfxManifestPngs()) if (beklenen.Add(f)) vfx++;

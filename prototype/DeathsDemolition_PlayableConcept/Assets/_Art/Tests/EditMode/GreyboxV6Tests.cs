@@ -349,6 +349,25 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(256, PlanarReflection.HeightOf(QualityTier.Yuksek));
             Assert.AreEqual(1024, PlanarReflection.HeightOf(QualityTier.Sinematik));
             Assert.IsTrue(PlanarReflection.CharactersIn(QualityTier.Sinematik) && !PlanarReflection.CharactersIn(QualityTier.Yuksek));
+
+            // WP-075 C3 · sky v2: the v6 layout's skybox, the rings on the v2 sheets in queue order, drifting clouds, the landmarks.
+            Assert.AreEqual(DD.Prototype.World.WorldAtmosphere.SkyV2ResourceName, DD.Prototype.World.WorldAtmosphere.SkyResourceFor(DD.Prototype.World.WorldLayoutKind.V6));
+            Assert.AreEqual(DD.Prototype.World.WorldAtmosphere.SharedSkyResourceName, DD.Prototype.World.WorldAtmosphere.SkyResourceFor(DD.Prototype.World.WorldLayoutKind.Ap005));
+            Assert.IsNotNull(Resources.Load<Material>(DD.Prototype.World.WorldAtmosphere.SkyV2ResourceName), "DD_Sky_v2");
+            Transform rings = dress.transform.Find(ArtSurfaceImporter.SkyRootName);
+            int lastQueue = 0;
+            foreach ((string layer, int queue) in WorldV5Sky.PlateQueues)
+            {
+                Material ring = rings.Find("Horizon_" + layer).GetComponent<MeshRenderer>().sharedMaterial;
+                StringAssert.Contains("horizon_" + layer + "_v2", AssetDatabase.GetAssetPath(ring.GetTexture("_BaseMap")));
+                Assert.Greater(ring.renderQueue, lastQueue, layer + " sırası");
+                lastQueue = ring.renderQueue;
+            }
+
+            Transform skyV2 = dress.transform.Find(WorldV5Sky.RootName);
+            Assert.AreEqual(WorldV5Sky.Clouds.Length + WorldV5Sky.Cards.Length, skyV2.childCount, "bulut düzlemi + nirengi kartı");
+            foreach ((string name, string role, float height, float half, float tile, float speed, int queue) c in WorldV5Sky.Clouds)
+                Assert.Greater(((Vector4)skyV2.Find(c.name).GetComponent<MeshRenderer>().sharedMaterial.GetVector("_ScrollUV")).magnitude, 0f, c.name + " sürüklenmiyor");
             Assert.IsEmpty(fails, string.Join("\n", fails));
         }
 

@@ -78,6 +78,11 @@ namespace DD.Prototype.World
         /// </summary>
         public const string SharedSkyResourceName = "DD_Sky_Overcast_v1";
 
+        /// <summary>WP-075 C3 · the v6 layout (World v5) sky: AP-023 sky band v2; World_AP005 (±45) keeps v1 until v5 replaces it.</summary>
+        public const string SkyV2ResourceName = "DD_Sky_v2";
+
+        public static string SkyResourceFor(WorldLayoutKind layout) => layout == WorldLayoutKind.V6 ? SkyV2ResourceName : SharedSkyResourceName;
+
         /// <summary>
         /// WP-075 v3 key ("Islak Arduvaz — Açılma", direction Ek A §1.1): a low 4900 K sun, 33° up, from the WSW
         /// (compass 232°), light travelling toward 52° (NE) — a 1.8 m figure casts 2.8 m up-right in the top-down
@@ -411,7 +416,7 @@ namespace DD.Prototype.World
             // pipeline (a latitude-longitude gradient: no sun disk, no horizon glow) is the
             // sky of every scene. Loaded by name so this assembly stays independent of
             // DD.Art; the procedural sky below is only the fallback when the asset is absent.
-            var shared = Resources.Load<Material>(SharedSkyResourceName);
+            var shared = Resources.Load<Material>(SkyResourceFor(WorldLayout.Current)) ?? Resources.Load<Material>(SharedSkyResourceName);
             if (shared != null)
             {
                 RenderSettings.skybox = shared;

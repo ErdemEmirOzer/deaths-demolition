@@ -268,7 +268,8 @@ namespace DD.Art.Pipeline.EditorTools
             Kairo(dress);
             Chumon(dress);
             Vista(dress);
-            ArtSurfaceImporter.BuildHorizonPlates(dress.gameObject);   // AP-019 horizon rings (World_AP005's), until the C3 sky v2
+            ArtSurfaceImporter.BuildHorizonPlates(dress.gameObject);   // the AP-019 horizon rings (contract radii) …
+            WorldV5Sky.Build(dress);                                    // … in sky v2 (WP-075 C3): v2 sheets, cloud planes, landmarks
             report.PlazaCells = WorldV5Ground.Build(dress, (parent, family, v, m, role) => Place(parent, family, v, m, Vector3.zero, role));
             report.Instances = CountInstances(dress);
             return report;

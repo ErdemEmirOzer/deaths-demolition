@@ -297,6 +297,7 @@ namespace DD.Art.Pipeline.EditorTools
             { "horizon_mid", TextureClass.Vfx },
             { "horizon_far", TextureClass.Vfx },
             { "skyband", TextureClass.Sky },
+            { "skyband_v2", TextureClass.Sky },   // WP-075 C3 · AP-023 sky band v2 (the v6 layout's sky)
             // Structure (palace timber/screens, plaster, roofs, shore-path and basin module surfaces).
             { "wood", TextureClass.Structure },
             { "plaster", TextureClass.Structure },
@@ -322,6 +323,7 @@ namespace DD.Art.Pipeline.EditorTools
             { "bamboo_culm", TextureClass.Foliage },
             // Sky gradient.
             { "sky", TextureClass.Sky },
+            { "sky_v2", TextureClass.Sky },   // WP-075 C3 · its derived lat-long
             // WP-016 characters (ADR-016-1): the AP-006 player set (three skin albedos + shared normal/ORM) and the AP-007 zombie atlas.
             { "player", TextureClass.Character },
             { "player_skin1", TextureClass.Character },

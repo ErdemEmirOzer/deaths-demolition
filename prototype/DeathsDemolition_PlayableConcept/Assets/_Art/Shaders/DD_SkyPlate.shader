@@ -7,6 +7,7 @@ Shader "DD/SkyPlate"
     {
         [MainTexture] _BaseMap("Plate (RGBA sheet)", 2D) = "white" {}
         [MainColor] _BaseColor("Tint", Color) = (1, 1, 1, 1)
+        _ScrollUV("UV scroll per second (xy; WP-075 C3 cloud planes)", Vector) = (0, 0, 0, 0)
     }
 
     SubShader
@@ -34,6 +35,7 @@ Shader "DD/SkyPlate"
             CBUFFER_START(UnityPerMaterial)
                 float4 _BaseMap_ST;
                 half4 _BaseColor;
+                float4 _ScrollUV;
             CBUFFER_END
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
 
@@ -55,7 +57,7 @@ Shader "DD/SkyPlate"
                 #else
                     output.positionCS.z = output.positionCS.w * (1.0 - 1.0e-5);
                 #endif
-                output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
+                output.uv = TRANSFORM_TEX(input.uv, _BaseMap) + _Time.y * _ScrollUV.xy;   // C3: the cloud planes drift with the cookie (0 on the plates)
                 return output;
             }
 

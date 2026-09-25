@@ -104,6 +104,10 @@ namespace DD.Art
             report.Append("[AP005] Content: ").Append(count).Append(" instances, ").Append(renderers.Length).Append(" renderers, ")
                 .Append(lodGroups).Append(" LOD groups, ").Append(colliders).Append(" colliders (").Append(underRun ? "under Run" : "standalone").Append(").\n");
 
+            // WP-074 B1b: the live layout before the markers register (S-03's SpawnWorldProfile refreshes on WorldLayout.Changed);
+            // WP-075 C3: and before the atmosphere, whose skybox follows the layout (v6 → sky v2).
+            WorldLayout.SetCurrent(LayoutOf(_placement));
+
             int driftFields = 0;
             if (_buildAtmosphere)
             {
@@ -113,8 +117,6 @@ namespace DD.Art
 
             report.Append("[AP005] Atmosphere: ").Append(_buildAtmosphere ? "sun + volume + wind + " + driftFields + " drift fields" : "off").Append(".\n");
 
-            // WP-074 B1b: the live layout before the markers register (S-03's SpawnWorldProfile refreshes on WorldLayout.Changed).
-            WorldLayout.SetCurrent(LayoutOf(_placement));
             WorldMarkers.Build(root, _placement != null ? MarkerSetFrom(_placement) : WorldMarkers.ProceduralSet());
 
             // The baked NavMesh is registered by NavMeshSurface.OnEnable, which runs AFTER this
