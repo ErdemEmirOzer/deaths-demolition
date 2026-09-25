@@ -369,7 +369,16 @@ namespace DD.Prototype.Weapons
 
         public static void PublishWeaponEquipped(ClassicWeaponId id) => WeaponEquipped?.Invoke(id);
 
-        public static void PublishReloadStarted(float duration) => ReloadStarted?.Invoke(duration);
+        /// <summary>WP-069 (S-06 B4b): the reload <see cref="ReloadStarted"/> just announced is the empty one (dry chamber) — read inside the handler.</summary>
+        public static bool LastReloadEmpty { get; private set; }
+
+        public static void PublishReloadStarted(float duration) => PublishReloadStarted(duration, false);
+
+        public static void PublishReloadStarted(float duration, bool empty)
+        {
+            LastReloadEmpty = empty;
+            ReloadStarted?.Invoke(duration);
+        }
 
         public static void PublishReloadCompleted() => ReloadCompleted?.Invoke();
 

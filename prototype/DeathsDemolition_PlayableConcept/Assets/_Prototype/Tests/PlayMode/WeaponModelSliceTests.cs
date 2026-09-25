@@ -662,8 +662,13 @@ namespace DD.Prototype.Tests.PlayMode
                 Transform rightHand = skinned.Animator.GetBoneTransform(HumanBodyBones.RightHand);
                 Transform grip = WeaponSocketContract.Find(mount, WeaponSocketContract.MarkerGrip);
                 Assert.IsNotNull(grip, d.RosterKey + ": marker_grip yok.");
-                float gripToHand = Vector3.Distance(grip.position, rightHand.position);
-                Assert.Less(gripToHand, 0.08f, d.RosterKey + ": kabza sağ elden " + (gripToHand * 100f).ToString("0.0") + " cm uzakta.");
+                // WP-069 (C-00 grip decision B): the definition's grip offset — the hand's mid-grip socket in the weapon frame —
+                // lands on socket_weapon_r, and that grip point sits in the right hand.
+                Vector3 gripOffset = _s.Controller.Classic.Definition.GripOffset;
+                Vector3 gripPoint = grip.position + mount.rotation * gripOffset;
+                Assert.Less(Vector3.Distance(gripPoint, mount.parent.position), 0.001f, d.RosterKey + ": kavrama noktası el soketine oturmadı (gripOffset " + gripOffset.ToString("F3") + ").");
+                float gripToHand = Vector3.Distance(gripPoint, rightHand.position);
+                Assert.Less(gripToHand, 0.08f, d.RosterKey + ": kavrama noktası sağ elden " + (gripToHand * 100f).ToString("0.0") + " cm uzakta.");
                 report.Add(d.RosterKey + " muzzleDir=" + muzzleDir.ToString("F2") + " grip→hand=" + (gripToHand * 100f).ToString("0.0") + "cm");
 
                 // WP-059C: the alignment keeps the clip's motion — at rest the socket's deviation from its captured aim pose

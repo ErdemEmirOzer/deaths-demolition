@@ -202,3 +202,4 @@ MonoBehaviour:
       position: {x: 0.196, y: -0.126, z: 0.35}
       euler: {x: -0.94, y: -1.47, z: 0}
       scale: 0.837
+    gripOffset: {x: 0, y: -0.035, z: -0.005}

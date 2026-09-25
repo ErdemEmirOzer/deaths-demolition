@@ -526,7 +526,7 @@ namespace DD.Prototype.Weapons
             ReloadRemaining = ReloadDuration;
             IsReloading = true;
 
-            WeaponEvents.PublishReloadStarted(ReloadDuration);
+            WeaponEvents.PublishReloadStarted(ReloadDuration, _emptyReload);
             AudioEvents.Raise(CombatAudioEvent.ReloadStart, Vector3.zero, 1f, 40);
             return true;
         }

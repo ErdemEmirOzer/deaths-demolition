@@ -38,8 +38,16 @@ namespace DD.Prototype.PlayerSystem
         private int _overrideLayer = -1;
         private int _additiveLayer = -1;
         // Reference socket rotation (character space) per rest pose: index 0..2 = Aim_<weapon>, 3..4 = SwHold_1/2.
-        private readonly Quaternion[] _reference = new Quaternion[5];
-        private readonly bool[] _hasReference = new bool[5];
+        private readonly Quaternion[] _reference = new Quaternion[6];
+        private readonly bool[] _hasReference = new bool[6];
+
+        // WP-069 · the v3 aim pose (S-06 B4b 6ee44282: CharacterAnimatorContract.WeaponPoseV3 = 4 / AimV3State = "Aim_V3"),
+        // mirrored here until B4b lands on main — then these read the contract's names.
+        private const int WeaponPoseV3 = 4;
+        private const string AimV3State = "Aim_V3";
+
+        /// <summary>WP-069 (C-00 grip decision B): the hand's mid-grip socket in the weapon frame (the held weapon's definition, set by WeaponController).</summary>
+        public Vector3 GripOffset { get; set; } = DD.Prototype.Core.Weapons.WeaponGrip.DefaultOffset;
 
         /// <summary>True on the frames the mount was written (tests).</summary>
         public bool AlignedThisFrame { get; private set; }
@@ -79,6 +87,7 @@ namespace DD.Prototype.PlayerSystem
         {
             if (_skinned == null) return -1;
             if (_skinned.SpecialHold > 0) return 2 + Mathf.Clamp(_skinned.SpecialHold, 1, 2);
+            if (_skinned.Weapon == WeaponPoseV3) return 5;
             return _skinned.Weapon <= 2 ? _skinned.Weapon : -1;
         }
 
@@ -90,7 +99,7 @@ namespace DD.Prototype.PlayerSystem
             if (_additiveLayer < 0) _additiveLayer = animator.GetLayerIndex(CharacterAnimatorContract.AdditiveLayer);
             if (_overrideLayer < 0) return false;
             if (animator.IsInTransition(_overrideLayer)) return false;
-            string state = pose >= 3
+            string state = pose == 5 ? AimV3State : pose >= 3
                 ? CharacterAnimatorContract.SwHoldState + "_" + (pose - 2)
                 : CharacterAnimatorContract.AimState + "_" + pose;
             if (!animator.GetCurrentAnimatorStateInfo(_overrideLayer).IsName(state)) return false;
@@ -149,6 +158,7 @@ namespace DD.Prototype.PlayerSystem
 
             DeltaDegrees = Quaternion.Angle(Quaternion.identity, delta);
             transform.rotation = baseRotation * delta;
+            if (socket != null) transform.position = socket.position - transform.rotation * GripOffset;   // the grip point on the hand
             AlignedThisFrame = true;
         }
 

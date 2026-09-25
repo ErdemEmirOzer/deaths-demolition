@@ -112,6 +112,8 @@ namespace DD.Prototype.Weapons
 
         // WP-069 B2: the character's motor — movement widens the cone, firing / focus slow the step.
         private PlayerMotor _motor;
+        private WeaponMountAlignment _mountAlignment;
+        private PlayerSkinnedVisual _skinnedVisual;
 
         // WP-069 B4: the aim point (Namekuji's top-down arc lands at the cursor) and Raiju's self-shock slow.
         private PlayerAim _playerAim;
@@ -306,6 +308,7 @@ namespace DD.Prototype.Weapons
                 return;
             }
 
+            bool switching = _equipped && _equippedId != settings.Id;
             _equippedId = settings.Id;
             _equipped = true;
             _classic.Equip(settings, _modifiers);
@@ -316,6 +319,19 @@ namespace DD.Prototype.Weapons
             WeaponRegistry.SelectedWeapon = _equippedId;
             WeaponEvents.PublishWeaponEquipped(_equippedId);
             PublishClassicState(true);
+            if (switching) SkinnedVisual()?.PlaySwitchIn();   // WP-069 (S-06 B4b): the new weapon comes up
+        }
+
+        /// <summary>The player's authored body (the switch clips), found once.</summary>
+        private PlayerSkinnedVisual SkinnedVisual()
+        {
+            if (_skinnedVisual == null)
+            {
+                PlayerRig rig = GetComponentInParent<PlayerRig>();
+                _skinnedVisual = rig != null && rig.Animation != null ? rig.Animation.Skinned : null;
+            }
+
+            return _skinnedVisual;
         }
 
         /// <summary>
@@ -399,6 +415,14 @@ namespace DD.Prototype.Weapons
             if (Config == null)
             {
                 return;
+            }
+
+            // WP-069 (C-00 grip decision B): the weapon in hand sits by its definition's grip offset (the Special while held).
+            if (_mountAlignment == null && RigParent != null) _mountAlignment = RigParent.GetComponent<WeaponMountAlignment>();
+            if (_mountAlignment != null)
+            {
+                WeaponDefinition held = _special.IsActive ? _special.Definition : _classic.Definition;
+                _mountAlignment.GripOffset = held != null ? held.GripOffset : WeaponGrip.DefaultOffset;
             }
 
             float dt = Time.deltaTime;
@@ -799,6 +823,7 @@ namespace DD.Prototype.Weapons
             SetRigVisibility();
             PublishClassicState(true);
             PublishSpecialState(true);
+            SkinnedVisual()?.PlaySwitchIn();   // WP-069 (S-06 B4b): the parked classic comes back up
         }
 
         // ------------------------------------------------------------------ shared

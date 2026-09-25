@@ -311,6 +311,17 @@ namespace DD.Prototype.Core.Weapons
         }
     }
 
+    /// <summary>
+    /// WP-069 (C-00 grip decision B, 25.09) · where the hand holds the weapon: the hand's mid-grip socket (P-06 AP-022,
+    /// <c>socket_weapon_r</c>) expressed in the weapon frame (ADR-042-1: root = trigger blade, +Z barrel, +Y up, +X right).
+    /// WeaponMountAlignment places the model so this point lands on the socket; third person / top-down only — the
+    /// first-person view model sits at its fpView pose.
+    /// </summary>
+    public static class WeaponGrip
+    {
+        public static readonly Vector3 DefaultOffset = new Vector3(0f, -0.035f, -0.005f);
+    }
+
     [Serializable]
     public sealed class WeaponPresentationBlock
     {
@@ -329,6 +340,7 @@ namespace DD.Prototype.Core.Weapons
         public ClassicWeaponId placeholderVisual = ClassicWeaponId.AssaultRifle;
         public WeaponSockets sockets = new WeaponSockets();
         [Tooltip("WP-069: the first-person view pose (unset → the class default).")] public WeaponFpViewPose fpView = new WeaponFpViewPose();
+        [Tooltip("WP-069 (grip decision B): the hand's mid-grip socket in the weapon frame; the model sits so this point lands on socket_weapon_r.")] public Vector3 gripOffset = WeaponGrip.DefaultOffset;
 
         /// <summary>The pose the first-person view uses: this weapon's own, or its class default.</summary>
         public WeaponFpViewPose FpViewPoseOr(WeaponClass cls) => fpView != null && fpView.IsSet ? fpView : WeaponFpViewPose.DefaultFor(cls);
@@ -418,6 +430,9 @@ namespace DD.Prototype.Core.Weapons
 
         /// <summary>S-06 animation set (weaponId unless overridden).</summary>
         public string AnimSet => string.IsNullOrEmpty(presentation.animSet) ? weaponId : presentation.animSet;
+
+        /// <summary>WP-069 (grip decision B): the hand's mid-grip socket in the weapon frame.</summary>
+        public Vector3 GripOffset => presentation.gripOffset;
 
         /// <summary>WP-069: the first-person view pose (own, or the class default).</summary>
         public WeaponFpViewPose FpViewPose => presentation.FpViewPoseOr(weaponClass);
