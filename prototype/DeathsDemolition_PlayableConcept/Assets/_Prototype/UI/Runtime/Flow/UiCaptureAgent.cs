@@ -1117,6 +1117,7 @@ namespace DD.Prototype.UI
 
                 yield return new WaitForSecondsRealtime(1.5f);
                 yield return Frame(folder, "hud-idle");
+                yield return ArmsPair(folder, "arms-idle");   // FP arms legibility gate (C-00 25.09): HUD on / off, frozen
                 yield return Crop(folder, "crop-glyph-idle-x4", "WeaponIcon", 12f);   // 12b · B11 (AD R1-B SHOULD-5): the glyph at idle
                 yield return UiCaptureAgent.Coverage(folder, "hud-idle");
 
@@ -1253,6 +1254,7 @@ namespace DD.Prototype.UI
 
                         yield return new WaitForSecondsRealtime(0.3f);
                         yield return Frame(folder, "hud-both-low");
+                yield return ArmsPair(folder, "arms-both-low");   // FP arms legibility gate (C-00 25.09): HUD on / off, frozen
                     }
                 }
 
@@ -1517,6 +1519,7 @@ namespace DD.Prototype.UI
 
                 yield return new WaitForSecondsRealtime(0.2f);
                 yield return Frame(folder, "hud-special-online");
+                yield return ArmsPair(folder, "arms-special");   // FP arms legibility gate (C-00 25.09): HUD on / off, frozen
 
                 // E14 v3 (DEC-097): the reload refilling the ring and Raiju's charge arc, staged on the live snapshot (the
                 // runtime republishes it every frame, so the staged state is re-asserted until the frame is taken).
@@ -1910,6 +1913,119 @@ namespace DD.Prototype.UI
             {
                 yield return new WaitForEndOfFrame();
                 WritePng(Path.Combine(folder, name + ".png"));
+            }
+
+            /// <summary>
+            /// The FP arms legibility gate (C-00 25.09: the HUD draws over the viewmodel's arms): the world frozen
+            /// (timeScale 0), one frame with the HUD (<c>-hud</c>), one without it (<c>-bare</c>: every canvas under the
+            /// RunHudScreen off), one without the HUD and the FP arms (<c>-noarms</c>: bare vs noarms = the arm mask), and
+            /// <c>-elements.jsonl</c> - each visible HUD graphic's frame rect (px, origin bottom-left),
+            /// colour, size and ink edge - so tools/fparms-contrast.py can measure each element against the pixels under it.
+            /// First person only (the arms are the FP viewmodel's).
+            /// </summary>
+            private static IEnumerator ArmsPair(string folder, string name)
+            {
+                RunHudScreen hud = UnityEngine.Object.FindObjectOfType<RunHudScreen>();
+                if (hud == null || DD.Prototype.CameraSystem.CameraModeService.Current != DD.Prototype.CameraSystem.CameraMode.FirstPerson)
+                {
+                    yield break;
+                }
+
+                float timeScale = Time.timeScale;
+                Time.timeScale = 0f;
+                yield return null;
+                yield return null;
+                yield return Frame(folder, name + "-hud");
+                DumpHudElements(Path.Combine(folder, name + "-elements.jsonl"), hud);
+                Canvas[] canvases = hud.GetComponentsInChildren<Canvas>(false);
+                var was = new bool[canvases.Length];
+                for (int i = 0; i < canvases.Length; i++)
+                {
+                    was[i] = canvases[i].enabled;
+                    canvases[i].enabled = false;
+                }
+
+                yield return null;
+                yield return Frame(folder, name + "-bare");
+
+                // The arm mask: the same frame with the FP arms' renderers off (the weapon stays) - bare vs noarms = arm pixels.
+                // FirstPersonArms instantiates its model at the scene root as "FP_Arms" (S-06's file, read only here).
+                GameObject arms = DD.Prototype.Characters.FirstPersonArms.Shown != null ? GameObject.Find("FP_Arms") : null;
+                Renderer[] armRenderers = arms != null ? arms.GetComponentsInChildren<Renderer>(false) : new Renderer[0];
+                var armWas = new bool[armRenderers.Length];
+                for (int i = 0; i < armRenderers.Length; i++)
+                {
+                    armWas[i] = armRenderers[i].enabled;
+                    armRenderers[i].enabled = false;
+                }
+
+                yield return null;
+                yield return Frame(folder, name + "-noarms");
+                for (int i = 0; i < armRenderers.Length; i++)
+                {
+                    armRenderers[i].enabled = armWas[i];
+                }
+
+                Debug.Log("[UiCapture] " + name + ": arms " + (arms != null ? armRenderers.Length + " renderers" : "none shown"));
+                for (int i = 0; i < canvases.Length; i++)
+                {
+                    canvases[i].enabled = was[i];
+                }
+
+                Time.timeScale = timeScale;
+                yield return null;
+            }
+
+            private static void DumpHudElements(string path, RunHudScreen hud)
+            {
+                var ic = System.Globalization.CultureInfo.InvariantCulture;
+                var lines = new System.Text.StringBuilder();
+                var corners = new Vector3[4];
+                foreach (UnityEngine.UI.Graphic g in hud.GetComponentsInChildren<UnityEngine.UI.Graphic>(false))
+                {
+                    if (!g.enabled || g.canvasRenderer.GetInheritedAlpha() * g.color.a <= 0.01f)
+                    {
+                        continue;
+                    }
+
+                    Canvas canvas = g.canvas;
+                    Camera camera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null;
+                    g.rectTransform.GetWorldCorners(corners);
+                    Vector2 a = RectTransformUtility.WorldToScreenPoint(camera, corners[0]);
+                    Vector2 b = RectTransformUtility.WorldToScreenPoint(camera, corners[2]);
+                    var text = g as TMPro.TMP_Text;
+                    bool ink = false;
+                    float size = 0f;
+                    string words = string.Empty;
+                    if (text != null)
+                    {
+                        Material m = text.fontSharedMaterial;
+                        ink = m != null && m.HasProperty("_OutlineWidth") && m.GetFloat("_OutlineWidth") > 0.01f;
+                        size = text.fontSize;
+                        words = text.text ?? string.Empty;
+                    }
+                    else
+                    {
+                        ink = g.GetComponent<UiFx>() != null;
+                    }
+
+                    Color c = g.color;
+                    float alpha = g.canvasRenderer.GetInheritedAlpha() * c.a;
+                    string pathName = g.name;
+                    for (Transform t = g.transform.parent; t != null && t != hud.transform; t = t.parent)
+                    {
+                        pathName = t.name + "/" + pathName;
+                    }
+
+                    lines.Append(string.Format(ic,
+                        "{{\"path\":\"{0}\",\"text\":{1},\"words\":\"{2}\",\"x0\":{3:F1},\"y0\":{4:F1},\"x1\":{5:F1},\"y1\":{6:F1},\"r\":{7:F4},\"g\":{8:F4},\"b\":{9:F4},\"a\":{10:F4},\"size\":{11:F1},\"ink\":{12}}}\n",
+                        pathName.Replace("\"", "'"), text != null ? "true" : "false", words.Replace("\"", "'").Replace("\n", " "),
+                        Mathf.Min(a.x, b.x), Mathf.Min(a.y, b.y), Mathf.Max(a.x, b.x), Mathf.Max(a.y, b.y),
+                        c.r, c.g, c.b, alpha, size, ink ? "true" : "false"));
+                }
+
+                File.WriteAllText(path, lines.ToString());
+                Debug.Log("[UiCapture] hud elements " + path);
             }
 
             /// <summary>
