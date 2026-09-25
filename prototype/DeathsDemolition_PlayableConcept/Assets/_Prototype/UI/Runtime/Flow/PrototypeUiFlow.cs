@@ -281,7 +281,7 @@ namespace DD.Prototype.UI
                 // at rest at t0 - the SCREEN decision comes from the table only, never from the
                 // anti-flicker race (removing motion must not remove the destination or the tip).
                 tip = tipped ? UiLoadingTips.PickForLoadingScreen() : null;
-                curtain.ShowGroup(UiCurtain.DestinationFor(sceneName), subline, tip, intoRun);
+                curtain.ShowGroup(UiCurtain.DestinationFor(sceneName), subline, tip, intoRun, UiCurtain.KeyArtFor(sceneName));
                 groupShownAt = t0;
             }
             if (!fast && !ink && !UiMotion.ReducedMotion)
@@ -382,7 +382,7 @@ namespace DD.Prototype.UI
                             tip = UiLoadingTips.PickForLoadingScreen(); // one tip per screen, never swapped mid-load
                         }
 
-                        curtain.ShowGroup(UiCurtain.DestinationFor(sceneName), subline, tipped ? tip : null, intoRun);
+                        curtain.ShowGroup(UiCurtain.DestinationFor(sceneName), subline, tipped ? tip : null, intoRun, UiCurtain.KeyArtFor(sceneName));
                         groupShownAt = now;
                     }
                 }

@@ -139,6 +139,43 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.Greater(curtain.SealColor.a, 0.95f, "10b-2: aktivasyonda mühür damgalanır (TextPrimary)");
         }
 
+        /// <summary>
+        /// R1-D (N20): the way into the run and the way to the Results show their painted key art over the plates (the
+        /// plates step aside); the menus keep the plates; the ring-only depth shows neither.
+        /// </summary>
+        [UnityTest]
+        [Timeout(120000)]
+        public IEnumerator AnahtarSanat_KosuVeResults_MenulerPlaka_HalkaYalnizHicbiri()
+        {
+            PrototypeUiFlow.FastTransitions = true;
+            yield return BootTanMainMenuye();
+            PrototypeUiFlow.FastTransitions = false;
+            UiCurtain curtain = UiCurtain.Instance;
+            Assert.IsNotNull(curtain);
+            Assert.IsNotNull(UiCurtain.KeyArtFor(PrototypeScenes.Run));
+            Assert.IsNotNull(UiCurtain.KeyArtFor(PrototypeScenes.Results));
+            Assert.IsNull(UiCurtain.KeyArtFor(PrototypeScenes.MainMenu), "the menus keep the Look B plates");
+
+            curtain.ShowGroup(UiCurtain.DestinationFor(PrototypeScenes.Run), string.Empty, null, true, UiCurtain.KeyArtFor(PrototypeScenes.Run));
+            yield return null;
+            Assert.IsTrue(curtain.KeyArtVisible, "the run's key art shows");
+            Assert.IsFalse(curtain.PlateVisible, "the plates step aside under the opaque art");
+
+            curtain.ShowGroup(UiCurtain.DestinationFor(PrototypeScenes.MainMenu), string.Empty, null, false, UiCurtain.KeyArtFor(PrototypeScenes.MainMenu));
+            yield return null;
+            Assert.IsFalse(curtain.KeyArtVisible, "no key art for the menu");
+            Assert.IsTrue(curtain.PlateVisible, "the menu keeps its plate");
+
+            curtain.ShowGroup(UiCurtain.DestinationFor(PrototypeScenes.Results), string.Empty, null, false, UiCurtain.KeyArtFor(PrototypeScenes.Results));
+            yield return null;
+            Assert.IsTrue(curtain.KeyArtVisible, "the Results' key art shows");
+            curtain.ShowRingOnly();
+            yield return null;
+            Assert.IsFalse(curtain.KeyArtVisible, "the ring-only depth shows no art");
+            curtain.Open(true);
+            yield return null;
+        }
+
         [UnityTest]
         [Timeout(120000)]
         public IEnumerator AzHareket_GrupT0daGorunur_AsgariGosterimTutulur()

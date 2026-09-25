@@ -12,11 +12,16 @@ namespace DD.Prototype.Tests.EditMode
     /// </summary>
     public sealed class UpgradeWallpaperTests
     {
-        private const string SourcePath = "Assets/_Prototype/UI/Art/Resources/UI/Wallpapers/upgrade_wallpaper.png";
+        private static readonly string[] SourcePaths =
+        {
+            "Assets/_Prototype/UI/Art/Resources/UI/Wallpapers/upgrade_wallpaper.png",
+            "Assets/_Prototype/UI/Art/Resources/UI/Wallpapers/loading_run.png",       // R1-D (N20) key art
+            "Assets/_Prototype/UI/Art/Resources/UI/Wallpapers/loading_results.png"
+        };
         private const float LuminanceCeiling = 0.0245f;
 
         [Test]
-        public void DuvarKagidi_EnParlakPikseldeBile_SolukMetinOkunur()
+        public void DuvarKagidi_EnParlakPikseldeBile_SolukMetinOkunur([ValueSource(nameof(SourcePaths))] string SourcePath)
         {
             var texture = new Texture2D(2, 2);
             Assert.IsTrue(texture.LoadImage(File.ReadAllBytes(SourcePath)), SourcePath);
@@ -36,7 +41,7 @@ namespace DD.Prototype.Tests.EditMode
 
             Object.DestroyImmediate(texture);
             float ratio = UiContrast.Ratio(UiTokens.Get(UiColor.TextMuted), brightest);
-            Debug.Log("[DD-TEST] r1c.wallpaper maxL=" + max.ToString("F4") + " textMuted=" + ratio.ToString("F2"));
+            Debug.Log("[DD-TEST] r1c.wallpaper " + Path.GetFileName(SourcePath) + " maxL=" + max.ToString("F4") + " textMuted=" + ratio.ToString("F2"));
             Assert.LessOrEqual(max, LuminanceCeiling, "the wallpaper's brightest pixel stays under the ceiling");
             Assert.GreaterOrEqual(ratio, 4.5f, "TextMuted on the brightest pixel");
         }
@@ -49,6 +54,12 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(2560, art.width, "full size, never downsized");
             Assert.AreEqual(1440, art.height);
             Assert.AreEqual(1, art.mipmapCount, "a UI backdrop has no mips");
+            foreach (string key in new[] { UiCurtain.KeyArtFor(DD.Prototype.Core.Boot.PrototypeScenes.Run), UiCurtain.KeyArtFor(DD.Prototype.Core.Boot.PrototypeScenes.Results) })
+            {
+                Texture2D keyArt = Resources.Load<Texture2D>(key);
+                Assert.IsNotNull(keyArt, key);
+                Assert.AreEqual(1, keyArt.mipmapCount, key + ": no mips");
+            }
         }
     }
 }

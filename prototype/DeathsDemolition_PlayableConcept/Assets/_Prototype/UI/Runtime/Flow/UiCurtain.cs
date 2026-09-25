@@ -110,6 +110,17 @@ namespace DD.Prototype.UI
         private bool _cursorWasVisible = true;
         private RawImage _plateFar;
         private RawImage _plateMid;
+
+        /// <summary>
+        /// WP-068 R1-D (N20): the destination's painted key art - the sumi-e series of the round-end wallpaper, clamped to
+        /// L ≤ 0.024 so every word on the screen keeps its contrast. Over the plates, under the ring, labels and tip strip.
+        /// </summary>
+        private RawImage _keyArt;
+        private UiTweenHandle _keyArtPush;
+
+        /// <summary>The slow push-in over a load (AE-class motion, Decor: Reduced Motion holds it still).</summary>
+        public const float KeyArtPushScale = 1.05f;
+        public const float KeyArtPushSeconds = 9f;
         private RectTransform _tipStrip;
         private TMP_Text _tip;
         private RectTransform _stall;
@@ -185,6 +196,23 @@ namespace DD.Prototype.UI
             get { return _plateFar != null && _plateFar.gameObject.activeSelf && _plateFar.texture != null; }
         }
 
+        /// <summary>The destination's key art is on screen (tests, captures).</summary>
+        public bool KeyArtVisible
+        {
+            get { return _keyArt != null && _keyArt.gameObject.activeSelf && _keyArt.texture != null; }
+        }
+
+        /// <summary>
+        /// The key art for a destination: the way into the run (the ronin climbing to the gate) and the way to the Results
+        /// (the ronin kneeling by his planted blade); the menus keep the Look B plates (the world itself).
+        /// </summary>
+        public static string KeyArtFor(string scene)
+        {
+            if (scene == PrototypeScenes.Run) return "UI/Wallpapers/loading_run";
+            if (scene == PrototypeScenes.Results) return "UI/Wallpapers/loading_results";
+            return null;
+        }
+
         public bool MidPlateVisible
         {
             get { return _plateMid != null && _plateMid.gameObject.activeSelf && _plateMid.texture != null; }
@@ -230,6 +258,7 @@ namespace DD.Prototype.UI
             _scrimFoot = UiFactory.NewImage("ScrimFoot", groupRect, UiColor.SurfaceInset, UiSprites.FadeUp);
             UiFactory.Fill((RectTransform)_scrimFoot.transform);
             _scrimFoot.color = WithAlpha(UiTokens.Get(UiColor.SurfaceInset), 1f - (1f - ScrimBottom) / (1f - ScrimTop));
+            _keyArt = Plate("KeyArt", groupRect);   // above the scrims: the art is already text-safe (clamped)
 
             // The ensō device (10b-2, §15.3): the dry ghost circle, the stroke drawn at real
             // progress whose last WetBand is still wet (cream 0.6 under the dry cream, so the band
@@ -708,6 +737,13 @@ namespace DD.Prototype.UI
                 return;
             }
 
+            CoverTexture(image, texture);
+            image.gameObject.SetActive(true);
+        }
+
+        /// <summary>Cover-fit: the texture fills the screen at any aspect without stretching (centre crop).</summary>
+        private void CoverTexture(RawImage image, Texture texture)
+        {
             float screenAspect = _root.rect.width / Mathf.Max(1f, _root.rect.height);
             float textureAspect = (float)texture.width / Mathf.Max(1, texture.height);
             if (screenAspect >= textureAspect)
@@ -720,8 +756,6 @@ namespace DD.Prototype.UI
                 float w = screenAspect / textureAspect;
                 image.uvRect = new Rect((1f - w) * 0.5f, 0f, w, 1f);
             }
-
-            image.gameObject.SetActive(true);
         }
 
         private RectTransform Door(string name, float anchorMinX, float anchorMaxX)
@@ -822,7 +856,7 @@ namespace DD.Prototype.UI
         /// the run (the lanterns lit: where you are going); <paramref name="tip"/> null = no strip
         /// (Boot, Results, the Pause abort). Reduced Motion shows the static RM line instead.
         /// </summary>
-        public void ShowGroup(string destination, string subline, string tip, bool midPlate)
+        public void ShowGroup(string destination, string subline, string tip, bool midPlate, string keyArt = null)
         {
             _eyebrow.text = "LOADING";
             _eyebrowState = "LOADING";
@@ -843,6 +877,7 @@ namespace DD.Prototype.UI
                 _plateMid.gameObject.SetActive(false);
             }
 
+            ShowKeyArt(keyArt);
             SetTip(UiMotion.ReducedMotion ? UiLoadingTips.ReducedMotionLine : tip);
             if (_stall != null)
             {
@@ -850,6 +885,36 @@ namespace DD.Prototype.UI
             }
 
             UiPresets.PaneIn(_group, null, 0f);
+        }
+
+        /// <summary>The key art (or none): cover-fit, over the plates, pushing in slowly while the load runs.</summary>
+        private void ShowKeyArt(string resource)
+        {
+            UiMotion.Kill(_keyArtPush, false);
+            Texture2D art = string.IsNullOrEmpty(resource) ? null : Resources.Load<Texture2D>(resource);
+            if (art == null)
+            {
+                _keyArt.gameObject.SetActive(false);
+                return;
+            }
+
+            _keyArt.texture = art;
+            CoverTexture(_keyArt, art);
+            _keyArt.gameObject.SetActive(true);
+            _plateFar.gameObject.SetActive(false);   // hidden under the opaque art: no fill spent on them
+            _plateMid.gameObject.SetActive(false);
+            var rect = (RectTransform)_keyArt.transform;
+            rect.localScale = Vector3.one;
+            _keyArtPush = UiMotion.ScaleSeconds(rect, 1f, KeyArtPushScale, KeyArtPushSeconds, UiEase.Linear, UiMotionClass.Decor);
+        }
+
+        private void HideKeyArt()
+        {
+            UiMotion.Kill(_keyArtPush, false);
+            if (_keyArt != null)
+            {
+                _keyArt.gameObject.SetActive(false);
+            }
         }
 
         /// <summary>
@@ -874,6 +939,7 @@ namespace DD.Prototype.UI
             _group.gameObject.SetActive(true);
             _plateFar.gameObject.SetActive(false);
             _plateMid.gameObject.SetActive(false);
+            HideKeyArt();
             SetTip(null);
             if (_stall != null)
             {

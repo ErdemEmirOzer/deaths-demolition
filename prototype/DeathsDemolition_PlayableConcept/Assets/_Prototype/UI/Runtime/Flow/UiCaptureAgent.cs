@@ -870,7 +870,7 @@ namespace DD.Prototype.UI
                 // A Results-bound load that stalls (shown directly: a real stall needs a stuck load):
                 // no tip (§15.1), the 10 s notice, then the ≥ 60 s error modal.
                 curtain.Close(true);
-                curtain.ShowGroup(UiCurtain.DestinationFor(PrototypeScenes.Results), string.Empty, null, false);
+                curtain.ShowGroup(UiCurtain.DestinationFor(PrototypeScenes.Results), string.Empty, null, false, UiCurtain.KeyArtFor(PrototypeScenes.Results));
                 curtain.SetProgress(0.45f);
                 curtain.ShowStalled();
                 yield return new WaitForSecondsRealtime(0.6f);
