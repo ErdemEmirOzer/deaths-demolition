@@ -42,5 +42,47 @@ namespace DD.Prototype.Feedback
             s_scratch.Clear();
             return pool;
         }
+
+        /// <summary>
+        /// WP-069 (S-02, CI cb78bfb4): a pool short of its capacity — instances destroyed behind its back, e.g. a muzzle
+        /// flash parented to the weapon that died with its scene — is topped up here and only the new instances are woken
+        /// (the free list hands the newest out first), so the hit path never instantiates. Configure / scene-load time; a
+        /// full pool costs one pass and allocates nothing. Returns the instances added.
+        /// </summary>
+        public static int Refill<T>(PrototypePool<T> pool) where T : PooledBehaviour
+        {
+            if (pool == null)
+            {
+                return 0;
+            }
+
+            pool.PurgeDestroyed();
+            int missing = pool.Capacity - pool.CountTotal;
+            if (missing <= 0)
+            {
+                return 0;
+            }
+
+            pool.Prewarm(pool.Capacity);
+            s_scratch.Clear();
+            for (int i = 0; i < missing; i++)
+            {
+                T instance = pool.Get(Vector3.zero, Quaternion.identity);
+                if (instance == null)
+                {
+                    break;
+                }
+
+                s_scratch.Add(instance);
+            }
+
+            for (int i = 0; i < s_scratch.Count; i++)
+            {
+                pool.Release((T)s_scratch[i]);
+            }
+
+            s_scratch.Clear();
+            return missing;
+        }
     }
 }

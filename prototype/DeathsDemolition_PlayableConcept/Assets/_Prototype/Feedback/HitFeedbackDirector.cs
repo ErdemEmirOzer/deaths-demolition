@@ -280,14 +280,33 @@ namespace DD.Prototype.Feedback
             // WP-019: the player-side layer (vignette + shake) and the armour plate hook (WP-017).
             DamageVignetteLayer.EnsureExists();
             DD.Prototype.Characters.ArmorVisualBinder.AnyBroken += OnArmorPlateBroken;
+            UnityEngine.SceneManagement.SceneManager.activeSceneChanged += OnActiveSceneChanged;
         }
 
         protected override void OnDisable()
         {
             FeelRuntime.Changed -= OnFeelChanged;
             DD.Prototype.Characters.ArmorVisualBinder.AnyBroken -= OnArmorPlateBroken;
+            UnityEngine.SceneManagement.SceneManager.activeSceneChanged -= OnActiveSceneChanged;
             FeelEventRouter.Clear();
             base.OnDisable();
+        }
+
+        /// <summary>WP-069 readout: pooled effects the last scene change put back (0 when every pool was whole).</summary>
+        public int LastSceneRefill { get; private set; }
+
+        /// <summary>
+        /// WP-069 (S-02, CI cb78bfb4): every feedback pool back to capacity on a scene change. An effect parented to the
+        /// weapon muzzle dies with the rig, so its pool came back short and grew again inside a hit (the RegionalArmor hit
+        /// window after the CI sequence: 42 / 48 flipbooks, +4 Instantiate). FeedbackPoolWarmer.Refill wakes only the new ones.
+        /// </summary>
+        private void OnActiveSceneChanged(UnityEngine.SceneManagement.Scene from, UnityEngine.SceneManagement.Scene to)
+        {
+            LastSceneRefill = _vfx.Refill() + FeedbackPoolWarmer.Refill(_impactPool) + FeedbackPoolWarmer.Refill(_bloodPool) +
+                              FeedbackPoolWarmer.Refill(_armorHitPool) + FeedbackPoolWarmer.Refill(_armorBreakPool) + FeedbackPoolWarmer.Refill(_deathPool) +
+                              FeedbackPoolWarmer.Refill(_explosionPool) + FeedbackPoolWarmer.Refill(_tracerPool) + FeedbackPoolWarmer.Refill(_muzzlePool) +
+                              FeedbackPoolWarmer.Refill(_linkPool) + FeedbackPoolWarmer.Refill(_shockRingPool) + FeedbackPoolWarmer.Refill(_sealGlyphPool);
+            if (LastSceneRefill > 0) Debug.Log("[Feedback] scene change: " + LastSceneRefill + " pooled effects refilled (destroyed behind their pools' backs)");
         }
 
         /// <summary>WP-017 plate hook: the fragments burst at the plate's anchor (the hit path draws the sheet + splinter).</summary>

@@ -54,6 +54,7 @@ namespace DD.Prototype.Core.Pooling
 
         public void Prewarm(int count)
         {
+            PurgeDestroyed();
             int target = Mathf.Min(count, _capacity);
             while (CountTotal < target)
             {
@@ -66,6 +67,47 @@ namespace DD.Prototype.Core.Pooling
                 instance.gameObject.SetActive(false);
                 _available.Push(instance);
             }
+        }
+
+        /// <summary>
+        /// WP-069 (CI cb78bfb4): drop entries destroyed behind the pool's back — an instance parented to something that died
+        /// with its scene (a muzzle flash on the weapon), a test's cleanup — so <see cref="CountTotal"/> counts live
+        /// instances and <see cref="Prewarm"/> can refill. Load-time call; allocates only when the free list holds a dead entry.
+        /// </summary>
+        public int PurgeDestroyed()
+        {
+            int removed = 0;
+            for (int i = _spawned.Count - 1; i >= 0; i--)
+            {
+                if (_spawned[i] == null)
+                {
+                    _spawned.RemoveAt(i);
+                    removed++;
+                }
+            }
+
+            bool deadFree = false;
+            foreach (T candidate in _available)
+            {
+                if (candidate == null)
+                {
+                    deadFree = true;
+                    break;
+                }
+            }
+
+            if (deadFree)
+            {
+                T[] entries = _available.ToArray();   // top first
+                _available.Clear();
+                for (int i = entries.Length - 1; i >= 0; i--)
+                {
+                    if (entries[i] != null) _available.Push(entries[i]);
+                    else removed++;
+                }
+            }
+
+            return removed;
         }
 
         public T Get(Vector3 position, Quaternion rotation)

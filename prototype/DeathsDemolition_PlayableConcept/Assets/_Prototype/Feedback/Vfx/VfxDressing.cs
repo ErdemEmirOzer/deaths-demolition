@@ -181,6 +181,10 @@ namespace DD.Prototype.Feedback.Vfx
                     2, 2, PoolExhaustedPolicy.RecycleOldest));
                 ImpactSystem.Ensure(this);
             }
+            else
+            {
+                Refill();   // WP-069 (CI cb78bfb4): a pool that lost instances behind its back is topped up here, not in a hit
+            }
 
             if (_binder == null)
             {
@@ -203,6 +207,20 @@ namespace DD.Prototype.Feedback.Vfx
 
             _blood.Configure(templateRoot, _flipbooks);
             _ready = true;
+        }
+
+        /// <summary>WP-069 (CI cb78bfb4): every dressing pool back to capacity at configure / scene load (FeedbackPoolWarmer.Refill). Returns the instances added.</summary>
+        public int Refill()
+        {
+            if (_flipbooks == null)
+            {
+                return 0;
+            }
+
+            return FeedbackPoolWarmer.Refill(_flipbooks) + FeedbackPoolWarmer.Refill(_decals) + FeedbackPoolWarmer.Refill(_fragments) +
+                   FeedbackPoolWarmer.Refill(_smoke) + FeedbackPoolWarmer.Refill(_sparks) + FeedbackPoolWarmer.Refill(_leaves) +
+                   FeedbackPoolWarmer.Refill(_paper) + FeedbackPoolWarmer.Refill(_straw) + FeedbackPoolWarmer.Refill(_casings) +
+                   FeedbackPoolWarmer.Refill(_barrelCards);
         }
 
         /// <summary>Per frame from the director: blood far-LOD absorb + merged mesh rebuild, delayed cards, barrel heat.</summary>
