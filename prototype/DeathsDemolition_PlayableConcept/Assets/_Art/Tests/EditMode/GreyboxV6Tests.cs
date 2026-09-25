@@ -324,8 +324,7 @@ namespace DD.Art.Tests.EditMode
             // B5b-4 · kit kairō (K3 W / E, K6) rails off, each bay's roof fading; R6 as a karamon.
             Transform kairo = dress.transform.Find(WorldV5Dress.KairoGroupName);
             Assert.IsNotNull(kairo, "kairō");
-            int bays = 0, expectedBays = 0;
-            foreach ((string id, Vector2 a, Vector2 b) in WorldV5Dress.KitKairo) expectedBays += Mathf.Max(1, Mathf.RoundToInt(Vector2.Distance(a, b) / WorldV5Dress.KairoBay));
+            int bays = 0, expectedBays = WorldV5Dress.BayCount();
             foreach (Transform bay in kairo)
             {
                 bays++;
@@ -337,6 +336,13 @@ namespace DD.Art.Tests.EditMode
 
             Assert.AreEqual(expectedBays, bays, "kairō bölmesi");
             Assert.IsNotNull(dress.transform.Find("Chumon_Karamon"), "chūmon");
+
+            // B5b-5 · R2–R5 as kit buildings (roofs fading), the garden trunks as v005 trees; no greybox tree / room / corridor left.
+            Transform buildings = dress.transform.Find(WorldV5Dress.BuildingGroupName);
+            Assert.AreEqual(WorldV5Dress.KitBuildings.Length, buildings.childCount, "kit yapıları");
+            foreach (Transform b in buildings)
+                if (b.Find(ArtLibraryPrefabBuilder.RoofName + "/" + WorldV5Dress.RoofOccluderName) == null) fails.Add("çatı soldurma yok: " + b.name);
+            Assert.Greater(dress.transform.Find(WorldV5Dress.GardenGroupName).childCount, 20, "bahçe ağaçları");
 
             // B8 · the plaza's planar reflection at its surface; the mirror maps y → 2h − y; tiers off / 256 / 1024, characters at Cinematic only.
             PlanarReflection planar = plaza.GetComponent<PlanarReflection>();

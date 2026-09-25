@@ -221,7 +221,8 @@ namespace DD.Art.Pipeline.EditorTools
         private static readonly Dictionary<string, GameObject> s_prefabs = new Dictionary<string, GameObject>(StringComparer.Ordinal);
 
         /// <summary>Greybox pieces the kit replaces (name prefixes under the greybox root).</summary>
-        public static readonly string[] ReplacedPrefixes = { "Hall_Plinth", "Hall_Stair", "R1_MainHall_", "RingWall_", "Court_", "Karamon_", "Lantern_", "Planter_", "Vista", "K3_", "K6_", "R6_Chumon_" };
+        public static readonly string[] ReplacedPrefixes = { "Hall_Plinth", "Hall_Stair", "R1_MainHall_", "RingWall_", "Court_", "Karamon_", "Lantern_", "Planter_", "Vista", "K3_", "K6_", "R6_Chumon_",
+                                                           "K1_", "K2_", "K4_", "K5_", "R2_", "R3_", "R4_", "R5_", "Tree_", "R7_Sakura_" };
 
         /// <summary>
         /// B5b-4 · The straight open kairō dressed with AP-023 bays (V01, rails off: the greybox corridors are entered from the side —
@@ -229,12 +230,26 @@ namespace DD.Art.Pipeline.EditorTools
         /// floor is walkable at 0.25 (the greybox deck), 4.74 m wide, posts every 2.4 m at ±2.1–2.37 (clear 4.2 ≥ the greybox 4.0).
         /// K2 / K4 (angled joints) and K5 / K1 stay greybox.
         /// </summary>
-        public static readonly (string id, Vector2 a, Vector2 b)[] KitKairo =
+        public static readonly (string id, Vector2[] path, bool closed)[] KitKairo =
         {
-            ("K3_CloisterWest", new Vector2(-22f, 22f), new Vector2(-22f, 36f)),
-            ("K3_CloisterEast", new Vector2(22f, 22f), new Vector2(22f, 36f)),
-            ("K6_RearKairo", new Vector2(-22f, 52.5f), new Vector2(22f, 52.5f)),
+            ("K3_CloisterWest", new[] { new Vector2(-22f, 22f), new Vector2(-22f, 36f) }, false),
+            ("K3_CloisterEast", new[] { new Vector2(22f, 22f), new Vector2(22f, 36f) }, false),
+            ("K6_RearKairo", new[] { new Vector2(-22f, 52.5f), new Vector2(22f, 52.5f) }, false),
+            // B5b-5: K1 closed (V02; its doors as half-open V03 bays), the angled links and the shore walk open (V01, rails off).
+            ("K1_WestKairo", new[] { new Vector2(-33f, -16f), new Vector2(-33f, 20f) }, true),
+            ("K2_NorthWestLink", new[] { new Vector2(-33f, 20f), new Vector2(-28f, 27f), new Vector2(-26f, 30f) }, false),
+            ("K4_EastKairo", new[] { new Vector2(26f, 30f), new Vector2(30f, 22f), new Vector2(44f, 22f), new Vector2(50f, 14f) }, false),
+            ("K5_SouthShore", new[] { new Vector2(-22f, -46f), new Vector2(0f, -46f) }, false),
         };
+
+        /// <summary>Bays per corridor: each segment's length over 2.4 m, rounded (≥ 1).</summary>
+        public static int BayCount()
+        {
+            int n = 0;
+            foreach ((string id, Vector2[] path, bool closed) in KitKairo)
+                for (int i = 0; i + 1 < path.Length; i++) n += Mathf.Max(1, Mathf.RoundToInt(Vector2.Distance(path[i], path[i + 1]) / KairoBay));
+            return n;
+        }
 
         public const float KairoBay = 2.4f;
         public const string KairoGroupName = "Kairo";
@@ -255,6 +270,7 @@ namespace DD.Art.Pipeline.EditorTools
             var dress = new GameObject(RootName).transform;
             dress.SetParent(worldRoot, false);
 
+            List<(Vector3 position, float radius, bool greatSakura)> garden = GardenSpots(greybox);
             foreach (Transform t in new List<Transform>(Children(greybox)))
                 foreach (string prefix in ReplacedPrefixes)
                     if (t.name.StartsWith(prefix, StringComparison.Ordinal)) { UnityEngine.Object.DestroyImmediate(t.gameObject); report.RemovedBoxes++; break; }
@@ -267,6 +283,8 @@ namespace DD.Art.Pipeline.EditorTools
             Yagura(dress);
             Kairo(dress);
             Chumon(dress);
+            Buildings(dress);
+            GardenTrees(dress, garden);
             Vista(dress);
             ArtSurfaceImporter.BuildHorizonPlates(dress.gameObject);   // the AP-019 horizon rings (contract radii) …
             WorldV5Sky.Build(dress);                                    // … in sky v2 (WP-075 C3): v2 sheets, cloud planes, landmarks
@@ -510,21 +528,42 @@ namespace DD.Art.Pipeline.EditorTools
         {
             var group = new GameObject(KairoGroupName).transform;
             group.SetParent(dress, false);
-            foreach ((string id, Vector2 a, Vector2 b) in KitKairo)
+            foreach ((string id, Vector2[] path, bool closed) in KitKairo)
             {
-                float len = Vector2.Distance(a, b);
-                int n = Mathf.Max(1, Mathf.RoundToInt(len / KairoBay));
-                float s = len / (n * KairoBay);
-                Vector2 d = (b - a) / len;
-                float deg = Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg;
-                for (int i = 0; i < n; i++)
+                int index = 0;
+                for (int seg = 0; seg + 1 < path.Length; seg++)
                 {
-                    Vector2 c = a + d * ((i + 0.5f) * len / n);
-                    GameObject bay = Place(group, "kairo_bay", 1, Mz(c.x, c.y, 0f, deg) * Matrix4x4.Scale(new Vector3(s, 1f, 1f)), Vector3.zero, "structure");
-                    bay.name = id + "_Bay_" + i.ToString("00");
-                    RailsOff(bay);
-                    Transform roof = bay.transform.Find(ArtLibraryPrefabBuilder.RoofName);
-                    if (roof != null) RoofOccluder(bay.transform, roof);
+                    Vector2 a = path[seg], b = path[seg + 1];
+                    float len = Vector2.Distance(a, b);
+                    int n = Mathf.Max(1, Mathf.RoundToInt(len / KairoBay));
+                    float s = len / (n * KairoBay);
+                    Vector2 d = (b - a) / len;
+                    float deg = Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg;
+                    for (int i = 0; i < n; i++)
+                    {
+                        Vector2 c = a + d * ((i + 0.5f) * len / n);
+                        int variation = 1;
+                        float yaw = deg;
+                        if (closed)
+                        {
+                            // Closed bays (V02) except where a K1 door opens a side: V03 (wall −Y, open +Y) faces its open side at the door.
+                            variation = 2;
+                            float half = len / n * 0.5f;
+                            foreach ((char side, float z, float width) in GreyboxV6Builder.K1Doors)
+                            {
+                                float overlap = Mathf.Min(c.y + half, z + width * 0.5f) - Mathf.Max(c.y - half, z - width * 0.5f);
+                                if (overlap < 1f) continue;
+                                variation = 3;
+                                yaw = side == 'W' ? deg : deg + 180f;   // +Y is west at 90°, east at 270°
+                            }
+                        }
+
+                        GameObject bay = Place(group, "kairo_bay", variation, Mz(c.x, c.y, 0f, yaw) * Matrix4x4.Scale(new Vector3(s, 1f, 1f)), Vector3.zero, "structure");
+                        bay.name = id + "_Bay_" + (index++).ToString("00");
+                        RailsOff(bay);
+                        Transform roof = bay.transform.Find(ArtLibraryPrefabBuilder.RoofName);
+                        if (roof != null) RoofOccluder(bay.transform, roof);
+                    }
                 }
             }
         }
@@ -540,6 +579,64 @@ namespace DD.Art.Pipeline.EditorTools
             {
                 Bounds b = c.bounds;
                 if (b.min.y - y > 0.2f && b.max.y - y > 0.9f && b.max.y - y < 1.5f) c.gameObject.SetActive(false);
+            }
+        }
+
+        /// <summary>
+        /// B5b-5 · R2–R5 as the kit's buildings, which P-05 made to the greybox rooms: the pavilion (openings W / S / E on R2's doors), the
+        /// kura (10 × 8, doors E / W), the tea house (raised 0.45, entries N / E) and the azumaya (open). Their roofs fade top-down.
+        /// </summary>
+        public static readonly (string id, string family, Vector2 at, float yaw)[] KitBuildings =
+        {
+            ("R2_EastPavilion", "pavilion", new Vector2(35f, 28f), 0f),
+            ("R3_Kura", "kura", new Vector2(-39f, 40f), 0f),
+            ("R4_TeaHouse", "teahouse", new Vector2(-32f, -36f), 0f),
+            ("R5_Azumaya", "azumaya", new Vector2(33f, -33f), 0f),
+        };
+
+        public const string BuildingGroupName = "Buildings", GardenGroupName = "GardenTrees";
+
+        private static void Buildings(Transform dress)
+        {
+            var group = new GameObject(BuildingGroupName).transform;
+            group.SetParent(dress, false);
+            foreach ((string id, string family, Vector2 at, float yaw) in KitBuildings)
+            {
+                GameObject b = Place(group, family, 1, Mz(at.x, at.y, 0f, yaw), Vector3.zero, "structure");
+                b.name = id;
+                Transform roof = b.transform.Find(ArtLibraryPrefabBuilder.RoofName);
+                if (roof != null) RoofOccluder(b.transform, roof);
+            }
+        }
+
+        /// <summary>The greybox garden's trunks (Tree_*: sakura / maple garden, the NE pines) and the R7 court's six-trunk island.</summary>
+        private static List<(Vector3 position, float radius, bool greatSakura)> GardenSpots(Transform greybox)
+        {
+            var spots = new List<(Vector3, float, bool)>();
+            bool sakura = false;
+            foreach (Transform t in Children(greybox))
+            {
+                if (t.name.StartsWith("Tree_", StringComparison.Ordinal)) spots.Add((t.position, t.localScale.x * 0.5f, false));
+                else if (t.name.StartsWith("R7_Sakura_", StringComparison.Ordinal) && !sakura) { spots.Add((new Vector3(36f, 0f, 1f), 2.6f, true)); sakura = true; }
+            }
+
+            return spots;
+        }
+
+        /// <summary>
+        /// B5b-5 · The garden trunks as v005 trees: the NE corner (z &gt; 34) black pine, the rest sakura (60 %) and momiji; one great
+        /// sakura (V01, 8.9 m crown) on the R7 island. Trunk colliders replace the greybox cylinders.
+        /// </summary>
+        private static void GardenTrees(Transform dress, List<(Vector3 position, float radius, bool greatSakura)> spots)
+        {
+            var group = new GameObject(GardenGroupName).transform;
+            group.SetParent(dress, false);
+            var rng = new System.Random(745);
+            foreach ((Vector3 p, float radius, bool great) in spots)
+            {
+                double pick = rng.NextDouble(), yaw = rng.NextDouble() * 360.0, s = 0.9 + rng.NextDouble() * 0.25;
+                (string family, int v) = great ? ("sakura_v2", 1) : p.z > 34f ? ("black_pine", pick < 0.5 ? 1 : 4) : pick < 0.6 ? ("sakura_v2", pick < 0.3 ? 2 : 3) : ("momiji", 1);
+                Place(group, family, v, Mz(p.x, p.z, 0f, (float)yaw) * Matrix4x4.Scale(Vector3.one * (great ? 1f : (float)s)), Vector3.zero, "vegetation");
             }
         }
 

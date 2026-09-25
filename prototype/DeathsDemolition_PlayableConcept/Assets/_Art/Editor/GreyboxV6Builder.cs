@@ -79,12 +79,14 @@ namespace DD.Art.Pipeline.EditorTools
             // on the AP-023 hall's wall lines (x ±16.5, z 39…49) and open bays (front x −9 / 0 / 9 at 2.6 m clear, E/W z 44 at 2.3 m).
             new Room { Id = "R1_MainHall", Acoustic = "Hall", X0 = -16.5f, X1 = 16.5f, Z0 = 39f, Z1 = 49f, Floor = PlinthHeight, Height = 6.5f,
                 Doors = new[] { new Door('S', -9f, 2.6f), new Door('S', 0f, 2.6f), new Door('S', 9f, 2.6f), new Door('E', 44f, 2.3f), new Door('W', 44f, 2.3f) } },
-            new Room { Id = "R2_EastPavilion", Acoustic = "Hall", X0 = 30f, X1 = 40f, Z0 = 24f, Z1 = 32f, Height = 3.8f,
-                Doors = new[] { new Door('W', 28f, 2.4f), new Door('S', 35f, 2.4f), new Door('E', 28f, 2.4f) } },
-            new Room { Id = "R3_Kura", Acoustic = "Hall", X0 = -44f, X1 = -34f, Z0 = 36f, Z1 = 44f, Height = 4f,
-                Doors = new[] { new Door('E', 40f, 2.2f), new Door('S', -39f, 2.2f) } },
-            new Room { Id = "R4_TeaHouse", Acoustic = "Hall", X0 = -36f, X1 = -28f, Z0 = -40f, Z1 = -32f, Height = 3.6f,
-                Doors = new[] { new Door('N', -32f, 2.2f), new Door('E', -36f, 2.2f) } },
+            // WP-074 B5b-5: R2–R4 on the AP-023 buildings' wall lines and openings (pavilion 8.4 × 6.4, W / S / E; kura 10 × 8 with its
+            // two end doors E / W — the greybox S door moves to W; tea house 6 × 6 raised 0.45, N / E entries 1.8 m off its axes).
+            new Room { Id = "R2_EastPavilion", Acoustic = "Hall", X0 = 30.8f, X1 = 39.2f, Z0 = 24.8f, Z1 = 31.2f, Floor = 0.25f, Height = 3.8f,
+                Doors = new[] { new Door('W', 28f, 2.46f), new Door('S', 35f, 2.76f), new Door('E', 28f, 2.46f) } },
+            new Room { Id = "R3_Kura", Acoustic = "Hall", X0 = -44f, X1 = -34f, Z0 = 36f, Z1 = 44f, Floor = 0.3f, Height = 4f,
+                Doors = new[] { new Door('E', 40f, 2.0f), new Door('W', 40f, 2.0f) } },
+            new Room { Id = "R4_TeaHouse", Acoustic = "Hall", X0 = -35f, X1 = -29f, Z0 = -39f, Z1 = -33f, Floor = 0.45f, Height = 3.6f,
+                Doors = new[] { new Door('N', -33.8f, 2.16f), new Door('E', -37.8f, 2.16f) } },
             new Room { Id = "R5_Azumaya", Acoustic = "Corridor", X0 = 30f, X1 = 36f, Z0 = -36f, Z1 = -30f, Height = 3.2f, Walls = false, RoofOnly = true },
             new Room { Id = "R6_Chumon", Acoustic = "Corridor", X0 = -4f, X1 = 4f, Z0 = 18f, Z1 = 23f, Height = 5f,
                 Doors = new[] { new Door('S', 0f, 5f), new Door('N', 0f, 5f), new Door('E', 20.5f, 2f), new Door('W', 20.5f, 2f) } },
