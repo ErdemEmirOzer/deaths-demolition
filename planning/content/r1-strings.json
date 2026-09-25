@@ -1930,5 +1930,89 @@
   "selection.not_in_build": {
     "en": "Not in this build.",
     "tr": "Bu sürümde yok."
+  },
+  "tree.flag.offer": {
+    "en": "OFFER",
+    "tr": "TEKLİF"
+  },
+  "tree.lock.profile": {
+    "en": "Earn it on the PATH first.",
+    "tr": "Önce YOL'da kazan."
+  },
+  "tree.lock.weapon": {
+    "en": "Not a branch of the weapon you carry.",
+    "tr": "Taşıdığın silahın dalı değil."
+  },
+  "tree.lock.special": {
+    "en": "Opens when you pick up a Special this run.",
+    "tr": "Bu koşuda bir Special aldığında açılır."
+  },
+  "tree.lock.pending": {
+    "en": "Not in this build yet.",
+    "tr": "Bu sürümde henüz yok."
+  },
+  "tree.picks_used": {
+    "en": "This round's picks are used.",
+    "tr": "Bu round'un seçimleri kullanıldı."
+  },
+  "tree.refuse.gold": {
+    "en": "Not enough gold for that yet. Nothing was taken.",
+    "tr": "Bunun için altın henüz yetmiyor. Hiçbir şey alınmadı."
+  },
+  "tree.refuse.limit": {
+    "en": "No more of that this round. Nothing was taken.",
+    "tr": "Bu round bundan fazlası yok. Hiçbir şey alınmadı."
+  },
+  "tree.refuse.not_offered": {
+    "en": "That is not for sale in this offer. Nothing was taken.",
+    "tr": "Bu teklifte satılmıyor. Hiçbir şey alınmadı."
+  },
+  "tree.refuse.nothing_to_undo": {
+    "en": "There is nothing to undo.",
+    "tr": "Geri alınacak bir şey yok."
+  },
+  "tree.refuse.undo_closed": {
+    "en": "Undo has closed for this offer.",
+    "tr": "Bu teklif için geri alma kapandı."
+  },
+  "tree.refuse.reforge_used": {
+    "en": "The run's one Reforge is spent.",
+    "tr": "Koşunun tek Yeniden Dövme hakkı kullanıldı."
+  },
+  "tree.refuse.reforge_early": {
+    "en": "Reforge opens from round 5.",
+    "tr": "Yeniden Dövme 5. round'dan itibaren açılır."
+  },
+  "tree.refuse.no_run": {
+    "en": "No run is in progress.",
+    "tr": "Süren bir koşu yok."
+  },
+  "pause.run.title": {
+    "en": "RUN SO FAR",
+    "tr": "ŞU ANA KADAR"
+  },
+  "pause.run.round": {
+    "en": "ROUND",
+    "tr": "ROUND"
+  },
+  "pause.run.time": {
+    "en": "TIME",
+    "tr": "SÜRE"
+  },
+  "pause.run.kills": {
+    "en": "KILLS",
+    "tr": "ÖLDÜRME"
+  },
+  "pause.run.gold": {
+    "en": "GOLD",
+    "tr": "ALTIN"
+  },
+  "pause.run.upgrades": {
+    "en": "UPGRADES",
+    "tr": "GELİŞTİRME"
+  },
+  "pause.run.build_none": {
+    "en": "no upgrades",
+    "tr": "geliştirme yok"
   }
 }

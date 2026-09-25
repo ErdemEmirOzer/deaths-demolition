@@ -1,0 +1,339 @@
+using System.Collections;
+using System.Collections.Generic;
+using System.Reflection;
+using DD.Prototype.Core.Boot;
+using DD.Prototype.Core.Config;
+using DD.Prototype.Core.DebugTools;
+using DD.Prototype.PlayerSystem;
+using DD.Prototype.Rounds;
+using DD.Prototype.Spawn;
+using DD.Prototype.UI;
+using NUnit.Framework;
+using TMPro;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.TestTools;
+
+namespace DD.Prototype.Tests.PlayMode
+{
+    /// <summary>
+    /// WP-068 R1-C · the in-run tree on the round-end shop (N14) with S-04's node cards (WP-077 K10a). The tree takes the
+    /// card row's place: every node the offer sells carries its OFFER mark, BUY buys it through its card, UNDO LAST in
+    /// the footer refunds it in full, the Hearth is stoked directly, a pin draws its path, the lanes switch, and the
+    /// grid and the detail card fit their host at 1080p and at the Mac setting (UI 1.2 × text 1.25).
+    /// </summary>
+    public sealed class RunTreeScreenTests
+    {
+        private static readonly Vector3[] s_a = new Vector3[4];
+        private static readonly Vector3[] s_b = new Vector3[4];
+        private readonly List<string> _errors = new List<string>();
+
+        [SetUp]
+        public void SetUp()
+        {
+            _errors.Clear();
+            RunFlowClock.ClearHolds();
+            UiNavigation.Model.Clear();
+            Application.logMessageReceived += Collect;
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            Application.logMessageReceived -= Collect;
+            LogAssert.ignoreFailingMessages = false;
+            UiSettings.TextScale = 1f;
+            UiSettings.UiScale = 1f;
+            RunFlowClock.ClearHolds();
+            if (RunDirector.Instance != null && RunDirector.Instance.Shop != null)
+            {
+                RunDirector.Instance.Shop.NodeCardsOverride = null;
+            }
+
+            if (EnemySpawnDirector.Instance != null)
+            {
+                Spawning(true);
+            }
+
+            if (PlayerRegistry.Primary != null && PlayerRegistry.Primary.Health != null)
+            {
+                PlayerRegistry.Primary.Health.DiagnosisInvulnerable = false;
+            }
+
+            Assert.AreEqual(0, _errors.Count, "UI / run errors while the tree was open:\n" + string.Join("\n", _errors));
+        }
+
+        private void Collect(string message, string trace, LogType type)
+        {
+            if (type != LogType.Error && type != LogType.Exception && type != LogType.Assert) return;
+            if (message.Contains("[UI]") || message.Contains("[Run]") || message.Contains("[Gold]") ||
+                message.Contains("NullReferenceException") || message.Contains("MissingReferenceException") ||
+                message.Contains("IndexOutOfRangeException") || message.Contains("ArgumentException"))
+            {
+                _errors.Add(type + ": " + message);
+            }
+        }
+
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator Agac_TeklifIsaretli_Al_GeriAl_Ocak_Pin_Serit()
+        {
+            yield return OpenTree();
+            RunDirector run = RunDirector.Instance;
+            RoundUpgradeShop shop = run.Shop;
+            UpgradeScreen screen = Object.FindObjectOfType<UpgradeScreen>();
+            UiRunTreePanel tree = screen.GetComponentInChildren<UiRunTreePanel>(false);
+            Assert.IsNotNull(tree, "the tree replaces the card row while node cards are on");
+            foreach (UiButton b in screen.GetComponentsInChildren<UiButton>(false))
+            {
+                Assert.IsFalse(b.gameObject.name.StartsWith("Card."), "no classic card is shown in tree mode: " + b.gameObject.name);
+            }
+
+            RunTreeSnapshot snap = tree.Snapshot;
+            Assert.Greater(snap.Count, 0, "the snapshot has the run's tree");
+            Assert.Greater(shop.Cards.Count, 0, "the offer has node cards");
+            Assert.IsNotNull(tree.NodeButton(0, 0) ?? tree.NodeButton(1, 0) ?? tree.NodeButton(2, 0) ?? tree.NodeButton(3, 0), "tier 1 of the weapon lane is drawn");
+            Assert.Greater(tree.Edges.Count, 0, "the weapon lane draws its edges");
+
+            // Every node on screen carries a word (PD §5.1), and every node the offer sells its OFFER mark.
+            for (int r = 0; r < UiRunTreePanel.Rows; r++)
+            {
+                for (int t = 0; t < UiRunTreePanel.Tiers; t++)
+                {
+                    UiButton node = tree.NodeButton(r, t);
+                    if (node != null)
+                    {
+                        TMP_Text state = node.transform.Find("State").GetComponent<TMP_Text>();
+                        Assert.IsFalse(string.IsNullOrEmpty(state.text), "node " + r + "," + t + " has a state word");
+                    }
+                }
+            }
+
+            int bought = -1;
+            for (int c = 0; c < shop.Cards.Count; c++)
+            {
+                UpgradeCardOffer card = shop.Cards[c];
+                if (!card.IsNode || card.NodeIndex < 0)
+                {
+                    continue;
+                }
+
+                tree.FocusNode(card.NodeIndex);
+                Assert.IsTrue(tree.OfferShownOn(card.NodeIndex), snap.Nodes[card.NodeIndex].NodeId + " is marked OFFER");
+                if (bought < 0 && snap.Nodes[card.NodeIndex].Status == RunTreeNodeStatus.Available)
+                {
+                    bought = card.NodeIndex;
+                }
+            }
+
+            // BUY through the card; the seal reads OWNED; UNDO LAST in the footer gives the gold back in full.
+            Assert.GreaterOrEqual(bought, 0, "some offered node is affordable with 5000 gold");
+            tree.FocusNode(bought);
+            Assert.IsTrue(tree.BuyButton.IsInteractable(), "BUY is live on an offered, affordable node");
+            int gold = shop.Gold;
+            tree.OnBuy();
+            yield return null;
+            Assert.Less(shop.Gold, gold, "BUY spent gold");
+            RunTreeNodeStatus after = tree.Snapshot.Nodes[bought].Status;
+            Assert.IsTrue(after == RunTreeNodeStatus.Purchased || after == RunTreeNodeStatus.MaxTier || tree.Snapshot.Nodes[bought].OwnedTier > 0,
+                "the bought node is owned (" + after + ")");
+            UiButton undo = Named(screen, "Undo");
+            Assert.IsTrue(undo.gameObject.activeInHierarchy, "UNDO LAST shows after a purchase");
+            StringAssert.Contains("+", undo.LabelText.text, "UNDO names its refund");
+            Click(undo);
+            yield return null;
+            Assert.AreEqual(gold, shop.Gold, "UNDO refunds in full");
+            Assert.IsFalse(undo.gameObject.activeInHierarchy, "one step of undo");
+
+            // The Hearth is stoked directly, outside the cards, once a weapon-lane keystone opens it (WP-077 K3);
+            // until then STOKE is dead and the seal says what it needs.
+            int hearth = tree.Snapshot.HearthIndex;
+            if (hearth >= 0)
+            {
+                tree.FocusNode(hearth);
+                int stacks = tree.Snapshot.HearthStacks;
+                StringAssert.Contains("HEARTH", tree.BuyButton.LabelText.text.ToUpperInvariant(), "BUY reads STOKE THE HEARTH");
+                RunTreeNodeStatus status = tree.Snapshot.Nodes[hearth].Status;
+                if (status == RunTreeNodeStatus.Available)
+                {
+                    tree.OnBuy();
+                    yield return null;
+                    Assert.AreEqual(stacks + 1, tree.Snapshot.HearthStacks, "the Hearth took one stoke");
+                }
+                else
+                {
+                    Assert.IsFalse(tree.BuyButton.IsInteractable(), "STOKE waits for the Hearth's prerequisite (" + status + ")");
+                    StringAssert.Contains(status == RunTreeNodeStatus.PrereqMissing ? "NEEDS" : string.Empty,
+                        tree.StateTextOf(hearth).text.ToUpperInvariant(), "the Hearth's seal names its prerequisite");
+                }
+            }
+
+            // A pin on a node the offer does not sell: PINNED, and its path drawn.
+            int pin = -1;
+            for (int i = 0; i < tree.Snapshot.Count; i++)
+            {
+                RunTreeNodeView n = tree.Snapshot.Nodes[i];
+                if (n.Lane == RunTreeLane.Weapon && n.Status == RunTreeNodeStatus.PrereqMissing && n.Kind != RunTreeNodeKind.Hearth)
+                {
+                    pin = i;
+                    break;
+                }
+            }
+
+            if (pin >= 0)
+            {
+                tree.FocusNode(pin);
+                Assert.IsTrue(tree.PinButton.IsInteractable(), "PIN is live on a node still out of reach");
+                tree.OnPin();
+                yield return null;
+                Assert.AreEqual(pin, tree.Snapshot.PinnedIndex, "the pin is set");
+                Assert.Greater(tree.Snapshot.PinPathCount, 0, "the pin has a path");
+                StringAssert.Contains("UNPIN", tree.PinButton.LabelText.text.ToUpperInvariant());
+            }
+
+            // Lanes.
+            tree.SetLane(RunTreeLane.Body, false);
+            Assert.AreEqual(RunTreeLane.Body, tree.Lane);
+            bool any = false;
+            for (int r = 0; r < UiRunTreePanel.Rows && !any; r++)
+            {
+                for (int t = 0; t < UiRunTreePanel.Tiers && !any; t++)
+                {
+                    any = tree.NodeButton(r, t) != null;
+                }
+            }
+
+            Assert.IsTrue(any, "the body lane draws its nodes");
+            Debug.Log("[DD-TEST] r1c.tree 1080 compact=" + tree.Compact + " seal=" + tree.SealPx + " pitch=" + tree.RowPitchPx +
+                      " tree=" + tree.TreeRect.rect.size + " detail=" + tree.DetailRect.rect.size);
+            Assert.IsFalse(tree.Compact, "1080p keeps the seal over its name (PD §5)");
+            Assert.AreEqual(UiRunTreePanel.SealSize, tree.SealPx, "1080p seal 64");
+            AssertFits(screen, tree, "1080p");
+            run.CloseUpgradeScreen();
+            yield return null;
+        }
+
+        /// <summary>The Mac setting: the rows compact (the seal beside its words) and the grid, the detail card and BUY stay inside their hosts.</summary>
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator Kompakt_UiOlcek12_Metin125_AgacSigar()
+        {
+            yield return OpenTree(1.2f, 1.25f);
+            UpgradeScreen screen = Object.FindObjectOfType<UpgradeScreen>();
+            UiRunTreePanel tree = screen.GetComponentInChildren<UiRunTreePanel>(false);
+            Assert.IsNotNull(tree);
+            Debug.Log("[DD-TEST] r1c.tree mac compact=" + tree.Compact + " seal=" + tree.SealPx + " pitch=" + tree.RowPitchPx +
+                      " tree=" + tree.TreeRect.rect.size + " detail=" + tree.DetailRect.rect.size);
+            Assert.GreaterOrEqual(tree.SealPx, 40f, "the seal stays a seal");
+            Assert.IsFalse(tree.Compact, "the Mac host has the room for the stacked row");
+            AssertFits(screen, tree, "mac");
+            tree.SetLane(RunTreeLane.Body, false);
+            AssertFits(screen, tree, "mac body");
+            RunDirector.Instance.CloseUpgradeScreen();
+            yield return null;
+        }
+
+        // ================================================================== helpers
+
+        private static IEnumerator OpenTree(float uiScale = 1f, float textScale = 1f)
+        {
+            LogAssert.ignoreFailingMessages = true;
+            yield return LifecycleTestKit.BootTanMainMenuye();
+            UiSettings.UiScale = uiScale;
+            UiSettings.TextScale = textScale;
+            PrototypeUiFlow.SelectedWeapon = ClassicWeaponId.AssaultRifle;
+            PrototypeUiFlow.GoToSelection();
+            yield return LifecycleTestKit.SahneyiBekle(PrototypeScenes.Selection);
+            PrototypeUiFlow.StartRun();
+            yield return LifecycleTestKit.SahneyiBekle(PrototypeScenes.Run);
+            yield return LifecycleTestKit.KosuHazirOlsun();
+            yield return LifecycleTestKit.Bekle(() => EnemySpawnDirector.Instance != null && RunDirector.Instance != null && RunDirector.Instance.Wallet != null, 40f, "run not ready");
+            PlayerRegistry.Primary.Health.DiagnosisInvulnerable = true;
+            Spawning(false);
+            RunDirector.Instance.Shop.NodeCardsOverride = true;
+            RunDirector.Instance.Wallet.DebugSet(5000);
+            Assert.IsTrue(PressDebug("Complete this round"), "F1 'Complete this round' is missing");
+            yield return LifecycleTestKit.Bekle(() => RunDirector.Instance.Phase == RunPhase.Upgrading, 25f, "the shop did not open");
+            for (int i = 0; i < 4; i++)
+            {
+                yield return null;
+            }
+        }
+
+        private static void AssertFits(UpgradeScreen screen, UiRunTreePanel tree, string when)
+        {
+            RectTransform treeRect = tree.TreeRect;
+            for (int r = 0; r < UiRunTreePanel.Rows; r++)
+            {
+                for (int t = 0; t < UiRunTreePanel.Tiers; t++)
+                {
+                    UiButton node = tree.NodeButton(r, t);
+                    if (node != null)
+                    {
+                        Inside((RectTransform)node.transform, treeRect, when + " node " + r + "," + t);
+                    }
+                }
+            }
+
+            Inside((RectTransform)tree.BuyButton.transform, tree.DetailRect, when + " BUY");
+            Inside((RectTransform)tree.PinButton.transform, tree.DetailRect, when + " PIN");
+            Inside((RectTransform)tree.DetailName.transform, tree.DetailRect, when + " name");
+            Assert.IsFalse(tree.DetailName.isTextTruncated, when + ": the node name is whole (" + tree.DetailName.text + ")");
+
+            // The tree's host ends above the footer (CONTINUE).
+            UiButton next = Named(screen, "Continue");
+            ((RectTransform)next.transform).GetWorldCorners(s_a);
+            treeRect.GetWorldCorners(s_b);
+            Assert.GreaterOrEqual(s_b[0].y + 0.5f, s_a[1].y, when + ": the tree clears the footer");
+        }
+
+        private static void Inside(RectTransform child, RectTransform host, string what)
+        {
+            child.GetWorldCorners(s_a);
+            host.GetWorldCorners(s_b);
+            const float slack = 1f;
+            Assert.IsTrue(s_a[0].x >= s_b[0].x - slack && s_a[0].y >= s_b[0].y - slack &&
+                          s_a[2].x <= s_b[2].x + slack && s_a[2].y <= s_b[2].y + slack,
+                what + " stays inside its host: " + s_a[0] + ".." + s_a[2] + " in " + s_b[0] + ".." + s_b[2]);
+        }
+
+        private static UiButton Named(Component root, string name)
+        {
+            foreach (UiButton b in root.GetComponentsInChildren<UiButton>(true))
+            {
+                if (b.gameObject.name == name) return b;
+            }
+
+            Assert.Fail("no button '" + name + "'");
+            return null;
+        }
+
+        private static void Click(UiButton button)
+        {
+            var data = new PointerEventData(EventSystem.current) { button = PointerEventData.InputButton.Left };
+            ExecuteEvents.Execute(button.gameObject, data, ExecuteEvents.pointerClickHandler);
+        }
+
+        private static bool PressDebug(string label)
+        {
+            IReadOnlyList<DebugPanelEntry> entries = DebugPanelRegistry.Entries;
+            for (int i = 0; i < entries.Count; i++)
+            {
+                if (entries[i] is DebugPanelButton button && button.Label != null && button.Label.Contains(label) && button.OnPressed != null)
+                {
+                    button.OnPressed.Invoke();
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static void Spawning(bool on)
+        {
+            FieldInfo f = typeof(EnemySpawnDirector).GetField("_spawningEnabled", BindingFlags.NonPublic | BindingFlags.Instance);
+            Assert.IsNotNull(f);
+            f.SetValue(EnemySpawnDirector.Instance, on);
+        }
+    }
+}

@@ -1,0 +1,1354 @@
+using System;
+using System.Globalization;
+using DD.Prototype.Rounds;
+using TMPro;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
+
+namespace DD.Prototype.UI
+{
+    /// <summary>
+    /// WP-068 R1-C · the in-run tree on the round-end shop (M4-R1 N14, WP-077 §2 / §2.5, PD §5, S09-CONSTRAINTS).
+    /// The hybrid offer (WP-077 K1) is unchanged: three frontier nodes are for sale, the Hearth is bought directly,
+    /// and the pin guarantees a path. This screen is where the player sees all of it at once:
+    /// - Eight columns of tree, four of detail. Two lanes (WEAPON / BODY) behind tabs (Q / E). Each lane is a 4 × 4
+    ///   grid of seals with a one-line name and a state word; no scrolling.
+    /// - The seven states are shape + glyph + word (PD §5.1): LOCKED, NEEDS x, AVAILABLE, N GOLD SHORT, OWNED,
+    ///   CLOSED BY x, MAX. Overlays: OFFER (the gold ring and chip: the nodes this offer sells), the pin, NEW.
+    /// - The edges are one Graphic (UiTreeEdges): hairline, owned Rim 2, dashed while a prerequisite is missing,
+    ///   4 px along the pinned path.
+    /// - The detail card names the focused node: kind, name, pips, what it does, the state sentence, the price. BUY is
+    ///   its one Primary (STOKE on the Hearth), with PIN / UNPIN and REFORGE on an owned fork. UNDO LAST lives in the
+    ///   screen's footer, beside CONTINUE, because it is about the offer rather than the node.
+    /// The layout is measured from the host and the text (TextScale, UI scale): 112 px rows and 64 px seals where they
+    /// fit (1080p), a compact row with the seal beside its words where they do not (Mac 1.2 × 1.25). Every fact comes
+    /// from S-04's RunTreeSnapshot and every action is a RoundUpgradeShop command quoting the offer's session and
+    /// revision; the screen decides nothing.
+    /// </summary>
+    public sealed class UiRunTreePanel : MonoBehaviour
+    {
+        public const float SealSize = 64f;
+        public const float RowPitch = 112f;
+        public const float TierPitch = 214f;
+        public const float NodeWidth = 196f;
+        public const int Tiers = 4;
+        public const int Rows = 4;
+        public const float OpeningBeatSeconds = 0.12f;
+
+        private const float TabHeight = 44f;
+        private const float TabWidth = 168f;
+        private const float CompactSealMax = 56f;
+        private const float MinSeal = 40f;
+        private const float EdgeGap = 24f;
+
+        private sealed class NodeView
+        {
+            public UiButton Button;
+            public RectTransform Rect;
+            public RectTransform Seal;
+            public Image Fill;
+            public Image Ring;
+            public Image Glyph;
+            public Image Cross;
+            public Image Mark;
+            public GameObject Pin;
+            public GameObject Offer;
+            public GameObject New;
+            public TMP_Text Name;
+            public TMP_Text State;
+            public int Index = -1;
+        }
+
+        private readonly NodeView[] _views = new NodeView[Tiers * Rows];
+        private readonly RunTreeSnapshot _snap = new RunTreeSnapshot();
+        private readonly int[] _cell = new int[Tiers * Rows];
+        private readonly bool[] _onPath = new bool[RunTreeSnapshot.Capacity];
+        private RoundUpgradeShop _shop;
+        private RunTreeLane _lane = RunTreeLane.Weapon;
+
+        private RectTransform _tree;
+        private RectTransform _detail;
+        private UiButton _tabWeapon;
+        private UiButton _tabBody;
+        private TMP_Text _laneKeys;
+        private TMP_Text _hearthCount;
+        private RectTransform _grid;
+        private UiTreeEdges _edges;
+
+        private RectTransform _dContent;
+        private RectTransform _dHead;
+        private Image _dGlyph;
+        private TMP_Text _dKind;
+        private UiPips _dPips;
+        private int _dPipsCount = -1;
+        private TMP_Text _dName;
+        private TMP_Text _dState;
+        private TMP_Text _dDesc;
+        private RectTransform _dBuyRow;
+        private RectTransform _dActions;
+        private TMP_Text _dPrice;
+        private UiButton _buy;
+        private UiButton _pin;
+        private UiButton _reforge;
+
+        private float _pitchX = TierPitch;
+        private float _pitchY = RowPitch;
+        private float _seal = SealSize;
+        private float _headSize = SealSize;
+        private bool _compact;
+        private float _nodeWidth = NodeWidth;
+        private int _focus = -1;
+        private bool _opening;
+
+        /// <summary>Set by the screen from the open offer: every command quotes them (WP-008).</summary>
+        public int SessionId { get; set; }
+        public int Revision { get; set; }
+
+        /// <summary>The control below the tree (the screen's UNDO / CONTINUE) for pad navigation.</summary>
+        public Selectable ExitDown { get; set; }
+
+        /// <summary>The control above the lane tabs (the gold strip's REROLL when it is pressable).</summary>
+        public Selectable ExitUp { get; set; }
+
+        /// <summary>A command was refused: the screen shows the sentence in its footer.</summary>
+        public Action<string> Refused;
+
+        /// <summary>A command changed the offer: the screen redraws synchronously.</summary>
+        public Action Changed;
+
+        /// <summary>The screen's sentence for a refused card purchase.</summary>
+        public Func<UpgradePurchaseResult, string> DescribePurchase;
+
+        public RunTreeSnapshot Snapshot => _snap;
+        public int FocusIndex => _focus;
+        public RunTreeLane Lane => _lane;
+        public bool Compact => _compact;
+        public float SealPx => _seal;
+        public float RowPitchPx => _pitchY;
+        public UiButton BuyButton => _buy;
+        public UiButton PinButton => _pin;
+        public UiButton ReforgeButton => _reforge;
+        public TMP_Text DetailName => _dName;
+        public TMP_Text DetailState => _dState;
+        public TMP_Text DetailDescription => _dDesc;
+        public UiTreeEdges Edges => _edges;
+        public RectTransform DetailRect => _detail;
+        public RectTransform TreeRect => _tree;
+
+        /// <summary>The seal button at (row, tier) of the lane on screen, null where the lane has no node.</summary>
+        public UiButton NodeButton(int row, int tier)
+        {
+            NodeView v = _views[row * Tiers + tier];
+            return v != null && v.Index >= 0 ? v.Button : null;
+        }
+
+        /// <summary>The seal button of a snapshot node when its lane is on screen.</summary>
+        public UiButton ButtonOf(int index)
+        {
+            NodeView v = ViewOf(index);
+            return v != null ? v.Button : null;
+        }
+
+        public TMP_Text StateTextOf(int index)
+        {
+            NodeView v = ViewOf(index);
+            return v != null ? v.State : null;
+        }
+
+        public TMP_Text NameTextOf(int index)
+        {
+            NodeView v = ViewOf(index);
+            return v != null ? v.Name : null;
+        }
+
+        public bool OfferShownOn(int index)
+        {
+            NodeView v = ViewOf(index);
+            return v != null && v.Offer.activeSelf;
+        }
+
+        /// <summary>The control the screen focuses: the detailed node's seal.</summary>
+        public Selectable FocusTarget()
+        {
+            NodeView v = ViewOf(_focus);
+            return v != null ? v.Button : null;
+        }
+
+        // ================================================================== build
+
+        public static UiRunTreePanel Create(RectTransform host)
+        {
+            RectTransform root = UiFactory.NewRect("RunTree", host);
+            UiFactory.Fill(root);
+            var panel = root.gameObject.AddComponent<UiRunTreePanel>();
+            panel.Build(root);
+            return panel;
+        }
+
+        private void Build(RectTransform root)
+        {
+            // Eight columns of tree, four of detail (S09-CONSTRAINTS; 0.657 / 0.672 = the 12-column grid's 8 + gutter).
+            _tree = UiFactory.NewRect("Tree", root);
+            _tree.anchorMin = new Vector2(0f, 0f);
+            _tree.anchorMax = new Vector2(0.657f, 1f);
+            _tree.offsetMin = Vector2.zero;
+            _tree.offsetMax = Vector2.zero;
+
+            _tabWeapon = UiFactory.Button("Lane.Weapon", _tree, UiStrings.Get("tree.lane.weapon", "WEAPON"), UiButtonVariant.Nav, () => SetLane(RunTreeLane.Weapon, true));
+            _tabBody = UiFactory.Button("Lane.Body", _tree, UiStrings.Get("tree.lane.body", "BODY"), UiButtonVariant.Nav, () => SetLane(RunTreeLane.Body, true));
+            _tabWeapon.SetSegment(true);
+            _tabBody.SetSegment(true);
+            PlaceTopLeft((RectTransform)_tabWeapon.transform, 0f, 0f, TabWidth, TabHeight);
+            PlaceTopLeft((RectTransform)_tabBody.transform, TabWidth + (int)UiSpace.S, 0f, TabWidth, TabHeight);
+            _laneKeys = UiFactory.Label("LaneKeys", _tree, "Q / E", UiType.Caption, UiColor.TextMuted, TextAnchor.MiddleLeft);
+            PlaceTopLeft((RectTransform)_laneKeys.transform, TabWidth * 2f + (int)UiSpace.S + (int)UiSpace.L, 0f, 96f, TabHeight);
+            _hearthCount = UiFactory.Label("HearthCount", _tree, string.Empty, UiType.Label, UiColor.TextSecondary, TextAnchor.MiddleRight);
+            PlaceAnchored((RectTransform)_hearthCount.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), Vector2.zero, new Vector2(260f, TabHeight));
+            _hearthCount.enableWordWrapping = false;
+
+            _grid = UiFactory.NewRect("Grid", _tree);
+            _grid.anchorMin = new Vector2(0f, 1f);
+            _grid.anchorMax = new Vector2(0f, 1f);
+            _grid.pivot = new Vector2(0f, 1f);
+
+            var edgesGo = new GameObject("Edges", typeof(RectTransform), typeof(CanvasRenderer), typeof(UiTreeEdges));
+            var edgesRect = (RectTransform)edgesGo.transform;
+            edgesRect.SetParent(_grid, false);
+            edgesRect.anchorMin = new Vector2(0f, 1f);
+            edgesRect.anchorMax = new Vector2(0f, 1f);
+            edgesRect.pivot = new Vector2(0f, 1f);
+            edgesRect.anchoredPosition = Vector2.zero;
+            _edges = edgesGo.GetComponent<UiTreeEdges>();
+            _edges.raycastTarget = false;
+
+            for (int s = 0; s < _views.Length; s++)
+            {
+                _views[s] = BuildNode(s);
+            }
+
+            BuildDetail(root);
+        }
+
+        private NodeView BuildNode(int slot)
+        {
+            var v = new NodeView();
+            v.Button = UiFactory.Button("Node." + slot / Tiers + "." + slot % Tiers, _grid, string.Empty, UiButtonVariant.Ghost, () => OnNodeActivated(slot));
+            v.Rect = (RectTransform)v.Button.transform;
+            v.Button.LabelText.gameObject.SetActive(false);
+            v.Button.gameObject.AddComponent<UiTreeNodeInput>().Configure(this, slot);
+
+            v.Seal = UiFactory.NewRect("Seal", v.Rect);
+            v.Mark = UiFactory.NewImage("Mark", v.Seal, UiColor.TextPrimary, UiSprites.RingHairline);
+            UiFactory.Fill((RectTransform)v.Mark.transform, -6f);
+            v.Fill = UiFactory.NewImage("Fill", v.Seal, UiColor.SurfaceInset, UiSprites.Disc);
+            UiFactory.Fill((RectTransform)v.Fill.transform);
+            v.Ring = UiFactory.NewImage("Ring", v.Seal, UiColor.TextPrimary, UiSprites.Ring);
+            UiFactory.Fill((RectTransform)v.Ring.transform);
+            v.Glyph = UiFactory.NewImage("Glyph", v.Seal, UiColor.TextPrimary, UiSprites.Disc);
+            v.Glyph.preserveAspect = true;
+            var glyphRect = (RectTransform)v.Glyph.transform;
+            glyphRect.anchorMin = new Vector2(0.2f, 0.2f);
+            glyphRect.anchorMax = new Vector2(0.8f, 0.8f);
+            glyphRect.offsetMin = Vector2.zero;
+            glyphRect.offsetMax = Vector2.zero;
+            v.Cross = UiFactory.NewImage("Cross", v.Seal, UiColor.TextMuted, UiSprites.Solid);
+            var crossRect = (RectTransform)v.Cross.transform;
+            crossRect.anchorMin = new Vector2(-0.1f, 0.5f);
+            crossRect.anchorMax = new Vector2(1.1f, 0.5f);
+            crossRect.sizeDelta = new Vector2(0f, 3f);
+            crossRect.localRotation = Quaternion.Euler(0f, 0f, 35f);
+
+            // Overlays: the pin at the seal's lower right, NEW as a dot at its upper right, OFFER as a chip across its top.
+            Sprite mark = UiArt.Icon("Seal.Mark");
+            Image pin = UiFactory.NewImage("Pin", v.Seal, UiColor.TextPrimary, mark != null ? mark : UiSprites.Disc);
+            PlaceAnchored((RectTransform)pin.transform, new Vector2(1f, 0f), new Vector2(0.5f, 0.5f), new Vector2(-2f, 2f), new Vector2(20f, 20f));
+            v.Pin = pin.gameObject;
+            Image dot = UiFactory.NewImage("New", v.Seal, UiColor.AccentSakura, UiSprites.Disc);   // the kit's NEW colour (UiChips)
+            PlaceAnchored((RectTransform)dot.transform, new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-6f, -6f), new Vector2(10f, 10f));
+            v.New = dot.gameObject;
+            TMP_Text offer = UiChips.Create("Offer", v.Seal, UiChipKind.Value, UiStrings.Get("tree.flag.offer", "OFFER"), UiChipSize.Row);
+            var offerRect = (RectTransform)offer.transform.parent;
+            PlaceAnchored(offerRect, new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f), Vector2.zero, offerRect.sizeDelta);
+            v.Offer = offerRect.gameObject;
+
+            v.Name = UiFactory.Label("Name", v.Rect, string.Empty, UiType.Label, UiColor.TextPrimary, TextAnchor.MiddleCenter);
+            v.Name.enableWordWrapping = false;
+            v.Name.overflowMode = TextOverflowModes.Ellipsis;
+            v.State = UiFactory.Label("State", v.Rect, string.Empty, UiType.Caption, UiColor.TextSecondary, TextAnchor.MiddleCenter);
+            v.State.enableWordWrapping = false;
+            v.State.overflowMode = TextOverflowModes.Ellipsis;
+            return v;
+        }
+
+        private void BuildDetail(RectTransform root)
+        {
+            _detail = UiFactory.NewRect("Detail", root);
+            _detail.anchorMin = new Vector2(0.672f, 0f);
+            _detail.anchorMax = new Vector2(1f, 1f);
+            _detail.offsetMin = Vector2.zero;
+            _detail.offsetMax = Vector2.zero;
+            UiCard card = UiCard.Create("DetailCard", _detail, Vector2.zero, UiElevation.Elev1, UiColor.SurfacePanel, UiSpace.XL);
+            UiFactory.Fill((RectTransform)card.transform);
+            _dContent = card.Content;
+
+            _dHead = UiFactory.NewRect("Head", _dContent);
+            _dGlyph = UiFactory.NewImage("Glyph", _dHead, UiColor.TextPrimary, UiSprites.Disc);
+            _dGlyph.preserveAspect = true;
+            _dKind = UiFactory.Label("Kind", _dHead, string.Empty, UiType.Label, UiColor.TextSecondary, TextAnchor.MiddleLeft);
+            _dKind.enableWordWrapping = false;
+            _dKind.overflowMode = TextOverflowModes.Ellipsis;
+
+            _dName = UiFactory.Label("Name", _dContent, string.Empty, UiType.H2, UiColor.TextPrimary);
+            _dName.enableWordWrapping = false;
+            _dName.overflowMode = TextOverflowModes.Ellipsis;
+            _dState = UiFactory.Label("State", _dContent, string.Empty, UiType.Label, UiColor.TextPrimary);
+            _dState.enableWordWrapping = false;
+            _dState.overflowMode = TextOverflowModes.Ellipsis;
+            _dDesc = UiFactory.Label("Description", _dContent, string.Empty, UiType.Body, UiColor.TextSecondary);
+            _dDesc.overflowMode = TextOverflowModes.Ellipsis;
+
+            _dBuyRow = UiFactory.NewRect("BuyRow", _dContent);
+            _dPrice = UiFactory.Numeric("Price", _dBuyRow, string.Empty, UiType.NumericM, UiColor.StateGold, TextAnchor.MiddleLeft, false);
+            RectTransform priceRect = UiFactory.Fill((RectTransform)_dPrice.transform);
+            priceRect.offsetMax = new Vector2(-212f, 0f);
+            _buy = UiFactory.Button("Buy", _dBuyRow, "BUY", UiButtonVariant.Primary, OnBuy);
+            UiInput.Prompt(_buy, UiPromptAction.Submit, true);
+            PlaceAnchored((RectTransform)_buy.transform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), Vector2.zero, new Vector2(204f, UiTokens.TargetPreferred));
+
+            _dActions = UiFactory.NewRect("Actions", _dContent);
+            _pin = UiFactory.Button("Pin", _dActions, UiStrings.Get("tree.action.pin", "PIN"), UiButtonVariant.Secondary, OnPin);
+            PlaceAnchored((RectTransform)_pin.transform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), Vector2.zero, new Vector2(150f, UiTokens.TargetPreferred));
+            _reforge = UiFactory.Button("Reforge", _dActions, UiStrings.Get("tree.action.reforge", "REFORGE"), UiButtonVariant.Secondary, OnReforge);
+            PlaceAnchored((RectTransform)_reforge.transform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), Vector2.zero, new Vector2(204f, UiTokens.TargetPreferred));
+        }
+
+        // ================================================================== layout
+
+        /// <summary>
+        /// Measured from the host rect and the live text metrics, so TextScale and the UI scale grow the rows into the
+        /// room the host has instead of past it (the R1-B Selection lesson).
+        /// </summary>
+        private void Layout()
+        {
+            float w = _tree.rect.width;
+            float h = _tree.rect.height;
+            float name = LineOf(_views[0].Name);
+            float state = LineOf(_views[0].State);
+            float gridTop = TabHeight + (int)UiSpace.M;
+            _pitchX = Mathf.Min(TierPitch, Mathf.Floor(w / Tiers));
+
+            // PD §5's 112 px row is the 1080p / TextScale 1 value of "a 64 px seal over two lines": the row grows with
+            // the text while the host has the room, so a larger TextScale keeps the seal stacked instead of shrinking it.
+            float stackNeed = 8f + 4f + SealSize + 4f + name + state + 4f;
+            _pitchY = Mathf.Min(Mathf.Floor((h - gridTop) / Rows), Mathf.Max(RowPitch, Mathf.Ceil(stackNeed)));
+
+            // Stacked (the seal over its one-line name) while a 48+ seal still fits over both lines; the compact row
+            // puts the seal beside them.
+            float stackedSeal = _pitchY - 8f - 4f - name - state - 4f;
+            _compact = stackedSeal < 48f;
+            _seal = _compact
+                ? Mathf.Clamp(_pitchY - 12f, MinSeal, CompactSealMax)
+                : Mathf.Min(SealSize, stackedSeal);
+            _nodeWidth = _compact ? _pitchX - EdgeGap : Mathf.Min(NodeWidth, _pitchX - (int)UiSpace.M);
+
+            _grid.sizeDelta = new Vector2(_pitchX * Tiers, _pitchY * Rows);
+            _grid.anchoredPosition = new Vector2(0f, -gridTop);
+            ((RectTransform)_edges.transform).sizeDelta = _grid.sizeDelta;
+
+            float boxH = _pitchY - 8f;
+            for (int s = 0; s < _views.Length; s++)
+            {
+                NodeView v = _views[s];
+                int row = s / Tiers;
+                int tier = s % Tiers;
+                v.Rect.anchorMin = new Vector2(0f, 1f);
+                v.Rect.anchorMax = new Vector2(0f, 1f);
+                v.Rect.sizeDelta = new Vector2(_nodeWidth, boxH);
+                if (_compact)
+                {
+                    v.Rect.pivot = new Vector2(0f, 1f);
+                    v.Rect.anchoredPosition = new Vector2(tier * _pitchX, -row * _pitchY);
+                    PlaceAnchored(v.Seal, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), Vector2.zero, new Vector2(_seal, _seal));
+                    float textLeft = _seal + (int)UiSpace.S;
+                    float top = Mathf.Max(0f, (boxH - name - state) * 0.5f);
+                    Band(v.Name, textLeft, top, name, TextAlignmentOptions.MidlineLeft);
+                    Band(v.State, textLeft, top + name, state, TextAlignmentOptions.MidlineLeft);
+                }
+                else
+                {
+                    v.Rect.pivot = new Vector2(0.5f, 1f);
+                    v.Rect.anchoredPosition = new Vector2(tier * _pitchX + _pitchX * 0.5f, -row * _pitchY);
+                    PlaceAnchored(v.Seal, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -4f), new Vector2(_seal, _seal));
+                    Band(v.Name, 0f, 4f + _seal + 4f, name, TextAlignmentOptions.Midline);
+                    Band(v.State, 0f, 4f + _seal + 4f + name, state, TextAlignmentOptions.Midline);
+                }
+            }
+
+            LayoutDetail();
+        }
+
+        private void LayoutDetail()
+        {
+            float h = _dContent.rect.height;
+            float kind = LineOf(_dKind);
+            float nameLine = LineOf(_dName);
+            float stateLine = LineOf(_dState);
+            float body = LineOf(_dDesc);
+            float button = UiTokens.TargetPreferred;
+
+            // The foot: BUY over the node actions, anchored to the card's bottom; the description takes what is left.
+            float foot = button * 2f + (int)UiSpace.S;
+            float head = h - foot >= SealSize + nameLine + stateLine + body * 3f + (int)UiSpace.M * 3f ? SealSize : 48f;
+            _headSize = head;
+
+            float y = 0f;
+            Dock(_dHead, y, head);
+            PlaceAnchored((RectTransform)_dGlyph.transform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), Vector2.zero, new Vector2(head, head));
+            var kindRect = (RectTransform)_dKind.transform;
+            kindRect.anchorMin = new Vector2(0f, 1f);
+            kindRect.anchorMax = new Vector2(1f, 1f);
+            kindRect.pivot = new Vector2(0f, 1f);
+            kindRect.offsetMin = new Vector2(head + (int)UiSpace.L, -(head * 0.5f));
+            kindRect.offsetMax = new Vector2(0f, -(head * 0.5f - kind));
+            y += head + (int)UiSpace.M;
+            Dock((RectTransform)_dName.transform, y, nameLine);
+            y += nameLine + (int)UiSpace.XS;
+            Dock((RectTransform)_dState.transform, y, stateLine);
+            y += stateLine + (int)UiSpace.M;
+            float descH = Mathf.Max(body, h - foot - (int)UiSpace.M - y);
+            Dock((RectTransform)_dDesc.transform, y, descH);
+
+            DockBottom(_dActions, 0f, button);
+            DockBottom(_dBuyRow, button + (int)UiSpace.S, button);
+            if (_dPips != null)
+            {
+                ((RectTransform)_dPips.transform).anchoredPosition = new Vector2(head + (int)UiSpace.L, -(int)UiSpace.XS);
+            }
+        }
+
+        // ================================================================== refresh
+
+        /// <summary>The screen opened: the next Refresh stamps the tree in tier by tier (Opening Beat, ≤ 600 ms).</summary>
+        public void BeginOpening()
+        {
+            _opening = true;
+            _focus = -1;
+        }
+
+        /// <summary>Redraw from the shop (on open and on OfferChanged); never per frame.</summary>
+        public void Refresh(RoundUpgradeShop shop)
+        {
+            _shop = shop;
+            _snap.Refresh(shop);
+            Layout();
+            _tabWeapon.SetSelectedChoice(_lane == RunTreeLane.Weapon);
+            _tabBody.SetSelectedChoice(_lane == RunTreeLane.Body);
+            RefreshHearthCount();
+
+            for (int i = 0; i < _cell.Length; i++)
+            {
+                _cell[i] = -1;
+            }
+
+            for (int i = 0; i < _snap.Count; i++)
+            {
+                RunTreeNodeView n = _snap.Nodes[i];
+                if (n.Lane == _lane && n.Row >= 0 && n.Row < Rows && n.Column >= 0 && n.Column < Tiers)
+                {
+                    _cell[n.Row * Tiers + n.Column] = i;
+                }
+            }
+
+            Array.Clear(_onPath, 0, _onPath.Length);
+            for (int k = 0; k < _snap.PinPathCount; k++)
+            {
+                int p = _snap.PinPath[k];
+                if (p >= 0 && p < _onPath.Length)
+                {
+                    _onPath[p] = true;
+                }
+            }
+
+            if (_focus < 0 || _focus >= _snap.Count || _snap.Nodes[_focus].Lane != _lane)
+            {
+                _focus = FirstUseful();
+            }
+
+            for (int s = 0; s < _views.Length; s++)
+            {
+                ApplyNode(_views[s], _cell[s]);
+            }
+
+            DrawEdges();
+            ShowDetail(_focus);
+            LinkNavigation();
+
+            if (_opening)
+            {
+                _opening = false;
+                for (int s = 0; s < _views.Length; s++)
+                {
+                    if (_views[s].Index >= 0)
+                    {
+                        UiPresets.StampIn(_views[s].Seal, (s % Tiers) * OpeningBeatSeconds);   // PD §5.4 Opening Beat
+                    }
+                }
+            }
+        }
+
+        private void RefreshHearthCount()
+        {
+            int hearth = _snap.HearthIndex;
+            bool show = hearth >= 0 && hearth < _snap.Count;
+            _hearthCount.gameObject.SetActive(show);
+            if (show)
+            {
+                _hearthCount.text = UiStrings.Get("tree.hearth.count", "HEARTH {value} / {max}")
+                    .Replace("{value}", _snap.HearthStacks.ToString(CultureInfo.InvariantCulture))
+                    .Replace("{max}", _snap.Nodes[hearth].MaxTier.ToString(CultureInfo.InvariantCulture));
+            }
+        }
+
+        private void ApplyNode(NodeView v, int index)
+        {
+            v.Index = index;
+            v.Button.gameObject.SetActive(index >= 0);
+            if (index < 0)
+            {
+                return;
+            }
+
+            RunTreeNodeView n = _snap.Nodes[index];
+            SetGlyph(v.Glyph, n);
+            v.Name.text = string.IsNullOrEmpty(n.ShortName) ? n.DisplayName : n.ShortName;
+            bool owned = IsOwned(n);
+            bool dim = n.Status == RunTreeNodeStatus.Locked || n.Status == RunTreeNodeStatus.Excluded;
+            bool waiting = n.Status == RunTreeNodeStatus.PrereqMissing;
+            bool forSale = n.InOffer && !owned;
+
+            // PD §5.1: shape + glyph + word, never colour alone. Owned = a cream seal with an ink glyph; open = an
+            // inset seal ringed in cream; waiting = a muted ring; locked / closed = no fill, dim, the closed one struck.
+            v.Fill.enabled = owned || n.Status == RunTreeNodeStatus.Available || n.Status == RunTreeNodeStatus.Unaffordable;
+            v.Fill.color = UiTokens.Get(owned ? UiColor.TextPrimary : UiColor.SurfaceInset);
+            v.Glyph.color = WithAlpha(UiTokens.Get(owned ? UiColor.SurfaceBase : UiColor.TextPrimary), dim ? 0.35f : waiting ? 0.6f : 1f);
+            v.Ring.sprite = n.Kind == RunTreeNodeKind.Capstone || n.Kind == RunTreeNodeKind.WeaponSeal ? UiSprites.RingEnso : UiSprites.Ring;
+            UiColor ring = forSale ? UiColor.StateGold : owned ? UiColor.TextSecondary : dim || waiting ? UiColor.TextMuted : UiColor.TextPrimary;
+            v.Ring.color = WithAlpha(UiTokens.Get(ring), dim ? 0.6f : 1f);
+            v.Cross.gameObject.SetActive(n.Status == RunTreeNodeStatus.Excluded);
+            v.Pin.SetActive(n.IsPinned);
+            v.Offer.SetActive(forSale);
+            v.New.SetActive(n.NewlyUnlocked);
+            v.Mark.enabled = index == _focus;
+            v.Name.color = UiTokens.Get(dim ? UiColor.TextMuted : UiColor.TextPrimary);
+            v.State.text = StateWord(n);
+            v.State.color = UiTokens.Get(n.Status == RunTreeNodeStatus.Unaffordable ? UiColor.StateWarning : dim ? UiColor.TextMuted : UiColor.TextSecondary);
+        }
+
+        private static void SetGlyph(Image image, RunTreeNodeView n)
+        {
+            Sprite glyph = GlyphOf(n);
+            UiArt.SetGlyph(image, glyph != null ? glyph : UiSprites.Disc);
+            if (UiArt.IsGlyph(image.sprite))
+            {
+                UiArt.ApplyGlyph(image, new Vector3(0.25f, 0f, 0f));
+            }
+        }
+
+        /// <summary>
+        /// The snapshot's icon key, then the nearest glyph G1 ships: the upgrade's stand-in, the weapon's roster
+        /// glyph, the Hud set for the Hearth (the seal), the Purse (gold), the Special link and the body lane (health).
+        /// </summary>
+        public static Sprite GlyphOf(RunTreeNodeView n)
+        {
+            Sprite own = UiArt.Icon(n.IconKey);
+            if (own != null)
+            {
+                return own;
+            }
+
+            if (n.HasBranch)
+            {
+                Sprite upgrade = UiArt.UpgradeIcon(n.Branch);
+                if (upgrade != null)
+                {
+                    return upgrade;
+                }
+            }
+
+            switch (n.Kind)
+            {
+                case RunTreeNodeKind.Hearth: return UiArt.Icon("Seal.Mark");
+                case RunTreeNodeKind.Purse: return UiArt.Icon("Hud.Gold");
+                case RunTreeNodeKind.SpecialLink: return UiArt.Icon("Hud.Special");
+            }
+
+            if (!string.IsNullOrEmpty(n.IconKey) && n.IconKey.StartsWith("Weapon.", StringComparison.Ordinal))
+            {
+                Sprite roster = UiArt.RosterGlyph(n.IconKey.Substring("Weapon.".Length));
+                if (roster != null)
+                {
+                    return roster;
+                }
+            }
+
+            return UiArt.Icon(n.Lane == RunTreeLane.Body ? "Hud.Health" : "Weapon.AssaultRifle");
+        }
+
+        private string StateWord(RunTreeNodeView n)
+        {
+            string word;
+            switch (n.Status)
+            {
+                case RunTreeNodeStatus.Locked:
+                    word = UiStrings.Get("tree.state.locked", "LOCKED");
+                    break;
+                case RunTreeNodeStatus.PrereqMissing:
+                    word = UiStrings.Get("tree.state.prereq_missing", "NEEDS {node}").Replace("{node}", ShortOf(n.MissingParentIndex).ToUpperInvariant());
+                    break;
+                case RunTreeNodeStatus.Available:
+                    word = UiStrings.Get("tree.state.available", "AVAILABLE") + " · " + n.Cost.ToString(CultureInfo.InvariantCulture);
+                    break;
+                case RunTreeNodeStatus.Unaffordable:
+                    word = UiStrings.Get("tree.state.unaffordable", "{value} GOLD SHORT").Replace("{value}", n.Shortfall.ToString(CultureInfo.InvariantCulture));
+                    break;
+                case RunTreeNodeStatus.Purchased:
+                    word = UiStrings.Get("tree.state.purchased", "OWNED") + (n.MaxTier > 1 ? " · " + n.OwnedTier + "/" + n.MaxTier : string.Empty);
+                    break;
+                case RunTreeNodeStatus.Excluded:
+                    word = UiStrings.Get("tree.state.excluded", "CLOSED BY {node}").Replace("{node}", ShortOf(n.ClosedByIndex).ToUpperInvariant());
+                    break;
+                case RunTreeNodeStatus.MaxTier:
+                    word = UiStrings.Get("tree.state.max_tier", "MAX");
+                    break;
+                default:
+                    word = string.Empty;
+                    break;
+            }
+
+            return n.NewlyUnlocked ? UiStrings.Get("tree.flag.new", "NEW") + " · " + word : word;
+        }
+
+        private string ShortOf(int index)
+        {
+            if (index < 0 || index >= _snap.Count)
+            {
+                return "?";
+            }
+
+            RunTreeNodeView n = _snap.Nodes[index];
+            return string.IsNullOrEmpty(n.ShortName) ? n.DisplayName : n.ShortName;
+        }
+
+        private void DrawEdges()
+        {
+            _edges.Clear();
+            Color hair = WithAlpha(UiTokens.Get(UiColor.TextMuted), 0.7f);
+            Color owned = UiTokens.Get(UiColor.TextSecondary);
+            Color pinned = UiTokens.Get(UiColor.TextPrimary);
+            for (int s = 0; s < _cell.Length; s++)
+            {
+                int child = _cell[s];
+                if (child < 0 || _snap.Nodes[child].ParentIndices == null)
+                {
+                    continue;
+                }
+
+                RunTreeNodeView c = _snap.Nodes[child];
+                for (int k = 0; k < c.ParentIndices.Length; k++)
+                {
+                    int parent = c.ParentIndices[k];
+                    if (parent < 0 || parent >= _snap.Count || _snap.Nodes[parent].Lane != _lane)
+                    {
+                        continue;
+                    }
+
+                    RunTreeNodeView p = _snap.Nodes[parent];
+                    bool bothOwned = IsOwned(p) && IsOwned(c);
+                    bool path = _onPath[child] && (_onPath[parent] || IsOwned(p));
+                    bool dashed = c.Status == RunTreeNodeStatus.PrereqMissing && !IsOwned(p);
+                    _edges.Add(EdgeOut(p.Row, p.Column), EdgeIn(c.Row, c.Column), path ? 4f : bothOwned ? 2f : 1f, dashed && !path, path ? pinned : bothOwned ? owned : hair);
+                }
+            }
+
+            _edges.Commit();
+        }
+
+        private Vector2 SealCentre(int row, int tier)
+        {
+            return _compact
+                ? new Vector2(tier * _pitchX + _seal * 0.5f, -(row * _pitchY + (_pitchY - 8f) * 0.5f))
+                : new Vector2(tier * _pitchX + _pitchX * 0.5f, -(row * _pitchY + 4f + _seal * 0.5f));
+        }
+
+        private Vector2 EdgeOut(int row, int tier)
+        {
+            Vector2 c = SealCentre(row, tier);
+            return _compact ? new Vector2(tier * _pitchX + _nodeWidth + 2f, c.y) : c + new Vector2(_seal * 0.5f + 6f, 0f);
+        }
+
+        private Vector2 EdgeIn(int row, int tier)
+        {
+            return SealCentre(row, tier) - new Vector2(_seal * 0.5f + 6f, 0f);
+        }
+
+        private static bool IsOwned(RunTreeNodeView n)
+        {
+            return n.Status == RunTreeNodeStatus.Purchased || n.Status == RunTreeNodeStatus.MaxTier;
+        }
+
+        private int FirstUseful()
+        {
+            int first = -1;
+            int pinned = -1;
+            for (int s = 0; s < _cell.Length; s++)
+            {
+                int i = _cell[s];
+                if (i < 0)
+                {
+                    continue;
+                }
+
+                RunTreeNodeView n = _snap.Nodes[i];
+                if (n.InOffer && n.Status == RunTreeNodeStatus.Available)
+                {
+                    return i;
+                }
+
+                if (n.IsPinned && pinned < 0)
+                {
+                    pinned = i;
+                }
+
+                if (first < 0)
+                {
+                    first = i;
+                }
+            }
+
+            return pinned >= 0 ? pinned : first;
+        }
+
+        // ================================================================== navigation
+
+        /// <summary>
+        /// Edge-first pad map (PD §5.5): Right follows an edge to a child, Left back to a parent, Up / Down stay in the
+        /// tier. Off the grid: Up to the lane tab (and on to REROLL), Right to BUY, Down to the screen's UNDO / CONTINUE.
+        /// </summary>
+        private void LinkNavigation()
+        {
+            Selectable detail = _buy.gameObject.activeSelf && _buy.IsInteractable() ? _buy : _pin;
+            for (int s = 0; s < _views.Length; s++)
+            {
+                NodeView v = _views[s];
+                if (v.Index < 0)
+                {
+                    continue;
+                }
+
+                int row = s / Tiers;
+                int tier = s % Tiers;
+                Selectable right = ChildOf(v.Index) ?? Nearest(row, tier + 1, +1) ?? detail;
+                Selectable left = ParentOf(v.Index) ?? Nearest(row, tier - 1, -1);
+                Selectable up = InTier(tier, row - 1, -1) ?? (_lane == RunTreeLane.Weapon ? _tabWeapon : _tabBody);
+                Selectable down = InTier(tier, row + 1, +1) ?? ExitDown;
+                Explicit(v.Button, up, down, left, right);
+            }
+
+            Selectable first = FirstButton();
+            Explicit(_tabWeapon, ExitUp, first, null, _tabBody);
+            Explicit(_tabBody, ExitUp, first, _tabWeapon, null);
+            Selectable node = FocusTarget() ?? first;
+            Selectable buy = _buy.IsInteractable() ? _buy : null;
+            Explicit(_buy, null, _pin, node, null);
+            Explicit(_pin, buy, ExitDown, node, _reforge.gameObject.activeSelf ? _reforge : null);
+            Explicit(_reforge, buy, ExitDown, _pin, null);
+        }
+
+        private Selectable ChildOf(int index)
+        {
+            int best = -1;
+            int bestRow = int.MaxValue;
+            int row = _snap.Nodes[index].Row;
+            for (int s = 0; s < _cell.Length; s++)
+            {
+                int c = _cell[s];
+                if (c < 0 || _snap.Nodes[c].ParentIndices == null || Array.IndexOf(_snap.Nodes[c].ParentIndices, index) < 0)
+                {
+                    continue;
+                }
+
+                int d = Math.Abs(_snap.Nodes[c].Row - row);
+                if (d < bestRow)
+                {
+                    bestRow = d;
+                    best = c;
+                }
+            }
+
+            return best >= 0 ? ButtonOf(best) : null;
+        }
+
+        private Selectable ParentOf(int index)
+        {
+            int[] parents = _snap.Nodes[index].ParentIndices;
+            if (parents == null)
+            {
+                return null;
+            }
+
+            for (int k = 0; k < parents.Length; k++)
+            {
+                UiButton b = parents[k] >= 0 && parents[k] < _snap.Count ? ButtonOf(parents[k]) : null;
+                if (b != null)
+                {
+                    return b;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>The nearest node by row in a tier, walking further tiers in <paramref name="step"/>'s direction.</summary>
+        private Selectable Nearest(int row, int tier, int step)
+        {
+            for (int t = tier; t >= 0 && t < Tiers; t += step)
+            {
+                for (int d = 0; d < Rows; d++)
+                {
+                    Selectable a = At(row - d, t) ?? At(row + d, t);
+                    if (a != null)
+                    {
+                        return a;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        private Selectable InTier(int tier, int row, int step)
+        {
+            for (int r = row; r >= 0 && r < Rows; r += step)
+            {
+                Selectable a = At(r, tier);
+                if (a != null)
+                {
+                    return a;
+                }
+            }
+
+            return null;
+        }
+
+        private Selectable At(int row, int tier)
+        {
+            return row >= 0 && row < Rows && tier >= 0 && tier < Tiers ? NodeButton(row, tier) : null;
+        }
+
+        private Selectable FirstButton()
+        {
+            for (int t = 0; t < Tiers; t++)
+            {
+                Selectable a = InTier(t, 0, +1);
+                if (a != null)
+                {
+                    return a;
+                }
+            }
+
+            return null;
+        }
+
+        private static void Explicit(Selectable control, Selectable up, Selectable down, Selectable left, Selectable right)
+        {
+            control.navigation = new UnityEngine.UI.Navigation
+            {
+                mode = UnityEngine.UI.Navigation.Mode.Explicit,
+                selectOnUp = up,
+                selectOnDown = down,
+                selectOnLeft = left,
+                selectOnRight = right
+            };
+        }
+
+        // ================================================================== detail
+
+        private void ShowDetail(int index)
+        {
+            bool has = index >= 0 && index < _snap.Count;
+            _buy.gameObject.SetActive(has);
+            _pin.gameObject.SetActive(has);
+            _dGlyph.enabled = has;
+            for (int s = 0; s < _views.Length; s++)
+            {
+                _views[s].Mark.enabled = has && _views[s].Index >= 0 && _views[s].Index == index;
+            }
+
+            if (!has)
+            {
+                _dKind.text = string.Empty;
+                _dName.text = string.Empty;
+                _dDesc.text = string.Empty;
+                _dState.text = string.Empty;
+                _dPrice.text = string.Empty;
+                _reforge.gameObject.SetActive(false);
+                SetPips(0, 0);
+                return;
+            }
+
+            RunTreeNodeView n = _snap.Nodes[index];
+            SetGlyph(_dGlyph, n);
+            _dGlyph.color = UiTokens.Get(UiColor.TextPrimary);
+            bool hearth = n.Kind == RunTreeNodeKind.Hearth;
+            _dKind.text = UiStrings.Get("tree.kind." + n.Kind, n.Kind.ToString().ToUpperInvariant()) + "  ·  " +
+                          UiStrings.Get(n.Lane == RunTreeLane.Weapon ? "tree.lane.weapon" : "tree.lane.body", n.Lane.ToString().ToUpperInvariant());
+            SetPips(!hearth && n.MaxTier > 1 && n.MaxTier <= 6 ? n.MaxTier : 0, n.OwnedTier);
+
+            _dName.text = n.DisplayName;
+            _dState.text = StateSentence(n);
+            _dState.color = UiTokens.Get(n.Status == RunTreeNodeStatus.Unaffordable ? UiColor.StateWarning
+                : n.InOffer && !IsOwned(n) ? UiColor.StateGold : UiColor.TextPrimary);
+            _dDesc.text = DescriptionOf(n);
+
+            bool buyable = n.Status == RunTreeNodeStatus.Available && (hearth || (n.InOffer && _shop != null && !_shop.IsLocked));
+            bool priced = n.Status != RunTreeNodeStatus.MaxTier && n.Status != RunTreeNodeStatus.Excluded && !(IsOwned(n) && n.MaxTier <= 1);
+            _dPrice.text = priced ? n.Cost.ToString(CultureInfo.InvariantCulture) + " GOLD" : string.Empty;
+            _buy.SetText(hearth ? UiStrings.Get("tree.action.stoke", "STOKE THE HEARTH") : "BUY");
+            _buy.SetInteractable(buyable);
+            _pin.SetText(n.IsPinned ? UiStrings.Get("tree.action.unpin", "UNPIN") : UiStrings.Get("tree.action.pin", "PIN"));
+            _pin.SetInteractable(n.IsPinned || (!IsOwned(n) && n.Status != RunTreeNodeStatus.Excluded && !hearth));
+            bool reforge = n.Kind == RunTreeNodeKind.Fork && IsOwned(n) && n.ReforgeCost >= 0;
+            _reforge.gameObject.SetActive(reforge);
+            if (reforge)
+            {
+                _reforge.SetText(UiStrings.Get("tree.action.reforge", "REFORGE") + " · " + n.ReforgeCost.ToString(CultureInfo.InvariantCulture));
+            }
+        }
+
+        private void SetPips(int count, int filled)
+        {
+            if (count != _dPipsCount)
+            {
+                if (_dPips != null)
+                {
+                    Destroy(_dPips.gameObject);
+                    _dPips = null;
+                }
+
+                _dPipsCount = count;
+                if (count > 0)
+                {
+                    _dPips = UiPips.Create("Pips", _dHead, count, 0);
+                    PlaceAnchored((RectTransform)_dPips.transform, new Vector2(0f, 0.5f), new Vector2(0f, 1f),
+                        new Vector2(_headSize + (int)UiSpace.L, -(int)UiSpace.XS), ((RectTransform)_dPips.transform).sizeDelta);
+                }
+            }
+
+            if (_dPips != null)
+            {
+                _dPips.Set(Mathf.Clamp(filled, 0, count), false);
+            }
+        }
+
+        private string DescriptionOf(RunTreeNodeView n)
+        {
+            string text = !string.IsNullOrEmpty(n.Description) ? n.Description
+                : n.HasBranch ? UpgradeCardCatalog.Describe(n.Branch, n.OwnedTier) : string.Empty;
+            string note = null;
+            if (n.Kind == RunTreeNodeKind.Hearth)
+            {
+                note = UiStrings.Get("tree.hearth.round", "{value} of {max} stokes this round")
+                    .Replace("{value}", _snap.HearthThisRound.ToString(CultureInfo.InvariantCulture))
+                    .Replace("{max}", _snap.HearthPerRound.ToString(CultureInfo.InvariantCulture));
+            }
+            else if (n.Kind == RunTreeNodeKind.Fork)
+            {
+                note = IsOwned(n) && n.ReforgeCost >= 0
+                    ? UiStrings.Get("tree.reforge.caption", "Swap this fork's side once per run. The new side is paid in full.")
+                    : UiStrings.Get("tree.fork.closed", "Taking one side closes the other for this run.");
+            }
+            else if (n.IsPinned && _snap.PinPathCount > 0)
+            {
+                note = UiStrings.Get("tree.path_total", "Path total {value} gold").Replace("{value}", _snap.PinPathTotalCost.ToString(CultureInfo.InvariantCulture));
+            }
+            else if (!IsOwned(n) && n.Status != RunTreeNodeStatus.Excluded)
+            {
+                note = UiStrings.Get("tree.pin.caption", "A pinned node comes in the next offer once it is reachable.");
+            }
+
+            if (string.IsNullOrEmpty(note))
+            {
+                return text;
+            }
+
+            string muted = "<color=#" + ColorUtility.ToHtmlStringRGB(UiTokens.Get(UiColor.TextMuted)) + ">" + note + "</color>";
+            return string.IsNullOrEmpty(text) ? muted : text + "\n" + muted;
+        }
+
+        private string StateSentence(RunTreeNodeView n)
+        {
+            switch (n.Status)
+            {
+                case RunTreeNodeStatus.Locked:
+                    switch (n.LockReason)
+                    {
+                        case RunTreeLockReason.NotOnThisWeapon: return UiStrings.Get("tree.lock.weapon", "Not a branch of the weapon you carry.");
+                        case RunTreeLockReason.NoSpecialYet: return UiStrings.Get("tree.lock.special", "Opens when you pick up a Special this run.");
+                        case RunTreeLockReason.EffectPending: return UiStrings.Get("tree.lock.pending", "Not in this build yet.");
+                        default: return UiStrings.Get("tree.lock.profile", "Earn it on the PATH first.");
+                    }
+
+                case RunTreeNodeStatus.Available:
+                    if (n.Kind == RunTreeNodeKind.Hearth || n.InOffer)
+                    {
+                        return _shop != null && _shop.IsLocked && n.Kind != RunTreeNodeKind.Hearth
+                            ? UiStrings.Get("tree.picks_used", "This round's picks are used.")
+                            : UiStrings.Get("tree.state.available", "AVAILABLE");
+                    }
+
+                    return UiStrings.Get("tree.flag.not_offered", "NOT IN THIS OFFER");
+                default:
+                    return StateWord(n);
+            }
+        }
+
+        // ================================================================== input
+
+        /// <summary>A seal took the focus (pad, keyboard, pointer): the detail card follows it.</summary>
+        public void OnNodeSelected(int slot)
+        {
+            int index = _views[slot].Index;
+            if (index >= 0 && index != _focus)
+            {
+                _focus = index;
+                ShowDetail(_focus);
+                LinkNavigation();
+            }
+        }
+
+        /// <summary>
+        /// Keyboard (PD §5.5): Q / E switch lanes, P pins the detailed node; right-click pins with the mouse. Polled by
+        /// the shop screen's own Update while the tree is up and no pause is over it (T6: no per-frame loop here).
+        /// </summary>
+        public void HandleKeys()
+        {
+            if (Input.GetKeyDown(KeyCode.Q))
+            {
+                SetLane(RunTreeLane.Weapon, true);
+            }
+            else if (Input.GetKeyDown(KeyCode.E))
+            {
+                SetLane(RunTreeLane.Body, true);
+            }
+            else if (Input.GetKeyDown(KeyCode.P))
+            {
+                OnPin();
+            }
+        }
+
+        /// <summary>Shows a lane (the tabs, Q / E, tests).</summary>
+        public void SetLane(RunTreeLane lane, bool focusNode)
+        {
+            if (lane == _lane || _shop == null)
+            {
+                return;
+            }
+
+            _lane = lane;
+            _focus = -1;
+            Refresh(_shop);
+            UiEvents.Raise(UiEvent.ChoiceSelected, "TreeLane");
+            Selectable target = FocusTarget();
+            if (focusNode && target != null)
+            {
+                UiInput.Focus(target);
+            }
+        }
+
+        /// <summary>Details a node (tests, and the seal's click); switches lanes when it lives in the other one.</summary>
+        public void FocusNode(int index)
+        {
+            if (index < 0 || index >= _snap.Count)
+            {
+                return;
+            }
+
+            _focus = index;
+            if (_snap.Nodes[index].Lane != _lane)
+            {
+                _lane = _snap.Nodes[index].Lane;
+                Refresh(_shop);
+                return;
+            }
+
+            ShowDetail(index);
+            LinkNavigation();
+        }
+
+        private void OnNodeActivated(int slot)
+        {
+            int index = _views[slot].Index;
+            if (index < 0)
+            {
+                return;
+            }
+
+            FocusNode(index);
+            if (_buy.IsInteractable())
+            {
+                UiInput.Focus(_buy);
+            }
+        }
+
+        /// <summary>Right-click pins (PD §5.5).</summary>
+        public void PinSlot(int slot)
+        {
+            if (_views[slot].Index >= 0)
+            {
+                FocusNode(_views[slot].Index);
+                OnPin();
+            }
+        }
+
+        /// <summary>BUY: the Hearth directly, a node through its card (a fork pair is one card), a tier through its branch card.</summary>
+        public void OnBuy()
+        {
+            if (_shop == null || _focus < 0 || _focus >= _snap.Count)
+            {
+                return;
+            }
+
+            RunTreeNodeView n = _snap.Nodes[_focus];
+            NodeView view = ViewOf(_focus);
+            if (n.Kind == RunTreeNodeKind.Hearth)
+            {
+                Report(_shop.TryStokeHearth(SessionId, Revision), view, true);
+                return;
+            }
+
+            int card = CardOf(_focus, n, out bool alternative);
+            if (card < 0)
+            {
+                Report(RunTreeCommandResult.NotAvailable, view, true);
+                return;
+            }
+
+            if (_shop.TryPurchase(card, SessionId, Revision, alternative))
+            {
+                Report(RunTreeCommandResult.Done, view, true);
+                return;
+            }
+
+            // A card refusal keeps the shop's own sentence (UpgradeScreen.DescribeRefusal): one wording per cause.
+            UiSound.Play(UiSoundKind.Denied);
+            if (view != null)
+            {
+                UiPresets.DeniedNudge(view.Seal);
+            }
+
+            Refused?.Invoke(DescribePurchase != null ? DescribePurchase(_shop.LastResult) : Refusal(RunTreeCommandResult.NotAvailable));
+        }
+
+        private int CardOf(int index, RunTreeNodeView n, out bool alternative)
+        {
+            alternative = false;
+            for (int i = 0; i < _shop.Cards.Count; i++)
+            {
+                UpgradeCardOffer card = _shop.Cards[i];
+                if (card.IsValid && card.IsNode && (card.NodeIndex == index || card.AltNodeIndex == index))
+                {
+                    alternative = card.AltNodeIndex == index;
+                    return i;
+                }
+            }
+
+            if (n.Kind == RunTreeNodeKind.Tier && n.HasBranch)
+            {
+                for (int i = 0; i < _shop.Cards.Count; i++)
+                {
+                    UpgradeCardOffer card = _shop.Cards[i];
+                    if (card.IsValid && (!card.IsNode || card.NodeKind == RunTreeNodeKind.Tier) && card.Branch == n.Branch)
+                    {
+                        return i;
+                    }
+                }
+            }
+
+            return -1;
+        }
+
+        public void OnPin()
+        {
+            if (_shop == null || _focus < 0 || _focus >= _snap.Count || !_pin.IsInteractable())
+            {
+                return;
+            }
+
+            RunTreeNodeView n = _snap.Nodes[_focus];
+            if (!_shop.SetPin(n.IsPinned ? null : n.NodeId))
+            {
+                Report(RunTreeCommandResult.NotAvailable, ViewOf(_focus), false);
+                return;
+            }
+
+            UiEvents.Raise(UiEvent.ChoiceSelected, n.IsPinned ? "TreeUnpin" : "TreePin");
+            Changed?.Invoke();
+        }
+
+        private void OnReforge()
+        {
+            if (_shop == null || _focus < 0 || _focus >= _snap.Count)
+            {
+                return;
+            }
+
+            Report(_shop.TryReforge(_snap.Nodes[_focus].NodeId, SessionId, Revision), ViewOf(_focus), true);
+        }
+
+        private void Report(RunTreeCommandResult result, NodeView view, bool purchase)
+        {
+            if (result == RunTreeCommandResult.Done)
+            {
+                if (purchase)
+                {
+                    UiEvents.Raise(UiEvent.UpgradePurchased);
+                }
+
+                Changed?.Invoke();
+                if (view != null && view.Index >= 0)
+                {
+                    UiPresets.StampIn(view.Seal);   // PD §5.4: the seal stamps
+                }
+
+                return;
+            }
+
+            UiSound.Play(UiSoundKind.Denied);
+            if (view != null)
+            {
+                UiPresets.DeniedNudge(view.Seal);
+            }
+
+            Refused?.Invoke(Refusal(result));
+        }
+
+        public static string Refusal(RunTreeCommandResult result)
+        {
+            switch (result)
+            {
+                case RunTreeCommandResult.InsufficientGold: return UiStrings.Get("tree.refuse.gold", "Not enough gold for that yet. Nothing was taken.");
+                case RunTreeCommandResult.LimitReached: return UiStrings.Get("tree.refuse.limit", "No more of that this round. Nothing was taken.");
+                case RunTreeCommandResult.NothingToUndo: return UiStrings.Get("tree.refuse.nothing_to_undo", "There is nothing to undo.");
+                case RunTreeCommandResult.UndoClosed: return UiStrings.Get("tree.refuse.undo_closed", "Undo has closed for this offer.");
+                case RunTreeCommandResult.AlreadyUsed: return UiStrings.Get("tree.refuse.reforge_used", "The run's one Reforge is spent.");
+                case RunTreeCommandResult.TooEarly: return UiStrings.Get("tree.refuse.reforge_early", "Reforge opens from round 5.");
+                case RunTreeCommandResult.NoRun: return UiStrings.Get("tree.refuse.no_run", "No run is in progress.");
+                default: return UiStrings.Get("tree.refuse.not_offered", "That is not for sale in this offer. Nothing was taken.");
+            }
+        }
+
+        private NodeView ViewOf(int index)
+        {
+            if (index < 0)
+            {
+                return null;
+            }
+
+            for (int s = 0; s < _views.Length; s++)
+            {
+                if (_views[s] != null && _views[s].Index == index)
+                {
+                    return _views[s];
+                }
+            }
+
+            return null;
+        }
+
+        // ================================================================== helpers
+
+        private static float LineOf(TMP_Text text)
+        {
+            return Mathf.Ceil(text.GetPreferredValues("Ag").y);
+        }
+
+        private static Color WithAlpha(Color c, float a)
+        {
+            c.a = a;
+            return c;
+        }
+
+        private static void PlaceAnchored(RectTransform rect, Vector2 anchor, Vector2 pivot, Vector2 at, Vector2 size)
+        {
+            rect.anchorMin = anchor;
+            rect.anchorMax = anchor;
+            rect.pivot = pivot;
+            rect.sizeDelta = size;
+            rect.anchoredPosition = at;
+        }
+
+        private static void PlaceTopLeft(RectTransform rect, float left, float top, float width, float height)
+        {
+            PlaceAnchored(rect, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(left, -top), new Vector2(width, height));
+        }
+
+        private static void Band(TMP_Text text, float left, float top, float height, TextAlignmentOptions alignment)
+        {
+            var rect = (RectTransform)text.transform;
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(1f, 1f);
+            rect.pivot = new Vector2(0.5f, 1f);
+            rect.offsetMin = new Vector2(left, -(top + height));
+            rect.offsetMax = new Vector2(0f, -top);
+            text.alignment = alignment;
+        }
+
+        private static void Dock(RectTransform rect, float top, float height)
+        {
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(1f, 1f);
+            rect.pivot = new Vector2(0.5f, 1f);
+            rect.offsetMin = new Vector2(0f, -(top + height));
+            rect.offsetMax = new Vector2(0f, -top);
+        }
+
+        private static void DockBottom(RectTransform rect, float bottom, float height)
+        {
+            rect.anchorMin = new Vector2(0f, 0f);
+            rect.anchorMax = new Vector2(1f, 0f);
+            rect.pivot = new Vector2(0.5f, 0f);
+            rect.offsetMin = new Vector2(0f, bottom);
+            rect.offsetMax = new Vector2(0f, bottom + height);
+        }
+    }
+
+    /// <summary>A seal's own input: the focus it takes drives the detail card, and a right-click pins it (PD §5.5).</summary>
+    public sealed class UiTreeNodeInput : MonoBehaviour, IPointerClickHandler, ISelectHandler
+    {
+        private UiRunTreePanel _panel;
+        private int _slot;
+
+        public void Configure(UiRunTreePanel panel, int slot)
+        {
+            _panel = panel;
+            _slot = slot;
+        }
+
+        public void OnSelect(BaseEventData eventData)
+        {
+            if (_panel != null)
+            {
+                _panel.OnNodeSelected(_slot);
+            }
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (eventData.button == PointerEventData.InputButton.Right && _panel != null)
+            {
+                _panel.PinSlot(_slot);
+            }
+        }
+    }
+}

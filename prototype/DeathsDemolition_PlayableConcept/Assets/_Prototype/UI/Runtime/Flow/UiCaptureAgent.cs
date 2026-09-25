@@ -562,6 +562,14 @@ namespace DD.Prototype.UI
                     yield break;
                 }
 
+                if (_screen == "tree")
+                {
+                    yield return TreeFrames();
+                    Debug.Log("[UiCapture] tree done");
+                    Application.Quit();
+                    yield break;
+                }
+
                 switch (_screen)
                 {
                     case "settings":
@@ -1291,6 +1299,196 @@ namespace DD.Prototype.UI
                 yield return new WaitForSecondsRealtime(0.4f);
                 yield return Frame(folder, "hud-slick");
                 RunHudScreen.CaptureSlick = false;
+            }
+
+            /// <summary>
+            /// WP-068 R1-C: <c>-ddUiCapture tree</c> - the in-run tree on the round-end shop with node cards on (WP-077
+            /// K10a), over four staged shops: round 1 mid Opening Beat, open, a focused offer, a purchase with UNDO LAST;
+            /// rounds 2-4 buy the offer (keystones and forks first) and stoke the Hearth once it opens, so OWNED, CLOSED BY,
+            /// the Hearth and a pinned path all reach a frame. The player is invulnerable; the rounds are completed by the
+            /// spawn director's debug path, so every shop is the real round-end flow.
+            /// </summary>
+            private IEnumerator TreeFrames()
+            {
+                string folder = Path.HasExtension(_out) ? (Path.GetDirectoryName(_out) ?? Application.persistentDataPath) : _out;
+                Directory.CreateDirectory(folder);
+                PrototypeUiFlow.GoToSelection();
+                yield return UiCaptureAgent.WaitScene(PrototypeScenes.Selection, 20f);
+                yield return WaitFor(() => !UiCurtain.IsCovering, 10f);
+                PrototypeUiFlow.StartRun();
+                yield return UiCaptureAgent.WaitScene(PrototypeScenes.Run, 30f);
+                yield return UiCaptureAgent.WaitRunLive(20f);
+                PlayerRig rig = PlayerRegistry.Primary;
+                if (rig != null && rig.Health != null)
+                {
+                    rig.Health.DiagnosisInvulnerable = true;
+                }
+
+                RunDirector run = RunDirector.Instance;
+                if (run == null || run.Shop == null || run.Wallet == null)
+                {
+                    Debug.LogWarning("[UiCapture] tree: no run");
+                    yield break;
+                }
+
+                run.Shop.NodeCardsOverride = true;
+                run.Wallet.DebugSet(3000);
+                bool hearthShot = false;
+                for (int round = 1; round <= 4; round++)
+                {
+                    yield return WaitFor(() => run.Phase == RunPhase.Fighting, 40f);
+                    yield return new WaitForSecondsRealtime(0.5f);
+                    DD.Prototype.Spawn.EnemySpawnDirector spawn = DD.Prototype.Spawn.EnemySpawnDirector.Instance;
+                    if (spawn == null || !spawn.DebugCompleteRound())
+                    {
+                        Debug.LogWarning("[UiCapture] tree: round " + round + " could not be completed");
+                        yield break;
+                    }
+
+                    yield return WaitFor(() => run.Phase == RunPhase.Upgrading, 30f);
+                    UiRunTreePanel tree = null;
+                    yield return WaitFor(() => (tree = FindObjectOfType<UiRunTreePanel>()) != null, 5f);
+                    if (tree == null)
+                    {
+                        Debug.LogWarning("[UiCapture] tree: no tree panel in round " + round);
+                        yield break;
+                    }
+
+                    if (round == 1)
+                    {
+                        yield return new WaitForSecondsRealtime(0.22f);
+                        yield return Frame(folder, "tree-r1-opening");
+                        yield return new WaitForSecondsRealtime(1.2f);
+                        yield return Frame(folder, "tree-r1-open");
+                    }
+
+                    for (int pick = 0; pick < 2; pick++)
+                    {
+                        int node = BestOffered(tree.Snapshot);
+                        if (node < 0 || run.Shop.IsLocked)
+                        {
+                            break;
+                        }
+
+                        tree.FocusNode(node);
+                        UiInput.Focus(tree.BuyButton);
+                        yield return new WaitForSecondsRealtime(0.35f);
+                        if (round == 1 && pick == 0)
+                        {
+                            yield return Frame(folder, "tree-r1-focus-offer");
+                        }
+
+                        tree.OnBuy();
+                        yield return new WaitForSecondsRealtime(0.2f);
+                        if (round == 1 && pick == 0)
+                        {
+                            yield return Frame(folder, "tree-r1-bought-undo");
+                        }
+                    }
+
+                    int hearth = tree.Snapshot.HearthIndex;
+                    if (hearth >= 0 && tree.Snapshot.Nodes[hearth].Status == RunTreeNodeStatus.Available)
+                    {
+                        tree.FocusNode(hearth);
+                        tree.OnBuy();
+                        yield return new WaitForSecondsRealtime(0.35f);
+                        if (!hearthShot)
+                        {
+                            hearthShot = true;
+                            yield return Frame(folder, "tree-hearth-stoked");
+                        }
+                    }
+
+                    if (round == 4)
+                    {
+                        tree.SetLane(RunTreeLane.Weapon, false);
+                        int pin = PinTarget(tree.Snapshot);
+                        if (pin >= 0)
+                        {
+                            tree.FocusNode(pin);
+                            tree.OnPin();
+                        }
+
+                        yield return new WaitForSecondsRealtime(0.4f);
+                        yield return Frame(folder, "tree-r4-weapon-pinned");
+                        int closed = FirstWith(tree.Snapshot, RunTreeNodeStatus.Excluded);
+                        if (closed >= 0)
+                        {
+                            tree.FocusNode(closed);
+                            yield return new WaitForSecondsRealtime(0.3f);
+                            yield return Frame(folder, "tree-r4-closed");
+                        }
+
+                        tree.SetLane(RunTreeLane.Body, false);
+                        yield return new WaitForSecondsRealtime(0.4f);
+                        yield return Frame(folder, "tree-r4-body");
+                    }
+
+                    run.CloseUpgradeScreen();
+                }
+            }
+
+            /// <summary>The offer's best buy for the staging: keystone, fork, capstone, then any affordable offered node.</summary>
+            private static int BestOffered(RunTreeSnapshot snap)
+            {
+                int best = -1;
+                int bestRank = int.MaxValue;
+                for (int i = 0; i < snap.Count; i++)
+                {
+                    RunTreeNodeView n = snap.Nodes[i];
+                    if (!n.InOffer || n.Status != RunTreeNodeStatus.Available)
+                    {
+                        continue;
+                    }
+
+                    int rank = n.Kind == RunTreeNodeKind.BranchKeystone ? 0 : n.Kind == RunTreeNodeKind.Fork ? 1 : n.Kind == RunTreeNodeKind.Capstone ? 2 : 3;
+                    if (rank < bestRank)
+                    {
+                        bestRank = rank;
+                        best = i;
+                    }
+                }
+
+                return best;
+            }
+
+            /// <summary>A weapon-lane node still out of reach (prefer the capstone) to pin, so the 4 px path shows.</summary>
+            private static int PinTarget(RunTreeSnapshot snap)
+            {
+                int fallback = -1;
+                for (int i = 0; i < snap.Count; i++)
+                {
+                    RunTreeNodeView n = snap.Nodes[i];
+                    if (n.Lane != RunTreeLane.Weapon || n.Status != RunTreeNodeStatus.PrereqMissing)
+                    {
+                        continue;
+                    }
+
+                    if (n.Kind == RunTreeNodeKind.Capstone)
+                    {
+                        return i;
+                    }
+
+                    if (fallback < 0)
+                    {
+                        fallback = i;
+                    }
+                }
+
+                return fallback;
+            }
+
+            private static int FirstWith(RunTreeSnapshot snap, RunTreeNodeStatus status)
+            {
+                for (int i = 0; i < snap.Count; i++)
+                {
+                    if (snap.Nodes[i].Status == status)
+                    {
+                        return i;
+                    }
+                }
+
+                return -1;
             }
 
             private static IEnumerator StagedSpecial(string folder, string name, Func<SpecialWeaponHudState, SpecialWeaponHudState> stage)

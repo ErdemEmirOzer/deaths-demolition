@@ -247,8 +247,9 @@ namespace DD.Prototype.Tests.EditMode
             // UiFxGlobals (slice 4): the Fx shader's gold-leaf global is StateGold; UiFxCaptureAgent:
             // capture-only Fx sample page (gold-leaf chips, sparks). WP-068 8b / 8-R / 8c: the HUD's own parts - HudReticle
             // (E15: Gold400 while a Special is live), RunHudScreen.Ink.cs (the ink HUD's gold readout) and UiWorldMarker
-            // (E14 / E21: the drop's marker).
-            { "StateGold", new[] { "RunHudScreen.cs", "RunHudScreen.Ink.cs", "HudReticle.cs", "UiWorldMarker.cs", "UpgradeScreen.cs", "ResultsViewModel.cs", "UiTokens.cs", "UiContrast.cs", "UiKitSheet.cs", "UiKitContrast.cs", "UiFxGlobals.cs", "UiFxCaptureAgent.cs" } },
+            // (E14 / E21: the drop's marker). WP-068 R1-C: UpgradeTree.cs - the shop's price and its OFFER ring / chip (what
+            // this offer sells for gold); PauseScreen.cs - the run-so-far strip's gold counter.
+            { "StateGold", new[] { "UpgradeTree.cs", "PauseScreen.cs", "RunHudScreen.cs", "RunHudScreen.Ink.cs", "HudReticle.cs", "UiWorldMarker.cs", "UpgradeScreen.cs", "ResultsViewModel.cs", "UiTokens.cs", "UiContrast.cs", "UiKitSheet.cs", "UiKitContrast.cs", "UiFxGlobals.cs", "UiFxCaptureAgent.cs" } },
             { "BarSpecial", new[] { "RunHudScreen.cs", "UiTokens.cs", "UiContrast.cs", "UiKitSheet.cs", "UiKitContrast.cs" } },
             { "GoldLeaf", new[] { "UiTokens.cs" } },
             // Vermilion = one primary CTA per screen/modal, heading tick, BUY pill, seal.

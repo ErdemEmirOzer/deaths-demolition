@@ -174,6 +174,10 @@ namespace DD.Prototype.UI
         private RectTransform _cardsHost;
         private float _cardsTop;
 
+        /// <summary>WP-068 R1-C: the in-run tree, shown instead of the card row while the shop draws node cards (WP-077 K10a).</summary>
+        private UiRunTreePanel _tree;
+        private UiButton _undoButton;
+
         private GameObject _emptyPanel;
         private TMP_Text _emptyTitle;
         private TMP_Text _emptyBody;
@@ -229,6 +233,7 @@ namespace DD.Prototype.UI
 
             BuildEmptyPanel();
             BuildFooter();
+            BuildTree();
             BuildCountdownStrip();
 
             Canvas.gameObject.SetActive(false);
@@ -740,6 +745,52 @@ namespace DD.Prototype.UI
             rect.pivot = new Vector2(1f, 0.5f);
             rect.sizeDelta = new Vector2(ContinueWidth, UiTokens.TargetPreferred);
             rect.anchoredPosition = Vector2.zero;
+
+            // WP-068 R1-C (WP-077 §2.5): UNDO LAST beside CONTINUE - it is about the offer, not a node. Full refund
+            // until the player continues; shown only while the shop offers it.
+            _undoButton = UiFactory.Button(
+                "Undo", footer, UiStrings.Get("tree.action.undo", "UNDO LAST"), UiButtonVariant.Secondary, OnUndoActivated);
+            RectTransform undo = (RectTransform)_undoButton.transform;
+            undo.anchorMin = new Vector2(1f, 0.5f);
+            undo.anchorMax = new Vector2(1f, 0.5f);
+            undo.pivot = new Vector2(1f, 0.5f);
+            undo.sizeDelta = new Vector2(UndoWidth, UiTokens.TargetPreferred);
+            undo.anchoredPosition = new Vector2(-(ContinueWidth + (int)UiSpace.M), 0f);
+            _undoButton.gameObject.SetActive(false);
+        }
+
+        private const float UndoWidth = 260f;
+
+        /// <summary>
+        /// WP-068 R1-C: the tree takes the card row's place (and its height, down to the footer). Built once, shown
+        /// only while <see cref="RoundUpgradeShop.NodeCardsActive"/>.
+        /// </summary>
+        private void BuildTree()
+        {
+            RectTransform host = UiFactory.NewRect("TreeHost", Content);
+            host.anchorMin = new Vector2(0f, 0f);
+            host.anchorMax = new Vector2(1f, 1f);
+            host.offsetMin = new Vector2(0f, UiTokens.TargetPreferred + (int)UiSpace.XL);
+            host.offsetMax = new Vector2(0f, -_cardsTop);
+            _tree = UiRunTreePanel.Create(host);
+            _tree.Refused = OnTreeRefused;
+            _tree.Changed = OnTreeChanged;
+            _tree.DescribePurchase = DescribeRefusal;
+            host.gameObject.SetActive(false);
+        }
+
+        private bool TreeMode
+        {
+            get { return _tree != null && _tree.transform.parent.gameObject.activeSelf; }
+        }
+
+        private void SetTreeMode(bool on)
+        {
+            GameObject host = _tree.transform.parent.gameObject;
+            if (host.activeSelf != on)
+            {
+                host.SetActive(on);
+            }
         }
 
         /// <summary>
@@ -824,6 +875,10 @@ namespace DD.Prototype.UI
 
             TickFade();
             GateForPause();
+            if (TreeMode && !UiNavigation.IsPaused)
+            {
+                _tree.HandleKeys();
+            }
 
             // Redraw only when the shop or the wallet said something changed. The F1
             // panel's own buy / give-gold buttons drive the same instances, so they land
@@ -859,6 +914,7 @@ namespace DD.Prototype.UI
             _notice = null;
             _fade = 0f;
             _panelGroup.alpha = 0f;
+            _tree.BeginOpening();
 
             // The session this screen belongs to. Every purchase from here quotes it, so a
             // button that somehow fires after the next round's screen opened is refused.
@@ -1000,6 +1056,18 @@ namespace DD.Prototype.UI
 
             int count = shop.Cards.Count;
 
+            // WP-068 R1-C: node cards on (WP-077 K10a) - the tree is the offer. It stays up with no card left too:
+            // the Hearth is bought outside the cards and the pin still plans the next offer.
+            if (shop.NodeCardsActive)
+            {
+                RefreshTree(shop, count);
+                return;
+            }
+
+            SetTreeMode(false);
+            _undoButton.gameObject.SetActive(false);
+            SetFooterNoteRoom(false);
+
             // EMPTY. Every branch is at its maximum tier, or the economy section offers
             // none. A finished sentence, and CONTINUE still works.
             if (count <= 0)
@@ -1046,6 +1114,132 @@ namespace DD.Prototype.UI
             RefreshReroll(shop);
             RefreshFooter(shop.Gold, shop.PurchasesThisRound);
             LinkNavigation(count);
+        }
+
+        private void RefreshTree(RoundUpgradeShop shop, int count)
+        {
+            for (int i = 0; i < _slots.Length; i++)
+            {
+                _slots[i].Button.gameObject.SetActive(false);
+            }
+
+            _emptyPanel.SetActive(false);
+            SetTreeMode(true);
+
+            int affordable = 0;
+            for (int i = 0; i < count; i++)
+            {
+                if (shop.CanAfford(i))
+                {
+                    affordable++;
+                }
+            }
+
+            _tree.SessionId = _sessionId;
+            _tree.Revision = _revision;
+            RefreshGoldStrip(shop, affordable, count);
+            RefreshReroll(shop);
+            bool undo = shop.UndoAvailable;
+            _undoButton.gameObject.SetActive(undo);
+            if (undo)
+            {
+                _undoButton.SetText(UiStrings.Get("tree.action.undo", "UNDO LAST") + " · +" + shop.UndoRefund);
+            }
+
+            RefreshFooter(shop.Gold, shop.PurchasesThisRound);
+            SetFooterNoteRoom(undo);
+            _tree.ExitDown = undo ? (Selectable)_undoButton : _continueButton;
+            _tree.ExitUp = _rerollButton != null && _rerollButton.IsInteractable() ? _rerollButton : null;
+            _treeWasLocked = shop.IsLocked;
+            _tree.Refresh(shop);
+            LinkTreeNavigation();
+        }
+
+        private bool _treeWasLocked;
+
+        /// <summary>The footer note gives UNDO its room while it shows.</summary>
+        private void SetFooterNoteRoom(bool undo)
+        {
+            var noteRect = (RectTransform)_footerNote.transform;
+            noteRect.offsetMax = new Vector2(-(ContinueWidth + (int)UiSpace.XL + (undo ? UndoWidth + (int)UiSpace.M : 0f)), 0f);
+        }
+
+        /// <summary>
+        /// Pad map in tree mode: the tree links its own nodes, tabs and detail buttons; REROLL (in the gold strip,
+        /// above the tabs) and UNDO / CONTINUE (in the footer, below) lead back to the detailed node.
+        /// </summary>
+        private void LinkTreeNavigation()
+        {
+            Selectable node = _tree.FocusTarget();
+            bool undo = _undoButton.gameObject.activeSelf;
+            if (_rerollButton != null)
+            {
+                Nav(_rerollButton, null, node, null, null);
+            }
+
+            if (undo)
+            {
+                Nav(_undoButton, node, null, null, _continueButton);
+            }
+
+            Nav(_continueButton, node, null, undo ? _undoButton : null, null);
+        }
+
+        private static void Nav(Selectable control, Selectable up, Selectable down, Selectable left, Selectable right)
+        {
+            control.navigation = new UnityEngine.UI.Navigation
+            {
+                mode = UnityEngine.UI.Navigation.Mode.Explicit,
+                selectOnUp = up,
+                selectOnDown = down,
+                selectOnLeft = left,
+                selectOnRight = right
+            };
+        }
+
+        private void OnTreeRefused(string sentence)
+        {
+            _notice = sentence;
+            RoundUpgradeShop shop = Shop;
+            RefreshFooter(shop != null ? shop.Gold : 0, shop != null ? shop.PurchasesThisRound : 0);
+        }
+
+        private void OnTreeChanged()
+        {
+            _notice = null;
+            RoundUpgradeShop shop = Shop;
+            if (shop != null && shop.IsLocked && !_treeWasLocked)
+            {
+                UiEvents.Raise(UiEvent.UpgradeOfferLocked);
+            }
+
+            // Synchronous, like a card purchase: the next input meets the new state.
+            _dirty = false;
+            Refresh();
+            EnsureFocus();
+        }
+
+        private void OnUndoActivated()
+        {
+            RoundUpgradeShop shop = Shop;
+            if (shop == null)
+            {
+                return;
+            }
+
+            RunTreeCommandResult result = shop.TryUndoLast(_sessionId, _revision);
+            if (result != RunTreeCommandResult.Done)
+            {
+                UiSound.Play(UiSoundKind.Denied);
+                OnTreeRefused(UiRunTreePanel.Refusal(result));
+                return;
+            }
+
+            UiEvents.Raise(UiEvent.ChoiceSelected, "TreeUndo");
+            _notice = null;
+            _dirty = false;
+            Refresh();
+            Focus(_tree.FocusTarget() ?? _continueButton);
         }
 
         /// <summary>
@@ -1399,6 +1593,9 @@ namespace DD.Prototype.UI
 
         private void ShowNotice(string title, string body)
         {
+            SetTreeMode(false);
+            _undoButton.gameObject.SetActive(false);
+            SetFooterNoteRoom(false);
             for (int i = 0; i < _slots.Length; i++)
             {
                 _slots[i].Button.gameObject.SetActive(false);
@@ -1555,6 +1752,12 @@ namespace DD.Prototype.UI
                 return;
             }
 
+            // WP-077 §2.5: undo lasts until CONTINUE.
+            if (Shop != null)
+            {
+                Shop.CloseUndo();
+            }
+
             RunDirector.Instance.CloseUpgradeScreen();
         }
 
@@ -1566,6 +1769,12 @@ namespace DD.Prototype.UI
         private void FocusFirstUsefulControl()
         {
             RoundUpgradeShop shop = Shop;
+
+            if (TreeMode && _tree.FocusTarget() != null)
+            {
+                Focus(_tree.FocusTarget());
+                return;
+            }
 
             if (shop != null && !shop.IsLocked)
             {

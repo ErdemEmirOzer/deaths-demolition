@@ -569,4 +569,44 @@ S-09 (R1-B, 25.09):
 
 
 S-09 (R1-B, 25.09, C-00 decision): the meta currency is **Ash** in `en` and **Kül** in `tr`. The UI shows English only, and the English-text test takes no exception. Every `en` value above that read "Kül" now reads "Ash"; `tr` is unchanged. A9 is superseded for `en`.
+## 9 · Tree screen (S-09, R1-C)
+
+| key | en | tr |
+| --- | --- | --- |
+| `tree.flag.offer` | OFFER | TEKLİF |
+| `tree.lock.profile` | Earn it on the PATH first. | Önce YOL'da kazan. |
+| `tree.lock.weapon` | Not a branch of the weapon you carry. | Taşıdığın silahın dalı değil. |
+| `tree.lock.special` | Opens when you pick up a Special this run. | Bu koşuda bir Special aldığında açılır. |
+| `tree.lock.pending` | Not in this build yet. | Bu sürümde henüz yok. |
+| `tree.picks_used` | This round's picks are used. | Bu round'un seçimleri kullanıldı. |
+| `tree.refuse.gold` | Not enough gold for that yet. Nothing was taken. | Bunun için altın henüz yetmiyor. Hiçbir şey alınmadı. |
+| `tree.refuse.limit` | No more of that this round. Nothing was taken. | Bu round bundan fazlası yok. Hiçbir şey alınmadı. |
+| `tree.refuse.not_offered` | That is not for sale in this offer. Nothing was taken. | Bu teklifte satılmıyor. Hiçbir şey alınmadı. |
+| `tree.refuse.nothing_to_undo` | There is nothing to undo. | Geri alınacak bir şey yok. |
+| `tree.refuse.undo_closed` | Undo has closed for this offer. | Bu teklif için geri alma kapandı. |
+| `tree.refuse.reforge_used` | The run's one Reforge is spent. | Koşunun tek Yeniden Dövme hakkı kullanıldı. |
+| `tree.refuse.reforge_early` | Reforge opens from round 5. | Yeniden Dövme 5. round'dan itibaren açılır. |
+| `tree.refuse.no_run` | No run is in progress. | Süren bir koşu yok. |
+
+S-09 (R1-C, 25.09):
+- The in-run tree screen (N14) marks the nodes this offer sells with an OFFER chip and a gold ring (`tree.flag.offer`); a node that is open but not offered reads `tree.flag.not_offered` in the detail card.
+- `tree.lock.*` is the detail card's sentence for a LOCKED node, one per RunTreeLockReason (ProfileLocked, NotOnThisWeapon, NoSpecialYet, EffectPending).
+- `tree.refuse.*` is the footer sentence when a tree command is refused (RunTreeCommandResult). A refused card purchase keeps the shop's existing sentence for its cause.
+
+## 10 · Pause · run so far (S-09, R1-C)
+
+| key | en | tr |
+| --- | --- | --- |
+| `pause.run.title` | RUN SO FAR | ŞU ANA KADAR |
+| `pause.run.round` | ROUND | ROUND |
+| `pause.run.time` | TIME | SÜRE |
+| `pause.run.kills` | KILLS | ÖLDÜRME |
+| `pause.run.gold` | GOLD | ALTIN |
+| `pause.run.upgrades` | UPGRADES | GELİŞTİRME |
+| `pause.run.build_none` | no upgrades | geliştirme yok |
+
+S-09 (R1-C, 25.09):
+- Direction E25's read-only strip on the Pause card: five value-over-label cells and the build line under them. The values come from the producers the HUD and Results already quote (RunEvents, the wallet, RunBuildState), so the three screens agree.
+- `pause.run.upgrades` counts the upgrades bought this run. The build line reads "WEAPON · build" and falls back to `pause.run.build_none`.
+
 <!-- TABLES:END -->
