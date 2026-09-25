@@ -6903,14 +6903,14 @@
     "W2_left_mm": 0.0,
     "W3_wrist_max": {
      "Right": [
-      4.9,
-      6.9,
-      9.5
+      8.1,
+      1.6,
+      0.6
      ],
      "Left": [
-      2.1,
-      10.3,
-      47.9
+      10.4,
+      4.4,
+      41.8
      ]
     },
     "W4_contract": "ok",
@@ -6919,22 +6919,23 @@
      1
     ],
     "W5_loop": null,
-    "W6_max_deg_per_f": 4.4,
+    "W6_max_deg_per_f": 3.6,
     "W6_at": [
      "LeftLowerArm",
      1
     ],
     "W6_grip_m_per_f": 0.015,
     "W7_hand_pen_mm": 0.0,
-    "W7_head_clear_m": 0.386,
+    "W7_head_clear_m": 0.414,
     "W8_bolt_end": [
      -0.0284,
      0.044,
      0.09
     ],
-    "W9_peak_deg": 4.43,
+    "W9_peak_deg": 3.61,
     "W9_end_vs_f0_deg": 0.0,
-    "W9_f0_vs_aim_deg": 0.52,
+    "W9_f0_vs_aim_deg": 0.55,
+    "W0_scene_fps": 30.0,
     "W11_fp_camera_still": [
      0.0,
      0.0
@@ -7030,14 +7031,14 @@
     "W2_left_mm": 0.0,
     "W3_wrist_max": {
      "Right": [
-      26.1,
-      10.9,
-      25.7
+      26.3,
+      13.2,
+      35.7
      ],
      "Left": [
-      53.7,
-      34.2,
-      70.8
+      49.4,
+      30.0,
+      58.4
      ]
     },
     "W4_contract": "ok",
@@ -7046,14 +7047,14 @@
      36
     ],
     "W5_loop": null,
-    "W6_max_deg_per_f": 27.2,
+    "W6_max_deg_per_f": 25.5,
     "W6_at": [
      "LeftHand",
      58
     ],
     "W6_grip_m_per_f": 0.025,
     "W7_hand_pen_mm": 0.0,
-    "W7_head_clear_m": 0.358,
+    "W7_head_clear_m": 0.354,
     "W8_mag_at_mag_in": [
      0.0,
      0.0141,
@@ -7064,8 +7065,9 @@
      0.044,
      0.09
     ],
-    "W10_start_deg": 0.52,
-    "W10_end_deg": 0.52,
+    "W10_start_deg": 0.55,
+    "W10_end_deg": 0.55,
+    "W0_scene_fps": 30.0,
     "W11_fp_camera_still": [
      0.0,
      0.0
@@ -7153,14 +7155,14 @@
     "W2_left_mm": 0.0,
     "W3_wrist_max": {
      "Right": [
-      26.6,
-      10.9,
-      25.7
+      26.3,
+      13.2,
+      35.7
      ],
      "Left": [
-      51.8,
-      32.1,
-      72.3
+      49.4,
+      22.5,
+      57.8
      ]
     },
     "W4_contract": "ok",
@@ -7169,14 +7171,14 @@
      16
     ],
     "W5_loop": null,
-    "W6_max_deg_per_f": 38.4,
+    "W6_max_deg_per_f": 30.9,
     "W6_at": [
-     "LeftHand",
-     32
+     "LeftLowerArm",
+     26
     ],
     "W6_grip_m_per_f": 0.022,
     "W7_hand_pen_mm": 0.0,
-    "W7_head_clear_m": 0.341,
+    "W7_head_clear_m": 0.334,
     "W8_mag_at_mag_in": [
      0.0,
      0.0141,
@@ -7187,8 +7189,9 @@
      0.044,
      0.09
     ],
-    "W10_start_deg": 0.52,
-    "W10_end_deg": 0.52,
+    "W10_start_deg": 0.55,
+    "W10_end_deg": 0.55,
+    "W0_scene_fps": 30.0,
     "W11_fp_camera_still": [
      0.0,
      0.0
@@ -7209,6 +7212,267 @@
     ]
    },
    "tp_twin": "AP022_tp_ar_1_reload_tac",
+   "fp_camera": "viewmodel anchor: still in every FP clip and identical across all of them (W11 0.000 mm / 0.000 deg); weapon keyed in its space"
+  },
+  {
+   "clip": "AP022_fp_ar_2_ads_idle",
+   "fbx": "AP022_fp_ar_2_ads_idle_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 61,
+   "fps": 30,
+   "seconds": 2.0,
+   "loop": true,
+   "events": [
+    {
+     "name": "breath",
+     "frame": 0
+    }
+   ],
+   "layer": "fp_base",
+   "mask": "FP viewmodel (arms + fingers + ik_*; fp_camera constant)",
+   "additive": false,
+   "additive_reference": null,
+   "class": "ar",
+   "weapon": "ar_2",
+   "shared_by": [
+    "ar_2"
+   ],
+   "action": "ads_idle",
+   "maps_to": "WP-071 clip list §3 #33",
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "validation": {
+    "W1_grip_mm": [
+     0.0,
+     0.0
+    ],
+    "W2_left_mm": 0.0,
+    "W3_wrist_max": {
+     "Right": [
+      30.3,
+      27.9,
+      4.8
+     ],
+     "Left": [
+      38.4,
+      16.4,
+      71.4
+     ]
+    },
+    "W4_contract": "ok",
+    "W7_head_at": [
+     "Right",
+     18
+    ],
+    "W5_loop": 0.0,
+    "W6_max_deg_per_f": 2.3,
+    "W6_at": [
+     "LeftHand",
+     60
+    ],
+    "W6_grip_m_per_f": 0.0,
+    "W7_hand_pen_mm": 0.0,
+    "W7_head_clear_m": 0.293,
+    "W8_bolt_end": [
+     -0.0355,
+     0.08,
+     0.222
+    ],
+    "W0_scene_fps": 30.0,
+    "W11_fp_camera_still": [
+     0.0,
+     0.0
+    ],
+    "W11_vs_first_clip": [
+     0.0,
+     0.0
+    ]
+   },
+   "result": "PASS",
+   "tp_twin": "AP022_tp_ar_2_ads_idle",
+   "fp_camera": "viewmodel anchor: still in every FP clip and identical across all of them (W11 0.000 mm / 0.000 deg); weapon keyed in its space"
+  },
+  {
+   "clip": "AP022_fp_ar_2_ads_in",
+   "fbx": "AP022_fp_ar_2_ads_in_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 8,
+   "fps": 30,
+   "seconds": 0.233,
+   "loop": false,
+   "events": [
+    {
+     "name": "ads_ready",
+     "frame": 7
+    }
+   ],
+   "layer": "fp_base",
+   "mask": "FP viewmodel (arms + fingers + ik_*; fp_camera constant)",
+   "additive": false,
+   "additive_reference": null,
+   "class": "ar",
+   "weapon": "ar_2",
+   "shared_by": [
+    "ar_2"
+   ],
+   "action": "ads_in",
+   "maps_to": "WP-071 clip list §3 #33",
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "validation": {
+    "W1_grip_mm": [
+     0.0,
+     0.0
+    ],
+    "W2_left_mm": 0.0,
+    "W3_wrist_max": {
+     "Right": [
+      30.1,
+      27.9,
+      9.9
+     ],
+     "Left": [
+      37.8,
+      16.5,
+      71.0
+     ]
+    },
+    "W4_contract": "ok",
+    "W7_head_at": [
+     "Right",
+     6
+    ],
+    "W5_loop": null,
+    "W6_max_deg_per_f": 14.2,
+    "W6_at": [
+     "RightLowerArm",
+     4
+    ],
+    "W6_grip_m_per_f": 0.084,
+    "W7_hand_pen_mm": 0.0,
+    "W7_head_clear_m": 0.293,
+    "W8_bolt_end": [
+     -0.0355,
+     0.08,
+     0.222
+    ],
+    "W10_start_deg": 0.69,
+    "W0_scene_fps": 30.0,
+    "W11_fp_camera_still": [
+     0.0,
+     0.0
+    ],
+    "W11_vs_first_clip": [
+     0.0,
+     0.0
+    ]
+   },
+   "result": "PASS",
+   "tp_twin": "AP022_tp_ar_2_ads_in",
+   "fp_camera": "viewmodel anchor: still in every FP clip and identical across all of them (W11 0.000 mm / 0.000 deg); weapon keyed in its space"
+  },
+  {
+   "clip": "AP022_fp_ar_2_ads_out",
+   "fbx": "AP022_fp_ar_2_ads_out_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 6,
+   "fps": 30,
+   "seconds": 0.167,
+   "loop": false,
+   "events": [],
+   "layer": "fp_base",
+   "mask": "FP viewmodel (arms + fingers + ik_*; fp_camera constant)",
+   "additive": false,
+   "additive_reference": null,
+   "class": "ar",
+   "weapon": "ar_2",
+   "shared_by": [
+    "ar_2"
+   ],
+   "action": "ads_out",
+   "maps_to": "WP-071 clip list §3 #33",
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "validation": {
+    "W1_grip_mm": [
+     0.0,
+     0.0
+    ],
+    "W2_left_mm": 0.0,
+    "W3_wrist_max": {
+     "Right": [
+      30.1,
+      27.9,
+      9.8
+     ],
+     "Left": [
+      37.8,
+      16.4,
+      71.0
+     ]
+    },
+    "W4_contract": "ok",
+    "W7_head_at": [
+     "Right",
+     0
+    ],
+    "W5_loop": null,
+    "W6_max_deg_per_f": 19.7,
+    "W6_at": [
+     "RightLowerArm",
+     3
+    ],
+    "W6_grip_m_per_f": 0.117,
+    "W7_hand_pen_mm": 0.0,
+    "W7_head_clear_m": 0.294,
+    "W8_bolt_end": [
+     -0.0355,
+     0.08,
+     0.222
+    ],
+    "W10_end_deg": 0.69,
+    "W0_scene_fps": 30.0,
+    "W11_fp_camera_still": [
+     0.0,
+     0.0
+    ],
+    "W11_vs_first_clip": [
+     0.0,
+     0.0
+    ]
+   },
+   "result": "PASS",
+   "tp_twin": "AP022_tp_ar_2_ads_out",
    "fp_camera": "viewmodel anchor: still in every FP clip and identical across all of them (W11 0.000 mm / 0.000 deg); weapon keyed in its space"
   },
   {
@@ -7260,14 +7524,14 @@
     "W2_left_mm": 0.0,
     "W3_wrist_max": {
      "Right": [
-      4.9,
-      9.0,
+      26.8,
+      15.5,
       9.5
      ],
      "Left": [
-      9.4,
-      13.1,
-      46.8
+      4.7,
+      8.5,
+      43.2
      ]
     },
     "W4_contract": "ok",
@@ -7276,22 +7540,23 @@
      4
     ],
     "W5_loop": null,
-    "W6_max_deg_per_f": 6.6,
+    "W6_max_deg_per_f": 5.0,
     "W6_at": [
      "LeftLowerArm",
      1
     ],
     "W6_grip_m_per_f": 0.018,
     "W7_hand_pen_mm": 0.0,
-    "W7_head_clear_m": 0.374,
+    "W7_head_clear_m": 0.417,
     "W8_bolt_end": [
      -0.0355,
      0.08,
      0.222
     ],
-    "W9_peak_deg": 9.95,
+    "W9_peak_deg": 8.01,
     "W9_end_vs_f0_deg": 0.0,
-    "W9_f0_vs_aim_deg": 0.23,
+    "W9_f0_vs_aim_deg": 0.69,
+    "W0_scene_fps": 30.0,
     "W11_fp_camera_still": [
      0.0,
      0.0
@@ -7313,6 +7578,153 @@
     ]
    },
    "tp_twin": "AP022_tp_ar_2_fire",
+   "fp_camera": "viewmodel anchor: still in every FP clip and identical across all of them (W11 0.000 mm / 0.000 deg); weapon keyed in its space"
+  },
+  {
+   "clip": "AP022_fp_ar_2_idle_aim",
+   "fbx": "AP022_fp_ar_2_idle_aim_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 121,
+   "fps": 30,
+   "seconds": 4.0,
+   "loop": true,
+   "events": [
+    {
+     "name": "breath",
+     "frame": 0
+    }
+   ],
+   "layer": "fp_base",
+   "mask": "FP viewmodel (arms + fingers + ik_*; fp_camera constant)",
+   "additive": false,
+   "additive_reference": null,
+   "class": "ar",
+   "weapon": "ar_2",
+   "shared_by": [
+    "ar_2"
+   ],
+   "action": "idle_aim",
+   "maps_to": "WP-071 clip list §3 #29",
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "validation": {
+    "W1_grip_mm": [
+     0.0,
+     0.0
+    ],
+    "W2_left_mm": 0.0,
+    "W3_wrist_max": {
+     "Right": [
+      26.9,
+      15.9,
+      9.7
+     ],
+     "Left": [
+      3.9,
+      8.9,
+      43.7
+     ]
+    },
+    "W4_contract": "ok",
+    "W7_head_at": [
+     "Right",
+     24
+    ],
+    "W5_loop": 0.0,
+    "W6_max_deg_per_f": 1.7,
+    "W6_at": [
+     "LeftUpperArm",
+     1
+    ],
+    "W6_grip_m_per_f": 0.0,
+    "W7_hand_pen_mm": 0.0,
+    "W7_head_clear_m": 0.441,
+    "W8_bolt_end": [
+     -0.0355,
+     0.08,
+     0.222
+    ],
+    "W0_scene_fps": 30.0,
+    "W13_fpview": {
+     "grip_rig": [
+      0.3849,
+      -0.2261,
+      0.5325
+     ],
+     "target": [
+      0.3834,
+      -0.2272,
+      0.5325
+     ],
+     "err_mm": 1.9,
+     "yaw_pitch_roll": [
+      -2.46,
+      1.63,
+      -0.23
+     ],
+     "err_deg": 0.23
+    },
+    "W11_fp_camera_still": [
+     0.0,
+     0.0
+    ],
+    "W11_vs_first_clip": [
+     0.0,
+     0.0
+    ]
+   },
+   "result": "PASS",
+   "hands_in_weapon_frame": {
+    "LeftHand": {
+     "model_blender_pos": [
+      0.0359,
+      -0.2998,
+      -0.0299
+     ],
+     "unity_pos": [
+      -0.0359,
+      -0.0299,
+      0.2998
+     ],
+     "unity_rot_of_bone_axes_xyzw": [
+      -0.2357,
+      -0.8946,
+      0.3689,
+      0.0897
+     ],
+     "note": "bone axes expressed in the Unity weapon frame; the Unity bone's own axis convention (FBX import) may add a constant — verify against the imported rig"
+    },
+    "socket_weapon_r": {
+     "model_blender_pos": [
+      0.0,
+      0.005,
+      -0.035
+     ],
+     "unity_pos": [
+      -0.0,
+      -0.035,
+      -0.005
+     ],
+     "unity_rot_of_bone_axes_xyzw": [
+      0.4518,
+      0.1691,
+      0.2769,
+      0.831
+     ],
+     "note": "bone axes expressed in the Unity weapon frame; the Unity bone's own axis convention (FBX import) may add a constant — verify against the imported rig"
+    }
+   },
+   "tp_twin": "AP022_tp_ar_2_idle_aim",
    "fp_camera": "viewmodel anchor: still in every FP clip and identical across all of them (W11 0.000 mm / 0.000 deg); weapon keyed in its space"
   },
   {
@@ -7388,14 +7800,14 @@
     "W2_left_mm": 0.0,
     "W3_wrist_max": {
      "Right": [
-      21.5,
-      9.1,
-      15.2
+      28.5,
+      27.3,
+      25.8
      ],
      "Left": [
-      54.7,
-      26.3,
-      83.2
+      55.2,
+      19.3,
+      58.0
      ]
     },
     "W4_contract": "ok",
@@ -7404,14 +7816,14 @@
      18
     ],
     "W5_loop": null,
-    "W6_max_deg_per_f": 35.1,
+    "W6_max_deg_per_f": 35.6,
     "W6_at": [
-     "LeftHand",
-     62
+     "LeftLowerArm",
+     22
     ],
     "W6_grip_m_per_f": 0.031,
     "W7_hand_pen_mm": 0.0,
-    "W7_head_clear_m": 0.292,
+    "W7_head_clear_m": 0.285,
     "W8_mag_at_mag_in": [
      0.0,
      0.026,
@@ -7422,11 +7834,12 @@
      0.08,
      0.222
     ],
-    "W10_start_deg": 0.23,
-    "W10_end_deg": 0.23,
+    "W10_start_deg": 0.69,
+    "W10_end_deg": 0.69,
+    "W0_scene_fps": 30.0,
     "W12_tip_above_top_m": [
-     -0.006,
-     56
+     -0.018,
+     52
     ],
     "W11_fp_camera_still": [
      0.0,
@@ -7516,14 +7929,14 @@
     "W2_left_mm": 0.0,
     "W3_wrist_max": {
      "Right": [
-      21.5,
-      9.1,
-      15.2
+      26.5,
+      27.3,
+      25.8
      ],
      "Left": [
-      49.1,
-      26.4,
-      72.3
+      47.6,
+      20.3,
+      48.2
      ]
     },
     "W4_contract": "ok",
@@ -7532,14 +7945,14 @@
      20
     ],
     "W5_loop": null,
-    "W6_max_deg_per_f": 37.4,
+    "W6_max_deg_per_f": 36.7,
     "W6_at": [
      "LeftLowerArm",
      31
     ],
     "W6_grip_m_per_f": 0.027,
     "W7_hand_pen_mm": 0.0,
-    "W7_head_clear_m": 0.291,
+    "W7_head_clear_m": 0.283,
     "W8_mag_at_mag_in": [
      0.0,
      0.026,
@@ -7550,8 +7963,9 @@
      0.08,
      0.222
     ],
-    "W10_start_deg": 0.23,
-    "W10_end_deg": 0.23,
+    "W10_start_deg": 0.69,
+    "W10_end_deg": 0.69,
+    "W0_scene_fps": 30.0,
     "W11_fp_camera_still": [
      0.0,
      0.0
@@ -7573,6 +7987,192 @@
     ]
    },
    "tp_twin": "AP022_tp_ar_2_reload_tac",
+   "fp_camera": "viewmodel anchor: still in every FP clip and identical across all of them (W11 0.000 mm / 0.000 deg); weapon keyed in its space"
+  },
+  {
+   "clip": "AP022_fp_ar_2_switch_in",
+   "fbx": "AP022_fp_ar_2_switch_in_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 14,
+   "fps": 30,
+   "seconds": 0.433,
+   "loop": false,
+   "events": [
+    {
+     "name": "lh_grab",
+     "frame": 8
+    },
+    {
+     "name": "switch_ready",
+     "frame": 12
+    }
+   ],
+   "layer": "fp_base",
+   "mask": "FP viewmodel (arms + fingers + ik_*; fp_camera constant)",
+   "additive": false,
+   "additive_reference": null,
+   "class": "ar",
+   "weapon": "ar_2",
+   "shared_by": [
+    "ar_2"
+   ],
+   "action": "switch_in",
+   "maps_to": "WP-071 clip list §3 #32",
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "validation": {
+    "W1_grip_mm": [
+     0.0,
+     0.0
+    ],
+    "W2_left_mm": 0.0,
+    "W3_wrist_max": {
+     "Right": [
+      41.2,
+      26.3,
+      34.7
+     ],
+     "Left": [
+      9.0,
+      36.2,
+      45.5
+     ]
+    },
+    "W4_contract": "ok",
+    "W7_head_at": [
+     "Right",
+     10
+    ],
+    "W5_loop": null,
+    "W6_max_deg_per_f": 39.5,
+    "W6_at": [
+     "LeftHand",
+     5
+    ],
+    "W6_grip_m_per_f": 0.13,
+    "W7_hand_pen_mm": 0.0,
+    "W7_head_clear_m": 0.433,
+    "W8_bolt_end": [
+     -0.0355,
+     0.08,
+     0.222
+    ],
+    "W10_end_deg": 0.69,
+    "W0_scene_fps": 30.0,
+    "W11_fp_camera_still": [
+     0.0,
+     0.0
+    ],
+    "W11_vs_first_clip": [
+     0.0,
+     0.0
+    ]
+   },
+   "result": "PASS",
+   "tp_twin": "AP022_tp_ar_2_switch_in",
+   "fp_camera": "viewmodel anchor: still in every FP clip and identical across all of them (W11 0.000 mm / 0.000 deg); weapon keyed in its space"
+  },
+  {
+   "clip": "AP022_fp_ar_2_switch_out",
+   "fbx": "AP022_fp_ar_2_switch_out_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 10,
+   "fps": 30,
+   "seconds": 0.3,
+   "loop": false,
+   "events": [
+    {
+     "name": "lh_release",
+     "frame": 1
+    },
+    {
+     "name": "switch_away",
+     "frame": 8
+    }
+   ],
+   "layer": "fp_base",
+   "mask": "FP viewmodel (arms + fingers + ik_*; fp_camera constant)",
+   "additive": false,
+   "additive_reference": null,
+   "class": "ar",
+   "weapon": "ar_2",
+   "shared_by": [
+    "ar_2"
+   ],
+   "action": "switch_out",
+   "maps_to": "WP-071 clip list §3 #32",
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "validation": {
+    "W1_grip_mm": [
+     0.0,
+     0.0
+    ],
+    "W2_left_mm": 0.0,
+    "W3_wrist_max": {
+     "Right": [
+      41.2,
+      26.3,
+      34.7
+     ],
+     "Left": [
+      9.4,
+      12.4,
+      44.9
+     ]
+    },
+    "W4_contract": "ok",
+    "W7_head_at": [
+     "Right",
+     0
+    ],
+    "W5_loop": null,
+    "W6_max_deg_per_f": 31.4,
+    "W6_at": [
+     "LeftHand",
+     4
+    ],
+    "W6_grip_m_per_f": 0.124,
+    "W7_hand_pen_mm": 0.0,
+    "W7_head_clear_m": 0.444,
+    "W8_bolt_end": [
+     -0.0355,
+     0.08,
+     0.222
+    ],
+    "W10_start_deg": 0.69,
+    "W0_scene_fps": 30.0,
+    "W11_fp_camera_still": [
+     0.0,
+     0.0
+    ],
+    "W11_vs_first_clip": [
+     0.0,
+     0.0
+    ]
+   },
+   "result": "PASS",
+   "tp_twin": "AP022_tp_ar_2_switch_out",
    "fp_camera": "viewmodel anchor: still in every FP clip and identical across all of them (W11 0.000 mm / 0.000 deg); weapon keyed in its space"
   },
   {
@@ -7621,35 +8221,36 @@
     "W2_left_mm": 0.0,
     "W3_wrist_max": {
      "Right": [
-      5.8,
-      8.1,
-      15.5
+      20.8,
+      25.6,
+      19.8
      ],
      "Left": [
-      17.5,
-      16.5,
-      55.7
+      20.1,
+      26.8,
+      74.9
      ]
     },
     "W4_contract": "ok",
     "W7_head_at": [
      "Right",
-     20
+     18
     ],
     "W5_loop": 0.0,
-    "W6_max_deg_per_f": 2.7,
+    "W6_max_deg_per_f": 1.0,
     "W6_at": [
-     "LeftHand",
-     1
+     "RightUpperArm",
+     30
     ],
     "W6_grip_m_per_f": 0.0,
     "W7_hand_pen_mm": 0.0,
-    "W7_head_clear_m": 0.353,
+    "W7_head_clear_m": 0.287,
     "W8_bolt_end": [
      -0.0284,
      0.044,
      0.09
     ],
+    "W0_scene_fps": 30.0,
     "W11_fp_camera_still": [
      0.0,
      0.0
@@ -7709,14 +8310,14 @@
     "W2_left_mm": 0.0,
     "W3_wrist_max": {
      "Right": [
-      5.5,
-      8.3,
-      15.4
+      20.3,
+      25.4,
+      19.4
      ],
      "Left": [
-      17.5,
-      16.5,
-      54.5
+      19.6,
+      26.8,
+      74.4
      ]
     },
     "W4_contract": "ok",
@@ -7725,20 +8326,21 @@
      7
     ],
     "W5_loop": null,
-    "W6_max_deg_per_f": 4.4,
+    "W6_max_deg_per_f": 9.7,
     "W6_at": [
-     "RightUpperArm",
+     "LeftLowerArm",
      4
     ],
-    "W6_grip_m_per_f": 0.03,
+    "W6_grip_m_per_f": 0.066,
     "W7_hand_pen_mm": 0.0,
-    "W7_head_clear_m": 0.353,
+    "W7_head_clear_m": 0.288,
     "W8_bolt_end": [
      -0.0284,
      0.044,
      0.09
     ],
-    "W10_start_deg": 0.52,
+    "W10_start_deg": 0.55,
+    "W0_scene_fps": 30.0,
     "W11_fp_camera_still": [
      0.0,
      0.0
@@ -7793,14 +8395,14 @@
     "W2_left_mm": 0.0,
     "W3_wrist_max": {
      "Right": [
-      5.5,
-      8.2,
-      15.4
+      20.3,
+      25.4,
+      20.0
      ],
      "Left": [
-      17.5,
-      16.5,
-      54.5
+      19.6,
+      27.0,
+      74.4
      ]
     },
     "W4_contract": "ok",
@@ -7809,20 +8411,21 @@
      0
     ],
     "W5_loop": null,
-    "W6_max_deg_per_f": 6.1,
+    "W6_max_deg_per_f": 13.5,
     "W6_at": [
-     "RightUpperArm",
+     "LeftLowerArm",
      3
     ],
-    "W6_grip_m_per_f": 0.042,
+    "W6_grip_m_per_f": 0.091,
     "W7_hand_pen_mm": 0.0,
-    "W7_head_clear_m": 0.353,
+    "W7_head_clear_m": 0.288,
     "W8_bolt_end": [
      -0.0284,
      0.044,
      0.09
     ],
-    "W10_end_deg": 0.52,
+    "W10_end_deg": 0.55,
+    "W0_scene_fps": 30.0,
     "W11_fp_camera_still": [
      0.0,
      0.0
@@ -7882,35 +8485,55 @@
     "W2_left_mm": 0.0,
     "W3_wrist_max": {
      "Right": [
-      5.1,
-      4.9,
-      9.8
+      8.4,
+      1.9,
+      1.0
      ],
      "Left": [
-      2.3,
-      8.0,
-      48.4
+      9.9,
+      2.2,
+      41.8
      ]
     },
     "W4_contract": "ok",
     "W7_head_at": [
      "Right",
-     32
+     24
     ],
     "W5_loop": 0.0,
-    "W6_max_deg_per_f": 2.7,
+    "W6_max_deg_per_f": 1.4,
     "W6_at": [
      "LeftHand",
      1
     ],
     "W6_grip_m_per_f": 0.0,
     "W7_hand_pen_mm": 0.0,
-    "W7_head_clear_m": 0.396,
+    "W7_head_clear_m": 0.426,
     "W8_bolt_end": [
      -0.0284,
      0.044,
      0.09
     ],
+    "W0_scene_fps": 30.0,
+    "W13_fpview": {
+     "grip_rig": [
+      0.3011,
+      -0.1772,
+      0.4162
+     ],
+     "target": [
+      0.2996,
+      -0.1784,
+      0.4162
+     ],
+     "err_mm": 1.9,
+     "yaw_pitch_roll": [
+      -1.89,
+      1.29,
+      -0.2
+     ],
+     "err_deg": 0.2
+    },
     "W11_fp_camera_still": [
      0.0,
      0.0
@@ -8015,13 +8638,13 @@
     "W3_wrist_max": {
      "Right": [
       13.2,
-      5.9,
+      14.5,
       32.1
      ],
      "Left": [
-      10.7,
-      12.3,
-      48.0
+      25.6,
+      21.1,
+      44.4
      ]
     },
     "W4_contract": "ok",
@@ -8030,20 +8653,21 @@
      10
     ],
     "W5_loop": null,
-    "W6_max_deg_per_f": 41.5,
+    "W6_max_deg_per_f": 37.8,
     "W6_at": [
-     "LeftUpperArm",
+     "LeftHand",
      5
     ],
-    "W6_grip_m_per_f": 0.105,
+    "W6_grip_m_per_f": 0.13,
     "W7_hand_pen_mm": 0.0,
-    "W7_head_clear_m": 0.389,
+    "W7_head_clear_m": 0.418,
     "W8_bolt_end": [
      -0.0284,
      0.044,
      0.09
     ],
-    "W10_end_deg": 0.52,
+    "W10_end_deg": 0.55,
+    "W0_scene_fps": 30.0,
     "W11_fp_camera_still": [
      0.0,
      0.0
@@ -8108,13 +8732,13 @@
     "W3_wrist_max": {
      "Right": [
       13.2,
-      8.7,
+      14.5,
       32.1
      ],
      "Left": [
-      10.7,
-      12.5,
-      48.9
+      20.3,
+      12.1,
+      43.7
      ]
     },
     "W4_contract": "ok",
@@ -8123,20 +8747,21 @@
      0
     ],
     "W5_loop": null,
-    "W6_max_deg_per_f": 29.9,
+    "W6_max_deg_per_f": 30.7,
     "W6_at": [
      "LeftUpperArm",
      3
     ],
-    "W6_grip_m_per_f": 0.088,
+    "W6_grip_m_per_f": 0.124,
     "W7_hand_pen_mm": 0.0,
-    "W7_head_clear_m": 0.398,
+    "W7_head_clear_m": 0.428,
     "W8_bolt_end": [
      -0.0284,
      0.044,
      0.09
     ],
-    "W10_start_deg": 0.52,
+    "W10_start_deg": 0.55,
+    "W0_scene_fps": 30.0,
     "W11_fp_camera_still": [
      0.0,
      0.0
@@ -8199,14 +8824,14 @@
     "W2_left_mm": 0.0,
     "W3_wrist_max": {
      "Right": [
-      5.4,
-      6.9,
-      12.6
+      8.5,
+      4.5,
+      4.1
      ],
      "Left": [
-      2.5,
-      9.3,
-      50.5
+      10.0,
+      4.1,
+      43.9
      ]
     },
     "W4_contract": "ok",
@@ -8215,22 +8840,23 @@
      10
     ],
     "W5_loop": 0.0,
-    "W6_max_deg_per_f": 4.1,
+    "W6_max_deg_per_f": 3.5,
     "W6_at": [
      "LeftUpperArm",
      1
     ],
     "W6_grip_m_per_f": 0.017,
     "W7_hand_pen_mm": 0.0,
-    "W7_head_clear_m": 0.383,
+    "W7_head_clear_m": 0.411,
     "W8_bolt_end": [
      -0.0284,
      0.044,
      0.09
     ],
-    "W9_peak_deg": 5.46,
+    "W9_peak_deg": 5.23,
     "W9_end_vs_f0_deg": 0.0,
-    "W9_f0_vs_aim_deg": 0.52,
+    "W9_f0_vs_aim_deg": 0.55,
+    "W0_scene_fps": 30.0,
     "W11_fp_camera_still": [
      0.0,
      0.0
@@ -8293,14 +8919,14 @@
     "W2_left_mm": 0.0,
     "W3_wrist_max": {
      "Right": [
-      2.5,
-      12.9,
-      10.9
+      10.9,
+      33.2,
+      16.4
      ],
      "Left": [
-      0.6,
-      11.4,
-      45.9
+      2.4,
+      2.8,
+      44.2
      ]
     },
     "W4_contract": "ok",
@@ -8309,22 +8935,23 @@
      1
     ],
     "W5_loop": null,
-    "W6_max_deg_per_f": 3.7,
+    "W6_max_deg_per_f": 3.2,
     "W6_at": [
      "LeftLowerArm",
      1
     ],
     "W6_grip_m_per_f": 0.01,
     "W7_hand_pen_mm": 0.0,
-    "W7_head_clear_m": 0.39,
+    "W7_head_clear_m": 0.328,
     "W8_bolt_end": [
      -0.0311,
      0.0576,
      -0.026
     ],
-    "W9_peak_deg": 3.66,
+    "W9_peak_deg": 3.22,
     "W9_end_vs_f0_deg": 0.0,
-    "W9_f0_vs_aim_deg": 0.48,
+    "W9_f0_vs_aim_deg": 0.55,
+    "W0_scene_fps": 30.0,
     "W11_fp_camera_still": [
      0.0,
      0.0
@@ -8421,14 +9048,14 @@
     "W2_left_mm": 0.0,
     "W3_wrist_max": {
      "Right": [
-      23.0,
-      12.4,
-      23.1
+      27.1,
+      32.1,
+      18.1
      ],
      "Left": [
-      60.1,
-      15.8,
-      59.5
+      60.2,
+      18.9,
+      70.7
      ]
     },
     "W4_contract": "ok",
@@ -8437,14 +9064,14 @@
      14
     ],
     "W5_loop": null,
-    "W6_max_deg_per_f": 27.8,
+    "W6_max_deg_per_f": 28.6,
     "W6_at": [
      "LeftHand",
      49
     ],
     "W6_grip_m_per_f": 0.015,
     "W7_hand_pen_mm": 0.0,
-    "W7_head_clear_m": 0.343,
+    "W7_head_clear_m": 0.288,
     "W8_mag_at_mag_in": [
      0.0,
      0.0065,
@@ -8455,8 +9082,9 @@
      0.0576,
      -0.026
     ],
-    "W10_start_deg": 0.48,
-    "W10_end_deg": 0.48,
+    "W10_start_deg": 0.55,
+    "W10_end_deg": 0.55,
+    "W0_scene_fps": 30.0,
     "W11_fp_camera_still": [
      0.0,
      0.0
@@ -8545,14 +9173,14 @@
     "W2_left_mm": 0.0,
     "W3_wrist_max": {
      "Right": [
-      23.0,
-      12.4,
-      23.1
+      27.8,
+      32.2,
+      18.2
      ],
      "Left": [
-      49.0,
-      20.1,
-      53.3
+      55.0,
+      24.4,
+      64.9
      ]
     },
     "W4_contract": "ok",
@@ -8561,14 +9189,14 @@
      34
     ],
     "W5_loop": null,
-    "W6_max_deg_per_f": 35.4,
+    "W6_max_deg_per_f": 33.6,
     "W6_at": [
      "LeftLowerArm",
      15
     ],
-    "W6_grip_m_per_f": 0.025,
+    "W6_grip_m_per_f": 0.024,
     "W7_hand_pen_mm": 0.0,
-    "W7_head_clear_m": 0.342,
+    "W7_head_clear_m": 0.287,
     "W8_mag_at_mag_in": [
      0.0,
      0.0065,
@@ -8579,8 +9207,9 @@
      0.0576,
      -0.026
     ],
-    "W10_start_deg": 0.48,
-    "W10_end_deg": 0.48,
+    "W10_start_deg": 0.55,
+    "W10_end_deg": 0.55,
+    "W0_scene_fps": 30.0,
     "W11_fp_camera_still": [
      0.0,
      0.0
@@ -8650,35 +9279,36 @@
     "W2_left_mm": 0.0,
     "W3_wrist_max": {
      "Right": [
-      9.1,
-      17.7,
-      19.1
+      15.1,
+      31.3,
+      39.7
      ],
      "Left": [
-      14.6,
-      8.5,
-      48.9
+      13.3,
+      14.0,
+      51.0
      ]
     },
     "W4_contract": "ok",
     "W7_head_at": [
      "Right",
-     20
+     18
     ],
     "W5_loop": 0.0,
     "W6_max_deg_per_f": 3.0,
     "W6_at": [
-     "LeftUpperArm",
+     "LeftHand",
      60
     ],
     "W6_grip_m_per_f": 0.0,
     "W7_hand_pen_mm": 0.0,
-    "W7_head_clear_m": 0.337,
+    "W7_head_clear_m": 0.284,
     "W8_bolt_end": [
      -0.0311,
      0.0576,
      -0.026
     ],
+    "W0_scene_fps": 30.0,
     "W11_fp_camera_still": [
      0.0,
      0.0
@@ -8732,20 +9362,20 @@
    "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
    "validation": {
     "W1_grip_mm": [
-     0.0,
+     0.001,
      0.0
     ],
     "W2_left_mm": 0.0,
     "W3_wrist_max": {
      "Right": [
-      8.4,
-      17.5,
-      19.1
+      14.7,
+      32.8,
+      38.8
      ],
      "Left": [
-      14.4,
-      11.3,
-      48.3
+      13.1,
+      13.9,
+      50.2
      ]
     },
     "W4_contract": "ok",
@@ -8754,20 +9384,21 @@
      5
     ],
     "W5_loop": null,
-    "W6_max_deg_per_f": 6.4,
+    "W6_max_deg_per_f": 8.6,
     "W6_at": [
      "RightUpperArm",
      3
     ],
-    "W6_grip_m_per_f": 0.042,
+    "W6_grip_m_per_f": 0.038,
     "W7_hand_pen_mm": 0.0,
-    "W7_head_clear_m": 0.337,
+    "W7_head_clear_m": 0.285,
     "W8_bolt_end": [
      -0.0311,
      0.0576,
      -0.026
     ],
-    "W10_start_deg": 0.48,
+    "W10_start_deg": 0.55,
+    "W0_scene_fps": 30.0,
     "W11_fp_camera_still": [
      0.0,
      0.0
@@ -8816,20 +9447,20 @@
    "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
    "validation": {
     "W1_grip_mm": [
-     0.0,
+     0.001,
      0.0
     ],
     "W2_left_mm": 0.0,
     "W3_wrist_max": {
      "Right": [
-      8.4,
-      17.5,
-      19.1
+      14.7,
+      32.9,
+      38.8
      ],
      "Left": [
-      14.4,
-      11.3,
-      48.3
+      13.1,
+      13.9,
+      50.2
      ]
     },
     "W4_contract": "ok",
@@ -8838,20 +9469,21 @@
      0
     ],
     "W5_loop": null,
-    "W6_max_deg_per_f": 7.4,
+    "W6_max_deg_per_f": 10.4,
     "W6_at": [
-     "LeftLowerArm",
-     3
+     "RightUpperArm",
+     2
     ],
-    "W6_grip_m_per_f": 0.049,
+    "W6_grip_m_per_f": 0.044,
     "W7_hand_pen_mm": 0.0,
-    "W7_head_clear_m": 0.337,
+    "W7_head_clear_m": 0.285,
     "W8_bolt_end": [
      -0.0311,
      0.0576,
      -0.026
     ],
-    "W10_end_deg": 0.48,
+    "W10_end_deg": 0.55,
+    "W0_scene_fps": 30.0,
     "W11_fp_camera_still": [
      0.0,
      0.0
@@ -8911,35 +9543,55 @@
     "W2_left_mm": 0.0,
     "W3_wrist_max": {
      "Right": [
-      2.8,
-      11.7,
-      11.2
+      11.0,
+      32.0,
+      16.8
      ],
      "Left": [
-      1.2,
-      11.8,
-      45.8
+      2.4,
+      3.3,
+      45.0
      ]
     },
     "W4_contract": "ok",
     "W7_head_at": [
      "Right",
-     32
+     30
     ],
     "W5_loop": 0.0,
-    "W6_max_deg_per_f": 2.4,
+    "W6_max_deg_per_f": 2.0,
     "W6_at": [
      "LeftHand",
      1
     ],
     "W6_grip_m_per_f": 0.0,
     "W7_hand_pen_mm": 0.0,
-    "W7_head_clear_m": 0.395,
+    "W7_head_clear_m": 0.334,
     "W8_bolt_end": [
      -0.0311,
      0.0576,
      -0.026
     ],
+    "W0_scene_fps": 30.0,
+    "W13_fpview": {
+     "grip_rig": [
+      0.1219,
+      -0.1481,
+      0.3007
+     ],
+     "target": [
+      0.1203,
+      -0.1492,
+      0.3008
+     ],
+     "err_mm": 1.9,
+     "yaw_pitch_roll": [
+      -0.74,
+      1.08,
+      -0.17
+     ],
+     "err_deg": 0.17
+    },
     "W11_fp_camera_still": [
      0.0,
      0.0
@@ -9043,14 +9695,14 @@
     "W2_left_mm": 0.0,
     "W3_wrist_max": {
      "Right": [
-      17.0,
-      12.6,
-      29.9
+      21.6,
+      33.4,
+      26.9
      ],
      "Left": [
-      18.9,
-      11.5,
-      45.9
+      5.0,
+      13.3,
+      46.5
      ]
     },
     "W4_contract": "ok",
@@ -9059,20 +9711,21 @@
      8
     ],
     "W5_loop": null,
-    "W6_max_deg_per_f": 45.6,
+    "W6_max_deg_per_f": 41.9,
     "W6_at": [
-     "LeftUpperArm",
+     "LeftHand",
      4
     ],
-    "W6_grip_m_per_f": 0.127,
+    "W6_grip_m_per_f": 0.125,
     "W7_hand_pen_mm": 0.0,
-    "W7_head_clear_m": 0.386,
+    "W7_head_clear_m": 0.324,
     "W8_bolt_end": [
      -0.0311,
      0.0576,
      -0.026
     ],
-    "W10_end_deg": 0.48,
+    "W10_end_deg": 0.55,
+    "W0_scene_fps": 30.0,
     "W11_fp_camera_still": [
      0.0,
      0.0
@@ -9136,14 +9789,14 @@
     "W2_left_mm": 0.0,
     "W3_wrist_max": {
      "Right": [
-      17.0,
-      13.9,
-      29.9
+      21.6,
+      31.6,
+      26.9
      ],
      "Left": [
-      18.9,
-      12.3,
-      47.8
+      7.8,
+      12.8,
+      45.5
      ]
     },
     "W4_contract": "ok",
@@ -9152,20 +9805,21 @@
      0
     ],
     "W5_loop": null,
-    "W6_max_deg_per_f": 36.4,
+    "W6_max_deg_per_f": 37.2,
     "W6_at": [
      "LeftUpperArm",
      2
     ],
-    "W6_grip_m_per_f": 0.107,
+    "W6_grip_m_per_f": 0.151,
     "W7_hand_pen_mm": 0.0,
-    "W7_head_clear_m": 0.398,
+    "W7_head_clear_m": 0.336,
     "W8_bolt_end": [
      -0.0311,
      0.0576,
      -0.026
     ],
-    "W10_start_deg": 0.48,
+    "W10_start_deg": 0.55,
+    "W0_scene_fps": 30.0,
     "W11_fp_camera_still": [
      0.0,
      0.0
@@ -9228,14 +9882,14 @@
     "W2_left_mm": 0.0,
     "W3_wrist_max": {
      "Right": [
-      5.1,
-      5.6,
-      10.8
+      8.3,
+      2.7,
+      2.0
      ],
      "Left": [
-      2.3,
-      8.4,
-      48.8
+      9.9,
+      2.8,
+      42.6
      ]
     },
     "W4_contract": "ok",
@@ -9244,22 +9898,23 @@
      10
     ],
     "W5_loop": 0.0,
-    "W6_max_deg_per_f": 3.0,
+    "W6_max_deg_per_f": 1.7,
     "W6_at": [
      "LeftUpperArm",
      1
     ],
     "W6_grip_m_per_f": 0.007,
     "W7_hand_pen_mm": 0.0,
-    "W7_head_clear_m": 0.392,
+    "W7_head_clear_m": 0.421,
     "W8_bolt_end": [
      -0.0284,
      0.044,
      0.09
     ],
-    "W9_peak_deg": 3.31,
+    "W9_peak_deg": 2.33,
     "W9_end_vs_f0_deg": 0.0,
-    "W9_f0_vs_aim_deg": 0.52,
+    "W9_f0_vs_aim_deg": 0.55,
+    "W0_scene_fps": 30.0,
     "W11_fp_camera_still": [
      0.0,
      0.0
@@ -9413,6 +10068,10 @@
     "AP022_fp_smg_switch_out",
     "AP022_fp_walk_sway"
    ]
+  },
+  "slice_5b": {
+   "package": "AP-022 slice 5b (P-06, 25.09) — FP arms on fpView (rest grip = fpView.position/scale, pitch/yaw, roll 0; W13 ≤ 1.9 mm / 0.23°), fp_camera offset constant per weapon set, ar_2 own idle/ADS/switch",
+   "fp_clips": 29
   }
  }
 }

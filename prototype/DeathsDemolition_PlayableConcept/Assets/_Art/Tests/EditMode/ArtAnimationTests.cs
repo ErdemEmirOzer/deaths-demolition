@@ -38,7 +38,7 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(C.ClipCount, m.Count);
             int player = 0, zombie = 0;
             foreach (var s in m.Values) { if (s.target == "player") player++; else if (s.target == "zombie") zombie++; }
-            Assert.AreEqual(86, player); Assert.AreEqual(57, zombie);   // WP-071: + AP-022 slice 1 (10) + slice 2a (3) + 4a/4b AR+SMG TP (21) + slice 5 FP (23)   // WP-032G: + sw_hold_jewel (AP-009G v007)   // WP-032C: v004 = 85 (weapon A/B/C ×5, sw hold ×2, pickup_upper, hurt ×2, death_side, lower/raise; tier hits ×12, armour breaks ×3, stumble, deaths ×4, rises ×2)
+            Assert.AreEqual(92, player); Assert.AreEqual(57, zombie);   // WP-071: + AP-022 slice 1 (10) + slice 2a (3) + 4a/4b AR+SMG TP (21) + slice 5/5b FP (29)   // WP-032G: + sw_hold_jewel (AP-009G v007)   // WP-032C: v004 = 85 (weapon A/B/C ×5, sw hold ×2, pickup_upper, hurt ×2, death_side, lower/raise; tier hits ×12, armour breaks ×3, stumble, deaths ×4, rises ×2)
             foreach (string name in C.PlayerClips) Assert.IsTrue(m.ContainsKey(name), name);
             foreach (string name in C.ZombieClips) Assert.IsTrue(m.ContainsKey(name), name);
             // Every manifest event name is in the contract table.
@@ -171,6 +171,7 @@ namespace DD.Art.Tests.EditMode
             Assert.IsNotNull(ArtAnimatorBuilder.FindState(fp, 1, C.FireV3State), "FP Fire_V3");
             Assert.AreEqual(3, set.FpWeaponSets.Count, "FP AOC ar_1 / ar_2 / smg_1");
             Assert.AreEqual(set.Clip("AP022_fp_smg_idle_aim"), set.FpWeaponSets[2].overrides[set.Clip("AP022_fp_ar_idle_aim")], "FP smg_1 sınıf slotu");
+            Assert.AreEqual(set.Clip("AP022_fp_ar_2_idle_aim"), set.FpWeaponSets[1].overrides[set.Clip("AP022_fp_ar_idle_aim")], "FP ar_2 kendi dinlenmesi (5b, silaha özel klip)");
             int rests = 6 + (v3 ? 1 : 0);
 
             Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 0, C.DeathState + "_0")); Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 0, C.DeathState + "_1"));
@@ -373,7 +374,7 @@ namespace DD.Art.Tests.EditMode
         {
             var player = AssetDatabase.LoadAssetAtPath<CharacterAnimationSet>(ArtCharacterPrefabBuilder.PlayerAnimationSet);
             var zombie = AssetDatabase.LoadAssetAtPath<CharacterAnimationSet>(ArtCharacterPrefabBuilder.ZombieAnimationSet);
-            Assert.AreEqual(86, player.Clips.Count); Assert.AreEqual(57, zombie.Clips.Count);   // WP-071 + AP-022 slice 1 + 2a + 4a/4b + 5   // WP-032C v004
+            Assert.AreEqual(92, player.Clips.Count); Assert.AreEqual(57, zombie.Clips.Count);   // WP-071 + AP-022 slice 1 + 2a + 4a/4b + 5/5b   // WP-032C v004
             Assert.AreEqual(ArtAnimationClipContract.ManifestSchema, player.ManifestSchema); Assert.AreEqual(ArtAnimationClipContract.ManifestSchema, zombie.ManifestSchema);
             var m = Manifest();
             foreach (var set in new[] { player, zombie })
