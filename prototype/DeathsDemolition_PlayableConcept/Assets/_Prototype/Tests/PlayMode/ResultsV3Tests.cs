@@ -68,6 +68,35 @@ namespace DD.Prototype.Tests.PlayMode
             yield return null;
             AssertFits(screen, "mac");
             AssertTitleClearsRibbon(screen, "mac");
+            AssertBlocksClearFooter(screen, "mac");
+        }
+
+        /// <summary>AD 12c MUST-4: the blocks grow into the band over the footer, never into it (MAIN MENU keeps its air).</summary>
+        private static void AssertBlocksClearFooter(ResultsScreen screen, string when)
+        {
+            RectTransform footer = null;
+            var blocks = new System.Collections.Generic.List<RectTransform>();
+            foreach (RectTransform rect in screen.GetComponentsInChildren<RectTransform>(false))
+            {
+                if (rect.name == "Footer")
+                {
+                    footer = rect;
+                }
+                else if (rect.name == "Report" || rect.name == "Rewards")
+                {
+                    blocks.Add(rect);
+                }
+            }
+
+            Assert.IsNotNull(footer, when + ": footer");
+            Assert.AreEqual(2, blocks.Count, when + ": the two blocks");
+            footer.GetWorldCorners(s_a);
+            float footerTop = s_a[1].y;
+            foreach (RectTransform block in blocks)
+            {
+                block.GetWorldCorners(s_b);
+                Assert.Greater(s_b[0].y, footerTop, when + ": " + block.name + " ends above the footer");
+            }
         }
 
         private static IEnumerator DieAndOpenResults(float uiScale, float textScale, string killer = "r1d-results")

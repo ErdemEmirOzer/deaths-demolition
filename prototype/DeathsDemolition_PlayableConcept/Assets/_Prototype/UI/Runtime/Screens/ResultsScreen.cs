@@ -100,7 +100,9 @@ namespace DD.Prototype.UI
             RectTransform rewards = Column("Rewards", ReportShare + 0.02f, 1f, top, FooterHeight);
             // E26: the blocks take their content's height (one height for both, capped by the room) - no empty card. The
             // reward cards are fitted against the same capped room, so none is ever clipped by the cap.
-            float room = Content.rect.height - top - FooterHeight - (int)UiSpace.XL;
+            // AD 12c MUST-4: the room runs to the footer's own band (one Primary tall) + XL - FooterHeight's spare 40 px had
+            // left ≈ 120 px unused over MAIN MENU at Mac while the first unlock card was dropped for room.
+            float room = Content.rect.height - top - UiTokens.TargetPreferred - (int)UiSpace.XL;
             float reportHeight = BuildReport(report);
             float rewardsHeight = BuildRewards(rewards, room);
 
@@ -307,10 +309,32 @@ namespace DD.Prototype.UI
             TMP_Text xpValue = UiFactory.Numeric("Total", xpRow, _model.TotalXp, UiType.NumericL, UiColor.TextPrimary, TextAnchor.MiddleRight, false);
             RectTransform valueRect = UiFactory.Fill((RectTransform)xpValue.transform);
             valueRect.offsetMax = new Vector2(-(unitWidth + (int)UiSpace.S), 0f);
+            // What must follow the breakdown (AD 12b MUST-1 / 12c MUST-4: the first card, its "and N more", the forward
+            // line - never traded for the breakdown): measured first, so the rows take what is left.
+            float rowBand = UiFactory.ScaledBand(32f);
+            float nextLine = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption));
+            float after = (_model.AshEarned > 0 ? (int)UiSpace.S + UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Label)) : 0f)
+                          + 2f * (int)UiSpace.M + UiTokens.StrokeHairline;
+            float entry = UiFactory.ScaledBand(RewardEntryHeight);
+            float more = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption));
+            int listed = _model.NewUnlocks.Count + _model.NewAchievements.Count;
+            float listFirst = listed == 0
+                ? UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Body))
+                : entry + (int)UiSpace.S + (listed > 1 ? more : 0f);
+            float levelBlock = (int)UiSpace.M + UiFactory.ScaledBand(UiFactory.LineHeight(UiType.H3)) + (int)UiSpace.S + 14f
+                               + (int)UiSpace.XS + UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption));
+            float forward = string.IsNullOrEmpty(_model.NextUnlockLine) ? 0f : nextLine;
+            float tail = levelBlock + forward + after + listFirst + 2f * (int)UiSpace.XL;
+            int rowsFit = Mathf.Max(0, Mathf.FloorToInt((blockRoom - stack.Cursor - tail) / rowBand));
             for (int i = 0; i < _model.XpBreakdown.Count; i++)
             {
+                if (!ShowsBreakdownRow(i, rowsFit))
+                {
+                    continue;
+                }
+
                 TMP_Text value = UiFactory.StatRow(_model.XpBreakdown[i].Label, _model.XpBreakdown[i].Value, host, _model.XpBreakdown[i].Color, UiType.Body, 120f);
-                stack.Add((RectTransform)value.transform.parent, UiFactory.ScaledBand(32f));
+                stack.Add((RectTransform)value.transform.parent, rowBand);
             }
 
             stack.Gap(UiSpace.M);
@@ -343,14 +367,7 @@ namespace DD.Prototype.UI
             TMP_Text barCaption = UiFactory.Label("BarCaption", host, _model.ProgressCaption, UiType.Caption, UiColor.TextSecondary);
             stack.Add((RectTransform)barCaption.transform, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption)));
             // E26's forward look (12b, AD R1-D SHOULD-1): what the next level brings - only while the list below still gets its
-            // first card (or its one line: the empty state, the "N new" summary) inside the block's room (AD 12b MUST-1).
-            float nextLine = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption));
-            float after = (_model.AshEarned > 0 ? (int)UiSpace.S + UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Label)) : 0f)
-                          + 2f * (int)UiSpace.M + UiTokens.StrokeHairline;
-            int listed = _model.NewUnlocks.Count + _model.NewAchievements.Count;
-            float listFirst = listed == 0
-                ? UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Body))
-                : UiFactory.ScaledBand(RewardEntryHeight) + (int)UiSpace.S;
+            // first card and its "and N more" (or its one line: the empty state) inside the block's room (AD 12b MUST-1).
             if (!string.IsNullOrEmpty(_model.NextUnlockLine)
                 && stack.Cursor + nextLine + after + listFirst + 2f * (int)UiSpace.XL <= blockRoom)
             {
@@ -371,8 +388,6 @@ namespace DD.Prototype.UI
             stack.Gap(UiSpace.M);
 
             // Unlocks first, then achievements, as many cards as the column holds (measured); the rest summarised.
-            float entry = UiFactory.ScaledBand(RewardEntryHeight);
-            float more = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption));
             float room = blockRoom - 2f * (int)UiSpace.XL - stack.Cursor;
             int total = _model.NewUnlocks.Count + _model.NewAchievements.Count;
             if (total == 0)
@@ -405,6 +420,50 @@ namespace DD.Prototype.UI
             }
 
             return stack.Cursor + 2f * (int)UiSpace.XL;
+        }
+
+        /// <summary>
+        /// AD 12c MUST-4: which XP breakdown rows print when only <paramref name="fit"/> of them fit - the rows that add
+        /// nothing ("+0") yield first, then the last rows; the total over them always prints.
+        /// </summary>
+        private bool ShowsBreakdownRow(int index, int fit)
+        {
+            List<UiStatLine> rows = _model.XpBreakdown;
+            if (fit >= rows.Count)
+            {
+                return true;
+            }
+
+            int kept = 0;
+            for (int i = 0; i < rows.Count; i++)
+            {
+                if (rows[i].Value == "+0")
+                {
+                    continue;
+                }
+
+                if (i == index)
+                {
+                    return kept < fit;
+                }
+
+                kept++;
+            }
+
+            if (rows[index].Value != "+0")
+            {
+                return false;
+            }
+
+            // Zero rows only in what is left after every row with a value.
+            int valued = kept;
+            int zeroBefore = 0;
+            for (int i = 0; i < index; i++)
+            {
+                zeroBefore += rows[i].Value == "+0" ? 1 : 0;
+            }
+
+            return valued + zeroBefore < fit;
         }
 
         private void AddReward(ref UiStack stack, RectTransform host, ProfileUnlockEntry entry, UiColor accent, bool achievement, float height)
