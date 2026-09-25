@@ -10,7 +10,10 @@ namespace DD.Prototype.UI
     {
         S = 0, // 560 × 264
         M = 1, // 640 × 340
-        L = 2  // 680 × 520
+        L = 2, // 680 × 520
+
+        /// <summary>WP-068 R1-C (AD R1-A SHOULD-3): the Pause panel - three CAMERA segments hold "THIRD PERSON" at TextScale 1.25.</summary>
+        XL = 3 // 760 × 680
     }
 
     /// <summary>
@@ -59,6 +62,7 @@ namespace DD.Prototype.UI
             {
                 case UiModalSize.S: return new Vector2(560f, 264f);
                 case UiModalSize.L: return new Vector2(680f, 520f);
+                case UiModalSize.XL: return new Vector2(760f, 680f);
                 default: return new Vector2(640f, 340f);
             }
         }
