@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using DD.Prototype.CameraSystem;
 using DD.Prototype.Core;
 using DD.Prototype.Core.Boot;
 using DD.Prototype.PlayerSystem;
@@ -104,6 +105,21 @@ namespace DD.Art.Tests.PlayMode
             return list.ToArray();
         }
 
+        /// <summary>WP-075 C7 · an optional 9th CSV column: the camera mode (td / tp / fp) the post follows for that pose.</summary>
+        public static bool ModeFor(string poseName, out CameraMode mode)
+        {
+            mode = CameraMode.TopDown;
+            string csv = Environment.GetEnvironmentVariable("DD_ART_CAPTURE_POSES");
+            if (string.IsNullOrEmpty(csv) || !File.Exists(csv)) return false;
+            foreach (string line in File.ReadAllLines(csv))
+            {
+                string[] f = line.Split(',');
+                if (f.Length >= 9 && f[0].Trim() == poseName) return CameraModeService.TryParseMode(f[8], out mode);
+            }
+
+            return false;
+        }
+
         public static string OutputDir()
         {
             string dir = Environment.GetEnvironmentVariable("DD_ART_CAPTURE_DIR");
@@ -145,6 +161,7 @@ namespace DD.Art.Tests.PlayMode
             foreach (ArtVisualRegression.CameraPose pose in PosesFor())
             {
                 int warm = 0;
+                CameraModeService.Request(ModeFor(pose.name, out CameraMode mode) ? mode : CameraMode.TopDown, true);
                 yield return ArtVisualRegression.WarmStreaming(pose, W, H, 90, f => warm = f);
                 Time.timeScale = 0f;
                 try
@@ -161,6 +178,7 @@ namespace DD.Art.Tests.PlayMode
             }
 
             Time.captureDeltaTime = 0f;
+            CameraModeService.Request(CameraMode.TopDown, true);
             File.WriteAllLines(Path.Combine(dir, "world-v3-manifest.csv"), manifest);
             Debug.Log("[DD-TEST] wp020.captures frames=" + PosesFor().Length + " instances=" + Ap005WorldBootstrap.Last.Instances + " -> " + dir);
             // The AP005 placement count; another scene (DD_ART_CAPTURE_SCENE: the v6 dev scene, dressed in-scene) has no placement instances.

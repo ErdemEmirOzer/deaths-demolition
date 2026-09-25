@@ -1,4 +1,6 @@
 using System;
+using DD.Prototype.CameraSystem;
+using DD.Prototype.Core;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -10,7 +12,7 @@ namespace DD.Art.Pipeline.EditorTools
     /// WP-075 C6 · The World v5 (v6 layout) look profile: DD_Look_v5 is DD_Overcast_v1 (its Neutral tonemap / grade / bloom / grain /
     /// vignette, copied once) with the colour lookup on LUT v2 "Islak Arduvaz, Açılma" (DD_Look_v2.png, WP-075 Ek A §6.1;
     /// wp-074/tools/build-look-v2.py, ΔE gate in DD_Look_v2.recipe.json). World_AP005 keeps DD_Overcast_v1 + LUT v1 until World v5
-    /// replaces it. The C7 post rules are written into this same profile.
+    /// replaces it. WP-075 C7: the post rules' Cinematic top-down baseline is written into this same profile (LookV3Post).
     /// </summary>
     public static class WorldV5Look
     {
@@ -31,7 +33,20 @@ namespace DD.Art.Pipeline.EditorTools
             lookup.texture.value = lut;
             lookup.contribution.overrideState = true;
             lookup.contribution.value = 1f;
-            EditorUtility.SetDirty(lookup);
+            // WP-075 C7: the post baseline the editor shows (Cinematic, top-down); LookV3Post re-applies by tier / camera mode at runtime.
+            LookV3Post.Write(profile, LookV3Post.RulesFor(QualityTier.Sinematik, CameraMode.TopDown), 10f);
+            foreach (VolumeComponent component in profile.components)
+            {
+                if (!AssetDatabase.Contains(component))
+                {
+                    component.name = component.GetType().Name;
+                    component.hideFlags = HideFlags.HideInInspector | HideFlags.HideInHierarchy;
+                    AssetDatabase.AddObjectToAsset(component, profile);
+                }
+
+                EditorUtility.SetDirty(component);
+            }
+
             EditorUtility.SetDirty(profile);
             return profile;
         }

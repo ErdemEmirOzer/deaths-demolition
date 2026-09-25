@@ -453,6 +453,42 @@ namespace DD.Art.Tests.EditMode
             Assert.IsFalse(importer.mipmapEnabled, "LUT mip yok");
         }
 
+        [Test]
+        public void Greybox_C7_PostKurallari_KademeVeKameraModu()
+        {
+            // Ek A §7 table: grain by tier, vignette by mode, DoF / camera blur only in Cinematic TP / FP.
+            LookV3Post.Rules td = LookV3Post.RulesFor(QualityTier.Sinematik, CameraMode.TopDown);
+            Assert.AreEqual(0.18f, td.Grain, 1e-4f);
+            Assert.AreEqual(0.24f, td.VignetteIntensity, 1e-4f);
+            Assert.AreEqual(0.40f, td.VignetteSmoothness, 1e-4f);
+            Assert.AreEqual(LookV3Post.DepthMode.Off, td.Depth);
+            Assert.AreEqual(0f, td.MotionBlur);
+            LookV3Post.Rules tp = LookV3Post.RulesFor(QualityTier.Sinematik, CameraMode.ThirdPerson);
+            Assert.AreEqual(LookV3Post.DepthMode.GaussianFar, tp.Depth);
+            Assert.AreEqual(0.22f, tp.VignetteIntensity, 1e-4f);
+            Assert.AreEqual(0.12f, tp.MotionBlur, 1e-4f);
+            Assert.AreEqual(LookV3Post.DepthMode.BokehAim, LookV3Post.RulesFor(QualityTier.Sinematik, CameraMode.FirstPerson).Depth);
+            LookV3Post.Rules high = LookV3Post.RulesFor(QualityTier.Yuksek, CameraMode.ThirdPerson);
+            Assert.AreEqual(0.10f, high.Grain, 1e-4f);
+            Assert.AreEqual(LookV3Post.DepthMode.Off, high.Depth);
+            Assert.AreEqual(0f, high.MotionBlur);
+            Assert.AreEqual(0f, LookV3Post.RulesFor(QualityTier.Performans, CameraMode.FirstPerson).Grain);
+
+            Open();
+            Assert.IsNotNull(GameObject.Find(WorldV5Dress.RootName).GetComponent<LookV3Post>(), "dress kökü LookV3Post taşır");
+            var profile = AssetDatabase.LoadAssetAtPath<UnityEngine.Rendering.VolumeProfile>(WorldV5Look.ProfilePath);
+            Assert.IsTrue(profile.TryGet(out UnityEngine.Rendering.Universal.Bloom bloom) && bloom.active);
+            Assert.AreEqual(1.10f, bloom.threshold.value, 1e-4f);
+            Assert.AreEqual(0.55f, bloom.intensity.value, 1e-4f);
+            Assert.AreEqual(0.68f, bloom.scatter.value, 1e-4f);
+            Assert.IsFalse(bloom.highQualityFiltering.value);
+            Assert.IsTrue(profile.TryGet(out UnityEngine.Rendering.Universal.FilmGrain grain) && grain.active);
+            Assert.AreEqual(0.18f, grain.intensity.value, 1e-4f);
+            Assert.IsTrue(profile.TryGet(out UnityEngine.Rendering.Universal.DepthOfField dof) && !dof.active, "taban tepeden: DoF kapalı");
+            foreach (UnityEngine.Rendering.VolumeComponent c in profile.components)
+                Assert.IsTrue(AssetDatabase.Contains(c), c.GetType().Name + " profil alt varlığı");
+        }
+
         private static int CountOf(string s, string token)
         {
             int n = 0;
