@@ -110,8 +110,9 @@ SBX="$OUT/profile-sandbox"; mkdir -p "$SBX"
 DEVFLAGS=(); [ "$MODE" = "dev" ] && DEVFLAGS=(-ddProfilePath "$SBX/prototype-profile.json")
 dd_log "smoke mode=$MODE profileSandbox=$([ "$MODE" = "dev" ] && echo yes || echo no)"
 
-trap 'dd_slot_release smoke' EXIT
+trap 'dd_slot_release player; dd_slot_release smoke' EXIT
 dd_slot_acquire smoke   # slot.sh v4 'smoke' kind (limit 1): only one player smoke at a time — release smokes write the real profile
+dd_slot_acquire player  # WP-043D: every Player launch holds the 'player' slot (never during main-ci)
 # 2) e1 main menu
 "$BIN" -screen-fullscreen 0 -ddTelemetryDir "$OUT/telemetry" -ddCapture "$OUT/e1-mainmenu-1280x720.png" -ddSize 1280x720 -ddDelay "$DELAY" "${DEVFLAGS[@]}" -logFile "$OUT/e1-player.log"
 E1=$?; E1X=$(grep -c 'Exception\|WITH FAILURES' "$OUT/e1-player.log" 2>/dev/null); E1X=${E1X:-0}

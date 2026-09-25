@@ -30,6 +30,10 @@ while [ $# -gt 0 ]; do case "$1" in
 SHA=$(git -C "$DD_REPO" rev-parse --verify "$REF^{commit}" 2>/dev/null) || { echo "unknown commit: $REF" >&2; exit 64; }
 # WP-043C: tools/compile-check.sh shares the checkout — wait (≤ 30 min) while one runs.
 for _ in $(seq 1 60); do pgrep -f "tools/compile-check.sh" >/dev/null || break; sleep 30; done
+# WP-043D: hold the single 'player' slot for the whole run — Player captures / bots share the audio device and
+# focus with the Editor PlayMode tests (a full-screen capture broke the UiV3 audio test); wrapped launches wait.
+trap 'dd_slot_release player' EXIT
+dd_slot_acquire player
 OUT="$OUT_ROOT/$SHA"; mkdir -p "$OUT"; DD_TIMELINE="$OUT/timeline.txt"
 export DD_SLOT_TAG="main-ci"
 dd_log "main-ci sha=$SHA ci=$CI_DIR out=$OUT"
