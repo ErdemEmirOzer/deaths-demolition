@@ -970,13 +970,13 @@ namespace DD.Art.Pipeline.EditorTools
                 var aoc = AssetDatabase.LoadAssetAtPath<AnimatorOverrideController>(path);
                 if (aoc == null) { aoc = new AnimatorOverrideController(c); AssetDatabase.CreateAsset(aoc, path); }
                 aoc.runtimeAnimatorController = c;
-                bool otherClass = C.WeaponClassOf(animSet) != C.WeaponClassOf(baseSet);
+                // FP: every slot may have a weapon-specific clip (AP022_fp_<set>_<slot>, e.g. ar_2's own rest on its fpView) over the class one
                 var pairs = new List<KeyValuePair<AnimationClip, AnimationClip>>();
-                foreach (string slot in otherClass ? ClassAndOwnSlots : C.WeaponOwnSlots)
+                foreach (string slot in ClassAndOwnSlots)
                 {
                     if (!clips.TryGetValue(C.PlayerFpClipV3(baseSet, slot), out AnimationClip from)) continue;
-                    clips.TryGetValue(C.PlayerFpClipV3(animSet, slot), out AnimationClip to);
-                    pairs.Add(new KeyValuePair<AnimationClip, AnimationClip>(from, animSet == baseSet ? null : to));
+                    AnimationClip to = FpClipFor(clips, animSet, slot);
+                    pairs.Add(new KeyValuePair<AnimationClip, AnimationClip>(from, to == null || to == from ? null : to));
                 }
 
                 aoc.ApplyOverrides(pairs);
@@ -988,6 +988,12 @@ namespace DD.Art.Pipeline.EditorTools
             set.ConfigureFirstPerson(c, sets);
             EditorUtility.SetDirty(set);
             Debug.Log(LogPrefix + "FP viewmodel controller: " + c.layers.Length + " layers, sets " + sets.Count);
+        }
+
+        private static AnimationClip FpClipFor(Dictionary<string, AnimationClip> clips, string animSet, string slot)
+        {
+            if (clips.TryGetValue("AP022_fp_" + animSet + "_" + slot, out AnimationClip own)) return own;
+            return clips.TryGetValue(C.PlayerFpClipV3(animSet, slot), out AnimationClip cls) ? cls : null;
         }
 
         private static readonly string[] ClassAndOwnSlots = { "idle_aim", "switch_in", "switch_out", "fire", "reload_tac", "reload_empty" };
