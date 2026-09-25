@@ -41,6 +41,7 @@ namespace DD.Prototype.Tests.PlayMode
 
             RunFlowClock.ClearHolds();
             DD.Prototype.CameraSystem.CameraModeService.ResetForTests();   // WP-069 T3 switches to FP
+            WeaponController.FirstPersonWeaponSocket = null;               // WP-069 × B4b hook
             if (SceneManager.GetActiveScene().name != PrototypeScenes.MainMenu)
             {
                 PrototypeUiFlow.GoToMainMenu();
@@ -456,6 +457,47 @@ namespace DD.Prototype.Tests.PlayMode
             public float Value() => _v;
             public float Range(float min, float max) => min + (max - min) * _v;
             public int Range(int min, int maxExclusive) => min;
+        }
+
+        /// <summary>
+        /// WP-069 × WP-071 B4b (C-00 25.09): with the FP arms' weapon socket set, the FP weapon follows it — its grip point
+        /// (gripOffset × the pose scale) on the socket, the socket's rotation, the pose scale — frame by frame; cleared,
+        /// the fpView pose places it again.
+        /// </summary>
+        [UnityTest]
+        [Timeout(120000)]
+        public IEnumerator FP_KolSoketi_SilahSoketiIzler_YoksaFpView()
+        {
+            yield return Kur();
+            Transform mount = _s.Rig.GetComponentInChildren<PlayerWeaponBinding>().WeaponMount;
+            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.FirstPerson, instant: true);
+            yield return SpecialWeaponSahne.Kareler(30);
+            Transform anchor = DD.Prototype.CameraSystem.CameraView.ViewmodelAnchor;
+            Assert.IsNotNull(anchor, "FP'de görüntü modeli çapası yok.");
+            WeaponDefinition def = _s.Controller.Classic.Definition;
+            WeaponFpViewPose pose = def.FpViewPose;
+            Transform rig = mount.Find("ClassicWeaponRig");
+
+            var socket = new GameObject("[FpArmsSocket]").transform;
+            socket.SetPositionAndRotation(anchor.TransformPoint(new Vector3(0.2f, -0.2f, 0.4f)), anchor.rotation * Quaternion.Euler(-5f, 10f, 3f));
+            WeaponController.FirstPersonWeaponSocket = socket;
+            yield return SpecialWeaponSahne.Kareler(3);
+            for (int step = 0; step < 2; step++)
+            {
+                Vector3 grip = rig.position + rig.rotation * (def.GripOffset * pose.scale);
+                Assert.Less(Vector3.Distance(grip, socket.position), 0.001f, "kavrama noktası kol soketinde değil (adım " + step + ")");
+                Assert.Less(Quaternion.Angle(rig.rotation, socket.rotation), 0.1f, "silah soketin dönüşünde değil (adım " + step + ")");
+                Assert.AreEqual(pose.scale, rig.localScale.x, 1e-4f, "poz ölçeği");
+                socket.position += anchor.right * 0.05f;   // the arms move (a reload): the weapon follows next frame
+                socket.rotation = socket.rotation * Quaternion.Euler(0f, 0f, 8f);
+                yield return SpecialWeaponSahne.Kareler(2);
+            }
+
+            WeaponController.FirstPersonWeaponSocket = null;
+            Object.Destroy(socket.gameObject);
+            yield return SpecialWeaponSahne.Kareler(3);
+            Assert.Less(Vector3.Distance(rig.position, anchor.TransformPoint(pose.position)), 0.01f, "kol soketi yokken fpView pozuna dönmedi");
+            Assert.IsTrue(_s.Controller.ClassicFpViewPosed);
         }
 
         private const int KareW = 1920, KareH = 1080;

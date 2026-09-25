@@ -1199,6 +1199,15 @@ namespace DD.Prototype.Weapons
         private readonly FpViewPoseState _classicFpPose = new FpViewPoseState();
         private readonly FpViewPoseState _specialFpPose = new FpViewPoseState();
 
+        /// <summary>
+        /// WP-069 × WP-071 B4b (C-00 25.09): the first-person arms' weapon socket while S-06's FirstPersonArms is active (it
+        /// sets this; null otherwise). With it the FP weapon follows the arms — root = socket − R·gripOffset (× the pose's
+        /// scale), R the socket's rotation, no added kick (the clip carries it); without it the fpView pose places the weapon.
+        /// fpView stays the authoring target and the single owner of FP placement: P-06's FP rest clip puts the weapon at the
+        /// fpView pose, and FP_GorusPozu gates the frame with the arms on too.
+        /// </summary>
+        public static Transform FirstPersonWeaponSocket { get; set; }
+
         /// <summary>WP-069 readout: the classic rig sits at its FP view pose this frame (tests).</summary>
         public bool ClassicFpViewPosed => _classicFpPose.Posed;
 
@@ -1257,6 +1266,16 @@ namespace DD.Prototype.Weapons
                 }
 
                 WeaponFpViewPose pose = definition.FpViewPose;
+                Transform armSocket = FirstPersonWeaponSocket;
+                if (armSocket != null && armSocket.gameObject.activeInHierarchy)
+                {
+                    Quaternion r = armSocket.rotation;
+                    t.SetPositionAndRotation(armSocket.position - r * (definition.GripOffset * pose.scale), r);
+                    t.localScale = new Vector3(pose.scale, pose.scale, pose.scale);
+                    _posed = true;
+                    return;
+                }
+
                 Quaternion kick = Quaternion.identity;
                 Vector3 forward = character.forward;
                 forward.y = 0f;
