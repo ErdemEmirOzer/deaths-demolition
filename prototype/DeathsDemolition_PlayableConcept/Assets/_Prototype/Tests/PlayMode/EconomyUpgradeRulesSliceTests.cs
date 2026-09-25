@@ -64,6 +64,7 @@ namespace DD.Prototype.Tests.PlayMode
         [SetUp]
         public void SetUp()
         {
+            RoundUpgradeShop.NodeCardsTestDefault = false;   // WP-077 K10: these slices test the classic card row
             _hatalar.Clear();
             RunFlowClock.ClearHolds();
             UiNavigation.Model.Clear();
@@ -92,6 +93,7 @@ namespace DD.Prototype.Tests.PlayMode
         [TearDown]
         public void TearDown()
         {
+            RoundUpgradeShop.NodeCardsTestDefault = null;
             Application.logMessageReceived -= HataTopla;
             Dec071KlonunuGeriAl();
             Time.captureDeltaTime = 0f;

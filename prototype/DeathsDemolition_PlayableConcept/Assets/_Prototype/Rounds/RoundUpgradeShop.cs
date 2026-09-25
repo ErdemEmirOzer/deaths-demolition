@@ -220,7 +220,17 @@ namespace DD.Prototype.Rounds
         public bool? NodeCardsOverride { get; set; }
 
         /// <summary>WP-077 K10: the offer sells in-run tree node cards instead of the classic branch cards.</summary>
-        public bool NodeCardsActive => NodeCardsOverride ?? (_config != null && _config.Economy != null && _config.Economy.RunTreeNodeCards);
+        public bool NodeCardsActive => NodeCardsOverride ?? NodeCardsTestDefault ?? (_config != null && _config.Economy != null && _config.Economy.RunTreeNodeCards);
+
+        /// <summary>
+        /// Tests: a default for every shop (a PlayMode slice's director is rebuilt on each scene load). The classic-card
+        /// slices pin it to false — they test the card row's contract (DEC-048 / DEC-050, the safe error state), which
+        /// the tree screen replaces when RunTreeNodeCards ships. Null = the config. Reset per domain.
+        /// </summary>
+        public static bool? NodeCardsTestDefault { get; set; }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetNodeCardsTestDefault() => NodeCardsTestDefault = null;
 
         /// <summary>WP-077 K10 "undo last purchase": this offer's last card / Hearth buy can be taken back in full (same screen, before CONTINUE).</summary>
         public bool UndoAvailable => IsOpen && Status == UpgradeOfferStatus.Ready && _last.Valid && _last.Session == SessionId && !_undoClosed;
