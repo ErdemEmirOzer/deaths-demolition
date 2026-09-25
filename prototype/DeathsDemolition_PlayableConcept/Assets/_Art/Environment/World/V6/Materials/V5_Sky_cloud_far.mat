@@ -32,7 +32,7 @@ Material:
     - _AlphaPower: 0.6
     - _Haze: 0.4
     m_Colors:
-    - _BaseColor: {r: 0.62, g: 0.66, b: 0.72, a: 1}
+    - _BaseColor: {r: 0.82, g: 0.85, b: 0.9, a: 1}
     - _HazeColor: {r: 0.815, g: 0.843, b: 0.87, a: 1}
     - _ScrollUV: {r: 0.003377189, g: 0.0026385495, b: 0, a: 0}
   m_BuildTextureStacks: []

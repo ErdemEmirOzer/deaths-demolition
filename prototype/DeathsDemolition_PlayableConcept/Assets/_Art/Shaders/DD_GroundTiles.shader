@@ -33,6 +33,10 @@ Shader "DD/GroundTiles"
         _PlanarDistortion("Planar distortion (normal)", Range(0, 0.1)) = 0.03
         _PlanarWet("Planar on wet stone (× Fresnel)", Range(0, 1)) = 0.35
         _PuddleDarken("Puddle albedo scale", Range(0.5, 1)) = 0.85
+        [Header(Overcast sky sheen DEC 101)]
+        _SkyReflColor("Sky sheen colour (linear; the overcast the wet stone mirrors)", Color) = (0, 0, 0, 1)
+        _SkyReflWet("Sky sheen on wet stone", Range(0, 1)) = 0
+        _SkyReflPuddle("Sky sheen in puddles", Range(0, 1)) = 0
         [HideInInspector] _Cull("__cull", Float) = 2.0
     }
 
@@ -71,6 +75,9 @@ Shader "DD/GroundTiles"
             half _PlanarStrength;
             half _PlanarDistortion;
             half _PlanarWet;
+            half4 _SkyReflColor;
+            half _SkyReflWet;
+            half _SkyReflPuddle;
             half _Cull;
         CBUFFER_END
 
@@ -243,6 +250,12 @@ Shader "DD/GroundTiles"
                     half w = saturate(max(puddle, _PlanarWet * wet) * lerp(fresnel, 1.0h, 0.5h * puddle)) * _PlanarStrength;
                     color.rgb = lerp(color.rgb, reflection * lerp(1.0h, _PuddleDarken, puddle), w);
                 }
+
+                // DEC-101 (C-00: puddles read as black blotches from the top-down camera; HF's courtyard glows with the overcast): a sky
+                // sheen the planar / probes may miss at steep angles — additive, Fresnel-weighted, never below the stone.
+                half ndvSky = saturate(dot(normalWS, inputData.viewDirectionWS));
+                half sheen = (wet * _SkyReflWet + puddle * _SkyReflPuddle) * lerp(0.6h, 1.0h, pow(1.0h - ndvSky, 3.0h));
+                color.rgb += _SkyReflColor.rgb * sheen;
 
                 color.rgb = MixFog(color.rgb, inputData.fogCoord);
                 color.a = 1.0h;

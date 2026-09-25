@@ -91,7 +91,7 @@ namespace DD.Prototype.World
         /// </summary>
         public static class Overcast
         {
-            public const float SunIntensityScale = 0.60f, SunShadowStrength = 0.55f, AmbientScale = 1.6f, FogEnd = 160f;
+            public const float SunIntensityScale = 0.60f, SunShadowStrength = 0.55f, AmbientScale = 1.6f, FogEnd = 185f;   // 160 greyed the 58–84 m forest (HF: dark green)
             public static bool Active => WorldLayout.Current == WorldLayoutKind.V6;
         }
 

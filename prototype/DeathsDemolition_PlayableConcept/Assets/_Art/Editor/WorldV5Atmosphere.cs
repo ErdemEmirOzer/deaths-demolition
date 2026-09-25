@@ -30,15 +30,15 @@ namespace DD.Art.Pipeline.EditorTools
 
         /// <summary>
         /// DEC-101 aerial perspective: mist sheets over the vista band outside the ring (58–90 m), two layers (y 3 m / 8 m), so the
-        /// sugi and the hills fade layer by layer like the HF frames (0.10 / 0.08: the near forest stays dark, the plates carry the haze). Outside the play area, so the ≤ 12 % local-fog rule (Ek A §5)
+        /// sugi and the hills fade layer by layer like the HF frames (0.06 / 0.04: the near forest stays dark and green like HF's pines, the plates carry the haze). Outside the play area, so the ≤ 12 % local-fog rule (Ek A §5)
         /// does not bind them; tiered 4 / 8 / 8.
         /// </summary>
         public static readonly (Vector2 at, Vector2 size, float y, float alpha)[] VistaMist =
         {
-            (new Vector2(0f, 74f), new Vector2(180f, 32f), 3f, 0.10f), (new Vector2(0f, -74f), new Vector2(180f, 32f), 3f, 0.10f),
-            (new Vector2(74f, 0f), new Vector2(32f, 116f), 3f, 0.10f), (new Vector2(-74f, 0f), new Vector2(32f, 116f), 3f, 0.10f),
-            (new Vector2(0f, 76f), new Vector2(180f, 28f), 8f, 0.08f), (new Vector2(0f, -76f), new Vector2(180f, 28f), 8f, 0.08f),
-            (new Vector2(76f, 0f), new Vector2(28f, 124f), 8f, 0.08f), (new Vector2(-76f, 0f), new Vector2(28f, 124f), 8f, 0.08f),
+            (new Vector2(0f, 74f), new Vector2(180f, 32f), 3f, 0.06f), (new Vector2(0f, -74f), new Vector2(180f, 32f), 3f, 0.06f),
+            (new Vector2(74f, 0f), new Vector2(32f, 116f), 3f, 0.06f), (new Vector2(-74f, 0f), new Vector2(32f, 116f), 3f, 0.06f),
+            (new Vector2(0f, 76f), new Vector2(180f, 28f), 8f, 0.04f), (new Vector2(0f, -76f), new Vector2(180f, 28f), 8f, 0.04f),
+            (new Vector2(76f, 0f), new Vector2(28f, 124f), 8f, 0.04f), (new Vector2(-76f, 0f), new Vector2(28f, 124f), 8f, 0.04f),
         };
         public const float CentreClear = 10f;
         public static string MeshFolder => GreyboxV6Builder.DataFolder + "/Atmosphere";

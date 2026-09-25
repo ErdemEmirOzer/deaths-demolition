@@ -45,17 +45,20 @@ Material:
     - _PlanarDistortion: 0.03
     - _PlanarStrength: 1
     - _PlanarWet: 0.35
-    - _PuddleDarken: 0.85
+    - _PuddleDarken: 1
     - _PuddleField: 0.56
-    - _PuddleFieldRamp: 0.06
+    - _PuddleFieldRamp: 0.1
     - _PuddleRamp: 0.15
     - _PuddleScale: 5.5
     - _PuddleSmoothness: 0.86
     - _PuddleThreshold: 0.45
+    - _SkyReflPuddle: 0.35
+    - _SkyReflWet: 0.1
     - _TilePuddle: 0
     - _WetAlbedo: 0.82
     - _WetSmoothness: 0.78
     - _Wetness: 1
     m_Colors:
     - _AlbedoTint: {r: 0.86, g: 1, b: 1.19, a: 1}
+    - _SkyReflColor: {r: 0.46, g: 0.5, b: 0.56, a: 1}
   m_BuildTextureStacks: []

@@ -77,6 +77,10 @@ namespace DD.Art.Pipeline.EditorTools
         /// <summary>AD S1 cool tint (linear, R/B ≈ 0.72 against the 4900 K sun and LUT v2's warm highlights; 0.64 overshot to 226° / s 0.29, 0.77 gave 206° / s 0.07).</summary>
         public static readonly Color AlbedoTint = new Color(0.86f, 1.00f, 1.19f, 1f);
 
+        /// <summary>DEC-101 sky sheen (linear): the bright overcast the courtyard mirrors (HF), added on wet stone (0.10) and in the
+        /// puddles (0.35, no puddle darkening, softer 0.10 edges) — the top-down camera's planar sees only the deck overhead.</summary>
+        public static readonly Color SkyReflColor = new Color(0.46f, 0.50f, 0.56f, 1f);
+
         public static readonly (string name, float value)[] MaterialValues =
         {
             // WP-075 AD S1: the slate read beige (hue ≈ 35°, V ≈ 0.70 in the sun) → value 2.5 → 2.0 with a cool tint (AlbedoTint), toward
@@ -85,8 +89,9 @@ namespace DD.Art.Pipeline.EditorTools
             // DEC-101 (HF: a mirror-wet courtyard under a bright overcast sky): the wet body 0.55 → 0.78, value 2.0 → 4.0 (C-00: slate under cloud V 0.30–0.38), puddles 0.72 → 0.86 and
             // larger (5.5 m, field 0.56 ≈ 40 % cover) — AD S1's ≤ 8 % specular area belonged to the sunny v3 key.
             ("_NormalStrength", 1f), ("_Occlusion", 1f), ("_Wetness", 1f), ("_WetAlbedo", 0.82f), ("_WetSmoothness", 0.78f),
-            ("_PuddleThreshold", 0.45f), ("_PuddleRamp", 0.15f), ("_PuddleSmoothness", 0.86f), ("_PuddleDarken", 0.85f), ("_TilePuddle", 0f),
-            ("_PuddleScale", 5.5f), ("_PuddleField", 0.56f), ("_PuddleFieldRamp", 0.06f), ("_AlbedoSaturation", 0.28f), ("_AlbedoValue", 4.0f),
+            ("_PuddleThreshold", 0.45f), ("_PuddleRamp", 0.15f), ("_PuddleSmoothness", 0.86f), ("_PuddleDarken", 1f), ("_TilePuddle", 0f),
+            ("_SkyReflWet", 0.10f), ("_SkyReflPuddle", 0.35f),
+            ("_PuddleScale", 5.5f), ("_PuddleField", 0.56f), ("_PuddleFieldRamp", 0.10f), ("_AlbedoSaturation", 0.28f), ("_AlbedoValue", 4.0f),
             ("_PlanarStrength", 1f), ("_PlanarDistortion", 0.03f), ("_PlanarWet", 0.35f),
         };
 
@@ -267,6 +272,7 @@ namespace DD.Art.Pipeline.EditorTools
             m.SetTexture("_MaskMap", Load(set, "Mask"));
             foreach ((string name, float value) in MaterialValues) m.SetFloat(name, value);
             m.SetColor("_AlbedoTint", AlbedoTint);
+            m.SetColor("_SkyReflColor", SkyReflColor);
             m.enableInstancing = true;
             EditorUtility.SetDirty(m);
             return m;
