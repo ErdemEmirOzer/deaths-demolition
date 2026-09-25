@@ -204,6 +204,13 @@ namespace DD.Prototype.UI
         private GameObject _specialCap;
         public const float SpecialCapWidth = 132f;   // AD R1-B SHOULD-1: the ring's baseline (= the ring's width)
         public const float SpecialCapHeight = 4f;
+
+        /// <summary>
+        /// WP-068 12b (AD R1-B SHOULD-1, the remainder): the time strip's track is Stone (TextMuted, Stone350) at this alpha
+        /// under the cream fill, so the remaining fraction reads against a denominator - the ammo ladder's spent-round
+        /// language - instead of a second cream. Both are the flat Solid sprite (square ends, not a brush).
+        /// </summary>
+        public const float SpecialCapTrackAlpha = 0.25f;
         public const float SpecialChargeSize = 108f;
         public const float SpecialGlyphSize = 64f;       // N19 §1.5: the E14 ring glyph
         public const float SpecialGlyphY = 22f;          // its centre above the ring's centre (spans -10 .. +54 inside r 58)
@@ -583,18 +590,18 @@ namespace DD.Prototype.UI
             _specialCharge.fillAmount = 0f;
             _specialCharge.enabled = false;
 
-            // The time cap (40 s / 45 s): secondary, so a thin strip under the ring - a cream ghost track and a cream fill
-            // that drains; the final seconds turn it coral with the ENDING word (colour never alone).
+            // The time cap (40 s / 45 s): secondary, so a thin strip under the ring - a Stone track (12b, AD R1-B SHOULD-1) and a
+            // cream fill that drains, flat-ended; the final seconds turn the fill coral with the ENDING word (colour never alone).
             RectTransform cap = UiFactory.NewRect("TimeCap", ringRoot);
             cap.anchorMin = new Vector2(0.5f, 0f);
             cap.anchorMax = new Vector2(0.5f, 0f);
             cap.pivot = new Vector2(0.5f, 1f);
             cap.sizeDelta = new Vector2(SpecialCapWidth, SpecialCapHeight);
             cap.anchoredPosition = new Vector2(0f, -(int)UiSpace.S);
-            Image capTrack = UiFactory.NewImage("Track", cap, UiColor.TextPrimary, UiSprites.Solid);
+            Image capTrack = UiFactory.NewImage("Track", cap, UiColor.TextMuted, UiSprites.Solid);
             UiFactory.Fill((RectTransform)capTrack.transform);
             Color capGhost = capTrack.color;
-            capGhost.a = SpecialRingGhost;
+            capGhost.a = SpecialCapTrackAlpha;
             capTrack.color = capGhost;
             _specialCapFill = UiFactory.NewImage("Fill", cap, UiColor.TextPrimary, UiSprites.Solid);
             UiFactory.Fill((RectTransform)_specialCapFill.transform);

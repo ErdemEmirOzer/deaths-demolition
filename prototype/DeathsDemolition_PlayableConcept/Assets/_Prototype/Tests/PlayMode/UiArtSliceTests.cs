@@ -337,6 +337,24 @@ namespace DD.Prototype.Tests.PlayMode
                 Assert.AreEqual("Ring.Progress132", ringFill.sprite != null ? ringFill.sprite.name : "yok", "Special halkası A4 Ring.Progress132");
                 Assert.IsTrue(ringFill.transform.parent.Find("Ticks").gameObject.activeInHierarchy, "aktifken mermi bölümleri görünür");
                 Assert.IsTrue(ringFill.transform.parent.Find("TimeCap").gameObject.activeInHierarchy, "süre tavanı şeridi görünür");
+                // WP-068 12b (AD R1-B SHOULD-1): a Stone track (TextMuted α 0.25) under the cream fill, both flat-ended (Solid).
+                {
+                    Image capTrack = ringFill.transform.parent.Find("TimeCap/Track").GetComponent<Image>();
+                    Image capCream = ringFill.transform.parent.Find("TimeCap/Fill").GetComponent<Image>();
+                    Color stone = UiTokens.Get(UiColor.TextMuted);
+                    Color cream = UiTokens.Get(UiColor.TextPrimary);
+                    Assert.AreEqual(stone.r, capTrack.color.r, 0.01f, "süre şeridi izi Stone (R)");
+                    Assert.AreEqual(stone.g, capTrack.color.g, 0.01f, "süre şeridi izi Stone (G)");
+                    Assert.AreEqual(stone.b, capTrack.color.b, 0.01f, "süre şeridi izi Stone (B)");
+                    Assert.AreEqual(RunHudScreen.SpecialCapTrackAlpha, capTrack.color.a, 0.01f, "Stone izi α 0,25");
+                    Assert.AreEqual(cream.r, capCream.color.r, 0.01f, "dolum krem");
+                    Assert.AreEqual(cream.b, capCream.color.b, 0.01f, "dolum krem");
+                    Assert.AreSame(UiSprites.Solid, capTrack.sprite, "iz düz uçlu (Solid, fırça değil)");
+                    Assert.AreEqual(Image.Type.Simple, capTrack.type, "iz düz uçlu");
+                    Assert.AreSame(UiSprites.Solid, capCream.sprite, "dolum düz uçlu (Solid, fırça değil)");
+                    Assert.AreEqual(Image.FillMethod.Horizontal, capCream.fillMethod, "dolum yatay boşalır, uçları kare");
+                }
+
                 float wipeStart = Time.realtimeSinceStartup;
                 while (Time.realtimeSinceStartup - wipeStart < 0.4f)
                 {
