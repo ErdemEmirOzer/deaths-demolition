@@ -6,6 +6,7 @@ using DD.Prototype.Core.Config;
 using DD.Prototype.Core.Weapons;
 using DD.Prototype.Damage;
 using DD.Prototype.Enemies;
+using DD.Prototype.PlayerSystem;
 using DD.Prototype.Weapons;
 using UnityEngine;
 
@@ -49,6 +50,7 @@ namespace DD.Prototype.Feedback.Vfx
             }
 
             yield return new WaitForSeconds(4f);
+            if (PlayerRegistry.Primary != null) PlayerRegistry.Primary.Health.DiagnosisInvulnerable = true;   // evidence only: the 21 s puddle outlives a death
             _mode = CameraModeService.Current == CameraMode.FirstPerson ? "fp" : CameraModeService.Current == CameraMode.ThirdPerson ? "tp" : "topdown";
             ArcSystem arc = ArcSystem.Instance;
             GelSystem gel = GelSystem.Instance;
