@@ -342,11 +342,20 @@ namespace DD.Prototype.UI
             stack.Gap(UiSpace.XS);
             TMP_Text barCaption = UiFactory.Label("BarCaption", host, _model.ProgressCaption, UiType.Caption, UiColor.TextSecondary);
             stack.Add((RectTransform)barCaption.transform, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption)));
-            if (!string.IsNullOrEmpty(_model.NextUnlockLine))
+            // E26's forward look (12b, AD R1-D SHOULD-1): what the next level brings - only while the list below still gets its
+            // first card (or its one line: the empty state, the "N new" summary) inside the block's room (AD 12b MUST-1).
+            float nextLine = UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption));
+            float after = (_model.AshEarned > 0 ? (int)UiSpace.S + UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Label)) : 0f)
+                          + 2f * (int)UiSpace.M + UiTokens.StrokeHairline;
+            int listed = _model.NewUnlocks.Count + _model.NewAchievements.Count;
+            float listFirst = listed == 0
+                ? UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Body))
+                : UiFactory.ScaledBand(RewardEntryHeight) + (int)UiSpace.S;
+            if (!string.IsNullOrEmpty(_model.NextUnlockLine)
+                && stack.Cursor + nextLine + after + listFirst + 2f * (int)UiSpace.XL <= blockRoom)
             {
-                // E26's forward look (12b, AD R1-D SHOULD-1): what the next level brings, in the empty state too.
                 TMP_Text next = UiFactory.Label("NextUnlock", host, _model.NextUnlockLine, UiType.Caption, UiColor.TextSecondary);
-                stack.Add((RectTransform)next.transform, UiFactory.ScaledBand(UiFactory.LineHeight(UiType.Caption)));
+                stack.Add((RectTransform)next.transform, nextLine);
             }
 
             if (_model.AshEarned > 0)
@@ -377,7 +386,7 @@ namespace DD.Prototype.UI
             int shown = 0;
             for (int i = 0; i < _model.NewUnlocks.Count && shown < fits; i++, shown++)
             {
-                AddReward(ref stack, host, _model.NewUnlocks[i], UiColor.AccentSakura, false, entry);
+                AddReward(ref stack, host, _model.NewUnlocks[i], UiColor.TextSecondary, false, entry);   // 12b MUST-2: cream frame
             }
 
             for (int i = 0; i < _model.NewAchievements.Count && shown < fits; i++, shown++)
@@ -416,15 +425,19 @@ namespace DD.Prototype.UI
         /// </summary>
         private RectTransform BuildRewardEntry(RectTransform host, ProfileUnlockEntry entry, UiColor accent)
         {
+            // AD 12b MUST-2 (§2.1): an unlock card is a cream hairline frame with a TextPrimary name and its glyph in the
+            // content's own tint (a weapon's identity tint); sakura is the NEW chip's alone. Achievements keep their state tint.
+            bool achievement = accent == UiColor.StateSuccess;
+            UiColor nameColour = achievement ? accent : UiColor.TextPrimary;
             RectTransform card = UiFactory.Card("Reward", host, accent, UiColor.SurfaceRaised);
             RectTransform content = UiFactory.ClipContent(UiFactory.CardContent(card, UiSpace.M));
 
             float markSize = RewardEntryHeight - (int)UiSpace.M * 2;
             string typeLabel = string.Empty;
-            Sprite markSprite = accent == UiColor.StateSuccess
+            Sprite markSprite = achievement
                 ? UiArt.Medal(_model.MedalFor(entry.Title))
                 : _model.UnlockSpriteFor(entry.Title, out typeLabel);
-            Image mark = UiFactory.NewImage("Mark", content, accent, markSprite);
+            Image mark = UiFactory.NewImage("Mark", content, achievement ? accent : _model.UnlockTintFor(entry.Title), markSprite);
             mark.preserveAspect = true;
             var markRect = (RectTransform)mark.transform;
             markRect.anchorMin = new Vector2(0f, 0.5f);
@@ -444,7 +457,7 @@ namespace DD.Prototype.UI
                 }
             }
 
-            TMP_Text title = UiFactory.Label("Title", content, UiFactory.Clip(titleText, 32), UiType.BodyStrong, accent, TextAnchor.LowerLeft);
+            TMP_Text title = UiFactory.Label("Title", content, UiFactory.Clip(titleText, 32), UiType.BodyStrong, nameColour, TextAnchor.LowerLeft);
             RectTransform titleRect = UiFactory.Fill((RectTransform)title.transform);
             titleRect.offsetMin = new Vector2(textLeft, UiFactory.ScaledBand(RewardDetailBand));
             titleRect.offsetMax = new Vector2(-64f, 0f);

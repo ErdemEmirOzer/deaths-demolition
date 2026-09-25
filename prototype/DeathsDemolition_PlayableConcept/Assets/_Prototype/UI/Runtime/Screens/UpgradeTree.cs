@@ -720,6 +720,12 @@ namespace DD.Prototype.UI
                 // Compact rows carry OFFER and the owned count in the word (no room for chips beside the words).
                 string counted = count ? n.OwnedTier + "/" + n.MaxTier + " · " : string.Empty;
                 word = counted + word;
+                if (!forSale && n.Status == RunTreeNodeStatus.Available && v.State.GetPreferredValues(word).x > v.State.rectTransform.rect.width)
+                {
+                    // AD 12b MUST-3: a word that would wrap yields its state word ("2/4 · 120") - the price never sits alone on a
+                    // line (the solid ring already says AVAILABLE).
+                    word = counted + n.Cost.ToString(CultureInfo.InvariantCulture);
+                }
                 if (forSale)
                 {
                     // An offered node that can be bought reads "OFFER · 15" (or "OFFER · 2/4 · 15"): the price never sits

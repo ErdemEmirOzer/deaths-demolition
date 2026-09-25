@@ -179,7 +179,10 @@ namespace DD.Prototype.UI
             {
                 case UnlockContentType.Weapon:
                     typeLabel = "WEAPON";
-                    return UiArt.Icon("Weapon." + glyph.Id) ?? UiArt.Medal(UiMedal.Rare);
+                    // 12b (AD 12b MUST-2): the weapon's own N19 glyph - the unlock id is the v3 weapon id ("smg_2") or the
+                    // runtime name; the medal only when neither resolves.
+                    ClassicWeaponId weapon;
+                    return TryWeapon(glyph.Id, out weapon) ? UiArt.WeaponIcon(weapon) ?? UiArt.Medal(UiMedal.Rare) : UiArt.Medal(UiMedal.Rare);
                 case UnlockContentType.Branch:
                     typeLabel = "BRANCH";
                     return UiArt.Icon("Upgrade." + glyph.Id) ?? UiArt.Medal(UiMedal.Rare);
@@ -266,6 +269,29 @@ namespace DD.Prototype.UI
                 ? UiStrings.Get("results.next_unlock_one", "Next unlock: {name} at level {level} · 1 level away")
                 : UiStrings.Get("results.next_unlock", "Next unlock: {name} at level {level} · {away} levels away").Replace("{away}", away.ToString());
             return line.Replace("{name}", name).Replace("{level}", best.ToString());
+        }
+
+        /// <summary>12b (AD 12b MUST-2): the tint an unlock's glyph wears - a weapon's identity tint, cream otherwise.</summary>
+        public UiColor UnlockTintFor(string title)
+        {
+            UnlockGlyph glyph;
+            ClassicWeaponId weapon;
+            if (title != null && UnlockTypes.TryGetValue(title, out glyph) && glyph.Type == UnlockContentType.Weapon && TryWeapon(glyph.Id, out weapon))
+            {
+                return UiGlyphTints.Weapon(weapon);
+            }
+
+            return UiColor.TextPrimary;
+        }
+
+        private static bool TryWeapon(string id, out ClassicWeaponId weapon)
+        {
+            if (!string.IsNullOrEmpty(id) && DD.Prototype.Core.Weapons.WeaponIdMigration.TryGetRuntimeId(id, out weapon))
+            {
+                return true;
+            }
+
+            return Enum.TryParse(id ?? string.Empty, out weapon);
         }
 
         public UiMedal MedalFor(string achievementTitle)
