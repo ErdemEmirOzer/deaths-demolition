@@ -131,6 +131,99 @@ namespace DD.Prototype.Tests.PlayMode
             Debug.Log("[DD-TEST] wp069.t3.fp-lod " + string.Join(" | ", report));
         }
 
+        /// <summary>
+        /// WP-069 (C-00 25.09) · the first-person view pose: with every classic in hand in FP the rig sits at its
+        /// definition's <see cref="WeaponFpViewPose"/>, and the frame at 1080p rest (viewmodel layer, the viewmodel
+        /// camera's projection incl. S-01's screen transform) meets the target — 40–90 k px, the silhouette's centre in
+        /// the lower-right quadrant, the barrel toward the screen centre (≤ 30°), not one pixel in the S-09 HUD weapon
+        /// cluster (bottom-right 420×150 + 24 px). Leaving FP puts the rig back on the hand. The ten frames go on one sheet.
+        /// </summary>
+        [UnityTest]
+        [Timeout(180000)]
+        public IEnumerator FP_GorusPozu_OnSilah_KadrajBandinda()
+        {
+            yield return Kur();
+            var binding = _s.Rig.GetComponentInChildren<PlayerWeaponBinding>();
+            Transform mount = binding.WeaponMount;
+            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.FirstPerson, instant: true);
+            yield return SpecialWeaponSahne.Kareler(60);
+            var camRig = DD.Prototype.CameraSystem.PrototypeCameraRig.Active;
+            Assert.IsNotNull(camRig, "kamera rig'i yok");
+            Camera vm = camRig.ViewmodelCamera;
+            Assert.IsNotNull(vm, "FP'de görüntü modeli kamerası yok.");
+            camRig.Camera.aspect = KareW / (float)KareH;
+            vm.aspect = KareW / (float)KareH;
+
+            const int ClusterW = 420 + 24, ClusterH = 150 + 24, Kucuk = 4;
+            int sw = KareW / Kucuk, sh = KareH / Kucuk;
+            var sheet = new Color32[sw * 5 * sh * 2];
+            var report = new List<string>();
+            var wrong = new List<string>();
+            int n = 0;
+            foreach (ClassicWeaponDefinition d in WeaponRoster.Enabled)
+            {
+                _s.Controller.EquipClassic(d.Id, _s.Config);
+                yield return SpecialWeaponSahne.Kareler(20);
+                Assert.IsTrue(_s.Controller.ClassicFpViewPosed, d.RosterKey + ": FP görüş pozuna oturmadı.");
+                Transform rig = mount.Find("ClassicWeaponRig");
+                Color32[] px = VmKare(vm, null);
+                int cov = 0, cluster = 0;
+                long sx = 0, sy = 0;
+                for (int i = 0; i < px.Length; i++)
+                {
+                    if (!(px[i].r < 240 || px[i].g > 15 || px[i].b < 240)) continue;
+                    int u = i % KareW, v = i / KareW;   // row 0 = bottom
+                    cov++; sx += u; sy += v;
+                    if (u >= KareW - ClusterW && v < ClusterH) cluster++;
+                }
+
+                float cx = cov > 0 ? sx / (float)cov : 0f, cy = cov > 0 ? sy / (float)cov : 0f;
+                Vector2 grip = Ekran(vm, rig.position), muzzle = Ekran(vm, _s.Controller.Muzzle.position);
+                float angle = Vector2.Angle(muzzle - grip, new Vector2(KareW * 0.5f, KareH * 0.5f) - grip);
+                string line = d.RosterKey + " cov " + cov + " px, centre (" + cx.ToString("0") + "," + (KareH - cy).ToString("0") + " from top), barrel→centre " + angle.ToString("0") + "°, HUD " + cluster + " px";
+                report.Add(line);
+                if (cov < 40000 || cov > 90000 || cx <= KareW * 0.5f || cy >= KareH * 0.5f || angle > 30f || cluster > 0) wrong.Add(line);
+
+                int col = n % 5, row = n / 5;
+                for (int y = 0; y < sh; y++)
+                {
+                    for (int x = 0; x < sw; x++)
+                    {
+                        sheet[((1 - row) * sh + y) * sw * 5 + col * sw + x] = px[(y * Kucuk) * KareW + x * Kucuk];
+                    }
+                }
+
+                n++;
+            }
+
+            var tex = new Texture2D(sw * 5, sh * 2, TextureFormat.RGBA32, false);
+            tex.SetPixels32(sheet);
+            tex.Apply();
+            string sheetPath = Path.Combine(EvidenceDir, "wp069-fpview-sheet.png");
+            File.WriteAllBytes(sheetPath, tex.EncodeToPNG());
+            Object.Destroy(tex);
+            Debug.Log("[DD-TEST] wp069.fpview " + string.Join(" | ", report) + " sheet=" + sheetPath);
+            Assert.AreEqual(10, n, "on klasik silahın hepsi ölçülmedi.");
+            Assert.IsEmpty(wrong, "FP kadrajı hedef bandın dışında: " + string.Join(" | ", wrong));
+
+            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.TopDown, instant: true);
+            yield return SpecialWeaponSahne.Kareler(10);
+            Assert.IsFalse(_s.Controller.ClassicFpViewPosed, "FP'den çıkınca görüş pozu kalkmadı.");
+            Transform back = mount.Find("ClassicWeaponRig");
+            Assert.Less(back.localPosition.magnitude, 1e-4f, "silah ele dönmedi (konum)");
+            Assert.Less(Quaternion.Angle(back.localRotation, Quaternion.identity), 0.01f, "silah ele dönmedi (dönüş)");
+            Assert.AreEqual(1f, back.localScale.x, 1e-4f, "ölçek geri dönmedi");
+            camRig.Camera.ResetAspect();
+            vm.ResetAspect();
+        }
+
+        /// <summary>A world point on the 1920×1080 viewmodel frame (row 0 = bottom), through the viewmodel camera's own matrices.</summary>
+        private static Vector2 Ekran(Camera vm, Vector3 world)
+        {
+            Vector4 clip = vm.projectionMatrix * (vm.worldToCameraMatrix * new Vector4(world.x, world.y, world.z, 1f));
+            return new Vector2((clip.x / clip.w * 0.5f + 0.5f) * KareW, (clip.y / clip.w * 0.5f + 0.5f) * KareH);
+        }
+
         private const int KareW = 1920, KareH = 1080;
 
         /// <summary>

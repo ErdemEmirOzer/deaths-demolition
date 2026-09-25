@@ -181,6 +181,7 @@ namespace DD.Prototype.Weapons
 
         private void Awake()
         {
+            if (GetComponent<FpViewPoseDriver>() == null) gameObject.AddComponent<FpViewPoseDriver>().Bind(this);   // WP-069 FP view pose (order 950)
             if (_aimSourceBehaviour != null)
             {
                 _aimSource = _aimSourceBehaviour as IAimSource;
@@ -1160,6 +1161,78 @@ namespace DD.Prototype.Weapons
 
         /// <summary>WP-042B readout: which model the classic rig carries (tests / probe).</summary>
         public ClassicModelKind ClassicModelSource { get; private set; }
+
+        // ------------------------------------------------------------------ WP-069 · the FP view pose
+
+        private readonly FpViewPoseState _classicFpPose = new FpViewPoseState();
+
+        /// <summary>WP-069 readout: the classic rig sits at its FP view pose this frame (tests).</summary>
+        public bool ClassicFpViewPosed => _classicFpPose.Posed;
+
+        /// <summary>Called by <see cref="FpViewPoseDriver"/> after the mount alignment and the grip IK (order 950).</summary>
+        internal void ApplyFpViewPose()
+        {
+            WeaponDefinition definition = _classic != null ? _classic.Definition : null;
+            _classicFpPose.Tick(_classicRig, definition, _motor != null ? _motor.transform : transform);
+        }
+
+        /// <summary>
+        /// WP-069 (C-00 25.09) · while the classic rig's weapon is on the <see cref="CameraLayers.FirstPersonView"/> layer it
+        /// sits at its definition's <see cref="WeaponFpViewPose"/> relative to the viewmodel camera (grip position, rotation,
+        /// scale) instead of the hidden third-person hand — TIMES the mount's animated deviation from its rest aim
+        /// (WeaponMountAlignment: mount = facing × delta), so the fire kick and the reload travel still turn it. Stays a
+        /// child of the mount (the FP layer switch and the LOD0 pin keep working); off that layer the local pose goes back
+        /// to identity. No allocation.
+        /// </summary>
+        private sealed class FpViewPoseState
+        {
+            private Renderer _probe;
+            private bool _posed;
+
+            public bool Posed => _posed;
+
+            public void Tick(WeaponVisualRig rig, WeaponDefinition definition, Transform character)
+            {
+                if (rig == null)
+                {
+                    return;
+                }
+
+                Transform t = rig.transform;
+                if (_probe == null || !_probe.gameObject.activeInHierarchy || !_probe.transform.IsChildOf(t))
+                {
+                    _probe = rig.GetComponentInChildren<Renderer>(false);
+                }
+
+                Transform anchor = CameraView.ViewmodelAnchor;
+                bool firstPerson = anchor != null && definition != null && _probe != null && _probe.gameObject.layer == CameraLayers.FirstPersonView;
+                if (!firstPerson)
+                {
+                    if (_posed)
+                    {
+                        t.localPosition = Vector3.zero;
+                        t.localRotation = Quaternion.identity;
+                        t.localScale = Vector3.one;
+                        _posed = false;
+                    }
+
+                    return;
+                }
+
+                WeaponFpViewPose pose = definition.FpViewPose;
+                Quaternion kick = Quaternion.identity;
+                Vector3 forward = character.forward;
+                forward.y = 0f;
+                if (t.parent != null && forward.sqrMagnitude > 1e-6f)
+                {
+                    kick = Quaternion.Inverse(Quaternion.LookRotation(forward.normalized, Vector3.up)) * t.parent.rotation;
+                }
+
+                t.SetPositionAndRotation(anchor.TransformPoint(pose.position), anchor.rotation * Quaternion.Euler(pose.euler) * kick);
+                t.localScale = new Vector3(pose.scale, pose.scale, pose.scale);
+                _posed = true;
+            }
+        }
 
         // ------------------------------------------------------------------ WP-069 T3 · the FP weapon at LOD0
 

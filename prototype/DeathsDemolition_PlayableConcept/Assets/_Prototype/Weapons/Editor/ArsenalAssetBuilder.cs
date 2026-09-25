@@ -485,10 +485,37 @@ namespace DD.Prototype.Weapons.EditorTools
             d.presentation.modelTp = roster != null ? roster.ModelResource : "";
         }
 
+        // ================================================================== first-person view poses (C-00 25.09)
+
+        /// <summary>
+        /// Grip position in the viewmodel camera's space + scale per classic, barrel converging on the crosshair 8 m out
+        /// (WeaponFpViewPose.Converging). Tuned in the Run scene at 1080p rest against the C-00 frame target (lower right,
+        /// 40–90 k px, barrel toward the centre, clear of the S-09 HUD weapon cluster) with margin; measured by
+        /// WeaponModelSliceTests.FP_GorusPozu_OnSilah_KadrajBandinda. S-06 fits the FP arms to them (B4b).
+        /// </summary>
+        private static readonly Dictionary<string, (float x, float y, float z, float s)> FpPoses = new Dictionary<string, (float, float, float, float)>
+        {
+            { "ar_1", (0.26f, -0.20f, 0.08f, 0.85f) },
+            { "smg_1", (0.26f, -0.20f, 0.15f, 0.85f) },
+            { "sg_1", (0.26f, -0.20f, 0.08f, 0.85f) },
+            { "ar_2", (0.38f, -0.30f, 0.25f, 1f) },
+            { "smg_2", (0.26f, -0.20f, 0.08f, 1f) },
+            { "sg_2", (0.38f, -0.30f, 0.25f, 1f) },
+            { "lmg_1", (0.44f, -0.30f, 0.25f, 0.70f) },
+            { "lmg_2", (0.26f, -0.25f, 0.15f, 0.60f) },
+            { "sr_1", (0.38f, -0.30f, 0.25f, 1f) },
+            { "rl_1", (0.38f, -0.30f, 0.15f, 1f) },
+        };
+
         // ================================================================== asset writing
 
         private static WeaponDefinition Write(WeaponDefinition fresh)
         {
+            if (FpPoses.TryGetValue(fresh.weaponId, out (float x, float y, float z, float s) fp))
+            {
+                fresh.presentation.fpView = WeaponFpViewPose.Converging(new Vector3(fp.x, fp.y, fp.z), fp.s);
+            }
+
             string path = Folder + "/" + fresh.name + ".asset";
             WeaponDefinition existing = AssetDatabase.LoadAssetAtPath<WeaponDefinition>(path);
             if (existing == null)

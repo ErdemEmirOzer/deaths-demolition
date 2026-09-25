@@ -192,3 +192,7 @@ MonoBehaviour:
       - attach_barrel
       - attach_top
       - attach_stock
+    fpView:
+      position: {x: 0.38, y: -0.3, z: 0.25}
+      euler: {x: -2.21, y: -2.81, z: 0}
+      scale: 1

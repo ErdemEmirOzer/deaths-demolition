@@ -270,6 +270,51 @@ namespace DD.Prototype.Core.Weapons
         public string[] attachments = { "attach_barrel", "attach_top", "attach_stock" };
     }
 
+    /// <summary>
+    /// WP-069 · where the weapon sits in the first-person view (C-00, 25.09): the model root (grip) in the viewmodel
+    /// camera's space — +X right, +Y up, +Z forward, metres — its rotation there and a uniform scale. The tuned values
+    /// aim the barrel at the crosshair <see cref="ConvergeMetres"/> out (<see cref="Converging"/>); the frame target at
+    /// 1080p rest: lower-right, 40–90 k px, barrel toward the centre, clear of the S-09 HUD weapon cluster. S-01's
+    /// viewmodel screen transform (WP-070V) applies on top; S-06 fits the FP arms to these poses (B4b). An unset pose
+    /// (z ≤ 0) falls back to <see cref="DefaultFor"/> the weapon class.
+    /// </summary>
+    [Serializable]
+    public sealed class WeaponFpViewPose
+    {
+        public const float ConvergeMetres = 8f;
+
+        [Tooltip("Grip (model root) in the viewmodel camera's space, metres (+X right, +Y up, +Z forward).")] public Vector3 position;
+        [Tooltip("Model rotation in camera space, degrees (tuned: barrel at the crosshair 8 m out).")] public Vector3 euler;
+        [Tooltip("Uniform view-model scale (1 = authored; the big LMGs read smaller so they do not fill the screen).")] public float scale = 1f;
+
+        public bool IsSet => position.z > 0f && scale > 0f;
+
+        /// <summary>A pose at <paramref name="grip"/> whose barrel points at the crosshair <see cref="ConvergeMetres"/> out.</summary>
+        public static WeaponFpViewPose Converging(Vector3 grip, float scale)
+        {
+            Vector3 e = Quaternion.LookRotation(new Vector3(0f, 0f, ConvergeMetres) - grip, Vector3.up).eulerAngles;
+            e = new Vector3(Mathf.DeltaAngle(0f, e.x), Mathf.DeltaAngle(0f, e.y), Mathf.DeltaAngle(0f, e.z));
+            return new WeaponFpViewPose { position = grip, euler = new Vector3(Round(e.x), Round(e.y), Round(e.z)), scale = scale };
+        }
+
+        /// <summary>The class starting point (each weapon carries its own tuned pose; these came from the first of the class).</summary>
+        public static WeaponFpViewPose DefaultFor(WeaponClass cls)
+        {
+            switch (cls)
+            {
+                case WeaponClass.AssaultRifle: return Converging(new Vector3(0.26f, -0.20f, 0.08f), 0.85f);
+                case WeaponClass.Smg: return Converging(new Vector3(0.26f, -0.20f, 0.08f), 1f);
+                case WeaponClass.Shotgun: return Converging(new Vector3(0.26f, -0.20f, 0.08f), 0.85f);
+                case WeaponClass.Lmg: return Converging(new Vector3(0.44f, -0.30f, 0.25f), 0.70f);
+                case WeaponClass.Sniper: return Converging(new Vector3(0.38f, -0.30f, 0.25f), 1f);
+                case WeaponClass.Launcher: return Converging(new Vector3(0.38f, -0.30f, 0.15f), 1f);
+                default: return Converging(new Vector3(0.32f, -0.25f, 0.15f), 1f);
+            }
+        }
+
+        private static float Round(float v) => Mathf.Round(v * 100f) / 100f;
+    }
+
     [Serializable]
     public sealed class WeaponPresentationBlock
     {
@@ -287,6 +332,10 @@ namespace DD.Prototype.Core.Weapons
         [Tooltip("Until the AP-021 model lands: show the in-hand model / pose of this M3 weapon (class sibling).")]
         public ClassicWeaponId placeholderVisual = ClassicWeaponId.AssaultRifle;
         public WeaponSockets sockets = new WeaponSockets();
+        [Tooltip("WP-069: the first-person view pose (unset → the class default).")] public WeaponFpViewPose fpView = new WeaponFpViewPose();
+
+        /// <summary>The pose the first-person view uses: this weapon's own, or its class default.</summary>
+        public WeaponFpViewPose FpViewPoseOr(WeaponClass cls) => fpView != null && fpView.IsSet ? fpView : WeaponFpViewPose.DefaultFor(cls);
     }
 
     // ======================================================================== the definition
@@ -373,6 +422,9 @@ namespace DD.Prototype.Core.Weapons
 
         /// <summary>S-06 animation set (weaponId unless overridden).</summary>
         public string AnimSet => string.IsNullOrEmpty(presentation.animSet) ? weaponId : presentation.animSet;
+
+        /// <summary>WP-069: the first-person view pose (own, or the class default).</summary>
+        public WeaponFpViewPose FpViewPose => presentation.FpViewPoseOr(weaponClass);
 
         /// <summary>S-09 HUD icon key.</summary>
         public string HudIconId => string.IsNullOrEmpty(presentation.hudIconId) ? "Weapon." + weaponId : presentation.hudIconId;
