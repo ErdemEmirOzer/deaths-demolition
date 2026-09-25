@@ -83,7 +83,7 @@ namespace DD.Prototype.Tests.PlayMode
             VfxTier.Override = VfxTierLevel.Performance;
             yield return null;
             Assert.AreEqual(GroundFireSystem.FlameCap, fire.SystemOf(0).main.maxParticles);
-            Assert.AreEqual(120, GroundFireSystem.FlameCap);
+            Assert.AreEqual(160, GroundFireSystem.FlameCap);
 
             // Extinguished → out within OutSeconds, then the slot frees.
             RunTreeGroundFire.Clear();

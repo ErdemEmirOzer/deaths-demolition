@@ -16,7 +16,8 @@ namespace DD.Prototype.Feedback.Vfx
     ///     it: the AP-010B lantern_flame 4 × 4 loop, alpha-blended with an HDR core, yellow → orange → dark red;
     ///   · an additive flame carpet the size of the zone (#FF8A2A α 0.35) flickering at 6 Hz;
     ///   · embers ≤ 3.5 m up (1.0–2.2 m/s, 1.2–1.8 s, 2–4 cm, streak ≤ 8 cm);
-    ///   · a char: AP-010 decal_scorch, #0E0B09 α 0.7, r 0.87 × the zone, held 3 s past the fire, faded over 2 s;
+    ///   · a char: a procedural mottled soot disc (the AP-010 decal_scorch's α tops out at 0.40), #0E0B09 α 0.7, r 0.87 × the
+    ///     zone, held 3 s past the fire, faded over 2 s;
     ///   · the heat wave as faint additive feathered-noise quads (#FFD9A0 α 0.06, 1.2 m, noise cycling ~6.7 Hz) — a refraction
     ///     card (DD/VFX HeatHaze) only where the pipeline gives the camera opaque texture (it drew a grey rectangle without);
     ///   · thin smoke (#3A3632 α 0.25, MuzzleSystem's shared smoke) and a flickering #FFA050 light (6, 5 m, ~8 Hz) for the nearest
@@ -36,14 +37,14 @@ namespace DD.Prototype.Feedback.Vfx
         private static readonly int AlphaCapId = Shader.PropertyToID("_AlphaCap");
 
         // Caps / rates per tier (Performance, High, Cinematic).
-        public static int FlameCap => VfxTier.Pick(120, 260, 420);
+        public static int FlameCap => VfxTier.Pick(160, 320, 480);
         public static int EmberCap => VfxTier.Pick(40, 140, 260);
         public static int GlowCap => VfxTier.Pick(16, 32, 48);
         public static int CharCap => MaxZones;
         public static int ShimmerCap => VfxTier.Pick(0, 60, 90);
         public static int LightZones => VfxTier.Pick(1, 2, 3);
         public static int HazeZones => VfxTier.Pick(0, 0, 3);
-        public static float FlamesPerSquareMetre => VfxTier.Pick(1.0f, 1.8f, 2.5f);   // per second
+        public static float FlamesPerSquareMetre => VfxTier.Pick(1.4f, 2.6f, 4.0f);   // per second (the V6 plaza's light stone needs the density)
         public static float EmbersPerSecond => VfxTier.Pick(4f, 9f, 14f);              // per zone of 10 m², clamped ×0.5–3
         public static float SmokeEvery => VfxTier.Pick(0f, 0.6f, 0.4f);                // seconds; 0 = none
 
@@ -77,7 +78,7 @@ namespace DD.Prototype.Feedback.Vfx
         private MaterialPropertyBlock _hazeBlock;
         private ParticleSystem _flames, _embers, _glow, _char, _shimmer;
         private Material _flameMat, _emberMat, _glowMat, _charMat, _shimmerMat, _hazeMat;
-        private Texture2D _dot, _soft, _noise;
+        private Texture2D _dot, _soft, _noise, _charTex;
         private VfxTierLevel _tier;
         private bool _tierApplied;
         private int _groundMask;
@@ -139,6 +140,7 @@ namespace DD.Prototype.Feedback.Vfx
             DestroyIfSet(_charMat);
             DestroyIfSet(_shimmerMat);
             DestroyIfSet(_noise);
+            DestroyIfSet(_charTex);
             DestroyIfSet(_hazeMat);
             DestroyIfSet(_dot);
             DestroyIfSet(_soft);
@@ -287,7 +289,8 @@ namespace DD.Prototype.Feedback.Vfx
             if (dt <= 0f) return;
 
             Camera cam = CameraOverride != null ? CameraOverride : Camera.main;
-            Vector3 camPos = cam != null ? cam.transform.position : Vector3.zero;
+            Vector3 camPos = cam != null ? cam.transform.position : new Vector3(0f, -1000f, 0f);
+            _camPos = camPos;
             int live = 0;
             for (int i = 0; i < MaxZones; i++)
             {
@@ -387,9 +390,15 @@ namespace DD.Prototype.Feedback.Vfx
             }
         }
 
+        private Vector3 _camPos;
+        private const float CameraClearance = 1.5f;   // no flame / ember is born within 1.5 m of the camera (a first-person blob, capture 6)
+
+        private bool NearCamera(Vector3 p) => (p - _camPos).sqrMagnitude < CameraClearance * CameraClearance;
+
         private void EmitFlame(in Zone z, float k)
         {
             Vector3 off = Disc(z.Radius * 0.92f);
+            if (NearCamera(z.Centre + off)) return;
             float edge = off.magnitude / Mathf.Max(z.Radius, 0.01f);   // taller in the middle, low tongues at the rim
             // Tongues licking the ground: small, taller than wide (1 : 1.7), their foot on the stone, a slow rise and a short life
             // (the first capture's 0.8–1.4 m/s over 0.8 s lifted them a metre off the ground — floating drops).
@@ -414,6 +423,7 @@ namespace DD.Prototype.Feedback.Vfx
         private void EmitEmber(in Zone z, float speed)
         {
             Vector3 off = Disc(z.Radius * 0.85f);
+            if (NearCamera(z.Centre + off + Vector3.up * 0.3f)) return;
             var ep = new ParticleSystem.EmitParams
             {
                 // AD MUST 3: ≤ 3.5 m up (1.0–2.2 m/s against a light pull, 1.2–1.8 s: ≤ 3.2 m with the 0.5 m start), 2–4 cm.
@@ -539,8 +549,10 @@ namespace DD.Prototype.Feedback.Vfx
             _flameMat = Particle("DD_GroundFireFlames (runtime)", flameRow != null && flameRow.Texture != null ? flameRow.Texture : (Texture)_soft, FlameTint, false);
             _emberMat = Particle("DD_GroundFireEmbers (runtime)", _dot, Color.white, true);
             _glowMat = Particle("DD_GroundFireGlow (runtime)", _soft, Color.white, true);
-            VfxCatalogEntry scorch = VfxLibrary.Get(VfxIds.DecalScorch);
-            _charMat = Particle("DD_GroundFireChar (runtime)", scorch != null && scorch.Texture != null ? scorch.Texture : (Texture)_soft, Color.white, false);
+            // The char is a procedural mottled soot disc: the AP-010 decal_scorch's alpha tops out at 0.40 (mean 0.11) — made for
+            // the decal system — so at the AD's α 0.7 it peaked near 0.28 and vanished on the V6 plaza's light stone (capture 5).
+            _charTex = BuildCharTexture(128);
+            _charMat = Particle("DD_GroundFireChar (runtime)", _charTex, Color.white, false);
             _noise = BuildNoiseSheet(64);
             _shimmerMat = Particle("DD_GroundFireShimmer (runtime)", _noise, Color.white, true);
 
@@ -738,6 +750,30 @@ namespace DD.Prototype.Feedback.Vfx
                         float a = Mathf.Clamp01((n - 0.35f) * 2.2f) * feather * feather;
                         px[(oy + y) * size + ox + x] = new Color32(255, 255, 255, (byte)(a * 255f));
                     }
+                }
+            }
+
+            t.SetPixels32(px);
+            t.Apply(false, true);
+            return t;
+        }
+
+        // A soot disc: a dark mottled interior (value noise, α 0.75–1) and a ragged, noise-bitten edge — no clean circle.
+        private static Texture2D BuildCharTexture(int size)
+        {
+            var t = new Texture2D(size, size, TextureFormat.RGBA32, false) { name = "DD_GroundFireChar", hideFlags = HideFlags.DontSave, wrapMode = TextureWrapMode.Clamp };
+            var px = new Color32[size * size];
+            float half = (size - 1) * 0.5f;
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float d = Mathf.Sqrt((x - half) * (x - half) + (y - half) * (y - half)) / half;
+                    float n = Mathf.PerlinNoise(x * 0.07f + 3.1f, y * 0.07f + 7.7f) * 0.65f + Mathf.PerlinNoise(x * 0.23f, y * 0.23f + 1.3f) * 0.35f;
+                    float rim = 0.62f + 0.3f * n;                                   // where the edge frays out
+                    float edge = 1f - Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((d - rim) / 0.22f));
+                    float body = 0.75f + 0.25f * Mathf.PerlinNoise(x * 0.12f + 9.4f, y * 0.12f);
+                    px[y * size + x] = new Color32(255, 255, 255, (byte)(Mathf.Clamp01(edge * body) * 255f));
                 }
             }
 
