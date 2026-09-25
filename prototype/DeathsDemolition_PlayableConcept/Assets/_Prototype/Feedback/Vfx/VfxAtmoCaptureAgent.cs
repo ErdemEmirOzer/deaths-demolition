@@ -59,7 +59,10 @@ namespace DD.Prototype.Feedback.Vfx
                     foreach (AtmosphereSystem.Layer layer in Enum.GetValues(typeof(AtmosphereSystem.Layer))) counts += " " + layer + "=" + a.LiveCount(layer);
                 }
 
-                Debug.Log("[VfxAtmoCapture] " + file + " total=" + (a != null ? a.TotalLive : -1) + counts + " shaftW=" + Shader.GetGlobalVector("_DD_ShaftDir").w.ToString("F2"));
+                Vector4 vl = Shader.GetGlobalVector("_DD_VL_Density");
+                string field = " fieldLive=" + AtmosphereSystem.FieldLive + " vl=" + vl.ToString("F4") + " vlMask=" + Shader.GetGlobalVector("_DD_VL_Mask").x.ToString("F1")
+                    + (a != null ? " volumeRegions=" + a.VolumeRegions + " volumeInRange=" + a.InRangeCount(AtmosphereSystem.Source.Volume) + " shaftCards=" + a.InRangeCount(AtmosphereSystem.Source.Shaft) : "");
+                Debug.Log("[VfxAtmoCapture] " + file + " total=" + (a != null ? a.TotalLive : -1) + counts + " shaftW=" + Shader.GetGlobalVector("_DD_ShaftDir").w.ToString("F2") + field);
                 yield return new WaitForSeconds(1.5f);
             }
 
