@@ -592,9 +592,9 @@ namespace DD.Prototype.UI
             PlaceAnchored(countRect, _compact ? new Vector2(0.5f, 1f) : new Vector2(1f, 0f), new Vector2(0.5f, 0.5f),
                 _compact ? Vector2.zero : new Vector2(-4f, 4f), countRect.sizeDelta);
 
-            // Compact rows: the OFFER chip hangs under the seal (across its top it would cover the words beside it).
+            // Compact rows: the OFFER chip hangs under the seal, its right edge on the seal's, clear of the words beside it.
             var offerRect = (RectTransform)v.Offer.transform;
-            PlaceAnchored(offerRect, _compact ? new Vector2(0.5f, 0f) : new Vector2(0.5f, 1f), _compact ? new Vector2(0.5f, 1f) : new Vector2(0.5f, 0.5f),
+            PlaceAnchored(offerRect, _compact ? new Vector2(1f, 0f) : new Vector2(0.5f, 1f), _compact ? new Vector2(1f, 1f) : new Vector2(0.5f, 0.5f),
                 _compact ? new Vector2(0f, 6f) : Vector2.zero, offerRect.sizeDelta);
             if (count)
             {
