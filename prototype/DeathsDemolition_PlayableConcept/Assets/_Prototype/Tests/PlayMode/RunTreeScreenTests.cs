@@ -231,6 +231,31 @@ namespace DD.Prototype.Tests.PlayMode
             AssertFits(screen, tree, "mac");
             tree.SetLane(RunTreeLane.Body, false);
             AssertFits(screen, tree, "mac body");
+
+            // The Mac aspect (3024 × 1964) leaves the host ~510 px: the rows go compact and the words beside the seal
+            // wrap to two lines rather than cut a name ("Regeneration Delay" / "Regeneration Rate" must both print).
+            var host = (RectTransform)tree.transform.parent;
+            host.offsetMin += new Vector2(0f, 160f);
+            tree.Refresh(RunDirector.Instance.Shop);
+            Assert.IsTrue(tree.Compact, "a ~510 px host compacts the rows");
+            foreach (RunTreeLane lane in new[] { RunTreeLane.Body, RunTreeLane.Weapon })
+            {
+                tree.SetLane(lane, false);
+                for (int i = 0; i < tree.Snapshot.Count; i++)
+                {
+                    TMP_Text name = tree.NameTextOf(i);
+                    if (name == null) continue;
+                    name.ForceMeshUpdate();
+                    Assert.IsFalse(name.isTextTruncated, "compact " + lane + ": " + name.text + " prints whole");
+                    TMP_Text state = tree.StateTextOf(i);
+                    state.ForceMeshUpdate();
+                    Assert.IsFalse(state.isTextTruncated, "compact " + lane + ": " + state.text + " prints whole");
+                }
+
+                AssertFits(screen, tree, "mac compact " + lane);
+            }
+
+            host.offsetMin -= new Vector2(0f, 160f);
             RunDirector.Instance.CloseUpgradeScreen();
             yield return null;
         }

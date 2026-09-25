@@ -100,6 +100,9 @@ namespace DD.Prototype.UI
         private float _pitchY = RowPitch;
         private float _seal = SealSize;
         private float _headSize = SealSize;
+        private float _boxH;
+        private float _nameLine;
+        private float _stateLine;
         private float _innerWidth;
         private bool _compact;
         private float _nodeWidth = NodeWidth;
@@ -388,6 +391,9 @@ namespace DD.Prototype.UI
             ((RectTransform)_edges.transform).sizeDelta = _grid.sizeDelta;
 
             float boxH = _pitchY - 8f;
+            _boxH = boxH;
+            _nameLine = name;
+            _stateLine = state;
             for (int s = 0; s < _views.Length; s++)
             {
                 NodeView v = _views[s];
@@ -396,6 +402,8 @@ namespace DD.Prototype.UI
                 v.Rect.anchorMin = new Vector2(0f, 1f);
                 v.Rect.anchorMax = new Vector2(0f, 1f);
                 v.Rect.sizeDelta = new Vector2(_nodeWidth, boxH);
+                v.Name.enableWordWrapping = _compact;
+                v.State.enableWordWrapping = _compact;
                 if (_compact)
                 {
                     v.Rect.pivot = new Vector2(0f, 1f);
@@ -448,7 +456,7 @@ namespace DD.Prototype.UI
             Dock((RectTransform)_dState.transform, y, stateLine);
             y += stateLine + (int)UiSpace.M;
             // The rule note (two Caption lines) sits over the foot; the description takes the band between.
-            float note = LineOf(_dNote) * 2f;
+            float note = TwoLines(_dNote);
             float noteBottom = foot + (int)UiSpace.L;
             DockBottom((RectTransform)_dNote.transform, noteBottom, note);
             float descH = Mathf.Max(body, h - noteBottom - note - (int)UiSpace.S - y);
@@ -557,7 +565,7 @@ namespace DD.Prototype.UI
 
             RunTreeNodeView n = _snap.Nodes[index];
             SetGlyph(v.Glyph, n);
-            v.Name.text = Fit(v.Name, string.Empty, n);
+            v.Name.text = _compact ? FullName(n) : Fit(v.Name, string.Empty, n);
             bool owned = IsOwned(n) || (n.Kind == RunTreeNodeKind.Tier && n.OwnedTier > 0);
             bool dim = n.Status == RunTreeNodeStatus.Locked || n.Status == RunTreeNodeStatus.Excluded;
             bool waiting = n.Status == RunTreeNodeStatus.PrereqMissing;
@@ -590,9 +598,13 @@ namespace DD.Prototype.UI
 
             v.Mark.enabled = index == _focus;
             v.Name.color = UiTokens.Get(dim ? UiColor.TextMuted : UiColor.TextPrimary);
-            _measureState = v.State;
+            _measureState = _compact ? null : v.State;
             v.State.text = StateWord(n);
             _measureState = null;
+            if (_compact)
+            {
+                FitCompact(v);
+            }
             v.State.color = UiTokens.Get(n.Status == RunTreeNodeStatus.Unaffordable ? UiColor.StateWarning : dim ? UiColor.TextMuted : UiColor.TextSecondary);
         }
 
@@ -705,6 +717,38 @@ namespace DD.Prototype.UI
         }
 
         private TMP_Text _measureState;
+
+        private static string FullName(RunTreeNodeView n)
+        {
+            return string.IsNullOrEmpty(n.DisplayName) ? n.ShortName : n.DisplayName;
+        }
+
+        /// <summary>
+        /// Compact rows (the Mac aspect) have the height the words beside a 48 px seal lack in width: the name and the state
+        /// word take up to two lines each, the pair centred on the seal, so full names ("Regeneration Delay") always print.
+        /// </summary>
+        private void FitCompact(NodeView v)
+        {
+            float width = v.Name.rectTransform.rect.width;
+            float name = Mathf.Min(TwoLines(v.Name), Mathf.Ceil(v.Name.GetPreferredValues(v.Name.text, width, 0f).y));
+            float state = Mathf.Min(TwoLines(v.State), Mathf.Ceil(v.State.GetPreferredValues(v.State.text, width, 0f).y));
+            if (name + state > _boxH)
+            {
+                state = _stateLine;
+            }
+
+            name = Mathf.Max(name, _nameLine);
+            state = Mathf.Max(state, _stateLine);
+            float left = _seal + (int)UiSpace.S;
+            float top = Mathf.Max(0f, (_boxH - name - state) * 0.5f);
+            Band(v.Name, left, top, name, TextAlignmentOptions.MidlineLeft);
+            Band(v.State, left, top + name, state, TextAlignmentOptions.MidlineLeft);
+        }
+
+        private static float TwoLines(TMP_Text text)
+        {
+            return Mathf.Ceil(text.GetPreferredValues("Ag\nAg").y);
+        }
 
         /// <summary>NEEDS / CLOSED BY with the partner's name fitted to the node's state line.</summary>
         private string Needs(string key, string fallback, int partner)
