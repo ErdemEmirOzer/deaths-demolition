@@ -483,3 +483,4 @@ MonoBehaviour:
     stanceFrames: 0
   _manifestSchema: AP009.clips-manifest.v008
   _locomotionReferenceSpeed: 6.2
+  _weaponSets: []

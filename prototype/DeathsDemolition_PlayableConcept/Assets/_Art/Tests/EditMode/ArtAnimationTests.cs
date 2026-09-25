@@ -138,6 +138,27 @@ namespace DD.Art.Tests.EditMode
                 else Assert.AreEqual(0f, radius, 1e-4f, "idle merkezde");
             }
 
+            // WP-071 B4b (K8): the v3 generic weapon states (Weapon == 4) + one override controller per AnimSet (weapon slots only)
+            Params(c, C.ReloadEmpty);
+            bool v3 = set.Find("AP022_tp_ar_idle_aim") != null;   // the AR set lands with P-06's 30 fps slice 4a; until then no v3 states / AOCs
+            Assert.AreEqual(v3, ArtAnimatorBuilder.FindState(c, 1, C.AimV3State) != null, "Aim_V3 yalnız v3 kliplerle");
+            if (v3) {
+            AnimatorState aimV3 = ArtAnimatorBuilder.FindState(c, 1, C.AimV3State);
+            Assert.IsNotNull(aimV3); Assert.AreEqual(set.Clip("AP022_tp_ar_idle_aim"), aimV3.motion);
+            foreach (string st in new[] { C.ReloadTacState, C.ReloadEmptyState, C.SwitchInV3State, C.SwitchOutV3State }) Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 1, st), st);
+            Assert.AreEqual(set.Clip("AP022_tp_ar_1_reload_tac"), ArtAnimatorBuilder.FindState(c, 1, C.ReloadTacState).motion, "taban = ilk set (ar_1)");
+            Assert.IsTrue(ArtAnimatorBuilder.FindState(c, 1, C.ReloadEmptyState).speedParameterActive, "ReloadEmpty ReloadRate ile");
+            Assert.AreEqual(set.Clip("AP022_tp_ar_1_fire"), ArtAnimatorBuilder.FindState(c, 2, C.FireV3State).motion);
+            Assert.AreEqual(2, set.WeaponSets.Count, "ar_1 + ar_2 AOC");
+            AnimatorOverrideController ar2 = set.WeaponOverrides("ar_2");
+            Assert.IsNotNull(ar2); Assert.AreEqual(c, ar2.runtimeAnimatorController);
+            Assert.AreEqual(set.Clip("AP022_tp_ar_2_reload_empty"), ar2[set.Clip("AP022_tp_ar_1_reload_empty")], "ar_2 AOC reload_empty");
+            Assert.AreEqual(set.Clip("AP022_tp_ar_2_fire"), ar2[set.Clip("AP022_tp_ar_1_fire")], "ar_2 AOC fire");
+            Assert.AreEqual(set.Clip("AP022_tp_ar_idle_aim"), ar2[set.Clip("AP022_tp_ar_idle_aim")], "sınıf slotu override edilmez");
+            }
+            else Assert.AreEqual(0, set.WeaponSets.Count, "v3 klip yokken AOC yok");
+            int rests = 6 + (v3 ? 1 : 0);
+
             Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 0, C.DeathState + "_0")); Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 0, C.DeathState + "_1"));
             Assert.IsNull(ArtAnimatorBuilder.FindState(c, 0, C.PickupState), "WP-032B · DEC-082: pickup taban katmanında değil");
             Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 1, C.PickupState), "pickup üst gövde override katmanında");
@@ -150,7 +171,7 @@ namespace DD.Art.Tests.EditMode
                 Assert.IsNotNull(aim, "Aim_" + w); Assert.AreEqual(set.Clip(C.PlayerWeaponClip(w, "idle_aim")), aim.motion);
                 AnimatorState reload = ArtAnimatorBuilder.FindState(c, 1, C.ReloadState + "_" + w);
                 Assert.IsNotNull(reload, "Reload_" + w); Assert.IsTrue(reload.speedParameterActive && reload.speedParameter == C.ReloadRate, "Reload_" + w + " ReloadRate");
-                Assert.AreEqual(6, reload.transitions.Length, "Reload_" + w + " → Aim ×3 + SwHold ×3");
+                Assert.AreEqual(rests, reload.transitions.Length, "Reload_" + w + " → Aim ×3 (+ Aim_V3) + SwHold ×3 (WP-071 B4b)");
                 Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 1, C.SwitchOutState + "_" + w)); Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 1, C.SwitchInState + "_" + w));
                 AnimatorState fireW = ArtAnimatorBuilder.FindState(c, 2, C.FireState + "_" + w);
                 Assert.IsNotNull(fireW, "Fire_" + w); Assert.AreEqual(set.Clip(C.PlayerWeaponClip(w, "fire")), fireW.motion);
@@ -172,11 +193,11 @@ namespace DD.Art.Tests.EditMode
                 // the generated muscle-curve clips start at 0 (= the reference), like the WP-032 telegraph clips; the additive read comes from layer 2's blending mode
                 Assert.AreEqual(AnimatorLayerBlendingMode.Additive, c.layers[2].blendingMode, "swing additive katmanda");
             }
-            Assert.AreEqual(6, ArtAnimatorBuilder.FindState(c, 1, C.EmptyState).transitions.Length, "Empty → Aim_0..2 + SwHold_1..3");
+            Assert.AreEqual(rests, ArtAnimatorBuilder.FindState(c, 1, C.EmptyState).transitions.Length, "Empty → Aim_0..2 (+ Aim_V3) + SwHold_1..3 (WP-071 B4b)");
             Assert.AreEqual(C.EmptyState, c.layers[1].stateMachine.defaultState.name); Assert.AreEqual(C.EmptyState, c.layers[2].stateMachine.defaultState.name);
             // Deaths never leave (no transitions out); the pickup returns to the upper layer's Empty.
             Assert.AreEqual(0, ArtAnimatorBuilder.FindState(c, 0, C.DeathState + "_0").transitions.Length);
-            Assert.AreEqual(6, ArtAnimatorBuilder.FindState(c, 1, C.PickupState).transitions.Length, "WP-032C: pickup → Aim ×3 + SwHold ×3");
+            Assert.AreEqual(rests, ArtAnimatorBuilder.FindState(c, 1, C.PickupState).transitions.Length, "WP-032C: pickup → Aim ×3 (+ Aim_V3) + SwHold ×3 (WP-071 B4b)");
         }
 
         [Test]

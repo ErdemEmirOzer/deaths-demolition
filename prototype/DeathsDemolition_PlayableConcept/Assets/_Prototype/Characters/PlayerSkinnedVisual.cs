@@ -57,6 +57,7 @@ namespace DD.Prototype.Characters
         private static readonly int WeaponId = Animator.StringToHash(CharacterAnimatorContract.Weapon);
         private static readonly int ReloadId = Animator.StringToHash(CharacterAnimatorContract.Reload);
         private static readonly int ReloadRateId = Animator.StringToHash(CharacterAnimatorContract.ReloadRate);
+        private static readonly int ReloadEmptyId = Animator.StringToHash(CharacterAnimatorContract.ReloadEmpty);
         private static readonly int SwitchOutId = Animator.StringToHash(CharacterAnimatorContract.SwitchOut);
         private static readonly int SwitchInId = Animator.StringToHash(CharacterAnimatorContract.SwitchIn);
         private static readonly int LowerId = Animator.StringToHash(CharacterAnimatorContract.Lower);
@@ -107,7 +108,8 @@ namespace DD.Prototype.Characters
         {
             Animator.StringToHash(CharacterAnimatorContract.AimState + "_0"), Animator.StringToHash(CharacterAnimatorContract.AimState + "_1"),
             Animator.StringToHash(CharacterAnimatorContract.AimState + "_2"), Animator.StringToHash(CharacterAnimatorContract.SwHoldState + "_1"),
-            Animator.StringToHash(CharacterAnimatorContract.SwHoldState + "_2"), Animator.StringToHash(CharacterAnimatorContract.SwHoldState + "_3")
+            Animator.StringToHash(CharacterAnimatorContract.SwHoldState + "_2"), Animator.StringToHash(CharacterAnimatorContract.SwHoldState + "_3"),
+            Animator.StringToHash(CharacterAnimatorContract.AimV3State)
         };
         private static readonly SkinnedMeshRenderer[] s_noRenderers = new SkinnedMeshRenderer[0];
         private SkinnedMeshRenderer[] _headRenderers;
@@ -276,6 +278,7 @@ namespace DD.Prototype.Characters
 
             if (_authored)
             {
+                BindWeaponSets();
                 _animator.SetBool(AliveId, true);
                 _overrideLayer = -1;
                 for (int i = 0; i < _animator.layerCount; i++) if (_animator.GetLayerName(i) == CharacterAnimatorContract.OverrideUpperLayer) _overrideLayer = i;
@@ -323,8 +326,78 @@ namespace DD.Prototype.Characters
             PlayPickup();
         }
 
-        // WP-069 B2 (S-02, interim): weapons 3–9 borrow their class's M3 pose until the WP-071 override controllers land.
-        private void OnWeaponEquipped(ClassicWeaponId id) => SetWeapon(DD.Prototype.Core.Weapons.Arsenal.LegacyPoseIndex(id));
+        // WP-071 B4b (K8): a weapon whose AnimSet has v3 clips plays the generic v3 states through its override controller;
+        // the others keep WP-069's interim class pose (Arsenal.LegacyPoseIndex).
+        private void OnWeaponEquipped(ClassicWeaponId id) => EquipWeapon(DD.Prototype.Core.Weapons.Arsenal.Get(id), id);
+
+        // ---------------------------------------------------------------- WP-071 B4b per-weapon override controllers
+
+        /// <summary>
+        /// WP-071 B4b: the v3 weapon path is DORMANT until its dependencies land — C-00's grip-point decision (P-06 authors the hand at
+        /// mid-grip, the mount still puts the model origin on the socket: the left hand misses the foregrip by ~3.3 cm) and S-02's
+        /// WeaponMountAlignment v3 pose (without it the weapon keeps no reload / switch delta). Off = every weapon on the legacy class
+        /// pose, exactly as before; tests switch it on.
+        /// </summary>
+        public static bool V3WeaponSets;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetV3Statics() => V3WeaponSets = false;
+
+        private AnimatorOverrideController _runtimeOverrides;
+        private readonly List<string> _setKeys = new List<string>();
+        private readonly List<List<KeyValuePair<AnimationClip, AnimationClip>>> _setOverrides = new List<List<KeyValuePair<AnimationClip, AnimationClip>>>();
+        private DD.Prototype.Core.Weapons.WeaponDefinition _weaponDef;
+        private float _burstStart = -1f;
+
+        /// <summary>Fire beats that reached the Animator (a burst weapon counts one per burst; tests).</summary>
+        public int FireTriggers { get; private set; }
+        /// <summary>The v3 animation set applied (WeaponDefinition.AnimSet), null on the legacy pose path (tests / probes).</summary>
+        public string WeaponAnimSet { get; private set; }
+
+        /// <summary>
+        /// One runtime override controller per player (assigned once at Attach — swapping controllers would rebind and reset every
+        /// layer); an equip copies that weapon's override pairs into it (cached at Attach, no allocation per equip).
+        /// </summary>
+        private void BindWeaponSets()
+        {
+            if (_runtimeOverrides != null || _animation == null || _animation.WeaponSets == null || _animation.WeaponSets.Count == 0) return;
+            _runtimeOverrides = new AnimatorOverrideController(_animation.Controller) { name = "DD_Player_runtime" };
+            _animator.runtimeAnimatorController = _runtimeOverrides;
+            for (int i = 0; i < _animation.WeaponSets.Count; i++)
+            {
+                CharacterAnimationSet.WeaponAnimSet ws = _animation.WeaponSets[i];
+                if (ws == null || ws.overrides == null) continue;
+                var pairs = new List<KeyValuePair<AnimationClip, AnimationClip>>(ws.overrides.overridesCount);
+                ws.overrides.GetOverrides(pairs);
+                _setKeys.Add(ws.animSet);
+                _setOverrides.Add(pairs);
+            }
+        }
+
+        /// <summary>Equip: the v3 set when the weapon's AnimSet has one, else the legacy class pose.</summary>
+        public void EquipWeapon(DD.Prototype.Core.Weapons.WeaponDefinition def, ClassicWeaponId id)
+        {
+            _weaponDef = def;
+            _burstStart = -1f;
+            int k = V3WeaponSets && def != null && _runtimeOverrides != null ? _setKeys.IndexOf(def.AnimSet) : -1;
+            if (k < 0)
+            {
+                WeaponAnimSet = null;
+                SetWeapon(DD.Prototype.Core.Weapons.Arsenal.LegacyPoseIndex(id));
+                return;
+            }
+
+            if (WeaponAnimSet != _setKeys[k]) _runtimeOverrides.ApplyOverrides(_setOverrides[k]);
+            WeaponAnimSet = _setKeys[k];
+            SetWeapon(CharacterAnimatorContract.WeaponPoseV3);
+        }
+
+        /// <summary>WP-071 B4b: the reload the gameplay started is the empty one (its duration is the definition's reloadEmptySeconds — the event carries only the duration; S-02 ClassicWeaponRuntime picks tac / empty).</summary>
+        private bool IsEmptyReload(float seconds)
+        {
+            if (_weaponDef == null || _weaponDef.ammo == null) return false;
+            return Mathf.Abs(seconds - _weaponDef.ammo.reloadEmptySeconds) < Mathf.Abs(seconds - _weaponDef.ammo.reloadTacSeconds);
+        }
         private void OnReloadStarted(float duration) => PlayReload(duration);
         private void OnReloadInterrupted() => CancelReload();
         private void OnSpecialEnded() => SetSpecialHold(0);
@@ -357,15 +430,23 @@ namespace DD.Prototype.Characters
         /// <summary>The classic weapon held (ClassicWeaponId index): Aim_<w> is the upper rest, Fire_<w> the recoil, Reload_<w> / Switch_<w> the one-shots.</summary>
         public void SetWeapon(int weapon)
         {
-            _weapon = Mathf.Clamp(weapon, 0, 3);
+            _weapon = Mathf.Clamp(weapon, 0, CharacterAnimatorContract.WeaponPoseV3);
             if (_authored) _animator.SetInteger(WeaponId, _weapon);
         }
 
         /// <summary>Reload: the weapon's clip rate-scaled so mag_out / mag_in / chamber land inside <paramref name="seconds"/> (WeaponConfig.ReloadTime).</summary>
         public void PlayReload(float seconds)
         {
-            if (!_authored || _dying || _weapon > 2) return;
-            float clipSeconds = _animation.Find(CharacterAnimatorContract.PlayerWeaponClip(_weapon, "reload"))?.seconds ?? 0f;
+            if (!_authored || _dying || _weapon == 3) return;
+            string clip;
+            if (_weapon == CharacterAnimatorContract.WeaponPoseV3)
+            {
+                bool empty = IsEmptyReload(seconds);
+                _animator.SetBool(ReloadEmptyId, empty);
+                clip = CharacterAnimatorContract.PlayerWeaponClipV3(WeaponAnimSet, empty ? "reload_empty" : "reload_tac");
+            }
+            else clip = CharacterAnimatorContract.PlayerWeaponClip(_weapon, "reload");
+            float clipSeconds = _animation.Find(clip)?.seconds ?? 0f;
             _animator.SetFloat(ReloadRateId, seconds > 0.05f && clipSeconds > 0.05f ? clipSeconds / seconds : 1f);
             _animator.SetTrigger(ReloadId);
         }
@@ -375,7 +456,8 @@ namespace DD.Prototype.Characters
         {
             if (!_authored) return;
             _animator.ResetTrigger(ReloadId);
-            if (ResolveOverrideLayer() >= 0 && _animator.GetCurrentAnimatorStateInfo(_overrideLayer).IsName(CharacterAnimatorContract.ReloadState + "_" + _weapon))
+            AnimatorStateInfo over = ResolveOverrideLayer() >= 0 ? _animator.GetCurrentAnimatorStateInfo(_overrideLayer) : default;
+            if (_overrideLayer >= 0 && (over.IsName(CharacterAnimatorContract.ReloadState + "_" + _weapon) || over.IsName(CharacterAnimatorContract.ReloadTacState) || over.IsName(CharacterAnimatorContract.ReloadEmptyState)))
             {
                 _animator.CrossFadeInFixedTime(RestStateName(), 0.1f, _overrideLayer);
             }
@@ -406,6 +488,7 @@ namespace DD.Prototype.Characters
         private string RestStateName()
         {
             if (_swHold > 0) return CharacterAnimatorContract.SwHoldState + "_" + _swHold;
+            if (_weapon == CharacterAnimatorContract.WeaponPoseV3) return CharacterAnimatorContract.AimV3State;
             return _weapon <= 2 ? CharacterAnimatorContract.AimState + "_" + _weapon : CharacterAnimatorContract.EmptyState;
         }
 
@@ -415,6 +498,19 @@ namespace DD.Prototype.Characters
         public void PlayFire()
         {
             if (!_authored || _dying) return;
+            // WP-071 B4b: a burst weapon's v3 fire clip is the whole burst (P-06 ar_2: 3 kicks in 15 f) — only the burst's first shot starts it
+            if (_swHold == 0 && _weapon == CharacterAnimatorContract.WeaponPoseV3 && _weaponDef != null && _weaponDef.fire != null
+                && _weaponDef.fire.fireMode == DD.Prototype.Core.Weapons.WeaponFireMode.Burst)
+            {
+                // the burst's shots arrive on frame boundaries (a 60 Hz frame can push the last one past count × interval): the window
+                // reaches half-way into the gap before the next burst (burstDelaySeconds), which frame jitter never crosses
+                float now = Time.time, window = Mathf.Max(0, _weaponDef.fire.burstCount - 1) * _weaponDef.fire.burstIntervalSeconds + 0.5f * _weaponDef.fire.burstDelaySeconds;
+                if (_burstStart >= 0f && now - _burstStart <= window) return;
+                _burstStart = now;
+            }
+
+            FireTriggers++;
+
             _animator.SetTrigger(_swHold > 0 ? SwFireId : FireId);
         }
 

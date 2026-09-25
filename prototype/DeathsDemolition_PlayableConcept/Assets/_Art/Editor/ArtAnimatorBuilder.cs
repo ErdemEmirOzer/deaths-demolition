@@ -86,6 +86,7 @@ namespace DD.Art.Pipeline.EditorTools
 
             WriteSet(ArtCharacterPrefabBuilder.PlayerAnimationSet, player, manifest, clips, unitySpeeds, "player", PlayerSource, playerReferenceSpeed,
                 clips[C.PlayerIdle], clips[C.PlayerWalkFwd], manifest[C.PlayerWalkFwd].speedMps);
+            WriteWeaponSets(ArtCharacterPrefabBuilder.PlayerAnimationSet, player, clips);
             WriteSet(ArtCharacterPrefabBuilder.ZombieAnimationSet, zombie, manifest, clips, unitySpeeds, "zombie", ZombieSource, manifest[C.ZombieShambleA].speedMps,
                 clips[C.ZombieIdleSway], clips[C.ZombieShambleA], manifest[C.ZombieShambleA].speedMps);
 
@@ -222,6 +223,7 @@ namespace DD.Art.Pipeline.EditorTools
             st.writeDefaultValues = false;
             for (int w = 0; w < aims.Length; w++)
             {
+                if (aims[w] == null) continue;
                 AnimatorStateTransition back = st.AddTransition(aims[w]);
                 back.hasExitTime = true; back.exitTime = exitTime; back.hasFixedDuration = true; back.duration = exitDuration; back.canTransitionToSelf = false;
                 back.AddCondition(AnimatorConditionMode.Equals, w, C.Weapon);
@@ -315,6 +317,7 @@ namespace DD.Art.Pipeline.EditorTools
                 (C.Pickup, AnimatorControllerParameterType.Trigger), (C.Alive, AnimatorControllerParameterType.Bool),
                 // WP-032C weapon handling + hurt
                 (C.Weapon, AnimatorControllerParameterType.Int), (C.Reload, AnimatorControllerParameterType.Trigger), (C.ReloadRate, AnimatorControllerParameterType.Float),
+                (C.ReloadEmpty, AnimatorControllerParameterType.Bool),
                 (C.SwitchOut, AnimatorControllerParameterType.Trigger), (C.SwitchIn, AnimatorControllerParameterType.Trigger),
                 (C.Lower, AnimatorControllerParameterType.Trigger), (C.Raise, AnimatorControllerParameterType.Trigger),
                 (C.SwHold, AnimatorControllerParameterType.Int), (C.Hurt, AnimatorControllerParameterType.Trigger), (C.HurtStyle, AnimatorControllerParameterType.Int),
@@ -370,7 +373,10 @@ namespace DD.Art.Pipeline.EditorTools
             AnimatorStateMachine osm = over.stateMachine;
             AnimatorState overEmpty = osm.AddState(C.EmptyState);
             osm.defaultState = overEmpty;
-            var aims = new AnimatorState[3];
+            // aims[] is indexed by the Weapon pose: 0..2 the M3 classes, 3 none (Empty), 4 the WP-071 v3 generic set (AOC per weapon)
+            string v3Base = C.WeaponAnimSetsV3[0];
+            bool v3 = clips.ContainsKey(C.PlayerWeaponClipV3(v3Base, "idle_aim"));
+            var aims = new AnimatorState[v3 ? C.WeaponPoseV3 + 1 : 3];
             for (int w = 0; w < 3; w++)
             {
                 aims[w] = osm.AddState(C.AimState + "_" + w);
@@ -378,17 +384,24 @@ namespace DD.Art.Pipeline.EditorTools
                 aims[w].writeDefaultValues = false;
             }
 
+            if (v3)
+            {
+                aims[C.WeaponPoseV3] = osm.AddState(C.AimV3State);
+                aims[C.WeaponPoseV3].motion = clips[C.PlayerWeaponClipV3(v3Base, "idle_aim")];
+                aims[C.WeaponPoseV3].writeDefaultValues = false;
+            }
+
             var holds = new AnimatorState[3];
             holds[0] = osm.AddState(C.SwHoldState + "_1"); holds[0].motion = clips[C.PlayerSwHoldBell]; holds[0].writeDefaultValues = false;
             holds[1] = osm.AddState(C.SwHoldState + "_2"); holds[1].motion = clips[C.PlayerSwHoldLoom]; holds[1].writeDefaultValues = false;
             holds[2] = osm.AddState(C.SwHoldState + "_3"); holds[2].motion = clips[C.PlayerSwHoldJewel]; holds[2].writeDefaultValues = false;   // AP-009G v007 (Tide Jewel; no swing clip — the pull is a VFX beat)
             // Empty / Aim_x / SwHold_x ↔ the weapon and special-weapon selection (no exit time)
-            var rests = new List<AnimatorState> { overEmpty }; rests.AddRange(aims); rests.AddRange(holds);
+            var rests = new List<AnimatorState> { overEmpty }; foreach (AnimatorState a in aims) if (a != null) rests.Add(a); rests.AddRange(holds);
             foreach (AnimatorState from in rests)
             {
-                for (int w = 0; w < 3; w++)
+                for (int w = 0; w < aims.Length; w++)
                 {
-                    if (from == aims[w]) continue;
+                    if (aims[w] == null || from == aims[w]) continue;
                     AnimatorStateTransition t = from.AddTransition(aims[w]);
                     t.hasExitTime = false; t.hasFixedDuration = true; t.duration = from == overEmpty ? 0f : 0.15f;
                     t.AddCondition(AnimatorConditionMode.Equals, w, C.Weapon);
@@ -415,6 +428,26 @@ namespace DD.Art.Pipeline.EditorTools
                 FromAny(osm, sIn, 0.03f, (AnimatorConditionMode.If, 0f, C.SwitchIn), (AnimatorConditionMode.Equals, w, C.Weapon), (AnimatorConditionMode.If, 0f, C.Alive));
             }
 
+            if (v3)
+            {
+                // WP-071 B4b: the v3 generic one-shots (Weapon == 4); the per-weapon AOC swaps fire / reload_tac / reload_empty
+                AnimatorState tac = OneShotUpper(osm, aims, holds, C.ReloadTacState, clips[C.PlayerWeaponClipV3(v3Base, "reload_tac")], 0.98f, 0.1f);
+                tac.speedParameterActive = true; tac.speedParameter = C.ReloadRate;
+                FromAny(osm, tac, 0.05f, (AnimatorConditionMode.If, 0f, C.Reload), (AnimatorConditionMode.Equals, C.WeaponPoseV3, C.Weapon), (AnimatorConditionMode.IfNot, 0f, C.ReloadEmpty), (AnimatorConditionMode.If, 0f, C.Alive));
+                AnimatorState empty = OneShotUpper(osm, aims, holds, C.ReloadEmptyState, clips[C.PlayerWeaponClipV3(v3Base, "reload_empty")], 0.98f, 0.1f);
+                empty.speedParameterActive = true; empty.speedParameter = C.ReloadRate;
+                FromAny(osm, empty, 0.05f, (AnimatorConditionMode.If, 0f, C.Reload), (AnimatorConditionMode.Equals, C.WeaponPoseV3, C.Weapon), (AnimatorConditionMode.If, 0f, C.ReloadEmpty), (AnimatorConditionMode.If, 0f, C.Alive));
+                AnimatorState vOut = OneShotUpper(osm, aims, holds, C.SwitchOutV3State, clips[C.PlayerWeaponClipV3(v3Base, "switch_out")], 0.98f, 0.05f);
+                FromAny(osm, vOut, 0.03f, (AnimatorConditionMode.If, 0f, C.SwitchOut), (AnimatorConditionMode.Equals, C.WeaponPoseV3, C.Weapon), (AnimatorConditionMode.If, 0f, C.Alive));
+                AnimatorState vIn = OneShotUpper(osm, aims, holds, C.SwitchInV3State, clips[C.PlayerWeaponClipV3(v3Base, "switch_in")], 0.98f, 0.1f);
+                FromAny(osm, vIn, 0.03f, (AnimatorConditionMode.If, 0f, C.SwitchIn), (AnimatorConditionMode.Equals, C.WeaponPoseV3, C.Weapon), (AnimatorConditionMode.If, 0f, C.Alive));
+                // lower / raise: the v3 set has none yet → the rifle's (pose 0) clips
+                AnimatorState vLower = OneShotUpper(osm, aims, holds, C.WeaponLowerState + "_" + C.WeaponPoseV3, clips[C.PlayerWeaponLowerClip(0)], 0.98f, 0.1f);
+                FromAny(osm, vLower, 0.05f, (AnimatorConditionMode.If, 0f, C.Lower), (AnimatorConditionMode.Equals, C.WeaponPoseV3, C.Weapon), (AnimatorConditionMode.If, 0f, C.Alive));
+                AnimatorState vRaise = OneShotUpper(osm, aims, holds, C.WeaponRaiseState + "_" + C.WeaponPoseV3, clips[C.PlayerWeaponRaiseClip(0)], 0.98f, 0.1f);
+                FromAny(osm, vRaise, 0.05f, (AnimatorConditionMode.If, 0f, C.Raise), (AnimatorConditionMode.Equals, C.WeaponPoseV3, C.Weapon), (AnimatorConditionMode.If, 0f, C.Alive));
+            }
+
             for (int w = 0; w < 3; w++)   // v004: lower / raise per weapon (A = the v003 clip)
             {
                 AnimatorState lower = OneShotUpper(osm, aims, holds, C.WeaponLowerState + "_" + w, clips[C.PlayerWeaponLowerClip(w)], 0.98f, 0.1f);
@@ -437,6 +470,12 @@ namespace DD.Art.Pipeline.EditorTools
             {
                 AnimatorState fireW = OneShot(add.stateMachine, C.FireState + "_" + w, clips[C.PlayerWeaponClip(w, "fire")], addEmpty, 0.9f, 0.03f);
                 FromAny(add.stateMachine, fireW, 0.0f, (AnimatorConditionMode.If, 0f, C.Fire), (AnimatorConditionMode.Equals, w, C.Weapon), (AnimatorConditionMode.If, 0f, C.Alive));
+            }
+
+            if (v3)
+            {
+                AnimatorState fireV3 = OneShot(add.stateMachine, C.FireV3State, clips[C.PlayerWeaponClipV3(v3Base, "fire")], addEmpty, 0.9f, 0.03f);
+                FromAny(add.stateMachine, fireV3, 0.0f, (AnimatorConditionMode.If, 0f, C.Fire), (AnimatorConditionMode.Equals, C.WeaponPoseV3, C.Weapon), (AnimatorConditionMode.If, 0f, C.Alive));
             }
 
             AnimatorState fire = OneShot(add.stateMachine, C.FireState, clips[C.PlayerFireRecoil], addEmpty, 0.9f, 0.05f);
@@ -856,6 +895,44 @@ namespace DD.Art.Pipeline.EditorTools
             }
 
             return -1;
+        }
+
+        /// <summary>
+        /// WP-071 B4b (K8 / A6.2): one AnimatorOverrideController per v3 animation set (WeaponDefinition.AnimSet), overriding only
+        /// the weapon-own slots (fire / reload_tac / reload_empty) over the base controller, whose v3 states carry the first set's
+        /// clips; the class slots stay the base clips. Written next to the player controller (Player/Generated).
+        /// </summary>
+        private static void WriteWeaponSets(string setPath, AnimatorController controller, Dictionary<string, AnimationClip> clips)
+        {
+            var set = AssetDatabase.LoadAssetAtPath<CharacterAnimationSet>(setPath);
+            if (set == null) return;
+            string folder = ArtCharacterContract.PlayerFolder + "/Generated";
+            EnsureFolder(folder);
+            var sets = new List<CharacterAnimationSet.WeaponAnimSet>();
+            string baseSet = C.WeaponAnimSetsV3[0];
+            foreach (string animSet in C.WeaponAnimSetsV3)
+            {
+                if (!clips.ContainsKey(C.PlayerWeaponClipV3(animSet, "fire"))) continue;
+                string path = folder + "/DD_Player_" + animSet + ".overrideController";
+                var aoc = AssetDatabase.LoadAssetAtPath<AnimatorOverrideController>(path);
+                if (aoc == null) { aoc = new AnimatorOverrideController(controller); AssetDatabase.CreateAsset(aoc, path); }
+                aoc.runtimeAnimatorController = controller;
+                var pairs = new List<KeyValuePair<AnimationClip, AnimationClip>>();
+                foreach (string slot in C.WeaponOwnSlots)
+                {
+                    AnimationClip from = clips[C.PlayerWeaponClipV3(baseSet, slot)];
+                    clips.TryGetValue(C.PlayerWeaponClipV3(animSet, slot), out AnimationClip to);
+                    pairs.Add(new KeyValuePair<AnimationClip, AnimationClip>(from, animSet == baseSet ? null : to));
+                }
+
+                aoc.ApplyOverrides(pairs);
+                EditorUtility.SetDirty(aoc);
+                sets.Add(new CharacterAnimationSet.WeaponAnimSet { animSet = animSet, overrides = aoc });
+            }
+
+            set.ConfigureWeaponSets(sets);
+            EditorUtility.SetDirty(set);
+            Debug.Log(LogPrefix + "weapon animation sets: " + sets.Count + " (" + string.Join(", ", C.WeaponAnimSetsV3) + ")");
         }
 
         private static void WriteSet(string setPath, AnimatorController controller, Dictionary<string, ArtAnimationClipContract.ClipSpec> manifest,

@@ -335,6 +335,72 @@ namespace DD.Art.Tests.PlayMode
 
         [UnityTest]
         [Timeout(300000)]
+        public IEnumerator SilahV3_AOC_ar1ar2_TacEmpty_BurstTekVurus_LocomotionSifirlanmaz()
+        {
+            // WP-071 B4b (K8): the AR pair on the generic v3 states through one runtime override controller — equip swaps only the
+            // weapon slots (no rebind: the base layer keeps its state and clock), reload picks tac / empty from the duration, the
+            // burst weapon's fire clip starts once per burst.
+            yield return RunAP005();
+            PlayerSkinnedVisual.V3WeaponSets = true;   // dormant in the game until the grip decision + S-02's mount v3 pose
+            try
+            {
+            PlayerSkinnedVisual pv = PlayerRegistry.Primary.GetComponentInChildren<PlayerSkinnedVisual>(true);
+            if (pv.AnimationSet == null || pv.AnimationSet.WeaponSets.Count == 0) Assert.Ignore("AP-022 slice 4a (AR, 30 fps) henüz içe alınmadı — v3 set yok");
+            var ar1 = DD.Prototype.Core.Weapons.Arsenal.Get("ar_1");
+            var ar2 = DD.Prototype.Core.Weapons.Arsenal.Get("ar_2");
+            Assert.IsNotNull(ar1); Assert.IsNotNull(ar2);
+            int over = -1; for (int i = 0; i < pv.Animator.layerCount; i++) if (pv.Animator.GetLayerName(i) == C.OverrideUpperLayer) over = i;
+            pv.EquipWeapon(ar1, ar1.id);
+            Assert.AreEqual("ar_1", pv.WeaponAnimSet);
+            Assert.AreEqual(C.WeaponPoseV3, pv.Weapon);
+            yield return CharacterTests.Bekle(() => pv.Animator.GetCurrentAnimatorStateInfo(over).IsName(C.AimV3State), 2f, "Aim_V3");
+            for (int i = 0; i < 20; i++) yield return null;
+            AnimatorStateInfo b0 = pv.Animator.GetCurrentAnimatorStateInfo(0);
+            pv.EquipWeapon(ar2, ar2.id);
+            yield return null;
+            AnimatorStateInfo b1 = pv.Animator.GetCurrentAnimatorStateInfo(0);
+            Assert.AreEqual("ar_2", pv.WeaponAnimSet);
+            Assert.AreEqual(b0.fullPathHash, b1.fullPathHash, "AOC değişimi base katmanı sıfırlamamalı (durum)");
+            Assert.Greater(b1.normalizedTime, b0.normalizedTime, "AOC değişimi base saatini sıfırlamamalı");
+            Assert.IsTrue(pv.Animator.GetCurrentAnimatorStateInfo(over).IsName(C.AimV3State), "üst katman Aim_V3'te kalır");
+
+            string[] seen = new string[2];
+            float[] seconds = { ar2.ammo.reloadTacSeconds, ar2.ammo.reloadEmptySeconds };
+            string[] states = { C.ReloadTacState, C.ReloadEmptyState };
+            for (int k = 0; k < 2; k++)
+            {
+                pv.PlayReload(seconds[k]);
+                yield return CharacterTests.Bekle(() => pv.Animator.GetCurrentAnimatorStateInfo(over).IsName(states[k]), 1f, states[k]);
+                AnimatorClipInfo[] ci = pv.Animator.GetCurrentAnimatorClipInfo(over);
+                seen[k] = ci.Length > 0 ? ci[0].clip.name : "-";
+                pv.CancelReload();
+                yield return CharacterTests.Bekle(() => pv.Animator.GetCurrentAnimatorStateInfo(over).IsName(C.AimV3State), 1f, "reload iptal → Aim_V3");
+            }
+
+            StringAssert.Contains("ar_2_reload_tac", seen[0], "tac süresi → ar_2 reload_tac (AOC)");
+            StringAssert.Contains("ar_2_reload_empty", seen[1], "empty süresi → ar_2 reload_empty (AOC)");
+
+            int f0 = pv.FireTriggers;
+            for (int i = 0; i < 3; i++) { pv.PlayFire(); yield return new WaitForSeconds(ar2.fire.burstIntervalSeconds); }
+            int burst = pv.FireTriggers - f0;
+            yield return new WaitForSeconds(ar2.fire.burstDelaySeconds + 0.1f);
+            pv.PlayFire();
+            int second = pv.FireTriggers - f0 - burst;
+            pv.EquipWeapon(ar1, ar1.id);
+            int a0 = pv.FireTriggers;
+            for (int i = 0; i < 3; i++) { pv.PlayFire(); yield return new WaitForSeconds(0.05f); }
+            int auto = pv.FireTriggers - a0;
+            Debug.Log("[DD-TEST] wp071.b4b tac=" + seen[0] + " empty=" + seen[1] + " burstFireBeats=" + burst + "+" + second + " autoBeats=" + auto
+                      + " baseT " + b0.normalizedTime.ToString("F3", CultureInfo.InvariantCulture) + "→" + b1.normalizedTime.ToString("F3", CultureInfo.InvariantCulture));
+            Assert.AreEqual(1, burst, "ar_2 burst: 3 mermi → 1 fire klibi");
+            Assert.AreEqual(1, second, "sonraki burst yeniden başlar");
+            Assert.AreEqual(3, auto, "ar_1 auto: mermi başına kick");
+            }
+            finally { PlayerSkinnedVisual.V3WeaponSets = false; }
+        }
+
+        [UnityTest]
+        [Timeout(300000)]
         public IEnumerator Twist_RigV002_SurucuBurulmasi_AgirlikKadarDagitilir()
         {
             // WP-071 · AP-022 rig v002: the eight twist bones follow their driver's twist × P-06's weight (−0.5 / +0.4 / +0.8 / −0.5).

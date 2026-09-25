@@ -45,6 +45,7 @@ namespace DD.Prototype.Characters
         public const string Weapon = "Weapon";           // int: ClassicWeaponId (0 A rifle, 1 B smg, 2 C shotgun) — selects Aim_/Reload_/Switch_/Fire_ states
         public const string Reload = "Reload";           // trigger → Reload_<Weapon> at ReloadRate
         public const string ReloadRate = "ReloadRate";   // float: clip seconds / WeaponConfig.ReloadTime
+        public const string ReloadEmpty = "ReloadEmpty"; // bool: WP-071 B4b — the v3 set's reload_empty (else reload_tac)
         public const string SwitchOut = "SwitchOut";     // trigger → SwitchOut_<Weapon> (switch_away event)
         public const string SwitchIn = "SwitchIn";       // trigger → SwitchIn_<Weapon> (switch_ready event)
         public const string Lower = "Lower";             // trigger → WeaponLower (lowered event)
@@ -89,6 +90,11 @@ namespace DD.Prototype.Characters
         public const string ReloadState = "Reload";           // Reload_<weapon>
         public const string SwitchOutState = "SwitchOut";     // SwitchOut_<weapon>
         public const string SwitchInState = "SwitchIn";       // SwitchIn_<weapon>
+        // WP-071 B4b (K8 / A6.1): the v3 generic weapon states (Weapon == WeaponPoseV3); the clips are the base set's, a per-weapon
+        // AnimatorOverrideController (animSet) swaps the weapon-specific slots
+        public const int WeaponPoseV3 = 4;
+        public const string AimV3State = "Aim_V3", ReloadTacState = "ReloadTac", ReloadEmptyState = "ReloadEmpty",
+            SwitchInV3State = "SwitchIn_V3", SwitchOutV3State = "SwitchOut_V3", FireV3State = "Fire_V3";
         public const string WeaponLowerState = "WeaponLower";
         public const string WeaponRaiseState = "WeaponRaise";
         public const string SwHoldState = "SwHold";           // SwHold_1 bell, SwHold_2 loom
@@ -148,6 +154,14 @@ namespace DD.Prototype.Characters
         public static string PlayerWeaponRaiseClip(int weapon) => weapon <= 0 ? PlayerWeaponRaise : PlayerWeaponClip(weapon, "weapon_raise");
         /// <summary>Weapon letter of a ClassicWeaponId index (0 A AssaultRifle, 1 B AutoSmg, 2 C CombatShotgun).</summary>
         public static readonly string[] WeaponLetters = { "A", "B", "C" };
+        // WP-071 B4b · AP-022 v3 weapon clips: class slots (shared by the class's weapons) and weapon slots (per weaponId)
+        public static readonly string[] WeaponClassSlots = { "idle_aim", "ads_in", "ads_idle", "ads_out", "switch_in", "switch_out" };
+        public static readonly string[] WeaponOwnSlots = { "fire", "reload_tac", "reload_empty" };
+        /// <summary>The v3 animation sets present (WeaponDefinition.AnimSet keys); the first one is the base controller's default.</summary>
+        public static readonly string[] WeaponAnimSetsV3 = { "ar_1", "ar_2" };
+        public static string WeaponClassOf(string animSet) { int u = animSet.IndexOf('_'); return u > 0 ? animSet.Substring(0, u) : animSet; }
+        public static string PlayerWeaponClipV3(string animSet, string slot) =>
+            "AP022_tp_" + (System.Array.IndexOf(WeaponOwnSlots, slot) >= 0 ? animSet : WeaponClassOf(animSet)) + "_" + slot;
         public static string PlayerWeaponClip(int weapon, string kind) => "AP009_player_" + WeaponLetters[Mathf.Clamp(weapon, 0, 2)] + "_" + kind;   // idle_aim / fire / reload / switch_in / switch_out
         public const string ZombieIdleSway = "AP009_zombie_idle_sway";
         public const string ZombieIdleTwitch = "AP009_zombie_idle_twitch";
@@ -298,6 +312,28 @@ namespace DD.Prototype.Characters
         [SerializeField] private string _manifestSchema = "";
         [Tooltip("WP-018 · Ground speed (m/s) the 2-D locomotion blend is normalised to (player: config MoveSpeed at build; the child time scales are reference / clip speed_mps).")]
         [SerializeField] private float _locomotionReferenceSpeed = 6.2f;
+        [Tooltip("WP-071 B4b (K8): per-weapon override controllers keyed by WeaponDefinition.AnimSet (v3 weapon clips); empty = legacy pose path only.")]
+        [SerializeField] private List<WeaponAnimSet> _weaponSets = new List<WeaponAnimSet>();
+
+        [Serializable]
+        public sealed class WeaponAnimSet
+        {
+            public string animSet;
+            public AnimatorOverrideController overrides;
+        }
+
+        public IReadOnlyList<WeaponAnimSet> WeaponSets => _weaponSets;
+
+        /// <summary>WP-071 B4b: the override controller for a weapon's AnimSet key, or null (legacy pose path).</summary>
+        public AnimatorOverrideController WeaponOverrides(string animSet)
+        {
+            if (_weaponSets == null || string.IsNullOrEmpty(animSet)) return null;
+            for (int i = 0; i < _weaponSets.Count; i++) if (_weaponSets[i] != null && _weaponSets[i].animSet == animSet) return _weaponSets[i].overrides;
+            return null;
+        }
+
+        /// <summary>Editor (builder): the v3 weapon sets.</summary>
+        public void ConfigureWeaponSets(List<WeaponAnimSet> sets) => _weaponSets = sets ?? new List<WeaponAnimSet>();
 
         public AnimationClip Idle => _idle;
         public AnimationClip Walk => _walk;
