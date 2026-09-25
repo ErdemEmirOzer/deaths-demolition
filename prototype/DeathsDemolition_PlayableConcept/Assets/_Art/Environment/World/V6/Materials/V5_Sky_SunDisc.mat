@@ -31,6 +31,10 @@ Material:
         m_Texture: {fileID: 2800000, guid: 243a25d431d2449918e996d97ac8164b, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _SkyPano:
+        m_Texture: {fileID: 2800000, guid: 2a0141904f862456692573194a81acbe, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
     - _CloudAlphaPower: 2
@@ -39,6 +43,7 @@ Material:
     - _GlowIntensity: 1.6
     - _HaloIntensity: 0.45
     - _HaloPower: 7
+    - _SkyRotation: 0
     m_Colors:
     - _CloudDim: {r: 0.88, g: 0.5, b: 0, a: 0}
     - _CloudFarMap: {r: 900, g: 0.0008571429, b: 0.003377189, a: 0.0026385495}

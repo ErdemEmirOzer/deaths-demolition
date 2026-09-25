@@ -1,8 +1,8 @@
 // WP-075 · DEC-102 · DD/SunDisc — the high sun's disc and halo in the v6 sky: one quad along the sun direction (WorldV5Sky), procedural
 // from its UV (a soft-edged HDR disc the bloom turns into glare, a tight glow and a wide exponential halo), additive, no fog, the depth
-// pinned just inside the far plane like DD/SkyPlate. Drawn after the cloud planes: it samples both cloud sheets along each pixel's view
-// ray with their own mapping and drift (DD/SkyPlate on the WorldV5Sky planes), so a passing cloud dims the sun to a bright glow through
-// the cumulus instead of hiding it, and the gaps show the crisp disc.
+// pinned just inside the far plane like DD/SkyPlate. DEC-102 r2: drawn after the skybox, it reads the sky_v3 panorama along each pixel's
+// view ray (Skybox/Panoramic's own lat-long mapping and rotation) for its cloud cover — the cumulus dims the sun to a bright glow instead
+// of hiding it, the gaps and the forward-scatter glow show the crisp disc (the cookie's rule: wp-074/tools/stage-sky-v3.py).
 Shader "DD/SunDisc"
 {
     Properties
@@ -14,11 +14,8 @@ Shader "DD/SunDisc"
         _GlowFalloff("Tight glow falloff (per quad half-size)", Range(4, 120)) = 36
         _HaloPower("Halo falloff", Range(1, 32)) = 6
         _HaloIntensity("Halo intensity", Range(0, 2)) = 0.22
-        [NoScaleOffset] _CloudNear("Near cloud sheet", 2D) = "black" {}
-        _CloudNearMap("Near sheet: height, 1 / tile, drift u, drift v", Vector) = (500, 0.00057, 0, 0)
-        [NoScaleOffset] _CloudFar("Far cloud sheet", 2D) = "black" {}
-        _CloudFarMap("Far sheet: height, 1 / tile, drift u, drift v", Vector) = (900, 0.00086, 0, 0)
-        _CloudAlphaPower("Cloud alpha power (WorldV5Sky.CloudAlphaPower)", Range(0.3, 4)) = 2
+        [NoScaleOffset] _SkyPano("Sky panorama (the skybox's lat-long)", 2D) = "white" {}
+        _SkyRotation("Skybox rotation (degrees)", Float) = 0
         _CloudDim("Cloud dimming: disc, halo", Vector) = (0.88, 0.5, 0, 0)
     }
     SubShader
@@ -37,6 +34,7 @@ Shader "DD/SunDisc"
             #pragma vertex Vert
             #pragma fragment Frag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"   // LinearToSRGB (the panorama's cloud rule is in sRGB)
             CBUFFER_START(UnityPerMaterial)
                 half4 _DiscColor;
                 half4 _HaloColor;
@@ -45,13 +43,10 @@ Shader "DD/SunDisc"
                 half _GlowFalloff;
                 half _HaloPower;
                 half _HaloIntensity;
-                float4 _CloudNearMap;
-                float4 _CloudFarMap;
-                half _CloudAlphaPower;
+                float _SkyRotation;
                 half4 _CloudDim;
             CBUFFER_END
-            TEXTURE2D(_CloudNear); SAMPLER(sampler_CloudNear);
-            TEXTURE2D(_CloudFar); SAMPLER(sampler_CloudFar);
+            TEXTURE2D(_SkyPano); SAMPLER(sampler_SkyPano);
             struct Attributes { float4 positionOS : POSITION; float2 uv : TEXCOORD0; };
             struct Varyings { float4 positionCS : SV_POSITION; float2 uv : TEXCOORD0; float3 positionWS : TEXCOORD1; };
             Varyings Vert(Attributes input)
@@ -67,21 +62,27 @@ Shader "DD/SunDisc"
                 output.uv = input.uv;
                 return output;
             }
-            // The cloud sheet's coverage along the view ray: the WorldV5Sky plane sits at (0, height, 0) with uv = world xz / tile,
-            // drifting by _Time.y × the sheet's _ScrollUV (DD/SkyPlate), alpha^CloudAlphaPower.
-            half Cover(TEXTURE2D_PARAM(sheet, samplerSheet), float4 map, float3 dir)
+            // The panorama's cloud cover along the view ray: Skybox/Panoramic's lat-long (u = 0.5 − atan2(z, x) / 2π after the rotation,
+            // v = 1 − acos(y) / π); cloud = neither blue (b − r) nor the near-white glow round the sun (the cookie's rule).
+            half Cover(float3 dir)
             {
-                if (dir.y <= 0.01) return 0.0h;
-                float2 xz = _WorldSpaceCameraPos.xz + dir.xz * ((map.x - _WorldSpaceCameraPos.y) / dir.y);
-                half a = SAMPLE_TEXTURE2D(sheet, samplerSheet, xz * map.y + _Time.y * map.zw).a;
-                return pow(saturate(a), _CloudAlphaPower);
+                float a = radians(_SkyRotation), c = cos(a), s = sin(a);
+                float3 d = float3(c * dir.x - s * dir.z, dir.y, s * dir.x + c * dir.z);
+                float2 uv = float2(0.5 - atan2(d.z, d.x) / (2.0 * PI), 1.0 - acos(clamp(d.y, -1.0, 1.0)) / PI);
+                half3 sky = SAMPLE_TEXTURE2D_LOD(_SkyPano, sampler_SkyPano, uv, 0).rgb;
+                #if !UNITY_COLORSPACE_GAMMA
+                    sky = LinearToSRGB(sky);   // the rule is in sRGB (the panorama is an sRGB texture)
+                #endif
+                half blue = saturate((sky.b - sky.r - 0.06h) / 0.28h);
+                half glow = saturate((max(sky.r, max(sky.g, sky.b)) - 0.78h) / 0.12h);
+                half t = saturate((1.0h - max(blue, glow) - 0.55h) / 0.30h);
+                return t * t * (3.0h - 2.0h * t);
             }
+
             half4 Frag(Varyings input) : SV_Target
             {
                 float3 dir = normalize(input.positionWS - _WorldSpaceCameraPos);
-                half near = Cover(TEXTURE2D_ARGS(_CloudNear, sampler_CloudNear), _CloudNearMap, dir);
-                half far = Cover(TEXTURE2D_ARGS(_CloudFar, sampler_CloudFar), _CloudFarMap, dir);
-                half cover = 1.0h - (1.0h - near) * (1.0h - far);
+                half cover = Cover(dir);
                 half r = length(input.uv * 2.0 - 1.0);
                 half disc = 1.0h - smoothstep(_DiscRadius * 0.7h, _DiscRadius, r);
                 half glow = exp(-r * _GlowFalloff) * _GlowIntensity;

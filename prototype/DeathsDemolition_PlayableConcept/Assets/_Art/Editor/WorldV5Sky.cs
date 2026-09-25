@@ -58,6 +58,7 @@ namespace DD.Art.Pipeline.EditorTools
         {
             yield return ArtSkyBuilder.SkyBandV2SourcePath;
             yield return ArtSkyBuilder.SkyV2TexturePath;
+            yield return ArtSkyBuilder.SkyDec102SourcePath;   // DEC-102 r2: the v6 sky (the v2 band / cloud sheets stay on disk, unused by v6)
             foreach (string role in new[] { "horizon_far_v2", "horizon_mid_v2", "horizon_near_v2", "cloud_near", "cloud_far", "landmark_pagoda", "landmark_temple", "landmark_torii", "horizon_nw_cluster" })
                 yield return ArtPipelinePaths.SourceTexture(role, "Sheet");
         }
@@ -68,10 +69,8 @@ namespace DD.Art.Pipeline.EditorTools
         /// <summary>Builds the sky v2 dressing under <paramref name="dress"/>; the AP-019 rings must already be there (BuildHorizonPlates). Returns the objects placed.</summary>
         public static int Build(Transform dress)
         {
-            Material band = ArtSkyBuilder.BuildV2();
-            band.SetColor("_Tint", SkyBandTint);
-            band.SetFloat("_Exposure", SkyBandExposure);
-            EditorUtility.SetDirty(band);
+            // DEC-102 r2 (C-00 25.09: the tiled cloud planes read as repeating "popcorn"): the sky is AP-023 sky_v3's panorama; no cloud planes.
+            Material sky = ArtSkyBuilder.BuildV3();
             EnsureFolder(MeshFolder);
             int n = 0;
             Transform rings = dress.Find(ArtSurfaceImporter.SkyRootName);
@@ -88,26 +87,12 @@ namespace DD.Art.Pipeline.EditorTools
 
             var root = new GameObject(RootName) { layer = PrototypeLayers.Environment }.transform;
             root.SetParent(dress, false);
-            Vector2 drift = Compass(DriftCompassDegrees);
-            var cloudMaterials = new Dictionary<string, (Material material, float height, float tile)>();
-            foreach ((string name, string role, float height, float half, float tile, float speed, int queue) c in Clouds)
-            {
-                Mesh mesh = Quad("SM_sky_" + c.name, new[] { new Vector3(-c.half, 0f, -c.half), new Vector3(-c.half, 0f, c.half), new Vector3(c.half, 0f, c.half), new Vector3(c.half, 0f, -c.half) },
-                    new[] { new Vector2(-c.half / c.tile, -c.half / c.tile), new Vector2(-c.half / c.tile, c.half / c.tile), new Vector2(c.half / c.tile, c.half / c.tile), new Vector2(c.half / c.tile, -c.half / c.tile) });
-                Material cloud = PlateMaterial(c.role, c.queue, drift * (c.speed / c.tile));
-                cloud.SetFloat("_AlphaPower", CloudAlphaPower);
-                cloud.SetColor("_BaseColor", CloudTint);
-                cloud.SetFloat("_Haze", CloudHaze);
-                Plate(root, c.name, new Vector3(0f, c.height, 0f), Quaternion.identity, mesh, cloud);
-                cloudMaterials[c.role] = (cloud, c.height, c.tile);
-                n++;
-            }
 
             // DEC-102: the high sun's disc and halo (DD/SunDisc; SunDisc re-places it per camera along the sun, inside the far clip).
             float half = Mathf.Tan(SunHaloDegrees * Mathf.Deg2Rad) * SunDisc.Distance;
             Mesh sunMesh = Quad("SM_sky_SunDisc", new[] { new Vector3(-half, -half, 0f), new Vector3(-half, half, 0f), new Vector3(half, half, 0f), new Vector3(half, -half, 0f) },
                 new[] { new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(1f, 0f) });
-            Material sunMaterial = SunDiscMaterial(Mathf.Tan(SunDiscDegrees * Mathf.Deg2Rad) / Mathf.Tan(SunHaloDegrees * Mathf.Deg2Rad), cloudMaterials["cloud_near"], cloudMaterials["cloud_far"]);
+            Material sunMaterial = SunDiscMaterial(Mathf.Tan(SunDiscDegrees * Mathf.Deg2Rad) / Mathf.Tan(SunHaloDegrees * Mathf.Deg2Rad), sky);
             Vector3 toSun = -(Quaternion.Euler(WorldAtmosphere.V6Sky.SunEuler) * Vector3.forward);
             Plate(root, SunDiscName, toSun * SunDisc.Distance, Quaternion.LookRotation(toSun), sunMesh, sunMaterial);
             GameObject sunDisc = root.Find(SunDiscName).gameObject;
@@ -136,9 +121,9 @@ namespace DD.Art.Pipeline.EditorTools
 
         public const string SunDiscName = "SunDisc";
         public const float SunHaloDegrees = 22f, SunDiscDegrees = 0.6f;   // the real sun is 0.27°; 0.6° reads at 1080p before the bloom
-        public const int SunDiscQueue = 2896;   // after the cloud planes (2894 / 2895): the disc reads their cover itself (DD/SunDisc)
+        public const int SunDiscQueue = 2896;   // after the skybox; the disc reads the panorama's cloud cover itself (DD/SunDisc)
 
-        private static Material SunDiscMaterial(float discRadius, (Material material, float height, float tile) near, (Material material, float height, float tile) far)
+        private static Material SunDiscMaterial(float discRadius, Material sky)
         {
             Shader shader = Shader.Find("DD/SunDisc");
             if (shader == null) throw new InvalidOperationException("DD/SunDisc missing");
@@ -152,20 +137,11 @@ namespace DD.Art.Pipeline.EditorTools
 
             m.shader = shader;
             m.SetFloat("_DiscRadius", discRadius);
-            m.SetTexture("_CloudNear", near.material.GetTexture("_BaseMap"));
-            m.SetTexture("_CloudFar", far.material.GetTexture("_BaseMap"));
-            m.SetVector("_CloudNearMap", CloudMap(near));
-            m.SetVector("_CloudFarMap", CloudMap(far));
-            m.SetFloat("_CloudAlphaPower", CloudAlphaPower);
+            m.SetTexture("_SkyPano", sky.GetTexture("_MainTex"));
+            m.SetFloat("_SkyRotation", sky.GetFloat("_Rotation"));
             m.renderQueue = SunDiscQueue;
             EditorUtility.SetDirty(m);
             return m;
-        }
-
-        private static Vector4 CloudMap((Material material, float height, float tile) sheet)
-        {
-            Vector4 scroll = sheet.material.GetVector("_ScrollUV");
-            return new Vector4(sheet.height, 1f / sheet.tile, scroll.x, scroll.y);
         }
 
         private static void Plate(Transform parent, string name, Vector3 position, Quaternion rotation, Mesh mesh, Material material)

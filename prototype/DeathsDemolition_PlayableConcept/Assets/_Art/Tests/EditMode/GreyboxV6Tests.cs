@@ -17,7 +17,7 @@ namespace DD.Art.Tests.EditMode
     /// WP-074 B1 · The World v5 greybox (GreyboxV6Builder, WP-074 direction §0 K1–K5, Ek B §2 / §6): a ±55 m ring with its
     /// runtime WorldBounds and the NavMesh 0.5 m inside it, one NavMesh piece where bodies go (no body-reachable unlinked island),
     /// the twelve spawn gates, twelve weapon points and every room reaching the start, spawn gates ≥ 30 m of path from it, every
-    /// room with ≥ 2 exits, roofs out of the bake and tagged Roof, and the stakeholder data (18 gates, 5 regions, acoustic spaces).
+    /// room with ≥ 2 exits, roofs out of the bake and tagged Roof, and the stakeholder data (22 gates, 5 regions, acoustic spaces).
     /// </summary>
     public sealed class GreyboxV6Tests
     {
@@ -108,7 +108,7 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(DD.Prototype.World.WorldLayoutKind.Ap005, Ap005WorldBootstrap.LayoutOf(AssetDatabase.LoadAssetAtPath<WorldPlacementAsset>(ArtLibraryPaths.Ap005PlacementAsset)), "AP005 ±45 düzeni");
             var expected = new List<string>();
             foreach (GreyboxV6Builder.Gate g in GreyboxV6Builder.Gates) if (g.Kind == "inner") expected.Add(g.Id);
-            Assert.AreEqual(6, expected.Count);
+            Assert.AreEqual(10, expected.Count, "6 + S-03 senaryo C'nin 4 orta kapısı (C-00 25.09)");
             Assert.AreEqual(expected, placement.innerSpawnPoints.ConvertAll(p => p.id), "orta kapı id'leri spawn-gates-v6.json ile aynı");
             Vector3 seed = Seed(placement);
             var path = new NavMeshPath();
@@ -191,8 +191,8 @@ namespace DD.Art.Tests.EditMode
 
             Assert.GreaterOrEqual(roofs, 10, "çatı sayısı");
             string gates = File.ReadAllText(GreyboxV6Builder.SpawnGatesJson), regions = File.ReadAllText(GreyboxV6Builder.RegionsJson), acoustic = File.ReadAllText(GreyboxV6Builder.AcousticJson);
-            Assert.AreEqual(18, CountOf(gates, "\"kind\":"), "18 kapı");
-            Assert.AreEqual(6, CountOf(gates, "\"kind\": \"inner\""), "6 orta kapı");
+            Assert.AreEqual(22, CountOf(gates, "\"kind\":"), "22 kapı (S-03 senaryo C, C-00 25.09)");
+            Assert.AreEqual(10, CountOf(gates, "\"kind\": \"inner\""), "10 orta kapı");
             Assert.AreEqual(5, CountOf(regions, "\"polygonXZ\":"), "5 bölge");
             Assert.AreEqual(GreyboxV6Builder.Rooms.Length + GreyboxV6Builder.Corridors.Length, CountOf(acoustic, "\"enclosure\":"), "akustik alan");
             StringAssert.Contains("\"enclosure\": \"Hall\"", acoustic);
@@ -322,7 +322,7 @@ namespace DD.Art.Tests.EditMode
             Assert.IsNotNull(dress.transform.Find(ArtSurfaceImporter.SkyRootName), "ufuk halkaları");
             Debug.Log("[DD-TEST] wp074.b5b3.vista trees " + trees);
 
-            // B5b-4 · kit kairō (K3 W / E, K6) rails off, each bay's roof fading; R6 as a karamon.
+            // B5b-4 · kit kairō (K3 W / E, K6) rails off, each bay's roof fading; v007-B: kairo_angle corners on K2 / K4, R6 the kit chūmon.
             Transform kairo = dress.transform.Find(WorldV5Dress.KairoGroupName);
             Assert.IsNotNull(kairo, "kairō");
             int bays = 0, expectedBays = WorldV5Dress.BayCount();
@@ -336,7 +336,11 @@ namespace DD.Art.Tests.EditMode
             }
 
             Assert.AreEqual(expectedBays, bays, "kairō bölmesi");
-            Assert.IsNotNull(dress.transform.Find("Chumon_Karamon"), "chūmon");
+            int corners = 0;
+            foreach (Transform t in kairo) if (t.name.Contains("_Corner_")) corners++;
+            Assert.AreEqual(4, corners, "v007-B: kairo_angle köşeleri (K2 2 × 45°, K4 2 × 60°)");
+            Assert.IsNotNull(dress.transform.Find(WorldV5Dress.ShoreGroupName + "/" + WorldV5Dress.WaterfallName), "v007-B: şelale (en büyük havuz, kavisli kıyı)");
+            Assert.IsNotNull(dress.transform.Find(WorldV5Dress.ChumonName), "chūmon (v007-B: kit chūmon, × 1,2 geniş)");
 
             // B5b-5 · R2–R5 as kit buildings (roofs fading), the garden trunks as v005 trees; no greybox tree / room / corridor left.
             Transform buildings = dress.transform.Find(WorldV5Dress.BuildingGroupName);
@@ -372,10 +376,10 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(1024, PlanarReflection.HeightOf(QualityTier.Sinematik));
             Assert.IsTrue(PlanarReflection.CharactersIn(QualityTier.Sinematik) && !PlanarReflection.CharactersIn(QualityTier.Yuksek));
 
-            // WP-075 C3 · sky v2: the v6 layout's skybox, the rings on the v2 sheets in queue order, drifting clouds, the landmarks.
-            Assert.AreEqual(DD.Prototype.World.WorldAtmosphere.SkyV2ResourceName, DD.Prototype.World.WorldAtmosphere.SkyResourceFor(DD.Prototype.World.WorldLayoutKind.V6));
+            // WP-075 C3 · the v6 layout's skybox (DEC-102 r2: sky_v3's panorama), the rings on the v2 sheets in queue order, the landmarks.
+            Assert.AreEqual(DD.Prototype.World.WorldAtmosphere.SkyV3ResourceName, DD.Prototype.World.WorldAtmosphere.SkyResourceFor(DD.Prototype.World.WorldLayoutKind.V6));   // DEC-102 r2: the sky_v3 panorama
             Assert.AreEqual(DD.Prototype.World.WorldAtmosphere.SharedSkyResourceName, DD.Prototype.World.WorldAtmosphere.SkyResourceFor(DD.Prototype.World.WorldLayoutKind.Ap005));
-            Assert.IsNotNull(Resources.Load<Material>(DD.Prototype.World.WorldAtmosphere.SkyV2ResourceName), "DD_Sky_v2");
+            Assert.IsNotNull(Resources.Load<Material>(DD.Prototype.World.WorldAtmosphere.SkyV3ResourceName), "DD_Sky_v3");
             Transform rings = dress.transform.Find(ArtSurfaceImporter.SkyRootName);
             int lastQueue = 0;
             foreach ((string layer, int queue) in WorldV5Sky.PlateQueues)
@@ -387,9 +391,8 @@ namespace DD.Art.Tests.EditMode
             }
 
             Transform skyV2 = dress.transform.Find(WorldV5Sky.RootName);
-            Assert.AreEqual(WorldV5Sky.Clouds.Length + WorldV5Sky.Cards.Length + 1, skyV2.childCount, "bulut düzlemi + nirengi kartı + güneş diski (DEC-102)");
-            foreach ((string name, string role, float height, float half, float tile, float speed, int queue) c in WorldV5Sky.Clouds)
-                Assert.Greater(((Vector4)skyV2.Find(c.name).GetComponent<MeshRenderer>().sharedMaterial.GetVector("_ScrollUV")).magnitude, 0f, c.name + " sürüklenmiyor");
+            // DEC-102 r2: the cloud planes are retired (the sky_v3 panorama carries the clouds); the landmark cards and the sun disc stay.
+            Assert.AreEqual(WorldV5Sky.Cards.Length + 1, skyV2.childCount, "nirengi kartı + güneş diski (DEC-102 r2: bulut düzlemi yok)");
 
             // WP-075 C4 / C5 · shafts (20; none within 10 m of the centre) and fog sheets (one per pond + 7), tier-cut, visual only.
             Transform shafts = dress.transform.Find(WorldV5Atmosphere.ShaftGroupName), fogSheets = dress.transform.Find(WorldV5Atmosphere.FogGroupName);
@@ -566,8 +569,10 @@ namespace DD.Art.Tests.EditMode
                 WorldAtmosphere.ConfigureSun(light);
                 Assert.AreEqual(WorldAtmosphere.SunIntensity * WorldAtmosphere.V6Sky.SunIntensityScale, light.intensity, 1e-4f);
                 Assert.AreEqual(WorldAtmosphere.V6Sky.SunShadowStrength, light.shadowStrength, 1e-4f);
-                Assert.That(WorldAtmosphere.SunEulerFor(WorldLayoutKind.V6).x, Is.InRange(55f, 65f), "güneş yüksekliği");
-                Assert.AreEqual(WorldAtmosphere.CloudShadow.BrokenCookieResourceName, WorldAtmosphere.CloudShadow.CookieResourceFor(WorldLayoutKind.V6));
+                Assert.That(WorldAtmosphere.SunEulerFor(WorldLayoutKind.V6).x, Is.InRange(45f, 55f), "güneş yüksekliği (DEC-102 r2: 45–55°)");
+                Assert.AreEqual(WorldAtmosphere.CloudShadow.Sky3CookieResourceName, WorldAtmosphere.CloudShadow.CookieResourceFor(WorldLayoutKind.V6));
+                Assert.AreEqual(0f, WorldAtmosphere.CloudShadow.SpeedFor(WorldLayoutKind.V6), "r2: gök duruk, gölgesi de");
+                Assert.AreEqual(WorldAtmosphere.SkyV3ResourceName, WorldAtmosphere.SkyResourceFor(WorldLayoutKind.V6));
                 WorldLayout.SetCurrent(WorldLayoutKind.Ap005);
                 WorldAtmosphere.ConfigureSun(light);
                 Assert.AreEqual(WorldAtmosphere.SunIntensity, light.intensity, 1e-4f, "World_AP005 v3 anahtarı değişmez");
@@ -579,11 +584,11 @@ namespace DD.Art.Tests.EditMode
                 WorldLayout.SetCurrent(previous);
             }
 
-            // The broken-cloud cookie: 40–60 % sun (≥ 0.8), 0.40 under a cloud, imported by the cookie rules.
+            // The v6 cookie (r2: cast from the sky_v3 panorama): 40–60 % sun (≥ 0.8), 0.40 under a cloud, imported by the cookie rules.
             var png = new Texture2D(2, 2, TextureFormat.RGBA32, false);
             try
             {
-                Assert.IsTrue(png.LoadImage(File.ReadAllBytes(ArtImportContract.CloudCookieBrokenPath)), "broken cookie PNG");
+                Assert.IsTrue(png.LoadImage(File.ReadAllBytes(ArtImportContract.CloudCookieSky3Path)), "sky3 cookie PNG");
                 Color32[] px = png.GetPixels32();
                 int sun = 0, low = 255;
                 foreach (Color32 c in px) { if (c.r >= 204) sun++; low = Mathf.Min(low, c.r); }
@@ -595,12 +600,15 @@ namespace DD.Art.Tests.EditMode
                 Object.DestroyImmediate(png);
             }
 
-            Assert.IsTrue(ArtImportContract.IsLightCookieTexture(ArtImportContract.CloudCookieBrokenPath));
-            Assert.IsNotNull(Resources.Load<Texture2D>(WorldAtmosphere.CloudShadow.BrokenCookieResourceName));
+            Assert.IsTrue(ArtImportContract.IsLightCookieTexture(ArtImportContract.CloudCookieSky3Path));
+            Assert.IsNotNull(Resources.Load<Texture2D>(WorldAtmosphere.CloudShadow.Sky3CookieResourceName));
+            var skyV3 = Resources.Load<Material>(WorldAtmosphere.SkyV3ResourceName);
+            Assert.IsNotNull(skyV3, "r2: gök panoraması malzemesi");
+            Assert.AreEqual(ArtSkyBuilder.SkyDec102SourcePath, AssetDatabase.GetAssetPath(skyV3.GetTexture("_MainTex")), "r2: sky_v3 panoraması");
 
-            // Tiers: Cinematic ½ × 32, High ¼ × 12, Performance off; the feature on the High and Cinematic renderers.
+            // Tiers: Cinematic ½ × 24 (r2), High ¼ × 12, Performance off; the feature on the High and Cinematic renderers.
             VolumetricLightFeature.Rules cin = VolumetricLightFeature.RulesFor(QualityTier.Sinematik), high = VolumetricLightFeature.RulesFor(QualityTier.Yuksek);
-            Assert.IsTrue(cin.On && cin.Downsample == 2 && cin.Steps == 32);
+            Assert.IsTrue(cin.On && cin.Downsample == 2 && cin.Steps == 24);   // r2: 24 (release p99)
             Assert.IsTrue(high.On && high.Downsample == 4 && high.Steps == 12);
             Assert.IsFalse(VolumetricLightFeature.RulesFor(QualityTier.Performans).On);
             foreach (string path in ScreenAtmosphereSetup.RendererPaths)
@@ -620,13 +628,15 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(WorldV5Atmosphere.VolumeRegions.Length, field.Regions.Length);
             Assert.Less(field.DensityAt(new Vector3(0f, 1.5f, 0f)), 0.004f, "meydan merkezi açık (K10)");
             Assert.Greater(field.DensityAt(new Vector3(-45f, 3f, 14f)), 0.02f, "bambu korusu sisli");
+            Assert.Greater(field.DensityAt(new Vector3(10f, 30f, -10f)), 0.0007f, "r2: pus 30 m'ye uzanır (bulut açıklığından sütunlar tepeden okunur)");
+            Assert.LessOrEqual(field.AmbientScatter, 0.1f, "r2: sütun aralarında gök saçılması düşük (sütunlar gölgeden ayrılır)");
             // S-07 sözleşmesi (DD_ShaftMask, C-00 25.09): tepe yoğunluğuna göre 0..1 — meydan huzme dışı, koru huzmenin içinde.
             Assert.Greater(field.PeakDensity(), 0f, "tepe yoğunluğu");
             Assert.Less(field.ShaftMaskAt(new Vector3(0f, 1.5f, 0f)), 0.2f, "meydan: huzme maskesi düşük");
             Assert.Greater(field.ShaftMaskAt(new Vector3(-45f, 3f, 14f)), 0.8f, "koru: huzme maskesi yüksek");
             Assert.IsNotNull(dress.transform.Find(WorldV5Sky.RootName + "/" + WorldV5Sky.SunDiscName).GetComponent<SunDisc>(), "güneş diski");
-            var clouds = dress.transform.Find(WorldV5Sky.RootName + "/Clouds_Near").GetComponent<MeshRenderer>().sharedMaterial;
-            Assert.Greater(clouds.GetFloat("_AlphaPower"), 1f, "parçalı bulut");
+            Assert.IsNull(dress.transform.Find(WorldV5Sky.RootName + "/Clouds_Near"), "r2: döşeme bulut düzlemleri yok (panorama)");
+            Assert.Greater(field.DensityAt(new Vector3(0f, 18f, 0f)), 0.0015f, "r2: yükseltilmiş pus bandı (tepeden sütunlar)");
             Assert.AreEqual(WorldV5Atmosphere.VistaMist.Length, GameObject.Find(WorldV5Atmosphere.VistaMistGroupName).transform.childCount, "vista sisi");
             var far = dress.transform.Find(ArtSurfaceImporter.SkyRootName + "/Horizon_far").GetComponent<MeshRenderer>().sharedMaterial;
             Assert.Greater(far.GetFloat("_Haze"), 0.3f, "uzak katman sisli");

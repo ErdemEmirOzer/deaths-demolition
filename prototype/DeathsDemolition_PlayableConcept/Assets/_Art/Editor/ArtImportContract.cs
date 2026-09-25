@@ -298,6 +298,7 @@ namespace DD.Art.Pipeline.EditorTools
             { "horizon_far", TextureClass.Vfx },
             { "skyband", TextureClass.Sky },
             { "skyband_v2", TextureClass.Sky },   // WP-075 C3 · AP-023 sky band v2 (the v6 layout's sky)
+            { "sky_dec102", TextureClass.Sky },   // DEC-102 r2 · AP-023 sky_v3: the broken-cloud panorama (P-05 text-only HF, 4096 × 2048)
             // Structure (palace timber/screens, plaster, roofs, shore-path and basin module surfaces).
             { "wood", TextureClass.Structure },
             { "plaster", TextureClass.Structure },
@@ -702,13 +703,15 @@ namespace DD.Art.Pipeline.EditorTools
         public const string CloudCookiePath = ArtRoot + "/Resources/DD_CloudCookie.png";
         /// <summary>WP-075 DEC-102: the v6 layout's broken-cloud cookie (wp-074/tools/make-cloud-cookie.py), same rules.</summary>
         public const string CloudCookieBrokenPath = ArtRoot + "/Resources/DD_CloudCookie_Broken.png";
+        /// <summary>DEC-102 r2: the v6 layout's cookie cast from the sky_v3 panorama (wp-074/tools/stage-sky-v3.py), same rules.</summary>
+        public const string CloudCookieSky3Path = ArtRoot + "/Resources/DD_CloudCookie_Sky3.png";
         public const int LightCookieMaxSize = 1024;
 
         public static bool IsLightCookieTexture(string assetPath)
         {
             if (assetPath == null) return false;
             string p = assetPath.Replace('\\', '/');
-            return p == CloudCookiePath || p == CloudCookieBrokenPath;
+            return p == CloudCookiePath || p == CloudCookieBrokenPath || p == CloudCookieSky3Path;
         }
 
         /// <summary>

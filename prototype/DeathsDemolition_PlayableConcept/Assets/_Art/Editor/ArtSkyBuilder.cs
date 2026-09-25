@@ -113,6 +113,37 @@ namespace DD.Art.Pipeline.EditorTools
         /// <summary>WP-075 C3 · DD_Sky_v2 (Resources): WorldAtmosphere puts it on the skybox when the live layout is v6.</summary>
         public static Material BuildV2() => Build(SkyBandV2SourcePath, SkyV2TexturePath, SkyV2MaterialPath);
 
+        /// <summary>DEC-102 r2 · the v6 layout's sky: AP-023 sky_v3's broken-cloud panorama (staged by wp-074/tools/stage-sky-v3.py, rolled
+        /// to Skybox/Panoramic's azimuth: +Z at u 0.25) as a 360° lat-long, as is — no band conversion, no sun disc (DD/SunDisc draws it).</summary>
+        public const string SkyDec102SourcePath = ArtPipelinePaths.TexturesSource + "/T_sky_dec102_BaseColor.png";
+        public const string SkyV3MaterialPath = ArtPipelinePaths.ArtRoot + "/Resources/DD_Sky_v3.mat";
+
+        public static Material BuildV3()
+        {
+            var skyTex = AssetDatabase.LoadAssetAtPath<Texture2D>(SkyDec102SourcePath);
+            if (skyTex == null) throw new System.InvalidOperationException("[ArtPipeline] sky v3 panorama missing: " + SkyDec102SourcePath);
+            Shader shader = Shader.Find(SkyShaderName);
+            if (shader == null) throw new System.InvalidOperationException("[ArtPipeline] Shader '" + SkyShaderName + "' not found.");
+            var mat = AssetDatabase.LoadAssetAtPath<Material>(SkyV3MaterialPath);
+            if (mat == null)
+            {
+                mat = new Material(shader);
+                AssetDatabase.CreateAsset(mat, SkyV3MaterialPath);
+            }
+
+            mat.shader = shader;
+            mat.SetTexture("_MainTex", skyTex);
+            mat.SetFloat("_Mapping", 1f);      // latitude-longitude layout
+            mat.SetFloat("_ImageType", 0f);    // 360°
+            mat.SetFloat("_Layout", 0f);
+            mat.SetFloat("_Exposure", 1f);
+            mat.SetFloat("_Rotation", 0f);
+            mat.SetColor("_Tint", new Color(0.5f, 0.5f, 0.5f, 0.5f));
+            mat.DisableKeyword("_MAPPING_6_FRAMES_LAYOUT");
+            EditorUtility.SetDirty(mat);
+            return mat;
+        }
+
         private static Material Build(string bandPath, string texturePath, string materialPath)
         {
             string SkyBandSourcePath = bandPath, SkyTexturePath = texturePath, SkyMaterialPath = materialPath;

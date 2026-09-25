@@ -1,29 +1,23 @@
 {
   "version": 3,
   "variant": "v3",
+  "revision": 2,
   "name": "Yağmur Sonrası Güneş",
-  "decision": "DEC-102 (user 2026-09-25 via C-00): broken cloud, high warm sun, cold shadows",
-  "spec": "C-00 DEC-102 brief 25.09; DEC-101's material read kept; HF-variant targets pending (C-00) — recipe by hand",
-  "method": "wp-074/tools/build-look-v3.py on build-look-v2.py's local Lightroom-class grade",
+  "decision": "DEC-102 (user 2026-09-25 via C-00): broken cloud, high warm sun, cold shadows; targets = the user-approved HF v002-dec102 frames",
+  "spec": "C-00 DEC-102 brief 25.09; DEC-101's material read kept; fit to AP005-HF-center/north-v002-dec102 (west compared)",
+  "method": "wp-074/tools/build-look-v3.py: build-look-v2.py's local Lightroom-class grade; global sliders fitted to the HF frames' mean Lab / chroma / L std, HSL + grading hues + curve fixed",
   "sliders": {
-    "temp": -10,
     "tint": 0,
-    "exposure": -0.2,
-    "contrast": 12,
-    "highlights": -25,
-    "shadows": 2,
-    "whites": 0,
-    "blacks": -8,
     "texture": 0,
     "clarity": 0,
     "dehaze": 0,
-    "vibrance": 4,
-    "saturation": -28,
+    "shadows": 2,
+    "whites": 0,
     "hsl": {
       "hue": [
         0,
         -2,
-        -6,
+        -4,
         -6,
         0,
         0,
@@ -31,10 +25,10 @@
         0
       ],
       "sat": [
-        -25,
-        -45,
-        -25,
-        0,
+        -20,
+        -35,
+        -5,
+        10,
         0,
         14,
         0,
@@ -42,9 +36,9 @@
       ],
       "lum": [
         -6,
-        -16,
-        -8,
-        -15,
+        -12,
+        0,
+        -6,
         0,
         -6,
         0,
@@ -54,17 +48,17 @@
     "grading": {
       "shadows": [
         215,
-        22,
+        14.0,
         -4
       ],
       "midtones": [
         210,
-        4,
+        0,
         0
       ],
       "highlights": [
         40,
-        16,
+        30.0,
         3
       ],
       "blending": 60,
@@ -95,12 +89,19 @@
         255,
         255
       ]
-    ]
+    ],
+    "temp": 6.0,
+    "exposure": 0.0,
+    "contrast": 22.0,
+    "highlights": -10.0,
+    "blacks": -6.0,
+    "saturation": 0.0,
+    "vibrance": 14.0
   },
   "lut": {
     "file": "DD_Look_v3.png",
     "size": 32,
-    "sha256": "de84ad9e7e42f55c63ebce89b8cddc0f53d3261be6bcd5b3705f81a2ab763fe7",
+    "sha256": "85aaccf9dab852c73ffa7d4e972e80e566ddb6dc600b0f80d58b02cd29734743",
     "layout": "URP ApplyLut2D 1024×32 (DD_Neutral_32.png)"
   },
   "appliedAfter": "DD_Look_v5 (the v6 look profile), colour lookup → v3",
@@ -110,21 +111,104 @@
     "frames": [
       {
         "frame": "v5-hf-center.png",
-        "meanDeltaE": 0.489,
-        "p95": 1.23
-      },
-      {
-        "frame": "v5-hf-west.png",
-        "meanDeltaE": 0.389,
-        "p95": 0.92
+        "meanDeltaE": 0.558,
+        "p95": 1.298
       },
       {
         "frame": "v5-hf-north.png",
-        "meanDeltaE": 0.478,
-        "p95": 1.075
+        "meanDeltaE": 0.48,
+        "p95": 1.225
+      },
+      {
+        "frame": "v5-hf-west.png",
+        "meanDeltaE": 0.443,
+        "p95": 0.994
       }
     ],
     "pass": true
   },
-  "builtUtc": "2026-09-25T10:25:15Z"
+  "hfCompare": [
+    {
+      "frame": "v5-hf-center.png",
+      "target": "AP005-HF-center-v002-dec102.png",
+      "fitted": true,
+      "beforeLut": "DD_Look_v3.png",
+      "before": {
+        "L": 42.7,
+        "a": -0.2,
+        "b": 1.3,
+        "C": 3.9,
+        "Lstd": 16.1
+      },
+      "v3": {
+        "L": 45.9,
+        "a": 0.8,
+        "b": 7.6,
+        "C": 9.7,
+        "Lstd": 18.7
+      },
+      "hf": {
+        "L": 47.8,
+        "a": 2.3,
+        "b": 6.4,
+        "C": 11.8,
+        "Lstd": 22.4
+      }
+    },
+    {
+      "frame": "v5-hf-north.png",
+      "target": "AP005-HF-north-v002-dec102.png",
+      "fitted": true,
+      "beforeLut": "DD_Look_v3.png",
+      "before": {
+        "L": 32.7,
+        "a": 0.2,
+        "b": -0.1,
+        "C": 2.9,
+        "Lstd": 16.9
+      },
+      "v3": {
+        "L": 34.2,
+        "a": 1.6,
+        "b": 5.2,
+        "C": 6.8,
+        "Lstd": 19.4
+      },
+      "hf": {
+        "L": 49.8,
+        "a": 2.1,
+        "b": 9.4,
+        "C": 11.7,
+        "Lstd": 21.6
+      }
+    },
+    {
+      "frame": "v5-hf-west.png",
+      "target": "AP005-HF-west-v002-dec102.png",
+      "fitted": false,
+      "beforeLut": "DD_Look_v3.png",
+      "before": {
+        "L": 15.8,
+        "a": -1.9,
+        "b": -1.8,
+        "C": 3.9,
+        "Lstd": 11.8
+      },
+      "v3": {
+        "L": 16.1,
+        "a": -2.4,
+        "b": 2.4,
+        "C": 5.4,
+        "Lstd": 12.9
+      },
+      "hf": {
+        "L": 41.9,
+        "a": -3.0,
+        "b": 18.3,
+        "C": 19.4,
+        "Lstd": 20.2
+      }
+    }
+  ],
+  "builtUtc": "2026-09-25T17:11:04Z"
 }

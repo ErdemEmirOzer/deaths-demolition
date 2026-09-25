@@ -17,7 +17,7 @@ namespace DD.Art
     public sealed class VolumetricLightFeature : ScriptableRendererFeature
     {
         public const string ShaderName = "Hidden/DD/VolumetricLight";
-        public const float PhaseG = 0.62f, IsotropicShare = 0.35f, DepthWeight = 0.6f;
+        public const float PhaseG = 0.65f, IsotropicShare = 0.35f, DepthWeight = 0.6f;   // r2: g 0.65 (C-00: 0.6–0.7)
 
         public struct Rules
         {
@@ -31,7 +31,9 @@ namespace DD.Art
         {
             return tier switch
             {
-                QualityTier.Sinematik => new Rules { On = true, Downsample = 2, Steps = 32, MaxDistance = 70f },
+                // r2: 24 steps (was 32) — the quadratic spacing keeps the near shafts; release players had 63 / 198 frames over 33 ms in
+                // top-down / FP at 32 (p99 42.5 / 54.3 against the ≤ 40 gate), the steps are the march's linear cost.
+                QualityTier.Sinematik => new Rules { On = true, Downsample = 2, Steps = 24, MaxDistance = 70f },
                 QualityTier.Yuksek => new Rules { On = true, Downsample = 4, Steps = 12, MaxDistance = 50f },
                 _ => new Rules { On = false },
             };

@@ -89,17 +89,29 @@ namespace DD.Art.Pipeline.EditorTools
             new Room { Id = "R4_TeaHouse", Acoustic = "Hall", X0 = -35f, X1 = -29f, Z0 = -39f, Z1 = -33f, Floor = 0.45f, Height = 3.6f,
                 Doors = new[] { new Door('N', -33.8f, 2.16f), new Door('E', -37.8f, 2.16f) } },
             new Room { Id = "R5_Azumaya", Acoustic = "Corridor", X0 = 30f, X1 = 36f, Z0 = -36f, Z1 = -30f, Height = 3.2f, Walls = false, RoofOnly = true },
-            new Room { Id = "R6_Chumon", Acoustic = "Corridor", X0 = -4f, X1 = 4f, Z0 = 18f, Z1 = 23f, Height = 5f,
-                Doors = new[] { new Door('S', 0f, 5f), new Door('N', 0f, 5f), new Door('E', 20.5f, 2f), new Door('W', 20.5f, 2f) } },
+            // v007-B: the kit chūmon × 1.2 wide (WorldV5Dress.Chumon) — its axis opening 6.0 m (C-00: ≥ 6 m), the side doors 2 m.
+            new Room { Id = "R6_Chumon", Acoustic = "Corridor", X0 = -4.8f, X1 = 4.8f, Z0 = 18f, Z1 = 23f, Height = 5f,
+                Doors = new[] { new Door('S', 0f, 6f), new Door('N', 0f, 6f), new Door('E', 20.5f, 2f), new Door('W', 20.5f, 2f) } },
         };
+
+        /// <summary>A corridor's centre-line path by id (the dress lays its kit kairō on the same line).</summary>
+        public static Vector2[] CorridorPath(string id)
+        {
+            foreach (Corridor c in Corridors) if (c.Id == id) return c.Path;
+            throw new ArgumentException("no corridor " + id);
+        }
 
         public static readonly Corridor[] Corridors =
         {
             new Corridor { Id = "K1_WestKairo", Path = new[] { new Vector2(-33f, -16f), new Vector2(-33f, 20f) }, Width = 5.2f, Height = 3.4f, Closed = true },
-            new Corridor { Id = "K2_NorthWestLink", Path = new[] { new Vector2(-33f, 20f), new Vector2(-28f, 27f), new Vector2(-26f, 30f) }, Width = 4f, Height = 3.4f },
+            // v007-B (C-00 25.09): the angled links on the kit's 30 / 45 / 60° corners (AP-023 kairo_angle: 3.6 m arms either side of
+            // the vertex) — K2 two 45° right turns from K1's north end into K3's west side (junction z 30 → 28.69); K4 keeps its oblique
+            // start on K3's east side (−60°, start x 26 → 25.38: the R2 pavilion's SW corner leaves no room for a turn there), 60° left
+            // onto z 22, 60° right to its open end (x 44 → 45.38).
+            new Corridor { Id = "K2_NorthWestLink", Path = new[] { new Vector2(-33f, 20f), new Vector2(-33f, 23.6f), new Vector2(-27.909f, 28.691f), new Vector2(-24.309f, 28.691f) }, Width = 4f, Height = 3.4f },
             new Corridor { Id = "K3_CloisterWest", Path = new[] { new Vector2(-22f, 22f), new Vector2(-22f, 36f) }, Width = 4f, Height = 3.4f },
             new Corridor { Id = "K3_CloisterEast", Path = new[] { new Vector2(22f, 22f), new Vector2(22f, 36f) }, Width = 4f, Height = 3.4f },
-            new Corridor { Id = "K4_EastKairo", Path = new[] { new Vector2(26f, 30f), new Vector2(30f, 22f), new Vector2(44f, 22f), new Vector2(50f, 14f) }, Width = 4f, Height = 3.4f },
+            new Corridor { Id = "K4_EastKairo", Path = new[] { new Vector2(25.381f, 30f), new Vector2(30f, 22f), new Vector2(45.381f, 22f), new Vector2(50f, 14f) }, Width = 4f, Height = 3.4f },
             new Corridor { Id = "K5_SouthShore", Path = new[] { new Vector2(-22f, -46f), new Vector2(0f, -46f) }, Width = 3.5f, Height = 3.2f },
             new Corridor { Id = "K6_RearKairo", Path = new[] { new Vector2(-22f, 52.5f), new Vector2(22f, 52.5f) }, Width = 4f, Height = 3.2f },
         };
@@ -107,7 +119,8 @@ namespace DD.Art.Pipeline.EditorTools
         /// <summary>K1 wall openings (Ek B §2.3): east doors z −7 / 7 (4 m), west door z 0 (3 m); the two ends are open mouths.</summary>
         public static readonly (char side, float z, float width)[] K1Doors = { ('E', -7f, 4f), ('E', 7f, 4f), ('W', 0f, 3f) };
 
-        /// <summary>Spawn gates (Ek B §3.4): the 12 edge gates keep the prototype ids (placement), the 6 inner gates are data for S-03.</summary>
+        /// <summary>Spawn gates (Ek B §3.4): the 12 edge gates keep the prototype ids (placement), the inner gates are data for S-03 — 6, plus
+        /// the four of S-03's coverage scenario C (C-00 25.09; S-03's measured coordinates, bound by its test 5bb18807).</summary>
         public static readonly Gate[] Gates =
         {
             new Gate("N_RearWest", "N_PalaceGateWest", "edge", -20f, 53f), new Gate("N_RearEast", "N_PalaceGateEast", "edge", 20f, 53f),
@@ -119,6 +132,9 @@ namespace DD.Art.Pipeline.EditorTools
             new Gate("I_WestKairoSouth", null, "inner", -33f, -18.5f), new Gate("I_CloisterWest", null, "inner", -22f, 24f),
             new Gate("I_ShoreEast", null, "inner", 18f, -30f), new Gate("I_GreatSakuraSouth", null, "inner", 36f, -10.5f),
             new Gate("I_ServiceYardSouth", null, "inner", -36f, 31.5f), new Gate("I_HallRear", null, "inner", 0f, 52.5f),
+            new Gate("I_CloisterEast", null, "inner", 22f, 24f), new Gate("I_ShoreWest", null, "inner", -18f, -30f),
+            // I_ServiceYardEast: S-03's (−28, 40) sits on the yard's east wall (x −28) — 1.5 m inside, like I_ServiceYardSouth.
+            new Gate("I_ServiceYardEast", null, "inner", -29.5f, 40f), new Gate("I_PlazaSouthWest", null, "inner", -14f, -18f),
         };
 
         /// <summary>Weapon points (Ek B §3.6, first 12 of 14 in the prototype id order; the last two are listed in the json).</summary>

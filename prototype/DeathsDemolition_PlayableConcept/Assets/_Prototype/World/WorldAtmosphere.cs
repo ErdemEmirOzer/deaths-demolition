@@ -81,20 +81,25 @@ namespace DD.Prototype.World
         /// <summary>WP-075 C3 · the v6 layout (World v5) sky: AP-023 sky band v2; World_AP005 (±45) keeps v1 until v5 replaces it.</summary>
         public const string SkyV2ResourceName = "DD_Sky_v2";
 
-        public static string SkyResourceFor(WorldLayoutKind layout) => layout == WorldLayoutKind.V6 ? SkyV2ResourceName : SharedSkyResourceName;
+        /// <summary>DEC-102 r2: the v6 sky is AP-023 sky_v3's broken-cloud panorama (the cloud planes retired).</summary>
+        public const string SkyV3ResourceName = "DD_Sky_v3";
+        public static string SkyResourceFor(WorldLayoutKind layout) => layout == WorldLayoutKind.V6 ? SkyV3ResourceName : SharedSkyResourceName;
 
         /// <summary>
         /// WP-075 · DEC-102 (user 2026-09-25; updates DEC-101): the v6 sky is broken cloud (≈ 40–55 % cover) under a high, strong, warm
-        /// sun (≈ 60° up, from the WSW as before) with cold blue shadows — the sky fill tinted cool — and the realistic shafts of
-        /// VolumetricLightFeature; the distance haze keeps DEC-101's 185 m end (REQ-104's 52 m start and DEC-076's colour kept).
+        /// sun (50° up; DEC-102 r2, C-00: 45–55°) with cold blue shadows — the sky fill tinted cool — and the realistic shafts of VolumetricLightFeature; the
+        /// distance haze keeps DEC-101's 185 m end (REQ-104's 52 m start and DEC-076's colour kept). r2 (the user-approved HF targets
+        /// AP005-HF-*-v002-dec102): the sun stands in the NNW, ahead of the HF views that look north over the plaza, so they read
+        /// backlit (sun glare on the wet slate, shadows toward the viewer); golden (≈ 4000 K), stronger, the cold fill a little lower.
         /// World_AP005 keeps the v3 key. Read by <see cref="ConfigureSun"/> (the bake and the runtime sun), <see cref="SunEulerFor"/>
         /// and <see cref="ApplyEnvironment"/>.
         /// </summary>
         public static class V6Sky
         {
-            public const float SunIntensityScale = 1.25f, SunShadowStrength = 0.92f, FogEnd = 185f;
-            public static readonly Vector3 SunEuler = new Vector3(60f, 52f, 0f);
-            public static readonly Color AmbientTint = new Color(0.82f, 0.94f, 1.18f, 1f);   // cold shadows
+            public const float SunIntensityScale = 1.45f, SunShadowStrength = 0.92f, FogEnd = 185f;
+            public static readonly Vector3 SunEuler = new Vector3(50f, 160f, 0f);   // 50° up (C-00: 45–55° — high, the shafts read); light toward the SSE: the sun in the NNW
+            public static readonly Color SunColor = new Color(1.0f, 0.84f, 0.66f);   // ≈ 4000 K (the v3 key's 4900 K read cold against HF)
+            public static readonly Color AmbientTint = new Color(0.74f, 0.85f, 1.06f, 1f);   // cold shadows, a little deeper
             public static bool Active => WorldLayout.Current == WorldLayoutKind.V6;
         }
 
@@ -134,7 +139,10 @@ namespace DD.Prototype.World
             /// <summary>WP-075 DEC-102: the v6 layout's broken-cloud cookie (≈ 52 % sun, 20–50 m cloud cells; wp-074/tools/make-cloud-cookie.py).</summary>
             public const string BrokenCookieResourceName = "DD_CloudCookie_Broken";
 
-            public static string CookieResourceFor(WorldLayoutKind layout) => layout == WorldLayoutKind.V6 ? BrokenCookieResourceName : CookieResourceName;
+            /// <summary>DEC-102 r2: the v6 cookie is the sky_v3 panorama's own clouds cast on the ground; the sky is static, so is it.</summary>
+            public const string Sky3CookieResourceName = "DD_CloudCookie_Sky3";
+            public static string CookieResourceFor(WorldLayoutKind layout) => layout == WorldLayoutKind.V6 ? Sky3CookieResourceName : CookieResourceName;
+            public static float SpeedFor(WorldLayoutKind layout) => layout == WorldLayoutKind.V6 ? 0f : SpeedMetersPerSecond;
 
             /// <summary>Ground footprint of one tile, both axes (the 90 m map sees 14 % of the pattern: no repetition read).</summary>
             public const float TileMeters = 240f;
@@ -384,7 +392,7 @@ namespace DD.Prototype.World
         public static void ConfigureSun(Light light)
         {
             light.type = LightType.Directional;
-            light.color = SunColor;
+            light.color = V6Sky.Active ? V6Sky.SunColor : SunColor;
             light.intensity = SunIntensity * (V6Sky.Active ? V6Sky.SunIntensityScale : 1f);
 
             // Soft shadows at half strength: an overcast sky has no hard sun, and a weak

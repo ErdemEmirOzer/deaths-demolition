@@ -238,17 +238,26 @@ namespace DD.Art.Pipeline.EditorTools
             ("K6_RearKairo", new[] { new Vector2(-22f, 52.5f), new Vector2(22f, 52.5f) }, false),
             // B5b-5: K1 closed (V02; its doors as half-open V03 bays), the angled links and the shore walk open (V01, rails off).
             ("K1_WestKairo", new[] { new Vector2(-33f, -16f), new Vector2(-33f, 20f) }, true),
-            ("K2_NorthWestLink", new[] { new Vector2(-33f, 20f), new Vector2(-28f, 27f), new Vector2(-26f, 30f) }, false),
-            ("K4_EastKairo", new[] { new Vector2(26f, 30f), new Vector2(30f, 22f), new Vector2(44f, 22f), new Vector2(50f, 14f) }, false),
+            ("K2_NorthWestLink", GreyboxV6Builder.CorridorPath("K2_NorthWestLink"), false),   // v007-B: kairo_angle corners (Kairo)
+            ("K4_EastKairo", GreyboxV6Builder.CorridorPath("K4_EastKairo"), false),
             ("K5_SouthShore", new[] { new Vector2(-22f, -46f), new Vector2(0f, -46f) }, false),
         };
 
-        /// <summary>Bays per corridor: each segment's length over 2.4 m, rounded (≥ 1).</summary>
+        /// <summary>Kit pieces under the kairō group: every interior vertex a kairo_angle corner, and each segment — less the corners' arms —
+        /// its length over 2.4 m in bays, rounded (≥ 1; none where two corners' arms meet).</summary>
         public static int BayCount()
         {
             int n = 0;
             foreach ((string id, Vector2[] path, bool closed) in KitKairo)
-                for (int i = 0; i + 1 < path.Length; i++) n += Mathf.Max(1, Mathf.RoundToInt(Vector2.Distance(path[i], path[i + 1]) / KairoBay));
+            {
+                n += Mathf.Max(0, path.Length - 2);
+                for (int i = 0; i + 1 < path.Length; i++)
+                {
+                    float len = Vector2.Distance(path[i], path[i + 1]) - (i > 0 ? KairoAngleArm : 0f) - (i + 2 < path.Length ? KairoAngleArm : 0f);
+                    if (len >= MinBayLength) n += Mathf.Max(1, Mathf.RoundToInt(len / KairoBay));
+                }
+            }
+
             return n;
         }
 
@@ -391,11 +400,13 @@ namespace DD.Art.Pipeline.EditorTools
                 n += Cap(court, new Vector2(x, 35.7f), new Vector2(0f, 1f));
             }
 
-            // B5b-4: up to 1.8 m short of the chūmon karamon's posts (x ±3.43) — its side passages, the greybox R6's 2 m E/W doors.
-            n += Run(court, new Vector2(-24.5f, 20f), new Vector2(-5.5f, 20f));
-            n += Cap(court, new Vector2(-5.5f, 20f), new Vector2(1f, 0f));
-            n += Run(court, new Vector2(24.5f, 20f), new Vector2(5.5f, 20f));
-            n += Cap(court, new Vector2(5.5f, 20f), new Vector2(-1f, 0f));
+            // B5b-4 / v007-B: the walls stay on their line; they end ChumonSidePassage short of the chūmon's side walls (x ±ChumonHalfWidth)
+            // — its side passages, the greybox R6's 2 m E / W doors.
+            float end = ChumonHalfWidth + ChumonSidePassage;
+            n += Run(court, new Vector2(-24.5f, 20f), new Vector2(-end, 20f));
+            n += Cap(court, new Vector2(-end, 20f), new Vector2(1f, 0f));
+            n += Run(court, new Vector2(24.5f, 20f), new Vector2(end, 20f));
+            n += Cap(court, new Vector2(end, 20f), new Vector2(-1f, 0f));
             return n;
         }
 
@@ -541,13 +552,16 @@ namespace DD.Art.Pipeline.EditorTools
             foreach ((string id, Vector2[] path, bool closed) in KitKairo)
             {
                 int index = 0;
+                for (int v = 1; v + 1 < path.Length; v++) AngleCorner(group, id, v, path[v - 1], path[v], path[v + 1]);
                 for (int seg = 0; seg + 1 < path.Length; seg++)
                 {
-                    Vector2 a = path[seg], b = path[seg + 1];
-                    float len = Vector2.Distance(a, b);
+                    // v007-B: an interior vertex is a kairo_angle corner — its arms take KairoAngleArm of each segment it joins.
+                    Vector2 d = (path[seg + 1] - path[seg]).normalized;
+                    Vector2 a = path[seg] + d * (seg > 0 ? KairoAngleArm : 0f), b = path[seg + 1] - d * (seg + 2 < path.Length ? KairoAngleArm : 0f);
+                    float len = Vector2.Dot(b - a, d);
+                    if (len < MinBayLength) continue;   // the corners' arms meet: no straight bay between them
                     int n = Mathf.Max(1, Mathf.RoundToInt(len / KairoBay));
                     float s = len / (n * KairoBay);
-                    Vector2 d = (b - a) / len;
                     float deg = Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg;
                     for (int i = 0; i < n; i++)
                     {
@@ -578,6 +592,26 @@ namespace DD.Art.Pipeline.EditorTools
                     }
                 }
             }
+        }
+
+        /// <summary>v007-B · AP-023 kairo_angle's arm: the joint plane sits this far from the corner vertex along each corridor.</summary>
+        public const float KairoAngleArm = 3.6f, MinBayLength = 0.3f;
+
+        /// <summary>The kit corner piece for the turn in → at → out: V01 / V02 / V03 = 30 / 45 / 60°. Its arm 1 runs along local −X, arm 2
+        /// along (cos t, sin t) — a left (counter-clockwise, x → z) turn; a right turn is the same piece walked backwards (its +X along
+        /// the reversed outgoing leg).</summary>
+        private static void AngleCorner(Transform group, string id, int vertex, Vector2 from, Vector2 at, Vector2 to)
+        {
+            Vector2 a = (at - from).normalized, b = (to - at).normalized;
+            float turn = Vector2.SignedAngle(a, b);
+            int variation = Mathf.Abs(Mathf.Abs(turn) - 30f) < 0.5f ? 1 : Mathf.Abs(Mathf.Abs(turn) - 45f) < 0.5f ? 2 : Mathf.Abs(Mathf.Abs(turn) - 60f) < 0.5f ? 3 : 0;
+            if (variation == 0) throw new InvalidOperationException(id + " corner " + vertex + ": " + turn.ToString("0.0") + "° — the kit turns 30 / 45 / 60° only");
+            Vector2 forward = turn > 0f ? a : -b;
+            GameObject corner = Place(group, "kairo_angle", variation, Mz(at.x, at.y, 0f, Mathf.Atan2(forward.y, forward.x) * Mathf.Rad2Deg), Vector3.zero, "structure");
+            corner.name = id + "_Corner_" + vertex.ToString("00");
+            RailsOff(corner);
+            Transform roof = corner.transform.Find(ArtLibraryPrefabBuilder.RoofName);
+            if (roof != null) RoofOccluder(corner.transform, roof);
         }
 
         /// <summary>The bay's koran off: the rail part's renderers and its colliders (shells 0.25 → 1.1–1.5 m; posts reach 3.65, sills 0.1).</summary>
@@ -679,6 +713,11 @@ namespace DD.Art.Pipeline.EditorTools
             group.SetParent(dress, false);
             group.gameObject.AddComponent<NavMeshModifier>().ignoreFromBuild = true;
             var rng = new System.Random(746);
+            Transform falls = null;   // v007-B: the waterfall goes on the largest pond's north rim
+            foreach (Transform w in Children(greybox))
+                if (w.name.StartsWith("Pond", StringComparison.Ordinal) && w.name.EndsWith("_Water", StringComparison.Ordinal)
+                    && (falls == null || w.localScale.x * w.localScale.z > falls.localScale.x * falls.localScale.z)) falls = w;
+            Vector3 fallsAt = falls != null ? RimPoint(falls, NorthRimAngle(falls)) : Vector3.positiveInfinity;
             foreach (Transform w in Children(greybox))
             {
                 if (!w.name.StartsWith("Pond", StringComparison.Ordinal) || !w.name.EndsWith("_Water", StringComparison.Ordinal)) continue;
@@ -691,16 +730,69 @@ namespace DD.Art.Pipeline.EditorTools
                     Vector3 q = w.TransformPoint(new Vector3(Mathf.Cos(t + 0.01f) * 0.5f, 0f, Mathf.Sin(t + 0.01f) * 0.5f));
                     float deg = Mathf.Atan2(q.z - p.z, q.x - p.x) * Mathf.Rad2Deg;
                     double pick = rng.NextDouble();
-                    Visual(Place(group, pick < 0.6 ? "pond_shore_moss" : "pond_shore_pebble", 1 + rng.Next(3), Mz(p.x, p.z, 0f, deg), Vector3.zero, "dressing"));
-                    if (pick < 0.25) Visual(Place(group, "pond_rock", 3 + rng.Next(3), Mz(p.x, p.z, 0f, (float)(rng.NextDouble() * 360.0)), Vector3.zero, "dressing"));
+                    int shoreVariation = 1 + rng.Next(3);
+                    // v007-B: the falls' own curved shore replaces the strips near it (Waterfall); the rng draws stay, so the rest is as before.
+                    bool keep = w != falls || Vector3.Distance(p, fallsAt) >= WaterfallClearing;
+                    if (keep) Visual(Place(group, pick < 0.6 ? "pond_shore_moss" : "pond_shore_pebble", shoreVariation, Mz(p.x, p.z, 0f, deg), Vector3.zero, "dressing"));
+                    if (pick < 0.25)
+                    {
+                        int rockVariation = 3 + rng.Next(3);
+                        float rockYaw = (float)(rng.NextDouble() * 360.0);
+                        if (keep) Visual(Place(group, "pond_rock", rockVariation, Mz(p.x, p.z, 0f, rockYaw), Vector3.zero, "dressing"));
+                    }
+
                     if (pick > 0.8)
                     {
                         Vector3 r = w.TransformPoint(new Vector3(Mathf.Cos(t) * 0.42f, 0f, Mathf.Sin(t) * 0.42f));
-                        Visual(Place(group, "pond_reeds", 1 + rng.Next(4), Mz(r.x, r.z, 0f, (float)(rng.NextDouble() * 360.0)), Vector3.zero, "dressing"));
+                        int reedVariation = 1 + rng.Next(4);
+                        float reedYaw = (float)(rng.NextDouble() * 360.0);
+                        if (keep) Visual(Place(group, "pond_reeds", reedVariation, Mz(r.x, r.z, 0f, reedYaw), Vector3.zero, "dressing"));
                     }
                 }
 
                 Lotus(group, w);
+            }
+
+            if (falls != null) Waterfall(group, falls);
+        }
+
+        public const float WaterfallClearing = 9f, WaterfallInset = 1.2f, WaterfallShoreOffset = 5.5f;
+        public const string WaterfallName = "Waterfall";
+
+        private static Vector3 RimPoint(Transform water, float t) => water.TransformPoint(new Vector3(Mathf.Cos(t) * 0.5f, 0f, Mathf.Sin(t) * 0.5f));
+
+        /// <summary>The ellipse parameter of the pond's northernmost rim point (sampled; the disc may be rotated).</summary>
+        private static float NorthRimAngle(Transform water)
+        {
+            float best = 0f, bestZ = float.NegativeInfinity;
+            for (int i = 0; i < 360; i++)
+            {
+                float t = i * Mathf.Deg2Rad, z = RimPoint(water, t).z;
+                if (z > bestZ) { bestZ = z; best = t; }
+            }
+
+            return best;
+        }
+
+        /// <summary>v007-B (C-00 25.09: curved shore only at the waterfall pond) · a taki-ishi group on the largest pond's north rim, set
+        /// <see cref="WaterfallInset"/> into the water and pouring toward the pond's centre (the kit's water leaves along local −Y), with
+        /// the concave curved shore modules (the land pushing into the water: V03 pebble, V06 moss) either side in place of the straight
+        /// strips. Visual: it stands inside the pond's NotWalkable rim, which stays the NavMesh boundary.</summary>
+        private static void Waterfall(Transform group, Transform water)
+        {
+            float t = NorthRimAngle(water);
+            Vector3 rim = RimPoint(water, t), next = RimPoint(water, t + 0.01f);
+            Vector3 inward = water.position - rim; inward.y = 0f; inward.Normalize();
+            Vector3 at = rim + inward * WaterfallInset;
+            GameObject rock = Place(group, "waterfall_rock", 2, Mz(at.x, at.z, 0f, Mathf.Atan2(inward.x, -inward.z) * Mathf.Rad2Deg), Vector3.zero, "dressing");
+            rock.name = WaterfallName;
+            Visual(rock);
+            Vector3 tangent = next - rim; tangent.y = 0f; tangent.Normalize();
+            float deg = Mathf.Atan2(tangent.z, tangent.x) * Mathf.Rad2Deg;
+            foreach ((float side, int variation) in new[] { (-1f, 3), (1f, 6) })
+            {
+                Vector3 p = rim + tangent * (side * WaterfallShoreOffset);
+                Visual(Place(group, "pond_shore_curve", variation, Mz(p.x, p.z, 0f, deg), Vector3.zero, "dressing"));
             }
         }
 
@@ -852,12 +944,17 @@ namespace DD.Art.Pipeline.EditorTools
             foreach (Collider c in go.GetComponentsInChildren<Collider>(true)) c.gameObject.SetActive(false);
         }
 
+        /// <summary>v007-B · R6's chūmon: AP-023 chumon V01 (posts 8 × 5 m, 5.0 m bays) widened × <see cref="ChumonWidthScale"/> along x so the
+        /// axis opening stays ≥ 6 m (C-00 25.09: the karamon's 6.0 m clear), the court walls ending <see cref="ChumonSidePassage"/> short.</summary>
+        public const float ChumonWidthScale = 1.2f, ChumonHalfWidth = 4.0f * ChumonWidthScale, ChumonSidePassage = 1.5f;
+        public const string ChumonName = "Chumon";
+
         private static void Chumon(Transform dress)
         {
-            // R6 (x ±4, z 18…23) as a karamon on the north axis: 6.0 m clear S / N (the greybox doors are 5 m), the sides open between
-            // its front and back posts toward the 1.8 m wall gaps (the greybox E / W doors). A chūmon proper is a P-05 wish.
-            GameObject gate = Place(dress, "gates", 1, Mz(0f, 20.5f, 0f, 0f), Vector3.zero, "structure");
-            gate.name = "Chumon_Karamon";
+            // R6 (x ±4.8, z 18…23): the two-storey gate house on the north axis, its long sides open S / N (6.0 m clear), its short sides'
+            // 2 m doors toward the side passages (the greybox E / W doors). Upper storey not enterable (the kit's own colliders).
+            GameObject gate = Place(dress, "chumon", 1, Mz(0f, 20.5f, 0f, 0f) * Matrix4x4.Scale(new Vector3(ChumonWidthScale, 1f, 1f)), Vector3.zero, "structure");
+            gate.name = ChumonName;
             Transform roof = gate.transform.Find(ArtLibraryPrefabBuilder.RoofName);
             if (roof != null) RoofOccluder(gate.transform, roof);
         }

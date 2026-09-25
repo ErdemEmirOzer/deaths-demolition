@@ -53,7 +53,7 @@ public static class QualityTiers
 |---|---|---|---|---|
 | Gök bandı v2 + bulut düzlemleri | S-05 WP-075 | bant + 1 düzlem | bant + 2 düzlem | 2 düzlem + parallaks |
 | Bulut gölgesi cookie | S-05 | tam | tam | tam |
-| Hacimsel ışık (DEC-102: raymarch, ana ışık gölge haritası × bulut cookie, yükseklik + bölgesel sis yoğunluğu; tüm modlar) | S-05 WP-075 | kapalı | ¼ çözünürlük, 12 adım | ½ çözünürlük, 32 adım |
+| Hacimsel ışık (DEC-102: raymarch, ana ışık gölge haritası × bulut cookie, yükseklik + bölgesel sis yoğunluğu; tüm modlar) | S-05 WP-075 | kapalı | ¼ çözünürlük, 12 adım | ½ çözünürlük, 24 adım (karesel aralık; r2: 32 adım release p99 kapısını kırdı) |
 | Huzme kartları | S-05 | 6, alfa ×0,7 (hacimsel ışığın yerine) | — (DEC-102: hacimsel) | — (DEC-102: hacimsel) |
 | Ekran-uzayı huzme (TP/FP) | S-05 | kapalı | — (DEC-102: hacimsel) | — (DEC-102: hacimsel) |
 | Yer sisi levhaları | S-05 | 4, alfa ×0,6 | 7, alfa ×0,8 | 10 |

@@ -7,12 +7,12 @@
     { "id": "R3_Kura", "enclosure": "Hall", "polygonXZ": [-44, 36, -34, 36, -34, 44, -44, 44], "floor": 0.3, "ceiling": 4.3, "areaM2": 80, "thresholds": [[-34, 40, 2], [-44, 40, 2]] },
     { "id": "R4_TeaHouse", "enclosure": "Hall", "polygonXZ": [-35, -39, -29, -39, -29, -33, -35, -33], "floor": 0.45, "ceiling": 4.05, "areaM2": 36, "thresholds": [[-33.8, -33, 2.16], [-29, -37.8, 2.16]] },
     { "id": "R5_Azumaya", "enclosure": "Corridor", "polygonXZ": [30, -36, 36, -36, 36, -30, 30, -30], "floor": 0, "ceiling": 3.2, "areaM2": 36, "thresholds": [] },
-    { "id": "R6_Chumon", "enclosure": "Corridor", "polygonXZ": [-4, 18, 4, 18, 4, 23, -4, 23], "floor": 0, "ceiling": 5, "areaM2": 40, "thresholds": [[0, 18, 5], [0, 23, 5], [4, 20.5, 2], [-4, 20.5, 2]] },
+    { "id": "R6_Chumon", "enclosure": "Corridor", "polygonXZ": [-4.8, 18, 4.8, 18, 4.8, 23, -4.8, 23], "floor": 0, "ceiling": 5, "areaM2": 48, "thresholds": [[0, 18, 6], [0, 23, 6], [4.8, 20.5, 2], [-4.8, 20.5, 2]] },
     { "id": "K1_WestKairo", "enclosure": "Corridor", "closed": true, "segmentsXZ": [[-30.4, -16, -30.4, 20, -35.6, 20, -35.6, -16]], "ceiling": 3.65 },
-    { "id": "K2_NorthWestLink", "enclosure": "Corridor", "closed": false, "segmentsXZ": [[-31.373, 18.838, -26.373, 25.838, -29.627, 28.162, -34.627, 21.162], [-26.336, 25.891, -24.336, 28.891, -27.664, 31.109, -29.664, 28.109]], "ceiling": 3.65 },
+    { "id": "K2_NorthWestLink", "enclosure": "Corridor", "closed": false, "segmentsXZ": [[-31, 20, -31, 23.6, -35, 23.6, -35, 20], [-31.586, 22.186, -26.495, 27.277, -29.323, 30.105, -34.414, 25.014], [-27.909, 26.691, -24.309, 26.691, -24.309, 30.691, -27.909, 30.691]], "ceiling": 3.65 },
     { "id": "K3_CloisterWest", "enclosure": "Corridor", "closed": false, "segmentsXZ": [[-20, 22, -20, 36, -24, 36, -24, 22]], "ceiling": 3.65 },
     { "id": "K3_CloisterEast", "enclosure": "Corridor", "closed": false, "segmentsXZ": [[24, 22, 24, 36, 20, 36, 20, 22]], "ceiling": 3.65 },
-    { "id": "K4_EastKairo", "enclosure": "Corridor", "closed": false, "segmentsXZ": [[24.211, 29.106, 28.211, 21.106, 31.789, 22.894, 27.789, 30.894], [30, 20, 44, 20, 44, 24, 30, 24], [42.4, 20.8, 48.4, 12.8, 51.6, 15.2, 45.6, 23.2]], "ceiling": 3.65 },
+    { "id": "K4_EastKairo", "enclosure": "Corridor", "closed": false, "segmentsXZ": [[23.649, 29, 28.268, 21, 31.732, 23, 27.113, 31], [30, 20, 45.381, 20, 45.381, 24, 30, 24], [43.649, 21, 48.268, 13, 51.732, 15, 47.113, 23]], "ceiling": 3.65 },
     { "id": "K5_SouthShore", "enclosure": "Corridor", "closed": false, "segmentsXZ": [[-22, -47.75, 0, -47.75, 0, -44.25, -22, -44.25]], "ceiling": 3.45 },
     { "id": "K6_RearKairo", "enclosure": "Corridor", "closed": false, "segmentsXZ": [[-22, 50.5, 22, 50.5, 22, 54.5, -22, 54.5]], "ceiling": 3.45 }
   ]

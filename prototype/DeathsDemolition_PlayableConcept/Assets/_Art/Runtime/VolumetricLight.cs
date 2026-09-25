@@ -21,17 +21,23 @@ namespace DD.Art
             public float RadiusXZ, RadiusY, Density;
         }
 
-        public const int MaxRegions = 8;
+        public const int MaxRegions = 12;
         public static readonly int DensityId = Shader.PropertyToID("_DD_VL_Density");
         public static readonly int RegionsId = Shader.PropertyToID("_DD_VL_Regions");
         public static readonly int RegionShapeId = Shader.PropertyToID("_DD_VL_RegionShape");
         public static readonly int RegionCountId = Shader.PropertyToID("_DD_VL_RegionCount");
         public static readonly int ScatterId = Shader.PropertyToID("_DD_VL_Scatter");
         public static readonly int MaskId = Shader.PropertyToID("_DD_VL_Mask");
+        public static readonly int BandId = Shader.PropertyToID("_DD_VL_Band");
 
         [Tooltip("Base haze density (1/m) at BaseHeight.")] public float BaseDensity = 0.0025f;
         [Tooltip("Height falloff (1/m): the haze halves every ln2 / k metres.")] public float HeightFalloff = 0.18f;
         public float BaseHeight = 0f;
+        /// <summary>DEC-102 r2 · a lifted haze band (gaussian in height) the steep top-down rays cross: lit through the cloud gaps only, it
+        /// reads as the slanted crepuscular columns from above; the eye-level views look under it.</summary>
+        [Tooltip("Lifted band centre height (m).")] public float BandHeight = 18f;
+        [Tooltip("Lifted band half thickness (m).")] public float BandHalfThickness = 9f;
+        [Tooltip("Lifted band peak density (1/m); 0 = none.")] public float BandDensity = 0f;
         [Tooltip("Sun colour × intensity × this = the scattered light.")] public float ScatterScale = 1.0f;
         [Tooltip("Ambient (sky) scatter: RenderSettings' sky colour × this (the cold shadows).")] public float AmbientScatter = 0.35f;
         public Region[] Regions = Array.Empty<Region>();
@@ -57,6 +63,7 @@ namespace DD.Art
             Current = null;
             Shader.SetGlobalVector(DensityId, Vector4.zero);
             Shader.SetGlobalVector(MaskId, Vector4.zero);
+            Shader.SetGlobalVector(BandId, Vector4.zero);
         }
 
         private readonly Vector4[] _regions = new Vector4[MaxRegions];
@@ -73,6 +80,7 @@ namespace DD.Art
             if (Current == this) Current = null;
             Shader.SetGlobalVector(DensityId, Vector4.zero);   // w 0: the field is off for every reader
             Shader.SetGlobalVector(MaskId, Vector4.zero);
+            Shader.SetGlobalVector(BandId, Vector4.zero);
         }
 
         private void LateUpdate() => Publish();
@@ -81,6 +89,8 @@ namespace DD.Art
         public float DensityAt(Vector3 p)
         {
             float d = BaseDensity * Mathf.Exp(-HeightFalloff * Mathf.Max(p.y - BaseHeight, 0f));
+            float band = (p.y - BandHeight) / Mathf.Max(BandHalfThickness, 1e-3f);
+            d += BandDensity * Mathf.Exp(-band * band);
             int n = Mathf.Min(Regions.Length, MaxRegions);
             for (int i = 0; i < n; i++)
             {
@@ -126,6 +136,7 @@ namespace DD.Art
             Shader.SetGlobalFloat(RegionCountId, n);
             float peak = PeakDensity();
             Shader.SetGlobalVector(MaskId, new Vector4(peak > 0f ? 1f / peak : 0f, 0f, 0f, 0f));
+            Shader.SetGlobalVector(BandId, new Vector4(BandHeight, BandHalfThickness, BandDensity, 0f));
             Light sun = CloudShadowDriver.Active != null ? CloudShadowDriver.Active.Sun : RenderSettings.sun;
             Color scatter = sun != null ? sun.color.linear * (sun.intensity * ScatterScale) : Color.black;
             Shader.SetGlobalVector(ScatterId, new Vector4(scatter.r, scatter.g, scatter.b, AmbientScatter));

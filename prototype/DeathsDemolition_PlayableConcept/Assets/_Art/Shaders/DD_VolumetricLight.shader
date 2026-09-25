@@ -71,11 +71,14 @@ Shader "Hidden/DD/VolumetricLight"
                 float3 d = ComputeWorldSpacePosition(uv, raw, UNITY_MATRIX_I_VP) - camera;
                 float len = length(d);
                 float3 dir = d / max(len, 1e-4);
-                if (DDVLIsSky(raw)) len = _VL_March.y;
+                if (DDVLIsSky(raw)) len = min(_VL_March.y, 30.0);   // r2: a sky ray stops at 30 m — facing the sun, 70 m of haze washed the sky out
                 len = min(len, _VL_March.y);
 
+                // r2: quadratic step spacing — dense near the camera (the narrow shafts through eaves, bamboo and gates resolve in
+                // TP / FP), long far out (the crepuscular columns); sample s sits at len·((s + jitter) / n)², its segment spans
+                // len·(2s + 1) / n².
                 int steps = max((int)_VL_March.x, 1);
-                float stepLen = len / steps;
+                float invN2 = 1.0 / (steps * steps);
                 float jitter = DDVLNoise(input.positionCS.xy);
                 float phase = DDVLPhase(dot(dir, _VL_SunDir.xyz), _VL_March.z, _VL_March.w) * 4.0 * PI;   // 1 = isotropic
 
@@ -85,7 +88,9 @@ Shader "Hidden/DD/VolumetricLight"
                 for (int s = 0; s < 64; s++)
                 {
                     if (s >= steps) break;
-                    float3 p = camera + dir * ((s + jitter) * stepLen);
+                    float u = s + jitter;
+                    float3 p = camera + dir * (len * u * u * invN2);
+                    float stepLen = len * (2.0 * s + 1.0) * invN2;
                     float dens = DD_VL_Density(p);
                     if (dens <= 1e-6) continue;
                     float shadow = MainLightRealtimeShadow(TransformWorldToShadowCoord(p));

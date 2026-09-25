@@ -500,7 +500,7 @@ namespace DD.Art.Tests.EditMode
             // WP-075 C3 · AP-023 sky v2 (v6 layout): band v2 + its derived lat-long, 3 horizon v2 sheets, 2 cloud sheets, 3 landmark + 1 NW cluster card = 11.
             int gok = 0;
             foreach (string f in WorldV5Sky.TextureFiles()) if (beklenen.Add(f)) gok++;
-            Assert.AreEqual(11, gok, "AP-023 gök v2 dokuları");
+            Assert.AreEqual(12, gok, "AP-023 gök v2 dokuları + DEC-102 r2 gök v3 panoraması (sky_dec102)");
 
             // WP-019 (ADR-019-1): every PNG the AP-010 manifest ships (rows + their emissive layers).
             int vfx = 0;

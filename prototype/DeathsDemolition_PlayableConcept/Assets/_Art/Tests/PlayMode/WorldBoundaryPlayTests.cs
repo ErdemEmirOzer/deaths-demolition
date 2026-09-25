@@ -569,7 +569,7 @@ namespace DD.Art.Tests.PlayMode
             Assert.AreEqual(WorldLayoutKind.V6, WorldLayout.Current, "WorldLayout.Current v6");
             int innerMarkers = 0;
             foreach (SpawnPointMarker m in UnityEngine.Object.FindObjectsOfType<SpawnPointMarker>()) if (m.Kind == SpawnPointKind.Inner) innerMarkers++;
-            Assert.AreEqual(6, innerMarkers, "orta kapı marker'ı (Kind = Inner)");
+            Assert.AreEqual(10, innerMarkers, "orta kapı marker'ı (Kind = Inner; 6 + S-03 senaryo C'nin 4'ü, C-00 25.09)");
             Assert.AreEqual(30, UnityEngine.Object.FindObjectsOfType<DD.Prototype.Navigation.NavRegionMarker>().Length, "B1c bölge hacimleri (7 oda + 20 çıkış + 3 darboğaz)");
             yield return null;
             Time.captureDeltaTime = 1f / 60f;

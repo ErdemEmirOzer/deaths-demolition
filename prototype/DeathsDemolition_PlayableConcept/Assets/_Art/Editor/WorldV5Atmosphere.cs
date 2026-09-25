@@ -75,22 +75,30 @@ namespace DD.Art.Pipeline.EditorTools
 
         /// <summary>DEC-102 volumetric field (VolumetricLight on the dress root): where the shafts should read — the bamboo grove, the
         /// ponds, the sakura court, the veranda, the karamon forecourt, the rear kairō and the NE pines; the plaza centre stays clear
-        /// (Ek A K10: ≤ 3 % local fog around the top-down player).</summary>
+        /// (Ek A K10: ≤ 3 % local fog around the top-down player). r2 (C-00 25.09, HF v002: shafts read in every camera): denser, and
+        /// the court edges under the cloister eaves (x ±20) join as their own regions.</summary>
         public static readonly (Vector3 centre, float radiusXZ, float radiusY, float density)[] VolumeRegions =
         {
-            (new Vector3(-45f, 3f, -14f), 14f, 6f, 0.022f), (new Vector3(-45f, 3f, 14f), 14f, 6f, 0.022f),
-            (new Vector3(-2f, 1.5f, -28f), 16f, 3f, 0.020f), (new Vector3(36f, 3f, 0f), 12f, 5f, 0.018f),
-            (new Vector3(0f, 4f, 34f), 16f, 5f, 0.012f), (new Vector3(0f, 3f, 20f), 8f, 4f, 0.012f),
-            (new Vector3(0f, 3f, 52f), 22f, 4f, 0.012f), (new Vector3(42f, 4f, 40f), 12f, 6f, 0.015f),
+            (new Vector3(-45f, 3f, -14f), 14f, 6f, 0.030f), (new Vector3(-45f, 3f, 14f), 14f, 6f, 0.030f),
+            (new Vector3(-2f, 1.5f, -28f), 16f, 3f, 0.026f), (new Vector3(36f, 3f, 0f), 12f, 5f, 0.022f),
+            (new Vector3(0f, 4f, 34f), 16f, 5f, 0.018f), (new Vector3(0f, 3f, 20f), 8f, 4f, 0.016f),
+            (new Vector3(0f, 3f, 52f), 22f, 4f, 0.014f), (new Vector3(42f, 4f, 40f), 12f, 6f, 0.018f),
+            (new Vector3(-20f, 3f, 29f), 7f, 4f, 0.020f), (new Vector3(20f, 3f, 29f), 7f, 4f, 0.020f),
         };
 
         public static int Build(Transform dress, Transform greybox)
         {
             var field = dress.gameObject.AddComponent<VolumetricLight>();
-            field.BaseDensity = 0.0025f;
-            field.HeightFalloff = 0.18f;
-            field.ScatterScale = 0.55f;   // DEC-102 first frames read milky at 1.0
-            field.AmbientScatter = 0.2f;
+            // r2: a taller haze (halves every ~15 m, not ~4 m) so the crepuscular columns from the cloud gaps reach ~40 m and read from
+            // the top-down camera; the ambient share low so the columns stand out of the shade (0.2 read milky-flat between them).
+            field.BaseDensity = 0.0035f;
+            field.HeightFalloff = 0.045f;
+            field.ScatterScale = 0.5f;   // DEC-102 first frames read milky at 1.0; r2 0.7 washed the backlit HF views (Δ mean +0.13, contrast 0.21 → 0.15)
+            field.AmbientScatter = 0.06f;
+            // r2: the lifted band (18 ± 9 m) — the crepuscular columns from the cloud gaps read from the top-down camera (C-00 25.09).
+            field.BandHeight = 18f;
+            field.BandHalfThickness = 9f;
+            field.BandDensity = 0.0015f;   // 0.004 milked the backlit TP / ¾ views (the sky rays crossed 70 m of it toward the sun)
             field.Regions = new VolumetricLight.Region[VolumeRegions.Length];
             for (int i = 0; i < VolumeRegions.Length; i++)
                 field.Regions[i] = new VolumetricLight.Region { Centre = VolumeRegions[i].centre, RadiusXZ = VolumeRegions[i].radiusXZ, RadiusY = VolumeRegions[i].radiusY, Density = VolumeRegions[i].density };

@@ -55,14 +55,21 @@ namespace DD.Art
 
         /// <summary>Evidence-only A/B switches for the perf rows (WP-075 perf: planar and bake on their own rows): <c>-ddPlanar off</c>
         /// disables the planar reflection, <c>-ddBake off</c> drops the lightmaps and the baked reflection probes at load (light probes
-        /// stay), <c>-ddScreenAtmos off</c> keeps the TP / FP screen atmosphere off. Nothing changes without a flag.</summary>
+        /// stay), <c>-ddScreenAtmos off</c> keeps the TP / FP screen atmosphere off, <c>-ddVolumetric off</c> the DEC-102 volumetric light.
+        /// Editor PlayMode captures (DEC-102 A/B frames) name them in <see cref="EvidenceOffVariable"/> instead, e.g. "ddVolumetric".
+        /// Nothing changes without a flag.</summary>
         public const string PlanarFlag = "-ddPlanar", BakeFlag = "-ddBake", ScreenAtmosFlag = "-ddScreenAtmos", VolumetricFlag = "-ddVolumetric";
+        public const string EvidenceOffVariable = "DD_EVIDENCE_OFF";
 
         private static bool Off(string flag)
         {
             string[] args = System.Environment.GetCommandLineArgs();
             for (int i = 0; i + 1 < args.Length; i++)
                 if (args[i] == flag) return string.Equals(args[i + 1], "off", System.StringComparison.OrdinalIgnoreCase);
+            string env = System.Environment.GetEnvironmentVariable(EvidenceOffVariable);
+            if (string.IsNullOrEmpty(env)) return false;
+            foreach (string name in env.Split(','))
+                if (string.Equals(name.Trim(), flag.TrimStart('-'), System.StringComparison.OrdinalIgnoreCase)) return true;
             return false;
         }
 

@@ -10,6 +10,7 @@
 //   _DD_VL_RegionShape[i]    x vertical radius (m), y peak density (1/m)
 //   _DD_VL_Scatter   rgb the sun's scattered colour (linear, × intensity), a the ambient (sky) share in the shadows
 //   _DD_VL_Mask      x 1 / the field's peak density (normalises DD_ShaftMask; 0 while the field is off)
+//   _DD_VL_Band      x lifted haze band centre (m), y half thickness (m), z peak density (1/m) — DEC-102 r2, the top-down columns
 //
 //   DD_VL_Density(p)   the field at a world point (1/m)
 //   DD_CloudSunLit01(p) (DD_CloudCookie.hlsl) the cloud cookie's sun share at p, 0 under a cloud … 1 in a gap; the shadow map is the
@@ -19,18 +20,21 @@
 //                      (Performance, World_AP005: the "missing → 1" of the VFX spec). Multiply by the caller's MainLightRealtimeShadow
 //                      for the shaft itself (the raymarch's own terms, without the phase). Needs DD_CloudCookie.hlsl included first.
 
-#define DD_VL_MAX_REGIONS 8
+#define DD_VL_MAX_REGIONS 12
 
 float4 _DD_VL_Density;
 float4 _DD_VL_Regions[DD_VL_MAX_REGIONS];
 float4 _DD_VL_RegionShape[DD_VL_MAX_REGIONS];
 float4 _DD_VL_Scatter;
 float4 _DD_VL_Mask;
+float4 _DD_VL_Band;
 float _DD_VL_RegionCount;
 
 float DD_VL_Density(float3 p)
 {
     float d = _DD_VL_Density.x * exp(-_DD_VL_Density.y * max(p.y - _DD_VL_Density.z, 0.0));
+    float band = (p.y - _DD_VL_Band.x) / max(_DD_VL_Band.y, 1e-3);
+    d += _DD_VL_Band.z * exp(-band * band);
     int n = (int)_DD_VL_RegionCount;
     [loop]
     for (int i = 0; i < DD_VL_MAX_REGIONS; i++)

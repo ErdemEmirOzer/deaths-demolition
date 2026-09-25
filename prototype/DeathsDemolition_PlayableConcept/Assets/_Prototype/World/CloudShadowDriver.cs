@@ -137,7 +137,7 @@ namespace DD.Prototype.World
             if (_light == null) return;
             if (!ForcedPhase.HasValue)
             {
-                float step = WorldAtmosphere.CloudShadow.SpeedMetersPerSecond * Time.deltaTime;
+                float step = WorldAtmosphere.CloudShadow.SpeedFor(WorldLayout.Current) * Time.deltaTime;   // DEC-102 r2: v6 static (its sky is)
                 Transform t = _light.transform;
                 Vector3 d = DriftDirection;
                 _offset += new Vector2(Vector3.Dot(d, t.right), Vector3.Dot(d, t.up)) * step;

@@ -14,6 +14,6 @@
     { "id": "R3_Kura", "box": [-44, 36, -34, 44], "floor": 0.3, "exits": 2 },
     { "id": "R4_TeaHouse", "box": [-35, -39, -29, -33], "floor": 0.45, "exits": 2 },
     { "id": "R5_Azumaya", "box": [30, -36, 36, -30], "floor": 0, "exits": 4 },
-    { "id": "R6_Chumon", "box": [-4, 18, 4, 23], "floor": 0, "exits": 4 }
+    { "id": "R6_Chumon", "box": [-4.8, 18, 4.8, 23], "floor": 0, "exits": 4 }
   ]
 }
