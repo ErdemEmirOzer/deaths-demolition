@@ -27,6 +27,7 @@ namespace DD.Prototype.UI
         private const float StrokeInner = Size * 0.5f * 0.984f * 0.75f;
         private const float StrokeOuter = Size * 0.5f * 0.984f;
         public const float Clearance = 12f;
+        private const float EdgeEpsilon = 0.01f;
 
         /// <summary>The prompt / countdown slot at the bottom centre (AD R1-A MUST-1b), reserved whether or not it shows.</summary>
         public static readonly Vector2 PromptSlot = new Vector2(380f, 56f);
@@ -144,7 +145,7 @@ namespace DD.Prototype.UI
                     float move = box.center.y < 0f ? clear.yMax - box.yMin : down;
                     if (resolveDownward && move > 0f && truePoint.y < clear.center.y && centre.y + down >= lowest)
                     {
-                        move = down;
+                        move = down - EdgeEpsilon;   // a hair past the edge: landing exactly on it reads as an overlap next pass
                     }
 
                     centre.y += move;

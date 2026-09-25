@@ -106,7 +106,7 @@ namespace DD.Prototype.Tests.EditMode
             float? clock = UiMotion.TestNow;
             UiMotion.ResetForTests();
             UiMotion.TestNow = 10f;
-            var host = new GameObject("BannerHost", typeof(RectTransform));
+            var host = new GameObject("BannerHost", typeof(RectTransform), typeof(Canvas));   // TMP lays text out only under a canvas (EditMode)
             try
             {
                 var root = (RectTransform)host.transform;
