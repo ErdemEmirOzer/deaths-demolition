@@ -161,6 +161,12 @@ namespace DD.Prototype.UI
                 UiInputScheme.Force(DD.Prototype.Core.InputAbstraction.InputSchemeKind.Gamepad);
             }
 
+            // -ddUiLanguage tr: the Turkish pack (process-local settings) - the overflow frames at 1.25 and Mac.
+            if (Arg("-ddUiLanguage") == "tr")
+            {
+                UiSettings.Language = "tr";
+            }
+
             // -ddUiHudFrame 1: the HUD's 16:9 frame on (12c · B12; process-local settings, never the player's file).
             if (Arg("-ddUiHudFrame") == "1")
             {

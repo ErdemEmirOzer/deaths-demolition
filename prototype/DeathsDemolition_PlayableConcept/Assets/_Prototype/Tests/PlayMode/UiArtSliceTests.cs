@@ -634,6 +634,9 @@ namespace DD.Prototype.Tests.PlayMode
             // WP-068 12c · B12: HUD IN A 16:9 FRAME sits under UI SCALE in DISPLAY (not flipped here).
             Hareket(MoveDirection.Down);
             yield return SeciliBekle("HudFrame");
+            // WP-068 Turkish: LANGUAGE (ENGLISH / TÜRKÇE) under the HUD frame switch (not changed here).
+            Hareket(MoveDirection.Down);
+            yield return SeciliBekle("Language");
             Hareket(MoveDirection.Down);
             yield return SeciliBekle("Setting.MASTER VOLUME");
             // WP-068 slice 11 (S-08): UI SOUNDS sits under the master volume.
