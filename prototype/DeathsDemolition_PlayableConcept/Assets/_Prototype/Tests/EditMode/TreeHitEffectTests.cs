@@ -280,15 +280,15 @@ namespace DD.Prototype.Tests.EditMode
             Sahip(ClassicWeaponId.Rl1, "fork_rl_1_x");
             float hasar = 160f, ic = 1.8f, dis = 5f;
             RunTreeHooks.ShapeRocketBlast(ClassicWeaponId.Rl1, ref hasar, ref ic, ref dis);
-            Assert.AreEqual(208f, hasar, 1e-3f, "+%30 hasar");
-            Assert.AreEqual(1.35f, ic, 1e-4f, "yarıçap ×0,75");
-            Assert.AreEqual(3.75f, dis, 1e-4f);
+            Assert.AreEqual(240f, hasar, 1e-3f, "+%50 hasar");
+            Assert.AreEqual(1.44f, ic, 1e-4f, "yarıçap ×0,80");
+            Assert.AreEqual(4f, dis, 1e-4f);
 
             Sahip(ClassicWeaponId.Rl1, "fork_rl_1_y");
             hasar = 160f; ic = 1.8f; dis = 5f;
             RunTreeHooks.ShapeRocketBlast(ClassicWeaponId.Rl1, ref hasar, ref ic, ref dis);
             Assert.AreEqual(160f, hasar);
-            Assert.AreEqual(6.25f, dis, 1e-4f, "yarıçap +%25");
+            Assert.AreEqual(5.75f, dis, 1e-4f, "yarıçap +%15");
 
             hasar = 160f; ic = 1.8f; dis = 5f;
             RunTreeHooks.ShapeRocketBlast(ClassicWeaponId.Sg2, ref hasar, ref ic, ref dis);

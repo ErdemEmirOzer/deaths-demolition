@@ -939,7 +939,7 @@
     "id": "fork_lmg_2_y",
     "shortName": "Cold Barrel",
     "displayName": "Cold Barrel",
-    "description": "First 10 rounds after a reload +30% damage.",
+    "description": "First 20 rounds after a reload +30% damage.",
     "effectId": "fork.lmg_2.y",
     "cost": 90,
     "offerWeight": 1.2,
@@ -947,7 +947,7 @@
     "args": [
      {
       "name": "count",
-      "value": 10
+      "value": 20
      },
      {
       "name": "value",
@@ -984,7 +984,7 @@
     "id": "fork_sr_1_x",
     "shortName": "Hold Breath",
     "displayName": "Hold Breath",
-    "description": "Wait 2.5 s → ×2 damage.",
+    "description": "Wait 2 s → ×2 damage.",
     "effectId": "fork.sr_1.x",
     "cost": 90,
     "offerWeight": 1.2,
@@ -992,7 +992,7 @@
     "args": [
      {
       "name": "seconds",
-      "value": 2.5
+      "value": 2.0
      },
      {
       "name": "value",
@@ -1062,11 +1062,11 @@
     "args": [
      {
       "name": "value",
-      "value": 30
+      "value": 50
      },
      {
       "name": "radius",
-      "value": 75
+      "value": 80
      }
     ]
    },
@@ -1082,7 +1082,7 @@
     "args": [
      {
       "name": "value",
-      "value": 25
+      "value": 15
      }
     ]
    },

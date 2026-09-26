@@ -365,12 +365,12 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
-        public void Catal_lmg_2_y_DoldurmadanSonraIlkOnMermiYuzdeOtuz()
+        public void Catal_lmg_2_y_DoldurmadanSonraIlkYirmiMermiYuzdeOtuz()
         {
             Kos(ClassicWeaponId.Lmg2, "fork_lmg_2_y");
             Assert.AreEqual(1.3f, RunTreeHooks.ShotDamageScale(ClassicWeaponId.Lmg2, 1f, 0f, 0), 1e-5f);
-            Assert.AreEqual(1.3f, RunTreeHooks.ShotDamageScale(ClassicWeaponId.Lmg2, 1f, 0f, 9), 1e-5f);
-            Assert.AreEqual(1f, RunTreeHooks.ShotDamageScale(ClassicWeaponId.Lmg2, 1f, 0f, 10), 1e-5f);
+            Assert.AreEqual(1.3f, RunTreeHooks.ShotDamageScale(ClassicWeaponId.Lmg2, 1f, 0f, 19), 1e-5f);
+            Assert.AreEqual(1f, RunTreeHooks.ShotDamageScale(ClassicWeaponId.Lmg2, 1f, 0f, 20), 1e-5f);
         }
 
         [Test]
@@ -387,23 +387,23 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsTrue(rt.TryBeginReload());
             rt.Tick(10f);
             Assert.IsTrue(rt.LastReloadCompleted);
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 20; i++)
             {
                 Assert.AreEqual(taban * 1.3f, rt.BuildShot(Vector3.zero, Vector3.forward).Damage, 1e-3f, "mermi " + (i + 1));
                 rt.ConsumeShot();
             }
 
-            Assert.AreEqual(taban, rt.BuildShot(Vector3.zero, Vector3.forward).Damage, 1e-4f, "11. mermi normal");
+            Assert.AreEqual(taban, rt.BuildShot(Vector3.zero, Vector3.forward).Damage, 1e-4f, "21. mermi normal");
         }
 
         // ------------------------------------------------------------------ sr_1
 
         [Test]
-        public void Catal_sr_1_x_IkiBucukSaniyeBekleyinceIkiKat()
+        public void Catal_sr_1_x_IkiSaniyeBekleyinceIkiKat()
         {
-            // S-04: the wait is 2.5 s (the bolt cycle is already 1.25 s, so 1 s would make every shot ×2).
+            // S-04: the wait is 2 s (K10b audit 26.09: 2.5 s = two bolt cycles, so ×2 bought nothing; the bolt cycle is 1.25 s, so 1 s would make every shot ×2).
             Kos(ClassicWeaponId.Sr1, "fork_sr_1_x");
-            Assert.AreEqual(2f, RunTreeHooks.ShotDamageScale(ClassicWeaponId.Sr1, 1f, 2.5f, 0), 1e-5f);
+            Assert.AreEqual(2f, RunTreeHooks.ShotDamageScale(ClassicWeaponId.Sr1, 1f, 2.0f, 0), 1e-5f);
             Assert.AreEqual(1f, RunTreeHooks.ShotDamageScale(ClassicWeaponId.Sr1, 1f, 1.3f, 0), 1e-5f, "normal atış temposu (1,25 s) ×2 almaz");
         }
 
