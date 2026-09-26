@@ -35,10 +35,12 @@ namespace DD.Prototype.UI.EditorTools
 
         // "_" and "…": TMP asks every font for its underline and ellipsis glyphs when a label takes
         // the font; a static atlas without them logs a warning per label (p3: 4 870 warnings).
-        public const string DisplayCharset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,:;!?'\"-–—()&/·×+%#’‘“”…_";
+        // WP-068 Turkish (C-00 26.09): the Turkish capitals Shippori Mincho B1 draws - Ç Ö Ü. Ğ İ Ş are not in the face;
+        // they fall back to the Text face (Source Sans 3) through the Display fallback chain.
+        public const string DisplayCharset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,:;!?'\"-–—()&/·×+%#’‘“”…_ÇÖÜ";
         // 12b (AD R1-A SHOULD-7): "°" - STICK LOOK SPEED "180°/s", the FOV rows and the ACCURACY stat print
         // their unit in the Numeric face; without it the sign fell back to the Text face (Oswald has U+00B0).
-        public const string NumericCharset = "0123456789 :/%+−-×.,x_…°";
+        public const string NumericCharset = "0123456789 :/%+−-×.,x_…°ÇÖÜĞİŞçöüğış";   // + Turkish (a numeric chip may carry a word)
         public const char DegreeSign = '°';
         public const string Digits = "0123456789";
 
@@ -50,6 +52,7 @@ namespace DD.Prototype.UI.EditorTools
                 for (int c = 0x20; c < 0x7F; c++) chars.Append((char)c);
                 for (int c = 0xA0; c <= 0xFF; c++) chars.Append((char)c);
                 chars.Append("–—‘’“”•…·×→←↑↓−");
+                chars.Append("ĞğİıŞş");   // Turkish beyond Latin-1 (Ç ç Ö ö Ü ü are in it)
                 return chars.ToString();
             }
         }
