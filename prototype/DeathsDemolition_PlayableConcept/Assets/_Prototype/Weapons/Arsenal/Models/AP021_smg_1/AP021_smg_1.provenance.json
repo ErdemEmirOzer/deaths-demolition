@@ -2,15 +2,15 @@
  "package": "AP-021",
  "owner": "P-07",
  "key": "smg_1",
- "version": "v003",
+ "version": "v003.1 (AD B MUSTs complete, 26.09)",
  "frame": "Unity frame at export (canonical — S-02 measured in the Run scene (C-00 T4, 25.09): Unity +Z barrel, +Y up, +X = shooter right)",
- "ad_verdict": "02-concept/AP021-AD-classics-B-verdict.md: KABUL_DUZELTMELERLE -> v003: C1, C3 (notch floor 0.1013), C4 (nxy p95 0.023) done; open: pad front edge 0.72 mm (rear/ADS edge 0.26)",
+ "ad_verdict": "02-concept/AP021-AD-classics-B-verdict.md: KABUL_DUZELTMELERLE -> v003.1: C1, C3, C4 done; pad front edge 0.70 -> 0.35 mm (top 0.39 -> 0.0)",
  "files": [
   {
    "source": "asset-production/AP-021/exports/fbx/AP021_smg_1.fbx",
    "target": "_Prototype/Weapons/Arsenal/Models/AP021_smg_1/AP021_smg_1.fbx",
-   "bytes": 1075900,
-   "sha256": "53fbe8ed686450f2560ec8e7541691281cd6c462901907e3b2ae8992130f486e"
+   "bytes": 1075948,
+   "sha256": "89338895cd4c22c9e35be1df691a082c9bb3b49895db8614201b3ede7fb40cc7"
   },
   {
    "source": "asset-production/AP-021/exports/textures/smg_1/T_AP021_smg_1_BaseColor.png",
@@ -27,8 +27,8 @@
   {
    "source": "asset-production/AP-021/exports/textures/smg_1/T_AP021_smg_1_MRA.png",
    "target": "_Prototype/Weapons/Arsenal/Models/AP021_smg_1/Textures/T_AP021_smg_1_MRA.png",
-   "bytes": 3088128,
-   "sha256": "59b2fe567d15f4a6e9fee2534032879497894c8ea2fdd212b659f0a8e756886c"
+   "bytes": 3088439,
+   "sha256": "1253fd7ab295371cfa8faacb5669a1d95bfeaa7cbbdd4f3313e9c3fe7ec6d71c"
   },
   {
    "source": "asset-production/AP-021/exports/textures/smg_1/T_AP021_smg_1_Normal.png",

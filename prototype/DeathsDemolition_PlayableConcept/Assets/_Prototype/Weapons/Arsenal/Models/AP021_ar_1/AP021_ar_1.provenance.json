@@ -2,15 +2,15 @@
  "package": "AP-021",
  "owner": "P-07",
  "key": "ar_1",
- "version": "v003",
+ "version": "v003.1 (AD B MUSTs complete, 26.09)",
  "frame": "Unity frame at export (canonical — S-02 measured in the Run scene (C-00 T4, 25.09): Unity +Z barrel, +Y up, +X = shooter right)",
- "ad_verdict": "02-concept/AP021-AD-classics-B-verdict.md: KABUL_DUZELTMELERLE -> v003: C1, C2 (plane split, foreign 0), M2 (crown p95 0.56 -> 0.28 mm + b-2 nxy 0.009) done; M1 partial: wrist dihedral p95 33.7 -> 22.1 deg (target 8; remodel), smooth, sharp >= 60 deg, flat 0",
+ "ad_verdict": "02-concept/AP021-AD-classics-B-verdict.md: KABUL_DUZELTMELERLE -> v003.1: C1, C2, M2 done; M1 done by remodel (new wrist + tang lacquer dihedral p95 6.36 deg on LOD0, shape within 1.2 mm; LOD1 12.7 deg; hemp wrap kept)",
  "files": [
   {
    "source": "asset-production/AP-021/exports/fbx/AP021_ar_1.fbx",
    "target": "_Prototype/Weapons/Arsenal/Models/AP021_ar_1/AP021_ar_1.fbx",
-   "bytes": 1046844,
-   "sha256": "87ce040cdfa489d980fa927382dd5dc85e917c53040cb11a723bc25e19b454a8"
+   "bytes": 1086188,
+   "sha256": "9a5d551a94269440de482d5229851fcb1e9150fbb7afe2f9406d81cccd52fd08"
   },
   {
    "source": "asset-production/AP-021/exports/textures/ar_1/T_AP021_ar_1_BaseColor.png",

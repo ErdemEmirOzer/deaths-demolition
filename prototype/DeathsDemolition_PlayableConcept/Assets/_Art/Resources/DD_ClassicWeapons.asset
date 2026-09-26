@@ -19,7 +19,7 @@ MonoBehaviour:
   - id: 0
     rosterKey: ar_1
     model: {fileID: 919132149155446097, guid: d7027c15dd68a40058785793ab690b94, type: 3}
-    lodTriangles: 9f4a000082160000b8060000
+    lodTriangles: 0d4e00006a170000b8060000
     ownMaterials: 1
     modelPackage: AP-021
   - id: 1
