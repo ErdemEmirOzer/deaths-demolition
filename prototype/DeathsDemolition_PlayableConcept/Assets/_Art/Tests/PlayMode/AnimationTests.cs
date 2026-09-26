@@ -335,6 +335,36 @@ namespace DD.Art.Tests.PlayMode
 
         [UnityTest]
         [Timeout(300000)]
+        public IEnumerator SilahV3_B4c_TpAcikSetler_SniperSurguDongusu_ArSmgLegacy()
+        {
+            // WP-071 B4c (C-00 26.09): TP v3 is ON for smg_2 / sr_1 / rl_1 / lmg_1 / lmg_2 in the game (PlayerSkinnedVisual.TpV3Sets) and
+            // stays on the legacy pose for ar_1 / ar_2 / smg_1; the sniper's shot starts its bolt cycle (Cycle_V3).
+            Assert.IsFalse(PlayerSkinnedVisual.V3WeaponSets, "global TP v3 kapalı (AR/SMG 3,7 cm)");
+            yield return RunAP005();
+            PlayerSkinnedVisual pv = PlayerRegistry.Primary.GetComponentInChildren<PlayerSkinnedVisual>(true);
+            int weaponParam = Animator.StringToHash(C.Weapon);
+            foreach (string key in new[] { "smg_2", "sr_1", "rl_1", "lmg_1", "lmg_2", "ar_1", "smg_1" })
+            {
+                var def = DD.Prototype.Core.Weapons.Arsenal.Get(key);
+                pv.EquipWeapon(def, def.id);
+                yield return null;
+                bool on = System.Array.IndexOf(PlayerSkinnedVisual.TpV3Sets, key) >= 0;
+                Assert.AreEqual(on ? key : null, pv.WeaponAnimSet, key + " TP v3 seti");
+                Assert.AreEqual(on, pv.Animator.GetInteger(weaponParam) == C.WeaponPoseV3, key + " Weapon parametresi");
+            }
+
+            var sr = DD.Prototype.Core.Weapons.Arsenal.Get("sr_1");
+            pv.EquipWeapon(sr, sr.id);
+            for (int i = 0; i < 40; i++) yield return null;   // switch settles
+            int over = pv.Animator.GetLayerIndex(C.OverrideUpperLayer);
+            pv.PlayFire();
+            yield return CharacterTests.Bekle(() => pv.Animator.GetCurrentAnimatorStateInfo(over).IsName(C.CycleV3State), 1.5f, "sr_1 Cycle_V3");
+            AnimatorClipInfo[] ci = pv.Animator.GetCurrentAnimatorClipInfo(over);
+            StringAssert.Contains("tp_sr_1_bolt_cycle", ci.Length > 0 ? ci[0].clip.name : "-");
+        }
+
+        [UnityTest]
+        [Timeout(300000)]
         public IEnumerator SilahV3_AOC_ar1ar2_TacEmpty_BurstTekVurus_LocomotionSifirlanmaz()
         {
             // WP-071 B4b (K8): the AR pair on the generic v3 states through one runtime override controller — equip swaps only the

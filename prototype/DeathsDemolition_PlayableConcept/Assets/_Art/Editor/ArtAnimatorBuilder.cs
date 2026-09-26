@@ -323,7 +323,7 @@ namespace DD.Art.Pipeline.EditorTools
                 (C.SwitchOut, AnimatorControllerParameterType.Trigger), (C.SwitchIn, AnimatorControllerParameterType.Trigger),
                 (C.Lower, AnimatorControllerParameterType.Trigger), (C.Raise, AnimatorControllerParameterType.Trigger),
                 (C.SwHold, AnimatorControllerParameterType.Int), (C.Hurt, AnimatorControllerParameterType.Trigger), (C.HurtStyle, AnimatorControllerParameterType.Int),
-                (C.SwFire, AnimatorControllerParameterType.Trigger));
+                (C.SwFire, AnimatorControllerParameterType.Trigger), (C.Cycle, AnimatorControllerParameterType.Trigger));
             SetDefault(c, C.LocoRate, 1f);
             SetDefault(c, C.ReloadRate, 1f);
             SetDefault(c, C.Alive, true);
@@ -443,6 +443,15 @@ namespace DD.Art.Pipeline.EditorTools
                 FromAny(osm, vOut, 0.03f, (AnimatorConditionMode.If, 0f, C.SwitchOut), (AnimatorConditionMode.Equals, C.WeaponPoseV3, C.Weapon), (AnimatorConditionMode.If, 0f, C.Alive));
                 AnimatorState vIn = OneShotUpper(osm, aims, holds, C.SwitchInV3State, clips[C.PlayerWeaponClipV3(v3Base, "switch_in")], 0.98f, 0.1f);
                 FromAny(osm, vIn, 0.03f, (AnimatorConditionMode.If, 0f, C.SwitchIn), (AnimatorConditionMode.Equals, C.WeaponPoseV3, C.Weapon), (AnimatorConditionMode.If, 0f, C.Alive));
+                // WP-071 B4c: the bolt cycle after a shot — the state carries the sniper's own clip (only a set with hasCycle triggers it)
+                foreach (string cs in C.WeaponAnimSetsV3)
+                {
+                    if (!clips.TryGetValue(C.PlayerWeaponCycleClipV3(cs), out AnimationClip cycleClip)) continue;
+                    AnimatorState cycle = OneShotUpper(osm, aims, holds, C.CycleV3State, cycleClip, 0.98f, 0.08f);
+                    FromAny(osm, cycle, 0.05f, (AnimatorConditionMode.If, 0f, C.Cycle), (AnimatorConditionMode.Equals, C.WeaponPoseV3, C.Weapon), (AnimatorConditionMode.If, 0f, C.Alive));
+                    break;
+                }
+
                 // lower / raise: the v3 set has none yet → the rifle's (pose 0) clips
                 AnimatorState vLower = OneShotUpper(osm, aims, holds, C.WeaponLowerState + "_" + C.WeaponPoseV3, clips[C.PlayerWeaponLowerClip(0)], 0.98f, 0.1f);
                 FromAny(osm, vLower, 0.05f, (AnimatorConditionMode.If, 0f, C.Lower), (AnimatorConditionMode.Equals, C.WeaponPoseV3, C.Weapon), (AnimatorConditionMode.If, 0f, C.Alive));
@@ -1049,7 +1058,7 @@ namespace DD.Art.Pipeline.EditorTools
                 foreach (string slot in otherClass ? ClassAndOwnSlots : C.WeaponOwnSlots)
                 {
                     if (!clips.TryGetValue(C.PlayerWeaponClipV3(baseSet, slot), out AnimationClip from)) continue;
-                    clips.TryGetValue(C.PlayerWeaponClipV3(animSet, slot), out AnimationClip to);
+                    AnimationClip to = V3SlotClip(clips, animSet, slot);
                     pairs.Add(new KeyValuePair<AnimationClip, AnimationClip>(from, animSet == baseSet ? null : to));
                 }
 
@@ -1059,13 +1068,27 @@ namespace DD.Art.Pipeline.EditorTools
                 sets.Add(new CharacterAnimationSet.WeaponAnimSet
                 {
                     animSet = animSet, overrides = aoc,
-                    hasLeftHand = rest != null && rest.hasLeftHandInWeapon, leftHandInWeapon = rest != null ? rest.leftHandInWeapon : Vector3.zero
+                    hasLeftHand = rest != null && rest.hasLeftHandInWeapon, leftHandInWeapon = rest != null ? rest.leftHandInWeapon : Vector3.zero,
+                    hasCycle = clips.ContainsKey(C.PlayerWeaponCycleClipV3(animSet))
                 });
             }
 
             set.ConfigureWeaponSets(sets);
             EditorUtility.SetDirty(set);
             Debug.Log(LogPrefix + "weapon animation sets: " + sets.Count + " (" + string.Join(", ", C.WeaponAnimSetsV3) + ")");
+        }
+
+        /// <summary>
+        /// WP-071 B4c: a set's clip for a slot — its own, else a same-class sibling's own weapon slot (lmg_2 has no reloads yet → lmg_1's),
+        /// else, for reload_tac, its own reload_empty (the launcher has one reload).
+        /// </summary>
+        private static AnimationClip V3SlotClip(Dictionary<string, AnimationClip> clips, string animSet, string slot)
+        {
+            if (clips.TryGetValue(C.PlayerWeaponClipV3(animSet, slot), out AnimationClip own)) return own;
+            if (System.Array.IndexOf(C.WeaponOwnSlots, slot) < 0) return null;
+            foreach (string sibling in C.WeaponAnimSetsV3)
+                if (sibling != animSet && C.WeaponClassOf(sibling) == C.WeaponClassOf(animSet) && clips.TryGetValue(C.PlayerWeaponClipV3(sibling, slot), out AnimationClip s)) return s;
+            return slot == "reload_tac" && clips.TryGetValue(C.PlayerWeaponClipV3(animSet, "reload_empty"), out AnimationClip empty) ? empty : null;
         }
 
         private static void WriteSet(string setPath, AnimatorController controller, Dictionary<string, ArtAnimationClipContract.ClipSpec> manifest,

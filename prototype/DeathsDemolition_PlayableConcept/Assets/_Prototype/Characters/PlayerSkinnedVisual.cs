@@ -353,6 +353,16 @@ namespace DD.Prototype.Characters
         public static bool V3WeaponSets = false;
 
         /// <summary>
+        /// WP-071 B4c (C-00 26.09): the TP v3 sets ON in the game — smg_2, the sniper, the launcher and the LMGs (P-06's per-weapon-grip
+        /// exports; S-02's HerSilah_…KundakOmuz holds their stock ≤ 2 cm in the live TP pose). The AR / smg_1 pair stays on the legacy pose
+        /// (<see cref="V3WeaponSets"/>, 3.7 cm).
+        /// </summary>
+        public static readonly string[] TpV3Sets = { "smg_2", "sr_1", "rl_1", "lmg_1", "lmg_2" };
+
+        /// <summary>The TP v3 path for a set: all sets with <see cref="V3WeaponSets"/> (tests), else <see cref="TpV3Sets"/>.</summary>
+        public static bool TpV3On(string animSet) => V3WeaponSets || (animSet != null && System.Array.IndexOf(TpV3Sets, animSet) >= 0);
+
+        /// <summary>
         /// WP-071 B4b: the FP viewmodel arms (a copy of the player model on the viewmodel layer) — OFF by default (C-00 26.09): fpView v4 / v5
         /// moved the weapon up and forward and the B4b arms-only body cut (the kimono sleeve) now enters the frame half-way; the weapon
         /// stays on fpView without arms. On again with P-06's FP arms v2 + finger-grip clips (the WP-071 fpik batch).
@@ -395,12 +405,20 @@ namespace DD.Prototype.Characters
             }
         }
 
+        private static readonly int CycleId = Animator.StringToHash(CharacterAnimatorContract.Cycle);
+
+        private bool CurrentSetHasCycle()
+        {
+            int k = WeaponAnimSet != null ? _setKeys.IndexOf(WeaponAnimSet) : -1;
+            return k >= 0 && _animation.WeaponSets[_setIndex[k]].hasCycle;
+        }
+
         /// <summary>Equip: the v3 set when the weapon's AnimSet has one, else the legacy class pose.</summary>
         public void EquipWeapon(DD.Prototype.Core.Weapons.WeaponDefinition def, ClassicWeaponId id)
         {
             _weaponDef = def;
             _burstStart = -1f;
-            int k = V3WeaponSets && def != null && _runtimeOverrides != null ? _setKeys.IndexOf(def.AnimSet) : -1;
+            int k = def != null && TpV3On(def.AnimSet) && _runtimeOverrides != null ? _setKeys.IndexOf(def.AnimSet) : -1;
             if (_fpArms != null) _fpArms.SetWeaponSet(FirstPersonV3Arms && def != null ? def.AnimSet : null, def != null ? def.FpViewPose.scale : 1f);
             if (k < 0)
             {
@@ -542,6 +560,7 @@ namespace DD.Prototype.Characters
             if (_swHold == 0 && _weapon == CharacterAnimatorContract.WeaponPoseV3 && !burstBeat) return;   // the legacy TP recoil stays per shot
             FireTriggers++;
             _animator.SetTrigger(_swHold > 0 ? SwFireId : FireId);
+            if (_swHold == 0 && _weapon == CharacterAnimatorContract.WeaponPoseV3 && CurrentSetHasCycle()) _animator.SetTrigger(CycleId);   // WP-071 B4c: the sniper's bolt
         }
 
         /// <summary>Damage taken: the upper-body hit clip. Never touches movement, aim or fire (REQ-044/045).</summary>
