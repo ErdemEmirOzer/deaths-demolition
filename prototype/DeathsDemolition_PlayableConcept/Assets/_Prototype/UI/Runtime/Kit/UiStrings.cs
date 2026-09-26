@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 using UnityEngine;
 
@@ -17,8 +18,17 @@ namespace DD.Prototype.UI
     {
         public const string ResourcePath = "Strings/r1-strings";
 
-        /// <summary>The column read today. The UI ships English; "tr" is kept in the table for the language setting.</summary>
-        public static string Language = "en";
+        public const string English = "en";
+        public const string Turkish = "tr";
+
+        /// <summary>
+        /// The column read: "en" or "tr". <see cref="UiSettings.Language"/> (Settings › DISPLAY › LANGUAGE) owns it and sets it
+        /// when the settings file loads, so the first screen already reads the saved language; screens read it when built.
+        /// </summary>
+        public static string Language = English;
+
+        private static CultureInfo s_turkishCulture;
+        private static bool s_turkishCultureTried;
 
         private static Dictionary<string, Dictionary<string, string>> s_table;
 
@@ -56,6 +66,54 @@ namespace DD.Prototype.UI
         {
             string text = Get(key, fallback);
             return string.IsNullOrEmpty(text) ? text : text.Replace("{" + name + "}", value);
+        }
+
+        /// <summary>Get with two named placeholders filled. Built on demand, never per frame.</summary>
+        public static string Format(string key, string name1, string value1, string name2, string value2, string fallback)
+        {
+            string text = Get(key, fallback);
+            return string.IsNullOrEmpty(text) ? text : text.Replace("{" + name1 + "}", value1).Replace("{" + name2 + "}", value2);
+        }
+
+        /// <summary>
+        /// Upper case for the language on screen: Turkish rules under "tr" (i → İ, ı → I), invariant otherwise. Every
+        /// user-facing upper-casing in the UI goes through here; ids, keys and paths keep ToUpperInvariant.
+        /// </summary>
+        public static string Upper(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+            {
+                return text ?? string.Empty;
+            }
+
+            if (Language != Turkish)
+            {
+                return text.ToUpperInvariant();
+            }
+
+            CultureInfo turkish = TurkishCulture;
+            return turkish != null ? text.ToUpper(turkish) : text.Replace('i', '\u0130').ToUpperInvariant();
+        }
+
+        private static CultureInfo TurkishCulture
+        {
+            get
+            {
+                if (!s_turkishCultureTried)
+                {
+                    s_turkishCultureTried = true;
+                    try
+                    {
+                        s_turkishCulture = new CultureInfo("tr-TR");
+                    }
+                    catch (CultureNotFoundException)
+                    {
+                        s_turkishCulture = null;   // a stripped player: the dotted-capital-I mapping below stands in
+                    }
+                }
+
+                return s_turkishCulture;
+            }
         }
 
         /// <summary>Tests: drop the parsed table so the next Get reads the resource again.</summary>

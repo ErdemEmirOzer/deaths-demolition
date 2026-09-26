@@ -61,9 +61,12 @@ namespace DD.Prototype.UI
         public bool CentreDot;
         /// <summary>WP-068 12c · B12 (AD 8-R SHOULD-A2): on a screen wider than 16:9 the HUD's corner clusters stand in a centred 16:9 frame.</summary>
         public bool HudFrame169;
+        /// <summary>WP-068 TR: the UI language, "en" or "tr" (Settings › DISPLAY › LANGUAGE). Older files lack the key: "en".</summary>
+        public string Language = UiStrings.English;
 
         public UiSettingsData Clamp()
         {
+            Language = UiSettings.NormalizeLanguage(Language);
             CameraMode = Mathf.Clamp(CameraMode, 0, 2);
             FirstPersonFov = Mathf.Clamp(FirstPersonFov, CameraModeSettings.MinFirstPersonFov, CameraModeSettings.MaxFirstPersonFov);
             ThirdPersonFov = Mathf.Clamp(ThirdPersonFov, CameraModeSettings.MinThirdPersonFov, CameraModeSettings.MaxThirdPersonFov);
@@ -345,6 +348,34 @@ namespace DD.Prototype.UI
             }
         }
 
+        /// <summary>
+        /// WP-068 TR: the UI language ("en" / "tr"; anything else reads "en"). Setting it also sets
+        /// <see cref="UiStrings.Language"/>, so every screen built afterwards reads the new column.
+        /// </summary>
+        public static string Language
+        {
+            get { EnsureLoaded(); return s_data.Language; }
+            set
+            {
+                EnsureLoaded();
+                string language = NormalizeLanguage(value);
+                UiStrings.Language = language;
+                if (language == s_data.Language)
+                {
+                    return;
+                }
+
+                s_data.Language = language;
+                Persist();
+            }
+        }
+
+        /// <summary>"tr" stays "tr"; everything else (null, empty, an unknown code) is "en".</summary>
+        public static string NormalizeLanguage(string language)
+        {
+            return language == UiStrings.Turkish ? UiStrings.Turkish : UiStrings.English;
+        }
+
         private static void SetCamera(ref int field, int value)
         {
             EnsureLoaded();
@@ -490,11 +521,19 @@ namespace DD.Prototype.UI
             string[] names = QualitySettings.names;
             if (names == null || names.Length == 0)
             {
-                return "DEFAULT";
+                return UiStrings.Get("settings.quality.default", "DEFAULT");
             }
 
-            string name = QualityName(index).ToUpperInvariant();
             QualityTier tier = QualityTiers.TierOfLevel(index, names.Length);
+            string name = QualityName(index).ToUpperInvariant();
+            if (UiStrings.Language != UiStrings.English)
+            {
+                // WP-068 TR: the tier's word from the pack; English keeps the QualitySettings level name.
+                name = tier == QualityTier.Sinematik ? UiStrings.Get("settings.quality.cinematic", name)
+                    : tier == QualityTier.Yuksek ? UiStrings.Get("settings.quality.high", name)
+                    : UiStrings.Get("settings.quality.performance", name);
+            }
+
             return tier == QualityTier.Sinematik ? name + " · 30 FPS" : tier == QualityTier.Yuksek ? name + " · 60 FPS" : name;
         }
 
@@ -539,6 +578,8 @@ namespace DD.Prototype.UI
             s_data.HeadBobScale = loaded != null ? loaded.HeadBobScale : defaults.HeadBobScale;
             s_data.CentreDot = loaded != null && loaded.CentreDot;
             s_data.HudFrame169 = loaded != null && loaded.HudFrame169;
+            s_data.Language = NormalizeLanguage(loaded != null ? loaded.Language : null);
+            UiStrings.Language = s_data.Language;   // before the first screen reads a string
             int count = Mathf.Max(1, QualitySettings.names.Length);
             // DEC-100 (user, 25.09): with no saved choice the game opens on Cinematic (QualityTiers.DefaultTier); a saved
             // choice is kept as it is (no migration).
@@ -696,6 +737,8 @@ namespace DD.Prototype.UI
             s_data.HeadBobScale = defaults.HeadBobScale;
             s_data.CentreDot = defaults.CentreDot;
             s_data.HudFrame169 = defaults.HudFrame169;
+            s_data.Language = defaults.Language;
+            UiStrings.Language = UiStrings.English;
             Changed = null;
             CameraChanged = null;
             MasterVolumeChanged = null;

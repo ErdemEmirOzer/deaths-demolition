@@ -651,4 +651,331 @@ S-09 (R1-D, 25.09):
 - `results.killer.*` (12b): the killing blow in the Results H1 by the attacker's tier (EnemyAttackState's "Zombie.<Tier>.<Style>" ids), never the raw id.
 - `results.next_unlock` (12b, AD R1-D SHOULD-1): the column's forward look under the XP caption - the lowest weapon or branch unlock above the level the run ended on; absent once every unlock is owned.
 
+## 12 · Language setting and the UI through the pack (S-09, WP-068 TR)
+
+| key | en | tr |
+| --- | --- | --- |
+| `access.caption` | These change how the game is presented, never how it plays. | Bunlar oyunun nasıl sunulduğunu değiştirir, nasıl oynandığını asla. |
+| `access.note.flashes` | Damage and final-seconds flashes at 40%. Blood and the world are not changed. Camera shake has its own slider on the pause screen. | Hasar ve son saniye parlamaları %40'ta. Kan ve dünya değişmez. Kamera sarsıntısının duraklatma ekranında kendi kaydırıcısı var. |
+| `access.note.palette` | Colour-blind safe moves health, earned and unlocked states from green to blue. Danger stays red; every state also has a shape and a word. | Renk körü dostu palet can, kazanılmış ve açık durumları yeşilden maviye taşır. Tehlike kırmızı kalır; her durumun ayrıca bir şekli ve bir kelimesi vardır. |
+| `access.note.reduced_motion` | Pulses hold still, screen fades are instant and the menu petals stop drifting. | Nabızlar durur, ekran geçişleri anlık olur ve menü yaprakları süzülmeyi bırakır. |
+| `access.note.text_scale` | Body, label and caption text. It applies to the next screen you open. | Gövde, etiket ve açıklama metni. Açtığın sonraki ekranda uygulanır. |
+| `access.palette.colour_blind` | COLOUR-BLIND SAFE | RENK KÖRÜ DOSTU |
+| `access.palette.default` | DEFAULT | VARSAYILAN |
+| `access.reduced_motion.off` | REDUCED MOTION · OFF | AZALTILMIŞ HAREKET · KAPALI |
+| `access.reduced_motion.on` | REDUCED MOTION · ON | AZALTILMIŞ HAREKET · AÇIK |
+| `access.row.palette` | PALETTE | PALET |
+| `access.row.reduce_flashes` | REDUCE FLASHES | PARLAMALARI AZALT |
+| `access.row.reduced_motion` | REDUCED MOTION | AZALTILMIŞ HAREKET |
+| `access.row.text_scale` | TEXT SCALE | METİN ÖLÇEĞİ |
+| `access.sample` | SAMPLE | ÖRNEK |
+| `access.sample.caption` | Caption text at {value}. | Açıklama metni {value}. |
+| `access.sample.edge` | Damage edge and final-seconds bands at their peak. | Hasar kenarı ve son saniye bantları en yüksek hâlinde. |
+| `access.section.colour` | COLOUR | RENK |
+| `access.section.motion` | MOTION | HAREKET |
+| `access.section.text` | TEXT | METİN |
+| `access.swatch.danger` | DANGER | TEHLİKE |
+| `access.swatch.warning` | WARNING | UYARI |
+| `ach.auto_note` | Achievements unlock by themselves at the end of a run. There is nothing to claim. | Başarımlar koşu sonunda kendiliğinden açılır. Alınacak bir şey yok. |
+| `ach.earned` | EARNED | KAZANILDI |
+| `ach.empty.body` | This build does not define any achievements. When it does, they will unlock automatically at the end of a run and appear here. | Bu sürüm hiç başarım tanımlamıyor. Tanımladığında, koşu sonunda otomatik açılıp burada görünecekler. |
+| `ach.empty.title` | No achievements yet | Henüz başarım yok |
+| `ach.in_progress` | IN PROGRESS | SÜRÜYOR |
+| `ach.next` | NEXT | SONRAKİ |
+| `ach.none_defined` | No achievements are defined in this build yet. | Bu sürümde henüz tanımlı başarım yok. |
+| `ach.page` | Page {value} of {total} | Sayfa {value} / {total} |
+| `ach.previous` | PREVIOUS | ÖNCEKİ |
+| `ach.progress` | {value} of {total} earned | {total} içinden {value} kazanıldı |
+| `ach.progress_new` |   ·  {value} new |   ·  {value} yeni |
+| `common.main_menu` | MAIN MENU | ANA MENÜ |
+| `common.off` | OFF | KAPALI |
+| `common.on` | ON | AÇIK |
+| `controls.aim_assist` | AIM ASSIST | NİŞAN YARDIMI |
+| `controls.deadzone` | STICK DEAD ZONE | ÇUBUK ÖLÜ BÖLGESİ |
+| `controls.file` | Overrides: {value} | Değişiklikler: {value} |
+| `controls.gamepad` | GAMEPAD | OYUN KUMANDASI |
+| `controls.intro` | Select a slot and press the key or button you want. Escape cancels. Overrides are saved on this machine. | Bir yuva seç ve istediğin tuşa ya da düğmeye bas. Escape iptal eder. Değişiklikler bu makinede kaydedilir. |
+| `controls.keyboard` | KEYBOARD | KLAVYE |
+| `controls.listening` | PRESS A KEY | BİR TUŞA BAS |
+| `controls.no_service` | Input service not running. | Girdi servisi çalışmıyor. |
+| `controls.reset` | RESET ALL BINDINGS TO DEFAULTS | TÜM ATAMALARI VARSAYILANA DÖNDÜR |
+| `controls.rumble` | RUMBLE | TİTREŞİM |
+| `hud.ammo.empty` | EMPTY | BOŞ |
+| `hud.banner.classic_restored` | CLASSIC WEAPON RESTORED | KLASİK SİLAH GERİ DÖNDÜ |
+| `hud.banner.last` | CLEAR THE LAST OF THEM | SONUNCULARI TEMİZLE |
+| `hud.banner.round` | ROUND {value} | ROUND {value} |
+| `hud.banner.round_complete` | ROUND {value} COMPLETE | ROUND {value} TAMAMLANDI |
+| `hud.banner.special_field` | SPECIAL WEAPON ON THE FIELD | ÖZEL SİLAH SAHADA |
+| `hud.banner.special_named` | {value} ONLINE | {value} DEVREDE |
+| `hud.banner.special_online` | SPECIAL WEAPON ONLINE | ÖZEL SİLAH DEVREDE |
+| `hud.enemies.breakdown` | {value} left to arrive  ·  {alive} on the map | {value} daha gelecek  ·  haritada {alive} |
+| `hud.enemies.pool_empty` | pool empty  ·  {value} still on the map | havuz boş  ·  haritada hâlâ {value} |
+| `hud.enemies.waiting` | waiting for the round to start | roundun başlaması bekleniyor |
+| `hud.health` | HEALTH | CAN |
+| `hud.health.low` | LOW | DÜŞÜK |
+| `hud.health.recovering` | RECOVERING | TOPARLANIYOR |
+| `hud.health.recovery_in` | recovery in {value}s | {value} sn içinde toparlanma |
+| `hud.special.active` | ACTIVE | AKTİF |
+| `hud.special.ending` | ENDING | BİTİYOR |
+| `hud.special.ending_banner` | SPECIAL WEAPON ENDING | ÖZEL SİLAH BİTİYOR |
+| `hud.special.generic` | Special Weapon | Özel Silah |
+| `hud.special.hits` | HITS {value} | İSABET {value} |
+| `hud.special.on_field` | ON THE FIELD | SAHADA |
+| `hud.special.reloading` | RELOADING | DOLDURULUYOR |
+| `hud.special.shots` | SHOTS {value} | ATIŞ {value} |
+| `hud.special.suspended` | SUSPENDED | ASKIDA |
+| `hud.threat.behind` | BEHIND YOU | ARKANDA |
+| `hud.threat.elite` | ELITE NEARBY | ELİT YAKINDA |
+| `hud.threat.surrounded` | SURROUNDED | KUŞATILDIN |
+| `hud.threat.ultra` | ULTRA NEARBY | ULTRA YAKINDA |
+| `loading.dest.main_menu` | the main menu | ana menüyü |
+| `loading.dest.next` | the next screen | sonraki ekranı |
+| `loading.dest.results` | the results screen | sonuç ekranını |
+| `loading.dest.run` | the run | koşuyu |
+| `loading.dest.selection` | the selection screen | seçim ekranını |
+| `loading.entering` | ENTERING | GİRİLİYOR |
+| `loading.entering.full` | ENTERING · 100% | GİRİLİYOR · %100 |
+| `loading.error.body` | Deaths Demolition could not open {value}. {reason} Your profile was not changed. | Deaths Demolition {value} açamadı. {reason} Profilin değişmedi. |
+| `loading.error.missing` | The scene is missing from this build. | Sahne bu sürümde yok. |
+| `loading.error.retry` | TRY AGAIN | TEKRAR DENE |
+| `loading.error.stalled` | Loading stopped making progress. | Yükleme ilerlemeyi bıraktı. |
+| `loading.error.title` | THE NEXT SCREEN DID NOT LOAD | SONRAKİ EKRAN YÜKLENMEDİ |
+| `loading.error.to_menu` | RETURN TO MAIN MENU | ANA MENÜYE DÖN |
+| `loading.percent` | LOADING · {0}% | YÜKLENİYOR · %{0} |
+| `loading.reduced_motion` | Loading. The screen changes on its own; no input is needed. | Yükleniyor. Ekran kendiliğinden değişir; bir şeye basman gerekmez. |
+| `loading.stalled` | Loading is taking longer than usual. | Yükleme her zamankinden uzun sürüyor. |
+| `loading.tip.ctrl.01` | Holding fire keeps firing. Every classic weapon is automatic. | Ateşi basılı tutmak ateşe devam ettirir. Her klasik silah otomatiktir. |
+| `loading.tip.ctrl.02` | Holding fire on an empty magazine starts the reload. | Boş şarjörde ateşi basılı tutmak dolumu başlatır. |
+| `loading.tip.ctrl.03` | Keys and buttons can be remapped under CONTROLS. Overrides stay on this machine. | Tuşlar ve düğmeler KONTROLLER altında değiştirilebilir. Değişiklikler bu makinede kalır. |
+| `loading.tip.ctrl.04` | There is no dash and no dodge. Footwork is the only evasion. | Atılma da kaçınma da yok. Tek kaçış ayak oyunudur. |
+| `loading.tip.econ.01` | Each round ends with three upgrade cards. Up to two of them can be bought. | Her round üç geliştirme kartıyla biter. En fazla ikisi alınabilir. |
+| `loading.tip.econ.02` | One paid reroll per round, only before a purchase. It swaps one or two cards. | Round başına bir ücretli reroll, yalnızca alımdan önce. Bir ya da iki kartı değiştirir. |
+| `loading.tip.econ.03` | Unspent gold carries into the next round. | Harcanmayan altın sonraki rounda geçer. |
+| `loading.tip.econ.04` | Gold still on the ground when a round is cleared is collected on its own. | Round temizlendiğinde yerde kalan altın kendiliğinden toplanır. |
+| `loading.tip.econ.05` | Armour an enemy spawned with adds gold. Breaking the plate never lowers the reward. | Düşmanın doğduğu zırh altın ekler. Plakayı kırmak ödülü asla düşürmez. |
+| `loading.tip.surv.01` | Health regenerates after a few seconds without damage. A new hit resets the wait. | Birkaç saniye hasar almazsan can yenilenir. Yeni bir darbe beklemeyi sıfırlar. |
+| `loading.tip.surv.02` | There is no invulnerability window. Two hits in one moment both count in full. | Dokunulmazlık aralığı yok. Aynı anda gelen iki darbe de tam sayılır. |
+| `loading.tip.surv.03` | One life. When health reaches zero, the run ends and the results screen follows. | Tek can. Can sıfıra inince koşu biter ve sonuç ekranı gelir. |
+| `loading.tip.surv.04` | During NEXT ROUND IN the world keeps moving. The gap is for repositioning. | SONRAKİ ROUND sırasında dünya hareket etmeyi sürdürür. Ara, yer değiştirmek içindir. |
+| `loading.tip.sw.01` | A Special Weapon has no ammo and no reload. Its timer starts on pickup. | Özel silahın cephanesi ve dolumu yoktur. Süresi alındığı anda başlar. |
+| `loading.tip.sw.02` | Round-end upgrades change the classic weapon only. A Special Weapon is untouched. | Round sonu geliştirmeleri yalnızca klasik silahı değiştirir. Özel silaha dokunmaz. |
+| `loading.tip.sw.03` | The Kagura Bell rings outward in every direction. It does not read the aim. | Kagura Çanı her yöne dışa doğru çalar. Nişana bakmaz. |
+| `loading.tip.sw.04` | Ofuda seals do little damage. With enough of them, a shot into one collapses the net. | Ofuda mühürleri az hasar verir. Yeterince varsa birine atılan atış ağı çökertir. |
+| `loading.tip.sw.05` | The Tide Jewel opens a well that drags the crowd inward, then implodes on the pile. | Gelgit Mücevheri kalabalığı içeri çeken bir kuyu açar, sonra yığının üstüne çöker. |
+| `loading.tip.sw.06` | A drop's beacon blinks faster as its ground timer runs out. | Yerdeki silahın işareti, süresi azaldıkça daha hızlı yanıp söner. |
+| `loading.tip.tier.01` | A zombie deals damage only when its swing lands. Contact alone does nothing. | Zombi yalnızca savuruşu isabet edince hasar verir. Temas tek başına bir şey yapmaz. |
+| `loading.tip.tier.02` | Special, Elite and Ultra versions each arrive on a set round, then join the pool. | Özel, Elit ve Ultra sürümler belli bir roundda gelir, sonra havuza katılır. |
+| `loading.tip.tier.03` | An exposed head takes more damage than the body. A helmet covers it until it breaks. | Açıktaki kafa gövdeden fazla hasar alır. Miğfer kırılana dek onu örter. |
+| `loading.tip.tier.04` | Elites and Ultras resist the Bell's push. The Tide slows an Ultra instead of pulling it. | Elitler ve Ultralar Çan'ın itişine direnir. Gelgit bir Ultra'yı çekmez, yavaşlatır. |
+| `loading.tip.tier.05` | BEHIND YOU means an attack is winding up outside your view. | ARKANDA, görüşünün dışında bir saldırının hazırlandığını gösterir. |
+| `loading.word` | LOADING | YÜKLENİYOR |
+| `menu.build_prefix` | Prototype build ·  | Prototip sürüm ·  |
+| `menu.eyebrow` | PLAYABLE CONCEPT · PROTOTYPE | OYNANABİLİR KONSEPT · PROTOTİP |
+| `menu.play` | PLAY | OYNA |
+| `menu.play_hint` | Choose a skin and a classic weapon, then fight for the highest round you can reach. | Bir kostüm ve bir klasik silah seç, sonra ulaşabildiğin en yüksek round için savaş. |
+| `menu.progress` | PROGRESS | İLERLEME |
+| `menu.quit` | QUIT | ÇIKIŞ |
+| `menu.subtitle` | An old palace, a garden, and a crowd that never stops arriving. | Eski bir saray, bir bahçe ve gelmeyi hiç bırakmayan bir kalabalık. |
+| `menu.tab.accessibility` | ACCESSIBILITY | ERİŞİLEBİLİRLİK |
+| `menu.tab.achievements` | ACHIEVEMENTS | BAŞARIMLAR |
+| `menu.tab.controls` | CONTROLS | KONTROLLER |
+| `menu.tab.profile` | PROFILE | PROFİL |
+| `menu.tab.settings` | SETTINGS | AYARLAR |
+| `menu.tab.statistics` | STATISTICS | İSTATİSTİKLER |
+| `pause.caption` | The whole simulation is stopped: enemies, projectiles, timers and the round clock. | Bütün simülasyon durdu: düşmanlar, mermiler, sayaçlar ve round saati. |
+| `pause.confirm.body` | Leaving now ends the run. The current round, all unspent gold and every weapon upgrade you bought are lost. Profile level, statistics and achievements you have already earned are kept. | Şimdi çıkarsan koşu biter. Mevcut round, harcanmamış tüm altın ve aldığın her silah geliştirmesi kaybolur. Zaten kazandığın profil seviyesi, istatistikler ve başarımlar korunur. |
+| `pause.confirm.end` | END RUN | KOŞUYU BİTİR |
+| `pause.confirm.keep` | KEEP PLAYING | OYNAMAYA DEVAM |
+| `pause.confirm.title` | END THIS RUN? | BU KOŞU BİTSİN Mİ? |
+| `pause.resume` | RESUME | DEVAM ET |
+| `pause.shake` | CAMERA SHAKE INTENSITY | KAMERA SARSINTISI ŞİDDETİ |
+| `pause.shake.caption` | 0 disables shake completely; 1 is the default. Shake never moves your aim at any setting. | 0 sarsıntıyı tamamen kapatır; 1 varsayılandır. Sarsıntı hiçbir ayarda nişanını oynatmaz. |
+| `pause.title` | PAUSED | DURAKLATILDI |
+| `profile.ach_summary` | {value} of {total} achievements earned | {total} başarımdan {value} kazanıldı |
+| `profile.badges_label` | PROFILE BADGE | PROFİL ROZETİ |
+| `profile.branch_line` | {value} branch | {value} dalı |
+| `profile.level` | LEVEL {value} | SEVİYE {value} |
+| `profile.level_label` | PROFILE LEVEL | PROFİL SEVİYESİ |
+| `profile.none` | None | Yok |
+| `profile.notice.recovered` | The previous profile file could not be read, so this profile started fresh. The unreadable file was kept next to the save. | Önceki profil dosyası okunamadı, bu yüzden bu profil sıfırdan başladı. Okunamayan dosya kaydın yanında saklandı. |
+| `profile.pick_note` | Locked titles and badges open through achievements and unlocks. | Kilitli unvanlar ve rozetler başarımlar ve açılışlarla açılır. |
+| `profile.progress` | {value} XP towards level {next} | {value} XP · {next}. seviyeye |
+| `profile.rule` | Persistent progress unlocks content only. It never grants starting damage, health or gold. | Kalıcı ilerleme yalnızca içerik açar. Başlangıç hasarı, can ya da altın asla vermez. |
+| `profile.titles_label` | PROFILE TITLE | PROFİL UNVANI |
+| `profile.unlocked` | UNLOCKED | AÇIK |
+| `profile.unlocked_content` | UNLOCKED CONTENT | AÇILAN İÇERİK |
+| `results.achievements_empty` | No new achievements this run. | Bu koşuda yeni başarım yok. |
+| `results.armour_broken` | Armour Broken | Kırılan Zırh |
+| `results.best_round_chip` | NEW BEST ROUND | YENİ EN İYİ ROUND |
+| `results.combat_note.all` | Every kill counts towards kill XP and statistics. | Her öldürme, öldürme XP'sine ve istatistiklere sayılır. |
+| `results.combat_note.partial` | Kills in your final round count. Round XP is granted only for completed rounds. | Son roundundaki öldürmeler sayılır. Round XP'si yalnızca tamamlanan roundlar için verilir. |
+| `results.empty.body` | This screen is filled in the moment a run ends. Start one from the main menu and it will come back here by itself. | Bu ekran bir koşu bittiği anda dolar. Ana menüden bir koşu başlat, buraya kendiliğinden döner. |
+| `results.empty.title` | There is no finished run to report. | Raporlanacak bitmiş bir koşu yok. |
+| `results.ending.abandoned` | RUN ABANDONED IN ROUND {value} | KOŞU {value}. ROUNDDA BIRAKILDI |
+| `results.ending.defeated` | DEFEATED IN ROUND {value} | {value}. ROUNDDA YENİLDİN |
+| `results.ending.ended` | RUN ENDED IN ROUND {value} | KOŞU {value}. ROUNDDA BİTTİ |
+| `results.footer.none` | Rewards are granted automatically. There is nothing to claim. | Ödüller otomatik verilir. Alınacak bir şey yok. |
+| `results.gold_collected` | Gold Collected | Toplanan Altın |
+| `results.gold_spent` | Gold Spent | Harcanan Altın |
+| `results.level_line` | LEVEL {from}  →  LEVEL {to} | SEVİYE {from}  →  SEVİYE {to} |
+| `results.level_up` | LEVEL UP | SEVİYE ATLADIN |
+| `results.level_up_many` | LEVEL UP  x{value} | SEVİYE ATLADIN  x{value} |
+| `results.no_run` | NO RUN RECORDED | KAYITLI KOŞU YOK |
+| `results.outcome.applied` | Everything above is already saved to your profile. There is nothing to claim. | Yukarıdaki her şey profiline zaten kaydedildi. Alınacak bir şey yok. |
+| `results.outcome.duplicate` | This run was already recorded in your profile. Nothing was added twice. | Bu koşu profiline zaten kaydedilmişti. Hiçbir şey iki kez eklenmedi. |
+| `results.outcome.invalid` | This run could not be recorded in your profile. Your saved profile is unchanged. | Bu koşu profiline kaydedilemedi. Kayıtlı profilin değişmedi. |
+| `results.outcome.missing_identity` | This run could not be recorded in your profile: it carried no run identity. | Bu koşu profiline kaydedilemedi: bir koşu kimliği taşımıyordu. |
+| `results.outcome.write_failed` | This run could not be written to your profile file. Your saved profile is unchanged. | Bu koşu profil dosyana yazılamadı. Kayıtlı profilin değişmedi. |
+| `results.overflow` | and {value} more, already added to your profile | ve {value} tane daha, profiline zaten eklendi |
+| `results.played` | {value} played | {value} oynandı |
+| `results.reached_round` | REACHED ROUND | ULAŞILAN ROUND |
+| `results.rounds_completed` | {value} rounds completed | {value} round tamamlandı |
+| `results.rounds_completed.one` | 1 round completed | 1 round tamamlandı |
+| `results.title` | RUN RESULTS | KOŞU SONUÇLARI |
+| `results.unlock.badge` | BADGE | ROZET |
+| `results.unlock.branch` | BRANCH | DAL |
+| `results.unlock.hud` | HUD | HUD |
+| `results.unlock.title` | TITLE | UNVAN |
+| `results.unlocks_empty` | No new content this run. | Bu koşuda yeni içerik yok. |
+| `results.upgrades_bought` | Upgrades Bought | Alınan Geliştirme |
+| `results.xp.kills` | Kills | Öldürmeler |
+| `results.xp.other` | Gold, Upgrades, Time | Altın, Geliştirme, Süre |
+| `results.xp.rounds` | Completed Rounds | Tamamlanan Roundlar |
+| `results.xp_note.applied` | Profile progress unlocks content only. It never raises your starting damage, health or gold. | Profil ilerlemesi yalnızca içerik açar. Başlangıç hasarını, canını ya da altınını asla artırmaz. |
+| `results.xp_note.not_applied` | This XP was not added to your profile. Profile progress unlocks content only; it never raises your starting damage, health or gold. | Bu XP profiline eklenmedi. Profil ilerlemesi yalnızca içerik açar; başlangıç hasarını, canını ya da altınını asla artırmaz. |
+| `selection.back` | BACK | GERİ |
+| `selection.eyebrow` | BEFORE THE RUN | KOŞUDAN ÖNCE |
+| `selection.selected` | SELECTED | SEÇİLDİ |
+| `selection.skin.caption` | All three are available from the start and none of them changes a gameplay value. | Üçü de baştan açıktır ve hiçbiri bir oynanış değerini değiştirmez. |
+| `selection.skin.detail` | Cosmetic only | Yalnızca görünüş |
+| `selection.skin.title` | CHARACTER SKIN | KARAKTER KOSTÜMÜ |
+| `selection.start` | START RUN | KOŞUYU BAŞLAT |
+| `selection.subtitle` | The skin is cosmetic. The classic weapon is carried for the whole run and cannot be swapped. | Kostüm yalnızca görünüştür. Klasik silah koşu boyunca taşınır ve değiştirilemez. |
+| `selection.title` | PREPARE YOUR RUN | KOŞUNU HAZIRLA |
+| `selection.unavailable` | UNAVAILABLE | KULLANILAMAZ |
+| `selection.weapon.title` | CLASSIC WEAPON | KLASİK SİLAH |
+| `settings.caption` | Device preferences. They are saved on this machine and never touch your profile. | Cihaz tercihleri. Bu makinede kaydedilir ve profiline asla dokunmaz. |
+| `settings.display.fullscreen` | FULLSCREEN | TAM EKRAN |
+| `settings.display.windowed` | WINDOWED | PENCERE |
+| `settings.language.en` | ENGLISH | ENGLISH |
+| `settings.language.tr` | TÜRKÇE | TÜRKÇE |
+| `settings.note.camera` | Third and first person only; switch the view in Pause. A low field of view causes more motion sickness; Reduced Motion (Accessibility) sets head bob to 0 and cuts the blends. | Yalnızca üçüncü ve birinci şahısta; görünümü Pause'da değiştir. Dar görüş alanı daha çok baş dönmesi yapar; Azaltılmış Hareket (Erişilebilirlik) kafa sallantısını 0'a çeker ve geçişleri keser. |
+| `settings.note.hints` | Brief hints during the first three runs, in play and on loading screens. Off leaves the rules. | İlk üç koşuda, oyunda ve yükleme ekranlarında kısa ipuçları. Kapalıyken kurallar kalır. |
+| `settings.note.hud_frame` | On a screen wider than 16:9, the HUD's corners move in to a centred 16:9 frame. | 16:9'dan geniş bir ekranda HUD'ın köşeleri ortalanmış bir 16:9 çerçeveye çekilir. |
+| `settings.note.telemetry` | Run telemetry writes one local file per run (rounds, kills, weapon use) for tuning. It never contains your profile or name. | Koşu telemetrisi ayar için her koşuda tek bir yerel dosya yazar (roundlar, öldürmeler, silah kullanımı). Profilini ya da adını asla içermez. |
+| `settings.note.ui_scale` | UI scale applies to the next screen you open. | Arayüz ölçeği açtığın sonraki ekranda uygulanır. |
+| `settings.preview` | PREVIEW | ÖNİZLEME |
+| `settings.preview.caption` | UI SCALE {value}. It applies to the next screen you open. | ARAYÜZ ÖLÇEĞİ {value}. Açtığın sonraki ekranda uygulanır. |
+| `settings.quality.cinematic` | CINEMATIC | SİNEMATİK |
+| `settings.quality.default` | DEFAULT | VARSAYILAN |
+| `settings.quality.high` | HIGH | YÜKSEK |
+| `settings.quality.performance` | PERFORMANCE | PERFORMANS |
+| `settings.row.centre_dot` | CENTRE DOT | ORTA NOKTA |
+| `settings.row.display_mode` | DISPLAY MODE | EKRAN MODU |
+| `settings.row.hints` | HINTS | İPUÇLARI |
+| `settings.row.hud_frame` | HUD IN A 16:9 FRAME | HUD 16:9 ÇERÇEVEDE |
+| `settings.row.invert_look` | INVERT LOOK | BAKIŞI TERS ÇEVİR |
+| `settings.row.language` | LANGUAGE | DİL |
+| `settings.row.look_sensitivity` | LOOK SENSITIVITY | BAKIŞ HASSASİYETİ |
+| `settings.row.master_volume` | MASTER VOLUME | ANA SES |
+| `settings.row.quality` | QUALITY | KALİTE |
+| `settings.row.stick_look_speed` | STICK LOOK SPEED | ÇUBUKLA BAKIŞ HIZI |
+| `settings.row.telemetry` | RUN TELEMETRY | KOŞU TELEMETRİSİ |
+| `settings.row.ui_scale` | UI SCALE | ARAYÜZ ÖLÇEĞİ |
+| `settings.row.ui_sounds` | UI SOUNDS | ARAYÜZ SESLERİ |
+| `settings.section.audio` | AUDIO | SES |
+| `settings.section.data` | DATA | VERİ |
+| `settings.section.display` | DISPLAY | GÖRÜNTÜ |
+| `settings.section.graphics` | GRAPHICS | GRAFİK |
+| `shop.card.utility` | UTILITY | DESTEK |
+| `shop.card.weapon_core` | WEAPON CORE | SİLAH ÇEKİRDEĞİ |
+| `shop.continue` | CONTINUE | DEVAM ET |
+| `shop.eyebrow` | ROUND COMPLETE | ROUND TAMAMLANDI |
+| `shop.fault.body_suffix` | {value} No gold was taken and nothing is for sale this round. Continue when ready. | {value} Altın alınmadı ve bu round satışta bir şey yok. Hazır olunca devam et. |
+| `shop.fault.duplicate` | The upgrade table lists the same upgrade twice. | Geliştirme tablosu aynı geliştirmeyi iki kez listeliyor. |
+| `shop.fault.exhausted.title` | Nothing left to upgrade | Geliştirilecek bir şey kalmadı |
+| `shop.fault.invalid.title` | No valid upgrade offer this round | Bu round geçerli bir geliştirme teklifi yok |
+| `shop.fault.maxed` | Every upgrade you can still take is already at its maximum tier. | Alabileceğin her geliştirme zaten azami kademesinde. |
+| `shop.fault.no_table` | The upgrade table is not loaded. | Geliştirme tablosu yüklü değil. |
+| `shop.fault.other` | The upgrade offer could not be built. | Geliştirme teklifi oluşturulamadı. |
+| `shop.fault.pool` | Not enough upgrades are available for your weapon and build right now. | Şu an silahın ve yapın için yeterli geliştirme yok. |
+| `shop.gold_amount` | {value} GOLD | {value} ALTIN |
+| `shop.gold_available` | GOLD AVAILABLE | MEVCUT ALTIN |
+| `shop.intro.one` | Buy one upgrade this round, or reroll the offer once first. Unspent gold carries into the next round. | Bu round bir geliştirme al ya da önce teklifi bir kez reroll et. Harcanmayan altın sonraki rounda geçer. |
+| `shop.maxed.body` | Every upgrade branch is already at its maximum tier, so this round has no card to offer. Your gold carries into the next round. | Her geliştirme dalı zaten azami kademesinde, bu yüzden bu round sunulacak kart yok. Altının sonraki rounda geçer. |
+| `shop.maxed.title` | Every branch is at maximum tier | Her dal azami kademede |
+| `shop.next_round_in` | NEXT ROUND IN | SONRAKİ ROUND |
+| `shop.no_table.body` | PrototypeConfig is not loaded, so there is no upgrade table to draw cards from. The run continues normally. | PrototypeConfig yüklü değil, bu yüzden kart çekilecek bir geliştirme tablosu yok. Koşu normal devam eder. |
+| `shop.no_table.title` | No upgrade table is loaded | Yüklü geliştirme tablosu yok |
+| `shop.note.another` | Choose another upgrade, or continue. | Başka bir geliştirme seç ya da devam et. |
+| `shop.note.applied_many` | Upgrades applied. Continue when ready. | Geliştirmeler uygulandı. Hazır olunca devam et. |
+| `shop.note.applied_one` | Upgrade applied. Continue when ready. | Geliştirme uygulandı. Hazır olunca devam et. |
+| `shop.note.choose` | Choose what to strengthen, then continue. | Neyi güçlendireceğini seç, sonra devam et. |
+| `shop.note.choose_one` | Choose one upgrade, or reroll once, then continue. | Bir geliştirme seç ya da bir kez reroll yap, sonra devam et. |
+| `shop.note.no_gold` | No gold collected this round, so nothing can be bought yet. A new offer appears next round. | Bu round altın toplanmadı, bu yüzden henüz bir şey alınamaz. Sonraki round yeni bir teklif gelir. |
+| `shop.note.nothing` | Nothing to spend it on this round. It carries over. | Bu round harcayacak bir şey yok. Sonraki rounda geçer. |
+| `shop.note.unaffordable` | None of these is affordable yet. Unspent gold carries into the next round. | Bunların hiçbirine henüz yetmiyor. Harcanmayan altın sonraki rounda geçer. |
+| `shop.preparing.body` | The round-end offer is still being built. It will appear in a moment; continuing now simply starts the next round. | Round sonu teklifi hâlâ hazırlanıyor. Birazdan görünecek; şimdi devam etmek yalnızca sonraki roundu başlatır. |
+| `shop.preparing.title` | Preparing the offer | Teklif hazırlanıyor |
+| `shop.purchased` | PURCHASED | ALINDI |
+| `shop.refuse.apply` | That upgrade could not be applied to your weapon, so no gold was spent. | O geliştirme silahına uygulanamadı, bu yüzden altın harcanmadı. |
+| `shop.refuse.changed` | The offer changed. Prices and tiers were refreshed; nothing was spent. | Teklif değişti. Fiyatlar ve kademeler yenilendi; hiçbir şey harcanmadı. |
+| `shop.refuse.closed` | This offer is no longer open. Nothing was spent. | Bu teklif artık açık değil. Hiçbir şey harcanmadı. |
+| `shop.refuse.gold` | Not enough gold for that upgrade. Nothing was spent. | O geliştirme için altın yetmiyor. Hiçbir şey harcanmadı. |
+| `shop.refuse.max` | That upgrade is already at its maximum tier. Nothing was spent. | O geliştirme zaten azami kademesinde. Hiçbir şey harcanmadı. |
+| `shop.refuse.no_offer` | There is no valid offer this round. Nothing was spent. | Bu round geçerli bir teklif yok. Hiçbir şey harcanmadı. |
+| `shop.refuse.one_per_round` | One upgrade per round. The offer is locked; nothing was spent. | Round başına bir geliştirme. Teklif kilitli; hiçbir şey harcanmadı. |
+| `shop.refuse.other` | That purchase could not be completed. Nothing was spent. | O alım tamamlanamadı. Hiçbir şey harcanmadı. |
+| `shop.refuse.owned` | You already own that card. Nothing was spent. | O karta zaten sahipsin. Hiçbir şey harcanmadı. |
+| `shop.refuse.reroll_failed` | The reroll could not be built. Nothing was spent and your reroll is kept. | Reroll oluşturulamadı. Hiçbir şey harcanmadı ve reroll hakkın duruyor. |
+| `shop.refuse.reroll_gold` | Not enough gold to reroll. Nothing was spent. | Reroll için altın yetmiyor. Hiçbir şey harcanmadı. |
+| `shop.refuse.reroll_locked` | The offer is locked after a purchase. Nothing was spent. | Teklif bir alımdan sonra kilitlenir. Hiçbir şey harcanmadı. |
+| `shop.refuse.reroll_nothing` | There is no other upgrade to swap in. Nothing was spent and your reroll is kept. | Yerine konacak başka geliştirme yok. Hiçbir şey harcanmadı ve reroll hakkın duruyor. |
+| `shop.refuse.reroll_other` | That reroll could not be completed. Nothing was spent. | O reroll tamamlanamadı. Hiçbir şey harcanmadı. |
+| `shop.refuse.reroll_used` | You already rerolled this round. Nothing was spent. | Bu round zaten reroll yaptın. Hiçbir şey harcanmadı. |
+| `shop.reroll` | REROLL | REROLL |
+| `shop.reroll.cost` | REROLL · {value} GOLD · ONCE | REROLL · {value} ALTIN · BİR KEZ |
+| `shop.reroll.locked` | REROLL · LOCKED | REROLL · KİLİTLİ |
+| `shop.reroll.need` | REROLL · NEED {value} GOLD | REROLL · {value} ALTIN GEREK |
+| `shop.reroll.nothing` | REROLL · NOTHING TO SWAP | REROLL · DEĞİŞECEK KART YOK |
+| `shop.reroll.unavailable` | REROLL · UNAVAILABLE | REROLL · KULLANILAMAZ |
+| `shop.reroll.used` | REROLL · USED THIS ROUND | REROLL · BU ROUND KULLANILDI |
+| `shop.spent` | SPENT THIS ROUND | BU ROUND HARCANAN |
+| `shop.state.expensive` | TOO EXPENSIVE | ÇOK PAHALI |
+| `shop.state.leaves` | Leaves you {value} gold. | Geriye {value} altın kalır. |
+| `shop.state.locked` | OFFER LOCKED | TEKLİF KİLİTLİ |
+| `shop.state.max` | MAX TIER | AZAMİ KADEME |
+| `shop.state.max.body` | This branch is already at its maximum tier. | Bu dal zaten azami kademesinde. |
+| `shop.state.need_gold` | You need {value} more gold for this one. | Bunun için {value} altın daha gerek. |
+| `shop.state.one_per_round` | One upgrade per round. Continue to the next round. | Round başına bir geliştirme. Sonraki rounda devam et. |
+| `shop.state.picks_used` | All picks for this round are used. Continue to the next round. | Bu round'un tüm seçimleri kullanıldı. Sonraki rounda devam et. |
+| `shop.state.purchased` | Bought this round. It is already applied to your weapon. | Bu round alındı. Silahına zaten uygulandı. |
+| `shop.tier.not_owned` | NOT OWNED | SAHİP DEĞİLSİN |
+| `shop.title` | SPEND YOUR GOLD | ALTININI HARCA |
+| `stats.armour_broken` | Armour Pieces Broken | Kırılan Zırh Parçası |
+| `stats.best_run_xp` | Best Single Run XP | Tek Koşuda En İyi XP |
+| `stats.empty` | No runs recorded yet. Finish a run and every line below starts filling in. | Henüz kayıtlı koşu yok. Bir koşu bitir, aşağıdaki her satır dolmaya başlar. |
+| `stats.highest_round` | Highest Round | En Yüksek Round |
+| `stats.lifetime_xp` | Lifetime XP | Toplam XP |
+| `stats.note` | Gold and time played are recorded per run only. Neither contributes profile XP. | Altın ve oynama süresi yalnızca koşu başına kaydedilir. İkisi de profil XP'si vermez. |
+| `stats.profile_level` | Profile Level | Profil Seviyesi |
+| `stats.rounds_completed` | Rounds Completed | Tamamlanan Round |
+| `stats.runs_played` | Runs Played | Oynanan Koşu |
+| `stats.tier.elite` | Elite | Elit |
+| `stats.tier.special` | Special | Özel |
+| `stats.tier.standard` | Standard | Standart |
+| `stats.tier.ultra` | Ultra | Ultra |
+| `stats.tier_caption` | Tiers recorded at zero have not appeared in a run yet. | Sıfır görünen kademeler henüz bir koşuda çıkmadı. |
+| `stats.total_kills` | Total Kills | Toplam Öldürme |
+| `stats.unattributed` | Recorded Before Tier Tracking | Kademe Takibinden Önce Kaydedilen |
+| `tree.action.buy` | BUY | AL |
+
+S-09 (WP-068 TR, 26.09):
+- Settings › DISPLAY › LANGUAGE (`settings.row.language`) switches the column every screen reads (`UiSettings.Language`, saved in ui-settings.json; an older file reads English). The Settings pane and the menu's own words redraw at once; every other screen reads the language when it is next built.
+- `settings.language.en` / `settings.language.tr`: each language names itself, so both columns carry the same word.
+- `settings.quality.*` names the three quality tiers in Turkish; English keeps the QualitySettings level name.
+- `loading.tip.*` are the U9 loading tips (UiLoadingTips keys; the English column is the code's text, ≤ 90 characters in both columns).
+- Keys are namespaced by screen: `menu.*`, `settings.*`, `access.*`, `controls.*`, `profile.*`, `stats.*`, `ach.*`, `pause.*`, `selection.*`, `results.*`, `loading.*`, `hud.*`, `shop.*`, `common.*`. `{value}`, `{total}`, `{from}`, `{to}`, `{next}`, `{alive}`, `{reason}` and TMP's `{0}` are filled in code and stay verbatim.
+- Upper-casing on screen follows the language (`UiStrings.Upper`: Turkish rules under `tr`, so i → İ).
+
 <!-- TABLES:END -->

@@ -68,6 +68,10 @@ namespace DD.Prototype.UI
                 return;
             }
 
+            // WP-068 TR: the settings file (and with it the saved language) is read before any screen of the scene
+            // builds, so the first screen already reads the chosen language. Idempotent.
+            UiSettings.EnsureLoaded();
+
             // The navigation base is set HERE, once per scene, before the screens exist
             // (WP-005). Entering a base drops every layer and overlay of the previous
             // scene, so a new run can never inherit the last run's shop or pause state,
