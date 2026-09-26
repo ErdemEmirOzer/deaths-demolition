@@ -404,7 +404,7 @@ namespace DD.Prototype.UI
             _dPrice = UiFactory.Numeric("Price", _dBuyRow, string.Empty, UiType.NumericM, UiColor.StateGold, TextAnchor.MiddleLeft, false);
             RectTransform priceRect = UiFactory.Fill((RectTransform)_dPrice.transform);
             priceRect.offsetMax = new Vector2(-212f, 0f);
-            _buy = UiFactory.Button("Buy", _dBuyRow, "BUY", UiButtonVariant.Primary, OnBuy);
+            _buy = UiFactory.Button("Buy", _dBuyRow, UiStrings.Get("tree.action.buy", "BUY"), UiButtonVariant.Primary, OnBuy);
             _buyPrompt = UiInput.Prompt(_buy, UiPromptAction.Submit, true);
             PlaceAnchored((RectTransform)_buy.transform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), Vector2.zero, new Vector2(204f, UiTokens.TargetPreferred));
 
@@ -956,10 +956,10 @@ namespace DD.Prototype.UI
             // names a tier keeps the full name and takes another line instead (AD R1-C MUST-2 re-check).
             if (string.IsNullOrEmpty(n.ShortName) || line == null || n.Kind == RunTreeNodeKind.Tier)
             {
-                return template.Length > 0 ? template.Replace("{node}", full.ToUpperInvariant()) : full;
+                return template.Length > 0 ? template.Replace("{node}", UiStrings.Upper(full)) : full;
             }
 
-            string candidate = template.Length > 0 ? template.Replace("{node}", full.ToUpperInvariant()) : full;
+            string candidate = template.Length > 0 ? template.Replace("{node}", UiStrings.Upper(full)) : full;
             float width = line.rectTransform.rect.width;
             bool fits = line.enableWordWrapping
                 ? line.GetPreferredValues(candidate, width, 0f).y <= TwoLines(line)   // compact: two lines beside the seal
@@ -969,7 +969,7 @@ namespace DD.Prototype.UI
                 return candidate;
             }
 
-            return template.Length > 0 ? template.Replace("{node}", n.ShortName.ToUpperInvariant()) : n.ShortName;
+            return template.Length > 0 ? template.Replace("{node}", UiStrings.Upper(n.ShortName)) : n.ShortName;
         }
 
         private TMP_Text _measureState;
@@ -1450,8 +1450,8 @@ namespace DD.Prototype.UI
             SetGlyph(_dGlyph, n, false);
             _dGlyph.color = UiTokens.Get(UiColor.TextPrimary);
             bool hearth = n.Kind == RunTreeNodeKind.Hearth;
-            _dKind.text = UiStrings.Get("tree.kind." + n.Kind, n.Kind.ToString().ToUpperInvariant()) + "  ·  " +
-                          UiStrings.Get(n.Lane == RunTreeLane.Weapon ? "tree.lane.weapon" : "tree.lane.body", n.Lane.ToString().ToUpperInvariant());
+            _dKind.text = UiStrings.Get("tree.kind." + n.Kind, UiStrings.Upper(n.Kind.ToString())) + "  ·  " +
+                          UiStrings.Get(n.Lane == RunTreeLane.Weapon ? "tree.lane.weapon" : "tree.lane.body", UiStrings.Upper(n.Lane.ToString()));
             SetPips(!hearth && n.MaxTier > 1 && n.MaxTier <= 6 ? n.MaxTier : 0, n.OwnedTier);
             if (_dPips != null)
             {
@@ -1470,8 +1470,8 @@ namespace DD.Prototype.UI
 
             bool buyable = n.Status == RunTreeNodeStatus.Available && (hearth || (Offered(index) && !_shop.IsLocked));
             bool priced = n.Status != RunTreeNodeStatus.MaxTier && n.Status != RunTreeNodeStatus.Excluded && !(IsOwned(n) && n.MaxTier <= 1);
-            _dPrice.text = priced ? n.Cost.ToString(CultureInfo.InvariantCulture) + " GOLD" : string.Empty;
-            _buy.SetText(hearth ? UiStrings.Get("tree.action.stoke", "STOKE THE HEARTH") : "BUY");
+            _dPrice.text = priced ? UiStrings.Format("shop.gold_amount", "value", n.Cost.ToString(CultureInfo.InvariantCulture), "{value} GOLD") : string.Empty;
+            _buy.SetText(hearth ? UiStrings.Get("tree.action.stoke", "STOKE THE HEARTH") : UiStrings.Get("tree.action.buy", "BUY"));
             FitBuy();
             _buy.SetInteractable(buyable);
             if (_buyPrompt != null)
@@ -1495,7 +1495,7 @@ namespace DD.Prototype.UI
         private void FitBuy()
         {
             float word = Mathf.Ceil(_buy.LabelText.GetPreferredValues(_buy.LabelText.text).x);
-            if (_innerWidth > 0f && word + BuyChrome > Mathf.Floor(_innerWidth * 0.62f) && _buy.LabelText.text != "BUY")
+            if (_innerWidth > 0f && word + BuyChrome > Mathf.Floor(_innerWidth * 0.62f) && _buy.LabelText.text != UiStrings.Get("tree.action.buy", "BUY"))
             {
                 // The narrow card (Mac 1.2 × 1.25): the short verb; the name and kind above already say HEARTH.
                 _buy.SetText(UiStrings.Get("tree.action.stoke_short", "STOKE"));
@@ -1525,7 +1525,7 @@ namespace DD.Prototype.UI
                 return;
             }
 
-            _dStatLabel.text = UiStrings.Get(n.Stat, n.Stat).ToUpperInvariant();
+            _dStatLabel.text = UiStrings.Upper(UiStrings.Get(n.Stat, n.Stat));
             _dStatValue.text = float.IsNaN(n.StatNext)
                 ? StatText(n.StatNow, n.StatUnit) + " · " + UiStrings.Get("tree.state.max_tier", "MAX")
                 : StatText(n.StatNow, n.StatUnit) + "  →  " + StatText(n.StatNext, n.StatUnit);

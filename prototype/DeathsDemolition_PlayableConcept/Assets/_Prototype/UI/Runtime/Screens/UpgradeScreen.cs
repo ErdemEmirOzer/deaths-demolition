@@ -239,8 +239,8 @@ namespace DD.Prototype.UI
             // Header. Round number comes from the shop when it is open, so the eyebrow is
             // re-written on every open rather than baked in here.
             _cardsTop = BuildHeader(
-                "ROUND COMPLETE",
-                "SPEND YOUR GOLD",
+                UiStrings.Get("shop.eyebrow", "ROUND COMPLETE"),
+                UiStrings.Get("shop.title", "SPEND YOUR GOLD"),
                 IntroSentence());
 
             _cardsTop += (int)UiSpace.XXL;
@@ -361,7 +361,7 @@ namespace DD.Prototype.UI
             var availableStack = new UiStack(available);
 
             TMP_Text label = UiFactory.Label(
-                "AvailableLabel", available, "GOLD AVAILABLE", UiType.Label, UiColor.TextMuted);
+                "AvailableLabel", available, UiStrings.Get("shop.gold_available", "GOLD AVAILABLE"), UiType.Label, UiColor.TextMuted);
             availableStack.Add((RectTransform)label.transform, UiFactory.LineHeight(UiType.Label));
 
             availableStack.Gap(UiSpace.XS);
@@ -387,7 +387,7 @@ namespace DD.Prototype.UI
             var spentStack = new UiStack(spent);
 
             TMP_Text spentLabel = UiFactory.Label(
-                "SpentLabel", spent, "SPENT THIS ROUND", UiType.Label, UiColor.TextMuted);
+                "SpentLabel", spent, UiStrings.Get("shop.spent", "SPENT THIS ROUND"), UiType.Label, UiColor.TextMuted);
             spentStack.Add((RectTransform)spentLabel.transform, UiFactory.LineHeight(UiType.Label));
 
             spentStack.Gap(UiSpace.XS);
@@ -401,7 +401,7 @@ namespace DD.Prototype.UI
             RectTransform note = Zone(host, 0.48f, 0.72f);
             _goldNote = UiFactory.Label(
                 "Note", note,
-                "Choose what to strengthen, then continue.",
+                UiStrings.Get("shop.note.choose", "Choose what to strengthen, then continue."),
                 UiType.Caption, UiColor.TextMuted, TextAnchor.LowerLeft);
             UiFactory.Fill((RectTransform)_goldNote.transform);
 
@@ -420,11 +420,11 @@ namespace DD.Prototype.UI
             var rerollStack = new UiStack(reroll);
 
             _rerollLabel = UiFactory.Label(
-                "RerollLabel", reroll, "REROLL", UiType.Label, UiColor.TextMuted, TextAnchor.MiddleRight);
+                "RerollLabel", reroll, UiStrings.Get("shop.reroll", "REROLL"), UiType.Label, UiColor.TextMuted, TextAnchor.MiddleRight);
             rerollStack.Add((RectTransform)_rerollLabel.transform, UiFactory.LineHeight(UiType.Label));
 
             _rerollButton = UiFactory.Button(
-                "Reroll", reroll, "REROLL", UiButtonVariant.Secondary, OnRerollActivated);
+                "Reroll", reroll, UiStrings.Get("shop.reroll", "REROLL"), UiButtonVariant.Secondary, OnRerollActivated);
             UiInput.Prompt(_rerollButton, UiPromptAction.Reroll);
             rerollStack.Add((RectTransform)_rerollButton.transform, UiTokens.TargetPreferred);
         }
@@ -551,7 +551,7 @@ namespace DD.Prototype.UI
             priceRect.offsetMax = new Vector2(-(StateChipWidth + (int)UiSpace.M), 0f);
 
             slot.StateLabel = UiFactory.Chip(
-                "State", priceRow, "BUY", UiColor.AccentPrimary, UiColor.TextOnAccent,
+                "State", priceRow, UiStrings.Get("tree.action.buy", "BUY"), UiColor.AccentPrimary, UiColor.TextOnAccent,
                 StateChipWidth, StateChipHeight);
             var stateRect = (RectTransform)slot.StateLabel.transform.parent;
             stateRect.anchorMin = new Vector2(1f, 0.5f);
@@ -621,7 +621,7 @@ namespace DD.Prototype.UI
 
             // ---- purchased badge ---------------------------------------------------
             TMP_Text badge = UiFactory.Chip(
-                "Badge", root, "PURCHASED", UiColor.StateSuccess, UiColor.SurfaceInset,
+                "Badge", root, UiStrings.Get("shop.purchased", "PURCHASED"), UiColor.StateSuccess, UiColor.SurfaceInset,
                 BadgeWidth, BadgeHeight);
             var badgeRect = (RectTransform)badge.transform.parent;
             badgeRect.anchorMin = new Vector2(1f, 1f);
@@ -756,7 +756,7 @@ namespace DD.Prototype.UI
             noteRect.offsetMax = new Vector2(-(ContinueWidth + (int)UiSpace.XL), 0f);
 
             _continueButton = UiFactory.Button(
-                "Continue", footer, "CONTINUE", UiButtonVariant.Primary, CloseScreen);
+                "Continue", footer, UiStrings.Get("shop.continue", "CONTINUE"), UiButtonVariant.Primary, CloseScreen);
             _continuePrompt = UiInput.Prompt(_continueButton, UiPromptAction.Submit, true);
             RectTransform rect = (RectTransform)_continueButton.transform;
             rect.anchorMin = new Vector2(1f, 0.5f);
@@ -865,7 +865,7 @@ namespace DD.Prototype.UI
             RectTransform host = UiFactory.CardContent(card, UiSpace.L);
 
             TMP_Text label = UiFactory.Label(
-                "Label", host, "NEXT ROUND IN", UiType.Label, UiColor.TextSecondary, TextAnchor.MiddleLeft);
+                "Label", host, UiStrings.Get("shop.next_round_in", "NEXT ROUND IN"), UiType.Label, UiColor.TextSecondary, TextAnchor.MiddleLeft);
             RectTransform labelRect = UiFactory.Fill((RectTransform)label.transform);
             labelRect.offsetMax = new Vector2(-100f, 0f);
 
@@ -1063,9 +1063,9 @@ namespace DD.Prototype.UI
             if (shop == null || !shop.IsOpen)
             {
                 ShowNotice(
-                    "Preparing the offer",
-                    "The round-end offer is still being built. It will appear in a moment; " +
-                    "continuing now simply starts the next round.");
+                    UiStrings.Get("shop.preparing.title", "Preparing the offer"),
+                    UiStrings.Get("shop.preparing.body", "The round-end offer is still being built. It will appear in a moment; " +
+                    "continuing now simply starts the next round."));
                 RefreshReroll(null);
                 RefreshFooter(0, 0);
                 return;
@@ -1081,9 +1081,10 @@ namespace DD.Prototype.UI
             {
                 ShowNotice(
                     shop.Fault == UpgradeOfferFault.PoolExhausted
-                        ? "Nothing left to upgrade"
-                        : "No valid upgrade offer this round",
-                    DescribeFault(shop.Fault) + " No gold was taken and nothing is for sale this round. Continue when ready.");
+                        ? UiStrings.Get("shop.fault.exhausted.title", "Nothing left to upgrade")
+                        : UiStrings.Get("shop.fault.invalid.title", "No valid upgrade offer this round"),
+                    UiStrings.Format("shop.fault.body_suffix", "value", DescribeFault(shop.Fault),
+                        "{value} No gold was taken and nothing is for sale this round. Continue when ready."));
                 RefreshReroll(shop);
                 RefreshFooter(shop.Gold, shop.PurchasesThisRound);
                 return;
@@ -1110,13 +1111,13 @@ namespace DD.Prototype.UI
             {
                 ShowNotice(
                     PrototypeConfig.Active != null
-                        ? "Every branch is at maximum tier"
-                        : "No upgrade table is loaded",
+                        ? UiStrings.Get("shop.maxed.title", "Every branch is at maximum tier")
+                        : UiStrings.Get("shop.no_table.title", "No upgrade table is loaded"),
                     PrototypeConfig.Active != null
-                        ? "Every upgrade branch is already at its maximum tier, so this round has no card " +
-                          "to offer. Your gold carries into the next round."
-                        : "PrototypeConfig is not loaded, so there is no upgrade table to draw cards from. " +
-                          "The run continues normally.");
+                        ? UiStrings.Get("shop.maxed.body", "Every upgrade branch is already at its maximum tier, so this round has no card " +
+                          "to offer. Your gold carries into the next round.")
+                        : UiStrings.Get("shop.no_table.body", "PrototypeConfig is not loaded, so there is no upgrade table to draw cards from. " +
+                          "The run continues normally."));
                 RefreshReroll(shop);
                 RefreshFooter(shop.Gold, shop.PurchasesThisRound);
                 return;
@@ -1334,27 +1335,27 @@ namespace DD.Prototype.UI
             switch (state)
             {
                 case RerollAvailability.Available:
-                    _rerollLabel.text = "REROLL · " + cost + " GOLD · ONCE";
+                    _rerollLabel.text = UiStrings.Format("shop.reroll.cost", "value", cost.ToString(), "REROLL · {value} GOLD · ONCE");
                     _rerollLabel.color = UiTokens.Get(UiColor.TextPrimary);
                     break;
                 case RerollAvailability.Used:
-                    _rerollLabel.text = "REROLL · USED THIS ROUND";
+                    _rerollLabel.text = UiStrings.Get("shop.reroll.used", "REROLL · USED THIS ROUND");
                     _rerollLabel.color = UiTokens.Get(UiColor.TextMuted);
                     break;
                 case RerollAvailability.LockedByPurchase:
-                    _rerollLabel.text = "REROLL · LOCKED";
+                    _rerollLabel.text = UiStrings.Get("shop.reroll.locked", "REROLL · LOCKED");
                     _rerollLabel.color = UiTokens.Get(UiColor.TextMuted);
                     break;
                 case RerollAvailability.NoAlternatives:
-                    _rerollLabel.text = "REROLL · NOTHING TO SWAP";
+                    _rerollLabel.text = UiStrings.Get("shop.reroll.nothing", "REROLL · NOTHING TO SWAP");
                     _rerollLabel.color = UiTokens.Get(UiColor.TextMuted);
                     break;
                 case RerollAvailability.TooExpensive:
-                    _rerollLabel.text = "REROLL · NEED " + cost + " GOLD";
+                    _rerollLabel.text = UiStrings.Format("shop.reroll.need", "value", cost.ToString(), "REROLL · NEED {value} GOLD");
                     _rerollLabel.color = UiTokens.Get(UiColor.TextSecondary);
                     break;
                 default:
-                    _rerollLabel.text = "REROLL · UNAVAILABLE";
+                    _rerollLabel.text = UiStrings.Get("shop.reroll.unavailable", "REROLL · UNAVAILABLE");
                     _rerollLabel.color = UiTokens.Get(UiColor.TextMuted);
                     break;
             }
@@ -1366,16 +1367,16 @@ namespace DD.Prototype.UI
             switch (fault)
             {
                 case UpgradeOfferFault.NotEnoughEligibleBranches:
-                    return "Not enough upgrades are available for your weapon and build right now.";
+                    return UiStrings.Get("shop.fault.pool", "Not enough upgrades are available for your weapon and build right now.");
                 case UpgradeOfferFault.PoolExhausted:
-                    return "Every upgrade you can still take is already at its maximum tier.";
+                    return UiStrings.Get("shop.fault.maxed", "Every upgrade you can still take is already at its maximum tier.");
                 case UpgradeOfferFault.NoUpgradeTable:
                 case UpgradeOfferFault.NoConfig:
-                    return "The upgrade table is not loaded.";
+                    return UiStrings.Get("shop.fault.no_table", "The upgrade table is not loaded.");
                 case UpgradeOfferFault.DuplicateBranch:
-                    return "The upgrade table lists the same upgrade twice.";
+                    return UiStrings.Get("shop.fault.duplicate", "The upgrade table lists the same upgrade twice.");
                 default:
-                    return "The upgrade offer could not be built.";
+                    return UiStrings.Get("shop.fault.other", "The upgrade offer could not be built.");
             }
         }
 
@@ -1409,7 +1410,7 @@ namespace DD.Prototype.UI
                 return;
             }
 
-            slot.Eyebrow.text = card.Kind == UpgradeCardKind.WeaponCore ? "WEAPON CORE" : "UTILITY";
+            slot.Eyebrow.text = card.Kind == UpgradeCardKind.WeaponCore ? UiStrings.Get("shop.card.weapon_core", "WEAPON CORE") : UiStrings.Get("shop.card.utility", "UTILITY");
             ApplyIcon(slot, card.Branch);
             slot.Button.SetText(UiFactory.Clip(card.TitleWithTier, 22));
             slot.Tier.text = DescribeTierStep(card);
@@ -1430,10 +1431,10 @@ namespace DD.Prototype.UI
 
             if (purchased)
             {
-                SetChip(slot, "PURCHASED", UiColor.StateSuccess, UiColor.SurfaceInset);
+                SetChip(slot, UiStrings.Get("shop.purchased", "PURCHASED"), UiColor.StateSuccess, UiColor.SurfaceInset);
                 slot.Price.color = UiTokens.Get(UiColor.TextMuted);
                 slot.Coin.color = UiTokens.Get(UiColor.TextMuted);
-                slot.Sentence.text = "Bought this round. It is already applied to your weapon.";
+                slot.Sentence.text = UiStrings.Get("shop.state.purchased", "Bought this round. It is already applied to your weapon.");
                 slot.Sentence.color = UiTokens.Get(UiColor.StateSuccess);
                 return;
             }
@@ -1441,40 +1442,40 @@ namespace DD.Prototype.UI
             if (offerLocked)
             {
                 // WP-008 (DEC-048): the round's one purchase was made on another card.
-                SetChip(slot, "OFFER LOCKED", UiColor.SurfaceRaised, UiColor.TextSecondary);
+                SetChip(slot, UiStrings.Get("shop.state.locked", "OFFER LOCKED"), UiColor.SurfaceRaised, UiColor.TextSecondary);
                 slot.Price.color = UiTokens.Get(UiColor.TextMuted);
                 slot.Coin.color = UiTokens.Get(UiColor.TextMuted);
                 slot.Sentence.text = PicksPerRound > 1
-                    ? "All picks for this round are used. Continue to the next round."
-                    : "One upgrade per round. Continue to the next round.";
+                    ? UiStrings.Get("shop.state.picks_used", "All picks for this round are used. Continue to the next round.")
+                    : UiStrings.Get("shop.state.one_per_round", "One upgrade per round. Continue to the next round.");
                 slot.Sentence.color = UiTokens.Get(UiColor.TextSecondary);
                 return;
             }
 
             if (maxed)
             {
-                SetChip(slot, "MAX TIER", UiColor.SurfaceRaised, UiColor.TextSecondary);
+                SetChip(slot, UiStrings.Get("shop.state.max", "MAX TIER"), UiColor.SurfaceRaised, UiColor.TextSecondary);
                 slot.Price.color = UiTokens.Get(UiColor.TextMuted);
                 slot.Coin.color = UiTokens.Get(UiColor.TextMuted);
-                slot.Sentence.text = "This branch is already at its maximum tier.";
+                slot.Sentence.text = UiStrings.Get("shop.state.max.body", "This branch is already at its maximum tier.");
                 slot.Sentence.color = UiTokens.Get(UiColor.TextSecondary);
                 return;
             }
 
             if (!canAfford)
             {
-                SetChip(slot, "TOO EXPENSIVE", UiColor.SurfaceRaised, UiColor.TextSecondary);
+                SetChip(slot, UiStrings.Get("shop.state.expensive", "TOO EXPENSIVE"), UiColor.SurfaceRaised, UiColor.TextSecondary);
                 slot.Price.color = UiTokens.Get(UiColor.TextMuted);
                 slot.Coin.color = UiTokens.Get(UiColor.TextMuted);
-                slot.Sentence.text = "You need " + Mathf.Max(0, card.Cost - gold) + " more gold for this one.";
+                slot.Sentence.text = UiStrings.Format("shop.state.need_gold", "value", Mathf.Max(0, card.Cost - gold).ToString(), "You need {value} more gold for this one.");
                 slot.Sentence.color = UiTokens.Get(UiColor.StateDanger);
                 return;
             }
 
-            SetChip(slot, "BUY", UiColor.AccentPrimary, UiColor.TextOnAccent);
+            SetChip(slot, UiStrings.Get("tree.action.buy", "BUY"), UiColor.AccentPrimary, UiColor.TextOnAccent);
             slot.Price.color = UiTokens.Get(UiColor.StateGold);
             slot.Coin.color = UiTokens.Get(UiColor.StateGold);
-            slot.Sentence.text = "Leaves you " + Mathf.Max(0, gold - card.Cost) + " gold.";
+            slot.Sentence.text = UiStrings.Format("shop.state.leaves", "value", Mathf.Max(0, gold - card.Cost).ToString(), "Leaves you {value} gold.");
             slot.Sentence.color = UiTokens.Get(UiColor.TextSecondary);
         }
 
@@ -1524,7 +1525,7 @@ namespace DD.Prototype.UI
         private static string DescribeTierStep(UpgradeCardOffer card)
         {
             string owned = card.OwnedTier <= 0
-                ? "NOT OWNED"
+                ? UiStrings.Get("shop.tier.not_owned", "NOT OWNED")
                 : "TIER " + UpgradeCardCatalog.Roman(card.OwnedTier);
 
             return owned +
@@ -1541,7 +1542,7 @@ namespace DD.Prototype.UI
             {
                 // The round's purchase is made: every remaining card is locked, not
                 // "unaffordable" - say the true thing (probe screenshot 06 caught this).
-                _goldNote.text = shop.PurchasesThisRound > 1 ? "Upgrades applied. Continue when ready." : "Upgrade applied. Continue when ready.";
+                _goldNote.text = shop.PurchasesThisRound > 1 ? UiStrings.Get("shop.note.applied_many", "Upgrades applied. Continue when ready.") : UiStrings.Get("shop.note.applied_one", "Upgrade applied. Continue when ready.");
                 _goldNote.color = UiTokens.Get(UiColor.TextMuted);
                 return;
             }
@@ -1551,17 +1552,17 @@ namespace DD.Prototype.UI
                 // The 0-gold opening, and every later round where the prices have outrun
                 // the wallet. Stated as a fact with a way forward, not as a failure.
                 _goldNote.text = shop.Gold <= 0
-                    ? "No gold collected this round, so nothing can be bought yet. A new offer appears next round."
-                    : "None of these is affordable yet. Unspent gold carries into the next round.";
+                    ? UiStrings.Get("shop.note.no_gold", "No gold collected this round, so nothing can be bought yet. A new offer appears next round.")
+                    : UiStrings.Get("shop.note.unaffordable", "None of these is affordable yet. Unspent gold carries into the next round.");
                 _goldNote.color = UiTokens.Get(UiColor.StateWarning);
                 return;
             }
 
             _goldNote.text = PicksPerRound > 1
                 ? (shop.PurchasesThisRound > 0
-                    ? "Choose another upgrade, or continue."
+                    ? UiStrings.Get("shop.note.another", "Choose another upgrade, or continue.")
                     : "Choose up to " + Words(PicksPerRound) + " upgrades, or reroll once first, then continue.")
-                : "Choose one upgrade, or reroll once, then continue.";
+                : UiStrings.Get("shop.note.choose_one", "Choose one upgrade, or reroll once, then continue.");
             _goldNote.color = UiTokens.Get(UiColor.TextMuted);
         }
 
@@ -1577,7 +1578,7 @@ namespace DD.Prototype.UI
         {
             return PicksPerRound > 1
                 ? "Buy up to " + Words(PicksPerRound) + " upgrades this round, or reroll the offer once before the first. Unspent gold carries into the next round."
-                : "Buy one upgrade this round, or reroll the offer once first. Unspent gold carries into the next round.";
+                : UiStrings.Get("shop.intro.one", "Buy one upgrade this round, or reroll the offer once first. Unspent gold carries into the next round.");
         }
 
         /// <summary>Small counts read as words in a sentence ("up to two upgrades"); larger ones as digits.</summary>
@@ -1596,7 +1597,7 @@ namespace DD.Prototype.UI
         {
             // One fixed label. A button whose caption changes under the focus ring reads
             // as a different control to a keyboard or gamepad player.
-            _continueButton.SetText("CONTINUE");
+            _continueButton.SetText(UiStrings.Get("shop.continue", "CONTINUE"));
 
             if (!string.IsNullOrEmpty(_notice))
             {
@@ -1645,7 +1646,7 @@ namespace DD.Prototype.UI
 
             _goldValue.text = Shop != null ? Shop.Gold.ToString() : "0";
             _goldSpent.text = Shop != null ? Shop.GoldSpentThisRound.ToString() : "0";
-            _goldNote.text = "Nothing to spend it on this round. It carries over.";
+            _goldNote.text = UiStrings.Get("shop.note.nothing", "Nothing to spend it on this round. It carries over.");
             _goldNote.color = UiTokens.Get(UiColor.TextMuted);
         }
 
@@ -1728,24 +1729,24 @@ namespace DD.Prototype.UI
             switch (result)
             {
                 case UpgradeRerollResult.InsufficientGold:
-                    return "Not enough gold to reroll. Nothing was spent.";
+                    return UiStrings.Get("shop.refuse.reroll_gold", "Not enough gold to reroll. Nothing was spent.");
                 case UpgradeRerollResult.RerollUsed:
-                    return "You already rerolled this round. Nothing was spent.";
+                    return UiStrings.Get("shop.refuse.reroll_used", "You already rerolled this round. Nothing was spent.");
                 case UpgradeRerollResult.OfferLocked:
-                    return "The offer is locked after a purchase. Nothing was spent.";
+                    return UiStrings.Get("shop.refuse.reroll_locked", "The offer is locked after a purchase. Nothing was spent.");
                 case UpgradeRerollResult.NoReplacementAvailable:
-                    return "There is no other upgrade to swap in. Nothing was spent and your reroll is kept.";
+                    return UiStrings.Get("shop.refuse.reroll_nothing", "There is no other upgrade to swap in. Nothing was spent and your reroll is kept.");
                 case UpgradeRerollResult.InvalidResult:
                 case UpgradeRerollResult.InvalidCost:
-                    return "The reroll could not be built. Nothing was spent and your reroll is kept.";
+                    return UiStrings.Get("shop.refuse.reroll_failed", "The reroll could not be built. Nothing was spent and your reroll is kept.");
                 case UpgradeRerollResult.ShopClosed:
                 case UpgradeRerollResult.SessionMismatch:
                 case UpgradeRerollResult.StaleRevision:
                 case UpgradeRerollResult.OfferUnavailable:
                 case UpgradeRerollResult.WalletRefused:
-                    return "This offer is no longer open. Nothing was spent.";
+                    return UiStrings.Get("shop.refuse.closed", "This offer is no longer open. Nothing was spent.");
                 default:
-                    return "That reroll could not be completed. Nothing was spent.";
+                    return UiStrings.Get("shop.refuse.reroll_other", "That reroll could not be completed. Nothing was spent.");
             }
         }
 
@@ -1758,28 +1759,28 @@ namespace DD.Prototype.UI
             switch (result)
             {
                 case UpgradePurchaseResult.InsufficientGold:
-                    return "Not enough gold for that upgrade. Nothing was spent.";
+                    return UiStrings.Get("shop.refuse.gold", "Not enough gold for that upgrade. Nothing was spent.");
                 case UpgradePurchaseResult.BranchMaxed:
-                    return "That upgrade is already at its maximum tier. Nothing was spent.";
+                    return UiStrings.Get("shop.refuse.max", "That upgrade is already at its maximum tier. Nothing was spent.");
                 case UpgradePurchaseResult.NoWeapon:
-                    return "That upgrade could not be applied to your weapon, so no gold was spent.";
+                    return UiStrings.Get("shop.refuse.apply", "That upgrade could not be applied to your weapon, so no gold was spent.");
                 case UpgradePurchaseResult.StaleOffer:
-                    return "The offer changed. Prices and tiers were refreshed; nothing was spent.";
+                    return UiStrings.Get("shop.refuse.changed", "The offer changed. Prices and tiers were refreshed; nothing was spent.");
                 case UpgradePurchaseResult.AlreadyPurchased:
-                    return "You already own that card. Nothing was spent.";
+                    return UiStrings.Get("shop.refuse.owned", "You already own that card. Nothing was spent.");
                 case UpgradePurchaseResult.PurchaseLimitReached:
                     return PicksPerRound > 1
                         ? "All " + Words(PicksPerRound) + " picks for this round are used. The offer is locked; nothing was spent."
-                        : "One upgrade per round. The offer is locked; nothing was spent.";
+                        : UiStrings.Get("shop.refuse.one_per_round", "One upgrade per round. The offer is locked; nothing was spent.");
                 case UpgradePurchaseResult.OfferUnavailable:
-                    return "There is no valid offer this round. Nothing was spent.";
+                    return UiStrings.Get("shop.refuse.no_offer", "There is no valid offer this round. Nothing was spent.");
                 case UpgradePurchaseResult.ShopClosed:
                 case UpgradePurchaseResult.SessionMismatch:
                 case UpgradePurchaseResult.StaleRevision:
                 case UpgradePurchaseResult.WalletRefused:
-                    return "This offer is no longer open. Nothing was spent.";
+                    return UiStrings.Get("shop.refuse.closed", "This offer is no longer open. Nothing was spent.");
                 default:
-                    return "That purchase could not be completed. Nothing was spent.";
+                    return UiStrings.Get("shop.refuse.other", "That purchase could not be completed. Nothing was spent.");
             }
         }
 

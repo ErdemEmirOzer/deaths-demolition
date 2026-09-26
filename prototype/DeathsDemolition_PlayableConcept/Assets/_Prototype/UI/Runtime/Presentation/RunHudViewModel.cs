@@ -72,7 +72,7 @@ namespace DD.Prototype.UI
 
         public string RoundText { get; private set; } = Placeholder;
         public string EnemiesText { get; private set; } = Placeholder;
-        public string EnemiesBreakdown { get; private set; } = "waiting for the round to start";
+        public string EnemiesBreakdown { get; private set; } = UiStrings.Get("hud.enemies.waiting", "waiting for the round to start");
 
         // ---- gold
         private int _gold = int.MinValue;
@@ -130,7 +130,7 @@ namespace DD.Prototype.UI
         private bool _suspended;
 
         public string WeaponName { get; private set; } = Placeholder;
-        public string BuildText { get; private set; } = "no upgrades";
+        public string BuildText { get; private set; } = UiStrings.Get("pause.run.build_none", "no upgrades");
         public string AmmoText { get; private set; } = Placeholder;
         public RunHudReloadState ReloadState { get; private set; } = RunHudReloadState.Ready;
         public float ReloadProgress01 { get; private set; } = 1f;
@@ -169,7 +169,7 @@ namespace DD.Prototype.UI
         /// </summary>
         public static string DeathLine(string killedBy)
         {
-            const string down = "DOWN";
+            string down = UiStrings.Get("hud.status.down", "DOWN");
             if (string.IsNullOrEmpty(killedBy))
             {
                 return down;
@@ -263,15 +263,16 @@ namespace DD.Prototype.UI
                 {
                     // The run has not published a state yet: the HUD says so instead of
                     // showing a confident zero.
-                    EnemiesBreakdown = "waiting for the round to start";
+                    EnemiesBreakdown = UiStrings.Get("hud.enemies.waiting", "waiting for the round to start");
                 }
                 else if (_poolExhausted)
                 {
-                    EnemiesBreakdown = "pool empty  ·  " + _alive + " still on the map";
+                    EnemiesBreakdown = UiStrings.Format("hud.enemies.pool_empty", "value", _alive.ToString(), "pool empty  ·  {value} still on the map");
                 }
                 else
                 {
-                    EnemiesBreakdown = _poolRemaining + " left to arrive  ·  " + _alive + " on the map";
+                    EnemiesBreakdown = UiStrings.Format("hud.enemies.breakdown", "value", _poolRemaining.ToString(), "alive", _alive.ToString(),
+                        "{value} left to arrive  ·  {alive} on the map");
                 }
 
                 changed |= RunHudField.Enemies;
@@ -343,12 +344,12 @@ namespace DD.Prototype.UI
 
                 if (_dead)
                 {
-                    HealthStateText = "DOWN";
+                    HealthStateText = UiStrings.Get("hud.status.down", "DOWN");
                     HealthStateTone = RunHudTone.Danger;
                 }
                 else if (_regenerating)
                 {
-                    HealthStateText = "RECOVERING";
+                    HealthStateText = UiStrings.Get("hud.health.recovering", "RECOVERING");
                     HealthStateTone = RunHudTone.Positive;
                 }
                 else if (regenTenths > 0)
@@ -391,17 +392,31 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>WP-059D: "recovery in X.Xs", cached per tenth for the session (first use of a tenth formats it).</summary>
+        private static string s_regenLanguage;
+
+        private static string RegenText(int regenTenths)
+        {
+            return UiStrings.Format("hud.health.recovery_in", "value", (regenTenths / 10f).ToString("0.0"), "recovery in {value}s");
+        }
+
         private static string RegenTextFor(int regenTenths)
         {
             if (regenTenths < 0 || regenTenths > RegenTextCacheTenths)
             {
-                return "recovery in " + (regenTenths / 10f).ToString("0.0") + "s";
+                return RegenText(regenTenths);
+            }
+
+            if (!ReferenceEquals(s_regenLanguage, UiStrings.Language))
+            {
+                // WP-068 TR: the cache holds one language; a language change (main menu) starts it again.
+                System.Array.Clear(s_regenTexts, 0, s_regenTexts.Length);
+                s_regenLanguage = UiStrings.Language;
             }
 
             string text = s_regenTexts[regenTenths];
             if (text == null)
             {
-                text = "recovery in " + (regenTenths / 10f).ToString("0.0") + "s";
+                text = RegenText(regenTenths);
                 s_regenTexts[regenTenths] = text;
             }
 
@@ -423,7 +438,7 @@ namespace DD.Prototype.UI
                 _weaponSource = state.DisplayName;
                 WeaponName = string.IsNullOrEmpty(_weaponSource)
                     ? Placeholder
-                    : UiFactory.Clip(_weaponSource.ToUpperInvariant(), WeaponNameMaxCharacters);
+                    : UiFactory.Clip(UiStrings.Upper(_weaponSource), WeaponNameMaxCharacters);
                 changed |= RunHudField.WeaponName;
             }
 
@@ -480,7 +495,7 @@ namespace DD.Prototype.UI
 
             _buildSource = description;
             BuildText = string.IsNullOrEmpty(_buildSource) || _buildSource == "Stock"
-                ? "no upgrades"
+                ? UiStrings.Get("pause.run.build_none", "no upgrades")
                 : UiFactory.Clip(_buildSource, BuildMaxCharacters);
             return RunHudField.Build;
         }
@@ -501,7 +516,7 @@ namespace DD.Prototype.UI
             _poolExhausted = false;
             RoundText = Placeholder;
             EnemiesText = Placeholder;
-            EnemiesBreakdown = "waiting for the round to start";
+            EnemiesBreakdown = UiStrings.Get("hud.enemies.waiting", "waiting for the round to start");
 
             _gold = int.MinValue;
             GoldText = "0";
@@ -525,7 +540,7 @@ namespace DD.Prototype.UI
             _reload = (RunHudReloadState)(-1);
             _suspended = false;
             WeaponName = Placeholder;
-            BuildText = "no upgrades";
+            BuildText = UiStrings.Get("pause.run.build_none", "no upgrades");
             AmmoText = Placeholder;
             PelletCount = 0;
             ReloadState = RunHudReloadState.Ready;

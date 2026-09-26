@@ -482,7 +482,7 @@ namespace DD.Prototype.UI
         private void BuildSpecialContent(RectTransform specialHost, bool ink)
         {
             _specialPhase = UiFactory.Label(
-                "Phase", specialHost, "ON THE FIELD", UiType.Label, UiColor.StateGold, TextAnchor.UpperCenter);
+                "Phase", specialHost, UiStrings.Get("hud.special.on_field", "ON THE FIELD"), UiType.Label, UiColor.StateGold, TextAnchor.UpperCenter);
             RectTransform phaseRect = UiFactory.Fill((RectTransform)_specialPhase.transform);
             phaseRect.anchorMin = new Vector2(0f, 1f);
             phaseRect.pivot = new Vector2(0.5f, 1f);
@@ -932,6 +932,7 @@ namespace DD.Prototype.UI
 
         /// <summary>Every text a threat chip can carry (sizes the shared slot width).</summary>
         private static readonly string[] ThreatLabels = { "SURROUNDED", "BEHIND YOU", "ELITE NEARBY", "ULTRA NEARBY" };
+        private static readonly string[] ThreatLabelKeys = { "hud.threat.surrounded", "hud.threat.behind", "hud.threat.elite", "hud.threat.ultra" };
 
         private sealed class ThreatSlot
         {
@@ -966,7 +967,7 @@ namespace DD.Prototype.UI
             {
                 // The strong slot names the worst tier near: its word and its outer-only tier glyph change together.
                 _threatUltra = ultra;
-                _threatSlots[2].Label.text = ultra ? "ULTRA NEARBY" : "ELITE NEARBY";
+                _threatSlots[2].Label.text = ultra ? UiStrings.Get("hud.threat.ultra", "ULTRA NEARBY") : UiStrings.Get("hud.threat.elite", "ELITE NEARBY");
                 Sprite tier = UiArt.Icon(ultra ? "Threat.UltraOuter" : "Threat.EliteOuter");
                 if (tier != null && _threatSlots[2].Glyph != null)
                 {
@@ -1553,7 +1554,7 @@ namespace DD.Prototype.UI
 
                         _reloadBar.SetValue(0f, true);
                         // E11: EMPTY + the reload control's live glyph (UiPrompt knows the device in hand).
-                        _reloadCaption.text = "EMPTY";
+                        _reloadCaption.text = UiStrings.Get("hud.ammo.empty", "EMPTY");
                         _reloadCaption.color = UiTokens.Get(UiColor.StateWarning);
                         break;
 
@@ -1632,12 +1633,12 @@ namespace DD.Prototype.UI
             }
 
             string name = string.IsNullOrEmpty(state.DisplayName)
-                ? "Special Weapon"
+                ? UiStrings.Get("hud.special.generic", "Special Weapon")
                 : UiFactory.Clip(state.DisplayName, 30);
 
             if (state.Phase == SpecialWeaponPhase.OnGround)
             {
-                _specialPhase.text = "ON THE FIELD";
+                _specialPhase.text = UiStrings.Get("hud.special.on_field", "ON THE FIELD");
                 _specialPhase.color = UiTokens.Get(UiColor.StateGold);
                 _specialCaption.text = name;
                 _specialCaption.color = UiTokens.Get(UiColor.TextPrimary);
@@ -1660,7 +1661,7 @@ namespace DD.Prototype.UI
             bool reloading = state.IsReloading;
 
             // E14 v3 words: RELOADING while a cell / canister changes, ENDING in the time cap's final seconds.
-            _specialPhase.text = warning ? "ENDING" : reloading ? "RELOADING" : "ACTIVE";
+            _specialPhase.text = warning ? UiStrings.Get("hud.special.ending", "ENDING") : reloading ? UiStrings.Get("hud.special.reloading", "RELOADING") : UiStrings.Get("hud.special.active", "ACTIVE");
             _specialPhase.color = UiTokens.Get(warning ? UiColor.StateDanger : UiColor.StateGold);
             _specialCaption.text = name;
             _specialCaption.color = UiTokens.Get(UiColor.TextPrimary);
@@ -1728,7 +1729,10 @@ namespace DD.Prototype.UI
             _swShownShots = _swShots;
             switch (mode)
             {
-                case 3: _specialUsage.text = "SHOTS " + _swShots + (hits > 0 ? "  ·  HITS " + hits : string.Empty); break;
+                case 3:
+                    _specialUsage.text = UiStrings.Format("hud.special.shots", "value", _swShots.ToString(), "SHOTS {value}")
+                        + (hits > 0 ? "  ·  " + UiStrings.Format("hud.special.hits", "value", hits.ToString(), "HITS {value}") : string.Empty);
+                    break;
                 default: _specialUsage.text = string.Empty; break;
             }
         }
@@ -2013,25 +2017,25 @@ namespace DD.Prototype.UI
         private void OnRoundStarted(int round)
         {
             UiEvents.Raise(UiEvent.HudRoundStarted);
-            ShowBanner("ROUND " + round);
+            ShowBanner(UiStrings.Format("hud.banner.round", "value", round.ToString(), "ROUND {value}"));
         }
 
         private void OnRoundCompleted(int round)
         {
             UiEvents.Raise(UiEvent.HudRoundCompleted);
-            ShowBanner("ROUND " + round + " COMPLETE");
+            ShowBanner(UiStrings.Format("hud.banner.round_complete", "value", round.ToString(), "ROUND {value} COMPLETE"));
         }
 
         private void OnPoolExhausted(int round)
         {
             UiEvents.Raise(UiEvent.HudPoolExhausted);
-            ShowBanner("CLEAR THE LAST OF THEM");
+            ShowBanner(UiStrings.Get("hud.banner.last", "CLEAR THE LAST OF THEM"));
         }
 
         private void OnSpecialSpawned(Vector3 position, float groundLifetime)
         {
             UiEvents.Raise(UiEvent.HudSpecialSpawned);
-            ShowBanner("SPECIAL WEAPON ON THE FIELD");
+            ShowBanner(UiStrings.Get("hud.banner.special_field", "SPECIAL WEAPON ON THE FIELD"));
         }
 
         private void OnSpecialPickedUp(float activeDuration)
@@ -2042,7 +2046,7 @@ namespace DD.Prototype.UI
             // publishes the new state, so WeaponEvents.Special.DisplayName is still the
             // previous weapon's on a consecutive pickup. Show the generic line now and let
             // the first Active snapshot with a name retitle the banner (same banner timer).
-            ShowBanner("SPECIAL WEAPON ONLINE");
+            ShowBanner(UiStrings.Get("hud.banner.special_online", "SPECIAL WEAPON ONLINE"));
             _bannerAwaitsSpecialName = true;
             PlaySpecialPickup(activeDuration);
         }
@@ -2092,7 +2096,7 @@ namespace DD.Prototype.UI
             {
                 // WP-068 12b (AD R1-B SHOULD-2): the line carries the Special's glyph, 48 px in its identity tint, stamping in
                 // with the name, left of the words (HudBanner.GlyphGap).
-                _banner.Retitle(UiFactory.Clip(state.DisplayName.ToUpperInvariant(), 30) + " ONLINE",
+                _banner.Retitle(UiStrings.Format("hud.banner.special_named", "value", UiFactory.Clip(UiStrings.Upper(state.DisplayName), 30), "{value} ONLINE"),
                     UiArt.SpecialIcon(state.WeaponId), UiTokens.Get(SpecialTint(state.WeaponId)));
             }
         }
@@ -2123,7 +2127,7 @@ namespace DD.Prototype.UI
                 return;
             }
 
-            ShowBanner("CLASSIC WEAPON RESTORED");
+            ShowBanner(UiStrings.Get("hud.banner.classic_restored", "CLASSIC WEAPON RESTORED"));
         }
 
         private void OnSpecialGroundExpired()

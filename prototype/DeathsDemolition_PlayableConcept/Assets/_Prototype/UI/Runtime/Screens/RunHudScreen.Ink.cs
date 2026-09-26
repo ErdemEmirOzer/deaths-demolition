@@ -174,7 +174,7 @@ namespace DD.Prototype.UI
             _calmOnly.Add(UiFactory.Group(maxCalm.gameObject));
 
             // LOW takes the "/ max" place (T2 hides whenever health is low - low is danger).
-            _healthLowWord = InkText("Low", root, "LOW", UiType.Label, UiColor.StateDanger, TextAnchor.MiddleLeft);
+            _healthLowWord = InkText("Low", root, UiStrings.Get("hud.health.low", "LOW"), UiType.Label, UiColor.StateDanger, TextAnchor.MiddleLeft);
             _healthLowWord.fontStyle = FontStyles.Bold;
             Place(_healthLowWord.rectTransform, Vector2.zero, new Vector2(0f, 0.5f), new Vector2(after, row), new Vector2(72f, band * 0.6f));
             _healthLowWord.gameObject.SetActive(false);
@@ -284,13 +284,13 @@ namespace DD.Prototype.UI
             RectTransform captionRow = _reloadCaption.rectTransform;
             Place(captionRow, anchor, new Vector2(0f, 0.5f), new Vector2(captionLeft, 92f), new Vector2(220f, ReloadPromptSize + 6f));
             _reloadPrompt = UiInputGlyphs.Build("ReloadPrompt", captionRow, UiPromptAction.Reload, UiColor.TextPrimary, UiColor.SurfaceInset, ReloadPromptSize);
-            _reloadPromptHome = new Vector2(Mathf.Ceil(_reloadCaption.GetPreferredValues("EMPTY").x) + (int)UiSpace.S, 0f);
+            _reloadPromptHome = new Vector2(Mathf.Ceil(_reloadCaption.GetPreferredValues(UiStrings.Get("hud.ammo.empty", "EMPTY")).x) + (int)UiSpace.S, 0f);
             Place((RectTransform)_reloadPrompt.transform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), _reloadPromptHome, ((RectTransform)_reloadPrompt.transform).sizeDelta);
             _reloadPromptGroup = UiFactory.Group(_reloadPrompt.gameObject);   // 8c · E23: α + 4 px Fast in, Exit Fast out
             _reloadPrompt.gameObject.SetActive(false);
             _reloadCaptionGroup = UiFactory.Group(captionRow.gameObject);
 
-            TMP_Text suspended = InkText("Suspended", root, "SUSPENDED", UiType.Label, UiColor.StateWarning, TextAnchor.MiddleLeft);
+            TMP_Text suspended = InkText("Suspended", root, UiStrings.Get("hud.special.suspended", "SUSPENDED"), UiType.Label, UiColor.StateWarning, TextAnchor.MiddleLeft);
             suspended.fontStyle = FontStyles.Bold;
             Place(suspended.rectTransform, anchor, new Vector2(0f, 0.5f), new Vector2(captionLeft, 92f), new Vector2(220f, ReloadPromptSize + 6f));
             _suspendedChip = suspended.gameObject;
@@ -409,7 +409,7 @@ namespace DD.Prototype.UI
             Image underline = UiFactory.NewImage("Underline", row, UiColor.StateDanger, BrushSprite());
             Place(underline.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0.5f), new Vector2(0f, 3f), new Vector2(300f, 7f));
             Fade(underline, 0.8f);
-            TMP_Text words = InkText("Text", row, "SPECIAL WEAPON ENDING", UiType.Label, UiColor.StateDanger, TextAnchor.MiddleCenter);
+            TMP_Text words = InkText("Text", row, UiStrings.Get("hud.special.ending_banner", "SPECIAL WEAPON ENDING"), UiType.Label, UiColor.StateDanger, TextAnchor.MiddleCenter);
             words.fontStyle = FontStyles.Bold;
             UiHudInk.Apply(words);
             UiFactory.Fill(words.rectTransform);
@@ -423,14 +423,14 @@ namespace DD.Prototype.UI
             RectTransform row = InkRoot("ThreatRow", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -ThreatRowTop), new Vector2(600f, 30f));
             _threatRow = row.gameObject;
 
-            _threatSlots[0] = InkThreatChip(row, "SURROUNDED", "Threat.Surrounded", UiColor.StateDanger);
-            _threatSlots[1] = InkThreatChip(row, "BEHIND YOU", "Threat.BehindOuter", UiColor.StateDanger);
-            _threatSlots[2] = InkThreatChip(row, "ELITE NEARBY", "Threat.EliteOuter", UiColor.StateWarning);
+            _threatSlots[0] = InkThreatChip(row, UiStrings.Get("hud.threat.surrounded", "SURROUNDED"), "Threat.Surrounded", UiColor.StateDanger);
+            _threatSlots[1] = InkThreatChip(row, UiStrings.Get("hud.threat.behind", "BEHIND YOU"), "Threat.BehindOuter", UiColor.StateDanger);
+            _threatSlots[2] = InkThreatChip(row, UiStrings.Get("hud.threat.elite", "ELITE NEARBY"), "Threat.EliteOuter", UiColor.StateWarning);
 
             float words = 0f;
             for (int i = 0; i < ThreatLabels.Length; i++)
             {
-                words = Mathf.Max(words, Mathf.Ceil(_threatSlots[2].Label.GetPreferredValues(ThreatLabels[i]).x));
+                words = Mathf.Max(words, Mathf.Ceil(_threatSlots[2].Label.GetPreferredValues(UiStrings.Get(ThreatLabelKeys[i], ThreatLabels[i])).x));
             }
 
             float width = 30f + words;
@@ -670,7 +670,7 @@ namespace DD.Prototype.UI
         private RectTransform _suspendedRect;
         private RectTransform _weaponCalm;
         private Vector2 _ladderHome;
-        private string _ammoLowWord = "LOW AMMO";
+        private string _ammoLowWord = UiStrings.Get("hud.ammo.low", "LOW AMMO");
         private int _clusterMirrored = -1;
 
         /// <summary>The weapon cluster's LOW word (12b: "LOW AMMO", the pack's hud.ammo.low; tests).</summary>
