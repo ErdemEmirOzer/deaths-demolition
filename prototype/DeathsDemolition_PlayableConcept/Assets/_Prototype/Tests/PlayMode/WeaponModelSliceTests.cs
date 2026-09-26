@@ -526,6 +526,139 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsTrue(_s.Controller.ClassicFpViewPosed);
         }
 
+        /// <summary>
+        /// WP-069 FP weapon feel (C-00 26.09), Run scene, arms off. Rest is exactly fpView. Holding Focus lays the sight line on
+        /// the crosshair (sight_rear and sight_front within 3 px of the centre) and zooms the world FOV ×0.85 (A4.1); releasing
+        /// returns to fpView. One hip shot kicks the view model back and up (A4.2 ar_1 3 cm / 2.2°, and no longer the TP fire
+        /// clip's ~17° turn), settling onto fpView. Reduced motion keeps the view model on fpView. Evidence: hip / mid-ADS / ADS
+        /// frames and the kick peak.
+        /// </summary>
+        [UnityTest]
+        [Timeout(240000)]
+        public IEnumerator FP_His_ADS_Kick_AzaltilmisHareket()
+        {
+            yield return Kur();
+            Transform mount = _s.Rig.GetComponentInChildren<PlayerWeaponBinding>().WeaponMount;
+            _s.Controller.EquipClassic(ClassicWeaponId.AssaultRifle, _s.Config);
+            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.FirstPerson, instant: true);
+            yield return SpecialWeaponSahne.Kareler(60);
+            var camRig = DD.Prototype.CameraSystem.PrototypeCameraRig.Active;
+            Camera vm = camRig.ViewmodelCamera;
+            Assert.IsNotNull(vm, "FP'de görüntü modeli kamerası yok.");
+            camRig.Camera.aspect = KareW / (float)KareH;
+            vm.aspect = KareW / (float)KareH;
+            yield return Dinlenme(mount, "ar_1");
+            yield return SpecialWeaponSahne.Kareler(10);
+            Transform anchor = DD.Prototype.CameraSystem.CameraView.ViewmodelAnchor;
+            WeaponDefinition def = _s.Controller.Classic.Definition;
+            WeaponFpViewPose pose = def.FpViewPose;
+            Transform rig = mount.Find("ClassicWeaponRig");
+            float Sapma() => Vector3.Distance(anchor.InverseTransformPoint(rig.position), pose.position);
+            float Aci() => Quaternion.Angle(Quaternion.Inverse(anchor.rotation) * rig.rotation, Quaternion.Euler(pose.euler));
+            float Yatay() => 2f * Mathf.Atan(Mathf.Tan(camRig.Camera.fieldOfView * 0.5f * Mathf.Deg2Rad) * camRig.Camera.aspect) * Mathf.Rad2Deg;
+            var report = new List<string>();
+
+            // rest = fpView, the feel offset exactly zero
+            Assert.Less(Sapma(), 0.001f, "dinlenme fpView'da değil (" + (Sapma() * 1000f).ToString("0.0") + " mm)");
+            Assert.Less(Aci(), 0.05f);
+            Assert.AreEqual(Vector3.zero, _s.Controller.ClassicFeel.Position, "dinlenmede his ofseti sıfır değil");
+            float hipH = Yatay();
+            Color32[] hip = SahneKare(camRig.Camera);
+
+            // ADS
+            float adsSeconds = def.accuracy.adsSeconds;
+            _s.Girdi.OdakBasili = true;
+            yield return new WaitForSeconds(adsSeconds * 0.4f);
+            Color32[] mid = SahneKare(camRig.Camera);
+            yield return new WaitForSeconds(adsSeconds + 0.3f);
+            Assert.AreEqual(1f, DD.Prototype.CameraSystem.FpAdsLens.Ads01, 1e-3f, "ADS tamamlanmadı");
+            Transform rear = WeaponSocketContract.Find(rig, "sight_rear"), front = WeaponSocketContract.Find(rig, "sight_front");
+            Assert.IsNotNull(rear, "sight_rear yok");
+            Assert.IsNotNull(front, "sight_front yok");
+            var centre = new Vector2(KareW * 0.5f, KareH * 0.5f);
+            Vector2 pr = Ekran(vm, rear.position), pf = Ekran(vm, front.position);
+            float adsH = Yatay();
+            report.Add("ADS sight_rear " + (pr - centre).magnitude.ToString("0.0") + " px, sight_front " + (pf - centre).magnitude.ToString("0.0") + " px from the centre, FOV " +
+                       hipH.ToString("0.0") + "° → " + adsH.ToString("0.0") + "° (×" + (adsH / hipH).ToString("0.000") + ")");
+            Assert.Less((pr - centre).magnitude, 3f, "ADS: gez nişangâhta değil");
+            Assert.Less((pf - centre).magnitude, 3f, "ADS: arpacık nişangâhta değil");
+            Assert.AreEqual(0.85f, adsH / hipH, 0.01f, "ADS dünya FOV ×0,85 (A4.1)");
+            Color32[] ads = SahneKare(camRig.Camera);
+
+            _s.Girdi.OdakBasili = false;
+            yield return new WaitForSeconds(adsSeconds + 0.4f);
+            Assert.Less(Sapma(), 0.001f, "ADS'den sonra fpView'a dönmedi");
+            Assert.AreEqual(hipH, Yatay(), 0.05f, "FOV geri dönmedi");
+
+            // one hip shot: the A4.2 kick, then back on fpView
+            float back = 0f, up = 0f, turn = 0f;
+            Color32[] peak = null;
+            _s.Girdi.AtesBasti = true;
+            _s.Girdi.AtesBasili = true;
+            for (int f = 0; f < 15; f++)
+            {
+                yield return null;
+                if (f == 0) { _s.Girdi.AtesBasti = false; _s.Girdi.AtesBasili = false; }
+                Vector3 d = anchor.InverseTransformPoint(rig.position) - pose.position;
+                if (-d.z > back) { back = -d.z; if (peak == null && back > 0.012f) peak = SahneKare(camRig.Camera); }
+                up = Mathf.Max(up, d.y);
+                turn = Mathf.Max(turn, Aci());
+            }
+
+            yield return new WaitForSeconds(0.8f);
+            report.Add("kick back " + (back * 100f).ToString("0.0") + " cm, up " + (up * 100f).ToString("0.0") + " cm, turn " + turn.ToString("0.0") + "°, after 0.8 s " + (Sapma() * 1000f).ToString("0.0") + " mm");
+            Assert.Greater(back, 0.015f, "kick geri tepme yok (A4.2 ar_1 3 cm)");
+            Assert.Greater(turn, 1f, "kick namlu kalkışı yok (A4.2 ar_1 2,2°)");
+            Assert.Less(turn, 4f, "FP'de TP ateş klibi dönüşü hâlâ var (~17°)");
+            Assert.Less(Sapma(), 0.001f, "kick sonrası fpView'a dönmedi");
+
+            // reduced motion: no kick, no sway, no bob
+            DD.Prototype.CameraSystem.CameraModeSettings before = DD.Prototype.CameraSystem.CameraModeService.Settings.Clone();
+            try
+            {
+                DD.Prototype.CameraSystem.CameraModeSettings reduced = before.Clone();
+                reduced.ReducedMotion = true;
+                DD.Prototype.CameraSystem.CameraModeService.ApplySettings(reduced, false, true);
+                yield return SpecialWeaponSahne.Kareler(5);
+                float worst = 0f;
+                _s.Girdi.AtesBasti = true;
+                _s.Girdi.AtesBasili = true;
+                for (int f = 0; f < 15; f++)
+                {
+                    yield return null;
+                    if (f == 0) { _s.Girdi.AtesBasti = false; _s.Girdi.AtesBasili = false; }
+                    worst = Mathf.Max(worst, Sapma());
+                }
+
+                report.Add("reduced motion: worst " + (worst * 1000f).ToString("0.00") + " mm off fpView");
+                Assert.Less(worst, 0.001f, "azaltılmış harekette görüntü modeli oynadı");
+            }
+            finally
+            {
+                DD.Prototype.CameraSystem.CameraModeService.ApplySettings(before, false, true);
+            }
+
+            const int Kucuk = 2;
+            int sw = KareW / Kucuk, sh = KareH / Kucuk;
+            var sheet = new Color32[sw * 2 * sh * 2];
+            Color32[][] cells = { hip, mid, ads, peak ?? hip };
+            for (int c = 0; c < 4; c++)
+            {
+                int col = c % 2, row = c / 2;
+                for (int y = 0; y < sh; y++)
+                {
+                    for (int x = 0; x < sw; x++) sheet[((1 - row) * sh + y) * sw * 2 + col * sw + x] = cells[c][(y * Kucuk) * KareW + x * Kucuk];
+                }
+            }
+
+            YazPng(sheet, sw * 2, sh * 2, "wp069-feel-sheet.png");
+            YazPng(ads, KareW, KareH, "wp069-feel-ads.png");
+            if (peak != null) YazPng(peak, KareW, KareH, "wp069-feel-kick.png");
+            Debug.Log("[DD-TEST] wp069.feel " + string.Join(" | ", report));
+            camRig.Camera.ResetAspect();
+            vm.ResetAspect();
+        }
+
         private const int KareW = 1920, KareH = 1080;
 
         /// <summary>

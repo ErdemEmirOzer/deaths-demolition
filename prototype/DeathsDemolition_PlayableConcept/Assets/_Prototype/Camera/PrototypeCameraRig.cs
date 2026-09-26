@@ -801,7 +801,7 @@ namespace DD.Prototype.CameraSystem
             UpdateWallProbe(Feet + Vector3.up * eye, yawOnly * Vector3.forward);
 
             // FirstPersonFov is horizontal degrees at 16:9 (Hor+, C-00 24.09); Unity wants vertical.
-            float horizontal = CameraModeService.Settings.FirstPersonFov;
+            float horizontal = CameraModeService.Settings.FirstPersonFov * FpAdsLens.WorldFovScale;   // WP-069 FP feel: ADS zoom (A4.1)
             fov = 2f * Mathf.Atan(Mathf.Tan(horizontal * 0.5f * Mathf.Deg2Rad) / CameraModeSettings.FovReferenceAspect) * Mathf.Rad2Deg;
         }
 

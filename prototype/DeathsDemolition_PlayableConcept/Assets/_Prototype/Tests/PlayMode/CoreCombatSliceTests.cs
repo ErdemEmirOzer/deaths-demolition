@@ -26,9 +26,11 @@ namespace DD.Prototype.Tests.PlayMode
     /// Savaş dilimi testlerinin sürülebilir girdisi: hareket, imleç, ateş.
     /// Registry'ye takılır; motor, nişan ve silah aynı kaynağı okur.
     /// </summary>
-    internal sealed class SavasTestGirdisi : IInputSource
+    internal sealed class SavasTestGirdisi : IInputSource, IFocusInputSource
     {
         public Vector2 Yon;
+        public bool OdakBasili;   // WP-069 FP feel: Focus / ADS held
+        public bool FocusHeld => OdakBasili;
         public Vector2 Imlec = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
         public bool AtesBasili;
         public bool AtesBasti;

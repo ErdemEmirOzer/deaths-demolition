@@ -320,6 +320,7 @@ namespace DD.Prototype.Weapons
             WeaponEvents.PublishWeaponEquipped(_equippedId);
             PublishClassicState(true);
             if (switching) SkinnedVisual()?.PlaySwitchIn();   // WP-069 (S-06 B4b): the new weapon comes up
+            if (switching) _clipMotionUntil = Time.time + FpClipMotionSeconds;   // WP-069 FP feel: the switch clip shows in FP
         }
 
         /// <summary>The player's authored body (the switch clips), found once.</summary>
@@ -635,6 +636,8 @@ namespace DD.Prototype.Weapons
                 CameraReactions.AddRecoil(_classic.LastRecoilPitch, _classic.LastRecoilYaw);
             }
 
+            FpFeelShot(_classicFeel, _classic.Definition);   // WP-069 FP feel: the view-model kick (A4.2)
+
             // WP-042 / WP-042C: the casing slot. A/B eject at the SHOT — always from here, never from the
             // clip: the 6/5-frame additive fire clip is retriggered per shot and drops its frame-1 event
             // under auto fire (measured on WP-032C: 3 shots → 2 events). C ejects at the pump-back —
@@ -803,6 +806,8 @@ namespace DD.Prototype.Weapons
                 CameraReactions.AddRecoil(_special.LastRecoilPitch, _special.LastRecoilYaw);
             }
 
+            FpFeelShot(_specialFeel, _special.Definition);   // WP-069 FP feel: the view-model kick (A4.2)
+
             ApplyFireShake(feelRow.shakeWeight, WeaponPower.Heavy, aim);
 
             AudioEvents.Raise(CombatAudioEvent.HeavyWeaponFire, origin, 1f, 60);
@@ -831,6 +836,7 @@ namespace DD.Prototype.Weapons
             PublishClassicState(true);
             PublishSpecialState(true);
             SkinnedVisual()?.PlaySwitchIn();   // WP-069 (S-06 B4b): the parked classic comes back up
+            _clipMotionUntil = Time.time + FpClipMotionSeconds;
         }
 
         // ------------------------------------------------------------------ shared
@@ -1199,6 +1205,24 @@ namespace DD.Prototype.Weapons
         private readonly FpViewPoseState _classicFpPose = new FpViewPoseState();
         private readonly FpViewPoseState _specialFpPose = new FpViewPoseState();
 
+        // WP-069 · the FP weapon feel layer (C-00 26.09): ADS pose + lens, sway, bob, view-model kick on top of fpView.
+        private readonly FpWeaponFeel _classicFeel = new FpWeaponFeel();
+        private readonly FpWeaponFeel _specialFeel = new FpWeaponFeel();
+        private bool _feelHasLast;
+        private float _feelLastYaw, _feelLastPitch;
+        private Vector3 _feelLastPos;
+        private uint _feelShots;
+        private float _clipMotionUntil = -1f, _clipMotionWeight;
+
+        /// <summary>How long after a switch the mount's clip motion carries into the FP view model (the switch clips run ≤ 0.6 s).</summary>
+        public const float FpClipMotionSeconds = 0.6f;
+
+        /// <summary>WP-069 readout: the classic's FP feel layer (tests).</summary>
+        public FpWeaponFeel ClassicFeel => _classicFeel;
+
+        /// <summary>WP-069 readout: the Special's FP feel layer (tests).</summary>
+        public FpWeaponFeel SpecialFeel => _specialFeel;
+
         /// <summary>
         /// WP-069 × WP-071 B4b (C-00 25.09): the first-person arms' weapon socket while S-06's FirstPersonArms is active (it
         /// sets this; null otherwise). With it the FP weapon follows the arms — root = socket − R·gripOffset (× the pose's
@@ -1219,9 +1243,77 @@ namespace DD.Prototype.Weapons
         internal void ApplyFpViewPose()
         {
             Transform character = _motor != null ? _motor.transform : transform;
-            _classicFpPose.Tick(_classicRig, _classic != null ? _classic.Definition : null, character, true);
+            TickFpFeel(character);
+            float clip = _clipMotionWeight;
+            _classicFpPose.Tick(_classicRig, _classic != null ? _classic.Definition : null, character, true, _classicFeel, clip);
             // the arms' socket is the classic's FP set — a Special in hand keeps its own fpView pose
-            _specialFpPose.Tick(_specialRig, _special.IsActive ? _special.Definition : null, character, false);
+            _specialFpPose.Tick(_specialRig, _special.IsActive ? _special.Definition : null, character, false, _specialFeel, clip);
+        }
+
+        /// <summary>
+        /// WP-069 FP feel: look rates from the viewmodel anchor, planar speed from the character, the gameplay ADS weight; the ADS
+        /// lens for the camera (FpAdsLens); the clip-motion weight (switch / reload only — the fire kick is the feel layer's).
+        /// </summary>
+        private void TickFpFeel(Transform character)
+        {
+            Transform anchor = CameraView.ViewmodelAnchor;
+            float dt = Time.deltaTime;
+            if (anchor == null)
+            {
+                _classicFeel.Reset();
+                _specialFeel.Reset();
+                _feelHasLast = false;
+                _clipMotionWeight = 0f;
+                FpAdsLens.Ads01 = 0f;
+                FpAdsLens.WorldFovScale = 1f;
+                return;
+            }
+
+            Vector3 f = anchor.forward;
+            float yaw = Mathf.Atan2(f.x, f.z) * Mathf.Rad2Deg, pitch = Mathf.Asin(Mathf.Clamp(f.y, -1f, 1f)) * Mathf.Rad2Deg;
+            Vector3 pos = character.position;
+            float yawRate = 0f, pitchRate = 0f, speed = 0f;
+            if (_feelHasLast && dt > 0f)
+            {
+                yawRate = Mathf.DeltaAngle(_feelLastYaw, yaw) / dt;
+                pitchRate = (pitch - _feelLastPitch) / dt;
+                Vector3 d = pos - _feelLastPos;
+                d.y = 0f;
+                speed = d.magnitude / dt;
+            }
+
+            _feelLastYaw = yaw;
+            _feelLastPitch = pitch;
+            _feelLastPos = pos;
+            _feelHasLast = true;
+
+            bool reduced = CameraModeService.Settings != null && CameraModeService.Settings.ReducedMotion;
+            WeaponDefinition classicDef = _classic != null ? _classic.Definition : null;
+            if (classicDef != null)
+            {
+                _classicFeel.Tick(dt, yawRate, pitchRate, speed, _special.IsActive ? 0f : _classic.Ads01, CameraModesFeel.For(classicDef.weaponId).Weight, reduced);
+            }
+
+            WeaponDefinition specialDef = _special.IsActive ? _special.Definition : null;
+            if (specialDef != null) _specialFeel.Tick(dt, yawRate, pitchRate, speed, 0f, CameraModesFeel.For(specialDef.weaponId).Weight, reduced);
+            else _specialFeel.Reset();
+
+            float ads = specialDef == null && classicDef != null ? _classicFeel.AdsEased : 0f;
+            FpAdsLens.Ads01 = ads;
+            FpAdsLens.WorldFovScale = classicDef != null ? Mathf.Lerp(1f, FpWeaponFeel.AdsWorldFovScale(classicDef.weaponClass), ads) : 1f;
+
+            bool clipMotion = Time.time < _clipMotionUntil || (_classic != null && _classic.IsReloading);
+            _clipMotionWeight = Mathf.MoveTowards(_clipMotionWeight, clipMotion ? 1f : 0f, dt > 0f ? dt / 0.1f : 1f);
+        }
+
+        /// <summary>WP-069 FP feel: one view-model kick for the weapon that fired (first person only; the yaw side is a deterministic hash).</summary>
+        private void FpFeelShot(FpWeaponFeel feel, WeaponDefinition def)
+        {
+            if (feel == null || def == null || CameraView.ViewmodelAnchor == null) return;
+            _feelShots++;
+            float side = ((_feelShots * 2654435761u) >> 16 & 1u) == 0u ? 1f : -1f;
+            bool reduced = CameraModeService.Settings != null && CameraModeService.Settings.ReducedMotion;
+            feel.Shot(def.weaponId, CameraModesFeel.For(def.weaponId).Weight, feel.AdsEased, side, reduced);
         }
 
         /// <summary>
@@ -1239,7 +1331,11 @@ namespace DD.Prototype.Weapons
 
             public bool Posed => _posed;
 
-            public void Tick(WeaponVisualRig rig, WeaponDefinition definition, Transform character, bool followArms)
+            private WeaponDefinition _sightDef;
+            private bool _hasSight;
+            private Vector3 _sightLocal;
+
+            public void Tick(WeaponVisualRig rig, WeaponDefinition definition, Transform character, bool followArms, FpWeaponFeel feel, float clipMotion)
             {
                 if (rig == null)
                 {
@@ -1278,17 +1374,50 @@ namespace DD.Prototype.Weapons
                     return;
                 }
 
+                // The mount's animated deviation (the TP clips) carries into FP only while switching / reloading — the fire
+                // kick is the feel layer's A4.2 view-model kick (the TP fire clip turned the FP weapon ~17°).
                 Quaternion kick = Quaternion.identity;
                 Vector3 forward = character.forward;
                 forward.y = 0f;
-                if (t.parent != null && forward.sqrMagnitude > 1e-6f)
+                if (clipMotion > 0f && t.parent != null && forward.sqrMagnitude > 1e-6f)
                 {
-                    kick = Quaternion.Inverse(Quaternion.LookRotation(forward.normalized, Vector3.up)) * t.parent.rotation;
+                    kick = Quaternion.Slerp(Quaternion.identity, Quaternion.Inverse(Quaternion.LookRotation(forward.normalized, Vector3.up)) * t.parent.rotation, clipMotion);
                 }
 
-                t.SetPositionAndRotation(anchor.TransformPoint(pose.position), anchor.rotation * Quaternion.Euler(pose.euler) * kick);
+                Vector3 viewPos = pose.position;
+                Quaternion viewRot = Quaternion.Euler(pose.euler);
+                if (feel != null)
+                {
+                    // ADS: the model's sight_ads (the eye point on the sight line) on the anchor, the barrel along the view.
+                    float a = feel.AdsEased;
+                    if (a > 0f && SightAds(t, definition, out Vector3 sight))
+                    {
+                        viewPos = Vector3.Lerp(viewPos, -(sight * pose.scale), a);
+                        viewRot = Quaternion.Slerp(viewRot, Quaternion.identity, a);
+                    }
+
+                    viewPos += feel.Position;
+                    viewRot = feel.Rotation * viewRot;
+                }
+
+                t.SetPositionAndRotation(anchor.TransformPoint(viewPos), anchor.rotation * viewRot * kick);
                 t.localScale = new Vector3(pose.scale, pose.scale, pose.scale);
                 _posed = true;
+            }
+
+            /// <summary>The model's sight_ads in the weapon frame (cached per definition; false when the model has none).</summary>
+            private bool SightAds(Transform root, WeaponDefinition definition, out Vector3 local)
+            {
+                if (_sightDef != definition)
+                {
+                    _sightDef = definition;
+                    Transform node = WeaponSocketContract.Find(root, definition.presentation.sockets.sightAds);
+                    _hasSight = node != null;
+                    _sightLocal = _hasSight ? root.InverseTransformPoint(node.position) : Vector3.zero;
+                }
+
+                local = _sightLocal;
+                return _hasSight;
             }
         }
 
