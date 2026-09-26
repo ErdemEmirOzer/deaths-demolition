@@ -84,6 +84,21 @@ namespace DD.Prototype.Core.Weapons
             }
         }
 
+        /// <summary>
+        /// WP-073 (C-00 26.09): the contract frame of a VFX socket — forward down the barrel, up up (the flash, smoke and casing
+        /// read it). The AP-021 v003 exports (P-07) keep Blender's frame on the socket empties: down the barrel = local −Y,
+        /// up = local +Z, right = +X — measured identical on all ten classic weapons (Wp073WeaponSocketTests), so their
+        /// forward pointed straight up. A socket whose forward points up along the model root is turned into the contract
+        /// frame on the instance (position untouched). Returns true when it turned one.
+        /// </summary>
+        public static bool NormalizeFrame(Transform socket, Transform modelRoot)
+        {
+            if (socket == null || modelRoot == null) return false;
+            if (Vector3.Dot(socket.forward, modelRoot.up) < 0.9f) return false;   // already forward down the barrel
+            socket.localRotation = socket.localRotation * Quaternion.LookRotation(Vector3.down, Vector3.forward);
+            return true;
+        }
+
         /// <summary>Depth-first search by exact name under <paramref name="root"/> (the root itself excluded).</summary>
         public static Transform Find(Transform root, string name)
         {

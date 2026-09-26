@@ -187,6 +187,7 @@ namespace DD.Prototype.Weapons
             // WP-042 (ADR-042-1): a model that carries the contract sockets hands them to the rig —
             // the flash / tracer origin moves to its muzzle, the casing and magazine slots read its ports.
             Transform muzzle = WeaponSocketContract.Find(modelRoot.transform, WeaponSocketContract.Muzzle);
+            WeaponSocketContract.NormalizeFrame(muzzle, modelRoot.transform);   // WP-073: AP-021 sockets arrive in Blender's frame
             if (muzzle != null)
             {
                 if (_muzzle != null && _muzzle.parent == _body) Destroy(_muzzle.gameObject);
@@ -194,6 +195,7 @@ namespace DD.Prototype.Weapons
             }
 
             _ejection = WeaponSocketContract.Find(modelRoot.transform, WeaponSocketContract.Ejection);
+            WeaponSocketContract.NormalizeFrame(_ejection, modelRoot.transform);
             _magMarker = WeaponSocketContract.Find(modelRoot.transform, WeaponSocketContract.MarkerMag);
         }
 

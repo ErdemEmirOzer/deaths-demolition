@@ -365,6 +365,15 @@ namespace DD.Art
                         tag.Surface = kind;
                         tag.Family = family;
                         added++;
+
+                        // WP-073 (C-00 26.09): a tile roof inside a timber kit piece (SM_gates' Roof/RoofOccluder) is tile, not
+                        // the frame's wood — its own tag wins (the nearest SurfaceTag up the parents). Load-time only.
+                        foreach (Collider roof in t.GetComponentsInChildren<Collider>(true))
+                        {
+                            if (roof.name != V6RoofOccluderName || roof.GetComponent<SurfaceTag>() != null) continue;
+                            roof.gameObject.AddComponent<SurfaceTag>().Surface = SurfaceKind.Stone;
+                            added++;
+                        }
                     }
 
                     continue;
