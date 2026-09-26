@@ -254,7 +254,7 @@ namespace DD.Prototype.UI
             // after quitting). The mid plate (lanterns lit) and the weapon sub-line go into the run.
             bool intoRun = sceneName == PrototypeScenes.Run;
             bool tipped = ShowsTip(from, sceneName);
-            string subline = intoRun ? ProfileService.WeaponDisplayName(SelectedWeapon).ToUpperInvariant() : string.Empty;
+            string subline = intoRun ? UiStrings.Upper(ProfileService.WeaponDisplayName(SelectedWeapon)) : string.Empty;
             string tip = null;
             bool fast = FastTransitions;
             float lastLoad = UiLoadTiming.LastLoadSeconds(sceneName);
@@ -313,7 +313,7 @@ namespace DD.Prototype.UI
                 curtain.Open(fast);
                 bool menuFailed = sceneName == PrototypeScenes.MainMenu;
                 string failed = sceneName;
-                curtain.ShowError(sceneName, false, menuFailed ? "TRY AGAIN" : "RETURN TO MAIN MENU",
+                curtain.ShowError(sceneName, false, menuFailed ? UiStrings.Get("loading.error.retry", "TRY AGAIN") : UiStrings.Get("loading.error.to_menu", "RETURN TO MAIN MENU"),
                     () => Load(menuFailed ? failed : PrototypeScenes.MainMenu));
                 yield break;
             }

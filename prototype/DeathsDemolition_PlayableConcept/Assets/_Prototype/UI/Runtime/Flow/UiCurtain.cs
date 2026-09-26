@@ -335,7 +335,7 @@ namespace DD.Prototype.UI
             _seal.enabled = seal != null;
             RestSeal();
 
-            _eyebrow = UiFactory.Label("Eyebrow", groupRect, "LOADING", UiType.Label, UiColor.TextSecondary, TextAnchor.UpperCenter);
+            _eyebrow = UiFactory.Label("Eyebrow", groupRect, UiStrings.Get("loading.word", "LOADING"), UiType.Label, UiColor.TextSecondary, TextAnchor.UpperCenter);
             PlaceText(_eyebrow, RingLift - RingSize * 0.5f - (int)UiSpace.XL, UiFactory.LineHeight(UiType.Label));
 
             _destination = UiFactory.Label("Destination", groupRect, string.Empty, UiType.H2, UiColor.TextPrimary, TextAnchor.UpperCenter);
@@ -519,7 +519,7 @@ namespace DD.Prototype.UI
             _blotFx.Hold();
 
             float top = RingLift - BootSealSize * 0.5f - (int)UiSpace.XL;
-            _kicker = UiFactory.Label("Kicker", _bootLayer, "PLAYABLE CONCEPT · PROTOTYPE", UiType.Label, UiColor.TextSecondary, TextAnchor.UpperCenter);
+            _kicker = UiFactory.Label("Kicker", _bootLayer, UiStrings.Get("menu.eyebrow", "PLAYABLE CONCEPT · PROTOTYPE"), UiType.Label, UiColor.TextSecondary, TextAnchor.UpperCenter);
             PlaceText(_kicker, top, UiFactory.LineHeight(UiType.Label));
             top -= UiFactory.LineHeight(UiType.Label) + (int)UiSpace.S;
 
@@ -653,7 +653,7 @@ namespace DD.Prototype.UI
             UiMotion.Resize(_seal.rectTransform, new Vector2(SealSize, SealSize), UiDuration.Screen, UiEase.Settle, UiMotionClass.Decor);
             UiMotion.TintAlpha(_kicker, 0f, UiDuration.Fast, UiEase.Exit, UiMotionClass.Decor);
             UiMotion.TintAlpha(_wordmark, 0f, UiDuration.Fast, UiEase.Exit, UiMotionClass.Decor);
-            _eyebrow.text = "LOADING";
+            _eyebrow.text = UiStrings.Get("loading.word", "LOADING");
             _eyebrowState = "LOADING";
             _eyebrow.gameObject.SetActive(true);
             _eyebrow.canvasRenderer.SetAlpha(0f);
@@ -911,7 +911,7 @@ namespace DD.Prototype.UI
         /// </summary>
         public void ShowGroup(string destination, string subline, string tip, bool midPlate, string keyArt = LoadingKeyArt)
         {
-            _eyebrow.text = "LOADING";
+            _eyebrow.text = UiStrings.Get("loading.word", "LOADING");
             _eyebrowState = "LOADING";
             _percent = -1;
             _destination.text = destination ?? string.Empty;
@@ -931,7 +931,7 @@ namespace DD.Prototype.UI
             }
 
             ShowKeyArt(keyArt);
-            SetTip(UiMotion.ReducedMotion ? UiLoadingTips.ReducedMotionLine : tip);
+            SetTip(UiMotion.ReducedMotion ? UiStrings.Get("loading.reduced_motion", UiLoadingTips.ReducedMotionLine) : tip);
             if (_stall != null)
             {
                 _stall.gameObject.SetActive(false);
@@ -997,7 +997,7 @@ namespace DD.Prototype.UI
             if (destination != null)
             {
                 // The ink variant keeps its two labels under the small ring (§15.1: LOADING / RUN RESULTS).
-                _eyebrow.text = "LOADING";
+                _eyebrow.text = UiStrings.Get("loading.word", "LOADING");
                 _eyebrow.gameObject.SetActive(true);
                 _destination.text = destination;
                 _destination.gameObject.SetActive(true);
@@ -1070,7 +1070,7 @@ namespace DD.Prototype.UI
             if (_stall == null)
             {
                 float width = Mathf.Min(TipMaxWidth, _root.rect.width - TipMargin * 2f);
-                _stall = UiNotices.Notice("Stalled", _group.transform, UiNoticeKind.Info, UiLoadingTips.StalledLine, width);
+                _stall = UiNotices.Notice("Stalled", _group.transform, UiNoticeKind.Info, UiStrings.Get("loading.stalled", UiLoadingTips.StalledLine), width);
                 _stall.anchorMin = new Vector2(0f, 0f);
                 _stall.anchorMax = new Vector2(0f, 0f);
             }
@@ -1092,9 +1092,11 @@ namespace DD.Prototype.UI
         {
             HideError();
             _canvas.enabled = true;
-            string body = "Deaths Demolition could not open " + SentenceFor(scene) + ". "
-                + (stalled ? "Loading stopped making progress." : "The scene is missing from this build.")
-                + " Your profile was not changed.";
+            string body = UiStrings.Format("loading.error.body", "value", SentenceFor(scene), "reason",
+                stalled
+                    ? UiStrings.Get("loading.error.stalled", "Loading stopped making progress.")
+                    : UiStrings.Get("loading.error.missing", "The scene is missing from this build."),
+                "Deaths Demolition could not open {value}. {reason} Your profile was not changed.");
             Action quit = Application.Quit;
             // M width, height from the content (no void under a two-line body).
             // The strip and the stall notice would repeat what the modal says (AD 10b-1 SHOULD-2).
@@ -1108,8 +1110,8 @@ namespace DD.Prototype.UI
             // edge and the destination sat on its bottom border. HideError puts back what was shown.
             HideDevice();
             _error = onPrimary != null
-                ? UiModal.Create("LoadError", _root, UiModalSize.M, "THE NEXT SCREEN DID NOT LOAD", body, primaryLabel, UiButtonVariant.Primary, onPrimary, "QUIT", quit, false, true)
-                : UiModal.Create("LoadError", _root, UiModalSize.M, "THE NEXT SCREEN DID NOT LOAD", body, "QUIT", UiButtonVariant.Secondary, quit, null, null, false, true);
+                ? UiModal.Create("LoadError", _root, UiModalSize.M, UiStrings.Get("loading.error.title", "THE NEXT SCREEN DID NOT LOAD"), body, primaryLabel, UiButtonVariant.Primary, onPrimary, UiStrings.Get("menu.quit", "QUIT"), quit, false, true)
+                : UiModal.Create("LoadError", _root, UiModalSize.M, UiStrings.Get("loading.error.title", "THE NEXT SCREEN DID NOT LOAD"), body, UiStrings.Get("menu.quit", "QUIT"), UiButtonVariant.Secondary, quit, null, null, false, true);
             _error.Open();
             UiCursor.SetContextVisible(true);
         }
@@ -1148,11 +1150,11 @@ namespace DD.Prototype.UI
         /// <summary>The destination in sentence case for the error body.</summary>
         public static string SentenceFor(string scene)
         {
-            if (scene == PrototypeScenes.MainMenu) return "the main menu";
-            if (scene == PrototypeScenes.Selection) return "the selection screen";
-            if (scene == PrototypeScenes.Run) return "the run";
-            if (scene == PrototypeScenes.Results) return "the results screen";
-            return "the next screen";
+            if (scene == PrototypeScenes.MainMenu) return UiStrings.Get("loading.dest.main_menu", "the main menu");
+            if (scene == PrototypeScenes.Selection) return UiStrings.Get("loading.dest.selection", "the selection screen");
+            if (scene == PrototypeScenes.Run) return UiStrings.Get("loading.dest.run", "the run");
+            if (scene == PrototypeScenes.Results) return UiStrings.Get("loading.dest.results", "the results screen");
+            return UiStrings.Get("loading.dest.next", "the next screen");
         }
 
         /// <summary>
@@ -1189,7 +1191,7 @@ namespace DD.Prototype.UI
                 if (percent != _percent)
                 {
                     _percent = percent;
-                    _eyebrow.SetText("LOADING · {0}%", percent);
+                    _eyebrow.SetText(UiStrings.Get("loading.percent", "LOADING · {0}%"), percent);
                 }
             }
         }
@@ -1215,7 +1217,7 @@ namespace DD.Prototype.UI
                 return;
             }
 
-            _eyebrow.text = UiMotion.ReducedMotion ? "ENTERING · 100%" : "ENTERING";
+            _eyebrow.text = UiMotion.ReducedMotion ? UiStrings.Get("loading.entering.full", "ENTERING · 100%") : UiStrings.Get("loading.entering", "ENTERING");
             _eyebrowState = "ENTERING";
             // The ring never scales: the seal marks the step (Stamp 1.12 → 1.00, ink → TextPrimary,
             // §15.3), and the mouth closes as the scene activates; the wet edge dries into the stroke.
@@ -1324,10 +1326,10 @@ namespace DD.Prototype.UI
         /// <summary>The destination label for a scene (UXW §2: real names only).</summary>
         public static string DestinationFor(string scene)
         {
-            if (scene == PrototypeScenes.MainMenu) return "MAIN MENU";
-            if (scene == PrototypeScenes.Selection) return "BEFORE THE RUN";
-            if (scene == PrototypeScenes.Run) return "ROUND 1";
-            if (scene == PrototypeScenes.Results) return "RUN RESULTS";
+            if (scene == PrototypeScenes.MainMenu) return UiStrings.Get("common.main_menu", "MAIN MENU");
+            if (scene == PrototypeScenes.Selection) return UiStrings.Get("selection.eyebrow", "BEFORE THE RUN");
+            if (scene == PrototypeScenes.Run) return UiStrings.Format("hud.banner.round", "value", "1", "ROUND {value}");
+            if (scene == PrototypeScenes.Results) return UiStrings.Get("results.title", "RUN RESULTS");
             return string.Empty;
         }
 

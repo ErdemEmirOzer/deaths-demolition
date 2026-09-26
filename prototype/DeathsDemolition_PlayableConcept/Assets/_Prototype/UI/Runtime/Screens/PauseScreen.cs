@@ -80,7 +80,22 @@ namespace DD.Prototype.UI
         // M4-R1 N2 (WP-070 §5.1): the segmented CAMERA selector and the chosen mode's one-line description.
         // R1 content pack (planning/content/r1-strings.json): camera.mode.* and camera.mode.*.desc. The first-person line was
         // rewritten in the pack for the rear-edge arc (AD R1-A SHOULD-2): threats behind are marked, not unseen.
-        public static readonly string[] CameraModeNames = { "TOP-DOWN", "THIRD-PERSON", "FIRST-PERSON" };
+        public static readonly string[] CameraModeNames = { "TOP-DOWN", "THIRD-PERSON", "FIRST-PERSON" };   // fallbacks (WP-068 TR)
+        private static readonly string[] CameraModeKeys = { "camera.mode.top_down", "camera.mode.third_person", "camera.mode.first_person" };
+        private static readonly string[] CameraModeCaptionKeys = { "camera.mode.top_down.desc", "camera.mode.third_person.desc", "camera.mode.first_person.desc" };
+
+        /// <summary>WP-068 TR: a camera mode's name in the chosen language.</summary>
+        public static string CameraModeName(int index)
+        {
+            return UiStrings.Get(CameraModeKeys[index], CameraModeNames[index]);
+        }
+
+        /// <summary>WP-068 TR: a camera mode's one-line caption in the chosen language.</summary>
+        public static string CameraModeCaption(int index)
+        {
+            return UiStrings.Get(CameraModeCaptionKeys[index], CameraModeCaptions[index]);
+        }
+
         public static readonly string[] CameraModeCaptions =
         {
             "The whole courtyard in view. Aim with the cursor.",
@@ -307,7 +322,7 @@ namespace DD.Prototype.UI
 
             if (_cameraCaption != null)
             {
-                _cameraCaption.text = CameraModeCaptions[Mathf.Clamp(current, 0, CameraModeCaptions.Length - 1)];
+                _cameraCaption.text = CameraModeCaption(Mathf.Clamp(current, 0, CameraModeCaptions.Length - 1));
             }
         }
 
@@ -383,10 +398,10 @@ namespace DD.Prototype.UI
 
             RectTransform host = UiFactory.CardContent(_panel, UiSpace.XXXL);
 
-            _title = UiFactory.Label("Title", host, "PAUSED", UiType.H1, UiColor.TextPrimary);
+            _title = UiFactory.Label("Title", host, UiStrings.Get("pause.title", "PAUSED"), UiType.H1, UiColor.TextPrimary);
             _caption = UiFactory.Label(
                 "Caption", host,
-                "The whole simulation is stopped: enemies, projectiles, timers and the round clock.",
+                UiStrings.Get("pause.caption", "The whole simulation is stopped: enemies, projectiles, timers and the round clock."),
                 UiType.Body, UiColor.TextSecondary);
 
             BuildRunStrip(host);
@@ -396,7 +411,7 @@ namespace DD.Prototype.UI
             BuildCameraRow(host);
 
             _shakeLabel = UiFactory.Label(
-                "ShakeLabel", host, "CAMERA SHAKE INTENSITY", UiType.Label, UiColor.TextMuted);
+                "ShakeLabel", host, UiStrings.Get("pause.shake", "CAMERA SHAKE INTENSITY"), UiType.Label, UiColor.TextMuted);
             _shakeValue = UiFactory.Numeric(
                 "ShakeValue", host, "1.00", UiType.BodyStrong, UiColor.TextPrimary, TextAnchor.MiddleRight);
             _shakeSlider = UiFactory.NewSlider(
@@ -404,12 +419,12 @@ namespace DD.Prototype.UI
             _shakeSlider.onValueChanged.AddListener(OnShakeChanged);
             _shakeCaption = UiFactory.Label(
                 "ShakeCaption", host,
-                "0 disables shake completely; 1 is the default. Shake never moves your aim at any setting.",
+                UiStrings.Get("pause.shake.caption", "0 disables shake completely; 1 is the default. Shake never moves your aim at any setting."),
                 UiType.Caption, UiColor.TextMuted);
 
             // Actions are docked to the foot of the card, not to the cursor, so the
             // panel keeps the same shape whatever the caption above wraps to.
-            _resumeButton = UiFactory.Button("Resume", host, "RESUME", UiButtonVariant.Primary, Resume);
+            _resumeButton = UiFactory.Button("Resume", host, UiStrings.Get("pause.resume", "RESUME"), UiButtonVariant.Primary, Resume);
             UiInput.Prompt(_resumeButton, UiPromptAction.Pause, true); // the same key that opened it closes it
             RectTransform resumeRect = (RectTransform)_resumeButton.transform;
             resumeRect.anchorMin = new Vector2(0f, 0f);
@@ -419,7 +434,7 @@ namespace DD.Prototype.UI
             resumeRect.offsetMax = new Vector2(-(int)UiSpace.S, UiTokens.TargetPreferred);
 
             UiButton quit = UiFactory.Button(
-                "MainMenu", host, "MAIN MENU", UiButtonVariant.Secondary, OpenConfirm);
+                "MainMenu", host, UiStrings.Get("common.main_menu", "MAIN MENU"), UiButtonVariant.Secondary, OpenConfirm);
             RectTransform quitRect = (RectTransform)quit.transform;
             quitRect.anchorMin = new Vector2(0.5f, 0f);
             quitRect.anchorMax = new Vector2(1f, 0f);
@@ -497,7 +512,7 @@ namespace DD.Prototype.UI
             string current = _cameraCaption.text;
             for (int i = 0; i < CameraModeCaptions.Length; i++)
             {
-                captionH = Mathf.Max(captionH, Mathf.Ceil(_cameraCaption.GetPreferredValues(CameraModeCaptions[i], inner, 0f).y));
+                captionH = Mathf.Max(captionH, Mathf.Ceil(_cameraCaption.GetPreferredValues(CameraModeCaption(i), inner, 0f).y));
             }
 
             _cameraCaption.text = current;
@@ -544,7 +559,7 @@ namespace DD.Prototype.UI
             string build = director != null ? director.Build.DescribeBuild() : null;
             string weapon = DD.Prototype.Weapons.WeaponEvents.Classic.DisplayName;
             string upgrades = string.IsNullOrEmpty(build) || build == "Stock" ? UiStrings.Get("pause.run.build_none", "no upgrades") : build;
-            _runBuild.text = string.IsNullOrEmpty(weapon) ? upgrades : weapon.ToUpperInvariant() + "  ·  " + upgrades;
+            _runBuild.text = string.IsNullOrEmpty(weapon) ? upgrades : UiStrings.Upper(weapon) + "  ·  " + upgrades;
         }
 
         private static float Place(RectTransform rect, float top, float height)
@@ -570,14 +585,14 @@ namespace DD.Prototype.UI
         /// <summary>M4-R1 N2: CAMERA - three segments side by side (Left / Right walk them), the current one Selected, and a caption.</summary>
         private void BuildCameraRow(RectTransform host)
         {
-            _cameraLabel = UiFactory.Label("CameraLabel", host, "CAMERA", UiType.Label, UiColor.TextMuted);
+            _cameraLabel = UiFactory.Label("CameraLabel", host, UiStrings.Get("camera.title", "CAMERA"), UiType.Label, UiColor.TextMuted);
             _cameraRow = UiFactory.NewRect("CameraModes", host);
             float gap = (int)UiSpace.S;
             for (int i = 0; i < _cameraButtons.Length; i++)
             {
                 var mode = (CameraMode)i;
                 // Nav: the kit's "current choice" look - raised fill, cream outline and tick; the other segments read quieter.
-                UiButton button = UiFactory.Button("Camera." + mode, _cameraRow, CameraModeNames[i], UiButtonVariant.Nav, () => ChooseCamera(mode));
+                UiButton button = UiFactory.Button("Camera." + mode, _cameraRow, CameraModeName(i), UiButtonVariant.Nav, () => ChooseCamera(mode));
                 button.LabelText.alignment = TextAlignmentOptions.Center;
                 button.SetSegment(true);   // AD R1-A SHOULD-1: no tick in a segmented row
                 var rect = (RectTransform)button.transform;
@@ -589,7 +604,7 @@ namespace DD.Prototype.UI
                 _cameraButtons[i] = button;
             }
 
-            _cameraCaption = UiFactory.Label("CameraCaption", host, CameraModeCaptions[0], UiType.Caption, UiColor.TextMuted);
+            _cameraCaption = UiFactory.Label("CameraCaption", host, CameraModeCaption(0), UiType.Caption, UiColor.TextMuted);
         }
 
         private void BuildConfirmDialog()
@@ -620,21 +635,21 @@ namespace DD.Prototype.UI
             RectTransform host = UiFactory.CardContent(card, UiSpace.XXXL);
             var stack = new UiStack(host);
 
-            TMP_Text title = UiFactory.Label("Title", host, "END THIS RUN?", UiType.H2, UiColor.TextPrimary);
+            TMP_Text title = UiFactory.Label("Title", host, UiStrings.Get("pause.confirm.title", "END THIS RUN?"), UiType.H2, UiColor.TextPrimary);
             stack.Add((RectTransform)title.transform, UiFactory.LineHeight(UiType.H2));
 
             stack.Gap(UiSpace.M);
 
             TMP_Text body = UiFactory.Label(
                 "Body", host,
-                "Leaving now ends the run. The current round, all unspent gold and every weapon upgrade " +
+                UiStrings.Get("pause.confirm.body", "Leaving now ends the run. The current round, all unspent gold and every weapon upgrade " +
                 "you bought are lost. Profile level, statistics and achievements you have already earned " +
-                "are kept.",
+                "are kept."),
                 UiType.Body, UiColor.TextSecondary);
             stack.Add((RectTransform)body.transform, UiFactory.LineHeight(UiType.Body) * 4f);
 
             _cancelButton = UiFactory.Button(
-                "Cancel", host, "KEEP PLAYING", UiButtonVariant.Secondary, CloseConfirm);
+                "Cancel", host, UiStrings.Get("pause.confirm.keep", "KEEP PLAYING"), UiButtonVariant.Secondary, CloseConfirm);
             RectTransform cancelRect = (RectTransform)_cancelButton.transform;
             cancelRect.anchorMin = new Vector2(0f, 0f);
             cancelRect.anchorMax = new Vector2(0.5f, 0f);
@@ -643,7 +658,7 @@ namespace DD.Prototype.UI
             cancelRect.offsetMax = new Vector2(-(int)UiSpace.S, UiTokens.TargetPreferred);
 
             UiButton confirm = UiFactory.Button(
-                "Confirm", host, "END RUN", UiButtonVariant.Danger, ConfirmQuit);
+                "Confirm", host, UiStrings.Get("pause.confirm.end", "END RUN"), UiButtonVariant.Danger, ConfirmQuit);
             RectTransform confirmRect = (RectTransform)confirm.transform;
             confirmRect.anchorMin = new Vector2(0.5f, 0f);
             confirmRect.anchorMax = new Vector2(1f, 0f);

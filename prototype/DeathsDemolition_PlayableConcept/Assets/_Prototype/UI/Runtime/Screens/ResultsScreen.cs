@@ -88,7 +88,7 @@ namespace DD.Prototype.UI
                 ? _model.Eyebrow
                 : _model.Eyebrow + "  ·  " + ResultsViewModel.KillerName(_model.KilledBy);
             string plate = CosmeticsViewModel.NamePlate(ProfileService.CosmeticsSource);
-            string eyebrow = string.IsNullOrEmpty(plate) ? ResultsViewModel.Title : ResultsViewModel.Title + "  ·  " + plate.ToUpperInvariant();
+            string eyebrow = string.IsNullOrEmpty(plate) ? ResultsViewModel.Title : ResultsViewModel.Title + "  ·  " + UiStrings.Upper(plate);
             BuildNewBest();   // first: the ribbon's width bounds the title
             float headerHeight = BuildHeader(eyebrow, ending, _model.Loadout, TitleTypeFor(ending));
 
@@ -240,7 +240,7 @@ namespace DD.Prototype.UI
             glyphRect.pivot = new Vector2(0f, 0.5f);
             glyphRect.sizeDelta = new Vector2(WeaponRowHeight, WeaponRowHeight);
             glyphRect.anchoredPosition = Vector2.zero;
-            TMP_Text name = UiFactory.Label("Name", weapon, _model.WeaponName.ToUpperInvariant(), UiType.BodyStrong, UiColor.TextPrimary, TextAnchor.LowerLeft);
+            TMP_Text name = UiFactory.Label("Name", weapon, UiStrings.Upper(_model.WeaponName), UiType.BodyStrong, UiColor.TextPrimary, TextAnchor.LowerLeft);
             RectTransform nameRect = UiFactory.Fill((RectTransform)name.transform);
             nameRect.offsetMin = new Vector2(WeaponRowHeight + (int)UiSpace.L, UiFactory.ScaledBand(WeaponRowHeight) * 0.5f);
             TMP_Text build = UiFactory.Label("Build", weapon, _model.BuildLine, UiType.Caption, UiColor.TextSecondary, TextAnchor.UpperLeft);
@@ -537,7 +537,7 @@ namespace DD.Prototype.UI
             detailRect.offsetMax = new Vector2(-64f, -UiFactory.ScaledBand(RewardTitleBand));
 
             // AD v004 MUST-1: NEW is one token everywhere - ink on sakura - whatever the card's accent.
-            TMP_Text badge = UiFactory.Chip("New", content, "NEW", UiColor.AccentSakura, UiColor.SurfaceBase, 56f, 24f);
+            TMP_Text badge = UiFactory.Chip("New", content, UiStrings.Get("tree.flag.new", "NEW"), UiColor.AccentSakura, UiColor.SurfaceBase, 56f, 24f);
             var badgeRect = (RectTransform)badge.transform.parent;
             badgeRect.anchorMin = new Vector2(1f, 0.5f);
             badgeRect.anchorMax = new Vector2(1f, 0.5f);

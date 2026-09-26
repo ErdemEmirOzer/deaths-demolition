@@ -71,12 +71,14 @@ namespace DD.Prototype.UI
 
         // The header and spine words that stand on the menu plate (12b · D1: UiTranslucentTokensTests lays them out
         // and measures each over the brightest plate texel under it).
-        public const string HeaderEyebrow = "PLAYABLE CONCEPT · PROTOTYPE";
+        // WP-068 TR: pack words in the chosen language (properties, so a language change reads the new column); the
+        // title is the game's name and is never translated.
+        public static string HeaderEyebrow => UiStrings.Get("menu.eyebrow", "PLAYABLE CONCEPT · PROTOTYPE");
         public const string HeaderTitle = "DEATHS DEMOLITION";
-        public const string HeaderSubtitle = "An old palace, a garden, and a crowd that never stops arriving.";
-        public const string PlayHintText = "Choose a skin and a classic weapon, then fight for the highest round you can reach.";
-        public const string NavGroupLabel = "PROGRESS";
-        public const string BuildNotePrefix = "Prototype build · ";
+        public static string HeaderSubtitle => UiStrings.Get("menu.subtitle", "An old palace, a garden, and a crowd that never stops arriving.");
+        public static string PlayHintText => UiStrings.Get("menu.play_hint", "Choose a skin and a classic weapon, then fight for the highest round you can reach.");
+        public static string NavGroupLabel => UiStrings.Get("menu.progress", "PROGRESS");
+        public static string BuildNotePrefix => UiStrings.Get("menu.build_prefix", "Prototype build · ");
 
         /// <summary>
         /// 12b · D1 (T10: "TextSecondary ≥ 4.5:1 with the scrim" - the dimmest text the plate carries): the spine's
@@ -96,6 +98,13 @@ namespace DD.Prototype.UI
         /// <summary>WP-022G: the remap row currently listening ("PRESS A KEY"), for the redraw after the result.</summary>
         private string _rebindingEntryId;
         private UiButton _playButton;
+
+        // WP-068 TR: the menu's standing words, relabelled in place when the language changes.
+        private UiButton _quitButton;
+        private TMP_Text _playHint;
+        private TMP_Text _navGroup;
+        private TMP_Text _buildNote;
+        private UiStepper _languageRow;
 
         /// <summary>The pane on screen. Exposed for tests; the source of truth is <see cref="UiNavigation"/>.</summary>
         public UiContext Pane
@@ -343,6 +352,7 @@ namespace DD.Prototype.UI
             // The PLAY caption at its measured height (≤ 2 lines at the column width; the old
             // fixed 3-line band pushed the tabs into QUIT at UI scale 1.2 × TextScale 1.25).
             TMP_Text playHint = UiFactory.Label("PlayHint", column, PlayHintText, UiType.Caption, PlateCaption);
+            _playHint = playHint;
             float hintHeight = width > 1f
                 ? Mathf.Max(captionLine, Mathf.Ceil(playHint.GetPreferredValues(playHint.text, width, 0f).y))
                 : captionLine * 2f;
@@ -353,6 +363,7 @@ namespace DD.Prototype.UI
                 // WP-025 version stamp (WP-022B binding): "wp-022-…-g1234567 · release · 2026-09-16".
                 BuildNotePrefix + DD.Prototype.Core.Build.BuildInfo.Read().Label,
                 UiType.Caption, PlateCaption);
+            _buildNote = build;
             float buildHeight = width > 1f
                 ? Mathf.Max(captionLine, Mathf.Ceil(build.GetPreferredValues(build.text, width, 0f).y))
                 : captionLine;
@@ -360,7 +371,7 @@ namespace DD.Prototype.UI
             float labelHeight = UiFactory.LineHeight(UiType.Label);
             NavRhythm rhythm = NavRhythmFor(column.rect.height, (int)UiSpace.S + hintHeight + labelHeight + foot);
 
-            UiButton play = UiFactory.Button("Play", column, "PLAY", UiButtonVariant.Primary,
+            UiButton play = UiFactory.Button("Play", column, UiStrings.Get("menu.play", "PLAY"), UiButtonVariant.Primary,
                 PrototypeUiFlow.GoToSelection);
             stack.Add((RectTransform)play.transform, rhythm.Play);
             SetInitialFocus(play);
@@ -371,21 +382,23 @@ namespace DD.Prototype.UI
             stack.Cursor += rhythm.GroupGap;
             TMP_Text sectionLabel = UiFactory.Label(
                 "MenuLabel", column, NavGroupLabel, UiType.Label, PlateCaption);
+            _navGroup = sectionLabel;
             stack.Add((RectTransform)sectionLabel.transform, labelHeight);
             stack.Gap(UiSpace.S);
 
-            _profileTab = AddTab(ref stack, column, "PROFILE", UiContext.Profile, "Menu.Profile", rhythm);
-            _statisticsTab = AddTab(ref stack, column, "STATISTICS", UiContext.Statistics, "Menu.Statistics", rhythm);
-            _achievementsTab = AddTab(ref stack, column, "ACHIEVEMENTS", UiContext.Achievements, "Menu.Achievements", rhythm);
-            _settingsTab = AddTab(ref stack, column, "SETTINGS", UiContext.Settings, "Menu.Settings", rhythm);
-            _controlsTab = AddTab(ref stack, column, "CONTROLS", UiContext.Controls, "Menu.Controls", rhythm);
-            _accessibilityTab = AddTab(ref stack, column, "ACCESSIBILITY", UiContext.Accessibility, "Menu.Accessibility", rhythm); // AD v006 MUST-2 → AP-012 v003 person-in-circle glyph (gamepad stays with CONTROLS)
+            _profileTab = AddTab(ref stack, column, TabLabel(UiContext.Profile), UiContext.Profile, "Menu.Profile", rhythm);
+            _statisticsTab = AddTab(ref stack, column, TabLabel(UiContext.Statistics), UiContext.Statistics, "Menu.Statistics", rhythm);
+            _achievementsTab = AddTab(ref stack, column, TabLabel(UiContext.Achievements), UiContext.Achievements, "Menu.Achievements", rhythm);
+            _settingsTab = AddTab(ref stack, column, TabLabel(UiContext.Settings), UiContext.Settings, "Menu.Settings", rhythm);
+            _controlsTab = AddTab(ref stack, column, TabLabel(UiContext.Controls), UiContext.Controls, "Menu.Controls", rhythm);
+            _accessibilityTab = AddTab(ref stack, column, TabLabel(UiContext.Accessibility), UiContext.Accessibility, "Menu.Accessibility", rhythm); // AD v006 MUST-2 → AP-012 v003 person-in-circle glyph (gamepad stays with CONTROLS)
 
             // Quit is docked to the foot of the column rather than to the cursor: a
             // destructive action should not sit adjacent to the reading tabs. The build line
             // sits under it (AD 6ab MUST-4).
-            UiButton quit = UiFactory.Button("Quit", column, "QUIT", UiButtonVariant.Secondary,
+            UiButton quit = UiFactory.Button("Quit", column, UiStrings.Get("menu.quit", "QUIT"), UiButtonVariant.Secondary,
                 PrototypeUiFlow.Quit);
+            _quitButton = quit;
             RectTransform quitRect = (RectTransform)quit.transform;
             quitRect.anchorMin = new Vector2(0f, 0f);
             quitRect.anchorMax = new Vector2(1f, 0f);
@@ -404,6 +417,81 @@ namespace DD.Prototype.UI
             // from PLAY must never land on QUIT. Automatic navigation would also reach the
             // pane's sliders from a tab, which is what the horizontal axis is for.
             UiInput.ChainVertical(false, play, _profileTab, _statisticsTab, _achievementsTab, _settingsTab, _controlsTab, _accessibilityTab, quit);
+        }
+
+        /// <summary>WP-068 TR: a nav tab's word in the chosen language.</summary>
+        private static string TabLabel(UiContext pane)
+        {
+            switch (pane)
+            {
+                case UiContext.Statistics: return UiStrings.Get("menu.tab.statistics", "STATISTICS");
+                case UiContext.Achievements: return UiStrings.Get("menu.tab.achievements", "ACHIEVEMENTS");
+                case UiContext.Settings: return UiStrings.Get("menu.tab.settings", "SETTINGS");
+                case UiContext.Controls: return UiStrings.Get("menu.tab.controls", "CONTROLS");
+                case UiContext.Accessibility: return UiStrings.Get("menu.tab.accessibility", "ACCESSIBILITY");
+                default: return UiStrings.Get("menu.tab.profile", "PROFILE");
+            }
+        }
+
+        /// <summary>
+        /// WP-068 TR · Settings › LANGUAGE: saves the choice (UiSettings sets UiStrings.Language), relabels the menu's standing
+        /// words in place and redraws the Settings pane in the new language with focus back on the LANGUAGE row. Every other
+        /// screen reads the language when it is next built.
+        /// </summary>
+        private void ChooseLanguage(string language)
+        {
+            if (language == UiSettings.Language)
+            {
+                return;
+            }
+
+            UiSettings.Language = language;
+            RelabelMenu();
+            RedrawPane();
+            if (_languageRow != null)
+            {
+                UiInput.Focus(_languageRow.Button);
+            }
+        }
+
+        private void RelabelMenu()
+        {
+            SetLabel(Content != null ? Content.Find("Eyebrow") : null, HeaderEyebrow);
+            SetLabel(Content != null ? Content.Find("Subtitle") : null, HeaderSubtitle);
+            SetLabel(_playHint != null ? _playHint.transform : null, PlayHintText);
+            SetLabel(_navGroup != null ? _navGroup.transform : null, NavGroupLabel);
+            SetLabel(_buildNote != null ? _buildNote.transform : null, BuildNotePrefix + DD.Prototype.Core.Build.BuildInfo.Read().Label);
+            Relabel(_playButton, UiStrings.Get("menu.play", "PLAY"));
+            Relabel(_quitButton, UiStrings.Get("menu.quit", "QUIT"));
+            Relabel(_profileTab, TabLabel(UiContext.Profile));
+            Relabel(_statisticsTab, TabLabel(UiContext.Statistics));
+            Relabel(_achievementsTab, TabLabel(UiContext.Achievements));
+            Relabel(_settingsTab, TabLabel(UiContext.Settings));
+            Relabel(_controlsTab, TabLabel(UiContext.Controls));
+            Relabel(_accessibilityTab, TabLabel(UiContext.Accessibility));
+        }
+
+        private static void SetLabel(Transform label, string text)
+        {
+            TMP_Text tmp = label != null ? label.GetComponent<TMP_Text>() : null;
+            if (tmp != null)
+            {
+                tmp.text = text;
+            }
+        }
+
+        private static void Relabel(UiButton button, string text)
+        {
+            if (button != null)
+            {
+                button.SetText(text);
+            }
+        }
+
+        private static string[] LanguageNames()
+        {
+            // Each language names itself: the pack keeps the same word in both columns.
+            return new[] { UiStrings.Get("settings.language.en", "ENGLISH"), UiStrings.Get("settings.language.tr", "TURKISH") };
         }
 
         private UiButton AddTab(ref UiStack stack, RectTransform column, string label, UiContext pane, string icon, NavRhythm rhythm)
@@ -592,7 +680,10 @@ namespace DD.Prototype.UI
         private const float PreviewBlockHeight = 104f;
         private const float PreviewHudInset = 16f;      // AD 6ab MUST-5: the block's right edge − 16 from the preview's
 
-        private static readonly string[] DisplayModes = { "WINDOWED", "FULLSCREEN" };
+        private static string[] DisplayModes()
+        {
+            return new[] { UiStrings.Get("settings.display.windowed", "WINDOWED"), UiStrings.Get("settings.display.fullscreen", "FULLSCREEN") };
+        }
 
         private RectTransform _previewHud;
         private TMP_Text _previewCaption;
@@ -615,9 +706,9 @@ namespace DD.Prototype.UI
         private void BuildSettingsPane()
         {
             var head = new UiStack(_paneHost);
-            head.Add(UiFactory.Heading("SETTINGS", _paneHost), UiFactory.LineHeight(UiType.H2));
+            head.Add(UiFactory.Heading(UiStrings.Get("menu.tab.settings", "SETTINGS"), _paneHost), UiFactory.LineHeight(UiType.H2));
             AddCaptionUnder(ref head, _paneHost, "Caption",
-                "Device preferences. They are saved on this machine and never touch your profile.", 1, UiSpace.M);
+                UiStrings.Get("settings.caption", "Device preferences. They are saved on this machine and never touch your profile."), 1, UiSpace.M);
 
             RectTransform body;
             float column;
@@ -626,11 +717,11 @@ namespace DD.Prototype.UI
             RectTransform content = scroll.Content;
             var stack = new UiStack(content);
 
-            AddSettingsSection(ref stack, content, "DISPLAY", false);
-            UiStepper display = UiStepper.Create("Display", content, "DISPLAY MODE", DisplayModes,
+            AddSettingsSection(ref stack, content, UiStrings.Get("settings.section.display", "DISPLAY"), false);
+            UiStepper display = UiStepper.Create("Display", content, UiStrings.Get("settings.row.display_mode", "DISPLAY MODE"), DisplayModes(),
                 UiSettings.Fullscreen ? 1 : 0, true, i => UiSettings.Fullscreen = i == 1);   // WP-022M: asynchronous on macOS (UiDisplayMode)
             AddSettingRow(ref stack, display.transform);
-            UiSlider scale = UiSlider.Create("Setting.UI SCALE", content, "UI SCALE",
+            UiSlider scale = UiSlider.Create("Setting.UI SCALE", content, UiStrings.Get("settings.row.ui_scale", "UI SCALE"),
                 UiTheme.UiScaleMin, UiTheme.UiScaleMax, UiSettings.UiScale, 0.05f, Percent,
                 v =>
                 {
@@ -641,78 +732,84 @@ namespace DD.Prototype.UI
             if (!well)
             {
                 // AD 12c SHOULD-6: where the preview well yields (6ab SHOULD-10), its "next screen" caption stays under the slider.
-                AddCaptionUnder(ref stack, content, "ScaleNote", "UI scale applies to the next screen you open.", 1, UiSpace.S);
+                AddCaptionUnder(ref stack, content, "ScaleNote", UiStrings.Get("settings.note.ui_scale", "UI scale applies to the next screen you open."), 1, UiSpace.S);
             }
 
-            UiSwitch hudFrame = UiSwitch.Create("HudFrame", content, "HUD IN A 16:9 FRAME", UiSettings.HudFrame169,
+            UiSwitch hudFrame = UiSwitch.Create("HudFrame", content, UiStrings.Get("settings.row.hud_frame", "HUD IN A 16:9 FRAME"), UiSettings.HudFrame169,
                 on => UiSettings.HudFrame169 = on);   // 12c · B12 (AD 8-R SHOULD-A2)
             AddSettingRow(ref stack, hudFrame.transform);
             AddCaptionUnder(ref stack, content, "HudFrameNote",
-                "On a screen wider than 16:9, the HUD's corners move in to a centred 16:9 frame.", 1, UiSpace.S);
+                UiStrings.Get("settings.note.hud_frame", "On a screen wider than 16:9, the HUD's corners move in to a centred 16:9 frame."), 1, UiSpace.S);
 
-            AddSettingsSection(ref stack, content, "AUDIO", true);
+            // WP-068 TR: the UI language. A change redraws this pane and relabels the menu at once (ChooseLanguage).
+            UiStepper language = UiStepper.Create("Language", content, UiStrings.Get("settings.row.language", "LANGUAGE"), LanguageNames(),
+                UiSettings.Language == UiStrings.Turkish ? 1 : 0, true, i => ChooseLanguage(i == 1 ? UiStrings.Turkish : UiStrings.English));
+            AddSettingRow(ref stack, language.transform);
+            _languageRow = language;
+
+            AddSettingsSection(ref stack, content, UiStrings.Get("settings.section.audio", "AUDIO"), true);
             // Volumes are continuous (no detents; ← / → step 5 %), the UI scale has its six stops.
-            UiSlider master = UiSlider.Create("Setting.MASTER VOLUME", content, "MASTER VOLUME",
+            UiSlider master = UiSlider.Create("Setting.MASTER VOLUME", content, UiStrings.Get("settings.row.master_volume", "MASTER VOLUME"),
                 0f, 1f, UiSettings.MasterVolume, 0f, Percent,
                 v => UiSettings.MasterVolume = Mathf.Round(v * 20f) / 20f, SettingsColumnWidth, SettingLabelWidth);
             AddSettingRow(ref stack, master.transform);
             // WP-068 U8: UI sounds on their own slider (the Interface bus).
-            UiSlider uiSounds = UiSlider.Create("Setting.UI SOUNDS", content, "UI SOUNDS",
+            UiSlider uiSounds = UiSlider.Create("Setting.UI SOUNDS", content, UiStrings.Get("settings.row.ui_sounds", "UI SOUNDS"),
                 0f, 1f, UiSettings.UiVolume, 0f, Percent,
                 v => UiSettings.UiVolume = Mathf.Round(v * 20f) / 20f, SettingsColumnWidth, SettingLabelWidth);
             AddSettingRow(ref stack, uiSounds.transform);
 
-            AddSettingsSection(ref stack, content, "GRAPHICS", true);
-            UiStepper quality = UiStepper.Create("Setting.GRAPHICS QUALITY", content, "QUALITY", QualityNames(),
+            AddSettingsSection(ref stack, content, UiStrings.Get("settings.section.graphics", "GRAPHICS"), true);
+            UiStepper quality = UiStepper.Create("Setting.GRAPHICS QUALITY", content, UiStrings.Get("settings.row.quality", "QUALITY"), QualityNames(),
                 UiSettings.Quality, false, i => UiSettings.Quality = i);
             AddSettingRow(ref stack, quality.transform);
 
             // M4-R1 N2 (WP-070 §3): the third / first person rows. The mode itself is chosen in Pause (D-13); the look
             // fields are input preferences (input-settings.json, S-01's bridge feeds the camera), the rest ui-settings.
-            AddSettingsSection(ref stack, content, "CAMERA", true);
+            AddSettingsSection(ref stack, content, UiStrings.Get("camera.title", "CAMERA"), true);
             InputPreferences look = InputPreferencesStore.Current;
-            UiSlider lookSpeed = UiSlider.Create("Setting.LOOK SENSITIVITY", content, "LOOK SENSITIVITY",
+            UiSlider lookSpeed = UiSlider.Create("Setting.LOOK SENSITIVITY", content, UiStrings.Get("settings.row.look_sensitivity", "LOOK SENSITIVITY"),
                 1f, LookSteps, LookStepOf(look.LookSensitivity), 1f, v => Mathf.RoundToInt(v).ToString(),
                 v => UpdatePreferences(p => p.LookSensitivity = LookSensitivityOf(v)), SettingsColumnWidth, SettingLabelWidth);
             AddSettingRow(ref stack, lookSpeed.transform);
-            UiSlider stickSpeed = UiSlider.Create("Setting.STICK LOOK SPEED", content, "STICK LOOK SPEED",
+            UiSlider stickSpeed = UiSlider.Create("Setting.STICK LOOK SPEED", content, UiStrings.Get("settings.row.stick_look_speed", "STICK LOOK SPEED"),
                 InputPreferences.MinStickLookDegreesPerSecond, InputPreferences.MaxStickLookDegreesPerSecond, look.StickLookDegreesPerSecond, 10f,
                 v => Mathf.RoundToInt(v) + "°/s", v => UpdatePreferences(p => p.StickLookDegreesPerSecond = Mathf.Round(v / 10f) * 10f),
                 SettingsColumnWidth, SettingLabelWidth);
             AddSettingRow(ref stack, stickSpeed.transform);
-            UiSwitch invert = UiSwitch.Create("InvertLook", content, "INVERT LOOK", look.LookInvertY,
+            UiSwitch invert = UiSwitch.Create("InvertLook", content, UiStrings.Get("settings.row.invert_look", "INVERT LOOK"), look.LookInvertY,
                 on => UpdatePreferences(p => p.LookInvertY = on));
             AddSettingRow(ref stack, invert.transform);
-            UiSlider fpFov = UiSlider.Create("Setting.FIRST PERSON FOV", content, "FIRST-PERSON FOV",
+            UiSlider fpFov = UiSlider.Create("Setting.FIRST PERSON FOV", content, UiStrings.Get("camera.fov.first_person", "FIRST-PERSON FOV"),
                 CameraSystem.CameraModeSettings.MinFirstPersonFov, CameraSystem.CameraModeSettings.MaxFirstPersonFov, UiSettings.FirstPersonFov, 1f,
                 Degrees, v => UiSettings.FirstPersonFov = Mathf.Round(v), SettingsColumnWidth, SettingLabelWidth);
             AddSettingRow(ref stack, fpFov.transform);
-            UiSlider tpFov = UiSlider.Create("Setting.THIRD PERSON FOV", content, "THIRD-PERSON FOV",
+            UiSlider tpFov = UiSlider.Create("Setting.THIRD PERSON FOV", content, UiStrings.Get("camera.fov.third_person", "THIRD-PERSON FOV"),
                 CameraSystem.CameraModeSettings.MinThirdPersonFov, CameraSystem.CameraModeSettings.MaxThirdPersonFov, UiSettings.ThirdPersonFov, 1f,
                 Degrees, v => UiSettings.ThirdPersonFov = Mathf.Round(v), SettingsColumnWidth, SettingLabelWidth);
             AddSettingRow(ref stack, tpFov.transform);
-            UiStepper shoulder = UiStepper.Create("Shoulder", content, "SHOULDER", ShoulderNames, UiSettings.Shoulder, true,
+            UiStepper shoulder = UiStepper.Create("Shoulder", content, UiStrings.Get("camera.shoulder", "SHOULDER"), ShoulderNames(), UiSettings.Shoulder, true,
                 i => UiSettings.Shoulder = i);
             AddSettingRow(ref stack, shoulder.transform);
-            UiSlider bob = UiSlider.Create("Setting.HEAD BOB", content, "HEAD BOB", 0f, 1f, UiSettings.HeadBobScale, 0.05f, Percent,
+            UiSlider bob = UiSlider.Create("Setting.HEAD BOB", content, UiStrings.Get("camera.head_bob", "HEAD BOB"), 0f, 1f, UiSettings.HeadBobScale, 0.05f, Percent,
                 v => UiSettings.HeadBobScale = Mathf.Round(v * 20f) / 20f, SettingsColumnWidth, SettingLabelWidth);
             AddSettingRow(ref stack, bob.transform);
-            UiSwitch dot = UiSwitch.Create("CentreDot", content, "CENTRE DOT", UiSettings.CentreDot, on => UiSettings.CentreDot = on);
+            UiSwitch dot = UiSwitch.Create("CentreDot", content, UiStrings.Get("settings.row.centre_dot", "CENTRE DOT"), UiSettings.CentreDot, on => UiSettings.CentreDot = on);
             AddSettingRow(ref stack, dot.transform);
             AddCaptionUnder(ref stack, content, "CameraNote",
-                "Third and first person only; switch the view in Pause. A low field of view causes more motion sickness; Reduced Motion (Accessibility) sets head bob to 0 and cuts the blends.", 3, UiSpace.S);   // AD R1-A SHOULD-8
+                UiStrings.Get("settings.note.camera", "Third and first person only; switch the view in Pause. A low field of view causes more motion sickness; Reduced Motion (Accessibility) sets head bob to 0 and cuts the blends."), 3, UiSpace.S);   // AD R1-A SHOULD-8
 
-            AddSettingsSection(ref stack, content, "DATA", true);
-            UiSwitch telemetry = UiSwitch.Create("Telemetry", content, "RUN TELEMETRY", UiSettings.Telemetry,
+            AddSettingsSection(ref stack, content, UiStrings.Get("settings.section.data", "DATA"), true);
+            UiSwitch telemetry = UiSwitch.Create("Telemetry", content, UiStrings.Get("settings.row.telemetry", "RUN TELEMETRY"), UiSettings.Telemetry,
                 on => UiSettings.Telemetry = on);   // WP-022E / WP-045: local files only, no identity data
             AddSettingRow(ref stack, telemetry.transform);
             AddCaptionUnder(ref stack, content, "TelemetryNote",
-                "Run telemetry writes one local file per run (rounds, kills, weapon use) for tuning. It never contains your profile or name.", 1, UiSpace.S);
-            UiSwitch hints = UiSwitch.Create("Hints", content, "HINTS", UiSettings.Hints,
+                UiStrings.Get("settings.note.telemetry", "Run telemetry writes one local file per run (rounds, kills, weapon use) for tuning. It never contains your profile or name."), 1, UiSpace.S);
+            UiSwitch hints = UiSwitch.Create("Hints", content, UiStrings.Get("settings.row.hints", "HINTS"), UiSettings.Hints,
                 on => UiSettings.Hints = on);       // WP-068 slice 10b (U9)
             AddSettingRow(ref stack, hints.transform);
             AddCaptionUnder(ref stack, content, "HintsNote",
-                "Brief hints during the first three runs, in play and on loading screens. Off leaves the rules.", 1, UiSpace.None);
+                UiStrings.Get("settings.note.hints", "Brief hints during the first three runs, in play and on loading screens. Off leaves the rules."), 1, UiSpace.None);
 
             scroll.SetContentHeight(stack.Cursor);
             scroll.TrackSelectables();
@@ -722,7 +819,7 @@ namespace DD.Prototype.UI
                 BuildScalePreview(body, column);   // the rail's 24 px gutter is the gap (AD 6ab MUST-5: the block fits whole at 1.0)
             }
 
-            UiInput.ChainVertical(display.Button, scale, hudFrame.Button, master, uiSounds, quality.Button,
+            UiInput.ChainVertical(display.Button, scale, hudFrame.Button, language.Button, master, uiSounds, quality.Button,
                 lookSpeed, stickSpeed, invert.Button, fpFov, tpFov, shoulder.Button, bob, dot.Button,
                 telemetry.Button, hints.Button);
             UiInput.Focus(display.Button);
@@ -762,7 +859,10 @@ namespace DD.Prototype.UI
 
         // M4-R1 N2: the look sensitivity as 1–20 steps (WP-070 §3.1: 1 = 0.02, 20 = 0.30 °/px).
         private const float LookSteps = 20f;
-        private static readonly string[] ShoulderNames = { "RIGHT", "LEFT" };
+        private static string[] ShoulderNames()
+        {
+            return new[] { UiStrings.Get("camera.shoulder.right", "RIGHT"), UiStrings.Get("camera.shoulder.left", "LEFT") };
+        }
 
         public static float LookSensitivityOf(float step)
         {
@@ -791,7 +891,7 @@ namespace DD.Prototype.UI
             string[] names = QualitySettings.names;
             if (names == null || names.Length == 0)
             {
-                return new[] { "DEFAULT" };
+                return new[] { UiStrings.Get("settings.quality.default", "DEFAULT") };
             }
 
             var labels = new string[names.Length];
@@ -850,7 +950,7 @@ namespace DD.Prototype.UI
             well.offsetMin = new Vector2(left, well.offsetMin.y);
             var stack = new UiStack(well);
 
-            TMP_Text label = UiFactory.Label("Label", well, "PREVIEW", UiType.Label, UiColor.TextMuted);
+            TMP_Text label = UiFactory.Label("Label", well, UiStrings.Get("settings.preview", "PREVIEW"), UiType.Label, UiColor.TextMuted);
             stack.Add((RectTransform)label.transform, UiFactory.LineHeight(UiType.Label));
             stack.Gap(UiSpace.S);
 
@@ -897,7 +997,7 @@ namespace DD.Prototype.UI
             UiFactory.Fill(panel);
             RectTransform inner = UiFactory.CardContent(panel, UiSpace.L);
 
-            TMP_Text label = UiFactory.Label("Label", inner, "HEALTH", UiType.Label, UiColor.TextMuted, TextAnchor.UpperLeft);
+            TMP_Text label = UiFactory.Label("Label", inner, UiStrings.Get("hud.health", "HEALTH"), UiType.Label, UiColor.TextMuted, TextAnchor.UpperLeft);
             UiFactory.Fill(label.rectTransform);
             TMP_Text value = UiFactory.Numeric("Value", inner, "64 / 100", UiType.NumericM, UiColor.TextPrimary, TextAnchor.UpperRight, false);
             UiFactory.Fill(value.rectTransform);
@@ -922,12 +1022,14 @@ namespace DD.Prototype.UI
             float s = PreviewHudScale * scale;
             _previewHud.localScale = new Vector3(s, s, 1f);
             _previewHud.anchoredPosition = new Vector2(-PreviewHudInset, PreviewHudInset);
-            _previewCaption.text = "UI SCALE " + Percent(scale) + ". It applies to the next screen you open.";
+            _previewCaption.text = UiStrings.Format("settings.preview.caption", "value", Percent(scale), "UI SCALE {value}. It applies to the next screen you open.");
         }
 
         private static string ReducedMotionLabel()
         {
-            return UiSettings.ReducedMotion ? "REDUCED MOTION · ON" : "REDUCED MOTION · OFF";
+            return UiSettings.ReducedMotion
+                ? UiStrings.Get("access.reduced_motion.on", "REDUCED MOTION · ON")
+                : UiStrings.Get("access.reduced_motion.off", "REDUCED MOTION · OFF");
         }
 
         private Slider AddSettingSlider(
@@ -1003,10 +1105,10 @@ namespace DD.Prototype.UI
         private void BuildControlsPane()
         {
             var stack = new UiStack(_paneHost);
-            stack.Add(UiFactory.Heading("CONTROLS", _paneHost), UiFactory.LineHeight(UiType.H2));
+            stack.Add(UiFactory.Heading(UiStrings.Get("menu.tab.controls", "CONTROLS"), _paneHost), UiFactory.LineHeight(UiType.H2));
             stack.Gap(UiSpace.XS);
             TMP_Text intro = UiFactory.Label(
-                "Intro", _paneHost, "Select a slot and press the key or button you want. Escape cancels. Overrides are saved on this machine.",
+                "Intro", _paneHost, UiStrings.Get("controls.intro", "Select a slot and press the key or button you want. Escape cancels. Overrides are saved on this machine."),
                 UiType.Caption, UiColor.TextMuted);
             stack.Add((RectTransform)intro.transform, UiFactory.LineHeight(UiType.Caption));
             stack.Gap(UiSpace.M);
@@ -1029,22 +1131,22 @@ namespace DD.Prototype.UI
             var rightStack = new UiStack(right);
             var leftButtons = new List<Selectable>(8);
             var rightButtons = new List<Selectable>(8);
-            AddRemapColumn(ref leftStack, "KEYBOARD", DD.Prototype.Core.InputAbstraction.InputSchemeKind.KeyboardMouse, remap, leftButtons);
-            AddRemapColumn(ref rightStack, "GAMEPAD", DD.Prototype.Core.InputAbstraction.InputSchemeKind.Gamepad, remap, rightButtons);
+            AddRemapColumn(ref leftStack, UiStrings.Get("controls.keyboard", "KEYBOARD"), DD.Prototype.Core.InputAbstraction.InputSchemeKind.KeyboardMouse, remap, leftButtons);
+            AddRemapColumn(ref rightStack, UiStrings.Get("controls.gamepad", "GAMEPAD"), DD.Prototype.Core.InputAbstraction.InputSchemeKind.Gamepad, remap, rightButtons);
 
             // Gamepad options under the gamepad column.
             InputPreferences prefs = InputPreferencesStore.Current;
             rightStack.Gap(UiSpace.M);
-            Slider deadzone = AddSettingSliderIn(ref rightStack, right, "STICK DEAD ZONE", null, 0f, 0.5f, prefs.StickDeadzone,
+            Slider deadzone = AddSettingSliderIn(ref rightStack, right, UiStrings.Get("controls.deadzone", "STICK DEAD ZONE"), null, 0f, 0.5f, prefs.StickDeadzone,
                 v => Mathf.RoundToInt(v * 100f) + "%", v => UpdatePreferences(p => p.StickDeadzone = v));
             // AD v006 MUST-6: AIM ASSIST as a cycle toggle (Off → Light → Full), MUST-1 recipe.
-            UiButton assist = AddToggleRow(ref rightStack, right, "AimAssist", "AIM ASSIST",
+            UiButton assist = AddToggleRow(ref rightStack, right, "AimAssist", UiStrings.Get("controls.aim_assist", "AIM ASSIST"),
                 () => AimAssistState(),
                 () => { UpdatePreferences(p => p.AimAssist = (InputAimAssistLevel)(((int)p.AimAssist + 1) % 3)); return AimAssistState(); }, "AimAssist");   // WP-059: the level is WP-024 data
             rightStack.Gap(UiSpace.S);
-            UiButton rumble = AddToggleRow(ref rightStack, right, "Rumble", "RUMBLE",
-                () => (InputPreferencesStore.Current.RumbleEnabled ? "ON" : "OFF", InputPreferencesStore.Current.RumbleEnabled),
-                () => { UpdatePreferences(p => p.RumbleEnabled = !p.RumbleEnabled); return (InputPreferencesStore.Current.RumbleEnabled ? "ON" : "OFF", InputPreferencesStore.Current.RumbleEnabled); }, "Rumble");
+            UiButton rumble = AddToggleRow(ref rightStack, right, "Rumble", UiStrings.Get("controls.rumble", "RUMBLE"),
+                () => (InputPreferencesStore.Current.RumbleEnabled ? UiStrings.Get("common.on", "ON") : UiStrings.Get("common.off", "OFF"), InputPreferencesStore.Current.RumbleEnabled),
+                () => { UpdatePreferences(p => p.RumbleEnabled = !p.RumbleEnabled); return (InputPreferencesStore.Current.RumbleEnabled ? UiStrings.Get("common.on", "ON") : UiStrings.Get("common.off", "OFF"), InputPreferencesStore.Current.RumbleEnabled); }, "Rumble");
             rightButtons.Add(deadzone);
             rightButtons.Add(assist);
             rightButtons.Add(rumble);
@@ -1054,7 +1156,7 @@ namespace DD.Prototype.UI
             stack.Gap(UiSpace.XL);
             RectTransform footer = UiFactory.NewRect("Footer", _paneHost);
             stack.Add(footer, UiTokens.TargetCompact);
-            UiButton reset = UiFactory.Button("ResetBindings", footer, "RESET ALL BINDINGS TO DEFAULTS", UiButtonVariant.Secondary, () =>
+            UiButton reset = UiFactory.Button("ResetBindings", footer, UiStrings.Get("controls.reset", "RESET ALL BINDINGS TO DEFAULTS"), UiButtonVariant.Secondary, () =>
             {
                 if (remap != null)
                 {
@@ -1072,7 +1174,7 @@ namespace DD.Prototype.UI
             resetRect.sizeDelta = new Vector2(420f, UiTokens.TargetCompact);
             resetRect.anchoredPosition = Vector2.zero;
             TMP_Text file = UiFactory.Label(
-                "File", footer, remap != null ? "Overrides: " + Path.GetFileName(remap.OverridesFilePath) : "Input service not running.",
+                "File", footer, remap != null ? UiStrings.Format("controls.file", "value", Path.GetFileName(remap.OverridesFilePath), "Overrides: {value}") : UiStrings.Get("controls.no_service", "Input service not running."),
                 UiType.Caption, UiColor.TextMuted, TextAnchor.MiddleRight);
             RectTransform fileRect = UiFactory.Fill((RectTransform)file.transform);
             fileRect.offsetMin = new Vector2(440f, 0f);
@@ -1158,7 +1260,7 @@ namespace DD.Prototype.UI
                 // (inset + hairline, TextPrimary, 12 px left inset); an overridden slot adds
                 // a sakura 6 px diamond after the cap (never colour alone); a listening slot
                 // reads PRESS A KEY in StateWarning with the threat-chip outline.
-                string capText = listening ? "PRESS A KEY" : e.DisplayName;
+                string capText = listening ? UiStrings.Get("controls.listening", "PRESS A KEY") : e.DisplayName;
                 TMP_Text cap = UiFactory.Chip("Cap", slot.transform, capText,
                     listening ? UiColor.SurfaceBase : UiColor.SurfaceInset,
                     listening ? UiColor.StateWarning : (e.IsOverridden ? UiColor.AccentSakura : UiColor.TextPrimary),
@@ -1260,10 +1362,14 @@ namespace DD.Prototype.UI
 
         // ------------------------------------------------------- accessibility pane
 
-        private static readonly string[] PaletteModes = { "DEFAULT", "COLOUR-BLIND SAFE" };
+        private static string[] PaletteModes()
+        {
+            return new[] { UiStrings.Get("access.palette.default", "DEFAULT"), UiStrings.Get("access.palette.colour_blind", "COLOUR-BLIND SAFE") };
+        }
         private static readonly float[] TextScaleStops = { 1f, 1.1f, 1.25f };   // E8: stops 100 / 110 / 125
         private static readonly UiColor[] SwatchTokens = { UiColor.BarHealth, UiColor.StateSuccess, UiColor.StateWarning, UiColor.StateDanger };
-        private static readonly string[] SwatchNames = { "HEALTH", "EARNED", "WARNING", "DANGER" };
+        private static readonly string[] SwatchNames = { "HEALTH", "EARNED", "WARNING", "DANGER" };   // object names + fallbacks
+        private static readonly string[] SwatchKeys = { "hud.health", "ach.earned", "access.swatch.warning", "access.swatch.danger" };
         private const float SampleBarHeight = 12f;
         private const float SampleHealth = 0.25f;           // the low-health state the sample shows
         private const float SampleHitFrom = 0.45f;
@@ -1289,9 +1395,9 @@ namespace DD.Prototype.UI
         private void BuildAccessibilityPane()
         {
             var head = new UiStack(_paneHost);
-            head.Add(UiFactory.Heading("ACCESSIBILITY", _paneHost), UiFactory.LineHeight(UiType.H2));
+            head.Add(UiFactory.Heading(UiStrings.Get("menu.tab.accessibility", "ACCESSIBILITY"), _paneHost), UiFactory.LineHeight(UiType.H2));
             AddCaptionUnder(ref head, _paneHost, "Intro",
-                "These change how the game is presented, never how it plays.", 1, UiSpace.M);
+                UiStrings.Get("access.caption", "These change how the game is presented, never how it plays."), 1, UiSpace.M);
 
             RectTransform body;
             float column;
@@ -1300,8 +1406,8 @@ namespace DD.Prototype.UI
             RectTransform content = scroll.Content;
             var stack = new UiStack(content);
 
-            AddSettingsSection(ref stack, content, "COLOUR", false);
-            UiStepper palette = UiStepper.Create("Palette", content, "PALETTE", PaletteModes, UiSettings.ColorPalette, true,
+            AddSettingsSection(ref stack, content, UiStrings.Get("access.section.colour", "COLOUR"), false);
+            UiStepper palette = UiStepper.Create("Palette", content, UiStrings.Get("access.row.palette", "PALETTE"), PaletteModes(), UiSettings.ColorPalette, true,
                 i =>
                 {
                     UiSettings.ColorPalette = i;
@@ -1309,10 +1415,10 @@ namespace DD.Prototype.UI
                 });
             AddSettingRow(ref stack, palette.transform);
             AddCaptionUnder(ref stack, content, "PaletteNote",
-                "Colour-blind safe moves health, earned and unlocked states from green to blue. Danger stays red; every state also has a shape and a word.", 2, UiSpace.XS);
+                UiStrings.Get("access.note.palette", "Colour-blind safe moves health, earned and unlocked states from green to blue. Danger stays red; every state also has a shape and a word."), 2, UiSpace.XS);
 
-            AddSettingsSection(ref stack, content, "TEXT", true);
-            UiSlider text = UiSlider.Create("Setting.TEXT SCALE", content, "TEXT SCALE",
+            AddSettingsSection(ref stack, content, UiStrings.Get("access.section.text", "TEXT"), true);
+            UiSlider text = UiSlider.Create("Setting.TEXT SCALE", content, UiStrings.Get("access.row.text_scale", "TEXT SCALE"),
                 UiSettings.TextScaleMin, UiSettings.TextScaleMax, UiSettings.TextScale, 0f, Percent,
                 v =>
                 {
@@ -1322,10 +1428,10 @@ namespace DD.Prototype.UI
             text.SetStops(TextScaleStops);
             AddSettingRow(ref stack, text.transform);
             AddCaptionUnder(ref stack, content, "TextNote",
-                "Body, label and caption text. It applies to the next screen you open.", 1, UiSpace.XS);
+                UiStrings.Get("access.note.text_scale", "Body, label and caption text. It applies to the next screen you open."), 1, UiSpace.XS);
 
-            AddSettingsSection(ref stack, content, "MOTION", true);
-            UiSwitch flashes = UiSwitch.Create("ReduceFlashes", content, "REDUCE FLASHES", UiSettings.ReduceFlashes,
+            AddSettingsSection(ref stack, content, UiStrings.Get("access.section.motion", "MOTION"), true);
+            UiSwitch flashes = UiSwitch.Create("ReduceFlashes", content, UiStrings.Get("access.row.reduce_flashes", "REDUCE FLASHES"), UiSettings.ReduceFlashes,
                 on =>
                 {
                     UiSettings.ReduceFlashes = on;
@@ -1334,8 +1440,8 @@ namespace DD.Prototype.UI
                 });
             AddSettingRow(ref stack, flashes.transform);
             AddCaptionUnder(ref stack, content, "FlashNote",
-                "Damage and final-seconds flashes at 40%. Blood and the world are not changed. Camera shake has its own slider on the pause screen.", 2, UiSpace.S);
-            UiSwitch reduced = UiSwitch.Create("ReducedMotion", content, "REDUCED MOTION", UiSettings.ReducedMotion,
+                UiStrings.Get("access.note.flashes", "Damage and final-seconds flashes at 40%. Blood and the world are not changed. Camera shake has its own slider on the pause screen."), 2, UiSpace.S);
+            UiSwitch reduced = UiSwitch.Create("ReducedMotion", content, UiStrings.Get("access.row.reduced_motion", "REDUCED MOTION"), UiSettings.ReducedMotion,
                 on =>
                 {
                     UiSettings.ReducedMotion = on;
@@ -1343,7 +1449,7 @@ namespace DD.Prototype.UI
                 });
             AddSettingRow(ref stack, reduced.transform);
             AddCaptionUnder(ref stack, content, "MotionNote",
-                "Pulses hold still, screen fades are instant and the menu petals stop drifting.", 1, UiSpace.None);
+                UiStrings.Get("access.note.reduced_motion", "Pulses hold still, screen fades are instant and the menu petals stop drifting."), 1, UiSpace.None);
 
             scroll.SetContentHeight(stack.Cursor);
             scroll.TrackSelectables();
@@ -1373,7 +1479,7 @@ namespace DD.Prototype.UI
             var stack = new UiStack(well);
             float width = well.rect.width > 1f ? well.rect.width : PreviewMinWidth;
 
-            TMP_Text label = UiFactory.Label("Label", well, "SAMPLE", UiType.Label, UiColor.TextMuted);
+            TMP_Text label = UiFactory.Label("Label", well, UiStrings.Get("access.sample", "SAMPLE"), UiType.Label, UiColor.TextMuted);
             stack.Add((RectTransform)label.transform, UiFactory.LineHeight(UiType.Label));
             stack.Gap(UiSpace.S);
 
@@ -1385,7 +1491,7 @@ namespace DD.Prototype.UI
             _sampleChips = new Image[SwatchTokens.Length];
             for (int i = 0; i < SwatchTokens.Length; i++)
             {
-                TMP_Text chip = UiFactory.Chip("Swatch." + SwatchNames[i], chips, SwatchNames[i], SwatchTokens[i], UiColor.SurfaceBase, chipWidth, chipHeight);
+                TMP_Text chip = UiFactory.Chip("Swatch." + SwatchNames[i], chips, UiStrings.Get(SwatchKeys[i], SwatchNames[i]), SwatchTokens[i], UiColor.SurfaceBase, chipWidth, chipHeight);
                 chip.fontStyle = FontStyles.Bold;
                 var rect = (RectTransform)chip.transform.parent;
                 rect.anchorMin = new Vector2(0f, 1f);
@@ -1414,7 +1520,7 @@ namespace DD.Prototype.UI
             heartRect.pivot = new Vector2(0f, 0.5f);
             heartRect.anchoredPosition = Vector2.zero;
             float textLeft = heart.enabled ? labelBand + (int)UiSpace.S : 0f;
-            TMP_Text healthLabel = UiFactory.Label("HealthLabel", healthRow, "HEALTH", UiType.Label, UiColor.TextMuted, TextAnchor.MiddleLeft);
+            TMP_Text healthLabel = UiFactory.Label("HealthLabel", healthRow, UiStrings.Get("hud.health", "HEALTH"), UiType.Label, UiColor.TextMuted, TextAnchor.MiddleLeft);
             RectTransform healthLabelRect = UiFactory.Fill(healthLabel.rectTransform);
             healthLabelRect.offsetMin = new Vector2(textLeft, 0f);
             TMP_Text healthValue = UiFactory.Numeric("HealthValue", healthRow, Mathf.RoundToInt(SampleHealth * 100f) + " / 100", UiType.NumericM, low ? UiColor.StateDanger : UiColor.TextPrimary, TextAnchor.MiddleRight, false);
@@ -1448,7 +1554,7 @@ namespace DD.Prototype.UI
             _sampleBands = new[] { top, bottom };
 
             stack.Gap(UiSpace.S);
-            TMP_Text note = UiFactory.Label("ScreenNote", well, "Damage edge and final-seconds bands at their peak.", UiType.Caption, UiColor.TextMuted);
+            TMP_Text note = UiFactory.Label("ScreenNote", well, UiStrings.Get("access.sample.edge", "Damage edge and final-seconds bands at their peak."), UiType.Caption, UiColor.TextMuted);
             stack.Add((RectTransform)note.transform, UiFactory.LineHeight(UiType.Caption) * 2f);
             RefreshAccessibilitySample();
         }
@@ -1467,7 +1573,7 @@ namespace DD.Prototype.UI
             }
 
             _sampleCaption.fontSize = UiTokens.FontSize(UiType.Caption);
-            _sampleCaption.text = "Caption text at " + Percent(UiSettings.TextScale) + ".";
+            _sampleCaption.text = UiStrings.Format("access.sample.caption", "value", Percent(UiSettings.TextScale), "Caption text at {value}.");
             SetAlpha(_sampleEdge, UiTokens.DamageEdgePeakAlpha * UiTokens.FlashScale);
             foreach (Image band in _sampleBands)
             {
@@ -1510,7 +1616,7 @@ namespace DD.Prototype.UI
             button.LabelText.color = UiTokens.Get(UiColor.TextPrimary);
             RectTransform labelRect = (RectTransform)button.LabelText.transform;
             labelRect.offsetMin = new Vector2(20f, labelRect.offsetMin.y);
-            labelRect.offsetMax = new Vector2(-(ChipWidthFor("COLOUR-BLIND SAFE") + 16f + (int)UiSpace.M), labelRect.offsetMax.y);
+            labelRect.offsetMax = new Vector2(-(ChipWidthFor(UiStrings.Get("access.palette.colour_blind", "COLOUR-BLIND SAFE")) + 16f + (int)UiSpace.M), labelRect.offsetMax.y);
 
             (string text, bool on) state = current();
             TMP_Text chip = UiFactory.Chip("State", button.transform, state.text,
@@ -1604,7 +1710,7 @@ namespace DD.Prototype.UI
             // "PROFILE LEVEL", not "LEVEL": the eyebrow says at first glance that this
             // number is the profile's experience, not a character's power.
             TMP_Text levelLabel = UiFactory.Label(
-                "LevelLabel", _paneHost, "PROFILE LEVEL", UiType.Label, UiColor.TextMuted);
+                "LevelLabel", _paneHost, UiStrings.Get("profile.level_label", "PROFILE LEVEL"), UiType.Label, UiColor.TextMuted);
             stack.Add((RectTransform)levelLabel.transform, UiFactory.LineHeight(UiType.Label));
             stack.Gap(UiSpace.XS);
 
@@ -1658,7 +1764,7 @@ namespace DD.Prototype.UI
 
             var leftStack = new UiStack(left);
             TMP_Text unlockLabel = UiFactory.Label(
-                "UnlockLabel", left, "UNLOCKED CONTENT", UiType.Label, UiColor.TextMuted);
+                "UnlockLabel", left, UiStrings.Get("profile.unlocked_content", "UNLOCKED CONTENT"), UiType.Label, UiColor.TextMuted);
             leftStack.Add((RectTransform)unlockLabel.transform, UiFactory.LineHeight(UiType.Label));
             leftStack.Gap(UiSpace.S);
 
@@ -1801,7 +1907,7 @@ namespace DD.Prototype.UI
                 RectTransform pager = UiFactory.NewRect("Pager", _paneHost);
                 stack.Add(pager, PagerHeight);
 
-                UiButton previous = UiFactory.Button("Pager.Previous", pager, "PREVIOUS", UiButtonVariant.Secondary, () => TurnAchievementPage(-1));
+                UiButton previous = UiFactory.Button("Pager.Previous", pager, UiStrings.Get("ach.previous", "PREVIOUS"), UiButtonVariant.Secondary, () => TurnAchievementPage(-1));
                 RectTransform previousRect = (RectTransform)previous.transform;
                 previousRect.anchorMin = new Vector2(0f, 0.5f);
                 previousRect.anchorMax = new Vector2(0f, 0.5f);
@@ -1810,7 +1916,7 @@ namespace DD.Prototype.UI
                 previousRect.anchoredPosition = Vector2.zero;
                 previous.SetInteractable(_achievementPage > 0);
 
-                UiButton next = UiFactory.Button("Pager.Next", pager, "NEXT", UiButtonVariant.Secondary, () => TurnAchievementPage(1));
+                UiButton next = UiFactory.Button("Pager.Next", pager, UiStrings.Get("ach.next", "NEXT"), UiButtonVariant.Secondary, () => TurnAchievementPage(1));
                 RectTransform nextRect = (RectTransform)next.transform;
                 nextRect.anchorMin = new Vector2(1f, 0.5f);
                 nextRect.anchorMax = new Vector2(1f, 0.5f);
@@ -1820,7 +1926,7 @@ namespace DD.Prototype.UI
                 next.SetInteractable(_achievementPage < pages - 1);
 
                 TMP_Text page = UiFactory.Label(
-                    "Page", pager, "Page " + (_achievementPage + 1) + " of " + pages, UiType.Caption, UiColor.TextSecondary, TextAnchor.MiddleCenter);
+                    "Page", pager, UiStrings.Format("ach.page", "value", (_achievementPage + 1).ToString(), "total", pages.ToString(), "Page {value} of {total}"), UiType.Caption, UiColor.TextSecondary, TextAnchor.MiddleCenter);
                 RectTransform pageRect = UiFactory.Fill((RectTransform)page.transform);
                 pageRect.offsetMin = new Vector2(168f, 0f);
                 pageRect.offsetMax = new Vector2(-168f, 0f);
@@ -1947,7 +2053,7 @@ namespace DD.Prototype.UI
             {
                 TMP_Text chip = UiFactory.Chip(
                     "State", button.transform,
-                    isNew ? "NEW" : "LOCKED",
+                    isNew ? UiStrings.Get("tree.flag.new", "NEW") : UiStrings.Get("tree.state.locked", "LOCKED"),
                     isNew ? UiColor.AccentSakura : UiColor.SurfaceInset,
                     isNew ? UiColor.SurfaceBase : UiColor.TextSecondary,
                     isNew ? 56f : 88f, UiChips.Height(UiChipSize.Row)); // WP-068 slice 3 (AD MUST-1): the band from the face at the TextScale - a fixed 22 emptied LOCKED at 1.25
@@ -2044,7 +2150,7 @@ namespace DD.Prototype.UI
 
             TMP_Text chip = UiFactory.Chip(
                 "State", content,
-                line.Earned ? (line.IsNew ? "NEW" : "EARNED") : "IN PROGRESS",
+                line.Earned ? (line.IsNew ? UiStrings.Get("tree.flag.new", "NEW") : UiStrings.Get("ach.earned", "EARNED")) : UiStrings.Get("ach.in_progress", "IN PROGRESS"),
                 line.Earned ? (line.IsNew ? UiColor.AccentSakura : UiColor.StateSuccess) : UiColor.SurfaceInset,
                 line.Earned ? (line.IsNew ? UiColor.SurfaceBase : UiColor.SurfaceInset) : UiColor.TextSecondary, // NEW = ink on sakura (AD v004 MUST-1)
                 140f, UiChips.Height(UiChipSize.Card)); // 140: "IN PROGRESS" at Caption tracking needs it (120 clipped the last S); height from the face (slice 3)
@@ -2109,7 +2215,7 @@ namespace DD.Prototype.UI
 
             TMP_Text chip = UiFactory.Chip(
                 "State", row,
-                line.Unlocked ? "UNLOCKED" : "LEVEL " + line.RequiredLevel,
+                line.Unlocked ? UiStrings.Get("profile.unlocked", "UNLOCKED") : UiStrings.Format("profile.level", "value", line.RequiredLevel.ToString(), "LEVEL {value}"),
                 UiColor.SurfaceInset,
                 // BarHealth (moss), not StateSuccess (jade): one green in the theme (AD SHOULD-7);
                 // Moss400 on SurfaceInset measures 5.1:1.

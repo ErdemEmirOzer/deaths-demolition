@@ -43,8 +43,8 @@ namespace DD.Prototype.UI
     /// </summary>
     public sealed class ResultsViewModel
     {
-        public const string Title = "RUN RESULTS";
-        public const string ContinueLabel = "MAIN MENU";
+        public static string Title => UiStrings.Get("results.title", "RUN RESULTS");
+        public static string ContinueLabel => UiStrings.Get("common.main_menu", "MAIN MENU");
 
         /// <summary>Hard cap on each reward list. The overflow is summarised, never scrolled.</summary>
         public const int MaxRewardEntries = 3;
@@ -55,11 +55,11 @@ namespace DD.Prototype.UI
         public bool HasRun;
 
         // ---- header
-        public string Eyebrow = "NO RUN RECORDED";
+        public string Eyebrow = UiStrings.Get("results.no_run", "NO RUN RECORDED");
         public string Loadout = string.Empty;
 
         // ---- run result (hero)
-        public string ReachedRoundLabel = "REACHED ROUND";
+        public string ReachedRoundLabel = UiStrings.Get("results.reached_round", "REACHED ROUND");
         public string ReachedRound = "—";
         public string RoundsCompletedCaption = string.Empty;
 
@@ -73,7 +73,7 @@ namespace DD.Prototype.UI
         // ---- experience
         public readonly List<UiStatLine> XpBreakdown = new List<UiStatLine>(3);
         public string TotalXp = "+0";
-        public string LevelLine = "LEVEL 1";
+        public string LevelLine = UiStrings.Format("profile.level", "value", "1", "LEVEL {value}");
         public bool LeveledUp;
         public int LevelsGained;
 
@@ -87,8 +87,8 @@ namespace DD.Prototype.UI
         // ---- rewards
         public readonly List<ProfileUnlockEntry> NewUnlocks = new List<ProfileUnlockEntry>(4);
         public readonly List<ProfileUnlockEntry> NewAchievements = new List<ProfileUnlockEntry>(4);
-        public string UnlocksEmpty = "No new content this run.";
-        public string AchievementsEmpty = "No new achievements this run.";
+        public string UnlocksEmpty = UiStrings.Get("results.unlocks_empty", "No new content this run.");
+        public string AchievementsEmpty = UiStrings.Get("results.achievements_empty", "No new achievements this run.");
 
         /// <summary>True when something on the screen deserves the reveal sound.</summary>
         public bool Celebrate;
@@ -121,7 +121,7 @@ namespace DD.Prototype.UI
                 return;
             }
 
-            BestRoundChip = data.IsNewHighestRound ? "NEW BEST ROUND" : string.Empty;
+            BestRoundChip = data.IsNewHighestRound ? UiStrings.Get("results.best_round_chip", "NEW BEST ROUND") : string.Empty;
             KilledBy = data.KilledBy ?? string.Empty;
             AchievementRarities.Clear();
             for (int i = 0; i < data.NewAchievements.Count; i++)
@@ -178,25 +178,25 @@ namespace DD.Prototype.UI
             switch (glyph.Type)
             {
                 case UnlockContentType.Weapon:
-                    typeLabel = "WEAPON";
+                    typeLabel = UiStrings.Get("tree.lane.weapon", "WEAPON");
                     // 12b (AD 12b MUST-2): the weapon's own N19 glyph - the unlock id is the v3 weapon id ("smg_2") or the
                     // runtime name; the medal only when neither resolves.
                     ClassicWeaponId weapon;
                     return TryWeapon(glyph.Id, out weapon) ? UiArt.WeaponIcon(weapon) ?? UiArt.Medal(UiMedal.Rare) : UiArt.Medal(UiMedal.Rare);
                 case UnlockContentType.Branch:
-                    typeLabel = "BRANCH";
+                    typeLabel = UiStrings.Get("results.unlock.branch", "BRANCH");
                     return UiArt.Icon("Upgrade." + glyph.Id) ?? UiArt.Medal(UiMedal.Rare);
                 case UnlockContentType.Title:
-                    typeLabel = "TITLE";
+                    typeLabel = UiStrings.Get("results.unlock.title", "TITLE");
                     return UiArt.Icon("Unlock.Title") ?? UiArt.Medal(UiMedal.Rare);   // 12b (AD G1 SHOULD-3): its own G1 cell
                 case UnlockContentType.Badge:
-                    typeLabel = "BADGE";
+                    typeLabel = UiStrings.Get("results.unlock.badge", "BADGE");
                     return UiArt.Icon("Unlock.Badge") ?? UiArt.Medal(UiMedal.Rare);   // the sakura wreath (Epic) is the Epic medal's alone
                 case UnlockContentType.Indicator:
-                    typeLabel = "HUD";
+                    typeLabel = UiStrings.Get("results.unlock.hud", "HUD");
                     return UiArt.Reticle(true) ?? UiArt.Medal(UiMedal.Rare);
                 default:
-                    typeLabel = "COSMETIC";
+                    typeLabel = UiStrings.Get("path.page.cosmetic", "COSMETIC");
                     return UiArt.Medal(UiMedal.Rare);
             }
         }
@@ -226,7 +226,7 @@ namespace DD.Prototype.UI
                 }
             }
 
-            return UiFactory.Clip(sourceId, 32).ToUpperInvariant();
+            return UiStrings.Upper(UiFactory.Clip(sourceId, 32));
         }
 
         /// <summary>The lowest weapon or branch unlock above <paramref name="level"/> (the profile's ladder), as the forward-look line.</summary>
@@ -337,11 +337,11 @@ namespace DD.Prototype.UI
         public float ProgressBefore01 = -1f;
 
         // ---- empty state
-        public string EmptyTitle = "There is no finished run to report.";
+        public string EmptyTitle = UiStrings.Get("results.empty.title", "There is no finished run to report.");
 
         public string EmptyBody =
-            "This screen is filled in the moment a run ends. Start one from the main menu and it will " +
-            "come back here by itself.";
+            UiStrings.Get("results.empty.body", "This screen is filled in the moment a run ends. Start one from the main menu and it will " +
+            "come back here by itself.");
 
         /// <summary>Builds the model with the profile's own weapon names.</summary>
         public static ResultsViewModel From(RunRewardReport report)
@@ -360,7 +360,7 @@ namespace DD.Prototype.UI
             if (report == null || !report.HasRun)
             {
                 model.HasRun = false;
-                model.FooterNote = "Rewards are granted automatically. There is nothing to claim.";
+                model.FooterNote = UiStrings.Get("results.footer.none", "Rewards are granted automatically. There is nothing to claim.");
                 return model;
             }
 
@@ -373,7 +373,7 @@ namespace DD.Prototype.UI
             model.Weapon = summary.Weapon;
             model.WeaponName = weaponName != null ? weaponName(summary.Weapon) : summary.Weapon.ToString();
             model.BuildLine = string.IsNullOrEmpty(summary.BuildDescription) || summary.BuildDescription == "Stock"
-                ? "no upgrades"
+                ? UiStrings.Get("pause.run.build_none", "no upgrades")
                 : UiFactory.Clip(summary.BuildDescription, BuildMaxCharacters);
             model.AshEarned = Mathf.Max(0, report.AshEarned);
             model.ProgressBefore01 = report.LevelBefore == report.LevelAfter && report.LevelRequirementAfter > 0
@@ -387,43 +387,43 @@ namespace DD.Prototype.UI
             // ---- run result --------------------------------------------------
             model.ReachedRound = summary.ReachedRound > 0 ? summary.ReachedRound.ToString() : "—";
             model.RoundsCompletedCaption = summary.CompletedRounds == 1
-                ? "1 round completed"
-                : summary.CompletedRounds + " rounds completed";
+                ? UiStrings.Get("results.rounds_completed.one", "1 round completed")
+                : UiStrings.Format("results.rounds_completed", "value", summary.CompletedRounds.ToString(), "{value} rounds completed");
 
             // ---- combat ------------------------------------------------------
             // Standard is always listed - it is the only tier in this build. The other
             // tiers appear ONLY when the run actually recorded one: a line reading
             // "Elite Kills 0" would present content that does not exist yet as if it
             // had merely been missed (WP-005: never fabricate variant data).
-            model.Combat.Add(new UiStatLine("Total Kills", summary.TotalKills.ToString(), UiColor.TextPrimary, true));
-            model.Combat.Add(new UiStatLine("Standard", summary.StandardKills.ToString()));
-            AddTierIfAny(model.Combat, "Special", summary.SpecialKills, UiColor.AccentSakura);
-            AddTierIfAny(model.Combat, "Elite", summary.EliteKills, UiColor.AccentWisteria);
-            AddTierIfAny(model.Combat, "Ultra", summary.UltraKills, UiColor.SilverLeaf); // WP-068: gold is currency/Special only; ceremony is ginpaku
+            model.Combat.Add(new UiStatLine(UiStrings.Get("stats.total_kills", "Total Kills"), summary.TotalKills.ToString(), UiColor.TextPrimary, true));
+            model.Combat.Add(new UiStatLine(UiStrings.Get("stats.tier.standard", "Standard"), summary.StandardKills.ToString()));
+            AddTierIfAny(model.Combat, UiStrings.Get("stats.tier.special", "Special"), summary.SpecialKills, UiColor.AccentSakura);
+            AddTierIfAny(model.Combat, UiStrings.Get("stats.tier.elite", "Elite"), summary.EliteKills, UiColor.AccentWisteria);
+            AddTierIfAny(model.Combat, UiStrings.Get("stats.tier.ultra", "Ultra"), summary.UltraKills, UiColor.SilverLeaf); // WP-068: gold is currency/Special only; ceremony is ginpaku
 
             if (summary.ArmorPiecesBroken > 0)
             {
-                model.Combat.Add(new UiStatLine("Armour Broken", summary.ArmorPiecesBroken.ToString(), UiColor.TextSecondary));
+                model.Combat.Add(new UiStatLine(UiStrings.Get("results.armour_broken", "Armour Broken"), summary.ArmorPiecesBroken.ToString(), UiColor.TextSecondary));
             }
 
             model.CombatNote = summary.CompletedRounds < summary.ReachedRound
-                ? "Kills in your final round count. Round XP is granted only for completed rounds."
-                : "Every kill counts towards kill XP and statistics.";
+                ? UiStrings.Get("results.combat_note.partial", "Kills in your final round count. Round XP is granted only for completed rounds.")
+                : UiStrings.Get("results.combat_note.all", "Every kill counts towards kill XP and statistics.");
 
             // ---- run economy -------------------------------------------------
             // AD R1-D SHOULD (one rule for currency on Results): the tally is cream, like the GOLD hero tile.
-            model.Economy.Add(new UiStatLine("Gold Collected", summary.GoldEarned.ToString(), UiColor.TextPrimary));
-            model.Economy.Add(new UiStatLine("Gold Spent", summary.GoldSpent.ToString(), UiColor.TextSecondary));
-            model.Economy.Add(new UiStatLine("Upgrades Bought", summary.UpgradesPurchased.ToString(), UiColor.TextSecondary));
+            model.Economy.Add(new UiStatLine(UiStrings.Get("results.gold_collected", "Gold Collected"), summary.GoldEarned.ToString(), UiColor.TextPrimary));
+            model.Economy.Add(new UiStatLine(UiStrings.Get("results.gold_spent", "Gold Spent"), summary.GoldSpent.ToString(), UiColor.TextSecondary));
+            model.Economy.Add(new UiStatLine(UiStrings.Get("results.upgrades_bought", "Upgrades Bought"), summary.UpgradesPurchased.ToString(), UiColor.TextSecondary));
 
             // ---- experience --------------------------------------------------
             model.XpBreakdown.Add(new UiStatLine(
-                "Completed Rounds" + Count(summary.CompletedRounds),
+                UiStrings.Get("results.xp.rounds", "Completed Rounds") + Count(summary.CompletedRounds),
                 "+" + report.CompletedRoundXp));
             model.XpBreakdown.Add(new UiStatLine(
-                "Kills" + Count(summary.TotalKills),
+                UiStrings.Get("results.xp.kills", "Kills") + Count(summary.TotalKills),
                 "+" + report.KillXp));
-            model.XpBreakdown.Add(new UiStatLine("Gold, Upgrades, Time", "+0", UiColor.TextMuted));
+            model.XpBreakdown.Add(new UiStatLine(UiStrings.Get("results.xp.other", "Gold, Upgrades, Time"), "+0", UiColor.TextMuted));
 
             model.TotalXp = "+" + report.TotalXpEarned;
             model.Applied = report.Applied;
@@ -436,22 +436,24 @@ namespace DD.Prototype.UI
             model.ProgressAfter01 = report.ProgressAfter01;
 
             model.LevelLine = report.LeveledUp
-                ? "LEVEL " + report.LevelBefore + "  →  LEVEL " + report.LevelAfter
-                : "LEVEL " + report.LevelAfter;
+                ? UiStrings.Format("results.level_line", "from", report.LevelBefore.ToString(), "to", report.LevelAfter.ToString(), "LEVEL {from}  →  LEVEL {to}")
+                : UiStrings.Format("profile.level", "value", report.LevelAfter.ToString(), "LEVEL {value}");
 
-            model.ProgressCaption = report.XpIntoLevelAfter + " / " + report.LevelRequirementAfter +
-                                    " XP towards level " + (report.LevelAfter + 1);
+            model.ProgressCaption = UiStrings.Format("profile.progress", "value", report.XpIntoLevelAfter + " / " + report.LevelRequirementAfter,
+                "next", (report.LevelAfter + 1).ToString(), "{value} XP towards level {next}");
             model.NextUnlockLine = NextUnlockFor(report.LevelAfter, ProfileServiceLookup.Instance);
 
             model.LevelUpChip = report.LeveledUp
-                ? report.LevelsGained > 1 ? "LEVEL UP  x" + report.LevelsGained : "LEVEL UP"
+                ? report.LevelsGained > 1
+                    ? UiStrings.Format("results.level_up_many", "value", report.LevelsGained.ToString(), "LEVEL UP  x{value}")
+                    : UiStrings.Get("results.level_up", "LEVEL UP")
                 : string.Empty;
 
             model.XpNote = report.Applied
-                ? "Profile progress unlocks content only. It never raises your starting damage, " +
-                  "health or gold."
-                : "This XP was not added to your profile. Profile progress unlocks content only; " +
-                  "it never raises your starting damage, health or gold.";
+                ? UiStrings.Get("results.xp_note.applied", "Profile progress unlocks content only. It never raises your starting damage, " +
+                  "health or gold.")
+                : UiStrings.Get("results.xp_note.not_applied", "This XP was not added to your profile. Profile progress unlocks content only; " +
+                  "it never raises your starting damage, health or gold.");
 
             // ---- rewards -----------------------------------------------------
             model.NewUnlocks.AddRange(report.NewUnlocks);
@@ -473,24 +475,24 @@ namespace DD.Prototype.UI
             switch (report.Outcome)
             {
                 case ProfileCommitOutcome.Applied:
-                    return "Everything above is already saved to your profile. There is nothing to claim.";
+                    return UiStrings.Get("results.outcome.applied", "Everything above is already saved to your profile. There is nothing to claim.");
 
                 case ProfileCommitOutcome.Duplicate:
-                    return "This run was already recorded in your profile. Nothing was added twice.";
+                    return UiStrings.Get("results.outcome.duplicate", "This run was already recorded in your profile. Nothing was added twice.");
 
                 case ProfileCommitOutcome.MissingIdentity:
-                    return "This run could not be recorded in your profile: it carried no run identity.";
+                    return UiStrings.Get("results.outcome.missing_identity", "This run could not be recorded in your profile: it carried no run identity.");
 
                 case ProfileCommitOutcome.InvalidIdentity:
                     // Same honest sentence as an invalid candidate: no new player-facing copy
                     // for a fail-closed internal refusal.
-                    return "This run could not be recorded in your profile. Your saved profile is unchanged.";
+                    return UiStrings.Get("results.outcome.invalid", "This run could not be recorded in your profile. Your saved profile is unchanged.");
 
                 case ProfileCommitOutcome.InvalidCandidate:
-                    return "This run could not be recorded in your profile. Your saved profile is unchanged.";
+                    return UiStrings.Get("results.outcome.invalid", "This run could not be recorded in your profile. Your saved profile is unchanged.");
 
                 default:
-                    return "This run could not be written to your profile file. Your saved profile is unchanged.";
+                    return UiStrings.Get("results.outcome.write_failed", "This run could not be written to your profile file. Your saved profile is unchanged.");
             }
         }
 
@@ -500,7 +502,7 @@ namespace DD.Prototype.UI
             int hidden = total - MaxRewardEntries;
             return hidden <= 0
                 ? string.Empty
-                : "and " + hidden + " more, already added to your profile";
+                : UiStrings.Format("results.overflow", "value", hidden.ToString(), "and {value} more, already added to your profile");
         }
 
         private static void AddTierIfAny(List<UiStatLine> lines, string tier, int kills, UiColor color)
@@ -521,13 +523,13 @@ namespace DD.Prototype.UI
             switch (summary.EndReason)
             {
                 case RunEndReason.Aborted:
-                    return "RUN ABANDONED IN ROUND " + summary.ReachedRound;
+                    return UiStrings.Format("results.ending.abandoned", "value", summary.ReachedRound.ToString(), "RUN ABANDONED IN ROUND {value}");
 
                 case RunEndReason.Debug:
-                    return "RUN ENDED IN ROUND " + summary.ReachedRound;
+                    return UiStrings.Format("results.ending.ended", "value", summary.ReachedRound.ToString(), "RUN ENDED IN ROUND {value}");
 
                 default:
-                    return "DEFEATED IN ROUND " + summary.ReachedRound;
+                    return UiStrings.Format("results.ending.defeated", "value", summary.ReachedRound.ToString(), "DEFEATED IN ROUND {value}");
             }
         }
 
@@ -535,10 +537,10 @@ namespace DD.Prototype.UI
         {
             string weapon = weaponName != null ? weaponName(summary.Weapon) : summary.Weapon.ToString();
             string build = string.IsNullOrEmpty(summary.BuildDescription) || summary.BuildDescription == "Stock"
-                ? "no upgrades"
+                ? UiStrings.Get("pause.run.build_none", "no upgrades")
                 : UiFactory.Clip(summary.BuildDescription, BuildMaxCharacters);
 
-            return weapon + "   ·   " + build + "   ·   " + FormatDuration(summary.RunDuration) + " played";
+            return weapon + "   ·   " + build + "   ·   " + UiStrings.Format("results.played", "value", FormatDuration(summary.RunDuration), "{value} played");
         }
 
         public static string FormatDuration(float seconds)

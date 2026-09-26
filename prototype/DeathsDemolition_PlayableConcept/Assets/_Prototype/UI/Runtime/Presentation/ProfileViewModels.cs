@@ -126,10 +126,10 @@ namespace DD.Prototype.UI
     /// </summary>
     public sealed class CosmeticsViewModel
     {
-        public const string TitlesLabel = "PROFILE TITLE";
-        public const string BadgesLabel = "PROFILE BADGE";
-        public const string NoneOption = "None";
-        public const string PickNote = "Locked titles and badges open through achievements and unlocks.";
+        public static string TitlesLabel => UiStrings.Get("profile.titles_label", "PROFILE TITLE");
+        public static string BadgesLabel => UiStrings.Get("profile.badges_label", "PROFILE BADGE");
+        public static string NoneOption => UiStrings.Get("profile.none", "None");
+        public static string PickNote => UiStrings.Get("profile.pick_note", "Locked titles and badges open through achievements and unlocks.");
 
         public readonly List<UiCosmeticLine> Titles = new List<UiCosmeticLine>(6);
         public readonly List<UiCosmeticLine> Badges = new List<UiCosmeticLine>(6);
@@ -212,12 +212,12 @@ namespace DD.Prototype.UI
     /// </summary>
     public sealed class ProfileViewModel
     {
-        public const string Title = "PROFILE";
+        public static string Title => UiStrings.Get("menu.tab.profile", "PROFILE");
 
-        public const string RuleNote =
-            "Persistent progress unlocks content only. It never grants starting damage, health or gold.";
+        public static string RuleNote =>
+            UiStrings.Get("profile.rule", "Persistent progress unlocks content only. It never grants starting damage, health or gold.");
 
-        public string LevelText = "LEVEL 1";
+        public string LevelText = UiStrings.Format("profile.level", "value", "1", "LEVEL {value}");
         public float Progress01;
         public string ProgressCaption = string.Empty;
 
@@ -239,15 +239,15 @@ namespace DD.Prototype.UI
 
             int requirement = Mathf.Max(1, lookup.LevelRequirement(profile.ProfileLevel));
 
-            model.LevelText = "LEVEL " + profile.ProfileLevel;
+            model.LevelText = UiStrings.Format("profile.level", "value", profile.ProfileLevel.ToString(), "LEVEL {value}");
             model.Progress01 = Mathf.Clamp01(profile.XpIntoLevel / (float)requirement);
-            model.ProgressCaption = profile.XpIntoLevel + " / " + requirement +
-                                    " XP towards level " + (profile.ProfileLevel + 1);
+            model.ProgressCaption = UiStrings.Format("profile.progress", "value", profile.XpIntoLevel + " / " + requirement,
+                "next", (profile.ProfileLevel + 1).ToString(), "{value} XP towards level {next}");
 
             model.Headline.Add(new UiStatLine(
-                "Highest Round", profile.HighestRound > 0 ? profile.HighestRound.ToString() : "—"));
-            model.Headline.Add(new UiStatLine("Rounds Completed", profile.RoundsCompleted.ToString()));
-            model.Headline.Add(new UiStatLine("Total Kills", profile.TotalKills.ToString()));
+                UiStrings.Get("stats.highest_round", "Highest Round"), profile.HighestRound > 0 ? profile.HighestRound.ToString() : "—"));
+            model.Headline.Add(new UiStatLine(UiStrings.Get("stats.rounds_completed", "Rounds Completed"), profile.RoundsCompleted.ToString()));
+            model.Headline.Add(new UiStatLine(UiStrings.Get("stats.total_kills", "Total Kills"), profile.TotalKills.ToString()));
 
             // WP-009: "unlocked" is the EARNED entitlement in the profile, not a level
             // comparison - the same authority the selection screen and the offer gate
@@ -301,8 +301,8 @@ namespace DD.Prototype.UI
             }
 
             model.AchievementSummary = defined == 0
-                ? "No achievements are defined in this build yet."
-                : earned + " of " + defined + " achievements earned";
+                ? UiStrings.Get("ach.none_defined", "No achievements are defined in this build yet.")
+                : UiStrings.Format("profile.ach_summary", "value", earned.ToString(), "total", defined.ToString(), "{value} of {total} achievements earned");
 
             string notice = lookup.PersistenceNotice;
             if (!string.IsNullOrEmpty(notice))
@@ -312,8 +312,8 @@ namespace DD.Prototype.UI
             else if (lookup.RecoveredFromCorruptSave)
             {
                 model.Notice =
-                    "The previous profile file could not be read, so this profile started fresh. " +
-                    "The unreadable file was kept next to the save.";
+                    UiStrings.Get("profile.notice.recovered", "The previous profile file could not be read, so this profile started fresh. " +
+                    "The unreadable file was kept next to the save.");
             }
 
             return model;
@@ -323,7 +323,7 @@ namespace DD.Prototype.UI
         {
             int required = lookup.UnlockLevelFor(branch);
             model.Unlocks.Add(new UiUnlockLine(
-                lookup.BranchDisplayName(branch) + " branch",
+                UiStrings.Format("profile.branch_line", "value", lookup.BranchDisplayName(branch), "{value} branch"),
                 ProfileProgression.IsBranchEntitled(profile, branch),
                 required));
         }
@@ -338,10 +338,10 @@ namespace DD.Prototype.UI
     /// </summary>
     public sealed class StatisticsViewModel
     {
-        public const string Title = "STATISTICS";
+        public static string Title => UiStrings.Get("menu.tab.statistics", "STATISTICS");
 
-        public const string Note =
-            "Gold and time played are recorded per run only. Neither contributes profile XP.";
+        public static string Note =>
+            UiStrings.Get("stats.note", "Gold and time played are recorded per run only. Neither contributes profile XP.");
 
         /// <summary>Set on a profile with no runs; the groups are still filled with their zeros.</summary>
         public string EmptyNotice = string.Empty;
@@ -363,33 +363,33 @@ namespace DD.Prototype.UI
 
             if (profile.RunsPlayed <= 0)
             {
-                model.EmptyNotice = "No runs recorded yet. Finish a run and every line below starts filling in.";
+                model.EmptyNotice = UiStrings.Get("stats.empty", "No runs recorded yet. Finish a run and every line below starts filling in.");
             }
 
-            model.Progress.Add(new UiStatLine("Profile Level", profile.ProfileLevel.ToString()));
-            model.Progress.Add(new UiStatLine("Lifetime XP", profile.TotalXpEarned.ToString()));
-            model.Progress.Add(new UiStatLine("Best Single Run XP", profile.BestRunXp.ToString()));
+            model.Progress.Add(new UiStatLine(UiStrings.Get("stats.profile_level", "Profile Level"), profile.ProfileLevel.ToString()));
+            model.Progress.Add(new UiStatLine(UiStrings.Get("stats.lifetime_xp", "Lifetime XP"), profile.TotalXpEarned.ToString()));
+            model.Progress.Add(new UiStatLine(UiStrings.Get("stats.best_run_xp", "Best Single Run XP"), profile.BestRunXp.ToString()));
 
-            model.Runs.Add(new UiStatLine("Runs Played", profile.RunsPlayed.ToString()));
-            model.Runs.Add(new UiStatLine("Highest Round", profile.HighestRound.ToString()));
-            model.Runs.Add(new UiStatLine("Rounds Completed", profile.RoundsCompleted.ToString()));
+            model.Runs.Add(new UiStatLine(UiStrings.Get("stats.runs_played", "Runs Played"), profile.RunsPlayed.ToString()));
+            model.Runs.Add(new UiStatLine(UiStrings.Get("stats.highest_round", "Highest Round"), profile.HighestRound.ToString()));
+            model.Runs.Add(new UiStatLine(UiStrings.Get("stats.rounds_completed", "Rounds Completed"), profile.RoundsCompleted.ToString()));
 
-            model.Kills.Add(new UiStatLine("Total Kills", profile.TotalKills.ToString(), UiColor.TextPrimary, true));
-            model.Kills.Add(new UiStatLine("Standard", profile.StandardKills.ToString()));
-            AddTier(model, "Special", profile.SpecialKills, UiColor.AccentSakura);
-            AddTier(model, "Elite", profile.EliteKills, UiColor.AccentWisteria);
-            AddTier(model, "Ultra", profile.UltraKills, UiColor.SilverLeaf); // WP-068: gold is currency/Special only; ceremony is ginpaku
+            model.Kills.Add(new UiStatLine(UiStrings.Get("stats.total_kills", "Total Kills"), profile.TotalKills.ToString(), UiColor.TextPrimary, true));
+            model.Kills.Add(new UiStatLine(UiStrings.Get("stats.tier.standard", "Standard"), profile.StandardKills.ToString()));
+            AddTier(model, UiStrings.Get("stats.tier.special", "Special"), profile.SpecialKills, UiColor.AccentSakura);
+            AddTier(model, UiStrings.Get("stats.tier.elite", "Elite"), profile.EliteKills, UiColor.AccentWisteria);
+            AddTier(model, UiStrings.Get("stats.tier.ultra", "Ultra"), profile.UltraKills, UiColor.SilverLeaf); // WP-068: gold is currency/Special only; ceremony is ginpaku
             if (profile.UnattributedKills > 0)
             {
                 // Only a legacy file can carry these (WP-009 kill invariant); shown, never hidden.
-                model.Kills.Add(new UiStatLine("Recorded Before Tier Tracking", profile.UnattributedKills.ToString(), UiColor.TextMuted));
+                model.Kills.Add(new UiStatLine(UiStrings.Get("stats.unattributed", "Recorded Before Tier Tracking"), profile.UnattributedKills.ToString(), UiColor.TextMuted));
             }
 
-            model.Kills.Add(new UiStatLine("Armour Pieces Broken", profile.ArmorPiecesBroken.ToString(), UiColor.TextSecondary));
+            model.Kills.Add(new UiStatLine(UiStrings.Get("stats.armour_broken", "Armour Pieces Broken"), profile.ArmorPiecesBroken.ToString(), UiColor.TextSecondary));
 
             bool anyUnseen = profile.SpecialKills <= 0 || profile.EliteKills <= 0 || profile.UltraKills <= 0;
             model.TierCaption = anyUnseen
-                ? "Tiers recorded at zero have not appeared in a run yet."
+                ? UiStrings.Get("stats.tier_caption", "Tiers recorded at zero have not appeared in a run yet.")
                 : string.Empty;
 
             return model;
@@ -412,15 +412,15 @@ namespace DD.Prototype.UI
     /// </summary>
     public sealed class AchievementsViewModel
     {
-        public const string Title = "ACHIEVEMENTS";
+        public static string Title => UiStrings.Get("menu.tab.achievements", "ACHIEVEMENTS");
 
-        public const string EmptyTitle = "No achievements yet";
+        public static string EmptyTitle => UiStrings.Get("ach.empty.title", "No achievements yet");
 
-        public const string EmptyBody =
-            "This build does not define any achievements. When it does, they will unlock " +
-            "automatically at the end of a run and appear here.";
+        public static string EmptyBody =>
+            UiStrings.Get("ach.empty.body", "This build does not define any achievements. When it does, they will unlock " +
+            "automatically at the end of a run and appear here.");
 
-        public const string AutoNote = "Achievements unlock by themselves at the end of a run. There is nothing to claim.";
+        public static string AutoNote => UiStrings.Get("ach.auto_note", "Achievements unlock by themselves at the end of a run. There is nothing to claim.");
 
         public readonly List<UiAchievementLine> Lines = new List<UiAchievementLine>(8);
 
@@ -468,7 +468,8 @@ namespace DD.Prototype.UI
             model.NewCount = source.NewCount;
             model.Progress = model.Defined == 0
                 ? string.Empty
-                : model.Earned + " of " + model.Defined + " earned" + (model.NewCount > 0 ? "  ·  " + model.NewCount + " new" : string.Empty);
+                : UiStrings.Format("ach.progress", "value", model.Earned.ToString(), "total", model.Defined.ToString(), "{value} of {total} earned")
+                  + (model.NewCount > 0 ? UiStrings.Format("ach.progress_new", "value", model.NewCount.ToString(), "  ·  {value} new") : string.Empty);
             return model;
         }
 
@@ -503,7 +504,7 @@ namespace DD.Prototype.UI
 
             model.Progress = model.Defined == 0
                 ? string.Empty
-                : model.Earned + " of " + model.Defined + " earned";
+                : UiStrings.Format("ach.progress", "value", model.Earned.ToString(), "total", model.Defined.ToString(), "{value} of {total} earned");
 
             return model;
         }

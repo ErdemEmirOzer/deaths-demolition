@@ -168,7 +168,7 @@ namespace DD.Prototype.UI
                 UiHintState.Seen = mask;
             }
 
-            return index >= 0 ? All[index].Text : null;
+            return index >= 0 ? UiStrings.Get(All[index].Key, All[index].Text) : null;   // WP-068 TR: the pack row under the tip's key
         }
     }
 }

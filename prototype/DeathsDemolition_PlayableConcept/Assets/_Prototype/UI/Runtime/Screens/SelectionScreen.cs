@@ -140,9 +140,9 @@ namespace DD.Prototype.UI
             }
 
             float headerHeight = BuildHeader(
-                "BEFORE THE RUN",
-                "PREPARE YOUR RUN",
-                "The skin is cosmetic. The classic weapon is carried for the whole run and cannot be swapped.");
+                UiStrings.Get("selection.eyebrow", "BEFORE THE RUN"),
+                UiStrings.Get("selection.title", "PREPARE YOUR RUN"),
+                UiStrings.Get("selection.subtitle", "The skin is cosmetic. The classic weapon is carried for the whole run and cannot be swapped."));
 
             float top = headerHeight + (int)UiSpace.XXL;
             float stageFrom = ColumnShare + GutterShare;
@@ -245,12 +245,12 @@ namespace DD.Prototype.UI
         {
             var stack = new UiStack(column);
 
-            stack.Add(UiFactory.Heading("CHARACTER SKIN", column), UiFactory.LineHeight(UiType.H2));
+            stack.Add(UiFactory.Heading(UiStrings.Get("selection.skin.title", "CHARACTER SKIN"), column), UiFactory.LineHeight(UiType.H2));
             stack.Gap(UiSpace.S);
 
             TMP_Text caption = UiFactory.Label(
                 "SkinCaption", column,
-                "All three are available from the start and none of them changes a gameplay value.",
+                UiStrings.Get("selection.skin.caption", "All three are available from the start and none of them changes a gameplay value."),
                 UiType.Caption, UiColor.TextMuted);
             stack.Add((RectTransform)caption.transform, UiFactory.LineHeight(UiType.Caption) * 2f);
 
@@ -289,7 +289,7 @@ namespace DD.Prototype.UI
                 button.LabelText.alignment = TextAlignmentOptions.TopLeft;
 
                 TMP_Text detail = UiFactory.Label(
-                    "Detail", button.transform, "Cosmetic only", UiType.Caption, UiColor.TextSecondary,
+                    "Detail", button.transform, UiStrings.Get("selection.skin.detail", "Cosmetic only"), UiType.Caption, UiColor.TextSecondary,
                     TextAnchor.UpperLeft);
                 RectTransform detailRect = UiFactory.Fill((RectTransform)detail.transform);
                 detailRect.anchorMin = new Vector2(0f, 1f);
@@ -298,7 +298,7 @@ namespace DD.Prototype.UI
                 detailRect.offsetMax = new Vector2(-BadgeWidth, -(int)UiSpace.M);
 
                 _skinButtons[i] = button;
-                _skinBadges[i] = BuildBadge(button, "SELECTED");
+                _skinBadges[i] = BuildBadge(button, UiStrings.Get("selection.selected", "SELECTED"));
 
                 // Focus opens on the skin that is already selected - on a second run of
                 // the session that is the remembered one, not the first card.
@@ -416,7 +416,7 @@ namespace DD.Prototype.UI
         private void BuildWeaponColumn(RectTransform column)
         {
             var stack = new UiStack(column);
-            stack.Add(UiFactory.Heading("CLASSIC WEAPON", column), UiFactory.LineHeight(UiType.H2));
+            stack.Add(UiFactory.Heading(UiStrings.Get("selection.weapon.title", "CLASSIC WEAPON"), column), UiFactory.LineHeight(UiType.H2));
             stack.Gap(UiSpace.S);
             _weaponsColumn = column;
             _weaponsTop = stack.Cursor;
@@ -490,11 +490,11 @@ namespace DD.Prototype.UI
                 button.LabelText.enableWordWrapping = false;
                 button.LabelText.overflowMode = TextOverflowModes.Ellipsis;
 
-                _weaponSelected[i] = RowChip(button, UiChipKind.Selected, "SELECTED").gameObject;
+                _weaponSelected[i] = RowChip(button, UiChipKind.Selected, UiStrings.Get("selection.selected", "SELECTED")).gameObject;
                 _weaponSelected[i].SetActive(false);
                 if (!unlocked)
                 {
-                    _weaponLockChips[i] = RowChip(button, UiChipKind.Neutral, enabled ? LockChip(id) : "UNAVAILABLE");
+                    _weaponLockChips[i] = RowChip(button, UiChipKind.Neutral, enabled ? LockChip(id) : UiStrings.Get("selection.unavailable", "UNAVAILABLE"));
                 }
 
                 _weaponButtons[i] = button;
@@ -568,7 +568,7 @@ namespace DD.Prototype.UI
                     left += RowGlyph + (int)UiSpace.S;
                 }
 
-                TMP_Text name = UiFactory.Label("Name", tile, UiStrings.Get("weapon." + ids[i] + ".name", ids[i]).ToUpperInvariant(), UiType.Label, UiColor.TextPrimary, TextAnchor.MiddleLeft);
+                TMP_Text name = UiFactory.Label("Name", tile, UiStrings.Upper(UiStrings.Get("weapon." + ids[i] + ".name", ids[i])), UiType.Label, UiColor.TextPrimary, TextAnchor.MiddleLeft);
                 RectTransform nameRect = UiFactory.Fill((RectTransform)name.transform);
                 nameRect.offsetMin = new Vector2(left, 0f);
                 nameRect.offsetMax = new Vector2(-(int)UiSpace.M, 0f);
@@ -1019,7 +1019,7 @@ namespace DD.Prototype.UI
             tint.a = unlocked ? 1f : UiGlyphTints.LockedAlpha;
             _stageGlyph.color = tint;
 
-            _stageName.text = WeaponName(id).ToUpperInvariant();
+            _stageName.text = UiStrings.Upper(WeaponName(id));
             _stageClass.text = ClassLine(key, def);
             _stageRole.text = UiStrings.Get("weapon." + key + ".role", string.Empty);
             _stageDescription.text = UiStrings.Get("weapon." + key + ".desc", string.Empty);
@@ -1090,7 +1090,7 @@ namespace DD.Prototype.UI
             string level = info.LevelGate.ToString(CultureInfo.InvariantCulture);
             if (info.OnPath)
             {
-                return info.Ready ? UiStrings.Get("path.lock.ready", "PATH › ready").ToUpperInvariant() : UiStrings.Get("path.title", "PATH") + " · L" + level;
+                return info.Ready ? UiStrings.Upper(UiStrings.Get("path.lock.ready", "PATH › ready")) : UiStrings.Get("path.title", "PATH") + " · L" + level;
             }
 
             return UiStrings.Get("tree.state.locked", "LOCKED") + " · L" + level;
@@ -1306,7 +1306,7 @@ namespace DD.Prototype.UI
             footer.sizeDelta = new Vector2(0f, UiTokens.TargetPreferred);
             footer.anchoredPosition = Vector2.zero;
 
-            UiButton back = UiFactory.Button("Back", footer, "BACK", UiButtonVariant.Secondary, GoBack);
+            UiButton back = UiFactory.Button("Back", footer, UiStrings.Get("selection.back", "BACK"), UiButtonVariant.Secondary, GoBack);
             _backButton = back;
             UiInput.LeadingIcon(back, "Menu.Back", UiColor.TextSecondary, 22f);
             UiInput.Prompt(back, UiPromptAction.Cancel);
@@ -1318,7 +1318,7 @@ namespace DD.Prototype.UI
             backRect.anchoredPosition = Vector2.zero;
 
             UiButton start = UiFactory.Button(
-                "Start", footer, "START RUN", UiButtonVariant.Primary, PrototypeUiFlow.StartRun);
+                "Start", footer, UiStrings.Get("selection.start", "START RUN"), UiButtonVariant.Primary, PrototypeUiFlow.StartRun);
             _startButton = start;
             UiInput.Prompt(start, UiPromptAction.Submit, true);
             RectTransform startRect = (RectTransform)start.transform;
