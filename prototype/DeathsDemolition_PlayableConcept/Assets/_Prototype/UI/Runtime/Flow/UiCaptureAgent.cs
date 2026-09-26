@@ -595,6 +595,12 @@ namespace DD.Prototype.UI
                     yield break;
                 }
 
+                if (_screen == "cursor")
+                {
+                    yield return CursorShot();
+                    yield break;
+                }
+
                 if (_screen == "loading")
                 {
                     yield return LoadingFrames();
@@ -841,6 +847,50 @@ namespace DD.Prototype.UI
             /// (default primary) to <c>-ddUiCaptureOut</c>, then the modal open over it to the same
             /// name with <c>-modal</c>. <c>-ddUiKitRm 1</c> builds it under Reduced Motion.
             /// </summary>
+            /// <summary>
+            /// 12b SHOULD-7 (AD G1 SHOULD-4): the hardware cursor is not in a Player capture, so this mode only stages it -
+            /// the kit sheet, the Press art bound (UiCursor.SetPressed, as a held control does), and the cream SELECTED
+            /// chip's centre written to <c>&lt;out&gt;.target</c> ("x y width height", frame px, origin bottom-left). The
+            /// capture script moves the macOS pointer there (tools/warp-cursor.swift) and takes the screen with the cursor
+            /// (<c>screencapture -C</c>) inside the 20 s this mode holds; then a reference frame without it, and quit.
+            /// </summary>
+            private IEnumerator CursorShot()
+            {
+                UiKitSheet.Build(1);
+                yield return new WaitForSecondsRealtime(_delay);
+                RectTransform chip = null;
+                foreach (RectTransform rect in UnityEngine.Object.FindObjectsOfType<RectTransform>())
+                {
+                    if (rect.name == "Selected" && rect.gameObject.activeInHierarchy)
+                    {
+                        chip = rect;
+                        break;
+                    }
+                }
+
+                Vector2 centre = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
+                if (chip != null)
+                {
+                    var corners = new Vector3[4];
+                    chip.GetWorldCorners(corners);
+                    Canvas canvas = chip.GetComponentInParent<Canvas>();
+                    Camera camera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null;
+                    centre = (RectTransformUtility.WorldToScreenPoint(camera, corners[0]) + RectTransformUtility.WorldToScreenPoint(camera, corners[2])) * 0.5f;
+                }
+
+                UiCursor.SetContextVisible(true);
+                UiCursor.SetPressed(true);
+                File.WriteAllText(_out + ".target", string.Format(System.Globalization.CultureInfo.InvariantCulture,
+                    "{0:F1} {1:F1} {2} {3}", centre.x, centre.y, Screen.width, Screen.height));
+                Debug.Log("[UiCapture] cursor target " + centre + " on " + (chip != null ? "the SELECTED chip" : "the screen centre")
+                          + " · framebuffer " + Screen.width + "x" + Screen.height + " · Press art " + UiCursor.Pressed);
+                yield return new WaitForSecondsRealtime(20f);
+                yield return new WaitForEndOfFrame();
+                WritePng(_out);
+                UiCursor.SetPressed(false);
+                Application.Quit();
+            }
+
             private IEnumerator KitSheet()
             {
                 UiTokens.Palette = Arg("-ddUiKitPalette") == "cb" ? UiPalette.ColorBlindSafe : UiPalette.Default;
