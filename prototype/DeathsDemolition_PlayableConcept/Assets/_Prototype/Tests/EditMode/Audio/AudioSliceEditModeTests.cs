@@ -811,6 +811,29 @@ namespace DD.Prototype.Tests.EditMode.Audio
         }
 
         [Test]
+        public void SilahFoleyV3_KlipSetineGore_MekanizmaEslemesi()
+        {
+            // WP-072 V6 mix audit: the legacy A/B/C clips vs the AP-022 v3 sets.
+            const DD.Prototype.Characters.CharacterAnimationEvent MagOut = DD.Prototype.Characters.CharacterAnimationEvent.MagOut,
+                MagIn = DD.Prototype.Characters.CharacterAnimationEvent.MagIn, MagIn3 = DD.Prototype.Characters.CharacterAnimationEvent.MagIn3,
+                Eject = DD.Prototype.Characters.CharacterAnimationEvent.Eject, Chamber = DD.Prototype.Characters.CharacterAnimationEvent.Chamber,
+                BoxOpen = DD.Prototype.Characters.CharacterAnimationEvent.BoxOpen, BoltBack = DD.Prototype.Characters.CharacterAnimationEvent.BoltBack;
+            Assert.AreEqual(AudioSoundId.FoleyRl1RocketIn, WeaponFoleyV3.Mechanism("RL1", MagOut), "RL1 eski A klibi: mag_out = roket tüpe");
+            Assert.AreEqual(AudioSoundId.None, WeaponFoleyV3.Mechanism("SG2", Eject, false, false), "SG2 kırma: atış başına pompa yok");
+            Assert.AreEqual(AudioSoundId.None, WeaponFoleyV3.Mechanism("SG2", Chamber, false, false));
+            Assert.AreEqual(AudioSoundId.FoleySg2Chamber, WeaponFoleyV3.Mechanism("SG2", Chamber, false, true), "SG2 reload sonunda kapanır");
+            Assert.AreEqual(AudioSoundId.None, WeaponFoleyV3.Mechanism("SG2", MagIn3, false, true), "SG2 iki fişek");
+            Assert.AreEqual(AudioSoundId.FoleySg1Eject, WeaponFoleyV3.Mechanism("SG1", Eject, false, false), "SG1 pompa atış başına");
+            Assert.AreEqual(AudioSoundId.FoleySr1BoltBack, WeaponFoleyV3.Mechanism("SR1", Eject, false), "SR1 eski: eject = sürgü geri");
+            Assert.AreEqual(AudioSoundId.None, WeaponFoleyV3.Mechanism("SR1", Eject, true), "SR1 v3: bolt_back taşır");
+            Assert.AreEqual(AudioSoundId.FoleySr1BoltBack, WeaponFoleyV3.Mechanism("SR1", BoltBack, true));
+            Assert.AreEqual(AudioSoundId.FoleyLmg1BoxOpen, WeaponFoleyV3.Mechanism("LMG1", MagOut, false), "LMG eski: mag_out = kutu açılır");
+            Assert.AreEqual(AudioSoundId.None, WeaponFoleyV3.Mechanism("LMG1", MagIn, true), "LMG v3: box_close taşır");
+            Assert.AreEqual(AudioSoundId.FoleyLmg1BoxOpen, WeaponFoleyV3.Mechanism("LMG1", BoxOpen, true));
+            Assert.AreEqual(AudioSoundId.FoleyAr1MagIn, WeaponFoleyV3.Mechanism("AR1", MagIn, true), "AR1 iki sette aynı");
+        }
+
+        [Test]
         public void AkustikAlanlar_V6Haritasi_SalonKoridor_Histerezis_SahneYoksaOpen()
         {
             Debug.Log("[DD-TEST] wp072b6 " + AudioCatalogBuilder.BuildAcousticSpaces());

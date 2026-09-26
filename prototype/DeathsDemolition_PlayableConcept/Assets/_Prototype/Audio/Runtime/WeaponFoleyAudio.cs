@@ -40,7 +40,9 @@ namespace DD.Prototype.Audio
         }
 
         /// <summary>The weapon's own mechanism sound for this clip event; None = the weapon has no such action (silent).</summary>
-        public static AudioSoundId Mechanism(string audioId, CharacterAnimationEvent e)
+        /// <param name="v3Clip">The TP v3 set (AP-022) plays for this weapon; false = the AP-009 A/B/C class clip (legacy timing).</param>
+        /// <param name="reloading">The weapon is reloading (a fire clip's eject / chamber is a per-shot cycle otherwise).</param>
+        public static AudioSoundId Mechanism(string audioId, CharacterAnimationEvent e, bool v3Clip = false, bool reloading = true)
         {
             bool magIn = e == CharacterAnimationEvent.MagIn || e == CharacterAnimationEvent.MagIn2 || e == CharacterAnimationEvent.MagIn3;
             switch (audioId)
@@ -72,6 +74,9 @@ namespace DD.Prototype.Audio
                     if (e == CharacterAnimationEvent.Chamber) return AudioSoundId.FoleySg1Chamber;
                     break;
                 case "SG2":
+                    // Break-action, two shells: on the shared C (pump) clips no per-shot cycle and no third shell (WP-072 V6 mix audit).
+                    if (!v3Clip && !reloading && (e == CharacterAnimationEvent.Eject || e == CharacterAnimationEvent.Chamber)) return AudioSoundId.None;
+                    if (!v3Clip && e == CharacterAnimationEvent.MagIn3) return AudioSoundId.None;
                     if (e == CharacterAnimationEvent.Eject) return AudioSoundId.FoleySg2Eject;
                     if (magIn || e == CharacterAnimationEvent.ShellIn) return AudioSoundId.FoleySg2ShellIn;
                     if (e == CharacterAnimationEvent.Chamber) return AudioSoundId.FoleySg2Chamber;
@@ -80,6 +85,8 @@ namespace DD.Prototype.Audio
                 case "LMG2":
                 {
                     bool heavy = audioId == "LMG2";
+                    // The v3 clips carry box_open / belt_seat / box_close; their mag_out / mag_in would open and close the box twice.
+                    if (v3Clip && (e == CharacterAnimationEvent.MagOut || magIn)) return AudioSoundId.None;
                     if (e == CharacterAnimationEvent.BoxOpen || e == CharacterAnimationEvent.MagOut) return heavy ? AudioSoundId.FoleyLmg2BoxOpen : AudioSoundId.FoleyLmg1BoxOpen;
                     if (e == CharacterAnimationEvent.BeltSeat) return heavy ? AudioSoundId.FoleyLmg2BeltSeat : AudioSoundId.FoleyLmg1BeltSeat;
                     if (e == CharacterAnimationEvent.BoxClose || magIn) return heavy ? AudioSoundId.FoleyLmg2BoxClose : AudioSoundId.FoleyLmg1BoxClose;
@@ -88,6 +95,8 @@ namespace DD.Prototype.Audio
                 }
 
                 case "SR1":
+                    // The v3 clips carry the whole bolt cycle; their eject / chamber sit on (or just before) bolt_back / bolt_down.
+                    if (v3Clip && (e == CharacterAnimationEvent.Eject || e == CharacterAnimationEvent.Chamber)) return AudioSoundId.None;
                     if (e == CharacterAnimationEvent.MagOut) return AudioSoundId.FoleySr1MagOut;
                     if (magIn) return AudioSoundId.FoleySr1MagIn;
                     if (e == CharacterAnimationEvent.BoltUp) return AudioSoundId.FoleySr1BoltUp;
@@ -96,7 +105,8 @@ namespace DD.Prototype.Audio
                     if (e == CharacterAnimationEvent.BoltDown || e == CharacterAnimationEvent.Chamber) return AudioSoundId.FoleySr1BoltDown;
                     break;
                 case "RL1":
-                    if (e == CharacterAnimationEvent.RocketIn) return AudioSoundId.FoleyRl1RocketIn;
+                    // The legacy A clip has no rocket_in: its mag_out is the rocket sliding into the tube (the v3 clip has no mag_out).
+                    if (e == CharacterAnimationEvent.RocketIn || e == CharacterAnimationEvent.MagOut) return AudioSoundId.FoleyRl1RocketIn;
                     if (e == CharacterAnimationEvent.RocketSeat || magIn) return AudioSoundId.FoleyRl1RocketSeat;
                     break;
             }

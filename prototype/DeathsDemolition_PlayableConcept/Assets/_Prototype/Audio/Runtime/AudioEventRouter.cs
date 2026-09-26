@@ -658,10 +658,37 @@ namespace DD.Prototype.Audio
                 placement = AudioMixPlan.WeaponFoley(sound);
             }
 
+            // Two clip events a few frames apart can name the same voice (v3 empty reloads: charge + chamber; SR1 bolt_back + eject):
+            // one mechanism, one sound.
+            float now = Time.time;
+            if (sound == _lastFoley && now - _lastFoleyAt < FoleyRepeatSeconds)
+            {
+                FoleyRepeatSkipped++;
+                return;
+            }
+
             if (_play(placement, rig.transform.position, 1f, 30))
             {
                 FoleyCount++;
+                _lastFoley = sound;
+                _lastFoleyAt = now;
             }
+        }
+
+        private const float FoleyRepeatSeconds = 0.2f;
+        private AudioSoundId _lastFoley;
+        private float _lastFoleyAt = -10f;
+
+        /// <summary>Foley voices dropped as a repeat of the same voice within 0,2 s (tests / F1).</summary>
+        public int FoleyRepeatSkipped { get; private set; }
+
+        /// <summary>The player's TP rig plays the AP-022 v3 set for the equipped weapon (else the AP-009 A/B/C clips).</summary>
+        private static bool V3ClipPlaying()
+        {
+            if (!PlayerSkinnedVisual.V3WeaponSets) return false;
+            PlayerRig rig = PlayerRegistry.Primary;
+            var visual = rig != null ? rig.GetComponentInChildren<PlayerSkinnedVisual>() : null;
+            return visual != null && !string.IsNullOrEmpty(visual.WeaponAnimSet);
         }
 
         /// <summary>
@@ -681,7 +708,9 @@ namespace DD.Prototype.Audio
             }
 
             float semitones = 0f;
-            sound = WeaponFoleyV3.Mechanism(audioId, e);
+            var controller = DD.Prototype.Weapons.WeaponRegistry.ActiveController;
+            bool reloading = controller == null || controller.Classic == null || controller.Classic.IsReloading;
+            sound = WeaponFoleyV3.Mechanism(audioId, e, V3ClipPlaying(), reloading);
             if (sound == AudioSoundId.None)
             {
                 sound = WeaponFoleyV3.Handling(family, e);

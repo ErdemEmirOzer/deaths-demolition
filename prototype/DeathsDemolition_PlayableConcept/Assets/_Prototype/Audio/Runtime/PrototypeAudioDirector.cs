@@ -149,6 +149,9 @@ namespace DD.Prototype.Audio
         /// <summary>The last sound that got a voice. Test readout.</summary>
         public AudioSoundId LastPlayed { get; private set; }
 
+        /// <summary>Legacy reload cues skipped because the weapon's own v3 foley covers the reload (tests).</summary>
+        public int LegacyReloadSuppressed { get; private set; }
+
         /// <summary>WP-072 B1 test / F1 surface: the player's fire voice.</summary>
         public WeaponFireAudio WeaponFire => _weaponFire;
 
@@ -567,6 +570,15 @@ namespace DD.Prototype.Audio
                 ep.Sound = ExplosionLayer(Vector3.Distance(_listener.Transform.position, cue.Position));
                 if (cue.Position == Vector3.zero) ep.Spatial = 0f;
                 PlayResolved(ep, cue.Position, Mathf.Clamp(cue.Intensity <= 0f ? 1f : cue.Intensity, 0.25f, 1.4f), cue.Priority);
+                return;
+            }
+
+            // WP-072 V6 mix audit: the old synthesized reload trio (start / insert at 62 % / end) retires once the equipped weapon's
+            // own clip-event foley is produced — it flammed ~100 ms ahead of mag_in (DIRECTION §155 listed it as retired).
+            if ((cue.Event == CombatAudioEvent.ReloadStart || cue.Event == CombatAudioEvent.ReloadInsert || cue.Event == CombatAudioEvent.ReloadEnd)
+                && _library.IsProduced(WeaponFoleyV3.Handling(WeaponFoleyV3.Family(WeaponFoleyV3.Equipped()), DD.Prototype.Characters.CharacterAnimationEvent.Raised)))
+            {
+                LegacyReloadSuppressed++;
                 return;
             }
 

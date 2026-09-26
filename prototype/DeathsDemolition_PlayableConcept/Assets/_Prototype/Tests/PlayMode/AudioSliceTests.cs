@@ -1216,6 +1216,103 @@ namespace DD.Prototype.Tests.PlayMode
             }
         }
 
+        /// <summary>
+        /// WP-072 · V6 mix pass (C-00 26.09): the default world, a scripted fight (6 zombies closing in, SMG1 bursts from the player),
+        /// captured post-mixer per camera mode — the full mix and each bus solo (music / ambience / world SFX / player SFX).
+        /// Measurement only (not a gate): Explicit, out of CI; the table goes to the log.
+        /// </summary>
+        [UnityTest]
+        [Explicit("WP-072 V6 mix ölçümü — kanıt, CI dışı")]
+        [Timeout(400000)]
+        public IEnumerator MixV6_UcKameraModu_BusSeviyeleri_Olcum()
+        {
+            UnityEngine.Audio.AudioMixer mixer = _d.Bridge.Mixer;
+            string path = System.IO.Path.Combine(Application.temporaryCachePath, "wp072-mix.wav");
+            _s.Rig.Health.DiagnosisInvulnerable = true;
+            for (int i = 0; i < 6; i++)
+            {
+                float a = i * Mathf.PI / 3f;
+                _s.Dogur(_s.Zemin(Mathf.Cos(a) * 9f, Mathf.Sin(a) * 9f));
+            }
+
+            var modlar = new[] { DD.Prototype.CameraSystem.CameraMode.TopDown, DD.Prototype.CameraSystem.CameraMode.ThirdPerson, DD.Prototype.CameraSystem.CameraMode.FirstPerson };
+            var dallar = new[] { ("full", 0), ("music", 1), ("ambience", 2), ("world", 3), ("player", 4) };
+            var rapor = new System.Text.StringBuilder("[DD-TEST] wp072.mix v6 (LUFS-I / PLR dB / LRA400 LU)");
+            try
+            {
+                foreach (var mod in modlar)
+                {
+                    DD.Prototype.CameraSystem.CameraModeService.Request(mod, true);
+                    yield return new WaitForSecondsRealtime(0.6f);
+                    rapor.Append("\n  ").Append(mod).Append(':');
+                    foreach (var (ad, bus) in dallar)
+                    {
+                        for (int k = 1; k <= 4; k++)
+                        {
+                            if (bus == 0 || k == bus) mixer.ClearFloat(AudioMixerBridge.VolumeParams[k]);
+                            else mixer.SetFloat(AudioMixerBridge.VolumeParams[k], -80f);
+                        }
+
+                        AudioOutputCapture cap = AudioOutputCapture.Arm(_d.gameObject, path);
+                        float bitis = Time.realtimeSinceStartup + 4.8f, sonraki = 0f;
+                        int atis = 0;
+                        while (Time.realtimeSinceStartup < bitis)
+                        {
+                            float t = Time.realtimeSinceStartup;
+                            // 1,2 s burst (SMG1 ~ 8 shots/s) then 0,8 s off — a player's rhythm, not a wall of fire.
+                            if (t >= sonraki && (bitis - t) % 2f > 0.8f)
+                            {
+                                AudioEvents.RaiseWeapon(CombatAudioEvent.ClassicWeaponFire, "SMG1", _s.Rig.transform.position + Vector3.up * 1.3f + _s.Rig.transform.forward * (0.1f * (atis % 2)), 0.75f, 50);
+                                atis++;
+                                sonraki = t + 0.125f;
+                            }
+
+                            yield return null;
+                        }
+
+                        long frames = cap.FramesWritten;
+                        UnityEngine.Object.DestroyImmediate(cap);
+                        foreach (var tap in UnityEngine.Object.FindObjectsOfType<AudioOutputTap>(true)) UnityEngine.Object.DestroyImmediate(tap);
+                        if (frames == 0) Assert.Inconclusive("Ses çıkışı yok (batch/aygıt yok).");
+                        float[] mono = OkuMono(path, out int rate);
+                        LoudnessMeter.Result r = LoudnessMeter.Measure(mono, rate);
+                        int win = (int)(0.4f * rate), hop = rate / 10;
+                        var m = new System.Collections.Generic.List<float>();
+                        var w = new float[win];
+                        for (int s0 = 0; s0 + win <= mono.Length; s0 += hop) { Array.Copy(mono, s0, w, 0, win); float l = LoudnessMeter.WindowLoudness(w, rate); if (l > -70f) m.Add(l); }
+                        m.Sort();
+                        float lra = m.Count > 4 ? m[(int)(m.Count * 0.95f) - 1] - m[(int)(m.Count * 0.10f)] : 0f;
+                        rapor.Append(' ').Append(ad).Append(' ').Append(r.Silent ? "sil" : r.IntegratedLufs.ToString("0.0")).Append(" / ").Append((r.TruePeakDb - r.IntegratedLufs).ToString("0.0")).Append(" / ").Append(lra.ToString("0.0")).Append(" ·");
+                        if (bus == 0) Assert.IsFalse(r.Silent, mod + " tam miks sessiz");
+                    }
+                }
+            }
+            finally
+            {
+                for (int k = 1; k <= 4; k++) mixer.ClearFloat(AudioMixerBridge.VolumeParams[k]);
+                DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.TopDown, true);
+            }
+
+            Debug.Log(rapor.ToString());
+        }
+
+        private static float[] OkuMono(string path, out int rate)
+        {
+            byte[] raw = System.IO.File.ReadAllBytes(path);
+            int ch = raw[22] | (raw[23] << 8);
+            rate = raw[24] | (raw[25] << 8) | (raw[26] << 16) | (raw[27] << 24);
+            int n = (raw.Length - 44) / (2 * ch);
+            var mono = new float[n];
+            for (int i = 0; i < n; i++)
+            {
+                float sum = 0f;
+                for (int c = 0; c < ch; c++) { int o = 44 + 2 * (i * ch + c); sum += (short)(raw[o] | (raw[o + 1] << 8)) / 32768f; }
+                mono[i] = sum / ch;
+            }
+
+            return mono;
+        }
+
         // ================================================================== WP-068 dilim 11 · UI ses v3
 
         [UnityTest]
