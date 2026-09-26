@@ -188,8 +188,39 @@ namespace DD.Prototype.UI
             }
         }
 
+        /// <summary>
+        /// WP-068 Turkish (C-00 26.09, "metin taşmaları"): every visible label that TMP truncated, or whose one-line words are
+        /// wider than its box, logged with the frame ("[UiCapture] overflow &lt;frame&gt; &lt;path&gt; 'words'") - the
+        /// objective half of the 1.25 / Mac overflow check (grep the logs); the frames are the other half.
+        /// </summary>
+        private static void LogOverflow(string frame)
+        {
+            foreach (TMPro.TMP_Text text in UnityEngine.Object.FindObjectsOfType<TMPro.TMP_Text>())
+            {
+                if (!text.isActiveAndEnabled || text.canvasRenderer.GetInheritedAlpha() < 0.05f || string.IsNullOrEmpty(text.text))
+                {
+                    continue;
+                }
+
+                float width = text.rectTransform.rect.width;
+                bool wide = !text.enableWordWrapping && width > 1f && text.preferredWidth > width + 2f;
+                if (text.isTextTruncated || wide)
+                {
+                    string where = text.name;
+                    for (Transform t = text.transform.parent; t != null && t.parent != null; t = t.parent)
+                    {
+                        where = t.name + "/" + where;
+                    }
+
+                    Debug.Log("[UiCapture] overflow " + frame + " " + where + " '" + text.text.Replace("\n", " ") + "'"
+                              + (text.isTextTruncated ? " truncated" : " wider " + text.preferredWidth.ToString("F0") + " > " + width.ToString("F0") + " " + text.overflowMode));
+                }
+            }
+        }
+
         private static void WritePng(string path)
         {
+            LogOverflow(Path.GetFileNameWithoutExtension(path));
             string folder = Path.GetDirectoryName(path);
             if (!string.IsNullOrEmpty(folder) && !Directory.Exists(folder))
             {
