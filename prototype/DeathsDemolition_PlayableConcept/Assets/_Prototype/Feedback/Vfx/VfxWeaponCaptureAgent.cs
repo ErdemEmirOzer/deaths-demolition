@@ -20,7 +20,7 @@ namespace DD.Prototype.Feedback.Vfx
     /// rl_1, or the keys of <c>-ddVfxWeaponCaptureOnly a,b</c>), it equips it through <see cref="WeaponQaHooks"/>, waits for the
     /// raise, taps the trigger through its own input source until a full-tracer round leaves (the class's every-Nth; a pellet
     /// or rocket weapon: the first shot) and frames <c>&lt;mode&gt;-&lt;key&gt;-flash.png</c> one frame after that shot and
-    /// <c>&lt;mode&gt;-&lt;key&gt;-casing.png</c> 0.15 s after it, logging the muzzle / ejection sockets against the camera, the
+    /// <c>&lt;mode&gt;-&lt;key&gt;-casing.png</c> 0.15 s after it (sg_1: 0.03 s after its actual pump event), logging the muzzle / ejection sockets against the camera, the
     /// round's origin, the newest casing's travel and the VFX counters. Opt-in only; writes nothing else.
     /// </summary>
     public sealed class VfxWeaponCaptureAgent : MonoBehaviour
@@ -45,6 +45,8 @@ namespace DD.Prototype.Feedback.Vfx
         private ProjectileSpawnInfo _spawn;
         private int _spawnFrame;
         private ClassicWeaponId _watch;
+        private float _casingAt = -1f;
+        private Vector3 _casingPort;
 
         private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
 
@@ -67,8 +69,15 @@ namespace DD.Prototype.Feedback.Vfx
             agent._only = only;
         }
 
-        private void OnEnable() { ProjectileEvents.Spawned += OnSpawned; }
-        private void OnDisable() { ProjectileEvents.Spawned -= OnSpawned; }
+        private void OnEnable() { ProjectileEvents.Spawned += OnSpawned; WeaponEvents.Mechanism += OnMechanism; }
+        private void OnDisable() { ProjectileEvents.Spawned -= OnSpawned; WeaponEvents.Mechanism -= OnMechanism; }
+
+        private void OnMechanism(WeaponMechanismEvent info)
+        {
+            if (info.Weapon != _watch || info.Kind != WeaponMechanismKind.CasingEjected) return;
+            _casingAt = Time.time;
+            _casingPort = info.Position;
+        }
 
         private void OnSpawned(ProjectileSpawnInfo info)
         {
@@ -155,6 +164,7 @@ namespace DD.Prototype.Feedback.Vfx
             for (int tap = 0; tap < taps; tap++)
             {
                 _spawned = false;
+                _casingAt = -1f;
                 _input.Fire = true;
                 float until = Time.time + 1.6f;
                 while (!_spawned && Time.time < until) yield return null;
@@ -207,7 +217,21 @@ namespace DD.Prototype.Feedback.Vfx
             CasingEffect casing = NewestCasing(dressing, portAtShot);
             Grab(key, "flash", shot, shotFrame, shotTime, muzzle, port, portAtShot, casing, dressing, profile);
 
-            while (Time.time - shotTime < CasingDelay) yield return null;
+            if (_watch == ClassicWeaponId.CombatShotgun)
+            {
+                float until = shotTime + 1.2f;
+                while (_casingAt < shotTime && Time.time < until) yield return null;
+                if (_casingAt >= shotTime)
+                {
+                    while (Time.time - _casingAt < 0.03f) yield return null;
+                    portAtShot = _casingPort;
+                    casing = NewestCasing(dressing, portAtShot);
+                }
+            }
+            else
+            {
+                while (Time.time - shotTime < CasingDelay) yield return null;
+            }
             yield return new WaitForEndOfFrame();
             Grab(key, "casing", shot, shotFrame, shotTime, muzzle, port, portAtShot, casing, dressing, profile);
         }
@@ -244,7 +268,8 @@ namespace DD.Prototype.Feedback.Vfx
             Camera cam = Camera.main;
             Transform c = cam != null ? cam.transform : null;
             string line = "[VfxWeaponCapture] " + file + " key=" + key + " dFrames=" + (Time.frameCount - shotFrame) + " dt=" + F(Time.time - shotTime)
-                          + " round=" + shot.ProjectileId + " kind=" + shot.Kind;
+                          + " round=" + shot.ProjectileId + " kind=" + shot.Kind
+                          + " mechanismDt=" + (_casingAt >= shotTime ? F(_casingAt - shotTime) : "none");
             if (muzzle != null && c != null)
             {
                 Vector3 vp = cam.WorldToViewportPoint(muzzle.position);

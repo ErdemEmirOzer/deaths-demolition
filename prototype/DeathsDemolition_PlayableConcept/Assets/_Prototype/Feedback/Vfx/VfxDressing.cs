@@ -278,7 +278,10 @@ namespace DD.Prototype.Feedback.Vfx
         /// </summary>
         private void EjectCasing(MuzzleVariant variant, Transform muzzle, VfxWeaponProfile profile)
         {
-            if (_casings == null) return;
+            if (_casings == null || muzzle == null || (profile != null && !profile.HasCasing)) return;
+            DD.Prototype.Weapons.WeaponController active = DD.Prototype.Weapons.WeaponRegistry.ActiveController;
+            if (active != null && active.Classic != null && active.Classic.Definition != null
+                && active.Classic.Definition.presentation.casing == DD.Prototype.Core.Weapons.WeaponCasing.None) return;
             CasingLibrary lib = CasingLibrary.Current;
             if (lib == null) return;
             DD.Prototype.Weapons.WeaponVisualRig rig = _heatMuzzle == muzzle ? _heatRig : muzzle.GetComponentInParent<DD.Prototype.Weapons.WeaponVisualRig>();
@@ -303,6 +306,16 @@ namespace DD.Prototype.Feedback.Vfx
             if (c == null) return;
             c.Play(lib.MeshFor(mesh), lib.Material, velocity, seed, life);
             CasingsEjected++;
+        }
+
+        /// <summary>sg_1 ejects on its existing pump mechanism event (clip or 0.40 s fallback), never on the flash.</summary>
+        public void PlayPumpCasing(DD.Prototype.Weapons.WeaponMechanismEvent info)
+        {
+            if (!_ready || info.Kind != DD.Prototype.Weapons.WeaponMechanismKind.CasingEjected
+                || info.Weapon != DD.Prototype.Core.Config.ClassicWeaponId.CombatShotgun) return;
+            DD.Prototype.Weapons.WeaponController active = DD.Prototype.Weapons.WeaponRegistry.ActiveController;
+            if (active == null || active.SpecialWeaponActive || active.Classic == null || active.Classic.Id != info.Weapon) return;
+            EjectCasing(MuzzleVariant.C, active.Muzzle, VfxWeaponProfiles.For(info.Weapon));
         }
 
         private Vector3 BarrelAxis()
@@ -750,7 +763,9 @@ namespace DD.Prototype.Feedback.Vfx
             // WP-073 B1: the class profile drives the flash, the light, the smoke and the casing (a Special keeps A).
             VfxWeaponProfile profile = VfxWeaponProfiles.Active();
             bool firstPerson = DD.Prototype.CameraSystem.CameraModeService.Current == DD.Prototype.CameraSystem.CameraMode.FirstPerson;
-            EjectCasing(variant, muzzle, profile);
+            // sg_2 keeps its current shot ejection until S-02/C-00 defines its break-open contract.
+            if (active == null || active.Classic == null || active.Classic.Id != DD.Prototype.Core.Config.ClassicWeaponId.CombatShotgun)
+                EjectCasing(variant, muzzle, profile);
             LastMuzzleNote = active == null ? "no-active" : active.Classic == null ? "no-classic" : active.SpecialWeaponActive ? "special" : active.Classic.Id.ToString();
             float size = row.WorldSizeMetres * Mathf.Max(0.5f, scale);
             // Reduce flashes: the sheet at × 0.4 (the light holds a steady 0.8 in MuzzleSystem).

@@ -52,6 +52,7 @@ namespace DD.Prototype.Feedback.Vfx
         public float SmokeStart, SmokeEnd, SmokeSeconds, SmokeAlpha;
 
         // ---- casing (§1.3)
+        public bool HasCasing = true;
         public MuzzleVariant CasingMesh = MuzzleVariant.A;
         public float CasingSpeed = 3f;
         public float CasingSpinHz = 12f;
@@ -162,7 +163,7 @@ namespace DD.Prototype.Feedback.Vfx
 
         public static readonly VfxWeaponProfile Rl1 = new VfxWeaponProfile
         {
-            Slot = "rl_1", Class = VfxWeaponClass.Launcher, Speed = 46f, CoreWidth = 0f, GlowWidth = 0f, TracerEveryN = 0,
+            Slot = "rl_1", Class = VfxWeaponClass.Launcher, HasCasing = false, Speed = 46f, CoreWidth = 0f, GlowWidth = 0f, TracerEveryN = 0,
             FlashScale = 1.8f, FlashDurationScale = 1.5f,
             LightColor = Hex("#FFB070"), LightIntensity = 24f, LightRange = 12f, LightHoldSeconds = 4f / 60f, LightFadeSeconds = 0.25f,
             SmokeStart = 0.8f, SmokeEnd = 2.0f, SmokeSeconds = 2.0f, SmokeAlpha = 0.45f

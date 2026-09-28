@@ -87,6 +87,7 @@ namespace DD.Prototype.Feedback.Vfx
             EnemyCombatEvents.Raised += OnCombatBeat;
             CharacterAnimationEvents.Any += OnAnimationEvent;
             WeaponEvents.ReloadStarted += OnReloadStarted;
+            WeaponEvents.Mechanism += OnWeaponMechanism;
         }
 
         private void Disarm()
@@ -94,6 +95,7 @@ namespace DD.Prototype.Feedback.Vfx
             EnemyCombatEvents.Raised -= OnCombatBeat;
             CharacterAnimationEvents.Any -= OnAnimationEvent;
             WeaponEvents.ReloadStarted -= OnReloadStarted;
+            WeaponEvents.Mechanism -= OnWeaponMechanism;
         }
 
         /// <summary>Delayed effects (the magazine hits the ground, the pump vents after the shot).</summary>
@@ -188,6 +190,8 @@ namespace DD.Prototype.Feedback.Vfx
         }
 
         // ------------------------------------------------------------------ weapons
+
+        private void OnWeaponMechanism(WeaponMechanismEvent info) => _owner.PlayPumpCasing(info);
 
         private void OnReloadStarted(float seconds)
         {
