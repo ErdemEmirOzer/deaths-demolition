@@ -852,8 +852,8 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(CameraMode.TopDown, CameraModeService.Current);
             var silah = WeaponRegistry.ActiveController;
             var bag = _rig.GetComponent<PlayerWeaponBinding>();
-            Collider govde = hedef.HitboxFor(BodyRegion.UpperBody);
-            Collider kafa = hedef.HitboxFor(BodyRegion.Head);
+            Collider govde = hedef.HitboxFor(DD.Prototype.Damage.BodyRegion.UpperBody);
+            Collider kafa = hedef.HitboxFor(DD.Prototype.Damage.BodyRegion.Head);
             Assert.IsNotNull(bag);
             Assert.IsNotNull(govde);
             Assert.IsNotNull(kafa);
@@ -1006,7 +1006,7 @@ namespace DD.Prototype.Tests.PlayMode
                 for (int i = 0; i < hasar.Count; i++)
                 {
                     Assert.Greater(hasar[i].Result.HealthDamage, 0f, "Flesh hit can hasarı taşımıyor.");
-                    Assert.AreEqual(BodyRegion.UpperBody, hasar[i].Result.Region, "Fixture gerçek gövde isabeti üretmedi.");
+                    Assert.AreEqual(DD.Prototype.Damage.BodyRegion.UpperBody, hasar[i].Result.Region, "Fixture gerçek gövde isabeti üretmedi.");
                     Assert.AreEqual(TufekHasari, hasar[i].Result.HealthDamage, "Gövde hasarı formülden farklı.");
                     Assert.AreEqual(hasar[i].Result.Killed ? HitFeedbackTier.Death : HitFeedbackTier.FleshHit,
                         tierler[i], "Gövde hasarı ile dressed tier eşleşmiyor.");
