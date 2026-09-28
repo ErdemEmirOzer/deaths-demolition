@@ -172,6 +172,9 @@ namespace DD.Art.Tests.PlayMode
 
             string dir = OutputDir();
             var manifest = new List<string> { "name,position,lookAt,vfov,file,warmFrames" };
+            bool recordSugi = Environment.GetEnvironmentVariable("DD_ART_CAPTURE_SUGI_LOD") == "1";
+            if (recordSugi) SugiCaptureLodRecorder.Install();
+            var lodRows = new List<string> { "pose,variant,groupId,lod,rootDistance,referenceDistance,renderer,mesh,lodBias,vfov,rootX,rootY,rootZ,screenMinX,screenMinY,screenMaxX,screenMaxY,triangles,localAzimuthDeg,elevationDeg,groupYawDeg" };
             Time.captureDeltaTime = 1f / 60f;
             float? phaseBefore = CloudShadowDriver.ForcedPhase;
             foreach (ArtVisualRegression.CameraPose pose in PosesFor())
@@ -198,8 +201,12 @@ namespace DD.Art.Tests.PlayMode
                 try
                 {
                     string file = Path.Combine(dir, pose.name + ".png");
-                    Texture2D t = ArtVisualRegression.Capture(pose, W, H, true);
+                    if (recordSugi) SugiCaptureLodRecorder.Begin(pose.name);
+                    Texture2D t;
+                    try { t = ArtVisualRegression.Capture(pose, W, H, true); }
+                    finally { if (recordSugi) SugiCaptureLodRecorder.Stop(); }
                     try { File.WriteAllBytes(file, t.EncodeToPNG()); } finally { UnityEngine.Object.DestroyImmediate(t); }
+                    if (recordSugi) lodRows.AddRange(SugiCaptureLodRecorder.Rows);
                     if (look && ScreenAtmosphereFeature.WorldActive)
                     {
                         // WP-075 C4 B / C5: the same frame without the screen atmosphere (K9: shafts ≤ +0.08 V frame mean).
@@ -223,6 +230,11 @@ namespace DD.Art.Tests.PlayMode
             CameraModeService.Request(CameraMode.TopDown, true);
             CloudShadowDriver.ForcedPhase = phaseBefore;
             File.WriteAllLines(Path.Combine(dir, "world-v3-manifest.csv"), manifest);
+            if (recordSugi)
+            {
+                File.WriteAllLines(Path.Combine(dir, "sugi-rendered-lods.csv"), lodRows);
+                Assert.Greater(lodRows.Count, 1, "No sugi render callbacks from capture camera; no actual LOD evidence");
+            }
             Debug.Log("[DD-TEST] wp020.captures frames=" + PosesFor().Length + " instances=" + Ap005WorldBootstrap.Last.Instances + " -> " + dir);
             // The AP005 placement count; another scene (DD_ART_CAPTURE_SCENE: the v6 dev scene, dressed in-scene) has no placement instances.
             if (string.IsNullOrEmpty(scenePath)) Assert.AreEqual(3168, Ap005WorldBootstrap.Last.Instances);   // WP-038I: AP-017 Faz 2 delta v005 (+23); WP-038L: Faz 2b delta v006 (+25)
@@ -232,6 +244,80 @@ namespace DD.Art.Tests.PlayMode
         private static string V(Vector3 v)
         {
             return "(" + v.x.ToString("F2", CultureInfo.InvariantCulture) + " " + v.y.ToString("F2", CultureInfo.InvariantCulture) + " " + v.z.ToString("F2", CultureInfo.InvariantCulture) + ")";
+        }
+    }
+
+    /// <summary>Opt-in capture evidence: records meshes that receive OnWillRenderObject for the exact capture camera.
+    /// This never forces a LOD or changes a production prefab. Other game/shadow/reflection cameras cannot enter the receipt.</summary>
+    public sealed class SugiCaptureLodRecorder : MonoBehaviour
+    {
+        private static string _pose;
+        private static readonly HashSet<int> Seen = new HashSet<int>();
+        public static readonly List<string> Rows = new List<string>();
+        private LODGroup _group;
+        private int _lod;
+        private string _variant, _mesh;
+
+        public static void Install()
+        {
+            foreach (LODGroup group in UnityEngine.Object.FindObjectsOfType<LODGroup>())
+            {
+                LOD[] lods = group.GetLODs();
+                if (lods.Length < 3 || lods[0].renderers.Length == 0) continue;
+                MeshFilter first = lods[0].renderers[0].GetComponent<MeshFilter>();
+                string mesh = first != null && first.sharedMesh != null ? first.sharedMesh.name : "";
+                string variant = null;
+                foreach (string v in new[] { "V01", "V02", "V03" }) if (mesh.Contains("sugi_" + v)) variant = v;
+                if (variant == null) continue;
+                for (int i = 0; i < lods.Length; i++)
+                foreach (Renderer renderer in lods[i].renderers)
+                {
+                    var recorder = renderer.gameObject.AddComponent<SugiCaptureLodRecorder>();
+                    recorder._group = group; recorder._lod = i; recorder._variant = variant;
+                    MeshFilter filter = renderer.GetComponent<MeshFilter>();
+                    recorder._mesh = filter != null && filter.sharedMesh != null ? filter.sharedMesh.name : "";
+                }
+            }
+        }
+
+        public static void Begin(string pose) { _pose = pose; Seen.Clear(); Rows.Clear(); }
+        public static void Stop() { _pose = null; }
+
+        private void OnWillRenderObject()
+        {
+            Camera camera = Camera.current;
+            if (_pose == null || camera == null || camera.name != "ArtVisualRegression Camera (" + _pose + ")" || !Seen.Add(GetInstanceID())) return;
+            float rootDistance = Vector3.Distance(camera.transform.position, _group.transform.position);
+            float referenceDistance = Vector3.Distance(camera.transform.position, _group.transform.TransformPoint(_group.localReferencePoint));
+            MeshFilter filter = GetComponent<MeshFilter>();
+            Bounds bounds = filter.sharedMesh.bounds;
+            Vector3 min = bounds.min, max = bounds.max;
+            Vector2 screenMin = new Vector2(float.PositiveInfinity, float.PositiveInfinity);
+            Vector2 screenMax = new Vector2(float.NegativeInfinity, float.NegativeInfinity);
+            for (int corner = 0; corner < 8; corner++)
+            {
+                Vector3 local = new Vector3((corner & 1) == 0 ? min.x : max.x, (corner & 2) == 0 ? min.y : max.y, (corner & 4) == 0 ? min.z : max.z);
+                Vector3 screen = camera.WorldToViewportPoint(transform.TransformPoint(local));
+                screenMin = Vector2.Min(screenMin, new Vector2(screen.x, screen.y));
+                screenMax = Vector2.Max(screenMax, new Vector2(screen.x, screen.y));
+            }
+            uint triangleCount = 0;
+            for (int submesh = 0; submesh < filter.sharedMesh.subMeshCount; submesh++)
+                if (filter.sharedMesh.GetTopology(submesh) == MeshTopology.Triangles) triangleCount += filter.sharedMesh.GetIndexCount(submesh) / 3;
+            Vector3 root = _group.transform.position;
+            Vector3 localCamera = _group.transform.InverseTransformPoint(camera.transform.position);
+            float azimuth = Mathf.Repeat(Mathf.Atan2(localCamera.z, localCamera.x) * Mathf.Rad2Deg, 360f);
+            Vector3 toCamera = camera.transform.position - root;
+            float elevation = Mathf.Atan2(toCamera.y, new Vector2(toCamera.x, toCamera.z).magnitude) * Mathf.Rad2Deg;
+            Rows.Add(string.Join(",", _pose, _variant, _group.GetInstanceID().ToString(CultureInfo.InvariantCulture), _lod.ToString(CultureInfo.InvariantCulture),
+                rootDistance.ToString("F4", CultureInfo.InvariantCulture), referenceDistance.ToString("F4", CultureInfo.InvariantCulture), gameObject.name, _mesh,
+                QualitySettings.lodBias.ToString("F4", CultureInfo.InvariantCulture), camera.fieldOfView.ToString("F4", CultureInfo.InvariantCulture),
+                root.x.ToString("F4", CultureInfo.InvariantCulture), root.y.ToString("F4", CultureInfo.InvariantCulture), root.z.ToString("F4", CultureInfo.InvariantCulture),
+                screenMin.x.ToString("F5", CultureInfo.InvariantCulture), screenMin.y.ToString("F5", CultureInfo.InvariantCulture),
+                screenMax.x.ToString("F5", CultureInfo.InvariantCulture), screenMax.y.ToString("F5", CultureInfo.InvariantCulture),
+                triangleCount.ToString(CultureInfo.InvariantCulture),
+                azimuth.ToString("F3", CultureInfo.InvariantCulture), elevation.ToString("F3", CultureInfo.InvariantCulture),
+                _group.transform.eulerAngles.y.ToString("F3", CultureInfo.InvariantCulture)));
         }
     }
 }

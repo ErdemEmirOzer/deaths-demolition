@@ -1,11 +1,11 @@
 {
  "ap": "AP-023",
- "version": "manifest v005 (AP023.manifest.v1, 51 families / 166 FBX)",
+ "version": "manifest v013 (AP023.manifest.v1, 59 families / 192 FBX)",
  "derived": "source FBX used directly (embed off, path STRIP, -Z/Y-up); roles ap023_<role>; roof parts fade (role roof); sloped box shells carry obb; LOD0 bounds from the geometry, receipt-checked",
  "sources": [
   {
-   "path": "asset-production/AP-023/exports/AP023-manifest-v011.json",
-   "sha256": "362647d0f4b663196dfee0a9752137bd70e4f2143eebda3942c1b6dd9db80c57"
+   "path": "asset-production/AP-023/exports/AP023-manifest-v013.json",
+   "sha256": "4094d28792befe797c72081444f5262e9e622e37977dc0eefbc4136117b0d8c6"
   }
  ],
  "families": [
@@ -14507,7 +14507,7 @@
          ],
          "triangles": 800,
          "colourLayers": [
-          "AP023_Mask"
+          "AP023_Streak"
          ],
          "windExpected": false
         },
@@ -14526,7 +14526,7 @@
          ],
          "triangles": 136,
          "colourLayers": [
-          "AP023_Mask"
+          "AP023_Streak"
          ],
          "windExpected": false
         },
@@ -14545,7 +14545,7 @@
          ],
          "triangles": 84,
          "colourLayers": [
-          "AP023_Mask"
+          "AP023_Streak"
          ],
          "windExpected": false
         }
@@ -14571,7 +14571,7 @@
          ],
          "triangles": 852,
          "colourLayers": [
-          "AP023_Mask"
+          "AP023_Streak"
          ],
          "windExpected": false
         },
@@ -14590,7 +14590,7 @@
          ],
          "triangles": 468,
          "colourLayers": [
-          "AP023_Mask"
+          "AP023_Streak"
          ],
          "windExpected": false
         },
@@ -14607,7 +14607,7 @@
          ],
          "triangles": 172,
          "colourLayers": [
-          "AP023_Mask"
+          "AP023_Streak"
          ],
          "windExpected": false
         }
@@ -17642,14 +17642,14 @@
      "id": "V01",
      "prefab": "SM_momiji_V01",
      "boundsMin": [
-      -3.22722,
-      -3.34585,
-      0.00103
+      -2.96857,
+      -3.11922,
+      -0.01428
      ],
      "boundsMax": [
-      2.89262,
-      2.72952,
-      4.99153
+      3.17443,
+      3.00047,
+      5.06205
      ],
      "parts": [
       {
@@ -17664,9 +17664,9 @@
           "ap023_momiji_sprigs"
          ],
          "facesPerSlot": [
-          3200
+          5200
          ],
-         "triangles": 3200,
+         "triangles": 5200,
          "colourLayers": [
           "AP003_Wind"
          ],
@@ -17679,9 +17679,9 @@
           "ap023_momiji_sprigs"
          ],
          "facesPerSlot": [
-          1280
+          2052
          ],
-         "triangles": 1280,
+         "triangles": 2052,
          "colourLayers": [
           "AP003_Wind"
          ],
@@ -17694,9 +17694,9 @@
           "ap023_momiji_sprigs"
          ],
          "facesPerSlot": [
-          320
+          486
          ],
-         "triangles": 320,
+         "triangles": 486,
          "colourLayers": [
           "AP003_Wind"
          ],
@@ -17716,9 +17716,9 @@
           "ap023_bark_sakura"
          ],
          "facesPerSlot": [
-          6789
+          6868
          ],
-         "triangles": 6789,
+         "triangles": 6868,
          "colourLayers": [],
          "windExpected": false
         },
@@ -17729,9 +17729,9 @@
           "ap023_bark_sakura"
          ],
          "facesPerSlot": [
-          2633
+          1950
          ],
-         "triangles": 2633,
+         "triangles": 1950,
          "colourLayers": [],
          "windExpected": false
         },
@@ -17742,9 +17742,9 @@
           "ap023_bark_sakura"
          ],
          "facesPerSlot": [
-          735
+          646
          ],
-         "triangles": 735,
+         "triangles": 646,
          "colourLayers": [],
          "windExpected": false
         }
@@ -17760,14 +17760,14 @@
        "shellBoxes": [
         {
          "min": [
-          -0.64539,
-          -0.6436,
-          0.00352
+          -0.18759,
+          -0.20047,
+          0.16746
          ],
          "max": [
-          0.63119,
-          0.60375,
-          1.99859
+          0.19039,
+          0.19465,
+          1.85813
          ],
          "positions": 8
         }
