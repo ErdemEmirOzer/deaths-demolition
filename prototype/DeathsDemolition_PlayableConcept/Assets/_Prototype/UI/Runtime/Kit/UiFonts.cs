@@ -82,7 +82,13 @@ namespace DD.Prototype.UI
         /// </summary>
         public static TMP_FontAsset For(UiType type)
         {
-            TMP_FontAsset font = Role(RoleOf(type));
+            UiFontRole role = RoleOf(type);
+            if (role == UiFontRole.Display && UiStrings.Language == UiStrings.Turkish)
+            {
+                role = UiFontRole.Text;   // C-00: the complete Turkish heading uses the existing Text SDF.
+            }
+
+            TMP_FontAsset font = Role(role);
             if (font == null)
             {
                 font = Role(UiFontRole.Text);

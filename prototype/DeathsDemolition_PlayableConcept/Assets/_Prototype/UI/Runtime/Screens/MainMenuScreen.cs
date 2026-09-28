@@ -1295,16 +1295,28 @@ namespace DD.Prototype.UI
 
         private const int MaxRemapRows = 10; // Gameplay map: Move ×4, Fire, Reload, Pause, Special, Interact (9 on keyboard)
 
-        private static string RemapRowName(InputRemapEntry e)
+        public static string RemapRowName(InputRemapEntry e)
         {
-            string action = e.Action == PrototypeInputNames.ActionMove ? "Move" : e.Action;
-            if (!string.IsNullOrEmpty(e.CompositePart))
+            string action = UiStrings.Get("controls.action." + e.Action, e.Action);
+            if (string.IsNullOrEmpty(e.CompositePart))
             {
-                string part = e.CompositePart;
-                return action + " " + char.ToUpperInvariant(part[0]) + part.Substring(1);
+                return action;
             }
 
-            return action;
+            string part = e.CompositePart;
+            string fallback = char.ToUpperInvariant(part[0]) + part.Substring(1);
+            return UiStrings.Format("controls.action_part", "action", action,
+                "part", UiStrings.Get("controls.part." + part, fallback), "{action} {part}");
+        }
+
+        public static string AimAssistLabel(InputAimAssistLevel level)
+        {
+            switch (level)
+            {
+                case InputAimAssistLevel.Off: return UiStrings.Get("controls.assist.off", "OFF");
+                case InputAimAssistLevel.Light: return UiStrings.Get("controls.assist.light", "LIGHT");
+                default: return UiStrings.Get("controls.assist.full", "FULL");
+            }
         }
 
         private void StartRebind(IInputRemapService remap, string entryId)
@@ -1357,7 +1369,7 @@ namespace DD.Prototype.UI
         private static (string, bool) AimAssistState()
         {
             InputAimAssistLevel level = InputPreferencesStore.Current.AimAssist;   // WP-059: InputPreferences.AimAssistLevel is the source
-            return (AimAssistLevels.Label(level), level != InputAimAssistLevel.Off);
+            return (AimAssistLabel(level), level != InputAimAssistLevel.Off);
         }
 
         // ------------------------------------------------------- accessibility pane

@@ -235,7 +235,7 @@ Key: `tree.run.<id>.name` / `.desc`. Names ≤ 22 characters in both languages (
 | `branch.piercing` | Tier | Piercing | Delme | Pierce count +{value}. | Delme sayısı +{value}. | UpgradeBranch.Piercing |
 | `branch.ricochet` | Tier | Ricochet | Sekme | Ricochet count +{value}. | Sekme sayısı +{value}. | UpgradeBranch.Ricochet |
 | `branch.explosion` | Tier | Explosion | Patlama | {value}% chance that a hit detonates. | İsabetin patlama şansı %{value}. | UpgradeBranch.Explosion (chance) |
-| `branch.blast` | Tier | Blast | Patlama Gücü | Blast radius +{radius} m, blast damage +{value}%. | Patlama çapı +{radius} m, patlama hasarı +%{value}. | rl_1 Explosion = Blast (WP-069 §6, WP-077 §2.3) |
+| `branch.blast` | Tier | Blast | Patlama Gücü | Blast radius +{radius} m, blast damage +{value}%. | Patlama yarıçapı +{radius} m, patlama hasarı +%{value}. | rl_1 Explosion = Blast (WP-069 §6, WP-077 §2.3) |
 | `branch.chain` | Tier | Chain | Zincir | Chain jumps +{value}. | Zincir sıçraması +{value}. | UpgradeBranch.Chain |
 | `branch.fire_rate` | Tier | Fire Rate | Atış Hızı | Fire rate +{value}%. | Atış hızı +%{value}. | UpgradeBranch.FireRate |
 | `branch.reload_speed` | Tier | Reload Speed | Dolum Hızı | Reload time −{value}%. | Dolum süresi −%{value}. | UpgradeBranch.ReloadSpeed |
@@ -979,3 +979,51 @@ S-09 (WP-068 TR, 26.09):
 - Upper-casing on screen follows the language (`UiStrings.Upper`: Turkish rules under `tr`, so i → İ).
 
 <!-- TABLES:END -->
+
+## S-09 visible Turkish slice — C-00 28.09
+
+UI only: live shop counts and tier details; remap action/composite labels; assist levels; HUD known killer names reuse results.killer.*. Physical binding keycaps, special names, units and dev strings keep their source. Tree names/descriptions use existing StringKey stems and live args. Turkish Display uses the existing Text SDF for the complete row; English keeps Display.
+
+| Key | English | Turkish |
+|---|---|---|
+| shop.count.one | one | bir |
+| shop.count.two | two | iki |
+| shop.count.three | three | üç |
+| shop.intro.many | Buy up to {count} upgrades this round, or reroll the offer once before the first. Unspent gold carries into the next round. | Bu round en çok {count} geliştirme al ya da ilkinden önce teklifi bir kez reroll et. Harcanmayan altın sonraki rounda geçer. |
+| shop.note.choose_many | Choose up to {count} upgrades, or reroll once first, then continue. | En çok {count} geliştirme seç ya da önce bir kez reroll et, sonra devam et. |
+| shop.refuse.limit | All {count} picks for this round are used. The offer is locked; nothing was spent. | Bu roundun {count} seçimi de kullanıldı. Teklif kilitli; hiçbir şey harcanmadı. |
+| shop.footer.none | Nothing bought yet. All {gold} gold carries into the next round. | Henüz bir şey alınmadı. {gold} altının tümü sonraki rounda geçer. |
+| shop.footer.remaining | Applied immediately. {used} of {max} picks used, {left} left. {gold} gold carries into the next round. | Hemen uygulandı. {max} seçimden {used} kullanıldı, {left} kaldı. {gold} altın sonraki rounda geçer. |
+| shop.footer.locked_many | Applied immediately. All picks used, so the offer is now locked. {gold} gold carries into the next round. | Hemen uygulandı. Tüm seçimler kullanıldı; teklif artık kilitli. {gold} altın sonraki rounda geçer. |
+| shop.footer.locked_one | Applied immediately. One upgrade per round, so the offer is now locked. {gold} gold carries into the next round. | Hemen uygulandı. Round başına tek geliştirme; teklif artık kilitli. {gold} altın sonraki rounda geçer. |
+| controls.action_part | {action} {part} | {action} {part} |
+| controls.assist.off | OFF | KAPALI |
+| controls.assist.light | LIGHT | HAFİF |
+| controls.assist.full | FULL | TAM |
+| hud.death.killed_by | {down}  ·  killed by {source} | {down} · kaynak: {source} |
+| tree.link.unbound_1 | Special Link I | Özel Bağ I |
+| tree.link.unbound_2 | Special Link II | Özel Bağ II |
+| shop.detail.Piercing | Bullets pass through {count} more enemy per shot ({total} total), {damage}% damage kept per pass. | Atışta {count} ek düşman delinir (toplam {total}); geçişte %{damage} hasar kalır. |
+| shop.detail.Ricochet | {chance}% of hits bounce to another enemy within {radius} m, up to {count} time(s), at {damage}% damage. | İsabetlerin %{chance} kadarı {radius} m içindeki başka bir düşmana %{damage} hasarla en çok {count} kez seker. |
+| shop.detail.Explosion | {chance}% of hits detonate for {radius} m at {scale}x the hit's damage. | İsabetlerin %{chance} kadarı, isabet hasarının {scale}x katıyla {radius} m yarıçapta patlar. |
+| shop.detail.Chain | Damage jumps to {count} more enem(y/ies) within {radius} m at {damage}% damage, falling {falloff}% per jump. | Hasar {radius} m içindeki {count} ek düşmana %{damage} hasarla sıçrar; her sıçramada %{falloff} azalır. |
+| shop.detail.FireRate | +{value}% fire rate ({total}x total, capped at {max}x). | Atış hızı +%{value} (toplam {total}x, üst sınır {max}x). |
+| shop.detail.ReloadSpeed | -{value}% reload time ({total}x total, floor {min}x). | Dolum süresi -%{value} (toplam {total}x, alt sınır {min}x). |
+| shop.detail.MovementSpeed | +{value}% movement speed ({total}x total, capped at {max}x). | Hareket hızı +%{value} (toplam {total}x, üst sınır {max}x). |
+| shop.detail.MaximumHealth | +{value}% maximum health ({total}x total{health}). Current health keeps its share. | Azami can +%{value} (toplam {total}x{health}). Mevcut can oranı korunur. |
+| shop.detail.RegenerationDelay | -{value}% wait before health regenerates ({total}x total{seconds}). | Can yenilenmeden önceki bekleme -%{value} (toplam {total}x{seconds}). |
+| shop.detail.RegenerationRate | +{value}% health regeneration speed ({total}x total{rate}). | Can yenilenme hızı +%{value} (toplam {total}x{rate}). |
+| controls.action.Move | Move | Hareket |
+| controls.action.Aim | Aim | Nişan |
+| controls.action.AimStick | AimStick | Çubukla Nişan |
+| controls.action.Fire | Fire | Ateş |
+| controls.action.Reload | Reload | Doldur |
+| controls.action.Pause | Pause | Duraklat |
+| controls.action.Special | Special | Özel Silah |
+| controls.action.Interact | Interact | Etkileşim |
+| controls.action.Focus | Focus | Odaklan |
+| controls.part.up | Up | Yukarı |
+| controls.part.down | Down | Aşağı |
+| controls.part.left | Left | Sol |
+| controls.part.right | Right | Sağ |
+| tree.link.unbound_desc | Links the Special you pick up this run to your classic weapon. | Bu koşuda aldığın Özel silahı klasik silahına bağlar. |

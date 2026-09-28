@@ -418,7 +418,7 @@ namespace DD.Prototype.UI
         /// </summary>
         public static float FaceLineRatio(UiType type)
         {
-            TMP_FontAsset face = UiFonts.Role(UiFonts.RoleOf(type)) ?? UiFonts.Role(UiFontRole.Text);
+            TMP_FontAsset face = UiFonts.For(type);
             if (face == null || face.faceInfo.pointSize <= 0)
             {
                 return 1.25f;

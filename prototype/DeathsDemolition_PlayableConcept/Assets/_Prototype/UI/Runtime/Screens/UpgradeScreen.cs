@@ -1561,7 +1561,7 @@ namespace DD.Prototype.UI
             _goldNote.text = PicksPerRound > 1
                 ? (shop.PurchasesThisRound > 0
                     ? UiStrings.Get("shop.note.another", "Choose another upgrade, or continue.")
-                    : "Choose up to " + Words(PicksPerRound) + " upgrades, or reroll once first, then continue.")
+                    : UiUpgradeCopy.Choose(PicksPerRound))
                 : UiStrings.Get("shop.note.choose_one", "Choose one upgrade, or reroll once, then continue.");
             _goldNote.color = UiTokens.Get(UiColor.TextMuted);
         }
@@ -1576,21 +1576,7 @@ namespace DD.Prototype.UI
 
         private static string IntroSentence()
         {
-            return PicksPerRound > 1
-                ? "Buy up to " + Words(PicksPerRound) + " upgrades this round, or reroll the offer once before the first. Unspent gold carries into the next round."
-                : UiStrings.Get("shop.intro.one", "Buy one upgrade this round, or reroll the offer once first. Unspent gold carries into the next round.");
-        }
-
-        /// <summary>Small counts read as words in a sentence ("up to two upgrades"); larger ones as digits.</summary>
-        private static string Words(int n)
-        {
-            switch (n)
-            {
-                case 1: return "one";
-                case 2: return "two";
-                case 3: return "three";
-                default: return n.ToString();
-            }
+            return UiUpgradeCopy.Intro(PicksPerRound);
         }
 
         private void RefreshFooter(int gold, int purchases)
@@ -1614,17 +1600,7 @@ namespace DD.Prototype.UI
             int max = PicksPerRound;
             RoundUpgradeShop shop = Shop;
             bool locked = shop == null || shop.IsLocked;
-            if (purchases > 0 && max > 1 && !locked)
-            {
-                int left = Mathf.Max(0, max - purchases);
-                _footerNote.text = "Applied immediately. " + purchases + " of " + max + " picks used, " + left + " left. " + gold + " gold carries into the next round.";
-            }
-            else
-            {
-                _footerNote.text = purchases > 0
-                    ? "Applied immediately. " + (max > 1 ? "All picks used" : "One upgrade per round") + ", so the offer is now locked. " + gold + " gold carries into the next round."
-                    : "Nothing bought yet. All " + gold + " gold carries into the next round.";
-            }
+            _footerNote.text = UiUpgradeCopy.Footer(max, gold, purchases, locked);
 
             _footerNote.color = UiTokens.Get(UiColor.TextMuted);
         }
@@ -1770,7 +1746,7 @@ namespace DD.Prototype.UI
                     return UiStrings.Get("shop.refuse.owned", "You already own that card. Nothing was spent.");
                 case UpgradePurchaseResult.PurchaseLimitReached:
                     return PicksPerRound > 1
-                        ? "All " + Words(PicksPerRound) + " picks for this round are used. The offer is locked; nothing was spent."
+                        ? UiUpgradeCopy.PurchaseLimitReached(PicksPerRound)
                         : UiStrings.Get("shop.refuse.one_per_round", "One upgrade per round. The offer is locked; nothing was spent.");
                 case UpgradePurchaseResult.OfferUnavailable:
                     return UiStrings.Get("shop.refuse.no_offer", "There is no valid offer this round. Nothing was spent.");

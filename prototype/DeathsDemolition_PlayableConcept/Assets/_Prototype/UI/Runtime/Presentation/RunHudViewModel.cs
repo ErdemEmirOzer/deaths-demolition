@@ -189,6 +189,13 @@ namespace DD.Prototype.UI
                 return down;
             }
 
+            if (UiStrings.Language == UiStrings.Turkish)
+            {
+                string source = ResultsViewModel.KillerName(killedBy).Replace('.', ' ');
+                return UiStrings.Format("hud.death.killed_by", "down", down,
+                    "source", ClipTo(source, KillerMaxCharacters), "{down}  ·  killed by {source}");
+            }
+
             string phrase;
             if (parts[0] == "Zombie")
             {

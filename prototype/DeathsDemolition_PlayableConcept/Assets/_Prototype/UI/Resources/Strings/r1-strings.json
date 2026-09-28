@@ -617,7 +617,7 @@
   },
   "tree.run.branch.blast.desc": {
     "en": "Blast radius +{radius} m, blast damage +{value}%.",
-    "tr": "Patlama çapı +{radius} m, patlama hasarı +%{value}."
+    "tr": "Patlama yarıçapı +{radius} m, patlama hasarı +%{value}."
   },
   "tree.run.branch.chain.name": {
     "en": "Chain",
@@ -3362,5 +3362,169 @@
   "tree.action.buy": {
     "en": "BUY",
     "tr": "AL"
+  },
+  "shop.count.one": {
+    "en": "one",
+    "tr": "bir"
+  },
+  "shop.count.two": {
+    "en": "two",
+    "tr": "iki"
+  },
+  "shop.count.three": {
+    "en": "three",
+    "tr": "üç"
+  },
+  "shop.intro.many": {
+    "en": "Buy up to {count} upgrades this round, or reroll the offer once before the first. Unspent gold carries into the next round.",
+    "tr": "Bu round en çok {count} geliştirme al ya da ilkinden önce teklifi bir kez reroll et. Harcanmayan altın sonraki rounda geçer."
+  },
+  "shop.note.choose_many": {
+    "en": "Choose up to {count} upgrades, or reroll once first, then continue.",
+    "tr": "En çok {count} geliştirme seç ya da önce bir kez reroll et, sonra devam et."
+  },
+  "shop.refuse.limit": {
+    "en": "All {count} picks for this round are used. The offer is locked; nothing was spent.",
+    "tr": "Bu roundun {count} seçimi de kullanıldı. Teklif kilitli; hiçbir şey harcanmadı."
+  },
+  "shop.footer.none": {
+    "en": "Nothing bought yet. All {gold} gold carries into the next round.",
+    "tr": "Henüz bir şey alınmadı. {gold} altının tümü sonraki rounda geçer."
+  },
+  "shop.footer.remaining": {
+    "en": "Applied immediately. {used} of {max} picks used, {left} left. {gold} gold carries into the next round.",
+    "tr": "Hemen uygulandı. {max} seçimden {used} kullanıldı, {left} kaldı. {gold} altın sonraki rounda geçer."
+  },
+  "shop.footer.locked_many": {
+    "en": "Applied immediately. All picks used, so the offer is now locked. {gold} gold carries into the next round.",
+    "tr": "Hemen uygulandı. Tüm seçimler kullanıldı; teklif artık kilitli. {gold} altın sonraki rounda geçer."
+  },
+  "shop.footer.locked_one": {
+    "en": "Applied immediately. One upgrade per round, so the offer is now locked. {gold} gold carries into the next round.",
+    "tr": "Hemen uygulandı. Round başına tek geliştirme; teklif artık kilitli. {gold} altın sonraki rounda geçer."
+  },
+  "controls.action_part": {
+    "en": "{action} {part}",
+    "tr": "{action} {part}"
+  },
+  "controls.assist.off": {
+    "en": "OFF",
+    "tr": "KAPALI"
+  },
+  "controls.assist.light": {
+    "en": "LIGHT",
+    "tr": "HAFİF"
+  },
+  "controls.assist.full": {
+    "en": "FULL",
+    "tr": "TAM"
+  },
+  "hud.death.killed_by": {
+    "en": "{down}  ·  killed by {source}",
+    "tr": "{down} · kaynak: {source}"
+  },
+  "tree.link.unbound_1": {
+    "en": "Special Link I",
+    "tr": "Özel Bağ I"
+  },
+  "tree.link.unbound_2": {
+    "en": "Special Link II",
+    "tr": "Özel Bağ II"
+  },
+  "shop.detail.Piercing": {
+    "en": "Bullets pass through {count} more enemy per shot ({total} total), {damage}% damage kept per pass.",
+    "tr": "Atışta {count} ek düşman delinir (toplam {total}); geçişte %{damage} hasar kalır."
+  },
+  "shop.detail.Ricochet": {
+    "en": "{chance}% of hits bounce to another enemy within {radius} m, up to {count} time(s), at {damage}% damage.",
+    "tr": "İsabetlerin %{chance} kadarı {radius} m içindeki başka bir düşmana %{damage} hasarla en çok {count} kez seker."
+  },
+  "shop.detail.Explosion": {
+    "en": "{chance}% of hits detonate for {radius} m at {scale}x the hit's damage.",
+    "tr": "İsabetlerin %{chance} kadarı, isabet hasarının {scale}x katıyla {radius} m yarıçapta patlar."
+  },
+  "shop.detail.Chain": {
+    "en": "Damage jumps to {count} more enem(y/ies) within {radius} m at {damage}% damage, falling {falloff}% per jump.",
+    "tr": "Hasar {radius} m içindeki {count} ek düşmana %{damage} hasarla sıçrar; her sıçramada %{falloff} azalır."
+  },
+  "shop.detail.FireRate": {
+    "en": "+{value}% fire rate ({total}x total, capped at {max}x).",
+    "tr": "Atış hızı +%{value} (toplam {total}x, üst sınır {max}x)."
+  },
+  "shop.detail.ReloadSpeed": {
+    "en": "-{value}% reload time ({total}x total, floor {min}x).",
+    "tr": "Dolum süresi -%{value} (toplam {total}x, alt sınır {min}x)."
+  },
+  "shop.detail.MovementSpeed": {
+    "en": "+{value}% movement speed ({total}x total, capped at {max}x).",
+    "tr": "Hareket hızı +%{value} (toplam {total}x, üst sınır {max}x)."
+  },
+  "shop.detail.MaximumHealth": {
+    "en": "+{value}% maximum health ({total}x total{health}). Current health keeps its share.",
+    "tr": "Azami can +%{value} (toplam {total}x{health}). Mevcut can oranı korunur."
+  },
+  "shop.detail.RegenerationDelay": {
+    "en": "-{value}% wait before health regenerates ({total}x total{seconds}).",
+    "tr": "Can yenilenmeden önceki bekleme -%{value} (toplam {total}x{seconds})."
+  },
+  "shop.detail.RegenerationRate": {
+    "en": "+{value}% health regeneration speed ({total}x total{rate}).",
+    "tr": "Can yenilenme hızı +%{value} (toplam {total}x{rate})."
+  },
+  "controls.action.Move": {
+    "en": "Move",
+    "tr": "Hareket"
+  },
+  "controls.action.Aim": {
+    "en": "Aim",
+    "tr": "Nişan"
+  },
+  "controls.action.AimStick": {
+    "en": "AimStick",
+    "tr": "Çubukla Nişan"
+  },
+  "controls.action.Fire": {
+    "en": "Fire",
+    "tr": "Ateş"
+  },
+  "controls.action.Reload": {
+    "en": "Reload",
+    "tr": "Doldur"
+  },
+  "controls.action.Pause": {
+    "en": "Pause",
+    "tr": "Duraklat"
+  },
+  "controls.action.Special": {
+    "en": "Special",
+    "tr": "Özel Silah"
+  },
+  "controls.action.Interact": {
+    "en": "Interact",
+    "tr": "Etkileşim"
+  },
+  "controls.action.Focus": {
+    "en": "Focus",
+    "tr": "Odaklan"
+  },
+  "controls.part.up": {
+    "en": "Up",
+    "tr": "Yukarı"
+  },
+  "controls.part.down": {
+    "en": "Down",
+    "tr": "Aşağı"
+  },
+  "controls.part.left": {
+    "en": "Left",
+    "tr": "Sol"
+  },
+  "controls.part.right": {
+    "en": "Right",
+    "tr": "Sağ"
+  },
+  "tree.link.unbound_desc": {
+    "en": "Links the Special you pick up this run to your classic weapon.",
+    "tr": "Bu koşuda aldığın Özel silahı klasik silahına bağlar."
   }
 }

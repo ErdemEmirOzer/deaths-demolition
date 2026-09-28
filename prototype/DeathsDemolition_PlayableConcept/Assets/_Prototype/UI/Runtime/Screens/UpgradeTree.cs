@@ -725,7 +725,7 @@ namespace DD.Prototype.UI
             // PD §3.5: the pin path's steps are numbered before the label (1, 2 … the pinned node last).
             int step = PathStep(index);
             string prefix = step > 0 ? step.ToString(CultureInfo.InvariantCulture) + " · " : string.Empty;
-            v.Name.text = _compact ? prefix + FullName(n) : Fit(v.Name, prefix, n, true);
+            v.Name.text = _compact ? prefix + NameOf(n) : Fit(v.Name, prefix, n, true);
 
             _measureState = v.State;
             // Compact rows carry OFFER / NEW and the owned count in the word (no room for chips beside the words).
@@ -939,7 +939,7 @@ namespace DD.Prototype.UI
         /// </summary>
         private static string Fit(TMP_Text line, string template, RunTreeNodeView n, bool prefix = false)
         {
-            string full = string.IsNullOrEmpty(n.DisplayName) ? n.ShortName : n.DisplayName;
+            string full = NameOf(n);
             if (prefix)
             {
                 string whole = template + full;
@@ -949,7 +949,7 @@ namespace DD.Prototype.UI
                     return whole;
                 }
 
-                return template + n.ShortName;
+                return template + ShortNameOf(n);
             }
 
             // A tier's ShortName is its name cut at 12 characters ("Regeneration" for both regeneration branches): a word that
@@ -969,14 +969,32 @@ namespace DD.Prototype.UI
                 return candidate;
             }
 
-            return template.Length > 0 ? template.Replace("{node}", UiStrings.Upper(n.ShortName)) : n.ShortName;
+            return template.Length > 0 ? template.Replace("{node}", UiStrings.Upper(ShortNameOf(n))) : ShortNameOf(n);
         }
 
         private TMP_Text _measureState;
 
-        private static string FullName(RunTreeNodeView n)
+        public static string NameOf(RunTreeNodeView n)
         {
-            return string.IsNullOrEmpty(n.DisplayName) ? n.ShortName : n.DisplayName;
+            string fallback = string.IsNullOrEmpty(n.DisplayName) ? n.ShortName : n.DisplayName;
+            if (!string.IsNullOrEmpty(n.StringKey))
+            {
+                return UiStrings.Get(n.StringKey + ".name", fallback);
+            }
+
+            if (n.Kind == RunTreeNodeKind.SpecialLink)
+            {
+                if (n.NodeId == "link_1") return UiStrings.Get("tree.link.unbound_1", fallback);
+                if (n.NodeId == "link_2") return UiStrings.Get("tree.link.unbound_2", fallback);
+            }
+
+            return fallback;
+        }
+
+        private static string ShortNameOf(RunTreeNodeView n)
+        {
+            // A catalog's English abbreviation cannot replace a translated node name.
+            return UiStrings.Language == UiStrings.Turkish ? NameOf(n) : n.ShortName;
         }
 
         /// <summary>
@@ -992,7 +1010,7 @@ namespace DD.Prototype.UI
             {
                 // The word keeps its two lines; the name yields first - to the designer's short name ("Full Mag"), never a
                 // clipped one (a tier's ShortName is its name cut at 12 characters, so tiers keep their full name).
-                v.Name.text = prefix + n.ShortName;
+                v.Name.text = prefix + ShortNameOf(n);
                 name = Mathf.Min(TwoLines(v.Name), Mathf.Ceil(v.Name.GetPreferredValues(v.Name.text, width, 0f).y));
             }
 
@@ -1458,7 +1476,7 @@ namespace DD.Prototype.UI
                 _dPips.SetGhost(n.Kind == RunTreeNodeKind.Tier && n.OwnedTier < n.MaxTier ? n.OwnedTier : -1);   // the tier a buy adds
             }
 
-            _dName.text = n.DisplayName;
+            _dName.text = NameOf(n);
             _dState.text = StateSentence(n);
             // AD 12c SHOULD-4 (§2.1): gold is the offer's; a picks-used notice on an offered node is not currency / price / offer.
             bool picksUsed = n.Status == RunTreeNodeStatus.Available && n.Kind != RunTreeNodeKind.Hearth && _shop != null && _shop.IsLocked && Offered(index);
@@ -1573,6 +1591,17 @@ namespace DD.Prototype.UI
         /// </summary>
         public static string DescriptionOf(RunTreeNodeView n)
         {
+            if (n.Kind == RunTreeNodeKind.SpecialLink && string.IsNullOrEmpty(n.StringKey))
+            {
+                return UiStrings.Get("tree.link.unbound_desc", n.Description);
+            }
+
+            if (n.Kind == RunTreeNodeKind.Tier && n.HasBranch && UiStrings.Language == UiStrings.Turkish)
+            {
+                int next = n.MaxTier > 0 ? Mathf.Min(n.OwnedTier + 1, n.MaxTier) : n.OwnedTier + 1;
+                return UiUpgradeCopy.TierDescription(n.Branch, next - 1, n.StringKey);
+            }
+
             if (!string.IsNullOrEmpty(n.StringKey))
             {
                 string line = UiStrings.Get(n.StringKey + ".desc", null);
