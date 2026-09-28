@@ -50,6 +50,11 @@ namespace DD.Art.Pipeline.EditorTools
         /// <summary>WP-074 B1: the same boundary for a square of ±<paramref name="halfExtent"/> m (World v5 greybox ±55).</summary>
         public static GameObject Build(Transform root, List<(Vector2 centre, Vector2 semi, float yaw)> basins, float halfExtent)
         {
+            return Build(root, basins, halfExtent, null);
+        }
+
+        public static GameObject Build(Transform root, List<(Vector2 centre, Vector2 semi, float yaw)> basins, float halfExtent, Func<Vector2, bool> pondRimExclusion)
+        {
             if (root == null) throw new ArgumentNullException(nameof(root));
             Transform old = root.Find(ObjectName);
             if (old != null) UnityEngine.Object.DestroyImmediate(old.gameObject);
@@ -65,7 +70,7 @@ namespace DD.Art.Pipeline.EditorTools
             AddWall(go, "South", new Vector3(0f, mid, -off), new Vector3(span, height, WallThickness));
             AddWall(go, "East", new Vector3(off, mid, 0f), new Vector3(WallThickness, height, span));
             AddWall(go, "West", new Vector3(-off, mid, 0f), new Vector3(WallThickness, height, span));
-            BuildPondRims(go, basins, out int segments, out int crossings);
+            BuildPondRims(go, basins, pondRimExclusion, out int segments, out int crossings);
             int plugs = BuildGroundPlugs(go, basins, halfExtent, out int plugCells);
 
             NavMeshModifier modifier = go.AddComponent<NavMeshModifier>();
@@ -254,7 +259,7 @@ namespace DD.Art.Pipeline.EditorTools
             return false;
         }
 
-        private static void BuildPondRims(GameObject parent, List<(Vector2 centre, Vector2 semi, float yaw)> basins, out int segments, out int crossings)
+        private static void BuildPondRims(GameObject parent, List<(Vector2 centre, Vector2 semi, float yaw)> basins, Func<Vector2, bool> exclusion, out int segments, out int crossings)
         {
             segments = 0;
             crossings = 0;
@@ -270,8 +275,17 @@ namespace DD.Art.Pipeline.EditorTools
                 {
                     Vector2 p0 = PondPoint(basins[b], 2f * Mathf.PI * i / n), p1 = PondPoint(basins[b], 2f * Mathf.PI * (i + 1) / n);
                     Vector2 m = (p0 + p1) * 0.5f;
-                    if (CutsNavMesh(p0, p1)) { crossings++; continue; }
                     Vector2 d = p1 - p0;
+                    // V6: test the collider footprint too. Pond1_33's centre lies 0.172 m outside the deck,
+                    // but its rotated 0.3 m wide box overlaps it; centre-only filtering leaves that fence.
+                    if (exclusion != null)
+                    {
+                        Vector2 along = d.normalized * ((d.magnitude + 0.1f) * 0.5f);
+                        Vector2 across = new Vector2(-d.y, d.x).normalized * (PondRimThickness * 0.5f);
+                        if (exclusion(m) || exclusion(m + along + across) || exclusion(m + along - across) ||
+                            exclusion(m - along + across) || exclusion(m - along - across)) { crossings++; continue; }
+                    }
+                    if (CutsNavMesh(p0, p1)) { crossings++; continue; }
                     // WP-038Q: where the pond passes under a bridge its rail skirts already close it — a fence segment there only
                     // narrowed the deck (Pond0_48 / 51 left 0.97 m for a 0.96 m body: the soak seed-61 run-25 wedge).
                     if (OverlapsBridgeSkirt(new Vector3(m.x, mid, m.y), new Vector3(PondRimThickness, height, d.magnitude + 0.1f) * 0.5f, Quaternion.LookRotation(new Vector3(d.x, 0f, d.y)))) { crossings++; continue; }
@@ -295,6 +309,19 @@ namespace DD.Art.Pipeline.EditorTools
             box.center = centre;
             box.size = size;
             box.isTrigger = false;
+        }
+
+        /// <summary>Rebuild only V6's invisible boundary after a rim-rule delta; retains its baked lighting and NavMesh.</summary>
+        public static void ApplyV6Cli()
+        {
+            var scene = EditorSceneManager.OpenScene(GreyboxV6Builder.ScenePath, OpenSceneMode.Single);
+            GameObject root = GameObject.Find(Ap005WorldBootstrap.RootName);
+            if (root == null) throw new InvalidOperationException("[WorldBoundary] V6 world root missing");
+            var placement = AssetDatabase.LoadAssetAtPath<WorldPlacementAsset>(ArtLibraryPaths.Ap005PlacementAsset);
+            if (placement == null) throw new InvalidOperationException("[WorldBoundary] AP005 basin source missing");
+            Build(root.transform, PlacementImporter.BasinHoles(placement), GreyboxV6Builder.HalfExtent, GreyboxV6Builder.InPondStripExclusion);
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
         }
 
         /// <summary>Batch entry: add / rebuild the ring and the fall guard in World_AP005 without a re-import (no renderer → no rebake).</summary>

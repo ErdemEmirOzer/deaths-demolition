@@ -248,7 +248,7 @@ namespace DD.Art.Pipeline.EditorTools
             WorldBoundaryBuilder.BuildRingNavVolumes(root.transform, HalfExtent);
             Physics.SyncTransforms();
             int triangles = Bake(root.transform);
-            WorldBoundaryBuilder.Build(root.transform, basins, HalfExtent);
+            WorldBoundaryBuilder.Build(root.transform, basins, HalfExtent, InPondStripExclusion);
             Physics.SyncTransforms();
             Vector3 seed = NavMesh.SamplePosition(placement.playerStart, out NavMeshHit sh, 3f, NavMesh.AllAreas) ? sh.position : placement.playerStart;
             int links = NavMeshIslandLinker.LinkIslands(root.transform, seed);
@@ -607,24 +607,62 @@ namespace DD.Art.Pipeline.EditorTools
             water.GetComponent<MeshRenderer>().sharedMaterial = Mat("water");
             n++;
             // NotWalkable strips along the ellipse's local x (1 m), local height −1…0.1 m so bridge/causeway tops stay walkable.
+            // WP-075 (C-00 28.09, zombies held at the C1 slab joint and the C8 plank ends): the AP-023 decks top out at 0.15–0.16 m, a
+            // voxel above the strips' 0.1 m — the bake carved holes in them, the island linker bridged the holes with links the bodies
+            // stop at, and the rim builder, finding no NavMesh there, fenced the C1 causeway. The strips now skip the deck footprints
+            // (PondStripExclusions): the decks bake whole, the rims leave their crossing gaps.
+            float ang = b.yaw * Mathf.Deg2Rad;
+            Vector2 ToWorld(float x, float z) => b.centre + new Vector2(x * Mathf.Cos(ang) - z * Mathf.Sin(ang), x * Mathf.Sin(ang) + z * Mathf.Cos(ang));
             for (float lx = -a; lx < a; lx += 1f)
             {
                 float mid = lx + 0.5f, half = c * Mathf.Sqrt(Mathf.Max(0f, 1f - (mid * mid) / (a * a)));
                 if (half < 0.05f) continue;
-                var go = new GameObject("Pond" + index + "_NotWalkable_" + lx.ToString("F0", CultureInfo.InvariantCulture)) { layer = PrototypeLayers.Environment };
-                go.transform.SetParent(g, false);
-                float ang = b.yaw * Mathf.Deg2Rad;
-                Vector2 local = new Vector2(mid, 0f);
-                Vector2 world = b.centre + new Vector2(local.x * Mathf.Cos(ang) - local.y * Mathf.Sin(ang), local.x * Mathf.Sin(ang) + local.y * Mathf.Cos(ang));
-                go.transform.position = new Vector3(world.x, -0.45f, world.y);
-                go.transform.rotation = Quaternion.Euler(0f, -b.yaw, 0f);
-                NavMeshModifierVolume v = go.AddComponent<NavMeshModifierVolume>();
-                v.center = Vector3.zero;
-                v.size = new Vector3(1.02f, 1.1f, 2f * half);
-                v.area = ArtSurfaceImporter.NavAreaNotWalkable;
+                var runs = new List<(float z0, float z1)>();
+                float start = float.NaN;
+                for (float z = -half; z <= half + 1e-4f; z += PondStripStep)
+                {
+                    bool deck = InPondStripExclusion(ToWorld(mid - 0.51f, z)) || InPondStripExclusion(ToWorld(mid, z)) || InPondStripExclusion(ToWorld(mid + 0.51f, z));
+                    if (!deck && float.IsNaN(start)) start = z;
+                    if (deck && !float.IsNaN(start)) { runs.Add((start, z - PondStripStep)); start = float.NaN; }
+                }
+
+                if (!float.IsNaN(start)) runs.Add((start, half));
+                for (int r = 0; r < runs.Count; r++)
+                {
+                    (float z0, float z1) = runs[r];
+                    if (z1 - z0 < 0.05f) continue;
+                    string name = "Pond" + index + "_NotWalkable_" + lx.ToString("F0", CultureInfo.InvariantCulture) + (runs.Count > 1 ? "_" + r : string.Empty);
+                    var go = new GameObject(name) { layer = PrototypeLayers.Environment };
+                    go.transform.SetParent(g, false);
+                    Vector2 world = ToWorld(mid, (z0 + z1) * 0.5f);
+                    go.transform.position = new Vector3(world.x, -0.45f, world.y);
+                    go.transform.rotation = Quaternion.Euler(0f, -b.yaw, 0f);
+                    NavMeshModifierVolume v = go.AddComponent<NavMeshModifierVolume>();
+                    v.center = Vector3.zero;
+                    v.size = new Vector3(1.02f, 1.1f, z1 - z0);
+                    v.area = ArtSurfaceImporter.NavAreaNotWalkable;
+                }
             }
 
             return n;
+        }
+
+        public const float PondStripStep = 0.1f;
+
+        /// <summary>The deck footprints the pond NotWalkable strips leave out (world XZ min / max): the C8 plank bridge (x 4, 3 m, z −39.5…−18)
+        /// and the C1 slab causeway (x −8, 2 m, z −33…−20) with its 3 m island.</summary>
+        public static readonly (Vector2 min, Vector2 max)[] PondStripExclusions =
+        {
+            (new Vector2(2.5f, -39.5f), new Vector2(5.5f, -18f)),
+            (new Vector2(-9f, -33f), new Vector2(-7f, -20f)),
+            (new Vector2(-9.5f, -28.5f), new Vector2(-6.5f, -25.5f)),
+        };
+
+        public static bool InPondStripExclusion(Vector2 p)
+        {
+            foreach ((Vector2 min, Vector2 max) in PondStripExclusions)
+                if (p.x >= min.x && p.x <= max.x && p.y >= min.y && p.y <= max.y) return true;
+            return false;
         }
 
         private static int Stairs(Transform g, string name, Vector2 top, Vector2 outward, float width)

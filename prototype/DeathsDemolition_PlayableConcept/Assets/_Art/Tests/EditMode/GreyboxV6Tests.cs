@@ -10,6 +10,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.AI;
+using Unity.AI.Navigation;
 
 namespace DD.Art.Tests.EditMode
 {
@@ -41,6 +42,32 @@ namespace DD.Art.Tests.EditMode
             float len = 0f;
             for (int i = 1; i < path.corners.Length; i++) len += Vector3.Distance(path.corners[i - 1], path.corners[i]);
             return len;
+        }
+
+        [Test]
+        public void Greybox_KopruVeGecit_NavMeshKesintisiz_CitKesmez()
+        {
+            // WP-075 (C-00 28.09): the zombies held at the C1 slab joint (z −23.2) and the C8 plank ends — the pond NotWalkable strips
+            // carved the 0.15–0.16 m decks, links bridged the holes and a pond rim fenced the causeway. The decks bake whole now.
+            Open();
+            foreach ((Vector3 a, Vector3 b, string name) in new[]
+            {
+                (new Vector3(-8f, 0.2f, -32.6f), new Vector3(-8f, 0.2f, -20.4f), "C1 geçidi"),
+                (new Vector3(4f, 0.35f, -39.2f), new Vector3(4f, 0.35f, -18.3f), "C8 köprüsü"),
+            })
+            {
+                Assert.IsTrue(NavMesh.SamplePosition(a, out NavMeshHit ha, 0.6f, NavMesh.AllAreas), name + " başı NavMesh dışı");
+                Assert.IsTrue(NavMesh.SamplePosition(b, out NavMeshHit hb, 0.6f, NavMesh.AllAreas), name + " sonu NavMesh dışı");
+                bool blocked = NavMesh.Raycast(ha.position, hb.position, out NavMeshHit edge, NavMesh.AllAreas);
+                Assert.IsFalse(blocked, name + " NavMesh'i kesik: " + edge.position.ToString("F2"));
+                Collider[] rims = Physics.OverlapBox((a + b) * 0.5f + Vector3.up * 0.4f, new Vector3(0.9f, 0.3f, Vector3.Distance(a, b) * 0.5f), Quaternion.identity, ~0, QueryTriggerInteraction.Ignore);
+                foreach (Collider c in rims)
+                    Assert.IsFalse(c.transform.parent != null && c.transform.parent.name == WorldBoundaryBuilder.PondRimsName, name + " üstünde havuz çiti: " + c.name);
+            }
+
+            foreach (NavMeshModifierVolume v in Object.FindObjectsOfType<NavMeshModifierVolume>())
+                if (v.name.Contains("_NotWalkable_"))
+                    Assert.IsFalse(GreyboxV6Builder.InPondStripExclusion(new Vector2(v.transform.position.x, v.transform.position.z)), "güverte altında NotWalkable: " + v.name);
         }
 
         [Test]
