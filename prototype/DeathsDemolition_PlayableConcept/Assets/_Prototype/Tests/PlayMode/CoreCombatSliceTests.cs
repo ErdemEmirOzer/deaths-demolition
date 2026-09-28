@@ -849,17 +849,37 @@ namespace DD.Prototype.Tests.PlayMode
             // hits (measured 7 hits, 3 ArmorHit). This test is about the flesh-hit / death / player-damage
             // signals, not the roll — the target is bare.
             hedef.FitArmorComposition(false, false, false);
+            Assert.AreEqual(CameraMode.TopDown, CameraModeService.Current);
+            var silah = WeaponRegistry.ActiveController;
+            var bag = _rig.GetComponent<PlayerWeaponBinding>();
+            Collider govde = hedef.HitboxFor(BodyRegion.UpperBody);
+            Collider kafa = hedef.HitboxFor(BodyRegion.Head);
+            Assert.IsNotNull(bag);
+            Assert.IsNotNull(govde);
+            Assert.IsNotNull(kafa);
+            Debug.Log("[DD-TEST] gamefeel.spawn rising=" + hedef.IsRising +
+                      " head=" + kafa.bounds + " upper=" + govde.bounds);
+            bool govdeHazirLoglandi = false;
 
             var hasar = new List<EnemyDamageInfo>(16);
             var olum = new List<EnemyDeathInfo>(4);
             var tierler = new List<HitFeedbackTier>(16);
             var cueler = new List<CombatAudioEvent>(64);
-            Action<EnemyDamageInfo> hDinle = i => hasar.Add(i);
+            Action<EnemyDamageInfo> hDinle = i =>
+            {
+                hasar.Add(i);
+                Debug.Log("[DD-TEST] gamefeel.impact region=" + i.Result.Region + " hp=" + i.Result.HealthDamage +
+                          " point=" + i.Point.ToString("F3") + " direction=" + i.Direction.ToString("F3") +
+                          " rising=" + hedef.IsRising + " head=" + kafa.bounds + " upper=" + govde.bounds);
+            };
+            Action<ProjectileSpawnInfo> atisDinle = i => Debug.Log("[DD-TEST] gamefeel.shot id=" + i.ProjectileId +
+                " origin=" + i.Position.ToString("F3") + " direction=" + i.Direction.ToString("F3"));
             Action<EnemyDeathInfo> oDinle = i => olum.Add(i);
             Action<EnemyHitFeedbackInfo, HitFeedbackTier> tDinle = (i, t) => tierler.Add(t);
             var bastirilan = new List<CombatAudioEvent>(64);
             Action<CombatAudioCue> cDinle = c => cueler.Add(c.Event);
             Action<CombatAudioCue> bDinle = c => bastirilan.Add(c.Event);
+            ProjectileEvents.Spawned += atisDinle;
             DamageEvents.EnemyDamaged += hDinle;
             DamageEvents.EnemyDied += oDinle;
             HitFeedbackDirector.EnemyHitDressed += tDinle;
@@ -873,8 +893,43 @@ namespace DD.Prototype.Tests.PlayMode
                 float t0 = Time.realtimeSinceStartup;
                 while (hedef.IsAlive && Time.realtimeSinceStartup - t0 < 20f)
                 {
-                    _girdi.Imlec = EkranNoktasi(hedef.transform.position + Vector3.up * NisanDuzlemi);
-                    _girdi.AtesBasili = true;
+                    // The formula below assumes BODY damage. A spawn/rise or hit-reaction head dip can
+                    // cross the fixed TP ray; wait for an actual body corridor, without changing the pose,
+                    // weapon spread, damage or critical routing. Let the normal aim input resolve first.
+                    _girdi.AtesBasili = false;
+                    Vector3 nisan = govde.bounds.center;
+                    nisan.y = _rig.transform.position.y + NisanDuzlemi;
+                    _girdi.Imlec = EkranNoktasi(nisan);
+                    yield return null;
+                    if (!hedef.IsAlive) break;
+                    Vector3 origin = silah.Muzzle.position;
+                    origin.y = _rig.transform.position.y + silah.ShotRayHeight;
+                    Vector3 yon = bag.AimDirection;
+                    yon.y = 0f;
+                    yon = Quaternion.AngleAxis(silah.Classic.RecoilYawDegrees, Vector3.up) * yon.normalized;
+                    float spread = silah.Classic.CurrentSpreadDegrees;
+                    float pitch = spread * SpreadUtility.VerticalSpreadFactor;
+                    float kafaUzakligi = Vector3.Distance(origin, kafa.bounds.center) + kafa.bounds.extents.magnitude;
+                    float dikeyPay = kafaUzakligi * Mathf.Tan(pitch * Mathf.Deg2Rad);
+                    bool govdeHazir = !hedef.IsRising &&
+                        (origin.y + dikeyPay < kafa.bounds.min.y || origin.y - dikeyPay > kafa.bounds.max.y);
+                    Vector3 sag = Vector3.Cross(Vector3.up, yon).normalized;
+                    // The convex upper-body collider must contain the centre and the TP spread extremes.
+                    for (int yatay = -1; yatay <= 1 && govdeHazir; yatay++)
+                    for (int dikey = -1; dikey <= 1 && govdeHazir; dikey++)
+                    {
+                        Vector3 sinir = Quaternion.AngleAxis(yatay * spread, Vector3.up) *
+                            Quaternion.AngleAxis(dikey * pitch, sag) * yon;
+                        govdeHazir = govde.Raycast(new Ray(origin, sinir), out _, silah.Classic.Range);
+                    }
+                    if (govdeHazir && !govdeHazirLoglandi)
+                    {
+                        Debug.Log("[DD-TEST] gamefeel.body-ready rising=" + hedef.IsRising +
+                                  " origin=" + origin.ToString("F3") + " direction=" + yon.ToString("F3") +
+                                  " spread=" + spread + " head=" + kafa.bounds + " upper=" + govde.bounds);
+                        govdeHazirLoglandi = true;
+                    }
+                    _girdi.AtesBasili = govdeHazir;
                     yield return null;
                 }
 
@@ -929,6 +984,15 @@ namespace DD.Prototype.Tests.PlayMode
                                  " cue ates/flesh/olum=" + ates + "/" + fleshCue + "/" + olumCue +
                                  " ates-bastirilan=" + atesBastirilan + " unscaled+=" + (Time.unscaledTime - unscaledOnce).ToString("F2") +
                                  " hitstop " + hitStopOnce + "->" + HitStopService.Count);
+                int criticalCue = 0, fleshBastirilan = 0, criticalBastirilan = 0;
+                foreach (var cue in cueler) if (cue == CombatAudioEvent.CriticalHit) criticalCue++;
+                foreach (var cue in bastirilan)
+                {
+                    if (cue == CombatAudioEvent.FleshHit) fleshBastirilan++;
+                    if (cue == CombatAudioEvent.CriticalHit) criticalBastirilan++;
+                }
+                rapor.AppendLine("critical-cue=" + criticalCue + " suppressed-flesh/critical=" +
+                                 fleshBastirilan + "/" + criticalBastirilan);
                 Debug.Log(rapor.ToString());
                 for (int i = 0; i < hasar.Count; i++) Debug.Log("[DD-TEST] gamefeel.hit " + i + " region=" + hasar[i].Result.Region + " hp=" + hasar[i].Result.HealthDamage + " killed=" + hasar[i].Result.Killed + " armored=" + hasar[i].Result.WasArmored + " tier=" + (i < tierler.Count ? tierler[i].ToString() : "-"));
 
@@ -942,6 +1006,10 @@ namespace DD.Prototype.Tests.PlayMode
                 for (int i = 0; i < hasar.Count; i++)
                 {
                     Assert.Greater(hasar[i].Result.HealthDamage, 0f, "Flesh hit can hasarı taşımıyor.");
+                    Assert.AreEqual(BodyRegion.UpperBody, hasar[i].Result.Region, "Fixture gerçek gövde isabeti üretmedi.");
+                    Assert.AreEqual(TufekHasari, hasar[i].Result.HealthDamage, "Gövde hasarı formülden farklı.");
+                    Assert.AreEqual(hasar[i].Result.Killed ? HitFeedbackTier.Death : HitFeedbackTier.FleshHit,
+                        tierler[i], "Gövde hasarı ile dressed tier eşleşmiyor.");
                     Assert.AreEqual(EnemyTier.Standard, hasar[i].Tier);
                     if (hasar[i].Result.Killed) killedSayisi++;
                 }
@@ -1012,6 +1080,7 @@ namespace DD.Prototype.Tests.PlayMode
             }
             finally
             {
+                ProjectileEvents.Spawned -= atisDinle;
                 DamageEvents.EnemyDamaged -= hDinle;
                 DamageEvents.EnemyDied -= oDinle;
                 HitFeedbackDirector.EnemyHitDressed -= tDinle;
