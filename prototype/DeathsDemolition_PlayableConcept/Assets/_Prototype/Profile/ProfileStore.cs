@@ -116,6 +116,9 @@ namespace DD.Prototype.Profile
         private static FileStream s_lease;
         private static string s_leasePath;
 
+        /// <summary>True while the file is redirected (tests, -ddProfilePath sandboxes): the QA bot only closes a run then (WP-076).</summary>
+        public static bool HasPathOverride => !string.IsNullOrEmpty(s_pathOverride);
+
         /// <summary>Absolute path of the save file.</summary>
         public static string Path
         {

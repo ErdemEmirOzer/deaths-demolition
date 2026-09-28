@@ -66,8 +66,13 @@ namespace DD.Prototype.Qa.Tests.PlayMode
         public IEnumerator Bot_BirRound_SanalGamepadle_TamamlarVeRaporYazar()
         {
             int devicesBefore = InputSystem.devices.Count;
+            int commitsBefore = DD.Prototype.Profile.ProfileRunCommitter.Commits;
+            int progressLines = 0;
+            Application.LogCallback onLog = (m, st, t) => { if (m != null && m.StartsWith("[Progress]", StringComparison.Ordinal)) progressLines++; };
+            Application.logMessageReceived += onLog;
             _bot = QaRunBot.Arm(_dir, 1, 26, 300f, false);
             yield return Bekle(() => _bot == null || _bot.Finished, 330f, "Bot bir roundu 330 s içinde bitiremedi.");
+            Application.logMessageReceived -= onLog;
             Assert.IsNotNull(_bot);
             QaRunBot.Summary s = _bot.Result;
             Debug.Log("[DD-TEST] wp026.bot rounds=" + s.roundsCompleted + " kills=" + s.totalKills + " deaths=" + s.deaths + " spawns=" + s.spawnCount +
@@ -78,6 +83,10 @@ namespace DD.Prototype.Qa.Tests.PlayMode
             Assert.Greater(s.spawnCount, 0, "hiç spawn görülmedi");
             Assert.Greater(s.totalKills, 0, "bot hiç öldürmedi");
             Assert.AreEqual(1, s.roundsCompleted, s.note);
+            // WP-076 (R1 28.09): the bot closes the run against the isolated profile → one commit, one [Progress] line
+            Assert.AreEqual(commitsBefore + 1, DD.Prototype.Profile.ProfileRunCommitter.Commits, "bot koşuyu kapatıp profil commit'i yapmadı");
+            Assert.AreEqual(1, progressLines, "[Progress] satırı yok");
+            Assert.AreEqual(s.totalKills, s.spawnCount, "tamamlanan round: spawn = kill = havuz (R1 28.09: bot, kurulmadan önceki ilk refill tikini saymıyordu)");
             Assert.IsTrue(s.pass, s.note);
             Assert.AreEqual(devicesBefore, InputSystem.devices.Count, "sanal gamepad koşu sonunda kaldırılmalı");
             QaReport report = QaReport.FromJson(File.ReadAllText(Path.Combine(_dir, "qa-report.json")));

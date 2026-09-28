@@ -538,6 +538,13 @@ namespace DD.Prototype.Qa
                 if (EnemySpawnDirector.Instance != null)
                 {
                     EnemySpawnDirector.Instance.EnemySpawned += OnEnemySpawned;
+                    // WP-076 (R1 28.09, kill 61 > spawn 59): the bot arms after the round is Fighting — its first refill tick has
+                    // already spawned; count those bodies (tiers from the live list, in spawn order) so spawns match the pool.
+                    int already = EnemySpawnDirector.Instance.Population.SpawnedTotal;
+                    IReadOnlyList<ZombieEnemy> live = ZombieEnemy.Live;
+                    for (int i = 0; i < live.Count && i < already; i++) _spawnTiers.Add((int)live[i].Tier);
+                    _summary.spawnCount += already;
+                    if (already > 0) Log("spawns-before-arm " + already);
                 }
                 EnemyCombatEvents.Raised += OnCombatBeat;   // WP-052
             }
@@ -711,8 +718,26 @@ namespace DD.Prototype.Qa
                 if (_summary.roundsCompleted >= _rounds)
                 {
                     _running = false;
-                    Finish();
+                    StartCoroutine(CloseRunThenFinish());
                 }
+            }
+
+            /// <summary>
+            /// WP-076 (R1 28.09: no [Progress] line in bot runs): the bot used to stop after its last round with the run still open, so
+            /// the profile commit (ProfileRunCommitter on RunEnded, which logs [Progress]) never ran. Against a redirected profile only
+            /// (-ddProfilePath sandbox, test isolation) the run is closed the way F1 "End run" closes it — one frame after the
+            /// RoundCompleted dispatch; the real profile is never written by the bot.
+            /// </summary>
+            private IEnumerator CloseRunThenFinish()
+            {
+                yield return null;
+                RunDirector run = RunDirector.Instance;
+                if (!_finished && run != null && run.Phase != RunPhase.Dead && DD.Prototype.Profile.ProfileStore.HasPathOverride)
+                {
+                    Log("run-close EndRun(Debug) → profile commit (sandbox " + DD.Prototype.Profile.ProfileStore.Path + ")");
+                    run.EndRun(RunEndReason.Debug, "qa-bot");
+                }
+                if (!_finished) Finish();
             }
 
             private void OnRunEnded(RunSummary s)
