@@ -3,14 +3,14 @@
 
 Runs PilotPerfProbe windows through tools/qa/wp064_run.py perf (clean-host preflight, host monitor, attempt ledger,
 command hash) for every tier and camera mode in tools/qa/perf-targets.json, each window under the C-00 §4.14 user-data
-guard: tools/userdata-guard.sh snapshot → window → restore --scope player. The Player gets its own profile
+guard: tools/userdata-guard.sh snapshot --scope player → window → restore --scope player. The Player gets its own profile
 (wp064_run), telemetry and UI files (-ddUiDataRoot), and the tier / mode on the command line — nothing reads or
 writes the player's own settings. Every complete window counts; the verdict is tools/qa/wp078_perf_report.py.
 
 usage: wp078_perf.py --bin <app or build dir> --out <root> --commit <sha> [--tiers sinematik,yuksek] [--modes topdown,tp]
                      [--windows N] [--window-seconds 60] [--cooldown 60] [--dry-run]
 exit: 0 every window ran (see the report for pass/fail) · 6 a game Player was up and did not close · 7 user-data guard
-      mismatch (STOP, report to C-00) · 64 usage
+      mismatch (STOP, report to C-00) · guard exit codes preserved (30 blocked snapshot, 31 STOP restore) · 64 usage
 """
 import argparse
 import json
@@ -86,9 +86,7 @@ def guard_verdict(ug, restore_text, after_plist):
 
 
 def guard(command, directory):
-    args = [str(REPO / "tools" / "userdata-guard.sh"), command, str(directory)]
-    if command == "restore":
-        args += ["--scope", "player"]
+    args = [str(REPO / "tools" / "userdata-guard.sh"), command, str(directory), "--scope", "player"]
     return subprocess.run(args, capture_output=True, text=True)
 
 
@@ -259,16 +257,20 @@ def run_all(args, runs, root, binary, seconds, quiet, note):
             note(f"{cell.name}: {quiet.before_window(seconds + 90)}")
         snap = guard("snapshot", ug)
         if snap.returncode != 0:
-            note(f"STOP {cell.name}: guard snapshot exit {snap.returncode}")
-            return 7
+            state = "BLOCKED" if snap.returncode == 30 else "STOP"
+            note(f"{state} {cell.name}: guard snapshot exit {snap.returncode}; no Player started")
+            return snap.returncode
         run = subprocess.run(command, capture_output=True, text=True)
         (root / "ug" / (cell.name + ".wp064-run.out")).write_text(run.stdout + run.stderr, encoding="utf-8")
         export_prefs(ug / "prefs-after-run.plist")
         restore = guard("restore", ug)
         (ug / "restore.txt").write_text(restore.stdout + restore.stderr, encoding="utf-8")
+        if restore.returncode != 0:
+            note(f"STOP {cell.name}: guard restore exit {restore.returncode} — report to C-00")
+            return restore.returncode
         ok, why = guard_verdict(ug, restore.stdout, ug / "prefs-after-run.plist")
-        if restore.returncode != 0 or not ok:
-            note(f"STOP {cell.name}: guard restore exit {restore.returncode}, {why} — report to C-00")
+        if not ok:
+            note(f"STOP {cell.name}: guard restore mismatch, {why} — report to C-00")
             return 7
         note(f"{cell.name} wp064_run exit {run.returncode} · guard ok ({why})")
         if run.returncode in (2, 64, 66):
