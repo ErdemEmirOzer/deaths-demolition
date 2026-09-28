@@ -16,7 +16,7 @@ namespace DD.Prototype.Spawn
     /// 75 m, the inner-gate rules — apply only while a v6 world scene is loaded (World_V6_*); World_AP005 keeps today's
     /// values. When S-05 moves AP005 to ±55 (or v6 becomes the default world) the switch is <see cref="AlwaysV6"/> = true.
     /// Inner gates (SpawnPointMarker Kind = Inner, S-05's v6 builder): a body at ≤ 10 m straight distance from the gate
-    /// weighs ×0.25 (not "next to me"); inner share over the last 24 spawns above 50 % → inner ×0.7 (target 65 / 35).
+    /// weighs ×0.25 (not "next to me"); the inner weight is steered toward a 35 % share of the last 24 spawns (target 65 / 35, see InnerSteer).
     /// </summary>
     public static class SpawnWorldProfile
     {
@@ -25,8 +25,17 @@ namespace DD.Prototype.Spawn
 
         [PrototypeOnly(PendingDecisions.None, "WP-076 §5.1 v6 world: preferred band (m), MaxUseful (m); inner gate near-player distance (m) and factor; inner share window (spawns), cap, factor above it; v6 scene name prefix.", true)]
         public const float V6PreferredMin = 22f, V6PreferredMax = 45f, V6MaxUseful = 75f;
-        public const float InnerNearMetres = 10f, InnerNearFactor = 0.25f, InnerShareCap = 0.5f, InnerShareFactor = 0.7f;
+        public const float InnerNearMetres = 10f, InnerNearFactor = 0.25f, InnerShareCap = 0.5f;
         public const int InnerShareWindow = 24;
+
+        /// <summary>
+        /// WP-076 (R1 28.09: innerShare24 0.58 with the old step rule "> 50 % → ×0.7"): the inner weight is steered toward
+        /// <see cref="InnerShareTarget"/> — factor (odds(target) / odds(share))², floor <see cref="InnerSteerFloor"/>, never above 1 —
+        /// on a share with <see cref="InnerSharePrior"/> pseudo-spawns at the target, so the first spawns of a run do not swing it.
+        /// Steady state for an unsteered inner mass of 65 / 75 / 85 %: ≈ 45 / 49 / 53 % before the floor; the floor holds ≤ 50 %.
+        /// </summary>
+        public const float InnerShareTarget = 0.35f, InnerSteerFloor = 0.1f;
+        public const int InnerSharePrior = 6;
         public const string V6ScenePrefix = "World_V6";
 
         /// <summary>Tests: force the profile (null = read the loaded scenes).</summary>
@@ -95,13 +104,45 @@ namespace DD.Prototype.Spawn
             }
         }
 
+        /// <summary>Whether the next inner spawn keeps the rolling share at the existing cap, accounting for expiry.</summary>
+        public static bool CanRecordInner
+        {
+            get
+            {
+                int inner = 0;
+                for (int i = 0; i < s_count; i++) if (s_ring[i]) inner++;
+                if (s_count == s_ring.Length && s_ring[s_head]) inner--;
+                int nextCount = Mathf.Min(s_count + 1, s_ring.Length);
+                return inner + 1 <= InnerShareCap * nextCount;
+            }
+        }
+
+        /// <summary>The share the weights steer on: the last <see cref="InnerShareWindow"/> spawns plus the prior at the target.</summary>
+        public static float SteeringShare
+        {
+            get
+            {
+                int inner = 0;
+                for (int i = 0; i < s_count; i++) if (s_ring[i]) inner++;
+                return (inner + InnerShareTarget * InnerSharePrior) / (s_count + InnerSharePrior);
+            }
+        }
+
         /// <summary>Weight factor on an inner gate (1 for an edge gate or outside the v6 profile).</summary>
         public static float InnerFactor(SpawnPointKind kind, float straightDistance, float innerShare)
         {
             if (kind != SpawnPointKind.Inner) return 1f;
             float f = straightDistance <= InnerNearMetres ? InnerNearFactor : 1f;
-            if (innerShare > InnerShareCap) f *= InnerShareFactor;
-            return f;
+            return f * InnerSteer(innerShare);
+        }
+
+        /// <summary>(odds(target) / odds(share))², in [<see cref="InnerSteerFloor"/>, 1]; 1 at or below the target.</summary>
+        public static float InnerSteer(float share)
+        {
+            if (share <= InnerShareTarget) return 1f;
+            if (share >= 0.999f) return InnerSteerFloor;
+            float r = (InnerShareTarget / (1f - InnerShareTarget)) / (share / (1f - share));
+            return Mathf.Clamp(r * r, InnerSteerFloor, 1f);
         }
 
         public static void ResetStatics() { Override = null; IsV6 = false; s_head = 0; s_count = 0; for (int i = 0; i < s_ring.Length; i++) s_ring[i] = false; }

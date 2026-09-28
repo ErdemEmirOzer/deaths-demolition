@@ -1007,7 +1007,8 @@ namespace DD.Prototype.Spawn
                 ThreatLayer = ThreatLevelFeed.Layer,   // WP-054: threat-aware visibility weight
                 CameraMode = SpawnModeTable.Mode,       // WP-076 B6: TP / FP rows
                 MaxPathDistance = maxPathDistance,      // WP-076 B6: tier path gate
-                InnerShare = SpawnWorldProfile.IsV6 ? SpawnWorldProfile.InnerShare : -1f
+                InnerShare = SpawnWorldProfile.IsV6 ? SpawnWorldProfile.SteeringShare : -1f,
+                InnerQuotaFull = SpawnWorldProfile.IsV6 && !SpawnWorldProfile.CanRecordInner   // WP-076: steered on the prior-smoothed share
             };
 
             // WP-076 §5.1: rear-hemisphere share cap (FP 35 % / TP 45 % of the last 8 spawns)

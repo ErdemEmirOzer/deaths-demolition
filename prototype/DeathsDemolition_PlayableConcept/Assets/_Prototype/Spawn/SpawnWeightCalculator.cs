@@ -56,6 +56,8 @@ namespace DD.Prototype.Spawn
         public float MaxPathDistance;
         /// <summary>WP-076 B6 v6 profile: inner-gate share of the last 24 spawns (−1 = profile off → no inner rules).</summary>
         public float InnerShare;
+        /// <summary>Reject an inner spawn that would exceed the existing rolling cap, in every ladder pass.</summary>
+        public bool InnerQuotaFull;
     }
 
     /// <summary>
@@ -173,6 +175,13 @@ namespace DD.Prototype.Spawn
             {
                 breakdown.Cooldown = 0f;
                 return Reject(point, ref breakdown, "cooldown");
+            }
+
+            // The rolling inner cap survives all fairness/cooldown/path relaxations.
+            if (inputs.InnerShare >= 0f && inputs.InnerQuotaFull && point.Definition != null &&
+                point.Definition.Kind == SpawnPointKind.Inner)
+            {
+                return Reject(point, ref breakdown, "inner share cap");
             }
 
             // ---------------------------------------------------------- 2. ring region
