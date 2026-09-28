@@ -288,6 +288,12 @@ namespace DD.Prototype.Tests.PlayMode
             LogAssert.ignoreFailingMessages = true;
             yield return RunSahnesiniHazirla();
 
+            // Scene preparation runs natural enemies before StopRound. Their damage is outside this
+            // four-enemy measurement, whose survival bound is derived from a full 100 health.
+            float kurulumCani = _can.Current;
+            Assert.IsFalse(_can.IsDead, "Oyuncu sahne hazırlığında öldü; temas ölçümü başlayamaz.");
+            _can.HealToFull();
+
             const int zombiSayisi = 4;
             const float dogumYaricapi = 2.6f;
             const float olcumSaniye = 4.5f;
@@ -301,9 +307,15 @@ namespace DD.Prototype.Tests.PlayMode
             rapor.AppendLine("  senaryo: " + zombiSayisi + " Standard zombi, " + dogumYaricapi +
                              " m halka, " + olcumSaniye + " sn, oyuncu hareketsiz");
             rapor.AppendLine("  temas esigi mesafe = " + temasMesafesi.ToString("F2") + " m");
+            rapor.AppendLine("  kurulum cani=" + kurulumCani.ToString("F1") +
+                             " olcum baslangici=" + _can.Current.ToString("F1"));
 
             SuruDogur(zombiSayisi, dogumYaricapi, rapor);
 
+            float baslangicCani = _can.Current;
+            float istenenToplam = 0f;
+            float uygulananToplam = 0f;
+            var hasarMetni = new StringBuilder();
             int ihlal = 0;
             int hasarOlayi = 0;
             var ihlalMetni = new StringBuilder();
@@ -311,6 +323,12 @@ namespace DD.Prototype.Tests.PlayMode
             Action<PlayerDamageInfo> dinle = info =>
             {
                 hasarOlayi++;
+                istenenToplam += info.RequestedAmount;
+                uygulananToplam += info.AppliedAmount;
+                hasarMetni.AppendLine("    hit " + hasarOlayi + " requested=" + info.RequestedAmount.ToString("F2") +
+                                      " applied=" + info.AppliedAmount.ToString("F2") +
+                                      " hp=" + info.HealthBefore.ToString("F2") + "->" + info.HealthAfter.ToString("F2") +
+                                      " source=" + info.SourceId + " fatal=" + info.WasFatal);
                 if (AktifPenceredeZombiVar())
                 {
                     return;
@@ -402,8 +420,12 @@ namespace DD.Prototype.Tests.PlayMode
                              "  en yakin mesafe=" + enYakin.ToString("F3") + " m");
             rapor.AppendLine("  hasar olayi=" + hasarOlayi + "  olay-ihlali=" + ihlal +
                              "  sessiz-pencere-ihlali=" + sessizPencereIhlali +
-                             "  can " + BaslangicCani.ToString("F1") + " -> " +
+                             "  can " + baslangicCani.ToString("F1") + " -> " +
                              _can.Current.ToString("F1"));
+            rapor.AppendLine("  requested toplam=" + istenenToplam.ToString("F2") +
+                             " applied toplam=" + uygulananToplam.ToString("F2") +
+                             " selector=" + AttackSelector.Enabled);
+            rapor.Append(hasarMetni);
             if (ihlal > 0)
             {
                 rapor.Append(ihlalMetni);
@@ -435,6 +457,12 @@ namespace DD.Prototype.Tests.PlayMode
                 "PlayerHealth.Damaged'i hiç yükseltmeyen bir temas/yakınlık hasarı yolu " +
                 "eklendiğini de yakalar.\n" + rapor);
 
+            Assert.AreEqual(hasarOlayi * TekVurusHasari, istenenToplam, 0.01f,
+                "Standard imza saldırısının istenen hasarı formülden farklı.\n" + rapor);
+            Assert.AreEqual(baslangicCani - _can.Current, uygulananToplam, 0.01f,
+                "Can düşüşü Damaged olaylarının AppliedAmount toplamından farklı.\n" + rapor);
+            Assert.AreEqual(BaslangicCani, baslangicCani, 0.01f,
+                "Ölçüm tam canla başlamadı; hazırlık hasarı 8 × 10 tavanına dahil değildir.\n" + rapor);
             Assert.IsFalse(_can.IsDead,
                 "Oyuncu bu senaryoda ölmemeliydi: aritmetik tavan 8 × " + TekVurusHasari +
                 " = 80 < " + BaslangicCani + ".\n" + rapor);
