@@ -129,8 +129,8 @@ namespace DD.Art.Pipeline.EditorTools
             new Gate("S_BridgeSouth", "S_BridgeSouthEnd", "edge", 4f, -52f), new Gate("S_ShoreWest", "S_ShorePathWest", "edge", -16f, -52f),
             new Gate("SW_TeaHouse", "SW_BambooEntry", "edge", -44f, -44f), new Gate("W_BambooSouth", "W_BambooCorridorSouth", "edge", -52f, -18f),
             new Gate("W_BambooNorth", "W_BambooCorridorNorth", "edge", -52f, 18f), new Gate("NW_ServiceGate", "NW_ServiceGate", "edge", -46f, 46f),
-            new Gate("I_WestKairoSouth", null, "inner", -33f, -18.5f), new Gate("I_CloisterWest", null, "inner", -22f, 24f),
-            new Gate("I_ShoreEast", null, "inner", 18f, -30f), new Gate("I_GreatSakuraSouth", null, "inner", 36f, -10.5f),
+            new Gate("I_WestKairoSouth", null, "inner", -33f, -18.5f), new Gate("I_CloisterWest", null, "inner", -22f, 14f),
+            new Gate("I_ShoreEast", null, "inner", 24f, -8f), new Gate("I_GreatSakuraSouth", null, "inner", 24f, 14f),
             new Gate("I_ServiceYardSouth", null, "inner", -36f, 31.5f), new Gate("I_HallRear", null, "inner", 0f, 52.5f),
             new Gate("I_CloisterEast", null, "inner", 22f, 24f), new Gate("I_ShoreWest", null, "inner", -18f, -30f),
             // I_ServiceYardEast: S-03's (−28, 40) sits on the yard's east wall (x −28) — 1.5 m inside, like I_ServiceYardSouth.
@@ -192,6 +192,76 @@ namespace DD.Art.Pipeline.EditorTools
             string[] args = System.Environment.GetCommandLineArgs();
             string report = Build(Array.IndexOf(args, "-ddGreyboxOnly") < 0, Array.IndexOf(args, "-ddBake") >= 0);
             Debug.Log("[GreyboxV6] " + report);
+        }
+
+        /// <summary>Bind C-00's three approved inner-gate moves in the existing V6 world, retaining all other placements
+        /// and assets. Only the garden tree entering the new 4 m gate clearance and its NavMesh are updated; no library,
+        /// world regeneration or lighting bake. Run once on the pre-move placement.</summary>
+        public static void BindApprovedInnerGatesCli()
+        {
+            var old = new Dictionary<string, Vector2>
+            {
+                { "I_CloisterWest", new Vector2(-22f, 24f) },
+                { "I_GreatSakuraSouth", new Vector2(36f, -10.5f) },
+                { "I_ShoreEast", new Vector2(18f, -30f) }
+            };
+            Scene scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+            GameObject root = GameObject.Find(Ap005WorldBootstrap.RootName);
+            var placement = AssetDatabase.LoadAssetAtPath<WorldPlacementAsset>(PlacementPath);
+            if (root == null || placement == null || root.GetComponent<Ap005WorldBootstrap>().Placement != placement)
+                throw new InvalidOperationException("[FixedThreeBinding] V6 placement binding missing");
+            NavMeshSurface[] surfaces = root.GetComponentsInChildren<NavMeshSurface>(true);
+            var nav = AssetDatabase.LoadAssetAtPath<NavMeshData>(NavMeshPath);
+            if (surfaces.Length != 1 || surfaces[0].navMeshData != nav || nav == null)
+                throw new InvalidOperationException("[FixedThreeBinding] expected the existing V6 NavMesh binding");
+            if (placement.innerSpawnPoints.Count != 10 || placement.spawnPoints.Count != 12)
+                throw new InvalidOperationException("[FixedThreeBinding] expected 22 placements");
+            foreach (Gate gate in Gates)
+            {
+                if (gate.Kind != "inner") continue;
+                var point = placement.innerSpawnPoints.Find(p => p.id == gate.Id);
+                Vector2 expected = old.TryGetValue(gate.Id, out Vector2 before) ? before : gate.Position;
+                if (point == null || Vector2.Distance(new Vector2(point.position.x, point.position.z), expected) > 0.0001f)
+                    throw new InvalidOperationException("[FixedThreeBinding] unexpected source placement: " + gate.Id);
+            }
+            Transform garden = root.transform.Find(WorldV5Dress.RootName + "/" + WorldV5Dress.GardenGroupName);
+            if (garden == null) throw new InvalidOperationException("[FixedThreeBinding] garden missing");
+            var remove = new List<GameObject>();
+            foreach (Transform tree in garden)
+                foreach (Gate gate in Gates)
+                    if (old.ContainsKey(gate.Id) && Vector2.Distance(new Vector2(tree.position.x, tree.position.z), gate.Position) < 4f)
+                    { remove.Add(tree.gameObject); break; }
+            if (remove.Count != 1 || Vector2.Distance(new Vector2(remove[0].transform.position.x, remove[0].transform.position.z),
+                    new Vector2(27.311537f, 15.994804f)) > 0.0001f)
+                throw new InvalidOperationException("[FixedThreeBinding] unexpected tree-clearance delta");
+            Debug.Log("[FixedThreeBinding] tree-clearance remove=" + remove[0].name + " at=" + remove[0].transform.position.ToString("F6"));
+            UnityEngine.Object.DestroyImmediate(remove[0]);
+            Physics.SyncTransforms();
+            int floorMask = ~((1 << PrototypeLayers.CameraOccluder) | (1 << 2));
+            foreach (Gate gate in Gates)
+            {
+                if (!old.ContainsKey(gate.Id)) continue;
+                var point = placement.innerSpawnPoints.Find(p => p.id == gate.Id);
+                var from = new Vector3(gate.Position.x, 2.5f, gate.Position.y);
+                float y = Physics.Raycast(from, Vector3.down, out RaycastHit hit, 5f, floorMask, QueryTriggerInteraction.Ignore) ? hit.point.y : 0f;
+                point.position = new Vector3(gate.Position.x, y, gate.Position.y);
+                Debug.Log("[FixedThreeBinding] placement " + gate.Id + "=" + point.position.ToString("F6"));
+            }
+            EditorUtility.SetDirty(placement);
+            PlacementImporter.BuildAtBodyClimb(surfaces[0]);
+            EditorUtility.CopySerialized(surfaces[0].navMeshData, nav);
+            nav.name = Path.GetFileNameWithoutExtension(NavMeshPath);
+            surfaces[0].RemoveData();
+            surfaces[0].navMeshData = nav;
+            surfaces[0].AddData();
+            EditorUtility.SetDirty(nav);
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[FixedThreeBinding] changed=3 unchanged=19 treeClearance=1 scene=" + scene.path +
+                " placement=" + AssetDatabase.GetAssetPath(root.GetComponent<Ap005WorldBootstrap>().Placement) +
+                " nav=" + AssetDatabase.GetAssetPath(surfaces[0].navMeshData) + " navGuid=" + AssetDatabase.AssetPathToGUID(NavMeshPath) +
+                " surfaces=1 triangles=" + NavMesh.CalculateTriangulation().indices.Length / 3);
         }
 
         /// <param name="dress">WP-074 B5b-1: dress the layout with the AP-023 kit (<see cref="WorldV5Dress"/>) before the bake.</param>

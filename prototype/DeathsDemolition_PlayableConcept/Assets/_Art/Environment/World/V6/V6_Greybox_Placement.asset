@@ -72,13 +72,13 @@ MonoBehaviour:
     position: {x: -33, y: 0, z: -18.5}
     weight: 1
   - id: I_CloisterWest
-    position: {x: -22, y: 0.25000006, z: 24}
+    position: {x: -22, y: 0, z: 14}
     weight: 1
   - id: I_ShoreEast
-    position: {x: 18, y: 0, z: -30}
+    position: {x: 24, y: 0, z: -8}
     weight: 1
   - id: I_GreatSakuraSouth
-    position: {x: 36, y: 0, z: -10.5}
+    position: {x: 24, y: 0, z: 14}
     weight: 1
   - id: I_ServiceYardSouth
     position: {x: -36, y: 0, z: 31.5}
