@@ -354,10 +354,10 @@ Key: `tree.run.<id>.name` / `.desc`. Names ≤ 22 characters in both languages (
 | `tree.flag.pinned` | PINNED | İŞARETLİ |
 | `tree.flag.not_offered` | NOT IN THIS OFFER | BU TEKLİFTE YOK |
 | `tree.action.pin` | PIN | İŞARETLE |
-| `tree.action.unpin` | UNPIN | İŞARETİ KALDIR |
+| `tree.action.unpin` | UNPIN | BIRAK |
 | `tree.action.stoke` | STOKE THE HEARTH | OCAĞI YAK |
-| `tree.action.undo` | UNDO LAST | SONUNCUYU GERİ AL |
-| `tree.action.reforge` | REFORGE | YENİDEN DÖV |
+| `tree.action.undo` | UNDO LAST | GERİ AL |
+| `tree.action.reforge` | REFORGE | DÖV |
 | `tree.hearth.count` | HEARTH {value} / {max} | OCAK {value} / {max} |
 | `tree.hearth.round` | {value} of {max} stokes this round | Bu round {max} yakıştan {value} |
 | `tree.pin.caption` | A pinned node comes in the next offer once it is reachable. | İşaretli düğüm erişilebilir olunca sonraki teklifte gelir. |

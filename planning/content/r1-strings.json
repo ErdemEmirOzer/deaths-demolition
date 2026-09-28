@@ -545,7 +545,7 @@
   },
   "tree.action.unpin": {
     "en": "UNPIN",
-    "tr": "İŞARETİ KALDIR"
+    "tr": "BIRAK"
   },
   "tree.action.stoke": {
     "en": "STOKE THE HEARTH",
@@ -553,11 +553,11 @@
   },
   "tree.action.undo": {
     "en": "UNDO LAST",
-    "tr": "SONUNCUYU GERİ AL"
+    "tr": "GERİ AL"
   },
   "tree.action.reforge": {
     "en": "REFORGE",
-    "tr": "YENİDEN DÖV"
+    "tr": "DÖV"
   },
   "tree.hearth.count": {
     "en": "HEARTH {value} / {max}",
