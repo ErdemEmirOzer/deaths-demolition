@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using DD.Prototype.Damage;
 using DD.Prototype.Enemies;
+using DD.Prototype.Navigation;
 using DD.Prototype.PlayerSystem;
 using DD.Prototype.Rounds;
 using DD.Prototype.Spawn;
@@ -30,11 +31,10 @@ namespace DD.Prototype.Tests.PlayMode
         private const int Target = 12;
 
         /// <summary>
-        /// KNOWN OPEN (26.09 measurement, reported to C-00 / S-05): the C1 causeway and the bridge ends by the waterfall — bodies stop at
-        /// the dress slab joints (causeway z −23.2 between slab_bridge #3/#2; plank ends z −18.9 / −38.6) while the NavMesh says walkable
-        /// (stuck recoveries 2 + 2, 0 reached on the causeway). Reported every run; removed from this set when the geometry is fixed.
+        /// C1 remains a separate open issue. Waterfall is strict: every observed stall fails,
+        /// and a real enemy starts at the necessary near corner with the normal crowd solve.
         /// </summary>
-        private static readonly HashSet<string> KnownOpen = new HashSet<string> { "C1_Causeway", "Waterfall" };
+        private static readonly HashSet<string> KnownOpen = new HashSet<string> { "C1_Causeway" };
         private const float StationSeconds = 25f, ReachMetres = 3.5f, StallSeconds = 6f, StallMove = 0.75f;
 
         private static readonly (string name, Vector3 at)[] Stations =
@@ -74,11 +74,12 @@ namespace DD.Prototype.Tests.PlayMode
 
             var stations = new List<(string name, Vector3 at)>(Stations);
             GameObject falls = GameObject.Find("Waterfall");
-            if (falls != null) stations.Add(("Waterfall", falls.transform.position));
-            else Debug.LogWarning("[DD-OBS] wp076.v6ai Waterfall nesnesi yok");
+            Assert.IsNotNull(falls, "strict Waterfall istasyonu yok");
+            stations.Add(("Waterfall", falls.transform.position));
 
             var rapor = new StringBuilder("[DD-OBS] wp076.v6ai\n");
-            int sumRec = 0, sumRem = 0, sumOow = 0;
+            int sumRec = 0, sumRem = 0, sumOow = 0, waterfallStalls = 0;
+            bool nearCornerReached = false;
             var noReach = new List<string>();
             var oowAt = new List<string>();
             Action<DD.Prototype.Core.Config.EnemyTier, Vector3, ZombieEnemy.OutOfWorldReason, ZombieBodyState> onOow =
@@ -107,8 +108,25 @@ namespace DD.Prototype.Tests.PlayMode
                     var anchors = new Dictionary<ZombieEnemy, (Vector3 anchor, float since, bool reached, bool reported)>();
                     int spawned = 0, reached = 0;
                     Action<EnemySpawnContext> onSpawn = c => spawned++;
-                    director.EnemySpawned += onSpawn;
                     var stalls = new StringBuilder();
+                    int stallCount = 0;
+                    ZombieEnemy nearCornerBody = null;
+                    if (st.name == "Waterfall")
+                    {
+                        // S-05 supplied point on geometry 37badf64. Exercise the actual
+                        // CharacterController and crowd together; do not substitute a sweep.
+                        nearCornerBody = EnemyFactory.Spawn(DD.Prototype.Core.Config.EnemyTier.Standard, 1,
+                            new Vector3(2.8f, 0.3f, -19f), Quaternion.identity);
+                        Assert.IsNotNull(nearCornerBody, "Waterfall yakın-köşe gövdesi doğmadı");
+                        CharacterController controller = nearCornerBody.GetComponent<CharacterController>();
+                        Assert.IsNotNull(controller);
+                        Assert.IsTrue(controller.enabled);
+                        Assert.IsNotNull(nearCornerBody.PathFollower);
+                        Assert.Greater(CrowdService.Solver.MemberCount, 0, "gerçek crowd etkin olmalı");
+                        Assert.AreEqual(0.65f, nearCornerBody.PathFollower.CornerArriveRadius, "normal varış yarıçapı korunmalı");
+                        rapor.AppendLine("  waterfall nearCorner start=" + nearCornerBody.transform.position + " controllerRadius=" + controller.radius);
+                    }
+                    director.EnemySpawned += onSpawn;
                     director.ForceActiveTarget(Target, true);
                     float t0 = Time.time, nextCheck = 0f;
                     try
@@ -132,6 +150,7 @@ namespace DD.Prototype.Tests.PlayMode
                                     else if (!a.reported && d > 4f && Time.time - a.since >= StallSeconds)
                                     {
                                         a.reported = true;
+                                        stallCount++;
                                         stalls.Append(string.Format("({0:0.0},{1:0.0},{2:0.0} d={3:0.0} {4}) ", zp.x, zp.y, zp.z, d, z.Tier));
                                     }
                                     anchors[z] = a;
@@ -149,6 +168,12 @@ namespace DD.Prototype.Tests.PlayMode
                     int dRec = ZombieEnemy.StuckRecoveries - rec, dRem = ZombieEnemy.StuckRemovals - rem, dOow = ZombieEnemy.OutOfWorldRemovals - oow;
                     rapor.AppendLine(string.Format("  {0,-12} at=({1:0.0},{2:0.0},{3:0.0}) spawned={4} reached={5} stuckRecover={6} stuckRemove={7} oow={8} stalls: {9}",
                         st.name, hit.position.x, hit.position.y, hit.position.z, spawned, reached, dRec, dRem, dOow, stalls.Length > 0 ? stalls.ToString() : "-"));
+                    if (st.name == "Waterfall")
+                    {
+                        waterfallStalls = stallCount;
+                        nearCornerReached = anchors.TryGetValue(nearCornerBody, out var nearCornerAnchor) && nearCornerAnchor.reached;
+                        rapor.AppendLine("  strict Waterfall stalls=" + waterfallStalls + " nearCornerReached=" + nearCornerReached);
+                    }
                     bool known = KnownOpen.Contains(st.name);
                     if (known) rapor.AppendLine("    ^ KNOWN OPEN (not asserted)");
                     else { sumRec += dRec; sumRem += dRem; sumOow += dOow; if (reached == 0) noReach.Add(st.name); }
@@ -171,6 +196,8 @@ namespace DD.Prototype.Tests.PlayMode
             // (R3 / R4 / C8 once each, bodies far from the station — K1 kairō (−30.9, −5.8), north of the chūmon (3.0, 23.5)).
             rapor.AppendLine("  stuckRecover outside known = " + sumRec);
             Assert.IsEmpty(noReach, "oyuncuya ulaşılamayan istasyon\n" + rapor);
+            Assert.AreEqual(0, waterfallStalls, "strict Waterfall: gözlenen takılma\n" + rapor);
+            Assert.IsTrue(nearCornerReached, "Waterfall yakın-köşe gövdesi oyuncuya ulaşmadı\n" + rapor);
         }
 
         private static IEnumerator Bekle(Func<bool> kosul, float saniye, string aciklama)

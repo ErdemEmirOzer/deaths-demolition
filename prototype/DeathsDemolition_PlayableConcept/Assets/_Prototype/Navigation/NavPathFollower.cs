@@ -220,6 +220,15 @@ namespace DD.Prototype.Navigation
                     return;
                 }
 
+                // A nearby turn is still required when skipping it would cut across
+                // a NavMesh boundary. Keep the normal arrival radius on open segments
+                // and at the final corner, but preserve the walkable route at bends.
+                if (_cornerIndex + 1 < _cornerCount &&
+                    NavMesh.Raycast(position, _corners[_cornerIndex + 1], out NavMeshHit _, CrowdService.Paths.AreaMask))
+                {
+                    return;
+                }
+
                 _cornerIndex++;
             }
         }
