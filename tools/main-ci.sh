@@ -27,14 +27,100 @@ while [ $# -gt 0 ]; do case "$1" in
   --skip-playmode) SKIP_PLAY=1 ;; --editmode-timeout) ETMIN="$2"; shift ;; --playmode-timeout) PTMIN="$2"; shift ;;
   *) echo "unknown option: $1" >&2; exit 64 ;; esac; shift; done
 
+# Compile and CI serialize only the same physical checkout; never reclaim an unknown lease.
+CI_LEASE_HELD=0; CI_LEASE_READY=0
+ci_lease_release() {
+  [ "$CI_LEASE_HELD" -eq 1 ] || return 0
+  [ -d "$CI_LEASE" ] && [ ! -L "$CI_LEASE" ] || return 3
+  if [ "$CI_LEASE_READY" -eq 1 ]; then
+    [ -f "$CI_LEASE/owner-$CI_LEASE_TOKEN" ] &&
+      [ "$(cat "$CI_LEASE/owner-$CI_LEASE_TOKEN")" = "$CI_LEASE_OWNER" ] || return 3
+  fi
+  rm -f -- "$CI_LEASE/owner-$CI_LEASE_TOKEN" || return 3
+  rmdir -- "$CI_LEASE" || return 3
+  CI_LEASE_HELD=0
+}
+ci_lease_acquire() {
+  CI_DIR=$(python3 - "$CI_DIR" <<'PY_CANON'
+from pathlib import Path
+import os, sys
+try:
+    requested = Path(sys.argv[1]).absolute()
+    if os.path.lexists(requested):
+        target = requested.resolve(strict=True)
+        if not target.is_dir(): raise ValueError("checkout is not a directory")
+    else:
+        target = requested.parent.resolve(strict=True) / requested.name
+        if not target.parent.is_dir(): raise ValueError("checkout parent is not a directory")
+    if "\n" in str(target): raise ValueError("newline in checkout path")
+    print(target)
+except (OSError, RuntimeError, ValueError) as error:
+    print("cannot resolve CI checkout: " + str(error), file=sys.stderr)
+    sys.exit(3)
+PY_CANON
+  ) || return 3
+  local key=$(print -rn -- "$CI_DIR" | shasum -a 256 | cut -d' ' -f1)
+  [ "${#key}" -eq 64 ] || return 3
+  CI_LEASE="${CI_DIR:h}/.dd-ci-$key.lease"
+  CI_LEASE_TOKEN=$(python3 -c 'import uuid; print(uuid.uuid4())') || return 3
+  local started=$(ps -o lstart= -p $$ | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+  [ -n "$started" ] || return 3
+  CI_LEASE_OWNER="pid=$$"$'\n'"start=$started"$'\n'"token=$CI_LEASE_TOKEN"
+  mkdir -m 700 -- "$CI_LEASE" 2>/dev/null || { echo "CI checkout lease busy: $CI_DIR" >&2; return 75; }
+  CI_LEASE_HELD=1
+  print -r -- "$CI_LEASE_OWNER" > "$CI_LEASE/owner-$CI_LEASE_TOKEN" || return 3
+  CI_LEASE_READY=1
+}
+# Resolve Unity's projectPath too, so manual launches through an alias remain busy.
+ci_project_open() {
+  python3 - "$CI_DIR/prototype/DeathsDemolition_PlayableConcept" <<'PY_PROCESS'
+from pathlib import Path
+import re, subprocess, sys
+try:
+    target = Path(sys.argv[1]).resolve(strict=False)
+    rows = subprocess.check_output(["ps", "-axo", "args="], text=True).splitlines()
+    for command in rows:
+        executable = command.split(" -", 1)[0].strip()
+        if not executable.endswith("/Unity.app/Contents/MacOS/Unity"): continue
+        match = re.search(r"(?:^|\s)-projectPath\s+(.*?)(?=\s+-[A-Za-z]|$)", command)
+        if not match: continue
+        raw = match.group(1).strip()
+        if len(raw) >= 2 and raw[0] == raw[-1] and raw[0] in "\"'": raw = raw[1:-1]
+        if Path(raw).resolve(strict=True) == target: sys.exit(0)
+except (OSError, RuntimeError, ValueError):
+    sys.exit(2)
+sys.exit(1)
+PY_PROCESS
+}
+CI_PLAYER_HELD=0; CI_GUARD_READY=0; CI_GUARD_EXIT=0
+ci_guard_restore() {
+  "$DD_TOOLS_DIR/userdata-guard.sh" restore "$OUT/userdata-guard" --scope editor > "$OUT/userdata-guard.out" 2>&1
+  CI_GUARD_EXIT=$?; CI_GUARD_READY=0
+  if [ "$CI_GUARD_EXIT" -eq 0 ] && ! grep -q 'restore scope=editor .*verified=1' "$OUT/userdata-guard.out"; then CI_GUARD_EXIT=31; fi
+}
+ci_cleanup() {
+  local original=$1 slot_exit=0 lease_exit=0
+  trap - EXIT
+  [ "$CI_GUARD_READY" -eq 0 ] || ci_guard_restore
+  if [ "$CI_PLAYER_HELD" -eq 1 ]; then DD_SLOT_TAG="$CI_PLAYER_TAG" dd_slot_release player; slot_exit=$?; fi
+  ci_lease_release; lease_exit=$?
+  [ "$CI_GUARD_EXIT" -eq 0 ] && [ "$slot_exit" -eq 0 ] && [ "$lease_exit" -eq 0 ] || echo "CI cleanup failed: guard=$CI_GUARD_EXIT slot=$slot_exit lease=$lease_exit (original=$original)" >&2
+  [ "$original" -eq 0 ] || exit "$original"
+  [ "$CI_GUARD_EXIT" -eq 0 ] || exit "$CI_GUARD_EXIT"
+  [ "$slot_exit" -eq 0 ] || exit "$slot_exit"
+  exit "$lease_exit"
+}
+# zsh function-local EXIT traps run on function return; install this at script scope.
+trap 'ci_cleanup $?' EXIT
+ci_lease_acquire || exit $?
 SHA=$(git -C "$DD_REPO" rev-parse --verify "$REF^{commit}" 2>/dev/null) || { echo "unknown commit: $REF" >&2; exit 64; }
-# WP-043C: tools/compile-check.sh shares the checkout — wait (≤ 30 min) while one runs.
-for _ in $(seq 1 60); do pgrep -f "tools/compile-check.sh" >/dev/null || break; sleep 30; done
 # WP-043D: hold the single 'player' slot for the whole run — Player captures / bots share the audio device and
 # focus with the Editor PlayMode tests (a full-screen capture broke the UiV3 audio test); wrapped launches wait.
-OUT="$OUT_ROOT/$SHA"; mkdir -p "$OUT"; DD_TIMELINE="$OUT/timeline.txt"
-trap 'dd_slot_release player' EXIT
-dd_slot_acquire player
+OUT="$OUT_ROOT/$SHA"; mkdir -p "$OUT" || exit 3; DD_TIMELINE="$OUT/timeline.txt"
+ci_project_open; OPEN=$?
+[ "$OPEN" -eq 1 ] || { dd_log "CI project open or process check unavailable — busy"; exit 75; }
+CI_PLAYER_TAG="$DD_SLOT_TAG"; CI_PLAYER_HELD=1
+dd_slot_acquire player || exit $?
 export DD_SLOT_TAG="main-ci"
 dd_log "main-ci sha=$SHA ci=$CI_DIR out=$OUT"
 
@@ -43,12 +129,15 @@ if [ ! -e "$CI_DIR/.git" ]; then
   mkdir -p "${CI_DIR:h}"
   git -C "$DD_REPO" worktree add --detach "$CI_DIR" "$SHA" >/dev/null 2>&1 || { dd_log "worktree add failed"; exit 3; }
 else
-  DIRTY=$(git -C "$CI_DIR" status --porcelain --untracked-files=no | head -5)
+  [ "$(git -C "$CI_DIR" symbolic-ref -q HEAD)" != refs/heads/main ] || { dd_log "refusing main checkout"; exit 3; }
+  DIRTY=$(git -C "$CI_DIR" status --porcelain --untracked-files=no) || exit 3
   [ -z "$DIRTY" ] || { dd_log "CI worktree not clean: $DIRTY"; exit 3; }
   git -C "$CI_DIR" checkout -q --detach "$SHA" || { dd_log "checkout failed"; exit 3; }
 fi
 git -C "$CI_DIR" lfs pull >/dev/null 2>&1 || true
 dd_log "ci worktree at $(git -C "$CI_DIR" rev-parse --short=10 HEAD)"
+
+[ -d "$CI_DIR/prototype/DeathsDemolition_PlayableConcept" ] || { dd_log "CI project missing"; exit 3; }
 
 # 2) Library seed (APFS clone) on the first run
 LIB="$CI_DIR/prototype/DeathsDemolition_PlayableConcept/Library"
@@ -69,7 +158,13 @@ inventory() { [ -d "$PD" ] && find "$PD" -type f ! -name '*.lock' ! -name '.DS_S
 inventory > "$OUT/userdata-before.txt"
 # WP-066J: the shared guard also covers the player bundle folder and both PlayerPrefs plists (exact
 # restore to this snapshot: run-added keys removed — `defaults import` alone merges).
-"$DD_TOOLS_DIR/userdata-guard.sh" snapshot "$OUT/userdata-guard" --scope editor > "$OUT/userdata-guard-snapshot.out" 2>&1 || dd_log "WARNING userdata: guard snapshot failed (exit $?, a live Player holds the profile?) — $OUT/userdata-guard-snapshot.out"
+while :; do
+  "$DD_TOOLS_DIR/userdata-guard.sh" snapshot "$OUT/userdata-guard" --scope editor > "$OUT/userdata-guard-snapshot.out" 2>&1; GS=$?
+  [ "$GS" -eq 0 ] && break
+  [ "$GS" -eq 30 ] || exit "$GS"
+  dd_log "userdata snapshot30: waiting; no tests started"; sleep 20
+done
+CI_GUARD_READY=1
 
 # 4) tests (the CI worktree's own tools: they belong to the commit under test)
 "$CI_DIR/tools/test.sh" editmode --out "$OUT/editmode" --timeout-min "$ETMIN" > "$OUT/editmode.out" 2>&1; EX=$?
@@ -96,7 +191,7 @@ fi
 # WP-066K: Editor tests can only write the Editor area (player folder + Editor PlayerPrefs domain); a
 # change in the player area (bundle folder profile, player domain) is someone else's — listed, not undone.
 UG="$OUT/userdata-guard"
-"$DD_TOOLS_DIR/userdata-guard.sh" restore "$UG" --scope editor > "$OUT/userdata-guard.out" 2>&1; GX=$?
+ci_guard_restore; GX=$CI_GUARD_EXIT
 if ! cmp -s "$UG/before-editor.txt" "$UG/after-run-editor.txt" || [ "$GX" -ne 0 ]; then
   GW="Editor PlayerPrefs/profile changed during the tests: restored to the pre-run snapshot ($([ "$GX" -eq 0 ] && echo verified || echo "RESTORE MISMATCH exit $GX")) — $UG"
   UDWARN="${UDWARN:+$UDWARN; }$GW"; dd_log "WARNING userdata: $GW"
@@ -110,6 +205,7 @@ fi
 SARGS=(); [ -n "$UDWARN" ] && SARGS=(--userdata-warning "$UDWARN")
 python3 "$DD_TOOLS_DIR/ci_summary.py" "$OUT" "$SHA" "$OUT_ROOT" "$DD_TOOLS_DIR/ci-owners.tsv" "${SARGS[@]}" | tee -a "$DD_TIMELINE"
 SX=${pipestatus[1]}
+[ "$CI_GUARD_EXIT" -eq 0 ] || exit "$CI_GUARD_EXIT"
 [ "$SX" -eq 0 ] && exit 0
 grep -q '"compileErrors": \[\]' "$OUT/summary.json" && [ -f "$OUT/editmode/editmode.xml" ] && exit 1
 exit 2
