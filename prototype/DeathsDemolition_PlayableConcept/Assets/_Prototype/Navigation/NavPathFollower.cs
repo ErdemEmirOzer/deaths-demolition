@@ -46,6 +46,9 @@ namespace DD.Prototype.Navigation
         /// <summary>PROTOTYPE-ONLY, invented: distance at which a corner counts as reached, m.</summary>
         public float CornerArriveRadius = 0.65f;
 
+        /// <summary>The existing movement heading dead zone, shared with the owning controller.</summary>
+        public const float SteeringDeadZoneSquared = 0.0001f;
+
         /// <summary>Status of the last completed path calculation.</summary>
         public NavPathStatus Status { get; private set; } = NavPathStatus.Invalid;
 
@@ -223,7 +226,9 @@ namespace DD.Prototype.Navigation
                 // A nearby turn is still required when skipping it would cut across
                 // a NavMesh boundary. Keep the normal arrival radius on open segments
                 // and at the final corner, but preserve the walkable route at bends.
-                if (_cornerIndex + 1 < _cornerCount &&
+                // Once the body reaches the movement heading dead zone, consume the
+                // turn: holding it there leaves both the controller and crowd idle.
+                if (_cornerIndex + 1 < _cornerCount && delta.sqrMagnitude > SteeringDeadZoneSquared &&
                     NavMesh.Raycast(position, _corners[_cornerIndex + 1], out NavMeshHit _, CrowdService.Paths.AreaMask))
                 {
                     return;

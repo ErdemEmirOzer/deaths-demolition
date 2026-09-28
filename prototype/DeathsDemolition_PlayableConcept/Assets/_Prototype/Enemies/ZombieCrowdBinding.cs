@@ -96,7 +96,24 @@ namespace DD.Prototype.Enemies
         /// <summary>WP-054: the navigation goal for this life — the flank goal while far, the target itself inside the straight radius.</summary>
         private Vector3 CrowdFeelGoal(Vector3 target)
         {
-            return _flankSign != 0 && FlankInOpen(target) ? CrowdFeelSettings.Active.FlankGoal(transform.position, target, _flankSign, _flankAngle) : target;
+            if (_flankSign == 0 || !FlankInOpen(target)) return target;
+            Vector3 flank = CrowdFeelSettings.Active.FlankGoal(transform.position, target, _flankSign, _flankAngle);
+            // Open ground requires the lateral goal itself to remain on the walkable
+            // surface and visible along it. Projecting an off-bridge goal onto a nearby
+            // bank can otherwise send the body back toward a turn it already passed.
+            if (!CrowdService.Paths.TryProject(flank, out Vector3 projected))
+            {
+                _flankOpen = false;
+                return target;
+            }
+            Vector3 projection = projected - flank; projection.y = 0f;
+            if (projection.sqrMagnitude > NavPathFollower.SteeringDeadZoneSquared ||
+                UnityEngine.AI.NavMesh.Raycast(transform.position, projected, out UnityEngine.AI.NavMeshHit _, CrowdService.Paths.AreaMask))
+            {
+                _flankOpen = false;
+                return target;
+            }
+            return projected;
         }
 
         // WP-061M: the flank goal is an OPEN-GROUND approach. It is recomputed from the body's position, so where the
@@ -285,7 +302,7 @@ namespace DD.Prototype.Enemies
             Vector3 toCorner = _steeringCorner - position;
             toCorner.y = 0f;
 
-            if (toCorner.sqrMagnitude < 0.0001f)
+            if (toCorner.sqrMagnitude < NavPathFollower.SteeringDeadZoneSquared)
             {
                 return false;
             }
