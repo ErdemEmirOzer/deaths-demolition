@@ -133,7 +133,7 @@ namespace DD.Prototype.Tests.EditMode
             float innerShare = innerCells > 0 ? (float)innerViolations / innerCells : 0f;
             Debug.Log("[DD-OBS] wp076.b6c outsideCornerBelt cells=" + innerCells + " violations=" + innerViolations + " share=" + innerShare.ToString("0.000")
                       + (innerShare > InfoShareOutsideCorners ? " (> 3 % information line)" : " (≤ 3 %)"));
-            Assert.LessOrEqual(share, MaxViolationShare, "C-00 C + D: yol mesafesiyle ihlal ≤ %10 (band ≥ 3 kapı 22–45 m, ≥ 8 kapı ≤ 75 m)");
+            Assert.LessOrEqual(share, MaxViolationShare, "C-00 C + D: yol mesafesiyle ihlal ≤ %7 (band ≥ 3 kapı 22–45 m, ≥ 8 kapı ≤ 75 m)");
             Assert.LessOrEqual(mStd, 20f, "Standard ilk temas medyanı ≤ 20 s");
             Assert.LessOrEqual(mRun, 12f, "Runner ilk temas medyanı ≤ 12 s");
             Assert.LessOrEqual(mExe, 35f, "Executioner ilk temas medyanı ≤ 35 s");
