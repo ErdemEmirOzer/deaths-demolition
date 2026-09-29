@@ -875,7 +875,9 @@ namespace DD.Prototype.Tests.PlayMode
             Time.captureDeltaTime = 0f;
 
             Vector3 merkez = _rig.transform.position;
-            ZombieEnemy hedef = Dogur(merkez + new Vector3(0f, 0f, 7f), merkez);
+            // Keep the body-only spread corridor inside the upper capsule; the 7 m fixture can
+            // reject every shot before exercising feedback. Weapon, pose, damage and asserts stay intact.
+            ZombieEnemy hedef = Dogur(merkez + new Vector3(0f, 0f, 4f), merkez);
             Assert.IsNotNull(hedef);
             // WP-018: the AP-009 shamble carries the head forward and low, so the 1.15 m aim line now crosses
             // the head hitbox on the way in; a rolled helmet turned three of these "flesh" hits into armour
