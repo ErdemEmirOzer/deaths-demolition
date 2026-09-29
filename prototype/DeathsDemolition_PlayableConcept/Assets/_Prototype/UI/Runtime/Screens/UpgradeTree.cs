@@ -1486,7 +1486,9 @@ namespace DD.Prototype.UI
             _dNote.text = NoteOf(n);
             ShowStat(n);
 
-            bool buyable = n.Status == RunTreeNodeStatus.Available && (hearth || (Offered(index) && !_shop.IsLocked));
+            bool buyable = n.Status == RunTreeNodeStatus.Available && (hearth
+                ? _snap.HearthThisRound < _snap.HearthPerRound
+                : Offered(index) && !_shop.IsLocked);
             bool priced = n.Status != RunTreeNodeStatus.MaxTier && n.Status != RunTreeNodeStatus.Excluded && !(IsOwned(n) && n.MaxTier <= 1);
             _dPrice.text = priced ? UiStrings.Format("shop.gold_amount", "value", n.Cost.ToString(CultureInfo.InvariantCulture), "{value} GOLD") : string.Empty;
             _buy.SetText(hearth ? UiStrings.Get("tree.action.stoke", "STOKE THE HEARTH") : UiStrings.Get("tree.action.buy", "BUY"));
@@ -1644,9 +1646,9 @@ namespace DD.Prototype.UI
         {
             if (n.Kind == RunTreeNodeKind.Hearth)
             {
-                return UiStrings.Get("tree.hearth.round", "{value} of {max} stokes this round")
-                    .Replace("{value}", _snap.HearthThisRound.ToString(CultureInfo.InvariantCulture))
-                    .Replace("{max}", _snap.HearthPerRound.ToString(CultureInfo.InvariantCulture));
+                return n.Status == RunTreeNodeStatus.Available && _snap.HearthThisRound >= _snap.HearthPerRound
+                    ? string.Empty   // the compact state already shows the exhausted round allowance
+                    : HearthRoundSentence();
             }
 
             if (n.Kind == RunTreeNodeKind.Fork)
@@ -1666,6 +1668,13 @@ namespace DD.Prototype.UI
                 : string.Empty;
         }
 
+        private string HearthRoundSentence()
+        {
+            return UiStrings.Get("tree.hearth.round", "{value} of {max} stokes this round")
+                .Replace("{value}", _snap.HearthThisRound.ToString(CultureInfo.InvariantCulture))
+                .Replace("{max}", _snap.HearthPerRound.ToString(CultureInfo.InvariantCulture));
+        }
+
         private string StateSentence(RunTreeNodeView n)
         {
             switch (n.Status)
@@ -1680,6 +1689,11 @@ namespace DD.Prototype.UI
                     }
 
                 case RunTreeNodeStatus.Available:
+                    if (n.Kind == RunTreeNodeKind.Hearth && _snap.HearthThisRound >= _snap.HearthPerRound)
+                    {
+                        return HearthRoundSentence();
+                    }
+
                     if (n.Kind == RunTreeNodeKind.Hearth || Offered(IndexOfView(n)))
                     {
                         return _shop != null && _shop.IsLocked && n.Kind != RunTreeNodeKind.Hearth
