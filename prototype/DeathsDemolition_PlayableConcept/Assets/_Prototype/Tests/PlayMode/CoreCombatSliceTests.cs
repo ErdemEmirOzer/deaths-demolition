@@ -835,6 +835,39 @@ namespace DD.Prototype.Tests.PlayMode
         [Timeout(180000)]
         public IEnumerator GameFeelOlaylari_FleshHitOlumVeOyuncuHasari_AyriSinyaller()
         {
+            // BEGIN S02_COTIMED startup metadata (before fixture yield)
+            string GateRandomState()
+            {
+                try
+                {
+                    string raw = JsonUtility.ToJson(UnityEngine.Random.state);
+                    return string.IsNullOrEmpty(raw) || raw == "{}" ? "{\"status\":\"UNKNOWN:state_serializer_empty\"}" :
+                        "{\"status\":\"RAW_OBSERVED_NOT_SEED_OR_REPLAY_PROOF\",\"raw\":" + raw + "}";
+                }
+                catch (Exception) { return "{\"status\":\"UNKNOWN:state_getter_or_serializer_failure\"}"; }
+            }
+            string gateStartupUnityRandom = "{\"status\":\"NOT_REQUESTED\"}";
+            string gateRuntimeAssemblyName = "UNKNOWN", gateRuntimeAssemblyLocation = "UNKNOWN", gateRuntimeAssemblyHash = "UNKNOWN";
+            string gateAssemblyName = "UNKNOWN", gateAssemblyLocation = "UNKNOWN", gateAssemblyHash = "UNKNOWN";
+            try
+            {
+                if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-ddGameFeelGateDiag") >= 0)
+                {
+                    gateStartupUnityRandom = GateRandomState();
+                    var assembly = typeof(CoreCombatSliceTests).Assembly;
+                    gateAssemblyName = assembly.FullName;
+                    gateAssemblyLocation = assembly.Location;
+                    using (var sha = System.Security.Cryptography.SHA256.Create())
+                        gateAssemblyHash = System.BitConverter.ToString(sha.ComputeHash(System.IO.File.ReadAllBytes(gateAssemblyLocation))).Replace("-", "").ToLowerInvariant();
+                    var runtimeAssembly = typeof(ZombieEnemy).Assembly;
+                    gateRuntimeAssemblyName = runtimeAssembly.FullName;
+                    gateRuntimeAssemblyLocation = runtimeAssembly.Location;
+                    using (var sha = System.Security.Cryptography.SHA256.Create())
+                        gateRuntimeAssemblyHash = System.BitConverter.ToString(sha.ComputeHash(System.IO.File.ReadAllBytes(gateRuntimeAssemblyLocation))).Replace("-", "").ToLowerInvariant();
+                }
+            }
+            catch (Exception) { gateAssemblyHash = "UNKNOWN"; }
+            // END S02_COTIMED startup metadata
             yield return RunSahnesiniHazirla();
 
             // Ses bastırma penceresi ve hit-stop ölçeksiz saatle çalışır; sabit yakalama adımı
@@ -860,6 +893,175 @@ namespace DD.Prototype.Tests.PlayMode
             Debug.Log("[DD-TEST] gamefeel.spawn rising=" + hedef.IsRising +
                       " head=" + kafa.bounds + " upper=" + govde.bounds);
             bool govdeHazirLoglandi = false;
+            // BEGIN S02_COTIMED observer declarations
+            int gateSamples = 0, riseRejected = 0, headRejected = 0, rayRejected = 0, readySamples = 0;
+            int lastRayX = 0, lastRayY = 0;
+            Vector3 lastOrigin = Vector3.zero, lastAim = Vector3.zero;
+            float lastSpread = 0f;
+            // Opt-in observer only: bounded strings are captured at the existing rejection branches.
+            bool gateDiag = false;
+            string gateHeadRecord = null, gateRayRecord = null, gateDiagError = null;
+            string gateSourceCommit = "UNKNOWN", gateInputHash = "UNKNOWN", gateFixtureHash = "UNKNOWN";
+            string gateSourceHash = "UNKNOWN", gateExecutionId = "UNKNOWN";
+            string GateQuote(string value)
+            {
+                var escaped = new StringBuilder("\"");
+                foreach (char ch in value ?? "UNKNOWN")
+                {
+                    if (ch == '"' || ch == '\\') escaped.Append('\\').Append(ch);
+                    else if (ch < 32) escaped.Append("\\u").Append(((int)ch).ToString("x4"));
+                    else escaped.Append(ch);
+                }
+                return escaped.Append('"').ToString();
+            }
+            string GateFloat(float value) => float.IsNaN(value) || float.IsInfinity(value) ? GateQuote("UNKNOWN: nonfinite") : value.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
+            string GateBool(bool value) => value ? "true" : "false";
+            string GateDouble(double value) => double.IsNaN(value) || double.IsInfinity(value) ? GateQuote("UNKNOWN: nonfinite") : value.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
+            string GateTrs(Transform tr) => "{\"localPosition\":" + JsonUtility.ToJson(tr.localPosition) + ",\"localRotation\":" + JsonUtility.ToJson(tr.localRotation) +
+                ",\"localScale\":" + JsonUtility.ToJson(tr.localScale) + ",\"worldPosition\":" + JsonUtility.ToJson(tr.position) + ",\"worldRotation\":" + JsonUtility.ToJson(tr.rotation) +
+                ",\"lossyScale\":" + JsonUtility.ToJson(tr.lossyScale) + ",\"matrix\":" + JsonUtility.ToJson(tr.localToWorldMatrix) + "}";
+            string GatePath(Transform tr)
+            {
+                var nodes = new List<string>(32);
+                Transform current = tr;
+                while (current != null && nodes.Count < 32)
+                {
+                    nodes.Add("{\"name\":" + GateQuote(current.name) + ",\"siblingIndex\":" + current.GetSiblingIndex() +
+                        ",\"gameObjectId\":" + current.gameObject.GetInstanceID() + ",\"transformId\":" + current.GetInstanceID() +
+                        ",\"hasChangedReadOnly\":" + GateBool(current.hasChanged) + ",\"trs\":" + GateTrs(current) + "}");
+                    current = current.parent;
+                }
+                var scene = tr.gameObject.scene;
+                var physicsScene = UnityEngine.PhysicsSceneExtensions.GetPhysicsScene(scene);
+                return "{\"order\":\"leaf_to_root\",\"identityKind\":\"runtime_instance_not_persistent_prefab\",\"nodes\":[" + string.Join(",", nodes) +
+                    "],\"truncated\":" + GateBool(current != null) + ",\"rootId\":" + tr.root.GetInstanceID() + ",\"rootName\":" + GateQuote(tr.root.name) +
+                    ",\"sceneHandle\":" + scene.handle + ",\"sceneName\":" + GateQuote(scene.name) + ",\"scenePath\":" + GateQuote(scene.path) +
+                    ",\"physicsSceneValid\":" + GateBool(physicsScene.IsValid()) + ",\"physicsSceneHash\":" + physicsScene.GetHashCode() +
+                    ",\"physicsSceneDefaultMatch\":" + GateBool(physicsScene.Equals(Physics.defaultPhysicsScene)) + "}";
+            }
+            string GateArgs()
+            {
+                var quoted = new List<string>();
+                foreach (string arg in System.Environment.GetCommandLineArgs()) quoted.Add(GateQuote(arg));
+                return "[" + string.Join(",", quoted) + "]";
+            }
+            string GateProvenance() => "{\"record\":\"DD-Provenance\",\"testId\":" + GateQuote(TestContext.CurrentContext.Test.ID) +
+                ",\"testFullName\":" + GateQuote(TestContext.CurrentContext.Test.FullName) +
+                ",\"perCaseSeed\":\"UNKNOWN:bound_from_XML_after_run\",\"parentGlobalSeed\":\"UNKNOWN\",\"historicalReplay\":\"NOT_PROVEN\",\"cliArgs\":" +
+                GateArgs() + "}";
+            string GateShape(Collider c)
+            {
+                if (c is CapsuleCollider cap) return "{\"kind\":\"Capsule\",\"center\":" + JsonUtility.ToJson(cap.center) + ",\"radius\":" + GateFloat(cap.radius) + ",\"height\":" + GateFloat(cap.height) + ",\"direction\":" + cap.direction + "}";
+                if (c is SphereCollider sphere) return "{\"kind\":\"Sphere\",\"center\":" + JsonUtility.ToJson(sphere.center) + ",\"radius\":" + GateFloat(sphere.radius) + "}";
+                if (c is BoxCollider box) return "{\"kind\":\"Box\",\"center\":" + JsonUtility.ToJson(box.center) + ",\"size\":" + JsonUtility.ToJson(box.size) + "}";
+                if (c is MeshCollider mesh)
+                {
+                    Mesh shared = mesh.sharedMesh;
+                    return "{\"kind\":\"Mesh\",\"convex\":" + GateBool(mesh.convex) + ",\"sharedMesh\":" + (shared == null ? "null" :
+                        "{\"instanceId\":" + shared.GetInstanceID() + ",\"name\":" + GateQuote(shared.name) + ",\"isReadable\":" + GateBool(shared.isReadable) + "}") + "}";
+                }
+                return "{\"kind\":\"UNKNOWN\"}";
+            }
+            string GateRigidbody(Collider c)
+            {
+                Rigidbody rb = c.attachedRigidbody;
+                if (rb == null) return "{\"status\":\"OBSERVED_NULL\"}";
+                return "{\"status\":\"OBSERVED_PRESENT\",\"instanceId\":" + rb.GetInstanceID() + ",\"path\":" + GatePath(rb.transform) +
+                    ",\"isKinematic\":" + GateBool(rb.isKinematic) + ",\"detectCollisions\":" + GateBool(rb.detectCollisions) +
+                    ",\"constraints\":" + GateQuote(rb.constraints.ToString()) + ",\"interpolation\":" + GateQuote(rb.interpolation.ToString()) +
+                    ",\"collisionDetectionMode\":" + GateQuote(rb.collisionDetectionMode.ToString()) + ",\"mass\":" + GateFloat(rb.mass) +
+                    ",\"position\":" + JsonUtility.ToJson(rb.position) + ",\"rotation\":" + JsonUtility.ToJson(rb.rotation) +
+                    ",\"velocity\":" + JsonUtility.ToJson(rb.velocity) + ",\"angularVelocity\":" + JsonUtility.ToJson(rb.angularVelocity) +
+                    ",\"isSleeping\":" + GateBool(rb.IsSleeping()) + "}";
+            }
+            string GatePhysics() => "{\"autoSyncTransforms\":" + GateBool(Physics.autoSyncTransforms) + ",\"autoSimulation\":" + GateBool(Physics.autoSimulation) +
+                ",\"simulationMode\":" + GateQuote(Physics.simulationMode.ToString()) + ",\"queriesHitTriggers\":" + GateBool(Physics.queriesHitTriggers) +
+                ",\"frame\":" + Time.frameCount + ",\"inFixedTimeStep\":" + GateBool(Time.inFixedTimeStep) + ",\"timeAsDouble\":" + GateDouble(Time.timeAsDouble) +
+                ",\"fixedTimeAsDouble\":" + GateDouble(Time.fixedTimeAsDouble) + ",\"fixedDeltaTime\":" + GateFloat(Time.fixedDeltaTime) +
+                ",\"maximumDeltaTime\":" + GateFloat(Time.maximumDeltaTime) + ",\"fixedFrame\":\"UNKNOWN:no_native_counter\",\"lastNativeSync\":\"UNKNOWN\",\"lastSimulationTime\":\"UNKNOWN\",\"internalColliderPose\":\"UNKNOWN\"}";
+            string GateCollider(Collider collider, Vector3 sampleOrigin, DD.Prototype.Damage.BodyRegion role)
+            {
+                Transform tr = collider.transform;
+                ZombieEnemy owner = collider.GetComponentInParent<ZombieEnemy>();
+                Collider bound = hedef.HitboxFor(role);
+                Bounds bounds = collider.bounds;
+                return "{\"shape\":" + GateShape(collider) + ",\"path\":" + GatePath(tr) + ",\"attachedRigidbody\":" + GateRigidbody(collider) +
+                    ",\"layer\":" + collider.gameObject.layer + ",\"layerName\":" + GateQuote(LayerMask.LayerToName(collider.gameObject.layer)) +
+                    ",\"bindingRole\":" + GateQuote(role.ToString()) + ",\"boundReferenceEquals\":" + GateBool(System.Object.ReferenceEquals(collider, bound)) +
+                    ",\"boundColliderId\":" + (bound != null ? bound.GetInstanceID().ToString() : "null") + ",\"boundColliderPath\":" + (bound != null ? GatePath(bound.transform) : "null") +
+                    ",\"parentZombieReferenceEqualsTarget\":" + GateBool(System.Object.ReferenceEquals(owner, hedef)) + ",\"parentZombieId\":" + (owner != null ? owner.GetInstanceID().ToString() : "null") +
+                    ",\"isChildOfTarget\":" + GateBool(tr.IsChildOf(hedef.transform)) + ",\"shapeProvenance\":\"runtime_observed;creation_files_bound_by_inputHash_manifest;not_persistent_prefab_ID\"" +
+                    ",\"instanceId\":" + collider.GetInstanceID() + ",\"name\":" + GateQuote(collider.name) +
+                    ",\"type\":" + GateQuote(collider.GetType().FullName) + ",\"enabled\":" + GateBool(collider.enabled) +
+                    ",\"isTrigger\":" + GateBool(collider.isTrigger) + ",\"activeSelf\":" + GateBool(collider.gameObject.activeSelf) +
+                    ",\"activeInHierarchy\":" + GateBool(collider.gameObject.activeInHierarchy) +
+                    ",\"originInBounds_AABB_ONLY\":" + GateBool(bounds.Contains(sampleOrigin)) +
+                    ",\"actualInside\":\"UNKNOWN\",\"bounds\":" + JsonUtility.ToJson(bounds) +
+                    ",\"boundsCenter\":" + JsonUtility.ToJson(bounds.center) + ",\"boundsExtents\":" + JsonUtility.ToJson(bounds.extents) +
+                    ",\"localPosition\":" + JsonUtility.ToJson(tr.localPosition) + ",\"localRotation\":" + JsonUtility.ToJson(tr.localRotation) +
+                    ",\"localScale\":" + JsonUtility.ToJson(tr.localScale) + ",\"worldPosition\":" + JsonUtility.ToJson(tr.position) +
+                    ",\"worldRotation\":" + JsonUtility.ToJson(tr.rotation) + ",\"worldScale\":" + JsonUtility.ToJson(tr.lossyScale) +
+                    ",\"localToWorldMatrix\":" + JsonUtility.ToJson(tr.localToWorldMatrix) + "}";
+            }
+            string GateSnapshot(string branch, string rayStatus, Vector3 sampleOrigin, Vector3 sampleAim,
+                float sampleSpread, float samplePitch, float headDistance, float verticalAllowance,
+                int rayX, int rayY, Vector3 rayDirection, RaycastHit observedHit, int beforeFrame, double beforeFixedTime, float beforeRealtime, bool beforeFixedStep, int afterFrame, double afterFixedTime, float afterRealtime, bool afterFixedStep)
+            {
+                Bounds headBounds = kafa.bounds;
+                string hitValidity = rayStatus == "NOT_EVALUATED" ? "NOT_EVALUATED" : "NOT_VALID_QUERY_FALSE";
+                // observedHit is output of the original query; false-query fields are deliberately not consumed.
+                string queryHit = "null";
+                return "{\"collectionTiming\":\"query_before_and_immediate_after_clocks;fields_collected_at_snapshot_sequentially_not_atomic\",\"queryBefore\":" +
+                    (rayStatus == "NOT_EVALUATED" ? "null" : "{\"frame\":" + beforeFrame + ",\"fixedTime\":" + GateDouble(beforeFixedTime) + ",\"realtime\":" + GateFloat(beforeRealtime) + ",\"inFixedTimeStep\":" + GateBool(beforeFixedStep) + "}") +
+                    ",\"queryImmediateAfter\":" + (rayStatus == "NOT_EVALUATED" ? "null" : "{\"frame\":" + afterFrame + ",\"fixedTime\":" + GateDouble(afterFixedTime) + ",\"realtime\":" + GateFloat(afterRealtime) + ",\"inFixedTimeStep\":" + GateBool(afterFixedStep) + "}") +
+                    ",\"unityRandomStateAtSnapshot\":" + GateRandomState() +
+                    ",\"queryHitValidity\":" + GateQuote(hitValidity) + ",\"queryHit\":" + queryHit + ",\"physicsSnapshot\":" + GatePhysics() +
+                    ",\"targetLifecycle\":{\"componentId\":" + hedef.GetInstanceID() + ",\"gameObjectId\":" + hedef.gameObject.GetInstanceID() + ",\"path\":" + GatePath(hedef.transform) +
+                    ",\"health\":" + GateFloat(hedef.Health) + ",\"alive\":" + GateBool(hedef.IsAlive) + ",\"rising\":" + GateBool(hedef.IsRising) + ",\"pose\":" + GateQuote(hedef.Pose.ToString()) +
+                    ",\"enabled\":" + GateBool(hedef.enabled) + ",\"isActiveAndEnabled\":" + GateBool(hedef.isActiveAndEnabled) + ",\"activeSelf\":" + GateBool(hedef.gameObject.activeSelf) + ",\"activeInHierarchy\":" + GateBool(hedef.gameObject.activeInHierarchy) +
+                    ",\"poolGeneration\":\"UNKNOWN\",\"nativeActorPose\":\"UNKNOWN\"},\"runtimeAssemblyName\":" + GateQuote(gateRuntimeAssemblyName) + ",\"runtimeAssemblyLocation\":" + GateQuote(gateRuntimeAssemblyLocation) + ",\"runtimeAssemblySha256\":" + GateQuote(gateRuntimeAssemblyHash) +
+                    ",\"assemblyName\":" + GateQuote(gateAssemblyName) + ",\"assemblyLocation\":" + GateQuote(gateAssemblyLocation) +
+                    ",\"assemblySha256\":" + GateQuote(gateAssemblyHash) +
+                    ",\"sourceCommit\":" + GateQuote(gateSourceCommit) + ",\"sourceHash\":" + GateQuote(gateSourceHash) +
+                    ",\"inputHash\":" + GateQuote(gateInputHash) + ",\"fixtureHash\":" + GateQuote(gateFixtureHash) +
+                    ",\"executionId\":" + GateQuote(gateExecutionId) + ",\"branch\":" + GateQuote(branch) + ",\"rayStatus\":" + GateQuote(rayStatus) +
+                    ",\"frame\":" + Time.frameCount + ",\"time\":" + GateFloat(Time.time) +
+                    ",\"unscaledTime\":" + GateFloat(Time.unscaledTime) + ",\"realtime\":" + GateFloat(Time.realtimeSinceStartup) +
+                    ",\"sample\":" + gateSamples + ",\"origin\":" + JsonUtility.ToJson(sampleOrigin) +
+                    ",\"aim\":" + JsonUtility.ToJson(sampleAim) + ",\"spread\":" + GateFloat(sampleSpread) +
+                    ",\"pitch\":" + GateFloat(samplePitch) + ",\"recoilYaw\":" + GateFloat(silah.Classic.RecoilYawDegrees) +
+                    ",\"headDistance\":" + GateFloat(headDistance) + ",\"dikeyPay\":" + GateFloat(verticalAllowance) +
+                    ",\"signedBelowHeadClearance\":" + GateFloat(headBounds.min.y - (sampleOrigin.y + verticalAllowance)) +
+                    ",\"signedAboveHeadClearance\":" + GateFloat((sampleOrigin.y - verticalAllowance) - headBounds.max.y) +
+                    ",\"rangeDiagnosticGetterAtRejection\":" + GateFloat(silah.Classic.Range) +
+                    ",\"rayX\":" + rayX + ",\"rayY\":" + rayY + ",\"rayDirection\":" + JsonUtility.ToJson(rayDirection) +
+                    ",\"actualGovdeHazir\":" + (rayStatus == "EVALUATED_FALSE" ? "false" : "null") + ",\"head\":" + GateCollider(kafa, sampleOrigin, DD.Prototype.Damage.BodyRegion.Head) +
+                    ",\"upper\":" + GateCollider(govde, sampleOrigin, DD.Prototype.Damage.BodyRegion.UpperBody) + ",\"muzzleRaw\":" + JsonUtility.ToJson(silah.Muzzle.position) +
+                    ",\"aimRaw\":" + JsonUtility.ToJson(bag.AimDirection) + ",\"pose\":" + GateQuote(hedef.Pose.ToString()) +
+                    ",\"rising\":" + GateBool(hedef.IsRising) + ",\"target\":" + JsonUtility.ToJson(hedef.transform.position) +
+                    ",\"player\":" + JsonUtility.ToJson(_rig.transform.position) + ",\"aimPoint\":" + JsonUtility.ToJson(_rig.Aim.AimWorldPoint) +
+                    ",\"hasAimPoint\":" + GateBool(_rig.Aim.HasAimPoint) + "}";
+            }
+            try
+            {
+                string[] args = System.Environment.GetCommandLineArgs();
+                gateDiag = System.Array.IndexOf(args, "-ddGameFeelGateDiag") >= 0;
+                string GateArg(string key)
+                {
+                    int index = System.Array.IndexOf(args, key);
+                    return index >= 0 && index + 1 < args.Length ? args[index + 1] : "UNKNOWN";
+                }
+                if (gateDiag)
+                {
+                    gateSourceCommit = GateArg("-ddGateDiagSourceCommit");
+                    gateInputHash = GateArg("-ddGateDiagInputHash");
+                    gateFixtureHash = GateArg("-ddGateDiagFixtureHash");
+                    gateSourceHash = GateArg("-ddGateDiagSourceHash");
+                    gateExecutionId = GateArg("-ddGateDiagExecutionId");
+                }
+            }
+            catch (Exception) { gateDiagError = "UNKNOWN"; }
+            // END S02_COTIMED observer declarations
 
             var hasar = new List<EnemyDamageInfo>(16);
             var olum = new List<EnemyDeathInfo>(4);
@@ -913,6 +1115,23 @@ namespace DD.Prototype.Tests.PlayMode
                     float dikeyPay = kafaUzakligi * Mathf.Tan(pitch * Mathf.Deg2Rad);
                     bool govdeHazir = !hedef.IsRising &&
                         (origin.y + dikeyPay < kafa.bounds.min.y || origin.y - dikeyPay > kafa.bounds.max.y);
+                    // BEGIN S02_R2 head and aggregate observer
+                    if (gateDiag)
+                    {
+                        gateSamples++; lastOrigin = origin; lastAim = yon; lastSpread = spread;
+                        bool gateObservedRising = hedef.IsRising;
+                        if (gateObservedRising) riseRejected++;
+                        if (!gateObservedRising && !govdeHazir)
+                        {
+                            headRejected++;
+                            if (gateHeadRecord == null)
+                            {
+                                try { gateHeadRecord = GateSnapshot("original-head-predicate-false-not-rising", "NOT_EVALUATED", origin, yon, spread, pitch, kafaUzakligi, dikeyPay, 0, 0, Vector3.zero, default(RaycastHit), 0, 0d, 0f, false, 0, 0d, 0f, false); }
+                                catch (Exception) { gateHeadRecord = "{\"diagnostic\":\"UNKNOWN\"}"; gateDiagError = "UNKNOWN"; }
+                            }
+                        }
+                    }
+                    // END S02_R2 head and aggregate observer
                     Vector3 sag = Vector3.Cross(Vector3.up, yon).normalized;
                     // The convex upper-body collider must contain the centre and the TP spread extremes.
                     for (int yatay = -1; yatay <= 1 && govdeHazir; yatay++)
@@ -920,8 +1139,41 @@ namespace DD.Prototype.Tests.PlayMode
                     {
                         Vector3 sinir = Quaternion.AngleAxis(yatay * spread, Vector3.up) *
                             Quaternion.AngleAxis(dikey * pitch, sag) * yon;
-                        govdeHazir = govde.Raycast(new Ray(origin, sinir), out _, silah.Classic.Range);
+                        // BEGIN S02_COTIMED query before clocks
+                        int gateBeforeFrame = 0, gateAfterFrame = 0;
+                        double gateBeforeFixedTime = 0d, gateAfterFixedTime = 0d;
+                        float gateBeforeRealtime = 0f, gateAfterRealtime = 0f;
+                        bool gateBeforeFixedStep = false, gateAfterFixedStep = false;
+                        bool gateObserveQuery = gateDiag && gateRayRecord == null;
+                        if (gateObserveQuery)
+                        {
+                            gateBeforeFrame = Time.frameCount; gateBeforeFixedTime = Time.fixedTimeAsDouble;
+                            gateBeforeRealtime = Time.realtimeSinceStartup; gateBeforeFixedStep = Time.inFixedTimeStep;
+                        }
+                        // END S02_COTIMED query before clocks
+                        govdeHazir = govde.Raycast(new Ray(origin, sinir), out RaycastHit gateQueryHit, silah.Classic.Range);
+                        // BEGIN S02_COTIMED query immediate after clocks
+                        if (gateObserveQuery)
+                        {
+                            gateAfterFrame = Time.frameCount; gateAfterFixedTime = Time.fixedTimeAsDouble;
+                            gateAfterRealtime = Time.realtimeSinceStartup; gateAfterFixedStep = Time.inFixedTimeStep;
+                        }
+                        // END S02_COTIMED query immediate after clocks
+                        // BEGIN S02_R2 ray rejection observer
+                        if (gateDiag && !govdeHazir)
+                        {
+                            rayRejected++; lastRayX = yatay; lastRayY = dikey;
+                            if (gateRayRecord == null)
+                            {
+                                try { gateRayRecord = GateSnapshot("existing-upper-Collider.Raycast-false", "EVALUATED_FALSE", origin, yon, spread, pitch, kafaUzakligi, dikeyPay, yatay, dikey, sinir, gateQueryHit, gateBeforeFrame, gateBeforeFixedTime, gateBeforeRealtime, gateBeforeFixedStep, gateAfterFrame, gateAfterFixedTime, gateAfterRealtime, gateAfterFixedStep); }
+                                catch (Exception) { gateRayRecord = "{\"diagnostic\":\"UNKNOWN\"}"; gateDiagError = "UNKNOWN"; }
+                            }
+                        }
+                        // END S02_R2 ray rejection observer
                     }
+                    // BEGIN S02_R2 ready aggregate observer
+                    if (gateDiag && govdeHazir) readySamples++;
+                    // END S02_R2 ready aggregate observer
                     if (govdeHazir && !govdeHazirLoglandi)
                     {
                         Debug.Log("[DD-TEST] gamefeel.body-ready rising=" + hedef.IsRising +
@@ -1080,6 +1332,38 @@ namespace DD.Prototype.Tests.PlayMode
             }
             finally
             {
+                // BEGIN S02_COTIMED final observer log
+                if (gateDiag)
+                {
+                    try
+                    {
+                        Debug.Log("[DD-TEST] gamefeel.gate-final samples=" + gateSamples + " rise/head/ray-rejected=" +
+                                  riseRejected + "/" + headRejected + "/" + rayRejected + " ready=" + readySamples +
+                                  " last-ray=" + lastRayX + "/" + lastRayY + " origin=" + lastOrigin.ToString("F3") +
+                                  " aim=" + lastAim.ToString("F3") + " spread=" + lastSpread +
+                                  " head=" + kafa.bounds + " upper=" + govde.bounds + " target=" + hedef.transform.position.ToString("F3") +
+                                  " alive/hp=" + hedef.IsAlive + "/" + hedef.Health + " rising=" + hedef.IsRising +
+                                  " player=" + _rig.transform.position.ToString("F3") + " player-hp=" + _can.Current +
+                                  " aim-point=" + _rig.Aim.AimWorldPoint.ToString("F3") + " has-aim=" + _rig.Aim.HasAimPoint +
+                                  " phase=" + (RunDirector.Instance != null ? RunDirector.Instance.Phase.ToString() : "none") +
+                                  " scale=" + Time.timeScale + " delta=" + Time.deltaTime + " frozen=" + RunFlowClock.IsFrozen +
+                                  " motor/aim-control=" + _rig.Motor.ControlEnabled + "/" + _rig.Aim.ControlEnabled +
+                                  " hasar/dressed=" + hasar.Count + "/" + tierler.Count);
+                        Debug.Log("[DD-GATE-COTIMED] {\"stage\":\"NOTE\",\"sourceCommit\":" + GateQuote(gateSourceCommit) +
+                            ",\"sourceHash\":" + GateQuote(gateSourceHash) + ",\"inputHash\":" + GateQuote(gateInputHash) +
+                            ",\"fixtureHash\":" + GateQuote(gateFixtureHash) + ",\"executionId\":" + GateQuote(gateExecutionId) +
+                            ",\"provenance\":" + GateProvenance() +
+                            ",\"startupUnityRandomState\":" + gateStartupUnityRandom + ",\"finallyUnityRandomState\":" + GateRandomState() +
+                            ",\"diagnosticError\":" + (gateDiagError == null ? "null" : GateQuote(gateDiagError)) +
+                            ",\"samples\":" + gateSamples + ",\"riseRejected\":" + riseRejected + ",\"headRejected\":" + headRejected +
+                            ",\"rayRejected\":" + rayRejected + ",\"readySamples\":" + readySamples +
+                            ",\"lastOrigin\":" + JsonUtility.ToJson(lastOrigin) + ",\"lastAim\":" + JsonUtility.ToJson(lastAim) + ",\"lastSpread\":" + GateFloat(lastSpread) +
+                            ",\"lastRayX\":" + lastRayX + ",\"lastRayY\":" + lastRayY + ",\"nativePose\":\"UNKNOWN\"" +
+                            ",\"firstHeadRejection\":" + (gateHeadRecord ?? "null") + ",\"firstRayFailure\":" + (gateRayRecord ?? "null") + "}");
+                    }
+                    catch (Exception) { /* Observer failure cannot replace the original test outcome. */ }
+                }
+                // END S02_COTIMED final observer log
                 ProjectileEvents.Spawned -= atisDinle;
                 DamageEvents.EnemyDamaged -= hDinle;
                 DamageEvents.EnemyDied -= oDinle;

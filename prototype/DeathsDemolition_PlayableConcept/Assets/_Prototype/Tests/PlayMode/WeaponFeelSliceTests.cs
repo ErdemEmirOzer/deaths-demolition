@@ -106,13 +106,143 @@ namespace DD.Prototype.Tests.PlayMode
         [UnityTest]
         public IEnumerator DEC082_AlmaSirasinda_HareketVeNisanKilitlenmez()
         {
+            // BEGIN S02_R2 DEC observer locals and startup provenance
+            string DecRandomState()
+            {
+                try
+                {
+                    string raw = JsonUtility.ToJson(UnityEngine.Random.state);
+                    return string.IsNullOrEmpty(raw) || raw == "{}" ? "{\"status\":\"UNKNOWN:state_serializer_empty\"}" :
+                        "{\"status\":\"RAW_OBSERVED_NOT_SEED_OR_REPLAY_PROOF\",\"raw\":" + raw + "}";
+                }
+                catch (System.Exception) { return "{\"status\":\"UNKNOWN:state_getter_or_serializer_failure\"}"; }
+            }
+            string decStartupUnityRandom = "{\"status\":\"NOT_REQUESTED\"}", decBeforeSpawnUnityRandom = "{\"status\":\"NOT_REQUESTED\"}";
+            string decPickupBeforeMove = "null";
+            bool decDiag = System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-ddDec082Diag") >= 0;
+            int decSamples = 0, decLowSamples = 0, decControlClosedSamples = 0, decFirstFrame = -1, decLastFrame = -1;
+            float decLowestSpeed = float.PositiveInfinity, decObservedMaxSpeed = 0f;
+            Vector3 decStartPosition = Vector3.zero, decLastPosition = Vector3.zero;
+            string decStart = null, decFirst = null, decFirstLow = null, decEnd = null, decError = null;
+            string decAssemblyName = "UNKNOWN", decAssemblyLocation = "UNKNOWN", decAssemblyHash = "UNKNOWN";
+            string decRuntimeAssemblyName = "UNKNOWN", decRuntimeAssemblyLocation = "UNKNOWN", decRuntimeAssemblyHash = "UNKNOWN";
+            string DecQuote(string value)
+            {
+                var text = new System.Text.StringBuilder("\"");
+                foreach (char ch in value ?? "UNKNOWN")
+                {
+                    if (ch == '"' || ch == '\\') text.Append('\\').Append(ch);
+                    else if (ch < 32) text.Append("\\u").Append(((int)ch).ToString("x4"));
+                    else text.Append(ch);
+                }
+                return text.Append('"').ToString();
+            }
+            string DecFloat(float value) => float.IsNaN(value) || float.IsInfinity(value) ? DecQuote("UNKNOWN:nonfinite") : value.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
+            string DecBool(bool value) => value ? "true" : "false";
+            string DecArg(string key)
+            {
+                string[] args = System.Environment.GetCommandLineArgs();
+                int index = System.Array.IndexOf(args, key);
+                return index >= 0 && index + 1 < args.Length ? args[index + 1] : "UNKNOWN";
+            }
+            string DecPath(Transform tr)
+            {
+                if (tr == null) return "null";
+                var nodes = new List<string>(32);
+                Transform current = tr;
+                while (current != null && nodes.Count < 32)
+                {
+                    nodes.Add("{\"name\":" + DecQuote(current.name) + ",\"siblingIndex\":" + current.GetSiblingIndex() +
+                        ",\"transformId\":" + current.GetInstanceID() + ",\"gameObjectId\":" + current.gameObject.GetInstanceID() + "}");
+                    current = current.parent;
+                }
+                return "{\"order\":\"leaf_to_root\",\"nodes\":[" + string.Join(",", nodes) + "],\"truncated\":" + DecBool(current != null) + "}";
+            }
+            string DecTrs(Transform tr) => "{\"localPosition\":" + JsonUtility.ToJson(tr.localPosition) + ",\"localRotation\":" + JsonUtility.ToJson(tr.localRotation) +
+                ",\"localScale\":" + JsonUtility.ToJson(tr.localScale) + ",\"worldPosition\":" + JsonUtility.ToJson(tr.position) + ",\"worldRotation\":" + JsonUtility.ToJson(tr.rotation) +
+                ",\"lossyScale\":" + JsonUtility.ToJson(tr.lossyScale) + ",\"worldMatrix\":" + JsonUtility.ToJson(tr.localToWorldMatrix) + "}";
+            string DecArgs()
+            {
+                var quoted = new List<string>();
+                foreach (string arg in System.Environment.GetCommandLineArgs()) quoted.Add(DecQuote(arg));
+                return "[" + string.Join(",", quoted) + "]";
+            }
+            string DecProvenance() => "{\"record\":\"DD-Provenance\",\"testId\":" + DecQuote(TestContext.CurrentContext.Test.ID) +
+                ",\"testFullName\":" + DecQuote(TestContext.CurrentContext.Test.FullName) + ",\"perCaseSeed\":\"UNKNOWN:bound_from_XML_after_run\",\"parentGlobalSeed\":\"UNKNOWN\",\"historicalReplay\":\"NOT_PROVEN\"" +
+                ",\"cliArgsOrdered\":" + DecArgs() +
+                ",\"sourceCommit\":" + DecQuote(DecArg("-ddGateDiagSourceCommit")) + ",\"sourceHash\":" + DecQuote(DecArg("-ddDecDiagSourceHash")) +
+                ",\"inputHash\":" + DecQuote(DecArg("-ddGateDiagInputHash")) + ",\"fixtureHash\":" + DecQuote(DecArg("-ddDecDiagFixtureHash")) + ",\"executionId\":" + DecQuote(DecArg("-ddGateDiagExecutionId")) +
+                ",\"assemblyName\":" + DecQuote(decAssemblyName) + ",\"assemblyLocation\":" + DecQuote(decAssemblyLocation) + ",\"assemblySha256\":" + DecQuote(decAssemblyHash) +
+                ",\"runtimeAssemblyName\":" + DecQuote(decRuntimeAssemblyName) + ",\"runtimeAssemblyLocation\":" + DecQuote(decRuntimeAssemblyLocation) + ",\"runtimeAssemblySha256\":" + DecQuote(decRuntimeAssemblyHash) + "}";
+            string DecSnapshot(string stage)
+            {
+                PlayerMotor motor = _s.Rig.Motor;
+                CharacterController cc = motor.GetComponent<CharacterController>();
+                string controller = "{\"status\":\"OBSERVED_NULL\"}";
+                if (cc != null)
+                {
+                    var scene = cc.gameObject.scene;
+                    controller = "{\"type\":" + DecQuote(cc.GetType().FullName) + ",\"instanceId\":" + cc.GetInstanceID() + ",\"path\":" + DecPath(cc.transform) +
+                        ",\"shape\":{\"kind\":\"CharacterController_capsule\",\"center\":" + JsonUtility.ToJson(cc.center) + ",\"radius\":" + DecFloat(cc.radius) + ",\"height\":" + DecFloat(cc.height) +
+                        ",\"skinWidth\":" + DecFloat(cc.skinWidth) + ",\"stepOffset\":" + DecFloat(cc.stepOffset) + ",\"slopeLimit\":" + DecFloat(cc.slopeLimit) + ",\"minMoveDistance\":" + DecFloat(cc.minMoveDistance) + "}" +
+                        ",\"bounds\":" + JsonUtility.ToJson(cc.bounds) + ",\"boundsCenter\":" + JsonUtility.ToJson(cc.bounds.center) + ",\"boundsExtents\":" + JsonUtility.ToJson(cc.bounds.extents) + ",\"trs\":" + DecTrs(cc.transform) +
+                        ",\"sceneHandle\":" + scene.handle + ",\"sceneName\":" + DecQuote(scene.name) + ",\"scenePath\":" + DecQuote(scene.path) +
+                        ",\"enabled\":" + DecBool(cc.enabled) + ",\"activeSelf\":" + DecBool(cc.gameObject.activeSelf) + ",\"activeInHierarchy\":" + DecBool(cc.gameObject.activeInHierarchy) +
+                        ",\"isGrounded\":" + DecBool(cc.isGrounded) + ",\"collisionFlags\":" + DecQuote(cc.collisionFlags.ToString()) + ",\"velocity\":" + JsonUtility.ToJson(cc.velocity) + "}";
+                }
+                return "{\"unityRandomStateAtSnapshot\":" + DecRandomState() + ",\"stage\":" + DecQuote(stage) + ",\"collectionTiming\":\"public_getters_sequential_not_atomic;not_pre_post_Move\",\"frame\":" + Time.frameCount +
+                    ",\"time\":" + DecFloat(Time.time) + ",\"realtime\":" + DecFloat(Time.realtimeSinceStartup) + ",\"unscaledTime\":" + DecFloat(Time.unscaledTime) + ",\"timeScale\":" + DecFloat(Time.timeScale) +
+                    ",\"deltaTime\":" + DecFloat(Time.deltaTime) + ",\"fixedTime\":" + DecFloat(Time.fixedTime) + ",\"inFixedTimeStep\":" + DecBool(Time.inFixedTimeStep) +
+                    ",\"position\":" + JsonUtility.ToJson(_s.Rig.transform.position) + ",\"motorId\":" + motor.GetInstanceID() + ",\"planarVelocity\":" + JsonUtility.ToJson(motor.PlanarVelocity) +
+                    ",\"rawInput\":" + JsonUtility.ToJson(motor.RawInput) + ",\"scriptedInputYon\":" + JsonUtility.ToJson(_s.Girdi.Yon) +
+                    ",\"motorControlEnabled\":" + DecBool(motor.ControlEnabled) + ",\"aimControlEnabled\":" + DecBool(_s.Rig.Aim.ControlEnabled) +
+                    ",\"maxSpeed\":" + DecFloat(motor.MaxSpeed) + ",\"acceleration\":" + DecFloat(motor.Acceleration) + ",\"weaponSpeedMultiplier\":" + DecFloat(motor.WeaponSpeedMultiplier) +
+                    ",\"specialActive\":" + DecBool(_s.Controller.SpecialWeaponActive) + ",\"frozen\":" + DecBool(RunFlowClock.IsFrozen) +
+                    ",\"blockerIdentity\":\"UNKNOWN:no_public_contact_identity_getter\",\"desiredMotorVelocity\":\"UNKNOWN:no_public_actual_desired_velocity_getter\",\"nativePose\":\"UNKNOWN\",\"characterController\":" + controller + "}";
+            }
+            string DecSafeSnapshot(string stage)
+            {
+                try { return DecSnapshot(stage); }
+                catch (System.Exception) { decError = "UNKNOWN:observer_getter_failure"; return "{\"status\":\"UNKNOWN:observer_getter_failure\"}"; }
+            }
+            if (decDiag)
+            {
+                try
+                {
+                    decStartupUnityRandom = DecRandomState();
+                    var assembly = typeof(WeaponFeelSliceTests).Assembly;
+                    decAssemblyName = assembly.FullName; decAssemblyLocation = assembly.Location;
+                    using (var sha = System.Security.Cryptography.SHA256.Create())
+                        decAssemblyHash = System.BitConverter.ToString(sha.ComputeHash(System.IO.File.ReadAllBytes(decAssemblyLocation))).Replace("-", "").ToLowerInvariant();
+                    var runtimeAssembly = typeof(PlayerMotor).Assembly;
+                    decRuntimeAssemblyName = runtimeAssembly.FullName; decRuntimeAssemblyLocation = runtimeAssembly.Location;
+                    using (var sha = System.Security.Cryptography.SHA256.Create())
+                        decRuntimeAssemblyHash = System.BitConverter.ToString(sha.ComputeHash(System.IO.File.ReadAllBytes(decRuntimeAssemblyLocation))).Replace("-", "").ToLowerInvariant();
+                }
+                catch (System.Exception) { decError = "UNKNOWN:startup_assembly_hash_failure"; }
+            }
+            // END S02_R2 DEC observer locals and startup provenance
             yield return Kur();
 
+            // BEGIN S02_R2 DEC before spawn RNG observer
+            if (decDiag) decBeforeSpawnUnityRandom = DecRandomState();
+            // END S02_R2 DEC before spawn RNG observer
             yield return _s.SpawnEt(Pencere);
             SpecialWeaponPickup pickup = _s.CanliPickup();
             Assert.IsNotNull(pickup);
             _s.Girdi.Yon = new Vector2(1f, 0f);
             _s.Girdi.Imlec = new Vector2(Screen.width * 0.9f, Screen.height * 0.5f);
+            // BEGIN S02_R2 DEC pickup scalar observer before original teleport
+            if (decDiag)
+            {
+                try
+                {
+                    decPickupBeforeMove = pickup != null ? "{\"instanceId\":" + pickup.GetInstanceID() + ",\"weaponId\":" + DecQuote(pickup.WeaponId.ToString()) +
+                        ",\"weaponNumericId\":" + (int)pickup.WeaponId + ",\"position\":" + JsonUtility.ToJson(pickup.transform.position) + "}" : "{\"status\":\"OBSERVED_NULL\"}";
+                }
+                catch (System.Exception) { decError = "UNKNOWN:pickup_scalar_getter_failure"; }
+            }
+            // END S02_R2 DEC pickup scalar observer before original teleport
             _s.PickupaGit(pickup);
             yield return SpecialWeaponSahne.Bekle(() => _s.Controller.SpecialWeaponActive, SpecialWeaponSahne.FazZamanAsimi, "alma");
 
@@ -121,19 +251,79 @@ namespace DD.Prototype.Tests.PlayMode
             Vector3 p0 = _s.Rig.transform.position;
             float maxSpeed = 0f;
             Vector3 aim0 = _s.Rig.Aim.AimDirection;
+            // BEGIN S02_R2 DEC start and try wrapper
+            if (decDiag)
+            {
+                decStartPosition = _s.Rig.transform.position;
+                decLastPosition = decStartPosition;
+                decStart = DecSafeSnapshot("movement-window-start");
+            }
+            try
+            {
+            // END S02_R2 DEC start and try wrapper
             while (Time.time - t0 < 0.8f)
             {
                 Assert.AreEqual(1f, _s.Rig.Motor.RawInput.x, 1e-3f, "motor girdisi alma sırasında düşmez");
                 maxSpeed = Mathf.Max(maxSpeed, _s.Rig.Motor.PlanarVelocity.magnitude);
+                // BEGIN S02_R2 DEC iteration observer
+                if (decDiag)
+                {
+                    try
+                    {
+                        float observedSpeed = _s.Rig.Motor.PlanarVelocity.magnitude;
+                        decSamples++; decLastFrame = Time.frameCount;
+                        if (decFirstFrame < 0) decFirstFrame = decLastFrame;
+                        decLowestSpeed = Mathf.Min(decLowestSpeed, observedSpeed);
+                        decObservedMaxSpeed = Mathf.Max(decObservedMaxSpeed, observedSpeed);
+                        decLastPosition = _s.Rig.transform.position;
+                        if (!_s.Rig.Motor.ControlEnabled || !_s.Rig.Aim.ControlEnabled) decControlClosedSamples++;
+                        if (decFirst == null) decFirst = DecSafeSnapshot("first-movement-window-sample-after-original-maxSpeed-update");
+                        if (observedSpeed <= 0.5f)
+                        {
+                            decLowSamples++;
+                            if (decFirstLow == null) decFirstLow = DecSafeSnapshot("first-speed-at-or-below-original-assert-threshold;not-global-lowest-snapshot");
+                        }
+                    }
+                    catch (System.Exception) { decError = "UNKNOWN:iteration_observer_failure"; }
+                }
+                // END S02_R2 DEC iteration observer
                 yield return null;
             }
 
+            // BEGIN S02_R2 DEC window end observer
+            if (decDiag) decEnd = DecSafeSnapshot("movement-window-end-before-original-assertions");
+            // END S02_R2 DEC window end observer
             Assert.Greater(maxSpeed, 0.5f, "oyuncu alma sırasında hareket etti (m/s)");
             Assert.Greater((_s.Rig.transform.position - p0).magnitude, 0.3f, "yer değiştirme");
             _s.Girdi.Imlec = new Vector2(Screen.width * 0.1f, Screen.height * 0.5f);
             // The aim turns at its own rate; give it up to a second (it must move at all — a lock would hold it).
             yield return SpecialWeaponSahne.Bekle(() => Vector3.Angle(aim0, _s.Rig.Aim.AimDirection) > 20f, 1f, "nişan alma sırasında imleci takip eder");
             Assert.IsTrue(_s.Controller.SpecialWeaponActive, "Special aktif kaldı");
+            // BEGIN S02_R2 DEC finally observer wrapper
+            }
+            finally
+            {
+                if (decDiag)
+                {
+                    try
+                    {
+                        if (decEnd == null) decEnd = DecSafeSnapshot("failure-finally-before-window-completed;not-normal-window-end");
+                        Debug.Log("[DD-DEC082-DIAG] {\"stage\":\"NOTE\",\"provenance\":" + DecProvenance() +
+                            ",\"startupUnityRandomState\":" + decStartupUnityRandom + ",\"beforeSpawnUnityRandomState\":" + decBeforeSpawnUnityRandom + ",\"finallyUnityRandomState\":" + DecRandomState() +
+                            ",\"pickupBeforeOriginalMove\":" + decPickupBeforeMove +
+                            ",\"diagnosticError\":" + (decError != null ? DecQuote(decError) : "null") +
+                            ",\"samples\":" + decSamples + ",\"lowSpeedSamples\":" + decLowSamples + ",\"controlClosedSamples\":" + decControlClosedSamples +
+                            ",\"firstFrame\":" + decFirstFrame + ",\"lastFrame\":" + decLastFrame + ",\"lowestObservedSpeed\":" + DecFloat(decLowestSpeed) +
+                            ",\"maximumObservedSpeed\":" + DecFloat(decObservedMaxSpeed) + ",\"originalMaxSpeedScalar\":" + DecFloat(maxSpeed) +
+                            ",\"sampledDisplacement\":" + JsonUtility.ToJson(decLastPosition - decStartPosition) +
+                            ",\"finalDisplacement\":" + JsonUtility.ToJson(_s.Rig.transform.position - p0) +
+                            ",\"firstLowSnapshotMeaning\":\"first_threshold_low_only;global_minimum_scalar_only\",\"start\":" + (decStart ?? "null") +
+                            ",\"first\":" + (decFirst ?? "null") + ",\"firstLow\":" + (decFirstLow ?? "null") + ",\"end\":" + (decEnd ?? "null") + "}");
+                    }
+                    catch (System.Exception) { /* The observer cannot replace the original assertion outcome. */ }
+                }
+            }
+            // END S02_R2 DEC finally observer wrapper
         }
 
         [UnityTest]
