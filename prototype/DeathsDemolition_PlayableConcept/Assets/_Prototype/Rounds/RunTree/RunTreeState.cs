@@ -321,6 +321,50 @@ namespace DD.Prototype.Rounds
 
         public void SetPin(int i) => PinnedIndex = i >= 0 && IsBuilt && i < Graph.Count ? i : -1;
 
+        /// <summary>A pin may plan future prerequisites, but never a closed or unbound destination. Gold is not a gate.</summary>
+        public bool CanPin(int i, WeaponModifierState build)
+        {
+            if (!IsBuilt || i < 0 || i >= Graph.Count || Graph[i].Kind == RunTreeNodeKind.Hearth) return false;
+            RunTreeNodeStatus s = Status(i, build, int.MaxValue, out _, out _, out _);
+            if (s != RunTreeNodeStatus.Available && s != RunTreeNodeStatus.Unaffordable && s != RunTreeNodeStatus.PrereqMissing) return false;
+            return CanReach(i, build, 0);
+        }
+
+        private bool CanReach(int i, WeaponModifierState build, int depth)
+        {
+            if (i < 0 || i >= Graph.Count || depth > 8) return false;
+            RunTreeNode n = Graph[i];
+            if (n.Kind != RunTreeNodeKind.Tier && _owned[i]) return true;
+            RunTreeNodeStatus s = Status(i, build, int.MaxValue, out _, out _, out _);
+            if (s == RunTreeNodeStatus.Available || s == RunTreeNodeStatus.Unaffordable) return true;
+            if (s != RunTreeNodeStatus.PrereqMissing) return false;
+
+            switch (n.Kind)
+            {
+                case RunTreeNodeKind.BranchKeystone:
+                    return n.Parents.Length > 0 && Graph[n.Parents[0]].MaxTier >= 2 && CanReach(n.Parents[0], build, depth + 1);
+                case RunTreeNodeKind.Fork:
+                case RunTreeNodeKind.WeaponSeal:
+                    return ReachableCount(n.Lane, RunTreeNodeKind.BranchKeystone, build, depth + 1) >= 1;
+                case RunTreeNodeKind.Capstone:
+                    return (n.Lane != RunTreeLane.Weapon || (Graph.WeaponSealIndex >= 0 && CanReach(Graph.WeaponSealIndex, build, depth + 1)))
+                        && ReachableCount(n.Lane, RunTreeNodeKind.BranchKeystone, build, depth + 1) >= 2
+                        && ReachableCount(n.Lane, RunTreeNodeKind.Fork, build, depth + 1) >= 1;
+                case RunTreeNodeKind.SpecialLink:
+                    return n.LinkLevel >= 2 && Graph.LinkIIndex >= 0 && CanReach(Graph.LinkIIndex, build, depth + 1);
+                default:
+                    return false;
+            }
+        }
+
+        private int ReachableCount(RunTreeLane lane, RunTreeNodeKind kind, WeaponModifierState build, int depth)
+        {
+            int count = 0;
+            for (int j = 0; j < Graph.Count; j++)
+                if (Graph[j].Lane == lane && Graph[j].Kind == kind && CanReach(j, build, depth)) count++;
+            return count;
+        }
+
         /// <summary>
         /// The nodes still to buy on the way to <paramref name="target"/>, in buying order, ending with the
         /// target (owned steps skipped). Fills <paramref name="into"/>; returns its count. Cheapest partners
@@ -337,7 +381,7 @@ namespace DD.Prototype.Rounds
         /// <summary>The first node on the pin's path that is drawable now (the one the Nişan guarantees), else -1.</summary>
         public int PinnedOfferable(WeaponModifierState build)
         {
-            if (PinnedIndex < 0) return -1;
+            if (!CanPin(PinnedIndex, build)) return -1;
             PathTo(PinnedIndex, build, _scratch);
             for (int k = 0; k < _scratch.Count; k++)
             {
@@ -713,6 +757,7 @@ namespace DD.Prototype.Rounds
                     // Include what is still to pay on the tier the keystone needs.
                     int tier = n.Parents[0];
                     int have = OwnedTier(tier, build);
+                    if (have < 2 && Graph[tier].MaxTier < 2) continue;
                     if (have < 2 && TierEligibility != null && TierEligibility(Graph[tier].Branch, have) != UpgradeEligibility.Eligible) continue;
                     cost += have < 2 ? (2 - have) * Cost(tier, build) : 0;
                 }

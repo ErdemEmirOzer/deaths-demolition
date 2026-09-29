@@ -60,6 +60,9 @@ namespace DD.Prototype.Rounds
         private readonly List<int> _nodeSlots = new List<int>(UpgradeOfferPolicy.CardsPerOffer);
         private LastPurchase _last;
         private bool _undoClosed;
+        private int _pinAllowanceRunId = -1, _pinAllowanceRound = -1;
+        /// <summary>Successful pin assignments in this (run, round); clearing never refunds the one assignment.</summary>
+        public int PinChangesThisRound { get; private set; }
 
         private struct LastPurchase
         {
@@ -288,6 +291,12 @@ namespace DD.Prototype.Rounds
 
             Round = wantedRound;
             RunId = wantedRun;
+            if (_pinAllowanceRunId != wantedRun || _pinAllowanceRound != wantedRound)
+            {
+                _pinAllowanceRunId = wantedRun;
+                _pinAllowanceRound = wantedRound;
+                PinChangesThisRound = 0;
+            }
             IsOpen = true;
             PurchaseLimit = UpgradeOfferPolicy.PurchaseLimit(config);
             LastResult = UpgradePurchaseResult.None;
@@ -1346,10 +1355,10 @@ namespace DD.Prototype.Rounds
             return RunTreeCommandResult.Done;
         }
 
-        /// <summary>WP-077 Nişan (pin, K2): pins a node by id (null/empty clears). Guarantees its path on the NEXT offer.</summary>
+        /// <summary>WP-077 Nişan (K2): one target assignment per round; null/empty clears without refunding it. Same target is a no-op.</summary>
         public bool SetPin(string nodeId)
         {
-            if (!Tree.IsBuilt)
+            if (!IsOpen || !Tree.IsBuilt || Tree.RunId != RunId)
             {
                 return false;
             }
@@ -1360,7 +1369,11 @@ namespace DD.Prototype.Rounds
                 return false;
             }
 
+            if (i >= 0 && !Tree.CanPin(i, ModifierState())) return false;
+            if (i == Tree.PinnedIndex) return true;
+            if (i >= 0 && PinChangesThisRound >= 1) return false;
             Tree.SetPin(i);
+            if (i >= 0) PinChangesThisRound++;
             OfferChanged?.Invoke();
             return true;
         }

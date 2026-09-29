@@ -47,6 +47,7 @@ namespace DD.Prototype.Tests.EditMode
         public void TearDown()
         {
             RunTreeEffects.TreatAllAsLive = false;
+            RunTreeCatalog.TestSeam.Override(null);
             Object.DestroyImmediate(_config);
         }
 
@@ -68,8 +69,8 @@ namespace DD.Prototype.Tests.EditMode
 
         private void PinleAc(int round, string nodeId)
         {
-            if (!_dukkan.Tree.IsBuilt) Ac(round);
-            _dukkan.SetPin(nodeId);
+            if (!_dukkan.Tree.IsBuilt || !_dukkan.IsOpen || _dukkan.Round != round) Ac(round);
+            Assert.IsTrue(_dukkan.SetPin(nodeId), nodeId + " pinlenebilir");
             _dukkan.DiscardOffer();
             Ac(round);
         }
@@ -79,6 +80,161 @@ namespace DD.Prototype.Tests.EditMode
             int c = Kart(nodeId);
             Assert.GreaterOrEqual(c, 0, nodeId + " teklifte");
             return _dukkan.TryPurchase(c, _dukkan.SessionId, _dukkan.Revision, alt);
+        }
+
+        [Test]
+        public void Nisan_TekHak_SameId_Unpin_Reopen_YeniTur()
+        {
+            Ac(1);
+            Assert.IsTrue(_dukkan.SetPin("ks_reload"));
+            Assert.AreEqual(1, _dukkan.PinChangesThisRound);
+            int events = 0;
+            _dukkan.OfferChanged += () => events++;
+            int rev = _dukkan.Revision, gold = _cuzdan.Balance;
+            Assert.IsTrue(_dukkan.SetPin("ks_reload"), "aynı hedef yeni seçim değildir");
+            Assert.IsFalse(_dukkan.SetPin("ks_firerate"));
+            Assert.AreEqual(0, events);
+            Assert.AreEqual(rev, _dukkan.Revision);
+            Assert.AreEqual(gold, _cuzdan.Balance);
+            Assert.AreEqual(I("ks_reload"), _dukkan.Tree.PinnedIndex);
+            Assert.AreEqual(1, _dukkan.PinChangesThisRound);
+
+            _dukkan.Close();
+            Ac(1);
+            Assert.IsTrue(_dukkan.SetPin("ks_reload"));
+            Assert.IsFalse(_dukkan.SetPin("ks_firerate"), "pause / reopen hakkı yenilemez");
+            Assert.AreEqual(1, _dukkan.PinChangesThisRound);
+            _dukkan.DiscardOffer();
+            Ac(1);
+            Assert.IsFalse(_dukkan.SetPin("ks_firerate"), "teklif yeniden üretmek yeni tur değildir");
+            Assert.AreEqual(1, _dukkan.PinChangesThisRound);
+            Assert.IsTrue(_dukkan.SetPin(null), "mevcut UNPIN kullanılabilir");
+            Assert.IsTrue(_dukkan.SetPin(null), "boş pin clear no-op");
+            Assert.IsFalse(_dukkan.SetPin("ks_firerate"), "clear atama hakkını geri vermez");
+            Assert.AreEqual(1, _dukkan.PinChangesThisRound);
+
+            Ac(2);
+            Assert.AreEqual(0, _dukkan.PinChangesThisRound);
+            Assert.IsTrue(_dukkan.SetPin("ks_firerate"), "gerçek sonraki tur bir seçim açar");
+            Assert.IsFalse(_dukkan.SetPin("ks_reload"));
+            _dukkan.Open(1, _config, _cuzdan, _rank, Kosu + 1);
+            Assert.AreEqual(-1, _dukkan.Tree.PinnedIndex);
+            Assert.IsTrue(_dukkan.SetPin("ks_reload"), "yeni koşu kendi hakkını alır");
+        }
+
+        [TestCase("unknown")]
+        [TestCase("owned")]
+        [TestCase("excluded")]
+        [TestCase("maxed")]
+        [TestCase("locked")]
+        [TestCase("unreachable")]
+        [TestCase("hearth")]
+        [TestCase("no-special")]
+        public void Nisan_GecersizHedef_YanEtkiVeHakTuketimiYok(string reason)
+        {
+            Ac(1);
+            string target = "missing-node";
+            switch (reason)
+            {
+                case "owned":
+                    target = _dukkan.Tree.Graph[_dukkan.Tree.Graph.PurseIndex].Id;
+                    Assert.IsTrue(_dukkan.Tree.MarkOwned(I(target)));
+                    break;
+                case "excluded":
+                    Assert.IsTrue(_dukkan.Tree.MarkOwned(I("fork_ar_1_x")));
+                    target = "fork_ar_1_y";
+                    break;
+                case "maxed":
+                    target = "tier_FireRate";
+                    _rank.SetTier(UpgradeBranch.FireRate, _dukkan.Tree.Graph[I(target)].MaxTier);
+                    break;
+                case "locked":
+                    target = "tier_FireRate";
+                    _dukkan.Tree.TierEligibility = (b, owned) => b == UpgradeBranch.FireRate ? UpgradeEligibility.Locked : UpgradeEligibility.Eligible;
+                    break;
+                case "unreachable":
+                    target = "cap_ar_1";
+                    RunTreeEffects.TreatAllAsLive = false;
+                    _dukkan.Tree.Graph[_dukkan.Tree.Graph.WeaponSealIndex].EffectId = "test.unwired";
+                    Assert.AreEqual(RunTreeNodeStatus.PrereqMissing, _dukkan.Tree.Status(I(target), _rank, int.MaxValue, out _, out _, out _), "hedef canlı ama yolu kilitli");
+                    break;
+                case "hearth": target = _dukkan.Tree.Graph[_dukkan.Tree.Graph.HearthIndex].Id; break;
+                case "no-special": target = _dukkan.Tree.Graph[_dukkan.Tree.Graph.LinkIIndex].Id; break;
+            }
+
+            int events = 0, revision = _dukkan.Revision, gold = _cuzdan.Balance;
+            int applied = _cuzdan.AppliedTransactions, spent = _cuzdan.TotalSpent;
+            int previousTx = _cuzdan.NextTransactionId(), walletEvents = 0;
+            _cuzdan.Changed += _ => walletEvents++;
+            UpgradeEntitlement purchase = _dukkan.PurchaseEntitlement, reroll = _dukkan.RerollEntitlement;
+            var ids = new List<string>();
+            foreach (UpgradeCardOffer card in _dukkan.Cards) ids.Add(card.NodeId);
+            _dukkan.OfferChanged += () => events++;
+            Assert.IsFalse(_dukkan.SetPin(target), reason);
+            Assert.AreEqual(-1, _dukkan.Tree.PinnedIndex);
+            Assert.AreEqual(0, _dukkan.PinChangesThisRound);
+            Assert.AreEqual(revision, _dukkan.Revision);
+            Assert.AreEqual(gold, _cuzdan.Balance);
+            Assert.AreEqual(0, events);
+            Assert.IsTrue(_dukkan.SetPin("tier_MovementSpeed"), "ret ilk geçerli hedefin hakkını tüketmez");
+            int pinned = _dukkan.Tree.PinnedIndex;
+            Assert.IsFalse(_dukkan.SetPin(target), "geçersiz hedef mevcut pin'i de silmez");
+            Assert.AreEqual(pinned, _dukkan.Tree.PinnedIndex);
+            Assert.AreEqual(1, _dukkan.PinChangesThisRound);
+            Assert.AreEqual(1, events, "yalnız geçerli pin ataması event üretir");
+            Assert.AreEqual(revision, _dukkan.Revision);
+            Assert.AreEqual(gold, _cuzdan.Balance);
+            Assert.AreEqual(spent, _cuzdan.TotalSpent);
+            Assert.AreEqual(applied, _cuzdan.AppliedTransactions);
+            Assert.AreEqual(previousTx + 1, _cuzdan.NextTransactionId());
+            Assert.AreEqual(0, walletEvents);
+            Assert.AreEqual(purchase, _dukkan.PurchaseEntitlement);
+            Assert.AreEqual(reroll, _dukkan.RerollEntitlement);
+            Assert.AreEqual(ids.Count, _dukkan.Cards.Count);
+            for (int c = 0; c < ids.Count; c++) Assert.AreEqual(ids[c], _dukkan.Cards[c].NodeId);
+        }
+
+        [Test]
+        public void Nisan_GelecekYolu_TierTavaniBirOlanKeystoneSecilmez()
+        {
+            Ac(1);
+            int badTier = I("tier_FireRate"), badKeystone = I("ks_firerate");
+            _dukkan.Tree.Graph[badTier].MaxTier = 1;
+            _dukkan.Tree.Graph[badKeystone].FlatCost = 1;
+            string seal = _dukkan.Tree.Graph[_dukkan.Tree.Graph.WeaponSealIndex].Id;
+            Assert.IsTrue(_dukkan.SetPin(seal), "diğer keystone'larla hedefe ulaşılabilir");
+            var path = new List<int>();
+            _dukkan.Tree.PathTo(I(seal), _rank, path);
+            Assert.IsFalse(path.Contains(badKeystone));
+            Assert.IsFalse(path.Contains(badTier), "iki tier isteyen keystone için tier tavanı bir olan yol seçilemez");
+            Assert.GreaterOrEqual(_dukkan.Tree.PinnedOfferable(_rank), 0);
+        }
+
+        [Test]
+        public void Nisan_YolKapanirsa_GarantiliKartUretilmez()
+        {
+            Ac(1);
+            Assert.IsTrue(_dukkan.SetPin("fork_ar_1_y"), "gelecekte ulaşılabilen prereq yoluna pin");
+            Assert.GreaterOrEqual(_dukkan.Tree.PinnedOfferable(_rank), 0);
+            Assert.IsTrue(_dukkan.Tree.MarkOwned(I("fork_ar_1_x")));
+            Assert.AreEqual(-1, _dukkan.Tree.PinnedOfferable(_rank), "kapanmış hedefin parent tier'ı garanti olmaz");
+        }
+
+        [Test]
+        public void Nisan_UlasilabilirVePahali_DorukM1Oncesi_Pinlenebilir()
+        {
+            MetaRunModifiers meta = MetaRunModifiers.None;
+            meta.CapstoneMasteryMet = false;
+            _dukkan.Meta = meta;
+            Ac(1);
+            Assert.IsTrue(_dukkan.SetPin("cap_ar_1"), "DEC098 pin M1 kapısını aşar, ön koşulları planlar");
+            Assert.GreaterOrEqual(_dukkan.Tree.PinnedOfferable(_rank), 0);
+            Ac(2);
+            Assert.AreEqual(I("cap_ar_1"), _dukkan.Tree.PinnedIndex, "tur sınırı mevcut pin'i silmez");
+            Assert.AreEqual(0, _dukkan.PinChangesThisRound);
+            Assert.IsTrue(_cuzdan.TrySpend(_cuzdan.Balance));
+            Assert.AreEqual(RunTreeNodeStatus.Unaffordable, _dukkan.Tree.Status(I("tier_FireRate"), _rank, 0, out _, out _, out _));
+            Assert.IsTrue(_dukkan.SetPin("tier_FireRate"), "gold pin kapısı değildir");
         }
 
         [Test]
