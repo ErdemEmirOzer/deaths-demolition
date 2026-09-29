@@ -1302,7 +1302,11 @@ namespace DD.Prototype.UI
         /// </summary>
         private void LinkNavigation()
         {
-            Selectable detail = _buy.gameObject.activeSelf && _buy.IsInteractable() ? _buy : _pin;
+            Selectable buy = NavigationTarget(_buy);
+            Selectable pin = NavigationTarget(_pin);
+            Selectable reforge = NavigationTarget(_reforge);
+            Selectable exit = NavigationTarget(ExitDown);
+            Selectable detail = buy ?? pin ?? reforge ?? exit;
             for (int s = 0; s < _views.Length; s++)
             {
                 NodeView v = _views[s];
@@ -1324,10 +1328,9 @@ namespace DD.Prototype.UI
             Explicit(_tabWeapon, ExitUp, first, null, _tabBody);
             Explicit(_tabBody, ExitUp, first, _tabWeapon, null);
             Selectable node = FocusTarget() ?? first;
-            Selectable buy = _buy.IsInteractable() ? _buy : null;
-            Explicit(_buy, null, _pin, node, null);
-            Explicit(_pin, buy, ExitDown, node, _reforge.gameObject.activeSelf ? _reforge : null);
-            Explicit(_reforge, buy, ExitDown, _pin, null);
+            Explicit(_buy, null, pin ?? reforge ?? exit, node, null);
+            Explicit(_pin, buy, exit, node, reforge);
+            Explicit(_reforge, buy ?? pin, exit, pin ?? node, null);
         }
 
         private Selectable ChildOf(int index)
@@ -1425,6 +1428,13 @@ namespace DD.Prototype.UI
             return null;
         }
 
+        // Build navigation from each control's own availability. A temporary parent
+        // CanvasGroup pause must not erase links that remain valid after it resumes.
+        private static Selectable NavigationTarget(Selectable control)
+        {
+            return control != null && control.isActiveAndEnabled && control.interactable ? control : null;
+        }
+
         private static void Explicit(Selectable control, Selectable up, Selectable down, Selectable left, Selectable right)
         {
             control.navigation = new UnityEngine.UI.Navigation
@@ -1498,8 +1508,7 @@ namespace DD.Prototype.UI
             {
                 _buyPrompt.gameObject.SetActive(buyable);   // the key chip follows the Primary (AD R1-C MUST-1)
             }
-            _pin.SetText(n.IsPinned ? UiStrings.Get("tree.action.unpin", "UNPIN") : UiStrings.Get("tree.action.pin", "PIN"));
-            _pin.SetInteractable(n.IsPinned || (!IsOwned(n) && n.Status != RunTreeNodeStatus.Excluded && !hearth));
+            UpdatePinControl(index, out _, out _);
             bool reforge = n.Kind == RunTreeNodeKind.Fork && IsOwned(n) && n.ReforgeCost >= 0;
             _reforge.gameObject.SetActive(reforge);
             _reforge.SetInteractable(reforge && _snap.Gold >= n.ReforgeCost);
@@ -1729,16 +1738,24 @@ namespace DD.Prototype.UI
         {
             if (Input.GetKeyDown(KeyCode.Q))
             {
-                SetLane(RunTreeLane.Weapon, true);
+                HandleKey(KeyCode.Q);
             }
             else if (Input.GetKeyDown(KeyCode.E))
             {
-                SetLane(RunTreeLane.Body, true);
+                HandleKey(KeyCode.E);
             }
             else if (Input.GetKeyDown(KeyCode.P))
             {
-                OnPin();
+                HandleKey(KeyCode.P);
             }
+        }
+
+        /// <summary>Dispatch a tree shortcut; the native poll and owned input tests use the same handler.</summary>
+        public void HandleKey(KeyCode key)
+        {
+            if (key == KeyCode.Q) SetLane(RunTreeLane.Weapon, true);
+            else if (key == KeyCode.E) SetLane(RunTreeLane.Body, true);
+            else if (key == KeyCode.P) OnPin();
         }
 
         /// <summary>Shows a lane (the tabs, Q / E, tests).</summary>
@@ -1882,21 +1899,45 @@ namespace DD.Prototype.UI
             return -1;
         }
 
+        /// <summary>The command follows the live pin identity; a stale snapshot must not turn UNPIN into a same-ID no-op.</summary>
+        private void UpdatePinControl(int index, out string action, out bool unpin)
+        {
+            action = null;
+            unpin = false;
+            bool allowed = false;
+            if (_shop != null && _shop.Tree.IsBuilt && index >= 0 && index < _snap.Count)
+            {
+                string nodeId = _snap.Nodes[index].NodeId;
+                int liveIndex = string.IsNullOrEmpty(nodeId) ? -1 : _shop.Tree.Graph.IndexOf(nodeId);
+                if (liveIndex >= 0)
+                {
+                    unpin = liveIndex == _shop.Tree.PinnedIndex;
+                    action = unpin ? null : nodeId;
+                    allowed = _shop.CanSetPin(action);
+                }
+            }
+
+            _pin.SetText(unpin ? UiStrings.Get("tree.action.unpin", "UNPIN") : UiStrings.Get("tree.action.pin", "PIN"));
+            _pin.SetInteractable(allowed);
+        }
+
         public void OnPin()
         {
-            if (_shop == null || _focus < 0 || _focus >= _snap.Count || !_pin.IsInteractable())
+            if (_shop == null || _focus < 0 || _focus >= _snap.Count || _pin == null)
             {
                 return;
             }
 
-            RunTreeNodeView n = _snap.Nodes[_focus];
-            if (!_shop.SetPin(n.IsPinned ? null : n.NodeId))
+            UpdatePinControl(_focus, out string action, out bool unpin);
+            LinkNavigation();
+            if (!_pin.IsActive() || !_pin.IsInteractable()) return;
+            if (!_shop.SetPin(action))
             {
                 Report(RunTreeCommandResult.NotAvailable, ViewOf(_focus), false);
                 return;
             }
 
-            UiEvents.Raise(UiEvent.ChoiceSelected, n.IsPinned ? "TreeUnpin" : "TreePin");
+            UiEvents.Raise(UiEvent.ChoiceSelected, unpin ? "TreeUnpin" : "TreePin");
             Changed?.Invoke();
         }
 
