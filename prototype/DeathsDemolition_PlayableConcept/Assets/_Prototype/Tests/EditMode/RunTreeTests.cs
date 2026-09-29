@@ -277,6 +277,38 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void Ocak_ModifierYoksa_IslemVeYanEtkiYok()
+        {
+            RunTreeState t = Agac();
+            Assert.IsTrue(t.MarkOwned(I(t, "ks_firerate")));
+            Altin(500);
+            int balance = _cuzdan.Balance, spent = _cuzdan.TotalSpent;
+            int earned = _cuzdan.TotalEarned, applied = _cuzdan.AppliedTransactions;
+            int previousTx = _cuzdan.NextTransactionId();
+            int changes = 0, snapshots = 0;
+            _cuzdan.Changed += _ => changes++;
+            _cuzdan.SnapshotChanged += _ => snapshots++;
+
+            Assert.AreEqual(RunTreeCommandResult.NotAvailable, t.TryStokeHearth(_cuzdan, null, out int tx));
+            Assert.AreEqual(0, tx);
+            Assert.AreEqual(balance, _cuzdan.Balance);
+            Assert.AreEqual(spent, _cuzdan.TotalSpent);
+            Assert.AreEqual(earned, _cuzdan.TotalEarned);
+            Assert.AreEqual(applied, _cuzdan.AppliedTransactions);
+            Assert.AreEqual(previousTx + 1, _cuzdan.NextTransactionId(), "reddedilen komut işlem kimliği ayırmaz");
+            Assert.AreEqual(0, t.HearthStacks);
+            Assert.AreEqual(0, t.HearthThisRound);
+            Assert.AreEqual(-1, t.PinnedIndex);
+            Assert.AreEqual(0, changes);
+            Assert.AreEqual(0, snapshots);
+
+            // The same valid prerequisite and wallet still buy the unchanged 50-gold effect with a build.
+            Assert.AreEqual(RunTreeCommandResult.Done, t.TryStokeHearth(_cuzdan, _rank));
+            Assert.AreEqual(balance - 50, _cuzdan.Balance);
+            Assert.AreEqual(1, _rank.HearthStacks);
+        }
+
+        [Test]
         public void Ocak_KartDisi_Fiyat_TurSiniri_Tavan_Hasar()
         {
             RunTreeState t = Agac();

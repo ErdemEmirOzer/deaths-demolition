@@ -584,6 +584,7 @@ namespace DD.Prototype.Rounds
             transactionId = 0;
             if (!IsBuilt || Graph.HearthIndex < 0) return RunTreeCommandResult.UnknownNode;
             if (wallet == null || !wallet.IsOpen) return RunTreeCommandResult.NoRun;
+            if (build == null) return RunTreeCommandResult.NotAvailable;
             int i = Graph.HearthIndex;
             RunTreeNode n = Graph[i];
             if (HearthStacks >= n.MaxTier || HearthThisRound >= n.PerRoundLimit) return RunTreeCommandResult.LimitReached;
@@ -602,7 +603,7 @@ namespace DD.Prototype.Rounds
 
             HearthStacks++;
             HearthThisRound++;
-            if (build != null) build.SetHearth(HearthStacks, n.EffectValue);
+            build.SetHearth(HearthStacks, n.EffectValue);
             if (PinnedIndex == i && HearthStacks >= n.MaxTier) PinnedIndex = -1;
             return RunTreeCommandResult.Done;
         }
