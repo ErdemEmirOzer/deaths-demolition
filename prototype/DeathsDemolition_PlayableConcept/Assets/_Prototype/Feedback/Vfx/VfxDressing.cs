@@ -91,6 +91,8 @@ namespace DD.Prototype.Feedback.Vfx
         /// <summary>Audit seam (allocation bisect): PlayExplosion steps — 1 card, 2 shockwave, 4 smoke, 8 scorch decal. Default all.</summary>
         public static int AuditExplosionMask = -1;
         public int Played { get; private set; }
+        internal void CountExplosionCard() => Played++;
+        internal void CountExplosionDecal() => DecalsPlayed++;
         /// <summary>WP-047H: v004 asymmetric armour-break sheets played (0 when the row is absent → the ×1.3 armour sheet fallback).</summary>
         public int ArmorBreakSheets { get; private set; }
         public int DecalsPlayed { get; private set; }
@@ -178,6 +180,8 @@ namespace DD.Prototype.Feedback.Vfx
                 _barrelCards = FeedbackPoolWarmer.Warm(PoolService.GetOrCreate(Template<FlipbookEffect>(templateRoot, "FX_WP073_BarrelCard"),
                     2, 2, PoolExhaustedPolicy.RecycleOldest));
                 ImpactSystem.Ensure(this);
+                RocketVisualSystem.Ensure();
+                ExplosionDirector.Ensure(this);
                 ArcSystem.Ensure();           // WP-073 B6: Raiju (direction §2.1)
                 GelSystem.Ensure();           // WP-073 B6: Namekuji (§2.2)
                 GroundFireSystem.Ensure();    // WP-073: S-04's K10b burning ground (RunTreeGroundFire)
@@ -194,6 +198,8 @@ namespace DD.Prototype.Feedback.Vfx
             }
 
             _binder.Subscribe();
+            RocketVisualSystem.Ensure();
+            ExplosionDirector.Ensure(this);
 
             if (!_wave2Subscribed)
             {
@@ -993,21 +999,7 @@ namespace DD.Prototype.Feedback.Vfx
                 return false;
             }
 
-            bool any = (AuditExplosionMask & 1) != 0 && PlayFlipbook(VfxIds.Explosion, origin, FlipbookEffect.Facing.Camera, Quaternion.identity, 1f, Color.white, 1f, 0f);
-            // Manifest: ring seen frontally, ground-aligned 5 m quad, 0.3 s.
-            // AD M6: the ground ring reads as dust, not white fog — dust tint (s ≤ 0.25) and alpha ≤ 0.5.
-            any |= (AuditExplosionMask & 2) != 0 && PlayFlipbook(VfxIds.Shockwave, origin + Vector3.up * 0.05f, FlipbookEffect.Facing.Fixed, Quaternion.Euler(90f, 0f, 0f), 1f, ShockRingDustTint, 0.5f, 0.3f);
-            if (_smoke != null && (AuditExplosionMask & 4) != 0)
-            {
-                AtlasBurstEffect puff = _smoke.Get(origin + Vector3.up * 0.6f, Quaternion.LookRotation(Vector3.up));
-                if (puff != null)
-                {
-                    puff.Play(3, 0.8f, 1.1f, 1.5f);   // manifest: 3-5 billboards 0.8-1.2 m, 1.5 s (3: readability)
-                }
-            }
-
-            if ((AuditExplosionMask & 8) != 0) PlayDecal(VfxIds.DecalScorch, origin, Vector3.up, 0f, DecalSecondsScorch, ScorchAlphaCap, Color.white);
-            return any;
+            return ExplosionDirector.Instance != null && ExplosionDirector.Instance.Play(origin, radius, AuditExplosionMask);
         }
 
         // ------------------------------------------------------------------ armour break

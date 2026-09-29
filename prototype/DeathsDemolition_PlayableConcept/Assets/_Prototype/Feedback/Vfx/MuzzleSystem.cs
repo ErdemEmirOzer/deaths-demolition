@@ -258,7 +258,7 @@ namespace DD.Prototype.Feedback.Vfx
         /// WP-073 B2: a short light at a world point (direction §1.4 impact light #FFE0B0 / 3 / 2 m / 2 frames) from the same
         /// pool, so impacts and muzzles share the tier's light cap (8 / 4 / 2). Reduce flashes: ×0.8, never above the muzzle's.
         /// </summary>
-        public bool FlashAt(Vector3 point, Color colour, float intensity, float range, float holdSeconds, float fadeSeconds, bool exclusive = false)
+        public bool FlashAt(Vector3 point, Color colour, float intensity, float range, float holdSeconds, float fadeSeconds, bool exclusive = false, bool shadows = false)
         {
             float now = Time.time;
             int slot = -1;
@@ -287,7 +287,7 @@ namespace DD.Prototype.Feedback.Vfx
             Light l = m.Light;
             l.color = colour;
             l.range = range;
-            l.shadows = LightShadows.None;
+            l.shadows = shadows ? LightShadows.Soft : LightShadows.None;
             l.intensity = m.Intensity;
             l.transform.position = point;
             l.enabled = true;

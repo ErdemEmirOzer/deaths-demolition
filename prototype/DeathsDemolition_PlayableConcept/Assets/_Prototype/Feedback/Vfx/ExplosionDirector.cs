@@ -1,0 +1,143 @@
+using DD.Prototype.Core;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+namespace DD.Prototype.Feedback.Vfx
+{
+    /// <summary>WP-073 B3: the single visual owner called by the existing ReportExplosion path.
+    /// Never subscribes Detonated or replays damage/audio/feel. Ground probe is presentation only.</summary>
+    public sealed class ExplosionDirector : MonoBehaviour
+    {
+        private static ExplosionDirector s_instance;
+        public static ExplosionDirector Instance => s_instance;
+        public const int FullCapacity = 2, ScheduleCapacity = 32;
+        private struct Blast { public bool Active, Full, Grounded; public Vector3 At, Ground, Normal; public SurfaceKind Surface; public float Start, Scale; public int Stages, Mask; }
+        private readonly Blast[] _blasts = new Blast[ScheduleCapacity];
+        private Texture2D _dot;
+        private VfxDressing _owner;
+        private Material _smokeMaterial, _debrisMaterial, _leafMaterial, _emberMaterial;
+        private ParticleSystem _column, _debris, _leaves, _embers;
+        private MuzzleSystem _lights;
+        private int _next;
+        public int Presentations { get; private set; }
+        public int FullPresentations { get; private set; }
+        public int LightPresentations { get; private set; }
+        public int FlashCards { get; private set; }
+        public int Scorches { get; private set; }
+        public int WetRings { get; private set; }
+        public int EmberBursts { get; private set; }
+        public int Columns { get; private set; }
+        public int Residues { get; private set; }
+        public int SteamPuffs { get; private set; }
+        public int Pending { get { int n=0;for(int i=0;i<_blasts.Length;i++)if(_blasts[i].Active)n++;return n; } }
+        public ParticleSystem Column => _column;
+        public static ExplosionDirector Ensure(VfxDressing owner)
+        {
+            if(s_instance==null)s_instance=FindObjectOfType<ExplosionDirector>();
+            if(s_instance==null){var go=new GameObject("[ExplosionDirector]");DontDestroyOnLoad(go);s_instance=go.AddComponent<ExplosionDirector>();}
+            s_instance._owner=owner;return s_instance;
+        }
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics()=>s_instance=null;
+        private void Awake()
+        {
+            s_instance=this;
+            _smokeMaterial=B3Particles.Material(VfxIds.CardSmoke);_debrisMaterial=new Material(ImpactSystem.Instance.BlastResidueMaterial);
+            _column=B3Particles.Build(transform,"BlastWetColumn",_smokeMaterial,128,0f,true);
+            _debris=B3Particles.Build(transform,"BlastResidue",_debrisMaterial,128,1f,false);
+            var sheet=_debris.textureSheetAnimation;sheet.enabled=true;sheet.numTilesX=4;sheet.numTilesY=4;sheet.startFrame=new ParticleSystem.MinMaxCurve(0f,.999f);sheet.frameOverTime=new ParticleSystem.MinMaxCurve(0f);
+            _leafMaterial=B3Particles.Material(VfxIds.LeafBurst);_leaves=B3Particles.Build(transform,"BlastLeaves",_leafMaterial,96,1f,false);
+            if(VfxLibrary.TryGetPlayable(VfxIds.LeafBurst,out VfxCatalogEntry leaf)){var ls=_leaves.textureSheetAnimation;ls.enabled=true;ls.numTilesX=leaf.Columns;ls.numTilesY=leaf.Rows;ls.startFrame=new ParticleSystem.MinMaxCurve(0f,.999f);ls.frameOverTime=new ParticleSystem.MinMaxCurve(0f);}
+            _dot=B3Particles.Dot();_emberMaterial=B3Particles.Material(VfxIds.CardSmoke);_emberMaterial.mainTexture=_dot;_emberMaterial.SetTexture("_BaseMap",_dot);_embers=B3Particles.Build(transform,"BlastEmbers",_emberMaterial,128,1f,false);
+            _lights=MuzzleSystem.Ensure();SceneManager.activeSceneChanged+=OnSceneChanged;
+        }
+        private void OnDestroy(){SceneManager.activeSceneChanged-=OnSceneChanged;if(s_instance==this)s_instance=null;Destroy(_smokeMaterial);Destroy(_debrisMaterial);Destroy(_leafMaterial);Destroy(_emberMaterial);Destroy(_dot);}
+        private void OnSceneChanged(Scene a,Scene b)=>Clear();
+        public void Clear(){for(int i=0;i<_blasts.Length;i++)_blasts[i]=default;_column?.Clear();_debris?.Clear();_leaves?.Clear();_embers?.Clear();}
+        public bool Play(Vector3 at,float radius,int mask)
+        {
+            if(_owner==null||!_owner.IsReady||mask==0)return false;
+            int full=0;for(int i=0;i<_blasts.Length;i++)if(_blasts[i].Active&&_blasts[i].Full)full++;
+            ref Blast b=ref _blasts[_next];_next=(_next+1)%_blasts.Length;
+            b=new Blast {Active=true,Full=full<FullCapacity,At=at,Start=Time.time,Scale=Mathf.Clamp(radius/5f,.3f,1f),Mask=mask};
+            int layerMask=(1<<0)|(1<<PrototypeLayers.Environment)|(1<<PrototypeLayers.CameraOccluder);
+            b.Grounded=Physics.Raycast(at+Vector3.up*.15f,Vector3.down,out RaycastHit ground,1.35f,layerMask,QueryTriggerInteraction.Ignore);
+            if(b.Grounded){b.Ground=ground.point;b.Normal=ground.normal;b.Surface=SurfaceResolver.Resolve(ground.collider);}
+            Presentations++;if(b.Full)FullPresentations++;else LightPresentations++;
+            float alpha=GameFeelSettings.FlashScale;
+            if((mask&1)!=0)
+            {
+                Card(VfxIds.Explosion,at,Quaternion.identity,FlipbookEffect.Facing.Camera,3.6f*b.Scale*(b.Full?1f:.65f),1.6f,Color.white,alpha);
+                if(b.Full && alpha>=.99f && VfxTier.Current!=VfxTierLevel.Performance)
+                {if(Card(VfxIds.Explosion,at,Quaternion.identity,FlipbookEffect.Facing.Camera,2f*b.Scale,1f/60f,new Color(1f,.75f,.45f)*12f,1f,true))FlashCards++;}
+                _lights.FlashAt(at,new Color(1f,.69f,.44f),b.Full?40f:12f,9f*b.Scale,.08f,.35f,false,VfxTier.Current==VfxTierLevel.Cinematic);
+            }
+            if(b.Grounded && (mask&2)!=0)
+            {
+                FlipbookEffect ring=CardEffect(VfxIds.Shockwave,b.Ground+b.Normal*.05f,Quaternion.LookRotation(b.Normal),FlipbookEffect.Facing.Fixed,7f*b.Scale,.3f,new Color(.58f,.58f,.56f),.5f);
+                ring?.SetGrow(1f*b.Scale,.3f);
+            }
+            if(b.Grounded && (mask&8)!=0)
+            {
+                if(b.Surface!=SurfaceKind.Water && Decal(b.Ground,b.Normal,2.4f*b.Scale,12f,.7f,Color.white))Scorches++;
+                if(b.Surface!=SurfaceKind.Water && Decal(b.Ground,b.Normal,3f*b.Scale,6f,.35f,new Color(.3f,.32f,.34f)))WetRings++;
+            }
+            return true;
+        }
+        private void Update()=>Tick(Time.time);
+        public void Tick(float now)
+        {
+            for(int i=0;i<_blasts.Length;i++)
+            {
+                ref Blast b=ref _blasts[i];if(!b.Active)continue;float age=now-b.Start;
+                if(age>=.016f && (b.Stages&1)==0)
+                {b.Stages|=1;if(b.Full && (b.Mask&4)!=0){int count=VfxTier.Pick(10,24,32);for(int n=0;n<count;n++){float a=n*2.399963f;B3Particles.Emit(_embers,b.At,new Vector3(Mathf.Cos(a),1.5f,Mathf.Sin(a))*3f,.035f,.8f,new Color(1f,.48f,.24f,1f));}EmberBursts++;}}
+                if(age>=.033f && (b.Stages&2)==0)
+                {
+                    b.Stages|=2;if((b.Mask&4)!=0)
+                    {int count=b.Full?VfxTier.Pick(3,8,10):2;for(int n=0;n<count;n++)B3Particles.Emit(_column,b.At+Vector3.up*.2f,Vector3.up*(.4f+n*.05f),3f*b.Scale,1.2f,new Color(.56f,.58f,.60f,.45f));Columns++;}
+                }
+                if(age>=.05f && (b.Stages&4)==0)
+                {
+                    b.Stages|=4;
+                    if(b.Full && b.Grounded && (b.Mask&4)!=0)
+                    {
+                        int count=b.Surface==SurfaceKind.Wood?6:b.Surface==SurfaceKind.Dirt?10:b.Surface==SurfaceKind.Foliage?30:12;
+                        count=Mathf.Max(1,Mathf.RoundToInt(count*VfxTier.Pick(.4f,1f,1.3f)));
+                        bool water=b.Surface==SurfaceKind.Water;
+                        int cell=water?10:b.Surface==SurfaceKind.Wood?4:b.Surface==SurfaceKind.Dirt?8:0;
+                        var sheet=_debris.textureSheetAnimation;sheet.startFrame=new ParticleSystem.MinMaxCurve(cell/16f,(cell+1.999f)/16f);
+                        for(int n=0;n<count;n++){float a=n*2.399963f;Vector3 v=new Vector3(Mathf.Cos(a),1.2f+(n%3)*.3f,Mathf.Sin(a))*2f;B3Particles.Emit(b.Surface==SurfaceKind.Foliage?_leaves:_debris,b.Ground+b.Normal*.1f,v,water?.03f:.05f+(n%4)*.04f,water?1.5f:1.2f,water?new Color(.85f,.88f,.90f,.5f):new Color(.25f,.27f,.29f,1f));}
+                        if(water){Card(VfxIds.WaterSplash,b.Ground,Quaternion.identity,FlipbookEffect.Facing.Camera,2.5f*b.Scale,1.5f,Color.white,.5f);Card(VfxIds.Shockwave,b.Ground+b.Normal*.05f,Quaternion.LookRotation(b.Normal),FlipbookEffect.Facing.Fixed,4f*b.Scale,.3f,new Color(.85f,.88f,.90f),.5f);}
+                        if(b.Surface==SurfaceKind.Dirt && (b.Mask&8)!=0)Decal(b.Ground,b.Normal,1.8f*b.Scale,12f,.7f,new Color(.25f,.20f,.16f));
+                        Residues++;
+                    }
+                }
+                if(age>=.2f && (b.Stages&8)==0)
+                {
+                    b.Stages|=8;if(b.Full && VfxTier.Current==VfxTierLevel.Cinematic && (b.Mask&4)!=0)
+                    {for(int n=0;n<6;n++){float a=n*Mathf.PI/3f;B3Particles.Emit(_column,b.At+new Vector3(Mathf.Cos(a),.3f,Mathf.Sin(a))*.4f,Vector3.up*.3f,1f,1.2f,new Color(.82f,.84f,.87f,.25f));SteamPuffs++;}}
+                }
+                if(age>=.8f && (b.Stages&16)==0)
+                {
+                    b.Stages|=16;if(b.Full && b.Grounded && (b.Mask&4)!=0)
+                    {var sheet=_debris.textureSheetAnimation;sheet.startFrame=new ParticleSystem.MinMaxCurve(10f/16f,11.999f/16f);for(int n=0;n<4;n++){float a=n*Mathf.PI*.5f;B3Particles.Emit(_debris,b.Ground+new Vector3(Mathf.Cos(a),.03f,Mathf.Sin(a))*.8f,Vector3.up*.4f,.04f,.15f,new Color(.85f,.88f,.9f,.5f));}}
+                }
+                if(age>=1.6f)b.Active=false;
+            }
+        }
+        private bool Card(string id,Vector3 at,Quaternion rotation,FlipbookEffect.Facing facing,float size,float seconds,Color tint,float alpha,bool hold=false)
+        {var fx=CardEffect(id,at,rotation,facing,size,seconds,tint,alpha);if(hold)fx?.HoldFrame(0);return fx!=null;}
+        private FlipbookEffect CardEffect(string id,Vector3 at,Quaternion rotation,FlipbookEffect.Facing facing,float size,float seconds,Color tint,float alpha)
+        {
+            if(!VfxLibrary.TryGetPlayable(id,out VfxCatalogEntry row))return null;
+            var fx=_owner.FlipbookPool?.Get(at,rotation);if(fx==null)return null;fx.Play(row,facing,size,tint,alpha,.25f,seconds);_owner.CountExplosionCard();return fx;
+        }
+        private bool Decal(Vector3 at,Vector3 normal,float size,float seconds,float alpha,Color tint)
+        {
+            if(!VfxLibrary.TryGetPlayable(VfxIds.DecalScorch,out VfxCatalogEntry row))return false;
+            var d=_owner.DecalPool?.Get(at,Quaternion.LookRotation(normal,Mathf.Abs(Vector3.Dot(normal,Vector3.up))>.99f?Vector3.forward:Vector3.up));
+            if(d==null)return false;d.Play(row,size,seconds,alpha,tint,17f);_owner.CountExplosionDecal();return true;
+        }
+    }
+}

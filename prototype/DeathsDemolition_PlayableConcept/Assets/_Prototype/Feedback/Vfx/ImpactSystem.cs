@@ -420,6 +420,8 @@ namespace DD.Prototype.Feedback.Vfx
             }
         }
 
+        internal Material BlastResidueMaterial => _debrisMaterial;
+
         private void Build()
         {
             _atlas = BuildAtlas(256);
