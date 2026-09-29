@@ -9,6 +9,8 @@ Shader "DD/SkyPlate"
         [MainColor] _BaseColor("Tint", Color) = (1, 1, 1, 1)
         _ScrollUV("UV scroll per second (xy; WP-075 C3 cloud planes)", Vector) = (0, 0, 0, 0)
         _AlphaPower("Alpha power (WP-075 AD S3: > 1 thins the cloud cover, < 1 thickens it; 1 = the sheet)", Range(0.3, 4)) = 1
+        _BottomEdgeAA("Bottom edge pixel coverage (0 off, 1 on)", Float) = 0
+        _BottomPanoramaReveal("Reveal panorama through the authored fog footer (0 off, 1 on)", Float) = 0
         _HazeColor("Haze colour (DEC-101 aerial perspective; DEC-076 fog colour)", Color) = (0.815, 0.843, 0.870, 1)
         _Haze("Haze amount (0 = the sheet: the AP-019 plates unchanged)", Range(0, 1)) = 0
     }
@@ -40,13 +42,15 @@ Shader "DD/SkyPlate"
                 half4 _BaseColor;
                 float4 _ScrollUV;
                 half _AlphaPower;
+                float _BottomEdgeAA;
+                float _BottomPanoramaReveal;
                 half4 _HazeColor;
                 half _Haze;
             CBUFFER_END
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
 
             struct Attributes { float4 positionOS : POSITION; float2 uv : TEXCOORD0; UNITY_VERTEX_INPUT_INSTANCE_ID };
-            struct Varyings { float4 positionCS : SV_POSITION; float2 uv : TEXCOORD0; UNITY_VERTEX_INPUT_INSTANCE_ID UNITY_VERTEX_OUTPUT_STEREO };
+            struct Varyings { float4 positionCS : SV_POSITION; float2 uv : TEXCOORD0; float originalV : TEXCOORD1; UNITY_VERTEX_INPUT_INSTANCE_ID UNITY_VERTEX_OUTPUT_STEREO };
 
             Varyings Vert(Attributes input)
             {
@@ -64,14 +68,22 @@ Shader "DD/SkyPlate"
                     output.positionCS.z = output.positionCS.w * (1.0 - 1.0e-5);
                 #endif
                 output.uv = TRANSFORM_TEX(input.uv, _BaseMap) + _Time.y * _ScrollUV.xy;   // C3: the cloud planes drift with the cookie (0 on the plates)
+                output.originalV = input.uv.y;
                 return output;
             }
 
             half4 Frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_INSTANCE_ID(input);
+                float footprint = fwidth(input.originalV);
                 half4 c = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv) * _BaseColor;
                 c.a = pow(saturate(c.a), _AlphaPower);   // AD S3 thinned the cover; DEC-101 thickens it (overcast)
+                if (_BottomEdgeAA == 1.0)
+                    c.a *= footprint > 0.0 ? saturate(input.originalV / footprint) : 1.0;
+                // AP023-sky-v002 plate_from authors fog into the bottom 0.16 of V.
+                // User's panorama choice reveals the background over that existing domain; no new width parameter.
+                if (_BottomPanoramaReveal == 1.0)
+                    c.a *= smoothstep(0.0, 0.16, input.originalV);
                 c.rgb = lerp(c.rgb, _HazeColor.rgb, _Haze);   // DEC-101: distant layers fade into the haze
                 return c;   // no MixFog on purpose (AP-019 contract: fog-excluded)
             }

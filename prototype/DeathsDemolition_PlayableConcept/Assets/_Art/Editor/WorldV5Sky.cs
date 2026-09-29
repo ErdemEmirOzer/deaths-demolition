@@ -180,6 +180,8 @@ namespace DD.Art.Pipeline.EditorTools
             m.SetColor("_BaseColor", Color.white);
             m.SetVector("_ScrollUV", new Vector4(scroll.x, scroll.y, 0f, 0f));
             m.SetFloat("_AlphaPower", 1f);
+            m.SetFloat("_BottomEdgeAA", role == "horizon_near_v2" ? 1f : 0f);
+            m.SetFloat("_BottomPanoramaReveal", role == "horizon_near_v2" ? 1f : 0f);
             m.SetFloat("_Haze", 0f);
             m.SetColor("_HazeColor", new Color(0.815f, 0.843f, 0.870f, 1f));   // DEC-076 fog colour (WorldAtmosphere.FogColor)
             m.renderQueue = queue;
