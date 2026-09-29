@@ -112,8 +112,8 @@ namespace DD.Prototype.UI
         {
             Id = entry.Id;
             Kind = entry.Kind;
-            Title = entry.Title;
-            Detail = entry.Detail;
+            Title = ProfileContentCopy.CosmeticTitle(entry);
+            Detail = ProfileContentCopy.UnlockDetail(entry.Id, entry.Detail);
             Unlocked = entry.Unlocked;
             IsNew = entry.IsNew;
             Selected = entry.Selected;
@@ -323,7 +323,7 @@ namespace DD.Prototype.UI
         {
             int required = lookup.UnlockLevelFor(branch);
             model.Unlocks.Add(new UiUnlockLine(
-                UiStrings.Format("profile.branch_line", "value", lookup.BranchDisplayName(branch), "{value} branch"),
+                UiStrings.Format("profile.branch_line", "value", ProfileContentCopy.BranchName(branch, lookup.BranchDisplayName(branch)), "{value} branch"),
                 ProfileProgression.IsBranchEntitled(profile, branch),
                 required));
         }
@@ -507,6 +507,83 @@ namespace DD.Prototype.UI
                 : UiStrings.Format("ach.progress", "value", model.Earned.ToString(), "total", model.Defined.ToString(), "{value} of {total} earned");
 
             return model;
+        }
+    }
+
+    /// <summary>Localizes existing profile/catalog copy at the UI boundary; never changes identity or grants.</summary>
+    internal static class ProfileContentCopy
+    {
+        public static string BranchName(UpgradeBranch branch, string fallback)
+        {
+            if (UiStrings.Language != UiStrings.Turkish) return fallback;
+            string key;
+            switch (branch)
+            {
+                case UpgradeBranch.Piercing: key = "tree.run.branch.piercing.name"; break;
+                case UpgradeBranch.Ricochet: key = "tree.run.branch.ricochet.name"; break;
+                case UpgradeBranch.Explosion: key = "tree.run.branch.explosion.name"; break;
+                case UpgradeBranch.Chain: key = "tree.run.branch.chain.name"; break;
+                case UpgradeBranch.FireRate: key = "tree.run.branch.fire_rate.name"; break;
+                case UpgradeBranch.ReloadSpeed: key = "tree.run.branch.reload_speed.name"; break;
+                case UpgradeBranch.MovementSpeed: key = "tree.run.body.move.name"; break;
+                case UpgradeBranch.MaximumHealth: key = "tree.run.body.max_health.name"; break;
+                case UpgradeBranch.RegenerationDelay: key = "tree.run.body.regen_delay.name"; break;
+                case UpgradeBranch.RegenerationRate: key = "tree.run.body.regen_rate.name"; break;
+                case UpgradeBranch.ArmorBreak: key = "tree.run.branch.armor_break.name"; break;
+                case UpgradeBranch.Impact: key = "tree.run.branch.impact.name"; break;
+                case UpgradeBranch.Cluster: key = "tree.run.branch.cluster.name"; break;
+                default: return fallback;
+            }
+            return UiStrings.Get(key, fallback);
+        }
+
+        public static string CosmeticTitle(CosmeticEntry entry)
+        {
+            string title = entry.Title ?? string.Empty;
+            if (UiStrings.Language != UiStrings.Turkish) return title;
+            string prefix = entry.Kind == CosmeticKind.Title ? "Title: " : entry.Kind == CosmeticKind.Badge ? "Badge: " : null;
+            if (prefix == null || !title.StartsWith(prefix, StringComparison.Ordinal)) return title;
+            return UiStrings.Format(entry.Kind == CosmeticKind.Title ? "profile.cosmetic.title_format" : "profile.cosmetic.badge_format",
+                "name", title.Substring(prefix.Length), title);
+        }
+
+        public static string UnlockDetail(string id, string fallback)
+        {
+            if (UiStrings.Language != UiStrings.Turkish) return fallback;
+            UnlockDefinition definition = UnlockCatalog.Find(id);
+            if (definition == null) return fallback;
+            if (definition.Type == UnlockContentType.Weapon &&
+                fallback == "Classic weapon - opens at profile level " + definition.NumericKey + " (weapon roster)")
+            {
+                return UiStrings.Format("results.reward.weapon_roster", "level", definition.NumericKey.ToString(), fallback);
+            }
+            string count = definition.Condition == UnlockCondition.Achievement
+                ? AchievementCatalog.Find(definition.Key)?.Threshold.ToString() ?? string.Empty
+                : definition.NumericKey.ToString();
+            return UiStrings.Format("profile.content." + id + ".detail", "count", count, fallback);
+        }
+
+        public static string RewardDetail(string title, string fallback)
+        {
+            if (UiStrings.Language != UiStrings.Turkish) return fallback;
+            if (fallback == "Classic weapon - selectable before your next run")
+                return UiStrings.Get("results.reward.weapon_selectable", fallback);
+            if (fallback == "Upgrade branch - can now be offered at the end of a round")
+                return UiStrings.Get("results.reward.branch_offered", fallback);
+            foreach (UnlockDefinition definition in UnlockCatalog.Entries)
+            {
+                if (definition.DisplayName == title && definition.Detail == fallback)
+                    return UnlockDetail(definition.Id, fallback);
+            }
+            foreach (AchievementDefinition definition in AchievementCatalog.Definitions)
+            {
+                if (definition.DisplayName != title || definition.Description != fallback) continue;
+                // The old Namekuji key describes the player sliding; this catalog reward describes enemies sliding.
+                string key = definition.Id == "namekuji_skater" ? "results.reward.achievement.namekuji_skater.desc" : "achievement." + definition.Id + ".desc";
+                string copy = UiStrings.Get(key, fallback);
+                return copy.Replace("{count}", definition.Threshold.ToString()).Replace("{round}", definition.Threshold.ToString());
+            }
+            return fallback;
         }
     }
 }

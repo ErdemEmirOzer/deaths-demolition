@@ -255,7 +255,7 @@ namespace DD.Prototype.UI
                 if (at > level && at < best && at < ProfileService.NotInBuildUnlockLevel)
                 {
                     best = at;
-                    name = lookup.BranchDisplayName(branch);
+                    name = ProfileContentCopy.BranchName(branch, lookup.BranchDisplayName(branch));
                 }
             }
 

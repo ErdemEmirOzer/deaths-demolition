@@ -1116,8 +1116,11 @@ namespace DD.Prototype.UI
             IInputRemapService remap = PrototypeInputInstaller.Instance != null ? PrototypeInputInstaller.Instance.Remap : null;
             var focusables = new List<Selectable>(16);
 
-            RectTransform columns = UiFactory.NewRect("Columns", _paneHost);
-            stack.Add(columns, ControlsColumnsHeight);
+            UiScrollView scroll = UiScrollView.Create("ControlsScroll", _paneHost);
+            ((RectTransform)scroll.transform).offsetMax = new Vector2(0f, -stack.Cursor);
+            stack = new UiStack(scroll.Content);
+            RectTransform columns = UiFactory.NewRect("Columns", scroll.Content);
+            stack.Add(columns, 0f);
             RectTransform left = UiFactory.NewRect("Keyboard", columns);
             UiFactory.Fill(left);
             left.anchorMax = new Vector2(0.5f, 1f);
@@ -1151,10 +1154,15 @@ namespace DD.Prototype.UI
             rightButtons.Add(assist);
             rightButtons.Add(rumble);
 
+            // Reserve the actual scaled gamepad options as well as the keyboard rows.
+            float columnsHeight = Mathf.Max(leftStack.Cursor, rightStack.Cursor);
+            columns.sizeDelta = new Vector2(0f, columnsHeight);
+            stack.Cursor += columnsHeight;
+
             // AD v006 MUST-7: reset as a full-width footer row under both columns, the
             // overrides file name right-aligned on the same row.
             stack.Gap(UiSpace.XL);
-            RectTransform footer = UiFactory.NewRect("Footer", _paneHost);
+            RectTransform footer = UiFactory.NewRect("Footer", scroll.Content);
             stack.Add(footer, UiTokens.TargetCompact);
             UiButton reset = UiFactory.Button("ResetBindings", footer, UiStrings.Get("controls.reset", "RESET ALL BINDINGS TO DEFAULTS"), UiButtonVariant.Secondary, () =>
             {
@@ -1164,21 +1172,26 @@ namespace DD.Prototype.UI
                 }
 
                 UiEvents.Raise(UiEvent.Confirm, "ResetBindings");
-                _refocusName = "Footer/ResetBindings";
+                _refocusName = "ControlsScroll/Viewport/Content/Footer/ResetBindings";
                 RedrawPane();
             });
             RectTransform resetRect = (RectTransform)reset.transform;
             resetRect.anchorMin = new Vector2(0f, 0.5f);
             resetRect.anchorMax = new Vector2(0f, 0.5f);
             resetRect.pivot = new Vector2(0f, 0.5f);
-            resetRect.sizeDelta = new Vector2(420f, UiTokens.TargetCompact);
+            // Keep the existing minimum, but reserve the current font/scale's complete localized label plus button insets.
+            float labelWidth = reset.LabelText.GetPreferredValues(reset.LabelText.text).x + (int)UiSpace.L * 2;
+            float resetWidth = Mathf.Max(420f, Mathf.Ceil(labelWidth / (int)UiSpace.S) * (int)UiSpace.S);
+            resetRect.sizeDelta = new Vector2(Mathf.Min(scroll.Content.rect.width, resetWidth), UiTokens.TargetCompact);
             resetRect.anchoredPosition = Vector2.zero;
             TMP_Text file = UiFactory.Label(
                 "File", footer, remap != null ? UiStrings.Format("controls.file", "value", Path.GetFileName(remap.OverridesFilePath), "Overrides: {value}") : UiStrings.Get("controls.no_service", "Input service not running."),
                 UiType.Caption, UiColor.TextMuted, TextAnchor.MiddleRight);
             RectTransform fileRect = UiFactory.Fill((RectTransform)file.transform);
-            fileRect.offsetMin = new Vector2(440f, 0f);
+            fileRect.offsetMin = new Vector2(resetRect.sizeDelta.x + 20f, 0f);
             leftButtons.Add(reset);
+            scroll.SetContentHeight(stack.Cursor);
+            scroll.TrackSelectables();
 
             UiInput.ChainVertical(false, leftButtons.ToArray());
             UiInput.ChainVertical(false, rightButtons.ToArray());
@@ -1207,8 +1220,6 @@ namespace DD.Prototype.UI
                 }
             }
         }
-
-        private const float ControlsColumnsHeight = 500f; // 9 slots × 48 + heading; gamepad column shorter
 
         private void AddRemapColumn(ref UiStack stack, string heading, DD.Prototype.Core.InputAbstraction.InputSchemeKind scheme, IInputRemapService remap, List<Selectable> buttons)
         {
@@ -1349,13 +1360,13 @@ namespace DD.Prototype.UI
 
         private string FindSlotPath(string entryId)
         {
-            Transform t = _paneHost.Find("Columns/Keyboard/Slot." + entryId + "/Bind." + entryId);
+            Transform t = _paneHost.Find("ControlsScroll/Viewport/Content/Columns/Keyboard/Slot." + entryId + "/Bind." + entryId);
             if (t == null)
             {
-                t = _paneHost.Find("Columns/Gamepad/Slot." + entryId + "/Bind." + entryId);
+                t = _paneHost.Find("ControlsScroll/Viewport/Content/Columns/Gamepad/Slot." + entryId + "/Bind." + entryId);
             }
 
-            return t != null ? "Columns/" + t.parent.parent.name + "/" + t.parent.name + "/" + t.name : null;
+            return t != null ? "ControlsScroll/Viewport/Content/Columns/" + t.parent.parent.name + "/" + t.parent.name + "/" + t.name : null;
         }
 
         private static void UpdatePreferences(System.Action<InputPreferences> edit)

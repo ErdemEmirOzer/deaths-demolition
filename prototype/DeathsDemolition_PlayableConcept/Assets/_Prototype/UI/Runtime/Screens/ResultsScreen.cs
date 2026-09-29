@@ -530,7 +530,8 @@ namespace DD.Prototype.UI
             titleRect.offsetMin = new Vector2(textLeft, UiFactory.ScaledBand(RewardDetailBand));
             titleRect.offsetMax = new Vector2(-64f, 0f);
 
-            string detailText = string.IsNullOrEmpty(typeLabel) ? entry.Detail : typeLabel + "  ·  " + entry.Detail;
+            string localizedDetail = ProfileContentCopy.RewardDetail(entry.Title, entry.Detail);
+            string detailText = string.IsNullOrEmpty(typeLabel) ? localizedDetail : typeLabel + "  ·  " + localizedDetail;
             TMP_Text detail = UiFactory.Label("Detail", content, UiFactory.Clip(detailText, 120), UiType.Caption, UiColor.TextSecondary, TextAnchor.UpperLeft);
             RectTransform detailRect = UiFactory.Fill((RectTransform)detail.transform);
             detailRect.offsetMin = new Vector2(textLeft, 0f);
