@@ -339,6 +339,12 @@ namespace DD.Art.Tests.PlayMode
             string path = S06PalmSurfaceObserver.Argument("-ddS06PalmProof");
             if (string.IsNullOrEmpty(path))
                 Assert.Ignore("S-06 imported-surface diagnostic not requested (-ddS06PalmProof absent)");
+            string correspondencePath = S06PalmSurfaceObserver.Argument("-ddS06CorrespondenceProof");
+            if (!string.IsNullOrEmpty(correspondencePath))
+            {
+                Assert.IsFalse(string.Equals(System.IO.Path.GetFullPath(path), System.IO.Path.GetFullPath(correspondencePath), StringComparison.OrdinalIgnoreCase), "Palm and correspondence output paths must be distinct");
+                Assert.IsFalse(System.IO.File.Exists(path) || System.IO.File.Exists(correspondencePath), "Correspondence run requires fresh output paths; no prior proof overwrite");
+            }
             UiDataPaths.SetRootOverride(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(path), "ui-sandbox"));
             SceneManager.LoadScene(PrototypeScenes.Boot, LoadSceneMode.Single);
             yield return null;
@@ -363,6 +369,11 @@ namespace DD.Art.Tests.PlayMode
             bool measured = observer.ImportedSurfaceObserved;
             UnityEngine.Object.Destroy(observer);
             Assert.IsTrue(System.IO.File.Exists(path), "Actual observer proof output missing");
+            if (!string.IsNullOrEmpty(correspondencePath))
+            {
+                Assert.IsTrue(System.IO.File.Exists(correspondencePath), "Requested same-frame correspondence arrays/UNKNOWN receipt missing; no retake");
+                StringAssert.Contains("s06.same-frame-imported-baked-arrays.v1", System.IO.File.ReadAllText(correspondencePath), "Correspondence receipt overwritten or wrong schema");
+            }
             Assert.IsTrue(measured, "Imported surface or actual identity unavailable; preserve JSON UNKNOWN, no retake");
         }
 
@@ -870,6 +881,102 @@ namespace DD.Art.Tests.PlayMode
         [Serializable] public sealed class HumanMap { public string humanName, boneName; public bool useDefaultLimits; public Vector3 minimum, maximum, center; public float axisLength; }
         [Serializable] public sealed class RestBone { public string name; public Vector3 position, scale; public Quaternion rotation; }
         [Serializable] public sealed class MuscleScalar { public string name; public float normalizedValue; }
+        [Serializable] public sealed class VertexLayout
+        {
+            public string attribute, format;
+            public int dimension, stream, offset, stride;
+        }
+        [Serializable] public sealed class UvArray { public int channel, dimension; public Vector4[] values; }
+        [Serializable] public sealed class SubmeshArray
+        {
+            public string topology;
+            public int indexStart, indexCount, baseVertex, firstVertex, vertexCount;
+            public int[] canonicalIndices;
+            public string indicesDomain = "GetIndices(applyBaseVertex:true); baseVertex already applied exactly once";
+        }
+        [Serializable] public sealed class SkinInfluence { public int boneIndex, weightFloat32Bits; public float weight; }
+        [Serializable] public sealed class MatrixArray { public float[] rowMajor; }
+        [Serializable] public sealed class EffectiveImporter
+        {
+            public string access = "UNKNOWN_NOT_CAPTURED", error, animationType, avatarSetup, sourceAvatarReference, skinWeights, normalMode, tangentMode, metaSha256;
+            public bool isReadable, bakeAxisConversion, useFileUnits, weldVertices, keepQuads, optimizeMeshPolygons, optimizeMeshVertices, optimizeBones, optimizeGameObjects, customSkinPruningActive;
+            public float globalScale, minBoneWeight;
+            public int maxBonesPerVertex;
+        }
+        [Serializable] public sealed class MeshArrays
+        {
+            public string access = "UNKNOWN_NOT_CAPTURED", error, indexFormat, positionsFloat32LittleEndianBase64;
+            public string domain;
+            public int vertexCount;
+            public Vector3[] positions, normals;
+            public Vector4[] tangents;
+            public Color[] colors;
+            public VertexLayout[] layout;
+            public UvArray[] uvChannels;
+            public SubmeshArray[] submeshes;
+        }
+        // Additive raw primitives only: actual instance-loaded metadata and separately timed disk bytes.
+        [Serializable] public sealed class ModuleClock
+        {
+            public string access = "UNKNOWN", utc, phase, stage, unityVersion, error;
+            public int frameCount = -1;
+            public float timeSeconds, deltaTimeSeconds, realtimeSinceStartupSeconds;
+            public long stopwatchTicks;
+        }
+        [Serializable] public sealed class AssemblyDiskRead
+        {
+            public string access = "UNKNOWN_NOT_READ", path, fileSha256, error;
+            public long bytesRead = -1;
+            public ModuleClock readBegin, readEnd;
+            public string identityLimit = "Assembly.Location disk bytes during this read; not the loaded or mapped image SHA";
+        }
+        [Serializable] public sealed class LoadedTypeModule
+        {
+            public string role, actualTypeFullName, assemblyFullName, moduleName, mvid, location, error;
+            public string mvidAccess = "UNKNOWN", locationAccess = "UNKNOWN";
+            public string mvidSource = "Actual instance.GetType().Module.ModuleVersionId; never parsed from a disk DLL";
+            public string mappedImageSha256, mappedImageShaAccess = "UNKNOWN_NOT_READ_FROM_MAPPED_IMAGE";
+            public ModuleClock reflectionBegin, reflectionEnd;
+            public AssemblyDiskRead onDiskIdentity = new AssemblyDiskRead();
+        }
+        [Serializable] public sealed class LoadedModuleBoundary
+        {
+            public string schema = "s06.actual-loaded-type-module-boundary.v1";
+            public string access = "UNKNOWN_PAIRED_RAW_BODY_BAKE_NOT_REACHED";
+            public string observerSourceClaim, sourceClaimLimit = "Caller source origin, not executing HEAD or loaded-code SHA";
+            public string boundaryLimit = "Readonly before/after the ONE existing exact Body BakeMesh(false); primitive availability does not grant runtime or scientific acceptance";
+            public ModuleClock beforeBake, afterBake;
+            public LoadedTypeModule observerBeforeBake, observerAfterBake, playerRuntimeBeforeBake, playerRuntimeAfterBake;
+        }
+        [Serializable] public sealed class CorrespondenceProof
+        {
+            public string schema = "s06.same-frame-imported-baked-arrays.v1";
+            public string status = "UNKNOWN_SOURCE_TO_IMPORTED_TO_BAKED_MAPPING", observerSourceSha, utc, unityVersion, error;
+            public string mappingLimit = "Raw observation only. Counts/topology alone do not prove source corner or duplicate vertex identity. No closest-grip triangle chooses anatomy.";
+            public string skinAccess = "UNKNOWN_NOT_CAPTURED", skinError;
+            public string effectiveSkinLimit = "Stored influences are observed without normalization/pruning. Renderer/QualitySettings policies recorded; CPU/GPU effective correspondence not assumed.";
+            public string bakeDomain = "ONE existing BakeMesh(false) sample, renderer-local; baked positions to world via recorded localToWorld exactly once; no extra scale";
+            public string rendererQuality, qualitySkinWeights, bakedSnapshotSha256;
+            public int frameCount, exactBodyMeshMatches;
+            public bool originalIsReadable, rendererEnabled, rendererActive, rendererVisible;
+            public float timeSeconds, deltaTimeSeconds;
+            public AssetId importedMesh, avatar;
+            public bool avatarValid, avatarHuman;
+            public string observedState, observedWeaponId, stage;
+            public int observedWeaponParameter;
+            public EffectiveImporter effectiveImporter;
+            public TransformId renderer;
+            public Vector3 gripWorld;
+            public ClipId[] activeUpperClips;
+            public MeshArrays importedRest, bakedRendererLocal;
+            public TransformId[] rendererBones;
+            public LoadedModuleBoundary loadedModuleBoundary;
+            public MatrixArray[] importedBindposes;
+            public int[] bonesPerVertex;
+            public SkinInfluence[] allBoneWeights;
+            public string[] blendshapeNames;
+            public float[] blendshapeWeights;
+        }
         [Serializable] public sealed class Proof
         {
             public string schema = "s06.imported-skin-grip-observer.v1";
@@ -881,7 +988,7 @@ namespace DD.Art.Tests.PlayMode
             public string expectedWeapon = "ar_1 / HINAWA, legacy Aim_0", observedWeaponAnimSet, observedState, error;
             public string testIdentity = "DD.Art.Tests.PlayMode.AnimationTests.S06_LegacyAr1_ImportedSurface_OnePostHumanoidFrame", unityVersion, observedWeaponId, observedDisplayName, observedFireMode, observedWorldSource, observedWorldScene, classicModelSource, libraryRosterKey, libraryModelPackage;
             public AssetId[] candidateLod0SkinMeshes;
-            public bool actualLoadedLegacyIdentityKnown, specialWeaponActive, actualModelMeshSourcesMatchLibrary;
+            public bool actualLoadedLegacyIdentityKnown, specialWeaponActive, actualModelMeshSourcesMatchLibrary, avatarValid, avatarHuman;
             public AssetId[] actualModelMeshes;
             public string activeClipTimeLimit = "Fractional state normalized time times clip length is a state-clock estimate, not source animation sample/correspondence proof";
             public int observedWeaponParameter, activeAuthoredClassicModelCount;
@@ -899,6 +1006,7 @@ namespace DD.Art.Tests.PlayMode
             public Vector3 observedGripWorldPoint;
             public float socketToObservedGripMetres;
             public Surface surface;
+            public LoadedModuleBoundary loadedModuleBoundary = new LoadedModuleBoundary();
             public string counterPart = "WAIT: f44 FP diagnostic inputs absent in frozen legacy TP candidate; FP remains OFF; no extra intake/sample";
             public string proofLimit = "Loaded source/Avatar/mesh identities and observed imported surface can be proven; source CP equivalence/anatomical palm/contact/cause/fix cannot. Historical bone-midpoint proxies are not surface landmarks.";
         }
@@ -945,6 +1053,11 @@ namespace DD.Art.Tests.PlayMode
                 frameCount = Time.frameCount, timeSeconds = Time.time, deltaTimeSeconds = Time.deltaTime,
                 fpArmsEnabled = PlayerSkinnedVisual.FirstPersonV3Arms, tpSpecialDefaultEnabled = PlayerSkinnedVisual.TpV3On("sw_arc") };
             try { Observe(p); ImportedSurfaceObserved = p.actualLoadedLegacyIdentityKnown && p.surface != null; if (ImportedSurfaceObserved) p.status = "PARTIAL_IMPORTED_SURFACE_OBSERVED_ANATOMY_AND_SOURCE_MAPPING_UNKNOWN"; } catch (Exception e) { p.error = e.ToString(); p.status = "UNKNOWN_OBSERVER_ACCESS_OR_PLUMBING"; }
+            string correspondencePath = Argument("-ddS06CorrespondenceProof");
+            if (!string.IsNullOrEmpty(correspondencePath) && !System.IO.File.Exists(correspondencePath))
+                try { WriteCorrespondence(correspondencePath, new CorrespondenceProof { observerSourceSha = p.observerSourceSha, utc = p.utc,
+                    frameCount = p.frameCount, unityVersion = p.unityVersion, loadedModuleBoundary = p.loadedModuleBoundary, error = p.error ?? "Requested capture was not reached; no alternate sample or retake" }); }
+                catch (Exception e) { p.error = (p.error ?? "") + "\nCorrespondence receipt write failed: " + e; }
             try
             {
                 System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(OutputPath));
@@ -969,6 +1082,7 @@ namespace DD.Art.Tests.PlayMode
             p.observedState = state.IsName(C.AimState + "_0") ? "Aim_0" : state.shortNameHash.ToString(CultureInfo.InvariantCulture);
             p.stateTransition = an.IsInTransition(layer); p.observedWeaponParameter = an.GetInteger(C.Weapon); p.observedWeaponAnimSet = Visual.WeaponAnimSet;
             p.avatar = Identity(an.avatar);
+            p.avatarValid = an.avatar.isValid; p.avatarHuman = an.avatar.isHuman;
             p.playerPrefab = Identity(CharacterAssetSet.Load().PlayerPrefab);
             p.baseController = Identity(an.runtimeAnimatorController);
                         var library = ClassicWeaponVisualLibrary.Current; var entry = library != null ? library.Find(wc.Classic.Id) : null;
@@ -1034,18 +1148,104 @@ namespace DD.Art.Tests.PlayMode
             p.authoredGripOffsetWorldPoint = model.TransformPoint(def.GripOffset);
             if (marker == null) throw new InvalidOperationException("No actual authored right-grip marker; geometry target not guessed");
             p.observedGripWorldPoint = marker.position; p.socketToObservedGripMetres = Vector3.Distance(rig.WeaponMount.parent.position, marker.position);
-            p.surface = ClosestActualSkin(Visual.Renderers, marker.position);
+            p.surface = ClosestActualSkin(Visual.Renderers, marker.position, p);
         }
-        private static Surface ClosestActualSkin(SkinnedMeshRenderer[] renderers, Vector3 grip)
+        private static ModuleClock ModuleTime(string stage, string phase)
+        {
+            var clock = new ModuleClock { stage = stage, phase = phase };
+            try
+            {
+                clock.utc = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture);
+                clock.stopwatchTicks = System.Diagnostics.Stopwatch.GetTimestamp();
+                clock.unityVersion = Application.unityVersion; clock.frameCount = Time.frameCount;
+                clock.timeSeconds = Time.time; clock.deltaTimeSeconds = Time.deltaTime;
+                clock.realtimeSinceStartupSeconds = Time.realtimeSinceStartup;
+                clock.access = clock.frameCount >= 0 && !string.IsNullOrEmpty(clock.unityVersion)
+                    && Finite(clock.timeSeconds) && Finite(clock.deltaTimeSeconds) && Finite(clock.realtimeSinceStartupSeconds)
+                    ? "OBSERVED_UNITY_CLOCK" : "UNKNOWN_CLOCK_PRIMITIVE";
+            }
+            catch (Exception e) { clock.error = e.ToString(); clock.access = "UNKNOWN_CLOCK_ACCESS"; }
+            return clock;
+        }
+        private static LoadedTypeModule ReadLoadedTypeModule(object instance, string role, string stage, string phase)
+        {
+            var result = new LoadedTypeModule { role = role, reflectionBegin = ModuleTime(stage, phase + "/reflection-begin") };
+            try
+            {
+                if (instance == null) throw new InvalidOperationException("Actual instance unavailable; no declared-type or disk fallback");
+                var type = instance.GetType(); var module = type.Module; var assembly = type.Assembly;
+                result.actualTypeFullName = type.FullName; result.assemblyFullName = assembly.FullName; result.moduleName = module.Name;
+                try
+                {
+                    var value = module.ModuleVersionId;
+                    if (value != Guid.Empty) { result.mvid = value.ToString("D"); result.mvidAccess = "OBSERVED_ACTUAL_TYPE_MODULE_REFLECTION"; }
+                }
+                catch (Exception e) { result.error = "MVID unavailable: " + e; }
+                try
+                {
+                    result.location = assembly.Location;
+                    if (!string.IsNullOrEmpty(result.location)) result.locationAccess = "OBSERVED_ACTUAL_ASSEMBLY_LOCATION";
+                }
+                catch (Exception e) { result.error = (result.error ?? "") + "\nLocation unavailable: " + e; }
+            }
+            catch (Exception e) { result.error = (result.error ?? "") + "\nLoaded primitive unavailable: " + e; }
+            finally { result.reflectionEnd = ModuleTime(stage, phase + "/reflection-end"); }
+            if (!string.IsNullOrEmpty(result.location))
+            {
+                var disk = result.onDiskIdentity; disk.path = result.location;
+                disk.readBegin = ModuleTime(stage, phase + "/location-file-read-begin");
+                try
+                {
+                    if (!System.IO.Path.IsPathRooted(result.location)) throw new InvalidOperationException("Actual Assembly.Location is not absolute");
+                    var bytes = System.IO.File.ReadAllBytes(result.location); disk.bytesRead = bytes.LongLength;
+                    using (var sha = System.Security.Cryptography.SHA256.Create())
+                        disk.fileSha256 = BitConverter.ToString(sha.ComputeHash(bytes)).Replace("-", "").ToLowerInvariant();
+                    disk.access = "OBSERVED_LOCATION_FILE_BYTES_NOT_LOADED_IMAGE";
+                }
+                catch (Exception e) { disk.error = e.ToString(); disk.access = "UNKNOWN_LOCATION_FILE_READ"; }
+                finally { disk.readEnd = ModuleTime(stage, phase + "/location-file-read-end"); }
+            }
+            return result;
+        }
+        private Surface ClosestActualSkin(SkinnedMeshRenderer[] renderers, Vector3 grip, Proof observation)
         {
             Surface best = null; float bestD2 = float.PositiveInfinity; int ties = 0;
+            string correspondencePath = Argument("-ddS06CorrespondenceProof");
+            int bodyMatches = 0; bool correspondenceWritten = false;
+            if (!string.IsNullOrEmpty(correspondencePath))
+                foreach (var r in renderers) if (r != null && r.sharedMesh != null && IsExactBody(Identity(r.sharedMesh))) bodyMatches++;
             foreach (var r in renderers)
             {
                 if (r == null || r.sharedMesh == null || !r.name.EndsWith("_LOD0", StringComparison.Ordinal)) continue;
                 var baked = new Mesh { name = "S06_TransientActualSkin" };
                 try
                 {
-                    r.BakeMesh(baked, false); var verts = baked.vertices; string bakedSha = SnapshotHash(baked, verts); int globalTriangle = 0;
+                    LoadedModuleBoundary modules = null;
+                    if (!string.IsNullOrEmpty(correspondencePath) && bodyMatches == 1 && IsExactBody(Identity(r.sharedMesh)))
+                    {
+                        modules = observation.loadedModuleBoundary;
+                        modules.observerSourceClaim = observation.observerSourceSha;
+                        modules.access = "UNKNOWN_STARTED_BEFORE_EXISTING_BODY_BAKE";
+                        modules.observerBeforeBake = ReadLoadedTypeModule(this, "observer", observation.stage, "before-existing-body-bake");
+                        modules.playerRuntimeBeforeBake = ReadLoadedTypeModule(Visual, "actual-player-runtime", observation.stage, "before-existing-body-bake");
+                        modules.beforeBake = ModuleTime(observation.stage, "immediately-before-existing-body-bake");
+                    }
+                    r.BakeMesh(baked, false);
+                    if (modules != null)
+                    {
+                        modules.afterBake = ModuleTime(observation.stage, "immediately-after-existing-body-bake");
+                        modules.observerAfterBake = ReadLoadedTypeModule(this, "observer", observation.stage, "after-existing-body-bake");
+                        modules.playerRuntimeAfterBake = ReadLoadedTypeModule(Visual, "actual-player-runtime", observation.stage, "after-existing-body-bake");
+                        modules.access = "REFLECTION_ATTEMPTED_PRIMITIVE_AVAILABILITY_EXPLICIT_ACCEPTANCE_UNKNOWN";
+                    }
+                    var verts = baked.vertices; string bakedSha = SnapshotHash(baked, verts); int globalTriangle = 0;
+                    if (!string.IsNullOrEmpty(correspondencePath) && bodyMatches == 1 && IsExactBody(Identity(r.sharedMesh)))
+                    {
+                        var captured = CaptureCorrespondence(r, baked, bakedSha, grip, observation, bodyMatches);
+                        captured.loadedModuleBoundary = observation.loadedModuleBoundary;
+                        WriteCorrespondence(correspondencePath, captured);
+                        correspondenceWritten = true;
+                    }
                     for (int sub = 0; sub < baked.subMeshCount; sub++)
                     {
                         var indices = baked.GetTriangles(sub);
@@ -1071,8 +1271,197 @@ namespace DD.Art.Tests.PlayMode
                 }
                 finally { UnityEngine.Object.Destroy(baked); }
             }
+            if (!string.IsNullOrEmpty(correspondencePath) && !correspondenceWritten)
+                WriteCorrespondence(correspondencePath, new CorrespondenceProof { observerSourceSha = observation.observerSourceSha,
+                    utc = observation.utc, frameCount = observation.frameCount, exactBodyMeshMatches = bodyMatches, loadedModuleBoundary = observation.loadedModuleBoundary,
+                    error = "Exact hash/GUID/localID body renderer is absent or not unique; no alternate mesh or retake" });
             if (best != null) best.exactFloatTies = ties;
             return best;
+        }
+        private static bool IsExactBody(AssetId mesh)
+        {
+            return mesh != null && mesh.guid == "261e740b51f494918aac84a67d803f63" && mesh.fileId == "-1683454014250015237"
+                && mesh.fileSha256 == "26cff12942a4b99714aa4400f898b2fccbc8ae20249c92a5af2a03b908696d15";
+        }
+        private static void WriteCorrespondence(string path, CorrespondenceProof data)
+        {
+            System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path));
+            System.IO.File.WriteAllText(path, JsonUtility.ToJson(data, false));
+        }
+        private static CorrespondenceProof CaptureCorrespondence(SkinnedMeshRenderer r, Mesh baked, string bakedSha, Vector3 grip, Proof p, int bodyMatches)
+        {
+            var proof = new CorrespondenceProof { observerSourceSha = p.observerSourceSha, utc = p.utc, unityVersion = p.unityVersion,
+                frameCount = p.frameCount, timeSeconds = p.timeSeconds, deltaTimeSeconds = p.deltaTimeSeconds, exactBodyMeshMatches = bodyMatches,
+                importedMesh = Identity(r.sharedMesh), avatar = p.avatar, renderer = TransformOf(r.transform), gripWorld = grip,
+                avatarValid = p.avatarValid, avatarHuman = p.avatarHuman,
+                observedState = p.observedState, observedWeaponId = p.observedWeaponId, observedWeaponParameter = p.observedWeaponParameter, stage = p.stage,
+                activeUpperClips = p.activeUpperClips, originalIsReadable = r.sharedMesh.isReadable,
+                rendererEnabled = r.enabled, rendererActive = r.gameObject.activeInHierarchy, rendererVisible = r.isVisible,
+                rendererQuality = r.quality.ToString(), qualitySkinWeights = QualitySettings.skinWeights.ToString(), bakedSnapshotSha256 = bakedSha };
+            proof.importedRest = ReadMeshArrays(r.sharedMesh, "Imported mesh-local rest; source basis UNKNOWN until independently matched");
+            proof.bakedRendererLocal = ReadMeshArrays(baked, "Actual CPU posed renderer-local from same BakeMesh(false) instance");
+            proof.effectiveImporter = ReadEffectiveImporter(proof.importedMesh);
+            try
+            {
+                var bones = r.bones; proof.rendererBones = new TransformId[bones.Length];
+                for (int i = 0; i < bones.Length; i++)
+                {
+                    if (bones[i] == null) throw new InvalidOperationException("Null bound bone");
+                    proof.rendererBones[i] = TransformOf(bones[i]);
+                }
+                var bindposes = r.sharedMesh.bindposes; proof.importedBindposes = new MatrixArray[bindposes.Length];
+                for (int i = 0; i < bindposes.Length; i++)
+                {
+                    var values = new float[16]; for (int row = 0; row < 4; row++) for (int col = 0; col < 4; col++)
+                    {
+                        float value = bindposes[i][row, col]; if (!Finite(value)) throw new InvalidOperationException("Non-finite bindpose");
+                        values[4 * row + col] = value;
+                    }
+                    proof.importedBindposes[i] = new MatrixArray { rowMajor = values };
+                }
+                // Borrowed mesh storage: copy immediately; do not dispose or retain these views.
+                var counts = r.sharedMesh.GetBonesPerVertex(); var weights = r.sharedMesh.GetAllBoneWeights();
+                proof.bonesPerVertex = new int[counts.Length]; for (int i = 0; i < counts.Length; i++) proof.bonesPerVertex[i] = counts[i];
+                proof.allBoneWeights = new SkinInfluence[weights.Length]; int expectedWeights = 0;
+                foreach (int count in proof.bonesPerVertex) expectedWeights += count;
+                if (counts.Length != r.sharedMesh.vertexCount || expectedWeights != weights.Length || bindposes.Length != bones.Length)
+                    throw new InvalidOperationException("Stored skin slices/counts/bindpose/bone count mismatch");
+                for (int i = 0; i < weights.Length; i++)
+                {
+                    var w = weights[i];
+                    if (w.boneIndex < 0 || w.boneIndex >= bones.Length || !Finite(w.weight) || w.weight < 0f)
+                        throw new InvalidOperationException("Stored skin influence invalid/non-finite");
+                    proof.allBoneWeights[i] = new SkinInfluence { boneIndex = w.boneIndex, weight = w.weight,
+                        weightFloat32Bits = BitConverter.ToInt32(BitConverter.GetBytes(w.weight), 0) };
+                }
+                proof.blendshapeNames = new string[r.sharedMesh.blendShapeCount]; proof.blendshapeWeights = new float[r.sharedMesh.blendShapeCount];
+                for (int i = 0; i < proof.blendshapeNames.Length; i++)
+                {
+                    proof.blendshapeNames[i] = r.sharedMesh.GetBlendShapeName(i); proof.blendshapeWeights[i] = r.GetBlendShapeWeight(i);
+                    if (!Finite(proof.blendshapeWeights[i])) throw new InvalidOperationException("Non-finite blendshape weight");
+                }
+                proof.skinAccess = "COPIED_STORED_WEIGHTS_BINDPOSES_BONE_ORDER_NO_MUTATION";
+            }
+            catch (Exception e) { proof.skinAccess = "UNKNOWN_SKIN_ACCESS_OR_CONTRACT"; proof.skinError = e.ToString(); }
+            return proof;
+        }
+        private static bool Finite(float value) { return !float.IsNaN(value) && !float.IsInfinity(value); }
+        private static EffectiveImporter ReadEffectiveImporter(AssetId mesh)
+        {
+            var result = new EffectiveImporter();
+#if UNITY_EDITOR
+            try
+            {
+                var importer = UnityEditor.AssetImporter.GetAtPath(mesh.path) as UnityEditor.ModelImporter;
+                if (importer == null) throw new InvalidOperationException("Actual body ModelImporter unavailable");
+                result.animationType = importer.animationType.ToString(); result.avatarSetup = importer.avatarSetup.ToString();
+                var sourceAvatar = Identity(importer.sourceAvatar);
+                result.sourceAvatarReference = sourceAvatar == null ? "NOT_REFERENCED" : JsonUtility.ToJson(sourceAvatar);
+                result.isReadable = importer.isReadable; result.bakeAxisConversion = importer.bakeAxisConversion;
+                result.useFileUnits = importer.useFileUnits; result.globalScale = importer.globalScale;
+                result.weldVertices = importer.weldVertices; result.keepQuads = importer.keepQuads;
+                result.optimizeMeshPolygons = importer.optimizeMeshPolygons; result.optimizeMeshVertices = importer.optimizeMeshVertices;
+                result.optimizeBones = importer.optimizeBones; result.optimizeGameObjects = importer.optimizeGameObjects;
+                result.skinWeights = importer.skinWeights.ToString(); result.maxBonesPerVertex = importer.maxBonesPerVertex;
+                result.customSkinPruningActive = result.skinWeights == "Custom";
+                result.minBoneWeight = importer.minBoneWeight; result.normalMode = importer.importNormals.ToString(); result.tangentMode = importer.importTangents.ToString();
+                using (var sha = System.Security.Cryptography.SHA256.Create())
+                    result.metaSha256 = BitConverter.ToString(sha.ComputeHash(System.IO.File.ReadAllBytes(mesh.path + ".meta"))).Replace("-", "").ToLowerInvariant();
+                result.access = "OBSERVED_EFFECTIVE_IMPORTER_GETTERS_NO_MUTATION";
+            }
+            catch (Exception e) { result.access = "UNKNOWN_EFFECTIVE_IMPORTER_ACCESS"; result.error = e.ToString(); }
+#else
+            result.access = "UNKNOWN_EDITOR_IMPORTER_GETTERS_REQUIRED";
+#endif
+            return result;
+        }
+        private static MeshArrays ReadMeshArrays(Mesh mesh, string domain)
+        {
+            var result = new MeshArrays { domain = domain, vertexCount = mesh.vertexCount };
+#if UNITY_EDITOR
+            try
+            {
+                // Editor snapshot bypasses isReadable without changing importer/asset flags.
+                using (var snapshot = UnityEditor.MeshUtility.AcquireReadOnlyMeshData(mesh))
+                {
+                    var data = snapshot[0]; result.vertexCount = data.vertexCount; result.indexFormat = data.indexFormat.ToString();
+                    var layout = new List<VertexLayout>();
+                    foreach (UnityEngine.Rendering.VertexAttribute attribute in Enum.GetValues(typeof(UnityEngine.Rendering.VertexAttribute)))
+                        if (data.HasVertexAttribute(attribute))
+                        {
+                            int stream = data.GetVertexAttributeStream(attribute);
+                            layout.Add(new VertexLayout { attribute = attribute.ToString(), format = data.GetVertexAttributeFormat(attribute).ToString(),
+                                dimension = data.GetVertexAttributeDimension(attribute), stream = stream, offset = data.GetVertexAttributeOffset(attribute), stride = data.GetVertexBufferStride(stream) });
+                        }
+                    result.layout = layout.ToArray();
+                    using (var values = new Unity.Collections.NativeArray<Vector3>(data.vertexCount, Unity.Collections.Allocator.Temp))
+                    {
+                        data.GetVertices(values); result.positions = values.ToArray();
+                        foreach (var v in result.positions) if (!Finite(v.x) || !Finite(v.y) || !Finite(v.z)) throw new InvalidOperationException("Non-finite mesh position");
+                        result.positionsFloat32LittleEndianBase64 = PositionBytes(result.positions);
+                        if (data.HasVertexAttribute(UnityEngine.Rendering.VertexAttribute.Normal))
+                        {
+                            data.GetNormals(values); result.normals = values.ToArray();
+                            foreach (var v in result.normals) if (!Finite(v.x) || !Finite(v.y) || !Finite(v.z)) throw new InvalidOperationException("Non-finite mesh normal");
+                        }
+                    }
+                    using (var values = new Unity.Collections.NativeArray<Vector4>(data.vertexCount, Unity.Collections.Allocator.Temp))
+                    {
+                        if (data.HasVertexAttribute(UnityEngine.Rendering.VertexAttribute.Tangent))
+                        {
+                            data.GetTangents(values); result.tangents = values.ToArray();
+                            foreach (var v in result.tangents) if (!Finite(v.x) || !Finite(v.y) || !Finite(v.z) || !Finite(v.w)) throw new InvalidOperationException("Non-finite mesh tangent");
+                        }
+                        var uvs = new List<UvArray>();
+                        for (int channel = 0; channel < 8; channel++)
+                        {
+                            var attr = (UnityEngine.Rendering.VertexAttribute)((int)UnityEngine.Rendering.VertexAttribute.TexCoord0 + channel);
+                            if (!data.HasVertexAttribute(attr)) continue;
+                            int dimension = data.GetVertexAttributeDimension(attr);
+                            if (dimension < 1 || dimension > 4) throw new InvalidOperationException("Unsupported UV dimension");
+                            data.GetUVs(channel, values);
+                            var copied = values.ToArray();
+                            foreach (var v in copied) if (!Finite(v.x) || !Finite(v.y) || !Finite(v.z) || !Finite(v.w)) throw new InvalidOperationException("Non-finite mesh UV");
+                            uvs.Add(new UvArray { channel = channel, dimension = dimension, values = copied });
+                        }
+                        result.uvChannels = uvs.ToArray();
+                    }
+                    if (data.HasVertexAttribute(UnityEngine.Rendering.VertexAttribute.Color))
+                        using (var values = new Unity.Collections.NativeArray<Color>(data.vertexCount, Unity.Collections.Allocator.Temp))
+                        {
+                            data.GetColors(values); result.colors = values.ToArray();
+                            foreach (var v in result.colors) if (!Finite(v.r) || !Finite(v.g) || !Finite(v.b) || !Finite(v.a)) throw new InvalidOperationException("Non-finite mesh color");
+                        }
+                    result.submeshes = new SubmeshArray[data.subMeshCount];
+                    for (int sub = 0; sub < data.subMeshCount; sub++)
+                    {
+                        var descriptor = data.GetSubMesh(sub);
+                        using (var indices = new Unity.Collections.NativeArray<int>(descriptor.indexCount, Unity.Collections.Allocator.Temp))
+                        {
+                            data.GetIndices(indices, sub, true); var canonical = indices.ToArray();
+                            foreach (int index in canonical) if (index < 0 || index >= data.vertexCount) throw new InvalidOperationException("Mesh index out of range");
+                            result.submeshes[sub] = new SubmeshArray { topology = descriptor.topology.ToString(), indexStart = descriptor.indexStart,
+                                indexCount = descriptor.indexCount, baseVertex = descriptor.baseVertex, firstVertex = descriptor.firstVertex,
+                                vertexCount = descriptor.vertexCount, canonicalIndices = canonical };
+                        }
+                    }
+                    result.access = "COPIED_READ_ONLY_MESH_DATA_NO_IMPORTER_MUTATION";
+                }
+            }
+            catch (Exception e) { result.access = "UNKNOWN_MESH_DATA_ACCESS"; result.error = e.ToString(); }
+#else
+            result.access = "UNKNOWN_EDITOR_MESHUTILITY_REQUIRED_NO_READABILITY_CHANGE";
+#endif
+            return result;
+        }
+        private static string PositionBytes(Vector3[] positions)
+        {
+            using (var bytes = new System.IO.MemoryStream())
+            using (var writer = new System.IO.BinaryWriter(bytes))
+            {
+                foreach (var v in positions) { writer.Write(v.x); writer.Write(v.y); writer.Write(v.z); }
+                writer.Flush(); return Convert.ToBase64String(bytes.ToArray());
+            }
         }
         private static string SnapshotHash(Mesh baked, Vector3[] verts)
         {
