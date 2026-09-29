@@ -193,6 +193,19 @@ class Wp064StrictGateTests(unittest.TestCase):
             "mode": "release", "capApplicable": True, "capExceeded": True, "appMB": 550.1,
         }))
 
+    def test_dec093_release_cap_is_5120_mb(self):
+        gate = load_wp064_gate()
+        for size in (550.1, 1000.0, 5120.0):
+            with self.subTest(size=size):
+                self.assertTrue(gate.valid_release_footprint({
+                    "mode": "release-lz4hc", "capApplicable": True, "capExceeded": False, "appMB": size,
+                }))
+        for size in (5120.1, True, "1000", float("nan"), float("inf")):
+            with self.subTest(size=size):
+                self.assertFalse(gate.valid_release_footprint({
+                    "mode": "release", "capApplicable": True, "capExceeded": False, "appMB": size,
+                }))
+
     def test_malformed_root_fails_closed_without_traceback(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -215,6 +228,35 @@ class Wp064StrictGateTests(unittest.TestCase):
             self.assertEqual(2, bad_number.returncode)
             self.assertIn("finite and positive", bad_number.stderr)
 
+    def test_original_exit_receipt_requires_one_producer_integer_and_strict_type(self):
+        gate = load_wp064_gate()
+        with tempfile.TemporaryDirectory() as directory:
+            attempt = Path(directory) / "perf-1"
+            attempt.mkdir()
+            (attempt / "command.json").write_text("[]")
+            for raw, recorded, expected in (
+                    (b"exit=0\n", 0, True), (b"exit=3\n", 3, True),
+                    (b"exit=-9\n", -9, True), (b"exit=137\n", 0, False),
+                    (b"exit=0\n", False, False), (b"exit=0\n", "0", False),
+                    (b"exit=0\n", 0.0, False), (b"", 0, False), (b"0\n", 0, False),
+                    (b"exit=0\nexit=137\n", 0, False), (b"exit=00\n", 0, False),
+                    (b"exit=+0\n", 0, False), (b"exit=0 \n", 0, False),
+                    (b"exit=0\n\n", 0, False), (b"exit=false\n", 0, False),
+                    (b"exit=0.0\n", 0, False), (b"exit=0\xff", 0, False)):
+                with self.subTest(raw=raw, recorded=recorded):
+                    (attempt / "exit.txt").write_bytes(raw)
+                    (attempt / "attempt.json").write_text(json.dumps({"exitCode": recorded}))
+                    checks = []
+                    gate.validate_attempt(attempt, "perf", "a"*40, "binary", [],
+                                          lambda name, passed, value: checks.append((name, passed, value)))
+                    matches = [passed for name, passed, _ in checks if name == "perf-1.exitReceipt"]
+                    self.assertEqual([expected], matches)
+            (attempt / "exit.txt").unlink()
+            checks = []
+            gate.validate_attempt(attempt, "perf", "a"*40, "binary", [],
+                                  lambda name, passed, value: checks.append((name, passed, value)))
+            self.assertIn(("perf-1.exitReceipt", False), [(name, passed) for name, passed, _ in checks])
+
     def test_attempt_provenance_rejects_mixed_commit_and_stale_artifact(self):
         gate = load_wp064_gate()
         with tempfile.TemporaryDirectory() as directory:
@@ -224,6 +266,7 @@ class Wp064StrictGateTests(unittest.TestCase):
             metric = attempt / "04-window.json"
             command.write_text(json.dumps(["player", "-ddPilotScene", "Run"]), encoding="utf-8")
             metric.write_text(json.dumps({"frameMeanMs": 7.0}), encoding="utf-8")
+            (attempt / "exit.txt").write_text("exit=0\n", encoding="utf-8")
             commit = "a" * 40
             provenance = {
                 "schema": "dd-wp064-attempt-v1",
@@ -493,6 +536,17 @@ class Dec091ClosureSoakTests(unittest.TestCase):
         # ...unnamed, its build is checked against the default soak commit and fails
         self.assertIn("soak.soak-26.build", self.failed(self.soak_checks(mutate=mutate)))
 
+    def test_only_the_approved_stability_seed_pair_is_valid(self):
+        def mutate(runs, kwargs):
+            runs["soak-61"]["seed"] = 62
+            runs["soak-26"]["seed"] = 27
+        failed = self.failed(self.soak_checks(seeds="62,27", mutate=mutate))
+        self.assertIn("soak.stabilitySeeds", failed)
+
+    def test_repeated_real_report_does_not_count_as_five_runs(self):
+        failed = self.failed(self.soak_checks(report_dirs=("r1",) * 5))
+        self.assertIn("soak.realBotReport", failed)
+
 
 class ReleaseModeLabelTests(unittest.TestCase):
     """build-report.sh labels the mode with target / compression (WP-066W / 066C): the cap follows the base mode (r3 fix)."""
@@ -516,4 +570,3 @@ class ReleaseModeLabelTests(unittest.TestCase):
                 footprint = json.loads((build / "footprint.json").read_text(encoding="utf-8"))
                 self.assertEqual(mode + "-lz4hc", footprint["mode"])
                 self.assertIs(applies, footprint["capApplicable"], mode)
-

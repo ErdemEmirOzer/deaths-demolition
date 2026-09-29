@@ -13,7 +13,7 @@ import sys
 
 MEAN_MAX = 8.0
 P99_MAX = 10.0
-RELEASE_CAP_MB = 550.0
+RELEASE_CAP_MB = 5120.0        # DEC-093 supersedes DEC-086/090's 550 MB cap; LZ4HC remains unchanged.
 LOG_FAILURES = tuple(re.compile(pattern, re.IGNORECASE) for pattern in (
     r"\bShader error in\b",
     r"\berror CS\d+\b",
@@ -299,7 +299,7 @@ def stall_exclusion(window, frames):
                 "max": STALL_FRACTION_MAX, "rawP99FromCsv": raw_p99}
 
 
-def validate_attempt(attempt_dir, kind, commit, binary_hash, required, check):
+def validate_attempt(attempt_dir, kind, commit, binary_hash, required, check, allow_report_death=False):
     provenance = load_json(attempt_dir / "attempt.json", check)
     command_path = attempt_dir / "command.json"
     command = read_command(command_path, attempt_dir.name + ".commandJson", check)
@@ -307,8 +307,22 @@ def validate_attempt(attempt_dir, kind, commit, binary_hash, required, check):
     check(prefix + ".provenanceSchema", provenance.get("schema") == "dd-wp064-attempt-v1", provenance.get("schema"))
     check(prefix + ".provenanceKind", provenance.get("kind") == kind, provenance.get("kind"))
     check(prefix + ".provenanceCommit", provenance.get("executionCommit") == commit, provenance.get("executionCommit"))
-    check(prefix + ".provenanceComplete", provenance.get("status") == "complete" and provenance.get("exitCode") == 0,
+    exit_code = provenance.get("exitCode")
+    complete = type(exit_code) is int and ((provenance.get("status") == "complete" and exit_code == 0)
+               or (allow_report_death and provenance.get("status") == "failed" and exit_code == 3))
+    check(prefix + ".provenanceComplete", complete,
           f"{provenance.get('status')} exit={provenance.get('exitCode')}")
+    # wp064_run.py writes exactly one exit=<integer> receipt from Player.wait().
+    # Rehashing that file must never allow its original exit to disagree with the
+    # higher-level attempt record (including a killed/aborted Player).
+    try:
+        raw_exit = (attempt_dir / "exit.txt").read_bytes()
+        match = re.fullmatch(rb"exit=(0|-?[1-9][0-9]*)\n?", raw_exit)
+        observed_exit = int(match.group(1)) if match else None
+    except (OSError, ValueError):
+        raw_exit, observed_exit = b"", None
+    check(prefix + ".exitReceipt", type(exit_code) is int and observed_exit is not None and observed_exit == exit_code,
+          {"raw": raw_exit.decode("utf-8", errors="replace"), "observed": observed_exit, "attempt": exit_code})
     check(prefix + ".binary", provenance.get("binarySha256") == binary_hash, provenance.get("binarySha256"))
     check(prefix + ".commandHash", command_path.is_file() and provenance.get("commandSha256") == sha256(command_path),
           provenance.get("commandSha256"))
@@ -411,6 +425,7 @@ def main():
     parser.add_argument("--rounds", type=int, default=12)
     parser.add_argument("--window", type=int, default=60)
     parser.add_argument("--repo", default=str(Path(__file__).resolve().parents[2]))
+    parser.add_argument("--verify-only", action="store_true", help="recompute the complete closure; emit JSON without writing receipts")
     args = parser.parse_args()
     root = Path(args.root).resolve()
     release_dir = Path(args.release).resolve() if args.release else root / "build-release"
@@ -495,7 +510,8 @@ def main():
         command, provenance = validate_attempt(attempt, "perf", args.commit, dev_hash, required, check)
         attempt_id = provenance.get("attemptId")
         check(prefix + ".uniqueAttempt", isinstance(attempt_id, str) and bool(attempt_id) and attempt_id not in attempt_ids and attempt_id == row.get("attemptId"), attempt_id)
-        attempt_ids.add(attempt_id)
+        if isinstance(attempt_id, str) and attempt_id:
+            attempt_ids.add(attempt_id)
         preflight = load_json(attempt / "preflight.json", check)
         monitor = load_json(attempt / "host-monitor.json", check)
         scene = load_json(attempt / "01-scene-ready.json", check)
@@ -545,7 +561,7 @@ def main():
     soak_dirs = [name for name, _ in soak_specs]
     soak_dir_commit = dict(soak_specs)
     seeds = [int(x) for x in args.seeds.split(",") if x]
-    check("soak.stabilitySeeds", len(soak_dirs) == len(seeds) == 2 and len(set(seeds)) == 2, {"dirs": soak_dirs, "seeds": seeds})
+    check("soak.stabilitySeeds", len(soak_dirs) == len(seeds) == 2 and set(seeds) == {61, 26}, {"dirs": soak_dirs, "seeds": seeds})
     soak_required = ["command.json", "preflight.json", "host-monitor.json", "player.log", "exit.txt", "bot-summary.json", "qa-report.json", "events.txt"]
     soak_binaries = {}
     for soak_name, seed in zip(soak_dirs, seeds):
@@ -558,7 +574,8 @@ def main():
             soak_command, soak_provenance = validate_attempt(soak, "soak", soak_commit, binary_hash, soak_required, check)
             soak_id = soak_provenance.get("attemptId")
             check(prefix + ".uniqueAttempt", isinstance(soak_id, str) and bool(soak_id) and soak_id not in attempt_ids, soak_id)
-            attempt_ids.add(soak_id)
+            if isinstance(soak_id, str) and soak_id:
+                attempt_ids.add(soak_id)
             soak_preflight = load_json(soak / "preflight.json", check)
             soak_monitor = load_json(soak / "host-monitor.json", check)
             check(prefix + ".host", soak_preflight.get("pass") is True and soak_monitor.get("pass") is True and soak_monitor.get("timedOut") is False, "preflight+monitor")
@@ -590,13 +607,33 @@ def main():
         run = soak_root / report_name
         prefix = "report." + report_name
         summary = load_json(run / "bot-summary.json", check)
-        if not (run / "attempt.json").is_file():
+        if (run / "attempt.json").is_file():
+            binary_hash = dev_hash if report_commit == args.commit else external_build(soak_root, report_name, report_commit, check, prefix)[0]
+            command, provenance = validate_attempt(run, "soak", report_commit, binary_hash, soak_required, check, allow_report_death=True)
+            attempt_id = provenance.get("attemptId")
+            check(prefix + ".uniqueAttempt", isinstance(attempt_id, str) and bool(attempt_id) and attempt_id not in attempt_ids, attempt_id)
+            if isinstance(attempt_id, str) and attempt_id:
+                attempt_ids.add(attempt_id)
+            preflight = load_json(run / "preflight.json", check)
+            monitor = load_json(run / "host-monitor.json", check)
+            check(prefix + ".host", preflight.get("pass") is True and monitor.get("pass") is True and monitor.get("timedOut") is False, "preflight+monitor")
+            try:
+                command_ok = (int(flag_value(command, "-ddQaBotRounds")) == args.rounds
+                              and int(flag_value(command, "-ddQaBotSeed")) == summary.get("seed")
+                              and "-ddQaBotStability" not in command and "-ddQaBotInvulnerable" not in command)
+            except (TypeError, ValueError):
+                command_ok = False
+            check(prefix + ".command", command_ok, command)
+            player_logs.append(run / "player.log")
+        else:
             external_build(soak_root, report_name, report_commit, check, prefix)
-        real = summary.get("runMode") == "normal" and summary.get("seed") in seeds and summary.get("roundsRequested") == args.rounds
+        real = (summary.get("runMode") == "normal" and type(summary.get("seed")) is int and summary["seed"] in seeds
+                and type(summary.get("roundsRequested")) is int and summary["roundsRequested"] == args.rounds
+                and type(summary.get("roundsCompleted")) is int and 0 <= summary["roundsCompleted"] <= args.rounds)
         check(prefix + ".realBot", real, {key: summary.get(key) for key in ("runMode", "seed", "roundsRequested", "roundsCompleted", "deathRound")})
-        if real:
-            present.append(str(run / "bot-summary.json"))
-    real_bot = subprocess.run([sys.executable, str(Path(__file__).resolve().parent / "soak_gate.py"), "--report", *present],
+        if real and str(run.resolve()) not in present:
+            present.append(str(run.resolve()))
+    real_bot = subprocess.run([sys.executable, str(Path(__file__).resolve().parent / "soak_gate.py"), "--report", *(str(Path(p) / "bot-summary.json") for p in present)],
                               capture_output=True, text=True) if present else None
     real_bot_lines = real_bot.stdout.strip().splitlines() if real_bot and real_bot.stdout else []
     check("soak.realBotReport", len(present) >= 5 and real_bot is not None and real_bot.returncode == 0,
@@ -621,6 +658,9 @@ def main():
         "realBotReport": real_bot_lines,
         "checks": checks,
     }
+    if args.verify_only:
+        print(json.dumps(report, indent=2))
+        return 0 if passed else 1
     (root / "wp064-report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     lines = [f"WP-064 {'PASS' if passed else 'FAIL'} commit={args.commit} soakCommits={','.join(soak_commits)}"]
     lines += [f"{'PASS' if item['pass'] else 'FAIL'} {item['name']} = {item['value']}" for item in checks]

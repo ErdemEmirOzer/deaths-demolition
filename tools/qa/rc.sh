@@ -32,6 +32,7 @@ while [ $# -gt 0 ]; do
   esac
 done
 [ "$ROUNDS" -ge 12 ] || { echo "WP-061 RC requires --rounds >= 12" >&2; exit 64; }
+[ "$SEED" = "61" ] || [ "$SEED" = "26" ] || { echo "DEC-091 RC requires --seed 61 or 26" >&2; exit 64; }
 [ -n "$OUT" ] || OUT="$DD_BUILD_ROOT/rc-$(dd_utc)"
 if [ -d "$OUT" ] && [ -n "$(ls -A "$OUT" 2>/dev/null)" ]; then
   echo "refusing non-empty RC output directory: $OUT" >&2
@@ -83,7 +84,7 @@ fi
 echo "$$ $DD_PROJECT" > "$PROJECT_LOCK/owner.txt"
 
 finalize() {
-  python3 "$HERE/rc_aggregate.py" "$OUT" --repo "$REPO" --rounds "$ROUNDS" --start-epoch "$START_EPOCH" --failed-stage "$FAILED_STAGE"
+  DD_RC_M3_REPORT_ONLY=0 python3 "$HERE/rc_aggregate.py" "$OUT" --repo "$REPO" --rounds "$ROUNDS" --start-epoch "$START_EPOCH" --perf-runs "$PERF_RUNS" --window "$WINDOW" --failed-stage "$FAILED_STAGE"
   local agg=$?
   [ "$FAILED" -ne 0 ] && return "$FAILED"
   return "$agg"
@@ -112,7 +113,7 @@ trap 'finalize >/dev/null 2>&1 || true; cleanup' EXIT INT TERM
 stage full-editmode "$REPO/tools/test.sh" editmode --out "$OUT/full-editmode" --timeout-min 30 || exit "$FAILED"
 stage full-playmode "$REPO/tools/test.sh" playmode --out "$OUT/full-playmode" --timeout-min 60 || exit "$FAILED"
 stage release-smoke "$REPO/tools/build.sh" release --smoke --out "$OUT/release" || exit "$FAILED"
-# WP-064 v2 (S-10 finding 2): the Library state the release build ran on
+# MUST post-build receipt: capture immediately after release; wp064-closure verifies commit/Assets/clean/LFS/ArtifactDB.
 stage release-library python3 "$HERE/library_provenance.py" "$REPO" "$OUT/release/library-provenance.json" || exit "$FAILED"
 
 # Full suites above already include the QA EditMode and Armor PlayMode tests. Hand those XML files to
@@ -124,7 +125,9 @@ export DD_REQUIRE_ULTRA_EVIDENCE="1"
 export DD_READABILITY_ROUNDS="1,4,8,10,12"
 export DD_BOT_EXTRA="-ddQaBotFrames $OUT/m3/bot/tier-frames -ddUiCapture hud -ddUiCaptureOut $OUT/m3/bot/ui -ddUiCaptureRounds 1,2,4,8,12"
 export DD_PLAYER_TIMEOUT="${DD_PLAYER_TIMEOUT:-7200}"
-stage m3-regression "$REPO/tools/qa/regression.sh" "$OUT/m3" --rounds "$ROUNDS" --seed "$SEED" --perf-runs "$PERF_RUNS" --window "$WINDOW" --skip-tests --steps build,spawnmix,bot,perf,readability || exit "$FAILED"
+# Scope the DEC-091 adapter to this invocation. The raw M3 pass/original exit remain in qa-report.json;
+# only bot.rounds is report-only, all other gates (including optional probe policy) are unchanged.
+stage m3-regression env DD_RC_M3_REPORT_ONLY=1 DD_AGGREGATE="$HERE/rc_aggregate.py" "$REPO/tools/qa/regression.sh" "$OUT/m3" --rounds "$ROUNDS" --seed "$SEED" --perf-runs "$PERF_RUNS" --window "$WINDOW" --skip-tests --steps build,spawnmix,bot,perf,readability || exit "$FAILED"
 # DEC-091 (user 2026-09-24): the soak MUST is stability — seeds 61 and 26, ROUNDS each, the invulnerable-by-design bot
 # (-ddQaBotStability; rounds, log and memory checked by soak_gate.py --stability inside the closure gate). The real-bot run
 # of m3-regression and four more are a report (>= 5 runs, reached-round distribution not gated): a real-bot death does not stop the RC.
