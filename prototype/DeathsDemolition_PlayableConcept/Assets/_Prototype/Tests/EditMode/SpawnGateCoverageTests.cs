@@ -14,7 +14,7 @@ namespace DD.Prototype.Tests.EditMode
     /// WP-076 B6c (2/2) · §5.4 the v6 spawn coverage on the real v6 NavMesh (World_V6_Greybox, S-05 WP-074 B1): the gates of
     /// spawn-gates-v6.json, a 2 m grid over the walkable ±54 m, only cells connected to the player start.
     /// ASSERTED (C-00 decision C + D, 25.09): 22 gates, all reachable from the start; ≥ 3 gates within 22–45 m and ≥ 8
-    /// within 75 m of path, violations ≤ 10 % of cells; first contact median (nearest eligible gate ≥ 12 m, ≤ 75 m; the
+    /// within 75 m of path, violations ≤ 7 % of cells; first contact median (nearest eligible gate ≥ 12 m, ≤ 75 m; the
     /// Executioner ≤ 55 m) Standard ≤ 20 s, Runner ≤ 12 s, Executioner ≤ 35 s at the config walk speeds.
     /// REPORTED: the 3 % figure outside the corner belt (|x| and |z| ≤ 40 m), the straight-line variant and the 3 × 3
     /// sector breakdown ([DD-OBS] wp076.b6c). The 25.09 measurement: 18 gates / band ≥ 4 → 62 %; C + D → 9.1 %.
@@ -26,10 +26,10 @@ namespace DD.Prototype.Tests.EditMode
         private const string GatesPath = "Assets/_Art/Environment/World/V6/spawn-gates-v6.json";
         private const float Half = 54f, Step = 2f;
         // C-00 decision (25.09, option C + D): 22 gates (+ I_CloisterEast, I_ShoreWest, I_ServiceYardEast, I_PlazaSouthWest),
-        // band ≥ 3 gates in 22–45 m and ≥ 8 within 75 m; asserted target ≤ 10 % of cells by path; the 3 % figure stays an
+        // band ≥ 3 gates in 22–45 m and ≥ 8 within 75 m; asserted target ≤ 7 % of cells by path; the 3 % figure stays an
         // information line for the cells outside the corner belt (|x| or |z| > 40 m).
         private const int GateCount = 22, BandMin = 3, UsefulMin = 8;
-        private const float MaxViolationShare = 0.10f, InfoShareOutsideCorners = 0.03f, CornerBelt = 40f;
+        private const float MaxViolationShare = 0.07f, InfoShareOutsideCorners = 0.03f, CornerBelt = 40f;
 
         [System.Serializable] private sealed class GateFile { public Gate[] gates; }
         [System.Serializable] private sealed class Gate { public string id; public string kind; public float x; public float z; }
