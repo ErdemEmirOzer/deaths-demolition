@@ -1034,6 +1034,66 @@ namespace DD.Art.Pipeline.EditorTools
             return clips.TryGetValue(C.PlayerFpClipV3(animSet, slot), out AnimationClip cls) ? cls : null;
         }
 
+        /// <summary>Import and bind only the accepted TP Special family; preserve existing controllers, sets and FP assets.</summary>
+        public static void BuildTpSpecialFamily()
+        {
+            var manifest = ArtAnimationClipContract.Manifest();
+            var set = AssetDatabase.LoadAssetAtPath<CharacterAnimationSet>(ArtCharacterPrefabBuilder.PlayerAnimationSet);
+            if (set == null || set.Controller == null) throw new InvalidOperationException("TP base set missing");
+            var table = new List<CharacterAnimationSet.Entry>(set.Clips);
+            var clips = new Dictionary<string, AnimationClip>(StringComparer.Ordinal);
+            foreach (var entry in table) clips.Add(entry.name, entry.clip);
+            var familyNames = new List<string>();
+            foreach (var name in manifest.Keys) if (name.StartsWith("AP022_tp_sw_", StringComparison.Ordinal)) familyNames.Add(name);
+            familyNames.Sort(StringComparer.Ordinal);
+            if (familyNames.Count != 12) throw new InvalidDataException("Expected exact twelve TP Special clips");
+            foreach (var name in familyNames)
+            {
+                var spec = manifest[name];
+                var path = ArtAnimationClipContract.FbxPath(spec);
+                AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
+                var importer = AssetImporter.GetAtPath(path) as ModelImporter;
+                // Only these new metas: remove Unity's auto-mapped eye/jaw extras using the established 52-bone contract.
+                if (ArtCharacterContract.ApplyHumanDescription(importer)) importer.SaveAndReimport();
+                var clip = ArtAnimationClipContract.ClipOf(spec);
+                if (clip == null) throw new InvalidOperationException("TP Special clip missing: " + name);
+                clips[name] = clip;
+                table.RemoveAll(entry => entry.name == name);
+                table.Add(new CharacterAnimationSet.Entry { name = name, clip = clip, loop = spec.loop,
+                    seconds = spec.seconds, layer = spec.layer, additive = spec.additive, frames = spec.frames,
+                    events = spec.EventsText(), speedMps = spec.speedMps, stanceFrames = spec.stanceFrames });
+            }
+            var sets = new List<CharacterAnimationSet.WeaponAnimSet>(set.WeaponSets);
+            foreach (var key in new[] { "sw_arc", "sw_gel" })
+            {
+                string path = ArtCharacterContract.PlayerFolder + "/Generated/DD_Player_" + key + ".overrideController";
+                var aoc = AssetDatabase.LoadAssetAtPath<AnimatorOverrideController>(path);
+                if (aoc == null) { aoc = new AnimatorOverrideController(set.Controller); AssetDatabase.CreateAsset(aoc, path); }
+                aoc.runtimeAnimatorController = set.Controller;
+                var pairs = new List<KeyValuePair<AnimationClip, AnimationClip>>();
+                foreach (var slot in ClassAndOwnSlots)
+                {
+                    if (!clips.TryGetValue(C.PlayerWeaponClipV3("ar_1", slot), out var from)) throw new InvalidOperationException("Base slot missing: " + slot);
+                    var to = V3SlotClip(clips, key, slot);
+                    if (to == null) throw new InvalidOperationException("Special slot missing: " + key + "/" + slot);
+                    pairs.Add(new KeyValuePair<AnimationClip, AnimationClip>(from, to));
+                }
+                aoc.ApplyOverrides(pairs);
+                EditorUtility.SetDirty(aoc);
+                AssetDatabase.SaveAssetIfDirty(aoc);
+                string restName = clips.ContainsKey("AP022_tp_" + key + "_idle_aim") ? "AP022_tp_" + key + "_idle_aim" : C.PlayerWeaponClipV3(key, "idle_aim");
+                var rest = manifest[restName];
+                sets.RemoveAll(entry => entry.animSet == key);
+                sets.Add(new CharacterAnimationSet.WeaponAnimSet { animSet = key, overrides = aoc,
+                    hasLeftHand = rest.hasLeftHandInWeapon, leftHandInWeapon = rest.leftHandInWeapon, hasCycle = false });
+            }
+            set.Configure(set.Idle, set.Walk, set.WalkSpeedMetersPerSecond, set.Controller, set.Source, table, set.ManifestSchema, set.LocomotionReferenceSpeed);
+            set.ConfigureWeaponSets(sets);
+            EditorUtility.SetDirty(set);
+            AssetDatabase.SaveAssetIfDirty(set);
+            Debug.Log(LogPrefix + "TP Special family bound: 12 clips, 2 AOCs; existing controller/FP preserved");
+        }
+
         private static readonly string[] ClassAndOwnSlots = { "idle_aim", "switch_in", "switch_out", "fire", "reload_tac", "reload_empty" };
 
         private static void WriteWeaponSets(string setPath, AnimatorController controller, Dictionary<string, AnimationClip> clips, Dictionary<string, ArtAnimationClipContract.ClipSpec> manifest)
@@ -1064,7 +1124,8 @@ namespace DD.Art.Pipeline.EditorTools
 
                 aoc.ApplyOverrides(pairs);
                 EditorUtility.SetDirty(aoc);
-                manifest.TryGetValue(C.PlayerWeaponClipV3(animSet, "idle_aim"), out ArtAnimationClipContract.ClipSpec rest);
+                if (!manifest.TryGetValue("AP022_tp_" + animSet + "_idle_aim", out ArtAnimationClipContract.ClipSpec rest))
+                    manifest.TryGetValue(C.PlayerWeaponClipV3(animSet, "idle_aim"), out rest);
                 sets.Add(new CharacterAnimationSet.WeaponAnimSet
                 {
                     animSet = animSet, overrides = aoc,
@@ -1084,7 +1145,8 @@ namespace DD.Art.Pipeline.EditorTools
         /// </summary>
         private static AnimationClip V3SlotClip(Dictionary<string, AnimationClip> clips, string animSet, string slot)
         {
-            if (clips.TryGetValue(C.PlayerWeaponClipV3(animSet, slot), out AnimationClip own)) return own;
+            if (clips.TryGetValue("AP022_tp_" + animSet + "_" + slot, out AnimationClip own)) return own;
+            if (clips.TryGetValue(C.PlayerWeaponClipV3(animSet, slot), out AnimationClip cls)) return cls;
             if (System.Array.IndexOf(C.WeaponOwnSlots, slot) < 0) return null;
             foreach (string sibling in C.WeaponAnimSetsV3)
                 if (sibling != animSet && C.WeaponClassOf(sibling) == C.WeaponClassOf(animSet) && clips.TryGetValue(C.PlayerWeaponClipV3(sibling, slot), out AnimationClip s)) return s;

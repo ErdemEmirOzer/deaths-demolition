@@ -273,7 +273,7 @@ namespace DD.Art.Tests.EditMode
             int klip = 0;
             var manifest = ArtAnimationClipContract.Manifest();
             if (manifest != null) foreach (var spec in manifest.Values) if (beklenen.Add(ArtAnimationClipContract.FbxPath(spec))) klip++;
-            Assert.AreEqual(182, klip, "182 = 149 + WP-071 B4c TP 33 (sniper 11, launcher 8, LMG 11, smg_2 3); AP-009D v004 85 klip FBX (WP-032C) + player_sw_hold_jewel (AP-009G v007, WP-032G) + AP-022 v008 zombie deaths ×4 / attacks ×6 (WP-071 d9de74ba) + slice 2a electro loop / arc_electro / gel_slip + slices 4a/4b AR + SMG TP 21 + slice 5/5b FP arms 29 (WP-071) = 149");
+            Assert.AreEqual(194, klip, "194 = 182 + TP Special family 12; 182 = 149 + WP-071 B4c TP 33 (sniper 11, launcher 8, LMG 11, smg_2 3); AP-009D v004 85 klip FBX (WP-032C) + player_sw_hold_jewel (AP-009G v007, WP-032G) + AP-022 v008 zombie deaths ×4 / attacks ×6 (WP-071 d9de74ba) + slice 2a electro loop / arc_electro / gel_slip + slices 4a/4b AR + SMG TP 21 + slice 5/5b FP arms 29 (WP-071) = 149");
             beklenen.Add(ArtCharacterPrefabBuilder.PlayerIdleClipFile);
             beklenen.Add(ArtCharacterPrefabBuilder.PlayerWalkClipFile);
             foreach (string b in ArtCharacterPrefabBuilder.ZombieBodyModels) beklenen.Add(b);

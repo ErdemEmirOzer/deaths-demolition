@@ -1394,6 +1394,138 @@ MonoBehaviour:
     frames: 79
     events: lh_release=4;mag_out=23;mag_in=51;reload_commit=51;reload_cancel_point=57;lh_grab=68
     stanceFrames: 0
+  - name: AP022_tp_sw_arc_fire
+    clip: {fileID: -623603649343465320, guid: 3458d83fbec8e4b9da03b9366fcf0833, type: 3}
+    loop: 0
+    seconds: 0.6
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: additive
+    additive: 1
+    frames: 19
+    events: fire=0
+    stanceFrames: 0
+  - name: AP022_tp_sw_arc_reload_empty
+    clip: {fileID: -623603649343465320, guid: 845615704052a435eae9a24b3f348753, type: 3}
+    loop: 0
+    seconds: 3.6
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: override_upper
+    additive: 0
+    frames: 109
+    events: lh_release=5;cover_open=22;cell_out=35;cell_in=71;reload_commit=71;cover_close=82;reload_cancel_point=84;charge=91;lh_grab=95
+    stanceFrames: 0
+  - name: AP022_tp_sw_arc_reload_tac
+    clip: {fileID: -623603649343465320, guid: 3760f3dd8d7f8474cb37fd146b03e236, type: 3}
+    loop: 0
+    seconds: 3
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: override_upper
+    additive: 0
+    frames: 91
+    events: lh_release=4;cover_open=18;cell_out=29;cell_in=59;reload_commit=59;cover_close=68;reload_cancel_point=70;charge=76;lh_grab=79
+    stanceFrames: 0
+  - name: AP022_tp_sw_gel_fire
+    clip: {fileID: -623603649343465320, guid: 62d2a63c8c4454852b3bc5ad635d599d, type: 3}
+    loop: 0
+    seconds: 0.367
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: additive
+    additive: 1
+    frames: 12
+    events: fire=0
+    stanceFrames: 0
+  - name: AP022_tp_sw_gel_idle_aim
+    clip: {fileID: -623603649343465320, guid: 502a4234d783247d98a4d9f7744c4915, type: 3}
+    loop: 1
+    seconds: 3
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: override_upper
+    additive: 0
+    frames: 91
+    events: breath=0
+    stanceFrames: 0
+  - name: AP022_tp_sw_gel_reload_empty
+    clip: {fileID: -623603649343465320, guid: 2840dc34b3da8400ebe06a9ed3ed8035, type: 3}
+    loop: 0
+    seconds: 2.8
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: override_upper
+    additive: 0
+    frames: 85
+    events: lh_release=4;canister_out=25;canister_in=54;reload_commit=54;reload_cancel_point=58;lh_grab=66;pump_down=71;pump_up=77
+    stanceFrames: 0
+  - name: AP022_tp_sw_gel_reload_tac
+    clip: {fileID: -623603649343465320, guid: ace04a1aafa314265be7ba68bb4cdebd, type: 3}
+    loop: 0
+    seconds: 2.4
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: override_upper
+    additive: 0
+    frames: 73
+    events: lh_release=4;canister_out=22;canister_in=46;reload_commit=46;reload_cancel_point=50;lh_grab=56;pump_down=60;pump_up=66
+    stanceFrames: 0
+  - name: AP022_tp_sw_gel_switch_in
+    clip: {fileID: -623603649343465320, guid: b88091134bc8445a2ae308c36bfbf327, type: 3}
+    loop: 0
+    seconds: 0.5
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: override_upper
+    additive: 0
+    frames: 16
+    events: charge=9;lh_grab=10;switch_ready=14
+    stanceFrames: 0
+  - name: AP022_tp_sw_gel_switch_out
+    clip: {fileID: -623603649343465320, guid: 4eb479359859e4617ad26c638be12e84, type: 3}
+    loop: 0
+    seconds: 0.3
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: override_upper
+    additive: 0
+    frames: 10
+    events: lh_release=1;switch_away=8
+    stanceFrames: 0
+  - name: AP022_tp_sw_idle_aim
+    clip: {fileID: -623603649343465320, guid: 17ec765b6ff4e44f2958ff300589a3e4, type: 3}
+    loop: 1
+    seconds: 3
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: override_upper
+    additive: 0
+    frames: 91
+    events: breath=0
+    stanceFrames: 0
+  - name: AP022_tp_sw_switch_in
+    clip: {fileID: -623603649343465320, guid: 0a83e9714ebe34b49bc01ae8f127874a, type: 3}
+    loop: 0
+    seconds: 0.5
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: override_upper
+    additive: 0
+    frames: 16
+    events: charge=8;lh_grab=10;switch_ready=14
+    stanceFrames: 0
+  - name: AP022_tp_sw_switch_out
+    clip: {fileID: -623603649343465320, guid: f85a85224aed640bd91658dbc525d575, type: 3}
+    loop: 0
+    seconds: 0.3
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: override_upper
+    additive: 0
+    frames: 10
+    events: lh_release=1;switch_away=8
+    stanceFrames: 0
   _manifestSchema: AP009.clips-manifest.v008
   _locomotionReferenceSpeed: 6.2
   _weaponSets:
@@ -1457,6 +1589,22 @@ MonoBehaviour:
     overrides: {fileID: 22100000, guid: ebb1d72eeb01741689ab9a317a79c318, type: 2}
     hasLeftHand: 1
     leftHandInWeapon: {x: -0.0359, y: -0.0519, z: 0.3498}
+    hasSocketRot: 0
+    socketRotInWeapon: {x: 0, y: 0, z: 0, w: 1}
+    fpCameraOffset: {x: 0, y: 0, z: 0}
+    hasCycle: 0
+  - animSet: sw_arc
+    overrides: {fileID: 22100000, guid: 85098742860354a0a829ff82e4b032ac, type: 2}
+    hasLeftHand: 1
+    leftHandInWeapon: {x: -0.0359, y: -0.0649, z: 0.2798}
+    hasSocketRot: 0
+    socketRotInWeapon: {x: 0, y: 0, z: 0, w: 1}
+    fpCameraOffset: {x: 0, y: 0, z: 0}
+    hasCycle: 0
+  - animSet: sw_gel
+    overrides: {fileID: 22100000, guid: a1c5698d6cd4b479c931071e512e590c, type: 2}
+    hasLeftHand: 1
+    leftHandInWeapon: {x: -0.0928, y: -0.0434, z: 0.0949}
     hasSocketRot: 0
     socketRotInWeapon: {x: 0, y: 0, z: 0, w: 1}
     fpCameraOffset: {x: 0, y: 0, z: 0}

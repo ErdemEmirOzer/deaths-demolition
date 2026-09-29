@@ -38,7 +38,7 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(C.ClipCount, m.Count);
             int player = 0, zombie = 0;
             foreach (var s in m.Values) { if (s.target == "player") player++; else if (s.target == "zombie") zombie++; }
-            Assert.AreEqual(125, player); Assert.AreEqual(57, zombie);   // WP-071: + B4c TP 33 (snp / sr_1 / lch / rl_1 / lmg / smg_2); + AP-022 slice 1 (10) + slice 2a (3) + 4a/4b AR+SMG TP (21) + slice 5/5b FP (29)   // WP-032G: + sw_hold_jewel (AP-009G v007)   // WP-032C: v004 = 85 (weapon A/B/C ×5, sw hold ×2, pickup_upper, hurt ×2, death_side, lower/raise; tier hits ×12, armour breaks ×3, stumble, deaths ×4, rises ×2)
+            Assert.AreEqual(137, player); Assert.AreEqual(57, zombie);   // + TP Special family 12; WP-071: + B4c TP 33 (snp / sr_1 / lch / rl_1 / lmg / smg_2); + AP-022 slice 1 (10) + slice 2a (3) + 4a/4b AR+SMG TP (21) + slice 5/5b FP (29)   // WP-032G: + sw_hold_jewel (AP-009G v007)   // WP-032C: v004 = 85 (weapon A/B/C ×5, sw hold ×2, pickup_upper, hurt ×2, death_side, lower/raise; tier hits ×12, armour breaks ×3, stumble, deaths ×4, rises ×2)
             foreach (string name in C.PlayerClips) Assert.IsTrue(m.ContainsKey(name), name);
             foreach (string name in C.ZombieClips) Assert.IsTrue(m.ContainsKey(name), name);
             // Every manifest event name is in the contract table.
@@ -149,7 +149,29 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(set.Clip("AP022_tp_ar_1_reload_tac"), ArtAnimatorBuilder.FindState(c, 1, C.ReloadTacState).motion, "taban = ilk set (ar_1)");
             Assert.IsTrue(ArtAnimatorBuilder.FindState(c, 1, C.ReloadEmptyState).speedParameterActive, "ReloadEmpty ReloadRate ile");
             Assert.AreEqual(set.Clip("AP022_tp_ar_1_fire"), ArtAnimatorBuilder.FindState(c, 2, C.FireV3State).motion);
-            Assert.AreEqual(8, set.WeaponSets.Count, "ar_1 / ar_2 / smg_1 / smg_2 / sr_1 / rl_1 / lmg_1 / lmg_2 AOC (WP-071 B4c)");
+            Assert.AreEqual(10, set.WeaponSets.Count, "Eight firearm sets + sw_arc / sw_gel TP AOCs");
+            // TP Special boundary: own slots win, otherwise only the shared SW class is used.
+            foreach (var key in new[] { "sw_arc", "sw_gel" })
+            {
+                var aoc = set.WeaponOverrides(key);
+                Assert.IsNotNull(aoc, key);
+                Assert.AreSame(c, aoc.runtimeAnimatorController, key + " base controller");
+                foreach (var slot in new[] { "idle_aim", "switch_in", "switch_out", "fire", "reload_tac", "reload_empty" })
+                {
+                    var own = set.Clip("AP022_tp_" + key + "_" + slot);
+                    var expected = own != null ? own : set.Clip(C.PlayerWeaponClipV3(key, slot));
+                    Assert.IsNotNull(expected, key + "/" + slot);
+                    Assert.AreEqual(expected, aoc[set.Clip(C.PlayerWeaponClipV3("ar_1", slot))], key + "/" + slot);
+                    var spec = Manifest()[expected.name];
+                    Assert.AreEqual(spec.EventsText(), set.Find(expected.name).events);
+                    Assert.AreEqual(spec.seconds, expected.length, 0.001f, expected.name + " duration");
+                    Assert.AreEqual(0, ArtAnimationClipContract.Validate((ModelImporter)AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(expected))).Count, expected.name + " import contract");
+                    Assert.AreEqual(ArtCharacterContract.HumanoidBoneCount, ((ModelImporter)AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(expected))).humanDescription.human.Length, expected.name + " exact mapping");
+                }
+            }
+            Assert.IsFalse(PlayerSkinnedVisual.FirstPersonV3Arms, "FP Special remains OFF");
+            Assert.IsFalse(PlayerSkinnedVisual.TpV3On("sw_arc"), "TP grip MUST remains open; default rollout held");
+            Assert.IsFalse(PlayerSkinnedVisual.TpV3On("sw_gel"), "TP grip MUST remains open; default rollout held");
             // WP-071 B4c: the sniper / launcher / LMG sets — their class clips (snp / lch / lmg), own slots with fallbacks, the sniper's bolt cycle
             AnimatorOverrideController sr = set.WeaponOverrides("sr_1"), rl = set.WeaponOverrides("rl_1"), lmg2 = set.WeaponOverrides("lmg_2");
             Assert.AreEqual(set.Clip("AP022_tp_snp_idle_aim"), sr[set.Clip("AP022_tp_ar_idle_aim")], "sr_1 sınıf dinlenmesi (snp)");
@@ -394,7 +416,7 @@ namespace DD.Art.Tests.EditMode
         {
             var player = AssetDatabase.LoadAssetAtPath<CharacterAnimationSet>(ArtCharacterPrefabBuilder.PlayerAnimationSet);
             var zombie = AssetDatabase.LoadAssetAtPath<CharacterAnimationSet>(ArtCharacterPrefabBuilder.ZombieAnimationSet);
-            Assert.AreEqual(125, player.Clips.Count); Assert.AreEqual(57, zombie.Clips.Count);   // WP-071 B4c + 33 TP; WP-071 + AP-022 slice 1 + 2a + 4a/4b + 5/5b   // WP-032C v004
+            Assert.AreEqual(137, player.Clips.Count); Assert.AreEqual(57, zombie.Clips.Count);   // + TP Special family 12; WP-071 B4c + 33 TP; WP-071 + AP-022 slice 1 + 2a + 4a/4b + 5/5b   // WP-032C v004
             Assert.AreEqual(ArtAnimationClipContract.ManifestSchema, player.ManifestSchema); Assert.AreEqual(ArtAnimationClipContract.ManifestSchema, zombie.ManifestSchema);
             var m = Manifest();
             foreach (var set in new[] { player, zombie })
