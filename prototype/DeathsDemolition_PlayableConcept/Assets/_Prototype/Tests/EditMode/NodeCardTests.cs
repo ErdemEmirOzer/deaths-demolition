@@ -82,6 +82,296 @@ namespace DD.Prototype.Tests.EditMode
             return _dukkan.TryPurchase(c, _dukkan.SessionId, _dukkan.Revision, alt);
         }
 
+        private sealed class PinQueryRandom : IUpgradeOfferRandom
+        {
+            public float NextValue() => throw new System.InvalidOperationException("PIN query must not draw randomness");
+        }
+
+        private void SafPinSorgusu(string target, bool expected)
+        {
+            int events = 0, walletEvents = 0;
+            System.Action changed = () => events++;
+            System.Action<int> walletChanged = _ => walletEvents++;
+            _dukkan.OfferChanged += changed;
+            var cards = new List<UpgradeCardOffer>(_dukkan.Cards);
+            int pin = _dukkan.Tree.PinnedIndex, quota = _dukkan.PinChangesThisRound;
+            int revision = _dukkan.Revision, session = _dukkan.SessionId;
+            int purchases = _dukkan.PurchasesThisRound, rerolls = _dukkan.RerollsThisRound;
+            int gold = _cuzdan.Balance, spent = _cuzdan.TotalSpent, earned = _cuzdan.TotalEarned;
+            int applied = _cuzdan.AppliedTransactions, transaction = _cuzdan.NextTransactionId();
+            int hearth = _dukkan.Tree.HearthStacks, hearthRound = _dukkan.Tree.HearthThisRound;
+            bool open = _dukkan.IsOpen;
+            UpgradeEntitlement purchaseRight = _dukkan.PurchaseEntitlement, rerollRight = _dukkan.RerollEntitlement;
+            int count = _dukkan.Tree.IsBuilt ? _dukkan.Tree.Graph.Count : 0;
+            var owned = new bool[count];
+            var tiers = new int[count];
+            var unseen = new int[count];
+            for (int i = 0; i < count; i++)
+            {
+                owned[i] = _dukkan.Tree.IsOwned(i);
+                tiers[i] = _dukkan.Tree.OwnedTier(i, _rank);
+                unseen[i] = _dukkan.Tree.UnseenRounds(i);
+            }
+            var unityRandom = UnityEngine.Random.state;
+            IUpgradeOfferRandom random = _dukkan.Random;
+            _dukkan.Random = new PinQueryRandom();
+            // Wallet event count is observed only across the query, not the later real command.
+            _cuzdan.Changed += walletChanged;
+            try
+            {
+                for (int repeat = 0; repeat < 3; repeat++) Assert.AreEqual(expected, _dukkan.CanSetPin(target), target);
+                Assert.AreEqual(pin, _dukkan.Tree.PinnedIndex);
+                Assert.AreEqual(quota, _dukkan.PinChangesThisRound);
+                Assert.AreEqual(revision, _dukkan.Revision);
+                Assert.AreEqual(session, _dukkan.SessionId);
+                Assert.AreEqual(open, _dukkan.IsOpen);
+                Assert.AreEqual(purchases, _dukkan.PurchasesThisRound);
+                Assert.AreEqual(rerolls, _dukkan.RerollsThisRound);
+                Assert.AreEqual(purchaseRight, _dukkan.PurchaseEntitlement);
+                Assert.AreEqual(rerollRight, _dukkan.RerollEntitlement);
+                CollectionAssert.AreEqual(cards, _dukkan.Cards);
+                Assert.AreEqual(gold, _cuzdan.Balance);
+                Assert.AreEqual(spent, _cuzdan.TotalSpent);
+                Assert.AreEqual(earned, _cuzdan.TotalEarned);
+                Assert.AreEqual(applied, _cuzdan.AppliedTransactions);
+                Assert.AreEqual(transaction + 1, _cuzdan.NextTransactionId(), "query must not allocate transaction IDs");
+                Assert.AreEqual(hearth, _dukkan.Tree.HearthStacks);
+                Assert.AreEqual(hearthRound, _dukkan.Tree.HearthThisRound);
+                Assert.AreEqual(unityRandom, UnityEngine.Random.state);
+                for (int i = 0; i < count; i++)
+                {
+                    Assert.AreEqual(owned[i], _dukkan.Tree.IsOwned(i));
+                    Assert.AreEqual(tiers[i], _dukkan.Tree.OwnedTier(i, _rank));
+                    Assert.AreEqual(unseen[i], _dukkan.Tree.UnseenRounds(i));
+                }
+                Assert.AreEqual(0, events);
+                Assert.AreEqual(0, walletEvents);
+            }
+            finally
+            {
+                _dukkan.Random = random;
+                _dukkan.OfferChanged -= changed;
+                _cuzdan.Changed -= walletChanged;
+            }
+        }
+
+        [TestCase("unbuilt")]
+        [TestCase("closed")]
+        [TestCase("run-mismatch")]
+        [TestCase("unknown")]
+        [TestCase("owned")]
+        [TestCase("excluded")]
+        [TestCase("maxed")]
+        [TestCase("profile-locked")]
+        [TestCase("no-consumer")]
+        [TestCase("effect-pending")]
+        [TestCase("no-special")]
+        [TestCase("unreachable")]
+        [TestCase("hearth")]
+        public void CanSetPin_Ret_SafSorguVeKomutAyni(string reason)
+        {
+            string target = "tier_FireRate";
+            if (reason != "unbuilt") Ac(1);
+            switch (reason)
+            {
+                case "closed": _dukkan.Close(); break;
+                case "run-mismatch": _dukkan.Tree.Begin(Kosu + 1, ClassicWeaponId.AssaultRifle, _config); break;
+                case "unknown": target = "missing-node"; break;
+                case "owned":
+                    target = _dukkan.Tree.Graph[_dukkan.Tree.Graph.PurseIndex].Id;
+                    Assert.IsTrue(_dukkan.Tree.MarkOwned(I(target)));
+                    break;
+                case "excluded":
+                    Assert.IsTrue(_dukkan.Tree.MarkOwned(I("fork_ar_1_x")));
+                    target = "fork_ar_1_y";
+                    break;
+                case "maxed":
+                    _rank.SetTier(UpgradeBranch.FireRate, _dukkan.Tree.Graph[I(target)].MaxTier, _config);
+                    Assert.AreEqual(_dukkan.Tree.Graph[I(target)].MaxTier, _dukkan.Tree.OwnedTier(I(target), _rank));
+                    break;
+                case "profile-locked":
+                case "no-consumer":
+                    UpgradeEligibility blocked = reason == "profile-locked" ? UpgradeEligibility.Locked
+                        : UpgradeEligibility.NoLiveConsumer;
+                    _dukkan.Tree.TierEligibility = (b, owned) => b == UpgradeBranch.FireRate ? blocked : UpgradeEligibility.Eligible;
+                    break;
+                case "effect-pending":
+                    target = "ks_reload";
+                    RunTreeEffects.TreatAllAsLive = false;
+                    _dukkan.Tree.Graph[I(target)].EffectId = "test.unwired";
+                    Assert.AreEqual(RunTreeNodeStatus.Locked, _dukkan.Tree.Status(I(target), _rank, int.MaxValue, out RunTreeLockReason lockReason, out _, out _));
+                    Assert.AreEqual(RunTreeLockReason.EffectPending, lockReason);
+                    break;
+                case "no-special": target = _dukkan.Tree.Graph[_dukkan.Tree.Graph.LinkIIndex].Id; break;
+                case "unreachable":
+                    target = "cap_ar_1";
+                    RunTreeEffects.TreatAllAsLive = false;
+                    _dukkan.Tree.Graph[_dukkan.Tree.Graph.WeaponSealIndex].EffectId = "test.unwired";
+                    Assert.AreEqual(RunTreeNodeStatus.PrereqMissing, _dukkan.Tree.Status(I(target), _rank, int.MaxValue, out _, out _, out _));
+                    break;
+                case "hearth": target = _dukkan.Tree.Graph[_dukkan.Tree.Graph.HearthIndex].Id; break;
+            }
+            SafPinSorgusu(target, false);
+            int events = 0, pin = _dukkan.Tree.PinnedIndex, quota = _dukkan.PinChangesThisRound;
+            _dukkan.OfferChanged += () => events++;
+            Assert.IsFalse(_dukkan.SetPin(target));
+            Assert.AreEqual(pin, _dukkan.Tree.PinnedIndex);
+            Assert.AreEqual(quota, _dukkan.PinChangesThisRound);
+            Assert.AreEqual(0, events);
+            if (reason == "closed" || reason == "run-mismatch" || reason == "unbuilt")
+            {
+                SafPinSorgusu(null, false);
+                Assert.IsFalse(_dukkan.SetPin(null), "clear also requires a live matching shop");
+            }
+        }
+
+        [TestCase("available")]
+        [TestCase("partial-tier")]
+        [TestCase("gold-zero")]
+        [TestCase("prerequisite")]
+        [TestCase("cap-before-m1")]
+        [TestCase("purchase-quota")]
+        public void CanSetPin_Olumlu_SafSorguHakkiTuketmez(string reason)
+        {
+            if (reason == "purchase-quota") _config.Economy.PurchasesPerRound = 1;
+            if (reason == "cap-before-m1")
+            {
+                MetaRunModifiers meta = MetaRunModifiers.None;
+                meta.CapstoneMasteryMet = false;
+                _dukkan.Meta = meta;
+            }
+            Ac(1);
+            string target = "tier_MovementSpeed";
+            if (reason == "partial-tier")
+            {
+                Assert.Greater(_dukkan.Tree.Graph[I(target)].MaxTier, 1);
+                _rank.SetTier(UpgradeBranch.MovementSpeed, 1, _config);
+                Assert.AreEqual(1, _dukkan.Tree.OwnedTier(I(target), _rank));
+            }
+            if (reason == "gold-zero")
+            {
+                Assert.IsTrue(_cuzdan.TrySpend(_cuzdan.Balance));
+                Assert.AreEqual(0, _cuzdan.Balance);
+                Assert.AreEqual(RunTreeNodeStatus.Unaffordable, _dukkan.Tree.Status(I(target), _rank, 0, out _, out _, out _));
+            }
+            if (reason == "prerequisite") target = "ks_reload";
+            if (reason == "cap-before-m1") target = "cap_ar_1";
+            if (reason == "prerequisite" || reason == "cap-before-m1")
+                Assert.AreEqual(RunTreeNodeStatus.PrereqMissing, _dukkan.Tree.Status(I(target), _rank, int.MaxValue, out _, out _, out _));
+            if (reason == "purchase-quota")
+            {
+                Assert.Greater(_dukkan.Cards.Count, 0);
+                Assert.IsTrue(_dukkan.TryPurchase(0, _dukkan.SessionId, _dukkan.Revision));
+                Assert.IsTrue(_dukkan.IsLocked);
+                if (_dukkan.Tree.Status(I(target), _rank, int.MaxValue, out _, out _, out _) == RunTreeNodeStatus.MaxTier)
+                    target = "tier_FireRate";
+            }
+            SafPinSorgusu(target, true);
+            int events = 0;
+            _dukkan.OfferChanged += () => events++;
+            Assert.IsTrue(_dukkan.SetPin(target));
+            Assert.AreEqual(I(target), _dukkan.Tree.PinnedIndex);
+            Assert.AreEqual(1, _dukkan.PinChangesThisRound);
+            Assert.AreEqual(1, events);
+        }
+
+        [TestCase("owned")]
+        [TestCase("excluded")]
+        [TestCase("locked")]
+        [TestCase("maxed")]
+        [TestCase("hearth")]
+        public void CanSetPin_GecersizMevcutPin_Temizlenebilir(string reason)
+        {
+            Ac(1);
+            string target = reason == "locked" || reason == "maxed" ? "tier_FireRate" : "fork_ar_1_y";
+            if (reason == "hearth")
+            {
+                // Only a legacy/primitive caller can create this invalid target; UI clear still recovers it.
+                target = _dukkan.Tree.Graph[_dukkan.Tree.Graph.HearthIndex].Id;
+                Assert.IsTrue(_dukkan.SetPin("ks_reload"));
+                _dukkan.Tree.SetPin(I(target));
+            }
+            else Assert.IsTrue(_dukkan.SetPin(target));
+            if (reason == "owned") Assert.IsTrue(_dukkan.Tree.MarkOwned(I(target)));
+            if (reason == "excluded") Assert.IsTrue(_dukkan.Tree.MarkOwned(I("fork_ar_1_x")));
+            if (reason == "locked") _dukkan.Tree.TierEligibility = (b, owned) => b == UpgradeBranch.FireRate ? UpgradeEligibility.Locked : UpgradeEligibility.Eligible;
+            if (reason == "maxed")
+            {
+                _rank.SetTier(UpgradeBranch.FireRate, _dukkan.Tree.Graph[I(target)].MaxTier, _config);
+                Assert.AreEqual(_dukkan.Tree.Graph[I(target)].MaxTier, _dukkan.Tree.OwnedTier(I(target), _rank));
+            }
+            Assert.IsFalse(_dukkan.Tree.CanPin(I(target), _rank));
+            SafPinSorgusu(target, false);
+            Assert.IsFalse(_dukkan.SetPin(target), "same ID does not bypass new invalidity");
+            SafPinSorgusu(null, true);
+            SafPinSorgusu(string.Empty, true);
+            int events = 0;
+            _dukkan.OfferChanged += () => events++;
+            Assert.IsTrue(_dukkan.SetPin(null));
+            Assert.AreEqual(-1, _dukkan.Tree.PinnedIndex);
+            Assert.AreEqual(1, _dukkan.PinChangesThisRound);
+            Assert.AreEqual(1, events);
+            SafPinSorgusu("tier_MovementSpeed", false);
+        }
+
+        [TestCase(null)]
+        [TestCase("")]
+        public void CanSetPin_BosPinClear_SafNoOp(string clear)
+        {
+            Ac(1);
+            SafPinSorgusu(clear, true);
+            int events = 0;
+            _dukkan.OfferChanged += () => events++;
+            Assert.IsTrue(_dukkan.SetPin(clear));
+            Assert.AreEqual(-1, _dukkan.Tree.PinnedIndex);
+            Assert.AreEqual(0, _dukkan.PinChangesThisRound);
+            Assert.AreEqual(0, events);
+        }
+
+        [Test]
+        public void CanSetPin_SameId_Clear_Reopen_YeniTurVeKosu()
+        {
+            Ac(1);
+            Assert.IsTrue(_dukkan.SetPin("ks_reload"));
+            SafPinSorgusu("ks_reload", true);
+            int events = 0;
+            _dukkan.OfferChanged += () => events++;
+            Assert.IsTrue(_dukkan.SetPin("ks_reload"));
+            Assert.AreEqual(0, events);
+            SafPinSorgusu("ks_firerate", false);
+            Assert.IsFalse(_dukkan.SetPin("ks_firerate"));
+            Assert.AreEqual(I("ks_reload"), _dukkan.Tree.PinnedIndex);
+            SafPinSorgusu(null, true);
+            Assert.IsTrue(_dukkan.SetPin(null));
+            SafPinSorgusu("ks_firerate", false);
+            _dukkan.Close();
+            Ac(1);
+            SafPinSorgusu("ks_firerate", false);
+            _dukkan.DiscardOffer();
+            Ac(1);
+            SafPinSorgusu("ks_firerate", false);
+            Ac(2);
+            SafPinSorgusu("ks_firerate", true);
+            Assert.IsTrue(_dukkan.SetPin("ks_firerate"));
+            _dukkan.Open(1, _config, _cuzdan, _rank, Kosu + 1);
+            Assert.AreEqual(-1, _dukkan.Tree.PinnedIndex);
+            Assert.AreEqual(0, _dukkan.PinChangesThisRound);
+            SafPinSorgusu("ks_reload", true);
+        }
+
+        [Test]
+        public void CanSetPin_LegacyRunZero_RebuildHakkiYenilemez()
+        {
+            _dukkan.Open(1, _config, _cuzdan, _rank, 0);
+            Assert.IsTrue(_dukkan.SetPin("ks_reload"));
+            _dukkan.Close();
+            _dukkan.Open(1, _config, _cuzdan, _rank, 0);
+            Assert.AreEqual(1, _dukkan.PinChangesThisRound);
+            SafPinSorgusu("ks_firerate", false);
+            _dukkan.Open(2, _config, _cuzdan, _rank, 0);
+            SafPinSorgusu("ks_firerate", true);
+        }
+
         [Test]
         public void Nisan_TekHak_SameId_Unpin_Reopen_YeniTur()
         {

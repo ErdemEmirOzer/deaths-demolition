@@ -1355,8 +1355,8 @@ namespace DD.Prototype.Rounds
             return RunTreeCommandResult.Done;
         }
 
-        /// <summary>WP-077 Nişan (K2): one target assignment per round; null/empty clears without refunding it. Same target is a no-op.</summary>
-        public bool SetPin(string nodeId)
+        /// <summary>Whether SetPin would accept this action, without changing state. Null/empty means clear, including a pin whose target is now invalid.</summary>
+        public bool CanSetPin(string nodeId)
         {
             if (!IsOpen || !Tree.IsBuilt || Tree.RunId != RunId)
             {
@@ -1370,8 +1370,15 @@ namespace DD.Prototype.Rounds
             }
 
             if (i >= 0 && !Tree.CanPin(i, ModifierState())) return false;
+            return i == Tree.PinnedIndex || i < 0 || PinChangesThisRound < 1;
+        }
+
+        /// <summary>WP-077 Nişan (K2): one target assignment per round; null/empty clears without refunding it. Same target is a no-op.</summary>
+        public bool SetPin(string nodeId)
+        {
+            if (!CanSetPin(nodeId)) return false;
+            int i = string.IsNullOrEmpty(nodeId) ? -1 : Tree.Graph.IndexOf(nodeId);
             if (i == Tree.PinnedIndex) return true;
-            if (i >= 0 && PinChangesThisRound >= 1) return false;
             Tree.SetPin(i);
             if (i >= 0) PinChangesThisRound++;
             OfferChanged?.Invoke();
