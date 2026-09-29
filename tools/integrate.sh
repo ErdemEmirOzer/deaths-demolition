@@ -39,6 +39,8 @@ fail() { echo "GATE FAIL: $*"; FAILS=$((FAILS+1)); }
 # Clean rollback of a failed --no-commit pick without git reset: every path the pick touched goes back
 # to HEAD (restore) or is dropped again if HEAD never had it. main HEAD is untouched at this point.
 abort_pick() {
+  local verified_status
+  verified_status=$("${G[@]}" status --porcelain=v1 -z) || { echo "ROLLBACK UNVERIFIED: status failed; no cleanup"; return 4; }
   "${G[@]}" cherry-pick --quit >/dev/null 2>&1   # no sequencer state with --no-commit; --abort would fail
   # WP-051E: every dirty path from `status --porcelain -z`, parsed by a small python (rename entries carry
   # TWO paths, unmerged DU/UD/AA/UU entries are ordinary paths here). Up to 3 passes: a path that HEAD knows
@@ -46,7 +48,8 @@ abort_pick() {
   local pass=0 left=1
   while [ "$left" != "0" ] && [ "$pass" -lt 3 ]; do
     pass=$((pass+1))
-    "${G[@]}" status --porcelain=v1 -z | python3 -c '
+    verified_status=$("${G[@]}" status --porcelain=v1 -z) || { echo "ROLLBACK UNVERIFIED: status failed; no path cleanup"; return 4; }
+    print -rn -- "$verified_status" | python3 -c '
 import sys
 data = sys.stdin.buffer.read().split(b"\0"); i = 0; out = []
 while i < len(data):
@@ -63,7 +66,9 @@ sys.stdout.buffer.write(b"\n".join(out) + b"\n")
       if "${G[@]}" cat-file -e "HEAD:$f" 2>/dev/null; then "${G[@]}" restore --staged --worktree -- "$f" 2>/dev/null
       else "${G[@]}" rm -q --cached --force -- "$f" >/dev/null 2>&1; rm -f "$DD_REPO/$f"; fi
     done
-    left=$("${G[@]}" status --porcelain | wc -l | tr -d ' ')
+    verified_status=$("${G[@]}" status --porcelain) || { echo "ROLLBACK UNVERIFIED: post-restore status failed"; return 4; }
+    left=0
+    [ -z "$verified_status" ] || left=$(print -r -- "$verified_status" | wc -l | tr -d ' ')
   done
   echo "aborted: $left dirty paths remain (expected 0); main unchanged"
   [ "$left" = "0" ] || { echo "WARN: rollback left paths — inspect with: git -C '$DD_REPO' status"; "${G[@]}" status --porcelain | head -10; }
@@ -86,8 +91,11 @@ say "parent=$PARENT mode=$( [ "$FF" -eq 1 ] && echo ff-only || echo cherry-pick 
 # --- gate 2: source worktree clean (if the source is a branch with a worktree)
 SRCWT=$("${G[@]}" worktree list --porcelain | awk -v b="refs/heads/$SRC" '/^worktree /{w=substr($0,10)} /^branch /{if($2==b)print w}')
 if [ -n "$SRCWT" ]; then
-  D=$(git -C "$SRCWT" status --porcelain | wc -l | tr -d ' ')
-  [ "$D" = "0" ] && say "source worktree clean: $SRCWT" || fail "source worktree dirty ($D paths): $SRCWT"
+  if D=$(git -C "$SRCWT" status --porcelain); then
+    [ -z "$D" ] && say "source worktree clean: $SRCWT" || fail "source worktree dirty: $SRCWT"
+  else
+    fail "cannot read source worktree status: $SRCWT"
+  fi
 fi
 
 # --- gate 3: path scope
@@ -152,8 +160,11 @@ fi
 "${G[@]}" rev-parse -q --verify "refs/tags/$TAG" >/dev/null 2>&1 && fail "tag already exists: $TAG"
 
 # --- gate 6: main worktree clean
-MD=$("${G[@]}" status --porcelain | wc -l | tr -d ' ')
-[ "$MD" = "0" ] && say "main worktree clean" || fail "main worktree dirty ($MD paths)"
+if MD=$("${G[@]}" status --porcelain); then
+  [ -z "$MD" ] && say "main worktree clean" || fail "main worktree dirty"
+else
+  fail "cannot read main worktree status"
+fi
 
 # --- gate 7: LFS
 LP=$("${G[@]}" lfs ls-files 2>/dev/null | wc -l | tr -d ' '); LO=$(find "$("${G[@]}" rev-parse --path-format=absolute --git-common-dir)/lfs/objects" -type f 2>/dev/null | wc -l | tr -d ' ')
