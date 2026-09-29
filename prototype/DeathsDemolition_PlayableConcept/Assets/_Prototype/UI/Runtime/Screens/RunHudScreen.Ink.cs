@@ -670,7 +670,7 @@ namespace DD.Prototype.UI
         private RectTransform _suspendedRect;
         private RectTransform _weaponCalm;
         private Vector2 _ladderHome;
-        private string _ammoLowWord = UiStrings.Get("hud.ammo.low", "LOW AMMO");
+        private string _ammoLowWord;
         private int _clusterMirrored = -1;
 
         /// <summary>The weapon cluster's LOW word (12b: "LOW AMMO", the pack's hud.ammo.low; tests).</summary>

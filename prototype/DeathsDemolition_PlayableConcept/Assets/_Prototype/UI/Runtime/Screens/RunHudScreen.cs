@@ -331,9 +331,9 @@ namespace DD.Prototype.UI
             get { return _reticle; }
         }
 
-        private readonly RunHudViewModel _model = new RunHudViewModel();
+        private RunHudViewModel _model;
 
-        /// <summary>The presenter this HUD draws from. Exposed so a test can read what is shown.</summary>
+        /// <summary>The presenter initialized in Awake. Exposed so a test can read what is shown.</summary>
         public RunHudViewModel Model
         {
             get { return _model; }
@@ -341,6 +341,10 @@ namespace DD.Prototype.UI
 
         protected override void Build()
         {
+            // The presenter loads localized strings. Unity forbids Resources.Load
+            // during MonoBehaviour field initialization; Build runs from Awake.
+            _model = new RunHudViewModel();
+
             // FIRST, and the order is the whole point. uGUI draws siblings back to front,
             // so anything built here ends up UNDER every readout that follows. A damage
             // edge at 0.92 alpha drawn over the health block would blank the one number
