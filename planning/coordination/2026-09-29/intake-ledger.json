@@ -1,0 +1,73 @@
+{
+  "sourceBaseline": "3c0875e1e259cebae34e2cb496d03bb4e8dd9045",
+  "entries": [
+    {
+      "package": "WP-071",
+      "owner": "S-06",
+      "source": "2ed77017b7a3fabcea8368e8f780d82e1f22a624",
+      "sourceWorktree": "/Users/Erdem/Desktop/KADRO/context/projects/deaths-demolition/wp-032h/worktree/deaths-demolition",
+      "beforeMain": "dd4e5bfff29930d555250832dab00f28aab209e9",
+      "afterMain": "5f40e9c6b11044c7cb40298eaf61abc3c8cd5e0a",
+      "tag": "wp071-palm-observer-main-20260929",
+      "paths": [
+        "prototype/DeathsDemolition_PlayableConcept/Assets/_Art/Tests/PlayMode/AnimationTests.cs"
+      ],
+      "integrationExit": 0,
+      "sourceBlobExact": true,
+      "acceptance": "diagnostic-only; cause/anatomy/contact UNKNOWN; newmain fullCI NOTRUN",
+      "postDeferred": "batch final backup/cleanup/disk/LFS"
+    },
+    {
+      "package": "WP-075",
+      "owner": "S-05",
+      "source": "f0fb8aa7cebe11173d31becd6b1744b1aae3587e",
+      "sourceWorktree": "/Users/Erdem/.codex/worktrees/wp075-sky-intake-r2/Deaths Demolition",
+      "beforeMain": "24901e256e132c8ed4acfd027a935fe98d82526d",
+      "afterMain": "dd4e5bfff29930d555250832dab00f28aab209e9",
+      "tag": "wp075-sky-intake-main-20260929",
+      "paths": [
+        "prototype/DeathsDemolition_PlayableConcept/Assets/_Art/Editor/WorldV5Sky.cs",
+        "prototype/DeathsDemolition_PlayableConcept/Assets/_Art/Environment/World/V6/Materials/V5_Sky_horizon_near_v2.mat",
+        "prototype/DeathsDemolition_PlayableConcept/Assets/_Art/Shaders/DD_SkyPlate.shader",
+        "prototype/DeathsDemolition_PlayableConcept/Assets/_Art/Tests/PlayMode/WorldV3CaptureTests.cs"
+      ],
+      "integrationExit": 0,
+      "sourceBlobExact": true,
+      "originalSourceTests": "r2 XML1/1 PASS and guard0 independently verified; newmain fullCI NOTRUN",
+      "postDeferred": "one batch backup/cleanup/disk/LFS planned"
+    },
+    {
+      "package": "WP-076",
+      "owner": "S-03",
+      "source": "f802c78462484d43e11d013f897a8c08e56a0c5f",
+      "sourceWorktree": "/Users/Erdem/Desktop/KADRO/context/projects/deaths-demolition/wp-076/worktree/deaths-demolition",
+      "beforeMain": "5f40e9c6b11044c7cb40298eaf61abc3c8cd5e0a",
+      "afterMain": "512098809ed07d34f1c92338d6a8101d94b72e8a",
+      "tag": "wp076-contact-observer-main-20260929",
+      "paths": [
+        "prototype/DeathsDemolition_PlayableConcept/Assets/_Prototype/Enemies/ZombieEnemy.cs",
+        "prototype/DeathsDemolition_PlayableConcept/Assets/_Prototype/Tests/PlayMode/V6AiRoundTests.cs"
+      ],
+      "integrationExit": 0,
+      "sourceBlobExact": true,
+      "acceptance": "diagnostic-only; cause/anatomy/contact UNKNOWN; newmain fullCI NOTRUN",
+      "postDeferred": "batch final backup/cleanup/disk/LFS"
+    },
+    {
+      "package": "WP-079",
+      "owner": "S-01",
+      "source": "1466da4ed594746ff5b84daaf9ef0301179107ca",
+      "beforeMain": "512098809ed07d34f1c92338d6a8101d94b72e8a",
+      "afterMain": "641d1858126b19b80130f1f0a8543700f69e6706",
+      "tag": "wp079-integrate-status-main-20260929",
+      "paths": [
+        "tools/integrate.sh",
+        "tools/qa/tests/test_integrate_status.py"
+      ],
+      "integrationExit": 0,
+      "sourceBlobExact": true,
+      "sourceTests": "14/14nondelegatingfakeGit+syntax/exit0 independentlyverified",
+      "limitation": "cleanpreflight+singlewriter; not concurrentedit rollback guarantee"
+    }
+  ]
+}

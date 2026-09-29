@@ -51,3 +51,22 @@ S04/S07 eski koordinatöre yönelen mesajlarını düzeltmeleri için yeniden hi
 
 Her kabul kaydı sourceSHA/base/changedpaths/receipt/XML/log/hash/originalexit/guard/narrowlimit içerir. `integrate.sh` cleanpipe exit bug'u nedeniyle root ayrıca main/source `git status --porcelain` exit0 doğrular; tüm C00 untracked belgeleri önce açık dosya listesiyle commit edilir. Dirtygate bypass/force/reset/rebase/amend/add-A yok. Batch sonrası exact finalSHA compile ve main-ci, backup/cleanupdryrun/disk/LFS sonuçları ayrı kaydedilir.
 
+
+## 29.09 ikinci kayıt — C00 dar intake ve sonraki iş
+
+Dört atom resmi dry-run/apply/clean-exit0/sourceblobexact kapılarıyla main'e alınmıştır; [intake ledger](intake-ledger.json). Son codehead `641d1858126b19b80130f1f0a8543700f69e6706`; tüm yerel tagged kaynaklar ve eski adaylar korunur.
+
+| Paket | Source → main | Dar kabul | Açık sınır |
+|---|---|---|---|
+| WP075/S05 | f0fb8aa7 → dd4e5bff | 4path panorama; r2W60 1/1PASS guard0 | Greycurve/NWfooter; AD/perf/worldREADY yok |
+| WP071/S06 | 2ed77017 → 5f40e9c6 | Diagnostic1path; default1SKIP/optin1PASS | Source→imported→baked/contact UNKNOWN; FPOFF/TPHOLD |
+| WP076/S03 | f802c784 → 51209880 | Editoronly actualMove/contact hook; 1/1PASS | Movinggroundcontact, C1causeUNKNOWN |
+| WP079/S01 | 1466da4e → 641d1858 | Statusfailure failclosed2tools,14behavioraltests | Cleanpreflight+singlewriter; concurrency garantisi değil |
+
+Bağımsız [S05/S06 review](s05-s06-intake-review.md), [S01/S03 review](s01-s03-intake-review.md), [statusatomreview](s01-integrate-status-review.md). Root birleşikstatus suite14/14PASS/exit0; Unity/fullCI/releasebuhead üzerinde henüzNOTRUN. S01e8RC5path67/67 evidenceverified fakat eksikmandatory M3/closure receipt ilePASS üretilebildiğinden HOLD; owner strictcontractchildfix sürüyor.
+
+P05manifest e5b978ff50/50+9indexhash ve P07continuousUV9305b9b2/6c23611d11artifact+12input+514array whitelist bağımsızmatched; yalnız kaynakprovenans/darUV kabul. P06 [review](p06-source-intake-review.md):14artifact/canonicalFBX/Blend/CP/polygon/bind exact, sourceROI/anchor sourceinput intake-ready; Unity/posed/contact/AD değildir.
+
+Sonraki offline işler sevkli: S03B8allocminimumcapacitybugprep, S04pincommand1/round+nullHearth atomları, S05sky residualcause, S06source→imported→bakedmap, S09OcakUIcauseplan, P05LOD/consumerdebtmatrix, P06TPspecialHipsimporterror source-onlytriage, P07RAMglobaltopology. S01strictRChardening,S02originalCIcause,S07B3implementation,S08kitprovenance,S10A8generator ilkdalga devam. Yeni Unity/Player başlatmaları C00 batchcompile/mainCI penceresi için koordineli; offlineişler sürer.
+
+S07 yanlışcwd taslakları sahibiACK sonrası altıdosya/hash+patch ile korunmuş; iki trackedrootfile exactHEAD restore, dört untrackedoriginal kanıt klasörüne taşınmış. [Receipt](s07-writer-preservation-receipt.json). Ownerabsolutecwd'de devam; taslakproductionintake/PASS yapılmadı.
