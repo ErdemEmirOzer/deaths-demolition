@@ -102,6 +102,24 @@ namespace DD.Prototype.Enemies
         private EnemyAttackState _attack;
         private EnemyHitReactionState _reaction;
         private CharacterController _controller;
+#if UNITY_EDITOR
+        // Opt-in, single-body test observation. No observer component exists in normal play.
+        [Serializable]
+        public struct DiagnosticMove
+        {
+            public long callId;
+            public int frame, phase, lifeId;
+            public float time, dt;
+            public Vector3 ownVelocity, crowdVelocity, finalVelocity, requestedDelta;
+            public Vector3 before, afterMove, afterClamp, steeringCorner;
+            public bool hasSteeringCorner, groundedBefore, groundedAfterMove, groundedAfterClamp;
+            public CollisionFlags flags;
+        }
+        public static ZombieEnemy DiagnosticMoveBody;
+        public static Action<DiagnosticMove> DiagnosticMoveObserved;
+        private long _diagnosticMoveCall;
+#endif
+
 
         // ------------------------------------------------------------------- run state
         private EnemyRandom _random;
@@ -1043,10 +1061,46 @@ namespace DD.Prototype.Enemies
 
             Vector3 motion = velocity;
             motion.y = _verticalVelocity;
-            NoteWallContact(_controller.Move(motion * dt));   // WP-055E (M3 K1): side-contact flag instead of the allocating OnControllerColliderHit message
+#if UNITY_EDITOR
+            bool observeMove = DiagnosticMoveBody == this && DiagnosticMoveObserved != null;
+            DiagnosticMove observation = default;
+            if (observeMove)
+            {
+                observation = new DiagnosticMove
+                {
+                    callId = ++_diagnosticMoveCall, frame = Time.frameCount, time = Time.time, dt = dt,
+                    lifeId = _lifeId, ownVelocity = ownVelocity, crowdVelocity = correction,
+                    finalVelocity = motion, requestedDelta = motion * dt, before = transform.position,
+                    steeringCorner = _steeringCorner, hasSteeringCorner = _hasSteeringCorner,
+                    groundedBefore = _controller.isGrounded
+                };
+                DiagnosticMoveObserved(observation);
+            }
+#endif
+            CollisionFlags moveFlags = _controller.Move(motion * dt);
+            NoteWallContact(moveFlags);   // WP-055E (M3 K1): side-contact flag instead of the allocating OnControllerColliderHit message
+#if UNITY_EDITOR
+            if (observeMove)
+            {
+                observation.phase = 1;
+                observation.afterMove = transform.position;
+                observation.groundedAfterMove = _controller.isGrounded;
+                observation.flags = moveFlags;
+                DiagnosticMoveObserved(observation);
+            }
+#endif
 
             // A strong push can walk the body off the mesh; put it back.
             ClampToWalkable(correction);
+#if UNITY_EDITOR
+            if (observeMove)
+            {
+                observation.phase = 2;
+                observation.afterClamp = transform.position;
+                observation.groundedAfterClamp = _controller.isGrounded;
+                DiagnosticMoveObserved(observation);
+            }
+#endif
 
             // ------------------------------------------------------------------ facing
             // Faces its OWN intent, not the crowd correction: a zombie being shouldered

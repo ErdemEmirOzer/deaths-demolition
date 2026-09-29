@@ -2,6 +2,12 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+#if UNITY_EDITOR
+using System.IO;
+using System.Reflection;
+using System.Security.Cryptography;
+using UnityEditor;
+#endif
 using DD.Prototype.Damage;
 using DD.Prototype.Enemies;
 using DD.Prototype.Navigation;
@@ -48,6 +54,9 @@ namespace DD.Prototype.Tests.PlayMode
         public void TearDown()
         {
             RunFlowClock.ClearHolds();
+#if UNITY_EDITOR
+            C1ContactObserver.ResetHook();
+#endif
             if (PlayerRegistry.Primary != null && PlayerRegistry.Primary.Health != null) PlayerRegistry.Primary.Health.DiagnosisInvulnerable = false;
             LogAssert.ignoreFailingMessages = false;
         }
@@ -72,10 +81,20 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsTrue(SpawnWorldProfile.IsV6, "varsayılan dünya V6 değil");
             rig.Health.DiagnosisInvulnerable = true;
 
-            var stations = new List<(string name, Vector3 at)>(Stations);
+            bool c1Only = false;
+#if UNITY_EDITOR
+            c1Only = Environment.GetEnvironmentVariable("DD_WP076_C1_CONTACT") == "1";
+            var c1Proof = c1Only ? new C1ContactObserver.Proof() : null;
+#endif
+            var stations = c1Only
+                ? new List<(string name, Vector3 at)> { Stations[6] }
+                : new List<(string name, Vector3 at)>(Stations);
             GameObject falls = GameObject.Find("Waterfall");
-            Assert.IsNotNull(falls, "strict Waterfall istasyonu yok");
-            stations.Add(("Waterfall", falls.transform.position));
+            if (!c1Only)
+            {
+                Assert.IsNotNull(falls, "strict Waterfall istasyonu yok");
+                stations.Add(("Waterfall", falls.transform.position));
+            }
 
             var rapor = new StringBuilder("[DD-OBS] wp076.v6ai\n");
             int sumRec = 0, sumRem = 0, sumOow = 0, waterfallStalls = 0;
@@ -97,6 +116,9 @@ namespace DD.Prototype.Tests.PlayMode
                         continue;
                     }
 
+#if UNITY_EDITOR
+                    if (c1Only) { c1Proof.stationNavPosition = hit.position; c1Proof.stationNavResolved = true; }
+#endif
                     director.ForceActiveTarget(0, false);
                     director.ClearAllEnemies();
                     rig.Teleport(hit.position + Vector3.up * 0.05f, Quaternion.identity);
@@ -151,6 +173,10 @@ namespace DD.Prototype.Tests.PlayMode
                                     {
                                         a.reported = true;
                                         stallCount++;
+#if UNITY_EDITOR
+                                        if (c1Only && !c1Proof.selected)
+                                            C1ContactObserver.Select(z, c1Proof, a.anchor, a.since, d);
+#endif
                                         stalls.Append(string.Format("({0:0.0},{1:0.0},{2:0.0} d={3:0.0} {4}) ", zp.x, zp.y, zp.z, d, z.Tier));
                                     }
                                     anchors[z] = a;
@@ -174,6 +200,13 @@ namespace DD.Prototype.Tests.PlayMode
                         nearCornerReached = anchors.TryGetValue(nearCornerBody, out var nearCornerAnchor) && nearCornerAnchor.reached;
                         rapor.AppendLine("  strict Waterfall stalls=" + waterfallStalls + " nearCornerReached=" + nearCornerReached);
                     }
+#if UNITY_EDITOR
+                    if (c1Only)
+                    {
+                        c1Proof.spawned = spawned; c1Proof.reached = reached; c1Proof.stalls = stallCount;
+                        c1Proof.recoveries = dRec; c1Proof.removals = dRem; c1Proof.outOfWorld = dOow;
+                    }
+#endif
                     bool known = KnownOpen.Contains(st.name);
                     if (known) rapor.AppendLine("    ^ KNOWN OPEN (not asserted)");
                     else { sumRec += dRec; sumRem += dRem; sumOow += dOow; if (reached == 0) noReach.Add(st.name); }
@@ -188,8 +221,24 @@ namespace DD.Prototype.Tests.PlayMode
                 rig.Health.DiagnosisInvulnerable = false;
                 rapor.AppendLine("  oow: " + (oowAt.Count > 0 ? string.Join("; ", oowAt) : "-"));
                 Debug.Log(rapor.ToString());
+#if UNITY_EDITOR
+                if (c1Only)
+                {
+                    C1ContactObserver.ResetHook();
+                    c1Proof.outcome = c1Proof.move == null ? "UNKNOWN: no stalled-body normal Move captured"
+                        : c1Proof.contacts.Count == 0 ? "UNKNOWN: selected Move had no actual collider contact"
+                        : "CONTACT OBSERVED: collider binding and causal interpretation require review";
+                    c1Proof.sceneInputs = C1ContactObserver.CurrentScenes();
+                    string output = Environment.GetEnvironmentVariable("DD_WP076_C1_CONTACT_OUT");
+                    Assert.IsFalse(string.IsNullOrEmpty(output), "C1 diagnostic output path missing");
+                    File.WriteAllText(output, JsonUtility.ToJson(c1Proof, true));
+                    Debug.Log("[DD-OBS] wp076.c1-contact " + c1Proof.outcome);
+                }
+#endif
             }
 
+            // This opt-in is an observation of the unchanged KnownOpen fixture, not a new acceptance gate.
+            if (c1Only) yield break;
             Assert.AreEqual(0, sumRem, "takılma: watchdog gövde kaldırdı\n" + rapor);
             Assert.AreEqual(0, sumOow, "dünya dışı kaldırma\n" + rapor);
             // stuck RECOVERIES (repath + side step, the body stays) are reported, not asserted: 26.09 two runs 0 and 3 outside KnownOpen
@@ -199,6 +248,119 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(0, waterfallStalls, "strict Waterfall: gözlenen takılma\n" + rapor);
             Assert.IsTrue(nearCornerReached, "Waterfall yakın-köşe gövdesi oyuncuya ulaşmadı\n" + rapor);
         }
+
+#if UNITY_EDITOR
+        [UnityTest]
+        [Timeout(120000)]
+        public IEnumerator C1_Observer_ActualMoveContact_HookSmoke()
+        {
+            if (Environment.GetEnvironmentVariable("DD_WP076_C1_HOOK_SMOKE") != "1")
+                Assert.Ignore("Opt-in observer plumbing proof; not a C1 cause acceptance test.");
+            string output = Environment.GetEnvironmentVariable("DD_WP076_C1_HOOK_OUT");
+            Assert.IsFalse(string.IsNullOrEmpty(output), "Hook smoke output path missing");
+
+            Assert.AreEqual(TestProfileIsolation.TestProfilePath, DD.Prototype.Profile.ProfileStore.Path);
+            Assert.AreNotEqual(TestProfileIsolation.RealProfilePath, DD.Prototype.Profile.ProfileStore.Path);
+            Assert.AreEqual(TestProfileIsolation.TestTelemetryDirectory, DD.Prototype.Diagnostics.Telemetry.RunTelemetry.Directory);
+            Assert.AreEqual(DD.Prototype.UI.UiDataPaths.ProcessLocalRoot, DD.Prototype.UI.UiDataPaths.Root);
+            Assert.AreEqual(Path.Combine(DD.Prototype.UI.UiDataPaths.ProcessLocalRoot, DD.Prototype.UI.UiSettings.FileName), DD.Prototype.UI.UiSettings.FilePath);
+            Assert.AreEqual(Path.Combine(DD.Prototype.UI.UiDataPaths.ProcessLocalRoot, DD.Prototype.UI.UiLoadTiming.FileName), DD.Prototype.UI.UiLoadTiming.FilePath);
+            Assert.AreEqual(Path.Combine(DD.Prototype.UI.UiDataPaths.ProcessLocalRoot, DD.Prototype.UI.UiHintState.FileName), DD.Prototype.UI.UiHintState.FilePath);
+
+            var proof = new C1ContactObserver.Proof { hookSmoke = true, target = 1, stationSeconds = 0f, stallSeconds = 0f,
+                selection = "HOOK SMOKE: one factory body at a current authored gate, not a stalled C1 body",
+                outcome = "UNKNOWN: hook smoke not completed" };
+            EnemySpawnDirector director = null;
+            PlayerRig rig = null;
+            ZombieEnemy body = null;
+            bool directorWasEnabled = false;
+            try
+            {
+                LogAssert.ignoreFailingMessages = true;
+                RunFlowClock.ClearHolds();
+                SceneManager.LoadScene(DD.Prototype.Core.Boot.PrototypeScenes.Run, LoadSceneMode.Single);
+                yield return null;
+                yield return Bekle(() => RunDirector.Instance != null && EnemySpawnDirector.Instance != null && PlayerRegistry.Primary != null
+                    && RunDirector.Instance.Phase == RunPhase.Fighting, 40f, "hook smoke Run/Fighting");
+                director = EnemySpawnDirector.Instance; rig = PlayerRegistry.Primary;
+                directorWasEnabled = director.enabled;
+                RunDirector.Instance.BeginRound(1);
+                // ForceActiveTarget(0) restores normal demand; disable only this test's director to isolate one factory body.
+                director.ForceActiveTarget(0, false);
+                director.enabled = false;
+                director.ClearAllEnemies();
+                rig.Health.DiagnosisInvulnerable = true;
+                Assert.IsTrue(SpawnWorldProfile.IsV6);
+                Assert.IsTrue(NavMesh.SamplePosition(Stations[6].at + Vector3.up * 0.5f, out NavMeshHit station, 3f, NavMesh.AllAreas));
+                proof.stationNavResolved = true; proof.stationNavPosition = station.position;
+                rig.Teleport(station.position + Vector3.up * 0.05f, Quaternion.identity);
+                yield return null;
+                yield return null;
+                director.RefreshPointsNow();
+                SpawnPointRuntime chosen = null;
+                float nearest = float.PositiveInfinity;
+                foreach (SpawnPointRuntime point in SpawnPointRegistry.Points)
+                {
+                    if (!point.Enabled || !point.HasMarker || point.PathStatus != NavPathStatus.Complete) continue;
+                    Vector3 delta = point.NavPosition - rig.transform.position; delta.y = 0f;
+                    float distance = delta.magnitude;
+                    if (distance <= 15f) continue; // fixture-only separation from attacks, not a spawn rule
+                    if (distance < nearest || (distance == nearest && string.CompareOrdinal(point.Id, chosen.Id) < 0))
+                    { chosen = point; nearest = distance; }
+                }
+                Assert.IsNotNull(chosen, "No enabled marker-bound complete-path gate for hook smoke");
+                proof.spawnPointId = chosen.Id; proof.spawnPosition = chosen.NavPosition;
+                body = EnemyFactory.Spawn(DD.Prototype.Core.Config.EnemyTier.Standard, 1, chosen.NavPosition, chosen.SpawnRotation());
+                Assert.IsNotNull(body);
+                proof.spawned = 1;
+                CharacterController controller = body.GetComponent<CharacterController>();
+                Assert.IsNotNull(controller); Assert.IsTrue(controller.enabled);
+                yield return Bekle(() => body != null && body.IsAlive && !body.IsRising && controller.isGrounded
+                    && body.PathFollower != null && body.PathFollower.HasCompletePath, 8f, "body grounded with current complete path");
+                Assert.AreEqual(1, ZombieEnemy.Live.Count, "Hook fixture must contain only its one factory body");
+                C1ContactObserver.Select(body, proof, body.transform.position, Time.time, nearest);
+                yield return Bekle(() => proof.hookPhases.Count == 3, 3f, "selected body actual normal Move phases");
+
+                CollectionAssert.AreEqual(new[] { 0, 1, 2 }, proof.hookPhases);
+                Assert.IsNotNull(proof.move);
+                ZombieEnemy.DiagnosticMove move = proof.move.observation;
+                Assert.Greater(move.callId, 0); Assert.Greater(move.dt, 0f);
+                Assert.AreEqual(body.LifeId, move.lifeId);
+                Assert.AreEqual(move.frame, proof.move.afterMoveFrame); Assert.AreEqual(move.frame, proof.move.afterClampFrame);
+                foreach (int frame in proof.hookFrames) Assert.AreEqual(move.frame, frame);
+                Assert.AreEqual(move.requestedDelta, move.finalVelocity * move.dt);
+                Assert.Less(move.requestedDelta.y, 0f);
+                Assert.IsTrue(move.groundedBefore); Assert.IsTrue(move.groundedAfterMove);
+                Assert.IsTrue((move.flags & CollisionFlags.Below) != 0);
+                Assert.IsTrue(proof.move.path.privateFieldsResolved); Assert.IsTrue(proof.move.path.complete);
+                Assert.AreEqual(body.GetInstanceID(), proof.move.enemyInstanceId);
+                Assert.AreEqual(controller.GetInstanceID(), proof.move.controllerInstanceId);
+                Assert.IsTrue(proof.sameCallContacts);
+                Assert.Greater(proof.contacts.Count, 0, "No real OnControllerColliderHit callback in selected Move");
+                bool upwardWorldContact = false;
+                foreach (C1ContactObserver.Contact contact in proof.contacts)
+                {
+                    Assert.AreEqual(move.callId, contact.callId); Assert.AreEqual(move.frame, contact.frame);
+                    Assert.AreEqual(move.time, contact.time);
+                    if (contact.normal.y > 0f && contact.runtimeCollider != null && contact.collider.enabled && !contact.collider.trigger
+                        && contact.collider.layer == DD.Prototype.Core.PrototypeLayers.Environment
+                        && contact.runtimeCollider.GetComponentInParent<ZombieEnemy>() == null) upwardWorldContact = true;
+                }
+                Assert.IsTrue(upwardWorldContact, "No actual upward world-ground hit callback");
+                proof.outcome = "HOOK PROOF PASS / C1 CAUSE UNKNOWN: contact from a non-stalled diagnostic body";
+            }
+            finally
+            {
+                C1ContactObserver.ResetHook();
+                if (body != null) body.Despawn();
+                if (director != null) { director.ClearAllEnemies(); director.ForceActiveTarget(0, false); director.enabled = directorWasEnabled; }
+                if (rig != null && rig.Health != null) rig.Health.DiagnosisInvulnerable = false;
+                proof.sceneInputs = C1ContactObserver.CurrentScenes();
+                File.WriteAllText(output, JsonUtility.ToJson(proof, true));
+                Debug.Log("[DD-OBS] wp076.c1-hook " + proof.outcome);
+            }
+        }
+#endif
 
         private static IEnumerator Bekle(Func<bool> kosul, float saniye, string aciklama)
         {
@@ -210,4 +372,268 @@ namespace DD.Prototype.Tests.PlayMode
             }
         }
     }
+
+#if UNITY_EDITOR
+    // Added only to the first actually stalled C1 body by the opt-in fixture.
+    public sealed class C1ContactObserver : MonoBehaviour
+    {
+        [Serializable] public sealed class Source
+        {
+            public string path, guid, sha256, globalId, status;
+            public long fileId;
+        }
+        [Serializable] public sealed class TransformState
+        {
+            public string name, hierarchy;
+            public int instanceId;
+            public Vector3 localPosition, localScale, worldPosition, worldScale;
+            public Quaternion localRotation, worldRotation;
+            public float[] localToWorld;
+        }
+        [Serializable] public sealed class ColliderState
+        {
+            public int instanceId, layer;
+            public string type, hierarchy, scenePath;
+            public bool enabled, trigger;
+            public Vector3 boundsCenter, boundsSize, boxCenter, boxSize;
+            public Vector3[] boxWorldCorners;
+            public float boxWorldTop;
+            public TransformState[] transforms;
+            public Source sceneObject, source, originalSource, mesh;
+        }
+        [Serializable] public sealed class Contact
+        {
+            public long callId;
+            public int frame;
+            public float time, moveLength;
+            public Vector3 point, normal, hitMoveDirection;
+            public ColliderState collider;
+            [NonSerialized] public Collider runtimeCollider;
+        }
+        [Serializable] public sealed class PathState
+        {
+            public bool privateFieldsResolved, complete;
+            public string status;
+            public int cornerIndex, remaining;
+            public float arriveRadius;
+            public Vector3[] corners;
+            public Vector3 lastGoal;
+        }
+        [Serializable] public sealed class Move
+        {
+            public ZombieEnemy.DiagnosticMove observation;
+            public int enemyInstanceId, controllerInstanceId, afterMoveFrame, afterClampFrame;
+            public float afterMoveTime, afterClampTime, radius, height, skinWidth, stepOffset, slopeLimit, minMoveDistance;
+            public Vector3 controllerCenter, achievedMoveDelta, achievedAfterClampDelta;
+            public bool detectCollisions;
+            public string tier, unityVersion;
+            public TransformState[] enemyTransforms;
+            public PathState path;
+            public Source enemyScript, enemyComponent, enemyPrefabSource, controllerPrefabSource;
+        }
+        [Serializable] public sealed class Proof
+        {
+            public string outcome, selection = "first body satisfying unchanged fixture stall predicate; next normal walking Move only";
+            public Vector3 station = new Vector3(-8f, 0.25f, -33f), stationNavPosition, stallAnchor, selectionPosition;
+            public float stationSeconds = 25f, stallSeconds = 6f, stallMove = 0.75f, anchorSince, selectedTime, selectedDistance;
+            public int target = 12, spawned, reached, stalls, recoveries, removals, outOfWorld, selectedFrame, selectedLifeId;
+            public bool selected, sameCallContacts, stationNavResolved, hookSmoke;
+            public string spawnPointId;
+            public Vector3 spawnPosition;
+            public List<int> hookPhases = new List<int>(), hookFrames = new List<int>();
+            public Move move;
+            public List<Contact> contacts = new List<Contact>();
+            public List<ColliderState> nearbyContextOnly = new List<ColliderState>();
+            public Source[] sceneInputs;
+        }
+
+        private Proof _proof;
+        private ZombieEnemy _body;
+        private bool _insideMove, _captured;
+        private long _callId;
+
+        public static void Select(ZombieEnemy body, Proof proof, Vector3 anchor, float since, float distance)
+        {
+            proof.selected = true; proof.selectedFrame = Time.frameCount; proof.selectedTime = Time.time;
+            proof.selectedLifeId = body.LifeId; proof.selectionPosition = body.transform.position;
+            proof.stallAnchor = anchor; proof.anchorSince = since; proof.selectedDistance = distance;
+            var observer = body.gameObject.AddComponent<C1ContactObserver>();
+            observer._body = body; observer._proof = proof;
+            ZombieEnemy.DiagnosticMoveBody = body;
+            ZombieEnemy.DiagnosticMoveObserved = observer.Observe;
+        }
+
+        public static void ResetHook()
+        {
+            ZombieEnemy.DiagnosticMoveBody = null;
+            ZombieEnemy.DiagnosticMoveObserved = null;
+            foreach (C1ContactObserver observer in UnityEngine.Object.FindObjectsOfType<C1ContactObserver>())
+                Destroy(observer);
+        }
+
+        private void Observe(ZombieEnemy.DiagnosticMove value)
+        {
+            if (_captured || _body.LifeId != _proof.selectedLifeId) return;
+            _proof.hookPhases.Add(value.phase); _proof.hookFrames.Add(Time.frameCount);
+            if (value.phase == 0)
+            {
+                _insideMove = true; _callId = value.callId;
+                CharacterController cc = _body.GetComponent<CharacterController>();
+                _proof.move = new Move
+                {
+                    observation = value, enemyInstanceId = _body.GetInstanceID(), controllerInstanceId = cc.GetInstanceID(),
+                    tier = _body.Tier.ToString(), unityVersion = Application.unityVersion,
+                    radius = cc.radius, height = cc.height, skinWidth = cc.skinWidth, stepOffset = cc.stepOffset,
+                    slopeLimit = cc.slopeLimit, minMoveDistance = cc.minMoveDistance, controllerCenter = cc.center,
+                    detectCollisions = cc.detectCollisions, enemyTransforms = Hierarchy(_body.transform),
+                    path = ReadPath(_body.PathFollower), enemyScript = AssetSource(MonoScript.FromMonoBehaviour(_body)),
+                    enemyComponent = AssetSource(_body), enemyPrefabSource = AssetSource(PrefabUtility.GetCorrespondingObjectFromSource(_body)),
+                    controllerPrefabSource = AssetSource(PrefabUtility.GetCorrespondingObjectFromSource(cc))
+                };
+            }
+            else if (value.callId == _callId && value.phase == 1)
+            {
+                _insideMove = false;
+                _proof.move.afterMoveFrame = Time.frameCount; _proof.move.afterMoveTime = Time.time;
+            }
+            else if (value.callId == _callId && value.phase == 2)
+            {
+                _proof.move.observation = value;
+                _proof.move.afterClampFrame = Time.frameCount; _proof.move.afterClampTime = Time.time;
+                _proof.move.achievedMoveDelta = value.afterMove - value.before;
+                _proof.move.achievedAfterClampDelta = value.afterClamp - value.before;
+                _proof.sameCallContacts = true;
+                var actual = new HashSet<int>();
+                foreach (Contact contact in _proof.contacts)
+                {
+                    _proof.sameCallContacts &= contact.callId == value.callId && contact.frame == value.frame;
+                    ResolveSources(contact.collider, contact.runtimeCollider);
+                    actual.Add(contact.collider.instanceId);
+                }
+                // Context only: proximity never substitutes for an actual hit callback.
+                if (!_proof.hookSmoke) foreach (Collider collider in UnityEngine.Object.FindObjectsOfType<Collider>())
+                {
+                    if (!collider.enabled || collider.GetComponentInParent<ZombieEnemy>() != null || actual.Contains(collider.GetInstanceID())) continue;
+                    foreach (Contact contact in _proof.contacts)
+                        if ((collider.bounds.ClosestPoint(contact.point) - contact.point).sqrMagnitude <= 4f)
+                        {
+                            ColliderState state = Snapshot(collider); ResolveSources(state, collider);
+                            _proof.nearbyContextOnly.Add(state); break;
+                        }
+                }
+                _captured = true;
+                ZombieEnemy.DiagnosticMoveBody = null;
+                ZombieEnemy.DiagnosticMoveObserved = null;
+                enabled = false;
+            }
+        }
+
+        private void OnControllerColliderHit(ControllerColliderHit hit)
+        {
+            if (!_insideMove || _captured || hit.controller.gameObject != gameObject) return;
+            _proof.contacts.Add(new Contact
+            {
+                callId = _callId, frame = Time.frameCount, time = Time.time, point = hit.point,
+                normal = hit.normal, hitMoveDirection = hit.moveDirection, moveLength = hit.moveLength,
+                collider = Snapshot(hit.collider), runtimeCollider = hit.collider
+            });
+        }
+
+        private static PathState ReadPath(NavPathFollower follower)
+        {
+            if (follower == null) return new PathState { status = "UNKNOWN: no follower" };
+            var state = new PathState { status = follower.Status.ToString(), complete = follower.HasCompletePath,
+                remaining = follower.RemainingCorners, arriveRadius = follower.CornerArriveRadius };
+            const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+            Type type = typeof(NavPathFollower);
+            FieldInfo corners = type.GetField("_corners", flags), count = type.GetField("_cornerCount", flags),
+                index = type.GetField("_cornerIndex", flags), goal = type.GetField("_lastGoal", flags);
+            if (corners == null || count == null || index == null || goal == null) return state;
+            int n = (int)count.GetValue(follower);
+            state.corners = new Vector3[n];
+            Array.Copy((Vector3[])corners.GetValue(follower), state.corners, n);
+            state.cornerIndex = (int)index.GetValue(follower); state.lastGoal = (Vector3)goal.GetValue(follower);
+            state.privateFieldsResolved = true;
+            return state;
+        }
+
+        private static string PathOf(Transform transform)
+        {
+            string result = transform.name + "[" + transform.GetSiblingIndex() + "]";
+            for (Transform p = transform.parent; p != null; p = p.parent)
+                result = p.name + "[" + p.GetSiblingIndex() + "]/" + result;
+            return result;
+        }
+
+        private static TransformState[] Hierarchy(Transform transform)
+        {
+            var result = new List<TransformState>();
+            for (Transform p = transform; p != null; p = p.parent)
+            {
+                var matrix = new float[16];
+                for (int i = 0; i < 16; i++) matrix[i] = p.localToWorldMatrix[i];
+                result.Add(new TransformState { name = p.name, hierarchy = PathOf(p), instanceId = p.GetInstanceID(),
+                    localPosition = p.localPosition, localRotation = p.localRotation, localScale = p.localScale,
+                    worldPosition = p.position, worldRotation = p.rotation, worldScale = p.lossyScale, localToWorld = matrix });
+            }
+            return result.ToArray();
+        }
+
+        private static ColliderState Snapshot(Collider collider)
+        {
+            var state = new ColliderState { instanceId = collider.GetInstanceID(), type = collider.GetType().FullName,
+                layer = collider.gameObject.layer, hierarchy = PathOf(collider.transform), scenePath = collider.gameObject.scene.path,
+                enabled = collider.enabled, trigger = collider.isTrigger, boundsCenter = collider.bounds.center,
+                boundsSize = collider.bounds.size, transforms = Hierarchy(collider.transform) };
+            if (collider is BoxCollider box)
+            {
+                state.boxCenter = box.center; state.boxSize = box.size; state.boxWorldCorners = new Vector3[8];
+                state.boxWorldTop = float.NegativeInfinity;
+                for (int i = 0; i < 8; i++)
+                {
+                    Vector3 sign = new Vector3((i & 1) == 0 ? -1f : 1f, (i & 2) == 0 ? -1f : 1f, (i & 4) == 0 ? -1f : 1f);
+                    Vector3 corner = box.transform.TransformPoint(box.center + Vector3.Scale(box.size * 0.5f, sign));
+                    state.boxWorldCorners[i] = corner; state.boxWorldTop = Mathf.Max(state.boxWorldTop, corner.y);
+                }
+            }
+            return state;
+        }
+
+        private static void ResolveSources(ColliderState state, Collider collider)
+        {
+            state.sceneObject = AssetSource(collider);
+            state.source = AssetSource(PrefabUtility.GetCorrespondingObjectFromSource(collider));
+            state.originalSource = AssetSource(PrefabUtility.GetCorrespondingObjectFromOriginalSource(collider));
+            if (collider is MeshCollider meshCollider) state.mesh = AssetSource(meshCollider.sharedMesh);
+        }
+
+        private static Source AssetSource(UnityEngine.Object source)
+        {
+            if (source == null) return new Source { status = "UNKNOWN: no corresponding source" };
+            string path = AssetDatabase.GetAssetPath(source);
+            bool resolved = AssetDatabase.TryGetGUIDAndLocalFileIdentifier(source, out string guid, out long fileId);
+            return new Source { path = path, guid = guid, fileId = fileId,
+                globalId = GlobalObjectId.GetGlobalObjectIdSlow(source).ToString(), sha256 = HashFile(path),
+                status = resolved && !string.IsNullOrEmpty(path) ? "asset GUID/fileID resolved" : "runtime/scene identity; prefab source not established" };
+        }
+
+        private static string HashFile(string path)
+        {
+            if (string.IsNullOrEmpty(path) || !File.Exists(path)) return null;
+            using (SHA256 sha = SHA256.Create()) return BitConverter.ToString(sha.ComputeHash(File.ReadAllBytes(path))).Replace("-", "").ToLowerInvariant();
+        }
+
+        public static Source[] CurrentScenes()
+        {
+            var result = new List<Source>();
+            for (int i = 0; i < SceneManager.sceneCount; i++)
+            {
+                Scene scene = SceneManager.GetSceneAt(i);
+                result.Add(new Source { path = scene.path, guid = AssetDatabase.AssetPathToGUID(scene.path),
+                    sha256 = HashFile(scene.path), status = scene.isLoaded ? "loaded scene" : "not loaded" });
+            }
+            return result.ToArray();
+        }
+    }
+#endif
 }
