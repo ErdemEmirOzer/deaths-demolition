@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using DD.Prototype.Navigation;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools.Constraints;
 
 namespace DD.Prototype.Tests.EditMode
 {
@@ -110,6 +111,73 @@ namespace DD.Prototype.Tests.EditMode
             a.y = 0f;
             b.y = 0f;
             return Vector3.Distance(a, b);
+        }
+
+        // WP-076 B8: count changes must not shrink warmed grid capacity. This tests the
+        // real solver path, rather than a stable-count or region-cost-only allocation window.
+        [Test]
+        public void CrowdSolver_12_40_Churn_RetainsGridBuffers()
+        {
+            CrowdSolver solver = YeniSolver();
+            var members = AllocationMembers(solver, 40);
+            CrowdPlayerState player = OyuncuYok();
+            solver.Tick(Adim, player);
+            const System.Reflection.BindingFlags fields = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            object grid = typeof(CrowdSolver).GetField("_grid", fields).GetValue(solver);
+            string[] names = { "_bucketHead", "_next", "_cellKey" };
+            var buffers = new object[names.Length];
+            for (int i = 0; i < names.Length; i++) buffers[i] = grid.GetType().GetField(names[i], fields).GetValue(grid);
+            byte[] control = null;
+            Assert.That(() => { control = new byte[64 * 1024]; }, UnityEngine.TestTools.Constraints.Is.AllocatingGCMemory(),
+                "positive control: the calling-thread GC.Alloc recorder must see allocations");
+            bool saw12 = true, saw40 = true, sawContacts = true;
+            Assert.That(() =>
+            {
+                for (int cycle = 0; cycle < 8; cycle++)
+                {
+                    for (int i = 12; i < members.Length; i++) solver.Unregister(members[i]);
+                    solver.Tick(Adim, player);
+                    saw12 &= solver.MemberCount == 12; sawContacts &= solver.LastContactCount > 0;
+                    for (int i = 12; i < members.Length; i++) solver.Register(members[i]);
+                    solver.Tick(Adim, player);
+                    saw40 &= solver.MemberCount == 40; sawContacts &= solver.LastContactCount > 0;
+                }
+            }, UnityEngine.TestTools.Constraints.Is.Not.AllocatingGCMemory(), "warm 12/40 membership churn allocates on the calling thread");
+            Assert.IsTrue(saw12 && saw40 && sawContacts, "churn must actually reach both counts and exercise separation");
+            Assert.AreEqual(40, solver.MemberCount);
+            for (int i = 0; i < names.Length; i++) Assert.AreSame(buffers[i], grid.GetType().GetField(names[i], fields).GetValue(grid), names[i]);
+            System.GC.KeepAlive(control);
+        }
+
+        [TestCase(12)]
+        [TestCase(40)]
+        public void CrowdSolver_WarmActualTicks_NoCallingThreadAllocation(int count)
+        {
+            CrowdSolver solver = YeniSolver();
+            Uye[] members = AllocationMembers(solver, count);
+            CrowdPlayerState player = OyuncuYok();
+            for (int i = 0; i < 3; i++) solver.Tick(Adim, player);
+            Assert.Greater(solver.LastContactCount, 0, "fixture must exercise the separation solve");
+            byte[] control = null;
+            Assert.That(() => { control = new byte[64 * 1024]; }, UnityEngine.TestTools.Constraints.Is.AllocatingGCMemory(),
+                "positive control: the calling-thread GC.Alloc recorder must see allocations");
+            Assert.That(() =>
+            {
+                for (int i = 0; i < 200; i++) solver.Tick(Adim, player);
+            }, UnityEngine.TestTools.Constraints.Is.Not.AllocatingGCMemory(), "warm actual solver ticks allocate on the calling thread");
+            System.GC.KeepAlive(members);
+            System.GC.KeepAlive(control);
+        }
+
+        private static Uye[] AllocationMembers(CrowdSolver solver, int count)
+        {
+            var members = new Uye[count];
+            for (int i = 0; i < count; i++)
+            {
+                members[i] = new Uye { Konum = new Vector3((i % 5) * 0.8f, 0f, (i / 5) * 0.8f), Hedef = Vector3.forward * 10f };
+                solver.Register(members[i]);
+            }
+            return members;
         }
 
         // ================================================================ sabit tazelik (K3)

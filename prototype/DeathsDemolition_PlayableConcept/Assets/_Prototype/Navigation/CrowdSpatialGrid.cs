@@ -46,7 +46,7 @@ namespace DD.Prototype.Navigation
             }
 
             int buckets = Mathf.NextPowerOfTwo(Mathf.Max(32, capacity * 4));
-            if (_bucketHead.Length != buckets)
+            if (_bucketHead.Length < buckets)
             {
                 _bucketHead = new int[buckets];
                 _bucketMask = buckets - 1;
