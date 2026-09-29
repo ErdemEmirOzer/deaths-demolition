@@ -1,0 +1,45 @@
+{
+  "scope": "C00 cleanup of ACKed S07 wrong-checkout drafts; owner isolated writer continues",
+  "backup": "/private/tmp/dd-s07-root-final-draft-preserved-eb_u5yok",
+  "ownerAck": "S07 main handoff root writer stopped 2026-09-29",
+  "files": [
+    {
+      "path": "prototype/DeathsDemolition_PlayableConcept/Assets/_Prototype/Feedback/Vfx/VfxDressing.cs",
+      "preserved": "/private/tmp/dd-s07-root-final-draft-preserved-eb_u5yok/VfxDressing.cs",
+      "sha256": "823c041370ea237ad18ce10e4d940fb60ae27e1b0b7e09f38efb6a25749d5467",
+      "size": 62288
+    },
+    {
+      "path": "prototype/DeathsDemolition_PlayableConcept/Assets/_Prototype/Feedback/Vfx/MuzzleSystem.cs",
+      "preserved": "/private/tmp/dd-s07-root-final-draft-preserved-eb_u5yok/MuzzleSystem.cs",
+      "sha256": "007c2117827bf0d41ff1553bdf1d8a053a571244796f290f9f72666b2533eca3",
+      "size": 18518
+    },
+    {
+      "path": "prototype/DeathsDemolition_PlayableConcept/Assets/_Prototype/Feedback/Vfx/RocketVisualSystem.cs",
+      "preserved": "/private/tmp/dd-s07-root-final-draft-preserved-eb_u5yok/RocketVisualSystem.cs",
+      "sha256": "a7f671d2c809ac136154886e5438385cdd7239c5c4230ebeb107f3664781d610",
+      "size": 12594
+    },
+    {
+      "path": "prototype/DeathsDemolition_PlayableConcept/Assets/_Prototype/Feedback/Vfx/RocketVisualSystem.cs.meta",
+      "preserved": "/private/tmp/dd-s07-root-final-draft-preserved-eb_u5yok/RocketVisualSystem.cs.meta",
+      "sha256": "e87fe779b8ff8ec217964f8a1c7434be6dfcc1b133d127a2148497be27b66b0a",
+      "size": 60
+    },
+    {
+      "path": "prototype/DeathsDemolition_PlayableConcept/Assets/_Prototype/Feedback/Vfx/ExplosionDirector.cs",
+      "preserved": "/private/tmp/dd-s07-root-final-draft-preserved-eb_u5yok/ExplosionDirector.cs",
+      "sha256": "80a870b2e80006b29b2918937043b363a759e5da0c3b468fcdc83a85fba3ed9b",
+      "size": 8965
+    },
+    {
+      "path": "prototype/DeathsDemolition_PlayableConcept/Assets/_Prototype/Feedback/Vfx/ExplosionDirector.cs.meta",
+      "preserved": "/private/tmp/dd-s07-root-final-draft-preserved-eb_u5yok/ExplosionDirector.cs.meta",
+      "sha256": "36b820327e518ac3164a54a9f20a375ce4c4d7769842c0fa7d1c3e002b2135c7",
+      "size": 60
+    }
+  ],
+  "sourceRestored": "tracked2 exactHEAD; untracked4 originals moved, not deleted",
+  "mainUnchanged": "3c0875e1e259cebae34e2cb496d03bb4e8dd9045"
+}

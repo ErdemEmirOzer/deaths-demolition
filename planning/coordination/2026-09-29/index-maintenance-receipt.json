@@ -1,0 +1,70 @@
+{
+  "scope": "C00 explicit main index maintenance; no CI lease changes",
+  "originalOwner": "UNKNOWN",
+  "authority": "main user 2026-09-29 active coordinator; no routine approval",
+  "output": "/private/tmp/dd-main-index-maintenance-20260929-f865cogv",
+  "timeUTC": "2026-09-29T04:07:14Z",
+  "headBefore": "3c0875e1e259cebae34e2cb496d03bb4e8dd9045",
+  "mainBefore": "3c0875e1e259cebae34e2cb496d03bb4e8dd9045",
+  "stagedPaths": [],
+  "lockBefore": {
+    "dev": 16777233,
+    "inode": 49785778,
+    "size": 0,
+    "mode": 420,
+    "uid": 502,
+    "gid": 20,
+    "mtimeNs": 1790652660446197207,
+    "ctimeNs": 1790652663129501980,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "indexBefore": {
+    "dev": 16777233,
+    "inode": 49767333,
+    "size": 1530740,
+    "mode": 420,
+    "uid": 502,
+    "gid": 20,
+    "mtimeNs": 1790652277128835980,
+    "ctimeNs": 1790652277257918681,
+    "sha256": "36abd5d4242bf87a7557e703eb3f95531838b5c412a286a6d83d3b254c24f757"
+  },
+  "observedRootGitProcesses": [
+    {
+      "pid": 40937,
+      "command": "git-lfs filter-process"
+    },
+    {
+      "pid": 41260,
+      "command": "git-lfs filter-process"
+    }
+  ],
+  "lsofExit": 1,
+  "lsofOutput": "",
+  "quarantinedLock": "/private/tmp/dd-main-index-maintenance-20260929-f865cogv/index.lock.quarantined",
+  "lockAfter": {
+    "dev": 16777233,
+    "inode": 49785778,
+    "size": 0,
+    "mode": 420,
+    "uid": 502,
+    "gid": 20,
+    "mtimeNs": 1790652660446197207,
+    "ctimeNs": 1790654835791285746,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "replacementLockPresent": false,
+  "indexAfter": {
+    "dev": 16777233,
+    "inode": 49767333,
+    "size": 1530740,
+    "mode": 420,
+    "uid": 502,
+    "gid": 20,
+    "mtimeNs": 1790652277128835980,
+    "ctimeNs": 1790652277257918681,
+    "sha256": "36abd5d4242bf87a7557e703eb3f95531838b5c412a286a6d83d3b254c24f757"
+  },
+  "headAfter": "3c0875e1e259cebae34e2cb496d03bb4e8dd9045",
+  "result": "QUARANTINED_PRESERVED; original owner remains UNKNOWN"
+}

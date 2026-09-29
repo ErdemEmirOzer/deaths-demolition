@@ -2377,3 +2377,18 @@ Tam PlayMode sıralı koşuda `MixGecisi` FAIL (dövüş −33,3 / −37,9): tes
 - r3 düzeltme (kapanış koşusu `wp-064r3/closure-96e3c17`): main'in build-report.sh'ı mod etiketini `release-lz4hc` yapıyor, r2 tavan kuralı yalnız `release` kabul ediyordu → release footprint "cap N/A" sayıldı (324,8 MB ≤ 550 aslında); tavan ve kapı artık taban modu okur. Kararlılık/rapor dizinleri kendi commit'ini taşıyabilir (`stab26-final@<sha>`: WP-038R sonrası yeniden koşu). Perf ×3 96e3c17'nin kendi dev binary'sinde (C-00 kararı, a2 geçersiz: HUD v3 + dünya çarpıştırıcıları): ort 7,84 / 7,90 / 7,82 ms, temiz p99 8,69 / 8,69 / 8,62, GPU 5,5–5,7 ms, tam 40 — DEC-088 ✓, pay 0,10–0,18 ms. Python 40/40.
 - Kapanış kapısı (24.09, C-00 parametreleri): `wp064_gate.py` (f993775) — perf / release 96e3c17'nin kendi build'leri (`wp-064r3/closure-96e3c17`: perf ×3 ort 7,84 / 7,90 / 7,82 ms, release 324,8 MB), kararlılık `stab61-final@58be2c2` + `stab26-main2@a1397d3` (S-10: 12/12 × iki tohum, Mono +3,1 / +3,0 MB, log 0), rapor `real61-a,b,c` + `real26-a,b` @ 58be2c2 (gerçek bot 8 / 11 / 6 / 7 / 7 tur; dağılım kapı değil) → **PASS 141/141** (`closure-96e3c17/m3/wp064-report.json` sha256 4e5be8ca…; kuru koşu raporu `*.dry-58be2c2-stab26final.*`). Kapı temiz 96e3c17 çalışma ağacında koştu (git.clean, LFS tam). S-10 bağımsız kararı PASS → C-00: 96e3c17 + f993775 + bu not tek parti.
 
+
+
+## 2026-09-29 — main C-00 yeniden hizalama ve otomatik koordinasyon
+
+Kullanıcının güncel talimatıyla tek C-00, `main` (`01a0eb42-07c6-7e42-b18b-3c8005556f83`) oldu; eski C-00 salt okunur devir danışmanı olarak arşivlidir. Rutin görev/sevk/intake onayı beklenmez. Mevcut DEC, kaynak koruması, slot/lease, kullanıcı verisi, disk/swap, kredi0 ve 30.09 dünya üretim duraklatması geçerlidir.
+
+Başlangıç local main `3c0875e1e259cebae34e2cb496d03bb4e8dd9045`, fetch sonrası origin/main `ff06d5793e1e9b703fa128b4692c74f05a59b714`. 28.09 sonrası 23 commitin dosyaları incelendi; eski `CI hiç koşulmadı / üç kapı uygulanmadı / tek sahip her alanı yazdı` genellemeleri kanıtla düzeltilmiştir. Current-main full-CI henüz koşulmadı; ff06 EM1473+1skip, PM179/181 RED; eec recovery PM180/181 başka SHA; son GREEN a17cb73d. Kod, koşum ve kabul ayrıdır.
+
+- [23 commit → WP/sahip/kanıt/kabul eşlemesi](coordination/2026-09-29/commit-audit.md) (WP mesajda yoksa öneri olarak işaretli; tarih yeniden yazılmadı).
+- [Paketler ve açık sınırlar](coordination/2026-09-29/package-audit.md): WP-068..078/066, AP-021..023. FP OFF, TP Special HOLD, right-grip OPEN, f44 AD RED; P1–P5 ürün kararları açık.
+- [CI, RC sözleşmesi ve bakım denetimi](coordination/2026-09-29/ci-audit.md): RC soak stages, realbot report-only, release-library ve 5120MB cap S01 görevidir.
+- [Main durum / 13 sahip dispatch / takip](coordination/2026-09-29/MAIN-STATUS.md): S01–10 + P05–07; bütün promptlar `work-packages/*-MAIN-20260929.md`, yeni WP/AP numarası ayrılmadı.
+- Main index.lock dar C00 bakımı: old0byte inode49785778 no-open-holder + unchangedindex/HEAD kontrollerinden sonra no-overwrite rename ile korunmuştur; originalowner UNKNOWN kalır. [Bakım receipt](coordination/2026-09-29/index-maintenance-receipt.json). Hiç CI lease veya başka süreç değiştirilmedi.
+
+Bu ileriye dönük kayıt önceki dar teslimleri tam paket/oyun/release kabulüne yükseltmez. Her yeni intake source scope/hash/original exit/guard ve bağımsız status exit0 kapısıyla alınır; exact final batch SHA compile/main-ci ayrı kaydedilir.

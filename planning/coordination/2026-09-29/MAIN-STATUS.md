@@ -1,0 +1,53 @@
+# Deaths Demolition — main koordinasyon kaydı
+
+Güncelleme: 29.09.2026, ilk hizalama ve dispatch dalgası. Tek C-00: main `01a0eb42-07c6-7e42-b18b-3c8005556f83`.
+
+Kullanıcı iki kaynak promptun okunmasını, buranın koordinatör olmasını, önce oturumlara görev dağıtılmasını ve bugünkü yararlı çalışmaların korunup alınmasını istedi. Son talimat: rutin onay beklemeden tam otomatik devam. Kaynak promptlar ve eski sohbet/worktree/commitler korunur. S-01–10 ve P-05–07 normal kullanıcı yetkili koordinasyon akışındadır; yeni sohbet açılmadı.
+
+## Doğrulanmış başlangıç
+
+- Local main/HEAD: `3c0875e1e259cebae34e2cb496d03bb4e8dd9045`; fetch sonrası origin/main `ff06d5793e1e9b703fa128b4692c74f05a59b714`; ahead6/behind0. Bu değerler ilk snapshot'tır; aşağıdaki intake günlüğü ve canlı Git sonraki durumu gösterir.
+- 23 commit için [WP/sahip/kanıt eşlemesi](commit-audit.md), [paket açıkları](package-audit.md), [CI denetimi](ci-audit.md) korunmuştur. Mevcut üretim bugünkü işlerle kaybolmamıştır; izole adayların yararlı atomları r2 üzerinde toplanır.
+- Current3c0875 full-CI NOTRUN. ff06 RED: EM1473+1skip, PM179/181; eec recovery başkaSHA PM180/181. LatestGREEN a17cb73d. Eski sonucu yeniSHA'ya taşımak yasaktır.
+- `92232235` postmove spawn182/2734=%6,6569/22reachable gerçek dar ölçümü; .07 sourceassert yeni koşum NOTRUN. UI coldstart/followup ve TP Special atomları main'de; FP OFF/TPHOLD/right-gripOPEN/f44ADRED sürüyor.
+- Disk07:02TR22,69GiB; swap562MB; S05 W60 r2 koşumundan sonra slotları bıraktı. Yeni Unity işinden önce canlı disk≥15GiB/swap≤12GiB/slot+lease+guard kontrolü gerekir.
+- Root index obstruction dar bakımla giderildi: [receipt](index-maintenance-receipt.json), korunmuş lock `/private/tmp/dd-main-index-maintenance-20260929-f865cogv/index.lock.quarantined`; originalownerUNKNOWN, unchangedHEAD/index. CI lease değişmedi.
+
+## İş dağılımı
+
+13 paket gerçek tool teslimiyle sevk edildi; ilk snapshot'ta 13 sahibi de aktif doğrulandı. Tamamlanma anında yeni sonuç/sonraki dar iş aşağıdaki kayıtla güncellenir. FazA ilk teslimi nihai kabul değildir.
+
+| Sahip | İş | Prompt | Sohbet kimliği |
+|---|---|---|---|
+| S-01 | RC kapılarının onaylı DEC-091/093 ile uyumunu düzelt; bugünkü S-01 test/preview/diagnostic çıktılarının işe yarayanlarını kaynak ve kanıt olarak koru. | [Paket](../../work-packages/WP-079-RC-TOOLS-MAIN-20260929.md) | WP-079 |
+| S-02 | Özgün GameFeel ve DEC082 CI kırmızılarının nedenini kanıtla; bugünkü bc49f301 observer çıktısını koruyup güncel main üzerinde güvenli tanı/düzeltme teslim et. | [Paket](../../work-packages/WP-069-COMBAT-CI-CAUSE-MAIN-20260929.md) | WP-069 |
+| S-03 | Bugünkü bbf9049e C1 observer atomunu koru; yararlı tanı kodunun main'e alınabilecek sınırını ve gerçek C1 collider nedenini belirle. | [Paket](../../work-packages/WP-076-C1-CAUSE-INTAKE-MAIN-20260929.md) | WP-076 |
+| S-04 | Bugünkü A10/P1-P5 karar tablosunu koru; cloud/review-r1-b bulgularını mevcut kodla doğrulayıp uygulanabilir bug ile ürün kararı ayrımını çıkar. | [Paket](../../work-packages/WP-077-TREE-REVIEW-TRIAGE-MAIN-20260929.md) | WP-077 |
+| S-05 | Bugün tamamlanan dört-yol panorama teslimini kaybetmeden güncel main'e alınabilir temiz r2 teslimine dönüştür. | [Paket](../../work-packages/WP-075-TODAY-SKY-INTAKE-MAIN-20260929.md) | WP-075 |
+| S-06 | Bugünkü 1eb3d4d1/8b12f158/ccb970b8 teslim zincirini ayrıştırıp zaten main'deki b9eb99fd ile farkı doğrula; yararlı opt-in gözlemi güncel tabanda sınırlandır. | [Paket](../../work-packages/WP-071-ANIMATION-TODAY-INTAKE-MAIN-20260929.md) | WP-071 |
+| S-07 | WP-073 B3 launcher boşluğunu mevcut onaylı yönde kapat; bugünkü fire10 observer ve casing/tracer çıktısını koru. | [Paket](../../work-packages/WP-073-LAUNCHER-B3-MAIN-20260929.md) | WP-073 |
+| S-08 | Mevcut A/B dinleme kitini ve bugünkü ölçüm/provenans çıktısını koru; NOT READY nedenlerini teknik olarak kapatacak sınırlı dilimleri hazırla. | [Paket](../../work-packages/WP-072-AUDIO-KIT-CLOSURE-MAIN-20260929.md) | WP-072 |
+| S-09 | Bugünkü c6fc439e/3c0875e1 UI teslimlerini ve testleri koru; yükleme watchdog/hata modalı ve nihai UI kabul borcunu sınırlı bir dilimle doğrula. | [Paket](../../work-packages/WP-068-UI-CLOSURE-MAIN-20260929.md) | WP-068 |
+| S-10 | Bugünkü kabul/intake kayıtlarını koru ve güncel main için bağımsız kabul dalgasını hazırla; eksik A8 rapor üreticisini mevcut kabul planı çerçevesinde tasarla. | [Paket](../../work-packages/WP-078-MAIN-ACCEPTANCE-PREP-MAIN-20260929.md) | WP-078 |
+| P-05 | Bugünkü C1 slab kaynak yardımcı raporunu ve AP-023 v013 doğrulamalarını kaybetmeden manifestli devir seti hazırla. | [Paket](../../work-packages/AP-023-TODAY-SOURCE-ARCHIVE-MAIN-20260929.md) | AP-023 |
+| P-06 | Bugünkü kaynak çıkarımı, 146 klip/203 SHA ve gripOffset/FP arms teslimlerini koru; eligible=0 anatomik seçim engelini somut kaynak eşlemesiyle çöz. | [Paket](../../work-packages/AP-022-ANATOMICAL-SOURCE-BIND-MAIN-20260929.md) | AP-022 |
+| P-07 | Bugünkü RAM aday/IRON semantik çıkarımını koru; SMG2 junction için authoritative UV kapasitesini kanıtlayıp geçerli RAM aday üret. | [Paket](../../work-packages/AP-021-UV-CAPACITY-MAIN-20260929.md) | AP-021 |
+
+Ana repo/main entegrasyonu yalnız C-00. Aynı dosyanın tek yazarı; her sahibin eski worktree/dal/kanıtı korunur. Current-main r2 atomları dışında eskimiş tüm dal taşınmaz. World production/bake30.09'a kadar duraklatılmış; bugün skyintake mevcut kullanıcı seçiminin kurtarılmasıdır. Kredi0, ürün/AD/MUST/HOLD kapıları korunur.
+
+S04/S07 eski koordinatöre yönelen mesajlarını düzeltmeleri için yeniden hizalandı; eski sohbet yeniden arşivlendi. Diğer sahiplerin tamamına tekmainID tekrar bildirildi; eski019fbe65... sohbetine yeni iş/rapor gönderilmez.
+
+## Otomatik takip
+
+`deaths-demolition-main-koordinasyonu` heartbeat ACTIVE, bu main oturumuna bağlı, 10 dakikada bir teslim/izleme/sonraki dar iş/kanıtlı entegrasyon takibi. Aynı durum tekrar bildirilmez; değişiklik/tamamlanma/hata veya gerçekten kullanıcı müdahalesi gerektiğinde bildirilir. M4-R1 kabul kapıları tamamlandığında veya kullanıcı iptal ettiğinde durur. Otomasyon promptu bu dosyayı ve mevcut paketleri tüketir. Makine açık ve uygulama çalışıyor olmalıdır ([resmi scheduled tasks rehberi](https://learn.chatgpt.com/docs/automations?surface=app)).
+
+## Intake kuyruğu ve kayıt
+
+- S05 `f0fb8aa7`: parent3c0875, 4path eski5c89 terminaliyle blobexact; yeni W60 XML1/1PASS/guard0 bildirildi. Bağımsız hash/log/guard review sürüyor; main intake henüz yapılmadı. Gri eğri/NW landmark footer görsel açık.
+- S06 `2ed77017`: parent3c0875, AnimationTests.cs eskiccb terminaliyle blobexact; defaultskip/optin yeni XML review sürüyor. Anatomik/right-grip kabulü değildir.
+- S01 `e8dc425b`: parent3c0875, RC5path/Python67/67PASS/exit0 bildirildi; bağımsız intake review gerekli. integrate.sh status failure failclosed ekatomu ayrı hazırlanıyor.
+- P05 TODAY-SOURCE-ARCHIVE manifest `e5b978ff...` 50link; source363/363 + consumer5FBX/42model tarihsel kanıt indekslenmiş, yeni runtime yok. Bağımsız hashreview sürüyor.
+- P07 continuous IRON RAM receipt `9305b9b2...`, NPZ `6c23611d...`: narrowUV3/3 continuity iddiası; physicalReadyfalse/globaltopology/AD açık. Bağımsız hash/source immutable review sürüyor.
+
+Her kabul kaydı sourceSHA/base/changedpaths/receipt/XML/log/hash/originalexit/guard/narrowlimit içerir. `integrate.sh` cleanpipe exit bug'u nedeniyle root ayrıca main/source `git status --porcelain` exit0 doğrular; tüm C00 untracked belgeleri önce açık dosya listesiyle commit edilir. Dirtygate bypass/force/reset/rebase/amend/add-A yok. Batch sonrası exact finalSHA compile ve main-ci, backup/cleanupdryrun/disk/LFS sonuçları ayrı kaydedilir.
+
