@@ -86,6 +86,44 @@
       "sourceBlobExact": true,
       "sourceTests": "14/14nondelegatingfakeGit+syntax/exit0 independentlyverified",
       "limitation": "cleanpreflight+singlewriter; not concurrentedit rollback guarantee"
+    },
+    {
+      "package": "WP-069",
+      "owner": "S-02",
+      "source": "1ea58480a92822cbb3a8debbedd97881b822d711",
+      "sourceWorktree": "/Users/Erdem/Desktop/KADRO/context/projects/deaths-demolition/wp-053d/worktree/deaths-demolition",
+      "beforeMain": "a8dc1687baedc23da6ffd05f575210ae747a62e4",
+      "afterMain": "53f74cd767d1bade3500015e8e009d7476e1f078",
+      "tag": "wp069-combat-observers-main-20260929",
+      "paths": [
+        "prototype/DeathsDemolition_PlayableConcept/Assets/_Prototype/Tests/PlayMode/CoreCombatSliceTests.cs",
+        "prototype/DeathsDemolition_PlayableConcept/Assets/_Prototype/Tests/PlayMode/WeaponFeelSliceTests.cs"
+      ],
+      "integrationExit": 0,
+      "sourceBlobExact": true,
+      "postDeferred": "one final batch Git backup + preserved LFS backup, cleanup dryrun/disk/LFS; no historical pruning",
+      "utc": "2026-09-29T04:40:06Z",
+      "sourceTests": "source2/2 optin actualPASS/Unity0/guard0; 68sourceblob+7artifacthash+fullfilefixtures equal independentlyverified",
+      "acceptance": "diagnostic-only; originalfullCIprefix/nativephysicscauseUNKNOWN; baselineflagsOFF firstCI"
+    },
+    {
+      "package": "WP-076",
+      "owner": "S-03",
+      "source": "0bf4632cdee9bbd267642710e515312b25894ac5",
+      "sourceWorktree": "/Users/Erdem/Desktop/KADRO/context/projects/deaths-demolition/wp-076/worktree/deaths-demolition",
+      "beforeMain": "53f74cd767d1bade3500015e8e009d7476e1f078",
+      "afterMain": "c8b7adae109e227ebf4d4fb1ecefcfaea7da1d43",
+      "tag": "wp076-bucket-capacity-main-20260929",
+      "paths": [
+        "prototype/DeathsDemolition_PlayableConcept/Assets/_Prototype/Navigation/CrowdSpatialGrid.cs",
+        "prototype/DeathsDemolition_PlayableConcept/Assets/_Prototype/Tests/EditMode/CrowdSeparationContractTests.cs"
+      ],
+      "integrationExit": 0,
+      "sourceBlobExact": true,
+      "postDeferred": "one final batch Git backup + preserved LFS backup, cleanup dryrun/disk/LFS; no historical pruning",
+      "utc": "2026-09-29T04:42:07Z",
+      "sourceTests": "offline50datasets/550frames/118800orderedqueries equal; 3 meaningfulEditMode authored NOTRUN",
+      "acceptance": "retainedcapacity source semantics verified; CSharpcompile/runtime0Bframe/CPU/K8 NOTRUN"
     }
   ]
 }
