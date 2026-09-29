@@ -500,6 +500,10 @@ namespace DD.Prototype.UI
             op.allowSceneActivation = false;
             bool handedOff = false;
             float handOffAt = -1f;
+            float lastProgress = -1f;
+            float lastProgressAt = Time.unscaledTime;
+            bool stallLogged = false;
+            bool stallError = false;
             while (true)
             {
                 float now = Time.unscaledTime;
@@ -507,6 +511,24 @@ namespace DD.Prototype.UI
                 if (ArtificialLoadSeconds > 0f)
                 {
                     progress = Mathf.Min(progress, LoadedProgress * Mathf.Clamp01((now - loadStart) / ArtificialLoadSeconds));
+                }
+
+                // The first load has the same watchdog as later scene transitions (§15.2/15.4).
+                if (progress > lastProgress + 0.001f)
+                {
+                    lastProgress = progress;
+                    lastProgressAt = now;
+                }
+                else if (!stallLogged && now - lastProgressAt > StallSeconds)
+                {
+                    stallLogged = true;
+                    Debug.Log("[UI] Loading '" + sceneName + "' has not progressed for " + StallSeconds + " s.");
+                    curtain.ShowStalled();
+                }
+                else if (!stallError && now - lastProgressAt > StallErrorSeconds)
+                {
+                    stallError = true;
+                    curtain.ShowError(sceneName, true, null, null);
                 }
 
                 bool loaded = progress >= LoadedProgress;
@@ -533,6 +555,11 @@ namespace DD.Prototype.UI
                 }
 
                 yield return null;
+            }
+
+            if (stallError)
+            {
+                curtain.HideError();
             }
 
             curtain.Activate();
