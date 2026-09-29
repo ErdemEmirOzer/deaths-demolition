@@ -2,6 +2,24 @@
   "sourceBaseline": "3c0875e1e259cebae34e2cb496d03bb4e8dd9045",
   "entries": [
     {
+      "package": "WP-068",
+      "owner": "S-09",
+      "source": "88c6f69c5366a4fc2b8b9ddc19e03fcd5fe19aa9",
+      "sourceWorktree": "/Users/Erdem/Desktop/KADRO/context/projects/deaths-demolition/wp-068/worktree/deaths-demolition",
+      "beforeMain": "95c93072394cc2ec824d64257dfd20752b0598c7",
+      "afterMain": "c29b410840f453758c70aec2eb0e74559fd885d4",
+      "tag": "wp068-boot-watchdog-main-20260929",
+      "paths": [
+        "prototype/DeathsDemolition_PlayableConcept/Assets/_Prototype/Tests/PlayMode/LoadingWatchdogTests.cs",
+        "prototype/DeathsDemolition_PlayableConcept/Assets/_Prototype/Tests/PlayMode/LoadingWatchdogTests.cs.meta",
+        "prototype/DeathsDemolition_PlayableConcept/Assets/_Prototype/UI/Runtime/Flow/PrototypeUiFlow.cs"
+      ],
+      "integrationExit": 0,
+      "sourceBlobExact": true,
+      "sourceTests": "4/4actualclock+async stalls/recovery/UItargets, Unity0CS0guard0 independentlyverified",
+      "acceptance": "Boot10/60swatchdog only; nativeIO/PlayerQUIT/hardwareEscape/fullUI/perf notproved"
+    },
+    {
       "package": "WP-071",
       "owner": "S-06",
       "source": "2ed77017b7a3fabcea8368e8f780d82e1f22a624",

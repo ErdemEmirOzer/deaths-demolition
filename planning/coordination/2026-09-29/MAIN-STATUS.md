@@ -70,3 +70,13 @@ P05manifest e5b978ff50/50+9indexhash ve P07continuousUV9305b9b2/6c23611d11artifa
 Sonraki offline işler sevkli: S03B8allocminimumcapacitybugprep, S04pincommand1/round+nullHearth atomları, S05sky residualcause, S06source→imported→bakedmap, S09OcakUIcauseplan, P05LOD/consumerdebtmatrix, P06TPspecialHipsimporterror source-onlytriage, P07RAMglobaltopology. S01strictRChardening,S02originalCIcause,S07B3implementation,S08kitprovenance,S10A8generator ilkdalga devam. Yeni Unity/Player başlatmaları C00 batchcompile/mainCI penceresi için koordineli; offlineişler sürer.
 
 S07 yanlışcwd taslakları sahibiACK sonrası altıdosya/hash+patch ile korunmuş; iki trackedrootfile exactHEAD restore, dört untrackedoriginal kanıt klasörüne taşınmış. [Receipt](s07-writer-preservation-receipt.json). Ownerabsolutecwd'de devam; taslakproductionintake/PASS yapılmadı.
+
+## 29.09 üçüncü kayıt — beş atom / birleşik kabul penceresi
+
+S09 WP068 Boot watchdog `88c6f69c` → main `c29b410840f453758c70aec2eb0e74559fd885d4`,3pathblobexact, tag `wp068-boot-watchdog-main-20260929`; [bağımsız review](s09-ui-closure-intake-review.md). Kaynak4/4actualclock/asyncstall/recovery ve17artifactSHA/guard0 kabul; nativefailure/fallback/hardware Escape-B/actualPlayerQUIT/fullUI/perf açık. Beş source intake kaydı [ledger](intake-ledger.json) içinde.
+
+C00 şimdi bu birleşik kaynak için canonicalwarmCI checkoutta compile→fullmainCI→releaseLZ4HC/smoke kapılarını yürütür; mevcut GameFeel/DEC082 causeUNKNOWN kapıları sonuçtan önce kapanmaz. Yeni fizikselowner koşumları batchpenceresi bitene kadar başlatılmaz; kod/static/offline kaynak işleri sürer.
+
+Default post-integrate eski tam yedekleri keep3 ile silebildiği için automatic approval review reddetti; bu işlem çalışmadı. Güvenli alternatif: yeni `/Users/Erdem/Backups/deaths-demolition/c00-main-preserved-20260929` hedefi, backup-repo `--keep999999`, mevcut hiçbir yedek budanmadan doğrulama. Worktree cleanup yalnız dry-run/disk/LFS raporu ayrı; sonucu C00 harici devir kaydında tutulur.
+
+Birleşik exactSHA doğrulama sonuçlarının kalıcı güncel yolu: `/Users/Erdem/Desktop/KADRO/context/projects/deaths-demolition/c-00/main-20260929/`. Test/CI/build/smoke sonuçları bu klasörde ayrı manifestle bağlanacak; bu kayıt henüz koşuldu/PASS demiyor. Otomasyon önce bu klasörün latest-status.json dosyası varsa okumalı; yeni exactmainSHA ve canlı kaynak/status da doğrulanır.
