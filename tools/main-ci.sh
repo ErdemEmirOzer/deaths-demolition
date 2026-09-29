@@ -93,6 +93,76 @@ sys.exit(1)
 PY_PROCESS
 }
 CI_PLAYER_HELD=0; CI_GUARD_READY=0; CI_GUARD_EXIT=0
+# Diagnostic-only adapter: exact paths from bound guard TSV or legacy diff text.
+# This never interprets writer text as a command or changes guard/CI verdicts.
+ci_other_writers() {
+  python3 - "$1" "$2" "$3" <<'PY_OTHER_WRITERS'
+from pathlib import Path
+import re, sys
+
+report, attribution, home = sys.argv[1:]
+caption = ' (launch-counter keys excluded)'
+digest = re.compile(r'(?:[0-9a-f]{64}|MISSING)\Z')
+try:
+    changes = []
+    seen = set()
+    for number, line in enumerate(Path(report).read_text().split('\n'), 1):
+        if not line.strip():
+            continue
+        if re.match(r'(?:editor|player)\t(?:added|removed|modified)\t', line):
+            area, kind, tail = line.split('\t', 2)
+            path, before, after = tail.rsplit('\t', 2)
+            if area not in {'editor', 'player'} or kind not in {'added', 'removed', 'modified'}:
+                raise ValueError('invalid TSV area/kind at row ' + str(number))
+            if kind == 'added':
+                valid = before == 'ABSENT' and bool(digest.fullmatch(after))
+            elif kind == 'removed':
+                valid = after == 'ABSENT' and bool(digest.fullmatch(before))
+            else:
+                valid = bool(digest.fullmatch(before) and digest.fullmatch(after)) and before != after
+            if not valid:
+                raise ValueError('invalid TSV delta at row ' + str(number))
+        else:
+            match = re.fullmatch(r'(editor|player)  ([0-9a-f]{64}|MISSING)  (.+)', line)
+            if not match:
+                raise ValueError('invalid legacy OTHER row ' + str(number))
+            area, _, path = match.groups()
+            kind = 'legacy'
+        if path.endswith('.plist' + caption):
+            path = path[:-len(caption)]
+        if not Path(path).is_absolute() or any(c in path for c in '\x00\r\n'):
+            raise ValueError('invalid OTHER path at row ' + str(number))
+        if path in seen:
+            raise ValueError('duplicate OTHER path at row ' + str(number))
+        seen.add(path)
+        changes.append((path, kind))
+    try:
+        attributed = Path(attribution).read_text().split('\n')
+    except (OSError, UnicodeError):
+        attributed = []
+    output = []
+    for path, kind in changes:
+        writers = []
+        for row in attributed:
+            # A literal path boundary avoids prefix, substring and regex matches.
+            if not row.startswith(path + '\t'):
+                continue
+            fields = row[len(path) + 1:].split('\t', 1)
+            if len(fields) == 2 and fields[1] and (fields[0] == 'removed' or re.fullmatch(r'mtime (?:[01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]Z', fields[0])):
+                value = 'removed (writer UNKNOWN)' if fields == ['removed', '-'] else fields[1]
+                if value not in writers:
+                    writers.append(value)
+        if not writers:
+            writers = ['removed (writer UNKNOWN; no attribution record)' if kind == 'removed'
+                       else 'writer UNKNOWN (no attribution record)']
+        home_prefix = home.rstrip('/') + '/'
+        display = path[len(home_prefix):] if home and path.startswith(home_prefix) else path
+        output.append(display + '\t' + '; '.join(writers))
+    print(';'.join(output), end='')
+except (OSError, UnicodeError, ValueError) as error:
+    print('writer attribution UNKNOWN (' + str(error) + ')', end='')
+PY_OTHER_WRITERS
+}
 ci_guard_restore() {
   "$DD_TOOLS_DIR/userdata-guard.sh" restore "$OUT/userdata-guard" --scope editor > "$OUT/userdata-guard.out" 2>&1
   CI_GUARD_EXIT=$?; CI_GUARD_READY=0
@@ -197,7 +267,7 @@ if ! cmp -s "$UG/before-editor.txt" "$UG/after-run-editor.txt" || [ "$GX" -ne 0 
   UDWARN="${UDWARN:+$UDWARN; }$GW"; dd_log "WARNING userdata: $GW"
 fi
 if [ -s "$UG/out-of-scope-changed.txt" ]; then
-  GW="player area (bundle profile / player PlayerPrefs) changed during the tests — not by the Editor, NOT restored: $UG/out-of-scope-changed.txt; writers (WP-066M): $(grep -F -f <(sed 's/^player  [^ ]*  //' "$UG/out-of-scope-changed.txt") "$UG/attribution.txt" 2>/dev/null | cut -f1,3 | sed "s|$HOME/||" | tr '\n' ';')"
+  GW="player area (bundle profile / player PlayerPrefs) changed during the tests — not by the Editor, NOT restored: $UG/out-of-scope-changed.txt; writers (WP-066M): $(ci_other_writers "$UG/out-of-scope-changed.txt" "$UG/attribution.txt" "$HOME")"
   UDWARN="${UDWARN:+$UDWARN; }$GW"; dd_log "WARNING userdata: $GW"
 fi
 
