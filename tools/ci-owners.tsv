@@ -2,13 +2,19 @@
 # regex	owner	area
 ^(Camera)	S-01	camera modes
 ^(ProjectIntegrity|BuildPipeline|HandoffIntegrity|MeshWinding|SceneLoadDoubleTrigger)	S-01	build / repo integrity
+^(RunTreePinActionRegressionTests|RunTreeNavigationRegressionTests)$	S-09	UI pin action / navigation
+^MetaPathTests$	S-09	meta path UI
 ^(SpecialWeaponHud|Ui|Hud|MetaUi|LoadingScreen|RoundHudSync|RunHud|ResultsViewModel|PlayerHitDirectionHud)	S-09	UI
 ^(Audio)	S-08	audio
+^Wp073LauncherVfxTests$	S-07	launcher VFX
 ^(Vfx|ArtVfx|ArtBlood|Atmosphere|ArtWave3|Feel|SetPass|WeaponLayerDiagnostic|ShaderLibrary)	S-07	VFX / feel
 ^(Animation|ArtAnimation|Character|ArtCharacter|Armor|ArtArmor|ArtTier|HitboxPose)	S-06	animation / characters
 ^(World|Pilot|Look|NavMeshConnectivity|GoldenSlice|ArtLibrary|ArtAssetGate|ArtImport|ArtPrefab|ArtRepo|MenuPlate|ArtVisualRegression)	S-05	world / art pipeline
+^(AttackSelectorTests|AttackVarietySliceTests)$	S-03	attack selection / variety
 ^(Enemy(?!DamagesPlayer)|Spawn|RoundSpawn|RoundClear|RoundFormula|RoundTable|RoundLedger|Threat|Crowd|RegionNav|Tier|SpecialReaction|FlowRace)	S-03	enemies / AI / rounds
+^RunTreeTests$	S-04	run tree rules
 ^(Profile|Gold|Economy|Balance|Achievements|Completion|Cosmetics|Progression|RunBuildState|SelectionMemory|SessionSelection|SecondRun|RunTelemetry)	S-04	economy / profile
+^(RocketMathTests|RocketSliceTests|GelStateTests|GelSliceTests|ChainTargetTests)$	S-02	weapon behavior (S-07 VFX support)
 ^(Arsenal|Weapon|Projectile|CoreCombat|Gamepad|Input|PauseFire|PlayerExperience|PlayerHealth|PlayerMovement|PlayerWall|HitReaction|RegionalDamage|RegionalArmor|SpecialWeapon|EnemyDamagesPlayer|HotPathAllocation|AllocationProbe)	S-02	combat / player / input
 ^(Qa|Lifecycle|SpawnMixSimulator)	S-10	QA
 .*	C-00	unmapped (triage)

@@ -9,6 +9,8 @@ RegionalArmorSliceTests
 PlayerExperienceSliceTests
 GamepadParityTests
 PauseFireTests
+RocketSliceTests
+GelSliceTests
 # Camera modes (S-01)
 CameraContractTests
 CameraModesPlayTests
@@ -22,6 +24,8 @@ MetaUiSliceTests
 HudCoverageTests
 LoadingScreenTests
 RoundHudSyncTests
+RunTreePinActionRegressionTests
+RunTreeNavigationRegressionTests
 # Audio (S-08)
 AudioSliceTests
 # Run flow / AI (S-03, S-01)
@@ -29,5 +33,13 @@ RoundSpawnSliceTests
 SceneLoadDoubleTriggerTests
 SpecialWeaponLifecycleSliceTests
 ThreatSliceTests
+AttackVarietySliceTests
 # Lifecycle (S-01, WP-079B): subscriber / hold / service leaks across two runs — ~24 s; caught 3 regressions 24–25.09
 LifecycleHardeningTests
+
+# Launcher presentation regression (S-07), source-only registration; native outcome is reported by CI.
+Wp073LauncherVfxTests
+
+# Mandatory A3 PlayMode coverage; actual discovery/results remain source-bound to the CI run.
+AnimationLocomotionV3Tests
+ArmorTests
