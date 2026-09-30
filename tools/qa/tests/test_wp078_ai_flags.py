@@ -29,6 +29,9 @@ ARGV_READER = re.compile(r"GetCommandLineArgs|QaArgs\.|\bArg\s*\(|\bHasFlag\s*\(
 # Reviewed non-AI flags that live in AI-scope folders. Extend only with a C-00 note.
 NON_AI_FLAGS = {
     "-ddCharacters": "CharacterAssetSet: Procedural|Skinned art source A/B (WP-016), not AI behaviour",
+    # S-10 prova 30.09 (reported to C-00): S-06 WP-071 r2 FP arms decision capture, dev-only evidence tool, not AI
+    "-ddFpArmsCapture": "FirstPersonArmsCaptureAgent: FP arms evidence frames (WP-071 r2), dev builds only, not AI behaviour",
+    "-ddTelemetryDir": "FirstPersonArmsCaptureAgent: output root of that capture (shared telemetry flag), not AI behaviour",
 }
 
 

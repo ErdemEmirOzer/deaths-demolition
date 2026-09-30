@@ -50,7 +50,7 @@ Kural: sahip testi birincil kanıt (NUnit XML, `wp078_report.A3_REQUIRED_TEST_ID
 | animation | kadans bandı, 4 ölüm ailesi | `[Ragdoll] families` |
 | camera (WP-070 K1–K9) | TopDown regresyonu, D-20 nişan | A2 + A4 |
 | world (WP-074 B2/B9, WP-070 K2) | 18 kapı yolu | **paket kapısı (C-00 30.09 K6):** A2 + A5 player.log'larında aynı noktada ≥ 5 s takılma kümesi 0 (`tools/qa/stuck_clusters.py`; `time=` alanı olmayan log → "ölçülmedi", PASS değil) |
-| aiFlags | `-ddAiV3 0/1` (K4: tek bayrak, 2 koşu; kod↔liste testi) · diğer 6 bayrak: `-ddChainHops`/`-ddGelPuddles` DEC-097/099 ile emekli; `-ddCorpseLinger/-ddCrowdNeighbours/-ddSpawnLos` **yazılı geri çekildi** (S-03, C-00 30.09; komşu tavanı + spawn LOS kademe satırları KNOWN OPEN, R2, perf'e bağlı — WP-076 DIRECTION §7.1 c3c71eb4); `-ddRagdoll 0|1` S-06 tarafından uygulandı (359cce6a @ wp-071-r2c-binding; 1 = varsayılan ragdoll, 0 = her ölüm kendi klibi) → main'e girince A3 flagRuns'a eklenir (`-ddAiV3` + `-ddRagdoll` × 0/1 = 4 koşu; kod↔liste testi zorlar) | `-ddAiV3 0` ve `1` ile birer 1 round Player dumanı |
+| aiFlags | `-ddAiV3 0/1` + `-ddRagdoll 0/1` (K4: kodda okunan iki bayrak, 4 koşu; kod↔liste testi) · diğer 5 bayrak: `-ddChainHops`/`-ddGelPuddles` DEC-097/099 ile emekli; `-ddCorpseLinger/-ddCrowdNeighbours/-ddSpawnLos` **yazılı geri çekildi** (S-03, C-00 30.09; komşu tavanı + spawn LOS kademe satırları KNOWN OPEN, R2, perf'e bağlı — WP-076 DIRECTION §7.1 c3c71eb4); `-ddRagdoll 0|1` S-06 R2 ile main'de (RagdollProxyPool; 1 = varsayılan ragdoll, 0 = her ölüm kendi klibi) → A3 flagRuns'ta | `-ddAiV3` ve `-ddRagdoll` × `0`/`1` ile birer 1 round Player dumanı |
 | progression (DEC-095/098) | ağaç sim kabulü (S-04), `ApplyRun` sırası | `[Progress]` 5 gerçek bot koşusundan (bot koşu kapanışı main'de: `e5888d47`) |
 | audio | World kapasitesi, ses CPU | perf matrisinde ses payı (rapor) |
 | ui | ADR-024-2 tarama 0 | — |
@@ -80,7 +80,7 @@ Her Player/PlayMode koşusu `tools/userdata-guard.sh` snapshot → koşu → res
 ## 8 · İş kalemleri (S-10, FINAL'dan önce) — durum 30.09
 
 - **Tamam (dal `wp-078-accept-plan-r3`):** bot özetinde `qualityTier`/`worldHalfExtent`, TP/FP nişan hatası kamera kökenli, `-ddQaBotWeaponCycle`, zamanlı takılma satırları + `stuck_clusters.py`, rota koşusu (`-ddQaBotRouteTour`; kairo noktası düzeltildi), SpecialWeaponProbe DEC-097, `wp078_bot.py`, tek guard modülü `guard_receipt.py` (her yolda restore, SIGTERM 143, ana repo guard'ı), `wp078_perf` kademe/iptal/yeniden koşu + pencere guard makbuzu, `wp078_report` K1–K9, `wp078_accept.py` (zincir + manifest).
-- **Açık:** A6 parite alanları (`development`, sahne listesi, scripting backend) DdBuild native raporunda yok → S-01; yoksa A6 BLOCKED. Rota kairo noktası Player'da yeniden doğrulanacak (m31 smoke: diğer 3 nokta 3 modda captured). `-ddRagdoll` main'e girince AI_FLAGS'a eklenir (test zorlar). K5 "420 s zaman aşımı payı" rapor satırı.
+- **Açık:** A6 parite alanları (`development`, sahne listesi, scripting backend) DdBuild native raporunda yok → S-01; yoksa A6 BLOCKED. Rota kairo noktası Player'da yeniden doğrulanacak (m31 smoke: diğer 3 nokta 3 modda captured). `-ddRagdoll` main'de → AI_FLAGS'ta (A3 4 koşu). K5 "420 s zaman aşımı payı" rapor satırı.
 - **Koşu:** FINAL belirlenince `python3 tools/qa/wp078_accept.py --final <SHA>` (varsayılan kanıt kökü `KADRO/…/wp-078/evidence/<SHA8>`); guard her zaman ana repo yolundan; Player koşuları main-ci sırasında beklenir; A4 yalnız sessiz pencerede.
 
 ## 9 · Rapor ve sahiplik (A8)

@@ -98,15 +98,15 @@ metadata cannot be hidden by a successful summary or restoration.
   does not invent a new gate or a positive verdict, and XML remains mandatory.
   This identity mapping does not reinterpret an owner test as
   a missing dedicated scenario, route, simulation or AD proof elsewhere in the plan.
-  `aiFlags.flagRuns` additionally requires exactly two separate native Player smoke
-  executions, `-ddAiV3` x0/1 — the only AI argv flag the FINAL C# source parses
+  `aiFlags.flagRuns` additionally requires exactly four separate native Player smoke
+  executions, `-ddAiV3` and `-ddRagdoll` x0/1 — the AI argv flags the FINAL C# source parses
   (C-00 30.09 K4; `AI_FLAGS`, kept equal to the source by
   `tests/test_wp078_ai_flags.py`; a newly parsed AI flag grows the matrix by two runs).
-  The six other specification flags are listed on the A3 row under
+  The five other specification flags are listed on the A3 row under
   `areas.aiFlags.notPass` ("spesifikasyonda var, kodda yok") and never count as PASS:
   `-ddChainHops`/`-ddGelPuddles` retired (DEC-097/099); `-ddCorpseLinger`,
-  `-ddCrowdNeighbours`, `-ddSpawnLos` withdrawn in writing (S-03, C-00 30.09);
-  `-ddRagdoll` KNOWN OPEN (implemented by S-06 359cce6a, pending main). Each binds `flag`, integer `value`,
+  `-ddCrowdNeighbours`, `-ddSpawnLos` withdrawn in writing (S-03, C-00 30.09).
+  `-ddRagdoll` reached main with S-06 R2 and is in `AI_FLAGS`. Each binds `flag`, integer `value`,
   native argv `command`, `summary`, `log`, `provenance`, `originalExit`, `guard`
   and `buildRole`. The exact flag/value must appear once in native argv, and at
   least one ordered normal round must actually complete. An EditMode flag test

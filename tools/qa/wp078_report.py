@@ -201,10 +201,11 @@ A3_REQUIRED_TEST_IDS = {
     ]
 }
 # C-00 30.09 K4 (c-00/WP-078-K-KARARLARI-2026-09-30.md): the A3 aiFlags Player smoke matrix is the AI argv flags the
-# FINAL C# source actually parses — today only -ddAiV3 (AttackStyles.ReadFlag). tests/test_wp078_ai_flags.py compares
+# FINAL C# source actually parses — -ddAiV3 (AttackStyles.ReadFlag) and, since S-06's R2 reached main, -ddRagdoll
+# (RagdollProxyPool.ReadFlag; 1 = default ragdoll, 0 = every death keeps its clip). tests/test_wp078_ai_flags.py compares
 # this tuple with the C# sources; a new parsed AI flag must grow it (and the matrix), never silently stay outside.
-AI_FLAGS = ("-ddAiV3",)
-# The six v1 plan flags that the specification names but this FINAL's C# source does not parse (K4). They are listed
+AI_FLAGS = ("-ddAiV3", "-ddRagdoll")
+# The v1 plan flags that the specification names but this FINAL's C# source does not parse (K4). They are listed
 # on the A3 aiFlags row with their C-00 30.09 disposition and never counted as PASS. When one is parsed on main it
 # moves into AI_FLAGS (tests/test_wp078_ai_flags.py fails until it does) and the matrix grows by two runs.
 AI_FLAGS_NOT_PASS = {
@@ -213,7 +214,6 @@ AI_FLAGS_NOT_PASS = {
     "-ddCorpseLinger": ("WITHDRAWN", "withdrawn in writing (S-03, C-00 30.09)"),
     "-ddCrowdNeighbours": ("WITHDRAWN", "withdrawn in writing (S-03, C-00 30.09)"),
     "-ddSpawnLos": ("WITHDRAWN", "withdrawn in writing (S-03, C-00 30.09)"),
-    "-ddRagdoll": ("KNOWN OPEN", "implemented by S-06 (359cce6a), pending main"),
 }
 NOT_IN_CODE_REASON = "spesifikasyonda var, kodda yok"
 # C-00 30.09 K1: bot runs (A2, A5, flagRuns) use the dev build — QaRunBot is compiled only under
