@@ -13,10 +13,12 @@ tools/qa/wp078_report.py can bind it. Route frames are never "required": a block
 usage: wp078_bot.py --bin <build dir|.app|binary> --out <new dir> --commit <40-hex> --mode topdown|tp|fp
                     [--kind gameplay|route|stability|report|flag] [--seed 61] [--rounds 5] [--tier sinematik]
                     [--extra-arg=<flag>]... [--timeout 3600]
-exit: 0 run complete + guard ok · 1 run not complete (see attempt.json) · 6 a game Player is up · 7 guard STOP (report to
-      C-00) · 30 guard snapshot blocked · 64 usage
+exit: 0 run complete + guard ok · 1 run not complete (see attempt.json) · 6 a game Player is up · 7 guard STOP (snapshot error,
+      restore error or verdict mismatch — report to C-00) · 30 / 75 snapshot waited (live DD Player / lock) · 75 also a failed
+      clean-host preflight (Player not launched) · 64 usage · 143 SIGTERM (restore still ran)
 """
 import argparse
+import signal
 import json
 import re
 import subprocess
@@ -29,7 +31,8 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
 sys.path.insert(0, str(HERE))
 import wp064_run  # noqa: E402  (sha256_file, utc_now, write_json)
-import wp078_perf  # noqa: E402  (player_up, guard, export_prefs, guard_verdict, resolve_binary)
+import wp078_perf  # noqa: E402  (player_up, resolve_binary, PLAYER_EXE)
+import guard_receipt  # noqa: E402  (C-00 30.09 M-17: the one guard receipt module)
 
 KINDS = ("gameplay", "route", "stability", "report", "flag")
 REQUIRED = ["command.json", "player.log", "exit.txt", "bot-summary.json", "qa-report.json", "events.txt"]
@@ -72,10 +75,12 @@ def main():
     parser.add_argument("--tier", default="sinematik", choices=("sinematik", "yuksek", "performans"))
     parser.add_argument("--extra-arg", action="append", default=[])
     parser.add_argument("--timeout", type=int, default=3600)
-    parser.add_argument("--quiet", action="store_true", help="A5 / DEC-091 clean host: hold the player + Unity slots, wait for load1 < --load-max and "
-                        "no foreign Unity, sample the host every 30 s (hostClean = every sample quiet)")
+    parser.add_argument("--quiet", action="store_true", help="A5 / DEC-091 clean host (C-00 30.09 M-16): wp064_run-style preflight (12 clean 5 s "
+                        "samples: load1 < --load-max, no foreign Unity/Blender/Player) and a host sample every 30 s during the run "
+                        "(hostClean = every sample clean); only the player slot is held (by the guard), no Unity slots")
     parser.add_argument("--load-max", type=float, default=6.0)
     args = parser.parse_args()
+    signal.signal(signal.SIGTERM, lambda *_: sys.exit(143))   # C-00 30.09 M-14: the finally restore runs on SIGTERM
     if not re.fullmatch(r"[0-9a-f]{40}", args.commit):
         parser.error("--commit must be a full lowercase 40-hex SHA")
 
@@ -102,65 +107,101 @@ def main():
                "startedUtc": wp064_run.utc_now(), "startedEpoch": time.time(), "status": "starting"}
     wp064_run.write_json(out / "attempt.json", attempt)
 
-    notes = []
-    quiet = wp078_perf.QuietWindow(notes.append, out / ".quiet-hold", args.load_max, 10_000.0, 0.0) if args.quiet else None
-    try:
-        return run_guarded(args, out, command, attempt, quiet, notes)
-    finally:
-        if quiet is not None:
-            quiet.release()
+    preflight = {"requested": bool(args.quiet)}
+    if args.quiet:
+        clean, preflight = clean_host_preflight(args.load_max)
+        attempt["preflight"] = preflight
+        if not clean:
+            attempt.update({"status": "preflight-failed", "exitCode": 75, "completedUtc": wp064_run.utc_now()})
+            wp064_run.write_json(out / "attempt.json", attempt)
+            print(f"clean-host preflight failed; Player not launched: {out}")
+            return 75
+    return run_guarded(args, out, command, attempt)
 
 
-def run_guarded(args, out, command, attempt, quiet, notes):
-    if quiet is not None:
-        quiet.acquire()
+def host_sample(load_max, own_player=False):
+    """(clean, detail): no foreign Unity / Blender / other game Player (our own Player excluded while it runs); load1 below
+    load_max only before the run (during the run the load is ours)."""
+    comm = subprocess.run(["ps", "-Ao", "comm"], capture_output=True, text=True).stdout.splitlines()
+    unity = [c for c in comm if c.strip().endswith("/MacOS/Unity") or c.strip().endswith("/MacOS/Blender")]
+    players = sum(1 for c in comm if c.strip().endswith(wp078_perf.PLAYER_EXE))
+    load = float(subprocess.run(["sysctl", "-n", "vm.loadavg"], capture_output=True, text=True).stdout.split()[1])
+    foreign_players = players - (1 if own_player else 0)
+    clean = not unity and foreign_players <= 0 and (own_player or load < load_max)
+    return clean, {"utc": wp064_run.utc_now(), "load1": load, "foreignUnityBlender": len(unity), "foreignPlayers": max(0, foreign_players)}
+
+
+def clean_host_preflight(load_max, samples=12, interval=5.0, attempts=30, wait=60.0):
+    """C-00 30.09 M-16: DEC-091 clean host the wp064_run way — 12 consecutive clean 5 s samples (load1 < load_max, no
+    foreign Unity / Blender / Player), up to `attempts` windows; no Unity slots are held during the soak."""
+    windows = []
+    for attempt in range(1, attempts + 1):
+        run = []
+        for _ in range(samples):
+            clean, detail = host_sample(load_max)
+            run.append(detail)
+            if not clean:
+                break
+            time.sleep(interval)
+        ok = len(run) == samples
+        windows.append({"window": attempt, "pass": ok, "samples": run})
+        if ok:
+            return True, {"pass": True, "loadMax": load_max, "samplesRequired": samples, "windows": windows[-3:]}
+        time.sleep(wait)
+    return False, {"pass": False, "loadMax": load_max, "samplesRequired": samples, "windowsUsed": attempts, "windows": windows[-3:]}
+
+
+def launch(command):
+    """The Player through the single player slot (a seam for the guard tests)."""
+    return subprocess.Popen([str(REPO / "tools" / "player-run.sh")] + command)
+
+
+def run_guarded(args, out, command, attempt):
     ug = out / "ug"
-    snap = wp078_perf.guard("snapshot", ug)
-    if snap.returncode != 0:
+    snap = guard_receipt.run_guard("snapshot", ug, "player")
+    code = guard_receipt.snapshot_code(snap.returncode)
+    if code:
         attempt.update({"status": "guard-blocked", "exitCode": snap.returncode, "completedUtc": wp064_run.utc_now(),
                         "guard": {"snapshotExit": snap.returncode}})
         wp064_run.write_json(out / "attempt.json", attempt)
-        return snap.returncode
+        return code
 
-    timed_out, samples = False, []
-    player = subprocess.Popen([str(REPO / "tools" / "player-run.sh")] + command)
-    deadline = time.monotonic() + args.timeout
-    while player.poll() is None:
-        if time.monotonic() > deadline:
-            timed_out = True
-            player.terminate()
-            try:
-                player.wait(timeout=30)
-            except subprocess.TimeoutExpired:
-                player.kill()
-            break
-        if quiet is not None:
-            clean, why = quiet.foreign_quiet()
-            samples.append({"utc": wp064_run.utc_now(), "clean": clean, "host": why})
-        time.sleep(30 if quiet is not None else 2)
-    exit_code = player.wait()
-    (out / "exit.txt").write_text(f"exit={exit_code}\n", encoding="utf-8")
-
-    wp078_perf.export_prefs(ug / "prefs-after-run.plist")
-    restore = wp078_perf.guard("restore", ug)
-    (ug / "restore.txt").write_text(restore.stdout + restore.stderr, encoding="utf-8")
-    ok, why = wp078_perf.guard_verdict(ug, restore.stdout, ug / "prefs-after-run.plist")
-    fields = dict(re.findall(r"(\w+)=(\S+)", restore.stdout.strip().splitlines()[-1] if restore.stdout.strip() else ""))
-    oos = ug / "out-of-scope-changed.txt"
-    guard = {"snapshotExit": 0, "restoreExit": restore.returncode, "verified": fields.get("verified") == "1",
-             "outOfScopeChanged": bool(oos.is_file() and oos.stat().st_size > 0), "touched": fields.get("touched"), "verdict": why}
+    timed_out, samples, exit_code = False, [], None
+    try:
+        player = launch(command)
+        deadline = time.monotonic() + args.timeout
+        while player.poll() is None:
+            if time.monotonic() > deadline:
+                timed_out = True
+                player.terminate()
+                try:
+                    player.wait(timeout=30)
+                except subprocess.TimeoutExpired:
+                    player.kill()
+                break
+            if args.quiet:
+                clean, detail = host_sample(args.load_max, own_player=True)
+                samples.append(dict(detail, clean=clean))
+            time.sleep(30 if args.quiet else 2)
+        exit_code = player.wait()
+        (out / "exit.txt").write_text(f"exit={exit_code}\n", encoding="utf-8")
+    finally:
+        # C-00 30.09 M-14: the restore runs on every path — normal end, error, Ctrl-C, SIGTERM (SystemExit 143)
+        receipt = guard_receipt.close(ug, "player")
+        guard_code, why = receipt["code"], receipt["why"]
+        attempt["guard"] = dict(receipt, snapshotExit=0, verdict=why)
+        wp064_run.write_json(out / "attempt.json", attempt)
 
     missing = [name for name in REQUIRED if not (out / name).is_file()]
-    success = exit_code == 0 and not timed_out and not missing and restore.returncode == 0 and ok
+    success = exit_code == 0 and not timed_out and not missing and guard_code == 0
     attempt.update({"status": "complete" if success else "failed", "completedUtc": wp064_run.utc_now(), "completedEpoch": time.time(),
                     "exitCode": exit_code, "timedOut": timed_out, "missingArtifacts": missing,
-                    "hostClean": (bool(samples) and all(x["clean"] for x in samples)) if quiet is not None else None,
-                    "hostSamples": samples, "quietNotes": notes,
-                    "guard": guard, "artifactSha256": hash_outputs(out)})
+                    "hostClean": (bool(samples) and all(x["clean"] for x in samples)) if args.quiet else None,
+                    "hostSamples": samples, "artifactSha256": hash_outputs(out)})
     wp064_run.write_json(out / "attempt.json", attempt)
     print(f"{args.kind} {args.mode} exit={exit_code} timedOut={timed_out} missing={missing} guard={why} out={out}")
-    if restore.returncode != 0 or not ok:
-        return 7
+    if guard_code:
+        return guard_code
     return 0 if success else 1
 
 

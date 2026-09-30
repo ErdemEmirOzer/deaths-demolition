@@ -10,9 +10,11 @@ writes the player's own settings. Every complete window counts; the verdict is t
 usage: wp078_perf.py --bin <app or build dir> --out <root> --commit <sha> [--tiers sinematik,yuksek] [--modes topdown,tp]
                      [--windows N] [--window-seconds 60] [--cooldown 60] [--dry-run]
 exit: 0 every window ran (see the report for pass/fail) · 6 a game Player was up and did not close · 7 user-data guard
-      mismatch (STOP, report to C-00) · guard exit codes preserved (30 blocked snapshot, 31 STOP restore) · 64 usage
+      STOP (snapshot error, restore error or verdict mismatch — report to C-00) · 30 snapshot waited on a live DD Player ·
+      75 snapshot waited on a held lock · 64 usage · 143 SIGTERM (the current window is still restored)
 """
 import argparse
+import signal
 import json
 import subprocess
 import sys
@@ -43,64 +45,7 @@ def player_up():
     return any(line.strip().endswith(PLAYER_EXE) for line in out.splitlines())
 
 
-PLAYER_PREFS_DOMAIN = "com.Deaths-Demolition.Deaths-Demolition---Playable-Concept"
-ENGINE_KEYS = ("Screenmanager",)          # + UnitySelectMonitor: Unity writes the window state on every Player exit
-IGNORED_KEYS = ("unity.player_session_count", "unity.player_sessionid")
-
-
-def export_prefs(target):
-    subprocess.run(["defaults", "export", PLAYER_PREFS_DOMAIN, str(target)], capture_output=True)
-
-
-def changed_prefs(before, after):
-    """Keys that differ between two PlayerPrefs plists (launch counters ignored)."""
-    import plistlib
-
-    def load(path):
-        try:
-            with open(path, "rb") as handle:
-                return plistlib.load(handle)
-        except Exception:
-            return {}
-    a, b = load(before), load(after)
-    return sorted(k for k in set(a) | set(b) if k not in IGNORED_KEYS and a.get(k) != b.get(k))
-
-
-def guard_verdict(ug, restore_text, after_plist):
-    """C-00 25.09: the guard must verify its restore (verified=1); a touched file is acceptable only when it is the player's
-    PlayerPrefs plist and every changed key is Unity's own window state, which the guard restores exactly."""
-    import re
-    fields = dict(re.findall(r"(\w+)=(\S+)", restore_text.strip().splitlines()[-1] if restore_text.strip() else ""))
-    if fields.get("verified") != "1":
-        return False, "guard verified!=1"
-    oos = ug / "out-of-scope-changed.txt"
-    if oos.is_file() and oos.stat().st_size > 0:
-        return False, "out-of-scope changes"
-    if fields.get("touched") in ("0", None):
-        return True, "touched=0"
-    keys = changed_prefs(ug / "snap" / "PR" / "p1.plist", after_plist)
-    (ug / "prefs-diff.txt").write_text("\n".join(keys) + "\n", encoding="utf-8")
-    engine = keys and all(k.startswith(ENGINE_KEYS) or k == "UnitySelectMonitor" for k in keys)
-    return (True, f"touched={fields.get('touched')} engine window keys only") if engine and fields.get("touched") == "1" \
-        else (False, f"touched={fields.get('touched')} keys={keys}")
-
-
-def guard_path():
-    """C-00 30.09 (G4 Q9): the guard is called from the main repository only (DD_USERDATA_GUARD), never a worktree copy."""
-    import os
-    if os.environ.get("DD_USERDATA_GUARD"):
-        return os.environ["DD_USERDATA_GUARD"]
-    # default: the MAIN checkout's guard (the parent of the shared .git), not this worktree's copy
-    common = subprocess.run(["git", "-C", str(REPO), "rev-parse", "--path-format=absolute", "--git-common-dir"],
-                            capture_output=True, text=True).stdout.strip()
-    main_root = Path(common).parent if common else REPO
-    return str(main_root / "tools" / "userdata-guard.sh")
-
-
-def guard(command, directory):
-    args = [guard_path(), command, str(directory), "--scope", "player"]
-    return subprocess.run(args, capture_output=True, text=True)
-
+import guard_receipt  # noqa: E402  (C-00 30.09 M-17: the one guard receipt / verdict module)
 
 class QuietWindow:
     """C-00 26.09: measure only in a quiet window — this process holds the 'player' slot (the guard, a child, re-enters it)
@@ -184,6 +129,11 @@ class QuietWindow:
         return why
 
 
+def launch(command):
+    """The wp064_run window (a seam for the guard tests)."""
+    return subprocess.run(command, capture_output=True, text=True)
+
+
 def window_args(tier_name, mode, cell):
     # -ddQualityTier takes the lower-case key (performans|yuksek|sinematik); the probe reports the enum (probeValue)
     args = ["-ddQualityTier", tier_name, "-ddCameraMode", mode,
@@ -235,6 +185,7 @@ def main():
     parser.add_argument("--quiet-pause", type=float, default=180.0)
     parser.add_argument("--max-discards", type=int, default=6, help="K8: host-discarded re-runs allowed per cell per invocation")
     args = parser.parse_args()
+    signal.signal(signal.SIGTERM, lambda *_: sys.exit(143))   # C-00 30.09 M-14: finally blocks (restore) run on SIGTERM
 
     targets = json.loads(Path(args.targets).read_text(encoding="utf-8"))
     tiers = [t for t in args.tiers.split(",") if t] or list(targets["tiers"])
@@ -316,23 +267,24 @@ def run_window(args, root, binary, seconds, quiet, note, name, mode, index):
     ug = root / "ug" / cell.name
     if quiet is not None:
         note(f"{cell.name}: {quiet.before_window(seconds + 90)}")
-    snap = guard("snapshot", ug)
-    if snap.returncode != 0:
-        state = "BLOCKED" if snap.returncode == 30 else "STOP"
-        note(f"{state} {cell.name}: guard snapshot exit {snap.returncode}; no Player started")
-        return snap.returncode
-    run = subprocess.run(command, capture_output=True, text=True)
-    (root / "ug" / (cell.name + ".wp064-run.out")).write_text(run.stdout + run.stderr, encoding="utf-8")
-    export_prefs(ug / "prefs-after-run.plist")
-    restore = guard("restore", ug)
-    (ug / "restore.txt").write_text(restore.stdout + restore.stderr, encoding="utf-8")
-    if restore.returncode != 0:
-        note(f"STOP {cell.name}: guard restore exit {restore.returncode} — report to C-00")
-        return restore.returncode
-    ok, why = guard_verdict(ug, restore.stdout, ug / "prefs-after-run.plist")
-    if not ok:
-        note(f"STOP {cell.name}: guard restore mismatch, {why} — report to C-00")
-        return 7
+    snap = guard_receipt.run_guard("snapshot", ug)
+    code = guard_receipt.snapshot_code(snap.returncode)
+    if code:
+        note(f"{'BLOCKED' if code in (30, 75) else 'STOP'} {cell.name}: guard snapshot exit {snap.returncode} → {code}; no Player started")
+        return code
+    run = None
+    try:
+        run = launch(command)
+        (root / "ug").mkdir(parents=True, exist_ok=True)
+        (root / "ug" / (cell.name + ".wp064-run.out")).write_text(run.stdout + run.stderr, encoding="utf-8")
+    finally:
+        # C-00 30.09 M-14: the restore runs on every path — normal end, error, Ctrl-C, SIGTERM (SystemExit 143)
+        receipt = guard_receipt.close(ug)
+        guard_code, why = receipt["code"], receipt["why"]
+        if guard_code:
+            note(f"STOP {cell.name}: {why} — report to C-00")
+    if guard_code:
+        return guard_code
     note(f"{cell.name} wp064_run exit {run.returncode} · guard ok ({why})")
     if run.returncode in (2, 64, 66):
         note(f"STOP {cell.name}: wp064_run usage/input error (exit {run.returncode}) — see ug/<cell>.wp064-run.out")
