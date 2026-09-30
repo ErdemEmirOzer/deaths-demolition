@@ -319,16 +319,105 @@ namespace DD.Prototype.Tests.EditMode
             }
             Assert.IsFalse(_dukkan.Tree.CanPin(I(target), _rank));
             SafPinSorgusu(target, false);
-            Assert.IsFalse(_dukkan.SetPin(target), "same ID does not bypass new invalidity");
-            SafPinSorgusu(null, true);
-            SafPinSorgusu(string.Empty, true);
             int events = 0;
             _dukkan.OfferChanged += () => events++;
-            Assert.IsTrue(_dukkan.SetPin(null));
+            Assert.IsFalse(_dukkan.SetPin(target), "same ID does not bypass new invalidity");
+            if (reason == "hearth")
+            {
+                // M-35: RunTreeState.SetPin refuses Hearth, so the primitive call above left the earlier pin in place.
+                Assert.AreEqual(I("ks_reload"), _dukkan.Tree.PinnedIndex);
+                Assert.AreEqual(0, events);
+                SafPinSorgusu(null, true);
+                SafPinSorgusu(string.Empty, true);
+                Assert.IsTrue(_dukkan.SetPin(null));
+                Assert.AreEqual(1, events);
+            }
+            else
+            {
+                // M-35 (C-00 30.09): the command point clears the closed pin itself (one event), no assignment spent or refunded;
+                // a later clear is the no-op of CanSetPin_BosPinClear_SafNoOp.
+                Assert.AreEqual(1, events, "kapanan pin komut noktasında temizlenir");
+                SafPinSorgusu(null, true);
+                SafPinSorgusu(string.Empty, true);
+                Assert.IsTrue(_dukkan.SetPin(null));
+                Assert.AreEqual(1, events, "boş pini temizlemek olay üretmez");
+            }
+
             Assert.AreEqual(-1, _dukkan.Tree.PinnedIndex);
             Assert.AreEqual(1, _dukkan.PinChangesThisRound);
-            Assert.AreEqual(1, events);
             SafPinSorgusu("tier_MovementSpeed", false);
+        }
+
+        [TestCase("excluded")]
+        [TestCase("maxed")]
+        [TestCase("locked")]
+        public void Nisan_KapananHedef_OtomatikTemizlenir(string reason)
+        {
+            // M-35 (C-00 30.09): a pin whose target closes is cleared at the shop's next command point (here a reopen of the
+            // same offer), without spending or refunding the round's assignment; the snapshot never shows a closed pin or path.
+            Ac(1);
+            string target = reason == "excluded" ? "fork_ar_1_y" : "tier_FireRate";
+            Assert.IsTrue(_dukkan.SetPin(target));
+            Assert.AreEqual(1, _dukkan.PinChangesThisRound);
+            if (reason == "excluded") Assert.IsTrue(_dukkan.Tree.MarkOwned(I("fork_ar_1_x")));
+            if (reason == "maxed") _rank.SetTier(UpgradeBranch.FireRate, _dukkan.Tree.Graph[I(target)].MaxTier, _config);
+            if (reason == "locked") _dukkan.UnlockedPredicate = b => b != UpgradeBranch.FireRate;
+
+            var once = new RunTreeSnapshot();
+            once.Refresh(_dukkan);
+            Assert.AreEqual(-1, once.PinnedIndex, "anlık görüntü kapanan pini göstermez");
+            Assert.AreEqual(0, once.PinPathCount, "kapanan pinin yolu yok");
+
+            _dukkan.Close();
+            Ac(1);
+            Assert.AreEqual(-1, _dukkan.Tree.PinnedIndex, "komut noktasında otomatik temizlendi");
+            Assert.AreEqual(1, _dukkan.PinChangesThisRound, "hak harcanmaz, iade edilmez");
+            Assert.IsFalse(_dukkan.CanSetPin("tier_MovementSpeed"), "turun hakkı kullanıldı");
+            Ac(2);
+            Assert.IsTrue(_dukkan.CanSetPin("tier_MovementSpeed"), "sonraki turda yeni hak");
+        }
+
+        [Test]
+        public void Nisan_GeriAl_YeniPiniEzmez()
+        {
+            // M-38 (C-00 30.09): buying the pinned node clears the pin; the player pins another node; undoing the purchase
+            // must not overwrite that newer pin (the old code restored the bought node's pin unconditionally).
+            PinleAc(1, "purse");
+            Ac(2);
+            Assert.GreaterOrEqual(Kart("purse"), 0, "Nişan adımı teklifte");
+            Assert.IsTrue(Al("purse"));
+            Assert.AreEqual(-1, _dukkan.Tree.PinnedIndex);
+            Assert.IsTrue(_dukkan.SetPin("tier_MovementSpeed"));
+            Assert.AreEqual(RunTreeCommandResult.Done, _dukkan.TryUndoLast(_dukkan.SessionId, _dukkan.Revision));
+            Assert.IsFalse(_dukkan.Tree.IsOwned(I("purse")));
+            Assert.AreEqual(I("tier_MovementSpeed"), _dukkan.Tree.PinnedIndex, "geri alma yeni pini ezmez");
+            Assert.AreEqual(1, _dukkan.PinChangesThisRound);
+        }
+
+        [Test]
+        public void GeriAl_Ocak_BuildYokken_IadeYok_YiginAyni()
+        {
+            // M-37 (C-00 30.09): with no build to take the stack off, the undo of a Hearth stoke refuses before any gold moves.
+            _rank.SetTier(UpgradeBranch.FireRate, 2);
+            PinleAc(1, "ks_firerate");
+            Assert.IsTrue(Al("ks_firerate"));
+            Assert.AreEqual(RunTreeCommandResult.Done, _dukkan.TryStokeHearth(_dukkan.SessionId, _dukkan.Revision));
+            _dukkan.Close();
+            _dukkan.Open(1, _config, _cuzdan, null, Kosu);      // same offer, the build is gone (no provider)
+            int bakiye = _cuzdan.Balance, yigin = _dukkan.Tree.HearthStacks;
+            Assert.AreEqual(RunTreeCommandResult.NotAvailable, _dukkan.TryUndoLast(_dukkan.SessionId, _dukkan.Revision));
+            Assert.AreEqual(bakiye, _cuzdan.Balance, "iade yok");
+            Assert.AreEqual(yigin, _dukkan.Tree.HearthStacks, "yığın aynı");
+            Assert.IsFalse(_dukkan.Tree.UnstokeHearth(null), "build yokken RunTreeState de hiçbir şeyi değiştirmez");
+            Assert.AreEqual(yigin, _dukkan.Tree.HearthStacks);
+        }
+
+        [Test]
+        public void Nisan_TurdakiHak_AgacVerisinden()
+        {
+            // M-36 (C-00 30.09): the per-round pin assignments live in run-tree.json (pin.perRound, DEC-098 K2 = 1).
+            Assert.AreEqual(1, RunTreeCatalog.Document.pin.perRound);
+            Assert.AreEqual(1, RoundUpgradeShop.PinsPerRound);
         }
 
         [TestCase(null)]

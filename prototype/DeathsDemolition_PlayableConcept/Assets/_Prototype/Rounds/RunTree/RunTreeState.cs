@@ -325,7 +325,15 @@ namespace DD.Prototype.Rounds
 
         // ------------------------------------------------------------------ pin (Nişan)
 
-        public void SetPin(int i) => PinnedIndex = i >= 0 && IsBuilt && i < Graph.Count ? i : -1;
+        /// <summary>
+        /// M-35: a negative index clears the pin; a target is taken only when it is structurally valid (in range, never Hearth),
+        /// otherwise the call is ignored and the current pin stays. The reachability rule is <see cref="CanPin"/> (the shop's gate).
+        /// </summary>
+        public void SetPin(int i)
+        {
+            if (i < 0 || !IsBuilt) { PinnedIndex = -1; return; }
+            if (i < Graph.Count && Graph[i].Kind != RunTreeNodeKind.Hearth) PinnedIndex = i;
+        }
 
         /// <summary>A pin may plan future prerequisites, but never a closed or unbound destination. Gold is not a gate.</summary>
         public bool CanPin(int i, WeaponModifierState build)
@@ -537,10 +545,10 @@ namespace DD.Prototype.Rounds
         /// <summary>K10 undo of the last Hearth stoke (the shop refunds the gold).</summary>
         public bool UnstokeHearth(WeaponModifierState build)
         {
-            if (!IsBuilt || HearthStacks <= 0 || HearthThisRound <= 0) return false;
+            if (!IsBuilt || build == null || HearthStacks <= 0 || HearthThisRound <= 0) return false;   // M-37: nothing changes without a build
             HearthStacks--;
             HearthThisRound--;
-            if (build != null && Graph.HearthIndex >= 0) build.SetHearth(HearthStacks, Graph[Graph.HearthIndex].EffectValue);
+            if (Graph.HearthIndex >= 0) build.SetHearth(HearthStacks, Graph[Graph.HearthIndex].EffectValue);
             return true;
         }
 

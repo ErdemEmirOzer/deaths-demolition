@@ -162,6 +162,15 @@ namespace DD.Prototype.Rounds
         public RunTreeCatalogNode hearth = new RunTreeCatalogNode();
         public RunTreeCatalogNode[] specialLinks = new RunTreeCatalogNode[0];
         public RunTreeCatalogWeapon[] weapons = new RunTreeCatalogWeapon[0];
+        public RunTreeCatalogPin pin = new RunTreeCatalogPin();
+    }
+
+    /// <summary>M-36 (C-00 30.09): the Nişan rules as tree data.</summary>
+    [Serializable]
+    public sealed class RunTreeCatalogPin
+    {
+        [PrototypeOnly(PendingDecisions.UpgradesAndGold, "DEC-098 K2: pin target assignments per round (clearing never refunds one). A meta 'Second Pin' would raise it — its meaning is a user decision (M-36).")]
+        public int perRound = 1;
     }
 
     /// <summary>

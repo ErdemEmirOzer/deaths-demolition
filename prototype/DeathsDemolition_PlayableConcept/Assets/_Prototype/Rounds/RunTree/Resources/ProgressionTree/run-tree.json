@@ -301,6 +301,9 @@
    }
   ]
  },
+ "pin": {
+  "perRound": 1
+ },
  "hearth": {
   "id": "hearth",
   "shortName": "Hearth",

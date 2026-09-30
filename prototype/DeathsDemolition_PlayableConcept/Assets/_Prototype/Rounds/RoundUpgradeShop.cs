@@ -328,6 +328,7 @@ namespace DD.Prototype.Rounds
 
                 Tree.TierEligibility = TierEligibility;
                 PurseBonusThisRound = Tree.OnRoundEnd(wallet);
+                DropClosedPin();
 
                 BuildOffer();
 
@@ -1248,6 +1249,12 @@ namespace DD.Prototype.Rounds
                 return RunTreeCommandResult.UndoClosed;
             }
 
+            // M-37 (C-00 30.09): a Hearth stoke can only be undone onto a build — check before any gold moves.
+            if (_last.Hearth && ModifierState() == null)
+            {
+                return RunTreeCommandResult.NotAvailable;
+            }
+
             if (_wallet == null || _wallet.TryRefund(_last.TransactionId) != GoldTransactionResult.Applied)
             {
                 _last = default;
@@ -1273,7 +1280,9 @@ namespace DD.Prototype.Rounds
                     Tree.Unmark(last.Node);
                 }
 
-                if (last.WasPinned && last.Node >= 0) Tree.SetPin(last.Node);
+                // M-38 (C-00 30.09): the bought node was the pin (its purchase cleared it); give it back only if no new pin
+                // was set since — an undo never overwrites the player's newer choice nor spends an assignment.
+                if (last.WasPinned && last.Node >= 0 && Tree.PinnedIndex < 0) Tree.SetPin(last.Node);
 
                 undone = _cards[last.CardIndex];
                 undone.Cost = last.Cost;
@@ -1374,12 +1383,33 @@ namespace DD.Prototype.Rounds
             }
 
             if (i >= 0 && !Tree.CanPin(i, ModifierState())) return false;
-            return i == Tree.PinnedIndex || i < 0 || PinChangesThisRound < 1;
+            return i == Tree.PinnedIndex || i < 0 || PinChangesThisRound < PinsPerRound;
+        }
+
+        /// <summary>WP-077 Nişan (K2, M-36): <see cref="PinsPerRound"/> target assignments per round (run-tree.json pin.perRound).</summary>
+        public static int PinsPerRound => Math.Max(1, RunTreeCatalog.Document.pin != null ? RunTreeCatalog.Document.pin.perRound : 1);
+
+        /// <summary>
+        /// M-35 (C-00 30.09): a pin whose target has closed (bought, excluded, maxed, locked, unreachable) is cleared at the
+        /// shop's command points — a refresh, a new offer, a pin command — without spending or refunding an assignment.
+        /// Returns true when it cleared one.
+        /// </summary>
+        private bool DropClosedPin()
+        {
+            if (!Tree.IsBuilt || Tree.PinnedIndex < 0 || Tree.CanPin(Tree.PinnedIndex, ModifierState())) return false;
+            Tree.SetPin(-1);
+            return true;
         }
 
         /// <summary>WP-077 Nişan (K2): one target assignment per round; null/empty clears without refunding it. Same target is a no-op.</summary>
         public bool SetPin(string nodeId)
         {
+            if (IsOpen && DropClosedPin() && !CanSetPin(nodeId))
+            {
+                OfferChanged?.Invoke();   // the closed pin is gone even though this command is refused
+                return false;
+            }
+
             if (!CanSetPin(nodeId)) return false;
             int i = string.IsNullOrEmpty(nodeId) ? -1 : Tree.Graph.IndexOf(nodeId);
             if (i == Tree.PinnedIndex) return true;
@@ -1486,6 +1516,7 @@ namespace DD.Prototype.Rounds
         /// <summary>Re-reads owned tiers and prices after a purchase or a reroll.</summary>
         private void RefreshCards()
         {
+            DropClosedPin();
             WeaponModifierState modifiers = ModifierState();
             EconomyConfigSection economy = _config != null ? _config.Economy : null;
 

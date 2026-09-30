@@ -260,6 +260,8 @@ class Tree:
             return True
         if n.kind == KEYSTONE:
             return bool(n.parents) and self.owned_tier(n.parents[0]) >= 2
+        if n.kind == HEARTH and self.opts.hearth_any_keystone:
+            return self.count_owned(WEAPON_LANE, KEYSTONE) + self.count_owned(BODY_LANE, KEYSTONE) >= 1
         if n.kind in (FORK, SEAL, HEARTH):
             return self.count_owned(n.lane, KEYSTONE) >= 1
         if n.kind == CAPSTONE:
@@ -530,8 +532,8 @@ def simulate(o, slot, wid, seed, bot, rounds, g_info, branches, econ):
     wallet = Wallet()
     g, info = g_info
     tree = Tree(g, info, branches, econ, o)
-    if bot == "Rush":
-        tree.set_pin_run_start(info["cap"])
+    if bot == "Rush" and (tree.can_pin(info["cap"]) or not o.pin_rules):
+        tree.set_pin_run_start(info["cap"])   # M-33: through the shop's CanPin rule
     run = dict(weapon=slot, seed=seed, bot=bot, income=0, spent=0, incomeLate=0, spentLate=0, walletR15=0,
                firstKeystone=0, firstCapstone=0, hearth=0, hearthCapRound=0, purseRound=0, specialRound=0,
                poolExhaustedRound=0)
@@ -547,6 +549,10 @@ def simulate(o, slot, wid, seed, bot, rounds, g_info, branches, econ):
         round_income = gold + purse
         before = wallet.balance
         floor = f32(wallet.balance * f32(cushion(o, bot)))
+        gap = bot == "Rush" and r in o.pin_gap and tree.pinned >= 0
+        held = tree.pinned
+        if gap:
+            tree.pinned = -1                       # M-33: this draw and this shop run without the pin
         cards = tree.draw_frontier(rnd, o.offer_cards)
         if not cards and run["poolExhaustedRound"] == 0:
             run["poolExhaustedRound"] = r
@@ -558,6 +564,8 @@ def simulate(o, slot, wid, seed, bot, rounds, g_info, branches, econ):
                 break
             buy(tree, wallet, card, r, run)
             cards.remove(card)
+        if gap and not tree.owned[held]:
+            tree.pinned = held                     # the pin is set again in this round's shop (next draw)
         cap = {"Rush": 0 if tree.pinned >= 0 else 10 ** 9, "Human": o.human_hearth, "Hoarder": o.hoarder_hearth}.get(bot, 10 ** 9)
         for _ in range(cap):
             price = tree.cost(info["hearth"])
@@ -676,6 +684,8 @@ class Opts:
         self.pin_rules = not a.no_pin_rules
         self.link_price = a.link_price
         self.capstone_cost = a.capstone_cost
+        self.hearth_any_keystone = a.hearth_any_keystone
+        self.pin_gap = set(int(x) for x in a.pin_gap.split(",") if x) if a.pin_gap else set()
 
 
 def run_model(a):
@@ -715,6 +725,10 @@ def label(a):
         parts.append("WHAT-IF capstone %d" % a.capstone_cost)
     if a.no_pin_rules:
         parts.append("WHAT-IF pre-RT6 pin (no CanPin)")
+    if a.hearth_any_keystone:
+        parts.append("WHAT-IF Hearth with any keystone (RT8)")
+    if a.pin_gap:
+        parts.append("WHAT-IF Rush pin gap R%s (M-33)" % a.pin_gap)
     return " · ".join(parts)
 
 
@@ -746,6 +760,8 @@ def main():
                     help="catalog = 80/160 (RunTreeState.Cost since WP-077 B5-2); shipped = the pre-B5-2 1-gold slot price (26.09 C# CSV)")
     ap.add_argument("--capstone-cost", type=int, default=0)
     ap.add_argument("--no-pin-rules", action="store_true")
+    ap.add_argument("--hearth-any-keystone", action="store_true", help="WHAT-IF (R1-B RT8): Hearth needs a keystone in either lane")
+    ap.add_argument("--pin-gap", default="", help="WHAT-IF (M-33): comma rounds whose draw and shop run without the Rush bot's pin")
     ap.add_argument("--csv")
     ap.add_argument("--json")
     ap.add_argument("--compare", help="a C# TreeModel tree-model-runs.csv: prints how many runs match exactly (exit 1 if not all)")

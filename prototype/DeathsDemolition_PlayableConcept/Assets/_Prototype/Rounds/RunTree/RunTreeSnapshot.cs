@@ -147,7 +147,9 @@ namespace DD.Prototype.Rounds
             HearthThisRound = tree.HearthThisRound;
             HearthIndex = tree.Graph.HearthIndex;
             HearthPerRound = HearthIndex >= 0 ? tree.Graph[HearthIndex].PerRoundLimit : 0;
-            PinnedIndex = tree.PinnedIndex;
+            // M-35: a pin whose target has closed shows no pin, no path (the shop clears it at its next command point)
+            bool pinValid = tree.PinnedIndex >= 0 && tree.CanPin(tree.PinnedIndex, build);
+            PinnedIndex = pinValid ? tree.PinnedIndex : -1;
             PurseBonusThisRound = shop.PurseBonusThisRound;
             RunId = tree.RunId;
             UndoAvailable = shop.UndoAvailable;
@@ -187,7 +189,7 @@ namespace DD.Prototype.Rounds
                 bool drawable = status == RunTreeNodeStatus.Available || status == RunTreeNodeStatus.Unaffordable;
                 v.NewlyUnlocked = !newRun && drawable &&
                                   (_previous[i] == RunTreeNodeStatus.Locked || _previous[i] == RunTreeNodeStatus.PrereqMissing);
-                v.IsPinned = i == tree.PinnedIndex;
+                v.IsPinned = i == tree.PinnedIndex && pinValid;
                 v.InOffer = shop.IsNodeOnOffer(i) || (node.Kind == RunTreeNodeKind.Tier && InOffer(shop, node.Branch));
                 v.IconKey = IconKeyOf(tree, i);
                 v.ClosesIndex = tree.ForkPartner(i);
@@ -217,7 +219,7 @@ namespace DD.Prototype.Rounds
             PinPathCount = 0;
             PinPathTotalCost = 0;
             PinReachableIndex = -1;
-            if (tree.PinnedIndex >= 0)
+            if (pinValid)
             {
                 int n = tree.PathTo(tree.PinnedIndex, build, _path);
                 for (int k = 0; k < n && PinPathCount < PathCapacity; k++)

@@ -141,7 +141,8 @@ namespace DD.Prototype.Diagnostics.EditorTools
                 var build = new WeaponModifierState();
                 var tree = new RunTreeState();
                 tree.Begin(1, weapon, config, o.meta);
-                if (bot == Bot.Rush) tree.SetPin(tree.Graph.WeaponCapstoneIndex);
+                // M-33 (C-00 30.09): the rush bot pins through the shop's rule (CanPin: reachable, never Hearth), not a raw set.
+                if (bot == Bot.Rush && tree.CanPin(tree.Graph.WeaponCapstoneIndex, build)) tree.SetPin(tree.Graph.WeaponCapstoneIndex);
 
                 var cards = new List<int>(o.offerCards + 1);
                 var run = new RunResult { weapon = RunTreeCatalog.SlotFor(weapon), seed = seed, bot = bot };
