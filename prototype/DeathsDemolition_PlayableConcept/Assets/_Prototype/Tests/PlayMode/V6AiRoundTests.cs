@@ -37,10 +37,12 @@ namespace DD.Prototype.Tests.PlayMode
         private const int Target = 12;
 
         /// <summary>
-        /// C1 remains a separate open issue. Waterfall is strict: every observed stall fails,
-        /// and a real enemy starts at the necessary near corner with the normal crowd solve.
+        /// Stations reported but not asserted. Empty since WP-076 B9 (C-00 30.09): C1 left after two guarded r3 PlayMode runs
+        /// (7 / 12 reached, 0 stalls, 0 recoveries; every unreached body still walking, no queue / wait — the 25 s window, not a stop),
+        /// on top of S-05's pond-guard fix 7bcb94fd. Waterfall is strict: every observed stall fails, and a real enemy starts at the
+        /// necessary near corner with the normal crowd solve.
         /// </summary>
-        private static readonly HashSet<string> KnownOpen = new HashSet<string> { "C1_Causeway" };
+        private static readonly HashSet<string> KnownOpen = new HashSet<string>();
         private const float StationSeconds = 25f, ReachMetres = 3.5f, StallSeconds = 6f, StallMove = 0.75f;
 
         private static readonly (string name, Vector3 at)[] Stations =
