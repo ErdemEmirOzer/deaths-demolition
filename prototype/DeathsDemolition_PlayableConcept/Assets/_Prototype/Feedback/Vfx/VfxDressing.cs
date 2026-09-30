@@ -312,11 +312,15 @@ namespace DD.Prototype.Feedback.Vfx
             CasingsEjected++;
         }
 
-        /// <summary>sg_1 ejects on its existing pump mechanism event (clip or 0.40 s fallback), never on the flash.</summary>
+        /// <summary>The weapons whose shells follow the mechanism, never the flash: sg_1 pump (clip or 0.40 s fallback) and
+        /// sg_2 break-open (M-21, C-00 30.09 — no shell on the shot, two CasingEjected events when the breech opens on reload).</summary>
+        public static bool MechanismEjects(DD.Prototype.Core.Config.ClassicWeaponId id) =>
+            id == DD.Prototype.Core.Config.ClassicWeaponId.CombatShotgun || id == DD.Prototype.Core.Config.ClassicWeaponId.Sg2;
+
+        /// <summary>One shell per CasingEjected mechanism event of a <see cref="MechanismEjects"/> weapon.</summary>
         public void PlayPumpCasing(DD.Prototype.Weapons.WeaponMechanismEvent info)
         {
-            if (!_ready || info.Kind != DD.Prototype.Weapons.WeaponMechanismKind.CasingEjected
-                || info.Weapon != DD.Prototype.Core.Config.ClassicWeaponId.CombatShotgun) return;
+            if (!_ready || info.Kind != DD.Prototype.Weapons.WeaponMechanismKind.CasingEjected || !MechanismEjects(info.Weapon)) return;
             DD.Prototype.Weapons.WeaponController active = DD.Prototype.Weapons.WeaponRegistry.ActiveController;
             if (active == null || active.SpecialWeaponActive || active.Classic == null || active.Classic.Id != info.Weapon) return;
             EjectCasing(MuzzleVariant.C, active.Muzzle, VfxWeaponProfiles.For(info.Weapon));
@@ -767,8 +771,8 @@ namespace DD.Prototype.Feedback.Vfx
             // WP-073 B1: the class profile drives the flash, the light, the smoke and the casing (a Special keeps A).
             VfxWeaponProfile profile = VfxWeaponProfiles.Active();
             bool firstPerson = DD.Prototype.CameraSystem.CameraModeService.Current == DD.Prototype.CameraSystem.CameraMode.FirstPerson;
-            // sg_2 keeps its current shot ejection until S-02/C-00 defines its break-open contract.
-            if (active == null || active.Classic == null || active.Classic.Id != DD.Prototype.Core.Config.ClassicWeaponId.CombatShotgun)
+            // sg_1 pump / sg_2 break-open shells come from the mechanism event (PlayPumpCasing), never the flash.
+            if (active == null || active.Classic == null || !MechanismEjects(active.Classic.Id))
                 EjectCasing(variant, muzzle, profile);
             LastMuzzleNote = active == null ? "no-active" : active.Classic == null ? "no-classic" : active.SpecialWeaponActive ? "special" : active.Classic.Id.ToString();
             float size = row.WorldSizeMetres * Mathf.Max(0.5f, scale);

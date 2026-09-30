@@ -116,18 +116,43 @@ namespace DD.Prototype.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator Ar1_AndSg2_KeepImmediateShotCasing()
+        public IEnumerator Ar1_KeepsImmediateShotCasing()
         {
             yield return SetUpWeapon(ClassicWeaponId.AssaultRifle);
-            foreach (ClassicWeaponId id in new[] { ClassicWeaponId.AssaultRifle, ClassicWeaponId.Sg2 })
+            int casings = _vfx.CasingsEjected;
+            yield return FireOne();
+            Assert.AreEqual(casings + 1, _vfx.CasingsEjected, "ar_1 immediate shot casing contract");
+            yield return new WaitForSeconds(0.65f);
+            Assert.AreEqual(casings + 1, _vfx.CasingsEjected, "ar_1 mechanism must not duplicate the shot casing");
+        }
+
+        /// <summary>M-21 (C-00 30.09, S-02 contract): sg_2 is a break-open double — no shell on the shot; opening the breech
+        /// on reload raises two CasingEjected events and the VFX lays one shell per event. Needs S-02's BreakOpen timeline.</summary>
+        [UnityTest]
+        public IEnumerator Sg2_BreakOpen_NoShotCasing_TwoShellsOnReload()
+        {
+            yield return SetUpWeapon(ClassicWeaponId.Sg2);
+            int events = 0;
+            void Count(WeaponMechanismEvent e) { if (e.Weapon == ClassicWeaponId.Sg2 && e.Kind == WeaponMechanismKind.CasingEjected) events++; }
+            WeaponEvents.Mechanism += Count;
+            try
             {
-                Assert.IsTrue(WeaponQaHooks.TrySetClassicWeapon(id));
-                yield return new WaitForSeconds(1f);
                 int casings = _vfx.CasingsEjected;
                 yield return FireOne();
-                Assert.AreEqual(casings + 1, _vfx.CasingsEjected, id + " immediate shot casing contract");
                 yield return new WaitForSeconds(0.65f);
-                Assert.AreEqual(casings + 1, _vfx.CasingsEjected, id + " mechanism must not duplicate the shot casing");
+                Assert.AreEqual(casings, _vfx.CasingsEjected, "sg_2: no shell on the shot");
+                Assert.AreEqual(0, events, "sg_2: no mechanism shell on the shot");
+                _scene.Girdi.DoldurBasti = true;
+                yield return null;
+                _scene.Girdi.DoldurBasti = false;
+                yield return SpecialWeaponSahne.Bekle(() => events >= 2, 4f, "sg_2 break-open did not raise two CasingEjected events");
+                yield return new WaitForSeconds(0.1f);
+                Assert.AreEqual(2, events);
+                Assert.AreEqual(casings + 2, _vfx.CasingsEjected, "sg_2: one shell per break-open event");
+            }
+            finally
+            {
+                WeaponEvents.Mechanism -= Count;
             }
         }
     }
