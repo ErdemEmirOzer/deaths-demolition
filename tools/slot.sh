@@ -19,6 +19,11 @@
 #   farklıyken siler (geçici boş `ps` yanıtı canlı kilidi silmez); (b) DD_SLOT_TIMEOUT=<s> (boş/0 = sınırsız, eski davranış):
 #   bekleme bu süreye ulaşırsa bilet silinir, stderr'e `SLOT <kind> TIMEOUT after <n>s` + tutucular, çıkış 75; (c) bekleyen
 #   acquire INT/TERM/HUP alınca biletini siler (130/143/129) — bekleme `sleep & wait` ile, tuzak hemen koşar.
+# Disk kapısı (C-00 01.10): unity|player slotu alındığı AN dd_disk_gate (dd-env.sh, tek kaynak: disk ≥ 15 GiB, swap ≤ 12 GiB).
+#   Geçmezse slot bırakılır, bilet sırasını korur, stdout+stderr'e "disk-gate wait" satırı, 60 s sonra kuyruğa dönülür;
+#   toplam disk beklemesi DD_SLOT_DISK_WAIT saniyeyi (varsayılan 3600) aşarsa bilet silinir, çıkış 75. Yeniden giriş (atası
+#   tutan) kapıya bakmaz — tutucu zaten geçti. dd-env.sh slot.sh'nin yanında, yoksa wp-079 driver'ında aranır; ikisi de
+#   yoksa 64 (kapı asla sessizce atlanmaz). Self-test hook: DD_SLOT_DISK_POLL (varsayılan 60 s).
 set -u
 BASE=${DD_SLOT_BASE:-/tmp/dd-slots}; [ "${1:-}" = holds ] || mkdir -p "$BASE/unity" "$BASE/blender" "$BASE/smoke" "$BASE/player" "$BASE/queue/unity" "$BASE/queue/blender" "$BASE/queue/smoke" "$BASE/queue/player"
 # v3 (2026-09-17): dinamik 3. Unity slotu — swap kullanımı < 10 GB ve 1 dk yük < 24 iken 3, aksi hâlde 2.
@@ -45,6 +50,12 @@ clean(){ local k=$1 f pid st now; for f in "$BASE/$k"/* "$BASE/queue/$k"/*; do [
   now=$(pstart "$pid"); reused "$st" "$now" && rm -f "$f"; done; }
 holders(){ local f; for f in "$BASE/$1"/*; do [ -e "$f" ] && echo "  $(basename "$f"): $(head -1 "$f")"; done; }
 oldest(){ ls "$BASE/queue/$1" 2>/dev/null | sort | head -1; }
+DD_ENV="$(cd "$(dirname "$0")" && pwd)/dd-env.sh"
+[ -f "$DD_ENV" ] || DD_ENV="$HOME/Desktop/KADRO/context/projects/deaths-demolition/wp-079/driver/tools/dd-env.sh"
+# disk_gate: prints dd_disk_gate's one reason line; 0 ok · 75 not ready · 64 no dd-env.sh (anything else = not ready)
+disk_gate(){ local out rc; [ -f "$DD_ENV" ] || { echo "dd-env.sh not found next to slot.sh or in the wp-079 driver"; return 64; }
+  out=$(DD_TIMELINE= zsh -c 'source "$1" && dd_disk_gate' zsh "$DD_ENV" 2>&1); rc=$?
+  echo "${out##*$'\n'}" | sed -E 's/^[0-9TZ:-]+ //'; return $rc; }
 cmd=${1:-status}; kind=${2:-unity}; tag=${3:-anon}; owner=${DD_SLOT_OWNER:-$PPID}
 # WP-066N: DD_SLOT_OWNER lets a tool take the lock for its caller's shell (userdata-guard holds 'player' from snapshot to
 # restore); acquire is re-entrant — when the owner or one of its ancestors already holds a lock of this kind it returns at
@@ -56,6 +67,9 @@ case "$cmd" in
     to=${DD_SLOT_TIMEOUT:-0}
     case "$to" in *[!0-9]*) echo "SLOT: DD_SLOT_TIMEOUT must be whole seconds (got '$to')" >&2; exit 64 ;; esac
     to=$((10#$to))
+    dwait=${DD_SLOT_DISK_WAIT:-3600}
+    case "$dwait" in ''|*[!0-9]*) echo "SLOT: DD_SLOT_DISK_WAIT must be whole seconds (got '$dwait')" >&2; exit 64 ;; esac
+    dwait=$((10#$dwait)); dstart=""
     clean "$kind"
     for held in "$BASE/$kind"/*; do [ -e "$held" ] || continue
       if is_ancestor "${held##*.}" "$owner"; then echo "SLOT $kind reentrant -> $tag (held by ancestor pid ${held##*.}: $(basename "$held"))"; exit 0; fi
@@ -76,8 +90,25 @@ case "$cmd" in
           if ! ls "$BASE/$kind"/$i.* >/dev/null 2>&1; then
             f="$BASE/$kind/$i.$tag.$owner"
             if ( set -o noclobber; printf '%s %s\nstart=%s\n' "$(date -u +%FT%TZ)" "$tag" "$ostart" > "$f" ) 2>/dev/null; then
+              if [ "$kind" = unity ] || [ "$kind" = player ]; then
+                reason=$(disk_gate); grc=$?
+                if [ "$grc" -ne 0 ]; then
+                  rm -f "$f"   # the slot goes back at once; the ticket keeps its place in the queue
+                  if [ "$grc" -eq 64 ]; then rm -f "$BASE/queue/$kind/$ticket"; echo "SLOT $kind REFUSED: disk gate unavailable — $reason" >&2; exit 64; fi
+                  now=$(date +%s); [ -n "$dstart" ] || dstart=$now
+                  if [ $(( now-dstart )) -ge "$dwait" ] || { [ "$to" -gt 0 ] && [ $(( now-start )) -ge "$to" ]; }; then
+                    rm -f "$BASE/queue/$kind/$ticket"
+                    echo "SLOT $kind disk-gate TIMEOUT after $(( now-dstart ))s ($tag, pid $owner; DD_SLOT_DISK_WAIT=$dwait): $reason" | tee /dev/stderr
+                    exit 75
+                  fi
+                  dpoll=${DD_SLOT_DISK_POLL:-60}
+                  echo "$(date -u +%FT%TZ) SLOT $kind disk-gate wait ($tag, pid $owner; $(( now-dstart ))/${dwait}s): $reason — slot released, retry in ${dpoll}s" | tee /dev/stderr
+                  sleep "$dpoll" & zz=$!; wait "$zz"; zz=""
+                  continue 2
+                fi
+              fi
               rm -f "$BASE/queue/$kind/$ticket"
-              echo "SLOT $kind#$i -> $tag (pid $owner; bekleme $(( $(date +%s)-start )) s)"; exit 0
+              echo "SLOT $kind#$i -> $tag (pid $owner; bekleme $(( $(date +%s)-start )) s${dstart:+; disk-gate wait $(( $(date +%s)-dstart )) s})"; exit 0
             fi
           fi
         done

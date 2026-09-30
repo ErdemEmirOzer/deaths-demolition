@@ -42,7 +42,7 @@ class DiskGateTests(unittest.TestCase):
         self.assertEqual(rc, 75, out)
 
     def test_DiskKapisi_TumGirisNoktalarindaTekKaynak(self):
-        for name in ("test.sh", "build.sh", "player-run.sh", "compile-check.sh"):
+        for name in ("test.sh", "build.sh", "player-run.sh", "compile-check.sh", "slot.sh"):
             with self.subTest(script=name):
                 self.assertIn("dd_disk_gate", (TOOLS / name).read_text())
         self.assertNotIn("15728640", (TOOLS / "compile-check.sh").read_text(), "threshold lives only in dd-env.sh")
