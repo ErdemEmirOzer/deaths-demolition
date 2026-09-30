@@ -289,9 +289,15 @@ namespace DD.Prototype.Tests.PlayMode
                                     for (int ci = 1; ci < lp.corners.Length; ci++) left += Vector3.Distance(lp.corners[ci - 1], lp.corners[ci]);
                             }
                             if (missCount++ < 12)
-                                miss.Append(string.Format("({0:0.0},{1:0.0} v={2:0.00} corners={3} path={4:0.0}m) ", zp.x, zp.z,
+                            {
+                                // S-05 30.09 (C1): is a stopped body a chokepoint queue / crowd wait or a physical stop? queue = the follower's
+                                // chokepoint volume (e.g. C1_SteppingCauseway capacity 1), wait = the WP-050 idle_queue state
+                                NavPathFollower f = z.PathFollower;
+                                string queue = f != null && f.IsQueued && f.QueueVolume != null ? f.QueueVolume.id + ":" + f.QueuedSeconds.ToString("0.0") + "s" : "-";
+                                miss.Append(string.Format("({0:0.0},{1:0.0} v={2:0.00} corners={3} path={4:0.0}m queue={5} wait={6}) ", zp.x, zp.z,
                                     cc != null ? new Vector3(cc.velocity.x, 0f, cc.velocity.z).magnitude : -1f,
-                                    z.PathFollower != null ? z.PathFollower.RemainingCorners : -1, left));
+                                    f != null ? f.RemainingCorners : -1, left, queue, z.IsWaiting ? 1 : 0));
+                            }
                         }
                         if (missCount > 0) rapor.AppendLine("    ulaşamayan " + missCount + ": " + miss);
                     }
