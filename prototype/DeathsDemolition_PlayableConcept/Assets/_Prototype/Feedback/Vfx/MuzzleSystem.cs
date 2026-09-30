@@ -6,7 +6,7 @@ namespace DD.Prototype.Feedback.Vfx
 {
     /// <summary>
     /// WP-073 B1 · The muzzle's light and smoke per weapon class (direction §1.1): a pooled point light per shot
-    /// (colour / intensity / range / hold frames + fade from the profile; Cinematic casts soft shadows, High none,
+    /// (colour / intensity / range / hold frames + fade from the profile; no shadows on any tier — C-00 30.09, the Cinematic shadow is the explosion light's only;
     /// Performance lights every second shot; eight / four / two alive by tier), the sustained-fire model for auto
     /// weapons ≥ 600 RPM (one light stays lit and flickers 0.6–1.0 at 10 Hz while the trigger is held instead of a
     /// strobe) and ONE shared world-space smoke emitter (not an emitter per muzzle) — a soft radial puff — 0.3 m ahead of the
@@ -222,7 +222,7 @@ namespace DD.Prototype.Feedback.Vfx
                     Light l = m.Light;
                     l.color = p.LightColor;
                     l.range = p.LightRange;
-                    l.shadows = tier == VfxTierLevel.Cinematic ? LightShadows.Soft : LightShadows.None;
+                    l.shadows = LightShadows.None;   // C-00 30.09: muzzle lights never cast shadows (perf); only the Cinematic explosion light does
                     l.intensity = m.Intensity;
                     l.transform.position = MuzzlePoint(muzzle, firstPerson);
                     l.enabled = true;

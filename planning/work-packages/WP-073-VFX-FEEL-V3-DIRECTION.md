@@ -159,7 +159,7 @@ Toplam VFX (GPU+CPU, 1080p, referans Mac): **Sinematik ≤ 5,5 ms · Yüksek ≤
 | Öğe | Sinematik | Yüksek (varsayılan) | Performans | Yüksek ms hedefi |
 |---|---|---|---|---|
 | İz (ribbon) | 256, bloom tam, parıltı açık | 256, aynı | 256, bloom ×0,5, parıltı kapalı | 0,25 |
-| Namlu flaş / duman / ısı | her atış + gölge; 0,8 s + pus; haze açık (opaque texture yalnız Sin) | her atış gölgesiz; 0,5 s + pus; haze kapalı | her 2. atış ışık; 0,25 s, pus yok | 0,20 |
+| Namlu flaş / duman / ısı | her atış, gölgesiz (perf; C-00 30.09 — Sin gölgesi yalnız patlama ışığında); 0,8 s + pus; haze açık (opaque texture yalnız Sin) | her atış gölgesiz; 0,5 s + pus; haze kapalı | her 2. atış ışık; 0,25 s, pus yok | 0,20 |
 | VFX ışık havuzu (eşzamanlı) | 8 | 4 | 2 | 0,20 |
 | Kovan | 96, 8–12 s, sekme | 48, 5–8 s, sekme | 24, 3–4 s, sekme yok | 0,05 |
 | Darbe parçacık / darbe eşzamanlı | ×1,3 / 48 | ×1,0 / 40 | ×0,4 / 24 | 0,35 |

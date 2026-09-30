@@ -19,6 +19,14 @@ namespace DD.Prototype.Feedback.Vfx
         public const float ScorchAlpha = 0.40f;
         [PrototypeOnly(PendingDecisions.None, "Wet dark ring alpha: direction §1.5 gives size/time only (3.0 m / 6 s); 0.35 is a stand-in.", true)]
         public const float WetRingAlpha = 0.35f;
+        // C-00 30.09 (A): the explosion light is the one shadow-casting VFX light, Cinematic only (URP additional-light shadows: S-05).
+        // "-ddVfxExplosionShadowsOff" (development builds / Editor) turns it off for the quiet-window A/B perf run; never in release.
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+        private static readonly bool ShadowsOffForAb = System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-ddVfxExplosionShadowsOff") >= 0;
+#else
+        private const bool ShadowsOffForAb = false;
+#endif
+        public static bool LightCastsShadows => VfxTier.Current == VfxTierLevel.Cinematic && !ShadowsOffForAb;
         private struct Blast { public bool Active, Full, Grounded; public Vector3 At, Ground, Normal; public SurfaceKind Surface; public float Start, Scale; public int Stages, Mask; }
         private readonly Blast[] _blasts = new Blast[ScheduleCapacity];
         private Texture2D _dot;
@@ -77,7 +85,7 @@ namespace DD.Prototype.Feedback.Vfx
                 Card(VfxIds.Explosion,at,Quaternion.identity,FlipbookEffect.Facing.Camera,3.6f*b.Scale*(b.Full?1f:.65f),1.6f,Color.white,alpha);
                 if(b.Full && alpha>=.99f && VfxTier.Current!=VfxTierLevel.Performance)
                 {if(Card(VfxIds.Explosion,at,Quaternion.identity,FlipbookEffect.Facing.Camera,2f*b.Scale,1f/60f,new Color(1f,.75f,.45f)*12f,1f,true))FlashCards++;}
-                _lights.FlashAt(at,new Color(1f,.69f,.44f),b.Full?40f:12f,9f*b.Scale,.08f,.35f,false,VfxTier.Current==VfxTierLevel.Cinematic);
+                _lights.FlashAt(at,new Color(1f,.69f,.44f),b.Full?40f:12f,9f*b.Scale,.08f,.35f,false,LightCastsShadows);
             }
             if(b.Grounded && (mask&2)!=0)
             {
