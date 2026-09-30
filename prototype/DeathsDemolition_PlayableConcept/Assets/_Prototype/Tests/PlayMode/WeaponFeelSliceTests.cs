@@ -227,6 +227,10 @@ namespace DD.Prototype.Tests.PlayMode
             // BEGIN S02_R2 DEC before spawn RNG observer
             if (decDiag) decBeforeSpawnUnityRandom = DecRandomState();
             // END S02_R2 DEC before spawn RNG observer
+            // C-00 30.09 M-19: the pickup's spot is the director's roll (angle 0–360° around the player) — with the suite's
+            // shared random state it moved with the test order and could land against a V6 prop. A fixed source puts it
+            // in the same place every run.
+            _s.Director.SetRandomSource(new SabitRastgele(0.25f));
             yield return _s.SpawnEt(Pencere);
             SpecialWeaponPickup pickup = _s.CanliPickup();
             Assert.IsNotNull(pickup);
@@ -250,6 +254,9 @@ namespace DD.Prototype.Tests.PlayMode
             float t0 = Time.time;
             Vector3 p0 = _s.Rig.transform.position;
             float maxSpeed = 0f;
+            float minKomut = float.MaxValue;
+            int kontrolKapali = 0, yanEngel = 0;
+            CharacterController govde = _s.Rig.Motor.GetComponent<CharacterController>();
             Vector3 aim0 = _s.Rig.Aim.AimDirection;
             // BEGIN S02_R2 DEC start and try wrapper
             if (decDiag)
@@ -265,6 +272,9 @@ namespace DD.Prototype.Tests.PlayMode
             {
                 Assert.AreEqual(1f, _s.Rig.Motor.RawInput.x, 1e-3f, "motor girdisi alma sırasında düşmez");
                 maxSpeed = Mathf.Max(maxSpeed, _s.Rig.Motor.PlanarVelocity.magnitude);
+                minKomut = Mathf.Min(minKomut, _s.Rig.Motor.CommandedPlanarVelocity.magnitude);
+                if (!_s.Rig.Motor.ControlEnabled) kontrolKapali++;
+                if (govde != null && (govde.collisionFlags & CollisionFlags.Sides) != 0) yanEngel++;
                 // BEGIN S02_R2 DEC iteration observer
                 if (decDiag)
                 {
@@ -293,8 +303,15 @@ namespace DD.Prototype.Tests.PlayMode
             // BEGIN S02_R2 DEC window end observer
             if (decDiag) decEnd = DecSafeSnapshot("movement-window-end-before-original-assertions");
             // END S02_R2 DEC window end observer
-            Assert.Greater(maxSpeed, 0.5f, "oyuncu alma sırasında hareket etti (m/s)");
-            Assert.Greater((_s.Rig.transform.position - p0).magnitude, 0.3f, "yer değiştirme");
+            // C-00 30.09 M-19: DEC-082 is "no pickup LOCK" — measured on what the motor is commanded (input × speed) every
+            // frame; the body's travel is required only when nothing stopped it (a prop at the pickup: CC side contact).
+            float yol = (_s.Rig.transform.position - p0).magnitude;
+            string olcum = " (komut en az " + minKomut.ToString("F2") + " m/s, en yüksek hız " + maxSpeed.ToString("F2") + " m/s, yol " + yol.ToString("F2") +
+                           " m, yan temas " + yanEngel + " kare, kontrol kapalı " + kontrolKapali + " kare)";
+            Debug.Log("[DD-TEST] dec082" + olcum);
+            Assert.AreEqual(0, kontrolKapali, "DEC-082: alma sırasında motor kontrolü kapandı" + olcum);
+            Assert.Greater(minKomut, 0.5f, "DEC-082: alma sırasında motorun komut hızı düştü (kilit)" + olcum);
+            Assert.IsTrue(yol > 0.3f || yanEngel > 0, "oyuncu hareket etmedi ve önünde engel de yoktu" + olcum);
             _s.Girdi.Imlec = new Vector2(Screen.width * 0.1f, Screen.height * 0.5f);
             // The aim turns at its own rate; give it up to a second (it must move at all — a lock would hold it).
             yield return SpecialWeaponSahne.Bekle(() => Vector3.Angle(aim0, _s.Rig.Aim.AimDirection) > 20f, 1f, "nişan alma sırasında imleci takip eder");
@@ -493,6 +510,15 @@ namespace DD.Prototype.Tests.PlayMode
                 rumble.Unsubscribe();
                 rumble.Dispose();
             }
+        }
+    
+        private sealed class SabitRastgele : ISpecialWeaponRandom
+        {
+            private readonly float _v;
+            public SabitRastgele(float v) { _v = v; }
+            public float Value() => _v;
+            public float Range(float min, float max) => min + (max - min) * _v;
+            public int Range(int min, int maxExclusive) => min;
         }
     }
 }

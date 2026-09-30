@@ -158,6 +158,13 @@ namespace DD.Prototype.PlayerSystem
             get { return _rawInput; }
         }
 
+        /// <summary>
+        /// C-00 30.09 (M-19): the planar velocity the motor is commanded this frame — input × move speed × the weapon / gel /
+        /// run-tree scales — before acceleration and before a wall or a crowd takes its share. Control rules (REQ-045 "damage
+        /// does not cut control", DEC-082 "no pickup lock") are measured on it: a blocked body has a command and no travel.
+        /// </summary>
+        public Vector3 CommandedPlanarVelocity { get; private set; }
+
         public bool IsGrounded
         {
             get { return _controller != null && _controller.isGrounded; }
@@ -311,6 +318,7 @@ namespace DD.Prototype.PlayerSystem
             float gelSteer = Mathf.Lerp(1f, GelSteerMultiplier, _gel01);
             // WP-077 ks.body.evade: the tree's speed burst after a hit rides above the weapon clamp.
             Vector3 targetVelocity = desired * (_moveSpeed * Mathf.Clamp(WeaponSpeedMultiplier, 0.1f, 1f) * gelSpeed * DD.Prototype.Rounds.RunTreeHooks.MoveSpeedScaleAbove(WeaponSpeedMultiplier));
+            CommandedPlanarVelocity = targetVelocity;
 
             // Advances _planarVelocity AND returns the exact ground distance covered while
             // it was advancing, which is not the same thing as velocity * dt.
