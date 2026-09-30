@@ -645,7 +645,7 @@ namespace DD.Prototype.UI
             coreLabelRect.anchorMin = new Vector2(0f, 0f);
             coreLabelRect.anchorMax = new Vector2(0f, 1f);
             coreLabelRect.pivot = new Vector2(0f, 0.5f);
-            coreLabelRect.sizeDelta = new Vector2(CoreLabelWidth, 0f);
+            coreLabelRect.sizeDelta = new Vector2(CoreLabelMinWidth, 0f);
             coreLabelRect.anchoredPosition = Vector2.zero;
             for (int i = 0; i < 3; i++)
             {
@@ -673,7 +673,7 @@ namespace DD.Prototype.UI
             UiFactory.Fill((RectTransform)_stateLine.transform);   // the full width: AD R1-B SHOULD-3 retired the unlabeled XP track
         }
 
-        private const float CoreLabelWidth = 52f;
+        private const float CoreLabelMinWidth = 52f;   // "CORE" and its gap; the word is measured (AD d109 MUST-2: TR "ÇEKİRDEK" was cut at 52)
         private const float StageGlyphCompact = 96f;
 
         /// <summary>
@@ -877,9 +877,20 @@ namespace DD.Prototype.UI
                 }
             }
 
-            bool coreWord = namesW + (int)UiSpace.S * 2f + CoreLabelWidth <= w;
-            _coreRow.Find("Label").gameObject.SetActive(coreWord);
-            float left = coreWord ? CoreLabelWidth : 0f;
+            // The CORE word takes its own measured width (a one-word label never takes an ellipsis), else it gives way.
+            Transform labelTransform = _coreRow.Find("Label");
+            TMP_Text coreLabel = labelTransform != null ? labelTransform.GetComponent<TMP_Text>() : null;
+            float labelW = coreLabel != null
+                ? Mathf.Max(CoreLabelMinWidth, Mathf.Ceil(coreLabel.GetPreferredValues(coreLabel.text).x) + (int)UiSpace.S)
+                : CoreLabelMinWidth;
+            bool coreWord = namesW + (int)UiSpace.S * 2f + labelW <= w;
+            if (labelTransform != null)
+            {
+                labelTransform.gameObject.SetActive(coreWord);
+                ((RectTransform)labelTransform).sizeDelta = new Vector2(labelW, 0f);
+            }
+
+            float left = coreWord ? labelW : 0f;
             float slotW = Mathf.Floor((w - left - (int)UiSpace.S * 2f) / 3f);
             float x = left;
             for (int i = 0; i < 3; i++)

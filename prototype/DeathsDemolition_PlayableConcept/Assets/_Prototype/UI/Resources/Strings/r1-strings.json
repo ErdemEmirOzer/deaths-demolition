@@ -1765,11 +1765,11 @@
   },
   "camera.fov.third_person": {
     "en": "THIRD-PERSON FOV",
-    "tr": "ÜÇÜNCÜ ŞAHIS GÖRÜŞ ALANI"
+    "tr": "3. ŞAHIS GÖRÜŞ ALANI"
   },
   "camera.fov.first_person": {
     "en": "FIRST-PERSON FOV",
-    "tr": "BİRİNCİ ŞAHIS GÖRÜŞ ALANI"
+    "tr": "1. ŞAHIS GÖRÜŞ ALANI"
   },
   "camera.shoulder": {
     "en": "SHOULDER",
@@ -2441,7 +2441,7 @@
   },
   "loading.error.stalled": {
     "en": "Loading stopped making progress.",
-    "tr": "Yükleme ilerlemeyi bıraktı."
+    "tr": "Yükleme ilerlemiyor."
   },
   "loading.error.title": {
     "en": "THE NEXT SCREEN DID NOT LOAD",
@@ -3965,7 +3965,7 @@
   },
   "shop.intro.late_next": {
     "en": "Buy up to {count} upgrades this round, or reroll the offer once before the first. Next round brings the late-round bonus: {bonus} picks.",
-    "tr": "Bu round en çok {count} geliştirme al ya da ilkinden önce teklifi bir kez reroll et. Sonraki round geç round bonusu: {bonus} seçim."
+    "tr": "Bu round en çok {count} geliştirme al ya da ilkinden önce teklifi bir kez reroll et. Sonraki roundda geç round bonusu var: {bonus} seçim."
   },
   "profile.progress.max": {
     "en": "Max level reached",

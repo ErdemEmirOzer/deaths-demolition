@@ -505,8 +505,8 @@ Key `tips.NNN`. Group / class follow `UiLoadingTips` (FACT = rule, HINT = onboar
 | `camera.mode.third_person.desc` | Over the shoulder. Aim from the centre of the screen. | Omuz üstünden. Ekranın ortasından nişan al. |
 | `camera.mode.first_person.desc` | Eye level. The sharpest aim; threats behind you show at the edge. | Göz hizası. En keskin nişan; arkandaki tehdit kenarda görünür. |
 | `camera.caption` | The view changes as soon as you choose. Rounds and rules stay the same. | Görünüm seçer seçmez değişir. Roundlar ve kurallar aynı kalır. |
-| `camera.fov.third_person` | THIRD-PERSON FOV | ÜÇÜNCÜ ŞAHIS GÖRÜŞ ALANI |
-| `camera.fov.first_person` | FIRST-PERSON FOV | BİRİNCİ ŞAHIS GÖRÜŞ ALANI |
+| `camera.fov.third_person` | THIRD-PERSON FOV | 3. ŞAHIS GÖRÜŞ ALANI |
+| `camera.fov.first_person` | FIRST-PERSON FOV | 1. ŞAHIS GÖRÜŞ ALANI |
 | `camera.shoulder` | SHOULDER | OMUZ |
 | `camera.shoulder.left` | LEFT | SOL |
 | `camera.shoulder.right` | RIGHT | SAĞ |
@@ -738,7 +738,7 @@ S-09 (R1-D, 25.09):
 | `loading.error.body` | Deaths Demolition could not open {value}. {reason} Your profile was not changed. | Deaths Demolition {value} açamadı. {reason} Profilin değişmedi. |
 | `loading.error.missing` | The scene is missing from this build. | Sahne bu sürümde yok. |
 | `loading.error.retry` | TRY AGAIN | TEKRAR DENE |
-| `loading.error.stalled` | Loading stopped making progress. | Yükleme ilerlemeyi bıraktı. |
+| `loading.error.stalled` | Loading stopped making progress. | Yükleme ilerlemiyor. |
 | `loading.error.title` | THE NEXT SCREEN DID NOT LOAD | SONRAKİ EKRAN YÜKLENMEDİ |
 | `loading.error.to_menu` | RETURN TO MAIN MENU | ANA MENÜYE DÖN |
 | `loading.percent` | LOADING · {0}% | YÜKLENİYOR · %{0} |
@@ -1167,7 +1167,7 @@ DEC-107 (user 30.09): R10–R13 allow three picks. The round-end intro now follo
 |---|---|---|
 | `shop.intro.late` | Late-round bonus: buy up to {count} upgrades this round, or reroll the offer once before the first. | Geç round bonusu: bu round en çok {count} geliştirme al ya da ilkinden önce teklifi bir kez reroll et. |
 | `shop.intro.late_last` | Last late-round bonus: buy up to {count} upgrades this round. Next round is back to {normal} picks. | Son geç round bonusu: bu round en çok {count} geliştirme al. Sonraki round yine {normal} seçim. |
-| `shop.intro.late_next` | Buy up to {count} upgrades this round, or reroll the offer once before the first. Next round brings the late-round bonus: {bonus} picks. | Bu round en çok {count} geliştirme al ya da ilkinden önce teklifi bir kez reroll et. Sonraki round geç round bonusu: {bonus} seçim. |
+| `shop.intro.late_next` | Buy up to {count} upgrades this round, or reroll the offer once before the first. Next round brings the late-round bonus: {bonus} picks. | Bu round en çok {count} geliştirme al ya da ilkinden önce teklifi bir kez reroll et. Sonraki roundda geç round bonusu var: {bonus} seçim. |
 
 ## S-09 · R1-B P2 level cap (C-00 30.09)
 
@@ -1176,3 +1176,7 @@ At the level cap the requirement is int.MaxValue (S-04, R1-B P2), so the progres
 | Key | en | tr |
 |---|---|---|
 | `profile.progress.max` | Max level reached | En üst seviyeye ulaşıldı |
+
+## S-09 · DEC-109 AD round (C-00 30.09)
+
+The AD round on the DD-TR frames (K/wp-068s9/evidence/dec109/ad-tmp-verdict.md) changed four TR rows in place: `camera.fov.*` read "1. / 3. ŞAHIS GÖRÜŞ ALANI" so the Settings label column holds them at TextScale 1.25 (MUST-1; the EN column went to "… FOV" for the same reason); `shop.intro.late_next` gets its verb ("Sonraki roundda … bonusu var"); `loading.error.stalled` reads "Yükleme ilerlemiyor." instead of the word-for-word "ilerlemeyi bıraktı".
