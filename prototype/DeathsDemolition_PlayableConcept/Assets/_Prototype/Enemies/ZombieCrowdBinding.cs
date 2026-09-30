@@ -57,9 +57,10 @@ namespace DD.Prototype.Enemies
             _fitRadiusScale = RegionNavProfile.Active.FitRadiusScale(fit);
             if (_pathFollower == null) _pathFollower = new NavPathFollower();
             _pathFollower.SetRouteSeed(seed);
+            _pathFollower.BodyRadius = Radius;   // WP-076 B9 M-23: a wide body's corner reach = max(0.65, radius + 0.1)
             _pathFollower.HoldsChokepoints = _versionProfile != null && _versionProfile.HoldsChokepoints;   // WP-040: Elite B corridor closing
             RollCrowdFeel(ref _random);   // WP-054: flank side / angle for this life
-            _flankOpen = true; _nextFlankOpenCheck = 0f;   // WP-061M
+            _flankOpen = true; _nextFlankOpenCheck = 0f; _flankGoalOffset = Vector3.zero; _flankToEdge = false; _flankLineOpen = true;   // WP-061M / WP-076 B9 M-25
             RegionNavRouter.EnsureAreaCosts();
         }
 
@@ -93,27 +94,24 @@ namespace DD.Prototype.Enemies
             _wallContactSince = -1f; _wallLastContact = -1f; _wallSliding = false;
         }
 
-        /// <summary>WP-054: the navigation goal for this life — the flank goal while far, the target itself inside the straight radius.</summary>
+        /// <summary>
+        /// WP-054: the navigation goal for this life — the flank goal while far, the target itself inside the straight radius.
+        /// WP-076 B9 (M-25, C-00 30.09): the flank decision and its goal are made on the FlankOpenCheckSeconds timer only
+        /// (see <see cref="RefreshFlankDecision"/>); per frame this is pure arithmetic — no NavMesh query, no allocation.
+        /// </summary>
         private Vector3 CrowdFeelGoal(Vector3 target)
         {
-            if (_flankSign == 0 || !FlankInOpen(target)) return target;
-            Vector3 flank = CrowdFeelSettings.Active.FlankGoal(transform.position, target, _flankSign, _flankAngle);
-            // Open ground requires the lateral goal itself to remain on the walkable
-            // surface and visible along it. Projecting an off-bridge goal onto a nearby
-            // bank can otherwise send the body back toward a turn it already passed.
-            if (!CrowdService.Paths.TryProject(flank, out Vector3 projected))
-            {
-                _flankOpen = false;
-                return target;
-            }
-            Vector3 projection = projected - flank; projection.y = 0f;
-            if (projection.sqrMagnitude > NavPathFollower.SteeringDeadZoneSquared ||
-                UnityEngine.AI.NavMesh.Raycast(transform.position, projected, out UnityEngine.AI.NavMeshHit _, CrowdService.Paths.AreaMask))
-            {
-                _flankOpen = false;
-                return target;
-            }
-            return projected;
+            if (_flankSign == 0) return target;
+            if (Time.time >= _nextFlankOpenCheck) RefreshFlankDecision(target);
+            if (!_flankOpen) return target;
+            // Inside the straight radius the approach is the target itself (FlankGoal's own rule), without waiting for the
+            // next decision tick.
+            Vector3 to = target - transform.position; to.y = 0f;
+            float straight = CrowdFeelSettings.Active.FlankStraightRadius;
+            if (to.sqrMagnitude <= straight * straight) return target;
+            // Ray clear at the last decision: the WP-054 flank goal itself, recomputed per frame (arithmetic, as before 12c7215c).
+            // Ray stopped near an edge: the accepted hit, held as an offset from the target so it rides the player between checks.
+            return _flankToEdge ? target + _flankGoalOffset : CrowdFeelSettings.Active.FlankGoal(transform.position, target, _flankSign, _flankAngle);
         }
 
         // WP-061M: the flank goal is an OPEN-GROUND approach. It is recomputed from the body's position, so where the
@@ -124,19 +122,49 @@ namespace DD.Prototype.Enemies
         private const float FlankOpenCheckSeconds = 0.5f;
         private bool _flankOpen = true;
         private float _nextFlankOpenCheck;
+        /// <summary>WP-076 B9 (M-25): accepted flank goal − target at the last decision (zero = the target itself).</summary>
+        private Vector3 _flankGoalOffset;
+        private bool _flankToEdge;
+        private bool _flankLineOpen = true;
 
-        /// <summary>WP-061M readout: whether this body currently uses its flank goal (open line to the player).</summary>
+        /// <summary>WP-076 B9 (M-25) readout: the last flank decision found the straight NavMesh line to the player open (WP-061M).</summary>
+        public bool FlankLineOpen => _flankLineOpen;
+
+        /// <summary>WP-061M readout: whether this body currently uses its flank goal (open line to the player, and — WP-076 B9 M-25 — the flank point reachable along the NavMesh within CrowdFeelSettings.FlankProjectMaxMetres).</summary>
         public bool FlankActive => _flankSign != 0 && _flankOpen;
 
-        private bool FlankInOpen(Vector3 target)
+        /// <summary>
+        /// WP-076 B9 (M-25, C-00 30.09; AI-SPAWN-06/07 on 12c7215c): the flank decision, once per FlankOpenCheckSeconds.
+        ///   1. WP-061M: the straight NavMesh line body → target must be open, else no flank.
+        ///   2. NavMesh.Raycast body → flank point: no hit → the flank point; hit → the hit when its XZ distance to the
+        ///      flank point is ≤ CrowdFeelSettings.FlankProjectMaxMetres (the flank point is just past an edge: walk to the
+        ///      edge), else no flank.
+        /// Replaces 12c7215c's SamplePosition + 1 cm "heading dead zone" test, which measured a 3D nearest-point
+        /// projection in XZ and so rejected flanks on flat ground (a 0.2 m height gap or a 3° slope ≈ 1 cm), and ran
+        /// every frame. Two NavMesh.Raycast per flank body per 0.5 s at most; no allocation.
+        /// </summary>
+        private void RefreshFlankDecision(Vector3 target)
         {
-            float now = Time.time;
-            if (now >= _nextFlankOpenCheck)
+            _nextFlankOpenCheck = Time.time + FlankOpenCheckSeconds;
+            _flankGoalOffset = Vector3.zero; _flankToEdge = false;
+            Vector3 self = transform.position;
+            _flankOpen = !UnityEngine.AI.NavMesh.Raycast(self, target, out UnityEngine.AI.NavMeshHit _, UnityEngine.AI.NavMesh.AllAreas);
+            _flankLineOpen = _flankOpen;
+            if (!_flankOpen) return;
+
+            CrowdFeelSettings feel = CrowdFeelSettings.Active;
+            Vector3 flank = feel.FlankGoal(self, target, _flankSign, _flankAngle);
+            if (!UnityEngine.AI.NavMesh.Raycast(self, flank, out UnityEngine.AI.NavMeshHit hit, CrowdService.Paths.AreaMask))
+                return;   // open: the per-frame WP-054 goal
+            float dx = hit.position.x - flank.x, dz = hit.position.z - flank.z;
+            float max = feel.FlankProjectMaxMetres;
+            if (dx * dx + dz * dz <= max * max)
             {
-                _nextFlankOpenCheck = now + FlankOpenCheckSeconds;
-                _flankOpen = !UnityEngine.AI.NavMesh.Raycast(transform.position, target, out UnityEngine.AI.NavMeshHit _, UnityEngine.AI.NavMesh.AllAreas);
+                _flankGoalOffset = hit.position - target;
+                _flankToEdge = true;
+                return;
             }
-            return _flankOpen;
+            _flankOpen = false;
         }
 
         /// <summary>

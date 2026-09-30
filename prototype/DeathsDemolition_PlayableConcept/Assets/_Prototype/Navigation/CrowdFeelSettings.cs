@@ -33,6 +33,14 @@ namespace DD.Prototype.Navigation
         public float FlankStraightRadius = 3f, FlankBlendMetres = 2.5f;
         [PrototypeOnly(PendingDecisions.None, "Lateral offset cap of the flank goal, metres (kept on the NavMesh by the path query's projection).", true)]
         public float FlankOffsetMax = 2.5f;
+        /// <summary>
+        /// WP-076 B9 (M-25, C-00 30.09): the flank goal's walkability tolerance. The body casts a NavMesh ray to its flank
+        /// point every 0.5 s; when the ray is stopped by a NavMesh edge whose XZ distance to the flank point is within this,
+        /// the goal becomes the edge hit, otherwise the flank is dropped and the body walks at the target. OPEN: the value
+        /// inside 0.25–0.5 m is provisional until the FlankOpenGroundTests measurement (wp076.flank) is reviewed.
+        /// </summary>
+        [PrototypeOnly(PendingDecisions.None, "WP-076 B9 M-25 (OPEN, awaiting the wp076.flank measurement): max XZ metres between the flank point and the NavMesh ray's edge hit for the flank to be kept (0.25–0.5).", true)]
+        [Range(0.25f, 0.5f)] public float FlankProjectMaxMetres = 0.5f;
 
         [Header("Wall friction")]
         [PrototypeOnly(PendingDecisions.None, "Speed factor while sliding along world geometry.", true)]
