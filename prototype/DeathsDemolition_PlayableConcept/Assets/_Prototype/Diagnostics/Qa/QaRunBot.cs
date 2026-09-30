@@ -477,6 +477,7 @@ namespace DD.Prototype.Qa
             private float _routeStepStart, _routeSettleSince = -1f, _routeCaptureAt = -1f;
             private string _routeCapturePath;
             private NavMeshPath _routePath;
+            private Vector3 _routeTarget;
             private int _routeCorner;
             private ProfilerRecorder _drawCalls, _batches;
             private bool _weaponCycle;
@@ -1789,13 +1790,14 @@ namespace DD.Prototype.Qa
             }
 
             /// <summary>C-00 30.09 R3 (V6): courtyard (0,−3) 0°, horizon (0,−3) 180°, corridor R6 chūmon (0,19), kairo K1 north end
-            /// (−31,15) 180°. Rig pitch + looks down; corridor/kairo look up under the roof.</summary>
+            /// on the corridor's centre line (−33,15) 180° (the first pick −31 sat 0.6 m from the east wall and was never reached).
+            /// Rig pitch + looks down; corridor/kairo look up under the roof. Each point is snapped to the NavMesh (≤ 2 m) at step start.</summary>
             private static readonly RoutePoint[] RoutePoints =
             {
                 new RoutePoint("courtyard", 0f, -3f, 0f, 8f, 5f, false),
                 new RoutePoint("horizon", 0f, -3f, 180f, -3f, -3f, false),
                 new RoutePoint("corridor", 0f, 19f, 180f, -18f, -25f, true),
-                new RoutePoint("kairo", -31f, 15f, 180f, -12f, -15f, true),
+                new RoutePoint("kairo", -33f, 15f, 180f, -12f, -15f, true),   // K1 centre line x −33 (walls −35.6 / −30.4; GreyboxV6Builder K1)
             };
 
             /// <summary>The flag's folder name, always under the run's out dir (e.g. -ddQaBotRouteTour &lt;out&gt;/frames → "frames").</summary>
@@ -1862,7 +1864,7 @@ namespace DD.Prototype.Qa
                 Vector3 pos = rig.transform.position;
                 Vector3 fwd, right;
                 CameraBasis(out fwd, out right);
-                Vector3 target = new Vector3(point.X, pos.y, point.Z);
+                Vector3 target = new Vector3(_routeTarget.x, pos.y, _routeTarget.z);
                 Vector2 move = Vector2.zero, look = Vector2.zero;
                 Vector3 flat = target - pos; flat.y = 0f;
                 bool arrived = flat.magnitude <= RouteArrive;
@@ -1907,6 +1909,15 @@ namespace DD.Prototype.Qa
                 _routeStepStart = Time.unscaledTime;
                 _routeSettleSince = -1f;
                 _routeCorner = -1;
+                if (step < RoutePoints.Length)
+                {
+                    // the stand point on the NavMesh (≤ 2 m); a point with no NavMesh near it is recorded as blocked by the timeout
+                    RoutePoint p = RoutePoints[step];
+                    Vector3 raw = new Vector3(p.X, 0f, p.Z);
+                    NavMeshHit hit;
+                    _routeTarget = NavMesh.SamplePosition(raw + Vector3.up * 1f, out hit, 2f, NavMesh.AllAreas) ? hit.position : raw;
+                    Log("route-step key=" + p.Key + " target=" + V(_routeTarget) + (hit.hit ? "" : " (no NavMesh within 2 m)"));
+                }
                 if (step >= RoutePoints.Length)
                 {
                     Log("route-tour done frames=" + _summary.routeFrames.Count);
