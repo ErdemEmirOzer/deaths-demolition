@@ -180,7 +180,12 @@ namespace DD.Prototype.Weapons
         /// </summary>
         public int PelletsPerShell => _settings != null ? Mathf.Max(1, DD.Prototype.Rounds.RunTreeHooks.PelletCount(Id, _settings.PelletCount, 1)) : 1;
 
-        /// <summary>Shotguns are Heavy, SMGs Light, everything else Medium. Gates hit-stop.</summary>
+        /// <summary>
+        /// Shotguns and heavy single shots (sr_1, rl_1) are Heavy, SMGs Light, everything else Medium. Gates hit-stop, the
+        /// directional fire shake and the ×1.5 impact scale. R1-B W2 (C-00 30.09): an automatic weapon is never Heavy by its
+        /// impulse alone — lmg_2 (0.50) got the shotgun's directional camera punch 7× a second under a held trigger, the
+        /// camera drift REQ-126 forbids.
+        /// </summary>
         public WeaponPower Power
         {
             get
@@ -190,7 +195,7 @@ namespace DD.Prototype.Weapons
                     return WeaponPower.Medium;
                 }
 
-                if (_settings.PelletCount > 1 || _settings.StaggerImpulse >= 0.5f)
+                if (_settings.PelletCount > 1 || (_settings.StaggerImpulse >= 0.5f && FireMode != WeaponFireMode.Auto))
                 {
                     return WeaponPower.Heavy;
                 }

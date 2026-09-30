@@ -190,6 +190,33 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(cone, ringWidest, 0.05f, "bakış modunda halka daire (dikey 0,35 basıklığı yok)");
         }
 
+        // ------------------------------------------------------------------ R1-B W2 (C-00 30.09): Heavy power
+
+        /// <summary>An automatic weapon is never Heavy by its impulse alone (lmg_2 0.50 took the shotgun's directional punch 7× a second); shotguns and heavy single shots stay Heavy.</summary>
+        [Test]
+        public void GucSinifi_OtomatikSilahDarbeyleAgirOlmaz_PompaliVeTekAtisAgir()
+        {
+            PrototypeConfig config = Resources.Load<PrototypeConfig>(PrototypeConfig.ResourcesPath);
+            config.Weapons.RebuildClassicView();
+            DD.Prototype.Feedback.WeaponPower Guc(ClassicWeaponId id)
+            {
+                var rt = new ClassicWeaponRuntime();
+                rt.Equip(config.Weapons.Find(id), new WeaponModifierState());
+                return rt.Power;
+            }
+
+            Assert.AreNotEqual(DD.Prototype.Feedback.WeaponPower.Heavy, Guc(ClassicWeaponId.Lmg2), "lmg_2 tam otomatik: Heavy değil");
+            Assert.AreEqual(DD.Prototype.Feedback.WeaponPower.Heavy, Guc(ClassicWeaponId.Sr1), "sr_1 tek atış, yüksek darbe: Heavy");
+            Assert.AreEqual(DD.Prototype.Feedback.WeaponPower.Heavy, Guc(ClassicWeaponId.CombatShotgun), "sg_1: Heavy");
+            Assert.AreEqual(DD.Prototype.Feedback.WeaponPower.Heavy, Guc(ClassicWeaponId.Sg2), "sg_2: Heavy");
+            foreach (WeaponDefinition d in Arsenal.All)
+            {
+                if (d.fire.fireMode != WeaponFireMode.Auto || !WeaponIdMigration.TryGetRuntimeId(d.weaponId, out ClassicWeaponId id)) continue;
+                if (config.Weapons.Find(id).PelletCount > 1) continue;
+                Assert.AreNotEqual(DD.Prototype.Feedback.WeaponPower.Heavy, Guc(id), d.weaponId + ": otomatik silah darbeyle Heavy olmaz");
+            }
+        }
+
         // ------------------------------------------------------------------ C-00 30.09 B: top-down is planar
 
         /// <summary>
