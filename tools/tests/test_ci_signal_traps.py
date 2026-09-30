@@ -18,14 +18,24 @@ echo "$1 $2 $3" >> "{log}/slot-calls.txt"; echo "SLOT $2#1 -> $3"
 FAKE_GUARD = """#!/bin/zsh
 cmd=$1 dir=$2; echo "$cmd" >> "{log}/guard-calls.txt"
 if [ "$cmd" = snapshot ]; then mkdir -p "$dir"; echo x > "$dir/before-editor.txt"; echo "snapshot scope=editor ok"
-else cp "$dir/before-editor.txt" "$dir/after-run-editor.txt"; echo "restore scope=editor changed=0 verified=1"; fi
+else
+  if [ -n "${{FAKE_GUARD_SLOW:-}}" ]; then echo $$ > "{log}/guard-restore.pid"; sleep "$FAKE_GUARD_SLOW"; fi
+  cp "$dir/before-editor.txt" "$dir/after-run-editor.txt"; echo restore-done >> "{log}/guard-calls.txt"
+  echo "restore scope=editor changed=0 verified=1"
+fi
 """
 # FAKE_MODE: sleep (dies on TERM) · ignore (ignores TERM) · orphan (dies, but leaves a grandchild that ignores TERM) · pass
+#            · stray (passes, but leaves a detached "Unity" with -projectPath on the CI checkout — not in main-ci's tree)
 FAKE_TEST_SH = """#!/bin/zsh
 mode=$1; shift; out=""; while [ $# -gt 0 ]; do [ "$1" = --out ] && out=$2; shift; done
 echo $$ > "{log}/child-$mode.pid"
 case "$FAKE_MODE" in
-  pass) mkdir -p "$out"; echo '<test-run><test-case name="A" fullname="F.A" result="Passed" duration="0.1"/></test-run>' > "$out/$mode.xml"; exit 0 ;;
+  pass|stray) mkdir -p "$out"; echo '<test-run><test-case name="A" fullname="F.A" result="Passed" duration="0.1"/></test-run>' > "$out/$mode.xml"
+    if [ "$FAKE_MODE" = stray ] && [ "$mode" = editmode ]; then
+      "$FAKE_STRAY_UNITY" -projectPath "$FAKE_STRAY_PROJECT" -batchmode </dev/null >/dev/null 2>&1 &!
+      for i in {{1..50}}; do [ -s "{log}/stray-unity.pid" ] && break; sleep 0.1; done
+    fi
+    exit 0 ;;
   ignore) trap '' TERM; exec sleep 60 ;;
   orphan) ( trap '' TERM; exec sleep 60 ) & echo $! > "{log}/grandchild.pid"; exec sleep 60 ;;
   *) exec sleep 60 ;;
@@ -145,7 +155,7 @@ class CiSignalTrapTests(unittest.TestCase):
         os.kill(p.pid, sig)
         rc, out, err = self.finish(p)
         self.assertEqual(rc, code, out + err)
-        self.assertEqual(self.lines("guard-calls.txt"), ["snapshot", "restore"])
+        self.assertEqual(self.lines("guard-calls.txt"), ["snapshot", "restore", "restore-done"])
         self.assertEqual([l.split()[:2] for l in self.lines("slot-calls.txt")], [["acquire", "player"], ["release", "player"]])
         self.assertEqual(self.leases(), [])
         self.assertFalse(alive(child))
@@ -185,10 +195,36 @@ class CiSignalTrapTests(unittest.TestCase):
         rc, out, err = self.finish(p)
         self.assertEqual(rc, 143, out + err)
         self.assertFalse(alive(unity))
-        self.assertEqual(self.lines("guard-calls.txt"), ["snapshot", "restore"])
+        self.assertEqual(self.lines("guard-calls.txt"), ["snapshot", "restore", "restore-done"])
         calls = [l.split()[:2] for l in self.lines("slot-calls.txt")]
         self.assertEqual(sorted(calls), sorted([["acquire", "player"], ["acquire", "unity"], ["release", "unity"], ["release", "player"]]))
         self.assertEqual(self.leases(), [])
+
+    def test_MainCi_RestoreSirasindaIkinciSinyal_GuardKesilmez_RestoreTamamlanir(self):
+        # Y1b / judge MUST-1: INT/TERM/HUP are ignored while the guard restores, and the guard child inherits that.
+        p = self.main_ci(FAKE_GUARD_SLOW="3")
+        self.wait_file(self.log / "child-editmode.pid"); time.sleep(0.3)
+        os.kill(p.pid, signal.SIGTERM)
+        guard = self.wait_file(self.log / "guard-restore.pid")
+        os.kill(guard, signal.SIGTERM); os.kill(p.pid, signal.SIGINT)   # a second Ctrl-C / group signal mid-restore
+        rc, out, err = self.finish(p)
+        self.assertEqual(rc, 143, out + err)
+        self.assertEqual(self.lines("guard-calls.txt"), ["snapshot", "restore", "restore-done"])
+        self.assertEqual(self.leases(), [])
+
+    def test_MainCi_ProjeHalaAcikUnity_RestoreYok_PencereAcik_SlotVeLeaseTutulur(self):
+        # Y1b / judge MUST-2: a Unity outside main-ci's tree still has the CI checkout open → nothing is written.
+        stray = self.root / "Unity.app/Contents/MacOS/Unity"
+        write_exec(stray, "#!/bin/zsh\necho $$ > \"%s/stray-unity.pid\"\nsleep 60\n:\n" % self.log)
+        p = self.main_ci("stray", playmode=True, FAKE_STRAY_UNITY=str(stray),
+                         FAKE_STRAY_PROJECT=str(self.ci / "prototype/DeathsDemolition_PlayableConcept"))
+        rc, out, err = self.finish(p)
+        self.wait_file(self.log / "stray-unity.pid")
+        self.assertEqual(rc, 3, out + err)
+        self.assertIn("a Unity still has", out + err)
+        self.assertEqual(self.lines("guard-calls.txt"), ["snapshot"])
+        self.assertEqual([l.split()[:2] for l in self.lines("slot-calls.txt")], [["acquire", "player"]])
+        self.assertEqual(len(self.leases()), 1)
 
     def test_MainCi_NormalYol_Cikis0OzetYesilTekRestore(self):
         p = self.main_ci("pass", playmode=True)  # green needs both XMLs
@@ -197,7 +233,7 @@ class CiSignalTrapTests(unittest.TestCase):
         self.assertIn("GREEN · edit 1/1 · play 1/1", out)
         self.assertTrue((self.log / "child-playmode.pid").exists())
         self.assertTrue((self.out / self.sha / "summary.json").exists())
-        self.assertEqual(self.lines("guard-calls.txt"), ["snapshot", "restore"])
+        self.assertEqual(self.lines("guard-calls.txt"), ["snapshot", "restore", "restore-done"])
         self.assertEqual([l.split()[:2] for l in self.lines("slot-calls.txt")], [["acquire", "player"], ["release", "player"]])
         self.assertEqual(self.leases(), [])
         self.assertNotIn("through cleanup", err)

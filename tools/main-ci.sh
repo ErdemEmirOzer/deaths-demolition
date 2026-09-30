@@ -101,6 +101,20 @@ ci_guard_restore() {
   CI_GUARD_EXIT=$?; CI_GUARD_READY=0
   if [ "$CI_GUARD_EXIT" -eq 0 ] && ! grep -q 'restore scope=editor .*verified=1' "$OUT/userdata-guard.out"; then CI_GUARD_EXIT=31; fi
 }
+# Y1b (G4 D0 data-loss judge MUST-1/2, C-00 30.09) — used by BOTH the normal path and the cleanup: nothing is written
+# while any Unity still has the CI checkout open (a writer outside our process tree), and the restore itself cannot die
+# to a second Ctrl-C / group signal (ff06 guard: a kill between `defaults delete` and `import` loses keys) — ignored
+# dispositions are inherited by the guard child. 1 = window left open (slot + lease must stay held; tell C-00).
+ci_guard_restore_safe() {
+  ci_project_open; local open=$?
+  if [ "$open" -ne 1 ]; then
+    dd_log "main-ci ${CI_SIGNAL:-exit}: user-data window left open: a Unity still has $CI_DIR open (or the check failed: $open), tell C-00 — guard $OUT/userdata-guard NOT restored, player slot and lease $CI_LEASE kept" >&2
+    return 1
+  fi
+  trap '' INT TERM HUP
+  ci_guard_restore
+  [ "$CI_CLEANING" -eq 1 ] || { trap 'ci_signal INT 130' INT; trap 'ci_signal TERM 143' TERM; trap 'ci_signal HUP 129' HUP; }
+}
 ci_cleanup() {
   local original=$1 slot_exit=0 lease_exit=0
   trap - EXIT; CI_CLEANING=1
@@ -109,7 +123,7 @@ ci_cleanup() {
     dd_log "main-ci ${CI_SIGNAL:-exit}: user-data window left open: child $DD_CHILD_ALIVE still alive, tell C-00 — guard $OUT/userdata-guard NOT restored, player slot and lease $CI_LEASE kept" >&2
     exit "$original"
   fi
-  [ "$CI_GUARD_READY" -eq 0 ] || ci_guard_restore
+  if [ "$CI_GUARD_READY" -eq 1 ]; then ci_guard_restore_safe || exit "$original"; fi
   if [ "$CI_PLAYER_HELD" -eq 1 ]; then DD_SLOT_TAG="$CI_PLAYER_TAG" dd_slot_release player; slot_exit=$?; fi
   ci_lease_release; lease_exit=$?
   [ "$CI_GUARD_EXIT" -eq 0 ] && [ "$slot_exit" -eq 0 ] && [ "$lease_exit" -eq 0 ] || echo "CI cleanup failed: guard=$CI_GUARD_EXIT slot=$slot_exit lease=$lease_exit (original=$original)" >&2
@@ -202,7 +216,7 @@ fi
 # WP-066K: Editor tests can only write the Editor area (player folder + Editor PlayerPrefs domain); a
 # change in the player area (bundle folder profile, player domain) is someone else's — listed, not undone.
 UG="$OUT/userdata-guard"
-ci_guard_restore; GX=$CI_GUARD_EXIT
+ci_guard_restore_safe || exit 3; GX=$CI_GUARD_EXIT
 if ! cmp -s "$UG/before-editor.txt" "$UG/after-run-editor.txt" || [ "$GX" -ne 0 ]; then
   GW="Editor PlayerPrefs/profile changed during the tests: restored to the pre-run snapshot ($([ "$GX" -eq 0 ] && echo verified || echo "RESTORE MISMATCH exit $GX")) — $UG"
   UDWARN="${UDWARN:+$UDWARN; }$GW"; dd_log "WARNING userdata: $GW"
