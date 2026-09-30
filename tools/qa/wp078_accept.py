@@ -200,9 +200,32 @@ class EditorGuard:
         return guard_receipt.close(ug, scope or self.scope)
 
 
+B9_POSE_KEYS = {"name", "start", "tiers", "modes"}
+
+
+def load_b9_poses(path):
+    """{"source": …, "poses": [{"name": "sw-corner", "start": "-48,-48,45", "tiers": "yuksek", "modes": "topdown,tp"}]}
+    — names are unique folder names, start is x,z,yaw (three numbers), tiers/modes are wp078_perf --tiers/--modes lists."""
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    poses = data.get("poses") if isinstance(data, dict) else None
+    if not isinstance(poses, list) or not poses:
+        raise ValueError("needs a nonempty 'poses' list")
+    names = set()
+    for pose in poses:
+        if not isinstance(pose, dict) or set(pose) != B9_POSE_KEYS or not all(isinstance(pose[k], str) for k in B9_POSE_KEYS):
+            raise ValueError("each pose is exactly {name, start, tiers, modes} strings: " + json.dumps(pose))
+        if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,40}", pose["name"]) or pose["name"] in names:
+            raise ValueError("pose name must be a unique lower-case folder name: " + pose["name"])
+        if not re.fullmatch(r"-?\d+(\.\d+)?,-?\d+(\.\d+)?,-?\d+(\.\d+)?", pose["start"]):
+            raise ValueError("start must be x,z,yaw: " + pose["start"])
+        names.add(pose["name"])
+    return poses
+
+
 class Chain:
     def __init__(self, final, evidence, stages, dry_run=False, resume=False, editmode_filter="", playmode_filter="",
-                 wait_tries=3, wait_seconds=120.0, git=None, runner=None, guard=None, out=print, python=sys.executable):
+                 wait_tries=3, wait_seconds=120.0, git=None, runner=None, guard=None, out=print, python=sys.executable,
+                 b9_poses=None):
         self.final, self.evidence = final, Path(evidence).resolve()
         self.stages = [s for s in STAGE_ORDER if s in stages]
         self.dry_run, self.resume = dry_run, resume
@@ -212,6 +235,7 @@ class Chain:
         self.runner = runner or self._spawn
         self.guard = guard or EditorGuard()
         self.out, self.py = out, python
+        self.b9_poses = list(b9_poses or [])   # C-00 01.10: S-05 B9 pose windows, after A4 in the same quiet-window run
         self.child, self.terminated = None, False
         self.planned = []          # (stage, argv) — the dry-run command list
         self.verdicts = {}
@@ -358,7 +382,8 @@ class Chain:
         path = self.stage_record(stage)
         files = [f for r in results for f in r.get("files", [])] + list(extra_files)
         record = {"schema": RECORD_SCHEMA, "stage": stage, "executionCommit": self.final, "exitCode": exit_code,
-                  "status": "complete" if verdict == "PASS" else "failed", "verdict": verdict, "completedUtc": utc(),
+                  "status": "complete" if verdict == "PASS" else "recorded" if verdict == "RECORDED" else "failed",
+                  "verdict": verdict, "completedUtc": utc(),
                   "units": [{k: (str(v) if isinstance(v, Path) else v) for k, v in r.items() if k != "files"} for r in results],
                   "artifactSha256": hash_map(path.parent, files), "inputs": hash_map(path.parent, inputs)}
         if guarded:
@@ -621,23 +646,10 @@ class Chain:
             return
         root = self.evidence / "a4" / "perf"
         argv = [self.py, HERE / "wp078_perf.py", "--bin", self.evidence / "build-probe", "--out", root, "--commit", self.final]
-        code = None
-        for attempt in range(1, self.wait_tries + 1):
-            code = self.execute("wp078-perf", argv)
-            if self.dry_run:
-                break
-            if code == STOP:
-                raise Stop(STOP, "wp078_perf guard STOP (snapshot error, restore error or verdict mismatch)")
-            if code == 143:
-                raise Terminated()
-            if code not in WAIT_CODES:
-                break
-            if attempt == self.wait_tries:
-                raise Stop(code, f"wp078_perf exit {code} (Player up / guard wait) persisted after {attempt} tries")
-            self.log(f"WAIT wp078-perf: exit {code} (try {attempt}/{self.wait_tries}); resumes in the same root in {self.wait_seconds:.0f} s")
-            self.sleep(self.wait_seconds)
+        code = self.perf_with_wait("wp078-perf", argv)
         report_code = self.execute("wp078-perf-report", [self.py, HERE / "wp078_perf_report.py", root])
         if self.dry_run:
+            self.b9_windows()
             return
         attempts = sorted(p / "attempt.json" for p in root.iterdir() if p.is_dir() and wp078_perf_report.CELL.fullmatch(p.name)) if root.is_dir() else []
         # wp078_perf exits 0 only when every window's restore verdict was ok (it returns 7 / 30 / 75 otherwise), so exit 0
@@ -648,6 +660,49 @@ class Chain:
                    {"name": "wp078-perf-report", "exit": report_code, "gate": False,
                     "files": [root / "wp078-perf-report.json", root / "wp078-perf-report.txt"]}]
         self.finish("a4", results, inputs=[binary], extra={"buildRole": "probe", "perfRoot": "a4/perf"})
+        self.b9_windows()
+
+    def perf_with_wait(self, name, argv):
+        """One wp078_perf invocation; waits (6/30/75) resume in the same root, 7 is STOP, 143 ends the chain."""
+        code = None
+        for attempt in range(1, self.wait_tries + 1):
+            code = self.execute(name, argv)
+            if self.dry_run:
+                break
+            if code == STOP:
+                raise Stop(STOP, f"{name} guard STOP (snapshot error, restore error or verdict mismatch)")
+            if code == 143:
+                raise Terminated()
+            if code not in WAIT_CODES:
+                break
+            if attempt == self.wait_tries:
+                raise Stop(code, f"{name} exit {code} (Player up / guard wait) persisted after {attempt} tries")
+            self.log(f"WAIT {name}: exit {code} (try {attempt}/{self.wait_tries}); resumes in the same root in {self.wait_seconds:.0f} s")
+            self.sleep(self.wait_seconds)
+        return code
+
+    def b9_windows(self):
+        """C-00 01.10: S-05's B9 pose windows (-ddPilotStart x,z,yaw) run right after A4, in the same quiet-window run and
+        on the same release-probe build; one wp078_perf root per pose (<E>/b9/<name>). Recorded in <E>/stages/b9.json for
+        S-05's B9 report; not an acceptance gate (the chain exit and the A4 verdict ignore it)."""
+        if not self.b9_poses:
+            return
+        results = []
+        for pose in self.b9_poses:
+            root = self.evidence / "b9" / pose["name"]
+            argv = [self.py, HERE / "wp078_perf.py", "--bin", self.evidence / "build-probe", "--out", root, "--commit", self.final,
+                    "--tiers", pose["tiers"], "--modes", pose["modes"],
+                    "--extra-arg=-ddPilotStart", "--extra-arg=" + pose["start"]]
+            code = self.perf_with_wait("b9-" + pose["name"], argv)
+            report_code = self.execute("b9-" + pose["name"] + "-report", [self.py, HERE / "wp078_perf_report.py", root])
+            if self.dry_run:
+                continue
+            results.append({"name": "b9-" + pose["name"], "exit": code, "gate": False, "pose": dict(pose),
+                             "files": [root / "attempts-ledger.jsonl"]})
+            results.append({"name": "b9-" + pose["name"] + "-report", "exit": report_code, "gate": False,
+                            "files": [root / "wp078-perf-report.json"]})
+        if not self.dry_run:
+            self.finish("b9", results, guarded=False, verdict="RECORDED", extra={"buildRole": "probe", "source": "S-05 B9 pose list"})
 
     def stage_a8(self):
         manifest_path = self.evidence / "manifest.json"
@@ -882,6 +937,7 @@ def main(argv=None, **seams):
     parser.add_argument("--playmode-filter", default="", help="A1: test.sh --filter for PlayMode (default: the whole suite)")
     parser.add_argument("--wait-tries", type=int, default=3)
     parser.add_argument("--wait-seconds", type=float, default=120.0)
+    parser.add_argument("--b9-poses", help="C-00 01.10: S-05 B9 pose list (JSON) run after A4 in the same quiet-window run")
     try:
         args = parser.parse_args(argv)
     except SystemExit as error:
@@ -895,9 +951,14 @@ def main(argv=None, **seams):
         print(str(error), file=sys.stderr)
         return 64
     evidence = Path(args.evidence) if args.evidence else KADRO_EVIDENCE / args.final[:8]
+    try:
+        b9_poses = load_b9_poses(args.b9_poses) if args.b9_poses else []
+    except ValueError as error:
+        print("--b9-poses: " + str(error), file=sys.stderr)
+        return 64
     chain = Chain(args.final, evidence, stages, dry_run=args.dry_run, resume=args.resume,
                   editmode_filter=args.editmode_filter, playmode_filter=args.playmode_filter,
-                  wait_tries=args.wait_tries, wait_seconds=args.wait_seconds, **seams)
+                  wait_tries=args.wait_tries, wait_seconds=args.wait_seconds, b9_poses=b9_poses, **seams)
     previous = signal.signal(signal.SIGTERM, chain.on_sigterm)
     try:
         return chain.run()

@@ -432,6 +432,38 @@ class RefusalTests(Base):
         self.assertTrue(any("STOP" in line and "report to C-00" in line for line in chain.lines))
 
 
+class B9PoseTests(Base):
+    """C-00 01.10: S-05 B9 pose windows run after A4 on the same probe build, one root per pose, never gating."""
+    POSES = [{"name": "sw-corner", "start": "-48,-48,45", "tiers": "yuksek", "modes": "topdown,tp"},
+             {"name": "plaza-n", "start": "0,30,180", "tiers": "yuksek", "modes": "tp"}]
+
+    def test_poses_follow_a4_with_their_start_flag(self):
+        chain = self.dry(["a4"], b9_poses=self.POSES)
+        perf = [a for _, a in chain.planned if Path(a[1]).name == "wp078_perf.py"]
+        self.assertEqual(3, len(perf))
+        self.assertEqual(str(self.evidence.resolve() / "a4" / "perf"), self.opt(perf[0], "--out"))
+        for argv, pose in zip(perf[1:], self.POSES):
+            self.assertEqual(str(self.evidence.resolve() / "b9" / pose["name"]), self.opt(argv, "--out"))
+            self.assertEqual(str(self.evidence.resolve() / "build-probe"), self.opt(argv, "--bin"))
+            self.assertEqual((pose["tiers"], pose["modes"]), (self.opt(argv, "--tiers"), self.opt(argv, "--modes")))
+            self.assertEqual(["--extra-arg=-ddPilotStart", "--extra-arg=" + pose["start"]], argv[-2:])
+
+    def test_no_poses_no_b9(self):
+        chain = self.dry(["a4"])
+        self.assertFalse(any("b9" in str(a) for _, argv in chain.planned for a in argv))
+
+    def test_pose_file_validation(self):
+        path = Path(self.tmp.name) / "poses.json"
+        path.write_text(json.dumps({"poses": self.POSES}))
+        self.assertEqual(self.POSES, acc.load_b9_poses(path))
+        for bad in ([], [dict(self.POSES[0], start="-48,-48")], [dict(self.POSES[0], name="SW corner")],
+                    [self.POSES[0], self.POSES[0]], [dict(self.POSES[0], extra="x")]):
+            with self.subTest(bad=bad):
+                path.write_text(json.dumps({"poses": bad}))
+                with self.assertRaises(ValueError):
+                    acc.load_b9_poses(path)
+
+
 class StopTests(Base):
     def prepared(self, stages=("a6", "a0", "a1")):
         tools = FakeTools()

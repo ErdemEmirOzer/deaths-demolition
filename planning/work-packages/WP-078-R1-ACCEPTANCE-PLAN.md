@@ -62,6 +62,7 @@ Eşikler **veriden**: `tools/qa/perf-targets.json` — Sinematik ≤ 33,3 / p99 
 Senaryo: PilotPerfProbe `Run`, 1920×1080, tam 40 aktif, 10 s ısınma + 60 s pencere, `-ddQualityTier`, `-ddCameraMode`, TP/FP `-ddPilotCameraSweep 1`, `-ddUiDataRoot`, `-ddTelemetryDir`; guard `--scope player` (92eb636e: 30 BLOCKED / 31 STOP yukarı taşınır).
 Sessiz pencere (C-00 26.09): koşucu player slotunu ve **üç** Unity slotunu tutar; her pencereden önce load1 < 6, yabancı Unity/Player 0; ≤ 25 dk parti + 180 s ara; `wp064_run --load-max 6`. Kirli ölçüm kapı değildir.
 Build: **bot koşuları dev'de, perf kapısı release-probe'da; dev ölçümü yalnız A/B deltasıdır ve probe FAIL'ini örtmez** (K1). A4 `buildRole == probe`, her pencerenin binarySha256'sı probe build'ine eşit; A6 release-probe paritesi (development=false, LZ4HC, sahne listesi ve scripting backend release ile eşit). DEC-088/WP-044 tabanıyla karşılaştırmalar build türüyle yazılır. Kayıt: model, macOS, güç, ısıl durum, load1.
+B9 pozları (C-00 01.10): S-05'in B9 perf matrisi ayrı pencere açmaz; **A4'ten hemen sonra aynı sessiz pencere koşusunda**, aynı release-probe build'iyle koşar (önce A4). Poz listesi S-05'ten JSON: `{"poses": [{name, start: "x,z,yaw", tiers, modes}]}` → `wp078_accept.py --b9-poses <dosya>`; her poz `wp078_perf --extra-arg=-ddPilotStart --extra-arg=<x,z,yaw>` ile kendi kökünde (`<E>/b9/<name>`), kayıt `stages/b9.json` (RECORDED). B9 kabul kapısı değildir; A4 hükmünü ve zincir çıkışını etkilemez.
 
 ## 5 · Soak (A5, DEC-091)
 
