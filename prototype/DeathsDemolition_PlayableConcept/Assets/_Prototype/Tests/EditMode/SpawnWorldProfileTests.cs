@@ -96,8 +96,39 @@ namespace DD.Prototype.Tests.EditMode
                 Assert.AreEqual(0f, SpawnWeightCalculator.Evaluate(inner, in inputs, config, tuning, relaxation, out _));
                 Assert.Greater(SpawnWeightCalculator.Evaluate(edge, in inputs, config, tuning, relaxation, out _), 0f);
             }
+            // B9 safety valve: only the explicit InnerCap relaxation lets an inner gate through a full quota
+            Assert.Greater(SpawnWeightCalculator.Evaluate(inner, in inputs, config, tuning,
+                SpawnRelaxation.Screen | SpawnRelaxation.Cooldown | SpawnRelaxation.Reachability | SpawnRelaxation.InnerCap, out _), 0f);
             inputs.InnerShare = -1f;
             Assert.Greater(SpawnWeightCalculator.Evaluate(inner, in inputs, config, tuning, SpawnRelaxation.None, out _), 0f);
+        }
+
+        /// <summary>
+        /// WP-076 B9 (C-00 30.09): a full inner quota with no edge gate left never stops spawning — the ladder's last step
+        /// releases the cap (reported as InnerCap); with an edge gate available the cap holds and the edge is taken.
+        /// </summary>
+        [Test]
+        public void OrtaKota_KenarYoksa_GuvenlikVanasi_SpawnDurmaz()
+        {
+            var tuning = new SpawnWeightTuning(); tuning.Sanitize();
+            var config = new SpawnConfigSection();
+            var inputs = new SpawnWeightInputs { PlayerRegion = RingRegion.North, Now = 100f, InnerShare = 0.5f, InnerQuotaFull = true };
+            var selector = new SpawnPointSelector();
+            System.Func<float> r = () => 0.5f;
+
+            var onlyInner = new System.Collections.Generic.List<SpawnPointRuntime> { Kapi(SpawnPointKind.Inner, 20f) };
+            SpawnPointRuntime chosen = selector.SelectWithLadder(onlyInner, in inputs, config, tuning, r, out SpawnRelaxation used);
+            Assert.IsNotNull(chosen, "kenar kapısı yokken spawn durmamalı");
+            Assert.AreNotEqual(SpawnRelaxation.None, used & SpawnRelaxation.InnerCap, "vana InnerCap olarak raporlanır");
+
+            var mixed = new System.Collections.Generic.List<SpawnPointRuntime> { Kapi(SpawnPointKind.Inner, 20f), Kapi(SpawnPointKind.Edge, 20f) };
+            chosen = selector.SelectWithLadder(mixed, in inputs, config, tuning, r, out used);
+            Assert.AreEqual(SpawnPointKind.Edge, chosen.Definition.Kind, "kenar varken kota korunur");
+            Assert.AreEqual(SpawnRelaxation.None, used & SpawnRelaxation.InnerCap);
+
+            inputs.InnerQuotaFull = false;
+            chosen = selector.SelectWithLadder(onlyInner, in inputs, config, tuning, r, out used);
+            Assert.AreEqual(SpawnRelaxation.None, used & SpawnRelaxation.InnerCap, "kota dolu değilken vana kullanılmaz");
         }
 
         /// <summary>

@@ -127,6 +127,7 @@ namespace DD.Prototype.Tests.PlayMode
                     director.RefreshPointsNow();
 
                     int rec = ZombieEnemy.StuckRecoveries, rem = ZombieEnemy.StuckRemovals, oow = ZombieEnemy.OutOfWorldRemovals;
+                    int cap0 = director.InnerCapFallbacks, noPoint0 = director.NoPointTicks;   // WP-076 B9: inner-cap valve rate
                     var anchors = new Dictionary<ZombieEnemy, (Vector3 anchor, float since, bool reached, bool reported)>();
                     int spawned = 0, reached = 0;
                     Action<EnemySpawnContext> onSpawn = c => spawned++;
@@ -192,8 +193,9 @@ namespace DD.Prototype.Tests.PlayMode
                     }
 
                     int dRec = ZombieEnemy.StuckRecoveries - rec, dRem = ZombieEnemy.StuckRemovals - rem, dOow = ZombieEnemy.OutOfWorldRemovals - oow;
-                    rapor.AppendLine(string.Format("  {0,-12} at=({1:0.0},{2:0.0},{3:0.0}) spawned={4} reached={5} stuckRecover={6} stuckRemove={7} oow={8} stalls: {9}",
-                        st.name, hit.position.x, hit.position.y, hit.position.z, spawned, reached, dRec, dRem, dOow, stalls.Length > 0 ? stalls.ToString() : "-"));
+                    rapor.AppendLine(string.Format("  {0,-12} at=({1:0.0},{2:0.0},{3:0.0}) spawned={4} reached={5} stuckRecover={6} stuckRemove={7} oow={8} innerCapFallback={10} noPointTicks={11} innerShare24={12:0.00} stalls: {9}",
+                        st.name, hit.position.x, hit.position.y, hit.position.z, spawned, reached, dRec, dRem, dOow, stalls.Length > 0 ? stalls.ToString() : "-",
+                        director.InnerCapFallbacks - cap0, director.NoPointTicks - noPoint0, SpawnWorldProfile.InnerShare));
                     if (st.name == "Waterfall")
                     {
                         waterfallStalls = stallCount;

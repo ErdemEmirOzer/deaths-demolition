@@ -976,6 +976,8 @@ namespace DD.Prototype.Spawn
         /// <summary>WP-076 B6 readouts: heavy / Special spawns moved to a nearer point by the tier path gate, and those that found none.</summary>
         public int TierGateReroutes { get; private set; }
         public int TierGateFallbacks { get; private set; }
+        /// <summary>WP-076 B9: picks that needed the inner-cap safety valve (<see cref="SpawnRelaxation.InnerCap"/>).</summary>
+        public int InnerCapFallbacks { get; private set; }
 
         private SpawnPointRuntime SelectPoint(float maxPathDistance = 0f)
         {
@@ -1032,6 +1034,8 @@ namespace DD.Prototype.Spawn
             {
                 return null;
             }
+
+            if ((used & SpawnRelaxation.InnerCap) != 0) InnerCapFallbacks++;   // WP-076 B9 safety valve (C-00 30.09)
 
             if ((used & SpawnRelaxation.Cooldown) != 0)
             {

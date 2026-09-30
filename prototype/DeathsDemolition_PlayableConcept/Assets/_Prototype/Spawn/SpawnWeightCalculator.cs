@@ -18,7 +18,13 @@ namespace DD.Prototype.Spawn
         Cooldown = 2,
 
         /// <summary>Ignore the "must have a complete NavMesh path" rule. Last resort only.</summary>
-        Reachability = 4
+        Reachability = 4,
+
+        /// <summary>
+        /// WP-076 B9 (C-00 30.09): ignore the rolling inner-gate cap — the safety valve after every other pass found nothing
+        /// (a spawn that never stops comes before the inner quota). Counted: EnemySpawnDirector.InnerCapFallbacks.
+        /// </summary>
+        InnerCap = 8
     }
 
     /// <summary>Per-input result of one evaluation. Debug surface only.</summary>
@@ -178,7 +184,7 @@ namespace DD.Prototype.Spawn
             }
 
             // The rolling inner cap survives all fairness/cooldown/path relaxations.
-            if (inputs.InnerShare >= 0f && inputs.InnerQuotaFull && point.Definition != null &&
+            if (inputs.InnerShare >= 0f && inputs.InnerQuotaFull && (relaxation & SpawnRelaxation.InnerCap) == 0 && point.Definition != null &&
                 point.Definition.Kind == SpawnPointKind.Inner)
             {
                 return Reject(point, ref breakdown, "inner share cap");

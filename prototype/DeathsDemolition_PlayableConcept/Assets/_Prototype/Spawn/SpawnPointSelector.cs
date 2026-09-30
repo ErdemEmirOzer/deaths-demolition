@@ -165,6 +165,15 @@ namespace DD.Prototype.Spawn
             if (chosen != null)
             {
                 usedRelaxation = SpawnRelaxation.Screen | SpawnRelaxation.Cooldown | SpawnRelaxation.Reachability;
+                return chosen;
+            }
+
+            // WP-076 B9 (C-00 30.09): only the rolling inner cap is left in the way — release it rather than stop spawning
+            if (inputs.InnerQuotaFull)
+            {
+                const SpawnRelaxation valve = SpawnRelaxation.Screen | SpawnRelaxation.Cooldown | SpawnRelaxation.Reachability | SpawnRelaxation.InnerCap;
+                chosen = Select(points, in inputs, config, tuning, valve, random01);
+                if (chosen != null) usedRelaxation = valve;
             }
 
             return chosen;
