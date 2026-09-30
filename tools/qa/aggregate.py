@@ -40,6 +40,17 @@ def positive_metric(value):
     return finite_number(value) and value > 0
 
 
+def _load_sibling(name):
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("_agg_" + name, os.path.join(os.path.dirname(os.path.abspath(__file__)), name + ".py"))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+NUNIT_SKIPS = _load_sibling("nunit_skips")
+
+
 def xml_counts(path):
     try:
         root = ET.parse(path).getroot()
@@ -95,8 +106,12 @@ def main():
     em = xml_counts(em_path)
     if em:
         total, passed, failed, skipped, inconclusive = em
-        gates.append(gate("editmode.qa", failed == 0 and total > 0 and skipped == 0 and inconclusive == 0,
-                          f"{passed}/{total}", "all green, skipped 0", "QA tests or supplied full EditMode suite", em_path))
+        # C-00 30.09 Y6: only Skipped ∧ Explicit ∧ Diagnostics may skip; an Ignore skip is red (tools/qa/nunit_skips.py)
+        allowed, _, unexpected = NUNIT_SKIPS.classify_skips(em_path)
+        gates.append(gate("editmode.qa", failed == 0 and total > 0 and not unexpected and skipped == len(allowed) and inconclusive == 0,
+                          f"{passed}/{total}" + (f" +{len(allowed)} diagnostics" if allowed else ""),
+                          "all green, unexpected skips 0", "QA tests or supplied full EditMode suite"
+                          + ("; unexpected skips: " + ", ".join(unexpected) if unexpected else ""), em_path))
     else:
         gates.append(gate("editmode.qa", False, "missing", "editmode-qa.xml", "step skipped or crashed", "editmode-qa.xml"))
 

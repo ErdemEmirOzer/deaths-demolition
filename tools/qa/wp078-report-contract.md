@@ -156,7 +156,9 @@ metadata cannot be hidden by a successful summary or restoration.
   read from the bot summary; a missing field is BLOCKED (argv or labels are not
   evidence). The run's hash-bound `command.json` must give `-ddQualityTier sinematik`
   exactly once (case-insensitive); `hostClean=true` still comes from the attempt
-  provenance. `reportRuns`
+  provenance. Each stability run's slowest round and its margin to the 420 s round
+  timeout at Sinematik 30 fps is reported in `soakRoundTimeoutMargin` (K5; report only,
+  the timeout is unchanged). `reportRuns`
   contains source-bound normal-bot data: ≥5 topdown, ≥2 tp, ≥2 fp. Deaths and
   difficulty are reports, not extra balance gates.
   In addition to the generic log helper, §5.5 rejects actual

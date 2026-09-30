@@ -225,6 +225,8 @@ BUILD_MODES = {"dev": "dev", "release": "release", "probe": "release-probe"}
 WORLD_LOGS_EXPECTED = 3 + 2
 # C-00 30.09 R1–R3: A2 route-run evidence frames (QaRunBot -ddQaBotRouteTour). The top-down camera's yaw is fixed north
 # and its top ray is ~28° below the horizon, so topdown horizon is notApplicable; E-3 eye-level horizon is proven by FP.
+# K5 (C-00 30.09): QaRunBot.DefaultRoundTimeout; the soak reports each run's slowest round against it, threshold unchanged.
+ROUND_TIMEOUT_SECONDS = 420.0
 ROUTE_KEYS = ("courtyard", "corridor", "kairo", "horizon")
 ROUTE_ROOF_KEYS = ("corridor", "kairo")
 ROUTE_TOPDOWN_HORIZON = "topdown-fixed-camera"
@@ -239,6 +241,7 @@ def _helper(name):
 
 PERF = _helper("wp078_perf_report")
 SOAK = _helper("soak_gate")
+SKIPS = _helper("nunit_skips")
 GATE = _helper("wp064_gate")
 STUCK = _helper("stuck_clusters")
 
@@ -368,6 +371,7 @@ class Inspector:
         self.evidence = {}
         self.perf = None
         self.soak = []
+        self.timeout_margin = []
         self.report_runs = []
         self.bot_runs = []
         self.route_runs = []
@@ -512,9 +516,14 @@ class Inspector:
             raise ProofError("invalid or incomplete NUnit XML") from error
         leaves = root.findall(".//test-case")
         require(root.tag == "test-run", "unsupported NUnit root/schema")
-        require(counts["total"] > 0 and counts["passed"] == counts["total"] == len(leaves), "empty or inconsistent NUnit counts")
-        require(all(counts[key] == 0 for key in ("failed", "skipped", "inconclusive")), "NUnit failed/skipped/inconclusive")
-        require(root.get("result") == "Passed" and all(case.get("result") == "Passed" for case in leaves), "NUnit leaf did not pass")
+        # C-00 30.09 Y6: a skip counts only as Skipped ∧ Explicit ∧ Diagnostics (nunit_skips); an Ignore skip is red
+        allowed, _, unexpected = SKIPS.classify(SKIPS.skipped_cases_from_root(root))
+        require(not unexpected, "unexpected NUnit skip (Y6: only [Explicit] + Diagnostics may skip): " + ", ".join(unexpected))
+        require(counts["total"] > 0 and counts["passed"] + len(allowed) == counts["total"] == len(leaves), "empty or inconsistent NUnit counts")
+        require(counts["skipped"] == len(allowed) and all(counts[key] == 0 for key in ("failed", "inconclusive")), "NUnit failed/skipped/inconclusive")
+        allowed_names = set(allowed)
+        require(root.get("result") == "Passed" and all(case.get("result") == "Passed" or (case.get("fullname") or case.get("name")) in allowed_names
+                                                       for case in leaves), "NUnit leaf did not pass")
         names = [case.get("fullname") or case.get("name") for case in leaves]
         require(all(names) and len(set(names)) == len(names), "missing or duplicate NUnit test identity")
         if integrity:
@@ -522,7 +531,7 @@ class Inspector:
         if identities is not None:
             # NUnit parameterized instances append arguments to the same native
             # declared method; never allow an arbitrary class or invented method.
-            observed = {name.split("(", 1)[0] for name in names}
+            observed = {name.split("(", 1)[0] for name in names if name not in allowed_names}   # Y6: a skipped diagnostic is not run
             missing = set(identities) - observed
             require(not missing, "native A3 domain test identities missing: " + ", ".join(sorted(missing)), "BLOCKED")
         return counts
@@ -1008,6 +1017,7 @@ class Inspector:
             _, summary, _ = self.run(run, stability=True, step="A5")
             seeds.append(summary["seed"])
             self.soak.append(summary)
+            self.timeout_margin.append(round_timeout_margin(summary))
         require(sorted(seeds) == [26, 61], "duplicate or missing stability seed")
         reports = step.get("reportRuns")
         require(isinstance(reports, list), "missing real-bot reports", "BLOCKED")
@@ -1191,9 +1201,19 @@ def generate_report(manifest, evidence_root, targets=None):
     return {"schema": SCHEMA, "commit": manifest.get("commit"), "final": manifest.get("final") is True,
             "pass": passed, "status": status, "checklist": rows, "failures": failures,
             "buildHashes": manifest.get("buildHashes", {}), "perf": inspector.perf,
-            "soak": inspector.soak, "reportRuns": inspector.report_runs, "botRuns": inspector.bot_runs, "routeRuns": inspector.route_runs,
+            "soak": inspector.soak, "soakRoundTimeoutMargin": inspector.timeout_margin, "reportRuns": inspector.report_runs, "botRuns": inspector.bot_runs, "routeRuns": inspector.route_runs,
             "buildParity": inspector.build_parity,
             "evidence": sorted(inspector.evidence.values(), key=lambda row: row["path"])}
+
+
+def round_timeout_margin(summary):
+    """K5 report line: the slowest round of a stability run and its margin to the 420 s round timeout (not a gate)."""
+    seconds = [r.get("seconds") for r in summary.get("rounds") or [] if isinstance(r, dict) and isinstance(r.get("seconds"), (int, float))]
+    slowest = max(seconds) if seconds else None
+    return {"seed": summary.get("seed"), "qualityTier": summary.get("qualityTier"), "timeoutSeconds": ROUND_TIMEOUT_SECONDS,
+            "slowestRoundSeconds": slowest,
+            "marginSeconds": None if slowest is None else round(ROUND_TIMEOUT_SECONDS - slowest, 1),
+            "marginFraction": None if slowest is None else round(1.0 - slowest / ROUND_TIMEOUT_SECONDS, 3)}
 
 
 def main(argv=None):

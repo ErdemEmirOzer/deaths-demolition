@@ -11,9 +11,15 @@ import time
 import xml.etree.ElementTree as ET
 
 
-ALLOWED_PLAYMODE_SKIPS = {
+# C-00 30.09 Y6 (TANI-TESTI-POLITIKASI): a skip is allowed only when the test case is Skipped, Explicit (label or runstate)
+# and carries Category("Diagnostics") (on the case or an enclosing suite) — never by a name list. The one legacy fullname
+# exception below stays, visible by name in the report, until its owner moves the test to [Explicit] + Diagnostics.
+LEGACY_PLAYMODE_SKIP_EXCEPTIONS = {
     "DD.Art.Tests.PlayMode.SetPassAttributionTests.SetPass_Kaynaklari_40ZombiTamZirh",
 }
+ALLOWED_PLAYMODE_SKIPS = LEGACY_PLAYMODE_SKIP_EXCEPTIONS   # backwards-compatible name
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from nunit_skips import classify_skips, is_diagnostic_explicit, skipped_cases  # noqa: E402,F401  (Y6: one rule for every gate)
 
 
 def unique_object(pairs):
@@ -286,9 +292,9 @@ def main():
     library = read_json(os.path.join(args.out, "release", "library-provenance.json"))
     windows = read_json(os.path.join(args.out, "window-modes", "qa-report.json"))
     logs = read_json(os.path.join(args.out, "log-scan.json"))
-    play_skips = testcase_names(os.path.join(args.out, "full-playmode", "playmode.xml"), "skipped")
-    allowed_play_skips = [name for name in play_skips if name in ALLOWED_PLAYMODE_SKIPS]
-    unexpected_play_skips = [name for name in play_skips if name not in ALLOWED_PLAYMODE_SKIPS]
+    allowed_edit_skips, _, unexpected_edit_skips = classify_skips(os.path.join(args.out, "full-editmode", "editmode.xml"))
+    allowed_play_skips, legacy_play_skips, unexpected_play_skips = classify_skips(
+        os.path.join(args.out, "full-playmode", "playmode.xml"), LEGACY_PLAYMODE_SKIP_EXCEPTIONS)
     exact_tests = {
         "B11.flow": testcase_passed(os.path.join(args.out, "full-playmode", "playmode.xml"), "FlowSmokeTest.Akis_BootMainMenuSelectionRunOlumResultsMainMenu"),
         "B11.roundHud": testcase_passed(os.path.join(args.out, "full-playmode", "playmode.xml"), "RoundHudSyncTests.TurIlerleyinceHudRakamiDaIlerler"),
@@ -307,7 +313,9 @@ def main():
     m3_ok = m3_replay(args.out, m3, bot, args.rounds, args.perf_runs, args.window)
     library_ok = bool(library and library.get("schema") == "dd-wp064-library-provenance-v1"
                       and library.get("phase") == "post-build" and head != "unknown" and library.get("head") == head)
-    edit_ok = bool(edit and edit["failed"] == 0 and edit["skipped"] == 0 and edit["inconclusive"] == 0 and edit["total"] > 0)
+    # Y6: an EditMode skip is fine only as Skipped ∧ Explicit ∧ Diagnostics; an Ignore skip is an unexpected skip → red
+    edit_ok = bool(edit and edit["failed"] == 0 and edit["inconclusive"] == 0 and edit["total"] > 0 and not unexpected_edit_skips
+                   and edit["skipped"] == len(allowed_edit_skips))
     play_ok = bool(play and play["failed"] == 0 and play["inconclusive"] == 0 and play["total"] > 0 and not unexpected_play_skips)
     tests_ok = edit_ok and play_ok
     # Y2 (C-00 30.09): rc.sh names a failed stage also for failures outside the eleven stage exits (a real-bot report
@@ -330,7 +338,10 @@ def main():
         "failedStage": args.failed_stage,
         "stages": stage_results,
         "tests": {"editMode": edit, "playMode": play},
+        "allowedEditModeSkips": allowed_edit_skips,
+        "unexpectedEditModeSkips": unexpected_edit_skips,
         "allowedPlayModeSkips": allowed_play_skips,
+        "legacyPlayModeSkipExceptions": legacy_play_skips,
         "unexpectedPlayModeSkips": unexpected_play_skips,
         "exactTests": exact_tests,
         "release": release,

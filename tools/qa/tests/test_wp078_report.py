@@ -680,3 +680,21 @@ class RouteRunTests(Fixture):
 
 
 if __name__=='__main__':unittest.main()
+
+
+class RoundTimeoutMarginTests(unittest.TestCase):
+    """K5 (C-00 30.09): the soak's slowest round against the 420 s round timeout is a report line, never a gate."""
+
+    def test_margin_is_measured_from_the_slowest_round(self):
+        sys.path.insert(0, str(HERE))
+        import wp078_report as report
+        row = report.round_timeout_margin({"seed": 61, "qualityTier": "Sinematik",
+                                            "rounds": [{"round": 1, "seconds": 80.0}, {"round": 12, "seconds": 315.0}]})
+        self.assertEqual((315.0, 105.0, 0.25), (row["slowestRoundSeconds"], row["marginSeconds"], row["marginFraction"]))
+        self.assertEqual(420.0, row["timeoutSeconds"])
+
+    def test_no_round_seconds_leaves_the_margin_unmeasured(self):
+        sys.path.insert(0, str(HERE))
+        import wp078_report as report
+        row = report.round_timeout_margin({"seed": 26, "rounds": []})
+        self.assertIsNone(row["marginSeconds"])

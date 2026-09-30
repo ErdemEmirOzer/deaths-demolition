@@ -66,7 +66,7 @@ Build: **bot koşuları dev'de, perf kapısı release-probe'da; dev ölçümü y
 ## 5 · Soak (A5, DEC-091)
 
 Tek FINAL commit; kararlılık **MUST**: tohum 61 + 26 × 12/12, `-ddQaBotStability`, tepeden, V6 (`WorldBounds` 55), kademe **Sinematik** (DEC-100 varsayılan; §10 K5), sıralı 12/12 ve zaman aşımı 0 (DEC-091 "takılma 0" = takılan round), Player logunda hata 0, bellek **büyümesi** (r2 tabanlı: Mono ≤ 48 MB ve ≤ 4 MB/round, toplam ayırma ≤ 256 MB, RSS ≤ 512 MB; RSS okunamazsa −1 = "yok"), guard OK, temiz host. Kapı `soak_gate.py --stability`.
-Kademe ve dünya bot özetinden (`qualityTier == Sinematik`, `worldHalfExtent == 55`; alan yoksa BLOCKED), soak komutu `-ddQualityTier sinematik`'i açıkça verir (K5); bellek ve log eşikleri koşudan önce donmuştur. 30 fps'te round süresinin 420 s zaman aşımına kalan payı raporlanır.
+Kademe ve dünya bot özetinden (`qualityTier == Sinematik`, `worldHalfExtent == 55`; alan yoksa BLOCKED), soak komutu `-ddQualityTier sinematik`'i açıkça verir (K5); bellek ve log eşikleri koşudan önce donmuştur. 30 fps'te round süresinin 420 s zaman aşımına kalan payı raporlanır (K5): her tohum için en yavaş round süresi ve `420 − süre` (s, oran) `wp078_report` → `soakRoundTimeoutMargin`; rapor satırıdır, eşik (`QaRunBot.DefaultRoundTimeout = 420`) değişmez.
 Rapor (kapı değil): gerçek bot tepeden ≥ 5 + TP ≥ 2 + FP ≥ 2; TP/FP ve Sinematik-dışı (Yüksek/Performans) kararlılık gözlemleri (K3 kullanıcı kararı: R1'de rapor); `[OutOfWorld] stuckRemove` koşu başına > 2 → S-03 bileti; `stuckRecoveries` + `unstickSweeps` (botun kendi kurtarmaları) raporlanır, kapı değildir (K6).
 
 ## 6 · Build ve boyut (A6)

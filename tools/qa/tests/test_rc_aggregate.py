@@ -212,6 +212,69 @@ sys.exit(99)
         self.assertIs(expected, report["pass"])
         return report
 
+    def write_skip_xml(self, name, passed, skipped):
+        # C-00 30.09 Y6: skipped = [(fullname, label, runstate, categories on the case, categories on its fixture)]
+        root = ET.Element("test-run", total=str(len(passed) + len(skipped)), passed=str(len(passed)),
+                          failed="0", skipped=str(len(skipped)), inconclusive="0")
+        for case in passed:
+            ET.SubElement(root, "test-case", fullname=case, result="Passed")
+        for fullname, label, runstate, case_categories, fixture_categories in skipped:
+            fixture = ET.SubElement(root, "test-suite", type="TestFixture", fullname=fullname.rsplit(".", 1)[0])
+            if fixture_categories:
+                props = ET.SubElement(fixture, "properties")
+                for category in fixture_categories:
+                    ET.SubElement(props, "property", name="Category", value=category)
+            attrs = {"fullname": fullname, "result": "Skipped", "runstate": runstate}
+            if label:
+                attrs["label"] = label
+            node = ET.SubElement(fixture, "test-case", **attrs)
+            if case_categories:
+                props = ET.SubElement(node, "properties")
+                for category in case_categories:
+                    ET.SubElement(props, "property", name="Category", value=category)
+        path = self.out / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        ET.ElementTree(root).write(path, encoding="utf-8")
+
+    def test_y6_ignored_editmode_skip_is_red_and_named(self):
+        probe = "DD.AI.Tests.SpawnGateCoverageProbe.V6_KapiKapsami_Arama"
+        self.write_skip_xml("full-editmode/editmode.xml", ("Example.EditMode",), [(probe, "Ignored", "Runnable", (), ())])
+        report = self.verdict(False)
+        self.assertEqual([probe + " [Ignored]"], report["unexpectedEditModeSkips"])
+
+    def test_y6_explicit_diagnostics_skip_is_allowed_on_case_or_fixture(self):
+        on_case = "DD.AI.Tests.SpawnGateCoverageProbe.V6_KapiKapsami_Arama"
+        on_fixture = "DD.Art.Tests.PlayMode.GpuProbe.Olcum"
+        self.write_skip_xml("full-editmode/editmode.xml", ("Example.EditMode",),
+                            [(on_case, "Explicit", "Explicit", ("Diagnostics",), ())])
+        self.write_skip_xml("full-playmode/playmode.xml", EXACT_TESTS + (
+            "ArmorTests.Okunabilirlik_DEC077_Zirh_DeltaV_AltKumas_KomsuBant_ZeminHalkasi_Siluet",),
+            [(on_fixture, "", "Explicit", (), ("Diagnostics",))])
+        self.produce_reports()   # the m3 receipts are replayed from these XMLs, so they are produced after them (as in a real RC)
+        report = self.verdict(True)
+        self.assertEqual(([on_case], []), (report["allowedEditModeSkips"], report["unexpectedEditModeSkips"]))
+        self.assertEqual(([on_fixture], []), (report["allowedPlayModeSkips"], report["unexpectedPlayModeSkips"]))
+
+    def test_y6_explicit_without_diagnostics_or_diagnostics_without_explicit_is_red(self):
+        for label, runstate, categories in (("Explicit", "Explicit", ("Slow",)), ("Ignored", "Ignored", ("Diagnostics",))):
+            with self.subTest(label=label, categories=categories):
+                self.write_skip_xml("full-editmode/editmode.xml", ("Example.EditMode",),
+                                    [("DD.X.Tests.Probe.Case", label, runstate, categories, ())])
+                self.assertEqual(1, len(self.verdict(False)["unexpectedEditModeSkips"]))
+
+    def test_y6_legacy_playmode_exception_stays_visible_by_name(self):
+        legacy = "DD.Art.Tests.PlayMode.SetPassAttributionTests.SetPass_Kaynaklari_40ZombiTamZirh"
+        self.write_skip_xml("full-playmode/playmode.xml", EXACT_TESTS + (
+            "ArmorTests.Okunabilirlik_DEC077_Zirh_DeltaV_AltKumas_KomsuBant_ZeminHalkasi_Siluet",),
+            [(legacy, "Ignored", "Ignored", (), ())])
+        report = self.verdict(True)
+        self.assertEqual(([legacy], []), (report["legacyPlayModeSkipExceptions"], report["unexpectedPlayModeSkips"]))
+
+    def test_y6_legacy_name_does_not_cover_editmode(self):
+        legacy = "DD.Art.Tests.PlayMode.SetPassAttributionTests.SetPass_Kaynaklari_40ZombiTamZirh"
+        self.write_skip_xml("full-editmode/editmode.xml", ("Example.EditMode",), [(legacy, "Ignored", "Ignored", (), ())])
+        self.assertEqual(1, len(self.verdict(False)["unexpectedEditModeSkips"]))
+
     def test_two_stability_runs_and_real_bot_death_pass(self):
         self.verdict(True)
 
