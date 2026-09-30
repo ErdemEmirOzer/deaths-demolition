@@ -27,7 +27,14 @@ namespace DD.Prototype.Feedback.Vfx
         private readonly List<Vector3> _anchors = new List<Vector3>(MaxFlames);
         private PrototypePool<FlipbookEffect> _cards;
         private Transform _root;
-        private float _nextScan;
+        // C-00 01.10 GC finding (HitFeedbackDirector.Update 4224 B in Kalabalik40 after the V6 / FP-arms suites): the scene
+        // stamp was only compared every RescanInterval, so a scene change was noticed up to 5 s late and the allocating Scan
+        // (FindObjectsOfType + .name reads) landed in steady play. The stamp is now read every frame (0 B) and a changed scene
+        // is scanned at once, then once more SettleFrames later (a world that finishes building over a few frames) — both
+        // inside a scene's first half second, never on a steady frame. Scan has its own ProfilerMarker.
+        public const int SettleFrames = 30;
+        private static readonly Unity.Profiling.ProfilerMarker s_scanMarker = new Unity.Profiling.ProfilerMarker("LanternFlames.Scan");
+        private int _settleFrame = -1;
         private int _sceneStamp = -1;
 
         public int Placed => _flames.Count;
@@ -140,22 +147,27 @@ namespace DD.Prototype.Feedback.Vfx
         {
             TickFlicker(now);
             TickLights(now);
-            if (_cards == null || now < _nextScan)
+            if (_cards == null)
             {
                 return;
             }
 
-            _nextScan = now + RescanInterval;
-            // One scan per scene (the FindObjectsOfType arrays allocate — never on a steady frame, ADR-037-1);
+            // One scan per scene + one settle scan (the FindObjectsOfType arrays allocate — never on a steady frame, ADR-037-1);
             // a scene with no lanterns is remembered as such.
             int stamp = UnityEngine.SceneManagement.SceneManager.GetActiveScene().handle + UnityEngine.SceneManagement.SceneManager.sceneCount * 7919;
-            if (stamp == _sceneStamp)
+            if (stamp != _sceneStamp)
             {
+                _sceneStamp = stamp;
+                _settleFrame = Time.frameCount + SettleFrames;
+                using (s_scanMarker.Auto()) Scan();
                 return;
             }
 
-            _sceneStamp = stamp;
-            Scan();
+            if (_settleFrame >= 0 && Time.frameCount >= _settleFrame)
+            {
+                _settleFrame = -1;
+                using (s_scanMarker.Auto()) Scan();
+            }
         }
 
         /// <summary>Find the lanterns and light them. Allocates (FindObjectsOfType) — once per world load.</summary>
