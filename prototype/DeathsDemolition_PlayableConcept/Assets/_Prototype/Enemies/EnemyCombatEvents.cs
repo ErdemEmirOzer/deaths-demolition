@@ -124,6 +124,14 @@ namespace DD.Prototype.Enemies
 
         public static event Action<EnemyCombatEventInfo> Raised;
 
+        /// <summary>
+        /// WP-076 R1-B (i): with domain reload off a stale subscriber of the last Play session would survive; the bus is cleared at
+        /// SubsystemRegistration. Every subscriber (FeatTracker, AudioEventRouter, GelSystem, VfxEventBinder, QaRunBot) re-arms with
+        /// the −= / += pattern after the scene starts, which runs after this reset.
+        /// </summary>
+        [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetRaisedDomain() => Raised = null;
+
         private static readonly int[] s_counts = new int[KindCount];
         private static int s_total;
         private static EnemyCombatEventInfo s_last;

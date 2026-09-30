@@ -31,6 +31,16 @@ namespace DD.Prototype.Enemies
 
         bool IChainTarget.CanChain => _alive && !_dying && !IsRising && _gel == GelState.None;
 
+        /// <summary>
+        /// WP-076 R1-B AI1 (S-02 handshake): the chain resolves its bodies first and shocks them hop by hop later; a body evicted or
+        /// removed in between can come back from the pool as a NEW zombie. Store <see cref="LifeId"/> at resolve time and pass it
+        /// here: a different life is refused (false). S-02 also checks <see cref="IsLife"/> before its hop damage / lethal landing.
+        /// </summary>
+        public bool ApplyShock(int transactionId, float seconds, int expectedLifeId) => IsLife(expectedLifeId) && ApplyShock(transactionId, seconds);
+
+        /// <summary>WP-076 R1-B AI1: this body is alive in the life <paramref name="lifeId"/> (from <see cref="LifeId"/> at resolve time).</summary>
+        public bool IsLife(int lifeId) => _alive && lifeId != 0 && _lifeId == lifeId;
+
         /// <summary>S-02's chain calls this for every body in the chain with the weapon's shock seconds.</summary>
         public bool ApplyShock(int transactionId, float seconds)
         {
@@ -48,7 +58,8 @@ namespace DD.Prototype.Enemies
         /// <summary>Die(): a chain kill / a kill while (or just after) shocked dies Electrocuted; returns true when the fall is held for the tremble's remainder.</summary>
         private bool BeginShockDeathHold(in DamageHit hit)
         {
-            bool shocked = hit.Source == DamageSourceKind.Chain || Time.time < _shockUntil + ShockDeathGraceSeconds;
+            // WP-076 R1-B AI7: _shockUntil starts at 0 — without the guard a kill in the first grace seconds of app time died Electrocuted
+            bool shocked = hit.Source == DamageSourceKind.Chain || (_shockUntil > 0f && Time.time < _shockUntil + ShockDeathGraceSeconds);
             if (!shocked) return false;
             _bodyStateOverride = ZombieBodyState.Electrocuted;
             float remaining = Mathf.Min(ShockDeathHoldMaxSeconds, _shockUntil - Time.time);

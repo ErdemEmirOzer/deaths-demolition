@@ -52,7 +52,10 @@ namespace DD.Prototype.Enemies
                 if (oldest == this) break;
                 CorpsesEvicted++;
                 if (oldest == null || !oldest._dying) { s_corpses.RemoveAt(0); if (oldest != null) oldest._inCorpseList = false; continue; }
-                oldest.Despawn();   // OnDespawned → UnregisterCorpse
+                // WP-076 R1-B AI5: take the entry out BEFORE Despawn — the loop must progress even when a Despawn does not unregister
+                // (an entry already out of the pool would otherwise hang the game here)
+                s_corpses.RemoveAt(0); oldest._inCorpseList = false;
+                oldest.Despawn();
             }
         }
 

@@ -14,6 +14,14 @@ namespace DD.Prototype.Enemies
 
         /// <summary>Ease-out speed at <paramref name="t"/> seconds: d(t) = D·(1 − (1 − t/T)²) → v = 2D/T·(1 − t/T).</summary>
         public float SpeedAt(float t) => Seconds <= 0f || t >= Seconds ? 0f : 2f * Distance / Seconds * (1f - t / Seconds);
+
+        /// <summary>WP-076 R1-B AI4: the eased distance covered by <paramref name="t"/> seconds, d(t) = D·(1 − (1 − t/T)²).</summary>
+        public float DistanceAt(float t)
+        {
+            if (Seconds <= 0f) return Distance;
+            float x = Mathf.Clamp01(t / Seconds);
+            return Distance * (1f - (1f - x) * (1f - x));
+        }
     }
 
     /// <summary>WP-076 §3.4: the knockback in progress, read by S-06 per frame (no event).</summary>

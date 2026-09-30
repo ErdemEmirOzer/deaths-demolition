@@ -119,7 +119,10 @@ namespace DD.Prototype.Enemies
             Vector3 v = Vector3.zero;
             if (_kbTime >= 0f && _kbTime < _kbProfile.Seconds)
             {
-                v += _kbDirection * _kbProfile.SpeedAt(_kbTime);
+                // WP-076 R1-B AI4: move by the eased delta D·(e(t+dt) − e(t)), not v(t)·dt (explicit Euler overshot the 0.6 m shove
+                // to 0.72 m at 20 fps and 0.62 m at 144 fps) — the total is exactly Distance at any frame rate.
+                float moved = _kbProfile.DistanceAt(_kbTime + dt) - _kbProfile.DistanceAt(_kbTime);
+                if (dt > 0f) v += _kbDirection * (moved / dt);
                 _kbTime += dt;
             }
 
