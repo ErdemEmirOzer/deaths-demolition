@@ -717,10 +717,15 @@ namespace DD.Prototype.Audio
                 semitones = WeaponFoleyV3.HandlingSemitones(audioId);
             }
 
-            if (sound == AudioSoundId.None || !_produced(sound))
+            if (sound == AudioSoundId.None)
+            {
+                return true;   // the weapon has no such action: silent by design
+            }
+
+            if (!_produced(sound))
             {
                 sound = AudioSoundId.None;
-                return true;
+                return false;   // R1-B A5: a missing v3 clip falls back to the A/B/C foley, not silence
             }
 
             placement = AudioMixPlan.WeaponFoley(sound);

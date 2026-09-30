@@ -181,6 +181,7 @@ namespace DD.Prototype.Audio
         private bool _active;
         private WeaponVoiceSet _set;
         private float _lastShot;
+        private int _lastShotFrame = -10;
         private float _interval;
         private int _shots;
         private Vector3 _position;
@@ -261,6 +262,7 @@ namespace DD.Prototype.Audio
             }
 
             _lastShot = now;
+            _lastShotFrame = Time.frameCount;
             _position = cue.Position;
             if (_loop.isPlaying)
             {
@@ -276,7 +278,10 @@ namespace DD.Prototype.Audio
         {
             // + this frame's delta: a hitch longer than the release window must not end a burst the weapon is still firing
             // (the next shot lands on the frame after the hitch; WP-051C flake, LoopStarts 2 in one burst).
-            if (_active && _set.IsHybrid && Time.time - _lastShot > (60f / _set.LoopRpm) * ReleasePeriods + Time.deltaTime)
+            // R1-B A1: and at least two frames without a shot — the director and the weapon have no execution order, so one slow
+            // frame (GC hitch, < 9 fps) must never read as a trigger release mid-string.
+            if (_active && _set.IsHybrid && Time.frameCount - _lastShotFrame >= 2
+                && Time.time - _lastShot > (60f / _set.LoopRpm) * ReleasePeriods + Time.deltaTime)
             {
                 Release();
             }

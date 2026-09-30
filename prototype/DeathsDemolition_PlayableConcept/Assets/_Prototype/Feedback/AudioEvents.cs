@@ -170,12 +170,14 @@ namespace DD.Prototype.Feedback
         }
 
         /// <summary>
-        /// WP-072: a weapon cue that names its weapon (WP-069 audioId). Same duplicate rule as <see cref="Raise"/>;
-        /// listeners that ignore <see cref="CombatAudioCue.WeaponAudioId"/> see an ordinary cue.
+        /// WP-072: a weapon cue that names its weapon (WP-069 audioId); listeners that ignore
+        /// <see cref="CombatAudioCue.WeaponAudioId"/> see an ordinary cue. Never duplicate-suppressed (R1-B A2): the weapon raises
+        /// one cue per shot, and at the 2.2× fire-rate tier (~30 ms) the 40 ms / 1.6 m rule dropped every other shot's transient
+        /// and loop count; the voice pool's retrigger and instance limits cap it.
         /// </summary>
         public static void RaiseWeapon(CombatAudioEvent evt, string weaponAudioId, Vector3 position, float intensity = 1f, int priority = 0)
         {
-            RaiseInternal(new CombatAudioCue(evt, position, intensity, priority, false, weaponAudioId), true);
+            RaiseInternal(new CombatAudioCue(evt, position, intensity, priority, false, weaponAudioId), false);
         }
 
         /// <summary>Bypasses duplicate suppression. Use for lifecycle events that must never be lost.</summary>

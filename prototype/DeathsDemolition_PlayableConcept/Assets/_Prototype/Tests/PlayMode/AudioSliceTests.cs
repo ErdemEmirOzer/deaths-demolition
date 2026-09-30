@@ -1705,6 +1705,52 @@ namespace DD.Prototype.Tests.PlayMode
 
         [UnityTest]
         [Timeout(120000)]
+        public IEnumerator AmbiyansYolu_V6Fp_YagmurSonrasi_SifirAyirma()
+        {
+            // DEC-088 GC 0 (S-06 30.09 profiler: PrototypeAudioDirector.Update 8 × ~51 B / 300 frames after V6 + FP) — the
+            // after-rain drip built a diagnosis string per drip. The ambience tick with every after-rain clock forced due (birds,
+            // eave drips, gusts, leaf drips, grove bed) on the default world, first-person camera, allocates nothing.
+            AfterRainAmbience ar = _d.Ambience.AfterRain;
+            Assert.IsTrue(AmbienceDirector.WetLook && AfterRainAmbience.SunnyAfterRain, "V6 ıslak görünüm + yağmur sonrası");
+            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.FirstPerson, true);
+            try
+            {
+                yield return new WaitForSecondsRealtime(0.5f);
+                for (int i = 0; i < 64; i++)
+                {
+                    ar.ForceDue();
+                    _d.Ambience.Tick(1f / 60f, false);
+                    _d.Router.Tick();
+                }
+
+                yield return null;
+                byte[] kontrol = null;
+                Assert.That(() => { kontrol = new byte[64 * 1024]; }, UnityEngine.TestTools.Constraints.Is.AllocatingGCMemory(), "Pozitif kontrol: GC ölçümü ayırmayı görmedi.");
+                GC.KeepAlive(kontrol);
+
+                // Past the drip retrigger window (0.25 s unscaled) so the measured ticks really play a drip, not only gate it.
+                yield return new WaitForSecondsRealtime(0.3f);
+                int damla = ar.EaveDripCount;
+                Assert.That(() =>
+                {
+                    for (int i = 0; i < 200; i++)
+                    {
+                        ar.ForceDue();
+                        _d.Ambience.Tick(1f / 60f, false);
+                        _d.Router.Tick();
+                    }
+                }, UnityEngine.TestTools.Constraints.Is.Not.AllocatingGCMemory(), "Ambiyans yolu (yağmur sonrası, V6 + FP) ayırdı — DEC-088 GC 0.");
+                Assert.Greater(ar.EaveDripCount, damla, "ölçüm penceresinde damla çaldı (yol gerçekten koştu)");
+                Debug.Log("[DD-TEST] wp072.gc ambience threadAlloc=none over 200 forced after-rain ticks · drips +" + (ar.EaveDripCount - damla) + " · " + ar.LastDrip);
+            }
+            finally
+            {
+                DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.TopDown, true);
+            }
+        }
+
+        [UnityTest]
+        [Timeout(120000)]
         public IEnumerator SesYolu_KararliDurumda_SifirAyirma()
         {
             // Isınma: her yolun ilk çağrısı (klip deck'i, sözlük girdisi) kabul edilir.

@@ -54,7 +54,18 @@ namespace DD.Prototype.Audio
         public AcousticSpace LastSpace { get; private set; }
 
         /// <summary>Diagnosis of the last eave drip (tests).</summary>
-        public string LastDrip { get; private set; } = "none";
+        /// <summary>
+        /// Diagnosis of the last eave drip (tests). Built only when read: the drip path runs in the director's Update and must not
+        /// allocate (DEC-088 GC 0 — S-06 30.09 profiler: 8 allocations / 300 frames from the old per-drip string).
+        /// </summary>
+        public string LastDrip => _dripKind < 0 ? "none"
+            : (_dripKind == 0 ? "eave" : _dripKind == 1 ? "inside" : "ring") + " at " + _dripAt + " d " + _dripDistance.ToString("0.0")
+              + (_dripOk ? " played" : " dropped " + (_pool != null ? _pool.Describe() : "no pool"));
+
+        private int _dripKind = -1;
+        private Vector3 _dripAt;
+        private float _dripDistance;
+        private bool _dripOk;
 
         private float Range(float a, float b) => a + (float)_rng.NextDouble() * (b - a);
 
@@ -91,7 +102,10 @@ namespace DD.Prototype.Audio
 
                 bool ok = Play(AudioSoundId.AmbEaveDrip, at, fighting ? 0.45f : 0.7f);
                 if (ok) EaveDripCount++;
-                LastDrip = (eave ? "eave" : inside ? "inside" : "ring") + " at " + at + " d " + Vector3.Distance(at, listener).ToString("0.0") + (ok ? " played" : " dropped " + (_pool != null ? _pool.Describe() + " last " + _pool.LastPlayedAt(AudioSoundId.AmbEaveDrip).ToString("0.000") + " now " + Time.unscaledTime.ToString("0.000") : "no pool"));
+                _dripKind = eave ? 0 : inside ? 1 : 2;
+                _dripAt = at;
+                _dripDistance = Vector3.Distance(at, listener);
+                _dripOk = ok;
             }
 
             TickGrove(dt, busGain, bedLevel, listener, bedGroup);

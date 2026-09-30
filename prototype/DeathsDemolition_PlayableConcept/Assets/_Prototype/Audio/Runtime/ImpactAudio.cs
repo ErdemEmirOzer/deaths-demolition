@@ -14,7 +14,7 @@ namespace DD.Prototype.Audio
     /// </summary>
     public sealed class ImpactAudio
     {
-        private const int PendingCapacity = 16;
+        private const int PendingCapacity = 64;   // R1-B A4: a shotgun volley / many-substep frame
         private const float SameHitMeters = 0.15f;
         private const float PelletRadius = 1.6f;
         private const float PelletWindow = 0.06f;
@@ -94,7 +94,13 @@ namespace DD.Prototype.Audio
         public bool TryHold(in CombatAudioCue cue)
         {
             // Only a live projectile can follow its legacy cue with an Impact; anything else (props, tests, hitscan) plays now.
-            if (!Active || ProjectileSystem.LiveCount == 0 || _heldCount >= PendingCapacity) return false;
+            if (!Active || ProjectileSystem.LiveCount == 0) return false;
+            if (_heldCount >= PendingCapacity)
+            {
+                HoldOverflow++;   // R1-B A4: its v3 impact is coming; playing the legacy cue now would double the hit
+                return true;
+            }
+
             _held[_heldCount++] = new Held { Cue = cue, Replaced = false };
             return true;
         }
@@ -112,8 +118,13 @@ namespace DD.Prototype.Audio
             return n;
         }
 
+        /// <summary>Legacy cues dropped because the hold queue was full (R1-B A4; tests / F1).</summary>
+        public int HoldOverflow { get; private set; }
+
         private void OnImpact(ProjectileImpactInfo info)
         {
+            // R1-B A3: the legacy hold keys on the whole v3 set (Active); a partial catalog must not play both on one hit.
+            if (!Active) return;
             if (info.Flesh || info.Armor || info.Kind == ProjectileKind.Rocket || info.Kind == ProjectileKind.Orb || info.Kind == ProjectileKind.Gel)
             {
                 return;

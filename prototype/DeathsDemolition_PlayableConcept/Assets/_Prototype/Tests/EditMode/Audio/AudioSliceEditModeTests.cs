@@ -834,6 +834,30 @@ namespace DD.Prototype.Tests.EditMode.Audio
         }
 
         [Test]
+        public void SilahAtesCuesu_TekrarBastirmasinaTakilmaz_YuksekAtesHizi()
+        {
+            // R1-B A2: the weapon raises one cue per shot; at the 2.2× rate tier two shots land within the 40 ms / 1.6 m window.
+            int gelen = 0, bastirilan = 0;
+            Action<CombatAudioCue> cue = c => { if (c.Event == CombatAudioEvent.ClassicWeaponFire) gelen++; };
+            Action<CombatAudioCue> bas = c => { if (c.Event == CombatAudioEvent.ClassicWeaponFire) bastirilan++; };
+            AudioEvents.Cue += cue;
+            AudioEvents.CueSuppressed += bas;
+            try
+            {
+                AudioEvents.RaiseWeapon(CombatAudioEvent.ClassicWeaponFire, "SMG1", Vector3.zero, 0.75f, 50);
+                AudioEvents.RaiseWeapon(CombatAudioEvent.ClassicWeaponFire, "SMG1", Vector3.zero, 0.75f, 50);
+            }
+            finally
+            {
+                AudioEvents.Cue -= cue;
+                AudioEvents.CueSuppressed -= bas;
+            }
+
+            Assert.AreEqual(2, gelen, "aynı anda / aynı yerde iki atış iki cue");
+            Assert.AreEqual(0, bastirilan, "silah cue'su bastırılmaz");
+        }
+
+        [Test]
         public void AkustikAlanlar_V6Haritasi_SalonKoridor_Histerezis_SahneYoksaOpen()
         {
             Debug.Log("[DD-TEST] wp072b6 " + AudioCatalogBuilder.BuildAcousticSpaces());
