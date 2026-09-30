@@ -47,6 +47,9 @@
 # (<dir>/extra-keys.txt) · 64 usage
 set -u
 source "${0:A:h}/dd-env.sh"
+# Codex-audit M-02(e) (C-00 30.09): argv is exact — `snapshot|restore <dir>` or `… <dir> --scope <s>`; anything else
+# (--scope=player, a stray or extra argument) is a usage error before anything is touched, never a silent scope=all.
+{ [ $# -eq 2 ] || { [ $# -eq 4 ] && [ "$3" = "--scope" ]; }; } || { echo "usage: userdata-guard.sh snapshot|restore <dir> [--scope all|editor|player]" >&2; exit 64; }
 CMD="${1:-}"; DIR="${2:-}"; SCOPE=all
 [ "${3:-}" = "--scope" ] && SCOPE="${4:-}"
 PLAYER_RE="${DD_GUARD_PLAYER_RE:-Contents/MacOS/(Deaths Demolition|DeathsDemolition)}"
