@@ -1213,3 +1213,18 @@ The remap service names controls in English. In Turkish the Controls pane reads 
 | `input.control.rightCtrl` | Right Control | Sağ Ctrl |
 | `input.control.leftAlt` | Left Alt | Sol Alt |
 | `input.control.rightAlt` | Right Alt | Sağ Alt |
+
+## S-09 · DEC-113 Round Report (C-00 01.10)
+
+DEC-113 (user 30.09): the "Round Report" meta node (replaces Magnet) adds one line to the round-end screen, information only: kills by type (Standard always, the other types when there were any), damage taken, gold collected and the average Elite kill time (`shop.report.none` with no sample). Parts joined by "  ·  ", numbers in the language's form; the kill time uses `stat.fmt.seconds`.
+
+| Key | en | tr |
+|---|---|---|
+| `shop.report.standard` | STANDARD {value} | STANDART {value} |
+| `shop.report.special` | SPECIAL {value} | ÖZEL {value} |
+| `shop.report.elite` | ELITE {value} | ELİT {value} |
+| `shop.report.ultra` | ULTRA {value} | ULTRA {value} |
+| `shop.report.damage` | DAMAGE TAKEN {value} | ALINAN HASAR {value} |
+| `shop.report.gold` | GOLD +{value} | ALTIN +{value} |
+| `shop.report.elite_ttk` | ELITE KILL TIME {value} | ELİT ÖLDÜRME SÜRESİ {value} |
+| `shop.report.none` | — | — |

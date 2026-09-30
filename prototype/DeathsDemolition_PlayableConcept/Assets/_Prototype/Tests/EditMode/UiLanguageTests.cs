@@ -554,6 +554,19 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void Dec113_RoundRaporu_TurlerSifirsizGorunur_ElitSuresiYoksaTire_TR_EN()
+        {
+            UiStrings.Language = UiStrings.English;
+            Assert.AreEqual("STANDARD 20  ·  ELITE 2  ·  DAMAGE TAKEN 45  ·  GOLD +62  ·  ELITE KILL TIME 4.2 s",
+                UiUpgradeCopy.RoundReport(20, 0, 2, 0, 44.6f, 62, 4.23f, 2));
+            Assert.AreEqual("STANDARD 0  ·  DAMAGE TAKEN 0  ·  GOLD +0  ·  ELITE KILL TIME —",
+                UiUpgradeCopy.RoundReport(0, 0, 0, 0, 0f, 0, 0f, 0), "an empty round still reads; no Elite sample is a dash");
+            UiStrings.Language = UiStrings.Turkish;
+            Assert.AreEqual("STANDART 20  ·  ÖZEL 5  ·  ELİT 2  ·  ULTRA 1  ·  ALINAN HASAR 45  ·  ALTIN +1250  ·  ELİT ÖLDÜRME SÜRESİ 4,2 sn",
+                UiUpgradeCopy.RoundReport(20, 5, 2, 1, 45f, 1250, 4.23f, 3));
+        }
+
+        [Test]
         public void Kozmetik_Kilitli_KosulSatirda_TR_EN_EskiGelistiriciMetniYok()
         {
             int checkedRows = 0;

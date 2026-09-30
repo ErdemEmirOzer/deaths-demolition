@@ -4074,5 +4074,37 @@
   "input.control.rightAlt": {
     "en": "Right Alt",
     "tr": "Sağ Alt"
+  },
+  "shop.report.standard": {
+    "en": "STANDARD {value}",
+    "tr": "STANDART {value}"
+  },
+  "shop.report.special": {
+    "en": "SPECIAL {value}",
+    "tr": "ÖZEL {value}"
+  },
+  "shop.report.elite": {
+    "en": "ELITE {value}",
+    "tr": "ELİT {value}"
+  },
+  "shop.report.ultra": {
+    "en": "ULTRA {value}",
+    "tr": "ULTRA {value}"
+  },
+  "shop.report.damage": {
+    "en": "DAMAGE TAKEN {value}",
+    "tr": "ALINAN HASAR {value}"
+  },
+  "shop.report.gold": {
+    "en": "GOLD +{value}",
+    "tr": "ALTIN +{value}"
+  },
+  "shop.report.elite_ttk": {
+    "en": "ELITE KILL TIME {value}",
+    "tr": "ELİT ÖLDÜRME SÜRESİ {value}"
+  },
+  "shop.report.none": {
+    "en": "—",
+    "tr": "—"
   }
 }

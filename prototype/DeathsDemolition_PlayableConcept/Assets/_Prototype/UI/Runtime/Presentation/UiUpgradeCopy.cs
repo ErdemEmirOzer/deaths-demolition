@@ -58,6 +58,30 @@ namespace DD.Prototype.UI
             return Intro(limit);
         }
 
+        /// <summary>
+        /// DEC-113 (user 30.09, "Round Report" meta node): the round's one-line summary on the round-end screen, information only.
+        /// Kills by type (Standard always, the other types when there were any), damage taken, gold collected and the average
+        /// Elite kill time ("—" with no sample). Numbers in the language's form (UiStrings.Number).
+        /// </summary>
+        public static string RoundReport(int standard, int special, int elite, int ultra, float damageTaken, int goldIncome,
+            float eliteTtkAverage, int eliteTtkSamples)
+        {
+            var parts = new System.Collections.Generic.List<string>(7)
+            {
+                UiStrings.Format("shop.report.standard", "value", Number(Mathf.Max(0, standard)), "STANDARD {value}")
+            };
+            if (special > 0) parts.Add(UiStrings.Format("shop.report.special", "value", Number(special), "SPECIAL {value}"));
+            if (elite > 0) parts.Add(UiStrings.Format("shop.report.elite", "value", Number(elite), "ELITE {value}"));
+            if (ultra > 0) parts.Add(UiStrings.Format("shop.report.ultra", "value", Number(ultra), "ULTRA {value}"));
+            parts.Add(UiStrings.Format("shop.report.damage", "value", Number(Mathf.Max(0, Mathf.RoundToInt(damageTaken))), "DAMAGE TAKEN {value}"));
+            parts.Add(UiStrings.Format("shop.report.gold", "value", Number(Mathf.Max(0, goldIncome)), "GOLD +{value}"));
+            string ttk = eliteTtkSamples > 0
+                ? UiStrings.Format("stat.fmt.seconds", "value", UiStrings.Number(Mathf.Max(0f, eliteTtkAverage), "0.0"), "{value} s")
+                : UiStrings.Get("shop.report.none", "—");
+            parts.Add(UiStrings.Format("shop.report.elite_ttk", "value", ttk, "ELITE KILL TIME {value}"));
+            return string.Join("  ·  ", parts);
+        }
+
         public static string Choose(int limit) => UiStrings.Format("shop.note.choose_many", "count", CountWord(limit),
             "Choose up to {count} upgrades, or reroll once first, then continue.");
 
