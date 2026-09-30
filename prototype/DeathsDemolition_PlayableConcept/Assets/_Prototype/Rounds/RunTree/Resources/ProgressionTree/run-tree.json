@@ -681,12 +681,17 @@
     "id": "cap_ar_2",
     "shortName": "Third Eye",
     "displayName": "Third Eye",
-    "description": "If the 3rd round of a burst hits a head, it ricochets in a chain.",
+    "description": "The 3rd round of every burst hits 30% harder and arcs to a nearby enemy.",
     "effectId": "cap.ar_2",
     "cost": 380,
     "offerWeight": 2.0,
     "effectValue": 0.0,
-    "args": []
+    "args": [
+     {
+      "name": "value",
+      "value": 30
+     }
+    ]
    }
   },
   {
@@ -747,7 +752,7 @@
     "id": "cap_smg_2",
     "shortName": "Thunder Fang",
     "displayName": "Lightning Fang",
-    "description": "Every 3rd hit on a staggered target chains for sure.",
+    "description": "Staggered targets take 25% more damage from it; every 3rd hit on them chains for sure.",
     "effectId": "cap.smg_2",
     "cost": 380,
     "offerWeight": 2.0,
@@ -756,6 +761,10 @@
      {
       "name": "count",
       "value": 3
+     },
+     {
+      "name": "value",
+      "value": 25
      }
     ]
    }
@@ -962,12 +971,17 @@
     "id": "cap_lmg_2",
     "shortName": "Black Iron",
     "displayName": "Black Iron",
-    "description": "A round that breaks a plate passes to the body behind at full damage.",
+    "description": "A zombie whose plate it breaks staggers for 0.35 s.",
     "effectId": "cap.lmg_2",
     "cost": 380,
     "offerWeight": 2.0,
     "effectValue": 0.0,
-    "args": []
+    "args": [
+     {
+      "name": "seconds",
+      "value": 0.35
+     }
+    ]
    }
   },
   {

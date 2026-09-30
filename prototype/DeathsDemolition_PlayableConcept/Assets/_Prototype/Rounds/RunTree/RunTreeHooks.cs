@@ -72,13 +72,20 @@ namespace DD.Prototype.Rounds
         /// <summary>ks.armorbreak.plate: the factor on what a plate takes; ×N only while the plate is untouched.</summary>
         public static float PlateHitScale(bool plateUntouched) => plateUntouched ? V.PlateFirstHitMultiplier : 1f;
 
-        /// <summary>ks.impact.stagger: the factor on damage to a body that is staggering right now.</summary>
+        /// <summary>
+        /// ks.impact.stagger, and cap.smg_2 Lightning Fang for an smg_2 hit (DEC-112, additive): the factor on damage to a
+        /// body that is staggering from a hit right now (the Black Iron tree stagger feeds no bonus — IsHitStaggering).
+        /// </summary>
         public static float StaggeredScale(ZombieEnemy body)
         {
+            if (body == null) return 1f;
             float bonus = V.StaggeredDamageBonus;
-            if (bonus <= 0f || body == null) return 1f;
+            float fang = DamageHitContext.FromClassicWeapon ? LightningFangBonus(DamageHitContext.Weapon) : 0f;
+            if (bonus <= 0f && fang <= 0f) return 1f;
             ZombieAnimator animator = body.Animator;
-            return animator != null && animator.IsStaggering ? 1f + bonus : 1f;
+            if (animator == null || !animator.IsHitStaggering) return 1f;
+            if (fang > 0f) RaiseCapstoneProc(CapstoneProcKind.LightningFangBonus, DamageHitContext.Weapon, body.transform.position, body);
+            return 1f + Mathf.Max(0f, bonus) + fang;
         }
 
         // ------------------------------------------------------------------ body lane

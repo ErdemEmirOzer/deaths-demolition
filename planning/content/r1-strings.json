@@ -832,8 +832,8 @@
     "tr": "Üçüncü Göz"
   },
   "tree.run.cap.ar_2.desc": {
-    "en": "When a burst's third round hits the head, it ricochets on down the line.",
-    "tr": "Salvonun üçüncü mermisi kafaya isabet ederse zincirleme seker."
+    "en": "The 3rd round of every burst hits {value}% harder and arcs to a nearby enemy.",
+    "tr": "Her salvonun 3. mermisi %{value} daha sert vurur ve yakındaki bir düşmana sıçrar."
   },
   "tree.run.seal.ar_2.name": {
     "en": "Kubi",
@@ -896,8 +896,8 @@
     "tr": "Yıldırım Dişi"
   },
   "tree.run.cap.smg_2.desc": {
-    "en": "One hit in every {count} on a staggered target is a sure Chain.",
-    "tr": "Sendeleyen hedefe her {count}. isabet kesin Zincir olur."
+    "en": "Staggered targets take {value}% more damage from it; one hit in every {count} on them is a sure Chain.",
+    "tr": "Sendeleyen hedef bu silahtan %{value} fazla hasar alır; ona her {count}. isabet kesin Zincir olur."
   },
   "tree.run.seal.smg_2.name": {
     "en": "Tsuchi",
@@ -1024,8 +1024,8 @@
     "tr": "Kara Demir"
   },
   "tree.run.cap.lmg_2.desc": {
-    "en": "A round that breaks a plate carries full damage into the body behind.",
-    "tr": "Plaka kıran mermi arkadaki gövdeye tam hasarla geçer."
+    "en": "A zombie whose plate it breaks staggers for 0.35 s.",
+    "tr": "Plakasını kırdığı zombi 0,35 sn sendeler."
   },
   "tree.run.seal.lmg_2.name": {
     "en": "Ishizue",

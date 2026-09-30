@@ -200,8 +200,10 @@ def weapon_node(slot, which, a, m, w, st):
         m["burst_delay"] = 1 - a["value"] / 100.0
     elif k == ("ar_2", "y"):
         m["burst_n"] = int(a["value"])
-    elif k == ("ar_2", "cap"):
-        m["chain_bonus_share"] = head_share() / 3.0  # the 3rd round of a burst on a head chains
+    elif k == ("ar_2", "cap"):                     # DEC-112: every burst's 3rd round +value % and chains (no head condition)
+        n = m.get("burst_n", w["bn"])
+        m["dmg"] *= 1 + a["value"] / 100.0 / n
+        m["chain_bonus_share"] = 1.0 / n
     elif k == ("smg_2", "seal"):
         m["stag_bonus"] += 0.0                     # stagger 0.45 -> 0.7 s: control, DPS only via ks_impact
         m["stag_up"] = 0.7 / 0.45
@@ -209,7 +211,8 @@ def weapon_node(slot, which, a, m, w, st):
         m["stag_up"] = m.get("stag_up", 1.0) * (1 + a["value"] / 100.0)
     elif k == ("smg_2", "y"):
         m["fr"] *= 1 + a["value"] / 100.0
-    elif k == ("smg_2", "cap"):
+    elif k == ("smg_2", "cap"):                    # DEC-112: + value % on a staggered body (adds to ks_impact), chain kept
+        m["stag_bonus"] += a["value"] / 100.0 * STAGGER_UPTIME
         m["chain_bonus_share"] = STAGGER_UPTIME / a["count"]
     elif k == ("sg_2", "seal"):
         m["double_trigger"] = True                 # both barrels on one trigger: same DPS, burst front-loaded
@@ -234,7 +237,7 @@ def weapon_node(slot, which, a, m, w, st):
     elif k == ("lmg_2", "y"):
         m["first_n"] = int(a["count"]); m["first_bonus"] = a["value"] / 100.0
     elif k == ("lmg_2", "cap"):
-        m["plate_pass"] = True
+        pass                                       # DEC-112: a plate break staggers the body 0.35 s — survival, no DPS
     elif k == ("sr_1", "seal"):
         m["arm_ignore"] = max(m["arm_ignore"], head_share())
     elif k == ("sr_1", "x"):
@@ -334,8 +337,6 @@ def eff_hp(world, w, m, tier, r, slot):
         eff = dur / mult
         if m["plate_x2"] and per_shot > 0:
             eff -= min(eff, w["dmg"] * m["dmg"])                  # the first hit counts double
-        if m.get("plate_pass"):
-            eff *= 0.85                                            # lmg_2 cap: the breaking round is not lost
         tot += eff
     tot *= 1 - m["arm_ignore"]
     if m["extra_on_plate"]:

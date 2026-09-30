@@ -53,9 +53,10 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsFalse(RunTreeHooks.IgnoresArmor(ClassicWeaponId.Sr1, BodyRegion.Head, 0, 1));
             Assert.AreEqual(1f, RunTreeHooks.CloseRangeScale(ClassicWeaponId.Sg2, 1f));
             Assert.IsFalse(RunTreeHooks.AshWallApplies(ClassicWeaponId.CombatShotgun, 1f));
-            Assert.IsFalse(RunTreeHooks.BlackIronPasses(ClassicWeaponId.Lmg2, true));
+            Assert.IsFalse(RunTreeHooks.BlackIronStaggers(ClassicWeaponId.Lmg2, true));
             for (int i = 0; i < 6; i++) Assert.IsFalse(RunTreeHooks.LightningFangChains(ClassicWeaponId.Smg2, true));
-            Assert.IsFalse(RunTreeHooks.ThirdEyeChains(ClassicWeaponId.Ar2, 3, BodyRegion.Head));
+            Assert.AreEqual(0f, RunTreeHooks.LightningFangBonus(ClassicWeaponId.Smg2));
+            Assert.IsFalse(RunTreeHooks.ThirdEyeStrikes(ClassicWeaponId.Ar2, 3));
             Assert.IsFalse(RunTreeHooks.RoninMarkRound(ClassicWeaponId.AssaultRifle, 5));
             Assert.AreEqual(0.45f, RunTreeHooks.StaggerSecondsFor(ClassicWeaponId.Smg2, 0.45f));
             Assert.IsFalse(RunTreeHooks.RunnerFalls(ClassicWeaponId.Smg2, EnemyTier.Special));
@@ -90,9 +91,9 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsFalse(RunTreeHooks.RunnerFalls(ClassicWeaponId.Smg2, EnemyTier.Special));
             Assert.IsFalse(RunTreeHooks.HibanaFor(ClassicWeaponId.Rl1, out _, out _));
             Assert.AreEqual(0, RunTreeHooks.RocketSplitCount(ClassicWeaponId.Rl1));
-            Assert.IsFalse(RunTreeHooks.BlackIronPasses(ClassicWeaponId.Lmg2, true));
+            Assert.IsFalse(RunTreeHooks.BlackIronStaggers(ClassicWeaponId.Lmg2, true));
             Assert.IsFalse(RunTreeHooks.AshWallApplies(ClassicWeaponId.CombatShotgun, 1f));
-            Assert.IsFalse(RunTreeHooks.ThirdEyeChains(ClassicWeaponId.Ar2, 3, BodyRegion.Head));
+            Assert.IsFalse(RunTreeHooks.ThirdEyeStrikes(ClassicWeaponId.Ar2, 3));
             Assert.IsFalse(RunTreeHooks.RoninMarkRound(ClassicWeaponId.AssaultRifle, 5));
             Assert.IsFalse(RunTreeHooks.IgnoresArmor(ClassicWeaponId.Ar2, BodyRegion.Head, 0, 1), "sr_1 mührü ar_2 kafasına işlemez");
 
@@ -155,7 +156,7 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
-        public void Bitirici_ar_2_UcuncuMermiKafadaZincir()
+        public void Bitirici_ar_2_DEC112_HerSerininUcuncuMermisiSertVurupZincirler()
         {
             Sahip(ClassicWeaponId.Ar2, "cap_ar_2");
             Assert.AreEqual(1, RunTreeHooks.NextBurstOrdinal(10f));
@@ -163,10 +164,41 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(3, RunTreeHooks.NextBurstOrdinal(10.10f));
             Assert.AreEqual(1, RunTreeHooks.NextBurstOrdinal(10.36f), "0,26 s ara: yeni seri");
 
-            Assert.IsTrue(RunTreeHooks.ThirdEyeChains(ClassicWeaponId.Ar2, 3, BodyRegion.Head));
-            Assert.IsFalse(RunTreeHooks.ThirdEyeChains(ClassicWeaponId.Ar2, 3, BodyRegion.UpperBody), "kafa değil");
-            Assert.IsFalse(RunTreeHooks.ThirdEyeChains(ClassicWeaponId.Ar2, 2, BodyRegion.Head), "3. mermi değil");
-            Assert.IsFalse(RunTreeHooks.ThirdEyeChains(ClassicWeaponId.Smg2, 3, BodyRegion.Head), "başka silah");
+            Assert.IsTrue(RunTreeHooks.ThirdEyeStrikes(ClassicWeaponId.Ar2, 3), "kafa şartı yok (DEC-112)");
+            Assert.IsFalse(RunTreeHooks.ThirdEyeStrikes(ClassicWeaponId.Ar2, 2), "3. mermi değil");
+            Assert.IsFalse(RunTreeHooks.ThirdEyeStrikes(ClassicWeaponId.Smg2, 3), "başka silah");
+            Assert.AreEqual(1.3f, RunTreeHooks.ThirdEyeScale(), 1e-5f, "+%30 (kart args)");
+
+            // Vuruş yolu: 3. mermi gövdeye (kafa değil) +%30 ve zincir bayrağı; olay ilk gövdede bir kez.
+            int olay = 0;
+            CapstoneProcInfo son = default;
+            System.Action<CapstoneProcInfo> dinle = e => { olay++; son = e; };
+            RunTreeHooks.CapstoneProc += dinle;
+            try
+            {
+                var hedef = new DamageTarget { Id = 7 };
+                var isabet = new DD.Prototype.Damage.DamageResult { HealthDamage = 5f };
+                var p = new ProjectileState { WeaponId = ClassicWeaponId.Ar2, TreeOrdinal = 3 };
+                p.TouchedCount = 1;   // ilk gövde (BeforeTreeHit anında sayılmış)
+                Assert.AreEqual(1.3f, RunTreeHooks.BeforeTreeHit(ref p, in hedef, BodyRegion.UpperBody, Vector3.one), 1e-5f);
+                Assert.AreEqual(RunTreeHooks.TreeHitChain, RunTreeHooks.AfterTreeHit(ref p, in hedef, BodyRegion.UpperBody, Vector3.one, Vector3.forward, in isabet) & RunTreeHooks.TreeHitChain);
+                Assert.AreEqual(1, olay);
+                Assert.AreEqual(CapstoneProcKind.ThirdEyeArc, son.Kind);
+                Assert.AreEqual(ClassicWeaponId.Ar2, son.Weapon);
+                Assert.AreEqual(Vector3.one, son.Point);
+
+                p.TouchedCount = 2;
+                RunTreeHooks.BeforeTreeHit(ref p, in hedef, BodyRegion.UpperBody, Vector3.one);
+                Assert.AreEqual(1, olay, "delip geçtiği ikinci gövdede olay yok");
+
+                var ikinci = new ProjectileState { WeaponId = ClassicWeaponId.Ar2, TreeOrdinal = 2 };
+                Assert.AreEqual(1f, RunTreeHooks.BeforeTreeHit(ref ikinci, in hedef, BodyRegion.Head, Vector3.one), "2. mermi normal");
+                Assert.AreEqual(0, RunTreeHooks.AfterTreeHit(ref ikinci, in hedef, BodyRegion.Head, Vector3.one, Vector3.forward, in isabet) & RunTreeHooks.TreeHitChain);
+            }
+            finally
+            {
+                RunTreeHooks.CapstoneProc -= dinle;
+            }
 
             var chain = new ShotRequest();
             RunTreeHooks.ForcedChainRequest(ref chain);
@@ -210,6 +242,11 @@ namespace DD.Prototype.Tests.EditMode
             }
 
             Assert.IsFalse(RunTreeHooks.LightningFangChains(ClassicWeaponId.AutoSmg, true), "smg_1 sayılmaz");
+
+            // DEC-112: sendeleyen gövde smg_2'den +%25 alır (StaggeredScale'de ks.impact ile toplanır).
+            Assert.AreEqual(0.25f, RunTreeHooks.LightningFangBonus(ClassicWeaponId.Smg2), 1e-5f);
+            Assert.AreEqual(0f, RunTreeHooks.LightningFangBonus(ClassicWeaponId.AutoSmg), "başka silah");
+            Assert.AreEqual(1f, RunTreeHooks.StaggeredScale(null), "gövde yok");
         }
 
         // ------------------------------------------------------------------ sg_1 / sg_2 / lmg_2
@@ -264,12 +301,20 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
-        public void Bitirici_lmg_2_ZirhKiranMermiArkayaGecer()
+        public void Bitirici_lmg_2_DEC112_ZirhKirinciSendeletirHasarVeGecisYok()
         {
             Sahip(ClassicWeaponId.Lmg2, "cap_lmg_2");
-            Assert.IsTrue(RunTreeHooks.BlackIronPasses(ClassicWeaponId.Lmg2, true));
-            Assert.IsFalse(RunTreeHooks.BlackIronPasses(ClassicWeaponId.Lmg2, false), "plaka kırılmadı");
-            Assert.IsFalse(RunTreeHooks.BlackIronPasses(ClassicWeaponId.Lmg1, true), "başka silah");
+            Assert.IsTrue(RunTreeHooks.BlackIronStaggers(ClassicWeaponId.Lmg2, true));
+            Assert.IsFalse(RunTreeHooks.BlackIronStaggers(ClassicWeaponId.Lmg2, false), "plaka kırılmadı");
+            Assert.IsFalse(RunTreeHooks.BlackIronStaggers(ClassicWeaponId.Lmg1, true), "başka silah");
+
+            // Zombi olmayan alıcı: sendeleme yok, eski geçiş (TargetsLeft++ / TreeHitKeepDamage) ve hasar çarpanı yok.
+            var hedef = new DamageTarget { Id = 3 };
+            var kirdi = new DD.Prototype.Damage.DamageResult { ArmorDamage = 10f, ArmorBroke = true };
+            var p = new ProjectileState { WeaponId = ClassicWeaponId.Lmg2, TargetsLeft = 1 };
+            Assert.AreEqual(1f, RunTreeHooks.BeforeTreeHit(ref p, in hedef, BodyRegion.UpperBody, Vector3.zero));
+            Assert.AreEqual(0, RunTreeHooks.AfterTreeHit(ref p, in hedef, BodyRegion.UpperBody, Vector3.zero, Vector3.forward, in kirdi));
+            Assert.AreEqual(1, p.TargetsLeft, "geçiş kalktı");
         }
 
         // ------------------------------------------------------------------ rl_1 / Ash Cloud

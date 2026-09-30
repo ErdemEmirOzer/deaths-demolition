@@ -277,7 +277,7 @@ Key: `tree.run.<id>.name` / `.desc`. Names ≤ 22 characters in both languages (
 | `seal.ar_1` | WeaponSeal | Kodo | Kodo | After {count} shots in a row, bloom −{value}%. | Art arda {count} atıştan sonra yayılma artışı −%{value}. | WP-069 §6 keystone |
 | `fork.ar_2.x` | Fork | Tight Burst | Sıkı Salvo | Delay between bursts −{value}%. | Salvolar arası bekleme −%{value}. | WP-077 §2.4 fork X |
 | `fork.ar_2.y` | Fork | Long Burst | Uzun Salvo | Each burst fires {value} rounds instead of {base}. | Her salvo {base} yerine {value} mermi atar. | WP-077 §2.4 fork Y |
-| `cap.ar_2` | Capstone | Third Eye | Üçüncü Göz | When a burst's third round hits the head, it ricochets on down the line. | Salvonun üçüncü mermisi kafaya isabet ederse zincirleme seker. | WP-077 §2.4 capstone |
+| `cap.ar_2` | Capstone | Third Eye | Üçüncü Göz | The 3rd round of every burst hits {value}% harder and arcs to a nearby enemy. | Her salvonun 3. mermisi %{value} daha sert vurur ve yakındaki bir düşmana sıçrar. | WP-077 §2.4 capstone · DEC-112 |
 | `seal.ar_2` | WeaponSeal | Kubi | Kubi | Headshot bonus ×{base} → ×{value}. | Kafa isabeti ek çarpanı ×{base} → ×{value}. | WP-069 §6 keystone |
 | `fork.smg_1.x` | Fork | Twin Grip | Çift Kabza | Magazine ×{value}. | Şarjör ×{value}. | WP-077 §2.4 fork X |
 | `fork.smg_1.y` | Fork | Hot Barrel | Kızgın Namlu | Warm-Up starts after {seconds} s of fire. | Isınma {seconds} sn ateşten sonra başlar. | WP-077 §2.4 fork Y |
@@ -285,7 +285,7 @@ Key: `tree.run.<id>.name` / `.desc`. Names ≤ 22 characters in both languages (
 | `seal.smg_1` | WeaponSeal | Kaze | Kaze | Move speed while firing ×{value}. | Ateş ederken hareket hızı ×{value}. | WP-069 §6 keystone |
 | `fork.smg_2.x` | Fork | Heavy Core | Ağır Çekirdek | Stagger lasts {value}% longer. | Sendeleme %{value} uzun sürer. | WP-077 §2.4 fork X |
 | `fork.smg_2.y` | Fork | Quick Hammer | Hızlı Çekiç | Fire rate +{value}%. | Atış hızı +%{value}. | WP-077 §2.4 fork Y |
-| `cap.smg_2` | Capstone | Lightning Fang | Yıldırım Dişi | One hit in every {count} on a staggered target is a sure Chain. | Sendeleyen hedefe her {count}. isabet kesin Zincir olur. | WP-077 §2.4 capstone |
+| `cap.smg_2` | Capstone | Lightning Fang | Yıldırım Dişi | Staggered targets take {value}% more damage from it; one hit in every {count} on them is a sure Chain. | Sendeleyen hedef bu silahtan %{value} fazla hasar alır; ona her {count}. isabet kesin Zincir olur. | WP-077 §2.4 capstone · DEC-112 |
 | `seal.smg_2` | WeaponSeal | Tsuchi | Tsuchi | Stagger {base} → {value}. A Runner hit hard goes down. | Sendeletme {base} → {value}. Sert vurulan Runner yere düşer. | WP-069 §6 keystone |
 | `fork.sg_1.x` | Fork | Tight Choke | Sıkı Saçma | Spread −{value}%. | Yayılma −%{value}. | WP-077 §2.4 fork X |
 | `fork.sg_1.y` | Fork | Heavy Load | Geniş Saçma | +{count} pellets per shell. | Fişek başına +{count} saçma. | WP-077 §2.4 fork Y |
@@ -301,7 +301,7 @@ Key: `tree.run.<id>.name` / `.desc`. Names ≤ 22 characters in both languages (
 | `seal.lmg_1` | WeaponSeal | Nagaya | Nagaya | Magazine {base} → {value}. | Şarjör {base} → {value}. | WP-069 §6 keystone |
 | `fork.lmg_2.x` | Fork | Hot Box | Kızgın Kutu | Fire rate +{value}%. | Atış hızı +%{value}. | WP-077 §2.4 fork X |
 | `fork.lmg_2.y` | Fork | Cold Barrel | Soğuk Namlu | The first {count} rounds after a reload deal +{value}%. | Dolumdan sonraki ilk {count} mermi +%{value} hasar verir. | WP-077 §2.4 fork Y |
-| `cap.lmg_2` | Capstone | Black Iron | Kara Demir | A round that breaks a plate carries full damage into the body behind. | Plaka kıran mermi arkadaki gövdeye tam hasarla geçer. | WP-077 §2.4 capstone |
+| `cap.lmg_2` | Capstone | Black Iron | Kara Demir | A zombie whose plate it breaks staggers for 0.35 s. | Plakasını kırdığı zombi 0,35 sn sendeler. | WP-077 §2.4 capstone · DEC-112 |
 | `seal.lmg_2` | WeaponSeal | Ishizue | Ishizue | Settles in {value} shots instead of {base}, and tighter. | {base} yerine {value} atışta ve daha sıkı oturur. | WP-069 §6 keystone |
 | `fork.sr_1.x` | Fork | Hold Breath | Nefes Tut | Wait {seconds} s before the shot for ×{value} damage. | Atıştan önce {seconds} sn bekle, ×{value} hasar. | WP-077 §2.4 fork X |
 | `fork.sr_1.y` | Fork | Quick Bolt | Hızlı Sürgü | Fire rate +{value}%. | Atış hızı +%{value}. | WP-077 §2.4 fork Y |

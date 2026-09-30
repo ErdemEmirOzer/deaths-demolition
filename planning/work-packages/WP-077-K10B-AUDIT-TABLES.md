@@ -18,10 +18,10 @@ TTK = sustained seconds per kill (shots × magazine cycle / magazine) vs one tar
 | ar_2 | P+R+FR | R1 | — | 39 | 73 | 0.99 | — | — | — |
 | ar_2 | P+R+FR | R3 | P1 R1 FR1 | 42 | 92 | 0.96 | 0.96 | — | — |
 | ar_2 | P+R+FR | R5 | P2 R2 FR1 KS2 | 43 | 139 | 1.19 | 0.96 | 2.63 | — |
-| ar_2 | P+R+FR | R8 | P2 R2 FR2 KS2 S FX C H3 | 52 | 163 | 1.51 | 1.30 | 2.81 | 5.62 |
-| ar_2 | P+R+FR | R10 | P3 R3 FR3 KS3 S FX C H7 | 61 | 204 | 1.22 | 1.02 | 2.64 | 5.48 |
-| ar_2 | P+R+FR | R12 | P4 R4 FR5 KS3 S FX C H9 | 65 | 269 | 1.20 | 1.20 | 2.79 | 5.78 |
-| ar_2 | P+R+FR | R15 | P4 R4 FR5 KS3 S FX C H16 | 73 | 301 | 1.40 | 1.20 | 2.79 | 5.78 |
+| ar_2 | P+R+FR | R8 | P2 R2 FR2 KS2 S FX C H3 | 57 | 189 | 1.30 | 1.08 | 2.60 | 4.97 |
+| ar_2 | P+R+FR | R10 | P3 R3 FR3 KS3 S FX C H7 | 67 | 236 | 1.22 | 1.02 | 2.44 | 4.87 |
+| ar_2 | P+R+FR | R12 | P4 R4 FR5 KS3 S FX C H9 | 71 | 309 | 1.20 | 1.00 | 2.59 | 5.18 |
+| ar_2 | P+R+FR | R15 | P4 R4 FR5 KS3 S FX C H16 | 81 | 345 | 1.20 | 1.00 | 2.59 | 5.38 |
 | smg_1 | C+R+FR | R1 | — | 34 | 59 | 0.90 | — | — | — |
 | smg_1 | C+R+FR | R3 | C1 R1 FR1 | 37 | 97 | 1.08 | 0.97 | — | — |
 | smg_1 | C+R+FR | R5 | C2 R2 FR1 KS1 | 39 | 158 | 1.19 | 1.08 | 2.91 | — |
@@ -32,10 +32,10 @@ TTK = sustained seconds per kill (shots × magazine cycle / magazine) vs one tar
 | smg_2 | I+C+FR | R1 | I1 | 37 | 73 | 0.79 | — | — | — |
 | smg_2 | I+C+FR | R3 | I1 C1 FR1 | 41 | 102 | 0.95 | 0.95 | — | — |
 | smg_2 | I+C+FR | R5 | I2 C2 FR1 KS2 | 44 | 152 | 1.14 | 0.95 | 2.66 | — |
-| smg_2 | I+C+FR | R8 | I2 C2 FR2 KS2 S FX C H3 | 53 | 179 | 1.47 | 1.28 | 2.75 | 5.32 |
-| smg_2 | I+C+FR | R10 | I3 C3 FR3 KS3 S FX C H6 | 62 | 219 | 1.19 | 1.02 | 2.55 | 5.26 |
-| smg_2 | I+C+FR | R12 | I4 C3 FR5 KS3 S FX C H10 | 71 | 247 | 1.13 | 0.96 | 2.57 | 5.15 |
-| smg_2 | I+C+FR | R15 | I4 C3 FR5 KS3 S FX C H16 | 80 | 272 | 1.29 | 1.13 | 2.57 | 5.31 |
+| smg_2 | I+C+FR | R8 | I2 C2 FR2 KS2 S FX C H3 | 62 | 207 | 1.28 | 1.10 | 2.38 | 4.59 |
+| smg_2 | I+C+FR | R10 | I3 C3 FR3 KS3 S FX C H6 | 72 | 254 | 1.02 | 0.85 | 2.21 | 4.41 |
+| smg_2 | I+C+FR | R12 | I4 C3 FR5 KS3 S FX C H10 | 82 | 287 | 0.96 | 0.96 | 2.25 | 4.34 |
+| smg_2 | I+C+FR | R15 | I4 C3 FR5 KS3 S FX C H16 | 92 | 316 | 1.13 | 0.96 | 2.25 | 4.50 |
 | sg_1 | X+P+RS | R1 | — | 18 | 30 | 2.89 | — | — | — |
 | sg_1 | X+P+RS | R3 | X1 P1 RS1 | 23 | 60 | 2.74 | 2.74 | — | — |
 | sg_1 | X+P+RS | R5 | X2 P2 RS1 KS1 | 31 | 122 | 2.74 | 1.37 | 4.11 | — |
@@ -86,13 +86,13 @@ TTK = sustained seconds per kill (shots × magazine cycle / magazine) vs one tar
 | R5 | Standard | 1.19 | lmg_2 0.68 | rl_1 4.28 | 6.3 | sg_1 2.74, lmg_2 0.68, rl_1 4.28 |
 | R5 | Elite | 2.79 | lmg_2 1.36 | rl_1 4.28 | 3.1 | lmg_2 1.36, rl_1 4.28 |
 | R10 | Standard | 1.20 | lmg_2 0.53 | rl_1 4.28 | 8.1 | lmg_2 0.53, rl_1 4.28 |
-| R10 | Elite | 2.36 | lmg_2 1.24 | rl_1 4.28 | 3.5 | sg_2 1.58, lmg_2 1.24, rl_1 4.28 |
-| R10 | Ultra | 4.49 | lmg_2 2.65 | ar_2 5.48 | 2.1 | lmg_2 2.65 |
-| R15 | Standard | 1.30 | lmg_2 0.64 | rl_1 4.28 | 6.6 | lmg_1 0.84, lmg_2 0.64, rl_1 4.28 |
-| R15 | Elite | 2.18 | lmg_2 1.29 | rl_1 4.28 | 3.3 | lmg_2 1.29, rl_1 4.28 |
+| R10 | Elite | 2.28 | lmg_2 1.24 | rl_1 4.28 | 3.5 | lmg_2 1.24, rl_1 4.28 |
+| R10 | Ultra | 4.35 | lmg_2 2.65 | smg_1 5.40 | 2.0 | lmg_2 2.65 |
+| R15 | Standard | 1.16 | lmg_2 0.64 | rl_1 4.28 | 6.6 | lmg_2 0.64, rl_1 4.28 |
+| R15 | Elite | 2.17 | lmg_2 1.29 | rl_1 4.28 | 3.3 | lmg_2 1.29, rl_1 4.28 |
 | R15 | Ultra | 4.24 | lmg_2 2.74 | sr_1 6.54 | 2.4 | lmg_2 2.74, sr_1 6.54 |
 
-Crowd DPS at R10 (swarm throughput, round build): rl_1 877, sg_2 634, sg_1 524, lmg_1 362, smg_1 293, lmg_2 261, smg_2 219, ar_2 204, ar_1 201, sr_1 177
+Crowd DPS at R10 (swarm throughput, round build): rl_1 877, sg_2 634, sg_1 524, lmg_1 362, smg_1 293, lmg_2 261, smg_2 254, ar_2 236, ar_1 201, sr_1 177
 
 ### B2 · the same without the capstone (the tree model's human reaches it in ~1 run in 5)
 
@@ -114,49 +114,49 @@ Crowd DPS at R10 without the capstone: rl_1 809, sg_1 524, sg_2 508, lmg_1 343, 
 | ar_1 | seal | 150 | +9 % | +9 % | +5.7 % | HIGH (>2× class median 2 %) |
 | ar_1 | x | 90 | +11 % | +11 % | +11.7 % |  |
 | ar_1 | y | 90 | -5 % | -5 % | -5.8 % | no DPS (utility/survival) |
-| ar_1 | cap | 380 | +5 % | +0 % | +1.4 % |  |
+| ar_1 | cap | 380 | +5 % | +0 % | +1.4 % | low (<½ class median 12 %) |
 | ar_1 | ks_piercing | 110 | +0 % | +30 % | +27.2 % | HIGH (>2× class median 7 %) |
 | ar_1 | ks_firerate | 110 | +0 % | +0 % | +0.0 % | no DPS (utility/survival) |
 | ar_1 | ks_reload | 110 | +0 % | +0 % | +0.0 % | no DPS (utility/survival) |
 | ar_2 | seal | 150 | +0 % | +0 % | +0.0 % | no DPS (utility/survival) |
 | ar_2 | x | 90 | +6 % | +6 % | +7.0 % |  |
 | ar_2 | y | 90 | +6 % | +6 % | +7.0 % |  |
-| ar_2 | cap | 380 | +0 % | +0 % | +0.0 % | no DPS (utility/survival) |
+| ar_2 | cap | 380 | +10 % | +16 % | +4.2 % |  |
 | ar_2 | ks_piercing | 110 | +0 % | +17 % | +15.3 % | HIGH (>2× class median 7 %) |
 | ar_2 | ks_ricochet | 110 | +0 % | +7 % | +6.5 % |  |
 | ar_2 | ks_firerate | 110 | +4 % | +4 % | +3.7 % |  |
 | smg_1 | seal | 150 | +0 % | +0 % | +0.0 % | no DPS (utility/survival) |
 | smg_1 | x | 90 | +9 % | +9 % | +10.5 % |  |
 | smg_1 | y | 90 | +2 % | +2 % | +2.3 % | low (<½ class median 10 %) |
-| smg_1 | cap | 380 | +0 % | +12 % | +3.1 % | HIGH (>2× class median 5 %) |
+| smg_1 | cap | 380 | +0 % | +12 % | +3.1 % |  |
 | smg_1 | ks_chain | 110 | +0 % | +16 % | +14.5 % | HIGH (>2× class median 7 %) |
 | smg_1 | ks_ricochet | 110 | +0 % | +6 % | +5.5 % |  |
 | smg_1 | ks_firerate | 110 | +5 % | +5 % | +4.5 % |  |
 | smg_2 | seal | 150 | +3 % | +3 % | +1.8 % |  |
 | smg_2 | x | 90 | +2 % | +2 % | +2.5 % | low (<½ class median 10 %) |
 | smg_2 | y | 90 | +6 % | +6 % | +7.1 % |  |
-| smg_2 | cap | 380 | +0 % | +2 % | +0.5 % | no DPS (utility/survival) |
+| smg_2 | cap | 380 | +16 % | +18 % | +4.8 % |  |
 | smg_2 | ks_impact | 110 | +8 % | +8 % | +7.4 % |  |
 | smg_2 | ks_chain | 110 | +0 % | +20 % | +18.2 % | HIGH (>2× class median 7 %) |
 | smg_2 | ks_firerate | 110 | +5 % | +5 % | +4.2 % |  |
 | sg_1 | seal | 150 | +25 % | +25 % | +16.7 % | HIGH (>2× class median 2 %) |
 | sg_1 | x | 90 | +20 % | +20 % | +22.2 % | HIGH (>2× class median 10 %) |
 | sg_1 | y | 90 | +20 % | +20 % | +22.2 % | HIGH (>2× class median 10 %) |
-| sg_1 | cap | 380 | +5 % | +0 % | +1.3 % |  |
+| sg_1 | cap | 380 | +5 % | +0 % | +1.3 % | low (<½ class median 12 %) |
 | sg_1 | ks_explosion | 110 | +10 % | +25 % | +22.8 % | HIGH (>2× class median 7 %) |
 | sg_1 | ks_piercing | 110 | +0 % | +5 % | +4.3 % |  |
 | sg_1 | ks_reload | 110 | +4 % | +4 % | +3.8 % |  |
 | sg_2 | seal | 150 | +0 % | +0 % | +0.0 % | no DPS (utility/survival) |
 | sg_2 | x | 90 | +12 % | +12 % | +13.3 % |  |
 | sg_2 | y | 90 | +0 % | +0 % | +0.0 % | no DPS (utility/survival) |
-| sg_2 | cap | 380 | +25 % | +25 % | +6.6 % | HIGH (>2× class median 5 %) |
+| sg_2 | cap | 380 | +25 % | +25 % | +6.6 % | HIGH (>2× class median 12 %) |
 | sg_2 | ks_explosion | 110 | +10 % | +29 % | +26.4 % | HIGH (>2× class median 7 %) |
 | sg_2 | ks_impact | 110 | +5 % | +5 % | +4.8 % |  |
 | sg_2 | ks_reload | 110 | +0 % | +0 % | +0.0 % | no DPS (utility/survival) |
 | lmg_1 | seal | 150 | +9 % | +9 % | +6.1 % | HIGH (>2× class median 2 %) |
 | lmg_1 | x | 90 | +10 % | +10 % | +11.1 % |  |
 | lmg_1 | y | 90 | +0 % | +0 % | +0.0 % | no DPS (utility/survival) |
-| lmg_1 | cap | 380 | +5 % | +5 % | +1.4 % |  |
+| lmg_1 | cap | 380 | +5 % | +5 % | +1.4 % | low (<½ class median 12 %) |
 | lmg_1 | ks_piercing | 110 | +0 % | +16 % | +14.1 % | HIGH (>2× class median 7 %) |
 | lmg_1 | ks_chain | 110 | +0 % | +16 % | +14.2 % | HIGH (>2× class median 7 %) |
 | lmg_1 | ks_reload | 110 | +5 % | +5 % | +4.2 % |  |
@@ -170,19 +170,19 @@ Crowd DPS at R10 without the capstone: rl_1 809, sg_1 524, sg_2 508, lmg_1 343, 
 | sr_1 | seal | 150 | +0 % | +0 % | +0.0 % | no DPS (utility/survival) |
 | sr_1 | x | 90 | +0 % | +0 % | +0.0 % | no DPS (utility/survival) |
 | sr_1 | y | 90 | +24 % | +24 % | +26.2 % | HIGH (>2× class median 10 %) |
-| sr_1 | cap | 380 | +43 % | +0 % | +11.4 % | HIGH (>2× class median 5 %) |
+| sr_1 | cap | 380 | +43 % | +0 % | +11.4 % | HIGH (>2× class median 12 %) |
 | sr_1 | ks_piercing | 110 | +0 % | +5 % | +4.7 % |  |
 | sr_1 | ks_ricochet | 110 | +0 % | +7 % | +6.2 % |  |
 | sr_1 | ks_reload | 110 | +2 % | +2 % | +2.1 % | low (<½ class median 7 %) |
 | rl_1 | seal | 150 | +1 % | +1 % | +0.8 % | no DPS (utility/survival) |
 | rl_1 | x | 90 | +25 % | -4 % | +27.9 % | HIGH (>2× class median 10 %) |
 | rl_1 | y | 90 | +0 % | +28 % | +31.0 % | HIGH (>2× class median 10 %) |
-| rl_1 | cap | 380 | +12 % | +8 % | +3.2 % | HIGH (>2× class median 5 %) |
+| rl_1 | cap | 380 | +12 % | +8 % | +3.2 % |  |
 | rl_1 | ks_explosion | 110 | +0 % | +8 % | +6.8 % |  |
 | rl_1 | ks_cluster | 110 | +5 % | +8 % | +7.2 % |  |
 | rl_1 | ks_reload | 110 | +0 % | +0 % | +0.0 % | no DPS (utility/survival) |
 
-Class medians (best of single/crowd): cap 5 %, fork 10 %, keystone 7 %, seal 2 %
+Class medians (best of single/crowd): cap 12 %, fork 10 %, keystone 7 %, seal 2 %
 
 Fork X vs Y inside a weapon (best Δ): ar_1 X +11 / Y -5 %; ar_2 X +6 / Y +6 %; smg_1 X +9 / Y +2 %; smg_2 X +2 / Y +6 %; sg_1 X +20 / Y +20 %; sg_2 X +12 / Y +0 %; lmg_1 X +10 / Y +0 %; lmg_2 X +10 / Y +10 %; sr_1 X +0 / Y +24 %; rl_1 X +25 / Y +28 %
 

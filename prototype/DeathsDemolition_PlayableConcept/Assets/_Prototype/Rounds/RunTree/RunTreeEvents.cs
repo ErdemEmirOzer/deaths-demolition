@@ -1,4 +1,6 @@
 using System;
+using DD.Prototype.Core.Config;
+using DD.Prototype.Enemies;
 using UnityEngine;
 
 namespace DD.Prototype.Rounds
@@ -43,6 +45,36 @@ namespace DD.Prototype.Rounds
             Count = count;
             Pity = pity;
             Reroll = reroll;
+        }
+    }
+
+    /// <summary>DEC-112: which capstone fired on the hit path (<see cref="RunTreeHooks.CapstoneProc"/>).</summary>
+    public enum CapstoneProcKind
+    {
+        /// <summary>cap.ar_2 Third Eye: the burst's 3rd round struck (value % harder, chains to a nearby enemy).</summary>
+        ThirdEyeArc = 0,
+        /// <summary>cap.lmg_2 Black Iron: the body whose plate the round broke started its stagger.</summary>
+        BlackIronStagger = 1,
+        /// <summary>cap.smg_2 Lightning Fang: a hit-staggered body took the capstone's bonus damage.</summary>
+        LightningFangBonus = 2
+    }
+
+    /// <summary>One capstone proc. <see cref="Body"/> is the struck zombie (null for another receiver); <see cref="TargetLifeId"/> its life id (0 = none).</summary>
+    public readonly struct CapstoneProcInfo
+    {
+        public readonly CapstoneProcKind Kind;
+        public readonly ClassicWeaponId Weapon;
+        public readonly Vector3 Point;
+        public readonly ZombieEnemy Body;
+        public readonly int TargetLifeId;
+
+        public CapstoneProcInfo(CapstoneProcKind kind, ClassicWeaponId weapon, Vector3 point, ZombieEnemy body)
+        {
+            Kind = kind;
+            Weapon = weapon;
+            Point = point;
+            Body = body;
+            TargetLifeId = body != null ? body.LifeId : 0;
         }
     }
 

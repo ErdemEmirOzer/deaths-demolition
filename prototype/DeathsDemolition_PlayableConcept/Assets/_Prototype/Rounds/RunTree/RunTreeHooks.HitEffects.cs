@@ -49,8 +49,11 @@ namespace DD.Prototype.Rounds
         /// </summary>
         public const float BurstGapSeconds = 0.15f;
 
-        /// <summary>cap.ar_2: the round of the burst that chains on a head hit.</summary>
+        /// <summary>cap.ar_2 Third Eye (DEC-112): the round of every burst that hits value % harder and chains.</summary>
         public const int ThirdEyeRound = 3;
+
+        /// <summary>cap.lmg_2 Black Iron (DEC-112): the stagger of a body whose plate the round broke, s (card arg "seconds").</summary>
+        public const float BlackIronStaggerSeconds = 0.35f;
 
         /// <summary>cap.ar_1 / cap.sr_1 "pierces without limit": the round's target budget (its touched table's size).</summary>
         public const int UnlimitedPierceTargets = ProjectileState.TouchedCapacity;
@@ -68,7 +71,7 @@ namespace DD.Prototype.Rounds
 
         /// <summary>Chain from this hit (cap.ar_2 / cap.smg_2) — the engine runs one chain after the segment.</summary>
         public const int TreeHitChain = 1;
-        /// <summary>No pierce loss at this body (cap.lmg_2 broke a plate).</summary>
+        /// <summary>No pierce loss at this body. No node sets it since DEC-112 retired Black Iron's pass-through; the engine still honours it.</summary>
         public const int TreeHitKeepDamage = 2;
 
         // ------------------------------------------------------------------ state (reset per run)
@@ -198,8 +201,8 @@ namespace DD.Prototype.Rounds
 
         /// <summary>
         /// Before a projectile's body hit is applied (DamageHitContext already Set): marks the armour bypass (seal.sr_1 head,
-        /// cap.sr_1 first body, cap.ar_1 marked round) and the plate break (cap.sg_1), counts cap.smg_2, and returns the
-        /// damage factor (fork.sg_2.x close range).
+        /// cap.sr_1 first body, cap.ar_1 marked round) and the plate break (cap.sg_1), counts cap.smg_2, marks cap.ar_2's
+        /// chain, and returns the damage factor (fork.sg_2.x close range, cap.ar_2 burst's 3rd round).
         /// </summary>
         public static float BeforeTreeHit(ref ProjectileState p, in DamageTarget target, BodyRegion region, Vector3 point)
         {
@@ -228,13 +231,20 @@ namespace DD.Prototype.Rounds
                 s_treeHitFlags |= TreeHitChain;
             }
 
+            if (ThirdEyeStrikes(weapon, p.TreeOrdinal))
+            {
+                scale *= ThirdEyeScale();
+                s_treeHitFlags |= TreeHitChain;
+                if (p.TouchedCount <= 1) RaiseCapstoneProc(CapstoneProcKind.ThirdEyeArc, weapon, point, target.Receiver as ZombieEnemy);
+            }
+
             return scale;
         }
 
         /// <summary>
-        /// After the hit: cap.ar_2 head chain, cap.sg_1 shove, cap.lmg_2 pass-through (one more target, no loss), cap.sg_2
-        /// second-barrel blast (deferred to <see cref="FlushTreeBlasts"/>). Returns <see cref="TreeHitChain"/> /
-        /// <see cref="TreeHitKeepDamage"/> bits for the engine.
+        /// After the hit: cap.sg_1 shove, cap.lmg_2 stagger of the body whose plate broke, cap.sg_2 second-barrel blast
+        /// (deferred to <see cref="FlushTreeBlasts"/>); the chain bits <see cref="BeforeTreeHit"/> set (cap.ar_2 / cap.smg_2)
+        /// pass through when the hit landed. Returns <see cref="TreeHitChain"/> bits for the engine.
         /// </summary>
         public static int AfterTreeHit(ref ProjectileState p, in DamageTarget target, BodyRegion region, Vector3 point, Vector3 direction, in DamageResult result)
         {
@@ -248,14 +258,12 @@ namespace DD.Prototype.Rounds
             if (!v.Capstone) return flags;   // everything below is a capstone
 
             ClassicWeaponId weapon = p.WeaponId;
-            if (ThirdEyeChains(weapon, p.TreeOrdinal, region)) flags |= TreeHitChain;
-
             if (shove && !result.Killed && target.Receiver is ZombieEnemy body) body.ApplyTreeShove(direction, AshWallShoveMetres, AshWallShoveSeconds);
 
-            if (BlackIronPasses(weapon, result.ArmorBroke))
+            if (BlackIronStaggers(weapon, result.ArmorBroke) && !result.Killed && target.Receiver is ZombieEnemy broken
+                && broken.ApplyTreeStagger(v.CapstoneArg("seconds", BlackIronStaggerSeconds), direction))
             {
-                p.TargetsLeft++;
-                flags |= TreeHitKeepDamage;
+                RaiseCapstoneProc(CapstoneProcKind.BlackIronStagger, weapon, point, broken);
             }
 
             if (TwinBarrelHit(weapon, p.TreeOrdinal, p.TreeVolley, target.Id))
@@ -304,8 +312,11 @@ namespace DD.Prototype.Rounds
             return true;
         }
 
-        /// <summary>cap.lmg_2 Black Iron: an lmg_2 round that broke a plate passes to the body behind at full damage.</summary>
-        public static bool BlackIronPasses(ClassicWeaponId weapon, bool armorBroke)
+        /// <summary>
+        /// cap.lmg_2 Black Iron (DEC-112): an lmg_2 round that broke a plate staggers that body for seconds (no damage; the
+        /// body's 1.5 s lock and the Ultra's half duration live in ZombieEnemy.ApplyTreeStagger, S-03).
+        /// </summary>
+        public static bool BlackIronStaggers(ClassicWeaponId weapon, bool armorBroke)
         {
             if (!armorBroke) return false;
             RunTreeEffectValues v = V;
@@ -322,12 +333,22 @@ namespace DD.Prototype.Rounds
             return true;
         }
 
-        /// <summary>cap.ar_2 Third Eye: the burst's 3rd round hitting a head ricochets into a chain.</summary>
-        public static bool ThirdEyeChains(ClassicWeaponId weapon, int burstRound, BodyRegion region)
+        /// <summary>cap.ar_2 Third Eye (DEC-112): the 3rd round of every burst hits harder and chains, wherever it lands.</summary>
+        public static bool ThirdEyeStrikes(ClassicWeaponId weapon, int burstRound)
         {
-            if (burstRound != ThirdEyeRound || region != BodyRegion.Head) return false;
+            if (burstRound != ThirdEyeRound) return false;
             RunTreeEffectValues v = V;
             return v.Capstone && RunWeapon(v, weapon, ClassicWeaponId.Ar2, "ar_2");
+        }
+
+        /// <summary>cap.ar_2 Third Eye: the damage factor of the burst's 3rd round (1 + value %).</summary>
+        public static float ThirdEyeScale() => 1f + V.CapstoneArg("value", 30f) / 100f;
+
+        /// <summary>cap.smg_2 Lightning Fang (DEC-112): the damage bonus (share) a hit-staggered body takes from smg_2; 0 = not owned / other weapon.</summary>
+        public static float LightningFangBonus(ClassicWeaponId weapon)
+        {
+            RunTreeEffectValues v = V;
+            return v.Capstone && RunWeapon(v, weapon, ClassicWeaponId.Smg2, "smg_2") ? Mathf.Max(0f, v.CapstoneArg("value", 25f)) / 100f : 0f;
         }
 
         /// <summary>
@@ -360,9 +381,10 @@ namespace DD.Prototype.Rounds
             if (request.ChainDamageFalloff <= 0f) request.ChainDamageFalloff = t != null ? t.ChainDamageFalloff : 0.75f;
         }
 
+        /// <summary>A stagger from a hit (not the tree's own Black Iron stagger, DEC-112: that one feeds no damage bonus).</summary>
         private static bool IsStaggering(in DamageTarget target)
         {
-            return target.Receiver is ZombieEnemy body && body.Animator != null && body.Animator.IsStaggering;
+            return target.Receiver is ZombieEnemy body && body.Animator != null && body.Animator.IsHitStaggering;
         }
 
         // ------------------------------------------------------------------ stagger (ZombieEnemy.ProcessResult)
@@ -475,6 +497,23 @@ namespace DD.Prototype.Rounds
             for (int i = 0; i < n; i++) HitscanEngine.Explode(s_blastAt[i], s_blastDamage[i], s_blastRadius[i]);
         }
 
+        // ------------------------------------------------------------------ capstone procs (VFX / audio listeners)
+
+        /// <summary>
+        /// DEC-112: a capstone fired on the hit path — cap.ar_2's 3rd round (the first body it strikes), cap.lmg_2's stagger
+        /// (it started), cap.smg_2's bonus on a staggered body. For presentation only (S-02 tracer, S-07 tint); raised on the
+        /// hit path with a struct argument, so listeners must not allocate. A throwing listener is logged, never propagated.
+        /// </summary>
+        public static event Action<CapstoneProcInfo> CapstoneProc;
+
+        private static void RaiseCapstoneProc(CapstoneProcKind kind, ClassicWeaponId weapon, Vector3 point, ZombieEnemy body)
+        {
+            Action<CapstoneProcInfo> handler = CapstoneProc;
+            if (handler == null) return;
+            try { handler.Invoke(new CapstoneProcInfo(kind, weapon, point, body)); }
+            catch (Exception ex) { Debug.LogException(ex); }
+        }
+
         // ------------------------------------------------------------------ id sets (fixed, no allocation)
 
         private static bool HasId(int[] ids, int count, int id)
@@ -523,7 +562,11 @@ namespace DD.Prototype.Rounds
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetHitEffectsStatics() => ResetHitEffectsState();
+        private static void ResetHitEffectsStatics()
+        {
+            ResetHitEffectsState();
+            CapstoneProc = null;   // listeners re-subscribe on their scene (static bus rearm lesson)
+        }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void InstallHitEffects()
