@@ -228,6 +228,9 @@ namespace DD.Prototype.Profile
         public const string PurseAtStart = "meta.eco.pursestart";
         public const string CapstoneDiscount = "meta.eco.capdiscount";
 
+        /// <summary>DEC-113 pa_qol_6 Round Report — data in RunStatsTracker.LastRound; S-09 adds it here with the UI.</summary>
+        public const string RoundReport = "meta.qol.roundreport";
+
         private static readonly HashSet<string> s_live = new HashSet<string>
         {
             RerollCost, HearthSlope, PurseAtStart, CapstoneDiscount

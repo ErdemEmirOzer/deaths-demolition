@@ -734,19 +734,19 @@
    "row": 2,
    "column": 5,
    "kind": "Passive",
-   "shortName": "Magnet +0.5",
-   "displayName": "Wider Magnet",
-   "description": "Gold magnet radius +0.5 m.",
+   "shortName": "Round Report",
+   "displayName": "Round Report",
+   "description": "After each round, one line: kills by type, damage taken, gold earned and how fast you killed Elites.",
    "levelGate": 28,
    "ashCost": 320,
-   "effectId": "meta.qol.magnet",
-   "effectValue": 0.5,
+   "effectId": "meta.qol.roundreport",
+   "effectValue": 0.0,
    "parents": [
     "pa_qol_5"
    ],
    "exclusionGroup": 0,
    "weaponKey": "",
-   "stringKey": "tree.meta.passive.qol.magnet"
+   "stringKey": "tree.meta.passive.qol.round_report"
   }
  ]
 }

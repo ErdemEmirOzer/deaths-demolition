@@ -3,6 +3,50 @@ using DD.Prototype.Core.Config;
 namespace DD.Prototype.Rounds
 {
     /// <summary>
+    /// DEC-113 (user 30.09) "Round Report": one finished round in numbers — kills by tier, health the player lost, gold
+    /// credited, and how long Elites took to die (first hit → death). Information only (DEC-008: no power). Built by
+    /// <see cref="RunStatsTracker.CloseRound"/> on the round-cleared path, after the round-end gold sweep; independent of
+    /// telemetry (always on). <see cref="Round"/> 0 = no round finished yet this run.
+    /// </summary>
+    public readonly struct RoundReport
+    {
+        public readonly int Round;
+        public readonly int KillsStandard;
+        public readonly int KillsSpecial;
+        public readonly int KillsElite;
+        public readonly int KillsUltra;
+
+        /// <summary>Health the player actually lost this round (PlayerHealth applied amount, after the body lane).</summary>
+        public readonly float DamageTaken;
+
+        /// <summary>Gold credited to the wallet this round (pickups and the round-end sweep).</summary>
+        public readonly int GoldIncome;
+
+        /// <summary>Mean seconds from an Elite's first hit to its death; 0 when <see cref="EliteTtkSamples"/> is 0.</summary>
+        public readonly float EliteTtkAverage;
+
+        public readonly int EliteTtkSamples;
+
+        public RoundReport(int round, int killsStandard, int killsSpecial, int killsElite, int killsUltra,
+            float damageTaken, int goldIncome, float eliteTtkAverage, int eliteTtkSamples)
+        {
+            Round = round;
+            KillsStandard = killsStandard;
+            KillsSpecial = killsSpecial;
+            KillsElite = killsElite;
+            KillsUltra = killsUltra;
+            DamageTaken = damageTaken;
+            GoldIncome = goldIncome;
+            EliteTtkAverage = eliteTtkAverage;
+            EliteTtkSamples = eliteTtkSamples;
+        }
+
+        public bool IsValid => Round > 0;
+
+        public int Kills => KillsStandard + KillsSpecial + KillsElite + KillsUltra;
+    }
+
+    /// <summary>
     /// The run's counters. A plain class, not a MonoBehaviour and not a static: the
     /// director owns exactly one and a test can build its own.
     ///
@@ -18,6 +62,16 @@ namespace DD.Prototype.Rounds
     public sealed class RunStatsTracker
     {
         private readonly int[] _killsPerTier = new int[4];
+
+        /// <summary>DEC-113: Elites hit this round and not yet dead (life id, first-hit time); fixed, a flood is dropped.</summary>
+        public const int EliteTrackCapacity = 32;
+
+        private readonly int[] _roundKillsPerTier = new int[4];
+        private readonly int[] _eliteLife = new int[EliteTrackCapacity];
+        private readonly float[] _eliteFirstHit = new float[EliteTrackCapacity];
+        private int _eliteTracked;
+        private float _roundEliteTtkSum;
+        private int _roundEliteTtkCount;
 
         // ------------------------------------------------------------------ kills
 
@@ -70,12 +124,23 @@ namespace DD.Prototype.Rounds
 
         // ------------------------------------------------------------------ writes
 
-        /// <summary>
-        /// One enemy died. <paramref name="killXp"/> comes from
-        /// PrototypeConfig.KillXp(tier) - the arithmetic is never redone here.
-        /// </summary>
         /// <summary>DEC-111 (user 30.09): kills the run's own classic weapon made (Special and unowned kills excluded) — mastery.</summary>
         public int ClassicWeaponKills { get; private set; }
+
+        // ------------------------------------------------------------------ round report (DEC-113)
+
+        /// <summary>The last finished round (<see cref="RoundReport.Round"/> 0 = none yet this run).</summary>
+        public RoundReport LastRound { get; private set; }
+
+        public float RoundDamageTaken { get; private set; }
+
+        public int RoundGoldIncome { get; private set; }
+
+        public int RoundKillsFor(EnemyTier tier)
+        {
+            int index = (int)tier;
+            return index >= 0 && index < _roundKillsPerTier.Length ? _roundKillsPerTier[index] : 0;
+        }
 
         /// <summary>As <see cref="RecordKill(EnemyTier,int)"/>; <paramref name="byRunClassicWeapon"/> counts it toward mastery (DEC-111).</summary>
         public void RecordKill(EnemyTier tier, int killXp, bool byRunClassicWeapon)
@@ -84,12 +149,17 @@ namespace DD.Prototype.Rounds
             if (byRunClassicWeapon) ClassicWeaponKills++;
         }
 
+        /// <summary>
+        /// One enemy died. <paramref name="killXp"/> comes from
+        /// PrototypeConfig.KillXp(tier) - the arithmetic is never redone here.
+        /// </summary>
         public void RecordKill(EnemyTier tier, int killXp)
         {
             int index = (int)tier;
             if (index >= 0 && index < _killsPerTier.Length)
             {
                 _killsPerTier[index]++;
+                _roundKillsPerTier[index]++;
             }
 
             if (TotalKills == 0 || tier > HighestTierKilled)
@@ -120,6 +190,7 @@ namespace DD.Prototype.Rounds
         public void BeginRound()
         {
             RoundKills = 0;
+            ClearRoundReportCounters();
         }
 
         public void RecordGoldEarned(int amount)
@@ -127,7 +198,84 @@ namespace DD.Prototype.Rounds
             if (amount > 0)
             {
                 GoldEarned += amount;
+                RoundGoldIncome += amount;
             }
+        }
+
+        /// <summary>DEC-113: health the player lost (the applied amount).</summary>
+        public void RecordPlayerDamage(float applied)
+        {
+            if (applied > 0f)
+            {
+                RoundDamageTaken += applied;
+            }
+        }
+
+        /// <summary>DEC-113: an Elite (<paramref name="lifeId"/>) took a hit at <paramref name="now"/>; only its first hit starts the clock.</summary>
+        public void RecordEliteHit(int lifeId, float now)
+        {
+            if (lifeId == 0 || EliteIndex(lifeId) >= 0 || _eliteTracked >= EliteTrackCapacity)
+            {
+                return;
+            }
+
+            _eliteLife[_eliteTracked] = lifeId;
+            _eliteFirstHit[_eliteTracked] = now;
+            _eliteTracked++;
+        }
+
+        /// <summary>DEC-113: a tracked Elite died at <paramref name="now"/> — one time-to-kill sample (an untracked life adds none).</summary>
+        public void RecordEliteDied(int lifeId, float now)
+        {
+            int i = EliteIndex(lifeId);
+            if (i < 0)
+            {
+                return;
+            }
+
+            _roundEliteTtkSum += now > _eliteFirstHit[i] ? now - _eliteFirstHit[i] : 0f;
+            _roundEliteTtkCount++;
+            _eliteTracked--;
+            _eliteLife[i] = _eliteLife[_eliteTracked];
+            _eliteFirstHit[i] = _eliteFirstHit[_eliteTracked];
+        }
+
+        /// <summary>DEC-113: the round is finished — freezes its numbers into <see cref="LastRound"/>.</summary>
+        public RoundReport CloseRound(int round)
+        {
+            LastRound = new RoundReport(round,
+                _roundKillsPerTier[(int)EnemyTier.Standard], _roundKillsPerTier[(int)EnemyTier.Special],
+                _roundKillsPerTier[(int)EnemyTier.Elite], _roundKillsPerTier[(int)EnemyTier.Ultra],
+                RoundDamageTaken, RoundGoldIncome,
+                _roundEliteTtkCount > 0 ? _roundEliteTtkSum / _roundEliteTtkCount : 0f, _roundEliteTtkCount);
+            return LastRound;
+        }
+
+        private int EliteIndex(int lifeId)
+        {
+            for (int i = 0; i < _eliteTracked; i++)
+            {
+                if (_eliteLife[i] == lifeId)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        private void ClearRoundReportCounters()
+        {
+            for (int i = 0; i < _roundKillsPerTier.Length; i++)
+            {
+                _roundKillsPerTier[i] = 0;
+            }
+
+            RoundDamageTaken = 0f;
+            RoundGoldIncome = 0;
+            _eliteTracked = 0;
+            _roundEliteTtkSum = 0f;
+            _roundEliteTtkCount = 0;
         }
 
         public void RecordGoldSpent(int amount)
@@ -199,6 +347,8 @@ namespace DD.Prototype.Rounds
             UpgradesPurchased = 0;
             RerollsUsed = 0;
             RunTime = 0f;
+            ClearRoundReportCounters();
+            LastRound = default;
         }
     }
 }

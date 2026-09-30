@@ -114,6 +114,9 @@ namespace DD.Prototype.Rounds
         /// <summary>The run's counters. Read-only in practice; only this class writes.</summary>
         public RunStatsTracker Stats => _stats;
 
+        /// <summary>DEC-113: the last finished round's report (Round 0 = none yet this run).</summary>
+        public RoundReport LastRoundReport => _stats.LastRound;
+
         /// <summary>
         /// The run's build: weapon, purchases, cached description (WP-004). Ranks stay in
         /// the weapon's <see cref="WeaponModifierState"/>; this records what was bought.
@@ -467,7 +470,9 @@ namespace DD.Prototype.Rounds
 
             DamageEvents.EnemyDied += OnEnemyDied;
             DamageEvents.ArmorBroken += OnArmorBroken;
+            DamageEvents.EnemyDamaged += OnEnemyDamaged;
             PlayerHealth.AnyPlayerDied += OnPlayerDied;
+            PlayerHealth.AnyDamaged += OnPlayerDamaged;
 
             _shop.Purchased += OnCardPurchased;
             _shop.PurchaseUndone += OnCardPurchaseUndone;
@@ -482,7 +487,9 @@ namespace DD.Prototype.Rounds
         {
             DamageEvents.EnemyDied -= OnEnemyDied;
             DamageEvents.ArmorBroken -= OnArmorBroken;
+            DamageEvents.EnemyDamaged -= OnEnemyDamaged;
             PlayerHealth.AnyPlayerDied -= OnPlayerDied;
+            PlayerHealth.AnyDamaged -= OnPlayerDamaged;
 
             _shop.Purchased -= OnCardPurchased;
             _shop.PurchaseUndone -= OnCardPurchaseUndone;
@@ -652,6 +659,9 @@ namespace DD.Prototype.Rounds
                 ? GoldService.Instance.CollectOutstanding(round)
                 : default;
 
+            // DEC-113: the Round Report freezes after the sweep (its gold counted) and before RoundCompleted's listeners read it.
+            _stats.CloseRound(round);
+
             RunEvents.PublishRoundCompleted(round);
             SpecialWeaponRoundBridge.NotifyRoundEnded(round);
             RunAudioEvents.Raise(RunAudioEvent.RoundComplete);
@@ -660,6 +670,18 @@ namespace DD.Prototype.Rounds
         }
 
         // ------------------------------------------------------------------ counting
+
+        /// <summary>DEC-113 Round Report: an Elite's first hit starts its kill clock.</summary>
+        private void OnEnemyDamaged(EnemyDamageInfo info)
+        {
+            if (IsRunLive && info.Tier == EnemyTier.Elite) _stats.RecordEliteHit(info.Meta.LifeId, Time.time);
+        }
+
+        /// <summary>DEC-113 Round Report: health the player actually lost.</summary>
+        private void OnPlayerDamaged(PlayerDamageInfo info)
+        {
+            if (IsRunLive) _stats.RecordPlayerDamage(info.AppliedAmount);
+        }
 
         private void OnEnemyDied(EnemyDeathInfo info)
         {
@@ -679,6 +701,7 @@ namespace DD.Prototype.Rounds
 
             // DEC-111: DamageHitContext is valid inside this synchronous handler — the killing hit's source.
             _stats.RecordKill(info.Tier, killXp, DamageHitContext.FromClassicWeapon && DamageHitContext.Weapon == WeaponRegistry.SelectedWeapon);
+            if (info.Tier == EnemyTier.Elite) _stats.RecordEliteDied(info.Meta.LifeId, Time.time);   // DEC-113
             _killsThisRound++;
 
             // Gold is NOT handled here. GoldService listens to the same event and owns the

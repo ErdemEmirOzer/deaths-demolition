@@ -584,9 +584,11 @@ namespace DD.Prototype.Tests.PlayMode
             int tamamlanmaBakiye = -1;
             int tamamlanmaOutstanding = -1;
             GoldAutoCollectReport tamamlanmaSweep = default;
+            RoundReport tamamlanmaRapor = default;
             Action<int> tamamlanma = r =>
             {
                 tamamlanmaSayisi++;
+                tamamlanmaRapor = _run.LastRoundReport;   // DEC-113: donmuş olmalı (sweep sonrası, RoundCompleted öncesi)
                 tamamlanmaTimeScale = Time.timeScale;
                 tamamlanmaBakiye = _gold.Wallet.Balance;
                 tamamlanmaOutstanding = _gold.OutstandingPacketCount;
@@ -637,6 +639,12 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(_gold.Wallet.EarnedByPickup + _gold.Wallet.EarnedByAutoCollect, _gold.Wallet.TotalEarned);
             Assert.AreEqual(roundOdulToplami, _gold.Wallet.TotalEarned);
             Assert.AreEqual(1, sweepOlayi, "Sweep olayı bir kez.");
+
+            // DEC-113 Tur Raporu: RoundCompleted dinleyicisi turun raporunu görür — öldürmeler ve süpürme dahil turun tüm altını.
+            Assert.AreEqual(1, tamamlanmaRapor.Round, "Tur Raporu RoundCompleted'dan önce donar.");
+            Assert.AreEqual(oldurulen, tamamlanmaRapor.Kills);
+            Assert.AreEqual(roundOdulToplami, tamamlanmaRapor.GoldIncome, "Turun altını süpürme dahil.");
+            Assert.GreaterOrEqual(tamamlanmaRapor.DamageTaken, 0f);
 
             // Sweep görseli unscaled: 0.5 s içinde bütün paketler havuzda.
             float t1 = Time.realtimeSinceStartup;

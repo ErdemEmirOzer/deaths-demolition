@@ -1603,13 +1603,13 @@
     "en": "The HUD marks your pinned node and what it still needs.",
     "tr": "HUD işaretli düğümünü ve eksiğini gösterir."
   },
-  "tree.meta.passive.qol.magnet.name": {
-    "en": "Wider Magnet",
-    "tr": "Geniş Mıknatıs"
+  "tree.meta.passive.qol.round_report.name": {
+    "en": "Round Report",
+    "tr": "Tur Raporu"
   },
-  "tree.meta.passive.qol.magnet.desc": {
-    "en": "Gold pickup reach +{value} m.",
-    "tr": "Altın toplama menzili +{value} m."
+  "tree.meta.passive.qol.round_report.desc": {
+    "en": "After each round, one line: kills by type, damage taken, gold earned and how fast you killed Elites.",
+    "tr": "Her tur sonunda tek satır: türe göre öldürmeler, aldığın hasar, kazandığın altın ve Elite'leri ne kadar sürede öldürdüğün."
   },
   "tips.001": {
     "en": "Change the camera from the Pause menu: top-down, third-person or first-person.",

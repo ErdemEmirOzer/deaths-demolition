@@ -421,7 +421,7 @@ Key: `tree.meta.<id>.name` / `.desc` (the `meta.` prefix of the id is dropped in
 | `meta.passive.qol.run_stats` | Run Ledger | Koşu İstatistikleri | A run statistics panel on the round-end screen. | Round sonu ekranında koşu istatistik paneli. | WP-077 §3.3 QoL K3 — placement ASSUMED |
 | `meta.passive.qol.before_after` | Before and After | Önce ve Sonra | Cards show the full before → after line for every value. | Kartlar her değer için tam önce → sonra satırını gösterir. | WP-077 §3.3 QoL K4 |
 | `meta.passive.qol.path_tracker` | Path Tracker | Yol Göstergesi | The HUD marks your pinned node and what it still needs. | HUD işaretli düğümünü ve eksiğini gösterir. | WP-077 §3.3 QoL K5 |
-| `meta.passive.qol.magnet` | Wider Magnet | Geniş Mıknatıs | Gold pickup reach +{value} m. | Altın toplama menzili +{value} m. | WP-077 §3.3 QoL K6 (🔴 product decision) |
+| `meta.passive.qol.round_report` | Round Report | Tur Raporu | After each round, one line: kills by type, damage taken, gold earned and how fast you killed Elites. | Her tur sonunda tek satır: türe göre öldürmeler, aldığın hasar, kazandığın altın ve Elite'leri ne kadar sürede öldürdüğün. | WP-077 §3.3 QoL K6 · DEC-113 (Wider Magnet yerine) |
 
 ### PATH labels
 

@@ -450,5 +450,60 @@ namespace DD.Prototype.Tests.EditMode
                 UnityEngine.Object.DestroyImmediate(config);
             }
         }
+
+        [Test]
+        public void TurRaporu_DEC113_TurunSayilariniDondururVeYeniTurdaSifirlanir()
+        {
+            var stats = new RunStatsTracker();
+            Assert.IsFalse(stats.LastRound.IsValid, "koşu başında rapor yok");
+
+            stats.BeginRound();
+            stats.RecordKill(EnemyTier.Standard, 1);
+            stats.RecordKill(EnemyTier.Standard, 1);
+            stats.RecordKill(EnemyTier.Special, 2);
+            stats.RecordGoldEarned(40);
+            stats.RecordGoldEarned(0);
+            stats.RecordPlayerDamage(12.5f);
+            stats.RecordPlayerDamage(-3f);
+            stats.RecordEliteHit(7, 10f);
+            stats.RecordEliteHit(7, 11f);                 // yalnız ilk isabet saati başlatır
+            stats.RecordEliteHit(8, 12f);
+            stats.RecordKill(EnemyTier.Elite, 5);
+            stats.RecordEliteDied(7, 13f);                // 3 s
+            stats.RecordKill(EnemyTier.Elite, 5);
+            stats.RecordEliteDied(8, 13f);                // 1 s
+            stats.RecordEliteDied(9, 20f);                // izlenmeyen ömür: örnek yok
+            stats.RecordGoldEarned(25);                   // tur sonu süpürmesi rapordan önce
+
+            RoundReport r = stats.CloseRound(4);
+            Assert.AreEqual(4, r.Round);
+            Assert.AreEqual(2, r.KillsStandard);
+            Assert.AreEqual(1, r.KillsSpecial);
+            Assert.AreEqual(2, r.KillsElite);
+            Assert.AreEqual(0, r.KillsUltra);
+            Assert.AreEqual(5, r.Kills);
+            Assert.AreEqual(12.5f, r.DamageTaken, 1e-4f);
+            Assert.AreEqual(65, r.GoldIncome);
+            Assert.AreEqual(2, r.EliteTtkSamples);
+            Assert.AreEqual(2f, r.EliteTtkAverage, 1e-4f);
+            Assert.AreEqual(r.Round, stats.LastRound.Round);
+
+            stats.BeginRound();
+            Assert.AreEqual(0, stats.RoundKillsFor(EnemyTier.Standard));
+            Assert.AreEqual(0f, stats.RoundDamageTaken);
+            Assert.AreEqual(0, stats.RoundGoldIncome);
+            Assert.AreEqual(4, stats.LastRound.Round, "yeni tur başlayınca son rapor kalır");
+            Assert.AreEqual(3, stats.KillsFor(EnemyTier.Standard) + stats.KillsFor(EnemyTier.Special), "koşu toplamları etkilenmez");
+            RoundReport bos = stats.CloseRound(5);
+            Assert.AreEqual(0, bos.EliteTtkSamples);
+            Assert.AreEqual(0f, bos.EliteTtkAverage);
+
+            for (int i = 0; i < RunStatsTracker.EliteTrackCapacity + 5; i++) stats.RecordEliteHit(100 + i, 1f);   // taşma düşer, büyümez
+            stats.RecordEliteDied(100 + RunStatsTracker.EliteTrackCapacity + 2, 2f);
+            Assert.AreEqual(0, stats.CloseRound(6).EliteTtkSamples);
+
+            stats.Reset();
+            Assert.IsFalse(stats.LastRound.IsValid, "yeni koşu raporu siler");
+        }
     }
 }
