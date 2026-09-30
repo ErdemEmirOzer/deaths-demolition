@@ -276,8 +276,8 @@ guarded_stage player m3-regression env DD_RC_M3_REPORT_ONLY=1 DD_AGGREGATE="$HER
 # DEC-091 (user 2026-09-24): the soak MUST is stability — seeds 61 and 26, ROUNDS each, the invulnerable-by-design bot
 # (-ddQaBotStability; rounds, log and memory checked by soak_gate.py --stability inside the closure gate). The real-bot run
 # of m3-regression and four more are a report (>= 5 runs, reached-round distribution not gated): a real-bot death does not stop the RC.
-DEV_APP="$OUT/m3/build-dev/DeathsDemolition.app"
-DEV_BIN="$DEV_APP/Contents/MacOS/Deaths Demolition - Playable Concept"
+DEV_APP="$OUT/m3/build-dev/$DD_APP_NAME"            # names from dd-env.sh (single source; fixtures give their own)
+DEV_BIN="$DEV_APP/Contents/MacOS/$DD_PRODUCT"
 EXECUTION_COMMIT="$(git -C "$REPO" rev-parse HEAD)"
 soak_run() { python3 "$HERE/wp064_run.py" soak --bin "$DEV_BIN" --out "$OUT/m3/$1" --rounds "$ROUNDS" --seed "$2" --commit "$EXECUTION_COMMIT" \
   --timeout "$DD_PLAYER_TIMEOUT" --preflight-attempts "${DD_PREFLIGHT_WINDOWS:-30}" --preflight-wait 60 "${@:3}"; }

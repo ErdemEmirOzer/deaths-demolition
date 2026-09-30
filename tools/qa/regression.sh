@@ -27,7 +27,7 @@ STEPS="${STEPS:-build,editmode,spawnmix,bot,perf,readability,playmode}"; has_ste
 UNITY="${DD_UNITY:-/Applications/Unity/Hub/Editor/2022.3.22f1/Unity.app/Contents/MacOS/Unity}"
 PROJECT="${DD_PROJECT:-$REPO/prototype/DeathsDemolition_PlayableConcept}"
 APP=""; BIN=""   # resolved after the build step (build.sh → DeathsDemolition.app; fallback → DeathsDemolition-dev.app)
-find_app(){ APP=$(ls -d "$OUT"/build-dev/*.app 2>/dev/null | head -1); BIN="$APP/Contents/MacOS/Deaths Demolition - Playable Concept"; }
+find_app(){ APP=$(ls -d "$OUT"/build-dev/*.app 2>/dev/null | head -1); BIN="$APP/Contents/MacOS/$(source "$REPO/tools/dd-env.sh" >/dev/null 2>&1; print -r -- "$DD_PRODUCT")"; }   # product name from dd-env.sh
 mkdir -p "$OUT"; T="$OUT/timeline.txt"; log(){ echo "$(date -u +%FT%TZ) $*" | tee -a "$T"; }
 SLOT="${DD_SLOT_SH:-}"; [ -n "$SLOT" ] || { [ -x "$REPO/tools/slot.sh" ] && SLOT="$REPO/tools/slot.sh" || SLOT="$HOME/Desktop/KADRO/context/projects/deaths-demolition/tools/slot.sh"; }; SLOT_TAG="qa-$$"
 unity_count(){ ps -Ao comm | grep -c '/MacOS/Unity$'; }

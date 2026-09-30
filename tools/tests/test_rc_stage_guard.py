@@ -51,7 +51,7 @@ def main(tool, argv):
         Path(os.environ["CALL_LOG"] + ".sleeper").write_text(str(os.getpid()))
         time.sleep(float(sleep_for))
     if tool == "regression.sh":
-        binary = Path(argv[0]) / "build-dev/DeathsDemolition.app/Contents/MacOS/Deaths Demolition - Playable Concept"
+        binary = Path(argv[0]) / "build-dev/FixtureGame.app/Contents/MacOS/Fixture Product"   # = FIXTURE_APP / FIXTURE_PRODUCT
         binary.parent.mkdir(parents=True, exist_ok=True)
         binary.write_text("#!/bin/sh\nexit 0\n"); binary.chmod(0o755)
     if tool == "player-run.sh":
@@ -83,6 +83,11 @@ def plenty_bin(root):
     return str(d)
 
 
+FIXTURE_APP = "FixtureGame.app"
+FIXTURE_PRODUCT = "Fixture Product"
+REAL_PLAYER_RE = "Contents/MacOS/(Deaths Demolition|DeathsDemolition)"
+
+
 class FakeRepo:
     """A throw-away repository layout: real scripts under test, fakes for everything else."""
 
@@ -99,6 +104,10 @@ class FakeRepo:
             target = self.root / rel
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(REPO / rel, target)
+        # C-00 30.09 (S-03's real guard saw a fixture "Player"): the fixture's app/product names must never match the real
+        # Player pattern `Contents/MacOS/(Deaths Demolition|DeathsDemolition)` that guards and player-run pgrep for.
+        with open(self.root / "tools/dd-env.sh", "a") as env:
+            env.write(f'\nDD_APP_NAME="{FIXTURE_APP}"; DD_PRODUCT="{FIXTURE_PRODUCT}"\n')
         for rel in SHELL_FAKES:
             if rel in real:
                 continue
@@ -192,7 +201,7 @@ class RcStageGuardTests(unittest.TestCase):
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
         runs = [c for c in repo.calls() if c[0] == "player-run.sh"]
         self.assertEqual(2, len(runs), runs)
-        app_bin = str(out / "m3/build-dev/DeathsDemolition.app/Contents/MacOS/Deaths Demolition - Playable Concept")
+        app_bin = str(out / f"m3/build-dev/{FIXTURE_APP}/Contents/MacOS/{FIXTURE_PRODUCT}")
         for name, probe in (("economy-acceptance", "-ddEconomyProbe"), ("window-modes", "-ddQaWindowModes")):
             call = next(c for c in runs if probe in c)
             self.assertEqual(app_bin, call[1])
@@ -237,6 +246,29 @@ class RcStageGuardTests(unittest.TestCase):
         self.assertFalse(any(c[:3] == ["userdata-guard.sh", "restore", ug] for c in calls))
         self.assertEqual("30", (out / "stages/soak-stability-61/exit.txt").read_text().strip())
         self.assertIn("BLOCKED soak-stability-61: guard snapshot 30", (out / "timeline.txt").read_text())
+
+    def test_FiksturOyuncusu_GercekPlayerDesenineUymaz_BaskaOturumunGuardiniEngellemez(self):
+        # C-00 30.09: S-03's real guard snapshot returned 30 on this fixture's fake Player. While a fixture Player stage is
+        # alive, the real pattern (guard / player-run pgrep) must find nothing from this fixture.
+        repo = FakeRepo(self, self.REAL)
+        out = repo.dir / "out"
+        dev_bin = str(out / f"m3/build-dev/{FIXTURE_APP}/Contents/MacOS/{FIXTURE_PRODUCT}")
+        env = dict(repo.env, FAKE_RULES=json.dumps({"sleep:player-run.sh:" + dev_bin: 30}))
+        proc = subprocess.Popen(["/bin/zsh", str(repo.root / "tools/qa/rc.sh"), str(out)], env=env,
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        sleeper = Path(str(repo.log) + ".sleeper")
+        deadline = time.monotonic() + 60
+        while not sleeper.exists() and time.monotonic() < deadline:
+            time.sleep(0.1)
+        try:
+            self.assertTrue(sleeper.exists(), "fake Player stage never started")
+            ours = subprocess.run(["pgrep", "-fl", FIXTURE_APP], capture_output=True, text=True).stdout
+            self.assertIn(sleeper.read_text().strip(), ours, "sanity: the fixture Player is visible under its own name")
+            real = subprocess.run(["pgrep", "-fl", REAL_PLAYER_RE], capture_output=True, text=True).stdout
+            self.assertEqual([l for l in real.splitlines() if str(repo.dir) in l], [], real)
+        finally:
+            proc.send_signal(signal.SIGTERM)
+            proc.communicate(timeout=90)
 
     def test_TermAsamaOrtasinda_OnceRestoreSonraSifirDisiCikis(self):
         repo = FakeRepo(self, self.REAL)
@@ -341,7 +373,7 @@ class PlayerLaunchTests(unittest.TestCase):
     def test_RegressionOkunabilirlik_PlayerRunIle_SandboxBayraklari(self):
         repo = FakeRepo(self, ("tools/qa/regression.sh",))
         out = repo.dir / "m3"
-        binary = out / "build-dev/DeathsDemolition.app/Contents/MacOS/Deaths Demolition - Playable Concept"
+        binary = out / f"build-dev/{FIXTURE_APP}/Contents/MacOS/{FIXTURE_PRODUCT}"
         binary.parent.mkdir(parents=True)
         binary.write_text("#!/bin/sh\nexit 0\n")
         binary.chmod(0o755)
