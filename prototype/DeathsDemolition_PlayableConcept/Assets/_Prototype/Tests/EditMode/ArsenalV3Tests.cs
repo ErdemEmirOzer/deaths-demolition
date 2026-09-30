@@ -67,6 +67,21 @@ namespace DD.Prototype.Tests.EditMode
             }
         }
 
+        /// <summary>WP-069 B5 (C-00 30.09, option C): the FP arms stay off the long weapons until P-06's shoulder / yoke passes AD.</summary>
+        [Test]
+        public void FpKollar_UzunSilahlardaKapali_DigerleriAcik()
+        {
+            var kapali = new System.Collections.Generic.HashSet<string> { "ar_2", "sw_arc", "sw_gel", "lmg_1", "lmg_2", "rl_1" };
+            int n = 0;
+            foreach (WeaponDefinition d in Arsenal.All)
+            {
+                Assert.AreEqual(!kapali.Contains(d.weaponId), d.FpArms, d.weaponId + ": presentation.fpArms (C-00 30.09 C)");
+                n++;
+            }
+
+            Assert.AreEqual(12, n, "on klasik + iki Special");
+        }
+
         [Test]
         public void FpSolElOfseti_HepsiSifir_P06KliptenYerlestirir()
         {

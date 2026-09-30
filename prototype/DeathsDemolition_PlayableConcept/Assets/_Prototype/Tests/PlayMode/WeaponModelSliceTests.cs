@@ -476,6 +476,53 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsEmpty(wrong, "Special FP kadrajı hedef bandın dışında: " + string.Join(" | ", wrong));
         }
 
+        /// <summary>
+        /// WP-069 B5 (C-00 30.09, option C) · with the FP arms feature on (FirstPersonV3Arms), a classic whose data says
+        /// <c>fpArms = false</c> (ar_2, lmg_1, lmg_2, rl_1 until P-06's shoulder / yoke passes AD) shows no FP arms and publishes no
+        /// arms socket: the weapon rests exactly at its fpView pose. S-06's FirstPersonArms reads the flag (same batch).
+        /// </summary>
+        [UnityTest]
+        [Timeout(240000)]
+        public IEnumerator FP_Kollar_fpArmsKapaliSilahta_KolYok_FpViewPozunda()
+        {
+            DD.Prototype.Characters.PlayerSkinnedVisual.FirstPersonV3Arms = true;
+            try
+            {
+                yield return Kur();
+                Transform mount = _s.Rig.GetComponentInChildren<PlayerWeaponBinding>().WeaponMount;
+                DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.FirstPerson, instant: true);
+                yield return SpecialWeaponSahne.Kareler(60);
+                Transform anchor = DD.Prototype.CameraSystem.CameraView.ViewmodelAnchor;
+                var report = new List<string>();
+                var wrong = new List<string>();
+                int kapali = 0;
+                foreach (ClassicWeaponDefinition d in WeaponRoster.Enabled)
+                {
+                    _s.Controller.EquipClassic(d.Id, _s.Config);
+                    yield return Dinlenme(mount, d.RosterKey);
+                    yield return SpecialWeaponSahne.Kareler(10);
+                    WeaponDefinition def = _s.Controller.Classic.Definition;
+                    bool shown = DD.Prototype.Characters.FirstPersonArms.Shown != null;
+                    bool socket = WeaponController.FirstPersonWeaponSocket != null;
+                    Transform rig = mount.Find("ClassicWeaponRig");
+                    float mm = Vector3.Distance(anchor.InverseTransformPoint(rig.position), def.FpViewPose.position) * 1000f;
+                    string line = d.RosterKey + " fpArms " + def.FpArms + ", arms shown " + shown + ", socket " + socket + ", rig ↔ fpView " + mm.ToString("0.0") + " mm";
+                    report.Add(line);
+                    if (def.FpArms) continue;
+                    kapali++;
+                    if (shown || socket || mm > 1f) wrong.Add(line);
+                }
+
+                Debug.Log("[DD-TEST] wp069.fparms " + string.Join(" | ", report));
+                Assert.AreEqual(4, kapali, "ar_2, lmg_1, lmg_2, rl_1 fpArms kapalı olmalı (veri — ArsenalAssetBuilder.Build)");
+                Assert.IsEmpty(wrong, "fpArms kapalı silahta FP kolları görünüyor ya da silah fpView'da değil: " + string.Join(" | ", wrong));
+            }
+            finally
+            {
+                DD.Prototype.Characters.PlayerSkinnedVisual.FirstPersonV3Arms = false;
+            }
+        }
+
         private sealed class SabitRastgele : ISpecialWeaponRandom
         {
             private readonly float _v;

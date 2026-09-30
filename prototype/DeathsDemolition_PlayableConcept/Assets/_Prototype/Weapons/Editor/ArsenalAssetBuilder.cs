@@ -545,6 +545,13 @@ namespace DD.Prototype.Weapons.EditorTools
         /// </summary>
         private static readonly Dictionary<string, Vector3> FpLeftHandOffsets = new Dictionary<string, Vector3>();
 
+        /// <summary>
+        /// WP-069 B5 (C-00 30.09, option C): the weapons the FP arms do not hold until P-06's visible shoulder / yoke for the long
+        /// weapons passes AD — at their fpView the arms' cut end shows (unscaled z / scale 0.59–0.74; A′ = 0.45 was rejected:
+        /// the weapon leaves the pixel band). fpView stays as it is.
+        /// </summary>
+        private static readonly HashSet<string> FpArmsOff = new HashSet<string> { "ar_2", "sw_arc", "sw_gel", "lmg_1", "lmg_2", "rl_1" };
+
         // ================================================================== asset writing
 
         private static WeaponDefinition Write(WeaponDefinition fresh)
@@ -556,6 +563,7 @@ namespace DD.Prototype.Weapons.EditorTools
 
             fresh.presentation.gripOffset = GripOffsets.TryGetValue(fresh.weaponId, out Vector3 grip) ? grip : WeaponGrip.DefaultOffset;
             fresh.presentation.fpLeftHandOffset = FpLeftHandOffsets.TryGetValue(fresh.weaponId, out Vector3 leftHand) ? leftHand : Vector3.zero;
+            fresh.presentation.fpArms = !FpArmsOff.Contains(fresh.weaponId);
 
             string path = Folder + "/" + fresh.name + ".asset";
             WeaponDefinition existing = AssetDatabase.LoadAssetAtPath<WeaponDefinition>(path);
