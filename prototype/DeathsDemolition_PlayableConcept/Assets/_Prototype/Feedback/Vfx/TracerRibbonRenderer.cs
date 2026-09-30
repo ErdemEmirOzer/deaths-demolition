@@ -157,6 +157,15 @@ namespace DD.Prototype.Feedback.Vfx
 
         // ------------------------------------------------------------------ rhythm
 
+        // DEC-112 Third Eye (cap.ar_2, S-02 060931e0): the burst's 3rd round carries RunTreeHooks.TreeRoundThirdEye and is always a
+        // full Kor tracer (hit or miss), its glow toned the capstone's cold steel #9FB8D0 (the same tone ZombieSkinFx.Steel lights).
+        [DD.Prototype.Core.Config.PrototypeOnly(DD.Prototype.Core.Config.PendingDecisions.None, "DEC-112 Third Eye trail glow #9FB8D0 × 2.0 (S-07; AD round pending).", true)]
+        public const float ThirdEyeGlowIntensity = 2f;
+        private static readonly Color ThirdEyeGlow = new Color(0.624f, 0.722f, 0.816f) * ThirdEyeGlowIntensity;
+
+        /// <summary>DEC-112: the round is Third Eye's marked 3rd round (tests).</summary>
+        public static bool IsThirdEyeRound(int treeFlags) => (treeFlags & DD.Prototype.Rounds.RunTreeHooks.TreeRoundThirdEye) != 0;
+
         /// <summary>Whether a round with this id is its class's full tracer (every Nth; 0 = never, 1 = always).</summary>
         public static bool IsTracerRound(VfxWeaponProfile profile, int roundId)
         {
@@ -342,7 +351,8 @@ namespace DD.Prototype.Feedback.Vfx
                 if (p.Kind == ProjectileKind.Rocket || p.Kind == ProjectileKind.Orb || p.Kind == ProjectileKind.Gel) continue;   // meshes (B3 / B6)
                 VfxWeaponProfile profile = VfxWeaponProfiles.For(p.WeaponId);
                 bool pellet = p.Kind == ProjectileKind.Pellet;
-                bool tracer = pellet ? profile.CentreTracer && p.PelletIndex == 0 : IsTracerRound(profile, p.Generation);
+                bool thirdEye = !pellet && IsThirdEyeRound(p.TreeFlags);
+                bool tracer = pellet ? profile.CentreTracer && p.PelletIndex == 0 : thirdEye || IsTracerRound(profile, p.Generation);
                 bool bar = pellet && !tracer;
                 float width;
                 float length;
@@ -373,7 +383,8 @@ namespace DD.Prototype.Feedback.Vfx
                 Vector3 dir = p.Direction;
                 Vector3 h = p.Position;
                 Vector3 t = h - dir * (headD - tailD);
-                Write(n, layer, h, t, width, bead, headD, tailD, fadeDistance, fadeIn, profile.HeadColor, profile.TailColor, bar, false);
+                bool steel = thirdEye && layer == 1;
+                Write(n, layer, h, t, width, bead, headD, tailD, fadeDistance, fadeIn, steel ? ThirdEyeGlow : profile.HeadColor, steel ? ThirdEyeGlow : profile.TailColor, bar, false);
                 n++;
                 if (layer == 0 && tracer && !bar)
                 {
