@@ -36,6 +36,8 @@ namespace DD.Prototype.Tests.PlayMode
         private const float ProvisionalMinActiveShare = 0.5f;
         private const int MinFlankRolled = 3;
         private const float RefillCheckSeconds = 6f;
+        /// <summary>Refills only in the first 12 s of the 30 s station, so at least 18 s of far-flank sampling follow the last one.</summary>
+        private const float RefillWindowSeconds = 12f;
         private const int MinFarSamples = 10;
 
         [TearDown]
@@ -92,7 +94,7 @@ namespace DD.Prototype.Tests.PlayMode
             {
                 while (Time.time - t0 < StationSeconds)
                 {
-                    if (Time.time >= nextRefill && rolled < MinFlankRolled && Time.time - t0 < StationSeconds - RefillCheckSeconds)
+                    if (Time.time >= nextRefill && rolled < MinFlankRolled && Time.time - t0 < RefillWindowSeconds)
                     {
                         nextRefill = Time.time + RefillCheckSeconds;
                         director.ClearAllEnemies();   // new lives: new flank rolls
