@@ -32,7 +32,8 @@ namespace DD.Prototype.Tests.PlayMode
         private SpecialWeaponSahne _s;
         private VirtualGamepadDriver _pad;
         private IInputSource _kitInput;
-        private ZombieEnemy _frozen;   // WP-062J: the aim-assist fixture disables one body's Update; it must go back to the pool enabled
+        // WP-062J: the aim-assist fixture disables bodies' Update; they must go back to the pool enabled.
+        private readonly System.Collections.Generic.List<ZombieEnemy> _frozen = new System.Collections.Generic.List<ZombieEnemy>(4);
 
         [UnityTearDown]
         public IEnumerator Bitir()
@@ -40,8 +41,8 @@ namespace DD.Prototype.Tests.PlayMode
             // WP-062J: the zombie pool (EnemyFactory, DDOL) outlives the test — a body returned with ZombieEnemy.enabled = false
             // is handed to a later fixture with no Update: rise never ends, no telegraph / notice, a static body in the crowd
             // (TierAbilities, TierExperience, RegionNav failed only after this fixture in the full PlayMode run).
-            if (_frozen != null) _frozen.enabled = true;
-            _frozen = null;
+            foreach (ZombieEnemy f in _frozen) if (f != null) f.enabled = true;
+            _frozen.Clear();
 
             // WP-062J: the process-long PrototypeInputSource keeps the last actuated family — without this the rest of
             // the PlayMode run inherits scheme Gamepad / aim Stick (proved: TierAbilities telegraph, RegionNav rise,
@@ -233,7 +234,7 @@ namespace DD.Prototype.Tests.PlayMode
             // hitboxes cannot leave the ray between the assist sample and the one test shot.
             z.CompleteRise();
             z.enabled = false;
-            _frozen = z;
+            _frozen.Add(z);
             yield return Kareler(3);
             Physics.SyncTransforms();
 
@@ -331,14 +332,22 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.Greater(assisted, 0f);
 
             // Cone limits: 8° off (6 m) → never chosen; 14 m at 3° → chosen; 17 m at 1° → outside the 15 m limit.
-            // Zombies walk towards the player, so distances are asserted as ranges over the short window.
+            // C-00 30.09 (main-ci 68317433 red, measured K/wp-069b5/evidence/b5m-*): the three bodies are frozen like the
+            // first one. Walking, the geometry depended on the frames' simulated time: under load the 17 m / 1° body crossed
+            // into 15 m (or a flank moved a bearing) before the 6-frame sample. The expected ranges are unchanged.
             InputPreferencesStore.ResetToDefaults();
             yield return null;
             z.Kill();
             yield return Kareler(2);
-            _s.Dogur(_s.Rig.transform.position + (Quaternion.AngleAxis(-8f, Vector3.up) * fwd) * 6f);
-            _s.Dogur(_s.Rig.transform.position + (Quaternion.AngleAxis(3f, Vector3.up) * fwd) * 14f);
-            _s.Dogur(_s.Rig.transform.position + (Quaternion.AngleAxis(1f, Vector3.up) * fwd) * 17f);
+            foreach (float[] aday in new[] { new[] { -8f, 6f }, new[] { 3f, 14f }, new[] { 1f, 17f } })
+            {
+                ZombieEnemy k = _s.Dogur(_s.Rig.transform.position + (Quaternion.AngleAxis(aday[0], Vector3.up) * fwd) * aday[1]);
+                k.CompleteRise();
+                k.enabled = false;
+                _frozen.Add(k);
+            }
+
+            Physics.SyncTransforms();
             yield return Kareler(2);
             _pad.Set(Vector2.zero, new Vector2(0f, 1f));
             yield return Kareler(Kare);
