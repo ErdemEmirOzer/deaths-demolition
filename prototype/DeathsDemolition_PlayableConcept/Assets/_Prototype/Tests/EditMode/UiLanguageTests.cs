@@ -130,23 +130,25 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
-        public void Display_TR_TamSatirTextSdf_ENDisplay_MetrikCizilenYuzden()
+        public void Display_TR_EN_AyniDisplayYuzu_TurkceBuyukHarflerAtlasta()
         {
-            TMP_FontAsset text = UiFonts.Role(UiFontRole.Text);
+            // DEC-109: the Display face's DD-TR derivative draws every Turkish capital, so TR headings keep the Display
+            // face (the Codex 19cb757a switch to the Text SDF is gone) and its metrics.
             TMP_FontAsset display = UiFonts.Role(UiFontRole.Display);
             foreach (UiType type in new[] { UiType.Display, UiType.Banner, UiType.H1, UiType.H2 })
             {
-                UiStrings.Language = UiStrings.Turkish;
-                Assert.AreSame(text, UiFonts.For(type), "TR heading has one complete face, not mixed glyph fallback");
-                Assert.AreEqual(text.faceInfo.lineHeight / text.faceInfo.pointSize, UiFactory.FaceLineRatio(type), 0.001f);
-                foreach (char glyph in "KOŞU RAPORU PROFİL SEVİYE ĞğİıŞş")
+                foreach (string language in new[] { UiStrings.Turkish, UiStrings.English })
                 {
-                    Assert.IsTrue(text.characterLookupTable.ContainsKey(glyph), "the drawing face owns " + glyph);
+                    UiStrings.Language = language;
+                    Assert.AreSame(display, UiFonts.For(type), language + " " + type);
+                    Assert.AreEqual(display.faceInfo.lineHeight / display.faceInfo.pointSize, UiFactory.FaceLineRatio(type), 0.001f);
                 }
+            }
 
-                UiStrings.Language = UiStrings.English;
-                Assert.AreSame(display, UiFonts.For(type));
-                Assert.AreEqual(display.faceInfo.lineHeight / display.faceInfo.pointSize, UiFactory.FaceLineRatio(type), 0.001f);
+            UiStrings.Language = UiStrings.Turkish;   // tr-TR casing: i → İ
+            foreach (char glyph in UiStrings.Upper("koşu raporu profil seviye ğüşiöç ĞÜŞİÖÇ").Replace(" ", string.Empty))
+            {
+                Assert.IsTrue(display.characterLookupTable.ContainsKey(glyph), "the Display atlas owns " + glyph);
             }
         }
 

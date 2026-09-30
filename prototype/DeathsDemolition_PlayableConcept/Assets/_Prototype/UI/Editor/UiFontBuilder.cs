@@ -35,9 +35,9 @@ namespace DD.Prototype.UI.EditorTools
 
         // "_" and "…": TMP asks every font for its underline and ellipsis glyphs when a label takes
         // the font; a static atlas without them logs a warning per label (p3: 4 870 warnings).
-        // WP-068 Turkish (C-00 26.09): the Turkish capitals Shippori Mincho B1 draws - Ç Ö Ü. Ğ İ Ş are not in the face;
-        // they fall back to the Text face (Source Sans 3) through the Display fallback chain.
-        public const string DisplayCharset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,:;!?'\"-–—()&/·×+%#’‘“”…_ÇÖÜ";
+        // WP-068 Turkish: every Turkish capital. Ç Ö Ü are the face's own; Ğ İ Ş come from its DEC-109 derivative
+        // "Shippori Mincho B1 DD-TR" (OFL 1.1, tools/dec109, ShipporiMinchoB1DDTR-NOTICE.txt).
+        public const string DisplayCharset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,:;!?'\"-–—()&/·×+%#’‘“”…_ÇÖÜĞİŞ";
         // 12b (AD R1-A SHOULD-7): "°" - STICK LOOK SPEED "180°/s", the FOV rows and the ACCURACY stat print
         // their unit in the Numeric face; without it the sign fell back to the Text face (Oswald has U+00B0).
         public const string NumericCharset = "0123456789 :/%+−-×.,x_…°ÇÖÜĞİŞçöüğış";   // + Turkish (a numeric chip may carry a word)
@@ -79,7 +79,7 @@ namespace DD.Prototype.UI.EditorTools
             // Shippori's hhea box (1.160 / −0.288 em) is sized for CJK; the caps-only Display atlas uses
             // the font's own Latin typo metrics (0.880 / −0.120), so a caps heading is not pushed down
             // under an empty kanji ascender and its band is 1.0 em (LineHeight reads it).
-            new Face { Role = "Display", Folder = "ShipporiMinchoB1", File = "ShipporiMinchoB1-Bold.ttf", PointSize = 64, Padding = 8, Width = 1024, Height = 512, Charset = DisplayCharset, AscentEm = 0.88f, DescentEm = -0.12f },
+            new Face { Role = "Display", Folder = "ShipporiMinchoB1", File = "ShipporiMinchoB1DDTR-Bold.ttf", PointSize = 64, Padding = 8, Width = 1024, Height = 512, Charset = DisplayCharset, AscentEm = 0.88f, DescentEm = -0.12f },
             new Face { Role = "Text", Folder = "SourceSans3", File = "SourceSans3-Regular.ttf", PointSize = 44, Padding = 6, Width = 1024, Height = 512, Charset = null },
             // Oswald's box (1.193 / −0.289 em) makes room for accented capitals; the Numeric atlas holds
             // digits and a few signs (cap height 0.810): a 0.90 / −0.18 box (1.08 em) keeps the figures
@@ -89,12 +89,21 @@ namespace DD.Prototype.UI.EditorTools
         };
 
         [MenuItem("Tools/Deaths Demolition/UI/Build Font Assets (WP-068)")]
-        public static void BuildAll()
+        public static void BuildAll() => BuildRoles(null);
+
+        /// <summary>DEC-109: only the Display face (the derivative's Ğ İ Ş), leaving the Text and Numeric atlases untouched.
+        /// Batch: -executeMethod DD.Prototype.UI.EditorTools.UiFontBuilder.BuildDisplay</summary>
+        public static void BuildDisplay() => BuildRoles("Display");
+
+        private static void BuildRoles(string only)
         {
             var report = new System.Text.StringBuilder("[UiFontBuilder]");
             foreach (Face face in Faces)
             {
-                report.Append('\n').Append(Build(face));
+                if (only == null || face.Role == only)
+                {
+                    report.Append('\n').Append(Build(face));
+                }
             }
 
             // Display (caps) and Numeric (digits) fall back to the Text face, not to TMP's global

@@ -1,0 +1,21 @@
+Shippori Mincho B1 DD-TR — notice for a Modified Version (SIL Open Font License 1.1)
+
+ShipporiMinchoB1DDTR-Bold.ttf is a Modified Version of Shippori Mincho B1 Bold, version 3.110,
+Copyright 2021 The Shippori Mincho Project Authors (https://github.com/fontdasu/ShipporiMincho).
+It is distributed under the SIL Open Font License, Version 1.1; the full licence is in ShipporiMinchoB1-OFL.txt
+beside this file. The original declares no Reserved Font Name.
+
+Modified for Deaths Demolition in 2026 (decision DEC-109, WP-068), so the game's Turkish headings draw in this face:
+- Added Ğ (U+011E), ğ (U+011F), İ (U+0130), Ş (U+015E) and ş (U+015F).
+  - Ğ ğ: a newly drawn breve (two unencoded marks, brevecomb.case.dd and brevecomb.dd) over the face's own G and g.
+  - İ: the face's own Ü dot over I.
+  - Ş ş: the face's own combining cedilla (U+0327) under S and s, placed the way the face places it in Ç and ç.
+  The new glyphs are composites of the original outlines plus these marks; no original glyph was changed.
+- Font names: family "Shippori Mincho B1 DD-TR", PostScript name "ShipporiMinchoB1DDTR-Bold". The copyright
+  string is kept and one sentence about this modification is appended to it.
+- The OS/2 code page 1254 (Turkish) and Latin Extended-A bits are set. The DSIG table is removed because it no
+  longer matches the file.
+
+Reproduce: tools/dec109/dd-tr-font.sh --venv <a venv with fontTools> --src <original ShipporiMinchoB1-Bold.ttf>
+(original SHA-256 d20f3981afb8bceda5fdf8f0fb29ba51eb21518644612ccd8a183e5bd433e25a). The same source gives the
+same bytes.

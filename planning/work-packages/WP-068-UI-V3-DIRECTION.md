@@ -649,6 +649,12 @@ U1'in Türkçe uzantısı: Shippori Mincho B1'in eksik Ğ ğ İ Ş ş glifleri O
   - **İ:** Ü noktası (126), alt 793.
   - **Ş ş:** U+0327; kök S/s'nin en alt noktasında, ≥ 10 birim bindirme.
   - **Glif yazım anında:** saat yönü kuadratik kontur, tamsayı; G/S/I kerning'i Ğ/Ş/İ'ye kopyalanır; Display atlasına Ğ İ Ş eklenir; ardından TMP provası 28/40/56 px, TR/EN, 1,25 ve AD imzası. fonttools kullanıcı onayından sonra.
+- **Yazıldı (30.09, fonttools kullanıcı onayıyla, yalıtılmış venv):** `ShipporiMinchoB1DDTR-Bold.ttf` (iç ad "Shippori Mincho B1 DD-TR", `ShipporiMinchoB1DDTR-NOTICE.txt`), araç `tools/dec109/dd-tr-font.sh --venv DIR --src <özgün>`; aynı kaynak aynı baytı verir.
+  - Breve: saat yönü kuadratik, tamsayı, uyum hatası ğ 0,447 / Ğ 0,417 birim (≤ 0,5). ğ'nin yayı 160,20°: kare kesik dışbükey köşesi tamsayı ızgarasına 0,5'ten yakın düşsün diye (±0,5° pay).
+  - Ş ş: kök S/s'nin en alt noktasında; sedilin tepesi harfin iç kenarından 14,6 / 14,7 birim aşağıda, yüzün kendi Ç/ç'si 14,4 / 14,1 bırakıyor (ölçüldü). Bindirme 29 / 20.
+  - Kerning: el yazımı büyük harf tablosunda G/S/I'lı tek çift var (A–G); A–Ğ kopyalandı.
+  - Display atlası Ğ İ Ş ile yeniden üretildi (69 glif, eksik yok, 46 çift). TR başlıklar artık Display yüzüyle; Codex 19cb757a'nın Text SDF geçişi kalktı (M-64 kapandı).
+  - Sırada: oyun içi TMP provası (`-ddUiCapture typespec`, 28/40/56 px × 1,25, TR/EN) ve AD imzası.
 
 ## 14 · AD eş imzası
 

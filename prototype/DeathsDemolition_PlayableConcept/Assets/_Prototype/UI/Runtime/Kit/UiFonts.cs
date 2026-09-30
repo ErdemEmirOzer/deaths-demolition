@@ -82,15 +82,10 @@ namespace DD.Prototype.UI
         /// </summary>
         public static TMP_FontAsset For(UiType type)
         {
+            // DEC-109 (user 30.09, M-64 closed): Turkish headings draw in the Display face too - its DD-TR derivative has
+            // Ğ İ Ş, so the Codex 19cb757a switch to the Text SDF is gone. Lower case in a heading still falls back to Text,
+            // as it does in English.
             UiFontRole role = RoleOf(type);
-            if (role == UiFontRole.Display && UiStrings.Language == UiStrings.Turkish)
-            {
-                // Codex 19cb757a (28.09), recorded only in KADRO handoff-codex-2026-09-28/CODEX-GUNLUK.md, no AD round: Turkish
-                // headings draw with the Text SDF because Shippori Mincho B1's source TTF has no Ğ ğ İ Ş ş. Kept until the
-                // user's decision (KADRO c-00/CODEX-DUZELTME-PLANI-2026-09-30.md §5-1, M-64); the chosen path then passes the AD.
-                role = UiFontRole.Text;
-            }
-
             TMP_FontAsset font = Role(role);
             if (font == null)
             {

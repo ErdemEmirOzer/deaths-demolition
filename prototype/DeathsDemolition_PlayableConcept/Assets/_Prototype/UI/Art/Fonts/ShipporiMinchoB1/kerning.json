@@ -1,5 +1,5 @@
 {
- "note": "hand-authored (ShipporiMinchoB1-Bold has no pair kerning); tuned in the slice 3 AD round (SHOULD-1, UPM 1000, ±10, ≥ −80)",
+ "note": "hand-authored (ShipporiMinchoB1-Bold has no pair kerning); tuned in the slice 3 AD round (SHOULD-1, UPM 1000, ±10, ≥ −80); DEC-109: G/S/I (g/s) pairs copied to Ğ/Ş/İ (ğ/ş) by tools/dec109/dd_tr_font.py",
  "unitsPerEm": 1000,
  "pairs": [
   {
@@ -226,6 +226,11 @@
    "first": "L",
    "second": "O",
    "xAdvance": -15
+  },
+  {
+   "first": "A",
+   "second": "Ğ",
+   "xAdvance": -20
   }
  ]
 }
