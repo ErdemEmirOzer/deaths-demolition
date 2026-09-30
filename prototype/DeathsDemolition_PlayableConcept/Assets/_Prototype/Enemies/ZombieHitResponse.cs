@@ -1,3 +1,4 @@
+using DD.Prototype.Core.Config;
 using DD.Prototype.Core.Weapons;
 using DD.Prototype.Damage;
 using UnityEngine;
@@ -45,6 +46,7 @@ namespace DD.Prototype.Enemies
         {
             _kbTime = -1f; _kbProfile = default; _kbDirection = Vector3.zero;
             _suppressCounter = 0f; _suppressUntil = 0f; _suppressPush = Vector3.zero;
+            _treeStaggerAllowedAt = 0f;   // DEC-112: the lock is per life
         }
 
         /// <summary>Per-class response for one landed, non-lethal hit. Returns the (possibly raised) flinch.</summary>
@@ -111,6 +113,40 @@ namespace DD.Prototype.Enemies
             _kbProfile = new KnockbackProfile(metres * scale, seconds);
             _kbDirection = flat;
             _kbTime = 0f;
+        }
+
+        [PrototypeOnly(PendingDecisions.None, "DEC-112 (user 30.09): the tree stagger's per-body lock (s) and the Ultra duration factor.", true)]
+        public const float TreeStaggerLockSeconds = 1.5f, TreeStaggerUltraFactor = 0.5f;
+
+        /// <summary>Tree staggers started this session (tests / telemetry).</summary>
+        public static int TreeStaggers { get; private set; }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetTreeStaggerStatics() => TreeStaggers = 0;
+        private float _treeStaggerAllowedAt;
+
+        /// <summary>
+        /// DEC-112 (user 30.09, S-04 WP-077 Kurogane capstone "a zombie whose armour breaks staggers 0.35 s"): the tree's stagger on
+        /// this body through the REQ-124 path — refused while the body is dying, already staggering, inside the REQ-124 stagger lock
+        /// or inside this body's <see cref="TreeStaggerLockSeconds"/> lock; the Ultra staggers for <see cref="TreeStaggerUltraFactor"/>
+        /// of the seconds. Adds no damage; marked as a tree stagger so stagger-keyed damage bonuses (IsHitStaggering) do not see it.
+        /// Starts the REQ-124 lock. Returns true when the stagger started.
+        /// </summary>
+        public bool ApplyTreeStagger(float seconds, Vector3 direction)
+        {
+            if (!_alive || _dying || seconds <= 0f || _animator == null) return false;
+            if (Time.time < _treeStaggerAllowedAt || _animator.IsStaggering || _reaction.StaggerOnCooldown) return false;
+            float duration = _tier == EnemyTier.Ultra ? seconds * TreeStaggerUltraFactor : seconds;
+            Vector3 flat = direction; flat.y = 0f;
+            if (flat.sqrMagnitude < 1e-4f) flat = -transform.forward;
+            _treeStaggerAllowedAt = Time.time + TreeStaggerLockSeconds;
+            _reaction.NoteExternalStagger();
+            _animator.BeginTreeStagger(flat.normalized, 1f, duration, transform);
+            if (_tier == EnemyTier.Special) _animator.PlayStumble();
+            _attack.Cancel();
+            RaiseBeat(EnemyCombatEventKind.Stagger, transform.position + Vector3.up, flat.normalized, ArmorSlot.None, _animator.Driven, duration);
+            TreeStaggers++;
+            return true;
         }
 
         /// <summary>The displacement this frame adds on top of locomotion (knockback ease-out + suppression push); decays the state.</summary>

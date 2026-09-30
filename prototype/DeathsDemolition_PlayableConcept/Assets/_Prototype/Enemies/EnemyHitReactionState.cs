@@ -211,6 +211,9 @@ namespace DD.Prototype.Enemies
 
         public bool StaggerOnCooldown => _staggerCooldownRemaining > 0f;
 
+        /// <summary>DEC-112: a stagger that did not come through <see cref="Evaluate"/> (the tree stagger) still starts the REQ-124 lock.</summary>
+        public void NoteExternalStagger() => _staggerCooldownRemaining = _staggerCooldown;
+
         public void ApplyConfig(PrototypeConfig config, EnemyTier tier)
         {
             if (config == null)

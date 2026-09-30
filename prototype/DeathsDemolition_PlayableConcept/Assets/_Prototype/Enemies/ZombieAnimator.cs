@@ -404,6 +404,7 @@ namespace DD.Prototype.Enemies
             }
 
             _staggerLocalDirection = local;
+            _treeStagger = false;   // DEC-112: a hit stagger (re)starts as a real one
             _staggerIntensity = Mathf.Clamp(intensity, 0.3f, 2.5f);
             _staggerDuration = Mathf.Max(0.08f, duration);
             _staggerTime = 0f;
@@ -419,6 +420,24 @@ namespace DD.Prototype.Enemies
         }
 
         public bool IsStaggering => _staggerTime < _staggerDuration && _staggerDuration > 0f;
+
+        private bool _treeStagger;
+
+        /// <summary>
+        /// DEC-112 (S-04 WP-077, Kurogane capstone): the same body stagger as <see cref="BeginStagger"/>, marked as a tree stagger — it
+        /// reads as a stagger everywhere (locomotion, attacks, visuals) but not in <see cref="IsHitStaggering"/>.
+        /// </summary>
+        public void BeginTreeStagger(Vector3 worldDirection, float intensity, float duration, Transform reference)
+        {
+            BeginStagger(worldDirection, intensity, duration, reference);
+            _treeStagger = true;
+        }
+
+        /// <summary>
+        /// DEC-112: staggering from a HIT (REQ-124), not from a tree effect. Damage bonuses keyed on a stagger (ks.impact.stagger,
+        /// Tetsui) read this, so a tree stagger gives no indirect damage.
+        /// </summary>
+        public bool IsHitStaggering => IsStaggering && !_treeStagger;
 
         /// <summary>Pick and start a death reaction. The enemy despawns when DeathFinished.</summary>
         /// <summary>WP-076 §2 / DEC-096: the killing push S-03 built in Die(), set before <see cref="BeginDeath"/>; S-06's driver reads it (SetDeathImpulse(in DeathImpulse)).</summary>
