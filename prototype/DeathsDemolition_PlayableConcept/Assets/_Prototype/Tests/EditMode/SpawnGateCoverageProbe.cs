@@ -174,7 +174,8 @@ namespace DD.Prototype.Tests.EditMode
         public void V6_KapiKapsami_Setler()
         {
             string setsPath = System.Environment.GetEnvironmentVariable("DD_WP076_PROBE_SET");
-            if (string.IsNullOrEmpty(setsPath)) Assert.Ignore("probe sets: DD_WP076_PROBE_SET=<json>");
+            // Diagnostics policy (C-00 30.09 Y6): no Assert.Ignore opt-in — the test is Explicit; run without its input it fails plainly
+            Assert.IsFalse(string.IsNullOrEmpty(setsPath), "probe sets: DD_WP076_PROBE_SET=<json> gerekli (Explicit tanı testi)");
             SetFile sets = JsonUtility.FromJson<SetFile>(File.ReadAllText(setsPath));
             Assert.IsTrue(sets != null && sets.sets != null && sets.sets.Length > 0, "set dosyası boş: " + setsPath);
 
