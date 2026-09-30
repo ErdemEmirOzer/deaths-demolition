@@ -52,6 +52,7 @@ namespace DD.Prototype.Core.EditorTools
             so.FindProperty("m_ShadowDistance").floatValue = QualityTiers.ShadowDistanceCap[(int)QualityTier.Performans];
             so.FindProperty("m_ShadowCascadeCount").intValue = QualityTiers.ShadowCascadeCap[(int)QualityTier.Performans];
             so.FindProperty("m_SoftShadowsSupported").boolValue = false;
+            so.FindProperty("m_AdditionalLightShadowsSupported").boolValue = false;
             SerializedProperty renderers = so.FindProperty("m_RendererDataList");
             renderers.arraySize = 1;
             renderers.GetArrayElementAtIndex(0).objectReferenceValue = performanceRenderer;
@@ -66,6 +67,9 @@ namespace DD.Prototype.Core.EditorTools
             so.FindProperty("m_ShadowCascadeCount").intValue = QualityTiers.ShadowCascadeCap[(int)QualityTier.Sinematik];
             so.FindProperty("m_SoftShadowsSupported").boolValue = true;
             SetEnum(so.FindProperty("m_SoftShadowQuality"), "High");
+            // C-00 30.09 decision A (S-07 WP-073 B3): Cinematic alone supports additional-light shadows — the explosion light's; the
+            // muzzle light stays shadowless on every tier. High (PrototypeProjectSetup) and Performance keep them off.
+            so.FindProperty("m_AdditionalLightShadowsSupported").boolValue = true;
             var cinematicRenderer = AssetDatabase.LoadAssetAtPath<UniversalRendererData>(CinematicRendererPath);
             SerializedProperty cinematicRenderers = so.FindProperty("m_RendererDataList");
             cinematicRenderers.arraySize = 1;

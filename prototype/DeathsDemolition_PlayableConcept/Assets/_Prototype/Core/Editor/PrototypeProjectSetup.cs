@@ -248,7 +248,7 @@ namespace DD.Prototype.Core.EditorTools
 
             SetBool(so, "m_MainLightShadowsSupported", true);
             SetEnum(so, "m_MainLightShadowmapResolution", 2048);
-            SetBool(so, "m_AdditionalLightShadowsSupported", false);
+            SetBool(so, "m_AdditionalLightShadowsSupported", false);   // the High asset; Cinematic turns them on in QualityTierSetup (C-00 30.09 A)
             SetInt(so, "m_AdditionalLightsPerObjectLimit", 4);
 
             SetFloat(so, "m_ShadowDistance", 45f);

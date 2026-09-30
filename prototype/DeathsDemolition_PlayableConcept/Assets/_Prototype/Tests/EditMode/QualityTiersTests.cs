@@ -158,6 +158,10 @@ namespace DD.Prototype.Tests.EditMode
             SerializedProperty soft = cinematic.FindProperty("m_SoftShadowQuality");
             Assert.AreEqual("High", soft.enumNames[soft.enumValueIndex]);
             Assert.AreEqual("Assets/Settings/DD_URP_Renderer_Cinematic.asset", AssetDatabase.GetAssetPath(cinematic.FindProperty("m_RendererDataList").GetArrayElementAtIndex(0).objectReferenceValue));
+            // C-00 30.09 A: additional-light shadows only on Cinematic (the explosion light; the muzzle light is shadowless everywhere).
+            Assert.IsTrue(cinematic.FindProperty("m_AdditionalLightShadowsSupported").boolValue, "Cinematic ek ışık gölgesi açık");
+            Assert.IsFalse(high.FindProperty("m_AdditionalLightShadowsSupported").boolValue, "High ek ışık gölgesi kapalı");
+            Assert.IsFalse(performance.FindProperty("m_AdditionalLightShadowsSupported").boolValue, "Performance ek ışık gölgesi kapalı");
             // C-00 25.09: every tier carries the feature-free planar renderer at index 1 (the planar reflection's nested render; the
             // tier renderer's SSAO threw in release players).
             foreach (SerializedObject tierAsset in new[] { performance, high, cinematic })
