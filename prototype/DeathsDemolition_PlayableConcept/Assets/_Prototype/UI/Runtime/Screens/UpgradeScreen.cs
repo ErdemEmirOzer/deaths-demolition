@@ -189,6 +189,7 @@ namespace DD.Prototype.UI
 
         private UiButton _continueButton;
         private TMP_Text _footerNote;
+        private TMP_Text _intro;
 
         private TMP_Text _rerollLabel;
         private UiButton _rerollButton;
@@ -242,6 +243,8 @@ namespace DD.Prototype.UI
                 UiStrings.Get("shop.eyebrow", "ROUND COMPLETE"),
                 UiStrings.Get("shop.title", "SPEND YOUR GOLD"),
                 IntroSentence());
+            Transform intro = Content.Find("Subtitle");
+            _intro = intro != null ? intro.GetComponent<TMP_Text>() : null;   // DEC-107: re-written on every open
 
             _cardsTop += (int)UiSpace.XXL;
 
@@ -1074,6 +1077,12 @@ namespace DD.Prototype.UI
             // Every command from this screen quotes the cards it was drawn with (WP-008).
             _sessionId = shop.SessionId;
             _revision = shop.Revision;
+            if (_intro != null)
+            {
+                // DEC-107: the intro follows this offer's pick limit and names the late-round bonus (built once, the screen
+                // would keep the first round's count).
+                _intro.text = UiUpgradeCopy.Intro(PrototypeConfig.Active, shop.Round, shop.PurchaseLimit, shop.LateRoundBonus);
+            }
 
             // CONFIGURATION ERROR (decision 17). Three valid cards could not be produced.
             // Nothing was charged, no card is invented, CONTINUE works. Stated plainly.

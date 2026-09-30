@@ -501,6 +501,36 @@ namespace DD.Prototype.Tests.EditMode
         // ------------------------------------------------------------ slice 9 · E3 T1: a locked title / badge says what opens it
 
         [Test]
+        public void Dec107_GecRoundBonusu_GirisCumlesi_R9_R10_R13_R14()
+        {
+            // DEC-107: the intro follows each offer's limit and names the late-round bonus; the last bonus round says the
+            // next one is back to the usual count (R14 reads as planned), the round before announces it.
+            PrototypeConfig config = Resources.Load<PrototypeConfig>(PrototypeConfig.ResourcesPath);
+            Assert.IsNotNull(config);
+            int first = config.Economy.LatePurchaseFirstRound, last = config.Economy.LatePurchaseLastRound;
+            int normal = UpgradeOfferPolicy.PurchaseLimit(config), bonus = UpgradeOfferPolicy.PurchaseLimit(config, first);
+            Assert.AreEqual(2, normal, "shipped PurchasesPerRound");
+            Assert.AreEqual(3, bonus, "shipped DEC-107 LatePurchasesPerRound");
+            foreach (string language in new[] { UiStrings.English, UiStrings.Turkish })
+            {
+                UiStrings.Language = language;
+                string two = UiStrings.Get("shop.count.two"), three = UiStrings.Get("shop.count.three");
+                string before = UiUpgradeCopy.Intro(config, first - 1, normal, UpgradeOfferPolicy.IsLateRoundBonus(config, first - 1));
+                string during = UiUpgradeCopy.Intro(config, first, bonus, UpgradeOfferPolicy.IsLateRoundBonus(config, first));
+                string closing = UiUpgradeCopy.Intro(config, last, bonus, UpgradeOfferPolicy.IsLateRoundBonus(config, last));
+                string after = UiUpgradeCopy.Intro(config, last + 1, normal, UpgradeOfferPolicy.IsLateRoundBonus(config, last + 1));
+                Assert.AreEqual(UiStrings.Get("shop.intro.late_next").Replace("{count}", two).Replace("{bonus}", three), before, language);
+                Assert.AreEqual(UiStrings.Get("shop.intro.late").Replace("{count}", three), during, language);
+                Assert.AreEqual(UiStrings.Get("shop.intro.late_last").Replace("{count}", three).Replace("{normal}", two), closing, language);
+                Assert.AreEqual(UiUpgradeCopy.Intro(normal), after, language + ": R" + (last + 1) + " reads as any other round");
+                foreach (string line in new[] { before, during, closing, after })
+                {
+                    Assert.IsFalse(line.Contains("{"), language + ": " + line);
+                }
+            }
+        }
+
+        [Test]
         public void Kozmetik_Kilitli_KosulSatirda_TR_EN_EskiGelistiriciMetniYok()
         {
             int checkedRows = 0;

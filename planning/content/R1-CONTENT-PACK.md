@@ -1158,3 +1158,13 @@ Achievement and profile content names by id (ECUI-13): `achievement.<id>.name` f
 | `profile.content.indicator_kill_streak.name` | Kill streak counter | Öldürme Serisi Sayacı |
 | `profile.content.indicator_round_timer.name` | Round timer | Round Saati |
 | `profile.content.indicator_gold_ticker.name` | Gold ticker | Altın Sayacı |
+
+## S-09 · DEC-107 late-round bonus (C-00 30.09)
+
+DEC-107 (user 30.09): R10–R13 allow three picks. The round-end intro now follows each offer's own limit (it was written once when the screen was built, so it kept the first round's count) and names the bonus: `shop.intro.late` in R10–R12, `shop.intro.late_last` in R13 (the next round is back to the usual count, so R14 reads as planned, not as a loss), `shop.intro.late_next` in R9. `{count}` / `{normal}` / `{bonus}` are the count words (`shop.count.*`). TR keeps the project term "round".
+
+| Key | en | tr |
+|---|---|---|
+| `shop.intro.late` | Late-round bonus: buy up to {count} upgrades this round, or reroll the offer once before the first. | Geç round bonusu: bu round en çok {count} geliştirme al ya da ilkinden önce teklifi bir kez reroll et. |
+| `shop.intro.late_last` | Last late-round bonus: buy up to {count} upgrades this round. Next round is back to {normal} picks. | Son geç round bonusu: bu round en çok {count} geliştirme al. Sonraki round yine {normal} seçim. |
+| `shop.intro.late_next` | Buy up to {count} upgrades this round, or reroll the offer once before the first. Next round brings the late-round bonus: {bonus} picks. | Bu round en çok {count} geliştirme al ya da ilkinden önce teklifi bir kez reroll et. Sonraki round geç round bonusu: {bonus} seçim. |

@@ -30,6 +30,34 @@ namespace DD.Prototype.UI
             ? UiStrings.Format("shop.intro.many", "count", CountWord(limit), "Buy up to {count} upgrades this round, or reroll the offer once before the first. Unspent gold carries into the next round.")
             : UiStrings.Get("shop.intro.one", "Buy one upgrade this round, or reroll the offer once first. Unspent gold carries into the next round.");
 
+        /// <summary>
+        /// DEC-107 (user 30.09): the intro for the offer of <paramref name="round"/>. The late-round bonus (R10–R13) is named;
+        /// its last round says the next one goes back to the usual count, so R14 reads as planned rather than as a loss; the
+        /// round before it announces it. Every other round reads as <see cref="Intro(int)"/>.
+        /// </summary>
+        public static string Intro(PrototypeConfig config, int round, int limit, bool lateBonus)
+        {
+            if (lateBonus)
+            {
+                if (UpgradeOfferPolicy.IsLateRoundBonus(config, round + 1))
+                {
+                    return UiStrings.Format("shop.intro.late", "count", CountWord(limit),
+                        "Late-round bonus: buy up to {count} upgrades this round, or reroll the offer once before the first.");
+                }
+
+                return Fill("shop.intro.late_last", "Last late-round bonus: buy up to {count} upgrades this round. Next round is back to {normal} picks.",
+                    "count", CountWord(limit), "normal", CountWord(UpgradeOfferPolicy.PurchaseLimit(config)));
+            }
+
+            if (limit > 1 && UpgradeOfferPolicy.IsLateRoundBonus(config, round + 1))
+            {
+                return Fill("shop.intro.late_next", "Buy up to {count} upgrades this round, or reroll the offer once before the first. Next round brings the late-round bonus: {bonus} picks.",
+                    "count", CountWord(limit), "bonus", CountWord(UpgradeOfferPolicy.PurchaseLimit(config, round + 1)));
+            }
+
+            return Intro(limit);
+        }
+
         public static string Choose(int limit) => UiStrings.Format("shop.note.choose_many", "count", CountWord(limit),
             "Choose up to {count} upgrades, or reroll once first, then continue.");
 

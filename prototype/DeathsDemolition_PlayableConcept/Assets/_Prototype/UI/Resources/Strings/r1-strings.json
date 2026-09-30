@@ -3954,5 +3954,17 @@
   "profile.content.indicator_gold_ticker.name": {
     "en": "Gold ticker",
     "tr": "Altın Sayacı"
+  },
+  "shop.intro.late": {
+    "en": "Late-round bonus: buy up to {count} upgrades this round, or reroll the offer once before the first.",
+    "tr": "Geç round bonusu: bu round en çok {count} geliştirme al ya da ilkinden önce teklifi bir kez reroll et."
+  },
+  "shop.intro.late_last": {
+    "en": "Last late-round bonus: buy up to {count} upgrades this round. Next round is back to {normal} picks.",
+    "tr": "Son geç round bonusu: bu round en çok {count} geliştirme al. Sonraki round yine {normal} seçim."
+  },
+  "shop.intro.late_next": {
+    "en": "Buy up to {count} upgrades this round, or reroll the offer once before the first. Next round brings the late-round bonus: {bonus} picks.",
+    "tr": "Bu round en çok {count} geliştirme al ya da ilkinden önce teklifi bir kez reroll et. Sonraki round geç round bonusu: {bonus} seçim."
   }
 }
