@@ -59,6 +59,7 @@ namespace DD.Prototype.Weapons
             s_instance = null;
             WeaponRosterSourceRegistry.SetCurrent(Instance);
             UpgradeCardCatalog.WeaponBranchGate = IsBranchOfferedForSelectedWeapon;
+            UpgradeCardCatalog.WeaponBranchGateFor = WeaponRoster.IsBranchOffered;   // S-04 SHOULD: the shop asks for its own weapon
         }
     }
 }

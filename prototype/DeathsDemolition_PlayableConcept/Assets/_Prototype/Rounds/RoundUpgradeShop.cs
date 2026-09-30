@@ -208,12 +208,14 @@ namespace DD.Prototype.Rounds
         /// </summary>
         public void BeginRunTree(int runId, PrototypeConfig config)
         {
-            ClassicWeaponId weapon = WeaponProvider != null ? WeaponProvider() : WeaponRegistry.SelectedWeapon;
-            Tree.Begin(Mathf.Max(0, runId), weapon, config, Meta);
+            Tree.Begin(Mathf.Max(0, runId), ShopWeapon, config, Meta);
         }
 
         /// <summary>WP-077: the equipped weapon the tree is built for. Null = WeaponRegistry.SelectedWeapon.</summary>
         public Func<ClassicWeaponId> WeaponProvider { get; set; }
+
+        /// <summary>The shop's weapon: <see cref="WeaponProvider"/>, else the global selection. The tree and the branch gate both read it.</summary>
+        private ClassicWeaponId ShopWeapon => WeaponProvider != null ? WeaponProvider() : WeaponRegistry.SelectedWeapon;
 
         /// <summary>WP-077: Purse bonus paid when THIS offer opened (0 without a Purse). Round-end readout.</summary>
         public int PurseBonusThisRound { get; private set; }
@@ -336,8 +338,7 @@ namespace DD.Prototype.Rounds
                 // WP-077: a new run builds its tree; every new round-end pays the Purse and opens Hearth.
                 if (!Tree.IsBuilt || Tree.RunId != wantedRun)
                 {
-                    ClassicWeaponId weapon = WeaponProvider != null ? WeaponProvider() : WeaponRegistry.SelectedWeapon;
-                    Tree.Begin(wantedRun, weapon, config, Meta);
+                    Tree.Begin(wantedRun, ShopWeapon, config, Meta);
                 }
 
                 Tree.TierEligibility = TierEligibility;
@@ -1519,7 +1520,7 @@ namespace DD.Prototype.Rounds
 
         private bool HasLiveConsumer(UpgradeBranch branch)
         {
-            return OfferUnbackedBranches || UpgradeCardCatalog.HasLiveConsumer(branch);
+            return OfferUnbackedBranches || UpgradeCardCatalog.HasLiveConsumer(branch, ShopWeapon);   // SHOULD: the shop's weapon, not the global one
         }
 
         private bool IsUnlocked(UpgradeBranch branch)

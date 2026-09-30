@@ -268,6 +268,31 @@ namespace DD.Prototype.Rounds
 
         private static readonly string[] s_roman = { "0", "I", "II", "III", "IV", "V", "VI", "VII", "VIII" };
 
+        /// <summary>
+        /// SHOULD (S-09 30.09): as <see cref="HasLiveConsumer(UpgradeBranch)"/> for a named weapon — the shop asks for its own
+        /// weapon (RoundUpgradeShop.WeaponProvider) instead of the global selection. Uses <see cref="WeaponBranchGateFor"/>;
+        /// without it, the global <see cref="WeaponBranchGate"/> (pre-roster: every backed branch).
+        /// </summary>
+        public static bool HasLiveConsumer(UpgradeBranch branch, ClassicWeaponId weapon)
+        {
+            for (int i = 0; i < s_unbacked.Length; i++)
+            {
+                if (s_unbacked[i] == branch)
+                {
+                    return false;
+                }
+            }
+
+            System.Func<ClassicWeaponId, UpgradeBranch, bool> forWeapon = WeaponBranchGateFor;
+            if (forWeapon != null)
+            {
+                return forWeapon(weapon, branch);
+            }
+
+            System.Func<UpgradeBranch, bool> gate = WeaponBranchGate;
+            return gate == null || gate(branch);
+        }
+
         /// <summary>False for a branch no live system reads. See the class remarks.</summary>
         public static bool HasLiveConsumer(UpgradeBranch branch)
         {
@@ -288,6 +313,9 @@ namespace DD.Prototype.Rounds
 
         /// <summary>WP-034 seam: per-weapon branch gate (roster). Null keeps every backed branch live.</summary>
         public static System.Func<UpgradeBranch, bool> WeaponBranchGate { get; set; }
+
+        /// <summary>SHOULD seam: the roster gate for a named weapon (WeaponRosterSource installs WeaponRoster.IsBranchOffered). Null = use <see cref="WeaponBranchGate"/>.</summary>
+        public static System.Func<ClassicWeaponId, UpgradeBranch, bool> WeaponBranchGateFor { get; set; }
 
         /// <summary>True while some branch is being held out of the draw. False today.</summary>
         public static bool HasUnbackedBranches => s_unbacked.Length > 0;

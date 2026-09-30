@@ -53,6 +53,40 @@ namespace DD.Prototype.Tests.EditMode
 
         private void Ac(int round) => _dukkan.Open(round, _config, _cuzdan, _rank, Kosu);
 
+        [Test]
+        public void DalKapisi_SHOULD_DukkanKendiSilahinaSorar_SaglayiciYoksaGlobalSecim()
+        {
+            System.Func<ClassicWeaponId, UpgradeBranch, bool> oncekiSilahli = UpgradeCardCatalog.WeaponBranchGateFor;
+            System.Func<UpgradeBranch, bool> oncekiGlobal = UpgradeCardCatalog.WeaponBranchGate;
+            ClassicWeaponId oncekiSecim = WeaponRegistry.SelectedWeapon;
+            try
+            {
+                // AR'de yalnız Piercing, başka silahta Piercing dışındaki her şey canlı; global seçim rl_1.
+                UpgradeCardCatalog.WeaponBranchGateFor = (w, b) => w == ClassicWeaponId.AssaultRifle ? b == UpgradeBranch.Piercing : b != UpgradeBranch.Piercing;
+                UpgradeCardCatalog.WeaponBranchGate = b => false;
+                WeaponRegistry.SelectedWeapon = ClassicWeaponId.Rl1;
+                Ac(1);
+                Assert.AreNotEqual(UpgradeEligibility.NoLiveConsumer, _dukkan.Eligibility(UpgradeBranch.Piercing), "dükkânın silahı (AR) sorulur");
+                Assert.AreEqual(UpgradeEligibility.NoLiveConsumer, _dukkan.Eligibility(UpgradeBranch.FireRate));
+
+                _dukkan.WeaponProvider = null;   // sağlayıcı yok: global seçim (rl_1)
+                Assert.AreEqual(UpgradeEligibility.NoLiveConsumer, _dukkan.Eligibility(UpgradeBranch.Piercing));
+                Assert.AreNotEqual(UpgradeEligibility.NoLiveConsumer, _dukkan.Eligibility(UpgradeBranch.FireRate));
+
+                // Silahlı kapı kurulmamışsa eski global kapı geçerli (ön-roster davranışı korunur).
+                UpgradeCardCatalog.WeaponBranchGateFor = null;
+                Assert.IsFalse(UpgradeCardCatalog.HasLiveConsumer(UpgradeBranch.Piercing, ClassicWeaponId.AssaultRifle));
+                UpgradeCardCatalog.WeaponBranchGate = null;
+                Assert.IsTrue(UpgradeCardCatalog.HasLiveConsumer(UpgradeBranch.Piercing, ClassicWeaponId.AssaultRifle));
+            }
+            finally
+            {
+                UpgradeCardCatalog.WeaponBranchGateFor = oncekiSilahli;
+                UpgradeCardCatalog.WeaponBranchGate = oncekiGlobal;
+                WeaponRegistry.SelectedWeapon = oncekiSecim;
+            }
+        }
+
         private int Kart(string nodeId)
         {
             IReadOnlyList<UpgradeCardOffer> cards = _dukkan.Cards;
