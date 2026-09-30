@@ -995,6 +995,11 @@ namespace DD.Prototype.Spawn
         /// with the odds² steering; the round log reports the mean as innerMass).
         /// </summary>
         public double InnerMassSum { get; private set; }
+
+        /// <summary>WP-076 M-26 (C-00 30.09 K10 bot round): v6 picks, and those made while the rolling 50 % inner quota was full
+        /// (the cap's engagement rate = QuotaFullPicks / V6Picks).</summary>
+        public int V6Picks { get; private set; }
+        public int QuotaFullPicks { get; private set; }
         public int InnerMassSamples { get; private set; }
 
         private SpawnPointRuntime SelectPoint(float maxPathDistance = 0f)
@@ -1054,6 +1059,7 @@ namespace DD.Prototype.Spawn
             }
 
             if ((used & SpawnRelaxation.InnerQuota) != 0) InnerQuotaRelaxes++;   // WP-076 B9 (Y5)
+            if (inputs.InnerShare >= 0f) { V6Picks++; if (inputs.InnerQuotaFull) QuotaFullPicks++; }   // M-26 cap engagement
             if (inputs.InnerShare >= 0f && used == SpawnRelaxation.None && !inputs.InnerQuotaFull && _selector.LastTotalWeight > 0f)
             {
                 float steer = SpawnWorldProfile.InnerSteer(inputs.InnerShare);

@@ -10,7 +10,7 @@ namespace DD.Prototype.Spawn
     /// </summary>
     public static class SpawnRoundLog
     {
-        private static int s_reroutes, s_fallbacks, s_quotaRelax, s_noPointQuota, s_massN;
+        private static int s_reroutes, s_fallbacks, s_quotaRelax, s_noPointQuota, s_massN, s_picks, s_quotaFull;
         private static double s_massSum;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -28,6 +28,7 @@ namespace DD.Prototype.Spawn
             s_quotaRelax = d != null ? d.InnerQuotaRelaxes : 0;
             s_noPointQuota = d != null ? d.NoPointQuotaTicks : 0;
             s_massSum = d != null ? d.InnerMassSum : 0; s_massN = d != null ? d.InnerMassSamples : 0;
+            s_picks = d != null ? d.V6Picks : 0; s_quotaFull = d != null ? d.QuotaFullPicks : 0;
         }
 
         private static void OnRoundCompleted(int round)
@@ -41,7 +42,8 @@ namespace DD.Prototype.Spawn
                       + " innerQuotaRelax=" + (d != null ? d.InnerQuotaRelaxes - s_quotaRelax : 0)
                       + " noPointQuota=" + (d != null ? d.NoPointQuotaTicks - s_noPointQuota : 0)
                       + " innerMass=" + (d != null && d.InnerMassSamples > s_massN ? ((d.InnerMassSum - s_massSum) / (d.InnerMassSamples - s_massN)).ToString("0.00") : "-")
-                      + " spawns=" + (d != null ? d.Population.SpawnedTotal : 0));
+                      + " spawns=" + (d != null ? d.Population.SpawnedTotal : 0)
+                      + " quotaFull=" + (d != null ? (d.QuotaFullPicks - s_quotaFull) + "/" + (d.V6Picks - s_picks) : "-"));
         }
     }
 }
