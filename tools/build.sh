@@ -77,7 +77,7 @@ BUILD_OK=0; [ "$X" -eq 0 ] && [ -d "$APP" ] && grep -q '"result": "Succeeded"' "
 [ "$TARGET" = "win64" ] && { [ -f "$APP/$DD_WIN_EXE" ] && [ -d "$APP/${DD_WIN_EXE:r}_Data" ] || BUILD_OK=0; }
 # WP-046: build footprint (categories, top assets, folder roll-up, cap check) from the Unity build log
 if [ "$BUILD_OK" -eq 1 ] && [ -x "$DD_TOOLS_DIR/build-report.sh" ]; then
-  "$DD_TOOLS_DIR/build-report.sh" "$OUT" --top 25 --cap "${DD_BUILD_CAP_MB:-5120}" | head -1 | while IFS= read -r l; do dd_log "$l"; done
+  "$DD_TOOLS_DIR/build-report.sh" "$OUT" --top 25 --cap-bytes "${DD_BUILD_CAP_BYTES:-5000000000}" | head -1 | while IFS= read -r l; do dd_log "$l"; done
 fi
 
 # WP-079H: content manifest of the built player (before the smoke run touches anything) — verify a copy later with

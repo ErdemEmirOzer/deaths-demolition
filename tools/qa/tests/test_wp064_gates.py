@@ -193,14 +193,25 @@ class Wp064StrictGateTests(unittest.TestCase):
             "mode": "release", "capApplicable": True, "capExceeded": True, "appMB": 550.1,
         }))
 
-    def test_dec093_release_cap_is_5120_mb(self):
+    def test_dec093_release_cap_is_5e9_bytes_against_build_report_total_size(self):
         gate = load_wp064_gate()
-        for size in (550.1, 1000.0, 5120.0):
+        self.assertEqual(gate.RELEASE_CAP_BYTES, 5_000_000_000)
+        base = {"mode": "release-lz4hc", "capApplicable": True, "capExceeded": False, "appMB": 9999.0}
+        for size in (0, 1_181_216_746, 5_000_000_000):
+            with self.subTest(gateBytes=size):
+                self.assertTrue(gate.valid_release_footprint(dict(base, gateBytes=size)))
+        for size in (5_000_000_001, 5e9, True, "1000", None, -1):
+            with self.subTest(gateBytes=size):
+                self.assertFalse(gate.valid_release_footprint(dict(base, gateBytes=size)))
+
+    def test_dec093_legacy_footprint_without_gate_bytes_uses_app_mib(self):
+        gate = load_wp064_gate()
+        for size in (550.1, 1126.8, 4768.37):
             with self.subTest(size=size):
                 self.assertTrue(gate.valid_release_footprint({
                     "mode": "release-lz4hc", "capApplicable": True, "capExceeded": False, "appMB": size,
                 }))
-        for size in (5120.1, True, "1000", float("nan"), float("inf")):
+        for size in (4768.38, 5120.0, True, "1000", float("nan"), float("inf")):
             with self.subTest(size=size):
                 self.assertFalse(gate.valid_release_footprint({
                     "mode": "release", "capApplicable": True, "capExceeded": False, "appMB": size,

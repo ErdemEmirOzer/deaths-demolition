@@ -36,7 +36,7 @@ if [ -n "$FP" ] && [ -f "$FP" ]; then
 import json, sys, os
 cur = json.load(open(sys.argv[1])); prev = json.load(open(sys.argv[2])) if sys.argv[2] and os.path.isfile(sys.argv[2]) else None
 cap = 'N/A release-only' if cur.get('capApplicable') is False else ('WARN cap exceeded' if cur.get('capExceeded') else 'ok')
-line = f"{sys.argv[3]}: mode={cur.get('mode') or '?'} app={cur.get('appMB')} MB complete={cur.get('completeBuildMB')} MB user={cur.get('totalUserAssetsMB')} MB cap={cur.get('capMB')} {cap} (stamp {cur.get('stamp')})"
+line = f"{sys.argv[3]}: mode={cur.get('mode') or '?'} app={cur.get('appMB')} MB complete={cur.get('completeBuildMB')} MB user={cur.get('totalUserAssetsMB')} MB gate={cur.get('gateBytes')} B cap={cur.get('capBytes', cur.get('capMB'))} {cap} (stamp {cur.get('stamp')})"
 if prev:
     d = (cur.get('completeBuildMB') or 0) - (prev.get('completeBuildMB') or 0)
     line += f"  Δ vs {os.path.basename(sys.argv[2])[10:-5]} ({prev.get('mode') or '?'}): {d:+.1f} MB"

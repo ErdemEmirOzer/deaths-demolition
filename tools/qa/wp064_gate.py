@@ -13,7 +13,8 @@ import sys
 
 MEAN_MAX = 8.0
 P99_MAX = 10.0
-RELEASE_CAP_MB = 5120.0        # DEC-093 supersedes DEC-086/090's 550 MB cap; LZ4HC remains unchanged.
+RELEASE_CAP_BYTES = 5_000_000_000   # DEC-093 "5 GB" = 5 000 000 000 bytes (C-00 30.09, WP-079G K7); gate value = BuildReport totalSize.
+RELEASE_CAP_MB = RELEASE_CAP_BYTES / (1024 * 1024)   # ≈ 4768.37 MiB — only for footprints written before gateBytes existed.
 LOG_FAILURES = tuple(re.compile(pattern, re.IGNORECASE) for pattern in (
     r"\bShader error in\b",
     r"\berror CS\d+\b",
@@ -92,8 +93,15 @@ def valid_release_footprint(footprint):
         and base_mode(footprint) == "release"
         and footprint.get("capApplicable") is True
         and footprint.get("capExceeded") is False
-        and finite_number(footprint.get("appMB"), 0, RELEASE_CAP_MB)
+        and release_size_within_cap(footprint)
     )
+
+
+def release_size_within_cap(footprint):
+    """WP-079G K7: tools/build-report.sh writes gateBytes (Unity BuildReport totalSize); older footprints only carry appMB (MiB)."""
+    if "gateBytes" in footprint:
+        return exact_int(footprint.get("gateBytes"), 0) and footprint["gateBytes"] <= RELEASE_CAP_BYTES
+    return finite_number(footprint.get("appMB"), 0, RELEASE_CAP_MB)
 
 
 def load_json(path, check):
@@ -461,7 +469,7 @@ def main():
     check("build.releaseFootprintMode", base_mode(release_footprint) == "release" and release_footprint.get("capApplicable") is True,
           {key: release_footprint.get(key) for key in ("mode", "capApplicable")})
     check("build.releaseFootprint", valid_release_footprint(release_footprint),
-          f"{app_mb} MB <= {RELEASE_CAP_MB} MB")
+          f"gate {release_footprint.get('gateBytes')} bytes ({release_footprint.get('gateSource')}) <= {RELEASE_CAP_BYTES} bytes · app {app_mb} MB")
     check("build.releaseBinary", bool(release_binary and release_binary.is_file()), release_hash)
 
     try:
