@@ -31,6 +31,16 @@ namespace DD.Prototype.Feedback.Vfx
         public const float ShockIntensity = 1.2f;
         private static readonly Vector4 ShockHdr = SpecialVfxAssets.Hdr(0x7FD3FF, ShockIntensity);
         private static readonly Vector4 GelHdr = SpecialVfxAssets.Hdr(0xFF5FD2, 0.8f);
+
+        // DEC-112 (user 30.09, S-04 CapstoneProc): the capstone tone — a cold steel pulse #9FB8D0 on the struck body, so the
+        // stagger moment reads without a new VFX. Lightning Fang (smg_2 bonus on a hit-staggered body) 0.25 s, Black Iron
+        // (lmg_2 plate break → stagger) 0.5 s; full for the first 30 %, then an ease-out; Reduce flashes: × 0.6.
+        [DD.Prototype.Core.Config.PrototypeOnly(DD.Prototype.Core.Config.PendingDecisions.None, "DEC-112 capstone tone: #9FB8D0 × 0.9, 0.25 s (Lightning Fang) / 0.5 s (Black Iron); S-07 value, AD round pending.", true)]
+        public const float SteelIntensity = 0.9f;
+        public const float SteelFangSeconds = 0.25f;
+        public const float SteelIronSeconds = 0.5f;
+        public const float SteelReduced = 0.6f;
+        private static readonly Vector4 SteelHdr = SpecialVfxAssets.Hdr(0x9FB8D0, SteelIntensity);
         private static readonly int EmissionId = Shader.PropertyToID("_EmissionColor");
 
         private struct Slot
@@ -38,6 +48,7 @@ namespace DD.Prototype.Feedback.Vfx
             public ZombieSkinnedVisual Visual;
             public float ShockBorn, ShockSeconds;
             public float GelBorn;
+            public float SteelBorn, SteelSeconds;
             public bool Emissive;
             public bool Applied;
         }
@@ -72,6 +83,20 @@ namespace DD.Prototype.Feedback.Vfx
             return s.Emissive;
         }
 
+        /// <summary>Pulses (DEC-112 capstone tone) started since start-up (tests).</summary>
+        public static int SteelPulses { get; private set; }
+
+        /// <summary>DEC-112: a capstone struck the body — a cold steel pulse for <paramref name="seconds"/> (a new proc restarts it).</summary>
+        public static bool Steel(ZombieSkinnedVisual visual, float seconds)
+        {
+            int i = Acquire(visual);
+            if (i < 0) return false;
+            s_slots[i].SteelBorn = Time.time;
+            s_slots[i].SteelSeconds = seconds;
+            SteelPulses++;
+            return s_slots[i].Emissive;
+        }
+
         /// <summary>A gel hit / slide filmed the body (restarts the 6 s film).</summary>
         public static bool Gel(ZombieSkinnedVisual visual)
         {
@@ -94,7 +119,7 @@ namespace DD.Prototype.Feedback.Vfx
             if (free < 0) return -1;   // 16 glowing bodies is past both caps (rim ≤ 8, gel ≤ 8): the arcs still play
             bool emissive = HasEmission(visual);
             if (!emissive) SkippedNoEmission++;
-            s_slots[free] = new Slot { Visual = visual, ShockBorn = -1f, GelBorn = -1f, Emissive = emissive };
+            s_slots[free] = new Slot { Visual = visual, ShockBorn = -1f, GelBorn = -1f, SteelBorn = -1f, Emissive = emissive };
             return free;
         }
 
@@ -137,6 +162,13 @@ namespace DD.Prototype.Feedback.Vfx
                     else s.GelBorn = -1f;
                 }
 
+                if (s.SteelBorn >= 0f)
+                {
+                    float t = now - s.SteelBorn;
+                    if (t < s.SteelSeconds) { c += SteelColour(t, s.SteelSeconds, reduce); live = true; }
+                    else s.SteelBorn = -1f;
+                }
+
                 if (!live)
                 {
                     if (s.Applied) Write(s.Visual, Vector4.zero, true);
@@ -171,6 +203,15 @@ namespace DD.Prototype.Feedback.Vfx
             }
 
             return ShockHdr * (envelope * flicker);
+        }
+
+        /// <summary>The DEC-112 steel pulse at <paramref name="t"/> s of <paramref name="seconds"/> (linear HDR).</summary>
+        public static Vector4 SteelColour(float t, float seconds, bool reduceFlashes)
+        {
+            if (t < 0f || t >= seconds) return Vector4.zero;
+            float full = seconds * 0.3f;
+            float k = t <= full ? 1f : 1f - (t - full) / Mathf.Max(0.01f, seconds - full);
+            return SteelHdr * (k * k * (reduceFlashes ? SteelReduced : 1f));
         }
 
         /// <summary>The gel film at <paramref name="t"/> s (linear HDR): 0.8 → 0 over 6 s, ease-out.</summary>

@@ -88,6 +88,7 @@ namespace DD.Prototype.Feedback.Vfx
             CharacterAnimationEvents.Any += OnAnimationEvent;
             WeaponEvents.ReloadStarted += OnReloadStarted;
             WeaponEvents.Mechanism += OnWeaponMechanism;
+            DD.Prototype.Rounds.RunTreeHooks.CapstoneProc += OnCapstoneProc;
         }
 
         private void Disarm()
@@ -96,6 +97,21 @@ namespace DD.Prototype.Feedback.Vfx
             CharacterAnimationEvents.Any -= OnAnimationEvent;
             WeaponEvents.ReloadStarted -= OnReloadStarted;
             WeaponEvents.Mechanism -= OnWeaponMechanism;
+            DD.Prototype.Rounds.RunTreeHooks.CapstoneProc -= OnCapstoneProc;
+        }
+
+        /// <summary>DEC-112 (hit path, 0 B): Lightning Fang / Black Iron light the struck body steel (ZombieSkinFx.Steel);
+        /// Third Eye's chain is S-04's hit path and needs no skin tone.</summary>
+        private static void OnCapstoneProc(DD.Prototype.Rounds.CapstoneProcInfo info)
+        {
+            if (info.Body == null) return;
+            ZombieSkinnedVisual visual = info.Body.Skinned;
+            if (visual == null) return;
+            switch (info.Kind)
+            {
+                case DD.Prototype.Rounds.CapstoneProcKind.LightningFangBonus: ZombieSkinFx.Steel(visual, ZombieSkinFx.SteelFangSeconds); break;
+                case DD.Prototype.Rounds.CapstoneProcKind.BlackIronStagger: ZombieSkinFx.Steel(visual, ZombieSkinFx.SteelIronSeconds); break;
+            }
         }
 
         /// <summary>Delayed effects (the magazine hits the ground, the pump vents after the shot).</summary>
