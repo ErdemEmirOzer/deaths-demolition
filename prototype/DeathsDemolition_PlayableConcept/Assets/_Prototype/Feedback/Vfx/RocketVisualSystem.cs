@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using DD.Prototype.Core;
+using DD.Prototype.Core.Config;
 using DD.Prototype.Core.Weapons;
 using DD.Prototype.Weapons;
 using UnityEngine;
@@ -8,13 +10,18 @@ using UnityEngine.SceneManagement;
 namespace DD.Prototype.Feedback.Vfx
 {
     /// <summary>WP-073 B3: passive world presentation. Generation is the key; Get takes a live index.
-    /// Greybox is deliberately temporary pending P-07's flying rocket. No colliders or gameplay RNG.</summary>
+    /// B3.2: the flying rocket is AP-021 rl_1's own <c>part_rocket</c> (P-07 v003, LOD1) from the classic weapon library,
+    /// nose on the projectile point; the greybox stays as the fallback when the library/model/part is absent or its frame
+    /// fails the checks. The seated rocket on the weapon is hidden while the tube is empty and shown again on reload.
+    /// No colliders or gameplay RNG.</summary>
     public sealed class RocketVisualSystem : MonoBehaviour
     {
         private static RocketVisualSystem s_instance;
         private static readonly int WindId = Shader.PropertyToID("_DD_WindVector");
         public static RocketVisualSystem Instance => s_instance;
         public const float SmokeRate = 20f, RocketLength = 0.55f;
+        /// <summary>AP-021 (P-07) rl_1 moving part and the LOD used in flight (LOD1 466 tris ≤ direction §1.5's 600; LOD0 is 1,750).</summary>
+        public const string RocketPart = "part_rocket", FlightLod = "part_rocket_LOD1";
         private struct Flight { public int Id; public float Smoke, Ember; public Vector3 Last; }
         private readonly Flight[] _flights = new Flight[ProjectileSystem.Capacity];
         private readonly Matrix4x4[] _matrices = new Matrix4x4[ProjectileSystem.Capacity];
@@ -22,8 +29,14 @@ namespace DD.Prototype.Feedback.Vfx
         private struct DudVisual { public Vector3 At, Direction; public float Started, Life; }
         private readonly DudVisual[] _duds = new DudVisual[8];
         private int _dudNext;
-        private Mesh _mesh;
-        private Material _meshMaterial, _smokeMaterial, _exhaustMaterial, _sparkMaterial;
+        private Mesh _mesh, _greyMesh;
+        private Material[] _meshMaterials;
+        private Matrix4x4 _meshLocal = Matrix4x4.identity;
+        private bool _instanced;
+        private Material _greyMaterial, _smokeMaterial, _exhaustMaterial, _sparkMaterial;
+        private Transform _seatMuzzle;
+        private readonly List<Renderer> _seatRenderers = new List<Renderer>(4);
+        private bool _seatHidden, _seatReloaded;
         private Texture2D _dot;
         private ParticleSystem _smoke, _sparks;
         private readonly MeshRenderer[] _exhaustRenderers = new MeshRenderer[ProjectileSystem.Capacity];
@@ -35,6 +48,14 @@ namespace DD.Prototype.Feedback.Vfx
         public int SmokeEmitted { get; private set; }
         public int DudsPlayed { get; private set; }
         public int DrawnRockets { get; private set; }
+        /// <summary>True when the flight mesh is AP-021's part_rocket (false = greybox fallback).</summary>
+        public bool UsesAuthoredRocket { get; private set; }
+        /// <summary>Nose-to-tail length of the drawn rocket (metres): the smoke, sparks, exhaust and light sit behind it.</summary>
+        public float BodyLength { get; private set; } = RocketLength;
+        public int FlightTriangles { get; private set; }
+        /// <summary>The weapon's seated part_rocket is hidden (tube empty) / how many of its renderers are tracked.</summary>
+        public bool SeatedRocketHidden => _seatHidden;
+        public int SeatedRocketRenderers => _seatRenderers.Count;
         public ParticleSystem Smoke => _smoke;
         public ParticleSystem Sparks => _sparks;
         public int ExhaustAlive { get; private set; }
@@ -50,8 +71,7 @@ namespace DD.Prototype.Feedback.Vfx
         private void Awake()
         {
             s_instance = this;
-            _mesh = Greybox();
-            _meshMaterial = new Material(FeedbackMaterials.Opaque(new Color(0.48f, 0.48f, 0.48f))) { name = "B3 rocket greybox", enableInstancing = true };
+            UseFlightMesh();
             _smokeMaterial = B3Particles.Material(VfxIds.CardSmoke);
             _smoke = B3Particles.Build(transform, "RocketSmoke", _smokeMaterial, 1024, 0f, true);
             var size = _smoke.sizeOverLifetime; size.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Linear(0f, 0.15f / 0.9f, 1f, 1f));
@@ -75,13 +95,23 @@ namespace DD.Prototype.Feedback.Vfx
             _lights = MuzzleSystem.Ensure();
             SceneManager.activeSceneChanged += OnSceneChanged; Rearm();
         }
-        public void Rearm() { Disarm(); ProjectileEvents.Impact += OnImpact; ProjectileEvents.Expired += OnExpired; RocketImpacts.Dud += OnDud; }
-        private void Disarm() { ProjectileEvents.Impact -= OnImpact; ProjectileEvents.Expired -= OnExpired; RocketImpacts.Dud -= OnDud; }
+        public void Rearm()
+        {
+            Disarm(); ProjectileEvents.Impact += OnImpact; ProjectileEvents.Expired += OnExpired; RocketImpacts.Dud += OnDud;
+            ProjectileEvents.Spawned += OnSpawned; WeaponEvents.Mechanism += OnMechanism; WeaponEvents.ReloadInterrupted += OnReloadInterrupted;
+        }
+        private void Disarm()
+        {
+            ProjectileEvents.Impact -= OnImpact; ProjectileEvents.Expired -= OnExpired; RocketImpacts.Dud -= OnDud;
+            ProjectileEvents.Spawned -= OnSpawned; WeaponEvents.Mechanism -= OnMechanism; WeaponEvents.ReloadInterrupted -= OnReloadInterrupted;
+        }
         private void OnSceneChanged(Scene a, Scene b) { Clear(); Rearm(); }
         private void OnDestroy()
         {
-            Disarm(); SceneManager.activeSceneChanged -= OnSceneChanged; if (s_instance == this) s_instance = null;
-            Destroy(_mesh); Destroy(_meshMaterial); Destroy(_smokeMaterial); Destroy(_exhaustMaterial); Destroy(_sparkMaterial); Destroy(_dot);
+            Disarm(); SceneManager.activeSceneChanged -= OnSceneChanged; if (s_instance == this) s_instance = null; ReleaseSeat();
+            // The authored mesh / material are library assets (never destroyed); only the greybox pair is ours.
+            if (_greyMesh != null) Destroy(_greyMesh); if (_greyMaterial != null) Destroy(_greyMaterial);
+            Destroy(_smokeMaterial); Destroy(_exhaustMaterial); Destroy(_sparkMaterial); Destroy(_dot);
         }
         private void OnImpact(ProjectileImpactInfo p) { if (p.Stopped) Retire(p.ProjectileId); }
         private void OnExpired(ProjectileExpireInfo p) => Retire(p.ProjectileId);
@@ -96,9 +126,9 @@ namespace DD.Prototype.Feedback.Vfx
         {
             for (int i = 0; i < _flights.Length; i++) { _flights[i] = default; if(_exhaustRenderers[i]!=null)_exhaustRenderers[i].enabled=false; }
             for (int i = 0; i < _duds.Length; i++) _duds[i] = default;
-            ActiveFlights = 0; ExhaustAlive=0; _smoke?.Clear(); _sparks?.Clear();
+            ActiveFlights = 0; ExhaustAlive=0; _smoke?.Clear(); _sparks?.Clear(); ReleaseSeat();
         }
-        private void LateUpdate() => Present(Time.deltaTime);
+        private void LateUpdate() { SyncSeatedRocket(); Present(Time.deltaTime); }
         /// <summary>Same live-state reader used by runtime and tests. Does not advance the simulation.</summary>
         public void Present(float dt)
         {
@@ -116,11 +146,10 @@ namespace DD.Prototype.Feedback.Vfx
                 Vector3 dir = p.Direction.sqrMagnitude > 0.0001f ? p.Direction.normalized : Vector3.forward;
                 Quaternion rotation = Quaternion.LookRotation(dir);
                 // World-only after fire in all modes; no CameraView remapping of actual flight coordinates.
-                _matrices[drawn++] = Matrix4x4.TRS(p.Position,rotation,Vector3.one);
-                // Keep the accepted greybox mesh until a genuine P07 silhouette impostor exists.
+                _matrices[drawn++] = Matrix4x4.TRS(p.Position,rotation,Vector3.one) * _meshLocal;   // nose on the projectile point
                 if(_exhaustRenderers[slot]!=null)
                 {
-                    Vector3 nozzle=p.Position-dir*(RocketLength+.225f);
+                    Vector3 nozzle=p.Position-dir*(BodyLength+.225f);
                     Vector3 to=FeedbackCameraRef.TryGetPosition(out Vector3 viewer)?viewer-nozzle:-FeedbackCameraRef.Forward;
                     if(to.sqrMagnitude<.001f)to=Vector3.back;
                     Vector3 projected=Vector3.ProjectOnPlane(dir,to).normalized;
@@ -135,30 +164,143 @@ namespace DD.Prototype.Feedback.Vfx
                 int count = Mathf.Min(8, Mathf.FloorToInt(f.Smoke)); f.Smoke -= count;
                 for (int n = 0; n < count; n++)
                 {
-                    Vector3 at = Vector3.Lerp(f.Last,p.Position,(n + 1f)/count) - dir * RocketLength;
+                    Vector3 at = Vector3.Lerp(f.Last,p.Position,(n + 1f)/count) - dir * BodyLength;
                     B3Particles.Emit(_smoke, at, wind + Vector3.up * 0.3f, 0.9f, SmokeLife, Color.white); SmokeEmitted++;
                 }
                 f.Last = p.Position;
                 f.Ember += Mathf.Max(0f,dt) * 6f;
-                if (f.Ember >= 1f) { f.Ember -= 1f; B3Particles.Emit(_sparks,p.Position-dir*RocketLength,-dir*.4f,.03f,.3f,new Color(1f,.48f,.24f,1f)); }
-                if (VfxTier.Current != VfxTierLevel.Performance) _lights.TrackLight(p.Generation ^ 0x524c0000,p.Position-dir*0.55f,new Color(1f,0.69f,0.44f),8f,5f);
+                if (f.Ember >= 1f) { f.Ember -= 1f; B3Particles.Emit(_sparks,p.Position-dir*BodyLength,-dir*.4f,.03f,.3f,new Color(1f,.48f,.24f,1f)); }
+                if (VfxTier.Current != VfxTierLevel.Performance) _lights.TrackLight(p.Generation ^ 0x524c0000,p.Position-dir*BodyLength,new Color(1f,0.69f,0.44f),8f,5f);
             }
             for (int i = 0; i < _flights.Length; i++) if (_flights[i].Id != 0 && !_seen[i]) { _flights[i] = default; if(_exhaustRenderers[i]!=null)_exhaustRenderers[i].enabled=false; ActiveFlights--; }
             for (int i = 0; i < _duds.Length; i++)
             {
                 ref DudVisual d = ref _duds[i]; if (d.Life <= 0f) continue;
                 float age = Time.time-d.Started; if (age >= d.Life) { d = default; continue; }
-                if (drawn < _matrices.Length) _matrices[drawn++] = Matrix4x4.TRS(d.At + Vector3.down * Mathf.Min(0.3f,0.5f*age*age),Quaternion.LookRotation(d.Direction.sqrMagnitude>0.001f?d.Direction:Vector3.forward),Vector3.one);
+                if (drawn < _matrices.Length) _matrices[drawn++] = Matrix4x4.TRS(d.At + Vector3.down * Mathf.Min(0.3f,0.5f*age*age),Quaternion.LookRotation(d.Direction.sqrMagnitude>0.001f?d.Direction:Vector3.forward),Vector3.one) * _meshLocal;
             }
             DrawnRockets = drawn;
-            if (drawn > 0 && SystemInfo.supportsInstancing) Graphics.DrawMeshInstanced(_mesh,0,_meshMaterial,_matrices,drawn,null,ShadowCastingMode.Off,false,0,null,LightProbeUsage.Off);
-            else for(int i=0;i<drawn;i++)Graphics.DrawMesh(_mesh,_matrices[i],_meshMaterial,0,null,0,null,ShadowCastingMode.Off,false,null,LightProbeUsage.Off);
+            if (drawn > 0)
+                for (int s = 0; s < _mesh.subMeshCount; s++)
+                {
+                    Material m = _meshMaterials[s < _meshMaterials.Length ? s : _meshMaterials.Length - 1];
+                    if (_instanced) Graphics.DrawMeshInstanced(_mesh,s,m,_matrices,drawn,null,ShadowCastingMode.Off,false,0,null,LightProbeUsage.Off);
+                    else for(int i=0;i<drawn;i++)Graphics.DrawMesh(_mesh,_matrices[i],m,0,null,s,null,ShadowCastingMode.Off,false,null,LightProbeUsage.Off);
+                }
         }
         public bool TryVisual(int id, out Vector3 at)
         {
             for (int i = 0; i < _flights.Length; i++) if (_flights[i].Id == id) { at = _flights[i].Last; return true; }
             at = default; return false;
         }
+        // ------------------------------------------------------------------ B3.2 · flight mesh (AP-021 part_rocket, greybox fallback)
+
+        private void UseFlightMesh()
+        {
+            var entry = ClassicWeaponVisualLibrary.Current != null ? ClassicWeaponVisualLibrary.Current.Find(ClassicWeaponId.Rl1) : null;
+            if (entry != null && TryAuthoredRocket(entry.model, out Mesh mesh, out Material[] materials, out Matrix4x4 local, out float length))
+            {
+                _mesh = mesh; _meshMaterials = materials; _meshLocal = local; BodyLength = length; UsesAuthoredRocket = true;
+            }
+            else
+            {
+                _greyMesh = Greybox();
+                _greyMaterial = new Material(FeedbackMaterials.Opaque(new Color(0.48f, 0.48f, 0.48f))) { name = "B3 rocket greybox", enableInstancing = true };
+                _mesh = _greyMesh; _meshMaterials = new[] { _greyMaterial }; _meshLocal = Matrix4x4.identity; BodyLength = RocketLength; UsesAuthoredRocket = false;
+            }
+
+            _instanced = SystemInfo.supportsInstancing;
+            for (int i = 0; i < _meshMaterials.Length; i++) _instanced &= _meshMaterials[i].enableInstancing;
+            int tris = 0; for (int s = 0; s < _mesh.subMeshCount; s++) tris += (int)(_mesh.GetIndexCount(s) / 3);
+            FlightTriangles = tris;
+        }
+
+        /// <summary>
+        /// Reads <see cref="FlightLod"/> under <paramref name="model"/> (the rl_1 FBX root in the ADR-042-1 frame: +Z barrel, +Y up) and
+        /// returns its shared mesh / materials with a matrix that puts the nose (forward-most point) on the origin, centred on the Z axis.
+        /// False — caller keeps the greybox — when the part is missing, or the frame check fails: the long axis must be Z, 0.3–1.0 m,
+        /// and the nose must be the end toward the Muzzle socket (a model imported backwards or rotated never flies tail-first).
+        /// </summary>
+        public static bool TryAuthoredRocket(GameObject model, out Mesh mesh, out Material[] materials, out Matrix4x4 local, out float length)
+        {
+            mesh = null; materials = null; local = Matrix4x4.identity; length = 0f;
+            if (model == null) return false;
+            Transform lod = WeaponSocketContract.Find(model.transform, FlightLod);
+            Transform muzzle = WeaponSocketContract.Find(model.transform, WeaponSocketContract.Muzzle);
+            MeshFilter filter = lod != null ? lod.GetComponent<MeshFilter>() : null;
+            MeshRenderer renderer = lod != null ? lod.GetComponent<MeshRenderer>() : null;
+            if (filter == null || filter.sharedMesh == null || renderer == null || renderer.sharedMaterial == null || muzzle == null) return false;
+
+            Matrix4x4 toRoot = model.transform.worldToLocalMatrix * lod.localToWorldMatrix;
+            Bounds b = filter.sharedMesh.bounds;
+            Vector3 min = Vector3.positiveInfinity, max = Vector3.negativeInfinity;
+            for (int c = 0; c < 8; c++)
+            {
+                Vector3 corner = b.center + Vector3.Scale(b.extents, new Vector3((c & 1) == 0 ? -1f : 1f, (c & 2) == 0 ? -1f : 1f, (c & 4) == 0 ? -1f : 1f));
+                Vector3 p = toRoot.MultiplyPoint3x4(corner);
+                min = Vector3.Min(min, p); max = Vector3.Max(max, p);
+            }
+
+            float len = max.z - min.z, width = Mathf.Max(max.x - min.x, max.y - min.y);
+            float muzzleZ = model.transform.InverseTransformPoint(muzzle.position).z;
+            if (len < 0.3f || len > 1f || width > 0.25f * len || muzzleZ <= (min.z + max.z) * 0.5f) return false;
+
+            mesh = filter.sharedMesh; materials = renderer.sharedMaterials; length = len;
+            local = Matrix4x4.Translate(new Vector3(-(min.x + max.x) * 0.5f, -(min.y + max.y) * 0.5f, -max.z)) * toRoot;
+            return true;
+        }
+
+        // ------------------------------------------------------------------ B3.2 · seated rocket on the weapon (C-00 30.09)
+
+        // The weapon's part_rocket is the round in the tube: hidden once the tube is empty (the flying one is drawn above), shown
+        // again when the reload seats a rocket (rl_1 mechanism ShellSeated — clip mag_in / rocket seat or the controller's timer
+        // fallback) or the magazine is refilled. Reads WeaponController's public surface only; renderers are found once per model.
+        private void SyncSeatedRocket()
+        {
+            WeaponController c = WeaponRegistry.ActiveController;
+            bool rl = c != null && !c.SpecialWeaponActive && c.Classic.Id == ClassicWeaponId.Rl1
+                      && c.ClassicModelSource == WeaponController.ClassicModelKind.Authored;
+            Transform muzzle = rl ? c.Muzzle : null;
+            if (muzzle != _seatMuzzle || (muzzle == null && _seatRenderers.Count > 0))
+            {
+                ReleaseSeat();
+                _seatMuzzle = muzzle;
+                if (muzzle != null) FindSeat(muzzle);
+            }
+
+            if (muzzle == null || _seatRenderers.Count == 0) return;
+            SetSeatHidden(c.Classic.Ammo <= 0 && !_seatReloaded);
+        }
+
+        private void FindSeat(Transform muzzle)
+        {
+            Transform t = muzzle.parent;
+            for (int up = 0; up < 3 && t != null; up++, t = t.parent)
+            {
+                Transform part = WeaponSocketContract.Find(t, RocketPart);
+                if (part == null) continue;
+                part.GetComponentsInChildren(true, _seatRenderers);
+                return;
+            }
+        }
+
+        private void SetSeatHidden(bool hidden)
+        {
+            if (hidden == _seatHidden) return;
+            _seatHidden = hidden;
+            for (int i = 0; i < _seatRenderers.Count; i++) if (_seatRenderers[i] != null) _seatRenderers[i].forceRenderingOff = hidden;
+        }
+
+        private void ReleaseSeat()
+        {
+            SetSeatHidden(false);
+            _seatRenderers.Clear(); _seatMuzzle = null; _seatReloaded = false;
+        }
+
+        private void OnSpawned(ProjectileSpawnInfo p) { if (p.Kind == ProjectileKind.Rocket && p.WeaponId == ClassicWeaponId.Rl1) _seatReloaded = false; }
+        private void OnMechanism(WeaponMechanismEvent e) { if (e.Weapon == ClassicWeaponId.Rl1 && e.Kind == WeaponMechanismKind.ShellSeated) _seatReloaded = true; }
+        private void OnReloadInterrupted() => _seatReloaded = false;
+
         private static Mesh Greybox()
         {
             // 12-sided tapered body + nose, three triangular fins. 0.55m total, 42 triangles.

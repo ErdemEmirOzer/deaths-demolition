@@ -130,6 +130,31 @@ namespace DD.Prototype.Tests.PlayMode
                 "post-control: calling-thread recorder must still detect 64KiB allocation");
             Assert.AreEqual(64*1024,bait.Length,"keep allocation bait live through measured assertion");
         }
+        [Test] public void FlightMesh_IsAp021PartRocketLod1_NoseOnProjectilePoint()
+        {
+            var lib=ClassicWeaponVisualLibrary.Current;var entry=lib!=null?lib.Find(ClassicWeaponId.Rl1):null;
+            Assert.IsTrue(entry!=null&&entry.HasModel,"AP-021 rl_1 is in DD_ClassicWeapons on main");
+            Assert.IsTrue(_rocket.UsesAuthoredRocket,"part_rocket_LOD1 passes the frame checks (else greybox)");
+            Assert.LessOrEqual(_rocket.FlightTriangles,600,"direction §1.5 flying rocket ≤ 600 tri");
+            Assert.That(_rocket.BodyLength,Is.InRange(.55f,.62f),"part_rocket measured 0.586 m nose-to-tail (Blender, v003)");
+            Assert.IsTrue(RocketVisualSystem.TryAuthoredRocket(entry.model,out Mesh mesh,out Material[] mats,out Matrix4x4 local,out float len));
+            Assert.IsNotNull(mesh);Assert.Greater(mats.Length,0);
+            Bounds b=mesh.bounds;float minZ=float.MaxValue,maxZ=float.MinValue,maxR=0f;
+            for(int c=0;c<8;c++)
+            {
+                Vector3 p=local.MultiplyPoint3x4(b.center+Vector3.Scale(b.extents,new Vector3((c&1)==0?-1f:1f,(c&2)==0?-1f:1f,(c&4)==0?-1f:1f)));
+                minZ=Mathf.Min(minZ,p.z);maxZ=Mathf.Max(maxZ,p.z);maxR=Mathf.Max(maxR,Mathf.Abs(p.x),Mathf.Abs(p.y));
+            }
+            Assert.AreEqual(0f,maxZ,1e-4f,"nose on the projectile point");Assert.AreEqual(-len,minZ,1e-4f,"tail one body length behind");
+            Assert.Less(maxR,.06f,"centred on the flight axis (Ø ≈ 0.09 m)");
+        }
+        [Test] public void FlightMesh_WithoutPart_FallsBackToGreybox()
+        {
+            Assert.IsFalse(RocketVisualSystem.TryAuthoredRocket(null,out _,out _,out _,out _));
+            var go=new GameObject("no part_rocket");
+            try{Assert.IsFalse(RocketVisualSystem.TryAuthoredRocket(go,out _,out _,out _,out _));}
+            finally{Object.DestroyImmediate(go);}
+        }
         [Test] public void CinematicSteam_IsDelayedAndOnlyRunsOnce()
         {
             VfxTier.Override=VfxTierLevel.Cinematic;int steam=_blast.SteamPuffs;
