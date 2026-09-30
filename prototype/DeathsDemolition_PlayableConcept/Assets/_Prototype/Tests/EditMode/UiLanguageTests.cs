@@ -253,10 +253,18 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual("ELİT ZOMBİ", ResultsViewModel.KillerName("Zombie.Elite.Slam"));
             StringAssert.Contains("STANDART ZOMBİ", RunHudViewModel.DeathLine("Zombie.Standard.Swipe"));
             StringAssert.DoesNotContain("killed by", RunHudViewModel.DeathLine("Zombie.Standard.Swipe"));
-            StringAssert.Contains("HAZARD FİRE", RunHudViewModel.DeathLine("Hazard.Fire"), "unknown source remains readable and honest");
+            // M-67: the real non-zombie sources - rl_1's own blast and Raijū's self-shock (SpecialWeaponKeys.Raiju) - read as the
+            // player's own weapon, never the raw id.
+            Assert.AreEqual("KENDİ BOHİYA ATIŞIN", ResultsViewModel.KillerName("rl_1"));   // TR casing: i → İ
+            Assert.AreEqual("KENDİ RAİJU ATIŞIN", ResultsViewModel.KillerName(DD.Prototype.Core.Weapons.SpecialWeaponKeys.Raiju));
+            StringAssert.Contains("KENDİ BOHİYA ATIŞIN", RunHudViewModel.DeathLine("rl_1"));
+            StringAssert.DoesNotContain("RL_1", RunHudViewModel.DeathLine("rl_1"));
+            StringAssert.DoesNotContain("SW_ARC", RunHudViewModel.DeathLine("sw_arc"));
             Assert.AreEqual(UiStrings.Get("hud.status.down"), RunHudViewModel.DeathLine(null));
             UiStrings.Language = UiStrings.English;
             Assert.AreEqual("DOWN  ·  killed by a Standard's swipe", RunHudViewModel.DeathLine("Zombie.Standard.Swipe"));
+            Assert.AreEqual("DOWN  ·  killed by your own Bohiya", RunHudViewModel.DeathLine("rl_1"));
+            Assert.AreEqual("YOUR OWN RAIJU", ResultsViewModel.KillerName("sw_arc"));
         }
 
         // ------------------------------------------------------------ WP-068 R1-E E2: profile copy by identity

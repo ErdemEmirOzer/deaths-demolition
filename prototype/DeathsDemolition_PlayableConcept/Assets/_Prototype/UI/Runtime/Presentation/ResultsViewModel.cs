@@ -226,7 +226,22 @@ namespace DD.Prototype.UI
                 }
             }
 
+            // M-67: a weapon or Special id is the player's own shot (rl_1's blast, Raijū's self-shock) - its name, never
+            // the raw id ("RL_1", "SW_ARC").
+            string weapon = SelfDamageWeaponName(sourceId);
+            if (weapon != null)
+            {
+                return UiStrings.Upper(UiStrings.Format("results.killer.self", "weapon", weapon, "YOUR OWN {weapon}"));
+            }
+
             return UiStrings.Upper(UiFactory.Clip(sourceId, 32));
+        }
+
+        /// <summary>M-67: the weapon / Special name when <paramref name="sourceId"/> is a weapon id (weapon.&lt;id&gt;.name), else null.</summary>
+        public static string SelfDamageWeaponName(string sourceId)
+        {
+            string key = "weapon." + sourceId + ".name";
+            return string.IsNullOrEmpty(sourceId) || !UiStrings.Has(key) ? null : UiStrings.Get(key, sourceId);
         }
 
         /// <summary>The lowest weapon or branch unlock above <paramref name="level"/> (the profile's ladder), as the forward-look line.</summary>

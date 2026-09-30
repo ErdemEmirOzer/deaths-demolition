@@ -3758,5 +3758,13 @@
   "stat.fmt.hp_per_second": {
     "en": "{value} HP/s",
     "tr": "{value} HP/sn"
+  },
+  "results.killer.self": {
+    "en": "YOUR OWN {weapon}",
+    "tr": "KENDİ {weapon} ATIŞIN"
+  },
+  "hud.death.self": {
+    "en": "your own {weapon}",
+    "tr": "kendi {weapon} atışın"
   }
 }

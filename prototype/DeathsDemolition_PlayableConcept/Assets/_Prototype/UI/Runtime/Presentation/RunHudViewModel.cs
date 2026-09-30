@@ -197,7 +197,12 @@ namespace DD.Prototype.UI
             }
 
             string phrase;
-            if (parts[0] == "Zombie")
+            string weapon = ResultsViewModel.SelfDamageWeaponName(killedBy);
+            if (weapon != null)
+            {
+                phrase = UiStrings.Format("hud.death.self", "weapon", weapon, "your own {weapon}");   // M-67
+            }
+            else if (parts[0] == "Zombie")
             {
                 if (parts.Count == 1)
                 {
