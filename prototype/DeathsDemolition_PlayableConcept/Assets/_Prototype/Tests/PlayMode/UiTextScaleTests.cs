@@ -40,6 +40,7 @@ namespace DD.Prototype.Tests.PlayMode
         public void TearDown()
         {
             UiSettings.TextScale = 1f;
+            UiSettings.Language = UiStrings.English;
             PrototypeUiFlow.FastTransitions = _fast;
             UiSettings.SetPathOverride(null);
             if (File.Exists(_settingsPath))
@@ -108,6 +109,18 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// DEC-109 AD round (MUST-1 / MUST-2): the same 1.25 walk in Turkish - the Settings FOV rows, Selection's CORE word
+        /// and the Turkish headings in the Display face lay out whole (the Player captures had logged both cuts).
+        /// </summary>
+        [UnityTest]
+        [Timeout(180000)]
+        public IEnumerator TextScale125_TR_SecimHudAnaMenu_KesilmeYok()
+        {
+            UiSettings.Language = UiStrings.Turkish;
+            yield return TextScale125_SecimHudAnaMenu_KesilmeYok_CakismaYok();
         }
 
         [UnityTest]
