@@ -309,10 +309,10 @@ namespace DD.Prototype.Tests.PlayMode
                     if (vuruslar[i].Result.Region == DD.Prototype.Damage.BodyRegion.Head) kafaIsabeti++;
                 }
 
-                // WP-069 B5 (C-00 30.09): a hit reaction can dip the head into the 1.15 m line; a bare head hit is ×2, so
-                // 12 + 24 kills the 34 HP Standard in two hits and nothing is left to hit (0af8269a red). Three
-                // reverse-direction hits — or, when the target died, every hit that killed it came in reverse.
-                int gerekenIsabet = olum > 0 ? Mathf.Min(3, vuruslar.Count) : 3;
+                // C-00 30.09 B: top-down shots are planar — no vertical scatter onto the head — so the running Standard
+                // takes body hits only and 34 HP needs three of them (the 0af8269a red, isabet=2 olum=1, was a random ×2
+                // head hit from the old scatter).
+                const int gerekenIsabet = 3;
 
                 rapor.AppendLine("  kare=" + k + " kontrol kare=" + kontrolKare + " uyumlu=" + uyumluKare +
                                  " en buyuk vz=" + enBuyukHizX.ToString("F2") +
@@ -326,6 +326,7 @@ namespace DD.Prototype.Tests.PlayMode
                     "REQ-039: 1.2 sn basılı ateş yalnız " + (mermiOnce - mermiSonra) + " mermi harcadı.\n" + rapor);
                 Assert.GreaterOrEqual(uyumluKare, kontrolKare * 0.9f,
                     "REQ-037: karakter +z'ye koşarken −z'ye bakmayı sürdüremedi (uyumlu " + uyumluKare + "/" + kontrolKare + ").\n" + rapor);
+                Assert.AreEqual(0, kafaIsabeti, "Tepeden kafa isabeti (C-00 B: 0 beklenir).\n" + rapor);
                 Assert.GreaterOrEqual(tersYonluIsabet, gerekenIsabet,
                     "REQ-037: hareket yönünün tersine ateş hedefe isabet etmedi (" + tersYonluIsabet + "/" + gerekenIsabet + " isabet).\n" + rapor);
             }
@@ -849,29 +850,16 @@ namespace DD.Prototype.Tests.PlayMode
             Time.captureDeltaTime = 0f;
 
             Vector3 merkez = _rig.transform.position;
+            Assert.AreEqual(CameraMode.TopDown, CameraModeService.Current);
             ZombieEnemy hedef = Dogur(merkez + new Vector3(0f, 0f, 7f), merkez);
             Assert.IsNotNull(hedef);
-            // WP-018: the AP-009 shamble carries the head forward and low, so the 1.15 m aim line now crosses
-            // the head hitbox on the way in; a rolled helmet turned three of these "flesh" hits into armour
-            // hits (measured 7 hits, 3 ArmorHit). This test is about the flesh-hit / death / player-damage
-            // signals, not the roll — the target is bare.
+            // WP-018: a rolled helmet turned "flesh" hits into armour hits; this test is about the flesh-hit / death /
+            // player-damage signals, not the roll — the target is bare.
             hedef.FitArmorComposition(false, false, false);
-            Assert.AreEqual(CameraMode.TopDown, CameraModeService.Current);
-            var silah = WeaponRegistry.ActiveController;
             Collider govde = hedef.HitboxFor(DD.Prototype.Damage.BodyRegion.UpperBody);
             Collider kafa = hedef.HitboxFor(DD.Prototype.Damage.BodyRegion.Head);
             Assert.IsNotNull(govde);
             Assert.IsNotNull(kafa);
-            // WP-069 B5 (C-00 30.09): what one ar_1 bullet does to this bare Standard, per region, from the game's own
-            // numbers — the exposed regional multiplier (head ×2, body ×1, legs ×0.8) and, on the head, the weapon's
-            // extra head factor (ar_1 ×1).
-            ArmorConfigSection zirh = PrototypeConfig.Active.Enemies.Armor;
-            float silahKafaCarpani = ProjectileLaunch.From(silah.Classic.Definition, silah.Classic.Id, silah.Classic.Range).HeadMultiplier;
-            float BolgeHasari(DD.Prototype.Damage.BodyRegion bolge) =>
-                TufekHasari * zirh.ExposedMultiplierFor(DamageRegions.ToCore(bolge)) *
-                (bolge == DD.Prototype.Damage.BodyRegion.Head ? silahKafaCarpani : 1f);
-            Debug.Log("[DD-TEST] gamefeel.spawn rising=" + hedef.IsRising +
-                      " head=" + kafa.bounds + " upper=" + govde.bounds);
 
             var hasar = new List<EnemyDamageInfo>(16);
             var olum = new List<EnemyDeathInfo>(4);
@@ -900,35 +888,25 @@ namespace DD.Prototype.Tests.PlayMode
             int hitStopOnce = HitStopService.Count;
             float unscaledOnce = Time.unscaledTime;
 
-            int atesKaresi = 0, kafaBeklemesi = 0;
             try
             {
+                // C-00 30.09 decision B: top-down shots carry no vertical scatter — the damage ray runs flat at root +
+                // ShotRayHeight (1.39 m), below an upright Standard's head sphere — so a held trigger on the torso lands
+                // body hits only, and 34 HP / 12 is exactly three of them (the 0af8269a red was a random ×2 head hit
+                // from the vertical scatter). The head bounds ride on every impact log line (pose-driven head dips are
+                // measured separately).
                 float t0 = Time.realtimeSinceStartup;
                 while (hedef.IsAlive && Time.realtimeSinceStartup - t0 < 20f)
                 {
-                    // WP-069 B5 (C-00 30.09): the trigger is held only while the head sphere sits clear of the TP shot
-                    // line and its vertical spread (and the zombie is not rising), so the opening hits land on the body
-                    // and the FleshHit signal is exercised. At 7 m the spread is wider than the torso — a miss costs
-                    // nothing. A hit reaction can still dip the head into the line between two shots: that bare head
-                    // hit is real play (×2), and the asserts below take each hit by its region instead of assuming
-                    // three body hits (the 0af8269a / eb2f8bb1 reds: 12 + 24 and 12 + 12 + 24).
                     Vector3 nisan = govde.bounds.center;
                     nisan.y = _rig.transform.position.y + NisanDuzlemi;
                     _girdi.Imlec = EkranNoktasi(nisan);
-                    float atisY = _rig.transform.position.y + silah.ShotRayHeight;
-                    float dikeyAci = silah.Classic.CurrentSpreadDegrees * SpreadUtility.VerticalSpreadFactor;
-                    float kafaUzakligi = Vector3.Distance(silah.Muzzle.position, kafa.bounds.center) + kafa.bounds.extents.magnitude;
-                    float dikeyPay = kafaUzakligi * Mathf.Tan(dikeyAci * Mathf.Deg2Rad);
-                    bool kafaAcik = !hedef.IsRising &&
-                        (atisY + dikeyPay < kafa.bounds.min.y || atisY - dikeyPay > kafa.bounds.max.y);
-                    if (kafaAcik) atesKaresi++;
-                    else kafaBeklemesi++;
-                    _girdi.AtesBasili = kafaAcik;
+                    _girdi.AtesBasili = true;
                     yield return null;
                 }
 
-                Assert.IsFalse(hedef.IsAlive, "Zombi 20 sn'de öldürülemedi (ateş/kafa bekleme karesi " +
-                                              atesKaresi + "/" + kafaBeklemesi + ").");
+                _girdi.AtesBasili = false;
+                Assert.IsFalse(hedef.IsAlive, "Zombi 20 sn'de öldürülemedi.");
                 yield return null;
 
                 // Ceset penceresi: 0.4 s daha cesede ateş — yeni giydirme, hasar olayı veya flesh cue YOK.
@@ -991,42 +969,35 @@ namespace DD.Prototype.Tests.PlayMode
                 Debug.Log(rapor.ToString());
                 for (int i = 0; i < hasar.Count; i++) Debug.Log("[DD-TEST] gamefeel.hit " + i + " region=" + hasar[i].Result.Region + " hp=" + hasar[i].Result.HealthDamage + " killed=" + hasar[i].Result.Killed + " armored=" + hasar[i].Result.WasArmored + " tier=" + (i < tierler.Count ? tierler[i].ToString() : "-"));
 
-                // WP-069 B5 (C-00 30.09): each hit is dressed by its region (HitFeedbackDirector.ResolveTier, REQ-125) — a
-                // bare body hit FleshHit, a bare head hit CriticalHit, the killing hit Death — and carries the regional
-                // damage. The kill comes on the hit that takes the running total to 34 HP: three body hits, or two
-                // when one of them is a head hit.
+                // C-00 30.09 B: every top-down hit on the upright Standard is an UpperBody hit (head 0), 12 HP, dressed FleshHit
+                // until the killing one (Death); 34 HP takes exactly ceil(34 / 12) = 3 of them.
+                int beklenenIsabet = Mathf.CeilToInt(ZombiCani / TufekHasari);   // 3
                 Assert.AreEqual(hasar.Count, tierler.Count, "Her EnemyDamaged tek bir dressed tier üretmeli.\n" + rapor);
-                int killedSayisi = 0, oldurmeyenGovde = 0;
-                float toplamHasar = 0f;
+                int kafaIsabeti = 0, killedSayisi = 0;
                 for (int i = 0; i < hasar.Count; i++)
                 {
                     DamageResult r = hasar[i].Result;
-                    bool kafaIsabeti = r.Region == DD.Prototype.Damage.BodyRegion.Head;
+                    if (r.Region == DD.Prototype.Damage.BodyRegion.Head) kafaIsabeti++;
+                    Assert.AreEqual(DD.Prototype.Damage.BodyRegion.UpperBody, r.Region, "Tepeden dik Standard'a isabet " + i + " gövde değil (C-00 B).\n" + rapor);
                     Assert.IsFalse(r.WasArmored, "Çıplak hedefte zırh isabeti (" + i + ").\n" + rapor);
-                    Assert.AreEqual(BolgeHasari(r.Region), r.HealthDamage, 0.001f,
-                        "İsabet " + i + " (" + r.Region + ") hasarı bölge formülünden farklı.\n" + rapor);
-                    Assert.AreEqual(r.Killed ? HitFeedbackTier.Death : kafaIsabeti ? HitFeedbackTier.CriticalHit : HitFeedbackTier.FleshHit,
-                        tierler[i], "İsabet " + i + " (" + r.Region + ") dressed tier'ı bölgesiyle eşleşmiyor.\n" + rapor);
+                    Assert.AreEqual(TufekHasari, r.HealthDamage, 0.001f, "Gövde hasarı formülden farklı (" + i + ").\n" + rapor);
+                    Assert.AreEqual(r.Killed ? HitFeedbackTier.Death : HitFeedbackTier.FleshHit, tierler[i], "Gövde hasarı ile dressed tier eşleşmiyor (" + i + ").\n" + rapor);
                     Assert.AreEqual(EnemyTier.Standard, hasar[i].Tier);
                     if (r.Killed) killedSayisi++;
-                    else if (!kafaIsabeti) oldurmeyenGovde++;
-                    toplamHasar += r.HealthDamage;
                 }
 
+                Assert.AreEqual(0, kafaIsabeti, "Tepeden kafa isabeti (C-00 B: 0 beklenir).\n" + rapor);
+                Assert.AreEqual(beklenenIsabet, hasar.Count, "34 HP = tam üç gövde isabeti.\n" + rapor);
+                Assert.IsTrue(hasar[hasar.Count - 1].Result.Killed, "Öldüren isabet son hasar olayı değil.\n" + rapor);
+                Assert.AreEqual(1, killedSayisi, "Killed=true olan EnemyDamaged sayısı 1 olmalı.");
                 Assert.AreEqual(1, olum.Count, "EnemyDied " + olum.Count + " kez (tam 1).\n" + rapor);
                 Assert.AreEqual(1, olumTier, "Death tier'ı " + olumTier + " kez dressed (tam 1).\n" + rapor);
-                Assert.AreEqual(1, killedSayisi, "Killed=true olan EnemyDamaged sayısı 1 olmalı.");
-                Assert.IsTrue(hasar[hasar.Count - 1].Result.Killed, "Öldüren isabet son hasar olayı değil.\n" + rapor);
-                float olumOncesi = toplamHasar - hasar[hasar.Count - 1].Result.HealthDamage;
-                Assert.Less(olumOncesi, ZombiCani, "Can bitmişken zombi ölmedi.\n" + rapor);
-                Assert.GreaterOrEqual(toplamHasar, ZombiCani - 0.001f, "İsabetlerin toplamı canı karşılamadan öldü.\n" + rapor);
-                Assert.GreaterOrEqual(oldurmeyenGovde, 1, "Ölümden önce gövde isabeti yok; FleshHit sinyali sınanmadı.\n" + rapor);
-                Assert.AreEqual(oldurmeyenGovde, flesh, "FleshHit tier'ı ayrı sinyal üretmedi.\n" + rapor);
+                Assert.AreEqual(beklenenIsabet - 1, flesh, "FleshHit tier'ı ayrı sinyal üretmedi.\n" + rapor);
                 Assert.AreEqual(EnemyTier.Standard, olum[0].Tier);
                 Assert.IsFalse(olum[0].WasHeavyDeath);
                 Assert.AreEqual(0f, olum[0].SuggestedHitStop, 0.0001f, "Standard ölümü hit-stop önerdi (REQ-127).");
                 Assert.AreEqual(hitStopOnce, HitStopService.Count, "REQ-127: AR ile flesh hit/ölüm hit-stop üretti.");
-                Assert.GreaterOrEqual(ates, hasar.Count, "Ateş sesi cue'su eksik.");
+                Assert.GreaterOrEqual(ates, beklenenIsabet, "Ateş sesi cue'su eksik.");
                 Assert.GreaterOrEqual(fleshCue, 1, "FleshHit ses cue'su yok.");
                 Assert.AreEqual(1, olumCue, "EnemyDeath ses cue'su " + olumCue + " kez (tam 1).");
 

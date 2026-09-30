@@ -186,6 +186,79 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(cone, ringWidest, 0.05f, "bakış modunda halka daire (dikey 0,35 basıklığı yok)");
         }
 
+        // ------------------------------------------------------------------ C-00 30.09 B: top-down is planar
+
+        /// <summary>
+        /// C-00 30.09 decision B (top-down head hits): top-down shots carry no vertical scatter — the single cone, the pellet
+        /// ring and sg_2's Gauss cone all leave flat along a flat aim — and their horizontal spread is exactly what it was:
+        /// the same random draws give the same yaw, pellet by pellet (reference = the pre-B yaw formulas below).
+        /// </summary>
+        [Test]
+        public void Tepeden_DikeySacilmaSifir_YatayDagilimOncekiyleAyni()
+        {
+            Vector3 aim = new Vector3(0.3f, 0f, 1f).normalized;
+            float Yaw(Vector3 d) => Vector3.SignedAngle(aim, Vector3.ProjectOnPlane(d, Vector3.up), Vector3.up);
+
+            // single cone
+            const float cone = 3.5f;
+            Random.InitState(21);
+            var dirs = new Vector3[400];
+            for (int i = 0; i < dirs.Length; i++) dirs[i] = SpreadUtility.Apply(aim, cone);
+            Random.InitState(21);
+            float widest = 0f;
+            for (int i = 0; i < dirs.Length; i++)
+            {
+                float yaw = Random.Range(-cone, cone);
+                Random.Range(-cone, cone);   // pre-B pitch draw
+                Assert.AreEqual(0f, dirs[i].y, 1e-6f, "tepeden tek mermi düz");
+                Assert.AreEqual(yaw, Yaw(dirs[i]), 1e-3f, "tepeden yaw önceki ile aynı");
+                widest = Mathf.Max(widest, Mathf.Abs(yaw));
+            }
+
+            Assert.Greater(widest, 0.95f * cone, "yatay genişlik aynı");
+
+            // pellet ring (sg_1 numbers)
+            const float spread = 7.5f, ringShare = 0.6f, jitterShare = 0.10f, phase = 0.37f;
+            const int pellets = 8;
+            Random.InitState(33);
+            var ring = new Vector3[pellets];
+            for (int i = 0; i < pellets; i++) ring[i] = SpreadUtility.ApplyRing(aim, spread, i, pellets, ringShare, jitterShare, phase);
+            Random.InitState(33);
+            float jitter = jitterShare * spread, a = ringShare * spread, b = a * SpreadUtility.VerticalSpreadFactor;
+            for (int i = 0; i < pellets; i++)
+            {
+                float yaw;
+                if (i == 0)
+                {
+                    yaw = Random.Range(-jitter, jitter);
+                    Random.Range(-jitter, jitter);
+                }
+                else
+                {
+                    float t = SpreadUtility.RingParameterAtArcFraction(a, b, ((i - 1) + phase) / (pellets - 1));
+                    yaw = a * Mathf.Cos(t) + Random.Range(-jitter, jitter);
+                    Random.Range(-jitter, jitter);
+                }
+
+                Assert.AreEqual(0f, ring[i].y, 1e-6f, "tepeden halka pelleti düz (" + i + ")");
+                Assert.AreEqual(yaw, Yaw(ring[i]), 1e-3f, "tepeden halka yaw'ı önceki ile aynı (" + i + ")");
+            }
+
+            // sg_2 Gauss cone
+            const float gaussCone = 9f, sigmaShare = 0.7f;
+            Random.InitState(44);
+            var gauss = new Vector3[300];
+            for (int i = 0; i < gauss.Length; i++) gauss[i] = SpreadUtility.ApplyGauss(aim, gaussCone, sigmaShare);
+            Random.InitState(44);
+            for (int i = 0; i < gauss.Length; i++)
+            {
+                float u1 = Mathf.Max(1e-6f, Random.value), u2 = Random.value;
+                float yaw = Mathf.Clamp(Mathf.Sqrt(-2f * Mathf.Log(u1)) * Mathf.Cos(2f * Mathf.PI * u2) * sigmaShare * gaussCone, -gaussCone, gaussCone);
+                Assert.AreEqual(0f, gauss[i].y, 1e-6f, "tepeden Gauss pelleti düz");
+                Assert.AreEqual(yaw, Yaw(gauss[i]), 1e-3f, "tepeden Gauss yaw'ı önceki ile aynı");
+            }
+        }
+
         // ------------------------------------------------------------------ #19 clone
 
         [Test]

@@ -134,23 +134,28 @@ namespace DD.Prototype.Tests.EditMode
                 }
 
                 // Pellet 0 = centre (only the jitter), the ring pellets sit near the ring radius horizontally.
+                // C-00 30.09 B: top-down the ring is its horizontal fan — pitch 0, the yaw spacing of the WP-042 ellipse (the
+                // pre-B yaw, checked draw by draw in ArsenalReviewFixTests); its width reaches the ring radius every pull.
                 Assert.LessOrEqual(Vector3.Angle(dirs[0], aim), jitterShare * spread * 1.2f + 0.01f, "merkez pellet nişanda");
+                float a = ringShare * spread, jitter = jitterShare * spread, widest = 0f;
                 for (int i = 1; i < pellets; i++)
                 {
                     Vector3 flat = Vector3.ProjectOnPlane(dirs[i], Vector3.up).normalized;
                     float yaw = Mathf.Abs(Vector3.SignedAngle(aim, flat, Vector3.up));
-                    float pitch = Vector3.Angle(flat, dirs[i]);
-                    float a = ringShare * spread, b = a * SpreadUtility.VerticalSpreadFactor;
-                    float radial = (yaw * yaw) / (a * a) + (pitch * pitch) / (b * b);
-                    Assert.That(radial, Is.InRange(0.45f, 1.9f), "halka pelleti elips üzerinde (jitter payıyla)");
+                    Assert.Less(Vector3.Angle(flat, dirs[i]), 1e-3f, "tepeden halka pelleti düz (dikey saçılma yok)");
+                    Assert.LessOrEqual(yaw, a + jitter + 0.01f, "halka pelleti halka yarıçapında");
+                    widest = Mathf.Max(widest, yaw);
                     for (int j = 1; j < i; j++)
                     {
                         minSeparation = Mathf.Min(minSeparation, Vector3.Angle(dirs[i], dirs[j]));
                     }
                 }
+
+                // one end of the ring always has a pellet within a quarter arc step (the two ends are 3.5 steps apart) → ≥ ~0.89 a
+                Assert.GreaterOrEqual(widest, 0.8f * a - jitter, "yelpaze her tetikte halka genişliğine ulaşır");
             }
 
-            Assert.GreaterOrEqual(minSeparation, 0.12f * spread, "halka pelletleri yığılmaz (min ayrım ≥ 0,12 × yayılma)");
+            Debug.Log("[DD-TEST] tepeden halka en yakın iki pellet " + minSeparation.ToString("0.00") + "° (düz yelpazede ayna çiftleri yan yana düşebilir)");
             Vector3 mean = (sum / (pulls * pellets)).normalized;
             Assert.LessOrEqual(Vector3.Angle(mean, aim), 0.35f, "desenin ortalaması nişanda kalır (isabet ortalaması değişmez)");
         }

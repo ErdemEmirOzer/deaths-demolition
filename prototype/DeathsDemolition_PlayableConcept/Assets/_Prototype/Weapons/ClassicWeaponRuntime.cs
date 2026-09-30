@@ -909,10 +909,12 @@ namespace DD.Prototype.Weapons
     public static class SpreadUtility
     {
         /// <summary>
-        /// PROTOTYPE-ONLY: vertical spread is flattened to a third of horizontal. With a
-        /// high fixed camera, vertical scatter is nearly invisible and only costs hits,
-        /// while horizontal scatter is what the player actually reads as "this weapon is
-        /// loose".
+        /// PROTOTYPE-ONLY: the top-down pellet ring's vertical axis, a third of the horizontal one — it only shapes the ring's
+        /// equal-arc-length spacing, so the fan seen from above keeps its WP-042 look. Top-down shots themselves carry NO
+        /// vertical scatter (C-00 30.09, decision B): the aim is planar (WP-069 DIRECTION §4b rule 2, extended from the kick to
+        /// the scatter), the ray sits at 1.39 m so the struck region does not flicker (WP-042 region parity, DEC-097), and a
+        /// vertical scatter there never read as "loose" — it only cost hits, and once the ray met the head sphere it turned
+        /// into random ×2 criticals. TP / FP keep their round cone (review R1-A #16).
         /// </summary>
         public const float VerticalSpreadFactor = 0.35f;
 
@@ -938,7 +940,8 @@ namespace DD.Prototype.Weapons
             else
             {
                 yaw = Random.Range(-degrees, degrees);
-                pitch = Random.Range(-degrees, degrees) * VerticalSpreadFactor;
+                Random.Range(-degrees, degrees);   // C-00 30.09 B: top-down pitch 0; the draw stays so the yaw sequence is unchanged
+                pitch = 0f;
             }
 
             return Rotate(forward, right, yaw, pitch, lookFrame);
@@ -969,7 +972,8 @@ namespace DD.Prototype.Weapons
         /// <summary>
         /// WP-042 pellet pattern. Pellet 0 is the centre (the aim reward); pellets 1..n−1 sit on
         /// an ellipse of horizontal radius <paramref name="ringShare"/> × <paramref name="degrees"/>
-        /// and vertical radius × <see cref="VerticalSpreadFactor"/>, spaced by EQUAL ARC LENGTH
+        /// and vertical radius × <see cref="VerticalSpreadFactor"/> (top-down: flattened onto its horizontal axis after the
+        /// spacing, C-00 30.09 B — the fan from above is unchanged), spaced by EQUAL ARC LENGTH
         /// (equal parameter angle would bunch pellets at the flat ends), rotated by
         /// <paramref name="phase01"/> turns, each jittered by ±<paramref name="jitterShare"/> ×
         /// <paramref name="degrees"/>. No allocation.
@@ -992,6 +996,7 @@ namespace DD.Prototype.Weapons
             {
                 yaw = Random.Range(-jitter, jitter);
                 pitch = Random.Range(-jitter, jitter) * vFactor;
+                if (!lookFrame) pitch = 0f;   // C-00 30.09 B: planar top-down (the draw kept: same yaw sequence)
             }
             else
             {
@@ -1003,14 +1008,15 @@ namespace DD.Prototype.Weapons
                 float t = RingParameterAtArcFraction(a, b, target);
                 yaw = a * Mathf.Cos(t) + Random.Range(-jitter, jitter);
                 pitch = b * Mathf.Sin(t) + Random.Range(-jitter, jitter) * vFactor;
+                if (!lookFrame) pitch = 0f;   // C-00 30.09 B: the ring flattens to its horizontal fan; yaw spacing as before
             }
 
             return Rotate(forward, right, yaw, pitch, lookFrame);
         }
 
         /// <summary>
-        /// WP-069 (sg_2): Gauss cone — yaw ~ N(0, σ·degrees), pitch ~ N(0, σ·degrees) × <see cref="VerticalSpreadFactor"/>,
-        /// both clamped to the cone. Box–Muller over Random.value; no allocation.
+        /// WP-069 (sg_2): Gauss cone — yaw ~ N(0, σ·degrees) and, in TP / FP, pitch ~ N(0, σ·degrees), both clamped to the
+        /// cone; top-down pitch 0 (C-00 30.09 B). Box–Muller over Random.value; no allocation.
         /// </summary>
         public static Vector3 ApplyGauss(Vector3 direction, float degrees, float sigmaShare, bool lookFrame = false)
         {
@@ -1026,7 +1032,7 @@ namespace DD.Prototype.Weapons
             float u2 = Random.value;
             float mag = Mathf.Sqrt(-2f * Mathf.Log(u1));
             float yaw = Mathf.Clamp(mag * Mathf.Cos(2f * Mathf.PI * u2) * sigma, -degrees, degrees);
-            float pitch = Mathf.Clamp(mag * Mathf.Sin(2f * Mathf.PI * u2) * sigma, -degrees, degrees) * (lookFrame ? 1f : VerticalSpreadFactor);
+            float pitch = lookFrame ? Mathf.Clamp(mag * Mathf.Sin(2f * Mathf.PI * u2) * sigma, -degrees, degrees) : 0f;   // C-00 30.09 B: planar top-down
             return Rotate(forward, right, yaw, pitch, lookFrame);
         }
 
