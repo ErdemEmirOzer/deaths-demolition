@@ -102,9 +102,10 @@ namespace DD.Prototype.Core.EditorTools
             BuildInfo stamp = BuildStamp.Write(mode);
             DateTime t0 = DateTime.UtcNow;
             BuildSummary summary;
+            BuildPlayerOptions options;
             try
             {
-                var options = new BuildPlayerOptions
+                options = new BuildPlayerOptions
                 {
                     scenes = scenes,
                     locationPathName = output,
@@ -126,7 +127,11 @@ namespace DD.Prototype.Core.EditorTools
 
             if (!string.IsNullOrEmpty(report))
             {
-                WriteReport(report, mode, target == BuildTarget.StandaloneOSX ? null : targetName, compression, output, scenes.Length, summary, seconds, stamp);
+                bool development = (options.options & BuildOptions.Development) != 0;
+                string backend = PlayerSettings.GetScriptingBackend(BuildPipeline.GetBuildTargetGroup(target)).ToString();
+                Directory.CreateDirectory(Path.GetDirectoryName(report));
+                File.WriteAllText(report, ReportJson(summary.result.ToString(), mode, target == BuildTarget.StandaloneOSX ? null : targetName, compression,
+                    output, scenes, development, backend, summary.totalSize, summary.totalErrors, summary.totalWarnings, seconds, stamp.ToJson()));
             }
 
             if (summary.result != BuildResult.Succeeded)
@@ -135,27 +140,38 @@ namespace DD.Prototype.Core.EditorTools
             }
         }
 
-        // target is null for macOS and compression null when the flag is absent, so the default
-        // report stays byte-for-byte the pre-WP-066W/066C format.
-        private static void WriteReport(string path, string mode, string target, string compression, string output, int scenes, BuildSummary s, double seconds, BuildInfo stamp)
+        // target is null for macOS and compression null when the flag is absent, so those two keys keep the
+        // pre-WP-066W/066C shape. WP-078 A6 (S-10, C-00 30.09): development, sceneList (build order: path + guid) and
+        // scriptingBackend are appended after "scenes" (the count stays for older readers). Pure, so tests can call it.
+        public static string ReportJson(string result, string mode, string target, string compression, string output, string[] scenePaths,
+            bool development, string scriptingBackend, ulong totalSize, int totalErrors, int totalWarnings, double seconds, string stampJson)
         {
             var sb = new StringBuilder();
             sb.Append("{\n");
-            sb.Append("  \"result\": \"").Append(s.result).Append("\",\n");
+            sb.Append("  \"result\": \"").Append(result).Append("\",\n");
             sb.Append("  \"mode\": \"").Append(mode).Append("\",\n");
             if (target != null) sb.Append("  \"target\": \"").Append(target).Append("\",\n");
             if (compression != null) sb.Append("  \"compression\": \"").Append(compression).Append("\",\n");
             sb.Append("  \"output\": \"").Append(Escape(output)).Append("\",\n");
-            sb.Append("  \"scenes\": ").Append(scenes).Append(",\n");
-            sb.Append("  \"totalSize\": ").Append(s.totalSize).Append(",\n");
-            sb.Append("  \"totalErrors\": ").Append(s.totalErrors).Append(",\n");
-            sb.Append("  \"totalWarnings\": ").Append(s.totalWarnings).Append(",\n");
+            sb.Append("  \"scenes\": ").Append(scenePaths.Length).Append(",\n");
+            sb.Append("  \"development\": ").Append(development ? "true" : "false").Append(",\n");
+            sb.Append("  \"sceneList\": [");
+            for (int i = 0; i < scenePaths.Length; i++)
+            {
+                sb.Append(i == 0 ? "\n" : ",\n");
+                sb.Append("    { \"path\": \"").Append(Escape(scenePaths[i])).Append("\", \"guid\": \"")
+                  .Append(AssetDatabase.AssetPathToGUID(scenePaths[i])).Append("\" }");
+            }
+            sb.Append(scenePaths.Length == 0 ? "],\n" : "\n  ],\n");
+            sb.Append("  \"scriptingBackend\": \"").Append(Escape(scriptingBackend)).Append("\",\n");
+            sb.Append("  \"totalSize\": ").Append(totalSize).Append(",\n");
+            sb.Append("  \"totalErrors\": ").Append(totalErrors).Append(",\n");
+            sb.Append("  \"totalWarnings\": ").Append(totalWarnings).Append(",\n");
             sb.Append("  \"seconds\": ").Append(seconds.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)).Append(",\n");
             sb.Append("  \"unity\": \"").Append(Application.unityVersion).Append("\",\n");
-            sb.Append("  \"stamp\": ").Append(stamp.ToJson().Replace("\n", "\n  ")).Append("\n");
+            sb.Append("  \"stamp\": ").Append(stampJson.Replace("\n", "\n  ")).Append("\n");
             sb.Append("}\n");
-            Directory.CreateDirectory(Path.GetDirectoryName(path));
-            File.WriteAllText(path, sb.ToString());
+            return sb.ToString();
         }
 
         private static string Escape(string s)
