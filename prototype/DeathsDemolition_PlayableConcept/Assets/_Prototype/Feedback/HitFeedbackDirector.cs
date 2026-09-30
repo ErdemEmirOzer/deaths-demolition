@@ -9,6 +9,15 @@ using BodyRegion = DD.Prototype.Damage.BodyRegion;
 
 namespace DD.Prototype.Feedback
 {
+    /// <summary>M-62 (C-00 30.09): who made the blast. Only a rocket (rl_1 impact / air burst) takes the layered B3 presentation's
+    /// Full slots and the Cinematic shadowed light; every other blast (explosive rounds, bomblets, split rockets, RunTree
+    /// deferred blasts) plays the small preset — card + ring + scorch, light ≤ 12, no shadow, no embers / steam.</summary>
+    public enum ExplosionSource
+    {
+        Small = 0,
+        Rocket = 1,
+    }
+
     /// <summary>Everything the director needs to dress one landed hit on an enemy.</summary>
     public struct EnemyHitFeedbackInfo
     {
@@ -573,11 +582,11 @@ namespace DD.Prototype.Feedback
         }
 
         /// <summary>Explosion branch. Radius is visual only; damage was already applied.</summary>
-        public void ReportExplosion(Vector3 origin, float radius, int presentationGroupId = 0)
+        public void ReportExplosion(Vector3 origin, float radius, int presentationGroupId = 0, ExplosionSource source = ExplosionSource.Small)
         {
             if (_explosionPool != null && _budget.TryConsume(FeedbackCategory.Explosion, origin, true))
             {
-                if (!_vfx.PlayExplosion(origin, radius))
+                if (!_vfx.PlayExplosion(origin, radius, source))
                 {
                     BurstEffect burst = _explosionPool.Get(origin, Quaternion.identity);
                     if (burst != null)

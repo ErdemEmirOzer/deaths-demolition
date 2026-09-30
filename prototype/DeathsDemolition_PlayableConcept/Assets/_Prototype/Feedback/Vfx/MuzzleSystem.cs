@@ -341,6 +341,8 @@ namespace DD.Prototype.Feedback.Vfx
 
         /// <summary>WP-073 B2: impact lights started (tests / probes).</summary>
         public int ImpactLights { get; private set; }
+        /// <summary>M-62: pool lights lit right now that cast shadows (only the Cinematic rocket blast may; ≤ 1 expected).</summary>
+        public int ShadowedLightsLit { get { int n = 0; for (int i = 0; i < _lights.Length; i++) if (_lights[i].Light != null && _lights[i].Light.enabled && _lights[i].Light.shadows != LightShadows.None) n++; return n; } }
 
         private static Vector3 MuzzlePoint(Transform muzzle, bool firstPerson)
         {

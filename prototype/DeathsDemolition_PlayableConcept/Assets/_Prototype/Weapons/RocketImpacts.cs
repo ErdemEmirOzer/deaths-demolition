@@ -218,7 +218,7 @@ namespace DD.Prototype.Weapons
             int hits;
             int transaction = split > 1
                 ? SplitBlast(weapon, origin, damage, inner, outer, e.falloffExponent, e.impulse, group, split, out hits)
-                : Blast(weapon, origin, damage, inner, outer, e.falloffExponent, e.impulse, group, out hits);
+                : Blast(weapon, origin, damage, inner, outer, e.falloffExponent, e.impulse, group, ExplosionSource.Rocket, out hits);
             float self = HurtPlayer(weapon, origin, damage, inner, outer, e);   // the unsplit blast's share (one hit on the player)
             DD.Prototype.Rounds.RunTreeHooks.OnRocketBlast(weapon, origin, damage, outer);   // WP-077 ks.explosion.ashcloud / seal.rl_1 burning ground
 
@@ -232,7 +232,7 @@ namespace DD.Prototype.Weapons
             {
                 float angle = (i * 360f / bomblets) + Random.value * 30f;
                 Vector3 at = origin + Quaternion.Euler(0f, angle, 0f) * Vector3.forward * BombletRing;
-                int bt = Blast(weapon, at, BombletDamage, BombletInner, BombletRadius, 1f, e.impulse * 0.5f, group, out int bh);
+                int bt = Blast(weapon, at, BombletDamage, BombletInner, BombletRadius, 1f, e.impulse * 0.5f, group, ExplosionSource.Small, out int bh);
                 float bs = HurtPlayer(weapon, at, BombletDamage, BombletInner, BombletRadius, e);
                 Bomblets++;
                 var b = new RocketBlastInfo(weapon, RocketBlastKind.Bomblet, at, normal, BombletDamage, BombletInner, BombletRadius, 0, bh, bs, bt);
@@ -257,7 +257,7 @@ namespace DD.Prototype.Weapons
             {
                 Vector3 at = origin + Quaternion.Euler(0f, phase + i * 360f / count, 0f) * Vector3.forward * ring;
                 int t = Blast(weapon, at, damage * DD.Prototype.Rounds.RunTreeHooks.RocketSplitDamageScale, inner * scale, outer * scale, exponent,
-                    force * scale, group, out int h);
+                    force * scale, group, i == 0 ? ExplosionSource.Rocket : ExplosionSource.Small, out int h);   // M-62: one rocket-grade blast per split
                 hits += h;
                 if (i == 0) first = t;
             }
@@ -266,10 +266,10 @@ namespace DD.Prototype.Weapons
         }
 
         /// <summary>One blast in its own damage transaction; every enemy inside <paramref name="outer"/> once, through the damage system's region split.</summary>
-        private static int Blast(ClassicWeaponId weapon, Vector3 origin, float damage, float inner, float outer, float exponent, float force, int group, out int hits)
+        private static int Blast(ClassicWeaponId weapon, Vector3 origin, float damage, float inner, float outer, float exponent, float force, int group, ExplosionSource source, out int hits)
         {
             hits = 0;
-            HitFeedbackDirector.Instance.ReportExplosion(origin, outer, group);
+            HitFeedbackDirector.Instance.ReportExplosion(origin, outer, group, source);
             int transaction = DamageTransaction.NextId();
             DamageTransaction.Resume(transaction);
             try

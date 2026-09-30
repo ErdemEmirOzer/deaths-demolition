@@ -1412,7 +1412,7 @@ namespace DD.Prototype.Diagnostics
                     _stressExplosionNext = now + 1f;
                     int i = _stressExplosions++;
                     float a = i * 1.7f;
-                    fx.ReportExplosion(centre + new Vector3(Mathf.Cos(a) * 6f, 0.1f, Mathf.Sin(a) * 6f), 2.5f);
+                    fx.ReportExplosion(centre + new Vector3(Mathf.Cos(a) * 6f, 0.1f, Mathf.Sin(a) * 6f), 2.5f, 0, DD.Prototype.Feedback.ExplosionSource.Rocket);   // M-62: the launcher-grade blast (as before the source split)
                 }
 
                 if (now >= _stressDeathNext)

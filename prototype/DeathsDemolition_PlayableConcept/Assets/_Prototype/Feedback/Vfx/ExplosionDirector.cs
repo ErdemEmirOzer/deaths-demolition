@@ -14,7 +14,12 @@ namespace DD.Prototype.Feedback.Vfx
         public const int FullCapacity = 2, ScheduleCapacity = 32;
         // Ground marks — direction §1.5 "Patlama sırası" (WP-073-VFX-FEEL-V3-DIRECTION.md l.102): "scorch 2,4 m / 12 s + ıslak koyu
         // halka 3,0 m / 6 s". §1.5 gives no alpha; it reuses the existing AP-010 scorch ("mevcut", WP-069 §7), whose manifest sets it.
-        public const float ScorchSize = 2.4f, ScorchSeconds = 12f, WetRingSize = 3f, WetRingSeconds = 6f;
+        public const float ScorchSize = 2.4f, WetRingSize = 3f, WetRingSeconds = 6f;
+        // M-57 (C-00 30.09): the scorch / crater life follows the impact-decal pattern per tier (DIRECTION §5 8 / 12 / 12);
+        // the Cinematic value waits on C-00's 12-or-20 s call (VfxDressing.ImpactDecalSeconds is 20 on Cinematic, DEC-100).
+        [PrototypeOnly(PendingDecisions.None, "M-57: Cinematic scorch life 12 s per DIRECTION §5 until C-00 decides 12 vs 20 (DEC-100 impact decals 20).", true)]
+        public const float ScorchSecondsCinematic = 12f;
+        public static float ScorchSeconds => VfxTier.Pick(8f, 12f, ScorchSecondsCinematic);
         [PrototypeOnly(PendingDecisions.None, "AP-010 manifest v004 decal_scorch usage_note: alpha peak 0.40 (direction §1.5 row names no alpha; it reuses this scorch).")]
         public const float ScorchAlpha = 0.40f;
         [PrototypeOnly(PendingDecisions.None, "Wet dark ring alpha: direction §1.5 gives size/time only (3.0 m / 6 s); 0.35 is a stand-in.", true)]
@@ -27,7 +32,30 @@ namespace DD.Prototype.Feedback.Vfx
         private const bool ShadowsOffForAb = false;
 #endif
         public static bool LightCastsShadows => VfxTier.Current == VfxTierLevel.Cinematic && !ShadowsOffForAb;
-        private struct Blast { public bool Active, Full, Grounded; public Vector3 At, Ground, Normal; public SurfaceKind Surface; public float Start, Scale; public int Stages, Mask; }
+
+        // ---- presentation numbers (direction §1.5; one per line — M-57)
+        [PrototypeOnly(PendingDecisions.None, "B3 blast light: rocket Full 40 / Light 12, range 9 m × scale, hold 0.08 s + fade 0.35 s; a small blast ≤ 12, no shadow (M-62).", true)]
+        public const float LightFull = 40f;
+        public const float LightSmall = 12f;
+        public const float LightRange = 9f;
+        public const float LightHold = .08f;
+        public const float LightFade = .35f;
+        [PrototypeOnly(PendingDecisions.None, "B3 cards: fireball 3.6 m × scale (× 0.65 when not Full) / 1.6 s; flash card 2 m / 1 frame; shock ring 7 m / 0.3 s, α ≤ 0.5 (AD M6); Dirt crater 1.8 m.", true)]
+        public const float FireballSize = 3.6f;
+        public const float FireballSeconds = 1.6f;
+        public const float FireballLightScale = .65f;
+        public const float FlashCardSize = 2f;
+        public const float RingSize = 7f;
+        public const float RingSeconds = .3f;
+        public const float RingAlpha = .5f;
+        public const float CraterSize = 1.8f;
+        // M-56: the ground probe reaches max(radius, 2) + 0.15 m below the blast; a ground layer under a blast h metres up
+        // fades in alpha and size from 1 (on the ground) to GroundFadeFloor (at the probe's reach).
+        public const float GroundProbeMin = 2f;
+        public const float GroundProbeLift = .15f;
+        public const float GroundFadeFloor = .35f;
+        public static float GroundProbeLength(float radius) => Mathf.Max(radius, GroundProbeMin) + GroundProbeLift;
+        private struct Blast { public bool Active, Full, Rocket, Grounded; public Vector3 At, Ground, Normal; public SurfaceKind Surface; public float Start, Scale, GroundFade; public int Stages, Mask; }
         private readonly Blast[] _blasts = new Blast[ScheduleCapacity];
         private Texture2D _dot;
         private VfxDressing _owner;
@@ -69,36 +97,59 @@ namespace DD.Prototype.Feedback.Vfx
         private void OnDestroy(){SceneManager.activeSceneChanged-=OnSceneChanged;if(s_instance==this)s_instance=null;Destroy(_smokeMaterial);Destroy(_debrisMaterial);Destroy(_leafMaterial);Destroy(_emberMaterial);Destroy(_dot);}
         private void OnSceneChanged(Scene a,Scene b)=>Clear();
         public void Clear(){for(int i=0;i<_blasts.Length;i++)_blasts[i]=default;_column?.Clear();_debris?.Clear();_leaves?.Clear();_embers?.Clear();}
-        public bool Play(Vector3 at,float radius,int mask)
+        public bool Play(Vector3 at, float radius, int mask) => Play(at, radius, mask, ExplosionSource.Rocket);
+
+        /// <summary>M-62: a rocket takes a Full slot (≤ FullCapacity) and the Cinematic shadowed light; a small blast plays card +
+        /// ring + scorch, light ≤ LightSmall, no shadow, no embers / column / steam / residue / wet ring.</summary>
+        public bool Play(Vector3 at, float radius, int mask, ExplosionSource source)
         {
-            if(_owner==null||!_owner.IsReady||mask==0)return false;
-            int full=0;for(int i=0;i<_blasts.Length;i++)if(_blasts[i].Active&&_blasts[i].Full)full++;
-            ref Blast b=ref _blasts[_next];_next=(_next+1)%_blasts.Length;
-            b=new Blast {Active=true,Full=full<FullCapacity,At=at,Start=Time.time,Scale=Mathf.Clamp(radius/5f,.3f,1f),Mask=mask};
-            int layerMask=(1<<0)|(1<<PrototypeLayers.Environment)|(1<<PrototypeLayers.CameraOccluder);
-            b.Grounded=Physics.Raycast(at+Vector3.up*.15f,Vector3.down,out RaycastHit ground,1.35f,layerMask,QueryTriggerInteraction.Ignore);
-            if(b.Grounded){b.Ground=ground.point;b.Normal=ground.normal;b.Surface=SurfaceResolver.Resolve(ground.collider);}
-            Presentations++;if(b.Full)FullPresentations++;else LightPresentations++;
-            float alpha=GameFeelSettings.FlashScale;
-            if((mask&1)!=0)
+            if (_owner == null || !_owner.IsReady || mask == 0) return false;
+            bool rocket = source == ExplosionSource.Rocket;
+            if (!rocket) mask &= 1 | 2 | 8;
+            int full = 0;
+            for (int i = 0; i < _blasts.Length; i++) if (_blasts[i].Active && _blasts[i].Full) full++;
+            ref Blast b = ref _blasts[_next];
+            _next = (_next + 1) % _blasts.Length;
+            b = new Blast { Active = true, Rocket = rocket, Full = rocket && full < FullCapacity, At = at, Start = Time.time, Scale = Mathf.Clamp(radius / 5f, .3f, 1f), Mask = mask };
+            int layerMask = (1 << 0) | (1 << PrototypeLayers.Environment) | (1 << PrototypeLayers.CameraOccluder);
+            float reach = GroundProbeLength(radius);
+            b.Grounded = Physics.Raycast(at + Vector3.up * GroundProbeLift, Vector3.down, out RaycastHit ground, reach + GroundProbeLift, layerMask, QueryTriggerInteraction.Ignore);
+            if (b.Grounded)
             {
-                Card(VfxIds.Explosion,at,Quaternion.identity,FlipbookEffect.Facing.Camera,3.6f*b.Scale*(b.Full?1f:.65f),1.6f,Color.white,alpha);
-                if(b.Full && alpha>=.99f && VfxTier.Current!=VfxTierLevel.Performance)
-                {if(Card(VfxIds.Explosion,at,Quaternion.identity,FlipbookEffect.Facing.Camera,2f*b.Scale,1f/60f,new Color(1f,.75f,.45f)*12f,1f,true))FlashCards++;}
-                _lights.FlashAt(at,new Color(1f,.69f,.44f),b.Full?40f:12f,9f*b.Scale,.08f,.35f,false,LightCastsShadows);
+                b.Ground = ground.point;
+                b.Normal = ground.normal;
+                b.Surface = SurfaceResolver.Resolve(ground.collider);
+                b.GroundFade = Mathf.Lerp(1f, GroundFadeFloor, Mathf.Clamp01((at.y - ground.point.y) / reach));
             }
-            if(b.Grounded && (mask&2)!=0)
+
+            Presentations++;
+            if (b.Full) FullPresentations++;
+            else LightPresentations++;
+            float alpha = GameFeelSettings.FlashScale;
+            if ((mask & 1) != 0)
             {
-                FlipbookEffect ring=CardEffect(VfxIds.Shockwave,b.Ground+b.Normal*.05f,Quaternion.LookRotation(b.Normal),FlipbookEffect.Facing.Fixed,7f*b.Scale,.3f,VfxDressing.ShockRingDustTint,.5f);   // AD M6 dust tint, α ≤ 0.5 (kept from the pre-B3 ring)
-                ring?.SetGrow(1f*b.Scale,.3f);
+                Card(VfxIds.Explosion, at, Quaternion.identity, FlipbookEffect.Facing.Camera, FireballSize * b.Scale * (b.Full ? 1f : FireballLightScale), FireballSeconds, Color.white, alpha);
+                if (b.Full && alpha >= .99f && VfxTier.Current != VfxTierLevel.Performance
+                    && Card(VfxIds.Explosion, at, Quaternion.identity, FlipbookEffect.Facing.Camera, FlashCardSize * b.Scale, 1f / 60f, new Color(1f, .75f, .45f) * 12f, 1f, true))
+                    FlashCards++;
+                _lights.FlashAt(at, new Color(1f, .69f, .44f), b.Full ? LightFull : LightSmall, LightRange * b.Scale, LightHold, LightFade, false, b.Full && LightCastsShadows);
             }
-            if(b.Grounded && (mask&8)!=0)
+
+            if (b.Grounded && (mask & 2) != 0)
             {
-                if(b.Surface!=SurfaceKind.Water && Decal(b.Ground,b.Normal,ScorchSize*b.Scale,ScorchSeconds,ScorchAlpha,Color.white))Scorches++;
-                if(b.Surface!=SurfaceKind.Water && Decal(b.Ground,b.Normal,WetRingSize*b.Scale,WetRingSeconds,WetRingAlpha,new Color(.3f,.32f,.34f)))WetRings++;
+                FlipbookEffect ring = CardEffect(VfxIds.Shockwave, b.Ground + b.Normal * .05f, Quaternion.LookRotation(b.Normal), FlipbookEffect.Facing.Fixed, RingSize * b.Scale * b.GroundFade, RingSeconds, VfxDressing.ShockRingDustTint, RingAlpha * b.GroundFade);   // AD M6 dust tint
+                ring?.SetGrow(b.Scale * b.GroundFade, RingSeconds);
             }
+
+            if (b.Grounded && (mask & 8) != 0 && b.Surface != SurfaceKind.Water)
+            {
+                if (Decal(b.Ground, b.Normal, ScorchSize * b.Scale * b.GroundFade, ScorchSeconds, ScorchAlpha * b.GroundFade, Color.white)) Scorches++;
+                if (rocket && Decal(b.Ground, b.Normal, WetRingSize * b.Scale * b.GroundFade, WetRingSeconds, WetRingAlpha * b.GroundFade, new Color(.3f, .32f, .34f))) WetRings++;
+            }
+
             return true;
         }
+
         private void Update()=>Tick(Time.time);
         public void Tick(float now)
         {
@@ -109,7 +160,7 @@ namespace DD.Prototype.Feedback.Vfx
                 {b.Stages|=1;if(b.Full && (b.Mask&4)!=0){int count=VfxTier.Pick(10,24,32);for(int n=0;n<count;n++){float a=n*2.399963f;B3Particles.Emit(_embers,b.At,new Vector3(Mathf.Cos(a),1.5f,Mathf.Sin(a))*3f,.035f,.8f,new Color(1f,.48f,.24f,1f));}EmberBursts++;}}
                 if(age>=.033f && (b.Stages&2)==0)
                 {
-                    b.Stages|=2;if((b.Mask&4)!=0)
+                    b.Stages|=2;if(b.Rocket && (b.Mask&4)!=0)
                     {int count=b.Full?VfxTier.Pick(3,8,10):2;for(int n=0;n<count;n++)B3Particles.Emit(_column,b.At+Vector3.up*.2f,Vector3.up*(.4f+n*.05f),3f*b.Scale,1.2f,new Color(.56f,.58f,.60f,.45f));Columns++;}
                 }
                 if(age>=.05f && (b.Stages&4)==0)
@@ -124,7 +175,7 @@ namespace DD.Prototype.Feedback.Vfx
                         var sheet=_debris.textureSheetAnimation;sheet.startFrame=new ParticleSystem.MinMaxCurve(cell/16f,(cell+1.999f)/16f);
                         for(int n=0;n<count;n++){float a=n*2.399963f;Vector3 v=new Vector3(Mathf.Cos(a),1.2f+(n%3)*.3f,Mathf.Sin(a))*2f;B3Particles.Emit(b.Surface==SurfaceKind.Foliage?_leaves:_debris,b.Ground+b.Normal*.1f,v,water?.03f:.05f+(n%4)*.04f,water?1.5f:1.2f,water?new Color(.85f,.88f,.90f,.5f):new Color(.25f,.27f,.29f,1f));}
                         if(water){Card(VfxIds.WaterSplash,b.Ground,Quaternion.identity,FlipbookEffect.Facing.Camera,2.5f*b.Scale,1.5f,Color.white,.5f);Card(VfxIds.Shockwave,b.Ground+b.Normal*.05f,Quaternion.LookRotation(b.Normal),FlipbookEffect.Facing.Fixed,4f*b.Scale,.3f,new Color(.85f,.88f,.90f),.5f);}
-                        if(b.Surface==SurfaceKind.Dirt && (b.Mask&8)!=0)Decal(b.Ground,b.Normal,1.8f*b.Scale,ScorchSeconds,ScorchAlpha,new Color(.25f,.20f,.16f));   // §1.5 Dirt crater 1.8 m (scorch sheet)
+                        if(b.Surface==SurfaceKind.Dirt && (b.Mask&8)!=0)Decal(b.Ground,b.Normal,CraterSize*b.Scale*b.GroundFade,ScorchSeconds,ScorchAlpha*b.GroundFade,new Color(.25f,.20f,.16f));   // §1.5 Dirt crater (scorch sheet), α ≤ ScorchAlpha (M-57)
                         Residues++;
                     }
                 }

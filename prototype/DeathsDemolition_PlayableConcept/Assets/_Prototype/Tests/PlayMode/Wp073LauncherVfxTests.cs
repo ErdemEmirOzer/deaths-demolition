@@ -168,5 +168,41 @@ namespace DD.Prototype.Tests.PlayMode
             foreach(VfxTierLevel tier in new[]{VfxTierLevel.Performance,VfxTierLevel.High,VfxTierLevel.Cinematic})
             {VfxTier.Override=tier;_rocket.Present(.05f);Assert.IsTrue(_rocket.TryVisual(id,out _));Assert.AreEqual(tier==VfxTierLevel.Performance?1f:tier==VfxTierLevel.High?2f:3.5f,_rocket.SmokeLife);}
         }
+        // ---- M-56 / M-62 / M-58 (C-00 30.09)
+        private static GameObject Ground(float top)
+        {var g=GameObject.CreatePrimitive(PrimitiveType.Cube);g.transform.position=new Vector3(0f,top-.5f,200f);g.transform.localScale=new Vector3(20f,1f,20f);Physics.SyncTransforms();return g;}
+        [UnityTest] public IEnumerator M56_ContactAt139m_LaysGroundLayers_ThreeMetreAirburstDoesNot()
+        {
+            var ground=Ground(100f);
+            int scorch=_blast.Scorches,wet=_blast.WetRings,residue=_blast.Residues;
+            Assert.IsTrue(_blast.Play(new Vector3(0f,101.39f,200f),5f,-1,ExplosionSource.Rocket));_blast.Tick(Time.time+.3f);
+            Assert.AreEqual(scorch+1,_blast.Scorches,"1,39 m temas: scorch");Assert.AreEqual(wet+1,_blast.WetRings,"1,39 m temas: ıslak halka");Assert.AreEqual(residue+1,_blast.Residues,"1,39 m temas: kalıntı");
+            _blast.Tick(Time.time+2f);scorch=_blast.Scorches;wet=_blast.WetRings;residue=_blast.Residues;
+            Assert.IsTrue(_blast.Play(new Vector3(4f,103f,200f),2.5f,-1,ExplosionSource.Rocket));_blast.Tick(Time.time+.3f);   // reach max(2.5, 2) + 0.15 = 2.65 m
+            Assert.AreEqual(scorch,_blast.Scorches);Assert.AreEqual(wet,_blast.WetRings);Assert.AreEqual(residue,_blast.Residues,"3 m hava patlaması: zemin katmanı yok");
+            Object.Destroy(ground);yield return null;
+        }
+        [Test] public void M62_TwoSmallThenRocket_RocketTakesTheFullSlot_SmallPlaysNoEmbersOrColumn()
+        {
+            int full=_blast.FullPresentations,light=_blast.LightPresentations,embers=_blast.EmberBursts,columns=_blast.Columns;
+            Assert.IsTrue(_blast.Play(new Vector3(0f,100f,200f),3f,-1,ExplosionSource.Small));Assert.IsTrue(_blast.Play(new Vector3(4f,100f,200f),3f,-1,ExplosionSource.Small));
+            Assert.IsTrue(_blast.Play(new Vector3(8f,100f,200f),5f,-1,ExplosionSource.Rocket));
+            Assert.AreEqual(full+1,_blast.FullPresentations,"roket Full yuvasını alır");Assert.AreEqual(light+2,_blast.LightPresentations);
+            _blast.Tick(Time.time+.3f);Assert.AreEqual(embers+1,_blast.EmberBursts,"kor yalnız roket");Assert.AreEqual(columns+1,_blast.Columns,"sütun yalnız roket");
+        }
+        [Test] public void M62_CinematicExplosiveRounds_AtMostOneShadowedLight()
+        {
+            VfxTier.Override=VfxTierLevel.Cinematic;var lights=MuzzleSystem.Ensure();int peak=0;
+            for(int i=0;i<25;i++){_blast.Play(new Vector3(i%5*3f,100f,200f+i/5*3f),3f,-1,ExplosionSource.Small);peak=Mathf.Max(peak,lights.ShadowedLightsLit);}   // lmg_1 explosive rounds, 5 s × 5/s
+            Assert.AreEqual(0,peak,"küçük patlama gölgesiz");
+            _blast.Play(new Vector3(20f,100f,200f),5f,-1,ExplosionSource.Rocket);
+            Assert.AreEqual(ExplosionDirector.LightCastsShadows?1:0,lights.ShadowedLightsLit,"gölgeli ışık yalnız roket, ≤ 1");
+        }
+        [Test] public void M58_ExhaustPoolIsEight_NinthRocketFliesWithoutCard()
+        {
+            Assert.AreEqual(8,_rocket.ExhaustPoolSize);
+            for(int i=0;i<10;i++)Spawn();ProjectileSystem.Step(.025f);_rocket.Present(.05f);
+            Assert.AreEqual(10,_rocket.ActiveFlights);Assert.AreEqual(8,_rocket.ExhaustAlive);
+        }
     }
 }

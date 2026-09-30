@@ -39,9 +39,12 @@ namespace DD.Prototype.Feedback.Vfx
         private bool _seatHidden, _seatReloaded;
         private Texture2D _dot;
         private ParticleSystem _smoke, _sparks;
-        private readonly MeshRenderer[] _exhaustRenderers = new MeshRenderer[ProjectileSystem.Capacity];
-        private readonly Transform[] _exhaustTransforms = new Transform[ProjectileSystem.Capacity];
-        private readonly MaterialPropertyBlock[] _exhaustBlocks = new MaterialPropertyBlock[ProjectileSystem.Capacity];
+        // M-58 (C-00 30.09): eight exhaust cards, not one per projectile slot (256 GameObjects in Awake). Live flights take the
+        // lowest free flight slots, so flight slot i < ExhaustCapacity owns card i; a ninth concurrent rocket flies without one.
+        public const int ExhaustCapacity = 8;
+        private readonly MeshRenderer[] _exhaustRenderers = new MeshRenderer[ExhaustCapacity];
+        private readonly Transform[] _exhaustTransforms = new Transform[ExhaustCapacity];
+        private readonly MaterialPropertyBlock[] _exhaustBlocks = new MaterialPropertyBlock[ExhaustCapacity];
         private static readonly int FrameId=Shader.PropertyToID("_Frame"), AlphaId=Shader.PropertyToID("_Alpha"), AlphaCapId=Shader.PropertyToID("_AlphaCap"), TintId=Shader.PropertyToID("_Tint"), EmissiveId=Shader.PropertyToID("_EmissiveStrength");
         private MuzzleSystem _lights;
         public int ActiveFlights { get; private set; }
@@ -59,6 +62,7 @@ namespace DD.Prototype.Feedback.Vfx
         public ParticleSystem Smoke => _smoke;
         public ParticleSystem Sparks => _sparks;
         public int ExhaustAlive { get; private set; }
+        public int ExhaustPoolSize => _exhaustRenderers.Length;
         public float SmokeLife => VfxTier.Pick(1f, 2f, 3.5f);
         public static RocketVisualSystem Ensure()
         {
@@ -115,16 +119,17 @@ namespace DD.Prototype.Feedback.Vfx
         }
         private void OnImpact(ProjectileImpactInfo p) { if (p.Stopped) Retire(p.ProjectileId); }
         private void OnExpired(ProjectileExpireInfo p) => Retire(p.ProjectileId);
-        private void Retire(int id) { for (int i = 0; i < _flights.Length; i++) if (_flights[i].Id == id) { _flights[i] = default; if(_exhaustRenderers[i]!=null)_exhaustRenderers[i].enabled=false; ActiveFlights--; return; } }
+        private void Retire(int id) { for (int i = 0; i < _flights.Length; i++) if (_flights[i].Id == id) { _flights[i] = default; HideExhaust(i); ActiveFlights--; return; } }
         private void OnDud(RocketDudInfo d)
         {
             _duds[_dudNext] = new DudVisual { At = d.Position, Direction = d.Direction, Started = Time.time, Life = Mathf.Max(0.01f,d.FizzleSeconds) };
             _dudNext = (_dudNext + 1) % _duds.Length; DudsPlayed++;
             for(int i=0;i<3;i++)B3Particles.Emit(_sparks,d.Position,Vector3.up*.3f,.03f,.3f,new Color(1f,.48f,.24f,1f));
         }
+        private void HideExhaust(int slot) { if (slot < _exhaustRenderers.Length && _exhaustRenderers[slot] != null) _exhaustRenderers[slot].enabled = false; }
         public void Clear()
         {
-            for (int i = 0; i < _flights.Length; i++) { _flights[i] = default; if(_exhaustRenderers[i]!=null)_exhaustRenderers[i].enabled=false; }
+            for (int i = 0; i < _flights.Length; i++) { _flights[i] = default; HideExhaust(i); }
             for (int i = 0; i < _duds.Length; i++) _duds[i] = default;
             ActiveFlights = 0; ExhaustAlive=0; _smoke?.Clear(); _sparks?.Clear(); ReleaseSeat();
         }
@@ -147,7 +152,7 @@ namespace DD.Prototype.Feedback.Vfx
                 Quaternion rotation = Quaternion.LookRotation(dir);
                 // World-only after fire in all modes; no CameraView remapping of actual flight coordinates.
                 _matrices[drawn++] = Matrix4x4.TRS(p.Position,rotation,Vector3.one) * _meshLocal;   // nose on the projectile point
-                if(_exhaustRenderers[slot]!=null)
+                if(slot<_exhaustRenderers.Length && _exhaustRenderers[slot]!=null)
                 {
                     Vector3 nozzle=p.Position-dir*(BodyLength+.225f);
                     Vector3 to=FeedbackCameraRef.TryGetPosition(out Vector3 viewer)?viewer-nozzle:-FeedbackCameraRef.Forward;
@@ -172,7 +177,7 @@ namespace DD.Prototype.Feedback.Vfx
                 if (f.Ember >= 1f) { f.Ember -= 1f; B3Particles.Emit(_sparks,p.Position-dir*BodyLength,-dir*.4f,.03f,.3f,new Color(1f,.48f,.24f,1f)); }
                 if (VfxTier.Current != VfxTierLevel.Performance) _lights.TrackLight(p.Generation ^ 0x524c0000,p.Position-dir*BodyLength,new Color(1f,0.69f,0.44f),8f,5f);
             }
-            for (int i = 0; i < _flights.Length; i++) if (_flights[i].Id != 0 && !_seen[i]) { _flights[i] = default; if(_exhaustRenderers[i]!=null)_exhaustRenderers[i].enabled=false; ActiveFlights--; }
+            for (int i = 0; i < _flights.Length; i++) if (_flights[i].Id != 0 && !_seen[i]) { _flights[i] = default; HideExhaust(i); ActiveFlights--; }
             for (int i = 0; i < _duds.Length; i++)
             {
                 ref DudVisual d = ref _duds[i]; if (d.Life <= 0f) continue;

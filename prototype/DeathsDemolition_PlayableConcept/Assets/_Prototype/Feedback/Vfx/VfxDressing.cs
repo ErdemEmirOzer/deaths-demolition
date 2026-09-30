@@ -990,14 +990,14 @@ namespace DD.Prototype.Feedback.Vfx
         // ------------------------------------------------------------------ explosion
 
         /// <summary>Family 3 (WP-073 B3): the layered blast is <see cref="ExplosionDirector"/>'s (direction §1.5); the audit mask passes through.</summary>
-        public bool PlayExplosion(Vector3 origin, float radius)
+        public bool PlayExplosion(Vector3 origin, float radius, ExplosionSource source = ExplosionSource.Small)
         {
             if (!_ready || AuditMute)
             {
                 return false;
             }
 
-            return ExplosionDirector.Instance != null && ExplosionDirector.Instance.Play(origin, radius, AuditExplosionMask);
+            return ExplosionDirector.Instance != null && ExplosionDirector.Instance.Play(origin, radius, AuditExplosionMask, source);
         }
 
         // ------------------------------------------------------------------ armour break
