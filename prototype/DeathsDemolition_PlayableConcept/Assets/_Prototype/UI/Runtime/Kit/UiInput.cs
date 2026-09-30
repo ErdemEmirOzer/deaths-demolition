@@ -383,4 +383,5 @@ namespace DD.Prototype.UI
         {
             _blur?.Invoke();
         }
+    }
 }

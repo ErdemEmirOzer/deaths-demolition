@@ -398,5 +398,4 @@ namespace DD.Prototype.UI
             return button;
         }
     }
-    }
 }
