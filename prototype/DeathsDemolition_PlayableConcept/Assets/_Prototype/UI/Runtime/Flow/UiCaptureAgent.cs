@@ -865,6 +865,12 @@ namespace DD.Prototype.UI
                     yield break;
                 }
 
+                if (_screen == "typespec")
+                {
+                    yield return TypeSpec();
+                    yield break;
+                }
+
                 if (_screen == "cursor")
                 {
                     yield return CursorShot();
@@ -911,6 +917,14 @@ namespace DD.Prototype.UI
                 {
                     yield return TreeFrames();
                     Debug.Log("[UiCapture] tree done");
+                    Application.Quit();
+                    yield break;
+                }
+
+                if (_screen == "latebonus")
+                {
+                    yield return LateBonusFrames();
+                    Debug.Log("[UiCapture] latebonus done");
                     Application.Quit();
                     yield break;
                 }
@@ -1230,6 +1244,65 @@ namespace DD.Prototype.UI
                 WritePng(Path.Combine(Path.GetDirectoryName(_out) ?? string.Empty, Path.GetFileNameWithoutExtension(_out) + "-modal.png"));
                 yield return null;
                 Debug.Log("[UiCapture] kit done · framebuffer " + Screen.width + "x" + Screen.height);
+                Application.Quit();
+            }
+
+            /// <summary>
+            /// DEC-109: <c>-ddUiCapture typespec</c> - the Display face (Shippori Mincho B1 DD-TR) as TMP sets it in this Player,
+            /// through the path every heading takes (UiFactory.Label, the Display role, its static atlas and kerning): Turkish
+            /// and English caps at 56 / 40 / 28 px times <c>-ddUiKitScale</c> (default 1.25, the AD's scale), ink on the page
+            /// surface, to <c>-ddUiCaptureOut</c>. A line wider than its box is logged as "[UiCapture] overflow".
+            /// </summary>
+            private IEnumerator TypeSpec()
+            {
+                float scale = 1.25f;
+                string scaleArg = Arg("-ddUiKitScale");
+                if (!string.IsNullOrEmpty(scaleArg))
+                {
+                    float.TryParse(scaleArg, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out scale);
+                }
+
+                UiTokens.TextScale = Mathf.Clamp(scale, UiSettings.TextScaleMin, UiSettings.TextScaleMax);
+                Canvas canvas = UiFactory.CreateCanvas("TypeSpec", UiLayer.Modal, null, UiFactory.EnsureUiCamera());
+                var root = (RectTransform)canvas.transform;
+                UnityEngine.UI.Image page = UiFactory.NewImage("Page", root, UiColor.SurfaceBase, UiSprites.Solid);
+                UiFactory.Fill((RectTransform)page.transform);
+                string language = UiStrings.Language;
+                float y = 40f;
+                string[][] sets =
+                {
+                    new[] { UiStrings.Turkish, "OCAĞI YAK · DEĞİŞİM · ÇİĞ · GÜNEŞ", "İŞARETLE · KOŞU RAPORU · PROFİL · AĞAÇ" },
+                    new[] { UiStrings.English, "SPEND YOUR GOLD · RUN REPORT · SETTINGS" },
+                };
+                foreach (string[] set in sets)
+                {
+                    UiStrings.Language = set[0];   // the face UiFonts.For picks for this language
+                    foreach (int px in new[] { 56, 40, 28 })
+                    {
+                        for (int i = 1; i < set.Length; i++)
+                        {
+                            float size = px * UiTokens.TextScale;
+                            TMPro.TMP_Text line = UiFactory.Label("Spec" + set[0] + px, root, set[i], UiType.Display, UiColor.TextPrimary, TextAnchor.UpperLeft);
+                            line.fontSize = size;
+                            var rect = (RectTransform)line.transform;
+                            rect.anchorMin = new Vector2(0f, 1f);
+                            rect.anchorMax = new Vector2(0f, 1f);
+                            rect.pivot = new Vector2(0f, 1f);
+                            rect.sizeDelta = new Vector2(1800f, size * 1.25f);
+                            rect.anchoredPosition = new Vector2(56f, -y);
+                            y += size * 1.25f;
+                        }
+                    }
+
+                    y += 24f;
+                }
+
+                UiStrings.Language = language;
+                yield return new WaitForSecondsRealtime(_delay);
+                yield return new WaitForEndOfFrame();
+                WritePng(_out);
+                yield return null;
+                Debug.Log("[UiCapture] typespec done · text scale " + UiTokens.TextScale + " · framebuffer " + Screen.width + "x" + Screen.height);
                 Application.Quit();
             }
 
@@ -2070,6 +2143,57 @@ namespace DD.Prototype.UI
                 yield return new WaitForSecondsRealtime(0.4f);
                 yield return Frame(folder, "hud-slick");
                 RunHudScreen.CaptureSlick = false;
+            }
+
+            /// <summary>
+            /// DEC-107: <c>-ddUiCapture latebonus</c> - the round-end shop's intro at R9 (the bonus announced), R10 (the bonus),
+            /// R13 (its last round) and R14 (back to the usual count). The rounds are completed by the spawn director's debug
+            /// path, the player is invulnerable and nothing is bought; frames shop-r9 / r10 / r13 / r14 into -ddUiCaptureOut.
+            /// </summary>
+            private IEnumerator LateBonusFrames()
+            {
+                string folder = Path.HasExtension(_out) ? (Path.GetDirectoryName(_out) ?? Application.persistentDataPath) : _out;
+                Directory.CreateDirectory(folder);
+                PrototypeUiFlow.GoToSelection();
+                yield return UiCaptureAgent.WaitScene(PrototypeScenes.Selection, 20f);
+                yield return WaitFor(() => !UiCurtain.IsCovering, 10f);
+                PrototypeUiFlow.StartRun();
+                yield return UiCaptureAgent.WaitScene(PrototypeScenes.Run, 30f);
+                yield return UiCaptureAgent.WaitRunLive(20f);
+                PlayerRig rig = PlayerRegistry.Primary;
+                if (rig != null && rig.Health != null)
+                {
+                    rig.Health.DiagnosisInvulnerable = true;
+                }
+
+                RunDirector run = RunDirector.Instance;
+                if (run == null || run.Shop == null)
+                {
+                    Debug.LogWarning("[UiCapture] latebonus: no run");
+                    yield break;
+                }
+
+                for (int round = 1; round <= 14; round++)
+                {
+                    yield return WaitFor(() => run.Phase == RunPhase.Fighting, 60f);
+                    yield return new WaitForSecondsRealtime(0.5f);
+                    DD.Prototype.Spawn.EnemySpawnDirector spawn = DD.Prototype.Spawn.EnemySpawnDirector.Instance;
+                    if (spawn == null || !spawn.DebugCompleteRound())
+                    {
+                        Debug.LogWarning("[UiCapture] latebonus: round " + round + " could not be completed");
+                        yield break;
+                    }
+
+                    yield return WaitFor(() => run.Phase == RunPhase.Upgrading, 30f);
+                    if (round == 9 || round == 10 || round == 13 || round == 14)
+                    {
+                        yield return new WaitForSecondsRealtime(1.4f);
+                        Debug.Log("[UiCapture] latebonus r" + round + " limit " + run.Shop.PurchaseLimit + " bonus " + run.Shop.LateRoundBonus);
+                        yield return Frame(folder, "shop-r" + round);
+                    }
+
+                    run.CloseUpgradeScreen();
+                }
             }
 
             /// <summary>
