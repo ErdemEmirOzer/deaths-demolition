@@ -61,9 +61,20 @@ namespace DD.Prototype.Tests.PlayMode
             LogAssert.ignoreFailingMessages = false;
         }
 
-        [UnityTest]
-        [Timeout(600000)]
-        public IEnumerator V6_OdalarKopruSelale_TakilmaSifir()
+        /// <summary>Station-loop results shared by the acceptance test and the C1 diagnostic (WP-076 B9 M-22).</summary>
+        private sealed class RoundResult
+        {
+            public readonly StringBuilder Rapor = new StringBuilder("[DD-OBS] wp076.v6ai\n");
+            public readonly List<string> NoReach = new List<string>();
+            public int SumRec, SumRem, SumOow, WaterfallStalls;
+            public bool NearCornerReached;
+        }
+
+        private RunDirector _run;
+        private EnemySpawnDirector _director;
+        private PlayerRig _rig;
+
+        private IEnumerator Kur()
         {
             LogAssert.ignoreFailingMessages = true;
             RunFlowClock.ClearHolds();
@@ -71,38 +82,85 @@ namespace DD.Prototype.Tests.PlayMode
             yield return null;
             yield return Bekle(() => RunDirector.Instance != null && EnemySpawnDirector.Instance != null && PlayerRegistry.Primary != null
                                      && RunDirector.Instance.Phase == RunPhase.Fighting, 40f, "Run sahnesi / Fighting");
-            RunDirector run = RunDirector.Instance;
-            EnemySpawnDirector director = EnemySpawnDirector.Instance;
-            PlayerRig rig = PlayerRegistry.Primary;
+            _run = RunDirector.Instance;
+            _director = EnemySpawnDirector.Instance;
+            _rig = PlayerRegistry.Primary;
 
-            director.ForceActiveTarget(0, false);
-            run.BeginRound(1);
+            _director.ForceActiveTarget(0, false);
+            _run.BeginRound(1);
             yield return null;
             Assert.IsTrue(SpawnWorldProfile.IsV6, "varsayılan dünya V6 değil");
-            rig.Health.DiagnosisInvulnerable = true;
+            _rig.Health.DiagnosisInvulnerable = true;
+        }
 
-            bool c1Only = false;
-#if UNITY_EDITOR
-            c1Only = Environment.GetEnvironmentVariable("DD_WP076_C1_CONTACT") == "1";
-            var c1Proof = c1Only ? new C1ContactObserver.Proof() : null;
-#endif
-            var stations = c1Only
-                ? new List<(string name, Vector3 at)> { Stations[6] }
-                : new List<(string name, Vector3 at)>(Stations);
+        /// <summary>
+        /// The acceptance test: no environment input (WP-076 B9 M-22 — the C1 observation lives in its own Explicit Diagnostics method).
+        /// </summary>
+        [UnityTest]
+        [Timeout(600000)]
+        public IEnumerator V6_OdalarKopruSelale_TakilmaSifir()
+        {
+            yield return Kur();
+            var stations = new List<(string name, Vector3 at)>(Stations);
             GameObject falls = GameObject.Find("Waterfall");
-            if (!c1Only)
-            {
-                Assert.IsNotNull(falls, "strict Waterfall istasyonu yok");
-                stations.Add(("Waterfall", falls.transform.position));
-            }
+            Assert.IsNotNull(falls, "strict Waterfall istasyonu yok");
+            stations.Add(("Waterfall", falls.transform.position));
 
-            var rapor = new StringBuilder("[DD-OBS] wp076.v6ai\n");
-            int sumRec = 0, sumRem = 0, sumOow = 0, waterfallStalls = 0;
-            bool nearCornerReached = false;
-            var noReach = new List<string>();
+            var r = new RoundResult();
+            yield return Istasyonlar(stations, null, r);
+
+            StringBuilder rapor = r.Rapor;
+            Assert.AreEqual(0, r.SumRem, "takılma: watchdog gövde kaldırdı\n" + rapor);
+            Assert.AreEqual(0, r.SumOow, "dünya dışı kaldırma\n" + rapor);
+            // stuck RECOVERIES (repath + side step, the body stays) are reported, not asserted: 26.09 two runs 0 and 3 outside KnownOpen
+            // (R3 / R4 / C8 once each, bodies far from the station — K1 kairō (−30.9, −5.8), north of the chūmon (3.0, 23.5)).
+            rapor.AppendLine("  stuckRecover outside known = " + r.SumRec);
+            Assert.IsEmpty(r.NoReach, "oyuncuya ulaşılamayan istasyon\n" + rapor);
+            Assert.AreEqual(0, r.WaterfallStalls, "strict Waterfall: gözlenen takılma\n" + rapor);
+            Assert.IsTrue(r.NearCornerReached, "Waterfall yakın-köşe gövdesi oyuncuya ulaşmadı\n" + rapor);
+        }
+
+#if UNITY_EDITOR
+        /// <summary>
+        /// WP-076 B9 (M-22 / Y6, C-00 30.09): the C1 contact observation of the unchanged KnownOpen station — a diagnostic, never an
+        /// acceptance gate. Explicit + Diagnostics (not in full runs); output: DD_WP076_C1_CONTACT_OUT or the temporary cache.
+        /// </summary>
+        [UnityTest]
+        [Explicit("Diagnostics: C1 contact observation (WP-076 B9 M-22)")]
+        [Category("Diagnostics")]
+        [Timeout(600000)]
+        public IEnumerator C1_TemasGozlemi_TakilanGovde()
+        {
+            string output = Environment.GetEnvironmentVariable("DD_WP076_C1_CONTACT_OUT");
+            if (string.IsNullOrEmpty(output)) output = Path.Combine(Application.temporaryCachePath, "wp076-c1-contact.json");
+            yield return Kur();
+            var proof = new C1ContactObserver.Proof();
+            var r = new RoundResult();
+            yield return Istasyonlar(new List<(string name, Vector3 at)> { Stations[6] }, proof, r);
+            C1ContactObserver.ResetHook();
+            proof.outcome = proof.move == null ? "UNKNOWN: no stalled-body normal Move captured"
+                : proof.contacts.Count == 0 ? "UNKNOWN: selected Move had no actual collider contact"
+                : "CONTACT OBSERVED: collider binding and causal interpretation require review";
+            proof.sceneInputs = C1ContactObserver.CurrentScenes();
+            File.WriteAllText(output, JsonUtility.ToJson(proof, true));
+            Debug.Log("[DD-OBS] wp076.c1-contact " + proof.outcome + " → " + output);
+        }
+#endif
+
+        /// <param name="c1Diag">a C1ContactObserver.Proof for the C1 diagnostic, null for the acceptance test</param>
+        private IEnumerator Istasyonlar(List<(string name, Vector3 at)> stations, object c1Diag, RoundResult r)
+        {
+            RunDirector run = _run;
+            EnemySpawnDirector director = _director;
+            PlayerRig rig = _rig;
+#if UNITY_EDITOR
+            var c1 = c1Diag as C1ContactObserver.Proof;
+#endif
+            StringBuilder rapor = r.Rapor;
+            List<string> noReach = r.NoReach;
             var oowAt = new List<string>();
             Action<DD.Prototype.Core.Config.EnemyTier, Vector3, ZombieEnemy.OutOfWorldReason, ZombieBodyState> onOow =
-                (t, p, r, s) => oowAt.Add(r + "@(" + p.x.ToString("0.0") + "," + p.y.ToString("0.0") + "," + p.z.ToString("0.0") + ") " + t + " " + s);
+                (t, p, why, s) => oowAt.Add(why + "@(" + p.x.ToString("0.0") + "," + p.y.ToString("0.0") + "," + p.z.ToString("0.0") + ") " + t + " " + s);
             ZombieEnemy.OutOfWorldRemoved += onOow;
             try
             {
@@ -117,7 +175,7 @@ namespace DD.Prototype.Tests.PlayMode
                     }
 
 #if UNITY_EDITOR
-                    if (c1Only) { c1Proof.stationNavPosition = hit.position; c1Proof.stationNavResolved = true; }
+                    if (c1 != null) { c1.stationNavPosition = hit.position; c1.stationNavResolved = true; }
 #endif
                     director.ForceActiveTarget(0, false);
                     director.ClearAllEnemies();
@@ -127,7 +185,9 @@ namespace DD.Prototype.Tests.PlayMode
                     director.RefreshPointsNow();
 
                     int rec = ZombieEnemy.StuckRecoveries, rem = ZombieEnemy.StuckRemovals, oow = ZombieEnemy.OutOfWorldRemovals;
-                    int cap0 = director.InnerCapFallbacks, noPoint0 = director.NoPointTicks;   // WP-076 B9: inner-cap valve rate
+                    int cap0 = director.InnerQuotaRelaxes, noPoint0 = director.NoPointTicks, massN0 = director.InnerMassSamples;   // WP-076 B9 Y5 / M-26
+                    double mass0 = director.InnerMassSum;
+                    int holds0 = NavPathFollower.CornerHoldsStarted, cornerTo0 = NavPathFollower.CornerHoldTimeouts;   // WP-076 B9 M-23
                     var anchors = new Dictionary<ZombieEnemy, (Vector3 anchor, float since, bool reached, bool reported)>();
                     int spawned = 0, reached = 0;
                     Action<EnemySpawnContext> onSpawn = c => spawned++;
@@ -175,8 +235,8 @@ namespace DD.Prototype.Tests.PlayMode
                                         a.reported = true;
                                         stallCount++;
 #if UNITY_EDITOR
-                                        if (c1Only && !c1Proof.selected)
-                                            C1ContactObserver.Select(z, c1Proof, a.anchor, a.since, d);
+                                        if (c1 != null && !c1.selected)
+                                            C1ContactObserver.Select(z, c1, a.anchor, a.since, d);
 #endif
                                         stalls.Append(string.Format("({0:0.0},{1:0.0},{2:0.0} d={3:0.0} {4}) ", zp.x, zp.y, zp.z, d, z.Tier));
                                     }
@@ -193,25 +253,51 @@ namespace DD.Prototype.Tests.PlayMode
                     }
 
                     int dRec = ZombieEnemy.StuckRecoveries - rec, dRem = ZombieEnemy.StuckRemovals - rem, dOow = ZombieEnemy.OutOfWorldRemovals - oow;
-                    rapor.AppendLine(string.Format("  {0,-12} at=({1:0.0},{2:0.0},{3:0.0}) spawned={4} reached={5} stuckRecover={6} stuckRemove={7} oow={8} innerCapFallback={10} noPointTicks={11} innerShare24={12:0.00} stalls: {9}",
+                    rapor.AppendLine(string.Format("  {0,-12} at=({1:0.0},{2:0.0},{3:0.0}) spawned={4} reached={5} stuckRecover={6} stuckRemove={7} oow={8} innerQuotaRelax={10} noPointTicks={11} innerShare24={12:0.00} innerMass={13} cornerHold={14} cornerTimeout={15} stalls: {9}",
                         st.name, hit.position.x, hit.position.y, hit.position.z, spawned, reached, dRec, dRem, dOow, stalls.Length > 0 ? stalls.ToString() : "-",
-                        director.InnerCapFallbacks - cap0, director.NoPointTicks - noPoint0, SpawnWorldProfile.InnerShare));
+                        director.InnerQuotaRelaxes - cap0, director.NoPointTicks - noPoint0, SpawnWorldProfile.InnerShare,
+                        director.InnerMassSamples > massN0 ? ((director.InnerMassSum - mass0) / (director.InnerMassSamples - massN0)).ToString("0.00") : "-",
+                        NavPathFollower.CornerHoldsStarted - holds0, NavPathFollower.CornerHoldTimeouts - cornerTo0));
                     if (st.name == "Waterfall")
                     {
-                        waterfallStalls = stallCount;
-                        nearCornerReached = anchors.TryGetValue(nearCornerBody, out var nearCornerAnchor) && nearCornerAnchor.reached;
-                        rapor.AppendLine("  strict Waterfall stalls=" + waterfallStalls + " nearCornerReached=" + nearCornerReached);
+                        r.WaterfallStalls = stallCount;
+                        r.NearCornerReached = anchors.TryGetValue(nearCornerBody, out var nearCornerAnchor) && nearCornerAnchor.reached;
+                        rapor.AppendLine("  strict Waterfall stalls=" + r.WaterfallStalls + " nearCornerReached=" + r.NearCornerReached);
                     }
 #if UNITY_EDITOR
-                    if (c1Only)
+                    if (c1 != null)
                     {
-                        c1Proof.spawned = spawned; c1Proof.reached = reached; c1Proof.stalls = stallCount;
-                        c1Proof.recoveries = dRec; c1Proof.removals = dRem; c1Proof.outOfWorld = dOow;
+                        c1.spawned = spawned; c1.reached = reached; c1.stalls = stallCount;
+                        c1.recoveries = dRec; c1.removals = dRem; c1.outOfWorld = dOow;
                     }
 #endif
+                    // WP-076 B9 (S-05 30.09, C1): every body that never reached the player — final (x, z), speed, remaining corners / path
+                    {
+                        var miss = new StringBuilder();
+                        int missCount = 0;
+                        foreach (var kv in anchors)
+                        {
+                            ZombieEnemy z = kv.Key;
+                            if (kv.Value.reached || z == null || !z.IsAlive) continue;
+                            Vector3 zp = z.transform.position;
+                            CharacterController cc = z.GetComponent<CharacterController>();
+                            float left = 0f;
+                            if (NavMesh.SamplePosition(zp, out NavMeshHit zh, 1f, NavMesh.AllAreas))
+                            {
+                                var lp = new NavMeshPath();
+                                if (NavMesh.CalculatePath(zh.position, hit.position, NavMesh.AllAreas, lp))
+                                    for (int ci = 1; ci < lp.corners.Length; ci++) left += Vector3.Distance(lp.corners[ci - 1], lp.corners[ci]);
+                            }
+                            if (missCount++ < 12)
+                                miss.Append(string.Format("({0:0.0},{1:0.0} v={2:0.00} corners={3} path={4:0.0}m) ", zp.x, zp.z,
+                                    cc != null ? new Vector3(cc.velocity.x, 0f, cc.velocity.z).magnitude : -1f,
+                                    z.PathFollower != null ? z.PathFollower.RemainingCorners : -1, left));
+                        }
+                        if (missCount > 0) rapor.AppendLine("    ulaşamayan " + missCount + ": " + miss);
+                    }
                     bool known = KnownOpen.Contains(st.name);
                     if (known) rapor.AppendLine("    ^ KNOWN OPEN (not asserted)");
-                    else { sumRec += dRec; sumRem += dRem; sumOow += dOow; if (reached == 0) noReach.Add(st.name); }
+                    else { r.SumRec += dRec; r.SumRem += dRem; r.SumOow += dOow; if (reached == 0) noReach.Add(st.name); }
                     director.ClearAllEnemies();
                     yield return null;
                 }
@@ -223,43 +309,20 @@ namespace DD.Prototype.Tests.PlayMode
                 rig.Health.DiagnosisInvulnerable = false;
                 rapor.AppendLine("  oow: " + (oowAt.Count > 0 ? string.Join("; ", oowAt) : "-"));
                 Debug.Log(rapor.ToString());
-#if UNITY_EDITOR
-                if (c1Only)
-                {
-                    C1ContactObserver.ResetHook();
-                    c1Proof.outcome = c1Proof.move == null ? "UNKNOWN: no stalled-body normal Move captured"
-                        : c1Proof.contacts.Count == 0 ? "UNKNOWN: selected Move had no actual collider contact"
-                        : "CONTACT OBSERVED: collider binding and causal interpretation require review";
-                    c1Proof.sceneInputs = C1ContactObserver.CurrentScenes();
-                    string output = Environment.GetEnvironmentVariable("DD_WP076_C1_CONTACT_OUT");
-                    Assert.IsFalse(string.IsNullOrEmpty(output), "C1 diagnostic output path missing");
-                    File.WriteAllText(output, JsonUtility.ToJson(c1Proof, true));
-                    Debug.Log("[DD-OBS] wp076.c1-contact " + c1Proof.outcome);
-                }
-#endif
             }
 
-            // This opt-in is an observation of the unchanged KnownOpen fixture, not a new acceptance gate.
-            if (c1Only) yield break;
-            Assert.AreEqual(0, sumRem, "takılma: watchdog gövde kaldırdı\n" + rapor);
-            Assert.AreEqual(0, sumOow, "dünya dışı kaldırma\n" + rapor);
-            // stuck RECOVERIES (repath + side step, the body stays) are reported, not asserted: 26.09 two runs 0 and 3 outside KnownOpen
-            // (R3 / R4 / C8 once each, bodies far from the station — K1 kairō (−30.9, −5.8), north of the chūmon (3.0, 23.5)).
-            rapor.AppendLine("  stuckRecover outside known = " + sumRec);
-            Assert.IsEmpty(noReach, "oyuncuya ulaşılamayan istasyon\n" + rapor);
-            Assert.AreEqual(0, waterfallStalls, "strict Waterfall: gözlenen takılma\n" + rapor);
-            Assert.IsTrue(nearCornerReached, "Waterfall yakın-köşe gövdesi oyuncuya ulaşmadı\n" + rapor);
         }
 
 #if UNITY_EDITOR
+        /// <summary>Observer plumbing proof; not a C1 cause test. WP-076 B9 (Y6): Explicit + Diagnostics instead of an env-gated Ignore.</summary>
         [UnityTest]
+        [Explicit("Diagnostics: C1 observer hook smoke (WP-076 B9 Y6)")]
+        [Category("Diagnostics")]
         [Timeout(120000)]
         public IEnumerator C1_Observer_ActualMoveContact_HookSmoke()
         {
-            if (Environment.GetEnvironmentVariable("DD_WP076_C1_HOOK_SMOKE") != "1")
-                Assert.Ignore("Opt-in observer plumbing proof; not a C1 cause acceptance test.");
             string output = Environment.GetEnvironmentVariable("DD_WP076_C1_HOOK_OUT");
-            Assert.IsFalse(string.IsNullOrEmpty(output), "Hook smoke output path missing");
+            if (string.IsNullOrEmpty(output)) output = Path.Combine(Application.temporaryCachePath, "wp076-c1-hook.json");
 
             Assert.AreEqual(TestProfileIsolation.TestProfilePath, DD.Prototype.Profile.ProfileStore.Path);
             Assert.AreNotEqual(TestProfileIsolation.RealProfilePath, DD.Prototype.Profile.ProfileStore.Path);
