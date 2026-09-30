@@ -31,7 +31,7 @@ if cmd=='rev-parse':
  if '--git-common-dir' in a: print(root/'common');sys.exit(0)
  if any(x.startswith('refs/') for x in a):sys.exit(1)
  print(main if a[-1]=='main' or a[-1].endswith('^') else source);sys.exit(0)
-if cmd=='log':print('fixture source');sys.exit(0)
+if cmd=='log':print('Test: fixture' if '--format=%b' in a else 'WP-000: fixture source (C-00 30.09)');sys.exit(0)  # K-02 message gate
 if cmd=='rev-list':print(source+' '+main);sys.exit(0)
 if cmd=='merge-base':sys.exit(1)
 if cmd=='worktree':print('worktree '+str(root/'source')+'\nbranch refs/heads/fake-source');sys.exit(0)
@@ -93,7 +93,7 @@ class IntegrateStatusTests(unittest.TestCase):
     def rollback_failure(self, position, output):
         responses = [['dirty', 0]]*(position-1)+[[output, 128]]
         result, calls = self.execute({'main': responses}, rollback=True)
-        self.assertEqual(4, result.returncode, result.stdout+result.stderr)
+        self.assertEqual(7, result.returncode, result.stdout+result.stderr)   # Codex-audit M-08: unverified rollback = 7
         self.assertIn('ROLLBACK UNVERIFIED', result.stdout)
         self.assertNotIn('aborted: 0 dirty paths', result.stdout)
         mutations = [a for a in calls if a[0] in MUTATIONS]

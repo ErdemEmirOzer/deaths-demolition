@@ -1,12 +1,15 @@
 #!/bin/zsh
 # WP-043 · ADR-043-1 · tools/integrate.sh <commit|branch> --tag <name> [--apply] [--allow-paths <glob,…>] [--s01]
-#                                          [--message <tag msg>] [--repo DIR] [--no-post]
+#                                          [--message <tag msg>] [--repo DIR] [--no-post] [--subject-exempt <reason>]
 #
 # C-00's integration gate as one command. DEFAULT IS DRY-RUN (checks + report). --apply integrates.
 #   Gate:  single parent · source worktree clean (if the branch has one) · every changed path inside the
 #          allowed scope (Assets/_Prototype|_Art|TextMesh Pro, project README.md/PROTOTYPE-ONLY.md, planning/, tools/, wp-*/README*; more via
 #          --allow-paths) · ProjectIntegrityTests.cs only with --s01 · secret/credential grep on added lines
-#          · tag name free and slash-less · main worktree clean · LFS objects ≥ pointers.
+#          · tag name free and slash-less · main worktree clean · LFS objects ≥ pointers · commit-message format
+#          (Codex-audit K-02, C-00 30.09): subject `(WP|AP)-NNN…: … (C-00 dd.mm)`, body with a test line (starts
+#          with Test/Tests/Guarded, any case, or mentions EditMode/PlayMode); --subject-exempt "<reason>" skips it
+#          for C-00's own reverts/hotfixes and the reason is printed in the RESULT line (no silent bypass).
 #   Apply: parent == main HEAD → git merge --ff-only; otherwise git cherry-pick --no-commit + automatic
 #          planning resolution (03-ROADMAP: git 3-way merge, then each conflicting single line = base + both sides' character-level insertions in offset order, WP-043B/051C;
 #          04-IMPLEMENTATION-PLAN: conflict blocks → HEAD then THEIRS, blank line between; 00/01 DEC/REQ tables: HEAD
@@ -18,29 +21,36 @@
 #   --compile (WP-043C, with --apply): after the apply, tools/compile-check.sh compiles the new main HEAD in the
 #          main-ci checkout (batchmode -quit, errorsCS) — commits that compile alone can break main together.
 # Exit: 0 ok · 3 gate failed · 4 apply conflict (aborted, main unchanged) · 5 post-integrate failed · 6 main does not
-#       compile after the apply (--compile; main keeps the commit — revert or hotfix) · 64 usage
+#       compile after the apply (--compile; main keeps the commit — revert or hotfix) · 7 rollback unverified / dirty
+#       paths left (main HEAD unchanged, working tree NOT clean — inspect) · 64 usage
 set -u
 setopt nullglob
 source "${0:A:h}/dd-env.sh"
-SRC=""; TAG=""; APPLY=0; ALLOW=""; S01=0; MSG=""; NOPOST=0; VERBOSE=0; COMPILE=0
+SRC=""; TAG=""; APPLY=0; ALLOW=""; S01=0; MSG=""; NOPOST=0; VERBOSE=0; COMPILE=0; EXEMPT=""; EXEMPT_SET=0
 say() { [ "$VERBOSE" -eq 1 ] && echo "$@"; return 0; }   # informational lines only with --verbose (HIZLI HAT §7: 3-line output)
 while [ $# -gt 0 ]; do
   case "$1" in
     --tag) TAG="$2"; shift ;; --apply) APPLY=1 ;; --allow-paths) ALLOW="$2"; shift ;; --s01) S01=1 ;;
     --message) MSG="$2"; shift ;; --repo) DD_REPO="$2"; shift ;; --no-post) NOPOST=1 ;; --compile) COMPILE=1 ;; --verbose|-v) VERBOSE=1 ;;
+    --subject-exempt) EXEMPT="${2-}"; EXEMPT_SET=1; [ $# -ge 2 ] && shift ;;
     -*) echo "unknown option: $1" >&2; exit 64 ;;
     *) [ -z "$SRC" ] && SRC="$1" || { echo "one source only" >&2; exit 64; } ;;
   esac
   shift
 done
-[ -n "$SRC" ] && [ -n "$TAG" ] || { echo "usage: integrate.sh <commit|branch> --tag <name> [--apply] [--allow-paths a,b] [--s01] [--message m] [--repo DIR] [--no-post] [--compile] [--verbose]" >&2; exit 64; }
+[ -n "$SRC" ] && [ -n "$TAG" ] || { echo "usage: integrate.sh <commit|branch> --tag <name> [--apply] [--allow-paths a,b] [--s01] [--message m] [--repo DIR] [--no-post] [--compile] [--subject-exempt reason] [--verbose]" >&2; exit 64; }
+# Codex-audit K-02 (C-00 30.09): the exemption is explicit and carries a reason — an empty one is a usage error.
+[ "$EXEMPT_SET" -eq 0 ] || [[ "$EXEMPT" == *[![:space:]]* ]] || { echo "--subject-exempt needs a non-empty reason" >&2; exit 64; }
 G=(git -C "$DD_REPO")
 fail() { echo "GATE FAIL: $*"; FAILS=$((FAILS+1)); }
 # Clean rollback of a failed --no-commit pick without git reset: every path the pick touched goes back
 # to HEAD (restore) or is dropped again if HEAD never had it. main HEAD is untouched at this point.
+# Codex-audit M-08 (C-00 30.09): returns 0 ONLY when the tree is verified clean; 7 when the rollback cannot be
+# verified (any `git status` failure) or dirty paths remain — callers `abort_pick || exit 7; exit 4`, so a failed
+# rollback is never reported as a clean "apply conflict (main unchanged)".
 abort_pick() {
   local verified_status
-  verified_status=$("${G[@]}" status --porcelain=v1 -z) || { echo "ROLLBACK UNVERIFIED: status failed; no cleanup"; return 4; }
+  verified_status=$("${G[@]}" status --porcelain=v1 -z) || { echo "ROLLBACK UNVERIFIED: status failed; no cleanup"; return 7; }
   "${G[@]}" cherry-pick --quit >/dev/null 2>&1   # no sequencer state with --no-commit; --abort would fail
   # WP-051E: every dirty path from `status --porcelain -z`, parsed by a small python (rename entries carry
   # TWO paths, unmerged DU/UD/AA/UU entries are ordinary paths here). Up to 3 passes: a path that HEAD knows
@@ -48,7 +58,7 @@ abort_pick() {
   local pass=0 left=1
   while [ "$left" != "0" ] && [ "$pass" -lt 3 ]; do
     pass=$((pass+1))
-    verified_status=$("${G[@]}" status --porcelain=v1 -z) || { echo "ROLLBACK UNVERIFIED: status failed; no path cleanup"; return 4; }
+    verified_status=$("${G[@]}" status --porcelain=v1 -z) || { echo "ROLLBACK UNVERIFIED: status failed; no path cleanup"; return 7; }
     print -rn -- "$verified_status" | python3 -c '
 import sys
 data = sys.stdin.buffer.read().split(b"\0"); i = 0; out = []
@@ -66,12 +76,13 @@ sys.stdout.buffer.write(b"\n".join(out) + b"\n")
       if "${G[@]}" cat-file -e "HEAD:$f" 2>/dev/null; then "${G[@]}" restore --staged --worktree -- "$f" 2>/dev/null
       else "${G[@]}" rm -q --cached --force -- "$f" >/dev/null 2>&1; rm -f "$DD_REPO/$f"; fi
     done
-    verified_status=$("${G[@]}" status --porcelain) || { echo "ROLLBACK UNVERIFIED: post-restore status failed"; return 4; }
+    verified_status=$("${G[@]}" status --porcelain) || { echo "ROLLBACK UNVERIFIED: post-restore status failed"; return 7; }
     left=0
     [ -z "$verified_status" ] || left=$(print -r -- "$verified_status" | wc -l | tr -d ' ')
   done
   echo "aborted: $left dirty paths remain (expected 0); main unchanged"
-  [ "$left" = "0" ] || { echo "WARN: rollback left paths — inspect with: git -C '$DD_REPO' status"; "${G[@]}" status --porcelain | head -10; }
+  [ "$left" = "0" ] || { echo "WARN: rollback left paths — inspect with: git -C '$DD_REPO' status"; "${G[@]}" status --porcelain | head -10; return 7; }
+  return 0
 }
 FAILS=0
 MAIN=$("${G[@]}" rev-parse main) || exit 64
@@ -170,8 +181,21 @@ fi
 LP=$("${G[@]}" lfs ls-files 2>/dev/null | wc -l | tr -d ' '); LO=$(find "$("${G[@]}" rev-parse --path-format=absolute --git-common-dir)/lfs/objects" -type f 2>/dev/null | wc -l | tr -d ' ')
 [ "$LO" -ge "$LP" ] && say "lfs pointers=$LP objects=$LO" || fail "LFS objects ($LO) < pointers ($LP)"
 
-if [ "$FAILS" -gt 0 ]; then echo "RESULT: gate failed ($FAILS) — see GATE FAIL lines above"; exit 3; fi
-echo "RESULT: gate passed ($( [ "$FF" -eq 1 ] && echo ff-only || echo cherry-pick ), ${#FILES} paths, lfs $LP/$LO)$( [ "$APPLY" -eq 1 ] || echo ' — dry-run, add --apply')"
+# --- gate 8: commit-message format (Codex-audit K-02, C-00 30.09). Subject in the house format ending in the
+#     C-00 date stamp; body names how the change was tested. --subject-exempt skips it, loudly (RESULT line).
+SUBJ_RE='^(WP|AP)-[0-9]{3}[^:]*: .+ \(C-00 [0-9]{2}\.[0-9]{2}\)$'
+XNOTE=""
+if [ "$EXEMPT_SET" -eq 1 ]; then
+  XNOTE=" — commit-message gate EXEMPT (--subject-exempt): $EXEMPT"
+else
+  print -r -- "$SUBJ" | grep -qE "$SUBJ_RE" || fail "commit subject not '(WP|AP)-NNN…: … (C-00 dd.mm)': $SUBJ"
+  BODY=$("${G[@]}" log -1 --format=%b "$C")
+  { print -r -- "$BODY" | grep -qiE '^[[:space:]]*(test|guarded)' || print -r -- "$BODY" | grep -qE 'EditMode|PlayMode'; } \
+    || fail "commit body has no test line (a line starting with Test/Tests/Guarded, or naming EditMode/PlayMode)"
+fi
+
+if [ "$FAILS" -gt 0 ]; then echo "RESULT: gate failed ($FAILS) — see GATE FAIL lines above$XNOTE"; exit 3; fi
+echo "RESULT: gate passed ($( [ "$FF" -eq 1 ] && echo ff-only || echo cherry-pick ), ${#FILES} paths, lfs $LP/$LO)$( [ "$APPLY" -eq 1 ] || echo ' — dry-run, add --apply')$XNOTE"
 [ "$APPLY" -eq 1 ] || exit 0
 
 # ================================================================== apply
@@ -189,7 +213,7 @@ else
         # each as one base line with both sides' character-level insertions (difflib) applied in offset order.
         "${G[@]}" show ":1:$f" > "/tmp/dd-int-base.$$"; "${G[@]}" show ":2:$f" > "/tmp/dd-int-ours.$$"; "${G[@]}" show ":3:$f" > "/tmp/dd-int-theirs.$$"
         git merge-file -p --diff3 -L ours -L base -L theirs "/tmp/dd-int-ours.$$" "/tmp/dd-int-base.$$" "/tmp/dd-int-theirs.$$" > "/tmp/dd-int-merged.$$" 2>/dev/null
-        python3 - "/tmp/dd-int-merged.$$" "$DD_REPO/$f" <<'PY' || { echo "03-ROADMAP: automatic merge failed (a conflicting hunk is not a single-line insert-only change)"; rm -f /tmp/dd-int-*.$$; abort_pick; exit 4; }
+        python3 - "/tmp/dd-int-merged.$$" "$DD_REPO/$f" <<'PY' || { echo "03-ROADMAP: automatic merge failed (a conflicting hunk is not a single-line insert-only change)"; rm -f /tmp/dd-int-*.$$; abort_pick || exit 7; exit 4; }
 import sys, re, difflib
 src = open(sys.argv[1], encoding='utf-8').read()
 pat = re.compile(r'<<<<<<< ours\n(.*?)\n?\|\|\|\|\|\|\| base\n(.*?)\n?=======\n(.*?)\n?>>>>>>> theirs\n', re.S)
@@ -218,7 +242,7 @@ PY
         # 04: sections → HEAD block, blank line, THEIRS block. 00/01: table rows → HEAD rows then THEIRS rows
         # (the post-merge DEC/REQ numbering check below guarantees the result is still unique and ordered).
         SEP=$'\n\n'; [ "$f" = planning/04-IMPLEMENTATION-PLAN.md ] || SEP=$'\n'
-        DD_SEP="$SEP" python3 - "$DD_REPO/$f" <<'PY' || { echo "$f: automatic resolution failed"; abort_pick; exit 4; }
+        DD_SEP="$SEP" python3 - "$DD_REPO/$f" <<'PY' || { echo "$f: automatic resolution failed"; abort_pick || exit 7; exit 4; }
 import sys,re,os
 p=sys.argv[1]; s=open(p,encoding='utf-8').read(); sep=os.environ.get('DD_SEP','\n\n')
 pat=re.compile(r'<<<<<<< [^\n]*\n(.*?)\n?=======\n(.*?)\n?>>>>>>> [^\n]*\n', re.S)
@@ -230,7 +254,7 @@ if n[0]==0 or '<<<<<<<' in s2 or '>>>>>>>' in s2: sys.exit(1)
 open(p,'w',encoding='utf-8').write(s2)
 PY
         "${G[@]}" add "$f"; say "resolved $f (HEAD block then THEIRS block)" ;;
-      *) echo "CONFLICT in $f — not auto-resolvable; aborting (main unchanged)"; "${G[@]}" diff --name-only --diff-filter=U; abort_pick; exit 4 ;;
+      *) echo "CONFLICT in $f — not auto-resolvable; aborting (main unchanged)"; "${G[@]}" diff --name-only --diff-filter=U; abort_pick || exit 7; exit 4 ;;
     esac
   done
   # verification: every non-planning path must carry the SAME CHANGE as the source commit. Blob identity
@@ -245,13 +269,13 @@ PY
     A=$("${G[@]}" diff "$C^" "$C" -- "$f" | hunks); B=$("${G[@]}" diff --cached HEAD -- "$f" | hunks)
     if [ "$A" = "$B" ]; then say "verified by hunks (3-way merged): $f"; else echo "VERIFY FAIL: $f (blob $S vs $I; hunks differ)"; BAD=1; fi
   done
-  [ "$BAD" -eq 0 ] || { abort_pick; exit 4; }
+  [ "$BAD" -eq 0 ] || { abort_pick || exit 7; exit 4; }
   # the merged planning tree must still number DEC/REQ uniquely and in order
   T1="${TMPDIR:-/tmp}/dd-int-$$-idx"; mkdir -p "$T1"
   "${G[@]}" show ":planning/00-PROJECT-PLAN.md" > "$T1/00.md" 2>/dev/null; "${G[@]}" show ":planning/01-REQUIREMENTS.md" > "$T1/01.md" 2>/dev/null
-  P=$(check_ids "$T1/00.md" "$T1/01.md") || { echo "DEC/REQ numbering after merge: $P"; rm -rf "$T1"; abort_pick; exit 4; }
+  P=$(check_ids "$T1/00.md" "$T1/01.md") || { echo "DEC/REQ numbering after merge: $P"; rm -rf "$T1"; abort_pick || exit 7; exit 4; }
   rm -rf "$T1"
-  "${G[@]}" commit -q -C "$C" || { echo "commit failed"; abort_pick; exit 4; }
+  "${G[@]}" commit -q -C "$C" || { echo "commit failed"; abort_pick || exit 7; exit 4; }
 fi
 NEW=$("${G[@]}" rev-parse main)
 "${G[@]}" tag -a "$TAG" -m "${MSG:-$SUBJ}" "$NEW"
