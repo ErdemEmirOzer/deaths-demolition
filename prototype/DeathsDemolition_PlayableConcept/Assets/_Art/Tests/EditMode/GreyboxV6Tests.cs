@@ -49,18 +49,22 @@ namespace DD.Art.Tests.EditMode
         {
             // WP-075 (C-00 28.09): the zombies held at the C1 slab joint (z −23.2) and the C8 plank ends — the pond NotWalkable strips
             // carved the 0.15–0.16 m decks, links bridged the holes and a pond rim fenced the causeway. The decks bake whole now.
+            // WP-074 B9 (M-39): the walks, the rim probe (the full deck width) and the dress colliders all come from GreyboxV6Builder.Crossings.
             Open();
-            foreach ((Vector3 a, Vector3 b, string name) in new[]
+            foreach ((int index, float top, float inset, string name) in new[]
             {
-                (new Vector3(-8f, 0.2f, -32.6f), new Vector3(-8f, 0.2f, -20.4f), "C1 geçidi"),
-                (new Vector3(4f, 0.35f, -39.2f), new Vector3(4f, 0.35f, -18.3f), "C8 köprüsü"),
+                (GreyboxV6Builder.C1Causeway, 0.2f, 0.4f, "C1 geçidi"),
+                (GreyboxV6Builder.C8Bridge, 0.35f, 0.3f, "C8 köprüsü"),
             })
             {
+                GreyboxV6Builder.Crossing crossing = GreyboxV6Builder.Crossings[index];
+                var a = new Vector3(crossing.Centre.x, top, crossing.Min.y + inset);
+                var b = new Vector3(crossing.Centre.x, top, crossing.Max.y - inset);
                 Assert.IsTrue(NavMesh.SamplePosition(a, out NavMeshHit ha, 0.6f, NavMesh.AllAreas), name + " başı NavMesh dışı");
                 Assert.IsTrue(NavMesh.SamplePosition(b, out NavMeshHit hb, 0.6f, NavMesh.AllAreas), name + " sonu NavMesh dışı");
                 bool blocked = NavMesh.Raycast(ha.position, hb.position, out NavMeshHit edge, NavMesh.AllAreas);
                 Assert.IsFalse(blocked, name + " NavMesh'i kesik: " + edge.position.ToString("F2"));
-                Collider[] rims = Physics.OverlapBox((a + b) * 0.5f + Vector3.up * 0.4f, new Vector3(0.9f, 0.3f, Vector3.Distance(a, b) * 0.5f), Quaternion.identity, ~0, QueryTriggerInteraction.Ignore);
+                Collider[] rims = Physics.OverlapBox((a + b) * 0.5f + Vector3.up * 0.4f, new Vector3(crossing.Width * 0.5f, 0.3f, Vector3.Distance(a, b) * 0.5f), Quaternion.identity, ~0, QueryTriggerInteraction.Ignore);
                 foreach (Collider c in rims)
                     Assert.IsFalse(c.transform.parent != null && c.transform.parent.name == WorldBoundaryBuilder.PondRimsName, name + " üstünde havuz çiti: " + c.name);
             }
@@ -68,6 +72,118 @@ namespace DD.Art.Tests.EditMode
             foreach (NavMeshModifierVolume v in Object.FindObjectsOfType<NavMeshModifierVolume>())
                 if (v.name.Contains("_NotWalkable_"))
                     Assert.IsFalse(GreyboxV6Builder.InPondStripExclusion(new Vector2(v.transform.position.x, v.transform.position.z)), "güverte altında NotWalkable: " + v.name);
+
+            // The dress's kit crossings: no pond NotWalkable strip lies under any walkable collider of theirs (the strips skip the
+            // Crossings footprints — one source; the class is the AP-023 manifest's, COL_i in manifest shell order). The kit landings
+            // overhang the 3 m deck by 0.2 m a side on land (x 2.29…5.71 at C8, the S-03 C8 funnel, M-40) and the rails stand 0.1 m
+            // outside it: what must hold is that nothing walked on is carved, not that every collider fits the deck rectangle.
+            Transform bridges = GameObject.Find(WorldV5Dress.RootName).transform.Find(WorldV5Dress.BridgeGroupName);
+            Assert.IsNotNull(bridges, "Bridges grubu");
+            var strips = new List<NavMeshModifierVolume>();
+            foreach (NavMeshModifierVolume v in Object.FindObjectsOfType<NavMeshModifierVolume>())
+                if (v.name.Contains("_NotWalkable_")) strips.Add(v);
+            Assert.Greater(strips.Count, 0, "havuz şeridi yok; tarama yalanlanmıştır");
+            int pieces = 0, walkable = 0;
+            foreach (Transform piece in bridges)
+            {
+                pieces++;
+                GameObject source = PrefabUtility.GetCorrespondingObjectFromOriginalSource(piece.gameObject);
+                HashSet<int> walk = WalkableColliders(source != null ? source.name : piece.name);
+                foreach (Collider c in piece.GetComponentsInChildren<Collider>(true))
+                {
+                    if (c.isTrigger || !c.name.StartsWith("COL_") || !int.TryParse(c.name.Substring(4), out int index) || !walk.Contains(index)) continue;
+                    walkable++;
+                    Bounds cb = c.bounds;
+                    foreach (NavMeshModifierVolume v in strips)
+                        Assert.IsFalse(StripOverlaps(v, cb), piece.name + "/" + c.name + " altında havuz şeridi: " + v.name);
+                }
+            }
+
+            Assert.AreEqual(6, pieces, "C8 iki kalas açıklığı + C1 dört taş");
+            Assert.Greater(walkable, 0, "yürünür çarpıştırıcı yok; tarama yalanlanmıştır");
+        }
+
+        /// <summary>The COL_i indices of an AP-023 prefab (SM_&lt;family&gt;_V&lt;nn&gt;) whose manifest collider class is walkable — one
+        /// COL per shell, in manifest order (ArtLibraryPrefabBuilder).</summary>
+        private static HashSet<int> WalkableColliders(string prefab)
+        {
+            ArtLibraryManifest manifest = ArtLibraryManifest.FromJson(File.ReadAllText(ArtLibraryPaths.ManifestJson("AP-023")));
+            var set = new HashSet<int>();
+            foreach (ArtLibraryManifest.Family f in manifest.families)
+            foreach (ArtLibraryManifest.Variation v in f.variations)
+            {
+                if (v.prefab != prefab) continue;
+                int index = 0;
+                foreach (ArtLibraryManifest.Collider c in v.colliders)
+                {
+                    int shells = c.shellBoxes != null && c.shellBoxes.Count > 0 ? c.shellBoxes.Count : c.shells;
+                    for (int s = 0; s < shells; s++, index++)
+                        if (c.@class == "walkable") set.Add(index);
+                }
+            }
+
+            return set;
+        }
+
+        /// <summary>2D (XZ) separating-axis test of a NotWalkable strip (its yawed box) against a collider's world AABB.</summary>
+        private static bool StripOverlaps(NavMeshModifierVolume v, Bounds b)
+        {
+            Vector3 c = v.transform.TransformPoint(v.center);
+            float yaw = v.transform.eulerAngles.y * Mathf.Deg2Rad;
+            var ax = new Vector2(Mathf.Cos(yaw), -Mathf.Sin(yaw));   // local x in world XZ
+            var az = new Vector2(Mathf.Sin(yaw), Mathf.Cos(yaw));    // local z in world XZ
+            Vector2 hs = new Vector2(v.size.x * v.transform.lossyScale.x, v.size.z * v.transform.lossyScale.z) * 0.5f;
+            var centre = new Vector2(c.x, c.z);
+            var boxCentre = new Vector2(b.center.x, b.center.z);
+            var boxHalf = new Vector2(b.extents.x, b.extents.z);
+            foreach (Vector2 axis in new[] { Vector2.right, Vector2.up, ax, az })
+            {
+                float stripR = hs.x * Mathf.Abs(Vector2.Dot(ax, axis)) + hs.y * Mathf.Abs(Vector2.Dot(az, axis));
+                float boxR = boxHalf.x * Mathf.Abs(axis.x) + boxHalf.y * Mathf.Abs(axis.y);
+                if (Mathf.Abs(Vector2.Dot(centre - boxCentre, axis)) > stripR + boxR) return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// WP-074 B9 (Y7, C-00 30.09 decision B) · Builder ↔ scene parity: the dress's garden trees are exactly what the builder puts on
+        /// its garden spots (<see cref="GreyboxV6Builder.GardenTreeSpots"/> + the great sakura) — one to one, and per tree the family,
+        /// variation, position (±1 cm), yaw (≤ 0.5°) and scale (±0.01) of <see cref="WorldV5Dress.GardenTreeAt"/>: the accepted pins, the
+        /// position hash on an unpinned spot. No hand-edited tree left, missing or re-dressed.
+        /// </summary>
+        [Test]
+        public void Greybox_BahceAgaclari_BuilderNoktalarinaBireBir()
+        {
+            Open();
+            Transform garden = GameObject.Find(WorldV5Dress.RootName).transform.Find(WorldV5Dress.GardenGroupName);
+            Assert.IsNotNull(garden, "GardenTrees grubu");
+            var spots = new List<(Vector2 position, bool great)> { (GreyboxV6Builder.GreatSakura, true) };
+            foreach (var (_, position, _) in GreyboxV6Builder.GardenTreeSpots()) spots.Add((position, false));
+            var trees = new List<Transform>();
+            foreach (Transform tree in garden) trees.Add(tree);
+            Assert.AreEqual(spots.Count, trees.Count, "ağaç sayısı builder noktalarıyla aynı olmalı");
+            var errors = new List<string>();
+            int pinned = 0;
+            foreach ((Vector2 spot, bool great) in spots)
+            {
+                int hit = trees.FindIndex(t => Vector2.Distance(new Vector2(t.position.x, t.position.z), spot) <= 0.01f);
+                if (hit < 0) { errors.Add("builder noktasında ağaç yok: " + spot.ToString("F2")); continue; }
+                Transform tree = trees[hit];
+                trees.RemoveAt(hit);
+                var expected = WorldV5Dress.GardenTreeAt(new Vector3(spot.x, 0f, spot.y), great);
+                if (System.Array.Exists(WorldV5Dress.GardenPins, g => Vector2.Distance(new Vector2(g.Position.x, g.Position.z), spot) < 0.01f)) pinned++;
+                GameObject source = PrefabUtility.GetCorrespondingObjectFromOriginalSource(tree.gameObject);
+                string name = "SM_" + expected.family + "_V" + expected.variation.ToString("00");
+                if (source == null || source.name != name) errors.Add(spot.ToString("F2") + ": " + (source != null ? source.name : tree.name) + " (beklenen " + name + ")");
+                if (Vector3.Distance(tree.position, expected.position) > 0.01f) errors.Add(spot.ToString("F2") + ": konum " + tree.position.ToString("F3") + " (beklenen " + expected.position.ToString("F3") + ")");
+                if (Quaternion.Angle(tree.rotation, expected.rotation) > 0.5f) errors.Add(spot.ToString("F2") + ": yaw farkı " + Quaternion.Angle(tree.rotation, expected.rotation).ToString("F2") + "°");
+                if ((tree.localScale - expected.scale).magnitude > 0.01f) errors.Add(spot.ToString("F2") + ": ölçek " + tree.localScale.ToString("F3") + " (beklenen " + expected.scale.ToString("F3") + ")");
+            }
+
+            foreach (Transform t in trees) errors.Add("builder'da olmayan ağaç: " + t.position.ToString("F2"));
+            Assert.AreEqual(WorldV5Dress.GardenPins.Length, pinned, "her sabit (pin) bir builder noktasında olmalı");
+            Assert.IsEmpty(errors, string.Join("\n", errors));
         }
 
         [Test]
@@ -421,6 +537,11 @@ namespace DD.Art.Tests.EditMode
                 Material ring = rings.Find("Horizon_" + layer).GetComponent<MeshRenderer>().sharedMaterial;
                 StringAssert.Contains("horizon_" + layer + "_v2", AssetDatabase.GetAssetPath(ring.GetTexture("_BaseMap")));
                 Assert.Greater(ring.renderQueue, lastQueue, layer + " sırası");
+                // DEC-108 / M-44: only the near ring's fog footer reveals the panorama (its bottom edge AA with it), at the builder's height.
+                float reveal = "horizon_" + layer + "_v2" == WorldV5Sky.PanoramaRevealRole ? 1f : 0f;
+                Assert.AreEqual(reveal, ring.GetFloat("_BottomPanoramaReveal"), layer + " panorama açılımı (DEC-108: yalnız near)");
+                Assert.AreEqual(reveal, ring.GetFloat("_BottomEdgeAA"), layer + " alt kenar AA");
+                Assert.AreEqual(WorldV5Sky.PanoramaRevealHeight, ring.GetFloat("_RevealHeight"), 1e-6f, layer + " açılım yüksekliği (M-44: builder'dan)");
                 lastQueue = ring.renderQueue;
             }
 

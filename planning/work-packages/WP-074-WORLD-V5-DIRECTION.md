@@ -461,9 +461,9 @@ Tanımlı darboğaz = iç genişlik ≤ 2,5 m. Sayı **8**: C1 taş atlama (2,0 
 | 11 | W_BambooCorridorNorth → W_BambooNorth | −52, 18 | 60 m | |
 | 12 | NW_ServiceGate | −46, 46 | 75 m | |
 | 13 | I_WestKairoSouth (yeni) | −33, −16 | 38 m | K1 güney ağzı arkası |
-| 14 | I_CloisterWest (yeni) | −22, 23 | 34 m | K3 batı kairō içi |
-| 15 | I_ShoreEast (yeni) | 18, −30 | 49 m | karesansui doğu boşluğu |
-| 16 | I_GreatSakuraSouth (yeni) | 36, −9 | 56 m | R7 güney kapısı arkası |
+| 14 | I_CloisterWest (yeni) | −22, 14 | set 3 | K3 batı kairō içi (C-00 30.09 set 3, 92232235) |
+| 15 | I_R7SouthWest (eski I_ShoreEast) | 24, −8 | set 3 | R7 avlusunun güneybatısı, karesansui kuzeyi (set 3; ad konumdan, M-27) |
+| 16 | I_R7NorthWest (eski I_GreatSakuraSouth) | 24, 14 | set 3 | R7 avlusunun kuzeybatısı, I_CloisterEast'e 10,2 m (set 3; ad konumdan, M-27) |
 | 17 | I_ServiceYardSouth (yeni) | −36, 29 | 51 m | hizmet avlusu güney çiti |
 | 18 | I_HallRear (yeni) | 0, 49 | 62 m | salon arka kapısı içi |
 

@@ -311,19 +311,6 @@ namespace DD.Art.Pipeline.EditorTools
             box.isTrigger = false;
         }
 
-        /// <summary>Rebuild only V6's invisible boundary after a rim-rule delta; retains its baked lighting and NavMesh.</summary>
-        public static void ApplyV6Cli()
-        {
-            var scene = EditorSceneManager.OpenScene(GreyboxV6Builder.ScenePath, OpenSceneMode.Single);
-            GameObject root = GameObject.Find(Ap005WorldBootstrap.RootName);
-            if (root == null) throw new InvalidOperationException("[WorldBoundary] V6 world root missing");
-            var placement = AssetDatabase.LoadAssetAtPath<WorldPlacementAsset>(ArtLibraryPaths.Ap005PlacementAsset);
-            if (placement == null) throw new InvalidOperationException("[WorldBoundary] AP005 basin source missing");
-            Build(root.transform, PlacementImporter.BasinHoles(placement), GreyboxV6Builder.HalfExtent, GreyboxV6Builder.InPondStripExclusion);
-            EditorSceneManager.MarkSceneDirty(scene);
-            EditorSceneManager.SaveScene(scene);
-        }
-
         /// <summary>Batch entry: add / rebuild the ring and the fall guard in World_AP005 without a re-import (no renderer → no rebake).</summary>
         public static void ApplyCli()
         {

@@ -30,7 +30,10 @@ Material:
     m_Ints: []
     m_Floats:
     - _AlphaPower: 1
+    - _BottomEdgeAA: 0
+    - _BottomPanoramaReveal: 0
     - _Haze: 0.5
+    - _RevealHeight: 0.16
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _HazeColor: {r: 0.815, g: 0.843, b: 0.87, a: 1}

@@ -160,6 +160,11 @@ namespace DD.Art.Pipeline.EditorTools
             GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.OccludeeStatic);
         }
 
+        /// <summary>DEC-108 (user 29.09, C-00 30.09): the plate whose fog footer reveals the panorama below it, and the footer's height in V
+        /// (AP023-sky-v002 authors the fog into the bottom 0.16 of the sheet) — the only place these are set (M-44).</summary>
+        public const string PanoramaRevealRole = "horizon_near_v2";
+        public const float PanoramaRevealHeight = 0.16f;
+
         /// <summary>V5_Sky_&lt;role&gt;.mat on DD/SkyPlate with the role's Sheet, an explicit queue and a UV drift (rebuilt in place).</summary>
         public static Material PlateMaterial(string role, int queue, Vector2 scroll)
         {
@@ -180,8 +185,10 @@ namespace DD.Art.Pipeline.EditorTools
             m.SetColor("_BaseColor", Color.white);
             m.SetVector("_ScrollUV", new Vector4(scroll.x, scroll.y, 0f, 0f));
             m.SetFloat("_AlphaPower", 1f);
-            m.SetFloat("_BottomEdgeAA", role == "horizon_near_v2" ? 1f : 0f);
-            m.SetFloat("_BottomPanoramaReveal", role == "horizon_near_v2" ? 1f : 0f);
+            bool reveal = role == PanoramaRevealRole;
+            m.SetFloat("_BottomEdgeAA", reveal ? 1f : 0f);
+            m.SetFloat("_BottomPanoramaReveal", reveal ? 1f : 0f);
+            m.SetFloat("_RevealHeight", PanoramaRevealHeight);
             m.SetFloat("_Haze", 0f);
             m.SetColor("_HazeColor", new Color(0.815f, 0.843f, 0.870f, 1f));   // DEC-076 fog colour (WorldAtmosphere.FogColor)
             m.renderQueue = queue;

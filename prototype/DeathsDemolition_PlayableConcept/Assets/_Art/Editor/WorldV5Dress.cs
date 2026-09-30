@@ -718,6 +718,93 @@ namespace DD.Art.Pipeline.EditorTools
             return spots;
         }
 
+        /// <summary>WP-074 B9: offsets that give the garden trees' yaw and scale their own hash channels (see <see cref="GroveHash01"/>).</summary>
+        private static readonly Vector2 GardenYawSalt = new Vector2(17.31f, 5.13f), GardenScaleSalt = new Vector2(-8.71f, 31.97f);
+
+        /// <summary>WP-074 B9 (Y7): one garden tree as the AD-accepted world shipped it — kit variation and Unity transform.</summary>
+        public readonly struct GardenPin
+        {
+            public readonly string Family;
+            public readonly int Variation;
+            public readonly Vector3 Position, Scale;
+            public readonly Quaternion Rotation;
+
+            public GardenPin(string family, int variation, Vector3 position, Quaternion rotation, Vector3 scale)
+            {
+                Family = family;
+                Variation = variation;
+                Position = position;
+                Rotation = rotation;
+                Scale = scale;
+            }
+        }
+
+        /// <summary>
+        /// WP-074 B9 (Y7, C-00 30.09 decision B): the garden as the user played it and the AD accepted it (B2 / B5; the 35 trees of
+        /// main 68317433) — the one source. A spot within 1 cm of a pin keeps that tree exactly; only a spot with no pin (a moved spawn
+        /// gate opened it) draws its tree from the position hash, so a later gate move changes only the spots it opens or closes.
+        /// </summary>
+        public static readonly GardenPin[] GardenPins =
+        {
+            new GardenPin("sakura_v2", 4, new Vector3(27.27307f, 0.0f, -13.808204f), new Quaternion(-0.0f, 0.98053366f, -0.0f, 0.19635093f), new Vector3(1.0531878f, 1.0531877f, 1.0531878f)),
+            new GardenPin("black_pine", 1, new Vector3(27.427578f, 0.0f, 40.16469f), new Quaternion(-0.0f, -0.0937249f, -0.0f, 0.99559814f), new Vector3(1.1237115f, 1.1237115f, 1.1237115f)),
+            new GardenPin("momiji", 3, new Vector3(27.555439f, 0.0f, 19.062237f), new Quaternion(-0.0f, -0.4711185f, -0.0f, 0.88206995f), new Vector3(0.9248941f, 0.9248941f, 0.9248941f)),
+            new GardenPin("black_pine", 5, new Vector3(28.619577f, 0.0f, 35.344456f), new Quaternion(-0.0f, -0.18641677f, -0.0f, 0.98247075f), new Vector3(1.0152978f, 1.0152978f, 1.0152978f)),
+            new GardenPin("momiji", 1, new Vector3(31.789766f, 0.0f, 15.800505f), new Quaternion(-0.0f, 0.3071197f, -0.0f, 0.9516709f), new Vector3(0.97382635f, 0.97382635f, 0.97382635f)),
+            new GardenPin("momiji", 2, new Vector3(32.669563f, 0.0f, -24.79141f), new Quaternion(-0.0f, 0.63201225f, -0.0f, 0.7749584f), new Vector3(1.1013647f, 1.1013647f, 1.1013647f)),
+            new GardenPin("black_pine", 1, new Vector3(33.514217f, 0.0f, 39.920044f), new Quaternion(-0.0f, -0.85345566f, -0.0f, 0.52116543f), new Vector3(0.9185012f, 0.91850126f, 0.9185012f)),
+            new GardenPin("black_pine", 5, new Vector3(33.67609f, 0.0f, 35.17861f), new Quaternion(-0.0f, 0.8133765f, -0.0f, 0.58173764f), new Vector3(1.0147291f, 1.0147291f, 1.0147291f)),
+            new GardenPin("sakura_v2", 1, new Vector3(36.0f, 0.0f, 1.0f), new Quaternion(-0.0f, -0.9638874f, -0.0f, 0.26631004f), new Vector3(0.99999994f, 1.0f, 0.99999994f)),
+            new GardenPin("momiji", 1, new Vector3(38.157207f, 0.0f, -21.008404f), new Quaternion(-0.0f, 0.6355531f, -0.0f, 0.77205724f), new Vector3(0.9124465f, 0.9124465f, 0.9124465f)),
+            new GardenPin("sakura_v2", 2, new Vector3(38.901318f, 0.0f, 13.792571f), new Quaternion(-0.0f, -0.30190903f, -0.0f, 0.9533367f), new Vector3(1.1314535f, 1.1314535f, 1.1314535f)),
+            new GardenPin("sakura_v2", 3, new Vector3(38.913963f, 0.0f, -24.52365f), new Quaternion(-0.0f, 0.82458323f, -0.0f, 0.56574064f), new Vector3(1.1198817f, 1.1198817f, 1.1198817f)),
+            new GardenPin("momiji", 3, new Vector3(41.941948f, 0.0f, 29.4557f), new Quaternion(-0.0f, 0.8314763f, -0.0f, 0.5555603f), new Vector3(1.1409254f, 1.1409254f, 1.1409254f)),
+            new GardenPin("sakura_v2", 3, new Vector3(43.028095f, 0.0f, -15.19005f), new Quaternion(-0.0f, 0.9680875f, -0.0f, 0.25061265f), new Vector3(1.0744752f, 1.0744753f, 1.0744752f)),
+            new GardenPin("momiji", 3, new Vector3(43.344933f, 0.0f, -18.951832f), new Quaternion(-0.0f, -0.98145884f, -0.0f, 0.19167306f), new Vector3(1.073683f, 1.0736829f, 1.073683f)),
+            new GardenPin("black_pine", 4, new Vector3(43.597748f, 0.0f, 34.47863f), new Quaternion(-0.0f, -0.16941893f, -0.0f, 0.98554415f), new Vector3(0.96612936f, 0.96612936f, 0.96612936f)),
+            new GardenPin("momiji", 3, new Vector3(44.060856f, 0.0f, 16.115232f), new Quaternion(-0.0f, 0.58255124f, -0.0f, 0.81279397f), new Vector3(0.9320751f, 0.9320751f, 0.9320751f)),
+            new GardenPin("black_pine", 1, new Vector3(46.985085f, 0.0f, 39.34443f), new Quaternion(-0.0f, -0.91385853f, -0.0f, 0.40603277f), new Vector3(1.0595003f, 1.0595003f, 1.0595003f)),
+            new GardenPin("black_pine", 4, new Vector3(47.20042f, 0.0f, 34.29946f), new Quaternion(-0.0f, 0.47435725f, -0.0f, 0.88033247f), new Vector3(1.1238931f, 1.1238931f, 1.1238931f)),
+            new GardenPin("sakura_v2", 2, new Vector3(47.873093f, 0.0f, -4.485217f), new Quaternion(-0.0f, 0.66429913f, -0.0f, 0.74746686f), new Vector3(1.0161849f, 1.0161849f, 1.0161849f)),
+            new GardenPin("sakura_v2", 3, new Vector3(47.95798f, 0.0f, -39.93435f), new Quaternion(-0.0f, -0.8256846f, -0.0f, 0.56413203f), new Vector3(1.0283902f, 1.0283902f, 1.0283902f)),
+            new GardenPin("sakura_v2", 4, new Vector3(48.01479f, 0.0f, 8.899051f), new Quaternion(-0.0f, -0.44784215f, -0.0f, 0.89411265f), new Vector3(1.1330634f, 1.1330634f, 1.1330634f)),
+            new GardenPin("sakura_v2", 2, new Vector3(48.115868f, 0.0f, -30.299335f), new Quaternion(-0.0f, -0.9626397f, -0.0f, 0.27078566f), new Vector3(1.1178902f, 1.1178901f, 1.1178902f)),
+            new GardenPin("momiji", 3, new Vector3(48.439476f, 0.0f, 26.218359f), new Quaternion(-0.0f, 0.38596f, -0.0f, 0.9225155f), new Vector3(0.9859051f, 0.9859051f, 0.9859051f)),
+            new GardenPin("sakura_v2", 2, new Vector3(48.744434f, 0.0f, 29.639233f), new Quaternion(-0.0f, -0.7195312f, -0.0f, 0.69446015f), new Vector3(0.9800008f, 0.98000073f, 0.9800008f)),
+            new GardenPin("sakura_v2", 3, new Vector3(48.91532f, 0.0f, -34.17147f), new Quaternion(-0.0f, 0.42877305f, -0.0f, 0.9034122f), new Vector3(1.1163206f, 1.1163206f, 1.1163206f)),
+            new GardenPin("sakura_v2", 3, new Vector3(49.091724f, 0.0f, 5.647511f), new Quaternion(-0.0f, -0.360927f, -0.0f, 0.9325941f), new Vector3(0.9697288f, 0.9697289f, 0.9697288f)),
+            new GardenPin("sakura_v2", 2, new Vector3(51.854298f, 0.0f, -34.71484f), new Quaternion(-0.0f, 0.7417904f, -0.0f, 0.67063177f), new Vector3(1.0593051f, 1.0593052f, 1.0593051f)),
+            new GardenPin("sakura_v2", 4, new Vector3(52.11861f, 0.0f, -5.322835f), new Quaternion(-0.0f, 0.21244577f, -0.0f, 0.9771729f), new Vector3(0.9596694f, 0.9596695f, 0.9596694f)),
+            new GardenPin("momiji", 1, new Vector3(52.160057f, 0.0f, -29.49861f), new Quaternion(-0.0f, -0.80928636f, -0.0f, 0.5874143f), new Vector3(1.0178903f, 1.0178903f, 1.0178903f)),
+            new GardenPin("momiji", 2, new Vector3(52.261646f, 0.0f, 9.808929f), new Quaternion(-0.0f, -0.8011191f, -0.0f, 0.59850496f), new Vector3(1.1029754f, 1.1029755f, 1.1029754f)),
+            new GardenPin("sakura_v2", 3, new Vector3(52.529053f, 0.0f, 20.244831f), new Quaternion(-0.0f, 0.88890237f, -0.0f, 0.4580968f), new Vector3(1.0711288f, 1.0711287f, 1.0711288f)),
+            new GardenPin("momiji", 2, new Vector3(52.571136f, 0.0f, 29.223837f), new Quaternion(-0.0f, 0.9985348f, -0.0f, 0.054113366f), new Vector3(1.0349222f, 1.0349222f, 1.0349222f)),
+            new GardenPin("sakura_v2", 2, new Vector3(52.636906f, 0.0f, 5.1773553f), new Quaternion(-0.0f, 0.5439856f, -0.0f, 0.8390945f), new Vector3(0.90647304f, 0.90647304f, 0.90647304f)),
+            new GardenPin("black_pine", 1, new Vector3(52.891045f, 0.0f, 39.806545f), new Quaternion(-0.0f, 0.9977127f, -0.0f, 0.06759773f), new Vector3(0.9450798f, 0.9450797f, 0.9450798f)),
+        };
+
+        /// <summary>
+        /// What the builder puts on a garden spot (<see cref="GardenTrees"/> and the parity test read this one rule): the pinned tree, or
+        /// for an unpinned spot the position hash — the NE corner (z &gt; 34) black pine, the rest sakura (60 %) and momiji; the R7
+        /// island's great sakura V01 at scale 1.
+        /// </summary>
+        public static (string family, int variation, Vector3 position, Quaternion rotation, Vector3 scale) GardenTreeAt(Vector3 spot, bool greatSakura)
+        {
+            var c = new Vector2(spot.x, spot.z);
+            int pin = Array.FindIndex(GardenPins, g => Vector2.Distance(new Vector2(g.Position.x, g.Position.z), c) < 0.01f);
+            if (pin >= 0)
+            {
+                GardenPin g = GardenPins[pin];
+                return (g.Family, g.Variation, g.Position, g.Rotation, g.Scale);
+            }
+
+            double pick = GroveHash01(c), yaw = GroveHash01(c + GardenYawSalt) * 360.0, s = 0.9 + GroveHash01(c + GardenScaleSalt) * 0.25;
+            // v007: + black pine V05, sakura V04, momiji V02 (7 m) / V03 (3 m)
+            (string family, int v) = greatSakura ? ("sakura_v2", 1) : spot.z > 34f ? ("black_pine", pick < 0.34 ? 1 : pick < 0.67 ? 4 : 5)
+                : pick < 0.6 ? ("sakura_v2", pick < 0.2 ? 2 : pick < 0.4 ? 3 : 4) : ("momiji", pick < 0.73 ? 1 : pick < 0.87 ? 2 : 3);
+            return (family, v, WorldPlacementAsset.ToUnity(spot.x, spot.z, 0f), WorldPlacementAsset.ToUnityYaw((float)yaw), Vector3.one * (greatSakura ? 1f : (float)s));
+        }
+
         /// <summary>
         /// B5b-5 · The garden trunks as v005 trees: the NE corner (z &gt; 34) black pine, the rest sakura (60 %) and momiji; one great
         /// sakura (V01, 8.9 m crown) on the R7 island. Trunk colliders replace the greybox cylinders.
@@ -726,14 +813,14 @@ namespace DD.Art.Pipeline.EditorTools
         {
             var group = new GameObject(GardenGroupName).transform;
             group.SetParent(dress, false);
-            var rng = new System.Random(745);
             foreach ((Vector3 p, float radius, bool great) in spots)
             {
-                double pick = rng.NextDouble(), yaw = rng.NextDouble() * 360.0, s = 0.9 + rng.NextDouble() * 0.25;
-                // v007: + black pine V05, sakura V04, momiji V02 (7 m) / V03 (3 m)
-                (string family, int v) = great ? ("sakura_v2", 1) : p.z > 34f ? ("black_pine", pick < 0.34 ? 1 : pick < 0.67 ? 4 : 5)
-                    : pick < 0.6 ? ("sakura_v2", pick < 0.2 ? 2 : pick < 0.4 ? 3 : 4) : ("momiji", pick < 0.73 ? 1 : pick < 0.87 ? 2 : 3);
-                Place(group, family, v, Mz(p.x, p.z, 0f, (float)yaw) * Matrix4x4.Scale(Vector3.one * (great ? 1f : (float)s)), Vector3.zero, "vegetation");
+                // WP-074 B9 (Y7): the pinned tree or the position hash (GardenTreeAt) — never a sequential rng, so adding or clearing
+                // one spot (a moved spawn gate) leaves every other tree as it was and the scene stays the builder's output.
+                (string family, int variation, Vector3 position, Quaternion rotation, Vector3 scale) t = GardenTreeAt(p, great);
+                GameObject tree = Place(group, t.family, t.variation, Mz(p.x, p.z, 0f, 0f), Vector3.zero, "vegetation");
+                tree.transform.SetPositionAndRotation(t.position, t.rotation);
+                tree.transform.localScale = t.scale;
             }
         }
 
@@ -875,18 +962,25 @@ namespace DD.Art.Pipeline.EditorTools
 
         public const float LotusAreaPerCluster = 12f;
 
+        /// <summary>The kit crossings' own deck width / length (AP-023 plank_bridge V01, slab_bridge V01), which the dress scales to the greybox decks.</summary>
+        public const float KitPlankWidth = 1.6f, KitPlankLength = 10.8f, KitSlabWidth = 2f / 1.72f, KitSlabLength = 3.56f;
+
         /// <summary>
-        /// The C8 bridge as two plank spans (10.8 m each, x × 1.875 so the deck keeps the greybox 3 m: the C8 volume's width) and the C1
-        /// causeway as four granite slabs (× 1.72 → 2 m wide). Kit colliders (arched deck ≤ 0.6, landings 0.15).
+        /// The C8 bridge as two plank spans and the C1 causeway as four granite slabs, scaled to the greybox decks
+        /// (<see cref="GreyboxV6Builder.Crossings"/> — WP-074 B9 M-39: one source with the pond-strip exclusions): C8 3 m wide (× 1.875),
+        /// C1 2 m (× 1.72). Kit colliders (arched deck ≤ 0.6, landings 0.15).
         /// </summary>
         private static void Bridges(Transform dress)
         {
             var group = new GameObject(BridgeGroupName).transform;
             group.SetParent(dress, false);
-            foreach (float z in new[] { -23.375f, -34.125f })
-                Place(group, "plank_bridge", 1, Mz(4f, z, 0f, 0f) * Matrix4x4.Scale(new Vector3(1.875f, 10.75f / 10.8f, 1f)), Vector3.zero, "structure");
+            GreyboxV6Builder.Crossing c8 = GreyboxV6Builder.Crossings[GreyboxV6Builder.C8Bridge], c1 = GreyboxV6Builder.Crossings[GreyboxV6Builder.C1Causeway];
+            float span = c8.Length * 0.5f;
+            foreach (float z in new[] { c8.Centre.y + span * 0.5f, c8.Centre.y - span * 0.5f })
+                Place(group, "plank_bridge", 1, Mz(c8.Centre.x, z, 0f, 0f) * Matrix4x4.Scale(new Vector3(c8.Width / KitPlankWidth, span / KitPlankLength, 1f)), Vector3.zero, "structure");
+            float slab = c1.Length / 4f;
             for (int i = 0; i < 4; i++)
-                Place(group, "slab_bridge", 1, Mz(-8f, -33f + 1.625f + 3.25f * i, 0f, 0f) * Matrix4x4.Scale(new Vector3(1.72f, 3.25f / 3.56f, 1f)), Vector3.zero, "structure");
+                Place(group, "slab_bridge", 1, Mz(c1.Centre.x, c1.Min.y + slab * 0.5f + slab * i, 0f, 0f) * Matrix4x4.Scale(new Vector3(c1.Width / KitSlabWidth, slab / KitSlabLength, 1f)), Vector3.zero, "structure");
         }
 
         /// <summary>The west grove: its greybox blocks stay as the (invisible) collision, bamboo v2 clumps dress the solid cells, yotsume fences line the main lane — visual, no colliders.</summary>

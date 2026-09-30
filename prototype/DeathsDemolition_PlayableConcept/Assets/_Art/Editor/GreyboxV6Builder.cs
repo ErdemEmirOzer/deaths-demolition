@@ -120,7 +120,8 @@ namespace DD.Art.Pipeline.EditorTools
         public static readonly (char side, float z, float width)[] K1Doors = { ('E', -7f, 4f), ('E', 7f, 4f), ('W', 0f, 3f) };
 
         /// <summary>Spawn gates (Ek B §3.4): the 12 edge gates keep the prototype ids (placement), the inner gates are data for S-03 — 6, plus
-        /// the four of S-03's coverage scenario C (C-00 25.09; S-03's measured coordinates, bound by its test 5bb18807).</summary>
+        /// the four of S-03's coverage scenario C (C-00 25.09; S-03's measured coordinates, bound by its test 5bb18807). Set 3 (C-00 30.09,
+        /// 92232235) moved three; WP-074 B9 (M-27): the two by the R7 court are named for where they stand (were I_ShoreEast / I_GreatSakuraSouth).</summary>
         public static readonly Gate[] Gates =
         {
             new Gate("N_RearWest", "N_PalaceGateWest", "edge", -20f, 53f), new Gate("N_RearEast", "N_PalaceGateEast", "edge", 20f, 53f),
@@ -130,7 +131,7 @@ namespace DD.Art.Pipeline.EditorTools
             new Gate("SW_TeaHouse", "SW_BambooEntry", "edge", -44f, -44f), new Gate("W_BambooSouth", "W_BambooCorridorSouth", "edge", -52f, -18f),
             new Gate("W_BambooNorth", "W_BambooCorridorNorth", "edge", -52f, 18f), new Gate("NW_ServiceGate", "NW_ServiceGate", "edge", -46f, 46f),
             new Gate("I_WestKairoSouth", null, "inner", -33f, -18.5f), new Gate("I_CloisterWest", null, "inner", -22f, 14f),
-            new Gate("I_ShoreEast", null, "inner", 24f, -8f), new Gate("I_GreatSakuraSouth", null, "inner", 24f, 14f),
+            new Gate("I_R7SouthWest", null, "inner", 24f, -8f), new Gate("I_R7NorthWest", null, "inner", 24f, 14f),
             new Gate("I_ServiceYardSouth", null, "inner", -36f, 31.5f), new Gate("I_HallRear", null, "inner", 0f, 52.5f),
             new Gate("I_CloisterEast", null, "inner", 22f, 24f), new Gate("I_ShoreWest", null, "inner", -18f, -30f),
             // I_ServiceYardEast: S-03's (−28, 40) sits on the yard's east wall (x −28) — 1.5 m inside, like I_ServiceYardSouth.
@@ -192,76 +193,6 @@ namespace DD.Art.Pipeline.EditorTools
             string[] args = System.Environment.GetCommandLineArgs();
             string report = Build(Array.IndexOf(args, "-ddGreyboxOnly") < 0, Array.IndexOf(args, "-ddBake") >= 0);
             Debug.Log("[GreyboxV6] " + report);
-        }
-
-        /// <summary>Bind C-00's three approved inner-gate moves in the existing V6 world, retaining all other placements
-        /// and assets. Only the garden tree entering the new 4 m gate clearance and its NavMesh are updated; no library,
-        /// world regeneration or lighting bake. Run once on the pre-move placement.</summary>
-        public static void BindApprovedInnerGatesCli()
-        {
-            var old = new Dictionary<string, Vector2>
-            {
-                { "I_CloisterWest", new Vector2(-22f, 24f) },
-                { "I_GreatSakuraSouth", new Vector2(36f, -10.5f) },
-                { "I_ShoreEast", new Vector2(18f, -30f) }
-            };
-            Scene scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
-            GameObject root = GameObject.Find(Ap005WorldBootstrap.RootName);
-            var placement = AssetDatabase.LoadAssetAtPath<WorldPlacementAsset>(PlacementPath);
-            if (root == null || placement == null || root.GetComponent<Ap005WorldBootstrap>().Placement != placement)
-                throw new InvalidOperationException("[FixedThreeBinding] V6 placement binding missing");
-            NavMeshSurface[] surfaces = root.GetComponentsInChildren<NavMeshSurface>(true);
-            var nav = AssetDatabase.LoadAssetAtPath<NavMeshData>(NavMeshPath);
-            if (surfaces.Length != 1 || surfaces[0].navMeshData != nav || nav == null)
-                throw new InvalidOperationException("[FixedThreeBinding] expected the existing V6 NavMesh binding");
-            if (placement.innerSpawnPoints.Count != 10 || placement.spawnPoints.Count != 12)
-                throw new InvalidOperationException("[FixedThreeBinding] expected 22 placements");
-            foreach (Gate gate in Gates)
-            {
-                if (gate.Kind != "inner") continue;
-                var point = placement.innerSpawnPoints.Find(p => p.id == gate.Id);
-                Vector2 expected = old.TryGetValue(gate.Id, out Vector2 before) ? before : gate.Position;
-                if (point == null || Vector2.Distance(new Vector2(point.position.x, point.position.z), expected) > 0.0001f)
-                    throw new InvalidOperationException("[FixedThreeBinding] unexpected source placement: " + gate.Id);
-            }
-            Transform garden = root.transform.Find(WorldV5Dress.RootName + "/" + WorldV5Dress.GardenGroupName);
-            if (garden == null) throw new InvalidOperationException("[FixedThreeBinding] garden missing");
-            var remove = new List<GameObject>();
-            foreach (Transform tree in garden)
-                foreach (Gate gate in Gates)
-                    if (old.ContainsKey(gate.Id) && Vector2.Distance(new Vector2(tree.position.x, tree.position.z), gate.Position) < 4f)
-                    { remove.Add(tree.gameObject); break; }
-            if (remove.Count != 1 || Vector2.Distance(new Vector2(remove[0].transform.position.x, remove[0].transform.position.z),
-                    new Vector2(27.311537f, 15.994804f)) > 0.0001f)
-                throw new InvalidOperationException("[FixedThreeBinding] unexpected tree-clearance delta");
-            Debug.Log("[FixedThreeBinding] tree-clearance remove=" + remove[0].name + " at=" + remove[0].transform.position.ToString("F6"));
-            UnityEngine.Object.DestroyImmediate(remove[0]);
-            Physics.SyncTransforms();
-            int floorMask = ~((1 << PrototypeLayers.CameraOccluder) | (1 << 2));
-            foreach (Gate gate in Gates)
-            {
-                if (!old.ContainsKey(gate.Id)) continue;
-                var point = placement.innerSpawnPoints.Find(p => p.id == gate.Id);
-                var from = new Vector3(gate.Position.x, 2.5f, gate.Position.y);
-                float y = Physics.Raycast(from, Vector3.down, out RaycastHit hit, 5f, floorMask, QueryTriggerInteraction.Ignore) ? hit.point.y : 0f;
-                point.position = new Vector3(gate.Position.x, y, gate.Position.y);
-                Debug.Log("[FixedThreeBinding] placement " + gate.Id + "=" + point.position.ToString("F6"));
-            }
-            EditorUtility.SetDirty(placement);
-            PlacementImporter.BuildAtBodyClimb(surfaces[0]);
-            EditorUtility.CopySerialized(surfaces[0].navMeshData, nav);
-            nav.name = Path.GetFileNameWithoutExtension(NavMeshPath);
-            surfaces[0].RemoveData();
-            surfaces[0].navMeshData = nav;
-            surfaces[0].AddData();
-            EditorUtility.SetDirty(nav);
-            EditorSceneManager.MarkSceneDirty(scene);
-            EditorSceneManager.SaveScene(scene);
-            AssetDatabase.SaveAssets();
-            Debug.Log("[FixedThreeBinding] changed=3 unchanged=19 treeClearance=1 scene=" + scene.path +
-                " placement=" + AssetDatabase.GetAssetPath(root.GetComponent<Ap005WorldBootstrap>().Placement) +
-                " nav=" + AssetDatabase.GetAssetPath(surfaces[0].navMeshData) + " navGuid=" + AssetDatabase.AssetPathToGUID(NavMeshPath) +
-                " surfaces=1 triangles=" + NavMesh.CalculateTriangulation().indices.Length / 3);
         }
 
         /// <param name="dress">WP-074 B5b-1: dress the layout with the AP-023 kit (<see cref="WorldV5Dress"/>) before the bake.</param>
@@ -432,17 +363,37 @@ namespace DD.Art.Pipeline.EditorTools
                 n += Tree(g, "R7_Sakura_" + i, new Vector2(36f + Mathf.Cos(a) * 2.2f, 1f + Mathf.Sin(a) * 2.2f), 0.4f);
             }
 
-            // Sakura / maple garden and the NE pine corner: jittered 5 m grid, clear of paths, rooms, corridors and gates.
+            foreach ((string name, Vector2 p, float radius) in GardenTreeSpots()) n += Tree(g, name, p, radius);
+            return n;
+        }
+
+        /// <summary>The great sakura on the R7 island (WorldV5Dress places one V01 there over the six greybox trunks).</summary>
+        public static readonly Vector2 GreatSakura = new Vector2(36f, 1f);
+
+        /// <summary>
+        /// WP-074 B9 (Y7, AD panel 30.09 — author + refuter): garden spots kept open lawn although the grid would place a tree. (37.52, −13.82)
+        /// opened when set 3 moved I_GreatSakuraSouth's 4 m clearance away; a tree there hid the east sakura from the west path and filled
+        /// the lawn wedge on the R7 south-gate axis, so the lawn stays as the user played it and the AD accepted it (decision B).
+        /// </summary>
+        public static readonly Vector2[] GardenOpenSpots = { new Vector2(37.52f, -13.82f) };
+
+        /// <summary>
+        /// The sakura / maple garden and the NE pine corner: a jittered 5 m grid (seed 741, two draws per cell before the clear test,
+        /// so the jitter never depends on it), kept where <see cref="TreeSpotClear"/> allows and not in <see cref="GardenOpenSpots"/>. Scene-independent — the greybox trunks, the
+        /// dress (WorldV5Dress.GardenTrees) and the parity test all read this one list (WP-074 B9, Y7).
+        /// </summary>
+        public static List<(string name, Vector2 position, float radius)> GardenTreeSpots()
+        {
+            var spots = new List<(string, Vector2, float)>();
             var rng = new System.Random(741);
             for (float x = 28f; x <= 53f; x += 5f)
             for (float z = -40f; z <= 44f; z += 5f)
             {
                 var p = new Vector2(x + (float)(rng.NextDouble() - 0.5) * 2.5f, z + (float)(rng.NextDouble() - 0.5) * 2.5f);
-                if (!TreeSpotClear(p)) continue;
-                n += Tree(g, "Tree_" + x + "_" + z, p, z > 34f ? 0.5f : 0.35f);
+                if (TreeSpotClear(p) && !Array.Exists(GardenOpenSpots, o => Vector2.Distance(o, p) < 0.1f)) spots.Add(("Tree_" + x + "_" + z, p, z > 34f ? 0.5f : 0.35f));
             }
 
-            return n;
+            return spots;
         }
 
         private static int BuildSouth(Transform g, List<(Vector2 centre, Vector2 semi, float yaw)> basins)
@@ -451,11 +402,12 @@ namespace DD.Art.Pipeline.EditorTools
             // Ponds: water surface (visual) + NotWalkable strips 0.5 m past the ellipse (the rims are built by WorldBoundaryBuilder).
             for (int b = 0; b < basins.Count; b++) n += PondStrips(g, b, basins[b]);
             // Bridge x 4, z −18…−39.5 (deck 0.25, rails), the stepping causeway x −8 with its island, karesansui, K5 is a corridor.
-            n += Box(g, "Bridge_Deck", new Vector3(4f, 0.125f, -28.75f), new Vector3(3f, 0.25f, 21.5f), "floor");
-            n += Box(g, "Bridge_Rail_W", new Vector3(2.55f, 0.75f, -28.75f), new Vector3(0.1f, 1f, 19.5f), "wall");
-            n += Box(g, "Bridge_Rail_E", new Vector3(5.45f, 0.75f, -28.75f), new Vector3(0.1f, 1f, 19.5f), "wall");
-            n += Box(g, "Causeway", new Vector3(-8f, 0.1f, -26.5f), new Vector3(2f, 0.2f, 13f), "floor");
-            n += Box(g, "Causeway_Island", new Vector3(-8f, 0.1f, -27f), new Vector3(3f, 0.2f, 3f), "floor");
+            Crossing c8 = Crossings[C8Bridge], c1 = Crossings[C1Causeway], island = Crossings[C1Island];
+            n += Box(g, "Bridge_Deck", new Vector3(c8.Centre.x, 0.125f, c8.Centre.y), new Vector3(c8.Width, 0.25f, c8.Length), "floor");
+            n += Box(g, "Bridge_Rail_W", new Vector3(c8.Centre.x - c8.Width * 0.5f + 0.05f, 0.75f, c8.Centre.y), new Vector3(0.1f, 1f, c8.Length - 2f), "wall");
+            n += Box(g, "Bridge_Rail_E", new Vector3(c8.Centre.x + c8.Width * 0.5f - 0.05f, 0.75f, c8.Centre.y), new Vector3(0.1f, 1f, c8.Length - 2f), "wall");
+            n += Box(g, "Causeway", new Vector3(c1.Centre.x, 0.1f, c1.Centre.y), new Vector3(c1.Width, 0.2f, c1.Length), "floor");
+            n += Box(g, "Causeway_Island", new Vector3(island.Centre.x, 0.1f, island.Centre.y), new Vector3(island.Width, 0.2f, island.Length), "floor");
             n += Wall(g, "Karesansui_N", new Vector2(12f, -16f), new Vector2(28f, -16f), 0.9f, 0.4f, new[] { (6f, 3f) });
             n += Wall(g, "Karesansui_E", new Vector2(28f, -30f), new Vector2(28f, -16f), 0.9f, 0.4f, new[] { (8f, 3f) });
             foreach (Vector2 rock in new[] { new Vector2(16f, -20f), new Vector2(22f, -19f), new Vector2(25f, -25f), new Vector2(15f, -27f), new Vector2(20f, -25.5f) })
@@ -593,8 +545,9 @@ namespace DD.Art.Pipeline.EditorTools
                 n++;
             }
 
-            Marker(group, "C8_Bridge", NavRegionKind.Bridge, new Vector3(4f, 0.25f + 1.2f, -28.75f), new Vector3(3f, 2.4f, 21.5f), 1.35f, 2, null, "");
-            Marker(group, "C1_SteppingCauseway", NavRegionKind.Corridor, new Vector3(-8f, 0.2f + 1.2f, -26.5f), new Vector3(2f, 2.4f, 13f), 1.3f, 1, null, "");
+            Crossing c8 = Crossings[C8Bridge], c1 = Crossings[C1Causeway];
+            Marker(group, c8.Id, NavRegionKind.Bridge, new Vector3(c8.Centre.x, 0.25f + 1.2f, c8.Centre.y), new Vector3(c8.Width, 2.4f, c8.Length), 1.35f, 2, null, "");
+            Marker(group, c1.Id, NavRegionKind.Corridor, new Vector3(c1.Centre.x, 0.2f + 1.2f, c1.Centre.y), new Vector3(c1.Width, 2.4f, c1.Length), 1.3f, 1, null, "");
             Marker(group, "K1_WestKairo", NavRegionKind.Corridor, new Vector3(-33f, KairoFloor + 1.7f, 2f), new Vector3(5.2f, 3.4f, 36f), 1.3f, 6, null, "");
             return n + 3;
         }
@@ -731,14 +684,41 @@ namespace DD.Art.Pipeline.EditorTools
 
         public const float PondStripStep = 0.1f;
 
-        /// <summary>The deck footprints the pond NotWalkable strips leave out (world XZ min / max): the C8 plank bridge (x 4, 3 m, z −39.5…−18)
-        /// and the C1 slab causeway (x −8, 2 m, z −33…−20) with its 3 m island.</summary>
-        public static readonly (Vector2 min, Vector2 max)[] PondStripExclusions =
+        /// <summary>A pond crossing's deck: centre (world XZ), width across (x) and length along (z).</summary>
+        public readonly struct Crossing
         {
-            (new Vector2(2.5f, -39.5f), new Vector2(5.5f, -18f)),
-            (new Vector2(-9f, -33f), new Vector2(-7f, -20f)),
-            (new Vector2(-9.5f, -28.5f), new Vector2(-6.5f, -25.5f)),
+            public readonly string Id;
+            public readonly Vector2 Centre;
+            public readonly float Width, Length;
+
+            public Crossing(string id, float x, float z, float width, float length)
+            {
+                Id = id;
+                Centre = new Vector2(x, z);
+                Width = width;
+                Length = length;
+            }
+
+            public Vector2 Min => Centre - new Vector2(Width, Length) * 0.5f;
+            public Vector2 Max => Centre + new Vector2(Width, Length) * 0.5f;
+        }
+
+        public const int C8Bridge = 0, C1Causeway = 1, C1Island = 2;
+
+        /// <summary>
+        /// WP-074 B9 (M-39) · The crossings — one source for the greybox decks and rails, the C8 / C1 region markers, the pond-strip
+        /// exclusions and the AP-023 dress (WorldV5Dress.Bridges): the C8 plank bridge (x 4, 3 m, z −39.5…−18) and the C1 slab
+        /// causeway (x −8, 2 m, z −33…−20) with its 3 m island.
+        /// </summary>
+        public static readonly Crossing[] Crossings =
+        {
+            new Crossing("C8_Bridge", 4f, -28.75f, 3f, 21.5f),
+            new Crossing("C1_SteppingCauseway", -8f, -26.5f, 2f, 13f),
+            new Crossing("C1_Island", -8f, -27f, 3f, 3f),
         };
+
+        /// <summary>The deck footprints the pond NotWalkable strips leave out (world XZ min / max) — the <see cref="Crossings"/>.</summary>
+        public static readonly (Vector2 min, Vector2 max)[] PondStripExclusions = Array.ConvertAll(Crossings, c => (c.Min, c.Max));
 
         public static bool InPondStripExclusion(Vector2 p)
         {

@@ -1,5 +1,5 @@
 {
-    "utc": "2026-09-28T20:24:33.8655710Z",
+    "utc": "2026-09-30T20:27:05.8764320Z",
     "lightmapper": "ProgressiveGPU",
     "lightmapResolution": 16.0,
     "contributeGI": 715,
@@ -7,8 +7,8 @@
     "reflectionProbes": 20,
     "lightmapCount": 2,
     "budgetMb": 96,
-    "bakeSeconds": 151.65753173828126,
-    "bytes": 117755013,
+    "bakeSeconds": 280.29852294921877,
+    "bytes": 118021686,
     "shippedBytes": 53262336,
     "withinBudget": true,
     "ok": true,
