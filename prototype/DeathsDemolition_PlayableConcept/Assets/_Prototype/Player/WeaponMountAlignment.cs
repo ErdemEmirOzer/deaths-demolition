@@ -46,6 +46,15 @@ namespace DD.Prototype.PlayerSystem
         private const int WeaponPoseV3 = 4;
         private const string AimV3State = "Aim_V3";
 
+        // WP-069 B5 · S-06 WP-071 r2 (efd0d2e9, 30.09): Aim_V3 is a 1D blend idle_aim → ads_idle by the "AdsWeight" float
+        // (CharacterAnimatorContract.AdsWeight on that branch). The rest reference is the HIP pose: it is taken only while the
+        // weight is ≈ 0. Mirrored by name until r2 lands; an animator without the parameter reads as hip (no warning spam).
+        private const string AdsWeightParam = "AdsWeight";
+        private const float AdsRestMax = 0.05f;
+        private static readonly int AdsWeightId = Animator.StringToHash(AdsWeightParam);
+        private RuntimeAnimatorController _adsParamController;
+        private bool _hasAdsParam;
+
         /// <summary>WP-069 (C-00 grip decision B): the hand's mid-grip socket in the weapon frame (the held weapon's definition, set by WeaponController).</summary>
         public Vector3 GripOffset { get; set; } = DD.Prototype.Core.Weapons.WeaponGrip.DefaultOffset;
 
@@ -93,6 +102,7 @@ namespace DD.Prototype.PlayerSystem
             a._skinned = rig.Animation != null ? rig.Animation.Skinned : null;
             a._overrideLayer = -1;
             a._additiveLayer = -1;
+            a._adsParamController = null;
             for (int i = 0; i < a._hasReference.Length; i++) a._hasReference[i] = false;
             return a;
         }
@@ -137,7 +147,27 @@ namespace DD.Prototype.PlayerSystem
                 if (!animator.GetCurrentAnimatorStateInfo(_additiveLayer).IsName(CharacterAnimatorContract.EmptyState)) return false;
             }
 
-            return true;
+            return AdsWeight(animator) <= AdsRestMax;
+        }
+
+        /// <summary>The TP ADS blend weight (0 when the controller has no such parameter).</summary>
+        private float AdsWeight(Animator animator)
+        {
+            RuntimeAnimatorController controller = animator.runtimeAnimatorController;
+            if (!ReferenceEquals(controller, _adsParamController))
+            {
+                _adsParamController = controller;
+                _hasAdsParam = false;
+                if (controller != null)
+                {
+                    foreach (AnimatorControllerParameter p in animator.parameters)   // once per controller swap
+                    {
+                        if (p.nameHash == AdsWeightId && p.type == AnimatorControllerParameterType.Float) { _hasAdsParam = true; break; }
+                    }
+                }
+            }
+
+            return _hasAdsParam ? animator.GetFloat(AdsWeightId) : 0f;
         }
 
         private void LateUpdate()
