@@ -56,6 +56,9 @@ namespace DD.Prototype.Qa
         public const string InvulnerableFlag = "-ddQaBotInvulnerable";
         /// <summary>WP-064 / DEC-091: <c>-ddQaBotStability</c> — the player cannot die; the run is the soak STABILITY gate (all rounds, no timeout, logs/memory checked by tools/qa/soak_gate.py --stability), reported as <c>runMode=stability</c> with its own <c>stabilityPass</c>; <c>pass</c> (the real-bot result) stays false.</summary>
         public const string StabilityFlag = "-ddQaBotStability";
+        /// <summary>WP-078 A3 (arsenal): round N plays classic weapon (N−1) mod 10 through WeaponQaHooks — the seven meta-tree
+        /// weapons are not unlocked on a sandbox profile, so this is the only way a bot run fires all ten.</summary>
+        public const string WeaponCycleFlag = "-ddQaBotWeaponCycle";
         /// <summary>WP-044 K1: <c>-ddQaAllocScan N</c> — at round N (spawner on, crowd live) disable every Behaviour type in turn and sample 3 frames of GC (AllocationProbeTests pattern); writes alloc-scan.txt. The player is invulnerable during the scan; the run is a measurement, not a QA pass.</summary>
         public const string AllocScanFlag = "-ddQaAllocScan";
         /// <summary>WP-055: evidence only — the bot grants itself the Special Weapons in turn (Kagura → Ofuda → Tide) whenever a body is near, writes one frame per sw_* beat × tier; summary marked, never a QA pass.</summary>
@@ -111,6 +114,7 @@ namespace DD.Prototype.Qa
             d.ConfigureSpecialEvidence(QaArgs.Arg(SpecialFlag) != null);   // WP-055
             d.ConfigureDeathEvidence(QaArgs.ArgFloat(DieAfterFlag, -1f, -1f, 3600f));   // WP-059
             if (QaArgs.Arg(StabilityFlag) != null) d.ConfigureStability();   // WP-064 / DEC-091
+            if (QaArgs.Arg(WeaponCycleFlag) != null) d.ConfigureWeaponCycle();   // WP-078 A3
         }
 
         /// <summary>Also used by the PlayMode slice test: boot=false means the caller already put the run into Fighting.</summary>
@@ -128,6 +132,7 @@ namespace DD.Prototype.Qa
         public sealed class RoundRecord
         {
             public int round;
+            public string weapon;             // WP-078 A3 arsenal: classic weapon the round was played with (-ddQaBotWeaponCycle), "" otherwise
             public int poolTotal;
             public int kills;
             public int damageEvents;
@@ -443,6 +448,8 @@ namespace DD.Prototype.Qa
             public void ConfigureSpecialEvidence(bool enabled) => _specialEvidence = enabled;
 
             public void ConfigureStability() { _stability = true; _invulnerable = true; }
+            public void ConfigureWeaponCycle() { _weaponCycle = true; }
+            private bool _weaponCycle;
             private bool _stability;
 
             private void TickSpecialEvidence(PlayerRig rig)
@@ -881,7 +888,26 @@ namespace DD.Prototype.Qa
                 _current = new RoundRecord { round = round, poolTotal = RunDirector.Instance != null ? RunDirector.Instance.RoundPoolTotal : 0 };
                 _roundStart = Time.unscaledTime;
                 _summary.rounds.Add(_current);
+                if (_weaponCycle) _current.weapon = CycleWeapon(round);
                 PickNewGoal();
+            }
+
+            /// <summary>WP-078: equip classic weapon (round−1) mod 10, skipping disabled ones (rl_1 until enabled); "" if none.</summary>
+            private string CycleWeapon(int round)
+            {
+                const int Count = 10;
+                for (int step = 0; step < Count; step++)
+                {
+                    var id = (ClassicWeaponId)(((round - 1) + step) % Count);
+                    if (WeaponQaHooks.TrySetClassicWeapon(id))
+                    {
+                        Log("weapon round=" + round + " id=" + id + (step > 0 ? " (skipped " + step + " disabled)" : ""));
+                        return id.ToString();
+                    }
+                }
+
+                Log("weapon round=" + round + " none enabled");
+                return "";
             }
 
             private void CloseRoundRecord(bool completed, string outcome)
