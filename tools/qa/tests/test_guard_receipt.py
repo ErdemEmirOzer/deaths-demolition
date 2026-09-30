@@ -152,3 +152,44 @@ class BotRestoreOnEveryPathTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class PerfAttemptAnnotationTests(unittest.TestCase):
+    """WP-078 A4: wp078_perf adds the window's guard receipt and its evidenced scope to wp064_run's attempt.json."""
+
+    def test_receipt_and_scope_come_from_the_windows_own_evidence(self):
+        import json
+        cell = Path(tempfile.mkdtemp())
+        (cell / "attempt.json").write_text(json.dumps({"status": "complete", "exitCode": 0}))
+        (cell / "command.json").write_text(json.dumps(["/b/P", "-ddPilotResolution", "1920x1080", "-ddPilotWarmupSeconds", "10",
+                                                       "-ddPilotWindowSeconds", "60"]))
+        (cell / "02-force-40.json").write_text(json.dumps({"achievedCount": 40, "forcedTarget": 40}))
+        wp078_perf.annotate_attempt(cell, {"code": 0, "why": "touched=0", "restoreExit": 0, "verified": True, "touched": "0",
+                                           "outOfScopeChanged": False})
+        a = json.loads((cell / "attempt.json").read_text())
+        self.assertEqual({"snapshotExit": 0, "restoreExit": 0, "verified": True, "outOfScopeChanged": False},
+                         {k: a["guard"][k] for k in ("snapshotExit", "restoreExit", "verified", "outOfScopeChanged")})
+        self.assertEqual(([1920, 1080], 40, 10, 60, "probe"),
+                         (a["resolution"], a["activeEnemies"], a["warmupSeconds"], a["windowSeconds"], a["buildRole"]))
+
+    def test_missing_sources_leave_fields_out(self):
+        import json
+        cell = Path(tempfile.mkdtemp())
+        (cell / "attempt.json").write_text(json.dumps({"status": "failed", "exitCode": 1}))
+        wp078_perf.annotate_attempt(cell, {"code": 7, "why": "x", "restoreExit": 31, "verified": False, "touched": None,
+                                           "outOfScopeChanged": False})
+        a = json.loads((cell / "attempt.json").read_text())
+        self.assertNotIn("activeEnemies", a)
+        self.assertNotIn("resolution", a)
+        self.assertEqual(31, a["guard"]["restoreExit"])
+
+    def test_guard_folders_are_not_named_like_perf_windows(self):
+        import re
+        root = Path(tempfile.mkdtemp())
+        seen = []
+        with mock.patch.object(wp078_perf, "player_up", return_value=False), \
+                mock.patch.object(gr, "run_guard", side_effect=lambda cmd, ug, *a: seen.append(Path(ug).name) or done(0)), \
+                mock.patch.object(gr, "close", return_value={"code": 0, "why": "touched=0"}), \
+                mock.patch.object(wp078_perf, "launch", return_value=done(0)):
+            wp078_perf.run_window(perf_args(), root, Path("/b/P"), 60, None, lambda s: None, "yuksek", "tp", 1)
+        self.assertTrue(seen and not re.fullmatch(r"perf-[a-z]+-[a-z]+-\d+", seen[0]))

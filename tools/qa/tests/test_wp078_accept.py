@@ -230,7 +230,7 @@ class FakeTools:
                 data.pop("guard", None)             # what wp064_run really writes: no guard receipt in attempt.json
             attempt_path.write_text(json.dumps(data))
             if self.perf_ug_dirs:
-                (root / "ug" / attempt_path.parent.name).mkdir(parents=True, exist_ok=True)   # wp078_perf's guard dirs
+                (root / "ug" / ("ug-" + attempt_path.parent.name)).mkdir(parents=True, exist_ok=True)   # wp078_perf's guard dirs (not perf-*)
         return 0
 
     def tool_wp078_perf_report_py(self, argv, _):
@@ -583,14 +583,19 @@ class ManifestTests(Base):
         log = (self.evidence / "accept.log").read_text().splitlines()
         self.assertTrue(all(line[:4].isdigit() and line[19] == "Z" for line in log))
 
-    def test_real_perf_attempts_without_guard_leave_a4_blocked(self):
-        # wp064_run's attempt.json carries no guard receipt and wp078_perf keeps its guard folders under <root>/ug/<cell>:
-        # the report must say BLOCKED for A4, never PASS, and nothing is invented to fill it.
+    def test_perf_attempts_without_guard_leave_a4_blocked(self):
+        # a window whose attempt.json has no guard receipt (wp064_run alone): A4 BLOCKED, never PASS, nothing invented
         code, _ = self.full_run(FakeTools(perf_guard=False, perf_ug_dirs=True))
         report = self.report()
         self.assertEqual(1, code)
         self.assertEqual("BLOCKED", report["checklist"]["A4"]["status"], report["failures"])
         self.assertEqual({"A4", "A8"}, {name for name, row in report["checklist"].items() if row["status"] != "PASS"}, report["failures"])
+
+    def test_perf_with_guard_receipts_and_ug_named_folders_passes_a4(self):
+        # wp078_perf writes the guard receipt into each window's attempt.json and names its guard folders ug-<cell>
+        self.full_run(FakeTools(perf_guard=True, perf_ug_dirs=True))
+        report = self.report()
+        self.assertEqual("PASS", report["checklist"]["A4"]["status"], report["failures"])
 
     def test_missing_stage_stays_absent_and_blocked(self):
         code, _ = self.full_run(stages=[s for s in acc.STAGE_ORDER if s != "a5"])

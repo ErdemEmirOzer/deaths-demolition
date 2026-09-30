@@ -129,6 +129,43 @@ class QuietWindow:
         return why
 
 
+def annotate_attempt(cell, receipt):
+    """WP-078 A4: add what wp064_run does not record to the window's attempt.json — the guard receipt of this window and
+    the scope the report checks, each read from the window's own evidence (command.json flags, 02-force-40.json), never
+    assumed. A missing source leaves the field out, so the report says BLOCKED."""
+    path = cell / "attempt.json"
+    if not path.is_file():
+        return
+    attempt = json.loads(path.read_text(encoding="utf-8"))
+    attempt["guard"] = {"snapshotExit": 0, "restoreExit": receipt.get("restoreExit"), "verified": receipt.get("verified"),
+                        "outOfScopeChanged": receipt.get("outOfScopeChanged"), "touched": receipt.get("touched"),
+                        "verdict": receipt.get("why"), "code": receipt.get("code")}
+    attempt["buildRole"] = "probe"
+    try:
+        command = json.loads((cell / "command.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        command = []
+
+    def flag(name):
+        return command[command.index(name) + 1] if name in command and command.index(name) + 1 < len(command) else None
+    resolution = flag("-ddPilotResolution")
+    if resolution and "x" in resolution:
+        w, h = resolution.split("x", 1)
+        attempt["resolution"] = [int(w), int(h)]
+    for key, name in (("warmupSeconds", "-ddPilotWarmupSeconds"), ("windowSeconds", "-ddPilotWindowSeconds")):
+        if flag(name) is not None:
+            attempt[key] = int(float(flag(name)))
+    try:
+        force = json.loads((cell / "02-force-40.json").read_text(encoding="utf-8"))
+        for key in ("achievedCount",):   # PilotPerfProbe stage 02: the live count after forcing the ceiling (40)
+            if isinstance(force.get(key), int) and not isinstance(force.get(key), bool):
+                attempt["activeEnemies"] = force[key]
+                break
+    except (OSError, ValueError):
+        pass
+    path.write_text(json.dumps(attempt, indent=2) + "\n", encoding="utf-8")
+
+
 def launch(command):
     """The wp064_run window (a seam for the guard tests)."""
     return subprocess.run(command, capture_output=True, text=True)
@@ -264,7 +301,7 @@ def run_window(args, root, binary, seconds, quiet, note, name, mode, index):
         time.sleep(60)
         waited += 60
 
-    ug = root / "ug" / cell.name
+    ug = root / "ug" / ("ug-" + cell.name)   # not "perf-…": wp078_report treats any perf-* folder outside the root as a stray window
     if quiet is not None:
         note(f"{cell.name}: {quiet.before_window(seconds + 90)}")
     snap = guard_receipt.run_guard("snapshot", ug)
@@ -281,6 +318,7 @@ def run_window(args, root, binary, seconds, quiet, note, name, mode, index):
         # C-00 30.09 M-14: the restore runs on every path — normal end, error, Ctrl-C, SIGTERM (SystemExit 143)
         receipt = guard_receipt.close(ug)
         guard_code, why = receipt["code"], receipt["why"]
+        annotate_attempt(cell, receipt)
         if guard_code:
             note(f"STOP {cell.name}: {why} — report to C-00")
     if guard_code:
