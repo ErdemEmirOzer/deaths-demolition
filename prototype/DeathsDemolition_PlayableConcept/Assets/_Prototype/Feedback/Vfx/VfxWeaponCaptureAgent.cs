@@ -222,7 +222,10 @@ namespace DD.Prototype.Feedback.Vfx
             Vector3 portAtShot = port != null ? port.position : Vector3.zero;
             VfxDressing dressing = HitFeedbackDirector.Instance != null ? HitFeedbackDirector.Instance.Vfx : null;
 
-            yield return null;   // one frame after the shot
+            // AD r4 (01.10): the sheet peaks at f2–4 — grab at shot + 3 frames, not the birth cell (one frame after).
+            yield return null;
+            yield return null;
+            yield return null;
             yield return new WaitForEndOfFrame();
             CasingEffect casing = NewestCasing(dressing, portAtShot);
             Grab(key, "flash", shot, shotFrame, shotTime, muzzle, port, portAtShot, casing, dressing, profile);

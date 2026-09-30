@@ -780,7 +780,11 @@ namespace DD.Prototype.Feedback.Vfx
             Color tint = GameFeelSettings.FlashScale < 0.99f ? new Color(1f, 1f, 1f, 0.4f) : Color.white;
             if (profile != null)
             {
-                size *= profile.FlashScale * (firstPerson ? 0.85f : 1f);
+                // §1.1 absolute size: the stretched quad's long axis = the table length (AD r4 M2); FP keeps its 0.85 bloom.
+                size = profile.FlashLength > 0f
+                    ? profile.FlashLength / Mathf.Max(1f, Mathf.Max(profile.FlashStretch.x, profile.FlashStretch.y))
+                    : size * profile.FlashScale;
+                size *= firstPerson ? 0.85f : 1f;
                 tint = new Color(tint.r * profile.FlashIntensity, tint.g * profile.FlashIntensity, tint.b * profile.FlashIntensity, tint.a);
                 fx.Play(row, FlipbookEffect.Facing.Camera, size, tint, 1f, 0f, Mathf.Max(0.05f, row.DurationSeconds * profile.FlashDurationScale));
                 if (profile.FlashIntensity < 0.999f) fx.SetEmissiveScale(profile.FlashIntensity);

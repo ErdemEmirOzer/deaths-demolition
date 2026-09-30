@@ -38,6 +38,9 @@ namespace DD.Prototype.Feedback.Vfx
 
         // ---- muzzle (§1.1)
         public float FlashScale = 1f;
+        // AD r4 MUST M2 (01.10): the flash's long axis in metres straight from the §1.1 table (the old WorldSize × Max(0.5,
+        // shot scale) × FlashScale chain hid a × 0.5 and drew 54–73 % of the table). 0 = the old chain (a Special in hand).
+        public float FlashLength;
         public Vector2 FlashStretch = Vector2.one;
         public float FlashDurationScale = 1f;
         public float FlashIntensity = 1f;   // sheet emission multiplier (sg: the bloom stays within ~1.5× the quad, AD B1 MUST 4)
@@ -71,7 +74,7 @@ namespace DD.Prototype.Feedback.Vfx
 
         public static readonly VfxWeaponProfile Ar1 = new VfxWeaponProfile
         {
-            Slot = "ar_1", Class = VfxWeaponClass.AssaultRifle, Speed = 260f, CoreWidth = 0.035f, GlowWidth = 0.10f,
+            Slot = "ar_1", FlashLength = 0.55f, Class = VfxWeaponClass.AssaultRifle, Speed = 260f, CoreWidth = 0.035f, GlowWidth = 0.10f,
             HeadColor = Hdr("#FFF1DC", 5f), TailColor = Hdr("#FF9A4A", 2f), TracerEveryN = 3,
             FlashScale = 1f, FlashStretch = new Vector2(1.35f, 1f),
             LightColor = Hex("#FFC28A"), LightIntensity = 6f, LightRange = 4f, LightHoldSeconds = 2f / 60f, LightFadeSeconds = 0.08f,
@@ -81,7 +84,7 @@ namespace DD.Prototype.Feedback.Vfx
 
         public static readonly VfxWeaponProfile Ar2 = new VfxWeaponProfile
         {
-            Slot = "ar_2", Class = VfxWeaponClass.AssaultRifle, Speed = 320f, CoreWidth = 0.045f, GlowWidth = 0.12f,
+            Slot = "ar_2", FlashLength = 0.495f, Class = VfxWeaponClass.AssaultRifle, Speed = 320f, CoreWidth = 0.045f, GlowWidth = 0.12f,
             HeadColor = Hdr("#FFF4E6", 6f), TailColor = Hdr("#FF8A3A", 2.5f), TracerEveryN = 2,
             FlashScale = 0.9f, FlashStretch = new Vector2(1.35f, 1f),
             LightColor = Hex("#FFC28A"), LightIntensity = 6f, LightRange = 4f, LightHoldSeconds = 2f / 60f, LightFadeSeconds = 0.08f,
@@ -91,7 +94,7 @@ namespace DD.Prototype.Feedback.Vfx
 
         public static readonly VfxWeaponProfile Smg1 = new VfxWeaponProfile
         {
-            Slot = "smg_1", Class = VfxWeaponClass.Smg, Speed = 170f, CoreWidth = 0.030f, GlowWidth = 0.08f, HeadBead = 0.15f,
+            Slot = "smg_1", FlashLength = 0.35f, Class = VfxWeaponClass.Smg, Speed = 170f, CoreWidth = 0.030f, GlowWidth = 0.08f, HeadBead = 0.15f,
             HeadColor = Hdr("#FFF1DC", 5f), TailColor = Hdr("#FF9A4A", 2f), TracerEveryN = 3,
             FlashScale = 0.75f, FlashDurationScale = 0.6f, Sustained = true,
             LightColor = Hex("#FFC28A"), LightIntensity = 5f, LightRange = 4f, LightHoldSeconds = 2f / 60f, LightFadeSeconds = 0.08f,
@@ -101,7 +104,7 @@ namespace DD.Prototype.Feedback.Vfx
 
         public static readonly VfxWeaponProfile Smg2 = new VfxWeaponProfile
         {
-            Slot = "smg_2", Class = VfxWeaponClass.Smg, Speed = 200f, CoreWidth = 0.030f, GlowWidth = 0.08f, HeadBead = 0.15f,
+            Slot = "smg_2", FlashLength = 0.40f, Class = VfxWeaponClass.Smg, Speed = 200f, CoreWidth = 0.030f, GlowWidth = 0.08f, HeadBead = 0.15f,
             HeadColor = Hdr("#FFF1DC", 4f), TailColor = Hdr("#FF9A4A", 2f), TracerEveryN = 4,
             FlashScale = 0.86f, FlashDurationScale = 0.5f, Sustained = true,
             LightColor = Hex("#FFC28A"), LightIntensity = 5f, LightRange = 4f, LightHoldSeconds = 2f / 60f, LightFadeSeconds = 0.08f,
@@ -111,7 +114,7 @@ namespace DD.Prototype.Feedback.Vfx
 
         public static readonly VfxWeaponProfile Sg1 = new VfxWeaponProfile
         {
-            Slot = "sg_1", Class = VfxWeaponClass.Shotgun, Speed = 120f, CoreWidth = 0.025f, GlowWidth = 0f,
+            Slot = "sg_1", FlashLength = 0.60f, Class = VfxWeaponClass.Shotgun, Speed = 120f, CoreWidth = 0.025f, GlowWidth = 0f,
             HeadColor = Hdr("#FFD9B0", 2f), TailColor = Hdr("#FFD9B0", 2f), TracerEveryN = 0, PelletBars = true,
             FlashScale = 1.0f, FlashIntensity = 0.5f, FlashStretch = new Vector2(1f, 1.3f),
             LightColor = Hex("#FFB878"), LightIntensity = 7f, LightRange = 5.5f, LightHoldSeconds = 3f / 60f, LightFadeSeconds = 0.12f,
@@ -121,7 +124,7 @@ namespace DD.Prototype.Feedback.Vfx
 
         public static readonly VfxWeaponProfile Sg2 = new VfxWeaponProfile
         {
-            Slot = "sg_2", Class = VfxWeaponClass.Shotgun, Speed = 130f, CoreWidth = 0.025f, GlowWidth = 0.12f,
+            Slot = "sg_2", FlashLength = 0.60f, Class = VfxWeaponClass.Shotgun, Speed = 130f, CoreWidth = 0.025f, GlowWidth = 0.12f,
             HeadColor = Hdr("#FFF4E6", 6f), TailColor = Hdr("#FF8A3A", 2.5f), TracerEveryN = 0, PelletBars = true, CentreTracer = true,
             FlashScale = 1.0f, FlashIntensity = 0.5f, FlashStretch = new Vector2(1f, 1.3f),
             LightColor = Hex("#FFB878"), LightIntensity = 7f, LightRange = 5.5f, LightHoldSeconds = 3f / 60f, LightFadeSeconds = 0.12f,
@@ -131,7 +134,7 @@ namespace DD.Prototype.Feedback.Vfx
 
         public static readonly VfxWeaponProfile Lmg1 = new VfxWeaponProfile
         {
-            Slot = "lmg_1", Class = VfxWeaponClass.Lmg, Speed = 250f, CoreWidth = 0.045f, GlowWidth = 0.12f,
+            Slot = "lmg_1", FlashLength = 0.60f, Class = VfxWeaponClass.Lmg, Speed = 250f, CoreWidth = 0.045f, GlowWidth = 0.12f,
             HeadColor = Hdr("#FFF4E6", 6f), TailColor = Hdr("#FF8A3A", 2.5f), TracerEveryN = 4,
             FlashScale = 1.1f, FlashStretch = new Vector2(1.3f, 1f), Sustained = true,
             LightColor = Hex("#FFC28A"), LightIntensity = 9f, LightRange = 6f, LightHoldSeconds = 2f / 60f, LightFadeSeconds = 0.08f,
@@ -141,7 +144,7 @@ namespace DD.Prototype.Feedback.Vfx
 
         public static readonly VfxWeaponProfile Lmg2 = new VfxWeaponProfile
         {
-            Slot = "lmg_2", Class = VfxWeaponClass.Lmg, Speed = 300f, CoreWidth = 0.060f, GlowWidth = 0.16f, HeadBead = 0.30f,
+            Slot = "lmg_2", FlashLength = 0.54f, Class = VfxWeaponClass.Lmg, Speed = 300f, CoreWidth = 0.060f, GlowWidth = 0.16f, HeadBead = 0.30f,
             HeadColor = Hdr("#FFF8F0", 7f), TailColor = Hdr("#FF6E2E", 3f), TracerEveryN = 5,
             FlashScale = 1.0f, FlashStretch = new Vector2(1.2f, 1f), Sustained = true,
             LightColor = Hex("#FFC28A"), LightIntensity = 9f, LightRange = 6f, LightHoldSeconds = 2f / 60f, LightFadeSeconds = 0.08f,
@@ -151,7 +154,7 @@ namespace DD.Prototype.Feedback.Vfx
 
         public static readonly VfxWeaponProfile Sr1 = new VfxWeaponProfile
         {
-            Slot = "sr_1", Class = VfxWeaponClass.Sniper, Speed = 420f, LengthSeconds = 0.025f, MaxLength = 10f,
+            Slot = "sr_1", FlashLength = 1.20f, Class = VfxWeaponClass.Sniper, Speed = 420f, LengthSeconds = 0.025f, MaxLength = 10f,
             CoreWidth = 0.070f, GlowWidth = 0.20f, HeadBead = 0.30f,
             HeadColor = Hdr("#F4FAFF", 8f), TailColor = Hdr("#9FC8E8", 2f), TracerEveryN = 1,
             FlashScale = 1.6f, FlashStretch = new Vector2(2.2f, 1f), FlashDurationScale = 1.4f,
@@ -163,7 +166,7 @@ namespace DD.Prototype.Feedback.Vfx
 
         public static readonly VfxWeaponProfile Rl1 = new VfxWeaponProfile
         {
-            Slot = "rl_1", Class = VfxWeaponClass.Launcher, HasCasing = false, Speed = 46f, CoreWidth = 0f, GlowWidth = 0f, TracerEveryN = 0,
+            Slot = "rl_1", FlashLength = 0.80f, Class = VfxWeaponClass.Launcher, HasCasing = false, Speed = 46f, CoreWidth = 0f, GlowWidth = 0f, TracerEveryN = 0,
             FlashScale = 1.8f, FlashDurationScale = 1.5f,
             LightColor = Hex("#FFB070"), LightIntensity = 24f, LightRange = 12f, LightHoldSeconds = 4f / 60f, LightFadeSeconds = 0.25f,
             SmokeStart = 0.8f, SmokeEnd = 2.0f, SmokeSeconds = 2.0f, SmokeAlpha = 0.45f
