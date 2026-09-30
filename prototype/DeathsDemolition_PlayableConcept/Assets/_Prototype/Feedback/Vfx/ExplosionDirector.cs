@@ -15,10 +15,11 @@ namespace DD.Prototype.Feedback.Vfx
         // Ground marks — direction §1.5 "Patlama sırası" (WP-073-VFX-FEEL-V3-DIRECTION.md l.102): "scorch 2,4 m / 12 s + ıslak koyu
         // halka 3,0 m / 6 s". §1.5 gives no alpha; it reuses the existing AP-010 scorch ("mevcut", WP-069 §7), whose manifest sets it.
         public const float ScorchSize = 2.4f, WetRingSize = 3f, WetRingSeconds = 6f;
-        // M-57 (C-00 30.09): the scorch / crater life follows the impact-decal pattern per tier (DIRECTION §5 8 / 12 / 12);
-        // the Cinematic value waits on C-00's 12-or-20 s call (VfxDressing.ImpactDecalSeconds is 20 on Cinematic, DEC-100).
-        [PrototypeOnly(PendingDecisions.None, "M-57: Cinematic scorch life 12 s per DIRECTION §5 until C-00 decides 12 vs 20 (DEC-100 impact decals 20).", true)]
-        public const float ScorchSecondsCinematic = 12f;
+        // M-57 (C-00 30.09): the scorch / crater life follows the impact-decal pattern per tier (VfxDressing.ImpactDecalSeconds):
+        // Performance 8 / High 12 / Cinematic 20 s — C-00 decision "no quality cut", held only while tier-ms keeps Cinematic
+        // VFX ≤ 5.5 ms with the decal pool (else back to 12 with the number recorded).
+        [PrototypeOnly(PendingDecisions.None, "M-57 C-00 30.09: Cinematic scorch life 20 s (ImpactDecalSeconds pattern); conditional on tier-ms Cinematic VFX ≤ 5.5 ms, else 12.", true)]
+        public const float ScorchSecondsCinematic = 20f;
         public static float ScorchSeconds => VfxTier.Pick(8f, 12f, ScorchSecondsCinematic);
         [PrototypeOnly(PendingDecisions.None, "AP-010 manifest v004 decal_scorch usage_note: alpha peak 0.40 (direction §1.5 row names no alpha; it reuses this scorch).")]
         public const float ScorchAlpha = 0.40f;
