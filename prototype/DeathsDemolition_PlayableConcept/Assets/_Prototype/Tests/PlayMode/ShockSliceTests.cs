@@ -69,35 +69,6 @@ namespace DD.Prototype.Tests.PlayMode
         private static DamageHit Oldur(ZombieEnemy z, Vector3 dir) => new DamageHit { Amount = 9999f, Region = BodyRegion.UpperBody,
             Point = z.transform.position + Vector3.up, Direction = dir, ImpactForce = 0.25f, Source = DamageSourceKind.Chain };
 
-        /// <summary>
-        /// WP-076 R1-B AI1: the chain resolves bodies first and shocks them later; a body that left in between and came back from
-        /// the pool is a NEW life — the life-checked ApplyShock / ApplyKnockdown refuse it; the current life is accepted.
-        /// </summary>
-        [UnityTest]
-        [Timeout(120000)]
-        public IEnumerator Sok_EskiYasamKimligi_Reddedilir()
-        {
-            yield return Hazirla();
-            Vector3 fwd = Vector3.ProjectOnPlane(_rig.transform.forward, Vector3.up).normalized;
-            ZombieEnemy a = Dogur(fwd * 7f);
-            yield return null;
-            int oldLife = a.LifeId;
-            Assert.AreNotEqual(0, oldLife);
-            Assert.IsTrue(a.IsLife(oldLife)); Assert.IsFalse(a.IsLife(0), "0 = bilinmeyen yaşam");
-            EnemyFactory.ClearAll(); yield return null;
-            Assert.IsFalse(a.IsLife(oldLife), "havuza dönen gövde eski yaşam değil");
-
-            ZombieEnemy b = Dogur(fwd * 7f);
-            yield return null;
-            Assert.AreNotEqual(oldLife, b.LifeId, "havuzdan yeni yaşam");
-            Assert.IsFalse(b.ApplyShock(401, 1f, oldLife), "eski yaşama giden şok reddedilir");
-            Assert.IsFalse(b.IsElectrocuted);
-            Assert.IsFalse(b.ApplyKnockdown(402, 1f, oldLife), "eski yaşama giden devirme reddedilir");
-            Assert.IsTrue(b.ApplyShock(403, 1f, b.LifeId), "güncel yaşam kabul edilir");
-            Assert.IsTrue(b.IsElectrocuted);
-            EnemyFactory.ClearAll(); yield return null;
-        }
-
         [UnityTest]
         [Timeout(120000)]
         public IEnumerator Sok_Tutar_OlumOdulAninda_DusmeSonra()

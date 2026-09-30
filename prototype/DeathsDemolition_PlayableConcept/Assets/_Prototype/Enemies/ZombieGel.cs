@@ -68,9 +68,6 @@ namespace DD.Prototype.Enemies
         }
 
         /// <summary>S-02's direct gel hit topples the body (same pattern as ApplyShock: the same transaction once, a new hit extends).</summary>
-        /// <summary>WP-076 R1-B AI1: the life-checked knockdown (see <see cref="ApplyShock(int, float, int)"/>).</summary>
-        public bool ApplyKnockdown(int transactionId, float seconds, int expectedLifeId) => IsLife(expectedLifeId) && ApplyKnockdown(transactionId, seconds);
-
         public bool ApplyKnockdown(int transactionId, float seconds)
         {
             if (!_alive || _dying || seconds <= 0f) return false;

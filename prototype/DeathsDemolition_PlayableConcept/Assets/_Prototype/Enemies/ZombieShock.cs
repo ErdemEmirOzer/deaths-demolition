@@ -31,16 +31,6 @@ namespace DD.Prototype.Enemies
 
         bool IChainTarget.CanChain => _alive && !_dying && !IsRising && _gel == GelState.None;
 
-        /// <summary>
-        /// WP-076 R1-B AI1 (S-02 handshake): the chain resolves its bodies first and shocks them hop by hop later; a body evicted or
-        /// removed in between can come back from the pool as a NEW zombie. Store <see cref="LifeId"/> at resolve time and pass it
-        /// here: a different life is refused (false). S-02 also checks <see cref="IsLife"/> before its hop damage / lethal landing.
-        /// </summary>
-        public bool ApplyShock(int transactionId, float seconds, int expectedLifeId) => IsLife(expectedLifeId) && ApplyShock(transactionId, seconds);
-
-        /// <summary>WP-076 R1-B AI1: this body is alive in the life <paramref name="lifeId"/> (from <see cref="LifeId"/> at resolve time).</summary>
-        public bool IsLife(int lifeId) => _alive && lifeId != 0 && _lifeId == lifeId;
-
         /// <summary>S-02's chain calls this for every body in the chain with the weapon's shock seconds.</summary>
         public bool ApplyShock(int transactionId, float seconds)
         {
