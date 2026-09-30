@@ -1506,7 +1506,9 @@ namespace DD.Prototype.UI
                 _dPips.SetGhost(n.Kind == RunTreeNodeKind.Tier && n.OwnedTier < n.MaxTier ? n.OwnedTier : -1);   // the tier a buy adds
             }
 
-            _dName.text = NameOf(n);
+            // AD d109 SHOULD-5 (C-00 01.10: UPPER): the detail name is an H2 in the Display face, whose atlas holds capitals only;
+            // sentence case drew Mincho capitals and Text-face lower case inside one word ("Atış Hızı", "Piercing").
+            _dName.text = UiStrings.Upper(NameOf(n));
             _dState.text = StateSentence(n);
             // AD 12c SHOULD-4 (§2.1): gold is the offer's; a picks-used notice on an offered node is not currency / price / offer.
             bool picksUsed = n.Status == RunTreeNodeStatus.Available && n.Kind != RunTreeNodeKind.Hearth && _shop != null && _shop.IsLocked && Offered(index);
