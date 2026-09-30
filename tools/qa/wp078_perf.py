@@ -125,6 +125,12 @@ class QuietWindow:
         load = float(subprocess.run(["sysctl", "-n", "vm.loadavg"], capture_output=True, text=True).stdout.split()[1])
         return not unity and not player_up() and load < self.load_max, f"load1 {load:.2f} foreign Unity {len(unity)}"
 
+    def foreign_quiet(self):
+        """During our own Player run: no foreign Unity editor/batch and no Blender (load is ours, not measured here)."""
+        comm = subprocess.run(["ps", "-Ao", "comm"], capture_output=True, text=True).stdout.splitlines()
+        foreign = [c for c in comm if c.strip().endswith("/MacOS/Unity") or c.strip().endswith("/MacOS/Blender")]
+        return not foreign, f"foreign Unity/Blender {len(foreign)}"
+
     def acquire(self):
         subprocess.run([self.slot, "acquire", "player", "wp078-perf"], capture_output=True, text=True)
         self.flag.touch()
