@@ -3405,7 +3405,7 @@
   },
   "controls.action_part": {
     "en": "{action} {part}",
-    "tr": "{action} {part}"
+    "tr": "{part} {action}"
   },
   "controls.assist.off": {
     "en": "OFF",
@@ -3441,7 +3441,7 @@
   },
   "shop.detail.Explosion": {
     "en": "{chance}% of hits detonate for {radius} m at {scale}x the hit's damage.",
-    "tr": "İsabetlerin %{chance} kadarı, isabet hasarının {scale}x katıyla {radius} m yarıçapta patlar."
+    "tr": "İsabetlerin %{chance} kadarı, {scale} katı hasarla {radius} m yarıçapta patlar."
   },
   "shop.detail.Chain": {
     "en": "Damage jumps to {count} more enem(y/ies) within {radius} m at {damage}% damage, falling {falloff}% per jump.",
@@ -3480,7 +3480,7 @@
     "tr": "Nişan"
   },
   "controls.action.AimStick": {
-    "en": "AimStick",
+    "en": "Aim (Stick)",
     "tr": "Çubukla Nişan"
   },
   "controls.action.Fire": {

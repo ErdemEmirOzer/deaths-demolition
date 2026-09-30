@@ -996,7 +996,7 @@ UI only: live shop counts and tier details; remap action/composite labels; assis
 | shop.footer.remaining | Applied immediately. {used} of {max} picks used, {left} left. {gold} gold carries into the next round. | Hemen uygulandı. {max} seçimden {used} kullanıldı, {left} kaldı. {gold} altın sonraki rounda geçer. |
 | shop.footer.locked_many | Applied immediately. All picks used, so the offer is now locked. {gold} gold carries into the next round. | Hemen uygulandı. Tüm seçimler kullanıldı; teklif artık kilitli. {gold} altın sonraki rounda geçer. |
 | shop.footer.locked_one | Applied immediately. One upgrade per round, so the offer is now locked. {gold} gold carries into the next round. | Hemen uygulandı. Round başına tek geliştirme; teklif artık kilitli. {gold} altın sonraki rounda geçer. |
-| controls.action_part | {action} {part} | {action} {part} |
+| controls.action_part | {action} {part} | {part} {action} |
 | controls.assist.off | OFF | KAPALI |
 | controls.assist.light | LIGHT | HAFİF |
 | controls.assist.full | FULL | TAM |
@@ -1005,7 +1005,7 @@ UI only: live shop counts and tier details; remap action/composite labels; assis
 | tree.link.unbound_2 | Special Link II | Özel Bağ II |
 | shop.detail.Piercing | Bullets pass through {count} more enemy per shot ({total} total), {damage}% damage kept per pass. | Atışta {count} ek düşman delinir (toplam {total}); geçişte %{damage} hasar kalır. |
 | shop.detail.Ricochet | {chance}% of hits bounce to another enemy within {radius} m, up to {count} time(s), at {damage}% damage. | İsabetlerin %{chance} kadarı {radius} m içindeki başka bir düşmana %{damage} hasarla en çok {count} kez seker. |
-| shop.detail.Explosion | {chance}% of hits detonate for {radius} m at {scale}x the hit's damage. | İsabetlerin %{chance} kadarı, isabet hasarının {scale}x katıyla {radius} m yarıçapta patlar. |
+| shop.detail.Explosion | {chance}% of hits detonate for {radius} m at {scale}x the hit's damage. | İsabetlerin %{chance} kadarı, {scale} katı hasarla {radius} m yarıçapta patlar. |
 | shop.detail.Chain | Damage jumps to {count} more enem(y/ies) within {radius} m at {damage}% damage, falling {falloff}% per jump. | Hasar {radius} m içindeki {count} ek düşmana %{damage} hasarla sıçrar; her sıçramada %{falloff} azalır. |
 | shop.detail.FireRate | +{value}% fire rate ({total}x total, capped at {max}x). | Atış hızı +%{value} (toplam {total}x, üst sınır {max}x). |
 | shop.detail.ReloadSpeed | -{value}% reload time ({total}x total, floor {min}x). | Dolum süresi -%{value} (toplam {total}x, alt sınır {min}x). |
@@ -1015,7 +1015,7 @@ UI only: live shop counts and tier details; remap action/composite labels; assis
 | shop.detail.RegenerationRate | +{value}% health regeneration speed ({total}x total{rate}). | Can yenilenme hızı +%{value} (toplam {total}x{rate}). |
 | controls.action.Move | Move | Hareket |
 | controls.action.Aim | Aim | Nişan |
-| controls.action.AimStick | AimStick | Çubukla Nişan |
+| controls.action.AimStick | Aim (Stick) | Çubukla Nişan |
 | controls.action.Fire | Fire | Ateş |
 | controls.action.Reload | Reload | Doldur |
 | controls.action.Pause | Pause | Duraklat |
@@ -1089,7 +1089,7 @@ R1-E E1 (S-09, C-00 30.09): 21 tr lines below revised for grammar and pack termi
 
 ## S-09 · Slice 9 remainder (E3, C-00 30.09)
 
-`controls.reset` changed in place: RESET ALL is now a 500 ms hold (direction E7), so the label says so, following `path.buy.hold`. The three new keys are the Controls pane's dead-zone sentence, the override mark's legend (the kit never uses a shape alone) and the binding-conflict notice (direction E7: conflict → Warning notice). The `profile.locked.*` keys are a locked title / badge row's condition (direction E3: LOCKED = lock + condition; T1), and `profile.content.title_first_blood.detail` replaces a stale developer line ("…once the profile pane supports titles") with the condition, as its siblings read.
+`controls.reset` changed in place: RESET ALL is now a 500 ms hold (direction E7), so the label says so, following `path.buy.hold`. The three new keys are the Controls pane's dead-zone sentence, the override mark's legend (the kit never uses a shape alone) and the binding-conflict notice (direction E7: conflict → Warning notice). The `profile.locked.*` keys are a locked title / badge row's condition (direction E3: LOCKED = lock + condition; T1), and `profile.content.title_first_blood.detail` replaces a stale developer line ("…once the profile pane supports titles") with the condition, as its siblings read. M-69 (Codex fix list, rows updated in place in the visible-Turkish section): `controls.action_part` TR reads part first (Yukarı Hareket), `controls.action.AimStick` EN is "Aim (Stick)", and `shop.detail.Explosion` TR loses the doubled "{scale}x katıyla".
 
 | Key | en | tr |
 |---|---|---|

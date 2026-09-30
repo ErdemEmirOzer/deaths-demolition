@@ -234,7 +234,7 @@ namespace DD.Prototype.Tests.EditMode
         {
             var entry = new InputRemapEntry("binding-id", "Gameplay", "Move", InputSchemeKind.KeyboardMouse, "up", "<Keyboard>/w", "<Keyboard>/w", "W", false);
             UiStrings.Language = UiStrings.Turkish;
-            Assert.AreEqual("Hareket Yukarı", MainMenuScreen.RemapRowName(entry));
+            Assert.AreEqual("Yukarı Hareket", MainMenuScreen.RemapRowName(entry));   // M-69: part first
             Assert.AreEqual("W", entry.DisplayName);
             Assert.AreEqual("HAFİF", MainMenuScreen.AimAssistLabel(InputAimAssistLevel.Light));
             Assert.AreEqual("KAPALI", MainMenuScreen.AimAssistLabel(InputAimAssistLevel.Off));
