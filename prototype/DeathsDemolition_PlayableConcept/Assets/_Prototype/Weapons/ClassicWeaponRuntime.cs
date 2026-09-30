@@ -503,6 +503,15 @@ namespace DD.Prototype.Weapons
             _burstLeft = Mathf.Max(1, DD.Prototype.Rounds.RunTreeHooks.BurstCount(Id, d.fire.burstCount));   // + WP-077 fork.ar_2.y
         }
 
+        /// <summary>
+        /// R1-B W3 (C-00 30.09): drop the rest of a burst — the weapon was parked (a Special in hand), the camera blend
+        /// swallowed fire, or the player may not fire (death, frozen run). Otherwise the rest fired later with no trigger.
+        /// </summary>
+        public void CancelBurst()
+        {
+            _burstLeft = 0;
+        }
+
         /// <summary>WP-069 single fire: remember a press made during the cycle (fires when ready).</summary>
         public void BufferPress()
         {

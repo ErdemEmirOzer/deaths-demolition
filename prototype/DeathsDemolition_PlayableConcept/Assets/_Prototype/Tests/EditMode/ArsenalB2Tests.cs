@@ -75,6 +75,25 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(rt.MagazineSize - 3, rt.Ammo, "bir burst üç mermi");
         }
 
+        /// <summary>R1-B W3 (C-00 30.09): a burst cut short (Special in hand, camera blend, death) ends — no shot of it is left to fire later.</summary>
+        [Test]
+        public void Burst_Iptal_KalanAtislarSonradanAtilmaz()
+        {
+            ClassicWeaponRuntime rt = Equip(ClassicWeaponId.Ar2);
+            rt.BeginBurst();
+            Assert.IsTrue(rt.BurstActive);
+            rt.ConsumeShot();
+            Assert.IsTrue(rt.BurstActive, "üçlünün ilk atışından sonra sürer");
+            rt.CancelBurst();
+            Assert.IsFalse(rt.BurstActive, "iptal kalanı düşürür");
+            int ammo = rt.Ammo;
+            for (int i = 0; i < 60; i++) rt.Tick(0.01f);
+            Assert.IsFalse(rt.BurstActive);
+            Assert.AreEqual(ammo, rt.Ammo, "tetik yokken mermi harcanmadı");
+            rt.BeginBurst();
+            Assert.IsTrue(rt.BurstActive, "yeni basış yeni üçlü başlatır");
+        }
+
         [Test]
         public void Tekli_BasisTamponu_CevrimSonundaAtar_EskiBasisSoner()
         {

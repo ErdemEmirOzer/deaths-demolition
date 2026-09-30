@@ -449,6 +449,7 @@ namespace DD.Prototype.Weapons
             if (_special.IsActive)
             {
                 SetFiring(false);   // the classic weapon is parked
+                _classic.CancelBurst();   // R1-B W3: a burst does not outlive the parking
                 if (_special.Tick(dt))
                 {
                     HandleSpecialEnded();
@@ -489,6 +490,7 @@ namespace DD.Prototype.Weapons
             {
                 SetFiring(false);
                 _classic.ClampCooldown();
+                _classic.CancelBurst();   // R1-B W3: a blend / death / freeze ends the burst, it does not resume without a trigger
                 return;
             }
 
