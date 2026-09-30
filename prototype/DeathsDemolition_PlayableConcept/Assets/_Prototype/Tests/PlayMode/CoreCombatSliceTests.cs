@@ -297,7 +297,7 @@ namespace DD.Prototype.Tests.PlayMode
                 _girdi.Yon = Vector2.zero;
                 int mermiSonra = WeaponRegistry.ActiveController.Classic.Ammo;
 
-                int tersYonluIsabet = 0;
+                int tersYonluIsabet = 0, kafaIsabeti = 0;
                 for (int i = 0; i < vuruslar.Count; i++)
                 {
                     Vector3 d = vuruslar[i].Direction;
@@ -305,12 +305,19 @@ namespace DD.Prototype.Tests.PlayMode
                     {
                         tersYonluIsabet++;
                     }
+
+                    if (vuruslar[i].Result.Region == DD.Prototype.Damage.BodyRegion.Head) kafaIsabeti++;
                 }
+
+                // WP-069 B5 (C-00 30.09): a hit reaction can dip the head into the 1.15 m line; a bare head hit is ×2, so
+                // 12 + 24 kills the 34 HP Standard in two hits and nothing is left to hit (0af8269a red). Three
+                // reverse-direction hits — or, when the target died, every hit that killed it came in reverse.
+                int gerekenIsabet = olum > 0 ? Mathf.Min(3, vuruslar.Count) : 3;
 
                 rapor.AppendLine("  kare=" + k + " kontrol kare=" + kontrolKare + " uyumlu=" + uyumluKare +
                                  " en buyuk vz=" + enBuyukHizX.ToString("F2") +
                                  " mermi " + mermiOnce + "->" + mermiSonra +
-                                 " isabet=" + vuruslar.Count + " ters yonlu=" + tersYonluIsabet + " olum=" + olum +
+                                 " isabet=" + vuruslar.Count + " ters yonlu=" + tersYonluIsabet + " kafa=" + kafaIsabeti + " olum=" + olum +
                                  " hitstop=" + HitStopService.Count + " timeScale=" + Time.timeScale.ToString("F2"));
                 Debug.Log(rapor.ToString());
 
@@ -319,8 +326,8 @@ namespace DD.Prototype.Tests.PlayMode
                     "REQ-039: 1.2 sn basılı ateş yalnız " + (mermiOnce - mermiSonra) + " mermi harcadı.\n" + rapor);
                 Assert.GreaterOrEqual(uyumluKare, kontrolKare * 0.9f,
                     "REQ-037: karakter +z'ye koşarken −z'ye bakmayı sürdüremedi (uyumlu " + uyumluKare + "/" + kontrolKare + ").\n" + rapor);
-                Assert.GreaterOrEqual(tersYonluIsabet, 3,
-                    "REQ-037: hareket yönünün tersine ateş hedefe isabet etmedi (" + tersYonluIsabet + " isabet).\n" + rapor);
+                Assert.GreaterOrEqual(tersYonluIsabet, gerekenIsabet,
+                    "REQ-037: hareket yönünün tersine ateş hedefe isabet etmedi (" + tersYonluIsabet + "/" + gerekenIsabet + " isabet).\n" + rapor);
             }
             finally
             {
@@ -835,39 +842,6 @@ namespace DD.Prototype.Tests.PlayMode
         [Timeout(180000)]
         public IEnumerator GameFeelOlaylari_FleshHitOlumVeOyuncuHasari_AyriSinyaller()
         {
-            // BEGIN S02_COTIMED startup metadata (before fixture yield)
-            string GateRandomState()
-            {
-                try
-                {
-                    string raw = JsonUtility.ToJson(UnityEngine.Random.state);
-                    return string.IsNullOrEmpty(raw) || raw == "{}" ? "{\"status\":\"UNKNOWN:state_serializer_empty\"}" :
-                        "{\"status\":\"RAW_OBSERVED_NOT_SEED_OR_REPLAY_PROOF\",\"raw\":" + raw + "}";
-                }
-                catch (Exception) { return "{\"status\":\"UNKNOWN:state_getter_or_serializer_failure\"}"; }
-            }
-            string gateStartupUnityRandom = "{\"status\":\"NOT_REQUESTED\"}";
-            string gateRuntimeAssemblyName = "UNKNOWN", gateRuntimeAssemblyLocation = "UNKNOWN", gateRuntimeAssemblyHash = "UNKNOWN";
-            string gateAssemblyName = "UNKNOWN", gateAssemblyLocation = "UNKNOWN", gateAssemblyHash = "UNKNOWN";
-            try
-            {
-                if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-ddGameFeelGateDiag") >= 0)
-                {
-                    gateStartupUnityRandom = GateRandomState();
-                    var assembly = typeof(CoreCombatSliceTests).Assembly;
-                    gateAssemblyName = assembly.FullName;
-                    gateAssemblyLocation = assembly.Location;
-                    using (var sha = System.Security.Cryptography.SHA256.Create())
-                        gateAssemblyHash = System.BitConverter.ToString(sha.ComputeHash(System.IO.File.ReadAllBytes(gateAssemblyLocation))).Replace("-", "").ToLowerInvariant();
-                    var runtimeAssembly = typeof(ZombieEnemy).Assembly;
-                    gateRuntimeAssemblyName = runtimeAssembly.FullName;
-                    gateRuntimeAssemblyLocation = runtimeAssembly.Location;
-                    using (var sha = System.Security.Cryptography.SHA256.Create())
-                        gateRuntimeAssemblyHash = System.BitConverter.ToString(sha.ComputeHash(System.IO.File.ReadAllBytes(gateRuntimeAssemblyLocation))).Replace("-", "").ToLowerInvariant();
-                }
-            }
-            catch (Exception) { gateAssemblyHash = "UNKNOWN"; }
-            // END S02_COTIMED startup metadata
             yield return RunSahnesiniHazirla();
 
             // Ses bastırma penceresi ve hit-stop ölçeksiz saatle çalışır; sabit yakalama adımı
@@ -875,9 +849,7 @@ namespace DD.Prototype.Tests.PlayMode
             Time.captureDeltaTime = 0f;
 
             Vector3 merkez = _rig.transform.position;
-            // Keep the body-only spread corridor inside the upper capsule; the 7 m fixture can
-            // reject every shot before exercising feedback. Weapon, pose, damage and asserts stay intact.
-            ZombieEnemy hedef = Dogur(merkez + new Vector3(0f, 0f, 4f), merkez);
+            ZombieEnemy hedef = Dogur(merkez + new Vector3(0f, 0f, 7f), merkez);
             Assert.IsNotNull(hedef);
             // WP-018: the AP-009 shamble carries the head forward and low, so the 1.15 m aim line now crosses
             // the head hitbox on the way in; a rolled helmet turned three of these "flesh" hits into armour
@@ -886,184 +858,20 @@ namespace DD.Prototype.Tests.PlayMode
             hedef.FitArmorComposition(false, false, false);
             Assert.AreEqual(CameraMode.TopDown, CameraModeService.Current);
             var silah = WeaponRegistry.ActiveController;
-            var bag = _rig.GetComponent<PlayerWeaponBinding>();
             Collider govde = hedef.HitboxFor(DD.Prototype.Damage.BodyRegion.UpperBody);
             Collider kafa = hedef.HitboxFor(DD.Prototype.Damage.BodyRegion.Head);
-            Assert.IsNotNull(bag);
             Assert.IsNotNull(govde);
             Assert.IsNotNull(kafa);
+            // WP-069 B5 (C-00 30.09): what one ar_1 bullet does to this bare Standard, per region, from the game's own
+            // numbers — the exposed regional multiplier (head ×2, body ×1, legs ×0.8) and, on the head, the weapon's
+            // extra head factor (ar_1 ×1).
+            ArmorConfigSection zirh = PrototypeConfig.Active.Enemies.Armor;
+            float silahKafaCarpani = ProjectileLaunch.From(silah.Classic.Definition, silah.Classic.Id, silah.Classic.Range).HeadMultiplier;
+            float BolgeHasari(DD.Prototype.Damage.BodyRegion bolge) =>
+                TufekHasari * zirh.ExposedMultiplierFor(DamageRegions.ToCore(bolge)) *
+                (bolge == DD.Prototype.Damage.BodyRegion.Head ? silahKafaCarpani : 1f);
             Debug.Log("[DD-TEST] gamefeel.spawn rising=" + hedef.IsRising +
                       " head=" + kafa.bounds + " upper=" + govde.bounds);
-            bool govdeHazirLoglandi = false;
-            // BEGIN S02_COTIMED observer declarations
-            int gateSamples = 0, riseRejected = 0, headRejected = 0, rayRejected = 0, readySamples = 0;
-            int lastRayX = 0, lastRayY = 0;
-            Vector3 lastOrigin = Vector3.zero, lastAim = Vector3.zero;
-            float lastSpread = 0f;
-            // Opt-in observer only: bounded strings are captured at the existing rejection branches.
-            bool gateDiag = false;
-            string gateHeadRecord = null, gateRayRecord = null, gateDiagError = null;
-            string gateSourceCommit = "UNKNOWN", gateInputHash = "UNKNOWN", gateFixtureHash = "UNKNOWN";
-            string gateSourceHash = "UNKNOWN", gateExecutionId = "UNKNOWN";
-            string GateQuote(string value)
-            {
-                var escaped = new StringBuilder("\"");
-                foreach (char ch in value ?? "UNKNOWN")
-                {
-                    if (ch == '"' || ch == '\\') escaped.Append('\\').Append(ch);
-                    else if (ch < 32) escaped.Append("\\u").Append(((int)ch).ToString("x4"));
-                    else escaped.Append(ch);
-                }
-                return escaped.Append('"').ToString();
-            }
-            string GateFloat(float value) => float.IsNaN(value) || float.IsInfinity(value) ? GateQuote("UNKNOWN: nonfinite") : value.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
-            string GateBool(bool value) => value ? "true" : "false";
-            string GateDouble(double value) => double.IsNaN(value) || double.IsInfinity(value) ? GateQuote("UNKNOWN: nonfinite") : value.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
-            string GateTrs(Transform tr) => "{\"localPosition\":" + JsonUtility.ToJson(tr.localPosition) + ",\"localRotation\":" + JsonUtility.ToJson(tr.localRotation) +
-                ",\"localScale\":" + JsonUtility.ToJson(tr.localScale) + ",\"worldPosition\":" + JsonUtility.ToJson(tr.position) + ",\"worldRotation\":" + JsonUtility.ToJson(tr.rotation) +
-                ",\"lossyScale\":" + JsonUtility.ToJson(tr.lossyScale) + ",\"matrix\":" + JsonUtility.ToJson(tr.localToWorldMatrix) + "}";
-            string GatePath(Transform tr)
-            {
-                var nodes = new List<string>(32);
-                Transform current = tr;
-                while (current != null && nodes.Count < 32)
-                {
-                    nodes.Add("{\"name\":" + GateQuote(current.name) + ",\"siblingIndex\":" + current.GetSiblingIndex() +
-                        ",\"gameObjectId\":" + current.gameObject.GetInstanceID() + ",\"transformId\":" + current.GetInstanceID() +
-                        ",\"hasChangedReadOnly\":" + GateBool(current.hasChanged) + ",\"trs\":" + GateTrs(current) + "}");
-                    current = current.parent;
-                }
-                var scene = tr.gameObject.scene;
-                var physicsScene = UnityEngine.PhysicsSceneExtensions.GetPhysicsScene(scene);
-                return "{\"order\":\"leaf_to_root\",\"identityKind\":\"runtime_instance_not_persistent_prefab\",\"nodes\":[" + string.Join(",", nodes) +
-                    "],\"truncated\":" + GateBool(current != null) + ",\"rootId\":" + tr.root.GetInstanceID() + ",\"rootName\":" + GateQuote(tr.root.name) +
-                    ",\"sceneHandle\":" + scene.handle + ",\"sceneName\":" + GateQuote(scene.name) + ",\"scenePath\":" + GateQuote(scene.path) +
-                    ",\"physicsSceneValid\":" + GateBool(physicsScene.IsValid()) + ",\"physicsSceneHash\":" + physicsScene.GetHashCode() +
-                    ",\"physicsSceneDefaultMatch\":" + GateBool(physicsScene.Equals(Physics.defaultPhysicsScene)) + "}";
-            }
-            string GateArgs()
-            {
-                var quoted = new List<string>();
-                foreach (string arg in System.Environment.GetCommandLineArgs()) quoted.Add(GateQuote(arg));
-                return "[" + string.Join(",", quoted) + "]";
-            }
-            string GateProvenance() => "{\"record\":\"DD-Provenance\",\"testId\":" + GateQuote(TestContext.CurrentContext.Test.ID) +
-                ",\"testFullName\":" + GateQuote(TestContext.CurrentContext.Test.FullName) +
-                ",\"perCaseSeed\":\"UNKNOWN:bound_from_XML_after_run\",\"parentGlobalSeed\":\"UNKNOWN\",\"historicalReplay\":\"NOT_PROVEN\",\"cliArgs\":" +
-                GateArgs() + "}";
-            string GateShape(Collider c)
-            {
-                if (c is CapsuleCollider cap) return "{\"kind\":\"Capsule\",\"center\":" + JsonUtility.ToJson(cap.center) + ",\"radius\":" + GateFloat(cap.radius) + ",\"height\":" + GateFloat(cap.height) + ",\"direction\":" + cap.direction + "}";
-                if (c is SphereCollider sphere) return "{\"kind\":\"Sphere\",\"center\":" + JsonUtility.ToJson(sphere.center) + ",\"radius\":" + GateFloat(sphere.radius) + "}";
-                if (c is BoxCollider box) return "{\"kind\":\"Box\",\"center\":" + JsonUtility.ToJson(box.center) + ",\"size\":" + JsonUtility.ToJson(box.size) + "}";
-                if (c is MeshCollider mesh)
-                {
-                    Mesh shared = mesh.sharedMesh;
-                    return "{\"kind\":\"Mesh\",\"convex\":" + GateBool(mesh.convex) + ",\"sharedMesh\":" + (shared == null ? "null" :
-                        "{\"instanceId\":" + shared.GetInstanceID() + ",\"name\":" + GateQuote(shared.name) + ",\"isReadable\":" + GateBool(shared.isReadable) + "}") + "}";
-                }
-                return "{\"kind\":\"UNKNOWN\"}";
-            }
-            string GateRigidbody(Collider c)
-            {
-                Rigidbody rb = c.attachedRigidbody;
-                if (rb == null) return "{\"status\":\"OBSERVED_NULL\"}";
-                return "{\"status\":\"OBSERVED_PRESENT\",\"instanceId\":" + rb.GetInstanceID() + ",\"path\":" + GatePath(rb.transform) +
-                    ",\"isKinematic\":" + GateBool(rb.isKinematic) + ",\"detectCollisions\":" + GateBool(rb.detectCollisions) +
-                    ",\"constraints\":" + GateQuote(rb.constraints.ToString()) + ",\"interpolation\":" + GateQuote(rb.interpolation.ToString()) +
-                    ",\"collisionDetectionMode\":" + GateQuote(rb.collisionDetectionMode.ToString()) + ",\"mass\":" + GateFloat(rb.mass) +
-                    ",\"position\":" + JsonUtility.ToJson(rb.position) + ",\"rotation\":" + JsonUtility.ToJson(rb.rotation) +
-                    ",\"velocity\":" + JsonUtility.ToJson(rb.velocity) + ",\"angularVelocity\":" + JsonUtility.ToJson(rb.angularVelocity) +
-                    ",\"isSleeping\":" + GateBool(rb.IsSleeping()) + "}";
-            }
-            string GatePhysics() => "{\"autoSyncTransforms\":" + GateBool(Physics.autoSyncTransforms) + ",\"autoSimulation\":" + GateBool(Physics.autoSimulation) +
-                ",\"simulationMode\":" + GateQuote(Physics.simulationMode.ToString()) + ",\"queriesHitTriggers\":" + GateBool(Physics.queriesHitTriggers) +
-                ",\"frame\":" + Time.frameCount + ",\"inFixedTimeStep\":" + GateBool(Time.inFixedTimeStep) + ",\"timeAsDouble\":" + GateDouble(Time.timeAsDouble) +
-                ",\"fixedTimeAsDouble\":" + GateDouble(Time.fixedTimeAsDouble) + ",\"fixedDeltaTime\":" + GateFloat(Time.fixedDeltaTime) +
-                ",\"maximumDeltaTime\":" + GateFloat(Time.maximumDeltaTime) + ",\"fixedFrame\":\"UNKNOWN:no_native_counter\",\"lastNativeSync\":\"UNKNOWN\",\"lastSimulationTime\":\"UNKNOWN\",\"internalColliderPose\":\"UNKNOWN\"}";
-            string GateCollider(Collider collider, Vector3 sampleOrigin, DD.Prototype.Damage.BodyRegion role)
-            {
-                Transform tr = collider.transform;
-                ZombieEnemy owner = collider.GetComponentInParent<ZombieEnemy>();
-                Collider bound = hedef.HitboxFor(role);
-                Bounds bounds = collider.bounds;
-                return "{\"shape\":" + GateShape(collider) + ",\"path\":" + GatePath(tr) + ",\"attachedRigidbody\":" + GateRigidbody(collider) +
-                    ",\"layer\":" + collider.gameObject.layer + ",\"layerName\":" + GateQuote(LayerMask.LayerToName(collider.gameObject.layer)) +
-                    ",\"bindingRole\":" + GateQuote(role.ToString()) + ",\"boundReferenceEquals\":" + GateBool(System.Object.ReferenceEquals(collider, bound)) +
-                    ",\"boundColliderId\":" + (bound != null ? bound.GetInstanceID().ToString() : "null") + ",\"boundColliderPath\":" + (bound != null ? GatePath(bound.transform) : "null") +
-                    ",\"parentZombieReferenceEqualsTarget\":" + GateBool(System.Object.ReferenceEquals(owner, hedef)) + ",\"parentZombieId\":" + (owner != null ? owner.GetInstanceID().ToString() : "null") +
-                    ",\"isChildOfTarget\":" + GateBool(tr.IsChildOf(hedef.transform)) + ",\"shapeProvenance\":\"runtime_observed;creation_files_bound_by_inputHash_manifest;not_persistent_prefab_ID\"" +
-                    ",\"instanceId\":" + collider.GetInstanceID() + ",\"name\":" + GateQuote(collider.name) +
-                    ",\"type\":" + GateQuote(collider.GetType().FullName) + ",\"enabled\":" + GateBool(collider.enabled) +
-                    ",\"isTrigger\":" + GateBool(collider.isTrigger) + ",\"activeSelf\":" + GateBool(collider.gameObject.activeSelf) +
-                    ",\"activeInHierarchy\":" + GateBool(collider.gameObject.activeInHierarchy) +
-                    ",\"originInBounds_AABB_ONLY\":" + GateBool(bounds.Contains(sampleOrigin)) +
-                    ",\"actualInside\":\"UNKNOWN\",\"bounds\":" + JsonUtility.ToJson(bounds) +
-                    ",\"boundsCenter\":" + JsonUtility.ToJson(bounds.center) + ",\"boundsExtents\":" + JsonUtility.ToJson(bounds.extents) +
-                    ",\"localPosition\":" + JsonUtility.ToJson(tr.localPosition) + ",\"localRotation\":" + JsonUtility.ToJson(tr.localRotation) +
-                    ",\"localScale\":" + JsonUtility.ToJson(tr.localScale) + ",\"worldPosition\":" + JsonUtility.ToJson(tr.position) +
-                    ",\"worldRotation\":" + JsonUtility.ToJson(tr.rotation) + ",\"worldScale\":" + JsonUtility.ToJson(tr.lossyScale) +
-                    ",\"localToWorldMatrix\":" + JsonUtility.ToJson(tr.localToWorldMatrix) + "}";
-            }
-            string GateSnapshot(string branch, string rayStatus, Vector3 sampleOrigin, Vector3 sampleAim,
-                float sampleSpread, float samplePitch, float headDistance, float verticalAllowance,
-                int rayX, int rayY, Vector3 rayDirection, RaycastHit observedHit, int beforeFrame, double beforeFixedTime, float beforeRealtime, bool beforeFixedStep, int afterFrame, double afterFixedTime, float afterRealtime, bool afterFixedStep)
-            {
-                Bounds headBounds = kafa.bounds;
-                string hitValidity = rayStatus == "NOT_EVALUATED" ? "NOT_EVALUATED" : "NOT_VALID_QUERY_FALSE";
-                // observedHit is output of the original query; false-query fields are deliberately not consumed.
-                string queryHit = "null";
-                return "{\"collectionTiming\":\"query_before_and_immediate_after_clocks;fields_collected_at_snapshot_sequentially_not_atomic\",\"queryBefore\":" +
-                    (rayStatus == "NOT_EVALUATED" ? "null" : "{\"frame\":" + beforeFrame + ",\"fixedTime\":" + GateDouble(beforeFixedTime) + ",\"realtime\":" + GateFloat(beforeRealtime) + ",\"inFixedTimeStep\":" + GateBool(beforeFixedStep) + "}") +
-                    ",\"queryImmediateAfter\":" + (rayStatus == "NOT_EVALUATED" ? "null" : "{\"frame\":" + afterFrame + ",\"fixedTime\":" + GateDouble(afterFixedTime) + ",\"realtime\":" + GateFloat(afterRealtime) + ",\"inFixedTimeStep\":" + GateBool(afterFixedStep) + "}") +
-                    ",\"unityRandomStateAtSnapshot\":" + GateRandomState() +
-                    ",\"queryHitValidity\":" + GateQuote(hitValidity) + ",\"queryHit\":" + queryHit + ",\"physicsSnapshot\":" + GatePhysics() +
-                    ",\"targetLifecycle\":{\"componentId\":" + hedef.GetInstanceID() + ",\"gameObjectId\":" + hedef.gameObject.GetInstanceID() + ",\"path\":" + GatePath(hedef.transform) +
-                    ",\"health\":" + GateFloat(hedef.Health) + ",\"alive\":" + GateBool(hedef.IsAlive) + ",\"rising\":" + GateBool(hedef.IsRising) + ",\"pose\":" + GateQuote(hedef.Pose.ToString()) +
-                    ",\"enabled\":" + GateBool(hedef.enabled) + ",\"isActiveAndEnabled\":" + GateBool(hedef.isActiveAndEnabled) + ",\"activeSelf\":" + GateBool(hedef.gameObject.activeSelf) + ",\"activeInHierarchy\":" + GateBool(hedef.gameObject.activeInHierarchy) +
-                    ",\"poolGeneration\":\"UNKNOWN\",\"nativeActorPose\":\"UNKNOWN\"},\"runtimeAssemblyName\":" + GateQuote(gateRuntimeAssemblyName) + ",\"runtimeAssemblyLocation\":" + GateQuote(gateRuntimeAssemblyLocation) + ",\"runtimeAssemblySha256\":" + GateQuote(gateRuntimeAssemblyHash) +
-                    ",\"assemblyName\":" + GateQuote(gateAssemblyName) + ",\"assemblyLocation\":" + GateQuote(gateAssemblyLocation) +
-                    ",\"assemblySha256\":" + GateQuote(gateAssemblyHash) +
-                    ",\"sourceCommit\":" + GateQuote(gateSourceCommit) + ",\"sourceHash\":" + GateQuote(gateSourceHash) +
-                    ",\"inputHash\":" + GateQuote(gateInputHash) + ",\"fixtureHash\":" + GateQuote(gateFixtureHash) +
-                    ",\"executionId\":" + GateQuote(gateExecutionId) + ",\"branch\":" + GateQuote(branch) + ",\"rayStatus\":" + GateQuote(rayStatus) +
-                    ",\"frame\":" + Time.frameCount + ",\"time\":" + GateFloat(Time.time) +
-                    ",\"unscaledTime\":" + GateFloat(Time.unscaledTime) + ",\"realtime\":" + GateFloat(Time.realtimeSinceStartup) +
-                    ",\"sample\":" + gateSamples + ",\"origin\":" + JsonUtility.ToJson(sampleOrigin) +
-                    ",\"aim\":" + JsonUtility.ToJson(sampleAim) + ",\"spread\":" + GateFloat(sampleSpread) +
-                    ",\"pitch\":" + GateFloat(samplePitch) + ",\"recoilYaw\":" + GateFloat(silah.Classic.RecoilYawDegrees) +
-                    ",\"headDistance\":" + GateFloat(headDistance) + ",\"dikeyPay\":" + GateFloat(verticalAllowance) +
-                    ",\"signedBelowHeadClearance\":" + GateFloat(headBounds.min.y - (sampleOrigin.y + verticalAllowance)) +
-                    ",\"signedAboveHeadClearance\":" + GateFloat((sampleOrigin.y - verticalAllowance) - headBounds.max.y) +
-                    ",\"rangeDiagnosticGetterAtRejection\":" + GateFloat(silah.Classic.Range) +
-                    ",\"rayX\":" + rayX + ",\"rayY\":" + rayY + ",\"rayDirection\":" + JsonUtility.ToJson(rayDirection) +
-                    ",\"actualGovdeHazir\":" + (rayStatus == "EVALUATED_FALSE" ? "false" : "null") + ",\"head\":" + GateCollider(kafa, sampleOrigin, DD.Prototype.Damage.BodyRegion.Head) +
-                    ",\"upper\":" + GateCollider(govde, sampleOrigin, DD.Prototype.Damage.BodyRegion.UpperBody) + ",\"muzzleRaw\":" + JsonUtility.ToJson(silah.Muzzle.position) +
-                    ",\"aimRaw\":" + JsonUtility.ToJson(bag.AimDirection) + ",\"pose\":" + GateQuote(hedef.Pose.ToString()) +
-                    ",\"rising\":" + GateBool(hedef.IsRising) + ",\"target\":" + JsonUtility.ToJson(hedef.transform.position) +
-                    ",\"player\":" + JsonUtility.ToJson(_rig.transform.position) + ",\"aimPoint\":" + JsonUtility.ToJson(_rig.Aim.AimWorldPoint) +
-                    ",\"hasAimPoint\":" + GateBool(_rig.Aim.HasAimPoint) + "}";
-            }
-            try
-            {
-                string[] args = System.Environment.GetCommandLineArgs();
-                gateDiag = System.Array.IndexOf(args, "-ddGameFeelGateDiag") >= 0;
-                string GateArg(string key)
-                {
-                    int index = System.Array.IndexOf(args, key);
-                    return index >= 0 && index + 1 < args.Length ? args[index + 1] : "UNKNOWN";
-                }
-                if (gateDiag)
-                {
-                    gateSourceCommit = GateArg("-ddGateDiagSourceCommit");
-                    gateInputHash = GateArg("-ddGateDiagInputHash");
-                    gateFixtureHash = GateArg("-ddGateDiagFixtureHash");
-                    gateSourceHash = GateArg("-ddGateDiagSourceHash");
-                    gateExecutionId = GateArg("-ddGateDiagExecutionId");
-                }
-            }
-            catch (Exception) { gateDiagError = "UNKNOWN"; }
-            // END S02_COTIMED observer declarations
 
             var hasar = new List<EnemyDamageInfo>(16);
             var olum = new List<EnemyDeathInfo>(4);
@@ -1092,102 +900,35 @@ namespace DD.Prototype.Tests.PlayMode
             int hitStopOnce = HitStopService.Count;
             float unscaledOnce = Time.unscaledTime;
 
+            int atesKaresi = 0, kafaBeklemesi = 0;
             try
             {
                 float t0 = Time.realtimeSinceStartup;
                 while (hedef.IsAlive && Time.realtimeSinceStartup - t0 < 20f)
                 {
-                    // The formula below assumes BODY damage. A spawn/rise or hit-reaction head dip can
-                    // cross the fixed TP ray; wait for an actual body corridor, without changing the pose,
-                    // weapon spread, damage or critical routing. Let the normal aim input resolve first.
-                    _girdi.AtesBasili = false;
+                    // WP-069 B5 (C-00 30.09): the trigger is held only while the head sphere sits clear of the TP shot
+                    // line and its vertical spread (and the zombie is not rising), so the opening hits land on the body
+                    // and the FleshHit signal is exercised. At 7 m the spread is wider than the torso — a miss costs
+                    // nothing. A hit reaction can still dip the head into the line between two shots: that bare head
+                    // hit is real play (×2), and the asserts below take each hit by its region instead of assuming
+                    // three body hits (the 0af8269a / eb2f8bb1 reds: 12 + 24 and 12 + 12 + 24).
                     Vector3 nisan = govde.bounds.center;
                     nisan.y = _rig.transform.position.y + NisanDuzlemi;
                     _girdi.Imlec = EkranNoktasi(nisan);
-                    yield return null;
-                    if (!hedef.IsAlive) break;
-                    Vector3 origin = silah.Muzzle.position;
-                    origin.y = _rig.transform.position.y + silah.ShotRayHeight;
-                    Vector3 yon = bag.AimDirection;
-                    yon.y = 0f;
-                    yon = Quaternion.AngleAxis(silah.Classic.RecoilYawDegrees, Vector3.up) * yon.normalized;
-                    float spread = silah.Classic.CurrentSpreadDegrees;
-                    float pitch = spread * SpreadUtility.VerticalSpreadFactor;
-                    float kafaUzakligi = Vector3.Distance(origin, kafa.bounds.center) + kafa.bounds.extents.magnitude;
-                    float dikeyPay = kafaUzakligi * Mathf.Tan(pitch * Mathf.Deg2Rad);
-                    bool govdeHazir = !hedef.IsRising &&
-                        (origin.y + dikeyPay < kafa.bounds.min.y || origin.y - dikeyPay > kafa.bounds.max.y);
-                    // BEGIN S02_R2 head and aggregate observer
-                    if (gateDiag)
-                    {
-                        gateSamples++; lastOrigin = origin; lastAim = yon; lastSpread = spread;
-                        bool gateObservedRising = hedef.IsRising;
-                        if (gateObservedRising) riseRejected++;
-                        if (!gateObservedRising && !govdeHazir)
-                        {
-                            headRejected++;
-                            if (gateHeadRecord == null)
-                            {
-                                try { gateHeadRecord = GateSnapshot("original-head-predicate-false-not-rising", "NOT_EVALUATED", origin, yon, spread, pitch, kafaUzakligi, dikeyPay, 0, 0, Vector3.zero, default(RaycastHit), 0, 0d, 0f, false, 0, 0d, 0f, false); }
-                                catch (Exception) { gateHeadRecord = "{\"diagnostic\":\"UNKNOWN\"}"; gateDiagError = "UNKNOWN"; }
-                            }
-                        }
-                    }
-                    // END S02_R2 head and aggregate observer
-                    Vector3 sag = Vector3.Cross(Vector3.up, yon).normalized;
-                    // The convex upper-body collider must contain the centre and the TP spread extremes.
-                    for (int yatay = -1; yatay <= 1 && govdeHazir; yatay++)
-                    for (int dikey = -1; dikey <= 1 && govdeHazir; dikey++)
-                    {
-                        Vector3 sinir = Quaternion.AngleAxis(yatay * spread, Vector3.up) *
-                            Quaternion.AngleAxis(dikey * pitch, sag) * yon;
-                        // BEGIN S02_COTIMED query before clocks
-                        int gateBeforeFrame = 0, gateAfterFrame = 0;
-                        double gateBeforeFixedTime = 0d, gateAfterFixedTime = 0d;
-                        float gateBeforeRealtime = 0f, gateAfterRealtime = 0f;
-                        bool gateBeforeFixedStep = false, gateAfterFixedStep = false;
-                        bool gateObserveQuery = gateDiag && gateRayRecord == null;
-                        if (gateObserveQuery)
-                        {
-                            gateBeforeFrame = Time.frameCount; gateBeforeFixedTime = Time.fixedTimeAsDouble;
-                            gateBeforeRealtime = Time.realtimeSinceStartup; gateBeforeFixedStep = Time.inFixedTimeStep;
-                        }
-                        // END S02_COTIMED query before clocks
-                        govdeHazir = govde.Raycast(new Ray(origin, sinir), out RaycastHit gateQueryHit, silah.Classic.Range);
-                        // BEGIN S02_COTIMED query immediate after clocks
-                        if (gateObserveQuery)
-                        {
-                            gateAfterFrame = Time.frameCount; gateAfterFixedTime = Time.fixedTimeAsDouble;
-                            gateAfterRealtime = Time.realtimeSinceStartup; gateAfterFixedStep = Time.inFixedTimeStep;
-                        }
-                        // END S02_COTIMED query immediate after clocks
-                        // BEGIN S02_R2 ray rejection observer
-                        if (gateDiag && !govdeHazir)
-                        {
-                            rayRejected++; lastRayX = yatay; lastRayY = dikey;
-                            if (gateRayRecord == null)
-                            {
-                                try { gateRayRecord = GateSnapshot("existing-upper-Collider.Raycast-false", "EVALUATED_FALSE", origin, yon, spread, pitch, kafaUzakligi, dikeyPay, yatay, dikey, sinir, gateQueryHit, gateBeforeFrame, gateBeforeFixedTime, gateBeforeRealtime, gateBeforeFixedStep, gateAfterFrame, gateAfterFixedTime, gateAfterRealtime, gateAfterFixedStep); }
-                                catch (Exception) { gateRayRecord = "{\"diagnostic\":\"UNKNOWN\"}"; gateDiagError = "UNKNOWN"; }
-                            }
-                        }
-                        // END S02_R2 ray rejection observer
-                    }
-                    // BEGIN S02_R2 ready aggregate observer
-                    if (gateDiag && govdeHazir) readySamples++;
-                    // END S02_R2 ready aggregate observer
-                    if (govdeHazir && !govdeHazirLoglandi)
-                    {
-                        Debug.Log("[DD-TEST] gamefeel.body-ready rising=" + hedef.IsRising +
-                                  " origin=" + origin.ToString("F3") + " direction=" + yon.ToString("F3") +
-                                  " spread=" + spread + " head=" + kafa.bounds + " upper=" + govde.bounds);
-                        govdeHazirLoglandi = true;
-                    }
-                    _girdi.AtesBasili = govdeHazir;
+                    float atisY = _rig.transform.position.y + silah.ShotRayHeight;
+                    float dikeyAci = silah.Classic.CurrentSpreadDegrees * SpreadUtility.VerticalSpreadFactor;
+                    float kafaUzakligi = Vector3.Distance(silah.Muzzle.position, kafa.bounds.center) + kafa.bounds.extents.magnitude;
+                    float dikeyPay = kafaUzakligi * Mathf.Tan(dikeyAci * Mathf.Deg2Rad);
+                    bool kafaAcik = !hedef.IsRising &&
+                        (atisY + dikeyPay < kafa.bounds.min.y || atisY - dikeyPay > kafa.bounds.max.y);
+                    if (kafaAcik) atesKaresi++;
+                    else kafaBeklemesi++;
+                    _girdi.AtesBasili = kafaAcik;
                     yield return null;
                 }
 
-                Assert.IsFalse(hedef.IsAlive, "Zombi 20 sn'de öldürülemedi.");
+                Assert.IsFalse(hedef.IsAlive, "Zombi 20 sn'de öldürülemedi (ateş/kafa bekleme karesi " +
+                                              atesKaresi + "/" + kafaBeklemesi + ").");
                 yield return null;
 
                 // Ceset penceresi: 0.4 s daha cesede ateş — yeni giydirme, hasar olayı veya flesh cue YOK.
@@ -1250,30 +991,42 @@ namespace DD.Prototype.Tests.PlayMode
                 Debug.Log(rapor.ToString());
                 for (int i = 0; i < hasar.Count; i++) Debug.Log("[DD-TEST] gamefeel.hit " + i + " region=" + hasar[i].Result.Region + " hp=" + hasar[i].Result.HealthDamage + " killed=" + hasar[i].Result.Killed + " armored=" + hasar[i].Result.WasArmored + " tier=" + (i < tierler.Count ? tierler[i].ToString() : "-"));
 
-                int beklenenMinIsabet = Mathf.CeilToInt(ZombiCani / TufekHasari);   // 3
-                Assert.GreaterOrEqual(hasar.Count, beklenenMinIsabet, "İsabet sayısı formülün altında.\n" + rapor);
-                Assert.AreEqual(1, olum.Count, "EnemyDied " + olum.Count + " kez (tam 1).\n" + rapor);
-                Assert.AreEqual(1, olumTier, "Death tier'ı " + olumTier + " kez dressed (tam 1).\n" + rapor);
-                Assert.GreaterOrEqual(flesh, beklenenMinIsabet - 1, "FleshHit tier'ı ayrı sinyal üretmedi.\n" + rapor);
-
-                int killedSayisi = 0;
+                // WP-069 B5 (C-00 30.09): each hit is dressed by its region (HitFeedbackDirector.ResolveTier, REQ-125) — a
+                // bare body hit FleshHit, a bare head hit CriticalHit, the killing hit Death — and carries the regional
+                // damage. The kill comes on the hit that takes the running total to 34 HP: three body hits, or two
+                // when one of them is a head hit.
+                Assert.AreEqual(hasar.Count, tierler.Count, "Her EnemyDamaged tek bir dressed tier üretmeli.\n" + rapor);
+                int killedSayisi = 0, oldurmeyenGovde = 0;
+                float toplamHasar = 0f;
                 for (int i = 0; i < hasar.Count; i++)
                 {
-                    Assert.Greater(hasar[i].Result.HealthDamage, 0f, "Flesh hit can hasarı taşımıyor.");
-                    Assert.AreEqual(DD.Prototype.Damage.BodyRegion.UpperBody, hasar[i].Result.Region, "Fixture gerçek gövde isabeti üretmedi.");
-                    Assert.AreEqual(TufekHasari, hasar[i].Result.HealthDamage, "Gövde hasarı formülden farklı.");
-                    Assert.AreEqual(hasar[i].Result.Killed ? HitFeedbackTier.Death : HitFeedbackTier.FleshHit,
-                        tierler[i], "Gövde hasarı ile dressed tier eşleşmiyor.");
+                    DamageResult r = hasar[i].Result;
+                    bool kafaIsabeti = r.Region == DD.Prototype.Damage.BodyRegion.Head;
+                    Assert.IsFalse(r.WasArmored, "Çıplak hedefte zırh isabeti (" + i + ").\n" + rapor);
+                    Assert.AreEqual(BolgeHasari(r.Region), r.HealthDamage, 0.001f,
+                        "İsabet " + i + " (" + r.Region + ") hasarı bölge formülünden farklı.\n" + rapor);
+                    Assert.AreEqual(r.Killed ? HitFeedbackTier.Death : kafaIsabeti ? HitFeedbackTier.CriticalHit : HitFeedbackTier.FleshHit,
+                        tierler[i], "İsabet " + i + " (" + r.Region + ") dressed tier'ı bölgesiyle eşleşmiyor.\n" + rapor);
                     Assert.AreEqual(EnemyTier.Standard, hasar[i].Tier);
-                    if (hasar[i].Result.Killed) killedSayisi++;
+                    if (r.Killed) killedSayisi++;
+                    else if (!kafaIsabeti) oldurmeyenGovde++;
+                    toplamHasar += r.HealthDamage;
                 }
 
+                Assert.AreEqual(1, olum.Count, "EnemyDied " + olum.Count + " kez (tam 1).\n" + rapor);
+                Assert.AreEqual(1, olumTier, "Death tier'ı " + olumTier + " kez dressed (tam 1).\n" + rapor);
                 Assert.AreEqual(1, killedSayisi, "Killed=true olan EnemyDamaged sayısı 1 olmalı.");
+                Assert.IsTrue(hasar[hasar.Count - 1].Result.Killed, "Öldüren isabet son hasar olayı değil.\n" + rapor);
+                float olumOncesi = toplamHasar - hasar[hasar.Count - 1].Result.HealthDamage;
+                Assert.Less(olumOncesi, ZombiCani, "Can bitmişken zombi ölmedi.\n" + rapor);
+                Assert.GreaterOrEqual(toplamHasar, ZombiCani - 0.001f, "İsabetlerin toplamı canı karşılamadan öldü.\n" + rapor);
+                Assert.GreaterOrEqual(oldurmeyenGovde, 1, "Ölümden önce gövde isabeti yok; FleshHit sinyali sınanmadı.\n" + rapor);
+                Assert.AreEqual(oldurmeyenGovde, flesh, "FleshHit tier'ı ayrı sinyal üretmedi.\n" + rapor);
                 Assert.AreEqual(EnemyTier.Standard, olum[0].Tier);
                 Assert.IsFalse(olum[0].WasHeavyDeath);
                 Assert.AreEqual(0f, olum[0].SuggestedHitStop, 0.0001f, "Standard ölümü hit-stop önerdi (REQ-127).");
                 Assert.AreEqual(hitStopOnce, HitStopService.Count, "REQ-127: AR ile flesh hit/ölüm hit-stop üretti.");
-                Assert.GreaterOrEqual(ates, beklenenMinIsabet, "Ateş sesi cue'su eksik.");
+                Assert.GreaterOrEqual(ates, hasar.Count, "Ateş sesi cue'su eksik.");
                 Assert.GreaterOrEqual(fleshCue, 1, "FleshHit ses cue'su yok.");
                 Assert.AreEqual(1, olumCue, "EnemyDeath ses cue'su " + olumCue + " kez (tam 1).");
 
@@ -1334,38 +1087,6 @@ namespace DD.Prototype.Tests.PlayMode
             }
             finally
             {
-                // BEGIN S02_COTIMED final observer log
-                if (gateDiag)
-                {
-                    try
-                    {
-                        Debug.Log("[DD-TEST] gamefeel.gate-final samples=" + gateSamples + " rise/head/ray-rejected=" +
-                                  riseRejected + "/" + headRejected + "/" + rayRejected + " ready=" + readySamples +
-                                  " last-ray=" + lastRayX + "/" + lastRayY + " origin=" + lastOrigin.ToString("F3") +
-                                  " aim=" + lastAim.ToString("F3") + " spread=" + lastSpread +
-                                  " head=" + kafa.bounds + " upper=" + govde.bounds + " target=" + hedef.transform.position.ToString("F3") +
-                                  " alive/hp=" + hedef.IsAlive + "/" + hedef.Health + " rising=" + hedef.IsRising +
-                                  " player=" + _rig.transform.position.ToString("F3") + " player-hp=" + _can.Current +
-                                  " aim-point=" + _rig.Aim.AimWorldPoint.ToString("F3") + " has-aim=" + _rig.Aim.HasAimPoint +
-                                  " phase=" + (RunDirector.Instance != null ? RunDirector.Instance.Phase.ToString() : "none") +
-                                  " scale=" + Time.timeScale + " delta=" + Time.deltaTime + " frozen=" + RunFlowClock.IsFrozen +
-                                  " motor/aim-control=" + _rig.Motor.ControlEnabled + "/" + _rig.Aim.ControlEnabled +
-                                  " hasar/dressed=" + hasar.Count + "/" + tierler.Count);
-                        Debug.Log("[DD-GATE-COTIMED] {\"stage\":\"NOTE\",\"sourceCommit\":" + GateQuote(gateSourceCommit) +
-                            ",\"sourceHash\":" + GateQuote(gateSourceHash) + ",\"inputHash\":" + GateQuote(gateInputHash) +
-                            ",\"fixtureHash\":" + GateQuote(gateFixtureHash) + ",\"executionId\":" + GateQuote(gateExecutionId) +
-                            ",\"provenance\":" + GateProvenance() +
-                            ",\"startupUnityRandomState\":" + gateStartupUnityRandom + ",\"finallyUnityRandomState\":" + GateRandomState() +
-                            ",\"diagnosticError\":" + (gateDiagError == null ? "null" : GateQuote(gateDiagError)) +
-                            ",\"samples\":" + gateSamples + ",\"riseRejected\":" + riseRejected + ",\"headRejected\":" + headRejected +
-                            ",\"rayRejected\":" + rayRejected + ",\"readySamples\":" + readySamples +
-                            ",\"lastOrigin\":" + JsonUtility.ToJson(lastOrigin) + ",\"lastAim\":" + JsonUtility.ToJson(lastAim) + ",\"lastSpread\":" + GateFloat(lastSpread) +
-                            ",\"lastRayX\":" + lastRayX + ",\"lastRayY\":" + lastRayY + ",\"nativePose\":\"UNKNOWN\"" +
-                            ",\"firstHeadRejection\":" + (gateHeadRecord ?? "null") + ",\"firstRayFailure\":" + (gateRayRecord ?? "null") + "}");
-                    }
-                    catch (Exception) { /* Observer failure cannot replace the original test outcome. */ }
-                }
-                // END S02_COTIMED final observer log
                 ProjectileEvents.Spawned -= atisDinle;
                 DamageEvents.EnemyDamaged -= hDinle;
                 DamageEvents.EnemyDied -= oDinle;
