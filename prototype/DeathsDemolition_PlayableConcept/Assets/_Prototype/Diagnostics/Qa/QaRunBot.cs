@@ -1333,7 +1333,7 @@ namespace DD.Prototype.Qa
                 if (Time.unscaledTime - _lastTrace >= 1f)
                 {
                     _lastTrace = Time.unscaledTime;
-                    Log("t pos=" + V(pos) + " mode=" + cmd.Mode + " tgt=" + (target != null ? QaArgs.F(o.TargetDistance, 1) + "@" + V(o.TargetPosition) + (target.IsWaiting ? "/waiting" : "") + (target.IsRising ? "/rising" : "") : "-") + " los=" + (o.TargetLineOfSight ? 1 : 0) +
+                    Log("t pos=" + V(pos) + " time=" + QaArgs.F(Time.unscaledTime, 1) + " mode=" + cmd.Mode + " tgt=" + (target != null ? QaArgs.F(o.TargetDistance, 1) + "@" + V(o.TargetPosition) + (target.IsWaiting ? "/waiting" : "") + (target.IsRising ? "/rising" : "") : "-") + " los=" + (o.TargetLineOfSight ? 1 : 0) +
                         " mz=" + (_lastMuzzleClear ? 1 : 0) + " eye=" + (_lastEyeClear ? 1 : 0) + " blk=" + (_closeBlocker != null ? _closeBlocker.name + "@" + V(_closeBlocker.bounds.center) + "/" + V(_closeBlocker.bounds.size) : "-") +
                         " fire=" + (cmd.Fire ? 1 : 0) + " hp=" + QaArgs.F(rig.Health != null ? rig.Health.Normalized : -1f, 2) + " near=" + nearby + " kills=" + _summary.totalKills + "+" + (_current != null ? _current.kills : 0) +
                         (classic != null ? " ammo=" + classic.Ammo + "/" + classic.MagazineSize + "+" + (classic.ReserveInfinite ? "inf" : classic.ReserveAmmo.ToString()) + (classic.IsReloading ? "/reloading" : "") : ""));   // WP-078 C1: TP/FP rounds stalled with the trigger idle
@@ -1652,7 +1652,7 @@ namespace DD.Prototype.Qa
                     _unstickStart = Time.unscaledTime; _unstickUntil = Time.unscaledTime + 5.6f; _unstickAnchor = pos;
                     _unstickPhase = (_unstickPhase + 22.5f) % 45f;
                     _summary.unstickSweeps++;
-                    Log("unstick-sweep pos=" + V(pos) + " (" + _sameSpotStalls + " recoveries at the same spot)");
+                    Log("unstick-sweep pos=" + V(pos) + " time=" + QaArgs.F(Time.unscaledTime, 1) + " (" + _sameSpotStalls + " recoveries at the same spot)");
                 }
                 _relocating = true;
                 // A measured movement stall needs a committed path; otherwise a clear muzzle
@@ -1663,7 +1663,7 @@ namespace DD.Prototype.Qa
                 _hasGoal = true;
                 _hunting = false;
                 _lastPathTime = -999f;
-                Log("stall-recovery mode=" + mode + " pos=" + V(pos) + " near=" + nearby + " goal=" + V(_goal));
+                Log("stall-recovery mode=" + mode + " pos=" + V(pos) + " time=" + QaArgs.F(Time.unscaledTime, 1) + " near=" + nearby + " goal=" + V(_goal));   // WP-078 K6: time for tools/qa/stuck_clusters.py
             }
 
             private void SampleAllocation()
