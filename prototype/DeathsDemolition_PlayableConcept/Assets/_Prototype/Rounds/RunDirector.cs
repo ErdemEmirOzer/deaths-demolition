@@ -240,6 +240,7 @@ namespace DD.Prototype.Rounds
             _build.BeginRun(_runId, WeaponRegistry.SelectedWeapon);
             // WP-077 B2b: the meta PATH's passives for this run (read once; the run never writes the profile).
             _shop.Meta = MetaPathRules.RunModifiers(ProfileService.Current, ProfileProgression.NameOf(WeaponRegistry.SelectedWeapon));
+            _shop.BeginRunTree(_runId, Config);   // R1-B RT7: the run's tree exists from the first frame (links, effects, summary)
 
             PlayerRig rig = PlayerRegistry.Primary;
             if (rig != null && rig.Health != null)
@@ -793,18 +794,22 @@ namespace DD.Prototype.Rounds
                 GoldUnspent = wallet != null ? wallet.Balance : 0,
                 UpgradesPurchased = _stats.UpgradesPurchased,
                 RerollsUsed = _stats.RerollsUsed,
-                TreeKeystones = _shop.Tree.OwnedCount(RunTreeNodeKind.BranchKeystone) + _shop.Tree.OwnedCount(RunTreeNodeKind.WeaponSeal),
-                TreeCapstones = _shop.Tree.OwnedCount(RunTreeNodeKind.Capstone),
-                TreeHearthStacks = _shop.Tree.HearthStacks,
-                TreeLinkII = _shop.Tree.IsBuilt && _shop.Tree.Graph.LinkIIIndex >= 0 && _shop.Tree.IsOwned(_shop.Tree.Graph.LinkIIIndex) ? 1 : 0,
-                TreeWeaponCapstone = _shop.Tree.IsBuilt && _shop.Tree.IsOwned(_shop.Tree.Graph.WeaponCapstoneIndex) ? 1 : 0,
-                TreeFullLanes = _shop.Tree.FullLaneCount(_shop.BuildForTree),
+                // R1-B RT7: only THIS run's tree feeds the summary (the one-time capstone / Link II Ash milestones read it).
+                TreeKeystones = ThisRunTree ? _shop.Tree.OwnedCount(RunTreeNodeKind.BranchKeystone) + _shop.Tree.OwnedCount(RunTreeNodeKind.WeaponSeal) : 0,
+                TreeCapstones = ThisRunTree ? _shop.Tree.OwnedCount(RunTreeNodeKind.Capstone) : 0,
+                TreeHearthStacks = ThisRunTree ? _shop.Tree.HearthStacks : 0,
+                TreeLinkII = ThisRunTree && _shop.Tree.Graph.LinkIIIndex >= 0 && _shop.Tree.IsOwned(_shop.Tree.Graph.LinkIIIndex) ? 1 : 0,
+                TreeWeaponCapstone = ThisRunTree && _shop.Tree.IsOwned(_shop.Tree.Graph.WeaponCapstoneIndex) ? 1 : 0,
+                TreeFullLanes = ThisRunTree ? _shop.Tree.FullLaneCount(_shop.BuildForTree) : 0,
 
                 RunDuration = _stats.RunTime,
                 EndReason = reason,
                 KilledBy = killedBy
             };
         }
+
+        /// <summary>R1-B RT7: the shop's tree belongs to the current run (built, same run id).</summary>
+        private bool ThisRunTree => _shop.Tree.IsBuilt && _shop.Tree.RunId == _runId;
 
         // ------------------------------------------------------------------ wiring
 

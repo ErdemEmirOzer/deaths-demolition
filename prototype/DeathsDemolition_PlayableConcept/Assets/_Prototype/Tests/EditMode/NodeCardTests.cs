@@ -413,6 +413,25 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void RT7_KosuBasindaAgacKurulur_IlkDukkanBaglariSilmez()
+        {
+            // R1-B RT7 (C-00 30.09): the run's tree is built at the run start; a Special picked up before the first shop keeps
+            // naming the links (the first Open no longer rebuilds it), and the next run starts from an empty tree.
+            _dukkan.BeginRunTree(Kosu, _config);
+            Assert.IsTrue(_dukkan.Tree.IsBuilt);
+            Assert.AreEqual(Kosu, _dukkan.Tree.RunId);
+            _dukkan.Tree.OnSpecialPickedUp("sw_arc");
+            Ac(1);
+            Assert.AreEqual("sw_arc", _dukkan.Tree.LinkedSpecial, "ilk dükkân bağları silmez");
+            Assert.IsTrue(_dukkan.Tree.MarkOwned(I("purse")));
+
+            _dukkan.BeginRunTree(Kosu + 1, _config);
+            Assert.AreEqual(Kosu + 1, _dukkan.Tree.RunId);
+            Assert.AreEqual(string.Empty, _dukkan.Tree.LinkedSpecial, "yeni koşu önceki koşunun bağlarını taşımaz");
+            Assert.IsFalse(_dukkan.Tree.IsOwned(I("purse")), "yeni koşu önceki koşunun düğümlerini taşımaz");
+        }
+
+        [Test]
         public void Nisan_TurdakiHak_AgacVerisinden()
         {
             // M-36 (C-00 30.09): the per-round pin assignments live in run-tree.json (pin.perRound, DEC-098 K2 = 1).

@@ -199,6 +199,17 @@ namespace DD.Prototype.Rounds
         /// </summary>
         public RunTreeState Tree { get; } = new RunTreeState();
 
+        /// <summary>
+        /// R1-B RT7 (C-00 30.09): builds this run's tree at the run start (RunDirector.StartRun), so nothing reads the previous
+        /// run's tree before the first shop, and a Special picked up before the first shop keeps naming the links (the first
+        /// Open no longer rebuilds a tree whose run id already matches).
+        /// </summary>
+        public void BeginRunTree(int runId, PrototypeConfig config)
+        {
+            ClassicWeaponId weapon = WeaponProvider != null ? WeaponProvider() : WeaponRegistry.SelectedWeapon;
+            Tree.Begin(Mathf.Max(0, runId), weapon, config, Meta);
+        }
+
         /// <summary>WP-077: the equipped weapon the tree is built for. Null = WeaponRegistry.SelectedWeapon.</summary>
         public Func<ClassicWeaponId> WeaponProvider { get; set; }
 
