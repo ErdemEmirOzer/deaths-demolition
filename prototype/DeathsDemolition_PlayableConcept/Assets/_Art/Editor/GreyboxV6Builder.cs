@@ -495,14 +495,26 @@ namespace DD.Art.Pipeline.EditorTools
             return true;
         }
 
+        /// <summary>
+        /// WP-076 B9 (M-28, C-00 30.09; S-05 handshake): the builder's reserved zones — the R7 walls + island block and the
+        /// karesansui — where no tree, and no spawn gate, goes. Shared with S-03's SpawnGateCoverageProbe so a gate set is
+        /// judged against the same rule the builder applies.
+        /// </summary>
+        public static bool InReservedZone(Vector2 p, out string zone)
+        {
+            if (p.x > 25f && p.x < 47f && p.y > -10f && p.y < 12f) { zone = "R7"; return true; }           // R7 walls + island
+            if (p.x > 10f && p.x < 30f && p.y > -32f && p.y < -14f) { zone = "Karesansui"; return true; }   // karesansui
+            zone = null;
+            return false;
+        }
+
         private static bool TreeSpotClear(Vector2 p)
         {
             if (Mathf.Abs(p.x) > HalfExtent - 2f || Mathf.Abs(p.y) > HalfExtent - 2f) return false;
             foreach (Vector2[] path in GardenPaths) if (DistanceToPolyline(p, path) < 2.5f) return false;
             foreach (Corridor c in Corridors) if (DistanceToPolyline(p, c.Path) < c.Width * 0.5f + 1.5f) return false;
             foreach (Room r in Rooms) if (p.x > r.X0 - 2f && p.x < r.X1 + 2f && p.y > r.Z0 - 2f && p.y < r.Z1 + 2f) return false;
-            if (p.x > 25f && p.x < 47f && p.y > -10f && p.y < 12f) return false;   // R7 walls + island
-            if (p.x > 10f && p.x < 30f && p.y > -32f && p.y < -14f) return false;   // karesansui
+            if (InReservedZone(p, out _)) return false;   // R7 walls + island, karesansui (WP-076 B9: shared with the spawn probe)
             foreach (Gate gate in Gates) if (Vector2.Distance(p, gate.Position) < 4f) return false;
             foreach (Vector2 w in WeaponPositions) if (Vector2.Distance(p, w) < 3f) return false;
             return true;
