@@ -385,7 +385,14 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual("1.234,5", UiStrings.Number(1234.5f, "#,##0.0"), "group and decimal trade places, no culture");
             Assert.AreEqual("4,5 sn", UiRunTreePanel.StatText(4.5f, "s"));
             Assert.AreEqual("2,5 HP/sn", UiRunTreePanel.StatText(2.5f, "HP/s"));
-            Assert.AreEqual("−10 %", UiRunTreePanel.StatText(-10f, "%"));
+            // AD d109 SHOULD-7 (C-00 01.10): Turkish writes the percent sign first, the sign of the change in front of it.
+            Assert.AreEqual("−%10", UiRunTreePanel.StatText(-10f, "%"));
+            Assert.AreEqual("+%20", UiRunTreePanel.StatText(20f, "%"));
+            Assert.AreEqual("%80", UiStrings.Percent(80));
+            UiStrings.Language = UiStrings.English;
+            Assert.AreEqual("80%", UiStrings.Percent(80));
+            Assert.AreEqual("+20 %", UiRunTreePanel.StatText(20f, "%"), "English keeps the tree's spaced unit");
+            UiStrings.Language = UiStrings.Turkish;
             foreach (UpgradeBranch branch in System.Enum.GetValues(typeof(UpgradeBranch)))
             {
                 string detail = UiUpgradeCopy.TierDescription(branch, 1, "");

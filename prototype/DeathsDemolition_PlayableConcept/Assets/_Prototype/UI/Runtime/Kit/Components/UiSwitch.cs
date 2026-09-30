@@ -72,7 +72,6 @@ namespace DD.Prototype.UI
             label.fontSize = UiTokens.FontSize(UiType.Body);
             RectTransform labelRect = label.rectTransform;
             labelRect.offsetMin = new Vector2((int)UiSpace.XL - 4f, labelRect.offsetMin.y);
-            labelRect.offsetMax = new Vector2(-(TrackWidth + WordWidth + (int)UiSpace.L + (int)UiSpace.S), labelRect.offsetMax.y);
 
             _track = UiFactory.NewImage("Track", row.transform, UiColor.SurfaceInset, UiSprites.Chip);
             var trackRect = (RectTransform)_track.transform;
@@ -80,7 +79,6 @@ namespace DD.Prototype.UI
             trackRect.anchorMax = new Vector2(1f, 0.5f);
             trackRect.pivot = new Vector2(1f, 0.5f);
             trackRect.sizeDelta = new Vector2(TrackWidth, TrackHeight);
-            trackRect.anchoredPosition = new Vector2(-(int)UiSpace.L - WordWidth - (int)UiSpace.S, 0f);
 
             // The track's own edge (1 px BorderStrong rim): the OFF track is an inset well on a
             // dark row, and a well without an edge disappears (kit sheet k1).
@@ -104,13 +102,22 @@ namespace DD.Prototype.UI
             wordRect.anchorMin = new Vector2(1f, 0f);
             wordRect.anchorMax = new Vector2(1f, 1f);
             wordRect.pivot = new Vector2(1f, 0.5f);
-            wordRect.sizeDelta = new Vector2(WordWidth, 0f);
+            // AD d109 SHOULD-7: the word is the language's (common.on / common.off - TR "AÇIK" / "KAPALI"), so its box is
+            // the wider of the two words, never less than the English 44 px; the track and the label follow it.
+            float wordWidth = Mathf.Max(WordWidth, Mathf.Ceil(Mathf.Max(_word.GetPreferredValues(OnWord()).x, _word.GetPreferredValues(OffWord()).x)));
+            wordRect.sizeDelta = new Vector2(wordWidth, 0f);
             wordRect.anchoredPosition = new Vector2(-(int)UiSpace.L, 0f);
+            trackRect.anchoredPosition = new Vector2(-(int)UiSpace.L - wordWidth - (int)UiSpace.S, 0f);
+            labelRect.offsetMax = new Vector2(-(TrackWidth + wordWidth + (int)UiSpace.L + (int)UiSpace.S), labelRect.offsetMax.y);
 
             _word.transform.SetAsLastSibling();
             row.SetOnClick(Toggle);
             Apply(false);
         }
+
+        private static string OnWord() => UiStrings.Get("common.on", "ON");
+
+        private static string OffWord() => UiStrings.Get("common.off", "OFF");
 
         private float KnobTarget(bool on)
         {
@@ -138,7 +145,7 @@ namespace DD.Prototype.UI
 
         private void Apply(bool animate)
         {
-            _word.text = _value ? "ON" : "OFF";
+            _word.text = _value ? OnWord() : OffWord();
             _word.color = UiTokens.Get(_value ? UiColor.TextPrimary : UiColor.TextSecondary);
             _track.color = UiTokens.Get(_value ? UiColor.StateSuccess : UiColor.SurfaceInset);
             var to = new Vector2(KnobTarget(_value), 0f);

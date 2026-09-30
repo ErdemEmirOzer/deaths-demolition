@@ -72,6 +72,25 @@ namespace DD.Prototype.UI
             return Language == Turkish ? SwapSeparators(text) : text;
         }
 
+        /// <summary>
+        /// AD d109 SHOULD-7: a percentage in the language's order. English "80%" (or "+8 %" where a screen spaces its units,
+        /// <paramref name="spaced"/>); Turkish "%80", a sign staying in front ("+%8", "−%10"). <paramref name="number"/> is
+        /// already formatted (Number, signed).
+        /// </summary>
+        public static string Percent(string number, bool spaced = false)
+        {
+            if (Language == Turkish)
+            {
+                bool signed = !string.IsNullOrEmpty(number) && (number[0] == '+' || number[0] == '\u2212' || number[0] == '-');
+                return signed ? number[0] + "%" + number.Substring(1) : "%" + number;
+            }
+
+            return spaced ? number + " %" : number + "%";
+        }
+
+        /// <summary>A whole percentage in the language's order (EN "80%", TR "%80").</summary>
+        public static string Percent(int value) => Percent(Number(value));
+
         /// <summary>An integer, invariant digits (no separator to trade).</summary>
         public static string Number(int value)
         {

@@ -234,7 +234,9 @@ namespace DD.Prototype.UI
                 return UiStrings.Upper(UiStrings.Format("results.killer.self", "weapon", weapon, "YOUR OWN {weapon}"));
             }
 
-            return UiStrings.Upper(UiFactory.Clip(sourceId, 32));
+            // An unmapped source is an identifier: invariant upper case, never the language's casing (AD d109 SHOULD-8: tr-TR
+            // made "ui-capture" read "Uİ-CAPTURE").
+            return UiFactory.Clip(sourceId, 32).ToUpperInvariant();
         }
 
         /// <summary>M-67: the weapon / Special name when <paramref name="sourceId"/> is a weapon id (weapon.&lt;id&gt;.name), else null.</summary>

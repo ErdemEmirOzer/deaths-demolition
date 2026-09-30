@@ -883,7 +883,7 @@ namespace DD.Prototype.UI
 
         private static string Percent(float value)
         {
-            return Mathf.RoundToInt(value * 100f) + "%";
+            return UiStrings.Percent(Mathf.RoundToInt(value * 100f));
         }
 
         private static string[] QualityNames()
@@ -1141,7 +1141,7 @@ namespace DD.Prototype.UI
             InputPreferences prefs = InputPreferencesStore.Current;
             rightStack.Gap(UiSpace.M);
             Slider deadzone = AddSettingSliderIn(ref rightStack, right, UiStrings.Get("controls.deadzone", "STICK DEAD ZONE"), null, 0f, 0.5f, prefs.StickDeadzone,
-                v => Mathf.RoundToInt(v * 100f) + "%", v => UpdatePreferences(p => p.StickDeadzone = v));
+                v => UiStrings.Percent(Mathf.RoundToInt(v * 100f)), v => UpdatePreferences(p => p.StickDeadzone = v));
             // Slice 9 · E3 T3 (direction E7): what the dead zone does, in one sentence under its slider.
             AddCaptionUnder(ref rightStack, right, "DeadzoneNote",
                 UiStrings.Get("controls.deadzone.note", "How far a stick moves before it counts. Raise it if your aim drifts on its own."), 2, UiSpace.S);

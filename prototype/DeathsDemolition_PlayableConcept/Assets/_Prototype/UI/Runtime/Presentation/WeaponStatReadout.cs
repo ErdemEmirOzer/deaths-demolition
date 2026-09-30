@@ -136,7 +136,7 @@ namespace DD.Prototype.UI
                 case Handling:
                 case Armour:
                 case Headshot: return Fmt("stat.fmt.multiplier", "×{value}", Num(v));
-                case Stagger: return Mathf.RoundToInt(v * 100f).ToString(Invariant) + "%";
+                case Stagger: return UiStrings.Percent(Mathf.RoundToInt(v * 100f));
                 case Penetration: return Fmt("stat.fmt.bodies", "{value} BODIES", Num(v));
                 case SelfDamage: return Num(v);
                 default: return Num(v);

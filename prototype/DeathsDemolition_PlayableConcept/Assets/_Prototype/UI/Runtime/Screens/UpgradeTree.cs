@@ -1603,8 +1603,10 @@ namespace DD.Prototype.UI
                     return UiStrings.Format("stat.fmt.hp", "value", signed, "{value} HP");
                 case "HP/s":
                     return UiStrings.Format("stat.fmt.hp_per_second", "value", signed, "{value} HP/s");
+                case "%":
+                    return UiStrings.Percent(signed, true);   // EN "+20 %", TR "+%20" (AD d109 SHOULD-7)
                 default:
-                    return signed + " " + unit;   // "%" and any unit S-04 adds later
+                    return signed + " " + unit;   // any unit S-04 adds later
             }
         }
 

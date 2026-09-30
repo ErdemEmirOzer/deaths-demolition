@@ -262,7 +262,7 @@ namespace DD.Prototype.UI
             float v = Quantise(Mathf.Clamp(value, _min, _max));
             bool changed = !Mathf.Approximately(v, _current) || !_built;
             _current = v;
-            _value.text = _format != null ? _format(v) : Mathf.RoundToInt(Normalised(v) * 100f) + "%";
+            _value.text = _format != null ? _format(v) : UiStrings.Percent(Mathf.RoundToInt(Normalised(v) * 100f));
 
             float t = Normalised(v);
             float x = t * Mathf.Max(1f, RailWidthOrLayout());

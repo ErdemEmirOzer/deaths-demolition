@@ -115,6 +115,15 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual("ULTRA ZOMBIE", ResultsViewModel.KillerName("Zombie.Ultra.BiteGrab"));
             Assert.AreEqual("ELITE ZOMBIE", ResultsViewModel.KillerName("Zombie.Elite"));
             Assert.AreEqual("UI-CAPTURE", ResultsViewModel.KillerName("ui-capture"), "an unknown id prints as it came");
+            UiStrings.Language = UiStrings.Turkish;
+            try
+            {
+                Assert.AreEqual("UI-CAPTURE", ResultsViewModel.KillerName("ui-capture"), "an id keeps invariant casing in Turkish (no İ)");
+            }
+            finally
+            {
+                UiStrings.Language = UiStrings.English;
+            }
             Assert.AreEqual(string.Empty, ResultsViewModel.KillerName(null));
         }
 
