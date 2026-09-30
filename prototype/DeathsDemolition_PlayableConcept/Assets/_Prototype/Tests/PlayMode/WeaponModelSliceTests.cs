@@ -710,6 +710,74 @@ namespace DD.Prototype.Tests.PlayMode
         }
 
         /// <summary>
+        /// WP-069 B5-4 (C-00 30.09, AP-021 v003.3: smg_1 sight line +5 mm, every sight_ads re-derived by P-07's eye rule) · ADS on
+        /// every classic in first person: the model's sight_ads lands on the eye, so the rear sight and the front sight sit on the
+        /// crosshair (< 3 px at 1920 × 1080, the ar_1 check's bar). A weapon without both sight sockets (a scope) is reported, not
+        /// failed. Logged per weapon: rear / front offset (px) and eye → rear sight / sight height from the sockets (cm).
+        /// </summary>
+        [UnityTest]
+        [Timeout(420000)]
+        public IEnumerator FP_ADS_HerSilahta_GezVeArpacikNisangahta()
+        {
+            yield return Kur();
+            Transform mount = _s.Rig.GetComponentInChildren<PlayerWeaponBinding>().WeaponMount;
+            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.FirstPerson, instant: true);
+            yield return SpecialWeaponSahne.Kareler(60);
+            var camRig = DD.Prototype.CameraSystem.PrototypeCameraRig.Active;
+            Camera vm = camRig.ViewmodelCamera;
+            Assert.IsNotNull(vm, "FP'de görüntü modeli kamerası yok.");
+            camRig.Camera.aspect = KareW / (float)KareH;
+            vm.aspect = KareW / (float)KareH;
+            var centre = new Vector2(KareW * 0.5f, KareH * 0.5f);
+            var report = new List<string>();
+            var wrong = new List<string>();
+            int measured = 0;
+            try
+            {
+                foreach (WeaponDefinition d in Arsenal.All)
+                {
+                    if (d == null || !d.enabled || d.slot != WeaponSlotKind.Classic) continue;
+                    _s.Controller.EquipClassic(d.id, _s.Config);
+                    yield return Dinlenme(mount, d.weaponId);
+                    yield return SpecialWeaponSahne.Kareler(10);
+                    Transform rig = mount.Find("ClassicWeaponRig");
+                    Transform rear = rig != null ? WeaponSocketContract.Find(rig, "sight_rear") : null;
+                    Transform front = rig != null ? WeaponSocketContract.Find(rig, "sight_front") : null;
+                    Transform ads = rig != null ? WeaponSocketContract.Find(rig, d.presentation.sockets.sightAds) : null;
+                    if (rear == null || front == null || ads == null)
+                    {
+                        report.Add(d.weaponId + ": no open sights (rear " + (rear != null) + ", front " + (front != null) + ", ads " + (ads != null) + ") — skipped");
+                        continue;
+                    }
+
+                    _s.Girdi.OdakBasili = true;
+                    yield return new WaitForSeconds(d.accuracy.adsSeconds + 0.3f);
+                    Vector2 pr = Ekran(vm, rear.position), pf = Ekran(vm, front.position);
+                    float eyeToRear = Vector3.Distance(ads.position, rear.position) * 100f;
+                    float sightHeight = rig.InverseTransformPoint(rear.position).y * 100f;
+                    string line = d.weaponId + ": rear " + (pr - centre).magnitude.ToString("0.0") + " px, front " + (pf - centre).magnitude.ToString("0.0") +
+                                  " px, eye→rear " + eyeToRear.ToString("0.0") + " cm, sight height " + sightHeight.ToString("0.0") + " cm, ads01 " +
+                                  DD.Prototype.CameraSystem.FpAdsLens.Ads01.ToString("0.00");
+                    report.Add(line);
+                    measured++;
+                    if ((pr - centre).magnitude >= 3f || (pf - centre).magnitude >= 3f || DD.Prototype.CameraSystem.FpAdsLens.Ads01 < 0.999f) wrong.Add(line);
+                    _s.Girdi.OdakBasili = false;
+                    yield return new WaitForSeconds(d.accuracy.adsSeconds + 0.4f);
+                }
+            }
+            finally
+            {
+                _s.Girdi.OdakBasili = false;
+                camRig.Camera.ResetAspect();
+                vm.ResetAspect();
+            }
+
+            Debug.Log("[DD-TEST] wp069.adsall " + string.Join(" | ", report));
+            Assert.Greater(measured, 0, "hiçbir silah ölçülmedi");
+            Assert.IsEmpty(wrong, "ADS'de gez / arpacık nişangâhta değil: " + string.Join(" | ", wrong));
+        }
+
+        /// <summary>
         /// WP-069 × WP-071 B4b (C-00 25.09) · the check round with the FP arms drawn (main dedf06fa): every classic and both
         /// Specials in first person. A weapon with an FP set (ar_1 / ar_2 / smg_1) is held by the arms — its rest on fpView, the
         /// grip point on the arms' socket_weapon_r (the right hand holds it where the TP hand does), the left hand on P-06's
