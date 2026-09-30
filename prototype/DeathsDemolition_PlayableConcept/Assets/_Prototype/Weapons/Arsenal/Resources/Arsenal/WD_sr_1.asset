@@ -56,7 +56,7 @@ MonoBehaviour:
     maxRange: 90
     maxLifetimeSeconds: 0.71428573
     sweepRadius: 0
-    penetration: 4
+    penetration: 3
     penetrationDamageKeep: 0.9
     falloffStart: 60
     falloffEnd: 90
