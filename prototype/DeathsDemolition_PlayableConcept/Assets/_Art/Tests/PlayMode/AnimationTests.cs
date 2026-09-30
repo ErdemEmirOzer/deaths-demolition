@@ -1107,6 +1107,24 @@ namespace DD.Art.Tests.PlayMode
 
             GC.Collect();
             yield return null; yield return null;
+#if UNITY_EDITOR
+            // WP-071 (C-00 30.09, Kalabalik40 root cause): the old monoDelta read the heap in 8 KB pages, and the editor allocates on
+            // its own every frame (URP SceneViewDrawMode.UpdateSceneViewStates 48 B/frame after a V6 run) — 0 or 8192 by test order.
+            // Now exact and owner-attributed: a profiler binary log over the window, read back here; counted = every GC.Alloc under
+            // the PlayerLoop root, except the test runner's subtree (PlaymodeTestsController — it holds this test's body). Positive
+            // control: GcProbe64 (a DD.* behaviour, 64 B in Update) is in the window and must be seen; everything else must be 0.
+            var probeGo = new GameObject("WP071_GcProbe64");
+            _temp.Add(probeGo);
+            GcProbe64 gcProbe = probeGo.AddComponent<GcProbe64>();
+            string rawBase = System.IO.Path.Combine(Application.temporaryCachePath, "kalabalik40-gc-" + System.Diagnostics.Process.GetCurrentProcess().Id);
+            string raw = rawBase + ".raw";
+            if (System.IO.File.Exists(raw)) System.IO.File.Delete(raw);
+            Profiler.logFile = rawBase;
+            Profiler.enableBinaryLog = true;
+            Profiler.enabled = true;
+            yield return null;
+            Assert.IsTrue(Profiler.enabled, "profiler kaydı açılamadı — ölçüm yok, geçme yok");
+#endif
             long monoBefore = Profiler.GetMonoUsedSizeLong();
             int gen0Before = GC.CollectionCount(0);
             for (int frame = 0; frame < 240; frame++)
@@ -1117,15 +1135,25 @@ namespace DD.Art.Tests.PlayMode
 
             long delta = Profiler.GetMonoUsedSizeLong() - monoBefore;
             int gen0 = GC.CollectionCount(0) - gen0Before;
-            // Positive control: the measurement sees a known allocation.
-            long ctrlBefore = Profiler.GetMonoUsedSizeLong();
-            var bait = new byte[256 * 1024];
-            long ctrl = Profiler.GetMonoUsedSizeLong() - ctrlBefore;
-            GC.KeepAlive(bait);
-            Debug.Log("[DD-TEST] wp018.gc crowd=40 frames=240 monoDelta=" + delta + " gen0=" + gen0 + " control=" + ctrl);
-            Assert.Greater(ctrl, 128 * 1024, "pozitif kontrol: ölçüm ayırmayı görmüyor");
+#if UNITY_EDITOR
+            Profiler.enabled = false;
+            Profiler.enableBinaryLog = false;
+            Profiler.logFile = "";
+            int probeFrames = gcProbe.Frames;
+            UnityEngine.Object.Destroy(probeGo);
+            yield return null;
+            GcOwners owners = GcOwners.Read(raw);
+            try { System.IO.File.Delete(raw); } catch (System.IO.IOException) { }
+            Debug.Log("[DD-TEST] wp018.gc crowd=40 frames=240 profilerFrames=" + owners.Frames + " phaseFrames=" + owners.PhaseFrames + " historyRaised=" + owners.HistoryRaised + " playerLoopBytes=" + owners.CountedBytes + " probeBytes=" + owners.ProbeBytes + " (probe frames " + probeFrames + ") excluded=" + owners.ExcludedBytes + " roots=[" + owners.Roots + "] excludedProbeChains:\n    " + owners.ExcludedProbeChains + "\n monoDelta(info)=" + delta + " gen0=" + gen0 + (owners.CountedBytes > 0 ? "\n" + owners.CountedOwners : ""));
+            Assert.IsTrue(owners.HistoryRaised, "profiler geçmişi büyütülemedi (ProfilerDriver.SetMaxFrameHistoryLength yok) — pencere tam okunamaz, geçme yok");
+            Assert.IsTrue(owners.Loaded, "profiler kaydı okunamadı: " + raw + " — ölçüm yok, geçme yok");
+            Assert.IsTrue(owners.SawPlayerLoop, "kayıtta oyuncu döngüsü evresi (Update.* …) yok — ölçüm yok, geçme yok (kökler: " + owners.Roots + ")");
+            Assert.GreaterOrEqual(owners.ProbeBytes, (long)probeFrames * 32 * 9 / 10, "pozitif kontrol: yöntem bilinçli 64 B/kare ayırmayı görmüyor");
             Assert.AreEqual(0, gen0, "kalabalık animasyon yolu gen0 toplama tetikledi");
-            Assert.LessOrEqual(delta, 4096, "animasyon yolu kare başına ayırıyor: " + delta + " B / 240 kare");
+            Assert.AreEqual(0L, owners.CountedBytes, "oyun döngüsü pencerede ayırıyor (DEC-088 GC 0):\n" + owners.CountedOwners);
+#else
+            Assert.Fail("GC ölçümü yalnız editörde (profiler okuyucu) — tanı politikası: atlama yok");
+#endif
 
             // Far step: forced far → the Animator is stepped by hand at ≤ 15 Hz, events keep coming.
             CharacterAnimatorLod.ForceFar = 1;
@@ -1145,6 +1173,96 @@ namespace DD.Art.Tests.PlayMode
             Assert.AreEqual(0, CharacterAnimatorLod.FarCount);
             Assert.IsTrue(visuals[0].Animator.enabled);
         }
+
+#if UNITY_EDITOR
+        /// <summary>Kalabalik40's positive control: a DD.* behaviour that allocates ~64 B every Update (byte[32]).</summary>
+        private sealed class GcProbe64 : MonoBehaviour
+        {
+            public int Frames;
+            private static object s_sink;
+            private void Update() { s_sink = new byte[32]; Frames++; }
+        }
+
+        /// <summary>GC.Alloc owners in a profiler binary log (main thread), by root: PlayerLoop counted, the test runner's subtree excluded.</summary>
+        private sealed class GcOwners
+        {
+            public bool Loaded, SawPlayerLoop;
+            public int Frames, PhaseFrames;
+            public bool HistoryRaised;
+            public long CountedBytes, ProbeBytes, ExcludedBytes;
+            public string CountedOwners = "", Roots = "", ExcludedProbeChains = "";
+            private const string ThreadRoot = "Main Thread";
+            // r16: in batchmode there is no "PlayerLoop" / "EditorLoop" marker at the top (roots: Application.Message / Application.Tick /
+            // Profiler.*); the player loop shows as Unity's phase samples — counted = under a phase sample, not under the test runner
+            private static readonly string[] PlayerLoopPhases = { "Initialization.", "EarlyUpdate.", "FixedUpdate.", "PreUpdate.", "Update.", "PreLateUpdate.", "PostLateUpdate." };
+            private static bool IsPhase(string name) { foreach (string p in PlayerLoopPhases) if (name.StartsWith(p, StringComparison.Ordinal)) return true; return false; }
+            private const string TestRunner = "PlaymodeTestsController";   // the test runner's coroutine — this test's body lives under it
+            private const string Probe = "GcProbe64";
+
+            public static GcOwners Read(string raw)
+            {
+                var r = new GcOwners();
+                // r18: the editor keeps a 300-frame profiler history and the log holds many editor frames per player frame — only ~6
+                // of the 241 probe frames were in view. Raise the history before loading (internal API, by reflection); unavailable = FAIL.
+                System.Reflection.MethodInfo setHistory = typeof(UnityEditorInternal.ProfilerDriver).GetMethod("SetMaxFrameHistoryLength",
+                    System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+                if (setHistory != null) { setHistory.Invoke(null, new object[] { 20000 }); r.HistoryRaised = true; }
+                if (!System.IO.File.Exists(raw) || !UnityEditorInternal.ProfilerDriver.LoadProfile(raw, false)) return r;
+                r.Loaded = true;
+                var counted = new Dictionary<string, long>(StringComparer.Ordinal);
+                var roots = new HashSet<string>(StringComparer.Ordinal);
+                var probeChains = new HashSet<string>(StringComparer.Ordinal);
+                for (int f = UnityEditorInternal.ProfilerDriver.firstFrameIndex; f <= UnityEditorInternal.ProfilerDriver.lastFrameIndex; f++)
+                {
+                    using (UnityEditor.Profiling.RawFrameDataView v = UnityEditorInternal.ProfilerDriver.GetRawFrameDataView(f, 0))
+                    {
+                        if (v == null || !v.valid) continue;
+                        r.Frames++;
+                        bool phaseInFrame = false;
+                        var stack = new List<(string name, int left)>();
+                        for (int i = 0; i < v.sampleCount; i++)
+                        {
+                            while (stack.Count > 0 && stack[stack.Count - 1].left == 0) stack.RemoveAt(stack.Count - 1);
+                            string name = v.GetSampleName(i);
+                            int children = v.GetSampleChildrenCount(i);
+                            if (stack.Count > 0) { var top = stack[stack.Count - 1]; stack[stack.Count - 1] = (top.name, top.left - 1); }
+                            bool atTop = stack.Count == 0 || (stack.Count == 1 && stack[0].name == ThreadRoot);
+                            if (atTop && name != ThreadRoot) roots.Add(name);
+                            if (IsPhase(name)) { r.SawPlayerLoop = true; phaseInFrame = true; }
+                            if (name == "GC.Alloc")
+                            {
+                                long bytes = v.GetSampleMetadataCount(i) > 0 ? v.GetSampleMetadataAsLong(i, 0) : 0;
+                                bool underPlayerLoop = stack.Exists(e => IsPhase(e.name));
+                                bool testRunner = stack.Exists(e => e.name.Contains(TestRunner));
+                                if (!underPlayerLoop || testRunner)
+                                {
+                                    r.ExcludedBytes += bytes;
+                                    // r16: most probe allocations landed here — record their chains (diagnosis of the hierarchy)
+                                    if (probeChains.Count < 6 && stack.Exists(e => e.name.Contains(Probe))) probeChains.Add(string.Join(" > ", stack.ConvertAll(e => e.name + "(" + e.left + ")")));
+                                }
+                                else if (stack.Exists(e => e.name.Contains(Probe))) r.ProbeBytes += bytes;
+                                else
+                                {
+                                    r.CountedBytes += bytes;
+                                    string owner = stack[stack.Count - 1].name;
+                                    counted[owner] = counted.TryGetValue(owner, out long b) ? b + bytes : bytes;
+                                }
+                            }
+
+                            if (children > 0) stack.Add((name, children));
+                        }
+
+                        if (phaseInFrame) r.PhaseFrames++;
+                    }
+                }
+
+                foreach (var kv in counted) r.CountedOwners += "  " + kv.Value + " B  " + kv.Key + "\n";
+                r.Roots = string.Join(", ", roots);
+                r.ExcludedProbeChains = string.Join("\n    ", probeChains);
+                return r;
+            }
+        }
+#endif
 
         private static void Drive(List<ZombieSkinnedVisual> visuals, int frame)
         {
