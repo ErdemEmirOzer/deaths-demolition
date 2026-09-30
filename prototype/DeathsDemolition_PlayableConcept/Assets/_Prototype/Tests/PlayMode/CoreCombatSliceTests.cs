@@ -220,6 +220,35 @@ namespace DD.Prototype.Tests.PlayMode
         /// alınır. Hitscan yönü DamageEvents.EnemyDamaged.Direction'dan okunur. (Kuzey rotası
         /// seçildi: doğuda +x 3.9 m'de su havuzunun direkleri var, WorldStructures (6,−5).)
         /// </summary>
+        /// <summary>
+        /// R1-B W6 (C-00 30.09): a run started again in the same scene (the debug restart) begins with the weapon of a new
+        /// run — a full magazine and the round-1 reserve — not the previous run's leftovers.
+        /// </summary>
+        [UnityTest]
+        [Timeout(120000)]
+        public IEnumerator AyniSahnedeYeniKosu_SilahSarjorVeYedegiSifirdanBaslar()
+        {
+            yield return RunSahnesiniHazirla();
+            WeaponController silah = WeaponRegistry.ActiveController;
+            Assert.IsNotNull(silah);
+            int sarjor = silah.Classic.MagazineSize, yedek0 = silah.Classic.ReserveAmmo;
+            _girdi.AtesBasili = true;
+            float t0 = Time.realtimeSinceStartup;
+            while (silah.Classic.Ammo > sarjor / 2 && Time.realtimeSinceStartup - t0 < 5f) yield return null;
+            _girdi.AtesBasili = false;
+            _girdi.DoldurBasti = true;
+            yield return null;
+            _girdi.DoldurBasti = false;
+            yield return Bekle(() => !silah.Classic.IsReloading, 8f, "reload bitmedi");
+            Assert.Less(silah.Classic.ReserveAmmo, yedek0, "ölçüm boş: yedek harcanmadı");
+
+            RunDirector.Instance.StartRun();
+            yield return null;
+            WeaponController yeni = WeaponRegistry.ActiveController;
+            Assert.AreEqual(yeni.Classic.MagazineSize, yeni.Classic.Ammo, "yeni koşu dolu şarjörle başlar");
+            Assert.AreEqual(yedek0, yeni.Classic.ReserveAmmo, "yeni koşu 1. tur yedeğiyle başlar, önceki koşunun artığıyla değil");
+        }
+
         [UnityTest]
         [Category("Regression")]
         [Timeout(180000)]

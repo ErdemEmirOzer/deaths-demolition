@@ -233,7 +233,9 @@ namespace DD.Prototype.Rounds
             WeaponController controller = WeaponRegistry.ActiveController;
             if (controller != null)
             {
-                controller.Modifiers.ResetForNewRun();
+                // R1-B W6 (C-00 30.09): the whole weapon, not only its modifiers — a same-scene restart (debug) kept the
+                // previous run's magazine and reserve (Equip resets them; production reloads the scene).
+                controller.ResetForNewRun();
             }
 
             BindBuild();
