@@ -217,10 +217,11 @@ namespace DD.Prototype.Feedback.Vfx
                         _shots++;
                         yield return new WaitForEndOfFrame(); Grab(key, "fire", mode);
                         deadline = Time.realtimeSinceStartup + 2f;
-                        while (Time.time - _shotTime < .15f && !_ended && Time.realtimeSinceStartup < deadline) yield return null;
+                        // .10 s, not .15: a TP / FP rocket aimed at the plaza lands at ~0.2 s, and one slow frame after .15 s missed it (r4, 3/6).
+                        while (Time.time - _shotTime < .10f && !_ended && Time.realtimeSinceStartup < deadline) yield return null;
                         yield return new WaitForEndOfFrame();
                         if (!RocketVisualSystem.Instance.TryVisual(_shot.ProjectileId, out _)) Miss(key + " no live flight at flight capture");
-                        if (Time.time - _shotTime < .15f) Miss(key + " flight clock did not reach .15s");
+                        if (Time.time - _shotTime < .10f) Miss(key + " flight clock did not reach .10s");
                         Grab(key, "flight", mode);
                         deadline = Time.realtimeSinceStartup + 3f;
                         while (!_ended && Time.realtimeSinceStartup < deadline) yield return null;

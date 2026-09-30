@@ -76,6 +76,10 @@ namespace DD.Prototype.Feedback.Vfx
         public const float RearLightRange = 6f;
         public const float RearLightHold = 4f / 60f;
         public const float RearLightFade = .25f;
+        // r4 frames (tp-rl_1-flash, 30.09): the rear light 0.3 m from the shoulder burnt the player's back white (§4.1-1 silhouette
+        // rule). It sits RearLightBack metres behind the tube, scales by the player guard squared (TP ≈ 0.25), and is off in FP
+        // (behind the eye it only lights the viewmodel).
+        public const float RearLightBack = 1f;
         // WP-069 art table l.333: rl_1 tube 1.10 m; the Muzzle socket sits 0.125 m inside it (Wp073WeaponSocketTests finding, 26.09).
         [PrototypeOnly(PendingDecisions.None, "M-60: rl_1 tube 1.10 m (WP-069 l.333) minus the Muzzle socket's 0.125 m inset (Wp073WeaponSocketTests position finding) = the tube's rear behind the socket.", true)]
         public const float TubeRearFromMuzzle = 1.10f - .125f;
@@ -301,7 +305,9 @@ namespace DD.Prototype.Feedback.Vfx
                 B3Particles.Emit(_embers, rear, (back + spread) * speed + Vector3.up * BackblastDropLift, BackblastDropSize, seconds, smoke);
             }
 
-            if (!performance) _lights.FlashAt(rear, RearLightColour, RearLightIntensity, RearLightRange, RearLightHold, RearLightFade);
+            bool firstPerson = DD.Prototype.CameraSystem.CameraModeService.Current == DD.Prototype.CameraSystem.CameraMode.FirstPerson;
+            if (!performance && !firstPerson)
+                _lights.FlashAt(rear + back * RearLightBack, RearLightColour, RearLightIntensity * guard * guard, RearLightRange, RearLightHold, RearLightFade);
             int layerMask = (1 << 0) | (1 << PrototypeLayers.Environment) | (1 << PrototypeLayers.CameraOccluder);
             Vector3 probe = rear + back * (BackblastDecalSize * .5f);
             if (Physics.Raycast(probe, Vector3.down, out RaycastHit ground, BackblastGroundReach, layerMask, QueryTriggerInteraction.Ignore)
