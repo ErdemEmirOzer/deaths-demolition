@@ -64,13 +64,13 @@ TTK = sustained seconds per kill (shots × magazine cycle / magazine) vs one tar
 | lmg_2 | P+AB+RS | R10 | P3 AB3 RS3 KS3 S FX C H7 | 139 | 261 | 0.53 | 0.53 | 1.24 | 2.65 |
 | lmg_2 | P+AB+RS | R12 | P4 AB4 RS5 KS3 S FX C H9 | 157 | 296 | 0.64 | 0.48 | 1.13 | 2.58 |
 | lmg_2 | P+AB+RS | R15 | P4 AB4 RS5 KS3 S FX C H16 | 176 | 331 | 0.64 | 0.48 | 1.29 | 2.74 |
-| sr_1 | P+R+RS | R1 | — | 25 | 60 | 1.64 | — | — | — |
-| sr_1 | P+R+RS | R3 | P1 R1 RS1 | 27 | 69 | 1.58 | 1.58 | — | — |
-| sr_1 | P+R+RS | R5 | P2 R2 RS1 KS2 | 28 | 88 | 3.15 | 1.58 | 4.73 | — |
-| sr_1 | P+R+RS | R8 | P2 R2 RS2 KS2 S FX C H3 | 39 | 98 | 2.51 | 1.51 | 4.54 | 7.54 |
-| sr_1 | P+R+RS | R10 | P3 R3 RS3 KS3 S FX C H7 | 44 | 122 | 2.37 | 1.42 | 4.25 | 7.12 |
-| sr_1 | P+R+RS | R12 | P4 R4 RS5 KS3 S FX C H9 | 50 | 169 | 2.27 | 2.27 | 3.92 | 9.07 |
-| sr_1 | P+R+RS | R15 | P4 R4 RS5 KS3 S FX C H16 | 55 | 189 | 2.27 | 2.27 | 3.92 | 9.07 |
+| sr_1 | P+R+RS | R1 | — | 37 | 87 | 1.64 | — | — | — |
+| sr_1 | P+R+RS | R3 | P1 R1 RS1 | 40 | 100 | 1.58 | 1.58 | — | — |
+| sr_1 | P+R+RS | R5 | P2 R2 RS1 KS2 | 41 | 129 | 1.58 | 1.58 | 3.15 | — |
+| sr_1 | P+R+RS | R8 | P2 R2 RS2 KS2 S FX C H3 | 68 | 143 | 1.51 | 1.51 | 2.51 | 5.02 |
+| sr_1 | P+R+RS | R10 | P3 R3 RS3 KS3 S FX C H7 | 77 | 177 | 1.42 | 1.42 | 2.37 | 4.75 |
+| sr_1 | P+R+RS | R12 | P4 R4 RS5 KS3 S FX C H9 | 83 | 245 | 1.31 | 1.31 | 2.27 | 6.54 |
+| sr_1 | P+R+RS | R15 | P4 R4 RS5 KS3 S FX C H16 | 93 | 275 | 1.31 | 1.31 | 2.27 | 6.54 |
 | rl_1 | X+CL+RS | R1 | — | 42 | 210 | 4.28 | — | — | — |
 | rl_1 | X+CL+RS | R3 | X1 CL1 RS1 | 53 | 336 | 4.28 | 4.28 | — | — |
 | rl_1 | X+CL+RS | R5 | X2 CL2 RS1 KS1 | 62 | 503 | 4.28 | 4.28 | 4.28 | — |
@@ -83,29 +83,29 @@ TTK = sustained seconds per kill (shots × magazine cycle / magazine) vs one tar
 
 | R | tier | median | fastest | slowest | max/min | outliers (>1.5× or <0.67× median) |
 |---|---|---|---|---|---|---|
-| R5 | Standard | 1.19 | lmg_2 0.68 | rl_1 4.28 | 6.3 | sg_1 2.74, lmg_2 0.68, sr_1 3.15, rl_1 4.28 |
-| R5 | Elite | 2.79 | lmg_2 1.36 | sr_1 4.73 | 3.5 | lmg_2 1.36, sr_1 4.73, rl_1 4.28 |
-| R10 | Standard | 1.20 | lmg_2 0.53 | rl_1 4.28 | 8.1 | lmg_2 0.53, sr_1 2.37, rl_1 4.28 |
-| R10 | Elite | 2.45 | lmg_2 1.24 | rl_1 4.28 | 3.5 | sg_2 1.58, lmg_2 1.24, sr_1 4.25, rl_1 4.28 |
-| R10 | Ultra | 4.49 | lmg_2 2.65 | sr_1 7.12 | 2.7 | lmg_2 2.65, sr_1 7.12 |
-| R15 | Standard | 1.30 | lmg_2 0.64 | rl_1 4.28 | 6.6 | lmg_1 0.84, lmg_2 0.64, sr_1 2.27, rl_1 4.28 |
-| R15 | Elite | 2.33 | lmg_2 1.29 | rl_1 4.28 | 3.3 | lmg_2 1.29, sr_1 3.92, rl_1 4.28 |
-| R15 | Ultra | 4.24 | lmg_2 2.74 | sr_1 9.07 | 3.3 | lmg_2 2.74, sr_1 9.07 |
+| R5 | Standard | 1.19 | lmg_2 0.68 | rl_1 4.28 | 6.3 | sg_1 2.74, lmg_2 0.68, rl_1 4.28 |
+| R5 | Elite | 2.79 | lmg_2 1.36 | rl_1 4.28 | 3.1 | lmg_2 1.36, rl_1 4.28 |
+| R10 | Standard | 1.20 | lmg_2 0.53 | rl_1 4.28 | 8.1 | lmg_2 0.53, rl_1 4.28 |
+| R10 | Elite | 2.36 | lmg_2 1.24 | rl_1 4.28 | 3.5 | sg_2 1.58, lmg_2 1.24, rl_1 4.28 |
+| R10 | Ultra | 4.49 | lmg_2 2.65 | ar_2 5.48 | 2.1 | lmg_2 2.65 |
+| R15 | Standard | 1.30 | lmg_2 0.64 | rl_1 4.28 | 6.6 | lmg_1 0.84, lmg_2 0.64, rl_1 4.28 |
+| R15 | Elite | 2.18 | lmg_2 1.29 | rl_1 4.28 | 3.3 | lmg_2 1.29, rl_1 4.28 |
+| R15 | Ultra | 4.24 | lmg_2 2.74 | sr_1 6.54 | 2.4 | lmg_2 2.74, sr_1 6.54 |
 
-Crowd DPS at R10 (swarm throughput, round build): rl_1 877, sg_2 634, sg_1 524, lmg_1 362, smg_1 293, lmg_2 261, smg_2 219, ar_2 204, ar_1 201, sr_1 122
+Crowd DPS at R10 (swarm throughput, round build): rl_1 877, sg_2 634, sg_1 524, lmg_1 362, smg_1 293, lmg_2 261, smg_2 219, ar_2 204, ar_1 201, sr_1 177
 
 ### B2 · the same without the capstone (the tree model's human reaches it in ~1 run in 5)
 
 | R | tier | median | fastest | slowest | max/min | outliers |
 |---|---|---|---|---|---|---|
-| R10 | Standard | 1.20 | lmg_2 0.53 | rl_1 4.28 | 8.1 | lmg_2 0.53, sr_1 2.37, rl_1 4.28 |
+| R10 | Standard | 1.20 | lmg_2 0.53 | rl_1 4.28 | 8.1 | lmg_2 0.53, rl_1 4.28 |
 | R10 | Elite | 2.59 | lmg_2 1.24 | rl_1 4.28 | 3.5 | lmg_2 1.24, sr_1 4.25, rl_1 4.28 |
-| R10 | Ultra | 4.72 | lmg_2 2.65 | sr_1 9.49 | 3.6 | lmg_2 2.65, sr_1 9.49 |
+| R10 | Ultra | 4.72 | lmg_2 2.65 | sr_1 7.08 | 2.7 | lmg_2 2.65 |
 | R15 | Standard | 1.30 | lmg_2 0.64 | rl_1 4.28 | 6.6 | lmg_2 0.64, sr_1 2.27, rl_1 4.28 |
-| R15 | Elite | 2.68 | lmg_2 1.29 | sr_1 4.53 | 3.5 | lmg_2 1.29, sr_1 4.53, rl_1 4.28 |
-| R15 | Ultra | 4.51 | lmg_2 2.74 | sr_1 9.07 | 3.3 | lmg_2 2.74, sr_1 9.07 |
+| R15 | Elite | 2.68 | lmg_2 1.29 | rl_1 4.28 | 3.3 | lmg_2 1.29, rl_1 4.28 |
+| R15 | Ultra | 4.51 | lmg_2 2.74 | sr_1 6.54 | 2.4 | lmg_2 2.74 |
 
-Crowd DPS at R10 without the capstone: rl_1 809, sg_1 524, sg_2 508, lmg_1 343, smg_1 262, lmg_2 261, smg_2 214, ar_2 204, ar_1 200, sr_1 121
+Crowd DPS at R10 without the capstone: rl_1 809, sg_1 524, sg_2 508, lmg_1 343, smg_1 262, lmg_2 261, smg_2 214, ar_2 204, ar_1 200, sr_1 177
 
 ## C · Node power on the R10 build (Δ % single-target Elite DPS / Δ % crowd DPS; per 100 gold)
 
@@ -170,7 +170,7 @@ Crowd DPS at R10 without the capstone: rl_1 809, sg_1 524, sg_2 508, lmg_1 343, 
 | sr_1 | seal | 150 | +0 % | +0 % | +0.0 % | no DPS (utility/survival) |
 | sr_1 | x | 90 | +0 % | +0 % | +0.0 % | no DPS (utility/survival) |
 | sr_1 | y | 90 | +24 % | +24 % | +26.2 % | HIGH (>2× class median 10 %) |
-| sr_1 | cap | 380 | +20 % | +0 % | +5.3 % | HIGH (>2× class median 5 %) |
+| sr_1 | cap | 380 | +43 % | +0 % | +11.4 % | HIGH (>2× class median 5 %) |
 | sr_1 | ks_piercing | 110 | +0 % | +5 % | +4.7 % |  |
 | sr_1 | ks_ricochet | 110 | +0 % | +7 % | +6.2 % |  |
 | sr_1 | ks_reload | 110 | +2 % | +2 % | +2.1 % | low (<½ class median 7 %) |
@@ -208,11 +208,11 @@ Top-down: head share 0.00 (S-02 pose measurement pending) and hit × the TP/FP h
 
 | mode | R | sr_1 TTK Std / Elite / Ultra | ar_1 × 1.2 | sr_1 / (ar_1 × 1.2) |
 |---|---|---|---|---|
-| topdown | R8 | 2.51 / 4.54 / 10.05 | 1.18 / 2.22 / 4.58 | 2.12 / 2.05 / 2.19 |
-| topdown | R10 | 2.37 / 4.25 / 9.49 | 1.03 / 2.37 / 4.73 | 2.29 / 1.79 / 2.01 |
-| topdown | R12 | 2.27 / 4.53 / 9.07 | 1.18 / 2.51 / 5.03 | 1.92 / 1.80 / 1.80 |
-| topdown | R15 | 2.27 / 4.53 / 9.07 | 1.18 / 2.51 / 5.03 | 1.92 / 1.80 / 1.80 |
-| tpfp | R8 | 2.51 / 4.54 / 7.54 | 1.18 / 2.37 / 4.58 | 2.12 / 1.92 / 1.64 |
-| tpfp | R10 | 2.37 / 4.25 / 7.12 | 1.03 / 2.37 / 4.88 | 2.29 / 1.79 / 1.46 |
-| tpfp | R12 | 2.27 / 3.92 / 9.07 | 1.18 / 2.51 / 5.17 | 1.92 / 1.56 / 1.75 |
-| tpfp | R15 | 2.27 / 4.53 / 9.07 | 1.18 / 2.51 / 5.17 | 1.92 / 1.80 / 1.75 |
+| topdown | R8 | 1.51 / 2.51 / 7.54 | 1.18 / 2.22 / 4.58 | 1.28 / 1.13 / 1.64 |
+| topdown | R10 | 1.42 / 4.25 / 7.08 | 1.03 / 2.37 / 4.73 | 1.37 / 1.79 / 1.50 |
+| topdown | R12 | 1.31 / 3.92 / 6.54 | 1.18 / 2.51 / 5.03 | 1.11 / 1.56 / 1.30 |
+| topdown | R15 | 2.27 / 3.92 / 6.54 | 1.18 / 2.51 / 5.03 | 1.92 / 1.56 / 1.30 |
+| tpfp | R8 | 1.51 / 2.51 / 5.02 | 1.18 / 2.37 / 4.58 | 1.28 / 1.06 / 1.10 |
+| tpfp | R10 | 1.42 / 2.37 / 7.08 | 1.03 / 2.37 / 4.88 | 1.37 / 1.00 / 1.45 |
+| tpfp | R12 | 1.31 / 3.92 / 6.54 | 1.18 / 2.51 / 5.17 | 1.11 / 1.56 / 1.26 |
+| tpfp | R15 | 1.31 / 3.92 / 6.54 | 1.18 / 2.51 / 5.17 | 1.11 / 1.56 / 1.26 |
