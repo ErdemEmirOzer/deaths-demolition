@@ -551,7 +551,7 @@ def simulate(o, slot, wid, seed, bot, rounds, g_info, branches, econ):
         if not cards and run["poolExhaustedRound"] == 0:
             run["poolExhaustedRound"] = r
         tree.record_offer(cards)
-        limit = o.late_cards if (o.late_cards and r >= o.late_from) else o.card_limit
+        limit = o.late_cards if (o.late_cards and o.late_from <= r <= (o.late_to or 99)) else o.card_limit
         for _ in range(limit):
             card = choose(tree, cards, wallet.balance, floor, bot, rnd)
             if card < 0:
@@ -669,7 +669,7 @@ class Opts:
     def __init__(self, a):
         self.m1 = a.m1
         self.offer_cards, self.card_limit = 3, 2
-        self.late_cards, self.late_from = a.late_cards, 10
+        self.late_cards, self.late_from, self.late_to = a.late_cards, a.late_from, a.late_to
         self.human_cushion, self.hoarder_cushion = 0.30, 0.50
         self.human_hearth, self.hoarder_hearth = 2, 1
         self.hearth_cap = a.hearth_cap
@@ -697,7 +697,7 @@ def run_model(a):
 def label(a):
     parts = ["M1 met" if a.m1 else "before M1", "pickup %.2f" % a.pickup]
     if a.late_cards:
-        parts.append("%d cards from R10" % a.late_cards)
+        parts.append("%d cards R%d–%s" % (a.late_cards, a.late_from, ("R%d" % a.late_to) if a.late_to else "end"))
     if a.hearth_cap:
         parts.append("Hearth cap %d" % a.hearth_cap)
     if a.link_price == "catalog":
@@ -727,6 +727,8 @@ def main():
     ap.add_argument("--m1", action="store_true", help="capstone mastery M1 met (K6)")
     ap.add_argument("--pickup", type=float, default=0.90)
     ap.add_argument("--late-cards", type=int, default=0)
+    ap.add_argument("--late-from", type=int, default=10, help="first round of --late-cards (C# lateCardFromRound = 10)")
+    ap.add_argument("--late-to", type=int, default=0, help="WHAT-IF last round of --late-cards (0 = to the end)")
     ap.add_argument("--hearth-cap", type=int, default=0)
     ap.add_argument("--link-price", choices=["shipped", "catalog"], default="shipped")
     ap.add_argument("--capstone-cost", type=int, default=0)
