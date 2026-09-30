@@ -1298,7 +1298,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         /// <summary>
         /// WP-072 · user listening package (C-00 28.09): three A/B pairs from the game's real output on the default world (V6) —
-        /// 1 top-down fight and 2 first-person fight (A = today's mix, B = the player's weapon bus +3 dB — the master compressor takes ~1 dB of it), 3 the calm after-rain
+        /// 1 top-down fight and 2 first-person fight (A = today's mix, B = the player's weapon bus +5 dB — the master compressor, already ~4 dB over its −8 dB threshold in a fight, turns +3 dB into +1.0 dB at the output), 3 the calm after-rain
         /// courtyard (A = birds 0.35 as shipped — near the floor at 25–40 m, B = the designed level 1.0). Written under temporaryCachePath/wp072-listening; the batch copies them.
         /// </summary>
         [UnityTest]
@@ -1378,7 +1378,7 @@ namespace DD.Prototype.Tests.PlayMode
                 m.ThreatLayerOverride = null;
                 m.IntensityOverride = null;
 
-                // 1 / 2 · a fight: six zombies close in, the player fires bursts; B = the player's weapon bus +3 dB.
+                // 1 / 2 · a fight: six zombies close in, the player fires bursts; B = the player's weapon bus +5 dB.
                 for (int i = 0; i < 6; i++)
                 {
                     float a = i * Mathf.PI / 3f;
@@ -1391,7 +1391,7 @@ namespace DD.Prototype.Tests.PlayMode
                 {
                     DD.Prototype.CameraSystem.CameraModeService.Request(mod, true);
                     yield return new WaitForSecondsRealtime(3f);
-                    // One take: A = 0–10 s today's mix, B = 10–20 s the player's weapon bus +3 dB (split offline) — separate takes
+                    // One take: A = 0–10 s today's mix, B = 10–20 s the player's weapon bus +5 dB (split offline) — separate takes
                     // varied by more than the gain under test. The fire clock restarts per take (the FP take once inherited the
                     // top-down clock and barely fired: B − A +0.1 dB was a missing-shots artefact, WP-072 B7).
                     mixer.SetFloat(playerParam, tabanDb);
@@ -1401,7 +1401,7 @@ namespace DD.Prototype.Tests.PlayMode
                     bool artti = false;
                     yield return Kaydet(no + "_" + ad + "_take", 20f, t =>
                     {
-                        if (!artti && t >= 10f) { aAtis = atis; mixer.SetFloat(playerParam, tabanDb + 3f); artti = true; }
+                        if (!artti && t >= 10f) { aAtis = atis; mixer.SetFloat(playerParam, tabanDb + 5f); artti = true; }
                         Ates(t);
                     });
                     Debug.Log("[DD-TEST] wp072.weapon mode=" + mod + " A_shots=" + aAtis + " B_shots=" + (atis - aAtis) + " last=" + _d.WeaponFire.LastVoice);

@@ -139,3 +139,5 @@ Kurallar: Vorbis q0,8 ateş/darbe/Special (metalik HF için q0,6 yetersiz — sa
 | A10 | Kapsam | EVENT-COVERAGE-MATRIX satırları | her yeni kimlik: manifest + recipe fallback + satır + test (README kural 3) |
 
 A/B dinleme kiti (kullanıcı): `asset-production/AP-011/v016/review/ab/<sınıf>_<silahId>_A-eski_B-yeni.wav`, 48 kHz stereo; sıra: 3 tek atış (1 s ara) → 1,5 s sürekli/seri ateş → 2 s boşluk → tam reload → 1 s boşluk; A ve B −18 LUFS-I'ye eşitlenir, aralarına 1 kHz −30 dBFS 200 ms işaret; her dosyanın yanında `.json` (LUFS-I, LUFS-M max, TP, centroid, mekân, mod). Kit FP modunda (mekanik katman en belirgin) + Tepeden karşılaştırma dosyası (`_topdown`).
+
+**Durum notu (WP-072 B7-1b, C-00 30.09 yargıç paneli):** AmbBirdsDistant (seyrek nokta kaynaklı dağılım, yatak değil) klip LUFS'u bir sonuçtur: v023'te her varyant kendi baskın 1/3-oktav bandında avlu yatağının +12,5 dB üstüne ayarlandı (TP ≤ −3 dBTP; LUFS −20,3…−25,9). Ambiyans −24…−26 kuralından bu sapma bilinçlidir. Ölçüm (tek take A/B): kavgada master kompresör eşiğinin (−8 dB) ~4 dB üstünde çalışıyor; +3 dB oyuncu bus'ı çıkışta +1,0 dB (A9 sınırında).
