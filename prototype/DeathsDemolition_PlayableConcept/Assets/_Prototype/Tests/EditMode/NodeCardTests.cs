@@ -465,6 +465,42 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void Nisan_DEC110_AyniHedefeDonusUcretsiz_BaskaHedefeGecisHakYer()
+        {
+            // DEC-110 (user 30.09): after a clear, pinning this round's assigned target again is free; another target still
+            // needs a free assignment.
+            Ac(1);
+            Assert.IsTrue(_dukkan.SetPin("tier_FireRate"));
+            Assert.AreEqual(1, _dukkan.PinChangesThisRound);
+            Assert.IsTrue(_dukkan.SetPin(null));
+            Assert.IsTrue(_dukkan.CanSetPin("tier_FireRate"), "aynı hedef: ücretsiz");
+            Assert.IsTrue(_dukkan.SetPin("tier_FireRate"));
+            Assert.AreEqual(I("tier_FireRate"), _dukkan.Tree.PinnedIndex);
+            Assert.AreEqual(1, _dukkan.PinChangesThisRound, "hak harcanmadı");
+            Assert.IsFalse(_dukkan.CanSetPin("tier_MovementSpeed"), "başka hedef: turun hakkı kullanıldı");
+            Assert.IsFalse(_dukkan.SetPin("tier_MovementSpeed"));
+            Ac(2);
+            Assert.IsTrue(_dukkan.SetPin("tier_MovementSpeed"), "yeni turda yeni hak");
+            Assert.IsTrue(_dukkan.SetPin(null));
+            Assert.IsFalse(_dukkan.CanSetPin("tier_FireRate"), "önceki turun hedefi bu turun hedefi değil");
+        }
+
+        [Test]
+        public void Nisan_BosTemizleme_KapananPiniDusurunce_OlayCikar()
+        {
+            // S-09 30.09 note: SetPin(null) that finds a closed pin clears it through DropClosedPin — the state changed, so
+            // OfferChanged fires (the "same target" no-op path used to stay silent).
+            Ac(1);
+            Assert.IsTrue(_dukkan.SetPin("fork_ar_1_y"));
+            Assert.IsTrue(_dukkan.Tree.MarkOwned(I("fork_ar_1_x")));
+            int olay = 0;
+            _dukkan.OfferChanged += () => olay++;
+            Assert.IsTrue(_dukkan.SetPin(null));
+            Assert.AreEqual(-1, _dukkan.Tree.PinnedIndex);
+            Assert.AreEqual(1, olay);
+        }
+
+        [Test]
         public void Nisan_TurdakiHak_AgacVerisinden()
         {
             // M-36 (C-00 30.09): the per-round pin assignments live in run-tree.json (pin.perRound, DEC-098 K2 = 1).

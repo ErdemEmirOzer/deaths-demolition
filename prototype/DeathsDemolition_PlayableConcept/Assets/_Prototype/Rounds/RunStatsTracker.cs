@@ -74,6 +74,16 @@ namespace DD.Prototype.Rounds
         /// One enemy died. <paramref name="killXp"/> comes from
         /// PrototypeConfig.KillXp(tier) - the arithmetic is never redone here.
         /// </summary>
+        /// <summary>DEC-111 (user 30.09): kills the run's own classic weapon made (Special and unowned kills excluded) — mastery.</summary>
+        public int ClassicWeaponKills { get; private set; }
+
+        /// <summary>As <see cref="RecordKill(EnemyTier,int)"/>; <paramref name="byRunClassicWeapon"/> counts it toward mastery (DEC-111).</summary>
+        public void RecordKill(EnemyTier tier, int killXp, bool byRunClassicWeapon)
+        {
+            RecordKill(tier, killXp);
+            if (byRunClassicWeapon) ClassicWeaponKills++;
+        }
+
         public void RecordKill(EnemyTier tier, int killXp)
         {
             int index = (int)tier;
@@ -175,6 +185,7 @@ namespace DD.Prototype.Rounds
             }
 
             TotalKills = 0;
+            ClassicWeaponKills = 0;
             RoundKills = 0;
             HighestTierKilled = EnemyTier.Standard;
             KillXp = 0;

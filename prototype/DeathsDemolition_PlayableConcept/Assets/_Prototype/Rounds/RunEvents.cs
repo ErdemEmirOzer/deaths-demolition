@@ -231,6 +231,9 @@ namespace DD.Prototype.Rounds
         /// <summary>WP-077: Special Link II owned at the end of the run (0/1).</summary>
         public int TreeLinkII;
 
+        /// <summary>DEC-111 (user 30.09): kills the run's starting classic weapon made (Special / unowned kills excluded) — weapon mastery.</summary>
+        public int ClassicWeaponKills;
+
         /// <summary>WP-077 B4: the weapon-lane capstone owned at the end of the run (0/1; per-weapon capstone record).</summary>
         public int TreeWeaponCapstone;
 

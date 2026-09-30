@@ -326,6 +326,20 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void Ocak_RT8_BedenKeystoneuDaAcar()
+        {
+            // R1-B RT8 (C-00 30.09, direction §2.1): a keystone in either lane opens the Hearth.
+            RunTreeState t = Agac();
+            Altin(1000);
+            Assert.AreEqual(RunTreeCommandResult.NotAvailable, t.TryStokeHearth(_cuzdan, _rank), "keystone yok");
+            RunTreeEffects.TreatAllAsLive = true;
+            _rank.SetTier(UpgradeBranch.MovementSpeed, 2);
+            Assert.IsTrue(t.MarkOwned(I(t, "ks_move")));
+            Assert.AreEqual(RunTreeCommandResult.Done, t.TryStokeHearth(_cuzdan, _rank), "beden keystone'u da açar");
+            Assert.AreEqual(1, t.HearthStacks);
+        }
+
+        [Test]
         public void Ocak_KartDisi_Fiyat_TurSiniri_Tavan_Hasar()
         {
             RunTreeState t = Agac();

@@ -61,6 +61,9 @@ namespace DD.Prototype.Profile
         public readonly int TreeWeaponCapstone;
         public readonly int TreeFullLanes;
 
+        /// <summary>DEC-111 (user 30.09): kills of the run's starting classic weapon — the only kills weapon mastery counts.</summary>
+        public readonly int MasteryKills;
+
         /// <summary>Standard + Special + Elite + Ultra + unattributed, saturating.</summary>
         public int TotalKills => ProfileProgression.SaturatingAdd(
             ProfileProgression.SaturatingSum(StandardKills, SpecialKills, EliteKills, UltraKills), UnattributedKills);
@@ -98,6 +101,7 @@ namespace DD.Prototype.Profile
             TreeHearthStacks = Math.Max(0, summary.TreeHearthStacks);
             TreeWeaponCapstone = Math.Min(1, Math.Max(0, summary.TreeWeaponCapstone));
             TreeFullLanes = Math.Max(0, summary.TreeFullLanes);
+            MasteryKills = Math.Min(Math.Max(0, summary.ClassicWeaponKills), Math.Max(0, summary.TotalKills));
         }
 
         public int KillsFor(EnemyTier tier)
@@ -293,7 +297,7 @@ namespace DD.Prototype.Profile
 
             // WP-077: mastery and the per-weapon capstone record merge with the statistics, so the
             // achievement rules that read them (mastery_5_any, capstones_5_weapons) see this run.
-            candidate.AddMasteryKills(input.WeaponKey, input.TotalKills);
+            candidate.AddMasteryKills(input.WeaponKey, input.MasteryKills);   // DEC-111: the starting classic weapon's kills only
             if (input.TreeWeaponCapstone > 0) candidate.AddWeaponCapstone(input.WeaponKey);
             candidate.RoundsCompleted = SaturatingAdd(candidate.RoundsCompleted, input.CompletedRounds);
             candidate.HighestRound = Math.Max(candidate.HighestRound, input.ReachedRound);

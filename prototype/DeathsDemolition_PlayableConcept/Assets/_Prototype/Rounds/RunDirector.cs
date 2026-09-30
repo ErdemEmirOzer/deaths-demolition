@@ -677,7 +677,8 @@ namespace DD.Prototype.Rounds
                 killXp = Config.KillXp(info.Tier);
             }
 
-            _stats.RecordKill(info.Tier, killXp);
+            // DEC-111: DamageHitContext is valid inside this synchronous handler — the killing hit's source.
+            _stats.RecordKill(info.Tier, killXp, DamageHitContext.FromClassicWeapon && DamageHitContext.Weapon == WeaponRegistry.SelectedWeapon);
             _killsThisRound++;
 
             // Gold is NOT handled here. GoldService listens to the same event and owns the
@@ -773,6 +774,7 @@ namespace DD.Prototype.Rounds
                 CompletedRounds = _stats.CompletedRounds,
 
                 TotalKills = _stats.TotalKills,
+                ClassicWeaponKills = _stats.ClassicWeaponKills,
                 StandardKills = _stats.KillsFor(EnemyTier.Standard),
                 SpecialKills = _stats.KillsFor(EnemyTier.Special),
                 EliteKills = _stats.KillsFor(EnemyTier.Elite),

@@ -183,6 +183,7 @@ namespace DD.Prototype.Tests.EditMode
                 {
                     CompletionId = CompletionAuthority.TestSeam.IssueForNextRun(),
                     ReachedRound = 5, CompletedRounds = 4, StandardKills = i == 0 ? 3500 : 10, TotalKills = i == 0 ? 3500 : 10,
+                    ClassicWeaponKills = i == 0 ? 3500 : 10,   // DEC-111: mastery reads the classic weapon's kills
                     Weapon = silahlar[i], TreeCapstones = 1, TreeWeaponCapstone = 1, EndReason = RunEndReason.PlayerDeath
                 });
                 Assert.IsTrue(son.Applied);

@@ -61,6 +61,8 @@ namespace DD.Prototype.Rounds
         private LastPurchase _last;
         private bool _undoClosed;
         private int _pinAllowanceRunId = -1, _pinAllowanceRound = -1;
+        /// <summary>DEC-110: the target this round's assignment went to; pinning it again (after a clear) costs nothing.</summary>
+        private int _pinAssignedIndex = -1;
         /// <summary>Successful pin assignments in this (run, round); clearing never refunds the one assignment.</summary>
         public int PinChangesThisRound { get; private set; }
 
@@ -310,6 +312,7 @@ namespace DD.Prototype.Rounds
                 _pinAllowanceRunId = wantedRun;
                 _pinAllowanceRound = wantedRound;
                 PinChangesThisRound = 0;
+                _pinAssignedIndex = -1;
             }
             IsOpen = true;
             PurchaseLimit = UpgradeOfferPolicy.PurchaseLimit(config, wantedRound);
@@ -1408,7 +1411,7 @@ namespace DD.Prototype.Rounds
             }
 
             if (i >= 0 && !Tree.CanPin(i, ModifierState())) return false;
-            return i == Tree.PinnedIndex || i < 0 || PinChangesThisRound < PinsPerRound;
+            return i == Tree.PinnedIndex || i < 0 || i == _pinAssignedIndex || PinChangesThisRound < PinsPerRound;
         }
 
         /// <summary>WP-077 B6 telemetry: the node offer just drawn (a new offer or a reroll) — ids, frontier size, doubled cards.</summary>
@@ -1444,7 +1447,8 @@ namespace DD.Prototype.Rounds
         /// <summary>WP-077 Nişan (K2): one target assignment per round; null/empty clears without refunding it. Same target is a no-op.</summary>
         public bool SetPin(string nodeId)
         {
-            if (IsOpen && DropClosedPin() && !CanSetPin(nodeId))
+            bool dropped = IsOpen && DropClosedPin();
+            if (dropped && !CanSetPin(nodeId))
             {
                 OfferChanged?.Invoke();   // the closed pin is gone even though this command is refused
                 return false;
@@ -1452,11 +1456,22 @@ namespace DD.Prototype.Rounds
 
             if (!CanSetPin(nodeId)) return false;
             int i = string.IsNullOrEmpty(nodeId) ? -1 : Tree.Graph.IndexOf(nodeId);
-            if (i == Tree.PinnedIndex) return true;
+            if (i == Tree.PinnedIndex)
+            {
+                if (dropped) OfferChanged?.Invoke();   // S-09 30.09: the command cleared a closed pin — the state changed
+                return true;
+            }
+
             Tree.SetPin(i);
-            if (i >= 0)
+            if (i >= 0 && i == _pinAssignedIndex)
+            {
+                // DEC-110 (user 30.09): back to the target this round's assignment already went to — free.
+                RunTreeEvents.Raise(new RunTreeEvent(RunTreeEventKind.PinSet, Tree.Graph[i].Id, Round, 0, Tree.Graph[i].Lane, Tree.Graph[i].Kind));
+            }
+            else if (i >= 0)
             {
                 PinChangesThisRound++;
+                _pinAssignedIndex = i;
                 RunTreeEvents.Raise(new RunTreeEvent(RunTreeEventKind.PinSet, Tree.Graph[i].Id, Round, 0, Tree.Graph[i].Lane, Tree.Graph[i].Kind));
             }
 

@@ -78,6 +78,7 @@ namespace DD.Prototype.Tests.EditMode
                 ReachedRound = reached,
                 CompletedRounds = Math.Max(0, reached - 1),
                 TotalKills = kills,
+                ClassicWeaponKills = kills,   // DEC-111: every kill of these runs is the classic weapon's
                 StandardKills = kills,
                 KillXp = kills,
                 CompletedRoundXp = roundXp,
@@ -125,6 +126,30 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(UnlockContentType.Weapon, d.NewUnlocks[1].Type);
             Assert.AreEqual("ar_2", d.NewUnlocks[1].Id, "kimliğin kendi anahtarı");
             Assert.AreEqual(UnlockContentType.Branch, d.NewUnlocks[2].Type, "kimliksiz eski girdi metin önekine düşer");
+        }
+
+        [Test]
+        public void Ustalik_DEC111_YalnizBaslangicKlasikSilahininOldurmeleri()
+        {
+            // DEC-111 (user 30.09): mastery counts only the starting classic weapon's kills — Special and unowned kills do not.
+            RunSummary o = Ozet(5, 100, kills: 30);
+            o.ClassicWeaponKills = 18;
+            Assert.IsTrue(ProfileService.ApplyRun(o).Applied);
+            Assert.AreEqual(18, ProfileService.Current.MasteryKills("ar_1"), "yalnız klasik silahın öldürmeleri");
+            Assert.AreEqual(30, ProfileService.Current.TotalKills, "toplam öldürme istatistiği değişmez");
+
+            RunSummary fazla = Ozet(5, 100, kills: 5);
+            fazla.ClassicWeaponKills = 99;   // a summary can never credit more than it killed
+            Assert.IsTrue(ProfileService.ApplyRun(fazla).Applied);
+            Assert.AreEqual(23, ProfileService.Current.MasteryKills("ar_1"));
+
+            var istatistik = new RunStatsTracker();
+            istatistik.RecordKill(EnemyTier.Standard, 1, true);
+            istatistik.RecordKill(EnemyTier.Elite, 3, false);
+            Assert.AreEqual(2, istatistik.TotalKills);
+            Assert.AreEqual(1, istatistik.ClassicWeaponKills);
+            istatistik.Reset();
+            Assert.AreEqual(0, istatistik.ClassicWeaponKills);
         }
 
         [Test]

@@ -195,9 +195,14 @@ namespace DD.Prototype.Rounds
                     return false;
                 }
 
+                case RunTreeNodeKind.Hearth:
+                    // R1-B RT8 (C-00 30.09, direction §2.1): a keystone in EITHER lane opens the Hearth.
+                    if (CountOwned(RunTreeLane.Weapon, RunTreeNodeKind.BranchKeystone) + CountOwned(RunTreeLane.Body, RunTreeNodeKind.BranchKeystone) >= 1) return true;
+                    missing = CheapestUnowned(n.Lane, RunTreeNodeKind.BranchKeystone, build);
+                    return false;
+
                 case RunTreeNodeKind.Fork:
                 case RunTreeNodeKind.WeaponSeal:
-                case RunTreeNodeKind.Hearth:
                     if (CountOwned(n.Lane, RunTreeNodeKind.BranchKeystone) >= 1) return true;
                     missing = CheapestUnowned(n.Lane, RunTreeNodeKind.BranchKeystone, build);
                     return false;

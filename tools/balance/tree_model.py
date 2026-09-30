@@ -684,7 +684,7 @@ class Opts:
         self.pin_rules = not a.no_pin_rules
         self.link_price = a.link_price
         self.capstone_cost = a.capstone_cost
-        self.hearth_any_keystone = a.hearth_any_keystone
+        self.hearth_any_keystone = not a.hearth_weapon_lane_only   # RT8 (C-00 30.09): the shipped rule since WP-077 B7-1
         self.pin_gap = set(int(x) for x in a.pin_gap.split(",") if x) if a.pin_gap else set()
 
 
@@ -725,8 +725,8 @@ def label(a):
         parts.append("WHAT-IF capstone %d" % a.capstone_cost)
     if a.no_pin_rules:
         parts.append("WHAT-IF pre-RT6 pin (no CanPin)")
-    if a.hearth_any_keystone:
-        parts.append("WHAT-IF Hearth with any keystone (RT8)")
+    if a.hearth_weapon_lane_only:
+        parts.append("pre-B7-1 Hearth rule (weapon-lane keystone)")
     if a.pin_gap:
         parts.append("WHAT-IF Rush pin gap R%s (M-33)" % a.pin_gap)
     return " · ".join(parts)
@@ -760,7 +760,8 @@ def main():
                     help="catalog = 80/160 (RunTreeState.Cost since WP-077 B5-2); shipped = the pre-B5-2 1-gold slot price (26.09 C# CSV)")
     ap.add_argument("--capstone-cost", type=int, default=0)
     ap.add_argument("--no-pin-rules", action="store_true")
-    ap.add_argument("--hearth-any-keystone", action="store_true", help="WHAT-IF (R1-B RT8): Hearth needs a keystone in either lane")
+    ap.add_argument("--hearth-weapon-lane-only", action="store_true",
+                    help="the pre-B7-1 Hearth rule (a weapon-lane keystone; the 26.09 C# CSV); default = any keystone (RT8)")
     ap.add_argument("--pin-gap", default="", help="WHAT-IF (M-33): comma rounds whose draw and shop run without the Rush bot's pin")
     ap.add_argument("--csv")
     ap.add_argument("--json")
