@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Reflection;
 using System.Text;
 using DD.Prototype.CameraSystem;
 using DD.Prototype.Core;
@@ -59,6 +60,10 @@ namespace DD.Prototype.Qa
         /// <summary>WP-078 A3 (arsenal): round N plays classic weapon (N−1) mod 10 through WeaponQaHooks — the seven meta-tree
         /// weapons are not unlocked on a sandbox profile, so this is the only way a bot run fires all ten.</summary>
         public const string WeaponCycleFlag = "-ddQaBotWeaponCycle";
+        /// <summary>WP-078 D3c (C-00 30.09 R1–R3): a separate route run — spawns held, the bot walks the fixed V6 evidence points
+        /// (courtyard, horizon, corridor = R6 chūmon, kairo = K1 north end) by gamepad, captures one PNG per point into the given
+        /// directory, records them in the summary and quits. Never a gameplay run; the A2 gameplay runs are unchanged.</summary>
+        public const string RouteTourFlag = "-ddQaBotRouteTour";
         /// <summary>WP-044 K1: <c>-ddQaAllocScan N</c> — at round N (spawner on, crowd live) disable every Behaviour type in turn and sample 3 frames of GC (AllocationProbeTests pattern); writes alloc-scan.txt. The player is invulnerable during the scan; the run is a measurement, not a QA pass.</summary>
         public const string AllocScanFlag = "-ddQaAllocScan";
         /// <summary>WP-055: evidence only — the bot grants itself the Special Weapons in turn (Kagura → Ofuda → Tide) whenever a body is near, writes one frame per sw_* beat × tier; summary marked, never a QA pass.</summary>
@@ -115,6 +120,7 @@ namespace DD.Prototype.Qa
             d.ConfigureDeathEvidence(QaArgs.ArgFloat(DieAfterFlag, -1f, -1f, 3600f));   // WP-059
             if (QaArgs.Arg(StabilityFlag) != null) d.ConfigureStability();   // WP-064 / DEC-091
             if (QaArgs.Arg(WeaponCycleFlag) != null) d.ConfigureWeaponCycle();   // WP-078 A3
+            if (!string.IsNullOrEmpty(QaArgs.Arg(RouteTourFlag))) d.ConfigureRouteTour(QaArgs.Arg(RouteTourFlag));   // WP-078 D3c
         }
 
         /// <summary>Also used by the PlayMode slice test: boot=false means the caller already put the run into Fighting.</summary>
@@ -126,6 +132,21 @@ namespace DD.Prototype.Qa
             d.Configure(outDir, rounds, seed, roundTimeout, bootFlow);
             Debug.Log("[QaRunBot] armed rounds=" + rounds + " seed=" + seed + " roundTimeout=" + QaArgs.F(roundTimeout, 0) + "s out=" + outDir);
             return d;
+        }
+
+        /// <summary>WP-078 D3c: one evidence frame of the route run (key courtyard / horizon / corridor / kairo).</summary>
+        [Serializable]
+        public sealed class RouteFrame
+        {
+            public string key;
+            public string status;          // captured | blocked | notApplicable
+            public string reason;          // why blocked / not applicable
+            public string path;            // relative to the run's out dir: frames/route-<key>.png
+            public string mode;            // CameraModeService.Current
+            public float x, z, yaw, pitch; // stand point, requested view (rig: pitch + looks down)
+            public float seconds;          // unscaled seconds after run-ready
+            public bool roofAbove;         // corridor / kairo: an upward RaycastAll hit a CameraOccluderKind.Roof collider
+            public long drawCalls = -1, batches = -1;   // E-14: Render recorders at the capture frame (-1 = unavailable)
         }
 
         [Serializable]
@@ -217,6 +238,7 @@ namespace DD.Prototype.Qa
             public bool pass;
             public string note;
             public List<RoundRecord> rounds = new List<RoundRecord>();
+            public List<RouteFrame> routeFrames = new List<RouteFrame>();   // WP-078 D3c route run only
         }
 
         public sealed class Driver : MonoBehaviour
@@ -449,6 +471,14 @@ namespace DD.Prototype.Qa
 
             public void ConfigureStability() { _stability = true; _invulnerable = true; }
             public void ConfigureWeaponCycle() { _weaponCycle = true; }
+            public void ConfigureRouteTour(string framesDir) { _routeDir = framesDir; }
+            private string _routeDir;
+            private int _routeStep = -1;
+            private float _routeStepStart, _routeSettleSince = -1f, _routeCaptureAt = -1f;
+            private string _routeCapturePath;
+            private NavMeshPath _routePath;
+            private int _routeCorner;
+            private ProfilerRecorder _drawCalls, _batches;
             private bool _weaponCycle;
             private bool _stability;
 
@@ -957,6 +987,11 @@ namespace DD.Prototype.Qa
                     return;
                 }
                 TickSpecialEvidence(rig);   // WP-055
+                if (_routeDir != null)
+                {
+                    TickRouteTour(rig);         // WP-078 D3c: the route run owns every frame; no fighting, no rounds
+                    return;
+                }
 
                 if (_dieAfterSeconds >= 0f && !_died && Time.unscaledTime - _runStart >= _dieAfterSeconds)
                 {
@@ -1744,6 +1779,203 @@ namespace DD.Prototype.Qa
             /// aim direction. Inverse of the rig's stick model: rate = |s|^exp · speed (pitch × share,
             /// invert-Y honoured), with the adapter's radial dead zone / saturation undone.
             /// </summary>
+            // ---------------------------------------------------------------- WP-078 D3c route run
+
+            private struct RoutePoint
+            {
+                public string Key; public float X, Z, Yaw, PitchTp, PitchFp; public bool Roof;
+                public RoutePoint(string key, float x, float z, float yaw, float pitchTp, float pitchFp, bool roof)
+                { Key = key; X = x; Z = z; Yaw = yaw; PitchTp = pitchTp; PitchFp = pitchFp; Roof = roof; }
+            }
+
+            /// <summary>C-00 30.09 R3 (V6): courtyard (0,−3) 0°, horizon (0,−3) 180°, corridor R6 chūmon (0,19), kairo K1 north end
+            /// (−31,15) 180°. Rig pitch + looks down; corridor/kairo look up under the roof.</summary>
+            private static readonly RoutePoint[] RoutePoints =
+            {
+                new RoutePoint("courtyard", 0f, -3f, 0f, 8f, 5f, false),
+                new RoutePoint("horizon", 0f, -3f, 180f, -3f, -3f, false),
+                new RoutePoint("corridor", 0f, 19f, 180f, -18f, -25f, true),
+                new RoutePoint("kairo", -31f, 15f, 180f, -12f, -15f, true),
+            };
+
+            /// <summary>The flag's folder name, always under the run's out dir (e.g. -ddQaBotRouteTour &lt;out&gt;/frames → "frames").</summary>
+            private string RouteFolder => Path.GetFileName(_routeDir.TrimEnd('/', '\\'));
+
+            private const float RouteStartDelay = 3f;     // the ROUND 1 banner (2.4 s) is gone
+            private const float RouteStepTimeout = 45f;
+            private const float RouteArrive = 0.8f;
+
+            private void TickRouteTour(PlayerRig rig)
+            {
+                float now = Time.unscaledTime;
+                if (_routeStep < 0)
+                {
+                    HoldSpawns();
+                    if (now - _runStart < RouteStartDelay) { _pad.Set(Vector2.zero, Vector2.zero, false, false, false); _pad.Flush(); return; }
+                    Directory.CreateDirectory(Path.Combine(_outDir, RouteFolder));   // frames live inside the run's out dir (bound by the runner)
+                    try { _drawCalls = ProfilerRecorder.StartNew(ProfilerCategory.Render, "Draw Calls Count"); _batches = ProfilerRecorder.StartNew(ProfilerCategory.Render, "Batches Count"); } catch (Exception) { }
+                    _routePath = new NavMeshPath();
+                    BeginRouteStep(0);
+                }
+
+                if (_routeStep >= RoutePoints.Length)
+                {
+                    return;
+                }
+
+                RoutePoint point = RoutePoints[_routeStep];
+                bool topDown = CameraModeService.Current == CameraMode.TopDown;
+                if (topDown && point.Key == "horizon")
+                {
+                    RecordRoute(point, "notApplicable", "topdown-fixed-camera: yaw fixed north, the top ray is ~28° below the horizon (E-3 by FP)", null, false);
+                    BeginRouteStep(_routeStep + 1);
+                    return;
+                }
+
+                // a capture is in flight: wait for the PNG on disk (ScreenCapture writes at the end of a frame)
+                if (_routeCaptureAt >= 0f)
+                {
+                    _pad.Set(Vector2.zero, Vector2.zero, false, false, false); _pad.Flush();
+                    string full = Path.Combine(_outDir, _routeCapturePath);
+                    if (File.Exists(full) && new FileInfo(full).Length > 0)
+                    {
+                        RecordRoute(point, "captured", "", _routeCapturePath, RoofAbove(rig));
+                        _routeCaptureAt = -1f;
+                        BeginRouteStep(_routeStep + 1);
+                    }
+                    else if (now - _routeCaptureAt > 3f)
+                    {
+                        RecordRoute(point, "blocked", "frame not on disk 3 s after the capture", null, false);
+                        _routeCaptureAt = -1f;
+                        BeginRouteStep(_routeStep + 1);
+                    }
+                    return;
+                }
+
+                if (now - _routeStepStart > RouteStepTimeout)
+                {
+                    RecordRoute(point, "blocked", "point not reached / view not settled in " + QaArgs.F(RouteStepTimeout, 0) + " s", null, false);
+                    BeginRouteStep(_routeStep + 1);
+                    return;
+                }
+
+                Vector3 pos = rig.transform.position;
+                Vector3 fwd, right;
+                CameraBasis(out fwd, out right);
+                Vector3 target = new Vector3(point.X, pos.y, point.Z);
+                Vector2 move = Vector2.zero, look = Vector2.zero;
+                Vector3 flat = target - pos; flat.y = 0f;
+                bool arrived = flat.magnitude <= RouteArrive;
+                if (!arrived)
+                {
+                    Vector3 dir = RouteDirection(pos, target);
+                    move = QaBotBrain.WorldToStick(SteerOnNavMesh(pos, dir, Vector3.zero), fwd, right) * (flat.magnitude < 2f ? 0.5f : 1f);
+                    _routeSettleSince = -1f;
+                }
+
+                bool aligned = true;
+                PrototypeCameraRig cam = PrototypeCameraRig.Active;
+                if (!topDown && cam != null)
+                {
+                    float pitch = CameraModeService.Current == CameraMode.FirstPerson ? point.PitchFp : point.PitchTp;
+                    Vector3 viewDir = Quaternion.Euler(pitch, point.Yaw, 0f) * Vector3.forward;
+                    var o = new QaBotObservation { HasTarget = true, TargetPosition = cam.StablePosition + viewDir * 20f - Vector3.up * 1.0f };
+                    look = LookStickToward(o, Vector2.zero, fwd, right);
+                    aligned = Mathf.Abs(Mathf.DeltaAngle(cam.ViewYaw, point.Yaw)) <= 2f && Mathf.Abs(cam.ViewPitch - pitch) <= 2f;
+                }
+
+                _pad.Set(arrived ? Vector2.zero : move, aligned ? Vector2.zero : look, false, false, false);
+                _pad.Flush();
+                if (!arrived || !aligned)
+                {
+                    _routeSettleSince = -1f;
+                    return;
+                }
+
+                if (_routeSettleSince < 0f) _routeSettleSince = now;
+                if (now - _routeSettleSince < (topDown && point.Roof ? 1.0f : 0.5f)) return;   // TP smoothing / top-down roof fade
+
+                _routeCapturePath = RouteFolder + "/route-" + point.Key + ".png";
+                ScreenCapture.CaptureScreenshot(Path.Combine(_outDir, _routeCapturePath));
+                _routeCaptureAt = now;
+                Log("route-capture key=" + point.Key + " pos=" + V(pos) + " mode=" + CameraModeService.Current);
+            }
+
+            private void BeginRouteStep(int step)
+            {
+                _routeStep = step;
+                _routeStepStart = Time.unscaledTime;
+                _routeSettleSince = -1f;
+                _routeCorner = -1;
+                if (step >= RoutePoints.Length)
+                {
+                    Log("route-tour done frames=" + _summary.routeFrames.Count);
+                    _running = false;
+                    Finish();
+                }
+            }
+
+            private void RecordRoute(RoutePoint point, string status, string reason, string path, bool roofAbove)
+            {
+                var f = new RouteFrame
+                {
+                    key = point.Key, status = status, reason = reason, path = path ?? "", mode = CameraModeService.Current.ToString(),
+                    x = point.X, z = point.Z, yaw = point.Yaw,
+                    pitch = CameraModeService.Current == CameraMode.FirstPerson ? point.PitchFp : point.PitchTp,
+                    seconds = Time.unscaledTime - _runStart, roofAbove = roofAbove,
+                    drawCalls = _drawCalls.Valid ? _drawCalls.LastValue : -1, batches = _batches.Valid ? _batches.LastValue : -1
+                };
+                _summary.routeFrames.Add(f);
+                Log("[QaFrame] " + point.Key + " status=" + status + " drawCalls=" + f.drawCalls + " batches=" + f.batches + " roofAbove=" + (roofAbove ? 1 : 0) + (reason.Length > 0 ? " reason=" + reason : ""));
+            }
+
+            /// <summary>WP-078 R3: any collider straight above the head marked CameraOccluderKind.Roof (RaycastAll — the dressed kit
+            /// has unmarked slabs and lintels under the roof occluder).</summary>
+            private static bool RoofAbove(PlayerRig rig)
+            {
+                Vector3 head = rig.transform.position + Vector3.up * 1.7f;
+                RaycastHit[] hits = Physics.RaycastAll(head, Vector3.up, 15f, ~0, QueryTriggerInteraction.Collide);
+                for (int i = 0; i < hits.Length; i++)
+                {
+                    if (CameraOccluderClass.Of(hits[i].collider) == CameraOccluderKind.Roof) return true;
+                }
+
+                return false;
+            }
+
+            /// <summary>Straight NavMesh path to the route point, followed corner by corner (no goal logic of the fight planner).</summary>
+            private Vector3 RouteDirection(Vector3 pos, Vector3 target)
+            {
+                if (_routeCorner < 0 || _routeCorner >= _routePath.corners.Length)
+                {
+                    NavMeshHit a, b;
+                    Vector3 from = NavMesh.SamplePosition(pos, out a, 2f, NavMesh.AllAreas) ? a.position : pos;
+                    Vector3 to = NavMesh.SamplePosition(target, out b, 2f, NavMesh.AllAreas) ? b.position : target;
+                    _routeCorner = NavMesh.CalculatePath(from, to, NavMesh.AllAreas, _routePath) && _routePath.corners.Length > 1 ? 1 : int.MaxValue;
+                }
+
+                Vector3 goal = _routeCorner < _routePath.corners.Length ? _routePath.corners[_routeCorner] : target;
+                Vector3 d = goal - pos; d.y = 0f;
+                if (d.magnitude < 0.6f && _routeCorner < _routePath.corners.Length - 1)
+                {
+                    _routeCorner++;
+                    goal = _routePath.corners[_routeCorner];
+                    d = goal - pos; d.y = 0f;
+                }
+
+                return d.sqrMagnitude > 1e-4f ? d.normalized : Vector3.zero;
+            }
+
+            /// <summary>Dev-only spawn hold for the route run (VfxLauncherCaptureAgent / SpecialWeaponProbe precedent, H12).</summary>
+            private static void HoldSpawns()
+            {
+                EnemySpawnDirector dir = EnemySpawnDirector.Instance;
+                if (dir == null) return;
+                FieldInfo f = typeof(EnemySpawnDirector).GetField("_spawningEnabled", BindingFlags.NonPublic | BindingFlags.Instance);
+                if (f != null && (bool)f.GetValue(dir)) { f.SetValue(dir, false); dir.ClearAllEnemies(); }
+                else if (f != null && dir.ActiveCount > 0) dir.ClearAllEnemies();
+            }
+
             /// <summary>WP-064: top-down aim error — the rig's planar aim direction against the planar direction to the target.</summary>
             private static bool TryPlanarAimError(PlayerRig rig, QaBotObservation o, Vector3 pos, out float degrees)
             {
@@ -2429,6 +2661,17 @@ namespace DD.Prototype.Qa
                 _summary.gatePass = gateOk;
                 _summary.pass = gateOk && !_invulnerable && !_specialEvidence && !_deathEvidence;   // WP-052/055/059: an evidence run is never a QA pass
                 _summary.runMode = _stability ? "stability" : (_invulnerable || _specialEvidence || _deathEvidence ? "evidence" : "normal");
+                if (_routeDir != null)
+                {
+                    // WP-078 D3c: a route run passes when every point was captured or is not applicable; it is not a gameplay pass
+                    bool all = _summary.routeFrames.Count == RoutePoints.Length;
+                    foreach (RouteFrame f in _summary.routeFrames) all &= f.status == "captured" || f.status == "notApplicable";
+                    _summary.runMode = "route";
+                    _summary.gatePass = all;
+                    _summary.pass = all && string.IsNullOrEmpty(_fail);
+                    if (_drawCalls.Valid) _drawCalls.Dispose();
+                    if (_batches.Valid) _batches.Dispose();
+                }
                 _summary.stabilityPass = _stability && !_specialEvidence && !_deathEvidence && string.IsNullOrEmpty(_fail) && _timeoutRound <= 0
                                          && ExactRunPassed(_summary.roundsCompleted, _rounds, _deathRound, _timeoutRound);
                 _summary.note = string.IsNullOrEmpty(_fail) ? (_died ? "player died" : "ok") : _fail;
