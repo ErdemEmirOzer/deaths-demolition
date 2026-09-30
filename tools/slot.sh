@@ -32,12 +32,17 @@ limit(){ [ -n "${DD_SLOT_LIMIT_FILE:-}" ] && [ -s "$DD_SLOT_LIMIT_FILE" ] && { c
 # D1 review MUST-1: lstart is locale/TZ-formatted — a caller with LANG=tr_TR or TZ=UTC would read every live lock as
 # "started at another time" and delete it; one fixed format for every writer and reader.
 pstart(){ env -u TZ LC_ALL=C ps -o lstart= -p "$1" 2>/dev/null | tr -s ' '; }
+# reused <recorded> <now>: 0 = the pid now belongs to ANOTHER process. Only when both are known AND the recorded value is in
+# the fixed C format (`Www Mmm d HH:MM:SS YYYY`) — a lock written by an older slot.sh in another locale/TZ (e.g. tr_TR
+# "Çar 30 Eyl …") cannot be compared, so a LIVE pid keeps it (C-00 30.09: the KADRO copy can be synced at any moment;
+# dead pids are still removed by kill -0).
+reused(){ [ -n "$1" ] && [ -n "$2" ] && [[ "$1" =~ ^[A-Z][a-z]{2}\ [A-Z][a-z]{2}\ [0-9]{1,2}\ [0-9]{2}:[0-9]{2}:[0-9]{2}\ [0-9]{4}$ ]] && [ "$1" != "$2" ]; }
 # A lock/ticket is stale when its pid is gone or (v4) the pid now belongs to a process started at another time.
 # K3: both start times must be known — an empty `ps` answer (transient) never removes a live pid's lock.
 clean(){ local k=$1 f pid st now; for f in "$BASE/$k"/* "$BASE/queue/$k"/*; do [ -e "$f" ] || continue; pid=${f##*.}
   if ! kill -0 "$pid" 2>/dev/null; then rm -f "$f"; continue; fi
   st=$(sed -n 's/^start=//p' "$f" 2>/dev/null); [ -n "$st" ] || continue
-  now=$(pstart "$pid"); [ -n "$now" ] && [ "$st" != "$now" ] && rm -f "$f"; done; }
+  now=$(pstart "$pid"); reused "$st" "$now" && rm -f "$f"; done; }
 holders(){ local f; for f in "$BASE/$1"/*; do [ -e "$f" ] && echo "  $(basename "$f"): $(head -1 "$f")"; done; }
 oldest(){ ls "$BASE/queue/$1" 2>/dev/null | sort | head -1; }
 cmd=${1:-status}; kind=${2:-unity}; tag=${3:-anon}; owner=${DD_SLOT_OWNER:-$PPID}
@@ -100,7 +105,7 @@ case "$cmd" in
       is_ancestor "$hp" "$p" || continue
       # clean()'s stale rule (pid reused: both start times known and different) — skipped here, never removed
       st=$(sed -n 's/^start=//p' "$held" 2>/dev/null); now=$(pstart "$hp")
-      [ -n "$st" ] && [ -n "$now" ] && [ "$st" != "$now" ] && continue
+      reused "$st" "$now" && continue
       echo "SLOT $kind held by pid $hp ($(basename "$held")), an ancestor of pid $p"; exit 0
     done; exit 1 ;;
   status)

@@ -118,6 +118,21 @@ class SlotK3Tests(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertTrue(lock.exists(), "locale / TZ of the caller removed a live lock")
 
+    def test_SlotClean_EskiBicimYerelAyarliStart_CanliPidKorunur_OluPidSilinir(self):
+        # C-00 30.09: the KADRO copy can be synced at any moment — a lock written by an older slot.sh in tr_TR
+        # ("Çar 30 Eyl …") cannot be compared with the C-format start: a live pid keeps it, a dead pid is still removed.
+        live = self.sleeper()
+        lock = self.lock("player", "1.legacy", live, "Çar 30 Eyl 19:03:12 2026")
+        r = self.slot("status")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertTrue(lock.exists(), "a live holder's legacy-format lock was removed")
+        h = self.slot("holds", "player", str(live))
+        self.assertEqual(h.returncode, 0, h.stdout + h.stderr)
+        self.assertTrue(h.stdout.startswith("SLOT player held by "))
+        proc = self.procs[-1]; proc.kill(); proc.wait()
+        r = self.slot("status")
+        self.assertFalse(lock.exists(), "a dead holder's legacy lock must still be cleaned")
+
     def test_SlotClean_FarkliPstart_KilitSilinir(self):
         pid = self.sleeper()
         stale = self.lock("player", "1.reused", pid, "Thu Jan 1 00:00:00 1970")
