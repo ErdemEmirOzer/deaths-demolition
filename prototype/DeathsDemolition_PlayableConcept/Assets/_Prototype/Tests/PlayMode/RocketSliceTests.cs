@@ -31,6 +31,14 @@ namespace DD.Prototype.Tests.PlayMode
         private SpecialWeaponSahne _s;
         private readonly List<RocketBlastInfo> _blasts = new List<RocketBlastInfo>(16);
 
+        // C-00 30.09 (S-09 root cause, K/wp-068e/evidence r1e-cipin + r1e-pindiag): TrySetClassicWeapon writes the process-wide
+        // WeaponRegistry.SelectedWeapon, and ResetStatics runs once per PlayMode run — the RunTree* tier gate later in the CI
+        // order saw rl_1. The selection is saved before each test and given back as the teardown's last step.
+        private ClassicWeaponId _seciliOnce;
+
+        [SetUp]
+        public void SeciliSilahiSakla() => _seciliOnce = WeaponRegistry.SelectedWeapon;
+
         [UnityTearDown]
         public IEnumerator Bitir()
         {
@@ -52,6 +60,7 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             LogAssert.ignoreFailingMessages = false;
+            WeaponRegistry.SelectedWeapon = _seciliOnce;
         }
 
         private IEnumerator Kur()

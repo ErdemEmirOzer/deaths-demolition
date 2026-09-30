@@ -23,6 +23,14 @@ namespace DD.Prototype.Tests.PlayMode
         private int _casingsAtPump;
         private Vector3 _pumpPort;
 
+        // C-00 30.09 (S-09 root cause, K/wp-068e/evidence r1e-cipin + r1e-pindiag): TrySetClassicWeapon writes the process-wide
+        // WeaponRegistry.SelectedWeapon, and ResetStatics runs once per PlayMode run — the RunTree* tier gate later in the CI
+        // order saw rl_1. The selection is saved before each test and given back as the teardown's last step.
+        private ClassicWeaponId _seciliOnce;
+
+        [SetUp]
+        public void SeciliSilahiSakla() => _seciliOnce = WeaponRegistry.SelectedWeapon;
+
         [UnityTearDown]
         public IEnumerator TearDown()
         {
@@ -35,6 +43,7 @@ namespace DD.Prototype.Tests.PlayMode
                 yield return LifecycleTestKit.SahneyiBekle(PrototypeScenes.MainMenu);
             }
             LogAssert.ignoreFailingMessages = false;
+            WeaponRegistry.SelectedWeapon = _seciliOnce;
         }
 
         private IEnumerator SetUpWeapon(ClassicWeaponId id)
