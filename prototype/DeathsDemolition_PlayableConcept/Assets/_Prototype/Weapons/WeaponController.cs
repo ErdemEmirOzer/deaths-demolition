@@ -1553,10 +1553,22 @@ namespace DD.Prototype.Weapons
                     PublishMagOut(false);
                 }
 
-                while (_seatsFired < _timeline.SeatCount && p >= _timeline.SeatProgress(_seatsFired))
+                if (_timeline.Shells && _classic.ShellByShellReload)
                 {
-                    _seatsFired++;
-                    PublishMechanism(WeaponMechanismKind.ShellSeated, false);
+                    // R1-B W7 (C-00 30.09): one seat per shell the runtime actually loads — not the timeline's fixed three
+                    while (_seatsFired < _classic.ShellsLoadedThisReload)
+                    {
+                        _seatsFired++;
+                        PublishMechanism(WeaponMechanismKind.ShellSeated, false);
+                    }
+                }
+                else
+                {
+                    while (_seatsFired < _timeline.SeatCount && p >= _timeline.SeatProgress(_seatsFired))
+                    {
+                        _seatsFired++;
+                        PublishMechanism(WeaponMechanismKind.ShellSeated, false);
+                    }
                 }
 
                 if (!_chamberFired && p >= _timeline.ChamberProgress)

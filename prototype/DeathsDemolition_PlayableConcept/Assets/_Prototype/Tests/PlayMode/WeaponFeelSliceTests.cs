@@ -457,7 +457,9 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.Greater(reload, 1f);
             yield return SpecialWeaponSahne.Bekle(() => !_s.Controller.Classic.IsReloading, reload + 1f, "reload biter");
             Assert.AreEqual(0, Count(WeaponMechanismKind.MagazineDropped), "C: şarjör düşmez (fişek)");
-            Assert.AreEqual(3, Count(WeaponMechanismKind.ShellSeated), "C: üç fişek slotu (AP-009C mag_in / mag_in_2 / mag_in_3; klip ya da yedek)");
+            // R1-B W7 (C-00 30.09): the clip carries its three mag_in marks; the timer fallback seats the shells actually loaded
+            Assert.AreEqual(_s.Controller.ClipDrivesMechanism ? 3 : 1, Count(WeaponMechanismKind.ShellSeated),
+                "C: fişek slotları (klip: AP-009C mag_in ×3; yedek: yüklenen fişek sayısı — bir atış = bir fişek)");
             Assert.That(Count(WeaponMechanismKind.Chambered), Is.InRange(1, 2), "C: atışın pump'ı (0–1) + reload'un pump chamber'ı (1)");
             Assert.AreEqual(WeaponMechanismKind.Chambered, _mechanism[_mechanism.Count - 1].Kind, "C: reload'un son mekanizma olayı chamber (pump)");
         }

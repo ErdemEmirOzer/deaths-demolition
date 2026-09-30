@@ -488,6 +488,12 @@ namespace DD.Prototype.Weapons
         /// <summary>True when the magazine is not full and a reload is worth starting.</summary>
         public bool NeedsReload => !InfiniteAmmo && Ammo < MagazineSize;
 
+        /// <summary>R1-B W7 (C-00 30.09): shells loaded so far by the current shell-by-shell reload (the mechanism slots follow it).</summary>
+        public int ShellsLoadedThisReload => _shellsLoaded;
+
+        /// <summary>R1-B W7: a shell-by-shell reload is running (sg_1).</summary>
+        public bool ShellByShellReload => IsReloading && _shellSeconds > 0f;
+
         /// <summary>WP-069: a burst is in progress (its remaining shots fire whatever the trigger does).</summary>
         public bool BurstActive => _burstLeft > 0;
 

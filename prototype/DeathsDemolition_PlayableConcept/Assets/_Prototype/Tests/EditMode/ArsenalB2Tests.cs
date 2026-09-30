@@ -119,6 +119,24 @@ namespace DD.Prototype.Tests.EditMode
             }
         }
 
+        /// <summary>R1-B W7 (C-00 30.09): the shell-by-shell reload counts the shells it loads — two spent, two loaded (the mechanism slots follow this count).</summary>
+        [Test]
+        public void FisekFisekReload_YuklenenFisekSayisiniSayar()
+        {
+            ClassicWeaponRuntime rt = Equip(ClassicWeaponId.CombatShotgun);
+            int full = rt.Ammo;
+            rt.ConsumeShot(); rt.Tick(2f);
+            rt.ConsumeShot(); rt.Tick(2f);
+            Assert.AreEqual(full - 2, rt.Ammo);
+            Assert.IsTrue(rt.TryBeginReload());
+            Assert.IsTrue(rt.ShellByShellReload, "sg_1 fişek fişek");
+            Assert.AreEqual(0, rt.ShellsLoadedThisReload);
+            for (int i = 0; i < 400 && rt.IsReloading; i++) rt.Tick(0.01f);
+            Assert.IsFalse(rt.IsReloading);
+            Assert.AreEqual(full, rt.Ammo, "şarjör doldu");
+            Assert.AreEqual(2, rt.ShellsLoadedThisReload, "iki boşalan fişek, iki yükleme");
+        }
+
         [Test]
         public void Tekli_BasisTamponu_CevrimSonundaAtar_EskiBasisSoner()
         {
