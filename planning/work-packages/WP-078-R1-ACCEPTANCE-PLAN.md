@@ -66,7 +66,7 @@ B9 pozları (C-00 01.10): S-05'in B9 perf matrisi ayrı pencere açmaz; **A4'ten
 
 ### 4.1 · FINAL sessiz pencere — tek sıra (C-00 01.10)
 
-Pencere, FINAL zincirinde A5 bittikten sonra açılır; C-00 açılışı ve kapanışı tüm oturumlara duyurur. Pencere boyunca başka oturum Unity veya Player açmaz. Tek sahip S-10, S-07 yalnız kendi adımında.
+FINAL zinciri üç çağrıdır (aynı kanıt kökü `<E>`): (i) pencere öncesi `wp078_accept.py --final <SHA> --stages a6,a0,a1,a2,a3,a5`; (ii) pencere içinde aşağıdaki 1–2. adım; (iii) pencere sonrası `--stages a8 --resume`. Pencere A5 bittikten sonra açılır; C-00 açılışı ve kapanışı tüm oturumlara duyurur. Pencere boyunca başka oturum Unity veya Player açmaz. Tek sahip S-10, S-07 yalnız kendi adımında.
 
 | # | Adım | Sahip | Komut / kaynak | Süre | Başlama koşulu | Bitti sayılır |
 |---|---|---|---|---|---|---|
@@ -75,7 +75,7 @@ Pencere, FINAL zincirinde A5 bittikten sonra açılır; C-00 açılışı ve kap
 | 2 | B9 pozları | S-10 (S-05 pozları) | aynı çağrı, A4'ün hemen ardından: 6 poz × `wp078_perf --extra-arg=-ddPilotStart …`, kök `<E>/b9/<name>` | 36 pencere ≈ 85–90 dk | 1 bitti (aynı süreç) | `stages/b9.json` (RECORDED) |
 | 3 | Slot bırakma | S-10 | koşucu çıkınca player + Unity slotları serbest; S-10 `slot.sh status` ile doğrular | < 1 dk | 2 bitti | player 0/1, Unity tutucu yok |
 | 4 | S-07 adımı | S-07 | S-10 → S-07: **"S-07 başla"**; S-07 `NOWAIT=1 zsh …/wp-019r2/tools/wp073-quiet.sh` (launcher 1 + tier-ms 10, kendi guard/player-run, r4 dev build) | ≈ 25 dk | 3 | S-07 → S-10 "bitti" |
-| 5 | Kapanış | S-10 → C-00 | "sessiz pencere kapandı" + A4/B9 özet satırı; sonra A8 raporu (sessizlik gerekmez) | — | 4 | C-00 duyurusu |
+| 5 | Kapanış + A8 | S-10 → C-00 | "sessiz pencere kapandı" + A4/B9 özet satırı; sonra `wp078_accept.py --final <SHA> --stages a8 --resume` (sessizlik gerekmez) | ≈ 5 dk | 4 | C-00 duyurusu; `report-<utc>/` |
 
 Kurallar: kilit sırası player → unity (koşucu önce player slotunu alır). Bir adımda guard STOP (7) olursa pencere durur ve C-00'a bildirilir. Bekleme kodları (6/30/75) aynı kökte kaldığı yerden sürer. S-07 adımı S-10'un slotları bırakmasını bekler; S-10 slot tutarken S-07 beklemez. Toplam ≈ 3–3,5 sa. B9 ve S-07 ölçümleri kabul kapısı değildir, yalnız A4 kapıdır.
 
