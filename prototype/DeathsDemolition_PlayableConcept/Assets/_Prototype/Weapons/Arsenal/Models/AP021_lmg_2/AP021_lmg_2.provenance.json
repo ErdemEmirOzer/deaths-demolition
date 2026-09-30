@@ -2,21 +2,21 @@
  "package": "AP-021",
  "owner": "P-07",
  "key": "lmg_2",
- "version": "v003",
+ "version": "v003.3 (P-07 30.09, built 2026-09-30T14:45:27Z; S-02 B5-4 import)",
  "frame": "Unity frame at export (canonical — S-02 measured in the Run scene (C-00 T4, 25.09): Unity +Z barrel, +Y up, +X = shooter right)",
  "ad_verdict": "02-concept/AP021-AD-classics-B-verdict.md: KABUL_DUZELTMELERLE -> v003: C1 + M7 done (pan persimmon 0, recap faces iron UV)",
  "files": [
   {
    "source": "asset-production/AP-021/exports/fbx/AP021_lmg_2.fbx",
    "target": "_Prototype/Weapons/Arsenal/Models/AP021_lmg_2/AP021_lmg_2.fbx",
-   "bytes": 1170284,
-   "sha256": "317932f94cdaf30f0c1c3612e6db1578366888f63feaf4e42189650cebf5a2c9"
+   "bytes": 1170412,
+   "sha256": "c14ec628c377b8154fd270b0279c15d02fae020376e31baa750cccda205a65fd"
   },
   {
    "source": "asset-production/AP-021/exports/textures/lmg_2/T_AP021_lmg_2_BaseColor.png",
    "target": "_Prototype/Weapons/Arsenal/Models/AP021_lmg_2/Textures/T_AP021_lmg_2_BaseColor.png",
-   "bytes": 2208953,
-   "sha256": "d7c58f014faa4b433eb5792e463fb874c5ca421bf23784dc961cc8cecb198596"
+   "bytes": 2205123,
+   "sha256": "c65c34f39502bd46e69faa8a9cd40ca64414607d7e63438f31f713410e29f794"
   },
   {
    "source": "asset-production/AP-021/exports/textures/lmg_2/T_AP021_lmg_2_MRA.png",

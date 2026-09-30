@@ -2,15 +2,15 @@
  "package": "AP-021",
  "owner": "P-07",
  "key": "sr_1",
- "version": "v003",
+ "version": "v003.3 (P-07 30.09, built 2026-09-30T15:37:40Z; S-02 B5-4 import)",
  "frame": "Unity frame at export (canonical — S-02 measured in the Run scene (C-00 T4, 25.09): Unity +Z barrel, +Y up, +X = shooter right)",
  "ad_verdict": "02-concept/AP021-AD-classics-B-verdict.md: KABUL_DUZELTMELERLE -> v003: C1, C2 (plane split, foreign 0), M1 (eyepiece, glass disc r 15 mm), M2 (round bolt body 72 tris) done",
  "files": [
   {
    "source": "asset-production/AP-021/exports/fbx/AP021_sr_1.fbx",
    "target": "_Prototype/Weapons/Arsenal/Models/AP021_sr_1/AP021_sr_1.fbx",
-   "bytes": 1107548,
-   "sha256": "9934fc170fe613309905a6345c78c7c3dfbe117f7143b0a2f81612134a085e40"
+   "bytes": 1108108,
+   "sha256": "8230799738a4258d4137aeaf00b4c8e3c8effba0a80b516a83bb21c37f720b29"
   },
   {
    "source": "asset-production/AP-021/exports/textures/sr_1/T_AP021_sr_1_BaseColor.png",
@@ -21,8 +21,8 @@
   {
    "source": "asset-production/AP-021/exports/textures/sr_1/T_AP021_sr_1_MRA.png",
    "target": "_Prototype/Weapons/Arsenal/Models/AP021_sr_1/Textures/T_AP021_sr_1_MRA.png",
-   "bytes": 2858712,
-   "sha256": "950750d05d1c749766a62b10309415f8d4b8585ef18fc2b2d8f79c078fadf6c9"
+   "bytes": 2858543,
+   "sha256": "4b2674c9d9aa6ec0ff7e46e91115d26cbe991f5b44b5dd24ea24785d76679da2"
   },
   {
    "source": "asset-production/AP-021/exports/textures/sr_1/T_AP021_sr_1_Normal.png",

@@ -2,33 +2,33 @@
  "package": "AP-021",
  "owner": "P-07",
  "key": "rl_1",
- "version": "v003",
+ "version": "v003.3 (P-07 30.09, built 2026-09-30T14:50:57Z; S-02 B5-4 import)",
  "frame": "Unity frame at export (canonical — S-02 measured in the Run scene (C-00 T4, 25.09): Unity +Z barrel, +Y up, +X = shooter right)",
  "ad_verdict": "02-concept/AP021-AD-classics-B-verdict.md: KABUL_DUZELTMELERLE -> v003: C1, C2 (4 bands radial split, foreign 0), M1 (rocket body + 3 fins, closed; bore widened r 0.0415 -> 0.047) done",
  "files": [
   {
    "source": "asset-production/AP-021/exports/fbx/AP021_rl_1.fbx",
    "target": "_Prototype/Weapons/Arsenal/Models/AP021_rl_1/AP021_rl_1.fbx",
-   "bytes": 1084172,
-   "sha256": "35c9a5c90be7f412290507da921b54acf16245fe6829fa2649b35968d01b9a0a"
+   "bytes": 1094092,
+   "sha256": "010c00302136bb9de7b90cdcf965e4e8c95493f02ace0ccd1d8793a646aa337e"
   },
   {
    "source": "asset-production/AP-021/exports/textures/rl_1/T_AP021_rl_1_BaseColor.png",
    "target": "_Prototype/Weapons/Arsenal/Models/AP021_rl_1/Textures/T_AP021_rl_1_BaseColor.png",
-   "bytes": 2210521,
-   "sha256": "f1e8c30d4ef75399a6f53a87a9609d5bbb51804170e8476c9e53fe91e2895798"
+   "bytes": 2210544,
+   "sha256": "66b70abc0f9d66daec952933b368b4da698d086bf8ce19ddc4fcc4a622182202"
   },
   {
    "source": "asset-production/AP-021/exports/textures/rl_1/T_AP021_rl_1_MRA.png",
    "target": "_Prototype/Weapons/Arsenal/Models/AP021_rl_1/Textures/T_AP021_rl_1_MRA.png",
-   "bytes": 3169170,
-   "sha256": "8adc517cf892b69cc724e662b4302fcaff6c4fa4d4feb7461c97199981fdf575"
+   "bytes": 3161008,
+   "sha256": "0d28be73c894ca999f7df27c63fdff69b2c3081b01a36295dcac899844c2b0bf"
   },
   {
    "source": "asset-production/AP-021/exports/textures/rl_1/T_AP021_rl_1_Normal.png",
    "target": "_Prototype/Weapons/Arsenal/Models/AP021_rl_1/Textures/T_AP021_rl_1_Normal.png",
-   "bytes": 1600643,
-   "sha256": "712bf0bc1788fee61faca675027fca3415f06b5bbd87bdff05cebecbad7f600e"
+   "bytes": 1600756,
+   "sha256": "68072e18b289938bdc2ae1da59d1328ee80e7321d01ccb04a1d5f87ab1fe5cb4"
   }
  ]
 }

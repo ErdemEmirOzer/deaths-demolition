@@ -2,15 +2,15 @@
  "package": "AP-021",
  "owner": "P-07",
  "key": "lmg_1",
- "version": "v003",
+ "version": "v003.3 (P-07 30.09, built 2026-09-30T14:43:05Z; S-02 B5-4 import)",
  "frame": "Unity frame at export (canonical — S-02 measured in the Run scene (C-00 T4, 25.09): Unity +Z barrel, +Y up, +X = shooter right)",
  "ad_verdict": "02-concept/AP021-AD-classics-B-verdict.md: KABUL; v003: C1 done (0.8 mm chamfer, 30 px/cm textured leaf), LOD2 trigger no longer empty",
  "files": [
   {
    "source": "asset-production/AP-021/exports/fbx/AP021_lmg_1.fbx",
    "target": "_Prototype/Weapons/Arsenal/Models/AP021_lmg_1/AP021_lmg_1.fbx",
-   "bytes": 1150924,
-   "sha256": "e90fb1826b1072aefcfc7b0cd48382a294cf2114cb528137a180e7acd032ceb9"
+   "bytes": 1154940,
+   "sha256": "b94f637f21c5e36e5400571d915a4640e2387783bd34075881bf25d9edb957f9"
   },
   {
    "source": "asset-production/AP-021/exports/textures/lmg_1/T_AP021_lmg_1_BaseColor.png",
@@ -21,8 +21,8 @@
   {
    "source": "asset-production/AP-021/exports/textures/lmg_1/T_AP021_lmg_1_MRA.png",
    "target": "_Prototype/Weapons/Arsenal/Models/AP021_lmg_1/Textures/T_AP021_lmg_1_MRA.png",
-   "bytes": 3401871,
-   "sha256": "c2641a2f383eb84a1ef0d084ea4583b699e50a43961d658e0c02520ce9ff784c"
+   "bytes": 3403141,
+   "sha256": "391370322d784ffe7ac52865f8c216b181dbf002cd04854a82af965701dccbe7"
   },
   {
    "source": "asset-production/AP-021/exports/textures/lmg_1/T_AP021_lmg_1_Normal.png",

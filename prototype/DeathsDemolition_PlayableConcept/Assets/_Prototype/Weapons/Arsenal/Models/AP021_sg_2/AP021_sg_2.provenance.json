@@ -2,14 +2,14 @@
  "package": "AP-021",
  "owner": "P-07",
  "key": "sg_2",
- "version": "v002",
+ "version": "v003.3 (P-07 30.09, built 2026-09-30T14:41:11Z; S-02 B5-4 import)",
  "frame": "Unity frame at export (validation 05-blender/validation/AP021-sg_2-unity-frame.json pass, 0 mm)",
  "files": [
   {
    "source": "asset-production/AP-021/exports/fbx/AP021_sg_2.fbx",
    "target": "_Prototype/Weapons/Arsenal/Models/AP021_sg_2/AP021_sg_2.fbx",
-   "bytes": 1141100,
-   "sha256": "ae84e8faa88cd3ef7c1eaf19fa9ea387f86ecf9122572bb2ac14bfe27628e0be"
+   "bytes": 1141388,
+   "sha256": "6e67a0ede2546f98b306a71faf927de54b80b1f9407149b3efc8ba5a10260bb4"
   },
   {
    "source": "asset-production/AP-021/exports/textures/sg_2/T_AP021_sg_2_BaseColor.png",

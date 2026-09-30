@@ -2,33 +2,33 @@
  "package": "AP-021",
  "owner": "P-07",
  "key": "smg_2",
- "version": "v003",
+ "version": "v003.3 (P-07 30.09, built 2026-09-30T15:34:16Z; S-02 B5-4 import)",
  "frame": "Unity frame at export (canonical — S-02 measured in the Run scene (C-00 T4, 25.09): Unity +Z barrel, +Y up, +X = shooter right)",
  "ad_verdict": "02-concept/AP021-AD-classics-B-verdict.md: KABUL_DUZELTMELERLE -> v003: C1, C3 (0.1015), C4 (0.027/0.029), M1 (procedural cap + 2 rings, closed) done",
  "files": [
   {
    "source": "asset-production/AP-021/exports/fbx/AP021_smg_2.fbx",
    "target": "_Prototype/Weapons/Arsenal/Models/AP021_smg_2/AP021_smg_2.fbx",
-   "bytes": 1116828,
-   "sha256": "5f6cc9dcb9debe38c31da599ea6788a79304677ffd1d4d057bb48abaa75373bb"
+   "bytes": 1125212,
+   "sha256": "3889fcd8bcaad3ecb98ba101b1a8f3418589bb79adc10ac36180a9640fda9f52"
   },
   {
    "source": "asset-production/AP-021/exports/textures/smg_2/T_AP021_smg_2_BaseColor.png",
    "target": "_Prototype/Weapons/Arsenal/Models/AP021_smg_2/Textures/T_AP021_smg_2_BaseColor.png",
-   "bytes": 2466537,
-   "sha256": "ec7a72091b4241462d268ab48c3fcb96257b57a2eb487ed2f51759d5845aabfe"
+   "bytes": 2461335,
+   "sha256": "7c3b0ee06920b191843b1d9a2d184da89f5264dc5e756a5927300823d9d1e83a"
   },
   {
    "source": "asset-production/AP-021/exports/textures/smg_2/T_AP021_smg_2_MRA.png",
    "target": "_Prototype/Weapons/Arsenal/Models/AP021_smg_2/Textures/T_AP021_smg_2_MRA.png",
-   "bytes": 2986298,
-   "sha256": "0b1753b0a5a1ac08fb4da2f08b77e680d79596d61dd619d19e4fc7afa6b0e24d"
+   "bytes": 2975426,
+   "sha256": "6fa27e6dc6a40d161fe29e9f8b5eced8f15002e9848540b38f090e46ee5fcba4"
   },
   {
    "source": "asset-production/AP-021/exports/textures/smg_2/T_AP021_smg_2_Normal.png",
    "target": "_Prototype/Weapons/Arsenal/Models/AP021_smg_2/Textures/T_AP021_smg_2_Normal.png",
-   "bytes": 1576619,
-   "sha256": "29c8344a7013807ae950348de109e49384bbf17d9380ef92d2093923d980cf94"
+   "bytes": 1576740,
+   "sha256": "64d324efd475ce95f3a29eb5fc5040b029da83b741ab507e075ab3705d0a1a21"
   }
  ]
 }

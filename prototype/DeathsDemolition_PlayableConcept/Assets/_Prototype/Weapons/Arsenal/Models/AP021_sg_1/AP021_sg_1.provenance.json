@@ -2,15 +2,15 @@
  "package": "AP-021",
  "owner": "P-07",
  "key": "sg_1",
- "version": "v003",
+ "version": "v003.3 (P-07 30.09, built 2026-09-30T14:38:37Z; S-02 B5-4 import)",
  "frame": "Unity frame at export (canonical — S-02 measured in the Run scene (C-00 T4, 25.09): Unity +Z barrel, +Y up, +X = shooter right)",
  "ad_verdict": "02-concept/AP021-AD-classics-B-verdict.md: KABUL; v003: C1 done",
  "files": [
   {
    "source": "asset-production/AP-021/exports/fbx/AP021_sg_1.fbx",
    "target": "_Prototype/Weapons/Arsenal/Models/AP021_sg_1/AP021_sg_1.fbx",
-   "bytes": 1107052,
-   "sha256": "d2ed7d93dc7970e1778e1868914b0b004e95d4a0cbad7c0d67f30a2b1991582b"
+   "bytes": 1107676,
+   "sha256": "7af2ad6d853bc87d17bdd45096414acd6813f378471d4e6d71ade63102a2a579"
   },
   {
    "source": "asset-production/AP-021/exports/textures/sg_1/T_AP021_sg_1_BaseColor.png",
@@ -21,8 +21,8 @@
   {
    "source": "asset-production/AP-021/exports/textures/sg_1/T_AP021_sg_1_MRA.png",
    "target": "_Prototype/Weapons/Arsenal/Models/AP021_sg_1/Textures/T_AP021_sg_1_MRA.png",
-   "bytes": 3020806,
-   "sha256": "9e44b1941ea029951f3dcf86b1feaa7c11a2af40364394fe968ada891663591a"
+   "bytes": 3020745,
+   "sha256": "f878873da7919a27c7fe9a3c205af512c4e2c4a134f2d5e5a09216b9818afdb0"
   },
   {
    "source": "asset-production/AP-021/exports/textures/sg_1/T_AP021_sg_1_Normal.png",
