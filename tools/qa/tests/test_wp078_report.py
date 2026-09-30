@@ -13,7 +13,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-HERE = Path(__file__).resolve().parent
+HERE = Path(__file__).resolve().parents[1]   # tools/qa (C-00 30.09 M-15: the test lives in tools/qa/tests so discover finds it)
 FINAL = 'a' * 40
 OTHER = 'b' * 40
 AREAS = 'projectile penetration launcher arsenal gel chain ragdoll zombieAttacks animation camera world aiFlags progression audio ui readability'.split()
