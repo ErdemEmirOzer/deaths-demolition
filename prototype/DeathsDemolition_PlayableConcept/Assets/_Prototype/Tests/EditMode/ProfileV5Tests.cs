@@ -110,6 +110,24 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void SonucVerisi_KilitAcma_KimliktenOkunur_MetindenDegil()
+        {
+            // C-00 30.09: RunResultsData tells a branch from a weapon by ProfileUnlockEntry.Kind (WP-068 R1-E), not by the English
+            // "Upgrade branch" prefix — a Turkish (or any) detail line still lands as the right type with the entry's own id.
+            var draft = new RunRewardReport.Draft { HasRun = true, Summary = new RunSummary { ReachedRound = 4, CompletedRounds = 3 } };
+            draft.NewUnlocks.Add(new ProfileUnlockEntry("Delme", "Yükseltme dalı - tur sonunda teklif edilebilir", ProfileUnlockKind.Branch, "Piercing"));
+            draft.NewUnlocks.Add(new ProfileUnlockEntry("Sanren", "Klasik silah - sonraki koşudan önce seçilebilir", ProfileUnlockKind.Weapon, "ar_2"));
+            draft.NewUnlocks.Add(new ProfileUnlockEntry("Legacy", "Upgrade branch - can now be offered at the end of a round"));
+            RunResultsData d = RunResultsData.From(draft.Seal(), new ProfileData());
+            Assert.AreEqual(3, d.NewUnlocks.Count);
+            Assert.AreEqual(UnlockContentType.Branch, d.NewUnlocks[0].Type, "Türkçe metinli dal yine dal");
+            Assert.AreEqual("Piercing", d.NewUnlocks[0].Id);
+            Assert.AreEqual(UnlockContentType.Weapon, d.NewUnlocks[1].Type);
+            Assert.AreEqual("ar_2", d.NewUnlocks[1].Id, "kimliğin kendi anahtarı");
+            Assert.AreEqual(UnlockContentType.Branch, d.NewUnlocks[2].Type, "kimliksiz eski girdi metin önekine düşer");
+        }
+
+        [Test]
         public void Tavan_R1B_P2_XpSeviyeyeBirikmez_MaxOkunur()
         {
             // R1-B P2 (C-00 30.09): at the cap nothing banks into the level (TotalXpEarned / Ash count elsewhere), so a later

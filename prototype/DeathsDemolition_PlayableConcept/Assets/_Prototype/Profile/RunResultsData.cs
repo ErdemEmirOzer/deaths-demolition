@@ -226,10 +226,14 @@ namespace DD.Prototype.Profile
                 for (int i = 0; i < ladderCount && i < report.NewUnlocks.Count; i++)
                 {
                     ProfileUnlockEntry e = report.NewUnlocks[i];
-                    bool branch = e.Detail != null && e.Detail.StartsWith("Upgrade branch", System.StringComparison.Ordinal);
-                    // WP-049: the id is the enum NAME (roster / catalog key), resolved from the ladder's display name;
-                    // the title stays the display name. An unresolvable title keeps the title as id (never invented).
-                    unlocks.Add(new RunResultsUnlock(LadderId(e.Title, branch), branch ? UnlockContentType.Branch : UnlockContentType.Weapon, e.Title, e.Detail));
+                    // C-00 30.09 (after WP-068 R1-E 35f10261): the grant's identity decides, not its English copy. Only an
+                    // entry without identity (ProfileUnlockKind.Unknown: tests, older callers) falls back to the text prefix.
+                    bool branch = e.Kind == ProfileUnlockKind.Branch ||
+                                  (e.Kind == ProfileUnlockKind.Unknown && e.Detail != null && e.Detail.StartsWith("Upgrade branch", System.StringComparison.Ordinal));
+                    // WP-049: the id is the enum NAME / WP-069 weapon key. With an identity it is the entry's own id; otherwise
+                    // it is resolved from the ladder's display name (an unresolvable title keeps the title, never invented).
+                    string id = e.Kind != ProfileUnlockKind.Unknown && !string.IsNullOrEmpty(e.Id) ? e.Id : LadderId(e.Title, branch);
+                    unlocks.Add(new RunResultsUnlock(id, branch ? UnlockContentType.Branch : UnlockContentType.Weapon, e.Title, e.Detail));
                 }
 
                 for (int i = 0; i < report.OpenedContent.Count; i++)
