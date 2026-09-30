@@ -184,6 +184,8 @@ namespace DD.Prototype.Qa
             public float meanAimErrorDeg;     // angle between the rig's aim direction and the bot's target direction while a target was aimed
             public string aimKind;            // PlayerAim.AimKind seen most (Stick expected)
             public string cameraMode;         // WP-070: TopDown / ThirdPerson / FirstPerson (-ddCameraMode)
+            public string qualityTier;        // WP-078 A5: QualityTiers.Current the run played at (Performans / Yuksek / Sinematik)
+            public float worldHalfExtent;     // WP-078 A5: playable ring inner face the bot used (WorldBounds, V6 55; else the ±45 ring)
             public int fireFrames;
             public int lookFireGated;         // WP-078: TP/FP frames the trigger was held back until the centre ray was on the chest
             public string swBeats;           // WP-055: sw_push/sw_web/sw_pull beats seen (kind=count), "" when none
@@ -1326,11 +1328,12 @@ namespace DD.Prototype.Qa
                 _reloadCooldown -= Time.unscaledDeltaTime;
                 if (o.HasTarget && rig.Aim != null)
                 {
-                    Vector3 aimed = rig.Aim.AimDirection; aimed.y = 0f;
-                    Vector3 want = o.TargetPosition - pos; want.y = 0f;
-                    if (aimed.sqrMagnitude > 1e-6f && want.sqrMagnitude > 1e-6f)
+                    // WP-078: in TP/FP the shot leaves down the camera's centre ray — measure from the camera to the target's
+                    // chest (the point LookStickToward aims at); from the player's position the shoulder offset inflated it
+                    float aimError;
+                    if (CameraModeService.IsLookMode ? TryLookAimError(o, out aimError) : TryPlanarAimError(rig, o, pos, out aimError))
                     {
-                        _aimErrorSum += Vector3.Angle(aimed, want);
+                        _aimErrorSum += aimError;
                         _aimErrorSamples++;
                     }
 
@@ -1715,6 +1718,36 @@ namespace DD.Prototype.Qa
             /// aim direction. Inverse of the rig's stick model: rate = |s|^exp · speed (pitch × share,
             /// invert-Y honoured), with the adapter's radial dead zone / saturation undone.
             /// </summary>
+            /// <summary>WP-064: top-down aim error — the rig's planar aim direction against the planar direction to the target.</summary>
+            private static bool TryPlanarAimError(PlayerRig rig, QaBotObservation o, Vector3 pos, out float degrees)
+            {
+                Vector3 aimed = rig.Aim.AimDirection; aimed.y = 0f;
+                Vector3 want = o.TargetPosition - pos; want.y = 0f;
+                degrees = aimed.sqrMagnitude > 1e-6f && want.sqrMagnitude > 1e-6f ? Vector3.Angle(aimed, want) : 0f;
+                return aimed.sqrMagnitude > 1e-6f && want.sqrMagnitude > 1e-6f;
+            }
+
+            /// <summary>WP-078: TP/FP aim error — the camera's centre ray against the ray origin → target chest (1 m up).</summary>
+            private static bool TryLookAimError(QaBotObservation o, out float degrees)
+            {
+                degrees = 0f;
+                PrototypeCameraRig cam = PrototypeCameraRig.Active;
+                CameraAimRay ray;
+                if (cam == null || !cam.TryGetAimRay(Vector2.zero, 0f, out ray) || ray.Direction.sqrMagnitude < 1e-6f)
+                {
+                    return false;
+                }
+
+                Vector3 toChest = o.TargetPosition + Vector3.up * 1.0f - ray.Origin;
+                if (toChest.sqrMagnitude < 1e-6f)
+                {
+                    return false;
+                }
+
+                degrees = Vector3.Angle(ray.Direction, toChest);
+                return true;
+            }
+
             /// <summary>
             /// WP-078: true when the TP/FP screen-centre ray (from the stable camera pose) passes within the target's chest
             /// radius — the angle to the chest point (1 m up, as <see cref="LookStickToward"/> aims) is under
@@ -2356,6 +2389,8 @@ namespace DD.Prototype.Qa
                 _summary.meanAimErrorDeg = _aimErrorSamples > 0 ? (float)(_aimErrorSum / _aimErrorSamples) : -1f;
                 _summary.aimKind = "stick " + _aimKindStick + " / pointer " + _aimKindPointer;
                 _summary.cameraMode = CameraModeService.Current.ToString();
+                _summary.qualityTier = QualityTiers.Current.ToString();
+                _summary.worldHalfExtent = RingMargin;
                 var top = new List<KeyValuePair<string, int>>(_fireHits);
                 top.Sort((a, b) => b.Value.CompareTo(a.Value));
                 var sb = new StringBuilder();
