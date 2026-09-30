@@ -9,7 +9,7 @@ BIN="$APP/Contents/MacOS/$DD_PRODUCT"
 mkdir -p "$OUT/profile"
 DD_TIMELINE="$OUT/timeline.txt"
 trap 'dd_slot_release smoke' EXIT
-dd_slot_acquire smoke
+dd_slot_acquire smoke || exit $?   # D1 review MUST-2 / M-07c: slot.sh's code (75 timeout, 64 usage) now reaches the caller
 # Y2 (C-00 30.09): through tools/player-run.sh (player slot) with the UI files and telemetry in <out>; the caller keeps
 # tools/userdata-guard.sh snapshot/restore --scope player around this script (rc.sh does) — -screen-fullscreen 0 writes
 # the Screenmanager keys of the real player PlayerPrefs.

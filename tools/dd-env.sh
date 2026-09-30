@@ -31,9 +31,56 @@ dd_wait_slot() {
 DD_SLOT="$DD_TOOLS_DIR/slot.sh"; DD_SLOT_TAG="${DD_SLOT_TAG:-$(basename "$DD_REPO")-$$}"
 # dd_slot_acquire [kind]  — kind: unity (default, ≤2) · blender (≤1) · smoke (≤1: a player smoke writes the real profile,
 # two at once corrupt the user-data guard — slot.sh v4). Direct call: the lock is bound to THIS shell's pid.
-dd_slot_acquire() { [ -x "$DD_SLOT" ] || return 0; local kind="${1:-unity}"; dd_log "slot: acquiring $kind slot as $DD_SLOT_TAG ($(dd_unity_count) Unity batch running)"; local out="${TMPDIR:-/tmp}/dd-slot-$$.txt"; "$DD_SLOT" acquire "$kind" "$DD_SLOT_TAG" > "$out"; dd_log "slot: $(cat "$out")"; rm -f "$out"; }
-dd_slot_release() { [ -x "$DD_SLOT" ] || return 0; local kind="${1:-unity}"; "$DD_SLOT" release "$kind" "$DD_SLOT_TAG" >/dev/null 2>&1; dd_log "slot: released $kind $DD_SLOT_TAG"; }
+# Codex-audit M-07 (C-00 30.09): both return slot.sh's own exit code (they used to return 0 whatever slot.sh said).
+dd_slot_acquire() { [ -x "$DD_SLOT" ] || return 0; local kind="${1:-unity}" rc; dd_log "slot: acquiring $kind slot as $DD_SLOT_TAG ($(dd_unity_count) Unity batch running)"; local out="${TMPDIR:-/tmp}/dd-slot-$$.txt"; "$DD_SLOT" acquire "$kind" "$DD_SLOT_TAG" > "$out"; rc=$?; dd_log "slot: $(cat "$out")"; [ "$rc" -eq 0 ] || dd_log "slot: acquire $kind failed (slot.sh exit $rc)"; rm -f "$out"; return $rc; }
+dd_slot_release() { [ -x "$DD_SLOT" ] || return 0; local kind="${1:-unity}" rc; "$DD_SLOT" release "$kind" "$DD_SLOT_TAG" >/dev/null 2>&1; rc=$?; if [ "$rc" -eq 0 ]; then dd_log "slot: released $kind $DD_SLOT_TAG"; else dd_log "slot: release $kind $DD_SLOT_TAG failed (slot.sh exit $rc)"; fi; return $rc; }
 dd_sha() { [ -f "$1" ] && shasum -a 256 "$1" | cut -d' ' -f1 || echo MISSING; }
+# dd_project_open <projectDir> — 0 a Unity editor has <projectDir> open · 1 none has · 2 the process list is unavailable.
+# Shared by main-ci.sh and compile-check.sh (single source). Unity's projectPath is resolved too, so a launch through an
+# alias stays busy. Codex-audit M-06 (C-00 30.09): the flag is matched case-insensitively (Unity Hub launches with
+# `-projectpath`); a foreign path is resolved with strict=False, and one that cannot be resolved or does not exist (e.g. a
+# Unity whose worktree was removed) is skipped with a stderr line instead of failing the whole check (it locked CI at 75).
+dd_project_open() {
+  python3 - "$1" <<'PY_PROCESS'
+from pathlib import Path
+import re, subprocess, sys
+try:
+    target = Path(sys.argv[1]).resolve(strict=False)
+    rows = subprocess.check_output(["ps", "-axo", "pid=,args="], text=True).splitlines()
+except (OSError, RuntimeError, ValueError, subprocess.CalledProcessError) as error:
+    print("dd_project_open: process check unavailable: %s" % error, file=sys.stderr)
+    sys.exit(2)
+# M-12 review MUST-1: any unexpected error while reading the list is "cannot tell" (2 = busy), never "not open" (1);
+# SHOULD-1: a relative -projectPath cannot be resolved against Unity's own cwd → busy too.
+try:
+    for row in rows:
+        pid, _, command = row.strip().partition(" ")
+        command = command.strip()
+        executable = command.split(" -", 1)[0].strip()
+        if not executable.endswith("/Unity.app/Contents/MacOS/Unity"): continue
+        match = re.search(r"(?:^|\s)-projectPath\s+(.*?)(?=\s+-[A-Za-z]|$)", command, re.IGNORECASE)
+        if not match: continue
+        raw = match.group(1).strip()
+        if len(raw) >= 2 and raw[0] == raw[-1] and raw[0] in "\"'": raw = raw[1:-1]
+        if not raw.startswith("/"):
+            print("dd_project_open: Unity pid %s has a relative projectPath (cannot tell which project — busy): %s" % (pid, raw), file=sys.stderr)
+            sys.exit(2)
+        try:
+            path = Path(raw).resolve(strict=False)
+        except (OSError, RuntimeError, ValueError) as error:
+            print("dd_project_open: skipped a Unity projectPath that cannot be resolved (%s): %s" % (error, raw), file=sys.stderr)
+            continue
+        if path == target: sys.exit(0)
+        if not path.exists():
+            print("dd_project_open: skipped a Unity projectPath that does not exist: %s" % raw, file=sys.stderr)
+except SystemExit:
+    raise
+except Exception as error:
+    print("dd_project_open: process check failed (%s) — treating the checkout as busy" % error, file=sys.stderr)
+    sys.exit(2)
+sys.exit(1)
+PY_PROCESS
+}
 
 # WP-051D (C-00): Unity batch runs sometimes hang for hours after the OpenCL/lightmapper init (concurrent GPU load;
 # not the lighting settings). dd_unity_watched <log> <limitMin|0> <unity command…> runs the command (which must write

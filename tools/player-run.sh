@@ -21,7 +21,7 @@ BIN="$1"; shift
 [ -x "$BIN" ] || { echo "player-run: not an executable Player: $BIN" >&2; exit 64; }
 DD_SLOT_TAG="player-run-$$"
 trap 'dd_slot_release player' EXIT
-dd_slot_acquire player
+dd_slot_acquire player || exit $?   # D1 review MUST-2 / M-07c: slot.sh's code (75 timeout, 64 usage) now reaches the caller
 OTHERS=$(pgrep -fl "Contents/MacOS/(Deaths Demolition|DeathsDemolition)" | grep -v "$$" )
 [ -n "$OTHERS" ] && dd_log "WARNING player-run: another Player is running (user's game or an unwrapped launch): $(echo "$OTHERS" | cut -c1-120 | tr '\n' ';')"
 [[ " $* " == *" -ddTelemetryDir "* ]] || dd_log "WARNING player-run: no -ddTelemetryDir — this run writes the real telemetry folder"

@@ -64,27 +64,9 @@ PY_CANON
   print -r -- "$CI_LEASE_OWNER" > "$CI_LEASE/owner-$CI_LEASE_TOKEN" || return 3
   CI_LEASE_READY=1
 }
-# Resolve Unity's projectPath too, so manual launches through an alias remain busy.
-ci_project_open() {
-  python3 - "$CI_DIR/prototype/DeathsDemolition_PlayableConcept" <<'PY_PROCESS'
-from pathlib import Path
-import re, subprocess, sys
-try:
-    target = Path(sys.argv[1]).resolve(strict=False)
-    rows = subprocess.check_output(["ps", "-axo", "args="], text=True).splitlines()
-    for command in rows:
-        executable = command.split(" -", 1)[0].strip()
-        if not executable.endswith("/Unity.app/Contents/MacOS/Unity"): continue
-        match = re.search(r"(?:^|\s)-projectPath\s+(.*?)(?=\s+-[A-Za-z]|$)", command)
-        if not match: continue
-        raw = match.group(1).strip()
-        if len(raw) >= 2 and raw[0] == raw[-1] and raw[0] in "\"'": raw = raw[1:-1]
-        if Path(raw).resolve(strict=True) == target: sys.exit(0)
-except (OSError, RuntimeError, ValueError):
-    sys.exit(2)
-sys.exit(1)
-PY_PROCESS
-}
+# Codex-audit M-06 (C-00 30.09): one source — dd_project_open (dd-env.sh): case-insensitive -projectPath (Unity Hub),
+# an unresolvable/removed foreign path is skipped + logged instead of failing the check. 0 open · 1 not open · 2 no ps.
+ci_project_open() { dd_project_open "$CI_DIR/prototype/DeathsDemolition_PlayableConcept"; }
 ci_disk_ready() {
   local free=$(df -k "$CI_DIR" | awk 'NR==2{print $4}')
   if [[ "$free" != <-> ]] || [ "$free" -lt 15728640 ]; then

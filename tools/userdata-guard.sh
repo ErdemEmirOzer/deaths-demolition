@@ -163,7 +163,9 @@ if [ "$CMD" = snapshot ]; then
     fi
     DEV=$(kg_deviation "$P1"); [ -n "$DEV" ] && dd_log "WARNING userdata-guard: player display values already deviate from known-good (restore will refuse): $(echo "$DEV" | tr '\n' ';')"
   fi
-  wait_unlocked "$D1" "$D2" || exit 75
+  # Codex-audit M-07 (C-00 30.09): the lock wait follows the scope — editor waits on D1 only (D2 is read in editor scope
+  # only for the out-of-scope report, so a live Player holding the bundle profile must not stall main-ci); player/all as before.
+  if [ "$SCOPE" = editor ]; then wait_unlocked "$D1" || exit 75; else wait_unlocked "$D1" "$D2" || exit 75; fi
   try=1
   while :; do
     rm -rf "$SNAP"; mkdir -p "$SNAP/D1" "$SNAP/D2" "$SNAP/PR"   # our own fresh copy only
@@ -174,7 +176,9 @@ if [ "$CMD" = snapshot ]; then
     snap_state_of editor > "$DIR/before-editor.txt"; snap_state_of player > "$DIR/before-player.txt"
     cat "$DIR/before-editor.txt" "$DIR/before-player.txt" > "$DIR/before.txt"
     state > "$DIR/live-at-snapshot.txt"
-    cmp -s "$DIR/before.txt" "$DIR/live-at-snapshot.txt" && break
+    # M-12 review SHOULD-4: editor scope checks only its own area for stability (a Player saving to D2 is out of scope).
+    if [ "$SCOPE" = editor ]; then grep -F -e "  $D1/" -e "  $P2 " "$DIR/live-at-snapshot.txt" | cmp -s "$DIR/before-editor.txt" - && break
+    else cmp -s "$DIR/before.txt" "$DIR/live-at-snapshot.txt" && break; fi
     [ "$try" -ge 3 ] && { dd_log "userdata-guard: live data changed during the snapshot 3 times — $DIR/live-at-snapshot.txt"; exit 75; }
     dd_log "userdata-guard: a save landed during the snapshot (try $try) — retaking"; try=$((try+1)); sleep 2
   done

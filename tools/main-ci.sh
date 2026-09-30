@@ -16,7 +16,10 @@
 # Signals (Codex-audit Y1 / G4 Q10, C-00 30.09): INT/TERM/HUP exit 130/143/129 through the one EXIT cleanup. A running
 # test.sh (our own child) gets TERM and ≤ DD_CI_CHILD_GRACE s (default 120) to end with its Unity; if any of them is still
 # alive the user-data window is LEFT OPEN — no restore, no player slot / lease release — and the line says: tell C-00.
-# Exit: 0 green · 1 red tests · 2 compile error / missing results · 3 CI worktree not clean · 64 usage
+# Driver (Codex-audit M-12, C-00 30.09): the git worktree holding THIS main-ci.sh (guard, summary, owners, suites come from
+# it) must be clean, on a detached HEAD, and carry main's tools tree; its HEAD + tools tree hash go into summary.json/md.
+# Exit: 0 green · 1 red tests · 2 compile error / missing results · 3 CI worktree or driver worktree not clean, driver not
+#   detached or its tools ≠ main's · 64 usage · 75 busy (lease, project open, user-data guard)
 set -u
 setopt nullglob
 source "${0:A:h}/dd-env.sh"
@@ -29,6 +32,31 @@ while [ $# -gt 0 ]; do case "$1" in
   --out-root) OUT_ROOT="$2"; shift ;; --ci-dir) CI_DIR="$2"; shift ;; --seed-library) SEED="$2"; shift ;;
   --skip-playmode) SKIP_PLAY=1 ;; --editmode-timeout) ETMIN="$2"; shift ;; --playmode-timeout) PTMIN="$2"; shift ;;
   *) echo "unknown option: $1" >&2; exit 64 ;; esac; shift; done
+
+# Codex-audit M-12 (C-00 30.09): driver check before anything is taken (no lease, no slot, no guard).
+CI_DRIVER=""; CI_DRIVER_HEAD=""; CI_TOOLS_TREE=""
+ci_driver_check() {
+  local why="" dirty main_tools
+  CI_DRIVER=$(git -C "$DD_TOOLS_DIR" rev-parse --show-toplevel 2>/dev/null) && [ -n "$CI_DRIVER" ] ||
+    { echo "main-ci: driver refused — $DD_TOOLS_DIR is not inside a git worktree (exit 3)" >&2; return 3; }
+  dirty=$(git -C "$CI_DRIVER" status --porcelain 2>/dev/null) || why="git status failed"
+  [ -z "$why" ] && [ -n "$dirty" ] && why="worktree not clean: $(print -r -- "$dirty" | head -5 | tr '\n' ';')"
+  [ -z "$why" ] && git -C "$CI_DRIVER" symbolic-ref -q HEAD >/dev/null 2>&1 &&
+    why="HEAD is on branch $(git -C "$CI_DRIVER" symbolic-ref -q --short HEAD), not detached"
+  CI_DRIVER_HEAD=$(git -C "$CI_DRIVER" rev-parse --verify -q HEAD 2>/dev/null)
+  CI_TOOLS_TREE=$(git -C "$CI_DRIVER" rev-parse --verify -q HEAD:tools 2>/dev/null)
+  main_tools=$(git -C "$CI_DRIVER" rev-parse --verify -q main:tools 2>/dev/null)
+  if [ -z "$why" ] && { [ -z "$CI_TOOLS_TREE" ] || [ "$CI_TOOLS_TREE" != "$main_tools" ]; }; then
+    why="tools tree ${CI_TOOLS_TREE:-none} (HEAD ${CI_DRIVER_HEAD:0:10}) differs from main's ${main_tools:-none}"; fi
+  # C-00 30.09: the refusal names the one-line fix (C-00's procedure: detached driver at the SHA under test).
+  [ -z "$why" ] || { echo "main-ci: driver $CI_DRIVER refused — $why (exit 3)" >&2
+    if [ "$CI_DRIVER" = "$(git -C "$DD_REPO" rev-parse --show-toplevel 2>/dev/null)" ]; then
+      echo "fix: run main-ci from the dedicated CI driver worktree (KADRO wp-079/driver), never from the primary checkout: git -C <driver> checkout -q --detach main && <driver>/tools/main-ci.sh <sha>" >&2
+    else
+      echo "fix: git -C '$CI_DRIVER' checkout -q --detach main && '$CI_DRIVER/tools/main-ci.sh' <sha>   (clean first if dirty; the driver's tools must be main's)" >&2
+    fi; return 3; }
+}
+ci_driver_check || exit 3
 
 # Compile and CI serialize only the same physical checkout; never reclaim an unknown lease.
 CI_LEASE_HELD=0; CI_LEASE_READY=0
@@ -74,32 +102,15 @@ PY_CANON
   print -r -- "$CI_LEASE_OWNER" > "$CI_LEASE/owner-$CI_LEASE_TOKEN" || return 3
   CI_LEASE_READY=1
 }
-# Resolve Unity's projectPath too, so manual launches through an alias remain busy.
-ci_project_open() {
-  python3 - "$CI_DIR/prototype/DeathsDemolition_PlayableConcept" <<'PY_PROCESS'
-from pathlib import Path
-import re, subprocess, sys
-try:
-    target = Path(sys.argv[1]).resolve(strict=False)
-    rows = subprocess.check_output(["ps", "-axo", "args="], text=True).splitlines()
-    for command in rows:
-        executable = command.split(" -", 1)[0].strip()
-        if not executable.endswith("/Unity.app/Contents/MacOS/Unity"): continue
-        match = re.search(r"(?:^|\s)-projectPath\s+(.*?)(?=\s+-[A-Za-z]|$)", command)
-        if not match: continue
-        raw = match.group(1).strip()
-        if len(raw) >= 2 and raw[0] == raw[-1] and raw[0] in "\"'": raw = raw[1:-1]
-        if Path(raw).resolve(strict=True) == target: sys.exit(0)
-except (OSError, RuntimeError, ValueError):
-    sys.exit(2)
-sys.exit(1)
-PY_PROCESS
-}
-CI_PLAYER_HELD=0; CI_GUARD_READY=0; CI_GUARD_EXIT=0; CI_CHILD=""; CI_CLEANING=0; CI_SIGNAL=""
+# Codex-audit M-06 (C-00 30.09): one source — dd_project_open (dd-env.sh): case-insensitive -projectPath (Unity Hub),
+# an unresolvable/removed foreign path is skipped + logged instead of failing the check. 0 open · 1 not open · 2 no ps.
+ci_project_open() { dd_project_open "$CI_DIR/prototype/DeathsDemolition_PlayableConcept"; }
+CI_PLAYER_HELD=0; CI_GUARD_READY=0; CI_GUARD_EXIT=0; CI_GUARD_DIR=""; CI_CHILD=""; CI_CLEANING=0; CI_SIGNAL=""
+# CI_GUARD_DIR = the directory whose snapshot succeeded (Codex-audit M-07: it can be a .tryN retry directory).
 ci_guard_restore() {
-  "$DD_TOOLS_DIR/userdata-guard.sh" restore "$OUT/userdata-guard" --scope editor > "$OUT/userdata-guard.out" 2>&1
+  "$DD_TOOLS_DIR/userdata-guard.sh" restore "$CI_GUARD_DIR" --scope editor > "$CI_GUARD_DIR.out" 2>&1
   CI_GUARD_EXIT=$?; CI_GUARD_READY=0
-  if [ "$CI_GUARD_EXIT" -eq 0 ] && ! grep -q 'restore scope=editor .*verified=1' "$OUT/userdata-guard.out"; then CI_GUARD_EXIT=31; fi
+  if [ "$CI_GUARD_EXIT" -eq 0 ] && ! grep -q 'restore scope=editor .*verified=1' "$CI_GUARD_DIR.out"; then CI_GUARD_EXIT=31; fi
 }
 # Y1b (G4 D0 data-loss judge MUST-1/2, C-00 30.09) — used by BOTH the normal path and the cleanup: nothing is written
 # while any Unity still has the CI checkout open (a writer outside our process tree), and the restore itself cannot die
@@ -108,7 +119,7 @@ ci_guard_restore() {
 ci_guard_restore_safe() {
   ci_project_open; local open=$?
   if [ "$open" -ne 1 ]; then
-    dd_log "main-ci ${CI_SIGNAL:-exit}: user-data window left open: a Unity still has $CI_DIR open (or the check failed: $open), tell C-00 — guard $OUT/userdata-guard NOT restored, player slot and lease $CI_LEASE kept" >&2
+    dd_log "main-ci ${CI_SIGNAL:-exit}: user-data window left open: a Unity still has $CI_DIR open (or the check failed: $open), tell C-00 — guard $CI_GUARD_DIR NOT restored, player slot and lease $CI_LEASE kept" >&2
     return 1
   fi
   trap '' INT TERM HUP
@@ -120,7 +131,7 @@ ci_cleanup() {
   trap - EXIT; CI_CLEANING=1
   # Codex-audit Y1 / G4 Q10: restoring while the child (or its orphaned Unity) can still write would be a false "verified".
   if [ -n "$CI_CHILD" ] && ! dd_stop_child "$CI_CHILD" "${DD_CI_CHILD_GRACE:-120}"; then
-    dd_log "main-ci ${CI_SIGNAL:-exit}: user-data window left open: child $DD_CHILD_ALIVE still alive, tell C-00 — guard $OUT/userdata-guard NOT restored, player slot and lease $CI_LEASE kept" >&2
+    dd_log "main-ci ${CI_SIGNAL:-exit}: user-data window left open: child $DD_CHILD_ALIVE still alive, tell C-00 — guard ${CI_GUARD_DIR:-(no snapshot)} NOT restored, player slot and lease $CI_LEASE kept" >&2
     exit "$original"
   fi
   if [ "$CI_GUARD_READY" -eq 1 ]; then ci_guard_restore_safe || exit "$original"; fi
@@ -148,6 +159,7 @@ CI_PLAYER_TAG="$DD_SLOT_TAG"; CI_PLAYER_HELD=1
 dd_slot_acquire player || exit $?
 export DD_SLOT_TAG="main-ci"
 dd_log "main-ci sha=$SHA ci=$CI_DIR out=$OUT"
+dd_log "main-ci driver=$CI_DRIVER head=$CI_DRIVER_HEAD toolsTree=$CI_TOOLS_TREE (= main:tools)"
 
 # 1) CI worktree on the commit (detached; created once, then checkout only)
 if [ ! -e "$CI_DIR/.git" ]; then
@@ -183,13 +195,28 @@ inventory() { [ -d "$PD" ] && find "$PD" -type f ! -name '*.lock' ! -name '.DS_S
 inventory > "$OUT/userdata-before.txt"
 # WP-066J: the shared guard also covers the player bundle folder and both PlayerPrefs plists (exact
 # restore to this snapshot: run-added keys removed — `defaults import` alone merges).
-while :; do
-  "$DD_TOOLS_DIR/userdata-guard.sh" snapshot "$OUT/userdata-guard" --scope editor > "$OUT/userdata-guard-snapshot.out" 2>&1; GS=$?
-  [ "$GS" -eq 0 ] && break
-  [ "$GS" -eq 30 ] || exit "$GS"
-  dd_log "userdata snapshot30: waiting; no tests started"; sleep 20
+# Codex-audit M-07 (C-00 30.09): editor scope never refuses with 30 (that is the player-scope "a Player is running"), so the
+# old wait-on-30 loop was dead. 75 (a live foreign holder of the Editor-area lock after DD_GUARD_WAIT, or live data kept
+# changing) is retried ≤ CI_GUARD_TRIES times — the guard's own wait is the back-off — each time into a NEW directory
+# (userdata-guard, userdata-guard.try2, …): a directory that already holds a snapshot is refused with 64. The directory
+# that succeeded is the one restore uses. No tests start before a snapshot succeeded.
+CI_GUARD_TRIES=3; GTRY=1
+# M-12 review SHOULD-2: a rerun of the same SHA must not start while an earlier guard window of this OUT is unrestored
+# (a snapshot left in a .tryN dir would otherwise be bypassed by a fresh one in userdata-guard/).
+for d in "$OUT"/userdata-guard(N) "$OUT"/userdata-guard.try*(N/); do
+  # a SUCCESSFUL snapshot starts the sampler log (players.log); a failed try (75) leaves before.txt but no players.log
+  [ -f "$d/players.log" ] && [ ! -f "$d/after.txt" ] && { dd_log "userdata: $d holds an unrestored guard window from an earlier run of this SHA — tell C-00, do not restore it blindly (exit 64)"; exit 64; }
 done
-CI_GUARD_READY=1
+while :; do
+  GDIR="$OUT/userdata-guard"; [ "$GTRY" -gt 1 ] && GDIR="$OUT/userdata-guard.try$GTRY"
+  "$DD_TOOLS_DIR/userdata-guard.sh" snapshot "$GDIR" --scope editor > "$GDIR-snapshot.out" 2>&1; GS=$?
+  [ "$GS" -eq 0 ] && break
+  [ "$GS" -eq 75 ] && [ "$GTRY" -lt "$CI_GUARD_TRIES" ] || { dd_log "userdata snapshot exit $GS (try $GTRY/$CI_GUARD_TRIES, $GDIR) — no tests started"; exit "$GS"; }
+  dd_log "userdata snapshot75 (try $GTRY/$CI_GUARD_TRIES, $GDIR): busy — retrying into a new directory; no tests started"
+  GTRY=$((GTRY + 1))
+done
+CI_GUARD_DIR="$GDIR"; CI_GUARD_READY=1
+dd_log "userdata snapshot → $CI_GUARD_DIR (try $GTRY)"
 
 # 4) tests (the CI worktree's own tools: they belong to the commit under test); `& wait` so a signal is handled at once
 "$CI_DIR/tools/test.sh" editmode --out "$OUT/editmode" --timeout-min "$ETMIN" > "$OUT/editmode.out" 2>&1 & CI_CHILD=$!; wait $CI_CHILD; EX=$?; CI_CHILD=""
@@ -215,7 +242,7 @@ fi
 
 # WP-066K: Editor tests can only write the Editor area (player folder + Editor PlayerPrefs domain); a
 # change in the player area (bundle folder profile, player domain) is someone else's — listed, not undone.
-UG="$OUT/userdata-guard"
+UG="$CI_GUARD_DIR"
 ci_guard_restore_safe || exit 3; GX=$CI_GUARD_EXIT
 if ! cmp -s "$UG/before-editor.txt" "$UG/after-run-editor.txt" || [ "$GX" -ne 0 ]; then
   GW="Editor PlayerPrefs/profile changed during the tests: restored to the pre-run snapshot ($([ "$GX" -eq 0 ] && echo verified || echo "RESTORE MISMATCH exit $GX")) — $UG"
@@ -228,7 +255,8 @@ fi
 
 # 6) summary
 SARGS=(); [ -n "$UDWARN" ] && SARGS=(--userdata-warning "$UDWARN")
-python3 "$DD_TOOLS_DIR/ci_summary.py" "$OUT" "$SHA" "$OUT_ROOT" "$DD_TOOLS_DIR/ci-owners.tsv" "${SARGS[@]}" | tee -a "$DD_TIMELINE"
+python3 "$DD_TOOLS_DIR/ci_summary.py" "$OUT" "$SHA" "$OUT_ROOT" "$DD_TOOLS_DIR/ci-owners.tsv" "${SARGS[@]}" \
+  --driver-head "$CI_DRIVER_HEAD" --tools-tree "$CI_TOOLS_TREE" | tee -a "$DD_TIMELINE"
 SX=${pipestatus[1]}
 [ "$CI_GUARD_EXIT" -eq 0 ] || exit "$CI_GUARD_EXIT"
 [ "$SX" -eq 0 ] && exit 0

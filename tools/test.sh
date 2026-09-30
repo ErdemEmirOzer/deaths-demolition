@@ -99,7 +99,7 @@ t_cleanup() {
 }
 trap 't_cleanup' EXIT
 trap '[ "$T_CLEANING" -eq 1 ] || exit 130' INT; trap '[ "$T_CLEANING" -eq 1 ] || exit 143' TERM; trap '[ "$T_CLEANING" -eq 1 ] || exit 129' HUP
-dd_slot_acquire
+dd_slot_acquire || exit $?   # D1 review MUST-2 / M-07c: slot.sh's code (75 timeout, 64 usage) now reaches the caller
 PLAT=$( [ "$MODE" = "editmode" ] && echo EditMode || echo PlayMode ); NOGFX=(); [ "$MODE" = "editmode" ] && NOGFX=(-nographics)
 FARGS=(); [ -n "$FILTER" ] && FARGS=(-testFilter "$FILTER")
 T0=$(date +%s)
