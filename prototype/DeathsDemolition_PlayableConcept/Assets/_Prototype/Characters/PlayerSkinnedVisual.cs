@@ -465,7 +465,7 @@ namespace DD.Prototype.Characters
             if (_animator != null) SetFireHeld(false);
             _burstStart = -1f;
             int k = def != null && TpV3On(def.AnimSet) && _runtimeOverrides != null ? _setKeys.IndexOf(def.AnimSet) : -1;
-            if (_fpArms != null) _fpArms.SetWeaponSet(FirstPersonV3Arms && def != null ? def.AnimSet : null, def != null ? def.FpViewPose.scale : 1f);
+            ApplyFpArmsSet(force: true);
             if (k < 0)
             {
                 WeaponAnimSet = null;
@@ -539,6 +539,29 @@ namespace DD.Prototype.Characters
             // The hold pose follows the ACTIVE special (the pickup clip's pickup_done frame is when the hand closes on it).
             if (state.Phase == SpecialWeaponPhase.Active) SetSpecialHold(HoldIndexOf(state.WeaponId));
             else if (state.Phase == SpecialWeaponPhase.None) SetSpecialHold(0);
+            DD.Prototype.Core.Weapons.WeaponDefinition special = state.Phase == SpecialWeaponPhase.Active ? SpecialWeaponConfigSection.DefinitionOf(state.WeaponId) : null;
+            if (special != _fpSpecialDef && (state.Phase == SpecialWeaponPhase.Active || state.Phase == SpecialWeaponPhase.None))
+            {
+                _fpSpecialDef = special;
+                ApplyFpArmsSet(force: false);
+            }
+        }
+
+        // WP-069 B5-9 (C-00 30.09, option C): a weapon whose presentation.fpArms is off shows no FP arms — the classic in hand
+        // (EquipWeapon) and the active Special alike (a Special with fpArms off hides them while it is out; the classic's set
+        // returns when it ends). The set is re-applied only when it changes (SpecialChanged is published with the HUD state).
+        private DD.Prototype.Core.Weapons.WeaponDefinition _fpSpecialDef;
+        private string _fpSetApplied = "\0";
+
+        private void ApplyFpArmsSet(bool force)
+        {
+            if (_fpArms == null) return;
+            DD.Prototype.Core.Weapons.WeaponDefinition def = _weaponDef;
+            bool off = _fpSpecialDef != null && !_fpSpecialDef.FpArms;
+            string set = !off && FirstPersonV3Arms && def != null && def.FpArms ? def.AnimSet : null;
+            if (!force && set == _fpSetApplied) return;
+            _fpSetApplied = set;
+            _fpArms.SetWeaponSet(set, def != null ? def.FpViewPose.scale : 1f);
         }
 
         // ------------------------------------------------------------- WP-032C weapon handling

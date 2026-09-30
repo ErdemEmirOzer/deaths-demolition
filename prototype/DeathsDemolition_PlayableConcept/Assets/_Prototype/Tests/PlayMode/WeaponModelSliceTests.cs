@@ -913,7 +913,9 @@ namespace DD.Prototype.Tests.PlayMode
                 _s.Controller.EquipClassic(d.Id, _s.Config);
                 yield return Dinlenme(mount, d.RosterKey);
                 WeaponDefinition def = _s.Controller.Classic.Definition;
-                bool setli = fpArms.HasFpSetFor(def.AnimSet);   // an FP set of its own / its class (WeaponAnimSetsV3 also lists TP-only sets since B4c)
+                // an FP set of its own / its class (WeaponAnimSetsV3 also lists TP-only sets since B4c) AND presentation.fpArms on
+                // (C-00 30.09 option C: ar_2 / lmg_* / rl_1 / sw_* have fpArms off → the "fpView pose, no arms" branch)
+                bool setli = def.FpArms && fpArms.HasFpSetFor(def.AnimSet);
                 if (setli)
                 {
                     yield return SpecialWeaponSahne.Bekle(() => fpArms.Visible && fpArms.FrameCalibrated && WeaponController.FirstPersonWeaponSocket == fpArms.WeaponFrame, 3f, d.RosterKey + ": kollar silahı tutmadı");
