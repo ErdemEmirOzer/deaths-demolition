@@ -191,6 +191,12 @@ namespace DD.Prototype.Tests.EditMode
                 foreach (UpgradeBranch branch in System.Enum.GetValues(typeof(UpgradeBranch)))
                 {
                     string detail = UiUpgradeCopy.TierDescription(branch, 1, "");
+                    if (!UpgradeCardCatalog.TryFacts(branch, 1, out _))
+                    {
+                        Assert.IsNull(detail, branch + ": no computed line - the node's pack line takes over (M-66)");
+                        continue;
+                    }
+
                     Assert.IsNotEmpty(detail, branch.ToString());
                     StringAssert.DoesNotContain("{", detail, branch.ToString());
                 }
@@ -380,6 +386,7 @@ namespace DD.Prototype.Tests.EditMode
             foreach (UpgradeBranch branch in System.Enum.GetValues(typeof(UpgradeBranch)))
             {
                 string detail = UiUpgradeCopy.TierDescription(branch, 1, "");
+                if (detail == null) continue;   // M-66: no computed line for this branch
                 Assert.IsFalse(System.Text.RegularExpressions.Regex.IsMatch(detail, @"\d\.\d"), branch + " TR has no decimal point: " + detail);
                 StringAssert.DoesNotContain(" s)", detail, branch.ToString());
             }
@@ -388,6 +395,43 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual("1.34", UiStrings.Number(1.34f, "0.00"));
             Assert.AreEqual("1,234.5", UiStrings.Number(1234.5f, "#,##0.0"));
             Assert.AreEqual("4.5 s", UiRunTreePanel.StatText(4.5f, "s"));
+        }
+
+        // ------------------------------------------------------------ M-66: one source of tier numbers for EN and TR
+
+        [Test]
+        public void TierDetayi_HerDal_EN_TR_AyniSayilar_ENKatalogSatiri()
+        {
+            foreach (UpgradeBranch branch in System.Enum.GetValues(typeof(UpgradeBranch)))
+            {
+                UiStrings.Language = UiStrings.English;
+                string en = UiUpgradeCopy.TierDescription(branch, 1, "");
+                UiStrings.Language = UiStrings.Turkish;
+                string tr = UiUpgradeCopy.TierDescription(branch, 1, "");
+                if (!UpgradeCardCatalog.TryFacts(branch, 1, out _))
+                {
+                    Assert.IsNull(en, branch.ToString());
+                    Assert.IsNull(tr, branch + ": TR falls to the node's pack line like EN, never 'not in this build'");
+                    continue;
+                }
+
+                CollectionAssert.AreEquivalent(NumbersIn(en), NumbersIn(tr), branch + " · EN: " + en + " · TR: " + tr);
+                Assert.AreEqual(UpgradeCardCatalog.Describe(branch, 1), en, branch + ": the EN line is the catalog line itself");
+            }
+
+            UiStrings.Language = UiStrings.English;
+        }
+
+        /// <summary>Every number in a line, TR decimal commas read as points (so "1,34x" and "1.34x" compare equal).</summary>
+        private static List<string> NumbersIn(string line)
+        {
+            var numbers = new List<string>();
+            foreach (Match m in Regex.Matches(line, @"\d+(?:[.,]\d+)?"))
+            {
+                numbers.Add(m.Value.Replace(',', '.'));
+            }
+
+            return numbers;
         }
 
         // ------------------------------------------------------------ slice 9 · E3 R2: binding conflicts

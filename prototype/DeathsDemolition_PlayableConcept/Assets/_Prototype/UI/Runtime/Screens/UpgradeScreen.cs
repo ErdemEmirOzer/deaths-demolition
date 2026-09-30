@@ -1415,9 +1415,10 @@ namespace DD.Prototype.UI
             slot.Button.SetText(UiFactory.Clip(card.TitleWithTier, 22));
             slot.Tier.text = DescribeTierStep(card);
 
-            // Verbatim from UpgradeCardCatalog.Describe(), clipped only so a surprise
-            // 400-character line truncates instead of reflowing the card.
-            slot.Describe.text = UiFactory.Clip(card.Description, DescribeMaxCharacters);
+            // The catalog's live numbers (M-66: TryFacts, the source of UpgradeCardCatalog.Describe) in the language on
+            // screen; clipped only so a surprise 400-character line truncates instead of reflowing the card.
+            string describe = UiUpgradeCopy.TierDescription(card.Branch, card.OwnedTier, null);
+            slot.Describe.text = UiFactory.Clip(string.IsNullOrEmpty(describe) ? card.Description : describe, DescribeMaxCharacters);
 
             ApplyPips(slot, card);
 

@@ -321,112 +321,191 @@ namespace DD.Prototype.Rounds
         }
 
         /// <summary>
-        /// What buying this card changes, in one line, computed from the LIVE tuning rather
-        /// than written out as prose. Dragging RicochetChancePerTier in the F1 panel
-        /// changes the card text on the next round end, so the card can never lie.
+        /// M-66 (C-00 30.09): one tier's live numbers, the single source for the English catalog line (<see cref="Describe"/>)
+        /// and every UI language (the pack's <c>shop.detail.&lt;Branch&gt;</c> placeholders carry the same names). False for a
+        /// branch with no computed line (ArmorBreak, Impact, Cluster): the UI then uses the node's own pack line.
         /// </summary>
-        public static string Describe(UpgradeBranch branch, int ownedTier)
+        public static bool TryFacts(UpgradeBranch branch, int ownedTier, out TierFacts facts)
         {
             WeaponUpgradeTuning t = WeaponUpgradeTuning.Active;
             int next = ownedTier + 1;
+            switch (branch)
+            {
+                case UpgradeBranch.Piercing:
+                    facts = new TierFacts(
+                        "count", Mathf.Max(0, t.PierceTargetsPerTier), "0",
+                        "total", next * Mathf.Max(0, t.PierceTargetsPerTier), "0",
+                        "damage", t.PierceDamageFalloff * 100f, "0");
+                    return true;
+                case UpgradeBranch.Ricochet:
+                    facts = new TierFacts(
+                        "chance", Mathf.Clamp01(t.RicochetBaseChance + t.RicochetChancePerTier * (next - 1)) * 100f, "0",
+                        "radius", t.RicochetRadius, "0.#",
+                        "count", 1 + (next - 1) / Mathf.Max(1, t.RicochetTiersPerExtraBounce), "0",
+                        "damage", t.RicochetDamageScale * 100f, "0");
+                    return true;
+                case UpgradeBranch.Explosion:
+                    facts = new TierFacts(
+                        "chance", Mathf.Clamp01(t.ExplosionBaseChance + t.ExplosionChancePerTier * (next - 1)) * 100f, "0",
+                        "radius", t.ExplosionBaseRadius + t.ExplosionRadiusPerTier * (next - 1), "0.#",
+                        "scale", t.ExplosionBaseDamageScale + t.ExplosionDamageScalePerTier * (next - 1), "0.##");
+                    return true;
+                case UpgradeBranch.Chain:
+                    facts = new TierFacts(
+                        "count", Mathf.Max(0, t.ChainTargetsPerTier), "0",
+                        "radius", t.ChainRadius, "0.#",
+                        "damage", t.ChainDamageScale * 100f, "0",
+                        "falloff", (1f - t.ChainDamageFalloff) * 100f, "0");
+                    return true;
+                case UpgradeBranch.FireRate:
+                    facts = new TierFacts(
+                        "value", t.FireRateBonusPerTier * 100f, "0",
+                        "total", Mathf.Min(1f + t.FireRateBonusPerTier * next, Mathf.Max(1f, t.MaximumFireRateMultiplier)), "0.00",
+                        "max", t.MaximumFireRateMultiplier, "0.00");
+                    return true;
+                case UpgradeBranch.ReloadSpeed:
+                    facts = new TierFacts(
+                        "value", t.ReloadSpeedBonusPerTier * 100f, "0",
+                        "total", Mathf.Max(t.MinimumReloadFraction, 1f - t.ReloadSpeedBonusPerTier * next), "0.00",
+                        "min", t.MinimumReloadFraction, "0.00");
+                    return true;
+
+                // ---- player-side branches, read by PlayerMotor and PlayerHealth: "health" / "seconds" / "rate" are
+                // 0 without a config (the line then leaves its absolute part out).
+                case UpgradeBranch.MovementSpeed:
+                {
+                    PlayerUpgradeTuning p = PlayerUpgradeTuning.Active;
+                    facts = new TierFacts(
+                        "value", p.MoveSpeedBonusPerTier * 100f, "0",
+                        "total", p.MoveSpeedMultiplier(next), "0.00",
+                        "max", p.MaximumMoveSpeedMultiplier, "0.00");
+                    return true;
+                }
+                case UpgradeBranch.MaximumHealth:
+                {
+                    PlayerUpgradeTuning p = PlayerUpgradeTuning.Active;
+                    float total = p.MaxHealthMultiplier(next);
+                    facts = new TierFacts(
+                        "value", p.MaxHealthBonusPerTier * 100f, "0",
+                        "total", total, "0.00",
+                        "health", PrototypeConfig.Active != null ? PrototypeConfig.Active.Player.MaxHealth * total : 0f, "0");
+                    return true;
+                }
+                case UpgradeBranch.RegenerationDelay:
+                {
+                    PlayerUpgradeTuning p = PlayerUpgradeTuning.Active;
+                    float total = p.RegenDelayMultiplier(next);
+                    facts = new TierFacts(
+                        "value", p.RegenDelayReductionPerTier * 100f, "0",
+                        "total", total, "0.00",
+                        "seconds", PrototypeConfig.Active != null ? PrototypeConfig.Active.Player.HealthRegenDelay * total : 0f, "0.0");
+                    return true;
+                }
+                case UpgradeBranch.RegenerationRate:
+                {
+                    PlayerUpgradeTuning p = PlayerUpgradeTuning.Active;
+                    float total = p.RegenRateMultiplier(next);
+                    facts = new TierFacts(
+                        "value", p.RegenRateBonusPerTier * 100f, "0",
+                        "total", total, "0.00",
+                        "rate", PrototypeConfig.Active != null ? PrototypeConfig.Active.Player.HealthRegenRate * total : 0f, "0.#");
+                    return true;
+                }
+                default:
+                    facts = default;
+                    return false;
+            }
+        }
+
+        /// <summary>
+        /// What buying this card changes, in one line, computed from the LIVE tuning rather
+        /// than written out as prose. Dragging RicochetChancePerTier in the F1 panel
+        /// changes the card text on the next round end, so the card can never lie.
+        /// M-66: the numbers are <see cref="TryFacts"/>'s - the UI's languages format the same ones.
+        /// </summary>
+        public static string Describe(UpgradeBranch branch, int ownedTier)
+        {
+            if (!TryFacts(branch, ownedTier, out TierFacts f))
+            {
+                return HasLiveConsumer(branch)
+                    ? "Improves " + branch + "."
+                    : "NO EFFECT YET - no live system reads this branch.";
+            }
 
             switch (branch)
             {
                 case UpgradeBranch.Piercing:
                     return string.Format("Bullets pass through {0} more enemy per shot ({1} total), {2:0}% damage kept per pass.",
-                        Mathf.Max(0, t.PierceTargetsPerTier),
-                        next * Mathf.Max(0, t.PierceTargetsPerTier),
-                        t.PierceDamageFalloff * 100f);
-
+                        (int)f.Get("count"), (int)f.Get("total"), f.Get("damage"));
                 case UpgradeBranch.Ricochet:
-                {
-                    float chance = Mathf.Clamp01(t.RicochetBaseChance + t.RicochetChancePerTier * (next - 1));
-                    int bounces = 1 + (next - 1) / Mathf.Max(1, t.RicochetTiersPerExtraBounce);
                     return string.Format("{0:0}% of hits bounce to another enemy within {1:0.#} m, up to {2} time(s), at {3:0}% damage.",
-                        chance * 100f, t.RicochetRadius, bounces, t.RicochetDamageScale * 100f);
-                }
-
+                        f.Get("chance"), f.Get("radius"), (int)f.Get("count"), f.Get("damage"));
                 case UpgradeBranch.Explosion:
-                {
-                    float chance = Mathf.Clamp01(t.ExplosionBaseChance + t.ExplosionChancePerTier * (next - 1));
-                    float radius = t.ExplosionBaseRadius + t.ExplosionRadiusPerTier * (next - 1);
-                    float scale = t.ExplosionBaseDamageScale + t.ExplosionDamageScalePerTier * (next - 1);
                     return string.Format("{0:0}% of hits detonate for {1:0.#} m at {2:0.##}x the hit's damage.",
-                        chance * 100f, radius, scale);
-                }
-
+                        f.Get("chance"), f.Get("radius"), f.Get("scale"));
                 case UpgradeBranch.Chain:
                     return string.Format("Damage jumps to {0} more enem(y/ies) within {1:0.#} m at {2:0}% damage, falling {3:0}% per jump.",
-                        Mathf.Max(0, t.ChainTargetsPerTier), t.ChainRadius,
-                        t.ChainDamageScale * 100f, (1f - t.ChainDamageFalloff) * 100f);
-
+                        (int)f.Get("count"), f.Get("radius"), f.Get("damage"), f.Get("falloff"));
                 case UpgradeBranch.FireRate:
-                {
-                    float total = Mathf.Min(1f + t.FireRateBonusPerTier * next, Mathf.Max(1f, t.MaximumFireRateMultiplier));
-                    return string.Format("+{0:0}% fire rate ({1:0.00}x total, capped at {2:0.00}x).",
-                        t.FireRateBonusPerTier * 100f, total, t.MaximumFireRateMultiplier);
-                }
-
+                    return string.Format("+{0:0}% fire rate ({1:0.00}x total, capped at {2:0.00}x).", f.Get("value"), f.Get("total"), f.Get("max"));
                 case UpgradeBranch.ReloadSpeed:
-                {
-                    float total = Mathf.Max(t.MinimumReloadFraction, 1f - t.ReloadSpeedBonusPerTier * next);
-                    return string.Format("-{0:0}% reload time ({1:0.00}x total, floor {2:0.00}x).",
-                        t.ReloadSpeedBonusPerTier * 100f, total, t.MinimumReloadFraction);
-                }
-
-                // ---- player-side branches, read by PlayerMotor and PlayerHealth --------
-                // Same rule as above: the text is computed from the live tuning, so the card
-                // cannot describe an effect the player does not get.
-
+                    return string.Format("-{0:0}% reload time ({1:0.00}x total, floor {2:0.00}x).", f.Get("value"), f.Get("total"), f.Get("min"));
                 case UpgradeBranch.MovementSpeed:
-                {
-                    PlayerUpgradeTuning p = PlayerUpgradeTuning.Active;
-                    float total = p.MoveSpeedMultiplier(next);
-                    return string.Format("+{0:0}% movement speed ({1:0.00}x total, capped at {2:0.00}x).",
-                        p.MoveSpeedBonusPerTier * 100f, total, p.MaximumMoveSpeedMultiplier);
-                }
-
+                    return string.Format("+{0:0}% movement speed ({1:0.00}x total, capped at {2:0.00}x).", f.Get("value"), f.Get("total"), f.Get("max"));
                 case UpgradeBranch.MaximumHealth:
-                {
-                    PlayerUpgradeTuning p = PlayerUpgradeTuning.Active;
-                    float total = p.MaxHealthMultiplier(next);
-                    float maxHealth = PrototypeConfig.Active != null
-                        ? PrototypeConfig.Active.Player.MaxHealth * total
-                        : 0f;
-                    return string.Format("+{0:0}% maximum health ({1:0.00}x total{2}). Current health keeps its share.",
-                        p.MaxHealthBonusPerTier * 100f, total,
-                        maxHealth > 0f ? string.Format(", {0:0} HP", maxHealth) : string.Empty);
-                }
-
+                    return string.Format("+{0:0}% maximum health ({1:0.00}x total{2}). Current health keeps its share.", f.Get("value"), f.Get("total"),
+                        f.Get("health") > 0f ? string.Format(", {0:0} HP", f.Get("health")) : string.Empty);
                 case UpgradeBranch.RegenerationDelay:
-                {
-                    PlayerUpgradeTuning p = PlayerUpgradeTuning.Active;
-                    float total = p.RegenDelayMultiplier(next);
-                    float delay = PrototypeConfig.Active != null
-                        ? PrototypeConfig.Active.Player.HealthRegenDelay * total
-                        : 0f;
-                    return string.Format("-{0:0}% wait before health regenerates ({1:0.00}x total{2}).",
-                        p.RegenDelayReductionPerTier * 100f, total,
-                        delay > 0f ? string.Format(", {0:0.0} s", delay) : string.Empty);
-                }
-
+                    return string.Format("-{0:0}% wait before health regenerates ({1:0.00}x total{2}).", f.Get("value"), f.Get("total"),
+                        f.Get("seconds") > 0f ? string.Format(", {0:0.0} s", f.Get("seconds")) : string.Empty);
                 case UpgradeBranch.RegenerationRate:
-                {
-                    PlayerUpgradeTuning p = PlayerUpgradeTuning.Active;
-                    float total = p.RegenRateMultiplier(next);
-                    float rate = PrototypeConfig.Active != null
-                        ? PrototypeConfig.Active.Player.HealthRegenRate * total
-                        : 0f;
-                    return string.Format("+{0:0}% health regeneration speed ({1:0.00}x total{2}).",
-                        p.RegenRateBonusPerTier * 100f, total,
-                        rate > 0f ? string.Format(", {0:0.#} HP/s", rate) : string.Empty);
-                }
-
+                    return string.Format("+{0:0}% health regeneration speed ({1:0.00}x total{2}).", f.Get("value"), f.Get("total"),
+                        f.Get("rate") > 0f ? string.Format(", {0:0.#} HP/s", f.Get("rate")) : string.Empty);
                 default:
-                    return HasLiveConsumer(branch)
-                        ? "Improves " + branch + "."
-                        : "NO EFFECT YET - no live system reads this branch.";
+                    return "Improves " + branch + ".";
             }
+        }
+    }
+
+    /// <summary>
+    /// M-66: a tier's live numbers by placeholder name (the pack's <c>shop.detail.&lt;Branch&gt;</c> names), each with the
+    /// invariant pattern it is shown with ("0", "0.#", "0.00"). Built on demand for a card or a detail, never per frame.
+    /// </summary>
+    public readonly struct TierFacts
+    {
+        public readonly string[] Names;
+        public readonly float[] Values;
+        public readonly string[] Formats;
+
+        /// <summary>Triples: name, value, format.</summary>
+        public TierFacts(params object[] triples)
+        {
+            int n = triples.Length / 3;
+            Names = new string[n];
+            Values = new float[n];
+            Formats = new string[n];
+            for (int i = 0; i < n; i++)
+            {
+                Names[i] = (string)triples[i * 3];
+                Values[i] = System.Convert.ToSingle(triples[i * 3 + 1]);
+                Formats[i] = (string)triples[i * 3 + 2];
+            }
+        }
+
+        public int Count => Names != null ? Names.Length : 0;
+
+        /// <summary>The value named <paramref name="name"/>, 0 when absent.</summary>
+        public float Get(string name)
+        {
+            for (int i = 0; i < Count; i++)
+            {
+                if (Names[i] == name)
+                {
+                    return Values[i];
+                }
+            }
+
+            return 0f;
         }
     }
 }

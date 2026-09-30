@@ -1644,10 +1644,16 @@ namespace DD.Prototype.UI
                 return UiStrings.Get("tree.link.unbound_desc", n.Description);
             }
 
-            if (n.Kind == RunTreeNodeKind.Tier && n.HasBranch && UiStrings.Language == UiStrings.Turkish)
+            // M-66: a tier describes itself from the live tuning in BOTH languages (one path, one set of numbers); a branch
+            // with no computed line (ArmorBreak, Impact, Cluster) takes its pack line below, in TR as in EN.
+            if (n.Kind == RunTreeNodeKind.Tier && n.HasBranch)
             {
                 int next = n.MaxTier > 0 ? Mathf.Min(n.OwnedTier + 1, n.MaxTier) : n.OwnedTier + 1;
-                return UiUpgradeCopy.TierDescription(n.Branch, next - 1, n.StringKey);
+                string tier = UiUpgradeCopy.TierDescription(n.Branch, next - 1, n.StringKey);
+                if (!string.IsNullOrEmpty(tier))
+                {
+                    return tier;
+                }
             }
 
             if (!string.IsNullOrEmpty(n.StringKey))
