@@ -1,3 +1,5 @@
+// H12 (C-00 30.09): the capture / perf agent exists only in development builds and the Editor.
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
 using System;
 using System.Collections;
 using System.IO;
@@ -8,6 +10,8 @@ using DD.Prototype.Enemies;
 using DD.Prototype.PlayerSystem;
 using DD.Prototype.Rounds;
 using DD.Prototype.Weapons;
+using Unity.Profiling;
+using Unity.Profiling.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -578,6 +582,235 @@ namespace DD.Prototype.UI
             }
         }
 
+        /// <summary>
+        /// WP-068 12b · direction §8 (C-00 30.09 R1-E d): <c>-ddUiPerf &lt;blockSeconds&gt;</c> measures the staged screen's UI
+        /// before its frame - <c>uiperf-&lt;surface&gt;.json</c> in the capture folder and one <c>[UiPerf]</c> log line.
+        /// Method as PilotPerfProbe 04h: every enabled root canvas on, then off, in alternating blocks (on/off × 5, settle
+        /// 0.75 s), the frame cap and vsync lifted for the window (a cap resets LastValue - the WP-059 lesson); markers are
+        /// found by name through <see cref="ProfilerRecorderHandle.GetAvailable"/> and listed +/-. UI main-thread cost =
+        /// Δ(Update + LateUpdate scripts) + Δ(PlayerUpdateCanvases + PlayerEmitCanvasGeometry + RenderOverlays); p99 over the
+        /// on-frames' UI markers; GPU = Δ FrameTimingManager gpuFrameTime; TMP regen = TMP.GenerateText samples per frame.
+        /// A main-menu pane also records one re-open (ShowPane) in ms and its frame's GC bytes.
+        /// </summary>
+        private static class UiPerf
+        {
+            private const string Flag = "-ddUiPerf";
+            private const int Blocks = 10;
+            private const float SettleSeconds = 0.75f;
+            private const int MaxFrames = 8192;
+
+            // 0-1 scripts, 2-4 the UI frame cost, 5-8 detail (inside the others; never added).
+            private static readonly string[] MarkerNames =
+            {
+                "Update.ScriptRunBehaviourUpdate",
+                "PreLateUpdate.ScriptRunBehaviourLateUpdate",
+                "PostLateUpdate.PlayerUpdateCanvases",
+                "PostLateUpdate.PlayerEmitCanvasGeometry",
+                "UGUI.Rendering.RenderOverlays",
+                "Canvas.SendWillRenderCanvases",
+                "Canvas.BuildBatch",
+                "EventSystem.Update",
+                "TMP.GenerateText",
+            };
+
+            private const int TmpMarker = 8;
+            private static readonly FrameTiming[] s_timings = new FrameTiming[1];
+
+            public static bool Requested
+            {
+                get { return Arg(Flag) != null; }
+            }
+
+            public static IEnumerator Measure(string surface, string folder)
+            {
+                float blockSeconds;
+                if (!float.TryParse(Arg(Flag), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out blockSeconds) || blockSeconds <= 0f)
+                {
+                    blockSeconds = 3f;
+                }
+
+                var canvases = new System.Collections.Generic.List<Canvas>();
+                foreach (Canvas canvas in UnityEngine.Object.FindObjectsOfType<Canvas>())
+                {
+                    if (canvas.isRootCanvas && canvas.enabled)
+                    {
+                        canvases.Add(canvas);
+                    }
+                }
+
+                var available = new System.Collections.Generic.List<ProfilerRecorderHandle>();
+                ProfilerRecorderHandle.GetAvailable(available);
+                var markers = new ProfilerRecorder[MarkerNames.Length];
+                var found = new System.Text.StringBuilder();
+                for (int m = 0; m < MarkerNames.Length; m++)
+                {
+                    for (int h = 0; h < available.Count; h++)
+                    {
+                        if (ProfilerRecorderHandle.GetDescription(available[h]).Name == MarkerNames[m])
+                        {
+                            markers[m] = new ProfilerRecorder(available[h], 1, ProfilerRecorderOptions.Default);
+                            markers[m].Start();
+                            break;
+                        }
+                    }
+
+                    found.Append(markers[m].Valid ? "+" : "-").Append(MarkerNames[m]).Append(' ');
+                }
+
+                ProfilerRecorder setPass = ProfilerRecorder.StartNew(ProfilerCategory.Render, "SetPass Calls Count");
+                ProfilerRecorder batches = ProfilerRecorder.StartNew(ProfilerCategory.Render, "Batches Count");
+                ProfilerRecorder draws = ProfilerRecorder.StartNew(ProfilerCategory.Render, "Draw Calls Count");
+                ProfilerRecorder gc = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame");
+                int capBefore = Application.targetFrameRate;
+                int vsyncBefore = QualitySettings.vSyncCount;
+                Application.targetFrameRate = -1;
+                QualitySettings.vSyncCount = 0;
+
+                // [0] = UI on, [1] = UI off
+                var frames = new int[2];
+                var frameMs = new double[2];
+                var markerSum = new double[2, MarkerNames.Length];
+                var tmpCount = new double[2];
+                var counters = new double[2, 4];
+                var gpuSum = new double[2];
+                var gpuN = new int[2];
+                var uiOn = new float[MaxFrames];
+                int uiOnN = 0;
+                for (int block = 0; block < Blocks; block++)
+                {
+                    int k = block % 2;
+                    for (int c = 0; c < canvases.Count; c++)
+                    {
+                        if (canvases[c] != null)
+                        {
+                            canvases[c].enabled = k == 0;
+                        }
+                    }
+
+                    float t0 = Time.realtimeSinceStartup;
+                    while (Time.realtimeSinceStartup - t0 < SettleSeconds + blockSeconds)
+                    {
+                        yield return null;
+                        if (Time.realtimeSinceStartup - t0 < SettleSeconds)
+                        {
+                            continue;
+                        }
+
+                        frames[k]++;
+                        frameMs[k] += Time.unscaledDeltaTime * 1000.0;
+                        double ui = 0d;
+                        for (int m = 0; m < markers.Length; m++)
+                        {
+                            if (!markers[m].Valid)
+                            {
+                                continue;
+                            }
+
+                            double ms = markers[m].LastValue / 1e6;
+                            markerSum[k, m] += ms;
+                            if (m >= 2 && m <= 4)
+                            {
+                                ui += ms;
+                            }
+                        }
+
+                        if (markers[TmpMarker].Valid && markers[TmpMarker].Count > 0)
+                        {
+                            tmpCount[k] += markers[TmpMarker].GetSample(0).Count;
+                        }
+
+                        if (k == 0 && uiOnN < MaxFrames)
+                        {
+                            uiOn[uiOnN++] = (float)ui;
+                        }
+
+                        counters[k, 0] += setPass.Valid ? setPass.LastValue : 0;
+                        counters[k, 1] += batches.Valid ? batches.LastValue : 0;
+                        counters[k, 2] += draws.Valid ? draws.LastValue : 0;
+                        counters[k, 3] += gc.Valid ? gc.LastValue : 0;
+                        FrameTimingManager.CaptureFrameTimings();
+                        if (FrameTimingManager.GetLatestTimings(1, s_timings) > 0 && s_timings[0].gpuFrameTime > 0d)
+                        {
+                            gpuSum[k] += s_timings[0].gpuFrameTime;
+                            gpuN[k]++;
+                        }
+                    }
+                }
+
+                for (int c = 0; c < canvases.Count; c++)
+                {
+                    if (canvases[c] != null)
+                    {
+                        canvases[c].enabled = true;
+                    }
+                }
+
+                // One re-open of a main-menu pane (direction §8: a screen opens once in ≤ 12 ms, ≤ 256 KB).
+                double openMs = -1d;
+                long openGc = -1L;
+                MainMenuScreen menu = UnityEngine.Object.FindObjectOfType<MainMenuScreen>();
+                UiContext pane = UiNavigation.Layer;
+                if (menu != null && UiNavigationModel.IsLayer(pane))
+                {
+                    menu.ShowPane(pane == UiContext.Profile ? UiContext.Settings : UiContext.Profile);
+                    yield return new WaitForSecondsRealtime(1f);
+                    var watch = System.Diagnostics.Stopwatch.StartNew();
+                    menu.ShowPane(pane);
+                    watch.Stop();
+                    openMs = watch.Elapsed.TotalMilliseconds;
+                    yield return null;
+                    openGc = gc.Valid ? gc.LastValue : -1L;
+                    yield return new WaitForSecondsRealtime(0.5f);
+                }
+
+                Application.targetFrameRate = capBefore;
+                QualitySettings.vSyncCount = vsyncBefore;
+                var valid = new bool[markers.Length];
+                for (int m = 0; m < markers.Length; m++)
+                {
+                    valid[m] = markers[m].Valid;
+                    if (valid[m])
+                    {
+                        markers[m].Dispose();
+                    }
+                }
+
+                setPass.Dispose();
+                batches.Dispose();
+                draws.Dispose();
+                gc.Dispose();
+
+                double Avg(double sum, int k2) => frames[k2] > 0 ? sum / frames[k2] : -1d;
+                double Marker(int k2, int m) => valid[m] ? Avg(markerSum[k2, m], k2) : -1d;
+                double scriptsDelta = Avg(markerSum[0, 0] + markerSum[0, 1], 0) - Avg(markerSum[1, 0] + markerSum[1, 1], 1);
+                double uiMarkersOn = Avg(markerSum[0, 2] + markerSum[0, 3] + markerSum[0, 4], 0);
+                double uiMarkersOff = Avg(markerSum[1, 2] + markerSum[1, 3] + markerSum[1, 4], 1);
+                Array.Sort(uiOn, 0, uiOnN);
+                double p99 = uiOnN > 0 ? uiOn[Math.Min(uiOnN - 1, (int)(uiOnN * 0.99))] : -1d;
+                double gpuDelta = gpuN[0] > 0 && gpuN[1] > 0 ? gpuSum[0] / gpuN[0] - gpuSum[1] / gpuN[1] : -1d;
+                var ci = System.Globalization.CultureInfo.InvariantCulture;
+                string json = string.Format(ci,
+                    "{{\"surface\":\"{0}\",\"screen\":\"{1}x{2}\",\"canvases\":{3},\"framesOn\":{4},\"framesOff\":{5},\"frameMsOn\":{6:F3},\"frameMsOff\":{7:F3}," +
+                    "\"uiCostMs\":{8:F3},\"scriptsDeltaMs\":{9:F3},\"uiMarkersOnMs\":{10:F3},\"uiMarkersOffMs\":{11:F3},\"uiMarkersP99Ms\":{12:F3}," +
+                    "\"willRenderMs\":{13:F3},\"buildBatchMs\":{14:F3},\"eventSystemMs\":{15:F3},\"tmpRegenPerFrame\":{16:F2}," +
+                    "\"gpuDeltaMs\":{17:F3},\"setPassOn\":{18:F1},\"setPassDelta\":{19:F1},\"batchesOn\":{20:F1},\"batchesDelta\":{21:F1},\"drawsDelta\":{22:F1}," +
+                    "\"gcBytesPerFrameOn\":{23:F0},\"openMs\":{24:F2},\"openGcBytes\":{25},\"markers\":\"{26}\",\"blockSeconds\":{27:F1}}}",
+                    surface, Screen.width, Screen.height, canvases.Count, frames[0], frames[1], Avg(frameMs[0], 0), Avg(frameMs[1], 1),
+                    scriptsDelta + uiMarkersOn - uiMarkersOff, scriptsDelta, uiMarkersOn, uiMarkersOff, p99,
+                    Marker(0, 5), Marker(0, 6), Marker(0, 7), Avg(tmpCount[0], 0),
+                    gpuDelta, Avg(counters[0, 0], 0), Avg(counters[0, 0], 0) - Avg(counters[1, 0], 1), Avg(counters[0, 1], 0),
+                    Avg(counters[0, 1], 0) - Avg(counters[1, 1], 1), Avg(counters[0, 2], 0) - Avg(counters[1, 2], 1),
+                    Avg(counters[0, 3], 0), openMs, openGc, found.ToString().Trim(), blockSeconds);
+                if (!string.IsNullOrEmpty(folder))
+                {
+                    Directory.CreateDirectory(folder);
+                    File.WriteAllText(Path.Combine(folder, "uiperf-" + surface + ".json"), json + "\n");
+                }
+
+                Debug.Log("[UiPerf] " + json);
+            }
+        }
+
         private sealed class Driver : MonoBehaviour
         {
             private string _screen;
@@ -641,6 +874,18 @@ namespace DD.Prototype.UI
                 if (_screen == "loading")
                 {
                     yield return LoadingFrames();
+                    yield break;
+                }
+
+                if (_screen == "watchdog")
+                {
+                    yield return WatchdogFrames();
+                    yield break;
+                }
+
+                if (_screen == "missingscene")
+                {
+                    yield return MissingSceneFrames();
                     yield break;
                 }
 
@@ -710,6 +955,12 @@ namespace DD.Prototype.UI
                         yield return new WaitForSecondsRealtime(2f);
                         if (_screen == "pause")
                         {
+                            if (UiPerf.Requested)
+                            {
+                                // The live HUD at round start (the 40-body HUD is PilotPerfProbe 04h's).
+                                yield return UiPerf.Measure("hud-live", Path.GetDirectoryName(_out));
+                            }
+
                             PauseScreen pause = FindObjectOfType<PauseScreen>();
                             if (pause != null)
                             {
@@ -779,9 +1030,14 @@ namespace DD.Prototype.UI
                     }
                 }
 
+                string folder = Path.GetDirectoryName(_out);
+                if (UiPerf.Requested)
+                {
+                    yield return UiPerf.Measure(_screen, folder);
+                }
+
                 yield return new WaitForEndOfFrame();
 
-                string folder = Path.GetDirectoryName(_out);
                 if (!string.IsNullOrEmpty(folder) && !Directory.Exists(folder))
                 {
                     Directory.CreateDirectory(folder);
@@ -1074,6 +1330,165 @@ namespace DD.Prototype.UI
                 yield return null;
                 Debug.Log("[UiCapture] loading done · framebuffer " + Screen.width + "x" + Screen.height);
                 Application.Quit();
+            }
+
+            /// <summary>
+            /// R1-E E4 V4–V6 (plan K/wp-068e/E4-WATCHDOG-HATA-MODALI-PLANI.md): <c>-ddUiCapture watchdog</c> - a real stalled
+            /// load in the Player. Selection → Run with the activation held: the stall notice (≥ StallSeconds) and the QUIT-only
+            /// error (≥ StallErrorSeconds) are timed and framed; a simulated Cancel 1 s after the error must leave the error, the
+            /// scene and the load alone; at <c>-ddUiLoadHold</c> s (default 75) the hold is released and the run must start with
+            /// the error gone. <c>-ddUiLoadQuit 1</c> submits QUIT on the error instead (the harness times the exit and compares
+            /// the profile). Ends with <c>[UiWatchdog] PASS|FAIL</c> and exit 0 / 3.
+            /// </summary>
+            private IEnumerator WatchdogFrames()
+            {
+                var ci = System.Globalization.CultureInfo.InvariantCulture;
+                string folder = Path.HasExtension(_out) ? (Path.GetDirectoryName(_out) ?? Application.persistentDataPath) : _out;
+                Directory.CreateDirectory(folder);
+                float hold;
+                if (!float.TryParse(Arg("-ddUiLoadHold"), System.Globalization.NumberStyles.Float, ci, out hold) || hold <= 0f)
+                {
+                    hold = 75f;
+                }
+
+                PrototypeUiFlow.GoToSelection();
+                yield return UiCaptureAgent.WaitScene(PrototypeScenes.Selection, 30f);
+                yield return WaitFor(() => !UiCurtain.IsCovering, 10f);
+                yield return new WaitForSecondsRealtime(0.5f);
+                UiLoadTiming.RecordLoad(PrototypeScenes.Run, 5f);
+                PrototypeUiFlow.ArtificialLoadSeconds = 1000000f;
+                UiCurtain curtain = UiCurtain.Instance;
+                float requestAt = Time.realtimeSinceStartup;
+                PrototypeUiFlow.StartRun();
+                float noticeAt = -1f;
+                float errorAt = -1f;
+                while (errorAt < 0f && Time.realtimeSinceStartup - requestAt < 90f)
+                {
+                    if (noticeAt < 0f && curtain.StallVisible)
+                    {
+                        noticeAt = Time.realtimeSinceStartup;
+                        yield return Frame(folder, "watchdog-stalled");
+                    }
+
+                    if (curtain.ErrorOpen)
+                    {
+                        errorAt = Time.realtimeSinceStartup;
+                    }
+
+                    yield return null;
+                }
+
+                string scene = SceneManager.GetActiveScene().name;
+                Debug.Log(string.Format(ci, "[UiWatchdog] notice {0:F1} s · error {1:F1} s · scene {2} · loading {3}",
+                    noticeAt < 0f ? -1f : noticeAt - requestAt, errorAt < 0f ? -1f : errorAt - requestAt, scene, PrototypeUiFlow.IsLoading));
+                if (errorAt < 0f)
+                {
+                    PrototypeUiFlow.ArtificialLoadSeconds = 0f;
+                    Debug.Log("[UiWatchdog] FAIL: no error by 90 s");
+                    Application.Quit(3);
+                    yield break;
+                }
+
+                yield return new WaitForSecondsRealtime(0.6f);
+                yield return Frame(folder, "watchdog-error");
+                UiModal modal = curtain.GetComponentInChildren<UiModal>();
+                bool quitOnly = modal != null && modal.Primary != null && modal.Secondary == null;
+                yield return new WaitForSecondsRealtime(0.4f);
+                UiInput.SimulateCancelNextFrame();
+                yield return null;
+                yield return null;
+                bool cancelIgnored = curtain.ErrorOpen && PrototypeUiFlow.IsLoading && SceneManager.GetActiveScene().name == scene;
+                Debug.Log("[UiWatchdog] error QUIT-only " + quitOnly + " · cancel under the error " + (cancelIgnored ? "ignored" : "ACTED"));
+                if (Arg("-ddUiLoadQuit") == "1" && modal != null && modal.Primary != null)
+                {
+                    Debug.Log(string.Format(ci, "[UiWatchdog] QUIT submitted at {0:F2}", Time.realtimeSinceStartup));
+                    UnityEngine.EventSystems.ExecuteEvents.Execute(modal.Primary.gameObject,
+                        new UnityEngine.EventSystems.BaseEventData(UnityEngine.EventSystems.EventSystem.current), UnityEngine.EventSystems.ExecuteEvents.submitHandler);
+                    yield break;
+                }
+
+                while (Time.realtimeSinceStartup - requestAt < hold)
+                {
+                    yield return null;
+                }
+
+                PrototypeUiFlow.ArtificialLoadSeconds = 0f;
+                float releaseAt = Time.realtimeSinceStartup;
+                yield return UiCaptureAgent.WaitScene(PrototypeScenes.Run, 30f);
+                yield return WaitFor(() => !UiCurtain.IsCovering, 15f);
+                bool recovered = SceneManager.GetActiveScene().name == PrototypeScenes.Run && !curtain.ErrorOpen;
+                Debug.Log(string.Format(ci, "[UiWatchdog] released at {0:F1} s · recovered {1} in {2:F1} s",
+                    releaseAt - requestAt, recovered ? "yes" : "NO", Time.realtimeSinceStartup - releaseAt));
+                yield return new WaitForSecondsRealtime(1f);
+                yield return Frame(folder, "watchdog-recovered");
+                bool pass = noticeAt - requestAt >= PrototypeUiFlow.StallSeconds - 0.1f
+                            && errorAt - requestAt >= PrototypeUiFlow.StallErrorSeconds - 0.1f
+                            && quitOnly && cancelIgnored && recovered;
+                Debug.Log("[UiWatchdog] " + (pass ? "PASS" : "FAIL"));
+                Application.Quit(pass ? 0 : 3);
+            }
+
+            /// <summary>
+            /// R1-E E4 V2/V6 in the Player: <c>-ddUiCapture missingscene</c> - from the main menu's Settings pane a load of a
+            /// scene that is not in the build must open the load error over the menu (primary focused, nothing loading); a
+            /// simulated Cancel must leave the pane, the focus and the error; the primary must bring the main menu back; and,
+            /// as the control, the same Cancel without the error must take the menu's back (Settings → Profile). Frames
+            /// <c>missing-error</c> / <c>missing-after-cancel</c>; ends with <c>[UiMissingScene] PASS|FAIL</c> and exit 0 / 3.
+            /// </summary>
+            private IEnumerator MissingSceneFrames()
+            {
+                string folder = Path.HasExtension(_out) ? (Path.GetDirectoryName(_out) ?? Application.persistentDataPath) : _out;
+                Directory.CreateDirectory(folder);
+                MainMenuScreen menu = FindObjectOfType<MainMenuScreen>();
+                if (menu == null)
+                {
+                    Debug.Log("[UiMissingScene] FAIL: no main menu");
+                    Application.Quit(3);
+                    yield break;
+                }
+
+                menu.ShowPane(UiContext.Settings);
+                yield return new WaitForSecondsRealtime(0.5f);
+                UiCurtain curtain = UiCurtain.Instance;
+                PrototypeUiFlow.LoadForDiagnostics("DD_R1E_NoSuchScene");
+                yield return new WaitForSecondsRealtime(0.6f);
+                yield return Frame(folder, "missing-error");
+                UiModal modal = curtain.GetComponentInChildren<UiModal>();
+                UnityEngine.EventSystems.EventSystem events = UnityEngine.EventSystems.EventSystem.current;
+                bool opened = curtain.ErrorOpen && modal != null && modal.Primary != null && modal.Secondary != null && !PrototypeUiFlow.IsLoading;
+                bool focused = opened && events != null && events.currentSelectedGameObject == modal.Primary.gameObject;
+                UiInput.SimulateCancelNextFrame();
+                yield return null;
+                yield return null;
+                bool ignored = curtain.ErrorOpen && UiNavigation.Layer == UiContext.Settings
+                               && events != null && modal != null && events.currentSelectedGameObject == modal.Primary.gameObject;
+                yield return Frame(folder, "missing-after-cancel");
+                bool returned = false;
+                if (opened)
+                {
+                    UnityEngine.EventSystems.ExecuteEvents.Execute(modal.Primary.gameObject,
+                        new UnityEngine.EventSystems.BaseEventData(events), UnityEngine.EventSystems.ExecuteEvents.submitHandler);
+                    yield return new WaitForSecondsRealtime(0.2f);
+                    yield return WaitFor(() => !PrototypeUiFlow.IsLoading && !UiCurtain.IsCovering, 20f);
+                    returned = !curtain.ErrorOpen && SceneManager.GetActiveScene().name == PrototypeScenes.MainMenu;
+                }
+
+                bool control = false;
+                menu = FindObjectOfType<MainMenuScreen>();
+                if (menu != null)
+                {
+                    menu.ShowPane(UiContext.Settings);
+                    yield return new WaitForSecondsRealtime(0.3f);
+                    UiInput.SimulateCancelNextFrame();
+                    yield return null;
+                    yield return null;
+                    control = UiNavigation.Layer == UiContext.Profile;
+                }
+
+                bool pass = opened && focused && ignored && returned && control;
+                Debug.Log("[UiMissingScene] opened " + opened + " · focus on primary " + focused + " · cancel ignored " + ignored +
+                          " · primary returned " + returned + " · control cancel reached the menu " + control + " · " + (pass ? "PASS" : "FAIL"));
+                Application.Quit(pass ? 0 : 3);
             }
 
             /// <summary>
@@ -1727,6 +2142,10 @@ namespace DD.Prototype.UI
                         yield return Frame(folder, "tree-r1-opening");
                         yield return new WaitForSecondsRealtime(1.2f);
                         yield return Frame(folder, "tree-r1-open");
+                        if (UiPerf.Requested)
+                        {
+                            yield return UiPerf.Measure("tree", folder);
+                        }
                     }
 
                     for (int pick = 0; pick < 2; pick++)
@@ -2240,3 +2659,4 @@ namespace DD.Prototype.UI
         }
     }
 }
+#endif

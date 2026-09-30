@@ -220,6 +220,14 @@ namespace DD.Prototype.UI
                 () => Load(menuFailed ? sceneName : PrototypeScenes.MainMenu));
         }
 
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+        /// <summary>R1-E E4 (dev / Editor only): the capture agent's way to request a load by name, a missing scene included.</summary>
+        internal static void LoadForDiagnostics(string sceneName)
+        {
+            Load(sceneName);
+        }
+#endif
+
         private static void Load(string sceneName)
         {
             if (s_loading)
