@@ -1255,8 +1255,10 @@ namespace DD.Prototype.Tests.PlayMode
                 }
 
                 yield return SpecialWeaponSahne.Bekle(() => _s.Controller.Classic.Ammo > 0 && !_s.Controller.Classic.IsReloading, 4f, "dolum");
-                // A casing-less weapon (rl_1: WeaponCasing.None) has no ejection slot to measure.
-                bool casing = Arsenal.Get(d.Id) == null || Arsenal.Get(d.Id).presentation.casing != WeaponCasing.None;
+                // A casing-less weapon (rl_1: WeaponCasing.None) has no ejection slot to measure; a break-open (sg_2, C-00 30.09
+                // M-21) ejects nothing at the shot — its shells leave when it opens (WeaponFeelSliceTests.Mekanizma_Kirma_sg2_…).
+                bool casing = (Arsenal.Get(d.Id) == null || Arsenal.Get(d.Id).presentation.casing != WeaponCasing.None) &&
+                              WeaponMechanismTimeline.For(_s.Config.Weapons.Find(d.Id)).ShotCasings > 0;
                 var events = new List<WeaponMechanismEvent>();
                 var portAtEvent = new List<Vector3>();
                 System.Action<WeaponMechanismEvent> onMech = e => { events.Add(e); portAtEvent.Add(ejection.position); };

@@ -1533,6 +1533,15 @@ namespace DD.Prototype.Weapons
                 SetRigVisibility();
             }
 
+            // C-00 30.09 M-21 interim: a break-open's spent shells follow its timeline even under a clip — sg_2 borrows the
+            // shell-by-shell reload clip (no mag_out event) until its own set lands; the shared flag keeps a later clip's
+            // mag_out from doubling them.
+            if (_classic.IsReloading && _timeline.ReloadCasings > 0 && ClipDrivesMechanism && !_magOutFired && _classic.ReloadProgress01 >= _timeline.MagOutProgress)
+            {
+                _magOutFired = true;
+                PublishMagOut(false);
+            }
+
             if (_classic.IsReloading && !ClipDrivesMechanism)
             {
                 float p = _classic.ReloadProgress01;
@@ -1581,7 +1590,7 @@ namespace DD.Prototype.Weapons
             }
 
             if (e == s_eject) { if (_timeline.CasingDelaySeconds > 0f && _timeline.ShotCasings > 0) PublishMechanism(WeaponMechanismKind.CasingEjected, true); }   // pump weapons only (A/B eject at the shot)
-            else if (e == s_magOut) PublishMagOut(true);
+            else if (e == s_magOut) { if (_timeline.ReloadCasings <= 0 || !_magOutFired) { _magOutFired = true; PublishMagOut(true); } }
             else if (e == s_magIn || e == s_magIn2 || e == s_magIn3) PublishMechanism(WeaponMechanismKind.ShellSeated, true);
             else if (e == s_chamber) PublishMechanism(WeaponMechanismKind.Chambered, true);
         }

@@ -197,7 +197,9 @@ namespace DD.Prototype.Tests.EditMode
         public void Tepeden_DikeySacilmaSifir_YatayDagilimOncekiyleAyni()
         {
             Vector3 aim = new Vector3(0.3f, 0f, 1f).normalized;
-            float Yaw(Vector3 d) => Vector3.SignedAngle(aim, Vector3.ProjectOnPlane(d, Vector3.up), Vector3.up);
+            // atan2 in the aim's own frame: Vector3.(Signed)Angle goes through acos and loses ~0.004° near 0°
+            Vector3 right = Vector3.Cross(Vector3.up, aim).normalized;
+            float Yaw(Vector3 d) => Mathf.Atan2(Vector3.Dot(d, right), Vector3.Dot(d, aim)) * Mathf.Rad2Deg;
 
             // single cone
             const float cone = 3.5f;
