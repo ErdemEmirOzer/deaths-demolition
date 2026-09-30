@@ -39,7 +39,7 @@ fi
 #            · stray (passes, but leaves a detached "Unity" with -projectPath on the CI checkout — not in main-ci's tree)
 FAKE_TEST_SH = """#!/bin/zsh
 mode=$1; shift; out=""; while [ $# -gt 0 ]; do [ "$1" = --out ] && out=$2; shift; done
-echo $$ > "{log}/child-$mode.pid"
+echo $$ > "{log}/child-$mode.pid"; env > "{log}/env-$mode.txt"
 case "$FAKE_MODE" in
   pass|stray) mkdir -p "$out"; echo '<test-run><test-case name="A" fullname="F.A" result="Passed" duration="0.1"/></test-run>' > "$out/$mode.xml"
     if [ "$FAKE_MODE" = stray ] && [ "$mode" = editmode ]; then
@@ -130,6 +130,12 @@ class CiFixture(unittest.TestCase):
         self.git("init", "-q", "-b", "main")
         (self.repo / "prototype/DeathsDemolition_PlayableConcept").mkdir(parents=True)
         (self.repo / "prototype/DeathsDemolition_PlayableConcept/.keep").write_text("")
+        # Codex-audit M-10: the C# of the commit under test decides what main-ci scrubs (dd_scrub_code_env)
+        (self.repo / "prototype/DeathsDemolition_PlayableConcept/Assets").mkdir()
+        (self.repo / "prototype/DeathsDemolition_PlayableConcept/Assets/Probe.cs").write_text(
+            'class P { string a = System.Environment.GetEnvironmentVariable("DD_X");\n'
+            '  string b = System.Environment.GetEnvironmentVariable("HOME");\n'
+            '  string c = System.Environment.GetEnvironmentVariable("DD_WP076_PROBE"); }\n')
         tools = self.repo / "tools"; tools.mkdir()
         for name in COPY:
             shutil.copy2(TOOLS / name, tools / name)
@@ -285,6 +291,48 @@ class CiSignalTrapTests(CiFixture):
         self.assertEqual([l.split()[:2] for l in self.lines("slot-calls.txt")], [["acquire", "player"], ["release", "player"]])
         self.assertEqual(self.leases(), [])
         self.assertNotIn("through cleanup", err)
+
+    # --- Codex-audit M-10: env scrub right before the tests -------------------------------------------------------------
+    def assert_scrubbed(self, extra, cleared):
+        rc, out, err = self.finish(self.main_ci("pass", playmode=True, DD_KEEP_ME="k", **extra))
+        self.assertEqual(rc, 0, out + err)
+        for mode in ("editmode", "playmode"):
+            seen = dict(l.split("=", 1) for l in self.lines(f"env-{mode}.txt") if "=" in l)
+            for name in extra:
+                self.assertNotIn(name, seen, f"{mode} child still sees {name}")
+            self.assertEqual(str(self.home), seen["HOME"])       # allow-listed although the C# reads it
+            self.assertEqual("k", seen["DD_KEEP_ME"])            # not read by the C#: untouched
+        summary = json.loads((self.out / self.sha / "summary.json").read_text())
+        self.assertEqual(summary["envScrubbed"], cleared)
+        md = (self.out / self.sha / "summary.md").read_text()
+        self.assertIn("Ortam temizliği (env-scrub, C# okuduğu değişkenler): " + (", ".join(cleared) or "temizlenecek yok"), md)
+        timeline = (self.out / self.sha / "timeline.txt").read_text()
+        if cleared:
+            self.assertIn(f"env-scrub: cleared {len(cleared)} ({','.join(cleared)}) from {self.ci}", timeline)
+        else:
+            self.assertIn("env-scrub: nothing to clear (3 names read by C#)", timeline)
+
+    def test_M10_DD_XIleBaslatilir_TestCocuguGormez_HomeGorur_OzetteDD_X(self):
+        self.assert_scrubbed({"DD_X": "1"}, ["DD_X"])
+
+    def test_M10_GercekAdDD_WP076_PROBE_KodOkudugu_Temizlenir(self):
+        self.assert_scrubbed({"DD_X": "1", "DD_WP076_PROBE": "1"}, ["DD_WP076_PROBE", "DD_X"])
+
+    def test_M10_HicbiriAyarliDegil_OzetteBosListe(self):
+        self.assert_scrubbed({}, [])
+
+    def test_M10_GitGrepHatasi_Cikis3_TestKosmaz_GuardSlotLeaseKapanir(self):
+        real_git = shutil.which("git")
+        wrap = self.root / "grep-fails-bin"; wrap.mkdir()
+        write_exec(wrap / "git", '#!/bin/sh\nfor a in "$@"; do [ "$a" = grep ] && { echo "fatal: fixture git grep failure" >&2; exit 128; }; done\n'
+                                 'exec "%s" "$@"\n' % real_git)
+        rc, out, err = self.finish(self.main_ci("pass", DD_X="1", PATH=f"{wrap}:{self.env()['PATH']}"))
+        self.assertEqual(rc, 3, out + err)
+        self.assertIn("env-scrub: git grep failed in", err)
+        self.assertFalse((self.log / "child-editmode.pid").exists())   # never run unscrubbed
+        self.assertEqual(self.lines("guard-calls.txt"), ["snapshot", "restore", "restore-done"])
+        self.assertEqual([l.split()[:2] for l in self.lines("slot-calls.txt")], [["acquire", "player"], ["release", "player"]])
+        self.assertEqual(self.leases(), [])
 
     # --- compile-check -------------------------------------------------------------------------------------------------
     def assert_compile_signal(self, sig, code):

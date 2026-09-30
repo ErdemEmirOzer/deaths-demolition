@@ -7,6 +7,7 @@ C2-C4 pencere modu sürücüsü ve bütün üretilen loglarla yeni macOS crash r
 `rc-report.json` / `rc-report.txt` eksik kapıları açıkça FAIL gösterir. `ProjectIntegrityTests` veya
 planning belgeleri bu araç tarafından değiştirilmez. Ürün engeline rağmen bağımsız tanı kanıtlarını
 tamamlamak için `--diagnostic-continue` kullanılır; nihai karar yine FAIL kalır.
+Ortam (Codex-audit M-10, C-00 30.09): ilk aşamadan önce `$REPO` C#'ının okuduğu her ortam değişkeni (HOME hariç) kaldırılır (`dd_scrub_code_env`); temizlenenler timeline, `environment.txt` ve `rc-report.json` `envScrubbed`'da; git grep hatası → 3 (preflight).
 Kullanıcı verisi (Y2, C-00 30.09): guard **aşama başına** — `$DD_GUARD snapshot stages/<aşama>/ug --scope S` → aşama →
 `restore … --scope S`; test.sh aşamaları `editor`, Player aşamaları (m3-regression, soak-stability-61/26, her real-N rapor
 koşusu, economy-acceptance, window-modes) `player`, Player'lar `tools/player-run.sh` ile. release-smoke sarılmaz (smoke.sh'in

@@ -288,3 +288,42 @@ dd_ci_lease_status() {
   print -r -- "verdict: $DD_CI_LEASE_VERDICT — $DD_CI_LEASE_WHY"
   case "$DD_CI_LEASE_VERDICT" in FREE) return 0 ;; HELD-LIVE) return 75 ;; *) return 3 ;; esac
 }
+
+# Codex-audit M-10 (C-00 30.09): self-updating env scrub before main-ci's tests, rc.sh and a release / release-probe build.
+# No fixed list: the names are every GetEnvironmentVariable("NAME") literal in the C# of the tree under test, so a new env
+# read in C# widens the scrub by itself (e.g. DD_BUILD_EXTRA_SCENES, which can add scenes to a release build). Diagnostic
+# runs that need such a variable use tools/test.sh directly (not scrubbed).
+# Allow-list — the only names kept. HOME: Unity, git and the tests need the user's home; what they write under it is the
+# user-data guard's job. ANY ADDITION NEEDS A WRITTEN REASON ON THIS LINE (C-00). Assigned unconditionally: a caller's
+# environment cannot widen it.
+DD_ENV_SCRUB_ALLOW="HOME"
+# dd_scrub_code_env <tree>: unsets (in THIS shell, so every later child) each such name that is set, except the allow-list.
+# DD_ENV_SCRUBBED = the cleared names (space-separated, LC_ALL=C sorted; "" = none), DD_ENV_SCRUB_NAMES = how many names
+# the C# reads; one dd_log line. 0 · 3 git grep failed or a name could not be unset (fail closed: never run unscrubbed).
+DD_ENV_SCRUBBED=""; DD_ENV_SCRUB_NAMES=0
+dd_scrub_code_env() {
+  local tree="$1" raw rc name; local -a names cleared allow
+  DD_ENV_SCRUBBED=""; DD_ENV_SCRUB_NAMES=0; allow=(${=DD_ENV_SCRUB_ALLOW})
+  # Names: GetEnvironmentVariable("X") literals PLUS every "DD_…" string literal in C# — env names read through a constant
+  # (DD_WORLD_SOURCE, DD_QUALITY_TIER, …) would escape the literal pattern. Over-inclusion is harmless (only SET names are
+  # unset; shader keywords like DD_FX_* are never env vars; C# reads none of the tools' own DD_* variables).
+  raw=$(git -C "$tree" grep -h -o -e 'GetEnvironmentVariable("[A-Z0-9_]*"' -e '"DD_[A-Z0-9_]*[A-Z0-9]"' -- '*.cs'); rc=$?
+  # git grep: 0 matches · 1 no match · anything else (128 not a repository, …) is an error
+  if [ "$rc" -gt 1 ]; then
+    dd_log "env-scrub: git grep failed in $tree (exit $rc) — not run unscrubbed (3)" >&2; return 3; fi
+  names=(${(f)"$(print -r -- "$raw" | sed -n -e 's/^.*GetEnvironmentVariable("\([A-Z_][A-Z0-9_]*\)"$/\1/p' -e 's/^"\(DD_[A-Z0-9_]*\)"$/\1/p' | LC_ALL=C sort -u)"})
+  DD_ENV_SCRUB_NAMES=${#names}
+  for name in $names; do
+    (( ${allow[(Ie)$name]} )) && continue
+    [[ -v $name ]] || continue
+    unset "$name" 2>/dev/null
+    if [[ -v $name ]]; then dd_log "env-scrub: cannot unset $name (read by C# in $tree) — not run unscrubbed (3)" >&2; return 3; fi
+    cleared+=("$name")
+  done
+  DD_ENV_SCRUBBED="${(j: :)cleared}"
+  if [ "${#cleared}" -gt 0 ]; then dd_log "env-scrub: cleared ${#cleared} (${(j:,:)cleared}) from $tree"
+  else dd_log "env-scrub: nothing to clear ($DD_ENV_SCRUB_NAMES names read by C#)"; fi
+  return 0
+}
+# dd_env_scrubbed_json: DD_ENV_SCRUBBED as a JSON list (names are [A-Z0-9_], no escaping needed).
+dd_env_scrubbed_json() { local n out=""; for n in ${=DD_ENV_SCRUBBED}; do out+="${out:+, }\"$n\""; done; print -r -- "[$out]"; }

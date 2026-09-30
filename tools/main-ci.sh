@@ -20,6 +20,8 @@
 # it) must be clean, on a detached HEAD, and carry main's tools tree; its HEAD + tools tree hash go into summary.json/md.
 # Lease (Codex-audit M-05, C-00 30.09): dd_ci_lease_* (dd-env.sh), shared with compile-check.sh; a live owner → 75 at once
 # (no waiting); a stale / malformed / symlinked lease is never reclaimed → 3 (diagnose: compile-check.sh --lease-status).
+# Env (Codex-audit M-10, C-00 30.09): right before the tests every variable the CI checkout's C# reads is unset except HOME
+# (dd_scrub_code_env); the cleared names go into summary.json envScrubbed / summary.md; git grep failure → 3.
 # Exit: 0 green · 1 red tests · 2 compile error / missing results · 3 CI worktree or driver worktree not clean, driver not
 #   detached or its tools ≠ main's, lease stale/malformed/symlink, CI project missing, a Unity still has the CI checkout open
 #   at the restore (window left open, tell C-00) · 64 usage, unknown commit, an unrestored guard window of this SHA
@@ -186,6 +188,9 @@ CI_GUARD_DIR="$GDIR"; CI_GUARD_READY=1
 dd_log "userdata snapshot → $CI_GUARD_DIR (try $GTRY)"
 
 # 4) tests (the CI worktree's own tools: they belong to the commit under test); `& wait` so a signal is handled at once
+# Codex-audit M-10 (C-00 30.09): first unset every env variable the C# of the commit under test reads (dd_scrub_code_env,
+# dd-env.sh; allow-list HOME) — a caller's DD_* diagnostic variable must not change a CI result. git grep fails → 3.
+dd_scrub_code_env "$CI_DIR" || exit 3
 "$CI_DIR/tools/test.sh" editmode --out "$OUT/editmode" --timeout-min "$ETMIN" > "$OUT/editmode.out" 2>&1 & CI_CHILD=$!; wait $CI_CHILD; EX=$?; CI_CHILD=""
 PX=0
 if [ "$SKIP_PLAY" -eq 0 ]; then
@@ -223,7 +228,7 @@ fi
 # 6) summary
 SARGS=(); [ -n "$UDWARN" ] && SARGS=(--userdata-warning "$UDWARN")
 python3 "$DD_TOOLS_DIR/ci_summary.py" "$OUT" "$SHA" "$OUT_ROOT" "$DD_TOOLS_DIR/ci-owners.tsv" "${SARGS[@]}" \
-  --driver-head "$CI_DRIVER_HEAD" --tools-tree "$CI_TOOLS_TREE" | tee -a "$DD_TIMELINE"
+  --env-scrubbed "$DD_ENV_SCRUBBED" --driver-head "$CI_DRIVER_HEAD" --tools-tree "$CI_TOOLS_TREE" | tee -a "$DD_TIMELINE"
 SX=${pipestatus[1]}
 [ "$CI_GUARD_EXIT" -eq 0 ] || exit "$CI_GUARD_EXIT"
 [ "$SX" -eq 0 ] && exit 0

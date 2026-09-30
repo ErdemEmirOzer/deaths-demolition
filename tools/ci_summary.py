@@ -2,8 +2,11 @@
 """WP-079 · tools/main-ci.sh summary: NUnit XML (EditMode + PlayMode) + compile errors -> summary.json / summary.md,
 every red mapped to its owner (tools/ci-owners.tsv), and new reds vs the previous CI run of another SHA.
 usage: ci_summary.py <out-dir> <sha> <ci-root> <owners.tsv> [--userdata-warning TEXT] [--driver-head SHA] [--tools-tree HASH]
+                     [--env-scrubbed "NAME NAME…"]
 Codex-audit M-12 (C-00 30.09): --driver-head / --tools-tree = the main-ci driver worktree's HEAD and `HEAD:tools` tree hash
-(summary.json driverHead / toolsTree, a line in summary.md); optional — the old call still works (both null)."""
+(summary.json driverHead / toolsTree, a line in summary.md); optional — the old call still works (both null).
+Codex-audit M-10 (C-00 30.09): --env-scrubbed = the env variables main-ci cleared before the tests (dd_scrub_code_env);
+summary.json envScrubbed = that list ([] = none were set), null when the option is absent (old call)."""
 import glob, json, os, re, sys, datetime
 import xml.etree.ElementTree as ET
 
@@ -14,6 +17,8 @@ def opt(name):
 
 udwarn = opt("--userdata-warning") or ""
 driver_head, tools_tree = opt("--driver-head") or None, opt("--tools-tree") or None
+env_scrubbed = opt("--env-scrubbed")
+env_scrubbed = env_scrubbed.split() if env_scrubbed is not None else None
 
 rules = []
 for line in open(owners_path, encoding="utf-8"):
@@ -110,12 +115,14 @@ green = not reds and not compile_errors and all(s["xml"] and not s["watchdog"] f
 summary = {"sha": sha, "utc": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"), "green": green, "suites": suites,
            "reds": reds, "compileErrors": compile_errors, "previousSha": prev.get("sha") if prev else None,
            "newReds": [r["test"] for r in new_reds], "fixedSincePrevious": fixed, "userdataWarning": udwarn,
-           "driverHead": driver_head, "toolsTree": tools_tree}
+           "driverHead": driver_head, "toolsTree": tools_tree, "envScrubbed": env_scrubbed}
 json.dump(summary, open(os.path.join(out, "summary.json"), "w", encoding="utf-8"), indent=2, ensure_ascii=False)
 
 L = [f"# main CI — `{sha[:10]}` — {'GREEN' if green else 'RED'}", "", f"UTC {summary['utc']} · önceki koşu `{(summary['previousSha'] or '—')[:10]}`", ""]
 if driver_head or tools_tree:
     L[-1:-1] = [f"Sürücü (driver) HEAD `{driver_head or '—'}` · tools ağacı `{tools_tree or '—'}`"]
+if env_scrubbed is not None:
+    L[-1:-1] = [f"Ortam temizliği (env-scrub, C# okuduğu değişkenler): {', '.join(env_scrubbed) or 'temizlenecek yok'}"]
 L += ["| Süit | toplam | geçti | kırmızı | atlandı | s | derleme hatası | bekçi |", "|---|---:|---:|---:|---:|---:|---:|---|"]
 for mode, s in suites.items():
     L.append(f"| {mode} | {s['total']} | {s['passed']} | {s['failed']} | {s['skipped']} | {s['seconds']:.0f} | {s['errorsCS']} | {'KILLED' if s['watchdog'] else ('-' if s['xml'] else 'XML YOK')} |")

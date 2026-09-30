@@ -57,6 +57,7 @@ dd_utc() { print fixture-time; }
 dd_log() { print -r -- "$*"; }
 dd_unity_count() { print 0; }
 dd_slot_acquire() { print acquired >> "$ARGV_TRACE"; }
+dd_disk_gate() { return 0; }   # C-00 30.09 dd_disk_gate (dd26c3e6): the fixture's dd-env provides every function test.sh calls
 dd_slot_release() { print released >> "$ARGV_TRACE"; }
 dd_unity_watched() { DD_UNITY_OUTCOME=ok; shift 2; "$@"; }
 ''')

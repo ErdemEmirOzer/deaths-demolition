@@ -33,6 +33,9 @@ def flag(argv, name):
 
 def main(tool, argv):
     log(tool, argv)
+    if os.environ.get("ENV_DUMP"):   # M-10: what each child sees (DD_X must be gone, HOME kept)
+        with open(os.environ["ENV_DUMP"], "a", encoding="utf-8") as handle:
+            handle.write(json.dumps([tool, "DD_X" in os.environ, os.environ.get("HOME")]) + "\n")
     rules = json.loads(os.environ.get("FAKE_RULES", "{}"))
     if tool == "userdata-guard.sh":
         ok = (len(argv) == 4 and argv[0] in ("snapshot", "restore") and argv[2] == "--scope"
@@ -120,13 +123,20 @@ class FakeRepo:
                             f'sys.exit(fake.main("{Path(rel).stem}", sys.argv[1:]))\n')
         for rel, text in fake_over:
             self.write(rel, text)
+        # Codex-audit M-10: rc.sh scrubs what the C# of $REPO reads (git grep) — the fake repo is a git repo with one .cs
+        cs = self.root / "prototype/DeathsDemolition_PlayableConcept/Assets/Probe.cs"
+        cs.parent.mkdir(parents=True, exist_ok=True)
+        cs.write_text('class P { string a = System.Environment.GetEnvironmentVariable("DD_X");\n'
+                      '  string b = System.Environment.GetEnvironmentVariable("HOME"); }\n')
+        subprocess.run(["git", "init", "-q"], cwd=self.root, check=True, capture_output=True)
+        subprocess.run(["git", "add", "."], cwd=self.root, check=True, capture_output=True)
         unity = self.dir / "Unity"
         unity.write_text("#!/bin/sh\nexit 0\n")
         unity.chmod(0o755)
         (self.dir / "home").mkdir()
         self.env = {"PATH": plenty_bin(self.dir) + ":" + os.environ["PATH"], "HOME": str(self.dir / "home"), "TMPDIR": str(self.dir),
                     "CALL_LOG": str(self.log), "DD_UNITY": str(unity), "DD_SLOT_BASE": str(self.dir / "slots"),
-                    "PYTHONDONTWRITEBYTECODE": "1"}
+                    "PYTHONDONTWRITEBYTECODE": "1", "GIT_CEILING_DIRECTORIES": str(self.dir)}
 
     def write(self, rel, text):
         path = self.root / rel
@@ -141,10 +151,10 @@ class FakeRepo:
 class RcStageGuardTests(unittest.TestCase):
     REAL = ("tools/qa/rc.sh", "tools/qa/window-modes.sh", "tools/qa/economy-acceptance.sh")
 
-    def rc(self, *args, rules=None, repo=None):
+    def rc(self, *args, rules=None, repo=None, env_extra=None):
         repo = repo or FakeRepo(self, self.REAL)
         out = repo.dir / "out"
-        env = dict(repo.env, FAKE_RULES=json.dumps(rules or {}))
+        env = dict(repo.env, FAKE_RULES=json.dumps(rules or {}), **(env_extra or {}))
         result = subprocess.run(["/bin/zsh", str(repo.root / "tools/qa/rc.sh"), str(out), *args],
                                 capture_output=True, text=True, env=env, timeout=120)
         return repo, out, result
@@ -294,6 +304,30 @@ class RcStageGuardTests(unittest.TestCase):
         agg = [c for c in calls if c[0] == "rc_aggregate"][-1]
         self.assertEqual("full-playmode", agg[agg.index("--failed-stage") + 1])
         self.assertEqual("143", (out / "stages/full-playmode/exit.txt").read_text().strip())
+
+    def test_M10_DD_XIleBaslatilir_AsamalarGormez_HomeKalir_RaporaVeTimelineaYazilir(self):
+        repo = FakeRepo(self, self.REAL)
+        dump = repo.dir / "env-dump.jsonl"
+        repo, out, result = self.rc(repo=repo, env_extra={"DD_X": "1", "ENV_DUMP": str(dump)})
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        seen = [json.loads(line) for line in dump.read_text().splitlines()]
+        self.assertTrue(any(tool == "test.sh" for tool, _, _ in seen) and any(tool == "build.sh" for tool, _, _ in seen))
+        self.assertEqual([], [tool for tool, has_x, _ in seen if has_x], "a stage still saw DD_X")
+        self.assertEqual({str(repo.dir / "home")}, {home for _, _, home in seen})
+        agg = [c for c in repo.calls() if c[0] == "rc_aggregate"][-1]
+        self.assertEqual("DD_X", agg[agg.index("--env-scrubbed") + 1])
+        self.assertIn(f"env-scrub: cleared 1 (DD_X) from {repo.root.resolve()}", (out / "timeline.txt").read_text())
+        self.assertIn("envScrubbed=DD_X", (out / "environment.txt").read_text())
+
+    def test_M10_GitGrepHatasi_Cikis3_HicbirAsamaKosmaz_Preflight(self):
+        repo = FakeRepo(self, self.REAL)
+        shutil.rmtree(repo.root / ".git")
+        repo, out, result = self.rc(repo=repo, env_extra={"DD_X": "1"})
+        self.assertEqual(3, result.returncode, result.stdout + result.stderr)
+        self.assertIn("env-scrub: git grep failed", result.stderr)
+        calls = repo.calls()
+        self.assertEqual(["rc_aggregate"], [c[0] for c in calls], "nothing but the final aggregate may run")
+        self.assertEqual("preflight", calls[-1][calls[-1].index("--failed-stage") + 1])
 
     def test_PerfRuns2_KullanimHatasi64_HicbirSeyKosmaz(self):
         for value in ("2", "0", "x"):

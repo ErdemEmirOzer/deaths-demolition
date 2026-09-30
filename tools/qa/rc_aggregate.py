@@ -274,7 +274,10 @@ def main():
     parser.add_argument("--failed-stage", default="")
     parser.add_argument("--perf-runs", type=int, default=3)
     parser.add_argument("--window", type=int, default=60)
+    # Codex-audit M-10 (C-00 30.09): the env variables rc.sh cleared (dd_scrub_code_env); absent (old call) → null
+    parser.add_argument("--env-scrubbed", default=None)
     args = parser.parse_args()
+    env_scrubbed = args.env_scrubbed.split() if args.env_scrubbed is not None else None
 
     # release-library is MUST: post-build receipt; wp064-closure validates its content/commit/Assets/ArtifactDB.
     stages = ["full-editmode", "full-playmode", "release-smoke", "release-library", "m3-regression", "soak-stability-61", "soak-stability-26", "wp064-closure", "economy-acceptance", "window-modes", "log-scan"]
@@ -331,6 +334,7 @@ def main():
         "head": head,
         "pass": overall,
         "failedStage": args.failed_stage,
+        "envScrubbed": env_scrubbed,
         "stages": stage_results,
         "tests": {"editMode": edit, "playMode": play},
         "allowedEditModeSkips": allowed_edit_skips,
@@ -358,6 +362,8 @@ def main():
         f"Ultra gates {len(ultra)} ({sum(1 for gate in ultra if gate.get('pass'))} pass) · windows {bool(windows and windows.get('pass'))} · logs {bool(logs and logs.get('pass'))}",
         "evidence " + args.out,
     ]
+    if env_scrubbed is not None:
+        lines.insert(-1, "env-scrub cleared " + (",".join(env_scrubbed) or "-"))
     with open(os.path.join(args.out, "rc-report.txt"), "w", encoding="utf-8") as handle:
         handle.write("\n".join(lines) + "\n")
     print("\n".join(lines))

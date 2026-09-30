@@ -19,7 +19,11 @@
 # branch, date, mode, Unity) is written into the player by DD.Prototype.Core.EditorTools.DdBuild.
 #
 # Exit codes (contract for callers):
-#   0 ok · 10 build failed · 20 smoke failed · 30 user-data guard failed · 64 usage · 75 machine busy (--no-wait)
+#   0 ok · 3 release env scrub failed (git grep) · 10 build failed · 20 smoke failed · 30 user-data guard failed · 64 usage
+#   · 75 machine busy (--no-wait)
+# Env (Codex-audit M-10, C-00 30.09): release / release-probe first unset every variable the C# of $DD_REPO reads, except
+# HOME (dd_scrub_code_env, dd-env.sh) — e.g. DD_BUILD_EXTRA_SCENES must not add scenes to a shipped build; the cleared names
+# go into the timeline and report.json "envScrubbed". git grep failure → 3, nothing built. dev builds are unchanged.
 # Machine rule: a Unity slot is taken through tools/slot.sh (max 2 Unity batch on this machine) and released after the build.
 set -u
 setopt nullglob
@@ -55,6 +59,12 @@ DDOUT="$APP"; [ "$TARGET" = "win64" ] && DDOUT="$APP/$DD_WIN_EXE"
 # WP-066C: only an explicit --compression reaches the editor/report (default argv unchanged).
 CARGS=(); [ -n "$COMP" ] && { CARGS=(-ddCompression "$COMP"); TJSON="$TJSON"$'\n  "compression": "'"$COMP"'",'; TLOG="$TLOG compression=$COMP"; }
 dd_log "build.sh mode=$MODE$TLOG smoke=$SMOKE out=$OUT repo=$DD_REPO head=$(git -C "$DD_REPO" rev-parse --short=12 HEAD 2>/dev/null)"
+
+ESJSON=""
+if [ "$MODE" = "release" ] || [ "$MODE" = "release-probe" ]; then
+  dd_scrub_code_env "$DD_REPO" || exit 3
+  ESJSON=$'\n  "envScrubbed": '"$(dd_env_scrubbed_json)"','
+fi
 
 # Machine slot: tools/slot.sh (blocks until one of the 2 Unity slots is free; --no-wait refuses instead).
 if [ "$NOWAIT" -eq 1 ] && [ "$(dd_unity_count)" -ge "$DD_MAX_UNITY" ]; then dd_log "busy: $(dd_unity_count) Unity batch processes (limit $DD_MAX_UNITY)"; exit 75; fi
@@ -103,7 +113,7 @@ CODE=0
 STAMP=$( [ -f "$BREPORT" ] && grep -o '"describe": "[^"]*"' "$BREPORT" | head -1 | cut -d'"' -f4 || echo "" )
 cat > "$REPORT" <<JSON
 {
-  "mode": "$MODE",$TJSON
+  "mode": "$MODE",$TJSON$ESJSON
   "ok": $([ "$CODE" -eq 0 ] && echo true || echo false),
   "exitCode": $CODE,
   "build": { "ok": $([ "$BUILD_OK" -eq 1 ] && echo true || echo false), "unityExit": $X, "seconds": $((T1-T0)), "appKB": $APPKB, "errorsCS": $ERRS, "app": "$APP", "log": "$LOG", "report": "$BREPORT", "stamp": "$STAMP" },
