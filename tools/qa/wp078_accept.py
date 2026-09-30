@@ -5,8 +5,9 @@ Every step calls the existing tools as subprocesses — nothing is re-implemente
   a6  builds       tools/build.sh dev | release | release-probe --out <E>/build-{dev,release,probe}, then
                    tools/qa/library_provenance.py for each — each build under the Editor user-data guard (scope editor)
   a0  provenance   tools/qa/library_provenance.py <repo> <E>/a0/library-provenance.json (read-only, post-build)
-  a1  suites       tools/test.sh editmode|playmode --out <E>/a1/<mode> [--filter …] — each under guard_receipt, scope
-                   "editor": snapshot → test.sh → finally restore (never the player slot)
+  a1  suites       tools/test.sh editmode|playmode --out <E>/a1/<mode> [--filter …] — each under guard_receipt:
+                   snapshot → test.sh → finally restore; EditMode scope "editor", PlayMode scope "player" (C-00 30.09
+                   lock order player → unity: the snapshot takes the player slot before test.sh takes a Unity slot)
   a2  bots         tools/qa/wp078_bot.py gameplay × topdown/tp/fp (seed 61, 5 rounds, tier sinematik) + route × 3 modes
   a3  AI flags     wp078_bot.py --kind flag, one Player smoke per wp078_report.AI_FLAGS flag × value 0/1 (1 round)
   a5  soak         wp078_bot.py --kind stability --quiet (no Unity slots held) seeds 61 and 26 × 12 rounds, then
@@ -182,20 +183,21 @@ def bot_done(run_dir, kind):
 
 
 class EditorGuard:
-    """guard_receipt with scope "editor": snapshot → run → (finally) restore + verdict."""
+    """guard_receipt: snapshot → run → (finally) restore + verdict. Scope "editor" by default; a PlayMode unit passes
+    "player" so the snapshot holds the player slot before the Unity slot (C-00 30.09 lock order player → unity)."""
     scope = "editor"
 
     def path(self):
         return guard_receipt.guard_path()
 
-    def snapshot(self, ug):
+    def snapshot(self, ug, scope=None):
         ug.parent.mkdir(parents=True, exist_ok=True)
-        result = guard_receipt.run_guard("snapshot", ug, self.scope)
+        result = guard_receipt.run_guard("snapshot", ug, scope or self.scope)
         (ug.parent / (ug.name + ".snapshot.txt")).write_text(result.stdout + result.stderr, encoding="utf-8")
         return result.returncode
 
-    def close(self, ug):
-        return guard_receipt.close(ug, self.scope)
+    def close(self, ug, scope=None):
+        return guard_receipt.close(ug, scope or self.scope)
 
 
 class Chain:
@@ -382,12 +384,12 @@ class Chain:
         return binary
 
     # ---- Editor-guarded unit (builds, suites) -----------------------------------------------------------------------
-    def snapshot_with_wait(self, name, ug):
+    def snapshot_with_wait(self, name, ug, scope="editor"):
         for attempt in range(1, self.wait_tries + 1):
             self.check_terminated()
             if ug.exists():
                 self.move_aside(ug, "wait")
-            raw = self.guard.snapshot(ug)
+            raw = self.guard.snapshot(ug, scope)
             code = guard_receipt.snapshot_code(raw)
             if code == 0:
                 return
@@ -398,18 +400,18 @@ class Chain:
             self.log(f"WAIT {name}: Editor guard snapshot exit {raw} (try {attempt}/{self.wait_tries}); retry in {self.wait_seconds:.0f} s")
             self.sleep(self.wait_seconds)
 
-    def editor_unit(self, name, commands, out_dir, outputs, extra=lambda: {}):
-        """snapshot (scope editor) → commands (each only if the previous exited 0) → finally restore + verdict."""
+    def editor_unit(self, name, commands, out_dir, outputs, extra=lambda: {}, scope="editor"):
+        """snapshot (scope editor; PlayMode: player) → commands (each only if the previous exited 0) → finally restore + verdict."""
         ug = self.evidence / "ug" / name
         record_path = self.unit_record(name)
         if self.dry_run:
             guard = self.guard.path()
-            self.out(f"DRY {self.stage}: {shlex.join([guard, 'snapshot', str(ug), '--scope', 'editor'])}")
-            self.planned.append((self.stage, [guard, "snapshot", str(ug), "--scope", "editor"]))
+            self.out(f"DRY {self.stage}: {shlex.join([guard, 'snapshot', str(ug), '--scope', scope])}")
+            self.planned.append((self.stage, [guard, "snapshot", str(ug), "--scope", scope]))
             for argv in commands:
                 self.execute(name, argv)
-            self.out(f"DRY {self.stage}: {shlex.join([guard, 'restore', str(ug), '--scope', 'editor'])} (finally)")
-            self.planned.append((self.stage, [guard, "restore", str(ug), "--scope", "editor"]))
+            self.out(f"DRY {self.stage}: {shlex.join([guard, 'restore', str(ug), '--scope', scope])} (finally)")
+            self.planned.append((self.stage, [guard, "restore", str(ug), "--scope", scope]))
             return None
         if self.resume:
             record = load_json(record_path)
@@ -419,7 +421,7 @@ class Chain:
                 return self.unit_result(name, record_path, record)
             if out_dir.exists():
                 self.move_aside(out_dir, "prev")
-        self.snapshot_with_wait(name, ug)
+        self.snapshot_with_wait(name, ug, scope)
         exits, receipt = [], None
         try:
             for index, argv in enumerate(commands):
@@ -428,7 +430,7 @@ class Chain:
                 if code != 0:
                     break
         finally:
-            receipt = self.guard.close(ug)
+            receipt = self.guard.close(ug, scope)
             self.log(f"GUARD {name}: restore exit {receipt.get('restoreExit')} verdict {receipt.get('why')} code {receipt.get('code')}")
         guard = dict({k: receipt.get(k) for k in ("restoreExit", "verified", "touched", "outOfScopeChanged")},
                      snapshotExit=0, code=receipt.get("code"), why=receipt.get("why"))
@@ -536,7 +538,8 @@ class Chain:
                 argv += ["--filter", self.filters[mode]]
             result = self.editor_unit(f"a1-{mode}", [argv], out,
                                       lambda out=out, mode=mode: [out / f"{mode}.xml", out / f"{mode}.log", out / "durations.json"],
-                                      lambda mode=mode: {"testMode": mode, "filter": self.filters[mode] or None})
+                                      lambda mode=mode: {"testMode": mode, "filter": self.filters[mode] or None},
+                                      scope="player" if mode == "playmode" else "editor")
             if result:
                 results.append(result)
         self.finish("a1", results)

@@ -94,18 +94,20 @@ class FakeGit:
 
 class FakeGuard:
     def __init__(self, snapshot_codes=(), close=None):
-        self.snapshot_codes, self.close_receipt, self.calls = list(snapshot_codes), close or dict(OK_GUARD), []
+        self.snapshot_codes, self.close_receipt, self.calls, self.scopes = list(snapshot_codes), close or dict(OK_GUARD), [], []
 
     def path(self):
         return "/main/tools/userdata-guard.sh"
 
-    def snapshot(self, ug):
+    def snapshot(self, ug, scope="editor"):
         self.calls.append(("snapshot", ug.name))
+        self.scopes.append(("snapshot", ug.name, scope))
         ug.mkdir(parents=True, exist_ok=True)
         return self.snapshot_codes.pop(0) if self.snapshot_codes else 0
 
-    def close(self, ug):
+    def close(self, ug, scope="editor"):
         self.calls.append(("close", ug.name))
+        self.scopes.append(("close", ug.name, scope))
         return dict(self.close_receipt)
 
 
@@ -310,12 +312,14 @@ class DryRunTests(Base):
         self.assertEqual([[sys.executable, str(HERE / "library_provenance.py"), str(acc.REPO),
                            str(self.evidence.resolve() / "a0" / "library-provenance.json")]], argv)
 
-    def test_a1_suites_snapshot_test_restore_scope_editor_never_player(self):
+    def test_a1_suites_editmode_scope_editor_playmode_scope_player(self):
         chain = self.dry(["a1"], editmode_filter="ProjectIntegrityTests|ArsenalV3Tests")
         seq = [(Path(a[0]).name, a[1]) for _, a in chain.planned]
         self.assertEqual([("userdata-guard.sh", "snapshot"), ("test.sh", "editmode"), ("userdata-guard.sh", "restore"),
                           ("userdata-guard.sh", "snapshot"), ("test.sh", "playmode"), ("userdata-guard.sh", "restore")], seq)
-        self.assertFalse(any("player" in a for _, argv in chain.planned for a in argv if a.startswith("--scope") or a == "player"))
+        # C-00 30.09 lock order player → unity: the PlayMode snapshot takes the player slot before test.sh's Unity slot
+        scopes = [argv[-1] for _, argv in chain.planned if Path(argv[0]).name == "userdata-guard.sh"]
+        self.assertEqual(["editor", "editor", "player", "player"], scopes)
         edit = chain.planned[1][1]
         self.assertEqual("ProjectIntegrityTests|ArsenalV3Tests", self.opt(edit, "--filter"))
         self.assertNotIn("--filter", chain.planned[4][1])
@@ -446,6 +450,15 @@ class StopTests(Base):
         log = (self.evidence / "accept.log").read_text()
         self.assertIn("STOP a2", log)
         self.assertIn("report to C-00", log)
+
+    def test_playmode_guard_is_player_scope_snapshot_and_restore(self):
+        # C-00 30.09 lock order player → unity: the real guard calls, not only the dry-run plan, carry scope player
+        tools, guard = FakeTools(), FakeGuard()
+        self.prepared(("a6",))
+        chain = make_chain(self.evidence, ["a1"], tools=tools, guard=guard)
+        chain.run()
+        self.assertEqual([("snapshot", "a1-editmode", "editor"), ("close", "a1-editmode", "editor"),
+                          ("snapshot", "a1-playmode", "player"), ("close", "a1-playmode", "player")], guard.scopes)
 
     def test_editor_snapshot_error_is_stop_and_nothing_runs(self):
         tools, guard = FakeTools(), FakeGuard(snapshot_codes=[12])
