@@ -481,8 +481,10 @@ namespace DD.Prototype.Tests.PlayMode
         /// EŞİK: bir hasar olayından sonraki 10 karede kat edilen YOL.
         ///   MoveSpeed 6.2 m/s × girdi 0.5 = 3.1 m/s; 10 kare = 0.1667 sn → ideal 0.517 m.
         ///   Eşik 0.05 m, idealin %10'u. Kalabalık oyuncuyu fiziksel olarak engelleyebilir
-        ///   (REQ-046) ama bir sersemletme/kilit olsaydı değer tam 0.000 olurdu; eşik bu
-        ///   iki hâl arasına düşer.
+        ///   (REQ-046): CI/yerelde 0.000–0.010 m pencereler ölçüldü, yani yol tek başına
+        ///   kilidi kalabalıktan ayıramaz. WP-069 B5: her pencerede motor girdiyi almalı
+        ///   (ControlEnabled, RawInput = girdi); eşik altı pencere ancak CharacterController
+        ///   yanlardan temas bildirdiyse (fiziksel engel) kabul edilir.
         ///
         /// SENARYO BOYU: 3 zombi × en çok 2 isabet = 60 hasar &lt; 100 can.
         /// </summary>
@@ -512,6 +514,14 @@ namespace DD.Prototype.Tests.PlayMode
             var hasarKaresi = new List<int>(16);
             var hasarBilgisi = new List<PlayerDamageInfo>(16);
             var konumlar = new List<Vector3>(512);
+            // WP-069 B5 (C-00 30.09): per sample, whether the motor took this frame's input (ControlEnabled and RawInput
+            // = the stick) and whether the CharacterController's last Move touched something at its sides. A crowd
+            // can pin the player (REQ-046: measured 0.000–0.010 m windows in CI/local runs); a stun cannot hide behind
+            // that — it shows as control closed, or as no movement with nothing in the way.
+            var kontrolAcik = new List<bool>(512);
+            var yanEngel = new List<bool>(512);
+            CharacterController govde = _rig.GetComponent<CharacterController>();
+            Assert.IsNotNull(govde, "Oyuncuda CharacterController yok.");
 
             Action<PlayerDamageInfo> dinle = info =>
             {
@@ -523,6 +533,8 @@ namespace DD.Prototype.Tests.PlayMode
 
             int kareSayisi = Mathf.RoundToInt(olcumSaniye / Adim);
             konumlar.Add(_rig.transform.position);
+            kontrolAcik.Add(true);
+            yanEngel.Add(false);
 
             for (int i = 0; i < kareSayisi; i++)
             {
@@ -532,6 +544,8 @@ namespace DD.Prototype.Tests.PlayMode
 
                 yield return null;
                 konumlar.Add(_rig.transform.position);
+                kontrolAcik.Add(_rig.Motor.ControlEnabled && (_rig.Motor.RawInput - _girdi.Yon).sqrMagnitude < 1e-6f);
+                yanEngel.Add((govde.collisionFlags & CollisionFlags.Sides) != 0);
             }
 
             _can.Damaged -= dinle;
@@ -546,6 +560,7 @@ namespace DD.Prototype.Tests.PlayMode
                 "Hareketli oyuncu 6 sn boyunca hiç hasar almadı; REQ-045 ölçülemiyor.\n" + rapor);
 
             float enKisaYol = float.MaxValue;
+            int kontrolKesik = 0, engelsizDurma = 0;
             for (int i = 0; i < hasarKaresi.Count; i++)
             {
                 int basla = Mathf.Max(0, hasarKaresi[i]);
@@ -556,15 +571,24 @@ namespace DD.Prototype.Tests.PlayMode
                 }
 
                 float yol = 0f;
+                int kontrolKare = 0, engelKare = 0;
                 for (int k = basla; k < bitir; k++)
                 {
                     Vector3 d = konumlar[k + 1] - konumlar[k];
                     d.y = 0f;
                     yol += d.magnitude;
+                    if (kontrolAcik[k + 1]) kontrolKare++;
+                    if (yanEngel[k + 1]) engelKare++;
                 }
 
+                bool kesik = kontrolKare < bitir - basla;
+                bool engelsiz = yol <= yolEsigi && engelKare == 0;
+                if (kesik) kontrolKesik++;
+                if (engelsiz) engelsizDurma++;
                 rapor.AppendLine("    hasar[" + i + "] sonrasi " + (bitir - basla) +
-                                 " karede yol=" + yol.ToString("F4") + " m  (esik " + yolEsigi + ")");
+                                 " karede yol=" + yol.ToString("F4") + " m  (esik " + yolEsigi + ")" +
+                                 "  kontrol " + kontrolKare + "/" + (bitir - basla) + "  yan-engel " + engelKare +
+                                 (kesik ? "  KONTROL KESIK" : "") + (engelsiz ? "  ENGELSIZ DURMA" : ""));
 
                 if (yol < enKisaYol)
                 {
@@ -577,9 +601,14 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.Less(enKisaYol, float.MaxValue,
                 "Hiçbir hasar olayının ölçülebilir bir pencereye denk gelmedi.\n" + rapor);
 
-            Assert.Greater(enKisaYol, yolEsigi,
+            // REQ-045: after every hit the motor keeps taking the stick, and a window under the path threshold is only
+            // accepted when the controller was physically stopped at its sides (REQ-046 crowd), never standing free.
+            Assert.AreEqual(0, kontrolKesik,
+                "Hasar sonrası " + kontrolKesik + " pencerede motor girdiyi almadı (ControlEnabled / RawInput). " +
+                "REQ-045: hasar hareketi, nişanı veya ateşi kesmez.\n" + rapor);
+            Assert.AreEqual(0, engelsizDurma,
                 "Hasar aldıktan sonraki " + pencereKare + " karede oyuncu yalnız " +
-                enKisaYol.ToString("F4") + " m yol aldı (eşik " + yolEsigi + " m, ideal 0.517 m). " +
+                enKisaYol.ToString("F4") + " m yol aldı (eşik " + yolEsigi + " m, ideal 0.517 m) ve önünde engel yoktu. " +
                 "REQ-045: hasar hareketi, nişanı veya ateşi kesmez.\n" + rapor);
 
             Assert.IsFalse(_can.IsDead,
