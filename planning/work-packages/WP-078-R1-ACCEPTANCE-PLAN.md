@@ -31,7 +31,7 @@ Seçim `-ddCameraMode topdown|tp|fp`, kademe `-ddQualityTier sinematik` (DEC-100
 Bot sözleşmesi (main'de): kamera-göreli sol çubuk; TP/FP sağ çubukla yaw/pitch (`LookStickToward`), ateş yalnız merkez ışını hedef göğsündeyken (`LookRayOnTarget`); yok sayılan reload 45 kararda bir yeniden basılır; halka `WorldBounds.HalfExtent` (V6 55).
 Metrikler: round/ölüm/zaman aşımı; round satırları `[Camera] inside-collider … frames=0/N`, `[OutOfWorld]`, `[Projectile]`, `[Ragdoll]`, `[AiV3]`, `[SpawnV6]`, koşu satırı `[Progress]`; `stuckRecoveries` (rapor); nişan hatası (TP/FP kamera kökenli — §8 D3).
 Kanıt kareleri: mod başına avlu / koridor-çatı altı / ufuk (contract `frames` anahtarları `courtyard`, `corridor`, `horizon`). **Bugün bot bu kareleri üretmiyor** (`-ddQaBotFrames` tier kareleri içindir) → §8 D3.
-**Kabul:** üç modda 5/5, 0 ölüm, 0 istisna, zaman aşımı 0, kamera-duvar 0 kare, guard OK (`wp078_report` ayrıca `stuckRecoveries == 0` istiyor → §10 K6). TP/FP kararlılık (12 round) **rapor** (§10 K3).
+**Kabul:** üç modda 5/5, 0 ölüm, 0 istisna, zaman aşımı 0, kamera-duvar 0 kare, guard OK (`wp078_report` ayrıca `stuckRecoveries == 0` istiyor → §10 K6). TP/FP kararlılık (2 tohum × 12 round) **rapor** — kullanıcı kararı 30.09 (§10 K3).
 
 ## 3 · Regresyon kapsamı (A3)
 
@@ -67,7 +67,7 @@ Build: **bot koşuları dev'de, perf kapısı release-probe'da; dev ölçümü y
 
 Tek FINAL commit; kararlılık **MUST**: tohum 61 + 26 × 12/12, `-ddQaBotStability`, tepeden, V6 (`WorldBounds` 55), kademe **Sinematik** (DEC-100 varsayılan; §10 K5), sıralı 12/12 ve zaman aşımı 0 (DEC-091 "takılma 0" = takılan round), Player logunda hata 0, bellek **büyümesi** (r2 tabanlı: Mono ≤ 48 MB ve ≤ 4 MB/round, toplam ayırma ≤ 256 MB, RSS ≤ 512 MB; RSS okunamazsa −1 = "yok"), guard OK, temiz host. Kapı `soak_gate.py --stability`.
 Kademe ve dünya bot özetinden (`qualityTier == Sinematik`, `worldHalfExtent == 55`; alan yoksa BLOCKED), soak komutu `-ddQualityTier sinematik`'i açıkça verir (K5); bellek ve log eşikleri koşudan önce donmuştur. 30 fps'te round süresinin 420 s zaman aşımına kalan payı raporlanır.
-Rapor (kapı değil): gerçek bot tepeden ≥ 5 + TP ≥ 2 + FP ≥ 2; TP/FP ve Sinematik-dışı (Yüksek/Performans) kararlılık gözlemleri (K3 kullanıcıda); `[OutOfWorld] stuckRemove` koşu başına > 2 → S-03 bileti; `stuckRecoveries` + `unstickSweeps` (botun kendi kurtarmaları) raporlanır, kapı değildir (K6).
+Rapor (kapı değil): gerçek bot tepeden ≥ 5 + TP ≥ 2 + FP ≥ 2; TP/FP ve Sinematik-dışı (Yüksek/Performans) kararlılık gözlemleri (K3 kullanıcı kararı: R1'de rapor); `[OutOfWorld] stuckRemove` koşu başına > 2 → S-03 bileti; `stuckRecoveries` + `unstickSweeps` (botun kendi kurtarmaları) raporlanır, kapı değildir (K6).
 
 ## 6 · Build ve boyut (A6)
 
@@ -89,11 +89,11 @@ Her Player/PlayMode koşusu `tools/userdata-guard.sh` snapshot → koşu → res
 
 `wp078_report.py` (5e71a508; şema `dd-wp078-acceptance-v1`): manifest + kanıt kökü → `wp078-report.json`; eksik kanıt BLOCKED, kanıtlı ihlal FAIL, FAIL→sahip (bilinmiyorsa UNKNOWN). C-00'a ≤ 10 satır + FAIL→sahip tablosu. Kanıt `KADRO/…/wp-078/evidence/<FINAL>/`.
 
-## 10 · Kararlar (C-00 30.09 kaydı `K/c-00/WP-078-K-KARARLARI-2026-09-30.md`: K1, K2, K4–K6, K8, K9 kabul (değişiklikle); K7 → S-01 (5 GB = 5 000 000 000 B); K3 kullanıcıda)
+## 10 · Kararlar (C-00 30.09 kaydı `K/c-00/WP-078-K-KARARLARI-2026-09-30.md`: K1, K2, K4–K6, K8, K9 kabul (değişiklikle); K7 → S-01 (5 GB = 5 000 000 000 B); K3 kullanıcı kararı: R1'de rapor)
 
 - **K1 Kapı perf'i release-probe'dan** — öneri **EVET**. Kullanıcının oynadığı build release'tir; dev build (DEVELOPMENT_BUILD) ek iz/ayırma yükü ve p99 sıçramaları taşır (WP-070 dev ölçümünde p99 kapıyı karartmıştı); release-probe = release ayarları + yalnız sonda (`DD_PERF_PROBE`), dağıtılmaz. Dev ölçüm yalnız özellik A/B deltaları için. **Çakışma:** `wp078_report` A6 probe build'i `mode == "dev"` bekliyor, `DdBuild` ise `release-probe` yazıyor → K1 kabul edilirse üretici hizalanmalı.
 - **K2 Hücre başına 3 pencere** — **onaylandı**; `perf-targets minWindows 3` + contract `≥ 3` + PROJE-SISTEM-PROMPTU §15 ile zaten yürürlükte. En iyi pencere seçilmediği için 3 pencere tek pencerelik host gürültüsünü kapıda görünür kılar; 27 pencere ≈ 70 dk sessiz pencerede yapılabilir.
-- **K3 TP/FP kararlılık MUST mu (kullanıcı) — etki notu:** MUST olursa DEC-091 değişir; kabul koşusuna 2 tohum × 2 mod × 12 round (≈ 100 dk sessiz makine) eklenir ve TP/FP'ye özgü takılma/kamera bulguları R1 kapanışını durdurur. Rapor kalırsa aynı koşular yine yapılır, bulgular sahiplere bilet olur ama release'i bekletmez. S-10 önerisi: R1'de rapor, R2'de MUST'a yükseltme kullanıcıya sorulsun (TP/FP ilk turunda; bot TP/FP kısa koşuları PASS).
+- **K3 TP/FP kararlılık — KULLANICI KARARI (30.09, C-00 aktarımı): R1'de RAPOR.** TP ve FP kararlılık koşuları (2 tohum × 12 round) FINAL'da yine yapılır; çökme, zaman aşımı ya da log hatası release'ten önce C-00 satırıyla kullanıcıya adıyla gösterilir ve sahibine iş açılır, release'i bekletmez. R2'de "MUST olsun mu" yeniden sorulur. DEC-091 değişmez.
 - **K4 AI bayrak dumanı** — A3 `aiFlags` = main'de var olan bayraklar (bugün yalnız `-ddAiV3`) × 0/1. v1'deki 6 bayrak kodda yok; `wp078_report` 7 bayrak × 0/1 = 14 koşu istediği için FINAL'da daima BLOCKED olur → üreticinin bayrak listesi koddaki bayraklarla hizalanmalı.
 - **K5 Soak kademesi** — öneri **Sinematik** (DEC-100 varsayılan, kullanıcının oynadığı). `wp078_report` A5 bugün `topdown/Yuksek` bekliyor → Sinematik'e hizalanmalı; ayrıca bot özetinde `qualityTier` alanı yok (yalnız PilotPerfProbe yazar) → §8 D3 eklemeden A5 her tier'de düşer.
 - **K6 `stuckRecoveries = 0` şartı (wp078_report A2 ve A5)** — öneri **rapora çevir**: DEC-091 "zaman aşımı/takılma 0" round takılmasıdır (`fatalStuckSeconds`, timeout); `stuckRecoveries` botun başarılı kendini kurtarmasıdır — 24.09 PASS kararlılık koşularında 15 (tohum 61) ve 27 (tohum 26) idi → icat kapı (H1).
