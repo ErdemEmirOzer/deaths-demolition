@@ -353,13 +353,13 @@ Kademe sözleşmesi: S-05 `QUALITY-TIERS-V2.md` (3812dc2) — `QualityTiers.Curr
 |---|---|---|---|---|
 | AI tick bütçesi (40 beden; seçici + slot + jel sorgusu + nav/crowd + tehdit, ragdoll hariç) | 0,55 ms | 0,75 ms | 0,85 ms | `-ddAiV3 0|1` (v3 seçici/slot/kapma kapalı → WP-040 davranışı) |
 | Eşzamanlı sıcak ragdoll / aktif fizik cesedi (S-06 tavanıyla aynı; S-03 ölümde `Pick` ile okur, S-06 uygular; Sinematik 10 = S-05/S-06 uzlaşması, C-00 24.09) | 2 | 6 | 10 | `-ddRagdoll 0|1` (S-06 bayrağı; 0 = tam yazılı klip) |
-| Ceset ömrü çarpanı (`CorpseLinger` × ; tavan 6 / 10 / 16) | ×0,6 | ×1,0 | ×1,25 | `-ddCorpseLinger 0|1` (0 = WP-054 değerleri) |
+| Ceset ömrü çarpanı (`CorpseLinger` × ; tavan 6 / 10 / 16) | ×0,6 | ×1,0 | ×1,25 | ~~`-ddCorpseLinger 0|1`~~ geri çekildi (C-00 30.09); kademe satırı uygulandı (`CrowdFeelSettings.CorpseCeilingFor(QualityTiers.Current)`) |
 | Zincir yıldırım hop sayısı | 6 | 8 | 10 | `-ddChainHops 0|1` (0 = 4 hop, LOS yok) |
 | Jel birikinti tavanı (kayıt halkası) | 10 | 16 | 24 | `-ddGelPuddles 0|1` (0 = 6, domino yok) |
-| Kalabalık ayrışma komşu tavanı (`CrowdSpatialGrid` beden başına) | 6 | 10 | 14 | `-ddCrowdNeighbours 0|1` (0 = WP-030 değeri 8) |
-| `PathQueriesPerTick` / spawn LOS linecast | 4 / 9 | 6 / 18 | 6 / 18 | `-ddSpawnLos 0|1` (0 = viewport bandı) |
+| Kalabalık ayrışma komşu tavanı (`CrowdSpatialGrid` beden başına) | 6 | 10 | 14 | ~~`-ddCrowdNeighbours 0|1`~~ geri çekildi (C-00 30.09). **Kademe satırı uygulanmadı — KNOWN OPEN, R2'de perf ölçümüne bağlı** (bugün tek `CrowdTuning.MaxNeighborsPerMember`) |
+| `PathQueriesPerTick` / spawn LOS linecast | 4 / 9 | 6 / 18 | 6 / 18 | ~~`-ddSpawnLos 0|1`~~ geri çekildi (C-00 30.09). **Kademe satırı uygulanmadı — KNOWN OPEN, R2'de perf ölçümüne bağlı** (bugün TP/FP'de nokta başına tek Linecast, kademeden bağımsız) |
 
-Ölçüm S-05 §5 protokolü: PilotPerfProbe Run, 1080p, 10 s ısınma + 60 s pencere, tam 40, `-ddCameraMode` üç mod, kademe × mod ≥ 2 pencere; rapor dilim B8.
+C-00 30.09 (S-10 K4): A/B anahtarı yalnız `-ddAiV3 0|1` (AttackStyles.cs); `-ddChainHops` / `-ddGelPuddles` DEC-097/099 ile emekli. Ölçüm S-05 §5 protokolü: PilotPerfProbe Run, 1080p, 10 s ısınma + 60 s pencere, tam 40, `-ddCameraMode` üç mod, kademe × mod ≥ 2 pencere; rapor dilim B8.
 
 **AI tarafı ms bütçesi (DEC-092: Yüksek ort ≤ 16,6 ms / p99 ≤ 20 ms kare; AI payı = ana iş parçacığı, 40 beden, 1080p referans Mac; M3 tabanı: nav+crowd 0,112 ms, ThreatDirector ≤ 0,05 ms):**
 
