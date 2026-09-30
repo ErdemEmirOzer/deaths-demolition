@@ -75,6 +75,17 @@ def alive(pid):
     return bool(st) and not st.startswith("Z")
 
 
+# C-00 30.09 disk gate: fixtures must not depend on the real machine's free disk / swap — df and sysctl report plenty.
+def plenty_bin(root):
+    d = Path(root) / "plenty-bin"
+    d.mkdir(exist_ok=True)
+    (d / "df").write_text("#!/bin/sh\necho 'Filesystem 1024-blocks Used Available'\necho '/dev/fixture 999999999 1 999999999'\n")
+    (d / "sysctl").write_text("#!/bin/sh\n[ \"$2\" = vm.swapusage ] && { echo 'total = 1.00M  used = 0.00M  free = 1.00M'; exit 0; }\nexec /usr/sbin/sysctl \"$@\"\n")
+    for f in ("df", "sysctl"):
+        (d / f).chmod(0o755)
+    return str(d)
+
+
 class CiFixture(unittest.TestCase):
     """Shared fixture (no tests of its own)."""
     def setUp(self):
@@ -103,6 +114,7 @@ class CiFixture(unittest.TestCase):
         e.update(HOME=str(self.home), TMPDIR=str(self.tmpdir), DD_REPO=str(self.repo), DD_UNITY=str(self.root / "fake-unity"),
                  DD_STALL_TICK="1", DD_CI_CHILD_GRACE="10", GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@t",
                  GIT_COMMITTER_NAME="t", GIT_COMMITTER_EMAIL="t@t", GIT_CONFIG_NOSYSTEM="1")
+        e["PATH"] = plenty_bin(self.root) + ":" + e.get("PATH", "/usr/bin:/bin")
         e.update(extra)
         return e
 

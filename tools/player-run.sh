@@ -22,6 +22,7 @@ BIN="$1"; shift
 DD_SLOT_TAG="player-run-$$"
 trap 'dd_slot_release player' EXIT
 dd_slot_acquire player || exit $?   # D1 review MUST-2 / M-07c: slot.sh's code (75 timeout, 64 usage) now reaches the caller
+dd_disk_gate || exit $?   # C-00 30.09: no Player below 15 GiB free disk / above 12 GiB swap
 OTHERS=$(pgrep -fl "Contents/MacOS/(Deaths Demolition|DeathsDemolition)" | grep -v "$$" )
 [ -n "$OTHERS" ] && dd_log "WARNING player-run: another Player is running (user's game or an unwrapped launch): $(echo "$OTHERS" | cut -c1-120 | tr '\n' ';')"
 [[ " $* " == *" -ddTelemetryDir "* ]] || dd_log "WARNING player-run: no -ddTelemetryDir — this run writes the real telemetry folder"

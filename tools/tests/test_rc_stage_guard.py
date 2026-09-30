@@ -72,6 +72,17 @@ PLAYER_STAGES = ("m3-regression", "soak-stability-61", "soak-stability-26", "rea
                  "economy-acceptance", "window-modes")
 
 
+# C-00 30.09 disk gate: fixtures must not depend on the real machine's free disk / swap — df and sysctl report plenty.
+def plenty_bin(root):
+    d = Path(root) / "plenty-bin"
+    d.mkdir(exist_ok=True)
+    (d / "df").write_text("#!/bin/sh\necho 'Filesystem 1024-blocks Used Available'\necho '/dev/fixture 999999999 1 999999999'\n")
+    (d / "sysctl").write_text("#!/bin/sh\n[ \"$2\" = vm.swapusage ] && { echo 'total = 1.00M  used = 0.00M  free = 1.00M'; exit 0; }\nexec /usr/sbin/sysctl \"$@\"\n")
+    for f in ("df", "sysctl"):
+        (d / f).chmod(0o755)
+    return str(d)
+
+
 class FakeRepo:
     """A throw-away repository layout: real scripts under test, fakes for everything else."""
 
@@ -104,7 +115,7 @@ class FakeRepo:
         unity.write_text("#!/bin/sh\nexit 0\n")
         unity.chmod(0o755)
         (self.dir / "home").mkdir()
-        self.env = {"PATH": os.environ["PATH"], "HOME": str(self.dir / "home"), "TMPDIR": str(self.dir),
+        self.env = {"PATH": plenty_bin(self.dir) + ":" + os.environ["PATH"], "HOME": str(self.dir / "home"), "TMPDIR": str(self.dir),
                     "CALL_LOG": str(self.log), "DD_UNITY": str(unity), "DD_SLOT_BASE": str(self.dir / "slots"),
                     "PYTHONDONTWRITEBYTECODE": "1"}
 

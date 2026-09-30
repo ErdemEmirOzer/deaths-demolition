@@ -16,6 +16,20 @@ DD_PRODUCT="Deaths Demolition - Playable Concept"
 dd_utc() { date -u +%Y%m%dT%H%M%SZ; }
 dd_log() { echo "$(date -u +%FT%TZ) $*"; [ -n "$DD_TIMELINE" ] && echo "$(date -u +%FT%TZ) $*" >> "$DD_TIMELINE"; }
 dd_unity_count() { pgrep -f "Unity.app/Contents/MacOS/Unity.* -batchmode" 2>/dev/null | wc -l | tr -d ' '; }
+# dd_disk_gate [path] (C-00 30.09 · machine rule §10): the one resource gate before any Unity or Player launch — free disk on
+# <path>'s volume (default the repo) ≥ 15 GiB and used swap ≤ 12 GiB; else one reason line and 75 (busy — nothing started).
+# Unreadable df / sysctl counts as not ready. compile-check, test.sh, build.sh and player-run.sh call it (single source).
+DD_DISK_MIN_KIB=15728640; DD_SWAP_MAX_MB=12288
+dd_disk_gate() {
+  local free swap
+  free=$(df -k "${1:-$DD_REPO}" 2>/dev/null | awk 'NR==2{print $4}')
+  swap=$(sysctl -n vm.swapusage 2>/dev/null | sed -n 's/.*used = \([0-9]*\)[.0-9]*M.*/\1/p')
+  if [[ "$free" != <-> ]] || [ "$free" -lt "$DD_DISK_MIN_KIB" ]; then
+    dd_log "disk-gate: free disk ${free:-unknown} KiB < $DD_DISK_MIN_KIB (15 GiB) on ${1:-$DD_REPO} — not started (75)"; return 75; fi
+  if [[ "$swap" != <-> ]] || [ "$swap" -gt "$DD_SWAP_MAX_MB" ]; then
+    dd_log "disk-gate: used swap ${swap:-unknown} MB > $DD_SWAP_MAX_MB (12 GiB) — not started (75)"; return 75; fi
+  dd_log "disk-gate: ok freeKiB=$free swapUsedMB=$swap"; return 0
+}
 # Waits until fewer than DD_MAX_UNITY batch editors run. Returns 75 on timeout (EX_TEMPFAIL).
 dd_wait_slot() {
   local waited=0
