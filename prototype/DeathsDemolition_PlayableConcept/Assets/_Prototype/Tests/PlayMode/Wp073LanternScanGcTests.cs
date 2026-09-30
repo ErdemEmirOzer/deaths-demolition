@@ -5,6 +5,8 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
+using UnityEngine.TestTools.Constraints;
+using Is = NUnit.Framework.Is;
 
 namespace DD.Prototype.Tests.PlayMode
 {
