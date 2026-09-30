@@ -7326,39 +7326,39 @@
    "hands_in_weapon_frame": {
     "LeftHand": {
      "model_blender_pos": [
-      0.0359,
-      -0.2248,
-      -0.0259
+      0.0428,
+      -0.1282,
+      -0.0131
      ],
      "unity_pos": [
-      -0.0359,
-      -0.0259,
-      0.2248
+      -0.0428,
+      -0.0131,
+      0.1282
      ],
      "unity_rot_of_bone_axes_xyzw": [
-      -0.2357,
-      -0.8946,
-      0.3689,
-      0.0897
+      0.0179,
+      -0.9332,
+      0.0469,
+      0.3557
      ],
      "note": "bone axes expressed in the Unity weapon frame; the Unity bone's own axis convention (FBX import) may add a constant — verify against the imported rig"
     },
     "socket_weapon_r": {
      "model_blender_pos": [
-      0.0,
+      -0.0,
       0.025,
       -0.013
      ],
      "unity_pos": [
-      -0.0,
+      0.0,
       -0.013,
       -0.025
      ],
      "unity_rot_of_bone_axes_xyzw": [
-      0.4518,
-      0.1691,
-      0.2769,
-      0.831
+      0.5299,
+      0.0,
+      -0.0,
+      0.848
      ],
      "note": "bone axes expressed in the Unity weapon frame; the Unity bone's own axis convention (FBX import) may add a constant — verify against the imported rig"
     }
@@ -8281,20 +8281,20 @@
    "hands_in_weapon_frame": {
     "LeftHand": {
      "model_blender_pos": [
-      0.0359,
-      -0.2998,
-      -0.0299
+      0.0562,
+      -0.1641,
+      -0.0992
      ],
      "unity_pos": [
-      -0.0359,
-      -0.0299,
-      0.2998
+      -0.0562,
+      -0.0992,
+      0.1641
      ],
      "unity_rot_of_bone_axes_xyzw": [
-      -0.2357,
-      -0.8946,
-      0.3689,
-      0.0897
+      -0.5726,
+      -0.8177,
+      -0.0487,
+      0.0341
      ],
      "note": "bone axes expressed in the Unity weapon frame; the Unity bone's own axis convention (FBX import) may add a constant — verify against the imported rig"
     },
@@ -9338,13 +9338,13 @@
     "LeftHand": {
      "model_blender_pos": [
       0.0359,
-      -0.2408,
-      -0.0289
+      -0.1408,
+      -0.0359
      ],
      "unity_pos": [
       -0.0359,
-      -0.0289,
-      0.2408
+      -0.0359,
+      0.1408
      ],
      "unity_rot_of_bone_axes_xyzw": [
       -0.2357,
@@ -9366,10 +9366,10 @@
       -0.055
      ],
      "unity_rot_of_bone_axes_xyzw": [
-      0.4518,
-      0.1691,
-      0.2769,
-      0.831
+      0.5299,
+      -0.0,
+      0.0,
+      0.848
      ],
      "note": "bone axes expressed in the Unity weapon frame; the Unity bone's own axis convention (FBX import) may add a constant — verify against the imported rig"
     }
@@ -14256,6 +14256,2549 @@
     "W0_scene_fps": 30.0
    },
    "result": "PASS"
+  },
+  {
+   "clip": "AP022_fp_smg_2_ads_idle",
+   "fbx": "AP022_fp_smg_2_ads_idle_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 61,
+   "fps": 30,
+   "seconds": 2.0,
+   "loop": true,
+   "events": [
+    {
+     "name": "breath",
+     "frame": 0
+    }
+   ],
+   "layer": "fp_base",
+   "mask": "FP viewmodel (arms + fingers + ik_*; fp_camera constant)",
+   "additive": false,
+   "additive_reference": null,
+   "class": "smg",
+   "weapon": "smg_2",
+   "shared_by": [
+    "smg_2"
+   ],
+   "action": "ads_idle",
+   "maps_to": "WP-071 clip list §3 #33",
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "validation": {
+    "W1_grip_mm": [
+     0.001,
+     0.0
+    ],
+    "W2_left_mm": 0.0,
+    "W3_wrist_max": {
+     "Right": [
+      19.7,
+      23.1,
+      18.0
+     ],
+     "Left": [
+      19.8,
+      31.2,
+      12.0
+     ]
+    },
+    "W4_contract": "ok",
+    "W7_head_at": [
+     "Right",
+     18
+    ],
+    "W5_loop": 0.0,
+    "W6_max_deg_per_f": 4.3,
+    "W6_at": [
+     "LeftUpperArm",
+     1
+    ],
+    "W6_grip_m_per_f": 0.0,
+    "W7_hand_pen_mm": 0.0,
+    "W7_head_clear_m": 0.286,
+    "W8_bolt_end": [
+     -0.0315,
+     0.069,
+     0.038
+    ],
+    "W0_scene_fps": 30.0,
+    "W11_fp_camera_still": [
+     0.0,
+     0.0
+    ],
+    "W11_vs_first_clip": [
+     0.0,
+     0.0
+    ]
+   },
+   "result": "PASS",
+   "tp_twin": "AP022_tp_smg_ads_idle",
+   "fp_camera": "viewmodel anchor: still in every FP clip and identical across all of them (W11 0.000 mm / 0.000 deg); weapon keyed in its space"
+  },
+  {
+   "clip": "AP022_fp_smg_2_ads_in",
+   "fbx": "AP022_fp_smg_2_ads_in_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 6,
+   "fps": 30,
+   "seconds": 0.167,
+   "loop": false,
+   "events": [
+    {
+     "name": "ads_ready",
+     "frame": 5
+    }
+   ],
+   "layer": "fp_base",
+   "mask": "FP viewmodel (arms + fingers + ik_*; fp_camera constant)",
+   "additive": false,
+   "additive_reference": null,
+   "class": "smg",
+   "weapon": "smg_2",
+   "shared_by": [
+    "smg_2"
+   ],
+   "action": "ads_in",
+   "maps_to": "WP-071 clip list §3 #33",
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "validation": {
+    "W1_grip_mm": [
+     0.0,
+     0.0
+    ],
+    "W2_left_mm": 0.0,
+    "W3_wrist_max": {
+     "Right": [
+      19.0,
+      35.6,
+      18.0
+     ],
+     "Left": [
+      40.9,
+      30.7,
+      14.9
+     ]
+    },
+    "W4_contract": "ok",
+    "W7_head_at": [
+     "Right",
+     2
+    ],
+    "W5_loop": null,
+    "W6_max_deg_per_f": 14.2,
+    "W6_at": [
+     "RightUpperArm",
+     3
+    ],
+    "W6_grip_m_per_f": 0.048,
+    "W7_hand_pen_mm": 0.0,
+    "W7_head_clear_m": 0.28,
+    "W8_bolt_end": [
+     -0.0315,
+     0.069,
+     0.038
+    ],
+    "W10_start_deg": 0.55,
+    "W0_scene_fps": 30.0,
+    "W11_fp_camera_still": [
+     0.0,
+     0.0
+    ],
+    "W11_vs_first_clip": [
+     0.0,
+     0.0
+    ]
+   },
+   "result": "PASS",
+   "tp_twin": "AP022_tp_smg_ads_in",
+   "fp_camera": "viewmodel anchor: still in every FP clip and identical across all of them (W11 0.000 mm / 0.000 deg); weapon keyed in its space"
+  },
+  {
+   "clip": "AP022_fp_smg_2_ads_out",
+   "fbx": "AP022_fp_smg_2_ads_out_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 5,
+   "fps": 30,
+   "seconds": 0.133,
+   "loop": false,
+   "events": [],
+   "layer": "fp_base",
+   "mask": "FP viewmodel (arms + fingers + ik_*; fp_camera constant)",
+   "additive": false,
+   "additive_reference": null,
+   "class": "smg",
+   "weapon": "smg_2",
+   "shared_by": [
+    "smg_2"
+   ],
+   "action": "ads_out",
+   "maps_to": "WP-071 clip list §3 #33",
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "validation": {
+    "W1_grip_mm": [
+     0.0,
+     0.0
+    ],
+    "W2_left_mm": 0.0,
+    "W3_wrist_max": {
+     "Right": [
+      19.0,
+      35.7,
+      18.0
+     ],
+     "Left": [
+      40.9,
+      30.7,
+      14.9
+     ]
+    },
+    "W4_contract": "ok",
+    "W7_head_at": [
+     "Right",
+     2
+    ],
+    "W5_loop": null,
+    "W6_max_deg_per_f": 16.9,
+    "W6_at": [
+     "RightUpperArm",
+     3
+    ],
+    "W6_grip_m_per_f": 0.056,
+    "W7_hand_pen_mm": 0.0,
+    "W7_head_clear_m": 0.278,
+    "W8_bolt_end": [
+     -0.0315,
+     0.069,
+     0.038
+    ],
+    "W10_end_deg": 0.55,
+    "W0_scene_fps": 30.0,
+    "W11_fp_camera_still": [
+     0.0,
+     0.0
+    ],
+    "W11_vs_first_clip": [
+     0.0,
+     0.0
+    ]
+   },
+   "result": "PASS",
+   "tp_twin": "AP022_tp_smg_ads_out",
+   "fp_camera": "viewmodel anchor: still in every FP clip and identical across all of them (W11 0.000 mm / 0.000 deg); weapon keyed in its space"
+  },
+  {
+   "clip": "AP022_fp_smg_2_fire",
+   "fbx": "AP022_fp_smg_2_fire_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 8,
+   "fps": 30,
+   "seconds": 0.233,
+   "loop": false,
+   "events": [
+    {
+     "name": "fire",
+     "frame": 0
+    },
+    {
+     "name": "eject",
+     "frame": 1
+    }
+   ],
+   "layer": "fp_additive",
+   "mask": "FP viewmodel (arms + fingers + ik_*; fp_camera constant) (additive)",
+   "additive": true,
+   "additive_reference": "frame 0 of this clip (= the class idle_aim pose, no breath)",
+   "class": "smg",
+   "weapon": "smg_2",
+   "shared_by": [
+    "smg_2"
+   ],
+   "action": "fire",
+   "maps_to": "WP-071 clip list §3 #30",
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "validation": {
+    "W1_grip_mm": [
+     0.0,
+     0.0
+    ],
+    "W2_left_mm": 0.0,
+    "W3_wrist_max": {
+     "Right": [
+      7.7,
+      35.5,
+      19.6
+     ],
+     "Left": [
+      41.3,
+      13.9,
+      10.4
+     ]
+    },
+    "W4_contract": "ok",
+    "W7_head_at": [
+     "Right",
+     1
+    ],
+    "W5_loop": null,
+    "W6_max_deg_per_f": 3.8,
+    "W6_at": [
+     "LeftHand",
+     1
+    ],
+    "W6_grip_m_per_f": 0.01,
+    "W7_hand_pen_mm": 0.0,
+    "W7_head_clear_m": 0.291,
+    "W8_bolt_end": [
+     -0.0315,
+     0.069,
+     0.038
+    ],
+    "W9_peak_deg": 3.82,
+    "W9_end_vs_f0_deg": 0.0,
+    "W9_f0_vs_aim_deg": 0.55,
+    "W0_scene_fps": 30.0,
+    "W11_fp_camera_still": [
+     0.0,
+     0.0
+    ],
+    "W11_vs_first_clip": [
+     0.0,
+     0.0
+    ]
+   },
+   "result": "PASS",
+   "prop": {
+    "clip": "AP022_prop_fp_smg_2_fire",
+    "fbx": "AP022_prop_fp_smg_2_fire_v008.fbx",
+    "root": "AP021_smg_2",
+    "nodes": [
+     "part_bolt",
+     "part_mag",
+     "part_stock_fold",
+     "part_trigger"
+    ]
+   },
+   "tp_twin": "AP022_tp_smg_2_fire",
+   "fp_camera": "viewmodel anchor: still in every FP clip and identical across all of them (W11 0.000 mm / 0.000 deg); weapon keyed in its space"
+  },
+  {
+   "clip": "AP022_fp_smg_2_idle_aim",
+   "fbx": "AP022_fp_smg_2_idle_aim_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 121,
+   "fps": 30,
+   "seconds": 4.0,
+   "loop": true,
+   "events": [
+    {
+     "name": "breath",
+     "frame": 0
+    }
+   ],
+   "layer": "fp_base",
+   "mask": "FP viewmodel (arms + fingers + ik_*; fp_camera constant)",
+   "additive": false,
+   "additive_reference": null,
+   "class": "smg",
+   "weapon": "smg_2",
+   "shared_by": [
+    "smg_2"
+   ],
+   "action": "idle_aim",
+   "maps_to": "WP-071 clip list §3 #29",
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "validation": {
+    "W1_grip_mm": [
+     0.0,
+     0.0
+    ],
+    "W2_left_mm": 0.0,
+    "W3_wrist_max": {
+     "Right": [
+      8.5,
+      34.5,
+      19.9
+     ],
+     "Left": [
+      41.1,
+      13.8,
+      9.8
+     ]
+    },
+    "W4_contract": "ok",
+    "W7_head_at": [
+     "Right",
+     36
+    ],
+    "W5_loop": 0.0,
+    "W6_max_deg_per_f": 3.0,
+    "W6_at": [
+     "LeftHand",
+     1
+    ],
+    "W6_grip_m_per_f": 0.0,
+    "W7_hand_pen_mm": 0.0,
+    "W7_head_clear_m": 0.294,
+    "W8_bolt_end": [
+     -0.0315,
+     0.069,
+     0.038
+    ],
+    "W0_scene_fps": 30.0,
+    "W13_fpview": {
+     "grip_rig": [
+      0.1573,
+      -0.0621,
+      0.3791
+     ],
+     "target": [
+      0.1557,
+      -0.0632,
+      0.3791
+     ],
+     "err_mm": 1.9,
+     "yaw_pitch_roll": [
+      -1.16,
+      -2.79,
+      14.91
+     ],
+     "err_deg": 0.17
+    },
+    "W11_fp_camera_still": [
+     0.0,
+     0.0
+    ],
+    "W11_vs_first_clip": [
+     0.0,
+     0.0
+    ]
+   },
+   "result": "PASS",
+   "hands_in_weapon_frame": {
+    "LeftHand": {
+     "model_blender_pos": [
+      0.0254,
+      -0.1886,
+      -0.0643
+     ],
+     "unity_pos": [
+      -0.0254,
+      -0.0643,
+      0.1886
+     ],
+     "unity_rot_of_bone_axes_xyzw": [
+      0.6229,
+      0.7692,
+      -0.1107,
+      0.0897
+     ],
+     "note": "bone axes expressed in the Unity weapon frame; the Unity bone's own axis convention (FBX import) may add a constant — verify against the imported rig"
+    },
+    "socket_weapon_r": {
+     "model_blender_pos": [
+      0.0,
+      0.054,
+      -0.05
+     ],
+     "unity_pos": [
+      -0.0,
+      -0.05,
+      -0.054
+     ],
+     "unity_rot_of_bone_axes_xyzw": [
+      0.4763,
+      0.0886,
+      0.2323,
+      0.8434
+     ],
+     "note": "bone axes expressed in the Unity weapon frame; the Unity bone's own axis convention (FBX import) may add a constant — verify against the imported rig"
+    }
+   },
+   "tp_twin": "AP022_tp_smg_idle_aim",
+   "fp_camera": "viewmodel anchor: still in every FP clip and identical across all of them (W11 0.000 mm / 0.000 deg); weapon keyed in its space"
+  },
+  {
+   "clip": "AP022_fp_smg_2_reload_empty",
+   "fbx": "AP022_fp_smg_2_reload_empty_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 67,
+   "fps": 30,
+   "seconds": 2.2,
+   "loop": false,
+   "events": [
+    {
+     "name": "lh_release",
+     "frame": 4
+    },
+    {
+     "name": "mag_out",
+     "frame": 15
+    },
+    {
+     "name": "mag_in",
+     "frame": 36
+    },
+    {
+     "name": "reload_commit",
+     "frame": 36
+    },
+    {
+     "name": "charge",
+     "frame": 50
+    },
+    {
+     "name": "reload_cancel_point",
+     "frame": 53
+    },
+    {
+     "name": "lh_grab",
+     "frame": 58
+    }
+   ],
+   "layer": "fp_base",
+   "mask": "FP viewmodel (arms + fingers + ik_*; fp_camera constant)",
+   "additive": false,
+   "additive_reference": null,
+   "class": "smg",
+   "weapon": "smg_2",
+   "shared_by": [
+    "smg_2"
+   ],
+   "action": "reload_empty",
+   "maps_to": "WP-071 clip list §3 #31",
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "validation": {
+    "W1_grip_mm": [
+     0.0,
+     0.0
+    ],
+    "W2_left_mm": 0.0,
+    "W3_wrist_max": {
+     "Right": [
+      26.9,
+      34.6,
+      29.0
+     ],
+     "Left": [
+      58.4,
+      34.6,
+      60.0
+     ]
+    },
+    "W4_contract": "ok",
+    "W7_head_at": [
+     "Left",
+     52
+    ],
+    "W5_loop": null,
+    "W6_max_deg_per_f": 38.6,
+    "W6_at": [
+     "LeftHand",
+     21
+    ],
+    "W6_grip_m_per_f": 0.028,
+    "W7_hand_pen_mm": 0.0,
+    "W7_head_clear_m": 0.269,
+    "W8_mag_at_mag_in": [
+     0.0305,
+     0.0539,
+     0.018
+    ],
+    "W8_bolt_end": [
+     -0.0315,
+     0.069,
+     0.038
+    ],
+    "W10_start_deg": 0.55,
+    "W10_end_deg": 0.55,
+    "W0_scene_fps": 30.0,
+    "W12_tip_above_top_m": [
+     -0.008,
+     50
+    ],
+    "W11_fp_camera_still": [
+     0.0,
+     0.0
+    ],
+    "W11_vs_first_clip": [
+     0.0,
+     0.0
+    ]
+   },
+   "result": "PASS",
+   "prop": {
+    "clip": "AP022_prop_fp_smg_2_reload_empty",
+    "fbx": "AP022_prop_fp_smg_2_reload_empty_v008.fbx",
+    "root": "AP021_smg_2",
+    "nodes": [
+     "part_bolt",
+     "part_mag",
+     "part_stock_fold",
+     "part_trigger"
+    ]
+   },
+   "tp_twin": "AP022_tp_smg_2_reload_empty",
+   "fp_camera": "viewmodel anchor: still in every FP clip and identical across all of them (W11 0.000 mm / 0.000 deg); weapon keyed in its space"
+  },
+  {
+   "clip": "AP022_fp_smg_2_reload_tac",
+   "fbx": "AP022_fp_smg_2_reload_tac_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 52,
+   "fps": 30,
+   "seconds": 1.7,
+   "loop": false,
+   "events": [
+    {
+     "name": "lh_release",
+     "frame": 3
+    },
+    {
+     "name": "mag_out",
+     "frame": 12
+    },
+    {
+     "name": "mag_in",
+     "frame": 31
+    },
+    {
+     "name": "reload_commit",
+     "frame": 31
+    },
+    {
+     "name": "reload_cancel_point",
+     "frame": 38
+    },
+    {
+     "name": "lh_grab",
+     "frame": 45
+    }
+   ],
+   "layer": "fp_base",
+   "mask": "FP viewmodel (arms + fingers + ik_*; fp_camera constant)",
+   "additive": false,
+   "additive_reference": null,
+   "class": "smg",
+   "weapon": "smg_2",
+   "shared_by": [
+    "smg_2"
+   ],
+   "action": "reload_tac",
+   "maps_to": "WP-071 clip list §3 #31",
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "validation": {
+    "W1_grip_mm": [
+     0.0,
+     0.0
+    ],
+    "W2_left_mm": 0.0,
+    "W3_wrist_max": {
+     "Right": [
+      26.9,
+      34.5,
+      29.0
+     ],
+     "Left": [
+      41.0,
+      25.8,
+      50.5
+     ]
+    },
+    "W4_contract": "ok",
+    "W7_head_at": [
+     "Right",
+     45
+    ],
+    "W5_loop": null,
+    "W6_max_deg_per_f": 18.5,
+    "W6_at": [
+     "LeftHand",
+     26
+    ],
+    "W6_grip_m_per_f": 0.029,
+    "W7_hand_pen_mm": 0.0,
+    "W7_head_clear_m": 0.293,
+    "W8_mag_at_mag_in": [
+     0.0305,
+     0.0539,
+     0.018
+    ],
+    "W8_bolt_end": [
+     -0.0315,
+     0.069,
+     0.038
+    ],
+    "W10_start_deg": 0.55,
+    "W10_end_deg": 0.55,
+    "W0_scene_fps": 30.0,
+    "W11_fp_camera_still": [
+     0.0,
+     0.0
+    ],
+    "W11_vs_first_clip": [
+     0.0,
+     0.0
+    ]
+   },
+   "result": "PASS",
+   "prop": {
+    "clip": "AP022_prop_fp_smg_2_reload_tac",
+    "fbx": "AP022_prop_fp_smg_2_reload_tac_v008.fbx",
+    "root": "AP021_smg_2",
+    "nodes": [
+     "part_bolt",
+     "part_mag",
+     "part_stock_fold",
+     "part_trigger"
+    ]
+   },
+   "tp_twin": "AP022_tp_smg_2_reload_tac",
+   "fp_camera": "viewmodel anchor: still in every FP clip and identical across all of them (W11 0.000 mm / 0.000 deg); weapon keyed in its space"
+  },
+  {
+   "clip": "AP022_fp_smg_2_switch_in",
+   "fbx": "AP022_fp_smg_2_switch_in_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 12,
+   "fps": 30,
+   "seconds": 0.367,
+   "loop": false,
+   "events": [
+    {
+     "name": "lh_grab",
+     "frame": 7
+    },
+    {
+     "name": "switch_ready",
+     "frame": 10
+    }
+   ],
+   "layer": "fp_base",
+   "mask": "FP viewmodel (arms + fingers + ik_*; fp_camera constant)",
+   "additive": false,
+   "additive_reference": null,
+   "class": "smg",
+   "weapon": "smg_2",
+   "shared_by": [
+    "smg_2"
+   ],
+   "action": "switch_in",
+   "maps_to": "WP-071 clip list §3 #32",
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "validation": {
+    "W1_grip_mm": [
+     0.0,
+     0.0
+    ],
+    "W2_left_mm": 0.0,
+    "W3_wrist_max": {
+     "Right": [
+      24.2,
+      35.5,
+      35.5
+     ],
+     "Left": [
+      52.4,
+      19.4,
+      28.8
+     ]
+    },
+    "W4_contract": "ok",
+    "W7_head_at": [
+     "Right",
+     8
+    ],
+    "W5_loop": null,
+    "W6_max_deg_per_f": 37.9,
+    "W6_at": [
+     "LeftLowerArm",
+     4
+    ],
+    "W6_grip_m_per_f": 0.125,
+    "W7_hand_pen_mm": 0.0,
+    "W7_head_clear_m": 0.287,
+    "W8_bolt_end": [
+     -0.0315,
+     0.069,
+     0.038
+    ],
+    "W10_end_deg": 0.55,
+    "W0_scene_fps": 30.0,
+    "W11_fp_camera_still": [
+     0.0,
+     0.0
+    ],
+    "W11_vs_first_clip": [
+     0.0,
+     0.0
+    ]
+   },
+   "result": "PASS",
+   "tp_twin": "AP022_tp_smg_switch_in",
+   "fp_camera": "viewmodel anchor: still in every FP clip and identical across all of them (W11 0.000 mm / 0.000 deg); weapon keyed in its space"
+  },
+  {
+   "clip": "AP022_fp_smg_2_switch_out",
+   "fbx": "AP022_fp_smg_2_switch_out_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 8,
+   "fps": 30,
+   "seconds": 0.233,
+   "loop": false,
+   "events": [
+    {
+     "name": "lh_release",
+     "frame": 1
+    },
+    {
+     "name": "switch_away",
+     "frame": 6
+    }
+   ],
+   "layer": "fp_base",
+   "mask": "FP viewmodel (arms + fingers + ik_*; fp_camera constant)",
+   "additive": false,
+   "additive_reference": null,
+   "class": "smg",
+   "weapon": "smg_2",
+   "shared_by": [
+    "smg_2"
+   ],
+   "action": "switch_out",
+   "maps_to": "WP-071 clip list §3 #32",
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "validation": {
+    "W1_grip_mm": [
+     0.0,
+     0.0
+    ],
+    "W2_left_mm": 0.0,
+    "W3_wrist_max": {
+     "Right": [
+      24.2,
+      34.3,
+      35.5
+     ],
+     "Left": [
+      40.9,
+      19.8,
+      28.8
+     ]
+    },
+    "W4_contract": "ok",
+    "W7_head_at": [
+     "Right",
+     0
+    ],
+    "W5_loop": null,
+    "W6_max_deg_per_f": 36.4,
+    "W6_at": [
+     "LeftUpperArm",
+     2
+    ],
+    "W6_grip_m_per_f": 0.151,
+    "W7_hand_pen_mm": 0.0,
+    "W7_head_clear_m": 0.296,
+    "W8_bolt_end": [
+     -0.0315,
+     0.069,
+     0.038
+    ],
+    "W10_start_deg": 0.55,
+    "W0_scene_fps": 30.0,
+    "W11_fp_camera_still": [
+     0.0,
+     0.0
+    ],
+    "W11_vs_first_clip": [
+     0.0,
+     0.0
+    ]
+   },
+   "result": "PASS",
+   "tp_twin": "AP022_tp_smg_switch_out",
+   "fp_camera": "viewmodel anchor: still in every FP clip and identical across all of them (W11 0.000 mm / 0.000 deg); weapon keyed in its space"
+  },
+  {
+   "clip": "AP022_tp_lmg_2_reload_empty",
+   "fbx": "AP022_tp_lmg_2_reload_empty_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 175,
+   "fps": 30,
+   "seconds": 5.8,
+   "loop": false,
+   "events": [
+    {
+     "name": "lh_release",
+     "frame": 9
+    },
+    {
+     "name": "mag_out",
+     "frame": 52
+    },
+    {
+     "name": "mag_in",
+     "frame": 115
+    },
+    {
+     "name": "reload_commit",
+     "frame": 115
+    },
+    {
+     "name": "charge",
+     "frame": 157
+    },
+    {
+     "name": "reload_cancel_point",
+     "frame": 160
+    },
+    {
+     "name": "lh_grab",
+     "frame": 168
+    }
+   ],
+   "layer": "override_upper",
+   "mask": "UpperBody",
+   "additive": false,
+   "additive_reference": null,
+   "class": "lmg",
+   "weapon": "lmg_2",
+   "shared_by": [
+    "lmg_2"
+   ],
+   "action": "reload_empty",
+   "maps_to": "WP-071 clip list §2 #16",
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "validation": {
+    "W1_grip_mm": [
+     0.0,
+     0.0
+    ],
+    "W2_left_mm": 0.0,
+    "W3_wrist_max": {
+     "Right": [
+      28.8,
+      37.1,
+      17.7
+     ],
+     "Left": [
+      51.8,
+      19.4,
+      67.2
+     ]
+    },
+    "W4_contract": "ok",
+    "W7_head_at": [
+     "Left",
+     56
+    ],
+    "W5_loop": null,
+    "W6_max_deg_per_f": 24.0,
+    "W6_at": [
+     "LeftHand",
+     164
+    ],
+    "W6_grip_m_per_f": 0.031,
+    "W7_hand_pen_mm": 0.0,
+    "W7_head_clear_m": 0.308,
+    "W8_mag_at_mag_in": [
+     0.0,
+     0.148,
+     0.179
+    ],
+    "W8_bolt_end": [
+     -0.045,
+     0.095,
+     0.154
+    ],
+    "W10_start_deg": 0.52,
+    "W10_end_deg": 0.52,
+    "W0_scene_fps": 30.0,
+    "W12_tip_above_top_m": [
+     -0.017,
+     154
+    ]
+   },
+   "result": "PASS",
+   "prop": {
+    "clip": "AP022_prop_lmg_2_reload_empty",
+    "fbx": "AP022_prop_lmg_2_reload_empty_v008.fbx",
+    "root": "AP021_lmg_2",
+    "nodes": [
+     "part_bolt",
+     "part_mag",
+     "part_trigger"
+    ]
+   }
+  },
+  {
+   "clip": "AP022_tp_lmg_2_reload_tac",
+   "fbx": "AP022_tp_lmg_2_reload_tac_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 151,
+   "fps": 30,
+   "seconds": 5.0,
+   "loop": false,
+   "events": [
+    {
+     "name": "lh_release",
+     "frame": 8
+    },
+    {
+     "name": "mag_out",
+     "frame": 45
+    },
+    {
+     "name": "mag_in",
+     "frame": 99
+    },
+    {
+     "name": "reload_commit",
+     "frame": 99
+    },
+    {
+     "name": "reload_cancel_point",
+     "frame": 123
+    },
+    {
+     "name": "lh_grab",
+     "frame": 135
+    }
+   ],
+   "layer": "override_upper",
+   "mask": "UpperBody",
+   "additive": false,
+   "additive_reference": null,
+   "class": "lmg",
+   "weapon": "lmg_2",
+   "shared_by": [
+    "lmg_2"
+   ],
+   "action": "reload_tac",
+   "maps_to": "WP-071 clip list §2 #15",
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "validation": {
+    "W1_grip_mm": [
+     0.0,
+     0.0
+    ],
+    "W2_left_mm": 0.0,
+    "W3_wrist_max": {
+     "Right": [
+      28.3,
+      37.1,
+      17.7
+     ],
+     "Left": [
+      39.7,
+      19.0,
+      67.2
+     ]
+    },
+    "W4_contract": "ok",
+    "W7_head_at": [
+     "Left",
+     48
+    ],
+    "W5_loop": null,
+    "W6_max_deg_per_f": 13.9,
+    "W6_at": [
+     "LeftUpperArm",
+     99
+    ],
+    "W6_grip_m_per_f": 0.037,
+    "W7_hand_pen_mm": 0.0,
+    "W7_head_clear_m": 0.308,
+    "W8_mag_at_mag_in": [
+     0.0,
+     0.148,
+     0.179
+    ],
+    "W8_bolt_end": [
+     -0.045,
+     0.095,
+     0.154
+    ],
+    "W10_start_deg": 0.52,
+    "W10_end_deg": 0.52,
+    "W0_scene_fps": 30.0
+   },
+   "result": "PASS",
+   "prop": {
+    "clip": "AP022_prop_lmg_2_reload_tac",
+    "fbx": "AP022_prop_lmg_2_reload_tac_v008.fbx",
+    "root": "AP021_lmg_2",
+    "nodes": [
+     "part_bolt",
+     "part_mag",
+     "part_trigger"
+    ]
+   }
+  },
+  {
+   "clip": "AP022_fp_sw_arc_fire",
+   "fbx": "AP022_fp_sw_arc_fire_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 21,
+   "fps": 30,
+   "seconds": 0.667,
+   "loop": false,
+   "events": [
+    {
+     "name": "fire",
+     "frame": 0
+    }
+   ],
+   "layer": "fp_additive",
+   "mask": "FP viewmodel (arms + fingers + ik_*; fp_camera constant) (additive)",
+   "additive": true,
+   "additive_reference": "frame 0 of this clip (= the class idle_aim pose, no breath)",
+   "class": "sw",
+   "weapon": "sw_arc",
+   "shared_by": [
+    "sw_arc"
+   ],
+   "action": "fire",
+   "maps_to": "WP-071 clip list §3 #30",
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "validation": {
+    "W1_grip_mm": [
+     0.0,
+     0.0
+    ],
+    "W2_left_mm": 0.0,
+    "W3_wrist_max": {
+     "Right": [
+      5.9,
+      3.3,
+      3.0
+     ],
+     "Left": [
+      5.2,
+      31.2,
+      50.9
+     ]
+    },
+    "W4_contract": "ok",
+    "W7_head_at": [
+     "Right",
+     2
+    ],
+    "W5_loop": null,
+    "W6_max_deg_per_f": 4.5,
+    "W6_at": [
+     "LeftLowerArm",
+     1
+    ],
+    "W6_grip_m_per_f": 0.017,
+    "W7_hand_pen_mm": 0.0,
+    "W7_head_clear_m": 0.362,
+    "W9_peak_deg": 4.59,
+    "W9_end_vs_f0_deg": 0.0,
+    "W9_f0_vs_aim_deg": 0.53,
+    "W0_scene_fps": 30.0,
+    "W11_fp_camera_still": [
+     0.0,
+     0.0
+    ],
+    "W11_vs_first_clip": [
+     0.0,
+     0.0
+    ]
+   },
+   "result": "PASS",
+   "prop": {
+    "clip": "AP022_prop_fp_sw_arc_fire",
+    "fbx": "AP022_prop_fp_sw_arc_fire_v008.fbx",
+    "root": "AP021_sw_arc",
+    "nodes": [
+     "part_cell_1",
+     "part_cell_2",
+     "part_cell_3",
+     "part_cover",
+     "part_trigger"
+    ]
+   },
+   "tp_twin": "AP022_tp_sw_arc_fire",
+   "fp_camera": "viewmodel anchor: still in every FP clip and identical across all of them (W11 0.000 mm / 0.000 deg); weapon keyed in its space"
+  },
+  {
+   "clip": "AP022_fp_sw_arc_idle_aim",
+   "fbx": "AP022_fp_sw_arc_idle_aim_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 121,
+   "fps": 30,
+   "seconds": 4.0,
+   "loop": true,
+   "events": [
+    {
+     "name": "breath",
+     "frame": 0
+    }
+   ],
+   "layer": "fp_base",
+   "mask": "FP viewmodel (arms + fingers + ik_*; fp_camera constant)",
+   "additive": false,
+   "additive_reference": null,
+   "class": "sw",
+   "weapon": "sw_arc",
+   "shared_by": [
+    "sw_arc"
+   ],
+   "action": "idle_aim",
+   "maps_to": "WP-071 clip list §3 #29",
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "validation": {
+    "W1_grip_mm": [
+     0.0,
+     0.0
+    ],
+    "W2_left_mm": 0.0,
+    "W3_wrist_max": {
+     "Right": [
+      6.1,
+      1.6,
+      3.3
+     ],
+     "Left": [
+      5.2,
+      28.7,
+      51.1
+     ]
+    },
+    "W4_contract": "ok",
+    "W7_head_at": [
+     "Right",
+     30
+    ],
+    "W5_loop": 0.0,
+    "W6_max_deg_per_f": 2.0,
+    "W6_at": [
+     "LeftHand",
+     10
+    ],
+    "W6_grip_m_per_f": 0.0,
+    "W7_hand_pen_mm": 0.0,
+    "W7_head_clear_m": 0.373,
+    "W0_scene_fps": 30.0,
+    "W13_fpview": {
+     "grip_rig": [
+      0.3019,
+      -0.1592,
+      0.6132
+     ],
+     "target": [
+      0.3004,
+      -0.1603,
+      0.6132
+     ],
+     "err_mm": 1.8,
+     "yaw_pitch_roll": [
+      -2.06,
+      0.73,
+      -0.18
+     ],
+     "err_deg": 0.18
+    },
+    "W11_fp_camera_still": [
+     0.0,
+     0.0
+    ],
+    "W11_vs_first_clip": [
+     0.0,
+     0.0
+    ]
+   },
+   "result": "PASS",
+   "hands_in_weapon_frame": {
+    "LeftHand": {
+     "model_blender_pos": [
+      0.0359,
+      -0.1498,
+      -0.0589
+     ],
+     "unity_pos": [
+      -0.0359,
+      -0.0589,
+      0.1498
+     ],
+     "unity_rot_of_bone_axes_xyzw": [
+      -0.2357,
+      -0.8946,
+      0.3689,
+      0.0897
+     ],
+     "note": "bone axes expressed in the Unity weapon frame; the Unity bone's own axis convention (FBX import) may add a constant — verify against the imported rig"
+    },
+    "socket_weapon_r": {
+     "model_blender_pos": [
+      0.0,
+      0.005,
+      -0.035
+     ],
+     "unity_pos": [
+      -0.0,
+      -0.035,
+      -0.005
+     ],
+     "unity_rot_of_bone_axes_xyzw": [
+      0.4518,
+      0.1691,
+      0.2769,
+      0.831
+     ],
+     "note": "bone axes expressed in the Unity weapon frame; the Unity bone's own axis convention (FBX import) may add a constant — verify against the imported rig"
+    }
+   },
+   "tp_twin": "AP022_tp_sw_idle_aim",
+   "fp_camera": "viewmodel anchor: still in every FP clip and identical across all of them (W11 0.000 mm / 0.000 deg); weapon keyed in its space"
+  },
+  {
+   "clip": "AP022_fp_sw_arc_reload_empty",
+   "fbx": "AP022_fp_sw_arc_reload_empty_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 109,
+   "fps": 30,
+   "seconds": 3.6,
+   "loop": false,
+   "events": [
+    {
+     "name": "lh_release",
+     "frame": 5
+    },
+    {
+     "name": "cover_open",
+     "frame": 22
+    },
+    {
+     "name": "cell_out",
+     "frame": 35
+    },
+    {
+     "name": "cell_in",
+     "frame": 71
+    },
+    {
+     "name": "reload_commit",
+     "frame": 71
+    },
+    {
+     "name": "cover_close",
+     "frame": 82
+    },
+    {
+     "name": "reload_cancel_point",
+     "frame": 84
+    },
+    {
+     "name": "charge",
+     "frame": 91
+    },
+    {
+     "name": "lh_grab",
+     "frame": 95
+    }
+   ],
+   "layer": "fp_base",
+   "mask": "FP viewmodel (arms + fingers + ik_*; fp_camera constant)",
+   "additive": false,
+   "additive_reference": null,
+   "class": "sw",
+   "weapon": "sw_arc",
+   "shared_by": [
+    "sw_arc"
+   ],
+   "action": "reload_empty",
+   "maps_to": "WP-071 clip list §3 #31",
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "validation": {
+    "W1_grip_mm": [
+     0.0,
+     0.0
+    ],
+    "W2_left_mm": 0.0,
+    "W3_wrist_max": {
+     "Right": [
+      28.4,
+      15.4,
+      26.7
+     ],
+     "Left": [
+      30.7,
+      29.1,
+      51.0
+     ]
+    },
+    "W4_contract": "ok",
+    "W7_head_at": [
+     "Left",
+     35
+    ],
+    "W5_loop": null,
+    "W6_max_deg_per_f": 34.1,
+    "W6_at": [
+     "LeftHand",
+     92
+    ],
+    "W6_grip_m_per_f": 0.024,
+    "W7_hand_pen_mm": 0.0,
+    "W7_head_clear_m": 0.244,
+    "W10_start_deg": 0.53,
+    "W10_end_deg": 0.53,
+    "W0_scene_fps": 30.0,
+    "W11_fp_camera_still": [
+     0.0,
+     0.0
+    ],
+    "W11_vs_first_clip": [
+     0.0,
+     0.0
+    ]
+   },
+   "result": "PASS",
+   "prop": {
+    "clip": "AP022_prop_fp_sw_arc_reload_empty",
+    "fbx": "AP022_prop_fp_sw_arc_reload_empty_v008.fbx",
+    "root": "AP021_sw_arc",
+    "nodes": [
+     "part_cell_1",
+     "part_cell_2",
+     "part_cell_3",
+     "part_cover",
+     "part_trigger"
+    ]
+   },
+   "tp_twin": "AP022_tp_sw_arc_reload_empty",
+   "fp_camera": "viewmodel anchor: still in every FP clip and identical across all of them (W11 0.000 mm / 0.000 deg); weapon keyed in its space"
+  },
+  {
+   "clip": "AP022_fp_sw_arc_reload_tac",
+   "fbx": "AP022_fp_sw_arc_reload_tac_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 91,
+   "fps": 30,
+   "seconds": 3.0,
+   "loop": false,
+   "events": [
+    {
+     "name": "lh_release",
+     "frame": 4
+    },
+    {
+     "name": "cover_open",
+     "frame": 18
+    },
+    {
+     "name": "cell_out",
+     "frame": 29
+    },
+    {
+     "name": "cell_in",
+     "frame": 59
+    },
+    {
+     "name": "reload_commit",
+     "frame": 59
+    },
+    {
+     "name": "cover_close",
+     "frame": 68
+    },
+    {
+     "name": "reload_cancel_point",
+     "frame": 70
+    },
+    {
+     "name": "charge",
+     "frame": 76
+    },
+    {
+     "name": "lh_grab",
+     "frame": 79
+    }
+   ],
+   "layer": "fp_base",
+   "mask": "FP viewmodel (arms + fingers + ik_*; fp_camera constant)",
+   "additive": false,
+   "additive_reference": null,
+   "class": "sw",
+   "weapon": "sw_arc",
+   "shared_by": [
+    "sw_arc"
+   ],
+   "action": "reload_tac",
+   "maps_to": "WP-071 clip list §3 #31",
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "validation": {
+    "W1_grip_mm": [
+     0.0,
+     0.0
+    ],
+    "W2_left_mm": 0.0,
+    "W3_wrist_max": {
+     "Right": [
+      28.4,
+      15.4,
+      26.7
+     ],
+     "Left": [
+      30.7,
+      29.1,
+      51.0
+     ]
+    },
+    "W4_contract": "ok",
+    "W7_head_at": [
+     "Left",
+     29
+    ],
+    "W5_loop": null,
+    "W6_max_deg_per_f": 27.5,
+    "W6_at": [
+     "LeftUpperArm",
+     33
+    ],
+    "W6_grip_m_per_f": 0.016,
+    "W7_hand_pen_mm": 0.0,
+    "W7_head_clear_m": 0.244,
+    "W10_start_deg": 0.53,
+    "W10_end_deg": 0.53,
+    "W0_scene_fps": 30.0,
+    "W11_fp_camera_still": [
+     0.0,
+     0.0
+    ],
+    "W11_vs_first_clip": [
+     0.0,
+     0.0
+    ]
+   },
+   "result": "PASS",
+   "prop": {
+    "clip": "AP022_prop_fp_sw_arc_reload_tac",
+    "fbx": "AP022_prop_fp_sw_arc_reload_tac_v008.fbx",
+    "root": "AP021_sw_arc",
+    "nodes": [
+     "part_cell_1",
+     "part_cell_2",
+     "part_cell_3",
+     "part_cover",
+     "part_trigger"
+    ]
+   },
+   "tp_twin": "AP022_tp_sw_arc_reload_tac",
+   "fp_camera": "viewmodel anchor: still in every FP clip and identical across all of them (W11 0.000 mm / 0.000 deg); weapon keyed in its space"
+  },
+  {
+   "clip": "AP022_fp_sw_arc_switch_in",
+   "fbx": "AP022_fp_sw_arc_switch_in_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 16,
+   "fps": 30,
+   "seconds": 0.5,
+   "loop": false,
+   "events": [
+    {
+     "name": "charge",
+     "frame": 8
+    },
+    {
+     "name": "lh_grab",
+     "frame": 10
+    },
+    {
+     "name": "switch_ready",
+     "frame": 14
+    }
+   ],
+   "layer": "fp_base",
+   "mask": "FP viewmodel (arms + fingers + ik_*; fp_camera constant)",
+   "additive": false,
+   "additive_reference": null,
+   "class": "sw",
+   "weapon": "sw_arc",
+   "shared_by": [
+    "sw_arc"
+   ],
+   "action": "switch_in",
+   "maps_to": "WP-071 clip list §3 #32",
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "validation": {
+    "W1_grip_mm": [
+     0.0,
+     0.0
+    ],
+    "W2_left_mm": 0.0,
+    "W3_wrist_max": {
+     "Right": [
+      8.4,
+      7.8,
+      34.7
+     ],
+     "Left": [
+      30.0,
+      30.6,
+      59.6
+     ]
+    },
+    "W4_contract": "ok",
+    "W7_head_at": [
+     "Right",
+     12
+    ],
+    "W5_loop": null,
+    "W6_max_deg_per_f": 39.9,
+    "W6_at": [
+     "LeftLowerArm",
+     8
+    ],
+    "W6_grip_m_per_f": 0.126,
+    "W7_hand_pen_mm": 0.0,
+    "W7_head_clear_m": 0.366,
+    "W10_end_deg": 0.53,
+    "W0_scene_fps": 30.0,
+    "W11_fp_camera_still": [
+     0.0,
+     0.0
+    ],
+    "W11_vs_first_clip": [
+     0.0,
+     0.0
+    ]
+   },
+   "result": "PASS",
+   "tp_twin": "AP022_tp_sw_switch_in",
+   "fp_camera": "viewmodel anchor: still in every FP clip and identical across all of them (W11 0.000 mm / 0.000 deg); weapon keyed in its space"
+  },
+  {
+   "clip": "AP022_fp_sw_arc_switch_out",
+   "fbx": "AP022_fp_sw_arc_switch_out_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 10,
+   "fps": 30,
+   "seconds": 0.3,
+   "loop": false,
+   "events": [
+    {
+     "name": "lh_release",
+     "frame": 1
+    },
+    {
+     "name": "switch_away",
+     "frame": 8
+    }
+   ],
+   "layer": "fp_base",
+   "mask": "FP viewmodel (arms + fingers + ik_*; fp_camera constant)",
+   "additive": false,
+   "additive_reference": null,
+   "class": "sw",
+   "weapon": "sw_arc",
+   "shared_by": [
+    "sw_arc"
+   ],
+   "action": "switch_out",
+   "maps_to": "WP-071 clip list §3 #32",
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "validation": {
+    "W1_grip_mm": [
+     0.0,
+     0.0
+    ],
+    "W2_left_mm": 0.0,
+    "W3_wrist_max": {
+     "Right": [
+      8.4,
+      7.8,
+      34.7
+     ],
+     "Left": [
+      9.3,
+      28.0,
+      50.5
+     ]
+    },
+    "W4_contract": "ok",
+    "W7_head_at": [
+     "Right",
+     0
+    ],
+    "W5_loop": null,
+    "W6_max_deg_per_f": 37.4,
+    "W6_at": [
+     "LeftLowerArm",
+     3
+    ],
+    "W6_grip_m_per_f": 0.12,
+    "W7_hand_pen_mm": 0.0,
+    "W7_head_clear_m": 0.375,
+    "W10_start_deg": 0.53,
+    "W0_scene_fps": 30.0,
+    "W11_fp_camera_still": [
+     0.0,
+     0.0
+    ],
+    "W11_vs_first_clip": [
+     0.0,
+     0.0
+    ]
+   },
+   "result": "PASS",
+   "tp_twin": "AP022_tp_sw_switch_out",
+   "fp_camera": "viewmodel anchor: still in every FP clip and identical across all of them (W11 0.000 mm / 0.000 deg); weapon keyed in its space"
+  },
+  {
+   "clip": "AP022_fp_sw_gel_fire",
+   "fbx": "AP022_fp_sw_gel_fire_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 14,
+   "fps": 30,
+   "seconds": 0.433,
+   "loop": false,
+   "events": [
+    {
+     "name": "fire",
+     "frame": 0
+    }
+   ],
+   "layer": "fp_additive",
+   "mask": "FP viewmodel (arms + fingers + ik_*; fp_camera constant) (additive)",
+   "additive": true,
+   "additive_reference": "frame 0 of this clip (= the class idle_aim pose, no breath)",
+   "class": "sw",
+   "weapon": "sw_gel",
+   "shared_by": [
+    "sw_gel"
+   ],
+   "action": "fire",
+   "maps_to": "WP-071 clip list §3 #30",
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "validation": {
+    "W1_grip_mm": [
+     0.0,
+     0.0
+    ],
+    "W2_left_mm": 0.0,
+    "W3_wrist_max": {
+     "Right": [
+      3.3,
+      4.0,
+      5.8
+     ],
+     "Left": [
+      8.3,
+      25.3,
+      2.7
+     ]
+    },
+    "W4_contract": "ok",
+    "W7_head_at": [
+     "Right",
+     2
+    ],
+    "W5_loop": null,
+    "W6_max_deg_per_f": 2.5,
+    "W6_at": [
+     "LeftLowerArm",
+     1
+    ],
+    "W6_grip_m_per_f": 0.008,
+    "W7_hand_pen_mm": 0.0,
+    "W7_head_clear_m": 0.368,
+    "W9_peak_deg": 2.6,
+    "W9_end_vs_f0_deg": 0.0,
+    "W9_f0_vs_aim_deg": 0.81,
+    "W0_scene_fps": 30.0,
+    "W11_fp_camera_still": [
+     0.0,
+     0.0
+    ],
+    "W11_vs_first_clip": [
+     0.0,
+     0.0
+    ]
+   },
+   "result": "PASS",
+   "prop": {
+    "clip": "AP022_prop_fp_sw_gel_fire",
+    "fbx": "AP022_prop_fp_sw_gel_fire_v008.fbx",
+    "root": "AP021_sw_gel",
+    "nodes": [
+     "part_canister",
+     "part_gauge_needle",
+     "part_lever",
+     "part_trigger"
+    ]
+   },
+   "tp_twin": "AP022_tp_sw_gel_fire",
+   "fp_camera": "viewmodel anchor: still in every FP clip and identical across all of them (W11 0.000 mm / 0.000 deg); weapon keyed in its space"
+  },
+  {
+   "clip": "AP022_fp_sw_gel_idle_aim",
+   "fbx": "AP022_fp_sw_gel_idle_aim_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 121,
+   "fps": 30,
+   "seconds": 4.0,
+   "loop": true,
+   "events": [
+    {
+     "name": "breath",
+     "frame": 0
+    }
+   ],
+   "layer": "fp_base",
+   "mask": "FP viewmodel (arms + fingers + ik_*; fp_camera constant)",
+   "additive": false,
+   "additive_reference": null,
+   "class": "sw",
+   "weapon": "sw_gel",
+   "shared_by": [
+    "sw_gel"
+   ],
+   "action": "idle_aim",
+   "maps_to": "WP-071 clip list §3 #29",
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "validation": {
+    "W1_grip_mm": [
+     0.0,
+     0.0
+    ],
+    "W2_left_mm": 0.0,
+    "W3_wrist_max": {
+     "Right": [
+      3.5,
+      3.5,
+      6.2
+     ],
+     "Left": [
+      9.1,
+      24.2,
+      3.4
+     ]
+    },
+    "W4_contract": "ok",
+    "W7_head_at": [
+     "Right",
+     34
+    ],
+    "W5_loop": 0.0,
+    "W6_max_deg_per_f": 1.7,
+    "W6_at": [
+     "LeftHand",
+     45
+    ],
+    "W6_grip_m_per_f": 0.0,
+    "W7_hand_pen_mm": 0.0,
+    "W7_head_clear_m": 0.372,
+    "W0_scene_fps": 30.0,
+    "W13_fpview": {
+     "grip_rig": [
+      0.2899,
+      -0.1504,
+      0.5926
+     ],
+     "target": [
+      0.2883,
+      -0.151,
+      0.5927
+     ],
+     "err_mm": 1.6,
+     "yaw_pitch_roll": [
+      -1.93,
+      0.71,
+      -0.18
+     ],
+     "err_deg": 0.18
+    },
+    "W11_fp_camera_still": [
+     0.0,
+     0.0
+    ],
+    "W11_vs_first_clip": [
+     0.0,
+     0.0
+    ]
+   },
+   "result": "PASS",
+   "hands_in_weapon_frame": {
+    "LeftHand": {
+     "model_blender_pos": [
+      0.0928,
+      -0.0949,
+      -0.0434
+     ],
+     "unity_pos": [
+      -0.0928,
+      -0.0434,
+      0.0949
+     ],
+     "unity_rot_of_bone_axes_xyzw": [
+      0.606,
+      0.6344,
+      -0.4393,
+      0.1934
+     ],
+     "note": "bone axes expressed in the Unity weapon frame; the Unity bone's own axis convention (FBX import) may add a constant — verify against the imported rig"
+    },
+    "socket_weapon_r": {
+     "model_blender_pos": [
+      0.0,
+      0.005,
+      -0.035
+     ],
+     "unity_pos": [
+      -0.0,
+      -0.035,
+      -0.005
+     ],
+     "unity_rot_of_bone_axes_xyzw": [
+      0.4518,
+      0.1691,
+      0.2769,
+      0.831
+     ],
+     "note": "bone axes expressed in the Unity weapon frame; the Unity bone's own axis convention (FBX import) may add a constant — verify against the imported rig"
+    }
+   },
+   "tp_twin": "AP022_tp_sw_idle_aim",
+   "fp_camera": "viewmodel anchor: still in every FP clip and identical across all of them (W11 0.000 mm / 0.000 deg); weapon keyed in its space"
+  },
+  {
+   "clip": "AP022_fp_sw_gel_reload_empty",
+   "fbx": "AP022_fp_sw_gel_reload_empty_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 85,
+   "fps": 30,
+   "seconds": 2.8,
+   "loop": false,
+   "events": [
+    {
+     "name": "lh_release",
+     "frame": 4
+    },
+    {
+     "name": "canister_out",
+     "frame": 25
+    },
+    {
+     "name": "canister_in",
+     "frame": 54
+    },
+    {
+     "name": "reload_commit",
+     "frame": 54
+    },
+    {
+     "name": "reload_cancel_point",
+     "frame": 58
+    },
+    {
+     "name": "lh_grab",
+     "frame": 66
+    },
+    {
+     "name": "pump_down",
+     "frame": 71
+    },
+    {
+     "name": "pump_up",
+     "frame": 77
+    }
+   ],
+   "layer": "fp_base",
+   "mask": "FP viewmodel (arms + fingers + ik_*; fp_camera constant)",
+   "additive": false,
+   "additive_reference": null,
+   "class": "sw",
+   "weapon": "sw_gel",
+   "shared_by": [
+    "sw_gel"
+   ],
+   "action": "reload_empty",
+   "maps_to": "WP-071 clip list §3 #31",
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "validation": {
+    "W1_grip_mm": [
+     0.0,
+     0.0
+    ],
+    "W2_left_mm": 0.0,
+    "W3_wrist_max": {
+     "Right": [
+      36.0,
+      20.6,
+      38.0
+     ],
+     "Left": [
+      38.3,
+      26.8,
+      33.2
+     ]
+    },
+    "W4_contract": "ok",
+    "W7_head_at": [
+     "Left",
+     25
+    ],
+    "W5_loop": null,
+    "W6_max_deg_per_f": 22.9,
+    "W6_at": [
+     "LeftLowerArm",
+     44
+    ],
+    "W6_grip_m_per_f": 0.039,
+    "W7_hand_pen_mm": 0.0,
+    "W7_head_clear_m": 0.337,
+    "W10_start_deg": 0.81,
+    "W10_end_deg": 0.81,
+    "W0_scene_fps": 30.0,
+    "W11_fp_camera_still": [
+     0.0,
+     0.0
+    ],
+    "W11_vs_first_clip": [
+     0.0,
+     0.0
+    ]
+   },
+   "result": "PASS",
+   "prop": {
+    "clip": "AP022_prop_fp_sw_gel_reload_empty",
+    "fbx": "AP022_prop_fp_sw_gel_reload_empty_v008.fbx",
+    "root": "AP021_sw_gel",
+    "nodes": [
+     "part_canister",
+     "part_gauge_needle",
+     "part_lever",
+     "part_trigger"
+    ]
+   },
+   "tp_twin": "AP022_tp_sw_gel_reload_empty",
+   "fp_camera": "viewmodel anchor: still in every FP clip and identical across all of them (W11 0.000 mm / 0.000 deg); weapon keyed in its space"
+  },
+  {
+   "clip": "AP022_fp_sw_gel_reload_tac",
+   "fbx": "AP022_fp_sw_gel_reload_tac_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 73,
+   "fps": 30,
+   "seconds": 2.4,
+   "loop": false,
+   "events": [
+    {
+     "name": "lh_release",
+     "frame": 4
+    },
+    {
+     "name": "canister_out",
+     "frame": 22
+    },
+    {
+     "name": "canister_in",
+     "frame": 46
+    },
+    {
+     "name": "reload_commit",
+     "frame": 46
+    },
+    {
+     "name": "reload_cancel_point",
+     "frame": 50
+    },
+    {
+     "name": "lh_grab",
+     "frame": 56
+    },
+    {
+     "name": "pump_down",
+     "frame": 60
+    },
+    {
+     "name": "pump_up",
+     "frame": 66
+    }
+   ],
+   "layer": "fp_base",
+   "mask": "FP viewmodel (arms + fingers + ik_*; fp_camera constant)",
+   "additive": false,
+   "additive_reference": null,
+   "class": "sw",
+   "weapon": "sw_gel",
+   "shared_by": [
+    "sw_gel"
+   ],
+   "action": "reload_tac",
+   "maps_to": "WP-071 clip list §3 #31",
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "validation": {
+    "W1_grip_mm": [
+     0.0,
+     0.0
+    ],
+    "W2_left_mm": 0.0,
+    "W3_wrist_max": {
+     "Right": [
+      36.0,
+      20.6,
+      38.0
+     ],
+     "Left": [
+      37.8,
+      26.8,
+      33.1
+     ]
+    },
+    "W4_contract": "ok",
+    "W7_head_at": [
+     "Left",
+     22
+    ],
+    "W5_loop": null,
+    "W6_max_deg_per_f": 29.5,
+    "W6_at": [
+     "LeftLowerArm",
+     38
+    ],
+    "W6_grip_m_per_f": 0.039,
+    "W7_hand_pen_mm": 0.0,
+    "W7_head_clear_m": 0.337,
+    "W10_start_deg": 0.81,
+    "W10_end_deg": 0.81,
+    "W0_scene_fps": 30.0,
+    "W11_fp_camera_still": [
+     0.0,
+     0.0
+    ],
+    "W11_vs_first_clip": [
+     0.0,
+     0.0
+    ]
+   },
+   "result": "PASS",
+   "prop": {
+    "clip": "AP022_prop_fp_sw_gel_reload_tac",
+    "fbx": "AP022_prop_fp_sw_gel_reload_tac_v008.fbx",
+    "root": "AP021_sw_gel",
+    "nodes": [
+     "part_canister",
+     "part_gauge_needle",
+     "part_lever",
+     "part_trigger"
+    ]
+   },
+   "tp_twin": "AP022_tp_sw_gel_reload_tac",
+   "fp_camera": "viewmodel anchor: still in every FP clip and identical across all of them (W11 0.000 mm / 0.000 deg); weapon keyed in its space"
+  },
+  {
+   "clip": "AP022_fp_sw_gel_switch_in",
+   "fbx": "AP022_fp_sw_gel_switch_in_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 16,
+   "fps": 30,
+   "seconds": 0.5,
+   "loop": false,
+   "events": [
+    {
+     "name": "charge",
+     "frame": 9
+    },
+    {
+     "name": "lh_grab",
+     "frame": 10
+    },
+    {
+     "name": "switch_ready",
+     "frame": 14
+    }
+   ],
+   "layer": "fp_base",
+   "mask": "FP viewmodel (arms + fingers + ik_*; fp_camera constant)",
+   "additive": false,
+   "additive_reference": null,
+   "class": "sw",
+   "weapon": "sw_gel",
+   "shared_by": [
+    "sw_gel"
+   ],
+   "action": "switch_in",
+   "maps_to": "WP-071 clip list §3 #32",
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "validation": {
+    "W1_grip_mm": [
+     0.0,
+     0.0
+    ],
+    "W2_left_mm": 0.0,
+    "W3_wrist_max": {
+     "Right": [
+      12.5,
+      10.9,
+      35.2
+     ],
+     "Left": [
+      24.7,
+      31.8,
+      25.6
+     ]
+    },
+    "W4_contract": "ok",
+    "W7_head_at": [
+     "Right",
+     12
+    ],
+    "W5_loop": null,
+    "W6_max_deg_per_f": 37.1,
+    "W6_at": [
+     "LeftLowerArm",
+     8
+    ],
+    "W6_grip_m_per_f": 0.1,
+    "W7_hand_pen_mm": 0.0,
+    "W7_head_clear_m": 0.366,
+    "W10_end_deg": 0.81,
+    "W0_scene_fps": 30.0,
+    "W11_fp_camera_still": [
+     0.0,
+     0.0
+    ],
+    "W11_vs_first_clip": [
+     0.0,
+     0.0
+    ]
+   },
+   "result": "PASS",
+   "tp_twin": "AP022_tp_sw_switch_in",
+   "fp_camera": "viewmodel anchor: still in every FP clip and identical across all of them (W11 0.000 mm / 0.000 deg); weapon keyed in its space"
+  },
+  {
+   "clip": "AP022_fp_sw_gel_switch_out",
+   "fbx": "AP022_fp_sw_gel_switch_out_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 10,
+   "fps": 30,
+   "seconds": 0.3,
+   "loop": false,
+   "events": [
+    {
+     "name": "lh_release",
+     "frame": 1
+    },
+    {
+     "name": "switch_away",
+     "frame": 8
+    }
+   ],
+   "layer": "fp_base",
+   "mask": "FP viewmodel (arms + fingers + ik_*; fp_camera constant)",
+   "additive": false,
+   "additive_reference": null,
+   "class": "sw",
+   "weapon": "sw_gel",
+   "shared_by": [
+    "sw_gel"
+   ],
+   "action": "switch_out",
+   "maps_to": "WP-071 clip list §3 #32",
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "validation": {
+    "W1_grip_mm": [
+     0.0,
+     0.0
+    ],
+    "W2_left_mm": 0.0,
+    "W3_wrist_max": {
+     "Right": [
+      12.5,
+      10.9,
+      35.2
+     ],
+     "Left": [
+      10.8,
+      23.5,
+      29.0
+     ]
+    },
+    "W4_contract": "ok",
+    "W7_head_at": [
+     "Right",
+     0
+    ],
+    "W5_loop": null,
+    "W6_max_deg_per_f": 37.6,
+    "W6_at": [
+     "LeftLowerArm",
+     3
+    ],
+    "W6_grip_m_per_f": 0.095,
+    "W7_hand_pen_mm": 0.0,
+    "W7_head_clear_m": 0.375,
+    "W10_start_deg": 0.81,
+    "W0_scene_fps": 30.0,
+    "W11_fp_camera_still": [
+     0.0,
+     0.0
+    ],
+    "W11_vs_first_clip": [
+     0.0,
+     0.0
+    ]
+   },
+   "result": "PASS",
+   "tp_twin": "AP022_tp_sw_switch_out",
+   "fp_camera": "viewmodel anchor: still in every FP clip and identical across all of them (W11 0.000 mm / 0.000 deg); weapon keyed in its space"
   }
  ],
  "v005_changes": {
@@ -14403,6 +16946,11 @@
    "fp_clips": 29,
    "note": "re-delivery: per-weapon FP names only (AP022_fp_<ar_1|ar_2|smg_1>_<slot>), right hand at each weapon's gripOffset (S-02 80ea9faf), rest on fpView W13 ≤ 1.9 mm / 0.23°, fp_camera offset constant per weapon"
   },
-  "tp_v3_b4c": "AP-022 TP v3 B4c (P-06 v008, C-00 26.09): +33 TP rows — sniper snp ×6 + sr_1 ×5 (bolt cycles), launcher lch ×6 + rl_1 ×2, LMG lmg ×7 (+ fire_loop) + lmg_1 ×3 + lmg_2 fire, smg_2 TP ×3; shotgun / prop rows not merged"
+  "tp_v3_b4c": "AP-022 TP v3 B4c (P-06 v008, C-00 26.09): +33 TP rows — sniper snp ×6 + sr_1 ×5 (bolt cycles), launcher lch ×6 + rl_1 ×2, LMG lmg ×7 (+ fire_loop) + lmg_1 ×3 + lmg_2 fire, smg_2 TP ×3; shotgun / prop rows not merged",
+  "fp_v003": "AP-022 FP v003 (P-06 26.09, C-00): 38 FP rows from AP022-clips-manifest-v008 (exports/v008) — contact-based fingers on the v2 arms, left hand behind the handguard (ar_1 / smg_1), smg_2's own FP set (9 clips); TP / prop rows of that slice not merged here",
+  "fp_v004": "AP-022 FP v004b (P-06 26.09, wcheck 38/38): the 38 FP rows / files — right grip unrolled (thumb over the grip, index on the trigger guard), ar_1 left palm-up, contact fingers re-solved; ar_2 ADS on the old handguard grip, smg_2 right grip roll −32 / ADS shoulder −20 (every ADS wrist in range)",
+  "tp_lmg_2_reloads": "AP-022 lmg_2 Kurogane tray reloads (P-06 28.09): AP022_tp_lmg_2_reload_tac (151 f) / reload_empty (175 f) — lmg_2 stops borrowing lmg_1's",
+  "fp_special": "AP-022 FP Special (P-06 28.09, manifest 146): AP022_fp_sw_{arc,gel}_{idle_aim,switch_in,switch_out,fire,reload_tac,reload_empty} — contact fingers, events on the TP frames, rest = S-02 fpView; FP camera offsets sw_arc (-0.16,-0.36,0) / sw_gel (-0.16,-0.36,-0.04) (x right, y look, z up)",
+  "tp_special": "AP-022 TP Special (P-06 28.09, manifest 146 / SHA256SUMS 203): AP022_tp_sw_arc_fire, AP022_tp_sw_arc_reload_empty, AP022_tp_sw_arc_reload_tac, AP022_tp_sw_gel_fire, AP022_tp_sw_gel_idle_aim, AP022_tp_sw_gel_reload_empty, AP022_tp_sw_gel_reload_tac, AP022_tp_sw_gel_switch_in, AP022_tp_sw_gel_switch_out, AP022_tp_sw_idle_aim, AP022_tp_sw_switch_in, AP022_tp_sw_switch_out — 12 clips; TP HOLD — right-grip MUST open: the sw_arc / sw_gel TP sets stay off (TpV3Sets) until the right-grip AD and C-00's decision; PlayerSkinnedVisual.EquipSpecialV3 is the path (WP-071 M-48/M-52)"
  }
 }

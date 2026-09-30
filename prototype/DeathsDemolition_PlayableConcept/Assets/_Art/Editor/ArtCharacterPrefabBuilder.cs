@@ -153,6 +153,8 @@ namespace DD.Art.Pipeline.EditorTools
         {
             ArtTextureRepack.BuildDerived(PlayerTextures + "/T_player_Packed.png", PlayerDerived + "/T_player_MetallicSmoothness.png",
                 PlayerDerived + "/T_player_MetallicSmoothness.provenance.json", ArtTextureRepack.OrmToMetallicSmoothnessAo, ArtTextureRepack.OrmAlgorithm);
+            ArtTextureRepack.BuildDerived(PlayerFpArmsPacked, PlayerFpArmsMetallicSmoothness,
+                PlayerDerived + "/T_player_fparms_MetallicSmoothness.provenance.json", ArtTextureRepack.OrmToMetallicSmoothnessAo, ArtTextureRepack.OrmAlgorithm);   // AP-022 FP arms v2
             ArtTextureRepack.BuildDerived(ZombieTextures + "/T_zombie_atlas_Packed.png", ZombieDerived + "/T_zombie_atlas_MetallicSmoothness.png",
                 ZombieDerived + "/T_zombie_atlas_MetallicSmoothness.provenance.json", ArtTextureRepack.OrmToMetallicSmoothnessAo, ArtTextureRepack.OrmAlgorithm);
             ArtTextureRepack.BuildDerived(ZombieTextures + "/T_zombie_atlas_Mask.png", ZombieDerived + "/T_zombie_atlas_DetailMask.png",
@@ -179,6 +181,11 @@ namespace DD.Art.Pipeline.EditorTools
                 Load<Texture2D>(PlayerTextures + "/T_player_Normal.png"),
                 Load<Texture2D>(PlayerDerived + "/T_player_MetallicSmoothness.png"));
             EditorUtility.SetDirty(player);
+            // AP-022 FP arms v2 (WP-071): the FP-only arms (own UVs) — skin 1 albedo; FirstPersonArms swaps the albedo per skin
+            Material fpArms = LoadOrCreateMaterial(PlayerFpArmsMaterial, lit, "M_player_fparms");
+            ArtMaterialBuilder.ApplyCommonPublic(fpArms);
+            ApplyCharacterMaps(fpArms, Load<Texture2D>(PlayerFpArmsAlbedos[0]), Load<Texture2D>(PlayerFpArmsNormal), Load<Texture2D>(PlayerFpArmsMetallicSmoothness));
+            EditorUtility.SetDirty(fpArms);
 
             Texture2D atlas = Load<Texture2D>(ZombieTextures + "/T_zombie_atlas_BaseColor.png");
             Texture2D atlasNormal = Load<Texture2D>(ZombieTextures + "/T_zombie_atlas_Normal.png");
@@ -497,7 +504,10 @@ namespace DD.Art.Pipeline.EditorTools
 
                 var visual = root.AddComponent<PlayerSkinnedVisual>();
                 visual.Configure(animator, group, renderers, weaponSocket, backSocket, animationSet, events, aimLayer, playerLook, playerFeet);
-                visual.ConfigureFirstPerson(model);   // WP-071 B4b-3: the FP viewmodel arms copy this model
+                // WP-071 B4b-3: the FP viewmodel arms copy this model; AP-022 FP arms v2: their own mesh / material / per-skin albedo
+                var fpAlbedos = new Texture2D[PlayerFpArmsAlbedos.Length];
+                for (int i = 0; i < fpAlbedos.Length; i++) fpAlbedos[i] = Load<Texture2D>(PlayerFpArmsAlbedos[i]);
+                visual.ConfigureFirstPerson(model, BuildFirstPersonArmsMesh(perLod[0]), Load<Material>(PlayerFpArmsMaterial), fpAlbedos);
 
                 EnsureFolder(Path.GetDirectoryName(PlayerPrefab).Replace('\\', '/'));
                 GameObject saved = PrefabUtility.SaveAsPrefabAsset(root, PlayerPrefab);
@@ -888,6 +898,94 @@ namespace DD.Art.Pipeline.EditorTools
             smr.updateWhenOffscreen = false;
             smr.skinnedMotionVectors = false;
             smr.quality = SkinQuality.Bone4;
+        }
+
+        public const string PlayerFpArmsMesh = PlayerFolder + "/Generated/Player_FPArms.asset";
+        /// <summary>AP-022 FP arms v2 (P-06, C-00 25.09): FP-only arms — sleeves tied back (tasuki), bare forearm and hand; PlayerRig v002, rest = player_base_v002.</summary>
+        public const string PlayerFpArmsModel = PlayerFolder + "/AP022_player_fparms_v2.fbx";
+        public const string PlayerFpArmsMaterial = PlayerFolder + "/M_player_fparms.mat";
+        public const string PlayerFpArmsNormal = PlayerTextures + "/T_player_fparms_Normal.png";
+        public const string PlayerFpArmsPacked = PlayerTextures + "/T_player_fparms_Packed.png";
+        public const string PlayerFpArmsMetallicSmoothness = PlayerDerived + "/T_player_fparms_MetallicSmoothness.png";
+        /// <summary>Per PlayerSkin (0..2) — the arms' own UVs, so the TP albedo block cannot be shared.</summary>
+        public static readonly string[] PlayerFpArmsAlbedos =
+        {
+            PlayerTextures + "/T_player_fparms_skin1_BaseColor.png", PlayerTextures + "/T_player_fparms_skin2_BaseColor.png", PlayerTextures + "/T_player_fparms_skin3_BaseColor.png"
+        };
+
+        /// <summary>
+        /// WP-071 B4b-3 / AP-022 FP arms v2 (C-00 25.09): the FP viewmodel draws P-06's FP-only arms mesh on the copied player rig. The
+        /// mesh has its own bone array / bind poses (same names, same rest), so its bone indices are remapped BY NAME onto the LOD0 body's
+        /// bones and its vertices moved into the body mesh's space (bodyBind · fpBind⁻¹, identical for every weighted bone at a shared rest —
+        /// checked ≤ 1 mm); the result skins on the body renderer's bones unchanged. (v1 cut the arm triangles out of the body — the kimono
+        /// sleeve filled the frame.)
+        /// </summary>
+        public static Mesh BuildFirstPersonArmsMesh(SkinnedMeshRenderer body)
+        {
+            if (body == null || body.sharedMesh == null) return null;
+            var fpModel = AssetDatabase.LoadAssetAtPath<GameObject>(PlayerFpArmsModel);
+            SkinnedMeshRenderer fp = fpModel != null ? fpModel.GetComponentInChildren<SkinnedMeshRenderer>(true) : null;
+            if (fp == null || fp.sharedMesh == null) throw new InvalidOperationException(LogPrefix + "FP arms model missing: " + PlayerFpArmsModel);
+            Mesh src = fp.sharedMesh;
+            var bodyIndex = new Dictionary<string, int>(StringComparer.Ordinal);
+            for (int b = 0; b < body.bones.Length; b++) if (body.bones[b] != null) bodyIndex[body.bones[b].name] = b;
+            var map = new int[fp.bones.Length];
+            for (int b = 0; b < map.Length; b++) map[b] = fp.bones[b] != null && bodyIndex.TryGetValue(fp.bones[b].name, out int bb) ? bb : -1;
+
+            BoneWeight[] w = src.boneWeights;
+            var used = new bool[map.Length];
+            foreach (BoneWeight x in w)
+            {
+                if (x.weight0 > 0f) used[x.boneIndex0] = true;
+                if (x.weight1 > 0f) used[x.boneIndex1] = true;
+                if (x.weight2 > 0f) used[x.boneIndex2] = true;
+                if (x.weight3 > 0f) used[x.boneIndex3] = true;
+            }
+
+            Matrix4x4[] bodyBind = body.sharedMesh.bindposes, fpBind = src.bindposes;
+            Matrix4x4 toBody = Matrix4x4.identity;
+            bool first = true;
+            float deviation = 0f;
+            for (int b = 0; b < map.Length; b++)
+            {
+                if (!used[b]) continue;
+                if (map[b] < 0) throw new InvalidOperationException(LogPrefix + "FP arms bone not on the body: " + (fp.bones[b] != null ? fp.bones[b].name : "#" + b));
+                Matrix4x4 m = bodyBind[map[b]] * fpBind[b].inverse;
+                if (first) { toBody = m; first = false; continue; }
+                deviation = Mathf.Max(deviation, Vector3.Distance(m.MultiplyPoint3x4(Vector3.zero), toBody.MultiplyPoint3x4(Vector3.zero)),
+                                      Vector3.Distance(m.MultiplyPoint3x4(Vector3.up), toBody.MultiplyPoint3x4(Vector3.up)));
+            }
+
+            if (deviation > 0.001f) throw new InvalidOperationException(LogPrefix + "FP arms rest differs from the body's by " + (deviation * 1000f).ToString("F1") + " mm");
+
+            Vector3[] v = src.vertices, n = src.normals;
+            Vector4[] t = src.tangents;
+            for (int i = 0; i < v.Length; i++) v[i] = toBody.MultiplyPoint3x4(v[i]);
+            for (int i = 0; i < n.Length; i++) n[i] = toBody.MultiplyVector(n[i]).normalized;
+            for (int i = 0; i < t.Length; i++) { Vector3 d = toBody.MultiplyVector(new Vector3(t[i].x, t[i].y, t[i].z)).normalized; t[i] = new Vector4(d.x, d.y, d.z, t[i].w); }
+            for (int i = 0; i < w.Length; i++)
+            {
+                BoneWeight x = w[i];
+                x.boneIndex0 = x.weight0 > 0f ? map[x.boneIndex0] : 0; x.boneIndex1 = x.weight1 > 0f ? map[x.boneIndex1] : 0;
+                x.boneIndex2 = x.weight2 > 0f ? map[x.boneIndex2] : 0; x.boneIndex3 = x.weight3 > 0f ? map[x.boneIndex3] : 0;
+                w[i] = x;
+            }
+
+            var mesh = AssetDatabase.LoadAssetAtPath<Mesh>(PlayerFpArmsMesh);
+            bool created = mesh == null;
+            if (created) mesh = new Mesh();
+            mesh.Clear();
+            mesh.name = "Player_FPArms";
+            mesh.indexFormat = src.indexFormat;
+            mesh.vertices = v; mesh.normals = n; mesh.tangents = t; mesh.uv = src.uv;
+            mesh.boneWeights = w; mesh.bindposes = bodyBind;
+            mesh.subMeshCount = src.subMeshCount;
+            for (int sm = 0; sm < src.subMeshCount; sm++) mesh.SetTriangles(src.GetTriangles(sm), sm);
+            mesh.RecalculateBounds();
+            if (created) { EnsureFolder(PlayerFolder + "/Generated"); AssetDatabase.CreateAsset(mesh, PlayerFpArmsMesh); }
+            EditorUtility.SetDirty(mesh);
+            Debug.Log(LogPrefix + "FP arms mesh (AP-022 v2): " + (src.triangles.Length / 3) + " triangles, " + v.Length + " vertices, rest deviation " + (deviation * 1000f).ToString("F2") + " mm");
+            return mesh;
         }
 
         /// <summary>LODGroup levels from intended distances (÷ shipped lodBias), cross-fade; the last distance is the cull.</summary>

@@ -77,7 +77,10 @@ namespace DD.Prototype.Characters
             {
                 _searchClock = SearchInterval;
                 _grip = FindGrip(_searchRoot);
-                _weaponFrame = FindFrame(_searchRoot);
+                // the weapon rig's own frame (S-02 contract: +Z barrel, +Y up, +X right) — the AP021_ model node under it carries the FBX
+                // axis conversion (270°, 0, 0) and is NOT the frame hands_in_weapon_frame is expressed in
+                DD.Prototype.Weapons.WeaponVisualRig rig = _searchRoot != null ? _searchRoot.GetComponentInChildren<DD.Prototype.Weapons.WeaponVisualRig>() : null;
+                _weaponFrame = rig != null ? rig.transform : FindFrame(_searchRoot);
             }
 
             GateOpen = _gate == null || _gate();
@@ -128,6 +131,23 @@ namespace DD.Prototype.Characters
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// WP-071 B4b (C-00 25.09 / 26.09): the same solve, then the chain turns about the shoulder → target axis so the elbow points at
+        /// <paramref name="pole"/> (FP left arm: down and slightly back, off screen — P-06's measurement). The hand keeps its rotation.
+        /// </summary>
+        public static void Solve(Transform a, Transform b, Transform c, Vector3 t, Vector3 pole)
+        {
+            Solve(a, b, c, t);
+            Vector3 axis = c.position - a.position;
+            if (axis.sqrMagnitude < 1e-8f) return;
+            axis.Normalize();
+            Vector3 elbow = Vector3.ProjectOnPlane(b.position - a.position, axis), want = Vector3.ProjectOnPlane(pole - a.position, axis);
+            if (elbow.sqrMagnitude < 1e-8f || want.sqrMagnitude < 1e-8f) return;
+            Quaternion handRot = c.rotation;
+            a.rotation = Quaternion.AngleAxis(Vector3.SignedAngle(elbow, want, axis), axis) * a.rotation;
+            c.rotation = handRot;
         }
 
         private static Transform FindGrip(Transform root)

@@ -31,8 +31,16 @@ namespace DD.Prototype.Characters
         private static int s_capOverride = -1;
         private static int s_tierCap = -1;
         private static bool s_tierSubscribed;
-        /// <summary>Global switch (tests / A-B): false = every death keeps its authored clip.</summary>
+        /// <summary>Global switch (tests / A-B): false = every death keeps its authored clip. `-ddRagdoll 0` starts a run with it off
+        /// (the quality-tier contract's A/B flag, WP-078 A3; C-00 30.09).</summary>
         public static bool Enabled = true;
+
+        /// <summary>`-ddRagdoll 0|1` (default on): the process's ragdoll A/B setting.</summary>
+        public static bool ReadFlag(string[] args)
+        {
+            for (int i = 0; args != null && i < args.Length - 1; i++) if (args[i] == "-ddRagdoll") return args[i + 1] != "0";
+            return true;
+        }
 
         public const int BodyCount = 11;
         public const float SettleSpeed = 0.15f, SettleAngular = 0.6f, SettleHold = 0.35f, MinActive = 0.5f, MaxActive = 3.0f;
@@ -368,7 +376,7 @@ namespace DD.Prototype.Characters
             s_capOverride = -1;
             s_tierCap = -1;
             if (s_tierSubscribed) { QualityTiers.Changed -= OnTierChanged; s_tierSubscribed = false; }
-            Enabled = true;
+            Enabled = ReadFlag(System.Environment.GetCommandLineArgs());   // -ddRagdoll 0|1 (A/B); tests set Enabled directly
             RefusedCount = 0;
             AcquiredCount = 0;
             ReleasedCount = 0;

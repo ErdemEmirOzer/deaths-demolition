@@ -83,6 +83,23 @@ namespace DD.Art.Tests.PlayMode
             LogAssert.ignoreFailingMessages = false;
         }
 
+        // WP-071 (C-00 26.09): the FP arms tests set the switch for their own run and restore it — the shipped default is one commit either way.
+        private static bool? s_armsBefore;
+
+        private static void ArmsForTest(bool on)
+        {
+            if (s_armsBefore == null) s_armsBefore = PlayerSkinnedVisual.FirstPersonV3Arms;
+            PlayerSkinnedVisual.FirstPersonV3Arms = on;
+        }
+
+        [TearDown]
+        public void RestoreArmsSwitch()
+        {
+            if (!s_armsBefore.HasValue) return;
+            PlayerSkinnedVisual.FirstPersonV3Arms = s_armsBefore.Value;
+            s_armsBefore = null;
+        }
+
         private IEnumerator RunAP005()
         {
             Environment.SetEnvironmentVariable(WorldSourceSettings.EnvironmentVariable, "AP005");
@@ -331,52 +348,6 @@ namespace DD.Art.Tests.PlayMode
             Assert.LessOrEqual(heldError, 0.03f, "sol el kabzaya ulaşmadı (≤ 3 cm)");
         }
 
-        // S-06: one normal boot/selection/run observation; no reload, pose reset or aim writer.
-        [UnityTest]
-        [Timeout(300000)]
-        public IEnumerator S06_LegacyAr1_ImportedSurface_OnePostHumanoidFrame()
-        {
-            string path = S06PalmSurfaceObserver.Argument("-ddS06PalmProof");
-            if (string.IsNullOrEmpty(path))
-                Assert.Ignore("S-06 imported-surface diagnostic not requested (-ddS06PalmProof absent)");
-            string correspondencePath = S06PalmSurfaceObserver.Argument("-ddS06CorrespondenceProof");
-            if (!string.IsNullOrEmpty(correspondencePath))
-            {
-                Assert.IsFalse(string.Equals(System.IO.Path.GetFullPath(path), System.IO.Path.GetFullPath(correspondencePath), StringComparison.OrdinalIgnoreCase), "Palm and correspondence output paths must be distinct");
-                Assert.IsFalse(System.IO.File.Exists(path) || System.IO.File.Exists(correspondencePath), "Correspondence run requires fresh output paths; no prior proof overwrite");
-            }
-            UiDataPaths.SetRootOverride(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(path), "ui-sandbox"));
-            SceneManager.LoadScene(PrototypeScenes.Boot, LoadSceneMode.Single);
-            yield return null;
-            yield return CharacterTests.Bekle(() => SceneManager.GetActiveScene().name == PrototypeScenes.MainMenu, SahneZamanAsimi, "normal MainMenu");
-            Assert.AreEqual(ArtTestProfileIsolation.TestProfilePath, ProfileStore.Path, "Profil yolu izole değil.");
-            PrototypeUiFlow.GoToSelection();
-            yield return CharacterTests.Bekle(() => SceneManager.GetActiveScene().name == PrototypeScenes.Selection, SahneZamanAsimi, "normal Selection");
-            PrototypeUiFlow.SelectedWeapon = ClassicWeaponId.AssaultRifle;
-            PrototypeUiFlow.StartRun();
-            yield return CharacterTests.Bekle(() => SceneManager.GetActiveScene().name == PrototypeScenes.Run && PlayerRegistry.Primary != null && WeaponRegistry.ActiveController != null, KurulumZamanAsimi, "normal Run/player/weapon");
-            PlayerSkinnedVisual pv = PlayerRegistry.Primary.GetComponentInChildren<PlayerSkinnedVisual>(true);
-            Assert.IsNotNull(pv, "Actual loaded skinned player unavailable");
-            yield return CharacterTests.Bekle(() =>
-            {
-                var an = pv.Animator; int layer = an != null ? an.GetLayerIndex(C.OverrideUpperLayer) : -1;
-                return layer >= 0 && !an.IsInTransition(layer) && an.GetCurrentAnimatorStateInfo(layer).IsName(C.AimState + "_0")
-                    && WeaponRegistry.ActiveController.Classic.IsConfigured && !WeaponRegistry.ActiveController.SpecialWeaponActive;
-            }, OyuncuZamanAsimi, "actual legacy Aim_0, no pose forcing");
-            var observer = pv.gameObject.AddComponent<S06PalmSurfaceObserver>();
-            observer.Visual = pv; observer.OutputPath = path;
-            yield return CharacterTests.Bekle(() => observer.Completed, OyuncuZamanAsimi, "ONE postHumanoid record");
-            bool measured = observer.ImportedSurfaceObserved;
-            UnityEngine.Object.Destroy(observer);
-            Assert.IsTrue(System.IO.File.Exists(path), "Actual observer proof output missing");
-            if (!string.IsNullOrEmpty(correspondencePath))
-            {
-                Assert.IsTrue(System.IO.File.Exists(correspondencePath), "Requested same-frame correspondence arrays/UNKNOWN receipt missing; no retake");
-                StringAssert.Contains("s06.same-frame-imported-baked-arrays.v1", System.IO.File.ReadAllText(correspondencePath), "Correspondence receipt overwritten or wrong schema");
-            }
-            Assert.IsTrue(measured, "Imported surface or actual identity unavailable; preserve JSON UNKNOWN, no retake");
-        }
-
         // ================================================================================ rise
 
         [UnityTest]
@@ -407,6 +378,65 @@ namespace DD.Art.Tests.PlayMode
             yield return CharacterTests.Bekle(() => pv.Animator.GetCurrentAnimatorStateInfo(over).IsName(C.CycleV3State), 1.5f, "sr_1 Cycle_V3");
             AnimatorClipInfo[] ci = pv.Animator.GetCurrentAnimatorClipInfo(over);
             StringAssert.Contains("tp_sr_1_bolt_cycle", ci.Length > 0 ? ci[0].clip.name : "-");
+
+            // WP-071 r2: an LMG string (shots within 1.6 fire intervals) loops fire_loop on the additive layer; it ends after the last shot
+            var lmg = DD.Prototype.Core.Weapons.Arsenal.Get("lmg_1");
+            pv.EquipWeapon(lmg, lmg.id);
+            for (int i = 0; i < 40; i++) yield return null;
+            int add = pv.Animator.GetLayerIndex(C.AdditiveLayer);
+            for (int shot = 0; shot < 6; shot++)
+            {
+                pv.PlayFire();   // one shot per frame: the gap is a frame, inside the chain window (1.6 × 60 / rpm) on any machine load
+                yield return null;
+            }
+
+            Assert.IsTrue(pv.Animator.GetBool(Animator.StringToHash(C.FireHeld)), "LMG dizisi FireHeld");
+            yield return CharacterTests.Bekle(() => pv.Animator.GetCurrentAnimatorStateInfo(add).IsName(C.FireLoopV3State), 1f, "lmg_1 FireLoop_V3");
+            yield return CharacterTests.Bekle(() => !pv.Animator.GetBool(Animator.StringToHash(C.FireHeld)), 2f, "dizi bitince FireHeld kapanır");
+        }
+
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator SilahV3_SinifGecisi_smg2ar2_SpecialV3_swArc_Donus_VarsayilanKapali()
+        {
+            // WP-071 M-49 / M-48 (C-00 30.09): on the one runtime override controller smg_2 → ar_2 puts the ar class back on the class
+            // slots; a Special's TP v3 set (EquipSpecialV3) plays on SwHold 0 through sw_arc and every end path (hold 0) returns to the
+            // classic set; with the switch off (the shipped default) the Special keeps the SwHold interim pose.
+            yield return RunAP005();
+            PlayerSkinnedVisual pv = PlayerRegistry.Primary.GetComponentInChildren<PlayerSkinnedVisual>(true);
+            Assert.IsTrue(pv.AnimationSet != null && pv.AnimationSet.WeaponSets.Count > 0, "v3 set yok");
+            var smg2 = DD.Prototype.Core.Weapons.Arsenal.Get("smg_2");
+            var ar2 = DD.Prototype.Core.Weapons.Arsenal.Get("ar_2");
+            Assert.IsFalse(pv.EquipSpecialV3(SpecialWeaponId.Raiju), "varsayılan kapalı: Special v3 seti devreye girmez");
+            Assert.IsFalse(pv.SpecialV3Active);
+            PlayerSkinnedVisual.V3WeaponSets = true;
+            try
+            {
+                var aoc = pv.Animator.runtimeAnimatorController as AnimatorOverrideController;
+                Assert.IsNotNull(aoc, "runtime override controller");
+                string idle = C.PlayerWeaponClipV3("ar_1", "idle_aim");
+                pv.EquipWeapon(smg2, smg2.id);
+                yield return null;
+                StringAssert.Contains("tp_smg", aoc[idle].name, "smg_2 → smg sınıf dinlenmesi");
+                pv.EquipWeapon(ar2, ar2.id);
+                yield return null;
+                StringAssert.Contains("tp_ar_idle_aim", aoc[idle].name, "smg_2 → ar_2: sınıf yuvası ar'a döner (M-49)");
+
+                Assert.IsTrue(pv.EquipSpecialV3(SpecialWeaponId.Raiju), "Raiju v3 seti");
+                yield return null;
+                Assert.AreEqual("sw_arc", pv.WeaponAnimSet);
+                Assert.AreEqual(0, pv.SpecialHold, "v3 Special SwHold 0'da");
+                StringAssert.Contains("tp_sw_idle_aim", aoc[idle].name, "sw_arc → AP022_tp_sw_idle_aim");
+                pv.SetSpecialHold(1);   // the HUD-state path's hold index while the v3 Special is out
+                Assert.AreEqual(0, pv.SpecialHold, "v3 Special açıkken ara SwHold yok sayılır");
+                Assert.AreEqual("sw_arc", pv.WeaponAnimSet);
+                pv.SetSpecialHold(0);   // Deactivated / Ended / Cleared / Phase None
+                yield return null;
+                Assert.IsFalse(pv.SpecialV3Active);
+                Assert.AreEqual("ar_2", pv.WeaponAnimSet, "bitişte klasik sete dönüş");
+                StringAssert.Contains("tp_ar_idle_aim", aoc[idle].name, "klasik dinlenme geri");
+            }
+            finally { PlayerSkinnedVisual.V3WeaponSets = false; }
         }
 
         [UnityTest]
@@ -417,7 +447,7 @@ namespace DD.Art.Tests.PlayMode
             // weapon slots (no rebind: the base layer keeps its state and clock), reload picks tac / empty from the duration, the
             // burst weapon's fire clip starts once per burst.
             yield return RunAP005();
-            PlayerSkinnedVisual.V3WeaponSets = true;   // C-00 25.09: TP v3 is off in the game until P-06's gripOffset re-export; this test turns it on
+            PlayerSkinnedVisual.V3WeaponSets = true;
             try
             {
             PlayerSkinnedVisual pv = PlayerRegistry.Primary.GetComponentInChildren<PlayerSkinnedVisual>(true);
@@ -486,11 +516,11 @@ namespace DD.Art.Tests.PlayMode
 
         [UnityTest]
         [Timeout(300000)]
-        public IEnumerator FpKollar_VarsayilanKapali_FpdeGizli_SilahFpViewda()
+        public IEnumerator FpKollar_Kapaliyken_FpdeGizli_SilahFpViewda()
         {
-            // C-00 26.09: the FP arms are OFF by default until P-06's FP arms v2 + finger clips — in first person no arms copy shows and the
-            // weapon keeps S-02's fpView (the FirstPersonWeaponSocket hook stays empty).
-            Assert.IsFalse(PlayerSkinnedVisual.FirstPersonV3Arms, "FP kolları varsayılan kapalı");
+            // C-00 26.09: with the FP arms switch off (the release stop-gap afabd44f) no arms copy shows in first person and the weapon keeps
+            // S-02's fpView (the FirstPersonWeaponSocket hook stays empty). Independent of the shipped default (PlayerSkinnedVisual.FirstPersonV3Arms).
+            ArmsForTest(false);
             yield return RunAP005();
             PlayerSkinnedVisual pv = PlayerRegistry.Primary.GetComponentInChildren<PlayerSkinnedVisual>(true);
             var ar1 = DD.Prototype.Core.Weapons.Arsenal.Get("ar_1");
@@ -512,7 +542,7 @@ namespace DD.Art.Tests.PlayMode
         {
             // WP-071 B4b-3: in first person the FP arms copy sits on the viewmodel layer with fp_camera on the anchor, plays the
             // FP twins (fire additive, tac / empty reload, switch), shows only the LOD0 body (no head), and hides back in TP.
-            PlayerSkinnedVisual.FirstPersonV3Arms = true;   // the feature under test (default OFF, C-00 26.09)
+            ArmsForTest(true);   // the feature under test, whatever the shipped default
             yield return RunAP005();
             PlayerSkinnedVisual pv = PlayerRegistry.Primary.GetComponentInChildren<PlayerSkinnedVisual>(true);
             Assert.IsNotNull(pv.FirstPersonArms, "FirstPersonArms bağlı değil");
@@ -543,6 +573,38 @@ namespace DD.Art.Tests.PlayMode
                 yield return CharacterTests.Bekle(() => fp.FrameCalibrated, 5f, "FP el → silah çerçevesi dinlenmede kalibre");
                 yield return null;
                 Assert.AreSame(fp.WeaponFrame, DD.Prototype.Weapons.WeaponController.FirstPersonWeaponSocket, "S-02 kancası FP silah çerçevesi");
+                for (int i = 0; i < 12; i++) yield return null;   // the hand IK blends in (0.1 s)
+                Camera vmCam = anchor.GetComponentInParent<Camera>();
+                Vector3 rhView = vmCam != null ? vmCam.WorldToViewportPoint(fp.Animator.GetBoneTransform(HumanBodyBones.RightHand).position) : Vector3.zero;
+                Debug.Log("[DD-TEST] wp071.fpik rightErr=" + (fp.LastRightError * 100f).ToString("F2", CultureInfo.InvariantCulture) + " cm leftErr=" + (fp.LastLeftError * 100f).ToString("F2", CultureInfo.InvariantCulture)
+                          + " cm rightHandViewport=" + rhView.ToString("F2"));
+                Assert.Less(fp.LastRightError, 0.01f, "FP sağ el kabzada (≤ 1 cm)");
+                Assert.Less(fp.LastLeftError, 0.01f, "FP sol el ön el korumasında (≤ 1 cm)");
+                // every FP set on its fpView (S-02 v4): the IK residual per set at rest — S-02 reshapes a pose the arms cannot reach
+                var sb = new System.Text.StringBuilder("[DD-TEST] wp071.fpikSets");
+                foreach (var def in new[] { DD.Prototype.Core.Weapons.Arsenal.Get("ar_2"), smg1, ar1 })
+                {
+                    pv.EquipWeapon(def, def.id);
+                    yield return CharacterTests.Bekle(() => fp.FrameCalibrated, 5f, def.AnimSet + " kalibre");
+                    for (int i = 0; i < 12; i++) yield return null;
+                    Vector3 v = vmCam != null ? vmCam.WorldToViewportPoint(fp.Animator.GetBoneTransform(HumanBodyBones.RightHand).position) : Vector3.zero;
+                    sb.Append(' ').Append(def.AnimSet).Append(" r=").Append((fp.LastRightError * 100f).ToString("F2", CultureInfo.InvariantCulture))
+                      .Append(" l=").Append((fp.LastLeftError * 100f).ToString("F2", CultureInfo.InvariantCulture)).Append("cm rhView=").Append(v.ToString("F2"));
+                    Debug.Log(sb.ToString());
+                    Assert.Less(fp.LastRightError, 0.01f, def.AnimSet + ": sağ el kabzada (≤ 1 cm)");
+                    Assert.Less(fp.LastLeftError, 0.03f, def.AnimSet + ": sol el hedefte (≤ 3 cm, S-02 kapısı)");
+                }
+
+                Debug.Log(sb.ToString());
+                {
+                    Transform rhB = fp.Animator.GetBoneTransform(HumanBodyBones.RightHand), lhB = fp.Animator.GetBoneTransform(HumanBodyBones.LeftHand), hdB = fp.Animator.GetBoneTransform(HumanBodyBones.Head);
+                    Debug.Log("[DD-TEST] wp071.fphands RH=" + anchor.InverseTransformPoint(rhB.position).ToString("F3") + " LH=" + anchor.InverseTransformPoint(lhB.position).ToString("F3")
+                              + " Head=" + anchor.InverseTransformPoint(hdB.position).ToString("F3") + " fpCam=" + anchor.InverseTransformPoint(fp.FpCamera.position).ToString("F3") + " rigScale=" + fp.RigScale.ToString("F3")
+                              + " rootInAnchor=" + anchor.InverseTransformPoint(fp.Animator.transform.position).ToString("F3") + " rootFwd=" + anchor.InverseTransformDirection(fp.Animator.transform.forward).ToString("F2")
+                              + " bodyFwd=" + anchor.InverseTransformDirection(fp.Animator.bodyRotation * Vector3.forward).ToString("F2"));
+                }
+
+
                 // S-02 hand-off measurement (fpView band): the weapon root the FP rig implies = frame − R·gripOffset, in anchor space
                 Vector3 rootWorld = fp.WeaponFrame.position - fp.WeaponFrame.rotation * (ar1.GripOffset * ar1.FpViewPose.scale);   // S-02's rule
                 Vector3 rootInAnchor = anchor.InverseTransformPoint(rootWorld);
@@ -576,13 +638,279 @@ namespace DD.Art.Tests.PlayMode
             finally
             {
                 DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.ThirdPerson, instant: true);
-                PlayerSkinnedVisual.FirstPersonV3Arms = false;
             }
 
             for (int i = 0; i < 3; i++) yield return null;
             Assert.IsFalse(pv.FirstPersonArms.Visible, "TP'de FP kolları gizli");
             Assert.IsNull(DD.Prototype.Weapons.WeaponController.FirstPersonWeaponSocket, "TP'de kanca boş (fpView yedeği)");
             Assert.IsNull(FirstPersonArms.Shown);
+        }
+
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator FpKollar_Kadraj_KolPayi10_KameraMesafesi15_ElSilahta()
+        {
+            // C-00 25.09 acceptance for the FP arms, per armed weapon at rest: arm pixels ≤ 10 % of 1080p, the arm geometry ≥ 15 cm from
+            // the camera, both hands on the weapon ≤ 1 cm, rest on fpView ≤ 0.3 cm; a frame per weapon (FP layer, arms + weapon).
+            ArmsForTest(true);
+            yield return RunAP005();
+            PlayerSkinnedVisual pv = PlayerRegistry.Primary.GetComponentInChildren<PlayerSkinnedVisual>(true);
+            FirstPersonArms fp = pv.FirstPersonArms;
+            Assert.IsNotNull(fp);
+            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.FirstPerson, instant: true);
+            var report = new System.Text.StringBuilder("[DD-TEST] wp071.fpframe");
+            var wrong = new List<string>();
+            try
+            {
+                foreach (string key in new[] { "ar_1", "ar_2", "smg_1", "smg_2" })
+                {
+                    var def = DD.Prototype.Core.Weapons.Arsenal.Get(key);
+                    pv.EquipWeapon(def, def.id);
+                    yield return CharacterTests.Bekle(() => fp.Visible && fp.FrameCalibrated, 5f, key + " kollar");
+                    for (int i = 0; i < 15; i++) yield return null;   // the hand IK blends in (0.1 s)
+                    Transform anchor = DD.Prototype.CameraSystem.CameraView.ViewmodelAnchor;
+                    Camera vm = anchor.GetComponentInParent<Camera>();
+                    var pose = def.FpViewPose;
+                    Vector3 root = fp.WeaponFrame.position - fp.WeaponFrame.rotation * (def.GripOffset * pose.scale);
+                    float rest = Vector3.Distance(anchor.InverseTransformPoint(root), pose.position);
+                    // arms-only pixels: a temporary base camera at the overlay camera's pose, FP layer, weapon renderers hidden
+                    int armPx = RenderFp(vm, key, fp.Animator.transform, hideWeapon: true, save: false);
+                    RenderFp(vm, key, fp.Animator.transform, hideWeapon: false, save: true);
+                    // the arm geometry's clearance from the camera (baked skinned vertices)
+                    float minDist = float.MaxValue, minFront = float.MaxValue;   // minFront: vertices in front of the lens only
+                    foreach (SkinnedMeshRenderer smr in fp.Animator.GetComponentsInChildren<SkinnedMeshRenderer>())
+                    {
+                        if (!smr.enabled) continue;
+                        var baked = new Mesh();
+                        smr.BakeMesh(baked, true);
+                        Matrix4x4 m = Matrix4x4.TRS(smr.transform.position, smr.transform.rotation, Vector3.one);
+                        foreach (Vector3 v in baked.vertices)
+                        {
+                            Vector3 cv = vm.transform.InverseTransformPoint(m.MultiplyPoint3x4(v));
+                            minDist = Mathf.Min(minDist, cv.magnitude);
+                            if (cv.z > 0f) minFront = Mathf.Min(minFront, cv.magnitude);
+                        }
+                        UnityEngine.Object.Destroy(baked);
+                    }
+
+                    Vector3 rh = vm.WorldToViewportPoint(fp.Animator.GetBoneTransform(HumanBodyBones.RightHand).position), lh = vm.WorldToViewportPoint(fp.Animator.GetBoneTransform(HumanBodyBones.LeftHand).position);
+                    bool rIn = rh.x > 0f && rh.x < 1f && rh.y > 0f && rh.y < 1f, lIn = lh.x > 0f && lh.x < 1f && lh.y > 0f && lh.y < 1f, handsIn = rIn && lIn;
+                    // the elbows off screen with a margin (C-00 (1): the forearm enters from the edge; the v2 sleeve end sits above the elbow)
+                    Vector3 le = vm.WorldToViewportPoint(fp.Animator.GetBoneTransform(HumanBodyBones.LeftLowerArm).position), re = vm.WorldToViewportPoint(fp.Animator.GetBoneTransform(HumanBodyBones.RightLowerArm).position);
+                    const float margin = 40f / 1080f;
+                    bool elbowsOff = (le.y < -margin || le.x < -margin || le.x > 1f + margin) && (re.y < -margin || re.x < -margin || re.x > 1f + margin);
+                    float share = armPx / (1920f * 1080f) * 100f;
+                    string line = key + " armPx=" + share.ToString("F1", CultureInfo.InvariantCulture) + "% minCam=" + (minDist * 100f).ToString("F1", CultureInfo.InvariantCulture) + "cm r=" + (fp.LastRightError * 100f).ToString("F2", CultureInfo.InvariantCulture)
+                                  + " l=" + (fp.LastLeftError * 100f).ToString("F2", CultureInfo.InvariantCulture) + "cm rest=" + (rest * 100f).ToString("F2", CultureInfo.InvariantCulture) + "cm hands=" + (handsIn ? "in" : "OUT" + (rIn ? "" : "(R)") + (lIn ? "" : "(L)")) + " rhPx=(" + (rh.x * 1920f).ToString("F0", CultureInfo.InvariantCulture) + "," + ((1f - rh.y) * 1080f).ToString("F0", CultureInfo.InvariantCulture)
+                                  + ") lhPx=(" + (lh.x * 1920f).ToString("F0", CultureInfo.InvariantCulture) + "," + ((1f - lh.y) * 1080f).ToString("F0", CultureInfo.InvariantCulture) + ") minFront=" + (minFront * 100f).ToString("F1", CultureInfo.InvariantCulture) + "cm elbowL=("
+                                  + (le.x * 1920f).ToString("F0", CultureInfo.InvariantCulture) + "," + ((1f - le.y) * 1080f).ToString("F0", CultureInfo.InvariantCulture) + ") elbowR=(" + (re.x * 1920f).ToString("F0", CultureInfo.InvariantCulture) + "," + ((1f - re.y) * 1080f).ToString("F0", CultureInfo.InvariantCulture) + ")" + (elbowsOff ? "" : " ELBOW-ON-SCREEN");
+                    report.Append(" | ").Append(line);
+                    if (share > 10f || minDist < 0.15f || fp.LastRightError > 0.01f || fp.LastLeftError > 0.01f || rest > 0.003f || !handsIn || !elbowsOff) wrong.Add(line);
+                }
+            }
+            finally { DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.ThirdPerson, instant: true); }
+
+            Debug.Log(report.ToString());
+            Assert.IsEmpty(wrong, "FP kol kabulü (C-00: kol ≤ %10, kamera ≥ 15 cm, el ≤ 1 cm, dinlenme ≤ 0,3 cm, eller ekranda, dirsekler ekran dışında)");
+        }
+
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator FpKollar_V6Kareleri_4Silah()
+        {
+            // C-00 25.09: FP frames with the arms for the visual sign-off — the default world (V6), the full camera stack (world +
+            // viewmodel overlay) at 1080p with the HUD on (the screen-space canvases drawn by a second camera into the same frame),
+            // one per weapon at rest.
+            ArmsForTest(true);
+            Environment.SetEnvironmentVariable(WorldSourceSettings.EnvironmentVariable, "V6");
+            CharacterAssetSet.ResetCache();
+            SceneManager.LoadScene(PrototypeScenes.Boot, LoadSceneMode.Single);
+            yield return null;
+            yield return CharacterTests.Bekle(() => SceneManager.GetActiveScene().name == PrototypeScenes.MainMenu && SceneManager.GetActiveScene().isLoaded, SahneZamanAsimi, "MainMenu");
+            yield return null;
+            Assert.AreEqual(ArtTestProfileIsolation.TestProfilePath, ProfileStore.Path, "Profil yolu izole değil.");
+            PrototypeUiFlow.GoToSelection();
+            yield return CharacterTests.Bekle(() => SceneManager.GetActiveScene().name == PrototypeScenes.Selection, SahneZamanAsimi, "Selection");
+            PrototypeUiFlow.SelectedWeapon = ClassicWeaponId.AssaultRifle;
+            PrototypeUiFlow.StartRun();
+            yield return CharacterTests.Bekle(() => SceneManager.GetSceneByName(WorldSourceSettings.V6SceneName).isLoaded, SahneZamanAsimi, "World V6");
+            yield return CharacterTests.Bekle(() => PlayerRegistry.Primary != null && PrototypeCameraRig.Active != null, OyuncuZamanAsimi, "oyuncu/kamera");
+            PlayerSkinnedVisual pv = PlayerRegistry.Primary.GetComponentInChildren<PlayerSkinnedVisual>(true);
+            FirstPersonArms fp = pv.FirstPersonArms;
+            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.FirstPerson, instant: true);
+            var saved = new List<string>();
+            var adsLines = new List<string>();
+            var adsWrong = new List<string>();
+            try
+            {
+                foreach (string key in new[] { "ar_1", "ar_2", "smg_1", "smg_2" })
+                {
+                    var def = DD.Prototype.Core.Weapons.Arsenal.Get(key);
+                    pv.EquipWeapon(def, def.id);
+                    yield return CharacterTests.Bekle(() => fp.Visible && fp.FrameCalibrated, 5f, key + " kollar");
+                    for (int i = 0; i < 20; i++) yield return null;
+                    saved.Add(CaptureV6("wp071-v6-" + key));
+                    fp.SetAds(true);   // the ADS frame: the arms follow S-02's ADS view pose (sight_ads on the anchor) at weight 1
+                    for (int i = 0; i < 25; i++) yield return null;
+                    saved.Add(CaptureV6("wp071-v6ads-" + key));
+                    adsLines.Add(key + " ads r=" + (fp.LastRightError * 100f).ToString("F2", CultureInfo.InvariantCulture) + " l=" + (fp.LastLeftError * 100f).ToString("F2", CultureInfo.InvariantCulture) + "cm");
+                    if (!(fp.LastRightError <= 0.01f) || !(fp.LastLeftError <= 0.01f)) adsWrong.Add(adsLines[adsLines.Count - 1]);
+                    fp.SetAds(false);
+                    for (int i = 0; i < 15; i++) yield return null;
+                }
+            }
+            finally
+            {
+                DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.ThirdPerson, instant: true);
+                Environment.SetEnvironmentVariable(WorldSourceSettings.EnvironmentVariable, null);
+            }
+
+            Debug.Log("[DD-TEST] wp071.v6frames " + string.Join(" ", saved));
+            Debug.Log("[DD-TEST] wp071.ads " + string.Join(" | ", adsLines));
+            Assert.AreEqual(8, saved.Count);
+            Assert.IsEmpty(adsWrong, "ADS'de eller silahta ≤ 1 cm");
+        }
+
+        // The full camera stack (world + viewmodel overlay) at 1080p with the HUD composited over it; saved to the temp cache.
+        private static string CaptureV6(string name)
+        {
+            Camera cam = Camera.main;
+            Assert.IsNotNull(cam, "ana kamera");
+            var rt = new RenderTexture(1920, 1080, 24, RenderTextureFormat.ARGB32);
+            RenderTexture prevTarget = cam.targetTexture;
+            cam.targetTexture = rt;
+            cam.Render();   // a URP base camera renders its stack (the viewmodel overlay) into its target
+            cam.targetTexture = prevTarget;
+            RenderTexture prev = RenderTexture.active;
+            RenderTexture.active = rt;
+            var tex = new Texture2D(1920, 1080, TextureFormat.RGBA32, false);
+            tex.ReadPixels(new Rect(0, 0, 1920, 1080), 0, 0);
+            RenderTexture.active = prev;
+            Color32[] world = tex.GetPixels32(), hud = RenderHud(1920, 1080);
+            for (int i = 0; i < world.Length && hud != null; i++)
+            {
+                // UI blends SrcAlpha / OneMinusSrcAlpha over a clear (0,0,0,0) target: rgb = c·a, alpha = a² → composite over the frame
+                float a = Mathf.Sqrt(hud[i].a / 255f);
+                world[i] = new Color32((byte)Mathf.Min(255f, hud[i].r + world[i].r * (1f - a)), (byte)Mathf.Min(255f, hud[i].g + world[i].g * (1f - a)), (byte)Mathf.Min(255f, hud[i].b + world[i].b * (1f - a)), 255);
+            }
+
+            tex.SetPixels32(world);
+            tex.Apply();
+            string path = System.IO.Path.Combine(Application.temporaryCachePath, name + ".png");
+            System.IO.File.WriteAllBytes(path, tex.EncodeToPNG());
+            UnityEngine.Object.Destroy(tex);
+            rt.Release();
+            UnityEngine.Object.Destroy(rt);
+            return path;
+        }
+
+        // The HUD alone: every active screen-space-overlay root canvas is drawn, for this one render, by a camera into a transparent
+        // 1080p target (the canvases lay out at its size), then restored; the caller composites it over the frame.
+        private static Color32[] RenderHud(int w, int h)
+        {
+            var target = new RenderTexture(w, h, 24, RenderTextureFormat.ARGB32);
+            var go = new GameObject("[WP071-HudCapture]");
+            go.transform.position = new Vector3(0f, -5000f, 0f);   // nothing of the world near it
+            Camera ui = go.AddComponent<Camera>();
+            ui.enabled = false;
+            ui.clearFlags = CameraClearFlags.SolidColor;
+            ui.backgroundColor = new Color(0f, 0f, 0f, 0f);
+            ui.orthographic = true;
+            ui.nearClipPlane = 0.01f; ui.farClipPlane = 10f;
+            ui.targetTexture = target;
+            var data = UnityEngine.Rendering.Universal.CameraExtensions.GetUniversalAdditionalCameraData(ui);
+            data.renderType = UnityEngine.Rendering.Universal.CameraRenderType.Base;
+            data.renderPostProcessing = false;
+            var switched = new List<Canvas>();
+            int mask = 0;
+            foreach (Canvas c in UnityEngine.Object.FindObjectsOfType<Canvas>())
+            {
+                if (!c.isRootCanvas || !c.enabled || !c.gameObject.activeInHierarchy || c.renderMode != RenderMode.ScreenSpaceOverlay) continue;
+                c.renderMode = RenderMode.ScreenSpaceCamera;
+                c.worldCamera = ui;
+                c.planeDistance = 1f;
+                mask |= 1 << c.gameObject.layer;
+                switched.Add(c);
+            }
+
+            ui.cullingMask = mask;
+            Canvas.ForceUpdateCanvases();
+            ui.Render();
+            foreach (Canvas c in switched) { c.renderMode = RenderMode.ScreenSpaceOverlay; c.worldCamera = null; }
+            RenderTexture prev = RenderTexture.active;
+            RenderTexture.active = target;
+            var read = new Texture2D(w, h, TextureFormat.RGBA32, false);
+            read.ReadPixels(new Rect(0, 0, w, h), 0, 0);
+            RenderTexture.active = prev;
+            Color32[] px = read.GetPixels32();
+            UnityEngine.Object.Destroy(read);
+            ui.targetTexture = null;
+            UnityEngine.Object.Destroy(go);
+            target.Release();
+            UnityEngine.Object.Destroy(target);
+            Debug.Log("[DD-TEST] wp071.hudcapture canvases=" + switched.Count);
+            return px;
+        }
+
+        // The viewmodel layer alone with the viewmodel camera's own pose and projection (CameraViewmodelHudPlayTests pattern), over
+        // black and over white: a pixel that differs from the background in either pass is covered. hideWeapon: every FP-layer renderer
+        // outside the arms rig is off for the pass (the weapon), so the count is the arms'.
+        private static int RenderFp(Camera vm, string key, Transform arms, bool hideWeapon, bool save)
+        {
+            const int W = 1920, H = 1080, Tol = 6;
+            var hidden = new List<Renderer>();
+            if (hideWeapon)
+                foreach (Renderer r in UnityEngine.Object.FindObjectsOfType<Renderer>())
+                    if (r.enabled && r.gameObject.layer == DD.Prototype.CameraSystem.CameraLayers.FirstPersonView && !r.transform.IsChildOf(arms)) { r.enabled = false; hidden.Add(r); }
+            var target = new RenderTexture(W, H, 24, RenderTextureFormat.ARGB32);
+            var go = new GameObject("[WP071-FpProbe]");
+            go.transform.SetPositionAndRotation(vm.transform.position, vm.transform.rotation);
+            Camera cam = go.AddComponent<Camera>();
+            cam.enabled = false;
+            cam.targetTexture = target;
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.cullingMask = 1 << DD.Prototype.CameraSystem.CameraLayers.FirstPersonView;
+            cam.nearClipPlane = vm.nearClipPlane;
+            cam.farClipPlane = vm.farClipPlane;
+            cam.aspect = (float)W / H;
+            cam.projectionMatrix = vm.projectionMatrix;
+            Color32[] black = FpPass(cam, target, Color.black, W, H), white = FpPass(cam, target, Color.white, W, H);
+            foreach (Renderer r in hidden) r.enabled = true;
+            int n = 0;
+            for (int i = 0; i < black.Length; i++)
+            {
+                Color32 a = black[i], b = white[i];
+                if (a.r > Tol || a.g > Tol || a.b > Tol || b.r < 255 - Tol || b.g < 255 - Tol || b.b < 255 - Tol) n++;
+            }
+
+            if (save)
+            {
+                var png = new Texture2D(W, H, TextureFormat.RGBA32, false);
+                png.SetPixels32(black); png.Apply();
+                System.IO.File.WriteAllBytes(System.IO.Path.Combine(Application.temporaryCachePath, "wp071-fp-" + key + ".png"), png.EncodeToPNG());
+                UnityEngine.Object.Destroy(png);
+            }
+
+            cam.targetTexture = null;
+            UnityEngine.Object.Destroy(go);
+            target.Release();
+            UnityEngine.Object.Destroy(target);
+            return n;
+        }
+
+        private static Color32[] FpPass(Camera cam, RenderTexture target, Color bg, int w, int h)
+        {
+            cam.backgroundColor = bg;
+            cam.Render();
+            RenderTexture previous = RenderTexture.active;
+            RenderTexture.active = target;
+            var read = new Texture2D(w, h, TextureFormat.RGBA32, false);
+            read.ReadPixels(new Rect(0, 0, w, h), 0, 0);
+            read.Apply();
+            RenderTexture.active = previous;
+            Color32[] px = read.GetPixels32();
+            UnityEngine.Object.Destroy(read);
+            return px;
         }
 
         [UnityTest]
@@ -830,676 +1158,6 @@ namespace DD.Art.Tests.PlayMode
                 else if (beat == 60) v.PlayFlinch(Vector3.right, BodyRegion.Head, false);
                 else if (beat == 80) v.PlayHeavyStagger();
             }
-        }
-    }
-
-
-    /// <summary>One opt-in read-only observation after the existing runtime writers. It never defines an anatomical palm from a bone.</summary>
-    [DefaultExecutionOrder(20000)]
-    public sealed class S06PalmSurfaceObserver : MonoBehaviour
-    {
-        public PlayerSkinnedVisual Visual;
-        public string OutputPath;
-        public bool Completed { get; private set; }
-        public bool ImportedSurfaceObserved { get; private set; }
-        [Serializable] public sealed class AssetId
-        {
-            public string name, path, guid, fileId, fileSha256, dependencyHash;
-        }
-        [Serializable] public sealed class TransformId
-        {
-            public string name, hierarchy;
-            public Vector3 localPosition, worldPosition, localScale, lossyScale;
-            public Quaternion localRotation, worldRotation;
-            public float[] localToWorldRowMajor, worldToLocalRowMajor;
-            public float localToWorldDeterminant;
-        }
-        [Serializable] public sealed class ClipId
-        {
-            public AssetId asset;
-            public float weight, lengthSeconds, animatorNormalizedTime, observedLoopSeconds, observedFrameAt30fps;
-        }
-        [Serializable] public sealed class Surface
-        {
-            public string landmarkName = "ImportedLOD0_SurfaceClosestToAuthoredRightGrip";
-            public string anatomicalIdentity = "UNKNOWN: no sealed source anatomical palm CP/polygon/barycentric landmark";
-            public string sourceControlpointMapping = "UNKNOWN: importer welding/split/reorder; source CP index is not Unity vertex index";
-            public string selection = "Minimum world-space squared distance over all actual baked LOD0 skin triangles; exact float ties counted; no anatomical mask or acceptance threshold";
-            public AssetId mesh;
-            public TransformId renderer;
-            public int bakedVertexCount, importedVertexCount, triangleOrdinal, submeshIndex, submeshTriangleOrdinal, exactFloatTies;
-            public int[] orderedBakedVertexIndices;
-            public string bakedToImportedVertexCorrespondence = "UNKNOWN: imported mesh unreadable; vertex ordinal equivalence not independently verified";
-            public bool rendererEnabled, rendererActiveInHierarchy, rendererIsVisible;
-            public string scaleConversion = "BakeMesh(useScale:false), then renderer.localToWorld once; Unity renderer-local to world metres. Source FBX/Blender to Unity correspondence UNKNOWN";
-            public Vector3[] orderedBakedRendererLocalVertices, orderedBakedWorldVertices;
-            public Vector3 barycentric, rendererLocalPoint, worldPoint, worldWindingNormal, gripMinusSurfaceWorld;
-            public float distanceToAuthoredGripMetres;
-            public string originalMeshReadable, restWeightsAccess, bakedSnapshotSha256;
-            public TransformId[] boundBones;
-        }
-        [Serializable] public sealed class HumanMap { public string humanName, boneName; public bool useDefaultLimits; public Vector3 minimum, maximum, center; public float axisLength; }
-        [Serializable] public sealed class RestBone { public string name; public Vector3 position, scale; public Quaternion rotation; }
-        [Serializable] public sealed class MuscleScalar { public string name; public float normalizedValue; }
-        [Serializable] public sealed class VertexLayout
-        {
-            public string attribute, format;
-            public int dimension, stream, offset, stride;
-        }
-        [Serializable] public sealed class UvArray { public int channel, dimension; public Vector4[] values; }
-        [Serializable] public sealed class SubmeshArray
-        {
-            public string topology;
-            public int indexStart, indexCount, baseVertex, firstVertex, vertexCount;
-            public int[] canonicalIndices;
-            public string indicesDomain = "GetIndices(applyBaseVertex:true); baseVertex already applied exactly once";
-        }
-        [Serializable] public sealed class SkinInfluence { public int boneIndex, weightFloat32Bits; public float weight; }
-        [Serializable] public sealed class MatrixArray { public float[] rowMajor; }
-        [Serializable] public sealed class EffectiveImporter
-        {
-            public string access = "UNKNOWN_NOT_CAPTURED", error, animationType, avatarSetup, sourceAvatarReference, skinWeights, normalMode, tangentMode, metaSha256;
-            public bool isReadable, bakeAxisConversion, useFileUnits, weldVertices, keepQuads, optimizeMeshPolygons, optimizeMeshVertices, optimizeBones, optimizeGameObjects, customSkinPruningActive;
-            public float globalScale, minBoneWeight;
-            public int maxBonesPerVertex;
-        }
-        [Serializable] public sealed class MeshArrays
-        {
-            public string access = "UNKNOWN_NOT_CAPTURED", error, indexFormat, positionsFloat32LittleEndianBase64;
-            public string domain;
-            public int vertexCount;
-            public Vector3[] positions, normals;
-            public Vector4[] tangents;
-            public Color[] colors;
-            public VertexLayout[] layout;
-            public UvArray[] uvChannels;
-            public SubmeshArray[] submeshes;
-        }
-        // Additive raw primitives only: actual instance-loaded metadata and separately timed disk bytes.
-        [Serializable] public sealed class ModuleClock
-        {
-            public string access = "UNKNOWN", utc, phase, stage, unityVersion, error;
-            public int frameCount = -1;
-            public float timeSeconds, deltaTimeSeconds, realtimeSinceStartupSeconds;
-            public long stopwatchTicks;
-        }
-        [Serializable] public sealed class AssemblyDiskRead
-        {
-            public string access = "UNKNOWN_NOT_READ", path, fileSha256, error;
-            public long bytesRead = -1;
-            public ModuleClock readBegin, readEnd;
-            public string identityLimit = "Assembly.Location disk bytes during this read; not the loaded or mapped image SHA";
-        }
-        [Serializable] public sealed class LoadedTypeModule
-        {
-            public string role, actualTypeFullName, assemblyFullName, moduleName, mvid, location, error;
-            public string mvidAccess = "UNKNOWN", locationAccess = "UNKNOWN";
-            public string mvidSource = "Actual instance.GetType().Module.ModuleVersionId; never parsed from a disk DLL";
-            public string mappedImageSha256, mappedImageShaAccess = "UNKNOWN_NOT_READ_FROM_MAPPED_IMAGE";
-            public ModuleClock reflectionBegin, reflectionEnd;
-            public AssemblyDiskRead onDiskIdentity = new AssemblyDiskRead();
-        }
-        [Serializable] public sealed class LoadedModuleBoundary
-        {
-            public string schema = "s06.actual-loaded-type-module-boundary.v1";
-            public string access = "UNKNOWN_PAIRED_RAW_BODY_BAKE_NOT_REACHED";
-            public string observerSourceClaim, sourceClaimLimit = "Caller source origin, not executing HEAD or loaded-code SHA";
-            public string boundaryLimit = "Readonly before/after the ONE existing exact Body BakeMesh(false); primitive availability does not grant runtime or scientific acceptance";
-            public ModuleClock beforeBake, afterBake;
-            public LoadedTypeModule observerBeforeBake, observerAfterBake, playerRuntimeBeforeBake, playerRuntimeAfterBake;
-        }
-        [Serializable] public sealed class CorrespondenceProof
-        {
-            public string schema = "s06.same-frame-imported-baked-arrays.v1";
-            public string status = "UNKNOWN_SOURCE_TO_IMPORTED_TO_BAKED_MAPPING", observerSourceSha, utc, unityVersion, error;
-            public string mappingLimit = "Raw observation only. Counts/topology alone do not prove source corner or duplicate vertex identity. No closest-grip triangle chooses anatomy.";
-            public string skinAccess = "UNKNOWN_NOT_CAPTURED", skinError;
-            public string effectiveSkinLimit = "Stored influences are observed without normalization/pruning. Renderer/QualitySettings policies recorded; CPU/GPU effective correspondence not assumed.";
-            public string bakeDomain = "ONE existing BakeMesh(false) sample, renderer-local; baked positions to world via recorded localToWorld exactly once; no extra scale";
-            public string rendererQuality, qualitySkinWeights, bakedSnapshotSha256;
-            public int frameCount, exactBodyMeshMatches;
-            public bool originalIsReadable, rendererEnabled, rendererActive, rendererVisible;
-            public float timeSeconds, deltaTimeSeconds;
-            public AssetId importedMesh, avatar;
-            public bool avatarValid, avatarHuman;
-            public string observedState, observedWeaponId, stage;
-            public int observedWeaponParameter;
-            public EffectiveImporter effectiveImporter;
-            public TransformId renderer;
-            public Vector3 gripWorld;
-            public ClipId[] activeUpperClips;
-            public MeshArrays importedRest, bakedRendererLocal;
-            public TransformId[] rendererBones;
-            public LoadedModuleBoundary loadedModuleBoundary;
-            public MatrixArray[] importedBindposes;
-            public int[] bonesPerVertex;
-            public SkinInfluence[] allBoneWeights;
-            public string[] blendshapeNames;
-            public float[] blendshapeWeights;
-        }
-        [Serializable] public sealed class Proof
-        {
-            public string schema = "s06.imported-skin-grip-observer.v1";
-            public string status = "UNKNOWN_ANATOMICAL_PALM_AND_SOURCE_VERTEX_MATCH";
-            public string observerSourceSha, utc, stage = "LateUpdate order20000, after Animator/Humanoid and runtime mount900/left-grip910 writers";
-            public string domain = "Unity world metres; vectors are Unity axes. Triangle normal from ordered baked world geometry, not bone rotation. Source Blender units are not subtracted.";
-            public int frameCount;
-            public float timeSeconds, deltaTimeSeconds;
-            public string expectedWeapon = "ar_1 / HINAWA, legacy Aim_0", observedWeaponAnimSet, observedState, error;
-            public string testIdentity = "DD.Art.Tests.PlayMode.AnimationTests.S06_LegacyAr1_ImportedSurface_OnePostHumanoidFrame", unityVersion, observedWeaponId, observedDisplayName, observedFireMode, observedWorldSource, observedWorldScene, classicModelSource, libraryRosterKey, libraryModelPackage;
-            public AssetId[] candidateLod0SkinMeshes;
-            public bool actualLoadedLegacyIdentityKnown, specialWeaponActive, actualModelMeshSourcesMatchLibrary, avatarValid, avatarHuman;
-            public AssetId[] actualModelMeshes;
-            public string activeClipTimeLimit = "Fractional state normalized time times clip length is a state-clock estimate, not source animation sample/correspondence proof";
-            public int observedWeaponParameter, activeAuthoredClassicModelCount;
-            public bool fpArmsEnabled, tpSpecialDefaultEnabled, stateTransition, mountAligned, mountDeltaApplied;
-            public float mountDeltaDegrees, leftGripWeight, leftGripErrorMetres;
-            public bool leftGripErrorFinite;
-            public AssetId playerPrefab, avatar, baseController, weaponDefinition, weaponLibraryModel;
-            public ClipId[] activeUpperClips;
-            public HumanMap[] avatarHumanMapping;
-            public RestBone[] avatarRestSkeleton;
-            public MuscleScalar[] rightArmHandMuscles;
-            public TransformId root, rightHandBoneReference, middleProximalBoneReference, socket, weaponMount, actualModelRoot, actualModelFirstChild, authoredGripMarker, leftGripMarker;
-            public Vector3 authoredGripOffsetModelMetres, authoredGripOffsetWorldPoint;
-            public string actualGripMarkerName;
-            public Vector3 observedGripWorldPoint;
-            public float socketToObservedGripMetres;
-            public Surface surface;
-            public LoadedModuleBoundary loadedModuleBoundary = new LoadedModuleBoundary();
-            public string counterPart = "WAIT: f44 FP diagnostic inputs absent in frozen legacy TP candidate; FP remains OFF; no extra intake/sample";
-            public string proofLimit = "Loaded source/Avatar/mesh identities and observed imported surface can be proven; source CP equivalence/anatomical palm/contact/cause/fix cannot. Historical bone-midpoint proxies are not surface landmarks.";
-        }
-        public static string Argument(string name)
-        {
-            var args = Environment.GetCommandLineArgs();
-            for (int i = 0; i < args.Length - 1; i++) if (args[i] == name) return args[i + 1];
-            return null;
-        }
-        private static string Hierarchy(Transform t)
-        {
-            if (t == null) return null;
-            string path = t.name; while (t.parent != null) { t = t.parent; path = t.name + "/" + path; } return path;
-        }
-        private static TransformId TransformOf(Transform t)
-        {
-            if (t == null) return null;
-            var m = t.localToWorldMatrix; var inv = t.worldToLocalMatrix; var values = new float[16]; var inverseValues = new float[16];
-            for (int r = 0; r < 4; r++) for (int c = 0; c < 4; c++) { values[r * 4 + c] = m[r, c]; inverseValues[r * 4 + c] = inv[r, c]; }
-            return new TransformId { name = t.name, hierarchy = Hierarchy(t), localPosition = t.localPosition,
-                worldPosition = t.position, localScale = t.localScale, lossyScale = t.lossyScale, localRotation = t.localRotation, worldRotation = t.rotation, localToWorldRowMajor = values, worldToLocalRowMajor = inverseValues, localToWorldDeterminant = m.determinant };
-        }
-        private static AssetId Identity(UnityEngine.Object obj)
-        {
-            if (obj == null) return null;
-            var id = new AssetId { name = obj.name };
-#if UNITY_EDITOR
-            id.path = UnityEditor.AssetDatabase.GetAssetPath(obj);
-            if (UnityEditor.AssetDatabase.TryGetGUIDAndLocalFileIdentifier(obj, out string guid, out long fileId)) { id.guid = guid; id.fileId = fileId.ToString(CultureInfo.InvariantCulture); }
-            if (!string.IsNullOrEmpty(id.path))
-            {
-                id.dependencyHash = UnityEditor.AssetDatabase.GetAssetDependencyHash(id.path).ToString();
-                if (System.IO.File.Exists(id.path))
-                    using (var sha = System.Security.Cryptography.SHA256.Create())
-                        id.fileSha256 = BitConverter.ToString(sha.ComputeHash(System.IO.File.ReadAllBytes(id.path))).Replace("-", "").ToLowerInvariant();
-            }
-#endif
-            return id;
-        }
-        private void LateUpdate()
-        {
-            if (Completed || Visual == null || string.IsNullOrEmpty(OutputPath)) return;
-            var p = new Proof { observerSourceSha = Argument("-ddS06PalmSourceSha"), utc = DateTime.UtcNow.ToString("o"),
-                frameCount = Time.frameCount, timeSeconds = Time.time, deltaTimeSeconds = Time.deltaTime,
-                fpArmsEnabled = PlayerSkinnedVisual.FirstPersonV3Arms, tpSpecialDefaultEnabled = PlayerSkinnedVisual.TpV3On("sw_arc") };
-            try { Observe(p); ImportedSurfaceObserved = p.actualLoadedLegacyIdentityKnown && p.surface != null; if (ImportedSurfaceObserved) p.status = "PARTIAL_IMPORTED_SURFACE_OBSERVED_ANATOMY_AND_SOURCE_MAPPING_UNKNOWN"; } catch (Exception e) { p.error = e.ToString(); p.status = "UNKNOWN_OBSERVER_ACCESS_OR_PLUMBING"; }
-            string correspondencePath = Argument("-ddS06CorrespondenceProof");
-            if (!string.IsNullOrEmpty(correspondencePath) && !System.IO.File.Exists(correspondencePath))
-                try { WriteCorrespondence(correspondencePath, new CorrespondenceProof { observerSourceSha = p.observerSourceSha, utc = p.utc,
-                    frameCount = p.frameCount, unityVersion = p.unityVersion, loadedModuleBoundary = p.loadedModuleBoundary, error = p.error ?? "Requested capture was not reached; no alternate sample or retake" }); }
-                catch (Exception e) { p.error = (p.error ?? "") + "\nCorrespondence receipt write failed: " + e; }
-            try
-            {
-                System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(OutputPath));
-                System.IO.File.WriteAllText(OutputPath, JsonUtility.ToJson(p, true));
-                Debug.Log("[S06-PalmProof] frame=" + p.frameCount + " status=" + p.status + " surface=" + (p.surface != null ? p.surface.landmarkName : "UNKNOWN"));
-            }
-            finally { Completed = true; }
-        }
-        private void Observe(Proof p)
-        {
-            var an = Visual.Animator;
-            p.unityVersion = Application.unityVersion;
-            p.observedWorldSource = WorldSourceSettings.Resolve(out string worldScene).ToString(); p.observedWorldScene = worldScene;
-            var wc = WeaponRegistry.ActiveController;
-            if (wc == null || !wc.Classic.IsConfigured) throw new InvalidOperationException("Actual configured weapon controller unavailable");
-            var actualDef = wc.Classic.Definition;
-            p.weaponDefinition = Identity(actualDef); p.observedWeaponId = actualDef != null ? actualDef.weaponId : null;
-            p.observedDisplayName = wc.Classic.DisplayName; p.observedFireMode = wc.Classic.FireMode.ToString(); p.specialWeaponActive = wc.SpecialWeaponActive;
-            int layer = an.GetLayerIndex(C.OverrideUpperLayer);
-            if (layer < 0 || an.avatar == null || !an.avatar.isValid || !an.avatar.isHuman) throw new InvalidOperationException("Actual Humanoid Avatar or override layer unavailable");
-            var state = an.GetCurrentAnimatorStateInfo(layer);
-            p.observedState = state.IsName(C.AimState + "_0") ? "Aim_0" : state.shortNameHash.ToString(CultureInfo.InvariantCulture);
-            p.stateTransition = an.IsInTransition(layer); p.observedWeaponParameter = an.GetInteger(C.Weapon); p.observedWeaponAnimSet = Visual.WeaponAnimSet;
-            p.avatar = Identity(an.avatar);
-            p.avatarValid = an.avatar.isValid; p.avatarHuman = an.avatar.isHuman;
-            p.playerPrefab = Identity(CharacterAssetSet.Load().PlayerPrefab);
-            p.baseController = Identity(an.runtimeAnimatorController);
-                        var library = ClassicWeaponVisualLibrary.Current; var entry = library != null ? library.Find(wc.Classic.Id) : null;
-            if (entry == null || entry.model == null) throw new InvalidOperationException("Loaded classic library entry unavailable");
-            int entryMatches = 0; foreach (var candidate in library.entries) if (candidate != null && candidate.id == wc.Classic.Id) entryMatches++;
-            if (entryMatches != 1) throw new InvalidOperationException("Classic library identity is ambiguous");
-            p.weaponLibraryModel = Identity(entry.model); p.libraryRosterKey = entry.rosterKey; p.libraryModelPackage = entry.modelPackage;
-            p.classicModelSource = wc.ClassicModelSource.ToString();
-            var skinIds = new List<AssetId>(); foreach (var sr in Visual.Renderers) if (sr != null && sr.sharedMesh != null && sr.name.EndsWith("_LOD0", StringComparison.Ordinal)) skinIds.Add(Identity(sr.sharedMesh));
-            p.candidateLod0SkinMeshes = skinIds.ToArray();
-            var ci = an.GetCurrentAnimatorClipInfo(layer); p.activeUpperClips = new ClipId[ci.Length];
-            for (int i = 0; i < ci.Length; i++)
-            {
-                float seconds = (state.normalizedTime - Mathf.Floor(state.normalizedTime)) * ci[i].clip.length;
-                p.activeUpperClips[i] = new ClipId { asset = Identity(ci[i].clip), weight = ci[i].weight, lengthSeconds = ci[i].clip.length,
-                    animatorNormalizedTime = state.normalizedTime, observedLoopSeconds = seconds, observedFrameAt30fps = seconds * 30f };
-            }
-            var hd = an.avatar.humanDescription; p.avatarHumanMapping = new HumanMap[hd.human.Length];
-            for (int i = 0; i < hd.human.Length; i++) { var h = hd.human[i]; p.avatarHumanMapping[i] = new HumanMap { humanName = h.humanName, boneName = h.boneName,
-                useDefaultLimits = h.limit.useDefaultValues, minimum = h.limit.min, maximum = h.limit.max, center = h.limit.center, axisLength = h.limit.axisLength }; }
-            p.avatarRestSkeleton = new RestBone[hd.skeleton.Length];
-            for (int i = 0; i < hd.skeleton.Length; i++) { var b = hd.skeleton[i]; p.avatarRestSkeleton[i] = new RestBone { name = b.name, position = b.position, rotation = b.rotation, scale = b.scale }; }
-            using (var handler = new HumanPoseHandler(an.avatar, an.transform))
-            {
-                var hp = new HumanPose(); handler.GetHumanPose(ref hp); var muscles = new List<MuscleScalar>();
-                for (int i = 0; i < HumanTrait.MuscleName.Length; i++) if (HumanTrait.MuscleName[i].StartsWith("Right", StringComparison.Ordinal))
-                    muscles.Add(new MuscleScalar { name = HumanTrait.MuscleName[i], normalizedValue = hp.muscles[i] });
-                p.rightArmHandMuscles = muscles.ToArray();
-            }
-            var rig = PlayerRegistry.Primary;
-            p.root = TransformOf(rig.transform); p.rightHandBoneReference = TransformOf(an.GetBoneTransform(HumanBodyBones.RightHand));
-            p.middleProximalBoneReference = TransformOf(an.GetBoneTransform(HumanBodyBones.RightMiddleProximal));
-            p.weaponMount = TransformOf(rig.WeaponMount); p.socket = TransformOf(rig.WeaponMount.parent);
-            var align = rig.WeaponMount.GetComponent<WeaponMountAlignment>();
-            if (align != null) { p.mountAligned = align.AlignedThisFrame; p.mountDeltaApplied = align.DeltaApplied; p.mountDeltaDegrees = align.DeltaDegrees; }
-            p.leftGripWeight = Visual.GripIk.Weight; p.leftGripErrorFinite = !float.IsNaN(Visual.GripIk.LastError) && !float.IsInfinity(Visual.GripIk.LastError);
-            if (p.leftGripErrorFinite) p.leftGripErrorMetres = Visual.GripIk.LastError;
-            p.leftGripMarker = TransformOf(Visual.GripIk.Grip);
-            Transform model = null;
-            var ownedRenderers = new List<Renderer>(); wc.CollectWeaponRenderers(ownedRenderers);
-            var ownedRigs = new HashSet<WeaponVisualRig>();
-            foreach (var wr in ownedRenderers) if (wr != null) { var vr = wr.GetComponentInParent<WeaponVisualRig>(); if (vr != null) ownedRigs.Add(vr); }
-            foreach (var vr in ownedRigs)
-                if (vr.HasAuthoredModel && vr.Body != null && vr.Body != wc.SpecialRigBody && vr.Body.gameObject.activeInHierarchy)
-                    foreach (Transform child in vr.Body) if (child.name == "Model" && child.gameObject.activeInHierarchy) { p.activeAuthoredClassicModelCount++; model = child; }
-            if (p.activeAuthoredClassicModelCount != 1) throw new InvalidOperationException("Actual classic model is not unique");
-            var actualMeshIds = new List<AssetId>(); bool match = true;
-            var expectedMeshes = new HashSet<Mesh>();
-            foreach (var f in entry.model.GetComponentsInChildren<MeshFilter>(true)) if (f.sharedMesh != null) expectedMeshes.Add(f.sharedMesh);
-            foreach (var f in model.GetComponentsInChildren<MeshFilter>(true)) if (f.sharedMesh != null) { actualMeshIds.Add(Identity(f.sharedMesh)); match &= expectedMeshes.Contains(f.sharedMesh); }
-            p.actualModelMeshes = actualMeshIds.ToArray(); p.actualModelMeshSourcesMatchLibrary = match && actualMeshIds.Count > 0;
-            p.actualLoadedLegacyIdentityKnown = p.observedWeaponId == "ar_1" && wc.Classic.Id == ClassicWeaponId.AssaultRifle && entry.rosterKey == "ar_1"
-                && wc.ClassicModelSource == WeaponController.ClassicModelKind.Authored && !p.specialWeaponActive && p.observedState == "Aim_0" && !p.stateTransition && p.observedWeaponParameter == 0
-                && string.IsNullOrEmpty(p.observedWeaponAnimSet) && p.actualModelMeshSourcesMatchLibrary;
-            if (!p.actualLoadedLegacyIdentityKnown) throw new InvalidOperationException("Actual loaded ar1 legacy pose/model identity does not match requested observation");
-            p.actualModelRoot = TransformOf(model); p.actualModelFirstChild = model.childCount > 0 ? TransformOf(model.GetChild(0)) : null;
-            Transform marker = null; int markerCount = 0;
-            foreach (var t in model.GetComponentsInChildren<Transform>(true)) if (t.name == "grip_r") { marker = t; markerCount++; }
-            if (markerCount == 0) foreach (var t in model.GetComponentsInChildren<Transform>(true)) if (t.name == DD.Prototype.Core.Weapons.WeaponSocketContract.MarkerGrip) { marker = t; markerCount++; }
-            if (markerCount != 1) throw new InvalidOperationException("Authored right grip marker unavailable or ambiguous");
-            p.authoredGripMarker = TransformOf(marker); p.actualGripMarkerName = marker != null ? marker.name : null;
-            var def = actualDef; p.authoredGripOffsetModelMetres = def.GripOffset;
-            p.authoredGripOffsetWorldPoint = model.TransformPoint(def.GripOffset);
-            if (marker == null) throw new InvalidOperationException("No actual authored right-grip marker; geometry target not guessed");
-            p.observedGripWorldPoint = marker.position; p.socketToObservedGripMetres = Vector3.Distance(rig.WeaponMount.parent.position, marker.position);
-            p.surface = ClosestActualSkin(Visual.Renderers, marker.position, p);
-        }
-        private static ModuleClock ModuleTime(string stage, string phase)
-        {
-            var clock = new ModuleClock { stage = stage, phase = phase };
-            try
-            {
-                clock.utc = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture);
-                clock.stopwatchTicks = System.Diagnostics.Stopwatch.GetTimestamp();
-                clock.unityVersion = Application.unityVersion; clock.frameCount = Time.frameCount;
-                clock.timeSeconds = Time.time; clock.deltaTimeSeconds = Time.deltaTime;
-                clock.realtimeSinceStartupSeconds = Time.realtimeSinceStartup;
-                clock.access = clock.frameCount >= 0 && !string.IsNullOrEmpty(clock.unityVersion)
-                    && Finite(clock.timeSeconds) && Finite(clock.deltaTimeSeconds) && Finite(clock.realtimeSinceStartupSeconds)
-                    ? "OBSERVED_UNITY_CLOCK" : "UNKNOWN_CLOCK_PRIMITIVE";
-            }
-            catch (Exception e) { clock.error = e.ToString(); clock.access = "UNKNOWN_CLOCK_ACCESS"; }
-            return clock;
-        }
-        private static LoadedTypeModule ReadLoadedTypeModule(object instance, string role, string stage, string phase)
-        {
-            var result = new LoadedTypeModule { role = role, reflectionBegin = ModuleTime(stage, phase + "/reflection-begin") };
-            try
-            {
-                if (instance == null) throw new InvalidOperationException("Actual instance unavailable; no declared-type or disk fallback");
-                var type = instance.GetType(); var module = type.Module; var assembly = type.Assembly;
-                result.actualTypeFullName = type.FullName; result.assemblyFullName = assembly.FullName; result.moduleName = module.Name;
-                try
-                {
-                    var value = module.ModuleVersionId;
-                    if (value != Guid.Empty) { result.mvid = value.ToString("D"); result.mvidAccess = "OBSERVED_ACTUAL_TYPE_MODULE_REFLECTION"; }
-                }
-                catch (Exception e) { result.error = "MVID unavailable: " + e; }
-                try
-                {
-                    result.location = assembly.Location;
-                    if (!string.IsNullOrEmpty(result.location)) result.locationAccess = "OBSERVED_ACTUAL_ASSEMBLY_LOCATION";
-                }
-                catch (Exception e) { result.error = (result.error ?? "") + "\nLocation unavailable: " + e; }
-            }
-            catch (Exception e) { result.error = (result.error ?? "") + "\nLoaded primitive unavailable: " + e; }
-            finally { result.reflectionEnd = ModuleTime(stage, phase + "/reflection-end"); }
-            if (!string.IsNullOrEmpty(result.location))
-            {
-                var disk = result.onDiskIdentity; disk.path = result.location;
-                disk.readBegin = ModuleTime(stage, phase + "/location-file-read-begin");
-                try
-                {
-                    if (!System.IO.Path.IsPathRooted(result.location)) throw new InvalidOperationException("Actual Assembly.Location is not absolute");
-                    var bytes = System.IO.File.ReadAllBytes(result.location); disk.bytesRead = bytes.LongLength;
-                    using (var sha = System.Security.Cryptography.SHA256.Create())
-                        disk.fileSha256 = BitConverter.ToString(sha.ComputeHash(bytes)).Replace("-", "").ToLowerInvariant();
-                    disk.access = "OBSERVED_LOCATION_FILE_BYTES_NOT_LOADED_IMAGE";
-                }
-                catch (Exception e) { disk.error = e.ToString(); disk.access = "UNKNOWN_LOCATION_FILE_READ"; }
-                finally { disk.readEnd = ModuleTime(stage, phase + "/location-file-read-end"); }
-            }
-            return result;
-        }
-        private Surface ClosestActualSkin(SkinnedMeshRenderer[] renderers, Vector3 grip, Proof observation)
-        {
-            Surface best = null; float bestD2 = float.PositiveInfinity; int ties = 0;
-            string correspondencePath = Argument("-ddS06CorrespondenceProof");
-            int bodyMatches = 0; bool correspondenceWritten = false;
-            if (!string.IsNullOrEmpty(correspondencePath))
-                foreach (var r in renderers) if (r != null && r.sharedMesh != null && IsExactBody(Identity(r.sharedMesh))) bodyMatches++;
-            foreach (var r in renderers)
-            {
-                if (r == null || r.sharedMesh == null || !r.name.EndsWith("_LOD0", StringComparison.Ordinal)) continue;
-                var baked = new Mesh { name = "S06_TransientActualSkin" };
-                try
-                {
-                    LoadedModuleBoundary modules = null;
-                    if (!string.IsNullOrEmpty(correspondencePath) && bodyMatches == 1 && IsExactBody(Identity(r.sharedMesh)))
-                    {
-                        modules = observation.loadedModuleBoundary;
-                        modules.observerSourceClaim = observation.observerSourceSha;
-                        modules.access = "UNKNOWN_STARTED_BEFORE_EXISTING_BODY_BAKE";
-                        modules.observerBeforeBake = ReadLoadedTypeModule(this, "observer", observation.stage, "before-existing-body-bake");
-                        modules.playerRuntimeBeforeBake = ReadLoadedTypeModule(Visual, "actual-player-runtime", observation.stage, "before-existing-body-bake");
-                        modules.beforeBake = ModuleTime(observation.stage, "immediately-before-existing-body-bake");
-                    }
-                    r.BakeMesh(baked, false);
-                    if (modules != null)
-                    {
-                        modules.afterBake = ModuleTime(observation.stage, "immediately-after-existing-body-bake");
-                        modules.observerAfterBake = ReadLoadedTypeModule(this, "observer", observation.stage, "after-existing-body-bake");
-                        modules.playerRuntimeAfterBake = ReadLoadedTypeModule(Visual, "actual-player-runtime", observation.stage, "after-existing-body-bake");
-                        modules.access = "REFLECTION_ATTEMPTED_PRIMITIVE_AVAILABILITY_EXPLICIT_ACCEPTANCE_UNKNOWN";
-                    }
-                    var verts = baked.vertices; string bakedSha = SnapshotHash(baked, verts); int globalTriangle = 0;
-                    if (!string.IsNullOrEmpty(correspondencePath) && bodyMatches == 1 && IsExactBody(Identity(r.sharedMesh)))
-                    {
-                        var captured = CaptureCorrespondence(r, baked, bakedSha, grip, observation, bodyMatches);
-                        captured.loadedModuleBoundary = observation.loadedModuleBoundary;
-                        WriteCorrespondence(correspondencePath, captured);
-                        correspondenceWritten = true;
-                    }
-                    for (int sub = 0; sub < baked.subMeshCount; sub++)
-                    {
-                        var indices = baked.GetTriangles(sub);
-                        for (int tri = 0; tri < indices.Length; tri += 3, globalTriangle++)
-                        {
-                            int ia = indices[tri], ib = indices[tri + 1], ic = indices[tri + 2];
-                            var a = r.transform.TransformPoint(verts[ia]); var b = r.transform.TransformPoint(verts[ib]); var c = r.transform.TransformPoint(verts[ic]);
-                            if (Vector3.Cross(b - a, c - a).sqrMagnitude == 0f) continue;
-                            Vector3 bary; Vector3 q = ClosestPoint(grip, a, b, c, out bary); float d2 = (q - grip).sqrMagnitude;
-                            if (float.IsNaN(d2) || float.IsInfinity(d2)) throw new InvalidOperationException("Non-finite baked geometry distance");
-                            if (d2 == bestD2) { ties++; continue; } if (d2 > bestD2) continue;
-                            bestD2 = d2; ties = 1;
-                            var bones = new TransformId[r.bones.Length]; for (int k = 0; k < bones.Length; k++) bones[k] = TransformOf(r.bones[k]);
-                            best = new Surface { bakedSnapshotSha256 = bakedSha, mesh = Identity(r.sharedMesh), renderer = TransformOf(r.transform), bakedVertexCount = verts.Length,
-                                importedVertexCount = r.sharedMesh.vertexCount, triangleOrdinal = globalTriangle, submeshIndex = sub, submeshTriangleOrdinal = tri / 3,
-                                orderedBakedVertexIndices = new[] { ia, ib, ic }, rendererEnabled = r.enabled, rendererActiveInHierarchy = r.gameObject.activeInHierarchy, rendererIsVisible = r.isVisible, orderedBakedRendererLocalVertices = new[] { verts[ia], verts[ib], verts[ic] },
-                                orderedBakedWorldVertices = new[] { a, b, c }, barycentric = bary, rendererLocalPoint = bary.x * verts[ia] + bary.y * verts[ib] + bary.z * verts[ic],
-                                worldPoint = q, worldWindingNormal = Vector3.Cross(b - a, c - a).normalized, gripMinusSurfaceWorld = grip - q,
-                                distanceToAuthoredGripMetres = Mathf.Sqrt(d2), originalMeshReadable = r.sharedMesh.isReadable.ToString(),
-                                restWeightsAccess = "No readability/importer mutation; source CP/skin-region identity remains UNKNOWN", boundBones = bones };
-                        }
-                    }
-                }
-                finally { UnityEngine.Object.Destroy(baked); }
-            }
-            if (!string.IsNullOrEmpty(correspondencePath) && !correspondenceWritten)
-                WriteCorrespondence(correspondencePath, new CorrespondenceProof { observerSourceSha = observation.observerSourceSha,
-                    utc = observation.utc, frameCount = observation.frameCount, exactBodyMeshMatches = bodyMatches, loadedModuleBoundary = observation.loadedModuleBoundary,
-                    error = "Exact hash/GUID/localID body renderer is absent or not unique; no alternate mesh or retake" });
-            if (best != null) best.exactFloatTies = ties;
-            return best;
-        }
-        private static bool IsExactBody(AssetId mesh)
-        {
-            return mesh != null && mesh.guid == "261e740b51f494918aac84a67d803f63" && mesh.fileId == "-1683454014250015237"
-                && mesh.fileSha256 == "26cff12942a4b99714aa4400f898b2fccbc8ae20249c92a5af2a03b908696d15";
-        }
-        private static void WriteCorrespondence(string path, CorrespondenceProof data)
-        {
-            System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path));
-            System.IO.File.WriteAllText(path, JsonUtility.ToJson(data, false));
-        }
-        private static CorrespondenceProof CaptureCorrespondence(SkinnedMeshRenderer r, Mesh baked, string bakedSha, Vector3 grip, Proof p, int bodyMatches)
-        {
-            var proof = new CorrespondenceProof { observerSourceSha = p.observerSourceSha, utc = p.utc, unityVersion = p.unityVersion,
-                frameCount = p.frameCount, timeSeconds = p.timeSeconds, deltaTimeSeconds = p.deltaTimeSeconds, exactBodyMeshMatches = bodyMatches,
-                importedMesh = Identity(r.sharedMesh), avatar = p.avatar, renderer = TransformOf(r.transform), gripWorld = grip,
-                avatarValid = p.avatarValid, avatarHuman = p.avatarHuman,
-                observedState = p.observedState, observedWeaponId = p.observedWeaponId, observedWeaponParameter = p.observedWeaponParameter, stage = p.stage,
-                activeUpperClips = p.activeUpperClips, originalIsReadable = r.sharedMesh.isReadable,
-                rendererEnabled = r.enabled, rendererActive = r.gameObject.activeInHierarchy, rendererVisible = r.isVisible,
-                rendererQuality = r.quality.ToString(), qualitySkinWeights = QualitySettings.skinWeights.ToString(), bakedSnapshotSha256 = bakedSha };
-            proof.importedRest = ReadMeshArrays(r.sharedMesh, "Imported mesh-local rest; source basis UNKNOWN until independently matched");
-            proof.bakedRendererLocal = ReadMeshArrays(baked, "Actual CPU posed renderer-local from same BakeMesh(false) instance");
-            proof.effectiveImporter = ReadEffectiveImporter(proof.importedMesh);
-            try
-            {
-                var bones = r.bones; proof.rendererBones = new TransformId[bones.Length];
-                for (int i = 0; i < bones.Length; i++)
-                {
-                    if (bones[i] == null) throw new InvalidOperationException("Null bound bone");
-                    proof.rendererBones[i] = TransformOf(bones[i]);
-                }
-                var bindposes = r.sharedMesh.bindposes; proof.importedBindposes = new MatrixArray[bindposes.Length];
-                for (int i = 0; i < bindposes.Length; i++)
-                {
-                    var values = new float[16]; for (int row = 0; row < 4; row++) for (int col = 0; col < 4; col++)
-                    {
-                        float value = bindposes[i][row, col]; if (!Finite(value)) throw new InvalidOperationException("Non-finite bindpose");
-                        values[4 * row + col] = value;
-                    }
-                    proof.importedBindposes[i] = new MatrixArray { rowMajor = values };
-                }
-                // Borrowed mesh storage: copy immediately; do not dispose or retain these views.
-                var counts = r.sharedMesh.GetBonesPerVertex(); var weights = r.sharedMesh.GetAllBoneWeights();
-                proof.bonesPerVertex = new int[counts.Length]; for (int i = 0; i < counts.Length; i++) proof.bonesPerVertex[i] = counts[i];
-                proof.allBoneWeights = new SkinInfluence[weights.Length]; int expectedWeights = 0;
-                foreach (int count in proof.bonesPerVertex) expectedWeights += count;
-                if (counts.Length != r.sharedMesh.vertexCount || expectedWeights != weights.Length || bindposes.Length != bones.Length)
-                    throw new InvalidOperationException("Stored skin slices/counts/bindpose/bone count mismatch");
-                for (int i = 0; i < weights.Length; i++)
-                {
-                    var w = weights[i];
-                    if (w.boneIndex < 0 || w.boneIndex >= bones.Length || !Finite(w.weight) || w.weight < 0f)
-                        throw new InvalidOperationException("Stored skin influence invalid/non-finite");
-                    proof.allBoneWeights[i] = new SkinInfluence { boneIndex = w.boneIndex, weight = w.weight,
-                        weightFloat32Bits = BitConverter.ToInt32(BitConverter.GetBytes(w.weight), 0) };
-                }
-                proof.blendshapeNames = new string[r.sharedMesh.blendShapeCount]; proof.blendshapeWeights = new float[r.sharedMesh.blendShapeCount];
-                for (int i = 0; i < proof.blendshapeNames.Length; i++)
-                {
-                    proof.blendshapeNames[i] = r.sharedMesh.GetBlendShapeName(i); proof.blendshapeWeights[i] = r.GetBlendShapeWeight(i);
-                    if (!Finite(proof.blendshapeWeights[i])) throw new InvalidOperationException("Non-finite blendshape weight");
-                }
-                proof.skinAccess = "COPIED_STORED_WEIGHTS_BINDPOSES_BONE_ORDER_NO_MUTATION";
-            }
-            catch (Exception e) { proof.skinAccess = "UNKNOWN_SKIN_ACCESS_OR_CONTRACT"; proof.skinError = e.ToString(); }
-            return proof;
-        }
-        private static bool Finite(float value) { return !float.IsNaN(value) && !float.IsInfinity(value); }
-        private static EffectiveImporter ReadEffectiveImporter(AssetId mesh)
-        {
-            var result = new EffectiveImporter();
-#if UNITY_EDITOR
-            try
-            {
-                var importer = UnityEditor.AssetImporter.GetAtPath(mesh.path) as UnityEditor.ModelImporter;
-                if (importer == null) throw new InvalidOperationException("Actual body ModelImporter unavailable");
-                result.animationType = importer.animationType.ToString(); result.avatarSetup = importer.avatarSetup.ToString();
-                var sourceAvatar = Identity(importer.sourceAvatar);
-                result.sourceAvatarReference = sourceAvatar == null ? "NOT_REFERENCED" : JsonUtility.ToJson(sourceAvatar);
-                result.isReadable = importer.isReadable; result.bakeAxisConversion = importer.bakeAxisConversion;
-                result.useFileUnits = importer.useFileUnits; result.globalScale = importer.globalScale;
-                result.weldVertices = importer.weldVertices; result.keepQuads = importer.keepQuads;
-                result.optimizeMeshPolygons = importer.optimizeMeshPolygons; result.optimizeMeshVertices = importer.optimizeMeshVertices;
-                result.optimizeBones = importer.optimizeBones; result.optimizeGameObjects = importer.optimizeGameObjects;
-                result.skinWeights = importer.skinWeights.ToString(); result.maxBonesPerVertex = importer.maxBonesPerVertex;
-                result.customSkinPruningActive = result.skinWeights == "Custom";
-                result.minBoneWeight = importer.minBoneWeight; result.normalMode = importer.importNormals.ToString(); result.tangentMode = importer.importTangents.ToString();
-                using (var sha = System.Security.Cryptography.SHA256.Create())
-                    result.metaSha256 = BitConverter.ToString(sha.ComputeHash(System.IO.File.ReadAllBytes(mesh.path + ".meta"))).Replace("-", "").ToLowerInvariant();
-                result.access = "OBSERVED_EFFECTIVE_IMPORTER_GETTERS_NO_MUTATION";
-            }
-            catch (Exception e) { result.access = "UNKNOWN_EFFECTIVE_IMPORTER_ACCESS"; result.error = e.ToString(); }
-#else
-            result.access = "UNKNOWN_EDITOR_IMPORTER_GETTERS_REQUIRED";
-#endif
-            return result;
-        }
-        private static MeshArrays ReadMeshArrays(Mesh mesh, string domain)
-        {
-            var result = new MeshArrays { domain = domain, vertexCount = mesh.vertexCount };
-#if UNITY_EDITOR
-            try
-            {
-                // Editor snapshot bypasses isReadable without changing importer/asset flags.
-                using (var snapshot = UnityEditor.MeshUtility.AcquireReadOnlyMeshData(mesh))
-                {
-                    var data = snapshot[0]; result.vertexCount = data.vertexCount; result.indexFormat = data.indexFormat.ToString();
-                    var layout = new List<VertexLayout>();
-                    foreach (UnityEngine.Rendering.VertexAttribute attribute in Enum.GetValues(typeof(UnityEngine.Rendering.VertexAttribute)))
-                        if (data.HasVertexAttribute(attribute))
-                        {
-                            int stream = data.GetVertexAttributeStream(attribute);
-                            layout.Add(new VertexLayout { attribute = attribute.ToString(), format = data.GetVertexAttributeFormat(attribute).ToString(),
-                                dimension = data.GetVertexAttributeDimension(attribute), stream = stream, offset = data.GetVertexAttributeOffset(attribute), stride = data.GetVertexBufferStride(stream) });
-                        }
-                    result.layout = layout.ToArray();
-                    using (var values = new Unity.Collections.NativeArray<Vector3>(data.vertexCount, Unity.Collections.Allocator.Temp))
-                    {
-                        data.GetVertices(values); result.positions = values.ToArray();
-                        foreach (var v in result.positions) if (!Finite(v.x) || !Finite(v.y) || !Finite(v.z)) throw new InvalidOperationException("Non-finite mesh position");
-                        result.positionsFloat32LittleEndianBase64 = PositionBytes(result.positions);
-                        if (data.HasVertexAttribute(UnityEngine.Rendering.VertexAttribute.Normal))
-                        {
-                            data.GetNormals(values); result.normals = values.ToArray();
-                            foreach (var v in result.normals) if (!Finite(v.x) || !Finite(v.y) || !Finite(v.z)) throw new InvalidOperationException("Non-finite mesh normal");
-                        }
-                    }
-                    using (var values = new Unity.Collections.NativeArray<Vector4>(data.vertexCount, Unity.Collections.Allocator.Temp))
-                    {
-                        if (data.HasVertexAttribute(UnityEngine.Rendering.VertexAttribute.Tangent))
-                        {
-                            data.GetTangents(values); result.tangents = values.ToArray();
-                            foreach (var v in result.tangents) if (!Finite(v.x) || !Finite(v.y) || !Finite(v.z) || !Finite(v.w)) throw new InvalidOperationException("Non-finite mesh tangent");
-                        }
-                        var uvs = new List<UvArray>();
-                        for (int channel = 0; channel < 8; channel++)
-                        {
-                            var attr = (UnityEngine.Rendering.VertexAttribute)((int)UnityEngine.Rendering.VertexAttribute.TexCoord0 + channel);
-                            if (!data.HasVertexAttribute(attr)) continue;
-                            int dimension = data.GetVertexAttributeDimension(attr);
-                            if (dimension < 1 || dimension > 4) throw new InvalidOperationException("Unsupported UV dimension");
-                            data.GetUVs(channel, values);
-                            var copied = values.ToArray();
-                            foreach (var v in copied) if (!Finite(v.x) || !Finite(v.y) || !Finite(v.z) || !Finite(v.w)) throw new InvalidOperationException("Non-finite mesh UV");
-                            uvs.Add(new UvArray { channel = channel, dimension = dimension, values = copied });
-                        }
-                        result.uvChannels = uvs.ToArray();
-                    }
-                    if (data.HasVertexAttribute(UnityEngine.Rendering.VertexAttribute.Color))
-                        using (var values = new Unity.Collections.NativeArray<Color>(data.vertexCount, Unity.Collections.Allocator.Temp))
-                        {
-                            data.GetColors(values); result.colors = values.ToArray();
-                            foreach (var v in result.colors) if (!Finite(v.r) || !Finite(v.g) || !Finite(v.b) || !Finite(v.a)) throw new InvalidOperationException("Non-finite mesh color");
-                        }
-                    result.submeshes = new SubmeshArray[data.subMeshCount];
-                    for (int sub = 0; sub < data.subMeshCount; sub++)
-                    {
-                        var descriptor = data.GetSubMesh(sub);
-                        using (var indices = new Unity.Collections.NativeArray<int>(descriptor.indexCount, Unity.Collections.Allocator.Temp))
-                        {
-                            data.GetIndices(indices, sub, true); var canonical = indices.ToArray();
-                            foreach (int index in canonical) if (index < 0 || index >= data.vertexCount) throw new InvalidOperationException("Mesh index out of range");
-                            result.submeshes[sub] = new SubmeshArray { topology = descriptor.topology.ToString(), indexStart = descriptor.indexStart,
-                                indexCount = descriptor.indexCount, baseVertex = descriptor.baseVertex, firstVertex = descriptor.firstVertex,
-                                vertexCount = descriptor.vertexCount, canonicalIndices = canonical };
-                        }
-                    }
-                    result.access = "COPIED_READ_ONLY_MESH_DATA_NO_IMPORTER_MUTATION";
-                }
-            }
-            catch (Exception e) { result.access = "UNKNOWN_MESH_DATA_ACCESS"; result.error = e.ToString(); }
-#else
-            result.access = "UNKNOWN_EDITOR_MESHUTILITY_REQUIRED_NO_READABILITY_CHANGE";
-#endif
-            return result;
-        }
-        private static string PositionBytes(Vector3[] positions)
-        {
-            using (var bytes = new System.IO.MemoryStream())
-            using (var writer = new System.IO.BinaryWriter(bytes))
-            {
-                foreach (var v in positions) { writer.Write(v.x); writer.Write(v.y); writer.Write(v.z); }
-                writer.Flush(); return Convert.ToBase64String(bytes.ToArray());
-            }
-        }
-        private static string SnapshotHash(Mesh baked, Vector3[] verts)
-        {
-            using (var memory = new System.IO.MemoryStream())
-            using (var writer = new System.IO.BinaryWriter(memory))
-            {
-                writer.Write(verts.Length); foreach (var v in verts) { writer.Write(v.x); writer.Write(v.y); writer.Write(v.z); }
-                writer.Write(baked.subMeshCount);
-                for (int sub = 0; sub < baked.subMeshCount; sub++) { var triangles = baked.GetTriangles(sub); writer.Write(triangles.Length); foreach (int index in triangles) writer.Write(index); }
-                writer.Flush(); using (var sha = System.Security.Cryptography.SHA256.Create())
-                    return BitConverter.ToString(sha.ComputeHash(memory.ToArray())).Replace("-", "").ToLowerInvariant();
-            }
-        }
-        private static Vector3 ClosestPoint(Vector3 p, Vector3 a, Vector3 b, Vector3 c, out Vector3 bary)
-        {
-            Vector3 ab = b - a, ac = c - a, ap = p - a; float d1 = Vector3.Dot(ab, ap), d2 = Vector3.Dot(ac, ap);
-            if (d1 <= 0f && d2 <= 0f) { bary = new Vector3(1, 0, 0); return a; }
-            Vector3 bp = p - b; float d3 = Vector3.Dot(ab, bp), d4 = Vector3.Dot(ac, bp);
-            if (d3 >= 0f && d4 <= d3) { bary = new Vector3(0, 1, 0); return b; }
-            float vc = d1 * d4 - d3 * d2;
-            if (vc <= 0f && d1 >= 0f && d3 <= 0f) { float v = d1 / (d1 - d3); bary = new Vector3(1 - v, v, 0); return a + v * ab; }
-            Vector3 cp = p - c; float d5 = Vector3.Dot(ab, cp), d6 = Vector3.Dot(ac, cp);
-            if (d6 >= 0f && d5 <= d6) { bary = new Vector3(0, 0, 1); return c; }
-            float vb = d5 * d2 - d1 * d6;
-            if (vb <= 0f && d2 >= 0f && d6 <= 0f) { float w = d2 / (d2 - d6); bary = new Vector3(1 - w, 0, w); return a + w * ac; }
-            float va = d3 * d6 - d5 * d4;
-            if (va <= 0f && d4 - d3 >= 0f && d5 - d6 >= 0f) { float w = (d4 - d3) / ((d4 - d3) + (d5 - d6)); bary = new Vector3(0, 1 - w, w); return b + w * (c - b); }
-            float inv = 1f / (va + vb + vc), v2 = vb * inv, w2 = vc * inv;
-            bary = new Vector3(1 - v2 - w2, v2, w2); return a + ab * v2 + ac * w2;
-        }
-    }
-
-    internal static class ArtAnimatorLayers
-    {
-        public static int Index(Animator animator, string layerName)
-        {
-            for (int i = 0; i < animator.layerCount; i++) if (animator.GetLayerName(i) == layerName) return i;
-            return -1;
         }
     }
 }

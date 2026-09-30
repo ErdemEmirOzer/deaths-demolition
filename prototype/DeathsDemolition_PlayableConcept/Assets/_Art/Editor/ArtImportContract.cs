@@ -330,6 +330,10 @@ namespace DD.Art.Pipeline.EditorTools
             { "player_skin1", TextureClass.Character },
             { "player_skin2b", TextureClass.Character },   // WP-017: skin 2 = 2b Steel/Indigo (user 2026-09-16); 2a retired
             { "player_skin3", TextureClass.Character },
+            { "player_fparms", TextureClass.Character },         // WP-071 · AP-022 FP arms v2 (P-06): Normal / Packed / derived MS
+            { "player_fparms_skin1", TextureClass.Character },
+            { "player_fparms_skin2", TextureClass.Character },
+            { "player_fparms_skin3", TextureClass.Character },
             { "zombie_atlas", TextureClass.Character },
             { "zombie_cloth", TextureClass.Character },    // WP-020 · AP-007 v002 second (cloth) atlas
             // WP-017 · AP-008 armour atlas (one 2K set for every family / variant / state).

@@ -30,9 +30,12 @@ namespace DD.Prototype.Tests.PlayMode
         private const float StockPenetrationMaxMetres = 0.02f;
         private SpecialWeaponSahne _s;
 
+        private bool _armsBefore, _armsSet;
+
         [UnityTearDown]
         public IEnumerator Bitir()
         {
+            if (_armsSet) { PlayerSkinnedVisual.FirstPersonV3Arms = _armsBefore; _armsSet = false; }
             if (_s != null)
             {
                 yield return _s.Bitir();
@@ -659,6 +662,226 @@ namespace DD.Prototype.Tests.PlayMode
             vm.ResetAspect();
         }
 
+        /// <summary>
+        /// WP-069 × WP-071 B4b (C-00 25.09) · the check round with the FP arms drawn (main dedf06fa): every classic and both
+        /// Specials in first person. A weapon with an FP set (ar_1 / ar_2 / smg_1) is held by the arms — its rest on fpView, the
+        /// grip point on the arms' socket_weapon_r (the right hand holds it where the TP hand does), the left hand on P-06's
+        /// hands_in_weapon_frame point (both ≤ 1 cm, hands on screen); every other weapon, and a Special in hand, keeps the fpView
+        /// pose. The weapon's pixels stay off the HUD and the Special ring block (0 px; the arms are exempt — C-00 25.09).
+        /// Evidence: a 12-frame sheet with the arms and the HUD frames.
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator FP_KollarAcik_ElKavrama_KadrajVeHud()
+        {
+            _armsBefore = PlayerSkinnedVisual.FirstPersonV3Arms;   // WP-071: the arms under test, whatever the shipped default (restored in Bitir)
+            _armsSet = true;
+            PlayerSkinnedVisual.FirstPersonV3Arms = true;
+            const int Kucuk = 4;
+            int sw = KareW / Kucuk, sh = KareH / Kucuk;
+            var sheet = new Color32[sw * 4 * sh * 3];
+            var report = new List<string>();
+            var wrong = new List<string>();
+            int n = 0;
+            bool[] hudMask = null;
+            Color32[][] hudPixels = null;
+            bool fpLayout = RunHudScreen.WeaponClusterPosition(Vector2.zero, true, KareH) != RunHudScreen.WeaponClusterPosition(Vector2.zero, false, KareH);
+            CharacterAnimationSet skinnedSet = null;
+
+            // One weapon at rest in FP: pose, hands, frame (arms + weapon), sheet cell.
+            string Olc(WeaponVisualRig weaponRig, WeaponDefinition def, Transform muzzleT, FirstPersonArms arms, bool armsExpected, bool special, Camera vm, string key)
+            {
+                Transform rig = weaponRig.transform;
+                Transform anchor = DD.Prototype.CameraSystem.CameraView.ViewmodelAnchor;
+                WeaponFpViewPose pose = def.FpViewPose;
+                float posErr = Vector3.Distance(rig.position, anchor.TransformPoint(pose.position)) * 100f;
+                float angErr = Quaternion.Angle(rig.rotation, anchor.rotation * Quaternion.Euler(pose.euler));
+                bool armsOn = arms.Visible;
+                bool held = WeaponController.FirstPersonWeaponSocket != null && WeaponController.FirstPersonWeaponSocket == arms.WeaponFrame;
+                string hands = "";
+                bool handsOk = !armsExpected;
+                if (armsOn)
+                {
+                    Vector3 gripPoint = rig.position + rig.rotation * (def.GripOffset * pose.scale);
+                    Transform socketR = Derin(arms.Animator.transform, "socket_weapon_r");
+                    Transform rightHand = arms.Animator.GetBoneTransform(HumanBodyBones.RightHand);
+                    Transform leftHand = arms.Animator.GetBoneTransform(HumanBodyBones.LeftHand);
+                    float rErr = socketR != null ? Vector3.Distance(gripPoint, socketR.position) * 100f : float.PositiveInfinity;
+                    hands = ", R grip→socket_weapon_r " + (socketR != null ? rErr.ToString("0.0") + " cm" : "n/a") +
+                            " (→RightHand " + (Vector3.Distance(gripPoint, rightHand.position) * 100f).ToString("0.0") + " cm)";
+                    CharacterAnimationSet.WeaponAnimSet ws = null;
+                    foreach (CharacterAnimationSet.WeaponAnimSet w in skinnedSet.FpWeaponSets) if (w != null && w.animSet == arms.WeaponSet) ws = w;
+                    // hands_in_weapon_frame is in the contract frame (root = rig: +Z barrel, +Y up, +X right) — not the AP021_<id> model
+                    // node, which carries the FBX axis conversion (270° about X in the rig; S-06 measured 26.9 cm off through it).
+                    float lErr = ws != null && ws.hasLeftHand ? Vector3.Distance(leftHand.position, rig.TransformPoint(ws.leftHandInWeapon)) * 100f : float.PositiveInfinity;
+                    hands += !float.IsInfinity(lErr) ? ", L hand→hands_in_weapon_frame " + lErr.ToString("0.0") + " cm" : ", L target n/a";
+                    bool handsIn = EkranIcinde(Ekran(vm, rightHand.position)) && EkranIcinde(Ekran(vm, leftHand.position));
+                    hands += ", hands on screen " + (handsIn ? "yes" : "NO");
+                    handsOk = !armsExpected || (rErr <= ElSagMaxCm && lErr <= ElSolMaxCm && handsIn);
+                    // where the arms are, in the viewmodel anchor's space (x right, y up, z look; m)
+                    int drawn = 0;
+                    Bounds armBounds = default;
+                    foreach (SkinnedMeshRenderer r in arms.Animator.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+                    {
+                        if (!r.enabled || !r.gameObject.activeInHierarchy) continue;
+                        if (drawn++ == 0) armBounds = r.bounds; else armBounds.Encapsulate(r.bounds);
+                    }
+
+                    hands += " [anchor space: fp_camera " + anchor.InverseTransformPoint(arms.FpCamera.position).ToString("F3") + " RightHand " + anchor.InverseTransformPoint(rightHand.position).ToString("F3") +
+                             " LeftHand " + anchor.InverseTransformPoint(leftHand.position).ToString("F3") + " grip " + anchor.InverseTransformPoint(gripPoint).ToString("F3") +
+                             " arm renderers " + drawn + " bounds c " + anchor.InverseTransformPoint(armBounds.center).ToString("F3") + " ext " + armBounds.extents.ToString("F3") +
+                             " anchorErr " + (arms.LastAnchorError * 1000f).ToString("0.0") + " mm, rig scale " + arms.RigScale.ToString("0.00") + "]";
+                }
+
+                // C-00 25.09: the HUD / ring overlap counts the weapon's pixels only — the arms are exempt (S-09 reads their
+                // legibility by contrast); the frame with the arms is the evidence and its coverage is reported.
+                Color32[] px = VmKare(vm, null, yalnizSilah: false);
+                int cov = 0;
+                for (int i = 0; i < px.Length; i++) if (px[i].r < 240 || px[i].g > 15 || px[i].b < 240) cov++;
+                Color32[] weaponPx = VmKare(vm, null);
+                int weaponCov = 0, hudOverlap = 0, ring = 0;
+                for (int i = 0; i < weaponPx.Length; i++)
+                {
+                    if (!(weaponPx[i].r < 240 || weaponPx[i].g > 15 || weaponPx[i].b < 240)) continue;
+                    int u = i % KareW, v = i / KareW;
+                    weaponCov++;
+                    if (hudMask[i]) hudOverlap++;
+                    if (u >= RingX0 && u < RingX1 && v >= KareH - RingYTop1 && v < KareH - RingYTop0) ring++;
+                }
+
+                Vector2 grip = Ekran(vm, rig.position), muzzle = Ekran(vm, muzzleT.position);
+                string line = key + " arms " + (armsOn ? "ON" : "off") + (held ? " (holding)" : "") + ", rest vs fpView " + posErr.ToString("0.0") + " cm / " + angErr.ToString("0.0") + "°" + hands +
+                              ", cov " + cov + " px (weapon " + weaponCov + "), grip " + (EkranIcinde(grip) ? "in" : "OUT") + ", muzzle " + (EkranIcinde(muzzle) ? "in" : "OUT") +
+                              ", weapon HUD overlap " + hudOverlap + " px, weapon ring " + ring + " px";
+                report.Add(line);
+                if (armsOn != armsExpected || (!special && held != armsExpected) || !handsOk || posErr > 1f || angErr > 1.5f || !EkranIcinde(grip) || !EkranIcinde(muzzle) || ring > 0 || (fpLayout && hudOverlap > 0)) wrong.Add(line);
+                int col = n % 4, row = n / 4;
+                for (int y = 0; y < sh; y++)
+                {
+                    for (int x = 0; x < sw; x++) sheet[((2 - row) * sh + y) * sw * 4 + col * sw + x] = px[(y * Kucuk) * KareW + x * Kucuk];
+                }
+
+                n++;
+                return line;
+            }
+
+            IEnumerator Hud()
+            {
+                RunHudScreen hud = Object.FindObjectOfType<RunHudScreen>();
+                Assert.IsNotNull(hud, "Run HUD yok.");
+                Transform hudCanvas = hud.transform.Find(hud.GetType().Name + ".Canvas");
+                Assert.IsNotNull(hudCanvas != null ? hudCanvas.GetComponent<Canvas>() : null, "HUD canvas'ı yok.");
+                hudPixels = new Color32[2][];
+                yield return HudCiz(hudCanvas.GetComponent<Canvas>(), hudPixels);
+                hudMask = HudMaske(hudPixels);
+            }
+
+            // The ten classics.
+            yield return Kur();
+            Transform mount = _s.Rig.GetComponentInChildren<PlayerWeaponBinding>().WeaponMount;
+            var skinned = _s.Rig.GetComponentInChildren<PlayerSkinnedVisual>();
+            Assert.IsNotNull(skinned, "oyuncu görseli yok.");
+            skinnedSet = skinned.AnimationSet;
+            FirstPersonArms fpArms = skinned.FirstPersonArms;
+            Assert.IsNotNull(fpArms, "FP kolları yok (B4b).");
+            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.FirstPerson, instant: true);
+            yield return SpecialWeaponSahne.Kareler(60);
+            var camRig = DD.Prototype.CameraSystem.PrototypeCameraRig.Active;
+            Camera vmCam = camRig.ViewmodelCamera;
+            Assert.IsNotNull(vmCam, "FP'de görüntü modeli kamerası yok.");
+            camRig.Camera.aspect = KareW / (float)KareH;
+            vmCam.aspect = KareW / (float)KareH;
+            yield return new WaitForSecondsRealtime(3f);   // past the round banner
+            yield return Hud();
+            foreach (ClassicWeaponDefinition d in WeaponRoster.Enabled)
+            {
+                _s.Controller.EquipClassic(d.Id, _s.Config);
+                yield return Dinlenme(mount, d.RosterKey);
+                WeaponDefinition def = _s.Controller.Classic.Definition;
+                bool setli = fpArms.HasFpSetFor(def.AnimSet);   // an FP set of its own / its class (WeaponAnimSetsV3 also lists TP-only sets since B4c)
+                if (setli)
+                {
+                    yield return SpecialWeaponSahne.Bekle(() => fpArms.Visible && fpArms.FrameCalibrated && WeaponController.FirstPersonWeaponSocket == fpArms.WeaponFrame, 3f, d.RosterKey + ": kollar silahı tutmadı");
+                }
+
+                yield return SpecialWeaponSahne.Kareler(3);
+                Olc(mount.Find("ClassicWeaponRig").GetComponent<WeaponVisualRig>(), def, _s.Controller.Muzzle, fpArms, setli, false, vmCam, d.RosterKey);
+                if (def.weaponId == "ar_1") YazPng(HudUstune(SahneKare(camRig.Camera), hudPixels), KareW, KareH, "wp069-b4b-hud-ar_1.png");
+            }
+
+            camRig.Camera.ResetAspect();
+            vmCam.ResetAspect();
+
+            // Both Specials, picked up while ar_1 (an FP set) is the classic — the arms must not hold a Special they have no set for.
+            foreach (float rv in new[] { 0.1f, 0.9f })
+            {
+                yield return _s.Bitir();
+                _s = null;
+                DD.Prototype.CameraSystem.CameraModeService.ResetForTests();
+                WeaponController.FirstPersonWeaponSocket = null;
+                yield return Kur();
+                _s.Controller.EquipClassic(ClassicWeaponId.AssaultRifle, _s.Config);
+                _s.Director.SetRandomSource(new SabitRastgele(rv));
+                yield return _s.SpawnEt(0.5f);
+                SpecialWeaponPickup pickup = _s.CanliPickup();
+                Assert.IsNotNull(pickup, "Special pickup yok.");
+                SpecialWeaponId id = pickup.WeaponId;
+                _s.PickupaGit(pickup);
+                yield return SpecialWeaponSahne.Bekle(() => _s.Controller.SpecialWeaponActive, SpecialWeaponSahne.FazZamanAsimi, "Special aktif olmadı.");
+                yield return SpecialWeaponSahne.Bekle(() => !_s.Controller.PickupDonePending, 1.5f, "pickup_done / yedek");
+                DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.FirstPerson, instant: true);
+                yield return SpecialWeaponSahne.Kareler(40);
+                Transform m = _s.Rig.GetComponentInChildren<PlayerWeaponBinding>().WeaponMount;
+                yield return Dinlenme(m, id.ToString());
+                var sk = _s.Rig.GetComponentInChildren<PlayerSkinnedVisual>();
+                skinnedSet = sk.AnimationSet;
+                camRig = DD.Prototype.CameraSystem.PrototypeCameraRig.Active;
+                vmCam = camRig.ViewmodelCamera;
+                camRig.Camera.aspect = KareW / (float)KareH;
+                vmCam.aspect = KareW / (float)KareH;
+                yield return SpecialWeaponSahne.Kareler(3);
+                yield return Hud();
+                Olc(m.Find("SpecialWeaponRig").GetComponent<WeaponVisualRig>(), _s.Controller.Special.Definition, _s.Controller.SpecialRigMuzzle, sk.FirstPersonArms, false, true, vmCam, id.ToString());
+                YazPng(HudUstune(SahneKare(camRig.Camera), hudPixels), KareW, KareH, "wp069-b4b-hud-" + id + ".png");
+                camRig.Camera.ResetAspect();
+                vmCam.ResetAspect();
+            }
+
+            YazPng(sheet, sw * 4, sh * 3, "wp069-b4b-arms-sheet.png");
+            Debug.Log("[DD-TEST] wp069.b4b " + string.Join(" | ", report) + " || S-09 FP layout " + (fpLayout ? "present" : "not yet"));
+            Assert.AreEqual(12, n, "10 klasik + 2 Special ölçülmedi.");
+            Assert.IsEmpty(wrong, "kollar açık FP kontrolü: " + string.Join(" | ", wrong));
+        }
+
+        // The hands on the weapon with the arms drawn (C-00 25.09: ≤ 1 cm, S-06's IK target): the grip point on the arms'
+        // socket_weapon_r and the left hand on P-06's hands_in_weapon_frame point.
+        private const float ElSagMaxCm = 1f, ElSolMaxCm = 1f;
+
+        private static Transform Derin(Transform t, string ad)
+        {
+            if (t.name == ad) return t;
+            for (int i = 0; i < t.childCount; i++)
+            {
+                Transform r = Derin(t.GetChild(i), ad);
+                if (r != null) return r;
+            }
+
+            return null;
+        }
+
+        /// <summary>The HUD's covered pixels from its black / white passes.</summary>
+        private static bool[] HudMaske(Color32[][] hud)
+        {
+            var mask = new bool[KareW * KareH];
+            for (int i = 0; i < mask.Length; i++)
+            {
+                Color32 k = hud[0][i], w = hud[1][i];
+                mask[i] = k.r > 8 || k.g > 8 || k.b > 8 || w.r < 247 || w.g < 247 || w.b < 247;
+            }
+
+            return mask;
+        }
+
         private const int KareW = 1920, KareH = 1080;
 
         /// <summary>
@@ -724,7 +947,7 @@ namespace DD.Prototype.Tests.PlayMode
             yield return SpecialWeaponSahne.Bekle(() => alignment == null || (alignment.DeltaApplied && alignment.DeltaDegrees < 0.75f), 3f, key + ": dinlenme pozuna oturmadı");
         }
 
-        private static Color32[] VmKare(Camera vm, string png)
+        private static Color32[] VmKare(Camera vm, string png, bool yalnizSilah = true)
         {
             var target = new RenderTexture(KareW, KareH, 24, RenderTextureFormat.ARGB32);
             var go = new GameObject("[WP069T3-LodProbe]");
@@ -741,11 +964,11 @@ namespace DD.Prototype.Tests.PlayMode
             cam.aspect = KareW / (float)KareH;
             cam.projectionMatrix = vm.projectionMatrix;
             // S-06 B4b: the FP arms share the FirstPersonView layer — the probe draws the weapons only (every renderer on the
-            // layer outside a WeaponVisualRig is off for this render).
+            // layer outside a WeaponVisualRig is off for this render) unless the arms are asked for.
             s_probeHidden.Clear();
             foreach (Renderer r in Object.FindObjectsOfType<Renderer>())
             {
-                if (r.enabled && r.gameObject.layer == DD.Prototype.CameraSystem.CameraLayers.FirstPersonView && r.GetComponentInParent<WeaponVisualRig>() == null)
+                if (yalnizSilah && r.enabled && r.gameObject.layer == DD.Prototype.CameraSystem.CameraLayers.FirstPersonView && r.GetComponentInParent<WeaponVisualRig>() == null)
                 {
                     r.enabled = false;
                     s_probeHidden.Add(r);

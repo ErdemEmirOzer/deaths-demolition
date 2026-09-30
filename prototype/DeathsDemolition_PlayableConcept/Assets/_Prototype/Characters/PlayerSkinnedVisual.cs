@@ -40,7 +40,14 @@ namespace DD.Prototype.Characters
         public FirstPersonArms FirstPersonArms => _fpArms;
 
         /// <summary>Editor (prefab builder): the model the FP arms copy.</summary>
-        public void ConfigureFirstPerson(GameObject model) => _fpModel = model;
+        public void ConfigureFirstPerson(GameObject model, Mesh armsMesh = null, Material armsMaterial = null, Texture2D[] armsAlbedos = null)
+        {
+            _fpModel = model; _fpArmsMesh = armsMesh; _fpArmsMaterial = armsMaterial; _fpArmsAlbedos = armsAlbedos;
+        }
+        [Tooltip("WP-071 B4b-3: the arms-only copy of the LOD0 body the FP viewmodel draws (builder-generated).")]
+        [SerializeField] private Mesh _fpArmsMesh;
+        [SerializeField] private Material _fpArmsMaterial;       // AP-022 FP arms v2 (own UVs / maps)
+        [SerializeField] private Texture2D[] _fpArmsAlbedos;     // per PlayerSkin
         [SerializeField] private Transform _weaponSocket;
         [SerializeField] private Transform _backSocket;
         [SerializeField] private CharacterAnimationSet _animation;
@@ -290,7 +297,9 @@ namespace DD.Prototype.Characters
                 if (_fpModel != null && _animation.FpController != null && _fpArms == null)
                 {
                     _fpArms = GetComponent<FirstPersonArms>() ?? gameObject.AddComponent<FirstPersonArms>();
-                    _fpArms.Configure(_fpModel, _animation, planarVelocity, () => _authored && !_dying, _renderers.Length > 0 ? _renderers[0] : null, () => _weaponDef);
+                    // shown for a classic weapon with an FP set; hidden while a Special is held (S-02 74419a07: the Special keeps its own FP view)
+                    _fpArms.Configure(_fpModel, _animation, planarVelocity, () => _authored && !_dying && _swHold == 0, _renderers.Length > 0 ? _renderers[0] : null, () => _weaponDef, _fpArmsMesh,
+                        _fpArmsMaterial, _fpArmsAlbedos, () => _appliedSkin);
                 }
                 _animator.SetBool(AliveId, true);
                 _overrideLayer = -1;
@@ -346,9 +355,9 @@ namespace DD.Prototype.Characters
         // ---------------------------------------------------------------- WP-071 B4b per-weapon override controllers
 
         /// <summary>
-        /// WP-071 B4b (C-00 25.09): the TP v3 weapon states — OFF until P-06's TP AR/SMG re-export on the per-weapon gripOffset (the
-        /// current v3 TP clips hold the old base grip: the stock sits 6.0 cm into the shoulder); TP plays the legacy class pose (stock
-        /// 0–1 mm, S-02). The FP arms (slice 5b) are independent of it: <see cref="FirstPersonV3Arms"/>.
+        /// WP-071 B4b: the TP v3 weapon states — still OFF: with P-06's per-weapon-grip re-export the stock measures 3.7 cm in Unity
+        /// (0 in Blender) — the Humanoid retarget moves the arms 1–4 cm from the authored pose (measured: RH–LH −3.2, LH–head −4.4 cm),
+        /// over C-00's 2 cm gate. Off = the legacy class pose. The FP arms are independent: <see cref="FirstPersonV3Arms"/>.
         /// </summary>
         public static bool V3WeaponSets = false;
 
@@ -406,6 +415,39 @@ namespace DD.Prototype.Characters
         }
 
         private static readonly int CycleId = Animator.StringToHash(CharacterAnimatorContract.Cycle);
+        private static readonly int AdsWeightId = Animator.StringToHash(CharacterAnimatorContract.AdsWeight);
+        private static readonly int FireHeldId = Animator.StringToHash(CharacterAnimatorContract.FireHeld);
+
+        [PrototypeOnly(PendingDecisions.None, "WP-071 r2: a shot within this many fire intervals of the previous one continues a sustained string (the LMG fire loop takes over from the per-shot kick; it ends that long after the last shot). Invented.", true)]
+        public const float FireLoopChainIntervals = 1.6f;
+        private float _lastShotTime = -1f;
+        private bool _fireHeld;
+        private DD.Prototype.Weapons.WeaponController _weaponController;
+
+        private bool CurrentSetHasFireLoop()
+        {
+            int k = WeaponAnimSet != null ? _setKeys.IndexOf(WeaponAnimSet) : -1;
+            return k >= 0 && _animation.WeaponSets[_setIndex[k]].hasFireLoop;
+        }
+
+        private float FireIntervalSeconds => _weaponDef != null && _weaponDef.fire != null && _weaponDef.fire.rpm > 0f ? 60f / _weaponDef.fire.rpm : 0.1f;
+
+        /// <summary>WP-071 r2: the TP v3 ADS weight (the gameplay's linear ClassicWeaponRuntime.Ads01) and the end of a sustained string.</summary>
+        private void TickV3Weapon()
+        {
+            if (_weapon != CharacterAnimatorContract.WeaponPoseV3) { _animator.SetFloat(AdsWeightId, 0f); SetFireHeld(false); return; }
+            if (_weaponController == null) _weaponController = GetComponentInParent<DD.Prototype.Weapons.WeaponController>();
+            DD.Prototype.Weapons.ClassicWeaponRuntime classic = _weaponController != null ? _weaponController.Classic : null;
+            _animator.SetFloat(AdsWeightId, _swHold == 0 && classic != null ? classic.Ads01 : 0f);
+            if (_fireHeld && Time.time - _lastShotTime > FireLoopChainIntervals * FireIntervalSeconds) SetFireHeld(false);
+        }
+
+        private void SetFireHeld(bool on)
+        {
+            if (_fireHeld == on) return;
+            _fireHeld = on;
+            _animator.SetBool(FireHeldId, on);
+        }
 
         private bool CurrentSetHasCycle()
         {
@@ -417,6 +459,10 @@ namespace DD.Prototype.Characters
         public void EquipWeapon(DD.Prototype.Core.Weapons.WeaponDefinition def, ClassicWeaponId id)
         {
             _weaponDef = def;
+            _classicId = id;
+            _specialV3 = false;   // a classic equip ends a v3 Special hold
+            _lastShotTime = -1f;   // WP-071 r2: a sustained string never carries over to the next weapon
+            if (_animator != null) SetFireHeld(false);
             _burstStart = -1f;
             int k = def != null && TpV3On(def.AnimSet) && _runtimeOverrides != null ? _setKeys.IndexOf(def.AnimSet) : -1;
             if (_fpArms != null) _fpArms.SetWeaponSet(FirstPersonV3Arms && def != null ? def.AnimSet : null, def != null ? def.FpViewPose.scale : 1f);
@@ -435,6 +481,33 @@ namespace DD.Prototype.Characters
             SetWeapon(CharacterAnimatorContract.WeaponPoseV3);
         }
 
+        private ClassicWeaponId _classicId;
+        private bool _specialV3;
+
+        /// <summary>True while a Special plays through its TP v3 set (<see cref="EquipSpecialV3"/>).</summary>
+        public bool SpecialV3Active => _specialV3;
+
+        /// <summary>
+        /// WP-071 M-48 (C-00 30.09): the Special's TP v3 set (AP-022 sw_arc / sw_gel, SpecialWeaponKeys.Of) when it is switched on
+        /// (TpV3Sets / V3WeaponSets — OFF by default until the right-grip AD and C-00's decision): SwHold 0 → the set's overrides →
+        /// the v3 pose. The classic weapon's definition, burst clock and FP arms are not touched; the classic id is kept for the
+        /// way back. Returns false (the SwHold interim pose stays) when the set is off or missing.
+        /// </summary>
+        public bool EquipSpecialV3(SpecialWeaponId id)
+        {
+            string key = DD.Prototype.Core.Weapons.SpecialWeaponKeys.Of(id);
+            int k = key != null && TpV3On(key) && _runtimeOverrides != null ? _setKeys.IndexOf(key) : -1;
+            if (k < 0) return false;
+            SetSpecialHold(0);
+            if (WeaponAnimSet != _setKeys[k]) _runtimeOverrides.ApplyOverrides(_setOverrides[k]);
+            WeaponAnimSet = _setKeys[k];
+            CharacterAnimationSet.WeaponAnimSet ws = _animation.WeaponSets[_setIndex[k]];
+            if (_gripIk != null) _gripIk.SetHandInWeapon(ws.hasLeftHand, ws.leftHandInWeapon);
+            SetWeapon(CharacterAnimatorContract.WeaponPoseV3);
+            _specialV3 = true;
+            return true;
+        }
+
         /// <summary>WP-071 B4b: the reload the gameplay started is the empty one (its duration is the definition's reloadEmptySeconds — the event carries only the duration; S-02 ClassicWeaponRuntime picks tac / empty).</summary>
         private bool IsEmptyReload(float seconds)
         {
@@ -450,7 +523,7 @@ namespace DD.Prototype.Characters
         {
             switch (e.Kind)
             {
-                case SpecialUsageKind.Activated: SetSpecialHold(HoldIndexOf(e.Id)); break;
+                case SpecialUsageKind.Activated: if (!EquipSpecialV3(e.Id)) SetSpecialHold(HoldIndexOf(e.Id)); break;
                 // Fired: the swing is already fired through IWeaponHost.OnWeaponFired → PlayerProceduralAnimator.PlayFireRecoil → PlayFire()
                 // (WeaponController.FireSpecialOnce keeps that call); a second trigger here would only re-arm the same beat.
                 case SpecialUsageKind.Deactivated: SetSpecialHold(0); break;
@@ -520,6 +593,15 @@ namespace DD.Prototype.Characters
         /// <summary>Special Weapon in the right hand: 0 none, 1 Kagura Bell, 2 Ofuda Loom — the SwHold loop replaces the Aim until it ends.</summary>
         public void SetSpecialHold(int hold)
         {
+            // WP-071 M-48: a v3 Special plays on SwHold 0 through its own set — the HUD-state path's hold index is ignored while it
+            // is out, and every end path (Deactivated / Ended / Cleared / Phase None → hold 0) brings the classic set back
+            if (_specialV3 && hold > 0) return;
+            if (_specialV3 && hold == 0)
+            {
+                _specialV3 = false;
+                EquipWeapon(_weaponDef, _classicId);
+            }
+
             _swHold = Mathf.Clamp(hold, 0, 2);
             if (_authored) _animator.SetInteger(SwHoldId, _swHold);
         }
@@ -558,6 +640,15 @@ namespace DD.Prototype.Characters
 
             if (_swHold == 0 && _fpArms != null && (burstBeat || _fpArms.WeaponSet == null)) _fpArms.Fire();
             if (_swHold == 0 && _weapon == CharacterAnimatorContract.WeaponPoseV3 && !burstBeat) return;   // the legacy TP recoil stays per shot
+            // WP-071 r2: a sustained LMG string loops fire_loop (FireHeld) instead of re-triggering the per-shot kick
+            if (_swHold == 0 && _weapon == CharacterAnimatorContract.WeaponPoseV3 && CurrentSetHasFireLoop())
+            {
+                float now = Time.time;
+                bool chained = _lastShotTime >= 0f && now - _lastShotTime <= FireLoopChainIntervals * FireIntervalSeconds;
+                _lastShotTime = now;
+                if (chained) { SetFireHeld(true); FireTriggers++; return; }
+            }
+
             FireTriggers++;
             _animator.SetTrigger(_swHold > 0 ? SwFireId : FireId);
             if (_swHold == 0 && _weapon == CharacterAnimatorContract.WeaponPoseV3 && CurrentSetHasCycle()) _animator.SetTrigger(CycleId);   // WP-071 B4c: the sniper's bolt
@@ -579,6 +670,7 @@ namespace DD.Prototype.Characters
             if (!_authored || _dying) return;
             _dying = true;
             _deathEnded = false;
+            SetFireHeld(false);   // WP-071 r2: a dying body never keeps the LMG fire loop
             // WP-032C: a sideways push (|x| dominant) is the v003 death_side (2); the coin only breaks a dead-centre tie.
             int style = Mathf.Abs(localHitDirection.x) > Mathf.Abs(localHitDirection.z) && Mathf.Abs(localHitDirection.x) > 0.2f ? 2
                 : localHitDirection.z > 0.2f ? 0 : localHitDirection.z < -0.2f ? 1 : coin ? 0 : 1;
@@ -640,6 +732,7 @@ namespace DD.Prototype.Characters
             }
 
             if (_dying) return;
+            TickV3Weapon();
 
             // Local (character-space) velocity over the set's reference speed: the 2-D blend axes.
             // The child time scales were baked against the same reference, so |v| / reference is

@@ -51,6 +51,8 @@ namespace DD.Prototype.Characters
         public const string Lower = "Lower";             // trigger → WeaponLower (lowered event)
         public const string Raise = "Raise";             // trigger → WeaponRaise (raised event)
         public const string Cycle = "Cycle";             // trigger: WP-071 B4c — the v3 set's bolt cycle after a shot (sr_1)
+        public const string AdsWeight = "AdsWeight";     // float: WP-071 r2 — the TP v3 aim-down-sights weight (gameplay ClassicWeaponRuntime.Ads01)
+        public const string FireHeld = "FireHeld";       // bool: WP-071 r2 — a sustained string of shots (the LMG fire loop)
         public const string SwHold = "SwHold";           // int: 0 none, 1 Kagura Bell, 2 Ofuda Loom (SwHold_ loops replace Aim_)
         public const string Hurt = "Hurt";               // trigger (player): HurtStyle 0 = hurt_A (override_upper), 1 = hurt_B (base, gut hit with a step)
         public const string HurtStyle = "HurtStyle";     // int
@@ -95,7 +97,8 @@ namespace DD.Prototype.Characters
         // AnimatorOverrideController (animSet) swaps the weapon-specific slots
         public const int WeaponPoseV3 = 4;
         public const string AimV3State = "Aim_V3", ReloadTacState = "ReloadTac", ReloadEmptyState = "ReloadEmpty",
-            SwitchInV3State = "SwitchIn_V3", SwitchOutV3State = "SwitchOut_V3", FireV3State = "Fire_V3", CycleV3State = "Cycle_V3";
+            SwitchInV3State = "SwitchIn_V3", SwitchOutV3State = "SwitchOut_V3", FireV3State = "Fire_V3", CycleV3State = "Cycle_V3",
+            CycleAdsV3State = "CycleAds_V3", FireLoopV3State = "FireLoop_V3";
         public const string WeaponLowerState = "WeaponLower";
         public const string WeaponRaiseState = "WeaponRaise";
         public const string SwHoldState = "SwHold";           // SwHold_1 bell, SwHold_2 loom
@@ -170,6 +173,10 @@ namespace DD.Prototype.Characters
 
         /// <summary>WP-071 B4c: a set's bolt cycle after a shot (AP022_tp_&lt;set&gt;_bolt_cycle — sr_1).</summary>
         public static string PlayerWeaponCycleClipV3(string animSet) => "AP022_tp_" + animSet + "_bolt_cycle";
+        /// <summary>WP-071 r2: the bolt cycle from the ADS pose (AP022_tp_&lt;set&gt;_bolt_cycle_ads — sr_1).</summary>
+        public static string PlayerWeaponCycleAdsClipV3(string animSet) => "AP022_tp_" + animSet + "_bolt_cycle_ads";
+        /// <summary>WP-071 r2: the class's sustained-fire loop (AP022_tp_&lt;class&gt;_fire_loop — lmg).</summary>
+        public static string PlayerWeaponFireLoopClipV3(string animSet) => "AP022_tp_" + WeaponClassOf(animSet) + "_fire_loop";
         public static string PlayerWeaponClipV3(string animSet, string slot) =>
             "AP022_tp_" + (System.Array.IndexOf(WeaponOwnSlots, slot) >= 0 ? animSet : WeaponClassOf(animSet)) + "_" + slot;
         /// <summary>WP-071 B4b-3 · AP-022 slice 5: the FP viewmodel twin of a v3 slot (same class / weapon split).</summary>
@@ -272,7 +279,7 @@ namespace DD.Prototype.Characters
             ZombieHitElectroLoopV3, ZombieDeathArcElectroV3, ZombieHitGelSlipV3
         };
 
-        public const int ClipCount = 194;   // + TP Special family 12; WP-071: + B4c TP 33 (sniper 11, launcher 8, LMG 11, smg_2 3); + AP-022 slice 1 (4 deaths + 6 attacks), slice 2a (electro loop, arc_electro death, gel_slip), slices 4a/4b (AR + SMG TP 21), slice 5/5b (FP arms 29 on fpView).   // WP-032G: + sw_hold_jewel (AP-009G v007). WP-032C: AP-009D v004 (v002 36 + 49: weapon A/B/C ×5, lower/raise ×3, sw hold ×2, pickup_upper, hurt ×2, death_side, tier hits ×12, armour breaks ×3, stumble, deaths ×4, rises ×2)
+        public const int ClipCount = 217;   // + FP Special 12 (sw_arc / sw_gel); + lmg_2 tray reloads 2; + FP arms batch smg_2 FP 9 (WP-071 r2); + TP Special family 12; WP-071: + B4c TP 33 (sniper 11, launcher 8, LMG 11, smg_2 3); + AP-022 slice 1 (4 deaths + 6 attacks), slice 2a (electro loop, arc_electro death, gel_slip), slices 4a/4b (AR + SMG TP 21), slice 5/5b (FP arms 29 on fpView).   // WP-032G: + sw_hold_jewel (AP-009G v007). WP-032C: AP-009D v004 (v002 36 + 49: weapon A/B/C ×5, lower/raise ×3, sw hold ×2, pickup_upper, hurt ×2, death_side, tier hits ×12, armour breaks ×3, stumble, deaths ×4, rises ×2)
         public const int Fps = 30;
 
         /// <summary>The zombie death clips in DeathStyle order (0 fwd, 1 back, 2 side, 3 kneel; WP-032C: 4 side_R, 5 special_A, 6 special_B, 7 ultra).</summary>
@@ -350,6 +357,8 @@ namespace DD.Prototype.Characters
             public Vector3 fpCameraOffset;
             /// <summary>WP-071 B4c: the set has a bolt cycle (Cycle_V3 after each shot).</summary>
             public bool hasCycle;
+            /// <summary>WP-071 r2: the set's class has a sustained-fire loop (FireLoop_V3 while FireHeld).</summary>
+            public bool hasFireLoop;
         }
 
         public IReadOnlyList<WeaponAnimSet> WeaponSets => _weaponSets;

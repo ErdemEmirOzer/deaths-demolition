@@ -1,5 +1,6 @@
 using System.Collections;
 using DD.Prototype.CameraSystem;
+using DD.Prototype.Characters;
 using DD.Prototype.Core.Boot;
 using NUnit.Framework;
 using UnityEngine;
@@ -15,6 +16,8 @@ namespace DD.Prototype.Tests.PlayMode
     /// viewmodel camera's pose and projection; no covered pixel may fall inside the rectangle. Positive control: a
     /// pixel the weapon really covers is moved onto the rectangle's centre with the viewmodel screen shift — the
     /// overlap must then be seen, so the check is not blind whatever pose S-02 ships.
+    /// WP-070K (C-00 25.09): only the WEAPON's pixels count — S-06's FP arms (FirstPersonArms, same layer) are switched off
+    /// for the measurement; the arms may reach under the cluster (C-00 decision), the weapon may not.
     /// </summary>
     public class CameraViewmodelHudPlayTests
     {
@@ -81,14 +84,14 @@ namespace DD.Prototype.Tests.PlayMode
 
         private struct Olcum
         {
-            public int Kapli, Cakisan;
+            public int Kapli, Cakisan, KolSayisi;
             public RectInt Kutu;
             public Vector2Int Ornek;   // a covered pixel near the silhouette's centre (render-texture px, row 0 = bottom)
             public string Png;
             public override string ToString()
             {
                 float k = RefW / W;
-                return "coveredPx=" + Kapli + " inCluster=" + Cakisan + " bbox(px@1080)=x " + (Kutu.xMin * k).ToString("0") + "–" + (Kutu.xMax * k).ToString("0")
+                return "armsExcluded=" + KolSayisi + " coveredPx=" + Kapli + " inCluster=" + Cakisan + " bbox(px@1080)=x " + (Kutu.xMin * k).ToString("0") + "–" + (Kutu.xMax * k).ToString("0")
                        + " y(top) " + ((H - Kutu.yMax) * k).ToString("0") + "–" + ((H - Kutu.yMin) * k).ToString("0") + " png=" + Png;
             }
         }
@@ -97,6 +100,17 @@ namespace DD.Prototype.Tests.PlayMode
         // screen transform), over black and over white: a pixel that differs from the background in either pass
         // is covered (HudCoverageTests pattern — independent of lighting and alpha).
         private static Olcum Olc(Camera vm, Rect kume, string ad)
+        {
+            // WP-070K: the FP arms are exempt — hide their renderers while the weapon alone is measured.
+            var kollar = new System.Collections.Generic.List<Renderer>();
+            if (FirstPersonArms.Shown != null && FirstPersonArms.Shown.Animator != null)
+                foreach (Renderer r in FirstPersonArms.Shown.Animator.GetComponentsInChildren<Renderer>(true))
+                    if (r.enabled) { kollar.Add(r); r.enabled = false; }
+            try { return OlcSilah(vm, kume, ad + (kollar.Count > 0 ? "-weapon" : ""), kollar.Count); }
+            finally { foreach (Renderer r in kollar) r.enabled = true; }
+        }
+
+        private static Olcum OlcSilah(Camera vm, Rect kume, string ad, int kolSayisi)
         {
             var target = new RenderTexture(W, H, 24, RenderTextureFormat.ARGB32);
             var go = new GameObject("[WP070V-ViewmodelProbe]");
@@ -115,7 +129,7 @@ namespace DD.Prototype.Tests.PlayMode
             // cluster rect (canvas px, origin top-left) → render-texture px (row 0 = bottom)
             int x0 = Mathf.FloorToInt(kume.xMin * W / RefW), x1 = Mathf.CeilToInt(kume.xMax * W / RefW);
             int y0 = Mathf.FloorToInt(H - kume.yMax * H / RefH), y1 = Mathf.CeilToInt(H - kume.yMin * H / RefH);
-            var o = new Olcum { Kutu = new RectInt(W, H, -W, -H) };
+            var o = new Olcum { Kutu = new RectInt(W, H, -W, -H), KolSayisi = kolSayisi };
             int xMin = W, yMin = H, xMax = -1, yMax = -1;
             var png = new Texture2D(W, H, TextureFormat.RGBA32, false);
             var cik = new Color32[siyah.Length];

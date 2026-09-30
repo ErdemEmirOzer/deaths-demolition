@@ -19,12 +19,15 @@ namespace DD.Prototype.Tests.PlayMode
     /// </summary>
     public class CameraFirstPersonArmsPlayTests
     {
+        private bool _armsBefore;
+
         [UnitySetUp]
         public IEnumerator Kur()
         {
             LogAssert.ignoreFailingMessages = true;
             CameraModeService.ResetForTests();
-            DD.Prototype.Characters.PlayerSkinnedVisual.FirstPersonV3Arms = true;   // the FP arms feature under test (default OFF, C-00 26.09)
+            _armsBefore = DD.Prototype.Characters.PlayerSkinnedVisual.FirstPersonV3Arms;
+            DD.Prototype.Characters.PlayerSkinnedVisual.FirstPersonV3Arms = true;   // the FP arms feature under test, whatever the shipped default
             yield return LifecycleTestKit.BootTanMainMenuye();
             SceneManager.LoadScene(PrototypeScenes.Run, LoadSceneMode.Single);
             yield return LifecycleTestKit.SahneyiBekle(PrototypeScenes.Run);
@@ -35,7 +38,7 @@ namespace DD.Prototype.Tests.PlayMode
         public IEnumerator Yik()
         {
             CameraModeService.ResetForTests();
-            DD.Prototype.Characters.PlayerSkinnedVisual.FirstPersonV3Arms = false;
+            DD.Prototype.Characters.PlayerSkinnedVisual.FirstPersonV3Arms = _armsBefore;
             Cursor.lockState = CursorLockMode.None;
             yield return LifecycleTestKit.BootTanMainMenuye();
             LogAssert.ignoreFailingMessages = false;

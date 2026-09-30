@@ -1162,6 +1162,12 @@ MonoBehaviour:
   - {fileID: 1798856926526498776}
   - {fileID: 1982315086431680745}
   _fpModel: {fileID: 919132149155446097, guid: 261e740b51f494918aac84a67d803f63, type: 3}
+  _fpArmsMesh: {fileID: 4300000, guid: c740853786723443ab30609fdb12183a, type: 2}
+  _fpArmsMaterial: {fileID: 2100000, guid: 4fc48fad42f094c1ab2034cb575b4956, type: 2}
+  _fpArmsAlbedos:
+  - {fileID: 2800000, guid: 65496fee934404dc18c9d10c51074244, type: 3}
+  - {fileID: 2800000, guid: 73719a8b9fed64263976f44e3f8b51ac, type: 3}
+  - {fileID: 2800000, guid: e3b3deb00ea134cf5bf0597c1423b5b8, type: 3}
   _weaponSocket: {fileID: 3431939398241300177}
   _backSocket: {fileID: 7864228941427982429}
   _animation: {fileID: 11400000, guid: 94d74f682f9ea4f399ef758aa27f6ada, type: 2}

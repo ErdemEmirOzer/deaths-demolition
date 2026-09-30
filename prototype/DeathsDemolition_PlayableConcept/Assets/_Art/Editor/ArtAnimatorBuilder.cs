@@ -323,7 +323,8 @@ namespace DD.Art.Pipeline.EditorTools
                 (C.SwitchOut, AnimatorControllerParameterType.Trigger), (C.SwitchIn, AnimatorControllerParameterType.Trigger),
                 (C.Lower, AnimatorControllerParameterType.Trigger), (C.Raise, AnimatorControllerParameterType.Trigger),
                 (C.SwHold, AnimatorControllerParameterType.Int), (C.Hurt, AnimatorControllerParameterType.Trigger), (C.HurtStyle, AnimatorControllerParameterType.Int),
-                (C.SwFire, AnimatorControllerParameterType.Trigger), (C.Cycle, AnimatorControllerParameterType.Trigger));
+                (C.SwFire, AnimatorControllerParameterType.Trigger), (C.Cycle, AnimatorControllerParameterType.Trigger),
+                (C.AdsWeight, AnimatorControllerParameterType.Float), (C.FireHeld, AnimatorControllerParameterType.Bool));
             SetDefault(c, C.LocoRate, 1f);
             SetDefault(c, C.ReloadRate, 1f);
             SetDefault(c, C.Alive, true);
@@ -391,6 +392,14 @@ namespace DD.Art.Pipeline.EditorTools
                 aims[C.WeaponPoseV3] = osm.AddState(C.AimV3State);
                 aims[C.WeaponPoseV3].motion = clips[C.PlayerWeaponClipV3(v3Base, "idle_aim")];
                 aims[C.WeaponPoseV3].writeDefaultValues = false;
+                // WP-071 r2: TP aim down sights — the rest blends hip idle_aim → ads_idle by AdsWeight (the per-set AOC swaps both)
+                if (clips.TryGetValue(C.PlayerWeaponClipV3(v3Base, "ads_idle"), out AnimationClip adsIdle))
+                {
+                    var adsTree = new BlendTree { name = C.AimV3State + "_Ads", blendType = BlendTreeType.Simple1D, blendParameter = C.AdsWeight, useAutomaticThresholds = false, hideFlags = HideFlags.HideInHierarchy };
+                    AssetDatabase.AddObjectToAsset(adsTree, AssetDatabase.GetAssetPath(c));
+                    adsTree.children = new[] { Child1D(clips[C.PlayerWeaponClipV3(v3Base, "idle_aim")], 0f), Child1D(adsIdle, 1f) };
+                    aims[C.WeaponPoseV3].motion = adsTree;
+                }
             }
 
             var holds = new AnimatorState[3];
@@ -448,7 +457,17 @@ namespace DD.Art.Pipeline.EditorTools
                 {
                     if (!clips.TryGetValue(C.PlayerWeaponCycleClipV3(cs), out AnimationClip cycleClip)) continue;
                     AnimatorState cycle = OneShotUpper(osm, aims, holds, C.CycleV3State, cycleClip, 0.98f, 0.08f);
-                    FromAny(osm, cycle, 0.05f, (AnimatorConditionMode.If, 0f, C.Cycle), (AnimatorConditionMode.Equals, C.WeaponPoseV3, C.Weapon), (AnimatorConditionMode.If, 0f, C.Alive));
+                    bool adsVariant = clips.TryGetValue(C.PlayerWeaponCycleAdsClipV3(cs), out AnimationClip cycleAdsClip);
+                    if (!adsVariant)
+                    {
+                        FromAny(osm, cycle, 0.05f, (AnimatorConditionMode.If, 0f, C.Cycle), (AnimatorConditionMode.Equals, C.WeaponPoseV3, C.Weapon), (AnimatorConditionMode.If, 0f, C.Alive));
+                        break;
+                    }
+
+                    // WP-071 r2: from the ADS pose the sniper cycles its ADS bolt (AdsWeight ≥ 0.5)
+                    FromAny(osm, cycle, 0.05f, (AnimatorConditionMode.If, 0f, C.Cycle), (AnimatorConditionMode.Equals, C.WeaponPoseV3, C.Weapon), (AnimatorConditionMode.If, 0f, C.Alive), (AnimatorConditionMode.Less, 0.5f, C.AdsWeight));
+                    AnimatorState cycleAds = OneShotUpper(osm, aims, holds, C.CycleAdsV3State, cycleAdsClip, 0.98f, 0.08f);
+                    FromAny(osm, cycleAds, 0.05f, (AnimatorConditionMode.If, 0f, C.Cycle), (AnimatorConditionMode.Equals, C.WeaponPoseV3, C.Weapon), (AnimatorConditionMode.If, 0f, C.Alive), (AnimatorConditionMode.Greater, 0.5f, C.AdsWeight));
                     break;
                 }
 
@@ -487,6 +506,22 @@ namespace DD.Art.Pipeline.EditorTools
             {
                 AnimatorState fireV3 = OneShot(add.stateMachine, C.FireV3State, clips[C.PlayerWeaponClipV3(v3Base, "fire")], addEmpty, 0.9f, 0.03f);
                 FromAny(add.stateMachine, fireV3, 0.0f, (AnimatorConditionMode.If, 0f, C.Fire), (AnimatorConditionMode.Equals, C.WeaponPoseV3, C.Weapon), (AnimatorConditionMode.If, 0f, C.Alive));
+                // WP-071 r2: a sustained string (FireHeld) loops the class's fire_loop instead of the per-shot kick (the LMGs)
+                foreach (string fs in C.WeaponAnimSetsV3)
+                {
+                    if (!clips.TryGetValue(C.PlayerWeaponFireLoopClipV3(fs), out AnimationClip loopClip)) continue;
+                    AnimatorState fireLoop = add.stateMachine.AddState(C.FireLoopV3State);
+                    fireLoop.motion = loopClip;
+                    fireLoop.writeDefaultValues = false;
+                    FromAny(add.stateMachine, fireLoop, 0.05f, (AnimatorConditionMode.If, 0f, C.FireHeld), (AnimatorConditionMode.Equals, C.WeaponPoseV3, C.Weapon), (AnimatorConditionMode.If, 0f, C.Alive));
+                    AnimatorStateTransition loopOut = fireLoop.AddTransition(addEmpty);
+                    loopOut.hasExitTime = false; loopOut.hasFixedDuration = true; loopOut.duration = 0.08f;
+                    loopOut.AddCondition(AnimatorConditionMode.IfNot, 0f, C.FireHeld);
+                    AnimatorStateTransition loopDead = fireLoop.AddTransition(addEmpty);   // death ends it too (the entry only checks Alive)
+                    loopDead.hasExitTime = false; loopDead.hasFixedDuration = true; loopDead.duration = 0.08f;
+                    loopDead.AddCondition(AnimatorConditionMode.IfNot, 0f, C.Alive);
+                    break;
+                }
             }
 
             AnimatorState fire = OneShot(add.stateMachine, C.FireState, clips[C.PlayerFireRecoil], addEmpty, 0.9f, 0.05f);
@@ -959,7 +994,6 @@ namespace DD.Art.Pipeline.EditorTools
             FromAny(sm, sOut, 0.03f, (AnimatorConditionMode.If, 0f, C.SwitchOut));
             AnimatorState sIn = OneShot(sm, C.SwitchInV3State, FpClipFor(clips, baseSet, "switch_in"), aim, 0.98f, 0.1f);
             FromAny(sm, sIn, 0.03f, (AnimatorConditionMode.If, 0f, C.SwitchIn));
-
             AnimatorControllerLayer add = AddLayer(c, C.FpAdditiveLayer, null, AnimatorLayerBlendingMode.Additive, false);
             AnimatorState addEmpty = add.stateMachine.AddState(C.EmptyState);
             add.stateMachine.defaultState = addEmpty;
@@ -1013,6 +1047,25 @@ namespace DD.Art.Pipeline.EditorTools
                 });
             }
 
+            // AP-022 FP arms v2 (P-06 / C-00 25.09): a v3 set without its own FP clips (smg_2) borrows its class sibling's clips and
+            // fp_camera offset, and its left-hand point moves with the weapon's own grip_l socket (AP-021 contract): donor point +
+            // (grip_l(set) − grip_l(donor)) in the weapon rig frame — the same hand on a handguard that sits elsewhere.
+            foreach (string animSet in C.WeaponAnimSetsV3)
+            {
+                if (sets.Exists(x => x.animSet == animSet)) continue;
+                CharacterAnimationSet.WeaponAnimSet donor = sets.Find(x => C.WeaponClassOf(x.animSet) == C.WeaponClassOf(animSet));
+                if (donor == null) continue;
+                Vector3? own = WeaponGripLeft(animSet), from = WeaponGripLeft(donor.animSet);
+                bool moved = own.HasValue && from.HasValue;
+                sets.Add(new CharacterAnimationSet.WeaponAnimSet
+                {
+                    animSet = animSet, overrides = donor.overrides, hasLeftHand = donor.hasLeftHand && moved,
+                    leftHandInWeapon = moved ? donor.leftHandInWeapon + (own.Value - from.Value) : donor.leftHandInWeapon,
+                    hasSocketRot = donor.hasSocketRot, socketRotInWeapon = donor.socketRotInWeapon, fpCameraOffset = donor.fpCameraOffset
+                });
+                Debug.Log(LogPrefix + "FP set " + animSet + " borrows " + donor.animSet + (moved ? " (left hand moved by grip_l " + (own.Value - from.Value).ToString("F3") + ")" : " (no grip_l — left hand IK off)"));
+            }
+
             set.ConfigureFirstPerson(c, sets);
             EditorUtility.SetDirty(set);
             Debug.Log(LogPrefix + "FP viewmodel controller: " + c.layers.Length + " layers, sets " + sets.Count);
@@ -1025,8 +1078,20 @@ namespace DD.Art.Pipeline.EditorTools
         /// </summary>
         private static readonly Dictionary<string, Vector3> FpCameraOffsets = new Dictionary<string, Vector3>
         {
-            { "ar_1", new Vector3(-0.08f, 0f, -0.16f) }, { "ar_2", new Vector3(-0.12f, 0f, -0.30f) }, { "smg_1", new Vector3(-0.04f, 0f, -0.06f) }
+            { "ar_1", new Vector3(-0.08f, 0f, -0.16f) }, { "ar_2", new Vector3(-0.12f, 0f, -0.30f) }, { "smg_1", new Vector3(-0.04f, 0f, -0.06f) },
+            { "smg_2", new Vector3(-0.02f, -0.04f, -0.16f) },   // AP-022 FP v003 (P-06 26.09; x right, y up, z look)
+            { "sw_arc", new Vector3(-0.16f, 0f, -0.36f) }, { "sw_gel", new Vector3(-0.16f, -0.04f, -0.36f) }   // AP-022 FP Special (P-06 28.09: x right / y look / z up → here x, y up, z look)
         };
+
+        /// <summary>The AP-021 model's grip_l socket in the weapon rig frame (the model root sits on the rig at identity — WeaponVisualRig.SetModel).</summary>
+        private static Vector3? WeaponGripLeft(string key)
+        {
+            var model = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Prototype/Weapons/Arsenal/Models/AP021_" + key + "/AP021_" + key + ".fbx");
+            if (model == null) return null;
+            foreach (Transform t in model.GetComponentsInChildren<Transform>(true))
+                if (t.name == "grip_l") return model.transform.InverseTransformPoint(t.position);
+            return null;
+        }
 
         private static AnimationClip FpClipFor(Dictionary<string, AnimationClip> clips, string animSet, string slot)
         {
@@ -1034,67 +1099,9 @@ namespace DD.Art.Pipeline.EditorTools
             return clips.TryGetValue(C.PlayerFpClipV3(animSet, slot), out AnimationClip cls) ? cls : null;
         }
 
-        /// <summary>Import and bind only the accepted TP Special family; preserve existing controllers, sets and FP assets.</summary>
-        public static void BuildTpSpecialFamily()
-        {
-            var manifest = ArtAnimationClipContract.Manifest();
-            var set = AssetDatabase.LoadAssetAtPath<CharacterAnimationSet>(ArtCharacterPrefabBuilder.PlayerAnimationSet);
-            if (set == null || set.Controller == null) throw new InvalidOperationException("TP base set missing");
-            var table = new List<CharacterAnimationSet.Entry>(set.Clips);
-            var clips = new Dictionary<string, AnimationClip>(StringComparer.Ordinal);
-            foreach (var entry in table) clips.Add(entry.name, entry.clip);
-            var familyNames = new List<string>();
-            foreach (var name in manifest.Keys) if (name.StartsWith("AP022_tp_sw_", StringComparison.Ordinal)) familyNames.Add(name);
-            familyNames.Sort(StringComparer.Ordinal);
-            if (familyNames.Count != 12) throw new InvalidDataException("Expected exact twelve TP Special clips");
-            foreach (var name in familyNames)
-            {
-                var spec = manifest[name];
-                var path = ArtAnimationClipContract.FbxPath(spec);
-                AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
-                var importer = AssetImporter.GetAtPath(path) as ModelImporter;
-                // Only these new metas: remove Unity's auto-mapped eye/jaw extras using the established 52-bone contract.
-                if (ArtCharacterContract.ApplyHumanDescription(importer)) importer.SaveAndReimport();
-                var clip = ArtAnimationClipContract.ClipOf(spec);
-                if (clip == null) throw new InvalidOperationException("TP Special clip missing: " + name);
-                clips[name] = clip;
-                table.RemoveAll(entry => entry.name == name);
-                table.Add(new CharacterAnimationSet.Entry { name = name, clip = clip, loop = spec.loop,
-                    seconds = spec.seconds, layer = spec.layer, additive = spec.additive, frames = spec.frames,
-                    events = spec.EventsText(), speedMps = spec.speedMps, stanceFrames = spec.stanceFrames });
-            }
-            var sets = new List<CharacterAnimationSet.WeaponAnimSet>(set.WeaponSets);
-            foreach (var key in new[] { "sw_arc", "sw_gel" })
-            {
-                string path = ArtCharacterContract.PlayerFolder + "/Generated/DD_Player_" + key + ".overrideController";
-                var aoc = AssetDatabase.LoadAssetAtPath<AnimatorOverrideController>(path);
-                if (aoc == null) { aoc = new AnimatorOverrideController(set.Controller); AssetDatabase.CreateAsset(aoc, path); }
-                aoc.runtimeAnimatorController = set.Controller;
-                var pairs = new List<KeyValuePair<AnimationClip, AnimationClip>>();
-                foreach (var slot in ClassAndOwnSlots)
-                {
-                    if (!clips.TryGetValue(C.PlayerWeaponClipV3("ar_1", slot), out var from)) throw new InvalidOperationException("Base slot missing: " + slot);
-                    var to = V3SlotClip(clips, key, slot);
-                    if (to == null) throw new InvalidOperationException("Special slot missing: " + key + "/" + slot);
-                    pairs.Add(new KeyValuePair<AnimationClip, AnimationClip>(from, to));
-                }
-                aoc.ApplyOverrides(pairs);
-                EditorUtility.SetDirty(aoc);
-                AssetDatabase.SaveAssetIfDirty(aoc);
-                string restName = clips.ContainsKey("AP022_tp_" + key + "_idle_aim") ? "AP022_tp_" + key + "_idle_aim" : C.PlayerWeaponClipV3(key, "idle_aim");
-                var rest = manifest[restName];
-                sets.RemoveAll(entry => entry.animSet == key);
-                sets.Add(new CharacterAnimationSet.WeaponAnimSet { animSet = key, overrides = aoc,
-                    hasLeftHand = rest.hasLeftHandInWeapon, leftHandInWeapon = rest.leftHandInWeapon, hasCycle = false });
-            }
-            set.Configure(set.Idle, set.Walk, set.WalkSpeedMetersPerSecond, set.Controller, set.Source, table, set.ManifestSchema, set.LocomotionReferenceSpeed);
-            set.ConfigureWeaponSets(sets);
-            EditorUtility.SetDirty(set);
-            AssetDatabase.SaveAssetIfDirty(set);
-            Debug.Log(LogPrefix + "TP Special family bound: 12 clips, 2 AOCs; existing controller/FP preserved");
-        }
-
         private static readonly string[] ClassAndOwnSlots = { "idle_aim", "switch_in", "switch_out", "fire", "reload_tac", "reload_empty" };
+        /// <summary>WP-071 r2: the TP AOC slots — + ads_idle (the Aim_V3 ADS blend); the FP controller has no ADS state.</summary>
+        private static readonly string[] TpClassAndOwnSlots = { "idle_aim", "switch_in", "switch_out", "fire", "reload_tac", "reload_empty", "ads_idle" };
 
         private static void WriteWeaponSets(string setPath, AnimatorController controller, Dictionary<string, AnimationClip> clips, Dictionary<string, ArtAnimationClipContract.ClipSpec> manifest)
         {
@@ -1115,7 +1122,7 @@ namespace DD.Art.Pipeline.EditorTools
                 // weapon slots always; the class slots too when the set is another class (smg_1 over the ar base)
                 bool otherClass = C.WeaponClassOf(animSet) != C.WeaponClassOf(baseSet);
                 var pairs = new List<KeyValuePair<AnimationClip, AnimationClip>>();
-                foreach (string slot in otherClass ? ClassAndOwnSlots : C.WeaponOwnSlots)
+                foreach (string slot in otherClass ? TpClassAndOwnSlots : C.WeaponOwnSlots)
                 {
                     if (!clips.TryGetValue(C.PlayerWeaponClipV3(baseSet, slot), out AnimationClip from)) continue;
                     AnimationClip to = V3SlotClip(clips, animSet, slot);
@@ -1130,7 +1137,8 @@ namespace DD.Art.Pipeline.EditorTools
                 {
                     animSet = animSet, overrides = aoc,
                     hasLeftHand = rest != null && rest.hasLeftHandInWeapon, leftHandInWeapon = rest != null ? rest.leftHandInWeapon : Vector3.zero,
-                    hasCycle = clips.ContainsKey(C.PlayerWeaponCycleClipV3(animSet))
+                    hasCycle = clips.ContainsKey(C.PlayerWeaponCycleClipV3(animSet)),
+                    hasFireLoop = clips.ContainsKey(C.PlayerWeaponFireLoopClipV3(animSet))
                 });
             }
 

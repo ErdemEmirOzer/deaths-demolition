@@ -1,0 +1,200 @@
+{
+ "package": "AP-022",
+ "item": "FP arms v2 (C-00 25.09): FP-only arm mesh, same PlayerRig v002 skeleton and FP clips; TP body unchanged",
+ "date": "2026-09-25",
+ "owner": "P-06",
+ "to": "S-06 (WP-071 FirstPersonArms), info S-02",
+ "fbx": {
+  "file": "AP022_player_fparms_v2.fbx",
+  "armature": "PlayerRig (77 bones, rest = player_base_v002.fbx)",
+  "mesh": "Player_FPArms_LOD0",
+  "verts": 6324,
+  "tris": 12456,
+  "uv": "UVMap (single, both arms own texels)",
+  "material": "M_Player_FPArms",
+  "weighted_bones": [
+   "LeftHand",
+   "LeftIndex1",
+   "LeftIndex2",
+   "LeftIndex3",
+   "LeftLowerArm",
+   "LeftMiddle1",
+   "LeftMiddle2",
+   "LeftMiddle3",
+   "LeftPinky1",
+   "LeftPinky2",
+   "LeftPinky3",
+   "LeftRing1",
+   "LeftRing2",
+   "LeftRing3",
+   "LeftThumb1",
+   "LeftThumb2",
+   "LeftThumb3",
+   "LeftUpperArm",
+   "RightHand",
+   "RightIndex1",
+   "RightIndex2",
+   "RightIndex3",
+   "RightLowerArm",
+   "RightMiddle1",
+   "RightMiddle2",
+   "RightMiddle3",
+   "RightPinky1",
+   "RightPinky2",
+   "RightPinky3",
+   "RightRing1",
+   "RightRing2",
+   "RightRing3",
+   "RightThumb1",
+   "RightThumb2",
+   "RightThumb3",
+   "RightUpperArm",
+   "lowerarm_twist_01_l",
+   "lowerarm_twist_01_r",
+   "lowerarm_twist_02_l",
+   "lowerarm_twist_02_r"
+  ],
+  "max_influences": 3,
+  "lods": "LOD0 only",
+  "reimport": "PASS",
+  "exporter": "player_base_v002 settings (-Z fwd, Y up, FBX units, no leaf bones, all bones, tangent space, path_mode STRIP)"
+ },
+ "textures": {
+  "size": 4096,
+  "albedo": {
+   "skin1": "textures/AP022_fparms_albedo_skin1_4k.png",
+   "skin2": "textures/AP022_fparms_albedo_skin2_4k.png",
+   "skin3": "textures/AP022_fparms_albedo_skin3_4k.png"
+  },
+  "normal": "textures/AP022_fparms_normal_4k.png (OpenGL +Y, tangent space)",
+  "orm": "textures/AP022_fparms_orm_4k.png (R occlusion, G roughness, B metallic = AP-006 convention)",
+  "colorspace": "albedo sRGB; normal / ORM linear",
+  "skins": "roll = primary, roll fold = secondary, cords + stitches = accent, kote leather = that skin's TP kote sample (AP-006 texture-manifest-v003)",
+  "palette_skin1_measured": {
+   "roll": "#E7E1D0",
+   "roll_fold": "#C0B8A7",
+   "cords": "#A3494C",
+   "kote": "#40332F",
+   "skin_forearm": "#B98B6B",
+   "wrap_back": "#E7E1D0"
+  },
+  "tp_kote_sample": "#3F332E",
+  "roughness_mean": {
+   "skin": 0.588,
+   "kote": 0.606,
+   "cords": 0.8,
+   "roll": 0.86,
+   "wrap": 0.86
+  }
+ },
+ "design": {
+  "direction": "06-renders/AP022-fparms-v2-direction-v001.md (Fable, ACCEPT_WITH_CHANGES)",
+  "concepts": "02-concept/fp-arms-v2/ (HF 2.0 kr, 03-higgsfield/AP022-HF-ledger.json)",
+  "roll": "haori sleeve rolled 3.5 cm above the elbow joint, 4.0 cm high, <= +0.95 cm over the skin, crimson double tasuki cord + flat knot on the lateral face; the arm ends in a closed cap inside the roll",
+  "kote": "20.2 cm (3.5 cm below the elbow -> 1.8 cm above the wrist joint), 3 segments, 3 double-cord rows, wall 3.2 mm, <= 5.8 mm over the skin",
+  "hands": "palm wrap to the MCP knuckles (1.8 mm offset, thumb loop), 10 bare fingers (8 sides, >= 3 loops per phalanx), nails in albedo"
+ },
+ "acceptance_replicated": {
+  "method": "05-blender/scripts/AP022-fparms-measure-v001.py: FP rest clip f0, fp_camera + FpCameraOffsets on the anchor, fpView v4 (S-02 6f7c3802) rig shift, S-06 two-bone IK + elbow poles (97a17634), clavicle Front-Back clamp 8 deg (calibrated on S-06 f19 old-mesh numbers: ar_1 17.2 / 18.0, ar_2 14.3 / 14.2, smg_1 11.4 / 11.1 %), 1920x1080, 58.7 deg vertical, arms only",
+  "weapons": {
+   "ar_1": {
+    "clip": "AP022_fp_ar_1_idle_aim",
+    "armPx_pct": 8.88,
+    "minCam_cm": 27.8,
+    "hands_in_view": true,
+    "ik_err_cm": {
+     "right": 0.0,
+     "left": 0.0
+    }
+   },
+   "ar_2": {
+    "clip": "AP022_fp_ar_2_idle_aim",
+    "armPx_pct": 4.13,
+    "minCam_cm": 36.8,
+    "hands_in_view": true,
+    "ik_err_cm": {
+     "right": 0.0,
+     "left": 0.86
+    }
+   },
+   "smg_1": {
+    "clip": "AP022_fp_smg_1_idle_aim",
+    "armPx_pct": 7.03,
+    "minCam_cm": 34.2,
+    "hands_in_view": true,
+    "ik_err_cm": {
+     "right": 0.0,
+     "left": 0.0
+    }
+   },
+   "smg_2": {
+    "clip": "AP022_fp_smg_1_idle_aim",
+    "armPx_pct": 8.85,
+    "minCam_cm": 27.0,
+    "hands_in_view": true,
+    "ik_err_cm": {
+     "right": 0.0,
+     "left": null
+    }
+   }
+  },
+  "final": "S-06 Unity FpKollar_Kadraj test"
+ },
+ "integration_notes": [
+  "FirstPersonArms swaps Player_Body_LOD0.sharedMesh for the FP mesh: this mesh has its own bone array / bindposes (same names, same rest) -> remap bone indices by name to the body renderer's bones, or instantiate this FBX as the FP model with the player avatar.",
+  "Material: M_Player_FPArms (URP Lit) with these maps; SyncSkin should swap the albedo per skin (skin1/2/3 files) instead of copying the TP albedo block.",
+  "smg_2 has no ArtAnimatorBuilder.FpCameraOffsets entry (falls back to 0,0,0) while its FP set is the smg_1 clips authored with (-0.04,-0.06,0); smg_2 also has no left-hand IK point (no AP022_fp_smg_2_idle_aim row).",
+  "f19 minCam counted every vertex of the old arms mesh (it keeps all body vertices, only triangles were dropped): ar_2 1.1 cm was a torso vertex. The new mesh has no unused vertices.",
+  "FP clip finger poses were authored for the old mitten hands: with separated fingers the left fingertips rise ~2-3 cm above the handguard and the right fingers read loose at the trigger guard (clip follow-up, outside this mesh-only job)."
+ ],
+ "files": [
+  {
+   "file": "AP022_player_fparms_v2.fbx",
+   "bytes": 798700,
+   "sha256": "cabc8d5692781c983d6bd6f8adcb3d68c2765bb4c8a128a0cd38995850516e6e"
+  },
+  {
+   "file": "textures/AP022_fparms_albedo_skin1_4k.png",
+   "bytes": 7835128,
+   "sha256": "af8f57c5eb164ae1adea055c4319caf84b252e859d9d76f95190fb4f14f3b46d"
+  },
+  {
+   "file": "textures/AP022_fparms_albedo_skin2_4k.png",
+   "bytes": 8007815,
+   "sha256": "da3cde5de216fd243fbd204adb06f9d209ae0dfcf59d646d3671837999f56e21"
+  },
+  {
+   "file": "textures/AP022_fparms_albedo_skin3_4k.png",
+   "bytes": 8026697,
+   "sha256": "b608e382b4ca3532771ca1f32a4377b99fdf11659ee215441a5fe07cb72e6386"
+  },
+  {
+   "file": "textures/AP022_fparms_normal_4k.png",
+   "bytes": 18270891,
+   "sha256": "e37fcc3fc88b0c63cb589176830353848ec4f379dd4916fde0f13ece07351664"
+  },
+  {
+   "file": "textures/AP022_fparms_orm_4k.png",
+   "bytes": 6657340,
+   "sha256": "64f8ce8b3c6f49e33e80917c35f7a8d2de9b787f08c10f89fab6ffcc8545688f"
+  }
+ ],
+ "validation": [
+  "05-blender/validation/AP022-fparms-build-v001.json",
+  "05-blender/validation/AP022-fparms-tex-v001.json",
+  "05-blender/validation/AP022-fparms-export-v001.json",
+  "06-renders/fparms-v2/measure.json"
+ ],
+ "source": "05-blender/source/fparms-v2-master.blend; scripts AP022-fparms-{build,tex,export,measure}-v001.py",
+ "art_verdict": {
+  "file": "06-renders/AP022-art-verdict-fparms-v2-v001.md",
+  "verdict": "ACCEPT_WITH_NOTES (Fable, single final AD): MUST 1-5 PASS",
+  "applied_after_verdict": "SHOULD/follow-up 2: cap albedo = shadowed inner-kimono tone, radial pinch removed; palm grime stronger; thumb-loop tab softened (texture only, geometry and numbers unchanged)",
+  "skin_smoothness": 0.41,
+  "open": [
+   "clip finger curls per weapon grip (mitten-era poses) - required before a release build; AP-022 clip owner, C-00 schedules",
+   "kote damp strip + skin smoothness under Look B: S-06 Unity check",
+   "wear asymmetry / kote ulnar scuffs stronger: v3 texture pass"
+  ]
+ }
+}

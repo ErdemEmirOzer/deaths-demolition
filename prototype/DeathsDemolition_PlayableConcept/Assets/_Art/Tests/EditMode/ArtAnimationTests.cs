@@ -38,7 +38,7 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(C.ClipCount, m.Count);
             int player = 0, zombie = 0;
             foreach (var s in m.Values) { if (s.target == "player") player++; else if (s.target == "zombie") zombie++; }
-            Assert.AreEqual(137, player); Assert.AreEqual(57, zombie);   // + TP Special family 12; WP-071: + B4c TP 33 (snp / sr_1 / lch / rl_1 / lmg / smg_2); + AP-022 slice 1 (10) + slice 2a (3) + 4a/4b AR+SMG TP (21) + slice 5/5b FP (29)   // WP-032G: + sw_hold_jewel (AP-009G v007)   // WP-032C: v004 = 85 (weapon A/B/C ×5, sw hold ×2, pickup_upper, hurt ×2, death_side, lower/raise; tier hits ×12, armour breaks ×3, stumble, deaths ×4, rises ×2)
+            Assert.AreEqual(160, player); Assert.AreEqual(57, zombie);   // WP-071 r2: + smg_2 FP 9;   // + TP Special family 12; WP-071: + B4c TP 33 (snp / sr_1 / lch / rl_1 / lmg / smg_2); + AP-022 slice 1 (10) + slice 2a (3) + 4a/4b AR+SMG TP (21) + slice 5/5b FP (29)   // WP-032G: + sw_hold_jewel (AP-009G v007)   // WP-032C: v004 = 85 (weapon A/B/C ×5, sw hold ×2, pickup_upper, hurt ×2, death_side, lower/raise; tier hits ×12, armour breaks ×3, stumble, deaths ×4, rises ×2)
             foreach (string name in C.PlayerClips) Assert.IsTrue(m.ContainsKey(name), name);
             foreach (string name in C.ZombieClips) Assert.IsTrue(m.ContainsKey(name), name);
             // Every manifest event name is in the contract table.
@@ -144,7 +144,7 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(v3, ArtAnimatorBuilder.FindState(c, 1, C.AimV3State) != null, "Aim_V3 yalnız v3 kliplerle");
             if (v3) {
             AnimatorState aimV3 = ArtAnimatorBuilder.FindState(c, 1, C.AimV3State);
-            Assert.IsNotNull(aimV3); Assert.AreEqual(set.Clip("AP022_tp_ar_idle_aim"), aimV3.motion);
+            Assert.IsNotNull(aimV3);   // its motion is the ADS blend of AP022_tp_ar_idle_aim → ads_idle (WP-071 r2, checked below)
             foreach (string st in new[] { C.ReloadTacState, C.ReloadEmptyState, C.SwitchInV3State, C.SwitchOutV3State }) Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 1, st), st);
             Assert.AreEqual(set.Clip("AP022_tp_ar_1_reload_tac"), ArtAnimatorBuilder.FindState(c, 1, C.ReloadTacState).motion, "taban = ilk set (ar_1)");
             Assert.IsTrue(ArtAnimatorBuilder.FindState(c, 1, C.ReloadEmptyState).speedParameterActive, "ReloadEmpty ReloadRate ile");
@@ -178,11 +178,22 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(set.Clip("AP022_tp_sr_1_fire"), sr[set.Clip("AP022_tp_ar_1_fire")], "sr_1 fire");
             Assert.AreEqual(set.Clip("AP022_tp_lch_idle_aim"), rl[set.Clip("AP022_tp_ar_idle_aim")], "rl_1 sınıf dinlenmesi (lch)");
             Assert.AreEqual(set.Clip("AP022_tp_rl_1_reload_empty"), rl[set.Clip("AP022_tp_ar_1_reload_tac")], "rl_1 tek reload (tac = empty)");
-            Assert.AreEqual(set.Clip("AP022_tp_lmg_1_reload_tac"), lmg2[set.Clip("AP022_tp_ar_1_reload_tac")], "lmg_2 reload = lmg_1'inki (henüz yok)");
+            Assert.AreEqual(set.Clip("AP022_tp_lmg_2_reload_tac"), lmg2[set.Clip("AP022_tp_ar_1_reload_tac")], "lmg_2 kendi tepsi reload'u (P-06 28.09)");
+            Assert.AreEqual(set.Clip("AP022_tp_lmg_2_reload_empty"), lmg2[set.Clip("AP022_tp_ar_1_reload_empty")], "lmg_2 kendi boş reload'u");
             Assert.AreEqual(set.Clip("AP022_tp_lmg_2_fire"), lmg2[set.Clip("AP022_tp_ar_1_fire")], "lmg_2 kendi atışı");
             Assert.IsNotNull(ArtAnimatorBuilder.FindState(c, 1, C.CycleV3State), "Cycle_V3 (sniper sürgüsü)");
             Assert.AreEqual(set.Clip("AP022_tp_sr_1_bolt_cycle"), ArtAnimatorBuilder.FindState(c, 1, C.CycleV3State).motion);
             foreach (var ws in set.WeaponSets) Assert.AreEqual(ws.animSet == "sr_1", ws.hasCycle, ws.animSet + " hasCycle");
+            // WP-071 r2: TP ADS — Aim_V3 blends idle_aim → ads_idle by AdsWeight; the sniper's ADS bolt; the LMG fire loop
+            var adsTree = aimV3.motion as BlendTree;   // aimV3: the Aim_V3 state found above
+            Assert.IsNotNull(adsTree, "Aim_V3 ADS blend tree");
+            Assert.AreEqual(C.AdsWeight, adsTree.blendParameter);
+            Assert.AreEqual(set.Clip("AP022_tp_ar_idle_aim"), adsTree.children[0].motion);
+            Assert.AreEqual(set.Clip("AP022_tp_ar_ads_idle"), adsTree.children[1].motion);
+            Assert.AreEqual(set.Clip("AP022_tp_snp_ads_idle"), sr[set.Clip("AP022_tp_ar_ads_idle")], "sr_1 AOC ADS dinlenmesi (snp)");
+            Assert.AreEqual(set.Clip("AP022_tp_sr_1_bolt_cycle_ads"), ArtAnimatorBuilder.FindState(c, 1, C.CycleAdsV3State).motion, "sniper ADS sürgüsü");
+            Assert.AreEqual(set.Clip("AP022_tp_lmg_fire_loop"), ArtAnimatorBuilder.FindState(c, 2, C.FireLoopV3State).motion, "LMG sürekli ateş döngüsü");
+            foreach (var ws in set.WeaponSets) Assert.AreEqual(ws.animSet.StartsWith("lmg_", StringComparison.Ordinal), ws.hasFireLoop, ws.animSet + " hasFireLoop");
             AnimatorOverrideController smg = set.WeaponOverrides("smg_1");
             Assert.AreEqual(set.Clip("AP022_tp_smg_idle_aim"), smg[set.Clip("AP022_tp_ar_idle_aim")], "smg_1 AOC sınıf slotu (başka sınıf)");
             Assert.AreEqual(set.Clip("AP022_tp_smg_1_reload_empty"), smg[set.Clip("AP022_tp_ar_1_reload_empty")], "smg_1 AOC reload_empty");
@@ -202,7 +213,21 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(set.Clip("AP022_fp_ar_1_idle_aim"), fp.layers[0].stateMachine.defaultState.motion, "FP dinlenme = ar_1 idle_aim (taban set)");
             foreach (string st in new[] { C.ReloadTacState, C.ReloadEmptyState, C.SwitchInV3State, C.SwitchOutV3State }) Assert.IsNotNull(ArtAnimatorBuilder.FindState(fp, 0, st), "FP " + st);
             Assert.IsNotNull(ArtAnimatorBuilder.FindState(fp, 1, C.FireV3State), "FP Fire_V3");
-            Assert.AreEqual(3, set.FpWeaponSets.Count, "FP AOC ar_1 / ar_2 / smg_1");
+            Assert.AreEqual(6, set.FpWeaponSets.Count, "FP set ar_1 / ar_2 / smg_1 / smg_2 + sw_arc / sw_gel (AP-022 FP Special, P-06 28.09)");
+            foreach (var sw in new[] { "sw_arc", "sw_gel" })
+            {
+                CharacterAnimationSet.WeaponAnimSet fpSw = null;
+                foreach (var w in set.FpWeaponSets) if (w.animSet == sw) fpSw = w;
+                Assert.IsNotNull(fpSw, sw + " FP set");
+                Assert.AreEqual(set.Clip("AP022_fp_" + sw + "_idle_aim"), fpSw.overrides[set.Clip("AP022_fp_ar_1_idle_aim")], sw + " kendi FP dinlenmesi");
+                Assert.AreEqual(set.Clip("AP022_fp_" + sw + "_reload_empty"), fpSw.overrides[set.Clip("AP022_fp_ar_1_reload_empty")], sw + " kendi FP boş reload'u");
+            }
+            var smg2 = set.FpWeaponSets[3];
+            Assert.AreEqual("smg_2", smg2.animSet);
+            Assert.AreNotSame(set.FpWeaponSets[2].overrides, smg2.overrides, "smg_2 has its own FP AOC");
+            Assert.AreEqual(set.Clip("AP022_fp_smg_2_idle_aim"), smg2.overrides[set.Clip("AP022_fp_ar_1_idle_aim")], "FP smg_2 kendi dinlenmesi (dikey ön kabza)");
+            Assert.AreEqual(new Vector3(-0.02f, -0.04f, -0.16f), smg2.fpCameraOffset, "smg_2 fp_camera offset (P-06 v003)");
+            Assert.IsTrue(smg2.hasLeftHand, "smg_2 left-hand point from its own rest clip");
             Assert.AreEqual(set.Clip("AP022_fp_smg_1_idle_aim"), set.FpWeaponSets[2].overrides[set.Clip("AP022_fp_ar_1_idle_aim")], "FP smg_1 kendi dinlenmesi");
             Assert.AreEqual(set.Clip("AP022_fp_ar_2_idle_aim"), set.FpWeaponSets[1].overrides[set.Clip("AP022_fp_ar_1_idle_aim")], "FP ar_2 kendi dinlenmesi (5b, silaha özel klip)");
             // C-00 25.09 (S-05): a generated controller / AOC never references a GUID without an asset (deleted class FP clips, f8cdcebf)
@@ -416,7 +441,7 @@ namespace DD.Art.Tests.EditMode
         {
             var player = AssetDatabase.LoadAssetAtPath<CharacterAnimationSet>(ArtCharacterPrefabBuilder.PlayerAnimationSet);
             var zombie = AssetDatabase.LoadAssetAtPath<CharacterAnimationSet>(ArtCharacterPrefabBuilder.ZombieAnimationSet);
-            Assert.AreEqual(137, player.Clips.Count); Assert.AreEqual(57, zombie.Clips.Count);   // + TP Special family 12; WP-071 B4c + 33 TP; WP-071 + AP-022 slice 1 + 2a + 4a/4b + 5/5b   // WP-032C v004
+            Assert.AreEqual(160, player.Clips.Count); Assert.AreEqual(57, zombie.Clips.Count);   // + TP Special family 12; WP-071 B4c + 33 TP; WP-071 + AP-022 slice 1 + 2a + 4a/4b + 5/5b   // WP-032C v004
             Assert.AreEqual(ArtAnimationClipContract.ManifestSchema, player.ManifestSchema); Assert.AreEqual(ArtAnimationClipContract.ManifestSchema, zombie.ManifestSchema);
             var m = Manifest();
             foreach (var set in new[] { player, zombie })
@@ -458,5 +483,68 @@ namespace DD.Art.Tests.EditMode
             foreach (AnimatorControllerParameter p in c.parameters) have.Add(p.name);
             foreach (string n in names) Assert.IsTrue(have.Contains(n), c.name + " parametresi yok: " + n);
         }
-    }
+
+        [Test]
+        public void RagdollBayragi_ddRagdoll0_Kapatir_VarsayilanAcik()
+        {
+            // WP-071 r2 (C-00 30.09, S-10 K4): the quality-tier contract's A/B flag -ddRagdoll 0|1 (default on)
+            Assert.IsTrue(RagdollProxyPool.ReadFlag(new string[0]), "bayraksız açık");
+            Assert.IsFalse(RagdollProxyPool.ReadFlag(new[] { "-batchmode", "-ddRagdoll", "0" }), "-ddRagdoll 0 kapatır");
+            Assert.IsTrue(RagdollProxyPool.ReadFlag(new[] { "-ddRagdoll", "1" }), "-ddRagdoll 1 açık");
+            Assert.IsTrue(RagdollProxyPool.ReadFlag(new[] { "-ddRagdoll" }), "değersiz bayrak varsayılan (açık)");
+        }
+
+        [Test]
+        public void TpAoc_SiraBagimsiz_HerSetGecisindeSinifYuvalariYeniSetin()
+        {
+            // WP-071 M-49 (C-00 30.09): the runtime keeps ONE override controller and applies each set's cached pairs (GetOverrides →
+            // ApplyOverrides, PlayerSkinnedVisual.BindWeaponSets / EquipWeapon). For every ordered pair A → B of TP sets, B applied
+            // after A must resolve every slot exactly as B applied alone — no class slot (idle_aim / switch_in / switch_out) left
+            // on A's class (smg_2 → ar_2 must play tp_ar_idle_aim).
+            var set = AssetDatabase.LoadAssetAtPath<CharacterAnimationSet>(ArtCharacterPrefabBuilder.PlayerAnimationSet);
+            Assert.IsNotNull(set);
+            Assert.Greater(set.WeaponSets.Count, 0, "v3 set yok");
+            var pairs = new List<List<KeyValuePair<AnimationClip, AnimationClip>>>();
+            foreach (var ws in set.WeaponSets)
+            {
+                var p = new List<KeyValuePair<AnimationClip, AnimationClip>>(ws.overrides.overridesCount);
+                ws.overrides.GetOverrides(p);
+                pairs.Add(p);
+            }
+
+            string Resolve(AnimatorOverrideController o, string original) => o[original] != null ? o[original].name : "-";
+            var wrong = new List<string>();
+            for (int b = 0; b < set.WeaponSets.Count; b++)
+            {
+                var alone = new AnimatorOverrideController(set.Controller);
+                alone.ApplyOverrides(pairs[b]);
+                string key = set.WeaponSets[b].animSet, cls = CharacterAnimatorContract.WeaponClassOf(key);
+                foreach (string slot in new[] { "idle_aim", "switch_in", "switch_out" })
+                {
+                    string eff = Resolve(alone, CharacterAnimatorContract.PlayerWeaponClipV3(set.WeaponSets[0].animSet, slot));
+                    if (!eff.Contains("_tp_" + key + "_") && !eff.Contains("_tp_" + cls)) wrong.Add(key + " " + slot + " = " + eff);
+                }
+
+                for (int a = 0; a < set.WeaponSets.Count; a++)
+                {
+                    if (a == b) continue;
+                    var run = new AnimatorOverrideController(set.Controller);
+                    run.ApplyOverrides(pairs[a]);
+                    run.ApplyOverrides(pairs[b]);
+                    foreach (var kv in pairs[b])
+                    {
+                        if (kv.Key == null) continue;
+                        if (Resolve(run, kv.Key.name) != Resolve(alone, kv.Key.name))
+                            wrong.Add(set.WeaponSets[a].animSet + " → " + key + ": " + kv.Key.name + " = " + Resolve(run, kv.Key.name) + " (yalnız " + key + ": " + Resolve(alone, kv.Key.name) + ")");
+                    }
+
+                    UnityEngine.Object.DestroyImmediate(run);
+                }
+
+                UnityEngine.Object.DestroyImmediate(alone);
+            }
+
+            Assert.IsEmpty(wrong, "TP AOC geçişi sıraya bağlı / sınıf yuvası yanlış");
+        }
+}
 }
