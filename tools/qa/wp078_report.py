@@ -453,10 +453,11 @@ class Inspector:
     def original_exit(self, value, allowed=(0,)):
         require(integer(value) and value in allowed, "original exit is not an allowed actual integer")
 
-    def provenance(self, ref, original, role=None, balance=False, executed=True):
+    def provenance(self, ref, original, role=None, balance=False, executed=True, route=False):
         path, data = self.obj(ref)
         self.source(data)
-        self.original_exit(original, (0, 1, 3) if balance else (0,))
+        # route (prova 30.09): QaRunBot exits 3 when a route point is blocked; route_run turns that into a named BLOCKED
+        self.original_exit(original, (0, 1, 3) if balance else (0, 3) if route else (0,))
         if executed:
             require("exitCode" in data, "missing native original exitCode", "BLOCKED")
             if "timedOut" in data:
@@ -464,7 +465,7 @@ class Inspector:
         if "exitCode" in data:
             require(integer(data["exitCode"]) and data["exitCode"] == original, "native exit contradicts original exit")
         if "status" in data:
-            allowed = (("complete",) if original == 0 else ("failed",)) if balance else ("complete",)
+            allowed = (("complete",) if original == 0 else ("failed",)) if balance or route else ("complete",)
             require(data["status"] in allowed, "native attempt did not complete")
         for field in ("causalClosure", "originalFullCiBlockedOutcomeReproduced"):
             if not balance and field in data:
@@ -686,11 +687,17 @@ class Inspector:
         No rounds/deaths gate (it quits after the tour); original exit 0, verified guard, native bot-summary
         routeFrames cross-check of every bound frame. A missing frame key is BLOCKED, never substituted."""
         require(isinstance(run, dict), "missing route run", "BLOCKED")
-        proof = self.provenance(run.get("provenance"), run.get("originalExit"), self.bot_role(run))
+        proof = self.provenance(run.get("provenance"), run.get("originalExit"), self.bot_role(run), route=True)
         self.bind(run["provenance"], proof, [run.get("summary"), run.get("log"), run.get("frames")])
         self.bot_guard(run, proof, ("route",))
-        require(proof.get("status") == "complete", "missing native route run completion", "BLOCKED")
         _, summary = self.obj(run.get("summary"))
+        if run.get("originalExit") != 0:
+            # prova 30.09: a blocked point ends the route run with QaRunBot exit 3 — BLOCKED, naming the point and its
+            # native reason; exit 3 with no blocked point is a real failure
+            blocked = [str(row.get("key")) + ": " + str(row.get("reason")) for row in summary.get("routeFrames") or []
+                       if isinstance(row, dict) and row.get("status") == "blocked"]
+            require(bool(blocked), "route run exit " + str(run.get("originalExit")) + " without a blocked route point")
+            require(False, "route run blocked " + "; ".join(blocked), "BLOCKED")
         log, data = self.file(run.get("log"), read=True)
         require(bool(data.strip()), "empty route Player log", "BLOCKED")
         require(not SOAK.log_failures(log) and not self.required_log_failures(data), "runtime error in route Player log")

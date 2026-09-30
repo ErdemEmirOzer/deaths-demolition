@@ -77,7 +77,9 @@ metadata cannot be hidden by a successful summary or restoration.
   `status=captured`, `path` = `frames/route-<key>.png` = the bound file inside that
   run's directory, `mode` = the run's camera mode, `roofAbove=true` for corridor and
   kairo; all frame SHA-256 values of one run are distinct and every frame is a
-  complete PNG. No rounds/deaths gate applies to route runs. Hash/PNG coverage checks
+  complete PNG. No rounds/deaths gate applies to route runs. A route run whose native
+  `originalExit` is 3 (QaRunBot: a route point blocked) is BLOCKED and names each blocked
+  point with its native reason; exit 3 with no blocked point is FAIL. Hash/PNG coverage checks
   do not replace AD review of those images.
 - A3: `checks`, one source-bound PASS with evidence for each plan matrix area:
   `projectile`, `penetration`, `launcher`, `arsenal`, `gel`, `chain`, `ragdoll`,

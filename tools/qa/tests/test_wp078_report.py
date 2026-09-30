@@ -680,6 +680,16 @@ class RouteRunTests(Fixture):
     def test_attempt_kind_must_match(self):
         run=self.m['checklist']['A2']['routeRuns'][1]
         self.f.replace_json(run['provenance'],lambda x:x.update(kind='gameplay'));self.f.anchor(self.m);self.assert_step('A2','FAIL','attempt kind')
+    def test_blocked_point_run_names_the_point(self):
+        # prova 30.09: QaRunBot exits 3 when a route point is blocked; the BLOCKED reason names the point and its native reason
+        run=self.m['checklist']['A2']['routeRuns'][1]
+        self.f.replace_json(run['summary'],lambda x:[r.update(status='blocked',path='',reason='point not reached in 45 s') for r in x['routeFrames'] if r['key']=='kairo'])
+        self.f.replace_json(run['provenance'],lambda x:x.update(status='failed',exitCode=3));run['originalExit']=3;self.f.anchor(self.m)
+        self.assert_step('A2','BLOCKED','blocked kairo: point not reached in 45 s')
+    def test_route_exit_3_without_blocked_point_fails(self):
+        run=self.m['checklist']['A2']['routeRuns'][1]
+        self.f.replace_json(run['provenance'],lambda x:x.update(status='failed',exitCode=3));run['originalExit']=3;self.f.anchor(self.m)
+        self.assert_step('A2','FAIL','without a blocked route point')
     def test_route_needs_native_route_mode(self):
         run=self.m['checklist']['A2']['routeRuns'][2]
         self.f.replace_json(run['summary'],lambda x:x.update(runMode='normal'));self.f.anchor(self.m);self.assert_step('A2','FAIL','route run')
