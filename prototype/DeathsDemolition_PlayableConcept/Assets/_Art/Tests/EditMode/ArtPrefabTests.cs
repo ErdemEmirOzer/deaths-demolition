@@ -197,36 +197,71 @@ namespace DD.Art.Tests.EditMode
         }
 
         /// <summary>
-        /// TransitionHeights'ın kamera geometrisiyle tutarlılığı: sözleşme h/(0.768·d), d = 16/26/69
-        /// (ADR-012-1: hedef 32/52/138 m ÷ sevk edilen lodBias 2), [0.001, 0.95] kırpma. Sayılar tasarım
-        /// kararı değil, kamera FOV 42 ve sis 52→138'den türetilir.
+        /// WP-074 B7 · TransitionHeights göz hizası sözleşmesi v2: s/(1,1547·d), d = 15 / 30 m yazılı (Yüksek lodBias 2'de 30 / 60 m;
+        /// 0,85 yerleşim ölçeğinde bile E-8'in 25 / 50 m'si). Cull sınıfa göre: yapı 300 m (Performans'ta bile sis sonu), bitki 150 m
+        /// (Yüksek'te 300), prop 22,5 m (Yüksek'te 45; LOD1→2 cull'ün ¾'ü). Ölçü en büyük kenar (Unity LODGroup.size, PRA K-10).
+        /// [0.001, 0.95] kırpma, kesin azalan, her bant en az onda bir.
         /// </summary>
         [Test]
-        public void TransitionHeights_KameraGeometrisindenTuretilmis()
+        public void TransitionHeights_GozHizasiSozlesmesi()
         {
-            // Tolerans 5e-4: 0.768 sabiti ile 2·tan(21°) = 0.76773 arasındaki fark 1e-4 mertebesindedir;
-            // test geometrik türetimi sınar, dördüncü ondalığı değil.
-            const float tol = 5e-4f;
-            var b = new Bounds(new Vector3(0f, 2f, 0f), new Vector3(3f, 4f, 3f));
-            float[] h = ArtFamilyPrefabBuilder.TransitionHeights(b);
-            Assert.AreEqual(3, h.Length);
-            Assert.AreEqual(Mathf.Clamp(4f / (0.768f * 16f), 0.001f, 0.95f), h[0], tol, "LOD0→1 eşiği (d = 16 m yazılı = 32 m etkin)");
-            Assert.AreEqual(Mathf.Clamp(4f / (0.768f * 26f), 0.001f, 0.95f), h[1], tol, "LOD1→2 eşiği (d = 26 m yazılı = 52 m sis başı)");
-            Assert.AreEqual(Mathf.Clamp(4f / (0.768f * 69f), 0.001f, 0.95f), h[2], tol, "cull eşiği (d = 69 m yazılı = 138 m sis sonu)");
+            const float tol = 5e-4f, k = 1.1547f;
+            var duvar = new Bounds(new Vector3(0f, 1.2f, 0f), new Vector3(4f, 2.4f, 0.6f));
+            float[] yapi = ArtFamilyPrefabBuilder.TransitionHeights(duvar, ArtFamilyPrefabBuilder.LodClass.Structure);
+            Assert.AreEqual(3, yapi.Length);
+            Assert.AreEqual(4f / (k * 15f), yapi[0], tol, "LOD0→1: Yüksek'te 30 m (E-8 25 m / 0,85 ölçek)");
+            Assert.AreEqual(4f / (k * 30f), yapi[1], tol, "LOD1→2: Yüksek'te 60 m (E-8 50 m / 0,85 ölçek)");
+            Assert.AreEqual(4f / (k * 300f), yapi[2], tol, "Yapı: lodBias 1'de bile 300 m (dünya kenarı açılmaz)");
 
-            // Unity LODGroup.size = EN BÜYÜK kenar (yükseklik değil): 3 m uzun, 0.16 m yüksek bir
-            // curb için ölçü 3 m'dir; 32 m'de geçiş bu ölçüyle hesaplanır (PRA K-10).
-            float[] alcak = ArtFamilyPrefabBuilder.TransitionHeights(new Bounds(Vector3.zero, new Vector3(3f, 0.16f, 0.2f)));
-            Assert.AreEqual(Mathf.Clamp(3f / (0.768f * 16f), 0.001f, 0.95f), alcak[0], tol, "En büyük kenar (3 m) ölçü olmalı.");
-            Assert.IsTrue(alcak[0] > alcak[1] && alcak[1] > alcak[2], "Eşikler kesin azalan olmalı.");
+            float[] sugi = ArtFamilyPrefabBuilder.TransitionHeights(new Bounds(Vector3.zero, new Vector3(5f, 14f, 5f)), ArtFamilyPrefabBuilder.LodClass.Vegetation);
+            Assert.AreEqual(14f / (k * 15f), sugi[0], tol, "Sugi LOD0→1 Yüksek'te 30 m.");
+            Assert.AreEqual(14f / (k * 30f), sugi[1], tol, "Sugi LOD1→2 Yüksek'te 60 m.");
+            Assert.AreEqual(14f / (k * 150f), sugi[2], tol, "Bitki: Yüksek'te 300 m, Performans'ta 150 m.");
 
-            // En az 0.5 m ölçü: her kenarı 0.5 m'den küçük bir parça eşiği 0'a çekmez.
+            float[] bordur = ArtFamilyPrefabBuilder.TransitionHeights(new Bounds(Vector3.zero, new Vector3(3f, 0.16f, 0.2f)), ArtFamilyPrefabBuilder.LodClass.Prop);
+            Assert.AreEqual(3f / (k * 15f), bordur[0], tol, "En büyük kenar (3 m) ölçü olmalı.");
+            Assert.AreEqual(3f / (k * 16.875f), bordur[1], tol, "Prop LOD1→2 cull'ün ¾'ü.");
+            Assert.AreEqual(3f / (k * 22.5f), bordur[2], tol, "Prop: Yüksek'te 45 m.");
+
+            // 40 m bir yapı: LOD0 0,95'e kırpılır, LOD1 bandı onda birden inceyse yarıya iner (iki geçiş aynı anda olmaz).
+            float[] dev = ArtFamilyPrefabBuilder.TransitionHeights(new Bounds(Vector3.zero, new Vector3(40f, 8f, 12f)), ArtFamilyPrefabBuilder.LodClass.Structure);
+            Assert.AreEqual(0.95f, dev[0], 1e-6f, "Üst kırpma 0.95.");
+            Assert.LessOrEqual(dev[1], dev[0] * 0.9f + 1e-6f, "LOD1 bandı en az onda bir.");
+            Assert.LessOrEqual(dev[2], dev[1] * 0.9f + 1e-6f, "LOD2 bandı en az onda bir.");
+
+            // Tek aileli prefab (AP-001 … AP-003): sınıf sınırlarından — alçak ve küçük prop; ≥ 2 m, ≥ 3 m uzun ya da occluder yapı.
             float[] minik = ArtFamilyPrefabBuilder.TransitionHeights(new Bounds(Vector3.zero, new Vector3(0.3f, 0.1f, 0.2f)));
-            Assert.AreEqual(Mathf.Clamp(0.5f / (0.768f * 16f), 0.001f, 0.95f), minik[0], tol, "0.5 m tabanı uygulanmalı.");
+            Assert.AreEqual(0.5f / (k * 15f), minik[0], tol, "0,5 m tabanı uygulanmalı.");
+            Assert.AreEqual(0.5f / (k * 22.5f), minik[2], tol, "Alçak küçük prefab prop.");
+            Assert.AreEqual(6f / (k * 300f), ArtFamilyPrefabBuilder.TransitionHeights(new Bounds(Vector3.zero, new Vector3(3f, 6f, 3f)))[2], tol, "≥ 2 m prefab yapı.");
+            Assert.AreEqual(3.2f / (k * 300f), ArtFamilyPrefabBuilder.TransitionHeights(new Bounds(Vector3.zero, new Vector3(3.2f, 0.5f, 0.4f)))[2], tol, "≥ 3 m kiriş yapı.");
+            Assert.AreEqual(1.2f / (k * 300f), ArtFamilyPrefabBuilder.TransitionHeights(new Bounds(Vector3.zero, new Vector3(1.2f, 1.2f, 0.3f)), true)[2], tol, "Occluder yapı.");
+        }
 
-            // Çok yüksek parça (kahraman ağaç 9 m): üst kırpma 0.95'i aşmaz.
-            float[] yuksek = ArtFamilyPrefabBuilder.TransitionHeights(new Bounds(Vector3.zero, new Vector3(3f, 60f, 3f)));
-            Assert.LessOrEqual(yuksek[0], 0.95f + 1e-6f, "Üst kırpma 0.95.");
+        /// <summary>WP-074 B7 · Aile sınıfı: rüzgârlı ≥ 2 m → bitki; occluder, yürünür çarpıştırıcı, ≥ 2 m ya da ≥ 3 m kenar → yapı; kalan ve AP-017 süsü → prop.</summary>
+        [Test]
+        public void LodSinifi_AileVerisinden()
+        {
+            ArtLibraryManifest.Family Aile(string kind, Vector3 boyut, bool ruzgar, string carpistirici = null, bool occluder = false)
+            {
+                var v = new ArtLibraryManifest.Variation { boundsMin = new[] { -boyut.x / 2f, -boyut.y / 2f, 0f }, boundsMax = new[] { boyut.x / 2f, boyut.y / 2f, boyut.z } };
+                v.parts.Add(new ArtLibraryManifest.Part { wind = ruzgar });
+                if (carpistirici != null) v.colliders.Add(new ArtLibraryManifest.Collider { @class = carpistirici });
+                var f = new ArtLibraryManifest.Family { kind = kind, occluder = occluder };
+                f.variations.Add(v);
+                return f;
+            }
+
+            ArtFamilyPrefabBuilder.LodClass yapi = ArtFamilyPrefabBuilder.LodClass.Structure, bitki = ArtFamilyPrefabBuilder.LodClass.Vegetation, prop = ArtFamilyPrefabBuilder.LodClass.Prop;
+            Assert.AreEqual(yapi, ArtFamilyPrefabBuilder.ClassOf(Aile("", new Vector3(2f, 0.6f, 2.6f), false)), "halka duvarı kiti");
+            Assert.AreEqual(bitki, ArtFamilyPrefabBuilder.ClassOf(Aile("", new Vector3(5f, 5f, 16f), true)), "sugi");
+            Assert.AreEqual(prop, ArtFamilyPrefabBuilder.ClassOf(Aile("", new Vector3(2f, 0.2f, 1.4f), false, "blocking")), "alçak çit");
+            Assert.AreEqual(prop, ArtFamilyPrefabBuilder.ClassOf(Aile("", new Vector3(1f, 1f, 1.2f), true)), "sazlık");
+            Assert.AreEqual(yapi, ArtFamilyPrefabBuilder.ClassOf(Aile("", new Vector3(1.5f, 1f, 0.2f), false, "walkable")), "basamak taşı: yürünür, cull edilmez");
+            Assert.AreEqual(yapi, ArtFamilyPrefabBuilder.ClassOf(Aile("", new Vector3(3.2f, 0.4f, 0.5f), false)), "kiriş ≥ 3 m");
+            Assert.AreEqual(yapi, ArtFamilyPrefabBuilder.ClassOf(Aile("", new Vector3(1.2f, 0.3f, 1.2f), false, null, true)), "occluder");
+            Assert.AreEqual(prop, ArtFamilyPrefabBuilder.ClassOf(Aile("breakable", new Vector3(1f, 1f, 2.1f), false, "walkable")), "AP-017 kırılabilir");
+            Assert.AreEqual(prop, ArtFamilyPrefabBuilder.ClassOf(Aile("prop", new Vector3(1f, 1f, 2.0f), false)), "AP-017 prop");
         }
 
         // ============================================================== mesh ve malzeme

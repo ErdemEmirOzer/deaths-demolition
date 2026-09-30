@@ -44,7 +44,7 @@ namespace DD.Art.Pipeline.EditorTools
     {
         public const string GeometryName = "Geometry";
 
-        // -------------------------------------------------- LOD distance contract (ADR-012-1)
+        // -------------------------------------------------- LOD distance contract v1 (ADR-012-1; top-down camera — the characters)
 
         /// <summary>
         /// The Quality level the game ships with (Ultra) applies <c>lodBias</c> 2, which
@@ -85,6 +85,44 @@ namespace DD.Art.Pipeline.EditorTools
 
         public const float MinTransition = 0.001f;
         public const float MaxTransition = 0.95f;
+
+        // -------------------------------------------------- LOD distance contract v2 (WP-074 B7; the eye-level world)
+
+        /// <summary>What a world LOD group does for the eye-level view; it sets the group's cull (C-00 30.09 B7).</summary>
+        public enum LodClass
+        {
+            /// <summary>Walls, halls, roofs, kairō, gates, bridges, and anything walked on or large: drawn to the fog end on every tier.</summary>
+            Structure,
+            /// <summary>Trees and bamboo: drawn to the fog end on High and Cinematic; Performance may cull them nearer.</summary>
+            Vegetation,
+            /// <summary>Small, low, not walked on, and the AP-017 dressing: culled at <see cref="EyeLevelPropCullDistance"/>.</summary>
+            Prop,
+        }
+
+        /// <summary>
+        /// The runtime lodBias is the Quality tier's base (Performance 1, High 2, Cinematic 3 — QualityTierSetup; the camera modes
+        /// apply no factor), so the v2 distances are the High tier's and are authored ÷ 2: LOD0→1 30 m and LOD1→2 60 m on High —
+        /// S-01 E-8 asks 25 / 50 m, and Unity scales the switch with the instance scale, which the V6 dress sets down to 0.85
+        /// (30 × 0.834 = 25). Cinematic 45 / 90 m, Performance 15 / 30 m. E-8 holds at the default FOV (TP 60°, FP 90° Hor+);
+        /// a wider user FOV switches nearer at the same screen size — the pop stays the same in pixels.
+        /// </summary>
+        public const float EyeLevelReferenceLodBias = 2f;
+        public const float EyeLevelLod0Distance = 30f, EyeLevelLod1Distance = 60f;
+
+        /// <summary>V6 fog end (WorldAtmosphere.V6Sky.FogEnd): a structure is authored to it at lodBias 1, vegetation at High.</summary>
+        public const float SkylineCullDistance = 300f;
+
+        /// <summary>Small props cull here on High (S-01 §8 small-prop layer distance).</summary>
+        public const float EyeLevelPropCullDistance = 45f;
+
+        /// <summary>A family whose tallest variation reaches this builds the skyline (the 2.4 m ring wall does, a 1.4 m fence does not).</summary>
+        public const float SkylineMinHeight = 2f;
+
+        /// <summary>A family whose largest extent reaches this is a large piece (beams, rafters, bridges) and never culls as a prop.</summary>
+        public const float LargePieceMinExtent = 3f;
+
+        /// <summary>2·tan(60° / 2): visible world height per metre of distance for the TP camera (FP 58.7° switches 2.6 % nearer).</summary>
+        public const float EyeLevelVisibleHeightPerMetre = 1.1547f;
 
         public static void BuildAll()
         {
@@ -163,7 +201,7 @@ namespace DD.Art.Pipeline.EditorTools
                 group.animateCrossFading = true;
 
                 Bounds prefabBounds = TransformBounds(lods[0].bounds, renderers[0].transform.localToWorldMatrix);
-                float[] heights = TransitionHeights(prefabBounds);
+                float[] heights = TransitionHeights(prefabBounds, occluder);
                 group.SetLODs(new[]
                 {
                     new LOD(heights[0], new[] { renderers[0] }),
@@ -200,58 +238,77 @@ namespace DD.Art.Pipeline.EditorTools
         }
 
         /// <summary>
-        /// screenRelativeTransitionHeight for LOD0, LOD1 and the cull, from the prefab's
-        /// canonical bounds and the camera geometry of the prototype rig.
-        ///
-        /// The camera sees 0.768·d metres of height at distance d (vertical FOV 42°), so
-        /// an object h metres tall covers h / (0.768·d) of the screen there. The intended
-        /// distances are 32 m (LOD0 → LOD1), 52 m (LOD1 → LOD2, fog start) and 138 m
-        /// (cull, fog end); the authored distances are those divided by the shipped
-        /// lodBias (ADR-012-1). Each threshold is clamped to [0.001, 0.95] and the three
-        /// are forced strictly decreasing, which LODGroup requires.
-        ///
-        /// Measured caveat for the ADR: Unity evaluates a LODGroup against its largest
-        /// bounds extent (<c>LODGroup.size</c>), not its height. For families wider than
-        /// they are tall the effective switch distance is therefore d · (size / h); the
-        /// probe's LOD counter reports what actually happens. Quality lodBias (2 on
-        /// Ultra) doubles every distance on top of that.
+        /// WP-074 B7 · The class of a library family (its variations together, so every piece of a wall or hall kit shares it): the
+        /// AP-017 dressing (derivative / breakable / prop) is prop; a family with parts in the wind is vegetation when its tallest
+        /// variation reaches <see cref="SkylineMinHeight"/> and prop below; any other family is structure when it is a camera
+        /// occluder, is walked on (a walkable collider: bridges, stepping stones, shore paths — never culled under a zombie's feet),
+        /// reaches <see cref="SkylineMinHeight"/> or spans <see cref="LargePieceMinExtent"/> (beams, rafters), and prop otherwise.
         /// </summary>
-        /// <summary>WP-038G · AP-017 litter / piles / breakables: cull at 40 m (intended; / lodBias like the contract distances) — small ground dressing the −49° camera never sees past ~30 m.</summary>
-        public const float IntendedPropCullDistance = 40f;
-        public const float PropCullDistance = IntendedPropCullDistance / ShippedLodBias;
-
-        /// <summary>Contract thresholds with a family-specific cull distance (LOD0 / LOD1 distances stay; the cull moves in, never out).</summary>
-        public static float[] TransitionHeights(Bounds prefabBounds, float cullDistance)
+        public static LodClass ClassOf(ArtLibraryManifest.Family family)
         {
-            float h = Mathf.Max(MinObjectHeight, Mathf.Max(prefabBounds.size.x, Mathf.Max(prefabBounds.size.y, prefabBounds.size.z)));
-            float[] distances = { Mathf.Min(Lod0MaxDistance, cullDistance * 0.5f), Mathf.Min(Lod1MaxDistance, cullDistance * 0.75f), Mathf.Min(CullDistance, cullDistance) };
-            var result = new float[3];
-            for (int i = 0; i < 3; i++) result[i] = Mathf.Clamp(h / (VisibleHeightPerMetre * distances[i]), MinTransition, MaxTransition);
-            for (int i = 1; i < 3; i++) if (result[i] >= result[i - 1]) result[i] = result[i - 1] * 0.5f;
-            return result;
+            if (family.IsDerivative || family.IsBreakable || family.kind == "prop") return LodClass.Prop;
+            float tallest = 0f, largest = 0f;
+            bool wind = false, walkable = false;
+            foreach (ArtLibraryManifest.Variation v in family.variations)
+            {
+                if (v.boundsMin != null && v.boundsMax != null && v.boundsMin.Length == 3 && v.boundsMax.Length == 3)
+                {
+                    tallest = Mathf.Max(tallest, v.boundsMax[2] - v.boundsMin[2]);   // the AP contract space is z-up
+                    for (int a = 0; a < 3; a++) largest = Mathf.Max(largest, v.boundsMax[a] - v.boundsMin[a]);
+                }
+
+                foreach (ArtLibraryManifest.Part part in v.parts) wind |= part.wind;
+                foreach (ArtLibraryManifest.Collider c in v.colliders) walkable |= c.@class == "walkable";
+            }
+
+            if (wind) return tallest >= SkylineMinHeight ? LodClass.Vegetation : LodClass.Prop;
+            return family.occluder || walkable || tallest >= SkylineMinHeight || largest >= LargePieceMinExtent ? LodClass.Structure : LodClass.Prop;
         }
 
-        public static float[] TransitionHeights(Bounds prefabBounds)
+        /// <summary>A single-family prefab (AP-001 … AP-003) knows its bounds and whether it occludes: the same rule without wind or colliders.</summary>
+        public static float[] TransitionHeights(Bounds prefabBounds, bool occluder = false)
         {
-            // Unity evaluates a LODGroup against LODGroup.size, which is the LARGEST extent of
-            // its bounds, not the height. Using the same measure here is what makes the
-            // contract distances (32 / 52 / 138 m) the distances the group actually switches
-            // at; with the height alone a 7 m wide, 8 cm tall slab would have switched 14x
-            // further out (PRA K-10).
-            float h = Mathf.Max(MinObjectHeight, Mathf.Max(prefabBounds.size.x, Mathf.Max(prefabBounds.size.y, prefabBounds.size.z)));
-            float[] distances = { Lod0MaxDistance, Lod1MaxDistance, CullDistance };
+            Vector3 s = prefabBounds.size;
+            bool structure = occluder || s.y >= SkylineMinHeight || Mathf.Max(s.x, Mathf.Max(s.y, s.z)) >= LargePieceMinExtent;
+            return TransitionHeights(prefabBounds, structure ? LodClass.Structure : LodClass.Prop);
+        }
+
+        /// <summary>
+        /// screenRelativeTransitionHeight for LOD0, LOD1 and the cull (WP-074 B7, eye level). The TP camera sees 1.1547·d metres
+        /// of height at distance d (vertical FOV 60°), so a group of size s covers s / (1.1547·d) of the screen there. Distances,
+        /// authored at lodBias 1: LOD0→1 15 m, LOD1→2 30 m (High 30 / 60 m, E-8 with the 0.85 dress scale); the cull by class —
+        /// structure 300 m (the fog end even on Performance: the world edge never opens, C-00 30.09 B7 (2)), vegetation 150 m (300 m
+        /// on High; Performance may cull it), prop 22.5 m (45 m on High; its LOD1→2 moves in to ¾ of the cull). Clamped to
+        /// [0.001, 0.95] and strictly decreasing, as LODGroup requires, with each band at least a tenth wide.
+        ///
+        /// Unity evaluates a LODGroup against LODGroup.size, the LARGEST extent of its bounds, not its height; using the same
+        /// measure is what makes these the distances the group actually switches at (a 7 m wide, 8 cm tall slab measured by its
+        /// height would switch 14× further out — PRA K-10).
+        /// </summary>
+        public static float[] TransitionHeights(Bounds prefabBounds, LodClass lodClass)
+        {
+            float size = Mathf.Max(MinObjectHeight, Mathf.Max(prefabBounds.size.x, Mathf.Max(prefabBounds.size.y, prefabBounds.size.z)));
+            float cull = lodClass == LodClass.Structure ? SkylineCullDistance
+                : lodClass == LodClass.Vegetation ? SkylineCullDistance / EyeLevelReferenceLodBias
+                : EyeLevelPropCullDistance / EyeLevelReferenceLodBias;
+            float[] distances =
+            {
+                EyeLevelLod0Distance / EyeLevelReferenceLodBias,
+                Mathf.Min(EyeLevelLod1Distance / EyeLevelReferenceLodBias, cull * 0.75f),
+                cull,
+            };
 
             var result = new float[3];
             for (int i = 0; i < 3; i++)
             {
-                result[i] = Mathf.Clamp(h / (VisibleHeightPerMetre * distances[i]), MinTransition, MaxTransition);
+                result[i] = Mathf.Clamp(size / (EyeLevelVisibleHeightPerMetre * distances[i]), MinTransition, MaxTransition);
             }
 
-            // Only reachable when the 0.95 ceiling flattens two thresholds (an object
-            // taller than ~38 m); halving keeps the order without inventing a distance.
+            // Only reachable when the 0.95 ceiling squeezes two thresholds together (a group larger than ~30 m): a LOD band thinner
+            // than a tenth would switch twice at once, so the lower threshold halves — the order holds without inventing a distance.
             for (int i = 1; i < 3; i++)
             {
-                if (result[i] >= result[i - 1])
+                if (result[i] >= result[i - 1] * 0.9f)
                 {
                     result[i] = result[i - 1] * 0.5f;
                 }
