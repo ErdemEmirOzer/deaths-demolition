@@ -4,6 +4,11 @@
 This runner never changes the measured product. It launches one already-built
 development Player, records a 60 s clean preflight and samples competing
 processes/load once per second while the Player is alive.
+
+Y2 (C-00 30.09): the Player starts through tools/player-run.sh (the single 'player' slot; a TERM to the wrapper reaches
+the Player). command.json stays the Player's own argv (what the closure gate reads); attempt.json names the launcher.
+Perf mode runs with -ddUiDataRoot <out>/ui-data and -ddTelemetryDir <out>/telemetry unless the caller passed them
+(wp078_perf.py does). User data stays the caller's job: tools/userdata-guard.sh snapshot/restore --scope player around it.
 """
 import argparse
 import atexit
@@ -18,6 +23,8 @@ import subprocess
 import sys
 import time
 import uuid
+
+PLAYER_RUN = Path(__file__).resolve().parents[1] / "player-run.sh"
 
 
 def process_rows():
@@ -42,8 +49,9 @@ def process_rows():
     return rows
 
 
-def forbidden(row, allowed_pid=None):
-    if row["pid"] in {os.getpid(), allowed_pid}:
+def forbidden(row, allowed_pid=None, rows_by_pid=None):
+    # the launched Player runs under player-run.sh (allowed_pid): it and its descendants are this run, not a competitor
+    if row["pid"] in {os.getpid(), allowed_pid} or process_is_descendant(row, rows_by_pid or {}, allowed_pid):
         return False
     command = row["args"]
     return (
@@ -88,13 +96,14 @@ def heavy(row, allowed_pid=None, rows_by_pid=None):
     )
 
 
-def snapshot(allowed_pid=None):
+def snapshot(allowed_pid=None, own_tree=False):
+    """own_tree: allowed_pid is the launched player-run.sh — its descendants (the Player) are not forbidden."""
     rows = process_rows()
     rows_by_pid = {row["pid"]: row for row in rows}
     return {
         "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "load1": os.getloadavg()[0],
-        "forbidden": [r for r in rows if forbidden(r, allowed_pid)],
+        "forbidden": [r for r in rows if forbidden(r, allowed_pid, rows_by_pid if own_tree else None)],
         "heavy": [r for r in rows if heavy(r, allowed_pid, rows_by_pid)],
         "activeOver5Pct": [r for r in rows if r["cpu"] >= 5.0],
     }
@@ -180,6 +189,11 @@ def main():
         write_json(out / "attempt.json", attempt)
         print(f"Player binary missing: {binary}", file=sys.stderr)
         return 64
+    if not os.access(PLAYER_RUN, os.X_OK):
+        attempt.update({"status": "invalid", "error": "tools/player-run.sh missing", "completedUtc": utc_now()})
+        write_json(out / "attempt.json", attempt)
+        print(f"Player launcher missing or not executable: {PLAYER_RUN}", file=sys.stderr)
+        return 66
     attempt.update({
         "binary": str(binary),
         "binarySha256": sha256_file(binary),
@@ -298,6 +312,10 @@ def main():
             "-ddPilotWarmupSeconds", "10",
             "-ddPilotWindowSeconds", str(args.window),
         ]
+        # Y2: UI files and telemetry of a perf window stay in the attempt directory (a caller's own value wins)
+        for flag, default in (("-ddUiDataRoot", out / "ui-data"), ("-ddTelemetryDir", out / "telemetry")):
+            if flag not in args.extra_arg:
+                command += [flag, str(default)]
     else:
         frames = out / "tier-frames"
         command += [
@@ -315,11 +333,12 @@ def main():
     attempt.update({
         "status": "running",
         "commandSha256": sha256_file(out / "command.json"),
+        "launcher": str(PLAYER_RUN),
         "playerStartedUtc": utc_now(),
     })
     write_json(out / "attempt.json", attempt)
 
-    player = subprocess.Popen(command)
+    player = subprocess.Popen([str(PLAYER_RUN)] + command)
     monitor = []
     contaminated = False
     heavy_streaks = {}
@@ -328,7 +347,7 @@ def main():
     deadline = time.monotonic() + args.timeout
     timed_out = False
     while player.poll() is None:
-        snap = snapshot(player.pid)
+        snap = snapshot(player.pid, own_tree=True)
         monitor.append(snap)
         if snap["forbidden"]:
             contaminated = True
@@ -346,6 +365,15 @@ def main():
             try:
                 player.wait(timeout=10)
             except subprocess.TimeoutExpired:
+                # Y2: player-run.sh passed the TERM on; a Player that ignores it is killed with its wrapper
+                rows = process_rows()
+                rows_by_pid = {row["pid"]: row for row in rows}
+                for row in rows:
+                    if row["pid"] != player.pid and process_is_descendant(row, rows_by_pid, player.pid):
+                        try:
+                            os.kill(row["pid"], signal.SIGKILL)
+                        except OSError:
+                            pass
                 player.kill()
             break
         time.sleep(1.0)

@@ -7,6 +7,12 @@ C2-C4 pencere modu sürücüsü ve bütün üretilen loglarla yeni macOS crash r
 `rc-report.json` / `rc-report.txt` eksik kapıları açıkça FAIL gösterir. `ProjectIntegrityTests` veya
 planning belgeleri bu araç tarafından değiştirilmez. Ürün engeline rağmen bağımsız tanı kanıtlarını
 tamamlamak için `--diagnostic-continue` kullanılır; nihai karar yine FAIL kalır.
+Kullanıcı verisi (Y2, C-00 30.09): guard **aşama başına** — `$DD_GUARD snapshot stages/<aşama>/ug --scope S` → aşama →
+`restore … --scope S`; test.sh aşamaları `editor`, Player aşamaları (m3-regression, soak-stability-61/26, her real-N rapor
+koşusu, economy-acceptance, window-modes) `player`, Player'lar `tools/player-run.sh` ile. release-smoke sarılmaz (smoke.sh'in
+kendi guard'ı var). Snapshot hatası (30 = Player açık) aşamayı BLOKLAR; restore hatası (30/31/75/32, verified=1 yok) RC'yi
+`--diagnostic-continue` ile bile durdurur: `guard restore <kod> in stage <ad> — tell C-00`. INT/TERM/HUP: önce aşama
+durdurulur ve restore edilir, sonra FAIL. `--perf-runs` < 3 → 64.
 
 Tek komut: `tools/qa/regression.sh <out-dir> [--rounds 8] [--seed 26] [--perf-runs 3] [--window 60] [--quick] [--skip-build] [--skip-tests]`
 

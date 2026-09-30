@@ -46,8 +46,10 @@ clean_window(){ # DD_PERF_CLEAN=0 ile atlanır; perf-clean kalıbı: Blender ve 
 PLAYER_TIMEOUT="${DD_PLAYER_TIMEOUT:-3600}"   # s; a Player that never quits (driver not armed) must not hang the chain
 run_player(){ # run_player <label> <extra args…>
   local L="$1"; shift; local D="$OUT/$L"; mkdir -p "$D"; { uptime; ps -Ao pcpu,comm | awk '$1>5{print}'; } > "$D/load-before.txt"
-  "$BIN" -screen-fullscreen 0 -ddProfilePath "$D/probe-profile.json" "$@" -logFile "$D/player.log" & local P=$!
-  ( sleep "$PLAYER_TIMEOUT"; kill -0 $P 2>/dev/null && { echo "timeout ${PLAYER_TIMEOUT}s" > "$D/timeout.txt"; kill $P; sleep 5; kill -9 $P 2>/dev/null; } ) & local G=$!
+  # Y2 (C-00 30.09): through tools/player-run.sh (player slot; TERM reaches the Player), UI files + telemetry in <D>; the
+  # user-data guard is the caller's (rc.sh m3-regression: snapshot/restore --scope player around this script)
+  "$REPO/tools/player-run.sh" "$BIN" -screen-fullscreen 0 -ddProfilePath "$D/probe-profile.json" -ddUiDataRoot "$D/ui-data" -ddTelemetryDir "$D/telemetry" "$@" -logFile "$D/player.log" & local P=$!
+  ( sleep "$PLAYER_TIMEOUT"; kill -0 $P 2>/dev/null && { echo "timeout ${PLAYER_TIMEOUT}s" > "$D/timeout.txt"; kill $P; sleep 5; { pkill -9 -P $P; kill -9 $P; } 2>/dev/null; } ) & local G=$!
   wait $P; local X=$?; kill $G 2>/dev/null; wait $G 2>/dev/null
   { uptime; ps -Ao pcpu,comm | awk '$1>5{print}'; } > "$D/load-after.txt"; echo "exit=$X" > "$D/exit.txt"; log "$L exit=$X $(head -1 "$D/summary.txt" 2>/dev/null)"; return $X; }
 

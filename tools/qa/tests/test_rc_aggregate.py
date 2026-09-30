@@ -201,11 +201,11 @@ sys.exit(99)
         path.parent.mkdir(parents=True, exist_ok=True)
         ET.ElementTree(root).write(path, encoding="utf-8")
 
-    def verdict(self, expected):
+    def verdict(self, expected, *extra):
         env = self.env
         result = subprocess.run([
             sys.executable, str(SCRIPT), str(self.out), "--repo", str(self.fixture_repo),
-            "--rounds", "12", "--window", "60", "--perf-runs", "3", "--start-epoch", "1",
+            "--rounds", "12", "--window", "60", "--perf-runs", "3", "--start-epoch", "1", *extra,
         ], capture_output=True, text=True, env=env)
         self.assertEqual(0 if expected else 1, result.returncode, result.stdout + result.stderr)
         report = json.loads((self.out / "rc-report.json").read_text(encoding="utf-8"))
@@ -242,6 +242,11 @@ sys.exit(99)
                 path.write_text("1\n")
                 self.verdict(False)
                 path.write_text("0\n")
+
+    def test_failed_stage_named_by_rc_fails_even_with_green_stage_exits(self):
+        # Y2: a real-bot report run's guard restore or a signal fails the chain outside the eleven stage exits
+        report = self.verdict(False, "--failed-stage", "real-3")
+        self.assertEqual("real-3", report["failedStage"])
 
     def test_missing_release_library_receipt_fails(self):
         (self.out / "stages/release-library/exit.txt").unlink()

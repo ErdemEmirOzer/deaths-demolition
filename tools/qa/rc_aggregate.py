@@ -310,7 +310,9 @@ def main():
     edit_ok = bool(edit and edit["failed"] == 0 and edit["skipped"] == 0 and edit["inconclusive"] == 0 and edit["total"] > 0)
     play_ok = bool(play and play["failed"] == 0 and play["inconclusive"] == 0 and play["total"] > 0 and not unexpected_play_skips)
     tests_ok = edit_ok and play_ok
-    stage_ok = all(stage_results[name] == 0 for name in stages)
+    # Y2 (C-00 30.09): rc.sh names a failed stage also for failures outside the eleven stage exits (a real-bot report
+    # run's guard, a signal) — the report can never say PASS when the chain says it failed.
+    stage_ok = all(stage_results[name] == 0 for name in stages) and not args.failed_stage
     overall = stage_ok and tests_ok and all(exact_tests.values()) and soak_ok and bot_report_ok and library_ok and bool(release and release.get("ok") is True) and m3_ok and bool(windows and windows.get("pass") is True) and bool(logs and logs.get("pass") is True) and bool(ultra) and all(g.get("pass") for g in ultra)
 
     trace = {

@@ -8,6 +8,9 @@
 # never overlap. Warns (does not refuse) when another Player is already running — the user's own game
 # or an unwrapped launch — and when -ddTelemetryDir is missing (the run would write the real telemetry
 # folder). User data is NOT guarded here: keep tools/userdata-guard.sh snapshot/restore around it.
+# Y2 (C-00 30.09): INT/TERM/HUP to this wrapper are passed on to the Player (as TERM) and the wrapper waits for it — a
+# caller that stops its stage (rc.sh) or times a run out (wp064_run.py) leaves no orphan Player writing user data after
+# its guard restore.
 # Exit: the Player's exit code · 64 usage
 set -u
 source "${0:A:h}/dd-env.sh"
@@ -23,7 +26,11 @@ OTHERS=$(pgrep -fl "Contents/MacOS/(Deaths Demolition|DeathsDemolition)" | grep 
 [ -n "$OTHERS" ] && dd_log "WARNING player-run: another Player is running (user's game or an unwrapped launch): $(echo "$OTHERS" | cut -c1-120 | tr '\n' ';')"
 [[ " $* " == *" -ddTelemetryDir "* ]] || dd_log "WARNING player-run: no -ddTelemetryDir — this run writes the real telemetry folder"
 dd_log "player-run: $BIN $*"
-"$BIN" "$@"
-X=$?
+"$BIN" "$@" &
+PID=$!
+trap 'kill -TERM $PID 2>/dev/null' INT TERM HUP
+wait $PID; X=$?
+# a forwarded signal interrupts `wait`; wait again until the Player itself has exited (its own exit code)
+while kill -0 $PID 2>/dev/null; do wait $PID; X=$?; done
 dd_log "player-run: exit $X"
 exit $X
