@@ -419,7 +419,16 @@ namespace DD.Prototype.Weapons
             }
 
             // WP-069 (C-00 grip decision B): the weapon in hand sits by its definition's grip offset (the Special while held).
-            if (_mountAlignment == null && RigParent != null) _mountAlignment = RigParent.GetComponent<WeaponMountAlignment>();
+            if (_mountAlignment == null && RigParent != null)
+            {
+                _mountAlignment = RigParent.GetComponent<WeaponMountAlignment>();
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+                if (WeaponMountAlignment.Diagnostics)
+                {
+                    Debug.Log("[DD-MOUNT] controller mount=" + RigParent.name + " parent=" + (RigParent.parent != null ? RigParent.parent.name : "null") + " alignment=" + (_mountAlignment != null));
+                }
+#endif
+            }
             if (_mountAlignment != null)
             {
                 WeaponDefinition held = _special.IsActive ? _special.Definition : _classic.Definition;

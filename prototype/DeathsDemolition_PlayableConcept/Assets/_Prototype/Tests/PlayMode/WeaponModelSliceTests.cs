@@ -882,6 +882,45 @@ namespace DD.Prototype.Tests.PlayMode
             return mask;
         }
 
+        /// <summary>
+        /// WP-069 (C-00 28.09, release 819436d4 TP frame: the rifle stands on end at the shoulder, only in the Player's TP run) ·
+        /// the start weapon in hand in every camera mode: top-down, third person, first person → back to third person, the mount is
+        /// aligned this frame, rests on its aim pose (deviation &lt; 0.75°) and the muzzle points where the character faces.
+        /// </summary>
+        [UnityTest]
+        [Timeout(120000)]
+        public IEnumerator TP_BaslangicSilahi_HerKameraModunda_Elde()
+        {
+            yield return Kur();
+            Transform mount = _s.Rig.GetComponentInChildren<PlayerWeaponBinding>().WeaponMount;
+            var alignment = mount.GetComponent<WeaponMountAlignment>();
+            var skinned = _s.Rig.GetComponentInChildren<PlayerSkinnedVisual>();
+            var report = new List<string>();
+            var wrong = new List<string>();
+            foreach (DD.Prototype.CameraSystem.CameraMode mode in new[] { DD.Prototype.CameraSystem.CameraMode.TopDown, DD.Prototype.CameraSystem.CameraMode.ThirdPerson,
+                         DD.Prototype.CameraSystem.CameraMode.FirstPerson, DD.Prototype.CameraSystem.CameraMode.ThirdPerson })
+            {
+                DD.Prototype.CameraSystem.CameraModeService.Request(mode, instant: true);
+                yield return new WaitForSeconds(2f);
+                Animator a = skinned.Animator;
+                int ov = a.GetLayerIndex(CharacterAnimatorContract.OverrideUpperLayer), ad = a.GetLayerIndex(CharacterAnimatorContract.AdditiveLayer);
+                AnimatorStateInfo os = a.GetCurrentAnimatorStateInfo(ov);
+                string state = "?";
+                foreach (string n in new[] { "Aim_0", "Aim_1", "Aim_2", CharacterAnimatorContract.AimV3State, "SwHold_1", "SwHold_2", "Empty" }) if (os.IsName(n)) state = n;
+                string addState = ad >= 0 && a.GetCurrentAnimatorStateInfo(ad).IsName(CharacterAnimatorContract.EmptyState) ? "Empty" : "busy";
+                Vector3 muzzleDir = _s.Rig.transform.InverseTransformDirection((_s.Controller.Muzzle.position - mount.position).normalized);
+                string line = mode + ": weapon pose " + skinned.Weapon + " swHold " + skinned.SpecialHold + " override " + state + (a.IsInTransition(ov) ? " (transition)" : "") +
+                              " additive " + addState + (ad >= 0 && a.IsInTransition(ad) ? " (transition)" : "") + ", aligned " + alignment.AlignedThisFrame + ", deltaApplied " +
+                              alignment.DeltaApplied + " " + alignment.DeltaDegrees.ToString("0.0") + "°, muzzleDir " + muzzleDir.ToString("F2") + ", animator " + a.cullingMode;
+                report.Add(line);
+                if (mode == DD.Prototype.CameraSystem.CameraMode.FirstPerson) continue;   // FP: the fpView pose places the weapon
+                if (!alignment.AlignedThisFrame || alignment.DeltaDegrees > 0.75f || muzzleDir.z < 0.95f) wrong.Add(line);
+            }
+
+            Debug.Log("[DD-TEST] wp069.tpmount " + string.Join(" | ", report));
+            Assert.IsEmpty(wrong, "başlangıç silahı elde değil: " + string.Join(" | ", wrong));
+        }
+
         private const int KareW = 1920, KareH = 1080;
 
         /// <summary>

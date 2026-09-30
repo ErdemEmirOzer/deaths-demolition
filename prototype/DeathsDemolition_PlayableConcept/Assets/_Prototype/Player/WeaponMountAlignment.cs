@@ -58,9 +58,29 @@ namespace DD.Prototype.PlayerSystem
         /// <summary>The last frame's deviation from the rest pose in degrees (0 at rest; the kick / reload / hurt travel). Tests / F1.</summary>
         public float DeltaDegrees { get; private set; }
 
+        /// <summary>
+        /// WP-069 B5 (C-00 28.09 / 30.09, release TP frame: the rifle stood on end in the Player only) · <c>-ddMountDiag</c>: the
+        /// mount logs its binding and, every 60 frames for 10 s, its pose / rest / deviation. Development builds and the Editor
+        /// only (H12); off without the flag, false in a release build.
+        /// </summary>
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+        public static bool Diagnostics => s_diag ?? (s_diag = System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-ddMountDiag") >= 0).Value;
+
+        private static bool? s_diag;
+        private int _diagFrames;
+        private readonly int[] _refFrame = new int[6];
+        private readonly string[] _refClip = new string[6];
+#else
+        public static bool Diagnostics => false;
+#endif
+
         /// <summary>Attach to <paramref name="mount"/> for <paramref name="rig"/> (idempotent).</summary>
         public static WeaponMountAlignment Attach(Transform mount, PlayerRig rig)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            if (Diagnostics) Debug.Log("[DD-MOUNT] attach mount=" + (mount != null ? mount.name : "null") + " parent=" + (mount != null && mount.parent != null ? mount.parent.name : "null") +
+                                       " rig=" + (rig != null) + " skinned=" + (rig != null && rig.Animation != null && rig.Animation.Skinned != null));
+#endif
             if (mount == null || rig == null)
             {
                 return null;
@@ -90,6 +110,14 @@ namespace DD.Prototype.PlayerSystem
             if (_skinned.Weapon == WeaponPoseV3) return 5;
             return _skinned.Weapon <= 2 ? _skinned.Weapon : -1;
         }
+
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+        private static string DiagClip(Animator animator, int layer)
+        {
+            AnimatorClipInfo[] info = animator.GetCurrentAnimatorClipInfo(layer);
+            return info.Length > 0 && info[0].clip != null ? info[0].clip.name : "-";
+        }
+#endif
 
         /// <summary>The override layer rests in the pose's own state (no transition) and the additive layer is empty: the socket is at its authored rest.</summary>
         private bool AtRest(Animator animator, int pose)
@@ -147,6 +175,13 @@ namespace DD.Prototype.PlayerSystem
                 {
                     _reference[pose] = socketLocal;
                     _hasReference[pose] = true;
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+                    if (Diagnostics)
+                    {
+                        _refFrame[pose] = Time.frameCount;
+                        _refClip[pose] = DiagClip(animator, _overrideLayer);
+                    }
+#endif
                 }
 
                 if (_hasReference[pose])
@@ -160,6 +195,30 @@ namespace DD.Prototype.PlayerSystem
             transform.rotation = baseRotation * delta;
             if (socket != null) transform.position = socket.position - transform.rotation * GripOffset;   // the grip point on the hand
             AlignedThisFrame = true;
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            if (Diagnostics && _diagFrames++ < 600 && _diagFrames % 60 == 1)
+            {
+                string path = "";
+                for (Transform p = transform.parent; p != null && path.Length < 200; p = p.parent) path = p.name + "/" + path;
+                string layer = "n/a";
+                if (animator != null && _overrideLayer >= 0)
+                {
+                    AnimatorStateInfo cur = animator.GetCurrentAnimatorStateInfo(_overrideLayer);
+                    layer = "w " + animator.GetLayerWeight(_overrideLayer).ToString("0.00") + " clip " + DiagClip(animator, _overrideLayer) + " t " + cur.normalizedTime.ToString("0.00") +
+                            (animator.IsInTransition(_overrideLayer) ? " (→ next)" : "");
+                }
+
+                Transform hand = animator != null && animator.isHuman ? animator.GetBoneTransform(HumanBodyBones.RightHand) : null;
+                string handText = hand != null
+                    ? "hand " + _rig.transform.InverseTransformPoint(hand.position).ToString("F2") + " / " + (Quaternion.Inverse(_rig.transform.rotation) * hand.rotation).eulerAngles.ToString("F0") +
+                      " mount→hand " + Vector3.Distance(transform.position, hand.position).ToString("F2")
+                    : "hand n/a";
+                Debug.Log("[DD-MOUNT] frame " + Time.frameCount + " path=" + path + " pose=" + pose + " atRest=" + (animator != null && AtRest(animator, pose)) +
+                          " hasRef=" + (pose >= 0 && _hasReference[pose]) + (pose >= 0 ? " refFrame=" + _refFrame[pose] + " refClip=" + _refClip[pose] : "") +
+                          " delta=" + DeltaDegrees.ToString("0.0") + " weapon=" + (_skinned != null ? _skinned.Weapon : -9) + " swHold=" + (_skinned != null ? _skinned.SpecialHold : -9) +
+                          " override: " + layer + " " + handText);
+            }
+#endif
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
