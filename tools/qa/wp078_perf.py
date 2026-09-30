@@ -176,11 +176,26 @@ def window_args(tier_name, mode, cell):
 
 
 def plan(targets, tiers, modes, windows):
+    """(tier, mode, windows needed) per cell — windows = the counted windows each cell must reach."""
     for name in tiers:
         for mode in modes:
-            count = windows or int(targets["tiers"][name]["minWindows"])
-            for index in range(1, count + 1):
-                yield name, mode, index
+            yield name, mode, windows or int(targets["tiers"][name]["minWindows"])
+
+
+def cell_state(root, name, mode):
+    """(counted, next free index) for one cell in this root — C-00 30.09 K8: one root and one ledger per FINAL; a
+    resumed run continues at the next free index, and only complete ∧ hostClean attempts count."""
+    import wp078_perf_report as report
+    counted, highest = 0, 0
+    for d in root.glob(f"perf-{name}-{mode}-*"):
+        try:
+            highest = max(highest, int(d.name.rsplit("-", 1)[1]))
+        except ValueError:
+            continue
+        attempt = report.load(d / "attempt.json") or {}
+        if report.classify(attempt) == "complete":
+            counted += 1
+    return counted, highest + 1
 
 
 def main():
@@ -200,6 +215,7 @@ def main():
     parser.add_argument("--load-max", type=float, default=6.0, help="C-00 26.09: measure only below this load1")
     parser.add_argument("--quiet-minutes", type=float, default=25.0)
     parser.add_argument("--quiet-pause", type=float, default=180.0)
+    parser.add_argument("--max-discards", type=int, default=6, help="K8: host-discarded re-runs allowed per cell per invocation")
     args = parser.parse_args()
 
     targets = json.loads(Path(args.targets).read_text(encoding="utf-8"))
@@ -213,7 +229,7 @@ def main():
     root = Path(args.out).resolve()
     root.mkdir(parents=True, exist_ok=True)
     seconds = args.window_seconds or int(targets["windowSeconds"])
-    runs = list(plan(targets, tiers, modes, args.windows))
+    runs = list(plan(targets, tiers, modes, args.windows))   # (tier, mode, windows needed)
     binary = resolve_binary(args.bin)
     log = root / "wp078-perf.log"
 
@@ -223,7 +239,7 @@ def main():
         with log.open("a", encoding="utf-8") as handle:
             handle.write(line + "\n")
 
-    note(f"plan {len(runs)} windows · tiers={tiers} modes={modes} commit={args.commit}")
+    note(f"plan {len(runs)} cells × counted windows {[r[2] for r in runs]} · tiers={tiers} modes={modes} commit={args.commit}")
     quiet = None if (args.no_quiet or args.dry_run) else QuietWindow(note, root / ".quiet-hold", args.load_max, args.quiet_minutes, args.quiet_pause)
     try:
         return run_all(args, runs, root, binary, seconds, quiet, note)
@@ -233,53 +249,77 @@ def main():
 
 
 def run_all(args, runs, root, binary, seconds, quiet, note):
-    for position, (name, mode, index) in enumerate(runs):
-        cell = root / f"perf-{name}-{mode}-{index}"
-        command = [sys.executable, str(HERE / "wp064_run.py"), "perf", "--bin", str(binary), "--out", str(cell),
-                   "--commit", args.commit, "--window", str(seconds), "--load-max", str(args.load_max),
-                   "--preflight-attempts", "3", "--preflight-wait", "20"]
-        # "--extra-arg=<flag>": argparse reads a separate value that starts with "-" as an option
-        command += [f"--extra-arg={extra}" for extra in window_args(name, mode, cell)]
-        if args.dry_run:
-            note("dry-run " + " ".join(command))
-            continue
-
-        waited = 0.0
-        while player_up():
-            if waited >= args.player_wait:
-                note(f"STOP {cell.name}: a game Player is still up after {int(waited)} s (never touched)")
-                return 6
-            time.sleep(60)
-            waited += 60
-
-        ug = root / "ug" / cell.name
-        if quiet is not None:
-            note(f"{cell.name}: {quiet.before_window(seconds + 90)}")
-        snap = guard("snapshot", ug)
-        if snap.returncode != 0:
-            state = "BLOCKED" if snap.returncode == 30 else "STOP"
-            note(f"{state} {cell.name}: guard snapshot exit {snap.returncode}; no Player started")
-            return snap.returncode
-        run = subprocess.run(command, capture_output=True, text=True)
-        (root / "ug" / (cell.name + ".wp064-run.out")).write_text(run.stdout + run.stderr, encoding="utf-8")
-        export_prefs(ug / "prefs-after-run.plist")
-        restore = guard("restore", ug)
-        (ug / "restore.txt").write_text(restore.stdout + restore.stderr, encoding="utf-8")
-        if restore.returncode != 0:
-            note(f"STOP {cell.name}: guard restore exit {restore.returncode} — report to C-00")
-            return restore.returncode
-        ok, why = guard_verdict(ug, restore.stdout, ug / "prefs-after-run.plist")
-        if not ok:
-            note(f"STOP {cell.name}: guard restore mismatch, {why} — report to C-00")
-            return 7
-        note(f"{cell.name} wp064_run exit {run.returncode} · guard ok ({why})")
-        if run.returncode in (2, 64, 66):
-            note(f"STOP {cell.name}: wp064_run usage/input error (exit {run.returncode}) — see ug/<cell>.wp064-run.out")
-            return 64
-        if position + 1 < len(runs):
-            time.sleep(args.cooldown if quiet is None else min(args.cooldown, 20.0))
+    """C-00 30.09 K8: every cell runs until it has its counted windows; a host-discarded window is re-run at the next
+    free index in the same root (at most --max-discards extra attempts per cell per invocation)."""
+    first = True
+    for name, mode, need in runs:
+        extra = 0
+        while True:
+            counted, index = cell_state(root, name, mode)
+            if counted >= need:
+                note(f"perf-{name}-{mode}: {counted}/{need} counted")
+                break
+            if extra > args.max_discards:
+                note(f"perf-{name}-{mode}: {counted}/{need} counted after {extra - 1} re-runs — BLOCKED (host too busy), next cell")
+                break
+            if not first:
+                time.sleep(args.cooldown if quiet is None else min(args.cooldown, 20.0))
+            first = False
+            code = run_window(args, root, binary, seconds, quiet, note, name, mode, index)
+            if code is not None:
+                return code
+            extra += 1 if cell_state(root, name, mode)[0] == counted else 0
+            if args.dry_run:
+                break
     note("done")
     return 0
+
+
+def run_window(args, root, binary, seconds, quiet, note, name, mode, index):
+    """One guarded window; None to continue, an exit code to stop the whole matrix."""
+    cell = root / f"perf-{name}-{mode}-{index}"
+    command = [sys.executable, str(HERE / "wp064_run.py"), "perf", "--bin", str(binary), "--out", str(cell),
+               "--commit", args.commit, "--window", str(seconds), "--load-max", str(args.load_max),
+               "--preflight-attempts", "3", "--preflight-wait", "20"]
+    # "--extra-arg=<flag>": argparse reads a separate value that starts with "-" as an option
+    command += [f"--extra-arg={extra}" for extra in window_args(name, mode, cell)]
+    if args.dry_run:
+        note("dry-run " + " ".join(command))
+        return None
+
+    waited = 0.0
+    while player_up():
+        if waited >= args.player_wait:
+            note(f"STOP {cell.name}: a game Player is still up after {int(waited)} s (never touched)")
+            return 6
+        time.sleep(60)
+        waited += 60
+
+    ug = root / "ug" / cell.name
+    if quiet is not None:
+        note(f"{cell.name}: {quiet.before_window(seconds + 90)}")
+    snap = guard("snapshot", ug)
+    if snap.returncode != 0:
+        state = "BLOCKED" if snap.returncode == 30 else "STOP"
+        note(f"{state} {cell.name}: guard snapshot exit {snap.returncode}; no Player started")
+        return snap.returncode
+    run = subprocess.run(command, capture_output=True, text=True)
+    (root / "ug" / (cell.name + ".wp064-run.out")).write_text(run.stdout + run.stderr, encoding="utf-8")
+    export_prefs(ug / "prefs-after-run.plist")
+    restore = guard("restore", ug)
+    (ug / "restore.txt").write_text(restore.stdout + restore.stderr, encoding="utf-8")
+    if restore.returncode != 0:
+        note(f"STOP {cell.name}: guard restore exit {restore.returncode} — report to C-00")
+        return restore.returncode
+    ok, why = guard_verdict(ug, restore.stdout, ug / "prefs-after-run.plist")
+    if not ok:
+        note(f"STOP {cell.name}: guard restore mismatch, {why} — report to C-00")
+        return 7
+    note(f"{cell.name} wp064_run exit {run.returncode} · guard ok ({why})")
+    if run.returncode in (2, 64, 66):
+        note(f"STOP {cell.name}: wp064_run usage/input error (exit {run.returncode}) — see ug/<cell>.wp064-run.out")
+        return 64
+    return None
 
 
 if __name__ == "__main__":

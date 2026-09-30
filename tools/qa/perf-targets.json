@@ -1,19 +1,60 @@
 {
   "schema": "dd-perf-targets-v1",
-  "source": "WP-078 §4 (S-10); QUALITY-TIERS-V2 §1; user decisions DEC-092 (Yuksek 60 fps), DEC-100 (default tier Sinematik 30 fps, gated), DEC-088 (Performans)",
-  "resolution": [1920, 1080],
+  "source": "WP-078 §4 (S-10); QUALITY-TIERS-V2 §1; user decisions DEC-092 (Yuksek 60 fps), DEC-100 (default tier Sinematik 30 fps, gated), DEC-088 (Performans); C-00 30.09 K9 (per-tier stallMs)",
+  "resolution": [
+    1920,
+    1080
+  ],
   "activeEnemies": 40,
   "warmupSeconds": 10,
   "windowSeconds": 60,
   "stallMs": 33.33,
   "stallFractionMax": 0.01,
-  "modes": ["topdown", "tp", "fp"],
+  "modes": [
+    "topdown",
+    "tp",
+    "fp"
+  ],
   "defaultTier": "sinematik",
   "tiers": {
-    "sinematik":  { "meanMs": 33.3, "p99FilteredMs": 40.0, "role": "gate", "minWindows": 3, "dec": "DEC-100", "probeValue": "Sinematik" },
-    "yuksek":     { "meanMs": 16.6, "p99FilteredMs": 20.0, "role": "gate", "minWindows": 3, "dec": "DEC-092", "probeValue": "Yuksek" },
-    "performans": { "meanMs": 8.0,  "p99FilteredMs": 10.0, "role": "gate", "minWindows": 3, "dec": "DEC-088", "probeValue": "Performans" }
+    "sinematik": {
+      "meanMs": 33.3,
+      "p99FilteredMs": 40.0,
+      "stallMs": 40.0,
+      "role": "gate",
+      "minWindows": 3,
+      "dec": "DEC-100",
+      "probeValue": "Sinematik"
+    },
+    "yuksek": {
+      "meanMs": 16.6,
+      "p99FilteredMs": 20.0,
+      "stallMs": 33.33,
+      "role": "gate",
+      "minWindows": 3,
+      "dec": "DEC-092",
+      "probeValue": "Yuksek"
+    },
+    "performans": {
+      "meanMs": 8.0,
+      "p99FilteredMs": 10.0,
+      "stallMs": 33.33,
+      "role": "gate",
+      "minWindows": 3,
+      "dec": "DEC-088",
+      "probeValue": "Performans"
+    }
   },
   "commandLine": "-ddQualityTier <tier> -ddCameraMode <mode> -ddPilotCameraSweep 1 (TP/FP)",
-  "probeKeys": { "file": "04-window.json", "tier": "qualityTier", "mode": "cameraMode", "sweep": "cameraSweep", "mean": "frameMeanMs", "p99Filtered": "frameP99FilteredMs", "stallsExcluded": "framesExcludedAsStalls", "frames": "frameCount" }
+  "probeKeys": {
+    "file": "04-window.json",
+    "tier": "qualityTier",
+    "mode": "cameraMode",
+    "sweep": "cameraSweep",
+    "mean": "frameMeanMs",
+    "p99Filtered": "frameP99FilteredMs",
+    "stallsExcluded": "framesExcludedAsStalls",
+    "frames": "frameCount"
+  },
+  "stallMsNote": "top-level stallMs = the probe's native 33.33 ms stall (cross-check only); the gate uses tiers.<tier>.stallMs (C-00 30.09 K9)"
 }
