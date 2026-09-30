@@ -31,9 +31,11 @@ namespace DD.Prototype.Tests.PlayMode
     public sealed class FlankOpenGroundTests
     {
         private const int Target = 12;
-        private const float StationSeconds = 20f, SampleSeconds = 0.5f;
+        private const float StationSeconds = 30f, SampleSeconds = 0.5f;   // B9: room for refills (was 20)
         /// <summary>PROVISIONAL (WP-076 B9 M-25): pending the wp076.flank measurement.</summary>
         private const float ProvisionalMinActiveShare = 0.5f;
+        private const int MinFlankRolled = 3;
+        private const float RefillCheckSeconds = 6f;
         private const int MinFarSamples = 10;
 
         [TearDown]
@@ -75,17 +77,26 @@ namespace DD.Prototype.Tests.PlayMode
 
             CrowdFeelSettings feel = CrowdFeelSettings.Active;
             float straight = feel.FlankStraightRadius;
-            var seen = new HashSet<ZombieEnemy>();
+            var seen = new HashSet<int>();   // by LifeId: a pooled instance comes back as a new life
             int rolled = 0, farSamples = 0, activeSamples = 0;
             int lineOpenSamples = 0, acceptedSamples = 0;   // M-25: edge acceptance given an open line (the regression 12c7215c introduced)
             float expectedRolled = 0f;
 
+            // B9 30.09: the per-life flank roll follows the spawn-seed sequence, which earlier tests in the session advance (r3 run:
+            // 0 of 12 flankers after CorpseLifetimeSliceTests — a natural streak, no bias: a replica of the xorshift draw keeps 0.35);
+            // start the sequence at a fixed point (Y4 test hook) and refill with new lives until enough flank-rolled bodies are out.
+            EnemyFactory.ResetSeedForTests(1u);
             director.ForceActiveTarget(Target, true);
-            float t0 = Time.time, nextSample = 0f;
+            float t0 = Time.time, nextSample = 0f, nextRefill = Time.time + RefillCheckSeconds;
             try
             {
                 while (Time.time - t0 < StationSeconds)
                 {
+                    if (Time.time >= nextRefill && rolled < MinFlankRolled && Time.time - t0 < StationSeconds - RefillCheckSeconds)
+                    {
+                        nextRefill = Time.time + RefillCheckSeconds;
+                        director.ClearAllEnemies();   // new lives: new flank rolls
+                    }
                     if (Time.time >= nextSample)
                     {
                         nextSample = Time.time + SampleSeconds;
@@ -95,7 +106,7 @@ namespace DD.Prototype.Tests.PlayMode
                         {
                             ZombieEnemy z = live[i];
                             if (z == null || !z.IsAlive) continue;
-                            if (seen.Add(z))
+                            if (seen.Add(z.LifeId))
                             {
                                 expectedRolled += feel.FlankShareOf(z.Tier);
                                 if (z.FlankSign != 0) rolled++;
@@ -133,6 +144,7 @@ namespace DD.Prototype.Tests.PlayMode
                 farSamples, activeSamples, activeShare, feel.FlankProjectMaxMetres, straight, ProvisionalMinActiveShare));
 
             Assert.Greater(bodies, 0, "meydanda hiç gövde doğmadı");
+            Assert.GreaterOrEqual(rolled, MinFlankRolled, "yeterli kanat atan gövde yok (tohum dizisi; " + rolled + "/" + bodies + ")");
             Assert.GreaterOrEqual(farSamples, MinFarSamples, "ölçüm için yeterli uzak kanat örneği yok (rolled=" + rolled + ")");
             // C-00 30.09 (H5): the provisional threshold stays until the measurement is reviewed; the m25 line above decomposes it
             // (WP-061M line rule vs the M-25 edge check) for that review.
