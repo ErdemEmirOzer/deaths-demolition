@@ -60,6 +60,7 @@ namespace DD.Prototype.Diagnostics
     ///   -ddPilotScene &lt;Run|AP001_GoldenSlice&gt;  scene to measure (default AP001_GoldenSlice)
     ///   -ddPilotWindowSeconds &lt;n&gt;        measurement window length (default 60)
     ///   -ddPilotWarmupSeconds &lt;n&gt;        warm-up after the load is reached (default 10)
+    ///   -ddPilotStart &lt;x,z,yaw&gt;          WP-074 B9: measured pose on the NavMesh (≤ 2 m), sweep held off
     ///   -ddProfilePath &lt;file&gt;            redirect the profile file (keeps the real profile untouched)
     /// </summary>
     public static class PilotPerfProbe
@@ -128,6 +129,15 @@ namespace DD.Prototype.Diagnostics
         /// and the window stage reports the mean number of living bodies inside the view.
         /// </summary>
         private const string CameraSweepFlag = "-ddPilotCameraSweep";
+
+        /// <summary>
+        /// WP-074 B9 (S-05; S-10 30.09): <c>-ddPilotStart x,z,yaw</c> (optional) — before the scene is counted the player stands on the
+        /// NavMesh nearest (x, z) (≤ <see cref="StartSampleMetres"/>; farther fails the run, no silent fallback) facing yaw, and the
+        /// camera is turned to it. The pose is the measurement, so the camera sweep stays off with it (reported:
+        /// <c>sweepOffByStart</c>). The 01 and 04 stages carry <c>start</c> {x, z, yaw, sampled}. Absent: behaviour unchanged.
+        /// </summary>
+        private const string StartFlag = "-ddPilotStart";
+        private const float StartSampleMetres = 2f;
 
         /// <summary>The pilot scene by name: this assembly does not reference DD.Art, so the string is the contract.</summary>
         public const string PilotSceneName = "AP001_GoldenSlice";
@@ -245,6 +255,16 @@ namespace DD.Prototype.Diagnostics
         /// One record per stage, every field serialised into NN-stage.json. Fields a stage
         /// does not measure stay at their defaults (same convention as the other probes).
         /// </summary>
+        /// <summary>WP-074 B9: the -ddPilotStart pose (requested x / z / yaw; sampled = placed on the NavMesh at sampledX / Z).</summary>
+        [Serializable]
+        public sealed class StartPose
+        {
+            public bool set;
+            public float x, z, yaw;
+            public bool sampled;
+            public float sampledX, sampledY, sampledZ;
+        }
+
         [Serializable]
         public sealed class Stage
         {
@@ -402,6 +422,8 @@ namespace DD.Prototype.Diagnostics
             public string cameraMode;            // WP-078: CameraModeService.Current during the window
             public string qualityTier;           // WP-078: QualityTiers.Current during the window (-ddQualityTier for the matrix)
             public bool cameraSweep;             // WP-078: -ddPilotCameraSweep 1 active (TP/FP only)
+            public bool sweepOffByStart;         // WP-074 B9: -ddPilotCameraSweep asked but -ddPilotStart holds the pose
+            public StartPose start = new StartPose();   // WP-074 B9: -ddPilotStart (01 and 04)
             public float cameraSweepMeanOnScreen; // WP-078: mean living bodies inside the view during the sweep
             public int frameCount;
             public int frameCountRequired;
@@ -651,6 +673,7 @@ namespace DD.Prototype.Diagnostics
             private string _outDir;
             private string _scene;
             private float _windowSeconds;
+            private readonly StartPose _start = new StartPose();
             private float _warmupSeconds;
 
             private readonly List<Stage> _stages = new List<Stage>();
@@ -736,6 +759,36 @@ namespace DD.Prototype.Diagnostics
                 PlayerRig rig = PlayerRegistry.Primary;
                 rig.Health.DiagnosisInvulnerable = true;   // the probe player stands still under 40 bodies; keep the window alive
 
+                // WP-074 B9: -ddPilotStart x,z,yaw — the measured pose (the world's corners, the plaza), before anything is counted.
+                string start = Arg(StartFlag);
+                if (!string.IsNullOrEmpty(start))
+                {
+                    string[] c = start.Split(',');
+                    _start.set = true;
+                    if (c.Length != 3 || !float.TryParse(c[0], NumberStyles.Float, CultureInfo.InvariantCulture, out _start.x) ||
+                        !float.TryParse(c[1], NumberStyles.Float, CultureInfo.InvariantCulture, out _start.z) ||
+                        !float.TryParse(c[2], NumberStyles.Float, CultureInfo.InvariantCulture, out _start.yaw))
+                    {
+                        yield return Abort("01-scene-ready", StartFlag + " '" + start + "' is not x,z,yaw");
+                        yield break;
+                    }
+
+                    if (!NavMesh.SamplePosition(new Vector3(_start.x, rig.transform.position.y, _start.z), out NavMeshHit startHit, StartSampleMetres, NavMesh.AllAreas))
+                    {
+                        yield return Abort("01-scene-ready", StartFlag + " (" + start + ") is not within " + StartSampleMetres + " m of the NavMesh");
+                        yield break;
+                    }
+
+                    _start.sampled = true;
+                    _start.sampledX = startHit.position.x;
+                    _start.sampledY = startHit.position.y;
+                    _start.sampledZ = startHit.position.z;
+                    rig.Teleport(startHit.position, Quaternion.Euler(0f, _start.yaw, 0f));
+                    if (PrototypeCameraRig.Active != null) PrototypeCameraRig.Active.SetViewAngles(_start.yaw, 0f);
+                    Debug.Log("[PilotPerfProbe] start pose " + startHit.position.ToString("F2") + " yaw " + _start.yaw.ToString("F0", CultureInfo.InvariantCulture));
+                    yield return null;
+                }
+
                 // WP-013 A/B: the "off" side of the budget, applied before anything is counted.
                 if (AtmosphereOff)
                 {
@@ -748,6 +801,7 @@ namespace DD.Prototype.Diagnostics
                 // ---------------------------------------------------------------- 01 scene-ready
                 Stage s1 = Capture("01-scene-ready");
                 s1.sceneReadySeconds = sceneReadySeconds;
+                s1.start = _start;
                 CountScene(s1);
                 s1.targetFrameRateBefore = Application.targetFrameRate;
                 s1.vSyncCountBefore = QualitySettings.vSyncCount;
@@ -869,7 +923,8 @@ namespace DD.Prototype.Diagnostics
                     Debug.Log("[PilotPerfProbe] profiler binary log -> " + ProfilerLogPath);
                 }
 
-                bool sweep = string.Equals(Arg(CameraSweepFlag), "1", StringComparison.Ordinal) && CameraModeService.IsLookMode;
+                bool sweepAsked = string.Equals(Arg(CameraSweepFlag), "1", StringComparison.Ordinal) && CameraModeService.IsLookMode;
+                bool sweep = sweepAsked && !_start.set;   // WP-074 B9: a -ddPilotStart pose is held, not swept
                 float sweepYaw0 = PrototypeCameraRig.Active != null ? PrototypeCameraRig.Active.ViewYaw : 0f;
                 long sweepOnScreenSum = 0;
                 int sweepSamples = 0;
@@ -986,6 +1041,8 @@ namespace DD.Prototype.Diagnostics
                 s4.cameraMode = CameraModeService.Current.ToString();
                 s4.qualityTier = QualityTiers.Current.ToString();
                 s4.cameraSweep = sweep;
+                s4.sweepOffByStart = sweepAsked && _start.set;
+                s4.start = _start;
                 s4.cameraSweepMeanOnScreen = sweepSamples > 0 ? (float)sweepOnScreenSum / sweepSamples : -1f;
                 s4.frameCountRequired = Mathf.CeilToInt(_windowSeconds * 20f);
                 ComputeFrameStats(_frameMs, s4);
