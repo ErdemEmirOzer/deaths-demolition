@@ -40,6 +40,15 @@ namespace DD.Prototype.Tests.PlayMode
             yield return null;
             Assert.IsTrue(pause.IsPaused, "Pause açılmadı");
             Assert.IsTrue(pause.CameraButton(CameraMode.TopDown).IsSelectedChoice, "seçili = mevcut mod");
+            // Slice 9 · E3 T2: the caption describes the focused segment and falls back to the current mode when focus leaves.
+            UnityEngine.EventSystems.EventSystem events = UnityEngine.EventSystems.EventSystem.current;
+            Assert.IsNotNull(events, "Pause bir EventSystem ile açılır");
+            events.SetSelectedGameObject(pause.CameraButton(CameraMode.FirstPerson).gameObject);
+            yield return null;
+            Assert.AreEqual(PauseScreen.CameraModeCaption((int)CameraMode.FirstPerson), pause.CameraCaption, "odaklanan segmentin açıklaması");
+            events.SetSelectedGameObject(null);
+            yield return null;
+            Assert.AreEqual(PauseScreen.CameraModeCaption((int)CameraMode.TopDown), pause.CameraCaption, "odak satırdan çıkınca mevcut mod");
 
             pause.ChooseCamera(CameraMode.ThirdPerson);
             Assert.AreEqual(CameraMode.ThirdPerson, CameraModeService.Target, "seçim anında istenir");

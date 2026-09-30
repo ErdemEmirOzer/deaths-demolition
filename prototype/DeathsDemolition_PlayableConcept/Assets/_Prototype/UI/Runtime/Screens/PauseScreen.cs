@@ -309,6 +309,18 @@ namespace DD.Prototype.UI
             RefreshCamera();
         }
 
+        /// <summary>The camera caption for segment <paramref name="index"/>, or for the current mode when it is below 0.</summary>
+        private void ShowCameraCaption(int index)
+        {
+            if (_cameraCaption == null)
+            {
+                return;
+            }
+
+            int mode = index >= 0 ? index : (int)CameraModeService.Target;
+            _cameraCaption.text = CameraModeCaption(Mathf.Clamp(mode, 0, CameraModeCaptions.Length - 1));
+        }
+
         private void RefreshCamera()
         {
             int current = (int)CameraModeService.Target;
@@ -602,6 +614,9 @@ namespace DD.Prototype.UI
                 rect.offsetMin = new Vector2(i == 0 ? 0f : gap * 0.5f, 0f);
                 rect.offsetMax = new Vector2(i == 2 ? 0f : -gap * 0.5f, 0f);
                 _cameraButtons[i] = button;
+                // Slice 9 · E3 T2: the caption describes the focused segment; leaving the row gives it back to the current mode.
+                int index = i;
+                button.gameObject.AddComponent<UiFocusCallback>().Configure(() => ShowCameraCaption(index), () => ShowCameraCaption(-1));
             }
 
             _cameraCaption = UiFactory.Label("CameraCaption", host, CameraModeCaption(0), UiType.Caption, UiColor.TextMuted);

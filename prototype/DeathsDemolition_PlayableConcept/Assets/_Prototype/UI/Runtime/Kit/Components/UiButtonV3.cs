@@ -398,4 +398,31 @@ namespace DD.Prototype.UI
             return button;
         }
     }
+
+    /// <summary>
+    /// Slice 9 · E3 T2 (the shared focus-caption hook): calls back when its control gains or loses focus - keyboard, pad,
+    /// or a pointer hover (a UiButton moves focus on hover). Event-driven: a screen needs no per-frame focus poll.
+    /// USAGE: a caption that describes the focused choice and falls back to the current one when focus leaves.
+    /// </summary>
+    public sealed class UiFocusCallback : MonoBehaviour, UnityEngine.EventSystems.ISelectHandler, UnityEngine.EventSystems.IDeselectHandler
+    {
+        private Action _focus;
+        private Action _blur;
+
+        public void Configure(Action focus, Action blur)
+        {
+            _focus = focus;
+            _blur = blur;
+        }
+
+        public void OnSelect(UnityEngine.EventSystems.BaseEventData eventData)
+        {
+            _focus?.Invoke();
+        }
+
+        public void OnDeselect(UnityEngine.EventSystems.BaseEventData eventData)
+        {
+            _blur?.Invoke();
+        }
+    }
 }
