@@ -113,6 +113,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsNotNull(scroll);
             Transform columns = scroll.Content.Find("Columns");
             UiButton reset = scroll.Content.Find("Footer/ResetBindings").GetComponent<UiButton>();
+            Assert.IsTrue(reset.IsHoldButton, "RESET ALL BINDINGS is a 500 ms hold (direction E7, slice 9 R1).");
             UiButton rumble = columns.Find("Gamepad/Rumble").GetComponent<UiButton>();
             Assert.Greater(columns.Find("Keyboard").childCount, 5, "Use the actual binding rows.");
             Assert.GreaterOrEqual(ReferenceRect((RectTransform)rumble.transform).yMin, ReferenceRect((RectTransform)columns).yMin - 0.5f, "Right options fit the measured columns band.");

@@ -698,7 +698,7 @@ S-09 (R1-D, 25.09):
 | `controls.keyboard` | KEYBOARD | KLAVYE |
 | `controls.listening` | PRESS A KEY | BİR TUŞA BAS |
 | `controls.no_service` | Input service not running. | Girdi servisi çalışmıyor. |
-| `controls.reset` | RESET ALL BINDINGS TO DEFAULTS | TÜM ATAMALARI VARSAYILANA DÖNDÜR |
+| `controls.reset` | HOLD TO RESET ALL BINDINGS | TÜM ATAMALARI SIFIRLAMAK İÇİN BASILI TUT |
 | `controls.rumble` | RUMBLE | TİTREŞİM |
 | `hud.ammo.empty` | EMPTY | BOŞ |
 | `hud.banner.classic_restored` | CLASSIC WEAPON RESTORED | KLASİK SİLAH GERİ DÖNDÜ |
@@ -1086,3 +1086,13 @@ R1-E E1 (S-09, C-00 30.09): 21 tr lines below revised for grammar and pack termi
 | `achievement.both_special_links.desc` | Own both links of a Special in one run. | Tek koşuda bir Özel silahın iki bağına da sahip ol. |
 | `achievement.mastery_5_any.desc` | Reach mastery {count} with any weapon. | Bir silahta {count}. ustalık seviyesine ulaş. |
 | `results.reward.achievement.namekuji_skater.desc` | Defeat {count} enemies while they slide on gel in one run. | Bir koşuda jelde kayan {count} düşman yen. |
+
+## S-09 · Slice 9 remainder (E3, C-00 30.09)
+
+`controls.reset` changed in place: RESET ALL is now a 500 ms hold (direction E7), so the label says so, following `path.buy.hold`. The three new keys are the Controls pane's dead-zone sentence, the override mark's legend (the kit never uses a shape alone) and the binding-conflict notice (direction E7: conflict → Warning notice).
+
+| Key | en | tr |
+|---|---|---|
+| `controls.deadzone.note` | How far a stick moves before it counts. Raise it if your aim drifts on its own. | Çubuk bu kadar itilmeden hareket sayılmaz. Nişanın kendi kendine kayıyorsa artır. |
+| `controls.override_legend` | A marked slot is changed from its default. | İşaretli yuva varsayılandan değiştirildi. |
+| `controls.conflict` | {key} is bound to more than one action: {actions}. Rebind one of them. | {key} birden fazla eyleme atanmış: {actions}. Birini yeniden ata. |

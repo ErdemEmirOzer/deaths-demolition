@@ -356,6 +356,38 @@ namespace DD.Prototype.Tests.EditMode
                 StringAssert.DoesNotContain(english, copy);
         }
 
+        // ------------------------------------------------------------ slice 9 · E3 R2: binding conflicts
+
+        [Test]
+        public void Controls_TusCakismasi_AyniSemadaIkiYuva_UyariCumlesi_TR_EN()
+        {
+            var kb = InputSchemeKind.KeyboardMouse;
+            var entries = new List<InputRemapEntry>
+            {
+                new InputRemapEntry("fire", "Gameplay", "Fire", kb, null, "<Mouse>/leftButton", "<Keyboard>/r", "R", true),
+                new InputRemapEntry("reload", "Gameplay", "Reload", kb, null, "<Keyboard>/r", "<Keyboard>/r", "R", false),
+                new InputRemapEntry("up", "Gameplay", "Move", kb, "up", "<Keyboard>/w", "<Keyboard>/w", "W", false),
+                new InputRemapEntry("pad-reload", "Gameplay", "Reload", InputSchemeKind.Gamepad, null, "<Gamepad>/buttonWest", "<Keyboard>/r", "R", false),
+                new InputRemapEntry("aim", "Gameplay", "Aim", kb, null, "<Keyboard>/r", "<Keyboard>/r", "R", false),
+                new InputRemapEntry("empty-a", "Gameplay", "Pause", kb, null, "", "", "", false),
+                new InputRemapEntry("empty-b", "Gameplay", "Special", kb, null, "", "", "", false),
+            };
+
+            UiStrings.Language = UiStrings.Turkish;
+            List<string> tr = MainMenuScreen.RemapConflicts(entries, kb, out HashSet<string> paths);
+            Assert.AreEqual(1, tr.Count, "one control answered by two keyboard slots; the pad scheme, the Aim axis and unbound slots never count");
+            CollectionAssert.AreEquivalent(new[] { "<Keyboard>/r" }, paths);
+            StringAssert.Contains(UiStrings.Get("controls.action.Fire"), tr[0]);
+            StringAssert.Contains(UiStrings.Get("controls.action.Reload"), tr[0]);
+            StringAssert.StartsWith("R ", tr[0]);
+            StringAssert.DoesNotContain("{", tr[0]);
+            Assert.AreEqual(0, MainMenuScreen.RemapConflicts(entries, InputSchemeKind.Gamepad, out _).Count, "the gamepad scheme has no conflict");
+
+            UiStrings.Language = UiStrings.English;
+            List<string> en = MainMenuScreen.RemapConflicts(entries, kb, out _);
+            Assert.AreEqual("R is bound to more than one action: Fire, Reload. Rebind one of them.", en[0]);
+        }
+
         private sealed class AllAtOneLadder : IUnlockLadder
         {
             public int UnlockLevelFor(ClassicWeaponId id) { return 1; }

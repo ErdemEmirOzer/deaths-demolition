@@ -2280,8 +2280,8 @@
     "tr": "Girdi servisi çalışmıyor."
   },
   "controls.reset": {
-    "en": "RESET ALL BINDINGS TO DEFAULTS",
-    "tr": "TÜM ATAMALARI VARSAYILANA DÖNDÜR"
+    "en": "HOLD TO RESET ALL BINDINGS",
+    "tr": "TÜM ATAMALARI SIFIRLAMAK İÇİN BASILI TUT"
   },
   "controls.rumble": {
     "en": "RUMBLE",
@@ -3726,5 +3726,17 @@
   "results.reward.achievement.namekuji_skater.desc": {
     "en": "Defeat {count} enemies while they slide on gel in one run.",
     "tr": "Bir koşuda jelde kayan {count} düşman yen."
+  },
+  "controls.deadzone.note": {
+    "en": "How far a stick moves before it counts. Raise it if your aim drifts on its own.",
+    "tr": "Çubuk bu kadar itilmeden hareket sayılmaz. Nişanın kendi kendine kayıyorsa artır."
+  },
+  "controls.override_legend": {
+    "en": "A marked slot is changed from its default.",
+    "tr": "İşaretli yuva varsayılandan değiştirildi."
+  },
+  "controls.conflict": {
+    "en": "{key} is bound to more than one action: {actions}. Rebind one of them.",
+    "tr": "{key} birden fazla eyleme atanmış: {actions}. Birini yeniden ata."
   }
 }

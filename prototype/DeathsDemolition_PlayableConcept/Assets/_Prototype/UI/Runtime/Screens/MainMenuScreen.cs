@@ -1142,6 +1142,9 @@ namespace DD.Prototype.UI
             rightStack.Gap(UiSpace.M);
             Slider deadzone = AddSettingSliderIn(ref rightStack, right, UiStrings.Get("controls.deadzone", "STICK DEAD ZONE"), null, 0f, 0.5f, prefs.StickDeadzone,
                 v => Mathf.RoundToInt(v * 100f) + "%", v => UpdatePreferences(p => p.StickDeadzone = v));
+            // Slice 9 · E3 T3 (direction E7): what the dead zone does, in one sentence under its slider.
+            AddCaptionUnder(ref rightStack, right, "DeadzoneNote",
+                UiStrings.Get("controls.deadzone.note", "How far a stick moves before it counts. Raise it if your aim drifts on its own."), 2, UiSpace.S);
             // AD v006 MUST-6: AIM ASSIST as a cycle toggle (Off → Light → Full), MUST-1 recipe.
             UiButton assist = AddToggleRow(ref rightStack, right, "AimAssist", UiStrings.Get("controls.aim_assist", "AIM ASSIST"),
                 () => AimAssistState(),
@@ -1164,7 +1167,8 @@ namespace DD.Prototype.UI
             stack.Gap(UiSpace.XL);
             RectTransform footer = UiFactory.NewRect("Footer", scroll.Content);
             stack.Add(footer, UiTokens.TargetCompact);
-            UiButton reset = UiFactory.Button("ResetBindings", footer, UiStrings.Get("controls.reset", "RESET ALL BINDINGS TO DEFAULTS"), UiButtonVariant.Secondary, () =>
+            // Slice 9 · E3 R1 (direction E7, certain): destructive, so a 500 ms hold - a click or a pad press alone does nothing.
+            UiButton reset = UiFactory.Button("ResetBindings", footer, UiStrings.Get("controls.reset", "HOLD TO RESET ALL BINDINGS"), UiButtonVariant.Secondary, () =>
             {
                 if (remap != null)
                 {
@@ -1175,6 +1179,7 @@ namespace DD.Prototype.UI
                 _refocusName = "ControlsScroll/Viewport/Content/Footer/ResetBindings";
                 RedrawPane();
             });
+            reset.ConfigureHold(UiMotionTokens.HoldConfirm);
             RectTransform resetRect = (RectTransform)reset.transform;
             resetRect.anchorMin = new Vector2(0f, 0.5f);
             resetRect.anchorMax = new Vector2(0f, 0.5f);
@@ -1233,6 +1238,10 @@ namespace DD.Prototype.UI
             }
 
             IReadOnlyList<InputRemapEntry> entries = remap.Entries;
+            // Slice 9 · E3 R2 (direction E7): one control bound to two slots of this scheme is a conflict - both actions
+            // answer it. Those caps take the warning edge and one Warning notice under the column names them (shape + words).
+            List<string> conflicts = RemapConflicts(entries, scheme, out HashSet<string> conflictedPaths);
+            bool anyOverridden = false;
             int shown = 0;
             for (int i = 0; i < entries.Count && shown < MaxRemapRows; i++)
             {
@@ -1285,9 +1294,11 @@ namespace DD.Prototype.UI
                 var capEdge = capRect.gameObject.AddComponent<UnityEngine.UI.Outline>();
                 capEdge.effectDistance = new Vector2(1f, 1f);
                 capEdge.useGraphicAlpha = true;
-                Color edgeColor = UiTokens.Get(listening ? UiColor.StateWarning : UiColor.BorderHairline);
-                if (listening) edgeColor.a = 0.6f;
+                bool conflicted = !listening && !string.IsNullOrEmpty(e.EffectivePath) && conflictedPaths.Contains(e.EffectivePath);
+                Color edgeColor = UiTokens.Get(listening || conflicted ? UiColor.StateWarning : UiColor.BorderHairline);
+                if (listening || conflicted) edgeColor.a = 0.6f;
                 capEdge.effectColor = edgeColor;
+                anyOverridden |= e.IsOverridden;
                 if (e.IsOverridden && !listening)
                 {
                     Image diamond = UiFactory.NewImage("Overridden", slot.transform, UiColor.AccentSakura, UiSprites.Solid);
@@ -1302,6 +1313,69 @@ namespace DD.Prototype.UI
 
                 buttons.Add(slot);
             }
+
+            // The sakura diamond's word (kit rule: never a shape alone), once per column and only when a slot shows it.
+            if (anyOverridden)
+            {
+                AddCaptionUnder(ref stack, (RectTransform)stack.Parent, "OverrideLegend",
+                    UiStrings.Get("controls.override_legend", "A marked slot is changed from its default."), 1, UiSpace.XS);
+            }
+
+            if (conflicts.Count > 0)
+            {
+                stack.Gap(UiSpace.S);
+                RectTransform column = (RectTransform)stack.Parent;
+                RectTransform notice = UiNotices.Notice("Conflict", column, UiNoticeKind.Warning, string.Join("\n", conflicts),
+                    column.rect.width > 1f ? column.rect.width : 480f);
+                stack.Add(notice, notice.sizeDelta.y);
+            }
+        }
+
+        /// <summary>
+        /// Slice 9 · E3 R2: the conflict sentences of one scheme's rebindable slots - a control (effective path) that two
+        /// or more slots answer, with the slots' names in list order. <paramref name="conflictedPaths"/> gets those paths.
+        /// </summary>
+        public static List<string> RemapConflicts(IReadOnlyList<InputRemapEntry> entries, DD.Prototype.Core.InputAbstraction.InputSchemeKind scheme, out HashSet<string> conflictedPaths)
+        {
+            var order = new List<string>();
+            var names = new Dictionary<string, List<string>>(System.StringComparer.Ordinal);
+            var display = new Dictionary<string, string>(System.StringComparer.Ordinal);
+            for (int i = 0; entries != null && i < entries.Count; i++)
+            {
+                InputRemapEntry e = entries[i];
+                if (e.Scheme != scheme || e.Map != PrototypeInputNames.MapGameplay || e.Action == PrototypeInputNames.ActionDebugPanel
+                    || e.Action == PrototypeInputNames.ActionAim || e.Action == PrototypeInputNames.ActionAimStick || string.IsNullOrEmpty(e.EffectivePath))
+                {
+                    continue;
+                }
+
+                if (!names.TryGetValue(e.EffectivePath, out List<string> list))
+                {
+                    list = new List<string>(2);
+                    names.Add(e.EffectivePath, list);
+                    display.Add(e.EffectivePath, e.DisplayName);
+                    order.Add(e.EffectivePath);
+                }
+
+                list.Add(RemapRowName(e));
+            }
+
+            conflictedPaths = new HashSet<string>(System.StringComparer.Ordinal);
+            var sentences = new List<string>();
+            for (int i = 0; i < order.Count; i++)
+            {
+                List<string> list = names[order[i]];
+                if (list.Count < 2)
+                {
+                    continue;
+                }
+
+                conflictedPaths.Add(order[i]);
+                sentences.Add(UiStrings.Format("controls.conflict", "key", display[order[i]], "actions", string.Join(", ", list),
+                    "{key} is bound to more than one action: {actions}. Rebind one of them."));
+            }
+
+            return sentences;
         }
 
         private const int MaxRemapRows = 10; // Gameplay map: Move ×4, Fire, Reload, Pause, Special, Interact (9 on keyboard)
