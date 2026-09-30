@@ -100,8 +100,14 @@ namespace DD.Prototype.Core.Weapons
         [Tooltip("m")] public float maxRange = 45f;
         public float maxLifetimeSeconds = 2f;
         [Tooltip("0 = ray sweep; > 0 = sphere sweep (rocket, orb, gel).")] public float sweepRadius;
-        [Tooltip("Bodies passed through (the Piercing branch adds on top).")] public int penetration;
+        [Tooltip("Bodies passed through after the one struck (a bullet reaches 1 + this; the Piercing branch adds on top).")] public int penetration;
         [Range(0f, 1f)] public float penetrationDamageKeep = 0.6f;
+
+        /// <summary>
+        /// R1-B W5 (C-00 30.09): the bodies one bullet (each pellet) reaches before the Piercing branch — the one struck plus
+        /// <see cref="penetration"/>. ProjectileSystem.Spawn starts TargetsLeft here; the stat strip prints it ("{n} GÖVDE").
+        /// </summary>
+        public int BodiesPerShot => 1 + Mathf.Max(0, penetration);
         public float falloffStart = 45f;
         public float falloffEnd = 45f;
         [Range(0f, 1f)] public float falloffMinShare = 1f;

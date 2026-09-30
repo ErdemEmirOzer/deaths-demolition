@@ -349,5 +349,43 @@ namespace DD.Prototype.Tests.EditMode
                 WeaponRegistry.SelectedWeapon = before;
             }
         }
+
+        // ------------------------------------------------------------------ R1-B W5 bodies per bullet
+
+        /// <summary>
+        /// R1-B W5 (C-00 30.09 decision: the data follows the text, a bug fix). Before the Piercing branch one bullet (each
+        /// pellet) reaches the bodies the weapon's text promises: sr_1 four ("dört gövde"), lmg_2 two ("her mermi iki gövde").
+        /// For all twelve weapons the builder's data, the live projectile's TargetsLeft and the stat strip read one number.
+        /// </summary>
+        [Test]
+        public void W5_MermiBasinaGovde_OnIkiSilah_VeriMermiVeKartAyni()
+        {
+            var beklenen = new Dictionary<string, int>
+            {
+                { "ar_1", 2 }, { "ar_2", 2 }, { "smg_1", 1 }, { "smg_2", 2 }, { "sg_1", 1 }, { "sg_2", 1 },
+                { "lmg_1", 2 }, { "lmg_2", 2 }, { "sr_1", 4 }, { "rl_1", 1 }, { "sw_arc", 1 }, { "sw_gel", 1 }
+            };
+            var gorulen = new List<string>();
+            foreach (WeaponDefinition d in Arsenal.All)
+            {
+                if (d == null || !d.enabled) continue;
+                Assert.IsTrue(beklenen.TryGetValue(d.weaponId, out int n), d.weaponId + ": tabloda yok");
+                gorulen.Add(d.weaponId);
+                Assert.AreEqual(n, d.projectile.BodiesPerShot, d.weaponId + ": veri (1 + penetration " + d.projectile.penetration + ")");
+                ProjectileSystem.Clear();
+                ProjectileSystem.Spawn(Shot(Sky, 60f), ProjectileLaunch.From(d, d.id, 60f));
+                Assert.AreEqual(1, ProjectileSystem.LiveCount, d.weaponId);
+                Assert.AreEqual(n, ProjectileSystem.Get(0).TargetsLeft, d.weaponId + ": uçan mermi (Piercing dalı yok)");
+            }
+
+            CollectionAssert.AreEquivalent(beklenen.Keys, gorulen, "on iki silah");
+
+            WeaponDefinition sr1 = Arsenal.Get("sr_1"), lmg2 = Arsenal.Get("lmg_2");
+            StringAssert.Contains("dört gövde", sr1.description);
+            StringAssert.Contains("iki gövde", lmg2.description);
+            DD.Prototype.UI.WeaponStatReadout.ResetForTests();
+            StringAssert.StartsWith("4 ", DD.Prototype.UI.WeaponStatReadout.Read(sr1, DD.Prototype.UI.WeaponStatReadout.Penetration).Value, "sr_1 kartı");
+            StringAssert.StartsWith("2 ", DD.Prototype.UI.WeaponStatReadout.Read(lmg2, DD.Prototype.UI.WeaponStatReadout.Penetration).Value, "lmg_2 kartı");
+        }
     }
 }

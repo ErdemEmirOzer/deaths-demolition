@@ -189,7 +189,7 @@ namespace DD.Prototype.Weapons.EditorTools
             Fire(d, WeaponFireMode.Auto, 420f, 24f);
             Ammo(d, 60, 90, 5.0f, 5.8f, WeaponReloadKind.Magazine);   // DEC-099: reserve 180 → 90 (lmg_1 carries more per round)
             d.ammo.floorRefillDelaySeconds = 8f;
-            Ballistics(d, 300f, 60f, 32f, 0.70f, 2, 0.70f, 0.50f, 0.55f, 1f, 1.3f, WeaponCaliber.Heavy);
+            Ballistics(d, 300f, 60f, 32f, 0.70f, 1, 0.70f, 0.50f, 0.55f, 1f, 1.3f, WeaponCaliber.Heavy);   // R1-B W5 (C-00 30.09): penetration 2 → 1 = two bodies, as the text says
             // "Oturma": the cone starts wide and settles to 35 % of the base under sustained fire; reopens at 4°/s on release.
             Spread(d, 3.5f, 2.2f, 4.4f, 1.5f, 4.0f, 1.1f, -0.40f, 0f, 4f, 2.2f, 0.70f, 0.55f);
             d.accuracy.settleFloorShare = 0.35f;
@@ -206,7 +206,8 @@ namespace DD.Prototype.Weapons.EditorTools
                 "Bir nefes, bir sürgü, dört gövde; sessizlik sonra tokat.", null);
             Fire(d, WeaponFireMode.Single, 48f, 80f);   // DEC-105 (kullanıcı 30.09, K10b P1-A): 55 → 80, Kurogane unchanged
             Ammo(d, 5, 40, 2.6f, 3.2f, WeaponReloadKind.Magazine);
-            Ballistics(d, 420f, 90f, 60f, 0.85f, 4, 0.90f, 0.80f, 0.80f, 1.25f, 1.6f, WeaponCaliber.Heavy);   // DEC-099: pierce keep 0.80 → 0.90
+            // DEC-099: pierce keep 0.80 → 0.90. R1-B W5 (C-00 30.09): penetration 4 → 3 = four bodies, as the text says.
+            Ballistics(d, 420f, 90f, 60f, 0.85f, 3, 0.90f, 0.80f, 0.80f, 1.25f, 1.6f, WeaponCaliber.Heavy);
             Spread(d, 3.0f, 0.15f, 3.8f, 0.10f, 3.5f, 0.08f, 2.0f, 6f, 8f, 2.5f, 0.85f, 0.40f);
             Recoil(d, 4.5f, RecoilYawPattern.Random, new[] { 0.3f }, 1, 0.90f);
             // DEC-099 (S-04 D2): ArmorBreak → ReloadSpeed — ×1.6 armour only mattered from the 3rd body on, the branch from the 5th.

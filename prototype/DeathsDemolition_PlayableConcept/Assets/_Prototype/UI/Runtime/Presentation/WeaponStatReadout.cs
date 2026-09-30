@@ -102,7 +102,7 @@ namespace DD.Prototype.UI
                 case Accuracy: return d.accuracy.thirdPerson.hip;
                 case Handling: return d.accuracy.moveSpeedMultiplier;
                 case Stagger: return d.projectile.stagger;
-                case Penetration: return d.projectile.penetration;
+                case Penetration: return d.projectile.BodiesPerShot;   // R1-B W5: the bodies a bullet reaches, as the weapon's text says
                 case Armour: return d.projectile.armorDamageMultiplier;
                 case Headshot: return 2f * d.projectile.headMultiplier;   // the regional ×2.0 rule times the weapon's own
                 case BlastRadius: return d.explosive.enabled ? d.explosive.outerRadius : 0f;
