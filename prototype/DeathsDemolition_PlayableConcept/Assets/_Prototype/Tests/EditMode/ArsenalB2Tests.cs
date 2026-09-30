@@ -94,6 +94,31 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsTrue(rt.BurstActive, "yeni basış yeni üçlü başlatır");
         }
 
+        /// <summary>R1-B W4 (C-00 30.09): the settle floor holds against the base in effect now — focusing / ADS after the settle never takes lmg_2's cone below floorShare × base (it read 0° before).</summary>
+        [Test]
+        public void Oturma_TabanDaralincaKoniTabanPayininAltinaInmez()
+        {
+            // hip base 4° settled to −2.6°; the base drops to 1°: the cone is 1 − 0.65 = 0.35°, not 1 − 2.6 → 0°
+            Assert.AreEqual(-0.65f, ClassicWeaponRuntime.SettleClamp(-2.6f, 1f, 0.35f), 1e-5f, "−2,6° bloom 1° tabanda −0,65'e kırpılır");
+            Assert.AreEqual(0.35f, 1f + ClassicWeaponRuntime.SettleClamp(-2.6f, 1f, 0.35f), 1e-5f, "koni = taban × 0,35");
+            Assert.AreEqual(-0.2f, ClassicWeaponRuntime.SettleClamp(-0.2f, 1f, 0.35f), 1e-5f, "taban içinde dokunulmaz");
+            Assert.AreEqual(0.4f, ClassicWeaponRuntime.SettleClamp(0.4f, 1f, 0.35f), 1e-5f, "pozitif bloom dokunulmaz");
+
+            ClassicWeaponRuntime rt = Equip(ClassicWeaponId.Lmg2);
+            WeaponDefinition d = rt.Definition;
+            Assert.Less(d.accuracy.bloomPerShot, 0f, "lmg_2 negatif bloom (oturma)");
+            float share = d.accuracy.settleFloorShare;
+            for (int i = 0; i < 40; i++) { rt.ConsumeShot(); rt.Tick(0.005f); }
+            Assert.AreEqual(share * rt.BaseSpreadDegrees, rt.CurrentSpreadDegrees, 0.05f, "kalçada tabana oturdu");
+            rt.SetFocus(true);
+            for (int i = 0; i < 18; i++)
+            {
+                rt.Tick(0.005f);
+                Assert.GreaterOrEqual(rt.CurrentSpreadDegrees, share * rt.BaseSpreadDegrees - 1e-4f,
+                    "odak rampasında koni taban payının altına indi (ads " + rt.Ads01.ToString("0.00") + ")");
+            }
+        }
+
         [Test]
         public void Tekli_BasisTamponu_CevrimSonundaAtar_EskiBasisSoner()
         {

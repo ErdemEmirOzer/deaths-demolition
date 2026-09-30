@@ -715,7 +715,25 @@ namespace DD.Prototype.Weapons
 
         /// <summary>Current cone half-angle including accumulated bloom (the settle curve may take it below the base).</summary>
         public float CurrentSpreadDegrees =>
-            _settings != null ? Mathf.Max(0f, (BaseSpreadDegrees + DD.Prototype.Rounds.RunTreeHooks.Bloom(Id, _bloom, _shotInString)) * DD.Prototype.Rounds.RunTreeHooks.SpreadScale(Id)) : 0f;   // + WP-077 seal.ar_1 / fork.ar_1.x / fork.sg_1.x
+            _settings != null ? Mathf.Max(0f, (BaseSpreadDegrees + DD.Prototype.Rounds.RunTreeHooks.Bloom(Id, SettledBloom(), _shotInString)) * DD.Prototype.Rounds.RunTreeHooks.SpreadScale(Id)) : 0f;   // + WP-077 seal.ar_1 / fork.ar_1.x / fork.sg_1.x
+
+        /// <summary>
+        /// R1-B W4 (C-00 30.09): lmg_2's settle bloom is stored in degrees against the base at shot time; entering focus /
+        /// ADS or a narrower mode shrinks the base between shots and the cone fell below the settle floor (to 0°) until the
+        /// next shot. Read time clamps it against the base in effect now: the cone never settles below floorShare × base.
+        /// </summary>
+        private float SettledBloom()
+        {
+            WeaponDefinition d = Definition;
+            if (_bloom >= 0f || d == null || d.accuracy.settleFloorShare <= 0f) return _bloom;
+            return SettleClamp(_bloom, HipAdsBase(), d.accuracy.settleFloorShare);
+        }
+
+        /// <summary>The settle floor rule, pure (tests): a negative bloom no deeper than −base × (1 − floorShare).</summary>
+        public static float SettleClamp(float bloom, float baseDegrees, float floorShare)
+        {
+            return bloom >= 0f ? bloom : Mathf.Max(bloom, -Mathf.Max(0f, baseDegrees) * (1f - Mathf.Clamp01(floorShare)));
+        }
 
         /// <summary>
         /// WP-069 ADR-069-1: how this weapon's projectiles fly (v3 projectile block; a fast straight
