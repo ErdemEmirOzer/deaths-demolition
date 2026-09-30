@@ -1,12 +1,16 @@
 #!/bin/zsh
 # WP-079 · tools/main-ci.sh <sha|ref> [--out-root DIR] [--ci-dir DIR] [--seed-library DIR] [--skip-playmode]
-#                                    [--editmode-timeout N] [--playmode-timeout N]
+#                                    [--editmode-timeout N] [--playmode-timeout N] [--alone-timeout N]
 #
 # Continuous verification of main: puts a dedicated, DETACHED CI worktree on the given commit
 # (never touches main or any branch), compiles and runs the full EditMode suite plus the PlayMode
 # core suites (tools/ci-suites.txt, ≈ 25 min), then writes <out-root>/<sha>/summary.json + summary.md
 # with every red mapped to its owner session (tools/ci-owners.tsv) and the reds that are NEW since
 # the previous CI run of another commit.
+# Isolated tests (Codex-audit M-11, C-00 30.09): tools/ci-isolated.txt lists single tests the core must not run (capture,
+# DEC-077 reading, allocation); the core -testFilter excludes all of them (tools/ci_isolated.py, negative lookahead). Each
+# `alone` entry then runs in its OWN test.sh call (filter = that test only, out <sha>/playmode-alone-<n>-<name>,
+# --alone-timeout min, default 10) after the core step; ci_summary.py counts it like the core. `a3` entries are not run here.
 #
 # Safety: the CI worktree must be clean (checkout only, no reset); Unity runs under the machine slot
 # (tag main-ci, tools/slot.sh); tests use their process-local roots, and the player folder the Editor
@@ -24,7 +28,8 @@
 # (dd_scrub_code_env); the cleared names go into summary.json envScrubbed / summary.md; git grep failure → 3.
 # Exit: 0 green · 1 red tests · 2 compile error / missing results · 3 CI worktree or driver worktree not clean, driver not
 #   detached or its tools ≠ main's, lease stale/malformed/symlink, CI project missing, a Unity still has the CI checkout open
-#   at the restore (window left open, tell C-00) · 64 usage, unknown commit, an unrestored guard window of this SHA
+#   at the restore (window left open, tell C-00) · 64 usage, unknown commit, an unrestored guard window of this SHA,
+#   malformed ci-isolated.txt / ci-suites.txt (checked with the driver, before anything is taken)
 #   · 75 busy (lease held, CI project open, guard snapshot 75 three times) · 130/143/129 INT/TERM/HUP.
 #   Guard (editor scope): a snapshot never answers 30 (that is player scope's "a Player is running"); any snapshot exit other
 #   than 75 is returned as is, nothing started. A restore that fails or does not print "verified=1" makes the run exit the
@@ -37,10 +42,11 @@ REF="${1:-}"; shift 2>/dev/null || true
 [ -n "$REF" ] || { echo "usage: main-ci.sh <sha|ref> [--out-root DIR] [--ci-dir DIR] [--seed-library DIR] [--skip-playmode]" >&2; exit 64; }
 OUT_ROOT="${DD_CI_ROOT:-$HOME/Desktop/KADRO/context/projects/deaths-demolition/ci}"
 CI_DIR="${DD_CI_DIR:-$HOME/Desktop/KADRO/context/projects/deaths-demolition/wp-079/ci-worktree/deaths-demolition}"
-SEED=""; SKIP_PLAY=0; ETMIN=30; PTMIN=35
+SEED=""; SKIP_PLAY=0; ETMIN=30; PTMIN=35; ATMIN=10
 while [ $# -gt 0 ]; do case "$1" in
   --out-root) OUT_ROOT="$2"; shift ;; --ci-dir) CI_DIR="$2"; shift ;; --seed-library) SEED="$2"; shift ;;
   --skip-playmode) SKIP_PLAY=1 ;; --editmode-timeout) ETMIN="$2"; shift ;; --playmode-timeout) PTMIN="$2"; shift ;;
+  --alone-timeout) ATMIN="$2"; shift ;;
   *) echo "unknown option: $1" >&2; exit 64 ;; esac; shift; done
 
 # Codex-audit M-12 (C-00 30.09): driver check before anything is taken (no lease, no slot, no guard).
@@ -67,6 +73,11 @@ ci_driver_check() {
     fi; return 3; }
 }
 ci_driver_check || exit 3
+# Codex-audit M-11 (C-00 30.09): core filter + `alone` steps from the driver's ci-suites.txt / ci-isolated.txt, built before
+# anything is taken — a malformed file is 64 with nothing held.
+CORE_FILTER=$(python3 "$DD_TOOLS_DIR/ci_isolated.py" core-filter "$DD_TOOLS_DIR/ci-isolated.txt" "$DD_TOOLS_DIR/ci-suites.txt") &&
+  ALONE_STEPS=$(python3 "$DD_TOOLS_DIR/ci_isolated.py" alone "$DD_TOOLS_DIR/ci-isolated.txt") ||
+  { echo "main-ci: ci-isolated.txt / ci-suites.txt refused (exit 64)" >&2; exit 64; }
 
 # Compile and CI serialize only the same physical checkout; never reclaim an unknown lease. Codex-audit M-05 (C-00 30.09):
 # one source — dd_ci_lease_acquire / dd_ci_lease_release / dd_ci_lease_status (dd-env.sh).
@@ -192,12 +203,18 @@ dd_log "userdata snapshot → $CI_GUARD_DIR (try $GTRY)"
 # dd-env.sh; allow-list HOME) — a caller's DD_* diagnostic variable must not change a CI result. git grep fails → 3.
 dd_scrub_code_env "$CI_DIR" || exit 3
 "$CI_DIR/tools/test.sh" editmode --out "$OUT/editmode" --timeout-min "$ETMIN" > "$OUT/editmode.out" 2>&1 & CI_CHILD=$!; wait $CI_CHILD; EX=$?; CI_CHILD=""
-PX=0
+PX=0; AXS=""
 if [ "$SKIP_PLAY" -eq 0 ]; then
-  SUITES=$(grep -vE '^\s*(#|$)' "$DD_TOOLS_DIR/ci-suites.txt" | paste -sd'|' -)
-  "$CI_DIR/tools/test.sh" playmode --filter "\\.($SUITES)\\." --out "$OUT/playmode" --timeout-min "$PTMIN" > "$OUT/playmode.out" 2>&1 & CI_CHILD=$!; wait $CI_CHILD; PX=$?; CI_CHILD=""
+  "$CI_DIR/tools/test.sh" playmode --filter "$CORE_FILTER" --out "$OUT/playmode" --timeout-min "$PTMIN" > "$OUT/playmode.out" 2>&1 & CI_CHILD=$!; wait $CI_CHILD; PX=$?; CI_CHILD=""
+  # M-11: each `alone` test in its own Unity session (a fresh session is what an allocation test's frame counters need)
+  for step in "${(@f)ALONE_STEPS}"; do
+    [ -n "$step" ] || continue
+    AID=${step%%$'\t'*}; AFILTER=${step#*$'\t'}
+    "$CI_DIR/tools/test.sh" playmode --filter "$AFILTER" --out "$OUT/$AID" --timeout-min "$ATMIN" > "$OUT/$AID.out" 2>&1 < /dev/null & CI_CHILD=$!; wait $CI_CHILD; AX=$?; CI_CHILD=""
+    AXS="$AXS $AID=$AX"
+  done
 fi
-dd_log "editmode exit=$EX playmode exit=$PX"
+dd_log "editmode exit=$EX playmode exit=$PX${AXS:+ alone:$AXS}"
 
 # 5) user data: restore anything a test touched
 inventory > "$OUT/userdata-after.txt"

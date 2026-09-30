@@ -102,7 +102,7 @@ namespace DD.Prototype.Tests.PlayMode
             }
             finally {Object.DestroyImmediate(wall);}
         }
-        [Test] public void WarmPresentation_DoesNotAllocateOrConsumeGameplayRandom()
+        [Test, Category("Alloc")] public void WarmPresentation_DoesNotAllocateOrConsumeGameplayRandom()
         {
             Spawn();int generation=ProjectileSystem.Get(0).Generation;
             var rocket=_rocket;var smoke=rocket.Smoke;

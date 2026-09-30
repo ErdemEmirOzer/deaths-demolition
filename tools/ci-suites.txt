@@ -1,45 +1,50 @@
-# WP-079 · PlayMode core suites for tools/main-ci.sh (one fixture class name per line, # = comment).
+# WP-079 · PlayMode core suites for tools/main-ci.sh (one fixture class name per line, # = comment, also trailing).
 # Budget ≈ 25 min on the M1 Pro; keep capture/diagnostic/perf fixtures out (they belong to their owners' runs).
+# Codex-audit M-11 (C-00 30.09): single tests that break that rule inside a listed fixture go to tools/ci-isolated.txt
+# (excluded from the core filter; `alone` = own main-ci step, `a3` = S-10's A3 run) — an allocation test always runs alone.
+# Durations (trailing comments): CI 41ea723a (30.09, playmode.xml per fixture): core 1260.3 s XML / 1294 s wall for 229 tests.
+# M-11 takes 24.7 s out of the core (ArmorTests crowd capture 15.8 s + DEC-077 8.8 s → A3; the alloc test 0.008 s moves to
+# its own step, which costs one more Unity start ≈ 34 s wall = 1294 − 1260). Core now ≈ 1235.6 s XML for 226 tests.
 # Combat (S-02)
-CoreCombatSliceTests
-ProjectileSliceTests
-WeaponFeelSliceTests
-EnemyDamagesPlayerTests
-RegionalArmorSliceTests
-PlayerExperienceSliceTests
-GamepadParityTests
-PauseFireTests
-RocketSliceTests
-GelSliceTests
+CoreCombatSliceTests              # 57.6 s · 10 tests
+ProjectileSliceTests              # 19.1 s · 4 tests
+WeaponFeelSliceTests              # 29.2 s · 7 tests
+EnemyDamagesPlayerTests           # 61.0 s · 3 tests
+RegionalArmorSliceTests           # 63.2 s · 9 tests
+PlayerExperienceSliceTests        # 24.0 s · 4 tests
+GamepadParityTests                # 8.6 s · 2 tests
+PauseFireTests                    # 3.5 s · 1 test
+RocketSliceTests                  # 24.9 s · 6 tests
+GelSliceTests                     # 12.4 s · 1 test
 # Camera modes (S-01)
-CameraContractTests
-CameraModesPlayTests
+CameraContractTests               # 26.2 s · 6 tests
+CameraModesPlayTests              # 12.1 s · 14 tests
 # Animation / ragdoll (S-06)
-AnimationTests
-AnimationV003Tests
-AnimationRagdollTests
-AnimationSpecialTests
+AnimationTests                    # 110.3 s · 15 tests
+AnimationV003Tests                # 16.4 s · 4 tests
+AnimationRagdollTests             # 16.6 s · 4 tests
+AnimationSpecialTests             # 4.9 s · 2 tests
 # UI (S-09)
-MetaUiSliceTests
-HudCoverageTests
-LoadingScreenTests
-RoundHudSyncTests
-RunTreePinActionRegressionTests
-RunTreeNavigationRegressionTests
+MetaUiSliceTests                  # 92.5 s · 12 tests
+HudCoverageTests                  # 8.2 s · 1 test
+LoadingScreenTests                # 58.1 s · 14 tests
+RoundHudSyncTests                 # 26.7 s · 1 test
+RunTreePinActionRegressionTests   # 1.1 s · 10 tests
+RunTreeNavigationRegressionTests  # 1.0 s · 8 tests
 # Audio (S-08)
-AudioSliceTests
+AudioSliceTests                   # 235.8 s · 35 tests
 # Run flow / AI (S-03, S-01)
-RoundSpawnSliceTests
-SceneLoadDoubleTriggerTests
-SpecialWeaponLifecycleSliceTests
-ThreatSliceTests
-AttackVarietySliceTests
+RoundSpawnSliceTests              # 98.9 s · 11 tests
+SceneLoadDoubleTriggerTests       # 8.0 s · 1 test
+SpecialWeaponLifecycleSliceTests  # 143.8 s · 21 tests
+ThreatSliceTests                  # 10.8 s · 1 test
+AttackVarietySliceTests           # 22.7 s · 1 test
 # Lifecycle (S-01, WP-079B): subscriber / hold / service leaks across two runs — ~24 s; caught 3 regressions 24–25.09
-LifecycleHardeningTests
+LifecycleHardeningTests           # 17.4 s · 2 tests
 
 # Launcher presentation regression (S-07), source-only registration; native outcome is reported by CI.
-Wp073LauncherVfxTests
+Wp073LauncherVfxTests             # 0.3 s · 12 tests (WarmPresentation_… alloc → ci-isolated.txt alone)
 
 # Mandatory A3 PlayMode coverage; actual discovery/results remain source-bound to the CI run.
-AnimationLocomotionV3Tests
-ArmorTests
+AnimationLocomotionV3Tests        # 13.9 s · 3 tests
+ArmorTests                        # 6.3 s · 1 test (ZirhDurumGecisi_…; was 31.0 s · 3 — M-11: the crowd capture + DEC-077 → ci-isolated.txt a3)

@@ -8,12 +8,15 @@ Codex-audit M-12 (C-00 30.09): the scripts run from a DRIVER that is a detached 
 carries these tools (the same general code path as the real driver — no test-only bypass, H11); CiDriverGuardTests covers
 the driver check (M-12), dd_project_open (M-06), the editor-scope guard lock wait, main-ci's 75 retry into a new guard
 directory and dd_slot_* exit codes (M-07).
+Codex-audit M-11 (C-00 30.09): CiIsolatedStepTests — the fake test.sh records every call's --filter / --out; the core call
+excludes the ci-isolated.txt tests, each `alone` test runs in its own second call, `a3` never runs, the summary counts it.
 usage: python3 tools/tests/test_ci_signal_traps.py"""
-import json, os, shutil, signal, subprocess, tempfile, time, unittest
+import json, os, re, shutil, signal, subprocess, tempfile, time, unittest
 from pathlib import Path
 
 TOOLS = Path(__file__).resolve().parents[1]
-COPY = ["main-ci.sh", "compile-check.sh", "dd-env.sh", "ci_summary.py", "ci-owners.tsv", "ci-signatures.tsv", "ci-suites.txt"]
+COPY = ["main-ci.sh", "compile-check.sh", "dd-env.sh", "ci_summary.py", "ci-owners.tsv", "ci-signatures.tsv", "ci-suites.txt",
+        "ci_isolated.py", "ci-isolated.txt"]
 PRODUCT = "Deaths Demolition - Playable Concept"
 
 # WP-079G D6a: `holds` (the guard's lock-order query) = nothing held here.
@@ -39,11 +42,20 @@ fi
 """
 # FAKE_MODE: sleep (dies on TERM) · ignore (ignores TERM) · orphan (dies, but leaves a grandchild that ignores TERM) · pass
 #            · stray (passes, but leaves a detached "Unity" with -projectPath on the CI checkout — not in main-ci's tree)
+# M-11: every call appends "<mode>\t<out>\t<filter>" to test-calls.txt; an alone step (out dir playmode-alone-*) writes the
+# alloc test's full name with FAKE_ALONE_RESULT (default Passed).
 FAKE_TEST_SH = """#!/bin/zsh
-mode=$1; shift; out=""; while [ $# -gt 0 ]; do [ "$1" = --out ] && out=$2; shift; done
+mode=$1; shift; out=""; filter=""
+while [ $# -gt 0 ]; do [ "$1" = --out ] && out=$2; [ "$1" = --filter ] && filter=$2; shift; done
+print -r -- "$mode	$out	$filter" >> "{log}/test-calls.txt"
 echo $$ > "{log}/child-$mode.pid"; env > "{log}/env-$mode.txt"
 case "$FAKE_MODE" in
-  pass|stray) mkdir -p "$out"; echo '<test-run><test-case name="A" fullname="F.A" result="Passed" duration="0.1"/></test-run>' > "$out/$mode.xml"
+  pass|stray) mkdir -p "$out"
+    if [[ "${{out:t}}" == playmode-alone-* ]]; then
+      echo '<test-run><test-case name="W" fullname="DD.Prototype.Tests.PlayMode.Wp073LauncherVfxTests.WarmPresentation_DoesNotAllocateOrConsumeGameplayRandom" classname="DD.Prototype.Tests.PlayMode.Wp073LauncherVfxTests" result="'"${{FAKE_ALONE_RESULT:-Passed}}"'" duration="0.1"><failure><message>allocated 40 B</message></failure></test-case></test-run>' > "$out/$mode.xml"
+    else
+      echo '<test-run><test-case name="A" fullname="F.A" result="Passed" duration="0.1"/></test-run>' > "$out/$mode.xml"
+    fi
     if [ "$FAKE_MODE" = stray ] && [ "$mode" = editmode ]; then
       "$FAKE_STRAY_UNITY" -projectPath "$FAKE_STRAY_PROJECT" -batchmode </dev/null >/dev/null 2>&1 &!
       for i in {{1..50}}; do [ -s "{log}/stray-unity.pid" ] && break; sleep 0.1; done
@@ -546,6 +558,101 @@ class CiDriverGuardTests(CiFixture):
         rc, text = self.run_guard(self.root / "ug-player", "player")
         self.assertEqual(rc, 75, text)
         self.assertIn(f"profile lock still held by live pid {h.pid}", (self.root / "ug-player/timeline.txt").read_text())
+
+
+# NUnit's filter passes a test when the filter matches the test OR one of its ancestors (namespace suites, fixture) — the
+# core filter must therefore not match an excluded test's fixture / namespace either.
+def runs_under(filter_rx, fullname):
+    parts = fullname.split(".")
+    return any(re.search(filter_rx, ".".join(parts[:i])) for i in range(1, len(parts) + 1))
+
+
+ARMOR = "DD.Art.Tests.PlayMode.ArmorTests."
+CROWD = ARMOR + "Run_AP005v2_40SkinnedZombi_TamZirh_Binder_5Renderer_TekMateryal_KurallarUyumlu"
+DEC077 = ARMOR + "Okunabilirlik_DEC077_Zirh_DeltaV_AltKumas_KomsuBant_ZeminHalkasi_Siluet"
+ALLOC = "DD.Prototype.Tests.PlayMode.Wp073LauncherVfxTests.WarmPresentation_DoesNotAllocateOrConsumeGameplayRandom"
+KEPT = [ARMOR + "ZirhDurumGecisi_HasarYoluyla_Present_Damaged_Broken_OlayAnkrajda_GiysiSabit",
+        "DD.Prototype.Tests.PlayMode.Wp073LauncherVfxTests.Flight_UsesGeneration_AfterEarlierLiveIndexEnds",
+        "DD.Prototype.Tests.PlayMode.CoreCombatSliceTests.GameFeelOlaylari",
+        "DD.Art.Tests.PlayMode.AnimationTests.Kalabalik40_AnimasyonYolu_GcSifir_UzakAdim15Hz"]
+
+
+class CiIsolatedStepTests(CiFixture):
+    """Codex-audit M-11 (C-00 30.09): the real ci-suites.txt + ci-isolated.txt through main-ci with a recording test.sh."""
+    def calls(self):
+        return [l.split("\t") for l in self.lines("test-calls.txt")]
+
+    def test_M11_CekirdekIzoleleriDislar_AloneKendiCagrisinda_A3Kosmaz_OzetSayar(self):
+        rc, out, err = self.finish(self.main_ci("pass", playmode=True))
+        self.assertEqual(rc, 0, out + err)
+        calls = self.calls()
+        self.assertEqual([c[0] for c in calls], ["editmode", "playmode", "playmode"], calls)   # a3 entries: no call
+        core, alone = calls[1], calls[2]
+        self.assertEqual(core[1], str(self.out / self.sha / "playmode"))
+        for name in (CROWD, DEC077, ALLOC):
+            self.assertFalse(runs_under(core[2], name), f"core filter runs {name}")
+        for name in KEPT:
+            self.assertTrue(runs_under(core[2], name), f"core filter drops {name}")
+        sid = "playmode-alone-1-WarmPresentation_DoesNotAllocateOrConsumeGameplayRandom"
+        self.assertEqual(alone[1], str(self.out / self.sha / sid))                      # its own out dir
+        self.assertTrue(runs_under(alone[2], ALLOC))
+        for name in (CROWD, DEC077, *KEPT):
+            self.assertFalse(runs_under(alone[2], name), f"alone filter also runs {name}")
+        self.assertIn("GREEN · edit 1/1 · play 1/1 · alone 1/1", out)
+        summary = json.loads((self.out / self.sha / "summary.json").read_text())
+        self.assertEqual(summary["suites"][sid]["passed"], 1)
+        self.assertEqual([i["where"] for i in summary["isolated"]], ["a3", "a3", "alone"])
+        self.assertIn(sid, (self.out / self.sha / "summary.md").read_text())
+        self.assertIn(f"alone: {sid}=0", (self.out / self.sha / "timeline.txt").read_text())
+        self.assertEqual(self.lines("guard-calls.txt"), ["snapshot", "restore", "restore-done"])   # one window for all steps
+        self.assertEqual([l.split()[:2] for l in self.lines("slot-calls.txt")], [["acquire", "player"], ["release", "player"]])
+        self.assertEqual(self.leases(), [])
+
+    def test_M11_AloneKirmizi_CekirdekGibiSayilir_Cikis1YeniKirmizi(self):
+        rc, out, err = self.finish(self.main_ci("pass", playmode=True, FAKE_ALONE_RESULT="Failed"))
+        self.assertEqual(rc, 1, out + err)
+        self.assertIn("RED · edit 1/1 · play 1/1 · alone 0/1", out)
+        summary = json.loads((self.out / self.sha / "summary.json").read_text())
+        self.assertFalse(summary["green"])
+        self.assertEqual([r["test"] for r in summary["reds"]], [ALLOC])
+        self.assertEqual(summary["reds"][0]["owner"], "S-07")
+        self.assertTrue(summary["reds"][0]["mode"].startswith("playmode-alone-1-"))
+        self.assertEqual(summary["newReds"], [ALLOC])
+
+    def test_M11_AloneXmlYok_Yesil_Degil(self):
+        # the alone step's missing XML counts like a missing core XML (not green): the commit's test.sh writes none for it
+        def drop_alone_xml():
+            fake = self.repo / "tools/test.sh"
+            fake.write_text(fake.read_text().replace('if [[ "${out:t}" == playmode-alone-* ]]; then',
+                                                      'if [[ "${out:t}" == playmode-alone-* ]]; then exit 2;'))
+            self.git("commit", "-q", "-am", "alone step writes no XML")
+            self.sha = self.git("rev-parse", "HEAD")   # the commit under test carries this test.sh; main-ci checks it out
+            self.git("checkout", "-q", "--detach", "main", cwd=self.driver)
+        rc, out, err = self.finish(self.main_ci("pass", playmode=True, prepare=drop_alone_xml))
+        self.assertEqual(rc, 1, out + err)
+        summary = json.loads((self.out / self.sha / "summary.json").read_text())
+        sid = "playmode-alone-1-WarmPresentation_DoesNotAllocateOrConsumeGameplayRandom"
+        self.assertFalse(summary["suites"][sid]["xml"])
+        self.assertFalse(summary["green"])
+
+    def test_M11_SkipPlaymode_AloneAdimiYok(self):
+        rc, out, err = self.finish(self.main_ci("pass"))
+        self.assertEqual([c[0] for c in self.calls()], ["editmode"])
+        self.assertNotIn("alone", out)
+
+    def test_M11_BozukIzoleDosyasi_Cikis64HicbirSeyAlinmaz(self):
+        def break_file():
+            f = self.repo / "tools/ci-isolated.txt"
+            f.write_text(f.read_text() + "Foo\\.Bar\teverywhere\tbad where\n")
+            self.git("commit", "-q", "-am", "bad isolated")
+            self.git("checkout", "-q", "--detach", "main", cwd=self.driver)
+        rc, out, err = self.finish(self.main_ci("pass", playmode=True, prepare=break_file))
+        self.assertEqual(rc, 64, out + err)
+        self.assertIn("where 'everywhere' is not one of alone/a3", err)
+        self.assertEqual(self.lines("guard-calls.txt"), [])
+        self.assertEqual(self.lines("slot-calls.txt"), [])
+        self.assertEqual(self.leases(), [])
+        self.assertEqual(self.calls(), [])
 
 
 if __name__ == "__main__":

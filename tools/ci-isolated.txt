@@ -1,0 +1,16 @@
+# Codex-audit M-11 (C-00 30.09) · PlayMode tests that must NOT run inside the main-ci core step (tools/ci-suites.txt).
+# Columns (TAB-separated): <regex>  <where>  <why — and where it runs instead>. # = comment.
+#   <regex>: matched like Unity -testFilter (.NET regex, search semantics) against the full test name, e.g.
+#            DD.Art.Tests.PlayMode.ArmorTests.Run_AP005v2_40SkinnedZombi_TamZirh_Binder_5Renderer_TekMateryal_KurallarUyumlu;
+#            anchor it (^…$) so it names one test; no ";" (Unity splits -testFilter on it), no whitespace. A parameterized
+#            test must match its method suite too (…\.Method(\(.*)?$), or NUnit runs the cases through the parent match.
+#   <where>: alone = main-ci runs it in its OWN PlayMode step (own test.sh call, own out dir playmode-alone-<n>-<name>)
+#                    after the core step; its reds count like the core (summary.json/md, new reds);
+#            a3    = not in main-ci; S-10's A3 run owns it.
+#   Every listed test is excluded from the core filter (tools/ci_isolated.py builds the negative lookahead).
+# Rule (ci-suites.txt line 2 + WP-047/WP-019 lesson): capture / diagnostic / perf fixtures stay out of the core, and an
+# allocation test runs alone — frame counters only pass their positive control in a fresh session.
+# Durations: CI 41ea723a (30.09) playmode.xml.
+^DD\.Art\.Tests\.PlayMode\.ArmorTests\.Run_AP005v2_40SkinnedZombi_TamZirh_Binder_5Renderer_TekMateryal_KurallarUyumlu$	a3	S-06 WP-017 crowd capture: 40 skinned zombies, 1920x1080 PNG capture, [Timeout(300000)]; 15.8 s in the core — S-10 A3 run
+^DD\.Art\.Tests\.PlayMode\.ArmorTests\.Okunabilirlik_DEC077_Zirh_DeltaV_AltKumas_KomsuBant_ZeminHalkasi_Siluet$	a3	DEC-077 armour readability measurement (captures, reports the rule value), [Timeout(300000)]; 8.8 s in the core — S-10 A3 run
+^DD\.Prototype\.Tests\.PlayMode\.Wp073LauncherVfxTests\.WarmPresentation_DoesNotAllocateOrConsumeGameplayRandom$	alone	S-07 allocation test ([Category("Alloc")], GC-alloc constraint): runs alone — main-ci own step after the core

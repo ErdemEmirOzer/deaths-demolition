@@ -6,9 +6,15 @@ usage: ci_summary.py <out-dir> <sha> <ci-root> <owners.tsv> [--userdata-warning 
 Codex-audit M-12 (C-00 30.09): --driver-head / --tools-tree = the main-ci driver worktree's HEAD and `HEAD:tools` tree hash
 (summary.json driverHead / toolsTree, a line in summary.md); optional — the old call still works (both null).
 Codex-audit M-10 (C-00 30.09): --env-scrubbed = the env variables main-ci cleared before the tests (dd_scrub_code_env);
-summary.json envScrubbed = that list ([] = none were set), null when the option is absent (old call)."""
+summary.json envScrubbed = that list ([] = none were set), null when the option is absent (old call).
+Codex-audit M-11 (C-00 30.09): when the core PlayMode step ran (<out>/playmode exists), every `alone` entry of ci-isolated.txt
+(next to owners.tsv) is an expected suite <out>/playmode-alone-<n>-<name>/playmode.xml: its reds, new reds and a missing XML /
+watchdog count exactly like the core's (a missing ci-isolated.txt = no alone suites, the old behaviour)."""
 import glob, json, os, re, sys, datetime
 import xml.etree.ElementTree as ET
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import ci_isolated  # noqa: E402  (same tools dir)
 
 out, sha, root, owners_path = sys.argv[1:5]
 
@@ -60,9 +66,17 @@ def path_owner(path):
             return owner
     return "C-00"
 
+# (suite key = out subdir, test.sh mode = XML name)
+runs = [("editmode", "editmode"), ("playmode", "playmode")]
+isolated = ci_isolated.parse_isolated(os.path.join(os.path.dirname(owners_path), "ci-isolated.txt"))
+alone_ids = []
+if os.path.isdir(os.path.join(out, "playmode")):
+    alone_ids = [sid for sid, _ in ci_isolated.alone_steps(isolated)]
+    runs += [(sid, "playmode") for sid in alone_ids]
+
 suites, reds = {}, []
-for mode in ("editmode", "playmode"):
-    xml = os.path.join(out, mode, mode + ".xml")
+for mode, kind in runs:
+    xml = os.path.join(out, mode, kind + ".xml")
     tl = os.path.join(out, mode, "timeline.txt")
     info = {"xml": os.path.exists(xml), "total": 0, "passed": 0, "failed": 0, "skipped": 0, "seconds": 0.0,
             "watchdog": False, "errorsCS": 0}
@@ -115,7 +129,8 @@ green = not reds and not compile_errors and all(s["xml"] and not s["watchdog"] f
 summary = {"sha": sha, "utc": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"), "green": green, "suites": suites,
            "reds": reds, "compileErrors": compile_errors, "previousSha": prev.get("sha") if prev else None,
            "newReds": [r["test"] for r in new_reds], "fixedSincePrevious": fixed, "userdataWarning": udwarn,
-           "driverHead": driver_head, "toolsTree": tools_tree, "envScrubbed": env_scrubbed}
+           "driverHead": driver_head, "toolsTree": tools_tree, "envScrubbed": env_scrubbed,
+           "isolated": [{"pattern": p, "where": w, "why": y} for p, w, y in isolated]}
 json.dump(summary, open(os.path.join(out, "summary.json"), "w", encoding="utf-8"), indent=2, ensure_ascii=False)
 
 L = [f"# main CI — `{sha[:10]}` — {'GREEN' if green else 'RED'}", "", f"UTC {summary['utc']} · önceki koşu `{(summary['previousSha'] or '—')[:10]}`", ""]
@@ -123,6 +138,9 @@ if driver_head or tools_tree:
     L[-1:-1] = [f"Sürücü (driver) HEAD `{driver_head or '—'}` · tools ağacı `{tools_tree or '—'}`"]
 if env_scrubbed is not None:
     L[-1:-1] = [f"Ortam temizliği (env-scrub, C# okuduğu değişkenler): {', '.join(env_scrubbed) or 'temizlenecek yok'}"]
+if isolated:
+    L[-1:-1] = [f"Çekirdek dışı (ci-isolated.txt): {sum(w == 'alone' for _, w, _ in isolated)} ayrı adımda (alone) · "
+                f"{sum(w == 'a3' for _, w, _ in isolated)} main-ci'de değil (a3, S-10 A3 koşusu)"]
 L += ["| Süit | toplam | geçti | kırmızı | atlandı | s | derleme hatası | bekçi |", "|---|---:|---:|---:|---:|---:|---:|---|"]
 for mode, s in suites.items():
     L.append(f"| {mode} | {s['total']} | {s['passed']} | {s['failed']} | {s['skipped']} | {s['seconds']:.0f} | {s['errorsCS']} | {'KILLED' if s['watchdog'] else ('-' if s['xml'] else 'XML YOK')} |")
@@ -151,5 +169,6 @@ owners = {}
 for r in reds:
     owners.setdefault(r["owner"], 0)
     owners[r["owner"]] += 1
-print(f"CI {sha[:10]} {'GREEN' if green else 'RED'} · edit {suites['editmode']['passed']}/{suites['editmode']['total']} · play {suites['playmode']['passed']}/{suites['playmode']['total']} · compile {len(compile_errors)} · reds by owner {owners or '-'} · new {len(new_reds)}")
+alone = f" · alone {sum(suites[a]['passed'] for a in alone_ids)}/{sum(suites[a]['total'] for a in alone_ids)}" if alone_ids else ""
+print(f"CI {sha[:10]} {'GREEN' if green else 'RED'} · edit {suites['editmode']['passed']}/{suites['editmode']['total']} · play {suites['playmode']['passed']}/{suites['playmode']['total']}{alone} · compile {len(compile_errors)} · reds by owner {owners or '-'} · new {len(new_reds)}")
 sys.exit(0 if green else 1)
