@@ -1180,3 +1180,36 @@ At the level cap the requirement is int.MaxValue (S-04, R1-B P2), so the progres
 ## S-09 · DEC-109 AD round (C-00 30.09)
 
 The AD round on the DD-TR frames (K/wp-068s9/evidence/dec109/ad-tmp-verdict.md) changed four TR rows in place: `camera.fov.*` read "1. / 3. ŞAHIS GÖRÜŞ ALANI" so the Settings label column holds them at TextScale 1.25 (MUST-1; the EN column went to "… FOV" for the same reason); `shop.intro.late_next` gets its verb ("Sonraki roundda … bonusu var"); `loading.error.stalled` reads "Yükleme ilerlemiyor." instead of the word-for-word "ilerlemeyi bıraktı".
+
+## S-09 · Control names in Turkish (AD d109 SHOULD-7c, C-00 01.10)
+
+The remap service names controls in English. In Turkish the Controls pane reads these rows (keyed by the control path after the device; `dpad/up` → `dpad.up`). Face buttons (device letters), start / select and letter keys keep the service's name; English keeps the service's name everywhere.
+
+| Key | en | tr |
+|---|---|---|
+| `input.control.leftStick` | Left Stick | Sol Çubuk |
+| `input.control.rightStick` | Right Stick | Sağ Çubuk |
+| `input.control.leftStickPress` | Left Stick Press | Sol Çubuk Basışı |
+| `input.control.rightStickPress` | Right Stick Press | Sağ Çubuk Basışı |
+| `input.control.leftTrigger` | Left Trigger | Sol Tetik |
+| `input.control.rightTrigger` | Right Trigger | Sağ Tetik |
+| `input.control.leftShoulder` | Left Shoulder | Sol Omuz |
+| `input.control.rightShoulder` | Right Shoulder | Sağ Omuz |
+| `input.control.dpad` | D-Pad | Yön Tuşları |
+| `input.control.dpad.up` | D-Pad Up | Yön Yukarı |
+| `input.control.dpad.down` | D-Pad Down | Yön Aşağı |
+| `input.control.dpad.left` | D-Pad Left | Yön Sol |
+| `input.control.dpad.right` | D-Pad Right | Yön Sağ |
+| `input.control.leftButton` | Left Button | Sol Tık |
+| `input.control.rightButton` | Right Button | Sağ Tık |
+| `input.control.middleButton` | Middle Button | Orta Tık |
+| `input.control.forwardButton` | Forward | İleri Tuşu |
+| `input.control.backButton` | Back | Geri Tuşu |
+| `input.control.scroll` | Scroll | Tekerlek |
+| `input.control.space` | Space | Boşluk |
+| `input.control.leftShift` | Left Shift | Sol Shift |
+| `input.control.rightShift` | Right Shift | Sağ Shift |
+| `input.control.leftCtrl` | Left Control | Sol Ctrl |
+| `input.control.rightCtrl` | Right Control | Sağ Ctrl |
+| `input.control.leftAlt` | Left Alt | Sol Alt |
+| `input.control.rightAlt` | Right Alt | Sağ Alt |

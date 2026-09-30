@@ -881,6 +881,26 @@ namespace DD.Prototype.UI
             return Mathf.RoundToInt(value) + "°";
         }
 
+        /// <summary>
+        /// AD d109 SHOULD-7c: a control's name in the language. The remap service names controls in English ("Right Trigger",
+        /// "Left Button"); in Turkish the descriptive gamepad and mouse controls and a few worded keys read from
+        /// input.control.* (keyed by the control path after the device, "dpad/up" → "dpad.up"). Face buttons (device letters),
+        /// start / select, letter keys and anything without a row keep the service's name. The path is only read as text
+        /// (ADR-024-2: the UI never touches the Input System).
+        /// </summary>
+        public static string ControlName(string effectivePath, string displayName)
+        {
+            if (UiStrings.Language != UiStrings.Turkish || string.IsNullOrEmpty(effectivePath))
+            {
+                return displayName;
+            }
+
+            int slash = effectivePath.IndexOf('/');
+            string control = slash >= 0 ? effectivePath.Substring(slash + 1) : effectivePath;
+            string key = "input.control." + control.Replace('/', '.');
+            return UiStrings.Has(key) ? UiStrings.Get(key, displayName) : displayName;
+        }
+
         private static string Percent(float value)
         {
             return UiStrings.Percent(Mathf.RoundToInt(value * 100f));
@@ -1280,7 +1300,7 @@ namespace DD.Prototype.UI
                 // (inset + hairline, TextPrimary, 12 px left inset); an overridden slot adds
                 // a sakura 6 px diamond after the cap (never colour alone); a listening slot
                 // reads PRESS A KEY in StateWarning with the threat-chip outline.
-                string capText = listening ? UiStrings.Get("controls.listening", "PRESS A KEY") : e.DisplayName;
+                string capText = listening ? UiStrings.Get("controls.listening", "PRESS A KEY") : ControlName(e.EffectivePath, e.DisplayName);
                 TMP_Text cap = UiFactory.Chip("Cap", slot.transform, capText,
                     listening ? UiColor.SurfaceBase : UiColor.SurfaceInset,
                     listening ? UiColor.StateWarning : (e.IsOverridden ? UiColor.AccentSakura : UiColor.TextPrimary),
@@ -1353,7 +1373,7 @@ namespace DD.Prototype.UI
                 {
                     list = new List<string>(2);
                     names.Add(e.EffectivePath, list);
-                    display.Add(e.EffectivePath, e.DisplayName);
+                    display.Add(e.EffectivePath, ControlName(e.EffectivePath, e.DisplayName));
                     order.Add(e.EffectivePath);
                 }
 

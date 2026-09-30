@@ -538,6 +538,22 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void KontrolAdlari_TR_AnahtardanGelir_EN_ServisAdi_YuzTuslariKalir()
+        {
+            // AD d109 SHOULD-7c: the Controls pane named gamepad / mouse controls in English in Turkish.
+            UiStrings.Language = UiStrings.Turkish;
+            Assert.AreEqual("Sağ Tetik", MainMenuScreen.ControlName("<Gamepad>/rightTrigger", "Right Trigger"));
+            Assert.AreEqual("Sol Çubuk", MainMenuScreen.ControlName("<Gamepad>/leftStick", "Left Stick"));
+            Assert.AreEqual("Yön Yukarı", MainMenuScreen.ControlName("<Gamepad>/dpad/up", "D-Pad Up"));
+            Assert.AreEqual("Sol Tık", MainMenuScreen.ControlName("<Mouse>/leftButton", "Left Button"));
+            Assert.AreEqual("Boşluk", MainMenuScreen.ControlName("<Keyboard>/space", "Space"));
+            Assert.AreEqual("A", MainMenuScreen.ControlName("<Gamepad>/buttonSouth", "A"), "a face button keeps its device letter");
+            Assert.AreEqual("W", MainMenuScreen.ControlName("<Keyboard>/w", "W"), "a letter key keeps its letter");
+            UiStrings.Language = UiStrings.English;
+            Assert.AreEqual("Right Trigger", MainMenuScreen.ControlName("<Gamepad>/rightTrigger", "Right Trigger"), "English keeps the service's name");
+        }
+
+        [Test]
         public void Kozmetik_Kilitli_KosulSatirda_TR_EN_EskiGelistiriciMetniYok()
         {
             int checkedRows = 0;

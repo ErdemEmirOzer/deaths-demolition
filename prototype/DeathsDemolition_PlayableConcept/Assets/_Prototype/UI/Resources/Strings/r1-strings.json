@@ -3970,5 +3970,109 @@
   "profile.progress.max": {
     "en": "Max level reached",
     "tr": "En üst seviyeye ulaşıldı"
+  },
+  "input.control.leftStick": {
+    "en": "Left Stick",
+    "tr": "Sol Çubuk"
+  },
+  "input.control.rightStick": {
+    "en": "Right Stick",
+    "tr": "Sağ Çubuk"
+  },
+  "input.control.leftStickPress": {
+    "en": "Left Stick Press",
+    "tr": "Sol Çubuk Basışı"
+  },
+  "input.control.rightStickPress": {
+    "en": "Right Stick Press",
+    "tr": "Sağ Çubuk Basışı"
+  },
+  "input.control.leftTrigger": {
+    "en": "Left Trigger",
+    "tr": "Sol Tetik"
+  },
+  "input.control.rightTrigger": {
+    "en": "Right Trigger",
+    "tr": "Sağ Tetik"
+  },
+  "input.control.leftShoulder": {
+    "en": "Left Shoulder",
+    "tr": "Sol Omuz"
+  },
+  "input.control.rightShoulder": {
+    "en": "Right Shoulder",
+    "tr": "Sağ Omuz"
+  },
+  "input.control.dpad": {
+    "en": "D-Pad",
+    "tr": "Yön Tuşları"
+  },
+  "input.control.dpad.up": {
+    "en": "D-Pad Up",
+    "tr": "Yön Yukarı"
+  },
+  "input.control.dpad.down": {
+    "en": "D-Pad Down",
+    "tr": "Yön Aşağı"
+  },
+  "input.control.dpad.left": {
+    "en": "D-Pad Left",
+    "tr": "Yön Sol"
+  },
+  "input.control.dpad.right": {
+    "en": "D-Pad Right",
+    "tr": "Yön Sağ"
+  },
+  "input.control.leftButton": {
+    "en": "Left Button",
+    "tr": "Sol Tık"
+  },
+  "input.control.rightButton": {
+    "en": "Right Button",
+    "tr": "Sağ Tık"
+  },
+  "input.control.middleButton": {
+    "en": "Middle Button",
+    "tr": "Orta Tık"
+  },
+  "input.control.forwardButton": {
+    "en": "Forward",
+    "tr": "İleri Tuşu"
+  },
+  "input.control.backButton": {
+    "en": "Back",
+    "tr": "Geri Tuşu"
+  },
+  "input.control.scroll": {
+    "en": "Scroll",
+    "tr": "Tekerlek"
+  },
+  "input.control.space": {
+    "en": "Space",
+    "tr": "Boşluk"
+  },
+  "input.control.leftShift": {
+    "en": "Left Shift",
+    "tr": "Sol Shift"
+  },
+  "input.control.rightShift": {
+    "en": "Right Shift",
+    "tr": "Sağ Shift"
+  },
+  "input.control.leftCtrl": {
+    "en": "Left Control",
+    "tr": "Sol Ctrl"
+  },
+  "input.control.rightCtrl": {
+    "en": "Right Control",
+    "tr": "Sağ Ctrl"
+  },
+  "input.control.leftAlt": {
+    "en": "Left Alt",
+    "tr": "Sol Alt"
+  },
+  "input.control.rightAlt": {
+    "en": "Right Alt",
+    "tr": "Sağ Alt"
   }
 }
