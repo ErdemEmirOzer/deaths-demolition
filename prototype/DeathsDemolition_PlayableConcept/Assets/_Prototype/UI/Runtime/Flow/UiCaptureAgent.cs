@@ -2159,6 +2159,7 @@ namespace DD.Prototype.UI
             /// </summary>
             private IEnumerator LateBonusFrames()
             {
+                UpgradeScreen.CaptureShowRoundReport = Arg("-ddUiRoundReport") == "1";   // DEC-113 frames without buying the node
                 string folder = Path.HasExtension(_out) ? (Path.GetDirectoryName(_out) ?? Application.persistentDataPath) : _out;
                 Directory.CreateDirectory(folder);
                 PrototypeUiFlow.GoToSelection();

@@ -233,7 +233,8 @@ namespace DD.Prototype.Profile
 
         private static readonly HashSet<string> s_live = new HashSet<string>
         {
-            RerollCost, HearthSlope, PurseAtStart, CapstoneDiscount
+            RerollCost, HearthSlope, PurseAtStart, CapstoneDiscount,
+            RoundReport   // DEC-113: S-09's round-end line (UpgradeScreen)
             // + an effect id per hook as it lands (Special leanings: WP-069 B4; body row: player systems; QoL: S-09)
         };
 

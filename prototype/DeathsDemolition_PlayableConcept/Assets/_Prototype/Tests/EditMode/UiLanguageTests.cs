@@ -556,6 +556,12 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void Dec113_RoundRaporu_TurlerSifirsizGorunur_ElitSuresiYoksaTire_TR_EN()
         {
+            // The screen shows the line only for an owned node and a closed round.
+            var report = new RoundReport(3, 20, 0, 2, 0, 44.6f, 62, 4.23f, 2);
+            Assert.IsNull(UpgradeScreen.RoundReportLine(report, false), "node not owned: no line");
+            Assert.IsNull(UpgradeScreen.RoundReportLine(default(RoundReport), true), "no round closed yet: no line");
+            Assert.AreEqual(UiUpgradeCopy.RoundReport(20, 0, 2, 0, 44.6f, 62, 4.23f, 2), UpgradeScreen.RoundReportLine(report, true));
+
             UiStrings.Language = UiStrings.English;
             Assert.AreEqual("STANDARD 20  ·  ELITE 2  ·  DAMAGE TAKEN 45  ·  GOLD +62  ·  ELITE KILL TIME 4.2 s",
                 UiUpgradeCopy.RoundReport(20, 0, 2, 0, 44.6f, 62, 4.23f, 2));

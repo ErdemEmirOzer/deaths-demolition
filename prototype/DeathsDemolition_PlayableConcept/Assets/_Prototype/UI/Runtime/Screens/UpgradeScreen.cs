@@ -190,6 +190,7 @@ namespace DD.Prototype.UI
         private UiButton _continueButton;
         private TMP_Text _footerNote;
         private TMP_Text _intro;
+        private TMP_Text _roundReport;   // DEC-113
 
         private TMP_Text _rerollLabel;
         private UiButton _rerollButton;
@@ -245,6 +246,7 @@ namespace DD.Prototype.UI
                 IntroSentence());
             Transform intro = Content.Find("Subtitle");
             _intro = intro != null ? intro.GetComponent<TMP_Text>() : null;   // DEC-107: re-written on every open
+            BuildRoundReport();
 
             _cardsTop += (int)UiSpace.XXL;
 
@@ -1077,6 +1079,7 @@ namespace DD.Prototype.UI
             // Every command from this screen quotes the cards it was drawn with (WP-008).
             _sessionId = shop.SessionId;
             _revision = shop.Revision;
+            RefreshRoundReport();
             if (_intro != null)
             {
                 // DEC-107: the intro follows this offer's pick limit and names the late-round bonus (built once, the screen
@@ -1583,6 +1586,65 @@ namespace DD.Prototype.UI
         /// fallback (1); the shipped value lives in EconomyConfigSection.PurchasesPerRound (2).
         /// </summary>
         private static int PicksPerRound => Shop != null ? Shop.PurchaseLimit : UpgradeOfferPolicy.PurchaseLimit(PrototypeConfig.Active);
+
+        /// <summary>
+        /// DEC-113: the Round Report line - one line on the ROUND COMPLETE row, right-aligned, so the header keeps its
+        /// height. It starts after the eyebrow's own words and never wraps (information only, no focus stop).
+        /// </summary>
+        private void BuildRoundReport()
+        {
+            Transform eyebrowTransform = Content.Find("Eyebrow");
+            TMP_Text eyebrow = eyebrowTransform != null ? eyebrowTransform.GetComponent<TMP_Text>() : null;
+            if (eyebrow == null)
+            {
+                return;
+            }
+
+            _roundReport = UiFactory.Label("RoundReport", Content, string.Empty, UiType.Label, UiColor.TextSecondary, TextAnchor.LowerRight);
+            _roundReport.enableWordWrapping = false;
+            _roundReport.overflowMode = TextOverflowModes.Ellipsis;
+            RectTransform from = eyebrow.rectTransform;
+            RectTransform to = _roundReport.rectTransform;
+            to.anchorMin = from.anchorMin;
+            to.anchorMax = from.anchorMax;
+            to.pivot = from.pivot;
+            to.offsetMin = new Vector2(from.offsetMin.x + Mathf.Ceil(eyebrow.GetPreferredValues(eyebrow.text).x) + (int)UiSpace.XL, from.offsetMin.y);
+            to.offsetMax = from.offsetMax;
+            _roundReport.gameObject.SetActive(false);
+        }
+
+        private void RefreshRoundReport()
+        {
+            if (_roundReport == null)
+            {
+                return;
+            }
+
+            RunDirector run = RunDirector.Instance;
+            string line = RoundReportLine(run != null ? run.LastRoundReport : default,
+                CaptureShowRoundReport || DD.Prototype.Profile.MetaPathRules.Owns(DD.Prototype.Profile.ProfileService.Current, DD.Prototype.Profile.MetaPathEffects.RoundReport, out _));
+            _roundReport.gameObject.SetActive(line != null);
+            if (line != null)
+            {
+                _roundReport.text = line;
+            }
+        }
+
+        /// <summary>DEC-113: the line for a frozen round report, or null when the node isn't owned or no round has closed yet.</summary>
+        public static string RoundReportLine(RoundReport report, bool owned)
+        {
+            return owned && report.IsValid
+                ? UiUpgradeCopy.RoundReport(report.KillsStandard, report.KillsSpecial, report.KillsElite, report.KillsUltra,
+                    report.DamageTaken, report.GoldIncome, report.EliteTtkAverage, report.EliteTtkSamples)
+                : null;
+        }
+
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+        /// <summary>Dev capture only (-ddUiRoundReport 1): the line shows without owning the node, for the AD frames (H12).</summary>
+        public static bool CaptureShowRoundReport { get; set; }
+#else
+        private const bool CaptureShowRoundReport = false;
+#endif
 
         private static string IntroSentence()
         {
