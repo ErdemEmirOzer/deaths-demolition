@@ -36,6 +36,7 @@ namespace DD.Prototype.Feedback.Vfx
         public int DudsPlayed { get; private set; }
         public int DrawnRockets { get; private set; }
         public ParticleSystem Smoke => _smoke;
+        public ParticleSystem Sparks => _sparks;
         public int ExhaustAlive { get; private set; }
         public float SmokeLife => VfxTier.Pick(1f, 2f, 3.5f);
         public static RocketVisualSystem Ensure()

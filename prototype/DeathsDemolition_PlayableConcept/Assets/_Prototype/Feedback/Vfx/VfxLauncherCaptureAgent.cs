@@ -1,10 +1,11 @@
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
 using System;
 using System.Collections;
 using System.IO;
-using System.Reflection;
 using DD.Prototype.CameraSystem;
 using DD.Prototype.Core;
 using DD.Prototype.Core.Config;
+using DD.Prototype.Core.DebugTools;
 using DD.Prototype.Core.InputAbstraction;
 using DD.Prototype.Enemies;
 using DD.Prototype.PlayerSystem;
@@ -15,7 +16,9 @@ using UnityEngine;
 namespace DD.Prototype.Feedback.Vfx
 {
     /// <summary>Opt-in B3 QA: six controller shots, disposable target, three modes × two flash settings.
-    /// A missing stage/mode/blast is a nonzero result. Actual earlier world contacts remain labelled.</summary>
+    /// A missing stage/mode/blast is a nonzero result. Actual earlier world contacts remain labelled.
+    /// Development builds / editor only (as the Diagnostics probes). No reflection: spawning goes through the spawn director's
+    /// own F1 toggle, and the rig's input overrides are released to null (no runtime code sets them; only QA agents and tests).</summary>
     public sealed class VfxLauncherCaptureAgent : MonoBehaviour
     {
         private string _folder;
@@ -28,13 +31,13 @@ namespace DD.Prototype.Feedback.Vfx
         private float _shotTime, _endTime;
         private GameObject _target;
         private PlayerRig _rig;
-        private IInputSource _previous, _motorInput, _aimInput;
+        private IInputSource _previous;
         private CameraMode _oldMode;
         private ClassicWeaponId _oldWeapon;
         private bool _oldInvulnerable, _hasSnapshot;
         private EnemySpawnDirector _spawnDirector;
-        private FieldInfo _spawnEnabledField;
-        private object _spawnEnabled;
+        private DebugPanelToggle _spawnToggle;
+        private bool _spawnEnabled;
         private float _flash;
         private float _runDeadline;
         private bool _completed;
@@ -87,11 +90,10 @@ namespace DD.Prototype.Feedback.Vfx
                 if (_rig != null)
                 {
                     _rig.Health.DiagnosisInvulnerable = _oldInvulnerable;
-                    _rig.Motor.SetInputSource(_motorInput);
-                    _rig.Aim.SetInputSource(_aimInput);
+                    _rig.Motor.SetInputSource(null);
+                    _rig.Aim.SetInputSource(null);
                 }
-                if (_spawnDirector != null && _spawnEnabledField != null)
-                    _spawnEnabledField.SetValue(_spawnDirector, _spawnEnabled);
+                if (_spawnToggle != null) _spawnToggle.Set(_spawnEnabled);
                 WeaponQaHooks.TrySetClassicWeapon(_oldWeapon);
                 CameraModeService.Request(_oldMode);
             }
@@ -151,11 +153,11 @@ namespace DD.Prototype.Feedback.Vfx
             _oldMode = CameraModeService.Current;
             _oldWeapon = WeaponRegistry.ActiveController.Classic.Id;
             _oldInvulnerable = _rig.Health.DiagnosisInvulnerable;
-            _motorInput = typeof(DD.Prototype.PlayerSystem.PlayerMotor).GetField("_inputOverride", BindingFlags.NonPublic | BindingFlags.Instance)?.GetValue(_rig.Motor) as IInputSource;
-            _aimInput = typeof(DD.Prototype.PlayerSystem.PlayerAim).GetField("_inputOverride", BindingFlags.NonPublic | BindingFlags.Instance)?.GetValue(_rig.Aim) as IInputSource;
             _spawnDirector = EnemySpawnDirector.Instance;
-            _spawnEnabledField = typeof(EnemySpawnDirector).GetField("_spawningEnabled", BindingFlags.NonPublic | BindingFlags.Instance);
-            if (_spawnDirector != null && _spawnEnabledField != null) _spawnEnabled = _spawnEnabledField.GetValue(_spawnDirector);
+            _spawnToggle = _spawnDirector != null ? SpawnToggle() : null;
+            if (_spawnDirector != null && _spawnToggle == null)
+            { Miss("spawn director has no 'Spawning enabled' F1 toggle"); _completed = true; Application.Quit(3); yield break; }
+            if (_spawnToggle != null) _spawnEnabled = _spawnToggle.Get();
             _hasSnapshot = true;
             try
             {
@@ -180,7 +182,7 @@ namespace DD.Prototype.Feedback.Vfx
                     {
                         if (Time.timeScale <= 0f) { Miss("scaled simulation frozen"); continue; }
                         _watching = false;
-                        if (_spawnDirector != null) { _spawnEnabledField?.SetValue(_spawnDirector, false); _spawnDirector.ClearAllEnemies(); }
+                        if (_spawnDirector != null) { _spawnToggle.Set(false); _spawnDirector.ClearAllEnemies(); }
                         EnemyFactory.ClearAll();
                         ProjectileSystem.Clear();
                         RocketVisualSystem.Instance.Clear();
@@ -231,6 +233,14 @@ namespace DD.Prototype.Feedback.Vfx
             Debug.Log("[B3Capture] DONE actualShots=" + _shots + " misses=" + _misses);
             _completed = true;
             Application.Quit(_misses == 0 && _shots == 6 ? 0 : 4);
+        }
+        /// <summary>The spawn director's own F1 toggle ("Spawning enabled", Spawn tab) — its public switch, not its private field.</summary>
+        private static DebugPanelToggle SpawnToggle()
+        {
+            var entries = DebugPanelRegistry.Entries;
+            for (int i = 0; i < entries.Count; i++)
+                if (entries[i] is DebugPanelToggle t && t.Tab == DebugPanelTabs.Spawn && t.Label == "Spawning enabled") return t;
+            return null;
         }
         private void Grab(string key, string stage, CameraMode requested)
         {
@@ -291,3 +301,4 @@ namespace DD.Prototype.Feedback.Vfx
         }
     }
 }
+#endif

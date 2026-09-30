@@ -1,4 +1,5 @@
 using DD.Prototype.Core;
+using DD.Prototype.Core.Config;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -11,6 +12,13 @@ namespace DD.Prototype.Feedback.Vfx
         private static ExplosionDirector s_instance;
         public static ExplosionDirector Instance => s_instance;
         public const int FullCapacity = 2, ScheduleCapacity = 32;
+        // Ground marks — direction §1.5 "Patlama sırası" (WP-073-VFX-FEEL-V3-DIRECTION.md l.102): "scorch 2,4 m / 12 s + ıslak koyu
+        // halka 3,0 m / 6 s". §1.5 gives no alpha; it reuses the existing AP-010 scorch ("mevcut", WP-069 §7), whose manifest sets it.
+        public const float ScorchSize = 2.4f, ScorchSeconds = 12f, WetRingSize = 3f, WetRingSeconds = 6f;
+        [PrototypeOnly(PendingDecisions.None, "AP-010 manifest v004 decal_scorch usage_note: alpha peak 0.40 (direction §1.5 row names no alpha; it reuses this scorch).")]
+        public const float ScorchAlpha = 0.40f;
+        [PrototypeOnly(PendingDecisions.None, "Wet dark ring alpha: direction §1.5 gives size/time only (3.0 m / 6 s); 0.35 is a stand-in.", true)]
+        public const float WetRingAlpha = 0.35f;
         private struct Blast { public bool Active, Full, Grounded; public Vector3 At, Ground, Normal; public SurfaceKind Surface; public float Start, Scale; public int Stages, Mask; }
         private readonly Blast[] _blasts = new Blast[ScheduleCapacity];
         private Texture2D _dot;
@@ -30,7 +38,6 @@ namespace DD.Prototype.Feedback.Vfx
         public int Residues { get; private set; }
         public int SteamPuffs { get; private set; }
         public int Pending { get { int n=0;for(int i=0;i<_blasts.Length;i++)if(_blasts[i].Active)n++;return n; } }
-        public ParticleSystem Column => _column;
         public static ExplosionDirector Ensure(VfxDressing owner)
         {
             if(s_instance==null)s_instance=FindObjectOfType<ExplosionDirector>();
@@ -74,13 +81,13 @@ namespace DD.Prototype.Feedback.Vfx
             }
             if(b.Grounded && (mask&2)!=0)
             {
-                FlipbookEffect ring=CardEffect(VfxIds.Shockwave,b.Ground+b.Normal*.05f,Quaternion.LookRotation(b.Normal),FlipbookEffect.Facing.Fixed,7f*b.Scale,.3f,new Color(.58f,.58f,.56f),.5f);
+                FlipbookEffect ring=CardEffect(VfxIds.Shockwave,b.Ground+b.Normal*.05f,Quaternion.LookRotation(b.Normal),FlipbookEffect.Facing.Fixed,7f*b.Scale,.3f,VfxDressing.ShockRingDustTint,.5f);   // AD M6 dust tint, α ≤ 0.5 (kept from the pre-B3 ring)
                 ring?.SetGrow(1f*b.Scale,.3f);
             }
             if(b.Grounded && (mask&8)!=0)
             {
-                if(b.Surface!=SurfaceKind.Water && Decal(b.Ground,b.Normal,2.4f*b.Scale,12f,.7f,Color.white))Scorches++;
-                if(b.Surface!=SurfaceKind.Water && Decal(b.Ground,b.Normal,3f*b.Scale,6f,.35f,new Color(.3f,.32f,.34f)))WetRings++;
+                if(b.Surface!=SurfaceKind.Water && Decal(b.Ground,b.Normal,ScorchSize*b.Scale,ScorchSeconds,ScorchAlpha,Color.white))Scorches++;
+                if(b.Surface!=SurfaceKind.Water && Decal(b.Ground,b.Normal,WetRingSize*b.Scale,WetRingSeconds,WetRingAlpha,new Color(.3f,.32f,.34f)))WetRings++;
             }
             return true;
         }
@@ -109,7 +116,7 @@ namespace DD.Prototype.Feedback.Vfx
                         var sheet=_debris.textureSheetAnimation;sheet.startFrame=new ParticleSystem.MinMaxCurve(cell/16f,(cell+1.999f)/16f);
                         for(int n=0;n<count;n++){float a=n*2.399963f;Vector3 v=new Vector3(Mathf.Cos(a),1.2f+(n%3)*.3f,Mathf.Sin(a))*2f;B3Particles.Emit(b.Surface==SurfaceKind.Foliage?_leaves:_debris,b.Ground+b.Normal*.1f,v,water?.03f:.05f+(n%4)*.04f,water?1.5f:1.2f,water?new Color(.85f,.88f,.90f,.5f):new Color(.25f,.27f,.29f,1f));}
                         if(water){Card(VfxIds.WaterSplash,b.Ground,Quaternion.identity,FlipbookEffect.Facing.Camera,2.5f*b.Scale,1.5f,Color.white,.5f);Card(VfxIds.Shockwave,b.Ground+b.Normal*.05f,Quaternion.LookRotation(b.Normal),FlipbookEffect.Facing.Fixed,4f*b.Scale,.3f,new Color(.85f,.88f,.90f),.5f);}
-                        if(b.Surface==SurfaceKind.Dirt && (b.Mask&8)!=0)Decal(b.Ground,b.Normal,1.8f*b.Scale,12f,.7f,new Color(.25f,.20f,.16f));
+                        if(b.Surface==SurfaceKind.Dirt && (b.Mask&8)!=0)Decal(b.Ground,b.Normal,1.8f*b.Scale,ScorchSeconds,ScorchAlpha,new Color(.25f,.20f,.16f));   // §1.5 Dirt crater 1.8 m (scorch sheet)
                         Residues++;
                     }
                 }

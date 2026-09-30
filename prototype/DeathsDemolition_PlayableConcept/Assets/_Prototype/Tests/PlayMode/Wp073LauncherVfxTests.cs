@@ -38,7 +38,7 @@ namespace DD.Prototype.Tests.PlayMode
         {
             Spawn(70f,.01f,ProjectileKind.Bullet);Spawn();ProjectileSystem.Step(.025f);Assert.AreEqual(1,ProjectileSystem.LiveCount);
             ref readonly ProjectileState p=ref ProjectileSystem.Get(0);int id=p.Generation;Vector3 position=p.Position;
-            _rocket.Present(.05f);Assert.AreEqual(1,_rocket.ActiveFlights);Assert.IsTrue(_rocket.TryVisual(id,out Vector3 at));Assert.AreEqual(position,at);Assert.Greater(_rocket.SmokeEmitted,0);
+            _rocket.Present(.05f);Assert.AreEqual(1,_rocket.ActiveFlights);Assert.AreEqual(1,_rocket.DrawnRockets);Assert.IsTrue(_rocket.TryVisual(id,out Vector3 at));Assert.AreEqual(position,at);Assert.Greater(_rocket.SmokeEmitted,0);
         }
         [Test] public void Clear_StopsFlight_NoBlast_AndNoFurtherEmission()
         {
@@ -71,9 +71,10 @@ namespace DD.Prototype.Tests.PlayMode
         [UnityTest] public IEnumerator ReducedFlashes_PreservesColumnAndSoot_RemovesFlash()
         {
             var ground=GameObject.CreatePrimitive(PrimitiveType.Cube);ground.transform.position=new Vector3(0f,99.5f,200f);ground.transform.localScale=new Vector3(10f,1f,10f);Physics.SyncTransforms();
-            int flashes=_blast.FlashCards,columns=_blast.Columns,scorches=_blast.Scorches;
+            int flashes=_blast.FlashCards,columns=_blast.Columns,scorches=_blast.Scorches,wet=_blast.WetRings,embers=_blast.EmberBursts,residues=_blast.Residues;
             GameFeelSettings.FlashScale=.4f;Assert.IsTrue(_blast.Play(new Vector3(0f,100.1f,200f),5f,-1));_blast.Tick(Time.time+.3f);
             Assert.AreEqual(flashes,_blast.FlashCards);Assert.AreEqual(columns+1,_blast.Columns);Assert.AreEqual(scorches+1,_blast.Scorches);
+            Assert.AreEqual(wet+1,_blast.WetRings);Assert.AreEqual(embers+1,_blast.EmberBursts);Assert.AreEqual(residues+1,_blast.Residues);
             Object.Destroy(ground);yield return null;
         }
         [Test] public void PausedPresentation_DoesNotEmit()
@@ -105,9 +106,7 @@ namespace DD.Prototype.Tests.PlayMode
         [Test, Category("Alloc")] public void WarmPresentation_DoesNotAllocateOrConsumeGameplayRandom()
         {
             Spawn();int generation=ProjectileSystem.Get(0).Generation;
-            var rocket=_rocket;var smoke=rocket.Smoke;
-            var sparkField=typeof(RocketVisualSystem).GetField("_sparks",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic);
-            Assert.IsNotNull(sparkField);var sparks=(ParticleSystem)sparkField.GetValue(rocket);
+            var rocket=_rocket;var smoke=rocket.Smoke;var sparks=rocket.Sparks;
             Assert.IsNotNull(smoke);Assert.IsNotNull(sparks);
             // Warm both real particle-emission branches. Then .08s crosses both accumulated rates.
             rocket.Present(.17f);rocket.Present(.17f);rocket.Present(.10f);

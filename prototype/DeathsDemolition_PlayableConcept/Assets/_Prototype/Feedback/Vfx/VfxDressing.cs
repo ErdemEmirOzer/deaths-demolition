@@ -32,10 +32,8 @@ namespace DD.Prototype.Feedback.Vfx
         /// <summary>WP-073 B2: environment marks 8 s on Performance, 12 s above (direction §5).</summary>
         private static float ImpactDecalSeconds => VfxTier.Pick(8f, DecalSecondsEnvironment, 20f);   // DEC-100: Cinematic marks stay 20 s
         private const float DecalSecondsSplat = 30f;
-        private const float DecalSecondsScorch = 12f;
         private const float DecalSecondsSplinter = 8f;
         private const float DecalAlphaCap = 0.85f;
-        private const float ScorchAlphaCap = 0.40f;
         private const float SplatAlphaCap = 0.70f;
 
         private PrototypePool<FlipbookEffect> _flipbooks;
@@ -77,8 +75,8 @@ namespace DD.Prototype.Feedback.Vfx
         private bool _ready;
         private int _splatToggle;
 
-        /// <summary>AD M6: shock ring dust colour (h ~30°, s 0.22, v 0.62).</summary>
-        private static readonly Color ShockRingDustTint = new Color(0.62f, 0.55f, 0.48f, 1f);
+        /// <summary>AD M6: shock ring dust colour (h ~30°, s 0.22, v 0.62). WP-073 B3: read by <see cref="ExplosionDirector"/>.</summary>
+        internal static readonly Color ShockRingDustTint = new Color(0.62f, 0.55f, 0.48f, 1f);
         private const float DeathSheetAlphaStepSeconds = 0.28f;
         private const float DeathSheetAlphaStepTo = 0.35f;
         private const float DeathSheetNearCameraMetres = 1.5f;
@@ -991,7 +989,7 @@ namespace DD.Prototype.Feedback.Vfx
 
         // ------------------------------------------------------------------ explosion
 
-        /// <summary>Family 3: fireball sheet + ground shockwave sheet + smoke puffs + scorch decal.</summary>
+        /// <summary>Family 3 (WP-073 B3): the layered blast is <see cref="ExplosionDirector"/>'s (direction §1.5); the audit mask passes through.</summary>
         public bool PlayExplosion(Vector3 origin, float radius)
         {
             if (!_ready || AuditMute)
