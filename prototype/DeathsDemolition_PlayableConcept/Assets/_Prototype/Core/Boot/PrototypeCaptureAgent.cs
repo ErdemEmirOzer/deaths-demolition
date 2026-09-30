@@ -8,6 +8,13 @@ namespace DD.Prototype.Core.Boot
     /// <summary>
     /// PROTOTYPE-ONLY: lets the built Player take a picture of itself.
     ///
+    /// H12 WRITTEN EXCEPTION (C-00 30.09, Codex-audit M-55): diagnostic/capture agents are normally dev-build only
+    /// (<c>#if DEVELOPMENT_BUILD || UNITY_EDITOR</c>). This one deliberately stays in RELEASE builds: it is the only
+    /// image-and-exit path of the flagless release smoke (tools/smoke.sh e1/e4 launch the release Player with
+    /// <c>-ddCapture</c>; the agent writes the PNG and quits). It is active only with <c>-ddCapture</c>; without the
+    /// flag it creates no object and allocates nothing beyond reading the command line (<see cref="TryStart"/>,
+    /// tested by CaptureAgentReleaseExceptionTests). Do not add any other behaviour to it.
+    ///
     /// A rendering fault that only exists in a build cannot be judged from the Editor, and
     /// the machine running these checks has no screen-recording permission, so nothing
     /// outside the process can photograph the window either. The Player capturing its own
@@ -39,20 +46,29 @@ namespace DD.Prototype.Core.Boot
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Baslat()
         {
-            string yol = Arg(YolBayragi);
+            TryStart(Environment.GetCommandLineArgs());
+        }
+
+        /// <summary>
+        /// Starts the capture only when <paramref name="args"/> carries <c>-ddCapture &lt;path&gt;</c>; returns whether it did.
+        /// Without the flag it only scans the array: no GameObject, no component, no allocation (H12 exception, see above).
+        /// </summary>
+        public static bool TryStart(string[] args)
+        {
+            string yol = Arg(args, YolBayragi);
             if (string.IsNullOrEmpty(yol))
             {
-                return;
+                return false;
             }
 
             var tasiyici = new GameObject("PrototypeCaptureAgent");
             UnityEngine.Object.DontDestroyOnLoad(tasiyici);
-            tasiyici.AddComponent<Surucu>().Kur(yol, Arg(BoyutBayragi), Arg(GecikmeBayragi));
+            tasiyici.AddComponent<Surucu>().Kur(yol, Arg(args, BoyutBayragi), Arg(args, GecikmeBayragi));
+            return true;
         }
 
-        private static string Arg(string ad)
+        private static string Arg(string[] args, string ad)
         {
-            string[] args = Environment.GetCommandLineArgs();
             for (int i = 0; i < args.Length - 1; i++)
             {
                 if (string.Equals(args[i], ad, StringComparison.Ordinal))
