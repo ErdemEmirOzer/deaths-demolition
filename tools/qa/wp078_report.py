@@ -1098,11 +1098,13 @@ class Inspector:
             absent = [role + "." + field for role, value in zip(("release", "probe"), values) if value is None]
             if absent:
                 missing.extend(absent)
-            elif field == "sceneList" and not all(isinstance(v, list) and v and all(isinstance(x, str) for x in v) for v in values):
-                failures.append("native sceneList is not a nonempty list of scene paths")
+            elif field == "sceneList" and not all(scene_entries(v) is not None for v in values):
+                failures.append("native sceneList is not a nonempty list of scene paths ({path, guid} entries)")
             elif field == "scriptingBackend" and not all(isinstance(v, str) and v for v in values):
                 failures.append("native scriptingBackend is not a string")
-            elif values[0] != values[1]:
+            elif field == "sceneList" and scene_entries(values[0]) != scene_entries(values[1]):
+                failures.append("release/probe sceneList differ (build order, path + guid)")
+            elif field == "scriptingBackend" and values[0] != values[1]:
                 failures.append("release/probe " + field + " differ")
         self.build_parity = {"pass": not failures and not missing, "failures": failures, "missingNativeFields": missing, "observed": rows}
         require(not failures, "release-probe parity failed (K1): " + "; ".join(failures))
@@ -1214,6 +1216,23 @@ def round_timeout_margin(summary):
             "slowestRoundSeconds": slowest,
             "marginSeconds": None if slowest is None else round(ROUND_TIMEOUT_SECONDS - slowest, 1),
             "marginFraction": None if slowest is None else round(1.0 - slowest / ROUND_TIMEOUT_SECONDS, 3)}
+
+
+def scene_entries(value):
+    """Native sceneList in build order as [(path, guid)] — DdBuild writes [{path, guid}] (S-01 06b7d19c, WP-079G A6);
+    a plain path list (older reports) maps to guid None. None when the value is not a nonempty list of valid entries."""
+    if not isinstance(value, list) or not value:
+        return None
+    entries = []
+    for item in value:
+        if isinstance(item, str) and item:
+            entries.append((item, None))
+        elif (isinstance(item, dict) and isinstance(item.get("path"), str) and item["path"]
+              and isinstance(item.get("guid"), str) and re.fullmatch(r"[0-9a-f]{32}", item["guid"])):
+            entries.append((item["path"], item["guid"]))
+        else:
+            return None
+    return entries
 
 
 def main(argv=None):

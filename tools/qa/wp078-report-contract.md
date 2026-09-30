@@ -174,7 +174,7 @@ metadata cannot be hidden by a successful summary or restoration.
   Release provenance attests `compression=LZ4HC`; native `totalSize` is positive
   and ≤5,000,000,000 bytes (DEC-093). Parity (K1, `buildParity`): release and probe
   native reports each carry `compression=lz4hc` and `development=false`, and equal
-  `sceneList` (enabled scene paths), `scriptingBackend`, `target` and scene count.
+  `sceneList` (build order, `{path, guid}` entries as DdBuild writes them; path and guid compared), `scriptingBackend`, `target` and scene count.
   A parity field the native report does not carry is BLOCKED and named in
   `buildParity.missingNativeFields` — it is never inferred from the build mode.
   Report field aliases do not replace evidence.

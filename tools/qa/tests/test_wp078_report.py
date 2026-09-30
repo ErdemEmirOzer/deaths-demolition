@@ -25,6 +25,8 @@ ROUTE_KEYS = ('courtyard','corridor','kairo','horizon')
 KNOWN_OPEN = ("-ddCorpseLinger", "-ddChainHops", "-ddGelPuddles", "-ddCrowdNeighbours", "-ddSpawnLos")
 BUILD_MODES = {"dev": "dev", "release": "release", "probe": "release-probe"}
 SCENES = ["Assets/_Prototype/Scenes/Boot.unity", "Assets/_Prototype/Scenes/Run.unity"]
+# WP-079G A6 (S-01 06b7d19c): DdBuild's native sceneList is [{path, guid}] in build order
+SCENE_LIST = [{"path": p, "guid": format(i + 1, "032x")} for i, p in enumerate(SCENES)]
 # K6: a timed 1 Hz QaRunBot trace that keeps moving (measurable, no same-spot cluster).
 TRACE = "\n".join(f"[QaRunBot] t pos={2.0*n:.1f},0.0,1.0 time={float(n):.1f} mode=patrol near=0" for n in range(12))
 GUARD = dict(snapshotExit=0, restoreExit=0, verified=1, outOfScopeChanged=0)
@@ -55,7 +57,7 @@ class EvidenceFixture:
         c['A6']['builds'] = {role:dict(library=self.library(), binary=ref, guard=copy.deepcopy(GUARD),
             provenance=self.provenance(role,compression='LZ4HC'),originalExit=0,
             buildReport=self.put_json(dict(result='Succeeded',mode=BUILD_MODES[role],totalErrors=0,totalSize=1000,scenes=len(SCENES),
-                **({} if role=='dev' else dict(compression='lz4hc')),development=role=='dev',sceneList=list(SCENES),scriptingBackend='Mono2x',
+                **({} if role=='dev' else dict(compression='lz4hc')),development=role=='dev',sceneList=copy.deepcopy(SCENE_LIST),scriptingBackend='Mono2x',
                 stamp=dict(stamped=True,commit=FINAL,describe=FINAL,mode=BUILD_MODES[role])),role+'-build-report.json'),
             report=self.put_json({'ok':True,'sourceCommit':FINAL},role+'-report.json'))
             for role,ref in self.binaries.items()}
@@ -472,7 +474,10 @@ class K1ReleaseProbeTests(Fixture):
                 r=self.assert_step('A6','BLOCKED','probe.'+field);self.assertIn('probe.'+field,r['buildParity']['missingNativeFields'])
     def test_a6_parity_violations_fail(self):
         for field,value,reason in (('development',True,'Development'),('compression','lz4','LZ4HC'),('scriptingBackend','IL2CPP','scriptingBackend'),
-                                   ('sceneList',['Assets/Other.unity'],'sceneList'),('scenes',5,'scene counts')):
+                                   ('sceneList',[{'path':'Assets/Other.unity','guid':'f'*32}],'sceneList'),('scenes',5,'scene counts'),
+                                   ('sceneList',[SCENE_LIST[1],SCENE_LIST[0]],'sceneList'),
+                                   ('sceneList',[dict(SCENE_LIST[0],guid='e'*32),SCENE_LIST[1]],'sceneList'),
+                                   ('sceneList',[{'path':SCENES[0]}],'sceneList')):
             with self.subTest(field=field):
                 self.setUp();b=self.m['checklist']['A6']['builds']['probe']
                 self.f.replace_json(b['buildReport'],lambda x:x.update({field:value}));self.f.anchor(self.m)
