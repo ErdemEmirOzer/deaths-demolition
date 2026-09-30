@@ -447,7 +447,7 @@ Orijinal referans notu: derme çatma tank + hortum + pompa + pirinç bağlantıl
 | Öğe | Görsel karar |
 |---|---|
 | Silah (0,95 m) | kiraz lake kundak + demir gövde; üstte/yanda **cam hazne** (silindir Ø 0,16 × 0,32, demir bantlı, pirinç vana), el pompası kolu, nozul = geniş pirinç çan + damlalık; hortum kord sarılı |
-| Jel rengi | 🔴 **sadakat önerisi:** canlı magenta #FF5FD2 (313°) + mor kenar #B040FF; gerekçe: beacon rezervi zaten Special'ın, Look B'nin soğuk gri-yeşilinde tam tamamlayıcı okunur, DEC-094 "sanat yönü çok yakın"; alternatif dünya uyumu = cıva-yeşil #7CFF9A (Foliage ile karışır, önermem) |
+| Jel rengi | **karar: DEC-103** (kullanıcı 30.09, sadakat) — **sadakat önerisi:** canlı magenta #FF5FD2 (313°) + mor kenar #B040FF; gerekçe: beacon rezervi zaten Special'ın, Look B'nin soğuk gri-yeşilinde tam tamamlayıcı okunur, DEC-094 "sanat yönü çok yakın"; alternatif dünya uyumu = cıva-yeşil #7CFF9A (Foliage ile karışır, önermem) |
 | Hazne | jel seviyesi = cephane (shader sıvı seviyesi, 0,5 Hz çalkantı, kabarcık 2/s), emissive ×1,5, cam kenarında magenta kırılma; ışık #FF5FD2 / 2 / 1,5 m sürekli (FP kolda parlar) |
 | Damla mermisi | 0,18 m uzamış damla mesh (vertex wobble), smoothness 0,95, emissive ×3, 3–4 damlacık kuyruğu (0,3 s), yerçekimi yayı; ışık #FF5FD2 / 3 / 3 m |
 | Birikinti | düzensiz splat decal 1,6–2,2 m (3 varyant + döndürme), smoothness 0,92 (ıslak taşın 0,60'ından yüksek → "ıslaktan ıslak" okunur), emissive ×0,6 + 0,3 Hz nabız, kabarcık 3/s; yaşam T (GD): %0–10 yayılma 0,6 → tam, %10–80 canlı, %80–100 **kuruma** (emissive → 0, renk → #6E3560 mat, kenarlar çatlar), sonra 2 s solma |
@@ -481,7 +481,7 @@ Kademe bütçesi: **Yüksek = varsayılan hedef** (kare ort ≤ 16,6 ms, p99 ≤
 ### §10 · Açık sorular
 | # | Soru | Öneri / karar sahibi |
 |---|---|---|
-| 1 🔴 | Jel rengi: orijinale sadakat (magenta #FF5FD2) mi, dünya uyumu mu? | sadakat (§8.2 gerekçe); kullanıcı |
+| 1 ✅ | Jel rengi: orijinale sadakat (magenta #FF5FD2) mi, dünya uyumu mu? | **karar: DEC-103** — sadakat (kullanıcı 30.09) |
 | 2 🔴 | Special gövdesinde pirinç alanı tavanı ≤ %25 — HUD altın anlamı korunuyor mu? | %25 kabul; C-00/S-09 |
 | 3 🔴 | Kara barut duman kimliği (K4): tepeden okunurluk için α ≤ 0,35 / pus ≤ 0,25 yeterli mi, yoksa duman tamamen kapalı mı? | kimlik olarak açık; kullanıcı oynayınca karar |
 | 4 🔴 | Kovan malzemesi: bakır-kâğıt kartuş (öneri) mi, kovansız (fitil dünyası saf) mı? | bakır-kâğıt (eject olayları ve K5 canlılık); kullanıcı |

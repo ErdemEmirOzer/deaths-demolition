@@ -25,7 +25,7 @@ namespace DD.Prototype.Feedback.Vfx
 
         // ---- tracer (§1.2): L = clamp(v × LengthSeconds, 1.2, MaxLength); the tracer IS the bullet (no mesh).
         public float Speed;                 // m/s (the visual projectile speed; S-02's projectile data replaces it)
-        public float LengthSeconds = 0.020f;
+        public float LengthSeconds = 0.020f;   // DEC-104 (kullanıcı 30.09): Δ 0,020 s, sr_1 0,025 s, tavan 8/10 m
         public float MaxLength = 8f;
         public float CoreWidth;             // m
         public float GlowWidth;             // m (0 = none)

@@ -45,7 +45,7 @@ namespace DD.Prototype.Feedback.Vfx
 
         private static readonly Vector4 Amber = SpecialVfxAssets.Hdr(0xFFC65A, 1f);
         private static readonly Vector4 WhiteCyan = SpecialVfxAssets.Hdr(0xEAF6FF, 1f);
-        private static readonly Vector4 GelCore = SpecialVfxAssets.Hdr(0xFF5FD2, 1f);
+        private static readonly Vector4 GelCore = SpecialVfxAssets.Hdr(0xFF5FD2, 1f);   // DEC-103 (kullanıcı 30.09): magenta #FF5FD2 ailesi
         private static readonly Vector4 GelRim = SpecialVfxAssets.Hdr(0xB040FF, 1f);
 
         public enum Part : byte { None, Cell1, Cell2, Cell3, ArcOther, ArcBodyEmission, GelCoreSpecks, GelLiquidRim, GelNozzle }

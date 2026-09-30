@@ -120,7 +120,7 @@ Palet: çekirdek #EAF6FF ×10 (200°) · dal #7FD3FF ×4 · hale #A08CFF ×1,5 �
 Eşzamanlı ana ark tavanı 8 / 8 / 6; dal 24 / 24 / 12; deri rim ≤ 8 zombi.
 
 ### 2.2 · Namekuji (sw_gel, Sliquifier benzeri) — canlı parlak jel; sake şişesi dilinde demir bantlı cam hazne
-Palet (🔴 WP-069 §10-1 sadakat önerisi geçerli): jel #FF5FD2 ×3 (313°) · kenar #B040FF ×1,5 · kuru #6E3560 mat · sıçrama damlası #FF8AE0 ×2. Look B içinde gerekçe: sahnenin soğuk gri-yeşiline tam tamamlayıcı, Foliage ile karışmaz, beacon rezervi zaten Special'ın.
+Palet (karar: DEC-103 — WP-069 §10-1 sadakat): jel #FF5FD2 ×3 (313°) · kenar #B040FF ×1,5 · kuru #6E3560 mat · sıçrama damlası #FF8AE0 ×2. Look B içinde gerekçe: sahnenin soğuk gri-yeşiline tam tamamlayıcı, Foliage ile karışmaz, beacon rezervi zaten Special'ın.
 | Öğe | Şekil / sayım / zamanlama |
 |---|---|
 | Nozul | ateşte damla perdesi 6 damlacık (0,02 m, 0,3 s, g) + Ø 0,30 sıçrama 0,15 s; ışık #FF5FD2 / 6 / 4 m / 0,20 s; hazne seviyesi −1/8 çalkalanarak (0,5 Hz, 0,4 s) |
@@ -189,8 +189,8 @@ Ayırma: tüm sistemler önceden boyutlu havuz, MPB dizileri statik, NonAlloc so
 Sanat oturumu (Higgsfield) gerektiren sayfa: **yok**.
 
 ## 7 · Açık kararlar (C-00 / kullanıcı)
-1. 🔴 İz katsayısı Δ 0,020 s (WP-069 0,035 yerine) — S-02'ye bilgi; oyun etkisi yok.
-2. 🔴 Jel rengi magenta sadakati (WP-069 §10-1 ile aynı soru).
+1. ~~🔴~~ İz katsayısı Δ 0,020 s (WP-069 0,035 yerine) — S-02'ye bilgi; oyun etkisi yok. **karar: DEC-104** (kullanıcı 30.09; sr_1 0,025 s, tavan 8/10 m)
+2. ~~🔴~~ Jel rengi magenta sadakati (WP-069 §10-1 ile aynı soru). **karar: DEC-103** (kullanıcı 30.09; #FF5FD2 ailesi kalır)
 3. Sinematik'te URP opaque texture (ısı dalgası, ≈ 0,3–0,5 ms) — kademe anahtarı ile açılır; Yüksek'te kapalı.
 4. `_DD_ShaftMask` sözleşmesi S-05 WP-075'ten; gelene kadar `DD/VFX Atmo` ana ışık gölgesi + ileri saçılma ile çalışır.
 5. Gib seti (§6-1) P-06 kapasitesine bağlı; gelene kadar kafa öldürme = sis + `fb_zombiedeath`.
