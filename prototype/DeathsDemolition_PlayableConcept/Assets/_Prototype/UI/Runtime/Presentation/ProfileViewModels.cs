@@ -607,7 +607,7 @@ namespace DD.Prototype.UI
         private static string AchievementDetail(string id, string fallback)
         {
             if (string.IsNullOrEmpty(id)) return fallback;
-            // The old Namekuji key describes the player sliding; this catalog reward describes enemies sliding.
+            // The Results line keeps its own Namekuji key; since R1-E E1 both keys say the enemies slide, as the catalog does.
             string key = id == "namekuji_skater" ? "results.reward.achievement.namekuji_skater.desc" : "achievement." + id + ".desc";
             string copy = UiStrings.Get(key, fallback);
             AchievementDefinition definition = AchievementCatalog.Find(id);

@@ -1836,8 +1836,8 @@
     "tr": "Yağmur Patencisi"
   },
   "achievement.namekuji_skater.desc": {
-    "en": "Defeat {count} enemies while sliding on gel in one run.",
-    "tr": "Bir koşuda jelde kayarken {count} düşman yen."
+    "en": "Defeat {count} enemies while they slide on gel in one run.",
+    "tr": "Bir koşuda jelde kayan {count} düşman yen."
   },
   "achievement.tomi_line.name": {
     "en": "String of Pearls",
@@ -3545,27 +3545,27 @@
   },
   "results.reward.weapon_roster": {
     "en": "Classic weapon - opens at profile level {level} (weapon roster)",
-    "tr": "Klasik silah - profil seviyesi {level} ile açılır (silah listesi)"
+    "tr": "Klasik silah - {level}. profil seviyesinde açılır (silah listesi)"
   },
   "profile.content.title_first_blood.detail": {
     "en": "Profile title - shown next to your name once the profile pane supports titles",
-    "tr": "Profil unvanı - profil bölmesi unvanları desteklediğinde adının yanında gösterilir"
+    "tr": "Profil unvanı - profil ekranı unvanları desteklediğinde adının yanında görünür"
   },
   "profile.content.title_survivor.detail": {
     "en": "Profile title for reaching round {count}",
-    "tr": "{count}. rounda ulaşma için profil unvanı"
+    "tr": "{count}. rounda ulaşınca kazanılan profil unvanı"
   },
   "profile.content.title_veteran.detail": {
     "en": "Profile title for reaching level {count}",
-    "tr": "{count}. seviyeye ulaşma için profil unvanı"
+    "tr": "{count}. seviyeye ulaşınca kazanılan profil unvanı"
   },
   "profile.content.title_executioner.detail": {
     "en": "Profile title for defeating an Executioner",
-    "tr": "Bir Executioner yenme için profil unvanı"
+    "tr": "Bir Executioner yenince kazanılan profil unvanı"
   },
   "profile.content.title_ironclad.detail": {
     "en": "Profile title for breaking {count} armour pieces",
-    "tr": "{count} zırh parçası kırma için profil unvanı"
+    "tr": "{count} zırh parçası kırınca kazanılan profil unvanı"
   },
   "profile.content.badge_ghost.detail": {
     "en": "Profile badge for {count} flawless rounds",
@@ -3573,7 +3573,7 @@
   },
   "profile.content.indicator_kill_streak.detail": {
     "en": "HUD indicator variant - available once {count} enemies are defeated",
-    "tr": "HUD gösterge türü - {count} düşman yenildiğinde kullanılabilir"
+    "tr": "HUD gösterge türü - {count} düşman yenince kullanılabilir"
   },
   "profile.content.indicator_round_timer.detail": {
     "en": "HUD indicator variant - available from round {count}",
@@ -3581,7 +3581,7 @@
   },
   "profile.content.indicator_gold_ticker.detail": {
     "en": "HUD indicator variant - available after a {count}-gold run",
-    "tr": "HUD gösterge türü - {count} altınlı bir koşudan sonra kullanılabilir"
+    "tr": "HUD gösterge türü - {count} altınlık bir koşudan sonra kullanılabilir"
   },
   "achievement.first_blood.desc": {
     "en": "Defeat your first enemy.",
@@ -3597,7 +3597,7 @@
   },
   "achievement.defeat_an_ultra.desc": {
     "en": "Bring down an Executioner.",
-    "tr": "Bir Executioner devir."
+    "tr": "Bir Executioner yen."
   },
   "achievement.reach_round_10.desc": {
     "en": "Survive until round {count}.",
@@ -3645,11 +3645,11 @@
   },
   "achievement.special_pickup_first.desc": {
     "en": "Pick up a special weapon.",
-    "tr": "Bir özel silah al."
+    "tr": "Bir Özel silah al."
   },
   "achievement.special_pickup_10.desc": {
     "en": "Pick up {count} special weapons in total.",
-    "tr": "Toplam {count} özel silah al."
+    "tr": "Toplam {count} Özel silah al."
   },
   "achievement.run_gold_150.desc": {
     "en": "Pick up {count} gold in a single run.",
@@ -3669,7 +3669,7 @@
   },
   "achievement.flawless_rounds_10.desc": {
     "en": "Complete {count} rounds without taking a hit, in total.",
-    "tr": "Toplam {count} roundu hasar almadan tamamla."
+    "tr": "Hasar almadan toplam {count} round tamamla."
   },
   "achievement.runs_played_10.desc": {
     "en": "Finish {count} runs.",
@@ -3693,38 +3693,38 @@
   },
   "achievement.first_capstone.desc": {
     "en": "Buy a capstone in the run tree.",
-    "tr": "Koşu ağacında bir taç düğüm al."
+    "tr": "Koşu ağacında bir doruk al."
   },
   "achievement.three_keystones_one_run.desc": {
     "en": "Own three keystones in one run.",
-    "tr": "Tek koşuda üç kilit düğüme sahip ol."
+    "tr": "Tek koşuda üç kilit taşına sahip ol."
   },
   "achievement.hearth_10_one_run.desc": {
     "en": "Stoke the Hearth {count} times in one run.",
-    "tr": "Tek koşuda Ocağı {count} kez körükle."
+    "tr": "Tek koşuda Ocağı {count} kez yak."
   },
   "achievement.hearth_20.desc": {
     "en": "Stoke the Hearth {count} times in one run.",
-    "tr": "Tek koşuda Ocağı {count} kez körükle."
+    "tr": "Tek koşuda Ocağı {count} kez yak."
   },
   "achievement.full_lane.desc": {
     "en": "End a run owning a lane's capstone with one of its tiers at maximum.",
-    "tr": "Bir koşuyu, bir dalın taç düğümü ve en yüksek seviyedeki bir kademesiyle bitir."
+    "tr": "Bir şeridin doruğuna ve azami kademedeki bir dalına sahipken koşu bitir."
   },
   "achievement.capstones_5_weapons.desc": {
     "en": "End runs owning the capstone with five different weapons.",
-    "tr": "Beş farklı silahla taç düğüme sahip olarak koşular bitir."
+    "tr": "Beş farklı silahın her biriyle doruğuna sahipken bir koşu bitir."
   },
   "achievement.both_special_links.desc": {
     "en": "Own both links of a Special in one run.",
-    "tr": "Tek koşuda bir özel silahın iki bağına da sahip ol."
+    "tr": "Tek koşuda bir Özel silahın iki bağına da sahip ol."
   },
   "achievement.mastery_5_any.desc": {
     "en": "Reach mastery {count} with any weapon.",
-    "tr": "Herhangi bir silahla {count}. ustalığa ulaş."
+    "tr": "Bir silahta {count}. ustalık seviyesine ulaş."
   },
   "results.reward.achievement.namekuji_skater.desc": {
     "en": "Defeat {count} enemies while they slide on gel in one run.",
-    "tr": "Bir koşuda jelde kaymakta olan {count} düşman yen."
+    "tr": "Bir koşuda jelde kayan {count} düşman yen."
   }
 }

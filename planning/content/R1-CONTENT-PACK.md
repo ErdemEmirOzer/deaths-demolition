@@ -528,7 +528,7 @@ Key `achievement.<id>.name` / `.desc`. Threshold column is a proposal for S-04 (
 | `raiju_grounded` | Grounded | Topraklı | Empty a full Raiju without shocking yourself. | Kendini çarpmadan bir Raiju'yu baştan sona boşalt. | SingleRun | Uncommon | — | new: SpecialSpentNoSelfShock |
 | `namekuji_puddles` | Slick Courtyard | Kaygan Avlu | Have {count} gel puddles on the ground at once. | Yerde aynı anda {count} jel birikintisi olsun. | SingleRun | Rare | 12 (= puddle cap) | new: ConcurrentPuddles |
 | `namekuji_executioner` | Down Goes the Axe | Balta Yere | Knock down an Executioner with Namekuji gel. | Bir Executioner'ı Namekuji jeliyle devir. | Lifetime | Uncommon | 1 | new: SpecialKnockdown(Ultra) |
-| `namekuji_skater` | Rain Skater | Yağmur Patencisi | Defeat {count} enemies while sliding on gel in one run. | Bir koşuda jelde kayarken {count} düşman yen. | SingleRun | Rare | 25 | new: KillsWhileSliding |
+| `namekuji_skater` | Rain Skater | Yağmur Patencisi | Defeat {count} enemies while they slide on gel in one run. | Bir koşuda jelde kayan {count} düşman yen. | SingleRun | Rare | 25 | new: KillsWhileSliding |
 | `tomi_line` | String of Pearls | İnci Dizisi | Defeat {count} enemies with one Tomi shot. | Tek Tomi atışıyla {count} düşman yen. | SingleRun | Rare | 4 | new: KillsPerShot(sr_1) |
 | `bohiya_one_rocket` | Fire Arrow | Ateş Oku | Defeat {count} enemies with one Bohiya rocket. | Tek Bohiya roketiyle {count} düşman yen. | SingleRun | Uncommon | 6 | new: KillsPerShot(rl_1) |
 | `nito_double` | Both Blades | İki Kılıç | Defeat a Guard with both of Nito's barrels in one breath. | Nito'nun iki namlusuyla bir nefeste bir Guard yen. | Lifetime | Uncommon | 1 | new: KillWithinWindow(sg_2, 2 shots) |
@@ -1032,26 +1032,28 @@ UI only: live shop counts and tier details; remap action/composite labels; assis
 
 Existing 882 keys and values are unchanged. 50 new bilingual UI-only keys; catalog identity names and gameplay data remain unchanged. Counts are read from the existing catalog thresholds.
 
+R1-E E1 (S-09, C-00 30.09): 21 tr lines below revised for grammar and pack terminology (doruk, kilit taşı, yak, şerit, Özel silah, yen); every change was proposed by one reviewer and checked by a second, adversarial one (`K/wp-068e/evidence/e1-tr-review.md`, `e1-refute.md`). The category-then-explanation lines keep " - ", because the Results card already joins its type word with "  ·  ". `achievement.namekuji_skater.desc` (§6) now says in both languages that the enemies slide, as the catalog and FeatTracker do.
+
 | Key | en | tr |
 |---|---|---|
 | `profile.cosmetic.title_format` | Title: {name} | Unvan: {name} |
 | `profile.cosmetic.badge_format` | Badge: {name} | Rozet: {name} |
 | `results.reward.weapon_selectable` | Classic weapon - selectable before your next run | Klasik silah - sonraki koşudan önce seçilebilir |
 | `results.reward.branch_offered` | Upgrade branch - can now be offered at the end of a round | Geliştirme dalı - artık round sonunda sunulabilir |
-| `results.reward.weapon_roster` | Classic weapon - opens at profile level {level} (weapon roster) | Klasik silah - profil seviyesi {level} ile açılır (silah listesi) |
-| `profile.content.title_first_blood.detail` | Profile title - shown next to your name once the profile pane supports titles | Profil unvanı - profil bölmesi unvanları desteklediğinde adının yanında gösterilir |
-| `profile.content.title_survivor.detail` | Profile title for reaching round {count} | {count}. rounda ulaşma için profil unvanı |
-| `profile.content.title_veteran.detail` | Profile title for reaching level {count} | {count}. seviyeye ulaşma için profil unvanı |
-| `profile.content.title_executioner.detail` | Profile title for defeating an Executioner | Bir Executioner yenme için profil unvanı |
-| `profile.content.title_ironclad.detail` | Profile title for breaking {count} armour pieces | {count} zırh parçası kırma için profil unvanı |
+| `results.reward.weapon_roster` | Classic weapon - opens at profile level {level} (weapon roster) | Klasik silah - {level}. profil seviyesinde açılır (silah listesi) |
+| `profile.content.title_first_blood.detail` | Profile title - shown next to your name once the profile pane supports titles | Profil unvanı - profil ekranı unvanları desteklediğinde adının yanında görünür |
+| `profile.content.title_survivor.detail` | Profile title for reaching round {count} | {count}. rounda ulaşınca kazanılan profil unvanı |
+| `profile.content.title_veteran.detail` | Profile title for reaching level {count} | {count}. seviyeye ulaşınca kazanılan profil unvanı |
+| `profile.content.title_executioner.detail` | Profile title for defeating an Executioner | Bir Executioner yenince kazanılan profil unvanı |
+| `profile.content.title_ironclad.detail` | Profile title for breaking {count} armour pieces | {count} zırh parçası kırınca kazanılan profil unvanı |
 | `profile.content.badge_ghost.detail` | Profile badge for {count} flawless rounds | Hasarsız {count} round için profil rozeti |
-| `profile.content.indicator_kill_streak.detail` | HUD indicator variant - available once {count} enemies are defeated | HUD gösterge türü - {count} düşman yenildiğinde kullanılabilir |
+| `profile.content.indicator_kill_streak.detail` | HUD indicator variant - available once {count} enemies are defeated | HUD gösterge türü - {count} düşman yenince kullanılabilir |
 | `profile.content.indicator_round_timer.detail` | HUD indicator variant - available from round {count} | HUD gösterge türü - {count}. rounddan itibaren kullanılabilir |
-| `profile.content.indicator_gold_ticker.detail` | HUD indicator variant - available after a {count}-gold run | HUD gösterge türü - {count} altınlı bir koşudan sonra kullanılabilir |
+| `profile.content.indicator_gold_ticker.detail` | HUD indicator variant - available after a {count}-gold run | HUD gösterge türü - {count} altınlık bir koşudan sonra kullanılabilir |
 | `achievement.first_blood.desc` | Defeat your first enemy. | İlk düşmanını yen. |
 | `achievement.armor_breaker.desc` | Break an armour piece off an enemy. | Bir düşmandan bir zırh parçası kır. |
 | `achievement.reach_round_5.desc` | Survive until round {count}. | {count}. rounda kadar hayatta kal. |
-| `achievement.defeat_an_ultra.desc` | Bring down an Executioner. | Bir Executioner devir. |
+| `achievement.defeat_an_ultra.desc` | Bring down an Executioner. | Bir Executioner yen. |
 | `achievement.reach_round_10.desc` | Survive until round {count}. | {count}. rounda kadar hayatta kal. |
 | `achievement.reach_round_15.desc` | Survive until round {count}. | {count}. rounda kadar hayatta kal. |
 | `achievement.reach_round_20.desc` | Survive until round {count}. | {count}. rounda kadar hayatta kal. |
@@ -1063,24 +1065,24 @@ Existing 882 keys and values are unchanged. 50 new bilingual UI-only keys; catal
 | `achievement.elite_hunter.desc` | Defeat {count} Guards in total. | Toplam {count} Guard yen. |
 | `achievement.ultra_hunter.desc` | Defeat {count} Executioners in total. | Toplam {count} Executioner yen. |
 | `achievement.armor_breaker_100.desc` | Break {count} armour pieces in total. | Toplam {count} zırh parçası kır. |
-| `achievement.special_pickup_first.desc` | Pick up a special weapon. | Bir özel silah al. |
-| `achievement.special_pickup_10.desc` | Pick up {count} special weapons in total. | Toplam {count} özel silah al. |
+| `achievement.special_pickup_first.desc` | Pick up a special weapon. | Bir Özel silah al. |
+| `achievement.special_pickup_10.desc` | Pick up {count} special weapons in total. | Toplam {count} Özel silah al. |
 | `achievement.run_gold_150.desc` | Pick up {count} gold in a single run. | Tek koşuda {count} altın topla. |
 | `achievement.run_gold_400.desc` | Pick up {count} gold in a single run. | Tek koşuda {count} altın topla. |
 | `achievement.run_upgrades_5.desc` | Buy {count} upgrade cards in a single run. | Tek koşuda {count} geliştirme kartı al. |
 | `achievement.flawless_round.desc` | Complete a round without taking a hit. | Hasar almadan bir round tamamla. |
-| `achievement.flawless_rounds_10.desc` | Complete {count} rounds without taking a hit, in total. | Toplam {count} roundu hasar almadan tamamla. |
+| `achievement.flawless_rounds_10.desc` | Complete {count} rounds without taking a hit, in total. | Hasar almadan toplam {count} round tamamla. |
 | `achievement.runs_played_10.desc` | Finish {count} runs. | {count} koşu bitir. |
 | `achievement.runs_played_50.desc` | Finish {count} runs. | {count} koşu bitir. |
 | `achievement.level_5.desc` | Reach profile level {count}. | {count}. profil seviyesine ulaş. |
 | `achievement.level_10.desc` | Reach profile level {count}. | {count}. profil seviyesine ulaş. |
 | `achievement.run_kills_40.desc` | Defeat {count} enemies in a single run. | Tek koşuda {count} düşman yen. |
-| `achievement.first_capstone.desc` | Buy a capstone in the run tree. | Koşu ağacında bir taç düğüm al. |
-| `achievement.three_keystones_one_run.desc` | Own three keystones in one run. | Tek koşuda üç kilit düğüme sahip ol. |
-| `achievement.hearth_10_one_run.desc` | Stoke the Hearth {count} times in one run. | Tek koşuda Ocağı {count} kez körükle. |
-| `achievement.hearth_20.desc` | Stoke the Hearth {count} times in one run. | Tek koşuda Ocağı {count} kez körükle. |
-| `achievement.full_lane.desc` | End a run owning a lane's capstone with one of its tiers at maximum. | Bir koşuyu, bir dalın taç düğümü ve en yüksek seviyedeki bir kademesiyle bitir. |
-| `achievement.capstones_5_weapons.desc` | End runs owning the capstone with five different weapons. | Beş farklı silahla taç düğüme sahip olarak koşular bitir. |
-| `achievement.both_special_links.desc` | Own both links of a Special in one run. | Tek koşuda bir özel silahın iki bağına da sahip ol. |
-| `achievement.mastery_5_any.desc` | Reach mastery {count} with any weapon. | Herhangi bir silahla {count}. ustalığa ulaş. |
-| `results.reward.achievement.namekuji_skater.desc` | Defeat {count} enemies while they slide on gel in one run. | Bir koşuda jelde kaymakta olan {count} düşman yen. |
+| `achievement.first_capstone.desc` | Buy a capstone in the run tree. | Koşu ağacında bir doruk al. |
+| `achievement.three_keystones_one_run.desc` | Own three keystones in one run. | Tek koşuda üç kilit taşına sahip ol. |
+| `achievement.hearth_10_one_run.desc` | Stoke the Hearth {count} times in one run. | Tek koşuda Ocağı {count} kez yak. |
+| `achievement.hearth_20.desc` | Stoke the Hearth {count} times in one run. | Tek koşuda Ocağı {count} kez yak. |
+| `achievement.full_lane.desc` | End a run owning a lane's capstone with one of its tiers at maximum. | Bir şeridin doruğuna ve azami kademedeki bir dalına sahipken koşu bitir. |
+| `achievement.capstones_5_weapons.desc` | End runs owning the capstone with five different weapons. | Beş farklı silahın her biriyle doruğuna sahipken bir koşu bitir. |
+| `achievement.both_special_links.desc` | Own both links of a Special in one run. | Tek koşuda bir Özel silahın iki bağına da sahip ol. |
+| `achievement.mastery_5_any.desc` | Reach mastery {count} with any weapon. | Bir silahta {count}. ustalık seviyesine ulaş. |
+| `results.reward.achievement.namekuji_skater.desc` | Defeat {count} enemies while they slide on gel in one run. | Bir koşuda jelde kayan {count} düşman yen. |
