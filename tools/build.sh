@@ -14,7 +14,7 @@
 #                                 `--compression none` gives the pre-DEC-090 uncompressed release.
 #
 # Output: <out>/DeathsDemolition.app, <out>/build.log, <out>/build-report.json (from the
-# Editor), <out>/report.json (script summary incl. smoke) and <out>/timeline.txt.
+# Editor), <out>/report.json (script summary incl. smoke), <out>/app-manifest.sha256 (WP-079H) and <out>/timeline.txt.
 # Default <out> = $DD_BUILD_ROOT/<mode>-<utc>. The version stamp (git describe, commit,
 # branch, date, mode, Unity) is written into the player by DD.Prototype.Core.EditorTools.DdBuild.
 #
@@ -80,6 +80,16 @@ if [ "$BUILD_OK" -eq 1 ] && [ -x "$DD_TOOLS_DIR/build-report.sh" ]; then
   "$DD_TOOLS_DIR/build-report.sh" "$OUT" --top 25 --cap "${DD_BUILD_CAP_MB:-5120}" | head -1 | while IFS= read -r l; do dd_log "$l"; done
 fi
 
+# WP-079H: content manifest of the built player (before the smoke run touches anything) — verify a copy later with
+# `cd <out> && shasum -a 256 -c app-manifest.sha256` or `tools/app_manifest.py verify <out>`
+APPMAN=""
+if [ "$BUILD_OK" -eq 1 ]; then
+  APPMAN=$(python3 "$DD_TOOLS_DIR/app_manifest.py" write "$OUT" "${APP:t}" 2>>"$OUT/app-manifest.err") \
+    && dd_log "app-manifest sha256=$APPMAN files=$(wc -l < "$OUT/app-manifest.sha256" | tr -d ' ')" \
+    || { APPMAN=""; dd_log "app-manifest FAILED (see $OUT/app-manifest.err)"; }
+  [ -s "$OUT/app-manifest.err" ] || rm -f "$OUT/app-manifest.err"
+fi
+
 SMOKE_STATUS="skipped"; SMOKE_EXIT=0
 if [ "$BUILD_OK" -eq 1 ] && [ "$SMOKE" -eq 1 ]; then
   "$DD_TOOLS_DIR/smoke.sh" "$APP" "$OUT" --mode "$MODE"; SMOKE_EXIT=$?
@@ -98,6 +108,8 @@ cat > "$REPORT" <<JSON
   "build": { "ok": $([ "$BUILD_OK" -eq 1 ] && echo true || echo false), "unityExit": $X, "seconds": $((T1-T0)), "appKB": $APPKB, "errorsCS": $ERRS, "app": "$APP", "log": "$LOG", "report": "$BREPORT", "stamp": "$STAMP" },
   "smoke": { "status": "$SMOKE_STATUS", "exitCode": $SMOKE_EXIT, "report": "$OUT/smoke-report.json" },
   "footprint": "$OUT/footprint.json",
+  "appManifest": "$OUT/app-manifest.sha256",
+  "appManifestSha256": $([ -n "$APPMAN" ] && echo "\"$APPMAN\"" || echo null),
   "head": "$(git -C "$DD_REPO" rev-parse HEAD 2>/dev/null)",
   "utc": "$(date -u +%FT%TZ)"
 }
