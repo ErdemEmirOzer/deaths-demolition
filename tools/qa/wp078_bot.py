@@ -193,6 +193,14 @@ def run_guarded(args, out, command, attempt):
         wp064_run.write_json(out / "attempt.json", attempt)
 
     missing = [name for name in REQUIRED if not (out / name).is_file()]
+    if exit_code in (30, 75) and not timed_out and not (out / "player.log").is_file() and guard_code == 0:
+        # prova 01.10: tools/player-run.sh refused before the Player started (disk gate / slot / live Player → 75 or 30);
+        # that is a wait, not a failed run — the caller retries (it was reported as exit 1 and never retried)
+        attempt.update({"status": "not-started", "completedUtc": wp064_run.utc_now(), "exitCode": exit_code, "timedOut": False,
+                        "missingArtifacts": missing})
+        wp064_run.write_json(out / "attempt.json", attempt)
+        print(f"{args.kind} {args.mode} not started: player-run exit {exit_code} (wait) guard={why} out={out}")
+        return exit_code
     success = exit_code == 0 and not timed_out and not missing and guard_code == 0
     attempt.update({"status": "complete" if success else "failed", "completedUtc": wp064_run.utc_now(), "completedEpoch": time.time(),
                     "exitCode": exit_code, "timedOut": timed_out, "missingArtifacts": missing,

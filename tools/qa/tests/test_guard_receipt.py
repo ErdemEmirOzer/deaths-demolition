@@ -215,3 +215,37 @@ class PerfExtraArgTests(unittest.TestCase):
             wp078_perf.run_window(a, root, Path("/b/P"), 60, None, lambda s: None, "yuksek", "topdown", 1)
         self.assertIn("--extra-arg=-ddPilotStart", seen[0])
         self.assertIn("--extra-arg=48,48,225", seen[0])
+
+
+class BotNotStartedIsAWaitTests(unittest.TestCase):
+    """prova 01.10: player-run refusing before the Player starts (disk gate 75 / live Player 30) is a wait, not exit 1."""
+
+    def run_bot(self, player_exit, write_log):
+        import json
+        out = Path(tempfile.mkdtemp())
+        args = argparse.Namespace(timeout=60, quiet=False, load_max=6.0, kind="route", mode="fp")
+
+        class Done:
+            def poll(self):
+                return player_exit
+
+            def wait(self, timeout=None):
+                if write_log:
+                    (out / "player.log").write_text("ran")
+                return player_exit
+        with mock.patch.object(gr, "run_guard", return_value=done(0)), \
+                mock.patch.object(gr, "close", return_value={"code": 0, "why": "touched=0"}), \
+                mock.patch.object(wp078_bot, "launch", return_value=Done()):
+            code = wp078_bot.run_guarded(args, out, ["/b/P"], {"status": "starting"})
+        return code, json.loads((out / "attempt.json").read_text())
+
+    def test_disk_gate_refusal_returns_75_not_started(self):
+        code, attempt = self.run_bot(75, write_log=False)
+        self.assertEqual((75, "not-started"), (code, attempt["status"]))
+
+    def test_live_player_refusal_returns_30(self):
+        self.assertEqual(30, self.run_bot(30, write_log=False)[0])
+
+    def test_a_player_that_ran_and_exited_75_is_a_failed_run(self):
+        code, attempt = self.run_bot(75, write_log=True)
+        self.assertEqual((1, "failed"), (code, attempt["status"]))
