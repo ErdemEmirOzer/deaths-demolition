@@ -1,3 +1,5 @@
+// H12 / M-55 (C-00 30.09): the capture agent exists only in development builds and the Editor.
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
 using System;
 using System.Collections;
 using System.IO;
@@ -452,3 +454,4 @@ namespace DD.Prototype.UI
         }
     }
 }
+#endif

@@ -85,7 +85,10 @@ namespace DD.Prototype.UI
             UiFontRole role = RoleOf(type);
             if (role == UiFontRole.Display && UiStrings.Language == UiStrings.Turkish)
             {
-                role = UiFontRole.Text;   // C-00: the complete Turkish heading uses the existing Text SDF.
+                // Codex 19cb757a (28.09), recorded only in KADRO handoff-codex-2026-09-28/CODEX-GUNLUK.md, no AD round: Turkish
+                // headings draw with the Text SDF because Shippori Mincho B1's source TTF has no Ğ ğ İ Ş ş. Kept until the
+                // user's decision (KADRO c-00/CODEX-DUZELTME-PLANI-2026-09-30.md §5-1, M-64); the chosen path then passes the AD.
+                role = UiFontRole.Text;
             }
 
             TMP_FontAsset font = Role(role);
