@@ -66,6 +66,11 @@ namespace DD.Prototype.Rounds
         public const int TreeRoundFirstBodyIgnoresArmor = 2;
         /// <summary>The round pierces without limit (cap.ar_1 marked round, cap.sr_1).</summary>
         public const int TreeRoundUnlimitedPierce = 4;
+        /// <summary>
+        /// DEC-112 (S-02 / S-07 30.09): cap.ar_2 Third Eye round — every burst's 3rd round while the capstone is owned, tagged at
+        /// spawn so the tracer (S-07 TracerRibbonRenderer) marks it, hit or miss. The hit path does not read it.
+        /// </summary>
+        public const int TreeRoundThirdEye = 8;
 
         // ------------------------------------------------------------------ AfterTreeHit result bits
 
@@ -131,7 +136,9 @@ namespace DD.Prototype.Rounds
                     return;
 
                 case ClassicWeaponId.Ar2:
-                    if (RunWeapon(v, p.WeaponId, ClassicWeaponId.Ar2, "ar_2")) p.TreeOrdinal = p.Shot.BurstRound > 0 ? p.Shot.BurstRound : NextBurstOrdinal(Time.time);   // WP-069: the runtime's round (S-04 30.09)
+                    if (!RunWeapon(v, p.WeaponId, ClassicWeaponId.Ar2, "ar_2")) return;
+                    p.TreeOrdinal = p.Shot.BurstRound > 0 ? p.Shot.BurstRound : NextBurstOrdinal(Time.time);   // WP-069: the runtime's round (S-04 30.09)
+                    if (p.TreeOrdinal == ThirdEyeRound) p.TreeFlags |= TreeRoundThirdEye;   // DEC-112: the tracer marks it (S-07)
                     return;
 
                 case ClassicWeaponId.Sg2:

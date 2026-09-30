@@ -172,6 +172,7 @@ namespace DD.Prototype.Tests.EditMode
                     var p = new ProjectileState { WeaponId = ClassicWeaponId.Ar2, Shot = new ShotRequest { BurstRound = tur } };
                     RunTreeHooks.OnProjectileSpawned(ref p);
                     sira.Add(p.TreeOrdinal);
+                    Assert.AreEqual(tur == 3, (p.TreeFlags & RunTreeHooks.TreeRoundThirdEye) != 0, "iz bayrağı yalnız 3. mermide (seri " + seri + ", tur " + tur + ")");
                 }
             }
 
