@@ -1,3 +1,4 @@
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
 using System;
 using System.Collections;
 using System.IO;
@@ -70,6 +71,15 @@ namespace DD.Prototype.Feedback.Vfx
             for (int i = 0; i < args.Length - 1; i++)
             {
                 if (args[i] != Flag) continue;
+                // M-55 (C-00 30.09): a capture run writes frames and plays a run, so it only starts inside a sandbox
+                // (-ddProfilePath → ProfileStore, or -ddUiDataRoot / QA bot → UiDataPaths; both set BeforeSceneLoad).
+                if (!DD.Prototype.Profile.ProfileStore.HasPathOverride && !DD.Prototype.UI.UiDataPaths.IsProcessLocal)
+                {
+                    Debug.LogError("[Capture] refused: no sandbox (" + Flag + ")");
+                    Application.Quit(2);
+                    return;
+                }
+
                 var go = new GameObject("VfxImpactCaptureAgent");
                 DontDestroyOnLoad(go);
                 go.AddComponent<VfxImpactCaptureAgent>()._folder = args[i + 1];
@@ -189,3 +199,4 @@ namespace DD.Prototype.Feedback.Vfx
         }
     }
 }
+#endif

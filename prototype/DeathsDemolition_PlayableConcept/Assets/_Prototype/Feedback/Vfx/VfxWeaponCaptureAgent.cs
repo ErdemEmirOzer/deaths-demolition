@@ -1,3 +1,4 @@
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
 using System;
 using System.Collections;
 using System.Globalization;
@@ -62,6 +63,15 @@ namespace DD.Prototype.Feedback.Vfx
             }
 
             if (folder == null) return;
+            // M-55 (C-00 30.09): a capture run writes frames and plays a run, so it only starts inside a sandbox
+            // (-ddProfilePath → ProfileStore, or -ddUiDataRoot / QA bot → UiDataPaths; both set BeforeSceneLoad).
+            if (!DD.Prototype.Profile.ProfileStore.HasPathOverride && !DD.Prototype.UI.UiDataPaths.IsProcessLocal)
+            {
+                Debug.LogError("[Capture] refused: no sandbox (" + Flag + ")");
+                Application.Quit(2);
+                return;
+            }
+
             var go = new GameObject("VfxWeaponCaptureAgent");
             DontDestroyOnLoad(go);
             VfxWeaponCaptureAgent agent = go.AddComponent<VfxWeaponCaptureAgent>();
@@ -137,7 +147,7 @@ namespace DD.Prototype.Feedback.Vfx
             }
 
             Debug.Log("[VfxWeaponCapture] done weapons=" + done + " missed=" + missed + " mode=" + _mode + " tier=" + VfxTier.Current);
-            Application.Quit(0);
+            Application.Quit(missed == 0 && done > 0 ? 0 : 4);   // M-55: a missed weapon (or none captured) fails the run
         }
 
         private static void StopSpawning()
@@ -362,3 +372,4 @@ namespace DD.Prototype.Feedback.Vfx
         }
     }
 }
+#endif
