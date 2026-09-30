@@ -786,6 +786,11 @@ namespace DD.Prototype.Characters
         public float GaitMultiplier => _gaitMul;
         public float GaitRate => _lastRate;
         public LocomotionLean Lean => _lean;
+        /// <summary>WP-071 MUST-I2: the body's world scale the gait clip speed was scaled by in the last locomotion update (tests).</summary>
+        public float GaitBodyScale { get; private set; } = 1f;
+
+        [PrototypeOnly(PendingDecisions.None, "WP-071 MUST-I2: the body scale the gait honours is clamped to this range (tier silhouette 0.96–1.48 × jitter 0.94–1.06). Invented.", true)]
+        public const float MinGaitBodyScale = 0.5f, MaxGaitBodyScale = 2f;
 
         private ZombieRig _rig;
         private bool _authored;
@@ -959,7 +964,11 @@ namespace DD.Prototype.Characters
             // The rate multiplies the whole Locomotion tree (idle included): ease it back to 1 as
             // the body stops so the idle sway does not crawl at MinGaitRate.
             // WP-071 K3: the cadence stays in the band (slide covers the rest), spread per spawn (gait profile)
-            float rate = Mathf.Clamp(metersPerSecond / _gaitClipSpeed * _gaitMul, MinGaitRate, MaxGaitRate);
+            // WP-071 MUST-I2 (P-06 AD): the calibrated clip speed is for a scale-1 body; a scaled body's stride scales with it
+            // (Executioner 1.48 at 1.7 m/s: ×1.08 unscaled — over the lock band — ≈ ×0.75 honest scaled).
+            float body = Mathf.Clamp(_animator.transform.lossyScale.y, MinGaitBodyScale, MaxGaitBodyScale);
+            GaitBodyScale = body;
+            float rate = Mathf.Clamp(metersPerSecond / (_gaitClipSpeed * body) * _gaitMul, MinGaitRate, MaxGaitRate);
             _lastRate = rate;
             _lastSpeedMps = metersPerSecond;
             _animator.SetFloat(GaitRateId, Mathf.Lerp(1f, rate, _speed01));

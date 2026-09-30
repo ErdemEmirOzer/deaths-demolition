@@ -101,6 +101,34 @@ namespace DD.Art.Tests.PlayMode
             Assert.GreaterOrEqual(muls.Count, 4, "kadans yayılımı yok");
         }
 
+        /// <summary>
+        /// WP-071 MUST-I2 (P-06 AD): the gait rate honours the body scale — the Executioner (1.48) at its 1.7 m/s walks the
+        /// scaled stride (rate ≈ 1.7 / (clip × 1.48), inside the lock band) instead of the scale-1 cadence (×1.08, over it).
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator Zombi_GovdeOlcegi_KadansOlcekliAdimla()
+        {
+            yield return Stage();
+            ZombieSkinnedVisual.GaitVariety = 0f;
+            const float speed = 1.7f, scale = 1.48f;
+            ZombieSkinnedVisual big = Zombie(new Vector3(0f, 0f, 0f), 60u);
+            ZombieSkinnedVisual unit = Zombie(new Vector3(4f, 0f, 0f), 60u);
+            big.transform.parent.localScale = Vector3.one * scale;
+            big.ResetForSpawn(EnemyTier.Ultra, speed, "A", 0, false);
+            unit.ResetForSpawn(EnemyTier.Ultra, speed, "A", 0, false);
+            Time.captureDeltaTime = 1f / 60f;
+            for (int f = 0; f < 60; f++) { big.SetSpeed(speed, Time.deltaTime); unit.SetSpeed(speed, Time.deltaTime); yield return null; }
+            float clip = big.AnimationSet.SpeedOf(C.ZombieGaitClips[big.Gait]);
+            float honest = Mathf.Clamp(speed / (clip * scale), CadenceBand.Min, CadenceBand.Max);
+            Debug.Log("[DD-TEST] wp071.bodyscale clip=" + clip.ToString("F2", CultureInfo.InvariantCulture) + " body=" + big.GaitBodyScale.ToString("F2", CultureInfo.InvariantCulture) + " rate=" + big.GaitRate.ToString("F2", CultureInfo.InvariantCulture) + " unscaled=" + unit.GaitRate.ToString("F2", CultureInfo.InvariantCulture) + " slide=" + (CadenceBand.SlideFraction(speed, clip * scale, big.GaitRate) * 100f).ToString("F0", CultureInfo.InvariantCulture) + "%");
+            Assert.AreEqual(scale, big.GaitBodyScale, 1e-3f, "gövde ölçeği okunmadı");
+            Assert.AreEqual(1f, unit.GaitBodyScale, 1e-3f);
+            Assert.AreEqual(honest, big.GaitRate, 1e-3f, "kadans ölçekli adıma göre değil");
+            Assert.LessOrEqual(big.GaitRate, CadenceBand.LockMaxRate, "ölçekli beden ayak kilidi bandında");
+            Assert.Greater(unit.GaitRate, big.GaitRate * 1.3f, "ölçek 1 beden daha hızlı kadans (kontrol)");
+        }
+
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator Zombi_DonusteIceEgilir_DuzdeDik()
