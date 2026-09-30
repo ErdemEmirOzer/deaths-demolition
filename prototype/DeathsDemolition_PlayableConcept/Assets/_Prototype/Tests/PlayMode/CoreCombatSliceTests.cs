@@ -249,6 +249,43 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(yedek0, yeni.Classic.ReserveAmmo, "yeni koşu 1. tur yedeğiyle başlar, önceki koşunun artığıyla değil");
         }
 
+        /// <summary>
+        /// R1-B W6 × RT7 (C-00 30.09, found moving the batch onto main 1542284d): the same-scene restart re-equips the weapon
+        /// from THIS run's tree. smg_1's fork X (×1.5 magazine) owned in run 1 must not reach run 2's first magazine — the
+        /// re-equip used to run before BeginRunTree and read the previous run's still-built tree.
+        /// </summary>
+        [UnityTest]
+        [Timeout(120000)]
+        public IEnumerator AyniSahnedeYeniKosu_OncekiKosununSarjorDugumunuTasimaz()
+        {
+            yield return RunSahnesiniHazirla();
+            ClassicWeaponId onceki = WeaponRegistry.SelectedWeapon;
+            try
+            {
+                Assert.IsTrue(WeaponQaHooks.TrySetClassicWeapon(ClassicWeaponId.AutoSmg), "smg_1 kuşanılmadı");
+                RunDirector.Instance.StartRun();   // this run's tree is built for smg_1
+                yield return null;
+                WeaponController silah = WeaponRegistry.ActiveController;
+                int taban = silah.Classic.MagazineSize;
+                RunTreeState agac = RunDirector.Instance.Shop.Tree;
+                Assert.IsTrue(agac.MarkOwned(agac.Graph.IndexOf("fork_smg_1_x")), "fork_smg_1_x sahiplenilemedi");
+                int buyuk = silah.Classic.MagazineSize;
+                Assert.AreEqual(Mathf.FloorToInt(taban * 1.5f), buyuk, "ölçüm boş: çatal şarjörü büyütmedi");
+                Assert.IsTrue(WeaponQaHooks.TrySetClassicWeapon(ClassicWeaponId.AutoSmg));   // re-equip fills the fork's magazine
+                Assert.AreEqual(buyuk, silah.Classic.Ammo, "ölçüm boş: büyük şarjör dolmadı");
+
+                RunDirector.Instance.StartRun();
+                yield return null;
+                WeaponController yeni = WeaponRegistry.ActiveController;
+                Assert.AreEqual(taban, yeni.Classic.MagazineSize, "yeni koşunun ağacında çatal yok");
+                Assert.AreEqual(taban, yeni.Classic.Ammo, "yeni koşu önceki koşunun şarjör düğümünü taşımaz");
+            }
+            finally
+            {
+                WeaponRegistry.SelectedWeapon = onceki;   // T1: the process-wide selection goes back
+            }
+        }
+
         [UnityTest]
         [Category("Regression")]
         [Timeout(180000)]

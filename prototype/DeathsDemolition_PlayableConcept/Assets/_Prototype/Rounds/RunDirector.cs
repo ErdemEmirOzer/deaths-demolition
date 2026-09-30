@@ -230,6 +230,12 @@ namespace DD.Prototype.Rounds
                 GoldService.Instance.InitializeForRun(_runId);
             }
 
+            // WP-077 B2b: the meta PATH's passives for this run (read once; the run never writes the profile).
+            _shop.Meta = MetaPathRules.RunModifiers(ProfileService.Current, ProfileProgression.NameOf(WeaponRegistry.SelectedWeapon));
+            _shop.BeginRunTree(_runId, Config);   // R1-B RT7: the run's tree exists from the first frame (links, effects, summary)
+            // (S-02 r4: built before the weapon reset below — the equip reads the tree, and until here the previous run's
+            // tree was still built.)
+
             WeaponController controller = WeaponRegistry.ActiveController;
             if (controller != null)
             {
@@ -240,9 +246,6 @@ namespace DD.Prototype.Rounds
 
             BindBuild();
             _build.BeginRun(_runId, WeaponRegistry.SelectedWeapon);
-            // WP-077 B2b: the meta PATH's passives for this run (read once; the run never writes the profile).
-            _shop.Meta = MetaPathRules.RunModifiers(ProfileService.Current, ProfileProgression.NameOf(WeaponRegistry.SelectedWeapon));
-            _shop.BeginRunTree(_runId, Config);   // R1-B RT7: the run's tree exists from the first frame (links, effects, summary)
 
             PlayerRig rig = PlayerRegistry.Primary;
             if (rig != null && rig.Health != null)
