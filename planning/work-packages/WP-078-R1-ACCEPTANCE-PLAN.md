@@ -50,7 +50,7 @@ Kural: sahip testi birincil kanıt (NUnit XML, `wp078_report.A3_REQUIRED_TEST_ID
 | animation | kadans bandı, 4 ölüm ailesi | `[Ragdoll] families` |
 | camera (WP-070 K1–K9) | TopDown regresyonu, D-20 nişan | A2 + A4 |
 | world (WP-074 B2/B9, WP-070 K2) | 18 kapı yolu | **paket kapısı (C-00 30.09 K6):** A2 + A5 player.log'larında aynı noktada ≥ 5 s takılma kümesi 0 (`tools/qa/stuck_clusters.py`; `time=` alanı olmayan log → "ölçülmedi", PASS değil) |
-| aiFlags | `-ddAiV3 0/1` (K4: tek bayrak, 2 koşu; kod↔liste testi) · diğer 6 bayrak **KNOWN OPEN** (spesifikasyonda var, kodda yok; `-ddChainHops`/`-ddGelPuddles` DEC-097/099 ile emekli; `-ddRagdoll` S-06, `-ddCorpseLinger/-ddCrowdNeighbours/-ddSpawnLos` S-03 → R2 ya da yazılı geri çekme) | `-ddAiV3 0` ve `1` ile birer 1 round Player dumanı |
+| aiFlags | `-ddAiV3 0/1` (K4: tek bayrak, 2 koşu; kod↔liste testi) · diğer 6 bayrak: `-ddChainHops`/`-ddGelPuddles` DEC-097/099 ile emekli; `-ddCorpseLinger/-ddCrowdNeighbours/-ddSpawnLos` **yazılı geri çekildi** (S-03, C-00 30.09; komşu tavanı + spawn LOS kademe satırları KNOWN OPEN, R2, perf'e bağlı — WP-076 DIRECTION §7.1 c3c71eb4); `-ddRagdoll` **KNOWN OPEN** (S-06 kararı bekleniyor) | `-ddAiV3 0` ve `1` ile birer 1 round Player dumanı |
 | progression (DEC-095/098) | ağaç sim kabulü (S-04), `ApplyRun` sırası | `[Progress]` 5 gerçek bot koşusundan (bot koşu kapanışı main'de: `e5888d47`) |
 | audio | World kapasitesi, ses CPU | perf matrisinde ses payı (rapor) |
 | ui | ADR-024-2 tarama 0 | — |
