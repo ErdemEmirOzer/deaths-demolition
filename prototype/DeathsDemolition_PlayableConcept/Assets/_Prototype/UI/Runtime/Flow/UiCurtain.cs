@@ -244,6 +244,12 @@ namespace DD.Prototype.UI
             get { return _error != null && _error.IsOpen; }
         }
 
+        /// <summary>R1-E B2: the load error stands - the screen under it must not act on Cancel (UiInput reads this).</summary>
+        public static bool LoadErrorOpen
+        {
+            get { return s_instance != null && s_instance.ErrorOpen; }
+        }
+
         /// <summary>The group's render state in one line (captures: why a frame shows what it shows).</summary>
         public string DebugState
         {

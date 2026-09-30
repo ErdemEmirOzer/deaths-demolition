@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.IO;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using DD.Prototype.Core.Boot;
@@ -186,6 +187,65 @@ namespace DD.Prototype.Tests.PlayMode
             curtain.Open(true);
             _manualError = false;
             Debug.Log("[S09-WATCHDOG] modal language=" + language + " textScale=1.25 primaryCalls=1 cancelIgnored=1 profile=" + _profileHash);
+        }
+
+        /// <summary>
+        /// R1-E B1a/B2: a scene missing from the build answers the press with the load error over the current screen
+        /// (not a press that does nothing), and Escape / B under that modal is not the screen's "back".
+        /// </summary>
+        [UnityTest, Timeout(60000)]
+        public IEnumerator MissingScene_ErrorOverMenu_CancelIgnoredUnderModal_PrimaryReturns()
+        {
+            const string missing = "DD_R1E_NoSuchScene";
+            PrototypeUiFlow.FastTransitions = true;
+            yield return BootTanMainMenuye();
+            UiFactory.EnsureEventSystem();
+            MainMenuScreen menu = UnityEngine.Object.FindObjectOfType<MainMenuScreen>();
+            Assert.IsNotNull(menu);
+            menu.ShowPane(UiContext.Settings);
+            yield return null;
+            Assert.AreEqual(UiContext.Settings, UiNavigation.Layer);
+            _profileHash = ProfileHash();
+            _manualError = true;
+            MethodInfo load = typeof(PrototypeUiFlow).GetMethod("Load", BindingFlags.NonPublic | BindingFlags.Static, null, new[] { typeof(string) }, null);
+            Assert.IsNotNull(load);
+            load.Invoke(null, new object[] { missing });
+            yield return null;
+            Canvas.ForceUpdateCanvases();
+            UiCurtain curtain = UiCurtain.Instance;
+            UiModal modal = OpenError(curtain);
+            Assert.AreEqual(UiStrings.Get("loading.error.to_menu"), modal.Primary.LabelText.text);
+            Assert.IsNotNull(modal.Secondary);
+            Assert.AreEqual(UiStrings.Get("menu.quit"), modal.Secondary.LabelText.text);
+            Assert.AreSame(modal.Primary.gameObject, EventSystem.current.currentSelectedGameObject, "Safe primary is the initial focus.");
+            Assert.IsFalse(PrototypeUiFlow.IsLoading, "Nothing is loading: the scene never started.");
+            Assert.AreEqual(PrototypeScenes.MainMenu, SceneManager.GetActiveScene().name);
+
+            // Escape / B under the modal: the menu takes no "back" (Settings → Profile) and focus stays on the modal.
+            UiInput.SimulateCancelNextFrame();
+            yield return null;
+            yield return null;
+            Assert.IsTrue(curtain.ErrorOpen, "Cancel keeps the load error open.");
+            Assert.AreEqual(UiContext.Settings, UiNavigation.Layer, "The screen under the load error ignores Cancel.");
+            Assert.AreSame(modal.Primary.gameObject, EventSystem.current.currentSelectedGameObject, "Cancel does not move focus off the modal.");
+            Assert.AreEqual(_profileHash, ProfileHash(), "Neither the error nor Cancel writes the profile.");
+
+            // The primary is the way back: a real main-menu load.
+            Assert.IsTrue(ExecuteEvents.Execute(modal.Primary.gameObject, new BaseEventData(EventSystem.current), ExecuteEvents.submitHandler));
+            Assert.IsFalse(curtain.ErrorOpen, "Primary Submit closes the modal.");
+            _manualError = false;
+            yield return Bekle(() => !PrototypeUiFlow.IsLoading && !UiCurtain.IsCovering, 20f, "The way back did not reach the main menu.");
+            Assert.AreEqual(PrototypeScenes.MainMenu, SceneManager.GetActiveScene().name);
+
+            // Control: with no modal the same simulated press reaches the menu, so the check above is meaningful.
+            menu = UnityEngine.Object.FindObjectOfType<MainMenuScreen>();
+            menu.ShowPane(UiContext.Settings);
+            yield return null;
+            UiInput.SimulateCancelNextFrame();
+            yield return null;
+            yield return null;
+            Assert.AreEqual(UiContext.Profile, UiNavigation.Layer, "Without the modal, Cancel takes the menu's back.");
+            Debug.Log("[S09-WATCHDOG] missing scene: modal over MainMenu, cancel ignored under it, primary returned, control cancel reached the menu");
         }
 
         private static UiModal OpenError(UiCurtain curtain)

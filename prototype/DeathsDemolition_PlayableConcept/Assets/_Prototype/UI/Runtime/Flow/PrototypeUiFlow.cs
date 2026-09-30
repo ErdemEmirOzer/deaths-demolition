@@ -209,6 +209,17 @@ namespace DD.Prototype.UI
         private static string s_loadingScene;
         private static int s_loadGeneration;
 
+        /// <summary>
+        /// Direction §15.4 / UXW §2.2: a load that cannot start. The menu retries itself; every other scene offers the
+        /// way back to the menu. QUIT is always the second action.
+        /// </summary>
+        private static void ShowLoadError(UiCurtain curtain, string sceneName)
+        {
+            bool menuFailed = sceneName == PrototypeScenes.MainMenu;
+            curtain.ShowError(sceneName, false, menuFailed ? UiStrings.Get("loading.error.retry", "TRY AGAIN") : UiStrings.Get("loading.error.to_menu", "RETURN TO MAIN MENU"),
+                () => Load(menuFailed ? sceneName : PrototypeScenes.MainMenu));
+        }
+
         private static void Load(string sceneName)
         {
             if (s_loading)
@@ -227,6 +238,9 @@ namespace DD.Prototype.UI
                 Debug.Log(
                     "[UI] Scene '" + sceneName + "' is not in the build settings. " +
                     "Run Tools > Deaths Demolition > UI > Build Meta Scenes to create the meta scenes.");
+                // R1-E B1a (direction §15.4): the press is answered - the load error stands on the current screen with
+                // the way back and QUIT, instead of a press that does nothing. Nothing writes the profile.
+                ShowLoadError(UiCurtain.Instance, sceneName);
                 return;
             }
 
@@ -311,10 +325,7 @@ namespace DD.Prototype.UI
                 ReleaseSimulation();
                 s_loading = false;
                 curtain.Open(fast);
-                bool menuFailed = sceneName == PrototypeScenes.MainMenu;
-                string failed = sceneName;
-                curtain.ShowError(sceneName, false, menuFailed ? UiStrings.Get("loading.error.retry", "TRY AGAIN") : UiStrings.Get("loading.error.to_menu", "RETURN TO MAIN MENU"),
-                    () => Load(menuFailed ? failed : PrototypeScenes.MainMenu));
+                ShowLoadError(curtain, sceneName);
                 yield break;
             }
 

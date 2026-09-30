@@ -24,10 +24,24 @@ namespace DD.Prototype.UI
 
         /// <summary>
         /// True on the frame the Cancel action was pressed (Escape / gamepad east). Reads
-        /// the legacy button by name and never throws when the axis is missing.
+        /// the legacy button by name and never throws when the axis is missing. Never true
+        /// while the load error stands (R1-E B2): it has no safe "back", so the screen under
+        /// it must not take one.
         /// </summary>
         public static bool CancelPressed()
         {
+            if (UiCurtain.LoadErrorOpen)
+            {
+                return false;
+            }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (Time.frameCount == s_simulatedCancelFrame)
+            {
+                return true;
+            }
+#endif
+
             // WP-022K (S-10 finding, MainMenu ~2 allocations/frame from the UI): probing the
             // legacy button by name throws when the Input Manager has no "Cancel" entry, and
             // a thrown-and-caught exception every frame IS the allocation. Probe once, then
@@ -56,6 +70,19 @@ namespace DD.Prototype.UI
 
         /// <summary>0 = not probed, 1 = the "Cancel" button exists, -1 = missing (Escape only).</summary>
         private static int s_cancelButtonState;
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        private static int s_simulatedCancelFrame = -1;
+
+        /// <summary>
+        /// Dev / test seam (R1-E B4): every <see cref="CancelPressed"/> reader sees one press on the NEXT frame, as the
+        /// legacy button would - a test cannot press Escape or the pad's east button through the Input Manager.
+        /// </summary>
+        public static void SimulateCancelNextFrame()
+        {
+            s_simulatedCancelFrame = Time.frameCount + 1;
+        }
+#endif
 
         private const string SubmitButton = "Submit";
 
