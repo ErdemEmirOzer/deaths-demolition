@@ -56,7 +56,51 @@ namespace DD.Prototype.Feedback.Vfx
         public const float GroundProbeLift = .15f;
         public const float GroundFadeFloor = .35f;
         public static float GroundProbeLength(float radius) => Mathf.Max(radius, GroundProbeMin) + GroundProbeLift;
-        private struct Blast { public bool Active, Full, Rocket, Grounded; public Vector3 At, Ground, Normal; public SurfaceKind Surface; public float Start, Scale, GroundFade; public int Stages, Mask; }
+
+        // ---- M-60 (C-00 30.09) · rl_1 backblast — direction §1.1 Launcher row (l.49): rear cone 2.5 m, smoke + water spray
+        // #B8B0A6 α 0.45, 0.6 s; the cone darkens wet ground (decal 1.2 m / 4 s); rear light #FFA060 / 12 / 6 m.
+        [PrototypeOnly(PendingDecisions.None, "M-60 direction §1.1 rl_1 row (l.49): backblast cone 2.5 m / 0.6 s / α 0.45; wet-ground decal 1.2 m / 4 s; rear light 12 / 6 m. Performance: 4 puffs + 3 drops, cone and life × 0.6 (§5 'a lower tier value, identity kept'); rear light off on Performance (2-light cap).", true)]
+        public const float BackblastLength = 2.5f;
+        public const float BackblastSeconds = .6f;
+        public const float BackblastAlpha = .45f;
+        public const float BackblastPerformanceScale = .6f;
+        public const float BackblastConeSpread = .35f;
+        public const float BackblastPuffStart = .5f;
+        public const float BackblastPuffGrow = .9f;
+        public const float BackblastDropSize = .03f;
+        public const float BackblastDropLift = 1.2f;
+        public const float BackblastDecalSize = 1.2f;
+        public const float BackblastDecalSeconds = 4f;
+        public const float BackblastGroundReach = 2.5f;
+        public const float RearLightIntensity = 12f;
+        public const float RearLightRange = 6f;
+        public const float RearLightHold = 4f / 60f;
+        public const float RearLightFade = .25f;
+        // WP-069 art table l.333: rl_1 tube 1.10 m; the Muzzle socket sits 0.125 m inside it (Wp073WeaponSocketTests finding, 26.09).
+        [PrototypeOnly(PendingDecisions.None, "M-60: rl_1 tube 1.10 m (WP-069 l.333) minus the Muzzle socket's 0.125 m inset (Wp073WeaponSocketTests position finding) = the tube's rear behind the socket.", true)]
+        public const float TubeRearFromMuzzle = 1.10f - .125f;
+        private static readonly Color BackblastTint = new Color(.722f, .690f, .651f);   // #B8B0A6
+        private static readonly Color RearLightColour = new Color(1f, .627f, .376f);    // #FFA060
+        private static readonly Color WetDarkTint = new Color(.3f, .32f, .34f);         // the wet ring's darkening tint
+
+        // ---- M-60 · near-blast screen-edge smear — direction §1.5 "Kamera / his" (l.105): < 4 m, 0.3 s, α 0.35, off under ReduceFlashes.
+        [PrototypeOnly(PendingDecisions.None, "M-60 direction §1.5 l.105: near blast (< 4 m) 0.3 s screen-edge water/mud smear α 0.35, off under reduced flashes; AP-010 vignette_damage edge mask tinted mud-grey (tint is a stand-in).", true)]
+        public const float EdgeSmearDistance = 4f;
+        public const float EdgeSmearSeconds = .3f;
+        public const float EdgeSmearAlpha = .35f;
+        public const float EdgeSmearNearOffset = .02f;
+        public const float EdgeSmearOverscan = 1.06f;
+        private static readonly Color EdgeSmearTint = new Color(.42f, .39f, .35f);   // wet mud grey (stand-in)
+
+        // ---- M-60 · §4.1 player guard (l.149): the column / fireball over the player's upper body on screen draws at α × 0.5 —
+        // GelSystem.GuardFactor's camera → chest test (TP / top-down; FP has no body on screen), column Ø 3 m (§1.5).
+        [PrototypeOnly(PendingDecisions.None, "M-60 §4.1: guard radius = the §1.5 column's final Ø 3 m / 2 × blast scale; chest 1.3 m (GelSystem's).", true)]
+        public const float ColumnGuardRadius = 1.5f;
+        public const float GuardChestHeight = 1.3f;
+        /// <summary>Test seam (like <see cref="VfxTier.Override"/>): the guard's chest point instead of the primary player's (any camera mode). Null in play.</summary>
+        public static Vector3? GuardChestOverride;
+
+        private struct Blast { public bool Active, Full, Rocket, Grounded; public Vector3 At, Ground, Normal; public SurfaceKind Surface; public float Start, Scale, GroundFade, Guard; public int Stages, Mask; }
         private readonly Blast[] _blasts = new Blast[ScheduleCapacity];
         private Texture2D _dot;
         private VfxDressing _owner;
@@ -74,6 +118,19 @@ namespace DD.Prototype.Feedback.Vfx
         public int Columns { get; private set; }
         public int Residues { get; private set; }
         public int SteamPuffs { get; private set; }
+        /// <summary>M-60: rl_1 backblast cones played / wet-ground darkening decals they laid.</summary>
+        public int Backblasts { get; private set; }
+        public int BackblastDecals { get; private set; }
+        /// <summary>M-60: near-blast screen-edge smears started.</summary>
+        public int EdgeSmears { get; private set; }
+        public bool EdgeSmearVisible => _smear != null && _smear.enabled;
+        /// <summary>M-60 §4.1: presentations whose fireball card / column / steam drew at α × 0.5 (player guard).</summary>
+        public int GuardedColumns { get; private set; }
+        private MeshRenderer _smear;
+        private Camera _smearCamera;
+        private Material _smearMaterial;
+        private MaterialPropertyBlock _smearBlock;
+        private float _smearStart = -1f;
         public int Pending { get { int n=0;for(int i=0;i<_blasts.Length;i++)if(_blasts[i].Active)n++;return n; } }
         public static ExplosionDirector Ensure(VfxDressing owner)
         {
@@ -82,7 +139,7 @@ namespace DD.Prototype.Feedback.Vfx
             s_instance._owner=owner;return s_instance;
         }
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetStatics()=>s_instance=null;
+        private static void ResetStatics(){s_instance=null;GuardChestOverride=null;}
         private void Awake()
         {
             s_instance=this;
@@ -94,10 +151,16 @@ namespace DD.Prototype.Feedback.Vfx
             if(VfxLibrary.TryGetPlayable(VfxIds.LeafBurst,out VfxCatalogEntry leaf)){var ls=_leaves.textureSheetAnimation;ls.enabled=true;ls.numTilesX=leaf.Columns;ls.numTilesY=leaf.Rows;ls.startFrame=new ParticleSystem.MinMaxCurve(0f,.999f);ls.frameOverTime=new ParticleSystem.MinMaxCurve(0f);}
             _dot=B3Particles.Dot();_emberMaterial=B3Particles.Material(VfxIds.CardSmoke);_emberMaterial.mainTexture=_dot;_emberMaterial.SetTexture("_BaseMap",_dot);_embers=B3Particles.Build(transform,"BlastEmbers",_emberMaterial,128,1f,false);
             _lights=MuzzleSystem.Ensure();SceneManager.activeSceneChanged+=OnSceneChanged;
+            _smearBlock=new MaterialPropertyBlock();BuildSmear();   // M-60: warm (no GameObject in the first near blast's frame)
         }
-        private void OnDestroy(){SceneManager.activeSceneChanged-=OnSceneChanged;if(s_instance==this)s_instance=null;Destroy(_smokeMaterial);Destroy(_debrisMaterial);Destroy(_leafMaterial);Destroy(_emberMaterial);Destroy(_dot);}
+        private void OnDestroy()
+        {
+            SceneManager.activeSceneChanged-=OnSceneChanged;if(s_instance==this)s_instance=null;Destroy(_smokeMaterial);Destroy(_debrisMaterial);Destroy(_leafMaterial);Destroy(_emberMaterial);Destroy(_dot);
+            if (_smear != null) Destroy(_smear.gameObject);
+            if (_smearMaterial != null) Destroy(_smearMaterial);
+        }
         private void OnSceneChanged(Scene a,Scene b)=>Clear();
-        public void Clear(){for(int i=0;i<_blasts.Length;i++)_blasts[i]=default;_column?.Clear();_debris?.Clear();_leaves?.Clear();_embers?.Clear();}
+        public void Clear(){for(int i=0;i<_blasts.Length;i++)_blasts[i]=default;_column?.Clear();_debris?.Clear();_leaves?.Clear();_embers?.Clear();HideSmear();}
         public bool Play(Vector3 at, float radius, int mask) => Play(at, radius, mask, ExplosionSource.Rocket);
 
         /// <summary>M-62: a rocket takes a Full slot (≤ FullCapacity) and the Cinematic shadowed light; a small blast plays card +
@@ -112,6 +175,8 @@ namespace DD.Prototype.Feedback.Vfx
             ref Blast b = ref _blasts[_next];
             _next = (_next + 1) % _blasts.Length;
             b = new Blast { Active = true, Rocket = rocket, Full = rocket && full < FullCapacity, At = at, Start = Time.time, Scale = Mathf.Clamp(radius / 5f, .3f, 1f), Mask = mask };
+            b.Guard = GuardAt(at, ColumnGuardRadius * b.Scale);   // M-60 §4.1: fireball card + column + steam at α × 0.5 over the player
+            if (b.Guard < 1f) GuardedColumns++;
             int layerMask = (1 << 0) | (1 << PrototypeLayers.Environment) | (1 << PrototypeLayers.CameraOccluder);
             float reach = GroundProbeLength(radius);
             b.Grounded = Physics.Raycast(at + Vector3.up * GroundProbeLift, Vector3.down, out RaycastHit ground, reach + GroundProbeLift, layerMask, QueryTriggerInteraction.Ignore);
@@ -129,11 +194,13 @@ namespace DD.Prototype.Feedback.Vfx
             float alpha = GameFeelSettings.FlashScale;
             if ((mask & 1) != 0)
             {
-                Card(VfxIds.Explosion, at, Quaternion.identity, FlipbookEffect.Facing.Camera, FireballSize * b.Scale * (b.Full ? 1f : FireballLightScale), FireballSeconds, Color.white, alpha);
+                Card(VfxIds.Explosion, at, Quaternion.identity, FlipbookEffect.Facing.Camera, FireballSize * b.Scale * (b.Full ? 1f : FireballLightScale), FireballSeconds, Color.white, alpha * b.Guard);
                 if (b.Full && alpha >= .99f && VfxTier.Current != VfxTierLevel.Performance
                     && Card(VfxIds.Explosion, at, Quaternion.identity, FlipbookEffect.Facing.Camera, FlashCardSize * b.Scale, 1f / 60f, new Color(1f, .75f, .45f) * 12f, 1f, true))
                     FlashCards++;
                 _lights.FlashAt(at, new Color(1f, .69f, .44f), b.Full ? LightFull : LightSmall, LightRange * b.Scale, LightHold, LightFade, false, b.Full && LightCastsShadows);
+                // M-60 §1.5 l.105: rocket and small blasts alike; ReduceFlashes (the FlashScale test above) turns it off.
+                if (alpha >= .99f && NearViewer(at) && PlayEdgeSmear()) EdgeSmears++;
             }
 
             if (b.Grounded && (mask & 2) != 0)
@@ -151,7 +218,7 @@ namespace DD.Prototype.Feedback.Vfx
             return true;
         }
 
-        private void Update()=>Tick(Time.time);
+        private void Update(){Tick(Time.time);TickSmear(Time.time);}
         public void Tick(float now)
         {
             for(int i=0;i<_blasts.Length;i++)
@@ -162,7 +229,7 @@ namespace DD.Prototype.Feedback.Vfx
                 if(age>=.033f && (b.Stages&2)==0)
                 {
                     b.Stages|=2;if(b.Rocket && (b.Mask&4)!=0)
-                    {int count=b.Full?VfxTier.Pick(3,8,10):2;for(int n=0;n<count;n++)B3Particles.Emit(_column,b.At+Vector3.up*.2f,Vector3.up*(.4f+n*.05f),3f*b.Scale,1.2f,new Color(.56f,.58f,.60f,.45f));Columns++;}
+                    {int count=b.Full?VfxTier.Pick(3,8,10):2;for(int n=0;n<count;n++)B3Particles.Emit(_column,b.At+Vector3.up*.2f,Vector3.up*(.4f+n*.05f),3f*b.Scale,1.2f,new Color(.56f,.58f,.60f,.45f*b.Guard));Columns++;}
                 }
                 if(age>=.05f && (b.Stages&4)==0)
                 {
@@ -183,7 +250,7 @@ namespace DD.Prototype.Feedback.Vfx
                 if(age>=.2f && (b.Stages&8)==0)
                 {
                     b.Stages|=8;if(b.Full && VfxTier.Current==VfxTierLevel.Cinematic && (b.Mask&4)!=0)
-                    {for(int n=0;n<6;n++){float a=n*Mathf.PI/3f;B3Particles.Emit(_column,b.At+new Vector3(Mathf.Cos(a),.3f,Mathf.Sin(a))*.4f,Vector3.up*.3f,1f,1.2f,new Color(.82f,.84f,.87f,.25f));SteamPuffs++;}}
+                    {for(int n=0;n<6;n++){float a=n*Mathf.PI/3f;B3Particles.Emit(_column,b.At+new Vector3(Mathf.Cos(a),.3f,Mathf.Sin(a))*.4f,Vector3.up*.3f,1f,1.2f,new Color(.82f,.84f,.87f,.25f*b.Guard));SteamPuffs++;}}
                 }
                 if(age>=.8f && (b.Stages&16)==0)
                 {
@@ -193,6 +260,167 @@ namespace DD.Prototype.Feedback.Vfx
                 if(age>=1.6f)b.Active=false;
             }
         }
+        // ------------------------------------------------------------------ M-60 · rl_1 backblast (direction §1.1 l.49)
+
+        /// <summary>
+        /// One rl_1 shot's rear cone from <paramref name="rear"/> (the tube's rear, world) along <paramref name="back"/>: smoke puffs
+        /// on the column emitter + water-spray drops on the ember emitter (#B8B0A6, α 0.45, 0.6 s, 2.5 m); a 1.2 m / 4 s darkening
+        /// decal where the cone meets ground within 2.5 m below its middle (never on water); the rear light #FFA060 / 12 / 6 m
+        /// (not on Performance). Performance: 4 puffs + 3 drops, cone and life × 0.6. The §4.1 guard halves the cone's alpha when
+        /// it sits between the camera and the player's chest (TP: the cone blows toward the camera). Called by VfxDressing.PlayMuzzle.
+        /// </summary>
+        public bool PlayBackblast(Vector3 rear, Vector3 back)
+        {
+            if (_owner == null || !_owner.IsReady || back.sqrMagnitude < 1e-6f) return false;
+            back.Normalize();
+            bool performance = VfxTier.Current == VfxTierLevel.Performance;
+            float scale = performance ? BackblastPerformanceScale : 1f;
+            float length = BackblastLength * scale;
+            float seconds = BackblastSeconds * scale;
+            int puffs = VfxTier.Pick(4, 8, 10);
+            int drops = VfxTier.Pick(3, 6, 8);
+            Vector3 right = Vector3.Cross(Vector3.up, back);
+            if (right.sqrMagnitude < 1e-4f) right = Vector3.right;
+            right.Normalize();
+            Vector3 up = Vector3.Cross(back, right);
+            float speed = length / seconds;
+            float guard = GuardAt(rear + back * (length * .5f), length * .25f);
+            Color smoke = new Color(BackblastTint.r, BackblastTint.g, BackblastTint.b, BackblastAlpha * guard);
+            for (int n = 0; n < puffs; n++)
+            {
+                float k = (n + 1f) / puffs;
+                float a = n * 2.399963f;
+                Vector3 spread = (right * Mathf.Cos(a) + up * Mathf.Sin(a)) * (BackblastConeSpread * k);
+                B3Particles.Emit(_column, rear + back * (length * .1f * k), (back + spread) * speed * (.6f + .4f * k), (BackblastPuffStart + BackblastPuffGrow * k) * scale, seconds, smoke);
+            }
+
+            for (int n = 0; n < drops; n++)
+            {
+                float a = n * 2.399963f + 1f;
+                Vector3 spread = (right * Mathf.Cos(a) + up * Mathf.Sin(a)) * BackblastConeSpread;
+                B3Particles.Emit(_embers, rear, (back + spread) * speed + Vector3.up * BackblastDropLift, BackblastDropSize, seconds, smoke);
+            }
+
+            if (!performance) _lights.FlashAt(rear, RearLightColour, RearLightIntensity, RearLightRange, RearLightHold, RearLightFade);
+            int layerMask = (1 << 0) | (1 << PrototypeLayers.Environment) | (1 << PrototypeLayers.CameraOccluder);
+            Vector3 probe = rear + back * (BackblastDecalSize * .5f);
+            if (Physics.Raycast(probe, Vector3.down, out RaycastHit ground, BackblastGroundReach, layerMask, QueryTriggerInteraction.Ignore)
+                && SurfaceResolver.Resolve(ground.collider) != SurfaceKind.Water
+                && Decal(ground.point, ground.normal, BackblastDecalSize, BackblastDecalSeconds, WetRingAlpha, WetDarkTint))
+                BackblastDecals++;
+
+            Backblasts++;
+            return true;
+        }
+
+        // ------------------------------------------------------------------ M-60 · §4.1 player guard (l.149)
+
+        /// <summary>GelSystem's guard (0.5 when <paramref name="p"/> sits between the camera and the player's chest, else 1); 1 in FP or without a camera / player.</summary>
+        private static float GuardAt(Vector3 p, float radius)
+        {
+            if (!FeedbackCameraRef.TryGetPosition(out Vector3 cam)) return 1f;
+            Vector3 chest;
+            if (GuardChestOverride.HasValue) chest = GuardChestOverride.Value;
+            else
+            {
+                if (DD.Prototype.CameraSystem.CameraModeService.Current == DD.Prototype.CameraSystem.CameraMode.FirstPerson) return 1f;
+                var player = DD.Prototype.PlayerSystem.PlayerRegistry.Primary;
+                if (player == null) return 1f;
+                chest = player.transform.position + Vector3.up * GuardChestHeight;
+            }
+
+            return GelSystem.GuardFactor(cam, chest, p, radius);
+        }
+
+        // ------------------------------------------------------------------ M-60 · near-blast screen-edge smear (§1.5 l.105)
+
+        /// <summary>True when the blast is under <see cref="EdgeSmearDistance"/> from the camera or the player's chest.</summary>
+        private static bool NearViewer(Vector3 at)
+        {
+            float reach = EdgeSmearDistance * EdgeSmearDistance;
+            if (FeedbackCameraRef.TryGetPosition(out Vector3 cam) && (cam - at).sqrMagnitude < reach) return true;
+            var player = DD.Prototype.PlayerSystem.PlayerRegistry.Primary;
+            return player != null && (player.transform.position + Vector3.up * GuardChestHeight - at).sqrMagnitude < reach;
+        }
+
+        /// <summary>
+        /// One camera-parented quad just past the near plane, sized to overscan the frustum, drawing the AP-010 vignette_damage
+        /// edge mask (alpha-only edge gradient) tinted mud-grey; α 0.35 → 0 over 0.3 s. VFX-owned (not the HUD canvas, S-09);
+        /// a newer near blast restarts it. Rebuilt when its camera went away (it is destroyed with the camera it rides).
+        /// </summary>
+        private bool PlayEdgeSmear()
+        {
+            Camera cam = FeedbackCameraRef.Current;
+            if (cam == null) return false;
+            if (_smear == null && !BuildSmear()) return false;
+            Transform t = _smear.transform;
+            if (_smearCamera != cam)
+            {
+                t.SetParent(cam.transform, false);
+                _smearCamera = cam;
+            }
+
+            float depth = cam.nearClipPlane + EdgeSmearNearOffset;
+            float height = 2f * depth * Mathf.Tan(cam.fieldOfView * .5f * Mathf.Deg2Rad) * EdgeSmearOverscan;
+            t.localPosition = new Vector3(0f, 0f, depth);
+            t.localRotation = Quaternion.identity;
+            t.localScale = new Vector3(height * cam.aspect, height, 1f);
+            _smearStart = Time.time;
+            SetSmearAlpha(EdgeSmearAlpha);
+            _smear.enabled = true;
+            return true;
+        }
+
+        private bool BuildSmear()
+        {
+            VfxCatalogEntry row = VfxLibrary.Get(VfxIds.VignetteDamage);
+            if (row == null || row.Texture == null) return false;
+            if (_smearMaterial == null)
+            {
+                _smearMaterial = new Material(FeedbackMaterials.ParticleAlpha()) { name = "B3 near-blast edge smear", hideFlags = HideFlags.DontSave };
+                _smearMaterial.mainTexture = row.Texture;
+                _smearMaterial.SetTexture("_BaseMap", row.Texture);
+            }
+
+            var go = new GameObject("BlastEdgeSmear");
+            go.transform.SetParent(transform, false);   // rides the (DontDestroyOnLoad) director until a near blast hands it to the camera
+            go.AddComponent<MeshFilter>().sharedMesh = VfxLibrary.Quad;
+            _smear = go.AddComponent<MeshRenderer>();
+            _smear.sharedMaterial = _smearMaterial;
+            _smear.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            _smear.receiveShadows = false;
+            _smear.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
+            _smear.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
+            _smear.enabled = false;
+            _smearCamera = null;
+            return true;
+        }
+
+        private void SetSmearAlpha(float alpha)
+        {
+            FeedbackMaterials.ApplyColor(_smearBlock, new Color(EdgeSmearTint.r, EdgeSmearTint.g, EdgeSmearTint.b, alpha));
+            _smear.SetPropertyBlock(_smearBlock);
+        }
+
+        private void TickSmear(float now)
+        {
+            if (_smearStart < 0f || _smear == null) return;
+            float k = (now - _smearStart) / EdgeSmearSeconds;
+            if (k >= 1f || GameFeelSettings.FlashScale < .99f)
+            {
+                HideSmear();
+                return;
+            }
+
+            SetSmearAlpha(EdgeSmearAlpha * (1f - k));
+        }
+
+        private void HideSmear()
+        {
+            _smearStart = -1f;
+            if (_smear != null) _smear.enabled = false;
+        }
+
         private bool Card(string id,Vector3 at,Quaternion rotation,FlipbookEffect.Facing facing,float size,float seconds,Color tint,float alpha,bool hold=false)
         {var fx=CardEffect(id,at,rotation,facing,size,seconds,tint,alpha);if(hold)fx?.HoldFrame(0);return fx!=null;}
         private FlipbookEffect CardEffect(string id,Vector3 at,Quaternion rotation,FlipbookEffect.Facing facing,float size,float seconds,Color tint,float alpha)

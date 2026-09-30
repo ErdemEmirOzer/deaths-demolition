@@ -45,6 +45,21 @@ namespace DD.Prototype.Feedback.Vfx
         private readonly MeshRenderer[] _exhaustRenderers = new MeshRenderer[ExhaustCapacity];
         private readonly Transform[] _exhaustTransforms = new Transform[ExhaustCapacity];
         private readonly MaterialPropertyBlock[] _exhaustBlocks = new MaterialPropertyBlock[ExhaustCapacity];
+        // M-60 (C-00 30.09) · direction §5 "Projectile mesh" (l.173) + §1.5 (l.99): Cinematic draws the mesh at every distance;
+        // High ≤ 25 m and Performance ≤ 15 m from the feedback camera, beyond that a camera-facing card along the flight line
+        // (the ember dot material, tinted between the iron ogive #4A4C50 and the paper body #8C7A66). Flight slot i < 8 owns
+        // card i (the exhaust's rule); a ninth far rocket keeps the mesh. No camera → mesh.
+        [PrototypeOnly(PendingDecisions.None, "M-60 direction §5 l.173: projectile mesh Cinematic every distance / High ≤ 25 m / Performance ≤ 15 m, then billboard; card width 0.12 m (the exhaust's) and tint are stand-ins.", true)]
+        public const float BillboardBeyondHigh = 25f;
+        public const float BillboardBeyondPerformance = 15f;
+        public const float BillboardWidth = .12f;
+        public static float BillboardBeyond => VfxTier.Pick(BillboardBeyondPerformance, BillboardBeyondHigh, float.PositiveInfinity);
+        private static readonly Color BillboardTint = new Color(.42f, .40f, .37f, 1f);
+        private readonly MeshRenderer[] _billboardRenderers = new MeshRenderer[ExhaustCapacity];
+        private readonly Transform[] _billboardTransforms = new Transform[ExhaustCapacity];
+        private MaterialPropertyBlock _billboardBlock;
+        /// <summary>M-60: rockets drawn as a far billboard card this frame (not counted in <see cref="DrawnRockets"/>).</summary>
+        public int BillboardRockets { get; private set; }
         private static readonly int FrameId=Shader.PropertyToID("_Frame"), AlphaId=Shader.PropertyToID("_Alpha"), AlphaCapId=Shader.PropertyToID("_AlphaCap"), TintId=Shader.PropertyToID("_Tint"), EmissiveId=Shader.PropertyToID("_EmissiveStrength");
         private MuzzleSystem _lights;
         public int ActiveFlights { get; private set; }
@@ -96,6 +111,16 @@ namespace DD.Prototype.Feedback.Vfx
             }
             _dot = B3Particles.Dot(); _sparkMaterial = B3Particles.Material(VfxIds.CardSmoke); _sparkMaterial.mainTexture=_dot; _sparkMaterial.SetTexture("_BaseMap",_dot);
             _sparks=B3Particles.Build(transform,"RocketEmbers",_sparkMaterial,128,1f,false);
+            _billboardBlock=new MaterialPropertyBlock();FeedbackMaterials.ApplyColor(_billboardBlock,BillboardTint);
+            for(int i=0;i<_billboardRenderers.Length;i++)
+            {
+                var go=new GameObject("RocketBillboardCard");go.transform.SetParent(transform,false);
+                go.AddComponent<MeshFilter>().sharedMesh=VfxLibrary.Quad;
+                var renderer=go.AddComponent<MeshRenderer>();renderer.sharedMaterial=_sparkMaterial;renderer.enabled=false;
+                renderer.shadowCastingMode=ShadowCastingMode.Off;renderer.receiveShadows=false;renderer.lightProbeUsage=LightProbeUsage.Off;
+                renderer.SetPropertyBlock(_billboardBlock);
+                _billboardRenderers[i]=renderer;_billboardTransforms[i]=go.transform;
+            }
             _lights = MuzzleSystem.Ensure();
             SceneManager.activeSceneChanged += OnSceneChanged; Rearm();
         }
@@ -126,7 +151,18 @@ namespace DD.Prototype.Feedback.Vfx
             _dudNext = (_dudNext + 1) % _duds.Length; DudsPlayed++;
             for(int i=0;i<3;i++)B3Particles.Emit(_sparks,d.Position,Vector3.up*.3f,.03f,.3f,new Color(1f,.48f,.24f,1f));
         }
-        private void HideExhaust(int slot) { if (slot < _exhaustRenderers.Length && _exhaustRenderers[slot] != null) _exhaustRenderers[slot].enabled = false; }
+        private void HideExhaust(int slot) { if (slot < _exhaustRenderers.Length && _exhaustRenderers[slot] != null) _exhaustRenderers[slot].enabled = false; HideBillboard(slot); }
+        private void HideBillboard(int slot) { if (slot < _billboardRenderers.Length && _billboardRenderers[slot] != null) _billboardRenderers[slot].enabled = false; }
+        /// <summary>M-60: the far card — centred on the body, its +x along the flight line projected on the view plane (the exhaust's facing).</summary>
+        private void PlaceBillboard(int slot, Vector3 centre, Vector3 dir, Vector3 eye)
+        {
+            Vector3 to=eye-centre;if(to.sqrMagnitude<.001f)to=Vector3.back;
+            Vector3 projected=Vector3.ProjectOnPlane(dir,to).normalized;
+            Vector3 up=projected.sqrMagnitude>.001f?Vector3.Cross(-to.normalized,projected):Vector3.up;
+            _billboardTransforms[slot].SetPositionAndRotation(centre,Quaternion.LookRotation(-to.normalized,up));
+            _billboardTransforms[slot].localScale=new Vector3(BodyLength,BillboardWidth,1f);
+            _billboardRenderers[slot].enabled=true;
+        }
         public void Clear()
         {
             for (int i = 0; i < _flights.Length; i++) { _flights[i] = default; HideExhaust(i); }
@@ -138,8 +174,10 @@ namespace DD.Prototype.Feedback.Vfx
         public void Present(float dt)
         {
             for (int i = 0; i < _seen.Length; i++) _seen[i] = false;
-            int drawn = 0; ExhaustAlive=0;
+            int drawn = 0; ExhaustAlive=0; BillboardRockets=0;
             Vector3 wind = Shader.GetGlobalVector(WindId);
+            bool haveEye = FeedbackCameraRef.TryGetPosition(out Vector3 eye);
+            float beyond = BillboardBeyond, beyondSq = beyond * beyond;
             for (int live = 0; live < ProjectileSystem.LiveCount; live++)
             {
                 ref readonly ProjectileState p = ref ProjectileSystem.Get(live);
@@ -151,7 +189,9 @@ namespace DD.Prototype.Feedback.Vfx
                 Vector3 dir = p.Direction.sqrMagnitude > 0.0001f ? p.Direction.normalized : Vector3.forward;
                 Quaternion rotation = Quaternion.LookRotation(dir);
                 // World-only after fire in all modes; no CameraView remapping of actual flight coordinates.
-                _matrices[drawn++] = Matrix4x4.TRS(p.Position,rotation,Vector3.one) * _meshLocal;   // nose on the projectile point
+                bool far = haveEye && (p.Position - eye).sqrMagnitude > beyondSq && slot < _billboardRenderers.Length && _billboardRenderers[slot] != null;
+                if (far) { PlaceBillboard(slot, p.Position - dir * (BodyLength * .5f), dir, eye); BillboardRockets++; }
+                else { HideBillboard(slot); _matrices[drawn++] = Matrix4x4.TRS(p.Position,rotation,Vector3.one) * _meshLocal; }   // nose on the projectile point
                 if(slot<_exhaustRenderers.Length && _exhaustRenderers[slot]!=null)
                 {
                     Vector3 nozzle=p.Position-dir*(BodyLength+.225f);

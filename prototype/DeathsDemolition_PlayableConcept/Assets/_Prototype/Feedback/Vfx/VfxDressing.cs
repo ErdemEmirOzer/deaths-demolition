@@ -796,6 +796,14 @@ namespace DD.Prototype.Feedback.Vfx
                 }
 
                 _muzzleSystem?.Play(muzzle, profile, firstPerson);
+                // M-60 (direction §1.1 rl_1): the backblast from the tube's rear — the Muzzle socket's forward runs down the barrel.
+                if (profile.Class == VfxWeaponClass.Launcher && ExplosionDirector.Instance != null)
+                {
+                    Vector3 rear = muzzle.position - muzzle.forward * ExplosionDirector.TubeRearFromMuzzle;
+                    if (firstPerson) rear = DD.Prototype.CameraSystem.CameraView.ViewmodelToWorld(rear);
+                    ExplosionDirector.Instance.PlayBackblast(rear, -muzzle.forward);
+                }
+
                 // FP: the barrel points away from the eye, so a quad aligned along it is edge-on (a 4 px sliver — AD B1
                 // MUST 5): in first person the flash is a pure camera-facing bloom at 0.85 scale; elsewhere +u runs
                 // down the barrel (AD M5).

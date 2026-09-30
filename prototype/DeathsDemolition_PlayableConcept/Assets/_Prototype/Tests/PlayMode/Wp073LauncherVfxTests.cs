@@ -17,15 +17,22 @@ namespace DD.Prototype.Tests.PlayMode
         private RocketVisualSystem _rocket;
         private ExplosionDirector _blast;
         private float _flash;
+        private Camera _cam, _previousCam;
         [SetUp] public void Setup()
         {
             _flash=GameFeelSettings.FlashScale;VfxTier.Override=VfxTierLevel.High;
             var vfx=HitFeedbackDirector.Instance.Vfx;Assert.IsTrue(vfx.IsReady);
             _rocket=RocketVisualSystem.Ensure();_blast=ExplosionDirector.Ensure(vfx);
             ProjectileSystem.Clear();_rocket.Clear();_blast.Clear();
+            // M-60: a fixed feedback camera 10 m behind the test spawn (billboard distance, edge smear, player guard read it).
+            _previousCam=FeedbackCameraRef.Current;_cam=new GameObject("Wp073 launcher test camera").AddComponent<Camera>();_cam.enabled=false;
+            _cam.transform.SetPositionAndRotation(new Vector3(0f,101f,190f),Quaternion.identity);FeedbackCameraRef.Set(_cam);
         }
         [TearDown] public void Cleanup()
-        {ProjectileSystem.Clear();_rocket.Clear();_blast.Clear();GameFeelSettings.FlashScale=_flash;VfxTier.Override=null;}
+        {
+            ProjectileSystem.Clear();_rocket.Clear();_blast.Clear();GameFeelSettings.FlashScale=_flash;VfxTier.Override=null;
+            ExplosionDirector.GuardChestOverride=null;FeedbackCameraRef.Set(_previousCam);if(_cam!=null)Object.DestroyImmediate(_cam.gameObject);
+        }
         private static int Spawn(float range=70f, float life=2.2f, ProjectileKind kind=ProjectileKind.Rocket)
         {
             var def=Arsenal.Get(ClassicWeaponId.Rl1);Assert.IsNotNull(def);
@@ -203,6 +210,48 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(8,_rocket.ExhaustPoolSize);
             for(int i=0;i<10;i++)Spawn();ProjectileSystem.Step(.025f);_rocket.Present(.05f);
             Assert.AreEqual(10,_rocket.ActiveFlights);Assert.AreEqual(8,_rocket.ExhaustAlive);
+        }
+        // ---- M-60 (C-00 30.09): backblast, far billboard, near-blast edge smear, §4.1 column guard
+        [UnityTest] public IEnumerator M60_Backblast_RearCone_DarkensGroundOnlyWithinReach()
+        {
+            var ground=Ground(100f);
+            int blasts=_blast.Backblasts,decals=_blast.BackblastDecals;
+            Assert.IsTrue(_blast.PlayBackblast(new Vector3(0f,101.5f,200f),Vector3.back));   // shoulder-high tube rear, ground 1.5 m below
+            Assert.AreEqual(blasts+1,_blast.Backblasts);Assert.AreEqual(decals+1,_blast.BackblastDecals,"arka koni ıslak zemini koyulaştırır");
+            Assert.IsTrue(_blast.PlayBackblast(new Vector3(0f,105f,200f),Vector3.back));     // 5 m up: no ground within 2.5 m
+            Assert.AreEqual(blasts+2,_blast.Backblasts);Assert.AreEqual(decals+1,_blast.BackblastDecals,"zemin menzil dışında: decal yok");
+            VfxTier.Override=VfxTierLevel.Performance;Assert.IsTrue(_blast.PlayBackblast(new Vector3(0f,101.5f,200f),Vector3.back));
+            Assert.AreEqual(blasts+3,_blast.Backblasts,"Performans: küçük koni, kimlik korunur");
+            Object.Destroy(ground);yield return null;
+        }
+        [Test] public void M60_FarRocket_IsBillboardBeyondTierRange_CinematicKeepsMesh()
+        {
+            _cam.transform.position=new Vector3(0f,100f,150f);   // ≈ 50 m from the spawn
+            Spawn();_rocket.Present(.05f);
+            Assert.AreEqual(1,_rocket.BillboardRockets,"Yüksek: 25 m ötesi billboard");Assert.AreEqual(0,_rocket.DrawnRockets,"billboard mesh sayılmaz");
+            VfxTier.Override=VfxTierLevel.Cinematic;_rocket.Present(.05f);
+            Assert.AreEqual(0,_rocket.BillboardRockets,"Sinematik: her mesafede mesh");Assert.AreEqual(1,_rocket.DrawnRockets);
+            _cam.transform.position=new Vector3(0f,100f,180f);   // ≈ 20 m
+            VfxTier.Override=VfxTierLevel.Performance;_rocket.Present(.05f);Assert.AreEqual(1,_rocket.BillboardRockets,"Performans: 15 m ötesi");
+            VfxTier.Override=VfxTierLevel.High;_rocket.Present(.05f);Assert.AreEqual(0,_rocket.BillboardRockets,"Yüksek: 20 m ≤ 25 m mesh");Assert.AreEqual(1,_rocket.DrawnRockets);
+        }
+        [Test] public void M60_NearBlast_EdgeSmear_UnderFourMetres_OffWithReducedFlashes()
+        {
+            _cam.transform.position=new Vector3(0f,100f,198f);int smears=_blast.EdgeSmears;
+            Assert.IsTrue(_blast.Play(new Vector3(0f,100f,200f),5f,-1,ExplosionSource.Rocket));Assert.AreEqual(smears+1,_blast.EdgeSmears,"2 m roket");Assert.IsTrue(_blast.EdgeSmearVisible);
+            Assert.IsTrue(_blast.Play(new Vector3(0f,100f,200f),3f,-1,ExplosionSource.Small));Assert.AreEqual(smears+2,_blast.EdgeSmears,"2 m küçük patlama");
+            Assert.IsTrue(_blast.Play(new Vector3(0f,100f,208f),5f,-1,ExplosionSource.Rocket));Assert.AreEqual(smears+2,_blast.EdgeSmears,"10 m: leke yok");
+            GameFeelSettings.FlashScale=.4f;Assert.IsTrue(_blast.Play(new Vector3(0f,100f,200f),5f,-1,ExplosionSource.Rocket));Assert.AreEqual(smears+2,_blast.EdgeSmears,"ReduceFlashes: kapalı");
+        }
+        [Test] public void M60_ColumnBetweenCameraAndPlayerChest_IsGuarded()
+        {
+            // GelSystem.GuardFactor semantics: covered = on the camera → chest segment (a blast behind the player is drawn behind it).
+            _cam.transform.position=new Vector3(0f,101f,190f);ExplosionDirector.GuardChestOverride=new Vector3(0f,101.3f,200f);
+            int guarded=_blast.GuardedColumns,columns=_blast.Columns;
+            Assert.IsTrue(_blast.Play(new Vector3(0f,101f,196f),5f,-1,ExplosionSource.Rocket));Assert.AreEqual(guarded+1,_blast.GuardedColumns,"kamera–göğüs arasında: α × 0,5");
+            Assert.IsTrue(_blast.Play(new Vector3(0f,101f,206f),5f,-1,ExplosionSource.Rocket));Assert.AreEqual(guarded+1,_blast.GuardedColumns,"oyuncunun arkasında: örtmez");
+            Assert.IsTrue(_blast.Play(new Vector3(12f,101f,196f),5f,-1,ExplosionSource.Small));Assert.AreEqual(guarded+1,_blast.GuardedColumns,"yanda: örtmez");
+            _blast.Tick(Time.time+.3f);Assert.AreEqual(columns+2,_blast.Columns,"sütun yine çizilir (yarı α)");
         }
     }
 }
