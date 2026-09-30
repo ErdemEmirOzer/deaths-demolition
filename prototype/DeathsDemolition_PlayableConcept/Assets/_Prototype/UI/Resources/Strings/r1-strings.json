@@ -3569,11 +3569,11 @@
   },
   "profile.content.badge_ghost.detail": {
     "en": "Profile badge for {count} flawless rounds",
-    "tr": "Hasarsız {count} round için profil rozeti"
+    "tr": "Hasar almadan {count} round tamamlayınca kazanılan profil rozeti"
   },
   "profile.content.indicator_kill_streak.detail": {
     "en": "HUD indicator variant - available once {count} enemies are defeated",
-    "tr": "HUD gösterge türü - {count} düşman yenince kullanılabilir"
+    "tr": "HUD gösterge türü - toplam {count} düşman yenince kullanılabilir"
   },
   "profile.content.indicator_round_timer.detail": {
     "en": "HUD indicator variant - available from round {count}",
@@ -3581,7 +3581,7 @@
   },
   "profile.content.indicator_gold_ticker.detail": {
     "en": "HUD indicator variant - available after a {count}-gold run",
-    "tr": "HUD gösterge türü - {count} altınlık bir koşudan sonra kullanılabilir"
+    "tr": "HUD gösterge türü - tek koşuda {count} altın toplayınca kullanılabilir"
   },
   "achievement.first_blood.desc": {
     "en": "Defeat your first enemy.",
@@ -3713,7 +3713,7 @@
   },
   "achievement.capstones_5_weapons.desc": {
     "en": "End runs owning the capstone with five different weapons.",
-    "tr": "Beş farklı silahın her biriyle doruğuna sahipken bir koşu bitir."
+    "tr": "Beş farklı silahla, her birinin doruğuna sahipken birer koşu bitir."
   },
   "achievement.both_special_links.desc": {
     "en": "Own both links of a Special in one run.",

@@ -1033,6 +1033,7 @@ UI only: live shop counts and tier details; remap action/composite labels; assis
 Existing 882 keys and values are unchanged. 50 new bilingual UI-only keys; catalog identity names and gameplay data remain unchanged. Counts are read from the existing catalog thresholds.
 
 R1-E E1 (S-09, C-00 30.09): 21 tr lines below revised for grammar and pack terminology (doruk, kilit taşı, yak, şerit, Özel silah, yen); every change was proposed by one reviewer and checked by a second, adversarial one (`K/wp-068e/evidence/e1-tr-review.md`, `e1-refute.md`). The category-then-explanation lines keep " - ", because the Results card already joins its type word with "  ·  ". `achievement.namekuji_skater.desc` (§6) now says in both languages that the enemies slide, as the catalog and FeatTracker do.
+R1-E E1b: a second adversarial reviewer (`e1-refute-2.md`) found no errors; 4 style rows follow it (capstones_5_weapons owner, gold_ticker and kill_streak read as their real conditions, badge_ghost in the title rows' form).
 
 | Key | en | tr |
 |---|---|---|
@@ -1046,10 +1047,10 @@ R1-E E1 (S-09, C-00 30.09): 21 tr lines below revised for grammar and pack termi
 | `profile.content.title_veteran.detail` | Profile title for reaching level {count} | {count}. seviyeye ulaşınca kazanılan profil unvanı |
 | `profile.content.title_executioner.detail` | Profile title for defeating an Executioner | Bir Executioner yenince kazanılan profil unvanı |
 | `profile.content.title_ironclad.detail` | Profile title for breaking {count} armour pieces | {count} zırh parçası kırınca kazanılan profil unvanı |
-| `profile.content.badge_ghost.detail` | Profile badge for {count} flawless rounds | Hasarsız {count} round için profil rozeti |
-| `profile.content.indicator_kill_streak.detail` | HUD indicator variant - available once {count} enemies are defeated | HUD gösterge türü - {count} düşman yenince kullanılabilir |
+| `profile.content.badge_ghost.detail` | Profile badge for {count} flawless rounds | Hasar almadan {count} round tamamlayınca kazanılan profil rozeti |
+| `profile.content.indicator_kill_streak.detail` | HUD indicator variant - available once {count} enemies are defeated | HUD gösterge türü - toplam {count} düşman yenince kullanılabilir |
 | `profile.content.indicator_round_timer.detail` | HUD indicator variant - available from round {count} | HUD gösterge türü - {count}. rounddan itibaren kullanılabilir |
-| `profile.content.indicator_gold_ticker.detail` | HUD indicator variant - available after a {count}-gold run | HUD gösterge türü - {count} altınlık bir koşudan sonra kullanılabilir |
+| `profile.content.indicator_gold_ticker.detail` | HUD indicator variant - available after a {count}-gold run | HUD gösterge türü - tek koşuda {count} altın toplayınca kullanılabilir |
 | `achievement.first_blood.desc` | Defeat your first enemy. | İlk düşmanını yen. |
 | `achievement.armor_breaker.desc` | Break an armour piece off an enemy. | Bir düşmandan bir zırh parçası kır. |
 | `achievement.reach_round_5.desc` | Survive until round {count}. | {count}. rounda kadar hayatta kal. |
@@ -1082,7 +1083,7 @@ R1-E E1 (S-09, C-00 30.09): 21 tr lines below revised for grammar and pack termi
 | `achievement.hearth_10_one_run.desc` | Stoke the Hearth {count} times in one run. | Tek koşuda Ocağı {count} kez yak. |
 | `achievement.hearth_20.desc` | Stoke the Hearth {count} times in one run. | Tek koşuda Ocağı {count} kez yak. |
 | `achievement.full_lane.desc` | End a run owning a lane's capstone with one of its tiers at maximum. | Bir şeridin doruğuna ve azami kademedeki bir dalına sahipken koşu bitir. |
-| `achievement.capstones_5_weapons.desc` | End runs owning the capstone with five different weapons. | Beş farklı silahın her biriyle doruğuna sahipken bir koşu bitir. |
+| `achievement.capstones_5_weapons.desc` | End runs owning the capstone with five different weapons. | Beş farklı silahla, her birinin doruğuna sahipken birer koşu bitir. |
 | `achievement.both_special_links.desc` | Own both links of a Special in one run. | Tek koşuda bir Özel silahın iki bağına da sahip ol. |
 | `achievement.mastery_5_any.desc` | Reach mastery {count} with any weapon. | Bir silahta {count}. ustalık seviyesine ulaş. |
 | `results.reward.achievement.namekuji_skater.desc` | Defeat {count} enemies while they slide on gel in one run. | Bir koşuda jelde kayan {count} düşman yen. |
