@@ -11,7 +11,7 @@
 ^(Animation|ArtAnimation|Character|ArtCharacter|Armor|ArtArmor|ArtTier|HitboxPose)	S-06	animation / characters
 ^(World|Pilot|Look|NavMeshConnectivity|GoldenSlice|ArtLibrary|ArtAssetGate|ArtImport|ArtPrefab|ArtRepo|MenuPlate|ArtVisualRegression)	S-05	world / art pipeline
 ^(AttackSelectorTests|AttackVarietySliceTests)$	S-03	attack selection / variety
-^(Enemy(?!DamagesPlayer)|NavPathFollower|Spawn|RoundSpawn|RoundClear|RoundFormula|RoundTable|RoundLedger|Threat|Crowd|RegionNav|Tier|SpecialReaction|FlowRace)	S-03	enemies / AI / rounds
+^(Enemy(?!DamagesPlayer)|NavPathFollower|R1BAiFix|FlankOpenGround|Spawn|RoundSpawn|RoundClear|RoundFormula|RoundTable|RoundLedger|Threat|Crowd|RegionNav|Tier|SpecialReaction|FlowRace)	S-03	enemies / AI / rounds
 ^RunTreeTests$	S-04	run tree rules
 ^(Profile|Gold|Economy|Balance|Achievements|Completion|Cosmetics|Progression|RunBuildState|SelectionMemory|SessionSelection|SecondRun|RunTelemetry)	S-04	economy / profile
 ^(RocketMathTests|RocketSliceTests|GelStateTests|GelSliceTests|ChainTargetTests)$	S-02	weapon behavior (S-07 VFX support)
