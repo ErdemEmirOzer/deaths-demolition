@@ -1,6 +1,4 @@
-using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Security.Cryptography;
 using System.IO;
 using System.Text;
@@ -16,10 +14,13 @@ namespace DD.Prototype.Tests.EditMode
 {
     /// <summary>
     /// WP-076 (C-00 26.09, target ≤ 7 %) · a measurement tool, not a gate: runs only with DD_WP076_PROBE=1. On the v6 NavMesh it
-    /// takes the same grid / metric as <see cref="SpawnGateCoverageTests"/> (band ≥ 3 gates in 22–45 m, ≥ 8 within 75 m, by path),
-    /// builds a cell × candidate path matrix (each gate's own neighbourhood, 2 m steps; plus a 4 m grid of "added gate" positions)
-    /// and searches greedily: the best single moves of inner gates (then edge gates too), and the best single added gate. It writes
-    /// the violating cells by sector and each step's share to DD_WP076_PROBE_OUT (and the log, [DD-OBS] wp076.probe).
+    /// takes the same grid / metric as <see cref="SpawnGateCoverageTests"/> (band ≥ 3 gates in 22–45 m, ≥ 8 within 75 m, by path).
+    /// <see cref="V6_KapiKapsami_Arama"/> builds a cell × candidate path matrix (each gate's own neighbourhood, 2 m steps; plus a 4 m
+    /// grid of "added gate" positions) and searches greedily: the best single moves of inner gates (then edge gates too), and the
+    /// best single added gate. <see cref="V6_KapiKapsami_Setler"/> (WP-076 B9, C-00 30.09) measures named gate sets given as moves
+    /// over the current spawn-gates-v6.json (DD_WP076_PROBE_SETS = json file) on the loaded NavMesh — reachability, share, sectors,
+    /// first contact — one table row per set. Both write DD_WP076_PROBE_OUT (and the log, [DD-OBS] wp076.probe / wp076.sets).
+    /// B9 replaced the 29.09 "fixed3" mode (pinned scene / NavMesh / gates hashes of a pre-92232235 state and a hard-coded set).
     /// </summary>
     [Category("WP076Probe")]
     public sealed class SpawnGateCoverageProbe
@@ -27,9 +28,6 @@ namespace DD.Prototype.Tests.EditMode
         private const string ScenePath = "Assets/_Art/Scenes/World_V6_Greybox.unity";
         private const string GatesPath = "Assets/_Art/Environment/World/V6/spawn-gates-v6.json";
         private const string NavPath = "Assets/_Art/Environment/World/V6/NavMesh-World_V6_Greybox.asset";
-        private const string SceneGuid = "2afaebde573d0428c96966afda288bb6", NavGuid = "0bf676a94f68d4cf18e4725d5df7f9fb";
-        private const string SceneBlob = "81d5066fb37c570223d99d20c96225278ffd4f9d", NavBlob = "d6e9c211b33d0ab1687d4baea633ea9944ed5185";
-        private const string GatesBlob = "1884da54ead6d59e5ef8df2b4896792be582c224";
         private const float Half = 54f, Step = 2f;
         private const int BandMin = 3, UsefulMin = 8;
 
@@ -48,14 +46,10 @@ namespace DD.Prototype.Tests.EditMode
         public void V6_KapiKapsami_Arama()
         {
             if (System.Environment.GetEnvironmentVariable("DD_WP076_PROBE") != "1") Assert.Ignore("probe: DD_WP076_PROBE=1");
-            bool fixed3 = System.Environment.GetEnvironmentVariable("DD_WP076_PROBE_FIXED3") == "1";
-            _scene = EditorSceneManager.OpenScene(ScenePath, fixed3 ? OpenSceneMode.Single : OpenSceneMode.Additive);
-            if (fixed3) ValidateFixedWorld();
+            _scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Additive);
             GateFile file = JsonUtility.FromJson<GateFile>(File.ReadAllText(GatesPath));
             var outSb = new StringBuilder();
             var t0 = System.Diagnostics.Stopwatch.StartNew();
-            GateFile original = fixed3 ? JsonUtility.FromJson<GateFile>(File.ReadAllText(GatesPath)) : null;
-            if (fixed3) ApplyFixedThree(file, original, outSb);
 
             Assert.IsTrue(NavMesh.SamplePosition(new Vector3(0f, 0.5f, -3f), out NavMeshHit startHit, 3f, NavMesh.AllAreas));
             Vector3 start = startHit.position;
@@ -79,31 +73,10 @@ namespace DD.Prototype.Tests.EditMode
             for (int i = 0; i < G; i++)
             {
                 Gate g = file.gates[i];
-                Vector3 at = new Vector3(g.x, 0.5f, g.z);
-                if (fixed3 && IsFixedGate(g.id))
-                {
-                    bool valid = TryCandidate(at, start, path, out Vector3 sample, outSb, g.id);
-                    if (!valid) WriteResult(outSb.AppendLine("[DD-OBS] wp076.fixed3 candidate FAIL/OPEN " + g.id));
-                    Assert.IsTrue(valid, "fixed3 candidate FAIL/OPEN: " + g.id);
-                    cand.Add(sample);
-                }
-                else
-                {
-                    Assert.IsTrue(NavMesh.SamplePosition(at, out NavMeshHit h, 3f, NavMesh.AllAreas), g.id);
-                    cand.Add(h.position);
-                    if (fixed3)
-                    {
-                        Gate source = original.gates[i];
-                        Assert.AreEqual(source.id, g.id); Assert.AreEqual(source.kind, g.kind);
-                        Assert.AreEqual(source.x, g.x); Assert.AreEqual(source.z, g.z);
-                        outSb.AppendLine("[DD-OBS] wp076.fixed3 unchanged " + g.id + " kind=" + g.kind +
-                            " source=" + at.ToString("F4") + " sample=" + h.position.ToString("F4") +
-                            " deviationSquared=" + new Vector2(h.position.x - g.x, h.position.z - g.z).sqrMagnitude.ToString("R"));
-                    }
-                }
+                Assert.IsTrue(NavMesh.SamplePosition(new Vector3(g.x, 0.5f, g.z), out NavMeshHit h, 3f, NavMesh.AllAreas), g.id);
+                cand.Add(h.position);
                 owner.Add(i);
             }
-            if (!fixed3)
             {
                 for (int i = 0; i < G; i++)
                 {
@@ -134,17 +107,6 @@ namespace DD.Prototype.Tests.EditMode
             int v0 = Violations(set, dist, C, null);
             outSb.AppendLine("[DD-OBS] wp076.probe now violations=" + v0 + " share=" + ((float)v0 / C).ToString("0.0000"));
             ReportCells(outSb, "now", set, dist, cells);
-
-            if (fixed3)
-            {
-                Assert.Greater(C, 0, "fixed3 has no connected grid cells");
-                float share = (float)v0 / C;
-                outSb.AppendLine("[DD-OBS] wp076.fixed3 coverage gates=22 edge=12 inner=10 changed=3 unchanged=19 cells=" + C +
-                    " violations=" + v0 + " share=" + share.ToString("R") + " target07=" + (share <= 0.07f ? "MET" : "OPEN") +
-                    " elapsedMs=" + t0.ElapsedMilliseconds);
-                WriteResult(outSb);
-                return;
-            }
 
             // greedy moves: inner gates only, then inner + edge
             foreach (bool edgeToo in new[] { false, true })
@@ -197,47 +159,91 @@ namespace DD.Prototype.Tests.EditMode
             WriteResult(outSb);
         }
 
-        private void ValidateFixedWorld()
+        [System.Serializable] private sealed class SetFile { public GateSet[] sets; }
+        [System.Serializable] private sealed class GateSet { public string name; public Gate[] moves; }
+
+        /// <summary>
+        /// WP-076 B9 (C-00 30.09): each named set = the current json gates with its moves applied (id → x, z; the kind is kept).
+        /// Gate sampling, reachability and the per-cell metric are those of <see cref="SpawnGateCoverageTests"/>; a moved gate also
+        /// reports its strict sample (≤ 0.9 m, as a builder would place it). Asserts nothing but the inputs (report tool).
+        /// </summary>
+        [Test]
+        public void V6_KapiKapsami_Setler()
         {
-            Assert.AreEqual(1, SceneManager.sceneCount, "fixed3 requires an isolated scene");
-            Assert.AreEqual(ScenePath, _scene.path);
-            Assert.AreEqual(SceneGuid, AssetDatabase.AssetPathToGUID(_scene.path));
-            Assert.AreEqual(SceneBlob, GitBlob(_scene.path));
-            Assert.AreEqual(GatesBlob, GitBlob(GatesPath));
-            Assert.AreEqual(NavGuid, AssetDatabase.AssetPathToGUID(NavPath));
-            Assert.AreEqual(NavBlob, GitBlob(NavPath));
-            var expected = AssetDatabase.LoadAssetAtPath<NavMeshData>(NavPath);
-            Assert.IsNotNull(expected);
-            MonoBehaviour surface = null;
-            foreach (GameObject root in _scene.GetRootGameObjects())
-            foreach (MonoBehaviour component in root.GetComponentsInChildren<MonoBehaviour>(true))
+            if (System.Environment.GetEnvironmentVariable("DD_WP076_PROBE") != "1") Assert.Ignore("probe: DD_WP076_PROBE=1");
+            string setsPath = System.Environment.GetEnvironmentVariable("DD_WP076_PROBE_SETS");
+            if (string.IsNullOrEmpty(setsPath)) Assert.Ignore("probe sets: DD_WP076_PROBE_SETS=<json>");
+            SetFile sets = JsonUtility.FromJson<SetFile>(File.ReadAllText(setsPath));
+            Assert.IsTrue(sets != null && sets.sets != null && sets.sets.Length > 0, "set dosyası boş: " + setsPath);
+
+            _scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);   // isolated: only the v6 NavMesh is loaded
+            var sb = new StringBuilder();
+            sb.AppendLine("[DD-OBS] wp076.sets scene=" + ScenePath + " sceneBlob=" + GitBlob(ScenePath) + " navBlob=" + GitBlob(NavPath)
+                          + " gatesBlob=" + GitBlob(GatesPath) + " setsFile=" + setsPath + " triangles=" + NavMesh.CalculateTriangulation().indices.Length / 3);
+            Assert.IsTrue(NavMesh.SamplePosition(new Vector3(0f, 0.5f, -3f), out NavMeshHit startHit, 3f, NavMesh.AllAreas), "oyuncu başlangıcı NavMesh'te değil");
+            Vector3 start = startHit.position;
+            var path = new NavMeshPath();
+
+            var cells = new List<Vector3>();
+            for (float x = -Half; x <= Half; x += Step)
+            for (float z = -Half; z <= Half; z += Step)
             {
-                if (component == null || component.GetType().FullName != "Unity.AI.Navigation.NavMeshSurface") continue;
-                Assert.IsNull(surface, "fixed3 requires one NavMeshSurface");
-                surface = component;
+                if (!NavMesh.SamplePosition(new Vector3(x, 0.5f, z), out NavMeshHit c, 0.9f, NavMesh.AllAreas)) continue;
+                Vector3 d = c.position - new Vector3(x, c.position.y, z);
+                if (d.sqrMagnitude > 0.8f) continue;
+                if (!NavMesh.CalculatePath(c.position, start, NavMesh.AllAreas, path) || path.status != NavMeshPathStatus.PathComplete) continue;
+                cells.Add(c.position);
             }
-            Assert.IsNotNull(surface);
-            Assert.IsTrue(surface.isActiveAndEnabled);
-            var data = new SerializedObject(surface).FindProperty("m_NavMeshData");
-            Assert.IsNotNull(data);
-            Assert.AreSame(expected, data.objectReferenceValue);
-            Assert.AreEqual(NavPath, AssetDatabase.GetAssetPath(data.objectReferenceValue));
-            var type = surface.GetType();
-            var instanceProperty = type.GetProperty("navMeshDataInstance", BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.IsNotNull(instanceProperty, "cannot verify the active NavMesh instance");
-            var instance = (NavMeshDataInstance)instanceProperty.GetValue(surface);
-            Assert.IsTrue(instance.valid, "resolved NavMesh asset is not active");
-            Assert.AreSame(surface, instance.owner);
-            var activeProperty = type.GetProperty("activeSurfaces", BindingFlags.Static | BindingFlags.Public);
-            Assert.IsNotNull(activeProperty);
-            var active = (IList)activeProperty.GetValue(null);
-            Assert.AreEqual(1, active.Count, "unrelated active NavMeshSurface");
-            Assert.AreSame(surface, active[0]);
-            Debug.Log("[DD-OBS] wp076.fixed3 binding scene=" + _scene.path + " sceneGuid=" + SceneGuid + " sceneBlob=" + GitBlob(_scene.path) +
-                " loadedScenes=" + SceneManager.sceneCount + " navPath=" + AssetDatabase.GetAssetPath(data.objectReferenceValue) +
-                " navGuid=" + AssetDatabase.AssetPathToGUID(NavPath) + " navBlob=" + GitBlob(NavPath) +
-                " instanceValid=" + instance.valid + " instanceOwner=" + surface.name + " activeSurfaces=" + active.Count +
-                " gatesBlob=" + GitBlob(GatesPath) + " probeBlob=" + GitBlob("Assets/_Prototype/Tests/EditMode/SpawnGateCoverageProbe.cs"));
+            int C = cells.Count;
+            Assert.Greater(C, 500, "v6 NavMesh ızgarası boş");
+            sb.AppendLine("| set | kapılar erişilebilir | hücre | ihlal | pay | ≤ %7 | sektör (ihlal/band<3/useful<8) | ilk temas medyanı |");
+
+            foreach (GateSet set in sets.sets)
+            {
+                GateFile file = JsonUtility.FromJson<GateFile>(File.ReadAllText(GatesPath));
+                var moved = new HashSet<string>();
+                foreach (Gate m in set.moves ?? new Gate[0])
+                {
+                    Gate g = System.Array.Find(file.gates, x => x.id == m.id);
+                    Assert.IsNotNull(g, set.name + ": bilinmeyen kapı " + m.id);
+                    g.x = m.x; g.z = m.z; moved.Add(m.id);
+                }
+
+                int G = file.gates.Length, reachable = 0;
+                var dist = new float[G * C];
+                var gateLog = new StringBuilder();
+                for (int i = 0; i < G; i++)
+                {
+                    Gate g = file.gates[i];
+                    bool onMesh = NavMesh.SamplePosition(new Vector3(g.x, 0.5f, g.z), out NavMeshHit h, 3f, NavMesh.AllAreas);
+                    bool ok = onMesh && NavMesh.CalculatePath(start, h.position, NavMesh.AllAreas, path) && path.status == NavMeshPathStatus.PathComplete;
+                    if (ok) reachable++;
+                    if (moved.Contains(g.id) || !ok)
+                    {
+                        bool strict = TryCandidate(new Vector3(g.x, 0.5f, g.z), start, path, out Vector3 sp);
+                        gateLog.Append(' ').Append(g.id).Append("(").Append(g.x.ToString("0.#")).Append(',').Append(g.z.ToString("0.#")).Append(")")
+                               .Append(ok ? " yol=" + (NavMesh.CalculatePath(start, h.position, NavMesh.AllAreas, path) ? Length(path).ToString("0") : "?") + "m" : " X")
+                               .Append(onMesh ? " snap=" + Vector2.Distance(new Vector2(h.position.x, h.position.z), new Vector2(g.x, g.z)).ToString("0.0") + "m" : " navmesh-yok")
+                               .Append(strict ? " sıkı=ok" : " sıkı=YOK").Append(';');
+                    }
+                    for (int c = 0; c < C; c++)
+                        dist[i * C + c] = onMesh && NavMesh.CalculatePath(cells[c], h.position, NavMesh.AllAreas, path) && path.status == NavMeshPathStatus.PathComplete
+                            ? Length(path) : float.PositiveInfinity;
+                }
+
+                var all = new int[G]; for (int i = 0; i < G; i++) all[i] = i;
+                int v = Violations(all, dist, C, null);
+                float share = (float)v / C;
+                var sec = new StringBuilder();
+                ReportCells(sec, set.name, all, dist, cells);
+                string secLine = sec.ToString().Split('\n')[0];
+                secLine = secLine.Substring(secLine.IndexOf(':') + 1).Trim();
+                sb.AppendLine("| " + set.name + " | " + reachable + "/" + G + " | " + C + " | " + v + " | " + (share * 100f).ToString("0.00") + " % | "
+                              + (share <= 0.07f && reachable == G ? "EVET" : "HAYIR") + " | " + secLine + " | " + Contact(all, dist, C) + " |");
+                sb.AppendLine("    kapılar:" + gateLog);
+            }
+
+            WriteResult(sb);
         }
 
         private static string GitBlob(string path)
@@ -252,32 +258,6 @@ namespace DD.Prototype.Tests.EditMode
             }
         }
 
-        private static bool IsFixedGate(string id) => id == "I_CloisterWest" || id == "I_GreatSakuraSouth" || id == "I_ShoreEast";
-
-        private static void ApplyFixedThree(GateFile file, GateFile original, StringBuilder sb)
-        {
-            Assert.AreEqual(22, file.gates.Length);
-            var ids = new HashSet<string>();
-            int edges = 0, inners = 0, changed = 0, unchanged = 0;
-            for (int i = 0; i < file.gates.Length; i++)
-            {
-                Gate gate = file.gates[i], source = original.gates[i];
-                Assert.IsTrue(ids.Add(gate.id), "duplicate gate id: " + gate.id);
-                if (gate.kind == "edge") edges++; else { Assert.AreEqual("inner", gate.kind); inners++; }
-                if (IsFixedGate(gate.id))
-                {
-                    Assert.AreEqual("inner", gate.kind);
-                    Vector2 at = gate.id == "I_CloisterWest" ? new Vector2(-22f, 14f) :
-                        gate.id == "I_GreatSakuraSouth" ? new Vector2(24f, 1f) : new Vector2(32f, -24f);
-                    gate.x = at.x; gate.z = at.y; changed++;
-                    Assert.IsTrue(source.x != gate.x || source.z != gate.z);
-                }
-                else { Assert.AreEqual(source.id, gate.id); Assert.AreEqual(source.kind, gate.kind); Assert.AreEqual(source.x, gate.x); Assert.AreEqual(source.z, gate.z); unchanged++; }
-            }
-            Assert.AreEqual(12, edges); Assert.AreEqual(10, inners); Assert.AreEqual(3, changed); Assert.AreEqual(19, unchanged);
-            sb.AppendLine("[DD-OBS] wp076.fixed3 inputs gates=22 edge=12 inner=10 changed=3 unchanged=19 gatesBlob=" + GitBlob(GatesPath));
-        }
-
         private static void WriteResult(StringBuilder sb)
         {
             string text = sb.ToString(); Debug.Log(text);
@@ -285,18 +265,13 @@ namespace DD.Prototype.Tests.EditMode
             if (!string.IsNullOrEmpty(outPath)) File.WriteAllText(outPath, text);
         }
 
-        private static bool TryCandidate(Vector3 at, Vector3 start, NavMeshPath path, out Vector3 p, StringBuilder evidence = null, string id = null)
+        private static bool TryCandidate(Vector3 at, Vector3 start, NavMeshPath path, out Vector3 p)
         {
             p = default;
-            bool sampled = NavMesh.SamplePosition(at, out NavMeshHit h, 0.9f, NavMesh.AllAreas);
-            evidence?.AppendLine("[DD-OBS] wp076.fixed3 sample " + id + " requested=" + at.ToString("F4") + " success=" + sampled + " actual=" + h.position.ToString("F4"));
-            if (!sampled) return false;
+            if (!NavMesh.SamplePosition(at, out NavMeshHit h, 0.9f, NavMesh.AllAreas)) return false;
             Vector3 d = h.position - new Vector3(at.x, h.position.y, at.z);
-            evidence?.AppendLine("[DD-OBS] wp076.fixed3 deviation " + id + " squared=" + d.sqrMagnitude.ToString("R"));
             if (d.sqrMagnitude > 0.8f) return false;
-            bool calculated = NavMesh.CalculatePath(start, h.position, NavMesh.AllAreas, path);
-            evidence?.AppendLine("[DD-OBS] wp076.fixed3 path " + id + " calculated=" + calculated + " status=" + path.status + " metres=" + Length(path).ToString("R"));
-            if (!calculated || path.status != NavMeshPathStatus.PathComplete) return false;
+            if (!NavMesh.CalculatePath(start, h.position, NavMesh.AllAreas, path) || path.status != NavMeshPathStatus.PathComplete) return false;
             p = h.position;
             return true;
         }
