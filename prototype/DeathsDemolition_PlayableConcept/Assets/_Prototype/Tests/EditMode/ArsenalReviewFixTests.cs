@@ -33,15 +33,19 @@ namespace DD.Prototype.Tests.EditMode
         // ------------------------------------------------------------------ #1 parallax
 
         [Test]
-        public void Paralaks_NoktaNamluArkasinda_YaDa12DereceUstu_KameraIsininaDuser()
+        public void Paralaks_NoktaNamluArkasinda_YaDaDibinde_KameraIsininaDuser_YakinHedefNisangahta()
         {
             Vector3 ray = Vector3.forward;
             Vector3 fallback = Vector3.right;
             Assert.AreEqual(ray, PlayerWeaponBinding.ResolveLookAim(new Vector3(0f, 0f, -0.3f), ray, fallback), "nokta namlunun arkasında → kamera ışını");
             Vector3 ok = Quaternion.AngleAxis(8f, Vector3.up) * Vector3.forward * 10f;
             Assert.AreEqual(ok, PlayerWeaponBinding.ResolveLookAim(ok, ray, fallback), "8° → namlu → nokta");
-            Vector3 wide = Quaternion.AngleAxis(20f, Vector3.up) * Vector3.forward * 0.5f;
-            Assert.AreEqual(ray, PlayerWeaponBinding.ResolveLookAim(wide, ray, fallback), "20° > 12° → kamera ışını");
+            Vector3 hugging = Quaternion.AngleAxis(20f, Vector3.up) * Vector3.forward * 0.5f;   // 0.47 m ahead
+            Assert.AreEqual(ray, PlayerWeaponBinding.ResolveLookAim(hugging, ray, fallback), "namlunun 0,5 m önünden yakın nokta (omuzdaki duvar) → kamera ışını");
+            // R1-B W1 (C-00 30.09): a zombie 2 m away with the 0.5 m shoulder offset is ~14° off the camera ray — the shot
+            // must still go muzzle → crosshair (the old 12° guard sent it 0.5 m wide).
+            Vector3 close = new Vector3(-0.5f, 0f, 2f);
+            Assert.AreEqual(close, PlayerWeaponBinding.ResolveLookAim(close, ray, fallback), "yakın hedef (2 m, ~14°) → namlu → nokta");
             Assert.AreEqual(ray, PlayerWeaponBinding.ResolveLookAim(Vector3.zero, ray, fallback), "sıfır → kamera ışını");
             Assert.AreEqual(fallback, PlayerWeaponBinding.ResolveLookAim(Vector3.zero, Vector3.zero, fallback), "ikisi de yok → yön");
         }

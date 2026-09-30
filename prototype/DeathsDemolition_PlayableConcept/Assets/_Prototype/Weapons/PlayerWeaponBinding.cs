@@ -166,17 +166,19 @@ namespace DD.Prototype.Weapons
         }
 
         /// <summary>
-        /// WP-070 §4.4 (review R1-A #1): past this angle between the muzzle → aim-point line and the camera
-        /// ray, the shot flies along the camera ray from the muzzle instead (a point hugging the camera —
-        /// a wall at the player's shoulder, a faded pole — would otherwise send it sideways or backwards).
+        /// WP-070 §4.4 (review R1-A #1, R1-B W1 C-00 30.09): when the aim point sits no further than this ahead of the
+        /// muzzle along the camera ray, the shot flies along the camera ray from the muzzle instead — a point hugging the
+        /// camera (a wall at the player's shoulder, a faded pole) would otherwise send it sideways or backwards. The old
+        /// 12° angle guard also caught every close target: with the 0.55 m shoulder offset a crosshair on a zombie 2 m
+        /// away is ~14° off the camera ray, and the shot flew 0.5 m wide of it.
         /// </summary>
-        [DD.Prototype.Core.Config.PrototypeOnly(DD.Prototype.Core.Config.PendingDecisions.None, "WP-070 §4.4 parallax fallback angle (degrees).", true)]
-        public const float LookParallaxMaxDegrees = 12f;
+        [DD.Prototype.Core.Config.PrototypeOnly(DD.Prototype.Core.Config.PendingDecisions.None, "WP-070 §4.4 parallax fallback: aim point at most this far ahead of the muzzle (m).", true)]
+        public const float LookMinAheadMeters = 0.5f;
 
         /// <summary>
-        /// Look-mode aim: muzzle → aim point when that line agrees with the camera ray (ahead of the muzzle and
-        /// within <see cref="LookParallaxMaxDegrees"/>), otherwise the camera ray's direction; the facing when
-        /// neither exists. Never zero, never behind the camera ray.
+        /// Look-mode aim: muzzle → aim point when the point lies more than <see cref="LookMinAheadMeters"/> ahead of the
+        /// muzzle along the camera ray (the shot meets the crosshair at any range), otherwise the camera ray's direction;
+        /// the facing when neither exists. Never zero, never behind the camera ray.
         /// </summary>
         public static Vector3 ResolveLookAim(Vector3 muzzleToPoint, Vector3 cameraRayDirection, Vector3 fallback)
         {
@@ -191,7 +193,7 @@ namespace DD.Prototype.Weapons
                 return muzzleToPoint;
             }
 
-            if (Vector3.Dot(muzzleToPoint, cameraRayDirection) <= 0f || Vector3.Angle(muzzleToPoint, cameraRayDirection) > LookParallaxMaxDegrees)
+            if (Vector3.Dot(muzzleToPoint, cameraRayDirection.normalized) <= LookMinAheadMeters)
             {
                 return cameraRayDirection;
             }
