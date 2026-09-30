@@ -646,7 +646,7 @@ namespace DD.Prototype.Profile
             for (int i = 0; i < draft.EarnedDefinitions.Count; i++)
             {
                 AchievementDefinition d = draft.EarnedDefinitions[i];
-                draft.NewAchievements.Add(new ProfileUnlockEntry(d.DisplayName, d.Description));
+                draft.NewAchievements.Add(new ProfileUnlockEntry(d.DisplayName, d.Description, ProfileUnlockKind.Achievement, d.Id));
             }
 
             // WP-077: Ash + mastery, after the achievements this run earned (their rarity Ash counts).
@@ -658,7 +658,7 @@ namespace DD.Prototype.Profile
             for (int i = 0; i < draft.OpenedContent.Count; i++)
             {
                 UnlockDefinition u = draft.OpenedContent[i];
-                draft.NewUnlocks.Add(new ProfileUnlockEntry(u.DisplayName, u.Detail));
+                draft.NewUnlocks.Add(new ProfileUnlockEntry(u.DisplayName, u.Detail, ProfileUnlockKind.Content, u.Id));
             }
 
             // The high-water mark advances in the SAME candidate as the rewards: they reach

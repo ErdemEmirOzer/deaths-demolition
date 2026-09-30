@@ -5,6 +5,17 @@ using UnityEngine;
 
 namespace DD.Prototype.Profile
 {
+    /// <summary>WP-068 R1-E: what a <see cref="ProfileUnlockEntry"/> granted, so a reader resolves it by identity, never by its English copy.</summary>
+    public enum ProfileUnlockKind
+    {
+        /// <summary>A hand-built entry with no identity (tests, older callers): readers show its copy as is.</summary>
+        Unknown = 0,
+        Weapon = 1,
+        Branch = 2,
+        Content = 3,
+        Achievement = 4
+    }
+
     /// <summary>One line in the "Newly Unlocked Content" or "Achievements Earned" list.</summary>
     public struct ProfileUnlockEntry
     {
@@ -14,10 +25,26 @@ namespace DD.Prototype.Profile
         /// <summary>English one-liner, e.g. "Classic weapon - now selectable before a run".</summary>
         public string Detail;
 
+        /// <summary>WP-068 R1-E: the kind of grant; <see cref="ProfileUnlockKind.Unknown"/> for the two-argument form.</summary>
+        public ProfileUnlockKind Kind;
+
+        /// <summary>
+        /// WP-068 R1-E: the granted id - the weapon's saved key ("ar_1"), the branch's enum name, the unlock catalog id or
+        /// the achievement id; empty for <see cref="ProfileUnlockKind.Unknown"/>.
+        /// </summary>
+        public string Id;
+
         public ProfileUnlockEntry(string title, string detail)
+            : this(title, detail, ProfileUnlockKind.Unknown, string.Empty)
+        {
+        }
+
+        public ProfileUnlockEntry(string title, string detail, ProfileUnlockKind kind, string id)
         {
             Title = title;
             Detail = detail;
+            Kind = kind;
+            Id = id ?? string.Empty;
         }
     }
 

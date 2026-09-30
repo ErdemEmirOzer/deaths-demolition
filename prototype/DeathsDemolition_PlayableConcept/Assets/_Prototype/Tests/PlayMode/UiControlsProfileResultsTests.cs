@@ -156,7 +156,7 @@ namespace DD.Prototype.Tests.PlayMode
             UiCosmeticLine title = new UiCosmeticLine(ProfileService.CosmeticsSource.Titles[0]);
             string expectedTitle = language == UiStrings.Turkish ? "Unvan: Blooded" : "Title: Blooded";
             Assert.AreEqual(expectedTitle, title.Title);
-            Assert.AreEqual(language == UiStrings.Turkish ? "Profil unvanı - profil bölmesi unvanları desteklediğinde adının yanında gösterilir" : UnlockCatalog.Find(title.Id).Detail, title.Detail);
+            Assert.AreEqual(language == UiStrings.Turkish ? UiStrings.Get("profile.content." + title.Id + ".detail") : UnlockCatalog.Find(title.Id).Detail, title.Detail);
             Assert.IsTrue(Contains(menu, "Blooded"), "Profile retains the existing cosmetic identity name.");
             UiUnlockLine branch = ProfileViewModel.From(ProfileService.Current, ProfileServiceLookup.Instance).Unlocks.Find(x => x.Title != null && x.Title.Contains(language == UiStrings.Turkish ? "Zincir" : "Chain"));
             Assert.IsNotNull(branch.Title, "The existing Chain unlock branch uses the language key.");
@@ -174,8 +174,8 @@ namespace DD.Prototype.Tests.PlayMode
             MethodInfo builder = typeof(ResultsScreen).GetMethod("BuildRewardEntry", BindingFlags.NonPublic | BindingFlags.Instance);
             foreach (ProfileUnlockEntry entry in new[]
             {
-                new ProfileUnlockEntry("Yabusame", "Classic weapon - selectable before your next run"),
-                new ProfileUnlockEntry("First Blood", "Defeat your first enemy.")
+                new ProfileUnlockEntry("Yabusame", "Classic weapon - selectable before your next run", ProfileUnlockKind.Weapon, "sr_1"),
+                new ProfileUnlockEntry("First Blood", "Defeat your first enemy.", ProfileUnlockKind.Achievement, "first_blood")
             })
             {
                 RectTransform card = (RectTransform)builder.Invoke(results, new object[] { host, entry, entry.Title == "First Blood" ? UiColor.StateSuccess : UiColor.TextSecondary });
@@ -183,8 +183,8 @@ namespace DD.Prototype.Tests.PlayMode
                 cards.Gap(UiSpace.S);
             }
             Canvas.ForceUpdateCanvases();
-            Assert.IsTrue(Contains(results, language == UiStrings.Turkish ? "Klasik silah - sonraki koşudan önce seçilebilir" : "Classic weapon - selectable before your next run"));
-            Assert.IsTrue(Contains(results, language == UiStrings.Turkish ? "İlk düşmanını yen." : "Defeat your first enemy."));
+            Assert.IsTrue(Contains(results, language == UiStrings.Turkish ? UiStrings.Get("results.reward.weapon_selectable") : "Classic weapon - selectable before your next run"));
+            Assert.IsTrue(Contains(results, language == UiStrings.Turkish ? UiStrings.Get("achievement.first_blood.desc") : "Defeat your first enemy."));
             foreach (TMP_Text text in host.GetComponentsInChildren<TMP_Text>())
                 if (text.name == "Detail") AssertFits(text);
             CheckAllCatalogCopy(language);
@@ -195,14 +195,17 @@ namespace DD.Prototype.Tests.PlayMode
         {
             Type copy = typeof(ProfileViewModel).Assembly.GetType("DD.Prototype.UI.ProfileContentCopy");
             MethodInfo method = copy.GetMethod("RewardDetail", BindingFlags.Static | BindingFlags.Public);
-            foreach (UnlockDefinition entry in UnlockCatalog.Entries) CheckCopy(method, entry.DisplayName, entry.Detail, language);
-            foreach (AchievementDefinition entry in AchievementCatalog.Definitions) CheckCopy(method, entry.DisplayName, entry.Description, language);
-            Assert.AreEqual("Future detail {unknown}", method.Invoke(null, new object[] { "Unknown future identity", "Future detail {unknown}" }), "Unknown content remains unchanged.");
+            foreach (UnlockDefinition entry in UnlockCatalog.Entries)
+                CheckCopy(method, new ProfileUnlockEntry(entry.DisplayName, entry.Detail, ProfileUnlockKind.Content, entry.Id), language);
+            foreach (AchievementDefinition entry in AchievementCatalog.Definitions)
+                CheckCopy(method, new ProfileUnlockEntry(entry.DisplayName, entry.Description, ProfileUnlockKind.Achievement, entry.Id), language);
+            Assert.AreEqual("Future detail {unknown}", method.Invoke(null, new object[] { new ProfileUnlockEntry("Unknown future identity", "Future detail {unknown}") }), "Unknown content remains unchanged.");
         }
 
-        private static void CheckCopy(MethodInfo method, string title, string source, string language)
+        private static void CheckCopy(MethodInfo method, ProfileUnlockEntry entry, string language)
         {
-            string value = (string)method.Invoke(null, new object[] { title, source });
+            string title = entry.Title, source = entry.Detail;
+            string value = (string)method.Invoke(null, new object[] { entry });
             if (language == UiStrings.English) Assert.AreEqual(source, value, title);
             else
             {

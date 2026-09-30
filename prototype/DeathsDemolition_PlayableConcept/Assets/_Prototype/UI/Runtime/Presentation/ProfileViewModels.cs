@@ -537,14 +537,26 @@ namespace DD.Prototype.UI
             return UiStrings.Get(key, fallback);
         }
 
+        // WP-068 R1-E: every lookup below goes by identity (a cosmetic's kind, a catalog id and its type/condition, a reward's
+        // ProfileUnlockKind + id), never by comparing English copy; English shows the data as is, and anything without an
+        // identity or a key keeps its English text.
+
         public static string CosmeticTitle(CosmeticEntry entry)
         {
             string title = entry.Title ?? string.Empty;
-            if (UiStrings.Language != UiStrings.Turkish) return title;
-            string prefix = entry.Kind == CosmeticKind.Title ? "Title: " : entry.Kind == CosmeticKind.Badge ? "Badge: " : null;
-            if (prefix == null || !title.StartsWith(prefix, StringComparison.Ordinal)) return title;
+            if (UiStrings.Language != UiStrings.Turkish || entry.Kind == CosmeticKind.Skin) return title;
+            string name = CosmeticName(title);
+            if (name.Length == title.Length) return title;
             return UiStrings.Format(entry.Kind == CosmeticKind.Title ? "profile.cosmetic.title_format" : "profile.cosmetic.badge_format",
-                "name", title.Substring(prefix.Length), title);
+                "name", name, title);
+        }
+
+        /// <summary>A title / badge name without its data kind label (Title: Blooded → Blooded), the way the pickers show it.</summary>
+        public static string CosmeticName(string title)
+        {
+            title = title ?? string.Empty;
+            int colon = title.IndexOf(": ", StringComparison.Ordinal);
+            return colon > 0 && colon < 12 ? title.Substring(colon + 2) : title;
         }
 
         public static string UnlockDetail(string id, string fallback)
@@ -552,8 +564,8 @@ namespace DD.Prototype.UI
             if (UiStrings.Language != UiStrings.Turkish) return fallback;
             UnlockDefinition definition = UnlockCatalog.Find(id);
             if (definition == null) return fallback;
-            if (definition.Type == UnlockContentType.Weapon &&
-                fallback == "Classic weapon - opens at profile level " + definition.NumericKey + " (weapon roster)")
+            // A roster weapon is the one catalog weapon kind: a level condition whose level is its numeric key.
+            if (definition.Type == UnlockContentType.Weapon && definition.Condition == UnlockCondition.Level)
             {
                 return UiStrings.Format("results.reward.weapon_roster", "level", definition.NumericKey.ToString(), fallback);
             }
@@ -563,27 +575,49 @@ namespace DD.Prototype.UI
             return UiStrings.Format("profile.content." + id + ".detail", "count", count, fallback);
         }
 
-        public static string RewardDetail(string title, string fallback)
+        /// <summary>A Results reward card's name: a branch takes its language name; weapons and achievements keep theirs.</summary>
+        public static string RewardTitle(ProfileUnlockEntry entry)
         {
+            string title = entry.Title ?? string.Empty;
+            if (UiStrings.Language != UiStrings.Turkish || entry.Kind != ProfileUnlockKind.Branch) return title;
+            return Enum.TryParse(entry.Id, false, out UpgradeBranch branch) && Enum.IsDefined(typeof(UpgradeBranch), branch)
+                ? BranchName(branch, title)
+                : title;
+        }
+
+        public static string RewardDetail(ProfileUnlockEntry entry)
+        {
+            string fallback = entry.Detail ?? string.Empty;
             if (UiStrings.Language != UiStrings.Turkish) return fallback;
-            if (fallback == "Classic weapon - selectable before your next run")
-                return UiStrings.Get("results.reward.weapon_selectable", fallback);
-            if (fallback == "Upgrade branch - can now be offered at the end of a round")
-                return UiStrings.Get("results.reward.branch_offered", fallback);
-            foreach (UnlockDefinition definition in UnlockCatalog.Entries)
+            switch (entry.Kind)
             {
-                if (definition.DisplayName == title && definition.Detail == fallback)
-                    return UnlockDetail(definition.Id, fallback);
+                case ProfileUnlockKind.Weapon:
+                    return UiStrings.Get("results.reward.weapon_selectable", fallback);
+                case ProfileUnlockKind.Branch:
+                    return UiStrings.Get("results.reward.branch_offered", fallback);
+                case ProfileUnlockKind.Content:
+                    return UnlockDetail(entry.Id, fallback);
+                case ProfileUnlockKind.Achievement:
+                    return AchievementDetail(entry.Id, fallback);
+                default:
+                    return fallback;
             }
-            foreach (AchievementDefinition definition in AchievementCatalog.Definitions)
+        }
+
+        private static string AchievementDetail(string id, string fallback)
+        {
+            if (string.IsNullOrEmpty(id)) return fallback;
+            // The old Namekuji key describes the player sliding; this catalog reward describes enemies sliding.
+            string key = id == "namekuji_skater" ? "results.reward.achievement.namekuji_skater.desc" : "achievement." + id + ".desc";
+            string copy = UiStrings.Get(key, fallback);
+            AchievementDefinition definition = AchievementCatalog.Find(id);
+            if (definition != null)
             {
-                if (definition.DisplayName != title || definition.Description != fallback) continue;
-                // The old Namekuji key describes the player sliding; this catalog reward describes enemies sliding.
-                string key = definition.Id == "namekuji_skater" ? "results.reward.achievement.namekuji_skater.desc" : "achievement." + definition.Id + ".desc";
-                string copy = UiStrings.Get(key, fallback);
-                return copy.Replace("{count}", definition.Threshold.ToString()).Replace("{round}", definition.Threshold.ToString());
+                string threshold = definition.Threshold.ToString();
+                copy = copy.Replace("{count}", threshold).Replace("{round}", threshold);
             }
-            return fallback;
+            // A threshold the catalog cannot supply never reaches the card as a raw token.
+            return copy.IndexOf('{') >= 0 ? fallback : copy;
         }
     }
 }

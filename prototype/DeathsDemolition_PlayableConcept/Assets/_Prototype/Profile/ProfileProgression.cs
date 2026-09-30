@@ -345,7 +345,8 @@ namespace DD.Prototype.Profile
                 {
                     newlyUnlocked.Add(new ProfileUnlockEntry(
                         ladder.WeaponDisplayName(id),
-                        "Classic weapon - selectable before your next run"));
+                        "Classic weapon - selectable before your next run",
+                        ProfileUnlockKind.Weapon, NameOf(id)));
                 }
             }
 
@@ -362,7 +363,8 @@ namespace DD.Prototype.Profile
                 {
                     newlyUnlocked.Add(new ProfileUnlockEntry(
                         ladder.BranchDisplayName(branch),
-                        "Upgrade branch - can now be offered at the end of a round"));
+                        "Upgrade branch - can now be offered at the end of a round",
+                        ProfileUnlockKind.Branch, NameOf(branch)));
                 }
             }
         }
@@ -455,7 +457,8 @@ namespace DD.Prototype.Profile
                 {
                     earned.Add(new ProfileUnlockEntry(
                         string.IsNullOrEmpty(definition.DisplayName) ? definition.Id : definition.DisplayName,
-                        definition.Description ?? string.Empty));
+                        definition.Description ?? string.Empty,
+                        ProfileUnlockKind.Achievement, definition.Id));
                 }
             }
         }

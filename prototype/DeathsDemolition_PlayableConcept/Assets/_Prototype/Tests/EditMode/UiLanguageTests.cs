@@ -1,6 +1,9 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using System.Text.RegularExpressions;
+using DD.Prototype.Achievements;
+using DD.Prototype.Profile;
 using DD.Prototype.UI;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Core.InputAbstraction;
@@ -254,6 +257,111 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(UiStrings.Get("hud.status.down"), RunHudViewModel.DeathLine(null));
             UiStrings.Language = UiStrings.English;
             Assert.AreEqual("DOWN  ·  killed by a Standard's swipe", RunHudViewModel.DeathLine("Zombie.Standard.Swipe"));
+        }
+
+        // ------------------------------------------------------------ WP-068 R1-E E2: profile copy by identity
+
+        private static object Copy(string method, object argument)
+        {
+            System.Type copy = typeof(ProfileViewModel).Assembly.GetType("DD.Prototype.UI.ProfileContentCopy");
+            Assert.IsNotNull(copy, "ProfileContentCopy");
+            MethodInfo info = copy.GetMethod(method, BindingFlags.Static | BindingFlags.Public);
+            Assert.IsNotNull(info, method);
+            return info.Invoke(null, new[] { argument });
+        }
+
+        [Test]
+        public void ProfilOdulu_TR_KimlikleCevrilir_IngilizceMetinEslesmesiYok_ENVeriKalir()
+        {
+            const string reworded = "Reworded English line";
+            UiStrings.Language = UiStrings.Turkish;
+            // The identity decides, not the English copy: a reworded English line still gets its key ...
+            Assert.AreEqual(UiStrings.Get("results.reward.weapon_selectable"), Copy("RewardDetail", new ProfileUnlockEntry("Kodo", reworded, ProfileUnlockKind.Weapon, "ar_1")));
+            Assert.AreEqual(UiStrings.Get("results.reward.branch_offered"), Copy("RewardDetail", new ProfileUnlockEntry("Chain", reworded, ProfileUnlockKind.Branch, "Chain")));
+            Assert.AreEqual(UiStrings.Get("tree.run.branch.chain.name"), Copy("RewardTitle", new ProfileUnlockEntry("Chain", reworded, ProfileUnlockKind.Branch, "Chain")));
+            Assert.AreEqual("Kodo", Copy("RewardTitle", new ProfileUnlockEntry("Kodo", reworded, ProfileUnlockKind.Weapon, "ar_1")), "weapon names are identity");
+            Assert.AreEqual("Mystery", Copy("RewardTitle", new ProfileUnlockEntry("Mystery", reworded, ProfileUnlockKind.Branch, "NotABranch")), "an unknown branch id keeps its name");
+            // ... and the old English line without an identity is no longer recognised: it shows as is.
+            Assert.AreEqual("Classic weapon - selectable before your next run",
+                Copy("RewardDetail", new ProfileUnlockEntry("Kodo", "Classic weapon - selectable before your next run")));
+            Assert.AreEqual(reworded, Copy("RewardDetail", new ProfileUnlockEntry("First Blood", reworded, ProfileUnlockKind.Achievement, "no_such_achievement")));
+
+            int roster = 0;
+            foreach (UnlockDefinition d in UnlockCatalog.Entries)
+            {
+                string tr = (string)Copy("RewardDetail", new ProfileUnlockEntry(d.DisplayName, reworded, ProfileUnlockKind.Content, d.Id));
+                Assert.AreNotEqual(reworded, tr, d.Id + " has its key");
+                StringAssert.DoesNotContain("{", tr, d.Id);
+                if (d.Type == UnlockContentType.Weapon && d.Condition == UnlockCondition.Level)
+                {
+                    roster++;
+                    Assert.AreEqual(UiStrings.Format("results.reward.weapon_roster", "level", d.NumericKey.ToString()), tr, d.Id);
+                }
+            }
+
+            if (DD.Prototype.Core.Weapons.WeaponRoster.Enabled.Count > 0)
+            {
+                Assert.Greater(roster, 0, "roster weapons are read by type + condition");
+            }
+
+            foreach (AchievementDefinition d in AchievementCatalog.Definitions)
+            {
+                string tr = (string)Copy("RewardDetail", new ProfileUnlockEntry(d.DisplayName, reworded, ProfileUnlockKind.Achievement, d.Id));
+                Assert.AreNotEqual(reworded, tr, d.Id + " has its key");
+                StringAssert.DoesNotContain("{", tr, d.Id);
+            }
+
+            UiStrings.Language = UiStrings.English;
+            Assert.AreEqual(reworded, Copy("RewardDetail", new ProfileUnlockEntry("Chain", reworded, ProfileUnlockKind.Branch, "Chain")), "English shows the data");
+            Assert.AreEqual("Chain", Copy("RewardTitle", new ProfileUnlockEntry("Chain", reworded, ProfileUnlockKind.Branch, "Chain")));
+            Assert.AreEqual(reworded, Copy("RewardDetail", new ProfileUnlockEntry("First Blood", reworded, ProfileUnlockKind.Achievement, "first_blood")));
+        }
+
+        [Test]
+        public void Kozmetik_TR_TurAnahtariyla_AdKimlikKalir_ENVeriKalir()
+        {
+            var title = new CosmeticEntry("title_first_blood", CosmeticKind.Title, "Title: Blooded", "d", true, false, false);
+            var badge = new CosmeticEntry("badge_ghost", CosmeticKind.Badge, "Badge: Ghost", "d", true, false, false);
+            UiStrings.Language = UiStrings.Turkish;
+            Assert.AreEqual(UiStrings.Format("profile.cosmetic.title_format", "name", "Blooded"), Copy("CosmeticTitle", title));
+            Assert.AreEqual(UiStrings.Format("profile.cosmetic.badge_format", "name", "Ghost"), Copy("CosmeticTitle", badge));
+            Assert.AreEqual("Blooded", Copy("CosmeticTitle", new CosmeticEntry("x", CosmeticKind.Title, "Blooded", "d", true, false, false)), "no kind label: the name as is");
+            Assert.AreEqual("Ivory: Crimson", Copy("CosmeticTitle", new CosmeticEntry("s", CosmeticKind.Skin, "Ivory: Crimson", "d", true, false, false)), "skins untouched");
+            UiStrings.Language = UiStrings.English;
+            Assert.AreEqual("Title: Blooded", Copy("CosmeticTitle", title));
+        }
+
+        [Test]
+        public void ProfilOdulu_Uretici_TurVeKimlikTasir()
+        {
+            var ladder = new AllAtOneLadder();
+            var profile = new ProfileData { ProfileLineageId = ProfileData.NewLineageId(), ProfileLevel = 1 };
+            var granted = new List<ProfileUnlockEntry>();
+            ProfileProgression.GrantUnlocksForLevel(profile, ladder, granted);
+            Assert.Greater(granted.Count, 0);
+            foreach (ProfileUnlockEntry e in granted)
+            {
+                Assert.That(e.Kind, Is.EqualTo(ProfileUnlockKind.Weapon).Or.EqualTo(ProfileUnlockKind.Branch), e.Title);
+                Assert.IsNotEmpty(e.Id, e.Title);
+                if (e.Kind == ProfileUnlockKind.Branch)
+                    Assert.IsTrue(System.Enum.IsDefined(typeof(UpgradeBranch), System.Enum.Parse(typeof(UpgradeBranch), e.Id)), e.Id);
+                else
+                    Assert.IsTrue(profile.UnlockedWeapons.Contains(e.Id), "the weapon id is its saved key: " + e.Id);
+            }
+
+            // Source census: the copy never compares English lines (the brittle 3c0875e1 form).
+            string source = File.ReadAllText(Path.Combine(Application.dataPath, "_Prototype", "UI", "Runtime", "Presentation", "ProfileViewModels.cs"));
+            string copy = source.Substring(source.IndexOf("internal static class ProfileContentCopy", System.StringComparison.Ordinal));
+            foreach (string english in new[] { "\"Classic weapon", "\"Upgrade branch", "\"Title: ", "\"Badge: ", "Detail ==", "DisplayName ==", "Description ==" })
+                StringAssert.DoesNotContain(english, copy);
+        }
+
+        private sealed class AllAtOneLadder : IUnlockLadder
+        {
+            public int UnlockLevelFor(ClassicWeaponId id) { return 1; }
+            public int UnlockLevelFor(UpgradeBranch branch) { return 1; }
+            public string WeaponDisplayName(ClassicWeaponId id) { return id.ToString(); }
+            public string BranchDisplayName(UpgradeBranch branch) { return branch.ToString(); }
         }
     }
 }

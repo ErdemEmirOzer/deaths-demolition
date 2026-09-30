@@ -515,14 +515,10 @@ namespace DD.Prototype.UI
             markRect.anchoredPosition = Vector2.zero;
 
             float textLeft = markSize + (int)UiSpace.M;
-            string titleText = entry.Title;
+            string titleText = ProfileContentCopy.RewardTitle(entry);
             if (!string.IsNullOrEmpty(typeLabel))
             {
-                int colon = titleText.IndexOf(": ", System.StringComparison.Ordinal);
-                if (colon > 0 && colon < 12)
-                {
-                    titleText = titleText.Substring(colon + 2);
-                }
+                titleText = ProfileContentCopy.CosmeticName(titleText);
             }
 
             TMP_Text title = UiFactory.Label("Title", content, UiFactory.Clip(titleText, 32), UiType.BodyStrong, nameColour, TextAnchor.LowerLeft);
@@ -530,7 +526,7 @@ namespace DD.Prototype.UI
             titleRect.offsetMin = new Vector2(textLeft, UiFactory.ScaledBand(RewardDetailBand));
             titleRect.offsetMax = new Vector2(-64f, 0f);
 
-            string localizedDetail = ProfileContentCopy.RewardDetail(entry.Title, entry.Detail);
+            string localizedDetail = ProfileContentCopy.RewardDetail(entry);
             string detailText = string.IsNullOrEmpty(typeLabel) ? localizedDetail : typeLabel + "  ·  " + localizedDetail;
             TMP_Text detail = UiFactory.Label("Detail", content, UiFactory.Clip(detailText, 120), UiType.Caption, UiColor.TextSecondary, TextAnchor.UpperLeft);
             RectTransform detailRect = UiFactory.Fill((RectTransform)detail.transform);
