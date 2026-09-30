@@ -1,4 +1,4 @@
-# WP-078 — M4-R1 kabul planı · S-10 · v2 2026-09-30 (v1 2026-09-24)
+# WP-078 — M4-R1 kabul planı · S-10 · v2.1 2026-09-30 (v1 2026-09-24; v2.1 = C-00 K1–K9 kararları)
 
 Paket sahibi: S-10 · Koordinasyon: C-00 · Durum: **koşu planı; kabul koşusu P1–P13 teslim edilip tek FINAL commit belirlenince** (C-00 30.09, P14). v2 güncel main `422de54a`'ya göre yazıldı; v1'den farklar §11.
 Çerçeve (karar önceliği: PROJE-SISTEM-PROMPTU §0.3): **DEC-091** (soak kararlılık MUST, gerçek bot rapor), **DEC-092** (Yüksek 60 fps), **DEC-093** (release ≤ 5 GB), **DEC-095/098** (iki katmanlı ağaç), **DEC-097/099** (arsenal + Special cephane/süre), **DEC-100** (varsayılan Sinematik 30 fps, kapı), `QUALITY-TIERS-V2.md`, WP-070 §11–§12, WP-074 B9, `tools/qa/wp078-report-contract.md` (A8 üretici). Bu belge karar/gereksinim metni değiştirmez; eşikler kaynaktan alıntıdır; karar gerektirenler §10'dadır.
@@ -49,8 +49,8 @@ Kural: sahip testi birincil kanıt (NUnit XML, `wp078_report.A3_REQUIRED_TEST_ID
 | zombieAttacks | 5 stil, tier izinleri (DEC-096) | ölüm nedeni dağılımı (rapor) |
 | animation | kadans bandı, 4 ölüm ailesi | `[Ragdoll] families` |
 | camera (WP-070 K1–K9) | TopDown regresyonu, D-20 nişan | A2 + A4 |
-| world (WP-074 B2/B9) | 18 kapı yolu | A5 (oda içi takılma > 5 s = 0) |
-| aiFlags | `-ddAiV3 0/1` (**main'de var olan tek bayrak**; v1'deki `-ddRagdoll/-ddCorpseLinger/-ddChainHops/-ddGelPuddles/-ddCrowdNeighbours/-ddSpawnLos` kodda yok) | `-ddAiV3 0` ve `1` ile birer 1 round Player dumanı (§10 K4) |
+| world (WP-074 B2/B9, WP-070 K2) | 18 kapı yolu | **paket kapısı (C-00 30.09 K6):** A2 + A5 player.log'larında aynı noktada ≥ 5 s takılma kümesi 0 (`tools/qa/stuck_clusters.py`; `time=` alanı olmayan log → "ölçülmedi", PASS değil) |
+| aiFlags | `-ddAiV3 0/1` (K4: tek bayrak, 2 koşu; kod↔liste testi) · diğer 6 bayrak **KNOWN OPEN** (spesifikasyonda var, kodda yok; `-ddChainHops`/`-ddGelPuddles` DEC-097/099 ile emekli; `-ddRagdoll` S-06, `-ddCorpseLinger/-ddCrowdNeighbours/-ddSpawnLos` S-03 → R2 ya da yazılı geri çekme) | `-ddAiV3 0` ve `1` ile birer 1 round Player dumanı |
 | progression (DEC-095/098) | ağaç sim kabulü (S-04), `ApplyRun` sırası | `[Progress]` 5 gerçek bot koşusundan (bot koşu kapanışı main'de: `e5888d47`) |
 | audio | World kapasitesi, ses CPU | perf matrisinde ses payı (rapor) |
 | ui | ADR-024-2 tarama 0 | — |
@@ -58,15 +58,16 @@ Kural: sahip testi birincil kanıt (NUnit XML, `wp078_report.A3_REQUIRED_TEST_ID
 
 ## 4 · Perf ölçüm protokolü (A4)
 
-Eşikler **veriden**: `tools/qa/perf-targets.json` — Sinematik ≤ 33,3 / p99 ≤ 40 (DEC-100, **kapı**) · Yüksek ≤ 16,6 / 20 (DEC-092, kapı) · Performans ≤ 8,0 / 10 (kapı). **Uyarı:** takılma eşiği tüm kademelerde `stallMs` 33,33; süzülmüş p99 bu karelerin dışında hesaplandığı için Sinematik'in p99 ≤ 40 sınırı hiç bağlamaz, gerçek kısıt "> 33,33 ms kare ≤ %1" olur → §10 K9. 3 kademe × 3 mod = 9 hücre, **her hücre ≥ 3 tam pencere** (27). Her tam pencere sayılır, en iyisi seçilmez; iptal yalnız host nedeniyle (`attempts-ledger.jsonl`: `preflight-failed` exit 75, ya da `failed` + `hostClean:false`).
+Eşikler **veriden**: `tools/qa/perf-targets.json` — Sinematik ≤ 33,3 / p99 ≤ 40 (DEC-100, **kapı**) · Yüksek ≤ 16,6 / 20 (DEC-092, kapı) · Performans ≤ 8,0 / 10 (kapı). Takılma eşiği kademe başına (K9): `tiers.<kademe>.stallMs` Sinematik 40, Yüksek/Performans 33,33; takılma sayısı ve süzülmüş p99 hash bağlı `frame-times-ms.csv`'den bu eşikle yeniden hesaplanır (probe'un yerel 33,33 alanları çapraz kontrol). Her pencere ham p99, p99,9, maks ve > 33,33 ms oranını raporlar; ham p99 DEC sınırını aşıp süzülmüş p99 geçiyorsa (`rawP99OverLimit`) C-00 🔴 olarak kullanıcıya taşır. 3 kademe × 3 mod = 9 hücre, **her hücre ≥ 3 tam pencere** (27). Her tam pencere sayılır, en iyisi seçilmez; iptal yalnız host nedeniyle (K8): (a) `preflight-failed` ∧ exit 75, (b) `failed` ∧ hostClean false ∧ timedOut false ∧ exit 0 ∧ missingArtifacts []; diğer her tamamlanmamış deneme FAIL. FINAL başına tek kök + tek defter; iptal edilen pencere aynı kökte sıradaki boş indeksle yeniden koşulur, hücre ≥ 3 sayılan pencereye ulaşana dek (`wp078_perf.py --max-discards`). İptaller hücre başına raporlanır.
 Senaryo: PilotPerfProbe `Run`, 1920×1080, tam 40 aktif, 10 s ısınma + 60 s pencere, `-ddQualityTier`, `-ddCameraMode`, TP/FP `-ddPilotCameraSweep 1`, `-ddUiDataRoot`, `-ddTelemetryDir`; guard `--scope player` (92eb636e: 30 BLOCKED / 31 STOP yukarı taşınır).
 Sessiz pencere (C-00 26.09): koşucu player slotunu ve **üç** Unity slotunu tutar; her pencereden önce load1 < 6, yabancı Unity/Player 0; ≤ 25 dk parti + 180 s ara; `wp064_run --load-max 6`. Kirli ölçüm kapı değildir.
-Build: kapı sayıları **release-probe**'dan (§10 K1). Kayıt: model, macOS, güç, ısıl durum, load1.
+Build: **bot koşuları dev'de, perf kapısı release-probe'da; dev ölçümü yalnız A/B deltasıdır ve probe FAIL'ini örtmez** (K1). A4 `buildRole == probe`, her pencerenin binarySha256'sı probe build'ine eşit; A6 release-probe paritesi (development=false, LZ4HC, sahne listesi ve scripting backend release ile eşit). DEC-088/WP-044 tabanıyla karşılaştırmalar build türüyle yazılır. Kayıt: model, macOS, güç, ısıl durum, load1.
 
 ## 5 · Soak (A5, DEC-091)
 
 Tek FINAL commit; kararlılık **MUST**: tohum 61 + 26 × 12/12, `-ddQaBotStability`, tepeden, V6 (`WorldBounds` 55), kademe **Sinematik** (DEC-100 varsayılan; §10 K5), sıralı 12/12 ve zaman aşımı 0 (DEC-091 "takılma 0" = takılan round), Player logunda hata 0, bellek **büyümesi** (r2 tabanlı: Mono ≤ 48 MB ve ≤ 4 MB/round, toplam ayırma ≤ 256 MB, RSS ≤ 512 MB; RSS okunamazsa −1 = "yok"), guard OK, temiz host. Kapı `soak_gate.py --stability`.
-Rapor (kapı değil): gerçek bot tepeden ≥ 5 + TP ≥ 2 + FP ≥ 2; TP/FP ve Sinematik-dışı kararlılık gözlemleri; `[OutOfWorld] stuckRemove` koşu başına > 2 → S-03 bileti; `stuckRecoveries` (botun kendi takılma kurtarması) sayılır, kapı değildir (§10 K6).
+Kademe ve dünya bot özetinden (`qualityTier == Sinematik`, `worldHalfExtent == 55`; alan yoksa BLOCKED), soak komutu `-ddQualityTier sinematik`'i açıkça verir (K5); bellek ve log eşikleri koşudan önce donmuştur. 30 fps'te round süresinin 420 s zaman aşımına kalan payı raporlanır.
+Rapor (kapı değil): gerçek bot tepeden ≥ 5 + TP ≥ 2 + FP ≥ 2; TP/FP ve Sinematik-dışı (Yüksek/Performans) kararlılık gözlemleri (K3 kullanıcıda); `[OutOfWorld] stuckRemove` koşu başına > 2 → S-03 bileti; `stuckRecoveries` + `unstickSweeps` (botun kendi kurtarmaları) raporlanır, kapı değildir (K6).
 
 ## 6 · Build ve boyut (A6)
 
@@ -88,17 +89,17 @@ Her Player/PlayMode koşusu `tools/userdata-guard.sh` snapshot → koşu → res
 
 `wp078_report.py` (5e71a508; şema `dd-wp078-acceptance-v1`): manifest + kanıt kökü → `wp078-report.json`; eksik kanıt BLOCKED, kanıtlı ihlal FAIL, FAIL→sahip (bilinmiyorsa UNKNOWN). C-00'a ≤ 10 satır + FAIL→sahip tablosu. Kanıt `KADRO/…/wp-078/evidence/<FINAL>/`.
 
-## 10 · Kararlar (öneri; C-00 yetkisi K1–K2, K4–K9 · kullanıcı K3)
+## 10 · Kararlar (C-00 30.09 kaydı `K/c-00/WP-078-K-KARARLARI-2026-09-30.md`: K1, K2, K4–K6, K8, K9 kabul (değişiklikle); K7 → S-01 (5 GB = 5 000 000 000 B); K3 kullanıcıda)
 
 - **K1 Kapı perf'i release-probe'dan** — öneri **EVET**. Kullanıcının oynadığı build release'tir; dev build (DEVELOPMENT_BUILD) ek iz/ayırma yükü ve p99 sıçramaları taşır (WP-070 dev ölçümünde p99 kapıyı karartmıştı); release-probe = release ayarları + yalnız sonda (`DD_PERF_PROBE`), dağıtılmaz. Dev ölçüm yalnız özellik A/B deltaları için. **Çakışma:** `wp078_report` A6 probe build'i `mode == "dev"` bekliyor, `DdBuild` ise `release-probe` yazıyor → K1 kabul edilirse üretici hizalanmalı.
-- **K2 Hücre başına 3 pencere** — öneri **EVET** (sözleşme tabanı 2). En iyi pencere seçilmediği için 3 pencere tek pencerelik host gürültüsünü kapıda görünür kılar; 27 pencere ≈ 70 dk sessiz pencerede yapılabilir.
+- **K2 Hücre başına 3 pencere** — **onaylandı**; `perf-targets minWindows 3` + contract `≥ 3` + PROJE-SISTEM-PROMPTU §15 ile zaten yürürlükte. En iyi pencere seçilmediği için 3 pencere tek pencerelik host gürültüsünü kapıda görünür kılar; 27 pencere ≈ 70 dk sessiz pencerede yapılabilir.
 - **K3 TP/FP kararlılık MUST mu (kullanıcı) — etki notu:** MUST olursa DEC-091 değişir; kabul koşusuna 2 tohum × 2 mod × 12 round (≈ 100 dk sessiz makine) eklenir ve TP/FP'ye özgü takılma/kamera bulguları R1 kapanışını durdurur. Rapor kalırsa aynı koşular yine yapılır, bulgular sahiplere bilet olur ama release'i bekletmez. S-10 önerisi: R1'de rapor, R2'de MUST'a yükseltme kullanıcıya sorulsun (TP/FP ilk turunda; bot TP/FP kısa koşuları PASS).
 - **K4 AI bayrak dumanı** — A3 `aiFlags` = main'de var olan bayraklar (bugün yalnız `-ddAiV3`) × 0/1. v1'deki 6 bayrak kodda yok; `wp078_report` 7 bayrak × 0/1 = 14 koşu istediği için FINAL'da daima BLOCKED olur → üreticinin bayrak listesi koddaki bayraklarla hizalanmalı.
 - **K5 Soak kademesi** — öneri **Sinematik** (DEC-100 varsayılan, kullanıcının oynadığı). `wp078_report` A5 bugün `topdown/Yuksek` bekliyor → Sinematik'e hizalanmalı; ayrıca bot özetinde `qualityTier` alanı yok (yalnız PilotPerfProbe yazar) → §8 D3 eklemeden A5 her tier'de düşer.
 - **K6 `stuckRecoveries = 0` şartı (wp078_report A2 ve A5)** — öneri **rapora çevir**: DEC-091 "zaman aşımı/takılma 0" round takılmasıdır (`fatalStuckSeconds`, timeout); `stuckRecoveries` botun başarılı kendini kurtarmasıdır — 24.09 PASS kararlılık koşularında 15 (tohum 61) ve 27 (tohum 26) idi → icat kapı (H1).
 - **K7 5 GB birimi** — `wp078_report` 5 000 000 000 B, `build.sh` 5120 MB; release ≈ 1,1 GB → pratik etkisi yok; birim C-00 kaydıyla sabitlenmeli.
 - **K8 Host-iptal defteri** — `wp078_report` defter girdisi almıyor ve tamamlanmamış her `perf-*` denemesini FAIL sayıyor (contract "C-00 defteri" diyor, kod yok). Öneri: `wp064_run`'ın `attempts-ledger.jsonl` kayıtları (`preflight-failed` exit 75; `failed` + `hostClean:false`) host-iptal defteri olarak okunsun; aksi hâlde yüklü makinede tek iptal A4'ü kalıcı olarak FAIL bırakır.
-- **K9 Kademe başına takılma eşiği** — öneri: `perf-targets.json`'da `stallMs` kademeye bağlansın (hedef kare aralığının 2 katı: Sinematik 66,7 ms, Yüksek 33,3 ms, Performans 33,3 ms mevcut tanım) ki Sinematik p99 ≤ 40 anlam kazansın. Veri değişikliği; eşik değeri C-00 kaydıyla.
+- **K9 Kademe başına takılma eşiği** — **kabul (değişiklikle)**: Sinematik `stallMs` 40 (DEC-100 p99 ≤ 40 ile aynı; 66,7 DEC'i gevşetirdiği için reddedildi), Yüksek/Performans 33,33; değişmez: `stallMs ≥ p99FilteredMs` (test).
 
 ## 11 · v1 → v2 farkları
 
