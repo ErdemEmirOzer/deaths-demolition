@@ -449,7 +449,7 @@ namespace DD.Prototype.Audio
             {
                 // The listener sits at the player's head (ADR-021-2), not at the camera: drips and grove are near the ear.
                 Vector3 listenerAt = _listenerAt != null ? _listenerAt() : (_root != null ? _root.position : Vector3.zero);
-                _afterRain.Tick(unscaledDeltaTime, busGain, _regionLevel, _phase == RunPhase.Fighting, listenerAt, _sources[Common].outputAudioMixerGroup);
+                _afterRain.Tick(unscaledDeltaTime, busGain, _regionLevel, _phase == RunPhase.Fighting, listenerAt, _sources[Common].outputAudioMixerGroup, _mixer.DuckLevel(AudioBus.Ambience));
             }
             else
             {

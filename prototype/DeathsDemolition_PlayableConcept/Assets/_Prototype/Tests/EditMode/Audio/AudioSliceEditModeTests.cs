@@ -858,6 +858,21 @@ namespace DD.Prototype.Tests.EditMode.Audio
         }
 
         [Test]
+        public void YagmurSonrasiKuslar_KazancFazdanBagimsiz_CatiAltindaKisik_DuckAltindaErtelenir()
+        {
+            // WP-072 B7 (C-00 30.09 panel): no phase factor (the old ×0.35 held the whole round), roof ×0.4, due-under-duck waits 4 s.
+            Assert.AreEqual(0.6f * 0.35f, AfterRainAmbience.BirdGain(false, 0.35f), 1e-6f, "açık avlu, varsayılan 0,35");
+            Assert.AreEqual(0.6f, AfterRainAmbience.BirdGain(false, 1f), 1e-6f, "açık avlu, tam seviye");
+            Assert.AreEqual(0.6f * 0.4f, AfterRainAmbience.BirdGain(true, 1f), 1e-6f, "çatı altı −8 dB");
+            Assert.AreEqual(0f, AfterRainAmbience.BirdGain(false, 0f), "0 = kuş yok");
+            Assert.IsTrue(AfterRainAmbience.BirdDeferred(0.3f), "patlama/ateş duck'ı altında ertelenir");
+            Assert.IsFalse(AfterRainAmbience.BirdDeferred(1f), "sakin avluda çalar");
+            Assert.AreEqual(0.35f, AfterRainAmbience.BirdLevel, "varsayılan 0,35 kullanıcı kararı — değişmez");
+            Assert.GreaterOrEqual(AfterRainAmbience.BirdRangeMin, 15f);
+            Assert.LessOrEqual(AfterRainAmbience.BirdRangeMax, 25f);
+        }
+
+        [Test]
         public void AkustikAlanlar_V6Haritasi_SalonKoridor_Histerezis_SahneYoksaOpen()
         {
             Debug.Log("[DD-TEST] wp072b6 " + AudioCatalogBuilder.BuildAcousticSpaces());

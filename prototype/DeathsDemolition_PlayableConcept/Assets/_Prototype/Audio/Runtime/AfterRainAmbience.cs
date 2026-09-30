@@ -7,8 +7,9 @@ namespace DD.Prototype.Audio
     /// <summary>
     /// WP-072 · DEC-102 "post-rain sunny courtyard" (AP-011 v022), ticked by <see cref="AmbienceDirector"/> while the
     /// wet look is on:
-    ///   • distant birds replace the rain look's thunder (25–40 m out, above the eaves) — −8 dB while the listener is
-    ///     inside a Hall / Corridor of the acoustic map (a roof between the ear and the sky);
+    ///   • distant birds replace the rain look's thunder (15–25 m out, 8–12 m up, above the eaves) — −8 dB while the listener
+    ///     is inside a Hall / Corridor of the acoustic map (a roof between the ear and the sky); a bird due while the ambience is
+    ///     ducked (gunfire, blasts) waits 4 s instead of being spent where nobody hears it (WP-072 B7, C-00 30.09 panel);
     ///   • eave drips at the nearest eave points (the fūrin hang points under the eaves, within 14 m); inside a space the
     ///     drops come from 2–4 m around the listener (the eave line of the room), in the open a slower ring 3–9 m out;
     ///   • the nearest bamboo grove within 35 m: a 3D rustle bed, a gust every 12–26 s, 1–2 leaf drips shaken loose after it.
@@ -26,6 +27,23 @@ namespace DD.Prototype.Audio
         public static float BirdLevel = 0.35f;
 
         public const float BirdMin = 14f, BirdMax = 30f;
+
+        /// <summary>
+        /// WP-072 B7 (C-00 30.09, 3-agent panel): the bird's own gain in every run phase — the old ×0.35 "fighting" factor keyed on
+        /// RunPhase.Fighting, i.e. the whole round, and buried the birds 20–25 LU under the bed. Real combat is the duck's job.
+        /// </summary>
+        public const float BirdGainOpen = 0.6f, BirdRoofFactor = 0.4f, BirdDeferDuck = 0.5f, BirdDeferSeconds = 4f;
+        public const float BirdRangeMin = 15f, BirdRangeMax = 25f, BirdHeightMin = 8f, BirdHeightMax = 12f;
+
+        /// <summary>Test seam (measurement): the next birds sit at this offset from the listener instead of a random spot. Null = random.</summary>
+        public static Vector3? PinnedBirdOffset;
+
+        public static float BirdGain(bool inside, float birdLevel) => BirdGainOpen * (inside ? BirdRoofFactor : 1f) * Mathf.Clamp01(birdLevel);
+
+        public static bool BirdDeferred(float ambienceDuck) => ambienceDuck < BirdDeferDuck;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics() => PinnedBirdOffset = null;
         public const float DripMin = 0.9f, DripMax = 2.6f;
         public const float GustMin = 12f, GustMax = 26f;
         public const float EaveRange = 14f, GroveRange = 35f;
@@ -47,6 +65,7 @@ namespace DD.Prototype.Audio
         }
 
         public int BirdCount { get; private set; }
+        public int BirdDeferCount { get; private set; }
         public int EaveDripCount { get; private set; }
         public int GustCount { get; private set; }
         public int LeafDripCount { get; private set; }
@@ -69,7 +88,7 @@ namespace DD.Prototype.Audio
 
         private float Range(float a, float b) => a + (float)_rng.NextDouble() * (b - a);
 
-        public void Tick(float dt, float busGain, float bedLevel, bool fighting, Vector3 listener, AudioMixerGroup bedGroup)
+        public void Tick(float dt, float busGain, float bedLevel, bool fighting, Vector3 listener, AudioMixerGroup bedGroup, float ambienceDuck = 1f)
         {
             AcousticSpace space = AcousticSpaces.At(listener);
             LastSpace = space;
@@ -79,11 +98,18 @@ namespace DD.Prototype.Audio
             _birdCountdown -= dt;
             if (_birdCountdown <= 0f && BirdLevel > 0f)
             {
-                _birdCountdown = Range(BirdMin, BirdMax);
-                float a = Range(0f, Mathf.PI * 2f), r = Range(25f, 40f);
-                Vector3 at = listener + new Vector3(Mathf.Cos(a) * r, Range(8f, 15f), Mathf.Sin(a) * r);
-                float gain = (fighting ? 0.35f : 0.6f) * (inside ? 0.4f : 1f) * Mathf.Clamp01(BirdLevel);
-                if (Play(AudioSoundId.AmbBirdsDistant, at, gain)) BirdCount++;
+                if (BirdDeferred(ambienceDuck))
+                {
+                    _birdCountdown = BirdDeferSeconds;   // no RNG draw: the deferral is repeatable
+                    BirdDeferCount++;
+                }
+                else
+                {
+                    _birdCountdown = Range(BirdMin, BirdMax);
+                    float a = Range(0f, Mathf.PI * 2f), r = Range(BirdRangeMin, BirdRangeMax);
+                    Vector3 at = listener + (PinnedBirdOffset ?? new Vector3(Mathf.Cos(a) * r, Range(BirdHeightMin, BirdHeightMax), Mathf.Sin(a) * r));
+                    if (Play(AudioSoundId.AmbBirdsDistant, at, BirdGain(inside, BirdLevel))) BirdCount++;
+                }
             }
 
             // Eave drips — from the eaves near the listener.

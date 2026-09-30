@@ -1421,6 +1421,89 @@ namespace DD.Prototype.Tests.PlayMode
             Debug.Log("[DD-TEST] wp072.listening " + string.Join(" ", System.IO.Directory.GetFiles(dir, "*.wav")));
         }
 
+        /// <summary>
+        /// WP-072 B7 bird measurement (C-00 30.09 panel): post-mixer solo renders in the open V6 courtyard, Fighting phase, no fire —
+        /// bed only (BirdLevel 0, 30 s) and birds only at 1.0 and 0.35 (every non-bird source muted, the bird pinned 20 m ahead /
+        /// 10 m up, 12 forced calls 3 s apart so each variant of the shuffle deck sounds). Music / SFX / UI buses muted in all three.
+        /// Each bird's onset (capture frame) and clip go to a sidecar CSV; tools/bird_contrast.py measures the own-band contrast.
+        /// </summary>
+        [UnityTest]
+        [Explicit("WP-072 B7 kuş ölçümü — kanıt, CI dışı")]
+        [Timeout(300000)]
+        public IEnumerator KusKontrasti_SoloRender_Olcum()
+        {
+            UnityEngine.Audio.AudioMixer mixer = _d.Bridge.Mixer;
+            AfterRainAmbience ar = _d.Ambience.AfterRain;
+            string dir = System.IO.Path.Combine(Application.temporaryCachePath, "wp072-birds");
+            System.IO.Directory.CreateDirectory(dir);
+            float oncekiKus = AfterRainAmbience.BirdLevel;
+            _s.Rig.Health.DiagnosisInvulnerable = true;
+            _s.Rig.Teleport(new Vector3(0f, 0.1f, 0f), Quaternion.identity);   // V6 plaza centre: open sky
+            yield return new WaitForSecondsRealtime(2f);
+            Assert.AreEqual(AcousticSpace.Open, ar.LastSpace, "ölçüm noktası açık avlu olmalı");
+            var muted = new System.Collections.Generic.List<AudioSource>();
+            try
+            {
+                foreach (int k in new[] { 1, 3, 4, 5 }) mixer.SetFloat(AudioMixerBridge.VolumeParams[k], -80f);
+
+                // Bed only.
+                AfterRainAmbience.BirdLevel = 0f;
+                yield return new WaitForSecondsRealtime(1f);
+                yield return KusKaydet(System.IO.Path.Combine(dir, "bed.wav"), 30f, null);
+
+                foreach (var (ad, seviye) in new[] { ("birds-1.00", 1f), ("birds-0.35", 0.35f) })
+                {
+                    AfterRainAmbience.BirdLevel = seviye;
+                    AfterRainAmbience.PinnedBirdOffset = _s.Rig.transform.forward * 20f + Vector3.up * 10f;
+                    var csv = new System.Text.StringBuilder("seconds,clip\n");
+                    int cagri = 0, kusLog = ar.BirdCount;
+                    yield return KusKaydet(System.IO.Path.Combine(dir, ad + ".wav"), 38f, (c, t) =>
+                    {
+                        if (cagri < 12 && t > 1f + cagri * 3f) { ar.ForceDue(true, false, false); cagri++; }
+                        foreach (AudioSource src in UnityEngine.Object.FindObjectsOfType<AudioSource>())
+                        {
+                            bool kus = src.clip != null && src.clip.name.StartsWith("AmbBirdsDistant", StringComparison.Ordinal);
+                            if (!kus && src.isPlaying && !src.mute) { src.mute = true; muted.Add(src); }
+                            if (kus && src.mute) src.mute = false;   // a pooled voice muted as a drip may carry the next bird
+                            if (kus && src.isPlaying && ar.BirdCount != kusLog && src.time < 0.1f)
+                            {
+                                kusLog = ar.BirdCount;
+                                csv.Append((c.FramesWritten / (double)AudioSettings.outputSampleRate).ToString("0.000", System.Globalization.CultureInfo.InvariantCulture)).Append(',').Append(src.clip.name).Append('\n');
+                            }
+                        }
+                    });
+                    System.IO.File.WriteAllText(System.IO.Path.Combine(dir, ad + ".csv"), csv.ToString());
+                    foreach (AudioSource src in muted) if (src != null) src.mute = false;
+                    muted.Clear();
+                }
+            }
+            finally
+            {
+                foreach (AudioSource src in muted) if (src != null) src.mute = false;
+                AfterRainAmbience.PinnedBirdOffset = null;
+                AfterRainAmbience.BirdLevel = oncekiKus;
+                foreach (int k in new[] { 1, 3, 4, 5 }) mixer.ClearFloat(AudioMixerBridge.VolumeParams[k]);
+            }
+
+            Debug.Log("[DD-TEST] wp072.birds " + string.Join(" ", System.IO.Directory.GetFiles(dir)));
+        }
+
+        private IEnumerator KusKaydet(string path, float saniye, System.Action<AudioOutputCapture, float> her)
+        {
+            AudioOutputCapture cap = AudioOutputCapture.Arm(_d.gameObject, path);
+            float bas = Time.realtimeSinceStartup;
+            while (Time.realtimeSinceStartup - bas < saniye)
+            {
+                her?.Invoke(cap, Time.realtimeSinceStartup - bas);
+                yield return null;
+            }
+
+            long frames = cap.FramesWritten;
+            UnityEngine.Object.DestroyImmediate(cap);
+            foreach (var tap in UnityEngine.Object.FindObjectsOfType<AudioOutputTap>(true)) UnityEngine.Object.DestroyImmediate(tap);
+            if (frames == 0) Assert.Inconclusive("Ses çıkışı yok (batch/aygıt yok).");
+        }
+
         private static float[] OkuMono(string path, out int rate)
         {
             byte[] raw = System.IO.File.ReadAllBytes(path);

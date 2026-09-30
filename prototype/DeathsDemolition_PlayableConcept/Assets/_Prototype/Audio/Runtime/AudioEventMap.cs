@@ -295,7 +295,7 @@ namespace DD.Prototype.Audio
             B(AudioEventSource.Animation, "anim.foot_l/foot_r → player, plate pavement", AudioSoundId.FootstepPavement, W, true, "AP015_paving_* plates = cut stone (WP-058B)"),
             B(AudioEventSource.Ambience, "scatter.thunder", AudioSoundId.AmbThunderDistant, A, true, "Look B: distant thunder every 40-90 s, far and low (v007) — off while DEC-102 AfterRainAmbience.SunnyAfterRain (birds instead)"),
             // ---- WP-072 · DEC-102 post-rain sunny courtyard (AfterRainAmbience, AP-011 v022)
-            B(AudioEventSource.Ambience, "scatter.birds_distant", AudioSoundId.AmbBirdsDistant, A, true, "every 6-14 s, 25-40 m out and above the eaves; −8 dB while the listener is in a Hall / Corridor"),
+            B(AudioEventSource.Ambience, "scatter.birds_distant", AudioSoundId.AmbBirdsDistant, A, true, "every 14-30 s, 15-25 m out and 8-12 m up (above the eaves); −8 dB in a Hall / Corridor; waits 4 s while the ambience is ducked (WP-072 B7)"),
             B(AudioEventSource.Ambience, "scatter.eave_drip", AudioSoundId.AmbEaveDrip, A, true, "every 0.9-2.6 s at the nearest eave point (fūrin hang points ≤ 14 m); inside a space 2-4 m around; in the open a slower 3-9 m ring"),
             B(AudioEventSource.Ambience, "zone.bamboo_grove / scatter.bamboo_gust / scatter.bamboo_drip", AudioSoundId.AmbBambooGroveLoop, A, true, "nearest grove ≤ 35 m (bamboo stalk / cluster clusters): 3D rustle bed, a gust every 12-26 s, leaf drips 0.4-0.9 s after it"),
             B(AudioEventSource.Animation, "anim.foot_l/foot_r → player on wet stone (DEC-102)", AudioSoundId.FootstepWetLayer, W, true, "thin water-film layer under a Stone / Default step while WetLook (~ −5 dB)"),
