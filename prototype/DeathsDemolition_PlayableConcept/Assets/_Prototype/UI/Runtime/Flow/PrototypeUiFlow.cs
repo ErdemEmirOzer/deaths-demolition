@@ -339,10 +339,7 @@ namespace DD.Prototype.UI
 
             op.allowSceneActivation = false;
 
-            float lastProgress = -1f;
-            float lastProgressAt = Time.unscaledTime;
-            bool stallLogged = false;
-            bool stallError = false;
+            var watchdog = new LoadWatchdog(sceneName, curtain, Time.unscaledTime);
             while (true)
             {
                 float now = Time.unscaledTime;
@@ -352,22 +349,7 @@ namespace DD.Prototype.UI
                     progress = Mathf.Min(progress, LoadedProgress * Mathf.Clamp01((now - loadStart) / ArtificialLoadSeconds));
                 }
 
-                if (progress > lastProgress + 0.001f)
-                {
-                    lastProgress = progress;
-                    lastProgressAt = now;
-                }
-                else if (!stallLogged && now - lastProgressAt > StallSeconds)
-                {
-                    stallLogged = true;
-                    Debug.Log("[UI] Loading '" + sceneName + "' has not progressed for " + StallSeconds + " s.");
-                    curtain.ShowStalled();
-                }
-                else if (!stallError && now - lastProgressAt > StallErrorSeconds)
-                {
-                    stallError = true;
-                    curtain.ShowError(sceneName, true, null, null); // QUIT only; if the load recovers, the modal goes
-                }
+                watchdog.Tick(progress, now);   // QUIT-only error at 60 s; if the load recovers, the modal goes
 
                 if (ink && ringShownAt < 0f && now - t0 >= InkRingSeconds && progress < LoadedProgress)
                 {
@@ -428,7 +410,7 @@ namespace DD.Prototype.UI
                 yield return null;
             }
 
-            if (stallError)
+            if (watchdog.ErrorShown)
             {
                 curtain.HideError();
             }
@@ -476,6 +458,59 @@ namespace DD.Prototype.UI
         public const float BootHandOffMinimumSeconds = 0.6f;
 
         /// <summary>
+        /// Direction §15.2 / §15.4 - one watchdog for the boot load and every later transition (M-70; c29b4108 had copied
+        /// it). No progress for <see cref="StallSeconds"/>: the stall notice (and a log). No progress for
+        /// <see cref="StallErrorSeconds"/>: the QUIT-only error, which stays until the load completes. Progress coming back
+        /// before the error takes the notice away and re-arms the watchdog, so a second stall shows it again.
+        /// </summary>
+        private sealed class LoadWatchdog
+        {
+            private readonly string _scene;
+            private readonly UiCurtain _curtain;
+            private float _lastProgress = -1f;
+            private float _lastProgressAt;
+            private bool _stallShown;
+
+            public LoadWatchdog(string scene, UiCurtain curtain, float now)
+            {
+                _scene = scene;
+                _curtain = curtain;
+                _lastProgressAt = now;
+            }
+
+            /// <summary>True once the error is up; the caller takes it down when the load completes.</summary>
+            public bool ErrorShown { get; private set; }
+
+            public void Tick(float progress, float now)
+            {
+                if (progress > _lastProgress + 0.001f)
+                {
+                    _lastProgress = progress;
+                    _lastProgressAt = now;
+                    if (_stallShown && !ErrorShown)
+                    {
+                        _stallShown = false;
+                        _curtain.HideStalled();
+                    }
+
+                    return;
+                }
+
+                if (!_stallShown && !ErrorShown && now - _lastProgressAt > StallSeconds)
+                {
+                    _stallShown = true;
+                    Debug.Log("[UI] Loading '" + _scene + "' has not progressed for " + StallSeconds + " s.");
+                    _curtain.ShowStalled();
+                }
+                else if (!ErrorShown && now - _lastProgressAt > StallErrorSeconds)
+                {
+                    ErrorShown = true;
+                    _curtain.ShowError(_scene, true, null, null);
+                }
+            }
+        }
+
+        /// <summary>
         /// Direction §15.3 / E1 (U7): the Boot scene hands its first load to the seal. With
         /// FastTransitions (batch, tests) the plain synchronous load stays - returns false.
         /// </summary>
@@ -519,10 +554,7 @@ namespace DD.Prototype.UI
             op.allowSceneActivation = false;
             bool handedOff = false;
             float handOffAt = -1f;
-            float lastProgress = -1f;
-            float lastProgressAt = Time.unscaledTime;
-            bool stallLogged = false;
-            bool stallError = false;
+            var watchdog = new LoadWatchdog(sceneName, curtain, Time.unscaledTime);
             while (true)
             {
                 float now = Time.unscaledTime;
@@ -532,23 +564,8 @@ namespace DD.Prototype.UI
                     progress = Mathf.Min(progress, LoadedProgress * Mathf.Clamp01((now - loadStart) / ArtificialLoadSeconds));
                 }
 
-                // The first load has the same watchdog as later scene transitions (§15.2/15.4).
-                if (progress > lastProgress + 0.001f)
-                {
-                    lastProgress = progress;
-                    lastProgressAt = now;
-                }
-                else if (!stallLogged && now - lastProgressAt > StallSeconds)
-                {
-                    stallLogged = true;
-                    Debug.Log("[UI] Loading '" + sceneName + "' has not progressed for " + StallSeconds + " s.");
-                    curtain.ShowStalled();
-                }
-                else if (!stallError && now - lastProgressAt > StallErrorSeconds)
-                {
-                    stallError = true;
-                    curtain.ShowError(sceneName, true, null, null);
-                }
+                // The first load has the same watchdog as later scene transitions (§15.2/15.4) - the one LoadWatchdog (M-70).
+                watchdog.Tick(progress, now);
 
                 bool loaded = progress >= LoadedProgress;
                 if (!handedOff && (curtain.BootSkipRequested || now - t0 >= hold))
@@ -576,7 +593,7 @@ namespace DD.Prototype.UI
                 yield return null;
             }
 
-            if (stallError)
+            if (watchdog.ErrorShown)
             {
                 curtain.HideError();
             }

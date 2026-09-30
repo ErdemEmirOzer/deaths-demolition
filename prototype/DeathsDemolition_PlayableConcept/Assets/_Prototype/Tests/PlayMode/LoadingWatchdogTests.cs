@@ -96,6 +96,37 @@ namespace DD.Prototype.Tests.PlayMode
             yield return ProveWatchdog(PrototypeScenes.MainMenu, PrototypeScenes.Selection, requestAt);
         }
 
+        /// <summary>
+        /// M-70 (Codex fix list): the load held for 12 s shows the stall notice; when progress comes back (the hold eased
+        /// to a slow real climb, still loading) the notice goes and the watchdog re-arms - no error, the load completes.
+        /// </summary>
+        [UnityTest, Timeout(120000)]
+        public IEnumerator Transition_StallNotice_LeavesWhenProgressReturns()
+        {
+            PrototypeUiFlow.FastTransitions = true;
+            yield return BootTanMainMenuye();
+            PrototypeUiFlow.FastTransitions = false;
+            UiLoadTiming.RecordLoad(PrototypeScenes.Selection, 5f);
+            PrototypeUiFlow.ArtificialLoadSeconds = HeldLoadSeconds;
+            float requestAt = Time.realtimeSinceStartup;
+            PrototypeUiFlow.GoToSelection();
+            UiCurtain curtain = UiCurtain.Instance;
+            yield return Bekle(() => curtain.StallVisible, PrototypeUiFlow.StallSeconds + 5f, "Stall notice did not show while the load was held.");
+            while (Time.realtimeSinceStartup - requestAt < 12f)
+                yield return null;
+            Assert.IsTrue(curtain.StallVisible, "Held 12 s: the notice stands.");
+            // Progress returns but the load is not done: 0.9 × elapsed / 60 climbs from ≈ 0.18, activation stays held.
+            PrototypeUiFlow.ArtificialLoadSeconds = 60f;
+            yield return new WaitForSecondsRealtime(1f);
+            Assert.IsTrue(PrototypeUiFlow.IsLoading, "Still loading after progress returned.");
+            Assert.IsFalse(curtain.StallVisible, "Progress came back: the stall notice goes.");
+            Assert.IsFalse(curtain.ErrorOpen, "No error on a recovered load.");
+            PrototypeUiFlow.ArtificialLoadSeconds = 0f;
+            yield return Bekle(() => !PrototypeUiFlow.IsLoading && !UiCurtain.IsCovering, 30f, "The recovered load did not complete.");
+            Assert.AreEqual(PrototypeScenes.Selection, SceneManager.GetActiveScene().name);
+            Debug.Log("[S09-WATCHDOG] M-70 stall notice left when progress returned at 12 s; load completed");
+        }
+
         private IEnumerator ProveWatchdog(string oldScene, string destination, float requestAt)
         {
             UiCurtain curtain = UiCurtain.Instance;

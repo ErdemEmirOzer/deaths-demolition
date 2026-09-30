@@ -1065,6 +1065,15 @@ namespace DD.Prototype.UI
             _ringGroup.localScale = new Vector3(scale, scale, 1f);
         }
 
+        /// <summary>M-70: progress came back before the error - the stall notice goes (the watchdog re-arms).</summary>
+        public void HideStalled()
+        {
+            if (_stall != null)
+            {
+                _stall.gameObject.SetActive(false);
+            }
+        }
+
         /// <summary>No progress for 10 s: an Info notice under the tip (direction §15.2).</summary>
         public void ShowStalled()
         {
