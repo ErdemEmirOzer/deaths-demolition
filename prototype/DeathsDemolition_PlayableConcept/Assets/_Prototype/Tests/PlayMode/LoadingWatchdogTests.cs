@@ -279,6 +279,28 @@ namespace DD.Prototype.Tests.PlayMode
             Debug.Log("[S09-WATCHDOG] missing scene: modal over MainMenu, cancel ignored under it, primary returned, control cancel reached the menu");
         }
 
+        /// <summary>R1-E E4 B1b: Core's FirstSceneMissing (the boot's first scene not in the build) opens the load error, TRY AGAIN + QUIT.</summary>
+        [UnityTest, Timeout(30000)]
+        public IEnumerator BootFirstSceneMissing_OpensLoadError_RetryAndQuit()
+        {
+            PrototypeUiFlow.FastTransitions = true;
+            yield return BootTanMainMenuye();
+            UiFactory.EnsureEventSystem();
+            Assert.IsNotNull(PrototypeBootstrapper.FirstSceneMissing, "The UI registers with Core's hook at install.");
+            _manualError = true;
+            PrototypeBootstrapper.FirstSceneMissing(PrototypeScenes.MainMenu);
+            yield return null;
+            UiCurtain curtain = UiCurtain.Instance;
+            UiModal modal = OpenError(curtain);
+            Assert.AreEqual(UiStrings.Get("loading.error.retry"), modal.Primary.LabelText.text, "The menu itself missing: TRY AGAIN.");
+            Assert.IsNotNull(modal.Secondary);
+            Assert.AreEqual(UiStrings.Get("menu.quit"), modal.Secondary.LabelText.text);
+            Assert.IsFalse(PrototypeUiFlow.IsLoading);
+            curtain.HideError();
+            curtain.Open(true);
+            _manualError = false;
+        }
+
         private static UiModal OpenError(UiCurtain curtain)
         {
             UiModal modal = curtain.GetComponentInChildren<UiModal>();

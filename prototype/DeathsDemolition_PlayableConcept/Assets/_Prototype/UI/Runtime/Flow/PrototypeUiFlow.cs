@@ -213,6 +213,18 @@ namespace DD.Prototype.UI
         /// Direction §15.4 / UXW §2.2: a load that cannot start. The menu retries itself; every other scene offers the
         /// way back to the menu. QUIT is always the second action.
         /// </summary>
+        private static void OnFirstSceneMissing(string sceneName)
+        {
+            if (!Application.isPlaying)
+            {
+                return;
+            }
+
+            UiCurtain curtain = UiCurtain.Instance;
+            curtain.Open(true);
+            ShowLoadError(curtain, sceneName);
+        }
+
         private static void ShowLoadError(UiCurtain curtain, string sceneName)
         {
             bool menuFailed = sceneName == PrototypeScenes.MainMenu;
@@ -636,6 +648,9 @@ namespace DD.Prototype.UI
 
             // WP-068 10b-2: the boot seal is the first loading screen (Core calls back into us).
             PrototypeBootstrapper.FirstSceneLoader = BootToFirstScene;
+            // R1-E E4 B1b (S-01's Core hook): a first scene missing from the build opens the load error over Boot
+            // (TRY AGAIN / QUIT) instead of a silent boot screen.
+            PrototypeBootstrapper.FirstSceneMissing = OnFirstSceneMissing;
 
             RunEvents.RunEnded += OnRunEnded;
             RunEvents.RunStarted += OnRunStarted;
