@@ -168,8 +168,10 @@ namespace DD.Prototype.CameraSystem
     public struct CameraModeProfile
     {
         /// <summary>
-        /// Multiplier on the quality tier's lodBias base (S-05 QUALITY-TIERS-V2 §3:
-        /// lodBias = max(1, tierBase × factor); bases 1.0 / 2.0 / 2.5 → High TP 1.2, FP 1.4).
+        /// Multiplier on the quality tier's lodBias base (S-05 QUALITY-TIERS-V2 §3: lodBias = max(1, tierBase × factor)).
+        /// 1 in every mode (C-00 30.09, WP-070M): the TP 0.6 / FP 0.7 proposals were never applied at runtime, and applied
+        /// they drop the Cinematic forest's LODs (S-05) — the tier base alone decides. Kept as a field so S-05 can tune a
+        /// mode through <c>CameraModeService.SetProfile</c> with a measured frame; a default other than 1 needs a C-00 decision.
         /// </summary>
         public float LodBiasFactor;
 
@@ -194,13 +196,13 @@ namespace DD.Prototype.CameraSystem
                 case CameraMode.ThirdPerson:
                     return new CameraModeProfile
                     {
-                        LodBiasFactor = 0.6f, ShadowDistance = 60f, ShadowCascades = 3, NearClip = 0.05f, FarClip = 450f,
+                        LodBiasFactor = 1f, ShadowDistance = 60f, ShadowCascades = 3, NearClip = 0.05f, FarClip = 450f,
                         OccluderPolicy = CameraOccluderPolicy.FadeCameraLine, ShakeScale = 0.55f,
                     };
                 case CameraMode.FirstPerson:
                     return new CameraModeProfile
                     {
-                        LodBiasFactor = 0.7f, ShadowDistance = 70f, ShadowCascades = 4, NearClip = 0.03f, FarClip = 450f,
+                        LodBiasFactor = 1f, ShadowDistance = 70f, ShadowCascades = 4, NearClip = 0.03f, FarClip = 450f,
                         OccluderPolicy = CameraOccluderPolicy.None, ShakeScale = 0.3f,
                     };
                 default:

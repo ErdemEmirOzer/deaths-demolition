@@ -1,3 +1,4 @@
+using DD.Prototype.CameraSystem;
 using DD.Prototype.Core;
 using DD.Prototype.UI;
 using NUnit.Framework;
@@ -77,15 +78,29 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void KameraModu_VarsayilanLodBiasCarpani_HerModda1_KademeTabaniAynenKalir()
+        {
+            // WP-070M (C-00 30.09): TP 0,6 / FP 0,7 çarpanı uygulanırsa Sinematik'te orman LOD'u düşüyordu (S-05); çarpan 1.
+            foreach (CameraMode mode in new[] { CameraMode.TopDown, CameraMode.ThirdPerson, CameraMode.FirstPerson })
+            {
+                float factor = CameraModeProfile.Default(mode).LodBiasFactor;
+                Assert.AreEqual(1f, factor, 0f, mode + " LodBiasFactor");
+                for (int t = 0; t < QualityTiers.LevelCount; t++)
+                {
+                    Assert.AreEqual(QualityTiers.LodBiasBase[t], QualityTiers.LodBias((QualityTier)t, factor), 1e-4f, mode + " / kademe " + t);
+                }
+            }
+        }
+
+        [Test]
         public void Kademe_ModFormulu_LodBiasGolgeKaskat_SozlesmeTablosu()
         {
-            // §3: Yüksek → Tepeden 2,0 / TP 1,2 / FP 1,4; Performans her modda 1,0; Sinematik (r2, DEC-100) TP 1,8 / FP 2,1.
+            // §3: lodBias = max(1, taban × mod çarpanı); mod çarpanı her modda 1 (WP-070M, C-00 30.09) → lodBias = kademe tabanı
+            // Performans 1,0 / Yüksek 2,0 / Sinematik 3,0 her modda. Alt sınır 1 formülün kendisidir.
+            Assert.AreEqual(1f, QualityTiers.LodBias(QualityTier.Performans, 1f), 1e-4f);
             Assert.AreEqual(2f, QualityTiers.LodBias(QualityTier.Yuksek, 1f), 1e-4f);
-            Assert.AreEqual(1.2f, QualityTiers.LodBias(QualityTier.Yuksek, 0.6f), 1e-4f);
-            Assert.AreEqual(1.4f, QualityTiers.LodBias(QualityTier.Yuksek, 0.7f), 1e-4f);
-            Assert.AreEqual(1f, QualityTiers.LodBias(QualityTier.Performans, 0.6f), 1e-4f);
-            Assert.AreEqual(2.1f, QualityTiers.LodBias(QualityTier.Sinematik, 0.7f), 1e-4f);
-            Assert.AreEqual(1.8f, QualityTiers.LodBias(QualityTier.Sinematik, 0.6f), 1e-4f);
+            Assert.AreEqual(3f, QualityTiers.LodBias(QualityTier.Sinematik, 1f), 1e-4f);
+            Assert.AreEqual(1f, QualityTiers.LodBias(QualityTier.Yuksek, 0.25f), 1e-4f);
             Assert.AreEqual(120f, QualityTiers.ShadowDistance(QualityTier.Sinematik, 200f), 1e-4f);
             // gölge = min(kademe tavanı, mod): Tepeden 60/2, TP 60/3, FP 70/4.
             Assert.AreEqual(60f, QualityTiers.ShadowDistance(QualityTier.Yuksek, 70f), 1e-4f);
