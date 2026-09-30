@@ -108,12 +108,16 @@ namespace DD.Prototype.UI
         public bool IsNew;
         public bool Selected;
 
+        /// <summary>Slice 9 · E3 T1 (direction E3: LOCKED = lock + condition): what opens it, short, for a locked row; empty when open.</summary>
+        public string LockReason;
+
         public UiCosmeticLine(CosmeticEntry entry)
         {
             Id = entry.Id;
             Kind = entry.Kind;
             Title = ProfileContentCopy.CosmeticTitle(entry);
             Detail = ProfileContentCopy.UnlockDetail(entry.Id, entry.Detail);
+            LockReason = entry.Unlocked ? string.Empty : ProfileContentCopy.LockReason(entry.Id);
             Unlocked = entry.Unlocked;
             IsNew = entry.IsNew;
             Selected = entry.Selected;
@@ -573,6 +577,28 @@ namespace DD.Prototype.UI
                 ? AchievementCatalog.Find(definition.Key)?.Threshold.ToString() ?? string.Empty
                 : definition.NumericKey.ToString();
             return UiStrings.Format("profile.content." + id + ".detail", "count", count, fallback);
+        }
+
+        /// <summary>
+        /// Slice 9 · E3 T1: a locked title / badge's condition in a row's words - LOCKED · ROUND 10, LOCKED · LEVEL 5 or
+        /// LOCKED · the achievement's name - read from the unlock catalog by id (the catalog Detail is a sentence for the
+        /// description, too long for a row). An id the catalog does not know reads plain LOCKED.
+        /// </summary>
+        public static string LockReason(string id)
+        {
+            UnlockDefinition definition = UnlockCatalog.Find(id);
+            if (definition == null) return UiStrings.Get("tree.state.locked", "LOCKED");
+            switch (definition.Condition)
+            {
+                case UnlockCondition.Round:
+                    return UiStrings.Format("profile.locked.round", "value", definition.NumericKey.ToString(), "LOCKED · ROUND {value}");
+                case UnlockCondition.Level:
+                    return UiStrings.Format("profile.locked.level", "value", definition.NumericKey.ToString(), "LOCKED · LEVEL {value}");
+                default:
+                    AchievementDefinition achievement = AchievementCatalog.Find(definition.Key);
+                    string name = achievement == null ? definition.Key : UiStrings.Get("achievement." + achievement.Id + ".name", achievement.DisplayName);
+                    return UiStrings.Format("profile.locked.achievement", "name", UiStrings.Upper(name), "LOCKED · {name}");
+            }
         }
 
         /// <summary>A Results reward card's name: a branch takes its language name; weapons and achievements keep theirs.</summary>

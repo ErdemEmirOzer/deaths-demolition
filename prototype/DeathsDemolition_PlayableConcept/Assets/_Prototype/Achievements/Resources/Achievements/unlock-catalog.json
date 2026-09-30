@@ -5,7 +5,7 @@
       "Id": "title_first_blood",
       "Type": "Title",
       "DisplayName": "Title: Blooded",
-      "Detail": "Profile title - shown next to your name once the profile pane supports titles",
+      "Detail": "Profile title for defeating your first enemy",
       "Condition": "Achievement",
       "Key": "first_blood"
     },

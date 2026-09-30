@@ -388,6 +388,38 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual("R is bound to more than one action: Fire, Reload. Rebind one of them.", en[0]);
         }
 
+        // ------------------------------------------------------------ slice 9 · E3 T1: a locked title / badge says what opens it
+
+        [Test]
+        public void Kozmetik_Kilitli_KosulSatirda_TR_EN_EskiGelistiriciMetniYok()
+        {
+            int checkedRows = 0;
+            foreach (UnlockDefinition d in UnlockCatalog.Entries)
+            {
+                if (d.Type != UnlockContentType.Title && d.Type != UnlockContentType.Badge) continue;
+                StringAssert.DoesNotContain("supports titles", d.Detail, d.Id + ": a condition, not a developer note");
+                foreach (string language in new[] { UiStrings.Turkish, UiStrings.English })
+                {
+                    UiStrings.Language = language;
+                    string reason = (string)Copy("LockReason", d.Id);
+                    StringAssert.StartsWith(UiStrings.Get("tree.state.locked"), reason, d.Id + " " + language);
+                    StringAssert.DoesNotContain("{", reason, d.Id);
+                    Assert.Greater(reason.Length, UiStrings.Get("tree.state.locked").Length + 3, d.Id + " names its condition");
+                    if (d.Condition != UnlockCondition.Achievement)
+                        StringAssert.Contains(d.NumericKey.ToString(), reason, d.Id + " carries its number");
+                    string detail = (string)typeof(ProfileViewModel).Assembly.GetType("DD.Prototype.UI.ProfileContentCopy")
+                        .GetMethod("UnlockDetail", BindingFlags.Static | BindingFlags.Public).Invoke(null, new object[] { d.Id, d.Detail });
+                    StringAssert.DoesNotContain("{", detail, d.Id);
+                }
+
+                checkedRows++;
+            }
+
+            Assert.Greater(checkedRows, 0, "the catalog has titles and badges");
+            UiStrings.Language = UiStrings.English;
+            Assert.AreEqual(UiStrings.Get("tree.state.locked"), Copy("LockReason", "no_such_unlock"), "an unknown id reads plain LOCKED");
+        }
+
         private sealed class AllAtOneLadder : IUnlockLadder
         {
             public int UnlockLevelFor(ClassicWeaponId id) { return 1; }

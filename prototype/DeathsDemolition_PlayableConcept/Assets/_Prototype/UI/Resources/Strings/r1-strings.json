@@ -3548,8 +3548,8 @@
     "tr": "Klasik silah - {level}. profil seviyesinde açılır (silah listesi)"
   },
   "profile.content.title_first_blood.detail": {
-    "en": "Profile title - shown next to your name once the profile pane supports titles",
-    "tr": "Profil unvanı - profil ekranı unvanları desteklediğinde adının yanında görünür"
+    "en": "Profile title for defeating your first enemy",
+    "tr": "İlk düşmanını yenince kazanılan profil unvanı"
   },
   "profile.content.title_survivor.detail": {
     "en": "Profile title for reaching round {count}",
@@ -3738,5 +3738,17 @@
   "controls.conflict": {
     "en": "{key} is bound to more than one action: {actions}. Rebind one of them.",
     "tr": "{key} birden fazla eyleme atanmış: {actions}. Birini yeniden ata."
+  },
+  "profile.locked.round": {
+    "en": "LOCKED · ROUND {value}",
+    "tr": "KİLİTLİ · {value}. ROUND"
+  },
+  "profile.locked.level": {
+    "en": "LOCKED · LEVEL {value}",
+    "tr": "KİLİTLİ · SEVİYE {value}"
+  },
+  "profile.locked.achievement": {
+    "en": "LOCKED · {name}",
+    "tr": "KİLİTLİ · {name}"
   }
 }

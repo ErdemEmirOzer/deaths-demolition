@@ -820,7 +820,14 @@ namespace DD.Prototype.Tests.PlayMode
                 if (b.name.StartsWith("Option.Title."))
                 {
                     options++;
-                    if (!b.IsInteractable()) locked++;
+                    if (!b.IsInteractable())
+                    {
+                        locked++;
+                        // Slice 9 · E3 T1 (direction E3): a locked option says what opens it - the kit's disabled reason.
+                        Transform reason = b.transform.Find("Reason");
+                        Assert.IsNotNull(reason, b.name + " carries its condition");
+                        StringAssert.StartsWith(UiStrings.Get("tree.state.locked"), reason.GetComponent<TMPro.TMP_Text>().text, b.name);
+                    }
                 }
             }
 

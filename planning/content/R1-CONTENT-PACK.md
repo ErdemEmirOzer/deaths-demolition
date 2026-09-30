@@ -1041,7 +1041,7 @@ R1-E E1 (S-09, C-00 30.09): 21 tr lines below revised for grammar and pack termi
 | `results.reward.weapon_selectable` | Classic weapon - selectable before your next run | Klasik silah - sonraki koşudan önce seçilebilir |
 | `results.reward.branch_offered` | Upgrade branch - can now be offered at the end of a round | Geliştirme dalı - artık round sonunda sunulabilir |
 | `results.reward.weapon_roster` | Classic weapon - opens at profile level {level} (weapon roster) | Klasik silah - {level}. profil seviyesinde açılır (silah listesi) |
-| `profile.content.title_first_blood.detail` | Profile title - shown next to your name once the profile pane supports titles | Profil unvanı - profil ekranı unvanları desteklediğinde adının yanında görünür |
+| `profile.content.title_first_blood.detail` | Profile title for defeating your first enemy | İlk düşmanını yenince kazanılan profil unvanı |
 | `profile.content.title_survivor.detail` | Profile title for reaching round {count} | {count}. rounda ulaşınca kazanılan profil unvanı |
 | `profile.content.title_veteran.detail` | Profile title for reaching level {count} | {count}. seviyeye ulaşınca kazanılan profil unvanı |
 | `profile.content.title_executioner.detail` | Profile title for defeating an Executioner | Bir Executioner yenince kazanılan profil unvanı |
@@ -1089,10 +1089,13 @@ R1-E E1 (S-09, C-00 30.09): 21 tr lines below revised for grammar and pack termi
 
 ## S-09 · Slice 9 remainder (E3, C-00 30.09)
 
-`controls.reset` changed in place: RESET ALL is now a 500 ms hold (direction E7), so the label says so, following `path.buy.hold`. The three new keys are the Controls pane's dead-zone sentence, the override mark's legend (the kit never uses a shape alone) and the binding-conflict notice (direction E7: conflict → Warning notice).
+`controls.reset` changed in place: RESET ALL is now a 500 ms hold (direction E7), so the label says so, following `path.buy.hold`. The three new keys are the Controls pane's dead-zone sentence, the override mark's legend (the kit never uses a shape alone) and the binding-conflict notice (direction E7: conflict → Warning notice). The `profile.locked.*` keys are a locked title / badge row's condition (direction E3: LOCKED = lock + condition; T1), and `profile.content.title_first_blood.detail` replaces a stale developer line ("…once the profile pane supports titles") with the condition, as its siblings read.
 
 | Key | en | tr |
 |---|---|---|
 | `controls.deadzone.note` | How far a stick moves before it counts. Raise it if your aim drifts on its own. | Çubuk bu kadar itilmeden hareket sayılmaz. Nişanın kendi kendine kayıyorsa artır. |
 | `controls.override_legend` | A marked slot is changed from its default. | İşaretli yuva varsayılandan değiştirildi. |
 | `controls.conflict` | {key} is bound to more than one action: {actions}. Rebind one of them. | {key} birden fazla eyleme atanmış: {actions}. Birini yeniden ata. |
+| `profile.locked.round` | LOCKED · ROUND {value} | KİLİTLİ · {value}. ROUND |
+| `profile.locked.level` | LOCKED · LEVEL {value} | KİLİTLİ · SEVİYE {value} |
+| `profile.locked.achievement` | LOCKED · {name} | KİLİTLİ · {name} |

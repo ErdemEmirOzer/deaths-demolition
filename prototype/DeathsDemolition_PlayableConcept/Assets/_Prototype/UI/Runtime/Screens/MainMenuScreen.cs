@@ -1882,6 +1882,7 @@ namespace DD.Prototype.UI
                 "Rule", left, ProfileViewModel.RuleNote, UiType.Caption, UiColor.TextMuted);
             leftStack.Add((RectTransform)rule.transform, UiFactory.LineHeight(UiType.Caption) * 2f);
 
+            float needed = leftStack.Cursor;
             if (twoColumns)
             {
                 RectTransform right = UiFactory.NewRect("Right", columns);
@@ -1889,6 +1890,15 @@ namespace DD.Prototype.UI
                 right.anchorMin = new Vector2(ProfileLeftColumn, 0f);
                 var rightStack = new UiStack(right);
                 BuildCosmeticsPicker(ref rightStack, cosmetics);
+                needed = Mathf.Max(needed, rightStack.Cursor);
+            }
+
+            // Slice 9 · E3 T1: the band grows to what its columns hold - at TextScale 1.25 the picker needs ≈ 420 px and
+            // the fixed 340 clipped its last rows.
+            if (needed > ProfileColumnsHeight)
+            {
+                columns.sizeDelta = new Vector2(columns.sizeDelta.x, Mathf.Ceil(needed));
+                stack.Cursor += Mathf.Ceil(needed) - ProfileColumnsHeight;
             }
         }
 
@@ -2061,7 +2071,8 @@ namespace DD.Prototype.UI
         /// <summary>
         /// WP-022D: "PROFILE TITLE" and "PROFILE BADGE" option rows. Each option is a Nav
         /// button (selected marker = the current choice); a locked option is not
-        /// interactable and says how it opens. Selecting writes through
+        /// interactable and says how it opens (slice 9 T1: its disabled reason, LOCKED · ROUND 10 -
+        /// a press reads Denied, the pad still reaches it through the chain). Selecting writes through
         /// <see cref="ICosmeticsSource.SelectTitle"/> / <see cref="ICosmeticsSource.SelectBadge"/>;
         /// the profile's Changed event redraws the pane and focus returns to the option.
         /// </summary>
@@ -2105,11 +2116,11 @@ namespace DD.Prototype.UI
             for (int i = 0; i < lines.Count; i++)
             {
                 UiCosmeticLine line = lines[i];
-                AddCosmeticOption(ref stack, kind, line.Id, line.Title, line.Detail, line.Unlocked, line.IsNew, line.Selected, options);
+                AddCosmeticOption(ref stack, kind, line.Id, line.Title, line.LockReason, line.Unlocked, line.IsNew, line.Selected, options);
             }
         }
 
-        private void AddCosmeticOption(ref UiStack stack, string kind, string id, string title, string detail, bool unlocked, bool isNew, bool selected, List<Selectable> options)
+        private void AddCosmeticOption(ref UiStack stack, string kind, string id, string title, string lockReason, bool unlocked, bool isNew, bool selected, List<Selectable> options)
         {
             string name = "Option." + kind + "." + (string.IsNullOrEmpty(id) ? "None" : id);
             bool isTitle = kind == "Title";
@@ -2141,29 +2152,31 @@ namespace DD.Prototype.UI
             button.LabelText.fontSize = UiTokens.FontSize(UiType.Body); // AD v004 MUST-4: names at Body 18
             button.SetSelectedChoice(selected);
             button.SetInteractable(unlocked);
+            // Slice 9 · E3 T1 (direction E3: LOCKED = lock + condition): the kit's disabled reason at the row's right edge
+            // says what opens it; the old LOCKED chip said only that it was shut.
+            if (!unlocked)
+            {
+                button.SetDisabledReason(string.IsNullOrEmpty(lockReason) ? UiStrings.Get("tree.state.locked", "LOCKED") : lockReason);
+            }
+
             options.Add(button);
 
-            // Right-hand chip: NEW (pulse) for a fresh unlock, LOCKED when it is not open
-            // yet (the contract's Detail is a description, not the condition - the
-            // Achievements pane says how), nothing when it is simply available.
-            if (!unlocked || isNew)
+            // Right-hand chip: NEW (pulse) for a fresh unlock; nothing when it is simply available.
+            if (isNew)
             {
                 TMP_Text chip = UiFactory.Chip(
                     "State", button.transform,
-                    isNew ? UiStrings.Get("tree.flag.new", "NEW") : UiStrings.Get("tree.state.locked", "LOCKED"),
-                    isNew ? UiColor.AccentSakura : UiColor.SurfaceInset,
-                    isNew ? UiColor.SurfaceBase : UiColor.TextSecondary,
-                    isNew ? 56f : 88f, UiChips.Height(UiChipSize.Row)); // WP-068 slice 3 (AD MUST-1): the band from the face at the TextScale - a fixed 22 emptied LOCKED at 1.25
+                    UiStrings.Get("tree.flag.new", "NEW"),
+                    UiColor.AccentSakura,
+                    UiColor.SurfaceBase,
+                    56f, UiChips.Height(UiChipSize.Row)); // WP-068 slice 3 (AD MUST-1): the band from the face at the TextScale - a fixed 22 emptied LOCKED at 1.25
                 RectTransform chipRect = (RectTransform)chip.transform.parent;
                 chipRect.anchorMin = new Vector2(1f, 0.5f);
                 chipRect.anchorMax = new Vector2(1f, 0.5f);
                 chipRect.pivot = new Vector2(1f, 0.5f);
                 chipRect.anchoredPosition = new Vector2(-(int)UiSpace.S, 0f);
-                if (isNew)
-                {
-                    chipRect.gameObject.AddComponent<UiPulse>().Configure(
-                        new Graphic[] { chipRect.GetComponent<Graphic>() }, 0.80f, 1f, UiTokens.PulsePeriod);
-                }
+                chipRect.gameObject.AddComponent<UiPulse>().Configure(
+                    new Graphic[] { chipRect.GetComponent<Graphic>() }, 0.80f, 1f, UiTokens.PulsePeriod);
             }
         }
 
