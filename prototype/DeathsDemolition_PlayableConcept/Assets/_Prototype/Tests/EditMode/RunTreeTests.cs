@@ -220,6 +220,23 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void OzelBag_FiyatiVeAgirligi_KatalogdanGelir()
+        {
+            // WP-077 B5: the link slots are generic nodes (FlatCost 0); before the fix a Special link card cost 1 gold.
+            foreach (string ozel in new[] { "sw_arc", "sw_gel" })
+            {
+                RunTreeState t = Agac();
+                t.OnSpecialPickedUp(ozel);
+                RunTreeCatalogNode b1 = RunTreeCatalog.FindLink(ozel, 1), b2 = RunTreeCatalog.FindLink(ozel, 2);
+                Assert.IsNotNull(b1, ozel + " bağ I");
+                Assert.IsNotNull(b2, ozel + " bağ II");
+                Assert.AreEqual(b1.cost, t.Cost(t.Graph.LinkIIndex, _rank), ozel + " bağ I fiyatı katalogdan");
+                Assert.AreEqual(b2.cost, t.Cost(t.Graph.LinkIIIndex, _rank), ozel + " bağ II fiyatı katalogdan");
+                Assert.Greater(b1.cost, 1, "katalog fiyatı 1 değil");
+            }
+        }
+
+        [Test]
         public void EtkisiBaglanmamis_Kilitli_Satilmaz_Teklife_Girmez()
         {
             // K10b: every shipped node is wired, so the rule is proven on a catalog copy whose ar_1 seal names an unwired effect.

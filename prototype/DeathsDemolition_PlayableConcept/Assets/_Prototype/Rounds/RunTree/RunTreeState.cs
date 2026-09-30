@@ -115,7 +115,7 @@ namespace DD.Prototype.Rounds
             }
         }
 
-        /// <summary>Gold price of the node's next step (tier price with the DEC-070 opening clamp; Hearth 50 + 30·n).</summary>
+        /// <summary>Gold price of the node's next step (tier price with the DEC-070 opening clamp; Hearth 50 + 30·n; a Special link the linked Special's catalog price).</summary>
         public int Cost(int i, WeaponModifierState build)
         {
             RunTreeNode n = Graph[i];
@@ -131,6 +131,12 @@ namespace DD.Prototype.Rounds
                     return Math.Max(1, n.FlatCost + (Meta.HearthCostStepOverride >= 0 ? Meta.HearthCostStepOverride : n.CostStep) * HearthStacks);
                 case RunTreeNodeKind.Capstone:
                     return Math.Max(1, Mathf.RoundToInt(n.FlatCost * (1f - Mathf.Clamp01(Meta.CapstoneDiscount))));
+                case RunTreeNodeKind.SpecialLink:
+                {
+                    // WP-077 B5: the link slots are generic (no catalog price of their own); the Special picked up first names them.
+                    RunTreeCatalogNode c = LinkCatalogOf(n);
+                    return Math.Max(1, c != null ? c.cost : n.FlatCost);
+                }
                 default:
                     return Math.Max(1, n.FlatCost);
             }
@@ -509,7 +515,9 @@ namespace DD.Prototype.Rounds
 
         private float OfferWeightOf(int i)
         {
-            float w = Math.Max(0.01f, Graph[i].OfferWeight);
+            RunTreeNode n = Graph[i];
+            RunTreeCatalogNode link = n.Kind == RunTreeNodeKind.SpecialLink ? LinkCatalogOf(n) : null;
+            float w = Math.Max(0.01f, link != null ? link.offerWeight : n.OfferWeight);
             return _unseen.Length > i && _unseen[i] >= PityRounds ? w * 2f : w;
         }
 
@@ -719,6 +727,10 @@ namespace DD.Prototype.Rounds
         }
 
         // ------------------------------------------------------------------ helpers
+
+        /// <summary>The catalog entry of a link slot for the linked Special (price, offer weight), else null.</summary>
+        private RunTreeCatalogNode LinkCatalogOf(RunTreeNode n) =>
+            string.IsNullOrEmpty(LinkedSpecial) ? null : RunTreeCatalog.FindLink(LinkedSpecial, n.LinkLevel);
 
         private int CountOwned(RunTreeLane lane, RunTreeNodeKind kind)
         {
