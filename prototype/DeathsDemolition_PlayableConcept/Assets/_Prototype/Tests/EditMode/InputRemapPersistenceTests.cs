@@ -67,6 +67,29 @@ namespace DD.Prototype.Tests.EditMode
             }
         }
 
+        /// <summary>
+        /// WP-069 B5 (S-09 WP-068 dilim 9 T3(d), C-00 30.09): the "default: X" name travels with the entry — the settings
+        /// screen may not turn control paths into names itself (ADR-024-2).
+        /// </summary>
+        [Test]
+        public void VarsayilanAdi_OverrideSonrasiDaVarsayilanTusuGosterir()
+        {
+            InputRemapEntry fire = Entry(PrototypeInputNames.ActionFire, InputSchemeKind.KeyboardMouse);
+            Assert.IsFalse(fire.IsOverridden);
+            Assert.IsFalse(string.IsNullOrEmpty(fire.DefaultDisplayName), "varsayılan adı boş");
+            Assert.AreEqual(fire.DisplayName, fire.DefaultDisplayName, "override yokken varsayılan = etkin");
+
+            Assert.IsTrue(_svc.ApplyOverride(fire.Id, "<Keyboard>/space"));
+            InputRemapEntry after = _svc.Find(fire.Id);
+            Assert.AreEqual(fire.DefaultDisplayName, after.DefaultDisplayName, "override varsayılanın adını değiştirmez");
+            Assert.AreNotEqual(after.DisplayName, after.DefaultDisplayName, "etkin ad yeni tuşun adı");
+
+            foreach (InputRemapEntry e in _svc.Entries)
+            {
+                Assert.IsFalse(string.IsNullOrEmpty(e.DefaultDisplayName), e.Action + "/" + e.Scheme + "/" + e.CompositePart + ": varsayılan adı boş");
+            }
+        }
+
         [Test]
         public void Override_Kaydet_Yukle_Sifirla_RoundTrip()
         {

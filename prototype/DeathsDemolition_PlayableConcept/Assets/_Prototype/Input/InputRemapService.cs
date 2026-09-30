@@ -329,9 +329,12 @@ namespace DD.Prototype.Inputs
                     bool overridden = !string.IsNullOrEmpty(b.overridePath);
                     string display = InputControlPath.ToHumanReadableString(effective,
                         InputControlPath.HumanReadableStringOptions.OmitDevice);
+                    string defaultDisplay = overridden
+                        ? InputControlPath.ToHumanReadableString(b.path, InputControlPath.HumanReadableStringOptions.OmitDevice)
+                        : display;
 
                     _entries.Add(new InputRemapEntry(id, _gameplay.name, action.name, scheme,
-                        b.isPartOfComposite ? b.name : string.Empty, b.path, effective, display, overridden));
+                        b.isPartOfComposite ? b.name : string.Empty, b.path, effective, display, overridden, defaultDisplay));
                     _actionById[id] = action;
                     _bindingIndexById[id] = i;
                 }

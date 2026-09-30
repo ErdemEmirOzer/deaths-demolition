@@ -7,7 +7,7 @@ namespace DD.Prototype.Core.InputAbstraction
     public readonly struct InputRemapEntry
     {
         public InputRemapEntry(string id, string map, string action, InputSchemeKind scheme, string compositePart,
-            string defaultPath, string effectivePath, string displayName, bool isOverridden)
+            string defaultPath, string effectivePath, string displayName, bool isOverridden, string defaultDisplayName = null)
         {
             Id = id;
             Map = map;
@@ -18,6 +18,8 @@ namespace DD.Prototype.Core.InputAbstraction
             EffectivePath = effectivePath;
             DisplayName = displayName;
             IsOverridden = isOverridden;
+            // Not overridden: the effective control IS the default, so its name is the default's name.
+            DefaultDisplayName = defaultDisplayName ?? (isOverridden ? string.Empty : displayName);
         }
 
         /// <summary>Stable identity of the binding (the asset's binding GUID). Survives reordering.</summary>
@@ -42,6 +44,12 @@ namespace DD.Prototype.Core.InputAbstraction
 
         /// <summary>Human-readable control name for the settings screen ("Right Trigger", "R").</summary>
         public string DisplayName { get; }
+
+        /// <summary>
+        /// WP-069 B5 (S-09 WP-068 dilim 9 T3(d), C-00 30.09): the human-readable name of <see cref="DefaultPath"/> for the
+        /// settings row's "default: X" — the UI may not turn control paths into names itself (ADR-024-2).
+        /// </summary>
+        public string DefaultDisplayName { get; }
 
         public bool IsOverridden { get; }
     }
