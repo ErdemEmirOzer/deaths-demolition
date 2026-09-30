@@ -47,7 +47,34 @@ namespace DD.Prototype.Diagnostics.Telemetry
         public float seconds;
     }
 
-    /// <summary>The whole run document (`dd-run-telemetry-v1`).</summary>
+    /// <summary>WP-077 B6 (v2): one tree event of the round-end shop (RunTreeEvents).</summary>
+    [Serializable]
+    public struct TreeEventRecord
+    {
+        public string kind;                    // node_bought / pin_set / offer_drawn / hearth_stoked / undo / reforged
+        public string id;                      // node id (offer_drawn: the offered ids, comma-separated)
+        public int round;
+        public int price;
+        public int lane;                       // 0 weapon, 1 body
+        public string nodeKind;
+        public int n;                          // hearth: stacks after the stoke; offer_drawn: frontier size
+        public int pity;                       // offer_drawn: cards the luck guard doubled
+        public bool reroll;
+    }
+
+    /// <summary>
+    /// WP-077 B6 (v2, C-00 30.09 top-down head decision): direct classic-weapon hits by body region, per weapon and camera
+    /// mode — the simulator's head share / hit split comes from these, not from a model constant.
+    /// </summary>
+    [Serializable]
+    public struct HitTally
+    {
+        public string weapon;
+        public string camera;
+        public int head, upper, lower;
+    }
+
+    /// <summary>The whole run document (`dd-run-telemetry-v2`; v1 plus the tree events and the hit tallies).</summary>
     [Serializable]
     public sealed class RunTelemetryDocument
     {
@@ -65,6 +92,9 @@ namespace DD.Prototype.Diagnostics.Telemetry
         public TtkSample[] ttk = Array.Empty<TtkSample>();
         public int ttkDropped;                 // samples beyond the ring capacity
         public bool truncated;                 // rounds beyond the record capacity were not stored
+        public TreeEventRecord[] treeEvents = Array.Empty<TreeEventRecord>();   // v2
+        public int treeEventsDropped;          // v2: events beyond the capacity
+        public HitTally[] hits = Array.Empty<HitTally>();                       // v2
     }
 
     /// <summary>
@@ -80,7 +110,11 @@ namespace DD.Prototype.Diagnostics.Telemetry
     /// </summary>
     public static class RunTelemetry
     {
-        public const string Schema = "dd-run-telemetry-v1";
+        public const string Schema = "dd-run-telemetry-v2";
+        /// <summary>The v1 documents (before WP-077 B6) still load: v2 only adds fields.</summary>
+        public const string SchemaV1 = "dd-run-telemetry-v1";
+        public const int TreeEventCapacity = 160;
+        private const int HitWeapons = 10, HitModes = 3;
         public const string Folder = "telemetry";
         public const int RoundCapacity = 64;
         public const int TtkCapacity = 512;
@@ -108,6 +142,9 @@ namespace DD.Prototype.Diagnostics.Telemetry
         private static readonly int[] s_tierScratch = new int[WeaponModifierState.BranchCount];
         private static readonly int[] s_tierAtRoundStart = new int[WeaponModifierState.BranchCount];
         private static bool s_truncated;
+        private static readonly TreeEventRecord[] s_treeEvents = new TreeEventRecord[TreeEventCapacity];
+        private static int s_treeCount, s_treeDropped;
+        private static readonly int[] s_hitCounts = new int[HitWeapons * HitModes * 3];
         private static RunTelemetryDocument s_last;
         private static string s_lastPath;
 
@@ -212,6 +249,7 @@ namespace DD.Prototype.Diagnostics.Telemetry
             RunEvents.GoldChanged += OnGoldChanged;
             RunEvents.RunEnded += OnRunEnded;
             DamageEvents.EnemyDamaged += OnEnemyDamaged;
+            RunTreeEvents.Raised += OnTreeEvent;          // WP-077 B6 (v2)
             DamageEvents.EnemyDied += OnEnemyDied;
             DamageEvents.PlayerAttacked += OnPlayerAttacked;
             ZombieEnemy.OutOfWorldRemoved += OnOutOfWorldRemoved;   // WP-061K
@@ -233,6 +271,9 @@ namespace DD.Prototype.Diagnostics.Telemetry
             s_truncated = false;
             s_firstHit.Clear();
             Array.Clear(s_rounds, 0, s_rounds.Length);
+            s_treeCount = 0;
+            s_treeDropped = 0;
+            Array.Clear(s_hitCounts, 0, s_hitCounts.Length);
         }
 
         /// <summary>Begins a run record. Public so a test can drive the recorder without a scene.</summary>
@@ -385,6 +426,16 @@ namespace DD.Prototype.Diagnostics.Telemetry
                 return;
             }
 
+            // WP-077 B6 (v2): a direct classic-weapon hit, by region, weapon and camera mode (three int increments, no allocation).
+            if ((info.Source == DamageSourceKind.Bullet || info.Source == DamageSourceKind.Pellet) && DamageHitContext.FromClassicWeapon)
+            {
+                int w = (int)DamageHitContext.Weapon, mode = (int)DD.Prototype.CameraSystem.CameraModeService.Current, region = (int)info.Result.Region;
+                if (w >= 0 && w < HitWeapons && mode >= 0 && mode < HitModes && region >= 0 && region < 3)
+                {
+                    s_hitCounts[(w * HitModes + mode) * 3 + region]++;
+                }
+            }
+
             int life = info.Meta.LifeId;
             if (life == 0 || s_firstHit.ContainsKey(life))
             {
@@ -488,6 +539,56 @@ namespace DD.Prototype.Diagnostics.Telemetry
             EndRun(summary);
         }
 
+        /// <summary>WP-077 B6 (v2): records a tree event of the shop (bounded; strings are fine here — not a combat hot path).</summary>
+        public static void OnTreeEvent(RunTreeEvent e)
+        {
+            if (!s_inRun) return;
+            if (s_treeCount >= TreeEventCapacity)
+            {
+                s_treeDropped++;
+                return;
+            }
+
+            s_treeEvents[s_treeCount++] = new TreeEventRecord
+            {
+                kind = TreeKindName(e.Kind), id = e.NodeId, round = e.Round, price = e.Price, lane = (int)e.Lane,
+                nodeKind = e.NodeKind.ToString(), n = e.Count, pity = e.Pity, reroll = e.Reroll
+            };
+        }
+
+        private static string TreeKindName(RunTreeEventKind k)
+        {
+            switch (k)
+            {
+                case RunTreeEventKind.NodeBought: return "node_bought";
+                case RunTreeEventKind.PinSet: return "pin_set";
+                case RunTreeEventKind.OfferDrawn: return "offer_drawn";
+                case RunTreeEventKind.HearthStoked: return "hearth_stoked";
+                case RunTreeEventKind.Undo: return "undo";
+                default: return "reforged";
+            }
+        }
+
+        private static HitTally[] BuildHits()
+        {
+            var list = new List<HitTally>();
+            for (int w = 0; w < HitWeapons; w++)
+            {
+                for (int m = 0; m < HitModes; m++)
+                {
+                    int b = (w * HitModes + m) * 3;
+                    if (s_hitCounts[b] + s_hitCounts[b + 1] + s_hitCounts[b + 2] == 0) continue;
+                    list.Add(new HitTally
+                    {
+                        weapon = ((ClassicWeaponId)w).ToString(), camera = ((DD.Prototype.CameraSystem.CameraMode)m).ToString(),
+                        head = s_hitCounts[b], upper = s_hitCounts[b + 1], lower = s_hitCounts[b + 2]
+                    });
+                }
+            }
+
+            return list.ToArray();
+        }
+
         /// <summary>Closes the run, builds the document and writes it (allocation is fine here). Public for tests.</summary>
         public static RunTelemetryDocument EndRun(in RunSummary summary)
         {
@@ -533,6 +634,11 @@ namespace DD.Prototype.Diagnostics.Telemetry
             var ttk = new TtkSample[s_ttkCount];
             Array.Copy(s_ttk, ttk, s_ttkCount);
             doc.ttk = ttk;
+            var tree = new TreeEventRecord[s_treeCount];
+            Array.Copy(s_treeEvents, tree, s_treeCount);
+            doc.treeEvents = tree;
+            doc.treeEventsDropped = s_treeDropped;
+            doc.hits = BuildHits();
 
             s_last = doc;
             s_inRun = false;
@@ -565,7 +671,7 @@ namespace DD.Prototype.Diagnostics.Telemetry
             try
             {
                 RunTelemetryDocument doc = JsonUtility.FromJson<RunTelemetryDocument>(json);
-                return doc != null && doc.schema == Schema ? doc : null;
+                return doc != null && (doc.schema == Schema || doc.schema == SchemaV1) ? doc : null;
             }
             catch (Exception)
             {

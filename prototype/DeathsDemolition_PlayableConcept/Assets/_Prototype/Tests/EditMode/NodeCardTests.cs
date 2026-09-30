@@ -432,6 +432,39 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void Telemetri_DukkanAgacOlaylariniYayinlar()
+        {
+            // WP-077 B6 (direction §4 telemetry set): the shop raises offer_drawn / pin_set / node_bought / hearth_stoked / undo.
+            var olaylar = new List<RunTreeEvent>();
+            System.Action<RunTreeEvent> dinle = e => olaylar.Add(e);
+            RunTreeEvents.Raised += dinle;
+            try
+            {
+                _rank.SetTier(UpgradeBranch.FireRate, 2);
+                Ac(1);
+                Assert.AreEqual(RunTreeEventKind.OfferDrawn, olaylar[0].Kind, "teklif çekildi");
+                Assert.Greater(olaylar[0].Count, 0, "cephe boyutu");
+                Assert.IsTrue(_dukkan.SetPin("ks_firerate"));
+                Assert.IsTrue(olaylar.Exists(e => e.Kind == RunTreeEventKind.PinSet && e.NodeId == "ks_firerate"));
+                _dukkan.DiscardOffer();
+                Ac(1);
+                Assert.IsTrue(Al("ks_firerate"));
+                RunTreeEvent alim = olaylar.Find(e => e.Kind == RunTreeEventKind.NodeBought);
+                Assert.AreEqual("ks_firerate", alim.NodeId);
+                Assert.AreEqual(RunTreeNodeKind.BranchKeystone, alim.NodeKind);
+                Assert.Greater(alim.Price, 0);
+                Assert.AreEqual(RunTreeCommandResult.Done, _dukkan.TryStokeHearth(_dukkan.SessionId, _dukkan.Revision));
+                Assert.IsTrue(olaylar.Exists(e => e.Kind == RunTreeEventKind.HearthStoked && e.Count == 1));
+                Assert.AreEqual(RunTreeCommandResult.Done, _dukkan.TryUndoLast(_dukkan.SessionId, _dukkan.Revision));
+                Assert.IsTrue(olaylar.Exists(e => e.Kind == RunTreeEventKind.Undo && e.NodeKind == RunTreeNodeKind.Hearth));
+            }
+            finally
+            {
+                RunTreeEvents.Raised -= dinle;
+            }
+        }
+
+        [Test]
         public void Nisan_TurdakiHak_AgacVerisinden()
         {
             // M-36 (C-00 30.09): the per-round pin assignments live in run-tree.json (pin.perRound, DEC-098 K2 = 1).

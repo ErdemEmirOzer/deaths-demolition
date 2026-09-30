@@ -690,6 +690,12 @@ namespace DD.Prototype.Rounds
 
         private bool CommitPurchase(UpgradeCardOffer card)
         {
+            if (card.IsNode && card.BoughtNodeIndex >= 0 && Tree.IsBuilt)
+            {
+                RunTreeNode n = Tree.Graph[card.BoughtNodeIndex];
+                RunTreeEvents.Raise(new RunTreeEvent(RunTreeEventKind.NodeBought, n.Id, Round, card.Cost, n.Lane, n.Kind));
+            }
+
             PurchasesThisRound++;
             GoldSpentThisRound += card.Cost;
             if (PurchasesThisRound >= PurchaseLimit)
@@ -931,6 +937,7 @@ namespace DD.Prototype.Rounds
                 _replacedSlots.Add(_nodeSlots[k]);
             }
 
+            RaiseOfferDrawn(true);
             RerollsThisRound++;
             GoldSpentThisRound += cost;
             RerollEntitlement = UpgradeEntitlement.Used;
@@ -1024,6 +1031,7 @@ namespace DD.Prototype.Rounds
         {
             Tree.TierEligibility = TierEligibility;
             Tree.DrawFrontier(Random, modifiers, UpgradeOfferPolicy.CardsPerOffer, _nodePicks);
+            RaiseOfferDrawn(false);
             Tree.RecordOffer(_nodePicks, modifiers);
             if (_nodePicks.Count == 0)
             {
@@ -1230,6 +1238,8 @@ namespace DD.Prototype.Rounds
             int cost = before - _wallet.Balance;
             GoldSpentThisRound += cost;
             _last = new LastPurchase { Valid = true, Hearth = true, Session = SessionId, CardIndex = -1, Node = Tree.Graph.HearthIndex, TransactionId = transactionId, Cost = cost };
+            RunTreeEvents.Raise(new RunTreeEvent(RunTreeEventKind.HearthStoked, Tree.Graph[Tree.Graph.HearthIndex].Id, Round, cost,
+                RunTreeLane.Weapon, RunTreeNodeKind.Hearth, Tree.HearthStacks));
             Revision++;
             RefreshCards();
             RunAudioEvents.Raise(RunAudioEvent.UpgradePurchased);
@@ -1307,6 +1317,8 @@ namespace DD.Prototype.Rounds
             }
 
             GoldSpentThisRound = Math.Max(0, GoldSpentThisRound - last.Cost);
+            if (last.Node >= 0 && last.Node < Tree.Graph.Count)
+                RunTreeEvents.Raise(new RunTreeEvent(RunTreeEventKind.Undo, Tree.Graph[last.Node].Id, Round, last.Cost, Tree.Graph[last.Node].Lane, Tree.Graph[last.Node].Kind));
             Revision++;
             RefreshCards();
             if (!last.Hearth) PurchaseUndone?.Invoke(undone);
@@ -1369,8 +1381,10 @@ namespace DD.Prototype.Rounds
                 return RunTreeCommandResult.WalletRefused;
             }
 
+            int partner = Tree.ForkPartner(i);
             Tree.Reforge(i, Round);
             GoldSpentThisRound += cost;
+            RunTreeEvents.Raise(new RunTreeEvent(RunTreeEventKind.Reforged, Tree.Graph[partner].Id, Round, cost, Tree.Graph[partner].Lane, RunTreeNodeKind.Fork));
             _last = default;
             Revision++;
             RefreshCards();
@@ -1395,6 +1409,21 @@ namespace DD.Prototype.Rounds
 
             if (i >= 0 && !Tree.CanPin(i, ModifierState())) return false;
             return i == Tree.PinnedIndex || i < 0 || PinChangesThisRound < PinsPerRound;
+        }
+
+        /// <summary>WP-077 B6 telemetry: the node offer just drawn (a new offer or a reroll) — ids, frontier size, doubled cards.</summary>
+        private void RaiseOfferDrawn(bool reroll)
+        {
+            if (!Tree.IsBuilt || RunTreeEvents.IsSilent) return;
+            var ids = new System.Text.StringBuilder(64);
+            for (int k = 0; k < _nodePicks.Count; k++)
+            {
+                if (k > 0) ids.Append(',');
+                ids.Append(Tree.Graph[_nodePicks[k]].Id);
+            }
+
+            RunTreeEvents.Raise(new RunTreeEvent(RunTreeEventKind.OfferDrawn, ids.ToString(), Round, 0, RunTreeLane.Weapon, RunTreeNodeKind.Tier,
+                Tree.LastFrontierSize, Tree.PityCount(_nodePicks), reroll));
         }
 
         /// <summary>WP-077 Nişan (K2, M-36): <see cref="PinsPerRound"/> target assignments per round (run-tree.json pin.perRound).</summary>
@@ -1425,7 +1454,12 @@ namespace DD.Prototype.Rounds
             int i = string.IsNullOrEmpty(nodeId) ? -1 : Tree.Graph.IndexOf(nodeId);
             if (i == Tree.PinnedIndex) return true;
             Tree.SetPin(i);
-            if (i >= 0) PinChangesThisRound++;
+            if (i >= 0)
+            {
+                PinChangesThisRound++;
+                RunTreeEvents.Raise(new RunTreeEvent(RunTreeEventKind.PinSet, Tree.Graph[i].Id, Round, 0, Tree.Graph[i].Lane, Tree.Graph[i].Kind));
+            }
+
             OfferChanged?.Invoke();
             return true;
         }

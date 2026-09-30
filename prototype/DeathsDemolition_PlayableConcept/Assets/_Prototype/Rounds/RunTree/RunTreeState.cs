@@ -39,6 +39,23 @@ namespace DD.Prototype.Rounds
         private int _earnedMark;
         private int[] _unseen = new int[0];
 
+        /// <summary>WP-077 B6 telemetry: the drawable cards (a fork pair counts once) of the last DrawFrontier.</summary>
+        public int LastFrontierSize { get; private set; }
+
+        /// <summary>WP-077 B6 telemetry: offered keystones / seals / capstones the luck guard (§2.5) doubled.</summary>
+        public int PityCount(List<int> offered)
+        {
+            int n = 0;
+            if (!IsBuilt || offered == null) return 0;
+            for (int k = 0; k < offered.Count; k++)
+            {
+                int i = offered[k];
+                if (i >= 0 && i < _unseen.Length && _unseen[i] >= PityRounds) n++;
+            }
+
+            return n;
+        }
+
         /// <summary>§2.5 luck guard: a keystone / seal / capstone left out of this many offers in a row draws at double weight.</summary>
         public const int PityRounds = 3;
 
@@ -455,6 +472,7 @@ namespace DD.Prototype.Rounds
                 total += OfferWeightOf(i);
             }
 
+            LastFrontierSize = _frontier.Count;
             while (into.Count < count && _frontier.Count > 0)
             {
                 float r = (random != null ? random.NextValue() : 0f) * total;

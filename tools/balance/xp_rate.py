@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """WP-077 B5 (S-04): real XP/hour (and Kül/hour) from run telemetry — the DEC-098 open item.
 
-Reads `dd-run-telemetry-v1` run documents (RunTelemetry, WP-045: one `run-<utc>.json` per run) from the directory
+Reads `dd-run-telemetry-v1` / `-v2` run documents (RunTelemetry, WP-045: one `run-<utc>.json` per run) from the directory
 given on the command line and prints aggregates only: per-run XP/h, the pooled XP/h (Σ XP / Σ run time), bands by
 reached round, and what that pace means for the DEC-098 rings (Kül = XP / 30; ring 1 = 150, rings 1+2 = 2 080,
 all = 5 830 Kül — the shipped meta catalog as TreeModel.Tempo reads it). It never prints per-run identities
@@ -35,7 +35,7 @@ def load(directory, min_seconds):
         except (OSError, ValueError):
             skipped += 1
             continue
-        if d.get("schema") != "dd-run-telemetry-v1" or float(d.get("runSeconds", 0)) < min_seconds:
+        if d.get("schema") not in ("dd-run-telemetry-v1", "dd-run-telemetry-v2") or float(d.get("runSeconds", 0)) < min_seconds:
             skipped += 1
             continue
         docs.append(d)

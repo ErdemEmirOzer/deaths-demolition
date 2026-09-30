@@ -54,6 +54,55 @@ namespace DD.Prototype.Tests.EditMode
             return new EnemyDeathInfo(null, tier, Vector3.zero, Vector3.forward, DD.Prototype.Damage.BodyRegion.UpperBody, DamageSourceKind.Bullet, false, false, 1, 2, 1, 0f, 0f, lifeId, in meta, in reward);
         }
 
+        private static EnemyDamageInfo BolgeVurusu(int lifeId, DD.Prototype.Damage.BodyRegion region)
+        {
+            var result = new DamageResult { HealthDamage = 5f, Region = region };
+            return new EnemyDamageInfo(null, EnemyTier.Standard, in result, Vector3.zero, Vector3.forward, DamageSourceKind.Bullet, 0f, 0.5f, false, Meta(lifeId));
+        }
+
+        [Test]
+        public void V2_AgacOlaylari_VeBolgeIsabetleri_Kaydedilir_V1Okunur()
+        {
+            // WP-077 B6 (direction §4 telemetry set, C-00 M-33; C-00 30.09 top-down head decision): tree events of the shop and
+            // direct classic hits by region / weapon / camera mode land in the v2 document; a v1 document still loads.
+            RunTelemetry.BeginRun();
+            RunTelemetry.OnRoundStarted(1);
+            RunTreeEvents.Raise(new RunTreeEvent(RunTreeEventKind.OfferDrawn, "tier_FireRate,ks_reload,purse", 1, 0, RunTreeLane.Weapon, RunTreeNodeKind.Tier, 7, 1, false));
+            RunTreeEvents.Raise(new RunTreeEvent(RunTreeEventKind.NodeBought, "purse", 1, 60, RunTreeLane.Body, RunTreeNodeKind.Purse));
+            RunTreeEvents.Raise(new RunTreeEvent(RunTreeEventKind.PinSet, "cap_ar_1", 1, 0, RunTreeLane.Weapon, RunTreeNodeKind.Capstone));
+            RunTreeEvents.Raise(new RunTreeEvent(RunTreeEventKind.HearthStoked, "hearth", 1, 50, RunTreeLane.Weapon, RunTreeNodeKind.Hearth, 1));
+            DamageHitContext.Set(1f, 1f, true, ClassicWeaponId.Ar2, null);
+            RunTelemetry.OnEnemyDamaged(BolgeVurusu(21, DD.Prototype.Damage.BodyRegion.Head));
+            RunTelemetry.OnEnemyDamaged(BolgeVurusu(21, DD.Prototype.Damage.BodyRegion.UpperBody));
+            RunTelemetry.OnEnemyDamaged(BolgeVurusu(22, DD.Prototype.Damage.BodyRegion.UpperBody));
+            RunTelemetry.OnEnemyDamaged(BolgeVurusu(22, DD.Prototype.Damage.BodyRegion.LowerBody));
+            DamageHitContext.Clear();
+            RunTelemetry.OnEnemyDamaged(BolgeVurusu(23, DD.Prototype.Damage.BodyRegion.Head));   // not a classic weapon hit → not counted
+            RunTelemetryDocument doc = RunTelemetry.EndRun(Ozet(1, 0, 0, 0, 0, 0));
+
+            Assert.AreEqual("dd-run-telemetry-v2", doc.schema);
+            Assert.AreEqual(4, doc.treeEvents.Length);
+            Assert.AreEqual("offer_drawn", doc.treeEvents[0].kind);
+            Assert.AreEqual(7, doc.treeEvents[0].n);
+            Assert.AreEqual(1, doc.treeEvents[0].pity);
+            Assert.AreEqual("node_bought", doc.treeEvents[1].kind);
+            Assert.AreEqual("purse", doc.treeEvents[1].id);
+            Assert.AreEqual(60, doc.treeEvents[1].price);
+            Assert.AreEqual(1, doc.treeEvents[1].lane);
+            Assert.AreEqual("pin_set", doc.treeEvents[2].kind);
+            Assert.AreEqual("hearth_stoked", doc.treeEvents[3].kind);
+            Assert.AreEqual(1, doc.treeEvents[3].n);
+            Assert.AreEqual(1, doc.hits.Length);
+            Assert.AreEqual("Ar2", doc.hits[0].weapon);
+            Assert.AreEqual(DD.Prototype.CameraSystem.CameraModeService.Current.ToString(), doc.hits[0].camera);
+            Assert.AreEqual(1, doc.hits[0].head);
+            Assert.AreEqual(2, doc.hits[0].upper);
+            Assert.AreEqual(1, doc.hits[0].lower);
+
+            string v1 = RunTelemetry.ToJson(doc).Replace("dd-run-telemetry-v2", RunTelemetry.SchemaV1);
+            Assert.IsNotNull(RunTelemetry.FromJson(v1), "v1 belgesi hâlâ okunur (kalibrasyon)");
+        }
+
         private static RunSummary Ozet(int reached, int completed, int kills, int gold, int spent, int upgrades)
         {
             return new RunSummary { ReachedRound = reached, CompletedRounds = completed, TotalKills = kills, StandardKills = kills, GoldEarned = gold, GoldSpent = spent, UpgradesPurchased = upgrades, Weapon = ClassicWeaponId.AssaultRifle, EndReason = RunEndReason.PlayerDeath, CompletedRoundXp = 20, KillXp = kills };
@@ -107,7 +156,7 @@ namespace DD.Prototype.Tests.EditMode
 
             Assert.IsNotNull(RunTelemetry.LastPath); Assert.IsTrue(File.Exists(RunTelemetry.LastPath));
             string json = File.ReadAllText(RunTelemetry.LastPath);
-            StringAssert.Contains("\"schema\":\"dd-run-telemetry-v1\"", json);
+            StringAssert.Contains("\"schema\":\"dd-run-telemetry-v2\"", json);
             foreach (string yasak in new[] { "Lineage", "Ordinal", "ProfileLevel", "Achievement", "Unlocked", "Completion", "UserName", "persistentDataPath" })
             {
                 StringAssert.DoesNotContain(yasak, json, "kimlik/profil verisi telemetriye girmez");
