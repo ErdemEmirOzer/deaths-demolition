@@ -85,8 +85,20 @@ def guard_verdict(ug, restore_text, after_plist):
         else (False, f"touched={fields.get('touched')} keys={keys}")
 
 
+def guard_path():
+    """C-00 30.09 (G4 Q9): the guard is called from the main repository only (DD_USERDATA_GUARD), never a worktree copy."""
+    import os
+    if os.environ.get("DD_USERDATA_GUARD"):
+        return os.environ["DD_USERDATA_GUARD"]
+    # default: the MAIN checkout's guard (the parent of the shared .git), not this worktree's copy
+    common = subprocess.run(["git", "-C", str(REPO), "rev-parse", "--path-format=absolute", "--git-common-dir"],
+                            capture_output=True, text=True).stdout.strip()
+    main_root = Path(common).parent if common else REPO
+    return str(main_root / "tools" / "userdata-guard.sh")
+
+
 def guard(command, directory):
-    args = [str(REPO / "tools" / "userdata-guard.sh"), command, str(directory), "--scope", "player"]
+    args = [guard_path(), command, str(directory), "--scope", "player"]
     return subprocess.run(args, capture_output=True, text=True)
 
 
