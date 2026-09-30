@@ -1,129 +1,105 @@
-# WP-078 — M4-R1 kabul planı (tasarım) · S-10 · v1 2026-09-24
+# WP-078 — M4-R1 kabul planı · S-10 · v2 2026-09-30 (v1 2026-09-24)
 
-Paket sahibi: S-10 · Koordinasyon: C-00 · Durum: **tasarım; kod yok.** Uygulama (bot uyarlaması, araç değişiklikleri, koşular) R1 paketleri geldikçe ayrı commit'lerle.
-Çerçeve: M4-R1 §4 / §8 (`KADRO/.../m4-r1/M4-R1-REVIZYON-TURU.md`), **DEC-091** (soak ikiye ayrılır), **DEC-092** (60 fps), **DEC-093** (build ≤ 5 GB), **DEC-095** (iki katmanlı ağaç), `QUALITY-TIERS-V2.md` (kademe sözleşmesi), WP-070 direction §11–§12 (mod × kademe, bot üç modda), WP-074 B9 (soak ±55). Bu belge karar/gereksinim metni değiştirmez; eşikler kaynak DEC/sözleşmeden alıntıdır.
+Paket sahibi: S-10 · Koordinasyon: C-00 · Durum: **koşu planı; kabul koşusu P1–P13 teslim edilip tek FINAL commit belirlenince** (C-00 30.09, P14). v2 güncel main `422de54a`'ya göre yazıldı; v1'den farklar §11.
+Çerçeve (karar önceliği: PROJE-SISTEM-PROMPTU §0.3): **DEC-091** (soak kararlılık MUST, gerçek bot rapor), **DEC-092** (Yüksek 60 fps), **DEC-093** (release ≤ 5 GB), **DEC-095/098** (iki katmanlı ağaç), **DEC-097/099** (arsenal + Special cephane/süre), **DEC-100** (varsayılan Sinematik 30 fps, kapı), `QUALITY-TIERS-V2.md`, WP-070 §11–§12, WP-074 B9, `tools/qa/wp078-report-contract.md` (A8 üretici). Bu belge karar/gereksinim metni değiştirmez; eşikler kaynaktan alıntıdır; karar gerektirenler §10'dadır.
 
 ## 0 · Amaç ve kapsam
 
-R1 turu sonunda **tek bir commit** üzerinde: (1) değişen süitler yeşil, (2) QaRunBot üç kamera modunda koşar, (3) projectile / ragdoll / Special / ağaç regresyonları kanıtlı, (4) kademe × mod perf matrisi DEC-092'ye göre ölçülmüş, (5) DEC-091 kararlılık soak'ı ±55 dünyada yeniden tabanlanmış, (6) release build ≤ 5 GB ve kullanıcı verisi korunmuş. Sonra release build → kullanıcı oynar → R2 (M4-R1 §8).
+M4-R1 sonunda **tek FINAL commit** üzerinde: (1) değişen süitler yeşil, (2) QaRunBot üç kamera modunda V6 dünyada koşar, (3) projectile / ragdoll / Special / ağaç regresyonları kanıtlı, (4) 3 kademe × 3 mod perf matrisi DEC-100/092 + Performans eşiğine göre ölçülmüş, (5) DEC-091 kararlılık soak'ı ±55 V6 dünyada, (6) release ≤ 5 GB ve kullanıcı verisi bayt-eşit korunmuş. Sonra release → kullanıcı oynar → R2.
+Kapsam dışı: sahip birim testlerinin yeniden yazımı, görsel kalite yargısı (AD), denge sayıları (S-02/S-04), yeni ürün kuralı.
 
-Kapsam dışı: paket içi birim testlerinin yeniden yazımı (sahipte kalır), görsel kalite yargısı (AD), denge değerleri (S-04/S-02).
+## 1 · Kabul zinciri (sıra = bağımlılık; hepsi aynı FINAL commit)
 
-## 1 · Kabul zinciri (sıra = bağımlılık)
-
-| Adım | Ne | Koşul / eşik | Sahip testi ↔ S-10 |
+| Adım | Ne | Eşik | Araç / kanıt |
 |---|---|---|---|
-| A0 | Taban | tek commit, `git status` boş, LFS maddeleşmiş, Library kökeni (WP-064 kapı v2 `library_provenance.py`) | S-10 |
-| A1 | Değişen süitler | EditMode + PlayMode, tek koşu (HIZLI HAT §7), kırmızı → §9 sahip tablosu | sahip süitleri, S-10 tek koşu |
-| A2 | Bot üç modda (§2) | TD/TP/FP × 5 round, takılma 0, kamera-duvar içi kare 0 (WP-070 K2) | S-01 kancaları, S-10 bot |
-| A3 | Regresyon kapsamı (§3) | matris satırlarının her biri PASS ya da sahipli FAIL | sahip + S-10 uçtan uca |
-| A4 | Perf matrisi (§4) | 3 kademe × 3 mod; kapı hücreleri DEC-092 / Performans eşiği | S-10 (wp064_run perf) |
-| A5 | Soak yeniden taban (§5) | DEC-091 kararlılık 2 tohum × 12/12 **aynı commit**; gerçek bot raporu | S-10 |
-| A6 | Build (§6) | release LZ4HC ≤ 5 GB (DEC-093), dev + release damga temiz | S-01 aracı, S-10 kanıt |
-| A7 | Kullanıcı verisi & bütünlük (§7) | koşu öncesi/sonrası bayt eşit; `ProjectIntegrityTests` yeşil | S-10 |
-| A8 | Rapor (§9) | `wp078-report.json` + ≤ 10 satır C-00; FAIL→sahip tablosu | S-10 |
+| A0 | Taban | FINAL tam SHA, `git status` boş, LFS 0 işaretçi, Library kökeni post-build | `tools/qa/library_provenance.py` |
+| A1 | Değişen süitler | FINAL'a giren paketlerin süitleri tek koşu + `main-ci` FINAL özeti yeşil | `tools/test.sh` (guard'lı), `ci/<sha>/summary.md` |
+| A2 | Bot üç modda (§2) | TD/TP/FP × 5 round, tohum 61, normal bot: 5/5, 0 ölüm, 0 istisna, zaman aşımı 0, kamera-duvar 0 kare | KADRO `wp-078/tools/player-run.sh` → `bot-summary.json`, `player.log` |
+| A3 | Regresyon kapsamı (§3) | her alan: sahip test XML'i PASS + S-10 uçtan uca satırı | `A3_REQUIRED_TEST_IDS` (wp078_report) + bot log satırları |
+| A4 | Perf matrisi (§4) | 9 hücre × ≥ 3 pencere, her tam pencere eşik altı | `tools/qa/wp078_perf.py` → `wp078_perf_report.py` |
+| A5 | Soak (§5) | DEC-091: tohum 61 + 26 × 12/12, kararlılık kapısı | `player-run.sh … -ddQaBotStability` → `soak_gate.py --stability` |
+| A6 | Build (§6) | dev + release (LZ4HC) + release-probe; release ≤ 5 GB | `tools/build.sh` |
+| A7 | Kullanıcı verisi & bütünlük (§7) | her Player/PlayMode koşusu guard verified=1; `ProjectIntegrityTests` PASS | guard makbuzları, NUnit XML |
+| A8 | Rapor (§9) | tüm A0–A7 aynı FINAL; eksik = BLOCKED | `tools/qa/wp078_report.py --manifest … --evidence-root … --out …` |
 
-Kontrol noktaları (tam zincir değil, yalnız etkilenen adım):
-- **C1** WP-070 B7 + WP-069 B1 main'de → A2 duman (3 mod × 2 round), A4 yalnız Yüksek × 3 mod × 1 pencere (eğilim).
-- **C2** WP-074 B1 greybox (S-05 SHA + yükleme bayrağı) → bot `WorldBounds` uyarlaması + WP-074 B9 soak (26 + 61, 12/12).
-- **C3** tüm R1 paketleri entegre → A0–A8 tek seferde; sonrasında giren her paket yalnız etkilediği adımı geçersiz kılar (değişiklik-kapsamlı yeniden doğrulama).
+Kontrol noktaları: **C1** (üç mod bot) ve **C2** (V6 halkası) geçildi (kanıt `wp-078/evidence/c1d-4cab1e1a`, `r1-820a885f`). **C3** = FINAL: A0–A8 tek seferde; sonrasında giren her paket yalnız etkilediği adımı geçersiz kılar.
+Süre (sessiz makinede): build'ler ~30 dk → A1 ~25 dk (main-ci) → A2 ~20 dk → A3 bayrak dumanı ~10 dk → A5 2 × ~25 dk → A4 27 pencere ≈ 70 dk + parti araları → A8. Toplam ≈ 4–5 saat; A4 yalnız sessiz pencerede.
 
-## 2 · QaRunBot üç kamera modunda
+## 2 · QaRunBot üç kamera modunda (A2)
 
-**Seçim:** `-ddCameraMode topdown|tp|fp` (CameraModeService.CommandLineFlag; kayıtlı tercihi değiştirmez — A7'de doğrulanır). Bot, mod değişiminde değil **başlangıç modunda** koşar; mod geçişi (Pause seçici) ayrı bir PlayMode testi (WP-070 K3), bot kapsamı değil.
+Seçim `-ddCameraMode topdown|tp|fp`, kademe `-ddQualityTier sinematik` (DEC-100 varsayılan; açıkça verilir), dünya varsayılan (V6, bayraksız yol). Sandbox: `-ddProfilePath`, `-ddTelemetryDir`, `<out>/ui-data` (QaRunBot) — kullanıcı dosyası yazılmaz; guard `snapshot/restore --scope player`, verified=1; kabul edilen tek değişiklik Unity `Screenmanager*`/`UnitySelectMonitor` plist anahtarları (C-00 25.09).
+Bot sözleşmesi (main'de): kamera-göreli sol çubuk; TP/FP sağ çubukla yaw/pitch (`LookStickToward`), ateş yalnız merkez ışını hedef göğsündeyken (`LookRayOnTarget`); yok sayılan reload 45 kararda bir yeniden basılır; halka `WorldBounds.HalfExtent` (V6 55).
+Metrikler: round/ölüm/zaman aşımı; round satırları `[Camera] inside-collider … frames=0/N`, `[OutOfWorld]`, `[Projectile]`, `[Ragdoll]`, `[AiV3]`, `[SpawnV6]`, koşu satırı `[Progress]`; `stuckRecoveries` (rapor); nişan hatası (TP/FP kamera kökenli — §8 D3).
+Kanıt kareleri: mod başına avlu / koridor-çatı altı / ufuk (contract `frames` anahtarları `courtyard`, `corridor`, `horizon`). **Bugün bot bu kareleri üretmiyor** (`-ddQaBotFrames` tier kareleri içindir) → §8 D3.
+**Kabul:** üç modda 5/5, 0 ölüm, 0 istisna, zaman aşımı 0, kamera-duvar 0 kare, guard OK (`wp078_report` ayrıca `stuckRecoveries == 0` istiyor → §10 K6). TP/FP kararlılık (12 round) **rapor** (§10 K3).
 
-**Bot sözleşmesi (uygulama S-10; kancalar S-01 WP-070 B7 / A-9):**
-1. *Hareket:* planlayıcı dünya uzayında istenen yönü üretmeye devam eder; sol çubuk = istenen yönün **kamera yaw'ına göre** dönüştürülmüş hâli (TD'de kimlik). Kaçış planlayıcısı (`QaBotBrain.ScoreDirection`) mod-bağımsız kalır.
-2. *Nişan:* TD mevcut (sağ çubuk dünya yönü). TP/FP'de sağ çubuk kamera yaw/pitch hızını sürer; hedef = en yakın tehdit (`CameraView`), atış yalnız `TryGetAimRay` ışını hedef göğüs kapsülüne ≤ 1,5° iken. Nişan hatası ve "ateş-hattı kaçırma" nedenleri (mevcut `fireLine` sayacı) mod başına raporlanır.
-3. *Arka tehdit:* FP/TP'de görüş dışındaki bedenler planlayıcıda aynen tehdit (dünya verisi); `RearThreat` beat'i (WP-076) bot için ek sinyal değil, yalnız HUD/ses kanıtı.
-4. *Dünya sınırı:* halka yarıçapı `WorldBounds.HalfExtent` / `NavMeshInset`'ten (S-05 WP-074 B1); yoksa 45 m geri dönüş. Güvenli nokta ızgarası ve merkez çekimi bu değerle ölçeklenir.
-5. *Kararlılık modu:* `-ddQaBotStability` üç modda aynı (ölümsüz, ayrı `stabilityPass`).
+## 3 · Regresyon kapsamı (A3)
 
-**Metrikler (bot-summary v3, mod alanı `cameraMode`):** round/ölüm/zaman aşımı, takılma (> 5 s konum değişimi < 0,5 m, oda içi ayrı sayılır — WP-074 B9), **kamera-duvar içi kare** (S-01 sondası: kamera kapsülü collider içinde; TP SphereCast itmesi sonrası), nişan hatası ort/p95, kaçırma nedenleri, 061L ödülsüz kaldırma (havuz − kill ve spawn − kill; §5).
+Kural: sahip testi birincil kanıt (NUnit XML, `wp078_report.A3_REQUIRED_TEST_IDS`); S-10 yalnız uçtan uca satır ekler, süitleri bir kez koşar.
 
-**Kanıt kareleri:** mod başına ≥ 3 (avlu açık, koridor/çatı altı, ufuk — WP-070 §12), sabit rota noktalarında `capture-gameplay-<mod>-<nokta>.png`; FP'de WP-070 E-listesi (E-1 kapalı geometri, E-14 draw call) aynı rotada. Rota noktaları dünya v5 greybox sonrası sabitlenir (C2).
-
-**Kabul:** TD/TP/FP × 5 round (normal mod, tohum 61), takılma 0, kamera-duvar içi kare 0 (WP-070 K2) + kararlılık modunda TP ve FP × tohum 26 × 12/12 (**rapor**, §5.3).
-
-## 3 · Regresyon kapsamı
-
-Kural: sahip testi birincil kanıt; S-10 yalnız uçtan uca (dev Player, bot/sonda) çapraz kontrol ekler ve süitleri **bir kez** koşar. Her satır: PASS · sahipli FAIL · N/A (paket girmedi).
-
-| Alan | Sahip kanıtı (süit / test) | S-10 uçtan uca çapraz kontrol |
+| Alan | Sahip kanıtı | S-10 uçtan uca |
 |---|---|---|
-| **Projectile** (WP-069 ADR-069-1) | sabit adım 1/120 s, kare başına ≤ 8 alt adım; süpürme (Raycast/SphereCast NonAlloc); tavan 256; `DamageTransaction` kimliği; 0 B/kare (WP-059D kalıbı: tek karede N atış + kontrol + pozitif kontrol) | bot koşusunda aktif mermi tepe sayısı / taşma 0 / isabet oranı; 10 silahın koşu içi mermi hızı = katalog değeri (±%1, `ArsenalCatalog` ↔ log); menzil sonu yok olma |
-| **Penetrasyon + bölgesel zırh** | WP-069 §276 yeni satır: sr_1 dört gövde, 3.'sü kasklı; WP-006 zırh testleri yeşil | — |
-| **Launcher rl_1** | patlama bölge dağılımı (WP-006), kurma 4,0 m, kendine hasar %45 / tavan 72 | gerçek bot raporunda kendine hasar ölümleri; > %5 ise WP-069 §1110 tetik → S-02 |
-| **10 silah + 2 Special** (N1/N12) | `WeaponDefinition` doğrulaması (coreBranches, keystone), reload/şarjör/atış hızı test satırları | bot her silahı ≥ 1 round kullanır (silah döngüsü bayrağı, S-10); ateş/reload olay sayıları ses/VFX olay yüzeyine eşit (WP-072/073 kapsam matrisi) |
-| **Special: jel** | birikinti tavanı Pick (10/16/24), kayma | kademe başına tavan aşılmaz (log sayacı) |
-| **Special: zincir yıldırım** | hop Pick (6/8/10), LOS | kademe başına hop tavanı; `-ddChainHops 0` = 4 hop, LOS yok (bayrak A/B) |
-| **Ragdoll / ölüm** (WP-071, WP-076) | `RagdollProxyPool.Capacity` Pick (2/6/10), taşan ölüm yazılı düşüş klibi, `RagdollReset` 200 döngü + 0 B (R3), cesette hasar olayı yok, NavMesh oyulmaz | soak'ta eşzamanlı ragdoll tepe ≤ kademe tavanı, havuz sızıntısı yok (döngü sayısı ↔ aktif); 4 ölüm animasyonu dağılımı (bot kill günlüğü) |
-| **Zombi saldırı ×5** (N11, WP-076) | `AttackStyleProfile` tier izinleri; telegraph = klip olayları (DEC-029) | gerçek bot raporunda ölüm nedeni stil dağılımı; `-ddAiV3 0` = WP-040 davranışı |
-| **Animasyon v3** | kadans bandı 0,85–1,20, ayak kilidi, moonwalk önleme (WP-071 K3) | — (AD) |
-| **Kamera** (WP-070 K1–K9) | TD regresyonu kare farkı 0, D-20 nişan sözleşmesi, ayar kalıcılığı test kökü, FP görüntü modeli | A2 + A4 + A7 |
-| **Dünya v5** (WP-074 B2/B9) | 18/18 kapı yolu, oran ≤ 1,45 | A5 soak (oda içi takılma > 5 s = 0) |
-| **AI v3 bayrakları** | `-ddAiV3 / -ddRagdoll / -ddCorpseLinger / -ddChainHops / -ddGelPuddles / -ddCrowdNeighbours / -ddSpawnLos` | her bayrak `0` ve `1` ile Player açılır, 1 round tamamlanır (bayrak duman matrisi, dev build) |
-| **Gelişim ağacı v2** (DEC-095, WP-077) | koşu içi dal/keystone, meta ağaç `ApplyRun` sırası, harcama payı R1–R15 %65–80 (simülasyon) | yeni XP eğrisi + Kül tempo telemetrisi 5 gerçek bot koşusundan (WP-077 §306); aday profil klonu kullanıcı profiline dokunmaz (A7) |
-| **Ses v3** | World kapasitesi, ses CPU ≤ 0,3 ms (Performans) | perf matrisinde ses payı raporu |
-| **UI** | ADR-024-2 tarama 0 (UI Input System okumaz), kamera seçici | — |
-| **Okunabilirlik** (DEC-077) | `ArmorTests.Okunabilirlik` | TD kapısı değişmez (MUST); TP/FP kanıt kareleri AD'ye rapor |
+| projectile (ADR-069-1) | 1/120 s sabit adım, tavan 256, 0 B/kare | `[Projectile] overflow=0`; 10 silahın ölçülen/katalog hızı ±%1 (`WeaponQaHooks.TrySetClassicWeapon` döngüsü) |
+| penetration | sr_1 dört gövde, 3.'sü kasklı; WP-006 zırh | — |
+| launcher rl_1 | bölge dağılımı, kurma 4,0 m, kendine hasar %45 / tavan 72 | gerçek bot raporunda kendine hasar ölümü > %5 → S-02 |
+| arsenal (10 silah) | `WeaponDefinition` v3 doğrulaması (DEC-097/099) | her silah ≥ 1 round — QaRunBot'ta silah döngüsü **henüz yok** (§8 D3) |
+| gel (Namekuji) | DEC-097: cephane 8/16 + tavan 45 s; DEC-099: birikinti 12 s, eşzamanlı tavan 8, Guard kayma ölümü yalnız R ≤ 10 | `[AiV3] gelSlides/gelFalls` |
+| chain (Raiju) | DEC-097: cephane 3/9 + tavan 40 s; `WD_sw_arc.maxTargets = 8` (ilk hedef dahil → ≤ 7 sekme), **kademesiz** | zincir başına hedef ≤ 8 — `SpecialImpacts.HopsApplied` birikimli, zincir başına sayaç gerekir (§8 D3 / S-02 kancası) |
+| ragdoll | `RagdollProxyPool` kademe tavanı, 200 döngü sızıntısız | `[Ragdoll] peak ≤ tierCap`, `totalAcquired − totalReleased − active = 0` |
+| zombieAttacks | 5 stil, tier izinleri (DEC-096) | ölüm nedeni dağılımı (rapor) |
+| animation | kadans bandı, 4 ölüm ailesi | `[Ragdoll] families` |
+| camera (WP-070 K1–K9) | TopDown regresyonu, D-20 nişan | A2 + A4 |
+| world (WP-074 B2/B9) | 18 kapı yolu | A5 (oda içi takılma > 5 s = 0) |
+| aiFlags | `-ddAiV3 0/1` (**main'de var olan tek bayrak**; v1'deki `-ddRagdoll/-ddCorpseLinger/-ddChainHops/-ddGelPuddles/-ddCrowdNeighbours/-ddSpawnLos` kodda yok) | `-ddAiV3 0` ve `1` ile birer 1 round Player dumanı (§10 K4) |
+| progression (DEC-095/098) | ağaç sim kabulü (S-04), `ApplyRun` sırası | `[Progress]` 5 gerçek bot koşusundan (bot koşu kapanışı main'de: `e5888d47`) |
+| audio | World kapasitesi, ses CPU | perf matrisinde ses payı (rapor) |
+| ui | ADR-024-2 tarama 0 | — |
+| readability (DEC-077) | `ArmorTests.Okunabilirlik` | TP/FP kareleri AD'ye rapor |
 
-## 4 · Perf ölçüm protokolü (hedeften bağımsız)
+## 4 · Perf ölçüm protokolü (A4)
 
-**Eşikler veriden okunur, protokol sabittir.** `tools/qa/perf-targets.json` (DEC kimliğiyle): kademe → {ort ms, p99 süzülmüş ms, kapı/rapor}. Bugünkü içerik QUALITY-TIERS-V2 §1'den: Performans 8,0 / 10 **kapı**; Yüksek 16,6 / 20 **kapı** (DEC-092); Sinematik 22 / 28 **rapor** (taban 45 fps). Hedef değişirse yalnız bu dosya değişir.
+Eşikler **veriden**: `tools/qa/perf-targets.json` — Sinematik ≤ 33,3 / p99 ≤ 40 (DEC-100, **kapı**) · Yüksek ≤ 16,6 / 20 (DEC-092, kapı) · Performans ≤ 8,0 / 10 (kapı). **Uyarı:** takılma eşiği tüm kademelerde `stallMs` 33,33; süzülmüş p99 bu karelerin dışında hesaplandığı için Sinematik'in p99 ≤ 40 sınırı hiç bağlamaz, gerçek kısıt "> 33,33 ms kare ≤ %1" olur → §10 K9. 3 kademe × 3 mod = 9 hücre, **her hücre ≥ 3 tam pencere** (27). Her tam pencere sayılır, en iyisi seçilmez; iptal yalnız host nedeniyle (`attempts-ledger.jsonl`: `preflight-failed` exit 75, ya da `failed` + `hostClean:false`).
+Senaryo: PilotPerfProbe `Run`, 1920×1080, tam 40 aktif, 10 s ısınma + 60 s pencere, `-ddQualityTier`, `-ddCameraMode`, TP/FP `-ddPilotCameraSweep 1`, `-ddUiDataRoot`, `-ddTelemetryDir`; guard `--scope player` (92eb636e: 30 BLOCKED / 31 STOP yukarı taşınır).
+Sessiz pencere (C-00 26.09): koşucu player slotunu ve **üç** Unity slotunu tutar; her pencereden önce load1 < 6, yabancı Unity/Player 0; ≤ 25 dk parti + 180 s ara; `wp064_run --load-max 6`. Kirli ölçüm kapı değildir.
+Build: kapı sayıları **release-probe**'dan (§10 K1). Kayıt: model, macOS, güç, ısıl durum, load1.
 
-**Matris:** 3 kademe × 3 mod = 9 hücre (WP-070 D-22). Pencere: kapı hücreleri (Yüksek × 3, Performans × 3) **≥ 3 tam pencere**, Sinematik hücreleri ≥ 2 (sözleşme §5 tabanı ≥ 2). Her tam deneme sayılır (en iyisi seçilmez); iptal yalnız host nedeniyle (deneme defteri, WP-064 kapı v2).
+## 5 · Soak (A5, DEC-091)
 
-**Senaryo (her pencere):** PilotPerfProbe `-ddPilotScene Run`, 1920×1080 pencereli, **tam 40 aktif** (yük bütünlüğü kontrolü), 10 s ısınma + 60 s pencere, `-ddCameraMode <mod>` + kademe anahtarı (`QualityTiers`, kayıtlı ayara yazmadan). TP/FP'de görüş karşılaştırılabilir olsun diye **sabit kamera programı**: avlu merkezinde 60 s'de 360° yaw taraması, pitch 0 (S-01 sonda kancası; ekrandaki düşman sayısı raporlanır). Oynanış penceresi (bot sürer) yalnız rapor.
+Tek FINAL commit; kararlılık **MUST**: tohum 61 + 26 × 12/12, `-ddQaBotStability`, tepeden, V6 (`WorldBounds` 55), kademe **Sinematik** (DEC-100 varsayılan; §10 K5), sıralı 12/12 ve zaman aşımı 0 (DEC-091 "takılma 0" = takılan round), Player logunda hata 0, bellek **büyümesi** (r2 tabanlı: Mono ≤ 48 MB ve ≤ 4 MB/round, toplam ayırma ≤ 256 MB, RSS ≤ 512 MB; RSS okunamazsa −1 = "yok"), guard OK, temiz host. Kapı `soak_gate.py --stability`.
+Rapor (kapı değil): gerçek bot tepeden ≥ 5 + TP ≥ 2 + FP ≥ 2; TP/FP ve Sinematik-dışı kararlılık gözlemleri; `[OutOfWorld] stuckRemove` koşu başına > 2 → S-03 bileti; `stuckRecoveries` (botun kendi takılma kurtarması) sayılır, kapı değildir (§10 K6).
 
-**Ölçülenler:** ort, medyan, ham p99, süzülmüş p99 (> 33,3 ms kareler; dışlama ≤ %1, CSV'den yeniden türetilir), > 33 ms sayısı, GPU kare ms (FrameTiming), ana/render iş parçacığı CPU, GC B/kare, draw call, set-pass, ekranda/görünür düşman, eşzamanlı ragdoll/mermi tepe.
+## 6 · Build ve boyut (A6)
 
-**Geçme:** kapı hücresinde **her** tam pencere ort ≤ eşik ve süzülmüş p99 ≤ eşik. Rapor hücresi eşiği aşarsa not düşülür, kapı değildir.
+dev + release (`tools/build.sh release`, LZ4HC) + release-probe (dağıtılmaz), aynı FINAL; editör hatası 0, damga temiz; release `totalSize` ≤ 5 GB (DEC-093; §10 K7). Ayak izi Δ rapor.
 
-**Build türü (açık konu → S-01):** PilotPerfProbe ve QaRunBot `DEVELOPMENT_BUILD || UNITY_EDITOR` altında; WP-070 ölçümünde dev build p99'u kapıyı karartıyor. Öneri: `tools/build.sh release-probe` = release ayarları (development kapalı, LZ4HC) + yalnız sonda derleme sembolü (`DD_PERF_PROBE`), **dağıtılmaz**. Kapı sayıları release-probe'dan; A/B deltaları dev'den (sahipler, sözleşme §5). Karar gelene kadar kapı dev build'le, rapor bu sınırlamayı yazar.
+## 7 · Kullanıcı verisi ve bütünlük (A7)
 
-**Host ve makine:** referans = geliştirme Mac'i (MacBookPro18,3, Apple M1 Pro; DEC-092). Her denemede kayıt: model, macOS, ekran yenileme, güç adaptörü (`pmset -g batt`), ısıl durum (`pmset -g therm`), load1. Ön koşul: load1 ≤ 4,0, Unity/Blender/Player süreci yok, slot yok, 3 dk sessiz (WP-064 dersi); pencereler arası 60 s soğuma. Tahmini süre: 24 pencere × ~2,5 dk + 2 build ≈ 1,5 saat sessiz pencere.
+Her Player/PlayMode koşusu `tools/userdata-guard.sh` snapshot → koşu → restore (verified=1; exit 30 bekle, 31 DUR → C-00); koşunun yarattığı dosyalar `created/`'e. `-ddCameraMode`/`-ddQualityTier` kayıtlı tercihi değiştirmez (UI dosyaları sandbox'ta). `ProjectIntegrityTests` PASS + LFS eşitliği. **C-00 "GUARD OK" demeden hiçbir A-koşusu başlamaz.**
 
-**Özellik payları:** sahipler kendi `-dd<Özellik> 0|1` deltalarını sözleşme §5 satırıyla yazar; S-10 C3'te toplamı doğrular: Yüksek TD taban + Σ pay ≤ 16,6 ms (dünya ≤ +3,5 · atmosfer ≤ +2,0 · VFX/anim/AI/UI/ses ≤ +3,0 · pay 0,2). Aşan paket kendi kademesinde kısar (§4.8); S-10 bütçe taşımaz.
+## 8 · İş kalemleri (S-10, FINAL'dan önce)
 
-## 5 · Soak (DEC-091) yeniden taban
+- **D2 araç:** KADRO `r1-accept2.sh` + `player-run.sh` (Codex değişiklikleri dahil) gözden geçirilip repo `tools/qa/wp078_accept.sh`'a taşınır (tek betik, aşama seçimi, guard çıkış sınırları); `wp078_report.py` manifest'ini koşu çıktılarından üreten `tools/qa/wp078_manifest.py`; python testleri.
+- **D3 kod (QaRunBot, S-10):** TP/FP nişan hatası kamera kökenli; A2 kanıt kareleri (`courtyard/corridor/horizon`, V6 sabit noktalar); SpecialWeaponProbe yaşam döngüsü DEC-097 cephane+süre. Unity doğrulaması GUARD OK sonrası.
+- **D3 ek:** bot özetine `qualityTier` ve `worldHalfExtent` alanları (A5 kapısının okuduğu, bugün yok); silah döngüsü (`WeaponQaHooks.TrySetClassicWeapon`); zincir başına Raiju hedef sayacı (S-02 ile).
+- **D2 ek:** koşu makbuzlarına guard alanları (`snapshotExit/restoreExit/verified/outOfScopeChanged`) — `wp064_run` bugün yalnız `hostClean` yazar.
+- Bot spawn sayacı + `[Progress]` düzeltmesi main'de (`e5888d47`; 28.09 notundaki `048f411b` içeriği).
 
-1. **Tek commit.** WP-064 kapanışı üç commit'e yayıldı (perf 96e3c17, stab61 58be2c2, stab26 a1397d3). R1'de kararlılık 2 tohum (61 + 26) × 12/12 + perf aynı C3 commit'inde. Koşucu `wp064_run.py` düzenine geçer (attempt.json, preflight, host monitor, defter); S-10 `soak.sh` yalnız geçiş dönemi.
-2. **Kapsam (MUST, DEC-091 değişmez):** tepeden mod, Yüksek kademe (varsayılan), ±55 dünya, `-ddQaBotStability`; zaman aşımı/takılma 0, Player logunda hata 0, bellek büyümesi sınırlı, kullanıcı verisi korunur, temiz host.
-3. **Rapor (kapı değil):** TP ve FP × tohum 26 × 12/12 kararlılık; Sinematik kademe × tohum 61 × 12/12 kararlılık (en büyük havuzlar — sızıntı avı). MUST'a yükseltme C-00/kullanıcı kararıdır (§10).
-4. **Bellek eşikleri:** büyüme ölçütleri (Mono r2→r12 ≤ 48 MB ve ≤ 4 MB/round, toplam ayırma ≤ 256 MB, RSS ≤ 512 MB) mutlak değil büyüme olduğundan yeni havuzlarla geçerli kalır; C2 soak'ında ölçülen değer + %50 pay ile yeniden onay, gerekirse `soak_gate.py` eşik güncellemesi ayrı commit.
-5. **Log örüntüleri (ek):** fizik eklem/rigidbody hataları, `Failed to create agent`, NavMesh `SetDestination` hataları, projectile taşma uyarısı, havuz tükenmesi.
-6. **061L kaldırmaları:** round başına havuz − kill ve spawn − kill raporlanır; koşu başına > 2 ise S-03 bileti (kararlılık oyun önlemiyle taşınıyorsa görünür olsun).
-7. **Gerçek bot raporu:** tepeden ≥ 5 koşu (medyan/min/maks, ölüm round'u ve nedeni, stil dağılımı) + TP ve FP × 2 koşu; kapı değil.
+## 9 · Rapor ve sahiplik (A8)
 
-## 6 · Build ve boyut
+`wp078_report.py` (5e71a508; şema `dd-wp078-acceptance-v1`): manifest + kanıt kökü → `wp078-report.json`; eksik kanıt BLOCKED, kanıtlı ihlal FAIL, FAIL→sahip (bilinmiyorsa UNKNOWN). C-00'a ≤ 10 satır + FAIL→sahip tablosu. Kanıt `KADRO/…/wp-078/evidence/<FINAL>/`.
 
-Release `tools/build.sh release` (LZ4HC, DEC-090) ≤ **5 GB** (DEC-093) — kapı; dev build aynı commit, damga temiz (`-dirty` yok), editör hatası 0. `build-report.sh` ayak izi: doku/mesh/ses payı + önceki R1 C1 değerine göre büyüme (rapor).
+## 10 · Kararlar (öneri; C-00 yetkisi K1–K2, K4–K9 · kullanıcı K3)
 
-## 7 · Kullanıcı verisi ve bütünlük
+- **K1 Kapı perf'i release-probe'dan** — öneri **EVET**. Kullanıcının oynadığı build release'tir; dev build (DEVELOPMENT_BUILD) ek iz/ayırma yükü ve p99 sıçramaları taşır (WP-070 dev ölçümünde p99 kapıyı karartmıştı); release-probe = release ayarları + yalnız sonda (`DD_PERF_PROBE`), dağıtılmaz. Dev ölçüm yalnız özellik A/B deltaları için. **Çakışma:** `wp078_report` A6 probe build'i `mode == "dev"` bekliyor, `DdBuild` ise `release-probe` yazıyor → K1 kabul edilirse üretici hizalanmalı.
+- **K2 Hücre başına 3 pencere** — öneri **EVET** (sözleşme tabanı 2). En iyi pencere seçilmediği için 3 pencere tek pencerelik host gürültüsünü kapıda görünür kılar; 27 pencere ≈ 70 dk sessiz pencerede yapılabilir.
+- **K3 TP/FP kararlılık MUST mu (kullanıcı) — etki notu:** MUST olursa DEC-091 değişir; kabul koşusuna 2 tohum × 2 mod × 12 round (≈ 100 dk sessiz makine) eklenir ve TP/FP'ye özgü takılma/kamera bulguları R1 kapanışını durdurur. Rapor kalırsa aynı koşular yine yapılır, bulgular sahiplere bilet olur ama release'i bekletmez. S-10 önerisi: R1'de rapor, R2'de MUST'a yükseltme kullanıcıya sorulsun (TP/FP ilk turunda; bot TP/FP kısa koşuları PASS).
+- **K4 AI bayrak dumanı** — A3 `aiFlags` = main'de var olan bayraklar (bugün yalnız `-ddAiV3`) × 0/1. v1'deki 6 bayrak kodda yok; `wp078_report` 7 bayrak × 0/1 = 14 koşu istediği için FINAL'da daima BLOCKED olur → üreticinin bayrak listesi koddaki bayraklarla hizalanmalı.
+- **K5 Soak kademesi** — öneri **Sinematik** (DEC-100 varsayılan, kullanıcının oynadığı). `wp078_report` A5 bugün `topdown/Yuksek` bekliyor → Sinematik'e hizalanmalı; ayrıca bot özetinde `qualityTier` alanı yok (yalnız PilotPerfProbe yazar) → §8 D3 eklemeden A5 her tier'de düşer.
+- **K6 `stuckRecoveries = 0` şartı (wp078_report A2 ve A5)** — öneri **rapora çevir**: DEC-091 "zaman aşımı/takılma 0" round takılmasıdır (`fatalStuckSeconds`, timeout); `stuckRecoveries` botun başarılı kendini kurtarmasıdır — 24.09 PASS kararlılık koşularında 15 (tohum 61) ve 27 (tohum 26) idi → icat kapı (H1).
+- **K7 5 GB birimi** — `wp078_report` 5 000 000 000 B, `build.sh` 5120 MB; release ≈ 1,1 GB → pratik etkisi yok; birim C-00 kaydıyla sabitlenmeli.
+- **K8 Host-iptal defteri** — `wp078_report` defter girdisi almıyor ve tamamlanmamış her `perf-*` denemesini FAIL sayıyor (contract "C-00 defteri" diyor, kod yok). Öneri: `wp064_run`'ın `attempts-ledger.jsonl` kayıtları (`preflight-failed` exit 75; `failed` + `hostClean:false`) host-iptal defteri olarak okunsun; aksi hâlde yüklü makinede tek iptal A4'ü kalıcı olarak FAIL bırakır.
+- **K9 Kademe başına takılma eşiği** — öneri: `perf-targets.json`'da `stallMs` kademeye bağlansın (hedef kare aralığının 2 katı: Sinematik 66,7 ms, Yüksek 33,3 ms, Performans 33,3 ms mevcut tanım) ki Sinematik p99 ≤ 40 anlam kazansın. Veri değişikliği; eşik değeri C-00 kaydıyla.
 
-Her Player koşusunda iki oyuncu klasöründe ui-settings / load-timing / input-settings / input-overrides / ui-hints yedek → geri yükleme **bayt eşit**; koşunun oluşturduğu dosyalar kanıta taşınır (silinmez). Ek: `-ddCameraMode` kayıtlı kamera tercihini değiştirmez (koşu öncesi/sonrası ui-settings eşit); meta ağaç aday profil klonu gerçek profile yazmaz. `ProjectIntegrityTests` + LFS işaretçi/nesne eşitliği.
+## 11 · v1 → v2 farkları
 
-## 8 · Gerekli kancalar (sahiplere istek)
-
-| Kanca | Sahip | Neden |
-|---|---|---|
-| Bot için kamera yaw/pitch sürme + `TryGetAimRay`, kamera-duvar içi sondası | S-01 WP-070 B7 | §2, K2 |
-| PilotPerfProbe sabit kamera programı (360° yaw), mod-farkında aşamalar (FP occluder-fade "beklenen") | S-01 / S-05 | §4 |
-| `release-probe` build türü | S-01 | §4 |
-| `WorldBounds.HalfExtent / NavMeshInset` + greybox yükleme bayrağı | S-05 WP-074 B1 | §2, §5 |
-| Mermi sayaçları (aktif, tepe, taşma) Player loguna/özete | S-02 WP-069 | §3 |
-| Ragdoll havuz sayaçları (aktif, tepe, taşma, döngü) | S-06 WP-071 | §3, §5 |
-| 061L kaldırma sayacını round sonu log satırına yaz | S-03 | §5.6 |
-| XP / Kül telemetrisi alanları | S-04 WP-077 | §3 |
-
-## 9 · Rapor ve sahiplik
-
-`wp078-report.json` (şema `dd-wp078-acceptance-v1`): commit, build hash'leri, A0–A8 kontrol listesi, perf matrisi (hücre × pencere), soak ve rapor koşuları, kanıt yolları. C-00'a ≤ 10 satır + **FAIL → sahip** tablosu (WP-039 kalıbı; sahip = paketi yazan oturum). Kanıt: `KADRO/.../wp-078/evidence/<commit>/`.
-
-## 10 · Açık konular (C-00)
-
-1. Kapı perf'i release-probe'dan mı (öneri) dev'den mi? (S-01 aracı gerekir.)
-2. TP/FP kararlılık soak'ı R1'de rapor (öneri) mı MUST mı? MUST ise DEC-091 değişikliği → kullanıcı kararı.
-3. Kapı hücresi pencere sayısı 3 (öneri; sözleşme tabanı 2).
-4. Sabit kamera programı yerine bot oynanışı penceresinin kapı sayılması istenirse varyans kabulü gerekir (bot zamanlaması tohumlu değil).
+Sinematik rapor → **kapı** (DEC-100) · 24 → **27** pencere, her hücre ≥ 3 · load1 ≤ 4 → **< 6** + 3 Unity + player slotu (C-00 26.09) · soak Yüksek → **Sinematik** · zincir yıldırım hop 6/8/10 → **maxTargets 8 kademesiz** · jel birikinti Pick(10/16/24) → **DEC-099: 12 s, eşzamanlı tavan 8** · Special cephane+süre (DEC-097) eklendi · AI bayrakları koddakine indirildi (K4) · A8 = `wp078_report.py` (üreticiyle çakışmalar K1, K4–K6, K8) · Sinematik p99 anlamı (K9) · C1/C2 geçti · v1 §8 kancaları main'de (S-01/02/03/04/05/06).
