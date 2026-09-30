@@ -1250,8 +1250,8 @@ namespace DD.Prototype.UI
             /// <summary>
             /// DEC-109: <c>-ddUiCapture typespec</c> - the Display face (Shippori Mincho B1 DD-TR) as TMP sets it in this Player,
             /// through the path every heading takes (UiFactory.Label, the Display role, its static atlas and kerning): Turkish
-            /// and English caps at 56 / 40 / 28 px times <c>-ddUiKitScale</c> (default 1.25, the AD's scale), ink on the page
-            /// surface, to <c>-ddUiCaptureOut</c>. A line wider than its box is logged as "[UiCapture] overflow".
+            /// and English at 56 / 40 / 28 px times <c>-ddUiKitScale</c> (default 1.25, the AD's scale) - real rows upper-cased
+            /// with the language's casing - ink on the page surface, to <c>-ddUiCaptureOut</c>. Overflow is logged.
             /// </summary>
             private IEnumerator TypeSpec()
             {
@@ -1269,20 +1269,27 @@ namespace DD.Prototype.UI
                 UiFactory.Fill((RectTransform)page.transform);
                 string language = UiStrings.Language;
                 float y = 40f;
-                string[][] sets =
+                // Real copy, never literals (UiTextAuditTests): these rows' Turkish carries Ğ İ Ş Ç Ö Ü in upper case.
+                string[][] rows =
                 {
-                    new[] { UiStrings.Turkish, "OCAĞI YAK · DEĞİŞİM · ÇİĞ · GÜNEŞ", "İŞARETLE · KOŞU RAPORU · PROFİL · AĞAÇ" },
-                    new[] { UiStrings.English, "SPEND YOUR GOLD · RUN REPORT · SETTINGS" },
+                    new[] { "settings.row.ui_scale", "weapon.class.sr" },
+                    new[] { "camera.fov.third_person", "tree.meta.passive.qol.tree_preview.name" },
                 };
-                foreach (string[] set in sets)
+                foreach (string set in new[] { UiStrings.Turkish, UiStrings.English })
                 {
-                    UiStrings.Language = set[0];   // the face UiFonts.For picks for this language
+                    UiStrings.Language = set;   // the face UiFonts.For picks for this language, and its casing
+                    var lines = new string[rows.Length];
+                    for (int r = 0; r < rows.Length; r++)
+                    {
+                        lines[r] = UiStrings.Upper(UiStrings.Get(rows[r][0])) + "  ·  " + UiStrings.Upper(UiStrings.Get(rows[r][1]));
+                    }
+
                     foreach (int px in new[] { 56, 40, 28 })
                     {
-                        for (int i = 1; i < set.Length; i++)
+                        for (int i = 0; i < lines.Length; i++)
                         {
                             float size = px * UiTokens.TextScale;
-                            TMPro.TMP_Text line = UiFactory.Label("Spec" + set[0] + px, root, set[i], UiType.Display, UiColor.TextPrimary, TextAnchor.UpperLeft);
+                            TMPro.TMP_Text line = UiFactory.Label("Spec" + set + px, root, lines[i], UiType.Display, UiColor.TextPrimary, TextAnchor.UpperLeft);
                             line.fontSize = size;
                             var rect = (RectTransform)line.transform;
                             rect.anchorMin = new Vector2(0f, 1f);
