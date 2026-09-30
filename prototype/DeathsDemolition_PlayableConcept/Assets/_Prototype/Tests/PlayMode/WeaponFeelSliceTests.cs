@@ -227,14 +227,17 @@ namespace DD.Prototype.Tests.PlayMode
             // BEGIN S02_R2 DEC before spawn RNG observer
             if (decDiag) decBeforeSpawnUnityRandom = DecRandomState();
             // END S02_R2 DEC before spawn RNG observer
-            // C-00 30.09 M-19: the pickup's spot is the director's roll (angle 0–360° around the player) — with the suite's
-            // shared random state it moved with the test order and could land against a V6 prop. A fixed source puts it
-            // in the same place every run.
+            // C-00 30.09 M-19: the pickup's spot is the director's roll (a weighted spawn point, or 0–360° around the player,
+            // 0.8 m above the projected ground) — it moved with the suite's shared random state, and teleporting the player
+            // onto it could wedge the controller in a V6 prop (measured: commanded 6.2 m/s, travel 0.00 m). DEC-082 is about
+            // the pickup not locking the player, not about where it drops: a fixed source, the pickup brought to the player
+            // where they stand, and the stick pushed toward a side the controller's own capsule finds clear for 1.2 m.
             _s.Director.SetRandomSource(new SabitRastgele(0.25f));
             yield return _s.SpawnEt(Pencere);
             SpecialWeaponPickup pickup = _s.CanliPickup();
             Assert.IsNotNull(pickup);
-            _s.Girdi.Yon = new Vector2(1f, 0f);
+            Vector2 yon = AcikYon();
+            _s.Girdi.Yon = yon;
             _s.Girdi.Imlec = new Vector2(Screen.width * 0.9f, Screen.height * 0.5f);
             // BEGIN S02_R2 DEC pickup scalar observer before original teleport
             if (decDiag)
@@ -247,7 +250,8 @@ namespace DD.Prototype.Tests.PlayMode
                 catch (System.Exception) { decError = "UNKNOWN:pickup_scalar_getter_failure"; }
             }
             // END S02_R2 DEC pickup scalar observer before original teleport
-            _s.PickupaGit(pickup);
+            pickup.transform.position = _s.Rig.transform.position + Vector3.up * 0.8f;
+            Physics.SyncTransforms();
             yield return SpecialWeaponSahne.Bekle(() => _s.Controller.SpecialWeaponActive, SpecialWeaponSahne.FazZamanAsimi, "alma");
 
             // The AP-009C grab clip is 0.8 s long; through that window the motor keeps the stick and moves.
@@ -270,7 +274,7 @@ namespace DD.Prototype.Tests.PlayMode
             // END S02_R2 DEC start and try wrapper
             while (Time.time - t0 < 0.8f)
             {
-                Assert.AreEqual(1f, _s.Rig.Motor.RawInput.x, 1e-3f, "motor girdisi alma sırasında düşmez");
+                Assert.Less((_s.Rig.Motor.RawInput - yon).sqrMagnitude, 1e-6f, "motor girdisi alma sırasında düşmez");
                 maxSpeed = Mathf.Max(maxSpeed, _s.Rig.Motor.PlanarVelocity.magnitude);
                 minKomut = Mathf.Min(minKomut, _s.Rig.Motor.CommandedPlanarVelocity.magnitude);
                 if (!_s.Rig.Motor.ControlEnabled) kontrolKapali++;
@@ -303,15 +307,16 @@ namespace DD.Prototype.Tests.PlayMode
             // BEGIN S02_R2 DEC window end observer
             if (decDiag) decEnd = DecSafeSnapshot("movement-window-end-before-original-assertions");
             // END S02_R2 DEC window end observer
-            // C-00 30.09 M-19: DEC-082 is "no pickup LOCK" — measured on what the motor is commanded (input × speed) every
-            // frame; the body's travel is required only when nothing stopped it (a prop at the pickup: CC side contact).
+            // C-00 30.09 M-19: DEC-082 is "no pickup LOCK" — the motor is commanded (input × speed) every frame, and on
+            // clear ground the body really moves.
             float yol = (_s.Rig.transform.position - p0).magnitude;
             string olcum = " (komut en az " + minKomut.ToString("F2") + " m/s, en yüksek hız " + maxSpeed.ToString("F2") + " m/s, yol " + yol.ToString("F2") +
                            " m, yan temas " + yanEngel + " kare, kontrol kapalı " + kontrolKapali + " kare)";
             Debug.Log("[DD-TEST] dec082" + olcum);
             Assert.AreEqual(0, kontrolKapali, "DEC-082: alma sırasında motor kontrolü kapandı" + olcum);
             Assert.Greater(minKomut, 0.5f, "DEC-082: alma sırasında motorun komut hızı düştü (kilit)" + olcum);
-            Assert.IsTrue(yol > 0.3f || yanEngel > 0, "oyuncu hareket etmedi ve önünde engel de yoktu" + olcum);
+            Assert.Greater(maxSpeed, 0.5f, "oyuncu alma sırasında hareket etti (m/s)" + olcum);
+            Assert.Greater(yol, 0.3f, "yer değiştirme" + olcum);
             _s.Girdi.Imlec = new Vector2(Screen.width * 0.1f, Screen.height * 0.5f);
             // The aim turns at its own rate; give it up to a second (it must move at all — a lock would hold it).
             yield return SpecialWeaponSahne.Bekle(() => Vector3.Angle(aim0, _s.Rig.Aim.AimDirection) > 20f, 1f, "nişan alma sırasında imleci takip eder");
@@ -512,6 +517,31 @@ namespace DD.Prototype.Tests.PlayMode
             }
         }
     
+        /// <summary>
+        /// C-00 30.09 M-19: a stick direction (right, left, up, down on screen) whose world direction the player's own
+        /// capsule finds clear for 1.2 m — the fixture must not depend on which V6 prop stands next to the start point.
+        /// </summary>
+        private Vector2 AcikYon()
+        {
+            CharacterController cc = _s.Rig.Motor.GetComponent<CharacterController>();
+            Camera cam = Camera.main;
+            Assert.IsNotNull(cc, "oyuncuda CharacterController yok");
+            Assert.IsNotNull(cam, "kamera yok");
+            Vector3 right = Vector3.ProjectOnPlane(cam.transform.right, Vector3.up).normalized;
+            Vector3 up = Vector3.ProjectOnPlane(cam.transform.forward, Vector3.up).normalized;
+            Vector3 c = cc.transform.TransformPoint(cc.center);
+            float half = Mathf.Max(0f, cc.height * 0.5f - cc.radius);
+            Vector3 p1 = c + Vector3.up * half, p2 = c - Vector3.up * (half - cc.stepOffset * 0.5f);
+            foreach (Vector2 v in new[] { new Vector2(1f, 0f), new Vector2(-1f, 0f), new Vector2(0f, 1f), new Vector2(0f, -1f) })
+            {
+                Vector3 dir = (right * v.x + up * v.y).normalized;
+                if (!Physics.CapsuleCast(p1, p2, cc.radius * 0.95f, dir, 1.2f, ~0, QueryTriggerInteraction.Ignore)) return v;
+            }
+
+            Assert.Fail("oyuncu başlangıcının dört yönü de 1,2 m içinde kapalı");
+            return Vector2.zero;
+        }
+
         private sealed class SabitRastgele : ISpecialWeaponRandom
         {
             private readonly float _v;
