@@ -7,6 +7,21 @@ sustained seconds per kill with the round's expected plates, crowd DPS at a fixe
 refills over a 75 s round), greedy lane purchases at 90 % pickup. Every assumption is a named constant in the script;
 read the numbers as ranks and ratios, not as play-feel truth.
 
+## 0 · Correction (B5, 30.09) — read this first
+A three-way review (WP-077 B5 panel, `wp-077-b5/evidence/panel-*.md`) checked this audit against the code. Four
+model errors are fixed in `k10b_audit.py` and the tables are regenerated (`WP-077-K10B-AUDIT-TABLES.md`):
+1. **Pierce keep:** a pen-0 weapon's pellets use `PierceDamageFalloff` 0.82 (ProjectileSystem), not the asset's 1.
+   **P3 is withdrawn**: `ks_piercing` on sg_1 is live (+5 % crowd).
+2. **Rocket capstone:** Ash Rain splits into 3 blasts at 0.5 damage and 0.6 radius (RunTreeHooks.HitEffects), not
+   "1.7× coverage". The rl_1 capstone costs 40 % crowd and 24 % single-target damage. It is a trap, not the top of P4.
+3. **Burning ground on rockets:** the blast kills most bodies in the disc before the ground burns (no overkill in
+   v1), and the blast radius grows with the Blast tier. `ks_explosion` on rl_1 is +8 % (in band), so **P2 as written
+   is withdrawn**.
+4. **Pickup:** the round-end sweep credits every packet before the shop, so pickup is 1.00, not 0.90.
+Unchanged: sr_1 is the weakest weapon and lmg_2 the fastest at every tier (§1). The four fork fixes (§3) still hold
+(lmg_2 Y +10 %, sr_1 X, rl_1 X +25 % / Y +28 %). The user decision page is
+`KADRO wp-077/KARAR-P1-P5.md` (30.09).
+
 ## 1 · TTK of the 10 weapons (R10, round build, seconds)
 
 | | median | fastest | slowest | max/min |

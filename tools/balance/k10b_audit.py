@@ -32,13 +32,17 @@ import r1_audit_run2 as base  # noqa: E402
 TREE_JSON = os.path.join(base.PROJ, "Rounds", "RunTree", "Resources", "ProgressionTree", "run-tree.json")
 
 # WeaponUpgradeTuning.cs code defaults (no asset in Resources)
-T = dict(pierce_per_tier=1, ric_base=0.35, ric_per_tier=0.18, ric_radius=6.5, ric_scale=0.6,
+T = dict(pierce_per_tier=1, pierce_falloff=0.82, ric_base=0.35, ric_per_tier=0.18, ric_radius=6.5, ric_scale=0.6,
          exp_base=0.14, exp_per_tier=0.10, exp_radius=2.2, exp_radius_per_tier=0.5, exp_scale=1.1, exp_scale_per_tier=0.45,
          chain_per_tier=1, chain_scale=0.5, chain_falloff=0.75, fr_per_tier=0.08, fr_max=2.2,
          rs_per_tier=0.10, rs_min=0.45, ab_per_tier=0.25, impact_per_tier=0.15)
 # RocketImpacts.cs §6: rl_1 Blast tier = inner +0.3 m, outer +0.5 m, damage +12 %; Cluster bomblet 40 dmg r 1.5 m
 RL_BLAST_PER_TIER = 0.12
+RL_BLAST_INNER_PER_TIER, RL_BLAST_OUTER_PER_TIER = 0.3, 0.5
 RL_BOMBLET = 40.0
+# RunTreeHooks.HitEffects: cap.rl_1 Ash Rain = count blasts at radius x 0.6 and damage x 0.5; the impact point takes ~0.6x
+RL_SPLIT_RADIUS, RL_SPLIT_DAMAGE, RL_SPLIT_CENTRE = 0.6, 0.5, 0.6
+HP_REF = [71.0]              # Standard HP of the evaluated round (overkill for burning ground); main() sets it
 
 BRANCH = {0: "Piercing", 1: "Ricochet", 2: "Explosion", 3: "Chain", 4: "Fire Rate", 5: "Reload Speed",
           10: "Armor Break", 11: "Impact", 12: "Cluster"}
@@ -62,7 +66,7 @@ HELD_FIRE_S = 3.0            # a held auto burst length for the warm-up nodes (k
 STILL_SHARE = 0.40           # share of firing time standing still (lmg_1 fork X)
 ROUND_S = 75.0               # a round's firing window for the ammo cap (reserve + floor refills)
 GROUND_OCCUPANCY = 0.5       # share of a burning-ground zone's time a body stands in it (ks_explosion, rl_1 seal)
-PICKUP = 0.90                # gold collection (TreeModel Human bot)
+PICKUP = 1.00                # B5: packets never expire and the round-end sweep credits them before the shop (RunDirector)
 ROUNDS = (1, 3, 5, 8, 10, 12, 15)
 TIERS = ("Standard", "Special", "Elite", "Ultra")   # config order = Standard / Runner / Guard / Executioner
 
@@ -83,7 +87,8 @@ def live_weapon(mb, design):
     w.update(dmg=float(f["damage"]), pel=int(f["pelletCount"]), rpm=float(f["rpm"]), mag=int(a["magazine"]),
              res=int(a["reserve"]), rt=float(a["reloadTacSeconds"]), re=float(a["reloadEmptySeconds"]),
              head=float(p["headMultiplier"]), arm=float(p["armorDamageMultiplier"]), stag=float(p["stagger"]),
-             pen=int(p["penetration"]), keep=float(p["penetrationDamageKeep"]), full=float(p["falloffStart"]),
+             pen=int(p["penetration"]), keep=float(p["penetrationDamageKeep"]) if int(p["penetration"]) > 0 else T["pierce_falloff"],
+             full=float(p["falloffStart"]),
              maxr=float(p["falloffEnd"]), minpct=float(p["falloffMinShare"]),
              refill_s=float(a.get("floorRefillDelaySeconds", 0) or 0), refill_mags=float(a.get("floorRefillMagazines", 0) or 0))
     w["mode"] = {0: "single", 1: "burst", 2: "auto"}[int(f["fireMode"])]
@@ -119,7 +124,7 @@ def mods(slot, w, st, tree):
              exp_r=T["exp_radius"] + T["exp_radius_per_tier"] * max(0, g("Explosion") - 1), burn=0.0,
              ab=T["ab_per_tier"] * g("Armor Break"), plate_x2=False, stag_bonus=0.0,
              head=w["head"], arm_ignore=0.0, noreload=0.0, blast_mult=1.0 + RL_BLAST_PER_TIER * (g("Explosion") if slot == "rl_1" else 0),
-             blast_r=1.0, bomblets=(g("Cluster") + 1 if g("Cluster") else 0), blast_split=1, extra_on_plate=0.0,
+             blast_r=1.0, blast_tier=(g("Explosion") if slot == "rl_1" else 0), bomblets=(g("Cluster") + 1 if g("Cluster") else 0), blast_split=1, extra_on_plate=0.0,
              extra_fr=0.0, first_n=0, first_bonus=0.0, second_barrel_x=0.0)
     ks = tree["ks"]
     for k in st["ks"]:
@@ -275,8 +280,12 @@ def per_shot_primary(w, m, slot):
     head = 1 + HEAD_SHARE * (2 * m["head"] - 1) if slot not in ("sg_1", "sg_2", "rl_1") else 1.0
     d = w["dmg"] * pel * hit * m["dmg"] * head
     if "blast" in w:
-        d = (w["dmg"] + w["blast"]["dmg"] * m["blast_mult"] * (1 + m["burn"])) * m["dmg"] + m.get("rl_burn", 0) * GROUND_OCCUPANCY
-        # ^ ks_explosion: RunTreeHooks.OnRocketBlast ignites the WHOLE blast disc at share x blast damage per second
+        blast = w["blast"]["dmg"] * m["blast_mult"] * m["dmg"]
+        centre = RL_SPLIT_CENTRE if m["blast_split"] > 1 else 1.0
+        d = w["dmg"] * m["dmg"] + blast * centre
+        # ks_explosion (RunTreeHooks.OnRocketBlast): the whole disc burns at share x blast for seconds — the primary
+        # took the full blast, so the burn only counts if it survived it
+        d += min(blast * m["burn"], max(0.0, HP_REF[0] - blast * centre)) + m.get("rl_burn", 0) * GROUND_OCCUPANCY
         d += m["bomblets"] * RL_BOMBLET * 0.5 * m["dmg"]           # half the bomblets land on the target
     # a second shot-level effect on the same target
     d *= 1 + m["exp"] * m["exp_scale"] * (1 + m["burn"])          # branch explosion includes the primary
@@ -369,14 +378,24 @@ def crowd_bodies(w, m, slot):
     if m["exp"]:
         extra += m["exp"] * m["exp_scale"] * (1 + m["burn"]) * BODIES_PER_M2 * math.pi * m["exp_r"] ** 2
     if "blast" in w:
-        outer = w["blast"]["outer"] * m["blast_r"]
-        bodies = BODIES_PER_M2 * math.pi * outer ** 2 * 0.5         # average falloff share over the disc
-        blast_frac = w["blast"]["dmg"] * m["blast_mult"] / (w["dmg"] + w["blast"]["dmg"] * m["blast_mult"])
-        split = 1 + (m["blast_split"] - 1) * 0.35                  # 3 smaller blasts cover more bodies
-        extra += bodies * blast_frac * split * (1 + m["bomblets"] * 0.15)
-        disc = BODIES_PER_M2 * math.pi * outer ** 2
+        inner = (w["blast"]["inner"] + RL_BLAST_INNER_PER_TIER * m["blast_tier"]) * m["blast_r"]
+        outer = (w["blast"]["outer"] + RL_BLAST_OUTER_PER_TIER * m["blast_tier"]) * m["blast_r"]
         per = max(1.0, per_shot_primary(w, m, slot))
-        extra += disc * (m.get("rl_burn", 0) * GROUND_OCCUPANCY + w["blast"]["dmg"] * m["blast_mult"] * m["burn"] * m["dmg"]) / per
+        blast = w["blast"]["dmg"] * m["blast_mult"] * m["dmg"]
+        area = BODIES_PER_M2 * math.pi * outer ** 2
+        bodies = area * 0.5                                        # average falloff share over the disc
+        if m["blast_split"] > 1:                                   # Ash Rain: damage x area of count smaller blasts
+            bodies *= m["blast_split"] * RL_SPLIT_DAMAGE * RL_SPLIT_RADIUS ** 2
+        extra += bodies * blast * (1 + m["bomblets"] * 0.15) / per
+        # burning ground (ks_explosion on the whole disc, Hibana): only bodies the blast left alive take it (overkill)
+        hp = HP_REF[0]
+        if blast > hp and outer > inner:
+            d_kill = inner + (outer - inner) * (1.0 - hp / blast)  # linear falloff inner → outer
+            survivors = max(0.0, 1.0 - (min(d_kill, outer) / outer) ** 2)
+        else:
+            survivors = 1.0
+        burn = min(blast * m["burn"], hp) + m.get("rl_burn", 0) * GROUND_OCCUPANCY
+        extra += area * survivors * burn / per
     return extra
 
 
@@ -528,8 +547,12 @@ def main():
         builds[s] = b
         out["weapons"][s] = {}
         for r in ROUNDS:
+            HP_REF[0] = world.hp(0, r)
             st = b[r]["state"]
             m = mods(s, w, st, tree)
+            st_nc = dict(st, cap=False)
+            m_nc = mods(s, w, st_nc, tree)
+            row_nc = [None if world.tiers[t]["IntroductionRound"] > r else single(world, w, m_nc, t, r, s)[1] for t in range(4)]
             row = []
             for t in range(4):
                 if world.tiers[t]["IntroductionRound"] > r:
@@ -538,7 +561,7 @@ def main():
                 row.append(single(world, w, m, t, r, s)[1])
             d1 = single(world, w, m, 2, r, s)[0]
             dc = crowd(w, m, s)
-            out["weapons"][s][r] = dict(build=build_label(st), dps=d1, crowd=dc, ttk=row)
+            out["weapons"][s][r] = dict(build=build_label(st), dps=d1, crowd=dc, ttk=row, ttk_nocap=row_nc, crowd_nocap=crowd(w, m_nc, s))
             P("| %s | %s | R%d | %s | %.0f | %.0f | %s |" % (
                 s, "+".join(ABBR[c] for c in w["core"]), r, build_label(st), d1, dc,
                 " | ".join("—" if x is None else "%.2f" % x for x in row)))
@@ -564,8 +587,25 @@ def main():
     P("Crowd DPS at R10 (swarm throughput, round build): " + ", ".join(
         "%s %.0f" % (s, out["weapons"][s][10]["crowd"]) for s in sorted(W, key=lambda s: -out["weapons"][s][10]["crowd"])))
     P("")
+    P("### B2 · the same without the capstone (the tree model's human reaches it in ~1 run in 5)\n")
+    P("| R | tier | median | fastest | slowest | max/min | outliers |")
+    P("|---|---|---|---|---|---|---|")
+    for r in (10, 15):
+        for t in (0, 2, 3):
+            xs = {s: out["weapons"][s][r]["ttk_nocap"][t] for s in W if out["weapons"][s][r]["ttk_nocap"][t] is not None}
+            md = med(list(xs.values()))
+            lo, hi = min(xs, key=xs.get), max(xs, key=xs.get)
+            outl = ["%s %.2f" % (s, v) for s, v in xs.items() if v > 1.5 * md or v < 0.67 * md]
+            out["ttk"]["R%d-%s-nocap" % (r, TIERS[t])] = dict(median=md, **xs)
+            P("| R%d | %s | %.2f | %s %.2f | %s %.2f | %.1f | %s |" % (
+                r, TIERS[t], md, lo, xs[lo], hi, xs[hi], xs[hi] / max(1e-6, xs[lo]), ", ".join(outl) or "—"))
+    P("")
+    P("Crowd DPS at R10 without the capstone: " + ", ".join(
+        "%s %.0f" % (s, out["weapons"][s][10]["crowd_nocap"]) for s in sorted(W, key=lambda s: -out["weapons"][s][10]["crowd_nocap"])))
+    P("")
 
     # ---- C. node power
+    HP_REF[0] = world.hp(0, 10)
     P("## C · Node power on the R10 build (Δ % single-target Elite DPS / Δ % crowd DPS; per 100 gold)\n")
     P("| weapon | node | cost | Δ 1-target | Δ crowd | Δ best per 100 g | flag |")
     P("|---|---|---|---|---|---|---|")
