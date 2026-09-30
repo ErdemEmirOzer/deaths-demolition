@@ -6,6 +6,7 @@ using DD.Prototype.Damage;
 using DD.Prototype.Diagnostics.EditorTools;
 using DD.Prototype.Diagnostics.Telemetry;
 using DD.Prototype.Economy;
+using DD.Prototype.PlayerSystem;
 using DD.Prototype.Rounds;
 using NUnit.Framework;
 using UnityEngine;
@@ -169,6 +170,48 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsNull(RunTelemetry.EndRun(Ozet(1, 0, 0, 0, 0, 0)), "koşu dışında EndRun null");
         }
 
+        private static PlayerDamageInfo OyuncuHasari(string kaynak, float miktar)
+        {
+            return new PlayerDamageInfo(null, miktar, miktar, 100f, 100f - miktar, 100f, Vector3.zero, Vector3.forward, kaynak, false);
+        }
+
+        /// <summary>
+        /// WP-069 B5 (C-00 30.09) · the rl_1 self-damage playtest measure (DIRECTION §7.5: death rate over 5 % → cap 50): the
+        /// killer of the run and, per round, the damage the player's own weapons did to the player. Enemy hits stay in
+        /// damageTaken; unknown sources (debug panel) are not counted.
+        /// </summary>
+        [Test]
+        public void KendiSilahHasari_VeKatil_Kaydedilir()
+        {
+            RunTelemetry.BeginRun();
+            RunTelemetry.OnRoundStarted(1);
+            RunTelemetry.OnPlayerDamaged(OyuncuHasari("rl_1", 40f));
+            RunTelemetry.OnPlayerDamaged(OyuncuHasari(DD.Prototype.Core.Weapons.SpecialWeaponKeys.Raiju, 5f));
+            RunTelemetry.OnPlayerDamaged(OyuncuHasari("Zombie.Standard.Swipe", 10f));
+            RunTelemetry.OnPlayerDamaged(OyuncuHasari("DebugPanel", 7f));
+            RunTelemetry.OnPlayerDamaged(OyuncuHasari(null, 3f));
+            RunTelemetry.OnRoundCompleted(1);
+            RunTelemetry.OnRoundStarted(2);
+            RunTelemetry.OnPlayerDamaged(OyuncuHasari("rl_1", 72f));
+            RunSummary ozet = Ozet(2, 1, 0, 0, 0, 0);
+            ozet.KilledBy = "rl_1";
+            RunTelemetryDocument doc = RunTelemetry.EndRun(ozet);
+
+            Assert.IsNotNull(doc);
+            Assert.AreEqual("rl_1", doc.killedBy);
+            Assert.AreEqual(45f, doc.rounds[0].selfDamage, 1e-4f, "rl_1 40 + sw_arc 5; düşman/debug/boş kaynak sayılmaz");
+            Assert.AreEqual(2, doc.rounds[0].selfHits);
+            Assert.AreEqual(0f, doc.rounds[0].damageTaken, "kendi silah hasarı düşman hasarına karışmaz");
+            Assert.AreEqual(72f, doc.rounds[1].selfDamage, 1e-4f);
+            Assert.AreEqual(1, doc.rounds[1].selfHits);
+
+            string json = File.ReadAllText(RunTelemetry.LastPath);
+            StringAssert.Contains("\"killedBy\":\"rl_1\"", json);
+            RunTelemetryDocument geri = RunTelemetry.FromJson(json);
+            Assert.AreEqual("rl_1", geri.killedBy);
+            Assert.AreEqual(45f, geri.rounds[0].selfDamage, 1e-4f);
+        }
+
         [Test]
         public void Kapasite_64RoundVe512Ttk_BoyutSiniri_Truncated()
         {
@@ -203,9 +246,10 @@ namespace DD.Prototype.Tests.EditMode
             EnemyDamageInfo v = Vurus(5);
             EnemyDeathInfo o = Olum(6, EnemyTier.Special, helmet: true);
             var hit = new EnemyAttackLandedInfo(null, EnemyTier.Standard, 3f, Vector3.zero, Vector3.forward, true);
+            PlayerDamageInfo kendi = OyuncuHasari("rl_1", 2f), zombi = OyuncuHasari("Zombie.Standard.Swipe", 2f);   // WP-069 B5
             // Isınma + pozitif kontrol. WP-051C: the process-wide used heap (GC.GetTotalMemory) also sees other Editor
             // threads' allocations; the test framework's GC.Alloc recorder is filtered to the calling thread only.
-            for (int i = 0; i < 100; i++) { RunTelemetry.OnEnemyDamaged(v); RunTelemetry.OnEnemyDied(o); RunTelemetry.OnGoldChanged(i); RunTelemetry.OnPlayerAttacked(hit); }
+            for (int i = 0; i < 100; i++) { RunTelemetry.OnEnemyDamaged(v); RunTelemetry.OnEnemyDied(o); RunTelemetry.OnGoldChanged(i); RunTelemetry.OnPlayerAttacked(hit); RunTelemetry.OnPlayerDamaged(kendi); RunTelemetry.OnPlayerDamaged(zombi); }
             object[] yem = null;
             Assert.That(() => { yem = new object[2000]; for (int i = 0; i < yem.Length; i++) yem[i] = new byte[64]; },
                 UnityEngine.TestTools.Constraints.Is.AllocatingGCMemory(), "sayaç geçersiz (pozitif kontrol: kayıtçı ayırmayı görmeli)");
@@ -219,6 +263,8 @@ namespace DD.Prototype.Tests.EditMode
                     RunTelemetry.OnEnemyDied(o);          // life 6 kayıtsız → yalnız sayaç
                     RunTelemetry.OnGoldChanged(i);
                     RunTelemetry.OnPlayerAttacked(hit);
+                    RunTelemetry.OnPlayerDamaged(kendi);
+                    RunTelemetry.OnPlayerDamaged(zombi);
                 }
             }, UnityEngine.TestTools.Constraints.Is.Not.AllocatingGCMemory(), "sıcak yol handler'ları ayırmamalı (bu iş parçacığında GC.Alloc örneği görüldü)");
             Debug.Log("[DD-TEST] wp045.telemetry hotpath threadAlloc=none positive=" + yem.Length);

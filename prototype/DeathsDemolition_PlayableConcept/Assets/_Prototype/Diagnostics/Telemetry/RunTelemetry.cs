@@ -5,6 +5,7 @@ using System.IO;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Damage;
 using DD.Prototype.Enemies;
+using DD.Prototype.PlayerSystem;
 using DD.Prototype.Rounds;
 using DD.Prototype.Weapons;
 using UnityEngine;
@@ -35,6 +36,8 @@ namespace DD.Prototype.Diagnostics.Telemetry
         public int ttkCountStandard, ttkCountSpecial, ttkCountElite, ttkCountUltra;
         public int outOfWorldRemovals;         // WP-061K: bodies despawned for leaving the world (fell / stranded) — no reward
         public int stuckRemovals;              // WP-061L: bodies despawned by the no-progress watchdog — no reward
+        public float selfDamage;               // WP-069 B5: Σ health the player's own weapons took (rl_1 blast / bomblets, Raiju arc)
+        public int selfHits;
     }
 
     /// <summary>One time-to-kill sample (first player hit → death).</summary>
@@ -83,6 +86,7 @@ namespace DD.Prototype.Diagnostics.Telemetry
         public string build;                   // Application.version
         public string weapon;
         public string endReason;
+        public string killedBy;                // WP-069 B5: RunSummary.KilledBy — "rl_1" is the player's own rocket (DIRECTION §7.5)
         public int reachedRound, completedRounds;
         public float runSeconds;
         public int totalKills, goldEarned, goldSpent, upgradesPurchased, rerollsUsed, armorPiecesBroken;
@@ -252,6 +256,7 @@ namespace DD.Prototype.Diagnostics.Telemetry
             RunTreeEvents.Raised += OnTreeEvent;          // WP-077 B6 (v2)
             DamageEvents.EnemyDied += OnEnemyDied;
             DamageEvents.PlayerAttacked += OnPlayerAttacked;
+            PlayerHealth.AnyDamaged += OnPlayerDamaged;   // WP-069 B5: own-weapon damage only
             ZombieEnemy.OutOfWorldRemoved += OnOutOfWorldRemoved;   // WP-061K
             WeaponEvents.SpecialWeaponSpawned += OnSpecialSpawned;
             WeaponEvents.SpecialWeaponPickedUp += OnSpecialPickedUp;
@@ -524,6 +529,30 @@ namespace DD.Prototype.Diagnostics.Telemetry
             r.hitsTaken++;
         }
 
+        /// <summary>
+        /// WP-069 B5 · damage the player's own weapons did to the player (DIRECTION §7.5: rl_1 self damage 45 % / cap 72 —
+        /// "if the first playtest's death rate is over 5 %, the cap drops to 50"). Enemy hits stay in damageTaken.
+        /// Public for tests.
+        /// </summary>
+        public static void OnPlayerDamaged(PlayerDamageInfo info)
+        {
+            if (s_roundIndex < 0 || s_roundIndex >= RoundCapacity || !IsOwnWeapon(info.SourceId))
+            {
+                return;
+            }
+
+            ref RoundRecord r = ref s_rounds[s_roundIndex];
+            r.selfDamage += Mathf.Max(0f, info.AppliedAmount);
+            r.selfHits++;
+        }
+
+        /// <summary>A classic weapon key (ar_1 … rl_1) or a Special key (sw_arc, sw_gel): the sources the weapons pass to PlayerHealth.</summary>
+        public static bool IsOwnWeapon(string sourceId)
+        {
+            return !string.IsNullOrEmpty(sourceId) &&
+                   (DD.Prototype.Core.Weapons.SpecialWeaponKeys.TryGetId(sourceId, out _) || DD.Prototype.Core.Weapons.Arsenal.Get(sourceId) != null);
+        }
+
         private static void OnSpecialSpawned(Vector3 position, float groundLifetime)
         {
             s_specialSpawns++;
@@ -604,6 +633,7 @@ namespace DD.Prototype.Diagnostics.Telemetry
                 build = Application.version,
                 weapon = summary.Weapon.ToString(),
                 endReason = summary.EndReason.ToString(),
+                killedBy = summary.KilledBy ?? string.Empty,
                 reachedRound = summary.ReachedRound,
                 completedRounds = summary.CompletedRounds,
                 runSeconds = Mathf.Max(0f, Time.time - s_runStart),
