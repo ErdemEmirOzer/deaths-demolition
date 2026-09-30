@@ -7,6 +7,7 @@ import subprocess
 import sys
 import struct
 import inspect
+import os
 import zlib
 import tempfile
 import unittest
@@ -17,7 +18,15 @@ FINAL = 'a' * 40
 OTHER = 'b' * 40
 AREAS = 'projectile penetration launcher arsenal gel chain ragdoll zombieAttacks animation camera world aiFlags progression audio ui readability'.split()
 DOMAIN_IDS = {'projectile': ['DD.Prototype.Tests.EditMode.ArsenalV3Tests.Havuz_TavanDolunca_EnEskiEmekli_SayilirSayim', 'DD.Prototype.Tests.EditMode.ArsenalV3Tests.Islem_SurdurmeKimligi_AcmadanVerilir_DevamEder', 'DD.Prototype.Tests.EditMode.ArsenalV3Tests.Mermi_Deterministik_AyniGirdi_AyniYol', 'DD.Prototype.Tests.EditMode.ArsenalV3Tests.Mermi_MenzilSonundaSoner_TamMenzilKatEder', 'DD.Prototype.Tests.PlayMode.ProjectileSliceTests.HizliMermi_InceDuvardan_Gecemez_TekUzunAdimdaBile', 'DD.Prototype.Tests.PlayMode.ProjectileSliceTests.KlasikSilah_Projectile_Atar_VeHedefiVurur', 'DD.Prototype.Tests.PlayMode.ProjectileSliceTests.Mermi_UcusSuresindenSonraHasarVerir_TekIsabet', 'DD.Prototype.Tests.PlayMode.ProjectileSliceTests.Mermiler_UcarkenVeCarparken_KareBasinaAyirmaYok'], 'penetration': ['DD.Prototype.Tests.EditMode.RegionalArmorSliceTests.BolgeCozumu_KayitliCollider_RegistryOnce', 'DD.Prototype.Tests.EditMode.RegionalArmorSliceTests.BolgeCozumu_KayitsizCollider_AcikFallback', 'DD.Prototype.Tests.EditMode.RegionalArmorSliceTests.DamageEventClassifier_OnSinifTablosu', 'DD.Prototype.Tests.EditMode.RegionalArmorSliceTests.DamageEventMeta_BeforeAfterVeKirilim', 'DD.Prototype.Tests.EditMode.RegionalArmorSliceTests.DamageTransaction_MonotonVeIcIceSayilir', 'DD.Prototype.Tests.EditMode.RegionalArmorSliceTests.IsEmpty_YalnizHicbirSeyOlmadiginda', 'DD.Prototype.Tests.EditMode.RegionalArmorSliceTests.KaynakTaramasi_HasarYolundaKareBasinaAramaYok', 'DD.Prototype.Tests.EditMode.RegionalArmorSliceTests.Kirilma_Idempotent_IkinciCagriKirmaz', 'DD.Prototype.Tests.EditMode.RegionalArmorSliceTests.Kritik_YalnizAcikKafaDogrudan_PatlamadaYok', 'DD.Prototype.Tests.EditMode.RegionalArmorSliceTests.OluBeden_IkinciOlumVeKirilmaYok', 'DD.Prototype.Tests.EditMode.RegionalArmorSliceTests.Parca_YalnizKendiBolgesiniKorur', 'DD.Prototype.Tests.EditMode.RegionalArmorSliceTests.Patlama_EnjekteOranlar_ToplamKorunurDeterministik', 'DD.Prototype.Tests.EditMode.RegionalArmorSliceTests.Patlama_IkiParca_IkiPayZirhaAcikPayCana', 'DD.Prototype.Tests.EditMode.RegionalArmorSliceTests.Patlama_KirilmaTasmasi_AyniPatlamadaCanaGecmez', 'DD.Prototype.Tests.EditMode.RegionalArmorSliceTests.Patlama_TekParca_KorunanPayZirhaAcikPaylarCana', 'DD.Prototype.Tests.EditMode.RegionalArmorSliceTests.Patlama_UcParca_SonraBiriKirik_AcikPayCana', 'DD.Prototype.Tests.EditMode.RegionalArmorSliceTests.Tasma_HerSlottaCanaGecmez', 'DD.Prototype.Tests.PlayMode.RegionalArmorSliceTests.AyniTransaction_IkinciUygulama_Reddedilir', 'DD.Prototype.Tests.PlayMode.RegionalArmorSliceTests.DogrudanIsabet_GercekHitbox_BolgeSlotYonlendirmesi', 'DD.Prototype.Tests.PlayMode.RegionalArmorSliceTests.IkinciRunSahnesi_HasarAboneleriCogalmaz', 'DD.Prototype.Tests.PlayMode.RegionalArmorSliceTests.Kompozisyon0123_Deterministik_HavuzIkinciYasam_Pause', 'DD.Prototype.Tests.PlayMode.RegionalArmorSliceTests.OluDusman_GecHasar_YeniOlumGoldKillYok_StandardKill', 'DD.Prototype.Tests.PlayMode.RegionalArmorSliceTests.Patlama_AyriCanYoluYok_BirincilHedefTekOlay', 'DD.Prototype.Tests.PlayMode.RegionalArmorSliceTests.Patlama_DusmanBasinaTekUygulama_TekDressing_ButceCogalmaz', 'DD.Prototype.Tests.PlayMode.RegionalArmorSliceTests.PatlamaylaOlum_TekOlum_KritikDegil', 'DD.Prototype.Tests.PlayMode.RegionalArmorSliceTests.VurusYolu_SifirAyirma'], 'launcher': ['DD.Prototype.Tests.EditMode.RocketMathTests.Patlama_DogrusalDusus_VeKendineHasar', 'DD.Prototype.Tests.EditMode.RocketMathTests.Rl1_Etkin_RoketBlogu_VeDallari', 'DD.Prototype.Tests.PlayMode.RocketSliceTests.Cluster_Bombaciklari_PatlamaEtrafinda', 'DD.Prototype.Tests.PlayMode.RocketSliceTests.DogrudanIsabet_VePatlama_AyriIslemde_HedefIkisiniDeAlir', 'DD.Prototype.Tests.PlayMode.RocketSliceTests.Kontrolcu_Rl1_RoketAtar', 'DD.Prototype.Tests.PlayMode.RocketSliceTests.KurmaMesafesiIcinde_Dud_30Hasar_PatlamaYok', 'DD.Prototype.Tests.PlayMode.RocketSliceTests.Oyuncu_KendiPatlamasindan_Yuzde45_Alir', 'DD.Prototype.Tests.PlayMode.RocketSliceTests.Ucus_Itki_VeHavadaPatlama_70m'], 'arsenal': ['DD.Prototype.Tests.EditMode.ArsenalB2Tests.Burst_UcAtis_005Aralik_SonraGecikme026', 'DD.Prototype.Tests.EditMode.ArsenalB2Tests.TekFisek_KabukKabukDoler_TetikKeser_YuklenenlerKalir', 'DD.Prototype.Tests.EditMode.ArsenalB2Tests.Yedek_TurBasiDolar_AsagiInmez_BosKalincaTabanBirSarjor', 'DD.Prototype.Tests.EditMode.ArsenalV3Tests.Havuz_TavanDolunca_EnEskiEmekli_SayilirSayim', 'DD.Prototype.Tests.EditMode.ArsenalV3Tests.Islem_SurdurmeKimligi_AcmadanVerilir_DevamEder', 'DD.Prototype.Tests.EditMode.ArsenalV3Tests.Katalog_OnTanim_Gecerli_KimliklerBenzersiz', 'DD.Prototype.Tests.EditMode.ArsenalV3Tests.KonfigKopyasi_TanimSayilariniTasir_KonseySayilari', 'DD.Prototype.Tests.EditMode.ArsenalV3Tests.Mermi_Deterministik_AyniGirdi_AyniYol', 'DD.Prototype.Tests.EditMode.ArsenalV3Tests.Mermi_MenzilSonundaSoner_TamMenzilKatEder', 'DD.Prototype.Tests.EditMode.SpecialWeaponContractTests.Egri_TabandanBaslar_MonotonArtar_TavandaSabitlenir', 'DD.Prototype.Tests.EditMode.SpecialWeaponContractTests.GecSinir_PencereUstundenBuyuk_RoundBitisindenKucuk', 'DD.Prototype.Tests.EditMode.SpecialWeaponContractTests.IkinciSpawn_ConfigtenOkunur_IhtimalAralikta', 'DD.Prototype.Tests.EditMode.SpecialWeaponContractTests.IlkUygunTurdanItibaren_IhtimalPozitif_GarantiDegil', 'DD.Prototype.Tests.EditMode.SpecialWeaponContractTests.IlkUygunTurdanOnce_IhtimalSifir', 'DD.Prototype.Tests.EditMode.SpecialWeaponContractTests.Nobetci_KasitliSapmayi_Yakalar', 'DD.Prototype.Tests.EditMode.SpecialWeaponContractTests.RoundKoprusu_IlerlemeyiKirpar_SaglayiciYokkenBagliDegil', 'DD.Prototype.Tests.EditMode.SpecialWeaponContractTests.SabitTazelik_SpecialWeaponConfig_SevkiyatVarsayilanlaAyni', 'DD.Prototype.Tests.EditMode.SpecialWeaponContractTests.SpawnPenceresi_RoundIcinde_BaslangicVeBitisDisinda'], 'gel': ['DD.Prototype.Tests.EditMode.GelStateTests.DeganlerinSuresiEsitlenir_Tavan_EnEskiSoner_Expire', 'DD.Prototype.Tests.EditMode.GelStateTests.Icerisi_YukseklikBandi_EnYeniKazanir', 'DD.Prototype.Tests.PlayMode.GelSliceTests.Jel_KayarDuserOlur_Kaldirma0_UltraKalkar_Devrilme'], 'chain': ['DD.Prototype.Tests.EditMode.ChainTargetTests.KalkanKayanAtlanir_UltraZinciriDevamEttirir_Duvar', 'DD.Prototype.Tests.EditMode.ChainTargetTests.Sira_EnYakin_HopYaricapi_Tavan_AramaSiniriYok'], 'ragdoll': ['DD.Art.Tests.PlayMode.AnimationRagdollTests.Havuz_200Dongu_SizintiYok', 'DD.Art.Tests.PlayMode.AnimationRagdollTests.Olum_ItkiYonundeDuser_Yerlesir_PozKalir_HavuzaDoner', 'DD.Art.Tests.PlayMode.AnimationRagdollTests.SahneDegisimi_DusenRagdoll_HatasizBirakilir', 'DD.Art.Tests.PlayMode.AnimationRagdollTests.Tavan_Dolunca_YaziliDusus_HepsiBiter_SonraYenidenDogar'], 'zombieAttacks': ['DD.Prototype.Tests.EditMode.AttackSelectorTests.AiV3Kapali_YalnizImzaStil', 'DD.Prototype.Tests.EditMode.AttackSelectorTests.BiteGrabKapisi_ArkaDonukVeyaDuran_TekKapma', 'DD.Prototype.Tests.EditMode.AttackSelectorTests.Inceleme_R1A_SertMenzil_AboneKorunur_AgirlikYonetimOncesi', 'DD.Prototype.Tests.EditMode.AttackSelectorTests.SlotTahtasi_AgirStillerTekil_WindupTavani_Yayilim', 'DD.Prototype.Tests.EditMode.AttackSelectorTests.TierIzinleri_ImzaStilNormalizasyonu', 'DD.Prototype.Tests.EditMode.AttackSelectorTests.UcKezAyniStilYok_ElDegisir_Deterministik', 'DD.Prototype.Tests.PlayMode.AttackVarietySliceTests.AltiStandard_YirmiSaniye_StilCesitliligi_UcTekrarYok_WindupTavani_TekKapma'], 'animation': ['DD.Art.Tests.PlayMode.AnimationLocomotionV3Tests.Oyuncu_YuruyusteBasanAyakKilitli_KaymaAz', 'DD.Art.Tests.PlayMode.AnimationLocomotionV3Tests.Zombi_DonusteIceEgilir_DuzdeDik', 'DD.Art.Tests.PlayMode.AnimationLocomotionV3Tests.Zombi_KadansBandi_KalabalikFarkliFaz_Kayar'], 'camera': ['DD.Prototype.Tests.PlayMode.CameraContractTests.KameraYawIle_HareketVeAnalogNisan_KameraTabaninaGore', 'DD.Prototype.Tests.PlayMode.CameraModesPlayTests.DuvarIciSayaci_PozitifKontrol', 'DD.Prototype.Tests.PlayMode.CameraModesPlayTests.TP_DuvarItmesi_KameraAslaDuvarIcindeDegil', 'DD.Prototype.Tests.PlayMode.CameraModesPlayTests.Tepeden_NisanIsiniEskiDuzlemIzdusumuyleAyni'], 'world': ['DD.Art.Tests.EditMode.NavMeshConnectivityTests.KopruGuvertesi_BedenKoridoruAcik_CitSokulmez_EtekBirlesik', 'DD.Art.Tests.EditMode.NavMeshConnectivityTests.NavMesh_TekParca_BedenErisilebilirAdacikYok_IsaretliNoktalarBaslangicaUlasir', 'DD.Art.Tests.EditMode.WorldBoundaryTests.HavuzCitleri_YurunebilirNavMeshiKesmez_BedenAdimiUstuPropUstundeNavMeshYok', 'DD.Art.Tests.EditMode.WorldBoundaryTests.Havuzlar_KenardanIceriKapsulTaramasi_CitVeyaGecitteDurur', 'DD.Art.Tests.EditMode.WorldBoundaryTests.OynanabilirAlan_ZeminDelikleriYalnizHavuzlarda', 'DD.Art.Tests.EditMode.WorldBoundaryTests.SinirHalkasi_CevreBoyuncaKapsulTaramasi_BoslukYok', 'DD.Art.Tests.EditMode.WorldBoundaryTests.SinirHalkasi_DortDuvar_IgnoreRaycast_OyuncuVeDusmaniDurdurur_AtisVeKamerayiEtkilemez'], 'aiFlags': ['DD.Prototype.Tests.EditMode.AttackSelectorTests.AiV3Kapali_YalnizImzaStil'], 'progression': ['DD.Prototype.Tests.EditMode.MetaPathTests.AnlikGoruntu_S09', 'DD.Prototype.Tests.EditMode.MetaPathTests.Katalog_Gecerli_Sayfalar_ve_Silahlar', 'DD.Prototype.Tests.EditMode.MetaPathTests.KayitHatasi_RamDegismez', 'DD.Prototype.Tests.EditMode.MetaPathTests.KosuDegistiricileri_DukkanVeAgac', 'DD.Prototype.Tests.EditMode.MetaPathTests.Respec_SilahlarKalir_IlkTam_SonraYuzde75', 'DD.Prototype.Tests.EditMode.MetaPathTests.SilahKilidi_Secim_SatiriSorgusu', 'DD.Prototype.Tests.EditMode.MetaPathTests.SilahSatinAlma_Atomik_Idempotan_SilahAcar', 'DD.Prototype.Tests.EditMode.MetaPathTests.TazeProfil_Durumlar', 'DD.Prototype.Tests.EditMode.MetaPathTests.YetersizKul_KilitliEtki_OnKosul_HicbirSeyYazmaz', 'DD.Prototype.Tests.EditMode.RunTreeTests.AnlikGoruntu_SatinAlinanKart_TekliftenDuser', 'DD.Prototype.Tests.EditMode.RunTreeTests.Anlik_Goruntu_S09_Alanlari_YeniAcilan_Yol', 'DD.Prototype.Tests.EditMode.RunTreeTests.Doruk_M1Oncesi_YalnizPinleTeklife_Girer', 'DD.Prototype.Tests.EditMode.RunTreeTests.Dukkan_AgaciKosuBasinaKurar_KeseyiOder_OcakKomutu', 'DD.Prototype.Tests.EditMode.RunTreeTests.EtkisiBaglanmamis_Kilitli_Satilmaz_Teklife_Girmez', 'DD.Prototype.Tests.EditMode.RunTreeTests.IcerikPaketi_HerDugumunAnahtari_Var', 'DD.Prototype.Tests.EditMode.RunTreeTests.Izgara_IkiSerit_4x4_BenzersizHucre_CekirdekDallarRoster', 'DD.Prototype.Tests.EditMode.RunTreeTests.KademeKisaAdlari_Benzersiz_TamKelime_OnIkiAlti', 'DD.Prototype.Tests.EditMode.RunTreeTests.Katalog_Gecerli_OnSilah_KisaAd12', 'DD.Prototype.Tests.EditMode.RunTreeTests.Kese_TurSonuYuzde10_YalnizSahipken', 'DD.Prototype.Tests.EditMode.RunTreeTests.Keystone_Kavsak_Dislama_Doruk_Kurallari', 'DD.Prototype.Tests.EditMode.RunTreeTests.Nisan_Yol_VeTeklifGarantisi', 'DD.Prototype.Tests.EditMode.RunTreeTests.Ocak_KartDisi_Fiyat_TurSiniri_Tavan_Hasar', 'DD.Prototype.Tests.EditMode.RunTreeTests.YeniDallar_EnumSozlesme_CekiliseGirmez'], 'audio': ['DD.Prototype.Tests.EditMode.Audio.AudioSliceEditModeTests.AkustikAlanlar_V6Haritasi_SalonKoridor_Histerezis_SahneYoksaOpen', 'DD.Prototype.Tests.EditMode.Audio.AudioSliceEditModeTests.AnimasyonOlaylari_HerKlipOlayininSatiriVar_SilahFoleyAyrik', 'DD.Prototype.Tests.EditMode.Audio.AudioSliceEditModeTests.AtesV3_KimlikTablosu_WP069AudioIdleri_HibritUcSilah_KuyrukMatrisi', 'DD.Prototype.Tests.EditMode.Audio.AudioSliceEditModeTests.AyakSesi_PlakaVaryantlari_AdKurali', 'DD.Prototype.Tests.EditMode.Audio.AudioSliceEditModeTests.BolgeHaritasi_BesPoligon_HerMerkezKendiBolgesineCozulur', 'DD.Prototype.Tests.EditMode.Audio.AudioSliceEditModeTests.BolgeHaritasi_NoktaPoligonTesti', 'DD.Prototype.Tests.EditMode.Audio.AudioSliceEditModeTests.DarbeV3_YuzeyKalibreMatrisi_AdlarVeKazanc', 'DD.Prototype.Tests.EditMode.Audio.AudioSliceEditModeTests.Firlatici_UcusDongusuEslemi_PitchRampasi_PatlamaKatmani', 'DD.Prototype.Tests.EditMode.Audio.AudioSliceEditModeTests.FoleyV3_SilahBasinaMekanizmaSeti_AileVeKovanEslemi', 'DD.Prototype.Tests.EditMode.Audio.AudioSliceEditModeTests.Katalog_ManifestLufsVeTepe_StandartIcinde_VeYenidenOlcumTutuyor', 'DD.Prototype.Tests.EditMode.Audio.AudioSliceEditModeTests.Katalog_ManifestVar_DonusturucuIdempotan_VeYuklenebilir', 'DD.Prototype.Tests.EditMode.Audio.AudioSliceEditModeTests.Kirilabilirler_AP017AileAdlari_KendiSesineCozulur', 'DD.Prototype.Tests.EditMode.Audio.AudioSliceEditModeTests.Kirilabilirler_EventIdVeriden_AltiOlayKendiSesi_AdOlayIcindeInceltir', 'DD.Prototype.Tests.EditMode.Audio.AudioSliceEditModeTests.LoudnessMeter_TamOlcekSinus_BS1770Referansi', 'DD.Prototype.Tests.EditMode.Audio.AudioSliceEditModeTests.Mixer_AltiGrupDortSnapshot_AcikParametreler_KopruEslemesi', 'DD.Prototype.Tests.EditMode.Audio.AudioSliceEditModeTests.OlayHaritasi_HerCombatVeRunOlayiIcinSatirVar', 'DD.Prototype.Tests.EditMode.Audio.AudioSliceEditModeTests.OlayHaritasi_HerSesinRecipeVeyaKatalogKarsiligiVar', 'DD.Prototype.Tests.EditMode.Audio.AudioSliceEditModeTests.OlayHaritasi_OyuncuUiAmbiyansMuzikSatirlari_TamVeTekil', 'DD.Prototype.Tests.EditMode.Audio.AudioSliceEditModeTests.SilahFoleyV3_KlipSetineGore_MekanizmaEslemesi', 'DD.Prototype.Tests.EditMode.Audio.AudioSliceEditModeTests.SpecialKullanim_RaijuNamekuji_Satirlari_EskiKimliklerYok', 'DD.Prototype.Tests.EditMode.Audio.AudioSliceEditModeTests.TierVokalSeti_HerTierKendiKimligi', 'DD.Prototype.Tests.EditMode.Audio.AudioSliceEditModeTests.UiOlaylari_HerUiEventUyesininSatiriVar_RouterHaritayaEsit', 'DD.Prototype.Tests.EditMode.Audio.AudioSliceEditModeTests.UiV3_Sozlesme_YeniOlaylarBagli_RunCuelariDuckYok_SliderHizi', 'DD.Prototype.Tests.EditMode.Audio.AudioSliceEditModeTests.UstKalite_24BitKaynak_GurultuTabani_Klip_DC_ImporterKalitesi', 'DD.Prototype.Tests.EditMode.Audio.AudioSliceEditModeTests.YuzeyEtiketleri_HerPlacementAilesininKuraliVar', 'DD.Prototype.Tests.PlayMode.AudioSliceTests.HavuzTavani_AsimdaDusurur_AktifSesKapasiteyiAsmaz', 'DD.Prototype.Tests.PlayMode.AudioSliceTests.SesYolu_KararliDurumda_SifirAyirma'], 'ui': ['DD.Prototype.Tests.EditMode.InputParityContractTests.InputSystem_YalnizInputKlasorunde', 'DD.Prototype.Tests.EditMode.UiCameraModesTests.KameraSatirlari_Sinirlanir_Kalici_EskiDosyaVarsayilan'], 'readability': ['DD.Art.Tests.PlayMode.ArmorTests.Okunabilirlik_DEC077_Zirh_DeltaV_AltKumas_KomsuBant_ZeminHalkasi_Siluet']}
-AI_FLAGS = ("-ddAiV3", "-ddRagdoll", "-ddCorpseLinger", "-ddChainHops", "-ddGelPuddles", "-ddCrowdNeighbours", "-ddSpawnLos")
+# C-00 30.09 K4: the Player smoke matrix is the AI flags the C# source parses (tests/test_wp078_ai_flags.py).
+AI_FLAGS = ("-ddAiV3",)
+MODE_NAMES = {'topdown':'TopDown','tp':'ThirdPerson','fp':'FirstPerson'}
+ROUTE_KEYS = ('courtyard','corridor','kairo','horizon')
+KNOWN_OPEN = ("-ddRagdoll", "-ddCorpseLinger", "-ddChainHops", "-ddGelPuddles", "-ddCrowdNeighbours", "-ddSpawnLos")
+BUILD_MODES = {"dev": "dev", "release": "release", "probe": "release-probe"}
+SCENES = ["Assets/_Prototype/Scenes/Boot.unity", "Assets/_Prototype/Scenes/Run.unity"]
+# K6: a timed 1 Hz QaRunBot trace that keeps moving (measurable, no same-spot cluster).
+TRACE = "\n".join(f"[QaRunBot] t pos={2.0*n:.1f},0.0,1.0 time={float(n):.1f} mode=patrol near=0" for n in range(12))
 GUARD = dict(snapshotExit=0, restoreExit=0, verified=1, outOfScopeChanged=0)
 
 class EvidenceFixture:
@@ -25,7 +34,7 @@ class EvidenceFixture:
         self.root = root
         self.serial = 0
         self.targets = json.loads((HERE / 'perf-targets.json').read_text())
-        self.binaries = {role: self.put(role + '.bin', role.encode()) for role in ('dev', 'release')}
+        self.binaries = {role: self.put(role + '.bin', role.encode()) for role in ('dev', 'release', 'probe')}
         self.manifest = dict(schema='dd-wp078-acceptance-v1', commit=FINAL, final=True,
             assetsTree='c'*40, buildHashes={k:v['artifactSha256'] for k,v in self.binaries.items()}, checklist={})
         for n in range(8):
@@ -34,23 +43,37 @@ class EvidenceFixture:
         c['A0']['library'] = self.library()
         c['A1']['xml'] = {k:self.xml(k) for k in ('editMode', 'playMode')}
         c['A2']['runs'] = [self.run(m,61,5) for m in ('topdown','tp','fp')]
+        c['A2']['routeRuns'] = [self.route_run(m) for m in ('topdown','tp','fp')]
         c['A3']['checks'] = {area:self.step(3) for area in AREAS}
         for area,row in c['A3']['checks'].items():row['evidence'].append(self.domain_xml(area))
         c['A3']['checks']['aiFlags']['flagRuns']=[self.flag_run(flag,value) for flag in AI_FLAGS for value in (0,1)]
-        c['A4'].update(perfRoot='perf', buildRole='dev')
+        c['A4'].update(perfRoot='perf', buildRole='probe')
         self.perf()
         c['A5']['runs'] = [self.run('topdown',s,12,True) for s in (61,26)]
         self.manifest['reportRuns'] = [self.run(m,61,5) for m,n in [('topdown',5),('tp',2),('fp',2)] for _ in range(n)]
         c['A5']['reportRuns'] = self.manifest['reportRuns']
         c['A6']['builds'] = {role:dict(library=self.library(), binary=ref, guard=copy.deepcopy(GUARD),
             provenance=self.provenance(role,compression='LZ4HC'),originalExit=0,
-            buildReport=self.put_json(dict(result='Succeeded',mode=role,totalErrors=0,totalSize=1000,
-                stamp=dict(stamped=True,commit=FINAL,describe=FINAL,mode=role)),role+'-build-report.json'),
+            buildReport=self.put_json(dict(result='Succeeded',mode=BUILD_MODES[role],totalErrors=0,totalSize=1000,scenes=len(SCENES),
+                **({} if role=='dev' else dict(compression='lz4hc')),development=role=='dev',sceneList=list(SCENES),scriptingBackend='Mono2x',
+                stamp=dict(stamped=True,commit=FINAL,describe=FINAL,mode=BUILD_MODES[role])),role+'-build-report.json'),
             report=self.put_json({'ok':True,'sourceCommit':FINAL},role+'-report.json'))
             for role,ref in self.binaries.items()}
         c['A7'].update(byteEqual=True, integrityXml=self.xml('ProjectIntegrityTests.Check'))
         c['A4']['attempts']=[dict(path=str(p.relative_to(self.root)),artifactSha256=hashlib.sha256(p.read_bytes()).hexdigest()) for p in sorted((self.root/'perf').glob('*/attempt.json'))]
+        c['A4']['ledger']=self.write_ledger()
         self.anchor(self.manifest)
+    def write_ledger(self, extra=()):
+        # wp064_run: one start row and one end row per attemptId in <perf root>/attempts-ledger.jsonl.
+        lines=[]
+        for p in sorted((self.root/'perf').glob('*/attempt.json')):
+            a=json.loads(p.read_text());d=p.parent.name
+            lines.append(dict(attemptId=a['attemptId'],kind='perf',status='starting',dir=d))
+            end=dict(attemptId=a['attemptId'],kind='perf',status=a['status'],exitCode=a['exitCode'],dir=d)
+            end.update({k:a[k] for k in ('hostClean','timedOut','missingArtifacts') if k in a})
+            lines.append(end)
+        lines+=list(extra)
+        return self.put('perf/attempts-ledger.jsonl',''.join(json.dumps(x,sort_keys=True)+'\n' for x in lines).encode())
     def put(self, name, data):
         p=self.root/name; p.parent.mkdir(parents=True,exist_ok=True); p.write_bytes(data)
         return dict(path=name,artifactSha256=hashlib.sha256(data).hexdigest())
@@ -67,30 +90,50 @@ class EvidenceFixture:
         for name in ids:ET.SubElement(root,'test-case',fullname=name,name=name,result='Passed')
         return self.put('domain-'+area+'.xml',ET.tostring(root))
     def flag_run(self,flag,value):
-        r=self.run('topdown',61,1);r.pop('frames')
+        r=self.run('topdown',61,1)
         r.update(flag=flag,value=value,command=self.put_json(['DeathsDemolition',flag,str(value)]))
         return r
-    def provenance(self, role='dev', **extra):
+    def provenance(self, role='dev', name=None, **extra):
         return self.put_json(dict(status='complete',guard=copy.deepcopy(GUARD),executionCommit=FINAL,sourceCommit=FINAL,testedCommit=FINAL,exitCode=0,
-            binarySha256=self.binaries[role]['artifactSha256'],hostClean=True,worldHalfExtent=55,**extra))
+            binarySha256=self.binaries[role]['artifactSha256'],hostClean=True,**extra),name)
     def step(self,n):
         p=self.provenance()
         return dict(status='PASS',owner='S-10',executionCommit=FINAL,originalExit=0,provenance=p,
             evidence=[p]+([self.put_json({'pass':True,'executionCommit':FINAL})] if n==3 else []),guard=copy.deepcopy(GUARD))
     def run(self, mode, seed, count, stability=False):
         records=[dict(round=n,completed=True,outcome='completed',memMonoUsedMB=100,memTotalAllocatedMB=200,memRssMB=300) for n in range(1,count+1)]
-        summary=dict(cameraMode=mode,qualityTier='Yuksek',seed=seed,roundsRequested=count,roundsCompleted=count,
+        summary=dict(cameraMode=mode,qualityTier='Sinematik',worldHalfExtent=55.0,seed=seed,roundsRequested=count,roundsCompleted=count,
             rounds=records,runMode='stability' if stability else 'normal',pass_=True,stabilityPass=True,deaths=0,
-            timedOut=False,passAll=True,passed=True,stuckRecoveries=0)
+            timedOut=False,passAll=True,passed=True,stuckRecoveries=0,unstickSweeps=0)
         summary['pass']=True
-        p=self.provenance()
-        log='\n'.join(f'[Camera] inside-collider round={n} frames=0/60' for n in range(1,count+1))
+        if stability:
+            # wp064_run layout: attempt.json + command.json share the attempt directory (K5 argv cross-check).
+            self.serial+=1;d=f'soak-{seed}-{self.serial}'
+            command=self.put_json(['Player','-ddQaBot','out','-ddQaBotRounds',str(count),'-ddQaBotSeed',str(seed),'-ddQaBotStability','-ddQualityTier','sinematik'],d+'/command.json')
+            p=self.provenance(name=d+'/attempt.json',commandSha256=command['artifactSha256'])
+        else:
+            p=self.provenance()
+        log='\n'.join(f'[Camera] inside-collider round={n} frames=0/60' for n in range(1,count+1))+'\n'+TRACE
         return dict(provenance=p,originalExit=0,guard=copy.deepcopy(GUARD),summary=self.put_json(summary),
-            log=self.put(f'run-{self.serial}.log',log.encode()),buildRole='dev',
-            frames={point:self.png(f'frame-{self.serial}-{mode}-{point}.png') for point in ('courtyard','corridor','horizon')})
+            log=self.put(f'run-{self.serial}.log',log.encode()),buildRole='dev')
+    def route_run(self, mode):
+        # C-00 30.09 R1–R3: QaRunBot -ddQaBotRouteTour <runOut>/frames; bot-summary routeFrames is the native record.
+        self.serial+=1;d=f'route-{mode}-{self.serial}';native=MODE_NAMES[mode];frames={};route=[]
+        for key in ROUTE_KEYS:
+            if mode=='topdown' and key=='horizon':
+                frames[key]={'notApplicable':'topdown-fixed-camera'}
+                route.append(dict(key=key,status='notApplicable',reason='topdown-fixed-camera: yaw fixed north, the top ray is ~28° below the horizon (E-3 by FP)',path='',mode=native,roofAbove=False))
+                continue
+            frames[key]=self.png(f'{d}/frames/route-{key}.png')
+            route.append(dict(key=key,status='captured',reason='',path=f'frames/route-{key}.png',mode=native,roofAbove=key in ('corridor','kairo')))
+        summary=self.put_json(dict(cameraMode=native,runMode='route',routeFrames=route,gatePass=True,roundsCompleted=0,**{'pass':True}),d+'/bot-summary.json')
+        log=self.put(d+'/player.log',b'[QaRunBot] route-tour done frames=4\n')
+        return dict(provenance=self.provenance(name=d+'/attempt.json'),originalExit=0,guard=copy.deepcopy(GUARD),
+            summary=summary,log=log,buildRole='dev',frames=frames)
     def png(self,name):
+        self.serial+=1;pixel=bytes([self.serial%256,(self.serial//256)%256,7])
         def chunk(tag,data):return struct.pack('>I',len(data))+tag+data+struct.pack('>I',zlib.crc32(tag+data)&0xffffffff)
-        raw=b'\x89PNG\r\n\x1a\n'+chunk(b'IHDR',struct.pack('>IIBBBBB',1,1,8,2,0,0,0))+chunk(b'IDAT',zlib.compress(b'\x00\xff\x00\x00'))+chunk(b'IEND',b'')
+        raw=b'\x89PNG\r\n\x1a\n'+chunk(b'IHDR',struct.pack('>IIBBBBB',1,1,8,2,0,0,0))+chunk(b'IDAT',zlib.compress(b'\x00'+pixel))+chunk(b'IEND',b'')
         return self.put(name,raw)
     def perf(self):
         for tier,limits in self.targets['tiers'].items():
@@ -107,8 +150,8 @@ class EvidenceFixture:
                         self.put_json(dict(configuredSafetyCeiling=40,ceiling=40,forcedTarget=40,achievedCount=40,**{'pass':True}),d+'/02-force-40.json'),
                         self.put_json(dict(warmupSeconds=10,**{'pass':True}),d+'/03-warmup.json')]
                     command=self.put_json({'argv':['synthetic']},d+'/command.json')
-                    self.put_json(dict(executionCommit=FINAL,status='complete',exitCode=0,hostClean=True,timedOut=False,
-                        binarySha256=self.binaries['dev']['artifactSha256'],guard=copy.deepcopy(GUARD),
+                    self.put_json(dict(attemptId=f'id-{tier}-{mode}-{n}',executionCommit=FINAL,status='complete',exitCode=0,hostClean=True,timedOut=False,missingArtifacts=[],
+                        binarySha256=self.binaries['probe']['artifactSha256'],guard=copy.deepcopy(GUARD),
                         resolution=[1920,1080],activeEnemies=40,warmupSeconds=10,windowSeconds=60,
                         commandSha256=command['artifactSha256'],artifactSha256={Path(r['path']).name:r['artifactSha256'] for r in resources}),d+'/attempt.json')
     def anchor(self, value):
@@ -123,7 +166,7 @@ class EvidenceFixture:
                     if isinstance(v,list):
                         for x in v:collect(x)
                     elif isinstance(v,dict):
-                        if 'path' in v and 'artifactSha256' in v and v['path']!=value['provenance']['path']:refs[v['path']]=v['artifactSha256']
+                        if 'path' in v and 'artifactSha256' in v and v['path']!=value['provenance']['path']:refs[os.path.relpath(v['path'],os.path.dirname(value['provenance']['path']) or '.')]=v['artifactSha256']
                         else:
                             for k,x in v.items():
                                 collect(x)
@@ -136,7 +179,7 @@ class EvidenceFixture:
         data=json.loads((self.root/ref['path']).read_text()); mutate(data)
         fresh=self.put_json(data,ref['path']); ref.update(fresh)
 
-class AcceptanceTests(unittest.TestCase):
+class Fixture(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         spec=importlib.util.spec_from_file_location('wp078_report',HERE/'wp078_report.py')
@@ -163,6 +206,40 @@ class AcceptanceTests(unittest.TestCase):
                 fresh=self.f.put_json(data,ref['path']);ref.update(fresh)
             self.f.anchor(self.m)
         r=self.result();self.assertIs(r['pass'],False);self.assertNotEqual(r['status'],'PASS');self.assertTrue(r['failures'])
+    def assert_step(self,step,status,reason=None):
+        r=self.result();self.assertFalse(r['pass'])
+        rows=[x for x in r['failures'] if x['step']==step]
+        self.assertTrue(rows,r['failures'])
+        if reason is not None:
+            rows=[x for x in rows if reason.lower() in x['reason'].lower()];self.assertTrue(rows,r['failures'])
+        self.assertEqual(rows[0]['status'],status,rows)
+        return r
+    def rehash_perf(self):
+        # Re-anchor every perf attempt after its native resources changed (the runner hashes them at completion).
+        for ref in self.m['checklist']['A4']['attempts']:
+            path=self.root/ref['path'];data=json.loads(path.read_text())
+            for filename in data.get('artifactSha256',{}):
+                data['artifactSha256'][filename]=hashlib.sha256((path.parent/filename).read_bytes()).hexdigest()
+            ref.update(self.f.put_json(data,ref['path']))
+        self.m['checklist']['A4']['ledger']=self.f.write_ledger();self.f.anchor(self.m)
+    def set_csv(self,cell,values,**window):
+        # Rewrite one window's CSV and its native (33.33 ms) probe fields consistently.
+        d=self.root/'perf'/cell;n=len(values);native=sorted(v for v in values if v<=33.33)
+        (d/'frame-times-ms.csv').write_text(''.join(f'{v:.4f}\n' for v in values))
+        p99=native[min(len(native)-1,-(-99*len(native)//100)-1)]
+        data=json.loads((d/'04-window.json').read_text())
+        data.update(frameCount=n,frameMeanMs=sum(values)/n,frameP99FilteredMs=p99,framesExcludedAsStalls=n-len(native));data.update(window)
+        (d/'04-window.json').write_text(json.dumps(data))
+    def add_attempt(self,cell,**fields):
+        # A non-complete attempt directory exactly as wp064_run leaves it (attempt.json + ledger rows).
+        d=self.root/'perf'/cell;d.mkdir(parents=True)
+        pre=self.f.put('perf/'+cell+'/preflight.json',b'{"pass": false}')
+        data=dict(attemptId='id-'+cell,schema='dd-wp064-attempt-v1',kind='perf',executionCommit=FINAL,
+            binarySha256=self.f.binaries['probe']['artifactSha256'],artifactSha256={'preflight.json':pre['artifactSha256']},**fields)
+        ref=self.f.put_json(data,'perf/'+cell+'/attempt.json')
+        self.m['checklist']['A4']['attempts'].append(ref);self.rehash_perf()
+
+class AcceptanceTests(Fixture):
     def test_complete_source_bound_final(self):
         r=self.result();self.assertTrue(r['pass'],r['failures']);self.assertEqual(r['schema'],'dd-wp078-acceptance-v1');self.assertEqual(r['commit'],FINAL);self.assertEqual(set(r['checklist']),{'A'+str(i) for i in range(9)})
     def test_missing_and_nonexecuted_steps(self):
@@ -220,6 +297,12 @@ class AcceptanceTests(unittest.TestCase):
         self.f.replace_json(self.m['checklist']['A2']['runs'][0]['summary'],lambda x:x.pop('stuckRecoveries'));self.assert_closed()
     def test_causal_closure_false_is_not_acceptance(self):
         self.f.replace_json(self.m['checklist']['A3']['checks']['projectile']['evidence'][1],lambda x:x.update(causalClosure=False));self.assert_closed()
+    def test_real_bot_death_exit_three(self):
+        # QaRunBot's native exit for a failed real-bot run is 3 (ExitCode); it stays a report.
+        run=self.m['reportRuns'][1];run['originalExit']=3
+        self.f.replace_json(run['provenance'],lambda x:x.update(exitCode=3,status='failed'))
+        self.f.replace_json(run['summary'],lambda x:x.update({'pass':False,'deaths':1}))
+        self.f.anchor(self.m);r=self.result();self.assertTrue(r['pass'],r['failures'])
     def test_original_balance_exit_preserved(self):
         run=self.m['reportRuns'][0];run['originalExit']=1
         self.f.replace_json(run['provenance'],lambda x:x.update(exitCode=1,status='failed'))
@@ -244,7 +327,13 @@ class AcceptanceTests(unittest.TestCase):
     def test_summary_mixed_source(self):
         self.f.replace_json(self.m['checklist']['A2']['runs'][0]['summary'],lambda x:x.update(sourceCommit=OTHER));self.f.anchor(self.m);self.assert_closed()
     def test_stability_stuck_recovery(self):
-        self.f.replace_json(self.m['checklist']['A5']['runs'][0]['summary'],lambda x:x.update(stuckRecoveries=1));self.f.anchor(self.m);self.assert_closed()
+        # C-00 30.09 K6: stuckRecoveries is the bot's own route recovery — reported per run with unstickSweeps, not a gate.
+        self.f.replace_json(self.m['checklist']['A5']['runs'][0]['summary'],lambda x:x.update(stuckRecoveries=27,unstickSweeps=3))
+        self.f.replace_json(self.m['checklist']['A2']['runs'][1]['summary'],lambda x:x.update(stuckRecoveries=15))
+        self.f.anchor(self.m);r=self.result();self.assertTrue(r['pass'],r['failures'])
+        rows={(x['step'],x['seed'],x['cameraMode']):x for x in r['botRuns']}
+        self.assertEqual((rows[('A5',61,'topdown')]['stuckRecoveries'],rows[('A5',61,'topdown')]['unstickSweeps']),(27,3))
+        self.assertEqual(rows[('A2',61,'tp')]['stuckRecoveries'],15)
     def test_incomplete_library_phase(self):
         self.f.replace_json(self.m['checklist']['A0']['library'],lambda x:x.update(phase='pre-build'));self.f.anchor(self.m);self.assert_closed()
     def test_unanchored_perf_attempt(self):
@@ -255,7 +344,11 @@ class AcceptanceTests(unittest.TestCase):
         ref=self.m['checklist']['A6']['builds']['release']['report']
         self.f.replace_json(ref,lambda x:x.update(sourceCommit=OTHER));self.f.anchor(self.m);self.assert_closed()
     def test_missing_route_frames(self):
-        self.m['checklist']['A2']['runs'][0]['frames'].pop('horizon');self.f.anchor(self.m);self.assert_closed()
+        # R1–R3: a missing route key is BLOCKED, never FAIL and never substituted.
+        for index,key in ((1,'horizon'),(2,'kairo'),(0,'courtyard')):
+            with self.subTest(key=key):
+                self.setUp();self.m['checklist']['A2']['routeRuns'][index]['frames'].pop(key);self.f.anchor(self.m)
+                self.assert_step('A2','BLOCKED','route frame '+key+' missing')
     def test_missing_csv(self):
         (self.root/'perf/perf-yuksek-tp-1/frame-times-ms.csv').unlink();self.assert_closed()
     def test_csv_drift(self):
@@ -276,8 +369,8 @@ class AcceptanceTests(unittest.TestCase):
         window=json.loads((new/'04-window.json').read_text());window['qualityTier']='Sinematik'
         wr=self.f.put_json(window,str((new/'04-window.json').relative_to(self.root)))
         ar=dict(path=str((new/'attempt.json').relative_to(self.root)))
-        self.f.replace_json(ar,lambda x:x['artifactSha256'].update({'04-window.json':wr['artifactSha256']}))
-        self.m['checklist']['A4']['attempts'].append(ar);self.f.anchor(self.m);self.assert_closed()
+        self.f.replace_json(ar,lambda x:(x['artifactSha256'].update({'04-window.json':wr['artifactSha256']}),x.update(attemptId='id-fourth')))
+        self.m['checklist']['A4']['attempts'].append(ar);self.m['checklist']['A4']['ledger']=self.f.write_ledger();self.f.anchor(self.m);self.assert_closed()
     def test_unrelated_succeeded_json_cannot_prove_domains(self):
         row=self.m['checklist']['A3']['checks']['projectile']
         row['evidence']=[row['provenance'],self.f.put_json(dict(schema='unrelated-json',executionCommit=FINAL,result='Succeeded'))]
@@ -298,7 +391,7 @@ class AcceptanceTests(unittest.TestCase):
                 run['log']=self.f.put('stability-errors.log',message.encode());self.f.anchor(self.m);self.assert_closed()
     def test_benign_stability_log_pass(self):
         run=self.m['checklist']['A5']['runs'][0]
-        run['log']=self.f.put('benign-stability.log',b'[QaRunBot] round complete; pool exhausted at intended round end\n[Projectile] round=3 overflow=0\nJoint Rigidbody configured successfully')
+        run['log']=self.f.put('benign-stability.log',b'[QaRunBot] round complete; pool exhausted at intended round end\n[Projectile] round=3 overflow=0\nJoint Rigidbody configured successfully\n'+TRACE.encode())
         self.f.anchor(self.m);r=self.result();self.assertTrue(r['pass'],r['failures'])
     def test_ai_flags_missing_smoke(self):
         self.m['checklist']['A3']['checks']['aiFlags']['flagRuns'].pop();self.f.anchor(self.m);self.assert_closed()
@@ -352,5 +445,238 @@ class AcceptanceTests(unittest.TestCase):
         row=self.m['checklist']['A3']['checks']['projectile'];row['evidence'].pop();self.f.anchor(self.m)
         r=self.result();self.assertFalse(r['pass']);self.assertTrue(any('missing native NUnit' in x['reason'] for x in r['failures']))
     def test_evidence_path_escape(self):self.m['checklist']['A1']['provenance']['path']='../elsewhere.json';self.assert_closed()
+
+
+
+class K1ReleaseProbeTests(Fixture):
+    """C-00 30.09 K1: A4 perf on release-probe, A6 probe mandatory with native parity; bots stay on dev."""
+    def test_a4_dev_role_fails(self):
+        self.m['checklist']['A4']['buildRole']='dev';self.assert_step('A4','FAIL','release-probe')
+    def test_a4_missing_role_blocked(self):
+        del self.m['checklist']['A4']['buildRole'];self.assert_step('A4','BLOCKED','buildRole missing')
+    def test_a4_window_on_dev_binary_fails(self):
+        ref=self.m['checklist']['A4']['attempts'][0]
+        self.f.replace_json(ref,lambda x:x.update(binarySha256=self.f.binaries['dev']['artifactSha256']))
+        self.m['checklist']['A4']['ledger']=self.f.write_ledger();self.f.anchor(self.m);self.assert_step('A4','FAIL','binary hash')
+    def test_a6_probe_mandatory(self):
+        del self.m['checklist']['A6']['builds']['probe'];self.assert_step('A6','BLOCKED','release-probe')
+    def test_a6_probe_mode_must_be_release_probe(self):
+        b=self.m['checklist']['A6']['builds']['probe']
+        self.f.replace_json(b['buildReport'],lambda x:(x.update(mode='dev'),x['stamp'].update(mode='dev')));self.f.anchor(self.m)
+        self.assert_step('A6','FAIL','release-probe')
+    def test_a6_parity_missing_native_fields_blocked(self):
+        for field in ('development','sceneList','scriptingBackend','compression'):
+            with self.subTest(field=field):
+                self.setUp();b=self.m['checklist']['A6']['builds']['probe']
+                self.f.replace_json(b['buildReport'],lambda x:x.pop(field));self.f.anchor(self.m)
+                r=self.assert_step('A6','BLOCKED','probe.'+field);self.assertIn('probe.'+field,r['buildParity']['missingNativeFields'])
+    def test_a6_parity_violations_fail(self):
+        for field,value,reason in (('development',True,'Development'),('compression','lz4','LZ4HC'),('scriptingBackend','IL2CPP','scriptingBackend'),
+                                   ('sceneList',['Assets/Other.unity'],'sceneList'),('scenes',5,'scene counts')):
+            with self.subTest(field=field):
+                self.setUp();b=self.m['checklist']['A6']['builds']['probe']
+                self.f.replace_json(b['buildReport'],lambda x:x.update({field:value}));self.f.anchor(self.m)
+                self.assert_step('A6','FAIL',reason)
+    def test_bot_runs_stay_dev(self):
+        run=self.m['checklist']['A2']['runs'][0];run['buildRole']='probe'
+        self.f.replace_json(run['provenance'],lambda x:x.update(binarySha256=self.f.binaries['probe']['artifactSha256']));self.f.anchor(self.m)
+        self.assert_step('A2','FAIL','dev build')
+
+
+class K4AiFlagTests(Fixture):
+    """C-00 30.09 K4: -ddAiV3 x0/1 only; the six specification flags are listed with their disposition, never PASS."""
+    def test_module_flags(self):
+        self.assertEqual(self.module.AI_FLAGS,AI_FLAGS)
+        self.assertEqual(set(self.module.AI_FLAGS_NOT_PASS),set(KNOWN_OPEN))
+    def test_spec_flags_listed_never_pass(self):
+        r=self.result();self.assertTrue(r['pass'],r['failures'])
+        rows={x['flag']:x for x in r['checklist']['A3']['areas']['aiFlags']['notPass']}
+        self.assertEqual(set(rows),set(KNOWN_OPEN))
+        self.assertTrue(all(x['pass'] is False and x['status']!='PASS' and x['reason']=='spesifikasyonda var, kodda yok' for x in rows.values()))
+        self.assertEqual({f:rows[f]['label'] for f in ('-ddChainHops','-ddGelPuddles')},dict.fromkeys(('-ddChainHops','-ddGelPuddles'),'retired (DEC-097/099)'))
+        self.assertTrue(all(rows[f]['label']=='withdrawn in writing (S-03, C-00 30.09)' for f in ('-ddCorpseLinger','-ddCrowdNeighbours','-ddSpawnLos')))
+        self.assertEqual((rows['-ddRagdoll']['status'],rows['-ddRagdoll']['label']),('KNOWN OPEN','implemented by S-06 (359cce6a), pending main'))
+        self.assertEqual(r['checklist']['A3']['areas']['aiFlags']['flagRuns'],2)
+    def test_exactly_two_runs(self):
+        runs=self.m['checklist']['A3']['checks']['aiFlags']['flagRuns']
+        self.assertEqual(len(runs),2)
+        runs.append(self.f.flag_run('-ddRagdoll',0));self.f.anchor(self.m);self.assert_step('A3','BLOCKED','exactly 2')
+    def test_unparsed_flag_cannot_replace_ai_v3(self):
+        runs=self.m['checklist']['A3']['checks']['aiFlags']['flagRuns']
+        runs[1]=self.f.flag_run('-ddRagdoll',1);self.f.anchor(self.m);self.assert_closed()
+
+
+class K5SoakTierTests(Fixture):
+    """C-00 30.09 K5: A5 at perf-targets defaultTier (Sinematik) from the bot summary; world 55 from the summary."""
+    def summary(self,mutate):
+        self.f.replace_json(self.m['checklist']['A5']['runs'][0]['summary'],mutate);self.f.anchor(self.m)
+    def test_missing_quality_tier_blocked(self):
+        self.summary(lambda x:x.pop('qualityTier'));self.assert_step('A5','BLOCKED','qualityTier')
+    def test_wrong_quality_tier_fails(self):
+        self.summary(lambda x:x.update(qualityTier='Yuksek'));self.assert_step('A5','FAIL','Sinematik')
+    def test_missing_world_extent_blocked(self):
+        self.summary(lambda x:x.pop('worldHalfExtent'));self.assert_step('A5','BLOCKED','worldHalfExtent')
+    def test_wrong_world_extent_fails(self):
+        self.summary(lambda x:x.update(worldHalfExtent=45.0));self.assert_step('A5','FAIL','55')
+    def test_provenance_world_extent_is_not_evidence(self):
+        run=self.m['checklist']['A5']['runs'][0]
+        self.f.replace_json(run['provenance'],lambda x:x.update(worldHalfExtent=55));self.summary(lambda x:x.pop('worldHalfExtent'))
+        self.assert_step('A5','BLOCKED','worldHalfExtent')
+    def command(self,argv):
+        run=self.m['checklist']['A5']['runs'][0];d=str(Path(run['provenance']['path']).parent)
+        ref=self.f.put_json(argv,d+'/command.json')
+        self.f.replace_json(run['provenance'],lambda x:x.update(commandSha256=ref['artifactSha256']));self.f.anchor(self.m)
+    def test_command_needs_sinematik(self):
+        self.command(['Player','-ddQaBotStability','-ddQualityTier','yuksek']);self.assert_step('A5','FAIL','-ddQualityTier')
+        self.command(['Player','-ddQaBotStability']);self.assert_step('A5','FAIL','-ddQualityTier')
+    def test_command_case_insensitive(self):
+        self.command(['Player','-ddQaBotStability','-ddQualityTier','Sinematik']);r=self.result();self.assertTrue(r['pass'],r['failures'])
+    def test_dirty_host_fails(self):
+        self.f.replace_json(self.m['checklist']['A5']['runs'][0]['provenance'],lambda x:x.update(hostClean=False));self.f.anchor(self.m)
+        self.assert_step('A5','FAIL','host')
+
+
+class K6WorldStallTests(Fixture):
+    """C-00 30.09 K6: same-spot stall clusters in A2/A5 logs gate A3 world; unmeasurable = ölçülmedi, never PASS."""
+    STUCK='\n'.join(f'[QaRunBot] t pos=10.0,0.0,5.0 time={30.0+n:.1f} mode=patrol near=0' for n in range(8))+'\n[QaRunBot] stall-recovery mode=patrol pos=10.0,0.0,5.0 time=33.0 near=0 goal=1,0,1'
+    def log(self,step,index,text):
+        run=self.m['checklist'][step]['runs'][index]
+        run['log']=self.f.put(f'world-{step}-{index}.log',text.encode());self.f.anchor(self.m)
+    def test_cluster_fails_world(self):
+        self.log('A5',1,TRACE+'\n'+self.STUCK)
+        r=self.assert_step('A3','FAIL','same-spot stall')
+        self.assertEqual(r['checklist']['A3']['areas']['world']['status'],'FAIL')
+        self.assertEqual(r['checklist']['A3']['areas']['world']['clusters'][0]['seconds'],7.0)
+    def test_unmeasurable_log_not_run(self):
+        self.log('A2',0,'\n'.join(f'[Camera] inside-collider round={n} frames=0/60' for n in range(1,6)))
+        r=self.assert_step('A3','BLOCKED','ölçülmedi')
+        self.assertEqual(r['checklist']['A3']['areas']['world']['status'],'NOT_RUN')
+        self.assertNotEqual(r['checklist']['A3']['status'],'PASS')
+    def test_missing_logs_never_pass(self):
+        self.m['checklist']['A5']['runs'].pop();r=self.result()
+        self.assertEqual(r['checklist']['A3']['areas']['world']['status'],'NOT_RUN');self.assertNotEqual(r['checklist']['A3']['status'],'PASS')
+    def test_report_run_cluster_is_observed_only(self):
+        run=self.m['reportRuns'][0];run['log']=self.f.put('world-report.log',(TRACE+'\n'+self.STUCK).encode());self.f.anchor(self.m)
+        r=self.result();self.assertTrue(r['pass'],r['failures'])
+        self.assertTrue(any(x['clusters'] and not x['gate'] for x in r['checklist']['A3']['areas']['world']['runs']))
+    def test_missing_stuck_counter_blocked(self):
+        self.f.replace_json(self.m['checklist']['A5']['runs'][0]['summary'],lambda x:x.pop('stuckRecoveries'));self.f.anchor(self.m)
+        self.assert_step('A5','BLOCKED','stuckRecoveries')
+
+
+class K8LedgerTests(Fixture):
+    """C-00 30.09 K8: mechanical discard rule from the hash-bound attempts ledger; single root."""
+    def test_preflight_discard_listed(self):
+        self.add_attempt('perf-yuksek-tp-4',status='preflight-failed',exitCode=75)
+        r=self.result();self.assertTrue(r['pass'],r['failures'])
+        self.assertEqual([(d['dir'],d['discard']) for d in r['perf']['discards']],[('perf-yuksek-tp-4','preflight-failed')])
+        cell=[c for c in r['perf']['cells'] if (c['tier'],c['mode'])==('yuksek','tp')][0];self.assertEqual((cell['counted'],cell['discards']),(3,1))
+    def test_host_contaminated_discard(self):
+        self.add_attempt('perf-sinematik-fp-4',status='failed',exitCode=0,hostClean=False,timedOut=False,missingArtifacts=[],guard=copy.deepcopy(GUARD))
+        r=self.result();self.assertTrue(r['pass'],r['failures']);self.assertEqual(r['perf']['discards'][0]['discard'],'host-contaminated')
+    def test_non_discardable_attempts_fail(self):
+        for n,fields in enumerate((dict(status='failed',exitCode=1,hostClean=False,timedOut=False,missingArtifacts=[]),
+                                   dict(status='failed',exitCode=0,hostClean=False,timedOut=True,missingArtifacts=[]),
+                                   dict(status='failed',exitCode=0,hostClean=False,timedOut=False,missingArtifacts=['04-window.json']),
+                                   dict(status='failed',exitCode=0,hostClean=True,timedOut=False,missingArtifacts=[]),
+                                   dict(status='preflight-failed',exitCode=0),dict(status='starting',exitCode=0))):
+            with self.subTest(fields=fields):
+                self.setUp();self.add_attempt(f'perf-performans-topdown-{4+n}',**fields)
+                self.assert_step('A4','FAIL','non-discardable')
+    def test_ledger_missing_attempt_blocked(self):
+        lines=(self.root/self.m['checklist']['A4']['ledger']['path']).read_text().splitlines()
+        kept=[l for l in lines if 'id-yuksek-fp-2' not in l]
+        self.m['checklist']['A4']['ledger']=self.f.put('perf/attempts-ledger.jsonl',('\n'.join(kept)+'\n').encode());self.f.anchor(self.m)
+        self.assert_step('A4','BLOCKED','ledger/disk')
+    def test_ledger_orphan_blocked(self):
+        self.m['checklist']['A4']['ledger']=self.f.write_ledger([dict(attemptId='ghost',kind='perf',status='complete',exitCode=0,dir='perf-yuksek-fp-9')])
+        self.f.anchor(self.m);self.assert_step('A4','BLOCKED','orphan')
+    def test_ledger_hash_bound(self):
+        path=self.root/self.m['checklist']['A4']['ledger']['path'];path.write_text(path.read_text()+'\n');self.assert_step('A4','FAIL','hash')
+    def test_second_root_blocked(self):
+        import shutil
+        shutil.copytree(self.root/'perf/perf-yuksek-tp-1',self.root/'other/perf-yuksek-tp-1');self.assert_step('A4','BLOCKED','single FINAL perf root')
+    def test_ledger_must_be_root_ledger(self):
+        self.m['checklist']['A4']['ledger']=self.f.put('elsewhere/attempts-ledger.jsonl',(self.root/'perf/attempts-ledger.jsonl').read_bytes())
+        self.f.anchor(self.m);self.assert_step('A4','BLOCKED','single perf root')
+
+
+class K9StallTests(Fixture):
+    """C-00 30.09 K9: per-tier stallMs recomputed from the CSV; native 33.33 is a cross-check; raw p99 escalation."""
+    def test_sinematik_frames_between_33_and_40_pass(self):
+        values=[30.0]*11700+[36.0]*300           # 2.5 % over 33.33 ms, none over the Sinematik stallMs 40
+        self.set_csv('perf-sinematik-tp-1',values,frameMeanMs=sum(values)/len(values));self.rehash_perf()
+        r=self.result();self.assertTrue(r['pass'],r['failures'])
+        w=[w for c in r['perf']['cells'] for w in c['windows'] if w['dir']=='perf-sinematik-tp-1'][0]
+        self.assertEqual((w['stallMs'],w['stalls'],w['fractionOver33ms'],w['rawP99Ms'],w['maxMs']),(40.0,0,0.025,36.0,36.0))
+        self.assertFalse(w['rawP99OverLimit']);self.assertIn('p999Ms',w)
+    def test_sinematik_stalls_over_40_cap(self):
+        values=[30.0]*11800+[45.0]*200           # 1.7 % over 40 ms
+        self.set_csv('perf-sinematik-fp-2',values);self.rehash_perf();self.assert_step('A4','FAIL','tier limit')
+    def test_raw_p99_over_limit_flag(self):
+        values=[10.0]*11860+[25.0]*80+[40.0]*60   # raw p99 25 > 20, filtered (≤ 33.33) p99 10 ≤ 20, stalls 0.5 %
+        self.set_csv('perf-yuksek-topdown-1',values);self.rehash_perf()
+        r=self.result();self.assertTrue(r['pass'],r['failures'])
+        self.assertEqual([(e['dir'],e['rawP99Ms']) for e in r['perf']['escalations']],[('perf-yuksek-topdown-1',25.0)])
+    def test_native_cross_check_still_binds(self):
+        values=[10.0]*12000
+        self.set_csv('perf-yuksek-fp-1',values,framesExcludedAsStalls=3);self.rehash_perf();self.assert_step('A4','FAIL','native stall count')
+    def test_tier_stall_fallback(self):
+        targets=copy.deepcopy(self.f.targets);self.assertEqual(self.module.tier_stall_ms(targets,'sinematik'),40.0)
+        for tier in targets['tiers'].values():tier.pop('stallMs',None)
+        self.assertEqual(self.module.tier_stall_ms(targets,'sinematik'),targets['stallMs'])
+
+
+class RouteRunTests(Fixture):
+    """C-00 30.09 R1–R3: A2 frames come from one QaRunBot route run per camera mode."""
+    def summary(self,index,mutate):
+        run=self.m['checklist']['A2']['routeRuns'][index]
+        def change(x):
+            for row in x['routeFrames']:mutate(row)
+        self.f.replace_json(run['summary'],change);self.f.anchor(self.m)
+    def test_gameplay_runs_need_no_frames(self):
+        self.assertTrue(all('frames' not in run for run in self.m['checklist']['A2']['runs']))
+        r=self.result();self.assertTrue(r['pass'],r['failures']);self.assertEqual(len(r['routeRuns']),3)
+    def test_missing_route_runs_blocked(self):
+        self.m['checklist']['A2']['routeRuns'].pop();self.assert_step('A2','BLOCKED','route runs')
+    def test_topdown_horizon_must_be_not_applicable(self):
+        run=self.m['checklist']['A2']['routeRuns'][0];run['frames']['horizon']=self.f.png('route-extra.png');self.f.anchor(self.m)
+        self.assert_step('A2','FAIL','notApplicable')
+    def test_native_status_path_mode_roof(self):
+        for mutate,reason in ((lambda r:r.update(status='blocked') if r['key']=='kairo' else None,'status'),
+                              (lambda r:r.update(path='frames/route-x.png') if r['key']=='courtyard' else None,'path'),
+                              (lambda r:r.update(mode='TopDown') if r['key']=='corridor' else None,'camera mode'),
+                              (lambda r:r.update(roofAbove=False) if r['key']=='corridor' else None,'roof')):
+            with self.subTest(reason=reason):
+                self.setUp();self.summary(1,mutate);self.assert_step('A2','FAIL',reason)
+    def test_native_route_key_missing_blocked(self):
+        run=self.m['checklist']['A2']['routeRuns'][2]
+        self.f.replace_json(run['summary'],lambda x:x.update(routeFrames=[r for r in x['routeFrames'] if r['key']!='horizon']));self.f.anchor(self.m)
+        self.assert_step('A2','BLOCKED','no horizon')
+    def test_duplicate_frame_bytes(self):
+        run=self.m['checklist']['A2']['routeRuns'][1]
+        data=(self.root/run['frames']['courtyard']['path']).read_bytes()
+        run['frames']['corridor']=self.f.put(run['frames']['corridor']['path'],data);self.f.anchor(self.m)
+        self.assert_step('A2','FAIL','same frame bytes')
+    def test_route_exit_and_guard(self):
+        run=self.m['checklist']['A2']['routeRuns'][0];run['originalExit']=3;self.assert_closed()
+    def test_route_guard_unverified(self):
+        run=self.m['checklist']['A2']['routeRuns'][0];run['guard']['verified']=0
+        self.f.replace_json(run['provenance'],lambda x:x.update(guard=copy.deepcopy(run['guard'])));self.f.anchor(self.m)
+        self.assert_step('A2','FAIL','guard')
+    def test_attempt_guard_is_authoritative(self):
+        # wp078_bot receipts: verified bool, outOfScopeChanged bool; a manifest copy must repeat the attempt's receipt.
+        run=self.m['checklist']['A2']['routeRuns'][1]
+        receipt=dict(snapshotExit=0,restoreExit=0,verified=True,outOfScopeChanged=False,touched='3',verdict='ok')
+        self.f.replace_json(run['provenance'],lambda x:x.update(guard=receipt,kind='route',buildRole='dev',mode='tp'));run.pop('guard');self.f.anchor(self.m)
+        r=self.result();self.assertTrue(r['pass'],r['failures'])
+        run['guard']=dict(GUARD,verified=0);self.assert_step('A2','FAIL','guard')
+    def test_attempt_kind_must_match(self):
+        run=self.m['checklist']['A2']['routeRuns'][1]
+        self.f.replace_json(run['provenance'],lambda x:x.update(kind='gameplay'));self.f.anchor(self.m);self.assert_step('A2','FAIL','attempt kind')
+    def test_route_needs_native_route_mode(self):
+        run=self.m['checklist']['A2']['routeRuns'][2]
+        self.f.replace_json(run['summary'],lambda x:x.update(runMode='normal'));self.f.anchor(self.m);self.assert_step('A2','FAIL','route run')
+
 
 if __name__=='__main__':unittest.main()
