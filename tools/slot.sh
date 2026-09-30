@@ -7,6 +7,8 @@
 #                                           # koşu boyunca tutar (ses cihazı + odak paylaşılıyor: UiV3 ses testi kırıldı)
 #   tools/slot.sh release unity|blender|smoke <etiket>
 #   tools/slot.sh status
+#   tools/slot.sh holds <kind> [<pid>]      # WP-079G D6a: salt okunur — <pid> (varsayılan: sahip) ya da atalarından biri canlı
+#                                           # bir <kind> kilidi tutuyorsa 0 (+ tek satır), yoksa 1; hiçbir şey yazmaz/silmez
 # Kural: Unity batch (test/build/probe/bake) ve ağır Blender CLI başlatmadan ÖNCE acquire (aynı kabukta), bitince release.
 # v2: bekleyenler FIFO — acquire önce kuyruğa bilet yazar; boş slotu yalnız en eski canlı bilet alır (açlık yok).
 # v4 (WP-043B, 2026-09-25 hız modu): (a) sınır (2/3) her turda yeniden hesaplanır — kuyruk başı, yük düştüğünde boşalan
@@ -18,7 +20,7 @@
 #   bekleme bu süreye ulaşırsa bilet silinir, stderr'e `SLOT <kind> TIMEOUT after <n>s` + tutucular, çıkış 75; (c) bekleyen
 #   acquire INT/TERM/HUP alınca biletini siler (130/143/129) — bekleme `sleep & wait` ile, tuzak hemen koşar.
 set -u
-BASE=${DD_SLOT_BASE:-/tmp/dd-slots}; mkdir -p "$BASE/unity" "$BASE/blender" "$BASE/smoke" "$BASE/player" "$BASE/queue/unity" "$BASE/queue/blender" "$BASE/queue/smoke" "$BASE/queue/player"
+BASE=${DD_SLOT_BASE:-/tmp/dd-slots}; [ "${1:-}" = holds ] || mkdir -p "$BASE/unity" "$BASE/blender" "$BASE/smoke" "$BASE/player" "$BASE/queue/unity" "$BASE/queue/blender" "$BASE/queue/smoke" "$BASE/queue/player"
 # v3 (2026-09-17): dinamik 3. Unity slotu — swap kullanımı < 10 GB ve 1 dk yük < 24 iken 3, aksi hâlde 2.
 swap_mb(){ sysctl -n vm.swapusage 2>/dev/null | sed -E 's/.*used = ([0-9.]+)M.*/\1/' | cut -d. -f1; }
 load1(){ sysctl -n vm.loadavg 2>/dev/null | awk '{print int($2)}'; }
@@ -90,6 +92,17 @@ case "$cmd" in
   release) own=$(ls "$BASE/$kind"/*."$tag"."$owner" 2>/dev/null)
     if [ -n "$own" ]; then rm -f $own; else rm -f "$BASE/$kind"/*."$tag".*; fi   # v4: own lock first; legacy: by tag
     echo "RELEASED $kind $tag"; exit 0 ;;
+  holds)   # WP-079G D6a (C-00 30.09 kilit sırası player → unity): the acquire re-entrancy notion, read-only (no clean)
+    p=${3:-$owner}
+    case "$p" in ''|*[!0-9]*) echo "SLOT: holds <kind> [<pid>] — pid must be a number (got '$p')" >&2; exit 64 ;; esac
+    for held in "$BASE/$kind"/*; do [ -e "$held" ] || continue; hp=${held##*.}
+      kill -0 "$hp" 2>/dev/null || continue   # D6a review: a dead holder's lock never counts (clean() removes it later)
+      is_ancestor "$hp" "$p" || continue
+      # clean()'s stale rule (pid reused: both start times known and different) — skipped here, never removed
+      st=$(sed -n 's/^start=//p' "$held" 2>/dev/null); now=$(pstart "$hp")
+      [ -n "$st" ] && [ -n "$now" ] && [ "$st" != "$now" ] && continue
+      echo "SLOT $kind held by pid $hp ($(basename "$held")), an ancestor of pid $p"; exit 0
+    done; exit 1 ;;
   status)
     for k in unity blender smoke player; do clean "$k"
       echo "== $k ($(ls "$BASE/$k" | wc -l | tr -d ' ')/$(limit "$k"))"

@@ -16,7 +16,9 @@ TOOLS = Path(__file__).resolve().parents[1]
 COPY = ["main-ci.sh", "compile-check.sh", "dd-env.sh", "ci_summary.py", "ci-owners.tsv", "ci-signatures.tsv", "ci-suites.txt"]
 PRODUCT = "Deaths Demolition - Playable Concept"
 
+# WP-079G D6a: `holds` (the guard's lock-order query) = nothing held here.
 FAKE_SLOT = """#!/bin/zsh
+[ "$1" = holds ] && exit 1
 echo "$1 $2 $3" >> "{log}/slot-calls.txt"; echo "SLOT $2#1 -> $3"
 """
 # Like the real guard: one snapshot per directory (64 when <dir>/snap exists). FAKE_GUARD_75_ONCE: the first snapshot

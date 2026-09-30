@@ -93,7 +93,7 @@ def verdict(ug, restore_text, after_plist):
 
 
 def restore_with_retry(ug, scope="player", attempts=10, wait_seconds=30.0, sleep=time.sleep):
-    """Restore with a bounded retry on 75 (a lock held); (code, CompletedProcess). Output → ug/restore.txt."""
+    """Restore with a bounded retry on 75 (a lock held); (code, CompletedProcess). Output appended to ug/restore.txt."""
     ug = Path(ug)
     ug.mkdir(parents=True, exist_ok=True)
     log = []
@@ -107,7 +107,9 @@ def restore_with_retry(ug, scope="player", attempts=10, wait_seconds=30.0, sleep
     text = "".join(log)
     if result.returncode == 75:
         text += f"\nVERİ GERİ YÜKLENMEDİ, snapshot {ug} — report to C-00\n"
-    (ug / "restore.txt").write_text(text, encoding="utf-8")
+    # WP-079G D6a: the guard itself appends its final line + exit=<n> to ug/restore.txt — append, never overwrite it
+    with open(ug / "restore.txt", "a", encoding="utf-8") as f:
+        f.write(text)
     return (0 if result.returncode == 0 else STOP), result
 
 

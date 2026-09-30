@@ -45,6 +45,12 @@
 #   known-good player display values.
 # Exit: 0 ok · 75 busy (a live foreign lock holder / live data kept changing) — nothing restored in that area · 30 restore did not reproduce the snapshot or a PlayerPrefs key not in it remains
 # (<dir>/extra-keys.txt) · 64 usage
+# WP-079G D6a (C-00 30.09): (1) lock order is always player → unity: `snapshot … --scope player|all` refuses with 64
+#   (nothing written, no slot taken) while the calling shell or one of its ancestors holds a `unity` slot (tools/slot.sh
+#   holds; the pid chain from this guard, plus DD_SLOT_OWNER when set) — editor scope takes no player slot and is unaffected.
+#   (2) `restore <dir>` appends its final line (the summary, or the refusal/error line) and `exit=<n>` to <dir>/restore.txt on
+#   every normal exit once <dir> is known (a guard killed by TERM/KILL writes nothing; HUP records exit=1), and every guard
+#   line also goes to <dir>/timeline.txt whatever DD_TIMELINE says.
 set -u
 source "${0:A:h}/dd-env.sh"
 # Codex-audit M-02(e) (C-00 30.09): argv is exact — `snapshot|restore <dir>` or `… <dir> --scope <s>`; anything else
@@ -56,7 +62,30 @@ PLAYER_RE="${DD_GUARD_PLAYER_RE:-Contents/MacOS/(Deaths Demolition|DeathsDemolit
 KNOWN_GOOD="${DD_GUARD_KNOWN_GOOD:-Screenmanager Fullscreen mode=1;Screenmanager Resolution Width=1920;Screenmanager Resolution Height=1080;Screenmanager Window Position X=0;Screenmanager Window Position Y=0}"
 [[ "$CMD" == (snapshot|restore) && -n "$DIR" && "$SCOPE" == (all|editor|player) ]] || { echo "usage: userdata-guard.sh snapshot|restore <dir> [--scope all|editor|player]" >&2; exit 64; }
 
+# WP-079G D6a (1): checked before anything is written or acquired.
+if [ "$CMD" = snapshot ] && [ "$SCOPE" != editor ] && [ -x "$DD_SLOT" ]; then
+  # only slot.sh's own "SLOT … held by …" answer counts (an older slot.sh without `holds` prints something else → not held)
+  UH=$("$DD_SLOT" holds unity $$ 2>/dev/null); [[ "$UH" == "SLOT unity held by "* ]] || UH=""
+  # D6a review SHOULD-1: the order is already right when an ancestor holds the player slot (re-entrant, e.g. a release
+  # script's own window) — a unity slot below it cannot deadlock against this snapshot.
+  if [ -n "$UH" ] && [[ "$("$DD_SLOT" holds player $$ 2>/dev/null)" == "SLOT player held by "* ]]; then UH=""; fi
+  if [ -z "$UH" ] && [ -n "${DD_SLOT_OWNER:-}" ]; then
+    UH=$("$DD_SLOT" holds unity "$DD_SLOT_OWNER" 2>/dev/null); [[ "$UH" == "SLOT unity held by "* ]] || UH=""; fi
+  if [ -n "$UH" ]; then
+    echo "userdata-guard: lock order — take the guard snapshot (player slot) BEFORE the Unity slot" >&2
+    echo "userdata-guard: $UH — release it, snapshot, then take the Unity slot again (exit 64); an Editor PlayMode run needs only --scope editor" >&2
+    exit 64
+  fi
+fi
+
 : "${DD_TIMELINE:=$DIR/timeline.txt}"; mkdir -p "$DIR"
+# WP-079G D6a (2): <dir>/timeline.txt is always the guard's own timeline (also when DD_TIMELINE points elsewhere);
+# UG_LAST = the last line logged, for <dir>/restore.txt.
+UG_TL="${DIR:A}/timeline.txt"; UG_LAST=""
+# one timestamp per line, written identically to stdout, DD_TIMELINE and <dir>/timeline.txt (D6a review SHOULD-3)
+dd_log() { UG_LAST="$(date -u +%FT%TZ) $*"; print -r -- "$UG_LAST"
+  [ -n "$DD_TIMELINE" ] && print -r -- "$UG_LAST" >> "$DD_TIMELINE"
+  [ "${DD_TIMELINE:A}" = "$UG_TL" ] || print -r -- "$UG_LAST" >> "$UG_TL"; return 0; }
 AS="$HOME/Library/Application Support"; PR="$HOME/Library/Preferences"
 DOM1="$DD_BUNDLE_ID"; DOM2="unity.Deaths Demolition.$DD_PRODUCT"
 # Self-test only: DD_GUARD_ROOT redirects both folders and both plists (absolute-path defaults domains).
@@ -192,7 +221,15 @@ if [ "$CMD" = snapshot ]; then
   exit 0
 fi
 
-[ -f "$DIR/before.txt" ] || { echo "userdata-guard: no snapshot in $DIR" >&2; exit 64; }
+# WP-079G D6a (2): every exit of restore from here on is recorded; the player slot is released only once the restore proper
+# has started (WP-066N), as before.
+UG_RELEASE=0
+restore_exit() { local rc=$?
+  [ "$UG_RELEASE" -eq 1 ] && release_player_slot
+  { print -r -- "${UG_LAST:-$(date -u +%FT%TZ) userdata-guard restore: no result line}"; print -r -- "exit=$rc"; } >> "$DIR/restore.txt"
+}
+trap 'restore_exit' EXIT
+[ -f "$DIR/before.txt" ] || { UG_LAST="$(date -u +%FT%TZ) userdata-guard: no snapshot in $DIR"; echo "userdata-guard: no snapshot in $DIR" >&2; exit 64; }
 # A snapshot taken by the WP-066J guard has only before.txt: split it by area (D1 + P2 = editor).
 if [ ! -f "$DIR/before-editor.txt" ]; then
   grep -F -e "  $D1/" -e "  $P2 " "$DIR/before.txt" > "$DIR/before-editor.txt"
@@ -200,7 +237,7 @@ if [ ! -f "$DIR/before-editor.txt" ]; then
 fi
 settle "$DOM1" "$P1"; settle "$DOM2" "$P2"
 rm -f "$DIR/.sampling"   # WP-066M: stops the sampler
-trap 'release_player_slot' EXIT   # WP-066N: the snapshot's player slot ends with this restore, whatever the outcome
+UG_RELEASE=1   # WP-066N: the snapshot's player slot ends with this restore, whatever the outcome (restore_exit)
 if in_scope player; then
   DEV=$(kg_deviation "$SNAP/PR/p1.plist")
   if [ -n "$DEV" ]; then
