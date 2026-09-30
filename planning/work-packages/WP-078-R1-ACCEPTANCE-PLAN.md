@@ -1,6 +1,6 @@
 # WP-078 — M4-R1 kabul planı · S-10 · v2.1 2026-09-30 (v1 2026-09-24; v2.1 = C-00 K1–K9 kararları)
 
-Paket sahibi: S-10 · Koordinasyon: C-00 · Durum: **koşu planı; kabul koşusu P1–P13 teslim edilip tek FINAL commit belirlenince** (C-00 30.09, P14). v2 güncel main `422de54a`'ya göre yazıldı; v1'den farklar §11.
+Paket sahibi: S-10 · Koordinasyon: C-00 · Durum: **koşu planı; kabul koşusu P1–P13 teslim edilip tek FINAL commit belirlenince** (C-00 30.09, P14). v2 main `422de54a`'ya göre yazıldı, v2.2 koşu adımları main `68317433` + dal `wp-078-accept-plan-r3` araçlarına göre; v1'den farklar §11.
 Çerçeve (karar önceliği: PROJE-SISTEM-PROMPTU §0.3): **DEC-091** (soak kararlılık MUST, gerçek bot rapor), **DEC-092** (Yüksek 60 fps), **DEC-093** (release ≤ 5 GB), **DEC-095/098** (iki katmanlı ağaç), **DEC-097/099** (arsenal + Special cephane/süre), **DEC-100** (varsayılan Sinematik 30 fps, kapı), `QUALITY-TIERS-V2.md`, WP-070 §11–§12, WP-074 B9, `tools/qa/wp078-report-contract.md` (A8 üretici). Bu belge karar/gereksinim metni değiştirmez; eşikler kaynaktan alıntıdır; karar gerektirenler §10'dadır.
 
 ## 0 · Amaç ve kapsam
@@ -14,13 +14,13 @@ Kapsam dışı: sahip birim testlerinin yeniden yazımı, görsel kalite yargıs
 |---|---|---|---|
 | A0 | Taban | FINAL tam SHA, `git status` boş, LFS 0 işaretçi, Library kökeni post-build | `tools/qa/library_provenance.py` |
 | A1 | Değişen süitler | FINAL'a giren paketlerin süitleri tek koşu + `main-ci` FINAL özeti yeşil | `tools/test.sh` (guard'lı), `ci/<sha>/summary.md` |
-| A2 | Bot üç modda (§2) | TD/TP/FP × 5 round, tohum 61, normal bot: 5/5, 0 ölüm, 0 istisna, zaman aşımı 0, kamera-duvar 0 kare | KADRO `wp-078/tools/player-run.sh` → `bot-summary.json`, `player.log` |
+| A2 | Bot üç modda (§2) | TD/TP/FP × 5 round, tohum 61, normal bot: 5/5, 0 ölüm, 0 istisna, zaman aşımı 0, kamera-duvar 0 kare; + rota koşusu × 3 mod (kareler) | `tools/qa/wp078_bot.py --kind gameplay` / `--kind route` → `attempt.json` (guard makbuzu + artifactSha256), `bot-summary.json`, `player.log` |
 | A3 | Regresyon kapsamı (§3) | her alan: sahip test XML'i PASS + S-10 uçtan uca satırı | `A3_REQUIRED_TEST_IDS` (wp078_report) + bot log satırları |
 | A4 | Perf matrisi (§4) | 9 hücre × ≥ 3 pencere, her tam pencere eşik altı | `tools/qa/wp078_perf.py` → `wp078_perf_report.py` |
-| A5 | Soak (§5) | DEC-091: tohum 61 + 26 × 12/12, kararlılık kapısı | `player-run.sh … -ddQaBotStability` → `soak_gate.py --stability` |
+| A5 | Soak (§5) | DEC-091: tohum 61 + 26 × 12/12, kararlılık kapısı | `tools/qa/wp078_bot.py --kind stability --quiet` (temiz-host preflight; yalnız player slotu) → `soak_gate.py --stability` |
 | A6 | Build (§6) | dev + release (LZ4HC) + release-probe; release ≤ 5 GB | `tools/build.sh` |
 | A7 | Kullanıcı verisi & bütünlük (§7) | her Player/PlayMode koşusu guard verified=1; `ProjectIntegrityTests` PASS | guard makbuzları, NUnit XML |
-| A8 | Rapor (§9) | tüm A0–A7 aynı FINAL; eksik = BLOCKED | `tools/qa/wp078_report.py --manifest … --evidence-root … --out …` |
+| A8 | Rapor (§9) | tüm A0–A7 aynı FINAL; eksik = BLOCKED | `tools/qa/wp078_accept.py --final <SHA>` (A0–A6 aşamaları + manifest) → `tools/qa/wp078_report.py` |
 
 Kontrol noktaları: **C1** (üç mod bot) ve **C2** (V6 halkası) geçildi (kanıt `wp-078/evidence/c1d-4cab1e1a`, `r1-820a885f`). **C3** = FINAL: A0–A8 tek seferde; sonrasında giren her paket yalnız etkilediği adımı geçersiz kılar.
 Süre (sessiz makinede): build'ler ~30 dk → A1 ~25 dk (main-ci) → A2 ~20 dk → A3 bayrak dumanı ~10 dk → A5 2 × ~25 dk → A4 27 pencere ≈ 70 dk + parti araları → A8. Toplam ≈ 4–5 saat; A4 yalnız sessiz pencerede.
@@ -30,7 +30,7 @@ Süre (sessiz makinede): build'ler ~30 dk → A1 ~25 dk (main-ci) → A2 ~20 dk 
 Seçim `-ddCameraMode topdown|tp|fp`, kademe `-ddQualityTier sinematik` (DEC-100 varsayılan; açıkça verilir), dünya varsayılan (V6, bayraksız yol). Sandbox: `-ddProfilePath`, `-ddTelemetryDir`, `<out>/ui-data` (QaRunBot) — kullanıcı dosyası yazılmaz; guard `snapshot/restore --scope player`, verified=1; kabul edilen tek değişiklik Unity `Screenmanager*`/`UnitySelectMonitor` plist anahtarları (C-00 25.09).
 Bot sözleşmesi (main'de): kamera-göreli sol çubuk; TP/FP sağ çubukla yaw/pitch (`LookStickToward`), ateş yalnız merkez ışını hedef göğsündeyken (`LookRayOnTarget`); yok sayılan reload 45 kararda bir yeniden basılır; halka `WorldBounds.HalfExtent` (V6 55).
 Metrikler: round/ölüm/zaman aşımı; round satırları `[Camera] inside-collider … frames=0/N`, `[OutOfWorld]`, `[Projectile]`, `[Ragdoll]`, `[AiV3]`, `[SpawnV6]`, koşu satırı `[Progress]`; `stuckRecoveries` (rapor); nişan hatası (TP/FP kamera kökenli — §8 D3).
-Kanıt kareleri: mod başına avlu / koridor-çatı altı / ufuk (contract `frames` anahtarları `courtyard`, `corridor`, `horizon`). **Bugün bot bu kareleri üretmiyor** (`-ddQaBotFrames` tier kareleri içindir) → §8 D3.
+Kanıt kareleri (C-00 30.09 R1–R3): A2 oyun koşusundan değil, mod başına ayrı **rota koşusundan** (`wp078_bot.py --kind route` → QaRunBot `-ddQaBotRouteTour`, yalnız dev; tur boyunca spawn tutulur): `courtyard` (0,−3) 0°, `horizon` (0,−3) 180° (tepeden N/A "topdown-fixed-camera"; E-3 FP), `corridor` R6 chūmon (0,19), `kairo` K1 merkez çizgisi (−33,15) 180°; çatı kanıtı yukarı RaycastAll `Kind==Roof`; her nokta NavMesh'e ≤ 2 m oturtulur; draw call/batches (E-14) kayıtta.
 **Kabul:** üç modda 5/5, 0 ölüm, 0 istisna, zaman aşımı 0, kamera-duvar 0 kare, guard OK (`wp078_report` ayrıca `stuckRecoveries == 0` istiyor → §10 K6). TP/FP kararlılık (2 tohum × 12 round) **rapor** — kullanıcı kararı 30.09 (§10 K3).
 
 ## 3 · Regresyon kapsamı (A3)
@@ -77,13 +77,11 @@ dev + release (`tools/build.sh release`, LZ4HC) + release-probe (dağıtılmaz),
 
 Her Player/PlayMode koşusu `tools/userdata-guard.sh` snapshot → koşu → restore (verified=1; exit 30 bekle, 31 DUR → C-00); koşunun yarattığı dosyalar `created/`'e. `-ddCameraMode`/`-ddQualityTier` kayıtlı tercihi değiştirmez (UI dosyaları sandbox'ta). `ProjectIntegrityTests` PASS + LFS eşitliği. **C-00 "GUARD OK" demeden hiçbir A-koşusu başlamaz.**
 
-## 8 · İş kalemleri (S-10, FINAL'dan önce)
+## 8 · İş kalemleri (S-10, FINAL'dan önce) — durum 30.09
 
-- **D2 araç:** KADRO `r1-accept2.sh` + `player-run.sh` (Codex değişiklikleri dahil) gözden geçirilip repo `tools/qa/wp078_accept.sh`'a taşınır (tek betik, aşama seçimi, guard çıkış sınırları); `wp078_report.py` manifest'ini koşu çıktılarından üreten `tools/qa/wp078_manifest.py`; python testleri.
-- **D3 kod (QaRunBot, S-10):** TP/FP nişan hatası kamera kökenli; A2 kanıt kareleri (`courtyard/corridor/horizon`, V6 sabit noktalar); SpecialWeaponProbe yaşam döngüsü DEC-097 cephane+süre. Unity doğrulaması GUARD OK sonrası.
-- **D3 ek:** bot özetine `qualityTier` ve `worldHalfExtent` alanları (A5 kapısının okuduğu, bugün yok); silah döngüsü (`WeaponQaHooks.TrySetClassicWeapon`); zincir başına Raiju hedef sayacı (S-02 ile).
-- **D2 ek:** koşu makbuzlarına guard alanları (`snapshotExit/restoreExit/verified/outOfScopeChanged`) — `wp064_run` bugün yalnız `hostClean` yazar.
-- Bot spawn sayacı + `[Progress]` düzeltmesi main'de (`e5888d47`; 28.09 notundaki `048f411b` içeriği).
+- **Tamam (dal `wp-078-accept-plan-r3`):** bot özetinde `qualityTier`/`worldHalfExtent`, TP/FP nişan hatası kamera kökenli, `-ddQaBotWeaponCycle`, zamanlı takılma satırları + `stuck_clusters.py`, rota koşusu (`-ddQaBotRouteTour`; kairo noktası düzeltildi), SpecialWeaponProbe DEC-097, `wp078_bot.py`, tek guard modülü `guard_receipt.py` (her yolda restore, SIGTERM 143, ana repo guard'ı), `wp078_perf` kademe/iptal/yeniden koşu + pencere guard makbuzu, `wp078_report` K1–K9, `wp078_accept.py` (zincir + manifest).
+- **Açık:** A6 parite alanları (`development`, sahne listesi, scripting backend) DdBuild native raporunda yok → S-01; yoksa A6 BLOCKED. Rota kairo noktası Player'da yeniden doğrulanacak (m31 smoke: diğer 3 nokta 3 modda captured). `-ddRagdoll` main'e girince AI_FLAGS'a eklenir (test zorlar). K5 "420 s zaman aşımı payı" rapor satırı.
+- **Koşu:** FINAL belirlenince `python3 tools/qa/wp078_accept.py --final <SHA>` (varsayılan kanıt kökü `KADRO/…/wp-078/evidence/<SHA8>`); guard her zaman ana repo yolundan; Player koşuları main-ci sırasında beklenir; A4 yalnız sessiz pencerede.
 
 ## 9 · Rapor ve sahiplik (A8)
 
