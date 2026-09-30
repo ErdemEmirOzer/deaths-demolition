@@ -1959,7 +1959,7 @@ namespace DD.Prototype.UI
                 int liveIndex = string.IsNullOrEmpty(nodeId) ? -1 : _shop.Tree.Graph.IndexOf(nodeId);
                 if (liveIndex >= 0)
                 {
-                    unpin = liveIndex == _shop.Tree.PinnedIndex;
+                    unpin = liveIndex == LivePin();
                     action = unpin ? null : nodeId;
                     allowed = _shop.CanSetPin(action);
                 }
@@ -1990,7 +1990,20 @@ namespace DD.Prototype.UI
 
             string nodeId = _snap.Nodes[_focus].NodeId;
             int liveIndex = string.IsNullOrEmpty(nodeId) ? -1 : _shop.Tree.Graph.IndexOf(nodeId);
-            return liveIndex >= 0 && liveIndex != _shop.Tree.PinnedIndex;
+            return liveIndex >= 0 && liveIndex != LivePin();
+        }
+
+        /// <summary>
+        /// M-35 (S-04): the pin the player still holds. A pin whose target has closed (bought, excluded, maxed, locked,
+        /// unreachable) is no pin: the snapshot already hides it and the shop drops it at its next command point, so the
+        /// control offers PIN (passive while the round's assignment is spent), never an UNPIN for a marker that isn't drawn.
+        /// Read live, not from the snapshot, so a stale snapshot never sends the wrong command.
+        /// </summary>
+        private int LivePin()
+        {
+            int pinned = _shop.Tree.PinnedIndex;
+            // CanSetPin on the pinned node is the shop's own CanPin rule; a closed shop answers no to everything, so it is asked only while open.
+            return pinned >= 0 && (!_shop.IsOpen || _shop.CanSetPin(_shop.Tree.Graph[pinned].Id)) ? pinned : -1;
         }
 
         /// <summary>The disabled PIN pressed (mouse, Submit): the kit already played Denied - the nudge and the reason follow.</summary>

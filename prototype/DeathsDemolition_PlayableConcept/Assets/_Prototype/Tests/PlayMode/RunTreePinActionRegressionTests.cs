@@ -276,17 +276,22 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsTrue(_shop.Tree.MarkOwned(Index("fork_ar_1_x"))); // Disclosed exclusion fixture, not purchase proof.
             Refresh();
             Assert.AreEqual(RunTreeNodeStatus.Excluded, _panel.Snapshot.Nodes[Index("fork_ar_1_y")].Status);
+            // M-35 (S-04): a pin whose target has closed is no pin. The snapshot hides it and the control offers PIN, passive:
+            // the round's assignment is spent, not refunded - never an UNPIN for a marker the tree doesn't draw.
+            Assert.IsFalse(_panel.Snapshot.Nodes[Index("fork_ar_1_y")].IsPinned);
             Focus("fork_ar_1_y");
             Assert.IsFalse(_shop.CanSetPin("fork_ar_1_y"));
-            Assert.IsTrue(_shop.CanSetPin(null));
-            PinControl(true, true);
+            Assert.AreEqual(1, _shop.PinChangesThisRound);
+            PinControl(false, false);
             State before = Capture();
             RightClick(_panel.ButtonOf(Index("fork_ar_1_y")));
-            Unchanged(before); // M-34: right-click never UNPINs
-            HoldUnpin();
-            Accepted(before, -1, 1, "TreeUnpin");
+            _panel.HandleKey(KeyCode.P);
+            Unchanged(before); // The UI sends no command; the shop drops the closed pin at its own command point.
+            RefusedAsUsed(2);  // M-34: right-click and P each say why
 
             Open(2);
+            Assert.AreEqual(-1, _shop.Tree.PinnedIndex, "M-35: the new round's offer drops the closed pin.");
+            Assert.AreEqual(0, _shop.PinChangesThisRound);
             Focus("cap_ar_1");
             Assert.IsFalse(_panel.Snapshot.Nodes[Index("cap_ar_1")].IsPinned);
             _shop.OfferChanged -= Refresh;
