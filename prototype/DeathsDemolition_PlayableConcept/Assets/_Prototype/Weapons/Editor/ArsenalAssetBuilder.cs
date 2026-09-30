@@ -204,7 +204,7 @@ namespace DD.Prototype.Weapons.EditorTools
         {
             WeaponDefinition d = New("sr_1", ClassicWeaponId.Sr1, WeaponClass.Sniper, "Tomi", WeaponSilhouetteV3.LongX, 5,
                 "Bir nefes, bir sürgü, dört gövde; sessizlik sonra tokat.", null);
-            Fire(d, WeaponFireMode.Single, 48f, 55f);
+            Fire(d, WeaponFireMode.Single, 48f, 80f);   // DEC-105 (kullanıcı 30.09, K10b P1-A): 55 → 80, Kurogane unchanged
             Ammo(d, 5, 40, 2.6f, 3.2f, WeaponReloadKind.Magazine);
             Ballistics(d, 420f, 90f, 60f, 0.85f, 4, 0.90f, 0.80f, 0.80f, 1.25f, 1.6f, WeaponCaliber.Heavy);   // DEC-099: pierce keep 0.80 → 0.90
             Spread(d, 3.0f, 0.15f, 3.8f, 0.10f, 3.5f, 0.08f, 2.0f, 6f, 8f, 2.5f, 0.85f, 0.40f);

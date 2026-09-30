@@ -118,7 +118,7 @@ namespace DD.Prototype.Tests.EditMode
             ClassicWeaponSettings sg1 = config.Weapons.Find(ClassicWeaponId.CombatShotgun);
             Assert.AreEqual(9f, sg1.Damage, 1e-5f); Assert.AreEqual(1.2f, sg1.FireRate, 1e-4f); Assert.AreEqual(8, sg1.PelletCount);
             Assert.AreEqual(0.75f + 0.55f * 7, sg1.ReloadTime, 1e-4f, "tek-fişek: M3 alanı = boştan tam şarjör");
-            Assert.AreEqual(55f, config.Weapons.Find(ClassicWeaponId.Sr1).Damage, 1e-5f);
+            Assert.AreEqual(80f, config.Weapons.Find(ClassicWeaponId.Sr1).Damage, 1e-5f, "DEC-105: Tomi 55 → 80");
             Assert.AreEqual(100, config.Weapons.Find(ClassicWeaponId.Lmg1).MagazineSize);
             Assert.AreEqual(3, smg1.UnlockProfileLevel, "DEC-085 Ö-3: B seviye 3");
             Assert.AreEqual(5, sg1.UnlockProfileLevel, "DEC-085 Ö-3: C seviye 5");

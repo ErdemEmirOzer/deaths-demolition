@@ -29,7 +29,7 @@ MonoBehaviour:
     burstCount: 3
     burstIntervalSeconds: 0.05
     burstDelaySeconds: 0.26
-    damage: 55
+    damage: 80
     pelletCount: 1
     pelletPattern: 0
     rings: []
