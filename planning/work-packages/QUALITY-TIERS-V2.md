@@ -60,7 +60,7 @@ public static class QualityTiers
 | Yükseklik sisi (TP/FP) | S-05 | kapalı | açık | açık |
 | Bitki yoğunluğu / impostor mesafesi | S-05 WP-074 | ×0,6 / 40 m | ×1,0 / 60 m | ×1,75 / 120 m |
 | Atmosfer parçacıkları (× cookie) | S-07 WP-073 | ×0,4 | ×0,7 | ×1,0 |
-| Eşzamanlı ragdoll (`RagdollProxyPool.Capacity`; taşan ölüm yazılı düşüş klibi; `-ddRagdoll`) | S-06 WP-071 (uygular) | 2 | 6 | 10 (S-03 / S-06 uzlaştı, C-00; S-06 önerisi 14 → S-03 / C-00 onayı bekliyor) |
+| Eşzamanlı ragdoll (`RagdollProxyPool.Capacity`; taşan ölüm yazılı düşüş klibi; `-ddRagdoll 0\|1` — S-06 359cce6a) | S-06 WP-071 (uygular) | 2 | 6 | 10 (S-03 / S-06 uzlaştı, C-00; S-06 önerisi 14 → S-03 / C-00 onayı bekliyor) |
 | Ceset tavanı / ömür (s); ceset–ceset çarpışması | S-06 | 6 / 2,5; ✘ | 10 / 4; ✔ | 24 / 8; ✔ (DEC-100, S-06 25.09) |
 | Animasyon toplamı (40 zombi) | S-06 | — | ≈ 1,9 ms (toplam 16,0'ı aşarsa VFX'ten sonra kısılan: **≤ 1,6 ms**) | **≤ 2,5 ms** (DEC-100, S-06 25.09) |
 | Foot IK gövde/kare (ayak kilidi) | S-06 | 4 (yalnız oyuncu) | 12 (oyuncu + ≤ 8) | oyuncu + tüm LOD0 (DEC-100) |
@@ -72,14 +72,14 @@ public static class QualityTiers
 | Yerinde dönüş/pivot klipleri | S-06 | ✘ (slerp) | ✔ | ✔ |
 | FP kol viewmodel Animator (≈ 0,15 ms) | S-06 | açık | açık | açık |
 | AI tick bütçesi (ragdoll hariç, 40 beden) `-ddAiV3` | S-03 WP-076 | 0,55 ms | 0,75 ms | 0,85 ms |
-| Ceset ömrü çarpanı (tavan S-06 satırı) `-ddCorpseLinger` | S-03 | ×0,6 | ×1,0 | ×1,25 |
-| Zincir yıldırım sekme `-ddChainHops` | S-03 | 6 | 8 | 10 |
-| Jel birikinti tavanı `-ddGelPuddles` | S-03 | 10 | 16 | 24 |
-| Kalabalık komşu tavanı `-ddCrowdNeighbours` | S-03 | 6 | 10 | 14 |
-| PathQueriesPerTick / spawn LOS linecast `-ddSpawnLos` | S-03 | 4 / 9 | 6 / 18 | 6 / 18 |
+| Ceset ömrü çarpanı (tavan S-06 satırı; bayrak yok — S-03 yazılı geri çekme) | S-03 | ×0,6 | ×1,0 | ×1,25 |
+| Zincir yıldırım sekme — DEC-097: kademesiz (`maxTargets` 8; eski `-ddChainHops` emekli) | S-03 | 8 | 8 | 8 |
+| Jel birikinti tavanı — DEC-099: kademesiz (8 birikinti / 12 s; eski `-ddGelPuddles` emekli) | S-03 | 8 / 12 s | 8 / 12 s | 8 / 12 s |
+| Kalabalık komşu tavanı (bayrak yok — S-03 yazılı geri çekme) | S-03 | 6 | 10 | 14 |
+| PathQueriesPerTick / spawn LOS linecast (bayrak yok — S-03 yazılı geri çekme) | S-03 | 4 / 9 | 6 / 18 | 6 / 18 |
 | Mermi (projectile) simülasyonu — oyun kuralı, **kademesiz** (tavan 256 mermi, 120 Hz sabit adım, 0 B/kare; isabet/menzil kademeyle değişmez) | S-02 WP-069 | aynı | aynı | aynı — ms: B1 ölçümü (bekleniyor) |
 | Mermi izi şeritleri (Yüksek hedef 0,25 ms) | S-07 WP-073 | 256, parıltısız, HDR ×0,5 | 256 tam | 256 tam |
-| Namlu ateşi + duman + ışık (0,20 + 0,20 ms) | S-07 | ışık her 2. atışta, 2 ışık, duman 0,25 s | her atış, 4 ışık, 0,5 s | 8 ışık yumuşak gölge, 0,8 s + pus |
+| Namlu ateşi + duman + ışık (0,20 + 0,20 ms) | S-07 | ışık her 2. atışta, 2 ışık, duman 0,25 s | her atış, 4 ışık, 0,5 s | 8 ışık, 0,8 s + pus (namlu ışığı her kademede gölgesiz; ek ışık gölgesi yalnız Sinematik patlama ışığında — C-00 30.09 karar A) |
 | Kovanlar (0,05) | S-07 | 24, 3 s | 48, 5 s | 96, 8 s |
 | Darbe parçacıkları (0,35) | S-07 | ×0,4, 24 eşzamanlı | ×1,0, 40 | ×1,3, 48 |
 | Dekaller (0,05) | S-07 | 64, 8 s | 128, 12 s | 256, 12 s |
