@@ -49,6 +49,67 @@ namespace DD.Prototype.Navigation
         /// <summary>The existing movement heading dead zone, shared with the owning controller.</summary>
         public const float SteeringDeadZoneSquared = 0.0001f;
 
+        // ------------------------------------------------------------------ corner hold
+        // WP-076 B9 (M-23, C-00 30.09; AI-SPAWN-04 on 4934e80f/12c7215c): a corner inside the
+        // reach radius is consumed once passed; otherwise it is held only while skipping it
+        // is blocked (budgeted, projected segment query) and never longer than CornerHoldMaxSeconds.
+
+        /// <summary>PROTOTYPE-ONLY, invented: longest hold of one blocked corner, s; then it is consumed anyway (<see cref="CornerHoldTimeouts"/>).</summary>
+        public const float CornerHoldMaxSeconds = 0.5f;
+
+        /// <summary>PROTOTYPE-ONLY, invented: minimum seconds between two segment queries for the same held corner, so held bodies do not drain the shared repath budget.</summary>
+        public const float CornerRequerySeconds = 0.1f;
+
+        /// <summary>PROTOTYPE-ONLY, invented: slack added to <see cref="BodyRadius"/> for the corner reach radius, m.</summary>
+        public const float CornerReachMargin = 0.1f;
+
+        /// <summary>Two corners closer than this (squared, XZ) are the same corner across repaths, m².</summary>
+        private const float CornerMatchSquared = 0.01f;
+
+        /// <summary>
+        /// WP-076 B9 (M-23): owner's body radius, m (0 = unset). A corner is in reach within
+        /// max(<see cref="CornerArriveRadius"/>, BodyRadius + <see cref="CornerReachMargin"/>), so a wide
+        /// body that cannot get within the arrive radius still enters the bounded hold.
+        /// </summary>
+        public float BodyRadius;
+
+        private INavSegmentQuery _segmentQuery;
+
+        /// <summary>WP-076 B9 (M-23): segment/budget source of the corner hold. Null (default) = <see cref="CrowdService.Paths"/>.</summary>
+        public INavSegmentQuery SegmentQuery
+        {
+            get => _segmentQuery ?? CrowdService.Paths;
+            set => _segmentQuery = value;
+        }
+
+        private bool _holdTracked;          // _holdCorner is the corner being evaluated
+        private Vector3 _holdCorner;
+        private bool _holdHasResult;        // a segment query answered for _holdCorner
+        private bool _holdBlocked;          // last answer for _holdCorner
+        private float _holdNextQuery;
+        private bool _holdStarted;
+        private float _holdStartTime;
+        private bool _hasReleasedCorner;    // last timed-out corner: a repath that re-adds it is not held again
+        private Vector3 _releasedCorner;
+
+        /// <summary>Corner holds started since the last reset (all followers).</summary>
+        public static int CornerHoldsStarted { get; private set; }
+
+        /// <summary>Holds released by <see cref="CornerHoldMaxSeconds"/> rather than by passing or a clear segment (all followers).</summary>
+        public static int CornerHoldTimeouts { get; private set; }
+
+        public static void ResetCornerHoldCounters()
+        {
+            CornerHoldsStarted = 0;
+            CornerHoldTimeouts = 0;
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics()
+        {
+            ResetCornerHoldCounters();
+        }
+
         /// <summary>Status of the last completed path calculation.</summary>
         public NavPathStatus Status { get; private set; } = NavPathStatus.Invalid;
 
@@ -119,7 +180,7 @@ namespace DD.Prototype.Navigation
                 }
             }
 
-            AdvanceCorner(position);
+            AdvanceCorner(position, now);
 
             if (_hasPath && _cornerIndex < _cornerCount)
             {
@@ -166,6 +227,28 @@ namespace DD.Prototype.Navigation
             _queueVolume = null;
             _rerouted = false;
             SpeedFactor = 1f;
+            ClearHold();
+            _hasReleasedCorner = false;
+        }
+
+        /// <summary>
+        /// Tests only (WP-076 B9 M-23): installs <paramref name="count"/> corners as a complete
+        /// path, steering from corner 1 like a fresh repath. No NavMesh involved.
+        /// </summary>
+        public void SetCornersForTests(Vector3[] corners, int count)
+        {
+            Invalidate();
+            _cornerCount = Mathf.Clamp(count, 0, Mathf.Min(_corners.Length, corners != null ? corners.Length : 0));
+            for (int i = 0; i < _cornerCount; i++) _corners[i] = corners[i];
+            _hasPath = _cornerCount >= 2;
+            Status = _hasPath ? NavPathStatus.Complete : NavPathStatus.Invalid;
+            _cornerIndex = _hasPath ? 1 : 0;
+        }
+
+        /// <summary>Tests only (WP-076 B9 M-23): the corner-advance step of <see cref="Tick"/> with a driven clock.</summary>
+        public void AdvanceCornersForTests(Vector3 position, float now)
+        {
+            AdvanceCorner(position, now);
         }
 
         /// <summary>
@@ -204,38 +287,137 @@ namespace DD.Prototype.Navigation
             }
         }
 
-        private void AdvanceCorner(Vector3 position)
+        private void AdvanceCorner(Vector3 position, float now)
         {
             if (!_hasPath)
             {
                 return;
             }
 
-            float sqrArrive = CornerArriveRadius * CornerArriveRadius;
+            float reach = Mathf.Max(CornerArriveRadius, BodyRadius > 0f ? BodyRadius + CornerReachMargin : 0f);
+            float sqrReach = reach * reach;
 
             while (_cornerIndex < _cornerCount)
             {
-                Vector3 delta = _corners[_cornerIndex] - position;
-                delta.y = 0f;
+                Vector3 corner = _corners[_cornerIndex];
+                float dx = corner.x - position.x;
+                float dz = corner.z - position.z;
 
-                if (delta.sqrMagnitude > sqrArrive)
+                if (dx * dx + dz * dz > sqrReach)
                 {
                     return;
                 }
 
-                // A nearby turn is still required when skipping it would cut across
-                // a NavMesh boundary. Keep the normal arrival radius on open segments
-                // and at the final corner, but preserve the walkable route at bends.
-                // Once the body reaches the movement heading dead zone, consume the
-                // turn: holding it there leaves both the controller and crowd idle.
-                if (_cornerIndex + 1 < _cornerCount && delta.sqrMagnitude > SteeringDeadZoneSquared &&
-                    NavMesh.Raycast(position, _corners[_cornerIndex + 1], out NavMeshHit _, CrowdService.Paths.AreaMask))
+                // WP-076 B9 (M-23): the final corner and a passed corner are consumed at once;
+                // any other corner only while skipping it would leave the NavMesh, bounded in time.
+                if (_cornerIndex + 1 < _cornerCount && !CornerPassed(position) && HoldCorner(position, now))
                 {
                     return;
                 }
 
+                if (_hasReleasedCorner && FlatSqr(corner, _releasedCorner) > CornerMatchSquared)
+                {
+                    _hasReleasedCorner = false;   // moved on past another corner; the bend may be held again later
+                }
+
+                ClearHold();
                 _cornerIndex++;
             }
+        }
+
+        /// <summary>Flat XZ: past C towards the next corner, or beyond C along the incoming segment.</summary>
+        private bool CornerPassed(Vector3 position)
+        {
+            Vector3 c = _corners[_cornerIndex];
+            Vector3 n = _corners[_cornerIndex + 1];
+            float px = position.x - c.x;
+            float pz = position.z - c.z;
+
+            if (px * (n.x - c.x) + pz * (n.z - c.z) > 0f)
+            {
+                return true;
+            }
+
+            if (_cornerIndex == 0)
+            {
+                return false;
+            }
+
+            Vector3 prev = _corners[_cornerIndex - 1];
+            return px * (c.x - prev.x) + pz * (c.z - prev.z) >= 0f;
+        }
+
+        /// <summary>True while the current (non-final, not passed) corner must still be held.</summary>
+        private bool HoldCorner(Vector3 position, float now)
+        {
+            Vector3 corner = _corners[_cornerIndex];
+
+            if (_hasReleasedCorner && FlatSqr(corner, _releasedCorner) <= CornerMatchSquared)
+            {
+                return false;   // already timed out once; a repath re-added it
+            }
+
+            if (!_holdTracked || FlatSqr(corner, _holdCorner) > CornerMatchSquared)
+            {
+                // A new corner. Keyed by position, not index, so the 0.35 s repath does not restart the hold.
+                ClearHold();
+                _holdTracked = true;
+                _holdCorner = corner;
+            }
+
+            if (!_holdHasResult || now >= _holdNextQuery)
+            {
+                INavSegmentQuery query = SegmentQuery;
+                if (query.TryTakeQueryBudget())
+                {
+                    // Off-mesh source: no projection, no claim of "blocked".
+                    _holdBlocked = query.TryProject(position, out Vector3 from) &&
+                                   query.SegmentBlocked(from, _corners[_cornerIndex + 1]);
+                    _holdHasResult = true;
+                    _holdNextQuery = now + CornerRequerySeconds;
+                }
+            }
+
+            // No budget and no earlier answer for this corner: not blocked.
+            if (!_holdHasResult || !_holdBlocked)
+            {
+                return false;
+            }
+
+            if (!_holdStarted)
+            {
+                _holdStarted = true;
+                _holdStartTime = now;
+                CornerHoldsStarted++;
+                return true;
+            }
+
+            if (now - _holdStartTime >= CornerHoldMaxSeconds)
+            {
+                CornerHoldTimeouts++;
+                _hasReleasedCorner = true;
+                _releasedCorner = corner;
+                return false;
+            }
+
+            return true;
+        }
+
+        private void ClearHold()
+        {
+            _holdTracked = false;
+            _holdHasResult = false;
+            _holdBlocked = false;
+            _holdNextQuery = 0f;
+            _holdStarted = false;
+            _holdStartTime = 0f;
+        }
+
+        private static float FlatSqr(Vector3 a, Vector3 b)
+        {
+            float dx = a.x - b.x;
+            float dz = a.z - b.z;
+            return dx * dx + dz * dz;
         }
     }
 }

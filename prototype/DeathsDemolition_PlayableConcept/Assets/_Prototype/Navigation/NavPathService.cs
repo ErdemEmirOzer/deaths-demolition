@@ -23,6 +23,23 @@ namespace DD.Prototype.Navigation
     }
 
     /// <summary>
+    /// WP-076 B9 (M-23, C-00 30.09): the narrow NavMesh surface the corner hold of
+    /// <see cref="NavPathFollower"/> needs. <see cref="NavPathService"/> is the runtime
+    /// implementation; EditMode tests substitute a stub so no baked NavMesh is required.
+    /// </summary>
+    public interface INavSegmentQuery
+    {
+        /// <summary>Takes one unit of the shared per-frame query budget; false when spent.</summary>
+        bool TryTakeQueryBudget();
+
+        /// <summary>Projects a point onto the walkable surface; false when nothing is close enough.</summary>
+        bool TryProject(Vector3 point, out Vector3 result);
+
+        /// <summary>True when the straight segment leaves the walkable surface (NavMesh.Raycast hit).</summary>
+        bool SegmentBlocked(Vector3 from, Vector3 to);
+    }
+
+    /// <summary>
     /// The NavMesh half of the S4 split: paths and WALKABLE path distance, nothing else.
     /// No separation, no pushing, no avoidance - that all lives in <see cref="CrowdSolver"/>.
     ///
@@ -42,7 +59,7 @@ namespace DD.Prototype.Navigation
     /// before the map exists. It re-probes periodically and recovers by itself the moment
     /// G-06 bakes a surface.
     /// </summary>
-    public sealed class NavPathService
+    public sealed class NavPathService : INavSegmentQuery
     {
         /// <summary>Corner buffer size. A 90x90 m blockout never comes close to this.</summary>
         public const int MaxCorners = 128;
@@ -291,6 +308,16 @@ namespace DD.Prototype.Navigation
 
             result = point;
             return false;
+        }
+
+        /// <summary>
+        /// WP-076 B9 (M-23): NavMesh.Raycast with <see cref="AreaMask"/>. <paramref name="from"/>
+        /// must already be on the NavMesh (see <c>TryProject</c>);
+        /// an off-mesh source reports a hit at the source.
+        /// </summary>
+        public bool SegmentBlocked(Vector3 from, Vector3 to)
+        {
+            return NavMesh.Raycast(from, to, out NavMeshHit _, AreaMask);
         }
 
         /// <summary>
