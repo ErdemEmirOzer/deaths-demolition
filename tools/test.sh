@@ -1,5 +1,5 @@
 #!/bin/zsh
-# WP-051 · tools/test.sh {editmode|playmode} [--filter <regex>] [--out DIR] [--timeout-min N] [--no-wait] [--extra-arg TOKEN]…
+# WP-051 · tools/test.sh {editmode|playmode} [--filter <regex>] [--out DIR] [--timeout-min N] [--no-wait]
 #
 # One command for Unity test runs with a RUNNER-LEVEL time limit: NUnit's [Timeout] only fires between
 # frames on the main thread, so a test stuck inside one blocking call (or an editor stuck after the run)
@@ -12,74 +12,26 @@ set -u
 setopt nullglob
 source "${0:A:h}/dd-env.sh"
 MODE="${1:-}"; shift 2>/dev/null || true
-[ "$MODE" = "editmode" ] || [ "$MODE" = "playmode" ] || { echo "usage: test.sh {editmode|playmode} [--filter re] [--out DIR] [--timeout-min N] [--no-wait] [--extra-arg TOKEN]…" >&2; exit 64; }
-FILTER=""; OUT=""; TMIN=0; NOWAIT=0; DIAG_ARGS=()
+[ "$MODE" = "editmode" ] || [ "$MODE" = "playmode" ] || { echo "usage: test.sh {editmode|playmode} [--filter re] [--out DIR] [--timeout-min N] [--no-wait]" >&2; exit 64; }
+FILTER=""; OUT=""; TMIN=0; NOWAIT=0
 while [ $# -gt 0 ]; do
   case "$1" in
-    --filter|--out|--timeout-min|--extra-arg)
+    --filter|--out|--timeout-min)
       [ $# -ge 2 ] || { echo "missing value for $1" >&2; exit 64; }
       case "$1" in
         --filter) FILTER="$2" ;;
         --out) OUT="$2" ;;
         --timeout-min) TMIN="$2" ;;
-        --extra-arg) DIAG_ARGS+=("$2") ;;
       esac
       shift 2 ;;
-    --extra-arg=*) DIAG_ARGS+=("${1#--extra-arg=}"); shift ;;
+    # H12 (C-00 01.10): the S02_R2 PlayMode observers (-ddGameFeelGateDiag / -ddDec082Diag and their -ddGateDiag* /
+    # -ddDecDiag* identity values) were retired with WP-069 M-18 (114eb9c6); no extra Unity argument passes any more
+    --extra-arg|--extra-arg=*) echo "$1: retired (H12, C-00 01.10 — no diagnostic flags reach Unity)" >&2; exit 64 ;;
     --no-wait) NOWAIT=1; shift ;;
     *) echo "unknown option: $1" >&2; exit 64 ;;
   esac
 done
 
-# Narrow argv contract for the two existing opt-in PlayMode observers. Tokens are
-# passed as an array, never evaluated, split, or resolved from environment strings.
-# These identity values record what the caller claims; evidence intake verifies
-# their source/manifest hashes. This wrapper validates shape and completeness only.
-diag_usage() { echo "diagnostic arguments: $*" >&2; exit 64; }
-if [ ${#DIAG_ARGS[@]} -gt 0 ]; then
-  [ "$MODE" = "playmode" ] || diag_usage "PlayMode only"
-  typeset -A DIAG_SEEN
-  d_index=1
-  while [ "$d_index" -le ${#DIAG_ARGS[@]} ]; do
-    d_key="${DIAG_ARGS[$d_index]}"
-    [ -z "${DIAG_SEEN[$d_key]:-}" ] || diag_usage "duplicate $d_key"
-    case "$d_key" in
-      -ddGameFeelGateDiag|-ddDec082Diag)
-        DIAG_SEEN[$d_key]=enabled ;;
-      -ddGateDiagSourceCommit|-ddGateDiagInputHash|-ddGateDiagExecutionId|-ddGateDiagSourceHash|-ddGateDiagFixtureHash|-ddDecDiagSourceHash|-ddDecDiagFixtureHash)
-        d_index=$((d_index+1))
-        [ "$d_index" -le ${#DIAG_ARGS[@]} ] || diag_usage "missing value for $d_key"
-        d_value="${DIAG_ARGS[$d_index]}"
-        case "$d_key" in
-          -ddGateDiagSourceCommit)
-            [[ "$d_value" =~ '^[0-9a-f]{40}$' ]] && [ -n "${d_value//0/}" ] || diag_usage "invalid source commit" ;;
-          -ddGateDiagExecutionId)
-            [[ "$d_value" =~ '^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$' ]] || diag_usage "invalid execution id"
-            case "${(L)d_value}" in unknown|missing|null|none|undefined) diag_usage "unbound execution id" ;; esac ;;
-          *)
-            [[ "$d_value" =~ '^[0-9a-f]{64}$' ]] && [ -n "${d_value//0/}" ] || diag_usage "invalid SHA256 for $d_key" ;;
-        esac
-        DIAG_SEEN[$d_key]="$d_value" ;;
-      *) diag_usage "unsupported token $d_key" ;;
-    esac
-    d_index=$((d_index+1))
-  done
-  [ -n "${DIAG_SEEN[-ddGameFeelGateDiag]:-}${DIAG_SEEN[-ddDec082Diag]:-}" ] || diag_usage "observer flag required"
-  for d_key in -ddGateDiagSourceCommit -ddGateDiagInputHash -ddGateDiagExecutionId; do
-    [ -n "${DIAG_SEEN[$d_key]:-}" ] || diag_usage "required $d_key"
-  done
-  for d_observer in GameFeelGate Dec082; do
-    if [ "$d_observer" = GameFeelGate ]; then d_prefix=Gate; else d_prefix=Dec; fi
-    for d_suffix in SourceHash FixtureHash; do
-      d_key="-dd${d_prefix}Diag${d_suffix}"
-      if [ -n "${DIAG_SEEN[-dd${d_observer}Diag]:-}" ]; then
-        [ -n "${DIAG_SEEN[$d_key]:-}" ] || diag_usage "required $d_key"
-      else
-        [ -z "${DIAG_SEEN[$d_key]:-}" ] || diag_usage "$d_key requires its observer"
-      fi
-    done
-  done
-fi
 [ "$TMIN" -gt 0 ] || TMIN=$( [ "$MODE" = "editmode" ] && echo 20 || echo 45 )
 [ -n "$OUT" ] || OUT="$DD_BUILD_ROOT/tests-$MODE-$(dd_utc)"
 mkdir -p "$OUT"; DD_TIMELINE="$OUT/timeline.txt"; XML="$OUT/$MODE.xml"; LOG="$OUT/$MODE.log"
@@ -105,7 +57,7 @@ PLAT=$( [ "$MODE" = "editmode" ] && echo EditMode || echo PlayMode ); NOGFX=(); 
 FARGS=(); [ -n "$FILTER" ] && FARGS=(-testFilter "$FILTER")
 T0=$(date +%s)
 # watchdogs (WP-051D dd_unity_watched): total limit TMIN per attempt + log-stall (20 min silent → stop that pid, retry once)
-dd_unity_watched "$LOG" "$TMIN" "$DD_UNITY" -batchmode "${NOGFX[@]}" -forgetProjectPath -projectPath "$DD_PROJECT" -runTests -testPlatform "$PLAT" "${FARGS[@]}" -testResults "$XML" -logFile "$LOG" "${DIAG_ARGS[@]}"
+dd_unity_watched "$LOG" "$TMIN" "$DD_UNITY" -batchmode "${NOGFX[@]}" -forgetProjectPath -projectPath "$DD_PROJECT" -runTests -testPlatform "$PLAT" "${FARGS[@]}" -testResults "$XML" -logFile "$LOG"
 X=$?
 T1=$(date +%s)
 KILLED=0; case "$DD_UNITY_OUTCOME" in killed|stalled) KILLED=1 ;; esac
