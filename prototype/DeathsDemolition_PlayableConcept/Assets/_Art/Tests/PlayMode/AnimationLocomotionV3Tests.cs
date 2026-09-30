@@ -182,5 +182,41 @@ namespace DD.Art.Tests.PlayMode
             Assert.GreaterOrEqual(drifts.Count, 3, "ayak kilidi devreye girmedi");
             Assert.LessOrEqual(median, 0.03f, "kilitli ayak kaydı > 3 cm");
         }
+
+        // R1-B AI2 (C-00 30.09): the stand-in for the Animator — rewrites the spine every frame before LateUpdate while "animating".
+        private sealed class SpineWriter : MonoBehaviour
+        {
+            public Transform Spine;
+            public bool Writing = true;
+            private void Update() { if (Writing && Spine != null) Spine.localRotation = Quaternion.identity; }
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator Lean_KapiKapaninca_OmurgayaBilesikUygulanmaz()
+        {
+            // R1-B AI2: after the ragdoll hand-off the Animator stops writing the spine; a decaying lean multiplied onto the
+            // unrefreshed bone compounded (≈10× at 60 fps). With the gate closed the bone must stay where it is.
+            var body = new GameObject("WP071_LeanBody");
+            _temp.Add(body);
+            var spine = new GameObject("Spine").transform;
+            spine.SetParent(body.transform, false);
+            var writer = body.AddComponent<SpineWriter>();
+            writer.Spine = spine;
+            bool gate = true;
+            var lean = body.AddComponent<LocomotionLean>();
+            lean.Configure(spine, body.transform, () => gate);
+            Time.captureDeltaTime = 1f / 60f;
+            for (int f = 0; f < 40; f++) { lean.Feed(Vector3.forward * (f * 0.2f)); yield return null; }   // 12 m/s² forward
+            Assert.Greater(lean.Pitch, 2f, "ivmede eğilme oluşmadı (test kurulumu)");
+            gate = false; writer.Writing = false;   // ragdoll hand-off: gate closes, nothing rewrites the spine
+            yield return null;
+            Quaternion held = spine.rotation;
+            for (int f = 0; f < 60; f++) yield return null;
+            float drift = Quaternion.Angle(held, spine.rotation);
+            Debug.Log("[DD-TEST] r1b.ai2 spineDrift=" + drift.ToString("F2", CultureInfo.InvariantCulture) + "° pitch=" + lean.Pitch.ToString("F2", CultureInfo.InvariantCulture));
+            Assert.Less(drift, 0.1f, "kapı kapalıyken eğilme omurgaya bileşik uygulandı");
+            Assert.AreEqual(0f, lean.Pitch, "kapı kapalı → eğilme sıfır");
+        }
     }
 }

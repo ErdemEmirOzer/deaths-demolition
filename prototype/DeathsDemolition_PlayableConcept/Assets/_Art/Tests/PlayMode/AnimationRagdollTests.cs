@@ -201,6 +201,32 @@ namespace DD.Art.Tests.PlayMode
         }
 
         [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator Tavan_IlkOkumadanSonraKademeDegisimiIzlenir()
+        {
+            // R1-B AI6 (C-00 30.09): the cap was cached on the first read but subscribed only when the pool was first built —
+            // a tier change in between was lost.
+            RagdollProxyPool.ResetStatics();
+            int before = QualitySettings.GetQualityLevel(), count = QualitySettings.names.Length;
+            if (count < 3) Assert.Ignore("kalite seviyesi < 3");
+            QualityTier from = QualityTiers.Current;
+            QualityTier to = from == QualityTier.Performans ? QualityTier.Sinematik : QualityTier.Performans;
+            try
+            {
+                Assert.AreEqual(RagdollProxyPool.CapOf(from), RagdollProxyPool.Capacity, "ilk okuma");
+                QualitySettings.SetQualityLevel(QualityTiers.LevelOfTier(to, count), true);
+                yield return null;
+                Assert.AreEqual(to, QualityTiers.Current);
+                Assert.AreEqual(RagdollProxyPool.CapOf(to), RagdollProxyPool.Capacity, "havuz kurulmadan önceki kademe değişimi tavana yansımadı");
+            }
+            finally
+            {
+                QualitySettings.SetQualityLevel(before, true);
+                RagdollProxyPool.ResetStatics();
+            }
+        }
+
+        [UnityTest]
         [Timeout(300000)]
         public IEnumerator Tavan_Dolunca_YaziliDusus_HepsiBiter_SonraYenidenDogar()
         {

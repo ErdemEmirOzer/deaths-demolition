@@ -57,7 +57,16 @@ namespace DD.Prototype.Characters
             float dt = Time.deltaTime;
             if (dt <= 1e-5f) return;
             bool on = Enabled && (_gate == null || _gate());
-            if (_hasLast && on)
+            if (!on)
+            {
+                // R1-B AI2 (C-00 30.09): a closed gate (ragdoll hand-off, far LOD, dead) means the Animator may not rewrite the
+                // spine this frame — a decaying lean multiplied onto the unrefreshed bone compounds (~1/s: ≈10× at 60 fps,
+                // ≈22× at 144 fps). Zero it and leave the bone alone.
+                ResetLean();
+                return;
+            }
+
+            if (_hasLast)
             {
                 Vector3 a = (_velocity - _lastVelocity) / dt;
                 float k = 1f - Mathf.Exp(-dt / Smoothing);
@@ -67,8 +76,8 @@ namespace DD.Prototype.Characters
             _lastVelocity = _velocity;
             _hasLast = true;
             Vector3 local = _body.InverseTransformDirection(_accel);
-            float targetPitch = on ? Mathf.Clamp(local.z * DegreesPerAccel, -MaxBack, MaxForward) : 0f;
-            float targetRoll = on ? Mathf.Clamp(-local.x * DegreesPerAccel, -MaxSide, MaxSide) : 0f;   // roll into the turn (lateral accel points inward)
+            float targetPitch = Mathf.Clamp(local.z * DegreesPerAccel, -MaxBack, MaxForward);
+            float targetRoll = Mathf.Clamp(-local.x * DegreesPerAccel, -MaxSide, MaxSide);   // roll into the turn (lateral accel points inward)
             float s = 1f - Mathf.Exp(-dt / Smoothing);
             _pitch = Mathf.Lerp(_pitch, targetPitch, s);
             _roll = Mathf.Lerp(_roll, targetRoll, s);

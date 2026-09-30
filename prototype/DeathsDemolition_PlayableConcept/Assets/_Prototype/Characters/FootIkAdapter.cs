@@ -63,6 +63,7 @@ namespace DD.Prototype.Characters
         private float _pelvisOffset;
         private float _leftLift, _rightLift;
         private int _ikFrame = -1;
+        private int _lastServedFrame = -2;
         private bool _servedThisFrame;
         private static int s_frame = -1;
         private static int s_served;
@@ -141,6 +142,10 @@ namespace DD.Prototype.Characters
             bool allowed = Force == 1 || (Force != 0 && (_enabled == null || _enabled()) && (_near == null || _near()));
             bool budget = allowed && s_served < MaxBodiesPerFrame;
             _servedThisFrame = budget;
+            // R1-B AI3 (C-00 30.09): the foot lock lives only while the IK is served every frame — a gap (budget, LOD / manual
+            // step, rise, disabled Animator) would otherwise blend the foot back toward a stale world point (a pop up to ~0.4 m).
+            if (!budget || _lastServedFrame != Time.frameCount - 1) ClearLock();
+            if (budget) _lastServedFrame = Time.frameCount;
             float k = 1f - Mathf.Exp(-Response * Time.deltaTime);
             _weight = Mathf.Lerp(_weight, budget ? 1f : 0f, k);
             if (_weight < 0.001f)

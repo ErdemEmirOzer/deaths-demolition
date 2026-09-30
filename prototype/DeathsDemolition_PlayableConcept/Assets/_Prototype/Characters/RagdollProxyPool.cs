@@ -23,7 +23,14 @@ namespace DD.Prototype.Characters
         /// </summary>
         public static int Capacity
         {
-            get { if (s_tierCap < 0) s_tierCap = CapOf(QualityTiers.Current); return s_capOverride >= 0 ? s_capOverride : s_tierCap; }
+            get
+            {
+                // R1-B AI6 (C-00 30.09): subscribe before caching — a tier change between the first read and the first ragdoll
+                // was lost (the subscription used to wait for EnsureInstance)
+                EnsureTierSubscribed();
+                if (s_tierCap < 0) s_tierCap = CapOf(QualityTiers.Current);
+                return s_capOverride >= 0 ? s_capOverride : s_tierCap;
+            }
             set => s_capOverride = value;
         }
 
@@ -298,7 +305,7 @@ namespace DD.Prototype.Characters
 
         private static void EnsureInstance()
         {
-            if (!s_tierSubscribed) { s_tierSubscribed = true; QualityTiers.Changed += OnTierChanged; }
+            EnsureTierSubscribed();
             if (s_instance != null) return;
             // review R1-A #3: the pooled zombies are DontDestroyOnLoad — the proxies share their lifetime, so a run that ends
             // mid-fall releases its proxies through the owners instead of losing them with the scene
@@ -309,6 +316,13 @@ namespace DD.Prototype.Characters
         }
 
         private static void OnTierChanged(QualityTier tier) => s_tierCap = CapOf(tier);
+
+        private static void EnsureTierSubscribed()
+        {
+            if (s_tierSubscribed) return;
+            s_tierSubscribed = true;
+            QualityTiers.Changed += OnTierChanged;
+        }
 
         /// <summary>
         /// Re-arm the round log (RunEvents drops its subscribers per run). Called at spawn, never on the death path: removing /
