@@ -307,7 +307,9 @@ namespace DD.Prototype.Tests.PlayMode
             PinControl(true, true);
             HoldUnpin();
             Accepted(before, -1, 1, "TreeUnpin"); // A snapshot-based command would incorrectly send same-ID and leave the pin.
-            PinControl(false, false);
+            PinControl(true, false); // DEC-110: back to this round's assigned target is free
+            Focus("ks_reload");
+            PinControl(false, false); // another target needs the round's spent assignment
         }
 
         private IEnumerator GoldPrerequisiteAndPurchaseQuota(string language)
