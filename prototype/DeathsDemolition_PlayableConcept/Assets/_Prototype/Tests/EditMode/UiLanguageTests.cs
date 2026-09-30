@@ -337,8 +337,9 @@ namespace DD.Prototype.Tests.EditMode
             var title = new CosmeticEntry("title_first_blood", CosmeticKind.Title, "Title: Blooded", "d", true, false, false);
             var badge = new CosmeticEntry("badge_ghost", CosmeticKind.Badge, "Badge: Ghost", "d", true, false, false);
             UiStrings.Language = UiStrings.Turkish;
-            Assert.AreEqual(UiStrings.Format("profile.cosmetic.title_format", "name", "Blooded"), Copy("CosmeticTitle", title));
-            Assert.AreEqual(UiStrings.Format("profile.cosmetic.badge_format", "name", "Ghost"), Copy("CosmeticTitle", badge));
+            // M-68: the name by id (profile.content.<id>.name), not the English data name.
+            Assert.AreEqual(UiStrings.Format("profile.cosmetic.title_format", "name", UiStrings.Get("profile.content.title_first_blood.name")), Copy("CosmeticTitle", title));
+            Assert.AreEqual(UiStrings.Format("profile.cosmetic.badge_format", "name", UiStrings.Get("profile.content.badge_ghost.name")), Copy("CosmeticTitle", badge));
             Assert.AreEqual("Blooded", Copy("CosmeticTitle", new CosmeticEntry("x", CosmeticKind.Title, "Blooded", "d", true, false, false)), "no kind label: the name as is");
             Assert.AreEqual("Ivory: Crimson", Copy("CosmeticTitle", new CosmeticEntry("s", CosmeticKind.Skin, "Ivory: Crimson", "d", true, false, false)), "skins untouched");
             UiStrings.Language = UiStrings.English;
@@ -395,6 +396,35 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual("1.34", UiStrings.Number(1.34f, "0.00"));
             Assert.AreEqual("1,234.5", UiStrings.Number(1234.5f, "#,##0.0"));
             Assert.AreEqual("4.5 s", UiRunTreePanel.StatText(4.5f, "s"));
+        }
+
+        // ------------------------------------------------------------ M-68: names by id
+
+        [Test]
+        public void Adlar_HerKatalogKimligiIcin_EN_TR_AnahtarVar_UIAnahtarlaCozer()
+        {
+            var table = UiStrings.Parse(File.ReadAllText(Path.Combine(RepoRoot, "planning", "content", "r1-strings.json")));
+            var missing = new List<string>();
+            foreach (AchievementDefinition a in AchievementCatalog.Definitions)
+                RequireBoth(table, "achievement." + a.Id + ".name", missing);
+            foreach (UnlockDefinition u in UnlockCatalog.Entries)
+                if (u.Type == UnlockContentType.Title || u.Type == UnlockContentType.Badge || u.Type == UnlockContentType.Indicator)
+                    RequireBoth(table, "profile.content." + u.Id + ".name", missing);
+            Assert.IsEmpty(missing, "M-68 name keys:\n" + string.Join("\n", missing));
+
+            UiStrings.Language = UiStrings.Turkish;
+            Assert.AreEqual(UiStrings.Get("achievement.first_blood.name"), Copy("RewardTitle", new ProfileUnlockEntry("First Blood", "d", ProfileUnlockKind.Achievement, "first_blood")));
+            Assert.AreEqual(UiStrings.Get("profile.content.title_survivor.name"), Copy("RewardTitle", new ProfileUnlockEntry("Title: Survivor", "d", ProfileUnlockKind.Content, "title_survivor")));
+            Assert.AreNotEqual("First Blood", UiStrings.Get("achievement.first_blood.name"), "TR has its own name");
+            UiStrings.Language = UiStrings.English;
+            Assert.AreEqual("First Blood", Copy("RewardTitle", new ProfileUnlockEntry("First Blood", "d", ProfileUnlockKind.Achievement, "first_blood")), "English shows the data");
+        }
+
+        private static void RequireBoth(Dictionary<string, Dictionary<string, string>> table, string key, List<string> missing)
+        {
+            if (!table.TryGetValue(key, out Dictionary<string, string> row)) { missing.Add(key); return; }
+            if (!row.TryGetValue("en", out string en) || string.IsNullOrEmpty(en)) missing.Add(key + " (en)");
+            if (!row.TryGetValue("tr", out string tr) || string.IsNullOrEmpty(tr)) missing.Add(key + " (tr)");
         }
 
         // ------------------------------------------------------------ M-66: one source of tier numbers for EN and TR

@@ -170,9 +170,7 @@ namespace DD.Prototype.UI
             {
                 if (entries[i].Selected && entries[i].Unlocked)
                 {
-                    string name = entries[i].Title ?? string.Empty;
-                    int colon = name.IndexOf(": ", StringComparison.Ordinal);
-                    return colon > 0 && colon < 12 ? name.Substring(colon + 2) : name;
+                    return ProfileContentCopy.ContentName(entries[i].Id, ProfileContentCopy.CosmeticName(entries[i].Title));   // M-68
                 }
             }
 
@@ -459,8 +457,10 @@ namespace DD.Prototype.UI
                     continue;
                 }
 
+                // M-68: names and descriptions in the language on screen, by id (English shows the data).
                 model.Lines.Add(new UiAchievementLine(
-                    e.Id, string.IsNullOrEmpty(e.Title) ? e.Id : e.Title, e.Description ?? string.Empty,
+                    e.Id, ProfileContentCopy.AchievementName(e.Id, string.IsNullOrEmpty(e.Title) ? e.Id : e.Title),
+                    ProfileContentCopy.AchievementDescription(e.Id, e.Description ?? string.Empty),
                     e.Earned, e.Rarity, e.IsNew, e.Current, e.Threshold));
                 model.Defined++;
                 if (e.Earned)
@@ -552,7 +552,7 @@ namespace DD.Prototype.UI
             string name = CosmeticName(title);
             if (name.Length == title.Length) return title;
             return UiStrings.Format(entry.Kind == CosmeticKind.Title ? "profile.cosmetic.title_format" : "profile.cosmetic.badge_format",
-                "name", name, title);
+                "name", ContentName(entry.Id, name), title);   // M-68: the name by id
         }
 
         /// <summary>A title / badge name without its data kind label (Title: Blooded → Blooded), the way the pickers show it.</summary>
@@ -601,14 +601,42 @@ namespace DD.Prototype.UI
             }
         }
 
-        /// <summary>A Results reward card's name: a branch takes its language name; weapons and achievements keep theirs.</summary>
+        /// <summary>M-68: an achievement's name in the language on screen (achievement.&lt;id&gt;.name); English shows the data.</summary>
+        public static string AchievementName(string id, string fallback)
+        {
+            return UiStrings.Language != UiStrings.Turkish || string.IsNullOrEmpty(id) ? fallback : UiStrings.Get("achievement." + id + ".name", fallback);
+        }
+
+        /// <summary>M-68: an achievement's description in the language on screen (its .desc key, the threshold filled in).</summary>
+        public static string AchievementDescription(string id, string fallback)
+        {
+            return UiStrings.Language != UiStrings.Turkish ? fallback : AchievementDetail(id, fallback);
+        }
+
+        /// <summary>M-68: a title / badge / indicator name (profile.content.&lt;id&gt;.name, without a kind label); English shows the data.</summary>
+        public static string ContentName(string id, string fallback)
+        {
+            return UiStrings.Language != UiStrings.Turkish || string.IsNullOrEmpty(id) ? fallback : UiStrings.Get("profile.content." + id + ".name", fallback);
+        }
+
+        /// <summary>A Results reward card's name by identity: a branch, an achievement and catalog content take their language name; weapons keep theirs.</summary>
         public static string RewardTitle(ProfileUnlockEntry entry)
         {
             string title = entry.Title ?? string.Empty;
-            if (UiStrings.Language != UiStrings.Turkish || entry.Kind != ProfileUnlockKind.Branch) return title;
-            return Enum.TryParse(entry.Id, false, out UpgradeBranch branch) && Enum.IsDefined(typeof(UpgradeBranch), branch)
-                ? BranchName(branch, title)
-                : title;
+            if (UiStrings.Language != UiStrings.Turkish) return title;
+            switch (entry.Kind)
+            {
+                case ProfileUnlockKind.Branch:
+                    return Enum.TryParse(entry.Id, false, out UpgradeBranch branch) && Enum.IsDefined(typeof(UpgradeBranch), branch)
+                        ? BranchName(branch, title)
+                        : title;
+                case ProfileUnlockKind.Achievement:
+                    return AchievementName(entry.Id, title);
+                case ProfileUnlockKind.Content:
+                    return ContentName(entry.Id, title);
+                default:
+                    return title;
+            }
         }
 
         public static string RewardDetail(ProfileUnlockEntry entry)

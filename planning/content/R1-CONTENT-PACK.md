@@ -1107,3 +1107,54 @@ R1-E E1b: a second adversarial reviewer (`e1-refute-2.md`) found no errors; 4 st
 | `tree.state.hearth_round` | THIS ROUND {value}/{max} | BU ROUND {value}/{max} |
 | `tree.pin.used` | This round's pin is used. Nothing changed. | Bu round işaret hakkı kullanıldı. Hiçbir şey değişmedi. |
 | `tree.pin.unavailable` | This node can't be pinned. Nothing changed. | Bu düğüm işaretlenemez. Hiçbir şey değişmedi. |
+
+## S-09 · M-68 names (Codex fix list, C-00 30.09)
+
+Achievement and profile content names by id (ECUI-13): `achievement.<id>.name` for the 35 achievements that had none (the 12 WP-069 names are unchanged) and `profile.content.<id>.name` for the 9 titles / badge / HUD indicators. The en column is the catalog name (titles without their "Title: " / "Badge: " data label). The TR names were written by one ux-writer and checked by two adversarial reviewers, a localizer and a game designer (`K/wp-068s9/evidence/m68-*`). All three MUSTs and five SHOULDs were taken: İlk Ultra (a goal, not "Ultra Yenildi", on a lock label), Elli Leş ("YERDE" is the HUD's down word), Kıdemli for the level-5 title (so it no longer shares Emektar with the 50-run achievement), Sıyrık Bile Yok, Özel Müşteri, Tüten Ocak, İlk Plaka, Elli Round Geride.
+
+| Key | en | tr |
+|---|---|---|
+| `achievement.first_blood.name` | First Blood | İlk Kan |
+| `achievement.armor_breaker.name` | Armor Breaker | İlk Plaka |
+| `achievement.reach_round_5.name` | Reach Round 5 | 5. Rounda Ulaş |
+| `achievement.defeat_an_ultra.name` | Defeat an Ultra | İlk Ultra |
+| `achievement.reach_round_10.name` | Reach Round 10 | 10. Rounda Ulaş |
+| `achievement.reach_round_15.name` | Reach Round 15 | 15. Rounda Ulaş |
+| `achievement.reach_round_20.name` | Reach Round 20 | 20. Rounda Ulaş |
+| `achievement.rounds_completed_50.name` | Fifty Rounds | Elli Round Geride |
+| `achievement.kills_50.name` | Fifty Down | Elli Leş |
+| `achievement.kills_250.name` | Body Count | Leş Sayısı |
+| `achievement.kills_1000.name` | Demolisher | Yıkıcı |
+| `achievement.special_hunter.name` | Runner Hunter | Runner Avcısı |
+| `achievement.elite_hunter.name` | Guard Hunter | Guard Avcısı |
+| `achievement.ultra_hunter.name` | Executioner Hunter | Executioner Avcısı |
+| `achievement.armor_breaker_100.name` | Plate Wrecker | Plaka Ezici |
+| `achievement.special_pickup_first.name` | Special Delivery | Özel Teslimat |
+| `achievement.special_pickup_10.name` | Regular Customer | Özel Müşteri |
+| `achievement.run_gold_150.name` | Pocket Change | Cep Harçlığı |
+| `achievement.run_gold_400.name` | Treasure Hunter | Define Avcısı |
+| `achievement.run_upgrades_5.name` | Well Equipped | Tam Teçhizat |
+| `achievement.flawless_round.name` | Untouched | Sıyrık Bile Yok |
+| `achievement.flawless_rounds_10.name` | Ghost | Hayalet |
+| `achievement.runs_played_10.name` | Regular | Müdavim |
+| `achievement.runs_played_50.name` | Veteran | Emektar |
+| `achievement.level_5.name` | Level 5 | Seviye 5 |
+| `achievement.level_10.name` | Level 10 | Seviye 10 |
+| `achievement.run_kills_40.name` | Rampage | Katliam |
+| `achievement.first_capstone.name` | First Capstone | İlk Doruk |
+| `achievement.three_keystones_one_run.name` | Three Keystones | Üç Kilit Taşı |
+| `achievement.hearth_10_one_run.name` | Stoked | Tüten Ocak |
+| `achievement.hearth_20.name` | Roaring Hearth | Harlı Ocak |
+| `achievement.full_lane.name` | Full Lane | Tam Şerit |
+| `achievement.capstones_5_weapons.name` | Five Summits | Beş Doruk |
+| `achievement.both_special_links.name` | Twin Link | Çift Bağ |
+| `achievement.mastery_5_any.name` | Master of One | Tek Silahın Ustası |
+| `profile.content.title_first_blood.name` | Blooded | Kan Görmüş |
+| `profile.content.title_survivor.name` | Survivor | Hayatta Kalan |
+| `profile.content.title_veteran.name` | Veteran | Kıdemli |
+| `profile.content.title_executioner.name` | Executioner | Cellat |
+| `profile.content.title_ironclad.name` | Ironclad | Demir Zırhlı |
+| `profile.content.badge_ghost.name` | Ghost | Hayalet |
+| `profile.content.indicator_kill_streak.name` | Kill streak counter | Öldürme Serisi Sayacı |
+| `profile.content.indicator_round_timer.name` | Round timer | Round Saati |
+| `profile.content.indicator_gold_ticker.name` | Gold ticker | Altın Sayacı |

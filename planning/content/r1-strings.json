@@ -3778,5 +3778,181 @@
   "tree.pin.unavailable": {
     "en": "This node can't be pinned. Nothing changed.",
     "tr": "Bu düğüm işaretlenemez. Hiçbir şey değişmedi."
+  },
+  "achievement.first_blood.name": {
+    "en": "First Blood",
+    "tr": "İlk Kan"
+  },
+  "achievement.armor_breaker.name": {
+    "en": "Armor Breaker",
+    "tr": "İlk Plaka"
+  },
+  "achievement.reach_round_5.name": {
+    "en": "Reach Round 5",
+    "tr": "5. Rounda Ulaş"
+  },
+  "achievement.defeat_an_ultra.name": {
+    "en": "Defeat an Ultra",
+    "tr": "İlk Ultra"
+  },
+  "achievement.reach_round_10.name": {
+    "en": "Reach Round 10",
+    "tr": "10. Rounda Ulaş"
+  },
+  "achievement.reach_round_15.name": {
+    "en": "Reach Round 15",
+    "tr": "15. Rounda Ulaş"
+  },
+  "achievement.reach_round_20.name": {
+    "en": "Reach Round 20",
+    "tr": "20. Rounda Ulaş"
+  },
+  "achievement.rounds_completed_50.name": {
+    "en": "Fifty Rounds",
+    "tr": "Elli Round Geride"
+  },
+  "achievement.kills_50.name": {
+    "en": "Fifty Down",
+    "tr": "Elli Leş"
+  },
+  "achievement.kills_250.name": {
+    "en": "Body Count",
+    "tr": "Leş Sayısı"
+  },
+  "achievement.kills_1000.name": {
+    "en": "Demolisher",
+    "tr": "Yıkıcı"
+  },
+  "achievement.special_hunter.name": {
+    "en": "Runner Hunter",
+    "tr": "Runner Avcısı"
+  },
+  "achievement.elite_hunter.name": {
+    "en": "Guard Hunter",
+    "tr": "Guard Avcısı"
+  },
+  "achievement.ultra_hunter.name": {
+    "en": "Executioner Hunter",
+    "tr": "Executioner Avcısı"
+  },
+  "achievement.armor_breaker_100.name": {
+    "en": "Plate Wrecker",
+    "tr": "Plaka Ezici"
+  },
+  "achievement.special_pickup_first.name": {
+    "en": "Special Delivery",
+    "tr": "Özel Teslimat"
+  },
+  "achievement.special_pickup_10.name": {
+    "en": "Regular Customer",
+    "tr": "Özel Müşteri"
+  },
+  "achievement.run_gold_150.name": {
+    "en": "Pocket Change",
+    "tr": "Cep Harçlığı"
+  },
+  "achievement.run_gold_400.name": {
+    "en": "Treasure Hunter",
+    "tr": "Define Avcısı"
+  },
+  "achievement.run_upgrades_5.name": {
+    "en": "Well Equipped",
+    "tr": "Tam Teçhizat"
+  },
+  "achievement.flawless_round.name": {
+    "en": "Untouched",
+    "tr": "Sıyrık Bile Yok"
+  },
+  "achievement.flawless_rounds_10.name": {
+    "en": "Ghost",
+    "tr": "Hayalet"
+  },
+  "achievement.runs_played_10.name": {
+    "en": "Regular",
+    "tr": "Müdavim"
+  },
+  "achievement.runs_played_50.name": {
+    "en": "Veteran",
+    "tr": "Emektar"
+  },
+  "achievement.level_5.name": {
+    "en": "Level 5",
+    "tr": "Seviye 5"
+  },
+  "achievement.level_10.name": {
+    "en": "Level 10",
+    "tr": "Seviye 10"
+  },
+  "achievement.run_kills_40.name": {
+    "en": "Rampage",
+    "tr": "Katliam"
+  },
+  "achievement.first_capstone.name": {
+    "en": "First Capstone",
+    "tr": "İlk Doruk"
+  },
+  "achievement.three_keystones_one_run.name": {
+    "en": "Three Keystones",
+    "tr": "Üç Kilit Taşı"
+  },
+  "achievement.hearth_10_one_run.name": {
+    "en": "Stoked",
+    "tr": "Tüten Ocak"
+  },
+  "achievement.hearth_20.name": {
+    "en": "Roaring Hearth",
+    "tr": "Harlı Ocak"
+  },
+  "achievement.full_lane.name": {
+    "en": "Full Lane",
+    "tr": "Tam Şerit"
+  },
+  "achievement.capstones_5_weapons.name": {
+    "en": "Five Summits",
+    "tr": "Beş Doruk"
+  },
+  "achievement.both_special_links.name": {
+    "en": "Twin Link",
+    "tr": "Çift Bağ"
+  },
+  "achievement.mastery_5_any.name": {
+    "en": "Master of One",
+    "tr": "Tek Silahın Ustası"
+  },
+  "profile.content.title_first_blood.name": {
+    "en": "Blooded",
+    "tr": "Kan Görmüş"
+  },
+  "profile.content.title_survivor.name": {
+    "en": "Survivor",
+    "tr": "Hayatta Kalan"
+  },
+  "profile.content.title_veteran.name": {
+    "en": "Veteran",
+    "tr": "Kıdemli"
+  },
+  "profile.content.title_executioner.name": {
+    "en": "Executioner",
+    "tr": "Cellat"
+  },
+  "profile.content.title_ironclad.name": {
+    "en": "Ironclad",
+    "tr": "Demir Zırhlı"
+  },
+  "profile.content.badge_ghost.name": {
+    "en": "Ghost",
+    "tr": "Hayalet"
+  },
+  "profile.content.indicator_kill_streak.name": {
+    "en": "Kill streak counter",
+    "tr": "Öldürme Serisi Sayacı"
+  },
+  "profile.content.indicator_round_timer.name": {
+    "en": "Round timer",
+    "tr": "Round Saati"
+  },
+  "profile.content.indicator_gold_ticker.name": {
+    "en": "Gold ticker",
+    "tr": "Altın Sayacı"
   }
 }

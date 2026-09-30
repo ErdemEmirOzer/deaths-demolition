@@ -155,10 +155,14 @@ namespace DD.Prototype.Tests.PlayMode
             menu.ShowPane(UiContext.Profile);
             yield return null;
             UiCosmeticLine title = new UiCosmeticLine(ProfileService.CosmeticsSource.Titles[0]);
-            string expectedTitle = language == UiStrings.Turkish ? "Unvan: Blooded" : "Title: Blooded";
+            // M-68: TR shows the title's own name (profile.content.<id>.name); EN shows the data.
+            string expectedTitle = language == UiStrings.Turkish
+                ? UiStrings.Format("profile.cosmetic.title_format", "name", UiStrings.Get("profile.content." + title.Id + ".name"))
+                : "Title: Blooded";
             Assert.AreEqual(expectedTitle, title.Title);
             Assert.AreEqual(language == UiStrings.Turkish ? UiStrings.Get("profile.content." + title.Id + ".detail") : UnlockCatalog.Find(title.Id).Detail, title.Detail);
-            Assert.IsTrue(Contains(menu, "Blooded"), "Profile retains the existing cosmetic identity name.");
+            Assert.IsTrue(Contains(menu, language == UiStrings.Turkish ? UiStrings.Get("profile.content." + title.Id + ".name") : "Blooded"),
+                "The picker shows the title's name in the language on screen (M-68).");
             UiUnlockLine branch = ProfileViewModel.From(ProfileService.Current, ProfileServiceLookup.Instance).Unlocks.Find(x => x.Title != null && x.Title.Contains(language == UiStrings.Turkish ? "Zincir" : "Chain"));
             Assert.IsNotNull(branch.Title, "The existing Chain unlock branch uses the language key.");
             Object.DestroyImmediate(menu.gameObject);
