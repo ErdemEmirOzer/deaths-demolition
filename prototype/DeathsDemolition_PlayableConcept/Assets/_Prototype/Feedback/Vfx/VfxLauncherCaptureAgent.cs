@@ -176,6 +176,9 @@ namespace DD.Prototype.Feedback.Vfx
                 InputSourceRegistry.SetCurrent(_input);
                 _target = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 _target.name = "B3 isolated QA target";
+                // Collider only: CreatePrimitive's built-in Default-Material has no URP shader in a Player (a magenta slab over
+                // every frame, 30.09 r2 capture); the blast, ground layers and rocket are the subject, not the wall.
+                _target.GetComponent<MeshRenderer>().enabled = false;
                 _target.layer = PrototypeLayers.Environment;
                 _target.transform.localScale = new Vector3(8f, 8f, .3f);
                 _target.transform.position = new Vector3(0f, -500f, 0f);
