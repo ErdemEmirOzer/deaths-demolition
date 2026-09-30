@@ -228,7 +228,7 @@ Sütunlar: amaç · varyant · durum · hareket · ses (UiEvent) · erişilebili
 | 24 | ★ `UiCurtain` | `UiFlowRunner` üstünde DontDestroyOnLoad canvas (sıra 400); iki lake kapı (kumiko karosu A6, α ≤ 0,08 — perde dışında kullanılmaz) (AD) + washi kart (mühür + kural cümlesi); menüde ScreenSpaceCamera, Run'da Overlay; `sceneLoaded`'da kameraya yeniden bağlanır | — | kapan 280 Move / aç 280 Settle; RM kes | `UiCurtainClose` (`LoadScene`'den ≥ 1 kare önce) / `UiCurtainOpen` | ink asla beyaz | tüm sahne geçişleri |
 | 25 | ★ `UiBackdrop` | plaka yığını 3 katman + ParallaxFollow + shader yaprak/yağmur (`Particles`) + fener nefesi (emissive maske) | — | Follow 0,20; RM statik kompozit | menü bed'i `AmbCommon` + uzak `AmbFurin` | metin-güvenli dikdörtgen (T10) | MainMenu, Selection |
 | 26 | ★ `UiCursor` | donanım `Cursor.SetCursor`, 32 + 64 px (Retina) RGBA32; Arrow / Press | — | sprite swap 0 ms, kare başına asla | sessiz | Run'da ve pad'de gizli, fare hareketinde döner | menüler |
-| 27 | `UiTooltip` SHOULD | washi kart ≤ 320, pad 12, 8 px ok; yalnız karar ekranları | — | in Fast (α + 4 px) 350 fare / 500 odak; out 0 ms | sessiz | odaklanan kontrolü asla örtmez; bir kez ölçülür | Selection, Shop, Achievements, Profile |
+| 27 | `UiTooltip` ~~SHOULD~~ → COULD, v3 dışı (E28 sapma, R1-E 30.09) | washi kart ≤ 320, pad 12, 8 px ok; yalnız karar ekranları | — | in Fast (α + 4 px) 350 fare / 500 odak; out 0 ms | sessiz | odaklanan kontrolü asla örtmez; bir kez ölçülür | Selection, Shop, Achievements, Profile |
 | 28 | ★ EdgeMarker | 44 disk `HudInk` + 28 glif + mesafe Caption; beacon VFX ile aynı silüet | — | projeksiyon-bağlı, eased lag yok | `SwBeaconLoop` (var) | altın→kor aciliyet lerp korunur | HUD |
 | 29 | ★ StatusStamp (`UiEnemyStatusMarkers`) | NET (ofuda etiketi) / DAZED (spiral) / PULLED (rezerv) 24 px outer-only glif + kelime; havuz 16 en yakın | — | Stamp Fast in, Exit Fast out; Scaled saat | `ZombieReact*` (var) | kelime + şekil | HUD |
 | 30 | ★ DamageNumber (S-07) | havuzlu `TextMeshProUGUI`, tek Overlay canvas (sıra 40), kapasite 48, Numeric SDF + `FaceOutline`, yalnız yukarı ofset | tier boyutları §5 E18 | 24 px yükseliş 600 Settle, α son 200; pop 1,15→1 100 ms; Scaled saat; faz değişiminde 200 ms unscaled flush | dünya vuruş sesi (var) | outline ≥ 4,5:1 her dünya pikselinde | HUD |
@@ -394,7 +394,18 @@ Ortak: her ekran `Expand` tuvalinde 1408 sayfaya tasarlanır, 1728'e sütun kesr
 ### E27 · Toast — **koşu içinde YOK**
 - Kare-doğru şeritler afiş yuvasında: `HudNewBestRound` (`RoundStarted`'da round > profil en iyisi; koşu başına bir kez; 2,4 s; `RearAttack`/`Encircled` sürerken ≤ 3 s ertelenir; hasar kenarından ≥ 0,5 s uzak; FIFO derinlik 2, aynı sınıf değiştirir) — **kullanıcı §13**; ELITE/ULTRA DOWN 0,6 s damga SHOULD. Menü/Results toast bileşeni COULD (üretici yok).
 
-### E28 · Tooltip (SHOULD)
+### E28 · Tooltip (SHOULD) — **SAPMA: v3'ten çıktı (R1-E, C-00 30.09 onayı)**
+- **Karar:** Yüzen `UiTooltip` v3'te yok. Karar yazar ve 2 çürütücüden geçti; kanıt KADRO `wp-068e/E3-DILIM9-KAPSAM-ONERISI.md`, `evidence/e3-refute.md`, `evidence/e3-refute-2.md`.
+- **Aşağıdaki dört tüketici bugün şöyle karşılanıyor:**
+  - Selection stat/dal: sahne odağı izliyor (`SelectionScreen.ShowOnStage`).
+  - Shop dal/tier: detay kartı odağı izliyor (`UpgradeTree.ShowDetail`); fareyle üzerine gelmek odak verir.
+  - Achievements ölçütü: kesilen metin yok (en uzun 72 karakter, sınır 90).
+  - Profile unlock: koşul kilitli satırda gösterilir (E3 T1).
+- **Karşılanmayan tek içerik:** Selection çekirdek dallarının etki metni → backlog.
+- Token'lar yerinde kalır: `TooltipDelayPointer/Focus`, `UiLayer.Tooltip`, `UiFrame.Tooltip`. Bileşen #27 COULD'a iner (v3 dışı).
+- **Aynı turda ertelenen:** canlı turntable (C2 COULD / §11 dilim 7 SHOULD) → M5 backlog "Selection'ın 3B öznesi (silah ya da karakter) ve yeniden yerleşimi". Gerekçe: Selection yüklemesi ≤ 0,5 s kapısı ölçülmedi; AD portreyi sahneden kaldırdı (ad-r1b §(b)).
+
+Aşağıdaki özgün tarif tarihçedir:
 - `UiTooltip` yalnız karar ekranlarında (Selection stat/dal, Shop dal/tier, Achievements ölçüt, Profile unlock); içerik = katalog cümlesi + arkasındaki sayılar; kural cümlelerinin yerini asla almaz (kısıt 1). Fare 350 ms / pad odak 500 ms (nav tekrar 100 ms'de açılıp kapanmasın), odak taşınınca 0 ms; ankrajın sağı/üstü, 80 px içinde çevirir; boyut bir kez ölçülür. Sessiz.
 
 ### E29 · Yükleme / sahne geçişi — perde (C4) — **§15 bu satırın üstüne yazar (async yükleme ekranı, 24.09 kullanıcı kapsamı); aşağıdaki senkron tarif yalnız tarihçe** (AD)
