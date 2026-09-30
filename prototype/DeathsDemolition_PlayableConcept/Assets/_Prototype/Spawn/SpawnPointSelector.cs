@@ -39,6 +39,9 @@ namespace DD.Prototype.Spawn
         /// <summary>How many points had a positive weight in the last evaluation.</summary>
         public int LastEligibleCount { get; private set; }
 
+        /// <summary>WP-076 B9 (M-26): the inner gates' share of <see cref="LastTotalWeight"/> (weights as evaluated, steering included).</summary>
+        public float LastInnerWeight { get; private set; }
+
         /// <summary>
         /// Evaluates every point at the given relaxation and stores the weights. Returns
         /// the total; 0 when no point is eligible. Never allocates after the buffer has
@@ -49,6 +52,7 @@ namespace DD.Prototype.Spawn
         {
             LastTotalWeight = 0f;
             LastEligibleCount = 0;
+            LastInnerWeight = 0f;
 
             if (points == null)
             {
@@ -63,7 +67,7 @@ namespace DD.Prototype.Spawn
 
             EnsureBuffer(count);
 
-            float total = 0f;
+            float total = 0f, inner = 0f;
             int eligible = 0;
 
             for (int i = 0; i < count; i++)
@@ -77,9 +81,11 @@ namespace DD.Prototype.Spawn
 
                 _weights[i] = weight;
                 total += weight;
+                if (weight > 0f && points[i].Definition != null && points[i].Definition.Kind == SpawnPointKind.Inner) inner += weight;
             }
 
             LastTotalWeight = total;
+            LastInnerWeight = inner;
             LastEligibleCount = eligible;
             return total;
         }
@@ -160,20 +166,24 @@ namespace DD.Prototype.Spawn
                 return chosen;
             }
 
-            chosen = Select(points, in inputs, config, tuning,
-                SpawnRelaxation.Screen | SpawnRelaxation.Cooldown | SpawnRelaxation.Reachability, random01);
-            if (chosen != null)
-            {
-                usedRelaxation = SpawnRelaxation.Screen | SpawnRelaxation.Cooldown | SpawnRelaxation.Reachability;
-                return chosen;
-            }
-
-            // WP-076 B9 (C-00 30.09): only the rolling inner cap is left in the way — release it rather than stop spawning
+            // WP-076 B9 (Y5, C-00 30.09): the rolling inner quota relaxes before Reachability — spawning never stops on the quota,
+            // and an inner gate with a complete path is preferred to an edge gate without one. Skipped when the quota is not full.
+            const SpawnRelaxation quota = SpawnRelaxation.Screen | SpawnRelaxation.Cooldown | SpawnRelaxation.InnerQuota;
             if (inputs.InnerQuotaFull)
             {
-                const SpawnRelaxation valve = SpawnRelaxation.Screen | SpawnRelaxation.Cooldown | SpawnRelaxation.Reachability | SpawnRelaxation.InnerCap;
-                chosen = Select(points, in inputs, config, tuning, valve, random01);
-                if (chosen != null) usedRelaxation = valve;
+                chosen = Select(points, in inputs, config, tuning, quota, random01);
+                if (chosen != null)
+                {
+                    usedRelaxation = quota;
+                    return chosen;
+                }
+            }
+
+            chosen = Select(points, in inputs, config, tuning, quota | SpawnRelaxation.Reachability, random01);
+            if (chosen != null)
+            {
+                usedRelaxation = inputs.InnerQuotaFull ? quota | SpawnRelaxation.Reachability
+                                                        : SpawnRelaxation.Screen | SpawnRelaxation.Cooldown | SpawnRelaxation.Reachability;
             }
 
             return chosen;

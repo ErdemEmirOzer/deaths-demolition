@@ -261,7 +261,7 @@ Bağlı S-05 kararları: oynanır **±55 m** (yedek ±50; 110×110), vista 55–
 | Orta kapı (`Kind = Interior`) | görüş engeli arkasında (S-05 kuralı); ek S-03 kuralı: aynı orta kapıdan ≤ 1 doğuş / 4 s (`PointCooldown` mevcut), oyuncu kapıya ≤ 10 m yolda ise ağırlık ×0,25 (yanıbaşında doğmaz), FP/TP'de §5.2 arka/LOS kuralına tabi | "pusu" hissi var, "burnumun dibinde" yok |
 | Odalar içi kapı | yok (R1–R7 içinde spawn noktası **yok**; I_HallRear salon arka kapısı *içi* = kapının dış tarafı, oda dışı) | oda-çıkış grafı bot/AI için temiz kalır |
 | Damlama | 18 kapı × 4 s = 4,5 spawn/s tavanı; `SpawnRefillClock` değişmez | S-05 hesabı doğrulandı |
-| Halka payı (kenar/orta) | hedef 65/35 (pencere 24 doğuş); orta payı > 50 olursa orta ×0,7 | tehdit yönü çeşitliliği korunur |
+| Halka payı (kenar/orta) | hedef 65/35 ± 10 = K10, pencere 24 doğuş ortalaması ≤ 0,45 (C-00 30.09 M-26). ~~orta payı > 50 olursa orta ×0,7~~ yerine: orta ağırlığı hedef 0,35'e odds² ile yönlendirilir (taban 0,1, 6 sahte-doğuş önseli; `SpawnWorldProfile.InnerSteer`); kesin %50 tavan yalnız yedek — Y5 merdiveninde InnerQuota olarak Reachability'den önce gevşer (C-00 30.09). Simülasyon: K10 çıplak orta kütlesi ≈ %65'e kadar tutar; üstü `[SpawnV6] innerMass` ölçümüyle karara bağlı (KNOWN OPEN) | tehdit yönü çeşitliliği korunur |
 
 Kamera modu kuralları (`SpawnWeightTuning` v2; mod `CameraModeService.Current` (S-01 f23f38e7), `Changed` olayında tablo satırı değişir; servis yoksa TopDown):
 

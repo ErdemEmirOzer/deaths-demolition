@@ -21,10 +21,11 @@ namespace DD.Prototype.Spawn
         Reachability = 4,
 
         /// <summary>
-        /// WP-076 B9 (C-00 30.09): ignore the rolling inner-gate cap — the safety valve after every other pass found nothing
-        /// (a spawn that never stops comes before the inner quota). Counted: EnemySpawnDirector.InnerCapFallbacks.
+        /// WP-076 B9 (Y5, C-00 30.09): ignore the rolling inner-gate quota. The ladder relaxes it after Screen + Cooldown and
+        /// BEFORE Reachability (an inner gate with a path beats an edge gate without one); the tier path gate uses the same
+        /// ladder. Counted: EnemySpawnDirector.InnerQuotaRelaxes.
         /// </summary>
-        InnerCap = 8
+        InnerQuota = 8
     }
 
     /// <summary>Per-input result of one evaluation. Debug surface only.</summary>
@@ -184,7 +185,7 @@ namespace DD.Prototype.Spawn
             }
 
             // The rolling inner cap survives all fairness/cooldown/path relaxations.
-            if (inputs.InnerShare >= 0f && inputs.InnerQuotaFull && (relaxation & SpawnRelaxation.InnerCap) == 0 && point.Definition != null &&
+            if (inputs.InnerShare >= 0f && inputs.InnerQuotaFull && (relaxation & SpawnRelaxation.InnerQuota) == 0 && point.Definition != null &&
                 point.Definition.Kind == SpawnPointKind.Inner)
             {
                 return Reject(point, ref breakdown, "inner share cap");

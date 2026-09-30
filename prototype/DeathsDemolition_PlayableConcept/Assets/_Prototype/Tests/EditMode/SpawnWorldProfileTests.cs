@@ -70,7 +70,7 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void OrtaKota_SiradakiKayit_EnEskiKaydiHesaplar()
         {
-            Assert.IsFalse(SpawnWorldProfile.CanRecordInner, "ilk kayıtta mevcut pay tavanı");
+            Assert.IsTrue(SpawnWorldProfile.CanRecordInner, "Y5: SteeringShare önseliyle oturumun ilk doğuşu iç kapı olabilir");
             SpawnWorldProfile.RecordSpawn(SpawnPointKind.Edge);
             Assert.IsTrue(SpawnWorldProfile.CanRecordInner);
             SpawnWorldProfile.ResetStatics();
@@ -96,19 +96,20 @@ namespace DD.Prototype.Tests.EditMode
                 Assert.AreEqual(0f, SpawnWeightCalculator.Evaluate(inner, in inputs, config, tuning, relaxation, out _));
                 Assert.Greater(SpawnWeightCalculator.Evaluate(edge, in inputs, config, tuning, relaxation, out _), 0f);
             }
-            // B9 safety valve: only the explicit InnerCap relaxation lets an inner gate through a full quota
+            // B9 Y5: only the explicit InnerQuota relaxation lets an inner gate through a full quota
             Assert.Greater(SpawnWeightCalculator.Evaluate(inner, in inputs, config, tuning,
-                SpawnRelaxation.Screen | SpawnRelaxation.Cooldown | SpawnRelaxation.Reachability | SpawnRelaxation.InnerCap, out _), 0f);
+                SpawnRelaxation.Screen | SpawnRelaxation.Cooldown | SpawnRelaxation.InnerQuota, out _), 0f);
             inputs.InnerShare = -1f;
             Assert.Greater(SpawnWeightCalculator.Evaluate(inner, in inputs, config, tuning, SpawnRelaxation.None, out _), 0f);
         }
 
         /// <summary>
-        /// WP-076 B9 (C-00 30.09): a full inner quota with no edge gate left never stops spawning — the ladder's last step
-        /// releases the cap (reported as InnerCap); with an edge gate available the cap holds and the edge is taken.
+        /// WP-076 B9 Y5 (C-00 30.09) ladder None → Screen → +Cooldown → +InnerQuota → +Reachability. (a) the only eligible gate is
+        /// inner and the quota is full → it is picked with InnerQuota (not Reachability); with an edge gate available the quota holds;
+        /// with the quota not full the step is skipped.
         /// </summary>
         [Test]
-        public void OrtaKota_KenarYoksa_GuvenlikVanasi_SpawnDurmaz()
+        public void OrtaKota_TekIcKapi_KotaDolu_InnerQuotaIleSecilir()
         {
             var tuning = new SpawnWeightTuning(); tuning.Sanitize();
             var config = new SpawnConfigSection();
@@ -118,59 +119,88 @@ namespace DD.Prototype.Tests.EditMode
 
             var onlyInner = new System.Collections.Generic.List<SpawnPointRuntime> { Kapi(SpawnPointKind.Inner, 20f) };
             SpawnPointRuntime chosen = selector.SelectWithLadder(onlyInner, in inputs, config, tuning, r, out SpawnRelaxation used);
-            Assert.IsNotNull(chosen, "kenar kapısı yokken spawn durmamalı");
-            Assert.AreNotEqual(SpawnRelaxation.None, used & SpawnRelaxation.InnerCap, "vana InnerCap olarak raporlanır");
+            Assert.IsNotNull(chosen, "kota dolu, yalnız iç kapı → spawn durmaz");
+            Assert.AreEqual(SpawnRelaxation.Screen | SpawnRelaxation.Cooldown | SpawnRelaxation.InnerQuota, used, "Reachability'den önce InnerQuota");
 
             var mixed = new System.Collections.Generic.List<SpawnPointRuntime> { Kapi(SpawnPointKind.Inner, 20f), Kapi(SpawnPointKind.Edge, 20f) };
             chosen = selector.SelectWithLadder(mixed, in inputs, config, tuning, r, out used);
             Assert.AreEqual(SpawnPointKind.Edge, chosen.Definition.Kind, "kenar varken kota korunur");
-            Assert.AreEqual(SpawnRelaxation.None, used & SpawnRelaxation.InnerCap);
+            Assert.AreEqual(SpawnRelaxation.None, used);
 
             inputs.InnerQuotaFull = false;
             chosen = selector.SelectWithLadder(onlyInner, in inputs, config, tuning, r, out used);
-            Assert.AreEqual(SpawnRelaxation.None, used & SpawnRelaxation.InnerCap, "kota dolu değilken vana kullanılmaz");
+            Assert.AreEqual(SpawnRelaxation.None, used, "kota dolu değilken merdiven basamağı atlanır");
         }
 
         /// <summary>
-        /// R1 28.09 (innerShare24 0.58): weighted draws over 10 edge + N inner gates whose unsteered inner mass is 55–75 %
-        /// (the old step rule sat at 0.50–0.58 on V6); with the steering the 24-spawn window stays ≤ 0.5 on average and at
-        /// the round-size checkpoints (12 / 24 / 48 / 96 spawns). Deterministic seed.
+        /// WP-076 B9 Y5 (b): an Elite pick (tier path gate ≤ 55 m) whose only gate within 55 m is inner, with the quota full, is
+        /// rerouted to that inner gate (the tier path uses the same ladder) instead of falling back to the far edge gate.
         /// </summary>
-        [TestCase(0.55f)]
-        [TestCase(0.65f)]
-        [TestCase(0.75f)]
-        public void OrtaPayi_Yonlendirme_Pencere24Hedefte(float innerMass)
+        [Test]
+        public void OrtaKota_EliteYolKapisi_KotaDolu_IcKapiyaYonlenir()
         {
-            var rng = new System.Random(76028);
-            const int edges = 10, inners = 10, draws = 240;
+            var tuning = new SpawnWeightTuning(); tuning.Sanitize();
+            var config = new SpawnConfigSection();
+            var inputs = new SpawnWeightInputs { PlayerRegion = RingRegion.North, Now = 100f, InnerShare = 0.5f, InnerQuotaFull = true,
+                                                 MaxPathDistance = SpawnModeTable.HeavyTierMaxPath };
+            var selector = new SpawnPointSelector();
+            var points = new System.Collections.Generic.List<SpawnPointRuntime>
+            {
+                Kapi(SpawnPointKind.Edge, 50f, SpawnModeTable.HeavyTierMaxPath + 12f),   // edge: beyond the Elite path gate
+                Kapi(SpawnPointKind.Inner, 30f, 40f)
+            };
+            SpawnPointRuntime chosen = selector.SelectWithLadder(points, in inputs, config, tuning, () => 0.5f, out SpawnRelaxation used);
+            Assert.IsNotNull(chosen, "Elite için ≤ 55 m iç kapı var → yönlenir");
+            Assert.AreEqual(SpawnPointKind.Inner, chosen.Definition.Kind);
+            Assert.AreNotEqual(SpawnRelaxation.None, used & SpawnRelaxation.InnerQuota);
+            Assert.AreEqual(SpawnRelaxation.None, used & SpawnRelaxation.Reachability, "yolu olan iç kapı, Reachability gevşetilmeden");
+        }
+
+        /// <summary>
+        /// R1 28.09 (innerShare24 0.58): weighted draws over 10 edge + N inner gates whose unsteered inner mass is 55–75 %.
+        /// The hard cap keeps the 24-window ≤ 0.5 at the round-size checkpoints (12 / 24 / 48 / 96 / 240 spawns) for every mass;
+        /// the mean is held to K10 (≤ 0.45, C-00 30.09 M-26) where the odds² steering can hold it (≤ 65 %); 75 % is reported
+        /// (K10 OPEN above ≈ 65 %, decided by the measured [SpawnV6] innerMass). Deterministic seed.
+        /// </summary>
+        [TestCase(0.55f, true)]
+        [TestCase(0.65f, true)]
+        [TestCase(0.75f, false)]
+        public void OrtaPayi_Yonlendirme_Pencere24Hedefte(float innerMass, bool k10)
+        {
+            const int edges = 10, inners = 10, draws = 240, seeds = 50;
             float innerW = innerMass / (1f - innerMass) * edges / inners;   // per-gate weight giving that unsteered inner mass
             var edgePoint = Kapi(SpawnPointKind.Edge, 20f);
             var innerPoint = Kapi(SpawnPointKind.Inner, 20f);
             var config = new SpawnConfigSection();
             var tuning = new SpawnWeightTuning(); tuning.Sanitize();
             double sum = 0; int n = 0;
-            var log = new System.Text.StringBuilder("[DD-OBS] wp076.innerSteer m=" + innerMass + ":");
-            for (int d = 1; d <= draws; d++)
+            var log = new System.Text.StringBuilder("[DD-OBS] wp076.innerSteer m=" + innerMass + " seeds=" + seeds + " (seed 0 checkpoints):");
+            for (int seed = 0; seed < seeds; seed++)
             {
-                var inputs = new SpawnWeightInputs
+                SpawnWorldProfile.ResetStatics();
+                var rng = new System.Random(76028 + seed);
+                for (int d = 1; d <= draws; d++)
                 {
-                    PlayerRegion = RingRegionMap.Classify(Vector3.zero, Vector3.zero, 14f), Now = 100f,
-                    InnerShare = SpawnWorldProfile.SteeringShare, InnerQuotaFull = !SpawnWorldProfile.CanRecordInner
-                };
-                float edgeWeight = SpawnWeightCalculator.Evaluate(edgePoint, in inputs, config, tuning, SpawnRelaxation.None, out _);
-                float f = SpawnWeightCalculator.Evaluate(innerPoint, in inputs, config, tuning, SpawnRelaxation.None, out _) / edgeWeight;
-                double wIn = inners * innerW * f, wEdge = edges;
-                bool inner = rng.NextDouble() * (wIn + wEdge) < wIn;
-                SpawnWorldProfile.RecordSpawn(inner ? SpawnPointKind.Inner : SpawnPointKind.Edge);
-                if (d >= 12) { sum += SpawnWorldProfile.InnerShare; n++; }
-                if (d == 12 || d == 24 || d == 48 || d == 96 || d == 240)
-                {
-                    log.Append(' ').Append(d).Append('=').Append(SpawnWorldProfile.InnerShare.ToString("0.00"));
-                    Assert.LessOrEqual(SpawnWorldProfile.InnerShare, 0.5f + 1e-4f, "innerShare24 > 0,5 @" + d + " m=" + innerMass);
+                    var inputs = new SpawnWeightInputs
+                    {
+                        PlayerRegion = RingRegionMap.Classify(Vector3.zero, Vector3.zero, 14f), Now = 100f,
+                        InnerShare = SpawnWorldProfile.SteeringShare, InnerQuotaFull = !SpawnWorldProfile.CanRecordInner
+                    };
+                    float edgeWeight = SpawnWeightCalculator.Evaluate(edgePoint, in inputs, config, tuning, SpawnRelaxation.None, out _);
+                    float f = SpawnWeightCalculator.Evaluate(innerPoint, in inputs, config, tuning, SpawnRelaxation.None, out _) / edgeWeight;
+                    double wIn = inners * innerW * f, wEdge = edges;
+                    bool inner = rng.NextDouble() * (wIn + wEdge) < wIn;
+                    SpawnWorldProfile.RecordSpawn(inner ? SpawnPointKind.Inner : SpawnPointKind.Edge);
+                    if (d >= 12) { sum += SpawnWorldProfile.InnerShare; n++; }
+                    if (d == 12 || d == 24 || d == 48 || d == 96 || d == 240)
+                    {
+                        if (seed == 0) log.Append(' ').Append(d).Append('=').Append(SpawnWorldProfile.InnerShare.ToString("0.00"));
+                        Assert.LessOrEqual(SpawnWorldProfile.InnerShare, 0.5f + 1e-4f, "innerShare24 > 0,5 @" + d + " m=" + innerMass + " seed=" + seed);
+                    }
                 }
             }
             Debug.Log(log.Append(" mean=").Append((sum / n).ToString("0.000")).ToString());
-            Assert.LessOrEqual(sum / n, 0.47, "ortalama pencere payı");
+            if (k10) Assert.LessOrEqual(sum / n, 0.45, "K10: ortalama pencere payı ≤ 0,45 (65/35 ± 10)");
         }
     }
 }

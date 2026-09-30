@@ -134,6 +134,13 @@ namespace DD.Prototype.Spawn
         // debug overrides
         private int _forcedTargetActive;
         private bool _spawningEnabled = true;
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+        /// <summary>
+        /// WP-076 B9 (S-10 handshake, C-00 30.09): dev-only switch for QA drivers (QaRunBot -ddQaBotRouteTour, capture agents)
+        /// instead of reflecting on <c>_spawningEnabled</c> (the field keeps its name for the existing reflection users).
+        /// </summary>
+        public bool SpawningEnabledDev { get => _spawningEnabled; set => _spawningEnabled = value; }
+#endif
 
         private DebugPanelEntry[] _debugEntries = Array.Empty<DebugPanelEntry>();
 
@@ -723,6 +730,7 @@ namespace DD.Prototype.Spawn
             if (point == null)
             {
                 _noPointTicks++;
+                if (SpawnWorldProfile.IsV6 && !SpawnWorldProfile.CanRecordInner) NoPointQuotaTicks++;   // WP-076 B9 (Y5)
                 NavigationDiagnostics.WarnThrottled(
                     "spawn.nopoint", 5f,
                     "[Spawn] No spawn point passed the weighting this tick (all too close, on screen, " +
@@ -976,8 +984,18 @@ namespace DD.Prototype.Spawn
         /// <summary>WP-076 B6 readouts: heavy / Special spawns moved to a nearer point by the tier path gate, and those that found none.</summary>
         public int TierGateReroutes { get; private set; }
         public int TierGateFallbacks { get; private set; }
-        /// <summary>WP-076 B9: picks that needed the inner-cap safety valve (<see cref="SpawnRelaxation.InnerCap"/>).</summary>
-        public int InnerCapFallbacks { get; private set; }
+        /// <summary>WP-076 B9 (Y5): picks made with the inner quota relaxed (<see cref="SpawnRelaxation.InnerQuota"/>), tier path included.</summary>
+        public int InnerQuotaRelaxes { get; private set; }
+        /// <summary>WP-076 B9 (Y5): refill ticks with no point while the inner quota was full (0 expected: the ladder relaxes it).</summary>
+        public int NoPointQuotaTicks { get; private set; }
+
+        /// <summary>
+        /// WP-076 B9 (M-26, C-00 30.09 "measure first"): the UNSTEERED inner mass — the inner gates' share of the eligible weight
+        /// with the share steering divided back out — summed over strict-pass picks with the quota open (K10 holds up to ≈ 65 %
+        /// with the odds² steering; the round log reports the mean as innerMass).
+        /// </summary>
+        public double InnerMassSum { get; private set; }
+        public int InnerMassSamples { get; private set; }
 
         private SpawnPointRuntime SelectPoint(float maxPathDistance = 0f)
         {
@@ -1035,7 +1053,13 @@ namespace DD.Prototype.Spawn
                 return null;
             }
 
-            if ((used & SpawnRelaxation.InnerCap) != 0) InnerCapFallbacks++;   // WP-076 B9 safety valve (C-00 30.09)
+            if ((used & SpawnRelaxation.InnerQuota) != 0) InnerQuotaRelaxes++;   // WP-076 B9 (Y5)
+            if (inputs.InnerShare >= 0f && used == SpawnRelaxation.None && !inputs.InnerQuotaFull && _selector.LastTotalWeight > 0f)
+            {
+                float steer = SpawnWorldProfile.InnerSteer(inputs.InnerShare);
+                float innerRaw = steer > 0f ? _selector.LastInnerWeight / steer : 0f, edge = _selector.LastTotalWeight - _selector.LastInnerWeight;
+                if (innerRaw + edge > 0f) { InnerMassSum += innerRaw / (innerRaw + edge); InnerMassSamples++; }
+            }
 
             if ((used & SpawnRelaxation.Cooldown) != 0)
             {

@@ -23,17 +23,20 @@ namespace DD.Prototype.Spawn
         /// <summary>The one-line switch (C-00 A): false = v6 values only in a v6 scene.</summary>
         public const bool AlwaysV6 = false;
 
-        [PrototypeOnly(PendingDecisions.None, "WP-076 §5.1 v6 world: preferred band (m), MaxUseful (m); inner gate near-player distance (m) and factor; inner share window (spawns), cap, factor above it; v6 scene name prefix.", true)]
+        [PrototypeOnly(PendingDecisions.None, "WP-076 §5.1 v6 world: preferred band (m), MaxUseful (m); inner gate near-player distance (m) and factor; inner share window (spawns) and the hard 50 % cap (a backstop only: relaxed as InnerQuota before Reachability, C-00 30.09 Y5); v6 scene name prefix.", true)]
         public const float V6PreferredMin = 22f, V6PreferredMax = 45f, V6MaxUseful = 75f;
         public const float InnerNearMetres = 10f, InnerNearFactor = 0.25f, InnerShareCap = 0.5f;
         public const int InnerShareWindow = 24;
 
         /// <summary>
-        /// WP-076 (R1 28.09: innerShare24 0.58 with the old step rule "> 50 % → ×0.7"): the inner weight is steered toward
+        /// WP-076 (R1 28.09: innerShare24 0.58 with the old step rule "> 50 % → ×0.7", replaced): the inner weight is steered toward
         /// <see cref="InnerShareTarget"/> — factor (odds(target) / odds(share))², floor <see cref="InnerSteerFloor"/>, never above 1 —
         /// on a share with <see cref="InnerSharePrior"/> pseudo-spawns at the target, so the first spawns of a run do not swing it.
-        /// Steady state for an unsteered inner mass of 65 / 75 / 85 %: ≈ 45 / 49 / 53 % before the floor; the floor holds ≤ 50 %.
+        /// Target K10 (C-00 30.09, M-26): the 24-window mean ≤ 0.45 (65 / 35 ± 10). Simulated means (240 draws, 200 seeds) for an
+        /// unsteered inner mass of 55 / 65 / 75 / 85 %: 0.415 / 0.444 / 0.466 / 0.484 — K10 holds up to ≈ 65 %; the real V6 mass is
+        /// measured per round ([SpawnV6] innerMass). The hard 50 % cap (<see cref="CanRecordInner"/>) is only the backstop.
         /// </summary>
+        [PrototypeOnly(PendingDecisions.None, "WP-076 §5.1 / M-26 (C-00 30.09): inner-share steering target, steering floor, prior pseudo-spawns; K10 = window mean ≤ 0.45, holds up to ≈ 65 % unsteered inner mass (OPEN above: exponent / target by the innerMass measurement).", true)]
         public const float InnerShareTarget = 0.35f, InnerSteerFloor = 0.1f;
         public const int InnerSharePrior = 6;
         public const string V6ScenePrefix = "World_V6";
@@ -104,7 +107,11 @@ namespace DD.Prototype.Spawn
             }
         }
 
-        /// <summary>Whether the next inner spawn keeps the rolling share at the existing cap, accounting for expiry.</summary>
+        /// <summary>
+        /// Whether the next inner spawn keeps the rolling share at the cap, accounting for the expiring oldest record. WP-076 B9 (Y5):
+        /// on the same prior as <see cref="SteeringShare"/> (<see cref="InnerSharePrior"/> pseudo-spawns at the target), so the
+        /// first spawn of a session may be inner; the raw 24-window share still stays ≤ 0.5 at 12 and 24 spawns.
+        /// </summary>
         public static bool CanRecordInner
         {
             get
@@ -113,7 +120,7 @@ namespace DD.Prototype.Spawn
                 for (int i = 0; i < s_count; i++) if (s_ring[i]) inner++;
                 if (s_count == s_ring.Length && s_ring[s_head]) inner--;
                 int nextCount = Mathf.Min(s_count + 1, s_ring.Length);
-                return inner + 1 <= InnerShareCap * nextCount;
+                return inner + 1 + InnerShareTarget * InnerSharePrior <= InnerShareCap * (nextCount + InnerSharePrior);
             }
         }
 

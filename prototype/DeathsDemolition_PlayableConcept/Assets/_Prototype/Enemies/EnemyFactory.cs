@@ -358,6 +358,15 @@ namespace DD.Prototype.Enemies
                 SpawnedCount, s_capacity, LivingCount, armoured, plates, helmets, bodies, legs, broken);
         }
 
+#if UNITY_INCLUDE_TESTS || UNITY_EDITOR
+        /// <summary>
+        /// WP-076 B9 (Y4 share, C-00 30.09): tests reset the spawn-seed sequence so a body's per-life rolls (scale, lean, flank)
+        /// no longer depend on how many bodies earlier tests in the same Play Mode session spawned (the counter is otherwise
+        /// only reset at SubsystemRegistration). Test assemblies only (InternalsVisibleTo in AssemblyInfo.cs).
+        /// </summary>
+        internal static void ResetSeedForTests(uint seed = 1u) => s_seedCounter = seed;
+#endif
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
         {
