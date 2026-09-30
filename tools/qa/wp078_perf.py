@@ -171,13 +171,15 @@ def launch(command):
     return subprocess.run(command, capture_output=True, text=True)
 
 
-def window_args(tier_name, mode, cell):
+def window_args(tier_name, mode, cell, extra=()):
     # -ddQualityTier takes the lower-case key (performans|yuksek|sinematik); the probe reports the enum (probeValue)
     args = ["-ddQualityTier", tier_name, "-ddCameraMode", mode,
             "-ddUiDataRoot", str(cell / "ui-data"), "-ddTelemetryDir", str(cell / "telemetry")]
     if mode != "topdown":
         args += ["-ddPilotCameraSweep", "1"]
-    return args
+    # S-05 B9 (30.09): caller probe flags (e.g. -ddPilotStart x,z,yaw) go to every window, after the fixed ones; they
+    # land in the window's command.json. One --out root per variant keeps its cells and ledger apart.
+    return args + list(extra)
 
 
 def plan(targets, tiers, modes, windows):
@@ -216,6 +218,8 @@ def main():
     parser.add_argument("--cooldown", type=float, default=60.0)
     parser.add_argument("--player-wait", type=float, default=1800.0, help="seconds to wait for another game Player to close")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--extra-arg", action="append", default=[],
+                        help="extra probe argument for every window, repeatable; use the --extra-arg=<value> form for values starting with '-'")
     parser.add_argument("--no-quiet", action="store_true", help="do not take the Unity / player slots (smoke only; never for the gate)")
     parser.add_argument("--load-max", type=float, default=6.0, help="C-00 26.09: measure only below this load1")
     parser.add_argument("--quiet-minutes", type=float, default=25.0)
@@ -288,7 +292,7 @@ def run_window(args, root, binary, seconds, quiet, note, name, mode, index):
                "--commit", args.commit, "--window", str(seconds), "--load-max", str(args.load_max),
                "--preflight-attempts", "3", "--preflight-wait", "20"]
     # "--extra-arg=<flag>": argparse reads a separate value that starts with "-" as an option
-    command += [f"--extra-arg={extra}" for extra in window_args(name, mode, cell)]
+    command += [f"--extra-arg={extra}" for extra in window_args(name, mode, cell, getattr(args, "extra_arg", None) or ())]
     if args.dry_run:
         note("dry-run " + " ".join(command))
         return None

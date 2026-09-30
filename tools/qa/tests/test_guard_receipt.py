@@ -193,3 +193,25 @@ class PerfAttemptAnnotationTests(unittest.TestCase):
                 mock.patch.object(wp078_perf, "launch", return_value=done(0)):
             wp078_perf.run_window(perf_args(), root, Path("/b/P"), 60, None, lambda s: None, "yuksek", "tp", 1)
         self.assertTrue(seen and not re.fullmatch(r"perf-[a-z]+-[a-z]+-\d+", seen[0]))
+
+
+class PerfExtraArgTests(unittest.TestCase):
+    """S-05 B9 (30.09): caller probe flags reach every window after the fixed tier/mode/sandbox arguments."""
+
+    def test_extra_args_follow_the_fixed_window_args(self):
+        args = wp078_perf.window_args("yuksek", "topdown", Path("/c"), ["-ddPilotStart", "-48,-48,45"])
+        self.assertEqual(["-ddPilotStart", "-48,-48,45"], args[-2:])
+        self.assertEqual("yuksek", args[args.index("-ddQualityTier") + 1])
+
+    def test_run_window_passes_them_in_the_equals_form(self):
+        root = Path(tempfile.mkdtemp())
+        seen = []
+        a = perf_args()
+        a.extra_arg = ["-ddPilotStart", "48,48,225"]
+        with mock.patch.object(wp078_perf, "player_up", return_value=False), \
+                mock.patch.object(gr, "run_guard", return_value=done(0)), \
+                mock.patch.object(gr, "close", return_value={"code": 0, "why": "touched=0"}), \
+                mock.patch.object(wp078_perf, "launch", side_effect=lambda cmd: seen.append(cmd) or done(0)):
+            wp078_perf.run_window(a, root, Path("/b/P"), 60, None, lambda s: None, "yuksek", "topdown", 1)
+        self.assertIn("--extra-arg=-ddPilotStart", seen[0])
+        self.assertIn("--extra-arg=48,48,225", seen[0])
