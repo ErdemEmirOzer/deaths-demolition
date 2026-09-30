@@ -13,6 +13,9 @@
 # shares with the game (profile, settings, telemetry) is hashed before/after — anything a test changed
 # is restored from the copy taken before and reported as a user-data warning.
 # Processes (R1 §4.13): this script kills nothing; tools/test.sh's watchdog only ends the Unity pid it started.
+# Signals (Codex-audit Y1 / G4 Q10, C-00 30.09): INT/TERM/HUP exit 130/143/129 through the one EXIT cleanup. A running
+# test.sh (our own child) gets TERM and ≤ DD_CI_CHILD_GRACE s (default 120) to end with its Unity; if any of them is still
+# alive the user-data window is LEFT OPEN — no restore, no player slot / lease release — and the line says: tell C-00.
 # Exit: 0 green · 1 red tests · 2 compile error / missing results · 3 CI worktree not clean · 64 usage
 set -u
 setopt nullglob
@@ -92,7 +95,7 @@ except (OSError, RuntimeError, ValueError):
 sys.exit(1)
 PY_PROCESS
 }
-CI_PLAYER_HELD=0; CI_GUARD_READY=0; CI_GUARD_EXIT=0
+CI_PLAYER_HELD=0; CI_GUARD_READY=0; CI_GUARD_EXIT=0; CI_CHILD=""; CI_CLEANING=0; CI_SIGNAL=""
 ci_guard_restore() {
   "$DD_TOOLS_DIR/userdata-guard.sh" restore "$OUT/userdata-guard" --scope editor > "$OUT/userdata-guard.out" 2>&1
   CI_GUARD_EXIT=$?; CI_GUARD_READY=0
@@ -100,7 +103,12 @@ ci_guard_restore() {
 }
 ci_cleanup() {
   local original=$1 slot_exit=0 lease_exit=0
-  trap - EXIT
+  trap - EXIT; CI_CLEANING=1
+  # Codex-audit Y1 / G4 Q10: restoring while the child (or its orphaned Unity) can still write would be a false "verified".
+  if [ -n "$CI_CHILD" ] && ! dd_stop_child "$CI_CHILD" "${DD_CI_CHILD_GRACE:-120}"; then
+    dd_log "main-ci ${CI_SIGNAL:-exit}: user-data window left open: child $DD_CHILD_ALIVE still alive, tell C-00 — guard $OUT/userdata-guard NOT restored, player slot and lease $CI_LEASE kept" >&2
+    exit "$original"
+  fi
   [ "$CI_GUARD_READY" -eq 0 ] || ci_guard_restore
   if [ "$CI_PLAYER_HELD" -eq 1 ]; then DD_SLOT_TAG="$CI_PLAYER_TAG" dd_slot_release player; slot_exit=$?; fi
   ci_lease_release; lease_exit=$?
@@ -112,6 +120,9 @@ ci_cleanup() {
 }
 # zsh function-local EXIT traps run on function return; install this at script scope.
 trap 'ci_cleanup $?' EXIT
+# zsh skips EXIT on an untrapped INT/TERM/HUP: record it, exit 128+n (cleanup runs once; a signal during cleanup is ignored).
+ci_signal() { [ "$CI_CLEANING" -eq 0 ] || return 0; CI_SIGNAL=SIG$1; echo "main-ci: SIG$1 — exit $2 through cleanup" >&2; exit $2; }
+trap 'ci_signal INT 130' INT; trap 'ci_signal TERM 143' TERM; trap 'ci_signal HUP 129' HUP
 ci_lease_acquire || exit $?
 SHA=$(git -C "$DD_REPO" rev-parse --verify "$REF^{commit}" 2>/dev/null) || { echo "unknown commit: $REF" >&2; exit 64; }
 # WP-043D: hold the single 'player' slot for the whole run — Player captures / bots share the audio device and
@@ -166,12 +177,12 @@ while :; do
 done
 CI_GUARD_READY=1
 
-# 4) tests (the CI worktree's own tools: they belong to the commit under test)
-"$CI_DIR/tools/test.sh" editmode --out "$OUT/editmode" --timeout-min "$ETMIN" > "$OUT/editmode.out" 2>&1; EX=$?
+# 4) tests (the CI worktree's own tools: they belong to the commit under test); `& wait` so a signal is handled at once
+"$CI_DIR/tools/test.sh" editmode --out "$OUT/editmode" --timeout-min "$ETMIN" > "$OUT/editmode.out" 2>&1 & CI_CHILD=$!; wait $CI_CHILD; EX=$?; CI_CHILD=""
 PX=0
 if [ "$SKIP_PLAY" -eq 0 ]; then
   SUITES=$(grep -vE '^\s*(#|$)' "$DD_TOOLS_DIR/ci-suites.txt" | paste -sd'|' -)
-  "$CI_DIR/tools/test.sh" playmode --filter "\\.($SUITES)\\." --out "$OUT/playmode" --timeout-min "$PTMIN" > "$OUT/playmode.out" 2>&1; PX=$?
+  "$CI_DIR/tools/test.sh" playmode --filter "\\.($SUITES)\\." --out "$OUT/playmode" --timeout-min "$PTMIN" > "$OUT/playmode.out" 2>&1 & CI_CHILD=$!; wait $CI_CHILD; PX=$?; CI_CHILD=""
 fi
 dd_log "editmode exit=$EX playmode exit=$PX"
 

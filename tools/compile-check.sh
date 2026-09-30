@@ -10,6 +10,8 @@
 # Asset Pipeline Refresh); an abort such as "Multiple Unity instances cannot open the same project" (exit 134) is busy (75),
 # any other non-zero exit without CS errors is "did not run" (3). It refuses up front while any Unity has the checkout's
 # project open. Compile and main-ci share an owner lease per canonical checkout.
+# Signals (Codex-audit Y1 / G4 Q10, C-00 30.09): INT/TERM/HUP exit 130/143/129 through the one EXIT cleanup; a running Unity
+# (our own child) gets TERM and ≤ DD_CI_CHILD_GRACE s (default 120); if it is still alive the slot and lease stay held: tell C-00.
 # Exit: 0 compiles · 2 compile errors (first ones printed) · 3 checkout failed / check did not run · 75 busy · 124 stalled/timed out · 64 usage
 set -u
 source "${0:A:h}/dd-env.sh"
@@ -90,10 +92,14 @@ ci_disk_ready() {
   fi
   dd_log "compile-check: disk freeKiB=$free minimumKiB=15728640"
 }
-CI_SLOT_HELD=0
+CI_SLOT_HELD=0; CI_CLEANING=0; CI_SIGNAL=""
 ci_cleanup() {
   local original=$1 slot_exit=0 lease_exit=0
-  trap - EXIT
+  trap - EXIT; CI_CLEANING=1
+  if [ -n "$DD_UNITY_PID" ] && ! dd_stop_child "$DD_UNITY_PID" "${DD_CI_CHILD_GRACE:-120}"; then
+    echo "compile-check ${CI_SIGNAL:-exit}: Unity child $DD_CHILD_ALIVE still alive, tell C-00 — slot $DD_SLOT_TAG and lease $CI_LEASE kept" >&2
+    exit "$original"
+  fi
   if [ "$CI_SLOT_HELD" -eq 1 ]; then dd_slot_release; slot_exit=$?; fi
   ci_lease_release; lease_exit=$?
   [ "$slot_exit" -eq 0 ] && [ "$lease_exit" -eq 0 ] || echo "compile cleanup failed: slot=$slot_exit lease=$lease_exit (original=$original)" >&2
@@ -103,6 +109,9 @@ ci_cleanup() {
 }
 # zsh function-local EXIT traps run on function return; install this at script scope.
 trap 'ci_cleanup $?' EXIT
+# zsh skips EXIT on an untrapped INT/TERM/HUP: record it, exit 128+n (cleanup runs once; a signal during cleanup is ignored).
+ci_signal() { [ "$CI_CLEANING" -eq 0 ] || return 0; CI_SIGNAL=SIG$1; echo "compile-check: SIG$1 — exit $2 through cleanup" >&2; exit $2; }
+trap 'ci_signal INT 130' INT; trap 'ci_signal TERM 143' TERM; trap 'ci_signal HUP 129' HUP
 ci_lease_acquire || exit $?
 SHA=$(git -C "$DD_REPO" rev-parse --verify "${REF:-main}^{commit}" 2>/dev/null) || { echo "unknown ref: ${REF:-main}" >&2; exit 64; }
 : "${OUT:=$HOME/Desktop/KADRO/context/projects/deaths-demolition/ci/compile-${SHA:0:10}-$(dd_utc)}"

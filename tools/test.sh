@@ -88,7 +88,17 @@ dd_log "test.sh mode=$MODE filter='${FILTER:-all}' timeout=${TMIN}min out=$OUT h
 # Application.targetFrameRate == 60; tests that read recorders must set targetFrameRate = -1 in SetUp.
 [ "$MODE" = "playmode" ] && dd_log "note: ProfilerRecorder-based tests need Application.targetFrameRate = -1 in SetUp (LastValue stays 0 at 60 in the Editor runner)"
 if [ "$NOWAIT" -eq 1 ] && [ "$(dd_unity_count)" -ge "$DD_MAX_UNITY" ]; then dd_log "busy"; exit 75; fi
-trap 'dd_slot_release' EXIT
+# Codex-audit Y1 / G4 Q10 (C-00 30.09): INT/TERM/HUP (main-ci forwards TERM to this pid) exit 130/143/129 through EXIT,
+# which first stops our own Unity (TERM to DD_UNITY_PID only, ≤ DD_CI_CHILD_GRACE s); a Unity still alive keeps the slot.
+T_CLEANING=0
+t_cleanup() {
+  trap - EXIT; T_CLEANING=1
+  if [ -n "$DD_UNITY_PID" ] && ! dd_stop_child "$DD_UNITY_PID" "${DD_CI_CHILD_GRACE:-120}"; then
+    dd_log "test.sh: Unity child $DD_CHILD_ALIVE still alive, tell C-00 — slot $DD_SLOT_TAG kept" >&2; return 0; fi
+  dd_slot_release
+}
+trap 't_cleanup' EXIT
+trap '[ "$T_CLEANING" -eq 1 ] || exit 130' INT; trap '[ "$T_CLEANING" -eq 1 ] || exit 143' TERM; trap '[ "$T_CLEANING" -eq 1 ] || exit 129' HUP
 dd_slot_acquire
 PLAT=$( [ "$MODE" = "editmode" ] && echo EditMode || echo PlayMode ); NOGFX=(); [ "$MODE" = "editmode" ] && NOGFX=(-nographics)
 FARGS=(); [ -n "$FILTER" ] && FARGS=(-testFilter "$FILTER")
