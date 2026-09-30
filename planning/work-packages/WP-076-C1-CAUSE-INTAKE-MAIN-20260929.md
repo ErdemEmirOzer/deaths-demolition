@@ -1,3 +1,5 @@
+> TARİHSEL (C-00 30.09): Codex dönemi kaydı, süreç benimsenmedi.
+
 # WP-076 — C1-CAUSE-INTAKE · main çalışma dalgası 2026-09-29
 
 Sahip: S-03. Tek entegrasyon sahibi: C-00 main.

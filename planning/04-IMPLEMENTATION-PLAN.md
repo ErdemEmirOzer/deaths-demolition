@@ -2392,3 +2392,24 @@ Başlangıç local main `3c0875e1e259cebae34e2cb496d03bb4e8dd9045`, fetch sonras
 - Main index.lock dar C00 bakımı: old0byte inode49785778 no-open-holder + unchangedindex/HEAD kontrollerinden sonra no-overwrite rename ile korunmuştur; originalowner UNKNOWN kalır. [Bakım receipt](coordination/2026-09-29/index-maintenance-receipt.json). Hiç CI lease veya başka süreç değiştirilmedi.
 
 Bu ileriye dönük kayıt önceki dar teslimleri tam paket/oyun/release kabulüne yükseltmez. Her yeni intake source scope/hash/original exit/guard ve bağımsız status exit0 kapısıyla alınır; exact final batch SHA compile/main-ci ayrı kaydedilir.
+
+## 2026-09-30 — C-00 durum özeti (M4-R1)
+
+30.09 C-00: yukarıdaki 29.09 bölümü ve `coordination/2026-09-29/` Codex dönemi kayıtlarıdır; tarihseldir, benimsenmedi; tek C-00 Claude. Codex denetimi: 49 commit, 106 bulgu, kritik 0 → [COMMIT-ESLEME](coordination/2026-09-29/COMMIT-ESLEME.md); düzeltmeler oturum paketlerinde. main `edb4dd69`; ilk tam CI (`710aeaaa`) kırmızı (EM 1516/1518, PM 219/227), kırmızılar sahiplerde. Satırlardaki "dal" = main'e girmedi.
+- **WP-068** (S-09, P8 R1-E): E1 TR metinleri, E2 ödül metni, E3 kapsam (onaylı), E4b eksik sahne, `-ddUiPerf` dalda (`wp-068e-r1e-r2`, `wp-068-s9-rest` 0d2da7a8). TR başlık yüzü: kullanıcı kararı (Shippori OFL türetme), iş S-09'da. RunTreePinActionRegressionTests ×6 kırmızısı S-09 + S-04'te.
+- **WP-069** (S-02, P6 B5): `wp-069-b5-r3` ee7a9bf4 dalda (13 commit, kapı 8 uyumlu): GameFeel 7 m + bölge çarpanlı beklenti, tepeden dikey saçılma 0 (C-00 kararı), fpArms verisi, M-19/M-20/M-21, Tomi 55→80 (kullanıcı kararı).
+- **WP-070** (S-01): kamera modları main'de. WP-070M (LodBiasFactor → 1) worktree'de, commit'lenmedi. FP kollar ar_2/sw_arc/sw_gel/lmg_1/lmg_2/rl_1'de kapalı; (B) omuz konsepti AD'de.
+- **WP-071** (S-06): r2c-binding dalda (39 commit, 5236d842); r4 yeşil olunca tek teslim commit'i `wp-071-r2-delivery` ile girer. Tek dinlenme referansı `wp-071-rest-pose` b33f1317, fpArms kapısı `wp-071-fparms-gate3` 49792d17. Kalabalik40 GC bisect'i sürüyor.
+- **WP-071 / TP Special:** TP Special aileleri main'de varsayılan KAPALI (b9eb99fd); açma kararı C-00 (M-52).
+- **WP-072** (S-08, P13 B7): kuş zinciri + aynı take A/B dalda (`wp-072-b7-r3` 5dfb995d, Audio EM 26/26). Render ve A/B kiti sırada.
+- **WP-073** (S-07): B7 main'de (c580dc63, DEC-103/104). B3 düzeltmeleri dalda (`wp-073-b3-launcher-r2` f7dadd41): capture ajanı dev-only, scorch α 0,40, Sinematik scorch 20 s, uçan roket part_rocket. Patlama ışığı gölgesi A/B ölçümü bekliyor.
+- **WP-074** (S-05, P10 B9): B6 göz hizası taraması HOLE 0; B7 v2 LOD sözleşmesi onaylı. Sahne builder çıktısıyla eşleşmiyor → tam Build + bake, S-03 kapı ölçümünden sonra (Y7); ardından S-08 re-bake.
+- **WP-075** (S-05, P11 C8): Sinematik ek ışık gölgesi dalda (`wp-075-cine-addl-shadows` 1bdf9bb3). Gök panoraması kullanıcı 30.09'da teyit etti (DEC satırını S-05 yazar); AD turu açık.
+- **WP-076** (S-03, P12 B9): innerCap vanası + set ölçümü dalda (`wp-076-b9-coverage-r2` c3c71eb4, EM 27/27). Kapı seti 3 (%6,66) korunur, nihai ölçüm Y7 sonrası; K10 ≤0,45.
+- **WP-077** (S-04, P7 B5): Python ağaç modeli 320/320 + KARAR-P1-P5 dalda (`wp-077-b5-pin-sim` 5c4d6b49); NodeCardTests düzeltmesi `-r2` 27673e49. P1/P2/P4/P5/S1/Mıknatıs kararları kullanıcıdan alındı; DEC satırları sahiplerde.
+- **WP-078** (S-10, P14): A0–A8 v2 planı dalda (`wp-078-accept-plan-r2` e2450f5f). K kararları C-00 dosyasında (K3: TP/FP kararlılığı R1'de rapor). Kabul koşuları P1–P13 bittikten sonra, tek commit üzerinde.
+- **WP-079** (S-01, P9): F (guard + test.sh revert), H (app manifest) ve G'nin K7/argv/M-08+K-02/Y1 dilimleri main'de. Sırada Y2 (rc.sh guard'ı), G4 guard restore-first (Q1–Q10) ve ci-owners.
+- **WP-080** (C-00): portfolyo belgeleri R1 (b99c3a54) + 080B tools README (0af8269a) main'de; R1 kapanışında tazelenir.
+- **AP-021** (P-07): 8 klasiğin sight_ads'ı yeniden kuruluyor; smg_2 ADS arka kapak kararı H. rl_1 Muzzle soketi tüp ağzında (z≈0,4455) → S-02/S-07.
+- **AP-022** (P-06, kritik yol): player_base v003 onaylı (kol iskelete hizalı + FP eli aşılanır). fparms v3 kısa setler S-06'da; FP kesik uç için (B) omuz konsepti AD'de; ≈96/237 klip.
+- **AP-023** (P-05): v015 (manifest 133d4b48) ve v016 (M-41 mask round-trip) S-05'in içe alımında.

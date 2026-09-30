@@ -1,3 +1,5 @@
+> TARİHSEL (C-00 30.09): Codex dönemi kaydı, süreç benimsenmedi.
+
 # Deaths Demolition — main koordinasyon kaydı
 
 Güncelleme: 29.09.2026, ilk hizalama ve dispatch dalgası. Tek C-00: main `01a0eb42-07c6-7e42-b18b-3c8005556f83`.

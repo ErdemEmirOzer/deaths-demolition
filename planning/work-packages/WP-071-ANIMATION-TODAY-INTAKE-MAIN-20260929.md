@@ -1,3 +1,5 @@
+> TARİHSEL (C-00 30.09): Codex dönemi kaydı, süreç benimsenmedi.
+
 # WP-071 — ANIMATION-TODAY-INTAKE · main çalışma dalgası 2026-09-29
 
 Sahip: S-06. Tek entegrasyon sahibi: C-00 main.

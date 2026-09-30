@@ -1,3 +1,5 @@
+> TARİHSEL (C-00 30.09): Codex dönemi kaydı, süreç benimsenmedi.
+
 # WP-073 — LAUNCHER-B3 · main çalışma dalgası 2026-09-29
 
 Sahip: S-07. Tek entegrasyon sahibi: C-00 main.

@@ -1,3 +1,5 @@
+> TARİHSEL (C-00 30.09): Codex dönemi kaydı, süreç benimsenmedi.
+
 # WP-075 — TODAY-SKY-INTAKE · main çalışma dalgası 2026-09-29
 
 Sahip: S-05. Tek entegrasyon sahibi: C-00 main.
