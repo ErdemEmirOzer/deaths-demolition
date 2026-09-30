@@ -240,6 +240,12 @@ namespace DD.Prototype.UI
             base.OnPointerExit(eventData);
         }
 
+        /// <summary>
+        /// M-34: called when a press reaches the control while it is not interactable, after the Denied cue - a screen
+        /// says WHY there (the tree's PIN: "this round's pin is used"). The control stays dead; no second cue.
+        /// </summary>
+        public System.Action DeniedPress;
+
         private void Activate()
         {
             if (!IsActive())
@@ -253,6 +259,7 @@ namespace DD.Prototype.UI
                 // deliberately dead, but silence reads as a dropped input rather than as a
                 // refusal. This is the interface's Denied cue.
                 UiSound.Play(UiSoundKind.Denied);
+                DeniedPress?.Invoke();
                 return;
             }
 

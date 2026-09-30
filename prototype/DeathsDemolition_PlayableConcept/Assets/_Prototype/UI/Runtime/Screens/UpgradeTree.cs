@@ -410,6 +410,7 @@ namespace DD.Prototype.UI
 
             _dActions = UiFactory.NewRect("Actions", _dContent);
             _pin = UiFactory.Button("Pin", _dActions, UiStrings.Get("tree.action.pin", "PIN"), UiButtonVariant.Secondary, OnPin);
+            _pin.DeniedPress = OnPinDenied;   // M-34: a refused PIN says why
             PlaceAnchored((RectTransform)_pin.transform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), Vector2.zero, new Vector2(150f, UiTokens.TargetPreferred));
             _reforge = UiFactory.Button("Reforge", _dActions, UiStrings.Get("tree.action.reforge", "REFORGE"), UiButtonVariant.Secondary, OnReforge);
             PlaceAnchored((RectTransform)_reforge.transform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), Vector2.zero, new Vector2(204f, UiTokens.TargetPreferred));
@@ -1798,7 +1799,7 @@ namespace DD.Prototype.UI
         {
             if (key == KeyCode.Q) SetLane(RunTreeLane.Weapon, true);
             else if (key == KeyCode.E) SetLane(RunTreeLane.Body, true);
-            else if (key == KeyCode.P) OnPin();
+            else if (key == KeyCode.P) PinOnly();   // M-34: P only ever PINs
         }
 
         /// <summary>Shows a lane (the tabs, Q / E, tests).</summary>
@@ -1865,13 +1866,13 @@ namespace DD.Prototype.UI
             }
         }
 
-        /// <summary>Right-click pins (PD §5.5).</summary>
+        /// <summary>Right-click pins (PD §5.5) - and only pins (M-34): on the pinned node it does nothing.</summary>
         public void PinSlot(int slot)
         {
             if (_views[slot].Index >= 0)
             {
                 FocusNode(_views[slot].Index);
-                OnPin();
+                PinOnly();
             }
         }
 
@@ -1961,9 +1962,51 @@ namespace DD.Prototype.UI
             }
 
             _pin.SetText(unpin ? UiStrings.Get("tree.action.unpin", "UNPIN") : UiStrings.Get("tree.action.pin", "PIN"));
+            // M-34: UNPIN is confirmed by holding the visible control (a stray press no longer spends the round's pin);
+            // PIN stays a press.
+            if (unpin)
+            {
+                _pin.ConfigureHold(UiMotionTokens.HoldConfirm);
+            }
+            else
+            {
+                _pin.ClearHold();
+            }
+
             _pin.SetInteractable(allowed);
         }
 
+        /// <summary>M-34: the round's pin is spent and the focused node is not the pin - a PIN try is refused for that reason.</summary>
+        private bool PinUsedRefuses()
+        {
+            if (_shop == null || !_shop.IsOpen || _shop.PinChangesThisRound < 1 || _focus < 0 || _focus >= _snap.Count)
+            {
+                return false;
+            }
+
+            string nodeId = _snap.Nodes[_focus].NodeId;
+            int liveIndex = string.IsNullOrEmpty(nodeId) ? -1 : _shop.Tree.Graph.IndexOf(nodeId);
+            return liveIndex >= 0 && liveIndex != _shop.Tree.PinnedIndex;
+        }
+
+        /// <summary>The disabled PIN pressed (mouse, Submit): the kit already played Denied - the nudge and the reason follow.</summary>
+        private void OnPinDenied()
+        {
+            if (!PinUsedRefuses())
+            {
+                return;
+            }
+
+            NodeView view = ViewOf(_focus);
+            if (view != null)
+            {
+                UiPresets.DeniedNudge(view.Seal);
+            }
+
+            Refused?.Invoke(UiStrings.Get("tree.pin.used", "This round's pin is used. Nothing changed."));
+        }
+
+        /// <summary>The visible control: PIN on a press, UNPIN on a completed hold (M-34).</summary>
         public void OnPin()
         {
             if (_shop == null || _focus < 0 || _focus >= _snap.Count || _pin == null)
@@ -1974,14 +2017,68 @@ namespace DD.Prototype.UI
             UpdatePinControl(_focus, out string action, out bool unpin);
             LinkNavigation();
             if (!_pin.IsActive() || !_pin.IsInteractable()) return;
-            if (!_shop.SetPin(action))
+            if (unpin)
             {
-                Report(RunTreeCommandResult.NotAvailable, ViewOf(_focus), false);
+                if (!_shop.SetPin(null))
+                {
+                    Report(RunTreeCommandResult.NotAvailable, ViewOf(_focus), false);
+                    return;
+                }
+
+                UiEvents.Raise(UiEvent.ChoiceSelected, "TreeUnpin");
+                Changed?.Invoke();
                 return;
             }
 
-            UiEvents.Raise(UiEvent.ChoiceSelected, unpin ? "TreeUnpin" : "TreePin");
-            Changed?.Invoke();
+            PinOrRefuse(action);
+        }
+
+        /// <summary>M-34: P and right-click only ever PIN; on the pinned node they do nothing (UNPIN is the control's hold).</summary>
+        private void PinOnly()
+        {
+            if (_shop == null || _focus < 0 || _focus >= _snap.Count || _pin == null)
+            {
+                return;
+            }
+
+            UpdatePinControl(_focus, out string action, out bool unpin);
+            LinkNavigation();
+            if (unpin || !_pin.IsActive()) return;
+            if (!_pin.IsInteractable())
+            {
+                // Keyboard / right-click on a refused PIN: the same answer as the button, never a silent drop.
+                if (PinUsedRefuses())
+                {
+                    UiSound.Play(UiSoundKind.Denied);
+                    OnPinDenied();
+                }
+
+                return;
+            }
+
+            PinOrRefuse(action);
+        }
+
+        private void PinOrRefuse(string action)
+        {
+            if (_shop.SetPin(action))
+            {
+                UiEvents.Raise(UiEvent.ChoiceSelected, "TreePin");
+                Changed?.Invoke();
+                return;
+            }
+
+            // Refused: the Denied cue, the seal's nudge and the reason in the footer (M-34).
+            NodeView view = ViewOf(_focus);
+            UiSound.Play(UiSoundKind.Denied);
+            if (view != null)
+            {
+                UiPresets.DeniedNudge(view.Seal);
+            }
+
+            Refused?.Invoke(_shop.PinChangesThisRound >= 1
+                ? UiStrings.Get("tree.pin.used", "This round's pin is set. Nothing changed.")
+                : UiStrings.Get("tree.pin.unavailable", "This node can't be pinned. Nothing changed."));
         }
 
         private void OnReforge()

@@ -3770,5 +3770,13 @@
   "tree.state.hearth_round": {
     "en": "THIS ROUND {value}/{max}",
     "tr": "BU ROUND {value}/{max}"
+  },
+  "tree.pin.used": {
+    "en": "This round's pin is used. Nothing changed.",
+    "tr": "Bu round işaret hakkı kullanıldı. Hiçbir şey değişmedi."
+  },
+  "tree.pin.unavailable": {
+    "en": "This node can't be pinned. Nothing changed.",
+    "tr": "Bu düğüm işaretlenemez. Hiçbir şey değişmedi."
   }
 }

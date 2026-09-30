@@ -24,6 +24,7 @@ namespace DD.Prototype.Tests.PlayMode
         private const int RunId = 181;
         private readonly List<GameObject> _owned = new List<GameObject>();
         private readonly List<string> _choices = new List<string>();
+        private readonly List<string> _refusals = new List<string>();
         private PrototypeConfig _config;
         private GoldWallet _wallet;
         private WeaponModifierState _build;
@@ -68,6 +69,7 @@ namespace DD.Prototype.Tests.PlayMode
             if (!hadEventSystem) _owned.Add(_events.gameObject);
             if (Object.FindObjectsOfType<Camera>().Length == 0) _owned.Add(UiFactory.EnsureUiCamera().gameObject);
             _choices.Clear();
+            _refusals.Clear();
             _offerEvents = _changed = 0;
             UiEvents.Raised += Choice;
         }
@@ -104,6 +106,7 @@ namespace DD.Prototype.Tests.PlayMode
             _footer = UiFactory.Button("OwnedFooter", canvas.transform, UiStrings.Get("shop.continue", "CONTINUE"), UiButtonVariant.Secondary, () => { });
             _panel.ExitDown = _footer;
             _panel.Changed = () => _changed++;
+            _panel.Refused = message => _refusals.Add(message);
             _shop.OfferChanged += Refresh;
             _shop.OfferChanged += OfferChanged;
             Refresh();
@@ -150,6 +153,20 @@ namespace DD.Prototype.Tests.PlayMode
             string text = UiSettings.Language == UiStrings.Turkish
                 ? (unpin ? "BIRAK" : "İŞARETLE") : (unpin ? "UNPIN" : "PIN");
             Assert.AreEqual(text, _panel.PinButton.LabelText.text);
+        }
+        /// <summary>M-34: UNPIN is the visible control's completed hold (the kit's test hooks drive the hold without a frame loop).</summary>
+        private void HoldUnpin()
+        {
+            UiButton pin = _panel.PinButton;
+            Assert.IsTrue(pin.IsHoldButton, "UNPIN is a hold, a single press never spends it (M-34).");
+            pin.BeginHoldForTests(0f);
+            Assert.AreEqual(UiHoldState.Completed, pin.TickHoldForTests(UiMotionTokens.HoldConfirm + 0.01f, true));
+        }
+        /// <summary>M-34: a refused PIN says why - the round's pin is used.</summary>
+        private void RefusedAsUsed(int count)
+        {
+            Assert.AreEqual(count, _refusals.Count, "each refused PIN reports once");
+            Assert.AreEqual(UiStrings.Get("tree.pin.used"), _refusals[_refusals.Count - 1]);
         }
         private void Submit(UiButton button)
         {
@@ -199,15 +216,19 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsFalse(_panel.BuyLive);
             before = Capture();
             MoveRight(_footer); // Terminal capstone skips the quota-disabled PIN.
-            Submit(_panel.PinButton); // Delivered to the disabled handler to check activation refusal.
+            Submit(_panel.PinButton); // Delivered to the disabled handler: Denied, and M-34's reason.
             RightClick(cap);
             _panel.HandleKey(KeyCode.P);
             Unchanged(before);
+            RefusedAsUsed(3); // M-34: button, right-click and P each report the used pin - none is swallowed silently
 
             Focus("ks_reload");
             PinControl(true, true);
             before = Capture();
-            Submit(_panel.PinButton);
+            RightClick(_panel.ButtonOf(Index("ks_reload")));
+            _panel.HandleKey(KeyCode.P);
+            Unchanged(before); // M-34: right-click and P never UNPIN
+            HoldUnpin();
             Accepted(before, -1, 1, "TreeUnpin");
             Focus("cap_ar_1");
             PinControl(false, false);
@@ -222,6 +243,7 @@ namespace DD.Prototype.Tests.PlayMode
             before = Capture();
             _panel.HandleKey(KeyCode.P);
             Unchanged(before);
+            RefusedAsUsed(4);
             _shop.DiscardOffer();
             Open(1);
             Focus("cap_ar_1");
@@ -251,6 +273,8 @@ namespace DD.Prototype.Tests.PlayMode
             PinControl(true, true);
             State before = Capture();
             RightClick(_panel.ButtonOf(Index("fork_ar_1_y")));
+            Unchanged(before); // M-34: right-click never UNPINs
+            HoldUnpin();
             Accepted(before, -1, 1, "TreeUnpin");
 
             Open(2);
@@ -265,6 +289,9 @@ namespace DD.Prototype.Tests.PlayMode
             finally { _shop.OfferChanged += Refresh; }
             before = Capture();
             _panel.HandleKey(KeyCode.P);
+            Unchanged(before); // M-34: P never UNPINs - even though the live pin (not the stale snapshot) says UNPIN
+            PinControl(true, true);
+            HoldUnpin();
             Accepted(before, -1, 1, "TreeUnpin"); // A snapshot-based command would incorrectly send same-ID and leave the pin.
             PinControl(false, false);
         }
@@ -307,7 +334,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsTrue(_shop.CanSetPin(null)); // Existing pin is clearable even with purchase quota used.
             PinControl(true, true);
             before = Capture();
-            Submit(_panel.PinButton);
+            HoldUnpin();
             Accepted(before, -1, 0, "TreeUnpin");
             Focus("cap_ar_1");
             Assert.IsTrue(_shop.CanSetPin("cap_ar_1"));
@@ -391,7 +418,7 @@ namespace DD.Prototype.Tests.PlayMode
             yield return null; // No second Refresh: the local navigation and eligibility survive the block.
             MoveRight(_panel.PinButton);
             before = Capture();
-            Submit(_panel.PinButton);
+            HoldUnpin();
             Accepted(before, -1, 1, "TreeUnpin");
         }
 

@@ -187,6 +187,37 @@ namespace DD.Prototype.UI
             }
         }
 
+        /// <summary>
+        /// Back to a plain press - for a control whose action changes with its state (M-34: the tree's PIN is a press,
+        /// the same control's UNPIN a hold). A running hold stops without acting.
+        /// </summary>
+        public void ClearHold()
+        {
+            if (_holdSeconds <= 0f)
+            {
+                return;
+            }
+
+            if (_holdRoutine != null)
+            {
+                StopCoroutine(_holdRoutine);
+                _holdRoutine = null;
+            }
+
+            _hold.State = UiHoldState.Idle;
+            _holdSeconds = 0f;
+            if (_holdFill != null)
+            {
+                UiMotion.KillTarget(_holdFill, false);
+                _holdFill.fillAmount = 0f;
+            }
+
+            if (_holdEdge != null)
+            {
+                _holdEdge.gameObject.SetActive(false);
+            }
+        }
+
         /// <summary>Show a hold at <paramref name="progress"/> without running one (kit sheet, captures).</summary>
         public void SetHoldPreview(float progress)
         {
