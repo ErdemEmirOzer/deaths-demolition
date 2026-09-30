@@ -45,7 +45,7 @@ namespace DD.Prototype.Rounds
 
         /// <summary>
         /// cap.ar_2 Third Eye: ar_2 rounds fired closer together than this belong to one burst (burst interval 0.05 s,
-        /// burst delay 0.26 s ÷ fire rate). The runtime does not publish the shot-in-burst index, so the round is counted here.
+        /// burst delay 0.26 s ÷ fire rate). Fallback: when the runtime publishes no BurstRound (ShotRequest.BurstRound, WP-069).
         /// </summary>
         public const float BurstGapSeconds = 0.15f;
 
@@ -131,7 +131,7 @@ namespace DD.Prototype.Rounds
                     return;
 
                 case ClassicWeaponId.Ar2:
-                    if (RunWeapon(v, p.WeaponId, ClassicWeaponId.Ar2, "ar_2")) p.TreeOrdinal = NextBurstOrdinal(Time.time);
+                    if (RunWeapon(v, p.WeaponId, ClassicWeaponId.Ar2, "ar_2")) p.TreeOrdinal = p.Shot.BurstRound > 0 ? p.Shot.BurstRound : NextBurstOrdinal(Time.time);   // WP-069: the runtime's round (S-04 30.09)
                     return;
 
                 case ClassicWeaponId.Sg2:

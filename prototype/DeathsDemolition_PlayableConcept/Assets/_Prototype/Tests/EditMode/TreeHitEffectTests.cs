@@ -155,6 +155,32 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsTrue(RunTreeHooks.RoninMarkRound(ClassicWeaponId.AssaultRifle, 5));
         }
 
+        /// <summary>
+        /// WP-069 (C-00 30.09, DEC-112): at a high fire rate (FR3 + ks_firerate + fork X) the bursts sit closer than
+        /// BurstGapSeconds and the timing guess merged them; the runtime's BurstRound marks every burst's 3rd round. Nine
+        /// spawns in one frame (zero gap): 1-2-3 ×3. Without a BurstRound the timing guess still answers.
+        /// </summary>
+        [Test]
+        public void Bitirici_ar_2_YuksekAtisHizinda_HerSerininUcuncuMermisi()
+        {
+            Sahip(ClassicWeaponId.Ar2, "cap_ar_2");
+            var sira = new System.Collections.Generic.List<int>();
+            for (int seri = 0; seri < 3; seri++)
+            {
+                for (int tur = 1; tur <= 3; tur++)
+                {
+                    var p = new ProjectileState { WeaponId = ClassicWeaponId.Ar2, Shot = new ShotRequest { BurstRound = tur } };
+                    RunTreeHooks.OnProjectileSpawned(ref p);
+                    sira.Add(p.TreeOrdinal);
+                }
+            }
+
+            CollectionAssert.AreEqual(new[] { 1, 2, 3, 1, 2, 3, 1, 2, 3 }, sira, "her serinin 3. mermisi");
+            var yedek = new ProjectileState { WeaponId = ClassicWeaponId.Ar2 };
+            RunTreeHooks.OnProjectileSpawned(ref yedek);
+            Assert.Greater(yedek.TreeOrdinal, 0, "BurstRound yok → zaman tahmini (yedek)");
+        }
+
         [Test]
         public void Bitirici_ar_2_DEC112_HerSerininUcuncuMermisiSertVurupZincirler()
         {

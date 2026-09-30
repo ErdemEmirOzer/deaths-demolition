@@ -49,6 +49,12 @@ namespace DD.Prototype.Weapons
         public float TracerWidth;
         public float TracerLifetime;
 
+        /// <summary>
+        /// WP-069 (C-00 30.09, DEC-112): the 1-based round of a burst weapon's burst, 0 when the shot is not part of one — the
+        /// runtime's own index. cap.ar_2 Third Eye reads it at spawn; the timing guess merged bursts at high fire rates.
+        /// </summary>
+        public int BurstRound;
+
         /// <summary>WP-042: where the tracer starts when it differs from the damage ray's origin (the visual muzzle); Origin when unset.</summary>
         public bool HasTracerOrigin;
         public Vector3 TracerOrigin;

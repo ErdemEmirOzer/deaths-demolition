@@ -75,6 +75,27 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(rt.MagazineSize - 3, rt.Ammo, "bir burst üç mermi");
         }
 
+        /// <summary>WP-069 (C-00 30.09, DEC-112): the runtime publishes each shot's round in its burst — 1-2-3 per burst, 0 off a burst weapon.</summary>
+        [Test]
+        public void Burst_BuildShot_SeriIcindeTurSirasi()
+        {
+            ClassicWeaponRuntime rt = Equip(ClassicWeaponId.Ar2);
+            var sira = new System.Collections.Generic.List<int>();
+            for (int seri = 0; seri < 3; seri++)
+            {
+                rt.BeginBurst();
+                for (int guard = 0; rt.BurstActive && guard < 10; guard++)
+                {
+                    sira.Add(rt.BuildShot(Vector3.zero, Vector3.forward).BurstRound);
+                    rt.ConsumeShot();
+                }
+            }
+
+            CollectionAssert.AreEqual(new[] { 1, 2, 3, 1, 2, 3, 1, 2, 3 }, sira);
+            ClassicWeaponRuntime ar1 = Equip(ClassicWeaponId.AssaultRifle);
+            Assert.AreEqual(0, ar1.BuildShot(Vector3.zero, Vector3.forward).BurstRound, "burst olmayan silah 0");
+        }
+
         /// <summary>R1-B W3 (C-00 30.09): a burst cut short (Special in hand, camera blend, death) ends — no shot of it is left to fire later.</summary>
         [Test]
         public void Burst_Iptal_KalanAtislarSonradanAtilmaz()

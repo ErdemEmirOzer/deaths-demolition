@@ -52,6 +52,7 @@ namespace DD.Prototype.Weapons
         private int _reserve;
         private float _floorTimer;
         private int _burstLeft;
+        private int _burstTotal;   // WP-069 DEC-112: the burst's round count at BeginBurst (BurstRound = total − left + 1)
         private float _pressBuffer;
         private bool _focusHeld;
         private float _ads01;
@@ -507,6 +508,7 @@ namespace DD.Prototype.Weapons
             }
 
             _burstLeft = Mathf.Max(1, DD.Prototype.Rounds.RunTreeHooks.BurstCount(Id, d.fire.burstCount));   // + WP-077 fork.ar_2.y
+            _burstTotal = _burstLeft;
         }
 
         /// <summary>
@@ -879,6 +881,9 @@ namespace DD.Prototype.Weapons
                 TracerWidth = multiPellet ? 0.022f : 0.03f,
                 TracerLifetime = multiPellet ? 0.075f : 0.09f
             };
+
+            // WP-069 (C-00 30.09, DEC-112): BuildShot runs before ConsumeShot, so the round in flight is total − left + 1.
+            request.BurstRound = _burstLeft > 0 && _burstTotal >= _burstLeft ? _burstTotal - _burstLeft + 1 : 0;
 
             if (m != null)
             {
