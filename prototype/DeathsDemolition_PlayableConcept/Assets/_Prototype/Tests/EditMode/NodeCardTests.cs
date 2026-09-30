@@ -292,7 +292,24 @@ namespace DD.Prototype.Tests.EditMode
                 _dukkan.Tree.SetPin(I(target));
             }
             else Assert.IsTrue(_dukkan.SetPin(target));
-            if (reason == "owned") Assert.IsTrue(_dukkan.Tree.MarkOwned(I(target)));
+            if (reason == "owned")
+            {
+                // Buying the pinned node clears the pin itself (RunTreeState.MarkOwned, WP-077 B1): no invalid pin is left to
+                // clear, and clearing an empty pin is the no-op of CanSetPin_BosPinClear_SafNoOp (no event, no refund).
+                Assert.IsTrue(_dukkan.Tree.MarkOwned(I(target)));
+                Assert.AreEqual(-1, _dukkan.Tree.PinnedIndex, "satın alınan hedefin pini kendiliğinden kalkar");
+                Assert.IsFalse(_dukkan.Tree.CanPin(I(target), _rank));
+                SafPinSorgusu(target, false);
+                Assert.IsFalse(_dukkan.SetPin(target), "sahip olunan düğüm yeniden pinlenemez");
+                SafPinSorgusu(null, true);
+                int noOp = 0;
+                _dukkan.OfferChanged += () => noOp++;
+                Assert.IsTrue(_dukkan.SetPin(null));
+                Assert.AreEqual(0, noOp, "boş pini temizlemek olay üretmez");
+                Assert.AreEqual(1, _dukkan.PinChangesThisRound, "tur hakkı iade edilmez");
+                SafPinSorgusu("tier_MovementSpeed", false);
+                return;
+            }
             if (reason == "excluded") Assert.IsTrue(_dukkan.Tree.MarkOwned(I("fork_ar_1_x")));
             if (reason == "locked") _dukkan.Tree.TierEligibility = (b, owned) => b == UpgradeBranch.FireRate ? UpgradeEligibility.Locked : UpgradeEligibility.Eligible;
             if (reason == "maxed")
