@@ -70,6 +70,23 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void Results_SeviyeTavani_MaxOkunur_CubukDolu_R1B_P2()
+        {
+            // R1-B P2 (S-04): the report's requirement at the cap is int.MaxValue; the caption never prints it, the bar is full.
+            RunRewardReport.Draft taslak = Taslak(Ozet(), 45, 17, 50, 50);
+            taslak.LevelRequirementAfter = int.MaxValue;
+            taslak.XpIntoLevelAfter = 0;
+            ResultsViewModel vm = ResultsViewModel.From(taslak.Seal(), SilahAdi);
+            Assert.AreEqual(UiStrings.Get("profile.progress.max"), vm.ProgressCaption);
+            Assert.IsFalse(vm.ProgressCaption.Contains(int.MaxValue.ToString()));
+            Assert.AreEqual(1f, vm.ProgressAfter01);
+            Assert.AreEqual(1f, vm.ProgressBefore01);
+
+            vm = ResultsViewModel.From(Rapor(Ozet(), 45, 17), SilahAdi);
+            StringAssert.Contains("40 / 175", vm.ProgressCaption, "below the cap: unchanged");
+        }
+
+        [Test]
         public void ReachedCompletedTotalStandard_Dogru()
         {
             ResultsViewModel vm = ResultsViewModel.From(Rapor(Ozet(), 45, 17), SilahAdi);

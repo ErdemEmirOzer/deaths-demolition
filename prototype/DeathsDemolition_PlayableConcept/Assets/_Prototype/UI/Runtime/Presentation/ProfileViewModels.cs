@@ -13,6 +13,17 @@ namespace DD.Prototype.UI
     /// All of them come from PrototypeConfig via <see cref="ProfileService"/> in the
     /// game; a test hands in its own so the models can be proven without a config.
     /// </summary>
+    /// <summary>
+    /// R1-B P2 (S-04, 30.09): the level cap as the screens read it. ProfileService.LevelRequirement returns int.MaxValue
+    /// at the cap (the same test as ProfileService.IsAtLevelCap), so a progress line would print "0 / 2147483647 XP".
+    /// </summary>
+    public static class UiLevelCap
+    {
+        public static bool IsCap(int requirement) => requirement == int.MaxValue;
+
+        public static string Caption() => UiStrings.Get("profile.progress.max", "Max level reached");
+    }
+
     public interface IProfileLookup
     {
         int LevelRequirement(int level);
@@ -239,12 +250,22 @@ namespace DD.Prototype.UI
                 return model;
             }
 
-            int requirement = Mathf.Max(1, lookup.LevelRequirement(profile.ProfileLevel));
+            int requirement = lookup.LevelRequirement(profile.ProfileLevel);
 
             model.LevelText = UiStrings.Format("profile.level", "value", profile.ProfileLevel.ToString(), "LEVEL {value}");
-            model.Progress01 = Mathf.Clamp01(profile.XpIntoLevel / (float)requirement);
-            model.ProgressCaption = UiStrings.Format("profile.progress", "value", profile.XpIntoLevel + " / " + requirement,
-                "next", (profile.ProfileLevel + 1).ToString(), "{value} XP towards level {next}");
+            if (UiLevelCap.IsCap(requirement))
+            {
+                // R1-B P2 (S-04): at the cap the requirement is int.MaxValue - never print "0 / 2147483647 XP".
+                model.Progress01 = 1f;
+                model.ProgressCaption = UiLevelCap.Caption();
+            }
+            else
+            {
+                requirement = Mathf.Max(1, requirement);
+                model.Progress01 = Mathf.Clamp01(profile.XpIntoLevel / (float)requirement);
+                model.ProgressCaption = UiStrings.Format("profile.progress", "value", profile.XpIntoLevel + " / " + requirement,
+                    "next", (profile.ProfileLevel + 1).ToString(), "{value} XP towards level {next}");
+            }
 
             model.Headline.Add(new UiStatLine(
                 UiStrings.Get("stats.highest_round", "Highest Round"), profile.HighestRound > 0 ? profile.HighestRound.ToString() : "—"));

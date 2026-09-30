@@ -391,8 +391,9 @@ namespace DD.Prototype.UI
                 ? UiStrings.Get("pause.run.build_none", "no upgrades")
                 : UiFactory.Clip(summary.BuildDescription, BuildMaxCharacters);
             model.AshEarned = Mathf.Max(0, report.AshEarned);
+            bool atCap = UiLevelCap.IsCap(report.LevelRequirementAfter);   // R1-B P2: the bar is full at the cap, not 40 / int.MaxValue
             model.ProgressBefore01 = report.LevelBefore == report.LevelAfter && report.LevelRequirementAfter > 0
-                ? Mathf.Clamp01(report.XpIntoLevelBefore / (float)report.LevelRequirementAfter)
+                ? (atCap ? 1f : Mathf.Clamp01(report.XpIntoLevelBefore / (float)report.LevelRequirementAfter))
                 : -1f;
 
             // ---- header ------------------------------------------------------
@@ -448,14 +449,16 @@ namespace DD.Prototype.UI
             // read as "unchanged". The model repeats nothing and recomputes nothing.
             model.LeveledUp = report.LeveledUp;
             model.LevelsGained = report.LevelsGained;
-            model.ProgressAfter01 = report.ProgressAfter01;
+            model.ProgressAfter01 = atCap ? 1f : report.ProgressAfter01;
 
             model.LevelLine = report.LeveledUp
                 ? UiStrings.Format("results.level_line", "from", report.LevelBefore.ToString(), "to", report.LevelAfter.ToString(), "LEVEL {from}  →  LEVEL {to}")
                 : UiStrings.Format("profile.level", "value", report.LevelAfter.ToString(), "LEVEL {value}");
 
-            model.ProgressCaption = UiStrings.Format("profile.progress", "value", report.XpIntoLevelAfter + " / " + report.LevelRequirementAfter,
-                "next", (report.LevelAfter + 1).ToString(), "{value} XP towards level {next}");
+            model.ProgressCaption = atCap
+                ? UiLevelCap.Caption()
+                : UiStrings.Format("profile.progress", "value", report.XpIntoLevelAfter + " / " + report.LevelRequirementAfter,
+                    "next", (report.LevelAfter + 1).ToString(), "{value} XP towards level {next}");
             model.NextUnlockLine = NextUnlockFor(report.LevelAfter, ProfileServiceLookup.Instance);
 
             model.LevelUpChip = report.LeveledUp

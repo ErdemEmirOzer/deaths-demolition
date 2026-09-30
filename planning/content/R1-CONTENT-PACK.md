@@ -1168,3 +1168,11 @@ DEC-107 (user 30.09): R10–R13 allow three picks. The round-end intro now follo
 | `shop.intro.late` | Late-round bonus: buy up to {count} upgrades this round, or reroll the offer once before the first. | Geç round bonusu: bu round en çok {count} geliştirme al ya da ilkinden önce teklifi bir kez reroll et. |
 | `shop.intro.late_last` | Last late-round bonus: buy up to {count} upgrades this round. Next round is back to {normal} picks. | Son geç round bonusu: bu round en çok {count} geliştirme al. Sonraki round yine {normal} seçim. |
 | `shop.intro.late_next` | Buy up to {count} upgrades this round, or reroll the offer once before the first. Next round brings the late-round bonus: {bonus} picks. | Bu round en çok {count} geliştirme al ya da ilkinden önce teklifi bir kez reroll et. Sonraki round geç round bonusu: {bonus} seçim. |
+
+## S-09 · R1-B P2 level cap (C-00 30.09)
+
+At the level cap the requirement is int.MaxValue (S-04, R1-B P2), so the progress caption printed "0 / 2147483647 XP". The Profile and Results captions read `profile.progress.max` there and the bar is full; the level line is unchanged.
+
+| Key | en | tr |
+|---|---|---|
+| `profile.progress.max` | Max level reached | En üst seviyeye ulaşıldı |

@@ -23,7 +23,8 @@ namespace DD.Prototype.Tests.EditMode
             public List<AchievementSettings> Tanimlar = new List<AchievementSettings>();
             public bool Bozuk;
 
-            public int LevelRequirement(int level) => 100 + 75 * (Mathf.Max(1, level) - 1);
+            public int Tavan;   // R1-B P2: > 0 → the cap level, whose requirement is int.MaxValue (ProfileService's rule)
+            public int LevelRequirement(int level) => Tavan > 0 && level >= Tavan ? int.MaxValue : 100 + 75 * (Mathf.Max(1, level) - 1);
             public string WeaponDisplayName(ClassicWeaponId id) => "W-" + id;
             // WP-069 B2: the v3 weapons (3..9) are opened by the DEC-095 meta tree, never by the profile ladder.
             public int UnlockLevelFor(ClassicWeaponId id) => id == ClassicWeaponId.AutoSmg ? 2 : id == ClassicWeaponId.CombatShotgun ? 3
@@ -151,6 +152,29 @@ namespace DD.Prototype.Tests.EditMode
 
             Assert.AreEqual("1 of 2 achievements earned", vm.AchievementSummary);
             Assert.AreEqual(string.Empty, vm.Notice);
+        }
+
+        [Test]
+        public void Profil_SeviyeTavani_MaxOkunur_CubukDolu_R1B_P2()
+        {
+            // R1-B P2 (S-04): at the cap the requirement is int.MaxValue; the caption never prints it.
+            try
+            {
+                foreach (string language in new[] { UiStrings.English, UiStrings.Turkish })
+                {
+                    UiStrings.Language = language;
+                    ProfileViewModel vm = ProfileViewModel.From(Profil(), new SahteLookup { Tavan = 2 });
+                    Assert.AreEqual(UiStrings.Get("profile.progress.max"), vm.ProgressCaption, language);
+                    Assert.IsFalse(vm.ProgressCaption.Contains(int.MaxValue.ToString()), language);
+                    Assert.AreEqual(1f, vm.Progress01, language);
+                }
+            }
+            finally
+            {
+                UiStrings.Language = UiStrings.English;
+            }
+
+            Assert.AreEqual("40 / 175 XP towards level 3", ProfileViewModel.From(Profil(), new SahteLookup()).ProgressCaption, "below the cap: unchanged");
         }
 
         [Test]

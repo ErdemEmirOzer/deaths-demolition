@@ -832,9 +832,10 @@ namespace DD.Prototype.UI
         private static string DescribeProfile()
         {
             ProfileData profile = ProfileService.Current;
+            int requirement = ProfileService.LevelRequirement(profile.ProfileLevel);
             return "L" + profile.ProfileLevel +
-                   "  " + profile.XpIntoLevel + "/" + ProfileService.LevelRequirement(profile.ProfileLevel) +
-                   " XP  ·  " + profile.TotalKills + " kills  ·  best round " + profile.HighestRound +
+                   "  " + (UiLevelCap.IsCap(requirement) ? "MAX" : profile.XpIntoLevel + "/" + requirement + " XP") +
+                   "  ·  " + profile.TotalKills + " kills  ·  best round " + profile.HighestRound +
                    "  ·  v" + profile.SaveVersion + (ProfileStore.SaveLocked ? "  ·  READ-ONLY" : string.Empty) +
                    "  ·  ord " + profile.LastAppliedCompletionOrdinal + (CompletionAuthority.HasLiveCapability ? " live " + CompletionAuthority.LiveOrdinal : string.Empty) +
                    "  ·  commits " + ProfileRunCommitter.Commits + "/" + ProfileRunCommitter.EventsSeen + "  ·  " + ProfileService.LastVerdict;
