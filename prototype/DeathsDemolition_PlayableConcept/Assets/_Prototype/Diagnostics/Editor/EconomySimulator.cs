@@ -313,6 +313,9 @@ namespace DD.Prototype.Diagnostics.EditorTools
             return Mathf.Max(1, Mathf.Clamp(cost, min, max));
         }
 
+        // C-00 30.09 (top-down head decision B): these are the EXPLOSION region shares reused as a shortcut, not a measured
+        // ray-hit split — they cannot back a decision. The head share of the hitscan ray lives in tools/balance/k10b_audit.py
+        // by camera mode (TopDown from S-02's pose measurement, else 0; TP/FP 0.15 until telemetry).
         private const float HeadShare = 0.25f, UpperShare = 0.45f, LowerShare = 0.30f;   // MODEL: where the player's shots land (explosion shares reused)
 
         private static WeaponTrack SimulateWeapon(ClassicWeaponDefinition d, PrototypeConfig config, WeaponUpgradeTuning tuning,
