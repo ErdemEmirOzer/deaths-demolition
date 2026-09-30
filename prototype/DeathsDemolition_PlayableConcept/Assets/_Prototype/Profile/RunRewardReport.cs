@@ -114,8 +114,8 @@ namespace DD.Prototype.Profile
 
             [PrototypeOnly(PendingDecisions.ProfileXp,
                 "Level-1 requirement used as the empty-report default. " +
-                "Request value: level requirement = 100 + 75 * (Level - 1).")]
-            public int LevelRequirementAfter = 100;
+                "DEC-098 K4 curve: level requirement = 100·L + 10·L² → 110 at L1 (R1-B P3; was the old 100 + 75·(L − 1)).")]
+            public int LevelRequirementAfter = 110;
             /// <summary>WP-077: Ash granted by this transaction (0 unless Applied).</summary>
             public int AshEarned;
 

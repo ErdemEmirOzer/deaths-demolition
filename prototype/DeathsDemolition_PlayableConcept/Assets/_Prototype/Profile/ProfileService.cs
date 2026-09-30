@@ -391,16 +391,20 @@ namespace DD.Prototype.Profile
             return Mathf.Max(1, required);
         }
 
-        /// <summary>XP still needed for the next level.</summary>
+        /// <summary>R1-B P2: true at the level cap (the requirement is int.MaxValue) — the UI shows "MAX", not "/2147483647 XP".</summary>
+        public static bool IsAtLevelCap(int level) => LevelRequirement(level) == int.MaxValue;
+
+        /// <summary>XP still needed for the next level (0 at the cap).</summary>
         public static int XpToNextLevel
         {
-            get { return Mathf.Max(0, LevelRequirement(Current.ProfileLevel) - Current.XpIntoLevel); }
+            get { return IsAtLevelCap(Current.ProfileLevel) ? 0 : Mathf.Max(0, LevelRequirement(Current.ProfileLevel) - Current.XpIntoLevel); }
         }
 
         public static float LevelProgress01
         {
             get
             {
+                if (IsAtLevelCap(Current.ProfileLevel)) return 1f;
                 int required = LevelRequirement(Current.ProfileLevel);
                 return Mathf.Clamp01(Current.XpIntoLevel / (float)required);
             }

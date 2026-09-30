@@ -109,24 +109,38 @@ namespace DD.Prototype.Profile
             return ProfileLoadStatus.Ok;
         }
 
+        /// <summary>DEC-098: Kül = XP / 30 (the fallback when no config is readable).</summary>
+        public const int FallbackXpPerAsh = 30;
+
         /// <summary>WP-077 v5 back-grant: Ash for the XP and the achievements a v4 profile already earned.</summary>
         public static int BackGrantAsh(ProfileData data)
         {
             if (data == null) return 0;
-            DD.Prototype.Core.Config.PrototypeConfig config = DD.Prototype.Core.Config.PrototypeConfig.Active;
-            DD.Prototype.Core.Config.ProgressionConfigSection prog = config != null ? config.Progression : null;
-            int perAsh = prog != null ? System.Math.Max(1, prog.XpPerAsh) : 40;
-            long ash = System.Math.Max(0, data.TotalXpEarned) / perAsh;
-            if (data.Achievements != null)
+            // R1-B P4 (C-00 30.09): Parse/Migrate must not throw (ProfileStore.ReadFile never throws). A config or catalog
+            // failure falls back to the XP-only grant at the DEC-098 rate (Kül = XP / 30), never to an exception.
+            long xpOnly = System.Math.Max(0, data.TotalXpEarned) / FallbackXpPerAsh;
+            try
             {
-                for (int i = 0; i < data.Achievements.Count; i++)
+                DD.Prototype.Core.Config.PrototypeConfig config = DD.Prototype.Core.Config.PrototypeConfig.Active;
+                DD.Prototype.Core.Config.ProgressionConfigSection prog = config != null ? config.Progression : null;
+                int perAsh = prog != null ? System.Math.Max(1, prog.XpPerAsh) : FallbackXpPerAsh;
+                long ash = System.Math.Max(0, data.TotalXpEarned) / perAsh;
+                if (data.Achievements != null)
                 {
-                    DD.Prototype.Achievements.AchievementDefinition d = DD.Prototype.Achievements.AchievementCatalog.Find(data.Achievements[i]);
-                    if (d != null && prog != null) ash += prog.AshForRarity((int)d.Rarity);
+                    for (int i = 0; i < data.Achievements.Count; i++)
+                    {
+                        DD.Prototype.Achievements.AchievementDefinition d = DD.Prototype.Achievements.AchievementCatalog.Find(data.Achievements[i]);
+                        if (d != null && prog != null) ash += prog.AshForRarity((int)d.Rarity);
+                    }
                 }
-            }
 
-            return (int)System.Math.Min(ash, int.MaxValue);
+                return (int)System.Math.Min(ash, int.MaxValue);
+            }
+            catch (System.Exception e)
+            {
+                UnityEngine.Debug.LogWarning("[ProfileMigration] Ash back-grant fell back to XP only: " + e.Message);
+                return (int)System.Math.Min(xpOnly, int.MaxValue);
+            }
         }
 
         /// <summary>True when the text still carries the retired v2 ring (reported at migration, never used).</summary>
@@ -187,10 +201,14 @@ namespace DD.Prototype.Profile
                 data.AshEarnedTotal = ash;
                 data.AshSpentTotal = 0;
                 data.AshBalance = ash;
-                if (data.MetaNodes == null) data.MetaNodes = new System.Collections.Generic.List<string>();
-                if (data.AshMilestones == null) data.AshMilestones = new System.Collections.Generic.List<string>();
-                if (data.WeaponMastery == null) data.WeaponMastery = new System.Collections.Generic.List<WeaponMasteryEntry>();
-                data.MetaPinnedNode = data.MetaPinnedNode ?? string.Empty;
+                // R1-B P6 (C-00 30.09): a real v4 build cannot write the v5 meta fields — a "v4" document that carries them is
+                // forged or corrupt, and keeping them would mean free nodes (AshSpentTotal 0). Start them empty.
+                data.MetaNodes = new System.Collections.Generic.List<string>();
+                data.MetaRespecCount = 0;
+                data.MetaSeen = 0;
+                data.AshMilestones = new System.Collections.Generic.List<string>();
+                data.WeaponMastery = new System.Collections.Generic.List<WeaponMasteryEntry>();
+                data.MetaPinnedNode = string.Empty;
             }
 
             data.SaveVersion = ProfileData.CurrentVersion;

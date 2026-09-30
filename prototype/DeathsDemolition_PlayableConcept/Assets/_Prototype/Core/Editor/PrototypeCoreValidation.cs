@@ -58,10 +58,10 @@ namespace DD.Prototype.Core.EditorTools
             Check(failures, "Ultra health multiplier == 5x standard",
                 Mathf.Abs(config.EnemyHealth(EnemyTier.Ultra, 1) - 170f) < 1e-2f, config.EnemyHealth(EnemyTier.Ultra, 1));
 
-            // Request: 15 + 5 * round, level requirement 100 + 75 * (Level - 1)
+            // Request: 15 + 5 * round; level requirement DEC-098 K4: 100·L + 10·L² (R1-B P3: was the old 100 + 75·(L − 1))
             Check(failures, "RoundCompletionXp(4) == 35", config.RoundCompletionXp(4) == 35, config.RoundCompletionXp(4));
-            Check(failures, "LevelRequirement(1) == 100", config.LevelRequirement(1) == 100, config.LevelRequirement(1));
-            Check(failures, "LevelRequirement(4) == 325", config.LevelRequirement(4) == 325, config.LevelRequirement(4));
+            Check(failures, "LevelRequirement(1) == 110", config.LevelRequirement(1) == 110, config.LevelRequirement(1));
+            Check(failures, "LevelRequirement(4) == 560", config.LevelRequirement(4) == 560, config.LevelRequirement(4));
 
             Check(failures, "KillXp(Ultra) == 9", config.KillXp(EnemyTier.Ultra) == 9, config.KillXp(EnemyTier.Ultra));
             Check(failures, "GoldReward(Elite) == 10", config.GoldReward(EnemyTier.Elite) == 10, config.GoldReward(EnemyTier.Elite));

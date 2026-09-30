@@ -193,6 +193,12 @@ namespace DD.Prototype.Profile
             while (levelUps < MaxLevelUpsPerTransaction && level < int.MaxValue)
             {
                 int required = Math.Max(1, requirement != null ? requirement(level) : 1);
+                if (required == int.MaxValue)
+                {
+                    // R1-B P2 (C-00 30.09): at the level cap nothing banks into the level — TotalXpEarned and Ash keep
+                    // counting elsewhere; a later cap raise then starts from 0 instead of hundreds of level-ups at once.
+                    return new LevelProgress(level, 0, levelUps, false);
+                }
                 if (into < required)
                 {
                     return new LevelProgress(level, into, levelUps, false);

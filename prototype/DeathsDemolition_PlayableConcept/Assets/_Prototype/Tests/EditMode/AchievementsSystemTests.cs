@@ -686,5 +686,20 @@ namespace DD.Prototype.Tests.EditMode
             c.UnlockedContent.Add("c");
             Assert.AreEqual(2, p.UnlockedContent.Count, "klon derin");
         }
+
+        [Test]
+        public void UnlockKatalogu_R1B_P5_EskiAdVeAnahtarTekGirdi()
+        {
+            // R1-B P5 (C-00 30.09): the duplicate check runs on the normalised id — "AutoSmg" and "smg_1" are one entry.
+            string json = "{\"Version\":1,\"Entries\":[" +
+                          "{\"Id\":\"AutoSmg\",\"Type\":\"Weapon\",\"Condition\":\"Achievement\",\"Key\":\"first_blood\"}," +
+                          "{\"Id\":\"smg_1\",\"Type\":\"Weapon\",\"Condition\":\"Achievement\",\"Key\":\"first_blood\"}]}";
+            LogAssert.Expect(LogType.Warning, new Regex("duplicate id 'smg_1'"));
+            int dropped;
+            List<UnlockDefinition> list = UnlockCatalog.Parse(json, out dropped);
+            Assert.AreEqual(1, list.Count);
+            Assert.AreEqual(1, dropped);
+            Assert.AreEqual("smg_1", list[0].Id);
+        }
     }
 }

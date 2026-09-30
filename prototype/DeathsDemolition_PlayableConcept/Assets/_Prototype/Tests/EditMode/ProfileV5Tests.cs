@@ -110,6 +110,53 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void Tavan_R1B_P2_XpSeviyeyeBirikmez_MaxOkunur()
+        {
+            // R1-B P2 (C-00 30.09): at the cap nothing banks into the level (TotalXpEarned / Ash count elsewhere), so a later
+            // cap raise cannot turn into hundreds of level-ups; the UI reads IsAtLevelCap and shows MAX.
+            LevelProgress p = ProfileProgression.ApplyXp(Prog.LevelCap, 500, 1_000_000, ProfileService.LevelRequirement);
+            Assert.AreEqual(Prog.LevelCap, p.Level);
+            Assert.AreEqual(0, p.XpIntoLevel, "tavanda seviyeye XP birikmez");
+            Assert.AreEqual(0, p.LevelUps);
+            Assert.IsTrue(ProfileService.IsAtLevelCap(Prog.LevelCap));
+            Assert.IsFalse(ProfileService.IsAtLevelCap(Prog.LevelCap - 1));
+            LevelProgress q = ProfileProgression.ApplyXp(Prog.LevelCap - 1, 0, 1_000_000, ProfileService.LevelRequirement);
+            Assert.AreEqual(Prog.LevelCap, q.Level);
+            Assert.AreEqual(0, q.XpIntoLevel, "L50'ye varınca artan XP de birikmez");
+        }
+
+        [Test]
+        public void Gocu_V4_SahteMetaAlanlari_Temizlenir_R1B_P6()
+        {
+            // R1-B P6: a real v4 build cannot write the v5 meta fields; a "v4" document carrying them would get free nodes.
+            var v4 = new ProfileData { SaveVersion = 4, ProfileLevel = 5, TotalXpEarned = 900, ProfileLineageId = ProfileData.NewLineageId() };
+            v4.MetaNodes.Add("pa_eco_1");
+            v4.MetaRespecCount = 2;
+            v4.MetaSeen = 1;
+            v4.AshMilestones.Add("capstone");
+            v4.WeaponMastery.Add(new WeaponMasteryEntry { Weapon = "ar_1", Kills = 999, Capstones = 3 });
+            v4.MetaPinnedNode = "pa_eco_2";
+            ProfileMigration.Migrate(v4);
+            Assert.AreEqual(ProfileData.CurrentVersion, v4.SaveVersion);
+            Assert.IsEmpty(v4.MetaNodes, "sahte düğümler bedava kalmaz");
+            Assert.AreEqual(0, v4.MetaRespecCount);
+            Assert.AreEqual(0, v4.MetaSeen);
+            Assert.IsEmpty(v4.AshMilestones);
+            Assert.IsEmpty(v4.WeaponMastery);
+            Assert.AreEqual(string.Empty, v4.MetaPinnedNode);
+            Assert.AreEqual(900 / Prog.XpPerAsh, v4.AshBalance, "geriye dönük Kül yine verilir");
+            Assert.IsTrue(v4.IsValid());
+        }
+
+        [Test]
+        public void GeriyeDonukKul_R1B_P4_YedekOranDEC098()
+        {
+            // R1-B P4: the back-grant never throws (a config / catalog failure falls back to XP only at the DEC-098 rate).
+            Assert.AreEqual(30, ProfileMigration.FallbackXpPerAsh);
+            Assert.AreEqual(0, ProfileMigration.BackGrantAsh(null));
+        }
+
+        [Test]
         public void Gocu_V4ToV5_SeviyeKorunur_SilahAnahtari_GeriyeDonukKul_Idempotan()
         {
             var v4 = new ProfileData

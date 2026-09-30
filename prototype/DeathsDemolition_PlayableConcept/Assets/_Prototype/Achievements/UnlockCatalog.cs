@@ -270,12 +270,6 @@ namespace DD.Prototype.Achievements
                 return null;
             }
 
-            if (seen.Contains(d.Id))
-            {
-                why = "duplicate id '" + d.Id + "'";
-                return null;
-            }
-
             UnlockContentType type;
             if (string.IsNullOrEmpty(d.Type) || !Enum.TryParse(d.Type, false, out type) || !Enum.IsDefined(typeof(UnlockContentType), type))
             {
@@ -301,6 +295,14 @@ namespace DD.Prototype.Achievements
             if (type == UnlockContentType.Branch && !Enum.IsDefined(typeof(UpgradeBranch), d.Id))
             {
                 why = "'" + d.Id + "' is not an UpgradeBranch name";
+                return null;
+            }
+
+            // R1-B P5 (C-00 30.09): the duplicate check runs on the NORMALISED id, so an M3 name ("AutoSmg") and its
+            // WP-069 key ("smg_1") are one entry, not two.
+            if (seen.Contains(d.Id))
+            {
+                why = "duplicate id '" + d.Id + "'";
                 return null;
             }
 
