@@ -1298,7 +1298,10 @@ namespace DD.Prototype.Tests.PlayMode
 
         /// <summary>
         /// WP-072 · user listening package (C-00 28.09): three A/B pairs from the game's real output on the default world (V6) —
-        /// 1 top-down fight and 2 first-person fight (A = today's mix, B = the player's weapon bus +5 dB — the master compressor, already ~4 dB over its −8 dB threshold in a fight, turns +3 dB into +1.0 dB at the output), 3 the calm after-rain
+        /// 1 top-down fight and 2 first-person fight — WP-072 B7 mix panel (C-00 01.10): one 36 s take per mode, variants rotated in 4 s
+        /// blocks A B C A B C A B C (A = today, B = SfxPlayer +3 / SfxWorld −1 dB = the Run snapshot proposal +1 / −3, C = SfxPlayer +2 and
+        /// SfxWorld ducked −3 dB under player fire); block starts (capture frames) go to a CSV and wp-072/tools/kit_splice.py splices,
+        /// level-matches and measures them (the horde drifted ~0.8 dB within a take, so blocks, not halves). 3 the calm after-rain
         /// courtyard (A = birds 0.35 as shipped — near the floor at 25–40 m, B = the designed level 1.0). Written under temporaryCachePath/wp072-listening; the batch copies them.
         /// </summary>
         [UnityTest]
@@ -1315,9 +1318,11 @@ namespace DD.Prototype.Tests.PlayMode
             float oncekiKus = AfterRainAmbience.BirdLevel;
             _s.Rig.Health.DiagnosisInvulnerable = true;
 
+            AudioOutputCapture aktifCap = null;
             IEnumerator Kaydet(string ad, float saniye, System.Action<float> her)
             {
                 AudioOutputCapture cap = AudioOutputCapture.Arm(_d.gameObject, System.IO.Path.Combine(dir, ad + ".wav"));
+                aktifCap = cap;
                 float bas = Time.realtimeSinceStartup;
                 while (Time.realtimeSinceStartup - bas < saniye)
                 {
@@ -1378,7 +1383,7 @@ namespace DD.Prototype.Tests.PlayMode
                 m.ThreatLayerOverride = null;
                 m.IntensityOverride = null;
 
-                // 1 / 2 · a fight: six zombies close in, the player fires bursts; B = the player's weapon bus +5 dB.
+                // 1 / 2 · a fight: six zombies close in, the player fires bursts; A/B/C rotate every 4 s (see the summary).
                 for (int i = 0; i < 6; i++)
                 {
                     float a = i * Mathf.PI / 3f;
@@ -1386,31 +1391,49 @@ namespace DD.Prototype.Tests.PlayMode
                 }
 
                 mixer.GetFloat(playerParam, out float tabanDb);
+                string worldParam = AudioMixerBridge.VolumeParams[3];
+                mixer.GetFloat(worldParam, out float tabanWorldDb);
                 var modlar = new[] { (DD.Prototype.CameraSystem.CameraMode.TopDown, "1", "ustten"), (DD.Prototype.CameraSystem.CameraMode.FirstPerson, "2", "birinci-sahis") };
                 foreach (var (mod, no, ad) in modlar)
                 {
                     DD.Prototype.CameraSystem.CameraModeService.Request(mod, true);
                     yield return new WaitForSecondsRealtime(3f);
-                    // One take: A = 0–10 s today's mix, B = 10–20 s the player's weapon bus +5 dB (split offline) — separate takes
-                    // varied by more than the gain under test. The fire clock restarts per take (the FP take once inherited the
-                    // top-down clock and barely fired: B − A +0.1 dB was a missing-shots artefact, WP-072 B7).
-                    mixer.SetFloat(playerParam, tabanDb);
+                    // The fire clock restarts per take (the FP take once inherited the top-down clock and barely fired). Blocks switch at a
+                    // burst onset (t = 4k s); C's World duck: −3 dB, 30 ms down, held 150 ms after the last shot, 350 ms back.
                     sonraki = 0f;
                     atis = 0;
-                    int aAtis = 0;
-                    bool artti = false;
-                    yield return Kaydet(no + "_" + ad + "_take", 20f, t =>
+                    int blok = -1, sonAtis = 0;
+                    float duck = 0f, sonAtisT = -10f, onceki = 0f;
+                    var bloklar = new System.Text.StringBuilder("frame,variant\n");
+                    yield return Kaydet(no + "_" + ad + "_take", 36f, t =>
                     {
-                        if (!artti && t >= 10f) { aAtis = atis; mixer.SetFloat(playerParam, tabanDb + 5f); artti = true; }
+                        int b = Mathf.Min(8, (int)(t / 4f));
+                        if (b != blok)
+                        {
+                            blok = b;
+                            bloklar.Append(aktifCap != null ? aktifCap.FramesWritten : 0).Append(',').Append("ABC"[b % 3]).Append('\n');
+                        }
+
                         Ates(t);
+                        if (atis != sonAtis) { sonAtis = atis; sonAtisT = t; }
+                        char v = "ABC"[blok % 3];
+                        float dt = Mathf.Max(0f, t - onceki);
+                        onceki = t;
+                        bool ateste = t - sonAtisT < 0.15f;
+                        duck = v == 'C' ? (ateste ? Mathf.Max(-3f, duck - 3f * dt / 0.03f) : Mathf.Min(0f, duck + 3f * dt / 0.35f)) : 0f;
+                        mixer.SetFloat(playerParam, tabanDb + (v == 'A' ? 0f : v == 'B' ? 3f : 2f));
+                        mixer.SetFloat(worldParam, tabanWorldDb + (v == 'B' ? -1f : 0f) + duck);
                     });
-                    Debug.Log("[DD-TEST] wp072.weapon mode=" + mod + " A_shots=" + aAtis + " B_shots=" + (atis - aAtis) + " last=" + _d.WeaponFire.LastVoice);
+                    System.IO.File.WriteAllText(System.IO.Path.Combine(dir, no + "_" + ad + "_blocks.csv"), bloklar.ToString());
+                    Debug.Log("[DD-TEST] wp072.weapon mode=" + mod + " shots=" + atis + " blocks=" + (blok + 1) + " last=" + _d.WeaponFire.LastVoice);
                 }
 
                 mixer.SetFloat(playerParam, tabanDb);
+                mixer.SetFloat(worldParam, tabanWorldDb);
             }
             finally
             {
+                mixer.ClearFloat(AudioMixerBridge.VolumeParams[3]);
                 AfterRainAmbience.BirdLevel = oncekiKus;
                 m.ThreatLayerOverride = null;
                 m.IntensityOverride = null;
