@@ -641,6 +641,14 @@ U1'in Türkçe uzantısı: Shippori Mincho B1'in eksik Ğ ğ İ Ş ş glifleri O
 - **Lisans:** Reserved Font Name yok (`ShipporiMinchoB1-OFL.txt`). Türevin iç adı "Shippori Mincho B1 DD-TR"; OFL metni ve telif korunur.
 - **Sonra:** metrik ve kerning ayarlanır, TMP SDF atlası yeniden üretilir. AD paneli TR ve EN başlık karelerine 1,25'te bakar.
 - **Geçiş:** uygulanana kadar SourceSans3 yedeği (19cb757a, M-64) kalır. Türetme aracının (fonttools) kurulumu kullanıcı kararıdır; makinede kurulu değil.
+- **Breve tasarım kararı (C-00 KABUL 30.09 ~19:05Z, panel A):** AD + tip + geometri çürütücüsü paneli; kanıt `K/wp-068s9/evidence/dec109/PANEL-DECISION.md`.
+  - **Biçim:** A'nın modüleli hilali, 160° yay üzerinde; boynuzlar dışa eğik, uçlar vuruşa dik kesik.
+  - **ğ:** 280 × 122, alt y 548, x 282 (üst kase + 10).
+  - **Ğ:** ayrı, daha yassı çizim; 290 × 100, alt y 797, x 399 (G'nin tepe noktası).
+  - **Vuruş:** kalınlık 60, uç 24; mürekkep makronun 0,57–0,58'i.
+  - **İ:** Ü noktası (126), alt 793.
+  - **Ş ş:** U+0327; kök S/s'nin en alt noktasında, ≥ 10 birim bindirme.
+  - **Glif yazım anında:** saat yönü kuadratik kontur, tamsayı; G/S/I kerning'i Ğ/Ş/İ'ye kopyalanır; Display atlasına Ğ İ Ş eklenir; ardından TMP provası 28/40/56 px, TR/EN, 1,25 ve AD imzası. fonttools kullanıcı onayından sonra.
 
 ## 14 · AD eş imzası
 
