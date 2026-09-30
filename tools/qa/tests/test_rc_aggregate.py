@@ -262,18 +262,23 @@ sys.exit(99)
                                     [("DD.X.Tests.Probe.Case", label, runstate, categories, ())])
                 self.assertEqual(1, len(self.verdict(False)["unexpectedEditModeSkips"]))
 
-    def test_y6_legacy_playmode_exception_stays_visible_by_name(self):
-        legacy = "DD.Art.Tests.PlayMode.SetPassAttributionTests.SetPass_Kaynaklari_40ZombiTamZirh"
+    def test_y6_no_name_exception_left_setpass_ignore_is_red(self):
+        # C-00 30.09: the SetPassAttributionTests fullname exception is removed; only the Y6 attributes allow a skip
+        setpass = "DD.Art.Tests.PlayMode.SetPassAttributionTests.SetPass_Kaynaklari_40ZombiTamZirh"
         self.write_skip_xml("full-playmode/playmode.xml", EXACT_TESTS + (
             "ArmorTests.Okunabilirlik_DEC077_Zirh_DeltaV_AltKumas_KomsuBant_ZeminHalkasi_Siluet",),
-            [(legacy, "Ignored", "Ignored", (), ())])
-        report = self.verdict(True)
-        self.assertEqual(([legacy], []), (report["legacyPlayModeSkipExceptions"], report["unexpectedPlayModeSkips"]))
+            [(setpass, "Ignored", "Ignored", (), ())])
+        report = self.verdict(False)
+        self.assertEqual([setpass + " [Ignored]"], report["unexpectedPlayModeSkips"])
+        self.assertNotIn("legacyPlayModeSkipExceptions", report)
 
-    def test_y6_legacy_name_does_not_cover_editmode(self):
-        legacy = "DD.Art.Tests.PlayMode.SetPassAttributionTests.SetPass_Kaynaklari_40ZombiTamZirh"
-        self.write_skip_xml("full-editmode/editmode.xml", ("Example.EditMode",), [(legacy, "Ignored", "Ignored", (), ())])
-        self.assertEqual(1, len(self.verdict(False)["unexpectedEditModeSkips"]))
+    def test_y6_setpass_as_explicit_diagnostics_fixture_is_allowed(self):
+        setpass = "DD.Art.Tests.PlayMode.SetPassAttributionTests.SetPass_Kaynaklari_40ZombiTamZirh"
+        self.write_skip_xml("full-playmode/playmode.xml", EXACT_TESTS + (
+            "ArmorTests.Okunabilirlik_DEC077_Zirh_DeltaV_AltKumas_KomsuBant_ZeminHalkasi_Siluet",),
+            [(setpass, "Explicit", "Explicit", (), ("Diagnostics",))])
+        self.produce_reports()
+        self.assertEqual([setpass], self.verdict(True)["allowedPlayModeSkips"])
 
     def test_two_stability_runs_and_real_bot_death_pass(self):
         self.verdict(True)

@@ -12,12 +12,8 @@ import xml.etree.ElementTree as ET
 
 
 # C-00 30.09 Y6 (TANI-TESTI-POLITIKASI): a skip is allowed only when the test case is Skipped, Explicit (label or runstate)
-# and carries Category("Diagnostics") (on the case or an enclosing suite) — never by a name list. The one legacy fullname
-# exception below stays, visible by name in the report, until its owner moves the test to [Explicit] + Diagnostics.
-LEGACY_PLAYMODE_SKIP_EXCEPTIONS = {
-    "DD.Art.Tests.PlayMode.SetPassAttributionTests.SetPass_Kaynaklari_40ZombiTamZirh",
-}
-ALLOWED_PLAYMODE_SKIPS = LEGACY_PLAYMODE_SKIP_EXCEPTIONS   # backwards-compatible name
+# and carries Category("Diagnostics") (on the case or an enclosing suite) — never by a name list. The former
+# SetPassAttributionTests fullname exception is gone: that fixture is [Explicit] + Diagnostics since 25ed95c5 (S-05).
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from nunit_skips import classify_skips, is_diagnostic_explicit, skipped_cases  # noqa: E402,F401  (Y6: one rule for every gate)
 
@@ -293,8 +289,7 @@ def main():
     windows = read_json(os.path.join(args.out, "window-modes", "qa-report.json"))
     logs = read_json(os.path.join(args.out, "log-scan.json"))
     allowed_edit_skips, _, unexpected_edit_skips = classify_skips(os.path.join(args.out, "full-editmode", "editmode.xml"))
-    allowed_play_skips, legacy_play_skips, unexpected_play_skips = classify_skips(
-        os.path.join(args.out, "full-playmode", "playmode.xml"), LEGACY_PLAYMODE_SKIP_EXCEPTIONS)
+    allowed_play_skips, _, unexpected_play_skips = classify_skips(os.path.join(args.out, "full-playmode", "playmode.xml"))
     exact_tests = {
         "B11.flow": testcase_passed(os.path.join(args.out, "full-playmode", "playmode.xml"), "FlowSmokeTest.Akis_BootMainMenuSelectionRunOlumResultsMainMenu"),
         "B11.roundHud": testcase_passed(os.path.join(args.out, "full-playmode", "playmode.xml"), "RoundHudSyncTests.TurIlerleyinceHudRakamiDaIlerler"),
@@ -341,7 +336,6 @@ def main():
         "allowedEditModeSkips": allowed_edit_skips,
         "unexpectedEditModeSkips": unexpected_edit_skips,
         "allowedPlayModeSkips": allowed_play_skips,
-        "legacyPlayModeSkipExceptions": legacy_play_skips,
         "unexpectedPlayModeSkips": unexpected_play_skips,
         "exactTests": exact_tests,
         "release": release,
