@@ -200,3 +200,4 @@ MonoBehaviour:
       scale: 0.83
     gripOffset: {x: 0, y: -0.047, z: -0.055}
     fpLeftHandOffset: {x: 0, y: 0, z: 0}
+    fpArms: 1
