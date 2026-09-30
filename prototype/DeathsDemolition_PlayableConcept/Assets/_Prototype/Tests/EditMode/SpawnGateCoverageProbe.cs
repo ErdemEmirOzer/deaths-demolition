@@ -196,7 +196,7 @@ namespace DD.Prototype.Tests.EditMode
             }
             int C = cells.Count;
             Assert.Greater(C, 500, "v6 NavMesh ızgarası boş");
-            sb.AppendLine("| set | kapılar erişilebilir | hücre | ihlal | pay | ≤ %7 | sektör (ihlal/band<3/useful<8) | ilk temas medyanı |");
+            sb.AppendLine("| set | kapılar erişilebilir | hücre | ihlal | pay | ≤ %7 | sektör (ihlal/band<3/useful<8) | ilk temas medyanı | kenarsız hücre |");
 
             foreach (GateSet set in sets.sets)
             {
@@ -233,14 +233,32 @@ namespace DD.Prototype.Tests.EditMode
 
                 var all = new int[G]; for (int i = 0; i < G; i++) all[i] = i;
                 int v = Violations(all, dist, C, null);
+                // 030cf3f4 rolling inner cap (every relaxation pass): a cell with no EDGE gate in [MinSpawnDistance, MaxUseful]
+                // of path can only be served by inner gates — once the 24-window is at 50 % inner, the director finds no point
+                // there until the player moves (NoPointTicks). Counted per set as the starvation exposure.
+                int edgeless = 0;
+                var edgelessAt = new StringBuilder();
+                for (int c = 0; c < C; c++)
+                {
+                    bool edge = false;
+                    for (int i = 0; i < G && !edge; i++)
+                    {
+                        if (file.gates[i].kind != "edge") continue;
+                        float len = dist[i * C + c];
+                        edge = len >= SpawnModeTable.MinSpawnDistance[0] && len <= SpawnWorldProfile.V6MaxUseful;
+                    }
+                    if (edge) continue;
+                    if (edgeless++ < 40) edgelessAt.Append(string.Format(" ({0:0},{1:0})", cells[c].x, cells[c].z));
+                }
                 float share = (float)v / C;
                 var sec = new StringBuilder();
                 ReportCells(sec, set.name, all, dist, cells);
                 string secLine = sec.ToString().Split('\n')[0];
                 secLine = secLine.Substring(secLine.IndexOf(':') + 1).Trim();
                 sb.AppendLine("| " + set.name + " | " + reachable + "/" + G + " | " + C + " | " + v + " | " + (share * 100f).ToString("0.00") + " % | "
-                              + (share <= 0.07f && reachable == G ? "EVET" : "HAYIR") + " | " + secLine + " | " + Contact(all, dist, C) + " |");
+                              + (share <= 0.07f && reachable == G ? "EVET" : "HAYIR") + " | " + secLine + " | " + Contact(all, dist, C) + " | " + edgeless + " |");
                 sb.AppendLine("    kapılar:" + gateLog);
+                if (edgeless > 0) sb.AppendLine("    kenarsız:" + edgelessAt);
             }
 
             WriteResult(sb);
