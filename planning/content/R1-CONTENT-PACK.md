@@ -698,7 +698,7 @@ S-09 (R1-D, 25.09):
 | `controls.keyboard` | KEYBOARD | KLAVYE |
 | `controls.listening` | PRESS A KEY | BİR TUŞA BAS |
 | `controls.no_service` | Input service not running. | Girdi servisi çalışmıyor. |
-| `controls.reset` | HOLD TO RESET ALL BINDINGS | TÜM ATAMALARI SIFIRLAMAK İÇİN BASILI TUT |
+| `controls.reset` | HOLD TO RESET ALL BINDINGS | TÜMÜNÜ SIFIRLAMAK İÇİN BASILI TUT |
 | `controls.rumble` | RUMBLE | TİTREŞİM |
 | `hud.ammo.empty` | EMPTY | BOŞ |
 | `hud.banner.classic_restored` | CLASSIC WEAPON RESTORED | KLASİK SİLAH GERİ DÖNDÜ |

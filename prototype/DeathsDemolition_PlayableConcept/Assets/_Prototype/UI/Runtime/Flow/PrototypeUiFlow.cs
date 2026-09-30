@@ -247,8 +247,13 @@ namespace DD.Prototype.UI
                     "[UI] Scene '" + sceneName + "' is not in the build settings. " +
                     "Run Tools > Deaths Demolition > UI > Build Meta Scenes to create the meta scenes.");
                 // R1-E B1a (direction §15.4): the press is answered - the load error stands on the current screen with
-                // the way back and QUIT, instead of a press that does nothing. Nothing writes the profile.
-                ShowLoadError(UiCurtain.Instance, sceneName);
+                // the way back and QUIT, instead of a press that does nothing. Nothing writes the profile. Play mode
+                // only: an EditMode caller (tests) has no curtain - it is a DontDestroyOnLoad object.
+                if (Application.isPlaying)
+                {
+                    ShowLoadError(UiCurtain.Instance, sceneName);
+                }
+
                 return;
             }
 
