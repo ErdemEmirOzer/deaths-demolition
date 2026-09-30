@@ -98,6 +98,9 @@ namespace DD.Prototype.Tests.PlayMode
 
         // -------------------------------------------------------------- PlayerConfigSection
         private const float BaslangicCani = 100f;
+
+        /// <summary>C-00 30.09 M-20: the health the scene preparation left, before the shared full-health start (report only).</summary>
+        private float _kurulumCani;
         private const float OyuncuYaricapi = 0.45f;
         private const float OyuncuHizi = 6.2f;
 
@@ -288,12 +291,6 @@ namespace DD.Prototype.Tests.PlayMode
             LogAssert.ignoreFailingMessages = true;
             yield return RunSahnesiniHazirla();
 
-            // Scene preparation runs natural enemies before StopRound. Their damage is outside this
-            // four-enemy measurement, whose survival bound is derived from a full 100 health.
-            float kurulumCani = _can.Current;
-            Assert.IsFalse(_can.IsDead, "Oyuncu sahne hazırlığında öldü; temas ölçümü başlayamaz.");
-            _can.HealToFull();
-
             const int zombiSayisi = 4;
             const float dogumYaricapi = 2.6f;
             const float olcumSaniye = 4.5f;
@@ -307,7 +304,7 @@ namespace DD.Prototype.Tests.PlayMode
             rapor.AppendLine("  senaryo: " + zombiSayisi + " Standard zombi, " + dogumYaricapi +
                              " m halka, " + olcumSaniye + " sn, oyuncu hareketsiz");
             rapor.AppendLine("  temas esigi mesafe = " + temasMesafesi.ToString("F2") + " m");
-            rapor.AppendLine("  kurulum cani=" + kurulumCani.ToString("F1") +
+            rapor.AppendLine("  kurulum cani=" + _kurulumCani.ToString("F1") +
                              " olcum baslangici=" + _can.Current.ToString("F1"));
 
             SuruDogur(zombiSayisi, dogumYaricapi, rapor);
@@ -461,8 +458,6 @@ namespace DD.Prototype.Tests.PlayMode
                 "Standard imza saldırısının istenen hasarı formülden farklı.\n" + rapor);
             Assert.AreEqual(baslangicCani - _can.Current, uygulananToplam, 0.01f,
                 "Can düşüşü Damaged olaylarının AppliedAmount toplamından farklı.\n" + rapor);
-            Assert.AreEqual(BaslangicCani, baslangicCani, 0.01f,
-                "Ölçüm tam canla başlamadı; hazırlık hasarı 8 × 10 tavanına dahil değildir.\n" + rapor);
             Assert.IsFalse(_can.IsDead,
                 "Oyuncu bu senaryoda ölmemeliydi: aritmetik tavan 8 × " + TekVurusHasari +
                 " = 80 < " + BaslangicCani + ".\n" + rapor);
@@ -710,6 +705,14 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             yield return null;
+
+            // C-00 30.09 M-20: the natural enemies of the preparation window can land a hit before StopRound (measured
+            // 100 → 90); their damage is outside every measurement here, whose bounds are derived from a full 100 —
+            // one shared start: full health, asserted.
+            _kurulumCani = _can.Current;
+            Assert.IsFalse(_can.IsDead, "Oyuncu sahne hazırlığında öldü; ölçüm başlayamaz.");
+            _can.HealToFull();
+            Assert.AreEqual(BaslangicCani, _can.Current, 0.01f, "Ölçüm tam canla başlamıyor (hazırlık hasarı " + (BaslangicCani - _kurulumCani).ToString("F1") + ").");
 
             // Kare hızından bağımsız, tekrarlanabilir ölçüm: adım tam 1/60 sn.
             Time.captureDeltaTime = Adim;
