@@ -18,7 +18,7 @@
 ^(Arsenal|Weapon|Projectile|CoreCombat|Gamepad|Input|PauseFire|PlayerExperience|PlayerHealth|PlayerMovement|PlayerWall|HitReaction|RegionalDamage|RegionalArmor|SpecialWeapon|EnemyDamagesPlayer|HotPathAllocation|AllocationProbe)	S-02	combat / player / input
 ^(Qa|Lifecycle|SpawnMixSimulator)	S-10	QA
 # WP-079G (C-00 30.09): fixtures that fell through to C-00 after the M4-R1 / Codex-period additions (d6a73dc3 review).
-^(NodeCard|Tree(Achievement|EffectValues|HitEffect|Model|WeaponStat)|UpgradeOffer|UpgradePurchase|FeatAchievement)	S-04	run tree / shop / feats
+^(NodeCard|Tree(Achievement|EffectValues|HitEffect|Model|WeaponStat|Stagger)|UpgradeOffer|UpgradePurchase|FeatAchievement)	S-04	run tree / shop / feats
 ^(RunTreeScreen|HearthLimitScreen|PauseV3|ResultsV3|SelectionV3|GlyphTintHud|LoadingKeyArt|LoadingWatchdog|UpgradeWallpaper)	S-09	UI v3 screens
 ^(Wp073|BackingScale|WindowFit)	S-07	WP-073 VFX / feel (ShaderLibraryTests.cs fixtures)
 ^(GreyboxV6|CloudShadow|QualityTiers|QualityDefaultDec100)	S-05	world V6 / quality tiers
