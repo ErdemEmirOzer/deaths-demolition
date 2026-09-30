@@ -673,7 +673,8 @@ namespace DD.Prototype.UI
             UiFactory.Fill((RectTransform)_stateLine.transform);   // the full width: AD R1-B SHOULD-3 retired the unlabeled XP track
         }
 
-        private const float CoreLabelMinWidth = 52f;   // "CORE" and its gap; the word is measured (AD d109 MUST-2: TR "ÇEKİRDEK" was cut at 52)
+        // "CORE" and its gap; the word itself is measured (AD d109 MUST-2: the Turkish word was cut at a fixed 52).
+        private const float CoreLabelMinWidth = 52f;
         private const float StageGlyphCompact = 96f;
 
         /// <summary>
