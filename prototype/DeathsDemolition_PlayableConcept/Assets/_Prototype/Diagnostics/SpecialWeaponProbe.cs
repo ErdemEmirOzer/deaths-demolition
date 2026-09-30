@@ -29,10 +29,12 @@ namespace DD.Prototype.Diagnostics
     /// a deterministic (injected) roll, a schedule inside the config window, a drop at a
     /// valid progress point reached by real kills, one spawn cue / one beacon loop / one HUD
     /// marker, the ground timer, the pickup, the classic weapon parked with its magazine and
-    /// build, unlimited fire with no reload, a multi-target attack under one damage
-    /// transaction, an armoured target on the existing armour contract, timers frozen under
-    /// the pause hold, the final-seconds warning exactly once, the automatic end with the
-    /// classic weapon back, the run-end cancel on death, and a clean second run. Nothing here
+    /// build, a full own magazine and reserve with the definition's time cap (DEC-097: cephane + süre
+    /// tavanı), fire that spends the Special's rounds and never the classic magazine, a multi-target
+    /// attack under one damage transaction, an armoured target on the existing armour contract, timers
+    /// frozen under the pause hold, the final-seconds warning exactly once, the automatic end at the time
+    /// cap with the classic weapon back, the end on an empty magazine and reserve before the cap, the
+    /// run-end cancel on death, and a clean second run. Nothing here
     /// changes product behaviour: it calls public methods and reads public state. Every
     /// number it reads comes from the config; none is asserted as a product value.
     ///
@@ -165,7 +167,7 @@ namespace DD.Prototype.Diagnostics
 
         private sealed class Driver : MonoBehaviour
         {
-            private const float SceneTimeout = 40f;
+            private const float SceneTimeout = 60f;   // WP-078: the DEC-097 time caps (Raiju 40 s, Namekuji 45 s) run inside one wait
             private string _outDir;
             private readonly List<Stage> _stages = new List<Stage>();
 
@@ -355,10 +357,13 @@ namespace DD.Prototype.Diagnostics
                           Count(_cue, CombatAudioEvent.SpecialWeaponPickup) == 1 && _evGroundExpired == 0 && SpecialWeaponSahne.Pickups() == 0 &&
                           WeaponEvents.Classic.TemporarilyDisabled && ReferenceEquals(classic, wc.Classic) && wc.Classic.Ammo == ammoParked &&
                           wc.Modifiers.DescribeBuild() == buildParked && ammoParked < wc.Classic.MagazineSize &&
-                          Mathf.Approximately(wc.Special.Duration, s.ActiveDuration) && wc.Special.Remaining > 0f;
+                          Mathf.Approximately(wc.Special.Duration, s.CapSeconds(wc.Special.Id)) && wc.Special.Remaining > 0f &&
+                          wc.Special.Ammo == wc.Special.MagazineSize && wc.Special.Definition != null &&
+                          wc.Special.ReserveAmmo == Mathf.Max(0, wc.Special.Definition.ammo.reserve);   // WP-078 (DEC-097): full magazine + reserve, the weapon's cap
                 s4.detail = "pickedUp=" + _evPickedUp + " beaconLoopStop=" + Count(_loopStop, CombatAudioEvent.SpecialWeaponBeaconLoop) + " spinUpStart=" + Count(_loopStart, CombatAudioEvent.HeavyWeaponSpinUp) +
-                            " ammoParked=" + ammoParked + "/" + wc.Classic.MagazineSize + " build=" + buildParked + " activeRemaining=" + wc.Special.Remaining + " hud=" + WeaponEvents.Special.Phase;
-                s4.note = "collecting the drop starts the active timer from the config duration, parks the classic weapon (same runtime, same magazine, same build, HUD 'disabled'), stops the beacon loop and starts the active loop - each exactly once";
+                             " ammoParked=" + ammoParked + "/" + wc.Classic.MagazineSize + " build=" + buildParked + " activeRemaining=" + wc.Special.Remaining + " cap=" + s.CapSeconds(wc.Special.Id) +
+                            " special=" + wc.Special.Id + " " + wc.Special.Ammo + "/" + wc.Special.MagazineSize + "+" + wc.Special.ReserveAmmo + " hud=" + WeaponEvents.Special.Phase;
+                s4.note = "collecting the drop starts the active timer from the weapon's time cap with a full own magazine and reserve (DEC-097), parks the classic weapon (same runtime, same magazine, same build, HUD 'disabled'), stops the beacon loop and starts the active loop - each exactly once";
                 yield return Shot(s4, "04-active.png");
                 Write(s4);
 
@@ -384,6 +389,7 @@ namespace DD.Prototype.Diagnostics
 
                 yield return null;
                 int ammoBefore = wc.Classic.Ammo;
+                int specialRoundsBefore = wc.Special.Ammo + wc.Special.ReserveAmmo;
                 input.Fire = true;
                 yield return new WaitForSecondsRealtime(1.2f);
                 input.Fire = false;
@@ -403,14 +409,15 @@ namespace DD.Prototype.Diagnostics
                 foreach (EnemyDamageInfo d in _damaged) { perTx.TryGetValue(d.Meta.TransactionId, out int n); perTx[d.Meta.TransactionId] = n + 1; }
                 int multiTargetTx = 0;
                 foreach (KeyValuePair<int, int> kv in perTx) if (kv.Value > 1) multiTargetTx++;
-                Stage s5 = Capture("05-unlimited-fire-one-transaction-armour", run, sw, wc, "7,8,9");
-                s5.pass = fireCues > 0 && wc.Classic.Ammo == ammoBefore && !wc.Classic.IsReloading && _damaged.Count > 0 && multiTargetTx > 0 &&
+                int specialRoundsSpent = specialRoundsBefore - (wc.Special.Ammo + wc.Special.ReserveAmmo);
+                Stage s5 = Capture("05-own-magazine-one-transaction-armour", run, sw, wc, "7,8,9");
+                s5.pass = fireCues > 0 && specialRoundsSpent == fireCues && wc.Classic.Ammo == ammoBefore && !wc.Classic.IsReloading && _damaged.Count > 0 && multiTargetTx > 0 &&
                           DamageTransaction.NestedBegins - nestedBefore == 0 && ZombieEnemy.DuplicateApplicationCount - dupBefore == 0 &&
                           (targets.Count == 0 || armouredArmorHits > 0) && wc.SpecialWeaponActive && sw.LastRolledWeapon == SpecialWeaponId.Raiju;
-                s5.detail = "fireCues=" + fireCues + " classicAmmo=" + ammoBefore + "->" + wc.Classic.Ammo + " reloading=" + wc.Classic.IsReloading + " damaged=" + _damaged.Count +
+                s5.detail = "fireCues=" + fireCues + " specialRoundsSpent=" + specialRoundsSpent + " classicAmmo=" + ammoBefore + "->" + wc.Classic.Ammo + " reloading=" + wc.Classic.IsReloading + " damaged=" + _damaged.Count +
                             " transactions=" + perTx.Count + " multiTargetTx=" + multiTargetTx + " nestedDelta=" + (DamageTransaction.NestedBegins - nestedBefore) +
                             " dupDelta=" + (ZombieEnemy.DuplicateApplicationCount - dupBefore) + " armouredArmorHits=" + armouredArmorHits + " weapon=" + sw.LastRolledWeapon;
-                s5.note = "held fire for over a second: the Special Weapon fires (cues), the classic magazine never moves and no reload starts; each wave band applies to its targets under ONE transaction id (no nested begin, no duplicate refusal); the armoured body takes armour damage on the existing direct contract";
+                s5.note = "held fire for over a second: every Special shot (cue) spends one of its own rounds (DEC-097), the classic magazine never moves and no classic reload starts; each wave band applies to its targets under ONE transaction id (no nested begin, no duplicate refusal); the armoured body takes armour damage on the existing direct contract";
                 Write(s5);
                 EnemyFactory.ClearAll();
 
@@ -452,18 +459,46 @@ namespace DD.Prototype.Diagnostics
                 Write(s7);
 
                 yield return WaitUntil(() => !wc.SpecialWeaponActive, "active duration never ended");
+                bool endedWithRoundsLeft = wc.Special.Ammo + wc.Special.ReserveAmmo > 0;   // WP-078: this end is the time cap, not an empty weapon
                 yield return WaitUntil(() => sw.State == SpecialWeaponDirector.SpecialWeaponState.Idle, "director did not return to Idle");
                 yield return null;
                 Stage s8 = Capture("08-auto-end-classic-restored", run, sw, wc, "12,13");
                 s8.pass = _evEnded == 1 && _evFinalSeconds == 1 && _evCleared == 1 && _evCancelled == 0 && !WeaponEvents.Classic.TemporarilyDisabled &&
                           ReferenceEquals(classic, wc.Classic) && wc.Classic.Ammo == ammoParked && wc.Modifiers.DescribeBuild() == buildParked &&
                           WeaponEvents.Special.Phase == SpecialWeaponPhase.None && Count(_loopStop, CombatAudioEvent.HeavyWeaponSpinUp) == 1 &&
-                          Count(_cue, CombatAudioEvent.SpecialWeaponExpired) == 1 && SpecialImpacts.ActiveChains == 0;
+                          Count(_cue, CombatAudioEvent.SpecialWeaponExpired) == 1 && SpecialImpacts.ActiveChains == 0 && endedWithRoundsLeft;
                 s8.detail = "ended=" + _evEnded + " cleared=" + _evCleared + " cancelled=" + _evCancelled + " classicDisabled=" + WeaponEvents.Classic.TemporarilyDisabled + " ammo=" + wc.Classic.Ammo + "/" + ammoParked +
                             " build=" + wc.Modifiers.DescribeBuild() + " hud=" + WeaponEvents.Special.Phase + " spinStop=" + Count(_loopStop, CombatAudioEvent.HeavyWeaponSpinUp) + " expiredCue=" + Count(_cue, CombatAudioEvent.SpecialWeaponExpired);
-                s8.note = "the active timer runs out: one Ended, one Cleared, the classic weapon comes back automatically with the magazine and build it was parked with, the HUD closes, the active loop stops";
+                s8.note = "the time cap runs out with rounds still in the weapon (DEC-097 time half): one Ended, one Cleared, the classic weapon comes back automatically with the magazine and build it was parked with, the HUD closes, the active loop stops";
                 yield return Shot(s8, "08-classic-restored.png");
                 Write(s8);
+
+                // ---------------------------------------------------------------- 08b: empty magazine and reserve end the activation before the cap (DEC-097 ammo half)
+                ResetCounters();
+                bool forcedAmmo = sw.ForceSpawn();
+                yield return WaitUntil(() => SpecialWeaponSahne.Pickups() == 1, "second drop did not land");
+                SpecialWeaponPickup pickup2 = SpecialWeaponSahne.Live();
+                int classicAmmo2 = wc.Classic.Ammo;
+                string build2 = wc.Modifiers.DescribeBuild();
+                if (pickup2 != null) rig.Motor.Teleport(pickup2.transform.position);
+                yield return WaitUntil(() => wc.SpecialWeaponActive, "second pickup was not collected");
+                float cap2 = wc.Special.Duration;
+                int rounds2 = wc.Special.Ammo + wc.Special.ReserveAmmo;
+                float t0 = Time.time;
+                input.Fire = true;
+                yield return WaitUntil(() => !wc.SpecialWeaponActive, "the weapon never ran dry");
+                input.Fire = false;
+                float held = Time.time - t0;
+                yield return null;
+                Stage s8b = Capture("08b-ammo-out-ends-before-cap", run, sw, wc, "12,13");
+                s8b.pass = forcedAmmo && rounds2 > 0 && held < cap2 && Count(_cue, CombatAudioEvent.HeavyWeaponFire) == rounds2 && _evEnded == 1 && _evCancelled == 0 &&
+                           Count(_cue, CombatAudioEvent.SpecialWeaponExpired) == 1 && !WeaponEvents.Classic.TemporarilyDisabled &&
+                           wc.Classic.Ammo == classicAmmo2 && wc.Modifiers.DescribeBuild() == build2;
+                s8b.detail = "forced=" + forcedAmmo + " rounds=" + rounds2 + " fireCues=" + Count(_cue, CombatAudioEvent.HeavyWeaponFire) + " held=" + held.ToString("F1") + "s cap=" + cap2 +
+                             " ended=" + _evEnded + " cancelled=" + _evCancelled + " expiredCue=" + Count(_cue, CombatAudioEvent.SpecialWeaponExpired) + " classic=" + wc.Classic.Ammo + "/" + classicAmmo2;
+                s8b.note = "a second drop fired until magazine and reserve are empty (reloads included): the activation ends on the last round, before the time cap, with one Ended and the classic weapon back as parked";
+                Write(s8b);
+                yield return WaitUntil(() => sw.State == SpecialWeaponDirector.SpecialWeaponState.Idle, "director did not return to Idle after the ammo end");
 
                 // ---------------------------------------------------------------- 09: run end (death) cancels a grounded drop; nothing outlives the run
                 ResetCounters();
