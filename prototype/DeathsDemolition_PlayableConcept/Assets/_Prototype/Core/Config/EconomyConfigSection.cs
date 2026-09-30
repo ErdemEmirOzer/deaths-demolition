@@ -84,6 +84,15 @@ namespace DD.Prototype.Core.Config
         [PrototypeOnly(PendingDecisions.UpgradesAndGold, "Upgrade cards the player may buy on one round-end offer. DEC-087 (user, 2026-09-17, Ö-6a): 2 — DEC-071's one purchase per round is superseded (WP-049 simulation: spend share 20% → 38–44%, R15 risk 8.8 → 6.1). The reroll still closes on the first purchase (DEC-050); the shop clamps to 1..CardsPerOffer.")]
         public int PurchasesPerRound = 2;
 
+        [PrototypeOnly(PendingDecisions.UpgradesAndGold, "DEC-107 (user, 2026-09-30, via C-00; K10b P5 A): the late-round bonus — rounds LatePurchaseFirstRound..LatePurchaseLastRound allow LatePurchasesPerRound cards (3 in R10–R13) instead of PurchasesPerRound; the pool stays full to R20 in the DEC-098 simulator. 0 = off.")]
+        public int LatePurchasesPerRound = 3;
+
+        [PrototypeOnly(PendingDecisions.UpgradesAndGold, "DEC-107: first round of the late-round bonus (inclusive).")]
+        public int LatePurchaseFirstRound = 10;
+
+        [PrototypeOnly(PendingDecisions.UpgradesAndGold, "DEC-107: last round of the late-round bonus (inclusive).")]
+        public int LatePurchaseLastRound = 13;
+
         [PrototypeOnly(PendingDecisions.UpgradesAndGold, "WP-077 K1 (user, 2026-09-24): Hybrid = the offer draws three cards from the in-run tree frontier + the pin (Nişan); reroll kept. 1 = FreeTree (named alternative, not playable yet; behaves as Hybrid).")]
         public int RunTreeOfferModel = 0;
 

@@ -50,6 +50,45 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void DEC107_GecTurBonusu_R10_R13UcKart()
+        {
+            // DEC-107 (user 30.09, via C-00): 3 cards per round in R10–R13, 2 elsewhere; shipped data and code defaults agree.
+            PrototypeConfig sevk = PrototypeConfig.Active;
+            Assert.IsNotNull(sevk);
+            for (int r = 1; r <= 20; r++)
+            {
+                bool bonus = r >= 10 && r <= 13;
+                Assert.AreEqual(bonus ? 3 : 2, UpgradeOfferPolicy.PurchaseLimit(sevk, r), "R" + r);
+                Assert.AreEqual(bonus, UpgradeOfferPolicy.IsLateRoundBonus(sevk, r), "R" + r + " bonus");
+            }
+
+            var kod = new EconomyConfigSection();
+            Assert.AreEqual(3, kod.LatePurchasesPerRound);
+            Assert.AreEqual(10, kod.LatePurchaseFirstRound);
+            Assert.AreEqual(13, kod.LatePurchaseLastRound);
+            Assert.AreEqual(UpgradeOfferPolicy.MaxPurchasesPerRound, UpgradeOfferPolicy.PurchaseLimit(null, 11), "config yoksa bonus yok");
+            _config.Economy.LatePurchasesPerRound = 0;
+            Assert.AreEqual(2, UpgradeOfferPolicy.PurchaseLimit(_config, 11), "0 = bonus kapalı");
+            Assert.IsFalse(UpgradeOfferPolicy.IsLateRoundBonus(_config, 11));
+        }
+
+        [Test]
+        public void DEC107_Dukkan_R10UcKartAlir_DorduncuReddedilir_R14IkiyeDoner()
+        {
+            _dukkan.Open(10, _config, _cuzdan, _rank, 5);
+            Assert.AreEqual(3, _dukkan.PurchaseLimit);
+            Assert.IsTrue(_dukkan.LateRoundBonus, "ekran 'geç tur bonusu'nu gösterir");
+            for (int i = 0; i < 3; i++) Assert.IsTrue(_dukkan.TryPurchase(i, _dukkan.SessionId, _dukkan.Revision), (i + 1) + ". kart");
+            Assert.AreEqual(3, _dukkan.PurchasesThisRound);
+            Assert.IsTrue(_dukkan.IsLocked, "üç kartla teklif kilitlenir");
+
+            _dukkan.Close();
+            _dukkan.Open(14, _config, _cuzdan, _rank, 5);
+            Assert.AreEqual(2, _dukkan.PurchaseLimit, "R14 yeniden 2");
+            Assert.IsFalse(_dukkan.LateRoundBonus);
+        }
+
+        [Test]
         public void Klamp_1_ile_KartSayisi()
         {
             _config.Economy.PurchasesPerRound = 0;

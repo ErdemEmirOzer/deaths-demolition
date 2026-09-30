@@ -28,10 +28,11 @@ namespace DD.Prototype.Rounds
 
         /// <summary>
         /// cap.rl_1 Ash Rain: each of the count split blasts is the (forked) blast's radius × 0.6 (inner and outer) and
-        /// damage × 0.5, centred on a ring 0.45 × the outer radius around the impact (random phase). Budget 1.5× but spread:
-        /// the impact point takes ≈ 0.6× of the unsplit blast, the area reaches 1.05× as far.
+        /// damage × RocketSplitDamageScale, centred on a ring 0.45 × the outer radius around the impact (random phase).
+        /// DEC-106 (user, 2026-09-30, via C-00; K10b P2 A): full damage (× 1.0) — at × 0.5 the three small blasts dealt
+        /// ≈ 0.54× the unsplit blast's damage × area (−40 % crowd, B5 audit), so the capstone weakened the launcher.
         /// </summary>
-        public const float RocketSplitRadiusScale = 0.6f, RocketSplitDamageScale = 0.5f, RocketSplitRingScale = 0.45f;
+        public const float RocketSplitRadiusScale = 0.6f, RocketSplitDamageScale = 1.0f, RocketSplitRingScale = 0.45f;
 
         /// <summary>cap.sg_1 Ash Wall: the point-blank shove, metres over seconds (a shotgun's own knockback is 0.6 m / 0.25 s).</summary>
         public const float AshWallShoveMetres = 2.0f, AshWallShoveSeconds = 0.35f;

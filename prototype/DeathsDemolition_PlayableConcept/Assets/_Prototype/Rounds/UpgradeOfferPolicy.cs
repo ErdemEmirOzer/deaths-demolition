@@ -129,6 +129,22 @@ namespace DD.Prototype.Rounds
             return Mathf.Clamp(wanted, 1, CardsPerOffer);
         }
 
+        /// <summary>
+        /// DEC-107 (user, 2026-09-30): the purchases allowed on the offer of <paramref name="round"/> — the late-round bonus
+        /// (<see cref="EconomyConfigSection.LatePurchasesPerRound"/>, shipped 3 in R10–R13) where it applies, else
+        /// <see cref="PurchaseLimit(PrototypeConfig)"/>. The shop and the simulator both read this.
+        /// </summary>
+        public static int PurchaseLimit(PrototypeConfig config, int round) =>
+            IsLateRoundBonus(config, round) ? Mathf.Clamp(config.Economy.LatePurchasesPerRound, 1, CardsPerOffer) : PurchaseLimit(config);
+
+        /// <summary>DEC-107: true when <paramref name="round"/> is in the late-round bonus window and the bonus raises the limit.</summary>
+        public static bool IsLateRoundBonus(PrototypeConfig config, int round)
+        {
+            if (config == null || config.Economy == null) return false;
+            EconomyConfigSection e = config.Economy;
+            return e.LatePurchasesPerRound > PurchaseLimit(config) && round >= e.LatePurchaseFirstRound && round <= e.LatePurchaseLastRound;
+        }
+
         /// <summary>DEC-050 / REQ-079: at most one paid reroll per round-end screen, before the purchase.</summary>
         public const int MaxRerollsPerRound = 1;
 

@@ -129,6 +129,9 @@ namespace DD.Prototype.Rounds
         /// <summary>WP-049C (DEC-087): cards the player may buy on THIS offer (config, clamped by <see cref="UpgradeOfferPolicy.PurchaseLimit"/>). Shipped 2; 1 was DEC-071.</summary>
         public int PurchaseLimit { get; private set; } = UpgradeOfferPolicy.MaxPurchasesPerRound;
 
+        /// <summary>DEC-107: this offer carries the late-round bonus (a third card in R10–R13); the screen names it.</summary>
+        public bool LateRoundBonus { get; private set; }
+
         /// <summary>WP-008 (DEC-050): the one paid reroll of this round. Locked once a purchase is made.</summary>
         public UpgradeEntitlement RerollEntitlement { get; private set; } = UpgradeEntitlement.Available;
 
@@ -298,7 +301,8 @@ namespace DD.Prototype.Rounds
                 PinChangesThisRound = 0;
             }
             IsOpen = true;
-            PurchaseLimit = UpgradeOfferPolicy.PurchaseLimit(config);
+            PurchaseLimit = UpgradeOfferPolicy.PurchaseLimit(config, wantedRound);
+            LateRoundBonus = UpgradeOfferPolicy.IsLateRoundBonus(config, wantedRound);
             LastResult = UpgradePurchaseResult.None;
             LastRerollResult = UpgradeRerollResult.None;
 

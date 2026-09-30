@@ -242,7 +242,7 @@ namespace DD.Prototype.Weapons
 
         /// <summary>
         /// WP-077 cap.rl_1 (Ash Rain): the blast as <paramref name="count"/> smaller ones on a ring around the impact
-        /// (RunTreeHooks.RocketSplit*: radius × 0.6, damage × 0.5, ring 0.45 × outer), each its own transaction — a body
+        /// (RunTreeHooks.RocketSplit*: radius × 0.6, damage × RocketSplitDamageScale — 1.0 since DEC-106, ring 0.45 × outer), each its own transaction — a body
         /// between two takes both. Returns the first one's transaction; <paramref name="hits"/> sums them.
         /// </summary>
         private static int SplitBlast(ClassicWeaponId weapon, Vector3 origin, float damage, float inner, float outer, float exponent, float force, int group,

@@ -38,7 +38,7 @@ namespace DD.Prototype.Diagnostics.EditorTools
             {
                 public PrototypeConfig config;                       // null → PrototypeConfig.Active
                 public int lastRound = 20;                           // criteria read R1–R15; the pool check runs to R20
-                public float goldPickupFraction = 0.90f;             // audit #6: 90 % collection
+                public float goldPickupFraction = 1.00f;             // S1 (user 30.09, DEC-098 note): the round-end sweep collects every packet before the shop (was 0.90, audit #6)
                 public int seedFrom = 1, seedTo = 20;
                 public ClassicWeaponId[] weapons = { ClassicWeaponId.AssaultRifle, ClassicWeaponId.AutoSmg, ClassicWeaponId.CombatShotgun, ClassicWeaponId.Sr1 };
                 public MetaRunModifiers meta = MetaRunModifiers.None; // CapstoneMasteryMet = K6 gate state
@@ -143,7 +143,6 @@ namespace DD.Prototype.Diagnostics.EditorTools
                 tree.Begin(1, weapon, config, o.meta);
                 if (bot == Bot.Rush) tree.SetPin(tree.Graph.WeaponCapstoneIndex);
 
-                int limit = UpgradeOfferPolicy.PurchaseLimit(config);
                 var cards = new List<int>(o.offerCards + 1);
                 var run = new RunResult { weapon = RunTreeCatalog.SlotFor(weapon), seed = seed, bot = bot };
                 int rounds = Math.Min(o.lastRound, track.rounds.Length);
@@ -168,7 +167,7 @@ namespace DD.Prototype.Diagnostics.EditorTools
 
                     if (tree.DrawFrontier(random, build, o.offerCards, cards) == 0 && run.poolExhaustedRound == 0) run.poolExhaustedRound = r;
                     tree.RecordOffer(cards, build);
-                    int cardsThisRound = o.lateCardLimit > 0 && r >= o.lateCardFromRound ? o.lateCardLimit : limit;
+                    int cardsThisRound = o.lateCardLimit > 0 && r >= o.lateCardFromRound ? o.lateCardLimit : UpgradeOfferPolicy.PurchaseLimit(config, r);   // DEC-107
                     for (int pick = 0; pick < cardsThisRound; pick++)
                     {
                         int card = Choose(tree, build, cards, wallet.Balance, floor, bot, random);
@@ -356,7 +355,7 @@ namespace DD.Prototype.Diagnostics.EditorTools
                 config = config != null ? config : PrototypeConfig.Active;
                 Report baseReport = EconomySimulator.Run(new EconomySimulator.Options
                 {
-                    config = config, seed = 1u, lastRound = 15, goldPickupFraction = 0.90f,
+                    config = config, seed = 1u, lastRound = 15, goldPickupFraction = 1.00f,
                     weapons = new[] { ClassicWeaponId.AssaultRifle }, threatColumn = false
                 });
                 RoundRow[] rows = baseReport.weapons[0].rounds;

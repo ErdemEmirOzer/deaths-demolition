@@ -681,6 +681,11 @@ class Opts:
 def run_model(a):
     o = Opts(a)
     cfg, econ, branches = load_economy()
+    # UpgradeOfferPolicy.PurchaseLimit(config, round): PurchasesPerRound + the DEC-107 late-round bonus from the config
+    o.card_limit = max(1, min(3, int(econ.get("PurchasesPerRound", 2))))
+    late = int(econ.get("LatePurchasesPerRound", 0) or 0)
+    if not a.late_cards and not a.no_late_bonus and late > o.card_limit:
+        o.late_cards, o.late_from, o.late_to = min(3, late), int(econ["LatePurchaseFirstRound"]), int(econ["LatePurchaseLastRound"])
     econ = dict(econ, StartingCostMin=int(econ["StartingCostMin"]), StartingCostMax=int(econ["StartingCostMax"]))
     with open(TREE_JSON, encoding="utf-8") as f:
         cat = json.load(f)
@@ -697,11 +702,15 @@ def run_model(a):
 def label(a):
     parts = ["M1 met" if a.m1 else "before M1", "pickup %.2f" % a.pickup]
     if a.late_cards:
-        parts.append("%d cards R%d–%s" % (a.late_cards, a.late_from, ("R%d" % a.late_to) if a.late_to else "end"))
+        parts.append("WHAT-IF %d cards R%d–%s" % (a.late_cards, a.late_from, ("R%d" % a.late_to) if a.late_to else "end"))
+    elif a.no_late_bonus:
+        parts.append("2 cards every round (pre-DEC-107)")
+    else:
+        parts.append("DEC-107 late bonus (config)")
     if a.hearth_cap:
         parts.append("Hearth cap %d" % a.hearth_cap)
-    if a.link_price == "catalog":
-        parts.append("WHAT-IF link price = catalog 80/160")
+    if a.link_price == "shipped":
+        parts.append("pre-B5-2 link price 1 gold")
     if a.capstone_cost:
         parts.append("WHAT-IF capstone %d" % a.capstone_cost)
     if a.no_pin_rules:
@@ -725,12 +734,16 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--balance", required=True, help="dd-balance-v1 report JSON (EconomySimulator, seed 1)")
     ap.add_argument("--m1", action="store_true", help="capstone mastery M1 met (K6)")
-    ap.add_argument("--pickup", type=float, default=0.90)
+    ap.add_argument("--pickup", type=float, default=1.00,
+                    help="gold collected; S1 (user 30.09): 1.00, the round-end sweep (the C# model used 0.90 before 30.09)")
+    ap.add_argument("--no-late-bonus", action="store_true",
+                    help="ignore DEC-107 (2 cards every round, the model before 30.09; with --pickup 0.90 it matches the 26.09 C# CSV)")
     ap.add_argument("--late-cards", type=int, default=0)
     ap.add_argument("--late-from", type=int, default=10, help="first round of --late-cards (C# lateCardFromRound = 10)")
     ap.add_argument("--late-to", type=int, default=0, help="WHAT-IF last round of --late-cards (0 = to the end)")
     ap.add_argument("--hearth-cap", type=int, default=0)
-    ap.add_argument("--link-price", choices=["shipped", "catalog"], default="shipped")
+    ap.add_argument("--link-price", choices=["shipped", "catalog"], default="catalog",
+                    help="catalog = 80/160 (RunTreeState.Cost since WP-077 B5-2); shipped = the pre-B5-2 1-gold slot price (26.09 C# CSV)")
     ap.add_argument("--capstone-cost", type=int, default=0)
     ap.add_argument("--no-pin-rules", action="store_true")
     ap.add_argument("--csv")

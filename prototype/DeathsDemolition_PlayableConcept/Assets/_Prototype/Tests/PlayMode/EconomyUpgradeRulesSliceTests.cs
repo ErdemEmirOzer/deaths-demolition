@@ -489,7 +489,7 @@ namespace DD.Prototype.Tests.PlayMode
             // aynı kartta çift tıklama tek işlem (ikinci kart aynı karede ayrı, meşru bir seçimdir — aşağıda).
             WeaponController silah = WeaponRegistry.ActiveController;
             int limit = shop.PurchaseLimit;
-            Assert.AreEqual(UpgradeOfferPolicy.PurchaseLimit(PrototypeConfig.Active), limit, "dükkân limiti config'den (DEC-087 sevk 2)");
+            Assert.AreEqual(UpgradeOfferPolicy.PurchaseLimit(PrototypeConfig.Active, shop.Round), limit, "dükkân limiti config'den (DEC-087 sevk 2; DEC-107 R10–R13'te 3)");
             Assert.AreEqual(2, limit, "DEC-087: sevk politikası iki kart");
             UpgradeCardOffer kart = shop.Cards[0];
             int tierOnce = silah.Modifiers.GetTier(kart.Branch);

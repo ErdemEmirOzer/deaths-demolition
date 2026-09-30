@@ -301,6 +301,8 @@ namespace DD.Prototype.Tests.EditMode
             Sahip(ClassicWeaponId.Rl1, "cap_rl_1");
             Assert.AreEqual(3, RunTreeHooks.RocketSplitCount(ClassicWeaponId.Rl1));
             Assert.AreEqual(0, RunTreeHooks.RocketSplitCount(ClassicWeaponId.Ar2));
+            Assert.AreEqual(1f, RunTreeHooks.RocketSplitDamageScale, "DEC-106: küçük patlamalar tam hasar");
+            Assert.AreEqual(0.6f, RunTreeHooks.RocketSplitRadiusScale, "yarıçap ×0,6 değişmedi");
         }
 
         [Test]

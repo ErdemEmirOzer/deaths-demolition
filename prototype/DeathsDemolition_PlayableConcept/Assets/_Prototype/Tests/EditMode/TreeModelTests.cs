@@ -58,8 +58,9 @@ namespace DD.Prototype.Tests.EditMode
         public void PinliBot_KeystoneR4_6_DorukR9_11_M1OncesiDePinGetirir()
         {
             // DEC-098 K6: the pin brings the capstone before M1; §4.3 keystone / capstone bands read on the pinned (rush) bot.
+            // S1 (user 30.09, DEC-098 note): bands at 100 % collection — the first keystone band is R3–6.
             EconomySimulator.TreeModel.BotSummary rush = Bot(Kos(false), EconomySimulator.TreeModel.Bot.Rush);
-            Assert.That(rush.keystoneMedian, Is.InRange(4, 6), "ilk keystone medyanı");
+            Assert.That(rush.keystoneMedian, Is.InRange(3, 6), "ilk keystone medyanı");
             Assert.That(rush.capstoneMedian, Is.InRange(9, 11), "doruk medyanı");
             Assert.LessOrEqual(rush.capstoneP90, 13, "doruk p90 ≤ R13");
             Assert.AreEqual(1f, rush.capstoneByR15, "pin her koşuda doruğa ulaşır");

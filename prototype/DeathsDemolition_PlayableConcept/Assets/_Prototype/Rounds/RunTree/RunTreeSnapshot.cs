@@ -77,6 +77,8 @@ namespace DD.Prototype.Rounds
         public int Gold { get; private set; }
         public int PicksUsed { get; private set; }
         public int PicksMax { get; private set; }
+        /// <summary>DEC-107: the offer's pick limit is raised by the late-round bonus (R10–R13).</summary>
+        public bool LateRoundBonus { get; private set; }
         public int HearthStacks { get; private set; }
         public int HearthThisRound { get; private set; }
         public int HearthPerRound { get; private set; }
@@ -140,6 +142,7 @@ namespace DD.Prototype.Rounds
             Gold = shop.Gold;
             PicksUsed = shop.PurchasesThisRound;
             PicksMax = shop.PurchaseLimit;
+            LateRoundBonus = shop.LateRoundBonus;
             HearthStacks = tree.HearthStacks;
             HearthThisRound = tree.HearthThisRound;
             HearthIndex = tree.Graph.HearthIndex;

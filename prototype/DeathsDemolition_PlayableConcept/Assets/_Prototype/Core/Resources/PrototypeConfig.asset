@@ -207,6 +207,9 @@ MonoBehaviour:
     RerollCost: 10
     CarryUnspentGold: 1
     PurchasesPerRound: 2
+    LatePurchasesPerRound: 3
+    LatePurchaseFirstRound: 10
+    LatePurchaseLastRound: 13
     RunTreeOfferModel: 0
     RunTreeNodeCards: 1
     StartingCostMin: 15
