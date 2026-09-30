@@ -255,7 +255,7 @@ namespace DD.Art
             // their daytime albedo (#C8BBA8, 15:30 world); emission is a later look decision. rock_moss binds the rock_boulder maps —
             // its moss blend rides AP023_Mask G (a later shader pass). Straw is authored on the tatami maps (manifest role ap023_tatami).
             // v005 (WP-074 B5b-2): + gravel (tile) and the hishigaki fence card (atlas).
-            foreach (string tile in new[] { "bamboo_old", "bark_pine", "bark_sakura", "copper", "granite", "granite_ashlar", "gravel", "moss", "namako", "pebble_beach", "plaster",
+            foreach (string tile in new[] { "bamboo_old", "bark_maple", "bark_pine", "bark_sakura", "copper", "granite", "granite_ashlar", "gravel", "moss", "namako", "pebble_beach", "plaster",
                                              "plaster_interior", "roof_tiles", "rock_boulder", "stone_ashlar", "tatami", "trim", "vermilion", "washi", "wood_planks", "wood_timber" })
             {
                 var spec = new Spec { Role = "ap023_" + tile, Kind = Kind.Textured, TextureRole = "ap023_" + tile };

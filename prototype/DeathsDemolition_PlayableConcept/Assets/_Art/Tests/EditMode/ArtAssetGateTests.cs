@@ -491,7 +491,8 @@ namespace DD.Art.Tests.EditMode
 
             foreach (string rol in ArtLibraryMaterialRoles.NormalOnlyTextureRoles())
                 if (beklenen.Add(ArtPipelinePaths.SourceTexture(rol, "Normal"))) ap023++;
-            Assert.AreEqual(108, ap023, "AP-023 v007: 32 BaseColor + 22 × (Normal + Packed + türetilmiş maske) + 10 atlas Normal = 108");
+            // v016 (WP-074 B9, P-05 30.09): + bark_maple karo (momiji gövdesi: BaseColor + Normal + Packed + maske) → 33 + 69 + 10 = 112.
+            Assert.AreEqual(112, ap023, "AP-023 v016: 33 BaseColor + 23 × (Normal + Packed + türetilmiş maske) + 10 atlas Normal = 112");
 
             // WP-074 B5b-2 · the AP-023 4K ground sets (plaza slate ×3, path granite ×2): BaseColor + Normal + packed Mask = 15.
             int zemin = 0;

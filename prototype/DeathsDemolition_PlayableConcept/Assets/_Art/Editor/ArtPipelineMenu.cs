@@ -540,6 +540,21 @@ namespace DD.Art.Pipeline.EditorTools
             Single("Build materials", ArtMaterialBuilder.BuildAll);
         }
 
+        /// <summary>
+        /// WP-074 B9 · Every world prefab again on the current LOD contract (B7 v2, eye level) — the AP-001 family prefabs and every
+        /// library package (<see cref="ArtLibraryPaths.Packages"/>) — without touching textures, materials or scenes. Batch:
+        /// <c>-executeMethod …ArtPipelineMenu.RebuildWorldPrefabs</c>.
+        /// </summary>
+        public static void RebuildWorldPrefabs()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode) throw new InvalidOperationException(LogPrefix + "Rebuild World Prefabs cannot run in Play mode.");
+            Stopwatch total = Stopwatch.StartNew();
+            LibraryStep(1, "AP-001 family prefabs", ArtFamilyPrefabBuilder.BuildAll);
+            LibraryStep(2, "Library prefabs (" + string.Join(", ", ArtLibraryPaths.Packages) + ")", ArtLibraryPrefabBuilder.BuildAll);
+            AssetDatabase.SaveAssets();
+            Debug.Log(LogPrefix + "Rebuild World Prefabs: done in " + Seconds(total) + " s.");
+        }
+
         [MenuItem(MenuRoot + "3. Build Family Prefabs", priority = 322)]
         public static void BuildFamilyPrefabs()
         {

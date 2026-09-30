@@ -186,6 +186,45 @@ namespace DD.Art.Tests.EditMode
             Debug.Log("[DD-TEST] wp012.gate.wind carriers=" + tasiyan + " nonCarriers=" + tasimayan);
         }
 
+        /// <summary>
+        /// AP-023 M-41 (P-05 30.09, v016): a still part (windExpected false) carries no colour layer or exactly <c>AP023_Mask</c>
+        /// (R streak, G moss), and a mask whose G is 1 on every vertex is the old <c>AP023_Streak</c> export slip read as full moss
+        /// (kairo_end_chumon V01 up to v015). Same rule as P-05's export round-trip check.
+        /// </summary>
+        [Test]
+        public void Ap023_DuraganParca_RenkKatmaniYalnizMaske_GHerYerdeBirDegil()
+        {
+            var hatalar = new List<string>();
+            int maske = 0;
+            foreach (ArtLibraryManifest.Family f in Manifest("AP-023").families)
+            foreach (ArtLibraryManifest.Variation v in f.variations)
+            foreach (ArtLibraryManifest.Part p in v.parts)
+            foreach (ArtLibraryManifest.Lod l in p.lods)
+            {
+                if (l.windExpected || l.colourLayers == null || l.colourLayers.Length == 0) continue;
+                if (l.colourLayers.Length != 1 || l.colourLayers[0] != "AP023_Mask")
+                {
+                    hatalar.Add(l.@object + ": renk katmanları [" + string.Join(", ", l.colourLayers) + "] — yalnız [] ya da [AP023_Mask]");
+                    continue;
+                }
+
+                Mesh m = MeshBul(Meshler(ArtLibraryPaths.Fbx("AP-023", f.family, l.fbx)), l.@object);
+                if (m == null) continue;   // HerKutuphaneFbx_… reports the missing mesh
+                maske++;
+                bool hepBir = true;
+                foreach (Color c in m.colors)
+                {
+                    if (c.g < 0.999f) { hepBir = false; break; }
+                }
+
+                if (hepBir) hatalar.Add(l.@object + ": AP023_Mask G her vertexte 1 (tam yosun) — Streak dışa aktarım kayması (M-41)");
+            }
+
+            Assert.Greater(maske, 0, "Hiç AP023_Mask taşıyan durağan parça yok; tarama yalanlanmıştır.");
+            Assert.IsEmpty(hatalar, string.Join("\n", hatalar));
+            Debug.Log("[DD-TEST] ap023.gate.m41 maskParts=" + maske);
+        }
+
         // ================================================================== prefab sözleşmesi
 
         [Test]

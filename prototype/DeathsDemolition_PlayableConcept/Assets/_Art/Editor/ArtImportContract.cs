@@ -383,6 +383,7 @@ namespace DD.Art.Pipeline.EditorTools
             { "ap023_slate_flag_v03", TextureClass.Ground },
             { "ap023_path_granite_v01", TextureClass.Ground },
             { "ap023_path_granite_v02", TextureClass.Ground },
+            { "ap023_bark_maple", TextureClass.Foliage },   // v015 (P-05 30.09): the momiji trunk
             { "ap023_bark_pine", TextureClass.Foliage },
             { "ap023_bark_sakura", TextureClass.Foliage },
             { "ap023_bamboo_culm", TextureClass.Foliage },

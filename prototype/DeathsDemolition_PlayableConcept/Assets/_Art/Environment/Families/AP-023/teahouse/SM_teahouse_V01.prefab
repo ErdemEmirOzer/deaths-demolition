@@ -588,21 +588,21 @@ LODGroup:
   m_AnimateCrossFading: 1
   m_LastLODIsBillboard: 0
   m_LODs:
-  - screenRelativeHeight: 0.6821579
+  - screenRelativeHeight: 0.48516712
     fadeTransitionWidth: 0
     renderers:
     - renderer: {fileID: 4602062331878030758}
     - renderer: {fileID: 2231408754872243131}
     - renderer: {fileID: 8524046613520662039}
     - renderer: {fileID: 2960547474360211821}
-  - screenRelativeHeight: 0.41978943
+  - screenRelativeHeight: 0.24258356
     fadeTransitionWidth: 0
     renderers:
     - renderer: {fileID: 2726005406059231097}
     - renderer: {fileID: 6925981977628903112}
     - renderer: {fileID: 2744024594364075431}
     - renderer: {fileID: 4933390308837807470}
-  - screenRelativeHeight: 0.15818153
+  - screenRelativeHeight: 0.024258357
     fadeTransitionWidth: 0
     renderers:
     - renderer: {fileID: 7079029114434769685}
@@ -3583,17 +3583,17 @@ LODGroup:
   m_AnimateCrossFading: 1
   m_LastLODIsBillboard: 0
   m_LODs:
-  - screenRelativeHeight: 0.7173697
+  - screenRelativeHeight: 0.5089367
     fadeTransitionWidth: 0
     renderers:
     - renderer: {fileID: 6364244193288641978}
     - renderer: {fileID: 5493075802388370951}
-  - screenRelativeHeight: 0.44145826
+  - screenRelativeHeight: 0.25446835
     fadeTransitionWidth: 0
     renderers:
     - renderer: {fileID: 2698451087669306913}
     - renderer: {fileID: 5069253087901401321}
-  - screenRelativeHeight: 0.1663466
+  - screenRelativeHeight: 0.025446836
     fadeTransitionWidth: 0
     renderers:
     - renderer: {fileID: 5244979709716211127}

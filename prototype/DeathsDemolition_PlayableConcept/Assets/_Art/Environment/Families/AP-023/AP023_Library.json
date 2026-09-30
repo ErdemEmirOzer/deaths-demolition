@@ -1,11 +1,11 @@
 {
  "ap": "AP-023",
- "version": "manifest v013 (AP023.manifest.v1, 59 families / 192 FBX)",
+ "version": "manifest v016 (AP023.manifest.v1, 59 families / 192 FBX)",
  "derived": "source FBX used directly (embed off, path STRIP, -Z/Y-up); roles ap023_<role>; roof parts fade (role roof); sloped box shells carry obb; LOD0 bounds from the geometry, receipt-checked",
  "sources": [
   {
-   "path": "asset-production/AP-023/exports/AP023-manifest-v013.json",
-   "sha256": "4094d28792befe797c72081444f5262e9e622e37977dc0eefbc4136117b0d8c6"
+   "path": "asset-production/AP-023/exports/AP023-manifest-v016.json",
+   "sha256": "8b1adfa984e4fc99ed38cc6446b973f7a144e6b8b7db49dba1ab6ddac55061a6"
   }
  ],
  "families": [
@@ -14507,7 +14507,7 @@
          ],
          "triangles": 800,
          "colourLayers": [
-          "AP023_Streak"
+          "AP023_Mask"
          ],
          "windExpected": false
         },
@@ -14526,7 +14526,7 @@
          ],
          "triangles": 136,
          "colourLayers": [
-          "AP023_Streak"
+          "AP023_Mask"
          ],
          "windExpected": false
         },
@@ -14545,7 +14545,7 @@
          ],
          "triangles": 84,
          "colourLayers": [
-          "AP023_Streak"
+          "AP023_Mask"
          ],
          "windExpected": false
         }
@@ -14571,7 +14571,7 @@
          ],
          "triangles": 852,
          "colourLayers": [
-          "AP023_Streak"
+          "AP023_Mask"
          ],
          "windExpected": false
         },
@@ -14590,7 +14590,7 @@
          ],
          "triangles": 468,
          "colourLayers": [
-          "AP023_Streak"
+          "AP023_Mask"
          ],
          "windExpected": false
         },
@@ -14607,7 +14607,7 @@
          ],
          "triangles": 172,
          "colourLayers": [
-          "AP023_Streak"
+          "AP023_Mask"
          ],
          "windExpected": false
         }
@@ -17713,7 +17713,7 @@
          "fbx": "AP023_momiji_V01.fbx",
          "object": "AP023_momiji_V01_trunk_LOD0",
          "materials": [
-          "ap023_bark_sakura"
+          "ap023_bark_maple"
          ],
          "facesPerSlot": [
           6868
@@ -17726,7 +17726,7 @@
          "fbx": "AP023_momiji_V01.fbx",
          "object": "AP023_momiji_V01_trunk_LOD1",
          "materials": [
-          "ap023_bark_sakura"
+          "ap023_bark_maple"
          ],
          "facesPerSlot": [
           1950
@@ -17739,7 +17739,7 @@
          "fbx": "AP023_momiji_V01.fbx",
          "object": "AP023_momiji_V01_trunk_LOD2",
          "materials": [
-          "ap023_bark_sakura"
+          "ap023_bark_maple"
          ],
          "facesPerSlot": [
           646
@@ -17853,7 +17853,7 @@
          "fbx": "AP023_momiji_V02.fbx",
          "object": "AP023_momiji_V02_trunk_LOD0",
          "materials": [
-          "ap023_bark_sakura"
+          "ap023_bark_maple"
          ],
          "facesPerSlot": [
           4182
@@ -17866,7 +17866,7 @@
          "fbx": "AP023_momiji_V02.fbx",
          "object": "AP023_momiji_V02_trunk_LOD1",
          "materials": [
-          "ap023_bark_sakura"
+          "ap023_bark_maple"
          ],
          "facesPerSlot": [
           1980
@@ -17879,7 +17879,7 @@
          "fbx": "AP023_momiji_V02.fbx",
          "object": "AP023_momiji_V02_trunk_LOD2",
          "materials": [
-          "ap023_bark_sakura"
+          "ap023_bark_maple"
          ],
          "facesPerSlot": [
           606
@@ -17993,7 +17993,7 @@
          "fbx": "AP023_momiji_V03.fbx",
          "object": "AP023_momiji_V03_trunk_LOD0",
          "materials": [
-          "ap023_bark_sakura"
+          "ap023_bark_maple"
          ],
          "facesPerSlot": [
           2646
@@ -18006,7 +18006,7 @@
          "fbx": "AP023_momiji_V03.fbx",
          "object": "AP023_momiji_V03_trunk_LOD1",
          "materials": [
-          "ap023_bark_sakura"
+          "ap023_bark_maple"
          ],
          "facesPerSlot": [
           1254
@@ -18019,7 +18019,7 @@
          "fbx": "AP023_momiji_V03.fbx",
          "object": "AP023_momiji_V03_trunk_LOD2",
          "materials": [
-          "ap023_bark_sakura"
+          "ap023_bark_maple"
          ],
          "facesPerSlot": [
           378
