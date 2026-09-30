@@ -106,11 +106,40 @@ namespace DD.Prototype.Core.Boot
         /// </summary>
         public static System.Func<string, bool> FirstSceneLoader;
 
+        /// <summary>
+        /// WP-068 R1-E E4 B1b (S-01 Core, C-00 30.09): raised with the scene name when the first scene is not in the
+        /// build. The boot stays in Boot and keeps the plain log (no console error: the acceptance criteria forbid them);
+        /// the UI registers here to open its load-error modal (TRY AGAIN / QUIT) instead of leaving a silent boot screen.
+        /// Same direction as <see cref="FirstSceneLoader"/>: Core cannot reference the UI assembly.
+        /// </summary>
+        public static System.Action<string> FirstSceneMissing;
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
         {
             s_persistent = null;
             FirstSceneLoader = null;
+            FirstSceneMissing = null;
+        }
+
+        /// <summary>
+        /// The first-scene hand-off, separated from <see cref="Start"/> so it can be tested without loading scenes.
+        /// Returns true when the caller must stop: the scene is missing (logged, <see cref="FirstSceneMissing"/> raised)
+        /// or the UI loader took it; false = do the plain synchronous load.
+        /// </summary>
+        public static bool HandOffFirstScene(string target, System.Func<string, bool> canLoad)
+        {
+            if (!canLoad(target))
+            {
+                // Expected while the later tasks have not created their scenes yet.
+                // Deliberately not an error: the acceptance criteria forbid console
+                // errors during normal use.
+                Debug.Log($"[Boot] Scene '{target}' is not in the build settings yet. Staying in Boot.");
+                FirstSceneMissing?.Invoke(target);
+                return true;
+            }
+
+            return FirstSceneLoader != null && FirstSceneLoader(target);
         }
 
         private IEnumerator Start()
@@ -128,16 +157,7 @@ namespace DD.Prototype.Core.Boot
                 ? PrototypeBootFlags.FirstSceneName
                 : _forcedFirstScene;
 
-            if (!Application.CanStreamedLevelBeLoaded(target))
-            {
-                // Expected while the later tasks have not created their scenes yet.
-                // Deliberately not an error: the acceptance criteria forbid console
-                // errors during normal use.
-                Debug.Log($"[Boot] Scene '{target}' is not in the build settings yet. Staying in Boot.");
-                yield break;
-            }
-
-            if (FirstSceneLoader != null && FirstSceneLoader(target))
+            if (HandOffFirstScene(target, Application.CanStreamedLevelBeLoaded))
             {
                 yield break;
             }
