@@ -474,7 +474,9 @@ namespace DD.Prototype.Qa
             public void ConfigureRouteTour(string framesDir) { _routeDir = framesDir; }
             private string _routeDir;
             private int _routeStep = -1;
-            private float _routeStepStart, _routeSettleSince = -1f, _routeCaptureAt = -1f;
+            private float _routeStepStart, _routeSettleSince = -1f, _routeCaptureAt = -1f, _routeTimeout, _routeTraceAt;
+            private bool _routeArrived;
+            private float _routeYawError, _routePitchError;
             private string _routeCapturePath;
             private NavMeshPath _routePath;
             private Vector3 _routeTarget;
@@ -1804,7 +1806,9 @@ namespace DD.Prototype.Qa
             private string RouteFolder => Path.GetFileName(_routeDir.TrimEnd('/', '\\'));
 
             private const float RouteStartDelay = 3f;     // the ROUND 1 banner (2.4 s) is gone
-            private const float RouteStepTimeout = 45f;
+            // WP-078 prova 30.09: the step budget follows the NavMesh path — kairo (~55 m of path from the corridor) took 31 s in
+            // top-down and ran out of a flat 45 s in TP/FP. Budget = 20 s + path / 1.2 m/s, clamped to [45, 120] s.
+            private const float RouteStepTimeoutMin = 45f, RouteStepTimeoutMax = 120f, RouteWalkSpeed = 1.2f, RouteTracePeriod = 2f;
             private const float RouteArrive = 0.8f;
 
             private void TickRouteTour(PlayerRig rig)
@@ -1854,9 +1858,14 @@ namespace DD.Prototype.Qa
                     return;
                 }
 
-                if (now - _routeStepStart > RouteStepTimeout)
+                if (now - _routeStepStart > _routeTimeout)
                 {
-                    RecordRoute(point, "blocked", "point not reached / view not settled in " + QaArgs.F(RouteStepTimeout, 0) + " s", null, false);
+                    // WP-078 prova: say which half failed — walking (distance left) or the view (yaw/pitch error)
+                    Vector3 at = rig.transform.position;
+                    float left = new Vector2(_routeTarget.x - at.x, _routeTarget.z - at.z).magnitude;
+                    RecordRoute(point, "blocked", (_routeArrived ? "view not settled" : "point not reached") + " in " + QaArgs.F(_routeTimeout, 0)
+                        + " s (pos " + V(at) + ", " + QaArgs.F(left, 1) + " m left, yawErr " + QaArgs.F(_routeYawError, 1)
+                        + "°, pitchErr " + QaArgs.F(_routePitchError, 1) + "°)", null, false);
                     BeginRouteStep(_routeStep + 1);
                     return;
                 }
@@ -1868,6 +1877,12 @@ namespace DD.Prototype.Qa
                 Vector2 move = Vector2.zero, look = Vector2.zero;
                 Vector3 flat = target - pos; flat.y = 0f;
                 bool arrived = flat.magnitude <= RouteArrive;
+                _routeArrived = arrived;
+                if (now >= _routeTraceAt)
+                {
+                    _routeTraceAt = now + RouteTracePeriod;
+                    Log("route-walk key=" + point.Key + " pos=" + V(pos) + " left=" + QaArgs.F(flat.magnitude, 1) + " time=" + QaArgs.F(now - _runStart, 1));
+                }
                 if (!arrived)
                 {
                     Vector3 dir = RouteDirection(pos, target);
@@ -1883,7 +1898,9 @@ namespace DD.Prototype.Qa
                     Vector3 viewDir = Quaternion.Euler(pitch, point.Yaw, 0f) * Vector3.forward;
                     var o = new QaBotObservation { HasTarget = true, TargetPosition = cam.StablePosition + viewDir * 20f - Vector3.up * 1.0f };
                     look = LookStickToward(o, Vector2.zero, fwd, right);
-                    aligned = Mathf.Abs(Mathf.DeltaAngle(cam.ViewYaw, point.Yaw)) <= 2f && Mathf.Abs(cam.ViewPitch - pitch) <= 2f;
+                    _routeYawError = Mathf.Abs(Mathf.DeltaAngle(cam.ViewYaw, point.Yaw));
+                    _routePitchError = Mathf.Abs(cam.ViewPitch - pitch);
+                    aligned = _routeYawError <= 2f && _routePitchError <= 2f;
                 }
 
                 _pad.Set(arrived ? Vector2.zero : move, aligned ? Vector2.zero : look, false, false, false);
@@ -1916,7 +1933,20 @@ namespace DD.Prototype.Qa
                     Vector3 raw = new Vector3(p.X, 0f, p.Z);
                     NavMeshHit hit;
                     _routeTarget = NavMesh.SamplePosition(raw + Vector3.up * 1f, out hit, 2f, NavMesh.AllAreas) ? hit.position : raw;
-                    Log("route-step key=" + p.Key + " target=" + V(_routeTarget) + (hit.hit ? "" : " (no NavMesh within 2 m)"));
+                    // step budget from the NavMesh path length (no path: straight line × 1.6 for the detours around walls)
+                    PlayerRig rig = PlayerRegistry.Primary;
+                    Vector3 from = rig != null ? rig.transform.position : _routeTarget;
+                    float length = 1.6f * Vector3.Distance(new Vector3(from.x, 0f, from.z), new Vector3(_routeTarget.x, 0f, _routeTarget.z));
+                    var path = new NavMeshPath();
+                    if (rig != null && NavMesh.CalculatePath(from, _routeTarget, NavMesh.AllAreas, path) && path.corners.Length > 1)
+                    {
+                        length = 0f;
+                        for (int i = 1; i < path.corners.Length; i++) length += Vector3.Distance(path.corners[i - 1], path.corners[i]);
+                    }
+                    _routeTimeout = Mathf.Clamp(20f + length / RouteWalkSpeed, RouteStepTimeoutMin, RouteStepTimeoutMax);
+                    _routeArrived = false; _routeYawError = _routePitchError = 0f; _routeTraceAt = 0f;
+                    Log("route-step key=" + p.Key + " target=" + V(_routeTarget) + (hit.hit ? "" : " (no NavMesh within 2 m)")
+                        + " path=" + QaArgs.F(length, 1) + "m budget=" + QaArgs.F(_routeTimeout, 0) + "s");
                 }
                 if (step >= RoutePoints.Length)
                 {
