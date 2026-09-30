@@ -165,7 +165,7 @@ namespace DD.Prototype.Tests.EditMode
             node.StringKey = "tree.run.fork.sr_1.x";
             node.ArgNames = new[] { "seconds", "value" };
             node.ArgValues = new[] { 2.5f, 2f };
-            Assert.AreEqual("Atıştan önce 2.5 sn bekle, ×2 hasar.", UiRunTreePanel.DescriptionOf(node));
+            Assert.AreEqual("Atıştan önce 2,5 sn bekle, ×2 hasar.", UiRunTreePanel.DescriptionOf(node));   // M-65 / Q9: TR decimal comma
             UiStrings.Language = UiStrings.English;
             Assert.AreEqual("Hold Breath", UiRunTreePanel.NameOf(node));
             Assert.AreEqual("Wait 2.5 s before the shot for ×2 damage.", UiRunTreePanel.DescriptionOf(node));
@@ -185,9 +185,9 @@ namespace DD.Prototype.Tests.EditMode
                 var node = new RunTreeNodeView { Kind = RunTreeNodeKind.Tier, HasBranch = true,
                     Branch = UpgradeBranch.FireRate, OwnedTier = 1, MaxTier = 2, StringKey = "tree.run.branch.fire_rate" };
                 UiStrings.Language = UiStrings.Turkish;
-                Assert.AreEqual("Atış hızı +%17 (toplam 1.34x, üst sınır 2.20x).", UiRunTreePanel.DescriptionOf(node));
+                Assert.AreEqual("Atış hızı +%17 (toplam 1,34x, üst sınır 2,20x).", UiRunTreePanel.DescriptionOf(node));
                 node.OwnedTier = 2;
-                Assert.AreEqual("Atış hızı +%17 (toplam 1.34x, üst sınır 2.20x).", UiRunTreePanel.DescriptionOf(node), "MAX describes the current tier, not a nonexistent third tier");
+                Assert.AreEqual("Atış hızı +%17 (toplam 1,34x, üst sınır 2,20x).", UiRunTreePanel.DescriptionOf(node), "MAX describes the current tier, not a nonexistent third tier");
                 foreach (UpgradeBranch branch in System.Enum.GetValues(typeof(UpgradeBranch)))
                 {
                     string detail = UiUpgradeCopy.TierDescription(branch, 1, "");
@@ -354,6 +354,32 @@ namespace DD.Prototype.Tests.EditMode
             string copy = source.Substring(source.IndexOf("internal static class ProfileContentCopy", System.StringComparison.Ordinal));
             foreach (string english in new[] { "\"Classic weapon", "\"Upgrade branch", "\"Title: ", "\"Badge: ", "Detail ==", "DisplayName ==", "Description ==" })
                 StringAssert.DoesNotContain(english, copy);
+        }
+
+        // ------------------------------------------------------------ M-65: numbers and units in the language's form
+
+        [Test]
+        public void Sayi_TR_VirgulNokta_Deterministik_BirimlerPakettenGelir()
+        {
+            UiStrings.Language = UiStrings.Turkish;
+            Assert.AreEqual("1,34", UiStrings.Number(1.34f, "0.00"));
+            Assert.AreEqual("2,5", UiStrings.Number(2.5f));
+            Assert.AreEqual("20", UiStrings.Number(20f));
+            Assert.AreEqual("1.234,5", UiStrings.Number(1234.5f, "#,##0.0"), "group and decimal trade places, no culture");
+            Assert.AreEqual("4,5 sn", UiRunTreePanel.StatText(4.5f, "s"));
+            Assert.AreEqual("2,5 HP/sn", UiRunTreePanel.StatText(2.5f, "HP/s"));
+            Assert.AreEqual("−10 %", UiRunTreePanel.StatText(-10f, "%"));
+            foreach (UpgradeBranch branch in System.Enum.GetValues(typeof(UpgradeBranch)))
+            {
+                string detail = UiUpgradeCopy.TierDescription(branch, 1, "");
+                Assert.IsFalse(System.Text.RegularExpressions.Regex.IsMatch(detail, @"\d\.\d"), branch + " TR has no decimal point: " + detail);
+                StringAssert.DoesNotContain(" s)", detail, branch.ToString());
+            }
+
+            UiStrings.Language = UiStrings.English;
+            Assert.AreEqual("1.34", UiStrings.Number(1.34f, "0.00"));
+            Assert.AreEqual("1,234.5", UiStrings.Number(1234.5f, "#,##0.0"));
+            Assert.AreEqual("4.5 s", UiRunTreePanel.StatText(4.5f, "s"));
         }
 
         // ------------------------------------------------------------ slice 9 · E3 R2: binding conflicts

@@ -1089,7 +1089,7 @@ R1-E E1 (S-09, C-00 30.09): 21 tr lines below revised for grammar and pack termi
 
 ## S-09 · Slice 9 remainder (E3, C-00 30.09)
 
-`controls.reset` changed in place: RESET ALL is now a 500 ms hold (direction E7), so the label says so, following `path.buy.hold`. The three new keys are the Controls pane's dead-zone sentence, the override mark's legend (the kit never uses a shape alone) and the binding-conflict notice (direction E7: conflict → Warning notice). The `profile.locked.*` keys are a locked title / badge row's condition (direction E3: LOCKED = lock + condition; T1), and `profile.content.title_first_blood.detail` replaces a stale developer line ("…once the profile pane supports titles") with the condition, as its siblings read. M-69 (Codex fix list, rows updated in place in the visible-Turkish section): `controls.action_part` TR reads part first (Yukarı Hareket), `controls.action.AimStick` EN is "Aim (Stick)", and `shop.detail.Explosion` TR loses the doubled "{scale}x katıyla".
+`controls.reset` changed in place: RESET ALL is now a 500 ms hold (direction E7), so the label says so, following `path.buy.hold`. The three new keys are the Controls pane's dead-zone sentence, the override mark's legend (the kit never uses a shape alone) and the binding-conflict notice (direction E7: conflict → Warning notice). The `profile.locked.*` keys are a locked title / badge row's condition (direction E3: LOCKED = lock + condition; T1), and `profile.content.title_first_blood.detail` replaces a stale developer line ("…once the profile pane supports titles") with the condition, as its siblings read. M-69 (Codex fix list, rows updated in place in the visible-Turkish section): `controls.action_part` TR reads part first (Yukarı Hareket), `controls.action.AimStick` EN is "Aim (Stick)", and `shop.detail.Explosion` TR loses the doubled "{scale}x katıyla". M-65: `stat.fmt.hp` / `stat.fmt.hp_per_second` carry the HP units the code used to append; every number goes through UiStrings.Number (TR "1,34", Q9).
 
 | Key | en | tr |
 |---|---|---|
@@ -1099,3 +1099,5 @@ R1-E E1 (S-09, C-00 30.09): 21 tr lines below revised for grammar and pack termi
 | `profile.locked.round` | LOCKED · ROUND {value} | KİLİTLİ · {value}. ROUND |
 | `profile.locked.level` | LOCKED · LEVEL {value} | KİLİTLİ · SEVİYE {value} |
 | `profile.locked.achievement` | LOCKED · {name} | KİLİTLİ · {name} |
+| `stat.fmt.hp` | {value} HP | {value} HP |
+| `stat.fmt.hp_per_second` | {value} HP/s | {value} HP/sn |

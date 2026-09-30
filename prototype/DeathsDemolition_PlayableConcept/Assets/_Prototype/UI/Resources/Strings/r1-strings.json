@@ -3750,5 +3750,13 @@
   "profile.locked.achievement": {
     "en": "LOCKED · {name}",
     "tr": "KİLİTLİ · {name}"
+  },
+  "stat.fmt.hp": {
+    "en": "{value} HP",
+    "tr": "{value} HP"
+  },
+  "stat.fmt.hp_per_second": {
+    "en": "{value} HP/s",
+    "tr": "{value} HP/sn"
   }
 }

@@ -1560,14 +1560,32 @@ namespace DD.Prototype.UI
                 : StatText(n.StatNow, n.StatUnit) + "  →  " + StatText(n.StatNext, n.StatUnit);
         }
 
-        /// <summary>A stat in display units: percentages signed ("+20 %", "−10 %"), seconds / HP / HP/s after the number, counts bare.</summary>
+        /// <summary>
+        /// A stat in display units: percentages signed ("+20 %", "−10 %"), seconds / HP / HP/s after the number, counts
+        /// bare. M-65: the number in the language's form (UiStrings.Number: TR "4,5") and the unit from the pack
+        /// (stat.fmt.*: TR "sn", "HP/sn").
+        /// </summary>
         public static string StatText(float value, string unit)
         {
             string number = Mathf.Abs(value - Mathf.Round(value)) < 0.001f
-                ? Mathf.Abs(Mathf.RoundToInt(value)).ToString(CultureInfo.InvariantCulture)
-                : Mathf.Abs(value).ToString("0.#", CultureInfo.InvariantCulture);
+                ? UiStrings.Number(Mathf.Abs(Mathf.RoundToInt(value)))
+                : UiStrings.Number(Mathf.Abs(value), "0.#");
             string sign = value < 0f ? "−" : unit == "%" && value > 0f ? "+" : string.Empty;
-            return string.IsNullOrEmpty(unit) ? sign + number : sign + number + " " + unit;
+            string signed = sign + number;
+            switch (unit)
+            {
+                case null:
+                case "":
+                    return signed;
+                case "s":
+                    return UiStrings.Format("stat.fmt.seconds", "value", signed, "{value} s");
+                case "HP":
+                    return UiStrings.Format("stat.fmt.hp", "value", signed, "{value} HP");
+                case "HP/s":
+                    return UiStrings.Format("stat.fmt.hp_per_second", "value", signed, "{value} HP/s");
+                default:
+                    return signed + " " + unit;   // "%" and any unit S-04 adds later
+            }
         }
 
         private void SetPips(int count, int filled)
@@ -1630,7 +1648,7 @@ namespace DD.Prototype.UI
                 : n.HasBranch ? UpgradeCardCatalog.Describe(n.Branch, n.OwnedTier) : string.Empty;
         }
 
-        /// <summary>Each "{name}" → its value: whole numbers bare ("20"), others to one decimal ("2.5"), invariant culture.</summary>
+        /// <summary>Each "{name}" → its value: whole numbers bare ("20"), others to one decimal - "2.5", TR "2,5" (M-65, UiStrings.Number).</summary>
         public static string FillArgs(string line, string[] names, float[] values)
         {
             if (names == null || values == null)
@@ -1642,8 +1660,8 @@ namespace DD.Prototype.UI
             {
                 float v = values[i];
                 string text = Mathf.Abs(v - Mathf.Round(v)) < 0.001f
-                    ? Mathf.RoundToInt(v).ToString(CultureInfo.InvariantCulture)
-                    : v.ToString("0.#", CultureInfo.InvariantCulture);
+                    ? UiStrings.Number(Mathf.RoundToInt(v))
+                    : UiStrings.Number(v, "0.#");
                 line = line.Replace("{" + names[i] + "}", text);
             }
 

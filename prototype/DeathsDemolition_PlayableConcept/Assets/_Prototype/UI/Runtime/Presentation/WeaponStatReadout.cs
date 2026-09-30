@@ -145,7 +145,7 @@ namespace DD.Prototype.UI
 
         private static string Num(float v)
         {
-            return Mathf.Abs(v - Mathf.Round(v)) < 0.005f ? Mathf.RoundToInt(v).ToString(Invariant) : v.ToString("0.##", Invariant);
+            return Mathf.Abs(v - Mathf.Round(v)) < 0.005f ? UiStrings.Number(Mathf.RoundToInt(v)) : UiStrings.Number(v, "0.##");   // M-65
         }
 
         private static string Fmt(string key, string fallback, string value, string name2 = null, string value2 = null)

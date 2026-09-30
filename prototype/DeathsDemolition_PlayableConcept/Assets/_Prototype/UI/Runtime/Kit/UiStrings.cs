@@ -61,6 +61,39 @@ namespace DD.Prototype.UI
             return row.TryGetValue("en", out text) && !string.IsNullOrEmpty(text) ? text : fallback;
         }
 
+        /// <summary>
+        /// M-65 (content pack Q9): a number as the language on screen writes it - invariant digits, then under "tr" the
+        /// decimal point and the group separator trade places ("1.34" → "1,34", "1,234.5" → "1.234,5"). Deterministic
+        /// and CultureInfo-free: a Player may not carry the tr-TR culture. Built on demand, never per frame.
+        /// </summary>
+        public static string Number(float value, string format = "0.#")
+        {
+            string text = value.ToString(format, CultureInfo.InvariantCulture);
+            return Language == Turkish ? SwapSeparators(text) : text;
+        }
+
+        /// <summary>An integer, invariant digits (no separator to trade).</summary>
+        public static string Number(int value)
+        {
+            return value.ToString(CultureInfo.InvariantCulture);
+        }
+
+        private static string SwapSeparators(string text)
+        {
+            if (text.IndexOf('.') < 0 && text.IndexOf(',') < 0)
+            {
+                return text;
+            }
+
+            char[] chars = text.ToCharArray();
+            for (int i = 0; i < chars.Length; i++)
+            {
+                chars[i] = chars[i] == '.' ? ',' : chars[i] == ',' ? '.' : chars[i];
+            }
+
+            return new string(chars);
+        }
+
         /// <summary>Get with one named placeholder filled ("{count}" → value). Built on demand, never per frame.</summary>
         public static string Format(string key, string name, string value, string fallback = "")
         {

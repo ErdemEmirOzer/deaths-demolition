@@ -10,9 +10,10 @@ namespace DD.Prototype.UI
     /// <summary>UI wording over the shop's live counts and tuning; never changes the shop or its data.</summary>
     public static class UiUpgradeCopy
     {
-        private static string Number(int value) => value.ToString(CultureInfo.InvariantCulture);
+        private static string Number(int value) => UiStrings.Number(value);
 
-        private static string Number(float value, string format = "0.#") => value.ToString(format, CultureInfo.InvariantCulture);
+        // M-65: the language's number form (TR "1,34"), never the raw invariant digits.
+        private static string Number(float value, string format = "0.#") => UiStrings.Number(value, format);
 
         private static string CountWord(int count)
         {
@@ -110,15 +111,15 @@ namespace DD.Prototype.UI
                 case UpgradeBranch.MaximumHealth:
                     float health = config != null ? config.Player.MaxHealth * p.MaxHealthMultiplier(next) : 0f;
                     return Fill(key, "", "value", Number(p.MaxHealthBonusPerTier * 100f, "0"), "total", Number(p.MaxHealthMultiplier(next), "0.00"),
-                        "health", health > 0f ? ", " + Number(health, "0") + " HP" : string.Empty);
+                        "health", health > 0f ? ", " + UiStrings.Format("stat.fmt.hp", "value", Number(health, "0"), "{value} HP") : string.Empty);
                 case UpgradeBranch.RegenerationDelay:
                     float delay = config != null ? config.Player.HealthRegenDelay * p.RegenDelayMultiplier(next) : 0f;
                     return Fill(key, "", "value", Number(p.RegenDelayReductionPerTier * 100f, "0"), "total", Number(p.RegenDelayMultiplier(next), "0.00"),
-                        "seconds", delay > 0f ? ", " + Number(delay, "0.0") + " s" : string.Empty);
+                        "seconds", delay > 0f ? ", " + UiStrings.Format("stat.fmt.seconds", "value", Number(delay, "0.0"), "{value} s") : string.Empty);
                 case UpgradeBranch.RegenerationRate:
                     float rate = config != null ? config.Player.HealthRegenRate * p.RegenRateMultiplier(next) : 0f;
                     return Fill(key, "", "value", Number(p.RegenRateBonusPerTier * 100f, "0"), "total", Number(p.RegenRateMultiplier(next), "0.00"),
-                        "rate", rate > 0f ? ", " + Number(rate) + " HP/s" : string.Empty);
+                        "rate", rate > 0f ? ", " + UiStrings.Format("stat.fmt.hp_per_second", "value", Number(rate), "{value} HP/s") : string.Empty);
                 default:
                     return UiStrings.Get("tree.lock.pending", "Not in this build yet.");
             }

@@ -403,7 +403,8 @@ namespace DD.Prototype.UI
 
         private static string RegenText(int regenTenths)
         {
-            return UiStrings.Format("hud.health.recovery_in", "value", (regenTenths / 10f).ToString("0.0"), "recovery in {value}s");
+            // M-65: the language's number form (TR "2,5"); the bare ToString("0.0") also followed the machine's culture.
+            return UiStrings.Format("hud.health.recovery_in", "value", UiStrings.Number(regenTenths / 10f, "0.0"), "recovery in {value}s");
         }
 
         private static string RegenTextFor(int regenTenths)
