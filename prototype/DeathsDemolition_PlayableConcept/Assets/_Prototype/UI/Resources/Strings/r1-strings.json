@@ -3766,5 +3766,9 @@
   "hud.death.self": {
     "en": "your own {weapon}",
     "tr": "kendi {weapon} atışın"
+  },
+  "tree.state.hearth_round": {
+    "en": "THIS ROUND {value}/{max}",
+    "tr": "BU ROUND {value}/{max}"
   }
 }

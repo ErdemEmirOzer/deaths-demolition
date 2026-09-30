@@ -224,6 +224,13 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(string.Empty, Note().text, "No duplicate counter or refusal message after a successful purchase.");
             Canvas.ForceUpdateCanvases();
             AssertFits(_panel.DetailState);
+            // M-63: the tree's node row (full or compact) says the round is spent - never "AVAILABLE · price" - at UI 1.2 × text 1.25.
+            TMP_Text word = _panel.StateTextOf(_panel.Snapshot.HearthIndex);
+            Assert.IsNotNull(word, "The Hearth seal has its state word on the tree.");
+            string spent = UiStrings.Get("tree.state.hearth_round").Replace("{value}", "3").Replace("{max}", "3");
+            StringAssert.Contains(spent, word.text.Replace("\n", " "), "Node word: " + word.text);
+            StringAssert.DoesNotContain(UiStrings.Get("tree.state.available"), word.text);
+            AssertFits(word);
         }
 
         private TMP_Text Note()

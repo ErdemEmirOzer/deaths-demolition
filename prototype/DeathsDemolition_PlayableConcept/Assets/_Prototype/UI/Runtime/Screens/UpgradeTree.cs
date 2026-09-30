@@ -679,6 +679,7 @@ namespace DD.Prototype.UI
             bool owned = IsOwned(n) || (n.Kind == RunTreeNodeKind.Tier && n.OwnedTier > 0);
             bool dim = n.Status == RunTreeNodeStatus.Locked || n.Status == RunTreeNodeStatus.Excluded;
             bool waiting = n.Status == RunTreeNodeStatus.PrereqMissing;
+            bool hearthSpent = HearthRoundSpent(n);   // M-63: Available by the seven-status contract, shut for this round
             bool forSale = Offered(index);
             SetGlyph(v.Glyph, n, waiting && !owned);
 
@@ -699,7 +700,7 @@ namespace DD.Prototype.UI
             // MAX wears the ginpaku ring - the silver-leaf colour (12b, AD R1-C MUST-5 residual). No Leaf glint: the Opening
             // Beat's seal stamp is the shop's one ceremony kind (§14 MUST-4, UiOrnamentCensusTests).
             bool max = n.Kind == RunTreeNodeKind.Tier && n.MaxTier > 0 && n.OwnedTier >= n.MaxTier;
-            UiColor ring = forSale ? UiColor.StateGold : max ? UiColor.SilverLeaf : owned ? UiColor.TextSecondary : dim || waiting ? UiColor.TextMuted : UiColor.TextPrimary;
+            UiColor ring = forSale ? UiColor.StateGold : max ? UiColor.SilverLeaf : owned ? UiColor.TextSecondary : dim || waiting || hearthSpent ? UiColor.TextMuted : UiColor.TextPrimary;
             v.Ring.color = WithAlpha(UiTokens.Get(ring), dim ? 0.6f : 1f);
             v.Cross.gameObject.SetActive(n.Status == RunTreeNodeStatus.Excluded);
             v.New.SetActive(n.NewlyUnlocked);
@@ -739,7 +740,7 @@ namespace DD.Prototype.UI
             }
 
             v.State.color = UiTokens.Get(n.Status == RunTreeNodeStatus.Unaffordable ? UiColor.StateWarning
-                : _compact && forSale ? UiColor.StateGold : dim ? UiColor.TextMuted : UiColor.TextSecondary);
+                : _compact && forSale ? UiColor.StateGold : dim || hearthSpent ? UiColor.TextMuted : UiColor.TextSecondary);
         }
 
         private static void SetGlyph(Image image, RunTreeNodeView n, bool hollow)
@@ -828,7 +829,11 @@ namespace DD.Prototype.UI
             }
 
             int available = -1;
-            if (n.Status == RunTreeNodeStatus.Available)
+            if (HearthRoundSpent(n))
+            {
+                tokens.Add(StateCore(n));   // M-63: "THIS ROUND 3/3" - no AVAILABLE, no price
+            }
+            else if (n.Status == RunTreeNodeStatus.Available)
             {
                 // An offered node's OFFER ring says AVAILABLE already: "OFFER · 15" (12b).
                 if (!forSale)
@@ -894,7 +899,18 @@ namespace DD.Prototype.UI
             return line;
         }
 
-        /// <summary>The state word alone (no NEW, no count): LOCKED, NEEDS …, AVAILABLE · price, N GOLD SHORT, OWNED, CLOSED BY …, MAX.</summary>
+        /// <summary>
+        /// M-63 (RT9, 8c7c22c1 fixed only the detail and BUY): the Hearth is Available by the seven-status contract even
+        /// when this round's stokes are spent - the node row and the compact word then say THIS ROUND 3/3 and the ring
+        /// dims, instead of AVAILABLE · price. Read from the snapshot's own counts (an overlay, not an eighth status).
+        /// </summary>
+        private bool HearthRoundSpent(RunTreeNodeView n)
+        {
+            return n.Kind == RunTreeNodeKind.Hearth && n.Status == RunTreeNodeStatus.Available
+                   && _snap.HearthPerRound > 0 && _snap.HearthThisRound >= _snap.HearthPerRound;
+        }
+
+        /// <summary>The state word alone (no NEW, no count): LOCKED, NEEDS …, AVAILABLE · price (THIS ROUND n/n for a spent Hearth), N GOLD SHORT, OWNED, CLOSED BY …, MAX.</summary>
         private string StateCore(RunTreeNodeView n)
         {
             string word;
@@ -911,7 +927,10 @@ namespace DD.Prototype.UI
                         : UiStrings.Get("tree.state.prereq_keystone", "NEEDS A KEYSTONE");
                     break;
                 case RunTreeNodeStatus.Available:
-                    word = UiStrings.Get("tree.state.available", "AVAILABLE") + " · " + n.Cost.ToString(CultureInfo.InvariantCulture);
+                    word = HearthRoundSpent(n)
+                        ? UiStrings.Get("tree.state.hearth_round", "THIS ROUND {value}/{max}")
+                            .Replace("{value}", UiStrings.Number(_snap.HearthThisRound)).Replace("{max}", UiStrings.Number(_snap.HearthPerRound))
+                        : UiStrings.Get("tree.state.available", "AVAILABLE") + " · " + n.Cost.ToString(CultureInfo.InvariantCulture);
                     break;
                 case RunTreeNodeStatus.Unaffordable:
                     word = UiStrings.Get("tree.state.unaffordable", "{value} GOLD SHORT").Replace("{value}", n.Shortfall.ToString(CultureInfo.InvariantCulture));
@@ -1674,7 +1693,7 @@ namespace DD.Prototype.UI
             if (n.Kind == RunTreeNodeKind.Hearth)
             {
                 return n.Status == RunTreeNodeStatus.Available && _snap.HearthThisRound >= _snap.HearthPerRound
-                    ? string.Empty   // the compact state already shows the exhausted round allowance
+                    ? string.Empty   // the node word and the detail state already say THIS ROUND n/n (M-63): no third copy
                     : HearthRoundSentence();
             }
 
