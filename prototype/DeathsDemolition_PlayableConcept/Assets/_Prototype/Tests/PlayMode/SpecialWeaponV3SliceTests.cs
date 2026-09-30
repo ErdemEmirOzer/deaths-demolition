@@ -177,6 +177,70 @@ namespace DD.Prototype.Tests.PlayMode
             }
         }
 
+        /// <summary>
+        /// R1-B AI1 (C-00 30.09): a chain resolves its bodies once and lands them 0.08 s apart (the lethal damage at the end of
+        /// the tremble). A body the pool takes back and spawns again in that window is a new zombie that was never in the chain:
+        /// neither the pending hop nor the pending lethal landing may reach it. At hop 0 the first body (tremble running) and the
+        /// third (hop not yet due) leave the round and two new Standards take their instances from the pool.
+        /// </summary>
+        [UnityTest]
+        [Timeout(120000)]
+        public IEnumerator Raiju_Zincir_HavuzdanDonenGovde_EskiSicramayiAlmaz()
+        {
+            yield return Kur();
+            var bodies = new List<ZombieEnemy>
+            {
+                Spawn(EnemyTier.Standard, _s.Zemin(0f, 8f)),
+                Spawn(EnemyTier.Standard, _s.Zemin(0f, 11f)),
+                Spawn(EnemyTier.Standard, _s.Zemin(0f, 14f)),
+                Spawn(EnemyTier.Standard, _s.Zemin(3f, 16f))
+            };
+            yield return new WaitForSeconds(1.5f);
+
+            int shocks = ZombieEnemy.ShocksApplied, life1 = bodies[1].LifeId, life3 = bodies[3].LifeId;
+            ZombieEnemy yeni0 = null, yeni2 = null;
+            ZombieEnemy eski0 = bodies[0], eski2 = bodies[2];
+            var died = new List<int>();
+            System.Action<EnemyDeathInfo> onDied = i => died.Add(i.LifeId);
+            System.Action<SpecialUsageEvent> onHop = e =>
+            {
+                if (e.Kind != SpecialUsageKind.Hit || e.Id != SpecialWeaponId.Raiju || e.Count != 0 || yeni0 != null) return;
+                eski2.Remove();
+                eski0.Remove();
+                yeni0 = Spawn(EnemyTier.Standard, _s.Zemin(-9f, 3f));   // LIFO pool: the last one back comes out first
+                yeni2 = Spawn(EnemyTier.Standard, _s.Zemin(9f, 3f));
+            };
+            DamageEvents.EnemyDied += onDied;
+            SpecialWeaponUsageEvents.Usage += onHop;
+            try
+            {
+                Vector3 from = _s.Rig.transform.position + Vector3.up * 1.39f;
+                Launch(SpecialWeaponId.Raiju, from, Torso(bodies[0]));
+                yield return SpecialWeaponSahne.Bekle(() => yeni0 != null, 3f, "küre çarpmadı");
+                Assert.AreSame(eski0, yeni0, "havuz ilk gövdenin örneğini geri vermedi (fikstür)");
+                Assert.AreSame(eski2, yeni2, "havuz üçüncü gövdenin örneğini geri vermedi (fikstür)");
+                int life0 = yeni0.LifeId, life2 = yeni2.LifeId;
+                yield return SpecialWeaponSahne.Bekle(() => SpecialImpacts.ActiveChains == 0, 6f, "zincir kaydı kapanmadı");
+                yield return null;
+
+                Debug.Log("[DD-TEST] wp069.r1b.ai1 hits=" + Count(SpecialUsageKind.Hit, SpecialWeaponId.Raiju) + " died=" + died.Count +
+                          " shocks=" + (ZombieEnemy.ShocksApplied - shocks));
+                Assert.AreEqual(3, Count(SpecialUsageKind.Hit, SpecialWeaponId.Raiju), "üçüncü halkanın sıçraması atlanır (gövde başka bir yaşam)");
+                Assert.AreEqual(3, ZombieEnemy.ShocksApplied - shocks, "titreme yalnız zincirdeki yaşamlara");
+                Assert.IsTrue(yeni0.IsAlive && yeni0.LifeId == life0, "titremesi süren gövdenin ölümcül inişi yeni yaşama düşmez");
+                Assert.IsTrue(yeni2.IsAlive && yeni2.LifeId == life2, "bekleyen sıçrama yeni yaşama düşmez");
+                Assert.AreEqual(yeni0.MaxHealth, yeni0.Health, 0.001f, "yeni yaşam hasarsız (ilk)");
+                Assert.AreEqual(yeni2.MaxHealth, yeni2.Health, 0.001f, "yeni yaşam hasarsız (üçüncü)");
+                Assert.IsFalse(yeni0.IsElectrocuted || yeni2.IsElectrocuted, "yeni yaşam titremez");
+                CollectionAssert.AreEquivalent(new[] { life1, life3 }, died, "yalnız zincirde kalan iki Standard ölür");
+            }
+            finally
+            {
+                DamageEvents.EnemyDied -= onDied;
+                SpecialWeaponUsageEvents.Usage -= onHop;
+            }
+        }
+
         [UnityTest]
         [Timeout(120000)]
         public IEnumerator Raiju_Ultra_Yuzde60_Sersemler_ZincirOndanSurer()

@@ -44,6 +44,9 @@ namespace DD.Prototype.Weapons
             public readonly DamageTarget[] Targets = new DamageTarget[ChainTargetResolver.BufferSize];
             public readonly RegistryTarget[] Resolved = new RegistryTarget[ChainTargetResolver.BufferSize];
             public readonly ZombieEnemy[] Bodies = new ZombieEnemy[ChainTargetResolver.BufferSize];
+            // R1-B AI1 (C-00 30.09): the life each body had when the chain resolved it — a pooled body evicted and spawned
+            // again before its hop lands is another zombie that was never in this chain.
+            public readonly int[] LifeIds = new int[ChainTargetResolver.BufferSize];
             public readonly float[] LethalAt = new float[ChainTargetResolver.BufferSize];   // < 0 = nothing pending
         }
 
@@ -154,6 +157,7 @@ namespace DD.Prototype.Weapons
                 else if (!DamageTargetResolver.TryFromReceiver(c.Resolved[i].Receiver, out c.Targets[i])) c.Targets[i] = default;
                 c.Resolved[i] = default;
                 c.Bodies[i] = c.Targets[i].Receiver as ZombieEnemy;
+                c.LifeIds[i] = c.Bodies[i] != null ? c.Bodies[i].LifeId : 0;
                 c.LethalAt[i] = -1f;
             }
 
@@ -205,7 +209,7 @@ namespace DD.Prototype.Weapons
         {
             DamageTarget target = c.Targets[i];
             ZombieEnemy body = c.Bodies[i];
-            if (!target.IsValid || body == null || !body.IsAlive) return;
+            if (!target.IsValid || !SameLife(c, i)) return;
 
             WeaponArcChainBlock arc = c.Def.arcChain;
             SpecialTierRule rule = RuleFor(arc.tierRules, body.Tier);
@@ -231,13 +235,20 @@ namespace DD.Prototype.Weapons
         private static void Land(Chain c, int i, bool lethal, float share)
         {
             ZombieEnemy body = c.Bodies[i];
-            if (body == null || !body.IsAlive) return;
+            if (!SameLife(c, i)) return;
             float amount = lethal ? body.Health + 1f : body.MaxHealth * Mathf.Clamp01(share);
             if (amount <= 0f) return;
             Apply(SpecialWeaponId.Raiju, c.Transaction, c.Targets[i], amount, c.Def.arcChain.ignoresArmor, c.Def.projectile.impulse, DamageSourceKind.Chain,
                 HitscanEngine.CentreOf(c.Targets[i]), Vector3.up);
             if (lethal) LethalApplied++;
             if (!body.IsAlive) SpecialLinks.OnRaijuKill();   // WP-077 link.arc.storm
+        }
+
+        /// <summary>R1-B AI1: the hop's body is still the living zombie the chain resolved (not a pooled body spawned again).</summary>
+        private static bool SameLife(Chain c, int i)
+        {
+            ZombieEnemy body = c.Bodies[i];
+            return body != null && body.IsAlive && body.LifeId == c.LifeIds[i];
         }
 
         private static void SelfShock(Chain c)
