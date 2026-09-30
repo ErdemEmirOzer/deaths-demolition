@@ -384,14 +384,17 @@ def crowd_bodies(w, m, slot):
     # ricochet (bounces at 0.6)
     if m["ric"]:
         extra += m["ric"] * sum(m["ric_p"] ** b * T["ric_scale"] for b in range(1, m["ric_bounces"] + 1))
-    # chain
-    jumps = m["chain"] + (1 if m.get("chain_bonus_share") else 0)
-    if jumps:
-        sc = T["chain_scale"]
-        tot = 0.0
+    # chain (branch tiers), then a capstone's bonus chain on a share of the shots (cap.ar_2 / cap.smg_2): one extra chain of
+    # chain_bonus_jumps jumps at the chain scale, forked on its first jump when chain_bonus_fork — weighted by its share
+    def chain_value(jumps, fork):
+        sc, tot = T["chain_scale"], 0.0
         for j in range(jumps):
-            tot += CHAIN_P ** (j + 1) * sc * (T["chain_falloff"] ** j) * (2 if (j == 0 and m["chain_fork"]) else 1)
-        extra += tot * (1.0 if m["chain"] else m.get("chain_bonus_share", 0))
+            tot += CHAIN_P ** (j + 1) * sc * (T["chain_falloff"] ** j) * (2 if (j == 0 and fork) else 1)
+        return tot
+    if m["chain"]:
+        extra += chain_value(m["chain"], m["chain_fork"])
+    if m.get("chain_bonus_share"):
+        extra += m["chain_bonus_share"] * chain_value(m.get("chain_bonus_jumps", 1), m.get("chain_bonus_fork", False))
     # branch explosion around the primary
     if m["exp"]:
         extra += m["exp"] * m["exp_scale"] * (1 + m["burn"]) * BODIES_PER_M2 * math.pi * m["exp_r"] ** 2

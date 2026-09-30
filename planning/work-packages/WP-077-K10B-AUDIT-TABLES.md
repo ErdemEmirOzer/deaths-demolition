@@ -32,10 +32,10 @@ TTK = sustained seconds per kill (shots × magazine cycle / magazine) vs one tar
 | smg_2 | I+C+FR | R1 | I1 | 37 | 73 | 0.79 | — | — | — |
 | smg_2 | I+C+FR | R3 | I1 C1 FR1 | 41 | 102 | 0.95 | 0.95 | — | — |
 | smg_2 | I+C+FR | R5 | I2 C2 FR1 KS2 | 44 | 152 | 1.14 | 0.95 | 2.66 | — |
-| smg_2 | I+C+FR | R8 | I2 C2 FR2 KS2 S FX C H3 | 53 | 188 | 1.47 | 1.28 | 2.75 | 5.32 |
-| smg_2 | I+C+FR | R10 | I3 C3 FR3 KS3 S FX C H6 | 62 | 224 | 1.19 | 1.02 | 2.55 | 5.26 |
-| smg_2 | I+C+FR | R12 | I4 C3 FR5 KS3 S FX C H10 | 71 | 253 | 1.13 | 0.96 | 2.57 | 5.15 |
-| smg_2 | I+C+FR | R15 | I4 C3 FR5 KS3 S FX C H16 | 80 | 278 | 1.29 | 1.13 | 2.57 | 5.31 |
+| smg_2 | I+C+FR | R8 | I2 C2 FR2 KS2 S FX C H3 | 53 | 179 | 1.47 | 1.28 | 2.75 | 5.32 |
+| smg_2 | I+C+FR | R10 | I3 C3 FR3 KS3 S FX C H6 | 62 | 219 | 1.19 | 1.02 | 2.55 | 5.26 |
+| smg_2 | I+C+FR | R12 | I4 C3 FR5 KS3 S FX C H10 | 71 | 247 | 1.13 | 0.96 | 2.57 | 5.15 |
+| smg_2 | I+C+FR | R15 | I4 C3 FR5 KS3 S FX C H16 | 80 | 272 | 1.29 | 1.13 | 2.57 | 5.31 |
 | sg_1 | X+P+RS | R1 | — | 18 | 30 | 2.89 | — | — | — |
 | sg_1 | X+P+RS | R3 | X1 P1 RS1 | 23 | 60 | 2.74 | 2.74 | — | — |
 | sg_1 | X+P+RS | R5 | X2 P2 RS1 KS1 | 31 | 122 | 2.74 | 1.37 | 4.11 | — |
@@ -92,7 +92,7 @@ TTK = sustained seconds per kill (shots × magazine cycle / magazine) vs one tar
 | R15 | Elite | 2.33 | lmg_2 1.29 | rl_1 4.28 | 3.3 | lmg_2 1.29, sr_1 3.92, rl_1 4.28 |
 | R15 | Ultra | 4.24 | lmg_2 2.74 | sr_1 9.07 | 3.3 | lmg_2 2.74, sr_1 9.07 |
 
-Crowd DPS at R10 (swarm throughput, round build): rl_1 877, sg_2 634, sg_1 524, lmg_1 362, smg_1 293, lmg_2 261, smg_2 224, ar_2 204, ar_1 201, sr_1 122
+Crowd DPS at R10 (swarm throughput, round build): rl_1 877, sg_2 634, sg_1 524, lmg_1 362, smg_1 293, lmg_2 261, smg_2 219, ar_2 204, ar_1 201, sr_1 122
 
 ### B2 · the same without the capstone (the tree model's human reaches it in ~1 run in 5)
 
@@ -135,7 +135,7 @@ Crowd DPS at R10 without the capstone: rl_1 809, sg_1 524, sg_2 508, lmg_1 343, 
 | smg_2 | seal | 150 | +3 % | +3 % | +1.8 % |  |
 | smg_2 | x | 90 | +2 % | +2 % | +2.5 % | low (<½ class median 10 %) |
 | smg_2 | y | 90 | +6 % | +6 % | +7.1 % |  |
-| smg_2 | cap | 380 | +0 % | +4 % | +1.1 % |  |
+| smg_2 | cap | 380 | +0 % | +2 % | +0.5 % | no DPS (utility/survival) |
 | smg_2 | ks_impact | 110 | +8 % | +8 % | +7.4 % |  |
 | smg_2 | ks_chain | 110 | +0 % | +20 % | +18.2 % | HIGH (>2× class median 7 %) |
 | smg_2 | ks_firerate | 110 | +5 % | +5 % | +4.2 % |  |
