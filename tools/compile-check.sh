@@ -1,5 +1,6 @@
 #!/bin/zsh
 # WP-043C · tools/compile-check.sh [ref] [--ci-dir DIR] [--out DIR]
+#           tools/compile-check.sh --lease-status [--ci-dir DIR]
 #
 # Fast "does it compile" gate for the end of a multi-session integration batch (C-00 25.09: two commits that
 # compile on their own branches broke main together — 6d69dafd × 47bf74c4). Checks out <ref> (default: main)
@@ -12,58 +13,30 @@
 # project open. Compile and main-ci share an owner lease per canonical checkout.
 # Signals (Codex-audit Y1 / G4 Q10, C-00 30.09): INT/TERM/HUP exit 130/143/129 through the one EXIT cleanup; a running Unity
 # (our own child) gets TERM and ≤ DD_CI_CHILD_GRACE s (default 120); if it is still alive the slot and lease stay held: tell C-00.
-# Exit: 0 compiles · 2 compile errors (first ones printed) · 3 checkout failed / check did not run · 75 busy · 124 stalled/timed out · 64 usage
+# Lease (Codex-audit M-05, C-00 30.09): dd_ci_lease_* in dd-env.sh. A live owner = busy 75; a stale (dead / reused pid),
+# malformed or symlinked lease is never reclaimed = 3. --lease-status is the read-only diagnosis (lease path, owner pid,
+# recorded vs current start, alive / same process, `verdict:` FREE · HELD-LIVE · STALE-DEAD-OWNER · STALE-PID-REUSED ·
+# MALFORMED · SYMLINK): deletes nothing, takes no slot, runs no git; exit 0 FREE · 75 HELD-LIVE · 3 stale/malformed/symlink.
+# Quarantine of a stale lease is C-00's (tools/README.md).
+# Exit: 0 compiles · 2 compile errors (first ones printed) · 3 checkout failed / check did not run / lease stale or malformed
+#   · 75 busy · 124 stalled/timed out · 64 usage · 130/143/129 INT/TERM/HUP
 set -u
 source "${0:A:h}/dd-env.sh"
-REF=""; CI_DIR="$HOME/Desktop/KADRO/context/projects/deaths-demolition/wp-079/ci-worktree/deaths-demolition"; OUT=""
+REF=""; CI_DIR="$HOME/Desktop/KADRO/context/projects/deaths-demolition/wp-079/ci-worktree/deaths-demolition"; OUT=""; LEASE_STATUS=0
+CC_USAGE="usage: compile-check.sh [ref] [--ci-dir DIR] [--out DIR] | compile-check.sh --lease-status [--ci-dir DIR]"
 while [ $# -gt 0 ]; do case "$1" in
-  --ci-dir) CI_DIR="$2"; shift ;; --out) OUT="$2"; shift ;;
-  -*) echo "usage: compile-check.sh [ref] [--ci-dir DIR] [--out DIR]" >&2; exit 64 ;;
+  --ci-dir) [ $# -ge 2 ] || { echo "$CC_USAGE" >&2; exit 64; }; CI_DIR="$2"; shift ;;
+  --out) [ $# -ge 2 ] || { echo "$CC_USAGE" >&2; exit 64; }; OUT="$2"; shift ;;
+  --lease-status) LEASE_STATUS=1 ;;
+  -*) echo "$CC_USAGE" >&2; exit 64 ;;
   *) REF="$1" ;; esac; shift; done
-# Compile and CI serialize only the same physical checkout; never reclaim an unknown lease.
-CI_LEASE_HELD=0; CI_LEASE_READY=0
-ci_lease_release() {
-  [ "$CI_LEASE_HELD" -eq 1 ] || return 0
-  [ -d "$CI_LEASE" ] && [ ! -L "$CI_LEASE" ] || return 3
-  if [ "$CI_LEASE_READY" -eq 1 ]; then
-    [ -f "$CI_LEASE/owner-$CI_LEASE_TOKEN" ] &&
-      [ "$(cat "$CI_LEASE/owner-$CI_LEASE_TOKEN")" = "$CI_LEASE_OWNER" ] || return 3
-  fi
-  rm -f -- "$CI_LEASE/owner-$CI_LEASE_TOKEN" || return 3
-  rmdir -- "$CI_LEASE" || return 3
-  CI_LEASE_HELD=0
-}
-ci_lease_acquire() {
-  CI_DIR=$(python3 - "$CI_DIR" <<'PY_CANON'
-from pathlib import Path
-import os, sys
-try:
-    requested = Path(sys.argv[1]).absolute()
-    if os.path.lexists(requested):
-        target = requested.resolve(strict=True)
-        if not target.is_dir(): raise ValueError("checkout is not a directory")
-    else:
-        target = requested.parent.resolve(strict=True) / requested.name
-        if not target.parent.is_dir(): raise ValueError("checkout parent is not a directory")
-    if "\n" in str(target): raise ValueError("newline in checkout path")
-    print(target)
-except (OSError, RuntimeError, ValueError) as error:
-    print("cannot resolve CI checkout: " + str(error), file=sys.stderr)
-    sys.exit(3)
-PY_CANON
-  ) || return 3
-  local key=$(print -rn -- "$CI_DIR" | shasum -a 256 | cut -d' ' -f1)
-  [ "${#key}" -eq 64 ] || return 3
-  CI_LEASE="${CI_DIR:h}/.dd-ci-$key.lease"
-  CI_LEASE_TOKEN=$(python3 -c 'import uuid; print(uuid.uuid4())') || return 3
-  local started=$(ps -o lstart= -p $$ | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
-  [ -n "$started" ] || return 3
-  CI_LEASE_OWNER="pid=$$"$'\n'"start=$started"$'\n'"token=$CI_LEASE_TOKEN"
-  mkdir -m 700 -- "$CI_LEASE" 2>/dev/null || { echo "CI checkout lease busy: $CI_DIR" >&2; return 75; }
-  CI_LEASE_HELD=1
-  print -r -- "$CI_LEASE_OWNER" > "$CI_LEASE/owner-$CI_LEASE_TOKEN" || return 3
-  CI_LEASE_READY=1
-}
+# M-05: read-only lease diagnosis — before any trap, slot, git or lease; nothing is written.
+if [ "$LEASE_STATUS" -eq 1 ]; then
+  [ -z "$REF" ] && [ -z "$OUT" ] || { echo "$CC_USAGE" >&2; exit 64; }
+  dd_ci_lease_status "$CI_DIR"; exit $?
+fi
+# Compile and CI serialize only the same physical checkout; never reclaim an unknown lease. Codex-audit M-05 (C-00 30.09):
+# one source — dd_ci_lease_acquire / dd_ci_lease_release / dd_ci_lease_status (dd-env.sh).
 # Codex-audit M-06 (C-00 30.09): one source — dd_project_open (dd-env.sh): case-insensitive -projectPath (Unity Hub),
 # an unresolvable/removed foreign path is skipped + logged instead of failing the check. 0 open · 1 not open · 2 no ps.
 ci_project_open() { dd_project_open "$CI_DIR/prototype/DeathsDemolition_PlayableConcept"; }
@@ -73,11 +46,11 @@ ci_cleanup() {
   local original=$1 slot_exit=0 lease_exit=0
   trap - EXIT; CI_CLEANING=1
   if [ -n "$DD_UNITY_PID" ] && ! dd_stop_child "$DD_UNITY_PID" "${DD_CI_CHILD_GRACE:-120}"; then
-    echo "compile-check ${CI_SIGNAL:-exit}: Unity child $DD_CHILD_ALIVE still alive, tell C-00 — slot $DD_SLOT_TAG and lease $CI_LEASE kept" >&2
+    echo "compile-check ${CI_SIGNAL:-exit}: Unity child $DD_CHILD_ALIVE still alive, tell C-00 — slot $DD_SLOT_TAG and lease $DD_CI_LEASE kept" >&2
     exit "$original"
   fi
   if [ "$CI_SLOT_HELD" -eq 1 ]; then dd_slot_release; slot_exit=$?; fi
-  ci_lease_release; lease_exit=$?
+  dd_ci_lease_release; lease_exit=$?
   [ "$slot_exit" -eq 0 ] && [ "$lease_exit" -eq 0 ] || echo "compile cleanup failed: slot=$slot_exit lease=$lease_exit (original=$original)" >&2
   [ "$original" -eq 0 ] || exit "$original"
   [ "$slot_exit" -eq 0 ] || exit "$slot_exit"
@@ -88,7 +61,8 @@ trap 'ci_cleanup $?' EXIT
 # zsh skips EXIT on an untrapped INT/TERM/HUP: record it, exit 128+n (cleanup runs once; a signal during cleanup is ignored).
 ci_signal() { [ "$CI_CLEANING" -eq 0 ] || return 0; CI_SIGNAL=SIG$1; echo "compile-check: SIG$1 — exit $2 through cleanup" >&2; exit $2; }
 trap 'ci_signal INT 130' INT; trap 'ci_signal TERM 143' TERM; trap 'ci_signal HUP 129' HUP
-ci_lease_acquire || exit $?
+dd_ci_lease_acquire "$CI_DIR" || exit $?
+CI_DIR=$DD_CI_CHECKOUT
 SHA=$(git -C "$DD_REPO" rev-parse --verify "${REF:-main}^{commit}" 2>/dev/null) || { echo "unknown ref: ${REF:-main}" >&2; exit 64; }
 : "${OUT:=$HOME/Desktop/KADRO/context/projects/deaths-demolition/ci/compile-${SHA:0:10}-$(dd_utc)}"
 mkdir -p "$OUT" || exit 3; DD_TIMELINE="$OUT/timeline.txt"

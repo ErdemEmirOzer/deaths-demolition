@@ -18,8 +18,16 @@
 # alive the user-data window is LEFT OPEN — no restore, no player slot / lease release — and the line says: tell C-00.
 # Driver (Codex-audit M-12, C-00 30.09): the git worktree holding THIS main-ci.sh (guard, summary, owners, suites come from
 # it) must be clean, on a detached HEAD, and carry main's tools tree; its HEAD + tools tree hash go into summary.json/md.
+# Lease (Codex-audit M-05, C-00 30.09): dd_ci_lease_* (dd-env.sh), shared with compile-check.sh; a live owner → 75 at once
+# (no waiting); a stale / malformed / symlinked lease is never reclaimed → 3 (diagnose: compile-check.sh --lease-status).
 # Exit: 0 green · 1 red tests · 2 compile error / missing results · 3 CI worktree or driver worktree not clean, driver not
-#   detached or its tools ≠ main's · 64 usage · 75 busy (lease, project open, user-data guard)
+#   detached or its tools ≠ main's, lease stale/malformed/symlink, CI project missing, a Unity still has the CI checkout open
+#   at the restore (window left open, tell C-00) · 64 usage, unknown commit, an unrestored guard window of this SHA
+#   · 75 busy (lease held, CI project open, guard snapshot 75 three times) · 130/143/129 INT/TERM/HUP.
+#   Guard (editor scope): a snapshot never answers 30 (that is player scope's "a Player is running"); any snapshot exit other
+#   than 75 is returned as is, nothing started. A restore that fails or does not print "verified=1" makes the run exit the
+#   guard's code — 31 when it exited 0 unverified — even over green/red (0/1/2). Slot acquire/release failures return
+#   slot.sh's code; a lease release failure returns 3.
 set -u
 setopt nullglob
 source "${0:A:h}/dd-env.sh"
@@ -58,50 +66,8 @@ ci_driver_check() {
 }
 ci_driver_check || exit 3
 
-# Compile and CI serialize only the same physical checkout; never reclaim an unknown lease.
-CI_LEASE_HELD=0; CI_LEASE_READY=0
-ci_lease_release() {
-  [ "$CI_LEASE_HELD" -eq 1 ] || return 0
-  [ -d "$CI_LEASE" ] && [ ! -L "$CI_LEASE" ] || return 3
-  if [ "$CI_LEASE_READY" -eq 1 ]; then
-    [ -f "$CI_LEASE/owner-$CI_LEASE_TOKEN" ] &&
-      [ "$(cat "$CI_LEASE/owner-$CI_LEASE_TOKEN")" = "$CI_LEASE_OWNER" ] || return 3
-  fi
-  rm -f -- "$CI_LEASE/owner-$CI_LEASE_TOKEN" || return 3
-  rmdir -- "$CI_LEASE" || return 3
-  CI_LEASE_HELD=0
-}
-ci_lease_acquire() {
-  CI_DIR=$(python3 - "$CI_DIR" <<'PY_CANON'
-from pathlib import Path
-import os, sys
-try:
-    requested = Path(sys.argv[1]).absolute()
-    if os.path.lexists(requested):
-        target = requested.resolve(strict=True)
-        if not target.is_dir(): raise ValueError("checkout is not a directory")
-    else:
-        target = requested.parent.resolve(strict=True) / requested.name
-        if not target.parent.is_dir(): raise ValueError("checkout parent is not a directory")
-    if "\n" in str(target): raise ValueError("newline in checkout path")
-    print(target)
-except (OSError, RuntimeError, ValueError) as error:
-    print("cannot resolve CI checkout: " + str(error), file=sys.stderr)
-    sys.exit(3)
-PY_CANON
-  ) || return 3
-  local key=$(print -rn -- "$CI_DIR" | shasum -a 256 | cut -d' ' -f1)
-  [ "${#key}" -eq 64 ] || return 3
-  CI_LEASE="${CI_DIR:h}/.dd-ci-$key.lease"
-  CI_LEASE_TOKEN=$(python3 -c 'import uuid; print(uuid.uuid4())') || return 3
-  local started=$(ps -o lstart= -p $$ | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
-  [ -n "$started" ] || return 3
-  CI_LEASE_OWNER="pid=$$"$'\n'"start=$started"$'\n'"token=$CI_LEASE_TOKEN"
-  mkdir -m 700 -- "$CI_LEASE" 2>/dev/null || { echo "CI checkout lease busy: $CI_DIR" >&2; return 75; }
-  CI_LEASE_HELD=1
-  print -r -- "$CI_LEASE_OWNER" > "$CI_LEASE/owner-$CI_LEASE_TOKEN" || return 3
-  CI_LEASE_READY=1
-}
+# Compile and CI serialize only the same physical checkout; never reclaim an unknown lease. Codex-audit M-05 (C-00 30.09):
+# one source — dd_ci_lease_acquire / dd_ci_lease_release / dd_ci_lease_status (dd-env.sh).
 # Codex-audit M-06 (C-00 30.09): one source — dd_project_open (dd-env.sh): case-insensitive -projectPath (Unity Hub),
 # an unresolvable/removed foreign path is skipped + logged instead of failing the check. 0 open · 1 not open · 2 no ps.
 ci_project_open() { dd_project_open "$CI_DIR/prototype/DeathsDemolition_PlayableConcept"; }
@@ -119,7 +85,7 @@ ci_guard_restore() {
 ci_guard_restore_safe() {
   ci_project_open; local open=$?
   if [ "$open" -ne 1 ]; then
-    dd_log "main-ci ${CI_SIGNAL:-exit}: user-data window left open: a Unity still has $CI_DIR open (or the check failed: $open), tell C-00 — guard $CI_GUARD_DIR NOT restored, player slot and lease $CI_LEASE kept" >&2
+    dd_log "main-ci ${CI_SIGNAL:-exit}: user-data window left open: a Unity still has $CI_DIR open (or the check failed: $open), tell C-00 — guard $CI_GUARD_DIR NOT restored, player slot and lease $DD_CI_LEASE kept" >&2
     return 1
   fi
   trap '' INT TERM HUP
@@ -131,12 +97,12 @@ ci_cleanup() {
   trap - EXIT; CI_CLEANING=1
   # Codex-audit Y1 / G4 Q10: restoring while the child (or its orphaned Unity) can still write would be a false "verified".
   if [ -n "$CI_CHILD" ] && ! dd_stop_child "$CI_CHILD" "${DD_CI_CHILD_GRACE:-120}"; then
-    dd_log "main-ci ${CI_SIGNAL:-exit}: user-data window left open: child $DD_CHILD_ALIVE still alive, tell C-00 — guard ${CI_GUARD_DIR:-(no snapshot)} NOT restored, player slot and lease $CI_LEASE kept" >&2
+    dd_log "main-ci ${CI_SIGNAL:-exit}: user-data window left open: child $DD_CHILD_ALIVE still alive, tell C-00 — guard ${CI_GUARD_DIR:-(no snapshot)} NOT restored, player slot and lease $DD_CI_LEASE kept" >&2
     exit "$original"
   fi
   if [ "$CI_GUARD_READY" -eq 1 ]; then ci_guard_restore_safe || exit "$original"; fi
   if [ "$CI_PLAYER_HELD" -eq 1 ]; then DD_SLOT_TAG="$CI_PLAYER_TAG" dd_slot_release player; slot_exit=$?; fi
-  ci_lease_release; lease_exit=$?
+  dd_ci_lease_release; lease_exit=$?
   [ "$CI_GUARD_EXIT" -eq 0 ] && [ "$slot_exit" -eq 0 ] && [ "$lease_exit" -eq 0 ] || echo "CI cleanup failed: guard=$CI_GUARD_EXIT slot=$slot_exit lease=$lease_exit (original=$original)" >&2
   [ "$original" -eq 0 ] || exit "$original"
   [ "$CI_GUARD_EXIT" -eq 0 ] || exit "$CI_GUARD_EXIT"
@@ -148,7 +114,8 @@ trap 'ci_cleanup $?' EXIT
 # zsh skips EXIT on an untrapped INT/TERM/HUP: record it, exit 128+n (cleanup runs once; a signal during cleanup is ignored).
 ci_signal() { [ "$CI_CLEANING" -eq 0 ] || return 0; CI_SIGNAL=SIG$1; echo "main-ci: SIG$1 — exit $2 through cleanup" >&2; exit $2; }
 trap 'ci_signal INT 130' INT; trap 'ci_signal TERM 143' TERM; trap 'ci_signal HUP 129' HUP
-ci_lease_acquire || exit $?
+dd_ci_lease_acquire "$CI_DIR" || exit $?
+CI_DIR=$DD_CI_CHECKOUT
 SHA=$(git -C "$DD_REPO" rev-parse --verify "$REF^{commit}" 2>/dev/null) || { echo "unknown commit: $REF" >&2; exit 64; }
 # WP-043D: hold the single 'player' slot for the whole run — Player captures / bots share the audio device and
 # focus with the Editor PlayMode tests (a full-screen capture broke the UiV3 audio test); wrapped launches wait.

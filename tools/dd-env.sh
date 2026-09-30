@@ -150,3 +150,141 @@ dd_unity_watched() {
     return $x
   done
 }
+
+# Codex-audit M-05 (C-00 30.09): CI checkout owner lease — single source for main-ci.sh and compile-check.sh.
+# Compile and CI serialize only the same PHYSICAL checkout: the key is sha256 of the canonical checkout path, the lease is
+# the directory <parent>/.dd-ci-<key>.lease (mkdir = atomic claim) holding ONE file owner-<token> with pid=/start=/token=
+# (written as .tmp-<token> and renamed, so a reader sees a whole owner file or none). A lease is never reclaimed or
+# deleted by these tools — a stale one is diagnosed read-only (compile-check.sh --lease-status) and quarantined by C-00.
+# dd_pstart <pid>: the process start in ONE fixed format for every writer and reader (slot.sh D1 lesson: plain `ps lstart`
+# follows LANG/TZ — a tr_TR or TZ=UTC caller would read a live owner as "another process").
+dd_pstart() { env -u TZ LC_ALL=C ps -o lstart= -p "$1" 2>/dev/null | tr -s ' ' | sed 's/^ //;s/ $//'; }
+# dd_ci_canon <dir>: canonical checkout path (symlinks resolved; a missing leaf is allowed under a real parent). 3 = error.
+dd_ci_canon() {
+  python3 - "$1" <<'PY_CANON'
+from pathlib import Path
+import os, sys
+try:
+    requested = Path(sys.argv[1]).absolute()
+    if os.path.lexists(requested):
+        target = requested.resolve(strict=True)
+        if not target.is_dir(): raise ValueError("checkout is not a directory")
+    else:
+        target = requested.parent.resolve(strict=True) / requested.name
+        if not target.parent.is_dir(): raise ValueError("checkout parent is not a directory")
+    if "\n" in str(target): raise ValueError("newline in checkout path")
+    print(target)
+except (OSError, RuntimeError, ValueError) as error:
+    print("cannot resolve CI checkout: " + str(error), file=sys.stderr)
+    sys.exit(3)
+PY_CANON
+}
+# dd_ci_lease_locate <dir>: DD_CI_CHECKOUT (canonical) + DD_CI_LEASE (its lease path). 0 · 3 error. Read-only.
+dd_ci_lease_locate() {
+  DD_CI_CHECKOUT=$(dd_ci_canon "$1") && [ -n "$DD_CI_CHECKOUT" ] || return 3
+  local key=$(print -rn -- "$DD_CI_CHECKOUT" | shasum -a 256 | cut -d' ' -f1)
+  [ "${#key}" -eq 64 ] || return 3
+  DD_CI_LEASE="${DD_CI_CHECKOUT:h}/.dd-ci-$key.lease"
+}
+# dd_ci_lease_inspect: reads $DD_CI_LEASE (never writes) → DD_CI_LEASE_VERDICT (FREE · HELD-LIVE · STALE-DEAD-OWNER ·
+# STALE-PID-REUSED · MALFORMED · SYMLINK), DD_CI_LEASE_WHY and the owner fields DD_CI_LEASE_{FILE,PID,START,NOW,ALIVE}.
+# K3 (slot.sh): an alive pid whose current start cannot be read is HELD-LIVE, never stale. A record written before M-05
+# (plain `ps lstart` in the writer's locale/TZ) that matches the caller's own plain form also counts as the same process.
+dd_ci_lease_inspect() {
+  local -a owners others; local f name body
+  DD_CI_LEASE_VERDICT=""; DD_CI_LEASE_WHY=""; DD_CI_LEASE_FILE=""; DD_CI_LEASE_PID=""; DD_CI_LEASE_START=""
+  DD_CI_LEASE_NOW=""; DD_CI_LEASE_ALIVE=""
+  if [ -L "$DD_CI_LEASE" ]; then DD_CI_LEASE_VERDICT=SYMLINK; DD_CI_LEASE_WHY="the lease path is a symlink (-> $(readlink "$DD_CI_LEASE"))"; return; fi
+  if [ ! -e "$DD_CI_LEASE" ]; then DD_CI_LEASE_VERDICT=FREE; DD_CI_LEASE_WHY="no lease"; return; fi
+  if [ ! -d "$DD_CI_LEASE" ]; then DD_CI_LEASE_VERDICT=MALFORMED; DD_CI_LEASE_WHY="the lease path is not a directory"; return; fi
+  for f in "$DD_CI_LEASE"/*(DN) ; do
+    name=${f:t}
+    if [[ "$name" == owner-* ]]; then owners+=("$f"); else others+=("$name"); fi
+  done
+  if [ "${#owners}" -eq 0 ]; then
+    DD_CI_LEASE_VERDICT=MALFORMED
+    DD_CI_LEASE_WHY="no owner file (${#others} other entries) — an acquire in progress, or its owner died between mkdir and write: run again"
+    return
+  fi
+  if [ "${#owners}" -gt 1 ] || [ "${#others}" -gt 0 ]; then
+    DD_CI_LEASE_VERDICT=MALFORMED; DD_CI_LEASE_WHY="${#owners} owner files and ${#others} other entries (expected exactly one owner file)"; return
+  fi
+  DD_CI_LEASE_FILE=${owners[1]}
+  if [ -L "$DD_CI_LEASE_FILE" ] || [ ! -f "$DD_CI_LEASE_FILE" ]; then
+    DD_CI_LEASE_VERDICT=MALFORMED; DD_CI_LEASE_WHY="the owner entry is not a regular file"; return
+  fi
+  body=$(cat -- "$DD_CI_LEASE_FILE" 2>/dev/null) || { DD_CI_LEASE_VERDICT=MALFORMED; DD_CI_LEASE_WHY="the owner file cannot be read"; return; }
+  local -a lines; lines=("${(@f)body}")
+  DD_CI_LEASE_PID=${${lines[1]:-}#pid=}; DD_CI_LEASE_START=${${lines[2]:-}#start=}
+  local token=${${lines[3]:-}#token=}
+  if [ "${#lines}" -ne 3 ] || [[ "${lines[1]}" != pid=* ]] || [[ "${lines[2]}" != start=* ]] || [[ "${lines[3]}" != token=* ]] ||
+     [[ "$DD_CI_LEASE_PID" != <1-> ]] || [ -z "$DD_CI_LEASE_START" ] || [ "owner-$token" != "${DD_CI_LEASE_FILE:t}" ]; then
+    DD_CI_LEASE_VERDICT=MALFORMED; DD_CI_LEASE_WHY="the owner file is not pid=<n> / start=<lstart> / token=<file token>"; return
+  fi
+  if ! dd_pid_live "$DD_CI_LEASE_PID"; then
+    DD_CI_LEASE_ALIVE=no; DD_CI_LEASE_VERDICT=STALE-DEAD-OWNER; DD_CI_LEASE_WHY="owner pid $DD_CI_LEASE_PID is not running"; return
+  fi
+  DD_CI_LEASE_ALIVE=yes; DD_CI_LEASE_NOW=$(dd_pstart "$DD_CI_LEASE_PID")
+  local legacy=$(ps -o lstart= -p "$DD_CI_LEASE_PID" 2>/dev/null | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+  if [ -z "$DD_CI_LEASE_NOW" ]; then
+    DD_CI_LEASE_VERDICT=HELD-LIVE; DD_CI_LEASE_WHY="owner pid alive, its start cannot be read now — treated as the owner (K3)"
+  elif [ "$DD_CI_LEASE_START" = "$DD_CI_LEASE_NOW" ] || [ "$DD_CI_LEASE_START" = "$legacy" ]; then
+    DD_CI_LEASE_VERDICT=HELD-LIVE; DD_CI_LEASE_WHY="owner pid alive and started at the recorded time"
+  else
+    DD_CI_LEASE_VERDICT=STALE-PID-REUSED; DD_CI_LEASE_WHY="pid $DD_CI_LEASE_PID now belongs to a process started at another time"
+  fi
+}
+# dd_ci_lease_acquire <dir>: claims the lease of <dir>'s canonical checkout (sets DD_CI_CHECKOUT — callers use it as their
+# checkout path from here on). 0 held · 75 busy (a live or not-yet-written owner) · 3 error, symlink, malformed or stale
+# lease (never reclaimed: `compile-check.sh --lease-status` + C-00). Release with dd_ci_lease_release (EXIT cleanup).
+DD_CI_LEASE=""; DD_CI_LEASE_HELD=0; DD_CI_LEASE_READY=0; DD_CI_LEASE_TOKEN=""; DD_CI_LEASE_OWNER=""
+dd_ci_lease_acquire() {
+  dd_ci_lease_locate "$1" || return 3
+  DD_CI_LEASE_TOKEN=$(python3 -c 'import uuid; print(uuid.uuid4())') && [ -n "$DD_CI_LEASE_TOKEN" ] || return 3
+  local started=$(dd_pstart $$)
+  [ -n "$started" ] || { echo "CI checkout lease: cannot read this process's start time" >&2; return 3; }
+  DD_CI_LEASE_OWNER="pid=$$"$'\n'"start=$started"$'\n'"token=$DD_CI_LEASE_TOKEN"
+  if ! mkdir -m 700 -- "$DD_CI_LEASE" 2>/dev/null; then
+    dd_ci_lease_inspect
+    case "$DD_CI_LEASE_VERDICT" in
+      HELD-LIVE) echo "CI checkout lease busy: $DD_CI_CHECKOUT (owner pid $DD_CI_LEASE_PID)" >&2; return 75 ;;
+      MALFORMED) if [ -z "$DD_CI_LEASE_FILE" ] && [ -d "$DD_CI_LEASE" ] && [ ! -L "$DD_CI_LEASE" ]; then
+                   echo "CI checkout lease busy: $DD_CI_CHECKOUT (no owner file yet: $DD_CI_LEASE_WHY)" >&2; return 75; fi ;;
+    esac
+    echo "CI checkout lease refused: $DD_CI_LEASE is $DD_CI_LEASE_VERDICT — $DD_CI_LEASE_WHY; never reclaimed: tools/compile-check.sh --lease-status, then C-00 (tools/README.md)" >&2
+    return 3
+  fi
+  DD_CI_LEASE_HELD=1
+  print -r -- "$DD_CI_LEASE_OWNER" > "$DD_CI_LEASE/.tmp-$DD_CI_LEASE_TOKEN" &&
+    mv -- "$DD_CI_LEASE/.tmp-$DD_CI_LEASE_TOKEN" "$DD_CI_LEASE/owner-$DD_CI_LEASE_TOKEN" || return 3
+  DD_CI_LEASE_READY=1
+}
+# dd_ci_lease_release: removes only OUR lease (the owner file must still be ours, the lease not a symlink). 0 · 3.
+dd_ci_lease_release() {
+  [ "$DD_CI_LEASE_HELD" -eq 1 ] || return 0
+  [ -d "$DD_CI_LEASE" ] && [ ! -L "$DD_CI_LEASE" ] || return 3
+  if [ "$DD_CI_LEASE_READY" -eq 1 ]; then
+    [ -f "$DD_CI_LEASE/owner-$DD_CI_LEASE_TOKEN" ] &&
+      [ "$(cat "$DD_CI_LEASE/owner-$DD_CI_LEASE_TOKEN")" = "$DD_CI_LEASE_OWNER" ] || return 3
+  fi
+  rm -f -- "$DD_CI_LEASE/owner-$DD_CI_LEASE_TOKEN" "$DD_CI_LEASE/.tmp-$DD_CI_LEASE_TOKEN" || return 3
+  rmdir -- "$DD_CI_LEASE" || return 3
+  DD_CI_LEASE_HELD=0
+}
+# dd_ci_lease_status <dir>: read-only report (compile-check.sh --lease-status). 0 FREE · 75 HELD-LIVE · 3 stale/malformed/
+# symlink/error — deletes nothing; a stale lease is C-00's to quarantine (tools/README.md).
+dd_ci_lease_status() {
+  dd_ci_lease_locate "$1" || { print -r -- "verdict: ERROR — cannot resolve the checkout $1"; return 3; }
+  dd_ci_lease_inspect
+  print -r -- "checkout: $DD_CI_CHECKOUT"
+  print -r -- "lease: $DD_CI_LEASE"
+  print -r -- "owner file: ${DD_CI_LEASE_FILE:-(none)}"
+  print -r -- "owner pid: ${DD_CI_LEASE_PID:-(none)}"
+  print -r -- "recorded start: ${DD_CI_LEASE_START:-(none)}"
+  print -r -- "current start: ${DD_CI_LEASE_NOW:-(none)}   (env -u TZ LC_ALL=C ps -o lstart=)"
+  print -r -- "owner alive: ${DD_CI_LEASE_ALIVE:-(n/a)}"
+  local same="(n/a)"; [ "$DD_CI_LEASE_VERDICT" = HELD-LIVE ] && same=yes; [ "$DD_CI_LEASE_VERDICT" = STALE-PID-REUSED ] && same=no
+  print -r -- "same process: $same"
+  print -r -- "verdict: $DD_CI_LEASE_VERDICT — $DD_CI_LEASE_WHY"
+  case "$DD_CI_LEASE_VERDICT" in FREE) return 0 ;; HELD-LIVE) return 75 ;; *) return 3 ;; esac
+}
