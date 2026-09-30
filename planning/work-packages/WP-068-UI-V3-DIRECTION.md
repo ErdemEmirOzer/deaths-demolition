@@ -634,6 +634,14 @@ Yakalama seti dilim başına §11; menüler 4 çözünürlük × UI scale {0,9, 
 
 ---
 
+### DEC-109 · Türkçe başlık yüzü (kullanıcı 30.09, C-00 iletti; S-09 yazdı)
+U1'in Türkçe uzantısı: Shippori Mincho B1'in eksik Ğ ğ İ Ş ş glifleri OFL 1.1 türevi olarak eklenir.
+- **Birleşik glifler:** İ = I + U+0307 (fontta var); Ş ş = S s + U+0327 (fontta var).
+- **Yeni çizim:** Ğ ğ için bir breve çizilir. Fontta ne ˘ U+02D8 ne U+0306 var; çizim AD onayından geçer.
+- **Lisans:** Reserved Font Name yok (`ShipporiMinchoB1-OFL.txt`). Türevin iç adı "Shippori Mincho B1 DD-TR"; OFL metni ve telif korunur.
+- **Sonra:** metrik ve kerning ayarlanır, TMP SDF atlası yeniden üretilir. AD paneli TR ve EN başlık karelerine 1,25'te bakar.
+- **Geçiş:** uygulanana kadar SourceSans3 yedeği (19cb757a, M-64) kalır. Türetme aracının (fonttools) kurulumu kullanıcı kararıdır; makinede kurulu değil.
+
 ## 14 · AD eş imzası
 
 **Karar: SIGNED_WITH_CHANGES** (art-director, 2026-09-24). İnceleme tabanı: r1/r2 dosyaları (dokuz disiplin), `council/baseline-small/` Look B kareleri, stil kılavuzu v1 §2.2/§2.4, `UiTokens.cs`. Görsel dil, üç yükselti, malzeme/ornament kuralları, C1 tipografi üçlüsü, C5 hex değerleri, C2 motor içi plaka yığını, C11 kredi tekilleştirmesi ve dilim başına AD turu kuralı tur 2 mutabakatıyla örtüşür. Aşağıdaki değişiklikler belgede "(AD)" ile işaretlidir; hepsi ya iç çelişki ya rezerv ihlali ya da aritmetik hatasıdır, hiçbiri yeni bir tasarım kararı açmaz.
