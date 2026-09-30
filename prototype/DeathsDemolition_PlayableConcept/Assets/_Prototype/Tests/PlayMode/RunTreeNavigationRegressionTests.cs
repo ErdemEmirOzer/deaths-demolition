@@ -33,6 +33,7 @@ namespace DD.Prototype.Tests.PlayMode
         private CanvasGroup _group;
         private EventSystem _eventSystem;
         private GameObject _previousFocus;
+        private ClassicWeaponId _previousWeapon;
         private string _settingsPath, _profileHash;
         private int _footerCalls;
 
@@ -55,6 +56,13 @@ namespace DD.Prototype.Tests.PlayMode
             _wallet.InitializeForRun(RunId);
             _wallet.Credit(50000, GoldSource.EnemyPickup, _wallet.NextTransactionId());
             _build = new WeaponModifierState();
+            // The tree is built for the shop's weapon, but its tier nodes ask UpgradeCardCatalog.WeaponBranchGate,
+            // which reads the global WeaponRegistry.SelectedWeapon. An earlier suite that equips another weapon
+            // (RocketSliceTests: rl_1) would lock Piercing / FireRate as NotOnThisWeapon here, so the fixture
+            // carries the same AR in both places and gives the selection back afterwards.
+            _previousWeapon = WeaponRegistry.SelectedWeapon;
+            if (_previousWeapon != ClassicWeaponId.AssaultRifle) Debug.Log("[RunTreeFixture] selected weapon was " + _previousWeapon + "; pinned to AssaultRifle for the AR shop");
+            WeaponRegistry.SelectedWeapon = ClassicWeaponId.AssaultRifle;
             _shop = new RoundUpgradeShop
             {
                 UnlockedPredicate = _ => true,
@@ -73,6 +81,7 @@ namespace DD.Prototype.Tests.PlayMode
         public void TearDown()
         {
             if (_shop != null) { _shop.OfferChanged -= Refresh; _shop.Close(); }
+            WeaponRegistry.SelectedWeapon = _previousWeapon;
             if (_eventSystem != null) _eventSystem.SetSelectedGameObject(_previousFocus != null && _previousFocus.activeInHierarchy ? _previousFocus : null);
             for (int i = _owned.Count - 1; i >= 0; i--) if (_owned[i] != null) Object.DestroyImmediate(_owned[i]);
             _owned.Clear();
