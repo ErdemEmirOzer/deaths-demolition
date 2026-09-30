@@ -1296,6 +1296,126 @@ namespace DD.Prototype.Tests.PlayMode
             Debug.Log(rapor.ToString());
         }
 
+        /// <summary>
+        /// WP-072 · user listening package (C-00 28.09): three A/B pairs from the game's real output on the default world (V6) —
+        /// 1 top-down fight and 2 first-person fight (A = today's mix, B = the player's weapon bus +2 dB), 3 the calm after-rain
+        /// courtyard (A = birds 0.35 as shipped — near the floor at 25–40 m, B = the designed level 1.0). Written under temporaryCachePath/wp072-listening; the batch copies them.
+        /// </summary>
+        [UnityTest]
+        [Explicit("WP-072 dinleme paketi — kanıt, CI dışı")]
+        [Timeout(300000)]
+        public IEnumerator DinlemePaketi_AB_Uret()
+        {
+            UnityEngine.Audio.AudioMixer mixer = _d.Bridge.Mixer;
+            MusicDirector m = _d.Music;
+            AfterRainAmbience ar = _d.Ambience.AfterRain;
+            string dir = System.IO.Path.Combine(Application.temporaryCachePath, "wp072-listening");
+            System.IO.Directory.CreateDirectory(dir);
+            string playerParam = AudioMixerBridge.VolumeParams[4];
+            float oncekiKus = AfterRainAmbience.BirdLevel;
+            _s.Rig.Health.DiagnosisInvulnerable = true;
+
+            IEnumerator Kaydet(string ad, float saniye, System.Action<float> her)
+            {
+                AudioOutputCapture cap = AudioOutputCapture.Arm(_d.gameObject, System.IO.Path.Combine(dir, ad + ".wav"));
+                float bas = Time.realtimeSinceStartup;
+                while (Time.realtimeSinceStartup - bas < saniye)
+                {
+                    her?.Invoke(Time.realtimeSinceStartup - bas);
+                    yield return null;
+                }
+
+                long frames = cap.FramesWritten;
+                UnityEngine.Object.DestroyImmediate(cap);
+                foreach (var tap in UnityEngine.Object.FindObjectsOfType<AudioOutputTap>(true)) UnityEngine.Object.DestroyImmediate(tap);
+                if (frames == 0) Assert.Inconclusive("Ses çıkışı yok (batch/aygıt yok).");
+            }
+
+            float sonraki = 0f;
+            int atis = 0;
+            void Ates(float t)
+            {
+                // 1,2 s burst (SMG1 ~8 shots/s), 0,8 s off.
+                if (t >= sonraki && t % 2f < 1.2f)
+                {
+                    AudioEvents.RaiseWeapon(CombatAudioEvent.ClassicWeaponFire, "SMG1", _s.Rig.transform.position + Vector3.up * 1.3f + _s.Rig.transform.forward * (0.1f * (atis++ % 2)), 0.75f, 50);
+                    sonraki = t + 0.125f;
+                }
+            }
+
+            try
+            {
+                // 3 · calm courtyard after the rain: quiet music floor, three bird calls in 18 s (the game spaces them 14–30 s).
+                m.ThreatLayerOverride = 0;
+                m.IntensityOverride = 0.05f;
+                yield return new WaitForSecondsRealtime(3f);
+                foreach (var (ad, kus) in new[] { ("3A_avlu_kus-oyundaki", oncekiKus), ("3B_avlu_kus-tam", 1f) })
+                {
+                    AfterRainAmbience.BirdLevel = kus;
+                    int cagri = 0;
+                    int kusOnce = ar.BirdCount;
+                    yield return Kaydet(ad, 18f, t =>
+                    {
+                        if (t > 1f + cagri * 6f) { ar.ForceDue(true, false, false); cagri++; }
+                        foreach (AudioSource src in UnityEngine.Object.FindObjectsOfType<AudioSource>())
+                        {
+                            if (!src.isPlaying || src.clip == null || !src.clip.name.StartsWith("AmbBirdsDistant", StringComparison.Ordinal) || src.time > 0.05f) continue;
+                            AudioListener l = UnityEngine.Object.FindObjectOfType<AudioListener>();
+                            float d = l != null ? Vector3.Distance(l.transform.position, src.transform.position) : -1f;
+                            float lin = src.rolloffMode == AudioRolloffMode.Linear ? Mathf.Clamp01(1f - (d - src.minDistance) / Mathf.Max(0.01f, src.maxDistance - src.minDistance)) : -1f;
+                            float eff = src.volume * ((1f - src.spatialBlend) + src.spatialBlend * Mathf.Max(0f, lin));
+                            mixer.GetFloat(AudioMixerBridge.VolumeParams[2], out float ambDb);
+                            Debug.Log("[DD-TEST] wp072.bird " + ad + " t=" + t.ToString("0.0") + " vol=" + src.volume.ToString("0.000") + " blend=" + src.spatialBlend.ToString("0.00")
+                                      + " d=" + d.ToString("0.0") + " rolloff=" + src.rolloffMode + " " + src.minDistance + "–" + src.maxDistance + " lin=" + lin.ToString("0.00")
+                                      + " eff=" + (20f * Mathf.Log10(Mathf.Max(1e-6f, eff))).ToString("0.0") + " dB group=" + (src.outputAudioMixerGroup != null ? src.outputAudioMixerGroup.name : "none")
+                                      + " ambBus=" + ambDb.ToString("0.0") + " dB space=" + ar.LastSpace + " phase fighting");
+                        }
+                    });
+                    Debug.Log("[DD-TEST] wp072.bird " + ad + " level " + AfterRainAmbience.BirdLevel + " played " + (ar.BirdCount - kusOnce) + " · " + _d.WorldPool.Describe());
+                }
+
+                AfterRainAmbience.BirdLevel = oncekiKus;
+                m.ThreatLayerOverride = null;
+                m.IntensityOverride = null;
+
+                // 1 / 2 · a fight: six zombies close in, the player fires bursts; B = the player's weapon bus +2 dB.
+                for (int i = 0; i < 6; i++)
+                {
+                    float a = i * Mathf.PI / 3f;
+                    _s.Dogur(_s.Zemin(Mathf.Cos(a) * 9f, Mathf.Sin(a) * 9f));
+                }
+
+                mixer.GetFloat(playerParam, out float tabanDb);
+                var modlar = new[] { (DD.Prototype.CameraSystem.CameraMode.TopDown, "1", "ustten"), (DD.Prototype.CameraSystem.CameraMode.FirstPerson, "2", "birinci-sahis") };
+                foreach (var (mod, no, ad) in modlar)
+                {
+                    DD.Prototype.CameraSystem.CameraModeService.Request(mod, true);
+                    yield return new WaitForSecondsRealtime(3f);
+                    // One take: A = 0–10 s today's mix, B = 10–20 s the player's weapon bus +2 dB (split offline) — separate takes
+                    // varied by more than the 2 dB under test.
+                    mixer.SetFloat(playerParam, tabanDb);
+                    bool artti = false;
+                    yield return Kaydet(no + "_" + ad + "_take", 20f, t =>
+                    {
+                        if (!artti && t >= 10f) { mixer.SetFloat(playerParam, tabanDb + 2f); artti = true; }
+                        Ates(t);
+                    });
+                }
+
+                mixer.SetFloat(playerParam, tabanDb);
+            }
+            finally
+            {
+                AfterRainAmbience.BirdLevel = oncekiKus;
+                m.ThreatLayerOverride = null;
+                m.IntensityOverride = null;
+                mixer.ClearFloat(playerParam);
+                DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.TopDown, true);
+            }
+
+            Debug.Log("[DD-TEST] wp072.listening " + string.Join(" ", System.IO.Directory.GetFiles(dir, "*.wav")));
+        }
+
         private static float[] OkuMono(string path, out int rate)
         {
             byte[] raw = System.IO.File.ReadAllBytes(path);
