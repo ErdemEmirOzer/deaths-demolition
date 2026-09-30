@@ -89,6 +89,36 @@ namespace DD.Prototype.Tests.EditMode
             Assert.Greater(shotgun.RecoilUpShare, rifle.RecoilUpShare);
         }
 
+        // ------------------------------------------------------------------ mechanism timeline (C-00 30.09 M-21)
+
+        /// <summary>The timeline follows the mechanism: sg_1 pump (shells, casing at the pump), sg_2 break-open (magazine marks, no casing at the shot, two at the opening), the rest magazine.</summary>
+        [Test]
+        public void MekanizmaCizelgesi_MekanizmayaGore_sg1Pompa_sg2Kirma_DigerleriSarjor()
+        {
+            PrototypeConfig config = Config;
+            WeaponMechanismTimeline sg1 = WeaponMechanismTimeline.For(config.Weapons.Find(ClassicWeaponId.CombatShotgun));
+            Assert.IsTrue(sg1.Shells, "sg_1 fişek fişek");
+            Assert.AreEqual(1, sg1.ShotCasings); Assert.AreEqual(0, sg1.ReloadCasings);
+            Assert.Greater(sg1.CasingDelaySeconds, 0f, "sg_1 kovanı pump'ta");
+
+            WeaponMechanismTimeline sg2 = WeaponMechanismTimeline.For(config.Weapons.Find(ClassicWeaponId.Sg2));
+            Assert.IsFalse(sg2.Shells, "sg_2 kırma: şarjör çizelgesi (ara adım)");
+            Assert.AreEqual(0, sg2.ShotCasings, "sg_2 atışta kovan yok");
+            Assert.AreEqual(2, sg2.ReloadCasings, "sg_2 açılışta iki kovan");
+            Assert.AreEqual(WeaponMechanismTimeline.Magazine.MagOutProgress, sg2.MagOutProgress, 1e-6f);
+
+            foreach (ClassicWeaponId id in new[] { ClassicWeaponId.AssaultRifle, ClassicWeaponId.AutoSmg, ClassicWeaponId.Lmg1, ClassicWeaponId.Sr1 })
+            {
+                WeaponMechanismTimeline t = WeaponMechanismTimeline.For(config.Weapons.Find(id));
+                Assert.IsFalse(t.Shells, id + " şarjör");
+                Assert.AreEqual(1, t.ShotCasings, id + " atışta kovan");
+                Assert.AreEqual(0, t.ReloadCasings, id + " reload'da kovan yok");
+            }
+
+            var legacy = new ClassicWeaponSettings { PelletCount = 8 };   // no data definition: the old pellet rule
+            Assert.IsTrue(WeaponMechanismTimeline.For(legacy).Shells);
+        }
+
         // ------------------------------------------------------------------ pellet ring
 
         [Test]

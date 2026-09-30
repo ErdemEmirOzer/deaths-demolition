@@ -440,6 +440,36 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(WeaponMechanismKind.Chambered, _mechanism[_mechanism.Count - 1].Kind, "C: reload'un son mekanizma olayı chamber (pump)");
         }
 
+        /// <summary>
+        /// C-00 30.09 M-21 · the break-open contract (sg_2 Nito): no casing at the shot; the reload opens the gun and both
+        /// spent shells fly (on the magazine timeline's mag_out mark, the interim step); no magazine drops.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator Mekanizma_Kirma_sg2_AtistaKovanYok_ReloaddaIkiKovan()
+        {
+            yield return Kur();
+            _s.Controller.EquipClassic(ClassicWeaponId.Sg2, _s.Config);
+            yield return null;
+            int ammo0 = _s.Controller.Classic.Ammo;
+            int casing0 = Count(WeaponMechanismKind.CasingEjected), mag0 = Count(WeaponMechanismKind.MagazineDropped);
+            _s.Girdi.AtesBasti = true;
+            _s.Girdi.AtesBasili = true;
+            yield return SpecialWeaponSahne.Bekle(() => _s.Controller.Classic.Ammo == ammo0 - 1, 2f, "tek atış");
+            _s.Girdi.AtesBasti = false;
+            _s.Girdi.AtesBasili = false;
+            yield return new WaitForSeconds(0.8f);   // past any pump-back window (0.40 s)
+            Assert.AreEqual(casing0, Count(WeaponMechanismKind.CasingEjected), "kırma: atışta kovan yok");
+
+            _s.Girdi.DoldurBasti = true;
+            yield return null;
+            _s.Girdi.DoldurBasti = false;
+            float reload = _s.Controller.Classic.ReloadDuration;
+            Assert.Greater(reload, 1f);
+            yield return SpecialWeaponSahne.Bekle(() => !_s.Controller.Classic.IsReloading, reload + 1f, "reload biter");
+            Assert.AreEqual(casing0 + 2, Count(WeaponMechanismKind.CasingEjected), "kırma: açılışta iki kovan");
+            Assert.AreEqual(mag0, Count(WeaponMechanismKind.MagazineDropped), "kırma: şarjör düşmez");
+        }
+
         [UnityTest]
         public IEnumerator Titresim_TakiliSilahaGore_KusanmadaOnbellek()
         {

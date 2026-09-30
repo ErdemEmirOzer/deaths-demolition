@@ -651,8 +651,12 @@ namespace DD.Prototype.Weapons
             // clip: the 6/5-frame additive fire clip is retriggered per shot and drops its frame-1 event
             // under auto fire (measured on WP-032C: 3 shots → 2 events). C ejects at the pump-back —
             // the clip's eject event when the character carries it, else the 0.40 s timer.
-            if (_timeline.CasingDelaySeconds <= 0f) PublishMechanism(WeaponMechanismKind.CasingEjected, false);
-            else if (!ClipDrivesMechanism) _casingAt = Time.time + _timeline.CasingDelaySeconds;
+            // C-00 30.09 M-21: a break-open (sg_2) ejects nothing at the shot — both shells leave when it opens (reload).
+            if (_timeline.ShotCasings > 0)
+            {
+                if (_timeline.CasingDelaySeconds <= 0f) PublishMechanism(WeaponMechanismKind.CasingEjected, false);
+                else if (!ClipDrivesMechanism) _casingAt = Time.time + _timeline.CasingDelaySeconds;
+            }
         }
 
         // ------------------------------------------------------------------ reload presentation
@@ -1535,7 +1539,7 @@ namespace DD.Prototype.Weapons
                 if (!_timeline.Shells && !_magOutFired && p >= _timeline.MagOutProgress)
                 {
                     _magOutFired = true;
-                    PublishMechanism(WeaponMechanismKind.MagazineDropped, false);
+                    PublishMagOut(false);
                 }
 
                 while (_seatsFired < _timeline.SeatCount && p >= _timeline.SeatProgress(_seatsFired))
@@ -1576,10 +1580,22 @@ namespace DD.Prototype.Weapons
                 return;
             }
 
-            if (e == s_eject) { if (_timeline.CasingDelaySeconds > 0f) PublishMechanism(WeaponMechanismKind.CasingEjected, true); }   // pump weapons only (A/B eject at the shot)
-            else if (e == s_magOut) PublishMechanism(WeaponMechanismKind.MagazineDropped, true);
+            if (e == s_eject) { if (_timeline.CasingDelaySeconds > 0f && _timeline.ShotCasings > 0) PublishMechanism(WeaponMechanismKind.CasingEjected, true); }   // pump weapons only (A/B eject at the shot)
+            else if (e == s_magOut) PublishMagOut(true);
             else if (e == s_magIn || e == s_magIn2 || e == s_magIn3) PublishMechanism(WeaponMechanismKind.ShellSeated, true);
             else if (e == s_chamber) PublishMechanism(WeaponMechanismKind.Chambered, true);
+        }
+
+        /// <summary>The mag_out mark: a magazine drops — or, on a break-open (C-00 30.09 M-21), the spent shells fly.</summary>
+        private void PublishMagOut(bool fromClip)
+        {
+            if (_timeline.ReloadCasings <= 0)
+            {
+                PublishMechanism(WeaponMechanismKind.MagazineDropped, fromClip);
+                return;
+            }
+
+            for (int i = 0; i < _timeline.ReloadCasings; i++) PublishMechanism(WeaponMechanismKind.CasingEjected, fromClip);
         }
 
         private void PublishMechanism(WeaponMechanismKind kind, bool fromClip)
