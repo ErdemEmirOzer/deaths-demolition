@@ -602,7 +602,14 @@ class CiIsolatedStepTests(CiFixture):
         summary = json.loads((self.out / self.sha / "summary.json").read_text())
         self.assertEqual(summary["suites"][sid]["passed"], 1)
         self.assertEqual([i["where"] for i in summary["isolated"]], ["a3", "a3", "alone"])
-        self.assertIn(sid, (self.out / self.sha / "summary.md").read_text())
+        md = (self.out / self.sha / "summary.md").read_text()
+        self.assertIn(sid, md)
+        # C-00 01.10: one line names every test kept out of the core — no silent scope limit
+        line = next(l for l in md.splitlines() if l.startswith("çekirdek dışı:"))
+        self.assertIn("a3 2 test (S-10 A3)", line)
+        self.assertIn("alone 1 test (ayrı adım)", line)
+        for name in (CROWD, DEC077, ALLOC):
+            self.assertIn("`" + name + "`", line)
         self.assertIn(f"alone: {sid}=0", (self.out / self.sha / "timeline.txt").read_text())
         self.assertEqual(self.lines("guard-calls.txt"), ["snapshot", "restore", "restore-done"])   # one window for all steps
         self.assertEqual([l.split()[:2] for l in self.lines("slot-calls.txt")], [["acquire", "player"], ["release", "player"]])

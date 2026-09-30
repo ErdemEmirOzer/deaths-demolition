@@ -139,8 +139,13 @@ if driver_head or tools_tree:
 if env_scrubbed is not None:
     L[-1:-1] = [f"Ortam temizliği (env-scrub, C# okuduğu değişkenler): {', '.join(env_scrubbed) or 'temizlenecek yok'}"]
 if isolated:
-    L[-1:-1] = [f"Çekirdek dışı (ci-isolated.txt): {sum(w == 'alone' for _, w, _ in isolated)} ayrı adımda (alone) · "
-                f"{sum(w == 'a3' for _, w, _ in isolated)} main-ci'de değil (a3, S-10 A3 koşusu)"]
+    # C-00 01.10: no silent scope limit — the one line names every test kept out of the core.
+    def _plain(pattern):
+        return re.sub(r"^\^|\$$", "", pattern).replace("\\.", ".")
+    def _names(kind):
+        return ", ".join("`" + _plain(p) + "`" for p, w, _ in isolated if w == kind) or "—"
+    L[-1:-1] = [f"çekirdek dışı: a3 {sum(w == 'a3' for _, w, _ in isolated)} test (S-10 A3) — {_names('a3')} · "
+                f"alone {sum(w == 'alone' for _, w, _ in isolated)} test (ayrı adım) — {_names('alone')}"]
 L += ["| Süit | toplam | geçti | kırmızı | atlandı | s | derleme hatası | bekçi |", "|---|---:|---:|---:|---:|---:|---:|---|"]
 for mode, s in suites.items():
     L.append(f"| {mode} | {s['total']} | {s['passed']} | {s['failed']} | {s['skipped']} | {s['seconds']:.0f} | {s['errorsCS']} | {'KILLED' if s['watchdog'] else ('-' if s['xml'] else 'XML YOK')} |")
