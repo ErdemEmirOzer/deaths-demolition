@@ -773,7 +773,10 @@ namespace DD.Prototype.Weapons
                 return false;
             }
 
-            if (!Physics.Raycast(interior, direction, out RaycastHit hit, distance, DD.Prototype.Core.PrototypeLayers.BulletHitMask, QueryTriggerInteraction.Collide))
+            // C-00 30.09: a body capsule between the player and the muzzle counts too (point-blank; the round then starts inside the
+            // player and meets the capsule on its first step — HitscanEngine.CapsuleOnlyHit).
+            int mask = DD.Prototype.Core.PrototypeLayers.BulletHitMask | (1 << DD.Prototype.Core.PrototypeLayers.Enemy);
+            if (!Physics.Raycast(interior, direction, out RaycastHit hit, distance, mask, QueryTriggerInteraction.Collide))
             {
                 return false;
             }

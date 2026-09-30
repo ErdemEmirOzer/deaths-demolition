@@ -265,15 +265,45 @@ namespace DD.Prototype.Weapons
         /// projectile's own resumed transaction. The first body hit resolves the per-shot branches once
         /// (chain / ricochet / explosion, ADR-034-1). Returns true when the projectile stops here.
         /// </summary>
+        private static readonly RaycastHit[] s_chordBuffer = new RaycastHit[16];
+
+        /// <summary>
+        /// C-00 30.09: true when a round entering <paramref name="capsule"/> (a living zombie's body capsule) at <paramref name="entry"/>
+        /// meets none of that body's hitboxes before it leaves the capsule; <paramref name="upper"/> is then the body's UpperBody
+        /// hitbox, which takes the hit (×1.0). False: a dead / hitbox-less body, or a region is on the chord (it resolves normally).
+        /// </summary>
+        internal static bool CapsuleOnlyHit(Collider capsule, Vector3 entry, Vector3 direction, out Collider upper)
+        {
+            upper = capsule;
+            DD.Prototype.Enemies.ZombieEnemy body = capsule.GetComponentInParent<DD.Prototype.Enemies.ZombieEnemy>();
+            if (body == null || !body.IsAlive) return false;
+            Collider region = body.HitboxFor(BodyRegion.UpperBody);
+            if (region == null || !region.enabled) return false;
+            float reach = capsule.bounds.size.magnitude + 0.1f;
+            float chord = capsule.Raycast(new Ray(entry + direction * reach, -direction), out RaycastHit exit, reach) ? reach - exit.distance : reach;
+            int n = Physics.RaycastNonAlloc(entry - direction * 0.01f, direction, s_chordBuffer, chord + 0.02f, 1 << PrototypeLayers.EnemyHitbox, QueryTriggerInteraction.Collide);
+            for (int i = 0; i < n; i++)
+            {
+                Collider c = s_chordBuffer[i].collider;
+                if (c != null && c.enabled && c.GetComponentInParent<DD.Prototype.Enemies.ZombieEnemy>() == body) return false;
+            }
+
+            upper = region;
+            return true;
+        }
+
         internal static bool ResolveProjectileSegment(ref ProjectileState p, Vector3 from, Vector3 direction, float length,
             out float travelled, out Vector3 end)
         {
             travelled = length;
             end = from + direction * length;
 
+            // C-00 30.09: bullets and pellets also meet body capsules (Enemy layer) — see CapsuleOnlyHit.
+            bool bodyCapsules = p.Kind == DD.Prototype.Core.Weapons.ProjectileKind.Bullet || p.Kind == DD.Prototype.Core.Weapons.ProjectileKind.Pellet;
+            int mask = PrototypeLayers.BulletHitMask | (bodyCapsules ? 1 << PrototypeLayers.Enemy : 0);
             int count = p.SweepRadius > 0f
-                ? Physics.SphereCastNonAlloc(from, p.SweepRadius, direction, s_rayBuffer, length, PrototypeLayers.BulletHitMask, QueryTriggerInteraction.Collide)
-                : Physics.RaycastNonAlloc(from, direction, s_rayBuffer, length, PrototypeLayers.BulletHitMask, QueryTriggerInteraction.Collide);
+                ? Physics.SphereCastNonAlloc(from, p.SweepRadius, direction, s_rayBuffer, length, mask, QueryTriggerInteraction.Collide)
+                : Physics.RaycastNonAlloc(from, direction, s_rayBuffer, length, mask, QueryTriggerInteraction.Collide);
 
             if (count <= 0)
             {
@@ -325,6 +355,15 @@ namespace DD.Prototype.Weapons
                         end = point;
                         stopped = true;
                         break;
+                    }
+
+                    // C-00 30.09 (S-02 neck-seam finding): the top-down line at root + ShotRayHeight can run between a body's hitboxes
+                    // (Standard: UpperBody top 1.42, Head bottom 1.40). A round through a living body's capsule that meets none of
+                    // that body's hitboxes on its chord is an UpperBody hit (×1.0) — no round passes through a visible zombie. When a
+                    // hitbox is on the chord the capsule is skipped and the region takes the hit as before.
+                    if (collider.gameObject.layer == PrototypeLayers.Enemy)
+                    {
+                        if (!CapsuleOnlyHit(collider, point, direction, out collider)) continue;
                     }
 
                     bool rocket = p.Kind == DD.Prototype.Core.Weapons.ProjectileKind.Rocket;

@@ -28,11 +28,21 @@ namespace DD.Prototype.Tests.PlayMode
     {
         private SpecialWeaponSahne _s;
         private GameObject _wall;
+        private readonly System.Collections.Generic.List<ZombieEnemy> _donuk = new System.Collections.Generic.List<ZombieEnemy>(4);
 
         [UnityTearDown]
         public IEnumerator Bitir()
         {
             ProjectileSystem.Clear();
+            // Frozen bodies go back to the pool alive (WP-062J lesson): Update and the Animator on again.
+            foreach (ZombieEnemy z in _donuk)
+            {
+                if (z == null) continue;
+                z.enabled = true;
+                foreach (Animator a in z.GetComponentsInChildren<Animator>(true)) a.enabled = true;
+            }
+
+            _donuk.Clear();
             if (_wall != null) UnityEngine.Object.Destroy(_wall);
             if (_s != null)
             {
@@ -205,6 +215,119 @@ namespace DD.Prototype.Tests.PlayMode
                 WeaponEvents.FireStarted -= onStart;
                 WeaponEvents.FireStopped -= onStop;
             }
+        }
+
+        // ------------------------------------------------------------------ C-00 01.10: no round through a visible body
+
+        private static readonly RaycastHit[] s_dikis = new RaycastHit[32];
+
+        /// <summary>2 = a hitbox of <paramref name="z"/> on the line, 1 = only its body capsule, 0 = neither (as the b5k measurement).</summary>
+        private static int CizgiSinifi(ZombieEnemy z, Vector3 from, Vector3 dir, float len)
+        {
+            int n = Physics.RaycastNonAlloc(from, dir, s_dikis, len, ~0, QueryTriggerInteraction.Collide);
+            bool hitbox = false, kapsul = false;
+            for (int i = 0; i < n; i++)
+            {
+                Collider col = s_dikis[i].collider;
+                if (col == null || col.GetComponentInParent<ZombieEnemy>() != z) continue;
+                if (col.gameObject.layer == PrototypeLayers.EnemyHitbox) hitbox = true;
+                else if (col.gameObject.layer == PrototypeLayers.Enemy) kapsul = true;
+            }
+
+            return hitbox ? 2 : kapsul ? 1 : 0;
+        }
+
+        private void Dondur(ZombieEnemy z)
+        {
+            z.enabled = false;
+            foreach (Animator a in z.GetComponentsInChildren<Animator>(true)) a.enabled = false;
+            _donuk.Add(z);
+            Physics.SyncTransforms();
+        }
+
+        /// <summary>Three flat top-down rounds (centre, ±0.1 m) at the shot height toward <paramref name="z"/>; each must damage it.</summary>
+        private IEnumerator UcAtis(ZombieEnemy z, string poz, System.Collections.Generic.List<string> yanlis, System.Collections.Generic.List<string> rapor)
+        {
+            Vector3 player = _s.Rig.transform.position;
+            Vector3 from = player + Vector3.up * _s.Controller.ShotRayHeight;
+            Vector3 flat = z.transform.position - player; flat.y = 0f;
+            Vector3 dir = flat.normalized, right = Vector3.Cross(Vector3.up, dir);
+            ProjectileLaunch launch = ProjectileLaunch.From(Arsenal.Get(ClassicWeaponId.AssaultRifle), ClassicWeaponId.AssaultRifle, 30f);
+            using (var sayac = new SpecialOlaySayaci())
+            {
+                foreach (float o in new[] { -0.1f, 0f, 0.1f })
+                {
+                    int sinif = CizgiSinifi(z, from + right * o, dir, flat.magnitude + 2f);
+                    sayac.DamagedByLife.TryGetValue(z.LifeId, out int once);
+                    ProjectileSystem.Spawn(Atis(from + right * o, from + right * o + dir, 1f, 30f), launch);
+                    yield return SpecialWeaponSahne.Bekle(() => ProjectileSystem.LiveCount == 0, 2f, "mermi inmedi");
+                    sayac.DamagedByLife.TryGetValue(z.LifeId, out int sonra);
+                    string satir = poz + " " + o.ToString("+0.0;-0.0;0") + " m: line " + (sinif == 2 ? "hitbox" : sinif == 1 ? "capsule-only" : "none") + " → " + (sonra > once ? "hit" : "MISS");
+                    rapor.Add(satir);
+                    if (sonra <= once) yanlis.Add(satir);
+                }
+            }
+        }
+
+        /// <summary>
+        /// C-00 01.10 (S-02 neck-seam measurement b5k: the top-down line at root + ShotRayHeight met only the body capsule of 6.2 %
+        /// of attack frames — Special 12.9 %, peaks 26–51 %): a round through a living body's capsule that meets none of its
+        /// hitboxes counts as UpperBody, so no top-down round passes through a visible zombie. Deterministic frozen poses: a
+        /// Special's attack frame where the centre line is capsule-only (searched, then Update + Animator off), a still Standard
+        /// and a staggering Standard; three flat rounds each (centre, ±0.1 m) must all damage the body. ShotRayHeight unchanged.
+        /// </summary>
+        [UnityTest]
+        [Timeout(180000)]
+        public IEnumerator Tepeden_DuzHat_GorunurGovdedenGecmez_SaldiriBeklemeSendeleme()
+        {
+            yield return Kur();
+            Vector3 c = _s.Rig.transform.position;
+            Vector3 fwd = _s.Rig.transform.forward; fwd.y = 0f; fwd.Normalize();
+            Vector3 right = Vector3.Cross(Vector3.up, fwd);
+            var yanlis = new System.Collections.Generic.List<string>();
+            var rapor = new System.Collections.Generic.List<string>();
+
+            // 1) a Special attacking the (invulnerable) player: wait for a frame whose centre line is capsule-only, then freeze it.
+            Vector3 sp = c + fwd * 2.2f; sp.y = c.y;
+            ZombieEnemy saldiran = EnemyFactory.Spawn(EnemyTier.Special, 6, sp, Quaternion.LookRotation(-fwd, Vector3.up), SpawnVisibility.Unknown);
+            Assert.IsNotNull(saldiran, "Special doğmadı");
+            saldiran.CompleteRise();
+            saldiran.FitArmorComposition(false, false, false);
+            bool bulundu = false;
+            float t0 = Time.realtimeSinceStartup;
+            while (!bulundu && Time.realtimeSinceStartup - t0 < 30f)
+            {
+                yield return null;
+                Physics.SyncTransforms();
+                if (!saldiran.IsAlive || saldiran.AttackPhase == ZombieAttackPhase.None) continue;
+                Vector3 p0 = _s.Rig.transform.position + Vector3.up * _s.Controller.ShotRayHeight;
+                Vector3 f = saldiran.transform.position - _s.Rig.transform.position; f.y = 0f;
+                if (f.sqrMagnitude > 1e-4f && CizgiSinifi(saldiran, p0, f.normalized, f.magnitude + 2f) == 1) bulundu = true;
+            }
+
+            Assert.IsTrue(bulundu, "30 s içinde merkez çizginin yalnız kapsüle çarptığı saldırı karesi yok (b5k: Special saldırı karelerinin %12,9'u)");
+            Dondur(saldiran);
+            yield return UcAtis(saldiran, "Special attack " + saldiran.AttackPhase, yanlis, rapor);
+
+            // 2) a still Standard (idle), off to the left
+            ZombieEnemy duran = _s.Dogur(_s.Zemin(-4f, 1f));
+            duran.CompleteRise();
+            yield return null;
+            Dondur(duran);
+            yield return UcAtis(duran, "Standard idle", yanlis, rapor);
+
+            // 3) a staggering Standard, off to the right
+            ZombieEnemy sendeleyen = _s.Dogur(_s.Zemin(4f, 1f));
+            sendeleyen.CompleteRise();
+            yield return null;
+            Vector3 geri = sendeleyen.transform.position - _s.Rig.transform.position; geri.y = 0f;
+            sendeleyen.Animator.BeginStagger(geri.normalized, 1f, 0.6f, sendeleyen.transform);
+            yield return new WaitForSeconds(0.25f);
+            Dondur(sendeleyen);
+            yield return UcAtis(sendeleyen, "Standard stagger", yanlis, rapor);
+
+            Debug.Log("[DD-TEST] wp069.dikis.fix " + string.Join(" | ", rapor));
+            Assert.IsEmpty(yanlis, "görünür gövdeden geçen mermi: " + string.Join(" | ", yanlis));
         }
 
         // ------------------------------------------------------------------ allocation (WP-059D referee form)
