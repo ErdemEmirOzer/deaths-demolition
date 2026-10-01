@@ -1298,10 +1298,11 @@ namespace DD.Prototype.Tests.PlayMode
 
         /// <summary>
         /// WP-072 · user listening package (C-00 28.09): three A/B pairs from the game's real output on the default world (V6) —
-        /// 1 top-down fight and 2 first-person fight — WP-072 B7 mix panel (C-00 01.10): one 36 s take per mode, variants rotated in 4 s
-        /// blocks A B C A B C A B C (A = today, B = SfxPlayer +3 / SfxWorld −1 dB = the Run snapshot proposal +1 / −3, C = SfxPlayer +2 and
-        /// SfxWorld ducked −3 dB under player fire); block starts (capture frames) go to a CSV and wp-072/tools/kit_splice.py splices,
-        /// level-matches and measures them (the horde drifted ~0.8 dB within a take, so blocks, not halves). 3 the calm after-rain
+        /// 1 top-down fight and 2 first-person fight — WP-072 B7 mix panel (C-00 01.10): one 60 s take per mode, 4 s blocks rotated
+        /// A B C W R ×3 (A = today, B = SfxPlayer +3 / SfxWorld −1 dB = the Run snapshot proposal +1 / −3, C = SfxPlayer +2 and SfxWorld
+        /// ducked −3 dB under player fire; W = the weapon alone, R = everything but the weapon — stems for the margin, since the SMG room
+        /// tail rings through any "gap" window); block starts (capture frames) go to a CSV and wp-072/tools/kit_splice.py splices,
+        /// level-matches and measures them. 3 the calm after-rain
         /// courtyard (A = birds 0.35 as shipped — near the floor at 25–40 m, B = the designed level 1.0). Written under temporaryCachePath/wp072-listening; the batch copies them.
         /// </summary>
         [UnityTest]
@@ -1393,6 +1394,8 @@ namespace DD.Prototype.Tests.PlayMode
                 mixer.GetFloat(playerParam, out float tabanDb);
                 string worldParam = AudioMixerBridge.VolumeParams[3];
                 mixer.GetFloat(worldParam, out float tabanWorldDb);
+                mixer.GetFloat(AudioMixerBridge.VolumeParams[1], out float tabanMusicDb);
+                mixer.GetFloat(AudioMixerBridge.VolumeParams[2], out float tabanAmbDb);
                 var modlar = new[] { (DD.Prototype.CameraSystem.CameraMode.TopDown, "1", "ustten"), (DD.Prototype.CameraSystem.CameraMode.FirstPerson, "2", "birinci-sahis") };
                 foreach (var (mod, no, ad) in modlar)
                 {
@@ -1405,24 +1408,26 @@ namespace DD.Prototype.Tests.PlayMode
                     int blok = -1, sonAtis = 0;
                     float duck = 0f, sonAtisT = -10f, onceki = 0f;
                     var bloklar = new System.Text.StringBuilder("frame,variant\n");
-                    yield return Kaydet(no + "_" + ad + "_take", 36f, t =>
+                    yield return Kaydet(no + "_" + ad + "_take", 60f, t =>
                     {
-                        int b = Mathf.Min(8, (int)(t / 4f));
+                        int b = Mathf.Min(14, (int)(t / 4f));
                         if (b != blok)
                         {
                             blok = b;
-                            bloklar.Append(aktifCap != null ? aktifCap.FramesWritten : 0).Append(',').Append("ABC"[b % 3]).Append('\n');
+                            bloklar.Append(aktifCap != null ? aktifCap.FramesWritten : 0).Append(',').Append("ABCWR"[b % 5]).Append('\n');
                         }
 
                         Ates(t);
                         if (atis != sonAtis) { sonAtis = atis; sonAtisT = t; }
-                        char v = "ABC"[blok % 3];
+                        char v = "ABCWR"[blok % 5];
                         float dt = Mathf.Max(0f, t - onceki);
                         onceki = t;
                         bool ateste = t - sonAtisT < 0.15f;
                         duck = v == 'C' ? (ateste ? Mathf.Max(-3f, duck - 3f * dt / 0.03f) : Mathf.Min(0f, duck + 3f * dt / 0.35f)) : 0f;
-                        mixer.SetFloat(playerParam, tabanDb + (v == 'A' ? 0f : v == 'B' ? 3f : 2f));
-                        mixer.SetFloat(worldParam, tabanWorldDb + (v == 'B' ? -1f : 0f) + duck);
+                        mixer.SetFloat(playerParam, v == 'R' ? -80f : tabanDb + (v == 'B' ? 3f : v == 'C' ? 2f : 0f));
+                        mixer.SetFloat(worldParam, v == 'W' ? -80f : tabanWorldDb + (v == 'B' ? -1f : 0f) + duck);
+                        mixer.SetFloat(AudioMixerBridge.VolumeParams[1], v == 'W' ? -80f : tabanMusicDb);   // music
+                        mixer.SetFloat(AudioMixerBridge.VolumeParams[2], v == 'W' ? -80f : tabanAmbDb);     // ambience
                     });
                     System.IO.File.WriteAllText(System.IO.Path.Combine(dir, no + "_" + ad + "_blocks.csv"), bloklar.ToString());
                     Debug.Log("[DD-TEST] wp072.weapon mode=" + mod + " shots=" + atis + " blocks=" + (blok + 1) + " last=" + _d.WeaponFire.LastVoice);
@@ -1433,7 +1438,7 @@ namespace DD.Prototype.Tests.PlayMode
             }
             finally
             {
-                mixer.ClearFloat(AudioMixerBridge.VolumeParams[3]);
+                foreach (int k in new[] { 1, 2, 3 }) mixer.ClearFloat(AudioMixerBridge.VolumeParams[k]);
                 AfterRainAmbience.BirdLevel = oncekiKus;
                 m.ThreatLayerOverride = null;
                 m.IntensityOverride = null;
@@ -1447,7 +1452,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// <summary>
         /// WP-072 B7 bird measurement (C-00 30.09 panel): post-mixer solo renders in the open V6 courtyard, Fighting phase, no fire —
         /// bed only (BirdLevel 0, 30 s) and birds only at 1.0 and 0.35 (every non-bird source muted, the bird pinned 20 m ahead /
-        /// 10 m up, 12 forced calls 3 s apart so each variant of the shuffle deck sounds). Music / SFX / UI buses muted in all three.
+        /// 10 m up, 24 forced calls 3 s apart: ~4 events per variant of the shuffle deck — 2 were too few, ±2 dB per run). Music / SFX / UI buses muted in all three.
         /// Each bird's onset (capture frame) and clip go to a sidecar CSV; tools/bird_contrast.py measures the own-band contrast.
         /// </summary>
         [UnityTest]
@@ -1480,9 +1485,9 @@ namespace DD.Prototype.Tests.PlayMode
                     AfterRainAmbience.PinnedBirdOffset = _s.Rig.transform.forward * 20f + Vector3.up * 10f;
                     var csv = new System.Text.StringBuilder("seconds,clip\n");
                     int cagri = 0, kusLog = ar.BirdCount;
-                    yield return KusKaydet(System.IO.Path.Combine(dir, ad + ".wav"), 38f, (c, t) =>
+                    yield return KusKaydet(System.IO.Path.Combine(dir, ad + ".wav"), 74f, (c, t) =>
                     {
-                        if (cagri < 12 && t > 1f + cagri * 3f) { ar.ForceDue(true, false, false); cagri++; }
+                        if (cagri < 24 && t > 1f + cagri * 3f) { ar.ForceDue(true, false, false); cagri++; }
                         foreach (AudioSource src in UnityEngine.Object.FindObjectsOfType<AudioSource>())
                         {
                             bool kus = src.clip != null && src.clip.name.StartsWith("AmbBirdsDistant", StringComparison.Ordinal);

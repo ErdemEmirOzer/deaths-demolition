@@ -131,7 +131,7 @@
    "layers": "derived (v005) + v023 per-variant gain",
    "bus": "Ambience",
    "spatial": true,
-   "provenance": "derived offline (AP-011 v022, WP-072 DEC-102, 0 cr) from v001–v006 ambience / footstep takes + synthesis · synthetic: 2 bush-warbler hoo-hokekyo suggestions, 2 sparrow chirp clusters, 2 white-eye twitters; HP 900, LP 5–6 k ×2, IR_Open wet −2…−4 dB · v023 (WP-072 B7-1b, C-00 30.09 panel): per-variant gain to +12.5 dB own-band contrast over the courtyard bed at BirdLevel 1.0 (_01 +0.96, _02 +5.70, _03 +0.57, _04 +1.08, _05 +0.12, _06 +1.13 dB), TP <= -3 dBTP"
+   "provenance": "derived offline (AP-011 v022, WP-072 DEC-102, 0 cr) from v001–v006 ambience / footstep takes + synthesis · synthetic: 2 bush-warbler hoo-hokekyo suggestions, 2 sparrow chirp clusters, 2 white-eye twitters; HP 900, LP 5–6 k ×2, IR_Open wet −2…−4 dB · v023 (WP-072 B7-1b, C-00 30.09 panel): per-variant gain to +12.5 dB own-band contrast over the courtyard bed at BirdLevel 1.0 (_01 +0.96, _02 +5.70, _03 +0.57, _04 +1.08, _05 +0.12, _06 +1.13 dB), TP <= -3 dBTP · v023 trim (b7-r6: broadband at 1.0 +3.88 LU > +3): _02 −1.0 dB (net +4.70)"
   },
   {
    "sound": "AmbCommon",

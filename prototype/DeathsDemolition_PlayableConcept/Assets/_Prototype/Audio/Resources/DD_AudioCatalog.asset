@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21fa3465f8aa14f0bbac4a22d4a8238f, type: 3}
   m_Name: DD_AudioCatalog
   m_EditorClassIdentifier: 
-  _manifestVersion: ap011-v022
-  _sourceHash: dbde13a4ff718198fcaaff206b20ce549a3d64c1eb71ce017a9d53d859d7e525
+  _manifestVersion: ap011-v023
+  _sourceHash: a38af227b3aaa32582b9c73dcc139ac6e5293df51eca562a6ad51f51c63bf03f
   _entries:
   - Sound: 10
     Clips:
@@ -5071,14 +5071,18 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 64d3f8bb6b1784161bbc9cdea4bc1f8f, type: 3}
     - {fileID: 8300000, guid: c166d1e9be455415eaefc94fff0083c6, type: 3}
     Loop: 0
-    Lufs: -26
-    TruePeakDb: -12.52
+    Lufs: -25.04
+    TruePeakDb: -9.08
     Provenance: "derived offline (AP-011 v022, WP-072 DEC-102, 0 cr) from v001\u2013v006
       ambience / footstep takes + synthesis \xB7 synthetic: 2 bush-warbler hoo-hokekyo
       suggestions, 2 sparrow chirp clusters, 2 white-eye twitters; HP 900, LP 5\u20136
-      k \xD72, IR_Open wet \u22122\u2026\u22124 dB"
+      k \xD72, IR_Open wet \u22122\u2026\u22124 dB \xB7 v023 (WP-072 B7-1b, C-00
+      30.09 panel): per-variant gain to +12.5 dB own-band contrast over the courtyard
+      bed at BirdLevel 1.0 (_01 +0.96, _02 +5.70, _03 +0.57, _04 +1.08, _05 +0.12,
+      _06 +1.13 dB), TP <= -3 dBTP \xB7 v023 trim (b7-r6: broadband at 1.0 +3.88
+      LU > +3): _02 \u22121.0 dB (net +4.70)"
     NoiseFloorDb: -120
     DcDb: -222.1
     Clipped: 0
     BitDepth: 24
-    Layers: derived (v005)
+    Layers: derived (v005) + v023 per-variant gain
