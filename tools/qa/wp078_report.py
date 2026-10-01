@@ -753,6 +753,12 @@ class Inspector:
         refs = step.get("xml", {})
         for kind in ("editMode", "playMode"):
             self.xml(refs.get(kind))
+        # R2 (C-00 01.10): main-ci parity — every ci-isolated `alone` test has its own session XML (assembler lists them from
+        # the tree's ci-isolated.txt, so a missing session is a missing file → BLOCKED); a manifest without the key is older
+        alone = refs.get("playModeAlone", [])
+        require(isinstance(alone, list), "A1 playModeAlone is not a list of session XMLs")
+        for ref in alone:
+            self.xml(ref)
 
     def A2(self, step):
         runs = step.get("runs")

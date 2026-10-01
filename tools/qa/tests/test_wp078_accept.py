@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import importlib.util
 import json
+import re
 import os
 import shutil
 import signal
@@ -152,6 +153,9 @@ class FakeTools:
         names = sorted({n for ids in RF.DOMAIN_IDS.values() for n in ids if part in n})
         if mode == "editmode":
             names.append("DD.Prototype.Tests.EditMode.ProjectIntegrityTests.Assets_Guid_Unique")
+        if "--filter" in argv:   # Unity -testFilter: .NET regex, search semantics, against the full name
+            rx = re.compile(argv[argv.index("--filter") + 1])
+            names = [n for n in names if rx.search(n)] or ["DD.Prototype.Tests.PlayMode.Isolated.Placeholder"]
         put(out / f"{mode}.xml", nunit(names))
         put(out / f"{mode}.log", "fake unity\n")
         return 0
@@ -324,14 +328,16 @@ class DryRunTests(Base):
     def test_a1_suites_editmode_scope_editor_playmode_scope_player(self):
         chain = self.dry(["a1"], editmode_filter="ProjectIntegrityTests|ArsenalV3Tests")
         seq = [(Path(a[0]).name, a[1]) for _, a in chain.planned]
-        self.assertEqual([("userdata-guard.sh", "snapshot"), ("test.sh", "editmode"), ("userdata-guard.sh", "restore"),
-                          ("userdata-guard.sh", "snapshot"), ("test.sh", "playmode"), ("userdata-guard.sh", "restore")], seq)
+        # R2: core PlayMode, then each ci-isolated `alone` entry in its own guarded session (main-ci parity)
+        alone = acc.ci_plan()[1]
+        self.assertEqual([("userdata-guard.sh", "snapshot"), ("test.sh", "editmode"), ("userdata-guard.sh", "restore")]
+                         + [("userdata-guard.sh", "snapshot"), ("test.sh", "playmode"), ("userdata-guard.sh", "restore")] * (1 + len(alone)), seq)
         # C-00 30.09 lock order player → unity: the PlayMode snapshot takes the player slot before test.sh's Unity slot
         scopes = [argv[-1] for _, argv in chain.planned if Path(argv[0]).name == "userdata-guard.sh"]
-        self.assertEqual(["editor", "editor", "player", "player"], scopes)
+        self.assertEqual(["editor", "editor"] + ["player", "player"] * (1 + len(acc.ci_plan()[1])), scopes)
         edit = chain.planned[1][1]
         self.assertEqual("ProjectIntegrityTests|ArsenalV3Tests", self.opt(edit, "--filter"))
-        self.assertNotIn("--filter", chain.planned[4][1])
+        self.assertEqual(acc.ci_plan()[0], self.opt(chain.planned[4][1], "--filter"))   # R2: main-ci core, not the whole suite
         # FINAL 23093940: the full PlayMode suite outgrew test.sh's 45 min default watchdog
         self.assertEqual(str(acc.PLAYMODE_TIMEOUT_MIN), self.opt(chain.planned[4][1], "--timeout-min"))
         self.assertNotIn("--timeout-min", chain.planned[1][1])
@@ -501,8 +507,10 @@ class StopTests(Base):
         self.prepared(("a6",))
         chain = make_chain(self.evidence, ["a1"], tools=tools, guard=guard)
         chain.run()
+        alone = [("snapshot", "a1-" + i, "player") for i, _ in acc.ci_plan()[1]]
         self.assertEqual([("snapshot", "a1-editmode", "editor"), ("close", "a1-editmode", "editor"),
-                          ("snapshot", "a1-playmode", "player"), ("close", "a1-playmode", "player")], guard.scopes)
+                          ("snapshot", "a1-playmode", "player"), ("close", "a1-playmode", "player")]
+                         + [x for snap in alone for x in (snap, ("close",) + snap[1:])], guard.scopes)
 
     def test_editor_snapshot_error_is_stop_and_nothing_runs(self):
         tools, guard = FakeTools(), FakeGuard(snapshot_codes=[12])
@@ -642,6 +650,28 @@ class ManifestTests(Base):
         reports = sorted(self.evidence.glob("report-*/wp078-report.json"))
         self.assertTrue(reports)
         return json.loads(reports[-1].read_text())
+
+    def test_r2_isolated_sessions_carry_what_the_core_excludes(self):
+        # R2 (C-00 01.10): the core XML no longer holds the DEC-077 readability case; its own `a3` session does, and the
+        # report still closes the readability row — through the A3 record, not a fullname list
+        code, _ = self.full_run()
+        dec077 = next(i for i in RF.DOMAIN_IDS["readability"] if "DEC077" in i)
+        core = (self.evidence / "a1" / "playmode" / "playmode.xml").read_text()
+        self.assertNotIn(dec077, core)
+        isolated = [d for d in (self.evidence / "a3").iterdir() if d.name.startswith("a3-isolated-") and "DEC077" in d.name]
+        self.assertEqual(1, len(isolated))
+        self.assertIn(dec077, (isolated[0] / "playmode.xml").read_text())
+        self.assertTrue(self.report()["pass"])
+
+    def test_r2_missing_alone_session_blocks_a1(self):
+        code, _ = self.full_run()
+        step_id = acc.ci_plan()[1][0][0]
+        (self.evidence / "a1" / step_id / "playmode.xml").unlink()
+        self.assertEqual(1, make_chain(self.evidence, ["a8"], tools=FakeTools(), resume=True).run())
+        reports = sorted(self.evidence.glob("report-*/wp078-report.json"))
+        report = json.loads(reports[-1].read_text())
+        self.assertFalse(report["pass"])
+        self.assertTrue(any(f["step"] == "A1" for f in report["failures"]), report["failures"])
 
     def test_full_chain_manifest_is_accepted_by_the_report(self):
         code, _ = self.full_run()

@@ -13,9 +13,9 @@ Kapsam dışı: sahip birim testlerinin yeniden yazımı, görsel kalite yargıs
 | Adım | Ne | Eşik | Araç / kanıt |
 |---|---|---|---|
 | A0 | Taban | FINAL tam SHA, `git status` boş, LFS 0 işaretçi, Library kökeni post-build | `tools/qa/library_provenance.py` |
-| A1 | Değişen süitler | FINAL'a giren paketlerin süitleri tek koşu + `main-ci` FINAL özeti yeşil | `tools/test.sh` (guard'lı), `ci/<sha>/summary.md` |
+| A1 | Değişen süitler | **main-ci paritesi (C-00 01.10):** EditMode tam + PlayMode `tools/ci-suites.txt` çekirdeği (ci-isolated hariç) tek oturumda + her `alone` girdisi kendi oturumunda; çekirdek dışı süitler kapı değil (sahiplerde) | `tools/test.sh` (guard'lı; PM player scope), `tools/ci_isolated.py`, `ci/<sha>/summary.md` |
 | A2 | Bot üç modda (§2) | TD/TP/FP × 5 round, tohum 61, normal bot: 5/5, 0 ölüm, 0 istisna, zaman aşımı 0, kamera-duvar 0 kare; + rota koşusu × 3 mod (kareler) | `tools/qa/wp078_bot.py --kind gameplay` / `--kind route` → `attempt.json` (guard makbuzu + artifactSha256), `bot-summary.json`, `player.log` |
-| A3 | Regresyon kapsamı (§3) | her alan: sahip test XML'i PASS + S-10 uçtan uca satırı | `A3_REQUIRED_TEST_IDS` (wp078_report) + bot log satırları |
+| A3 | Regresyon kapsamı (§3) | her alan: sahip test XML'i PASS + S-10 uçtan uca satırı; ci-isolated `a3` girdileri (DEC-077 okunabilirlik, AP005v2 kalabalık) her biri kendi oturumunda, XML'leri A3 kaydına bağlı | `A3_REQUIRED_TEST_IDS` (wp078_report) + bot log satırları |
 | A4 | Perf matrisi (§4) | 9 hücre × ≥ 3 pencere, her tam pencere eşik altı | `tools/qa/wp078_perf.py` → `wp078_perf_report.py` |
 | A5 | Soak (§5) | DEC-091: tohum 61 + 26 × 12/12, kararlılık kapısı | `tools/qa/wp078_bot.py --kind stability --quiet` (temiz-host preflight; yalnız player slotu) → `soak_gate.py --stability` |
 | A6 | Build (§6) | dev + release (LZ4HC) + release-probe; release ≤ 5 GB | `tools/build.sh` |

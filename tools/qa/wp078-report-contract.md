@@ -58,7 +58,12 @@ metadata cannot be hidden by a successful summary or restoration.
   `assetsTree`, `lfsPointersOnDisk=0`, `lfsMissing=0`, positive
   `library.artifactDbBytes` and `artifactDbMtime`.
 - A1: `xml` mapping `editMode`/`playMode` to raw NUnit XML references. Nonempty,
-  consistent leaf counts, all Passed, zero failed/skipped/inconclusive.
+  consistent leaf counts, all Passed, zero failed/inconclusive, skips only Y6
+  (Skipped + Explicit + Diagnostics). `playMode` is main-ci's core session
+  (tools/ci-suites.txt minus tools/ci-isolated.txt); `playModeAlone` lists one XML per
+  ci-isolated `alone` entry, each its own session (R2, C-00 01.10), listed from the
+  tree's ci-isolated.txt, so a missing session is a missing file (BLOCKED). The A3
+  area rows also bind each ci-isolated `a3` session XML through the A3 record.
 - A2: `runs`, exactly topdown/tp/fp normal seed61 gameplay runs, each five ordered completed
   rounds, deaths0, native pass, no runtime errors; all five rounds have camera
   inside-collider log samples with zero affected frames. Native `stuckRecoveries`

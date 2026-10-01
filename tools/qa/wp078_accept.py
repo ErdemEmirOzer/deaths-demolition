@@ -40,6 +40,7 @@ import argparse
 import hashlib
 import json
 import os
+import importlib.util
 import re
 import shlex
 import signal
@@ -60,6 +61,30 @@ PROJECT = "prototype/DeathsDemolition_PlayableConcept"
 KADRO_EVIDENCE = Path.home() / "Desktop" / "KADRO" / "context" / "projects" / "deaths-demolition" / "wp-078" / "evidence"
 STAGE_ORDER = ("a6", "a0", "a1", "a2", "a3", "a5", "a4", "a8")
 PLAYMODE_TIMEOUT_MIN = 90   # A1 full PlayMode watchdog (test.sh default 45 min; main-ci uses 60)
+ISOLATED_TIMEOUT_MIN = 10   # one isolated test in its own session (main-ci --alone-timeout default)
+
+
+def _ci_isolated():
+    spec = importlib.util.spec_from_file_location("_wp078_ci_isolated", REPO / "tools" / "ci_isolated.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def ci_plan():
+    """R2 (C-00 01.10 A1 decision): main-ci's PlayMode definition at this tree — the core -testFilter (tools/ci-suites.txt
+    minus every tools/ci-isolated.txt entry), each `alone` entry in its own session (main-ci does the same), and each `a3`
+    entry, which main-ci never runs and WP-078 A3 runs in its own session. Returns (core, alone, a3); alone/a3 are
+    [(step id, filter)] whose id is also the out dir name."""
+    ci = _ci_isolated()
+    entries = ci.parse_isolated(REPO / "tools" / "ci-isolated.txt")
+    core = ci.core_filter(ci.read_suites(REPO / "tools" / "ci-suites.txt"), entries)
+    a3 = []
+    for pattern, where, _ in entries:
+        if where == "a3":
+            m = re.match(r"\^?(\w+)", pattern.split("\\.")[-1])
+            a3.append((f"a3-isolated-{len(a3) + 1}-{(m.group(1)[:60] if m else 'test')}", f"(?:{pattern})"))
+    return core, ci.alone_steps(entries), a3
 STAGE_OUTPUTS = {"a6": ("build-dev", "build-release", "build-probe"), "a0": ("a0",), "a1": ("a1",), "a2": ("a2",),
                  "a3": ("a3",), "a5": ("a5",), "a4": ("a4",), "a8": ()}
 BUILDS = {"dev": "dev", "release": "release", "probe": "release-probe"}   # role → tools/build.sh mode (K1)
@@ -580,14 +605,19 @@ class Chain:
 
     def stage_a1(self):
         results = []
+        # R2 (C-00 01.10): A1 PlayMode = main-ci parity — the core filter in one session, then every `alone` entry in its
+        # own session (FINAL' dab326ab ran all 567 PlayMode tests in one session: 18 contamination reds + 26 non-core).
+        # An explicit --playmode-filter (a targeted rerun) replaces the core and runs no alone steps.
+        core, alone, _ = ci_plan()
+        playmode_filter = self.filters["playmode"] or core
         for mode in ("editmode", "playmode"):
             out = self.evidence / "a1" / mode
             argv = [REPO / "tools" / "test.sh", mode, "--out", out]
             if mode == "playmode":
                 # FINAL 23093940 (01.10): test.sh's PlayMode watchdog defaults to 45 min; the full suite (248 cases, 25 min
                 # in main-ci 5cf17f9e) was killed mid-suite at 45 min on the FINAL host. The watchdog only catches a hang.
-                argv += ["--timeout-min", str(PLAYMODE_TIMEOUT_MIN)]
-            if self.filters[mode]:
+                argv += ["--timeout-min", str(PLAYMODE_TIMEOUT_MIN), "--filter", playmode_filter]
+            elif self.filters[mode]:
                 argv += ["--filter", self.filters[mode]]
             result = self.editor_unit(f"a1-{mode}", [argv], out,
                                       lambda out=out, mode=mode: [out / f"{mode}.xml", out / f"{mode}.log", out / "durations.json"],
@@ -595,7 +625,21 @@ class Chain:
                                       scope="player" if mode == "playmode" else "editor")
             if result:
                 results.append(result)
+        if not self.filters["playmode"]:
+            for step_id, step_filter in alone:
+                result = self.isolated_unit("a1", step_id, step_filter)
+                if result:
+                    results.append(result)
         self.finish("a1", results)
+
+    def isolated_unit(self, stage, step_id, step_filter):
+        """One ci-isolated test in its own PlayMode session under the player-scope guard → <E>/<stage>/<step id>/."""
+        out = self.evidence / stage / step_id
+        argv = [REPO / "tools" / "test.sh", "playmode", "--out", out, "--timeout-min", str(ISOLATED_TIMEOUT_MIN),
+                "--filter", step_filter]
+        return self.editor_unit(f"{stage}-{step_id}", [argv], out,
+                                lambda out=out: [out / "playmode.xml", out / "playmode.log", out / "durations.json"],
+                                lambda: {"testMode": "playmode", "filter": step_filter, "isolated": True}, scope="player")
 
     def bot_stage_binary(self, stage):
         binary = self.dev_binary()
@@ -626,6 +670,9 @@ class Chain:
                 out = self.evidence / "a3" / f"flag-{flag.lstrip('-').lower()}-{value}"
                 argv = self.bot_argv(out, "flag", "topdown", GAMEPLAY_SEED, FLAG_ROUNDS, extra_args=(flag, str(value)))
                 results.append(self.bot_unit(out.name, out, argv, "flag"))
+        # R2 (C-00 01.10): the ci-isolated `a3` entries (main-ci never runs them) — each in its own PlayMode session
+        for step_id, step_filter in ci_plan()[2]:
+            results.append(self.isolated_unit("a3", step_id, step_filter))
         if self.dry_run:
             return
         results = [r for r in results if r]
@@ -633,7 +680,8 @@ class Chain:
         # with the flag smokes, so this record carries the A1 record and XML it consumed (a changed A1 invalidates it).
         a1 = self.stage_record("a1")
         a1_record = load_json(a1)
-        consumed = [a1] + [self.evidence / "a1" / m / f"{m}.xml" for m in ("editmode", "playmode")] if a1_record else []
+        consumed = ([a1] + [self.evidence / "a1" / m / f"{m}.xml" for m in ("editmode", "playmode")]
+                    + [self.evidence / "a1" / step_id / "playmode.xml" for step_id, _ in ci_plan()[1]]) if a1_record else []
         verdict = None
         if not a1_record or a1_record.get("executionCommit") != self.final:
             verdict = "BLOCKED"
@@ -868,8 +916,12 @@ def assemble_manifest(evidence, final, assets_tree):
     if record:
         checklist["A0"] = dict(_step(evidence, path, record, guarded=False), library=ref(evidence, evidence / "a0" / "library-provenance.json"))
 
+    _, alone, a3_isolated = ci_plan()
     xml = {"editMode": ref(evidence, evidence / "a1" / "editmode" / "editmode.xml"),
-           "playMode": ref(evidence, evidence / "a1" / "playmode" / "playmode.xml")}
+           "playMode": ref(evidence, evidence / "a1" / "playmode" / "playmode.xml"),
+           # R2: listed from the tree's ci-isolated.txt, not globbed — a missing session shows as a missing file (BLOCKED)
+           "playModeAlone": [ref(evidence, evidence / "a1" / step_id / "playmode.xml") for step_id, _ in alone]}
+    isolated_xml = [ref(evidence, evidence / "a3" / step_id / "playmode.xml") for step_id, _ in a3_isolated]
     a1_path, a1 = records["a1"]
     if a1:
         checklist["A1"] = dict(_step(evidence, a1_path, a1), xml=xml)
@@ -882,7 +934,7 @@ def assemble_manifest(evidence, final, assets_tree):
 
     a3_path, a3 = records["a3"]
     checks = {}
-    xml_refs = [x for x in (xml["editMode"], xml["playMode"]) if x]
+    xml_refs = [x for x in (xml["editMode"], xml["playMode"], *xml["playModeAlone"], *isolated_xml) if x]
     for area in wp078_report.AREAS:
         if area == "aiFlags":
             if a3:
@@ -891,10 +943,17 @@ def assemble_manifest(evidence, final, assets_tree):
                 row["evidence"] = row["evidence"] + xml_refs
                 row["flagRuns"] = [_flag_run(evidence, d) for d in _dirs(evidence / "a3", r"flag-[a-z0-9]+-[01]")]
                 checks[area] = row
+        elif a3:
+            # R2: the A3 record consumes the A1 XMLs (core + alone) and holds its own `a3` isolated sessions, so it is the
+            # one execution every area row's XML evidence is bound to
+            row = _step(evidence, a3_path, a3)
+            row.pop("owner")
+            row["evidence"] = row["evidence"] + xml_refs
+            checks[area] = row
         elif a1:
             row = _step(evidence, a1_path, a1)
             row.pop("owner")
-            row["evidence"] = row["evidence"] + xml_refs
+            row["evidence"] = row["evidence"] + [x for x in xml_refs if x not in isolated_xml]
             checks[area] = row
     if a3:
         checklist["A3"] = dict(_step(evidence, a3_path, a3), checks=checks)
