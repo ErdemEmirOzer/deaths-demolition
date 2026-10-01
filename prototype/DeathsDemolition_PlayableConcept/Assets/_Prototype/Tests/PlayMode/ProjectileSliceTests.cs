@@ -181,6 +181,13 @@ namespace DD.Prototype.Tests.PlayMode
             // before the rounds landed, so they spawned inside / past it. The target is held at 7 m (Update + Animator off,
             // handed back alive in the teardown) — this test is about the classic weapon's projectiles reaching a target.
             z.CompleteRise();
+            // C-00 01.10 (FINAL dab326ab core: hp 34 → 34, every round spawned and ended): the spawn roll can fit body armour /
+            // a helmet (round 1: 12 % / 15 %), and the flat top-down line lands on the upper body / head — armour hits take
+            // durability, not health. The roll's seed is EnemyFactory's process-wide counter (reset only at subsystem
+            // registration), so it followed how many bodies earlier tests spawned. This test is about rounds reaching a body:
+            // the target is bare, as in CoreCombatSliceTests' GameFeel (WP-018).
+            z.FitArmorComposition(false, false, false);
+            Assert.IsTrue(z.Armor == null || z.Armor.IsBare, "hedef zırhsız olmalı (FitArmorComposition)");
             yield return null;
             yield return null;
             Dondur(z);
@@ -191,8 +198,17 @@ namespace DD.Prototype.Tests.PlayMode
             int started = 0, stopped = 0;
             Action<ClassicWeaponId> onStart = id => started++;
             Action<ClassicWeaponId> onStop = id => stopped++;
+            // C-00 01.10 (FINAL dab326ab core: 34 → 34, no damage at all): where every round started, went and ended — a red
+            // names its cause instead of leaving it to guesswork.
+            var iz = new System.Text.StringBuilder();
+            Action<ProjectileSpawnInfo> onSpawn = i => { if (iz.Length < 3000) iz.Append("\n    spawn ").Append(i.WeaponId).Append(" at ").Append(i.Position.ToString("F2")).Append(" dir ").Append(i.Direction.ToString("F2")); };
+            Action<ProjectileImpactInfo> onImpact = i => { if (iz.Length < 3000) iz.Append("\n    impact ").Append(i.Surface).Append(" flesh=").Append(i.Flesh).Append(" armour=").Append(i.Armor).Append(" stopped=").Append(i.Stopped).Append(" at ").Append(i.Position.ToString("F2")); };
+            Action<ProjectileExpireInfo> onExpire = i => { if (iz.Length < 3000) iz.Append("\n    end ").Append(i.Reason).Append(" at ").Append(i.Position.ToString("F2")); };
             WeaponEvents.FireStarted += onStart;
             WeaponEvents.FireStopped += onStop;
+            ProjectileEvents.Spawned += onSpawn;
+            ProjectileEvents.Impact += onImpact;
+            ProjectileEvents.Expired += onExpire;
             try
             {
                 // The real aim path (cursor → aim plane → facing → muzzle), re-aimed every frame at the body on the
@@ -212,7 +228,8 @@ namespace DD.Prototype.Tests.PlayMode
                 _s.Girdi.AtesBasti = false;
                 yield return SpecialWeaponSahne.Bekle(() => ProjectileSystem.LiveCount == 0, 3f, "mermiler sönmedi");
                 yield return null;
-                Assert.Less(z.Health, hp0, "klasik silahın mermileri hedefe hasar vermedi");
+                if (z.Health >= hp0) Debug.Log("[DD-TEST] wp069.controller.miss " + KlasikIz(z, iz));
+                Assert.Less(z.Health, hp0, "klasik silahın mermileri hedefe hasar vermedi" + KlasikIz(z, iz));
                 Assert.GreaterOrEqual(started, 1, "FireStarted yayınlanmadı");
                 Assert.GreaterOrEqual(stopped, 1, "FireStopped yayınlanmadı");
                 Debug.Log("[DD-TEST] wp069.controller shots=" + (ProjectileSystem.SpawnedTotal - spawned0) + " hp " + hp0 + " → " + z.Health);
@@ -221,6 +238,9 @@ namespace DD.Prototype.Tests.PlayMode
             {
                 WeaponEvents.FireStarted -= onStart;
                 WeaponEvents.FireStopped -= onStop;
+                ProjectileEvents.Spawned -= onSpawn;
+                ProjectileEvents.Impact -= onImpact;
+                ProjectileEvents.Expired -= onExpire;
             }
         }
 
@@ -242,6 +262,30 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             return hitbox ? 2 : kapsul ? 1 : 0;
+        }
+
+        /// <summary>KlasikSilah's state at the end: the rig against the target, the target's colliders, the clock and the rounds.</summary>
+        private string KlasikIz(ZombieEnemy z, System.Text.StringBuilder rounds)
+        {
+            var b = new System.Text.StringBuilder();
+            b.Append("\n  rig ").Append(_s.Rig.transform.position.ToString("F2")).Append(" fwd ").Append(_s.Rig.transform.forward.ToString("F2"))
+             .Append(" primary=").Append(DD.Prototype.PlayerSystem.PlayerRegistry.Primary == _s.Rig)
+             .Append(" activeController=").Append(WeaponRegistry.ActiveController == _s.Controller)
+             .Append(" camera=").Append(DD.Prototype.CameraSystem.CameraModeService.Current)
+             .Append(" timeScale=").Append(Time.timeScale).Append(" captureDt=").Append(Time.captureDeltaTime)
+             .Append("\n  target ").Append(z.transform.position.ToString("F2")).Append(" alive=").Append(z.IsAlive).Append(" rising=").Append(z.IsRising)
+             .Append(" active=").Append(z.gameObject.activeInHierarchy).Append(" hp=").Append(z.Health)
+             .Append(" armour helmet/body/leg=").Append(z.Armor != null && z.Armor.IsEquipped(ArmorSlot.Helmet)).Append('/')
+             .Append(z.Armor != null && z.Armor.IsEquipped(ArmorSlot.Body)).Append('/').Append(z.Armor != null && z.Armor.IsEquipped(ArmorSlot.Leg));
+            var cc = z.GetComponent<CharacterController>();
+            if (cc != null) b.Append(" capsule ").Append(cc.enabled).Append(' ').Append(cc.bounds.min.ToString("F2")).Append('–').Append(cc.bounds.max.ToString("F2"));
+            foreach (BodyRegion r in new[] { BodyRegion.Head, BodyRegion.UpperBody, BodyRegion.LowerBody })
+            {
+                Collider c = z.HitboxFor(r);
+                b.Append("\n  ").Append(r).Append(c == null ? " none" : " " + c.enabled + " " + c.bounds.min.ToString("F2") + "–" + c.bounds.max.ToString("F2"));
+            }
+
+            return b.Append(rounds).ToString();
         }
 
         private void Dondur(ZombieEnemy z)
