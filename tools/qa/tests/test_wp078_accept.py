@@ -332,6 +332,9 @@ class DryRunTests(Base):
         edit = chain.planned[1][1]
         self.assertEqual("ProjectIntegrityTests|ArsenalV3Tests", self.opt(edit, "--filter"))
         self.assertNotIn("--filter", chain.planned[4][1])
+        # FINAL 23093940: the full PlayMode suite outgrew test.sh's 45 min default watchdog
+        self.assertEqual(str(acc.PLAYMODE_TIMEOUT_MIN), self.opt(chain.planned[4][1], "--timeout-min"))
+        self.assertNotIn("--timeout-min", chain.planned[1][1])
 
     def test_a2_gameplay_five_rounds_seed61_sinematik_and_route_runs(self):
         bots = self.planned("a2", "wp078_bot.py")

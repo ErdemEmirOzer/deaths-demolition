@@ -59,6 +59,7 @@ import wp078_report  # noqa: E402  (AI_FLAGS, AREAS, ROUTE_KEYS, SCHEMA)
 PROJECT = "prototype/DeathsDemolition_PlayableConcept"
 KADRO_EVIDENCE = Path.home() / "Desktop" / "KADRO" / "context" / "projects" / "deaths-demolition" / "wp-078" / "evidence"
 STAGE_ORDER = ("a6", "a0", "a1", "a2", "a3", "a5", "a4", "a8")
+PLAYMODE_TIMEOUT_MIN = 90   # A1 full PlayMode watchdog (test.sh default 45 min; main-ci uses 60)
 STAGE_OUTPUTS = {"a6": ("build-dev", "build-release", "build-probe"), "a0": ("a0",), "a1": ("a1",), "a2": ("a2",),
                  "a3": ("a3",), "a5": ("a5",), "a4": ("a4",), "a8": ()}
 BUILDS = {"dev": "dev", "release": "release", "probe": "release-probe"}   # role → tools/build.sh mode (K1)
@@ -582,6 +583,10 @@ class Chain:
         for mode in ("editmode", "playmode"):
             out = self.evidence / "a1" / mode
             argv = [REPO / "tools" / "test.sh", mode, "--out", out]
+            if mode == "playmode":
+                # FINAL 23093940 (01.10): test.sh's PlayMode watchdog defaults to 45 min; the full suite (248 cases, 25 min
+                # in main-ci 5cf17f9e) was killed mid-suite at 45 min on the FINAL host. The watchdog only catches a hang.
+                argv += ["--timeout-min", str(PLAYMODE_TIMEOUT_MIN)]
             if self.filters[mode]:
                 argv += ["--filter", self.filters[mode]]
             result = self.editor_unit(f"a1-{mode}", [argv], out,
