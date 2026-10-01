@@ -928,12 +928,25 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsNotNull(kafa);
 
             var hasar = new List<EnemyDamageInfo>(16);
+            var geo = new List<string>(16);   // per hit: line y, head / upper box min–max, entry distances, expected region
+            var beklenenBolge = new List<DD.Prototype.Damage.BodyRegion>(16);
             var olum = new List<EnemyDeathInfo>(4);
             var tierler = new List<HitFeedbackTier>(16);
             var cueler = new List<CombatAudioEvent>(64);
             Action<EnemyDamageInfo> hDinle = i =>
             {
                 hasar.Add(i);
+                // C-00 01.10 (option 1): the expected region from the real colliders NOW — the flat line enters the head box first
+                // → Head, else UpperBody (the capsule fallback counts as UpperBody too). The target's own flinch can dip the head
+                // onto the line (main-ci 55c6e37f / b5g: head centre 1.80 → 1.37 over three hits), so "head 0" was not physical.
+                Bounds hb = kafa.bounds, ub = govde.bounds;
+                var ray = new Ray(i.Point - i.Direction.normalized * 3f, i.Direction.normalized);
+                bool headOn = hb.IntersectRay(ray, out float hd);
+                bool upOn = ub.IntersectRay(ray, out float ud);
+                beklenenBolge.Add(headOn && (!upOn || hd <= ud) ? DD.Prototype.Damage.BodyRegion.Head : DD.Prototype.Damage.BodyRegion.UpperBody);
+                geo.Add("line y " + i.Point.y.ToString("F3") + " head y " + hb.min.y.ToString("F3") + "–" + hb.max.y.ToString("F3") +
+                        (headOn ? " (enter " + hd.ToString("F2") + ")" : " (off line)") + " upper y " + ub.min.y.ToString("F3") + "–" + ub.max.y.ToString("F3") +
+                        (upOn ? " (enter " + ud.ToString("F2") + ")" : " (off line)") + " hit " + i.Result.Region);
                 Debug.Log("[DD-TEST] gamefeel.impact region=" + i.Result.Region + " hp=" + i.Result.HealthDamage +
                           " point=" + i.Point.ToString("F3") + " direction=" + i.Direction.ToString("F3") +
                           " rising=" + hedef.IsRising + " head=" + kafa.bounds + " upper=" + govde.bounds);
@@ -1035,25 +1048,33 @@ namespace DD.Prototype.Tests.PlayMode
                 Debug.Log(rapor.ToString());
                 for (int i = 0; i < hasar.Count; i++) Debug.Log("[DD-TEST] gamefeel.hit " + i + " region=" + hasar[i].Result.Region + " hp=" + hasar[i].Result.HealthDamage + " killed=" + hasar[i].Result.Killed + " armored=" + hasar[i].Result.WasArmored + " tier=" + (i < tierler.Count ? tierler[i].ToString() : "-"));
 
-                // C-00 30.09 B: every top-down hit on the upright Standard is an UpperBody hit (head 0), 12 HP, dressed FleshHit
-                // until the killing one (Death); 34 HP takes exactly ceil(34 / 12) = 3 of them.
-                int beklenenIsabet = Mathf.CeilToInt(ZombiCani / TufekHasari);   // 3
+                // C-00 30.09 B + 01.10 (option 1): a top-down hit lands where the flat line meets the body NOW — Head when the line
+                // enters the head box first, else UpperBody (12 HP; a bare head ×2 = 24), dressed FleshHit until the killing one
+                // (Death); the hit count is the first n whose damage reaches 34 HP (three body hits, or fewer with a head hit).
+                int beklenenIsabet = 0;
+                float toplam = 0f;
+                for (int i = 0; i < hasar.Count && toplam < ZombiCani; i++)
+                {
+                    toplam += TufekHasari * (beklenenBolge[i] == DD.Prototype.Damage.BodyRegion.Head ? 2f : 1f);
+                    beklenenIsabet++;
+                }
                 Assert.AreEqual(hasar.Count, tierler.Count, "Her EnemyDamaged tek bir dressed tier üretmeli.\n" + rapor);
                 int kafaIsabeti = 0, killedSayisi = 0;
                 for (int i = 0; i < hasar.Count; i++)
                 {
                     DamageResult r = hasar[i].Result;
                     if (r.Region == DD.Prototype.Damage.BodyRegion.Head) kafaIsabeti++;
-                    Assert.AreEqual(DD.Prototype.Damage.BodyRegion.UpperBody, r.Region, "Tepeden dik Standard'a isabet " + i + " gövde değil (C-00 B).\n" + rapor);
+                    Assert.AreEqual(beklenenBolge[i], r.Region, "Tepeden isabet " + i + " bölgesi geometriyle uyuşmuyor (C-00 01.10): " + geo[i] + ".\n" + rapor);
                     Assert.IsFalse(r.WasArmored, "Çıplak hedefte zırh isabeti (" + i + ").\n" + rapor);
-                    Assert.AreEqual(TufekHasari, r.HealthDamage, 0.001f, "Gövde hasarı formülden farklı (" + i + ").\n" + rapor);
+                    float bolgeHasari = TufekHasari * (r.Region == DD.Prototype.Damage.BodyRegion.Head ? 2f : 1f);
+                    Assert.AreEqual(bolgeHasari, r.HealthDamage, 0.001f, "Bölge hasarı formülden farklı (" + i + ", " + r.Region + ").\n" + rapor);
                     Assert.AreEqual(r.Killed ? HitFeedbackTier.Death : HitFeedbackTier.FleshHit, tierler[i], "Gövde hasarı ile dressed tier eşleşmiyor (" + i + ").\n" + rapor);
                     Assert.AreEqual(EnemyTier.Standard, hasar[i].Tier);
                     if (r.Killed) killedSayisi++;
                 }
 
-                Assert.AreEqual(0, kafaIsabeti, "Tepeden kafa isabeti (C-00 B: 0 beklenir).\n" + rapor);
-                Assert.AreEqual(beklenenIsabet, hasar.Count, "34 HP = tam üç gövde isabeti.\n" + rapor);
+                Debug.Log("[DD-TEST] gamefeel.geo kafa=" + kafaIsabeti + " | " + string.Join(" | ", geo));
+                Assert.AreEqual(beklenenIsabet, hasar.Count, "34 HP = bölgelere göre " + beklenenIsabet + " isabet.\n" + rapor);
                 Assert.IsTrue(hasar[hasar.Count - 1].Result.Killed, "Öldüren isabet son hasar olayı değil.\n" + rapor);
                 Assert.AreEqual(1, killedSayisi, "Killed=true olan EnemyDamaged sayısı 1 olmalı.");
                 Assert.AreEqual(1, olum.Count, "EnemyDied " + olum.Count + " kez (tam 1).\n" + rapor);
