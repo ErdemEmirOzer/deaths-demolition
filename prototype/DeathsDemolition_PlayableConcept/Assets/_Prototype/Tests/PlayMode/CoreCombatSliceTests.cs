@@ -301,10 +301,28 @@ namespace DD.Prototype.Tests.PlayMode
             Vector3 merkez = _rig.transform.position;
             ZombieEnemy hedef = Dogur(merkez + new Vector3(0f, 0f, -6f), merkez);
             Assert.IsNotNull(hedef);
+            Collider kafa = hedef.HitboxFor(DD.Prototype.Damage.BodyRegion.Head);
+            Collider govde = hedef.HitboxFor(DD.Prototype.Damage.BodyRegion.UpperBody);
+            Assert.IsNotNull(kafa);
+            Assert.IsNotNull(govde);
 
             var vuruslar = new List<EnemyDamageInfo>(32);
+            var beklenenBolge = new List<DD.Prototype.Damage.BodyRegion>(32);
+            var geo = new List<string>(32);
             int olum = 0;
-            Action<EnemyDamageInfo> dinle = i => vuruslar.Add(i);
+            // C-00 01.10 (as GameFeel, option 1): the expected region from the real colliders at the hit — the running target's
+            // flinch can dip its head onto the flat line, so a head hit is physical when the line enters the head collider first.
+            Action<EnemyDamageInfo> dinle = i =>
+            {
+                vuruslar.Add(i);
+                var ray = new Ray(i.Point - i.Direction.normalized * 3f, i.Direction.normalized);
+                bool headOn = kafa.Raycast(ray, out RaycastHit hh, 10f);
+                bool upOn = govde.Raycast(ray, out RaycastHit uh, 10f);
+                beklenenBolge.Add(headOn && (!upOn || hh.distance <= uh.distance) ? DD.Prototype.Damage.BodyRegion.Head : DD.Prototype.Damage.BodyRegion.UpperBody);
+                geo.Add("line y " + i.Point.y.ToString("F3") + " head y " + kafa.bounds.min.y.ToString("F3") + "–" + kafa.bounds.max.y.ToString("F3") +
+                        (headOn ? " (enter " + hh.distance.ToString("F2") + ")" : " (off)") + " upper " + (upOn ? "enter " + uh.distance.ToString("F2") : "off") +
+                        " hit " + i.Result.Region);
+            };
             Action<EnemyDeathInfo> olumDinle = _ => olum++;
             DamageEvents.EnemyDamaged += dinle;
             DamageEvents.EnemyDied += olumDinle;
@@ -376,16 +394,18 @@ namespace DD.Prototype.Tests.PlayMode
                     if (vuruslar[i].Result.Region == DD.Prototype.Damage.BodyRegion.Head) kafaIsabeti++;
                 }
 
-                // C-00 30.09 B: top-down shots are planar — no vertical scatter onto the head — so the running Standard
-                // takes body hits only and 34 HP needs three of them (the 0af8269a red, isabet=2 olum=1, was a random ×2
-                // head hit from the old scatter).
-                const int gerekenIsabet = 3;
+                // C-00 30.09 B: top-down shots are planar — no vertical scatter onto the head (the 0af8269a red, isabet=2 olum=1,
+                // was a random ×2 head hit from the old scatter). C-00 01.10 (as GameFeel): a head hit is allowed only where the
+                // line meets the head collider (asserted per hit below), so every hit up to the kill must be a reverse-direction
+                // one — three body hits, or fewer with a physical head hit; a target still alive needs three.
+                int gerekenIsabet = olum > 0 ? vuruslar.Count : 3;
 
                 rapor.AppendLine("  kare=" + k + " kontrol kare=" + kontrolKare + " uyumlu=" + uyumluKare +
                                  " en buyuk vz=" + enBuyukHizX.ToString("F2") +
                                  " mermi " + mermiOnce + "->" + mermiSonra +
                                  " isabet=" + vuruslar.Count + " ters yonlu=" + tersYonluIsabet + " kafa=" + kafaIsabeti + " olum=" + olum +
                                  " hitstop=" + HitStopService.Count + " timeScale=" + Time.timeScale.ToString("F2"));
+                rapor.AppendLine("  geo: " + string.Join(" | ", geo));
                 Debug.Log(rapor.ToString());
 
                 Assert.Greater(kontrolKare, 10, "Kontrol penceresi çok kısa; ölçüm boş.\n" + rapor);
@@ -393,7 +413,11 @@ namespace DD.Prototype.Tests.PlayMode
                     "REQ-039: 1.2 sn basılı ateş yalnız " + (mermiOnce - mermiSonra) + " mermi harcadı.\n" + rapor);
                 Assert.GreaterOrEqual(uyumluKare, kontrolKare * 0.9f,
                     "REQ-037: karakter +z'ye koşarken −z'ye bakmayı sürdüremedi (uyumlu " + uyumluKare + "/" + kontrolKare + ").\n" + rapor);
-                Assert.AreEqual(0, kafaIsabeti, "Tepeden kafa isabeti (C-00 B: 0 beklenir).\n" + rapor);
+                for (int i = 0; i < vuruslar.Count; i++)
+                {
+                    Assert.AreEqual(beklenenBolge[i], vuruslar[i].Result.Region, "Tepeden isabet " + i + " bölgesi geometriyle uyuşmuyor (C-00 01.10): " + geo[i] + ".\n" + rapor);
+                }
+
                 Assert.GreaterOrEqual(tersYonluIsabet, gerekenIsabet,
                     "REQ-037: hareket yönünün tersine ateş hedefe isabet etmedi (" + tersYonluIsabet + "/" + gerekenIsabet + " isabet).\n" + rapor);
             }
