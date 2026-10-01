@@ -65,6 +65,9 @@ namespace DD.Prototype.World
         /// </summary>
         public static readonly Color FogColor = new Color(0.815f, 0.843f, 0.870f);
 
+        /// <summary>M-46: the foliage shader's vegetation haze global (x start, y end, z max; see <see cref="V6Sky.VegHazeMax"/>).</summary>
+        public static readonly int VegHazeId = Shader.PropertyToID("_DD_VegHaze");
+
         /// <summary>WP-013 fog end, reference for the WP-015 A/B captures only.</summary>
         public const float FogEndWp013 = 138f;
 
@@ -98,6 +101,11 @@ namespace DD.Prototype.World
         {
             // DEC-102 AD MUST-B1 (25.09): fog 52–185 m greyed the treeline at 60–90 m; it starts past the vista now (the plates carry the far haze).
             public const float SunIntensityScale = 1.45f, SunShadowStrength = 0.92f, FogStart = 90f, FogEnd = 300f;
+
+            /// <summary>M-46 (C-00 01.10, DEC-102 implementation fix, intent unchanged): vegetation aerial perspective — the vista band
+            /// (58–90 m) stands before the fog's 90 m start; foliage alone (DD/Foliage Wind) fades toward the fog colour from start to
+            /// end metres, at most max. The roofs are not touched (MUST-B1).</summary>
+            public const float VegHazeStart = 40f, VegHazeEnd = 90f, VegHazeMax = 0.30f;   // M-46 r4 (01.10): C* ratio ≤ 0.7 at both plaza poses
             public static readonly Vector3 SunEuler = new Vector3(50f, 160f, 0f);   // 50° up (C-00: 45–55° — high, the shafts read); light toward the SSE: the sun in the NNW
             public static readonly Color SunColor = new Color(1.0f, 0.84f, 0.66f);   // ≈ 4000 K (the v3 key's 4900 K read cold against HF)
             public static readonly Color AmbientTint = new Color(0.74f, 0.85f, 1.06f, 1f);   // cold shadows, a little deeper
@@ -435,6 +443,7 @@ namespace DD.Prototype.World
         public static void ApplyEnvironment()
         {
             ApplyFog();
+            Shader.SetGlobalVector(VegHazeId, V6Sky.Active ? new Vector4(V6Sky.VegHazeStart, V6Sky.VegHazeEnd, V6Sky.VegHazeMax, 0f) : Vector4.zero);
 
             RenderSettings.ambientMode = AmbientMode.Trilight;
             Color fill = V6Sky.Active ? V6Sky.AmbientTint : Color.white;   // DEC-102: the shadows read cold under the high sun

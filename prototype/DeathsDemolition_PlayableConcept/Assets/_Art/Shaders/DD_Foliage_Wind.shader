@@ -66,6 +66,10 @@ Shader "DD/Foliage Wind"
         #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Packing.hlsl"
         #include "DD_Wind.hlsl"
 
+        // WP-075 (M-46, C-00 01.10): vegetation aerial perspective — a global, not per material (SRP Batcher unchanged). x = start,
+        // y = end (m from the camera), z = the most it fades toward the fog colour; 0 (the default) leaves every foliage pixel as it was.
+        float4 _DD_VegHaze;
+
         TEXTURE2D(_BaseMap);            SAMPLER(sampler_BaseMap);
         TEXTURE2D(_BumpMap);            SAMPLER(sampler_BumpMap);
         TEXTURE2D(_MetallicGlossMap);   SAMPLER(sampler_MetallicGlossMap);
@@ -312,6 +316,10 @@ Shader "DD/Foliage Wind"
                 #endif
 
                 color.rgb = MixFog(color.rgb, inputData.fogCoord);
+                // M-46: the V6 vista band (58–90 m) stands before the linear fog's 90 m start; foliage alone fades toward the fog colour
+                // from _DD_VegHaze.x to .y metres (the roofs keep DEC-102 B1's value), up to .z.
+                half vegHaze = saturate((distance(input.positionWS, _WorldSpaceCameraPos) - _DD_VegHaze.x) / max(1e-3, _DD_VegHaze.y - _DD_VegHaze.x)) * _DD_VegHaze.z;
+                color.rgb = lerp(color.rgb, unity_FogColor.rgb, vegHaze);
                 // Alpha-to-coverage needs the coverage alpha in the output; OutputAlpha would
                 // force 1 for an opaque surface and switch the edge anti-aliasing off.
                 color.a = _AlphaToMask > 0.5 ? alpha : OutputAlpha(color.a, IsSurfaceTypeTransparent(_Surface));

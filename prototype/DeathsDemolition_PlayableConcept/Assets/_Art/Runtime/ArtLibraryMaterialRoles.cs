@@ -283,12 +283,12 @@ namespace DD.Art
                 // DEC-102 AD MUST-B1 (backlit treeline: crowns L ≤ 45, green): the dark needle atlas (L 23) read pale khaki at 60–150 m —
                 // the grazing cards mirrored the sky round the sun at 0.40 (needles are matte: 0.15) and the shaded crowns lost their green
                 // under the cool ambient (× 0.70 / 1.00 / 0.60 keeps them green).
-                if (atlas == "pine_needles") { spec.Smoothness = 0.15f; spec.Tint = new Color(0.20f, 2.40f, 1.60f, 1f); }
+                if (atlas == "pine_needles") { spec.Smoothness = 0.15f; spec.Tint = new Color(1.45f, 1.40f, 0.35f, 1f); }   // M-46 (01.10, DEC-102 uygulama düzeltmesi): forest green 130–145°, no lime/neon
                 rows.Add(spec);
             }
 
             // AP-023 v008 · the sugi LOD0 crown pads (AP023_M_pine_needles_pad_v001): the pine_needles atlas, front faces only.
-            rows.Add(new Spec { Role = "ap023_pine_needles_pad", Kind = Kind.Cutout, TextureRole = "ap023_pine_needles", Shader = ShaderKind.FoliageWind, NoPackedMap = true, Smoothness = 0.15f, Tint = new Color(0.20f, 2.40f, 1.60f, 1f), SingleSided = true });
+            rows.Add(new Spec { Role = "ap023_pine_needles_pad", Kind = Kind.Cutout, TextureRole = "ap023_pine_needles", Shader = ShaderKind.FoliageWind, NoPackedMap = true, Smoothness = 0.15f, Tint = new Color(1.45f, 1.40f, 0.35f, 1f), SingleSided = true });
 
             rows.Add(new Spec { Role = "ap023_cloth", Kind = Kind.Flat, FlatLinearAlbedo = new Color(0.0273f, 0.0232f, 0.0194f, 1f), Smoothness = 0.20f });
             rows.Add(new Spec { Role = "ap023_foliage_core", Kind = Kind.Flat, FlatLinearAlbedo = new Color(0.022f, 0.040f, 0.016f, 1f), Smoothness = 0.25f });
