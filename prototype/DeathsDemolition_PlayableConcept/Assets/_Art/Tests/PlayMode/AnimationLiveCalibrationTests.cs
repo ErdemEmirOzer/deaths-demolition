@@ -131,16 +131,21 @@ namespace DD.Art.Tests.PlayMode
             {
                 CharacterAnimationSet.Entry e = pv.AnimationSet.Find(cy.clip);
                 float sampled = pv.AnimationSet.SpeedOf(cy.clip);
-                float timeScale = PlayerSkinnedVisual.ChildTimeScale(reference, sampled);
+                // WP-071 MUST-4 (P-06 AD refuter B) + D-1 (C-00 01.10): each run child at its own top speed (run_back at the backward
+                // multiplier) with the time scale the tree really bakes (cadence-band capped) — the AP-022 strafes / run_back sit on the
+                // cap, so the old "honest at 6.2, slip ≤ 3 cm" rule read the designed K3 slide as a calibration error (H5: rule change)
+                float radius = cy.clip == C.PlayerRunBack ? DD.Prototype.Core.Config.PlayerConfigSection.BackwardSpeedMultiplier : 1f;
+                float bodySpeed = speed * radius;
+                float timeScale = PlayerSkinnedVisual.RunChildTimeScale(reference, sampled, radius);
                 int stance = Mathf.Max(1, e.stanceFrames);
                 root.position = new Vector3(-30f, 0f, -30f) - cy.travel * 20f;
-                an.SetFloat(C.MoveX, cy.move.x); an.SetFloat(C.MoveY, cy.move.y);
+                an.SetFloat(C.MoveX, cy.move.x * radius); an.SetFloat(C.MoveY, cy.move.y * radius);
                 float[] rates = { 1.0f, 1.25f };
                 float[] mean = new float[2];
                 for (int k = 0; k < 2; k++)
                 {
                     var slips = new List<float>();
-                    yield return MeasureSlip(pv, root, cy.travel, rates[k], speed, stance, timeScale, slips);
+                    yield return MeasureSlip(pv, root, cy.travel, rates[k] * radius, bodySpeed, stance, timeScale, slips);
                     float sum = 0f; foreach (float s in slips) sum += s;
                     mean[k] = slips.Count > 0 ? sum / slips.Count : float.NaN;
                     Assert.GreaterOrEqual(slips.Count, 6, cy.clip + " @" + rates[k] + " yeterli temas ölçülmedi");
@@ -149,16 +154,25 @@ namespace DD.Art.Tests.PlayMode
                 // slip is linear in the rate over this band; zero crossing → LocoRate0; no-slip speed = sampled / LocoRate0
                 float slope = (mean[1] - mean[0]) / (rates[1] - rates[0]);
                 float rate0 = Mathf.Abs(slope) > 1e-6f ? rates[0] - mean[0] / slope : rates[0];
-                float live = sampled / rate0;
+                // no slip ⇔ the feet carry the body: (rate0 × radius) × time scale × live = bodySpeed
+                float live = bodySpeed / Mathf.Max(1e-3f, rate0 * radius * timeScale);
                 float shippedSlipCm = mean[0] * 100f;   // LocoRate 1.0 = the shipped calibration at 6.2 m/s
                 rows.Add(cy.clip + " sampled=" + sampled.ToString("F3", CultureInfo.InvariantCulture) + " slip@1.0=" + shippedSlipCm.ToString("F1", CultureInfo.InvariantCulture) + "cm slip@1.25=" + (mean[1] * 100f).ToString("F1", CultureInfo.InvariantCulture)
                          + "cm rate0=" + rate0.ToString("F3", CultureInfo.InvariantCulture) + " live=" + live.ToString("F3", CultureInfo.InvariantCulture) + " m/s");
-                if (Mathf.Abs(shippedSlipCm) > 3f) fails.Add(cy.clip + " " + shippedSlipCm.ToString("F1", CultureInfo.InvariantCulture) + " cm (canlı " + live.ToString("F2", CultureInfo.InvariantCulture) + " m/s)");
+                // an honest child (time scale under the cadence cap) keeps the WP-032D rule — the shipped calibration slips ≤ 3 cm per
+                // stance at its top speed; a capped child (AP-022 strafes at 6.2 m/s) slides by design (K3) — its slide share stays in the
+                // TP budget (CadenceBand.SlideClose). The ±3 % zero crossing (r29) is under this method's noise (mirrored strafes 4.52 / 4.87).
+                bool capped = timeScale < PlayerSkinnedVisual.ChildTimeScale(reference, sampled) - 1e-4f;
+                float stanceSeconds = stance / 30f / Mathf.Max(0.1f, radius * timeScale);
+                float slideShare = Mathf.Abs(mean[0]) / Mathf.Max(0.01f, bodySpeed * stanceSeconds);
+                rows[rows.Count - 1] += (capped ? " capped" : " honest") + " slideShare=" + (slideShare * 100f).ToString("F0", CultureInfo.InvariantCulture) + "%";
+                if (!capped && Mathf.Abs(shippedSlipCm) > 3f) fails.Add(cy.clip + " " + shippedSlipCm.ToString("F1", CultureInfo.InvariantCulture) + " cm @ " + bodySpeed.ToString("F2", CultureInfo.InvariantCulture) + " m/s (canlı " + live.ToString("F2", CultureInfo.InvariantCulture) + " m/s)");
+                if (capped && slideShare > CadenceBand.SlideClose) fails.Add(cy.clip + " kapaklı kayma %" + (slideShare * 100f).ToString("F0", CultureInfo.InvariantCulture) + " > %" + (CadenceBand.SlideClose * 100f).ToString("F0", CultureInfo.InvariantCulture));
             }
 
             Time.captureDeltaTime = 0f;
             Debug.Log("[DD-TEST] wp032d.livecal\n" + string.Join("\n", rows));
-            Assert.IsEmpty(fails, "sevk edilen kalibrasyonla 6,2 m/s'de kayma > 3 cm/adım:\n" + string.Join("\n", fails));
+            Assert.IsEmpty(fails, "sevk edilen kalibrasyonla kayma bütçe dışında:\n" + string.Join("\n", fails));
         }
     }
 }

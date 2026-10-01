@@ -880,7 +880,7 @@ namespace DD.Prototype.Characters
             EnsureRagdollBones();
             RagdollProxyPool.ArmRoundLog();   // WP-078 per-round line
             _topSpeed = Mathf.Max(0.1f, topSpeedMetersPerSecond);
-            _gait = tier == EnemyTier.Special ? 3 : fit == "B" ? 1 : fit == "C" ? 2 : 0;
+            _gait = GaitIndexFor(tier, fit, _animation);
             _gaitClipSpeed = Mathf.Max(0.1f, _animation.SpeedOf(CharacterAnimatorContract.ZombieGaitClips[_gait]));
             _speed01 = 0f;
             _dying = false;
@@ -947,11 +947,38 @@ namespace DD.Prototype.Characters
             }
         }
 
+        /// <summary>WP-071 MUST-I1 A/B diagnostics: false = every tier on the AP-009 fallback gait (tests reset it to true).</summary>
+        public static bool TierGaits = true;
+
+        /// <summary>
+        /// WP-071 MUST-I1 (P-06 AD): the tier's own AP-022 gait — Standard shamble_fast A (fit A / C) or B (fit B), Runner run,
+        /// Guard walk_heavy, Executioner walk_stomp — where the set carries it; else the AP-009 fallback (fit shamble A/B/C, Runner run).
+        /// </summary>
+        public static int GaitIndexFor(EnemyTier tier, string fit, CharacterAnimationSet set)
+        {
+            if (!TierGaits) set = null;
+            int v3 = tier == EnemyTier.Special ? CharacterAnimatorContract.GaitRunV3
+                : tier == EnemyTier.Elite ? CharacterAnimatorContract.GaitWalkHeavyV3
+                : tier == EnemyTier.Ultra ? CharacterAnimatorContract.GaitWalkStompV3
+                : fit == "B" ? CharacterAnimatorContract.GaitShambleFastBV3 : CharacterAnimatorContract.GaitShambleFastAV3;
+            if (set != null && set.Find(CharacterAnimatorContract.ZombieGaitClips[v3]) != null) return v3;
+            return tier == EnemyTier.Special ? 3 : fit == "B" ? 1 : fit == "C" ? 2 : 0;
+        }
+
+        /// <summary>WP-071 MUST-I1 diagnostics / tests: play a given Gait index (before / after frames of the tier binding).</summary>
+        public void ForceGaitForTest(int gait)
+        {
+            if (!_authored) return;
+            _gait = Mathf.Clamp(gait, 0, CharacterAnimatorContract.ZombieGaitClips.Length - 1);
+            _gaitClipSpeed = Mathf.Max(0.1f, _animation.SpeedOf(CharacterAnimatorContract.ZombieGaitClips[_gait]));
+            _animator.SetFloat(GaitId, _gait);
+        }
+
         /// <summary>Re-read the gait after the look changed (fit A/B/C decides the shamble).</summary>
         public void SetFit(string fit, EnemyTier tier)
         {
             if (!_authored) return;
-            _gait = tier == EnemyTier.Special ? 3 : fit == "B" ? 1 : fit == "C" ? 2 : 0;
+            _gait = GaitIndexFor(tier, fit, _animation);
             _gaitClipSpeed = Mathf.Max(0.1f, _animation.SpeedOf(CharacterAnimatorContract.ZombieGaitClips[_gait]));
             _animator.SetFloat(GaitId, _gait);
         }

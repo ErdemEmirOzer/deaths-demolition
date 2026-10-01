@@ -63,6 +63,11 @@ namespace DD.Art.Pipeline.EditorTools
             public bool hasLeftHandInWeapon;
             public UnityEngine.Vector3 leftHandInWeapon;
             /// <summary>WP-071 B4b-3 (hands_in_weapon_frame.socket_weapon_r.unity_rot_of_bone_axes_xyzw): the socket bone's axes in the weapon frame.</summary>
+            /// <summary>WP-071 MUST-4 (AP-022): travel_dir_unity_xz — the body's travel direction (the planted foot moves opposite); else the name rule.</summary>
+            public bool hasTravelDir;
+            public UnityEngine.Vector3 bodyTravel;
+            /// <summary>WP-071 MUST-4 (AP-022): the row carries "spd" — the contact-point no-slide speed measured in Blender (±0.05 %), authoritative over the ankle calibrator.</summary>
+            public bool contactSpeed;
             public bool hasSocketRot;
             public UnityEngine.Quaternion socketRotInWeapon;
 
@@ -126,6 +131,13 @@ namespace DD.Art.Pipeline.EditorTools
                 spec.fit = fit == null ? null : ArtJson.AsString(fit, "fit");
                 object tier = ArtJson.Get(c, "tier");
                 spec.tier = tier == null ? null : ArtJson.AsString(tier, "tier");
+                if (ArtJson.Get(c, "travel_dir_unity_xz") is List<object> td && td.Count == 2)
+                {
+                    spec.hasTravelDir = true;
+                    spec.bodyTravel = new UnityEngine.Vector3(ArtJson.AsFloat(td[0]), 0f, ArtJson.AsFloat(td[1]));
+                }
+
+                spec.contactSpeed = ArtJson.Get(c, "spd") != null && spec.speedMps > 0.01f;
                 object validation = ArtJson.Get(c, "validation");
                 object contact = validation is Dictionary<string, object> vd ? ArtJson.Get(vd, "foot_contact_A") : null;
                 if (contact is Dictionary<string, object> cd)

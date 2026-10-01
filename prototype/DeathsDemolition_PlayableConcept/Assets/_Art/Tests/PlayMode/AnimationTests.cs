@@ -584,6 +584,9 @@ namespace DD.Art.Tests.PlayMode
                 var sb = new System.Text.StringBuilder("[DD-TEST] wp071.fpikSets");
                 foreach (var def in new[] { DD.Prototype.Core.Weapons.Arsenal.Get("ar_2"), smg1, ar1 })
                 {
+                    // C-00 30.09 option C (fpArms gate e0c0755b): a weapon with presentation.fpArms off stays on the fpView pose
+                    // without arms (ar_2 / lmg_* / rl_1) — the arms expectation holds only where fpArms is on (H5: rule change)
+                    if (!def.FpArms) { sb.Append(' ').Append(def.AnimSet).Append(" fpArms=0 (kolsuz)"); continue; }
                     pv.EquipWeapon(def, def.id);
                     yield return CharacterTests.Bekle(() => fp.FrameCalibrated, 5f, def.AnimSet + " kalibre");
                     for (int i = 0; i < 12; i++) yield return null;
@@ -665,6 +668,8 @@ namespace DD.Art.Tests.PlayMode
                 foreach (string key in new[] { "ar_1", "ar_2", "smg_1", "smg_2" })
                 {
                     var def = DD.Prototype.Core.Weapons.Arsenal.Get(key);
+                    // C-00 30.09 option C (fpArms gate e0c0755b): fpArms off → the fpView pose without arms; only armed weapons here (H5)
+                    if (!def.FpArms) { Debug.Log("[DD-TEST] wp071.fparms skip " + key + " fpArms=0 (kolsuz fpView)"); continue; }
                     pv.EquipWeapon(def, def.id);
                     yield return CharacterTests.Bekle(() => fp.Visible && fp.FrameCalibrated, 5f, key + " kollar");
                     for (int i = 0; i < 15; i++) yield return null;   // the hand IK blends in (0.1 s)
@@ -746,6 +751,8 @@ namespace DD.Art.Tests.PlayMode
                 foreach (string key in new[] { "ar_1", "ar_2", "smg_1", "smg_2" })
                 {
                     var def = DD.Prototype.Core.Weapons.Arsenal.Get(key);
+                    // C-00 30.09 option C (fpArms gate e0c0755b): fpArms off → the fpView pose without arms; only armed weapons here (H5)
+                    if (!def.FpArms) { Debug.Log("[DD-TEST] wp071.fparms skip " + key + " fpArms=0 (kolsuz fpView)"); continue; }
                     pv.EquipWeapon(def, def.id);
                     yield return CharacterTests.Bekle(() => fp.Visible && fp.FrameCalibrated, 5f, key + " kollar");
                     for (int i = 0; i < 20; i++) yield return null;
@@ -767,7 +774,7 @@ namespace DD.Art.Tests.PlayMode
 
             Debug.Log("[DD-TEST] wp071.v6frames " + string.Join(" ", saved));
             Debug.Log("[DD-TEST] wp071.ads " + string.Join(" | ", adsLines));
-            Assert.AreEqual(8, saved.Count);
+            Assert.AreEqual(6, saved.Count, "kollu 3 silah × (kare + ADS) — ar_2 fpArms=0 (C-00 30.09 kapı)");
             Assert.IsEmpty(adsWrong, "ADS'de eller silahta ≤ 1 cm");
         }
 
@@ -1041,18 +1048,22 @@ namespace DD.Art.Tests.PlayMode
             aim = Vector3.forward;
 
             // Fire → additive layer state; Hit → override layer state; both leave the base layer alone.
+            // WP-071 MUST-3 (C-00 01.10): standing, the base layer is in Idle_Breath (the idle breath's own state) — "alone" = unchanged
+            int baseBefore = an.GetCurrentAnimatorStateInfo(0).shortNameHash;
             pv.PlayFire();
             yield return null; yield return null;
             Assert.IsTrue(an.GetCurrentAnimatorStateInfo(add).IsName(C.FireState + "_0") || an.GetNextAnimatorStateInfo(add).IsName(C.FireState + "_0"), "WP-032C: Fire_0 (A rifle recoil) additive katmanda değil");
             pv.PlayHit();
             yield return null; yield return null;
             Assert.IsTrue(an.GetCurrentAnimatorStateInfo(over).IsName(C.HitState) || an.GetNextAnimatorStateInfo(over).IsName(C.HitState), "hit_light override katmanda değil");
-            Assert.IsTrue(an.GetCurrentAnimatorStateInfo(0).IsName(C.LocomotionState), "ateş/hit taban katmanını değiştirdi");
+            Assert.AreEqual(baseBefore, an.GetCurrentAnimatorStateInfo(0).shortNameHash, "ateş/hit taban katmanını değiştirdi");
 
             // Pickup through the WP-007 event → WP-032B (DEC-082): the grab on the upper-body override layer while the
             // legs keep the locomotion blend (walking forward the whole time), then back to the layer's Empty.
             velocity = Vector3.forward * 6.2f;
             yield return CharacterTests.Bekle(() => pv.Move.y > 0.9f, 2f, "pickup öncesi ileri blend");
+            // WP-071 MUST-3: from standing the base layer leaves Idle_Breath over 0.12 s — the pickup starts once the legs are on Locomotion
+            yield return CharacterTests.Bekle(() => an.GetCurrentAnimatorStateInfo(0).IsName(C.LocomotionState) && !an.IsInTransition(0), 2f, "pickup öncesi locomotion");
             WeaponEvents.PublishSpecialPickedUp(10f);
             yield return null; yield return null;
             Assert.IsTrue(an.GetCurrentAnimatorStateInfo(over).IsName(C.PickupState) || an.GetNextAnimatorStateInfo(over).IsName(C.PickupState), "pickup klibi üst gövde katmanında başlamadı");

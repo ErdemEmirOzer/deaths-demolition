@@ -268,10 +268,13 @@ namespace DD.Art.Pipeline.EditorTools
             // WP-032D · AnimationLiveCalibrationTests (two LocoRate points, zero crossing, 6.2 m/s along each clip's axis, iterated
             // twice — the slip is only linear near the zero): fwd 5.91, back 5.04, strafe L/R 5.85 / 5.85 (sampled 5.02 / 4.50 /
             // 4.40 / 4.56 — the sampled run cycles under-read by 15–33 %; the walk cycles agree with the live rig).
-            { C.PlayerRunFwd, 5.91f },
-            { C.PlayerRunBack, 4.9f },   // 4.83 → −2.2 cm, 5.04 → +5.2 cm (noisy contact on the back cycle) — the midpoint
-            { C.PlayerRunStrafeLeft, 5.85f },
-            { C.PlayerRunStrafeRight, 5.85f },
+            // WP-071 MUST-4 (a): the four AP-009 v004 run entries (5.91 / 4.9 / 5.85 / 5.85) left with AP-009 — the contract names are AP-022
+            // now, whose contact "spd" is authoritative (MUST-4 c); re-measure with AnimationLiveCalibrationTests before adding any entry back.
+            // WP-071 MUST-4 (c) + D-1 (AnimationLiveCalibrationTests at the backward top speed 4.03 m/s): shipped 3.60 slips −7.8 cm/stance
+            // (r29), shipped 4.10 slips +4.1 cm (r30) → zero ≈ 3.93 m/s = the ankle sampler's 3.94; the Blender contact spd 3.60 under-reads it
+            { C.PlayerRunBack, 3.93f },
+            // WP-071 MUST-I1 (r24b): the AP-022 zombie_run read 4.885 sampled (contact spd 5.30); the PlayMode contact slip at 4.6 m/s over
+            // 4.885 measured −7.9 cm/step → zero crossing ≈ 5.35 m/s, within 1 % of the contact spd the builder now uses.
         };
 
         /// <summary>WP-032: measure every locomotion clip on the character's avatar (StrideCalibrator); keyed by clip name.</summary>
@@ -287,10 +290,15 @@ namespace DD.Art.Pipeline.EditorTools
                     foreach (ArtAnimationClipContract.ClipSpec s in manifest.Values)
                     {
                         if (s.target != target || s.speedMps <= 0.01f) continue;
+                        // WP-071 MUST-4 (b): the AP-022 travel axis from the row (travel_dir_unity_xz), the name rule only without it
+                        Vector3 footTravel = s.hasTravelDir ? -s.bodyTravel.normalized : StrideCalibrator.FootTravelDirection(s.name);
                         StrideCalibrator.Result r = StrideCalibrator.Measure(rig, rig.GetComponent<Animator>(), clips[s.name], s.frames, ArtAnimationClipContract.Fps, s.EventsText(),
-                            StrideCalibrator.FootTravelDirection(s.name), s.stanceFrames);
+                            footTravel, s.stanceFrames);
                         if (r.windows > 0) result[s.name] = r.speedMps;
-                        Debug.Log(LogPrefix + "stride " + s.name + ": manifest " + s.speedMps.ToString("F3") + " m/s → Unity " + r.speedMps.ToString("F3") + " m/s (" + r.windows + " windows: " + r.report + ")");
+                        // WP-071 MUST-4 (c): an AP-022 contact-point "spd" is authoritative — the ankle sampler under-reads (walk_fwd −8.6 %, run_fwd −9.1 %, zombie_run −7.8 %)
+                        if (s.contactSpeed) result[s.name] = s.speedMps;
+                        Debug.Log(LogPrefix + "stride " + s.name + ": manifest " + s.speedMps.ToString("F3") + " m/s → Unity " + r.speedMps.ToString("F3") + " m/s (" + r.windows + " windows: " + r.report + ")"
+                                  + (s.contactSpeed ? " — contact spd " + s.speedMps.ToString("F3") + " used" : ""));
                     }
                 }
                 finally
@@ -324,7 +332,8 @@ namespace DD.Art.Pipeline.EditorTools
                 (C.Lower, AnimatorControllerParameterType.Trigger), (C.Raise, AnimatorControllerParameterType.Trigger),
                 (C.SwHold, AnimatorControllerParameterType.Int), (C.Hurt, AnimatorControllerParameterType.Trigger), (C.HurtStyle, AnimatorControllerParameterType.Int),
                 (C.SwFire, AnimatorControllerParameterType.Trigger), (C.Cycle, AnimatorControllerParameterType.Trigger),
-                (C.AdsWeight, AnimatorControllerParameterType.Float), (C.FireHeld, AnimatorControllerParameterType.Bool));
+                (C.AdsWeight, AnimatorControllerParameterType.Float), (C.FireHeld, AnimatorControllerParameterType.Bool),
+                (C.Still, AnimatorControllerParameterType.Bool));
             SetDefault(c, C.LocoRate, 1f);
             SetDefault(c, C.ReloadRate, 1f);
             SetDefault(c, C.Alive, true);
@@ -340,15 +349,21 @@ namespace DD.Art.Pipeline.EditorTools
             // (radius = clip speed / reference, so the blend passes THROUGH the walk at rate 1) and
             // the v002 run cycles sit on the unit circle; between them the tree cross-fades walk→run
             // (AP-009B README: blend above ~1.6× the walk speed — the walk scaled beyond ×2.1 reads as skating).
+            // WP-071 MUST-3 (P-06 AD refuter B): the centre is a static stand (idle frame 0 held) as long as the walk cycle and at the walk
+            // children's time scale, so it never stretches the tree cycle; the idle breath plays in its own state (Idle_Breath, below).
+            float walkScale = PlayerSkinnedVisual.ChildTimeScale(reference, SpeedOf(m, unitySpeeds, C.PlayerWalkFwd));
+            AnimationClip stand = BuildStandStillClip(clips[C.PlayerIdle], clips[C.PlayerWalkFwd].length);
             tree.children = new[]
             {
-                Child2D(clips[C.PlayerIdle], 0f, 0f, 1f),
+                stand != null ? Child2D(stand, 0f, 0f, walkScale) : Child2D(clips[C.PlayerIdle], 0f, 0f, 1f),
                 Ring(clips, m, unitySpeeds, reference, C.PlayerWalkFwd, 0f, 1f),
                 Ring(clips, m, unitySpeeds, reference, C.PlayerWalkBack, 0f, -1f),
                 Ring(clips, m, unitySpeeds, reference, C.PlayerStrafeLeft, -1f, 0f),
                 Ring(clips, m, unitySpeeds, reference, C.PlayerStrafeRight, 1f, 0f),
                 Child2D(clips[C.PlayerRunFwd], 0f, 1f, PlayerSkinnedVisual.RunChildTimeScale(reference, SpeedOf(m, unitySpeeds, C.PlayerRunFwd))),
-                Child2D(clips[C.PlayerRunBack], 0f, -1f, PlayerSkinnedVisual.RunChildTimeScale(reference, SpeedOf(m, unitySpeeds, C.PlayerRunBack))),
+                // WP-071 D-1 (C-00 01.10, user: backward ×0.65, S-02 PlayerConfigSection): run_back sits at the backward top speed (4.03 m/s → clip rate 1.12)
+                Child2D(clips[C.PlayerRunBack], 0f, -DD.Prototype.Core.Config.PlayerConfigSection.BackwardSpeedMultiplier,
+                    PlayerSkinnedVisual.RunChildTimeScale(reference, SpeedOf(m, unitySpeeds, C.PlayerRunBack), DD.Prototype.Core.Config.PlayerConfigSection.BackwardSpeedMultiplier)),
                 Child2D(clips[C.PlayerRunStrafeLeft], -1f, 0f, PlayerSkinnedVisual.RunChildTimeScale(reference, SpeedOf(m, unitySpeeds, C.PlayerRunStrafeLeft))),
                 Child2D(clips[C.PlayerRunStrafeRight], 1f, 0f, PlayerSkinnedVisual.RunChildTimeScale(reference, SpeedOf(m, unitySpeeds, C.PlayerRunStrafeRight)))
             };
@@ -356,6 +371,16 @@ namespace DD.Art.Pipeline.EditorTools
             loco.speedParameter = C.LocoRate;
             loco.writeDefaultValues = true;
             sm.defaultState = loco;
+            // WP-071 MUST-3: the idle breath at rate 1 in its own base state — in after 0.2 s under 0.1 m/s (PlayerSkinnedVisual sets Still), 0.12 s blends
+            AnimatorState breath = sm.AddState(C.StillState);
+            breath.motion = clips[C.PlayerIdle];
+            breath.writeDefaultValues = true;
+            AnimatorStateTransition toBreath = loco.AddTransition(breath);
+            toBreath.hasExitTime = false; toBreath.hasFixedDuration = true; toBreath.duration = 0.12f;
+            toBreath.AddCondition(AnimatorConditionMode.If, 0f, C.Still);
+            AnimatorStateTransition fromBreath = breath.AddTransition(loco);
+            fromBreath.hasExitTime = false; fromBreath.hasFixedDuration = true; fromBreath.duration = 0.12f;
+            fromBreath.AddCondition(AnimatorConditionMode.IfNot, 0f, C.Still);
 
             for (int i = 0; i < C.PlayerDeathClips.Length; i++)   // WP-032C: + death_side (2)
             {
@@ -590,10 +615,14 @@ namespace DD.Art.Pipeline.EditorTools
             gait.blendType = BlendTreeType.Simple1D;
             gait.blendParameter = C.Gait;
             gait.useAutomaticThresholds = false;
-            gait.children = new[]
+            // WP-071 MUST-I1: one child per ZombieGaitClips entry at its index (AP-009 0–3, AP-022 tier gaits 4–8 where imported)
+            var gaitChildren = new List<ChildMotion>();
+            for (int g = 0; g < C.ZombieGaitClips.Length; g++)
             {
-                Child1D(clips[C.ZombieShambleA], 0f), Child1D(clips[C.ZombieShambleB], 1f), Child1D(clips[C.ZombieShambleC], 2f), Child1D(clips[C.ZombieRun], 3f)
-            };
+                if (clips.ContainsKey(C.ZombieGaitClips[g])) gaitChildren.Add(Child1D(clips[C.ZombieGaitClips[g]], g));
+            }
+
+            gait.children = gaitChildren.ToArray();
             loco.speedParameterActive = true;
             loco.speedParameter = C.GaitRate;
             loco.writeDefaultValues = true;
@@ -887,6 +916,49 @@ namespace DD.Art.Pipeline.EditorTools
             float speed = SpeedOf(m, unity, clip);
             float radius = Mathf.Clamp(speed / Mathf.Max(0.1f, reference), 0.2f, 0.9f);
             return Child2D(clips[clip], x * radius, y * radius, PlayerSkinnedVisual.ChildTimeScale(reference, speed));
+        }
+
+        /// <summary>
+        /// WP-071 MUST-3: the static stand at the player tree's centre — every curve of the idle clip held at its frame 0 for
+        /// <paramref name="seconds"/> (the walk cycle's length). Null when the idle exposes no curves (the idle stays the centre).
+        /// </summary>
+        public static AnimationClip BuildStandStillClip(AnimationClip idle, float seconds)
+        {
+            if (idle == null) return null;
+            EditorCurveBinding[] bindings = AnimationUtility.GetCurveBindings(idle);
+            if (bindings == null || bindings.Length == 0)
+            {
+                Debug.LogWarning(LogPrefix + "stand-still: " + idle.name + " exposes no curves — the idle stays the locomotion centre");
+                return null;
+            }
+
+            string folder = ArtCharacterContract.PlayerFolder + "/Generated";
+            EnsureFolder(folder);
+            string path = folder + "/" + C.PlayerStandStill + ".anim";
+            var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
+            if (clip == null)
+            {
+                clip = new AnimationClip { name = C.PlayerStandStill };
+                AssetDatabase.CreateAsset(clip, path);
+            }
+
+            clip.ClearCurves();
+            clip.frameRate = 30f;
+            float length = Mathf.Max(1f / 30f, seconds);
+            foreach (EditorCurveBinding b in bindings)
+            {
+                AnimationCurve src = AnimationUtility.GetEditorCurve(idle, b);
+                if (src == null) continue;
+                float v = src.Evaluate(0f);
+                AnimationUtility.SetEditorCurve(clip, b, new AnimationCurve(new Keyframe(0f, v), new Keyframe(length, v)));
+            }
+
+            AnimationClipSettings settings = AnimationUtility.GetAnimationClipSettings(clip);
+            settings.loopTime = true;
+            AnimationUtility.SetAnimationClipSettings(clip, settings);
+            EditorUtility.SetDirty(clip);
+            Debug.Log(LogPrefix + "stand-still: " + bindings.Length + " curves of " + idle.name + " f0 held " + length.ToString("F3") + " s → " + path);
+            return clip;
         }
 
         private static ChildMotion Child2D(Motion motion, float x, float y, float timeScale)

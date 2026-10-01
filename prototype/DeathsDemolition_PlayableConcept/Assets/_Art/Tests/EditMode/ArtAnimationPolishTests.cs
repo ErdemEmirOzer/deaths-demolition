@@ -113,12 +113,16 @@ namespace DD.Art.Tests.EditMode
             foreach (string run in new[] { C.PlayerRunFwd, C.PlayerRunBack, C.PlayerRunStrafeLeft, C.PlayerRunStrafeRight })
             {
                 float speed = player.SpeedOf(run);
-                float timeScale = PlayerSkinnedVisual.RunChildTimeScale(v, speed);
-                float slide = CadenceBand.SlideFraction(v, speed, timeScale);
-                rows.Add(run + " v=" + v + " rate=" + timeScale.ToString("F2", CultureInfo.InvariantCulture) + " slide=" + (slide * 100f).ToString("F0", CultureInfo.InvariantCulture) + "%");
+                // WP-071 D-1 (C-00 01.10, user: backward ×0.65 — S-02 PlayerConfigSection.BackwardSpeedMultiplier, read from the source): run_back's top
+                // speed is the reference × the multiplier and its child sits at that radius; the clip rate there is radius × time scale
+                float radius = run == C.PlayerRunBack ? DD.Prototype.Core.Config.PlayerConfigSection.BackwardSpeedMultiplier : 1f;
+                float vDir = v * radius;
+                float rate = radius * PlayerSkinnedVisual.RunChildTimeScale(v, speed, radius);
+                float slide = CadenceBand.SlideFraction(vDir, speed, rate);
+                rows.Add(run + " v=" + vDir.ToString("F2", CultureInfo.InvariantCulture) + " rate=" + rate.ToString("F2", CultureInfo.InvariantCulture) + " slide=" + (slide * 100f).ToString("F0", CultureInfo.InvariantCulture) + "%");
                 // WP-071 K3: the run cycles play inside the band; the player (seen close in TP/FP) keeps the slide ≤ 20 %
-                Assert.LessOrEqual(timeScale, CadenceBand.Max + 1e-4f, run + " kadans bandı");
-                Assert.LessOrEqual(slide, CadenceBand.SlideClose, run + " 6,2 m/s kayma payı (TP/FP ≤ %20)");
+                Assert.LessOrEqual(rate, CadenceBand.Max + 1e-4f, run + " kadans bandı");
+                Assert.LessOrEqual(slide, CadenceBand.SlideClose, run + " " + vDir.ToString("F2", CultureInfo.InvariantCulture) + " m/s kayma payı (TP/FP ≤ %20)");
             }
 
             foreach (string walk in new[] { C.PlayerWalkFwd, C.PlayerWalkBack, C.PlayerStrafeLeft, C.PlayerStrafeRight })

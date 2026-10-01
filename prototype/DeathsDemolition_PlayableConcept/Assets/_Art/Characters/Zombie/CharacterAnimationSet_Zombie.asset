@@ -646,6 +646,61 @@ MonoBehaviour:
     frames: 30
     events: hit=0;fall_start=1;ragdoll_handoff=9;ground_impact=12;death_end=29
     stanceFrames: 0
+  - name: AP022_zombie_run
+    clip: {fileID: -623603649343465320, guid: c470792623d104c36bfafa943e6e2fa1, type: 3}
+    loop: 1
+    seconds: 0.467
+    speedMps: 5.3
+    unitySpeedMps: 5.3
+    layer: base
+    additive: 0
+    frames: 15
+    events: foot_l=0;foot_l_off=6;foot_r=7;foot_r_off=13
+    stanceFrames: 5
+  - name: AP022_zombie_shamble_fast_A
+    clip: {fileID: -623603649343465320, guid: d86177d7bcd874918b04de0a5709c89e, type: 3}
+    loop: 1
+    seconds: 0.8
+    speedMps: 2.4
+    unitySpeedMps: 2.4
+    layer: base
+    additive: 0
+    frames: 25
+    events: foot_l=0;foot_r_off=1;foot_r=12;foot_l_off=15
+    stanceFrames: 12
+  - name: AP022_zombie_shamble_fast_B
+    clip: {fileID: -623603649343465320, guid: bdca5f83d228d47d5b5517f13bec7fe6, type: 3}
+    loop: 1
+    seconds: 0.8
+    speedMps: 2.4
+    unitySpeedMps: 2.4
+    layer: base
+    additive: 0
+    frames: 25
+    events: foot_l=0;foot_r_off=1;foot_r=11;foot_l_off=14
+    stanceFrames: 13
+  - name: AP022_zombie_walk_heavy
+    clip: {fileID: -623603649343465320, guid: f26cbb59085924793aeae6588d35d391, type: 3}
+    loop: 1
+    seconds: 0.933
+    speedMps: 2.1
+    unitySpeedMps: 2.1
+    layer: base
+    additive: 0
+    frames: 29
+    events: foot_l=0;foot_r_off=3;foot_r=14;foot_l_off=17
+    stanceFrames: 16
+  - name: AP022_zombie_walk_stomp
+    clip: {fileID: -623603649343465320, guid: b1dad52be13e0442e85a3df9be202809, type: 3}
+    loop: 1
+    seconds: 1.067
+    speedMps: 1.7
+    unitySpeedMps: 1.7
+    layer: base
+    additive: 0
+    frames: 33
+    events: foot_l=0;foot_r_off=4;foot_r=16;foot_l_off=20
+    stanceFrames: 18
   _manifestSchema: AP009.clips-manifest.v008
   _locomotionReferenceSpeed: 1.485
   _weaponSets: []

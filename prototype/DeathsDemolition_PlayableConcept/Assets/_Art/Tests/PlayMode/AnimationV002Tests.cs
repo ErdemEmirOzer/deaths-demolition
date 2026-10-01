@@ -38,6 +38,7 @@ namespace DD.Art.Tests.PlayMode
         [SetUp]
         public void SetUp()
         {
+            ZombieSkinnedVisual.TierGaits = true;   // WP-071 MUST-I1 A/B diagnostic switch
             LogAssert.ignoreFailingMessages = true;
             RunFlowClock.ClearHolds();
             EnemyAttackState.ResetStatics();
@@ -266,6 +267,17 @@ namespace DD.Art.Tests.PlayMode
 
         // ============================================================ Ultra overhead (v002) — DEC-029 on the clip
 
+        /// <summary>WP-071 MUST-I1 A/B diagnostic: the same Ultra overhead run with every tier on the AP-009 fallback gait.</summary>
+        [UnityTest]
+        [Explicit, Category("Diagnostics")]
+        [Timeout(300000)]
+        public IEnumerator Tani_Overhead_Ultra_AP009Yurume()
+        {
+            ZombieSkinnedVisual.TierGaits = false;
+            yield return Overhead_Ultra_v002_KendiKlibi_PencereKlipOlaylarindan();
+            ZombieSkinnedVisual.TierGaits = true;
+        }
+
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator Overhead_Ultra_v002_KendiKlibi_PencereKlipOlaylarindan()
@@ -277,7 +289,7 @@ namespace DD.Art.Tests.PlayMode
             Assert.IsNotNull(z); Assert.IsTrue(z.Skinned.Authored);
             Animator an = z.Skinned.Animator;
             an.cullingMode = AnimatorCullingMode.AlwaysAnimate;
-            int overheadFrames = 0, windupFrames = 0, activeOutside = 0, swings = 0;
+            int overheadFrames = 0, windupFrames = 0, activeOutside = 0, swings = 0, windupStyle = -1;
             float windupStart = -1f, windowOpenAt = -1f;
             ZombieAttackPhase prev = ZombieAttackPhase.None;
             float t0 = Time.realtimeSinceStartup;
@@ -288,6 +300,7 @@ namespace DD.Art.Tests.PlayMode
                 {
                     if (prev != ZombieAttackPhase.Windup) windupStart = Time.time;
                     windupFrames++;
+                    if (windupFrames == 1) windupStyle = an.GetInteger(C.AttackStyle);
                     if (an.GetCurrentAnimatorStateInfo(0).IsName(C.AttackOverheadState) || an.GetNextAnimatorStateInfo(0).IsName(C.AttackOverheadState)) overheadFrames++;
                 }
 
@@ -300,7 +313,8 @@ namespace DD.Art.Tests.PlayMode
 
             float telegraph = z.Stats.TelegraphTime;
             Debug.Log("[DD-TEST] wp032b.overhead swings=" + swings + " windupFrames=" + windupFrames + " overheadFrames=" + overheadFrames + " activeOutside=" + activeOutside
-                      + " telegraph=" + telegraph.ToString("F3", CultureInfo.InvariantCulture) + " measured=" + (windowOpenAt - windupStart).ToString("F3", CultureInfo.InvariantCulture) + " fallback=" + EnemyAttackState.WindowFallbackCount);
+                      + " telegraph=" + telegraph.ToString("F3", CultureInfo.InvariantCulture) + " measured=" + (windowOpenAt - windupStart).ToString("F3", CultureInfo.InvariantCulture) + " fallback=" + EnemyAttackState.WindowFallbackCount
+                      + " attackStyle=" + windupStyle + " gait=" + C.ZombieGaitClips[z.Skinned.Gait] + " tierGaits=" + ZombieSkinnedVisual.TierGaits);
             Assert.GreaterOrEqual(swings, 1, "Ultra saldırmadı");
             Assert.Greater(overheadFrames, windupFrames / 2, "Ultra wind-up'ı Attack_Overhead durumunda değil (v002 klibi)");
             Assert.AreEqual(0, activeOutside, "aktif faz klip penceresi dışında");

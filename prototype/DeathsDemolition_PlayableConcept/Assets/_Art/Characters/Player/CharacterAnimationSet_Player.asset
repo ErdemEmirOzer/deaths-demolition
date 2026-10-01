@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 12a645b13c760498a9cf5d8b4292b682, type: 3}
   m_Name: CharacterAnimationSet_Player
   m_EditorClassIdentifier: 
-  _idle: {fileID: -623603649343465320, guid: a04bc52845dd84c2199c89657174e838, type: 3}
-  _walk: {fileID: -623603649343465320, guid: ac1796e4fed7e46a1a849aefcf713b3e, type: 3}
-  _walkSpeedMetersPerSecond: 3.01
+  _idle: {fileID: -623603649343465320, guid: 1669d2d8bcd0942ff9aef431762e08e2, type: 3}
+  _walk: {fileID: -623603649343465320, guid: 56209acdf85b1462b94e23a03bc86770, type: 3}
+  _walkSpeedMetersPerSecond: 2.6
   _controller: {fileID: 9100000, guid: b245a12937d084f689f339a22d4e41f8, type: 2}
   _source: "AP-009D v004 (85 clips, AP009-clips-manifest.json) \u2014 WP-018/032B/032C
     generated controller"
@@ -343,7 +343,7 @@ MonoBehaviour:
     loop: 1
     seconds: 0.467
     speedMps: 4.599
-    unitySpeedMps: 4.9
+    unitySpeedMps: 4.5001435
     layer: base
     additive: 0
     frames: 15
@@ -354,7 +354,7 @@ MonoBehaviour:
     loop: 1
     seconds: 0.467
     speedMps: 5.687
-    unitySpeedMps: 5.91
+    unitySpeedMps: 5.021642
     layer: base
     additive: 0
     frames: 15
@@ -365,7 +365,7 @@ MonoBehaviour:
     loop: 1
     seconds: 0.467
     speedMps: 4.415
-    unitySpeedMps: 5.85
+    unitySpeedMps: 4.4043508
     layer: base
     additive: 0
     frames: 15
@@ -376,7 +376,7 @@ MonoBehaviour:
     loop: 1
     seconds: 0.467
     speedMps: 4.415
-    unitySpeedMps: 5.85
+    unitySpeedMps: 4.5611014
     layer: base
     additive: 0
     frames: 15
@@ -1163,6 +1163,17 @@ MonoBehaviour:
     frames: 10
     events: lh_release=1;switch_away=8
     stanceFrames: 0
+  - name: AP022_tp_idle
+    clip: {fileID: -623603649343465320, guid: 1669d2d8bcd0942ff9aef431762e08e2, type: 3}
+    loop: 1
+    seconds: 4
+    speedMps: 0
+    unitySpeedMps: 0
+    layer: base
+    additive: 0
+    frames: 121
+    events: breath=0
+    stanceFrames: 0
   - name: AP022_tp_lch_ads_idle
     clip: {fileID: -623603649343465320, guid: 8277b4057f6664be1afe7ae371590e55, type: 3}
     loop: 1
@@ -1394,6 +1405,50 @@ MonoBehaviour:
     frames: 85
     events: lh_release=11;rocket_in=47;reload_commit=59;rocket_seat=59;reload_cancel_point=65;lh_grab=66
     stanceFrames: 0
+  - name: AP022_tp_run_back
+    clip: {fileID: -623603649343465320, guid: ee68bfe0251f849e7991c7ded955dfbc, type: 3}
+    loop: 1
+    seconds: 0.467
+    speedMps: 3.6
+    unitySpeedMps: 3.93
+    layer: base
+    additive: 0
+    frames: 15
+    events: foot_l=0;foot_l_off=7;foot_r=7;foot_r_off=14
+    stanceFrames: 6
+  - name: AP022_tp_run_fwd
+    clip: {fileID: -623603649343465320, guid: 76b1c9b94edd945dfaeaf7e89ca3604e, type: 3}
+    loop: 1
+    seconds: 0.533
+    speedMps: 5.8
+    unitySpeedMps: 5.8
+    layer: base
+    additive: 0
+    frames: 17
+    events: foot_l=0;foot_l_off=5;foot_r=8;foot_r_off=13
+    stanceFrames: 4
+  - name: AP022_tp_run_strafe_l
+    clip: {fileID: -623603649343465320, guid: 378c3f395230b4ac4824c3166d11979a, type: 3}
+    loop: 1
+    seconds: 0.533
+    speedMps: 4.6
+    unitySpeedMps: 4.6
+    layer: base
+    additive: 0
+    frames: 17
+    events: foot_l=1;foot_l_off=7;foot_r=9;foot_r_off=15
+    stanceFrames: 5
+  - name: AP022_tp_run_strafe_r
+    clip: {fileID: -623603649343465320, guid: 278eabe757b914efdaae4dcefa37aae9, type: 3}
+    loop: 1
+    seconds: 0.533
+    speedMps: 4.6
+    unitySpeedMps: 4.6
+    layer: base
+    additive: 0
+    frames: 17
+    events: foot_l=1;foot_l_off=7;foot_r=9;foot_r_off=15
+    stanceFrames: 5
   - name: AP022_tp_smg_1_fire
     clip: {fileID: -623603649343465320, guid: e38f48448ec0741abbd7348a2489e452, type: 3}
     loop: 0
@@ -1779,6 +1834,61 @@ MonoBehaviour:
     frames: 10
     events: lh_release=1;switch_away=8
     stanceFrames: 0
+  - name: AP022_tp_walk_back
+    clip: {fileID: -623603649343465320, guid: d9cc68828c6c245029c1f6f8ef3825f9, type: 3}
+    loop: 1
+    seconds: 0.667
+    speedMps: 2.55
+    unitySpeedMps: 2.55
+    layer: base
+    additive: 0
+    frames: 21
+    events: foot_l=0;foot_l_off=8;foot_r=10;foot_r_off=18
+    stanceFrames: 11
+  - name: AP022_tp_walk_fwd
+    clip: {fileID: -623603649343465320, guid: 56209acdf85b1462b94e23a03bc86770, type: 3}
+    loop: 1
+    seconds: 0.667
+    speedMps: 2.6
+    unitySpeedMps: 2.6
+    layer: base
+    additive: 0
+    frames: 21
+    events: foot_l=0;foot_r_off=2;foot_r=10;foot_l_off=12
+    stanceFrames: 11
+  - name: AP022_tp_walk_slow
+    clip: {fileID: -623603649343465320, guid: 0db23e2df2b674814897d5c1a00227fd, type: 3}
+    loop: 1
+    seconds: 1
+    speedMps: 1.3
+    unitySpeedMps: 1.3
+    layer: base
+    additive: 0
+    frames: 31
+    events: foot_l=0;foot_r_off=5;foot_r=15;foot_l_off=20
+    stanceFrames: 19
+  - name: AP022_tp_walk_strafe_l
+    clip: {fileID: -623603649343465320, guid: 180633ef4870741d5848a852d657ec02, type: 3}
+    loop: 1
+    seconds: 0.667
+    speedMps: 2.1
+    unitySpeedMps: 2.1
+    layer: base
+    additive: 0
+    frames: 21
+    events: foot_l=1;foot_r_off=2;foot_r=11;foot_l_off=12
+    stanceFrames: 10
+  - name: AP022_tp_walk_strafe_r
+    clip: {fileID: -623603649343465320, guid: 18b737f9c1bd942c3807cba8a7e7c458, type: 3}
+    loop: 1
+    seconds: 0.667
+    speedMps: 2.1
+    unitySpeedMps: 2.1
+    layer: base
+    additive: 0
+    frames: 21
+    events: foot_l=1;foot_r_off=2;foot_r=11;foot_l_off=12
+    stanceFrames: 10
   _manifestSchema: AP009.clips-manifest.v008
   _locomotionReferenceSpeed: 6.2
   _weaponSets:

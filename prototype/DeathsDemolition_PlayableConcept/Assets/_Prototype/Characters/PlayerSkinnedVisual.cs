@@ -62,6 +62,7 @@ namespace DD.Prototype.Characters
         private static readonly int MoveXId = Animator.StringToHash(CharacterAnimatorContract.MoveX);
         private static readonly int MoveYId = Animator.StringToHash(CharacterAnimatorContract.MoveY);
         private static readonly int LocoRateId = Animator.StringToHash(CharacterAnimatorContract.LocoRate);
+        private static readonly int StillId = Animator.StringToHash(CharacterAnimatorContract.Still);
         private static readonly int FireId = Animator.StringToHash(CharacterAnimatorContract.Fire);
         private static readonly int HitId = Animator.StringToHash(CharacterAnimatorContract.HitLight);
         private static readonly int DieId = Animator.StringToHash(CharacterAnimatorContract.Die);
@@ -110,7 +111,13 @@ namespace DD.Prototype.Characters
         [PrototypeOnly(PendingDecisions.None,
             "Highest child time scale of a locomotion clip (walk_fwd at the 6.2 m/s reference is ×1.9; the walk carries no " +
             "weight there since WP-032B's run ring). Cap, invented.", true)]
-        public const float MaxLocoRate = 2.4f;
+        public const float MaxLocoRate = 2.6f;   // WP-071 MUST-4 (d): AP-022 walk_back needs 2.43, the walk strafes 2.95 → 2.6 caps only the strafes (P-06 AD refuter B)
+
+        [PrototypeOnly(PendingDecisions.None, "WP-071 MUST-3: the body counts as standing under this speed (m/s) after StillHoldSeconds — the idle breath state. P-06 AD refuter B.", true)]
+        public const float StillSpeed = 0.1f, StillHoldSeconds = 0.2f;
+
+        [PrototypeOnly(PendingDecisions.None, "WP-071 MUST-4 (e): the foot lock engages only while the dominant ring child's slide share is at or under this (TP budget, CadenceBand.SlideClose).", true)]
+        public const float LockMaxSlide = CadenceBand.SlideClose;
 
         [PrototypeOnly(PendingDecisions.None,
             "Highest playback rate of the run cycles (P-06 ×1.6: faster reads as a flicker). WP-032B needed 2.0 on the v002 run_fwd (3.75 m/s on the " +
@@ -191,6 +198,15 @@ namespace DD.Prototype.Characters
         private const float AimLookDistance = 8f;
 
         private float _runTimeScale = 1f;
+        // WP-071 MUST-3/4: the ring children's contact speeds per direction (0 fwd, 1 back, 2 left, 3 right) and the time scales baked against them
+        private readonly float[] _walkSpeed = { 1f, 1f, 1f, 1f };
+        private readonly float[] _runSpeed = { 1f, 1f, 1f, 1f };
+        private bool _hasStill;
+        private float _stillFor;
+        private float _mps;
+        /// <summary>WP-071 MUST-3 readouts (tests): the walk-ring radius along the current move direction, and whether the breath state is asked for.</summary>
+        public float WalkRingRadius { get; private set; }
+        public bool StillRequested { get; private set; }
         public int AppliedSkinIndex => _appliedSkin;
         /// <summary>True when the AP-009 controller drives this body (false on the rig-test set).</summary>
         public bool Authored => _authored;
@@ -248,6 +264,22 @@ namespace DD.Prototype.Characters
             _authored = _animation != null && _animation.IsAuthored && _animator != null && _animator.runtimeAnimatorController != null;
             // WP-032B: the run ring's child time scale (reference / run_fwd no-slide speed) — the MaxRunRate clamp divides by it.
             float runSpeed = _animation != null ? _animation.SpeedOf(CharacterAnimatorContract.PlayerRunFwd) : 0f;
+            if (_animation != null)
+            {
+                string[] walks = { CharacterAnimatorContract.PlayerWalkFwd, CharacterAnimatorContract.PlayerWalkBack, CharacterAnimatorContract.PlayerStrafeLeft, CharacterAnimatorContract.PlayerStrafeRight };
+                string[] runs = { CharacterAnimatorContract.PlayerRunFwd, CharacterAnimatorContract.PlayerRunBack, CharacterAnimatorContract.PlayerRunStrafeLeft, CharacterAnimatorContract.PlayerRunStrafeRight };
+                for (int i = 0; i < 4; i++)
+                {
+                    _walkSpeed[i] = Mathf.Max(0.1f, _animation.SpeedOf(walks[i]));
+                    _runSpeed[i] = Mathf.Max(0.1f, _animation.SpeedOf(runs[i]));
+                }
+            }
+
+            _hasStill = false;
+            if (_animator != null && _animator.runtimeAnimatorController != null)
+            {
+                foreach (AnimatorControllerParameter prm in _animator.parameters) if (prm.nameHash == StillId) _hasStill = true;
+            }
             _runTimeScale = runSpeed > 0.01f && _animation != null ? RunChildTimeScale(_animation.LocomotionReferenceSpeed, runSpeed) : 1f;
             if (_events == null && _animator != null) _events = _animator.GetComponent<CharacterAnimationEvents>();
             if (_aimLayer == null && _animator != null) _aimLayer = _animator.GetComponent<PlayerAimLayer>();
@@ -269,7 +301,8 @@ namespace DD.Prototype.Characters
             }
 
             // WP-071: foot lock where the cadence is honest (walk ring rate ≈ 1; run ring when its clip rate ≤ LockMaxRate)
-            if (_footIk != null) _footIk.Bind(() => _authored && !_dying, () => true, () => _move.sqrMagnitude > 0.004f && _rate * (_move.sqrMagnitude > 0.5f ? _runTimeScale : 1f) <= CadenceBand.LockMaxRate);
+            // WP-071 MUST-4 (e): the lock follows the DOMINANT ring child's clip rate and slide share (run_back at 6.2 m/s slides 30 % → no lock)
+            if (_footIk != null) _footIk.Bind(() => _authored && !_dying, () => true, LockGateOpen);
             // WP-071 B2: procedural lean on the spine from the planar acceleration
             if (_lean == null && _animator != null) _lean = _animator.GetComponent<LocomotionLean>() ?? _animator.gameObject.AddComponent<LocomotionLean>();
             if (_lean != null) _lean.Configure(HumanoidBones.Bone(_animator, HumanBodyBones.Spine), transform, () => _authored && !_dying);
@@ -766,7 +799,15 @@ namespace DD.Prototype.Characters
             Vector2 targetMove = new Vector2(Mathf.Clamp(local.x, -1f, 1f), Mathf.Clamp(local.z, -1f, 1f));
             float speed01 = Mathf.Clamp01(mps / reference);
             // WP-032B: the run ring's clip rate is LocoRate × its child time scale; cap it at MaxRunRate (P-06).
-            float targetRate = Mathf.Lerp(1f, Mathf.Min(speed01, MaxRunRate / _runTimeScale), speed01);
+            // WP-071 MUST-3 (P-06 AD refuter B): inside the walk ring the walk plays at its authored rate 1 (LocoRate = the ring radius along
+            // the move direction × the child's time scale = 1) and the blend weight shortens the stride; outside it |v| / reference is honest.
+            // The old Lerp(1, s, s) played the AP-022 walk ring at 1.80× (406 spm at 2.6 m/s).
+            WalkRingRadius = RingAlong(targetMove, _walkSpeed) / reference;
+            float targetRate = Mathf.Min(Mathf.Max(speed01, WalkRingRadius), MaxRunRate / _runTimeScale);
+            _mps = mps;
+            _stillFor = mps < StillSpeed ? _stillFor + dt : 0f;
+            StillRequested = _stillFor >= StillHoldSeconds;
+            if (_hasStill) _animator.SetBool(StillId, StillRequested);
             if (dt > 0f)
             {
                 _move = Vector2.MoveTowards(_move, targetMove, dt / MoveSmoothing);
@@ -786,10 +827,56 @@ namespace DD.Prototype.Characters
             _ = _referenceSpeed;   // the motor's live top speed stays available for a follow-up run cycle
         }
 
+        /// <summary>WP-071 MUST-3/4: a ring's contact speed along a move direction (fwd / back by |y|, the strafe side by |x|).</summary>
+        private static float RingAlong(Vector2 move, float[] speeds)
+        {
+            float ax = Mathf.Abs(move.x), ay = Mathf.Abs(move.y);
+            if (ax + ay < 1e-4f) return speeds[0];
+            float fb = move.y >= 0f ? speeds[0] : speeds[1];
+            float side = move.x < 0f ? speeds[2] : speeds[3];
+            return (ax * side + ay * fb) / (ax + ay);
+        }
+
+        /// <summary>
+        /// WP-071 MUST-4 (e): the foot-lock gate — moving, and the dominant ring child (walk inside the ring, run past the halfway to the run
+        /// ring) plays at ≤ CadenceBand.LockMaxRate with a slide share ≤ <see cref="LockMaxSlide"/>.
+        /// </summary>
+        private bool LockGateOpen()
+        {
+            if (_move.sqrMagnitude <= 0.004f || _mps < StillSpeed || _animation == null) return false;
+            float reference = _animation.LocomotionReferenceSpeed;
+            float walk = RingAlong(_move, _walkSpeed), run = RingAlong(_move, _runSpeed);
+            float speed01 = _mps / reference;
+            float runRadius = RunRingRadius(_move);   // D-1: run_back sits at the backward multiplier
+            bool runDominant = speed01 > 0.5f * (walk / reference + runRadius);
+            float spd = runDominant ? run : walk;
+            float scale = runDominant ? RunChildTimeScale(reference, spd, runRadius) : ChildTimeScale(reference, spd);
+            float clipRate = _rate * scale;
+            // inside the walk ring the blend weight shortens the stride (the weighted planted foot carries |v|): no mean slide by construction
+            float slide = !runDominant && _mps <= walk ? 0f : Mathf.Abs(_mps - clipRate * spd) / Mathf.Max(0.01f, _mps);
+            return clipRate <= CadenceBand.LockMaxRate && slide <= LockMaxSlide;
+        }
+
         /// <summary>Blend-tree child time scale that shows no foot slide at the reference speed (builder).</summary>
         public static float ChildTimeScale(float referenceSpeed, float clipSpeedMps)
         {
             return clipSpeedMps > 0.01f ? Mathf.Min(MaxLocoRate, Mathf.Max(0.1f, referenceSpeed) / clipSpeedMps) : 1f;
+        }
+
+        /// <summary>
+        /// WP-071 D-1 (C-00 01.10, user: backward ×0.65): a run child at <paramref name="radius"/> of the reference (run_back at
+        /// PlayerConfigSection.BackwardSpeedMultiplier) — its clip rate at that radius is radius × time scale, kept inside the cadence band.
+        /// </summary>
+        public static float RunChildTimeScale(float referenceSpeed, float clipSpeedMps, float radius) => Mathf.Min(CadenceBand.Max / Mathf.Max(0.1f, radius), ChildTimeScale(referenceSpeed, clipSpeedMps));
+
+        /// <summary>
+        /// WP-071 D-1: the run ring's radius along a move direction — the motor's backward scale (S-02 PlayerMotor.BackwardScale:
+        /// lerp(1, PlayerConfigSection.BackwardSpeedMultiplier, the backward share)): 1 forward / side, 0.65 straight back, ≈ 0.75 at 45° back.
+        /// </summary>
+        public static float RunRingRadius(Vector2 move)
+        {
+            if (move.sqrMagnitude < 1e-8f) return 1f;
+            return Mathf.Lerp(1f, DD.Prototype.Core.Config.PlayerConfigSection.BackwardSpeedMultiplier, Mathf.Clamp01(-move.normalized.y));
         }
 
         /// <summary>WP-071 K3: a run-ring child's time scale — honest up to the cadence band, beyond it the run slides (run_back / strafes at 6.2 m/s).</summary>

@@ -211,6 +211,187 @@ namespace DD.Art.Tests.PlayMode
             Assert.LessOrEqual(median, 0.03f, "kilitli ayak kaydı > 3 cm");
         }
 
+        /// <summary>
+        /// WP-071 MUST-3 / MUST-4 (P-06 AD refuter B, AP-022 player locomotion): at the walk ring (2.6 m/s fwd) the walk clip plays at its
+        /// authored rate (LocoRate × child time scale ≈ 1, not the old 1.80×); at 6.2 m/s the run_fwd plays at 6.2 / 5.8; standing for 0.2 s
+        /// the base layer is in Idle_Breath; the foot-lock gate is open on the walk ring and shut on run_back at 6.2 m/s (30 % slide).
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator Oyuncu_YuruyusHalkasi_KendiHizinda_DururkenNefes_KilitBaskinCocukta()
+        {
+            yield return Stage();
+            CharacterAssetSet set = CharacterAssetSet.Load();
+            var stage = new GameObject("WP071_PlayerRate");
+            _temp.Add(stage);
+            Transform visual = new GameObject("Visual").transform;
+            visual.SetParent(stage.transform, false);
+            GameObject go = Object.Instantiate(set.PlayerPrefab, visual, false);
+            var pv = go.GetComponent<PlayerSkinnedVisual>();
+            Vector3 velocity = Vector3.zero;
+            pv.Attach(visual, () => velocity, () => 6.2f, () => Vector3.forward);
+            pv.Animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+            CharacterAnimationSet anim = pv.AnimationSet;
+            float reference = anim.LocomotionReferenceSpeed;
+            float walk = anim.SpeedOf(C.PlayerWalkFwd), run = anim.SpeedOf(C.PlayerRunFwd);
+            Time.captureDeltaTime = 1f / 60f;
+
+            velocity = Vector3.forward * walk;
+            for (int f = 0; f < 60; f++) { stage.transform.position += velocity * Time.deltaTime; yield return null; }
+            float walkClipRate = pv.LocoRate * PlayerSkinnedVisual.ChildTimeScale(reference, walk);
+            bool walkGate = pv.FootIk.LockGateOpen;
+
+            velocity = Vector3.forward * reference;
+            for (int f = 0; f < 60; f++) { stage.transform.position += velocity * Time.deltaTime; yield return null; }
+            float runClipRate = pv.LocoRate * PlayerSkinnedVisual.RunChildTimeScale(reference, run);
+
+            // D-1 (C-00 01.10, user: backward ×0.65): the backward top speed; run_back's child sits at that radius → clip rate 4.03 / 3.6 = 1.12
+            float backMul = DD.Prototype.Core.Config.PlayerConfigSection.BackwardSpeedMultiplier;
+            velocity = Vector3.back * reference * backMul;
+            for (int f = 0; f < 60; f++) { stage.transform.position += velocity * Time.deltaTime; yield return null; }
+            bool backGate = pv.FootIk.LockGateOpen;
+            float back = anim.SpeedOf(C.PlayerRunBack);
+            float backRate = backMul * PlayerSkinnedVisual.RunChildTimeScale(reference, back, backMul);
+            float backSlide = CadenceBand.SlideFraction(reference * backMul, back, backRate);
+
+            velocity = Vector3.zero;
+            for (int f = 0; f < 40; f++) yield return null;
+            bool breath = pv.Animator.GetCurrentAnimatorStateInfo(0).IsName(C.StillState) || pv.Animator.GetNextAnimatorStateInfo(0).IsName(C.StillState);
+            Debug.Log("[DD-TEST] wp071.locorate walk=" + walk.ToString("F2", CultureInfo.InvariantCulture) + " walkClipRate=" + walkClipRate.ToString("F3", CultureInfo.InvariantCulture)
+                      + " run=" + run.ToString("F2", CultureInfo.InvariantCulture) + " runClipRate=" + runClipRate.ToString("F3", CultureInfo.InvariantCulture)
+                      + " walkGate=" + walkGate + " backGate=" + backGate + " backRate=" + backRate.ToString("F2", CultureInfo.InvariantCulture) + " backSlide=" + (backSlide * 100f).ToString("F0", CultureInfo.InvariantCulture) + "% still=" + pv.StillRequested + " breathState=" + breath);
+            Assert.AreEqual(1f, walkClipRate, 0.05f, "yürüyüş halkası kendi hızında (MUST-3; eski 1,80×)");
+            Assert.AreEqual(reference / run, runClipRate, 0.03f, "koşu 6,2 / spd");
+            Assert.IsTrue(walkGate, "yürüyüş halkasında ayak kilidi açık");
+            Assert.LessOrEqual(backSlide, CadenceBand.SlideClose, "run_back geri azami hızda kayma ≤ %20 (D-1)");
+            Assert.AreEqual(backRate <= CadenceBand.LockMaxRate && backSlide <= PlayerSkinnedVisual.LockMaxSlide, backGate, "kilit kapısı baskın çocuğun oranı/kaymasıyla (MUST-4 e)");
+            Assert.IsTrue(pv.StillRequested && breath, "dururken Idle_Breath (MUST-3)");
+        }
+
+        /// <summary>Diagnostics: every foot event the clips fire, with the firing clip and its blend weight.</summary>
+        private sealed class FootEventLog : MonoBehaviour
+        {
+            public readonly List<string> Rows = new List<string>();
+            public int Plants, Lifts, WeakPlants;
+            private void Add(string name, AnimationEvent e, bool plant)
+            {
+                float w = e.animatorClipInfo.weight;
+                if (plant) { Plants++; if (w < 0.5f) WeakPlants++; } else Lifts++;
+                if (Rows.Count < 48) Rows.Add(Time.frameCount + ":" + name + "@" + (e.animatorClipInfo.clip != null ? e.animatorClipInfo.clip.name.Replace("AP009_player_", "").Replace("AP022_player_", "") : "?") + "·" + w.ToString("F2", CultureInfo.InvariantCulture));
+            }
+
+            public void foot_l(AnimationEvent e) => Add("L", e, true);
+            public void foot_r(AnimationEvent e) => Add("R", e, true);
+            public void foot_l_off(AnimationEvent e) => Add("Loff", e, false);
+            public void foot_r_off(AnimationEvent e) => Add("Roff", e, false);
+        }
+
+        /// <summary>
+        /// WP-071 (C-00 01.10, 4a) diagnostic: the player's planted-foot drift per walk direction (aim fixed forward) — the
+        /// diagonals blend two clips, so both clips' plant / lift events fire. Logs per direction: lock episodes, median / max
+        /// drift, plants (and those from a clip under half weight), lifts, the first events.
+        /// </summary>
+        [UnityTest]
+        [Explicit, Category("Diagnostics")]
+        [Timeout(600000)]
+        public IEnumerator Tani_Oyuncu_AyakKilidi_Yonlere()
+        {
+            yield return Stage();
+            CharacterAssetSet set = CharacterAssetSet.Load();
+            foreach (float debounce in new[] { 0f, 0.1f })
+            {
+                foreach (float deg in new[] { 0f, 45f, 90f, 135f, 180f })
+                {
+                    FootIkAdapter.PlantDebounceSeconds = debounce;
+                    var stage = new GameObject("WP071_PlayerDir" + deg);
+                    _temp.Add(stage);
+                    Transform visual = new GameObject("Visual").transform;
+                    visual.SetParent(stage.transform, false);
+                    GameObject go = Object.Instantiate(set.PlayerPrefab, visual, false);
+                    var pv = go.GetComponent<PlayerSkinnedVisual>();
+                    Vector3 velocity = Vector3.zero;
+                    pv.Attach(visual, () => velocity, () => 6.2f, () => Vector3.forward);
+                    pv.Animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+                    FootEventLog log = pv.Animator.gameObject.AddComponent<FootEventLog>();
+                    float walk = pv.AnimationSet.SpeedOf(C.PlayerWalkFwd);
+                    Time.captureDeltaTime = 1f / 60f;
+                    velocity = Quaternion.Euler(0f, deg, 0f) * Vector3.forward * walk;
+                    var feet = new[] { pv.Animator.GetBoneTransform(HumanBodyBones.LeftFoot), pv.Animator.GetBoneTransform(HumanBodyBones.RightFoot) };
+                    var was = new bool[2];
+                    var start = new Vector3[2];
+                    var drift = new float[2];
+                    var drifts = new List<float>();
+                    // stance slide (lock or not): the foot's horizontal travel while it is within 2 cm of its lowest height
+                    var track = new[] { new List<Vector3>(), new List<Vector3>() };
+                    var slides = new List<float>();
+                    // lock geometry at the lock frame: the foot's forward offset from its hip in body space, hip→foot / leg length
+                    Transform[] hips = { pv.Animator.GetBoneTransform(HumanBodyBones.LeftUpperLeg), pv.Animator.GetBoneTransform(HumanBodyBones.RightUpperLeg) };
+                    Transform knee = pv.Animator.GetBoneTransform(HumanBodyBones.LeftLowerLeg);
+                    float leg = Vector3.Distance(hips[0].position, knee.position) + Vector3.Distance(knee.position, feet[0].position);
+                    var lockFwd = new List<float>();
+                    var lockStretch = new List<float>();
+                    int locked = 0, frames = 0;
+                    for (int f = 0; f < 360; f++)
+                    {
+                        stage.transform.position += velocity * Time.deltaTime;
+                        yield return null;
+                        if (f < 60) { log.Rows.Clear(); log.Plants = log.Lifts = log.WeakPlants = 0; continue; }
+                        frames++;
+                        for (int i = 0; i < 2; i++)
+                        {
+                            bool now = pv.FootIk.IsLocked(i);
+                            if (now) locked++;
+                            if (now && !was[i])
+                            {
+                                start[i] = feet[i].position; drift[i] = 0f;
+                                Vector3 rel = Quaternion.Inverse(pv.transform.rotation) * (feet[i].position - hips[i].position);
+                                lockFwd.Add(rel.z); lockStretch.Add((feet[i].position - hips[i].position).magnitude / leg);
+                            }
+                            if (now) { Vector3 d = feet[i].position - start[i]; d.y = 0f; drift[i] = Mathf.Max(drift[i], d.magnitude); }
+                            if (!now && was[i]) drifts.Add(drift[i]);
+                            was[i] = now;
+                            track[i].Add(feet[i].position);
+                        }
+                    }
+
+                    // stance slide (lock or not): the foot's horizontal travel while within 2 cm of its lowest height in the window
+                    for (int i = 0; i < 2; i++)
+                    {
+                        float low = float.MaxValue;
+                        foreach (Vector3 q in track[i]) low = Mathf.Min(low, q.y);
+                        bool inSt = false; float run = 0f;
+                        for (int k = 0; k < track[i].Count; k++)
+                        {
+                            bool st = track[i][k].y < low + 0.02f;
+                            if (st && inSt) { Vector3 d = track[i][k] - track[i][k - 1]; d.y = 0f; run += d.magnitude; }
+                            if (!st && inSt) slides.Add(run);
+                            if (st && !inSt) run = 0f;
+                            inSt = st;
+                        }
+                    }
+
+                    drifts.Sort();
+                    slides.Sort();
+                    lockFwd.Sort();
+                    lockStretch.Sort();
+                    float median = drifts.Count > 0 ? drifts[drifts.Count / 2] : float.NaN, max = drifts.Count > 0 ? drifts[drifts.Count - 1] : float.NaN;
+                    float sMed = slides.Count > 0 ? slides[slides.Count / 2] : float.NaN, sMax = slides.Count > 0 ? slides[slides.Count - 1] : float.NaN;
+                    FootIkAdapter ik = pv.FootIk;
+                    Debug.Log("[DD-TEST] wp071.footdir debounce=" + debounce.ToString("F2", CultureInfo.InvariantCulture) + " deg=" + deg + " lockedFootFrames=" + locked + "/" + (frames * 2) + " episodes=" + drifts.Count
+                        + " medianDrift=" + (median * 100f).ToString("F1", CultureInfo.InvariantCulture) + " maxDrift=" + (max * 100f).ToString("F1", CultureInfo.InvariantCulture)
+                        + " cm stanceSlide med=" + (sMed * 100f).ToString("F1", CultureInfo.InvariantCulture) + " max=" + (sMax * 100f).ToString("F1", CultureInfo.InvariantCulture) + " cm (n=" + slides.Count + ")"
+                        + " lockAt fwd med=" + (lockFwd.Count > 0 ? (lockFwd[lockFwd.Count / 2] * 100f).ToString("F1", CultureInfo.InvariantCulture) : "-") + " cm stretch med=" + (lockStretch.Count > 0 ? lockStretch[lockStretch.Count / 2].ToString("F3", CultureInfo.InvariantCulture) : "-")
+                        + " ikLeg=" + ik.LegLength.ToString("F3", CultureInfo.InvariantCulture) + " testLeg=" + leg.ToString("F3", CultureInfo.InvariantCulture) + " lastReleaseRatio=" + ik.LastReleaseRatio.ToString("F3", CultureInfo.InvariantCulture)
+                        + " plants=" + log.Plants + " accepted=" + ik.PlantsAccepted + " debounced=" + ik.PlantsDebounced + " released stretch/gate/lift/plant=" + ik.ReleasedByStretch + "/" + ik.ReleasedByGate + "/" + ik.ReleasedByLift + "/" + ik.ReleasedByPlant
+                        + " | " + string.Join(" ", log.Rows.GetRange(0, Mathf.Min(12, log.Rows.Count))));
+                    Object.Destroy(stage);
+                    yield return null;
+                }
+            }
+
+            FootIkAdapter.PlantDebounceSeconds = 0.1f;
+        }
+
         // R1-B AI2 (C-00 30.09): the stand-in for the Animator — rewrites the spine every frame before LateUpdate while "animating".
         private sealed class SpineWriter : MonoBehaviour
         {

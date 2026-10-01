@@ -4838,6 +4838,1716 @@
    }
   },
   {
+   "clip": "AP022_zombie_shamble_fast_A",
+   "fbx": "AP022_zombie_shamble_fast_A_v008.fbx",
+   "target": "zombie",
+   "rig": "AP-006 rig_template_v001 / AP-007 ZombieRig (56 bones; armature node 'PlayerRig', as the delivered zombie slice 1)",
+   "frames": 25,
+   "fps": 30,
+   "seconds": 0.8,
+   "loop": true,
+   "events": [
+    {
+     "name": "foot_l",
+     "frame": 0
+    },
+    {
+     "name": "foot_r_off",
+     "frame": 1
+    },
+    {
+     "name": "foot_r",
+     "frame": 12
+    },
+    {
+     "name": "foot_l_off",
+     "frame": 15
+    }
+   ],
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "additive_reference": null,
+   "maps_to": "WP-071 A2.1 #6 shamble_fast 'hurry lurch' A (A1.4 Z1 drag; A2.5 Standard set)",
+   "tier": "Standard",
+   "variant": "A drag: right leg dead (stiff knee, low scuffing heel, circumducts), torso leans left, left arm reaches, right arm limp",
+   "mirror_of": null,
+   "mirror_design": null,
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "spd": 2.4,
+   "speed_mps": 2.4,
+   "speed_reference": "no-slide speed of the in-place cycle = measured contact-point (heel / MTP / toe) backward speed over the stance frames at rate 1.0",
+   "travel_dir_unity_xz": [
+    -0.0,
+    1.0
+   ],
+   "gameplay_speed_mps": 2.7,
+   "rate_at_gameplay": 1.125,
+   "slide_ratio_at_gameplay": -0.0,
+   "cadence_spm": 150.0,
+   "stance_fraction": {
+    "left": 0.583,
+    "right": 0.5
+   },
+   "band": "Standard 2.7 m/s (A2.1 #6 shamble_fast ~2.4; A1.4 Z1 2.2-2.4)",
+   "validation": {
+    "foot_contact_A": {
+     "left": {
+      "stance_frames": 14
+     },
+     "right": {
+      "stance_frames": 12
+     }
+    },
+    "check": "AP022-loco-check-v002",
+    "L1_loop_deg": 0.0,
+    "L2_slide_max_cm": 0.062,
+    "L3_speed_measured_mps": 2.4009,
+    "L3_speed_err_pct": 0.04,
+    "unity_calibrator_replica_mps": 2.3167,
+    "L6_max_deg_per_f": 23.45,
+    "L7_floor_min_m": -0.0,
+    "mesh_min_z_m": -0.0,
+    "mesh_slide_max_cm": 0.06,
+    "idle_foot_drift_mm": null,
+    "events_ok": true,
+    "result": "PASS"
+   },
+   "ad": {
+    "verdict": "KABUL_DÜZELTMELERLE",
+    "panel": "AD author + refuter A + refuter B (06-renders/loco-v001/AD-zombie-*.md)",
+    "must_closed": [
+     "MUST-1 head carriage (zombie_run)",
+     "MUST-2 arm pump (zombie_run)",
+     "MUST-A1 Groucho lope (zombie_run)"
+    ],
+    "exit_probe": "05-blender/validation/AP022-loco-zrun-probe-v001.json (P-06, 01.10)",
+    "open_integration": [
+     "MUST-I1 tier->gait wiring",
+     "MUST-I2 scale-aware rate + manifest spd (S-06 46017a7c)"
+    ],
+    "r2_debt": [
+     "SHOULD-1 run push-off",
+     "SHOULD-2 run lurch",
+     "SHOULD-5 Guard pose",
+     "other SHOULD/NIT"
+    ]
+   }
+  },
+  {
+   "clip": "AP022_zombie_shamble_fast_B",
+   "fbx": "AP022_zombie_shamble_fast_B_v008.fbx",
+   "target": "zombie",
+   "rig": "AP-006 rig_template_v001 / AP-007 ZombieRig (56 bones; armature node 'PlayerRig', as the delivered zombie slice 1)",
+   "frames": 25,
+   "fps": 30,
+   "seconds": 0.8,
+   "loop": true,
+   "events": [
+    {
+     "name": "foot_l",
+     "frame": 0
+    },
+    {
+     "name": "foot_r_off",
+     "frame": 1
+    },
+    {
+     "name": "foot_r",
+     "frame": 11
+    },
+    {
+     "name": "foot_l_off",
+     "frame": 14
+    }
+   ],
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "additive_reference": null,
+   "maps_to": "WP-071 A2.1 #6 shamble_fast 'hurry lurch' B (A1.4 Z1 fall-catch; A2.5 Standard set)",
+   "tier": "Standard",
+   "variant": "B fall-catch: each step a caught forward fall, head leading, right step 1 f early (foot_r@11)",
+   "mirror_of": null,
+   "mirror_design": null,
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "spd": 2.4,
+   "speed_mps": 2.4,
+   "speed_reference": "no-slide speed of the in-place cycle = measured contact-point (heel / MTP / toe) backward speed over the stance frames at rate 1.0",
+   "travel_dir_unity_xz": [
+    -0.0,
+    1.0
+   ],
+   "gameplay_speed_mps": 2.7,
+   "rate_at_gameplay": 1.125,
+   "slide_ratio_at_gameplay": -0.0,
+   "cadence_spm": 150.0,
+   "stance_fraction": {
+    "left": 0.542,
+    "right": 0.542
+   },
+   "band": "Standard 2.7 m/s (A2.1 #6 shamble_fast ~2.4; A1.4 Z1 2.2-2.4)",
+   "validation": {
+    "foot_contact_A": {
+     "left": {
+      "stance_frames": 13
+     },
+     "right": {
+      "stance_frames": 13
+     }
+    },
+    "check": "AP022-loco-check-v002",
+    "L1_loop_deg": 0.0,
+    "L2_slide_max_cm": 0.034,
+    "L3_speed_measured_mps": 2.4008,
+    "L3_speed_err_pct": 0.03,
+    "unity_calibrator_replica_mps": 2.2546,
+    "L6_max_deg_per_f": 18.91,
+    "L7_floor_min_m": -0.0,
+    "mesh_min_z_m": -0.0,
+    "mesh_slide_max_cm": 0.01,
+    "idle_foot_drift_mm": null,
+    "events_ok": true,
+    "result": "PASS"
+   },
+   "ad": {
+    "verdict": "KABUL_DÜZELTMELERLE",
+    "panel": "AD author + refuter A + refuter B (06-renders/loco-v001/AD-zombie-*.md)",
+    "must_closed": [
+     "MUST-1 head carriage (zombie_run)",
+     "MUST-2 arm pump (zombie_run)",
+     "MUST-A1 Groucho lope (zombie_run)"
+    ],
+    "exit_probe": "05-blender/validation/AP022-loco-zrun-probe-v001.json (P-06, 01.10)",
+    "open_integration": [
+     "MUST-I1 tier->gait wiring",
+     "MUST-I2 scale-aware rate + manifest spd (S-06 46017a7c)"
+    ],
+    "r2_debt": [
+     "SHOULD-1 run push-off",
+     "SHOULD-2 run lurch",
+     "SHOULD-5 Guard pose",
+     "other SHOULD/NIT"
+    ]
+   }
+  },
+  {
+   "clip": "AP022_zombie_run",
+   "fbx": "AP022_zombie_run_v008.fbx",
+   "target": "zombie",
+   "rig": "AP-006 rig_template_v001 / AP-007 ZombieRig (56 bones; armature node 'PlayerRig', as the delivered zombie slice 1)",
+   "frames": 15,
+   "fps": 30,
+   "seconds": 0.467,
+   "loop": true,
+   "events": [
+    {
+     "name": "foot_l",
+     "frame": 0
+    },
+    {
+     "name": "foot_l_off",
+     "frame": 6
+    },
+    {
+     "name": "foot_r",
+     "frame": 7
+    },
+    {
+     "name": "foot_r_off",
+     "frame": 13
+    }
+   ],
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "additive_reference": null,
+   "maps_to": "WP-071 clip list §5 #50 (A1.4 Z2)",
+   "tier": "Runner",
+   "variant": "Z2: arms loose, swinging back; torso 18 deg forward; head reaching forward; outer-edge landing; short flight",
+   "mirror_of": null,
+   "mirror_design": null,
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "spd": 5.3,
+   "speed_mps": 5.3,
+   "speed_reference": "no-slide speed of the in-place cycle = measured contact-point (heel / MTP / toe) backward speed over the stance frames at rate 1.0",
+   "travel_dir_unity_xz": [
+    -0.0,
+    1.0
+   ],
+   "gameplay_speed_mps": 4.6,
+   "rate_at_gameplay": 0.868,
+   "slide_ratio_at_gameplay": 0.0,
+   "cadence_spm": 257.1,
+   "stance_fraction": {
+    "left": 0.357,
+    "right": 0.357
+   },
+   "band": "Runner 4.6 m/s (A2.1 #6 run 5.3 -> x0.87)",
+   "validation": {
+    "foot_contact_A": {
+     "left": {
+      "stance_frames": 5
+     },
+     "right": {
+      "stance_frames": 5
+     }
+    },
+    "check": "AP022-loco-check-v002",
+    "L1_loop_deg": 0.0,
+    "L2_slide_max_cm": 0.304,
+    "L3_speed_measured_mps": 5.3058,
+    "L3_speed_err_pct": 0.11,
+    "unity_calibrator_replica_mps": 4.7874,
+    "L6_max_deg_per_f": 24.43,
+    "L7_floor_min_m": 0.0,
+    "mesh_min_z_m": 0.0001,
+    "mesh_slide_max_cm": 0.36,
+    "idle_foot_drift_mm": null,
+    "events_ok": true,
+    "result": "PASS"
+   },
+   "ad": {
+    "verdict": "KABUL_DÜZELTMELERLE",
+    "panel": "AD author + refuter A + refuter B (06-renders/loco-v001/AD-zombie-*.md)",
+    "must_closed": [
+     "MUST-1 head carriage (zombie_run)",
+     "MUST-2 arm pump (zombie_run)",
+     "MUST-A1 Groucho lope (zombie_run)"
+    ],
+    "exit_probe": "05-blender/validation/AP022-loco-zrun-probe-v001.json (P-06, 01.10)",
+    "open_integration": [
+     "MUST-I1 tier->gait wiring",
+     "MUST-I2 scale-aware rate + manifest spd (S-06 46017a7c)"
+    ],
+    "r2_debt": [
+     "SHOULD-1 run push-off",
+     "SHOULD-2 run lurch",
+     "SHOULD-5 Guard pose",
+     "other SHOULD/NIT"
+    ]
+   }
+  },
+  {
+   "clip": "AP022_zombie_walk_heavy",
+   "fbx": "AP022_zombie_walk_heavy_v008.fbx",
+   "target": "zombie",
+   "rig": "AP-006 rig_template_v001 / AP-007 ZombieRig (56 bones; armature node 'PlayerRig', as the delivered zombie slice 1)",
+   "frames": 29,
+   "fps": 30,
+   "seconds": 0.933,
+   "loop": true,
+   "events": [
+    {
+     "name": "foot_l",
+     "frame": 0
+    },
+    {
+     "name": "foot_r_off",
+     "frame": 3
+    },
+    {
+     "name": "foot_r",
+     "frame": 14
+    },
+    {
+     "name": "foot_l_off",
+     "frame": 17
+    }
+   ],
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "additive_reference": null,
+   "maps_to": "WP-071 clip list §5 #51 (A1.4 Z3 Guard)",
+   "tier": "Guard",
+   "variant": "Z3 Guard: shoulders forward, flat-foot strikes, heavy low stride",
+   "mirror_of": null,
+   "mirror_design": null,
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "spd": 2.1,
+   "speed_mps": 2.1,
+   "speed_reference": "no-slide speed of the in-place cycle = measured contact-point (heel / MTP / toe) backward speed over the stance frames at rate 1.0",
+   "travel_dir_unity_xz": [
+    -0.0,
+    1.0
+   ],
+   "gameplay_speed_mps": 2.2,
+   "rate_at_gameplay": 1.048,
+   "slide_ratio_at_gameplay": 0.0,
+   "cadence_spm": 128.6,
+   "stance_fraction": {
+    "left": 0.571,
+    "right": 0.571
+   },
+   "band": "Guard 2.2 m/s (A2.1 #6 heavy_walk ~2.0; A1.4 Z3 2.1)",
+   "validation": {
+    "foot_contact_A": {
+     "left": {
+      "stance_frames": 16
+     },
+     "right": {
+      "stance_frames": 16
+     }
+    },
+    "check": "AP022-loco-check-v002",
+    "L1_loop_deg": 0.0,
+    "L2_slide_max_cm": 0.075,
+    "L3_speed_measured_mps": 2.1014,
+    "L3_speed_err_pct": 0.07,
+    "unity_calibrator_replica_mps": 2.0447,
+    "L6_max_deg_per_f": 20.41,
+    "L7_floor_min_m": -0.0,
+    "mesh_min_z_m": -0.0,
+    "mesh_slide_max_cm": 0.03,
+    "idle_foot_drift_mm": null,
+    "events_ok": true,
+    "result": "PASS"
+   },
+   "ad": {
+    "verdict": "KABUL_DÜZELTMELERLE",
+    "panel": "AD author + refuter A + refuter B (06-renders/loco-v001/AD-zombie-*.md)",
+    "must_closed": [
+     "MUST-1 head carriage (zombie_run)",
+     "MUST-2 arm pump (zombie_run)",
+     "MUST-A1 Groucho lope (zombie_run)"
+    ],
+    "exit_probe": "05-blender/validation/AP022-loco-zrun-probe-v001.json (P-06, 01.10)",
+    "open_integration": [
+     "MUST-I1 tier->gait wiring",
+     "MUST-I2 scale-aware rate + manifest spd (S-06 46017a7c)"
+    ],
+    "r2_debt": [
+     "SHOULD-1 run push-off",
+     "SHOULD-2 run lurch",
+     "SHOULD-5 Guard pose",
+     "other SHOULD/NIT"
+    ]
+   }
+  },
+  {
+   "clip": "AP022_zombie_walk_stomp",
+   "fbx": "AP022_zombie_walk_stomp_v008.fbx",
+   "target": "zombie",
+   "rig": "AP-006 rig_template_v001 / AP-007 ZombieRig (56 bones; armature node 'PlayerRig', as the delivered zombie slice 1)",
+   "frames": 33,
+   "fps": 30,
+   "seconds": 1.067,
+   "loop": true,
+   "events": [
+    {
+     "name": "foot_l",
+     "frame": 0
+    },
+    {
+     "name": "foot_r_off",
+     "frame": 4
+    },
+    {
+     "name": "foot_r",
+     "frame": 16
+    },
+    {
+     "name": "foot_l_off",
+     "frame": 20
+    }
+   ],
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "additive_reference": null,
+   "maps_to": "WP-071 clip list §5 #52 (A1.4 Z4 Executioner)",
+   "tier": "Executioner",
+   "variant": "Z4 Executioner: body drops / rises per step, flat stomps, arms slightly open",
+   "mirror_of": null,
+   "mirror_design": null,
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "spd": 1.7,
+   "speed_mps": 1.7,
+   "speed_reference": "no-slide speed of the in-place cycle = measured contact-point (heel / MTP / toe) backward speed over the stance frames at rate 1.0",
+   "travel_dir_unity_xz": [
+    -0.0,
+    1.0
+   ],
+   "gameplay_speed_mps": 1.7,
+   "rate_at_gameplay": 1.0,
+   "slide_ratio_at_gameplay": 0.0,
+   "cadence_spm": 112.5,
+   "stance_fraction": {
+    "left": 0.562,
+    "right": 0.562
+   },
+   "band": "Executioner 1.7 m/s (A1.4 Z4 1.7)",
+   "validation": {
+    "foot_contact_A": {
+     "left": {
+      "stance_frames": 18
+     },
+     "right": {
+      "stance_frames": 18
+     }
+    },
+    "check": "AP022-loco-check-v002",
+    "L1_loop_deg": 0.0,
+    "L2_slide_max_cm": 0.022,
+    "L3_speed_measured_mps": 1.7004,
+    "L3_speed_err_pct": 0.02,
+    "unity_calibrator_replica_mps": 1.6597,
+    "L6_max_deg_per_f": 18.36,
+    "L7_floor_min_m": -0.0,
+    "mesh_min_z_m": -0.0,
+    "mesh_slide_max_cm": 0.17,
+    "idle_foot_drift_mm": null,
+    "events_ok": true,
+    "result": "PASS"
+   },
+   "ad": {
+    "verdict": "KABUL_DÜZELTMELERLE",
+    "panel": "AD author + refuter A + refuter B (06-renders/loco-v001/AD-zombie-*.md)",
+    "must_closed": [
+     "MUST-1 head carriage (zombie_run)",
+     "MUST-2 arm pump (zombie_run)",
+     "MUST-A1 Groucho lope (zombie_run)"
+    ],
+    "exit_probe": "05-blender/validation/AP022-loco-zrun-probe-v001.json (P-06, 01.10)",
+    "open_integration": [
+     "MUST-I1 tier->gait wiring",
+     "MUST-I2 scale-aware rate + manifest spd (S-06 46017a7c)"
+    ],
+    "r2_debt": [
+     "SHOULD-1 run push-off",
+     "SHOULD-2 run lurch",
+     "SHOULD-5 Guard pose",
+     "other SHOULD/NIT"
+    ]
+   }
+  },
+  {
+   "clip": "AP022_tp_idle",
+   "fbx": "AP022_tp_idle_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 121,
+   "fps": 30,
+   "seconds": 4.0,
+   "loop": true,
+   "events": [
+    {
+     "name": "breath",
+     "frame": 0
+    }
+   ],
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "additive_reference": null,
+   "maps_to": "WP-071 clip list §1 #1 (A1.1 L1)",
+   "tier": null,
+   "variant": null,
+   "mirror_of": null,
+   "mirror_design": null,
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "validation": {
+    "foot_contact_A": null,
+    "check": "AP022-loco-check-v002",
+    "L1_loop_deg": 0.0,
+    "L2_slide_max_cm": null,
+    "L3_speed_measured_mps": null,
+    "L3_speed_err_pct": null,
+    "unity_calibrator_replica_mps": null,
+    "L6_max_deg_per_f": 0.2,
+    "L7_floor_min_m": -0.0,
+    "mesh_min_z_m": -0.0022,
+    "mesh_slide_max_cm": null,
+    "idle_foot_drift_mm": 0.001,
+    "events_ok": null,
+    "result": "PASS",
+    "on_player_base_v003": {
+     "check": "AP022-loco-check-v002-v003body.json",
+     "pass": true,
+     "mesh_min_z_m": -0.0051,
+     "mesh_slide_max_cm": null
+    }
+   },
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist, thigh -0.5x UpperLeg twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "ik_foot_curves": "ik_foot_l / ik_foot_r keyed = the foot bones (Root space; FootIkAdapter / foot lock targets)",
+   "upper_body": "base-layer rifle carry = AP022_tp_ar_idle_aim f0 arm / finger locals (the weapon layer overrides the UpperBody mask at runtime)",
+   "ad": {
+    "verdict": "KABUL (R1, v002 body)",
+    "panel": "AD author + refuter A + refuter B (06-renders/loco-v002/AD-*.md) -> fixes rounds 1-3 (AD-fixes-v001.md) -> independent re-check 06-renders/loco-v003/AD-recheck-v001.md",
+    "must_closed": [
+     "MUST-1 strafe_r half-cycle phase",
+     "MUST-2 aim-walk glide / one-family ladder (20 f walk ring)",
+     "MUST-3 run strafes grounded",
+     "refuter B MUST-2 event contract",
+     "shin clearance gate >= 1.0 cm (both bodies)"
+    ],
+    "c00_decisions_0110": [
+     "walk ring 20 f / 180 spm (ii)",
+     "walk strafes 20 f at spd 2.1 (A); rate 1.19 at 2.5 m/s",
+     "walk-strafe stance knee 40-46 deg accepted R1, review R2",
+     "diagonals accepted R1 (iii), 8-way R2",
+     "R1 body = player_base v002"
+    ],
+    "should_r1": [
+     "S1 render v002 worst boot-sink frames (walk strafes -17.5/-14.3 mm, run_strafe_l -11.4, run_fwd -10.9; v002 foot weights, v003 -6..-9 mm)",
+     "S2 v002 walk-strafe plant float min 1.13 cm under runtime foot lock"
+    ],
+    "open_integration": [
+     "refuter B MUST-3 LocoRate / idle centre child (S-06/S-02)",
+     "refuter B MUST-4 calibration / overrides / lock gate (S-06)",
+     "D-1 directional speed: strafe child at spd 2.1 radius"
+    ]
+   }
+  },
+  {
+   "clip": "AP022_tp_walk_fwd",
+   "fbx": "AP022_tp_walk_fwd_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 21,
+   "fps": 30,
+   "seconds": 0.667,
+   "loop": true,
+   "events": [
+    {
+     "name": "foot_l",
+     "frame": 0
+    },
+    {
+     "name": "foot_r_off",
+     "frame": 2
+    },
+    {
+     "name": "foot_r",
+     "frame": 10
+    },
+    {
+     "name": "foot_l_off",
+     "frame": 12
+    }
+   ],
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "additive_reference": null,
+   "maps_to": "WP-071 clip list §1 #2 (A1.1 L2)",
+   "tier": null,
+   "variant": null,
+   "mirror_of": null,
+   "mirror_design": null,
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "spd": 2.6,
+   "speed_mps": 2.6,
+   "speed_reference": "no-slide speed of the in-place cycle = measured contact-point (heel / MTP / toe) backward speed over the stance frames at rate 1.0",
+   "travel_dir_unity_xz": [
+    -0.0,
+    1.0
+   ],
+   "gameplay_speed_mps": 3.0,
+   "rate_at_gameplay": 1.154,
+   "slide_ratio_at_gameplay": 0.0,
+   "cadence_spm": 180.0,
+   "stance_fraction": {
+    "left": 0.55,
+    "right": 0.55
+   },
+   "band": "walk (A2.1 #6 walk ~3.0; 20 f = 180 spm)",
+   "validation": {
+    "foot_contact_A": {
+     "left": {
+      "stance_frames": 11
+     },
+     "right": {
+      "stance_frames": 11
+     }
+    },
+    "check": "AP022-loco-check-v002",
+    "L1_loop_deg": 0.0,
+    "L2_slide_max_cm": 0.017,
+    "L3_speed_measured_mps": 2.6005,
+    "L3_speed_err_pct": 0.02,
+    "unity_calibrator_replica_mps": 2.3476,
+    "L6_max_deg_per_f": 22.78,
+    "L7_floor_min_m": -0.0,
+    "mesh_min_z_m": -0.0079,
+    "mesh_slide_max_cm": 1.44,
+    "idle_foot_drift_mm": null,
+    "events_ok": true,
+    "result": "PASS",
+    "on_player_base_v003": {
+     "check": "AP022-loco-check-v002-v003body.json",
+     "pass": true,
+     "mesh_min_z_m": -0.0058,
+     "mesh_slide_max_cm": 0.96
+    }
+   },
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist, thigh -0.5x UpperLeg twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "ik_foot_curves": "ik_foot_l / ik_foot_r keyed = the foot bones (Root space; FootIkAdapter / foot lock targets)",
+   "upper_body": "base-layer rifle carry = AP022_tp_ar_idle_aim f0 arm / finger locals (the weapon layer overrides the UpperBody mask at runtime)",
+   "ad": {
+    "verdict": "KABUL (R1, v002 body)",
+    "panel": "AD author + refuter A + refuter B (06-renders/loco-v002/AD-*.md) -> fixes rounds 1-3 (AD-fixes-v001.md) -> independent re-check 06-renders/loco-v003/AD-recheck-v001.md",
+    "must_closed": [
+     "MUST-1 strafe_r half-cycle phase",
+     "MUST-2 aim-walk glide / one-family ladder (20 f walk ring)",
+     "MUST-3 run strafes grounded",
+     "refuter B MUST-2 event contract",
+     "shin clearance gate >= 1.0 cm (both bodies)"
+    ],
+    "c00_decisions_0110": [
+     "walk ring 20 f / 180 spm (ii)",
+     "walk strafes 20 f at spd 2.1 (A); rate 1.19 at 2.5 m/s",
+     "walk-strafe stance knee 40-46 deg accepted R1, review R2",
+     "diagonals accepted R1 (iii), 8-way R2",
+     "R1 body = player_base v002"
+    ],
+    "should_r1": [
+     "S1 render v002 worst boot-sink frames (walk strafes -17.5/-14.3 mm, run_strafe_l -11.4, run_fwd -10.9; v002 foot weights, v003 -6..-9 mm)",
+     "S2 v002 walk-strafe plant float min 1.13 cm under runtime foot lock"
+    ],
+    "open_integration": [
+     "refuter B MUST-3 LocoRate / idle centre child (S-06/S-02)",
+     "refuter B MUST-4 calibration / overrides / lock gate (S-06)",
+     "D-1 directional speed: strafe child at spd 2.1 radius"
+    ]
+   }
+  },
+  {
+   "clip": "AP022_tp_walk_back",
+   "fbx": "AP022_tp_walk_back_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 21,
+   "fps": 30,
+   "seconds": 0.667,
+   "loop": true,
+   "events": [
+    {
+     "name": "foot_l",
+     "frame": 0
+    },
+    {
+     "name": "foot_l_off",
+     "frame": 8
+    },
+    {
+     "name": "foot_r",
+     "frame": 10
+    },
+    {
+     "name": "foot_r_off",
+     "frame": 18
+    }
+   ],
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "additive_reference": null,
+   "maps_to": "WP-071 clip list §1 #3 (A1.1 L3)",
+   "tier": null,
+   "variant": null,
+   "mirror_of": null,
+   "mirror_design": null,
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "spd": 2.55,
+   "speed_mps": 2.55,
+   "speed_reference": "no-slide speed of the in-place cycle = measured contact-point (heel / MTP / toe) backward speed over the stance frames at rate 1.0",
+   "travel_dir_unity_xz": [
+    -0.0,
+    -1.0
+   ],
+   "gameplay_speed_mps": 3.0,
+   "rate_at_gameplay": 1.176,
+   "slide_ratio_at_gameplay": 0.0,
+   "cadence_spm": 180.0,
+   "stance_fraction": {
+    "left": 0.55,
+    "right": 0.55
+   },
+   "band": "walk (A2.1 #6 walk ~3.0; 20 f = 180 spm)",
+   "validation": {
+    "foot_contact_A": {
+     "left": {
+      "stance_frames": 11
+     },
+     "right": {
+      "stance_frames": 11
+     }
+    },
+    "check": "AP022-loco-check-v002",
+    "L1_loop_deg": 0.0,
+    "L2_slide_max_cm": 0.0,
+    "L3_speed_measured_mps": 2.55,
+    "L3_speed_err_pct": 0.0,
+    "unity_calibrator_replica_mps": 2.2822,
+    "L6_max_deg_per_f": 19.67,
+    "L7_floor_min_m": -0.0,
+    "mesh_min_z_m": -0.0094,
+    "mesh_slide_max_cm": 1.51,
+    "idle_foot_drift_mm": null,
+    "events_ok": true,
+    "result": "PASS",
+    "on_player_base_v003": {
+     "check": "AP022-loco-check-v002-v003body.json",
+     "pass": true,
+     "mesh_min_z_m": -0.0066,
+     "mesh_slide_max_cm": 0.64
+    }
+   },
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist, thigh -0.5x UpperLeg twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "ik_foot_curves": "ik_foot_l / ik_foot_r keyed = the foot bones (Root space; FootIkAdapter / foot lock targets)",
+   "upper_body": "base-layer rifle carry = AP022_tp_ar_idle_aim f0 arm / finger locals (the weapon layer overrides the UpperBody mask at runtime)",
+   "ad": {
+    "verdict": "KABUL (R1, v002 body)",
+    "panel": "AD author + refuter A + refuter B (06-renders/loco-v002/AD-*.md) -> fixes rounds 1-3 (AD-fixes-v001.md) -> independent re-check 06-renders/loco-v003/AD-recheck-v001.md",
+    "must_closed": [
+     "MUST-1 strafe_r half-cycle phase",
+     "MUST-2 aim-walk glide / one-family ladder (20 f walk ring)",
+     "MUST-3 run strafes grounded",
+     "refuter B MUST-2 event contract",
+     "shin clearance gate >= 1.0 cm (both bodies)"
+    ],
+    "c00_decisions_0110": [
+     "walk ring 20 f / 180 spm (ii)",
+     "walk strafes 20 f at spd 2.1 (A); rate 1.19 at 2.5 m/s",
+     "walk-strafe stance knee 40-46 deg accepted R1, review R2",
+     "diagonals accepted R1 (iii), 8-way R2",
+     "R1 body = player_base v002"
+    ],
+    "should_r1": [
+     "S1 render v002 worst boot-sink frames (walk strafes -17.5/-14.3 mm, run_strafe_l -11.4, run_fwd -10.9; v002 foot weights, v003 -6..-9 mm)",
+     "S2 v002 walk-strafe plant float min 1.13 cm under runtime foot lock"
+    ],
+    "open_integration": [
+     "refuter B MUST-3 LocoRate / idle centre child (S-06/S-02)",
+     "refuter B MUST-4 calibration / overrides / lock gate (S-06)",
+     "D-1 directional speed: strafe child at spd 2.1 radius"
+    ]
+   }
+  },
+  {
+   "clip": "AP022_tp_walk_strafe_l",
+   "fbx": "AP022_tp_walk_strafe_l_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 21,
+   "fps": 30,
+   "seconds": 0.667,
+   "loop": true,
+   "events": [
+    {
+     "name": "foot_l",
+     "frame": 1
+    },
+    {
+     "name": "foot_r_off",
+     "frame": 2
+    },
+    {
+     "name": "foot_r",
+     "frame": 11
+    },
+    {
+     "name": "foot_l_off",
+     "frame": 12
+    }
+   ],
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "additive_reference": null,
+   "maps_to": "WP-071 clip list §1 #4 (A1.1 L4)",
+   "tier": null,
+   "variant": null,
+   "mirror_of": null,
+   "mirror_design": null,
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "spd": 2.1,
+   "speed_mps": 2.1,
+   "speed_reference": "no-slide speed of the in-place cycle = measured contact-point (heel / MTP / toe) backward speed over the stance frames at rate 1.0",
+   "travel_dir_unity_xz": [
+    -1.0,
+    -0.0
+   ],
+   "gameplay_speed_mps": 3.0,
+   "rate_at_gameplay": 1.429,
+   "slide_ratio_at_gameplay": 0.19,
+   "cadence_spm": 180.0,
+   "stance_fraction": {
+    "left": 0.5,
+    "right": 0.5
+   },
+   "band": "walk strafe (20 f @2.1 = C-00 (A) / D-1 0.85x; rate 1.19 at 2.5)",
+   "validation": {
+    "foot_contact_A": {
+     "left": {
+      "stance_frames": 10
+     },
+     "right": {
+      "stance_frames": 10
+     }
+    },
+    "check": "AP022-loco-check-v002",
+    "L1_loop_deg": 0.0,
+    "L2_slide_max_cm": 0.033,
+    "L3_speed_measured_mps": 2.1003,
+    "L3_speed_err_pct": 0.01,
+    "unity_calibrator_replica_mps": 2.0479,
+    "L6_max_deg_per_f": 15.41,
+    "L7_floor_min_m": -0.0,
+    "mesh_min_z_m": -0.0175,
+    "mesh_slide_max_cm": 1.55,
+    "idle_foot_drift_mm": null,
+    "events_ok": true,
+    "result": "PASS",
+    "on_player_base_v003": {
+     "check": "AP022-loco-check-v002-v003body.json",
+     "pass": true,
+     "mesh_min_z_m": -0.006,
+     "mesh_slide_max_cm": 1.24
+    }
+   },
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist, thigh -0.5x UpperLeg twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "ik_foot_curves": "ik_foot_l / ik_foot_r keyed = the foot bones (Root space; FootIkAdapter / foot lock targets)",
+   "upper_body": "base-layer rifle carry = AP022_tp_ar_idle_aim f0 arm / finger locals (the weapon layer overrides the UpperBody mask at runtime)",
+   "ad": {
+    "verdict": "KABUL (R1, v002 body)",
+    "panel": "AD author + refuter A + refuter B (06-renders/loco-v002/AD-*.md) -> fixes rounds 1-3 (AD-fixes-v001.md) -> independent re-check 06-renders/loco-v003/AD-recheck-v001.md",
+    "must_closed": [
+     "MUST-1 strafe_r half-cycle phase",
+     "MUST-2 aim-walk glide / one-family ladder (20 f walk ring)",
+     "MUST-3 run strafes grounded",
+     "refuter B MUST-2 event contract",
+     "shin clearance gate >= 1.0 cm (both bodies)"
+    ],
+    "c00_decisions_0110": [
+     "walk ring 20 f / 180 spm (ii)",
+     "walk strafes 20 f at spd 2.1 (A); rate 1.19 at 2.5 m/s",
+     "walk-strafe stance knee 40-46 deg accepted R1, review R2",
+     "diagonals accepted R1 (iii), 8-way R2",
+     "R1 body = player_base v002"
+    ],
+    "should_r1": [
+     "S1 render v002 worst boot-sink frames (walk strafes -17.5/-14.3 mm, run_strafe_l -11.4, run_fwd -10.9; v002 foot weights, v003 -6..-9 mm)",
+     "S2 v002 walk-strafe plant float min 1.13 cm under runtime foot lock"
+    ],
+    "open_integration": [
+     "refuter B MUST-3 LocoRate / idle centre child (S-06/S-02)",
+     "refuter B MUST-4 calibration / overrides / lock gate (S-06)",
+     "D-1 directional speed: strafe child at spd 2.1 radius"
+    ]
+   }
+  },
+  {
+   "clip": "AP022_tp_walk_strafe_r",
+   "fbx": "AP022_tp_walk_strafe_r_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 21,
+   "fps": 30,
+   "seconds": 0.667,
+   "loop": true,
+   "events": [
+    {
+     "name": "foot_l",
+     "frame": 1
+    },
+    {
+     "name": "foot_r_off",
+     "frame": 2
+    },
+    {
+     "name": "foot_r",
+     "frame": 11
+    },
+    {
+     "name": "foot_l_off",
+     "frame": 12
+    }
+   ],
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "additive_reference": null,
+   "maps_to": "WP-071 clip list §1 #5 (A1.1 L4, mirror design)",
+   "tier": null,
+   "variant": null,
+   "mirror_of": null,
+   "mirror_design": "AP022_tp_walk_strafe_l",
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "spd": 2.1,
+   "speed_mps": 2.1,
+   "speed_reference": "no-slide speed of the in-place cycle = measured contact-point (heel / MTP / toe) backward speed over the stance frames at rate 1.0",
+   "travel_dir_unity_xz": [
+    1.0,
+    -0.0
+   ],
+   "gameplay_speed_mps": 3.0,
+   "rate_at_gameplay": 1.429,
+   "slide_ratio_at_gameplay": 0.19,
+   "cadence_spm": 180.0,
+   "stance_fraction": {
+    "left": 0.5,
+    "right": 0.5
+   },
+   "band": "walk strafe (20 f @2.1 = C-00 (A) / D-1 0.85x; rate 1.19 at 2.5)",
+   "validation": {
+    "foot_contact_A": {
+     "left": {
+      "stance_frames": 10
+     },
+     "right": {
+      "stance_frames": 10
+     }
+    },
+    "check": "AP022-loco-check-v002",
+    "L1_loop_deg": 0.0,
+    "L2_slide_max_cm": 0.033,
+    "L3_speed_measured_mps": 2.1003,
+    "L3_speed_err_pct": 0.01,
+    "unity_calibrator_replica_mps": 2.0479,
+    "L6_max_deg_per_f": 15.7,
+    "L7_floor_min_m": -0.0,
+    "mesh_min_z_m": -0.0143,
+    "mesh_slide_max_cm": 1.5,
+    "idle_foot_drift_mm": null,
+    "events_ok": true,
+    "result": "PASS",
+    "on_player_base_v003": {
+     "check": "AP022-loco-check-v002-v003body.json",
+     "pass": true,
+     "mesh_min_z_m": -0.0079,
+     "mesh_slide_max_cm": 1.7
+    }
+   },
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist, thigh -0.5x UpperLeg twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "ik_foot_curves": "ik_foot_l / ik_foot_r keyed = the foot bones (Root space; FootIkAdapter / foot lock targets)",
+   "upper_body": "base-layer rifle carry = AP022_tp_ar_idle_aim f0 arm / finger locals (the weapon layer overrides the UpperBody mask at runtime)",
+   "ad": {
+    "verdict": "KABUL (R1, v002 body)",
+    "panel": "AD author + refuter A + refuter B (06-renders/loco-v002/AD-*.md) -> fixes rounds 1-3 (AD-fixes-v001.md) -> independent re-check 06-renders/loco-v003/AD-recheck-v001.md",
+    "must_closed": [
+     "MUST-1 strafe_r half-cycle phase",
+     "MUST-2 aim-walk glide / one-family ladder (20 f walk ring)",
+     "MUST-3 run strafes grounded",
+     "refuter B MUST-2 event contract",
+     "shin clearance gate >= 1.0 cm (both bodies)"
+    ],
+    "c00_decisions_0110": [
+     "walk ring 20 f / 180 spm (ii)",
+     "walk strafes 20 f at spd 2.1 (A); rate 1.19 at 2.5 m/s",
+     "walk-strafe stance knee 40-46 deg accepted R1, review R2",
+     "diagonals accepted R1 (iii), 8-way R2",
+     "R1 body = player_base v002"
+    ],
+    "should_r1": [
+     "S1 render v002 worst boot-sink frames (walk strafes -17.5/-14.3 mm, run_strafe_l -11.4, run_fwd -10.9; v002 foot weights, v003 -6..-9 mm)",
+     "S2 v002 walk-strafe plant float min 1.13 cm under runtime foot lock"
+    ],
+    "open_integration": [
+     "refuter B MUST-3 LocoRate / idle centre child (S-06/S-02)",
+     "refuter B MUST-4 calibration / overrides / lock gate (S-06)",
+     "D-1 directional speed: strafe child at spd 2.1 radius"
+    ]
+   }
+  },
+  {
+   "clip": "AP022_tp_walk_slow",
+   "fbx": "AP022_tp_walk_slow_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 31,
+   "fps": 30,
+   "seconds": 1.0,
+   "loop": true,
+   "events": [
+    {
+     "name": "foot_l",
+     "frame": 0
+    },
+    {
+     "name": "foot_r_off",
+     "frame": 5
+    },
+    {
+     "name": "foot_r",
+     "frame": 15
+    },
+    {
+     "name": "foot_l_off",
+     "frame": 20
+    }
+   ],
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "additive_reference": null,
+   "maps_to": "WP-071 A2.1 #6 walk_slow (no clip-list row; ring 0.35-1.8 m/s)",
+   "tier": null,
+   "variant": null,
+   "mirror_of": null,
+   "mirror_design": null,
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "spd": 1.3,
+   "speed_mps": 1.3,
+   "speed_reference": "no-slide speed of the in-place cycle = measured contact-point (heel / MTP / toe) backward speed over the stance frames at rate 1.0",
+   "travel_dir_unity_xz": [
+    -0.0,
+    1.0
+   ],
+   "gameplay_speed_mps": 1.3,
+   "rate_at_gameplay": 1.0,
+   "slide_ratio_at_gameplay": 0.0,
+   "cadence_spm": 120.0,
+   "stance_fraction": {
+    "left": 0.633,
+    "right": 0.633
+   },
+   "band": "walk_slow (A2.1 #6, 0.35-1.8 m/s ring)",
+   "validation": {
+    "foot_contact_A": {
+     "left": {
+      "stance_frames": 19
+     },
+     "right": {
+      "stance_frames": 19
+     }
+    },
+    "check": "AP022-loco-check-v002",
+    "L1_loop_deg": 0.0,
+    "L2_slide_max_cm": 0.011,
+    "L3_speed_measured_mps": 1.3002,
+    "L3_speed_err_pct": 0.02,
+    "unity_calibrator_replica_mps": 1.2337,
+    "L6_max_deg_per_f": 16.85,
+    "L7_floor_min_m": -0.0,
+    "mesh_min_z_m": -0.0095,
+    "mesh_slide_max_cm": 1.29,
+    "idle_foot_drift_mm": null,
+    "events_ok": true,
+    "result": "PASS",
+    "on_player_base_v003": {
+     "check": "AP022-loco-check-v002-v003body.json",
+     "pass": true,
+     "mesh_min_z_m": -0.0067,
+     "mesh_slide_max_cm": 1.08
+    }
+   },
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist, thigh -0.5x UpperLeg twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "ik_foot_curves": "ik_foot_l / ik_foot_r keyed = the foot bones (Root space; FootIkAdapter / foot lock targets)",
+   "upper_body": "base-layer rifle carry = AP022_tp_ar_idle_aim f0 arm / finger locals (the weapon layer overrides the UpperBody mask at runtime)",
+   "ad": {
+    "verdict": "KABUL (R1, v002 body)",
+    "panel": "AD author + refuter A + refuter B (06-renders/loco-v002/AD-*.md) -> fixes rounds 1-3 (AD-fixes-v001.md) -> independent re-check 06-renders/loco-v003/AD-recheck-v001.md",
+    "must_closed": [
+     "MUST-1 strafe_r half-cycle phase",
+     "MUST-2 aim-walk glide / one-family ladder (20 f walk ring)",
+     "MUST-3 run strafes grounded",
+     "refuter B MUST-2 event contract",
+     "shin clearance gate >= 1.0 cm (both bodies)"
+    ],
+    "c00_decisions_0110": [
+     "walk ring 20 f / 180 spm (ii)",
+     "walk strafes 20 f at spd 2.1 (A); rate 1.19 at 2.5 m/s",
+     "walk-strafe stance knee 40-46 deg accepted R1, review R2",
+     "diagonals accepted R1 (iii), 8-way R2",
+     "R1 body = player_base v002"
+    ],
+    "should_r1": [
+     "S1 render v002 worst boot-sink frames (walk strafes -17.5/-14.3 mm, run_strafe_l -11.4, run_fwd -10.9; v002 foot weights, v003 -6..-9 mm)",
+     "S2 v002 walk-strafe plant float min 1.13 cm under runtime foot lock"
+    ],
+    "open_integration": [
+     "refuter B MUST-3 LocoRate / idle centre child (S-06/S-02)",
+     "refuter B MUST-4 calibration / overrides / lock gate (S-06)",
+     "D-1 directional speed: strafe child at spd 2.1 radius"
+    ]
+   }
+  },
+  {
+   "clip": "AP022_tp_run_fwd",
+   "fbx": "AP022_tp_run_fwd_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 17,
+   "fps": 30,
+   "seconds": 0.533,
+   "loop": true,
+   "events": [
+    {
+     "name": "foot_l",
+     "frame": 0
+    },
+    {
+     "name": "foot_l_off",
+     "frame": 5
+    },
+    {
+     "name": "foot_r",
+     "frame": 8
+    },
+    {
+     "name": "foot_r_off",
+     "frame": 13
+    }
+   ],
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "additive_reference": null,
+   "maps_to": "WP-071 clip list §1 #6 (A1.1 L5)",
+   "tier": null,
+   "variant": null,
+   "mirror_of": null,
+   "mirror_design": null,
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "spd": 5.8,
+   "speed_mps": 5.8,
+   "speed_reference": "no-slide speed of the in-place cycle = measured contact-point (heel / MTP / toe) backward speed over the stance frames at rate 1.0",
+   "travel_dir_unity_xz": [
+    -0.0,
+    1.0
+   ],
+   "gameplay_speed_mps": 6.2,
+   "rate_at_gameplay": 1.069,
+   "slide_ratio_at_gameplay": 0.0,
+   "cadence_spm": 225.0,
+   "stance_fraction": {
+    "left": 0.25,
+    "right": 0.25
+   },
+   "band": "run (PlayerConfig.MoveSpeed 6.2)",
+   "validation": {
+    "foot_contact_A": {
+     "left": {
+      "stance_frames": 4
+     },
+     "right": {
+      "stance_frames": 4
+     }
+    },
+    "check": "AP022-loco-check-v002",
+    "L1_loop_deg": 0.0,
+    "L2_slide_max_cm": 0.0,
+    "L3_speed_measured_mps": 5.8,
+    "L3_speed_err_pct": 0.0,
+    "unity_calibrator_replica_mps": 5.2699,
+    "L6_max_deg_per_f": 22.98,
+    "L7_floor_min_m": -0.0,
+    "mesh_min_z_m": -0.0109,
+    "mesh_slide_max_cm": 1.22,
+    "idle_foot_drift_mm": null,
+    "events_ok": true,
+    "result": "PASS",
+    "on_player_base_v003": {
+     "check": "AP022-loco-check-v002-v003body.json",
+     "pass": true,
+     "mesh_min_z_m": -0.0083,
+     "mesh_slide_max_cm": 0.52
+    }
+   },
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist, thigh -0.5x UpperLeg twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "ik_foot_curves": "ik_foot_l / ik_foot_r keyed = the foot bones (Root space; FootIkAdapter / foot lock targets)",
+   "upper_body": "base-layer rifle carry = AP022_tp_ar_idle_aim f0 arm / finger locals (the weapon layer overrides the UpperBody mask at runtime)",
+   "ad": {
+    "verdict": "KABUL (R1, v002 body)",
+    "panel": "AD author + refuter A + refuter B (06-renders/loco-v002/AD-*.md) -> fixes rounds 1-3 (AD-fixes-v001.md) -> independent re-check 06-renders/loco-v003/AD-recheck-v001.md",
+    "must_closed": [
+     "MUST-1 strafe_r half-cycle phase",
+     "MUST-2 aim-walk glide / one-family ladder (20 f walk ring)",
+     "MUST-3 run strafes grounded",
+     "refuter B MUST-2 event contract",
+     "shin clearance gate >= 1.0 cm (both bodies)"
+    ],
+    "c00_decisions_0110": [
+     "walk ring 20 f / 180 spm (ii)",
+     "walk strafes 20 f at spd 2.1 (A); rate 1.19 at 2.5 m/s",
+     "walk-strafe stance knee 40-46 deg accepted R1, review R2",
+     "diagonals accepted R1 (iii), 8-way R2",
+     "R1 body = player_base v002"
+    ],
+    "should_r1": [
+     "S1 render v002 worst boot-sink frames (walk strafes -17.5/-14.3 mm, run_strafe_l -11.4, run_fwd -10.9; v002 foot weights, v003 -6..-9 mm)",
+     "S2 v002 walk-strafe plant float min 1.13 cm under runtime foot lock"
+    ],
+    "open_integration": [
+     "refuter B MUST-3 LocoRate / idle centre child (S-06/S-02)",
+     "refuter B MUST-4 calibration / overrides / lock gate (S-06)",
+     "D-1 directional speed: strafe child at spd 2.1 radius"
+    ]
+   }
+  },
+  {
+   "clip": "AP022_tp_run_back",
+   "fbx": "AP022_tp_run_back_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 15,
+   "fps": 30,
+   "seconds": 0.467,
+   "loop": true,
+   "events": [
+    {
+     "name": "foot_l",
+     "frame": 0
+    },
+    {
+     "name": "foot_l_off",
+     "frame": 7
+    },
+    {
+     "name": "foot_r",
+     "frame": 7
+    },
+    {
+     "name": "foot_r_off",
+     "frame": 14
+    }
+   ],
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "additive_reference": null,
+   "maps_to": "WP-071 clip list §1 #7 (A1.1 L6)",
+   "tier": null,
+   "variant": null,
+   "mirror_of": null,
+   "mirror_design": null,
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "spd": 3.6,
+   "speed_mps": 3.6,
+   "speed_reference": "no-slide speed of the in-place cycle = measured contact-point (heel / MTP / toe) backward speed over the stance frames at rate 1.0",
+   "travel_dir_unity_xz": [
+    -0.0,
+    -1.0
+   ],
+   "gameplay_speed_mps": 6.2,
+   "rate_at_gameplay": 1.722,
+   "slide_ratio_at_gameplay": 0.435,
+   "cadence_spm": 257.1,
+   "stance_fraction": {
+    "left": 0.429,
+    "right": 0.429
+   },
+   "band": "run (6.2 m/s; WP-071 L6: excess slides, N5)",
+   "validation": {
+    "foot_contact_A": {
+     "left": {
+      "stance_frames": 6
+     },
+     "right": {
+      "stance_frames": 6
+     }
+    },
+    "check": "AP022-loco-check-v002",
+    "L1_loop_deg": 0.0,
+    "L2_slide_max_cm": 0.0,
+    "L3_speed_measured_mps": 3.6,
+    "L3_speed_err_pct": 0.0,
+    "unity_calibrator_replica_mps": 3.6187,
+    "L6_max_deg_per_f": 23.24,
+    "L7_floor_min_m": -0.0,
+    "mesh_min_z_m": -0.0091,
+    "mesh_slide_max_cm": 1.27,
+    "idle_foot_drift_mm": null,
+    "events_ok": true,
+    "result": "PASS",
+    "on_player_base_v003": {
+     "check": "AP022-loco-check-v002-v003body.json",
+     "pass": true,
+     "mesh_min_z_m": -0.0088,
+     "mesh_slide_max_cm": 1.16
+    }
+   },
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist, thigh -0.5x UpperLeg twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "ik_foot_curves": "ik_foot_l / ik_foot_r keyed = the foot bones (Root space; FootIkAdapter / foot lock targets)",
+   "upper_body": "base-layer rifle carry = AP022_tp_ar_idle_aim f0 arm / finger locals (the weapon layer overrides the UpperBody mask at runtime)",
+   "ad": {
+    "verdict": "KABUL (R1, v002 body)",
+    "panel": "AD author + refuter A + refuter B (06-renders/loco-v002/AD-*.md) -> fixes rounds 1-3 (AD-fixes-v001.md) -> independent re-check 06-renders/loco-v003/AD-recheck-v001.md",
+    "must_closed": [
+     "MUST-1 strafe_r half-cycle phase",
+     "MUST-2 aim-walk glide / one-family ladder (20 f walk ring)",
+     "MUST-3 run strafes grounded",
+     "refuter B MUST-2 event contract",
+     "shin clearance gate >= 1.0 cm (both bodies)"
+    ],
+    "c00_decisions_0110": [
+     "walk ring 20 f / 180 spm (ii)",
+     "walk strafes 20 f at spd 2.1 (A); rate 1.19 at 2.5 m/s",
+     "walk-strafe stance knee 40-46 deg accepted R1, review R2",
+     "diagonals accepted R1 (iii), 8-way R2",
+     "R1 body = player_base v002"
+    ],
+    "should_r1": [
+     "S1 render v002 worst boot-sink frames (walk strafes -17.5/-14.3 mm, run_strafe_l -11.4, run_fwd -10.9; v002 foot weights, v003 -6..-9 mm)",
+     "S2 v002 walk-strafe plant float min 1.13 cm under runtime foot lock"
+    ],
+    "open_integration": [
+     "refuter B MUST-3 LocoRate / idle centre child (S-06/S-02)",
+     "refuter B MUST-4 calibration / overrides / lock gate (S-06)",
+     "D-1 directional speed: strafe child at spd 2.1 radius"
+    ]
+   }
+  },
+  {
+   "clip": "AP022_tp_run_strafe_l",
+   "fbx": "AP022_tp_run_strafe_l_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 17,
+   "fps": 30,
+   "seconds": 0.533,
+   "loop": true,
+   "events": [
+    {
+     "name": "foot_l",
+     "frame": 1
+    },
+    {
+     "name": "foot_l_off",
+     "frame": 7
+    },
+    {
+     "name": "foot_r",
+     "frame": 9
+    },
+    {
+     "name": "foot_r_off",
+     "frame": 15
+    }
+   ],
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "additive_reference": null,
+   "maps_to": "WP-071 clip list §1 #8 (A1.1 L7)",
+   "tier": null,
+   "variant": null,
+   "mirror_of": null,
+   "mirror_design": null,
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "spd": 4.6,
+   "speed_mps": 4.6,
+   "speed_reference": "no-slide speed of the in-place cycle = measured contact-point (heel / MTP / toe) backward speed over the stance frames at rate 1.0",
+   "travel_dir_unity_xz": [
+    -1.0,
+    -0.0
+   ],
+   "gameplay_speed_mps": 6.2,
+   "rate_at_gameplay": 1.348,
+   "slide_ratio_at_gameplay": 0.123,
+   "cadence_spm": 225.0,
+   "stance_fraction": {
+    "left": 0.312,
+    "right": 0.312
+   },
+   "band": "run (6.2 m/s; WP-071 L7: rate ceil 1.20, excess slides)",
+   "validation": {
+    "foot_contact_A": {
+     "left": {
+      "stance_frames": 5
+     },
+     "right": {
+      "stance_frames": 5
+     }
+    },
+    "check": "AP022-loco-check-v002",
+    "L1_loop_deg": 0.0,
+    "L2_slide_max_cm": 0.0,
+    "L3_speed_measured_mps": 4.6,
+    "L3_speed_err_pct": 0.0,
+    "unity_calibrator_replica_mps": 4.3849,
+    "L6_max_deg_per_f": 23.8,
+    "L7_floor_min_m": -0.0,
+    "mesh_min_z_m": -0.0114,
+    "mesh_slide_max_cm": 1.86,
+    "idle_foot_drift_mm": null,
+    "events_ok": true,
+    "result": "PASS",
+    "on_player_base_v003": {
+     "check": "AP022-loco-check-v002-v003body.json",
+     "pass": true,
+     "mesh_min_z_m": -0.0064,
+     "mesh_slide_max_cm": 0.92
+    }
+   },
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist, thigh -0.5x UpperLeg twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "ik_foot_curves": "ik_foot_l / ik_foot_r keyed = the foot bones (Root space; FootIkAdapter / foot lock targets)",
+   "upper_body": "base-layer rifle carry = AP022_tp_ar_idle_aim f0 arm / finger locals (the weapon layer overrides the UpperBody mask at runtime)",
+   "ad": {
+    "verdict": "KABUL (R1, v002 body)",
+    "panel": "AD author + refuter A + refuter B (06-renders/loco-v002/AD-*.md) -> fixes rounds 1-3 (AD-fixes-v001.md) -> independent re-check 06-renders/loco-v003/AD-recheck-v001.md",
+    "must_closed": [
+     "MUST-1 strafe_r half-cycle phase",
+     "MUST-2 aim-walk glide / one-family ladder (20 f walk ring)",
+     "MUST-3 run strafes grounded",
+     "refuter B MUST-2 event contract",
+     "shin clearance gate >= 1.0 cm (both bodies)"
+    ],
+    "c00_decisions_0110": [
+     "walk ring 20 f / 180 spm (ii)",
+     "walk strafes 20 f at spd 2.1 (A); rate 1.19 at 2.5 m/s",
+     "walk-strafe stance knee 40-46 deg accepted R1, review R2",
+     "diagonals accepted R1 (iii), 8-way R2",
+     "R1 body = player_base v002"
+    ],
+    "should_r1": [
+     "S1 render v002 worst boot-sink frames (walk strafes -17.5/-14.3 mm, run_strafe_l -11.4, run_fwd -10.9; v002 foot weights, v003 -6..-9 mm)",
+     "S2 v002 walk-strafe plant float min 1.13 cm under runtime foot lock"
+    ],
+    "open_integration": [
+     "refuter B MUST-3 LocoRate / idle centre child (S-06/S-02)",
+     "refuter B MUST-4 calibration / overrides / lock gate (S-06)",
+     "D-1 directional speed: strafe child at spd 2.1 radius"
+    ]
+   }
+  },
+  {
+   "clip": "AP022_tp_run_strafe_r",
+   "fbx": "AP022_tp_run_strafe_r_v008.fbx",
+   "target": "player",
+   "rig": "PlayerRig v002 (77 bones: Humanoid + fingers + twist + jaw + fp_camera + ik_*)",
+   "frames": 17,
+   "fps": 30,
+   "seconds": 0.533,
+   "loop": true,
+   "events": [
+    {
+     "name": "foot_l",
+     "frame": 1
+    },
+    {
+     "name": "foot_l_off",
+     "frame": 7
+    },
+    {
+     "name": "foot_r",
+     "frame": 9
+    },
+    {
+     "name": "foot_r_off",
+     "frame": 15
+    }
+   ],
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "additive_reference": null,
+   "maps_to": "WP-071 clip list §1 #9 (A1.1 L7, mirror design)",
+   "tier": null,
+   "variant": null,
+   "mirror_of": null,
+   "mirror_design": "AP022_tp_run_strafe_l",
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "spd": 4.6,
+   "speed_mps": 4.6,
+   "speed_reference": "no-slide speed of the in-place cycle = measured contact-point (heel / MTP / toe) backward speed over the stance frames at rate 1.0",
+   "travel_dir_unity_xz": [
+    1.0,
+    -0.0
+   ],
+   "gameplay_speed_mps": 6.2,
+   "rate_at_gameplay": 1.348,
+   "slide_ratio_at_gameplay": 0.123,
+   "cadence_spm": 225.0,
+   "stance_fraction": {
+    "left": 0.312,
+    "right": 0.312
+   },
+   "band": "run (6.2 m/s; WP-071 L7: rate ceil 1.20, excess slides)",
+   "validation": {
+    "foot_contact_A": {
+     "left": {
+      "stance_frames": 5
+     },
+     "right": {
+      "stance_frames": 5
+     }
+    },
+    "check": "AP022-loco-check-v002",
+    "L1_loop_deg": 0.0,
+    "L2_slide_max_cm": 0.0,
+    "L3_speed_measured_mps": 4.6,
+    "L3_speed_err_pct": 0.0,
+    "unity_calibrator_replica_mps": 4.393,
+    "L6_max_deg_per_f": 24.13,
+    "L7_floor_min_m": -0.0,
+    "mesh_min_z_m": -0.0098,
+    "mesh_slide_max_cm": 1.44,
+    "idle_foot_drift_mm": null,
+    "events_ok": true,
+    "result": "PASS",
+    "on_player_base_v003": {
+     "check": "AP022-loco-check-v002-v003body.json",
+     "pass": true,
+     "mesh_min_z_m": -0.0083,
+     "mesh_slide_max_cm": 1.55
+    }
+   },
+   "twist_curves": "keyed (upperarm -0.5x, lowerarm_01/02 +0.4/+0.8x hand twist, thigh -0.5x UpperLeg twist) — TwistCorrector may use them as-is",
+   "ik_hand_curves": "ik_hand_l / ik_hand_r keyed = the hand bones (Root space)",
+   "ik_foot_curves": "ik_foot_l / ik_foot_r keyed = the foot bones (Root space; FootIkAdapter / foot lock targets)",
+   "upper_body": "base-layer rifle carry = AP022_tp_ar_idle_aim f0 arm / finger locals (the weapon layer overrides the UpperBody mask at runtime)",
+   "ad": {
+    "verdict": "KABUL (R1, v002 body)",
+    "panel": "AD author + refuter A + refuter B (06-renders/loco-v002/AD-*.md) -> fixes rounds 1-3 (AD-fixes-v001.md) -> independent re-check 06-renders/loco-v003/AD-recheck-v001.md",
+    "must_closed": [
+     "MUST-1 strafe_r half-cycle phase",
+     "MUST-2 aim-walk glide / one-family ladder (20 f walk ring)",
+     "MUST-3 run strafes grounded",
+     "refuter B MUST-2 event contract",
+     "shin clearance gate >= 1.0 cm (both bodies)"
+    ],
+    "c00_decisions_0110": [
+     "walk ring 20 f / 180 spm (ii)",
+     "walk strafes 20 f at spd 2.1 (A); rate 1.19 at 2.5 m/s",
+     "walk-strafe stance knee 40-46 deg accepted R1, review R2",
+     "diagonals accepted R1 (iii), 8-way R2",
+     "R1 body = player_base v002"
+    ],
+    "should_r1": [
+     "S1 render v002 worst boot-sink frames (walk strafes -17.5/-14.3 mm, run_strafe_l -11.4, run_fwd -10.9; v002 foot weights, v003 -6..-9 mm)",
+     "S2 v002 walk-strafe plant float min 1.13 cm under runtime foot lock"
+    ],
+    "open_integration": [
+     "refuter B MUST-3 LocoRate / idle centre child (S-06/S-02)",
+     "refuter B MUST-4 calibration / overrides / lock gate (S-06)",
+     "D-1 directional speed: strafe child at spd 2.1 radius"
+    ]
+   }
+  },
+  {
    "clip": "AP022_tp_ar_1_fire",
    "fbx": "AP022_tp_ar_1_fire_v008.fbx",
    "target": "player",
@@ -16952,5 +18662,7 @@
   "tp_lmg_2_reloads": "AP-022 lmg_2 Kurogane tray reloads (P-06 28.09): AP022_tp_lmg_2_reload_tac (151 f) / reload_empty (175 f) — lmg_2 stops borrowing lmg_1's",
   "fp_special": "AP-022 FP Special (P-06 28.09, manifest 146): AP022_fp_sw_{arc,gel}_{idle_aim,switch_in,switch_out,fire,reload_tac,reload_empty} — contact fingers, events on the TP frames, rest = S-02 fpView; FP camera offsets sw_arc (-0.16,-0.36,0) / sw_gel (-0.16,-0.36,-0.04) (x right, y look, z up)",
   "tp_special": "AP-022 TP Special (P-06 28.09, manifest 146 / SHA256SUMS 203): AP022_tp_sw_arc_fire, AP022_tp_sw_arc_reload_empty, AP022_tp_sw_arc_reload_tac, AP022_tp_sw_gel_fire, AP022_tp_sw_gel_idle_aim, AP022_tp_sw_gel_reload_empty, AP022_tp_sw_gel_reload_tac, AP022_tp_sw_gel_switch_in, AP022_tp_sw_gel_switch_out, AP022_tp_sw_idle_aim, AP022_tp_sw_switch_in, AP022_tp_sw_switch_out — 12 clips; TP HOLD — right-grip MUST open: the sw_arc / sw_gel TP sets stay off (TpV3Sets) until the right-grip AD and C-00's decision; PlayerSkinnedVisual.EquipSpecialV3 is the path (WP-071 M-48/M-52)"
- }
+ },
+ "v008_zombie_locomotion": "WP-071 MUST-I1 (01.10): + AP-022 v008 zombie locomotion 5 (P-06 AP022-clips-manifest-v008.json sha256 3d76e7ad…, AD KABUL_DÜZELTMELERLE): shamble_fast_A / shamble_fast_B (Standard 2.4), run (Runner 5.3), walk_heavy (Guard 2.1), walk_stomp (Executioner 1.7) — Gait 4–8, ZombieSkinnedVisual.GaitIndexFor",
+ "v008_player_locomotion": "WP-071 MUST-3/4 (01.10): + AP-022 v008 player locomotion 10 (P-06 AP022-clips-manifest-v008.json sha256 aa1d2170…, SHA256SUMS 246/246, AD KABUL R1): idle 120 f, walk ring fwd 2.6 / back 2.55 / strafes 2.1, walk_slow 1.3 (unbound), run fwd 5.8 / back 3.6 / strafes 4.6 — the contract names (PlayerWalkFwd …) point at them; contact spd authoritative"
 }

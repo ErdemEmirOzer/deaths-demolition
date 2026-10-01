@@ -33,6 +33,10 @@ namespace DD.Prototype.Characters
         public const float LockHeight = 0.025f, LockBlendSeconds = 0.06f, LockMaxStretch = 1.0f;   // B2: 0.96 released every walking stance (the clip's own stance leg is ~97 % extended) — release at full reach
         [PrototypeOnly(PendingDecisions.None, "WP-071 foot lock bodies per frame (Yüksek: player + ≤ 8 zombies; quality tier sets it). Invented.", true)]
         public static int MaxLockBodiesPerFrame = 9;
+        [PrototypeOnly(PendingDecisions.None, "WP-071 (C-00 01.10, 4a): a plant within this time of the last accepted one is the same footfall — every clip of a locomotion blend fires its own foot_l / foot_r 1–2 frames apart (diagonals: 3 per step, each re-picking the held foot). Invented.", true)]
+        public static float PlantDebounceSeconds = 0.1f;
+        [PrototypeOnly(PendingDecisions.None, "WP-071 (C-00 01.10, 4a r25): the stretch release is relative — the reach at the lock frame plus this share of the leg (the IK-pass hip vs the IK target reads ≈ 10 % over the bone geometry, so the absolute 1.0 released every lock one frame later). Invented.", true)]
+        public const float LockStretchSlack = 0.05f;
 
         [SerializeField] private Animator _animator;
         [SerializeField, Range(0f, 1f)] private float _rotationWeight = 0.6f;
@@ -44,7 +48,20 @@ namespace DD.Prototype.Characters
         private readonly bool[] _locked = new bool[2];
         private readonly float[] _lockWeight = new float[2];
         private readonly Vector3[] _lockPos = new Vector3[2];
+        private readonly float[] _lockReach = new float[2];
         private int _plantPending;
+        private float _lastPlantTime = -1f;
+        /// <summary>WP-071 diagnostics: locked feet released by the leg stretch / the gate closing / a lift event / the other foot's plant.</summary>
+        public int ReleasedByStretch { get; private set; }
+        public int ReleasedByGate { get; private set; }
+        public int ReleasedByLift { get; private set; }
+        public int ReleasedByPlant { get; private set; }
+        /// <summary>WP-071 diagnostics: plant events accepted / dropped as the same footfall.</summary>
+        public int PlantsAccepted { get; private set; }
+        public int PlantsDebounced { get; private set; }
+        /// <summary>WP-071 diagnostics: the leg length the stretch release uses, and hip→held point / leg length at the last stretch release.</summary>
+        public float LegLength => _legLength;
+        public float LastReleaseRatio { get; private set; }
         private readonly bool[] _releasePending = new bool[2];
         private readonly float[] _gapThisFrame = new float[2];
         private readonly Vector3[] _targetThisFrame = new Vector3[2];
@@ -111,6 +128,7 @@ namespace DD.Prototype.Characters
             Force = -1;
             ProbeAllocPerServe = false;
             MaxLockBodiesPerFrame = 9;
+            PlantDebounceSeconds = 0.1f;
         }
 
         private void ClearLock()
@@ -216,19 +234,25 @@ namespace DD.Prototype.Characters
                 {
                     _locked[lower] = true;
                     _lockPos[lower] = lower == 1 ? target : _targetThisFrame[0];
+                    Transform lockHip = _animator.GetBoneTransform(lower == 0 ? HumanBodyBones.LeftUpperLeg : HumanBodyBones.RightUpperLeg);
+                    _lockReach[lower] = lockHip != null ? Vector3.Distance(lockHip.position, _lockPos[lower]) : 0f;   // same metric as the release
                 }
 
+                if (_locked[1 - lower]) ReleasedByPlant++;
                 _locked[1 - lower] = false;
                 _plantPending = 0;
             }
 
             if (foot == 0) { _gapThisFrame[0] = gap; _targetThisFrame[0] = target; }
-            if (_releasePending[foot]) { _locked[foot] = false; _releasePending[foot] = false; }
-            if (!_lockThisFrame) _locked[foot] = false;
+            if (_releasePending[foot]) { if (_locked[foot]) ReleasedByLift++; _locked[foot] = false; _releasePending[foot] = false; }
+            if (!_lockThisFrame) { if (_locked[foot]) ReleasedByGate++; _locked[foot] = false; }
             if (_locked[foot] && _legLength > 0f)
             {
                 Transform hip = _animator.GetBoneTransform(foot == 0 ? HumanBodyBones.LeftUpperLeg : HumanBodyBones.RightUpperLeg);
-                if (hip != null && Vector3.Distance(hip.position, _lockPos[foot]) > _legLength * LockMaxStretch) _locked[foot] = false;   // the slide wins
+                float reach = hip != null ? Vector3.Distance(hip.position, _lockPos[foot]) : 0f;
+                // r25: relative to the reach at the lock frame (same metric) — the body passes over the held foot and lets it go past its landing reach
+                float limit = Mathf.Max(_legLength * LockMaxStretch, _lockReach[foot] + _legLength * LockStretchSlack);
+                if (hip != null && reach > limit) { _locked[foot] = false; ReleasedByStretch++; LastReleaseRatio = reach / _legLength; }   // the slide wins
             }
 
             float step = Time.deltaTime / LockBlendSeconds;
@@ -240,7 +264,14 @@ namespace DD.Prototype.Characters
         }
 
         /// <summary>WP-071: the clip's foot_l / foot_r contact (owner forwards the event; the lower foot is taken, names aside).</summary>
-        public void NotifyPlant() => _plantPending = 1;
+        public void NotifyPlant()
+        {
+            // WP-071 (C-00 01.10, 4a): one footfall, one plant — the blend's other clips fire the same contact 1–2 frames later
+            if (_lastPlantTime >= 0f && Time.time - _lastPlantTime < PlantDebounceSeconds) { PlantsDebounced++; return; }
+            _lastPlantTime = Time.time;
+            PlantsAccepted++;
+            _plantPending = 1;
+        }
 
         /// <summary>WP-071: foot_l_off / foot_r_off (AP-022) — free that foot now (0 left, 1 right).</summary>
         public void NotifyLift(int foot) => _releasePending[foot] = true;

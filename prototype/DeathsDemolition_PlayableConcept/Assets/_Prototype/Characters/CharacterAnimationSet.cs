@@ -127,16 +127,25 @@ namespace DD.Prototype.Characters
         public static readonly string[] SwFireClips = { "DD_SwFire_Bell", "DD_SwFire_Loom" };
 
         // -------------------------------------------------------- AP-009 clip names
-        public const string PlayerIdle = "AP009_player_idle";
-        public const string PlayerWalkFwd = "AP009_player_walk_fwd";
-        public const string PlayerWalkBack = "AP009_player_walk_back";
-        public const string PlayerStrafeLeft = "AP009_player_strafe_left";
-        public const string PlayerStrafeRight = "AP009_player_strafe_right";
+        // WP-071 (C-00 01.10, P-06 AP-022 v008 player locomotion): the locomotion contract names are the AP-022 TP loops — walk ring
+        // 20 f (fwd 2.6 / back 2.55 / strafes 2.1 m/s contact spd), run ring (5.8 / 3.6 / 4.6), idle 120 f; the AP-009 loops stay in the set unbound.
+        public const string PlayerIdle = "AP022_tp_idle";
+        public const string PlayerWalkFwd = "AP022_tp_walk_fwd";
+        public const string PlayerWalkBack = "AP022_tp_walk_back";
+        public const string PlayerStrafeLeft = "AP022_tp_walk_strafe_l";
+        public const string PlayerStrafeRight = "AP022_tp_walk_strafe_r";
+        /// <summary>WP-071: AP-022 walk_slow (30 f, 1.3 m/s) — imported, not in the tree in R1 (a forward-only inner ring would bend the direction blend).</summary>
+        public const string PlayerWalkSlow = "AP022_tp_walk_slow";
+        /// <summary>WP-071 MUST-3: the generated static stand (PlayerIdle frame 0 held) at the locomotion tree's centre — the breath plays in its own state.</summary>
+        public const string PlayerStandStill = "DD_Player_StandStill";
+        /// <summary>WP-071 MUST-3: bool — the body has stood (|v| &lt; 0.1 m/s) for 0.2 s → the base layer plays the idle breath in <see cref="StillState"/>.</summary>
+        public const string Still = "Still";
+        public const string StillState = "Idle_Breath";
         // WP-032B · AP-009B v002 run cycles (flight phase; the outer ring of the 2-D locomotion blend)
-        public const string PlayerRunFwd = "AP009_player_run_fwd";
-        public const string PlayerRunBack = "AP009_player_run_back";
-        public const string PlayerRunStrafeLeft = "AP009_player_run_strafe_left";
-        public const string PlayerRunStrafeRight = "AP009_player_run_strafe_right";
+        public const string PlayerRunFwd = "AP022_tp_run_fwd";
+        public const string PlayerRunBack = "AP022_tp_run_back";
+        public const string PlayerRunStrafeLeft = "AP022_tp_run_strafe_l";
+        public const string PlayerRunStrafeRight = "AP022_tp_run_strafe_r";
         public const string PlayerFireRecoil = "AP009_player_fire_recoil";
         public const string PlayerHitLight = "AP009_player_hit_light";
         public const string PlayerDeathFwd = "AP009_player_death_fwd";
@@ -235,6 +244,15 @@ namespace DD.Prototype.Characters
         /// <summary>WP-071: DeathStyle 8 / 9 — the Special deaths (Death_8 arc_electro, Death_9 gel_slip), chosen by the visual from the body state, never by the gameplay index.</summary>
         public const int DeathStyleArcElectro = 8, DeathStyleGelSlip = 9;
         public static readonly string[] ZombieSpecialDeathClipsV3 = { ZombieDeathArcElectroV3, ZombieHitGelSlipV3 };
+        // WP-071 · AP-022 zombie locomotion (v008, P-06 AD MUST-I1): each tier's own gait — Standard shamble_fast A / B (2.4 m/s),
+        // Runner run (5.3), Guard walk_heavy (2.1), Executioner walk_stomp (1.7); in-place, foot_l / foot_r + foot_*_off
+        public const string ZombieShambleFastAV3 = "AP022_zombie_shamble_fast_A";
+        public const string ZombieShambleFastBV3 = "AP022_zombie_shamble_fast_B";
+        public const string ZombieRunV3 = "AP022_zombie_run";
+        public const string ZombieWalkHeavyV3 = "AP022_zombie_walk_heavy";
+        public const string ZombieWalkStompV3 = "AP022_zombie_walk_stomp";
+        /// <summary>WP-071 MUST-I1: Gait indices of the AP-022 tier gaits in <see cref="ZombieGaitClips"/> (0–3 stay the AP-009 fallback).</summary>
+        public const int GaitShambleFastAV3 = 4, GaitShambleFastBV3 = 5, GaitRunV3 = 6, GaitWalkHeavyV3 = 7, GaitWalkStompV3 = 8;
         /// <summary>WP-071: AP-022 attacks by state index (0 swipe_R, 1 lunge, 2 sweep, 3 overhead_slam, 4 bite_grab, 5 swipe_L).</summary>
         public static readonly string[] ZombieAttackClipsV3 = { ZombieAttackSwipeRV3, ZombieAttackLungeV3, ZombieAttackSweepV3, ZombieAttackOverheadSlamV3, ZombieAttackBiteGrabV3, ZombieAttackSwipeLV3 };
         public static readonly string[] HitDirections = { "front", "back", "left", "right" };
@@ -246,7 +264,10 @@ namespace DD.Prototype.Characters
         public static readonly string[] PlayerClips =
         {
             PlayerIdle, PlayerWalkFwd, PlayerWalkBack, PlayerStrafeLeft, PlayerStrafeRight,
-            PlayerRunFwd, PlayerRunBack, PlayerRunStrafeLeft, PlayerRunStrafeRight,
+            PlayerRunFwd, PlayerRunBack, PlayerRunStrafeLeft, PlayerRunStrafeRight, PlayerWalkSlow,
+            // the AP-009 locomotion loops (unbound since the AP-022 contract names, WP-071 01.10)
+            "AP009_player_idle", "AP009_player_walk_fwd", "AP009_player_walk_back", "AP009_player_strafe_left", "AP009_player_strafe_right",
+            "AP009_player_run_fwd", "AP009_player_run_back", "AP009_player_run_strafe_left", "AP009_player_run_strafe_right",
             PlayerFireRecoil, PlayerHitLight, PlayerDeathFwd, PlayerDeathBack, PlayerPickup,
             PlayerPickupUpper, PlayerSwHoldBell, PlayerSwHoldLoom, PlayerSwHoldJewel, PlayerDeathSide, PlayerHurtA, PlayerHurtB, PlayerWeaponLower, PlayerWeaponRaise,
             "AP009_player_B_weapon_lower", "AP009_player_B_weapon_raise", "AP009_player_C_weapon_lower", "AP009_player_C_weapon_raise",
@@ -276,10 +297,12 @@ namespace DD.Prototype.Characters
             ZombieDeathFallFwdV3, ZombieDeathFallBackV3, ZombieDeathSpinSideV3, ZombieDeathLegsOutV3,
             ZombieAttackSwipeRV3, ZombieAttackSwipeLV3, ZombieAttackLungeV3, ZombieAttackSweepV3, ZombieAttackOverheadSlamV3, ZombieAttackBiteGrabV3,
             // WP-071 AP-022 slice 2a
-            ZombieHitElectroLoopV3, ZombieDeathArcElectroV3, ZombieHitGelSlipV3
+            ZombieHitElectroLoopV3, ZombieDeathArcElectroV3, ZombieHitGelSlipV3,
+            // WP-071 AP-022 zombie locomotion (MUST-I1)
+            ZombieShambleFastAV3, ZombieShambleFastBV3, ZombieRunV3, ZombieWalkHeavyV3, ZombieWalkStompV3
         };
 
-        public const int ClipCount = 217;   // + FP Special 12 (sw_arc / sw_gel); + lmg_2 tray reloads 2; + FP arms batch smg_2 FP 9 (WP-071 r2); + TP Special family 12; WP-071: + B4c TP 33 (sniper 11, launcher 8, LMG 11, smg_2 3); + AP-022 slice 1 (4 deaths + 6 attacks), slice 2a (electro loop, arc_electro death, gel_slip), slices 4a/4b (AR + SMG TP 21), slice 5/5b (FP arms 29 on fpView).   // WP-032G: + sw_hold_jewel (AP-009G v007). WP-032C: AP-009D v004 (v002 36 + 49: weapon A/B/C ×5, lower/raise ×3, sw hold ×2, pickup_upper, hurt ×2, death_side, tier hits ×12, armour breaks ×3, stumble, deaths ×4, rises ×2)
+        public const int ClipCount = 232;   // + AP-022 player locomotion 10 (MUST-3/4); + AP-022 zombie locomotion 5 (MUST-I1); + FP Special 12 (sw_arc / sw_gel); + lmg_2 tray reloads 2; + FP arms batch smg_2 FP 9 (WP-071 r2); + TP Special family 12; WP-071: + B4c TP 33 (sniper 11, launcher 8, LMG 11, smg_2 3); + AP-022 slice 1 (4 deaths + 6 attacks), slice 2a (electro loop, arc_electro death, gel_slip), slices 4a/4b (AR + SMG TP 21), slice 5/5b (FP arms 29 on fpView).   // WP-032G: + sw_hold_jewel (AP-009G v007). WP-032C: AP-009D v004 (v002 36 + 49: weapon A/B/C ×5, lower/raise ×3, sw hold ×2, pickup_upper, hurt ×2, death_side, tier hits ×12, armour breaks ×3, stumble, deaths ×4, rises ×2)
         public const int Fps = 30;
 
         /// <summary>The zombie death clips in DeathStyle order (0 fwd, 1 back, 2 side, 3 kneel; WP-032C: 4 side_R, 5 special_A, 6 special_B, 7 ultra).</summary>
@@ -290,8 +313,8 @@ namespace DD.Prototype.Characters
         public static readonly string[] PlayerDeathClips = { PlayerDeathFwd, PlayerDeathBack, PlayerDeathSide };
         /// <summary>The zombie attack clips in AttackStyle order (0 swipe, 1 lunge, 2 sweep, 3 overhead).</summary>
         public static readonly string[] ZombieAttackClips = { ZombieAttackSwipe, ZombieAttackLunge, ZombieAttackSweep, ZombieAttackOverhead };
-        /// <summary>The zombie gait clips in Gait order (0 A, 1 B, 2 C, 3 run).</summary>
-        public static readonly string[] ZombieGaitClips = { ZombieShambleA, ZombieShambleB, ZombieShambleC, ZombieRun };
+        /// <summary>The zombie gait clips in Gait order (0 A, 1 B, 2 C, 3 run — AP-009; WP-071 MUST-I1: 4 shamble_fast_A, 5 shamble_fast_B, 6 run, 7 walk_heavy, 8 walk_stomp — AP-022).</summary>
+        public static readonly string[] ZombieGaitClips = { ZombieShambleA, ZombieShambleB, ZombieShambleC, ZombieRun, ZombieShambleFastAV3, ZombieShambleFastBV3, ZombieRunV3, ZombieWalkHeavyV3, ZombieWalkStompV3 };
     }
 
     /// <summary>
