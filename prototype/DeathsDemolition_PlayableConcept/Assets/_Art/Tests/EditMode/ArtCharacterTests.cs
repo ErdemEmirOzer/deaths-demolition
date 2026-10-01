@@ -44,7 +44,7 @@ namespace DD.Art.Tests.EditMode
         public void HerKarakterFbx_V11Sozlesmesi_Avatar_HumanEslemesiKaynaklaAyni()
         {
             List<string> files = CharacterFbx();
-            Assert.AreEqual(272, files.Count, "272 = 260 + 12 FP Special; 260 = 258 + 2 lmg_2 reloads; 258 = 248 + AP-022 FP arms v2 model + 9 smg_2 FP (WP-071 r2); 248 = 236 + TP Special family 12; 236 = 203 + 33 WP-071 B4c TP (AP-022 v008); 203 = 197 + 6 AP-022 slice 5b (ar_2 FP set); 197 = 174 + 23 AP-022 slice 5 (FP arms); 174 = 153 + 21 AP-022 slices 4a/4b (AR + SMG TP); 153 = 150 + 3 AP-022 slice 2a (electro loop, arc_electro, gel_slip); 150 = 140 + 10 AP-022 slice 1 (WP-071); 140 = 135 (WP-032G + sw_hold_jewel) + 5 AP-007C v003 modülü (H6/H7/A1/A2/T8, WP-038C) — 134 karakter FBX (oyuncu 1 + 2 klip; zombi 3 gövde + 24 modül + 2 klip; WP-017 zırh 18; WP-032C AP-009D v004 85 klip; WP-036 AP-014 tier parçaları 4):\n" + string.Join("\n", files));
+            Assert.AreEqual(287, files.Count, "287 = 272 + 15 AP-022 v008 locomotion (WP-071 R1-C: player 10 TP loops + zombie 5 tier gaits); 272 = 260 + 12 FP Special; 260 = 258 + 2 lmg_2 reloads; 258 = 248 + AP-022 FP arms v2 model + 9 smg_2 FP (WP-071 r2); 248 = 236 + TP Special family 12; 236 = 203 + 33 WP-071 B4c TP (AP-022 v008); 203 = 197 + 6 AP-022 slice 5b (ar_2 FP set); 197 = 174 + 23 AP-022 slice 5 (FP arms); 174 = 153 + 21 AP-022 slices 4a/4b (AR + SMG TP); 153 = 150 + 3 AP-022 slice 2a (electro loop, arc_electro, gel_slip); 150 = 140 + 10 AP-022 slice 1 (WP-071); 140 = 135 (WP-032G + sw_hold_jewel) + 5 AP-007C v003 modülü (H6/H7/A1/A2/T8, WP-038C) — 134 karakter FBX (oyuncu 1 + 2 klip; zombi 3 gövde + 24 modül + 2 klip; WP-017 zırh 18; WP-032C AP-009D v004 85 klip; WP-036 AP-014 tier parçaları 4):\n" + string.Join("\n", files));
 
             List<string> playerMap = ArtCharacterContract.HumanMapping(ArtCharacterContract.AvatarOf(ArtCharacterContract.PlayerAvatarSource));
             List<string> zombieMap = ArtCharacterContract.HumanMapping(ArtCharacterContract.AvatarOf(ArtCharacterContract.ZombieAvatarSource));
@@ -366,7 +366,13 @@ namespace DD.Art.Tests.EditMode
                 if (set.IsAuthored)
                 {
                     // WP-018: AP-009 set — the locomotion tree carries the idle and the walk (player 2-D corners; zombie nested idle/gait trees).
-                    Assert.IsTrue(ContainsMotion(tree, set.Idle) && ContainsMotion(tree, set.Walk), "locomotion ağacı idle + walk içermeli");
+                    // WP-071 MUST-3 (C-00 01.10, P-06 AD refuter B): the player tree's centre is the static stand (DD_Player_StandStill) and the
+                    // AP-022 idle breathes at rate 1 in its own base state Idle_Breath — the idle is the motion of that state instead (H5: rule change).
+                    AnimatorState breath = null;
+                    foreach (ChildAnimatorState st in controller.layers[0].stateMachine.states) if (st.state.name == CharacterAnimatorContract.StillState) breath = st.state;
+                    bool idleOk = ContainsMotion(tree, set.Idle) || (breath != null && breath.motion == set.Idle && tree.children.Length > 0 && tree.children[0].motion != null
+                                                                     && tree.children[0].motion.name == CharacterAnimatorContract.PlayerStandStill);
+                    Assert.IsTrue(idleOk && ContainsMotion(tree, set.Walk), "locomotion ağacı walk (+ idle ya da statik duruş ve Idle_Breath) içermeli");
                     Assert.AreEqual(0.5f, set.RateFor(set.Walk.name, set.SpeedOf(set.Walk.name) * 0.5f), 1e-4f);
                 }
                 else
