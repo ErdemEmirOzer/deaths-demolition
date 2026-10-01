@@ -873,6 +873,16 @@ namespace DD.Prototype.Tests.EditMode.Audio
         }
 
         [Test]
+        public void SilahOnde_KullaniciB_FirlaticiAtesi4dBKisik_DigerleriSifir()
+        {
+            // WP-072 B7 (user 01.10, option B): SFX-Player +3 / SFX-World −1; the launcher's explosion keeps +2 dB over its shot.
+            foreach (WeaponVoiceSet set in WeaponAudioIdentity.All)
+            {
+                Assert.AreEqual(set.AudioId == "RL1" ? -4f : 0f, set.FireTrimDb, set.AudioId + " ateş kırpması");
+            }
+        }
+
+        [Test]
         public void AkustikAlanlar_V6Haritasi_SalonKoridor_Histerezis_SahneYoksaOpen()
         {
             Debug.Log("[DD-TEST] wp072b6 " + AudioCatalogBuilder.BuildAcousticSpaces());

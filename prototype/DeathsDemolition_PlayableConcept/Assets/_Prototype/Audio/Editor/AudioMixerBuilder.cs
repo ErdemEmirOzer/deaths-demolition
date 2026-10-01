@@ -35,8 +35,13 @@ namespace DD.Prototype.Audio.EditorTools
             // snapshot comes down 1-2 dB per group (target ≈ −19.5 LUFS-I, TP ≈ −2.5) and the menu
             // ambience comes up 3 dB so results/menu are not a 10 dB hole under the fight.
             //           Master  Music  Ambience  SFX-World  SFX-Player  UI
-            new[] { 0f,   -6f,   -5f,      -2f,       -2f,      -4f },   // Run (WP-060: −5/−4/0/−1/−3 → −6/−5/−2/−2/−4)
-            new[] { 0f,   -3f,   -3f,      -6f,       -3f,       3f },   // RoundBreak: stinger + shop UI forward, world back (WP-058B: UI −2 → 0; WP-068 s11: UI +3, the v3 shop cards / stamps ≥ 6 LU over the break bed)
+            // WP-072 B7 (user 01.10, A/B kit option B): the player's weapon forward of the horde — SFX-Player +3, SFX-World −1 in Run and
+            // RoundBreak (weapon margin in a 6-zombie fight TopDown −2.4 → +1.6 LU, FP −0.8 → +3.2; the master compressor is not engaged).
+            // Run: WP-060 −5/−4/0/−1/−3 → −6/−5/−2/−2/−4. WP-072 B7 (user 01.10, option B: World −1 / Player +3 against the rest) then
+            // −1 dB on every content group for A4 (dense-40 TP/FP read −17.7/−17.6 LUFS-I; Master is pinned by the user's volume
+            // setting at runtime, so a snapshot Master value never applies): Music −7, Ambience −6, World −4, Player 0, UI −4.
+            new[] { 0f,   -7f,   -6f,      -4f,        0f,      -4f },
+            new[] { 0f,   -3f,   -3f,      -7f,        0f,       3f },   // RoundBreak: stinger + shop UI forward, world back (WP-058B: UI −2 → 0; WP-068 s11: UI +3, the v3 shop cards / stamps ≥ 6 LU over the break bed; WP-072 B7: World −6 → −7, Player −3 → 0)
             new[] { 0f,  -14f,  -12f,     -18f,      -18f,      -2f },   // Pause: world far back, UI audible (listener is paused anyway)
             new[] { 0f,   -4f,   -7f,     -80f,      -80f,       4f }    // Menu: menu loop + UI, no world (WP-058B: UI −3 → −1; WP-060: Amb −10 → −7; WP-068 s11: UI −1 → +4 - the menu bed reads −27.8 LUFS-I, v3 cues ≥ 6 LU over it)
         };

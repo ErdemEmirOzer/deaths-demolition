@@ -53,14 +53,22 @@ namespace DD.Prototype.Audio
         /// <summary>AP-011 v016: the transient files sit on the peak ceiling; this takes them back to the Fire pre-mix relation.</summary>
         public readonly float TransientTrimDb;
 
-        public WeaponVoiceSet(string audioId, AudioSoundId fire, WeaponTailClass tail)
-            : this(audioId, fire, AudioSoundId.None, AudioSoundId.None, 0f, tail, 0f)
+        /// <summary>
+        /// Per-weapon trim on the full fire voice (dB). WP-072 B7 (user 01.10, option B): SFX-Player +3 / SFX-World −1 moved the shot
+        /// 4 dB against everything on the world bus; the launcher's own explosion (Target, gain 1.0 — no headroom under the voice clamp)
+        /// keeps its STANDARDS §2 +2 dB over the launcher shot only if RL1's fire comes down 4 dB.
+        /// </summary>
+        public readonly float FireTrimDb;
+
+        public WeaponVoiceSet(string audioId, AudioSoundId fire, WeaponTailClass tail, float fireTrimDb = 0f)
+            : this(audioId, fire, AudioSoundId.None, AudioSoundId.None, 0f, tail, 0f, fireTrimDb)
         {
         }
 
-        public WeaponVoiceSet(string audioId, AudioSoundId fire, AudioSoundId transient, AudioSoundId loop, float loopRpm, WeaponTailClass tail, float transientTrimDb)
+        public WeaponVoiceSet(string audioId, AudioSoundId fire, AudioSoundId transient, AudioSoundId loop, float loopRpm, WeaponTailClass tail, float transientTrimDb, float fireTrimDb = 0f)
         {
             TransientTrimDb = transientTrimDb;
+            FireTrimDb = fireTrimDb;
             AudioId = audioId;
             Fire = fire;
             Transient = transient;
@@ -91,7 +99,7 @@ namespace DD.Prototype.Audio
             new WeaponVoiceSet("LMG1", AudioSoundId.WeaponLmg1Fire, AudioSoundId.WeaponLmg1Transient, AudioSoundId.WeaponLmg1Loop, 720f, WeaponTailClass.Lmg, -4.36f),
             new WeaponVoiceSet("LMG2", AudioSoundId.WeaponLmg2Fire, WeaponTailClass.Lmg),
             new WeaponVoiceSet("SR1", AudioSoundId.WeaponSr1Fire, WeaponTailClass.Sr),
-            new WeaponVoiceSet("RL1", AudioSoundId.WeaponRl1Fire, WeaponTailClass.Rl)
+            new WeaponVoiceSet("RL1", AudioSoundId.WeaponRl1Fire, WeaponTailClass.Rl, -4f)   // WP-072 B7: explosion keeps +2 dB over the shot
         };
 
         public static bool TryGet(string audioId, out WeaponVoiceSet set)
@@ -235,7 +243,7 @@ namespace DD.Prototype.Audio
             if (!set.IsHybrid)
             {
                 if (_active) Release();
-                PlayVoice(set.Fire, cue, mix, mix.NearFieldDb);
+                PlayVoice(set.Fire, cue, mix, mix.NearFieldDb + set.FireTrimDb);
                 PlayTail(set, cue.Position, mix);
                 return true;
             }
@@ -251,7 +259,7 @@ namespace DD.Prototype.Audio
                 _set = set;
                 _shots = 1;
                 _interval = period;
-                PlayVoice(set.Fire, cue, mix, mix.NearFieldDb);
+                PlayVoice(set.Fire, cue, mix, mix.NearFieldDb + set.FireTrimDb);
             }
             else
             {

@@ -1532,6 +1532,65 @@ namespace DD.Prototype.Tests.PlayMode
             if (frames == 0) Assert.Inconclusive("Ses çıkışı yok (batch/aygıt yok).");
         }
 
+        /// <summary>
+        /// WP-072 B7 A9 (STANDARDS: limiter gain reduction ≤ 4 dB in the highest stack, master ≤ −1 dBFS) under the user's option B buses:
+        /// top-down, six zombies closing in, SG1 every 0.9 s, the launcher (RL1) every 2 s with its explosion 8 m out. Rendered with the
+        /// master limiter threshold opened to 0 dB (MasterLimiterThreshold, exposed) so the output is uncompressed: the envelope above
+        /// −8 dBFS is the gain reduction the real −8 dB limiter would apply (wp-072/tools/a9_stack.py). Explicit, out of CI.
+        /// </summary>
+        [UnityTest]
+        [Explicit("WP-072 B7 A9 yığın ölçümü — kanıt, CI dışı")]
+        [Timeout(120000)]
+        public IEnumerator A9_EnYuksekYigin_LimiterOncesiZarf_Olcum()
+        {
+            UnityEngine.Audio.AudioMixer mixer = _d.Bridge.Mixer;
+            string dir = System.IO.Path.Combine(Application.temporaryCachePath, "wp072-a9");
+            System.IO.Directory.CreateDirectory(dir);
+            _s.Rig.Health.DiagnosisInvulnerable = true;
+            for (int i = 0; i < 6; i++)
+            {
+                float a = i * Mathf.PI / 3f;
+                _s.Dogur(_s.Zemin(Mathf.Cos(a) * 9f, Mathf.Sin(a) * 9f));
+            }
+
+            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.TopDown, true);
+            yield return new WaitForSecondsRealtime(3f);
+            try
+            {
+                mixer.SetFloat("MasterLimiterThreshold", 0f);
+                AudioOutputCapture cap = AudioOutputCapture.Arm(_d.gameObject, System.IO.Path.Combine(dir, "a9-stack.wav"));
+                float bas = Time.realtimeSinceStartup, sg = 0f, rl = 0.5f;
+                while (Time.realtimeSinceStartup - bas < 12f)
+                {
+                    float t = Time.realtimeSinceStartup - bas;
+                    Vector3 el = _s.Rig.transform.position + Vector3.up * 1.3f;
+                    if (t >= sg) { AudioEvents.RaiseWeapon(CombatAudioEvent.ClassicWeaponFire, "SG1", el, 1f, 50); sg = t + 0.9f; }
+                    if (t >= rl)
+                    {
+                        AudioEvents.RaiseWeapon(CombatAudioEvent.ClassicWeaponFire, "RL1", el + Vector3.right * 0.5f, 1f, 60);
+                        AudioEvents.Raise(CombatAudioEvent.Explosion, _s.Zemin(0f, 8f) + Vector3.up, 1.4f, 80);
+                        rl = t + 2f;
+                    }
+
+                    yield return null;
+                }
+
+                long frames = cap.FramesWritten;
+                UnityEngine.Object.DestroyImmediate(cap);
+                foreach (var tap in UnityEngine.Object.FindObjectsOfType<AudioOutputTap>(true)) UnityEngine.Object.DestroyImmediate(tap);
+                if (frames == 0) Assert.Inconclusive("Ses çıkışı yok (batch/aygıt yok).");
+                mixer.GetFloat(AudioMixerBridge.VolumeParams[4], out float player);
+                mixer.GetFloat(AudioMixerBridge.VolumeParams[3], out float world);
+                Assert.AreEqual(0f, player, 0.01f, "Run snapshot SFX-Player 0 (kullanıcı B, A4 kalibrasyonu −1)");
+                Assert.AreEqual(-4f, world, 0.01f, "Run snapshot SFX-World −4 (kullanıcı B, A4 kalibrasyonu −1)");
+                Debug.Log("[DD-TEST] wp072.a9 stack rendered " + frames + " frames · SfxPlayer " + player + " · SfxWorld " + world);
+            }
+            finally
+            {
+                mixer.ClearFloat("MasterLimiterThreshold");
+            }
+        }
+
         private static float[] OkuMono(string path, out int rate)
         {
             byte[] raw = System.IO.File.ReadAllBytes(path);
