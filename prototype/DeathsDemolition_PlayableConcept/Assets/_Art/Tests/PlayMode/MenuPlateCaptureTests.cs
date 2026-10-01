@@ -36,6 +36,7 @@ namespace DD.Art.Tests.PlayMode
     /// </summary>
     [Explicit("WP-068 slice 6 capture: run by name (-testFilter DD.Art.Tests.PlayMode.MenuPlateCaptureTests)")]
     [Category("Capture")]
+    [Category("Diagnostics")]   // Y6 rule 1: an [Explicit] capture is a diagnostic, not an unexpected skip in a full PlayMode run
     public sealed class MenuPlateCaptureTests
     {
         private const float SahneZamanAsimi = 120f, KurulumZamanAsimi = 60f;

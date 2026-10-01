@@ -349,6 +349,9 @@ namespace DD.Art.Tests.PlayMode
             for (int i = 0; i < zombies.Count; i++)
                 if (!reached.Contains(i)) stuck.Add(zombies[i].spot.ToString("F1") + " → " + (zombies[i].z != null ? zombies[i].z.transform.position.ToString("F2") : "yok"));
             Debug.Log("[DD-TEST] wp038p.zombies reached " + reached.Count + "/" + zombies.Count + " in " + t.ToString("F1") + " s" + (stuck.Count > 0 ? " stuck: " + string.Join(" | ", stuck) : ""));
+            // Hand the bodies back through EnemyFactory before the verdict, pass or fail, so none stays on ZombieEnemy.Live.
+            for (int i = 0; i < zombies.Count; i++)
+                if (zombies[i].z != null && zombies[i].z.gameObject.activeSelf) zombies[i].z.Remove();
             Assert.IsEmpty(stuck, "oyuncuya ulaşamayan zombi (" + stuck.Count + "): " + string.Join(" | ", stuck));
         }
 
@@ -515,7 +518,9 @@ namespace DD.Art.Tests.PlayMode
                     stuck.Add(row);
                 }
 
-                if (z != null) UnityEngine.Object.Destroy(z.gameObject);
+                // EnemyFactory's own exit (Despawn → OnDespawned leaves ZombieEnemy.Live). Object.Destroy skipped it and left a
+                // ghost in the live roster, so every later "no zombie left" check in the run failed (FINAL A1, S-04 01.10).
+                if (z != null && z.gameObject.activeSelf) z.Remove();
                 yield return null;
             }
 

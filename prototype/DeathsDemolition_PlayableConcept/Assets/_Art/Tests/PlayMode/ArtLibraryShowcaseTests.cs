@@ -36,7 +36,8 @@ namespace DD.Art.Tests
             for (int i = 0; i < 5; i++) yield return null;
             Assert.IsTrue(scene.isLoaded, "Vitrin sahnesi yüklenmedi: " + ArtLibraryPaths.ShowcaseScene);
 
-            int ornek = 0;
+            // Per shelf (ArtLibraryShowcaseBuilder: one root per package, one instance per index item with a prefab).
+            int ornek = 0, ap023 = 0;
             foreach (GameObject root in scene.GetRootGameObjects())
             {
                 foreach (Transform t in root.GetComponentsInChildren<Transform>(true))
@@ -44,11 +45,24 @@ namespace DD.Art.Tests
                     if (t.name.StartsWith("SM_", StringComparison.Ordinal) && t.GetComponent<LODGroup>() != null && t.parent == root.transform)
                     {
                         ornek++;
+                        if (root.name == "AP-023") ap023++;
                     }
                 }
             }
 
-            Assert.AreEqual(175, ornek, "12 + 42 + 53 + 12 + 6 + 50 (AP-017 Faz 1+2+2b, WP-038L v003) varyasyon örneği");   // name kept (169 → 175)
+            // B5a (8f412b5d) put AP-023 on the shelf, and every AP-023 manifest moves its count: the whole shelf is held to the
+            // library indexes, and the frozen packages keep their fixed 175 so a lost prefab there still fails by number.
+            int dizin = 0;
+            foreach (string ap in ArtLibraryPaths.Packages)
+            {
+                var index = UnityEditor.AssetDatabase.LoadAssetAtPath<ArtLibraryAsset>(ArtLibraryPaths.IndexAsset(ap));
+                Assert.IsNotNull(index, "kütüphane dizini yok: " + ap);
+                foreach (ArtLibraryAsset.Item item in index.items)
+                    if (item != null && item.prefab != null) dizin++;
+            }
+
+            Assert.AreEqual(175, ornek - ap023, "12 + 42 + 53 + 12 + 6 + 50 (AP-017 Faz 1+2+2b, WP-038L v003) varyasyon örneği, AP-023 hariç");   // name kept (169 → 175)
+            Assert.AreEqual(dizin, ornek, "vitrin = kütüphane dizinlerindeki her varyasyon (AP-023 " + ap023 + ")");
 
             for (int i = 0; i < 10; i++) yield return null;
 

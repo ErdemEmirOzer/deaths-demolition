@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Text;
 using DD.Prototype.Core.Boot;
+using DD.Prototype.UI;
 using DD.Prototype.World;
 using NUnit.Framework;
 using UnityEngine;
@@ -36,10 +37,21 @@ namespace DD.Prototype.Tests.PlayMode
         /// <summary>Zemin düzlemine "çakışık" sayılma toleransı: 0.1 mm.</summary>
         private const float DuzlemToleransi = 0.0001f;
 
-        [TearDown]
-        public void Bitir()
+        /// <summary>
+        /// Leaves the Run scene (and the world it loaded) behind: back to the main menu, as the art PlayMode fixtures do. Without it
+        /// the world stayed loaded into the next fixture (S-07 01.10: Wp073Atmosphere read this test's scene).
+        /// </summary>
+        [UnityTearDown]
+        public IEnumerator Bitir()
         {
             System.Environment.SetEnvironmentVariable(DD.Prototype.World.WorldSourceSettings.EnvironmentVariable, null);
+            LogAssert.ignoreFailingMessages = false;
+            if (SceneManager.GetActiveScene().name != PrototypeScenes.MainMenu)
+            {
+                PrototypeUiFlow.GoToMainMenu();
+                float t0 = Time.realtimeSinceStartup;
+                while (SceneManager.GetActiveScene().name != PrototypeScenes.MainMenu && Time.realtimeSinceStartup - t0 < 60f) yield return null;
+            }
         }
 
         [UnityTest]
