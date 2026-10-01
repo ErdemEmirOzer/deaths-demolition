@@ -135,17 +135,40 @@ namespace DD.Prototype.Tests.PlayMode
         {
             string output = Environment.GetEnvironmentVariable("DD_WP076_C1_CONTACT_OUT");
             if (string.IsNullOrEmpty(output)) output = Path.Combine(Application.temporaryCachePath, "wp076-c1-contact.json");
+            yield return TemasGozlemi(6, output, false);
+        }
+
+        /// <summary>
+        /// WP-076 B9 M-32 (C-00 30.09, with S-05): the same contact observation at R4_TeaHouse, whose north door step (0.45 m plinth vs
+        /// controller stepOffset 0.35 / NavMesh climb 0.30) is the suspected stall; the spawn-seed sequence is fixed (Y4 hook) so repeated
+        /// runs compare. Explicit + Diagnostics; output: DD_WP076_R4_CONTACT_OUT or the temporary cache.
+        /// </summary>
+        [UnityTest]
+        [Explicit("Diagnostics: R4 tea-house contact observation (WP-076 B9 M-32)")]
+        [Category("Diagnostics")]
+        [Timeout(600000)]
+        public IEnumerator R4_TemasGozlemi_TakilanGovde()
+        {
+            string output = Environment.GetEnvironmentVariable("DD_WP076_R4_CONTACT_OUT");
+            if (string.IsNullOrEmpty(output)) output = Path.Combine(Application.temporaryCachePath, "wp076-r4-contact.json");
+            yield return TemasGozlemi(3, output, true);
+        }
+
+        private IEnumerator TemasGozlemi(int stationIndex, string output, bool fixedSeed)
+        {
             yield return Kur();
+            if (fixedSeed) EnemyFactory.ResetSeedForTests(1u);
             var proof = new C1ContactObserver.Proof();
             var r = new RoundResult();
-            yield return Istasyonlar(new List<(string name, Vector3 at)> { Stations[6] }, proof, r);
+            yield return Istasyonlar(new List<(string name, Vector3 at)> { Stations[stationIndex] }, proof, r);
             C1ContactObserver.ResetHook();
             proof.outcome = proof.move == null ? "UNKNOWN: no stalled-body normal Move captured"
                 : proof.contacts.Count == 0 ? "UNKNOWN: selected Move had no actual collider contact"
                 : "CONTACT OBSERVED: collider binding and causal interpretation require review";
             proof.sceneInputs = C1ContactObserver.CurrentScenes();
             File.WriteAllText(output, JsonUtility.ToJson(proof, true));
-            Debug.Log("[DD-OBS] wp076.c1-contact " + proof.outcome + " → " + output);
+            Debug.Log("[DD-OBS] wp076.contact " + Stations[stationIndex].name + " " + proof.outcome + " → " + output);
+            Debug.Log(r.Rapor.ToString());
         }
 #endif
 
@@ -198,10 +221,17 @@ namespace DD.Prototype.Tests.PlayMode
                     ZombieEnemy nearCornerBody = null;
                     if (st.name == "Waterfall")
                     {
-                        // S-05 supplied point on geometry 37badf64. Exercise the actual
-                        // CharacterController and crowd together; do not substitute a sweep.
-                        nearCornerBody = EnemyFactory.Spawn(DD.Prototype.Core.Config.EnemyTier.Standard, 1,
-                            new Vector3(2.8f, 0.3f, -19f), Quaternion.identity);
+                        // WP-076 B9 M-24 (C-00 30.09): the near-corner start is DERIVED from the current NavMesh (was S-05's fixed point
+                        // (2.8, 0.3, −19) on geometry 37badf64), and its precondition is asserted, so a geometry change cannot quietly
+                        // empty the strict Waterfall case. Exercise the actual CharacterController and crowd together; no sweep.
+                        Assert.IsTrue(TryNecessaryCornerStart(hit.position, out Vector3 ncStart, out Vector3 ncCorner, out Vector3 ncNext),
+                            "ön koşul: C8 kuzeyinden istasyona giden yolda 'gerekli' köşe bulunamadı (geometri değişti mi?)");
+                        Vector3 ncFlat = ncCorner - ncStart; ncFlat.y = 0f;
+                        Assert.LessOrEqual(ncFlat.magnitude, 0.65f, "ön koşul: başlangıç köşenin 0,65 m varış yarıçapı içinde");
+                        Assert.IsTrue(NavMesh.Raycast(ncStart, ncNext, out NavMeshHit _, CrowdService.Paths.AreaMask),
+                            "ön koşul: başlangıçtan sonraki köşeye NavMesh çizgisi kapalı (köşe gerekli)");
+                        rapor.AppendLine("  waterfall nearCorner derived start=" + ncStart.ToString("F2") + " corner=" + ncCorner.ToString("F2") + " next=" + ncNext.ToString("F2"));
+                        nearCornerBody = EnemyFactory.Spawn(DD.Prototype.Core.Config.EnemyTier.Standard, 1, ncStart, Quaternion.identity);
                         Assert.IsNotNull(nearCornerBody, "Waterfall yakın-köşe gövdesi doğmadı");
                         CharacterController controller = nearCornerBody.GetComponent<CharacterController>();
                         Assert.IsNotNull(controller);
@@ -434,6 +464,38 @@ namespace DD.Prototype.Tests.PlayMode
             }
         }
 #endif
+
+        /// <summary>
+        /// WP-076 B9 M-24: a start 0.5 m before a NECESSARY corner (the NavMesh line from there to the next corner is blocked, the
+        /// NavPathFollower hold case) on a path from the C8 bridge's north landing (candidates on a 1 m grid, x 2.8 ± 3, z −19…−13) to
+        /// <paramref name="goal"/>. The first hit in grid order is used; false when the current NavMesh has none.
+        /// </summary>
+        private static bool TryNecessaryCornerStart(Vector3 goal, out Vector3 start, out Vector3 corner, out Vector3 next)
+        {
+            start = corner = next = Vector3.zero;
+            int mask = CrowdService.Paths.AreaMask;
+            var path = new NavMeshPath();
+            for (float dz = 0f; dz <= 6f; dz += 1f)
+            for (float dx = -3f; dx <= 3f; dx += 1f)
+            {
+                if (!NavMesh.SamplePosition(new Vector3(2.8f + dx, 0.5f, -19f + dz), out NavMeshHit from, 1f, mask)) continue;
+                if (!NavMesh.CalculatePath(from.position, goal, mask, path) || path.status != NavMeshPathStatus.PathComplete) continue;
+                Vector3[] c = path.corners;
+                for (int i = 1; i + 1 < c.Length; i++)
+                {
+                    Vector3 approach = c[i] - c[i - 1]; approach.y = 0f;
+                    if (approach.magnitude < 0.6f) continue;
+                    Vector3 before = c[i] - approach.normalized * 0.5f;
+                    if (!NavMesh.SamplePosition(before, out NavMeshHit b, 0.3f, mask)) continue;
+                    Vector3 flat = c[i] - b.position; flat.y = 0f;
+                    if (flat.magnitude > 0.65f) continue;
+                    if (!NavMesh.Raycast(b.position, c[i + 1], out NavMeshHit _, mask)) continue;   // skippable: not necessary
+                    start = b.position; corner = c[i]; next = c[i + 1];
+                    return true;
+                }
+            }
+            return false;
+        }
 
         private static IEnumerator Bekle(Func<bool> kosul, float saniye, string aciklama)
         {
