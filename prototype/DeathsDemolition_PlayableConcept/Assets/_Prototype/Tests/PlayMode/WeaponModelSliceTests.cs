@@ -715,6 +715,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// view-model anchor. The before / after table for the delivery note (R2 FP feel reference). Measurement only.
         /// </summary>
         [UnityTest, Explicit]
+        [Category("Diagnostics")]
         [Timeout(420000)]
         public IEnumerator FP_NamluKalkisi_Tablo_HerSilah()
         {

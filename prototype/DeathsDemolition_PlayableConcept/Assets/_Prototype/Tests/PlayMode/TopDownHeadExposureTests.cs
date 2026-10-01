@@ -56,6 +56,7 @@ namespace DD.Prototype.Tests.PlayMode
         }
 
         [UnityTest, Explicit]
+        [Category("Diagnostics")]
         [Timeout(300000)]
         public IEnumerator Tepeden_PozdanKafaPayi_AtisHattinaGore()
         {
@@ -191,6 +192,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// attack phases, stagger, gel. Numbers for C-00 (the fix is decided on them); asserts only that the poses were sampled.
         /// </summary>
         [UnityTest, Explicit]
+        [Category("Diagnostics")]
         [Timeout(420000)]
         public IEnumerator Tepeden_DuzHat_HitboxsuzKareOrani_KademeVePoz()
         {
