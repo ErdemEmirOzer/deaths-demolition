@@ -199,11 +199,13 @@ namespace DD.Prototype.Tests.PlayMode
                 { "WeaponRegistry.ActiveChanged", 2 },
                 { "PlayerHealth.AnyPlayerDied", 2 },   // WP-068 8c: RunHudScreen names the killing blow (E22 death line)
                 // WP-068 8b: RunHudScreen also takes AnyDamaged (the player-bound damage arc, E17).
-                { "PlayerHealth.AnyHealthChanged", 1 }, { "PlayerHealth.AnyDamaged", 2 },
+                // DEC-113 RunDirector, scene-local, paired unsubscribe: AnyDamaged → the Round Report's health lost (+1).
+                { "PlayerHealth.AnyHealthChanged", 1 }, { "PlayerHealth.AnyDamaged", 3 },
                 // WP-006: hasar olay busu izlenir. Run-yerel aboneler: EnemyDied ← RunDirector (kill/gold
                 // istatistiği) + GoldService (paket); ArmorBroken ← RunDirector (kırılma sayacı). EnemyDamaged /
                 // PlayerAttacked / EnemyHitDressed'a Run'da kalıcı abone yok (feedback tek sahibi çekmez, iter).
-                { "DamageEvents.EnemyDied", 2 }, { "DamageEvents.ArmorBroken", 1 }, { "DamageEvents.EnemyDamaged", 0 },
+                // DEC-113 RunDirector, scene-local, paired unsubscribe: EnemyDamaged → the Round Report's Elite first-hit clock (+1).
+                { "DamageEvents.EnemyDied", 2 }, { "DamageEvents.ArmorBroken", 1 }, { "DamageEvents.EnemyDamaged", 1 },
                 { "DamageEvents.PlayerAttacked", 0 }, { "HitFeedbackDirector.EnemyHitDressed", 0 },
                 // WP-007/WP-032C: RunHudScreen owns five Special events; PlayerSkinnedVisual owns the
                 // equipped/reload/special animation beats for one player life; the director owns the four
