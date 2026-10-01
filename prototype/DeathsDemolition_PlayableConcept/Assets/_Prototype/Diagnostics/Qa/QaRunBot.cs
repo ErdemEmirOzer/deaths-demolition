@@ -475,6 +475,7 @@ namespace DD.Prototype.Qa
             private string _routeDir;
             private int _routeStep = -1;
             private float _routeStepStart, _routeSettleSince = -1f, _routeCaptureAt = -1f, _routeTimeout, _routeTraceAt;
+            private Vector3 _routeTracePos, _routeLastSteer, _routeLastGoal;   // the route-stall trace: where the last trace stood, what steering asked
             private bool _routeArrived;
             private float _routeYawError, _routePitchError;
             private string _routeCapturePath;
@@ -1882,11 +1883,26 @@ namespace DD.Prototype.Qa
                 {
                     _routeTraceAt = now + RouteTracePeriod;
                     Log("route-walk key=" + point.Key + " pos=" + V(pos) + " left=" + QaArgs.F(flat.magnitude, 1) + " time=" + QaArgs.F(now - _runStart, 1));
+                    Vector3 since = pos - _routeTracePos; since.y = 0f;
+                    if (!arrived && _routeTraceAt - RouteTracePeriod > _routeStepStart + RouteTracePeriod && since.magnitude < 0.1f) LogRouteStall(point.Key, rig, pos);
+                    _routeTracePos = pos;
                 }
                 if (!arrived)
                 {
-                    Vector3 dir = RouteDirection(pos, target);
-                    move = QaBotBrain.WorldToStick(SteerOnNavMesh(pos, dir, Vector3.zero), fwd, right) * (flat.magnitude < 2f ? 0.5f : 1f);
+                    float toCorner;
+                    Vector3 onMesh;
+                    Vector3 dir = RouteDirection(pos, target, out toCorner, out onMesh);
+                    // The wall probe starts on the mesh and reaches no further than the corner being walked to, which RouteDirection
+                    // keeps in straight sight: at the NW kairō door (corners 0.3–1 m apart, the player r 0.45 inside the agent r 0.5
+                    // margin) a fixed 1.6 m probe left the mesh past the turn, every rotation failed, and the bot circled or stood
+                    // (FINAL 23093940 A2 BLOCKED at −25, 28.7 in all three modes).
+                    _routeLastSteer = SteerOnNavMesh(onMesh, dir, Vector3.zero, Mathf.Clamp(toCorner, 0.3f, SteerProbe));
+                    // Standing on the mesh boundary every probe grazes the edge and reports a hit (route-stall trace: steer 0, input
+                    // 0, touching only the K3 post and the floor). The corner is the next point of a path planned from here, on the
+                    // mesh, so walk straight at it instead of standing; the fight planner keeps its stop (WP-064B soak 3).
+                    if (_routeLastSteer == Vector3.zero) _routeLastSteer = dir;
+                    _routeLastGoal = pos + dir * toCorner;
+                    move = QaBotBrain.WorldToStick(_routeLastSteer, fwd, right) * (flat.magnitude < 2f ? 0.5f : 1f);
                     _routeSettleSince = -1f;
                 }
 
@@ -1985,14 +2001,17 @@ namespace DD.Prototype.Qa
             }
 
             /// <summary>Straight NavMesh path to the route point, followed corner by corner (no goal logic of the fight planner).</summary>
-            private Vector3 RouteDirection(Vector3 pos, Vector3 target)
+            private Vector3 RouteDirection(Vector3 pos, Vector3 target, out float toCorner, out Vector3 onMesh)
             {
-                if (_routeCorner < 0 || _routeCorner >= _routePath.corners.Length)
+                NavMeshHit a, b;
+                onMesh = NavMesh.SamplePosition(pos, out a, 2f, NavMesh.AllAreas) ? a.position : pos;
+                // Replan from where the body is when the corner being walked to is out of straight sight on the mesh (the body
+                // drifted past a tight turn): a fresh path's first corner is always in sight.
+                if (_routeCorner < 0 || _routeCorner >= _routePath.corners.Length
+                    || NavMesh.Raycast(onMesh, _routePath.corners[_routeCorner], out b, NavMesh.AllAreas))
                 {
-                    NavMeshHit a, b;
-                    Vector3 from = NavMesh.SamplePosition(pos, out a, 2f, NavMesh.AllAreas) ? a.position : pos;
                     Vector3 to = NavMesh.SamplePosition(target, out b, 2f, NavMesh.AllAreas) ? b.position : target;
-                    _routeCorner = NavMesh.CalculatePath(from, to, NavMesh.AllAreas, _routePath) && _routePath.corners.Length > 1 ? 1 : int.MaxValue;
+                    _routeCorner = NavMesh.CalculatePath(onMesh, to, NavMesh.AllAreas, _routePath) && _routePath.corners.Length > 1 ? 1 : int.MaxValue;
                 }
 
                 Vector3 goal = _routeCorner < _routePath.corners.Length ? _routePath.corners[_routeCorner] : target;
@@ -2004,7 +2023,35 @@ namespace DD.Prototype.Qa
                     d = goal - pos; d.y = 0f;
                 }
 
+                toCorner = d.magnitude;
                 return d.sqrMagnitude > 1e-4f ? d.normalized : Vector3.zero;
+            }
+
+            /// <summary>
+            /// Dev-only (H12) route-stall trace: the body moved under 0.1 m in a trace period while walking — log what steering
+            /// asked, what the motor was commanded and every solid collider the controller capsule touches, so a BLOCKED point
+            /// names its blocker instead of leaving it to guesswork.
+            /// </summary>
+            private void LogRouteStall(string key, PlayerRig rig, Vector3 pos)
+            {
+                var cc = rig.Motor != null ? rig.Motor.GetComponent<CharacterController>() : null;
+                var sb = new System.Text.StringBuilder("route-stall key=" + key + " pos=" + V(pos) + " goal=" + V(_routeLastGoal) + " steer=" + V(_routeLastSteer));
+                if (rig.Motor != null) sb.Append(" input=" + QaArgs.F(rig.Motor.RawInput.x, 2) + "," + QaArgs.F(rig.Motor.RawInput.y, 2) + " commanded=" + V(rig.Motor.CommandedPlanarVelocity));
+                if (cc != null)
+                {
+                    sb.Append(" cc r=" + QaArgs.F(cc.radius, 2) + " h=" + QaArgs.F(cc.height, 2) + " c=" + V(cc.center) + " skin=" + QaArgs.F(cc.skinWidth, 2) + " grounded=" + cc.isGrounded);
+                    Vector3 c = cc.transform.TransformPoint(cc.center);
+                    float half = Mathf.Max(0f, cc.height * 0.5f - cc.radius);
+                    foreach (Collider hit in Physics.OverlapCapsule(c + Vector3.down * half, c + Vector3.up * half, cc.radius + cc.skinWidth + 0.05f, ~0, QueryTriggerInteraction.Ignore))
+                    {
+                        if (hit == cc || hit.transform.IsChildOf(rig.transform)) continue;
+                        var path = new System.Text.StringBuilder(hit.name);
+                        for (Transform t = hit.transform.parent; t != null && path.Length < 160; t = t.parent) path.Insert(0, t.name + "/");
+                        sb.Append(" | touch " + hit.GetType().Name + " layer=" + LayerMask.LayerToName(hit.gameObject.layer) + " " + path + " min=" + V(hit.bounds.min) + " max=" + V(hit.bounds.max));
+                    }
+                }
+
+                Log(sb.ToString());
             }
 
             /// <summary>Dev-only spawn hold for the route run (VfxLauncherCaptureAgent / SpecialWeaponProbe precedent, H12).</summary>
@@ -2466,7 +2513,8 @@ namespace DD.Prototype.Qa
             /// stays on the NavMesh wins, so the bot slides along walls and planters instead of grinding into them.
             /// </summary>
             private static readonly float[] SteerAngles = { 0f, 35f, -35f, 70f, -70f, 110f, -110f, 150f, -150f, 180f };
-            private static Vector3 SteerOnNavMesh(Vector3 pos, Vector3 want, Vector3 avoidDirection)
+            private const float SteerProbe = 1.6f;
+            private static Vector3 SteerOnNavMesh(Vector3 pos, Vector3 want, Vector3 avoidDirection, float probe = SteerProbe)
             {
                 want.y = 0f;
                 if (want.sqrMagnitude < 1e-4f) return want;
@@ -2479,7 +2527,7 @@ namespace DD.Prototype.Qa
                 for (int i = 0; i < SteerAngles.Length; i++)
                 {
                     Vector3 d = Quaternion.Euler(0f, SteerAngles[i], 0f) * want;
-                    if (NavMesh.Raycast(pos, pos + d * 1.6f, out hit, NavMesh.AllAreas)) continue;
+                    if (NavMesh.Raycast(pos, pos + d * probe, out hit, NavMesh.AllAreas)) continue;
                     if (avoiding && Vector3.Dot(d, avoidDirection) > 0.5f) { if (fallback == Vector3.zero) fallback = d; continue; }   // open, but into the crowd
                     return d;
                 }
