@@ -1223,6 +1223,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// </summary>
         [UnityTest]
         [Explicit("WP-072 V6 mix ölçümü — kanıt, CI dışı")]
+        [Category("Diagnostics")]
         [Timeout(400000)]
         public IEnumerator MixV6_UcKameraModu_BusSeviyeleri_Olcum()
         {
@@ -1307,6 +1308,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// </summary>
         [UnityTest]
         [Explicit("WP-072 dinleme paketi — kanıt, CI dışı")]
+        [Category("Diagnostics")]
         [Timeout(300000)]
         public IEnumerator DinlemePaketi_AB_Uret()
         {
@@ -1457,6 +1459,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// </summary>
         [UnityTest]
         [Explicit("WP-072 B7 kuş ölçümü — kanıt, CI dışı")]
+        [Category("Diagnostics")]
         [Timeout(300000)]
         public IEnumerator KusKontrasti_SoloRender_Olcum()
         {
@@ -1540,6 +1543,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// </summary>
         [UnityTest]
         [Explicit("WP-072 B7 A9 yığın ölçümü — kanıt, CI dışı")]
+        [Category("Diagnostics")]
         [Timeout(120000)]
         public IEnumerator A9_EnYuksekYigin_LimiterOncesiZarf_Olcum()
         {
