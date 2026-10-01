@@ -344,7 +344,8 @@ namespace DD.Prototype.Tests.PlayMode
                         Vector3 v = _rig.Motor.PlanarVelocity;
                         Vector3 bakis = _rig.Aim.AimDirection;
                         enBuyukHizX = Mathf.Max(enBuyukHizX, v.z);
-                        if (v.z > 0.9f * OyuncuHizi && bakis.z < -0.9f)
+                        // C-00 01.10 (user decision): running +z while facing −z is running straight backward — ×0.65 (BackwardSpeedMultiplier).
+                        if (v.z > 0.9f * OyuncuHizi * DD.Prototype.Core.Config.PlayerConfigSection.BackwardSpeedMultiplier && bakis.z < -0.9f)
                         {
                             uyumluKare++;
                         }

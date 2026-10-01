@@ -420,16 +420,21 @@ namespace DD.Prototype.Tests.PlayMode
                 // ---- Çapraz girdi: hız tavanı aşılmaz.
                 yield return Kareler(20);   // dur
                 girdi.Hareket = new Vector2(1f, 1f);
-                float enBuyukHiz = 0f;
+                float enBuyukHiz = 0f, enBuyukOran = 0f;
                 for (int i = 0; i < 40; i++)
                 {
                     yield return null;
                     enBuyukHiz = Mathf.Max(enBuyukHiz, motor.PlanarVelocity.magnitude);
+                    // C-00 01.10 (user decision): running backward is ×0.65 (PlayerConfigSection.BackwardSpeedMultiplier) — the diagonal
+                    // here runs ~45° backward against the idle body facing, so "full speed" is 6.2 × the motor's own backward scale.
+                    float olcek = DD.Prototype.PlayerSystem.PlayerMotor.BackwardScale(ileri + sag, oyuncu.transform.forward);
+                    enBuyukOran = Mathf.Max(enBuyukOran, motor.PlanarVelocity.magnitude / (6.2f * olcek));
                 }
 
                 girdi.Hareket = Vector2.zero;
                 Assert.LessOrEqual(enBuyukHiz, 6.2f + 0.01f, "Çapraz girdi hız tavanını aştı: " + enBuyukHiz.ToString("F3") + " m/s.");
-                Assert.Greater(enBuyukHiz, 6.0f, "Çapraz girdide tam hıza ulaşılmadı (normalize hatası?): " + enBuyukHiz.ToString("F3"));
+                Assert.Greater(enBuyukOran, 6.0f / 6.2f, "Çapraz girdide tam hıza ulaşılmadı (normalize hatası?): hız / (6,2 × geri ölçeği) en çok " +
+                    enBuyukOran.ToString("F3") + " (hız " + enBuyukHiz.ToString("F3") + " m/s)");
 
                 // ---- Sağ analog (0,1): nişan kamera ileri yönünde; (1,0): kamera sağ yönünde.
                 girdi.Analog = new Vector2(0f, 1f);

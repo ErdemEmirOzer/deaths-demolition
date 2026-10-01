@@ -123,6 +123,20 @@ namespace DD.Prototype.PlayerSystem
         public float WeaponSpeedMultiplier { get; set; } = 1f;
 
         /// <summary>
+        /// The backward scale of a move <paramref name="desired"/> against the body's <paramref name="facing"/> (both planar):
+        /// lerp(1, <see cref="DD.Prototype.Core.Config.PlayerConfigSection.BackwardSpeedMultiplier"/>) by the move's backward share −cos(angle) — side-on and forward 1.0,
+        /// 45° back ≈ 0.75, straight back 0.65. Keyboard and gamepad reach it through the same Move vector (ADR-024).
+        /// </summary>
+        public static float BackwardScale(Vector3 desired, Vector3 facing)
+        {
+            desired.y = 0f;
+            facing.y = 0f;
+            if (desired.sqrMagnitude < 1e-6f || facing.sqrMagnitude < 1e-6f) return 1f;
+            float back = Mathf.Clamp01(-Vector3.Dot(desired.normalized, facing.normalized));
+            return Mathf.Lerp(1f, DD.Prototype.Core.Config.PlayerConfigSection.BackwardSpeedMultiplier, back);
+        }
+
+        /// <summary>
         /// WP-069 B4 (DIRECTION §7b): Namekuji's puddle under the player — the target speed ×1.8 and every rate
         /// ×0.35 (less control, no fall, no damage, firing unaffected), back to normal 0.3 s after stepping out.
         /// Written from the sw_gel data by SpecialGelEffects.
@@ -317,7 +331,8 @@ namespace DD.Prototype.PlayerSystem
             float gelSpeed = Mathf.Lerp(1f, GelSpeedMultiplier, _gel01);
             float gelSteer = Mathf.Lerp(1f, GelSteerMultiplier, _gel01);
             // WP-077 ks.body.evade: the tree's speed burst after a hit rides above the weapon clamp.
-            Vector3 targetVelocity = desired * (_moveSpeed * Mathf.Clamp(WeaponSpeedMultiplier, 0.1f, 1f) * gelSpeed * DD.Prototype.Rounds.RunTreeHooks.MoveSpeedScaleAbove(WeaponSpeedMultiplier));
+            Vector3 targetVelocity = desired * (_moveSpeed * Mathf.Clamp(WeaponSpeedMultiplier, 0.1f, 1f) * gelSpeed * DD.Prototype.Rounds.RunTreeHooks.MoveSpeedScaleAbove(WeaponSpeedMultiplier)
+                * BackwardScale(desired, transform.forward));   // C-00 01.10: running backward ×0.65 (AP-022 run_back)
             CommandedPlanarVelocity = targetVelocity;
 
             // Advances _planarVelocity AND returns the exact ground distance covered while
