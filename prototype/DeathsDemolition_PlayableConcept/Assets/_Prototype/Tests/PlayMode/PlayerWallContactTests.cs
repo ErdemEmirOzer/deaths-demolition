@@ -17,11 +17,12 @@ namespace DD.Prototype.Tests.PlayMode
     internal sealed class SurulenGirdi : IInputSource
     {
         public Vector2 Deger;
+        public Vector2? Imlec;   // null = the screen centre (the pointer every other suite leaves where it is)
 
         public bool IsEnabled => true;
         public Vector2 Move => Deger;
         public AimSourceKind AimKind => AimSourceKind.Pointer;
-        public Vector2 AimScreenPosition => new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
+        public Vector2 AimScreenPosition => Imlec ?? new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
         public Vector2 AimStick => Vector2.zero;
         public bool FireHeld => false;
         public bool FirePressed => false;
@@ -159,7 +160,11 @@ namespace DD.Prototype.Tests.PlayMode
             // -------------------------------------------- 3 · yeniden yaklaş ve kay
             yield return DuvaraSur(new Vector3(40f, 0.2f, 0f), new Vector2(1f, 0f), 90);
 
+            // C-00 01.10: the cursor leads along the wall. A fixed screen-centre pointer meets the raised aim plane on the camera's
+            // side (−z) and turned the body away from this +z slide, so the D-1 backward ×0.65 slowed it (dz 3.936 → 2.674 in
+            // FINAL dab326ab, the other legs unchanged). This test measures the wall, not the backward speed.
             _girdi.Deger = new Vector2(0.7071f, 0.7071f);
+            KaymaYonuneNisan(Vector3.forward);
             Vector3 kaymaBasi = _rig.transform.position;
             Vector3 onceki = kaymaBasi;
             int donmusKare = 0;
@@ -167,6 +172,7 @@ namespace DD.Prototype.Tests.PlayMode
             for (int i = 0; i < 60; i++)
             {
                 yield return null;
+                KaymaYonuneNisan(Vector3.forward);
                 Vector3 simdi = _rig.transform.position;
                 if (Vector3.ProjectOnPlane(simdi - onceki, Vector3.up).magnitude < 0.0005f)
                 {
@@ -177,7 +183,9 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             float kayma = _rig.transform.position.z - kaymaBasi.z;
+            rapor.AppendLine("  " + GeriPayi(new Vector3(0.7071f, 0f, 0.7071f)));
             _girdi.Deger = Vector2.zero;
+            _girdi.Imlec = null;
 
             rapor.AppendLine("  duvar boyunca kayma dz=" + kayma.ToString("F3") + " m" +
                              "  donmusKare=" + donmusKare + "/60" +
@@ -222,6 +230,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.Less(temas.y, 0.15f, "Guney duvarinda oyuncu havaya kalkti.\n" + rapor);
 
             _girdi.Deger = new Vector2(0.7071f, -0.7071f);
+            KaymaYonuneNisan(Vector3.right);   // C-00 01.10: the cursor leads along the wall (see the east wall)
             Vector3 basla = _rig.transform.position;
             Vector3 onceki = basla;
             int donmus = 0;
@@ -229,6 +238,7 @@ namespace DD.Prototype.Tests.PlayMode
             for (int i = 0; i < 60; i++)
             {
                 yield return null;
+                KaymaYonuneNisan(Vector3.right);
                 Vector3 s = _rig.transform.position;
                 if (Vector3.ProjectOnPlane(s - onceki, Vector3.up).magnitude < 0.0005f)
                 {
@@ -239,7 +249,9 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             float kayma = _rig.transform.position.x - basla.x;
+            rapor.AppendLine("  " + GeriPayi(new Vector3(0.7071f, 0f, -0.7071f)));
             _girdi.Deger = Vector2.zero;
+            _girdi.Imlec = null;
 
             rapor.AppendLine("  duvar boyunca kayma dx=" + kayma.ToString("F3") +
                              " m  donmusKare=" + donmus + "/60");
@@ -252,6 +264,24 @@ namespace DD.Prototype.Tests.PlayMode
         }
 
         // ------------------------------------------------------------------ yardımcılar
+
+        /// <summary>The pointer 4 m ahead of the body along <paramref name="yon"/>, on the aim plane — the body faces the slide.</summary>
+        private void KaymaYonuneNisan(Vector3 yon)
+        {
+            PrototypeCameraRig cam = PrototypeCameraRig.Active;
+            Camera c = cam != null ? cam.Camera : Camera.main;
+            Vector3 hedef = _rig.transform.position + yon * 4f;
+            hedef.y = _rig.Aim.AimPlaneY;
+            Vector3 ekran = c.WorldToScreenPoint(hedef);
+            _girdi.Imlec = new Vector2(ekran.x, ekran.y);
+        }
+
+        /// <summary>Logged: the body's facing against the slide input and the D-1 backward scale it gives.</summary>
+        private string GeriPayi(Vector3 girdi)
+        {
+            Vector3 f = _rig.transform.forward;
+            return "govde yonu=" + new Vector3(f.x, 0f, f.z).normalized.ToString("F2") + " geri olcegi=" + PlayerMotor.BackwardScale(girdi, f).ToString("F3");
+        }
 
         private IEnumerator DuvaraSur(Vector3 baslangic, Vector2 yon, int kare)
         {

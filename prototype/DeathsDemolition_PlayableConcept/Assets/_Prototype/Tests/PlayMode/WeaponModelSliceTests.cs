@@ -785,19 +785,41 @@ namespace DD.Prototype.Tests.PlayMode
             var wrong = new List<string>();
             try
             {
-                // M4 · rl_1: the rocket at the tube mouth on the frame it appears
+                // M4 · rl_1: the rocket is born at the tube mouth on the frame it appears. C-00 01.10 (a): measured at its spawn
+                // point (ProjectileSpawnInfo.Position, the muzzle read in the same call) on a fixed 1/60 step — the projectile
+                // system steps 1/120 and a newborn already flies 2 steps on a 60 fps frame (FINAL dab326ab: 46.2 px; an inherited
+                // short step had shown 0.0). The first frame's flight is the rocket moving, logged, not asserted (R2 AD item).
                 _s.Controller.EquipClassic(ClassicWeaponId.Rl1, _s.Config);
                 yield return Dinlenme(mount, "rl_1");
                 yield return SpecialWeaponSahne.Kareler(10);
-                int live0 = ProjectileSystem.LiveCount;
-                _s.Girdi.AtesBasti = true; _s.Girdi.AtesBasili = true;
-                yield return SpecialWeaponSahne.Bekle(() => ProjectileSystem.LiveCount > live0, 2f, "rl_1 ateşlemedi");
-                _s.Girdi.AtesBasti = false; _s.Girdi.AtesBasili = false;
-                Vector2 rocket = Ekran(camRig.Camera, ProjectileSystem.Get(ProjectileSystem.LiveCount - 1).Position);
-                Vector2 mouth = Ekran(vm, _s.Controller.Muzzle.position);
-                float gap = (rocket - mouth).magnitude;
-                report.Add("rl_1 firing frame: rocket ↔ tube mouth " + gap.ToString("0.0") + " px (kick pending " + (_s.Controller.ClassicFeel.KickPending * 100f).ToString("0") + " %)");
-                if (gap > 45f) wrong.Add("rl_1 roket tüp ağzından " + gap.ToString("0.0") + " px uzakta");
+                float dt0 = Time.captureDeltaTime;
+                Time.captureDeltaTime = 1f / 60f;
+                float spawnGap = -1f;
+                System.Action<ProjectileSpawnInfo> born = info =>
+                {
+                    if (spawnGap >= 0f || info.WeaponId != ClassicWeaponId.Rl1) return;
+                    spawnGap = (Ekran(camRig.Camera, info.Position) - Ekran(vm, _s.Controller.Muzzle.position)).magnitude;
+                };
+                ProjectileEvents.Spawned += born;
+                try
+                {
+                    int live0 = ProjectileSystem.LiveCount;
+                    _s.Girdi.AtesBasti = true; _s.Girdi.AtesBasili = true;
+                    yield return SpecialWeaponSahne.Bekle(() => ProjectileSystem.LiveCount > live0, 2f, "rl_1 ateşlemedi");
+                    _s.Girdi.AtesBasti = false; _s.Girdi.AtesBasili = false;
+                    Vector2 rocket = Ekran(camRig.Camera, ProjectileSystem.Get(ProjectileSystem.LiveCount - 1).Position);
+                    Vector2 mouth = Ekran(vm, _s.Controller.Muzzle.position);
+                    report.Add("rl_1 firing frame: rocket spawn ↔ tube mouth " + spawnGap.ToString("0.0") + " px, first frame's flight " + (rocket - mouth).magnitude.ToString("0.0") +
+                               " px at dt 1/60 (kick pending " + (_s.Controller.ClassicFeel.KickPending * 100f).ToString("0") + " %)");
+                    if (spawnGap < 0f) wrong.Add("rl_1 doğum olayı (ProjectileEvents.Spawned) gelmedi");
+                    else if (spawnGap > 45f) wrong.Add("rl_1 roket tüp ağzından " + spawnGap.ToString("0.0") + " px uzakta doğdu");
+                }
+                finally
+                {
+                    ProjectileEvents.Spawned -= born;
+                    Time.captureDeltaTime = dt0;
+                }
+
                 yield return new WaitForSeconds(1.2f);
 
                 // M3 · sg_1 / sg_2: the rig's lift within the budget, the flash on screen, shot +1…+45
