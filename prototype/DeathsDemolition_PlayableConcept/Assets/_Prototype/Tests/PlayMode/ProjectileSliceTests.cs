@@ -177,6 +177,13 @@ namespace DD.Prototype.Tests.PlayMode
             _s.Controller.EquipClassic(ClassicWeaponId.AssaultRifle, _s.Config);
             Assert.IsNotNull(_s.Controller.Classic.Definition, "A tüfek v3 tanımına bağlı değil (Arsenal)");
             ZombieEnemy z = _s.Dogur(_s.Zemin(0f, 7f));
+            // C-00 01.10 (order-dependent red, root cause S-02 b5p): the Standard walked from 7 m into the muzzle zone (under 1 m)
+            // before the rounds landed, so they spawned inside / past it. The target is held at 7 m (Update + Animator off,
+            // handed back alive in the teardown) — this test is about the classic weapon's projectiles reaching a target.
+            z.CompleteRise();
+            yield return null;
+            yield return null;
+            Dondur(z);
             yield return new WaitForSeconds(1.5f);
 
             float hp0 = z.Health;
