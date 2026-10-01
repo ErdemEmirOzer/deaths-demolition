@@ -32,8 +32,10 @@
 #   * WP-066L: both players run with -ddTelemetryDir <out>/telemetry (all build types honour it), so a
 #     smoke run never writes the real persistentDataPath/telemetry folder;
 #   * result in <out>/smoke-report.json ("userdata": before/after/restored/verified).
-# Exit: 0 ok · 20 smoke failed (exit code / exception / missing capture) · 30 user-data guard failed · 64 usage
-# Machine slot: takes the single 'smoke' slot (tools/slot.sh v4) for the whole e1+e4+restore sequence.
+# Exit: 0 ok · 20 smoke failed (exit code / exception / missing capture) · 30 user-data guard failed, or a game Player was
+#   already running (refused before the copy) · 64 usage · slot.sh's code when a slot cannot be taken
+# Machine slots (G4 D3 / K2): 'player' then 'smoke' (tools/slot.sh v4), both taken before the user-data copy and held for
+# the whole copy + e1 + e4 + restore sequence.
 set -u
 setopt nullglob
 source "${0:A:h}/dd-env.sh"
@@ -99,6 +101,25 @@ settle_all() { settle_plist "$DD_BUNDLE_ID" "$P1"; settle_plist "unity.Deaths De
 sidefiles() { for d in "$D1" "$D2"; do [ -d "$d" ] && find "$d" -maxdepth 1 -name 'prototype-profile.json.*' ! -name '*.lock' 2>/dev/null; done | LC_ALL=C sort; }
 snapshot() { for f in "$F1" "$F2" "${UIFILES[@]}"; do echo "$(dd_sha "$f")  $f"; done; for f in "$P1" "$P2"; do echo "$(plist_digest "$f")  $f (launch-counter keys excluded)"; done; sidefiles | while IFS= read -r f; do echo "$(dd_sha "$f")  $f"; done; }
 
+# 0) G4 D3 / K2 (C-00 01.10): slots BEFORE the user-data copy, in the machine order player → smoke (a release shell that
+#    already holds 'player' re-enters it here; a standalone smoke waits for 'player' without holding 'smoke', so the two
+#    can no longer deadlock). Then a live game Player → 30 before anything is copied (its writes would land between the
+#    backup and the restore). The check reads each process's executable path (ps comm, as wp078_perf.players) — not
+#    command lines, so a queued player-run.sh or a codesign of the .app is no Player; a failed ps counts as a live Player
+#    (review NIT: fail closed). DD_GUARD_PLAYER_RE: the guard's own pattern knob, fixtures only — logged when set.
+trap 'dd_slot_release smoke; dd_slot_release player' EXIT
+dd_slot_acquire player || exit $?  # WP-043D: every Player launch holds the 'player' slot (never during main-ci)
+dd_slot_acquire smoke || exit $?   # slot.sh v4 'smoke' kind (limit 1): only one player smoke at a time — release smokes write the real profile
+[ -n "${DD_GUARD_PLAYER_RE:-}" ] && dd_log "smoke: DD_GUARD_PLAYER_RE is set ('$DD_GUARD_PLAYER_RE') — fixture Player pattern in use"
+if PS=$(ps -Ao pid=,comm= 2>/dev/null) && [ -n "$PS" ]; then
+  LIVE=$(print -r -- "$PS" | grep -E "${DD_GUARD_PLAYER_RE:-Contents/MacOS/(Deaths Demolition|DeathsDemolition)}")
+else
+  LIVE="? ps failed (counted as a live Player)"
+fi
+if [ -n "$LIVE" ]; then
+  dd_log "smoke: REFUSED — a Player is running (nothing copied, no Player started; exit 30): $(print -r -- "$LIVE" | tr '\n' ';')"
+  exit 30
+fi
 # 1) guard: copy the real user data (no deletion, our own directory only)
 UD="$OUT/userdata-backup"; mkdir -p "$UD/D1" "$UD/D2" "$UD/PR"
 [ -f "$F1" ] && cp -p "$F1" "$UD/D1/"; for f in "$D2"/prototype-profile.json*; do [ -f "$f" ] && [ "${f##*.}" != "lock" ] && cp -p "$f" "$UD/D2/"; done
@@ -110,9 +131,6 @@ SBX="$OUT/profile-sandbox"; mkdir -p "$SBX"
 DEVFLAGS=(); [ "$MODE" = "dev" ] && DEVFLAGS=(-ddProfilePath "$SBX/prototype-profile.json")
 dd_log "smoke mode=$MODE profileSandbox=$([ "$MODE" = "dev" ] && echo yes || echo no)"
 
-trap 'dd_slot_release player; dd_slot_release smoke' EXIT
-dd_slot_acquire smoke || exit $?   # slot.sh v4 'smoke' kind (limit 1): only one player smoke at a time — release smokes write the real profile
-dd_slot_acquire player || exit $?  # WP-043D: every Player launch holds the 'player' slot (never during main-ci)
 # 2) e1 main menu
 "$BIN" -screen-fullscreen 0 -ddTelemetryDir "$OUT/telemetry" -ddCapture "$OUT/e1-mainmenu-1280x720.png" -ddSize 1280x720 -ddDelay "$DELAY" "${DEVFLAGS[@]}" -logFile "$OUT/e1-player.log"
 E1=$?; E1X=$(grep -c 'Exception\|WITH FAILURES' "$OUT/e1-player.log" 2>/dev/null); E1X=${E1X:-0}

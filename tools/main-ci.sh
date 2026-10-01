@@ -29,7 +29,8 @@
 # Exit: 0 green · 1 red tests · 2 compile error / missing results · 3 CI worktree or driver worktree not clean, driver not
 #   detached or its tools ≠ main's, lease stale/malformed/symlink, CI project missing, a Unity still has the CI checkout open
 #   at the restore (window left open, tell C-00) · 64 usage, unknown commit, an unrestored guard window of this SHA,
-#   malformed ci-isolated.txt / ci-suites.txt (checked with the driver, before anything is taken)
+#   malformed ci-isolated.txt / ci-suites.txt (checked with the driver, before anything is taken), DD_GUARD_ROOT set or the
+#   canonical guard ($DD_GUARD_CANON = KADRO wp-079/driver/tools/userdata-guard.sh, G4 D4) missing
 #   · 75 busy (lease held, CI project open, guard snapshot 75 three times) · 130/143/129 INT/TERM/HUP.
 #   Guard (editor scope): a snapshot never answers 30 (that is player scope's "a Player is running"); any snapshot exit other
 #   than 75 is returned as is, nothing started. A restore that fails or does not print "verified=1" makes the run exit the
@@ -49,6 +50,9 @@ while [ $# -gt 0 ]; do case "$1" in
   --alone-timeout) ATMIN="$2"; shift ;;
   *) echo "unknown option: $1" >&2; exit 64 ;; esac; shift; done
 
+# G4 D4 (C-00 01.10): the guard is the canonical driver copy ($DD_GUARD_CANON, dd-env.sh), never this worktree's; a set
+# DD_GUARD_ROOT or a missing canonical guard is 64 before anything is taken.
+dd_guard_canon_check || exit 64
 # Codex-audit M-12 (C-00 30.09): driver check before anything is taken (no lease, no slot, no guard).
 CI_DRIVER=""; CI_DRIVER_HEAD=""; CI_TOOLS_TREE=""
 ci_driver_check() {
@@ -87,7 +91,7 @@ ci_project_open() { dd_project_open "$CI_DIR/prototype/DeathsDemolition_Playable
 CI_PLAYER_HELD=0; CI_GUARD_READY=0; CI_GUARD_EXIT=0; CI_GUARD_DIR=""; CI_CHILD=""; CI_CLEANING=0; CI_SIGNAL=""
 # CI_GUARD_DIR = the directory whose snapshot succeeded (Codex-audit M-07: it can be a .tryN retry directory).
 ci_guard_restore() {
-  "$DD_TOOLS_DIR/userdata-guard.sh" restore "$CI_GUARD_DIR" --scope editor > "$CI_GUARD_DIR.out" 2>&1
+  "$DD_GUARD_CANON" restore "$CI_GUARD_DIR" --scope editor > "$CI_GUARD_DIR.out" 2>&1
   CI_GUARD_EXIT=$?; CI_GUARD_READY=0
   if [ "$CI_GUARD_EXIT" -eq 0 ] && ! grep -q 'restore scope=editor .*verified=1' "$CI_GUARD_DIR.out"; then CI_GUARD_EXIT=31; fi
 }
@@ -189,7 +193,7 @@ for d in "$OUT"/userdata-guard(N) "$OUT"/userdata-guard.try*(N/); do
 done
 while :; do
   GDIR="$OUT/userdata-guard"; [ "$GTRY" -gt 1 ] && GDIR="$OUT/userdata-guard.try$GTRY"
-  "$DD_TOOLS_DIR/userdata-guard.sh" snapshot "$GDIR" --scope editor > "$GDIR-snapshot.out" 2>&1; GS=$?
+  "$DD_GUARD_CANON" snapshot "$GDIR" --scope editor > "$GDIR-snapshot.out" 2>&1; GS=$?
   [ "$GS" -eq 0 ] && break
   [ "$GS" -eq 75 ] && [ "$GTRY" -lt "$CI_GUARD_TRIES" ] || { dd_log "userdata snapshot exit $GS (try $GTRY/$CI_GUARD_TRIES, $GDIR) — no tests started"; exit "$GS"; }
   dd_log "userdata snapshot75 (try $GTRY/$CI_GUARD_TRIES, $GDIR): busy — retrying into a new directory; no tests started"

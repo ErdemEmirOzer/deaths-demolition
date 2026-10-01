@@ -134,6 +134,11 @@ class FakeRepo:
         unity.write_text("#!/bin/sh\nexit 0\n")
         unity.chmod(0o755)
         (self.dir / "home").mkdir()
+        # G4 D4: rc.sh runs the canonical driver guard ($HOME/…/wp-079/driver/tools/userdata-guard.sh) — the same fake
+        canon = self.dir / "home/Desktop/KADRO/context/projects/deaths-demolition/wp-079/driver/tools/userdata-guard.sh"
+        canon.parent.mkdir(parents=True)
+        canon.write_bytes((self.root / "tools/userdata-guard.sh").read_bytes())
+        canon.chmod(0o755)
         self.env = {"PATH": plenty_bin(self.dir) + ":" + os.environ["PATH"], "HOME": str(self.dir / "home"), "TMPDIR": str(self.dir),
                     "CALL_LOG": str(self.log), "DD_UNITY": str(unity), "DD_SLOT_BASE": str(self.dir / "slots"),
                     "PYTHONDONTWRITEBYTECODE": "1", "GIT_CEILING_DIRECTORIES": str(self.dir)}
@@ -340,9 +345,32 @@ class RcStageGuardTests(unittest.TestCase):
 
     def test_GuardYolu_TekKanonikDegisken_TestDaliYok(self):
         text = (REPO / "tools/qa/rc.sh").read_text()
-        self.assertEqual(1, text.count('DD_GUARD="$REPO/tools/userdata-guard.sh"'))
-        body = text.split('DD_GUARD="$REPO/tools/userdata-guard.sh"', 1)[1]
+        self.assertEqual(1, text.count('DD_GUARD="$DD_GUARD_CANON"'))   # G4 D4: the driver guard (dd-env.sh)
+        body = text.split('DD_GUARD="$DD_GUARD_CANON"', 1)[1]
         self.assertNotIn("userdata-guard.sh", body)   # every guard call after it goes through $DD_GUARD
+        self.assertIn('DD_GUARD_CANON="$HOME/Desktop/KADRO/context/projects/deaths-demolition/wp-079/driver/tools/userdata-guard.sh"',
+                      (REPO / "tools/dd-env.sh").read_text())
+
+    def test_GuardKanonik_DdGuardRootVeyaKanonYok_Cikis64HicbirSeyYok(self):
+        repo, out, result = self.rc("--perf-runs", "3", env_extra={"DD_GUARD_ROOT": "/nonexistent-guard-root"})
+        self.assertEqual(64, result.returncode, result.stderr)
+        self.assertIn("DD_GUARD_ROOT", result.stderr)
+        self.assertEqual([], repo.calls())
+        self.assertFalse(out.exists())
+        repo = FakeRepo(self, self.REAL)
+        (repo.dir / "home/Desktop/KADRO/context/projects/deaths-demolition/wp-079/driver/tools/userdata-guard.sh").unlink()
+        repo, out, result = self.rc("--perf-runs", "3", repo=repo)
+        self.assertEqual(64, result.returncode, result.stderr)
+        self.assertIn("canonical guard", result.stderr)
+        self.assertEqual([], repo.calls())
+        self.assertFalse(out.exists())
+
+    def test_GuardKanonik_RepoKopyasiCagrilmaz(self):
+        repo = FakeRepo(self, self.REAL)
+        (repo.root / "tools/userdata-guard.sh").write_text("#!/bin/sh\necho WORKTREE-GUARD-USED >&2\nexit 99\n")
+        repo, out, result = self.rc("--perf-runs", "3", repo=repo)
+        self.assertNotIn("WORKTREE-GUARD-USED", result.stdout + result.stderr)
+        self.assertTrue(self.guard_calls(repo.calls()))
 
 
 class PlayerLaunchTests(unittest.TestCase):

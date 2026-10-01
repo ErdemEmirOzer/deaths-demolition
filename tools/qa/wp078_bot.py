@@ -15,7 +15,13 @@ usage: wp078_bot.py --bin <build dir|.app|binary> --out <new dir> --commit <40-h
                     [--extra-arg=<flag>]... [--timeout 3600]
 exit: 0 run complete + guard ok · 1 run not complete (see attempt.json) · 6 a game Player is up · 7 guard STOP (snapshot error,
       restore error or verdict mismatch — report to C-00) · 30 / 75 snapshot waited (live DD Player / lock) · 75 also a failed
-      clean-host preflight (Player not launched) · 64 usage · 143 SIGTERM (restore still ran)
+      clean-host preflight (Player not launched) · 65 NOT restored — a Player still up 60 s after the run
+      (out/ug/userdata-NOT-RESTORED.txt), or such a marker unresolved next to <out> (nothing started) — STOP, C-00
+      (ug/userdata-NOT-RESTORED.txt, STOP → C-00) · 64 usage, DD_GUARD_ROOT set or the canonical guard missing (G4 D4)
+      · 130/143/129 INT/TERM/HUP (the restore ran first)
+Guard (G4 D2/D4, C-00 01.10): the canonical driver guard (guard_receipt.GUARD); on an error or a signal the Player
+(player-run.sh) gets TERM, ≤ 30 s, then KILL; the restore waits ≤ 60 s for no game Player to be left and runs with
+INT/TERM/HUP deferred; the signal is raised after the attempt record is written.
 """
 import argparse
 import signal
@@ -80,7 +86,21 @@ def main():
                         "(hostClean = every sample clean); only the player slot is held (by the guard), no Unity slots")
     parser.add_argument("--load-max", type=float, default=6.0)
     args = parser.parse_args()
-    signal.signal(signal.SIGTERM, lambda *_: sys.exit(143))   # C-00 30.09 M-14: the finally restore runs on SIGTERM
+    # C-00 30.09 M-14 / G4 D2: TERM and HUP become SystemExit(128+n), so the restore half runs
+    for signum in (signal.SIGTERM, signal.SIGHUP):
+        if signal.getsignal(signum) in (signal.SIG_DFL, None):   # review SHOULD-4: nohup / `&` keep their SIG_IGN
+            signal.signal(signum, lambda n, _frame: sys.exit(128 + n))
+    refusal = guard_receipt.canon_refusal()
+    if refusal:
+        print(f"guard refused (G4 D4): {refusal} — nothing started", file=sys.stderr)
+        return 64
+    # G4 D2 review MUST-1: an unresolved NOT-RESTORED marker next to this run stops it — the next snapshot would take the
+    # unrestored data as its baseline (wp078_accept checks the whole evidence tree before every unit)
+    parent = Path(args.out).resolve().parent
+    open_markers = guard_receipt.unresolved(parent.glob("*/ug/" + guard_receipt.MARKER))   # the sibling runs' guard dirs
+    if open_markers:
+        print(f"unrestored guard window(s), resolve with C-00 first — nothing started: {open_markers}", file=sys.stderr)
+        return guard_receipt.NOT_RESTORED
     if not re.fullmatch(r"[0-9a-f]{40}", args.commit):
         parser.error("--commit must be a full lowercase 40-hex SHA")
 
@@ -166,7 +186,7 @@ def run_guarded(args, out, command, attempt):
         wp064_run.write_json(out / "attempt.json", attempt)
         return code
 
-    timed_out, samples, exit_code = False, [], None
+    timed_out, samples, exit_code, player, inflight = False, [], None, None, None
     try:
         player = launch(command)
         deadline = time.monotonic() + args.timeout
@@ -185,12 +205,21 @@ def run_guarded(args, out, command, attempt):
             time.sleep(30 if args.quiet else 2)
         exit_code = player.wait()
         (out / "exit.txt").write_text(f"exit={exit_code}\n", encoding="utf-8")
-    finally:
-        # C-00 30.09 M-14: the restore runs on every path — normal end, error, Ctrl-C, SIGTERM (SystemExit 143)
-        receipt = guard_receipt.close(ug, "player")
-        guard_code, why = receipt["code"], receipt["why"]
-        attempt["guard"] = dict(receipt, snapshotExit=0, verdict=why)
-        wp064_run.write_json(out / "attempt.json", attempt)
+    except BaseException as error:   # error, Ctrl-C, SIGTERM/SIGHUP: stop the Player (TERM → 30 s → KILL), restore, go on
+        inflight = error
+        if player is not None:
+            guard_receipt.stop_child(player, 30.0)
+    # C-00 30.09 M-14 / G4 D2: the restore half runs on every path, signals deferred; a Player still up → not restored, 65
+    receipt, signals = guard_receipt.finish(ug, "player", wp078_perf.players)
+    guard_code, why = receipt["code"], receipt["why"]
+    attempt["guard"] = dict(receipt, snapshotExit=0, verdict=why)
+    wp064_run.write_json(out / "attempt.json", attempt)
+    if guard_code == guard_receipt.NOT_RESTORED:
+        print(f"STOP: {why} — report to C-00", file=sys.stderr)
+        return guard_code
+    signals.reraise()
+    if inflight is not None:
+        raise inflight
 
     missing = [name for name in REQUIRED if not (out / name).is_file()]
     if exit_code in (30, 75) and not timed_out and not (out / "player.log").is_file() and guard_code == 0:

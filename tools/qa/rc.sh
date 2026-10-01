@@ -9,6 +9,8 @@
 # final verdict remains failed. Every attempted stage keeps its exit code, output and artefacts;
 # rc_aggregate.py always runs.
 #
+# $DD_GUARD = dd-env.sh DD_GUARD_CANON (G4 D4, C-00 01.10): the CI driver's guard, never this checkout's; DD_GUARD_ROOT set
+# or that guard missing → 64 before the output directory is created.
 # User-data guard (Y2, C-00 30.09 · §4.14) — PER STAGE, never one snapshot around the whole RC (its final restore would
 # roll back what the user did while playing during the RC). Every guarded stage runs
 #   $DD_GUARD snapshot stages/<stage>/ug --scope S → stage → $DD_GUARD restore stages/<stage>/ug --scope S
@@ -54,6 +56,7 @@ done
 # M-09 (C-00 30.09): the closure gate needs >= 3 complete perf windows; fewer is a usage error, not a late FAIL.
 [[ "$PERF_RUNS" == <-> ]] && [ "$PERF_RUNS" -ge 3 ] || { echo "WP-061 RC requires --perf-runs >= 3" >&2; exit 64; }
 [ "$SEED" = "61" ] || [ "$SEED" = "26" ] || { echo "DEC-091 RC requires --seed 61 or 26" >&2; exit 64; }
+dd_guard_canon_check || exit 64   # G4 D4: DD_GUARD_ROOT set / canonical driver guard missing — nothing created
 [ -n "$OUT" ] || OUT="$DD_BUILD_ROOT/rc-$(dd_utc)"
 if [ -d "$OUT" ] && [ -n "$(ls -A "$OUT" 2>/dev/null)" ]; then
   echo "refusing non-empty RC output directory: $OUT" >&2
@@ -67,8 +70,8 @@ FAILED_STAGE=""
 
 log() { echo "$(date -u +%FT%TZ) $*" | tee -a "$TIMELINE"; }
 
-# M11: the one canonical guard path — C-00's "driver guard path" decision changes this line only.
-DD_GUARD="$REPO/tools/userdata-guard.sh"
+# M11 / G4 D4 (C-00 01.10): the one canonical guard — the driver copy (dd-env.sh DD_GUARD_CANON), never this checkout's.
+DD_GUARD="$DD_GUARD_CANON"
 GUARD_DIR=""; GUARD_SCOPE=""; GUARD_STAGE=""; GUARD_CODE=0
 CURRENT_STAGE=""; STAGE_PID=""; SIG_PENDING=""
 

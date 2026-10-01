@@ -13,6 +13,17 @@ DD_WIN_DIR="DeathsDemolition-win64"; DD_WIN_EXE="DeathsDemolition.exe"   # WP-06
 DD_BUNDLE_ID="com.Deaths-Demolition.Deaths-Demolition---Playable-Concept"
 DD_PRODUCT="Deaths Demolition - Playable Concept"
 
+# G4 D4 (C-00 01.10): the ONE user-data guard every guarded caller runs (main-ci, rc.sh, tools/qa wp078_*): the CI driver
+# worktree's copy, which C-00 keeps detached at main (main-ci M-12 refuses any other driver). A fixed path, not an env knob
+# (a worktree's own, possibly older, guard is never used). dd_guard_canon_check: DD_GUARD_ROOT set (guard self-test knob)
+# or the canonical guard missing → one reason line on stderr and 64, before the caller takes anything.
+DD_GUARD_CANON="$HOME/Desktop/KADRO/context/projects/deaths-demolition/wp-079/driver/tools/userdata-guard.sh"
+dd_guard_canon_check() {
+  [ -z "${DD_GUARD_ROOT:-}" ] || { echo "guard: DD_GUARD_ROOT is set (guard self-test only) — refused, nothing taken (64)" >&2; return 64; }
+  [ -f "$DD_GUARD_CANON" ] && [ -x "$DD_GUARD_CANON" ] || { echo "guard: canonical guard $DD_GUARD_CANON missing or not executable — refused, nothing taken (64)" >&2; return 64; }
+  return 0
+}
+
 dd_utc() { date -u +%Y%m%dT%H%M%SZ; }
 dd_log() { echo "$(date -u +%FT%TZ) $*"; [ -n "$DD_TIMELINE" ] && echo "$(date -u +%FT%TZ) $*" >> "$DD_TIMELINE"; }
 dd_unity_count() { pgrep -f "Unity.app/Contents/MacOS/Unity.* -batchmode" 2>/dev/null | wc -l | tr -d ' '; }

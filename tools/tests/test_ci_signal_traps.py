@@ -26,7 +26,10 @@ echo "$1 $2 $3" >> "{log}/slot-calls.txt"; echo "SLOT $2#1 -> $3"
 """
 # Like the real guard: one snapshot per directory (64 when <dir>/snap exists). FAKE_GUARD_75_ONCE: the first snapshot
 # leaves a partial <dir>/snap and returns 75 (live data kept changing), later ones succeed; FAKE_GUARD_ALWAYS_75: every one.
+# G4 D4: main-ci runs the canonical guard ($HOME/…/wp-079/driver/tools/userdata-guard.sh, origin "canon"); the driver
+# worktree's own copy (origin "worktree") must never be called — guard-origin.txt records which one ran.
 FAKE_GUARD = """#!/bin/zsh
+echo "{origin}" >> "{log}/guard-origin.txt"
 cmd=$1 dir=$2; echo "$cmd" >> "{log}/guard-calls.txt"; echo "$cmd $dir" >> "{log}/guard-dirs.txt"
 if [ "$cmd" = snapshot ]; then
   [ -e "$dir/snap" ] && {{ echo "$dir/snap exists — one snapshot per directory" >&2; exit 64; }}
@@ -136,6 +139,9 @@ class CiFixture(unittest.TestCase):
         return subprocess.run(["git", *args], cwd=cwd or self.repo, env=self.env(), check=True, capture_output=True,
                               text=True).stdout.strip()
 
+    def canon_guard(self):
+        return self.home / "Desktop/KADRO/context/projects/deaths-demolition/wp-079/driver/tools/userdata-guard.sh"
+
     def make_repo(self, real_test_sh=False):
         """Fake main repo whose `main` carries the tools under test (copied scripts + fake slot.sh / userdata-guard.sh and
         the CI checkout's test.sh), a detached CI worktree and a detached DRIVER worktree at main (Codex-audit M-12): the
@@ -154,7 +160,8 @@ class CiFixture(unittest.TestCase):
         for name in COPY:
             shutil.copy2(TOOLS / name, tools / name)
         write_exec(tools / "slot.sh", FAKE_SLOT.format(log=self.log))
-        write_exec(tools / "userdata-guard.sh", FAKE_GUARD.format(log=self.log))
+        write_exec(tools / "userdata-guard.sh", FAKE_GUARD.format(log=self.log, origin="worktree"))
+        write_exec(self.canon_guard(), FAKE_GUARD.format(log=self.log, origin="canon"))
         if real_test_sh:
             for name in ("test.sh", "dd-env.sh", "test-durations.py"):
                 shutil.copy2(TOOLS / name, tools / name)

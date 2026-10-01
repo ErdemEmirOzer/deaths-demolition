@@ -92,7 +92,7 @@ class PerfRestoreOnEveryPathTests(unittest.TestCase):
     def run_window(self, launch):
         root = Path(tempfile.mkdtemp())
         closed = []
-        with mock.patch.object(wp078_perf, "player_up", return_value=False), \
+        with mock.patch.object(wp078_perf, "players", return_value=[]), \
                 mock.patch.object(gr, "run_guard", return_value=done(0)), \
                 mock.patch.object(gr, "close", side_effect=lambda ug, *a, **k: closed.append(ug) or {"code": 0, "why": "touched=0"}), \
                 mock.patch.object(wp078_perf, "launch", side_effect=launch):
@@ -121,7 +121,7 @@ class PerfRestoreOnEveryPathTests(unittest.TestCase):
     def test_snapshot_wait_states_and_errors_launch_nothing(self):
         for snapshot, expected in ((30, 30), (75, 75), (31, 7)):
             root = Path(tempfile.mkdtemp())
-            with mock.patch.object(wp078_perf, "player_up", return_value=False), \
+            with mock.patch.object(wp078_perf, "players", return_value=[]), \
                     mock.patch.object(gr, "run_guard", return_value=done(snapshot)), \
                     mock.patch.object(wp078_perf, "launch") as launch:
                 code = wp078_perf.run_window(perf_args(), root, Path("/b/P"), 60, None, lambda s: None, "yuksek", "tp", 1)
@@ -130,7 +130,7 @@ class PerfRestoreOnEveryPathTests(unittest.TestCase):
 
     def test_restore_failure_stops_the_matrix(self):
         root = Path(tempfile.mkdtemp())
-        with mock.patch.object(wp078_perf, "player_up", return_value=False), \
+        with mock.patch.object(wp078_perf, "players", return_value=[]), \
                 mock.patch.object(gr, "run_guard", return_value=done(0)), \
                 mock.patch.object(gr, "close", return_value={"code": 7, "why": "guard restore exit 31"}), \
                 mock.patch.object(wp078_perf, "launch", return_value=done(0)):
@@ -143,6 +143,7 @@ class BotRestoreOnEveryPathTests(unittest.TestCase):
         closed = []
         args = argparse.Namespace(timeout=60, quiet=False, load_max=6.0, kind="gameplay", mode="tp")
         with mock.patch.object(gr, "run_guard", return_value=done(0)), \
+                mock.patch.object(wp078_perf, "players", return_value=[]), \
                 mock.patch.object(gr, "close", side_effect=lambda ug, *a, **k: closed.append(ug) or {"code": 0, "why": "touched=0"}), \
                 mock.patch.object(wp078_bot, "launch", side_effect=KeyboardInterrupt):
             with self.assertRaises(KeyboardInterrupt):
@@ -187,7 +188,7 @@ class PerfAttemptAnnotationTests(unittest.TestCase):
         import re
         root = Path(tempfile.mkdtemp())
         seen = []
-        with mock.patch.object(wp078_perf, "player_up", return_value=False), \
+        with mock.patch.object(wp078_perf, "players", return_value=[]), \
                 mock.patch.object(gr, "run_guard", side_effect=lambda cmd, ug, *a: seen.append(Path(ug).name) or done(0)), \
                 mock.patch.object(gr, "close", return_value={"code": 0, "why": "touched=0"}), \
                 mock.patch.object(wp078_perf, "launch", return_value=done(0)):
@@ -208,7 +209,7 @@ class PerfExtraArgTests(unittest.TestCase):
         seen = []
         a = perf_args()
         a.extra_arg = ["-ddPilotStart", "48,48,225"]
-        with mock.patch.object(wp078_perf, "player_up", return_value=False), \
+        with mock.patch.object(wp078_perf, "players", return_value=[]), \
                 mock.patch.object(gr, "run_guard", return_value=done(0)), \
                 mock.patch.object(gr, "close", return_value={"code": 0, "why": "touched=0"}), \
                 mock.patch.object(wp078_perf, "launch", side_effect=lambda cmd: seen.append(cmd) or done(0)):
@@ -234,6 +235,7 @@ class BotNotStartedIsAWaitTests(unittest.TestCase):
                     (out / "player.log").write_text("ran")
                 return player_exit
         with mock.patch.object(gr, "run_guard", return_value=done(0)), \
+                mock.patch.object(wp078_perf, "players", return_value=[]), \
                 mock.patch.object(gr, "close", return_value={"code": 0, "why": "touched=0"}), \
                 mock.patch.object(wp078_bot, "launch", return_value=Done()):
             code = wp078_bot.run_guarded(args, out, ["/b/P"], {"status": "starting"})

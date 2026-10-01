@@ -24,6 +24,9 @@ import sys
 import time
 import uuid
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import guard_receipt  # noqa: E402  (G4 D2: DeferredSignals for stop_player)
+
 PLAYER_RUN = Path(__file__).resolve().parents[1] / "player-run.sh"
 
 
@@ -338,7 +341,51 @@ def main():
     })
     write_json(out / "attempt.json", attempt)
 
+    # G4 D2 (M12, C-00 01.10): a TERM/HUP to this runner is SystemExit(128+n) and a Ctrl-C KeyboardInterrupt — either one
+    # stops the Player the same way as the timeout (TERM through player-run.sh, 10 s, then KILL of the tree) before it goes
+    # on, so the caller's guard restore never runs while an orphaned Player still writes.
+    for handled in (signal.SIGTERM, signal.SIGHUP):
+        if signal.getsignal(handled) in (signal.SIG_DFL, None):
+            signal.signal(handled, lambda signum, _frame: sys.exit(128 + signum))
     player = subprocess.Popen([str(PLAYER_RUN)] + command)
+    try:
+        return run_player(args, out, attempt, player)
+    except BaseException:
+        stop_player(player)
+        raise
+
+
+def stop_player(player):
+    """TERM to player-run.sh (it passes the TERM on), ≤ 10 s, then KILL of its descendants and of itself. G4 D2 review
+    SHOULD-2: signals meanwhile are deferred and dropped (the exception already on its way wins) — a terminal Ctrl-C
+    reaches this runner as INT and, a moment later, as wp078_perf's TERM; that TERM must not cut the KILL fallback."""
+    block = guard_receipt.DeferredSignals()
+    with block:
+        _stop_player(player)
+    return block   # the timeout path re-raises what arrived meanwhile; the exception path already has one in flight
+
+
+def _stop_player(player):
+    if player.poll() is not None:
+        return
+    player.terminate()
+    try:
+        player.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        # Y2: player-run.sh passed the TERM on; a Player that ignores it is killed with its wrapper
+        rows = process_rows()
+        rows_by_pid = {row["pid"]: row for row in rows}
+        for row in rows:
+            if row["pid"] != player.pid and process_is_descendant(row, rows_by_pid, player.pid):
+                try:
+                    os.kill(row["pid"], signal.SIGKILL)
+                except OSError:
+                    pass
+        player.kill()
+        player.wait()
+
+
+def run_player(args, out, attempt, player):
     monitor = []
     contaminated = False
     heavy_streaks = {}
@@ -361,20 +408,7 @@ def main():
             contaminated = True
         if time.monotonic() >= deadline:
             timed_out = True
-            player.terminate()
-            try:
-                player.wait(timeout=10)
-            except subprocess.TimeoutExpired:
-                # Y2: player-run.sh passed the TERM on; a Player that ignores it is killed with its wrapper
-                rows = process_rows()
-                rows_by_pid = {row["pid"]: row for row in rows}
-                for row in rows:
-                    if row["pid"] != player.pid and process_is_descendant(row, rows_by_pid, player.pid):
-                        try:
-                            os.kill(row["pid"], signal.SIGKILL)
-                        except OSError:
-                            pass
-                player.kill()
+            stop_player(player).reraise()
             break
         time.sleep(1.0)
     exit_code = player.wait()

@@ -24,15 +24,17 @@ outputs it produced) — that record is the step provenance the manifest binds. 
 record <E>/stages/units/<name>.json. <E>/accept.log gets one UTC line per step.
 
 Stop rules: a guard STOP (exit 7 of a runner or of the Editor guard) stops the whole chain at once; a snapshot / host
-wait (30, 75, or 6 = a game Player up) is retried --wait-tries times, then the chain stops. Each stop prints
+wait (30, 75, or 6 = a game Player up) is retried --wait-tries times, then the chain stops. G4 D2 (review MUST-1): a
+window that was NOT restored (runner exit 65, userdata-NOT-RESTORED.txt) stops the chain at once, and an unresolved
+marker anywhere under <E> stops it before every guarded unit and every retry — never a wait, never moved aside. Each stop prints
 "STOP … report to C-00". A failed gameplay / perf / suite result does not stop later independent stages — the report
 shows it. The tree must stay at FINAL and clean before every stage (exit 2 otherwise).
 
 usage: wp078_accept.py --final <40-hex> [--evidence DIR] [--stages a6,a0,a1,a2,a3,a5,a4,a8] [--dry-run] [--resume]
                        [--editmode-filter RE] [--playmode-filter RE] [--wait-tries 3] [--wait-seconds 120]
 exit: 0 chain ran and the report PASSes (without a8: every selected stage PASS) · 1 an honest non-PASS · 2 HEAD is not
-      FINAL / the tree is dirty · 7 guard STOP · 6 / 30 / 75 a wait persisted · 64 usage or existing evidence without
-      --resume · 143 SIGTERM (the current child got SIGTERM and was waited for; Editor guard restored)
+      FINAL / the tree is dirty · 7 guard STOP · 65 a guard window NOT restored (or an unresolved marker under <E>) ·
+      6 / 30 / 75 a wait persisted · 64 usage or existing evidence without --resume · 143 SIGTERM (the current child got SIGTERM and was waited for; Editor guard restored)
 """
 import argparse
 import hashlib
@@ -72,6 +74,7 @@ REPORT_ROUNDS = 5
 GUARD_FIELDS = ("snapshotExit", "restoreExit", "verified", "outOfScopeChanged")
 RECORD_SCHEMA = "dd-wp078-accept-record-v1"
 STOP = guard_receipt.STOP                 # 7
+NOT_RESTORED = guard_receipt.NOT_RESTORED # 65 — G4 D2: STOP, C-00 resolves; never in WAIT_CODES
 WAIT_CODES = (6, 30, 75)
 RUN_NAME = re.compile(r"^(gameplay|route)-(topdown|tp|fp)$|^stability-\d+$|^report-(topdown|tp|fp)-\d+$|^flag-[a-z0-9]+-[01]$")
 
@@ -296,7 +299,23 @@ class Chain:
         self.log(f"EXIT {self.stage} {name}: {code}")
         return code
 
+    def open_markers(self, under=None):
+        root = under or self.evidence
+        return guard_receipt.unresolved(root.rglob(guard_receipt.MARKER)) if root.is_dir() else []
+
+    def check_markers(self, name):
+        """G4 D2 review MUST-1: an unrestored guard window anywhere under <E> stops the chain before the next snapshot
+        (which would take the unrestored data as its baseline)."""
+        if self.dry_run:
+            return
+        found = self.open_markers()
+        if found:
+            raise Stop(NOT_RESTORED, f"{name}: unrestored guard window(s) {found[:3]} — nothing started; C-00 resolves")
+
     def move_aside(self, path, tag):
+        found = self.open_markers(path)
+        if found:   # the marker must stay where the unrestored snapshot is
+            raise Stop(NOT_RESTORED, f"not moving {path.name} aside: unrestored guard window(s) {found[:3]} — C-00 resolves")
         k = 1
         while path.with_name(f"{path.name}.{tag}-{k}").exists():
             k += 1
@@ -412,6 +431,7 @@ class Chain:
     def snapshot_with_wait(self, name, ug, scope="editor"):
         for attempt in range(1, self.wait_tries + 1):
             self.check_terminated()
+            self.check_markers(name)
             if ug.exists():
                 self.move_aside(ug, "wait")
             raw = self.guard.snapshot(ug, scope)
@@ -497,9 +517,12 @@ class Chain:
                 return self.bot_result(name, out, 0 if load_json(out / "attempt.json").get("status") == "complete" else 1, gate)
             self.move_aside(out, "prev")
         for attempt in range(1, self.wait_tries + 1):
+            self.check_markers(name)
             code = self.execute(name, argv)
             if code == STOP:
                 raise Stop(STOP, f"{name}: wp078_bot guard STOP (snapshot error, restore error or verdict mismatch)")
+            if code == NOT_RESTORED:
+                raise Stop(NOT_RESTORED, f"{name}: wp078_bot NOT restored (a Player outlived the run) — C-00 resolves")
             if code == 143:
                 raise Terminated()
             if code not in WAIT_CODES:
@@ -666,11 +689,14 @@ class Chain:
         """One wp078_perf invocation; waits (6/30/75) resume in the same root, 7 is STOP, 143 ends the chain."""
         code = None
         for attempt in range(1, self.wait_tries + 1):
+            self.check_markers(name)
             code = self.execute(name, argv)
             if self.dry_run:
                 break
             if code == STOP:
                 raise Stop(STOP, f"{name} guard STOP (snapshot error, restore error or verdict mismatch)")
+            if code == NOT_RESTORED:
+                raise Stop(NOT_RESTORED, f"{name} NOT restored (a Player outlived a window) — C-00 resolves")
             if code == 143:
                 raise Terminated()
             if code not in WAIT_CODES:
@@ -949,6 +975,11 @@ def main(argv=None, **seams):
         stages = parse_stages(args.stages)
     except ValueError as error:
         print(str(error), file=sys.stderr)
+        return 64
+    # G4 D4 (C-00 01.10): the canonical driver guard or nothing (the wp078_perf / wp078_bot children check it too)
+    refusal = None if args.dry_run or "guard" in seams else guard_receipt.canon_refusal()
+    if refusal:
+        print(f"guard refused (G4 D4): {refusal} — nothing started", file=sys.stderr)
         return 64
     evidence = Path(args.evidence) if args.evidence else KADRO_EVIDENCE / args.final[:8]
     try:

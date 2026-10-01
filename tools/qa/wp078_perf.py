@@ -11,7 +11,13 @@ usage: wp078_perf.py --bin <app or build dir> --out <root> --commit <sha> [--tie
                      [--windows N] [--window-seconds 60] [--cooldown 60] [--dry-run]
 exit: 0 every window ran (see the report for pass/fail) · 6 a game Player was up and did not close · 7 user-data guard
       STOP (snapshot error, restore error or verdict mismatch — report to C-00) · 30 snapshot waited on a live DD Player ·
-      75 snapshot waited on a held lock · 64 usage · 143 SIGTERM (the current window is still restored)
+      75 snapshot waited on a held lock · 64 usage, DD_GUARD_ROOT set or the canonical guard missing (G4 D4) · 65 a window
+      was NOT restored (a Player still up 60 s after it: ug/<cell>/userdata-NOT-RESTORED.txt), or such a marker is still
+      unresolved under <out>/ug (nothing started) — STOP, C-00; never retried as a wait · 130/143/129 INT/TERM/HUP (the window is
+      still restored first)
+Guard (G4 D2/D4, C-00 01.10): the canonical driver guard (guard_receipt.GUARD); on an error or a signal wp064_run gets TERM
+(it stops its Player), ≤ 30 s, then KILL; the restore waits ≤ 60 s for no game Player to be left, runs with INT/TERM/HUP
+deferred (the guard child ignores them) and only then is the signal raised; the quiet window is released after it.
 """
 import argparse
 import signal
@@ -39,10 +45,18 @@ def resolve_binary(path):
     return p
 
 
+def players():
+    """Live game Player processes as "pid comm" (executable path — other sessions' shells mention the name in scripts)."""
+    # G4 D2 review SHOULD-1: a group Ctrl-C must not kill ps into an empty answer ("no Player" → a restore under a writer);
+    # ps ignores INT/TERM/HUP, and a failed ps counts as a live Player (fail closed)
+    ps = subprocess.run(["ps", "-Ao", "pid=,comm="], capture_output=True, text=True, preexec_fn=guard_receipt._ignore_signals)
+    if ps.returncode != 0:
+        return [f"? ps exit {ps.returncode} (counted as a live Player)"]
+    return [line.strip() for line in ps.stdout.splitlines() if line.strip().endswith(PLAYER_EXE)]
+
+
 def player_up():
-    """A game Player process (executable path — other sessions' shells mention the name in their scripts)."""
-    out = subprocess.run(["ps", "-Ao", "comm"], capture_output=True, text=True).stdout
-    return any(line.strip().endswith(PLAYER_EXE) for line in out.splitlines())
+    return bool(players())
 
 
 import guard_receipt  # noqa: E402  (C-00 30.09 M-17: the one guard receipt / verdict module)
@@ -166,9 +180,16 @@ def annotate_attempt(cell, receipt):
     path.write_text(json.dumps(attempt, indent=2) + "\n", encoding="utf-8")
 
 
-def launch(command):
-    """The wp064_run window (a seam for the guard tests)."""
-    return subprocess.run(command, capture_output=True, text=True)
+def launch(command, grace=30.0):
+    """The wp064_run window (a seam for the guard tests). G4 D2 (M12): on an exception or a signal wp064_run gets TERM, ≤
+    grace s, then KILL (guard_receipt.stop_child) — subprocess.run's immediate SIGKILL would orphan its Player."""
+    proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    try:
+        out, err = proc.communicate()
+    except BaseException:
+        guard_receipt.stop_child(proc, grace)
+        raise
+    return subprocess.CompletedProcess(command, proc.returncode, out, err)
 
 
 def window_args(tier_name, mode, cell, extra=()):
@@ -226,7 +247,15 @@ def main():
     parser.add_argument("--quiet-pause", type=float, default=180.0)
     parser.add_argument("--max-discards", type=int, default=6, help="K8: host-discarded re-runs allowed per cell per invocation")
     args = parser.parse_args()
-    signal.signal(signal.SIGTERM, lambda *_: sys.exit(143))   # C-00 30.09 M-14: finally blocks (restore) run on SIGTERM
+    # C-00 30.09 M-14 / G4 D2: TERM and HUP become SystemExit(128+n), so every finally (restore, quiet release) runs
+    for signum in (signal.SIGTERM, signal.SIGHUP):
+        if signal.getsignal(signum) in (signal.SIG_DFL, None):   # review SHOULD-4: nohup / `&` keep their SIG_IGN
+            signal.signal(signum, lambda n, _frame: sys.exit(128 + n))
+    if not args.dry_run:
+        refusal = guard_receipt.canon_refusal()
+        if refusal:
+            print(f"guard refused (G4 D4): {refusal} — nothing started", file=sys.stderr)
+            return 64
 
     targets = json.loads(Path(args.targets).read_text(encoding="utf-8"))
     tiers = [t for t in args.tiers.split(",") if t] or list(targets["tiers"])
@@ -237,6 +266,10 @@ def main():
         return 64
 
     root = Path(args.out).resolve()
+    open_markers = guard_receipt.unresolved((root / "ug").glob("*/" + guard_receipt.MARKER))
+    if open_markers:
+        print(f"unrestored guard window(s), resolve with C-00 first — nothing started: {open_markers}", file=sys.stderr)
+        return 65
     root.mkdir(parents=True, exist_ok=True)
     seconds = args.window_seconds or int(targets["windowSeconds"])
     runs = list(plan(targets, tiers, modes, args.windows))   # (tier, mode, windows needed)
@@ -313,18 +346,25 @@ def run_window(args, root, binary, seconds, quiet, note, name, mode, index):
     if code:
         note(f"{'BLOCKED' if code in (30, 75) else 'STOP'} {cell.name}: guard snapshot exit {snap.returncode} → {code}; no Player started")
         return code
-    run = None
+    run, inflight = None, None
     try:
         run = launch(command)
         (root / "ug").mkdir(parents=True, exist_ok=True)
         (root / "ug" / (cell.name + ".wp064-run.out")).write_text(run.stdout + run.stderr, encoding="utf-8")
-    finally:
-        # C-00 30.09 M-14: the restore runs on every path — normal end, error, Ctrl-C, SIGTERM (SystemExit 143)
-        receipt = guard_receipt.close(ug)
-        guard_code, why = receipt["code"], receipt["why"]
+    except BaseException as error:   # error, Ctrl-C, SIGTERM/SIGHUP (SystemExit): restore first, then it goes on
+        inflight = error
+    # C-00 30.09 M-14 / G4 D2: the restore half runs on every path, signals deferred; a Player still up → not restored, 65
+    receipt, signals = guard_receipt.finish(ug, "player", players)
+    guard_code, why = receipt["code"], receipt["why"]
+    if guard_code != guard_receipt.NOT_RESTORED:
         annotate_attempt(cell, receipt)
-        if guard_code:
-            note(f"STOP {cell.name}: {why} — report to C-00")
+    if guard_code:
+        note(f"STOP {cell.name}: {why} — report to C-00")
+    if guard_code == guard_receipt.NOT_RESTORED:
+        return guard_code   # the marker wins over a pending signal or error (the matrix stops either way)
+    signals.reraise()
+    if inflight is not None:
+        raise inflight
     if guard_code:
         return guard_code
     note(f"{cell.name} wp064_run exit {run.returncode} · guard ok ({why})")

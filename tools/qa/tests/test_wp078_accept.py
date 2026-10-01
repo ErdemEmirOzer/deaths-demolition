@@ -23,6 +23,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parents[1]   # tools/qa
 sys.path.insert(0, str(HERE))
+import guard_receipt  # noqa: E402
 import wp078_accept as acc  # noqa: E402
 import wp078_bot  # noqa: E402
 import wp078_perf  # noqa: E402
@@ -172,6 +173,9 @@ class FakeTools:
         if code in (30, 75):
             put_json(out / "attempt.json", {"status": "guard-blocked", "exitCode": code, "guard": {"snapshotExit": code}})
             return code
+        if code == 65:   # G4 D2: what wp078_bot leaves when a Player outlived the run — the snapshot is kept, not restored
+            put(out / "ug" / guard_receipt.MARKER, "NOT restored\n")
+            return code
         if code in (6, 7, 64):
             return code
         binary = wp078_perf.resolve_binary(opts["--bin"])
@@ -225,6 +229,11 @@ class FakeTools:
 
     def tool_wp078_perf_py(self, argv, _):
         root = Path(argv[argv.index("--out") + 1])
+        planned = self.script.get("perf:" + root.name)
+        if planned and planned[0] == 65:
+            planned.pop(0)
+            put(root / "ug" / "ug-perf-sinematik-tp-1" / guard_receipt.MARKER, "NOT restored\n")
+            return 65
         shutil.copytree(perf_fixture() / "perf", root, dirs_exist_ok=True)
         for attempt_path in root.glob("perf-*/attempt.json"):
             data = json.loads(attempt_path.read_text())
@@ -539,6 +548,47 @@ class StopTests(Base):
         self.assertEqual(1, chain.run())
         self.assertEqual("FAIL", json.loads((self.evidence / "stages" / "a2.json").read_text())["verdict"])
         self.assertEqual("PASS", json.loads((self.evidence / "stages" / "a3.json").read_text())["verdict"])
+
+    # ---- G4 D2 review MUST-1: NOT restored (65) is a STOP, never a wait ---------------------------------------------
+    def test_bot_not_restored_65_stops_at_once_and_the_marker_stays(self):
+        tools = self.prepared(("a6",))
+        tools.script["gameplay-topdown"] = [65, 0]
+        chain = make_chain(self.evidence, ["a2", "a3"], tools=tools)
+        self.assertEqual(65, chain.run())
+        runs = [c for c in tools.calls if "--out" in c and Path(c[c.index("--out") + 1]).name == "gameplay-topdown"]
+        self.assertEqual(1, len(runs))                                            # not retried
+        self.assertTrue((self.evidence / "a2" / "gameplay-topdown" / "ug" / guard_receipt.MARKER).is_file())
+        self.assertEqual([], list((self.evidence / "a2").glob("gameplay-topdown.*")))   # not moved aside
+        self.assertIn("NOT restored", (self.evidence / "accept.log").read_text())
+
+    def test_perf_not_restored_65_stops_before_the_report_and_b9(self):
+        tools = self.prepared(("a6",))
+        tools.script["perf:perf"] = [65]
+        chain = make_chain(self.evidence, ["a4"], tools=tools)
+        self.assertEqual(65, chain.run())
+        scripts = [Path(c[1]).name for c in tools.calls if c[0] == sys.executable]
+        self.assertEqual(1, scripts.count("wp078_perf.py"))
+        self.assertNotIn("wp078_perf_report.py", scripts)
+
+    def test_unresolved_marker_anywhere_stops_before_the_next_unit(self):
+        tools = self.prepared(("a6",))
+        marker = self.evidence / "b9" / "pose-x" / "ug" / "ug-perf-sinematik-tp-1" / guard_receipt.MARKER
+        put(marker, "NOT restored\n")
+        before = len(tools.calls)
+        self.assertEqual(65, make_chain(self.evidence, ["a2"], tools=tools).run())
+        self.assertEqual(before, len(tools.calls))                               # nothing started
+        self.assertIn("unrestored guard window", (self.evidence / "accept.log").read_text())
+        put(marker.parent / guard_receipt.MARKER_RESOLVED, "C-00\n")             # only C-00 writes this
+        self.assertEqual(0, make_chain(self.evidence, ["a2"], tools=tools, resume=True).run())
+
+    def test_move_aside_refuses_a_dir_with_an_unresolved_marker(self):
+        chain = make_chain(self.evidence, ["a2"])
+        out = self.evidence / "a2" / "gameplay-tp"
+        put(out / "ug" / guard_receipt.MARKER, "NOT restored\n")
+        with self.assertRaises(acc.Stop) as caught:
+            chain.move_aside(out, "wait")
+        self.assertEqual(65, caught.exception.code)
+        self.assertTrue(out.is_dir())
 
     def test_bot_stages_blocked_without_a_dev_build(self):
         tools = FakeTools()
