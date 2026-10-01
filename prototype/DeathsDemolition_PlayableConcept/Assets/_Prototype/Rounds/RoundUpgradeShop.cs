@@ -848,7 +848,7 @@ namespace DD.Prototype.Rounds
 
             CollectReplacementCandidates();
 
-            UpgradeOfferFault fault = UpgradeOfferPolicy.TryReroll(_current, _candidates, _weights, Random, _picks, _replacedSlots);
+            UpgradeOfferFault fault = UpgradeOfferPolicy.TryReroll(_current, _candidates, _weights, Random, _picks, _replacedSlots, PinnedTierSlot());
             if (fault == UpgradeOfferFault.NoReplacementAvailable)
             {
                 Debug.LogWarning("[Run] Upgrade offer: no eligible branch outside the current offer to reroll in (round " + Round +
@@ -1516,6 +1516,32 @@ namespace DD.Prototype.Rounds
             {
                 _picks[_picks.Count - 1] = settings;
             }
+        }
+
+        /// <summary>
+        /// RT5: the pinned step this shop's offer really carries — any drawable step on the node-card path; on the three-card
+        /// path only a tier step (its cards are branch tiers, <see cref="ApplyPinGuarantee"/>). -1 when none.
+        /// </summary>
+        public int PinGuaranteedStep(WeaponModifierState build)
+        {
+            if (!Tree.IsBuilt) return -1;
+            int step = Tree.PinnedOfferable(build);
+            if (step < 0 || NodeCardsActive) return step;
+            return Tree.Graph[step].Kind == RunTreeNodeKind.Tier ? step : -1;
+        }
+
+        /// <summary>RT4: the three-card slot holding the pinned tier step's card (the reroll keeps it), else -1.</summary>
+        private int PinnedTierSlot()
+        {
+            int step = PinGuaranteedStep(ModifierState());
+            if (step < 0) return -1;
+            UpgradeBranch branch = Tree.Graph[step].Branch;
+            for (int i = 0; i < _cards.Count; i++)
+            {
+                if (!_cards[i].IsNode && _cards[i].Branch == branch) return i;
+            }
+
+            return -1;
         }
 
         private bool HasLiveConsumer(UpgradeBranch branch)

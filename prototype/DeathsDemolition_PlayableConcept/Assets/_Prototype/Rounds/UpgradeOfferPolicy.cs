@@ -279,10 +279,12 @@ namespace DD.Prototype.Rounds
         /// cards stay in their slots; <paramref name="result"/> receives the new three in
         /// slot order and <paramref name="replacedSlots"/> the indices that changed.
         /// Nothing is drawn when the pool is empty (fault, no randomness consumed).
+        /// <paramref name="keepSlot"/> (RT4, WP-077 Nişan): a slot that never changes — the pinned step's card; the slots
+        /// are drawn from the others (-1 = none kept; the draw is then exactly the classic one).
         /// </summary>
         public static UpgradeOfferFault TryReroll(List<UpgradeBranchSettings> current,
             List<UpgradeBranchSettings> replacements, List<float> weights, IUpgradeOfferRandom random,
-            List<UpgradeBranchSettings> result, List<int> replacedSlots)
+            List<UpgradeBranchSettings> result, List<int> replacedSlots, int keepSlot = -1)
         {
             result.Clear();
             replacedSlots.Clear();
@@ -322,18 +324,29 @@ namespace DD.Prototype.Rounds
                 count = coin < 0.5f ? MinRerollReplacements : MaxRerollReplacements;
             }
 
-            // Which slots change: distinct, uniform.
-            int first = Mathf.Clamp((int)(Mathf.Clamp01(random != null ? random.NextValue() : 0f) * CardsPerOffer), 0, CardsPerOffer - 1);
-            replacedSlots.Add(first);
+            // Which slots change: distinct, uniform over the slots that may change (all but keepSlot).
+            bool keep = keepSlot >= 0 && keepSlot < CardsPerOffer;
+            int open = keep ? CardsPerOffer - 1 : CardsPerOffer;
+            if (count > open)
+            {
+                count = open;
+            }
+
+            int first = Mathf.Clamp((int)(Mathf.Clamp01(random != null ? random.NextValue() : 0f) * open), 0, open - 1);
+            int second = -1;
             if (count == 2)
             {
-                int second = Mathf.Clamp((int)(Mathf.Clamp01(random != null ? random.NextValue() : 0f) * (CardsPerOffer - 1)), 0, CardsPerOffer - 2);
+                second = Mathf.Clamp((int)(Mathf.Clamp01(random != null ? random.NextValue() : 0f) * (open - 1)), 0, open - 2);
                 if (second >= first)
                 {
                     second++;
                 }
+            }
 
-                replacedSlots.Add(second);
+            replacedSlots.Add(keep && first >= keepSlot ? first + 1 : first);
+            if (second >= 0)
+            {
+                replacedSlots.Add(keep && second >= keepSlot ? second + 1 : second);
             }
 
             for (int i = 0; i < current.Count; i++)

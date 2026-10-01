@@ -90,7 +90,7 @@ namespace DD.Prototype.Rounds
         public readonly int[] PinPath = new int[PathCapacity];
         public int PinPathCount { get; private set; }
         public int PinPathTotalCost { get; private set; }
-        /// <summary>The pinned step that is drawable now (the Nişan guarantee), -1 when none.</summary>
+        /// <summary>The pinned step the next offer carries (the Nişan guarantee; RT5: a tier step on the three-card path), -1 when none.</summary>
         public int PinReachableIndex { get; private set; } = -1;
 
         /// <summary>K10 is open (C-00): undo-last and fork reforge are not offered yet.</summary>
@@ -228,7 +228,7 @@ namespace DD.Prototype.Rounds
                     PinPathTotalCost += tree.Cost(_path[k], build);
                 }
 
-                PinReachableIndex = tree.PinnedOfferable(build);
+                PinReachableIndex = shop.PinGuaranteedStep(build);   // RT5: only a step this shop's offer can carry
             }
         }
 

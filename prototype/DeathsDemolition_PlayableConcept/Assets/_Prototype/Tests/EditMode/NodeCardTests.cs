@@ -912,6 +912,44 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void UcKartYolu_RT4_RerollPinKartiniKorur_RT5_YalnizKademeAdimiVaatEder()
+        {
+            // Üç kart yolu (RunTreeNodeCards kapalı; sevk dışı, test/F1): kartlar dal kademesidir.
+            for (int seed = 0; seed < 30; seed++)
+            {
+                _dukkan = new RoundUpgradeShop
+                {
+                    UnlockedPredicate = _ => true,
+                    Random = new SeededUpgradeOfferRandom(seed),
+                    WeaponProvider = () => ClassicWeaponId.AssaultRifle,
+                    NodeCardsOverride = false
+                };
+                PinleAc(1, "tier_FireRate");
+                int slot = -1;
+                for (int c = 0; c < _dukkan.Cards.Count; c++) if (!_dukkan.Cards[c].IsNode && _dukkan.Cards[c].Branch == UpgradeBranch.FireRate) slot = c;
+                Assert.GreaterOrEqual(slot, 0, "Nişan garantisi: FireRate kartı teklifte (seed " + seed + ")");
+                Assert.AreEqual(I("tier_FireRate"), _dukkan.PinGuaranteedStep(_rank));
+                Assert.IsTrue(_dukkan.TryReroll(_dukkan.SessionId, _dukkan.Revision), "seed " + seed);
+                Assert.AreEqual(UpgradeBranch.FireRate, _dukkan.Cards[slot].Branch, "RT4: reroll pinli kartı değiştirmez (seed " + seed + ")");
+            }
+
+            // RT5: keystone adımını üç kart yolu taşıyamaz → vaat yok; düğüm kartı yolu taşır.
+            _rank.SetTier(UpgradeBranch.FireRate, 2);
+            _dukkan = new RoundUpgradeShop
+            {
+                UnlockedPredicate = _ => true,
+                Random = new SeededUpgradeOfferRandom(3),
+                WeaponProvider = () => ClassicWeaponId.AssaultRifle,
+                NodeCardsOverride = false
+            };
+            PinleAc(1, "ks_firerate");
+            Assert.AreEqual(I("ks_firerate"), _dukkan.Tree.PinnedOfferable(_rank), "adım çizilebilir");
+            Assert.AreEqual(-1, _dukkan.PinGuaranteedStep(_rank), "RT5: üç kart yolu keystone'u vaat etmez");
+            _dukkan.NodeCardsOverride = true;
+            Assert.AreEqual(I("ks_firerate"), _dukkan.PinGuaranteedStep(_rank), "düğüm kartı yolu vaat eder");
+        }
+
+        [Test]
         public void EtkiSahipligi_BaglarSpecialUzerindenCozulur()
         {
             var t = new RunTreeState();

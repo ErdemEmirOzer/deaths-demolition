@@ -176,6 +176,44 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void Reroll_RT4_TutulanSlotHicDegismez_TutulmayincaKlasikCekilis()
+        {
+            var counts = new Dictionary<int, int> { { 1, 0 }, { 2, 0 } };
+            for (int keep = 0; keep < UpgradeOfferPolicy.CardsPerOffer; keep++)
+            {
+                for (int seed = 0; seed < 120; seed++)
+                {
+                    List<UpgradeBranchSettings> current = Havuz(UpgradeBranch.Piercing, UpgradeBranch.Ricochet, UpgradeBranch.Chain);
+                    List<UpgradeBranchSettings> pool = Havuz(UpgradeBranch.FireRate, UpgradeBranch.ReloadSpeed, UpgradeBranch.MovementSpeed);
+                    var result = new List<UpgradeBranchSettings>();
+                    var slots = new List<int>();
+                    Assert.AreEqual(UpgradeOfferFault.None, UpgradeOfferPolicy.TryReroll(current, pool, Agirliklar(pool), new SeededUpgradeOfferRandom(seed), result, slots, keep));
+                    Assert.IsFalse(slots.Contains(keep), "pinli kartın slotu değişmez (keep " + keep + ", seed " + seed + ")");
+                    Assert.AreEqual(current[keep].Branch, result[keep].Branch);
+                    Assert.IsTrue(UpgradeOfferPolicy.Validate(result));
+                    counts[slots.Count]++;
+                }
+            }
+
+            Assert.Greater(counts[1], 0);
+            Assert.Greater(counts[2], 0, "tutulan slot dışındaki iki slot da değişebilir");
+
+            // keepSlot -1: çekiliş klasik yolla birebir aynı (aynı tohum, aynı slotlar).
+            for (int seed = 0; seed < 50; seed++)
+            {
+                List<UpgradeBranchSettings> a = Havuz(UpgradeBranch.Piercing, UpgradeBranch.Ricochet, UpgradeBranch.Chain);
+                List<UpgradeBranchSettings> pa = Havuz(UpgradeBranch.FireRate, UpgradeBranch.ReloadSpeed, UpgradeBranch.MovementSpeed);
+                List<UpgradeBranchSettings> pb = Havuz(UpgradeBranch.FireRate, UpgradeBranch.ReloadSpeed, UpgradeBranch.MovementSpeed);
+                var ra = new List<UpgradeBranchSettings>(); var sa = new List<int>();
+                var rb = new List<UpgradeBranchSettings>(); var sb = new List<int>();
+                UpgradeOfferPolicy.TryReroll(a, pa, Agirliklar(pa), new SeededUpgradeOfferRandom(seed), ra, sa);
+                UpgradeOfferPolicy.TryReroll(a, pb, Agirliklar(pb), new SeededUpgradeOfferRandom(seed), rb, sb, -1);
+                CollectionAssert.AreEqual(sa, sb);
+                for (int i = 0; i < ra.Count; i++) Assert.AreEqual(ra[i].Branch, rb[i].Branch);
+            }
+        }
+
+        [Test]
         public void Reroll_TekAday_TekSlotDegisir()
         {
             List<UpgradeBranchSettings> current = Havuz(UpgradeBranch.Piercing, UpgradeBranch.Ricochet, UpgradeBranch.Chain);
