@@ -11,7 +11,7 @@ directory and dd_slot_* exit codes (M-07).
 Codex-audit M-11 (C-00 30.09): CiIsolatedStepTests — the fake test.sh records every call's --filter / --out; the core call
 excludes the ci-isolated.txt tests, each `alone` test runs in its own second call, `a3` never runs, the summary counts it.
 usage: python3 tools/tests/test_ci_signal_traps.py"""
-import json, os, re, shutil, signal, subprocess, tempfile, time, unittest
+import json, os, re, shutil, signal, subprocess, sys, tempfile, time, unittest
 from pathlib import Path
 
 TOOLS = Path(__file__).resolve().parents[1]
@@ -246,17 +246,21 @@ class CiSignalTrapTests(CiFixture):
         survivor = self.wait_file(self.log / survivor_file); time.sleep(0.3)
         os.kill(p.pid, signal.SIGTERM)
         rc, out, err = self.finish(p)
-        self.assertEqual(rc, 143, out + err)
+        self.assertEqual(rc, 65, out + err)   # G4 D2 MUST-3a: NOT restored → 65 (was 143), marker left for C-00
         self.assertIn(f"user-data window left open: child {survivor} still alive, tell C-00", err)
+        marker = (self.out / self.sha / "userdata-NOT-RESTORED.txt").read_text()
+        self.assertIn(f"child {survivor} still alive", marker)
+        self.assertIn(f"live {survivor}", marker)
+        self.assertIn("only C-00 writes userdata-NOT-RESTORED.resolved", marker)
         self.assertEqual(self.lines("guard-calls.txt"), ["snapshot"])  # restore NOT called
         self.assertEqual([l.split()[0] for l in self.lines("slot-calls.txt")], ["acquire"])  # player slot not released
         self.assertEqual(len(self.leases()), 1)  # lease kept: the survivor still uses the checkout
         self.assertTrue(alive(survivor))
 
-    def test_MainCi_CocukTERMeDirenir_Cikis143RestoreYokPencereAcikSatiri(self):
+    def test_MainCi_CocukTERMeDirenir_Cikis65IsaretRestoreYokPencereAcikSatiri(self):
         self.assert_window_left_open(self.main_ci("ignore", DD_CI_CHILD_GRACE="2"), "child-editmode.pid")
 
-    def test_MainCi_TestShOlurTorunYasar_RestoreYokPencereAcik(self):
+    def test_MainCi_TestShOlurTorunYasar_Cikis65IsaretRestoreYokPencereAcik(self):
         self.assert_window_left_open(self.main_ci("orphan", DD_CI_CHILD_GRACE="2"), "grandchild.pid")
 
     def test_MainCi_GercekTestSh_TERMUnityyeIletilir_Cikis143TekRestore(self):
@@ -291,11 +295,37 @@ class CiSignalTrapTests(CiFixture):
                          FAKE_STRAY_PROJECT=str(self.ci / "prototype/DeathsDemolition_PlayableConcept"))
         rc, out, err = self.finish(p)
         self.wait_file(self.log / "stray-unity.pid")
-        self.assertEqual(rc, 3, out + err)
+        self.assertEqual(rc, 65, out + err)   # G4 D2 MUST-3a (was 3)
         self.assertIn("a Unity still has", out + err)
+        self.assertIn("a Unity has the CI checkout open", (self.out / self.sha / "userdata-NOT-RESTORED.txt").read_text())
         self.assertEqual(self.lines("guard-calls.txt"), ["snapshot"])
         self.assertEqual([l.split()[:2] for l in self.lines("slot-calls.txt")], [["acquire", "player"]])
         self.assertEqual(len(self.leases()), 1)
+
+    def test_MainCi_CozulmemisIsaret_Cikis65HicbirSeyAlinmaz_ResolvedSonraKosar(self):
+        # G4 D2 MUST-3a: a marker from ANY earlier run (another SHA) stops the next run before the lease
+        other = self.out / ("f" * 40)
+        other.mkdir(parents=True)
+        (other / "userdata-NOT-RESTORED.txt").write_text("DIR x\nreason fixture\n")
+        rc, out, err = self.finish(self.main_ci("pass", playmode=True))
+        self.assertEqual(rc, 65, out + err)
+        self.assertIn("unrestored guard window(s), resolve with C-00 first", err)
+        self.assertIn(str(other / "userdata-NOT-RESTORED.txt"), err)
+        self.assertEqual(self.lines("guard-calls.txt") + self.lines("slot-calls.txt"), [])
+        self.assertEqual(self.leases(), [])
+        self.assertFalse((self.out / self.sha).exists())
+        (other / "userdata-NOT-RESTORED.resolved").write_text("C-00\n")   # only C-00 writes this
+        rc, out, err = self.finish(self.start([str(self.tools / "main-ci.sh"), self.sha, "--out-root", str(self.out),
+                                               "--ci-dir", str(self.ci)], FAKE_MODE="pass"))   # same repo, second run
+        self.assertEqual(rc, 0, out + err)
+
+    def test_MainCi_IsaretAdi_PythonTarafiylaAyni(self):
+        sys.path.insert(0, str(TOOLS / "qa"))
+        import guard_receipt
+        text = (TOOLS / "main-ci.sh").read_text()
+        self.assertIn(f"CI_MARKER={guard_receipt.MARKER};", text)
+        self.assertIn(f"CI_MARKER_RESOLVED={guard_receipt.MARKER_RESOLVED}", text)
+        self.assertEqual(65, guard_receipt.NOT_RESTORED)
 
     def test_MainCi_NormalYol_Cikis0OzetYesilTekRestore(self):
         p = self.main_ci("pass", playmode=True)  # green needs both XMLs

@@ -27,8 +27,10 @@
 # Env (Codex-audit M-10, C-00 30.09): right before the tests every variable the CI checkout's C# reads is unset except HOME
 # (dd_scrub_code_env); the cleared names go into summary.json envScrubbed / summary.md; git grep failure → 3.
 # Exit: 0 green · 1 red tests · 2 compile error / missing results · 3 CI worktree or driver worktree not clean, driver not
-#   detached or its tools ≠ main's, lease stale/malformed/symlink, CI project missing, a Unity still has the CI checkout open
-#   at the restore (window left open, tell C-00) · 64 usage, unknown commit, an unrestored guard window of this SHA,
+#   detached or its tools ≠ main's, lease stale/malformed/symlink, CI project missing · 65 a guard window NOT restored
+#   (G4 D2 MUST-3a, C-00 01.10: a child still alive at cleanup, or a Unity has the CI checkout open / the check failed at the
+#   restore) — $OUT/userdata-NOT-RESTORED.txt, slot + lease kept, tell C-00; or such a marker unresolved under
+#   $OUT_ROOT/*/ at the start (no .resolved next to it — only C-00 writes it): nothing taken · 64 usage, unknown commit, an unrestored guard window of this SHA,
 #   malformed ci-isolated.txt / ci-suites.txt (checked with the driver, before anything is taken), DD_GUARD_ROOT set or the
 #   canonical guard ($DD_GUARD_CANON = KADRO wp-079/driver/tools/userdata-guard.sh, G4 D4) missing
 #   · 75 busy (lease held, CI project open, guard snapshot 75 three times) · 130/143/129 INT/TERM/HUP.
@@ -99,10 +101,19 @@ ci_guard_restore() {
 # while any Unity still has the CI checkout open (a writer outside our process tree), and the restore itself cannot die
 # to a second Ctrl-C / group signal (ff06 guard: a kill between `defaults delete` and `import` loses keys) — ignored
 # dispositions are inherited by the guard child. 1 = window left open (slot + lease must stay held; tell C-00).
+# G4 D2 MUST-3a (C-00 01.10): every "not restored" branch leaves $OUT/userdata-NOT-RESTORED.txt (the wp078 / guard_receipt
+# format); the next main-ci stops on it with 65 before anything is taken until C-00 writes userdata-NOT-RESTORED.resolved.
+CI_MARKER=userdata-NOT-RESTORED.txt; CI_MARKER_RESOLVED=userdata-NOT-RESTORED.resolved
+ci_not_restored() {   # <reason> [live pids]
+  { print -r -- "DIR $CI_GUARD_DIR"; print -r -- "reason $1"; print -r -- "live ${2:-}"; print -r -- "utc $(date -u +%FT%TZ)"
+    print -r -- "NOT restored: the snapshot is kept as is; no inline inventory was made. STOP — tell C-00; only C-00 writes $CI_MARKER_RESOLVED next to this file."
+  } > "$OUT/$CI_MARKER"
+}
 ci_guard_restore_safe() {
   ci_project_open; local open=$?
   if [ "$open" -ne 1 ]; then
-    dd_log "main-ci ${CI_SIGNAL:-exit}: user-data window left open: a Unity still has $CI_DIR open (or the check failed: $open), tell C-00 — guard $CI_GUARD_DIR NOT restored, player slot and lease $DD_CI_LEASE kept" >&2
+    dd_log "main-ci ${CI_SIGNAL:-exit}: user-data window left open: a Unity still has $CI_DIR open (or the check failed: $open), tell C-00 — guard $CI_GUARD_DIR NOT restored, player slot and lease $DD_CI_LEASE kept, $OUT/$CI_MARKER (65)" >&2
+    ci_not_restored "a Unity has the CI checkout open, or the process check failed ($open)" "$(pgrep -f "Unity.app/Contents/MacOS/Unity" 2>/dev/null | tr '\n' ' ')"
     return 1
   fi
   trap '' INT TERM HUP
@@ -115,9 +126,11 @@ ci_cleanup() {
   # Codex-audit Y1 / G4 Q10: restoring while the child (or its orphaned Unity) can still write would be a false "verified".
   if [ -n "$CI_CHILD" ] && ! dd_stop_child "$CI_CHILD" "${DD_CI_CHILD_GRACE:-120}"; then
     dd_log "main-ci ${CI_SIGNAL:-exit}: user-data window left open: child $DD_CHILD_ALIVE still alive, tell C-00 — guard ${CI_GUARD_DIR:-(no snapshot)} NOT restored, player slot and lease $DD_CI_LEASE kept" >&2
-    exit "$original"
+    [ "$CI_GUARD_READY" -eq 1 ] || exit "$original"   # no open window: nothing to mark
+    ci_not_restored "child $DD_CHILD_ALIVE still alive ${DD_CI_CHILD_GRACE:-120} s after TERM" "$DD_CHILD_ALIVE"
+    exit 65
   fi
-  if [ "$CI_GUARD_READY" -eq 1 ]; then ci_guard_restore_safe || exit "$original"; fi
+  if [ "$CI_GUARD_READY" -eq 1 ]; then ci_guard_restore_safe || exit 65; fi
   if [ "$CI_PLAYER_HELD" -eq 1 ]; then DD_SLOT_TAG="$CI_PLAYER_TAG" dd_slot_release player; slot_exit=$?; fi
   dd_ci_lease_release; lease_exit=$?
   [ "$CI_GUARD_EXIT" -eq 0 ] && [ "$slot_exit" -eq 0 ] && [ "$lease_exit" -eq 0 ] || echo "CI cleanup failed: guard=$CI_GUARD_EXIT slot=$slot_exit lease=$lease_exit (original=$original)" >&2
@@ -126,6 +139,12 @@ ci_cleanup() {
   [ "$slot_exit" -eq 0 ] || exit "$slot_exit"
   exit "$lease_exit"
 }
+# G4 D2 MUST-3a: an unrestored window of ANY earlier run (marker without .resolved) stops this run before the lease.
+CI_OPEN_MARKERS=()
+for m in "$OUT_ROOT"/*/$CI_MARKER; do [ -e "${m:h}/$CI_MARKER_RESOLVED" ] || CI_OPEN_MARKERS+=("$m"); done
+if [ ${#CI_OPEN_MARKERS[@]} -gt 0 ]; then
+  echo "main-ci: unrestored guard window(s), resolve with C-00 first — nothing taken (65): ${CI_OPEN_MARKERS[*]}" >&2; exit 65
+fi
 # zsh function-local EXIT traps run on function return; install this at script scope.
 trap 'ci_cleanup $?' EXIT
 # zsh skips EXIT on an untrapped INT/TERM/HUP: record it, exit 128+n (cleanup runs once; a signal during cleanup is ignored).
@@ -236,7 +255,7 @@ fi
 # WP-066K: Editor tests can only write the Editor area (player folder + Editor PlayerPrefs domain); a
 # change in the player area (bundle folder profile, player domain) is someone else's — listed, not undone.
 UG="$CI_GUARD_DIR"
-ci_guard_restore_safe || exit 3; GX=$CI_GUARD_EXIT
+ci_guard_restore_safe || exit 65; GX=$CI_GUARD_EXIT
 if ! cmp -s "$UG/before-editor.txt" "$UG/after-run-editor.txt" || [ "$GX" -ne 0 ]; then
   GW="Editor PlayerPrefs/profile changed during the tests: restored to the pre-run snapshot ($([ "$GX" -eq 0 ] && echo verified || echo "RESTORE MISMATCH exit $GX")) — $UG"
   UDWARN="${UDWARN:+$UDWARN; }$GW"; dd_log "WARNING userdata: $GW"
