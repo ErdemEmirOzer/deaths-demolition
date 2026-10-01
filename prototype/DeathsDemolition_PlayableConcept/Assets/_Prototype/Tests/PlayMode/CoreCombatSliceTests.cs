@@ -937,16 +937,22 @@ namespace DD.Prototype.Tests.PlayMode
             Action<EnemyDamageInfo> hDinle = i =>
             {
                 hasar.Add(i);
-                // C-00 01.10 (option 1): the expected region from the real colliders NOW — the flat line enters the head box first
-                // → Head, else UpperBody (the capsule fallback counts as UpperBody too). The target's own flinch can dip the head
-                // onto the line (main-ci 55c6e37f / b5g: head centre 1.80 → 1.37 over three hits), so "head 0" was not physical.
+                // C-00 01.10 (option 1): the expected region from the real colliders NOW — the flat line enters the head collider
+                // first → Head, else UpperBody (the capsule fallback counts as UpperBody too). The target's own flinch can dip the
+                // head onto the line (main-ci 55c6e37f / b5g: head centre 1.80 → 1.37 over three hits), so "head 0" was not physical.
+                // Collider.Raycast, not bounds (main-ci 5cf17f9e): the head hitbox is a sphere and its box is wider off the centre —
+                // a line 0.093 m under the centre and 0.13 m to the side entered the box but passed the sphere (0.161 m > r 0.154),
+                // went through the capsule alone and was, rightly, UpperBody.
                 Bounds hb = kafa.bounds, ub = govde.bounds;
                 var ray = new Ray(i.Point - i.Direction.normalized * 3f, i.Direction.normalized);
-                bool headOn = hb.IntersectRay(ray, out float hd);
-                bool upOn = ub.IntersectRay(ray, out float ud);
+                bool headOn = kafa.Raycast(ray, out RaycastHit hh, 10f);
+                bool upOn = govde.Raycast(ray, out RaycastHit uh, 10f);
+                float hd = headOn ? hh.distance : 0f, ud = upOn ? uh.distance : 0f;
+                float headGap = Vector3.Cross(hb.center - ray.origin, ray.direction).magnitude - hb.extents.y;   // line to the sphere's surface
                 beklenenBolge.Add(headOn && (!upOn || hd <= ud) ? DD.Prototype.Damage.BodyRegion.Head : DD.Prototype.Damage.BodyRegion.UpperBody);
                 geo.Add("line y " + i.Point.y.ToString("F3") + " head y " + hb.min.y.ToString("F3") + "–" + hb.max.y.ToString("F3") +
-                        (headOn ? " (enter " + hd.ToString("F2") + ")" : " (off line)") + " upper y " + ub.min.y.ToString("F3") + "–" + ub.max.y.ToString("F3") +
+                        (headOn ? " (enter " + hd.ToString("F2") + ")" : " (missed by " + (headGap * 1000f).ToString("F0") + " mm" + (hb.IntersectRay(ray) ? ", box entered)" : ")")) +
+                        " upper y " + ub.min.y.ToString("F3") + "–" + ub.max.y.ToString("F3") +
                         (upOn ? " (enter " + ud.ToString("F2") + ")" : " (off line)") + " hit " + i.Result.Region);
                 Debug.Log("[DD-TEST] gamefeel.impact region=" + i.Result.Region + " hp=" + i.Result.HealthDamage +
                           " point=" + i.Point.ToString("F3") + " direction=" + i.Direction.ToString("F3") +
@@ -1050,7 +1056,7 @@ namespace DD.Prototype.Tests.PlayMode
                 for (int i = 0; i < hasar.Count; i++) Debug.Log("[DD-TEST] gamefeel.hit " + i + " region=" + hasar[i].Result.Region + " hp=" + hasar[i].Result.HealthDamage + " killed=" + hasar[i].Result.Killed + " armored=" + hasar[i].Result.WasArmored + " tier=" + (i < tierler.Count ? tierler[i].ToString() : "-"));
 
                 // C-00 30.09 B + 01.10 (option 1): a top-down hit lands where the flat line meets the body NOW — Head when the line
-                // enters the head box first, else UpperBody (12 HP; a bare head ×2 = 24), dressed FleshHit until the killing one
+                // enters the head collider first, else UpperBody (12 HP; a bare head ×2 = 24), dressed FleshHit until the killing one
                 // (Death); the hit count is the first n whose damage reaches 34 HP (three body hits, or fewer with a head hit).
                 int beklenenIsabet = 0;
                 float toplam = 0f;
