@@ -68,11 +68,21 @@ namespace DD.Prototype.Weapons
         public const float AdsKickBack = 0.4f, AdsKickPitch = 1f, AdsKickOther = 0.6f;
         private const float MaxSubstep = 1f / 240f;
 
+        /// <summary>
+        /// WP-069 M4 (C-00 01.10, S-07 AD r4): a kick is fed over a ramp of this share of the row's recovery (≤ KickRampMaxSeconds),
+        /// eased in (u²) — the same total, only spread. rl_1 (0.55 s) takes ≈ 3 frames and the firing frame shows ≈ 11 % of it, so
+        /// the rocket that leaves the un-kicked muzzle in that frame stays at the tube mouth (the whole 12 cm / 9° in one frame put
+        /// it ~120 px below). A ramp under one frame (rifles / SMGs / LMGs, 0.09–0.14 s) stays instant: their snap is unchanged.
+        /// </summary>
+        public const float KickRampShare = 0.1f, KickRampMaxSeconds = 0.05f;
+
         // ---- state
         private Vector3 _swayPos, _swayPosVel, _swayRot, _swayRotVel;   // metres; degrees (pitch, yaw, roll)
         private Vector3 _kickPos, _kickPosVel, _kickRot, _kickRotVel;
         private float _kickOmega = 40f, _kickZeta = 0.65f;
         private Vector3 _kickCapPos, _kickCapRot;
+        private Vector3 _rampPos, _rampRot;   // M4: the kick being fed, its total
+        private float _rampSeconds, _rampT, _rampFed;   // ramp length, time into it, cumulative share fed (0…1)
         private int _shotsInString;
         private float _sinceShot = 999f;
         private float _bobPhase, _bobAmp;
@@ -92,6 +102,8 @@ namespace DD.Prototype.Weapons
         {
             _swayPos = _swayPosVel = _swayRot = _swayRotVel = Vector3.zero;
             _kickPos = _kickPosVel = _kickRot = _kickRotVel = Vector3.zero;
+            _rampPos = _rampRot = Vector3.zero;
+            _rampSeconds = _rampT = _rampFed = 0f;
             _shotsInString = 0;
             _sinceShot = 999f;
             _bobPhase = _bobAmp = 0f;
@@ -175,9 +187,37 @@ namespace DD.Prototype.Weapons
             var rot = new Vector3(-k.PitchDeg * pitch, k.YawDeg * other * Mathf.Sign(yawSign == 0f ? 1f : yawSign), k.RollDeg * other) * stack;   // x − = muzzle up
             _kickCapPos = new Vector3(0f, k.UpCm * 0.01f, k.BackCm * 0.01f) * AutoStackCap;
             _kickCapRot = new Vector3(k.PitchDeg, k.YawDeg, Mathf.Abs(k.RollDeg)) * AutoStackCap;
-            _kickPos = Clamp(_kickPos + pos, _kickCapPos);
-            _kickRot = Clamp(_kickRot + rot, _kickCapRot);
+            // M4: a new shot first lands what is left of the previous ramp (the total is never lost), then ramps its own kick.
+            FeedRamp(1f);
+            float ramp = Mathf.Min(KickRampMaxSeconds, k.RecoverySeconds * KickRampShare);
+            if (ramp < 1f / 60f)   // under a frame: instant, as before (ar_1 / SMGs / LMGs)
+            {
+                _kickPos = Clamp(_kickPos + pos, _kickCapPos);
+                _kickRot = Clamp(_kickRot + rot, _kickCapRot);
+                return;
+            }
+
+            _rampPos = pos; _rampRot = rot;
+            _rampSeconds = ramp; _rampT = 0f; _rampFed = 0f;
         }
+
+        /// <summary>M4: feed the ramp up to cumulative share <paramref name="target"/> (0…1, eased in by the caller).</summary>
+        private void FeedRamp(float target)
+        {
+            if (_rampSeconds <= 0f) return;
+            float step = Mathf.Clamp01(target) - _rampFed;
+            if (step > 0f)
+            {
+                _kickPos = Clamp(_kickPos + _rampPos * step, _kickCapPos);
+                _kickRot = Clamp(_kickRot + _rampRot * step, _kickCapRot);
+                _rampFed += step;
+            }
+
+            if (_rampFed >= 1f - 1e-6f) _rampSeconds = 0f;
+        }
+
+        /// <summary>M4 (tests): the share of the last kick still waiting to be fed (0 once landed).</summary>
+        public float KickPending => _rampSeconds > 0f ? 1f - _rampFed : 0f;
 
         private static Vector3 Clamp(Vector3 v, Vector3 cap)
         {
@@ -222,6 +262,14 @@ namespace DD.Prototype.Weapons
             float walkIn = Mathf.Clamp01(planarSpeed / CameraModesFeel.BobWalkSpeed);
             float bobScale = _bobAmp * walkIn * CameraModesFeel.BobWeightScale(weight) * Mathf.Lerp(1f, VmBobAdsScale, ads);
             var bob = new Vector3(lat * Mathf.Sin(_bobPhase), -vert * 0.5f * (1f - Mathf.Cos(2f * _bobPhase)), 0f) * bobScale;
+
+            // M4: the kick ramp, eased in (u²) — the firing frame gets the smallest share
+            if (_rampSeconds > 0f)
+            {
+                _rampT += dt;
+                float u = Mathf.Clamp01(_rampT / _rampSeconds);
+                FeedRamp(u * u);
+            }
 
             // springs (sub-stepped: stable at 12 Hz and the stiffest kick)
             float left = dt;

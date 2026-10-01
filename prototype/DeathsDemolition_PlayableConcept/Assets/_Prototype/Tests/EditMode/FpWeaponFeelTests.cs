@@ -51,6 +51,39 @@ namespace DD.Prototype.Tests.EditMode
             Assert.Less(RotDeg(f.Rotation), 0.25f);
         }
 
+        /// <summary>
+        /// WP-069 M4 (C-00 01.10, S-07 AD r4): rl_1's view-model kick is fed over ≈ 3 frames eased in — the firing frame shows a
+        /// small share (the rocket leaves the un-kicked muzzle in that frame), the whole kick lands by the ramp's end (the same
+        /// total), a second shot mid-ramp first lands the rest; ar_1 stays instant.
+        /// </summary>
+        [Test]
+        public void M4_RoketTekmesi_UcKareyeYayilir_AtisKaresiKucuk_ToplamAyni_Ar1Aninda()
+        {
+            const float frame = 1f / 60f;
+            FpWeaponFeel.VmKick k = FpWeaponFeel.KickFor("rl_1");
+            var f = new FpWeaponFeel();
+            f.Shot("rl_1", FeelWeight.W4, 0f, 1f, false);
+            f.Tick(frame, 0f, 0f, 0f, 0f, FeelWeight.W4, false);
+            Assert.Less(-f.Position.z, 0.2f * k.BackCm * 0.01f, "atış karesinde geri tepme küçük pay");
+            Assert.Greater(f.KickPending, 0.5f, "tekmenin çoğu sonraki karelerde");
+            float peak = -f.Position.z;
+            for (int i = 0; i < 4; i++) { f.Tick(frame, 0f, 0f, 0f, 0f, FeelWeight.W4, false); peak = Mathf.Max(peak, -f.Position.z); }
+            Assert.AreEqual(0f, f.KickPending, 1e-6f, "rampa 3 karede biter");
+            Assert.Greater(peak, 0.85f * k.BackCm * 0.01f, "toplam tepme aynı (yay yalnız 3 karede biraz geri çeker)");
+
+            var ar = new FpWeaponFeel();
+            ar.Shot("ar_1", FeelWeight.W2, 0f, 1f, false);
+            Assert.AreEqual(0f, ar.KickPending, "ar_1 anında (rampa bir kareden kısa)");
+
+            var iki = new FpWeaponFeel();
+            iki.Shot("rl_1", FeelWeight.W4, 0f, 1f, false);
+            iki.Tick(frame, 0f, 0f, 0f, 0f, FeelWeight.W4, false);
+            float once = -iki.Position.z;
+            iki.Shot("rl_1", FeelWeight.W4, 0f, 1f, false);   // mid-ramp: the rest of the first kick lands now
+            iki.Tick(1e-5f, 0f, 0f, 0f, 0f, FeelWeight.W4, false);   // Position is published by Tick
+            Assert.Greater(-iki.Position.z, once + 0.5f * k.BackCm * 0.01f, "ikinci atış öncekinin kalanını düşürmez");
+        }
+
         [Test]
         public void Kick_ADS_GeriX04_PitchKorunur_DigerX06()
         {
@@ -58,8 +91,9 @@ namespace DD.Prototype.Tests.EditMode
             var ads = new FpWeaponFeel();
             hip.Shot("sg_1", FeelWeight.W2, 0f, 1f, false);
             ads.Shot("sg_1", FeelWeight.W2, 1f, 1f, false);
-            hip.Tick(1e-5f, 0f, 0f, 0f, 0f, FeelWeight.W2, false);
-            ads.Tick(1e-5f, 0f, 0f, 0f, 1f, FeelWeight.W2, false);
+            // M4 (C-00 01.10): sg_1's kick ramps over 0.03 s — sample once it has landed; the kick is linear, the ratios are the same.
+            hip.Tick(FpWeaponFeel.KickRampMaxSeconds, 0f, 0f, 0f, 0f, FeelWeight.W2, false);
+            ads.Tick(FpWeaponFeel.KickRampMaxSeconds, 0f, 0f, 0f, 1f, FeelWeight.W2, false);
             Assert.AreEqual(0.4f, ads.Position.z / hip.Position.z, 0.02f, "geri ×0,4");
             Assert.AreEqual(0.6f, ads.Position.y / hip.Position.y, 0.02f, "yukarı ×0,6");
             Assert.AreEqual(Signed(hip.Rotation.eulerAngles.x), Signed(ads.Rotation.eulerAngles.x), 0.05f, "pitch korunur");
