@@ -365,6 +365,8 @@ namespace DD.Prototype.Tests.PlayMode
         private AtmosphereSystem Attach()
         {
             AtmosphereSystem sys = AtmosphereSystem.Attach(_world.transform);
+            sys.ScanRoot = _world.transform;   // C-00 01.10 A1 triage: count only this synthetic world (a suite may leave V6 loaded)
+            if (sys.Ready) sys.Rescan();       // an Active left by an earlier world may have scanned already (Start rescans again: same result)
             sys.CameraOverride = _camGo.GetComponent<Camera>();
             sys.FocusOverride = Vector3.zero;
             sys.Seed(12345u);

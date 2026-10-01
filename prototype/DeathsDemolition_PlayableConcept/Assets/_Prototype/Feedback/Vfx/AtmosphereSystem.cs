@@ -290,6 +290,33 @@ namespace DD.Prototype.Feedback.Vfx
         private VfxTierLevel _tier;
         private bool _tierApplied;
         private bool _scanned;
+        private Transform _scanRoot;
+
+        /// <summary>
+        /// Test isolation (C-00 01.10 FINAL A1 triage): when set, <see cref="Rescan"/> counts only the world under this root — a
+        /// suite that leaves another world loaded (World_V6_Greybox, 12 "sakura" owners) cannot leak into a synthetic world's
+        /// anchor counts. Null (the game) = every loaded scene, as before.
+        /// </summary>
+        public Transform ScanRoot
+        {
+            get => _scanRoot;
+            set => _scanRoot = value;
+        }
+
+        private bool InScope(Transform t) => _scanRoot == null || (t != null && t.IsChildOf(_scanRoot));
+
+        private static Transform FindDeep(Transform parent, string name)
+        {
+            for (int i = 0; i < parent.childCount; i++)
+            {
+                Transform c = parent.GetChild(i);
+                if (c.name == name) return c;
+                Transform d = FindDeep(c, name);
+                if (d != null) return d;
+            }
+
+            return null;
+        }
         private float _weightClock;
         private Vector3 _weightFocus;
         private int _shaftsDirtyFrames;
@@ -618,6 +645,7 @@ namespace DD.Prototype.Feedback.Vfx
                 Renderer r = all[i];
                 if (r == null || !r.enabled || r is ParticleSystemRenderer || r is TrailRenderer || r is LineRenderer) continue;
                 Transform owner = OwnerOf(r.transform);
+                if (!InScope(owner)) continue;
                 string name = owner.name;
                 if (Has(name, "Vista")) continue;   // the distant forest band is outside every range anyway
                 string mat = r.sharedMaterial != null ? r.sharedMaterial.name : string.Empty;
@@ -708,7 +736,7 @@ namespace DD.Prototype.Feedback.Vfx
             for (int i = 0; i < roofs.Length; i++)
             {
                 CameraOccluderClass roof = roofs[i];
-                if (roof == null || roof.Kind != CameraOccluderKind.Roof) continue;
+                if (roof == null || roof.Kind != CameraOccluderKind.Roof || !InScope(roof.transform)) continue;
                 var box = roof.GetComponent<BoxCollider>();
                 if (box == null)
                 {
@@ -756,7 +784,8 @@ namespace DD.Prototype.Feedback.Vfx
             NavRegionMarker[] markers = FindObjectsOfType<NavRegionMarker>();
             for (int i = 0; i < markers.Length; i++)
             {
-                NavRegionVolume v = markers[i] != null ? markers[i].Volume : null;
+                if (markers[i] == null || !InScope(markers[i].transform)) continue;
+                NavRegionVolume v = markers[i].Volume;
                 if (v == null || v.kind != NavRegionKind.Room) continue;
                 Vector3 size = v.size;
                 list.Add(new Anchor
@@ -769,9 +798,8 @@ namespace DD.Prototype.Feedback.Vfx
 
         private void ScanShafts(List<Anchor> list)
         {
-            GameObject group = GameObject.Find(ShaftGroupName);
-            if (group == null) return;
-            Transform g = group.transform;
+            Transform g = _scanRoot != null ? FindDeep(_scanRoot, ShaftGroupName) : GameObject.Find(ShaftGroupName)?.transform;
+            if (g == null) return;
             for (int i = 0; i < g.childCount && i < MaxShafts * 2; i++)
             {
                 Transform card = g.GetChild(i);
