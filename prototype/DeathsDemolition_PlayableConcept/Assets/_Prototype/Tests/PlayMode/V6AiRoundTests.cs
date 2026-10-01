@@ -43,7 +43,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// necessary near corner with the normal crowd solve.
         /// </summary>
         private static readonly HashSet<string> KnownOpen = new HashSet<string>();
-        private const float StationSeconds = 25f, ReachMetres = 3.5f, StallSeconds = 6f, StallMove = 0.75f;
+        private const float StationSeconds = 25f, ReachMetres = 3.5f, StallSeconds = 6f, StallMove = 0.75f, DiagStallMetres = 2f;
 
         private static readonly (string name, Vector3 at)[] Stations =
         {
@@ -177,6 +177,9 @@ namespace DD.Prototype.Tests.PlayMode
         {
             RunDirector run = _run;
             EnemySpawnDirector director = _director;
+            // M-32: the contact diagnostics also watch bodies stopped close to the player (R4's north door sits ~4 m from it);
+            // the acceptance test keeps the 4 m stall distance
+            float stallMetres = c1Diag != null ? DiagStallMetres : 4f;
             PlayerRig rig = _rig;
 #if UNITY_EDITOR
             var c1 = c1Diag as C1ContactObserver.Proof;
@@ -262,7 +265,7 @@ namespace DD.Prototype.Tests.PlayMode
                                     if (!anchors.TryGetValue(z, out var a)) { anchors[z] = (zp, Time.time, d <= ReachMetres, false); if (d <= ReachMetres) reached++; continue; }
                                     if (!a.reached && d <= ReachMetres) { a.reached = true; reached++; }
                                     if (Vector3.Distance(zp, a.anchor) > StallMove) { a.anchor = zp; a.since = Time.time; }
-                                    else if (!a.reported && d > 4f && Time.time - a.since >= StallSeconds)
+                                    else if (!a.reported && d > stallMetres && Time.time - a.since >= StallSeconds)
                                     {
                                         a.reported = true;
                                         stallCount++;
