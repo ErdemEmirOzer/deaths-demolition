@@ -160,9 +160,9 @@ namespace DD.Prototype.Tests.PlayMode
             // -------------------------------------------- 3 · yeniden yaklaş ve kay
             yield return DuvaraSur(new Vector3(40f, 0.2f, 0f), new Vector2(1f, 0f), 90);
 
-            // C-00 01.10: the cursor leads along the wall. A fixed screen-centre pointer meets the raised aim plane on the camera's
-            // side (−z) and turned the body away from this +z slide, so the D-1 backward ×0.65 slowed it (dz 3.936 → 2.674 in
-            // FINAL dab326ab, the other legs unchanged). This test measures the wall, not the backward speed.
+            // C-00 01.10: the cursor leads along the wall, so the body faces the slide. The body used to face away from it (see
+            // RunSahnesiniHazirla: the aim read the batch mouse) and the D-1 backward ×0.65 slowed it (dz 3.936 → 2.674 in FINAL
+            // dab326ab, the other legs unchanged). This test measures the wall, not the backward speed.
             _girdi.Deger = new Vector2(0.7071f, 0.7071f);
             KaymaYonuneNisan(Vector3.forward);
             Vector3 kaymaBasi = _rig.transform.position;
@@ -328,6 +328,10 @@ namespace DD.Prototype.Tests.PlayMode
 
             _girdi = new SurulenGirdi();
             _rig.Motor.SetInputSource(_girdi);
+            // C-00 01.10 (b5tr): the aim reads this input too. Without it PlayerAim read the global source — the batch mouse
+            // at the bottom-left corner — and the body faced (−0.7, −0.7): the east wall's +x+z slide was straight backward
+            // (D-1 ×0.65, dz 3.936 → 2.674), the south wall's +x−z side-on (0.989).
+            _rig.Aim.SetInputSource(_girdi);
 
             PrototypeCameraRig cam = PrototypeCameraRig.Active;
             Assert.IsNotNull(cam, "Kamera rig yok; hareket tabani cozulemez.");
