@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using DD.Prototype.UI;
 using DD.Prototype.Weapons;
 using NUnit.Framework;
@@ -24,6 +25,8 @@ namespace DD.Prototype.Tests.PlayMode
         private const int OlcumKaresi = 600;
         private const float SessizAdim = 0.0005f;
         private const long EsikBayt = 128 * 1024;
+        private const int CiftKaresi = 100;   // active window: 6 interleaved HUD on / off pairs of 100 frames = the old 600 per state
+        private const int CiftSayisi = 6;
 
         private SpecialWeaponSahne _s;
         private int? _frameRateBefore;
@@ -73,18 +76,14 @@ namespace DD.Prototype.Tests.PlayMode
             _s.PickupaGit(_s.CanliPickup());
             yield return SpecialWeaponSahne.Bekle(() => _s.Controller.SpecialWeaponActive, SpecialWeaponSahne.FazZamanAsimi, "Special aktif olmadı.");
             Time.captureDeltaTime = SessizAdim;
-            long aktifAcik = 0, aktifKapali = 0;
-            yield return AyirmaOlc(OlcumKaresi, v => aktifAcik = v);
-            hud.enabled = false;
-            yield return AyirmaOlc(OlcumKaresi, v => aktifKapali = v);
-            hud.enabled = true;
+            long aktifAcik = 0, aktifKapali = 0, aktifFark = 0;
+            yield return HudFarkiOlc(hud, CiftKaresi, CiftSayisi, (acik, kapali, fark) => { aktifAcik = acik; aktifKapali = kapali; aktifFark = fark; });
             Time.captureDeltaTime = 0f;
-            long aktifFark = aktifAcik - aktifKapali;
             Debug.Log("[DD-TEST] wp007.perf activeHudOn=" + aktifAcik + " activeHudOff=" + aktifKapali + " delta=" + aktifFark +
-                      " (B/frame≈" + (aktifFark / (float)OlcumKaresi).ToString("0.0") + ")");
+                      " (median pair, B/frame≈" + (aktifFark / (float)OlcumKaresi).ToString("0.0") + ")");
             Assert.IsTrue(_s.Controller.SpecialWeaponActive, "Öncül: pencere boyunca aktif kalmadı.");
 
-            // PB-2'nin hedefi (aktif timer metni) aktif pencerede ölçülür ve eşiklenir.
+            // PB-2'nin hedefi (aktif timer metni) aktif pencerede ölçülür ve eşiklenir - iç içe pencerelerin medyanıyla (S-09 01.10).
             Assert.IsTrue(aktifAcik >= 0 && aktifKapali >= 0, "Aktif pencerede gen0 GC ölçümü bozdu — ölçüm yok.");
             Assert.LessOrEqual(aktifFark, EsikBayt, "Aktif penceresinde HUD yığını eşikten fazla büyüttü (timer metni kare başı geri geldi?).");
 
@@ -93,6 +92,52 @@ namespace DD.Prototype.Tests.PlayMode
             // ölçüldü (evidence/iter7b-headhud: 37 384 192 B / 600 kare her iki sürümde) — WP-007
             // yalnız kare başı mesafe metnini kaldırdı; canvas mimarisi S-09 alanı, M4 devri.
             Debug.Log("[DD-TEST] wp007.perf groundWindowObservation deltaB=" + yerdeFark + " (marker/pip canvas rebuild; WP-005 yüzeyi, HEAD ile aynı)");
+        }
+
+        /// <summary>
+        /// HUD on vs off as interleaved windows - ABBA… over <paramref name="ciftler"/> pairs of <paramref name="kare"/> frames.
+        /// The frame recorder is process-wide, and a ~200 KB allocation burst from outside the HUD lands in whichever window
+        /// it meets: back-to-back 600-frame windows on the same code read +197 / −1 / +194 / −204 KB (S-09 evidence b12,
+        /// 25.09; FINAL A1 +220 KB, 01.10). The median of the pair deltas, scaled to ciftler × kare frames (the old
+        /// 600-frame window), keeps one burst from deciding the verdict; the threshold is unchanged (H5: the method, not the
+        /// expectation). <paramref name="sonuc"/> gets (on total, off total, median delta × pairs), or -1s when a window had no
+        /// measurement.
+        /// </summary>
+        private static IEnumerator HudFarkiOlc(RunHudScreen hud, int kare, int ciftler, Action<long, long, long> sonuc)
+        {
+            var farklar = new List<long>(ciftler);
+            long acikToplam = 0, kapaliToplam = 0;
+            for (int c = 0; c < ciftler; c++)
+            {
+                bool acikOnce = c % 2 == 0;   // ABBA: an allocation trend over the pairs cancels instead of favouring one side
+                long acik = -1, kapali = -1;
+                for (int k = 0; k < 2; k++)
+                {
+                    bool acikPencere = (k == 0) == acikOnce;
+                    hud.enabled = acikPencere;   // OnEnable / OnDisable cost falls in AyirmaOlc's uncounted warm-up
+                    long v = -1;
+                    yield return AyirmaOlc(kare, x => v = x);
+                    if (acikPencere) acik = v; else kapali = v;
+                }
+
+                hud.enabled = true;
+                if (acik < 0 || kapali < 0)
+                {
+                    sonuc(-1, -1, -1);
+                    yield break;
+                }
+
+                acikToplam += acik;
+                kapaliToplam += kapali;
+                farklar.Add(acik - kapali);
+            }
+
+            var sirali = new List<long>(farklar);
+            sirali.Sort();
+            int m = sirali.Count / 2;
+            long medyan = sirali.Count % 2 == 1 ? sirali[m] : (sirali[m - 1] + sirali[m]) / 2;
+            Debug.Log("[DD-TEST] wp007.perf activePairDeltas=" + string.Join(",", farklar) + " median=" + medyan + " frames/window=" + kare);
+            sonuc(acikToplam, kapaliToplam, medyan * ciftler);
         }
 
         private static IEnumerator SayacPozitifKontrol()
