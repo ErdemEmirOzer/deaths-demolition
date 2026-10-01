@@ -64,6 +64,11 @@ metadata cannot be hidden by a successful summary or restoration.
   ci-isolated `alone` entry, each its own session (R2, C-00 01.10), listed from the
   tree's ci-isolated.txt, so a missing session is a missing file (BLOCKED). The A3
   area rows also bind each ci-isolated `a3` session XML through the A3 record.
+- Input loss (S-02 01.10, every bot run: A2, A3 flag, A5): a native summary with
+  `inputMeasurable: false` (virtual pad disabled or the pointer holding the scheme after the
+  pad) is BLOCKED "input lost (unmeasurable, rerun)" naming padDisabled / pointerAfterPad /
+  unfocused frames, before any exit or status rule; `runMode` keeps the run kind. wp078_bot
+  records such a run as status `unmeasurable` and exits 75, so the chain retries it.
 - A2: `runs`, exactly topdown/tp/fp normal seed61 gameplay runs, each five ordered completed
   rounds, deaths0, native pass, no runtime errors; all five rounds have camera
   inside-collider log samples with zero affected frames. Native `stuckRecoveries`

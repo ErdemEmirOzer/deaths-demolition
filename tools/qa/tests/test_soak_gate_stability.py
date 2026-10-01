@@ -36,6 +36,14 @@ class StabilityGateTests(unittest.TestCase):
         for mode in ("normal", "evidence"):
             self.assertNotEqual(0, self.run_gate(summary(mode=mode)).returncode, mode)
 
+    def test_input_lost_soak_fails_and_names_it(self):
+        # S-02 01.10 input-loss contract: an invulnerable bot whose input never reached the game "completes" rounds
+        data = dict(summary(), inputMeasurable=False, padDisabledFrames=40, pointerAfterPadFrames=0)
+        r = self.run_gate(data)
+        self.assertNotEqual(0, r.returncode)
+        self.assertIn("FAIL stability.input measurable=False", r.stdout)
+        self.assertEqual(0, self.run_gate(dict(summary(), inputMeasurable=True)).returncode)
+
     def test_timeout_round_fails(self):
         self.assertNotEqual(0, self.run_gate(summary(timeout_round=7)).returncode)
 

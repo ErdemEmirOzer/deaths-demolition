@@ -251,3 +251,37 @@ class BotNotStartedIsAWaitTests(unittest.TestCase):
     def test_a_player_that_ran_and_exited_75_is_a_failed_run(self):
         code, attempt = self.run_bot(75, write_log=True)
         self.assertEqual((1, "failed"), (code, attempt["status"]))
+
+
+class BotInputLostIsAWaitTests(unittest.TestCase):
+    """S-02 01.10 input-loss contract: a run whose bot input never reached the game is UNMEASURED — exit 75 (retried)."""
+
+    def run_bot(self, measurable):
+        import json
+        out = Path(tempfile.mkdtemp())
+        args = argparse.Namespace(timeout=60, quiet=False, load_max=6.0, kind="gameplay", mode="fp")
+
+        class Ran:
+            def poll(self):
+                return 3
+
+            def wait(self, timeout=None):
+                for name in wp078_bot.REQUIRED:
+                    (out / name).write_text("{}" if name.endswith(".json") else "x")
+                (out / "bot-summary.json").write_text(json.dumps({"inputMeasurable": measurable, "padDisabledFrames": 0,
+                                                                  "pointerAfterPadFrames": 1587, "unfocusedFrames": 12, "pass": False}))
+                return 3
+        with mock.patch.object(gr, "run_guard", return_value=done(0)), \
+                mock.patch.object(gr, "close", return_value={"code": 0, "why": "touched=0"}), \
+                mock.patch.object(wp078_bot, "launch", return_value=Ran()):
+            code = wp078_bot.run_guarded(args, out, ["/b/P"], {"status": "starting"})
+        return code, json.loads((out / "attempt.json").read_text())
+
+    def test_input_lost_is_unmeasured_75(self):
+        code, attempt = self.run_bot(False)
+        self.assertEqual((75, "unmeasurable"), (code, attempt["status"]))
+        self.assertEqual(1587, attempt["inputLoss"]["pointerAfterPadFrames"])
+
+    def test_measurable_bad_run_stays_a_failure(self):
+        code, attempt = self.run_bot(True)
+        self.assertEqual((1, "failed"), (code, attempt["status"]))

@@ -152,7 +152,11 @@ def main():
         hits = log_failures(args.player_log)
         log_ok = not hits
     lines.append(f"{'PASS' if log_ok else 'FAIL'} stability.log errors={len(hits)}" + ("" if log_ok else " first: " + hits[0]))
-    ok = mode_ok and ok_rounds and seed_ok and mem_ok and log_ok
+    # S-02 01.10 input-loss contract: a soak whose bot input never reached the game proves nothing (an invulnerable bot
+    # standing still completes rounds); absent field = older summary, measured as before
+    input_ok = summary.get("inputMeasurable") is not False
+    lines.append(f"{'PASS' if input_ok else 'FAIL'} stability.input measurable={summary.get('inputMeasurable')} padDisabled={summary.get('padDisabledFrames')} pointerAfterPad={summary.get('pointerAfterPadFrames')}")
+    ok = mode_ok and ok_rounds and seed_ok and mem_ok and log_ok and input_ok
     print(f"{'PASS' if ok else 'FAIL'} soak STABILITY gate (DEC-091)")
     print("\n".join(lines))
     return 0 if ok else 1

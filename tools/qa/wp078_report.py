@@ -602,8 +602,20 @@ class Inspector:
         require(isinstance(command, list) and all(isinstance(arg, str) for arg in command), "native command is not argv string list")
         return command
 
+    def input_measurable(self, run):
+        """S-02 01.10 QA input-loss contract: a run whose bot input never reached the game (virtual pad disabled, or the
+        pointer holding the scheme after the pad took it) is UNMEASURED — named BLOCKED, never PASS or FAIL. Read from the
+        hash-verified native summary before the exit/status checks, which an unmeasurable run fails for that reason only."""
+        if not isinstance(run, dict) or not isinstance(run.get("summary"), dict):
+            return
+        _, summary = self.obj(run.get("summary"))
+        if summary.get("inputMeasurable") is False:
+            require(False, "input lost (unmeasurable, rerun): pad disabled " + str(summary.get("padDisabledFrames")) + " / pointer after pad "
+                    + str(summary.get("pointerAfterPadFrames")) + " / unfocused " + str(summary.get("unfocusedFrames")) + " frames", "BLOCKED")
+
     def run(self, run, stability=False, report=False, step=None):
         require(isinstance(run, dict), "missing physical run", "BLOCKED")
+        self.input_measurable(run)
         proof = self.provenance(run.get("provenance"), run.get("originalExit"), self.bot_role(run), balance=report)
         self.bind(run["provenance"], proof, [run.get("summary"), run.get("log"), run.get("frames")])
         self.bot_guard(run, proof, ("report",) if report else ("stability",) if stability else ("gameplay",))
@@ -822,6 +834,7 @@ class Inspector:
             execution_path = str(self.path(run.get("provenance", {}).get("path")))
             require(execution_path not in execution_paths, "one native execution reused across flag smoke rows")
             execution_paths.add(execution_path)
+            self.input_measurable(run)
             proof = self.provenance(run.get("provenance"), run.get("originalExit"), self.bot_role(run))
             self.bot_guard(run, proof, ("flag",))
             require(proof.get("status") == "complete", "flag run completion unproven")

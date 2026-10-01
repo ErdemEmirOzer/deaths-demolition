@@ -666,6 +666,12 @@ class RouteRunTests(Fixture):
         self.assert_step('A2','FAIL','same frame bytes')
     def test_route_exit_and_guard(self):
         run=self.m['checklist']['A2']['routeRuns'][0];run['originalExit']=3;self.assert_closed()
+    def test_input_lost_gameplay_run_is_named_blocked(self):
+        # S-02 01.10 input-loss contract: inputMeasurable=false → BLOCKED "input lost", before any exit/status rule
+        run=self.m['checklist']['A2']['runs'][2]
+        self.f.replace_json(run['summary'],lambda x:x.update(inputMeasurable=False,padDisabledFrames=0,pointerAfterPadFrames=1587,unfocusedFrames=9,**{'pass':False}))
+        self.f.replace_json(run['provenance'],lambda x:x.update(status='unmeasurable',exitCode=3));run['originalExit']=3;self.f.anchor(self.m)
+        self.assert_step('A2','BLOCKED','input lost (unmeasurable, rerun): pad disabled 0 / pointer after pad 1587')
     def test_route_guard_unverified(self):
         run=self.m['checklist']['A2']['routeRuns'][0];run['guard']['verified']=0
         self.f.replace_json(run['provenance'],lambda x:x.update(guard=copy.deepcopy(run['guard'])));self.f.anchor(self.m)

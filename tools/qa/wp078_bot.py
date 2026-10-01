@@ -230,6 +230,19 @@ def run_guarded(args, out, command, attempt):
         wp064_run.write_json(out / "attempt.json", attempt)
         print(f"{args.kind} {args.mode} not started: player-run exit {exit_code} (wait) guard={why} out={out}")
         return exit_code
+    try:
+        summary = json.loads((out / "bot-summary.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        summary = None
+    if isinstance(summary, dict) and summary.get("inputMeasurable") is False and not timed_out and guard_code == 0:
+        # S-02 01.10 input-loss contract: the bot's input never reached the game (pad disabled / pointer held the scheme);
+        # the run is UNMEASURED — a wait (75) that the chain and wp078_accept retry, never a finished bad run
+        attempt.update({"status": "unmeasurable", "completedUtc": wp064_run.utc_now(), "exitCode": exit_code, "timedOut": False,
+                        "missingArtifacts": missing, "artifactSha256": hash_outputs(out),
+                        "inputLoss": {k: summary.get(k) for k in ("padDisabledFrames", "pointerAfterPadFrames", "unfocusedFrames")}})
+        wp064_run.write_json(out / "attempt.json", attempt)
+        print(f"{args.kind} {args.mode} UNMEASURED (input lost) exit={exit_code} guard={why} out={out}")
+        return 75
     success = exit_code == 0 and not timed_out and not missing and guard_code == 0
     attempt.update({"status": "complete" if success else "failed", "completedUtc": wp064_run.utc_now(), "completedEpoch": time.time(),
                     "exitCode": exit_code, "timedOut": timed_out, "missingArtifacts": missing,
