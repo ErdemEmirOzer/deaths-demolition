@@ -119,6 +119,9 @@ namespace DD.Art.Tests.PlayMode
             // Fire → the weapon's additive recoil, legs untouched.
             velocity = Vector3.forward * 6.2f;
             yield return CharacterTests.Bekle(() => pv.Move.y > 0.9f, 2f, "koşu");
+            // WP-071 MUST-3 (R1-C 5cf17f9e): the equips above stood still, so the base layer was in Idle_Breath; it leaves it over 0.12 s —
+            // the shot starts once the legs are on Locomotion (a precondition; "fire leaves the base layer alone" is asserted unchanged)
+            yield return CharacterTests.Bekle(() => an.GetCurrentAnimatorStateInfo(0).IsName(C.LocomotionState) && !an.IsInTransition(0), 2f, "koşu: taban Locomotion");
             pv.PlayFire();
             yield return null; yield return null;
             Assert.IsTrue(In(an, add, C.FireState + "_1"), "Fire_1 additive");
