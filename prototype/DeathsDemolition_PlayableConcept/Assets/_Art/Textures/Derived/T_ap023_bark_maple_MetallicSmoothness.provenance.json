@@ -1,7 +1,7 @@
 {
     "source": "Assets/_Art/Textures/Source/T_ap023_bark_maple_Packed.png",
-    "sourceSha256": "d29acd024e4649a10fdf9f1c64a1071ecde5c04ed3ff24a56bcb7d2b54efd315",
+    "sourceSha256": "709ef0275199e7a134d0b12331b1d87c78910fca8809282780c83382f091f890",
     "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
-    "utc": "2026-09-30T18:37:29.6464070Z",
-    "outputSha256": "210f11b8c2c29454b1cc7e63eb5e77d5ed366f9cb9bb90d2eb3c4e540ea16d19"
+    "utc": "2026-09-30T23:41:31.3563470Z",
+    "outputSha256": "8f3da3fee5ab13dd6e69c9cf69f2b056618307039d0e42b29655df02656c535d"
 }

@@ -1,11 +1,11 @@
 {
  "ap": "AP-023",
- "version": "manifest v016 (AP023.manifest.v1, 59 families / 192 FBX)",
+ "version": "manifest v019 (AP023.manifest.v1, 59 families / 192 FBX)",
  "derived": "source FBX used directly (embed off, path STRIP, -Z/Y-up); roles ap023_<role>; roof parts fade (role roof); sloped box shells carry obb; LOD0 bounds from the geometry, receipt-checked",
  "sources": [
   {
-   "path": "asset-production/AP-023/exports/AP023-manifest-v016.json",
-   "sha256": "8b1adfa984e4fc99ed38cc6446b973f7a144e6b8b7db49dba1ab6ddac55061a6"
+   "path": "asset-production/AP-023/exports/AP023-manifest-v019.json",
+   "sha256": "1584739e8bf7ad207e7c1c849470f4ad96b362d98cf6868f05738527e679d2b9"
   }
  ],
  "families": [
@@ -17644,7 +17644,7 @@
      "boundsMin": [
       -2.96857,
       -3.11922,
-      -0.01428
+      -0.01457
      ],
      "boundsMax": [
       3.17443,
@@ -17716,9 +17716,9 @@
           "ap023_bark_maple"
          ],
          "facesPerSlot": [
-          6868
+          8328
          ],
-         "triangles": 6868,
+         "triangles": 8328,
          "colourLayers": [],
          "windExpected": false
         },
@@ -17729,9 +17729,9 @@
           "ap023_bark_maple"
          ],
          "facesPerSlot": [
-          1950
+          2014
          ],
-         "triangles": 1950,
+         "triangles": 2014,
          "colourLayers": [],
          "windExpected": false
         },
@@ -17742,9 +17742,9 @@
           "ap023_bark_maple"
          ],
          "facesPerSlot": [
-          646
+          690
          ],
-         "triangles": 646,
+         "triangles": 690,
          "colourLayers": [],
          "windExpected": false
         }
@@ -17756,18 +17756,31 @@
        "fbx": "AP023_momiji_V01.fbx",
        "object": "AP023_momiji_V01_COL",
        "class": "blocking",
-       "shells": 1,
+       "shells": 2,
        "shellBoxes": [
         {
          "min": [
-          -0.18759,
-          -0.20047,
-          0.16746
+          -0.30988,
+          -0.3363,
+          0.0
          ],
          "max": [
-          0.19039,
-          0.19465,
-          1.85813
+          0.35757,
+          0.33115,
+          0.36493
+         ],
+         "positions": 8
+        },
+        {
+         "min": [
+          -0.22798,
+          -0.2544,
+          0.31493
+         ],
+         "max": [
+          0.27566,
+          0.24924,
+          1.85847
          ],
          "positions": 8
         }
@@ -17784,7 +17797,7 @@
      "boundsMin": [
       -5.16219,
       -5.17505,
-      -0.01077
+      -0.01107
      ],
      "boundsMax": [
       4.6097,
@@ -17856,9 +17869,9 @@
           "ap023_bark_maple"
          ],
          "facesPerSlot": [
-          4182
+          5326
          ],
-         "triangles": 4182,
+         "triangles": 5326,
          "colourLayers": [],
          "windExpected": false
         },
@@ -17869,9 +17882,9 @@
           "ap023_bark_maple"
          ],
          "facesPerSlot": [
-          1980
+          2034
          ],
-         "triangles": 1980,
+         "triangles": 2034,
          "colourLayers": [],
          "windExpected": false
         },
@@ -17882,9 +17895,9 @@
           "ap023_bark_maple"
          ],
          "facesPerSlot": [
-          606
+          616
          ],
-         "triangles": 606,
+         "triangles": 616,
          "colourLayers": [],
          "windExpected": false
         }
@@ -17900,14 +17913,14 @@
        "shellBoxes": [
         {
          "min": [
-          -0.14048,
-          -0.13731,
-          0.60031
+          -0.18003,
+          -0.19121,
+          0.0
          ],
          "max": [
-          0.14094,
-          0.13637,
-          2.15966
+          0.18581,
+          0.17463,
+          2.17981
          ],
          "positions": 8
         }
@@ -17922,12 +17935,12 @@
      "id": "V03",
      "prefab": "SM_momiji_V03",
      "boundsMin": [
-      -2.181,
-      -2.30613,
-      -0.01272
+      -2.19449,
+      -2.33539,
+      -0.01349
      ],
      "boundsMax": [
-      2.21257,
+      2.27213,
       2.44862,
       3.05233
      ],
@@ -17996,9 +18009,9 @@
           "ap023_bark_maple"
          ],
          "facesPerSlot": [
-          2646
+          3006
          ],
-         "triangles": 2646,
+         "triangles": 3006,
          "colourLayers": [],
          "windExpected": false
         },
@@ -18040,14 +18053,14 @@
        "shellBoxes": [
         {
          "min": [
-          -0.21825,
-          -0.20807,
-          -0.01272
+          -0.42033,
+          -0.50885,
+          -0.01349
          ],
          "max": [
-          0.13444,
-          0.2079,
-          0.71485
+          0.46083,
+          0.42729,
+          0.97314
          ],
          "positions": 8
         }
