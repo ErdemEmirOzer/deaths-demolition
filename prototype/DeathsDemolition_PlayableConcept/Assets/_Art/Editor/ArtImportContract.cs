@@ -548,6 +548,16 @@ namespace DD.Art.Pipeline.EditorTools
         public const bool TextureMipmaps = true;
         public const FilterMode TextureFilter = FilterMode.Trilinear;
         public const TextureWrapMode TextureWrap = TextureWrapMode.Repeat;
+
+        /// <summary>
+        /// DEC-108 AD MUST 1 (01.10): a horizon ring sheet (<c>T_horizon_*_Sheet</c>) wraps round its ring (U repeat) but not over its
+        /// top edge — with V repeat the top rows' bilinear and mip taps blend in the bottom row's opaque haze, a thin pale arc along
+        /// every ring top. Every other contract texture repeats both ways (the cloud sheets scroll in U and V).
+        /// </summary>
+        public static TextureWrapMode WrapVOf(string assetPath)
+        {
+            return System.IO.Path.GetFileName(assetPath ?? string.Empty).StartsWith("T_horizon_", StringComparison.Ordinal) ? TextureWrapMode.Clamp : TextureWrap;
+        }
         public const int TextureAniso = 4;
         public const TextureImporterCompression TextureCompression = TextureImporterCompression.Compressed;
         public const bool TextureCrunched = false;
@@ -958,7 +968,8 @@ namespace DD.Art.Pipeline.EditorTools
             changed |= Set(importer.textureCompression, TextureCompression, v => importer.textureCompression = v);
             changed |= Set(importer.crunchedCompression, TextureCrunched, v => importer.crunchedCompression = v);
             changed |= Set(importer.filterMode, TextureFilter, v => importer.filterMode = v);
-            changed |= Set(importer.wrapMode, TextureWrap, v => importer.wrapMode = v);
+            changed |= Set(importer.wrapModeU, TextureWrap, v => importer.wrapModeU = v);
+            changed |= Set(importer.wrapModeV, WrapVOf(importer.assetPath), v => importer.wrapModeV = v);
             changed |= Set(importer.anisoLevel, TextureAniso, v => importer.anisoLevel = v);
             bool cutout = KeepsCutoutAlpha(importer.assetPath);
             // A VFX sheet's alpha is its coverage (blended, not clipped): transparency dilation, no coverage-preserving mips.
@@ -1068,7 +1079,8 @@ namespace DD.Art.Pipeline.EditorTools
             Check(v, "textureCompression", importer.textureCompression, TextureCompression);
             Check(v, "crunchedCompression", importer.crunchedCompression, TextureCrunched);
             Check(v, "filterMode", importer.filterMode, TextureFilter);
-            Check(v, "wrapMode", importer.wrapMode, TextureWrap);
+            Check(v, "wrapModeU", importer.wrapModeU, TextureWrap);
+            Check(v, "wrapModeV", importer.wrapModeV, WrapVOf(importer.assetPath));
             Check(v, "anisoLevel", importer.anisoLevel, TextureAniso);
             Check(v, "alphaIsTransparency", importer.alphaIsTransparency, cutout || sheet);
             Check(v, "alphaSource", importer.alphaSource, alpha);

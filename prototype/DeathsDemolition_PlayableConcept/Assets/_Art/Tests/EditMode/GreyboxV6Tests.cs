@@ -796,6 +796,27 @@ namespace DD.Art.Tests.EditMode
             Assert.IsNull(dress.transform.Find(WorldV5Sky.RootName + "/Clouds_Near"), "r2: döşeme bulut düzlemleri yok (panorama)");
             Assert.Greater(field.DensityAt(new Vector3(0f, 18f, 0f)), 0.0015f, "r2: yükseltilmiş pus bandı (tepeden sütunlar)");
             Assert.AreEqual(WorldV5Atmosphere.VistaMist.Length, GameObject.Find(WorldV5Atmosphere.VistaMistGroupName).transform.childCount, "vista sisi");
+            // DEC-108 AD MUST 2: the understory skirt closes the vista band's square (±88 m, y −1…+5) — every tier, unlit, no shadows,
+            // just past the vista trees (≤ 84 m + jitter), so no line of sight below +5 m leaves the band to the sky.
+            Transform skirt = dress.transform.Find(WorldV5Atmosphere.SkirtGroupName);
+            Assert.AreEqual(4, skirt.childCount, "alt-bitki eteği: 4 duvar");
+            Assert.IsNull(skirt.GetComponent<AtmosphereTierGroup>(), "etek her kademede");
+            foreach (Transform wall in skirt)
+            {
+                var r = wall.GetComponent<MeshRenderer>();
+                Assert.AreEqual("DD/UnderstorySkirt", r.sharedMaterial.shader.name, wall.name);
+                Assert.AreEqual(UnityEngine.Rendering.ShadowCastingMode.Off, r.shadowCastingMode, wall.name + " gölgesiz");
+                Assert.AreEqual(WorldV5Atmosphere.SkirtHalf, Mathf.Max(Mathf.Abs(r.bounds.center.x), Mathf.Abs(r.bounds.center.z)), 0.01f, wall.name + " ±88 m");
+                Assert.AreEqual(WorldV5Atmosphere.SkirtHalf, Mathf.Max(r.bounds.extents.x, r.bounds.extents.z), 0.01f, wall.name + " köşeden köşeye");
+                Assert.AreEqual(WorldV5Atmosphere.SkirtBottom, r.bounds.min.y, 0.01f, wall.name + " alt");
+                Assert.AreEqual(WorldV5Atmosphere.SkirtTop, r.bounds.max.y, 0.01f, wall.name + " üst");
+            }
+
+            foreach (Renderer tree in dress.transform.Find(WorldV5Dress.VistaGroupName).GetComponentsInChildren<Renderer>())
+            {
+                Vector3 c = tree.transform.position;
+                Assert.Less(Mathf.Max(Mathf.Abs(c.x), Mathf.Abs(c.z)), WorldV5Atmosphere.SkirtHalf, tree.name + " eteğin içinde");
+            }
             var far = dress.transform.Find(ArtSurfaceImporter.SkyRootName + "/Horizon_far").GetComponent<MeshRenderer>().sharedMaterial;
             Assert.Greater(far.GetFloat("_Haze"), 0.3f, "uzak katman sisli");
         }

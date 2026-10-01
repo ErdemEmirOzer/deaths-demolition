@@ -41,6 +41,16 @@ namespace DD.Art.Pipeline.EditorTools
             (new Vector2(76f, 0f), new Vector2(28f, 124f), 8f, 0.04f), (new Vector2(-76f, 0f), new Vector2(28f, 124f), 8f, 0.04f),
         };
         public const float CentreClear = 10f;
+
+        /// <summary>
+        /// DEC-108 AD MUST 2 (01.10): the dark understory behind the vista band — a square ring of walls at ±<see cref="SkirtHalf"/> m
+        /// (past the 84 m band and its jitter), y <see cref="SkirtBottom"/>…<see cref="SkirtTop"/>, so the sky no longer shows under the
+        /// canopy below the horizon (B6 EDGE 62: the north arc, (±17, 42 / 48), z −54). Unlit trunk-shadow tone, hazed like the trees
+        /// (DD/UnderstorySkirt); every tier, no shadows, out of the bake.
+        /// </summary>
+        public const string SkirtGroupName = "UnderstorySkirt (DEC-108)";
+        public const float SkirtHalf = 88f, SkirtBottom = -1f, SkirtTop = 5f;
+        public static readonly Color SkirtTone = new Color(0.10f, 0.11f, 0.095f, 1f);
         public static string MeshFolder => GreyboxV6Builder.DataFolder + "/Atmosphere";
 
         /// <summary>Priority order (tier counts cut from the end): region, top point XZ, top height, length, width, peak alpha.</summary>
@@ -173,6 +183,17 @@ namespace DD.Art.Pipeline.EditorTools
                     mat.SetFloat("_NoiseSpeed", 0.3f);
                 });
                 Piece(grove, "GroveMist_" + i.ToString("00"), new Vector3(v.at.x, v.y, v.at.y), new Vector3(v.size.x, 1f, v.size.y), fogMesh, m);
+                n++;
+            }
+
+            var skirt = Group(dress, SkirtGroupName);
+            Mesh wallMesh = Quad("SM_SkirtWall", new[] { new Vector3(-0.5f, 0f, 0f), new Vector3(-0.5f, 1f, 0f), new Vector3(0.5f, 1f, 0f), new Vector3(0.5f, 0f, 0f) },
+                new Bounds(new Vector3(0f, 0.5f, 0f), new Vector3(1f, 1f, 0.01f)));
+            Material skirtMaterial = MaterialFor("V5_UnderstorySkirt", "DD/UnderstorySkirt", mat => mat.SetColor("_BaseColor", SkirtTone));
+            foreach ((string side, Vector2 at, float yaw) in new[] { ("North", new Vector2(0f, SkirtHalf), 0f), ("East", new Vector2(SkirtHalf, 0f), 90f), ("South", new Vector2(0f, -SkirtHalf), 180f), ("West", new Vector2(-SkirtHalf, 0f), 270f) })
+            {
+                Piece(skirt, "Skirt_" + side, new Vector3(at.x, SkirtBottom, at.y), new Vector3(2f * SkirtHalf, SkirtTop - SkirtBottom, 1f), wallMesh, skirtMaterial);
+                skirt.Find("Skirt_" + side).rotation = Quaternion.Euler(0f, yaw, 0f);
                 n++;
             }
 
