@@ -1,6 +1,7 @@
 using DD.Prototype.Core.Config;
 using DD.Prototype.Feedback.Vfx;
 using NUnit.Framework;
+using UnityEngine;
 
 namespace DD.Prototype.Tests.EditMode
 {
@@ -234,6 +235,36 @@ namespace DD.Prototype.Tests.EditMode
                     Assert.AreEqual(32, x.Budgets.CapacityFor(
                         DD.Prototype.Feedback.FeedbackCategory.Impact.ToString(), -1));
                     break;
+            }
+        }
+
+        /// <summary>
+        /// WP-069 M3 (C-00 01.10, S-06 r21): the shotgun row's view-model rig kick is its own column — within the A4.2 FP budget
+        /// (kick × pitchDegreesPerMeter × upShare / 0.15 ≤ 6.5°) — while the camera strength keeps the recoil column (0.34 m);
+        /// the other rows fall back to their recoil column; the authored DD_FeelConfig matches the defaults.
+        /// </summary>
+        [Test]
+        public void M3_PompaliRigTekmesi_ButcedeKameraGucuAyni_VarlikVarsayilanla()
+        {
+            FeelConfigData data = FeelConfig.CreateDefaults();
+            WeaponFeel sg = FeelRuntime.Current.Weapon(WeaponFeelId.CombatShotgun);   // the live path (the authored asset)
+            float rigPitch = sg.rigKickMeters * data.recoil.pitchDegreesPerMeter * sg.rigUpShare / 0.15f;
+            Assert.LessOrEqual(rigPitch, 6.5f, "pompalı rig kalkışı A4.2 bütçesinde (" + rigPitch.ToString("0.0") + "°)");
+            Assert.AreEqual(0.34f, sg.recoilKickMeters, 1e-5f, "kamera gücü sütunu değişmez");
+            WeaponFeel ar = FeelRuntime.Current.Weapon(WeaponFeelId.AssaultRifle);
+            Assert.AreEqual(ar.recoilKickMeters, ar.rigKickMeters, 1e-6f, "rig sütunu boş → recoil sütunu");
+            Assert.AreEqual(ar.recoilRecoverySeconds, ar.rigRecoverySeconds, 1e-6f);
+            Assert.AreEqual(ar.recoilUpShare, ar.rigUpShare, 1e-6f);
+
+            FeelConfig asset = Resources.Load<FeelConfig>("DD_FeelConfig");
+            Assert.IsNotNull(asset, "DD_FeelConfig yok");
+            foreach (WeaponFeelRow d in data.weapons)
+            {
+                WeaponFeelRow a = System.Array.Find(asset.AuthoredData.weapons, r => r.id == d.id);
+                Assert.IsNotNull(a, d.id.ToString());
+                Assert.AreEqual(d.rigKickMeters, a.rigKickMeters, 1e-6f, d.id + " rig kick (varlık)");
+                Assert.AreEqual(d.rigRecoverySeconds, a.rigRecoverySeconds, 1e-6f, d.id + " rig recovery (varlık)");
+                Assert.AreEqual(d.rigUpShare, a.rigUpShare, 1e-6f, d.id + " rig upShare (varlık)");
             }
         }
     }

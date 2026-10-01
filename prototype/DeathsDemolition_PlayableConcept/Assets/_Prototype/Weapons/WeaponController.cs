@@ -592,9 +592,11 @@ namespace DD.Prototype.Weapons
             // purpose - the gun kicks (rig) and the character absorbs it (host). Either
             // one alone reads as half a shot.
             WeaponFeel feelRow = FeelRuntime.Current.Weapon(WeaponFeelIds.From(_equippedId));
-            if (_classicRig != null)
+            // C-00 01.10: in first person the view-model kick is FpWeaponFeel's A4.2 row alone — the rig's own kick on top of it
+            // was a double count (sg_1 16.6° total). Third person / top-down keep the rig kick.
+            if (_classicRig != null && CameraModeService.Current != CameraMode.FirstPerson)
             {
-                _classicRig.PlayFireMotion(feelRow.recoilKickMeters, feelRow.recoilRecoverySeconds, feelRow.recoilUpShare);
+                _classicRig.PlayFireMotion(feelRow.rigKickMeters, feelRow.rigRecoverySeconds, feelRow.rigUpShare);   // M3: the rig column (camera strength below keeps recoilKickMeters)
             }
 
             _host?.OnWeaponFired(RecoilStrength01(feelRow.recoilKickMeters, _classic.Power), aim);
@@ -803,7 +805,7 @@ namespace DD.Prototype.Weapons
 
             if (_specialRig != null)
             {
-                _specialRig.PlayFireMotion(feelRow.recoilKickMeters, feelRow.recoilRecoverySeconds, feelRow.recoilUpShare);
+                if (CameraModeService.Current != CameraMode.FirstPerson) _specialRig.PlayFireMotion(feelRow.rigKickMeters, feelRow.rigRecoverySeconds, feelRow.rigUpShare);   // C-00 01.10: FP = A4.2 only
             }
 
             _host?.OnWeaponFired(SpecialWeaponRuntime.RecoilStrength01, aim);

@@ -83,7 +83,15 @@ namespace DD.Prototype.Core.Config
     {
         public readonly WeaponFeelId id; public readonly float recoilKickMeters, recoilRecoverySeconds, recoilUpShare, shakeWeight;
         public readonly FeelShakeKind shakeKind; public readonly float rumbleFraction; public readonly int rumbleDurationMs;
-        internal WeaponFeel(WeaponFeelRow d) { id = d.id; recoilKickMeters = d.recoilKickMeters; recoilRecoverySeconds = d.recoilRecoverySeconds; recoilUpShare = d.recoilUpShare; shakeWeight = d.shakeWeight; shakeKind = d.shakeKind; rumbleFraction = d.rumbleFraction; rumbleDurationMs = d.rumbleDurationMs; }
+        /// <summary>WP-069 M3: the view-model rig's kick (the row's rig column, else its recoil column).</summary>
+        public readonly float rigKickMeters, rigRecoverySeconds, rigUpShare;
+        internal WeaponFeel(WeaponFeelRow d)
+        {
+            id = d.id; recoilKickMeters = d.recoilKickMeters; recoilRecoverySeconds = d.recoilRecoverySeconds; recoilUpShare = d.recoilUpShare; shakeWeight = d.shakeWeight; shakeKind = d.shakeKind; rumbleFraction = d.rumbleFraction; rumbleDurationMs = d.rumbleDurationMs;
+            rigKickMeters = d.rigKickMeters > 0f ? d.rigKickMeters : d.recoilKickMeters;
+            rigRecoverySeconds = d.rigRecoverySeconds > 0f ? d.rigRecoverySeconds : d.recoilRecoverySeconds;
+            rigUpShare = d.rigUpShare > 0f ? d.rigUpShare : d.recoilUpShare;
+        }
     }
 
     public readonly struct ImpactFeel
@@ -496,7 +504,8 @@ namespace DD.Prototype.Core.Config
                 seenWeapons[id] = true;
                 if (!Range(w.recoilKickMeters, 0f, .5f) || !Range(w.recoilRecoverySeconds, .02f, .6f) ||
                     !Range(w.recoilUpShare, 0f, 1f) || !Range(w.shakeWeight, 0f, 1f) ||
-                    !Range(w.rumbleFraction, 0f, 1f) || w.rumbleDurationMs < 0 || w.rumbleDurationMs > 120)
+                    !Range(w.rumbleFraction, 0f, 1f) || w.rumbleDurationMs < 0 || w.rumbleDurationMs > 120 ||
+                    !Range(w.rigKickMeters, 0f, .5f) || !(w.rigRecoverySeconds == 0f || Range(w.rigRecoverySeconds, .02f, .6f)) || !Range(w.rigUpShare, 0f, 1f))
                     return Fail("weapon row out of range: " + w.id, out error);
             }
             if (d.impacts == null || d.impacts.Length != 11) return Fail("all fixed impact rows required", out error);

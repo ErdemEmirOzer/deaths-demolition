@@ -130,6 +130,16 @@ namespace DD.Prototype.Core.Config
         public FeelShakeKind shakeKind;
         public float rumbleFraction;
         public int rumbleDurationMs;
+
+        /// <summary>
+        /// WP-069 M3 (C-00 01.10, S-06 measurement r21): the weapon view-model rig's own kick — WeaponVisualRig's body push and
+        /// pitch (kick × pitchDegreesPerMeter × upShare / 0.15), apart from the camera strength that stays on recoilKickMeters.
+        /// 0 = the recoil column. The shotgun row sets it inside the A4.2 FP kick budget (≤ 6.5°): its recoil column (0.34 m,
+        /// upShare 0.3) lifted the barrel 61° + 34 cm and threw the flash off screen.
+        /// </summary>
+        public float rigKickMeters;
+        public float rigRecoverySeconds;
+        public float rigUpShare;
     }
 
     [Serializable]
@@ -335,7 +345,7 @@ namespace DD.Prototype.Core.Config
             {
                 Weapon(WeaponFeelId.AssaultRifle, .10f, .10f, .15f, .30f, FeelShakeKind.Rattle, .67f, 70),
                 Weapon(WeaponFeelId.AutoSmg, .05f, .055f, .10f, .18f, FeelShakeKind.Rattle, .5f, 45),
-                Weapon(WeaponFeelId.CombatShotgun, .34f, .30f, .30f, 1f, FeelShakeKind.Punch, 1f, 120),
+                Rig(Weapon(WeaponFeelId.CombatShotgun, .34f, .30f, .30f, 1f, FeelShakeKind.Punch, 1f, 120), .07f, .125f, .15f),   // M3: rig 6.3°
                 Weapon(WeaponFeelId.KaguraBell, .16f, .125f, .15f, .85f, FeelShakeKind.Rattle, 1f, 120),
                 Weapon(WeaponFeelId.OfudaLoom, .03f, .125f, .15f, .12f, FeelShakeKind.Rattle, .4f, 50),
                 Weapon(WeaponFeelId.TideJewel, .08f, .125f, .15f, .30f, FeelShakeKind.Rattle, .7f, 90)
@@ -370,6 +380,13 @@ namespace DD.Prototype.Core.Config
             return new WeaponFeelRow { id = id, recoilKickMeters = kick, recoilRecoverySeconds = recovery,
                 recoilUpShare = up, shakeWeight = shake, shakeKind = kind,
                 rumbleFraction = rumble, rumbleDurationMs = milliseconds };
+        }
+
+        /// <summary>WP-069 M3: the view-model rig's own kick on a row (the camera strength keeps the recoil column).</summary>
+        private static WeaponFeelRow Rig(WeaponFeelRow row, float kick, float recovery, float up)
+        {
+            row.rigKickMeters = kick; row.rigRecoverySeconds = recovery; row.rigUpShare = up;
+            return row;
         }
 
         private static ImpactFeelRow Impact(ImpactFeelId id, int priority, float amplitude, float seconds,

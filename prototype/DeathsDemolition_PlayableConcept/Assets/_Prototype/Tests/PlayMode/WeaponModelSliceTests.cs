@@ -710,6 +710,156 @@ namespace DD.Prototype.Tests.PlayMode
         }
 
         /// <summary>
+        /// C-00 01.10 (FP double kick: the view-model rig's own kick stacked on the A4.2 view-model kick): per classic in first
+        /// person, one shot at rest, shot +1…+45 frames — the rig body's lift and the total barrel lift (rig + A4.2) against the
+        /// view-model anchor. The before / after table for the delivery note (R2 FP feel reference). Measurement only.
+        /// </summary>
+        [UnityTest, Explicit]
+        [Timeout(420000)]
+        public IEnumerator FP_NamluKalkisi_Tablo_HerSilah()
+        {
+            yield return Kur();
+            Transform mount = _s.Rig.GetComponentInChildren<PlayerWeaponBinding>().WeaponMount;
+            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.FirstPerson, instant: true);
+            yield return SpecialWeaponSahne.Kareler(60);
+            var report = new List<string>();
+            try
+            {
+                foreach (WeaponDefinition d in Arsenal.All)
+                {
+                    if (d == null || !d.enabled || d.slot != WeaponSlotKind.Classic) continue;
+                    _s.Controller.EquipClassic(d.id, _s.Config);
+                    yield return Dinlenme(mount, d.weaponId);
+                    yield return SpecialWeaponSahne.Kareler(20);
+                    Transform rig = mount.Find("ClassicWeaponRig");
+                    WeaponVisualRig visual = rig != null ? rig.GetComponent<WeaponVisualRig>() : null;
+                    if (visual == null || visual.Body == null) { report.Add(d.weaponId + ": no rig"); continue; }
+                    Transform anchor = DD.Prototype.CameraSystem.CameraView.ViewmodelAnchor;
+                    Quaternion bodyRest = visual.Body.localRotation;
+                    Vector3 fwdRest = anchor.InverseTransformDirection(visual.Body.forward);
+                    _s.Girdi.AtesBasti = true; _s.Girdi.AtesBasili = true;
+                    yield return null;
+                    _s.Girdi.AtesBasti = false; _s.Girdi.AtesBasili = false;
+                    float rigMax = 0f, totalMax = 0f;
+                    for (int f = 1; f <= 45; f++)
+                    {
+                        yield return null;
+                        rigMax = Mathf.Max(rigMax, Quaternion.Angle(bodyRest, visual.Body.localRotation));
+                        totalMax = Mathf.Max(totalMax, Vector3.Angle(fwdRest, anchor.InverseTransformDirection(visual.Body.forward)));
+                    }
+
+                    report.Add(d.weaponId + " rig " + rigMax.ToString("0.0") + "° total " + totalMax.ToString("0.0") + "° (A4.2 pitch " + FpWeaponFeel.KickFor(d.weaponId).PitchDeg.ToString("0.0") + "°)");
+                    yield return new WaitForSeconds(0.8f);
+                }
+            }
+            finally
+            {
+                _s.Girdi.AtesBasti = false; _s.Girdi.AtesBasili = false;
+            }
+
+            Debug.Log("[DD-TEST] wp069.fptable " + string.Join(" | ", report));
+            Assert.IsNotEmpty(report);
+        }
+
+        /// <summary>
+        /// WP-069 M3 + M4 (C-00 01.10, S-07 AD r4) in first person. M4: rl_1's view-model kick is ramped (≈ 3 frames, eased in), so
+        /// on the frame the rocket appears it is still at the tube mouth (the whole 12 cm / 9° in one frame put it ~120 px below).
+        /// M3: sg_1 / sg_2 — the view-model rig's own kick is the rig column (0.07 m, upShare 0.15 → 6.3°), not the recoil
+        /// column's 61° + 34 cm: shot +1…+45 frames the rig body's lift stays within the A4.2 budget (6.5°) and the muzzle (the
+        /// flash) stays on screen. Logged: the combined FP lift (rig + the A4.2 view-model kick) for C-00.
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator FP_Tekme_RoketTupAgzinda_PompaliNamluButcede()
+        {
+            yield return Kur();
+            Transform mount = _s.Rig.GetComponentInChildren<PlayerWeaponBinding>().WeaponMount;
+            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.FirstPerson, instant: true);
+            yield return SpecialWeaponSahne.Kareler(60);
+            var camRig = DD.Prototype.CameraSystem.PrototypeCameraRig.Active;
+            Camera vm = camRig.ViewmodelCamera;
+            Assert.IsNotNull(vm, "FP'de görüntü modeli kamerası yok.");
+            camRig.Camera.aspect = KareW / (float)KareH;
+            vm.aspect = KareW / (float)KareH;
+            var report = new List<string>();
+            var wrong = new List<string>();
+            try
+            {
+                // M4 · rl_1: the rocket at the tube mouth on the frame it appears
+                _s.Controller.EquipClassic(ClassicWeaponId.Rl1, _s.Config);
+                yield return Dinlenme(mount, "rl_1");
+                yield return SpecialWeaponSahne.Kareler(10);
+                int live0 = ProjectileSystem.LiveCount;
+                _s.Girdi.AtesBasti = true; _s.Girdi.AtesBasili = true;
+                yield return SpecialWeaponSahne.Bekle(() => ProjectileSystem.LiveCount > live0, 2f, "rl_1 ateşlemedi");
+                _s.Girdi.AtesBasti = false; _s.Girdi.AtesBasili = false;
+                Vector2 rocket = Ekran(camRig.Camera, ProjectileSystem.Get(ProjectileSystem.LiveCount - 1).Position);
+                Vector2 mouth = Ekran(vm, _s.Controller.Muzzle.position);
+                float gap = (rocket - mouth).magnitude;
+                report.Add("rl_1 firing frame: rocket ↔ tube mouth " + gap.ToString("0.0") + " px (kick pending " + (_s.Controller.ClassicFeel.KickPending * 100f).ToString("0") + " %)");
+                if (gap > 45f) wrong.Add("rl_1 roket tüp ağzından " + gap.ToString("0.0") + " px uzakta");
+                yield return new WaitForSeconds(1.2f);
+
+                // M3 · sg_1 / sg_2: the rig's lift within the budget, the flash on screen, shot +1…+45
+                foreach (ClassicWeaponId id in new[] { ClassicWeaponId.CombatShotgun, ClassicWeaponId.Sg2 })
+                {
+                    _s.Controller.EquipClassic(id, _s.Config);
+                    string key = _s.Controller.Classic.Definition.weaponId;
+                    yield return Dinlenme(mount, key);
+                    yield return SpecialWeaponSahne.Kareler(20);
+                    Transform rig = mount.Find("ClassicWeaponRig");
+                    WeaponVisualRig visual = rig != null ? rig.GetComponent<WeaponVisualRig>() : null;
+                    Assert.IsNotNull(visual, key + ": görsel rig yok");
+                    Quaternion bodyRest = visual.Body.localRotation;
+                    Vector3 fwdRest = DD.Prototype.CameraSystem.CameraView.ViewmodelAnchor.InverseTransformDirection(visual.Body.forward);
+                    _s.Girdi.AtesBasti = true; _s.Girdi.AtesBasili = true;
+                    yield return null;
+                    _s.Girdi.AtesBasti = false; _s.Girdi.AtesBasili = false;
+                    float rigMax = 0f, totalMax = 0f; int offScreen = 0;
+                    for (int f = 1; f <= 45; f++)
+                    {
+                        yield return null;
+                        rigMax = Mathf.Max(rigMax, Quaternion.Angle(bodyRest, visual.Body.localRotation));
+                        Vector3 fwd = DD.Prototype.CameraSystem.CameraView.ViewmodelAnchor.InverseTransformDirection(visual.Body.forward);
+                        totalMax = Mathf.Max(totalMax, Vector3.Angle(fwdRest, fwd));
+                        Vector2 m = Ekran(vm, _s.Controller.Muzzle.position);
+                        if (m.x < 0f || m.x > KareW || m.y < 0f || m.y > KareH) offScreen++;
+                    }
+
+                    report.Add(key + ": FP rig lift max " + rigMax.ToString("0.0") + "°, FP barrel (A4.2) max " + totalMax.ToString("0.0") + "°, muzzle off screen " + offScreen + "/45");
+                    if (rigMax > 0.1f) wrong.Add(key + ": FP'de rig katkısı " + rigMax.ToString("0.0") + "° (C-00 01.10: FP = yalnız A4.2)");
+                    if (offScreen > 0) wrong.Add(key + ": namlu/flaş " + offScreen + " karede ekran dışı");
+                    yield return new WaitForSeconds(0.8f);
+                }
+            }
+            finally
+            {
+                _s.Girdi.AtesBasti = false; _s.Girdi.AtesBasili = false;
+                camRig.Camera.ResetAspect();
+                vm.ResetAspect();
+            }
+
+            // C-00 01.10: third person keeps the rig kick — sg_1's rig column (0.07 m, upShare 0.15 → 6.3°)
+            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.ThirdPerson, instant: true);
+            yield return SpecialWeaponSahne.Kareler(30);
+            _s.Controller.EquipClassic(ClassicWeaponId.CombatShotgun, _s.Config);
+            yield return Dinlenme(mount, "sg_1");
+            yield return SpecialWeaponSahne.Kareler(20);
+            WeaponVisualRig tpRig = mount.Find("ClassicWeaponRig").GetComponent<WeaponVisualRig>();
+            Quaternion tpRest = tpRig.Body.localRotation;
+            _s.Girdi.AtesBasti = true; _s.Girdi.AtesBasili = true;
+            yield return null;
+            _s.Girdi.AtesBasti = false; _s.Girdi.AtesBasili = false;
+            float tpMax = 0f;
+            for (int f = 1; f <= 45; f++) { yield return null; tpMax = Mathf.Max(tpMax, Quaternion.Angle(tpRest, tpRig.Body.localRotation)); }
+            report.Add("sg_1 TP rig lift max " + tpMax.ToString("0.0") + "°");
+            if (tpMax < 3f || tpMax > 6.7f) wrong.Add("sg_1 TP rig kalkışı " + tpMax.ToString("0.0") + "° (beklenen ≈ 6,3°: TP rig tekmesi sürer)");
+
+            Debug.Log("[DD-TEST] wp069.m3m4 " + string.Join(" | ", report));
+            Assert.IsEmpty(wrong, string.Join(" | ", wrong));
+        }
+
+        /// <summary>
         /// WP-069 B5-4 (C-00 30.09, AP-021 v003.3: smg_1 sight line +5 mm, every sight_ads re-derived by P-07's eye rule) · ADS on
         /// every classic in first person: the model's sight_ads lands on the eye, so the rear sight and the front sight sit on the
         /// crosshair (< 3 px at 1920 × 1080, the ar_1 check's bar). A weapon without both sight sockets (a scope) is reported, not
