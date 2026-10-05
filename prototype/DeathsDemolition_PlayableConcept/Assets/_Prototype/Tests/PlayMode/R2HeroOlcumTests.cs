@@ -64,19 +64,22 @@ namespace DD.Prototype.Tests.PlayMode
             var body = _s.Rig.GetComponentInChildren<PlayerSkinnedVisual>(true);
             Assert.IsNotNull(body, "skinned oyuncu yok");
             Transform socket = body.WeaponSocket, lHand = body.Animator.GetBoneTransform(HumanBodyBones.LeftHand);
+            // C-00 05.10 (WP-082 hero v2 reach pre-study): the support arm's elbow, interior angle (180 = straight) — report-only
+            // elbowMaxDeg; after the hero v2 import it becomes a check (≤ 165°, a reach margin of ≥ 1 cm)
+            Transform lUpper = body.Animator.GetBoneTransform(HumanBodyBones.LeftUpperArm), lLower = body.Animator.GetBoneTransform(HumanBodyBones.LeftLowerArm);
             var binding = _s.Rig.GetComponentInChildren<PlayerWeaponBinding>();
             Transform mount = binding != null ? binding.WeaponMount : null;
             Assert.IsNotNull(mount, "silah montajı yok");
             var alignment = mount.GetComponent<WeaponMountAlignment>();
             var report = new List<string>();
-            float maxRight = 0f, maxLeft = 0f;
+            float maxRight = 0f, maxLeft = 0f, elbowMax = 0f;
             int samples = 0;
             foreach (ClassicWeaponDefinition d in WeaponRoster.Enabled)
             {
                 _s.Controller.EquipClassic(d.Id, _s.Config);
                 yield return SpecialWeaponSahne.Kareler(60);   // the switch-in has played out
                 Assert.IsNotNull(alignment, "R2 H1: WeaponMountAlignment yok — tutamak noktası ölçülemez");
-                float right = 0f, left = 0f;
+                float right = 0f, left = 0f, elbow = 0f;
                 int n = 0, nLeft = 0;
                 for (int f = 0; f < 180; f++)
                 {
@@ -87,20 +90,29 @@ namespace DD.Prototype.Tests.PlayMode
                     right = Mathf.Max(right, Vector3.Distance(socket.position, grip));
                     n++;
                     WeaponGripIk ik = body.GripIk;
-                    if (ik != null && ik.Weight >= 1f && !float.IsNaN(ik.LastError)) { left = Mathf.Max(left, ik.LastError); nLeft++; }
+                    if (ik != null && ik.Weight >= 1f && !float.IsNaN(ik.LastError))
+                    {
+                        left = Mathf.Max(left, ik.LastError);
+                        nLeft++;
+                        if (lUpper != null && lLower != null && lHand != null)
+                            elbow = Mathf.Max(elbow, Vector3.Angle(lUpper.position - lLower.position, lHand.position - lLower.position));
+                    }
                 }
 
                 _s.Girdi.Yon = Vector2.zero;
                 maxRight = Mathf.Max(maxRight, right);
                 maxLeft = Mathf.Max(maxLeft, left);
+                elbowMax = Mathf.Max(elbowMax, elbow);
                 samples += n;
                 report.Add(d.RosterKey + " right " + (right * 100f).ToString("F2", CultureInfo.InvariantCulture) + " (grip point)" +
-                           " left " + (nLeft > 0 ? (left * 100f).ToString("F2", CultureInfo.InvariantCulture) + " (n " + nLeft + ")" : "n/a") + " cm, frames " + n);
+                           " left " + (nLeft > 0 ? (left * 100f).ToString("F2", CultureInfo.InvariantCulture) + " (n " + nLeft + ")" : "n/a") + " cm, elbow " +
+                           (nLeft > 0 ? elbow.ToString("F0", CultureInfo.InvariantCulture) + "°" : "n/a") + ", frames " + n);
             }
 
             float maxCm = Mathf.Max(maxRight, maxLeft) * 100f;
-            Debug.Log("[DD-TEST] wp083.h1 hold=" + (WeaponHoldIk.Enabled ? "on" : "off") + " maxCm=" + maxCm.ToString("F2", CultureInfo.InvariantCulture) + " :: " + string.Join(" | ", report));
-            R2Olcum.Yaz("H1", H1Name, new Dictionary<string, double> { { "maxCm", maxCm } }, samples);
+            Debug.Log("[DD-TEST] wp083.h1 hold=" + (WeaponHoldIk.Enabled ? "on" : "off") + " maxCm=" + maxCm.ToString("F2", CultureInfo.InvariantCulture) +
+                      " elbowMaxDeg=" + elbowMax.ToString("F1", CultureInfo.InvariantCulture) + " :: " + string.Join(" | ", report));
+            R2Olcum.Yaz("H1", H1Name, new Dictionary<string, double> { { "maxCm", maxCm }, { "elbowMaxDeg", System.Math.Round(elbowMax, 1) } }, samples);
             Assert.Greater(samples, 0, "ölçülen kare yok");
             Assert.LessOrEqual(maxCm, 1.0f, "R2 H1: el ↔ tutamak > 1 cm\n" + string.Join("\n", report));
         }

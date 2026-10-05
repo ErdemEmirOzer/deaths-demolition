@@ -48,6 +48,14 @@ An `[Explicit]` test runs only when the filter names it in full (S-02 05.10): gi
 `measuredBy` gets its artifact from the owner's own run into `<E>/r2/`. H4 is split (C-00 05.10): H4 = weapon yaw/roll
 table (S-02), H4a = FP arm keys (S-06), same thresholds.
 
+## H1 elbow (report, C-00 05.10)
+
+`R2HeroOlcumTests.H1_ElTutamak_TumKlasikSilahlar_DurusYuruyus` writes `elbowMaxDeg` next to `maxCm`: the left (support) arm's
+elbow, the interior angle at LeftLowerArm between the upper arm and the forearm (180 = straight), the largest over the frames the
+grip IK carries full weight, all weapons. It is reported, never gates, until the hero v2 import: then it becomes a check
+`elbowMaxDeg <= 165` (a reach margin of ≥ 1 cm). Source: S-02's hero v2 reach pre-study (K/wp-082/evidence/hero-v2-reach/ —
+the hold on, lmg_1 167°, rl_1 161°).
+
 ## P5 (Selection → Run load time)
 
 No owner test: `wp078_accept` writes `r2-P5.json` in stage `r2` from the chain's own A2/A3 bot sessions

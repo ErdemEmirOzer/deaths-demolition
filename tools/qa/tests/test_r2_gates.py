@@ -108,6 +108,14 @@ class MeasuredByTests(unittest.TestCase):
         # C-00 05.10: the gate is the fixed tier mix 22/10/6/2; the round-30 worst mix is reported, never gates
         self.assertEqual(["zombieSetPassWorst", "zombieDrawsWorst", "sharedTextureGpuMBWorst"], gate("Z3b")["report"])
 
+    def test_h1_reports_the_support_elbow_until_the_hero_v2_import(self):
+        # C-00 05.10 (WP-082 hero v2 reach pre-study): a report key, not a check, until the import makes it <= 165
+        self.assertEqual(["elbowMaxDeg"], gate("H1")["report"])
+        self.assertEqual(["maxCm"], [c["key"] for c in gate("H1")["checks"]])
+        row = r2.evaluate_gate(gate("H1"), FINAL, measure=measure("H1", maxCm=0.4, elbowMaxDeg=171.0))
+        self.assertEqual("PASS", row["status"])
+        self.assertEqual(171.0, row["values"]["elbowMaxDeg"])
+
     def test_s5_airborne_queue_is_reported_never_gated(self):
         self.assertEqual(["queueMax"], gate("S5")["report"])
         self.assertNotIn("queueMax", [c["key"] for c in gate("S5")["checks"]])
