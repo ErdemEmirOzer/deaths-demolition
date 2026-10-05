@@ -452,6 +452,8 @@ namespace DD.Prototype.Audio
         /// <summary>
         /// STANDARDS §5 wet level against the dry shot (−14 / −10 / −8 dB), less the 2 LU the tail files
         /// sit under the dry files (tails −20 LUFS-I, shots −18) — the files stay at a Vorbis-safe level.
+        /// WP-085 B5 (C-00 05.10 mix decision, user N2-07 "yankılı"): the open court +3 dB over spec (−11 dB wet), corridor
+        /// and hall at spec — the AP-027 tails sit at their BS.1770 −20 LUFS, ~4.5 dB under v016's; R2 S4 wants open ≥ 500 ms.
         /// </summary>
         public static float WetDb(AcousticSpace space)
         {
@@ -459,7 +461,7 @@ namespace DD.Prototype.Audio
             {
                 case AcousticSpace.Corridor: return -8f;
                 case AcousticSpace.Hall: return -6f;
-                default: return -12f;
+                default: return -9f;
             }
         }
 

@@ -877,7 +877,9 @@ namespace DD.Prototype.Tests.PlayMode
             {
                 for (int i = 0; i < 10; i++)
                 {
-                    AudioEvents.RaiseWeapon(CombatAudioEvent.ClassicWeaponFire, "SMG1", at + Vector3.right * (2f * i), 0.75f, 50);
+                    // Two points 2 m apart (beats the 1.6 m duplicate-cue merge) inside the 12 m Near band (WP-085 B5: a cue beyond
+                    // it would now pick the weapon's DistanceMid voice).
+                    AudioEvents.RaiseWeapon(CombatAudioEvent.ClassicWeaponFire, "SMG1", at + Vector3.right * (2f * (i % 2)), 0.75f, 50);
                     Assert.AreEqual(AudioSoundId.WeaponSmg1Fire, f.LastVoice, "Atış " + (i + 1) + ": tam SMG1 sesi.");
                     // R2 S2: her atış tam katman ister (hafif katman yok). Havuzun 30 ms yeniden tetik penceresi gerçek zamanla sayar;
                     // sabit oyun zamanında kareler çok hızlı akarsa reddedebilir — oyunda 900 RPM = 66 ms gerçek aralık, gerçek RPM kiti (B4) ölçer.
@@ -894,7 +896,8 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             Assert.AreEqual(releases + 1, f.Releases, "Bırakış bir kez.");
-            Assert.AreEqual(AudioSoundId.WeaponTailSmgOpen, f.LastTail, "Varsayılan mekân Open.");
+            Assert.AreEqual(AudioSoundId.WeaponSmg1TailOpen, f.LastTail, "Varsayılan mekân Open — SMG1'in kendi AP-027 kuyruğu (WP-085 B5).");
+            Assert.AreEqual(WeaponAudioIdentity.EarlyOffsetSeconds(AcousticSpace.Open), f.LastTailDelay, 1e-5f, "Açık avlu ilk yansıma ofseti.");
 
             // Tek atış sınıfı: her atışta kuru ses + mekân kuyruğu; mekân çözücüsü kuyruğu seçer.
             System.Func<Vector3, AcousticSpace> onceki = AcousticSpaces.Resolver;
@@ -903,7 +906,7 @@ namespace DD.Prototype.Tests.PlayMode
             {
                 AudioEvents.RaiseWeapon(CombatAudioEvent.ClassicWeaponFire, "SG1", at, 1.5f, 50);
                 Assert.AreEqual(AudioSoundId.WeaponSg1Fire, f.LastVoice);
-                Assert.AreEqual(AudioSoundId.WeaponTailSgHall, f.LastTail, "Salon kuyruğu.");
+                Assert.AreEqual(AudioSoundId.WeaponSg1TailHall, f.LastTail, "Salon kuyruğu — SG1'in kendi AP-027 kuyruğu (WP-085 B5).");
             }
             finally
             {
@@ -948,8 +951,10 @@ namespace DD.Prototype.Tests.PlayMode
                 Assert.AreEqual(AudioSoundId.WeaponLmg1Fire, f.LastVoice, "Uzak kaynak uzak kaydını çalar.");
                 Assert.AreEqual(AudioSoundId.FoleySmg1Chamber, f.LastMechanical, "Uzakta mekanik kapalı.");
 
-                // Without a v4 tail the class tail rings as rendered (no offset).
+                // A layer that is not produced falls back to the class tail as rendered (no offset). WP-085 B5: SG1's own hall
+                // tail ships now, so the test points the layer at an id no catalog carries.
                 WeaponAudioIdentity.ClearLayersForTests();
+                WeaponAudioIdentity.SetLayerForTests("SG1", WeaponLayer.TailHall, (AudioSoundId)9999);
                 yield return new WaitForSeconds(0.2f);
                 AudioEvents.RaiseWeapon(CombatAudioEvent.ClassicWeaponFire, "SG1", at + Vector3.forward * 2f, 1.5f, 50);
                 Assert.AreEqual(AudioSoundId.WeaponTailSgHall, f.LastTail);
@@ -982,7 +987,10 @@ namespace DD.Prototype.Tests.PlayMode
             // The surface the casing should speak: the same down ray CasingAudio casts (port + 0.6 m along the throw).
             int mask = (1 << DD.Prototype.Core.PrototypeLayers.Environment) | (1 << DD.Prototype.Core.PrototypeLayers.CameraOccluder);
             Assert.IsTrue(Physics.Raycast(port + _s.Rig.transform.right * 0.6f + Vector3.up * 0.2f, Vector3.down, out RaycastHit zemin, 4f, mask, QueryTriggerInteraction.Ignore), "Kovanın düşeceği zemin yok.");
-            AudioSoundId beklenen = WeaponFoleyV3.CasingOn(WeaponFoleyV3.Casing(WeaponFoleyV3.Equipped()), AudioSurfaceHints.Resolve(zemin.collider, zemin.point));
+            SurfaceKind zeminTuru = AudioSurfaceHints.Resolve(zemin.collider, zemin.point);
+            string esli = WeaponFoleyV3.Equipped();
+            AudioSoundId v4 = WeaponFoleyV3.CasingV4(esli, zeminTuru, AmbienceDirector.WetLook);   // WP-085 B5: the AP-027 voice when produced
+            AudioSoundId beklenen = v4 != AudioSoundId.None && _d.Library.IsProduced(v4) ? v4 : WeaponFoleyV3.CasingOn(WeaponFoleyV3.Casing(esli), zeminTuru);
             int uyumsuz = 0, sesTavan = 0, kuyrukTavan = 0;
             IEnumerator Izle(float saniye)
             {
@@ -1088,7 +1096,7 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(once, _d.Casings.Landed, "Kovan düşmeden ses yok (düşüş süresi).");
             yield return new WaitForSeconds(0.8f);
             Assert.AreEqual(once + 1, _d.Casings.Landed, "Kovan yere düştü.");
-            StringAssert.StartsWith("CasingRifle", _d.Casings.LastSound.ToString(), "AR1 = tüfek kovanı.");
+            StringAssert.StartsWith("CasingAr1", _d.Casings.LastSound.ToString(), "AR1 = kendi AP-027 kovanı (WP-085 B5).");
 
             // Magazin boşken tetik: silahın ağırlık ailesi (A → Medium).
             AudioEvents.Raise(CombatAudioEvent.ClassicWeaponDryFire, port, 1f, 40);

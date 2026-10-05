@@ -441,11 +441,45 @@ namespace DD.Prototype.Audio
         AmbBambooGust = 574,
         AmbBirdsDistant = 575,
 
-        // ---- WP-085 B5 · AP-027 v4 per-weapon layers (WeaponFireAudio WeaponLayer names). No catalog row yet: the game keeps the
-        // v016 class tails; the listening kit's C variant fills them from the AP-027 Faz A prototype (kit-only override).
+        // ---- WP-085 B5a · AP-027 per-weapon layers first named for the listening kit's C variant; since B5 (G4 = C) they are the
+        // AP-027 v002 catalog rows like the block below.
         WeaponAr1TailOpen = 580,
         WeaponAr1DistanceFar = 581,
         WeaponSg1TailOpen = 582,
-        WeaponSg1DistanceFar = 583
+        WeaponSg1DistanceFar = 583,
+
+        // ---- WP-085 B5 · AP-027 v002 (G4 direction C, C-00 05.10): per-weapon layers 600 + weapon·10 + layer (WeaponAudioIdentity.All order;
+        // Mechanical 0, TailOpen 1, TailCorridor 2, TailHall 3, DistanceMid 4, DistanceFar 5 — AR1 / SG1 TailOpen and DistanceFar keep 580–583),
+        // casings 700 + weapon·10 + surface (StoneSlate 0, WetStone 1, Wood 2, Dirt 3, Puddle 4), LMG links 800 + weapon·10 + surface.
+        // Resolved by name (WeaponAudioIdentity.Layer, WeaponFoleyV3.CasingV4); slice 1 = AR1 / SMG1 / SG1.
+        WeaponAr1Mechanical = 600,
+        WeaponAr1TailCorridor = 602,
+        WeaponAr1TailHall = 603,
+        WeaponAr1DistanceMid = 604,
+        WeaponSmg1Mechanical = 620,
+        WeaponSmg1TailOpen = 621,
+        WeaponSmg1TailCorridor = 622,
+        WeaponSmg1TailHall = 623,
+        WeaponSmg1DistanceMid = 624,
+        WeaponSmg1DistanceFar = 625,
+        WeaponSg1Mechanical = 640,
+        WeaponSg1TailCorridor = 642,
+        WeaponSg1TailHall = 643,
+        WeaponSg1DistanceMid = 644,
+        CasingAr1StoneSlate = 700,
+        CasingAr1WetStone = 701,
+        CasingAr1Wood = 702,
+        CasingAr1Dirt = 703,
+        CasingAr1Puddle = 704,
+        CasingSmg1StoneSlate = 720,
+        CasingSmg1WetStone = 721,
+        CasingSmg1Wood = 722,
+        CasingSmg1Dirt = 723,
+        CasingSmg1Puddle = 724,
+        CasingSg1StoneSlate = 740,
+        CasingSg1WetStone = 741,
+        CasingSg1Wood = 742,
+        CasingSg1Dirt = 743,
+        CasingSg1Puddle = 744
     }
 }

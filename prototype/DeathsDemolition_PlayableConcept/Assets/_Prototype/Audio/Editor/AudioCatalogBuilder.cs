@@ -26,6 +26,10 @@ namespace DD.Prototype.Audio.EditorTools
     {
         public const string ManifestPath = "Assets/_Art/Audio/AP011-audio-manifest.json";
         public const string AudioRoot = "Assets/_Art/Audio/AP011/";
+
+        /// <summary>WP-085 B5 (G4 = AP-027, C-00 05.10): the v4 weapon set — its entries replace the AP-011 rows of the same sound.</summary>
+        public const string Ap027ManifestPath = "Assets/_Art/Audio/AP027-audio-manifest.json";
+        public const string Ap027AudioRoot = "Assets/_Art/Audio/AP027/";
         public const string CatalogPath = "Assets/_Prototype/Audio/Resources/DD_AudioCatalog.asset";
         public const string RegionMapPath = "Assets/_Prototype/Audio/Resources/DD_AudioRegionMap.asset";
         public const string PlacementPath = "Assets/_Art/Environment/World/AP005_Placement.asset";
@@ -57,6 +61,9 @@ namespace DD.Prototype.Audio.EditorTools
             public int clipped;
             public int bitDepth;
             public bool continuous;
+
+            /// <summary>WP-085 B5: a named reason this entry's noise-floor stamp may exceed the standard (empty = none).</summary>
+            public string noiseFloorException;
             public float endSilenceDb;
 
             /// <summary>v003: the entry's own loudness target and true-peak ceiling (design level / codec headroom).</summary>
@@ -277,18 +284,27 @@ namespace DD.Prototype.Audio.EditorTools
                 return "manifest missing: " + ManifestPath + " (catalog untouched)";
             }
 
-            string hash = HashOf(ManifestPath);
+            // WP-085 B5: the AP-027 manifest rides on top — its rows win for the same sound, the rest of AP-011 stays.
+            Manifest v4 = File.Exists(Ap027ManifestPath) ? JsonUtility.FromJson<Manifest>(File.ReadAllText(Ap027ManifestPath)) : null;
+            var rows = new List<(ManifestEntry entry, string root)>();
+            var v4Sounds = new HashSet<string>();
+            if (v4 != null) foreach (ManifestEntry e in v4.entries) { rows.Add((e, Ap027AudioRoot)); v4Sounds.Add(e.sound); }
+            foreach (ManifestEntry e in manifest.entries) if (!v4Sounds.Contains(e.sound)) rows.Add((e, AudioRoot));
+
+            string hash = v4 != null ? HashOf(ManifestPath).Substring(0, 32) + HashOf(Ap027ManifestPath).Substring(0, 32) : HashOf(ManifestPath);
+            string version = v4 != null ? manifest.version + "+" + v4.version : manifest.version;
             var existing = AssetDatabase.LoadAssetAtPath<AudioCatalog>(CatalogPath);
-            if (existing != null && existing.SourceHash == hash && existing.Entries.Count == manifest.entries.Length)
+            if (existing != null && existing.SourceHash == hash && existing.Entries.Count == rows.Count)
             {
-                return "catalog up to date (" + manifest.entries.Length + " entries, " + hash.Substring(0, 8) + ")";
+                return "catalog up to date (" + rows.Count + " entries, " + hash.Substring(0, 8) + ")";
             }
 
-            var entries = new List<AudioCatalog.Entry>(manifest.entries.Length);
+            var entries = new List<AudioCatalog.Entry>(rows.Count);
             int missing = 0;
-            for (int i = 0; i < manifest.entries.Length; i++)
+            for (int i = 0; i < rows.Count; i++)
             {
-                ManifestEntry m = manifest.entries[i];
+                ManifestEntry m = rows[i].entry;
+                string root = rows[i].root;
                 if (!Enum.TryParse(m.sound, out AudioSoundId id))
                 {
                     Debug.LogWarning("[AudioCatalogBuilder] unknown sound id in manifest: " + m.sound);
@@ -298,7 +314,7 @@ namespace DD.Prototype.Audio.EditorTools
                 var clips = new List<AudioClip>(m.files.Length);
                 for (int f = 0; f < m.files.Length; f++)
                 {
-                    string path = AudioRoot + m.files[f];
+                    string path = root + m.files[f];
                     PinImporter(path, m.loop, m.sound);
                     var clip = AssetDatabase.LoadAssetAtPath<AudioClip>(path);
                     if (clip == null)
@@ -335,20 +351,25 @@ namespace DD.Prototype.Audio.EditorTools
                 AssetDatabase.CreateAsset(catalog, CatalogPath);
             }
 
-            catalog.Set(manifest.version, hash, entries);
+            catalog.Set(version, hash, entries);
             EditorUtility.SetDirty(catalog);
             AssetDatabase.SaveAssets();
 
             return "catalog built: " + entries.Count + " entries, " + missing + " missing clips, manifest " + hash.Substring(0, 8);
         }
 
-        /// <summary>WP-072: the v016 player-weapon set (fire / transient / body loop / space tail).</summary>
+        /// <summary>WP-072: the v016 player-weapon set (fire / transient / body loop / space tail); WP-085 B5: the AP-027 layers
+        /// (mechanical, per-weapon tails, distance voices) ride the same q9 rule.</summary>
         public static bool IsWeaponV3(string sound)
         {
             return sound != null && sound.StartsWith("Weapon", StringComparison.Ordinal)
                    && (sound.EndsWith("Fire", StringComparison.Ordinal) || sound.EndsWith("Transient", StringComparison.Ordinal)
-                       || sound.EndsWith("Loop", StringComparison.Ordinal) || sound.StartsWith("WeaponTail", StringComparison.Ordinal));
+                       || sound.EndsWith("Loop", StringComparison.Ordinal) || sound.StartsWith("WeaponTail", StringComparison.Ordinal)
+                       || sound.EndsWith("Mechanical", StringComparison.Ordinal) || sound.Contains("Tail") || sound.Contains("Distance"));
         }
+
+        /// <summary>Stereo files: every space tail (v016 class tails, AP-027 per-weapon tails).</summary>
+        public static bool IsStereoTail(string sound) => IsWeaponV3(sound) && sound.Contains("Tail");
 
         /// <summary>The codec and Vorbis quality an entry's files are pinned to (the quality test reads the same rule).</summary>
         public static AudioCompressionFormat WantedFormat(string sound, bool loop, bool longClip, out float quality)
@@ -379,7 +400,7 @@ namespace DD.Prototype.Audio.EditorTools
             // v003 quality standard (user directive 2026-09-16): OGG q8 for SFX, q7 for music/ambience loops.
             // WP-072 (DEC-093): the weapon v3 set is chosen for quality - q9 Vorbis, the ≤ 70 ms transients
             // as PCM (no codec pre-echo on the click that carries the weapon), space tails keep their stereo.
-            bool stereo = IsWeaponV3(sound) && sound.StartsWith("WeaponTail", StringComparison.Ordinal);
+            bool stereo = IsStereoTail(sound);
             var wanted = new AudioImporterSampleSettings
             {
                 compressionFormat = WantedFormat(sound, loop, longClip, out float quality),

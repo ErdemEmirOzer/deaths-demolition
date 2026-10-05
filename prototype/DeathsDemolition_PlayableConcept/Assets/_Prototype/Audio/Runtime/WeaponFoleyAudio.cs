@@ -182,6 +182,54 @@ namespace DD.Prototype.Audio
             }
         }
 
+        /// <summary>WP-085 B5: the AP-027 v4 casing surfaces (CasingAr1StoneSlate …); Gravel has no SurfaceKind.</summary>
+        public static readonly string[] V4Surfaces = { "StoneSlate", "WetStone", "Wood", "Dirt", "Puddle" };
+
+        private static readonly AudioSoundId[] s_v4Casing = BuildV4("Casing");
+        private static readonly AudioSoundId[] s_v4Link = BuildV4("Link");
+
+        private static AudioSoundId[] BuildV4(string category)
+        {
+            var ids = new AudioSoundId[WeaponAudioIdentity.All.Length * V4Surfaces.Length];
+            for (int w = 0; w < WeaponAudioIdentity.All.Length; w++)
+            {
+                string a = WeaponAudioIdentity.All[w].AudioId;
+                string pascal = char.ToUpperInvariant(a[0]) + a.Substring(1).ToLowerInvariant();
+                for (int s = 0; s < V4Surfaces.Length; s++)
+                {
+                    ids[w * V4Surfaces.Length + s] = System.Enum.TryParse(category + pascal + V4Surfaces[s], false, out AudioSoundId id) ? id : AudioSoundId.None;
+                }
+            }
+
+            return ids;
+        }
+
+        /// <summary>
+        /// WP-085 B5: the AP-027 surface a casing lands on — stone (and the hard default / metal / armour) as StoneSlate, or WetStone
+        /// while the world wears its wet look; wood and tatami as Wood; dirt; water as a Puddle; foliage / flesh none (silent).
+        /// </summary>
+        public static int V4Surface(SurfaceKind surface, bool wet)
+        {
+            switch (surface)
+            {
+                case SurfaceKind.Wood:
+                case SurfaceKind.Paper: return 2;
+                case SurfaceKind.Dirt: return 3;
+                case SurfaceKind.Water: return 4;
+                case SurfaceKind.Foliage:
+                case SurfaceKind.Flesh: return -1;
+                default: return wet ? 1 : 0;
+            }
+        }
+
+        /// <summary>The weapon's own AP-027 casing (or LMG belt link) voice for a surface; None when not delivered or silent there.</summary>
+        public static AudioSoundId CasingV4(string audioId, SurfaceKind surface, bool wet, bool link = false)
+        {
+            int w = WeaponAudioIdentity.IndexOf(audioId), s = V4Surface(surface, wet);
+            if (w < 0 || s < 0) return AudioSoundId.None;
+            return (link ? s_v4Link : s_v4Casing)[w * V4Surfaces.Length + s];
+        }
+
         /// <summary>A surface a casing skips off (WP-085 B2: one softer bounce follows the landing).</summary>
         public static bool CasingBounces(SurfaceKind surface)
         {
@@ -228,6 +276,10 @@ namespace DD.Prototype.Audio
     public sealed class CasingAudio
     {
         public const int Capacity = 16;
+
+        /// <summary>Casing file loudness against the −18 LUFS fire files: v017 −22 LUFS (+4 dB), AP-027 −24 LUFS (+6 dB).</summary>
+        public const float V3FileCompDb = 4f;
+        public const float V4FileCompDb = 6f;
         private const int BounceReserve = 4;
 
         /// <summary>PlayerCasing's 50 ms same-sound retrigger window plus 10 ms: a bounce never blocks a landing.</summary>
@@ -343,7 +395,13 @@ namespace DD.Prototype.Audio
             float pitch = WeaponFoleyV3.Pitch(WeaponFoleyV3.CasingSemitones(audioId));
             float db = PerspectiveDb(CameraModeService.Current);
 
-            AudioSoundId sound = WeaponFoleyV3.CasingOn(family, surface);
+            // WP-085 B5: the weapon's own AP-027 casing for this surface when produced (files −24 LUFS: +6 dB to the fire
+            // reference), else the v017 calibre-family set (−22 LUFS: +4 dB).
+            AudioSoundId v4 = WeaponFoleyV3.CasingV4(audioId, surface, AmbienceDirector.WetLook);
+            bool isV4 = v4 != AudioSoundId.None && _library.IsProduced(v4);
+            AudioSoundId sound = isV4 ? v4 : WeaponFoleyV3.CasingOn(family, surface);
+            if (isV4) pitch = 1f;   // the v4 set carries each weapon's own calibre; no family pitch on top
+            db += isV4 ? V4FileCompDb : V3FileCompDb;
             if (!Enqueue(sound, hit.point, fall, pitch, db, false))
             {
                 return;
@@ -354,9 +412,12 @@ namespace DD.Prototype.Audio
                 Enqueue(sound, hit.point, fall + 0.07f + 0.06f * _rng.Next01(), pitch * 1.06f, db - 9f, true);
             }
 
-            if (audioId.StartsWith("LMG", System.StringComparison.Ordinal) && surface != SurfaceKind.Water && surface != SurfaceKind.Foliage)
+            if (audioId.StartsWith("LMG", System.StringComparison.Ordinal) && surface != SurfaceKind.Foliage)
             {
-                Enqueue(AudioSoundId.CasingLink, hit.point, fall + 0.03f, pitch, db - 6f, false);
+                // AP-027 links sit 6 dB under their casing in the file (−30 LUFS): no runtime delta; the v017 link keeps −6 dB.
+                AudioSoundId link = WeaponFoleyV3.CasingV4(audioId, surface, AmbienceDirector.WetLook, true);
+                if (link != AudioSoundId.None && _library.IsProduced(link)) Enqueue(link, hit.point, fall + 0.03f, 1f, db, false);
+                else if (surface != SurfaceKind.Water) Enqueue(AudioSoundId.CasingLink, hit.point, fall + 0.03f, pitch, db - 6f, false);
             }
         }
 
@@ -414,8 +475,9 @@ namespace DD.Prototype.Audio
                 AudioPlacement placement = AudioMixPlan.PlayerCasing(p.Sound);
                 placement.Pitch = p.Pitch;
                 placement.Spatial = CameraModeService.Current == CameraMode.FirstPerson ? 0f : 0.9f;
-                // Level against the fire voice (gain 0.85, −18 LUFS files): casing files sit 4 LU lower (−22), PlayerCasing gain 0.5.
-                if (_play(placement, p.Point, Mathf.Pow(10f, (p.GainDb + 4f) / 20f) * (0.85f / 0.5f), 8))
+                // Level against the fire voice (gain 0.85, −18 LUFS files): GainDb already carries the file compensation (v017 casing
+                // files −22 LUFS: +4; AP-027 −24: +6), PlayerCasing gain 0.5.
+                if (_play(placement, p.Point, Mathf.Pow(10f, p.GainDb / 20f) * (0.85f / 0.5f), 8))
                 {
                     if (p.Bounce)
                     {

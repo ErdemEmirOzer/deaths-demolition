@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21fa3465f8aa14f0bbac4a22d4a8238f, type: 3}
   m_Name: DD_AudioCatalog
   m_EditorClassIdentifier: 
-  _manifestVersion: ap011-v023
-  _sourceHash: a38af227b3aaa32582b9c73dcc139ac6e5293df51eca562a6ad51f51c63bf03f
+  _manifestVersion: ap011-v023+ap027-v002-unity-ar1-sg1-smg1
+  _sourceHash: a38af227b3aaa32582b9c73dcc139ac65b897ca92b4546c8ccc5365d174c17d0
   _entries:
   - Sound: 10
     Clips:
@@ -2714,22 +2714,24 @@ MonoBehaviour:
       + ui_bell_rin_suzu.wav@40ms -4dB -5st + ui_bell_rin_suzu.wav@120ms -8dB'
   - Sound: 400
     Clips:
-    - {fileID: 8300000, guid: 47ef268e186c64d44a2bbeb8de655571, type: 3}
-    - {fileID: 8300000, guid: 8e7233207f3754e17ba7f18a7f9c4519, type: 3}
-    - {fileID: 8300000, guid: 0845a873909cf4ce9a3ffb0e921a4163, type: 3}
-    - {fileID: 8300000, guid: c65676d49fd4d4d3d8b851dcf328d49c, type: 3}
+    - {fileID: 8300000, guid: fe8edb060fd2647d4914bdfa4064b852, type: 3}
+    - {fileID: 8300000, guid: 192f56e463e0d400a886e9b59306a69b, type: 3}
+    - {fileID: 8300000, guid: 33b7a748c3efa420b890cd50e8aae922, type: 3}
+    - {fileID: 8300000, guid: 777b3564105dc4dcdab58ff3f626c4e3, type: 3}
+    - {fileID: 8300000, guid: 79cdc9d53336e468db66d4855a32530b, type: 3}
+    - {fileID: 8300000, guid: f45f87a5d9b6c4961962afededaeaf6b, type: 3}
     Loop: 0
     Lufs: -18
-    TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 AR1 dry
-      pre-mix K1 R1 + K2 rifle +0 st + K3 R5 ring 3300 Hz + carrier 300/1550 Hz +
-      sub 55 Hz; target 1720 Hz / 71 ms"
-    NoiseFloorDb: -62.6
-    DcDb: -174.3
+    TruePeakDb: -1.34
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC001, SRC002; source
+      recording) \xB7 SHA d76e743eb2e9\u2026 \xB7 AP-027 v003-recut on 4 file(s)
+      \xB7 import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak
+      / end gate)"
+    NoiseFloorDb: -41.2
+    DcDb: -68.2
     Clipped: 0
     BitDepth: 24
-    Layers: derived (v005)
+    Layers: Weapon_ar1_Fire
   - Sound: 401
     Clips:
     - {fileID: 8300000, guid: 990c01f70964f409bb872abd936c933c, type: 3}
@@ -2783,22 +2785,24 @@ MonoBehaviour:
     Layers: derived (v005)
   - Sound: 404
     Clips:
-    - {fileID: 8300000, guid: 74f31a22573b446a5b7fbf02faab7f8b, type: 3}
-    - {fileID: 8300000, guid: ee3ee843a69c742f69f3f0f1e453f6a4, type: 3}
-    - {fileID: 8300000, guid: 6faf193c32c3f404391678837db47366, type: 3}
-    - {fileID: 8300000, guid: 760ea9d12502b4038a0ae4f01d6928ec, type: 3}
+    - {fileID: 8300000, guid: da2af5308493f472daa4750868001198, type: 3}
+    - {fileID: 8300000, guid: fc2f8e76532004a58828457b49981df5, type: 3}
+    - {fileID: 8300000, guid: dbc0ed1fc75144d239c81c8b3406c0e2, type: 3}
+    - {fileID: 8300000, guid: c414d44b7ef734ca195e7640f2716b7e, type: 3}
+    - {fileID: 8300000, guid: 49a1d6258133a4b70b1aee6a85b47728, type: 3}
+    - {fileID: 8300000, guid: c73a85b95f678486f942b85650de7e10, type: 3}
     Loop: 0
-    Lufs: -19.95
-    TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 SMG1 dry
-      pre-mix K1 R4 + K2 c2 +0 st + K3 R5 ring 3900 Hz + carrier 380/1800 Hz + sub
-      60 Hz; target 2000 Hz / 55 ms"
-    NoiseFloorDb: -94.3
-    DcDb: -174.7
+    Lufs: -18
+    TruePeakDb: -1.52
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC101, SRC102, SRC127;
+      source recording) \xB7 SHA 05b64bd6dd3c\u2026 \xB7 AP-027 v003-recut on 5 file(s)
+      \xB7 import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak
+      / end gate) \xB7 import 15 Hz high-pass + DC out on Weapon_smg1_Fire_06.wav"
+    NoiseFloorDb: -57.1
+    DcDb: -64.2
     Clipped: 0
     BitDepth: 24
-    Layers: derived (v005)
+    Layers: Weapon_smg1_Fire
   - Sound: 405
     Clips:
     - {fileID: 8300000, guid: 107d49bf19e0c476a8deafdd2680220e, type: 3}
@@ -2852,22 +2856,24 @@ MonoBehaviour:
     Layers: derived (v005)
   - Sound: 408
     Clips:
-    - {fileID: 8300000, guid: 11eb9c397d5d8429f8cb244442429c51, type: 3}
-    - {fileID: 8300000, guid: ae12cd8f0a72d44fdadc91bfd3dbe6da, type: 3}
-    - {fileID: 8300000, guid: 6ec477f8504c0486bab873112891b3f2, type: 3}
-    - {fileID: 8300000, guid: 0f945db0044dd4714a169768cfc16b6c, type: 3}
+    - {fileID: 8300000, guid: f81a0bbac19b046b7ad40782747c3e95, type: 3}
+    - {fileID: 8300000, guid: 0a7ac6afa1ee54104947af60a970e186, type: 3}
+    - {fileID: 8300000, guid: cc713c70e8c5a4ab796ddb19d6992b95, type: 3}
+    - {fileID: 8300000, guid: 0976c19b648e5440783f511119c276ff, type: 3}
+    - {fileID: 8300000, guid: aec11ca1263554d0aaa22b30b4323324, type: 3}
+    - {fileID: 8300000, guid: ee6a4ca89f1fc48a8a57c0ae44c4963b, type: 3}
     Loop: 0
-    Lufs: -22
-    TruePeakDb: -1.5
-    Provenance: "derived offline (AP-011 v016, WP-072, 0 cr) from Seed Audio mechanism
-      renders (ledger 155\u2013159, 21.0 cr) + v001\u2013v006 bodies \xB7 SG1 dry
-      pre-mix K1 R3 + K2 shotgun +0 st + K3 R2 ring 1500 Hz + carrier 220/520 Hz
-      + sub 40 Hz; target 600 Hz / 336 ms"
-    NoiseFloorDb: -66.4
-    DcDb: -170
+    Lufs: -19.09
+    TruePeakDb: -1.06
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC003, SRC013; source
+      recording) \xB7 SHA 5d01ff8627b3\u2026 \xB7 AP-027 v003-recut on 1 file(s)
+      \xB7 import fade 10 ms + 20 ms silence on 5 file(s) (end within 40 dB of peak
+      / end gate)"
+    NoiseFloorDb: -85.1
+    DcDb: -66.7
     Clipped: 0
     BitDepth: 24
-    Layers: derived (v005)
+    Layers: Weapon_sg1_Fire
   - Sound: 409
     Clips:
     - {fileID: 8300000, guid: 46860032ee3e2463b95e09bd7cdbd534, type: 3}
@@ -5086,3 +5092,634 @@ MonoBehaviour:
     Clipped: 0
     BitDepth: 24
     Layers: derived (v005) + v023 per-variant gain
+  - Sound: 580
+    Clips:
+    - {fileID: 8300000, guid: 25d3f827c804541d1897702cb2e4d445, type: 3}
+    - {fileID: 8300000, guid: 9805ed20e8da041729165c6027bd0c1c, type: 3}
+    - {fileID: 8300000, guid: 4c11fb706e0f4428893ca34a60fa67cb, type: 3}
+    - {fileID: 8300000, guid: 5d129a21709d24a2885a8c129e3f5cb6, type: 3}
+    - {fileID: 8300000, guid: 43e4f8e8a5e8c4133a1b87cd92a9d2bd, type: 3}
+    - {fileID: 8300000, guid: c1170e912853f41fe9181b35bb242332, type: 3}
+    Loop: 0
+    Lufs: -25.9
+    TruePeakDb: -2.78
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC001; source recording)
+      \xB7 SHA 13defa439759\u2026"
+    NoiseFloorDb: -91.5
+    DcDb: -80.7
+    Clipped: 0
+    BitDepth: 24
+    Layers: "Weapon_ar1_TailOpen \xB7 stereo"
+  - Sound: 581
+    Clips:
+    - {fileID: 8300000, guid: ed29cf78a4c9c40adb55d157ce66531f, type: 3}
+    - {fileID: 8300000, guid: d779ffe73ebbf4ee78ecb7fb8d06ad0a, type: 3}
+    - {fileID: 8300000, guid: 16780c1e15552482d97f824a3e05f032, type: 3}
+    - {fileID: 8300000, guid: cba25122e186047098207abfadd245b7, type: 3}
+    - {fileID: 8300000, guid: b4813ec9aac104447a3df775a2d39a23, type: 3}
+    - {fileID: 8300000, guid: 16e774c3371044aa2b9f27aae7a18d78, type: 3}
+    Loop: 0
+    Lufs: -22.99
+    TruePeakDb: -1.51
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC001, SRC116; source
+      recording) \xB7 SHA e48bd80bae9c\u2026 \xB7 AP-027 v003-recut on 1 file(s)
+      \xB7 AP-027 v003b-recut on 4 file(s) \xB7 AP-027 v003c-recut on 2 file(s) \xB7
+      import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak /
+      end gate)"
+    NoiseFloorDb: -63.9
+    DcDb: -82.8
+    Clipped: 0
+    BitDepth: 24
+    Layers: Weapon_ar1_DistanceFar
+  - Sound: 582
+    Clips:
+    - {fileID: 8300000, guid: 2e3ae42166fca4775b197ce3b050a5c6, type: 3}
+    - {fileID: 8300000, guid: 879b653e0d60e449c8a0f219c31fa679, type: 3}
+    - {fileID: 8300000, guid: 16b2a1876a31a43acb4948b95820cc61, type: 3}
+    - {fileID: 8300000, guid: a9fdfdf5f14e2440fb390e030b9d7cd0, type: 3}
+    - {fileID: 8300000, guid: b8ce1e90db58e48a2a49821ae49d72dc, type: 3}
+    - {fileID: 8300000, guid: 305c27d563e35404fa7e1ffe2dee87c0, type: 3}
+    Loop: 0
+    Lufs: -25.52
+    TruePeakDb: -1.06
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC003, SRC006; source
+      recording) \xB7 SHA 48a60fc533c3\u2026"
+    NoiseFloorDb: -73
+    DcDb: -79.7
+    Clipped: 0
+    BitDepth: 24
+    Layers: "Weapon_sg1_TailOpen \xB7 stereo"
+  - Sound: 583
+    Clips:
+    - {fileID: 8300000, guid: 187a6658d35cb4a77b2149fc13faa1d0, type: 3}
+    - {fileID: 8300000, guid: cb77f78f5b36f4808a71d22692f71218, type: 3}
+    - {fileID: 8300000, guid: b5851946c130d4257b3c60b648b5cb0b, type: 3}
+    - {fileID: 8300000, guid: ca3061ddbfdc4485e844566646b08736, type: 3}
+    - {fileID: 8300000, guid: e90ddfb1bfaa44d29b00c0b6603f8305, type: 3}
+    - {fileID: 8300000, guid: de72bdbedd4cf4451a7ccd73501aa743, type: 3}
+    Loop: 0
+    Lufs: -24
+    TruePeakDb: -8
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC004; source recording)
+      \xB7 SHA 78f55dc0b2f5\u2026 \xB7 AP-027 v003-recut on 5 file(s) \xB7 AP-027
+      v003e-recut on 6 file(s)"
+    NoiseFloorDb: -62
+    DcDb: -110
+    Clipped: 0
+    BitDepth: 24
+    Layers: Weapon_sg1_DistanceFar
+  - Sound: 600
+    Clips:
+    - {fileID: 8300000, guid: cad0c93e9d8094be1a48e857932425e9, type: 3}
+    - {fileID: 8300000, guid: 311457f474b7a4184896bf05a7f322b0, type: 3}
+    - {fileID: 8300000, guid: aa103dbaa8af840abac7451cd96d7f46, type: 3}
+    - {fileID: 8300000, guid: f28ea449b60834007ab6e1f9cc30814f, type: 3}
+    - {fileID: 8300000, guid: 845e5dd57111b432bb8f26b07104e1ba, type: 3}
+    - {fileID: 8300000, guid: c9c66be706e0448ab94e1b0b1b8bc01b, type: 3}
+    Loop: 0
+    Lufs: -48.76
+    TruePeakDb: -32
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC002; source recording)
+      \xB7 SHA 609701ab4801\u2026 \xB7 AP-027 v003-recut on 6 file(s)"
+    NoiseFloorDb: -59
+    DcDb: -144
+    Clipped: 0
+    BitDepth: 24
+    Layers: Weapon_ar1_Mechanical
+  - Sound: 602
+    Clips:
+    - {fileID: 8300000, guid: 02ba3891bdc4d47618494dc1b23b8316, type: 3}
+    - {fileID: 8300000, guid: a20d1df4ae7f54f5ea45527fc8117d21, type: 3}
+    - {fileID: 8300000, guid: f08b006828cb34128b9d55a55d35fbf5, type: 3}
+    - {fileID: 8300000, guid: 3ca1c0cf2eba048a59104206d89fa9df, type: 3}
+    - {fileID: 8300000, guid: 76a66b4ba5bd142edacaaeb777b3eb19, type: 3}
+    - {fileID: 8300000, guid: e7cb95bc22d86489ea3177fd5dd69a2a, type: 3}
+    Loop: 0
+    Lufs: -26.3
+    TruePeakDb: -1.06
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording)
+      \xB7 SHA 225956d6b0bb\u2026 \xB7 import fade 10 ms + 20 ms silence on 4 file(s)
+      (end within 40 dB of peak / end gate)"
+    NoiseFloorDb: -61.9
+    DcDb: -97.1
+    Clipped: 0
+    BitDepth: 24
+    Layers: "Weapon_ar1_TailCorridor \xB7 stereo"
+  - Sound: 603
+    Clips:
+    - {fileID: 8300000, guid: 29ca66ce35abc4440b45cdcecbb5d5ff, type: 3}
+    - {fileID: 8300000, guid: 3b43988cceddd4acf8effcac39a4211d, type: 3}
+    - {fileID: 8300000, guid: de64e8a07786c482c8a2d54ceacad792, type: 3}
+    - {fileID: 8300000, guid: d90be304656e2469c92aba43d08b0942, type: 3}
+    - {fileID: 8300000, guid: ef1734c6a58ae4e3ca11feefeb7dff4f, type: 3}
+    - {fileID: 8300000, guid: 0a302cd0d901b47a2a9b3b7c902f549b, type: 3}
+    Loop: 0
+    Lufs: -29.76
+    TruePeakDb: -1.11
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording)
+      \xB7 SHA 19d0ef390432\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
+      (end within 40 dB of peak / end gate)"
+    NoiseFloorDb: -240
+    DcDb: -93.1
+    Clipped: 0
+    BitDepth: 24
+    Layers: "Weapon_ar1_TailHall \xB7 stereo"
+  - Sound: 604
+    Clips:
+    - {fileID: 8300000, guid: 3e948c9a950a44a04a2544b70dda2bf8, type: 3}
+    - {fileID: 8300000, guid: aef06b8f82ec14a28b3499cfb249f3ef, type: 3}
+    - {fileID: 8300000, guid: f6907a99cb79f4c198bdcd333be8aa58, type: 3}
+    - {fileID: 8300000, guid: 670213772f1144958a13349024c62c6f, type: 3}
+    - {fileID: 8300000, guid: cf395263e32934efc991a0411eaf16a5, type: 3}
+    - {fileID: 8300000, guid: dfcb7558755034fe88fe7157737f7ec4, type: 3}
+    Loop: 0
+    Lufs: -22
+    TruePeakDb: -5.36
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC001, SRC002; source
+      recording) \xB7 SHA 4724e3255ea5\u2026 \xB7 AP-027 v003-recut on 3 file(s)
+      \xB7 import fade 10 ms + 20 ms silence on 4 file(s) (end within 40 dB of peak
+      / end gate)"
+    NoiseFloorDb: -46
+    DcDb: -98.8
+    Clipped: 0
+    BitDepth: 24
+    Layers: Weapon_ar1_DistanceMid
+  - Sound: 620
+    Clips:
+    - {fileID: 8300000, guid: 2f99cd56a6d224bdd8eca3fdb8f41f71, type: 3}
+    - {fileID: 8300000, guid: 445a50dddf9ca4962888367f7e726a60, type: 3}
+    - {fileID: 8300000, guid: 90720ea7904024358ad22d9c2f1aed2f, type: 3}
+    - {fileID: 8300000, guid: c8f2e2c84f24e494d8c1fbfe74449c12, type: 3}
+    - {fileID: 8300000, guid: 8e542ac1bdfe44170ab158e4fbc6f18a, type: 3}
+    - {fileID: 8300000, guid: 7198f4ef0259f4d208ff79422fdad94e, type: 3}
+    Loop: 0
+    Lufs: -28
+    TruePeakDb: -2.37
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC102; source recording)
+      \xB7 SHA 3c3941ab7672\u2026"
+    NoiseFloorDb: -69.4
+    DcDb: -114.5
+    Clipped: 0
+    BitDepth: 24
+    Layers: Weapon_smg1_Mechanical
+  - Sound: 621
+    Clips:
+    - {fileID: 8300000, guid: b26883faa2e874006ad6f497faa294e4, type: 3}
+    - {fileID: 8300000, guid: 04d88e22b5b9d4906ae1d7f0563b26b1, type: 3}
+    - {fileID: 8300000, guid: 62e3c736a23c943589a8119b49bbd496, type: 3}
+    - {fileID: 8300000, guid: 807dadf0cea8a40f6a8ee9fd0c07a72c, type: 3}
+    - {fileID: 8300000, guid: 45970fdc0bdbb47289a8329504151215, type: 3}
+    - {fileID: 8300000, guid: 7ff21abfbe0844b2d9181756cfa58e6b, type: 3}
+    Loop: 0
+    Lufs: -28.35
+    TruePeakDb: -1.06
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC101; source recording)
+      \xB7 SHA e2ec0cd27d2a\u2026"
+    NoiseFloorDb: -85.7
+    DcDb: -89.9
+    Clipped: 0
+    BitDepth: 24
+    Layers: "Weapon_smg1_TailOpen \xB7 stereo"
+  - Sound: 622
+    Clips:
+    - {fileID: 8300000, guid: a05507931ecc24093a43d32d1835b7ed, type: 3}
+    - {fileID: 8300000, guid: 6630293818d2e464aac715199fdec099, type: 3}
+    - {fileID: 8300000, guid: 7668cc5dacdb443a0be6530138d448f3, type: 3}
+    - {fileID: 8300000, guid: 39871c85fdda043deb986d749649f5a0, type: 3}
+    - {fileID: 8300000, guid: 4ae705316fe2745579daa1c4fd8013d7, type: 3}
+    - {fileID: 8300000, guid: d380d1156cd6f4ca390a40eb5e327c46, type: 3}
+    Loop: 0
+    Lufs: -26.3
+    TruePeakDb: -1.06
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording)
+      \xB7 SHA 225956d6b0bb\u2026 \xB7 import fade 10 ms + 20 ms silence on 4 file(s)
+      (end within 40 dB of peak / end gate)"
+    NoiseFloorDb: -61.9
+    DcDb: -97.1
+    Clipped: 0
+    BitDepth: 24
+    Layers: "Weapon_smg1_TailCorridor \xB7 stereo"
+  - Sound: 623
+    Clips:
+    - {fileID: 8300000, guid: 696ade0a342dc4651817c8098645a66d, type: 3}
+    - {fileID: 8300000, guid: 1fae95dd8cfce4bf88c234e4deff8310, type: 3}
+    - {fileID: 8300000, guid: b71ced632c3af47bf9625a3dd30b27b3, type: 3}
+    - {fileID: 8300000, guid: 5e452da425661457a85542a21a44a28f, type: 3}
+    - {fileID: 8300000, guid: c986113d44f8749d9813f2b0179a99d7, type: 3}
+    - {fileID: 8300000, guid: a628eb62724d24f7bab59a7d3649ffce, type: 3}
+    Loop: 0
+    Lufs: -29.76
+    TruePeakDb: -1.11
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording)
+      \xB7 SHA 19d0ef390432\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
+      (end within 40 dB of peak / end gate)"
+    NoiseFloorDb: -240
+    DcDb: -93.1
+    Clipped: 0
+    BitDepth: 24
+    Layers: "Weapon_smg1_TailHall \xB7 stereo"
+  - Sound: 624
+    Clips:
+    - {fileID: 8300000, guid: 404e44f8a294c4740a4a779654132963, type: 3}
+    - {fileID: 8300000, guid: 85cc6066f434c42d99d045c5094a7275, type: 3}
+    - {fileID: 8300000, guid: f16071d883b9f4ebb80c9bbadfa08a49, type: 3}
+    - {fileID: 8300000, guid: 093d4fe01ec354972b4710d759d3a4b4, type: 3}
+    - {fileID: 8300000, guid: 76bff6ac0f09e41c489b3661b9719579, type: 3}
+    - {fileID: 8300000, guid: 6587a3bb1b79543d2aa36bf70efc4301, type: 3}
+    Loop: 0
+    Lufs: -22
+    TruePeakDb: -2.95
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC101, SRC102, SRC127;
+      source recording) \xB7 SHA 03703918ef57\u2026 \xB7 import fade 10 ms + 20 ms
+      silence on 5 file(s) (end within 40 dB of peak / end gate)"
+    NoiseFloorDb: -46.7
+    DcDb: -101.9
+    Clipped: 0
+    BitDepth: 24
+    Layers: Weapon_smg1_DistanceMid
+  - Sound: 625
+    Clips:
+    - {fileID: 8300000, guid: 7f7504918f93a482aa1d899d938faab2, type: 3}
+    - {fileID: 8300000, guid: d1f787ba3170a4a01bd6baa566a6503f, type: 3}
+    - {fileID: 8300000, guid: 779456e2ed8f742c285b2c2cd0dc97db, type: 3}
+    - {fileID: 8300000, guid: f0589b0d61ec347439ebd92966d98d55, type: 3}
+    - {fileID: 8300000, guid: eb0661da5fd9e48ca86a2125b78e1f66, type: 3}
+    - {fileID: 8300000, guid: f14672e65d85844c9913efdc897fe625, type: 3}
+    Loop: 0
+    Lufs: -24
+    TruePeakDb: -1.71
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC128; source recording)
+      \xB7 SHA 8b5d483bbc13\u2026 \xB7 AP-027 v003-recut on 4 file(s) \xB7 import
+      fade 10 ms + 20 ms silence on 4 file(s) (end within 40 dB of peak / end gate)"
+    NoiseFloorDb: -83.6
+    DcDb: -82.8
+    Clipped: 0
+    BitDepth: 24
+    Layers: Weapon_smg1_DistanceFar
+  - Sound: 640
+    Clips:
+    - {fileID: 8300000, guid: d9fac2125a06a4547bdf7800bf6e755e, type: 3}
+    - {fileID: 8300000, guid: 5c2e9bd7d5f7343e5a4f4548393d82fb, type: 3}
+    - {fileID: 8300000, guid: de641b9b4ec7246c2885472cb48ff380, type: 3}
+    - {fileID: 8300000, guid: 777414c3932784eca80566c906a1520f, type: 3}
+    - {fileID: 8300000, guid: eab9b5bcafe2748fe868d3495e0484d2, type: 3}
+    - {fileID: 8300000, guid: 6c54d136619a14e39b81e81db254560d, type: 3}
+    Loop: 0
+    Lufs: -46.81
+    TruePeakDb: -22.51
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC003, SRC013; source
+      recording) \xB7 SHA 2180f4490453\u2026"
+    NoiseFloorDb: -101.9
+    DcDb: -122.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: Weapon_sg1_Mechanical
+  - Sound: 642
+    Clips:
+    - {fileID: 8300000, guid: e1fb9ef171c224055903cc26e00c88e5, type: 3}
+    - {fileID: 8300000, guid: d99ca58a41bc94698bc2d99a25e9f5d3, type: 3}
+    - {fileID: 8300000, guid: 0646143503aef46c187d96a1c09e8d66, type: 3}
+    - {fileID: 8300000, guid: 50bd37cdf0134402eba8c37407ff2477, type: 3}
+    - {fileID: 8300000, guid: 3c730f3f8f88346e29640fb508815f8a, type: 3}
+    - {fileID: 8300000, guid: 55b239f34a35a4c89a332a7e54dd0582, type: 3}
+    Loop: 0
+    Lufs: -26.94
+    TruePeakDb: -1.06
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording)
+      \xB7 SHA 48ba25c36440\u2026 \xB7 import fade 10 ms + 20 ms silence on 5 file(s)
+      (end within 40 dB of peak / end gate)"
+    NoiseFloorDb: -60.2
+    DcDb: -97.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: "Weapon_sg1_TailCorridor \xB7 stereo"
+  - Sound: 643
+    Clips:
+    - {fileID: 8300000, guid: e16a380effd6c41ec8194d592b41c270, type: 3}
+    - {fileID: 8300000, guid: 1f71154a789514ffa967c1be9b926c57, type: 3}
+    - {fileID: 8300000, guid: ed477310894ee4b76b4382dd6aadb81b, type: 3}
+    - {fileID: 8300000, guid: ae48f1782bbb54520b21b04f1c887eb1, type: 3}
+    - {fileID: 8300000, guid: 60954539194aa44aead9bc58e9d55bd1, type: 3}
+    - {fileID: 8300000, guid: 0b6f66d1a29c347b5bef7c5e27cfaf5d, type: 3}
+    Loop: 0
+    Lufs: -29.75
+    TruePeakDb: -1.11
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording)
+      \xB7 SHA 5497f3dc2992\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
+      (end within 40 dB of peak / end gate)"
+    NoiseFloorDb: -240
+    DcDb: -93.1
+    Clipped: 0
+    BitDepth: 24
+    Layers: "Weapon_sg1_TailHall \xB7 stereo"
+  - Sound: 644
+    Clips:
+    - {fileID: 8300000, guid: 38e126cc643604d24bab127dc30a9a13, type: 3}
+    - {fileID: 8300000, guid: 259da8b76ac574103967685825f0fc0b, type: 3}
+    - {fileID: 8300000, guid: f8991fc25b5ac4ddd83778ecc4203b23, type: 3}
+    - {fileID: 8300000, guid: 3ecdf77a87b6a46769297b9d542fad4b, type: 3}
+    - {fileID: 8300000, guid: 5b9deee2eb12d4341980a6e85bb8311b, type: 3}
+    - {fileID: 8300000, guid: 5d38c79752fe5400fbccbdcc227c1121, type: 3}
+    Loop: 0
+    Lufs: -22
+    TruePeakDb: -4.08
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC003, SRC013; source
+      recording) \xB7 SHA 2c835710bf76\u2026 \xB7 AP-027 v003-recut on 1 file(s)
+      \xB7 import fade 10 ms + 20 ms silence on 5 file(s) (end within 40 dB of peak
+      / end gate)"
+    NoiseFloorDb: -106.7
+    DcDb: -102.3
+    Clipped: 0
+    BitDepth: 24
+    Layers: Weapon_sg1_DistanceMid
+  - Sound: 700
+    Clips:
+    - {fileID: 8300000, guid: 7dfe3e9af13fa455a8e502c1a0102b17, type: 3}
+    - {fileID: 8300000, guid: 7ccd6397c9cd5437482a59312292ffb2, type: 3}
+    - {fileID: 8300000, guid: 7461e400b3ef640f18db432662150149, type: 3}
+    - {fileID: 8300000, guid: 431534ed925ef42b2865503bf996b62f, type: 3}
+    - {fileID: 8300000, guid: 1ef36015d2f0547f5a91ffe82e3bf964, type: 3}
+    - {fileID: 8300000, guid: a6a1231759d7d4ac780b8b260e9e9033, type: 3}
+    Loop: 0
+    Lufs: -24.48
+    TruePeakDb: -1.06
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC011; source recording)
+      \xB7 SHA ce7037131ff7\u2026 \xB7 AP-027 v003-recut on 2 file(s) \xB7 import
+      fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
+    NoiseFloorDb: -61.2
+    DcDb: -72.2
+    Clipped: 0
+    BitDepth: 24
+    Layers: Casing_ar1_StoneSlate
+  - Sound: 701
+    Clips:
+    - {fileID: 8300000, guid: ae719c5fef70944489e88d131d52cb26, type: 3}
+    - {fileID: 8300000, guid: ffe489db54b3948b093ed29fed0e80f1, type: 3}
+    - {fileID: 8300000, guid: e9bb0c092d5644300b32c33c8a4d9fb0, type: 3}
+    - {fileID: 8300000, guid: 2a93c94a09b4a425e85a127eeb34fef1, type: 3}
+    - {fileID: 8300000, guid: f9e19624c9a9b467685a92c9d8f5026e, type: 3}
+    - {fileID: 8300000, guid: d18cadeb96af54c91a2d3285ab759453, type: 3}
+    Loop: 0
+    Lufs: -24.88
+    TruePeakDb: -1.06
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC011, SRC122, SRC123;
+      proxy surface/caliber) \xB7 SHA cad67e60d4b8\u2026 \xB7 AP-027 v003-recut on
+      1 file(s) \xB7 import fade 10 ms + 20 ms silence on 6 file(s) (end within 40
+      dB of peak / end gate)"
+    NoiseFloorDb: -240
+    DcDb: -75.6
+    Clipped: 0
+    BitDepth: 24
+    Layers: Casing_ar1_WetStone
+  - Sound: 702
+    Clips:
+    - {fileID: 8300000, guid: bb6a3b90f0e64449c92250d673f07200, type: 3}
+    - {fileID: 8300000, guid: 25d32d00f2c3b492d8ccd73ceba5606b, type: 3}
+    - {fileID: 8300000, guid: 18522cb08811347af8f5025940a12d1e, type: 3}
+    - {fileID: 8300000, guid: 0ece337462e9c41ee8fc5fa8319d7939, type: 3}
+    - {fileID: 8300000, guid: a85d05e5fac7549aa8388c6d9d9e8ca7, type: 3}
+    - {fileID: 8300000, guid: 24666cd1ac10a42008c299b88965da84, type: 3}
+    Loop: 0
+    Lufs: -24
+    TruePeakDb: -1.28
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC008, SRC010; source
+      recording) \xB7 SHA 28373334871d\u2026 \xB7 AP-027 v003-recut on 1 file(s)
+      \xB7 import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak
+      / end gate)"
+    NoiseFloorDb: -39.4
+    DcDb: -78
+    Clipped: 0
+    BitDepth: 24
+    Layers: Casing_ar1_Wood
+  - Sound: 703
+    Clips:
+    - {fileID: 8300000, guid: 5260fc81a91b8470b93cb9d21a658626, type: 3}
+    - {fileID: 8300000, guid: 7dce91382a3bd478dacac5b819d34536, type: 3}
+    - {fileID: 8300000, guid: 2a82524d6e2fb4c578658fac67608581, type: 3}
+    - {fileID: 8300000, guid: ee4eb66e35d944c7db3f72d651bfd562, type: 3}
+    - {fileID: 8300000, guid: f065e3148b26441af91fec0a108a7037, type: 3}
+    - {fileID: 8300000, guid: 38e4b9a6425164185a03d9c2ad2363a2, type: 3}
+    Loop: 0
+    Lufs: -24
+    TruePeakDb: -1.06
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC119; proxy surface/caliber)
+      \xB7 SHA 4359672ab7c6\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
+      (end within 40 dB of peak / end gate)"
+    NoiseFloorDb: -58.1
+    DcDb: -64.5
+    Clipped: 0
+    BitDepth: 24
+    Layers: Casing_ar1_Dirt
+  - Sound: 704
+    Clips:
+    - {fileID: 8300000, guid: 468c7cf9feb864d7bb3bbdbdb30838e5, type: 3}
+    - {fileID: 8300000, guid: 0b63f64a018a34049af64493cb38c4b7, type: 3}
+    - {fileID: 8300000, guid: 40a4e10305f5e4e0d945ed3f558ae826, type: 3}
+    - {fileID: 8300000, guid: 8a0cb69de89d54c1e9c46add06a535a9, type: 3}
+    - {fileID: 8300000, guid: 8fc14f8e17d0646d5a05937f64a8c14e, type: 3}
+    - {fileID: 8300000, guid: b0a0ef96b6aef478491691a73db64ed8, type: 3}
+    Loop: 0
+    Lufs: -24.62
+    TruePeakDb: -1.06
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC011, SRC122, SRC123;
+      proxy surface/caliber) \xB7 SHA 49af88b5820b\u2026 \xB7 AP-027 v003-recut on
+      2 file(s) \xB7 import fade 10 ms + 20 ms silence on 4 file(s) (end within 40
+      dB of peak / end gate)"
+    NoiseFloorDb: -240
+    DcDb: -74.1
+    Clipped: 0
+    BitDepth: 24
+    Layers: Casing_ar1_Puddle
+  - Sound: 720
+    Clips:
+    - {fileID: 8300000, guid: 60a78731ec9074a209194846e783950e, type: 3}
+    - {fileID: 8300000, guid: 817a9ace2f5fa47e6a409da27b67aac5, type: 3}
+    - {fileID: 8300000, guid: 3cd89b2ff989b4f0ab8dcc384ec4e2a7, type: 3}
+    - {fileID: 8300000, guid: f60065975b85f44da94327de3b0dce12, type: 3}
+    - {fileID: 8300000, guid: 02576bc6b51d34e04a6c5e9ba6d86590, type: 3}
+    - {fileID: 8300000, guid: 687c504103aef479088cae433cc77956, type: 3}
+    Loop: 0
+    Lufs: -24
+    TruePeakDb: -1.06
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC118; proxy surface/caliber)
+      \xB7 SHA 12065cfb734e\u2026 \xB7 AP-027 v003-recut on 3 file(s) \xB7 import
+      fade 10 ms + 20 ms silence on 1 file(s) (end within 40 dB of peak / end gate)"
+    NoiseFloorDb: -60.6
+    DcDb: -79.8
+    Clipped: 0
+    BitDepth: 24
+    Layers: Casing_smg1_StoneSlate
+  - Sound: 721
+    Clips:
+    - {fileID: 8300000, guid: b5abccfe3966246abb70c74697233f25, type: 3}
+    - {fileID: 8300000, guid: b842b347380f742819401ab1485f251c, type: 3}
+    - {fileID: 8300000, guid: cb3a4d175677d4684a47f219882fa861, type: 3}
+    - {fileID: 8300000, guid: ec7c11b9261024dc4941be8e06926ad7, type: 3}
+    - {fileID: 8300000, guid: 66292e34f13ec44a785a699eff36a498, type: 3}
+    - {fileID: 8300000, guid: d8a303bdc0f554415acdf7d23333ccfe, type: 3}
+    Loop: 0
+    Lufs: -24.37
+    TruePeakDb: -1.06
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC118, SRC122, SRC123;
+      proxy surface/caliber) \xB7 SHA 09067bf724a7\u2026 \xB7 AP-027 v003-recut on
+      1 file(s) \xB7 import fade 10 ms + 20 ms silence on 5 file(s) (end within 40
+      dB of peak / end gate)"
+    NoiseFloorDb: -240
+    DcDb: -75.7
+    Clipped: 0
+    BitDepth: 24
+    Layers: Casing_smg1_WetStone
+  - Sound: 722
+    Clips:
+    - {fileID: 8300000, guid: df13188dbaa9e487b8ff36f06d7142bf, type: 3}
+    - {fileID: 8300000, guid: 8c4a01150be6e4c7b9e5567703e21d9f, type: 3}
+    - {fileID: 8300000, guid: bdcb07e1604054b059bef5b6573376b9, type: 3}
+    - {fileID: 8300000, guid: a96566d38941f4ae4b73d1687a50e975, type: 3}
+    - {fileID: 8300000, guid: 3390500c7f765407aac013cdd3d09a89, type: 3}
+    - {fileID: 8300000, guid: 8a48062757f984646a6773aae6ab7385, type: 3}
+    Loop: 0
+    Lufs: -24.41
+    TruePeakDb: -1.06
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC117; proxy surface/caliber)
+      \xB7 SHA 827c2e57dc72\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
+      (end within 40 dB of peak / end gate)"
+    NoiseFloorDb: -69.9
+    DcDb: -77.7
+    Clipped: 0
+    BitDepth: 24
+    Layers: Casing_smg1_Wood
+  - Sound: 723
+    Clips:
+    - {fileID: 8300000, guid: 475e7587259bf43d9a1dc9475574ba10, type: 3}
+    - {fileID: 8300000, guid: ba61dfd8541074f99b9d98f84e55fe59, type: 3}
+    - {fileID: 8300000, guid: 48ac058d8ac5d45e6be248dc52532bb6, type: 3}
+    - {fileID: 8300000, guid: e35fd1645cf7b497b83faa360b667b32, type: 3}
+    - {fileID: 8300000, guid: d6533b63d49084c97b2b540f19ec475e, type: 3}
+    - {fileID: 8300000, guid: a068a0945bc1240c7adddff859b42fbd, type: 3}
+    Loop: 0
+    Lufs: -24
+    TruePeakDb: -1.06
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC119; proxy surface/caliber)
+      \xB7 SHA 4359672ab7c6\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
+      (end within 40 dB of peak / end gate)"
+    NoiseFloorDb: -58.1
+    DcDb: -64.5
+    Clipped: 0
+    BitDepth: 24
+    Layers: Casing_smg1_Dirt
+  - Sound: 724
+    Clips:
+    - {fileID: 8300000, guid: 58268e8c9dfc94e07abe1e8aad9c34c4, type: 3}
+    - {fileID: 8300000, guid: 516dbe1d159184302a8556e2c6a29f5d, type: 3}
+    - {fileID: 8300000, guid: f0787573366924d2482960052a3d9f07, type: 3}
+    - {fileID: 8300000, guid: 5619dc58a6db64f339f61af7766da639, type: 3}
+    - {fileID: 8300000, guid: 6b516718c928d4aaeb6c39415223cda9, type: 3}
+    - {fileID: 8300000, guid: 9f149a04b5b7d4b50aa7e7c941a36952, type: 3}
+    Loop: 0
+    Lufs: -24.77
+    TruePeakDb: -1.06
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC118, SRC122, SRC123;
+      proxy surface/caliber) \xB7 SHA bd059554861e\u2026 \xB7 AP-027 v003-recut on
+      2 file(s) \xB7 import fade 10 ms + 20 ms silence on 4 file(s) (end within 40
+      dB of peak / end gate)"
+    NoiseFloorDb: -240
+    DcDb: -104.3
+    Clipped: 0
+    BitDepth: 24
+    Layers: Casing_smg1_Puddle
+  - Sound: 740
+    Clips:
+    - {fileID: 8300000, guid: d445786a05e294cbc90208b28d65811d, type: 3}
+    - {fileID: 8300000, guid: 5cc3356f9278040f4a041793f1098373, type: 3}
+    - {fileID: 8300000, guid: ad96520fe0e5d416492dc247c976424c, type: 3}
+    - {fileID: 8300000, guid: cc6c39135d7384ff098b744c7e8b5cd2, type: 3}
+    - {fileID: 8300000, guid: 0ec2bebb10a0b4a388cc23db004b3893, type: 3}
+    - {fileID: 8300000, guid: 0970ca17d334547c1947eb1c04cd1f5b, type: 3}
+    Loop: 0
+    Lufs: -24
+    TruePeakDb: -2.15
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC009; source recording)
+      \xB7 SHA c2376ffd686d\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
+      (end within 40 dB of peak / end gate)"
+    NoiseFloorDb: -53.5
+    DcDb: -81.6
+    Clipped: 0
+    BitDepth: 24
+    Layers: Casing_sg1_StoneSlate
+  - Sound: 741
+    Clips:
+    - {fileID: 8300000, guid: d0c09d0b3655e4f68b7b842f08a406f5, type: 3}
+    - {fileID: 8300000, guid: 1237c921fb1864477b4f13ec0fa6708f, type: 3}
+    - {fileID: 8300000, guid: 425b012a9115f4130a81df68a069f733, type: 3}
+    - {fileID: 8300000, guid: e4c7fab8d28824fc19f7d5d21849d7fa, type: 3}
+    - {fileID: 8300000, guid: 3f048cb31d7b14fd7af53f3fcc339534, type: 3}
+    - {fileID: 8300000, guid: dd689e0d034474115b4bac154bc424ce, type: 3}
+    Loop: 0
+    Lufs: -24
+    TruePeakDb: -1.06
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC009, SRC122, SRC123;
+      proxy surface/caliber) \xB7 SHA ae15eb9b85c1\u2026 \xB7 import fade 10 ms +
+      20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
+    NoiseFloorDb: -240
+    DcDb: -87.5
+    Clipped: 0
+    BitDepth: 24
+    Layers: Casing_sg1_WetStone
+  - Sound: 742
+    Clips:
+    - {fileID: 8300000, guid: aab8aade3c81c46c0801193f58b50a0e, type: 3}
+    - {fileID: 8300000, guid: e5f0963b64fc941bd9d0ec2954b55b9b, type: 3}
+    - {fileID: 8300000, guid: 9eec64c37d69949bb99f6199185477eb, type: 3}
+    - {fileID: 8300000, guid: 810eec3ab6e09420382e52894b755401, type: 3}
+    - {fileID: 8300000, guid: adf4d21928f2547d88444dc670d42d7e, type: 3}
+    - {fileID: 8300000, guid: 165ceee93b6fc4b6cb97667b9103fbcb, type: 3}
+    Loop: 0
+    Lufs: -24
+    TruePeakDb: -4.37
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC008, SRC009; source
+      recording) \xB7 SHA 1883a65dd375\u2026 \xB7 import fade 10 ms + 20 ms silence
+      on 6 file(s) (end within 40 dB of peak / end gate)"
+    NoiseFloorDb: -39.5
+    DcDb: -82.6
+    Clipped: 0
+    BitDepth: 24
+    Layers: Casing_sg1_Wood
+  - Sound: 743
+    Clips:
+    - {fileID: 8300000, guid: f3485332e8ed04e81bf3ed39f4f524fc, type: 3}
+    - {fileID: 8300000, guid: 6020482fba1444cc196d265d012dc340, type: 3}
+    - {fileID: 8300000, guid: af893cb7b158c443e8fc717ae20ab1ef, type: 3}
+    - {fileID: 8300000, guid: 59e5bad45dccc412986131b01bca08d5, type: 3}
+    - {fileID: 8300000, guid: 7e31b6916fbb14a688958a43680836db, type: 3}
+    - {fileID: 8300000, guid: a6450103dc2f4438282cb7f1c5e9e3ae, type: 3}
+    Loop: 0
+    Lufs: -24
+    TruePeakDb: -1.46
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC009, SRC120; proxy surface/caliber)
+      \xB7 SHA 717cc762e089\u2026 \xB7 AP-027 v003-recut on 2 file(s) \xB7 import
+      fade 10 ms + 20 ms silence on 5 file(s) (end within 40 dB of peak / end gate)"
+    NoiseFloorDb: -69.5
+    DcDb: -88
+    Clipped: 0
+    BitDepth: 24
+    Layers: Casing_sg1_Dirt
+  - Sound: 744
+    Clips:
+    - {fileID: 8300000, guid: f8767a971ece342ccbabceb81ecbee1d, type: 3}
+    - {fileID: 8300000, guid: 226bf212f330d4855ae7907310b29f16, type: 3}
+    - {fileID: 8300000, guid: c72579b57322849eaacbe8ac739b3b55, type: 3}
+    - {fileID: 8300000, guid: 6bf082d3a9c0e4ba596a136864481a79, type: 3}
+    - {fileID: 8300000, guid: acfe9c399f92e4af88ed9c34f845d2d7, type: 3}
+    - {fileID: 8300000, guid: dff200b5c92e24883bc1429f3f04d717, type: 3}
+    Loop: 0
+    Lufs: -24.56
+    TruePeakDb: -1.06
+    Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC009, SRC122, SRC123;
+      proxy surface/caliber) \xB7 SHA 282d4a8c6b05\u2026 \xB7 AP-027 v003-recut on
+      2 file(s) \xB7 import fade 10 ms + 20 ms silence on 4 file(s) (end within 40
+      dB of peak / end gate)"
+    NoiseFloorDb: -240
+    DcDb: -104.5
+    Clipped: 0
+    BitDepth: 24
+    Layers: Casing_sg1_Puddle
