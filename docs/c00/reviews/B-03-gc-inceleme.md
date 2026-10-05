@@ -4,7 +4,7 @@
 
 **Kapsam:**
 - main'e 05.10'da giren bütün runtime C# değişiklikleri.
-- Aralık: `84941661..0b3ec358` (05.10'un ilk commit'i `0324d098`'in ebeveyni → main). 104 commit.
+- Aralık: `84941661..0b3ec358` (05.10'un ilk commit'i `0324d098`'in ebeveyni → main). 104 commit. **B-05 düzeltmesi:** taranan fark `a62d83db`'yi de içeriyordu; `0b3ec358..3e68bc08` eki §7'de.
 - `Assets/_Prototype` altında, `Tests/` ve `Editor/` hariç 51 dosya, +9 979 / −633 satır.
 - `_Art/Runtime` altında 05.10 değişikliği yok.
 
@@ -171,3 +171,24 @@ Bu satırlar `docs/c00/LOCAL-QUEUE.md`'ye tek satır olarak eklendi.
 - Unity koşturulmadı. Miktarlar tahmindir; "geçti" ya da "ölçüldü" denmiyor.
 - Test (`Tests/`) ve Editor kodu incelenmedi; sıcak yol değiller.
 - Şu oturumların commit'lenmemiş ya da dalda bekleyen işleri kapsam dışı: S-03 zombi v2, S-06 B2d/B2e, S-08 v003g ve `Launched` tüketicisi, S-09 sinematik. Main'e girdiklerinde aynı yöntemle yeniden taranmaları önerilir. Özellikle S-08'in `CasingEvents.Launched` tüketicisi kovan başına çalışacak; abonelik bir kez yapılmalı ve `PredictLanding` önbellekli maskeyle kullanılmalı (B2).
+
+## 7. Ek (B-05, 05.10 ~20:30): `0b3ec358..3e68bc08` aralığı
+
+Bu aralıkta runtime C# değişikliği tektir: `Audio/Runtime/WeaponFoleyAudio.cs` (`a62d83db`, +160/−54). `d0783d9b` shader'dır (kapsam dışı). `03c3b06b` yalnız `[Explicit]` tanı testleri ekler. Diğerleri belge commit'leridir.
+
+**Aralık etiketi düzeltmesi.** §1–§4'ün taradığı fark, inceleme sırasında çekilen `origin/main`'e göreydi; o an `a62d83db`'yi zaten içeriyordu. Kanıt: §1 aday listesindeki `WeaponFoleyAudio.cs:330` (`_deferred`) ve `:334` (`_launchSerial`) satırları `a62d83db`'de eklenmiştir. Başlıktaki "`..0b3ec358`" etiketi bu yüzden eksik yazılmıştı. §4'teki "kovan kuyruğu temiz" hükmü bu kodu kapsıyor. Yine de `a62d83db` aşağıda ayrıca, aynı yöntemle incelendi.
+
+**`a62d83db` — kovan sesi kendi görünen atışından (`CasingEvents.Launched` → `PredictLanding`):**
+
+| Yol | Sıklık | Bulgu |
+|---|---|---|
+| `Enable` / `Disable` (`:378–394`): `WeaponEvents.Mechanism` ve `CasingEvents.Launched` abonelikleri | etkinleştirmede bir kez; `_subscribed` bayrağı çift aboneliği önler | Metot grubu → delegate ayrımı yalnız bu anda (2 nesne). Sıcak yolda değil. |
+| `OnMechanism` → `Deferred` kuyruğu (`:408`) | kovan başına | `Deferred` bir struct; sabit dizi `new Deferred[4]` alan başlatmasında. Ayırma yok. |
+| `OnLaunched` (`:411`) | görünen kovan başına | Halka tamponlar `_launchSerial` / `_launchFrame` (`int[8]`, alan başlatması), struct yük `CasingLaunchInfo`. Ayırma yok. |
+| `Schedule` (`:450`) → `CasingEffect.PredictLanding` (`:456`) + `Physics.RaycastNonAlloc` | kovan başına | Ayırma yok. **B2 artık sıcak yolda:** `PredictLanding` her çağrıda `LayerMask.NameToLayer("Environment")` yapıyor; bu, kovan başına bir ad araması demek. Yalnız CPU maliyeti; maskeyi statik önbelleğe almak yeterli (S-02 `CasingEffect` sahibi, S-08 çağıran). |
+| `Tick` (`:560–564`) içinde `Resolve` | kare başına, bekleyen slot varken | Struct kopyası + `RaycastNonAlloc`. Ayırma yok. |
+| `NominalVelocity` (statik) | sahipsiz slotta | Salt matematik. `VfxWeaponProfiles.For` önceden de vardı. |
+
+**Sonuç:** `a62d83db` yeni bir ayırma bulgusu getirmiyor. Yalnız B2'nin önceliği "tüketici dalda" durumundan "main'de, kovan başına" durumuna yükseldi. Sahip satırı `BEKLEYEN-MESAJLAR.md`'de. S5 ölçümü (`gcBytesPerCasing` 0, commit gövdesi: r2 S5 PASS, gc 0) bu sonucu destekliyor; o ölçüm yerelde, guard altında alınmıştı.
+
+**r2 kapı denetleyicisi, main `3e68bc08` içeriği üzerinde** (`git archive` anlık görüntüsü, bulut): 15 yazıcı çağrısı · ERROR 1 · WARN 14 · INFO 14. Sonuç `0b3ec358` ile aynı. ERROR'ın düzeltmesi bu dalın sonraki commit'inde.

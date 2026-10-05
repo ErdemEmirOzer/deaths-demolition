@@ -1,6 +1,6 @@
 # Deaths Demolition — R2 release notes (DRAFT)
 
-> **Status: draft, not for publishing.** Written by C-00B (B-04) on 05.10.2026 from `docs/c00/R2-PLAN.md` (N2-01…N2-07) and the handoff document §4 (`docs/c00/C00-DEVIR-2026-10-05.md`), checked against `main` 0b3ec358.
+> **Status: draft, not for publishing.** Written by C-00B (B-04) on 05.10.2026 from `docs/c00/R2-PLAN.md` (N2-01…N2-07) and the handoff document §4 (`docs/c00/C00-DEVIR-2026-10-05.md`), checked against `main` 3e68bc08 (B-05 sync; first written against 0b3ec358).
 >
 > Several items below are **not in the game on `main` yet** (they are on session branches or still in production). §1 lists every line with its real state. Before R2 ships, C-00 / S-10 deletes or rewords each line whose state is not "on main" at the R2 FINAL commit. The player-facing text in §2–§3 describes R2 as planned; it must not go out while any of its lines is still open.
 
@@ -8,21 +8,21 @@
 
 ## 1. Line-by-line state (internal, for C-00 / S-10)
 
-| # | Player-visible change | User note | State on `main` 0b3ec358 | What must land before the line can ship |
+| # | Player-visible change | User note | State on `main` 3e68bc08 | What must land before the line can ship |
 |---|---|---|---|---|
 | 1 | Main menu: fewer words, one rail of icons, a word appears beside the focused icon, no pane open on arrival, level top-right | N2-01 | **On main** (menu v4 phase A, U1 default path 0.422) | — (U1b: Selection + panes v4 still open) |
 | 2 | A moving cinematic camera over the real map behind the menu (soft left scrim) | N2-01 add-on | **Branch** (S-09 `wp-081-v4a-r2`: `bcde16dc`, `8ba256ec` + uncommitted) | S-09 delivery, 5 aspect ratios + 60 s MP4 shown to the user, integrate |
 | 3 | Icons with motion, depth and reflection | N2-01 add-on | **Not started in code** (AP-028-B spec + 58 icons delivered) | S-09 icon v2 (shader + motion) |
 | 4 | Five loading-screen artworks that rotate and never repeat back to back | N2-02 | **Code on main** (`KeyArtRotation`, gate U3); upscaled arts accepted in production | S-09 intake of the v002 upscaled arts (q90) + LoadingKeyArtTests |
-| 5 | New zombie look "Drowned Guards": faces with eyes and teeth (3 head types), textured wet skin, wet indigo clothing, masks, clearer tiers | N2-03 | **Branch / production** (S-03 WP-084 slice 1; AP-025C accepted; AP-025D clothing polish + jaw weights running) | S-03 slice 1 integrated, Z2/Z3/Z3b/Z4 measured, AP-025D accepted |
-| 6 | New fantasy hero "Broken Seal" (Kırık Mühür), palette V1 with dark shoulder | N2-04 | **Production** (AP-024C: model, 77-bone rig, atlas; FBX export + 11-weapon grip check pending) | AP-024C checkpoint → C-00 visual approval → S-06/S-02 WP-082 import |
-| 7 | Hands hold the weapon in front of the body, no longer on the shoulder; rocket launcher fired from the shoulder | N2-05 | **On main but off** (`WeaponHoldIk.Enabled = false`); per-weapon rows on S-06 branch `wp-083-b1` | S-06 B2d/B2e commit with the hold on by default, H1/H3 PASS, main-ci |
+| 5 | New zombie look "Drowned Guards": faces with eyes and teeth (3 head types), textured wet skin, wet indigo clothing, masks, clearer tiers | N2-03 | **Shader on main, intake on branch** (`d0783d9b` `_ZOMBIE_MASKS`, keyword off by default; S-03 WP-084 slice 1 intake body on its branch; AP-025C accepted; AP-025D clothing polish + jaw weights running) | S-03 slice 1 integrated, Z2/Z3/Z3b/Z4 measured, AP-025D accepted |
+| 6 | New fantasy hero "Broken Seal" (Kırık Mühür), palette V1 with dark shoulder | N2-04 | **Production** (AP-024C: 5 FBX + roundtrip PASS, renders at the approved checkpoint; the 12-weapon grip table, deform check and manifest are open) | AP-024C jobs 2 / 3 / 5 → WP-082 import (S-06 / S-02) |
+| 7 | Hands hold the weapon in front of the body, no longer on the shoulder; rocket launcher fired from the shoulder | N2-05 | **On main but off** (`WeaponHoldIk.Enabled = false`); the ship-on change and per-weapon rows are S-06's local WIP (`wp-083-b1`, `dee54ffa`: H1 0.40 cm, buttstock rows PASS, ar_2 a known red, rl_1 sight 6.4 cm) | S-06 B2d/B2e commit with the hold on by default, H1/H3 PASS, main-ci |
 | 8 | Reload: the magazine leaves the gun, the spent one drops, the fresh one goes in from the hand; shotgun shells seat one by one; rocket goes into the tube | N2-05 | **On main** (WP-082 magazine contract + visual, §12 event contract) | Hero v2 clips for every weapon (the visual follows the clip's events) |
 | 9 | Walking and running: real starts, stops, sharp turns and pivots in eight directions, body sway | N2-06 | **Skeleton on main** (LocomotionV4, 142 ids); clips produced (AP-026C, 142 transitions + 50 reloads) but not imported | S-06 WP-083 clip import + foot IK, L1–L6 measured |
 | 10 | Zombie walks: new shamble / walk cycles | N2-06 | **Production** (12 zombie walks in AP-026C) | S-03 + S-06 zombie clip import |
 | 11 | Every shot is a full gunshot (no thin looping sound under automatic fire) | N2-07 | **On main** (WP-085 B1) | — |
 | 12 | Room echoes: open courtyard, corridor and hall each ring with their own longer tail; distant shots sound distant | N2-07 | **On main** (AP-027 v003f tails, S4 v2 PASS); v003g recut on S-08 branch | S-08 v003g overlay; ar_1 / sg_1 listening kit heard by the user ("is it echoing enough") |
-| 13 | Spent casings are heard where they land, on the surface they land on, with a small bounce | N2-07 | **On main** (casing sound from the visible casing's ballistics; worst miss 48–64 cm) | Optional: S-08 reads `CasingEvents.Launched` (target ≤ 25 cm) |
+| 13 | Spent casings are heard where they land, on the surface they land on, with a small bounce | N2-07 | **On main** (`a62d83db`: each casing heard from its own visible throw, `CasingEvents.Launched` → `PredictLanding`; 0.3–3.5 cm from the visible touchdown, R2 S5 PASS: drop 620–680 ms) | — |
 | 14 | Tracers start from the visible muzzle; the rocket is drawn from the tube mouth on its first frame | R1 carry-over (WP-087) | **On main** | — |
 
 Gate references: `tools/qa/r2-gates.json` (H1–H5, L1–L6, Z1–Z5, S1–S6, P2–P5, U1–U4). Human gates H5 / L6 / Z5 / S6 / U4 need an AD verdict.
