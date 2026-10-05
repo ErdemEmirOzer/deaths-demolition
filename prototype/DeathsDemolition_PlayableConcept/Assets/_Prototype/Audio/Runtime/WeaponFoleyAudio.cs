@@ -222,21 +222,24 @@ namespace DD.Prototype.Audio
     /// under the ejection port, heard after its fall time (0.25–0.6 s, STANDARDS §6) on the surface it lands on;
     /// LMGs add a belt link. Level by camera mode (STANDARDS §4: top-down a whisper, FP near).
     /// WP-085 B2: a casing on a hard surface skips once (a softer, higher tick 70–130 ms later); casings that leave in the
-    /// same frame (sg_2's two spent shells, M-21) land 50–80 ms apart instead of one retrigger-blocked hit; the queue holds
-    /// 16 (900 RPM × 0.6 s fall = 9 in the air) and a bounce never takes one of the last four slots from a landing.
+    /// same frame (sg_2's two spent shells, M-21) land 100–130 ms apart (clear of the 50 ms same-sound retrigger plus a frame) instead of one retrigger-blocked hit; the queue holds
+    /// 16 (900 RPM × 0.55 s fall ≈ 9 in the air) and a bounce never takes one of the last four slots from a landing.
     /// </summary>
     public sealed class CasingAudio
     {
         public const int Capacity = 16;
         private const int BounceReserve = 4;
+
+        /// <summary>PlayerCasing's 50 ms same-sound retrigger window plus 10 ms: a bounce never blocks a landing.</summary>
+        private const float BounceClearance = 0.06f;
         private const float Gravity = 9.81f;
 
         /// <summary>Fall time band (s): STANDARDS §6 / R2 S5 (250–700 ms).</summary>
         public const float MinFall = 0.25f;
-        public const float MaxFall = 0.6f;
+        public const float MaxFall = 0.55f;
 
-        /// <summary>Latest a staggered same-frame casing may land (R2 S5 upper bound).</summary>
-        public const float LatestLanding = 0.7f;
+        /// <summary>Latest a staggered same-frame casing may land: 20 ms inside the R2 S5 upper bound (700 ms).</summary>
+        public const float LatestLanding = 0.68f;
 
         private struct Pending
         {
@@ -270,6 +273,9 @@ namespace DD.Prototype.Audio
 
         /// <summary>Bounce ticks heard (test / F1).</summary>
         public int Bounces { get; private set; }
+
+        /// <summary>Bounces skipped because a landing of the same voice was due (test / F1).</summary>
+        public int BouncesYielded { get; private set; }
 
         /// <summary>Casings dropped because the queue was full (test / F1).</summary>
         public int Dropped { get; private set; }
@@ -332,7 +338,7 @@ namespace DD.Prototype.Audio
             // Several casings in one frame (break-open shells): stagger them so each is heard, not merged into one retrigger.
             if (Time.frameCount == _frame) _sameFrame++;
             else { _frame = Time.frameCount; _sameFrame = 0; }
-            if (_sameFrame > 0) fall = Mathf.Min(LatestLanding, fall + _sameFrame * (0.05f + 0.03f * _rng.Next01()));
+            if (_sameFrame > 0) fall = Mathf.Min(LatestLanding, fall + _sameFrame * (0.1f + 0.03f * _rng.Next01()));
 
             float pitch = WeaponFoleyV3.Pitch(WeaponFoleyV3.CasingSemitones(audioId));
             float db = PerspectiveDb(CameraModeService.Current);
@@ -365,6 +371,16 @@ namespace DD.Prototype.Audio
             }
         }
 
+        private bool LandingDue(AudioSoundId sound, float before)
+        {
+            for (int i = 0; i < _count; i++)
+            {
+                if (!_queue[i].Bounce && _queue[i].Sound == sound && _queue[i].At < before) return true;
+            }
+
+            return false;
+        }
+
         private bool Enqueue(AudioSoundId sound, Vector3 point, float delay, float pitch, float db, bool bounce)
         {
             if (sound == AudioSoundId.None || !_library.IsProduced(sound)) return false;
@@ -386,6 +402,14 @@ namespace DD.Prototype.Audio
                 if (_queue[i].At > now) continue;
                 Pending p = _queue[i];
                 _queue[i] = _queue[--_count];
+
+                // A bounce shares its landing's voice, so it would start the pool's same-sound retrigger window: it yields to
+                // any landing of that voice due within BounceClearance (a 900 RPM string, the second break-open shell).
+                if (p.Bounce && LandingDue(p.Sound, now + BounceClearance))
+                {
+                    BouncesYielded++;
+                    continue;
+                }
 
                 AudioPlacement placement = AudioMixPlan.PlayerCasing(p.Sound);
                 placement.Pitch = p.Pitch;

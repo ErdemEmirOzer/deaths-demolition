@@ -936,7 +936,7 @@ namespace DD.Prototype.Tests.PlayMode
             int mask = (1 << DD.Prototype.Core.PrototypeLayers.Environment) | (1 << DD.Prototype.Core.PrototypeLayers.CameraOccluder);
             Assert.IsTrue(Physics.Raycast(port + _s.Rig.transform.right * 0.6f + Vector3.up * 0.2f, Vector3.down, out RaycastHit zemin, 4f, mask, QueryTriggerInteraction.Ignore), "Kovanın düşeceği zemin yok.");
             AudioSoundId beklenen = WeaponFoleyV3.CasingOn(WeaponFoleyV3.Casing(WeaponFoleyV3.Equipped()), AudioSurfaceHints.Resolve(zemin.collider, zemin.point));
-            int uyumsuz = 0, sesTavan = 0;
+            int uyumsuz = 0, sesTavan = 0, kuyrukTavan = 0;
             IEnumerator Izle(float saniye)
             {
                 float bitis = Time.realtimeSinceStartup + saniye;
@@ -950,6 +950,7 @@ namespace DD.Prototype.Tests.PlayMode
                     }
 
                     sesTavan = Mathf.Max(sesTavan, canli);
+                    kuyrukTavan = Mathf.Max(kuyrukTavan, c.InAir);
                     if (c.Landed != landed)
                     {
                         landed = c.Landed;
@@ -972,6 +973,7 @@ namespace DD.Prototype.Tests.PlayMode
             // Havuz tavanı: bir karede 30 kovan → kuyruk tavanı aşılmaz, fazlası sayılarak düşer, kuyruk boşalır; eşzamanlı kovan sesi ≤ 3.
             int dusen = c.Dropped;
             for (int i = 0; i < 30; i++) DD.Prototype.Weapons.WeaponEvents.PublishMechanism(kovan);
+            kuyrukTavan = Mathf.Max(kuyrukTavan, c.InAir);
             Assert.LessOrEqual(c.InAir, CasingAudio.Capacity);
             Assert.Greater(c.Dropped, dusen, "Taşan kovan sayılır.");
             yield return Izle(1f);
@@ -1007,10 +1009,10 @@ namespace DD.Prototype.Tests.PlayMode
             R2Olcum.Yaz("S5", "DD.Prototype.Tests.PlayMode.AudioSliceTests.KovanV2_AyniKareIkiKabukAyriDuser_GecikmeBandi_HavuzTavani_SifirAyirma", new Dictionary<string, double>
             {
                 { "dropDelayMsMin", Math.Round(c.FallMinHeard * 1000.0, 1) }, { "dropDelayMsMax", Math.Round(c.FallMaxHeard * 1000.0, 1) },
-                { "surfaceMismatches", uyumsuz }, { "poolMax", sesTavan }, { "gcBytesPerCasing", (b1 - b0) / 5.0 }, { "rocketCasingSounds", roket }
+                { "surfaceMismatches", uyumsuz }, { "poolMax", sesTavan }, { "queueMax", kuyrukTavan }, { "gcBytesPerCasing", (b1 - b0) / 5.0 }, { "rocketCasingSounds", roket }
             }, c.Landed - once);
-            Debug.Log("[DD-TEST] wp085b2.casing landed=" + c.Landed + " bounces=" + c.Bounces + " dropped=" + c.Dropped + " fall=" + c.FallMinHeard.ToString("0.000")
-                      + "–" + c.FallMaxHeard.ToString("0.000") + " voicesMax=" + sesTavan + " surface=" + beklenen + " mismatches=" + uyumsuz + " rocket=" + roket);
+            Debug.Log("[DD-TEST] wp085b2.casing landed=" + c.Landed + " bounces=" + c.Bounces + " yielded=" + c.BouncesYielded + " dropped=" + c.Dropped + " fall=" + c.FallMinHeard.ToString("0.000")
+                      + "–" + c.FallMaxHeard.ToString("0.000") + " voicesMax=" + sesTavan + " queueMax=" + kuyrukTavan + " surface=" + beklenen + " mismatches=" + uyumsuz + " rocket=" + roket);
         }
 
         [UnityTest]
