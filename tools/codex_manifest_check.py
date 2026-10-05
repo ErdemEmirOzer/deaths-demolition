@@ -18,10 +18,13 @@ Checks (E = error, W = warning):
              non-empty, specs object (W if absent),
              source present in the package if named (W). Duplicate paths E. A file under exports/vNNN that no item lists
              is E (except SHA256SUMS, anim-events.json, README*).
-  SHA256SUMS manifest/SHA256SUMS-vNNN, manifest/SHA256SUMS or exports/vNNN/SHA256SUMS ("<sha256>  <path>", paths
-             relative to the package or to the file); every item listed with the same hash (E); extra entries W.
+  SHA256SUMS the manifest's "sha256sums" when set (C-00 06.10: a package-relative file; named but not found → E, no
+             fallback), else manifest/SHA256SUMS-vNNN, manifest/SHA256SUMS or exports/vNNN/SHA256SUMS ("<sha256>  <path>",
+             paths relative to the package or to the file); every item listed with the same hash (E); extra entries W.
   fbx        binary FBX, version 7400 (E); name <Asset>_<Part>_LOD<n> or COL_<…> (E); LOD0/1/2 per <Asset>_<Part> (E);
-             GlobalSettings UpAxis = 1 (Y up), else W.
+             GlobalSettings UpAxis = 1 (Y up), else W. C-00 06.10 (AP-024): an fbx item whose specs.lod_policy is
+             "single_first_person" is one mesh by design — name <Asset>_<Part> without _LOD<n> (E), outside the LOD
+             set; every other check on it stays.
   anim       binary FBX 7400 (E); exports/vNNN/anim-events.json present and valid JSON (E).
   texture    .png (E); suffix _BaseColor|_Normal|_ORM|_Emission|_Mask (E); power-of-two sides ≤ 8192 (E), not 2048/4096 W;
              _BaseColor/_Normal/_ORM colour (RGB/RGBA) not grey (E).
@@ -40,10 +43,10 @@ Checks (E = error, W = warning):
              RGB/RGBA, alpha if present fully opaque) · normal_map (RGB/RGBA, alpha if present fully opaque) (E).
   document   .json/.md/.html/.txt/.csv/.svg (E), UTF-8 (E); .json parses (E); runtime=false.
   video      .mp4 ISO BMFF: ftyp first, moov and mdat at top level (E); runtime=false.
-  licenses   LICENSES.csv present with columns file, source/url, license, date, usage (TR or EN names); every row has a
-             license that is not unknown/belirsiz/tbd/? (E).
+  licenses   LICENSES.csv present with columns file, source/url/source_url, license, date, usage/use (TR or EN names);
+             every row has a license that is not unknown/belirsiz/tbd/? (E).
   ledger     if the package has 03-higgsfield/ or an item names Higgsfield: 03-higgsfield/ledger.csv with columns date,
-             model, count, credit, output (E).
+             model, count, credit (or credits_actual), output (or output_path) (E).
 """
 import argparse
 import csv
@@ -74,10 +77,17 @@ FBX_NAME = re.compile(r"^(?:COL_[A-Za-z0-9_]+|(?P<base>[A-Za-z0-9]+(?:_[A-Za-z0-
 WAV_NAME = re.compile(r"^[A-Za-z0-9]+_[A-Za-z0-9]+_[A-Za-z0-9]+_\d{2}\.wav$")
 ICON_NAME = re.compile(r"^icon_[a-z0-9]+(?:_[a-z0-9]+)*$")
 UNKNOWN_LICENSES = ("", "unknown", "belirsiz", "bilinmiyor", "tbd", "?", "n/a")
-LICENSE_COLUMNS = {"file": ("dosya", "file", "path"), "source": ("kaynak", "source", "url", "kaynak url"),
-                   "license": ("lisans", "license"), "date": ("tarih", "date"), "usage": ("kullanım", "kullanim", "usage")}
+# C-00 06.10 (AP-024): + source_url / use (LICENSES.csv) and credits_actual / output_path (ledger) — aliases only add a
+# match for a column that was missing; the licence value is still read from the "license" column.
+LICENSE_COLUMNS = {"file": ("dosya", "file", "path"), "source": ("kaynak", "source", "url", "kaynak url", "source_url"),
+                   "license": ("lisans", "license"), "date": ("tarih", "date"),
+                   "usage": ("kullanım", "kullanim", "usage", "use")}
 LEDGER_COLUMNS = {"date": ("tarih", "date"), "model": ("model",), "count": ("adet", "count"),
-                  "credit": ("kredi", "credit", "credits"), "output": ("çıktı", "cikti", "çıktı yolu", "output", "path")}
+                  "credit": ("kredi", "credit", "credits", "credits_actual"),
+                  "output": ("çıktı", "cikti", "çıktı yolu", "output", "path", "output_path")}
+SINGLE_LOD_POLICY = "single_first_person"   # C-00 06.10 (AP-024): specs.lod_policy of a one-mesh first-person fbx
+# <Asset>_<Part> without _LOD<n>: the declared mesh is outside the LOD set and may not stand in for a set member
+SINGLE_FBX_NAME = re.compile(r"^(?![A-Za-z0-9_]*_LOD[0-9]$)[A-Za-z0-9]+(?:_[A-Za-z0-9]+)+$")
 
 
 class Report:
@@ -342,6 +352,17 @@ def latest_version(pkg):
     return versions[-1] if versions else None
 
 
+def declared_sums(rep, pkg, mpath, declared):
+    """C-00 06.10 (AP-024): the manifest's own "sha256sums" path wins over the name-based search — a stale
+    manifest/SHA256SUMS-vNNN of an older manifest revision must not be read. Named but unusable → E and None."""
+    if isinstance(declared, str) and declared and not declared.startswith("/") and ".." not in Path(declared).parts:
+        f = pkg / declared
+        if f.is_file():
+            return f
+    rep.error(mpath, "sha256sums %r is not a file in the package" % (declared,))
+    return None
+
+
 def find_sums(pkg, version):
     for c in (pkg / "manifest" / ("SHA256SUMS-" + version), pkg / "manifest" / "SHA256SUMS",
               pkg / "exports" / version / "SHA256SUMS"):
@@ -394,7 +415,7 @@ def check(pkg, version=None, manifest_path=None):
         items = []
 
     # items
-    listed, by_type, roles = {}, {t: [] for t in TYPES}, {}
+    listed, by_type, roles, single_lod = {}, {t: [] for t in TYPES}, {}, set()
     prefix = "exports/%s/" % version
     for i, it in enumerate(items):
         where = "%s items[%d]" % (mpath.name, i)
@@ -428,6 +449,8 @@ def check(pkg, version=None, manifest_path=None):
             rep.error(rel, "role missing")
         if not isinstance(it.get("specs"), dict):
             rep.warn(rel, "specs object missing")
+        elif t == "fbx" and it["specs"].get("lod_policy") == SINGLE_LOD_POLICY:
+            single_lod.add(f)   # C-00 06.10: only the item that declares it, only for type fbx
         src = it.get("source")
         if src is not None and (not isinstance(src, str) or not (pkg / src).exists()):
             rep.warn(rel, "source %r not found in the package" % src)
@@ -437,10 +460,11 @@ def check(pkg, version=None, manifest_path=None):
             rep.error(rel, "file in %s but not in the manifest" % prefix)
 
     # SHA256SUMS
-    sums = find_sums(pkg, version)
-    if sums is None:
+    declared = m.get("sha256sums")
+    sums = find_sums(pkg, version) if declared is None else declared_sums(rep, pkg, mpath, declared)
+    if sums is None and declared is None:
         rep.error(pkg / "manifest", "SHA256SUMS missing (manifest/SHA256SUMS[-%s] or %sSHA256SUMS)" % (version, prefix))
-    else:
+    elif sums is not None:
         entries = {}
         for n, line in enumerate(sums.read_text(encoding="utf-8").splitlines(), 1):
             if not line.strip():
@@ -465,7 +489,7 @@ def check(pkg, version=None, manifest_path=None):
             if key not in listed and Path(key).name not in UNLISTED_OK:
                 rep.warn(key, "in %s but not in the manifest" % sums.name)
 
-    check_fbx(rep, pkg, by_type["fbx"], anim=False)
+    check_fbx(rep, pkg, by_type["fbx"], anim=False, single_lod=single_lod)
     check_fbx(rep, pkg, by_type["anim"], anim=True)
     if by_type["anim"]:
         events = export_dir / "anim-events.json"
@@ -489,7 +513,7 @@ def check(pkg, version=None, manifest_path=None):
     return rep, version
 
 
-def check_fbx(rep, pkg, files, anim):
+def check_fbx(rep, pkg, files, anim, single_lod=frozenset()):
     lods = {}
     for f in files:
         rel = f.relative_to(pkg).as_posix()
@@ -508,6 +532,10 @@ def check_fbx(rep, pkg, files, anim):
         elif gs.get("UpAxis") not in (None, 1):
             rep.warn(rel, "GlobalSettings UpAxis=%s (Y up = 1)" % gs.get("UpAxis"))
         if anim:
+            continue
+        if f in single_lod:   # C-00 06.10: declared single first-person mesh — no LOD suffix, not in a LOD set
+            if not SINGLE_FBX_NAME.match(f.stem):
+                rep.error(rel, "%s name must be <Asset>_<Part> without _LOD<n>" % SINGLE_LOD_POLICY)
             continue
         mm = FBX_NAME.match(f.stem)
         if not mm:

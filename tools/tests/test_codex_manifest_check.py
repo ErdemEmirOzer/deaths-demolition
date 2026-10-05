@@ -434,5 +434,215 @@ class CodexManifestCheckTests(unittest.TestCase):
         self.assert_error(self.run_check(p.dir), "columns missing")
 
 
+# --- C-00 06.10 (AP-024 v004): manifest-declared SHA256SUMS, single_first_person LOD policy, header aliases ----------
+FP = {"fixture": True, "lod_policy": "single_first_person"}
+STALE_SUMS = ("%s  02-concept/options-v002/O1.png\n%s  02-concept/options-v002/O2.png\n" % ("a" * 64, "b" * 64))
+AP024_LEDGER = ("date,model,variant,count,credits_estimated,credits_actual,job_id,output_path,status\n"
+                "2026-10-05,gpt_image_2_5,flare,1,4.25,not_observed,ffbd6a4a,03-higgsfield/raw/O1.png,submitted\n")
+
+
+class ManifestRevisionTests(unittest.TestCase):
+    """AP-024 shape: export v001 described by a later manifest revision, next to the stale concept list
+    manifest/SHA256SUMS-v001 of an earlier revision."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory(prefix="dd-codex-check-r-")
+        self.root = Path(self.tmp.name)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def check(self, d, *args):
+        return cmc.check(d, *args)[0]
+
+    def assert_error(self, rep, needle):
+        self.assertTrue(any(needle in e["message"] or needle in e["path"] for e in rep.errors),
+                        "no error with %r in %s" % (needle, rep.errors))
+
+    def declared(self, p, value="exports/%s/SHA256SUMS" % V, stale=True):
+        """exports/vNNN/SHA256SUMS (paths relative to the file) + the manifest naming it; manifest/SHA256SUMS-vNNN
+        replaced by a concept list when stale."""
+        d = p.write(manifest=dict(p.manifest, items=p.items, sha256sums=value))
+        lines = ["%s  %s" % (it["sha256"], it["path"][len("exports/%s/" % V):]) for it in p.items]
+        (d / "exports" / V / "SHA256SUMS").write_text("\n".join(lines) + "\n")
+        if stale:
+            (d / "manifest" / ("SHA256SUMS-" + V)).write_text(STALE_SUMS)
+        return d
+
+    # --- 1 · manifest "sha256sums" ------------------------------------------------------------------------------------
+    def test_Sha256Sums_ManifestYoluBildirir_EskiListeOkunmaz(self):
+        p = Pkg(self.root).good()
+        rep = self.check(self.declared(p))
+        self.assertEqual([], rep.errors)
+        self.assertEqual([], rep.warnings)
+
+    def test_Sha256Sums_YolBildirilmez_EskiAramaAynen(self):
+        """control: without the key the name-based search still picks manifest/SHA256SUMS-vNNN (here the stale list)."""
+        p = Pkg(self.root).good()
+        d = self.declared(p)
+        m = json.loads((d / "manifest" / ("AP024-manifest-%s.json" % V)).read_text())
+        for absent in (False, True):
+            with self.subTest(null=absent):
+                if absent:
+                    m["sha256sums"] = None
+                else:
+                    m.pop("sha256sums", None)
+                rep = self.check(p.write(manifest=m, sums=False))
+                self.assertEqual(len(p.items), sum("not in SHA256SUMS-%s" % V in e["message"] for e in rep.errors))
+                self.assertEqual(2, sum("in SHA256SUMS-%s but not in the manifest" % V in w["message"]
+                                        for w in rep.warnings), rep.warnings)
+
+    def test_Sha256Sums_BildirilenYolGecersiz_HataGeriDusmeYok(self):
+        p = Pkg(self.root).good()
+        for bad in ("exports/%s/SHA256SUMS-yok" % V, "/etc/hosts", "../AP-024/manifest/SHA256SUMS-%s" % V, "", 7,
+                    "exports/%s" % V):
+            with self.subTest(value=bad):
+                d = self.declared(p, value=bad, stale=False)   # a valid manifest/SHA256SUMS-vNNN is there
+                rep = self.check(d)
+                self.assert_error(rep, "sha256sums %r is not a file in the package" % (bad,))
+                self.assertEqual(1, len(rep.errors), rep.errors)   # no fallback, no second "SHA256SUMS missing"
+
+    def test_Sha256Sums_BildirilenDosyaHashFarkli_Hata(self):
+        p = Pkg(self.root).good()
+        d = self.declared(p)
+        f = d / "exports" / V / "SHA256SUMS"
+        lines = f.read_text().splitlines()
+        f.write_text("\n".join([("f" * 64) + lines[0][64:]] + lines[2:]) + "\n")
+        rep = self.check(d)
+        self.assert_error(rep, "SHA256SUMS hash differs")
+        self.assert_error(rep, "not in SHA256SUMS")
+        self.assertEqual(2, len(rep.errors), rep.errors)
+
+    # --- 2 · specs.lod_policy = single_first_person -------------------------------------------------------------------
+    def test_FbxTekLod_IsaretliDosya_LodSetiVeAdKuralindanMuaf(self):
+        p = Pkg(self.root).good()
+        p.add("Hero/Hero_v2_FPArms.fbx", fbx_bytes(), "fbx", specs=FP)
+        rep = self.check(p.write())
+        self.assertEqual([], rep.errors)
+        self.assertEqual([], rep.warnings)
+
+    def test_FbxTekLod_IsaretsizVeyaYanlisIsaret_HataAynen(self):
+        variants = (("isaretsiz", {}), ("yanlis_deger", {"specs": dict(FP, lod_policy="single")}),
+                    ("buyuk_harf", {"specs": dict(FP, lod_policy="SINGLE_FIRST_PERSON")}),
+                    ("specs_disinda", {"lod_policy": "single_first_person"}))
+        for name, extra in variants:
+            with self.subTest(variant=name):
+                p = Pkg(self.root / name).good()
+                p.add("Hero/Hero_v2_FPArms.fbx", fbx_bytes(), "fbx", **extra)
+                rep = self.check(p.write())
+                self.assertEqual([{"path": "exports/%s/Hero/Hero_v2_FPArms.fbx" % V,
+                                   "message": "name must be <Asset>_<Part>_LOD<n> or COL_<…>"}], rep.errors)
+
+    def test_FbxTekLod_YalnizIsaretliDosyaMuaf(self):
+        p = Pkg(self.root).good()
+        p.items = [it for it in p.items if "LOD2" not in it["path"]]
+        (p.dir / "exports" / V / "Hero" / "Hero_Body_LOD2.fbx").unlink()
+        p.add("Hero/Hero_v2_FPArms.fbx", fbx_bytes(), "fbx", specs=FP)
+        p.add("Prop/Barrel_Gun.fbx", fbx_bytes(), "fbx")
+        rep = self.check(p.write())
+        self.assertEqual(sorted(["LOD set incomplete: missing LOD2", "name must be <Asset>_<Part>_LOD<n> or COL_<…>"]),
+                         sorted(e["message"] for e in rep.errors))
+
+    def test_FbxTekLod_LodAdliDosyaIsaretli_HataSetKorunur(self):
+        """marking a set member single may not hide the missing LODs of its set."""
+        p = Pkg(self.root).good()
+        for it in p.items:
+            if it["path"].endswith("Hero_Body_LOD0.fbx"):
+                it["specs"] = FP
+        p.items = [it for it in p.items if "LOD2" not in it["path"]]
+        (p.dir / "exports" / V / "Hero" / "Hero_Body_LOD2.fbx").unlink()
+        rep = self.check(p.write())
+        self.assert_error(rep, "single_first_person name must be <Asset>_<Part> without _LOD<n>")
+        self.assert_error(rep, "LOD set incomplete: missing LOD0, LOD2")
+
+    def test_FbxTekLod_DigerKurallarGecerli(self):
+        p = Pkg(self.root).good()
+        p.add("Hero/Hero_v2_FPArms.fbx", fbx_bytes(version=7500), "fbx", specs=FP)
+        p.add("Hero/fparms.fbx", fbx_bytes(), "fbx", specs=FP)
+        p.add("Hero/Hero_Ascii_FPArms.fbx", b"; FBX 7.4.0 project file (ASCII)\n", "fbx", specs=FP)
+        p.add("Hero/Hero_Up_FPArms.fbx", fbx_bytes(up_axis=2), "fbx", specs=FP)
+        rep = self.check(p.write())
+        self.assert_error(rep, "need 7400")
+        self.assert_error(rep, "single_first_person name must be <Asset>_<Part>")
+        self.assert_error(rep, "not a binary FBX")
+        self.assertTrue(any("UpAxis=2" in w["message"] for w in rep.warnings), rep.warnings)
+
+    def test_FbxTekLod_IkinciKopyaIsaretli_MuafiyetYok(self):
+        p = Pkg(self.root).good()
+        p.add("Hero/Hero_v2_FPArms.fbx", fbx_bytes(), "fbx")
+        p.items.append(dict(p.items[-1], specs=FP))   # the duplicate entry carries the mark, the listed one does not
+        rep = self.check(p.write())
+        self.assert_error(rep, "listed twice")
+        self.assert_error(rep, "name must be <Asset>_<Part>_LOD<n> or COL_<…>")
+
+    # --- 3 · LICENSES.csv aliases -------------------------------------------------------------------------------------
+    def test_Lisans_SourceUrlUseBasligi_KolonlarBulunur(self):
+        self.assertEqual({"file": 0, "source": 1, "license": 2, "date": 3, "usage": 4},
+                         cmc.column_map(["file", "source_url", "license", "date", "use"], cmc.LICENSE_COLUMNS))
+        p = Pkg(self.root).good()
+        lic = p.dir / "03-sources" / "LICENSES.csv"
+        lic.write_text("file,source_url,license,date,use\nx.wav,https://e.org,CC0,2026-10-05,layer\n")
+        self.assertEqual([], self.check(p.write()).errors)
+        lic.write_text("file,source_url,license,date,use\nx.wav,https://e.org,belirsiz,2026-10-05,layer\n")
+        self.assert_error(self.check(p.dir), "row 2: license 'belirsiz' is not usable")
+
+    def test_Lisans_EskiBasliklarVeEksikKolon_Degismez(self):
+        p = Pkg(self.root).good()
+        lic = p.dir / "03-sources" / "LICENSES.csv"
+        p.write()
+        for header in ("dosya,kaynak url,lisans,tarih,kullanım", "file,source,license,date,usage",
+                       "path,url,license,date,usage", "dosya,kaynak,lisans,tarih,kullanim"):
+            with self.subTest(header=header):
+                lic.write_text(header + "\nx.wav,https://e.org,CC0,2026-10-05,layer\n")
+                self.assertEqual([], self.check(p.dir).errors)
+        for header, missing in (("file,source_url,license,date", "usage"), ("file,license,date,use", "source"),
+                                ("file,source_url,licence,date,use", "license")):
+            with self.subTest(header=header):
+                lic.write_text(header + "\n")
+                self.assertEqual(["columns missing: " + missing], [e["message"] for e in self.check(p.dir).errors])
+
+    # --- 4 · ledger aliases -------------------------------------------------------------------------------------------
+    def test_Defter_CreditsActualOutputPath_KolonlarBulunur(self):
+        p = Pkg(self.root).good()
+        (p.dir / "03-higgsfield").mkdir()
+        (p.dir / "03-higgsfield" / "ledger.csv").write_text(AP024_LEDGER)
+        self.assertEqual([], self.check(p.write()).errors)
+
+    def test_Defter_EskiBasliklarVeTahminiKredi_Degismez(self):
+        p = Pkg(self.root).good()
+        (p.dir / "03-higgsfield").mkdir()
+        led = p.dir / "03-higgsfield" / "ledger.csv"
+        p.write()
+        for header in ("tarih,model,adet,kredi,çıktı", "date,model,count,credits,output", "date,model,count,credit,path",
+                       "tarih,model,adet,kredi,çıktı yolu"):
+            with self.subTest(header=header):
+                led.write_text(header + "\n")
+                self.assertEqual([], self.check(p.dir).errors)
+        for header, missing in (("date,model,count,credits_estimated,output_path", "credit"),
+                                ("date,model,count,credits_actual,job_id", "output")):
+            with self.subTest(header=header):
+                led.write_text(header + "\n")
+                self.assertEqual(["columns missing: " + missing], [e["message"] for e in self.check(p.dir).errors])
+
+    # --- CLI: --version + --manifest of a later revision (the C-00 06.10 acceptance command) --------------------------
+    def test_Cli_SurumVeManifestRevizyonu_AP024Bicimi_PASS(self):
+        p = Pkg(self.root).good()
+        p.add("Hero/Hero_v2_FPArms.fbx", fbx_bytes(), "fbx", specs=FP)
+        (p.dir / "03-sources" / "LICENSES.csv").write_text(
+            "file,source_url,license,date,use\nimpact.wav,https://example.org/a,CC0,2026-10-05,layer\n")
+        (p.dir / "03-higgsfield").mkdir()
+        (p.dir / "03-higgsfield" / "ledger.csv").write_text(AP024_LEDGER)
+        d = self.declared(p)
+        rev = d / "manifest" / "AP024-manifest-v004.json"
+        (d / "manifest" / ("AP024-manifest-%s.json" % V)).rename(rev)
+        cmd = [sys.executable, str(TOOLS / "codex_manifest_check.py"), str(d), "--version", V]
+        r = subprocess.run(cmd + ["--manifest", str(rev)], capture_output=True, text=True)
+        self.assertEqual(0, r.returncode, r.stdout + r.stderr)
+        self.assertEqual("codex-manifest-check AP-024 %s: PASS errors=0 warnings=0\n" % V, r.stdout)
+        r = subprocess.run(cmd, capture_output=True, text=True)          # without --manifest: vNNN name → missing
+        self.assertEqual(1, r.returncode, r.stdout + r.stderr)
+        self.assertIn("manifest missing", r.stdout)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
