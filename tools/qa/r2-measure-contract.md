@@ -64,6 +64,23 @@ grip IK carries full weight, all weapons. It is reported, never gates, until the
 `elbowMaxDeg <= 165` (a reach margin of ≥ 1 cm). Source: S-02's hero v2 reach pre-study (K/wp-082/evidence/hero-v2-reach/ —
 the hold on, lmg_1 167°, rl_1 161°).
 
+## H1b (support-hand grasp — C-00 06.10)
+
+Over every classic weapon with a foregrip (rl_1's front grip included), stance and walk, the frames where the grip IK carries
+full weight: `palmUpMaxDeg <= 30` — the worst angle between the left palm normal and the weapon frame's +Y; and
+`fingertipGapMaxCm <= 1.5` — the index and middle fingertips to the nearest point of the weapon mesh's foregrip. Report
+`weaponsMeasured`, `framesMeasured`; the test writes nothing unless both are above zero (source in the record). The worst
+weapon's name goes to the log, not into the values (plain numbers only). B2e AD MUST-2 (S-06).
+
+## H6 (TP weapon visibility — C-00 06.10)
+
+On the over-the-shoulder TP game camera, every classic, stance and walk: `visibleShareMin >= 0.25` — the worst weapon's
+visible pixels (depth-tested in the scene) over its own unoccluded mask; and `muzzleInsideSilhouetteFrames == 0` — frames
+whose Muzzle socket projects inside the body silhouette. Report `weaponsMeasured` and `secondWorstShare` (the second-worst
+weapon's share, so one weapon stuck alone is told apart). The per-weapon table goes beside the artifact
+(`r2-H6-perweapon.csv`: rosterKey, share, muzzleInsideFrames) and into the log. Rendered with `cam.Render()` into a
+target texture in batch (no WaitForEndOfFrame). B2e AD MUST-3 (S-06).
+
 ## P3 (B9 poses, report — S-05, C-00 06.10)
 
 No owner test: `tools/qa/r2_z3.py` writes `r2-P3.json` in the same run as Z3, from the chain's B9 windows

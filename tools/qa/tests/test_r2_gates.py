@@ -41,7 +41,10 @@ class ContractTests(unittest.TestCase):
                   ("Z3b", "zombieDraws"): 822, ("Z3b", "frameSetPass"): 98, ("Z3b", "sharedTextureGpuMB"): 96,
                   ("Z3b", "uniqueTexturesPerZombie"): 0,
                   # DEC-077 (user 16.09), asserted from C-00 06.10
-                  ("Z1", "silhouetteChange"): 0.30, ("Z1", "deltaVBandMean"): 0.12, ("Z1", "deltaVBandMin"): 0.08}
+                  ("Z1", "silhouetteChange"): 0.30, ("Z1", "deltaVBandMean"): 0.12, ("Z1", "deltaVBandMin"): 0.08,
+                  # C-00 06.10 record (S-06 B2e AD MUST-2 / MUST-3)
+                  ("H1b", "palmUpMaxDeg"): 30.0, ("H1b", "fingertipGapMaxCm"): 1.5,
+                  ("H6", "visibleShareMin"): 0.25, ("H6", "muzzleInsideSilhouetteFrames"): 0}
         for (gid, key), limit in pinned.items():
             check = next(c for c in gate(gid)["checks"] if c["key"] == key)
             self.assertEqual(limit, check["limit"], (gid, key))
@@ -149,6 +152,16 @@ class MeasuredByTests(unittest.TestCase):
         row = r2.evaluate_gate(gate("U1"), FINAL, measure=old)
         self.assertEqual("BLOCKED", row["status"])
         self.assertIn("u1_default, u1_same_content", row["reason"])
+
+    def test_h1b_and_h6_wait_for_s06s_writers_and_report_plain_numbers(self):
+        # C-00 06.10: the rows come first; measuredBy lands with S-06's tests (a measuredBy nobody writes is a lint ERROR)
+        for gid, report in (("H1b", ["weaponsMeasured", "framesMeasured"]), ("H6", ["weaponsMeasured", "secondWorstShare"])):
+            self.assertEqual(("S-06", "gate", report), (gate(gid)["owner"], gate(gid)["kind"], gate(gid)["report"]))
+            self.assertNotIn("measuredBy", gate(gid))
+        row = r2.evaluate_gate(gate("H6"), FINAL, measure=measure("H6", visibleShareMin=0.21, muzzleInsideSilhouetteFrames=0,
+                                                                  weaponsMeasured=10, secondWorstShare=0.33))
+        self.assertEqual("FAIL", row["status"])
+        self.assertIn("visibleShareMin 0.21 >= 0.25 is false", row["reason"])
 
     def test_s5_airborne_queue_is_reported_never_gated(self):
         self.assertEqual(["queueMax"], gate("S5")["report"])
