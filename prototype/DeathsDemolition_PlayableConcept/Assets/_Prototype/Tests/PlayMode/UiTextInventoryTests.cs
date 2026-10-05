@@ -25,11 +25,14 @@ namespace DD.Prototype.Tests.PlayMode
     /// UiIconButton's, or a word of its own or beside it in its row (scrollbars aside); the ones without are logged
     /// ([DD-TEST] wp081.unnamed).
     ///
-    /// R2 U1 (r2-gates.json, tools/qa/r2-measure-contract.md): the gate screens are the main menu and Selection in EN,
-    /// against the R1 baseline below. R1 opened the menu on its Profile pane; v4 opens it with every pane closed (G5,
-    /// C-00 05.10), so the gate compares like with like - the menu with Profile open - and logs the closed arrival too - lettersTotalReduction (both together) ≥ 0.40, lettersPerScreenReductionMin
-    /// ≥ 0.25, unnamedSelectables (every measured EN screen) = 0; r2-U1.json under DD_R2_MEASURE_DIR. Explicit: the gate
-    /// can only pass with menu v4 (WP-081 B4); the acceptance chain runs it by name.
+    /// R2 U1 (r2-gates.json, tools/qa/r2-measure-contract.md; C-00 05.10 decision): the gate screens are the main menu and
+    /// Selection in EN, against the R1 baseline below, measured two ways - both ≥ 0.40:
+    ///   u1_default       the player's default path: v4's real arrival (G5: every pane closed) + Selection;
+    ///   u1_same_content  like with like: the menu with the Profile pane open (R1's arrival) + Selection - so no words
+    ///                    pass the gate by hiding in a pane.
+    /// lettersTotalReduction is the smaller of the two (the gate's number); lettersPerScreenReductionMin ≥ 0.25 (the menu
+    /// with Profile open, and Selection), unnamedSelectables (every measured EN screen) = 0; r2-U1.json under
+    /// DD_R2_MEASURE_DIR. Explicit: the acceptance chain runs it by name.
     /// </summary>
     [Category("WP081")]
     [Category("Diagnostics")]
@@ -96,12 +99,13 @@ namespace DD.Prototype.Tests.PlayMode
 
                 yield return Bekle(() => !UiCurtain.IsCovering, 10f, "perde açılmadı");
                 yield return new WaitForSecondsRealtime(1.5f);   // the menu's entrance settles
-                totals[language + ".mainmenu"] = Measure(language + ".mainmenu", ref texts);
-                unnamedEn += language == UiStrings.English ? s_unnamed : 0;
-
                 MainMenuScreen menu = Object.FindObjectOfType<MainMenuScreen>();
                 Assert.IsNotNull(menu, "the main menu");
                 Assert.AreEqual(language, UiStrings.Language, "the language the letters are counted in");
+                // R2 contract: u1_default is the real arrival - every pane closed (G5) - not a state the test arranged.
+                Assert.IsFalse(menu.PaneOpen, language + ": the menu arrives with a pane open");
+                totals[language + ".mainmenu"] = Measure(language + ".mainmenu", ref texts);
+                unnamedEn += language == UiStrings.English ? s_unnamed : 0;
                 foreach (UiContext pane in Panes)
                 {
                     menu.ShowPane(pane);
@@ -127,27 +131,31 @@ namespace DD.Prototype.Tests.PlayMode
                 Assert.Greater(total.Value, 0, total.Key + ": the instrument measured nothing");
             }
 
-            int menuLetters = totals["en.pane.Profile"];   // the R1 arrival state: the menu with its Profile pane open
+            int menuLetters = totals["en.pane.Profile"];   // R1's arrival state: the menu with its Profile pane open
             int arrivalLetters = totals["en.mainmenu"];      // v4's arrival: every pane closed
             int selectionLetters = totals["en.selection"];
             Assert.Greater(R1MainMenuLetters, 0, "the R1 baseline is set (EN main menu " + menuLetters + ", Selection " + selectionLetters + " on this build)");
-            double totalReduction = 1.0 - (double)(menuLetters + selectionLetters) / (R1MainMenuLetters + R1SelectionLetters);
+            const double R1Total = R1MainMenuLetters + R1SelectionLetters;
+            double defaultPath = 1.0 - (arrivalLetters + selectionLetters) / R1Total;   // u1_default
+            double sameContent = 1.0 - (menuLetters + selectionLetters) / R1Total;      // u1_same_content
+            double totalReduction = System.Math.Min(defaultPath, sameContent);          // the gate's number: the smaller
             double perScreen = System.Math.Min(1.0 - (double)menuLetters / R1MainMenuLetters, 1.0 - (double)selectionLetters / R1SelectionLetters);
-            Debug.Log("[DD-TEST] wp081.u1 values lettersTotalReduction=" + totalReduction.ToString("F3") + " lettersPerScreenReductionMin=" + perScreen.ToString("F3")
-                      + " unnamedSelectables=" + unnamedEn + " (R1 " + R1MainMenuLetters + "+" + R1SelectionLetters + " @ " + R1BaselineCommit + "; menu with Profile "
-                      + menuLetters + ", Selection " + selectionLetters + ")");
-            Debug.Log("[DD-TEST] wp081.u1 arrival (every pane closed) mainmenu=" + arrivalLetters + " reduction="
-                      + (1.0 - (double)arrivalLetters / R1MainMenuLetters).ToString("F3") + " total="
-                      + (1.0 - (double)(arrivalLetters + selectionLetters) / (R1MainMenuLetters + R1SelectionLetters)).ToString("F3"));
+            Debug.Log("[DD-TEST] wp081.u1 values u1_default=" + defaultPath.ToString("F3") + " u1_same_content=" + sameContent.ToString("F3")
+                      + " lettersTotalReduction=" + totalReduction.ToString("F3") + " lettersPerScreenReductionMin=" + perScreen.ToString("F3")
+                      + " unnamedSelectables=" + unnamedEn + " (R1 " + R1MainMenuLetters + "+" + R1SelectionLetters + " @ " + R1BaselineCommit
+                      + "; arrival " + arrivalLetters + ", menu with Profile " + menuLetters + ", Selection " + selectionLetters + ")");
             R2Olcum.Yaz("U1", "DD.Prototype.Tests.PlayMode.UiTextInventoryTests.U1_GorunurHarf_AnaMenuPanellerVeSecim_EnTr",
                 new Dictionary<string, double>
                 {
+                    { "u1_default", defaultPath },
+                    { "u1_same_content", sameContent },
                     { "lettersTotalReduction", totalReduction },
                     { "lettersPerScreenReductionMin", perScreen },
                     { "unnamedSelectables", unnamedEn }
                 },
                 texts);
-            Assert.GreaterOrEqual(totalReduction, 0.40, "U1: letters on the main menu + Selection, against R1");
+            Assert.GreaterOrEqual(defaultPath, 0.40, "U1 (u1_default): letters on v4's arrival + Selection, against R1");
+            Assert.GreaterOrEqual(sameContent, 0.40, "U1b (u1_same_content): letters on the menu with Profile open + Selection, against R1");
             Assert.GreaterOrEqual(perScreen, 0.25, "U1: letters on each gate screen, against R1");
             Assert.AreEqual(0, unnamedEn, "U1: every visible control has a reader name");
         }
