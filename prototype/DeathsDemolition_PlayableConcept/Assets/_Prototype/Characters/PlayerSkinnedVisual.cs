@@ -350,7 +350,11 @@ namespace DD.Prototype.Characters
             // WeaponHoldIk.Enabled; same gate as the grip IK)
             if (_holdIk == null && _animator != null) _holdIk = _animator.GetComponent<WeaponHoldIk>();
             if (_holdIk == null && _animator != null && _animator.isHuman && WeaponHoldIk.Enabled) _holdIk = _animator.gameObject.AddComponent<WeaponHoldIk>();
-            if (_holdIk != null) _holdIk.Configure(_animator, _weaponSocket, aimDirection, () => _authored && !_dying && UpperAtRest());
+            if (_holdIk != null)
+            {
+                _holdIk.Configure(_animator, _weaponSocket, aimDirection, () => _authored && !_dying && UpperAtRest(),
+                    () => _gripIk != null && _gripIk.TryGetSupportGoal(out Vector3 g) ? g : (Vector3?)null);
+            }
 
             // WP-082 / WP-083 B2b: the left hand's magazine socket (S-02 WeaponMagazineOwnership; the Hero v2 rig may carry its own)
             if (_magSocket == null && _animator != null) _magSocket = Characters.MagazineSocket.Ensure(_animator);

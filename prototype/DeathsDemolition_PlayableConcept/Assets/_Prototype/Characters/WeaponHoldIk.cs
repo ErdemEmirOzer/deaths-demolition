@@ -47,6 +47,18 @@ namespace DD.Prototype.Characters
         // a handguard 18 cm ahead of the grip 37.5 cm of a 54.5 cm arm on the current player; K/wp-083/evidence b2c14)
         public static readonly Vector3 DefaultHipHold = new Vector3(0.10f, -0.12f, 0.22f);
 
+        /// <summary>
+        /// The per-weapon part of the hold (WP-083 B2 "silah başına tutamak / destek tablosu"): the support point's forward reach
+        /// ahead of the grip (m) the hip hold is sized for. A weapon whose support point (WeaponGripIk's goal) lies farther ahead is
+        /// pulled back along the aim by the difference — a long gun goes to the shoulder — so the support hand stays at the same
+        /// reach on every weapon. The pull is capped at <see cref="MaxPullBack"/> and eased over <see cref="PullBackSeconds"/>
+        /// (a weapon switch).
+        /// </summary>
+        public static readonly float ReferenceSupportForward = 0.12f;
+
+        [PrototypeOnly(PendingDecisions.None, "WP-083 B2: the hold's largest pull-back along the aim (m) and its easing time (s). Invented.", true)]
+        public const float MaxPullBack = 0.35f, PullBackSeconds = 0.15f;
+
         /// <summary>The right elbow's pole relative to the upper arm, in the aim's yaw frame (out, down, back; m).</summary>
         public static readonly Vector3 RightElbowPole = new Vector3(0.30f, -0.30f, -0.15f);
 
@@ -54,6 +66,8 @@ namespace DD.Prototype.Characters
         private Transform _socket, _chest, _upper, _lower, _hand;
         private Func<Vector3> _aimDirection;
         private Func<bool> _gate;
+        private Func<Vector3?> _support;
+        private float _pullBack;
         private Quaternion _socketInHand = Quaternion.identity;
         private Vector3 _socketOffset;   // socket position in the hand's rotation frame, world length
         private float _weight;
@@ -66,6 +80,8 @@ namespace DD.Prototype.Characters
         /// <summary>The last solve's grip pivot (world) — where socket_weapon_r is held.</summary>
         public Vector3 PivotPosition { get; private set; }
         public Quaternion PivotRotation { get; private set; } = Quaternion.identity;
+        /// <summary>The current pull-back along the aim for the held weapon's support reach (m; tests).</summary>
+        public float PullBack => _pullBack;
         /// <summary>socket_weapon_r ↔ pivot after the last solve at full weight (m; NaN otherwise; tests / H1).</summary>
         public float LastError { get; private set; } = float.NaN;
 
@@ -80,8 +96,10 @@ namespace DD.Prototype.Characters
         /// Owner binding (PlayerSkinnedVisual.Attach): the animator, the right hand's weapon socket, the aim and the gate (rest pose,
         /// alive). The socket's pose in the hand is read once (a child of the hand: pose-independent).
         /// </summary>
-        public void Configure(Animator animator, Transform weaponSocket, Func<Vector3> aimDirection, Func<bool> gate)
+        public void Configure(Animator animator, Transform weaponSocket, Func<Vector3> aimDirection, Func<bool> gate, Func<Vector3?> supportWorld = null)
         {
+            _support = supportWorld;
+            _pullBack = 0f;
             _animator = animator;
             _socket = weaponSocket;
             _aimDirection = aimDirection;
@@ -113,8 +131,14 @@ namespace DD.Prototype.Characters
             Vector3 flat = Vector3.ProjectOnPlane(aim, Vector3.up);
             Quaternion yaw = flat.sqrMagnitude > 1e-6f ? Quaternion.LookRotation(flat, Vector3.up) : Quaternion.LookRotation(Vector3.ProjectOnPlane(body.forward, Vector3.up), Vector3.up);
 
+            // the per-weapon pull-back: the support point's reach ahead of the grip, read in the socket frame (the weapon rides it)
+            Vector3? support = _support != null ? _support() : null;
+            float wantPull = 0f;
+            if (support.HasValue) wantPull = Mathf.Clamp((Quaternion.Inverse(_socket.rotation) * (support.Value - _socket.position)).z - ReferenceSupportForward, 0f, MaxPullBack);
+            _pullBack = Mathf.MoveTowards(_pullBack, wantPull, dt * MaxPullBack / PullBackSeconds);
+
             // the grip pivot and the hand pose that puts socket_weapon_r on it
-            Vector3 pivot = _chest.position + yaw * HipHold;
+            Vector3 pivot = _chest.position + yaw * HipHold - aim * _pullBack;
             Quaternion pivotRot = Quaternion.LookRotation(aim, Vector3.up);
             Quaternion handRot = pivotRot * Quaternion.Inverse(_socketInHand);
             Vector3 handPos = pivot - handRot * _socketOffset;

@@ -65,6 +65,18 @@ namespace DD.Prototype.Characters
             _weight = 0f;
         }
 
+        /// <summary>
+        /// WP-083 B2c: the left hand's goal on the held weapon (the set's hands_in_weapon_frame point, else the model's grip marker)
+        /// without solving — WeaponHoldIk sizes the hold to it. False while no grip is found.
+        /// </summary>
+        public bool TryGetSupportGoal(out Vector3 goal)
+        {
+            goal = default;
+            if (_grip == null || !_grip.gameObject.activeInHierarchy) return false;
+            goal = _hasHandInWeapon && _weaponFrame != null ? _weaponFrame.TransformPoint(_handInWeapon) : _grip.position;
+            return true;
+        }
+
         /// <summary>lh_release (true) / lh_grab (false) from the clip.</summary>
         public void SetReleased(bool released) => _eventReleased = released;
 
