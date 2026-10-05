@@ -87,8 +87,25 @@ namespace DD.Prototype.Audio
         /// <summary>True when this sound will play produced clips rather than a recipe.</summary>
         public bool IsProduced(AudioSoundId id)
         {
-            return _catalog != null && _catalog.TryGet(id, out AudioCatalog.Entry _);
+            return (_kitOverrides != null && _kitOverrides.ContainsKey(id)) || (_catalog != null && _catalog.TryGet(id, out AudioCatalog.Entry _));
         }
+
+        private Dictionary<AudioSoundId, Entry> _kitOverrides;
+
+        /// <summary>
+        /// WP-085 B5 listening kit only: these clips speak for the id (produced, shuffled deck) until <see cref="ClearKitOverrides"/>;
+        /// the catalog / baked entry underneath is untouched and comes back as it was. Never called by the game.
+        /// </summary>
+        public void OverrideForKit(AudioSoundId id, AudioClip[] clips)
+        {
+            if (id == AudioSoundId.None || clips == null || clips.Length == 0) return;
+            if (_kitOverrides == null) _kitOverrides = new Dictionary<AudioSoundId, Entry>();
+            var e = new Entry { Clips = clips, Deck = new int[clips.Length], DeckIndex = clips.Length };
+            for (int i = 0; i < clips.Length; i++) e.Deck[i] = i;
+            _kitOverrides[id] = e;
+        }
+
+        public void ClearKitOverrides() => _kitOverrides?.Clear();
 
         /// <summary>Clips baked so far.</summary>
         public int ClipCount { get; private set; }
@@ -244,6 +261,11 @@ namespace DD.Prototype.Audio
 
         private Entry EnsureBaked(AudioSoundId id)
         {
+            if (_kitOverrides != null && _kitOverrides.TryGetValue(id, out Entry kit))
+            {
+                return kit;
+            }
+
             if (_entries.TryGetValue(id, out Entry existing))
             {
                 return existing;

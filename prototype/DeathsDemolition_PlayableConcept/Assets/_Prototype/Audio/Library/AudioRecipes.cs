@@ -335,6 +335,10 @@ namespace DD.Prototype.Audio
                 case AudioSoundId.WeaponAr1Loop:
                 case AudioSoundId.WeaponSmg1Loop:
                 case AudioSoundId.WeaponLmg1Loop: return BuildHeavyMotorLoop(ref rng);
+                case AudioSoundId.WeaponAr1TailOpen:
+                case AudioSoundId.WeaponSg1TailOpen: return BuildWindBed(ref rng);   // WP-085 B5: the class-tail fallback family
+                case AudioSoundId.WeaponAr1DistanceFar: return BuildWeaponFire(WeaponVoice.Rifle, ref rng);
+                case AudioSoundId.WeaponSg1DistanceFar: return BuildWeaponFire(WeaponVoice.Shotgun, ref rng);
 
                 default:
                     if (id >= AudioSoundId.WeaponTailArOpen && id <= AudioSoundId.WeaponTailRlHall) return BuildWindBed(ref rng);

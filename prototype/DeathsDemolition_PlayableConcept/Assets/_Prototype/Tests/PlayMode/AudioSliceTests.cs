@@ -1630,7 +1630,10 @@ namespace DD.Prototype.Tests.PlayMode
             string istek = Environment.GetEnvironmentVariable("DD_KIT_WEAPONS");
             if (string.IsNullOrEmpty(istek)) istek = "ar_1,sg_1";
             string varyantlar = Environment.GetEnvironmentVariable("DD_KIT_VARIANTS");
-            if (string.IsNullOrEmpty(varyantlar)) varyantlar = "AB";
+            if (string.IsNullOrEmpty(varyantlar)) varyantlar = "ABC";
+            string ap027 = Environment.GetEnvironmentVariable("DD_AP027_DIR");
+            if (string.IsNullOrEmpty(ap027)) ap027 = System.IO.Path.Combine(Environment.GetEnvironmentVariable("HOME") ?? "", "Desktop/KADRO/context/projects/deaths-demolition/asset-production/AP-027/exports/v001-prototip");
+            var kitKliplar = new List<AudioClip>();
             _s.Rig.Health.DiagnosisInvulnerable = true;
             DD.Prototype.Core.Config.ClassicWeaponId oncekiSecim = DD.Prototype.Weapons.WeaponRegistry.SelectedWeapon;
 
@@ -1656,7 +1659,7 @@ namespace DD.Prototype.Tests.PlayMode
 
             var csv = new System.Text.StringBuilder("take,weapon,mode,variant,stem,kind,shot,frame,sampleRate\n");
             var ozet = new System.Text.StringBuilder("[");
-            float s1Min = 1f;
+            float s1Min = 1f, s1MinC = 1f;
             int s1Shots = 0, s2Deficit = 0, s2Transients = 0, s2Loops = 0, s2Refused = 0, s2Shots = 0;
             var s1Detay = new List<string>();
 
@@ -1716,7 +1719,11 @@ namespace DD.Prototype.Tests.PlayMode
                         yield return new WaitForSecondsRealtime(2f);
                         foreach (char v in varyantlar)
                         {
+                            // C = the AP-027 v4 prototype (kit-only override of this weapon's Fire / own open tail / far voice / casings).
+                            if (v == 'C' && !KitCYukle(wd.weaponId, audioId, ap027, kitKliplar)) continue;
                             WeaponFireAudio.LegacyVoicesForKit = v == 'B';
+                            try
+                            {
                             foreach (bool stem in new[] { false, true })
                             {
                                 for (int i = 0; i < buslar.Length; i++) mixer.SetFloat(buslar[i], stem && i != PlayerBus && i != 0 ? -80f : taban[i]);
@@ -1781,6 +1788,13 @@ namespace DD.Prototype.Tests.PlayMode
                                     .Append(",\"fireRefused\":").Append(refused).Append(",\"transients\":").Append(gecici).Append(",\"loopStarts\":").Append(dongu)
                                     .Append(",\"casingsLanded\":").Append(_d.Casings.Landed).Append(",\"lastCasing\":\"").Append(_d.Casings.LastSound).Append("\"}");
 
+                                if (v == 'C' && stem)
+                                {
+                                    float payC = AltBantPayiMin(System.IO.Path.Combine(dir, ad + ".wav"), heldFrames, out int olculenC);
+                                    if (olculenC > 0) s1MinC = Mathf.Min(s1MinC, payC);
+                                    s1Detay.Add(ad + " below400Min=" + payC.ToString("0.000") + " shots=" + olculenC);
+                                }
+
                                 if (v == 'A' && stem)
                                 {
                                     s2Shots += plan.Count;
@@ -1793,6 +1807,11 @@ namespace DD.Prototype.Tests.PlayMode
                                     s1Detay.Add(ad + " below400Min=" + pay.ToString("0.000") + " shots=" + olculen);
                                 }
                             }
+                            }
+                            finally
+                            {
+                                _d.Library.ClearKitOverrides();
+                            }
                         }
                     }
                 }
@@ -1804,6 +1823,8 @@ namespace DD.Prototype.Tests.PlayMode
                 DD.Prototype.Weapons.WeaponRegistry.SelectedWeapon = oncekiSecim;
                 if (_s.Controller != null) _s.Controller.EquipClassic(oncekiSecim, _s.Config);
                 WeaponFireAudio.LegacyVoicesForKit = false;
+                _d.Library.ClearKitOverrides();
+                foreach (AudioClip k in kitKliplar) if (k != null) UnityEngine.Object.Destroy(k);
                 if (cap != null) UnityEngine.Object.DestroyImmediate(cap);
                 for (int i = 0; i < buslar.Length; i++) mixer.ClearFloat(buslar[i]);
                 DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.TopDown, true);
@@ -1812,7 +1833,7 @@ namespace DD.Prototype.Tests.PlayMode
             System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "kit-events.csv"), csv.ToString());
             System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "kit-summary.json"), ozet.Append(']').ToString());
             Debug.Log("[DD-TEST] wp085.kit " + string.Join(" · ", s1Detay) + " · S2 shots=" + s2Shots + " deficit=" + s2Deficit + " transients=" + s2Transients
-                      + " loops=" + s2Loops + " refused=" + s2Refused + " · files " + System.IO.Directory.GetFiles(dir, "*.wav").Length);
+                      + " loops=" + s2Loops + " refused=" + s2Refused + (varyantlar.IndexOf('C') >= 0 ? " · C below400Min=" + s1MinC.ToString("0.000") : "") + " · files " + System.IO.Directory.GetFiles(dir, "*.wav").Length);
 
             const string kaynak = "DD.Prototype.Tests.PlayMode.AudioSliceTests.SilahKiti_GercekRpm_OyunIci_Kayit";
             if (varyantlar.IndexOf('A') >= 0)
@@ -1866,6 +1887,72 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             return measured > 0 ? min : 0f;
+        }
+
+        /// <summary>
+        /// WP-085 B5 kit C: the AP-027 Faz A prototype for this weapon (Weapon_ar1_Fire_01.wav …) as kit-only library overrides —
+        /// Fire (the authoritative pre-mix; Mechanical is inside it and is not added again), the weapon's own TailOpen (played with
+        /// the open-court reflection offset), DistanceFar, and the stone / wood casings of its calibre. False when the export has
+        /// no Fire for this weapon (the kit skips C for it).
+        /// </summary>
+        private bool KitCYukle(string weaponId, string audioId, string dir, List<AudioClip> sahip)
+        {
+            string k = weaponId.Replace("_", "");
+            AudioClip[] fire = WavKlipleri(dir, "Weapon_" + k + "_Fire_", sahip);
+            if (fire.Length == 0) return false;
+            WeaponAudioIdentity.TryGet(audioId, out WeaponVoiceSet set);
+            _d.Library.OverrideForKit(set.Fire, fire);
+            _d.Library.OverrideForKit(WeaponAudioIdentity.Layer(audioId, WeaponLayer.TailOpen), WavKlipleri(dir, "Weapon_" + k + "_TailOpen_", sahip));
+            _d.Library.OverrideForKit(WeaponAudioIdentity.Layer(audioId, WeaponLayer.DistanceFar), WavKlipleri(dir, "Weapon_" + k + "_DistanceFar_", sahip));
+            CasingFamily aile = WeaponFoleyV3.Casing(audioId);
+            _d.Library.OverrideForKit(WeaponFoleyV3.CasingOn(aile, SurfaceKind.Stone), WavKlipleri(dir, "Casing_" + k + "_StoneSlate_", sahip));
+            _d.Library.OverrideForKit(WeaponFoleyV3.CasingOn(aile, SurfaceKind.Wood), WavKlipleri(dir, "Casing_" + k + "_Wood_", sahip));
+            return true;
+        }
+
+        private static AudioClip[] WavKlipleri(string dir, string onEk, List<AudioClip> sahip)
+        {
+            if (!System.IO.Directory.Exists(dir)) return new AudioClip[0];
+            string[] yollar = System.IO.Directory.GetFiles(dir, onEk + "*.wav");
+            Array.Sort(yollar, StringComparer.Ordinal);
+            var kl = new List<AudioClip>();
+            foreach (string y in yollar)
+            {
+                AudioClip c = WavOku(y);
+                if (c == null) continue;
+                kl.Add(c);
+                sahip.Add(c);
+            }
+
+            return kl.ToArray();
+        }
+
+        /// <summary>PCM 16 / 24-bit WAV → AudioClip (the AP-027 exports are 48 kHz PCM24, mono or stereo).</summary>
+        private static AudioClip WavOku(string path)
+        {
+            byte[] b = System.IO.File.ReadAllBytes(path);
+            int pos = 12, ch = 1, rate = 48000, bits = 16, dataStart = -1, dataLen = 0;
+            while (pos + 8 <= b.Length)
+            {
+                string id = System.Text.Encoding.ASCII.GetString(b, pos, 4);
+                int len = BitConverter.ToInt32(b, pos + 4);
+                if (id == "fmt ") { ch = BitConverter.ToInt16(b, pos + 10); rate = BitConverter.ToInt32(b, pos + 12); bits = BitConverter.ToInt16(b, pos + 22); }
+                else if (id == "data") { dataStart = pos + 8; dataLen = Math.Min(len, b.Length - dataStart); break; }
+                pos += 8 + len + (len & 1);
+            }
+
+            if (dataStart < 0 || (bits != 16 && bits != 24)) return null;
+            int bps = bits / 8, n = dataLen / bps;
+            var x = new float[n];
+            for (int i = 0; i < n; i++)
+            {
+                int o = dataStart + i * bps;
+                x[i] = bits == 16 ? BitConverter.ToInt16(b, o) / 32768f : ((b[o] | (b[o + 1] << 8) | ((sbyte)b[o + 2] << 16)) / 8388608f);
+            }
+
+            AudioClip clip = AudioClip.Create(System.IO.Path.GetFileNameWithoutExtension(path), n / ch, ch, rate, false);
+            clip.SetData(x, 0);
+            return clip;
         }
 
         /// <summary>RBJ biquad, high- or low-pass, one pass.</summary>

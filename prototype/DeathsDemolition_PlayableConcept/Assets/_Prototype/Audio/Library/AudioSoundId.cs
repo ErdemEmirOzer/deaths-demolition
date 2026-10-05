@@ -439,6 +439,13 @@ namespace DD.Prototype.Audio
         FootstepWetLayer = 572,
         AmbBambooGroveLoop = 573,
         AmbBambooGust = 574,
-        AmbBirdsDistant = 575
+        AmbBirdsDistant = 575,
+
+        // ---- WP-085 B5 · AP-027 v4 per-weapon layers (WeaponFireAudio WeaponLayer names). No catalog row yet: the game keeps the
+        // v016 class tails; the listening kit's C variant fills them from the AP-027 Faz A prototype (kit-only override).
+        WeaponAr1TailOpen = 580,
+        WeaponAr1DistanceFar = 581,
+        WeaponSg1TailOpen = 582,
+        WeaponSg1DistanceFar = 583
     }
 }
