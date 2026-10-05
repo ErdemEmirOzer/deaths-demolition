@@ -136,27 +136,27 @@
       "landmark": "V6 R1_MainHall",
       "source": "regions-v6.json R1 box [-16.5,39,16.5,49], floor 1.2; eye=2.8",
       "position_start": [
-        -8,
-        2.8,
-        45
+        -1.2,
+        2.6,
+        40.5
       ],
       "position_end": [
-        -6.8,
-        2.8,
-        45
+        0.0,
+        2.6,
+        40.5
       ],
       "target_start": [
-        4,
-        2,
-        39
+        2.0,
+        1.8,
+        30.0
       ],
       "target_end": [
-        4.5,
-        2,
-        39
+        2.4,
+        1.8,
+        30.0
       ],
-      "vfov": 40,
-      "motion": "Salon duvarı boyunca yavaş pan-dolly",
+      "vfov": 48,
+      "motion": "Salon eşiğinde 1,2 m yatay dolly; içeriden avluya ve Chumon kapısına açılan ışık",
       "risk": "Beş çıkışın tek tek portal koordinatı bu kaynaktan çıkarılamadı; hedef kapı ekseni landmark adayıdır.",
       "start_s": 36,
       "duration_s": 12,
@@ -167,9 +167,45 @@
         0.48
       ],
       "coordinate_units": "metre; Unity X,Y-up,Z",
-      "status": "Kaynağa bağlı TASARIM koordinatları; runtime pose doğrulaması yapılmadı",
+      "status": "YEREL UYARLAMA (S-09 05.10, C-00 onayı): World V6'da tasarım pozu salonun Hall_Screen_W perdesine 0,8–2,1 m'den bakıyordu (kare simsiyah). Eşikte, aynı niyet: salonun ölçeği + içeriden dışarı açılan ışık.",
       "style_frame": "Frames/S04_StyleTarget.png",
-      "motion_preview": "Motion/S04_MotionPreview.mp4"
+      "motion_preview": "Motion/S04_MotionPreview.mp4",
+      "local_adaptation": {
+        "by": "S-09",
+        "date": "2026-10-05",
+        "approved": "C-00 05.10",
+        "design_pose": {
+          "position_start": [
+            -8,
+            2.8,
+            45
+          ],
+          "position_end": [
+            -6.8,
+            2.8,
+            45
+          ],
+          "target_start": [
+            4,
+            2,
+            39
+          ],
+          "target_end": [
+            4.5,
+            2,
+            39
+          ],
+          "vfov": 40
+        },
+        "criteria": "ortalama luminans ≥ diğer çekimlerin alt sınırı (0,069, B), 0,35 m küre çarpışmasız, B + yastıklarla kontrast FAIL 0",
+        "measured": {
+          "meanMin": 0.087,
+          "colliderHits": 0,
+          "contrastFailsP99": 0,
+          "sight": "clear"
+        },
+        "evidence": "K/wp-068s9/evidence/wp081/look6/S04-candidates (14 aday, 4 tur)"
+      }
     },
     {
       "id": "S05",
@@ -239,5 +275,8 @@
     "frame_test": "Tam sol üçte bir P95 linear luminance <=0.03 ve >0.10 luminance piksel oranı <=2%; gerçek glif alanında worst-case krem kontrast >=4.5",
     "text_hex": "#F3EBDD",
     "scrim": "Tasarım kareleri hamdır. S-09 mevcut menü text-safe clamp/scrim sistemi runtime garantisi için korunur; loading bandı karartması değildir."
-  }
+  },
+  "local_adaptations": [
+    "S04 (S-09 05.10, C-00 onayı) - diğer dört çekim AP-028 v002 ile birebir"
+  ]
 }

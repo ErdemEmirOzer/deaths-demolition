@@ -117,9 +117,25 @@ namespace DD.Prototype.Tests.PlayMode
                 Assert.IsTrue(t == null || !t.gameObject.activeSelf, band + " çekildi");
             }
 
-            Image scrim = backdrop.transform.Find("TextSafeScrim").GetComponent<Image>();
-            Assert.IsTrue(scrim.isActiveAndEnabled);
-            Assert.AreEqual(UiBackdrop.ScrimAlpha, scrim.color.a, 1e-4f);
+            // C-00 05.10 decision B + pads: the spine's scrim one wide soft profile, the small words on their own pads.
+            MenuLook look = MenuLook.Current;
+            Assert.IsTrue(look.GradientScrim && look.Pads, "shipped look: " + look);
+            Assert.IsTrue(backdrop.HasWorldScrim, "the world scrim replaces the third's");
+            Assert.IsFalse(backdrop.transform.Find("TextSafeScrim").gameObject.activeSelf);
+            Assert.AreEqual(look.ScrimEdge, backdrop.WorldScrimAlphaAt(0f), 1e-3f);
+            Assert.AreEqual(look.ScrimColumn, backdrop.WorldScrimAlphaAt(backdrop.WorldScrimColumn), 1e-3f);
+            Assert.AreEqual(0f, backdrop.WorldScrimAlphaAt(look.ScrimEnd), 1e-3f);
+            int padCount = 0;
+            foreach (Image image in menu.GetComponentsInChildren<Image>(false))
+            {
+                if (image.name == MenuLook.ReadoutPadName)
+                {
+                    padCount++;
+                    Assert.AreEqual(MenuLook.ReadoutPadAlpha, image.color.a, 1e-4f);
+                }
+            }
+
+            Assert.AreEqual(Debug.isDebugBuild ? 3 : 2, padCount, "a pad behind the focused word, one behind the level readout (and one behind the dev build line)");
 
             // The clock runs; Reduced Motion and an open pane hold S01's start.
             float before = cinematic.Clock;

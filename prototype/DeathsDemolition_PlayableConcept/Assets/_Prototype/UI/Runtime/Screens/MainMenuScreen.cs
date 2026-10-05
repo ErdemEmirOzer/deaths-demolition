@@ -119,6 +119,7 @@ namespace DD.Prototype.UI
         private TMP_Text _railWord;
         private TMP_Text _railSub;
         private Image _paneMark;
+        private Image _railPad;
         private RectTransform _paneCard;
         private TMP_Text _level;
         private UiBar _xp;
@@ -195,6 +196,27 @@ namespace DD.Prototype.UI
             {
                 bool cut = UiCurtain.IsCovering || UiMotion.ReducedMotion;
                 _plates.ShowWorld(cut ? 0f : MenuCinematic.Blend, Time.unscaledTime);
+            }
+
+            // The spine over the world: the scrim and the words' ink as the menu look says (C-00 05.10 options).
+            Transform title = Content.Find("Title");
+            Transform nav = Content.Find("Nav");
+            MenuLook.Current.ApplyUi(nav, _plates);
+            MenuLook.Current.ApplyUi(title, null);
+            MenuLook.ApplyReadoutInk(Content.Find("Progress"), MenuLook.Current.Pads);
+            if (MenuLook.Current.Pads && _railWordRect != null)
+            {
+                // The focused word and its sub-line stand on the world past the scrim's darkest part: their own soft pad,
+                // sized to the words and moved with them (MoveRailWord).
+                _railPad = MenuLook.AddPad(_railWordRect, _railWordRect.Find(MenuLook.ReadoutPadName));
+                SizeRailPad();
+                if (_buildNote != null && _buildNote.gameObject.activeSelf)
+                {
+                    MenuLook.PadBehind(_buildNote);   // the dev build's version line stands on the world too
+                }
+            }
+            if (_plates != null)
+            {
                 return;
             }
 
@@ -364,6 +386,8 @@ namespace DD.Prototype.UI
             TMP_Text build = UiFactory.Label(
                 "BuildNote", column, BuildNotePrefix + DD.Prototype.Core.Build.BuildInfo.Read().Label, UiType.Caption, PlateCaption);
             _buildNote = build;
+            // C-00 05.10: the version stamp shows in development builds only - the release menu carries no build line.
+            build.gameObject.SetActive(Debug.isDebugBuild);
             float buildHeight = width > 1f
                 ? Mathf.Max(captionLine, Mathf.Ceil(build.GetPreferredValues(build.text, width, 0f).y))
                 : captionLine;
@@ -461,6 +485,25 @@ namespace DD.Prototype.UI
             _railWordRect.anchoredPosition = new Vector2(hit + (int)RailWordGap, icon.anchoredPosition.y);
             _railWord.text = item.ShortLabel;
             _railSub.text = item.Button == _playButton ? PlaySubline : string.Empty;
+            SizeRailPad();
+        }
+
+        /// <summary>The focused word's pad hugs the words (the wider of the word and its sub-line), not the column.</summary>
+        private void SizeRailPad()
+        {
+            if (_railPad == null)
+            {
+                return;
+            }
+
+            float words = Mathf.Max(_railWord.GetPreferredValues(_railWord.text).x, string.IsNullOrEmpty(_railSub.text) ? 0f : _railSub.GetPreferredValues(_railSub.text).x);
+            float reach = MenuLook.PadReach;
+            RectTransform rect = _railPad.rectTransform;
+            rect.anchorMin = new Vector2(0f, 0f);
+            rect.anchorMax = new Vector2(0f, 1f);
+            rect.pivot = new Vector2(0f, 0.5f);
+            rect.offsetMin = new Vector2(-reach, -reach);
+            rect.offsetMax = new Vector2(Mathf.Ceil(words) + reach, reach);
         }
 
         private static void Band(RectTransform rect, float top, float height)

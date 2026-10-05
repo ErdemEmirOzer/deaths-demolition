@@ -801,7 +801,7 @@ namespace DD.Prototype.UI
                     "\"uiCostMs\":{8:F3},\"scriptsDeltaMs\":{9:F3},\"uiMarkersOnMs\":{10:F3},\"uiMarkersOffMs\":{11:F3},\"uiMarkersP99Ms\":{12:F3}," +
                     "\"willRenderMs\":{13:F3},\"buildBatchMs\":{14:F3},\"eventSystemMs\":{15:F3},\"tmpRegenPerFrame\":{16:F2}," +
                     "\"gpuDeltaMs\":{17:F3},\"setPassOn\":{18:F1},\"setPassDelta\":{19:F1},\"batchesOn\":{20:F1},\"batchesDelta\":{21:F1},\"drawsDelta\":{22:F1}," +
-                    "\"gcBytesPerFrameOn\":{23:F0},\"openMs\":{24:F2},\"openGcBytes\":{25},\"markers\":\"{26}\",\"blockSeconds\":{27:F1}}}",
+                    "\"gcBytesPerFrameOn\":{23:F0},\"openMs\":{24:F2},\"openGcBytes\":{25},\"markers\":\"{26}\",\"blockSeconds\":{27:F1} }}",
                     surface, Screen.width, Screen.height, canvases.Count, frames[0], frames[1], Avg(frameMs[0], 0), Avg(frameMs[1], 1),
                     scriptsDelta + uiMarkersOn - uiMarkersOff, scriptsDelta, uiMarkersOn, uiMarkersOff, p99,
                     Marker(0, 5), Marker(0, 6), Marker(0, 7), Avg(tmpCount[0], 0),
@@ -2587,6 +2587,18 @@ namespace DD.Prototype.UI
                 }
 
                 yield return new WaitForSecondsRealtime(Mathf.Max(_delay, MenuCinematic.Blend + 0.4f));   // past the plates' fade
+                // Nothing but this script drives the menu while it is measured: a click or key reaching the fullscreen Player
+                // (a shared machine) once opened panes and PLAY mid-run - the input modules stay off until the end.
+                var modules = new System.Collections.Generic.List<UnityEngine.EventSystems.BaseInputModule>();
+                foreach (UnityEngine.EventSystems.BaseInputModule module in FindObjectsOfType<UnityEngine.EventSystems.BaseInputModule>())
+                {
+                    if (module.enabled)
+                    {
+                        module.enabled = false;
+                        modules.Add(module);
+                    }
+                }
+
                 WriteCollisions(Path.Combine(folder, "cine-collisions.json"));
 
                 var elements = new System.Text.StringBuilder();
@@ -2594,6 +2606,13 @@ namespace DD.Prototype.UI
                 {
                     UiInput.Focus(menu.Rail[item].Button);
                     yield return new WaitForSecondsRealtime(0.5f);
+                    if (menu == null || menu.PaneOpen)
+                    {
+                        Debug.LogError("[UiCapture] cinematic: the menu changed under the capture (pane open or scene gone) - this run is invalid.");
+                        File.WriteAllText(Path.Combine(folder, "cine-INVALID.txt"), "the menu changed under the capture at focus " + item);
+                        yield break;
+                    }
+
                     AppendMenuElements(elements, menu, item);
                 }
 
@@ -2614,11 +2633,18 @@ namespace DD.Prototype.UI
                         }
 
                         string name = MenuCinematic.Shots[shot].id + "-t" + local.ToString("00.00", ic);
+                        if (menu == null || menu.PaneOpen)
+                        {
+                            Debug.LogError("[UiCapture] cinematic: the menu changed under the capture - this run is invalid.");
+                            File.WriteAllText(Path.Combine(folder, "cine-INVALID.txt"), "the menu changed under the capture at " + name);
+                            yield break;
+                        }
+
                         yield return Frame(folder, "cine-" + name);
                         var hidden = new System.Collections.Generic.List<UnityEngine.UI.Graphic>();
                         foreach (UnityEngine.UI.Graphic g in menu.GetComponentsInChildren<UnityEngine.UI.Graphic>(false))
                         {
-                            if (g.enabled && !UnderBackdrop(g.transform, menu.transform))
+                            if (g.enabled && !UnderBackdrop(g.transform, menu.transform) && g.name != MenuLook.ReadoutPadName)   // a pad is the words' ground
                             {
                                 g.enabled = false;
                                 hidden.Add(g);
@@ -2637,6 +2663,13 @@ namespace DD.Prototype.UI
                 }
 
                 MenuCinematic.TimeOverride = 0f;
+                foreach (UnityEngine.EventSystems.BaseInputModule module in modules)
+                {
+                    if (module != null)
+                    {
+                        module.enabled = true;
+                    }
+                }
             }
 
             private static bool UnderBackdrop(Transform t, Transform root)
@@ -2672,16 +2705,53 @@ namespace DD.Prototype.UI
 
                     Canvas canvas = g.canvas;
                     Camera camera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null;
-                    g.rectTransform.GetWorldCorners(corners);
-                    Vector2 a = RectTransformUtility.WorldToScreenPoint(camera, corners[0]);
-                    Vector2 b = RectTransformUtility.WorldToScreenPoint(camera, corners[2]);
                     var text = g as TMPro.TMP_Text;
                     if (text != null && string.IsNullOrEmpty(text.text))
                     {
                         continue;
                     }
 
+                    g.rectTransform.GetWorldCorners(corners);
+                    if (text != null)
+                    {
+                        // A word is measured where its letters are (its drawn bounds), not over its layout box - a sub-line's
+                        // box spans the column while its words (and their pad) cover a part of it.
+                        text.ForceMeshUpdate();
+                        Bounds lb = text.textBounds;
+                        corners[0] = text.transform.TransformPoint(lb.min);
+                        corners[2] = text.transform.TransformPoint(lb.max);
+                    }
+
+                    Vector2 a = RectTransformUtility.WorldToScreenPoint(camera, corners[0]);
+                    Vector2 b = RectTransformUtility.WorldToScreenPoint(camera, corners[2]);
                     float scale = canvas != null ? canvas.scaleFactor : 1f;
+                    // The word's own ink (UiHudInk outline, a glyph's Outline): its colour, for the face-vs-ink measure.
+                    Color ink = Color.clear;
+                    if (text != null && text.fontSharedMaterial != null && text.fontSharedMaterial.HasProperty("_OutlineWidth")
+                        && text.fontSharedMaterial.IsKeywordEnabled("OUTLINE_ON") && text.fontSharedMaterial.GetFloat("_OutlineWidth") > 0.01f)
+                    {
+                        ink = text.fontSharedMaterial.GetColor("_OutlineColor");
+                    }
+                    else if (text != null && text.fontSharedMaterial != null && text.fontSharedMaterial.IsKeywordEnabled("UNDERLAY_ON")
+                        && text.fontSharedMaterial.HasProperty("_UnderlayColor"))
+                    {
+                        ink = text.fontSharedMaterial.GetColor("_UnderlayColor");   // MenuLook's small-text ink: a ground, not an edge
+                    }
+                    else if (text == null && g.GetComponent<UnityEngine.UI.Outline>() != null)
+                    {
+                        ink = g.GetComponent<UnityEngine.UI.Outline>().effectColor;
+                    }
+
+                    // The focused word's pad moves with the word (the bg frames hold it at PLAY's row): report it, so a word
+                    // measured at another row is judged on its pad too.
+                    Color movingPad = Color.clear;
+                    Transform padT = text != null && text.transform.parent != null && text.transform.parent.name == "RailWord"
+                        ? text.transform.parent.Find(MenuLook.ReadoutPadName) : null;
+                    if (padT != null && padT.gameObject.activeInHierarchy && padT.GetComponent<UnityEngine.UI.Graphic>() != null)
+                    {
+                        movingPad = padT.GetComponent<UnityEngine.UI.Graphic>().color;
+                    }
+
                     string pathName = g.name;
                     for (Transform t = g.transform.parent; t != null && t != menu.transform; t = t.parent)
                     {
@@ -2690,14 +2760,14 @@ namespace DD.Prototype.UI
 
                     Color c = g.color;
                     lines.Append(string.Format(ic,
-                        "{{\"focus\":{0},\"path\":\"{1}\",\"text\":{2},\"words\":\"{3}\",\"font\":\"{4}\",\"x0\":{5:F1},\"y0\":{6:F1},\"x1\":{7:F1},\"y1\":{8:F1},\"r\":{9:F4},\"g\":{10:F4},\"b\":{11:F4},\"a\":{12:F4},\"sizePx\":{13:F1},\"bold\":{14},\"backdrop\":{15},\"screen\":[{16},{17}]}}\n",
+                        "{{\"focus\":{0},\"path\":\"{1}\",\"text\":{2},\"words\":\"{3}\",\"font\":\"{4}\",\"x0\":{5:F1},\"y0\":{6:F1},\"x1\":{7:F1},\"y1\":{8:F1},\"r\":{9:F4},\"g\":{10:F4},\"b\":{11:F4},\"a\":{12:F4},\"sizePx\":{13:F1},\"bold\":{14},\"backdrop\":{15},\"screen\":[{16},{17}],\"ink\":[{18:F4},{19:F4},{20:F4},{21:F4}],\"movingPad\":[{22:F4},{23:F4},{24:F4},{25:F4}] }}\n",
                         focus, pathName.Replace("\"", "'"), text != null ? "true" : "false",
                         text != null ? text.text.Replace("\"", "'").Replace("\n", " ") : string.Empty,
                         text != null && text.font != null ? text.font.name.Replace("\"", "'") : string.Empty,
                         Mathf.Min(a.x, b.x), Mathf.Min(a.y, b.y), Mathf.Max(a.x, b.x), Mathf.Max(a.y, b.y),
                         c.r, c.g, c.b, alpha, text != null ? text.fontSize * scale : 0f,
                         text != null && (text.fontStyle & TMPro.FontStyles.Bold) != 0 ? "true" : "false",
-                        backdrop ? "true" : "false", Screen.width, Screen.height));
+                        backdrop ? "true" : "false", Screen.width, Screen.height, ink.r, ink.g, ink.b, ink.a, movingPad.r, movingPad.g, movingPad.b, movingPad.a));
                 }
             }
 
@@ -2770,7 +2840,7 @@ namespace DD.Prototype.UI
                     {
                         Vector3 d = to[e] - from[e];
                         bool blocked = Physics.Raycast(from[e], d.normalized, out RaycastHit hit, d.magnitude, mask, QueryTriggerInteraction.Ignore);
-                        json.Append(e > 0 ? "," : string.Empty).Append(string.Format(ic, "{{\"end\":\"{0}\",\"distance\":{1:F2},\"blocked\":{2},\"hit\":\"{3}\",\"hitDistance\":{4:F2}}}",
+                        json.Append(e > 0 ? "," : string.Empty).Append(string.Format(ic, "{{\"end\":\"{0}\",\"distance\":{1:F2},\"blocked\":{2},\"hit\":\"{3}\",\"hitDistance\":{4:F2} }}",
                             e == 0 ? "start" : "end", d.magnitude, blocked ? "true" : "false", blocked ? hit.collider.name.Replace("\"", "'") : string.Empty, blocked ? hit.distance : 0f));
                     }
 
@@ -2894,7 +2964,7 @@ namespace DD.Prototype.UI
                 }
 
                 float P(float q) => values[Math.Min(values.Count - 1, (int)(values.Count * q))];
-                return string.Format(System.Globalization.CultureInfo.InvariantCulture, "{{\"n\":{0},\"avg\":{1:F3},\"p50\":{2:F3},\"p95\":{3:F3},\"p99\":{4:F3},\"max\":{5:F3}}}",
+                return string.Format(System.Globalization.CultureInfo.InvariantCulture, "{{\"n\":{0},\"avg\":{1:F3},\"p50\":{2:F3},\"p95\":{3:F3},\"p99\":{4:F3},\"max\":{5:F3} }}",
                     values.Count, sum / values.Count, P(0.5f), P(0.95f), P(0.99f), values[values.Count - 1]);
             }
 
@@ -2915,6 +2985,13 @@ namespace DD.Prototype.UI
                 }
 
                 yield return new WaitForSecondsRealtime(Mathf.Max(_delay, MenuCinematic.Blend + 0.4f));
+                // As CinematicFrames: nothing but this script drives the menu while the loop is recorded.
+                foreach (UnityEngine.EventSystems.BaseInputModule module in FindObjectsOfType<UnityEngine.EventSystems.BaseInputModule>())
+                {
+                    module.enabled = false;
+                }
+
+                MainMenuScreen menu = FindObjectOfType<MainMenuScreen>();
                 const int fps = 30;
                 int count = Mathf.RoundToInt(MenuCinematic.Period * fps);
                 Time.captureDeltaTime = 1f / fps;
@@ -2922,6 +2999,13 @@ namespace DD.Prototype.UI
                 {
                     MenuCinematic.TimeOverride = i / (float)fps;
                     yield return new WaitForEndOfFrame();
+                    if (menu == null || menu.PaneOpen)
+                    {
+                        Debug.LogError("[UiCapture] cinematicmp4: the menu changed under the recording - invalid.");
+                        File.WriteAllText(Path.Combine(folder, "..", "cine-INVALID.txt"), "the menu changed under the recording at frame " + i);
+                        break;
+                    }
+
                     Texture2D shot = ScreenCapture.CaptureScreenshotAsTexture();
                     File.WriteAllBytes(Path.Combine(folder, "frame-" + i.ToString("00000") + ".jpg"), shot.EncodeToJPG(92));
                     Destroy(shot);

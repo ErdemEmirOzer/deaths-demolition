@@ -24,7 +24,7 @@ namespace DD.Prototype.UI
     /// </summary>
     public sealed class MenuCinematic : MonoBehaviour
     {
-        public const string ShotResource = "MenuCinematic/menu-cinematic";   // AP-028 v002 MenuCinematic/shot-list.json, byte-identical (sha256 0372ad0a…)
+        public const string ShotResource = "MenuCinematic/menu-cinematic";   // AP-028 v002 shot-list.json (sha256 0372ad0a…) with S04 adapted locally on V6 (C-00 05.10; local_adaptation in the file)
         public const string Schema = "dd.menu-cinematic.design/2";
         public const float Slice = 12f;
         public const float Hold = 1.2f;
@@ -36,6 +36,9 @@ namespace DD.Prototype.UI
 
         /// <summary>Dev builds: <c>-ddMenuWorld off</c> keeps the plates (the A/B baseline for the menu's frame cost).</summary>
         public const string Flag = "-ddMenuWorld";
+
+        /// <summary>Dev builds: <c>-ddMenuShots &lt;path&gt;</c> - the shot list from a file (pose probes).</summary>
+        public const string ShotsFlag = "-ddMenuShots";
 
         [Serializable]
         public sealed class Shot
@@ -92,6 +95,7 @@ namespace DD.Prototype.UI
         public static MenuCinematic Current { get; private set; }
 
         private Camera _camera;
+        private GameObject _lookVolume;
         private RenderTexture _held;
         private RawImage _heldImage;
         private Canvas _heldCanvas;
@@ -113,8 +117,21 @@ namespace DD.Prototype.UI
             {
                 if (s_shots == null)
                 {
-                    TextAsset file = Resources.Load<TextAsset>(ShotResource);
-                    ShotFile parsed = file != null ? JsonUtility.FromJson<ShotFile>(file.text) : null;
+                    // Dev builds: -ddMenuShots <path> reads the list from a file - pose probes for a shot's local adaptation.
+                    string path = Debug.isDebugBuild ? Arg(ShotsFlag) : null;
+                    string json = null;
+                    if (!string.IsNullOrEmpty(path) && System.IO.File.Exists(path))
+                    {
+                        json = System.IO.File.ReadAllText(path);
+                        Debug.Log("[UI] Menu cinematic: shots from " + path + " (dev probe).");
+                    }
+                    else
+                    {
+                        TextAsset file = Resources.Load<TextAsset>(ShotResource);
+                        json = file != null ? file.text : null;
+                    }
+
+                    ShotFile parsed = json != null ? JsonUtility.FromJson<ShotFile>(json) : null;
                     s_shots = parsed != null && parsed.schema == Schema && parsed.shots != null ? parsed.shots : new Shot[0];
                 }
 
@@ -321,6 +338,7 @@ namespace DD.Prototype.UI
             }
 
             BuildCamera();
+            _lookVolume = MenuLook.Current.ApplyWorld();   // the menu's grade / light over the world (C-00 05.10 options)
             _clock = 0f;
             Apply(0f, true);
             UiFactory.MoveScreensToOverlay();   // the frame is full now: the menu goes over it as an overlay
@@ -486,6 +504,11 @@ namespace DD.Prototype.UI
             if (_camera != null)
             {
                 Destroy(_camera.gameObject);
+            }
+
+            if (_lookVolume != null)
+            {
+                Destroy(_lookVolume);
             }
         }
 

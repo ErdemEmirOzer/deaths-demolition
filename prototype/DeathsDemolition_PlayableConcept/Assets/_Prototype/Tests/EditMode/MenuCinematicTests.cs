@@ -188,6 +188,52 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void DunyaPerdesi_GenisYumusak_KenardaCizgiYok_VarsayilanB()
+        {
+            MenuLook shipped = MenuLook.Shipped();
+            Assert.IsTrue(shipped.GradientScrim && shipped.Pads, "C-00 05.10: B + pads ships");
+            Assert.IsFalse(shipped.LookB, "Look B stays a dev option");
+
+            var host = new GameObject("Root", typeof(RectTransform));
+            _created.Add(host);
+            var root = (RectTransform)host.transform;
+            root.sizeDelta = new Vector2(1920f, 1080f);
+            UiBackdrop backdrop = UiBackdrop.Create(root);
+            backdrop.SetWorldScrim(shipped.ScrimEdge, shipped.ScrimColumn, shipped.ScrimEnd);
+            float column = backdrop.WorldScrimColumn;
+            Assert.AreEqual(shipped.ScrimEdge, backdrop.WorldScrimAlphaAt(0f), 1e-4f);
+            Assert.AreEqual(shipped.ScrimColumn, backdrop.WorldScrimAlphaAt(column), 1e-4f);
+            Assert.AreEqual(0f, backdrop.WorldScrimAlphaAt(shipped.ScrimEnd), 1e-4f);
+            // No line: the profile falls monotonically and its steepest step is bounded (smoothstep: 1.5 × the mean slope),
+            // and the two halves meet with no slope jump at the column's edge.
+            float previous = 1f, steepest = 0f;
+            const int Steps = 2000;
+            for (int i = 0; i <= Steps; i++)
+            {
+                float x = shipped.ScrimEnd * i / Steps;
+                float a = backdrop.WorldScrimAlphaAt(x);
+                Assert.LessOrEqual(a, previous + 1e-5f, "monotone at " + x);
+                if (i > 0) steepest = Mathf.Max(steepest, (previous - a) / (shipped.ScrimEnd / Steps));
+                previous = a;
+            }
+
+            float mean = shipped.ScrimColumn / (shipped.ScrimEnd - column);
+            Assert.LessOrEqual(steepest, 1.5f * mean + 1e-3f, "steepest fall per screen width");
+            // Smoothstep's slope is 0 at both ends: right at the column's edge each side falls at a few % of the mean.
+            float d = 1e-4f;
+            float left = (backdrop.WorldScrimAlphaAt(column) - backdrop.WorldScrimAlphaAt(column - d)) / d;
+            float right = (backdrop.WorldScrimAlphaAt(column + d) - backdrop.WorldScrimAlphaAt(column)) / d;
+            Assert.Less(Mathf.Abs(left), 0.05f * mean, "flat into the column's edge");
+            Assert.Less(Mathf.Abs(right), 0.05f * mean, "flat out of it");
+            Assert.IsTrue(backdrop.HasWorldScrim);
+            Assert.IsFalse(backdrop.transform.Find("TextSafeScrim").gameObject.activeSelf, "the third's solid scrim steps aside");
+            // A resize re-cover-fits the plates, never the ramp (bfinal2: cropped to a sliver - a flat panel, a hard edge).
+            // (the handler is private; SendMessage asserts on a component that does not run in edit mode)
+            typeof(UiBackdrop).GetMethod("OnRectTransformDimensionsChange", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).Invoke(backdrop, null);
+            Assert.AreEqual(new Rect(0f, 0f, 1f, 1f), backdrop.transform.Find("WorldScrim").GetComponent<RawImage>().uvRect, "the ramp stays whole");
+        }
+
+        [Test]
         public void DunyaCanli_KanvaslarOverlay_UiKamerasiCizmez_DinleyiciKalir()
         {
             // The camera EnsureUiCamera makes for a menu scene (built here: the Editor may hold other cameras).

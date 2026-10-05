@@ -310,7 +310,12 @@ namespace DD.Prototype.UI
 
             foreach (RawImage image in _root.GetComponentsInChildren<RawImage>())
             {
-                CoverFit(image);
+                // The plates cover-fit; the world scrim is a ramp across its own rect (cover-fit cropped it to a sliver of
+                // its middle on a resize - a flat panel with a hard edge at 4:3 and on the Mac, bfinal2).
+                if (image != _worldScrim)
+                {
+                    CoverFit(image);
+                }
             }
         }
 
@@ -329,6 +334,111 @@ namespace DD.Prototype.UI
         private readonly System.Collections.Generic.List<CanvasGroup> _worldFade = new System.Collections.Generic.List<CanvasGroup>();
         private float _worldFadeAt = -1f;
         private float _worldFadeSeconds;
+
+        /// <summary>
+        /// WP-081 (MenuLook): the text-safe scrim and its fade at <paramref name="alpha"/> (C-00 decision b: <see cref="ScrimAlpha"/>;
+        /// a menu look over the live world may differ - C-00 05.10 options).
+        /// </summary>
+        public void SetTextSafeAlpha(float alpha)
+        {
+            foreach (RectTransform part in new[] { _thirdScrim, _thirdFade })
+            {
+                Graphic graphic = part != null ? part.GetComponent<Graphic>() : null;
+                if (graphic != null)
+                {
+                    SetAlpha(graphic, alpha);
+                }
+            }
+        }
+
+        private RawImage _worldScrim;
+        private float _worldEdge, _worldColumn, _worldEnd, _worldColumnAt;
+
+        /// <summary>
+        /// WP-081 (C-00 05.10, decision B): over the live world the spine's scrim is one wide, soft profile - <paramref name="edge"/>
+        /// at the screen's edge, smoothstep down to <paramref name="column"/> at the column's edge (the third, or wider where
+        /// <see cref="CoverColumn"/> took it), then smoothstep to 0 at <paramref name="end"/> of the width. Both halves meet with no
+        /// slope step, so no vertical line reads where the scrim ends (the short fade of the third read as one over V6's daylight).
+        /// Replaces the third's solid scrim and its fade; one 512×1 alpha ramp, built once.
+        /// </summary>
+        public void SetWorldScrim(float edge, float column, float end, float minFall = 0f)
+        {
+            if (!_built || _thirdScrim == null)
+            {
+                return;
+            }
+
+            _worldEdge = edge;
+            _worldColumn = column;
+            float columnAt = Mathf.Clamp(_thirdScrim.anchorMax.x, 0.05f, 0.9f);
+            _worldEnd = Mathf.Clamp(Mathf.Max(end, columnAt + minFall), 0.1f, 1f);
+            _worldColumnAt = Mathf.Clamp(columnAt, 0.05f, _worldEnd - 0.05f);
+            _thirdScrim.gameObject.SetActive(false);
+            if (_thirdFade != null)
+            {
+                _thirdFade.gameObject.SetActive(false);
+            }
+
+            if (_worldScrim == null)
+            {
+                var go = new GameObject("WorldScrim", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage));
+                go.transform.SetParent(_root, false);
+                _worldScrim = go.GetComponent<RawImage>();
+                _worldScrim.raycastTarget = false;
+                _worldScrim.transform.SetSiblingIndex(_thirdScrim.GetSiblingIndex());
+            }
+
+            const int Width = 512;
+            var ramp = new Texture2D(Width, 1, TextureFormat.RGBA32, false, true) { name = "WorldScrimRamp", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear, hideFlags = HideFlags.DontSave };
+            var pixels = new Color32[Width];
+            for (int i = 0; i < Width; i++)
+            {
+                pixels[i] = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(255f * WorldScrimAlphaAt((i + 0.5f) / Width * _worldEnd)));
+            }
+
+            ramp.SetPixels32(pixels);
+            ramp.Apply(false, true);
+            if (_worldScrim.texture != null)
+            {
+                Destroy(_worldScrim.texture);
+            }
+
+            _worldScrim.texture = ramp;
+            _worldScrim.uvRect = new Rect(0f, 0f, 1f, 1f);
+            _worldScrim.color = UiTokens.Get(UiColor.SurfaceBase);
+            RectTransform rect = UiFactory.Fill(_worldScrim.rectTransform);
+            rect.anchorMax = new Vector2(_worldEnd, 1f);
+            Debug.Log(string.Format(System.Globalization.CultureInfo.InvariantCulture,
+                "[UI] World scrim: edge {0:0.00} → column {1:0.00} at {2:0.000} W → 0 at {3:0.000} W (root {4:0}×{5:0}, third anchorMax {6:0.000}).",
+                edge, column, _worldColumnAt, _worldEnd, _root.rect.width, _root.rect.height, _thirdScrim.anchorMax.x));
+        }
+
+        /// <summary>The world scrim's alpha at <paramref name="x"/> (fraction of the width); 0 before <see cref="SetWorldScrim"/>.</summary>
+        public float WorldScrimAlphaAt(float x)
+        {
+            if (_worldEnd <= 0f)
+            {
+                return 0f;
+            }
+
+            if (x <= _worldColumnAt)
+            {
+                return Mathf.Lerp(_worldEdge, _worldColumn, Smooth(x / _worldColumnAt));
+            }
+
+            return _worldColumn * (1f - Smooth((x - _worldColumnAt) / (_worldEnd - _worldColumnAt)));
+        }
+
+        /// <summary>The world scrim's column edge (fraction of the width) - where the profile changes from 'over the words' to 'into the world'.</summary>
+        public float WorldScrimColumn => _worldColumnAt;
+
+        public bool HasWorldScrim => _worldScrim != null && _worldScrim.gameObject.activeSelf;
+
+        private static float Smooth(float u)
+        {
+            u = Mathf.Clamp01(u);
+            return u * u * (3f - 2f * u);
+        }
 
         /// <summary>True once the live world shows under the menu (MenuCinematic): the plates have stepped aside.</summary>
         public bool WorldShown { get; private set; }
