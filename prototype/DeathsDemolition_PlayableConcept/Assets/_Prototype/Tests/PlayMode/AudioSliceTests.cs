@@ -991,17 +991,27 @@ namespace DD.Prototype.Tests.PlayMode
 
             // Roketatar: kovan yok (CasingFamily.None) — kuşanılı rl_1 ile olay gelse de ses çıkmaz.
             int roket = 0;
-            foreach (DD.Prototype.Core.Weapons.ClassicWeaponDefinition d in DD.Prototype.Core.Weapons.WeaponRoster.Enabled)
+            DD.Prototype.Core.Config.ClassicWeaponId oncekiSecim = DD.Prototype.Weapons.WeaponRegistry.SelectedWeapon;
+            try
             {
-                DD.Prototype.Core.Weapons.WeaponDefinition wd = DD.Prototype.Core.Weapons.Arsenal.Get(d.Id);
-                if (wd == null || wd.weaponId != "rl_1") continue;
-                _s.Controller.EquipClassic(d.Id, _s.Config);
-                yield return new WaitForSeconds(0.3f);
-                int r0 = c.Landed;
-                for (int i = 0; i < 3; i++) DD.Prototype.Weapons.WeaponEvents.PublishMechanism(kovan);
-                yield return new WaitForSeconds(1f);
-                roket = c.Landed - r0;
-                _s.Controller.EquipClassic(DD.Prototype.Core.Config.ClassicWeaponId.AssaultRifle, _s.Config);
+                foreach (DD.Prototype.Core.Weapons.ClassicWeaponDefinition d in DD.Prototype.Core.Weapons.WeaponRoster.Enabled)
+                {
+                    DD.Prototype.Core.Weapons.WeaponDefinition wd = DD.Prototype.Core.Weapons.Arsenal.Get(d.Id);
+                    if (wd == null || wd.weaponId != "rl_1") continue;
+                    _s.Controller.EquipClassic(d.Id, _s.Config);
+                    yield return new WaitForSeconds(0.3f);
+                    int r0 = c.Landed;
+                    for (int i = 0; i < 3; i++) DD.Prototype.Weapons.WeaponEvents.PublishMechanism(kovan);
+                    yield return new WaitForSeconds(1f);
+                    roket = c.Landed - r0;
+                }
+            }
+            finally
+            {
+                // C-00 05.10 (main-ci 285b7fe8): EquipClassic writes the process-wide WeaponRegistry.SelectedWeapon — give it back
+                // (and the live controller its weapon), as CoreCombat T1 / RocketSliceTests d1c0f025 do.
+                DD.Prototype.Weapons.WeaponRegistry.SelectedWeapon = oncekiSecim;
+                if (_s.Controller != null) _s.Controller.EquipClassic(oncekiSecim, _s.Config);
             }
 
             Assert.AreEqual(0, roket, "Roketatarda kovan sesi yok.");
@@ -1575,6 +1585,7 @@ namespace DD.Prototype.Tests.PlayMode
             string varyantlar = Environment.GetEnvironmentVariable("DD_KIT_VARIANTS");
             if (string.IsNullOrEmpty(varyantlar)) varyantlar = "AB";
             _s.Rig.Health.DiagnosisInvulnerable = true;
+            DD.Prototype.Core.Config.ClassicWeaponId oncekiSecim = DD.Prototype.Weapons.WeaponRegistry.SelectedWeapon;
 
             var silahlar = new List<(DD.Prototype.Core.Config.ClassicWeaponId id, DD.Prototype.Core.Weapons.WeaponDefinition wd)>();
             foreach (DD.Prototype.Core.Weapons.ClassicWeaponDefinition d in DD.Prototype.Core.Weapons.WeaponRoster.Enabled)
@@ -1741,6 +1752,10 @@ namespace DD.Prototype.Tests.PlayMode
             }
             finally
             {
+                // C-00 05.10 (main-ci 285b7fe8 — four CoreCombat reds: the next run spawned with sg_1): EquipClassic writes the
+                // process-wide WeaponRegistry.SelectedWeapon; give it back and re-arm the live controller (CoreCombat T1 pattern).
+                DD.Prototype.Weapons.WeaponRegistry.SelectedWeapon = oncekiSecim;
+                if (_s.Controller != null) _s.Controller.EquipClassic(oncekiSecim, _s.Config);
                 WeaponFireAudio.LegacyVoicesForKit = false;
                 if (cap != null) UnityEngine.Object.DestroyImmediate(cap);
                 for (int i = 0; i < buslar.Length; i++) mixer.ClearFloat(buslar[i]);
