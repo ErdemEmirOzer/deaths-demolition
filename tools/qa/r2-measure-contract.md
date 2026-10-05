@@ -48,9 +48,17 @@ An `[Explicit]` test runs only when the filter names it in full (S-02 05.10): gi
 `measuredBy` gets its artifact from the owner's own run into `<E>/r2/`. H4 is split (C-00 05.10): H4 = weapon yaw/roll
 table (S-02), H4a = FP arm keys (S-06), same thresholds.
 
-## H1 elbow (report, C-00 05.10)
+## H1 (hand to grip, decision B; elbow report — C-00 05.10)
 
-`R2HeroOlcumTests.H1_ElTutamak_TumKlasikSilahlar_DurusYuruyus` writes `elbowMaxDeg` next to `maxCm`: the left (support) arm's
+**What `maxCm` measures** (C-00 05.10, decision B): the right hand is measured from `socket_weapon_r` to the weapon
+definition's grip point, `mount.TransformPoint(GripOffset)` — the point WeaponMountAlignment puts on the socket — **not**
+AP-021's `marker_grip`, which is the model origin (trigger root, ADR-042-1). Grip decision B (25.09) puts the hand behind
+and under the trigger on the measured mid-grip; the offsets are checked against the model by
+`Ap021ClassicModelGateTests.Ap021Klasik_GripOffset_Lod0TutamakBolgesinde` (LOD0 grip region centre <= 1 cm, >= 50
+vertices). The left hand is measured to its support point. The gate is the default player path: an optional switch (e.g.
+`DD_HOLD_IK=1`) is evidence for a fix, not the gate value.
+
+**Elbow** (report): `R2HeroOlcumTests.H1_ElTutamak_TumKlasikSilahlar_DurusYuruyus` writes `elbowMaxDeg` next to `maxCm`: the left (support) arm's
 elbow, the interior angle at LeftLowerArm between the upper arm and the forearm (180 = straight), the largest over the frames the
 grip IK carries full weight, all weapons. It is reported, never gates, until the hero v2 import: then it becomes a check
 `elbowMaxDeg <= 165` (a reach margin of ≥ 1 cm). Source: S-02's hero v2 reach pre-study (K/wp-082/evidence/hero-v2-reach/ —
