@@ -174,6 +174,33 @@ namespace DD.Prototype.Characters
             return _overrideLayer;
         }
 
+        private int _additiveLayer = -1;
+        private float _additiveWeight = -1f;
+
+        /// <summary>
+        /// WP-071 (C-00 05.10 decision B, S-02 measurement): in first person the TP fire additive (the body's recoil kick) weighs 0 —
+        /// FpViewPose carries the TP mount deviation into FP for the 0.6 s FpClipMotion window after a switch / Special return, and the
+        /// TP fire clip rode in with it (ar_2 f14–20 +8–16°). The TP body is hidden in FP (only its shadow loses the kick); the
+        /// clips are untouched. Third person / top-down keep weight 1.
+        /// </summary>
+        private void MuteTpAdditiveInFirstPerson()
+        {
+            if (_additiveLayer < 0)
+            {
+                if (!_animator.isInitialized) return;
+                _additiveLayer = _animator.GetLayerIndex(CharacterAnimatorContract.AdditiveLayer);
+                if (_additiveLayer < 0) return;
+            }
+
+            float w = DD.Prototype.CameraSystem.CameraModeService.Current == DD.Prototype.CameraSystem.CameraMode.FirstPerson ? 0f : 1f;
+            if (w == _additiveWeight) return;
+            _animator.SetLayerWeight(_additiveLayer, w);
+            _additiveWeight = w;
+        }
+
+        /// <summary>WP-071 (C-00 05.10): the TP fire additive's weight this visual last set (tests).</summary>
+        public float TpAdditiveWeight => _additiveWeight;
+
         private bool UpperAtRest()
         {
             if (ResolveOverrideLayer() < 0) return true;
@@ -789,6 +816,7 @@ namespace DD.Prototype.Characters
 
             if (_dying) return;
             TickV3Weapon();
+            MuteTpAdditiveInFirstPerson();
 
             // Local (character-space) velocity over the set's reference speed: the 2-D blend axes.
             // The child time scales were baked against the same reference, so |v| / reference is
