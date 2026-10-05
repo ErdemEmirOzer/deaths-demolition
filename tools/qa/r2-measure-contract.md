@@ -34,9 +34,11 @@ name is not in any bound XML the gate is BLOCKED; any other result is FAIL.
 
 ## Which session measures a gate
 
-`measuredBy` in `r2-gates.json` (`{"suite": "playmode"|"editmode", "filter": "<test.sh --filter regex>", "quiet": bool}`)
+`measuredBy` in `r2-gates.json` (`{"suite": "playmode"|"editmode", "filter": "<test.sh --filter regex>", "quiet": bool,
+"env": {"NAME": "value"}}`; `env` optional: the owner's own switches such as `DD_KIT_WEAPONS`, never `DD_R2_*`)
 tells `wp078_accept --round R2` to run that test in its own guarded session: stage `r2` (after A3) for `quiet: false`,
-stage `r2q` (in the quiet window after A4) for `quiet: true`. Gates sharing one filter share one session. A gate without
+stage `r2q` (in the quiet window after A4) for `quiet: true`. Gates sharing one filter and env share one session.
+An `[Explicit]` test runs only when the filter names it in full (S-02 05.10): give its full name, never a class regex. A gate without
 `measuredBy` gets its artifact from the owner's own run into `<E>/r2/`. H4 is split (C-00 05.10): H4 = weapon yaw/roll
 table (S-02), H4a = FP arm keys (S-06), same thresholds.
 

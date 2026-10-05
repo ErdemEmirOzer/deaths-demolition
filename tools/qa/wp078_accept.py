@@ -812,8 +812,9 @@ class Chain:
         results = []
         for step in steps:
             out = measure_dir / step["id"]
-            argv = ["/usr/bin/env", f"DD_R2_MEASURE_DIR={measure_dir}", f"DD_R2_COMMIT={self.final}",
-                    REPO / "tools" / "test.sh", step["suite"], "--out", out, "--filter", step["filter"]]
+            argv = (["/usr/bin/env", f"DD_R2_MEASURE_DIR={measure_dir}", f"DD_R2_COMMIT={self.final}"]
+                    + [f"{k}={v}" for k, v in step.get("env", {}).items()] + [
+                    REPO / "tools" / "test.sh", step["suite"], "--out", out, "--filter", step["filter"]])
             if step["suite"] == "playmode":
                 argv += ["--timeout-min", str(ISOLATED_TIMEOUT_MIN * 3)]
             if not self.dry_run:
@@ -821,7 +822,7 @@ class Chain:
             result = self.editor_unit(f"{stage}-{step['id']}", [argv], out,
                                       lambda out=out, step=step: [out / f"{step['suite']}.xml", out / f"{step['suite']}.log"]
                                       + [measure_dir / f"r2-{g}.json" for g in step["gates"]],
-                                      lambda step=step: {"r2Gates": step["gates"], "filter": step["filter"], "quiet": step["quiet"]},
+                                      lambda step=step: {"r2Gates": step["gates"], "filter": step["filter"], "env": step.get("env", {}), "quiet": step["quiet"]},
                                       scope="player" if step["suite"] == "playmode" else "editor")
             if result:
                 results.append(dict(result, gate=False))

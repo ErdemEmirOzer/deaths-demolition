@@ -510,6 +510,15 @@ class R2StageTests(Base):
         self.assertEqual(str(self.evidence.resolve() / "r2" / "r2-L1"), self.opt(runs[0], "--out"))
         self.assertEqual("editmode", runs[1][4])
 
+    def test_owner_switches_follow_the_measure_env(self):
+        steps = {False: [], True: [{"id": "r2-S1", "suite": "playmode", "filter": "Kit", "quiet": True, "gates": ["S1", "S2"],
+                                    "env": {"DD_KIT_VARIANTS": "A", "DD_KIT_WEAPONS": "all"}}]}
+        with mock.patch.object(acc.r2_gates, "measurement_steps", side_effect=lambda c, quiet: steps[quiet]):
+            chain = self.dry(["r2q"], round_name="R2")
+        run = [argv for s, argv in chain.planned if s == "r2q" and Path(argv[0]).name == "env"][0]
+        self.assertEqual(["DD_KIT_VARIANTS=A", "DD_KIT_WEAPONS=all"], run[3:5])
+        self.assertEqual("test.sh", Path(run[5]).name)
+
     def test_quiet_sessions_only_in_r2q(self):
         self.assertEqual(["AudioR2Dense40"], [self.opt(a, "--filter") for a in self.planned_r2(["r2q"], "R2")])
 

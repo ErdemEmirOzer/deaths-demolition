@@ -33,7 +33,8 @@ class ContractTests(unittest.TestCase):
         pinned = {("H1", "maxCm"): 1.0, ("L1", "avg"): 0.05, ("L1t", "avg"): 0.10, ("L3", "limbDegPerFrameMax"): 20.0,
                   ("Z3", "bonesMax"): 74, ("Z3b", "zombieSetPass"): 14, ("S1", "below400ShareMin"): 0.20,
                   ("S4", "hallMsMax"): 2000, ("U1", "lettersTotalReduction"): 0.40, ("H4b", "leakDegMax"): 1.0,
-                  ("H4", "yawRollExcessDegMax"): 1.0, ("H4a", "armOffscreenFrames"): 0, ("H4a", "armInCameraFrames"): 0}
+                  ("H4", "yawRollExcessDegMax"): 1.0, ("H4a", "armOffscreenFrames"): 0, ("H4a", "armInCameraFrames"): 0,
+                  ("S5", "poolMax"): 3}   # C-00 05.10: concurrent casing voices (was 8, which mixed in the airborne queue)
         for (gid, key), limit in pinned.items():
             check = next(c for c in gate(gid)["checks"] if c["key"] == key)
             self.assertEqual(limit, check["limit"], (gid, key))
@@ -73,15 +74,38 @@ class MeasuredByTests(unittest.TestCase):
         text = self.contract(L1=loco, L1t=loco, L2=loco, S3={"suite": "playmode", "filter": "AudioR2Dense40", "quiet": True})
         data = r2.load_contract(text)
         normal, quiet = r2.measurement_steps(data, False), r2.measurement_steps(data, True)
-        self.assertEqual([{"id": "r2-L1", "suite": "playmode", "filter": "LocomotionR2Tests", "quiet": False,
+        self.assertEqual([{"id": "r2-L1", "suite": "playmode", "filter": "LocomotionR2Tests", "env": {}, "quiet": False,
                            "gates": ["L1", "L1t", "L2"]}], normal)
         self.assertEqual(["S3"], quiet[0]["gates"])
+
+    def test_s5_airborne_queue_is_reported_never_gated(self):
+        self.assertEqual(["queueMax"], gate("S5")["report"])
+        self.assertNotIn("queueMax", [c["key"] for c in gate("S5")["checks"]])
+
+    def test_the_contract_binds_s08s_kit_session_in_the_quiet_window_with_its_switches(self):
+        data = r2.load_contract(CONTRACT)
+        kit = [s for s in r2.measurement_steps(data, quiet=True) if s["id"] == "r2-S1"]
+        self.assertEqual(1, len(kit))
+        self.assertEqual(["S1", "S2"], kit[0]["gates"])
+        self.assertEqual({"DD_KIT_VARIANTS": "A", "DD_KIT_WEAPONS": "all"}, kit[0]["env"])
+        normal = {s["id"]: s for s in r2.measurement_steps(data, quiet=False)}
+        self.assertEqual("editmode", normal["r2-U3"]["suite"])
+        self.assertIn("r2-S5", normal)
+
+    def test_the_same_test_under_other_switches_is_another_session(self):
+        a = {"suite": "playmode", "filter": "Kit", "quiet": False, "env": {"DD_KIT_WEAPONS": "all"}}
+        b = {"suite": "playmode", "filter": "Kit", "quiet": False, "env": {"DD_KIT_WEAPONS": "smg_1"}}
+        steps = r2.measurement_steps(r2.load_contract(self.contract(S1=a, S2=b, S5=dict(a))), False)
+        self.assertEqual([["S1", "S5"], ["S2"]], [s["gates"] for s in steps])
 
     def test_measured_by_is_validated(self):
         for bad in ({"H5": {"suite": "playmode", "filter": "x"}},                 # a human gate is not measured
                     {"L1": {"suite": "batch", "filter": "x"}},                    # unknown suite
                     {"L1": {"suite": "playmode", "filter": ""}},                  # empty filter
-                    {"L1": {"suite": "playmode", "filter": "x", "quiet": "yes"}}):  # quiet must be a boolean
+                    {"L1": {"suite": "playmode", "filter": "x", "quiet": "yes"}},  # quiet must be a boolean
+                    {"S1": {"suite": "playmode", "filter": "x", "env": {"DD_R2_COMMIT": "0"}}},  # the chain's own variables
+                    {"S1": {"suite": "playmode", "filter": "x", "env": {"kit": "all"}}},          # UPPER_CASE names only
+                    {"S1": {"suite": "playmode", "filter": "x", "env": {"DD_KIT_WEAPONS": 1}}}):  # string values only
             with self.subTest(bad=bad):
                 with self.assertRaises(r2.ContractError):
                     r2.load_contract(self.contract(**bad))

@@ -58,10 +58,12 @@
     {"id": "Z5", "area": "zombie", "kind": "human", "owner": "S-03", "title": "zombie AD review"},
 
     {"id": "S1", "area": "sound", "kind": "gate", "owner": "S-08", "title": "energy below 400 Hz, shots 2-10 at real RPM, first 150 ms",
-     "checks": [{"key": "below400ShareMin", "op": ">=", "limit": 0.20}]},
+     "checks": [{"key": "below400ShareMin", "op": ">=", "limit": 0.20}],
+     "measuredBy": {"suite": "playmode", "filter": "DD.Prototype.Tests.PlayMode.AudioSliceTests.SilahKiti_GercekRpm_OyunIci_Kayit", "quiet": true, "env": {"DD_KIT_WEAPONS": "all", "DD_KIT_VARIANTS": "A"}}},
     {"id": "S2", "area": "sound", "kind": "gate", "owner": "S-08", "title": "full fire layer on every shot",
      "checks": [{"key": "fireVoiceDeficit", "op": "==", "limit": 0}, {"key": "transients", "op": "==", "limit": 0},
-                {"key": "loopStarts", "op": "==", "limit": 0}, {"key": "rejectedNotStolen", "op": "==", "limit": 0}]},
+                {"key": "loopStarts", "op": "==", "limit": 0}, {"key": "rejectedNotStolen", "op": "==", "limit": 0}],
+     "measuredBy": {"suite": "playmode", "filter": "DD.Prototype.Tests.PlayMode.AudioSliceTests.SilahKiti_GercekRpm_OyunIci_Kayit", "quiet": true, "env": {"DD_KIT_WEAPONS": "all", "DD_KIT_VARIANTS": "A"}}},
     {"id": "S3", "area": "sound", "kind": "gate", "owner": "S-08", "title": "Dense-40 loudness and peak",
      "checks": [{"key": "truePeakDbtp", "op": "<=", "limit": -1.0}, {"key": "momentaryMaxLufs", "op": "<=", "limit": -13.0},
                 {"key": "preLimiterGrDb", "op": "<=", "limit": 1.0}, {"key": "weaponMarginLu", "op": ">=", "limit": 1.0}]},
@@ -69,10 +71,12 @@
      "checks": [{"key": "openMsMin", "op": ">=", "limit": 500}, {"key": "corridorMsMin", "op": ">=", "limit": 750},
                 {"key": "hallMsMin", "op": ">=", "limit": 1100}, {"key": "hallMsMax", "op": "<=", "limit": 2000},
                 {"key": "orderViolations", "op": "==", "limit": 0}]},
-    {"id": "S5", "area": "sound", "kind": "gate", "owner": "S-08", "title": "casing sounds",
+    {"id": "S5", "area": "sound", "kind": "gate", "owner": "S-08", "title": "casing sounds (C-00 05.10: poolMax = concurrent casing voices, queueMax = airborne casing queue, report)",
      "checks": [{"key": "dropDelayMsMin", "op": ">=", "limit": 250}, {"key": "dropDelayMsMax", "op": "<=", "limit": 700},
-                {"key": "surfaceMismatches", "op": "==", "limit": 0}, {"key": "poolMax", "op": "<=", "limit": 8},
-                {"key": "gcBytesPerCasing", "op": "==", "limit": 0}, {"key": "rocketCasingSounds", "op": "==", "limit": 0}]},
+                {"key": "surfaceMismatches", "op": "==", "limit": 0}, {"key": "poolMax", "op": "<=", "limit": 3},
+                {"key": "gcBytesPerCasing", "op": "==", "limit": 0}, {"key": "rocketCasingSounds", "op": "==", "limit": 0}],
+     "report": ["queueMax"],
+     "measuredBy": {"suite": "playmode", "filter": "DD.Prototype.Tests.PlayMode.AudioSliceTests.KovanV2_AyniKareIkiKabukAyriDuser_GecikmeBandi_HavuzTavani_SifirAyirma", "quiet": false}},
     {"id": "S6", "area": "sound", "kind": "human", "owner": "S-08", "title": "R1 v3 vs R2 v4 listening"},
 
     {"id": "P2", "area": "perf", "kind": "report", "owner": "S-10", "title": "R2 - R1 per cell (flag: > +10 % and > +1.0 ms together)",
@@ -88,7 +92,8 @@
     {"id": "U3", "area": "ui", "kind": "gate", "owner": "S-09", "title": "loading key-art rotation",
      "tests": ["DD.Prototype.Tests.EditMode.LoadingKeyArtTests.Rotasyon_ArdisikTekrarYok_YirmiYuklemedeHerSanatEnAzIkiKez"],
      "checks": [{"key": "consecutiveRepeats", "op": "==", "limit": 0}, {"key": "minPerAny20", "op": ">=", "limit": 3},
-                {"key": "distinctSha256", "op": ">=", "limit": 5}]},
+                {"key": "distinctSha256", "op": ">=", "limit": 5}],
+     "measuredBy": {"suite": "editmode", "filter": "DD.Prototype.Tests.EditMode.LoadingKeyArtTests.Rotasyon_ArdisikTekrarYok_YirmiYuklemedeHerSanatEnAzIkiKez", "quiet": false}},
     {"id": "U4", "area": "ui", "kind": "human", "owner": "S-09", "title": "menu v4 AD review"}
   ]
 }

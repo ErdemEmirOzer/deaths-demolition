@@ -19,8 +19,10 @@ nothing was measured). Ops: "<=", ">=", "==".
 """
 import json
 import math
+import re
 
 GATE_KINDS = ("gate", "report", "human")
+ENV_NAME = re.compile(r"[A-Z][A-Z0-9_]*")
 OPS = ("<=", ">=", "==")
 
 
@@ -68,21 +70,28 @@ def load_contract(text):
                     and isinstance(measured.get("filter"), str) and measured["filter"]
                     and isinstance(measured.get("quiet", False), bool)):
                 raise ContractError(f"{gid}: measuredBy needs suite playmode|editmode, a test filter and quiet true|false")
+            env = measured.get("env", {})
+            # the owner's own switches (e.g. DD_KIT_WEAPONS); DD_R2_* belongs to the chain and is never overridden
+            if not (isinstance(env, dict) and all(isinstance(k, str) and ENV_NAME.fullmatch(k) and not k.startswith("DD_R2_")
+                                                  and isinstance(v, str) for k, v in env.items())):
+                raise ContractError(f"{gid}: measuredBy env must map UPPER_CASE names (not DD_R2_*) to strings")
     return data
 
 
 def measurement_steps(contract, quiet):
     """The chain's measurement sessions: one per distinct (suite, filter) among the gates whose measuredBy has this
-    quiet flag, in contract order; each step lists the gates it is expected to write. Step id = r2-<first gate id>."""
+    quiet flag, in contract order; each step lists the gates it is expected to write. Step id = r2-<first gate id>.
+    A session is (suite, filter, env): the same test under other switches is another session."""
     steps, by_key = [], {}
     for gate in contract["gates"]:
         measured = gate.get("measuredBy")
         if not measured or bool(measured.get("quiet", False)) != quiet:
             continue
-        key = (measured["suite"], measured["filter"])
+        env = dict(sorted(measured.get("env", {}).items()))
+        key = (measured["suite"], measured["filter"], tuple(env.items()))
         if key not in by_key:
             by_key[key] = {"id": "r2-" + gate["id"], "suite": measured["suite"], "filter": measured["filter"],
-                           "quiet": quiet, "gates": []}
+                           "env": env, "quiet": quiet, "gates": []}
             steps.append(by_key[key])
         by_key[key]["gates"].append(gate["id"])
     return steps
