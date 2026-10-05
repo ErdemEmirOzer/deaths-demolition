@@ -293,10 +293,13 @@ namespace DD.Prototype.Tests.PlayMode
         {
             yield return RunSahnesiniHazirla();
 
-            // Zırhlı bir Standard'a isabet zırh kırılması → hit-stop üretebilir; hit-stop ölçeksiz
-            // saatle biter ve sabit yakalama adımı ölçeksiz zamanı ilerletmez (iter5: sim %6'da
-            // takılı kaldı, 1.2 s'de 5 atış). Bu test gerçek karelerle koşar; pencereler zamanla ölçülür.
-            Time.captureDeltaTime = 0f;
+            // C-00 05.10 (WP-087): game frames, a fixed 1/60 step — the windows are game time (1.2 s = 72 frames, the control
+            // window from 0.25 s = 57). On real frames the count followed the machine: b6mh (load average ~100–170) saw 18
+            // frames in 1.2 s, 9 in the control window, and failed "Kontrol penceresi çok kısa" while the same test alone saw
+            // 314 / 300 (b6mi). The old reason for real frames (iter5: a fixed step stalled the unscaled clock the hit-stop
+            // ended on, the sim stuck at 6 %) is gone: REQ-127's hit-stop is a local VFX envelope and never owns timeScale.
+            float captureDt0 = Time.captureDeltaTime;
+            Time.captureDeltaTime = 1f / 60f;
 
             Vector3 merkez = _rig.transform.position;
             ZombieEnemy hedef = Dogur(merkez + new Vector3(0f, 0f, -6f), merkez);
@@ -337,7 +340,7 @@ namespace DD.Prototype.Tests.PlayMode
             try
             {
                 int mermiOnce = WeaponRegistry.ActiveController.Classic.Ammo;
-                float t0 = Time.realtimeSinceStartup;
+                float t0 = Time.time;
                 float gecen = 0f;
                 int k = 0;
 
@@ -352,7 +355,7 @@ namespace DD.Prototype.Tests.PlayMode
                     _girdi.AtesBasili = true;
 
                     yield return null;
-                    gecen = Time.realtimeSinceStartup - t0;
+                    gecen = Time.time - t0;
                     k++;
 
                     // Hızlanma tamamlandıktan (0.138 s) sonra ölç.
@@ -425,6 +428,7 @@ namespace DD.Prototype.Tests.PlayMode
             {
                 DamageEvents.EnemyDamaged -= dinle;
                 DamageEvents.EnemyDied -= olumDinle;
+                Time.captureDeltaTime = captureDt0;
             }
         }
 
