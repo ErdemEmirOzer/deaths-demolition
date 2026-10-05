@@ -766,6 +766,8 @@ Açık / devir: → S-xx: … ; 🔴: … ; kredi: n kr (ledger no)
 11.51 QaRunBot yalnız DEVELOPMENT_BUILD'de çalışır; release Player bot bayrağıyla sonsuz bekler (runner'a timeout koy). Bot'ta "stick 0" = girdi ulaşmadı imzası. [m:unity-batch-dersleri 17.09; m:wp-069-durumu ders]
 11.52 macOS'ta `HOME` override persistentDataPath ve CFPreferences'ı yönlendirmez. cfprefsd plist'i geç yazar; smoke ile soak aynı anda koşmaz. [m:wp-025-durumu ders; m:wp-066-durumu ders]
 11.53 Guard'a INT/TERM/HUP trap'i eklenmez (zsh, SIG_IGN olan sinyalin trap'ini yine çalıştırır). Yeni bir çıkış kodu eklenirken bütün çağıranlar bulunur. [TR (userdata-guard); m:wp-079g-durumu 01.10/05.10]
+11.55 macOS'ta `timeout` komutu yoktur: `timeout N cmd` hiç çalışmaz ("command not found") ve zincirdeki sonraki adım sessizce eksik koşar (06.10: `git lfs push` atlandı, push GitHub pre-receive ile reddedildi). Süre sınırı gerekiyorsa `dd_unity_watched`/bekçi ya da arka plan + izleme kullanılır. [EG 06.10]
+
 11.54 `grep && python` zincirinde grep eşleşmezse düzenleme sessizce atlanır → commit öncesi `git show --stat`. [m:wp-043-durumu DERS]
 
 ---
@@ -826,7 +828,7 @@ Kullanıcının 06.10 tam yetkisiyle (§1.19) C-00 verdi; kitabın bağlayıcı 
 | Ç16 | Blender `--threads 4` (makine paylaşımlı). |
 | Ç20 | Tam yetki C-00'a ürün içi sayı ve teknik kararları verir; C-00 karar verir ve görselle bildirir. Ancak: (a) Unity/URP sürümü ve paket ekleme/yükseltme R2'de **yapılmaz** (ihtiyaç doğarsa C-00 karar verir, gerekçeli DEC ile); (b) gerçek kullanıcı verisine yazmak **hiçbir yetkiyle** yapılmaz (§2; yalnız C-00'ın kanıtlı geri yüklemesi); (c) S-06 runner exit-32 değişikliğini S-06'nın izin sistemi reddetti → yapılmadı; yerine §2.23 (latch'i C-00 kaldırır, uzun zincir Player slotunu tutar). |
 | Ç21 | Manuel kitler üretilir ve kanıtla saklanır; deterministik eşlerini gt/S-10 koşar. Kullanıcıya tek tek sorulmaz: kitler R2 FINAL'de tek görselli sayfada toplanır; kullanıcı isterse koşar, istemezse "beyan + deterministik eş" sınıfı yazılır (§1.17). Kulak/göz kararları (S6 dinleme, görsel hedef) yine kullanıcıya görselli sayfayla sunulur ama süreç beklemez. |
-| Ç25 | Belge/araç işleri için sparse worktree (`--no-checkout` + `sparse-checkout` docs/tools/planning + `GIT_LFS_SKIP_SMUDGE=1`); Unity gereken işlerde tam worktree (Library komşudan klonlanır). Codex 12.10'da dönünce aynı kural. |
+| Ç25 | Belge/araç işleri için sparse worktree (`--no-checkout` + `mkdir -p "$(git -C <wt> rev-parse --git-dir)/info"` + `sparse-checkout` docs/tools/planning + `GIT_LFS_SKIP_SMUDGE=1`; info dizini yoksa ilk read-tree tam checkout yapar — S-01 06.10 dersi); Unity gereken işlerde tam worktree (Library komşudan klonlanır). Codex 12.10'da dönünce aynı kural. |
 | Ç27 | `--s01` yalnız commit `ProjectIntegrityTests.cs`'e dokunuyorsa verilir (integrate.sh belgesi); S-01'in diğer araç teslimleri `tools/` kapsamındadır. |
 | Ç32 | Konsey notu = lider + eş imza; karar geri dönüşü zor ya da kritikse 1–2 çürütücü (refuter) ajan eklenir (eski "ultracode" kalıbı, Agent aracıyla). Workflow aracı yalnız kullanıcının kendi açık isteğiyle. |
 | Ç33 | R2 paket promptlarının kanonik yeri `docs/c00/prompts/` (depo) + kopyası `K/c-00/R2/prompts/`. Eksik R2 promptları (WP-082, WP-084, WP-086, WP-090, WP-091) C-00 tarafından yazılır. `planning/work-packages/` M4-R1 ve öncesi için geçerli kalır. |
