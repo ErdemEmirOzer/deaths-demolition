@@ -108,10 +108,12 @@ namespace DD.Prototype.Tests.PlayMode
                 texts += Overflows(name, "mainmenu", found);
                 MainMenuScreen menu = Object.FindObjectOfType<MainMenuScreen>();
                 Assert.IsNotNull(menu, "the main menu");
+                Applied(name, menu, language, textScale, uiScale);
                 foreach (UiContext pane in Panes)
                 {
                     menu.ShowPane(pane);
                     yield return new WaitForSecondsRealtime(0.6f);
+                    Assert.IsTrue(menu.PaneOpen && menu.Pane == pane, name + ": the " + pane + " pane is not open");
                     texts += Overflows(name, "pane." + pane, found);
                 }
 
@@ -183,7 +185,19 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             Debug.Log("[DD-TEST] wp081.u2 screen=" + combo + "." + screen + " checked=" + checkedTexts + " active=" + SceneManager.GetActiveScene().name);
+            // R2 contract (source in the record): a screen with no rendered text measured nothing - never a quiet 0 overflows.
+            Assert.Greater(checkedTexts, 0, combo + "." + screen + ": no text rendered to check");
             return checkedTexts;
+        }
+
+        /// <summary>R2 contract: the combination is really in force on the screen just built (language, text scale, UI scale).</summary>
+        private static void Applied(string combo, MainMenuScreen menu, string language, float textScale, float uiScale)
+        {
+            Assert.AreEqual(language, UiStrings.Language, combo + ": language");
+            Assert.AreEqual(textScale, UiTokens.TextScale, 1e-4f, combo + ": text scale");
+            UnityEngine.UI.CanvasScaler scaler = menu.GetComponentInChildren<UnityEngine.UI.CanvasScaler>();
+            Assert.IsNotNull(scaler, combo + ": the menu canvas");
+            Assert.AreEqual((UiTokens.ReferenceResolution / uiScale).x, scaler.referenceResolution.x, 0.5f, combo + ": UI scale on the built canvas");
         }
 
         /// <summary>A wrapped line that ends inside a word: its last character and the next one are both part of a word.</summary>

@@ -101,10 +101,13 @@ namespace DD.Prototype.Tests.PlayMode
 
                 MainMenuScreen menu = Object.FindObjectOfType<MainMenuScreen>();
                 Assert.IsNotNull(menu, "the main menu");
+                Assert.AreEqual(language, UiStrings.Language, "the language the letters are counted in");
                 foreach (UiContext pane in Panes)
                 {
                     menu.ShowPane(pane);
                     yield return new WaitForSecondsRealtime(0.6f);
+                    // R2 contract (source in the record): the pane is open on screen before its letters count.
+                    Assert.IsTrue(menu.PaneOpen && menu.Pane == pane, language + ": the " + pane + " pane is not open");
                     totals[language + ".pane." + pane] = Measure(language + ".pane." + pane, ref texts);
                     unnamedEn += language == UiStrings.English ? s_unnamed : 0;
                 }
@@ -113,6 +116,7 @@ namespace DD.Prototype.Tests.PlayMode
                 yield return SahneyiBekle(PrototypeScenes.Selection);
                 yield return Bekle(() => !UiCurtain.IsCovering, 10f, "perde açılmadı");
                 yield return new WaitForSecondsRealtime(1.5f);
+                Assert.IsNotNull(Object.FindObjectOfType<SelectionScreen>(), language + ": the Selection screen is up");
                 totals[language + ".selection"] = Measure(language + ".selection", ref texts);
                 unnamedEn += language == UiStrings.English ? s_unnamed : 0;
                 Debug.Log("[DD-TEST] wp081.u1 gate " + language + " mainmenu+selection=" + (totals[language + ".mainmenu"] + totals[language + ".selection"]));

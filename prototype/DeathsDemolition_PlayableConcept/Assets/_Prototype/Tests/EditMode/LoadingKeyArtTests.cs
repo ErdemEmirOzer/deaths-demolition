@@ -206,12 +206,26 @@ namespace DD.Prototype.Tests.EditMode
                 }
             }
 
+            // R2 contract (source in the record): the rotation really ran over real arts - every load counted, every art
+            // file read and loadable - before anything is written.
+            Assert.Greater(count, 1, "the rotation has arts to rotate");
+            long showings = 0;
+            for (int i = 0; i < Loads; i++)
+            {
+                Assert.That(shown[i], Is.InRange(0, count - 1), "load " + i + " shows a listed art");
+                showings++;
+            }
+
+            Assert.AreEqual(Loads, showings);
             var shas = new HashSet<string>();
             using (var sha = System.Security.Cryptography.SHA256.Create())
             {
                 foreach (string art in UiCurtain.LoadingKeyArts)
                 {
-                    shas.Add(System.BitConverter.ToString(sha.ComputeHash(File.ReadAllBytes(FileOf(art)))));
+                    byte[] bytes = File.ReadAllBytes(FileOf(art));
+                    Assert.Greater(bytes.Length, 0, art + ": the art file is empty");
+                    Assert.IsNotNull(Resources.Load<Texture2D>(art), art + ": the art does not load");
+                    shas.Add(System.BitConverter.ToString(sha.ComputeHash(bytes)));
                 }
             }
 
