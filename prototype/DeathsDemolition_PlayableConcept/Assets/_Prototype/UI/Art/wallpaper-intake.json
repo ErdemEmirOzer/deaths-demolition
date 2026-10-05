@@ -1,0 +1,143 @@
+{
+  "schema": "dd-wallpaper-intake-v1",
+  "files": [
+    {
+      "file": "loading_keyart.jpg",
+      "bytes": 1437489,
+      "sha256": "1fd07f7eae198548b423d27b7d88f8e33eed58256b89d459f04ae90fdfa93fd5",
+      "master": {
+        "path": "pre-intake: WP-068 R1-D key art (Higgsfield), JPEG as imported 25.09",
+        "sha256": "",
+        "bytes": 0
+      },
+      "encoder": "adopted (pre-intake)",
+      "psnr": 0.0,
+      "ssim": 0.0,
+      "maxLuminance": null,
+      "ceilingFit": null,
+      "date": "2026-10-05",
+      "note": "the courtyard; opens the rotation"
+    },
+    {
+      "file": "loading_keyart_02.jpg",
+      "bytes": 1238817,
+      "sha256": "f420a950b4a98237d780bd645c20b9e59cb91a8778402851656a47971ad18dcb",
+      "master": {
+        "path": "repo:Wallpapers/loading_keyart.jpg",
+        "sha256": "1fd07f7eae198548b423d27b7d88f8e33eed58256b89d459f04ae90fdfa93fd5",
+        "bytes": 1437489
+      },
+      "encoder": "Pillow 11.3.0 JPEG q90 4:4:4 optimize",
+      "psnr": 41.44,
+      "ssim": 0.98501,
+      "maxLuminance": {
+        "master": 0.98696,
+        "jpeg": 0.9888
+      },
+      "ceilingFit": null,
+      "date": "2026-10-05",
+      "note": "placeholder copy of the courtyard until AP-028 (WP-081 B1)"
+    },
+    {
+      "file": "loading_keyart_03.jpg",
+      "bytes": 1238817,
+      "sha256": "f420a950b4a98237d780bd645c20b9e59cb91a8778402851656a47971ad18dcb",
+      "master": {
+        "path": "repo:Wallpapers/loading_keyart.jpg",
+        "sha256": "1fd07f7eae198548b423d27b7d88f8e33eed58256b89d459f04ae90fdfa93fd5",
+        "bytes": 1437489
+      },
+      "encoder": "Pillow 11.3.0 JPEG q90 4:4:4 optimize",
+      "psnr": 41.44,
+      "ssim": 0.98501,
+      "maxLuminance": {
+        "master": 0.98696,
+        "jpeg": 0.9888
+      },
+      "ceilingFit": null,
+      "date": "2026-10-05",
+      "note": "placeholder copy of the courtyard until AP-028 (WP-081 B1)"
+    },
+    {
+      "file": "loading_keyart_04.jpg",
+      "bytes": 1238817,
+      "sha256": "f420a950b4a98237d780bd645c20b9e59cb91a8778402851656a47971ad18dcb",
+      "master": {
+        "path": "repo:Wallpapers/loading_keyart.jpg",
+        "sha256": "1fd07f7eae198548b423d27b7d88f8e33eed58256b89d459f04ae90fdfa93fd5",
+        "bytes": 1437489
+      },
+      "encoder": "Pillow 11.3.0 JPEG q90 4:4:4 optimize",
+      "psnr": 41.44,
+      "ssim": 0.98501,
+      "maxLuminance": {
+        "master": 0.98696,
+        "jpeg": 0.9888
+      },
+      "ceilingFit": null,
+      "date": "2026-10-05",
+      "note": "placeholder copy of the courtyard until AP-028 (WP-081 B1)"
+    },
+    {
+      "file": "loading_keyart_05.jpg",
+      "bytes": 1238817,
+      "sha256": "f420a950b4a98237d780bd645c20b9e59cb91a8778402851656a47971ad18dcb",
+      "master": {
+        "path": "repo:Wallpapers/loading_keyart.jpg",
+        "sha256": "1fd07f7eae198548b423d27b7d88f8e33eed58256b89d459f04ae90fdfa93fd5",
+        "bytes": 1437489
+      },
+      "encoder": "Pillow 11.3.0 JPEG q90 4:4:4 optimize",
+      "psnr": 41.44,
+      "ssim": 0.98501,
+      "maxLuminance": {
+        "master": 0.98696,
+        "jpeg": 0.9888
+      },
+      "ceilingFit": null,
+      "date": "2026-10-05",
+      "note": "placeholder copy of the courtyard until AP-028 (WP-081 B1)"
+    },
+    {
+      "file": "loading_keyart_results.jpg",
+      "bytes": 1394857,
+      "sha256": "a14fe67977f108db995268f342e9e814522ffc348578d62f2ae837aec5785b61",
+      "master": {
+        "path": "pre-intake: WP-068 R1-D Results key art (Higgsfield), JPEG as imported 25.09",
+        "sha256": "",
+        "bytes": 0
+      },
+      "encoder": "adopted (pre-intake)",
+      "psnr": 0.0,
+      "ssim": 0.0,
+      "maxLuminance": null,
+      "ceilingFit": null,
+      "date": "2026-10-05",
+      "note": "the way to the Results, outside the rotation"
+    },
+    {
+      "file": "upgrade_wallpaper.jpg",
+      "bytes": 446231,
+      "sha256": "c807db0551c4052cdd6a5bd93466e2cc39b41aace48e99b276184bac6ed315bc",
+      "master": {
+        "path": "git:ab582f61:prototype/DeathsDemolition_PlayableConcept/Assets/_Prototype/UI/Art/Resources/UI/Wallpapers/upgrade_wallpaper.png",
+        "sha256": "f54a7ef48acd78aca812ea85ea07960244cc32fbe5e05cd7a8c37b836c88bb4c",
+        "bytes": 3923658
+      },
+      "encoder": "Pillow 11.3.0 JPEG q90 4:4:4 optimize",
+      "psnr": 44.75,
+      "ssim": 0.9734,
+      "maxLuminance": {
+        "master": 0.02389,
+        "jpeg": 0.02436
+      },
+      "ceilingFit": {
+        "blocks": 64,
+        "rounds": 3,
+        "minScale": 0.7875
+      },
+      "date": "2026-10-05",
+      "note": "WP-068 R1-C round-end wallpaper; PNG to JPEG q90 (C-00 05.10, decision ii)"
+    }
+  ]
+}

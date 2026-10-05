@@ -9,12 +9,14 @@ namespace DD.Prototype.Tests.EditMode
     /// WP-068 R1-C · the round-end wallpaper may not cost readability (user request 25.09): every pixel stays under the
     /// luminance ceiling the art was clamped to, so the dimmest text the screen sets on its backdrop (TextMuted) keeps
     /// 4.5:1 or better on the brightest pixel, and the texture imports as a UI backdrop (full size, no mips).
+    /// WP-081 (C-00 05.10, decision ii): the source is a JPEG q90 from the R1-C PNG (tools/wallpaper/wallpaper_intake.py:
+    /// PSNR 44.75 dB, SSIM 0.973; the 64 blocks whose ringing crossed the ceiling dimmed - wallpaper-intake.json).
     /// </summary>
     public sealed class UpgradeWallpaperTests
     {
         private static readonly string[] SourcePaths =
         {
-            "Assets/_Prototype/UI/Art/Resources/UI/Wallpapers/upgrade_wallpaper.png"
+            "Assets/_Prototype/UI/Art/Resources/UI/Wallpapers/upgrade_wallpaper.jpg"
             // the loading key art is full and rich, darkened only under the words: LoadingKeyArtTests
         };
         private const float LuminanceCeiling = 0.0245f;

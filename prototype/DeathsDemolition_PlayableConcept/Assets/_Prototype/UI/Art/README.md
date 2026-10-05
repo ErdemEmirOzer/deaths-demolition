@@ -33,7 +33,10 @@ in the manifest are sliced with its rects; a manifest edit re-slices (source dep
 - Colour never lives in the art: icons are white, frames are cream ink; every image is tinted
   with a `UiColor` token, so `UiTokens`' measured contrast pairs stay the only colour authority.
 - Budget: UI art ≤ 12 MB source, every texture ≤ 1024² (`UiArtThemeTests.DokuSinifi_1024VeButce`); `Wallpapers/`
-  (the loading key arts and the round-end wallpaper) is its own class, ≤ 10 MB source (WP-081, C-00 05.10).
+  (the loading key arts and the round-end wallpaper) is its own class, ≤ 10 MB source (WP-081, C-00 05.10). A wallpaper
+  enters only through `tools/wallpaper/wallpaper_intake.py`: JPEG q90 (4:4:4) from a lossless 2560×1440 master that stays
+  outside the repo (AP-028 → `K/asset-production/AP-028`), PSNR ≥ 40 dB, a luminance ceiling held where one is asked;
+  its bytes, sha256 and measures go to `wallpaper-intake.json` (`WallpaperIntakeTests`).
 - Regenerating G1 / A4: `wp-068/tools/g1/build_g1.py <out>` (sources: AP-012 v004 `exports/`, SHA-checked, and the
   retired RGBA atlases snapshotted in `wp-068/g1-src/`) → copy `G1/`, `A4/`, `Cursor/`, `Tiles/` here → run the theme
   builder. Plates and skins: `asset-production/AP-012/tools/build_atlas.py` as before.
