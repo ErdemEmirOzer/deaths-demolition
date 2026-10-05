@@ -28,23 +28,39 @@ namespace DD.Prototype.Tests.PlayMode
     {
         private const int Size = 160;
 
+        /// <summary>A shader asset of the project by its shader name (Editor only: the test is an Editor PlayMode measurement).</summary>
+        private static Shader FindShaderAsset(string shaderName)
+        {
+#if UNITY_EDITOR
+            foreach (string guid in UnityEditor.AssetDatabase.FindAssets("t:Shader", new[] { "Assets" }))
+            {
+                var shader = UnityEditor.AssetDatabase.LoadAssetAtPath<Shader>(UnityEditor.AssetDatabase.GUIDToAssetPath(guid));
+                if (shader != null && shader.name == shaderName) return shader;
+            }
+#endif
+            return null;
+        }
+
         [UnityTest]
         [Timeout(180000)]
         public IEnumerator TierLit_KeywordKapali_ReferansaPikselEs()
         {
             LogAssert.ignoreFailingMessages = true;
             string referenceName = Environment.GetEnvironmentVariable("DD_WP084_PARITY_REFERENCE") ?? "Hidden/DD/Tests/Tier Lit R1 Reference";
-            Shader reference = Shader.Find(referenceName);
+            // ShaderLibraryTests.UretimKodu_ShaderFindKullanmaz (main-ci 173890ac): no string lookup. The shipped shader is the one the
+            // shipped tier materials carry; the R1 reference (a local, never-committed copy — K/wp-084/parity-ref) is found by name
+            // among the project's shader assets.
+            Shader reference = FindShaderAsset(referenceName);
             Assert.IsNotNull(reference, "kaynak yok: referans shader " + referenceName);
-            Shader shipped = Shader.Find("DD/Character/Tier Lit");
-            Assert.IsNotNull(shipped, "kaynak yok: DD/Character/Tier Lit");
+            ZombieTierLibrary tier = ZombieTierLibrary.Active;
+            Assert.IsTrue(tier != null && tier.IsReady, "kaynak yok: tier kütüphanesi");
+            Shader shipped = tier.bodyMaterials[0] != null ? tier.bodyMaterials[0].shader : null;
+            Assert.IsTrue(shipped != null && shipped.name == "DD/Character/Tier Lit", "kaynak yok: DD/Character/Tier Lit (tier gövde materyali)");
 
             Scene scene = SceneManager.CreateScene("WP084 parity " + Guid.NewGuid().ToString("N"));
             SceneManager.SetActiveScene(scene);
             var materials = new List<Material>();
             void Add(Material m) { if (m != null && m.shader == shipped && !materials.Contains(m)) materials.Add(m); }
-            ZombieTierLibrary tier = ZombieTierLibrary.Active;
-            Assert.IsTrue(tier != null && tier.IsReady, "kaynak yok: tier kütüphanesi");
             foreach (Material m in tier.bodyMaterials) Add(m);
             foreach (Material m in tier.armorMaterials) Add(m);
             foreach (Material m in tier.partMaterials) Add(m);

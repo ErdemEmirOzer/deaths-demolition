@@ -17,11 +17,15 @@ namespace DD.Prototype.Tests.EditMode
     [Category("Diagnostics")]
     public sealed class TierLitVariantCountTests
     {
+        private const string TierLitPath = "Assets/_Art/Shaders/DD_TierLit.shader";
+
         [Test]
         public void TierLit_VaryantSayisi()
         {
-            Shader shader = Shader.Find("DD/Character/Tier Lit");
-            Assert.IsNotNull(shader, "kaynak yok: DD/Character/Tier Lit");
+            // ShaderLibraryTests.UretimKodu_ShaderFindKullanmaz (main-ci 173890ac): no string lookup — the shader asset itself.
+            Shader shader = AssetDatabase.LoadAssetAtPath<Shader>(TierLitPath);
+            Assert.IsNotNull(shader, "kaynak yok: " + TierLitPath);
+            Assert.AreEqual("DD/Character/Tier Lit", shader.name, TierLitPath);
             MethodInfo count = typeof(ShaderUtil).GetMethod("GetVariantCount", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public,
                 null, new[] { typeof(Shader), typeof(bool) }, null);
             Assert.IsNotNull(count, "kaynak yok: ShaderUtil.GetVariantCount");
