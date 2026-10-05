@@ -569,11 +569,14 @@ class CiDriverGuardTests(CiFixture):
         gtools = self.root / "gtools"
         if not gtools.exists():
             gtools.mkdir()
-            for name in ("userdata-guard.sh", "dd-env.sh", "userdata_attrib.py"):
+            for name in ("userdata-guard.sh", "dd-env.sh", "userdata_attrib.py", "userdata_guard_io.py"):
                 shutil.copy2(TOOLS / name, gtools / name)
             write_exec(gtools / "slot.sh", FAKE_SLOT.format(log=self.log))
-        env = self.env(DD_GUARD_ROOT=str(self.root / "groot"), DD_GUARD_WAIT="1",
-                       DD_GUARD_PLAYER_RE="dd-fixture-no-such-player-7f3c")   # never matches a real Player
+            # G4 D5: the guard's Player pattern is fixed — a pgrep shim answers "no Player" so a real one never reaches us
+            write_exec(gtools / "bin/pgrep", '#!/bin/sh\nfor a in "$@"; do case "$a" in *"Contents/MacOS/(Deaths Demolition"*) exit 1 ;; '
+                                             'esac; done\nexec /usr/bin/pgrep "$@"\n')
+        env = self.env(DD_GUARD_ROOT=str(self.root / "groot"), DD_GUARD_WAIT="1")
+        env["PATH"] = f"{gtools / 'bin'}:{env['PATH']}"
         env.pop("DD_TIMELINE", None)
         r = subprocess.run(["zsh", str(gtools / "userdata-guard.sh"), "snapshot", str(target), "--scope", scope],
                            env=env, capture_output=True, text=True, timeout=120)
@@ -587,9 +590,9 @@ class CiDriverGuardTests(CiFixture):
     def test_M07_GuardEditorKapsami_D2KilidiniBeklemez_PlayerKapsami75(self):
         d2 = self.root / "groot/AS/com.Deaths-Demolition.Deaths-Demolition---Playable-Concept"; d2.mkdir(parents=True)
         (self.root / "groot/AS/Deaths Demolition" / PRODUCT).mkdir(parents=True)
-        holder = self.root / "dd-fixture-lock-holder"
-        write_exec(holder, "#!/bin/zsh\nsleep 60\n:\n")
-        h = self.background([str(holder)]); time.sleep(0.3)
+        # G4 D5 S7: only a live Player/Unity counts as a lock holder — a Unity-path stand-in (sleep; no -batchmode/-projectPath)
+        holder = self.root / "Unity.app/Contents/MacOS/Unity"; holder.parent.mkdir(parents=True); holder.symlink_to("/bin/sleep")
+        h = self.background([str(holder), "60"]); time.sleep(0.3)
         (d2 / "prototype-profile.json.lock").write_text(f"pid={h.pid}\nname={holder}\n")   # lock_holder's format
         rc, text = self.run_guard(self.root / "ug-editor", "editor")
         self.assertEqual(rc, 0, text)

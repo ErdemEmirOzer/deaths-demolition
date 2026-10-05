@@ -29,8 +29,14 @@ class GuardD6aTests(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory(prefix="dd-guard-d6a-")
         self.root = Path(self.tmp.name).resolve()
         self.tools = self.root / "tools"; self.tools.mkdir()
-        for name in ("userdata-guard.sh", "dd-env.sh", "userdata_attrib.py", "slot.sh"):
+        for name in ("userdata-guard.sh", "dd-env.sh", "userdata_attrib.py", "slot.sh", "userdata_guard_io.py"):
             shutil.copy2(TOOLS / name, self.tools / name)
+        # G4 D5: the guard's Player pattern is fixed (DD_GUARD_PLAYER_RE is gone) — a pgrep shim answers "no Player" for it,
+        # so a real Player running on this machine never reaches these tests
+        self.bin = self.root / "bin"; self.bin.mkdir()
+        (self.bin / "pgrep").write_text('#!/bin/sh\nfor a in "$@"; do case "$a" in *"Contents/MacOS/(Deaths Demolition"*) exit 1 ;; esac; done\n'
+                                       'exec /usr/bin/pgrep "$@"\n')
+        (self.bin / "pgrep").chmod(0o755)
         self.slots = self.root / "slots"
         (self.root / "limit").write_text("3\n")
         (self.root / "home").mkdir()
@@ -55,7 +61,7 @@ class GuardD6aTests(unittest.TestCase):
     def env(self, **extra):
         e = {k: v for k, v in os.environ.items() if not k.startswith("DD_")}
         e.update(HOME=str(self.root / "home"), TMPDIR=str(self.root), DD_GUARD_ROOT=str(self.groot), DD_GUARD_WAIT="1",
-                 DD_GUARD_PLAYER_RE="dd-fixture-no-such-player-7f3c",   # never matches a real Player
+                 PATH=f"{self.root / 'bin'}:{os.environ['PATH']}",
                  DD_SLOT_BASE=str(self.slots), DD_SLOT_LIMIT_FILE=str(self.root / "limit"), DD_SLOT_POLL="1",
                  DD_SLOT_SH=str(self.tools / "slot.sh"), DD_GUARD_SH=str(self.tools / "userdata-guard.sh"))
         e.update(extra)
@@ -203,9 +209,10 @@ class GuardD6aTests(unittest.TestCase):
         target = self.root / "ug-busy"
         rc, text = self.guard("snapshot", target, "--scope", "editor")
         self.assertEqual(rc, 0, text)
-        holder = self.root / "dd-fixture-lock-holder"
-        holder.write_text("#!/bin/zsh\nsleep 60\n:\n"); holder.chmod(0o755)
-        h = subprocess.Popen([str(holder)]); self.bg.append(h); time.sleep(0.3)
+        # G4 D5 S7: only a live Player or Unity counts as a lock holder (by its command, not the recorded name) — a Unity-path
+        # stand-in (sleep behind a Unity.app path; no -batchmode / -projectPath, so no Unity counter sees it)
+        holder = self.root / "Unity.app/Contents/MacOS/Unity"; holder.parent.mkdir(parents=True); holder.symlink_to("/bin/sleep")
+        h = subprocess.Popen([str(holder), "60"]); self.bg.append(h); time.sleep(0.3)
         lock = self.groot / "AS/Deaths Demolition" / PRODUCT / "prototype-profile.json.lock"
         lock.write_text(f"pid={h.pid}\nname={holder}\n")
         rc, text = self.guard("restore", target, "--scope", "editor")
