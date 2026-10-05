@@ -58,11 +58,16 @@ class RealFilesTests(unittest.TestCase):
 
     def test_AloneFiltre_YalnizOTesti(self):
         steps = ci.alone_steps(self.entries)
-        self.assertEqual([s for s, _ in steps], ["playmode-alone-1-WarmPresentation_DoesNotAllocateOrConsumeGameplayRandom"])
+        self.assertEqual([s for s, _ in steps], ["playmode-alone-1-WarmPresentation_DoesNotAllocateOrConsumeGameplayRandom",
+                                                 "playmode-alone-2-Dogus_MalzemeYolu_IsinmisHavuzda0Ayirma"])   # S-03 WP-084 G1 (C-00 06.10)
         rx = steps[0][1]
         self.assertTrue(runs_under(rx, ALLOC))
         for name in (CROWD, DEC077, *KEPT, *NOT_CORE):
             self.assertFalse(runs_under(rx, name), name)
+        g1 = "DD.Prototype.Tests.PlayMode.ZombieSpawnGcTests.Dogus_MalzemeYolu_IsinmisHavuzda0Ayirma"
+        self.assertTrue(runs_under(steps[1][1], g1))
+        self.assertFalse(runs_under(steps[1][1], ALLOC))
+        self.assertFalse(runs_under(self.core, g1))
         self.assertNotIn(";", rx)
         self.assertNotIn(";", self.core)
 

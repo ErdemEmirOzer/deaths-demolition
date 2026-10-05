@@ -14,3 +14,4 @@
 ^DD\.Art\.Tests\.PlayMode\.ArmorTests\.Run_AP005v2_40SkinnedZombi_TamZirh_Binder_5Renderer_TekMateryal_KurallarUyumlu$	a3	S-06 WP-017 crowd capture: 40 skinned zombies, 1920x1080 PNG capture, [Timeout(300000)]; 15.8 s in the core — S-10 A3 run
 ^DD\.Art\.Tests\.PlayMode\.ArmorTests\.Okunabilirlik_DEC077_Zirh_DeltaV_AltKumas_KomsuBant_ZeminHalkasi_Siluet$	a3	DEC-077 armour readability measurement (captures, reports the rule value), [Timeout(300000)]; 8.8 s in the core — S-10 A3 run
 ^DD\.Prototype\.Tests\.PlayMode\.Wp073LauncherVfxTests\.WarmPresentation_DoesNotAllocateOrConsumeGameplayRandom$	alone	S-07 allocation test ([Category("Alloc")], GC-alloc constraint): runs alone — main-ci own step after the core
+^DD\.Prototype\.Tests\.PlayMode\.ZombieSpawnGcTests\.Dogus_MalzemeYolu_IsinmisHavuzda0Ayirma$	alone	S-03 WP-084 B-03 G1 allocation test (UTF AllocatingGCMemory on the warm material path, 64 KB positive control): an allocation test always runs alone (C-00 06.10)

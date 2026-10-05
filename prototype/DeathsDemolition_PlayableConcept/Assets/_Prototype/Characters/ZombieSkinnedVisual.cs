@@ -274,11 +274,14 @@ namespace DD.Prototype.Characters
             _atlasOverride = atlasOverride;
         }
 
+        /// <summary>B-03 G1 · one reused list: <c>Renderer.sharedMaterials</c> returns a new array on every read.</summary>
+        private static readonly List<Material> s_currentMaterials = new List<Material>(4);
+
         private static bool SameMaterials(Renderer r, Material[] set)
         {
-            Material[] current = r.sharedMaterials;
-            if (current.Length != set.Length) return false;
-            for (int i = 0; i < set.Length; i++) if (current[i] != set[i]) return false;
+            r.GetSharedMaterials(s_currentMaterials);
+            if (s_currentMaterials.Count != set.Length) return false;
+            for (int i = 0; i < set.Length; i++) if (s_currentMaterials[i] != set[i]) return false;
             return true;
         }
 

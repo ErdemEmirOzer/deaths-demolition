@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace DD.Prototype.Characters
@@ -106,6 +107,36 @@ namespace DD.Prototype.Characters
         public const string MaterialAtlas = "M_Zombie_Atlas";
         public const string MaterialCloth = "M_Zombie_Cloth";
         [NonSerialized] private Dictionary<string, Material[]> _materialSets;
+        /// <summary>B-03 G1 · the reference-keyed front of <see cref="_materialSets"/>: a hit builds no key string.</summary>
+        [NonSerialized] private Dictionary<SetRef, Material[]> _materialSetRefs;
+        private static readonly string[] AtlasOnlyNames = { MaterialAtlas };
+
+        /// <summary>(material-name array, tier, atlas override) by reference — the arrays are serialised module / LOD lists or static.</summary>
+        private readonly struct SetRef
+        {
+            public readonly string[] Names;
+            public readonly int Tier;
+            public readonly Material Atlas;
+
+            public SetRef(string[] names, int tier, Material atlas)
+            {
+                Names = names;
+                Tier = tier;
+                Atlas = atlas;
+            }
+        }
+
+        private sealed class SetRefComparer : IEqualityComparer<SetRef>
+        {
+            public static readonly SetRefComparer Instance = new SetRefComparer();
+
+            public bool Equals(SetRef a, SetRef b) => ReferenceEquals(a.Names, b.Names) && a.Tier == b.Tier && ReferenceEquals(a.Atlas, b.Atlas);
+
+            public int GetHashCode(SetRef k)
+            {
+                unchecked { return (RuntimeHelpers.GetHashCode(k.Names) * 397 ^ k.Tier) * 397 ^ RuntimeHelpers.GetHashCode(k.Atlas); }
+            }
+        }
 
         public Body FindBody(string fit)
         {
@@ -141,21 +172,32 @@ namespace DD.Prototype.Characters
 
         /// <summary>
         /// WP-020 · The shared-material array of a module's sub-mesh order for one enemy version
-        /// (cached per pattern × tier: at most 3 patterns × 4 tiers — no per-spawn allocation after warm-up).
+        /// (cached per pattern × tier × atlas override: 3 patterns × 4 tiers × 5 overrides at most). B-03 G1: looked up by the name array's reference first, so
+        /// after the first sight of each serialised list no call allocates (the content key is built once per array reference).
         /// </summary>
         public Material[] MaterialsFor(string[] materialNames, int tierIndex) => MaterialsFor(materialNames, tierIndex, null);
 
         /// <summary>WP-088 · As above, with <paramref name="atlasOverride"/> (the version's body-atlas tint) on the atlas entries; cached per override.</summary>
         public Material[] MaterialsFor(string[] materialNames, int tierIndex, Material atlasOverride)
         {
-            if (materialNames == null || materialNames.Length == 0) materialNames = new[] { MaterialAtlas };
+            if (materialNames == null || materialNames.Length == 0) materialNames = AtlasOnlyNames;
+            if (atlasOverride == null) atlasOverride = null;   // a destroyed (Unity-null) override keys as "none", as the content key always did
+            var refKey = new SetRef(materialNames, tierIndex, atlasOverride);
+            if (_materialSetRefs == null) _materialSetRefs = new Dictionary<SetRef, Material[]>(SetRefComparer.Instance);
+            if (_materialSetRefs.TryGetValue(refKey, out Material[] set)) return set;
+
+            // first sight of this array reference: equal patterns still share one array (the content key)
             string key = string.Join("|", materialNames) + "#" + tierIndex + "#" + (atlasOverride != null ? atlasOverride.GetInstanceID() : 0);
             if (_materialSets == null) _materialSets = new Dictionary<string, Material[]>(StringComparer.Ordinal);
-            if (_materialSets.TryGetValue(key, out Material[] set)) return set;
-            Material atlas = atlasOverride != null ? atlasOverride : MaterialFor(tierIndex);
-            set = new Material[materialNames.Length];
-            for (int i = 0; i < set.Length; i++) set[i] = materialNames[i] == MaterialCloth ? ClothMaterialFor(tierIndex) : atlas;
-            _materialSets[key] = set;
+            if (!_materialSets.TryGetValue(key, out set))
+            {
+                Material atlas = atlasOverride != null ? atlasOverride : MaterialFor(tierIndex);
+                set = new Material[materialNames.Length];
+                for (int i = 0; i < set.Length; i++) set[i] = materialNames[i] == MaterialCloth ? ClothMaterialFor(tierIndex) : atlas;
+                _materialSets[key] = set;
+            }
+
+            _materialSetRefs[refKey] = set;
             return set;
         }
 
