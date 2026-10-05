@@ -78,6 +78,23 @@ class MeasuredByTests(unittest.TestCase):
                            "gates": ["L1", "L1t", "L2"]}], normal)
         self.assertEqual(["S3"], quiet[0]["gates"])
 
+    def test_a_null_value_is_blocked_and_a_note_is_ignored(self):
+        # S-02 05.10: R2Olcum writes null for a key whose measurement has not landed (H3 contactDeviationFramesMax
+        # until S-06 B2c), with a top-level "note"
+        measure = {"schema": "dd-r2-measure-v1", "gate": "H3", "commit": "a" * 40, "note": "contact from S-06 B2c",
+                   "values": {"missingEvents": 0, "contactDeviationFramesMax": None, "floatingMagazineFrames": 0}}
+        row = r2.evaluate_gate(gate("H3"), "a" * 40, measure=measure)
+        self.assertEqual("BLOCKED", row["status"])
+        self.assertIn("contactDeviationFramesMax", row["reason"])
+        measure["values"]["contactDeviationFramesMax"] = 1
+        self.assertEqual("PASS", r2.evaluate_gate(gate("H3"), "a" * 40, measure=measure)["status"])
+
+    def test_h3_belongs_to_s02_and_p5_shows_its_floor(self):
+        self.assertEqual("S-02", gate("H3")["owner"])     # C-00 05.10: the magazine state machine is S-02's
+        self.assertEqual("DD.Prototype.Tests.PlayMode.WeaponReloadMagazineTests.H3_SarjorluSilahlar_VuruslarTam_HavadaKareYok",
+                         gate("H3")["measuredBy"]["filter"])
+        self.assertIn("floorLimited", gate("P5")["report"])
+
     def test_s5_airborne_queue_is_reported_never_gated(self):
         self.assertEqual(["queueMax"], gate("S5")["report"])
         self.assertNotIn("queueMax", [c["key"] for c in gate("S5")["checks"]])
