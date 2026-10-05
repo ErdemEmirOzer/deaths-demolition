@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using DD.Prototype.Core.Boot;
 using TMPro;
 using UnityEngine;
@@ -123,6 +124,7 @@ namespace DD.Prototype.UI
         private RawImage _keyArt;
         private UiTweenHandle _keyArtPush;
         private ResourceRequest _keyArtLoad;
+        private string _keyArtLoadPath;
         private ResourceRequest _resultsKeyArtLoad;
 
         /// <summary>The slow push-in over a load (AE-class motion, Decor: Reduced Motion holds it still).</summary>
@@ -215,18 +217,62 @@ namespace DD.Prototype.UI
             get { return _keyArt != null && _keyArt.gameObject.activeInHierarchy && _keyArt.texture != null; }
         }
 
-        /// <summary>The loading key art (Resources paths): the courtyard for every load, the wall for the way to the Results.</summary>
+        /// <summary>The name of the art on screen (tests, captures); null when none shows.</summary>
+        public string KeyArtName
+        {
+            get { return KeyArtVisible ? _keyArt.texture.name : null; }
+        }
+
+        /// <summary>The loading key art (Resources paths): the courtyard opens the rotation, the wall is the way to the Results.</summary>
         public const string LoadingKeyArt = "UI/Wallpapers/loading_keyart";
         public const string ResultsKeyArt = "UI/Wallpapers/loading_keyart_results";
 
         /// <summary>
+        /// WP-081 B1 (C-00 05.10): the arts the loading screens rotate through, never the same one twice in a row
+        /// (<see cref="KeyArtRotation"/>). Until AP-028's paintings land, 02-05 are placeholder copies of the courtyard.
+        /// The Results keep their own art, outside the rotation.
+        /// </summary>
+        private static readonly string[] s_loadingKeyArts =
+        {
+            LoadingKeyArt,
+            "UI/Wallpapers/loading_keyart_02",
+            "UI/Wallpapers/loading_keyart_03",
+            "UI/Wallpapers/loading_keyart_04",
+            "UI/Wallpapers/loading_keyart_05"
+        };
+
+        private static KeyArtRotation s_rotation;
+
+        public static IReadOnlyList<string> LoadingKeyArts
+        {
+            get { return s_loadingKeyArts; }
+        }
+
+        private static KeyArtRotation Rotation
+        {
+            get { return s_rotation ?? (s_rotation = new KeyArtRotation(s_loadingKeyArts.Length, Environment.TickCount)); }
+        }
+
+        /// <summary>The art the next loading screen shows (warmed ahead).</summary>
+        public static string UpcomingKeyArt
+        {
+            get { return s_loadingKeyArts[Rotation.Upcoming]; }
+        }
+
+        /// <summary>The rotation art the last loading screen showed; null before the first.</summary>
+        public static string LastLoadingKeyArt
+        {
+            get { return Rotation.Last < 0 ? null : s_loadingKeyArts[Rotation.Last]; }
+        }
+
+        /// <summary>
         /// The key art for a destination: a painted scene for every load (C-00 25.09, the user: no runtime frame of an
-        /// empty world behind the ring) - the Results their own. The Look B plates stay only as the fallback when the art
-        /// cannot load.
+        /// empty world behind the ring) - the next one in the rotation, the Results their own. Asking does not use up a
+        /// turn; showing it does. The Look B plates stay only as the fallback when the art cannot load.
         /// </summary>
         public static string KeyArtFor(string scene)
         {
-            return scene == PrototypeScenes.Results ? ResultsKeyArt : LoadingKeyArt;
+            return scene == PrototypeScenes.Results ? ResultsKeyArt : UpcomingKeyArt;
         }
 
         public bool MidPlateVisible
@@ -313,7 +359,7 @@ namespace DD.Prototype.UI
             _keyArt = Plate("KeyArt", groupRect);   // above the scrims: the art is text-safe where the words sit
             // Warm the art now (behind the boot seal): a synchronous load on the first SCREEN would hitch the group's
             // first frame and eat its minimum display.
-            _keyArtLoad = Resources.LoadAsync<Texture2D>(LoadingKeyArt);
+            WarmUpcomingKeyArt();
             _resultsKeyArtLoad = Resources.LoadAsync<Texture2D>(ResultsKeyArt);
 
             // The ensō device (10b-2, §15.3): the dry ghost circle, the stroke drawn at real
@@ -907,7 +953,7 @@ namespace DD.Prototype.UI
         /// <summary>SCREEN depth: the loading group enters (PaneIn, Base 220) with the destination labels.</summary>
         public void ShowGroup(string destination, string subline)
         {
-            ShowGroup(destination, subline, null, false);
+            ShowGroup(destination, subline, null, false, UpcomingKeyArt);
         }
 
         /// <summary>
@@ -961,10 +1007,24 @@ namespace DD.Prototype.UI
         private void ShowKeyArt(string resource)
         {
             UiMotion.Kill(_keyArtPush, false);
-            ResourceRequest warmed = resource == LoadingKeyArt ? _keyArtLoad : resource == ResultsKeyArt ? _resultsKeyArtLoad : null;
-            Texture2D art = string.IsNullOrEmpty(resource)
-                ? null
-                : warmed != null ? warmed.asset as Texture2D : Resources.Load<Texture2D>(resource);
+            ResourceRequest warmed = resource == _keyArtLoadPath ? _keyArtLoad : resource == ResultsKeyArt ? _resultsKeyArtLoad : null;
+            Texture2D art = null;
+            if (!string.IsNullOrEmpty(resource))
+            {
+                art = warmed != null ? warmed.asset as Texture2D : null;
+                if (art == null)
+                {
+                    art = Resources.Load<Texture2D>(resource);   // off the warm path (a test's pick), or a warm the scene change let go
+                }
+            }
+
+            int turn = Array.IndexOf(s_loadingKeyArts, resource);
+            if (turn >= 0)
+            {
+                Rotation.Shown(turn);
+                WarmUpcomingKeyArt();
+            }
+
             if (art == null)
             {
                 _keyArt.gameObject.SetActive(false);
@@ -979,6 +1039,17 @@ namespace DD.Prototype.UI
             var rect = (RectTransform)_keyArt.transform;
             rect.localScale = Vector3.one;
             _keyArtPush = UiMotion.ScaleSeconds(rect, 1f, KeyArtPushScale, KeyArtPushSeconds, UiEase.Linear, UiMotionClass.Decor);
+        }
+
+        /// <summary>Warm the rotation's next art: at Build behind the boot seal, then behind each loading screen that used its turn.</summary>
+        private void WarmUpcomingKeyArt()
+        {
+            string next = UpcomingKeyArt;
+            if (next != _keyArtLoadPath)
+            {
+                _keyArtLoadPath = next;
+                _keyArtLoad = Resources.LoadAsync<Texture2D>(next);
+            }
         }
 
         private void HideKeyArt()
@@ -1353,6 +1424,7 @@ namespace DD.Prototype.UI
         {
             s_instance = null;
             s_covering = false;
+            s_rotation = null;
             Revealed = null;
         }
     }

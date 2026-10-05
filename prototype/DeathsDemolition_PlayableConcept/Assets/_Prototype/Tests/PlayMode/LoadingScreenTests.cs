@@ -154,19 +154,74 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsNotNull(curtain);
             foreach (string scene in new[] { PrototypeScenes.MainMenu, PrototypeScenes.Selection, PrototypeScenes.Run, PrototypeScenes.Results })
             {
-                Assert.AreEqual(scene == PrototypeScenes.Results ? UiCurtain.ResultsKeyArt : UiCurtain.LoadingKeyArt, UiCurtain.KeyArtFor(scene), scene);
-                curtain.ShowGroup(UiCurtain.DestinationFor(scene), string.Empty, null, scene == PrototypeScenes.Run, UiCurtain.KeyArtFor(scene));
+                string art = UiCurtain.KeyArtFor(scene);
+                Assert.AreEqual(scene == PrototypeScenes.Results ? UiCurtain.ResultsKeyArt : UiCurtain.UpcomingKeyArt, art, scene);
+                curtain.ShowGroup(UiCurtain.DestinationFor(scene), string.Empty, null, scene == PrototypeScenes.Run, art);
                 yield return null;
                 Assert.IsTrue(curtain.KeyArtVisible, scene + ": the key art shows");
+                Assert.AreEqual(Path.GetFileName(art), curtain.KeyArtName, scene + ": the art asked for is the art on screen");
                 Assert.IsFalse(curtain.PlateVisible || curtain.MidPlateVisible, scene + ": the plates step aside under the opaque art");
             }
 
+            string next = UiCurtain.UpcomingKeyArt;
             curtain.ShowGroup("ROUND 1", string.Empty);
             yield return null;
             Assert.IsTrue(curtain.KeyArtVisible, "the short overload shows the key art too");
+            Assert.AreEqual(Path.GetFileName(next), curtain.KeyArtName, "the short overload takes the rotation's turn");
             curtain.ShowRingOnly();
             yield return null;
             Assert.IsFalse(curtain.KeyArtVisible, "the ring-only depth shows no art");
+            curtain.Open(true);
+            yield return null;
+        }
+
+        /// <summary>
+        /// WP-081 B1 (R2 U3): twenty loading screens in a row on the live curtain - each shows the art the rotation named
+        /// (loaded, not the plates), never the one before it, and every art of the rotation at least twice. The Results'
+        /// own art in between does not break the rule for the screens around it.
+        /// </summary>
+        [UnityTest]
+        [Timeout(120000)]
+        public IEnumerator AnahtarSanat_Rotasyon_ArdisikEkranlarFarkli_YirmideHerBiriEnAzIkiKez()
+        {
+            PrototypeUiFlow.FastTransitions = true;
+            yield return BootTanMainMenuye();
+            PrototypeUiFlow.FastTransitions = false;
+            UiCurtain curtain = UiCurtain.Instance;
+            Assert.IsNotNull(curtain);
+            var tally = new System.Collections.Generic.Dictionary<string, int>();
+            foreach (string art in UiCurtain.LoadingKeyArts)
+            {
+                tally[Path.GetFileName(art)] = 0;
+            }
+
+            string previous = UiCurtain.LastLoadingKeyArt != null ? Path.GetFileName(UiCurtain.LastLoadingKeyArt) : null;
+            for (int load = 0; load < 20; load++)
+            {
+                string scene = load % 2 == 0 ? PrototypeScenes.Run : PrototypeScenes.Selection;
+                string art = UiCurtain.KeyArtFor(scene);
+                curtain.ShowGroup(UiCurtain.DestinationFor(scene), string.Empty, null, scene == PrototypeScenes.Run, art);
+                yield return null;
+                string onScreen = curtain.KeyArtName;
+                Assert.IsTrue(curtain.KeyArtVisible && !curtain.PlateVisible, "load " + load + ": the art shows, not the plates");
+                Assert.AreEqual(Path.GetFileName(art), onScreen, "load " + load + ": the art the rotation named");
+                Assert.AreNotEqual(previous, onScreen, "load " + load + ": the same art twice in a row");
+                tally[onScreen]++;
+                previous = onScreen;
+                if (load == 9)
+                {
+                    curtain.ShowGroup(UiCurtain.DestinationFor(PrototypeScenes.Results), string.Empty, null, false, UiCurtain.KeyArtFor(PrototypeScenes.Results));
+                    yield return null;
+                    Assert.AreEqual(Path.GetFileName(UiCurtain.ResultsKeyArt), curtain.KeyArtName, "the Results' own art");
+                }
+            }
+
+            foreach (System.Collections.Generic.KeyValuePair<string, int> art in tally)
+            {
+                Debug.Log("[DD-TEST] wp081.rotation " + art.Key + "=" + art.Value);
+                Assert.GreaterOrEqual(art.Value, 2, art.Key + ": at least twice in twenty loads");
+            }
+
             curtain.Open(true);
             yield return null;
         }

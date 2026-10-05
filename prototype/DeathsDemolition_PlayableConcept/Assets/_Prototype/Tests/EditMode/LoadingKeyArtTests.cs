@@ -16,12 +16,13 @@ namespace DD.Prototype.Tests.EditMode
     ///   labels  TextSecondary (the dimmest word there: eyebrow, subline) ≥ 4.5:1 on the brightest pixel;
     ///   tip     TextPrimary ≥ 7:1 on the strip (SurfaceBase 0.72, composited as the GPU does) over the brightest pixel -
     ///           not on the Results art: the way to the Results never shows a tip (PrototypeUiFlow.ShowsTip, asserted).
+    /// WP-081 B1 (R2 U3): every art of the rotation passes the same bar, and the rotation itself is proven on fixed seeds -
+    /// at least five arts, never the same one on two loading screens in a row, each at least twice in any twenty loads.
     /// </summary>
     public sealed class LoadingKeyArtTests
     {
-        private const string Folder = "Assets/_Prototype/UI/Art/Resources/UI/Wallpapers/";
-        private const string RunArt = Folder + "loading_keyart.jpg";
-        private const string ResultsArt = Folder + "loading_keyart_results.jpg";
+        private const string ResourcesFolder = "Assets/_Prototype/UI/Art/Resources/";
+        private static readonly string ResultsArt = FileOf(UiCurtain.ResultsKeyArt);
 
         /// <summary>Half the label stack's width at text 1.0 (reference px). The widest destination, BEFORE THE RUN, is ~130 at Mac × 1.25.</summary>
         private const float LabelHalfWidth = 180f;
@@ -40,9 +41,25 @@ namespace DD.Prototype.Tests.EditMode
             new object[] { "21x9", 2560, 1080, 1f, 1f }
         };
 
+        /// <summary>The source file of a key art's Resources path.</summary>
+        private static string FileOf(string resource)
+        {
+            return ResourcesFolder + resource + ".jpg";
+        }
+
+        private static IEnumerable<string> Arts()
+        {
+            foreach (string art in UiCurtain.LoadingKeyArts)
+            {
+                yield return FileOf(art);
+            }
+
+            yield return ResultsArt;
+        }
+
         private static IEnumerable<object[]> Cases()
         {
-            foreach (string art in new[] { RunArt, ResultsArt })
+            foreach (string art in Arts())
             {
                 foreach (object[] screen in Screens)
                 {
@@ -57,7 +74,7 @@ namespace DD.Prototype.Tests.EditMode
         [OneTimeSetUp]
         public void Load()
         {
-            foreach (string path in new[] { RunArt, ResultsArt })
+            foreach (string path in Arts())
             {
                 var texture = new Texture2D(2, 2);
                 Assert.IsTrue(texture.LoadImage(File.ReadAllBytes(path)), path);
@@ -81,7 +98,7 @@ namespace DD.Prototype.Tests.EditMode
         {
             s_art = s_arts[art];
             bool results = art == ResultsArt;
-            name = (results ? "results " : "run ") + name;
+            name = Path.GetFileNameWithoutExtension(art) + " " + name;
             if (results)
             {
                 foreach (string from in new[] { PrototypeScenes.Boot, PrototypeScenes.MainMenu, PrototypeScenes.Selection, PrototypeScenes.Run })
@@ -124,6 +141,105 @@ namespace DD.Prototype.Tests.EditMode
             if (!results)
             {
                 Assert.GreaterOrEqual(tipRatio, 7f, name + ": TextPrimary on the tip strip over the brightest pixel under it");
+            }
+        }
+
+        /// <summary>WP-081 B1: at least five arts in the rotation, each its own asset with its file in place; the Results' own art stays out.</summary>
+        [Test]
+        public void Rotasyon_EnAzBesAyriSanat_HepsiDosyada()
+        {
+            IReadOnlyList<string> arts = UiCurtain.LoadingKeyArts;
+            Assert.GreaterOrEqual(arts.Count, 5, "R2 U3: at least five loading arts");
+            Assert.AreEqual(arts.Count, new HashSet<string>(arts).Count, "every rotation art is its own asset");
+            CollectionAssert.DoesNotContain(arts, UiCurtain.ResultsKeyArt, "the Results keep their own art, outside the rotation");
+            foreach (string art in arts)
+            {
+                Assert.IsTrue(File.Exists(FileOf(art)), art + ": the source file");
+            }
+        }
+
+        /// <summary>
+        /// R2 U3 on fixed seeds: a session of 200 loading screens never shows one art twice in a row, and every 20 in a row
+        /// (the first 20 too) show each art at least twice.
+        /// </summary>
+        [Test]
+        public void Rotasyon_ArdisikTekrarYok_YirmiYuklemedeHerSanatEnAzIkiKez()
+        {
+            const int Seeds = 500;
+            const int Loads = 200;
+            const int Window = 20;
+            int count = UiCurtain.LoadingKeyArts.Count;
+            int fewest = int.MaxValue;
+            var shown = new int[Loads];
+            var tally = new int[count];
+            for (int seed = 0; seed < Seeds; seed++)
+            {
+                var rotation = new KeyArtRotation(count, seed);
+                for (int i = 0; i < Loads; i++)
+                {
+                    shown[i] = rotation.Upcoming;
+                    rotation.Shown(shown[i]);
+                    if (i > 0 && shown[i] == shown[i - 1])
+                    {
+                        Assert.Fail("seed " + seed + ": load " + i + " shows art " + shown[i] + " again");
+                    }
+                }
+
+                for (int start = 0; start + Window <= Loads; start++)
+                {
+                    System.Array.Clear(tally, 0, count);
+                    for (int i = start; i < start + Window; i++)
+                    {
+                        tally[shown[i]]++;
+                    }
+
+                    for (int art = 0; art < count; art++)
+                    {
+                        fewest = Mathf.Min(fewest, tally[art]);
+                        if (tally[art] < 2)
+                        {
+                            Assert.Fail("seed " + seed + ": loads " + start + "-" + (start + Window - 1) + " show art " + art + " " + tally[art] + "x");
+                        }
+                    }
+                }
+            }
+
+            Debug.Log("[DD-TEST] wp081.u3 arts=" + count + " seeds=" + Seeds + " loads=" + Loads + " repeats=0 fewestPer" + Window + "=" + fewest);
+        }
+
+        /// <summary>
+        /// A screen that shows an art off the turn (a test, a capture) takes that art out of the round: whatever was shown,
+        /// the upcoming art is never the one just shown.
+        /// </summary>
+        [Test]
+        public void Rotasyon_SiraDisiGosterim_SiradakiYineFarkli()
+        {
+            var random = new System.Random(81);
+            for (int seed = 0; seed < 200; seed++)
+            {
+                var rotation = new KeyArtRotation(5, seed);
+                for (int i = 0; i < 100; i++)
+                {
+                    int pick = random.Next(3) == 0 ? random.Next(5) : rotation.Upcoming;
+                    rotation.Shown(pick);
+                    if (rotation.Last != pick || rotation.Upcoming == pick)
+                    {
+                        Assert.Fail("seed " + seed + ": after art " + pick + " the upcoming is " + rotation.Upcoming + " (last " + rotation.Last + ")");
+                    }
+                }
+            }
+        }
+
+        /// <summary>The Results ask for their own art; every other destination for the rotation's next, and asking spends no turn.</summary>
+        [Test]
+        public void KeyArtFor_SonuclarKendiSanati_DigerleriRotasyon()
+        {
+            Assert.AreEqual(UiCurtain.ResultsKeyArt, UiCurtain.KeyArtFor(PrototypeScenes.Results));
+            string upcoming = UiCurtain.UpcomingKeyArt;
+            CollectionAssert.Contains(UiCurtain.LoadingKeyArts, upcoming);
+            foreach (string scene in new[] { PrototypeScenes.MainMenu, PrototypeScenes.Selection, PrototypeScenes.Run })
+            {
+                Assert.AreEqual(upcoming, UiCurtain.KeyArtFor(scene), scene);
             }
         }
 
