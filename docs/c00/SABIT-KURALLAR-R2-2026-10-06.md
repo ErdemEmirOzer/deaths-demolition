@@ -502,7 +502,7 @@
 
 6.38 Ölçüm/tanı testleri `[Explicit]` + `[Category("Diagnostics")]` taşır ve CI dışındadır. main-ci `--category '!^Diagnostics$'` geçer (sınıf regex'i Explicit testleri de seçtiği için). `[Explicit]` testi tam adıyla çağrılır. Atlanma kuralının tek yeri `tools/qa/nunit_skips.py`'dir (Skipped ∧ Explicit ∧ Diagnostics). [TR (main-ci, C-00 05.10); EG 05.10; m:wp-085-durumu ders; m:wp-078-r1-kabul Y6]
 
-6.39 **Ayırma testi:** `ProfilerRecorder("GC Allocated In Frame")` + pozitif kontrol (64 KB yem) + `Application.targetFrameRate = -1` (SetUp'ta; TearDown'da geri) + `Profiler.enabled`. `GC.GetAllocatedBytesForCurrentThread` (Mono'da hep 0) ve `GC.GetTotalMemory` kanıt sayılmaz. Alloc testleri zincirde tek başına koşar; tek-kare yükseltme + kontrol + çiftlerde minimum kullanılır. [PSP §11, §15; TR (ProfilerRecorder); m:unity-batch-dersleri 17.09; m:wp-059d-durumu ders]
+6.39 **Ayırma testi:** iki kabul edilen kalıp (PSP §11): (i) UTF `Is.Not.AllocatingGCMemory()` ile senkron çağrı, ya da (ii) kare boyunca `ProfilerRecorder("GC Allocated In Frame")` + `Application.targetFrameRate = -1` (SetUp'ta; TearDown'da geri) + `Profiler.enabled`. İkisinde de pozitif kontrol (64 KB yem) zorunludur. [C-00 06.10 düzeltmesi: taslak yalnız (ii)'yi anıyordu] `GC.GetAllocatedBytesForCurrentThread` (Mono'da hep 0) ve `GC.GetTotalMemory` kanıt sayılmaz. Alloc testleri zincirde tek başına koşar; tek-kare yükseltme + kontrol + çiftlerde minimum kullanılır. [PSP §11, §15; TR (ProfilerRecorder); m:unity-batch-dersleri 17.09; m:wp-059d-durumu ders]
 
 6.40 **Deterministik testler:**
 - Kare/süre/his ölçen PlayMode testinde `Time.captureDeltaTime = 1f/60f` konur ve finally'de geri verilir.
