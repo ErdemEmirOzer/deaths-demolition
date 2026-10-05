@@ -10,7 +10,8 @@
         "Unity.RenderPipelines.Core.Runtime",
         "Unity.RenderPipelines.Universal.Runtime",
         "Unity.AI.Navigation",
-        "UnityEngine.UI"
+        "UnityEngine.UI",
+        "DD.Prototype.Tests.Shared"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

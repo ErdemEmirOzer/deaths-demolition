@@ -4,14 +4,15 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 
-namespace DD.Prototype.Tests.PlayMode
+namespace DD.Prototype.Tests
 {
     /// <summary>
-    /// R2 measurement contract (WP-091, S-10 · tools/qa/r2-measure-contract.md): a measuring test hands its result to the
+    /// R2 measurement contract (WP-091, S-10 · tools/qa/r2-measure-contract.md) — shared by the EditMode and PlayMode test
+    /// assemblies (DD.Prototype.Tests.Shared, C-00 05.10): a measuring test hands its result to the
     /// acceptance chain as r2-&lt;gate&gt;.json in DD_R2_MEASURE_DIR, stamped with DD_R2_COMMIT. Without the folder variable it
     /// writes nothing (ordinary CI) — the test still asserts the contract's threshold itself. Plain numbers only.
     /// </summary>
-    internal static class R2Olcum
+    public static class R2Olcum
     {
         public const string Schema = "dd-r2-measure-v1";
 

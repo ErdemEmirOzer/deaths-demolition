@@ -9,7 +9,8 @@
         "DD.Art.Pipeline.Editor",
         "Unity.TextMeshPro",
         "UnityEngine.TestRunner",
-        "UnityEditor.TestRunner"
+        "UnityEditor.TestRunner",
+        "DD.Prototype.Tests.Shared"
     ],
     "includePlatforms": [
         "Editor"

@@ -7,7 +7,8 @@
         "DD.Prototype.Qa",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
-        "Unity.TextMeshPro"
+        "Unity.TextMeshPro",
+        "DD.Prototype.Tests.Shared"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
