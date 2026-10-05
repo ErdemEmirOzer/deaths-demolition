@@ -94,6 +94,8 @@ class MeasuredByTests(unittest.TestCase):
         self.assertEqual("DD.Prototype.Tests.PlayMode.WeaponReloadMagazineTests.H3_SarjorluSilahlar_VuruslarTam_HavadaKareYok",
                          gate("H3")["measuredBy"]["filter"])
         self.assertIn("floorLimited", gate("P5")["report"])
+        self.assertEqual("DD.Prototype.Tests.PlayMode.UiOverflowMatrixTests.U2_Tasma_TrEn_Metin1ve125_MacUi12",
+                         gate("U2")["measuredBy"]["filter"])
 
     def test_s5_airborne_queue_is_reported_never_gated(self):
         self.assertEqual(["queueMax"], gate("S5")["report"])

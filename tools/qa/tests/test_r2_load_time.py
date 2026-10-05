@@ -29,6 +29,26 @@ class SampleTests(unittest.TestCase):
         self.assertEqual([("a2/gameplay-tp", 1.40), ("a3/flag-ddaiv3-0", 1.50)], lt.samples(root))
 
 
+class RawTests(unittest.TestCase):
+    def test_raw_seconds_are_r2_only_and_minus_one_or_absent_is_no_sample(self):
+        r2, r1 = tempfile.mkdtemp(), tempfile.mkdtemp()
+        for name, raw in (("gameplay-tp", [0.1, 0.42]), ("gameplay-fp", [0.1, -1]), ("route-tp", None)):
+            d = Path(r2) / "a2" / name / "ui-data"
+            d.mkdir(parents=True)
+            data = {"Version": 1, "Scenes": ["Selection", "Run"], "Seconds": [1.2, 1.3]}
+            if raw is not None:
+                data["RawSeconds"] = raw
+            (d / "load-timing.json").write_text(json.dumps(data))
+        session(r1, "a2", "gameplay-tp", ["Selection", "Run"], [1.2, 1.22])     # R1 FINAL: no RawSeconds at all
+        data, _, _ = lt.artifact(r2, r1, A, B)
+        self.assertEqual((0.42, 1), (data["values"]["r2RawMedianSeconds"], data["values"]["r2RawSamples"]))
+        self.assertEqual(round(1.3 / 1.22, 4), data["values"]["ratio"])          # the ratio stays Seconds over Seconds
+        self.assertEqual({"a2/gameplay-tp": 0.42}, data["sessions"]["r2Raw"])
+
+    def test_without_raw_samples_the_field_is_null(self):
+        self.assertIsNone(lt.compare([("x", 1.3)], [("p", 1.2)])["r2RawMedianSeconds"])
+
+
 class CompareTests(unittest.TestCase):
     def test_ratio_of_medians_and_the_floor_flag(self):
         v = lt.compare([("x", 1.30), ("y", 1.50), ("z", 1.40)], [("p", 1.218), ("q", 1.222)])

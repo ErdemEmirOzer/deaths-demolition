@@ -9,6 +9,10 @@ writes <session>/ui-data/load-timing.json through its own -ddUiDataRoot (never t
 in both rounds (A2 gameplay/route × 3 modes, A3 flag runs), so P5 needs no extra Player and no code in either build:
 the R1 FINAL evidence is the baseline, the R2 FINAL evidence the subject, dev build against dev build.
 
+Raw (S-09 WP-081 B4, R2 only): "RawSeconds", in Scenes order, is LoadSceneAsync → progress 0.9 — the load itself, no
+curtain floor, no activation; -1 = not measured, absent before WP-081 (read as -1). R1 FINAL has none, so it never
+enters the ratio: r2RawMedianSeconds is shown next to it for the record.
+
 Floor: the curtain stays at least MinimumDisplaySeconds (1.2 s at R1). R1 measured ~1.22 s in every session, i.e. the
 real load was under the floor; the ratio therefore only shows an R2 load that grows past it (floorLimited = true says
 so). P5 is a report entry, it never fails.
@@ -29,43 +33,52 @@ STAGES = ("a2", "a3")      # the bot sessions of the chain that enter the run th
 SHA = re.compile(r"[0-9a-f]{40}")
 
 
-def samples(evidence):
-    """[(session, seconds)] — the "Run" entry of every bot session's load-timing.json, in path order."""
+def _number(value):
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and value > 0
+
+
+def samples(evidence, field="Seconds"):
+    """[(session, seconds)] — the "Run" entry of `field` (Seconds, or RawSeconds) in every bot session's
+    load-timing.json, in path order; a missing array or -1 is not a sample."""
     out = []
     for stage in STAGES:
         for path in sorted((Path(evidence) / stage).glob("*/ui-data/load-timing.json")):
             try:
                 data = json.loads(path.read_text(encoding="utf-8"))
-                seconds = dict(zip(data["Scenes"], data["Seconds"])).get("Run")
-            except (OSError, ValueError, KeyError, TypeError):
+                seconds = dict(zip(data["Scenes"], data.get(field) or [])).get("Run")
+            except (OSError, ValueError, KeyError, TypeError, AttributeError):
                 continue
-            if isinstance(seconds, (int, float)) and not isinstance(seconds, bool) and seconds > 0:
+            if _number(seconds):
                 out.append((f"{stage}/{path.parent.parent.name}", float(seconds)))
     return out
 
 
-def compare(r2, r1):
-    """P5 values from two sample lists, or None when a side has nothing."""
+def compare(r2, r1, r2_raw=()):
+    """P5 values from two sample lists, or None when a side has nothing; r2_raw (R2 RawSeconds) is recorded, never
+    part of the ratio."""
     if not r2 or not r1:
         return None
+    raw = [s for _, s in r2_raw]
     r2_median = statistics.median(s for _, s in r2)
     r1_median = statistics.median(s for _, s in r1)
     return {"ratio": round(r2_median / r1_median, 4),
             "r2MedianSeconds": round(r2_median, 4), "r1MedianSeconds": round(r1_median, 4),
             "r2Samples": len(r2), "r1Samples": len(r1),
             "floorSeconds": FLOOR_SECONDS,
-            "floorLimited": r1_median <= FLOOR_SECONDS + FLOOR_MARGIN}
+            "floorLimited": r1_median <= FLOOR_SECONDS + FLOOR_MARGIN,
+            "r2RawMedianSeconds": round(statistics.median(raw), 4) if raw else None,
+            "r2RawSamples": len(raw)}
 
 
 def artifact(r2_evidence, r1_evidence, commit, baseline_commit):
-    r2, r1 = samples(r2_evidence), samples(r1_evidence)
-    values = compare(r2, r1)
+    r2, r1, r2_raw = samples(r2_evidence), samples(r1_evidence), samples(r2_evidence, "RawSeconds")
+    values = compare(r2, r1, r2_raw)
     if values is None:
         return None, r2, r1
     return {"schema": "dd-r2-measure-v1", "gate": "P5", "commit": commit, "baselineCommit": baseline_commit,
             "source": "tools/qa/r2_load_time.py (Player load-timing.json, bot boot flow)",
             "values": values, "samples": len(r2),
-            "sessions": {"r2": dict(r2), "r1": dict(r1)}}, r2, r1
+            "sessions": {"r2": dict(r2), "r1": dict(r1), "r2Raw": dict(r2_raw)}}, r2, r1
 
 
 def main():
