@@ -83,6 +83,30 @@ class CodeMappingTests(unittest.TestCase):
         self.assertEqual(7, code)
         self.assertEqual(1, guard.call_count)
 
+    def test_restore_32_reaches_the_verdict_which_stops_on_the_out_of_scope_change(self):
+        """G4 D7: 32 (in scope verified, another area changed) is not retried and goes to verdict() like 0 — which stops
+        the acceptance window on out-of-scope changes, exactly as before D7 (when this case exited 0)."""
+        ug = Path(tempfile.mkdtemp())
+        line = "userdata-guard restore scope=player touched=0 verified=1 retry=none class=OTHER"
+        with mock.patch.object(gr, "run_guard", return_value=done(32, line)) as guard:
+            code, _ = gr.restore_with_retry(ug, attempts=5, sleep=lambda s: None)
+        self.assertEqual((0, 1), (code, guard.call_count))
+        (ug / "out-of-scope-changed.txt").write_text("editor  MISSING  /x\n")
+        with mock.patch.object(gr, "run_guard", return_value=done(32, line)), mock.patch.object(gr, "export_prefs"):
+            receipt = gr.close(ug)
+        self.assertEqual((7, "out-of-scope changes", 32, True), (receipt["code"], receipt["why"], receipt["restoreExit"],
+                                                                 receipt["outOfScopeChanged"]))
+
+    def test_restore_32_after_a_retry_stops_although_the_first_list_is_empty(self):
+        """D7 review SHOULD-1: a retry publishes its list as out-of-scope-changed.txt.N; the summary line decides."""
+        ug = Path(tempfile.mkdtemp())
+        (ug / "out-of-scope-changed.txt").write_text("")
+        (ug / "out-of-scope-changed.txt.2").write_text("editor  MISSING  /x\n")
+        line = "userdata-guard restore scope=player touched=0 verified=1 extraKeys=0 outOfScopeChanged=1 retry=none class=OTHER"
+        with mock.patch.object(gr, "run_guard", return_value=done(32, line)), mock.patch.object(gr, "export_prefs"):
+            receipt = gr.close(ug)
+        self.assertEqual((7, "out-of-scope changes", True), (receipt["code"], receipt["why"], receipt["outOfScopeChanged"]))
+
 
 def perf_args():
     return argparse.Namespace(dry_run=False, player_wait=0, commit="a" * 40, load_max=6.0)

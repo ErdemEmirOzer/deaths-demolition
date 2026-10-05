@@ -19,6 +19,8 @@
   index-append <ledger> <field>…   one tab-separated line → <ledger>/INDEX.tsv under an flock on <ledger>/.lock (G4 D6 Q5)
   restore-area               G4 D6 R9: one area's write phase — JSON config on stdin, JSON result on stdout (restore_area)
   verify-area                G4 D6 R10: one area's verification — JSON config on stdin, JSON result on stdout (verify_area)
+  window-owner <window.json> G4 D7 R4: the receipt's owner (re-entrant: the slot holder) alive with its start time → 0, else 1
+  foreign-players <lineage>  G4 D7: owned=0 Players of players-lineage.tsv as JSON; 1 when there is any
 Read-only except atomic-write, sample, index-append and restore-area. Exit 2 = usage.
 """
 import hashlib
@@ -52,6 +54,35 @@ def lstart(pid):
         if attempt < 2:
             time.sleep(0.1)
     return ""
+
+
+def window_owner(path):
+    """G4 D7 R4 (WINDOW_LOST): the window's real owner — the slot holder of a re-entrant snapshot, else the snapshot's
+    caller — still alive with the start time recorded in the receipt. lstart() already asks ps 3 times; an empty answer
+    counts as lost (the safe direction). Returns (alive: bool, why)."""
+    with open(path, encoding="utf-8") as f:
+        w = json.load(f)
+    r = w.get("receipt") or {}
+    who = r.get("holder") or r.get("owner")
+    if not who or not who.get("pid"):
+        return False, "the receipt names no owner"
+    now = lstart(who["pid"])
+    if not now:
+        return False, "owner pid %s is gone (or ps gave no answer 3 times)" % who["pid"]
+    if now != who.get("lstart"):
+        return False, "owner pid %s was reused (started %s, the receipt says %s)" % (who["pid"], now, who.get("lstart"))
+    return True, "owner pid %s alive" % who["pid"]
+
+
+def foreign_players(path):
+    """G4 D7 FOREIGN_WRITER: the players-lineage.tsv rows (utc, pid, ppid, lstart, owned) of Players outside the window's
+    own process tree (owned=0), one per pid."""
+    rows = {}
+    for line in read_plain(path):
+        cols = line.split("\t")
+        if len(cols) == 5 and cols[4] == "0":
+            rows.setdefault(cols[1], {"pid": int(cols[1]), "ppid": int(cols[2]), "lstart": cols[3], "firstSeen": cols[0]})
+    return list(rows.values())
 
 
 def atomic_write(dest):
@@ -434,7 +465,7 @@ def restore_area(cfg):
             res["classes"].append(cls)
 
     def index(path, digest, reason, cls):
-        index_append(cfg["ledger"], [utc, cfg["id"], cfg["dir"], path, digest, reason, cls])
+        index_append(cfg["ledger"], [utc, cfg["id"], cfg["dir"], path, digest, reason, cls or cfg.get("indexClass", "")])
 
     def finish():
         # D6 review: a race before any write is "nothing restored" (75); once anything in the area was written it is 30
@@ -676,6 +707,14 @@ def main(argv):
         value = lstart(args[0])
         print(value)
         return 0 if value else 1
+    if cmd == "window-owner" and len(args) == 1:
+        alive, why = window_owner(args[0])
+        print(why)
+        return 0 if alive else 1
+    if cmd == "foreign-players" and len(args) == 1:
+        rows = foreign_players(args[0])
+        print(json.dumps(rows))
+        return 1 if rows else 0
     if cmd == "atomic-write" and len(args) == 1:
         atomic_write(args[0])
         return 0

@@ -435,12 +435,12 @@ if [ -n "${DD_GUARD_ROOT:-}" ]; then LEDGER="$DD_GUARD_ROOT/ledger"; else LEDGER
 zmodload zsh/system
 : >> "$DIR/.restore.lock"   # zsystem flock does not create the file
 zsystem flock -t 0 -f UG_LOCKFD "$DIR/.restore.lock" 2>/dev/null || {
-  UG_LAST="$(date -u +%FT%TZ) userdata-guard restore scope=$SCOPE LOCKED — another restore of $DIR is running (75) retry=same-dir"; print -r -- "$UG_LAST"; exit 75; }
+  UG_LAST="$(date -u +%FT%TZ) userdata-guard restore scope=$SCOPE LOCKED — another restore of $DIR is running (75) retry=same-dir class=LOCKED"; print -r -- "$UG_LAST"; exit 75; }
 # D6 review (concurrency SHOULD-2): a guard shell killed with SIGKILL frees the lock above while its write helper (signals
 # ignored) still runs — the helper holds .restore-write.lock for its whole life; probe it and let go at once
 : >> "$DIR/.restore-write.lock"
 zsystem flock -t 0 -f UG_WFD "$DIR/.restore-write.lock" 2>/dev/null || {
-  UG_LAST="$(date -u +%FT%TZ) userdata-guard restore scope=$SCOPE LOCKED — a write helper of $DIR is still running (75) retry=same-dir"; print -r -- "$UG_LAST"; exit 75; }
+  UG_LAST="$(date -u +%FT%TZ) userdata-guard restore scope=$SCOPE LOCKED — a write helper of $DIR is still running (75) retry=same-dir class=LOCKED"; print -r -- "$UG_LAST"; exit 75; }
 zsystem flock -u $UG_WFD
 # R2 wait phase: a signal stops the current wait; the rest of the waits are skipped (areas still locked → BUSY)
 GUARD_SIG=0; WAITPID=""
@@ -452,11 +452,22 @@ case "${DIR:A}" in /private/tmp/*|/private/var/folders/*|/tmp/*) dd_log "WARNING
 [ -f "$DIR/quarantine.txt" ] || print -r -- "$LEDGER/quarantine/$WINID/" > "$DIR/quarantine.txt"
 # R3 the sampler stops (the dead writers' temp sweep runs in the write phase, only for the areas written — D6 review N3)
 rm -f "$DIR/.sampling"
+CLASSES=(); add_class() { (( ${CLASSES[(Ie)$1]} )) || CLASSES+=("$1"); }
+# R4 (G4 D7, Q2): a window with a slot receipt — its owner (re-entrant: the slot holder) must still be the same live
+# process; otherwise the player slot may have passed to someone else meanwhile: WINDOW_LOST (30), restored all the same.
+# The slot lock file is not consulted. No check for a legacy window.
+if [ "$KIND" = v2 ] && [ "$WRECEIPT" = receipt ]; then
+  # reported once (window-lost.txt): a later restore of the same window that converges exits 0 (T34)
+  if ! WL=$(python3 "$IO" window-owner "$DIR/window.json"); then
+    if [ -f "$DIR/window-lost.txt" ]; then dd_log "userdata-guard: info — window owner still gone ($WL); WINDOW_LOST was reported $(head -1 "$DIR/window-lost.txt")"
+    else print -r -- "$(date -u +%FT%TZ) $WL" > "$DIR/window-lost.txt"; add_class WINDOW_LOST
+      dd_log "userdata-guard: WINDOW_LOST — $WL; restoring anyway (30), tell C-00"; fi
+  fi
+fi
 # R5
 settle "$DOM1" "$P1"; settle "$DOM2" "$P2"
 UG_RELEASE=1   # WP-066N: the snapshot's player slot ends with this restore, whatever the outcome (restore_exit)
-CLASSES=(); typeset -A AREA_CLASS
-add_class() { (( ${CLASSES[(Ie)$1]} )) || CLASSES+=("$1"); }
+typeset -A AREA_CLASS
 # R7 area gate: A∖W → OUT_OF_WINDOW; a live lock holder → BUSY; the player area while a Player runs → BUSY
 WRITE_AREAS=()
 for a in $AREAS; do
@@ -517,7 +528,7 @@ if [ "$R8OK" -ne 1 ]; then
 fi
 python3 "${0:A:h}/userdata_attrib.py" "$DIR" || true
 [ -s "$DIR/attribution.txt" ] && dd_log "userdata-guard: writers → $DIR/attribution.txt"
-[ -n "$OTHER" ] && dd_log "WARNING userdata-guard: an area outside --scope $SCOPE changed during the run and was NOT restored — $OOS"
+[ -n "$OTHER" ] && { add_class OTHER; dd_log "WARNING userdata-guard: an area outside --scope $SCOPE changed during the run and was NOT restored — $OOS"; }
 TOUCHED=0; for a in $AREAS; do cmp -s "$DIR/before-$a.txt" "$DIR/after-run-$a.txt" || TOUCHED=1; done
 # R6 (after R8, SHOULD-1): the snapshot's player display values off known-good → 31, nothing written
 if (( ${WRITE_AREAS[(Ie)player]} )); then
@@ -529,6 +540,21 @@ if (( ${WRITE_AREAS[(Ie)player]} )); then
     add_class KG_DEVIATION; WRITE_AREAS=()
   fi
 fi
+# G4 D7 FOREIGN_WRITER (M8): a Player outside the window's own process tree (players-lineage.tsv owned=0) was seen while
+# the window was open, and the PLAYER area of the window changed (before ≠ the first after-run) — restored all the same
+# (30); the ledger rows of this restore carry the class, the verdict names the Players and the kept bytes. A Player writes
+# only the player area (WP-066K), so an editor-only window never has this class (D7 review MUST-1).
+FW_JSON="[]"; INDEXCLASS=""
+if [ -s "$DIR/players-lineage.tsv" ] && (( ${W[(Ie)player]} )) && (( ${AREAS[(Ie)player]} )); then
+  FW_JSON=$(python3 "$IO" foreign-players "$DIR/players-lineage.tsv"); fw=$?
+  if [ $fw -eq 1 ]; then
+    FWCHG=0; cmp -s "$DIR/before-player.txt" "$DIR/after-run-player.txt" || FWCHG=1
+    if [ $FWCHG -eq 1 ]; then
+      add_class FOREIGN_WRITER; INDEXCLASS=FOREIGN_WRITER
+      dd_log "userdata-guard: FOREIGN_WRITER — a Player outside this window ran while it was open and the window's data changed; restoring anyway (30), tell C-00: $FW_JSON"
+    fi
+  elif [ $fw -ne 0 ]; then FW_JSON="[]"; fi
+fi
 # R9 write phase. First the R3 sweep, only in the folders about to be written: a dead writer's temp file is moved to the
 # quarantine (SHOULD-4: a live pid's is left alone)
 for a in $WRITE_AREAS; do
@@ -537,7 +563,7 @@ for a in $WRITE_AREAS; do
     tp=${${t:t:r}##*-}
     if [[ "$tp" == <-> ]] && ! kill -0 "$tp" 2>/dev/null; then
       q="$LEDGER/quarantine/$WINID/tmp-sweep"; mkdir -p "$q"; ts="$(dd_sha "$t")"; mv -n "$t" "$q/${t:t}.$(date -u +%s)" \
-        && python3 "$IO" index-append "$LEDGER" "$(date -u +%FT%TZ)" "$WINID" "$DIR" "$t" "$ts" tmp-sweep "" \
+        && python3 "$IO" index-append "$LEDGER" "$(date -u +%FT%TZ)" "$WINID" "$DIR" "$t" "$ts" tmp-sweep "$INDEXCLASS" \
         && dd_log "userdata-guard: a dead writer's temp file moved to $q: $t"
     fi
   done
@@ -548,13 +574,13 @@ area_cfg() { local a=$1 f
   local first="$DIR/after-run-$a.txt"
   A_DIR="$DIR" A_AREA=$a A_ID="$WINID" A_LEDGER="$LEDGER" A_FOLDER="$folder" A_NAMES="${(j:/:)names}" A_PLIST="$plist" A_DOMAIN="$dom" \
   A_PX=$px A_SF="$sf" A_SP="$sp" A_BEFORE="$DIR/before-$a.txt" A_FIRST="$first" A_VOL="$UNITY_VOLATILE" A_RE="$PLAYER_RE" \
-  A_CHECK=$check A_AS="${AS:A}" A_PR="${PR:A}" A_PID=$$ A_RESULT="$DIR/restore-$a.json" python3 -c 'import json, os
+  A_CHECK=$check A_AS="${AS:A}" A_PR="${PR:A}" A_PID=$$ A_RESULT="$DIR/restore-$a.json" A_IC="$INDEXCLASS" python3 -c 'import json, os
 e = os.environ
 print(json.dumps({"dir": e["A_DIR"], "area": e["A_AREA"], "id": e["A_ID"], "ledger": e["A_LEDGER"], "folder": e["A_FOLDER"],
   "names": e["A_NAMES"].split("/"), "plist": e["A_PLIST"], "domain": e["A_DOMAIN"], "pxName": e["A_PX"], "snapFolder": e["A_SF"],
   "snapPlist": e["A_SP"], "before": e["A_BEFORE"], "first": e["A_FIRST"], "volatile": e["A_VOL"].split(), "playerRe": e["A_RE"],
   "checkPlayer": e["A_CHECK"] == "1", "rootAS": e["A_AS"], "rootPR": e["A_PR"], "guardPid": int(e["A_PID"]),
-  "result": e["A_RESULT"]}))'
+  "result": e["A_RESULT"], "indexClass": e["A_IC"]}))'
 }
 HELPER_FAILED=()
 for a in $WRITE_AREAS; do
@@ -578,25 +604,34 @@ done
 for c in $CLASSES; do case $c in OUT_OF_WINDOW|BUSY|KG_DEVIATION|INTERRUPTED) OK=0;; esac; done
 for c in $CLASSES; do case $c in STALE|SYMLINK|SNAPCORRUPT|WRITE_FAILED|RACED-EARLY|RACED-LATE|MISMATCH|SETTLE_TIMEOUT) OK=0;; esac; done
 state > "$DIR/after.txt"; for a in editor player; do state_of $a > "$DIR/after-$a.txt"; done
-# exit code by priority 64 > 31 > 30 > 75 > 0 (§2.5); retry=same-dir ⇔ 75 or INTERRUPTED
-RC=0
-for c in $CLASSES; do case $c in BUSY|RACED-EARLY) [ $RC -eq 0 ] && RC=75;; esac; done
-for c in $CLASSES; do case $c in STALE|SYMLINK|SNAPCORRUPT|WRITE_FAILED|OUT_OF_WINDOW|RACED-LATE|INTERRUPTED|MISMATCH|EXTRA_KEYS|SETTLE_TIMEOUT) RC=30;; esac; done
-[ "$OK" -eq 1 ] || [ $RC -ne 0 ] || RC=30
-for c in $CLASSES; do [ $c = KG_DEVIATION ] && RC=31; done
-RETRY=none; { [ $RC -eq 75 ] || (( ${CLASSES[(Ie)INTERRUPTED]} )); } && RETRY=same-dir
+# exit code by priority 64 > 31 > 30 > 75 > 32 > 0 (§2.5, G4 D7); class= = the first class of the deciding code in the
+# table order; retry=same-dir ⇔ 75 or INTERRUPTED. OTHER (another area changed) never lowers verified (INV-1).
+T30=(MISMATCH EXTRA_KEYS SETTLE_TIMEOUT SYMLINK SNAPCORRUPT WRITE_FAILED OUT_OF_WINDOW RACED-LATE STALE INTERRUPTED WINDOW_LOST FOREIGN_WRITER)
+T75=(BUSY RACED-EARLY LOCKED)
+first_of() { local c; for c in "$@"; do (( ${CLASSES[(Ie)$c]} )) && { print -r -- $c; return 0; }; done; return 1; }
+RC=0; CLS=OK
+if C=$(first_of KG_DEVIATION); then RC=31; CLS=$C
+elif C=$(first_of $T30); then RC=30; CLS=$C
+elif C=$(first_of $T75); then RC=75; CLS=$C
+elif [ "$OK" -ne 1 ]; then RC=30; CLS=MISMATCH   # unverified without a class of its own
+elif C=$(first_of OTHER); then RC=32; CLS=$C; fi
+# D7 review SHOULD-3: an area left unwritten (BUSY / RACED-EARLY) needs the retry even when a 30 class decides the code
+RETRY=none; { [ $RC -eq 75 ] || (( ${CLASSES[(Ie)INTERRUPTED]} )) || [ -n "$(first_of $T75)" ]; } && RETRY=same-dir
 SNAPID=$(python3 "$IO" sha "$DIR/before.txt" | cut -c1-12)
 # R11 verdict (atomic; v1 alias keys kept)
 VERDICT=$(V_ID="$WINID" V_KIND=$KIND V_SCOPE=$SCOPE V_W="$W" V_CLASSES="${(j: :)CLASSES}" V_RC=$RC V_OK=$OK V_TOUCHED=$TOUCHED \
-  V_RETRY=$RETRY V_SNAPID=$SNAPID V_DIR="$DIR" V_AREAS="${(j: :)WRITE_AREAS}" python3 -c 'import json, os, time
+  V_RETRY=$RETRY V_SNAPID=$SNAPID V_DIR="$DIR" V_AREAS="${(j: :)WRITE_AREAS}" V_CLS=$CLS V_FW="$FW_JSON" V_FWC=$INDEXCLASS \
+  python3 -c 'import json, os, time
 e = os.environ; d = e["V_DIR"]
 per = {}
 for a in e["V_AREAS"].split():
     try: per[a] = json.load(open(os.path.join(d, "restore-%s.json" % a)))
     except Exception: per[a] = None
 print(json.dumps({"version": 2, "id": e["V_ID"], "kind": e["V_KIND"], "scope": e["V_SCOPE"], "windowAreas": e["V_W"].split(),
-  "classes": e["V_CLASSES"].split(), "exit": int(e["V_RC"]), "verified": e["V_OK"] == "1", "touched": e["V_TOUCHED"] == "1",
-  "retry": e["V_RETRY"], "snapshotId": e["V_SNAPID"], "areas": per, "status": "ok" if e["V_RC"] == "0" else "failed",
+  "classes": e["V_CLASSES"].split(), "class": e["V_CLS"], "exit": int(e["V_RC"]), "verified": e["V_OK"] == "1", "touched": e["V_TOUCHED"] == "1",
+  "retry": e["V_RETRY"], "snapshotId": e["V_SNAPID"], "areas": per, "status": "ok" if e["V_RC"] in ("0", "32") else "failed",
+  "foreignWriter": None if not e["V_FWC"] else {"players": json.loads(e["V_FW"] or "[]"),
+    "displaced": [q for a in per.values() if a for p in a.get("paths", []) for q in p.get("quarantine", [])]},
   "samplerClosed": not os.path.exists(os.path.join(d, ".sampling")), "snapshotManifestSha256": None,
   "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}, indent=1))')
 print -r -- "$VERDICT" | python3 "$IO" atomic-write "$DIR/guard-verdict.json"
@@ -604,6 +639,6 @@ VN=1; VU=$(date -u +%Y%m%dT%H%M%SZ); while [ -e "$DIR/verdict-$VU.$VN.json" ]; d
 print -r -- "$VERDICT" | python3 "$IO" atomic-write "$DIR/verdict-$VU.$VN.json"
 # R12 (D8: the ledger record goes here)
 # R13 summary line (stdout's LAST line); the player slot is released by restore_exit
-dd_log "userdata-guard restore scope=$SCOPE touched=$TOUCHED verified=$OK extraKeys=$(grep -c . "$DIR/extra-keys.txt") outOfScopeChanged=$(grep -c . "$OOS") $M7 window=$WINID snapshotId=$SNAPID retry=$RETRY"
+dd_log "userdata-guard restore scope=$SCOPE touched=$TOUCHED verified=$OK extraKeys=$(grep -c . "$DIR/extra-keys.txt") outOfScopeChanged=$(grep -c . "$OOS") $M7 window=$WINID snapshotId=$SNAPID retry=$RETRY class=$CLS"
 [ "$OK" -eq 1 ] || { [ ${#CLASSES} -gt 0 ] && print -r -- "userdata-guard: classes ${CLASSES[*]} — $DIR/guard-verdict.json" >&2; cat "$DIR/extra-keys.txt" >&2; }
 exit $RC

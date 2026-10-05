@@ -547,8 +547,8 @@ class RestoreD5Tests(GuardFixture):
         self.assertEqual("", self.log.read_text())
 
 
-class RestoreWriteTests(GuardFixture):
-    """G4 D6 (design v3.1 §3 D6): the restore write path — exp / first / live per path, CAS, quarantine, rename swap."""
+class RestoreBase(GuardFixture):
+    """helpers shared by the restore test classes (no tests of its own)."""
 
     def snap(self, scope="all"):
         rc, out, err = self.run_guard("snapshot", self.dir, "--scope", scope)
@@ -576,6 +576,26 @@ class RestoreWriteTests(GuardFixture):
     def hook(self, script):
         write_exec(self.tmp / "pgrep-hook", "#!/bin/sh\n" + script)
 
+    def player_changes(self):
+        """only the player area changes (a player-scope restore then has no OTHER)."""
+        (self.d2 / "prototype-profile.json").write_text('{"player": 99}\n')
+        d = load_plist(self.p1); d["RunKey"] = 1; self.write_plist(self.p1, d)
+
+    def lock_d2(self, folder=None):
+        unity = self.tmp / "Unity.app/Contents/MacOS/Unity"
+        if not unity.exists():
+            unity.parent.mkdir(parents=True); unity.symlink_to("/bin/sleep")
+        p = subprocess.Popen([str(unity), "120"], start_new_session=True); self.procs.append(p)
+        (folder or self.d2).joinpath("prototype-profile.json.lock").write_text("pid=%d\nname=fixture\n" % p.pid)
+        return p
+
+    def unlock_d2(self, p, folder=None):
+        p.kill(); p.wait(timeout=10); (folder or self.d2).joinpath("prototype-profile.json.lock").unlink()
+
+
+class RestoreWriteTests(RestoreBase):
+    """G4 D6 (design v3.1 §3 D6): the restore write path — exp / first / live per path, CAS, quarantine, rename swap."""
+
     def test_Restore_MutluYol_UcKapsamCreatedKarantinada(self):
         for scope in ("editor", "player", "all"):
             with self.subTest(scope=scope):
@@ -584,7 +604,7 @@ class RestoreWriteTests(GuardFixture):
                 w = self.snap(scope)
                 self.run_changes()
                 rc, out, err = self.restore(scope)
-                self.assertEqual(0, rc, out + err)
+                self.assertEqual(0 if scope == "all" else 32, rc, out + err)   # G4 D7: the other area changed too → OTHER
                 last = out.strip().splitlines()[-1]
                 self.assertIn("verified=1", last); self.assertIn("snapshotId=", last); self.assertIn("retry=none", last)
                 state = self.live_state()
@@ -757,7 +777,7 @@ class RestoreWriteTests(GuardFixture):
             rc, out, err = self.restore()
         finally:
             lk.close()
-        self.assertEqual(75, rc, out + err); self.assertIn("LOCKED", out)
+        self.assertEqual(75, rc, out + err); self.assertTrue(out.strip().splitlines()[-1].endswith("retry=same-dir class=LOCKED"), out)
         rc, out, err = self.restore()
         self.assertEqual(0, rc, out + err)
 
@@ -770,19 +790,8 @@ class RestoreWriteTests(GuardFixture):
         self.assertEqual('{"user-later": 1}\n', (self.d1 / "ui-settings.json").read_text())
         self.assertIn("STALE", self.verdict()["classes"])
 
-    def lock_d2(self, folder=None):
-        unity = self.tmp / "Unity.app/Contents/MacOS/Unity"
-        if not unity.exists():
-            unity.parent.mkdir(parents=True); unity.symlink_to("/bin/sleep")
-        p = subprocess.Popen([str(unity), "120"], start_new_session=True); self.procs.append(p)
-        (folder or self.d2).joinpath("prototype-profile.json.lock").write_text("pid=%d\nname=fixture\n" % p.pid)
-        return p
-
-    def unlock_d2(self, p, folder=None):
-        p.kill(); p.wait(timeout=10); (folder or self.d2).joinpath("prototype-profile.json.lock").unlink()
-
     def test_Restore_Busy75SonraTekrar_Yakinsar(self):
-        before = self.live_state(); self.snap("player"); self.run_changes()
+        before = self.live_state(); self.snap("player"); self.player_changes()   # G4 D7: player-only, no OTHER (32)
         p = self.lock_d2()
         rc, out, err = self.restore("player"); self.assertEqual(75, rc, out + err)
         self.assertIn("retry=same-dir", out.strip().splitlines()[-1])
@@ -816,7 +825,7 @@ class RestoreWriteTests(GuardFixture):
         self.unlock_d2(p)
 
     def test_Restore_YazimdaSurecGrubunaInt_YazimBiter(self):
-        before = self.live_state(); self.snap("player"); self.run_changes()
+        before = self.live_state(); self.snap("player"); self.player_changes()   # G4 D7: player-only, no OTHER (32)
         self.hook('[ "$1" = 2 ] && { : > "%s/in-write"; sleep 3; }\n' % self.tmp)
         g = self.start_guard("restore", self.dir, "--scope", "player")
         self.assertTrue(self.wait_file(self.tmp / "in-write"))
@@ -826,7 +835,7 @@ class RestoreWriteTests(GuardFixture):
         self.assertEqual(before[self.d2 / "prototype-profile.json"], sha(self.d2 / "prototype-profile.json"))
 
     def test_Restore_YazimdaSigkill_TekrarYakinsar(self):
-        before = self.live_state(); self.snap("player"); self.run_changes()
+        before = self.live_state(); self.snap("player"); self.player_changes()   # G4 D7: player-only, no OTHER (32)
         self.hook('[ "$1" = 2 ] && { : > "%s/in-write"; sleep 30; }\n' % self.tmp)
         g = self.start_guard("restore", self.dir, "--scope", "player")
         self.assertTrue(self.wait_file(self.tmp / "in-write"))
@@ -837,7 +846,7 @@ class RestoreWriteTests(GuardFixture):
         self.assertEqual(before[self.d2 / "prototype-profile.json"], sha(self.d2 / "prototype-profile.json"))
 
     def test_Restore_PlistDeleteSonrasiSigkill_TekrarYakinsar(self):
-        self.snap("player"); self.run_changes()
+        self.snap("player"); self.player_changes()   # G4 D7: player-only, no OTHER (32)
         (self.tmp / "defaults-import-sleep").write_text("")
         g = self.start_guard("restore", self.dir, "--scope", "player")
         self.assertTrue(self.wait_file(self.tmp / "import-started", 60))
@@ -1010,7 +1019,8 @@ class RestoreWriteTests(GuardFixture):
             rc, out, err = self.restore()
         finally:
             lk.close()
-        self.assertEqual(75, rc, out + err); self.assertIn("write helper", out); self.assertIn("retry=same-dir", out)
+        self.assertEqual(75, rc, out + err); self.assertIn("write helper", out)
+        self.assertTrue(out.strip().splitlines()[-1].endswith("retry=same-dir class=LOCKED"), out)
         self.assertEqual('{"ui": 99}\n', (self.d1 / "ui-settings.json").read_text())
         rc, out, err = self.restore(); self.assertEqual(0, rc, out + err)
 
@@ -1027,7 +1037,7 @@ class RestoreWriteTests(GuardFixture):
 
     def test_Inceleme_KarantinaSlotuDoluysa_UstuneYazilmaz(self):
         """concurrency SHOULD-2: a quarantine slot taken meanwhile is never overwritten (exclusive create)."""
-        w = self.snap("player"); self.run_changes()
+        w = self.snap("player"); self.player_changes()   # G4 D7: player-only, no OTHER (32)
         slot = self.ledger(w["id"]) / "displaced" / "player"; slot.mkdir(parents=True)
         # next_slot sees .1 free, another writer takes it first: the hook fires at the first CAS
         self.hook('[ "$1" = 2 ] && printf other > "%s/prototype-profile.json.1"\n' % slot)
@@ -1068,6 +1078,180 @@ class RestoreWriteTests(GuardFixture):
         self.assertIn("userdata-guard restore scope=player", lines[-2]); self.assertEqual("exit=0", lines[-1])
         self.assertTrue((self.dir / "guard-verdict.json").is_file()); self.assertTrue(list(self.dir.glob("verdict-*.json")))
         self.assertEqual([], [e for e in self.slot_entries() if e.startswith("player/")])   # released after the summary
+
+
+class ClassCodeTests(RestoreBase):
+    """G4 D7 (design v3.1 §3 D7, §2.5): OTHER → 32, WINDOW_LOST, FOREIGN_WRITER, priority 64 > 31 > 30 > 75 > 32 > 0, class=."""
+
+    def last(self, out):
+        return out.strip().splitlines()[-1]
+
+    def player_side_changes(self):
+        (self.d2 / "prototype-profile.json").unlink()                       # removed → MISSING
+        (self.d2 / "ui-settings.json").write_text('{"made": 1}\n')          # added
+        d = load_plist(self.p1); d["PlayerKey"] = "z"; self.write_plist(self.p1, d)   # changed
+
+    def test_Other_EkleSilDegistir_Cikis32Verified1Attribution(self):
+        self.snap("editor")
+        (self.d1 / "ui-settings.json").write_text('{"ui": 99}\n')
+        self.player_side_changes()
+        rc, out, err = self.restore("editor")
+        self.assertEqual(32, rc, out + err)
+        last = self.last(out)
+        self.assertIn("verified=1", last); self.assertTrue(last.endswith("class=OTHER"), last)
+        self.assertEqual('{"ui": 1}\n', (self.d1 / "ui-settings.json").read_text())   # in scope: restored
+        other = (self.dir / "out-of-scope-changed.txt").read_text()
+        self.assertIn("player  MISSING  " + str(self.d2 / "prototype-profile.json"), other)
+        self.assertIn(str(self.d2 / "ui-settings.json"), other)
+        self.assertIn(str(self.p1), other)
+        self.assertFalse((self.d2 / "prototype-profile.json").exists())                  # out of scope: never undone
+        self.assertTrue((self.dir / "attribution.txt").exists())
+        v = self.verdict(); self.assertEqual((32, "OTHER", True), (v["exit"], v["class"], v["verified"]))
+
+    def test_Oncelik_OtherVeMismatch_Cikis30(self):
+        self.snap("editor")
+        (self.d1 / "ui-settings.json").write_text('{"ui": 99}\n')
+        (self.dir / "snap/D1/ui-settings.json").write_text("corrupt\n")
+        self.player_side_changes()
+        rc, out, err = self.restore("editor")
+        self.assertEqual(30, rc, out + err)
+        self.assertTrue(self.last(out).endswith("class=SNAPCORRUPT"), self.last(out))
+        self.assertIn("OTHER", self.verdict()["classes"])
+
+    def test_Oncelik_OtherVeBusy_Cikis75(self):
+        self.snap("editor")
+        (self.d1 / "ui-settings.json").write_text('{"ui": 99}\n')
+        self.player_side_changes()
+        p = self.lock_d2(self.d1)
+        rc, out, err = self.restore("editor")
+        self.unlock_d2(p, self.d1)
+        self.assertEqual(75, rc, out + err)
+        self.assertTrue(self.last(out).endswith("retry=same-dir class=BUSY"), self.last(out))
+
+    def test_Oncelik_KgVeDiger_Cikis31(self):
+        self.snap(); self.run_changes()
+        d = load_plist(self.dir / "snap/PR/p1.plist"); d["Screenmanager Fullscreen mode"] = 3
+        self.write_plist(self.dir / "snap/PR/p1.plist", d)
+        (self.dir / "snap/D1/ui-settings.json").write_text("corrupt\n")
+        rc, out, err = self.restore()
+        self.assertEqual(31, rc, out + err)
+        self.assertTrue(self.last(out).endswith("class=KG_DEVIATION"), self.last(out))
+
+    def snapshot_from_short_lived_parent(self, scope="player"):
+        """the snapshot's caller (the receipt owner) is a shell that exits right after it."""
+        r = subprocess.run(["zsh", "-c", 'zsh "$0" snapshot "$1" --scope "$2"; rc=$?; exit $rc', str(self.guard), str(self.dir), scope],
+                           env=self.env(), capture_output=True, text=True, timeout=120)
+        self.assertEqual(0, r.returncode, r.stdout + r.stderr)
+
+    def test_WindowLost_SahipSnapshottanSonraOlur_GeriYukler30TekrarSifir(self):
+        before = self.live_state()
+        self.snapshot_from_short_lived_parent()
+        self.player_changes()
+        rc, out, err = self.restore("player")
+        self.assertEqual(30, rc, out + err)
+        self.assertTrue(self.last(out).endswith("class=WINDOW_LOST"), self.last(out))
+        self.assertIn("verified=1", self.last(out))
+        self.assertEqual(before[self.d2 / "prototype-profile.json"], sha(self.d2 / "prototype-profile.json"))   # restored anyway
+        rc, out, err = self.restore("player")
+        self.assertEqual(0, rc, out + err)                    # reported once; the converged window is clean
+        self.assertIn("WINDOW_LOST was reported", out + err)
+
+    def test_WindowLost_ReentrantAtaCanli_Cikis0(self):
+        go = self.tmp / "release-reent"; done = self.tmp / "snap-done"
+        p = subprocess.Popen(["bash", "-c", f'"{self.tools}/slot.sh" acquire player reent >/dev/null || exit 9; '
+                              f'zsh -c \'zsh "$0" snapshot "$1" --scope player; rc=$?; exit $rc\' "{self.guard}" "{self.dir}" > "{self.tmp}/snap.out" 2>&1; '
+                              f'echo $? > "{done}"; while [ ! -f "{go}" ]; do sleep 0.1; done; "{self.tools}/slot.sh" release player reent >/dev/null'],
+                             env=self.env(), start_new_session=True)
+        self.procs.append(p)
+        self.assertTrue(self.wait_file(done, 120)); self.assertEqual("0", done.read_text().strip(), (self.tmp / "snap.out").read_text())
+        self.assertIsNotNone(json.loads((self.dir / "window.json").read_text())["receipt"]["holder"])
+        self.player_changes()
+        try:
+            rc, out, err = self.restore("player")
+        finally:
+            go.write_text("")
+        self.assertEqual(0, rc, out + err)
+        self.assertTrue(self.last(out).endswith("class=OK"), self.last(out))
+
+    def lineage_row(self, owned):
+        with open(self.dir / "players-lineage.tsv", "a") as f:
+            f.write("2026-10-05T12:00:00Z\t4242\t1\tMon Oct  5 15:00:00 2026\t%d\n" % owned)
+
+    def test_ForeignWriter_SahipsizPlayerVeDegisiklik_GeriYukler30Index(self):
+        before = self.live_state()
+        w = self.snap("player"); self.player_changes()
+        self.lineage_row(0)
+        rc, out, err = self.restore("player")
+        self.assertEqual(30, rc, out + err)
+        self.assertTrue(self.last(out).endswith("class=FOREIGN_WRITER"), self.last(out))
+        self.assertEqual(before[self.d2 / "prototype-profile.json"], sha(self.d2 / "prototype-profile.json"))
+        rows = [l.split("\t") for l in (self.root / "ledger" / "INDEX.tsv").read_text().splitlines() if l.split("\t")[1] == w["id"]]
+        self.assertTrue(rows); self.assertEqual({"FOREIGN_WRITER"}, {r[6] for r in rows})
+        fw = self.verdict()["foreignWriter"]
+        self.assertEqual([4242], [p["pid"] for p in fw["players"]]); self.assertTrue(fw["displaced"])
+
+    def test_ForeignWriter_SahibinCocuguPlayer_Cikis0(self):
+        self.snap("player"); self.player_changes()
+        self.lineage_row(1)
+        rc, out, err = self.restore("player")
+        self.assertEqual(0, rc, out + err)
+        self.assertIsNone(self.verdict()["foreignWriter"])
+
+    def test_ForeignWriter_EditorPenceresi_SinifYokCikis0(self):
+        """D7 review MUST-1: a Player writes only the player area — an editor-only window never gets FOREIGN_WRITER."""
+        self.snap("editor")
+        (self.d1 / "ui-settings.json").write_text('{"ui": 99}\n')
+        self.lineage_row(0)
+        rc, out, err = self.restore("editor")
+        self.assertEqual(0, rc, out + err)
+        self.assertTrue(self.last(out).endswith("class=OK"), self.last(out))
+
+    def test_ForeignWriterVeBusy_Cikis30RetrySameDir(self):
+        """D7 review SHOULD-3: a 30 class decides the code, but an area left BUSY still needs the retry."""
+        self.snap(); self.player_changes()
+        (self.d1 / "ui-settings.json").write_text('{"ui": 99}\n')
+        self.lineage_row(0)
+        p = self.lock_d2(self.d1)
+        try:
+            rc, out, err = self.restore()
+        finally:
+            self.unlock_d2(p, self.d1)
+        self.assertEqual(30, rc, out + err)
+        self.assertTrue(self.last(out).endswith("retry=same-dir class=FOREIGN_WRITER"), self.last(out))
+
+    def test_ForeignWriter_DegisiklikYok_Cikis0(self):
+        self.snap("player")
+        self.lineage_row(0)
+        rc, out, err = self.restore("player")
+        self.assertEqual(0, rc, out + err)
+
+    def test_Sozlesme_OzetSatiri_McGrepWpRegexKpTail(self):
+        """T28: every caller parse on the real guard's output (32 and 0)."""
+        import importlib.util, re as _re
+        spec = importlib.util.spec_from_file_location("guard_receipt_t28", TOOLS / "qa" / "guard_receipt.py")
+        gr = importlib.util.module_from_spec(spec); spec.loader.exec_module(gr)
+        self.snap("editor")
+        (self.d1 / "ui-settings.json").write_text('{"ui": 99}\n'); self.player_side_changes()
+        rc, out, err = self.restore("editor")
+        self.assertEqual(32, rc, out + err)
+        last = self.last(out)
+        self.assertIn("userdata-guard restore scope=editor", last)                             # the summary is stdout's last line
+        # main-ci's own grep pattern, read from main-ci.sh (drift there is caught here)
+        mc = _re.search(r"grep -q '(restore scope=editor [^']*)'", (TOOLS / "main-ci.sh").read_text()).group(1)
+        self.assertRegex(out, mc.replace(".*", ".*"))
+        rc_pat = _re.search(r'grep -q "(restore scope=\$GUARD_SCOPE [^"]*)"', (TOOLS / "qa" / "rc.sh").read_text()).group(1)
+        self.assertRegex(out, rc_pat.replace("$GUARD_SCOPE", "editor"))
+        fields = gr.restore_fields(out)
+        self.assertEqual(("1", "1"), (fields.get("verified"), fields.get("touched")))           # guard_receipt / WP regex
+        self.assertEqual("touched=1", _re.findall(r"touched=[0-9]*", out)[-1])                  # KP / GT grep -o … | tail -1
+        for key in dict(_re.findall(r"(\w+)=(\S+)", last)):
+            if key not in ("touched", "verified"):
+                self.assertNotIn("touched", key); self.assertNotIn("verified", key)
+        self.assertTrue(_re.search(r"snapshotId=[0-9a-f]{12} retry=none class=OTHER$", last), last)
+        # OTHER rows: <area>␠␠<sha|MISSING>␠␠<path>, the main-ci sed strips the prefix to the path
+        for row in (self.dir / "out-of-scope-changed.txt").read_text().splitlines():
+            self.assertRegex(row, r"^player  ([0-9a-f]{64}|MISSING)  /")
+            self.assertTrue(_re.sub(r"^player  [^ ]*  ", "", row).startswith("/"))
 
 
 def sandboxed_main():

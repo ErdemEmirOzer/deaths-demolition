@@ -90,11 +90,14 @@ CORE_FILTER=$(python3 "$DD_TOOLS_DIR/ci_isolated.py" core-filter "$DD_TOOLS_DIR/
 # Codex-audit M-06 (C-00 30.09): one source — dd_project_open (dd-env.sh): case-insensitive -projectPath (Unity Hub),
 # an unresolvable/removed foreign path is skipped + logged instead of failing the check. 0 open · 1 not open · 2 no ps.
 ci_project_open() { dd_project_open "$CI_DIR/prototype/DeathsDemolition_PlayableConcept"; }
-CI_PLAYER_HELD=0; CI_GUARD_READY=0; CI_GUARD_EXIT=0; CI_GUARD_DIR=""; CI_CHILD=""; CI_CLEANING=0; CI_SIGNAL=""
+CI_PLAYER_HELD=0; CI_GUARD_READY=0; CI_GUARD_EXIT=0; CI_GUARD_RAW=0; CI_GUARD_DIR=""; CI_CHILD=""; CI_CLEANING=0; CI_SIGNAL=""
 # CI_GUARD_DIR = the directory whose snapshot succeeded (Codex-audit M-07: it can be a .tryN retry directory).
 ci_guard_restore() {
   "$DD_GUARD_CANON" restore "$CI_GUARD_DIR" --scope editor > "$CI_GUARD_DIR.out" 2>&1
-  CI_GUARD_EXIT=$?; CI_GUARD_READY=0
+  CI_GUARD_EXIT=$?; CI_GUARD_READY=0; CI_GUARD_RAW=$CI_GUARD_EXIT
+  # G4 D7 K1: 32 = the Editor area restored and verified, the player area changed (someone else's, listed, never undone)
+  # — a warning, not a failure; it still needs the verified=1 line like 0
+  [ "$CI_GUARD_EXIT" -eq 32 ] && CI_GUARD_EXIT=0
   if [ "$CI_GUARD_EXIT" -eq 0 ] && ! grep -q 'restore scope=editor .*verified=1' "$CI_GUARD_DIR.out"; then CI_GUARD_EXIT=31; fi
 }
 # Y1b (G4 D0 data-loss judge MUST-1/2, C-00 30.09) — used by BOTH the normal path and the cleanup: nothing is written
@@ -201,17 +204,19 @@ inventory > "$OUT/userdata-before.txt"
 # Codex-audit M-07 (C-00 30.09): editor scope never refuses with 30 (that is the player-scope "a Player is running"), so the
 # old wait-on-30 loop was dead. 75 (a live foreign holder of the Editor-area lock after DD_GUARD_WAIT, or live data kept
 # changing) is retried ≤ CI_GUARD_TRIES times — the guard's own wait is the back-off — each time into a NEW directory
-# (userdata-guard, userdata-guard.try2, …): a directory that already holds a snapshot is refused with 64. The directory
-# that succeeded is the one restore uses. No tests start before a snapshot succeeded.
-CI_GUARD_TRIES=3; GTRY=1
+# (userdata-guard-<utc>, <same>.try2, …): a directory that already holds a snapshot is refused with 64. The directory
+# that succeeded is the one restore uses. No tests start before a snapshot succeeded. G4 D7 (d): the name carries this
+# run's UTC, so a second run of the same SHA starts in a fresh directory instead of meeting the first run's (64).
+CI_GUARD_TRIES=3; GTRY=1; UG_BASE="$OUT/userdata-guard-$(dd_utc)"
 # M-12 review SHOULD-2: a rerun of the same SHA must not start while an earlier guard window of this OUT is unrestored
-# (a snapshot left in a .tryN dir would otherwise be bypassed by a fresh one in userdata-guard/).
-for d in "$OUT"/userdata-guard(N) "$OUT"/userdata-guard.try*(N/); do
-  # a SUCCESSFUL snapshot starts the sampler log (players.log); a failed try (75) leaves before.txt but no players.log
+# (a snapshot left in a .tryN dir would otherwise be bypassed by a fresh one in a new userdata-guard-<utc>/).
+for d in "$OUT"/userdata-guard*(N/); do
+  # a SUCCESSFUL snapshot starts the sampler log (players.log); a try failing before the guard's S9 leaves no players.log,
+  # one failing after it keeps players.log without after.txt — also stopped here (64, the safe side: C-00 looks)
   [ -f "$d/players.log" ] && [ ! -f "$d/after.txt" ] && { dd_log "userdata: $d holds an unrestored guard window from an earlier run of this SHA — tell C-00, do not restore it blindly (exit 64)"; exit 64; }
 done
 while :; do
-  GDIR="$OUT/userdata-guard"; [ "$GTRY" -gt 1 ] && GDIR="$OUT/userdata-guard.try$GTRY"
+  GDIR="$UG_BASE"; [ "$GTRY" -gt 1 ] && GDIR="$UG_BASE.try$GTRY"
   "$DD_GUARD_CANON" snapshot "$GDIR" --scope editor > "$GDIR-snapshot.out" 2>&1; GS=$?
   [ "$GS" -eq 0 ] && break
   [ "$GS" -eq 75 ] && [ "$GTRY" -lt "$CI_GUARD_TRIES" ] || { dd_log "userdata snapshot exit $GS (try $GTRY/$CI_GUARD_TRIES, $GDIR) — no tests started"; exit "$GS"; }
@@ -249,13 +254,23 @@ dd_log "editmode exit=$EX playmode exit=$PX${AXS:+ alone:$AXS}"
 # 5) user data: restore anything a test touched
 inventory > "$OUT/userdata-after.txt"
 UDWARN=""
+# G4 D7 (b, V-S2): the guard is the one writer of its own files (prototype-profile.json*, the UI json files) — they are
+# NOT copied back here (that raced the guard's restore); only files OUTSIDE the guard set that the run created are moved
+# to userdata-created/; one it changed is named in the warning, not undone.
+CI_GUARD_FILES=(prototype-profile.json ui-settings.json load-timing.json input-settings.json input-overrides.json ui-hints.json)
+ci_guard_file() { [[ "$1" != */* ]] && { (( ${CI_GUARD_FILES[(Ie)$1]} )) || [[ "$1" == prototype-profile.json.* ]]; }; }
 if ! cmp -s "$OUT/userdata-before.txt" "$OUT/userdata-after.txt"; then
-  UDWARN="player folder changed during the tests: $(diff "$OUT/userdata-before.txt" "$OUT/userdata-after.txt" | grep -E '^[<>]' | awk '{print $1" "$3}' | sort -u -k2 | tr '\n' ';') restored from the pre-run copy"
-  mkdir -p "$OUT/userdata-created"
-  while IFS= read -r rel; do [ -f "$UD/$rel" ] || { mkdir -p "$OUT/userdata-created/${rel:h}"; mv "$PD/$rel" "$OUT/userdata-created/$rel"; }; done < <(inventory | awk '{ $1=""; sub(/^  */, ""); print }')
-  rsync -a --exclude '*.lock' "$UD/" "$PD/"
-  inventory > "$OUT/userdata-restored.txt"
-  cmp -s "$OUT/userdata-before.txt" "$OUT/userdata-restored.txt" && UDWARN="$UDWARN (verified)" || UDWARN="$UDWARN (RESTORE MISMATCH)"
+  UDCHG=(${(f)"$(diff "$OUT/userdata-before.txt" "$OUT/userdata-after.txt" | grep -E '^[<>]' | sed -E 's/^[<>] [^ ]+  //' | LC_ALL=C sort -u)"})
+  UDMOVED=(); UDKEPT=(); UDGUARD=()
+  for rel in $UDCHG; do
+    if ci_guard_file "$rel"; then UDGUARD+=("$rel")
+    elif [ -f "$PD/$rel" ] && ! grep -qF -x -e "  $rel" <(sed -E 's/^[^ ]+//' "$OUT/userdata-before.txt"); then   # not there before the run (review N1)
+      mkdir -p "$OUT/userdata-created/${rel:h}" && mv "$PD/$rel" "$OUT/userdata-created/$rel" && UDMOVED+=("$rel")
+    else UDKEPT+=("$rel"); fi
+  done
+  UDWARN="player folder changed during the tests: guard files ${UDGUARD:-none} (the guard restores them, below)"
+  [ ${#UDMOVED} -gt 0 ] && UDWARN="$UDWARN; created outside the guard set, moved to $OUT/userdata-created: ${(j:;:)UDMOVED}"
+  [ ${#UDKEPT} -gt 0 ] && UDWARN="$UDWARN; changed or removed outside the guard set, NOT restored: ${(j:;:)UDKEPT} (pre-run copy: $UD)"
   dd_log "WARNING userdata: $UDWARN"
 fi
 
@@ -264,7 +279,7 @@ fi
 UG="$CI_GUARD_DIR"
 ci_guard_restore_safe || exit 65; GX=$CI_GUARD_EXIT
 if ! cmp -s "$UG/before-editor.txt" "$UG/after-run-editor.txt" || [ "$GX" -ne 0 ]; then
-  GW="Editor PlayerPrefs/profile changed during the tests: restored to the pre-run snapshot ($([ "$GX" -eq 0 ] && echo verified || echo "RESTORE MISMATCH exit $GX")) — $UG"
+  GW="Editor PlayerPrefs/profile changed during the tests: restored to the pre-run snapshot ($([ "$GX" -eq 0 ] && { [ "$CI_GUARD_RAW" -eq 32 ] && echo "verified; out-of-scope change → see below" || echo verified; } || echo "RESTORE MISMATCH exit $GX")) — $UG"
   UDWARN="${UDWARN:+$UDWARN; }$GW"; dd_log "WARNING userdata: $GW"
 fi
 if [ -s "$UG/out-of-scope-changed.txt" ]; then

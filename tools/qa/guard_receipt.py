@@ -217,7 +217,8 @@ def verdict(ug, restore_text, after_plist):
     if fields.get("verified") != "1":
         return False, "guard verified!=1"
     oos = ug / "out-of-scope-changed.txt"
-    if oos.is_file() and oos.stat().st_size > 0:
+    # G4 D7 (review SHOULD-1): a retry publishes its list as out-of-scope-changed.txt.N — the summary line is the truth
+    if (oos.is_file() and oos.stat().st_size > 0) or fields.get("outOfScopeChanged", "0") != "0" or fields.get("class") == "OTHER":
         return False, "out-of-scope changes"
     touched = fields.get("touched")
     if touched in ("0", None):
@@ -227,6 +228,9 @@ def verdict(ug, restore_text, after_plist):
     if touched == "1" and keys and all(is_engine_key(k) for k in keys):
         return True, "touched=1 engine window keys only"
     return False, f"touched={touched} keys={keys}" + (" (a non-plist file changed)" if not keys else "")
+
+
+OUT_OF_SCOPE = 32   # userdata-guard restore (G4 D7): verified in scope, another area changed
 
 
 def restore_with_retry(ug, scope="player", attempts=10, wait_seconds=30.0, sleep=time.sleep):
@@ -247,7 +251,9 @@ def restore_with_retry(ug, scope="player", attempts=10, wait_seconds=30.0, sleep
     # WP-079G D6a: the guard itself appends its final line + exit=<n> to ug/restore.txt — append, never overwrite it
     with open(ug / "restore.txt", "a", encoding="utf-8") as f:
         f.write(text)
-    return (0 if result.returncode == 0 else STOP), result
+    # G4 D7: 32 = this window's area restored and verified, the other area changed — handed to verdict() like 0, which
+    # still stops on out-of-scope changes (the acceptance behaviour before D7, when this case exited 0)
+    return (0 if result.returncode in (0, OUT_OF_SCOPE) else STOP), result
 
 
 def close(ug, scope="player", **retry):
@@ -261,7 +267,8 @@ def close(ug, scope="player", **retry):
         fields = restore_fields(result.stdout)
         oos = ug / "out-of-scope-changed.txt"
         receipt = {"restoreExit": result.returncode, "verified": fields.get("verified") == "1", "touched": fields.get("touched"),
-                   "outOfScopeChanged": bool(oos.is_file() and oos.stat().st_size > 0)}
+                   "outOfScopeChanged": bool(oos.is_file() and oos.stat().st_size > 0)
+                   or fields.get("outOfScopeChanged", "0") != "0" or fields.get("class") == "OTHER"}
         if code:
             receipt = dict(receipt, code=STOP, why=f"guard restore exit {result.returncode}")
         else:

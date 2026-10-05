@@ -42,6 +42,11 @@ if [ "$cmd" = snapshot ]; then
 else
   if [ -n "${{FAKE_GUARD_SLOW:-}}" ]; then echo $$ > "{log}/guard-restore.pid"; sleep "$FAKE_GUARD_SLOW"; fi
   cp "$dir/before-editor.txt" "$dir/after-run-editor.txt"; echo restore-done >> "{log}/guard-calls.txt"
+  if [ "${{FAKE_GUARD_RESTORE_RC:-0}}" = 32 ]; then   # G4 D7: Editor area changed + restored + verified, player area changed
+    echo y > "$dir/after-run-editor.txt"
+    print -r -- "player  MISSING  /fixture/bundle/prototype-profile.json" > "$dir/out-of-scope-changed.txt"
+    echo "restore scope=editor touched=0 verified=1 retry=none class=OTHER"; exit 32
+  fi
   echo "restore scope=editor changed=0 verified=1"
 fi
 """
@@ -53,6 +58,10 @@ FAKE_TEST_SH = """#!/bin/zsh
 mode=$1; shift; out=""; filter=""; category=""
 while [ $# -gt 0 ]; do [ "$1" = --out ] && out=$2; [ "$1" = --filter ] && filter=$2; [ "$1" = --category ] && category=$2; shift; done
 print -r -- "$mode	$out	$filter	$category" >> "{log}/test-calls.txt"
+if [ -n "${{FAKE_PD:-}}" ] && [ "$mode" = editmode ]; then   # G4 D7 (b): a test run writes into the player folder
+  print -r -- '{{"ui": "run"}}' > "$FAKE_PD/ui-settings.json"; print -r -- '{{"run": 1}}' > "$FAKE_PD/profile.json"
+  mkdir -p "$FAKE_PD/telemetry"; print -r -- run > "$FAKE_PD/telemetry/run.json"
+fi
 echo $$ > "{log}/child-$mode.pid"; env > "{log}/env-$mode.txt"
 case "$FAKE_MODE" in
   pass|stray) mkdir -p "$out"
@@ -455,11 +464,17 @@ class CiDriverGuardTests(CiFixture):
         self.assert_driver_refused(main_moves_on, "tools tree")
         self.assertNotEqual(self.git("rev-parse", "main:tools"), self.git("rev-parse", "HEAD:tools", cwd=self.driver))
 
+    def guard_base(self):
+        """G4 D7 (d): the guard directory is userdata-guard-<utc> (retries <same>.tryN)."""
+        first = self.lines("guard-dirs.txt")[0].split(" ", 1)[1]
+        self.assertRegex(first, r"/userdata-guard-[0-9]{8}T[0-9]{6}Z$")
+        return Path(first)
+
     # --- M-07(b): 75 → retry into a NEW guard directory; the restore uses that directory ------------------------------
     def test_M07_Snapshot75BirKez_YeniDizinleDevam_OnuRestoreEder(self):
         rc, out, err = self.finish(self.main_ci("pass", playmode=True, FAKE_GUARD_75_ONCE="1"))
         self.assertEqual(rc, 0, out + err)
-        ug = self.out / self.sha / "userdata-guard"
+        ug = self.guard_base()
         self.assertEqual(self.lines("guard-dirs.txt"), [f"snapshot {ug}", f"snapshot {ug}.try2", f"restore {ug}.try2"])
         self.assertIn("snapshot75 (try 1/3", out)
         self.assertTrue((Path(f"{ug}.try2") / "after-run-editor.txt").exists())
@@ -469,12 +484,59 @@ class CiDriverGuardTests(CiFixture):
     def test_M07_Snapshot75Surer_UcDenemeUcDizin_75TestYokRestoreYok(self):
         rc, out, err = self.finish(self.main_ci("pass", FAKE_GUARD_ALWAYS_75="1"))
         self.assertEqual(rc, 75, out + err)
-        ug = self.out / self.sha / "userdata-guard"
+        ug = self.guard_base()
         self.assertEqual(self.lines("guard-dirs.txt"), [f"snapshot {ug}", f"snapshot {ug}.try2", f"snapshot {ug}.try3"])
         self.assertIn("userdata snapshot exit 75 (try 3/3", out)
         self.assertFalse((self.log / "child-editmode.pid").exists())
         self.assertEqual([l.split()[:2] for l in self.lines("slot-calls.txt")], [["acquire", "player"], ["release", "player"]])
         self.assertEqual(self.leases(), [])
+
+    # --- G4 D7 K1 (M9): main-ci and the guard's codes ----------------------------------------------------------------
+    def test_MainCi_Guard32_TestCikisiKorunurMismatchYok(self):
+        rc, out, err = self.finish(self.main_ci("pass", playmode=True, FAKE_GUARD_RESTORE_RC="32"))
+        self.assertEqual(rc, 0, out + err)                       # the tests' result stands (green), not the guard's 32
+        self.assertIn("GREEN", out)
+        self.assertNotIn("RESTORE MISMATCH", out + err)
+        self.assertIn("restored to the pre-run snapshot (verified; out-of-scope change → see below)", out + err)
+        self.assertIn("player area (bundle profile / player PlayerPrefs) changed during the tests", out + err)
+        self.assertNotIn("CI cleanup failed", out + err)
+
+    def test_MainCi_SatirIciBlok_UzerineYazmazCreatedTasir(self):
+        pd = self.home / "Library/Application Support/Deaths Demolition" / PRODUCT
+        (pd / "ui-settings.json").write_text('{"ui": "user"}\n')
+        rc, out, err = self.finish(self.main_ci("pass", playmode=True, FAKE_PD=str(pd)))
+        self.assertEqual(rc, 0, out + err)
+        # guard file: left to the guard (the fake one restores nothing) — never copied back by main-ci
+        self.assertEqual('{"ui": "run"}\n', (pd / "ui-settings.json").read_text())
+        # outside the guard set: the run-created file is moved, the changed one named, not undone
+        self.assertFalse((pd / "telemetry/run.json").exists())
+        self.assertEqual("run\n", (self.out / self.sha / "userdata-created/telemetry/run.json").read_text())
+        self.assertEqual('{"run": 1}\n', (pd / "profile.json").read_text())
+        self.assertIn("guard files ui-settings.json", out)
+        self.assertIn("NOT restored: profile.json", out)
+        self.assertNotIn("RESTORE MISMATCH", out + err)
+
+    def test_MainCi_GuardDosyaListesi_GuardFiles1IleAyni(self):
+        """G4 D7 (b): main-ci leaves exactly the guard's own files to the guard — its list must not drift from FILES1."""
+        import re as _re
+        guard = (TOOLS / "userdata-guard.sh").read_text(); ci = (TOOLS / "main-ci.sh").read_text()
+        files1 = _re.search(r"^FILES1=\(([^)]*)\)", guard, _re.M).group(1).split()
+        ci_list = _re.search(r"^CI_GUARD_FILES=\(([^)]*)\)", ci, _re.M).group(1).split()
+        self.assertEqual(files1, ci_list)
+
+    def test_MainCi_GuardDir_UtcAdliIkinciKosu64Degil(self):
+        rc, out, err = self.finish(self.main_ci("pass", playmode=True))
+        self.assertEqual(rc, 0, out + err)
+        time.sleep(1.1)   # the next run's UTC second differs
+        self.git("worktree", "remove", "--force", str(self.ci))   # a second run on the same fixture needs a fresh CI checkout
+        self.git("worktree", "add", "-q", "--detach", str(self.ci), self.sha)
+        (self.ci / "prototype/DeathsDemolition_PlayableConcept/Library").mkdir()
+        rc, out, err = self.finish(self.start([str(self.tools / "main-ci.sh"), self.sha, "--out-root", str(self.out),
+                                              "--ci-dir", str(self.ci)], FAKE_MODE="pass"))
+        self.assertEqual(rc, 0, out + err)                       # before D7 the second run met the first's dir: 64
+        self.assertNotIn("unrestored guard window", out + err)
+        dirs = sorted(d.name for d in (self.out / self.sha).glob("userdata-guard-*") if d.is_dir())
+        self.assertEqual(2, len(dirs), dirs)
 
     # --- M-06: dd_project_open (dd-env.sh, shared by main-ci + compile-check) -----------------------------------------
     def env_tools(self, slot_body=None):
