@@ -177,7 +177,8 @@ namespace DD.Prototype.Tests.PlayMode
         /// deadline is not missing — no clip carries mag_hand_attach yet) and the magazine part is never in neither the weapon
         /// nor a hand (floatingMagazineFrames). contactDeviationFramesMax (the hand reaching the socket on the beat, ≤ 2 frames)
         /// is S-06's MagazineContactProbe (WP-083 B2c): socket_mag_l ↔ the magazine seat on the Detach / Insert beats; the probe's
-        /// no-contact value when the hand never reaches the well (before S-06's contact IK). Null only when no beat was measured. Game frames (1/60).
+        /// no-contact value when the hand never reaches the well (before S-06's contact IK). Before it writes r2-H3.json the test asserts
+        /// the source is in the capture (S-10): socket_mag_l, every weapon's part_mag, two probed beats per weapon. Game frames (1/60).
         /// </summary>
         [UnityTest]
         [Timeout(300000)]
@@ -191,6 +192,10 @@ namespace DD.Prototype.Tests.PlayMode
             WeaponMagazineVisual v = _s.Controller.MagazineVisual;
             var probe = new MagazineContactProbe();   // WP-083 B2c (S-06): contactDeviationFramesMax
             DD.Prototype.Characters.PlayerSkinnedVisual body = _s.Rig.GetComponentInChildren<DD.Prototype.Characters.PlayerSkinnedVisual>(true);
+            // R2 "source in the capture" (S-10, r2-measure-contract): the hand socket the probe reads, and per weapon the magazine part
+            Assert.IsNotNull(body, "R2 H3: skinned oyuncu yok");
+            Assert.IsNotNull(body.MagazineSocket, "R2 H3: socket_mag_l yok — temas ölçülemez");
+            var bos = new List<string>();
             foreach (ClassicWeaponId id in ids)
             {
                 _s.Controller.EquipClassic(id, _s.Config);
@@ -201,6 +206,7 @@ namespace DD.Prototype.Tests.PlayMode
                 int e0 = m.FromEvent, t0 = m.FromTimer;
                 Transform part = v.Part;
                 Transform home = part != null ? part.parent : null;
+                if (part == null) bos.Add(key + ": part_mag yok — havada kare ölçülemez");
                 probe.Begin(key, part, body != null ? body.MagazineSocket : null, m);
                 int floating = 0, handFrames = 0;
                 float start = Time.time;
@@ -230,8 +236,10 @@ namespace DD.Prototype.Tests.PlayMode
             Debug.Log("[DD-TEST] wp082.h3 " + string.Join(" | ", report));
             Debug.Log("[DD-TEST] wp083.h3contact max=" + probe.MaxDeviationFrames + " f, beats " + probe.BeatsMeasured + ", closestMax " + probe.MaxClosestCm.ToString("F1") + " cm :: " + probe.Report);
             Assert.AreEqual(ids.Length, measured);
+            if (probe.BeatsMeasured != 2 * ids.Length) bos.Add("temas probu " + probe.BeatsMeasured + " vuruş ölçtü, beklenen " + (2 * ids.Length) + " (silah başına Detach + Insert)");
+            Assert.IsEmpty(bos, "R2 H3: kaynak kayıtta yok — artefakt yazılmadı\n" + string.Join("\n", bos) + "\n" + string.Join("\n", report));
             R2Olcum.Yaz("H3", "DD.Prototype.Tests.PlayMode.WeaponReloadMagazineTests.H3_SarjorluSilahlar_VuruslarTam_HavadaKareYok",
-                new Dictionary<string, double?> { { "missingEvents", missingAll }, { "floatingMagazineFrames", floatingAll }, { "contactDeviationFramesMax", probe.BeatsMeasured > 0 ? probe.MaxDeviationFrames : (double?)null } },
+                new Dictionary<string, double?> { { "missingEvents", missingAll }, { "floatingMagazineFrames", floatingAll }, { "contactDeviationFramesMax", probe.MaxDeviationFrames } },
                 measured, "contactDeviationFramesMax: S-06 MagazineContactProbe (socket_mag_l ↔ şarjör yuvası, Detach/Insert vuruşları ±" + MagazineContactProbe.Window + " kare); " + probe.BeatsMeasured + " vuruş");
             Assert.AreEqual(0, missingAll, "R2 H3: inmeyen reload vuruşu\n" + string.Join("\n", report));
             Assert.AreEqual(0, floatingAll, "R2 H3: şarjör havada (ne silahta ne elde)\n" + string.Join("\n", report));

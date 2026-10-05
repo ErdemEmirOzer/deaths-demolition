@@ -724,6 +724,7 @@ namespace DD.Prototype.Tests.PlayMode
             DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.FirstPerson, instant: true);
             yield return SpecialWeaponSahne.Kareler(60);
             var report = new List<string>();
+            var bos = new List<string>();   // R2 "source in the capture" (S-10, r2-measure-contract): a weapon that did not fire / move is not a measure
             float yawRollExcessMax = 0f;   // R2 H4 (S-10 contract): the worst |yaw| / |roll| over its A4.2 row
             int measured = 0;
             float tableDt0 = Time.captureDeltaTime;
@@ -755,9 +756,12 @@ namespace DD.Prototype.Tests.PlayMode
                     bodyRest = visual.Body.localRotation;
                     fwdRest = anchor.InverseTransformDirection(visual.Body.forward);
                     float sinceEquip = Time.time - equippedAt;
+                    if (DD.Prototype.CameraSystem.CameraModeService.Current != DD.Prototype.CameraSystem.CameraMode.FirstPerson) bos.Add(d.weaponId + ": FP'de değil (" + DD.Prototype.CameraSystem.CameraModeService.Current + ")");
+                    int ammo0 = _s.Controller.Classic.Ammo, ammoMin = ammo0;
                     _s.Girdi.AtesBasti = true; _s.Girdi.AtesBasili = true;
                     yield return null;
                     _s.Girdi.AtesBasti = false; _s.Girdi.AtesBasili = false;
+                    ammoMin = Mathf.Min(ammoMin, _s.Controller.Classic.Ammo);
                     float rigMax = 0f, totalMax = 0f;
                     Vector3 bodyPeak = Vector3.zero, feelPeak = Vector3.zero, rootPeak = Vector3.zero, mountPeak = Vector3.zero, camPeak = Vector3.zero;
                     int pf = 0, yf = 0, rf = 0, armFrames = 0, reloadFrames = 0, firstArm = 0;
@@ -767,6 +771,7 @@ namespace DD.Prototype.Tests.PlayMode
                         Transform armSocket = WeaponController.FirstPersonWeaponSocket;
                         if (armSocket != null && armSocket.gameObject.activeInHierarchy) { armFrames++; if (firstArm == 0) firstArm = f; }
                         if (_s.Controller.Classic.IsReloading) reloadFrames++;
+                        ammoMin = Mathf.Min(ammoMin, _s.Controller.Classic.Ammo);
                         rigMax = Mathf.Max(rigMax, Quaternion.Angle(bodyRest, visual.Body.localRotation));
                         totalMax = Mathf.Max(totalMax, Vector3.Angle(fwdRest, anchor.InverseTransformDirection(visual.Body.forward)));
                         Vector3 b = EulerDelta(AnchorEuler(anchor, visual.Body), body0);
@@ -779,6 +784,8 @@ namespace DD.Prototype.Tests.PlayMode
                         camPeak = PeakOf3(camPeak, EulerDelta(cam.eulerAngles, cam0));
                     }
 
+                    if (ammoMin >= ammo0) bos.Add(d.weaponId + ": ateşlemedi (cephane " + ammo0 + " → en az " + ammoMin + ")");
+                    if (totalMax <= 0.1f) bos.Add(d.weaponId + ": gövde kıpırdamadı (toplam " + totalMax.ToString("0.00") + "°) — ölçülen bir tekme yok");
                     FpWeaponFeel.VmKick k = FpWeaponFeel.KickFor(d.weaponId);
                     yawRollExcessMax = Mathf.Max(yawRollExcessMax, Mathf.Abs(bodyPeak.y) - Mathf.Abs(k.YawDeg), Mathf.Abs(bodyPeak.z) - Mathf.Abs(k.RollDeg));
                     measured++;
@@ -799,6 +806,7 @@ namespace DD.Prototype.Tests.PlayMode
             Debug.Log("[DD-TEST] wp069.fptable " + string.Join(" | ", report) + " | yaw/roll excess max " + yawRollExcessMax.ToString("0.00") + "°");
             Assert.IsNotEmpty(report);
             Assert.AreEqual(10, measured, "on klasik silahın hepsi ölçülmeli");
+            Assert.IsEmpty(bos, "R2 H4: kaynak kayıtta yok — artefakt yazılmadı\n" + string.Join("\n", bos) + "\n" + string.Join("\n", report));
             R2Olcum.Yaz("H4", "DD.Prototype.Tests.PlayMode.WeaponModelSliceTests.FP_NamluKalkisi_Tablo_HerSilah",
                 new Dictionary<string, double> { { "yawRollExcessDegMax", System.Math.Round(yawRollExcessMax, 3) } }, measured);
             Assert.LessOrEqual(yawRollExcessMax, 1.0f, "R2 H4: FP yaw/roll A4.2 satırının 1,0°'den fazla üstünde");
@@ -833,6 +841,7 @@ namespace DD.Prototype.Tests.PlayMode
             yield return SpecialWeaponSahne.Kareler(60);
             var report = new List<string>();
             var wrong = new List<string>();
+            var bos = new List<string>();   // R2 "source in the capture" (S-10): no shot / no shot inside the window is not a measure
             float leakMaxAll = 0f;   // R2 H4b: the largest rise over the three weapons
             float dt0 = Time.captureDeltaTime;
             Time.captureDeltaTime = 1f / 60f;   // game frames: a batch frame is 1–3 ms and 45 of them were 0.1 s, not 0.75 s
@@ -851,15 +860,19 @@ namespace DD.Prototype.Tests.PlayMode
                     Assert.IsNotNull(rig, def.weaponId + ": rig yok");
                     Assert.IsNotNull(anchor, "FP görüntü modeli çapası yok");
                     float weightAtShot = _s.Controller.FpClipMotionWeight;
+                    if (DD.Prototype.CameraSystem.CameraModeService.Current != DD.Prototype.CameraSystem.CameraMode.FirstPerson) bos.Add(def.weaponId + ": FP'de değil (" + DD.Prototype.CameraSystem.CameraModeService.Current + ")");
+                    int ammo0 = _s.Controller.Classic.Ammo, ammoMin = ammo0;
                     _s.Girdi.AtesBasti = true; _s.Girdi.AtesBasili = true;
                     yield return null;
                     _s.Girdi.AtesBasti = false; _s.Girdi.AtesBasili = false;
+                    ammoMin = Mathf.Min(ammoMin, _s.Controller.Classic.Ammo);
                     float leakMin = float.MaxValue, rise = 0f;
                     int riseFrame = 0;
                     var trace = new System.Text.StringBuilder();
                     for (int f = 1; f <= 45; f++)
                     {
                         yield return null;
+                        ammoMin = Mathf.Min(ammoMin, _s.Controller.Classic.Ammo);
                         Quaternion target = anchor.rotation * feel.Rotation * Quaternion.Euler(def.FpViewPose.euler);
                         float leak = Quaternion.Angle(target, rig.rotation);
                         if (f <= 24 || f % 5 == 0) trace.Append(' ').Append(f).Append(':').Append(leak.ToString("0.0")).Append('/').Append(_s.Controller.FpClipMotionWeight.ToString("0.00"));
@@ -870,7 +883,8 @@ namespace DD.Prototype.Tests.PlayMode
                     Debug.Log("[DD-TEST] wp087.trace " + def.weaponId + " t=" + Time.deltaTime.ToString("0.000") + trace);
 
                     report.Add(def.weaponId + " clip weight at the shot " + weightAtShot.ToString("0.00") + ", rise " + rise.ToString("0.0") + "° @f" + riseFrame);
-                    if (weightAtShot <= 0f) wrong.Add(def.weaponId + ": atış anahtar penceresine düşmedi (ölçüm boş)");
+                    if (weightAtShot <= 0f) bos.Add(def.weaponId + ": atış anahtar penceresine düşmedi (ağırlık " + weightAtShot.ToString("0.00") + ")");
+                    if (ammoMin >= ammo0) bos.Add(def.weaponId + ": ateşlemedi (cephane " + ammo0 + " → en az " + ammoMin + ")");
                     leakMaxAll = Mathf.Max(leakMaxAll, rise);
                     if (rise > 1f) wrong.Add(def.weaponId + ": TP ateş klibi FP silaha sızdı, yükselme " + rise.ToString("0.0") + "° @f" + riseFrame);
                     yield return new WaitForSeconds(0.8f);
@@ -883,6 +897,8 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             Debug.Log("[DD-TEST] wp087.switchfire " + string.Join(" | ", report));
+            Assert.AreEqual(3, report.Count, "üç silahın hepsi ölçülmeli");
+            Assert.IsEmpty(bos, "R2 H4b: kaynak kayıtta yok — artefakt yazılmadı\n" + string.Join("\n", bos) + "\n" + string.Join("\n", report));
             R2Olcum.Yaz("H4b", "DD.Prototype.Tests.PlayMode.WeaponModelSliceTests.FP_AnahtarPenceresindeAtes_KlipSizintisiYok",
                 new Dictionary<string, double> { { "leakDegMax", System.Math.Round(leakMaxAll, 3) } }, report.Count);
             Assert.IsEmpty(wrong, string.Join("\n", wrong) + "\n" + string.Join("\n", report));
