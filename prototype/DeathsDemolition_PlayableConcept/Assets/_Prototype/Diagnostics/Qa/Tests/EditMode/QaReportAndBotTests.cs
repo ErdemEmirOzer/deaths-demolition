@@ -232,6 +232,28 @@ namespace DD.Prototype.Qa.Tests.EditMode
             Assert.AreEqual(before, InputSystem.devices.Count, "Dispose cihazı kaldırır");
         }
 
+        /// <summary>
+        /// R2 (C-00 01.10, FINAL dab326ab A2 fp "stick 0 / pointer 1587"): the bot's pad must keep the scheme — input ignores
+        /// focus while it lives, the host's native keyboards / pointers are held off, and Dispose gives both back.
+        /// </summary>
+        [Test]
+        public void SanalGamepad_OdagaBakmaz_YerelKlavyeVeImleciAskiyaAlir_DisposeGeriVerir()
+        {
+            InputSettings.BackgroundBehavior before = InputSystem.settings.backgroundBehavior;
+            var native = new System.Collections.Generic.List<InputDevice>();
+            foreach (InputDevice d in InputSystem.devices) if (d.native && d.enabled && (d is Keyboard || d is Pointer)) native.Add(d);
+            using (var pad = new QaVirtualGamepad())
+            {
+                Assert.AreEqual(InputSettings.BackgroundBehavior.IgnoreFocus, InputSystem.settings.backgroundBehavior, "bot koşusunda girdi odağa bakmamalı");
+                Assert.IsTrue(pad.PadEnabled, "sanal pad açık olmalı");
+                Assert.AreEqual(native.Count, pad.SuspendedNative, "yerel klavye / imleç askıda olmalı");
+                foreach (InputDevice d in native) Assert.IsFalse(d.enabled, d.name + " askıda olmalı");
+            }
+
+            Assert.AreEqual(before, InputSystem.settings.backgroundBehavior, "Dispose eski arka plan davranışını geri verir");
+            foreach (InputDevice d in native) Assert.IsTrue(d.enabled, d.name + " geri açılmalı");
+        }
+
         [Test]
         public void Argumanlar_ListeVeSayi()
         {

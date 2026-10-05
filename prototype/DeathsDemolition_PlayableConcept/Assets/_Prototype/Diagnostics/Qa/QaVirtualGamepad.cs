@@ -1,5 +1,6 @@
 #if DEVELOPMENT_BUILD || UNITY_EDITOR
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.LowLevel;
@@ -21,12 +22,35 @@ namespace DD.Prototype.Qa
         private Gamepad _pad;
         private GamepadState _state;
         private bool _dirty;
+        private readonly List<InputDevice> _suspended = new List<InputDevice>();
+        private InputSettings.BackgroundBehavior _backgroundBefore;
+        private bool _backgroundTaken;
 
         public Gamepad Device => _pad;
         public bool IsAlive => _pad != null && _pad.added;
 
+        /// <summary>The pad is added and enabled — a disabled pad's events never reach the actions.</summary>
+        public bool PadEnabled => _pad != null && _pad.added && _pad.enabled;
+
+        /// <summary>Native keyboards / pointers held off for the bot run.</summary>
+        public int SuspendedNative => _suspended.Count;
+
+        /// <summary>
+        /// R2 (C-00 01.10, FINAL dab326ab A2 fp "stick 0 / pointer 1587"): with no InputSettings asset the background
+        /// behaviour is ResetAndDisableNonBackgroundDevices, so a pad added (or running) while the Player is unfocused is
+        /// parked disabled, and one real mouse / key event turns the active scheme to the pointer — either way the bot's input
+        /// stops reaching the game while the round goes on. For the bot run: input ignores focus (set before the add, as
+        /// Input/Testing/VirtualGamepadDriver does), and native keyboards / pointers — also ones that connect later — are
+        /// suspended so the scheme stays on this pad. Dispose gives both back.
+        /// </summary>
         public QaVirtualGamepad()
         {
+            _backgroundBefore = InputSystem.settings.backgroundBehavior;
+            InputSystem.settings.backgroundBehavior = InputSettings.BackgroundBehavior.IgnoreFocus;
+            _backgroundTaken = true;
+            var devices = new List<InputDevice>(InputSystem.devices);
+            for (int i = 0; i < devices.Count; i++) SuspendNative(devices[i]);
+            InputSystem.onDeviceChange += OnDeviceChange;
             _pad = InputSystem.AddDevice<Gamepad>(DeviceName);
             _state = new GamepadState();
             _dirty = true;
@@ -71,8 +95,36 @@ namespace DD.Prototype.Qa
             Flush();
         }
 
+        private void SuspendNative(InputDevice device)
+        {
+            if (device == null || !device.native || !device.enabled || !(device is Keyboard || device is Pointer)) return;
+            InputSystem.DisableDevice(device);
+            if (!_suspended.Contains(device)) _suspended.Add(device);
+        }
+
+        private void OnDeviceChange(InputDevice device, InputDeviceChange change)
+        {
+            if (change == InputDeviceChange.Added || change == InputDeviceChange.Reconnected || change == InputDeviceChange.Enabled) SuspendNative(device);
+        }
+
         public void Dispose()
         {
+            InputSystem.onDeviceChange -= OnDeviceChange;
+            try
+            {
+                if (_backgroundTaken) InputSystem.settings.backgroundBehavior = _backgroundBefore;
+                for (int i = 0; i < _suspended.Count; i++)
+                {
+                    if (_suspended[i] != null && _suspended[i].added) InputSystem.EnableDevice(_suspended[i]);
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[QaVirtualGamepad] input restore failed: " + e.Message);
+            }
+
+            _backgroundTaken = false;
+            _suspended.Clear();
             if (_pad != null)
             {
                 try

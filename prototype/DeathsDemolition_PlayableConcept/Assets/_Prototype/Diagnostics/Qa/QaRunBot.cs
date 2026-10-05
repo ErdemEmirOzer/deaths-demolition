@@ -159,6 +159,7 @@ namespace DD.Prototype.Qa
             public int damageEvents;
             public float seconds;
             public bool completed;
+            public bool inputLost;            // R2 (C-00 01.10): the bot's pad was disabled or the pointer took the scheme in this round
             public string outcome;
             // WP-064 stability gate (DEC-091): memory at the end of the round, MB (-1 = unavailable)
             public float memMonoUsedMB, memMonoHeapMB, memTotalAllocatedMB, memTotalReservedMB, memRssMB;
@@ -209,6 +210,10 @@ namespace DD.Prototype.Qa
             public float meanFrameMs;
             public float meanAimErrorDeg;     // angle between the rig's aim direction and the bot's target direction while a target was aimed
             public string aimKind;            // PlayerAim.AimKind seen most (Stick expected)
+            public int padDisabledFrames;     // R2 (C-00 01.10): frames the virtual pad was not enabled (its events dropped)
+            public int pointerAfterPadFrames; // frames the pointer held the scheme once the pad had it (or 2 s in without it)
+            public int unfocusedFrames;       // frames the Player window had no focus (report only: input ignores focus)
+            public bool inputMeasurable = true;   // false: the bot's input did not reach the game — not a gameplay result, rerun
             public string cameraMode;         // WP-070: TopDown / ThirdPerson / FirstPerson (-ddCameraMode)
             public string qualityTier;        // WP-078 A5: QualityTiers.Current the run played at (Performans / Yuksek / Sinematik)
             public float worldHalfExtent;     // WP-078 A5: playable ring inner face the bot used (WorldBounds, V6 55; else the ±45 ring)
@@ -341,6 +346,9 @@ namespace DD.Prototype.Qa
             private double _aimErrorSum;
             private int _aimErrorSamples;
             private int _aimKindStick, _aimKindPointer;
+            private int _padDisabledFrames, _pointerAfterPad, _unfocusedFrames;
+            private bool _padSeen;
+            private const float PadGraceSeconds = 2f;   // healthy runs show 2–3 pointer frames before the pad's first event lands
             private readonly Dictionary<string, int> _fireHits = new Dictionary<string, int>();
 
             // WP-044 allocation arbiter (C-00 / S-07 WP-047 finding: GC.GetAllocatedBytesForCurrentThread is always 0 on Unity Mono and
@@ -565,7 +573,8 @@ namespace DD.Prototype.Qa
                 BuildSafeSpots();
                 _runStart = Time.unscaledTime;
                 BeginRoundRecord(RunDirector.Instance.Round);
-                Log("run-ready round=" + RunDirector.Instance.Round + " waypoints=" + _waypoints.Count + " pad=" + _pad.IsAlive);
+                Log("run-ready round=" + RunDirector.Instance.Round + " waypoints=" + _waypoints.Count + " pad=" + _pad.IsAlive +
+                    " padEnabled=" + _pad.PadEnabled + " nativeSuspended=" + _pad.SuspendedNative + " background=" + UnityEngine.InputSystem.InputSystem.settings.backgroundBehavior);
                 _running = true;
             }
 
@@ -996,6 +1005,8 @@ namespace DD.Prototype.Qa
                     TickRouteTour(rig);         // WP-078 D3c: the route run owns every frame; no fighting, no rounds
                     return;
                 }
+
+                TickInputHealth(rig);   // R2 (C-00 01.10)
 
                 if (_dieAfterSeconds >= 0f && !_died && Time.unscaledTime - _runStart >= _dieAfterSeconds)
                 {
@@ -2000,6 +2011,30 @@ namespace DD.Prototype.Qa
                 return false;
             }
 
+            /// <summary>
+            /// R2 (C-00 01.10, FINAL dab326ab A2): did the bot's input reach the game this frame? A disabled pad, or the pointer
+            /// holding the scheme after the pad had it (or 2 s into the run without it), marks the round's input lost; the run is
+            /// then unmeasurable — the player stood still with a full magazine because nothing arrived, not because of the game.
+            /// </summary>
+            private void TickInputHealth(PlayerRig rig)
+            {
+                bool lost = false;
+                if (!Application.isFocused) _unfocusedFrames++;
+                if (_pad != null && !_pad.PadEnabled) { _padDisabledFrames++; lost = true; }
+                if (rig.Aim != null)
+                {
+                    if (rig.Aim.AimKind == AimSourceKind.Stick) _padSeen = true;
+                    else if (_padSeen || Time.unscaledTime - _runStart > PadGraceSeconds) { _pointerAfterPad++; lost = true; }
+                }
+
+                if (lost && _current != null && !_current.inputLost)
+                {
+                    _current.inputLost = true;
+                    Log("input-lost round=" + _current.round + " padEnabled=" + (_pad != null && _pad.PadEnabled) + " aimKind=" + (rig.Aim != null ? rig.Aim.AimKind.ToString() : "-") +
+                        " focused=" + Application.isFocused + " time=" + QaArgs.F(Time.unscaledTime - _runStart, 1));
+                }
+            }
+
             /// <summary>Straight NavMesh path to the route point, followed corner by corner (no goal logic of the fight planner).</summary>
             private Vector3 RouteDirection(Vector3 pos, Vector3 target, out float toCorner, out Vector3 onMesh)
             {
@@ -2735,6 +2770,10 @@ namespace DD.Prototype.Qa
                 if (string.IsNullOrEmpty(_summary.allocMethod)) _summary.allocMethod = "no reading (recorder unavailable or run too short)";
                 _summary.meanAimErrorDeg = _aimErrorSamples > 0 ? (float)(_aimErrorSum / _aimErrorSamples) : -1f;
                 _summary.aimKind = "stick " + _aimKindStick + " / pointer " + _aimKindPointer;
+                _summary.padDisabledFrames = _padDisabledFrames;
+                _summary.pointerAfterPadFrames = _pointerAfterPad;
+                _summary.unfocusedFrames = _unfocusedFrames;
+                _summary.inputMeasurable = _routeDir != null || (_padDisabledFrames == 0 && _pointerAfterPad == 0);
                 _summary.cameraMode = CameraModeService.Current.ToString();
                 _summary.qualityTier = QualityTiers.Current.ToString();
                 _summary.worldHalfExtent = RingMargin;
@@ -2761,6 +2800,13 @@ namespace DD.Prototype.Qa
                     if (_drawCalls.Valid) _drawCalls.Dispose();
                     if (_batches.Valid) _batches.Dispose();
                 }
+                if (!_summary.inputMeasurable)
+                {
+                    // R2 (C-00 01.10): the input never reached the game for part of the run — not a gameplay pass or fail, a rerun
+                    _summary.pass = false;
+                    _summary.runMode = "unmeasurable";
+                }
+
                 _summary.stabilityPass = _stability && !_specialEvidence && !_deathEvidence && string.IsNullOrEmpty(_fail) && _timeoutRound <= 0
                                          && ExactRunPassed(_summary.roundsCompleted, _rounds, _deathRound, _timeoutRound);
                 _summary.note = string.IsNullOrEmpty(_fail) ? (_died ? "player died" : "ok") : _fail;
@@ -2768,6 +2814,7 @@ namespace DD.Prototype.Qa
                 else if (_invulnerable) _summary.note += " [invulnerable evidence run: WP-052 tier frames; not a QA pass]";   // (WP-055: the marks used to be overwritten by the line above)
                 if (_specialEvidence) _summary.note += " [special evidence run: WP-055 sw_* frames; not a QA pass]";
                 if (_deathEvidence) _summary.note += " [death evidence run: WP-059 deathframe-*; not a QA pass]";
+                if (!_summary.inputMeasurable) _summary.note += " [input lost: pad disabled " + _padDisabledFrames + " / pointer after pad " + _pointerAfterPad + " / unfocused " + _unfocusedFrames + " frames — unmeasurable, rerun]";
                 _summary.swBeats = (_swBeats[0] + _swBeats[1] + _swBeats[2]) > 0 ? "sw_push=" + _swBeats[0] + " sw_web=" + _swBeats[1] + " sw_pull=" + _swBeats[2] : "";
 
                 try
@@ -2784,6 +2831,8 @@ namespace DD.Prototype.Qa
                     report.Add("bot.rounds", _summary.gatePass, _summary.roundsCompleted + "/" + _rounds + (_deathRound > 0 ? " (died r" + _deathRound + ")" : "") + (_timeoutRound > 0 ? " (timeout r" + _timeoutRound + ")" : ""), "exactly " + _rounds + " requested rounds, no death/timeout",
                         _summary.note + "; kills " + _summary.totalKills + ", deaths " + _summary.deaths + ", damage " + _summary.totalDamageEvents +
                         ", stuck " + _summary.stuckRecoveries + ", relocations " + _summary.relocations + ", wallEscapes " + _summary.wallEscapes + ", upgrades " + _summary.upgradesBought + " (" + _summary.goldSpent + " gold), kite " + _summary.kiteFrames + ", telegraphs " + _summary.telegraphDodges + ", specialPickups " + _summary.specialPickupsSought + ", reloads " + _summary.reloads, "bot-summary.json");
+                    report.Add("bot.input", _summary.inputMeasurable, _summary.aimKind + "; pad disabled " + _padDisabledFrames + ", pointer after pad " + _pointerAfterPad + ", unfocused " + _unfocusedFrames + " frames",
+                        "the bot's pad holds the scheme for the whole run", "R2 (C-00 01.10): input ignores focus, native keyboard / pointer suspended; false = unmeasurable (rerun), not a gameplay result", "bot-summary.json");
                     report.Add("bot.determinism", true, "spawn " + _summary.spawnSequenceHash + " outcome " + _summary.outcomeHash, "report only",
                         "compare across runs with the same seed; frame timing is not seeded", "bot-summary.json");
                     report.summary = "bot mean frame " + QaArgs.F(_summary.meanFrameMs) + " ms over " + _frameMs.Count + " frames";
@@ -2842,7 +2891,7 @@ namespace DD.Prototype.Qa
                 for (int i = 0; i < _summary.rounds.Count; i++)
                 {
                     RoundRecord r = _summary.rounds[i];
-                    sb.Append(r.completed ? "PASS " : "FAIL ").Append("round-").Append(r.round.ToString("D2"))
+                    sb.Append(r.inputLost ? "UNMEASURED " : (r.completed ? "PASS " : "FAIL ")).Append("round-").Append(r.round.ToString("D2"))
                       .Append(" | pool ").Append(r.poolTotal).Append(" kills ").Append(r.kills).Append(" damage ").Append(r.damageEvents)
                       .Append(" seconds ").Append(QaArgs.F(r.seconds, 1)).Append(" | ").Append(r.outcome).Append('\n');
                 }
