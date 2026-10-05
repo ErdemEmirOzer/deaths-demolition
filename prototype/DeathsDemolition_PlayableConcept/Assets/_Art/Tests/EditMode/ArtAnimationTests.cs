@@ -461,6 +461,40 @@ namespace DD.Art.Tests.EditMode
             Assert.IsTrue(overheadRate > 0.9f && overheadRate < 1.1f, "overhead oranı klibe yakın olmalı (1,167 s / 1,15 s): " + overheadRate);
         }
 
+        /// <summary>
+        /// WP-082 / WP-083 B2 (C-00 05.10, S-02 magazine contract v1): mag_hand_attach is the one new beat (79); mag_detach / mag_insert /
+        /// bolt_release are accepted contract spellings of mag_out / mag_in / chamber — clips may use either, the validator takes both and
+        /// S-02's WeaponMagazineOwnership maps all four beats to its steps.
+        /// </summary>
+        [Test]
+        public void SarjorSozlesmesi_DortOlay_EsAdlar_SahiplikAdimlari()
+        {
+            Assert.AreEqual(79, (int)CharacterAnimationEvent.MagHandAttach);
+            Assert.AreEqual(CharacterAnimationEvent.MagHandAttach, CharacterAnimationEvents.Parse("mag_hand_attach"));
+            Assert.AreEqual(CharacterAnimationEvent.MagOut, CharacterAnimationEvents.Parse("mag_detach"));
+            Assert.AreEqual(CharacterAnimationEvent.MagIn, CharacterAnimationEvents.Parse("mag_insert"));
+            Assert.AreEqual(CharacterAnimationEvent.Chamber, CharacterAnimationEvents.Parse("bolt_release"));
+            for (int i = 0; i < CharacterAnimationEvents.Synonyms.GetLength(0); i++)
+            {
+                MethodInfo method = typeof(CharacterAnimationEvents).GetMethod(CharacterAnimationEvents.Synonyms[i, 0], BindingFlags.Public | BindingFlags.Instance);
+                Assert.IsNotNull(method, "AnimationEvent hedefi yok: " + CharacterAnimationEvents.Synonyms[i, 0]);
+            }
+
+            var events = new List<KeyValuePair<string, int>>
+            {
+                new KeyValuePair<string, int>("mag_detach", 12), new KeyValuePair<string, int>("mag_hand_attach", 22),
+                new KeyValuePair<string, int>("mag_insert", 30), new KeyValuePair<string, int>("bolt_release", 40)
+            };
+            List<string> v = ArtAnimationEventContract.Validate("hero_v2_reload_probe", 48, false, events);
+            Assert.IsEmpty(v, string.Join("\n", v));
+            var steps = new[] { DD.Prototype.Weapons.MagazineStep.Detach, DD.Prototype.Weapons.MagazineStep.HandAttach, DD.Prototype.Weapons.MagazineStep.Insert, DD.Prototype.Weapons.MagazineStep.BoltRelease };
+            for (int i = 0; i < events.Count; i++)
+            {
+                Assert.IsTrue(DD.Prototype.Weapons.WeaponMagazineOwnership.TryStepFor(CharacterAnimationEvents.Parse(events[i].Key), out DD.Prototype.Weapons.MagazineStep step), events[i].Key);
+                Assert.AreEqual(steps[i], step, events[i].Key);
+            }
+        }
+
         [Test]
         public void CharacterAnimationEvents_Sozlesme_HerOlayAdiMetot_ParseEnum()
         {

@@ -89,7 +89,10 @@ namespace DD.Prototype.Characters
         TelegraphStart = 76,
         // S-02 WP-069 (24.09): the gel Special's side lever pump (part_lever)
         PumpDown = 77,
-        PumpUp = 78
+        PumpUp = 78,
+        // WP-082 / WP-083 B2 (C-00 05.10, S-02 magazine contract v1): the spent magazine leaves the hand and the fresh one arrives
+        // (between mag_detach = MagOut and mag_insert = MagIn) — the one genuinely new reload beat
+        MagHandAttach = 79
     }
 
     /// <summary>
@@ -115,7 +118,19 @@ namespace DD.Prototype.Characters
             "eject", "chamber", "mag_out", "mag_in", "mag_in_2", "mag_in_3", "switch_ready", "switch_away", "lowered", "raised",
             "pickup_grab", "pickup_done", "armor_break", "spawn_rise", "spawn_land",
             // WP-071 v3
-            "foot_l_off", "foot_r_off", "pivot_plant", "stop_plant", "weight_shift", "attack_recover", "grab_start", "grab_end", "attack_step", "roar", "ragdoll_handoff", "knockback_end", "hurt_end", "ground_impact", "blood_burst", "twitch", "spasm", "lh_release", "lh_grab", "ads_ready", "reload_commit", "reload_cancel_point", "mechanism_start", "mechanism_end", "spin_up", "spin_down", "sw_charge_peak", "shell_eject", "inspect_peak", "charge", "box_open", "belt_seat", "box_close", "bolt_up", "bolt_back", "bolt_fwd", "bolt_down", "shell_in", "rocket_in", "rocket_seat", "cell_out", "cell_in", "canister_out", "canister_in", "cover_open", "cover_close", "fall_start", "telegraph_start", "pump_down", "pump_up"
+            "foot_l_off", "foot_r_off", "pivot_plant", "stop_plant", "weight_shift", "attack_recover", "grab_start", "grab_end", "attack_step", "roar", "ragdoll_handoff", "knockback_end", "hurt_end", "ground_impact", "blood_burst", "twitch", "spasm", "lh_release", "lh_grab", "ads_ready", "reload_commit", "reload_cancel_point", "mechanism_start", "mechanism_end", "spin_up", "spin_down", "sw_charge_peak", "shell_eject", "inspect_peak", "charge", "box_open", "belt_seat", "box_close", "bolt_up", "bolt_back", "bolt_fwd", "bolt_down", "shell_in", "rocket_in", "rocket_seat", "cell_out", "cell_in", "canister_out", "canister_in", "cover_open", "cover_close", "fall_start", "telegraph_start", "pump_down", "pump_up",
+            // WP-082 / WP-083 B2 (S-02 magazine contract v1)
+            "mag_hand_attach"
+        };
+
+        /// <summary>
+        /// WP-082 / WP-083 B2 (C-00 05.10, S-02 magazine contract v1): the contract's spellings for beats the AP-009C names already carry —
+        /// accepted from clips (not rejected like <see cref="Aliases"/>) and raised as the existing event, so every listener of mag_out /
+        /// mag_in / chamber keeps working: { contract name, existing name }.
+        /// </summary>
+        public static readonly string[,] Synonyms =
+        {
+            { "mag_detach", "mag_out" }, { "mag_insert", "mag_in" }, { "bolt_release", "chamber" }
         };
 
         /// <summary>WP-071: v3 names that were proposed under another spelling (the validator rejects the alias and names the canonical one).</summary>
@@ -130,6 +145,11 @@ namespace DD.Prototype.Characters
             for (int i = 1; i < Names.Length; i++)
             {
                 if (Names[i] == name) return (CharacterAnimationEvent)i;
+            }
+
+            for (int i = 0; i < Synonyms.GetLength(0); i++)
+            {
+                if (Synonyms[i, 0] == name) return Parse(Synonyms[i, 1]);
             }
 
             return CharacterAnimationEvent.None;
@@ -239,6 +259,11 @@ namespace DD.Prototype.Characters
         public void telegraph_start(int value) => Raise(CharacterAnimationEvent.TelegraphStart, value);
         public void pump_down(int value) => Raise(CharacterAnimationEvent.PumpDown, value);
         public void pump_up(int value) => Raise(CharacterAnimationEvent.PumpUp, value);
+        // WP-082 / WP-083 B2 (S-02 magazine contract v1): the new beat and the contract's spellings of the existing three
+        public void mag_hand_attach(int value) => Raise(CharacterAnimationEvent.MagHandAttach, value);
+        public void mag_detach(int value) => Raise(CharacterAnimationEvent.MagOut, value);
+        public void mag_insert(int value) => Raise(CharacterAnimationEvent.MagIn, value);
+        public void bolt_release(int value) => Raise(CharacterAnimationEvent.Chamber, value);
 
         /// <summary>Tests / probes: raise an event as if the clip had fired it.</summary>
         public void RaiseForTest(CharacterAnimationEvent e) => Raise(e);
