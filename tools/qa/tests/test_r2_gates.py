@@ -31,11 +31,15 @@ class ContractTests(unittest.TestCase):
     def test_approved_thresholds_are_the_numbers_in_the_draft(self):
         # a changed threshold must be a reviewed edit of this file: pin the C-00 05.10 values
         pinned = {("H1", "maxCm"): 1.0, ("L1", "avg"): 0.05, ("L1t", "avg"): 0.10, ("L3", "limbDegPerFrameMax"): 20.0,
-                  ("Z3", "bonesMax"): 74, ("Z3b", "zombieSetPass"): 14, ("S1", "below400ShareMin"): 0.20,
+                  ("Z3", "bonesMax"): 74, ("Z3b", "zombieSetPass"): 24, ("S1", "below400ShareMin"): 0.20,
                   ("S4", "hallRt60MaxS"): 2.28, ("S4", "openRt60MinS"): 0.56,   # C-00 05.10 S4 v2: the tail's RT60 (spec ±20 %)
                   ("U1", "lettersTotalReduction"): 0.40, ("H4b", "leakDegMax"): 1.0,
                   ("H4", "yawRollExcessDegMax"): 1.0, ("H4a", "armOffscreenFrames"): 0, ("H4a", "armInCameraFrames"): 0,
-                  ("S5", "poolMax"): 3}   # C-00 05.10: concurrent casing voices (was 8, which mixed in the airborne queue)
+                  ("S5", "poolMax"): 3,   # C-00 05.10: concurrent casing voices (was 8, which mixed in the airborne queue)
+                  # C-00 05.10: Z3b from the fixed-mix R1 (16 / 567 / 88): +8, x1.45, +10 — the old 14/450/88 came from the
+                  # director-mixed R1 6/310/78
+                  ("Z3b", "zombieDraws"): 822, ("Z3b", "frameSetPass"): 98, ("Z3b", "sharedTextureGpuMB"): 96,
+                  ("Z3b", "uniqueTexturesPerZombie"): 0}
         for (gid, key), limit in pinned.items():
             check = next(c for c in gate(gid)["checks"] if c["key"] == key)
             self.assertEqual(limit, check["limit"], (gid, key))
