@@ -123,8 +123,14 @@ for f in "${FILES[@]}"; do
 done
 
 # --- gate 4: secrets on added lines (false-positive words excluded)
-SECRET='AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY|sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{30,}|xox[baprs]-[A-Za-z0-9-]{10,}|AIza[0-9A-Za-z_-]{30,}|(api[_-]?key|secret[_-]?key|password|passwd|access[_-]?token)[[:space:]]*[:=][[:space:]]*["'"'"'][^"'"'"']{8,}'
-HITS=$("${G[@]}" diff "$C^" "$C" -- . ':!*.png' ':!*.fbx' ':!*.asset' 2>/dev/null | grep -E '^\+[^+]' | grep -Ei "$SECRET" | grep -Ev 'CancellationToken|CompletionToken|tokenizer|TokenVerdict|PlaceholderJson|EXAMPLE|example\.com' | head -5)
+# C-00 05.10: key constants are case-SENSITIVE (AKIA…, AIza…, ghp_, sk-, xox*, PRIVATE KEY) — `grep -Ei` read a Turkish
+# test name (S-02 179f533c: …Sonraki·Atlananlari·Indirir, whose lower-case "a-k-i-A…" run looks like the AWS prefix) as
+# an AWS key. Only the `password = "…"`-style assignment stays case-insensitive.
+SECRET_KEYS='AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY|sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{30,}|xox[baprs]-[A-Za-z0-9-]{10,}|AIza[0-9A-Za-z_-]{30,}'
+SECRET_ASSIGN='(api[_-]?key|secret[_-]?key|password|passwd|access[_-]?token)[[:space:]]*[:=][[:space:]]*["'"'"'][^"'"'"']{8,}'
+ADDED=$("${G[@]}" diff "$C^" "$C" -- . ':!*.png' ':!*.fbx' ':!*.asset' 2>/dev/null | grep -E '^\+[^+]')
+HITS=$( { print -r -- "$ADDED" | grep -E "$SECRET_KEYS"; print -r -- "$ADDED" | grep -Ei "$SECRET_ASSIGN"; } \
+  | grep -Ev 'CancellationToken|CompletionToken|tokenizer|TokenVerdict|PlaceholderJson|EXAMPLE|example\.com' | head -5)
 if [ -n "$HITS" ]; then fail "secret-like content in added lines:"; echo "$HITS" | cut -c1-160; else say "secret grep: clean"; fi
 
 # --- gate 4b: DEC/REQ numbering after the source is applied (ProjectIntegrityTests rule: DEC = 1..N in file

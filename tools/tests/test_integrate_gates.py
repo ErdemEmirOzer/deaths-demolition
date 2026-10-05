@@ -121,6 +121,37 @@ class EntegreKapiTestleri(unittest.TestCase):
         self.assertEqual(sum("abort_pick || exit 7; exit 4" in l for l in code), 6)   # 03/04+00/01/conflict/verify/ids/commit
         self.assertIn("7 rollback unverified / dirty", text)
 
+    # ---------------------------------------------------------------- gate 4 secrets (C-00 05.10: case)
+    # Key-shaped strings are built at run time, so this file's own added lines never trip the gate it tests.
+    AKIA_REAL = "AK" + "IA" + "Q3EGRT5YHB2KLM7N"                     # realistic, no EXAMPLE
+    AKIA_DOC = "AK" + "IA" + "IOSFODNN7" + "EXAMPLE"                 # AWS's documented example key: excluded
+    S02_NAME = "YalnizIleri_TekrarYokSayilir_Sonraki" + "AtlananlariIndirir"   # S-02 179f533c (joined at run time)
+
+    def test_GizliKapisi_TurkceTestAdi_YanlisAlarmYok(self):
+        r, out = self.dry(content="public void %s() { }\n" % self.S02_NAME)
+        self.assertEqual(r.returncode, 0, out)
+        self.assertNotIn("GATE FAIL", out)
+        self.assertIn("RESULT: gate passed", out)
+
+    def test_GizliKapisi_GercekAkiaAnahtari_Cikis3(self):
+        r, out = self.dry(content='aws = "%s"\n' % self.AKIA_REAL)
+        self.assertEqual(r.returncode, 3, out)
+        self.assertIn("GATE FAIL: secret-like content in added lines", out)
+        self.assertIn(self.AKIA_REAL, out)
+
+    def test_GizliKapisi_KucukHarfAkia_AnahtarSayilmaz(self):
+        r, out = self.dry(content="x = %s\n" % self.AKIA_REAL.lower())
+        self.assertEqual(r.returncode, 0, out)
+
+    def test_GizliKapisi_AtamaKalibi_BuyukKucukHarfDuyarsizKalir(self):
+        r, out = self.dry(content='Pass' + 'word = "' + 'hunter2hunter2' + '"\n')
+        self.assertEqual(r.returncode, 3, out)
+        self.assertIn("secret-like content", out)
+
+    def test_GizliKapisi_AwsOrnekAnahtari_Dislanir(self):
+        r, out = self.dry(content='doc = "%s"\n' % self.AKIA_DOC)
+        self.assertEqual(r.returncode, 0, out)
+
     # ---------------------------------------------------------------- K-02 commit-message gate
     def dry(self, *extra, **kw):
         self.source(**kw)
