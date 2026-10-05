@@ -18,22 +18,42 @@ namespace DD.Prototype.Tests
 
         public static string Yaz(string gate, string source, IDictionary<string, double> values, int samples)
         {
+            var v = new List<KeyValuePair<string, double?>>(values.Count);
+            foreach (KeyValuePair<string, double> kv in values) v.Add(new KeyValuePair<string, double?>(kv.Key, kv.Value));
+            return Write(gate, source, v, samples, null);
+        }
+
+        /// <summary>
+        /// As <see cref="Yaz(string, string, IDictionary{string, double}, int)"/>, for a gate with a key that cannot be measured
+        /// yet: its value is null (written as JSON null — S-10's judge counts the gate BLOCKED, not PASS) and <paramref name="note"/>
+        /// says why (C-00 05.10, H3 contactDeviationFramesMax until S-06's hand contact lands).
+        /// </summary>
+        public static string Yaz(string gate, string source, IDictionary<string, double?> values, int samples, string note)
+        {
+            var v = new List<KeyValuePair<string, double?>>(values.Count);
+            foreach (KeyValuePair<string, double?> kv in values) v.Add(kv);
+            return Write(gate, source, v, samples, note);
+        }
+
+        private static string Write(string gate, string source, List<KeyValuePair<string, double?>> values, int samples, string note)
+        {
             string dir = Environment.GetEnvironmentVariable("DD_R2_MEASURE_DIR");
             if (string.IsNullOrEmpty(dir)) return null;
             var sb = new StringBuilder();
             sb.Append("{\"schema\": \"").Append(Schema).Append("\", \"gate\": \"").Append(gate)
               .Append("\", \"commit\": \"").Append(Environment.GetEnvironmentVariable("DD_R2_COMMIT") ?? "")
               .Append("\", \"source\": \"").Append(source).Append("\", \"values\": {");
-            bool first = true;
-            foreach (KeyValuePair<string, double> kv in values)
+            for (int i = 0; i < values.Count; i++)
             {
-                if (double.IsNaN(kv.Value) || double.IsInfinity(kv.Value)) throw new ArgumentException(gate + "." + kv.Key + " is not a plain number");
-                if (!first) sb.Append(", ");
-                first = false;
-                sb.Append('"').Append(kv.Key).Append("\": ").Append(kv.Value.ToString("R", CultureInfo.InvariantCulture));
+                KeyValuePair<string, double?> kv = values[i];
+                if (kv.Value.HasValue && (double.IsNaN(kv.Value.Value) || double.IsInfinity(kv.Value.Value))) throw new ArgumentException(gate + "." + kv.Key + " is not a plain number");
+                if (i > 0) sb.Append(", ");
+                sb.Append('"').Append(kv.Key).Append("\": ").Append(kv.Value.HasValue ? kv.Value.Value.ToString("R", CultureInfo.InvariantCulture) : "null");
             }
 
-            sb.Append("}, \"samples\": ").Append(samples).Append('}');
+            sb.Append("}, \"samples\": ").Append(samples);
+            if (!string.IsNullOrEmpty(note)) sb.Append(", \"note\": \"").Append(note.Replace("\\", "\\\\").Replace("\"", "\\\"")).Append('"');
+            sb.Append('}');
             Directory.CreateDirectory(dir);
             string path = Path.Combine(dir, "r2-" + gate + ".json");
             File.WriteAllText(path, sb.ToString());

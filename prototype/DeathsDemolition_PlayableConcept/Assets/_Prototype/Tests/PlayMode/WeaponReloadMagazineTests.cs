@@ -171,6 +171,65 @@ namespace DD.Prototype.Tests.PlayMode
             }
         }
 
+        /// <summary>
+        /// R2 H3 (C-00 05.10, owner S-02; S-10 r2-gates.json): every magazine weapon reloads once — the four beats all land
+        /// (missingEvents: a beat that never landed, by the clip or by its deadline, in a completed reload; a beat from the
+        /// deadline is not missing — no clip carries mag_hand_attach yet) and the magazine part is never in neither the weapon
+        /// nor a hand (floatingMagazineFrames). contactDeviationFramesMax (the hand reaching the socket on the beat, ≤ 2 frames)
+        /// comes with S-06's hand contact (WP-083 B2c): null until then, which S-10 reads as BLOCKED. Game frames (1/60).
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator H3_SarjorluSilahlar_VuruslarTam_HavadaKareYok()
+        {
+            yield return Kur();
+            var ids = new[] { ClassicWeaponId.AssaultRifle, ClassicWeaponId.Ar2, ClassicWeaponId.AutoSmg, ClassicWeaponId.Smg2, ClassicWeaponId.Lmg1, ClassicWeaponId.Lmg2, ClassicWeaponId.Sr1 };
+            var report = new List<string>();
+            int missingAll = 0, floatingAll = 0, measured = 0;
+            WeaponMagazineOwnership m = _s.Controller.Magazine;
+            WeaponMagazineVisual v = _s.Controller.MagazineVisual;
+            foreach (ClassicWeaponId id in ids)
+            {
+                _s.Controller.EquipClassic(id, _s.Config);
+                yield return SpecialWeaponSahne.Kareler(30);
+                string key = _s.Controller.Classic.Definition != null ? _s.Controller.Classic.Definition.weaponId : id.ToString();
+                yield return UcAtisVeReload();
+                yield return SpecialWeaponSahne.Bekle(() => _s.Controller.Classic.IsReloading, 2f, key + ": reload başlamadı");
+                int e0 = m.FromEvent, t0 = m.FromTimer;
+                Transform part = v.Part;
+                Transform home = part != null ? part.parent : null;
+                int floating = 0, handFrames = 0;
+                float start = Time.time;
+                while (_s.Controller.Classic.IsReloading && Time.time - start < 12f)
+                {
+                    yield return null;
+                    if (part == null) continue;
+                    bool inWeapon = part.parent == home;
+                    bool inHand = part.parent != null && part.parent.name == DD.Prototype.Characters.MagazineSocket.Name;
+                    if (!inWeapon && !inHand) floating++;
+                    if (inHand) handFrames++;
+                }
+
+                yield return null;
+                Assert.IsTrue(_s.Controller.Classic.LastReloadCompleted, key + ": reload tamamlanmadı");
+                int fromClip = m.FromEvent - e0, fromTimer = m.FromTimer - t0;
+                int missing = Mathf.Max(0, WeaponMagazineOwnership.StepCount - fromClip - fromTimer);
+                missingAll += missing;
+                floatingAll += floating;
+                measured++;
+                report.Add(key + " beats clip " + fromClip + " / deadline " + fromTimer + " / missing " + missing + ", part " + (part != null ? "hand " + handFrames + " f, floating " + floating : "none (no part_mag)"));
+                yield return new WaitForSeconds(0.3f);
+            }
+
+            Debug.Log("[DD-TEST] wp082.h3 " + string.Join(" | ", report));
+            Assert.AreEqual(ids.Length, measured);
+            R2Olcum.Yaz("H3", "DD.Prototype.Tests.PlayMode.WeaponReloadMagazineTests.H3_SarjorluSilahlar_VuruslarTam_HavadaKareYok",
+                new Dictionary<string, double?> { { "missingEvents", missingAll }, { "floatingMagazineFrames", floatingAll }, { "contactDeviationFramesMax", null } },
+                measured, "contactDeviationFramesMax: el ↔ soket teması S-06 WP-083 B2c ile ölçülecek (o gelene kadar BLOCKED)");
+            Assert.AreEqual(0, missingAll, "R2 H3: inmeyen reload vuruşu\n" + string.Join("\n", report));
+            Assert.AreEqual(0, floatingAll, "R2 H3: şarjör havada (ne silahta ne elde)\n" + string.Join("\n", report));
+        }
+
         /// <summary>WP-082 visual: a camera change mid-reload ends the ownership and the magazine part is home the same frame.</summary>
         [UnityTest]
         [Timeout(180000)]
