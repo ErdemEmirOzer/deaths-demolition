@@ -51,6 +51,7 @@ clean(){ local k=$1 f pid st now; for f in "$BASE/$k"/* "$BASE/queue/$k"/*; do [
 holders(){ local f; for f in "$BASE/$1"/*; do [ -e "$f" ] && echo "  $(basename "$f"): $(head -1 "$f")"; done; }
 oldest(){ ls "$BASE/queue/$1" 2>/dev/null | sort | head -1; }
 DD_ENV="$(cd "$(dirname "$0")" && pwd)/dd-env.sh"
+# bash cannot source dd-env.sh for DD_KADRO_REL before it has found it: this literal is pinned to it (test_dd_kadro)
 [ -f "$DD_ENV" ] || DD_ENV="$HOME/Desktop/KADRO/context/projects/deaths-demolition/wp-079/driver/tools/dd-env.sh"
 # disk_gate: prints dd_disk_gate's one reason line; 0 ok · 75 not ready · 64 no dd-env.sh (anything else = not ready)
 disk_gate(){ local out rc; [ -f "$DD_ENV" ] || { echo "dd-env.sh not found next to slot.sh or in the wp-079 driver"; return 64; }

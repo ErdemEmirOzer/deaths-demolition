@@ -12,7 +12,7 @@
 set -u
 setopt nullglob
 source "${0:A:h}/dd-env.sh"
-ROOT="$HOME/Desktop/KADRO/context/projects/deaths-demolition"; JSON=""
+ROOT="$DD_KPROJ"; JSON=""
 while [ $# -gt 0 ]; do case "$1" in --root) ROOT="$2"; shift ;; --json) JSON="$2"; shift ;; *) echo "usage: disk-report.sh [--root DIR] [--json FILE]" >&2; exit 64 ;; esac; shift; done
 num() { case "$1" in ''|*[!0-9]*) print -u2 -r -- "note: size '${1}' of ${2:-?} is not a number → 0"; print 0 ;; *) print -r -- "$1" ;; esac; }
 mb() { local k; [ -e "$1" ] || { print 0; return; }; k=$(du -sk "$1" 2>/dev/null | awk 'NR==1{print $1}'); k=$(num "$k" "$1"); print $((k / 1024)); }

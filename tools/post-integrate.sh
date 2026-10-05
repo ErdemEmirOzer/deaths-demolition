@@ -27,7 +27,7 @@ say; say "== build footprint (last known, WP-046)"
 # newest footprint.json under the build root (dev or release) → copy as footprint-<tag>.json, print line + delta vs previous tag
 # WP-051D: with nullglob an empty pattern list makes `ls -t` list the cwd (a directory name came back →
 # "cp: tools is a directory"); collect candidates first and pick the newest only if there is one.
-FP=""; CANDS=("$DD_BUILD_ROOT"/*/footprint.json(N) ~/Desktop/KADRO/context/projects/deaths-demolition/wp-*/evidence/*/footprint.json(N))
+FP=""; CANDS=("$DD_BUILD_ROOT"/*/footprint.json(N) "$DD_KPROJ"/wp-*/evidence/*/footprint.json(N))
 [ ${#CANDS} -gt 0 ] && FP=$(ls -t "${CANDS[@]}" 2>/dev/null | head -1)
 if [ -n "$FP" ] && [ -f "$FP" ]; then
   cp "$FP" "$DEST/footprint-$TAG.json"

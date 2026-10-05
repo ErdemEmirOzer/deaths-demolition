@@ -15,6 +15,8 @@ import json, os, re, shutil, signal, subprocess, sys, tempfile, time, unittest
 from pathlib import Path
 
 TOOLS = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(TOOLS))
+import dd_paths  # noqa: E402  (WP-089: the KADRO root; fixtures follow it on move day)
 COPY = ["main-ci.sh", "compile-check.sh", "dd-env.sh", "ci_summary.py", "ci-owners.tsv", "ci-signatures.tsv", "ci-suites.txt",
         "ci_isolated.py", "ci-isolated.txt"]
 PRODUCT = "Deaths Demolition - Playable Concept"
@@ -140,7 +142,7 @@ class CiFixture(unittest.TestCase):
                               text=True).stdout.strip()
 
     def canon_guard(self):
-        return self.home / "Desktop/KADRO/context/projects/deaths-demolition/wp-079/driver/tools/userdata-guard.sh"
+        return self.home / dd_paths.KADRO_REL / "context/projects/deaths-demolition/wp-079/driver/tools/userdata-guard.sh"
 
     def make_repo(self, real_test_sh=False):
         """Fake main repo whose `main` carries the tools under test (copied scripts + fake slot.sh / userdata-guard.sh and

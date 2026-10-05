@@ -34,7 +34,7 @@
 set -u
 setopt nullglob
 source "${0:A:h}/dd-env.sh"
-ROOT="$HOME/Desktop/KADRO/context/projects/deaths-demolition"; APPLY=0
+ROOT="$DD_KPROJ"; APPLY=0
 while [ $# -gt 0 ]; do case "$1" in --dry-run) APPLY=0 ;; --apply) APPLY=1 ;; --root) ROOT="$2"; shift ;; *) echo "usage: cleanup-merged.sh [--dry-run] [--apply] [--root DIR]" >&2; exit 64 ;; esac; shift; done
 MAIN_WT="$(git -C "$DD_REPO" rev-parse --path-format=absolute --git-common-dir)"; MAIN_WT="${MAIN_WT:h}"
 MAIN_HEAD=$(git -C "$MAIN_WT" rev-parse main)

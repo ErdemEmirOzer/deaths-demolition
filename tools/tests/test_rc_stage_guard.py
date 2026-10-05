@@ -19,6 +19,8 @@ import unittest
 from unittest import mock
 
 REPO = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO / "tools"))
+import dd_paths  # noqa: E402  (WP-089: the KADRO root; fixtures follow it on move day)
 
 FAKE_PY = r'''
 import json, os, sys, time
@@ -135,7 +137,7 @@ class FakeRepo:
         unity.chmod(0o755)
         (self.dir / "home").mkdir()
         # G4 D4: rc.sh runs the canonical driver guard ($HOME/…/wp-079/driver/tools/userdata-guard.sh) — the same fake
-        canon = self.dir / "home/Desktop/KADRO/context/projects/deaths-demolition/wp-079/driver/tools/userdata-guard.sh"
+        canon = self.dir / "home" / dd_paths.KADRO_REL / "context/projects/deaths-demolition/wp-079/driver/tools/userdata-guard.sh"
         canon.parent.mkdir(parents=True)
         canon.write_bytes((self.root / "tools/userdata-guard.sh").read_bytes())
         canon.chmod(0o755)
@@ -348,7 +350,7 @@ class RcStageGuardTests(unittest.TestCase):
         self.assertEqual(1, text.count('DD_GUARD="$DD_GUARD_CANON"'))   # G4 D4: the driver guard (dd-env.sh)
         body = text.split('DD_GUARD="$DD_GUARD_CANON"', 1)[1]
         self.assertNotIn("userdata-guard.sh", body)   # every guard call after it goes through $DD_GUARD
-        self.assertIn('DD_GUARD_CANON="$HOME/Desktop/KADRO/context/projects/deaths-demolition/wp-079/driver/tools/userdata-guard.sh"',
+        self.assertIn('DD_GUARD_CANON="$DD_KPROJ/wp-079/driver/tools/userdata-guard.sh"',   # WP-089: DD_KPROJ = the one KADRO root
                       (REPO / "tools/dd-env.sh").read_text())
 
     def test_GuardKanonik_DdGuardRootVeyaKanonYok_Cikis64HicbirSeyYok(self):
@@ -358,7 +360,7 @@ class RcStageGuardTests(unittest.TestCase):
         self.assertEqual([], repo.calls())
         self.assertFalse(out.exists())
         repo = FakeRepo(self, self.REAL)
-        (repo.dir / "home/Desktop/KADRO/context/projects/deaths-demolition/wp-079/driver/tools/userdata-guard.sh").unlink()
+        (repo.dir / "home" / dd_paths.KADRO_REL / "context/projects/deaths-demolition/wp-079/driver/tools/userdata-guard.sh").unlink()
         repo, out, result = self.rc("--perf-runs", "3", repo=repo)
         self.assertEqual(64, result.returncode, result.stderr)
         self.assertIn("canonical guard", result.stderr)

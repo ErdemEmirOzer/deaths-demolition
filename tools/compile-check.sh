@@ -22,7 +22,7 @@
 #   · 75 busy · 124 stalled/timed out · 64 usage · 130/143/129 INT/TERM/HUP
 set -u
 source "${0:A:h}/dd-env.sh"
-REF=""; CI_DIR="$HOME/Desktop/KADRO/context/projects/deaths-demolition/wp-079/ci-worktree/deaths-demolition"; OUT=""; LEASE_STATUS=0
+REF=""; CI_DIR="$DD_KPROJ/wp-079/ci-worktree/deaths-demolition"; OUT=""; LEASE_STATUS=0
 CC_USAGE="usage: compile-check.sh [ref] [--ci-dir DIR] [--out DIR] | compile-check.sh --lease-status [--ci-dir DIR]"
 while [ $# -gt 0 ]; do case "$1" in
   --ci-dir) [ $# -ge 2 ] || { echo "$CC_USAGE" >&2; exit 64; }; CI_DIR="$2"; shift ;;
@@ -64,7 +64,7 @@ trap 'ci_signal INT 130' INT; trap 'ci_signal TERM 143' TERM; trap 'ci_signal HU
 dd_ci_lease_acquire "$CI_DIR" || exit $?
 CI_DIR=$DD_CI_CHECKOUT
 SHA=$(git -C "$DD_REPO" rev-parse --verify "${REF:-main}^{commit}" 2>/dev/null) || { echo "unknown ref: ${REF:-main}" >&2; exit 64; }
-: "${OUT:=$HOME/Desktop/KADRO/context/projects/deaths-demolition/ci/compile-${SHA:0:10}-$(dd_utc)}"
+: "${OUT:=$DD_KPROJ/ci/compile-${SHA:0:10}-$(dd_utc)}"
 mkdir -p "$OUT" || exit 3; DD_TIMELINE="$OUT/timeline.txt"
 PROJ="$CI_DIR/prototype/DeathsDemolition_PlayableConcept"
 [ -d "$CI_DIR/.git" ] || [ -f "$CI_DIR/.git" ] || { dd_log "compile-check: no checkout at $CI_DIR (run main-ci once)"; exit 3; }

@@ -53,15 +53,17 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
 sys.path.insert(0, str(HERE))
 import guard_receipt  # noqa: E402  (the one guard receipt module; Editor runs use scope "editor")
+import dd_paths  # noqa: E402  (WP-089: the one KADRO root; guard_receipt put tools/ on sys.path)
 import wp078_perf  # noqa: E402  (resolve_binary)
 import wp078_perf_report  # noqa: E402  (CELL: the perf window directory layout)
 import wp078_report  # noqa: E402  (AI_FLAGS, AREAS, ROUTE_KEYS, SCHEMA)
 
 PROJECT = "prototype/DeathsDemolition_PlayableConcept"
-# C-00 05.10: repo and KADRO are moving off iCloud (~/Dev, symlinks at the old paths) — read the root from DD_KADRO
-# (the KADRO folder itself), never a fixed path; the old location stays the default until the move.
-KADRO_ROOT = Path(os.environ.get("DD_KADRO") or (Path.home() / "Desktop" / "KADRO"))
-KADRO_EVIDENCE = KADRO_ROOT / "context" / "projects" / "deaths-demolition" / "wp-078" / "evidence"
+# C-00 05.10: repo and KADRO are moving off iCloud (~/Dev, symlinks at the old paths). WP-089: the root comes from
+# tools/dd_paths.py (the one constant, also behind dd-env.sh DD_KADRO) — never from the environment, so an exported
+# DD_KADRO cannot split this tool from the shell tools; move day changes dd_paths.KADRO_REL only.
+KADRO_ROOT = dd_paths.KADRO
+KADRO_EVIDENCE = dd_paths.KPROJ / "wp-078" / "evidence"
 STAGE_ORDER = ("a6", "a0", "a1", "a2", "a3", "a5", "a4", "a8")
 PLAYMODE_TIMEOUT_MIN = 90   # A1 full PlayMode watchdog (test.sh default 45 min; main-ci uses 60)
 ISOLATED_TIMEOUT_MIN = 10   # one isolated test in its own session (main-ci --alone-timeout default)

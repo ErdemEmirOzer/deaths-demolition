@@ -17,6 +17,8 @@ from pathlib import Path
 from unittest import mock
 
 TOOLS = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(TOOLS))
+import dd_paths  # noqa: E402  (WP-089: the KADRO root; fixtures follow it on move day)
 sys.path.insert(0, str(TOOLS / "qa"))
 sys.path.insert(0, str(TOOLS / "tests"))
 import guard_receipt as gr  # noqa: E402
@@ -25,7 +27,7 @@ import wp078_bot  # noqa: E402
 import wp078_perf  # noqa: E402
 from test_ci_signal_traps import CiFixture, alive  # noqa: E402  (fixture only: no tests are imported)
 
-CANON_TAIL = "Desktop/KADRO/context/projects/deaths-demolition/wp-079/driver/tools/userdata-guard.sh"
+CANON_TAIL = dd_paths.KADRO_REL + "/context/projects/deaths-demolition/wp-079/driver/tools/userdata-guard.sh"
 FIXTURE_PLAYER = "dd-fixture-player-k2-7f3c"   # never matches Contents/MacOS/(Deaths Demolition|DeathsDemolition)
 
 

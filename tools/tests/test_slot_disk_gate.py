@@ -4,10 +4,12 @@ ready → the slot is released, the ticket keeps its place, a "disk-gate wait" l
 DD_SLOT_DISK_WAIT (3600 s) of disk waiting → 75. blender/smoke and re-entrant acquires are not gated; no dd-env.sh → 64.
 Fixture only: copied slot.sh + dd-env.sh in a tempdir, fake df/sysctl first on PATH (values from a state file), a temp
 DD_SLOT_BASE and HOME — no real disk state, no real slot directory. usage: python3 tools/tests/test_slot_disk_gate.py"""
-import os, shutil, signal, subprocess, tempfile, time, unittest
+import os, shutil, signal, subprocess, sys, tempfile, time, unittest
 from pathlib import Path
 
 TOOLS = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(TOOLS))
+import dd_paths  # noqa: E402  (WP-089: the KADRO root; fixtures follow it on move day)
 LOW, OK = 1000, 20 * 1048576   # KiB free: below / above 15 GiB
 
 
@@ -154,7 +156,7 @@ class SlotDiskGateTests(unittest.TestCase):
 
     def test_DdEnvYok_DriverKopyasiKullanilir(self):
         (self.tools / "dd-env.sh").unlink()
-        driver = self.root / "home/Desktop/KADRO/context/projects/deaths-demolition/wp-079/driver/tools/dd-env.sh"
+        driver = self.root / "home" / dd_paths.KADRO_REL / "context/projects/deaths-demolition/wp-079/driver/tools/dd-env.sh"
         driver.parent.mkdir(parents=True)
         shutil.copy2(TOOLS / "dd-env.sh", driver)
         self.state.write_text(str(LOW))

@@ -28,7 +28,9 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
-GUARD = str(Path.home() / "Desktop/KADRO/context/projects/deaths-demolition/wp-079/driver/tools/userdata-guard.sh")
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import dd_paths  # noqa: E402  (WP-089: the one KADRO root for the Python tools)
+GUARD = str(dd_paths.KPROJ / "wp-079/driver/tools/userdata-guard.sh")
 PLAYER_PREFS_DOMAIN = "com.Deaths-Demolition.Deaths-Demolition---Playable-Concept"
 ENGINE_KEY_PREFIX = "Screenmanager"
 ENGINE_KEYS_EXACT = ("UnitySelectMonitor",)

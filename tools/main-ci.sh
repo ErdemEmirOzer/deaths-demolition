@@ -43,8 +43,8 @@ setopt nullglob
 source "${0:A:h}/dd-env.sh"
 REF="${1:-}"; shift 2>/dev/null || true
 [ -n "$REF" ] || { echo "usage: main-ci.sh <sha|ref> [--out-root DIR] [--ci-dir DIR] [--seed-library DIR] [--skip-playmode]" >&2; exit 64; }
-OUT_ROOT="${DD_CI_ROOT:-$HOME/Desktop/KADRO/context/projects/deaths-demolition/ci}"
-CI_DIR="${DD_CI_DIR:-$HOME/Desktop/KADRO/context/projects/deaths-demolition/wp-079/ci-worktree/deaths-demolition}"
+OUT_ROOT="${DD_CI_ROOT:-$DD_KPROJ/ci}"
+CI_DIR="${DD_CI_DIR:-$DD_KPROJ/wp-079/ci-worktree/deaths-demolition}"
 SEED=""; SKIP_PLAY=0; ETMIN=30; PTMIN=35; ATMIN=10
 while [ $# -gt 0 ]; do case "$1" in
   --out-root) OUT_ROOT="$2"; shift ;; --ci-dir) CI_DIR="$2"; shift ;; --seed-library) SEED="$2"; shift ;;
@@ -183,7 +183,7 @@ dd_log "ci worktree at $(git -C "$CI_DIR" rev-parse --short=10 HEAD)"
 LIB="$CI_DIR/prototype/DeathsDemolition_PlayableConcept/Library"
 if [ ! -d "$LIB" ]; then
   if [ -z "$SEED" ]; then
-    for cand in "$HOME"/Desktop/KADRO/context/projects/deaths-demolition/*/worktree/*/prototype/DeathsDemolition_PlayableConcept/Library(N/om); do
+    for cand in "$DD_KPROJ"/*/worktree/*/prototype/DeathsDemolition_PlayableConcept/Library(N/om); do
       w="${cand%/prototype/*}"; pgrep -f "$w" >/dev/null && continue; SEED="$cand"; break
     done
   fi

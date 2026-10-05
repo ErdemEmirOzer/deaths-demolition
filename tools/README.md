@@ -3,8 +3,13 @@
 Shared scripts for every session and for regression automation (WP-026). All paths resolve
 from the script location, so each worktree uses its own project. Environment overrides:
 `DD_UNITY` (editor binary), `DD_BUILD_ROOT` (output root, default
-`~/Desktop/KADRO/context/projects/deaths-demolition/builds`), `DD_MAX_UNITY` (machine rule, 2),
+`$DD_KPROJ/builds`), `DD_MAX_UNITY` (machine rule, 2),
 `DD_WAIT_SECONDS` (queue timeout, 3600).
+KADRO root (WP-089, C-00 05.10, iCloud move A): `DD_KADRO_REL` in dd-env.sh (today `Desktop/KADRO`, relative to HOME) is
+the one place the shell tools spell it — `DD_KADRO` = `$HOME/$DD_KADRO_REL`, `DD_KPROJ` = `$DD_KADRO/context/projects/
+deaths-demolition` (CI root, CI worktree, driver guard `DD_GUARD_CANON`, builds, cleanup / disk-report roots). A constant,
+never read from the environment. Python: `tools/dd_paths.py` (`KADRO_REL`, `KPROJ`); slot.sh keeps one pinned fallback
+literal. Move day changes only these three values (`tools/tests/test_dd_kadro.py` keeps them equal).
 
 | Script | What it does | Exit codes |
 |---|---|---|

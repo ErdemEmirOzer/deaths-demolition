@@ -29,7 +29,7 @@ PROJECT="${DD_PROJECT:-$REPO/prototype/DeathsDemolition_PlayableConcept}"
 APP=""; BIN=""   # resolved after the build step (build.sh → DeathsDemolition.app; fallback → DeathsDemolition-dev.app)
 find_app(){ APP=$(ls -d "$OUT"/build-dev/*.app 2>/dev/null | head -1); BIN="$APP/Contents/MacOS/$(source "$REPO/tools/dd-env.sh" >/dev/null 2>&1; print -r -- "$DD_PRODUCT")"; }   # product name from dd-env.sh
 mkdir -p "$OUT"; T="$OUT/timeline.txt"; log(){ echo "$(date -u +%FT%TZ) $*" | tee -a "$T"; }
-SLOT="${DD_SLOT_SH:-}"; [ -n "$SLOT" ] || { [ -x "$REPO/tools/slot.sh" ] && SLOT="$REPO/tools/slot.sh" || SLOT="$HOME/Desktop/KADRO/context/projects/deaths-demolition/tools/slot.sh"; }; SLOT_TAG="qa-$$"
+SLOT="${DD_SLOT_SH:-}"; [ -n "$SLOT" ] || { [ -x "$REPO/tools/slot.sh" ] && SLOT="$REPO/tools/slot.sh" || SLOT="$(source "$REPO/tools/dd-env.sh" >/dev/null 2>&1; print -r -- "$DD_KPROJ")/tools/slot.sh"; }; SLOT_TAG="qa-$$"
 unity_count(){ ps -Ao comm | grep -c '/MacOS/Unity$'; }
 load1(){ uptime | sed 's/.*load averages: //' | awk '{print $1}'; }
 slot_acquire(){ # MAKİNE KURALI (C-00): slot.sh varsa kilit (≤ 2 Unity batch, bloklar); yoksa süreç sayımıyla bekle

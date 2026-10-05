@@ -5,7 +5,12 @@ DD_TOOLS_DIR="${0:A:h}"
 : "${DD_REPO:=${DD_TOOLS_DIR:h}}"
 DD_PROJECT="$DD_REPO/prototype/DeathsDemolition_PlayableConcept"
 : "${DD_UNITY:=/Applications/Unity/Hub/Editor/2022.3.22f1/Unity.app/Contents/MacOS/Unity}"
-: "${DD_BUILD_ROOT:=$HOME/Desktop/KADRO/context/projects/deaths-demolition/builds}"
+# WP-089 (C-00 05.10, iCloud move A): the KADRO root relative to HOME — the ONE place it is spelled for the shell tools.
+# A constant, never taken from the environment (DD_GUARD_CANON derives from it). Move day: only this value changes
+# (Desktop/KADRO → Dev/KADRO), together with tools/dd_paths.py KADRO_REL and slot.sh's fallback (test_dd_kadro pins all three).
+DD_KADRO_REL="Desktop/KADRO"
+DD_KADRO="$HOME/$DD_KADRO_REL"; DD_KPROJ="$DD_KADRO/context/projects/deaths-demolition"
+: "${DD_BUILD_ROOT:=$DD_KPROJ/builds}"
 : "${DD_MAX_UNITY:=2}"          # MAKİNE KURALI: at most two Unity batch processes on this machine
 : "${DD_WAIT_SECONDS:=3600}"    # how long a script waits for a free slot before giving up (exit 75)
 DD_APP_NAME="DeathsDemolition.app"
@@ -19,7 +24,7 @@ DD_PRODUCT="Deaths Demolition - Playable Concept"
 # or the canonical guard missing → one reason line on stderr and 64, before the caller takes anything. WP-089 (C-00 05.10):
 # then tools/guard_freshness.py — the driver's userdata-guard.sh / userdata_attrib.py ≠ main's → 64 as well (dd-env.sh /
 # slot.sh differences and a driver that is not a git checkout only warn).
-DD_GUARD_CANON="$HOME/Desktop/KADRO/context/projects/deaths-demolition/wp-079/driver/tools/userdata-guard.sh"
+DD_GUARD_CANON="$DD_KPROJ/wp-079/driver/tools/userdata-guard.sh"
 dd_guard_canon_check() {
   [ -z "${DD_GUARD_ROOT:-}" ] || { echo "guard: DD_GUARD_ROOT is set (guard self-test only) — refused, nothing taken (64)" >&2; return 64; }
   [ -f "$DD_GUARD_CANON" ] && [ -x "$DD_GUARD_CANON" ] || { echo "guard: canonical guard $DD_GUARD_CANON missing or not executable — refused, nothing taken (64)" >&2; return 64; }
