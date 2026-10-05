@@ -44,6 +44,7 @@ namespace DD.Prototype.Tests.PlayMode
             LogAssert.ignoreFailingMessages = false;
             UiSettings.TextScale = 1f;
             UiSettings.UiScale = 1f;
+            UiSettings.Language = UiStrings.English;
             RunFlowClock.ClearHolds();
             RunTreeEffects.TreatAllAsLive = false;
             if (RunDirector.Instance != null && RunDirector.Instance.Shop != null)
@@ -292,6 +293,64 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             host.offsetMin -= new Vector2(0f, 160f);
+            RunDirector.Instance.CloseUpgradeScreen();
+            yield return null;
+        }
+
+        /// <summary>
+        /// WP-081 (R1 AD SHOULD-3 / SHOULD-6): stacked rows in Turkish at the Mac setting (UI 1.2 × text 1.25). Every name and
+        /// every NEEDS line prints whole in both lanes - the column takes the host's room, names are never shortened - and
+        /// every OFFER tag sits inside its node, UiSpace.S under its top edge, where a focused card's brackets above end.
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator Yigin_TR_UiOlcek12_Metin125_OnceSatiriButun_TeklifAralikli()
+        {
+            UiSettings.Language = UiStrings.Turkish;
+            yield return OpenTree(1.2f, 1.25f);
+            UpgradeScreen screen = Object.FindObjectOfType<UpgradeScreen>();
+            UiRunTreePanel tree = screen.GetComponentInChildren<UiRunTreePanel>(false);
+            Assert.IsNotNull(tree);
+            Assert.IsFalse(tree.Compact, "stacked rows at the Mac setting");
+            RunTreeEffects.TreatAllAsLive = true;   // keystones / forks read ÖNCE <name> (their effects are pending in this build)
+            tree.Refresh(RunDirector.Instance.Shop);
+            int offers = 0;
+            int needs = 0;
+            foreach (RunTreeLane lane in new[] { RunTreeLane.Body, RunTreeLane.Weapon })
+            {
+                tree.SetLane(lane, false);
+                yield return null;
+                for (int i = 0; i < tree.Snapshot.Count; i++)
+                {
+                    TMP_Text name = tree.NameTextOf(i);
+                    if (name == null || !name.gameObject.activeInHierarchy) continue;
+                    name.ForceMeshUpdate();
+                    Assert.IsFalse(name.isTextTruncated, "tr " + lane + ": " + name.text + " prints whole");
+                    TMP_Text state = tree.StateTextOf(i);
+                    state.ForceMeshUpdate();
+                    Assert.IsFalse(state.isTextTruncated, "tr " + lane + ": " + state.text + " prints whole");
+                    if (tree.Snapshot.Nodes[i].Status == RunTreeNodeStatus.PrereqMissing)
+                    {
+                        needs++;
+                    }
+
+                    if (tree.OfferShownOn(i))
+                    {
+                        offers++;
+                        RectTransform tag = tree.OfferTagOf(i, out RectTransform node);
+                        tag.GetWorldCorners(s_a);
+                        float top = node.InverseTransformPoint(s_a[1]).y;
+                        Assert.LessOrEqual(top, node.rect.yMax - (int)UiSpace.S + 0.5f,
+                            "tr " + lane + " node " + i + ": the OFFER tag keeps UiSpace.S under its node's top edge");
+                    }
+                }
+
+                AssertFits(screen, tree, "tr mac " + lane);
+            }
+
+            Debug.Log("[DD-TEST] wp081.tree tr mac pitch=" + tree.RowPitchPx + " tree=" + tree.TreeRect.rect.size + " offers=" + offers + " needs=" + needs);
+            Assert.Greater(offers, 0, "the offer marks some nodes");
+            Assert.Greater(needs, 0, "some nodes print a NEEDS line");
             RunDirector.Instance.CloseUpgradeScreen();
             yield return null;
         }

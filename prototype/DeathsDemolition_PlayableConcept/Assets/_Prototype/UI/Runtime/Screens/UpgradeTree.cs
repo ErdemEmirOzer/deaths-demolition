@@ -31,8 +31,10 @@ namespace DD.Prototype.UI
     {
         public const float SealSize = 64f;
         public const float RowPitch = 112f;
-        public const float TierPitch = 214f;
-        public const float NodeWidth = 196f;
+        // WP-081 (R1 AD SHOULD-3): the column takes the room the host has, up to 268 (was 214): a tier's full name in a
+        // NEEDS line ("ÖNCE YENİLENME GECİKMESİ") prints whole instead of cut, and names are never shortened (canonical).
+        public const float TierPitch = 268f;
+        public const float NodeWidth = 248f;
         public const int Tiers = 4;
         public const int Rows = 4;
         public const float OpeningBeatSeconds = 0.12f;
@@ -46,6 +48,9 @@ namespace DD.Prototype.UI
         private const float HollowGlyphBand = 0.2f;   // ≈ 2.4 px of the 64 px cell (spread 6) - the ink outline is 0.25
         private const float MinSeal = 40f;
         private const float EdgeGap = 24f;
+
+        /// <summary>Caption at text 1.0 (UiTokens, the DEC-077 comfort floor): the smallest a stacked NEEDS line steps down to.</summary>
+        private const float StateFloor = 14f;
         private const float BuyWidth = 204f;
         private const float BuyChrome = 132f;   // the prompt keycap, its gap and the button's side padding
 
@@ -224,6 +229,14 @@ namespace DD.Prototype.UI
         {
             NodeView v = ViewOf(index);
             return v != null && v.Offer.activeSelf;
+        }
+
+        /// <summary>The OFFER tag and its node's rect (tests: the tag's clearance under the row above).</summary>
+        public RectTransform OfferTagOf(int index, out RectTransform node)
+        {
+            NodeView v = ViewOf(index);
+            node = v != null ? v.Rect : null;
+            return v != null ? (RectTransform)v.Offer.transform : null;
         }
 
         /// <summary>The control the screen focuses: the detailed node's seal.</summary>
@@ -432,6 +445,7 @@ namespace DD.Prototype.UI
             float w = _tree.rect.width;
             float h = _tree.rect.height;
             _views[0].Name.fontSize = _nameFontSize;
+            _views[0].State.fontSize = UiTokens.FontSize(UiType.Caption);   // measured at its own size, not a fitted one
             float name = LineOf(_views[0].Name);
             float state = LineOf(_views[0].State);
             float gridTop = TabHeight + (int)UiSpace.M;
@@ -482,6 +496,17 @@ namespace DD.Prototype.UI
                 v.Rect.sizeDelta = new Vector2(_nodeWidth, boxH);
                 v.Name.enableWordWrapping = _compact;
                 v.State.enableWordWrapping = _compact;
+                // WP-081 (R1 AD SHOULD-3): where even the widest column the host allows is short of a NEEDS line (TR at text
+                // 1.25 on the Mac host: 219 px for "ÖNCE YENİLENME GECİKMESİ"), the stacked line steps its size down toward
+                // the caption's text-1.0 size - never under it - instead of cutting a canonical name. Compact rows wrap.
+                float stateFont = UiTokens.FontSize(UiType.Caption);
+                v.State.enableAutoSizing = !_compact;
+                v.State.fontSizeMax = stateFont;
+                v.State.fontSizeMin = Mathf.Min(stateFont, StateFloor);
+                if (_compact)
+                {
+                    v.State.fontSize = stateFont;
+                }
                 // Compact rows (AD R1-C MUST-2): the name steps down to the state word's size so two lines of each fit
                 // beside the seal; the word keeps its two lines first.
                 v.Name.fontSize = _compact ? v.State.fontSize : _nameFontSize;
@@ -711,7 +736,10 @@ namespace DD.Prototype.UI
                 _compact ? new Vector2(-2f, 2f) : new Vector2(2f, 2f), new Vector2(pinSize, pinSize));
             v.Offer.SetActive(forSale && !_compact);
             var offerRect = (RectTransform)v.Offer.transform;
-            PlaceAnchored(offerRect, new Vector2(0f, 1f), new Vector2(0.5f, 0.5f), new Vector2(6f, -2f), offerRect.sizeDelta);
+            // WP-081 (R1 AD SHOULD-6): inside the node, its top UiSpace.S under the node's top edge - the focus brackets of the
+            // card above end on that edge (8 px outset into the 8 px row gap). The seal's top is 4 px under the node's.
+            float offerDown = (int)UiSpace.S - 4f + offerRect.sizeDelta.y * 0.5f;
+            PlaceAnchored(offerRect, new Vector2(0f, 1f), new Vector2(0.5f, 0.5f), new Vector2(6f, -offerDown), offerRect.sizeDelta);
             bool count = n.Kind == RunTreeNodeKind.Tier && n.OwnedTier > 0 && n.MaxTier > 1;
             var countRect = (RectTransform)v.Count.transform.parent;
             countRect.gameObject.SetActive(count && !_compact);

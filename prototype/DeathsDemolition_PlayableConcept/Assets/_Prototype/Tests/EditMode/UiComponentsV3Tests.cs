@@ -195,6 +195,16 @@ namespace DD.Prototype.Tests.EditMode
                 "RESET", null, "KEEP BINDINGS", null);
             Assert.Greater(longOne.CardSize.y, 264f, "uzun gövde: kart içerikten uzar");
             Assert.IsFalse(longOne.IsOpen);
+
+            // WP-081 (R1 AD SHOULD-9): the Elev2 soft shadow frames the card on every side and follows its height.
+            float reach = UiElevationSpec.ShadowRadius(UiElevation.Elev2);
+            foreach (UiModal modal in new[] { shortOne, longOne })
+            {
+                Assert.IsNotNull(modal.ShadowRect, "kartın gölgesi var");
+                Assert.AreEqual(modal.CardSize.x + reach * 2f, modal.ShadowRect.sizeDelta.x, 1e-3f, "gölge kartı yanlardan çevreler");
+                Assert.AreEqual(modal.CardSize.y + reach * 2f, modal.ShadowRect.sizeDelta.y, 1e-3f, "gölge kartın yüksekliğini izler");
+                Assert.AreEqual(0, modal.ShadowRect.GetSiblingIndex(), "perdenin üstünde, kartın altında");
+            }
         }
 
         [Test]

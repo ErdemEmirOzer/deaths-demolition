@@ -36,6 +36,7 @@ namespace DD.Prototype.UI
         private CanvasGroup _scrim;
         private CanvasGroup _card;
         private RectTransform _cardRect;
+        private RectTransform _shadowRect;
         private UiButton _primary;
         private UiButton _secondary;
         private Action _onSecondary;
@@ -115,6 +116,20 @@ namespace DD.Prototype.UI
             float content = (int)UiSpace.XL * 2f + UiFactory.LineHeight(UiType.H2) + (int)UiSpace.M + _bodyHeight + (int)UiSpace.L + UiSize.Target;
             Vector2 size = _cardRect.sizeDelta;
             _cardRect.sizeDelta = new Vector2(size.x, Mathf.Max(SizeOf(UiModalSize.S).y, Mathf.Ceil(content)));
+            FitShadow();
+        }
+
+        /// <summary>The card's shadow: the card's size plus the Elev2 reach on every side.</summary>
+        private void FitShadow()
+        {
+            float reach = UiElevationSpec.ShadowRadius(UiElevation.Elev2);
+            _shadowRect.sizeDelta = _cardRect.sizeDelta + new Vector2(reach * 2f, reach * 2f);
+        }
+
+        /// <summary>The shadow under the card (tests: it frames the card on every side).</summary>
+        public RectTransform ShadowRect
+        {
+            get { return _shadowRect; }
         }
 
         /// <summary>Current card size (tests).</summary>
@@ -141,12 +156,30 @@ namespace DD.Prototype.UI
             scrim.raycastTarget = true; // nothing underneath takes a click while open
             _scrim = UiFactory.Group(scrim.gameObject);
 
+            // WP-081 (R1 AD SHOULD-9): the kit's one soft shadow at Elev2 under the card. The scrim alone left about 12 % of
+            // a cream row legible at the edge of a small dialog ("ARAYÜZ ÖLÇEĞİ" cut by its top edge); now the rows behind
+            // stop at a falloff. It is the scrim's child, so it draws between the scrim and the card and fades with the scrim.
+            float reach = UiElevationSpec.ShadowRadius(UiElevation.Elev2);
+            Image shadow = UiFactory.NewImage("CardShadow", scrim.transform, UiColor.ShadowKey, UiSprites.SoftShadow);
+            shadow.raycastTarget = false;
+            shadow.type = Image.Type.Sliced;
+            shadow.pixelsPerUnitMultiplier = UiSprites.SoftShadowReach / Mathf.Max(1f, reach);
+            Color shade = shadow.color;
+            shade.a = UiElevationSpec.ShadowAlpha(UiElevation.Elev2);
+            shadow.color = shade;
+            _shadowRect = shadow.rectTransform;
+            _shadowRect.anchorMin = new Vector2(0.5f, 0.5f);
+            _shadowRect.anchorMax = new Vector2(0.5f, 0.5f);
+            _shadowRect.pivot = new Vector2(0.5f, 0.5f);
+            _shadowRect.anchoredPosition = new Vector2(0f, -reach * 0.25f);
+
             _cardRect = UiFactory.FramedCard("Card", root, UiColor.BorderStrong, UiColor.SurfacePanel, UiFrame.Modal);   // A4 Elev2 double line
             Vector2 cardSize = SizeOf(size);
             _cardRect.anchorMin = new Vector2(0.5f, 0.5f);
             _cardRect.anchorMax = new Vector2(0.5f, 0.5f);
             _cardRect.pivot = new Vector2(0.5f, 0.5f);
             _cardRect.sizeDelta = cardSize;
+            FitShadow();
             _card = UiFactory.Group(_cardRect.gameObject);
 
             RectTransform content = UiFactory.CardContent(_cardRect, UiSpace.XL);
