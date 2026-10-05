@@ -6,7 +6,8 @@
   "reviewVerdicts": ["KABUL", "KABUL_DÜZELTMELERLE", "RED"],
   "gates": [
     {"id": "H1", "area": "hero", "kind": "gate", "owner": "S-06", "title": "hand to grip distance on the default player path, both hands (C-00 05.10 decision B: right = socket_weapon_r to the definition's grip point mount.TransformPoint(GripOffset), not marker_grip; the support arm's elbowMaxDeg reported, a check <= 165 after the hero v2 import)",
-     "checks": [{"key": "maxCm", "op": "<=", "limit": 1.0}], "report": ["elbowMaxDeg"]},
+     "checks": [{"key": "maxCm", "op": "<=", "limit": 1.0}], "report": ["elbowMaxDeg"],
+     "measuredBy": {"suite": "playmode", "filter": "DD.Prototype.Tests.PlayMode.R2HeroOlcumTests.H1_ElTutamak_TumKlasikSilahlar_DurusYuruyus", "quiet": false}},
     {"id": "H2", "area": "hero", "kind": "gate", "owner": "S-06", "title": "weapon clips into shoulder/chest",
      "checks": [{"key": "clipFrames", "op": "==", "limit": 0}]},
     {"id": "H3", "area": "hero", "kind": "gate", "owner": "S-02", "title": "reload magazine events (C-00 05.10: owner S-02, the magazine state machine; contactDeviationFramesMax from S-06 B2c)",

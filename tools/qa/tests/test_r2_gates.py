@@ -122,6 +122,14 @@ class MeasuredByTests(unittest.TestCase):
         self.assertEqual("PASS", row["status"])
         self.assertEqual(171.0, row["values"]["elbowMaxDeg"])
 
+    def test_h1_is_measured_on_the_default_player_path_in_its_own_full_name_session(self):
+        # C-00 05.10 decision B: the gate is the default player path, so the session carries no switch (DD_HOLD_IK is the
+        # owner's A/B evidence, never the gate value); [Explicit] → the full name (BEKLEYEN §18 EXPLICIT-UNRUN)
+        steps = {s["id"]: s for s in r2.measurement_steps(r2.load_contract(CONTRACT), quiet=False)}
+        self.assertEqual("DD.Prototype.Tests.PlayMode.R2HeroOlcumTests.H1_ElTutamak_TumKlasikSilahlar_DurusYuruyus",
+                         steps["r2-H1"]["filter"])
+        self.assertEqual(("playmode", {}, ["H1"]), (steps["r2-H1"]["suite"], steps["r2-H1"]["env"], steps["r2-H1"]["gates"]))
+
     def test_u1_gates_both_measures_and_names_the_one_that_fails(self):
         # C-00 05.10 (BEKLEYEN §11, S-09 8ba256ec): the default path and the same content as R1 both gate (>= 0.40); the
         # smaller of the two, lettersTotalReduction, is reported
