@@ -157,11 +157,20 @@ namespace DD.Prototype.Tests.PlayMode
             ZombieEnemy.Rise = ZombieEnemy.RisePolicy.Off;
 
             // C-00 05.10: the gate is measured on the FIXED mix (R2ZombieCrowd.GateMix); the config's worst case is reported.
-            var gate = new double[6];
+            var gate = new double[7];
             yield return MeasureCrowd(director, R2ZombieCrowd.GateMix, "gate", gate);
             int[] worstMix = R2ZombieCrowd.WorstMix();
-            var worst = new double[6];
+            var worst = new double[7];
             yield return MeasureCrowd(director, worstMix, "worst", worst);
+
+            // R2 standard "the source is in the record" (S-10 d3c15529): no artefact unless the crowd was really there and drawn.
+            Assert.AreEqual(R2ZombieCrowd.Size, (int)gate[5], "kaynak yok: sabit karışım tam doğmadı");
+            Assert.AreEqual(R2ZombieCrowd.Size, (int)worst[5], "kaynak yok: en kötü karışım tam doğmadı");
+            Assert.Greater(gate[6], 0, "kaynak yok: kamerada görünür zombi renderer'ı yok");
+            Assert.Greater(gate[2], 0, "kaynak yok: kare render edilmedi (sayaç 0)");
+            Assert.Greater(gate[1], 0, "kaynak yok: zombiler çizilmedi (zombi draw 0)");
+            Assert.Greater(worst[1], 0, "kaynak yok: en kötü karışım çizilmedi");
+            Assert.Greater(gate[3], 0, "kaynak yok: zombi dokusu okunmadı");
 
             R2Olcum.Yaz("Z3b", "DD.Prototype.Tests.PlayMode.ZombieR2Tests.Z3b_40Zombi_SetPassPayi_DokuButcesi", new Dictionary<string, double>
             {
@@ -170,7 +179,6 @@ namespace DD.Prototype.Tests.PlayMode
                 { "zombieSetPassWorst", worst[0] }, { "zombieDrawsWorst", worst[1] }, { "sharedTextureGpuMBWorst", worst[3] },
             }, (int)gate[5]);
 
-            Assert.AreEqual(R2ZombieCrowd.Size, (int)gate[5], "sabit karışım tam doğmadı");
             Assert.LessOrEqual(gate[3], MaxSharedTextureGpuMB, "zombi ortak doku GPU MB");
             Assert.LessOrEqual(gate[4], MaxUniqueTexturesPerZombie, "zombiye özgü doku");
             Assert.LessOrEqual(gate[0], MaxZombieSetPass, "zombi SetPass payı");
@@ -180,7 +188,8 @@ namespace DD.Prototype.Tests.PlayMode
 
         /// <summary>
         /// One crowd: spawn the mix (R2ZombieCrowd), let it close in, freeze, then frame vs no-zombie counters and the zombie
-        /// textures. result = [zombieSetPass, zombieDraws, frameSetPass, sharedTextureGpuMB, uniqueTexturesPerZombie, bodies].
+        /// textures. result = [zombieSetPass, zombieDraws, frameSetPass, sharedTextureGpuMB, uniqueTexturesPerZombie, bodies,
+        /// zombie renderers visible to the game camera].
         /// </summary>
         private static IEnumerator MeasureCrowd(EnemySpawnDirector director, int[] mix, string label, double[] result)
         {
@@ -219,6 +228,9 @@ namespace DD.Prototype.Tests.PlayMode
             yield return Counters(cam, frame);
             var zombieRenderers = new List<Renderer>();
             foreach (ZombieEnemy z in ZombieEnemy.Live) if (z != null) foreach (Renderer r in z.GetComponentsInChildren<Renderer>(false)) if (r.enabled) zombieRenderers.Add(r);
+            Plane[] frustum = GeometryUtility.CalculateFrustumPlanes(cam);
+            int visible = 0;
+            foreach (Renderer r in zombieRenderers) if (GeometryUtility.TestPlanesAABB(frustum, r.bounds)) visible++;
             foreach (Renderer r in zombieRenderers) r.enabled = false;
             yield return Counters(cam, noZombies);
             var extra = new SortedDictionary<string, int>(StringComparer.Ordinal);
@@ -284,7 +296,7 @@ namespace DD.Prototype.Tests.PlayMode
                 "[DD-OBS] r2.z3b mix=" + label + " " + R2ZombieCrowd.Describe(mix) + " zombies={0} frame setPass={1} draw={2} batches={3} | no_zombies {4}/{5}/{6} | zombie setPass={7} draws={8} batches={9} | textures={10} sharedGpuMB={11:0.00} uniquePerZombieMax={12}",
                 perZombie.Count, frame[0], frame[1], frame[2], noZombies[0], noZombies[1], noZombies[2], zombieSetPass, zombieDraws, frame[2] - noZombies[2], all.Count, sharedMB, uniqueMax));
             Time.timeScale = 1f;
-            result[0] = zombieSetPass; result[1] = zombieDraws; result[2] = frame[0]; result[3] = sharedMB; result[4] = uniqueMax; result[5] = perZombie.Count;
+            result[0] = zombieSetPass; result[1] = zombieDraws; result[2] = frame[0]; result[3] = sharedMB; result[4] = uniqueMax; result[5] = perZombie.Count; result[6] = visible;
             foreach (ZombieEnemy z in crowd) if (z != null && z.IsSpawned) z.Remove();
             yield return null;
         }
@@ -303,12 +315,10 @@ namespace DD.Prototype.Tests.PlayMode
             // shared skeleton with the jaw (teeth ride the jaw), eyes and teeth inside the face mesh.
             var faces = new List<ZombieModuleLibrary.Module>();
             if (library.modules != null) foreach (ZombieModuleLibrary.Module m in library.modules) if (m != null && m.kind == "face") faces.Add(m);
-            if (faces.Count == 0)
-            {
-                R2Olcum.Yaz("Z4", source, new Dictionary<string, double?> { { "familiesMissingFace", null } }, 0,
-                    "AP-025-B face modules not delivered yet (WP-084)");
-                Assert.Fail("AP-025-B yüz modülleri henüz yok (kind \"face\") — Z4 BLOCKED");
-            }
+            // R2 standard "the source is in the record" (S-10 d3c15529): no artefact without the measured thing — the gate is
+            // BLOCKED by name until AP-025-B delivers the face modules.
+            Assert.IsTrue(library.bodies != null && library.bodies.Length > 0, "kaynak yok: kütüphanede gövde ailesi yok");
+            Assert.Greater(faces.Count, 0, "kaynak yok: AP-025-B yüz modülleri henüz yok (kind \"face\") — Z4 BLOCKED");
 
             int missing = 0, families = 0;
             foreach (ZombieModuleLibrary.Body body in library.bodies)
