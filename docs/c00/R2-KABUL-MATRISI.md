@@ -2,7 +2,7 @@
 
 > **Ne için:** S-10'un R2 FINAL zincirine girdi. `tools/qa/r2-gates.json`'daki her kapı tek satırda: kimin ölçtüğü, neyle ölçtüğü, son değerin nerede durduğu ve FINAL'i neyin beklettiği.
 > **Hazırlayan:** KADRO test-engineer (C-00B B-07, yerel ajan). Salt okuma derlemesidir; eşik değiştirmez. Eşik yalnız `r2-gates.json`'da, C-00 kaydıyla, ölçümden önce değişir (`tools/qa/r2-measure-contract.md` "Changing a threshold").
-> **Durum anı:** 06.10 ~02:00. main `d95d237aa59404492b3a8c797e8b18a7733e3754`.
+> **Durum anı:** 06.10 01:45. main `d95d237aa59404492b3a8c797e8b18a7733e3754`.
 > **`173890ac` → `d95d237a` arası:** yalnız `docs/` ve `planning/` değişti (`git diff 173890ac d95d237a -- tools prototype` boş). Bu aralıktaki commit'ler: `81de6ad3` (B-08), `19baeee9` (BEKLEYEN §11'deki Z3b kaydının düzeltilmesi), `1e83c1dd` (`docs/c00/SABIT-KURALLAR-R2-2026-10-06.md`), `d0fe0a62` (BEKLEYEN §20), `d95d237a`.
 > **Sonra gelen:** `db77df0a` (S-02 §19 G3/B1; çalışma kodu + yeni `Wp087B03GcTests.cs`). Matristeki hiçbir dosya:satır değişmedi.
 > **Daha önce:** `18f3d01e`'den sonra C-00 Z3b düzeltmesini aldı. Değişen dosyalar `ZombieR2Tests.cs`, `r2-gates.json` ve `test_r2_gates.py`:
