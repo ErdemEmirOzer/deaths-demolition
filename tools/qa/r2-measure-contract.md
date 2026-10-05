@@ -42,6 +42,14 @@ An `[Explicit]` test runs only when the filter names it in full (S-02 05.10): gi
 `measuredBy` gets its artifact from the owner's own run into `<E>/r2/`. H4 is split (C-00 05.10): H4 = weapon yaw/roll
 table (S-02), H4a = FP arm keys (S-06), same thresholds.
 
+## P5 (Selection → Run load time)
+
+No owner test: `wp078_accept` writes `r2-P5.json` in stage `r2` from the chain's own A2/A3 bot sessions
+(`<session>/ui-data/load-timing.json`, entry `Run`), median over the R1 FINAL evidence's same files
+(`--r1-evidence <dir> --r1-commit <40-hex>`; tool `tools/qa/r2_load_time.py`). Dev build against dev build, no code in
+either build (C-00 05.10 decision (a)). R1 sat on the 1.2 s curtain floor in every session, so `floorLimited` tells
+that the ratio only shows an R2 load that grows past it.
+
 ## Human gates
 
 H5, L6, Z5, S6, U4: one review file `<E>/r2/reviews/<gate id>.json`:

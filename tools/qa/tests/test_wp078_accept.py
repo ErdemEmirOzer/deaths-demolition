@@ -519,6 +519,28 @@ class R2StageTests(Base):
         self.assertEqual(["DD_KIT_VARIANTS=A", "DD_KIT_WEAPONS=all"], run[3:5])
         self.assertEqual("test.sh", Path(run[5]).name)
 
+    def test_p5_comes_from_the_chain_bot_sessions_over_the_r1_evidence(self):
+        r1 = Path(tempfile.mkdtemp())
+        for root, seconds in ((self.evidence, 1.30), (r1, 1.22)):
+            d = Path(root) / "a2" / "gameplay-tp" / "ui-data"
+            d.mkdir(parents=True, exist_ok=True)
+            (d / "load-timing.json").write_text(json.dumps({"Version": 1, "Scenes": ["Selection", "Run"], "Seconds": [1.2, seconds]}))
+        with mock.patch.object(acc.r2_gates, "measurement_steps", side_effect=lambda c, quiet: []):
+            chain = make_chain(self.evidence, ["r2"], round_name="R2", r1_evidence=r1, r1_commit="b" * 40)
+            chain.run()   # a chain of RECORDED stages only has no PASS verdict to exit 0 on; the record is what counts
+        self.assertEqual("RECORDED", chain.verdicts["r2"])
+        p5 = json.loads((self.evidence / "r2" / "r2-P5.json").read_text())
+        self.assertEqual(("P5", FINAL, "b" * 40), (p5["gate"], p5["commit"], p5["baselineCommit"]))
+        self.assertEqual(round(1.30 / 1.22, 4), p5["values"]["ratio"])
+
+    def test_without_an_r1_evidence_p5_is_left_blocked_and_named(self):
+        with mock.patch.object(acc.r2_gates, "measurement_steps", side_effect=lambda c, quiet: []):
+            chain = make_chain(self.evidence, ["r2"], round_name="R2")
+            chain.run()
+        self.assertEqual("RECORDED", chain.verdicts["r2"])
+        self.assertFalse((self.evidence / "r2" / "r2-P5.json").exists())
+        self.assertIn("P5 BLOCKED", (self.evidence / "accept.log").read_text())
+
     def test_quiet_sessions_only_in_r2q(self):
         self.assertEqual(["AudioR2Dense40"], [self.opt(a, "--filter") for a in self.planned_r2(["r2q"], "R2")])
 

@@ -57,6 +57,7 @@ import dd_paths  # noqa: E402  (WP-089: the one KADRO root; guard_receipt put to
 import wp078_perf  # noqa: E402  (resolve_binary)
 import wp078_perf_report  # noqa: E402  (CELL: the perf window directory layout)
 import r2_gates  # noqa: E402  (WP-091 R2 measurement sessions)
+import r2_load_time  # noqa: E402  (WP-091 P5: Selection → Run from the bot sessions' load-timing.json)
 import wp078_report  # noqa: E402  (AI_FLAGS, AREAS, ROUTE_KEYS, SCHEMA)
 
 PROJECT = "prototype/DeathsDemolition_PlayableConcept"
@@ -260,7 +261,7 @@ def load_b9_poses(path):
 class Chain:
     def __init__(self, final, evidence, stages, dry_run=False, resume=False, editmode_filter="", playmode_filter="",
                  wait_tries=3, wait_seconds=120.0, git=None, runner=None, guard=None, out=print, python=sys.executable,
-                 b9_poses=None, round_name="R1"):
+                 b9_poses=None, round_name="R1", r1_evidence=None, r1_commit=None):
         self.final, self.evidence = final, Path(evidence).resolve()
         self.stages = [s for s in STAGE_ORDER if s in stages]
         self.dry_run, self.resume = dry_run, resume
@@ -271,6 +272,7 @@ class Chain:
         self.guard = guard or EditorGuard()
         self.out, self.py = out, python
         self.round_name = round_name   # WP-091: "R2" adds the r2-gates.json step to the manifest
+        self.r1_evidence, self.r1_commit = (Path(r1_evidence).resolve() if r1_evidence else None), r1_commit   # P5 baseline
         self.b9_poses = list(b9_poses or [])   # C-00 01.10: S-05 B9 pose windows, after A4 in the same quiet-window run
         self.child, self.terminated = None, False
         self.planned = []          # (stage, argv) — the dry-run command list
@@ -826,8 +828,34 @@ class Chain:
                                       scope="player" if step["suite"] == "playmode" else "editor")
             if result:
                 results.append(dict(result, gate=False))
+        p5 = self.r2_load_time(measure_dir) if not quiet else None
         if not self.dry_run:
-            self.finish(stage, results, verdict="RECORDED", extra={"r2Steps": [s["id"] for s in steps]})
+            extra = {"r2Steps": [s["id"] for s in steps]}
+            if p5 is not None:
+                extra["p5"] = p5
+            self.finish(stage, results, verdict="RECORDED", extra=extra)
+
+    def r2_load_time(self, measure_dir):
+        """P5 (C-00 05.10 (a)): the Selection → Run load time of this chain's own A2/A3 bot sessions over the R1 FINAL
+        evidence's, from each session's ui-data/load-timing.json — no Player of its own. Without --r1-evidence P5 stays
+        BLOCKED in the report (named)."""
+        if self.r1_evidence is None:
+            self.log("P5: no --r1-evidence/--r1-commit — r2-P5.json not written, P5 BLOCKED in the report")
+            return "no-baseline"
+        if self.dry_run:
+            self.out(f"DRY r2: P5 from {self.evidence}/{{a2,a3}}/*/ui-data/load-timing.json over {self.r1_evidence} "
+                     f"({self.r1_commit}) → {measure_dir}/r2-P5.json")
+            return None
+        data, r2, r1 = r2_load_time.artifact(self.evidence, self.r1_evidence, self.final, self.r1_commit)
+        if data is None:
+            self.log(f"P5: no samples (R2 {len(r2)}, R1 {len(r1)}) — r2-P5.json not written, P5 BLOCKED in the report")
+            return "no-samples"
+        measure_dir.mkdir(parents=True, exist_ok=True)
+        (measure_dir / "r2-P5.json").write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+        v = data["values"]
+        self.log(f"P5 ratio {v['ratio']} (R2 {v['r2MedianSeconds']} s / R1 {v['r1MedianSeconds']} s, "
+                 f"{v['r2Samples']}/{v['r1Samples']} sessions, floorLimited {v['floorLimited']})")
+        return "written"
 
     def stage_a8(self):
         manifest_path = self.evidence / "manifest.json"
@@ -1097,6 +1125,8 @@ def main(argv=None, **seams):
     parser.add_argument("--wait-tries", type=int, default=3)
     parser.add_argument("--wait-seconds", type=float, default=120.0)
     parser.add_argument("--round", choices=("R1", "R2"), default="R1", help="WP-091: R2 adds the r2-gates.json gates to the manifest")
+    parser.add_argument("--r1-evidence", help="WP-091 P5: the R1 FINAL evidence root (its A2/A3 load-timing.json are the baseline)")
+    parser.add_argument("--r1-commit", help="WP-091 P5: the R1 FINAL commit, 40-hex (recorded in r2-P5.json)")
     parser.add_argument("--b9-poses", help="C-00 01.10: S-05 B9 pose list (JSON) run after A4 in the same quiet-window run")
     try:
         args = parser.parse_args(argv)
@@ -1116,6 +1146,9 @@ def main(argv=None, **seams):
         print(f"guard refused (G4 D4): {refusal} — nothing started", file=sys.stderr)
         return 64
     evidence = Path(args.evidence) if args.evidence else KADRO_EVIDENCE / args.final[:8]
+    if bool(args.r1_evidence) != bool(args.r1_commit) or (args.r1_commit and not re.fullmatch(r"[0-9a-f]{40}", args.r1_commit)):
+        print("--r1-evidence and --r1-commit go together; --r1-commit is a 40-hex SHA", file=sys.stderr)
+        return 64
     try:
         b9_poses = load_b9_poses(args.b9_poses) if args.b9_poses else []
     except ValueError as error:
@@ -1123,7 +1156,8 @@ def main(argv=None, **seams):
         return 64
     chain = Chain(args.final, evidence, stages, dry_run=args.dry_run, resume=args.resume,
                   editmode_filter=args.editmode_filter, playmode_filter=args.playmode_filter,
-                  wait_tries=args.wait_tries, wait_seconds=args.wait_seconds, b9_poses=b9_poses, round_name=args.round, **seams)
+                  wait_tries=args.wait_tries, wait_seconds=args.wait_seconds, b9_poses=b9_poses, round_name=args.round,
+                  r1_evidence=args.r1_evidence, r1_commit=args.r1_commit, **seams)
     previous = signal.signal(signal.SIGTERM, chain.on_sigterm)
     try:
         return chain.run()
