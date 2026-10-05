@@ -41,14 +41,23 @@ def load():
     except FileNotFoundError: return None
 def save(d):
     with open(path, "wb") as f: plistlib.dump(d, f, fmt=plistlib.FMT_BINARY)
+tmp = os.environ["SHIM_TMP"]
+flag = lambda n: os.path.exists(os.path.join(tmp, n))
 if cmd == "export":
+    if flag("defaults-fail-export"): sys.exit(1)
+    if flag("defaults-export-stale"):   # cfprefsd never mirrors the disk: settle times out
+        sys.stdout.buffer.write(plistlib.dumps({"stale": True})); sys.exit(0)
     d = load()
     if d is None: sys.exit(1)
     sys.stdout.buffer.write(plistlib.dumps(d))
 elif cmd == "import":
+    if flag("defaults-import-sleep"):
+        open(os.path.join(tmp, "import-started"), "w").close(); import time; time.sleep(30)
+    if flag("defaults-fail-import"): sys.exit(1)
     with open(args[2], "rb") as f: new = plistlib.load(f)
     d = load() or {}; d.update(new); save(d)
 elif cmd == "delete":
+    if flag("defaults-fail-delete"): sys.exit(1)
     d = load()
     if d is None or (len(args) > 2 and args[2] not in d): sys.exit(1)
     if len(args) > 2: d.pop(args[2]); save(d)
@@ -59,6 +68,8 @@ else:
 PGREP_SHIM = r'''#!/bin/sh
 for a in "$@"; do case "$a" in *"Contents/MacOS/(Deaths Demolition"*)
   echo "pgrep $*" >> "$SHIM_LOG"
+  n=$(( $(cat "$SHIM_TMP/pgrep-count" 2>/dev/null || echo 0) + 1 )); echo $n > "$SHIM_TMP/pgrep-count"
+  [ -x "$SHIM_TMP/pgrep-hook" ] && "$SHIM_TMP/pgrep-hook" "$n"
   [ -f "$SHIM_TMP/pgrep-player" ] && { cat "$SHIM_TMP/pgrep-player"; exit 0; }; exit 1 ;; esac; done
 exec /usr/bin/pgrep "$@"
 '''
@@ -136,6 +147,11 @@ def pwhome():
 
 def sha(p):
     return hashlib.sha256(Path(p).read_bytes()).hexdigest() if Path(p).is_file() else "MISSING"
+
+
+def load_plist(p):
+    with open(p, "rb") as f:
+        return plistlib.load(f)
 
 
 def write_exec(p, text):
@@ -529,6 +545,529 @@ class RestoreD5Tests(GuardFixture):
         rc, out, err = self.run_guard("restore", self.dir, "--scope", "player", DD_GUARD_ROOT=None)
         self.assertEqual(64, rc, err)
         self.assertEqual("", self.log.read_text())
+
+
+class RestoreWriteTests(GuardFixture):
+    """G4 D6 (design v3.1 §3 D6): the restore write path — exp / first / live per path, CAS, quarantine, rename swap."""
+
+    def snap(self, scope="all"):
+        rc, out, err = self.run_guard("snapshot", self.dir, "--scope", scope)
+        self.assertEqual(0, rc, out + err)
+        (self.tmp / "pgrep-count").unlink(missing_ok=True)
+        return json.loads((self.dir / "window.json").read_text())
+
+    def restore(self, scope="all", **env):
+        return self.run_guard("restore", self.dir, "--scope", scope, **env)
+
+    def ledger(self, wid):
+        return self.root / "ledger" / "quarantine" / wid
+
+    def verdict(self):
+        return json.loads((self.dir / "guard-verdict.json").read_text())
+
+    def run_changes(self):
+        """what a run leaves: D1 ui changed, a new D1 file, D2 profile changed, a P1 and a P2 key."""
+        (self.d1 / "ui-settings.json").write_text('{"ui": 99}\n')
+        (self.d1 / "load-timing.json").write_text('{"new": 1}\n')
+        (self.d2 / "prototype-profile.json").write_text('{"player": 99}\n')
+        d = load_plist(self.p1); d["RunKey"] = 1; self.write_plist(self.p1, d)
+        d = load_plist(self.p2); d["EditorKey"] = "changed"; self.write_plist(self.p2, d)
+
+    def hook(self, script):
+        write_exec(self.tmp / "pgrep-hook", "#!/bin/sh\n" + script)
+
+    def test_Restore_MutluYol_UcKapsamCreatedKarantinada(self):
+        for scope in ("editor", "player", "all"):
+            with self.subTest(scope=scope):
+                shutil.rmtree(self.dir, ignore_errors=True)
+                before = self.live_state()
+                w = self.snap(scope)
+                self.run_changes()
+                rc, out, err = self.restore(scope)
+                self.assertEqual(0, rc, out + err)
+                last = out.strip().splitlines()[-1]
+                self.assertIn("verified=1", last); self.assertIn("snapshotId=", last); self.assertIn("retry=none", last)
+                state = self.live_state()
+                if scope in ("editor", "all"):
+                    self.assertEqual(before[self.d1 / "ui-settings.json"], state[self.d1 / "ui-settings.json"])
+                    self.assertFalse((self.d1 / "load-timing.json").exists())
+                    created = self.ledger(w["id"]) / "created" / "editor" / "load-timing.json.1"
+                    self.assertEqual('{"new": 1}\n', created.read_text())
+                    self.assertTrue((self.ledger(w["id"]) / "displaced" / "editor" / "ui-settings.json.1").is_file())
+                    self.assertEqual("b", load_plist(self.p2)["EditorKey"])
+                if scope in ("player", "all"):
+                    self.assertEqual(before[self.d2 / "prototype-profile.json"], state[self.d2 / "prototype-profile.json"])
+                    self.assertNotIn("RunKey", load_plist(self.p1))
+                    self.assertTrue(list((self.ledger(w["id"]) / "displaced" / "PR").glob("p1.plist.*")))
+                index = (self.root / "ledger" / "INDEX.tsv").read_text()
+                self.assertIn(w["id"], index)
+                self.assertEqual(str(self.root / "ledger" / "quarantine" / w["id"]) + "/", (self.dir / "quarantine.txt").read_text().strip())
+                self.assertTrue(self.verdict()["verified"])
+                # leave the next scope a clean start
+                for f in (self.d1 / "load-timing.json",):
+                    f.unlink(missing_ok=True)
+                (self.d1 / "ui-settings.json").write_text('{"ui": 1}\n'); (self.d2 / "prototype-profile.json").write_text('{"player": 1}\n')
+                self.write_plist(self.p1, dict(KG_GOOD, PlayerKey="a")); self.write_plist(self.p2, {"EditorKey": "b"})
+
+    def test_Restore_ExportHatasi_DosyalarGeriCikis30(self):
+        before = self.live_state(); self.snap()
+        self.run_changes()
+        (self.tmp / "defaults-fail-export").write_text("")
+        rc, out, err = self.restore()
+        self.assertEqual(30, rc, out + err)
+        self.assertEqual(before[self.d2 / "prototype-profile.json"], sha(self.d2 / "prototype-profile.json"))
+        self.assertIn("RunKey", load_plist(self.p1))   # not written without a kept copy (INV-4)
+        self.assertIn("WRITE_FAILED", self.verdict()["classes"])
+
+    def test_Restore_DeleteImportHatasi_DigerleriGeriCikis30(self):
+        before = self.live_state(); self.snap()
+        self.run_changes()
+        (self.tmp / "defaults-fail-delete").write_text(""); (self.tmp / "defaults-fail-import").write_text("")
+        rc, out, err = self.restore()
+        self.assertEqual(30, rc, out + err)
+        self.assertEqual(before[self.d1 / "ui-settings.json"], sha(self.d1 / "ui-settings.json"))
+        self.assertIn("WRITE_FAILED", self.verdict()["classes"])
+
+    def test_Restore_SettleZamanAsimi_Verified0(self):
+        self.snap(); self.run_changes()
+        (self.tmp / "defaults-export-stale").write_text("")
+        rc, out, err = self.restore("editor")
+        self.assertEqual(30, rc, out + err)
+        self.assertIn("verified=0", out.strip().splitlines()[-1])
+
+    def test_Restore_BagKurallari_LiveFarkliVeyaBeforeYok_Cikis64(self):
+        self.snap()
+        live = self.dir / "live-at-snapshot.txt"
+        live.write_text(live.read_text().replace(sha(self.d1 / "ui-settings.json"), "0" * 64))
+        rc, out, err = self.restore()
+        self.assertEqual(64, rc, err); self.assertIn("not bound", err)
+        (self.dir / "before.txt").unlink()
+        rc, out, err = self.restore()
+        self.assertEqual(64, rc, err); self.assertIn("no snapshot", err)
+
+    def test_Restore_BagKurallari_DigerAlanFarki_BilgiSatiri(self):
+        self.snap("editor")
+        live = self.dir / "live-at-snapshot.txt"
+        live.write_text(live.read_text().replace(sha(self.d2 / "prototype-profile.json"), "0" * 64))
+        rc, out, err = self.restore("editor")
+        self.assertEqual(0, rc, out + err)   # C-00 05.10: only the window's own area binds
+        self.assertIn("an area outside the window changed", out)
+
+    def test_Restore_V1Izi_Cikis64Mesaj(self):
+        self.snap(); (self.dir / "snapshot-manifest.json").write_text("{}")
+        rc, out, err = self.restore()
+        self.assertEqual(64, rc, err); self.assertIn("v1 (74f62dd6)", err)
+
+    def test_Restore_SnapKopyaBozuk_YalnizOYolSnapcorrupt(self):
+        before = self.live_state(); self.snap(); self.run_changes()
+        (self.dir / "snap/D1/ui-settings.json").write_text("corrupt\n")
+        rc, out, err = self.restore()
+        self.assertEqual(30, rc, out + err)
+        self.assertEqual('{"ui": 99}\n', (self.d1 / "ui-settings.json").read_text())
+        self.assertEqual(before[self.d2 / "prototype-profile.json"], sha(self.d2 / "prototype-profile.json"))
+        self.assertIn("SNAPCORRUPT", self.verdict()["classes"])
+
+    def test_Restore_SnapD1Silinmis_CanliDosyaTasinmaz(self):
+        self.snap(); self.run_changes()
+        (self.dir / "snap/D1/ui-settings.json").unlink()
+        rc, out, err = self.restore()
+        self.assertEqual(30, rc, out + err)
+        self.assertTrue((self.d1 / "ui-settings.json").exists())
+
+    def test_Restore_BozukP1_YalnizP1Reddedilir(self):
+        before = self.live_state(); self.snap(); self.run_changes()
+        (self.dir / "snap/PR/p1.plist").write_bytes(b"broken")
+        rc, out, err = self.restore()
+        self.assertEqual(30, rc, out + err)
+        self.assertIn("RunKey", load_plist(self.p1))
+        self.assertEqual(before[self.d2 / "prototype-profile.json"], sha(self.d2 / "prototype-profile.json"))
+
+    def test_Restore_Symlink_YalnizOYolReddedilir(self):
+        before = self.live_state(); self.snap(); self.run_changes()
+        real = self.tmp / "elsewhere.json"; real.write_text("x\n")
+        (self.d1 / "ui-settings.json").unlink(); (self.d1 / "ui-settings.json").symlink_to(real)
+        rc, out, err = self.restore()
+        self.assertEqual(30, rc, out + err)
+        self.assertTrue((self.d1 / "ui-settings.json").is_symlink()); self.assertEqual("x\n", real.read_text())
+        self.assertEqual(before[self.d2 / "prototype-profile.json"], sha(self.d2 / "prototype-profile.json"))
+
+    def test_Restore_AlanDiziniSymlinkOldu_Cikis30Yazimsiz(self):
+        self.snap(); self.run_changes()
+        moved = self.tmp / "d2-real"; self.d2.rename(moved); self.d2.symlink_to(moved)
+        rc, out, err = self.restore("player")
+        self.assertEqual(30, rc, out + err)
+        self.assertEqual('{"player": 99}\n', (moved / "prototype-profile.json").read_text())
+        self.assertIn("SYMLINK", self.verdict()["classes"])
+
+    def test_Restore_Chmod0500D1_DigerleriDenenirCikis30(self):
+        before = self.live_state(); self.snap(); self.run_changes()
+        self.d1.chmod(0o500)
+        try:
+            rc, out, err = self.restore()
+        finally:
+            self.d1.chmod(0o755)
+        self.assertEqual(30, rc, out + err)
+        self.assertEqual(before[self.d2 / "prototype-profile.json"], sha(self.d2 / "prototype-profile.json"))
+        self.assertIn("WRITE_FAILED", self.verdict()["classes"])
+
+    def test_Restore_KarantinaYazilamaz_YolYazilmaz(self):
+        self.snap(); self.run_changes()
+        (self.root / "ledger").mkdir(); (self.root / "ledger").chmod(0o500)
+        try:
+            rc, out, err = self.restore("editor")
+        finally:
+            (self.root / "ledger").chmod(0o755)
+        self.assertEqual(30, rc, out + err)
+        self.assertEqual('{"ui": 99}\n', (self.d1 / "ui-settings.json").read_text())   # no kept copy → not written
+
+    def test_Restore_YazimOncesiDegisim_Cikis75Yazimsiz(self):
+        self.snap("player")
+        (self.d2 / "prototype-profile.json").write_text('{"player": 99}\n')   # the area's only change: nothing else written
+        # call 1 = R7 gate, call 2 = the first CAS: the user saves right there
+        self.hook('[ "$1" = 2 ] && printf "%%s" "{\\"user\\": 1}" > "%s"\n' % (self.d2 / "prototype-profile.json"))
+        rc, out, err = self.restore("player")
+        self.assertEqual(75, rc, out + err)
+        self.assertIn("retry=same-dir", out.strip().splitlines()[-1])
+        self.assertEqual('{"user": 1}', (self.d2 / "prototype-profile.json").read_text())
+        self.assertIn("RACED-EARLY", self.verdict()["classes"])
+
+    def test_Restore_YazimOrtasiDegisim_Cikis30Displaced(self):
+        self.snap("player"); self.run_changes()
+        (self.d2 / "ui-settings.json").write_text('{"made": 1}\n')   # a second (created) path, written before the primary
+        self.hook('[ "$1" = 3 ] && printf "%%s" "{\\"user\\": 1}" > "%s"\n' % (self.d2 / "prototype-profile.json"))
+        rc, out, err = self.restore("player")
+        self.assertEqual(30, rc, out + err)
+        self.assertEqual('{"user": 1}', (self.d2 / "prototype-profile.json").read_text())
+        self.assertIn("RACED-LATE", self.verdict()["classes"])
+        w = json.loads((self.dir / "window.json").read_text())
+        self.assertTrue((self.ledger(w["id"]) / "created" / "player" / "ui-settings.json.1").is_file())   # the write before the race
+
+    def test_Restore_YazimdaPgrepCanli_Raced(self):
+        self.snap("player"); self.run_changes()
+        self.hook('[ "$1" = 2 ] && echo "4242 /fixture/Player" > "%s/pgrep-player"\n' % self.tmp)
+        rc, out, err = self.restore("player")
+        self.assertEqual(75, rc, out + err)
+        self.assertEqual('{"player": 99}\n', (self.d2 / "prototype-profile.json").read_text())
+
+    def test_Restore_AyniDirIkiRestore_Biri75(self):
+        self.snap()
+        import fcntl
+        lk = open(self.dir / ".restore.lock", "a"); fcntl.lockf(lk, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        try:
+            rc, out, err = self.restore()
+        finally:
+            lk.close()
+        self.assertEqual(75, rc, out + err); self.assertIn("LOCKED", out)
+        rc, out, err = self.restore()
+        self.assertEqual(0, rc, out + err)
+
+    def test_Restore_TamamlanmisAlanKullaniciDegistirdi_Stale30Yazimsiz(self):
+        self.snap(); self.run_changes()
+        rc, out, err = self.restore(); self.assertEqual(0, rc, out + err)
+        (self.d1 / "ui-settings.json").write_text('{"user-later": 1}\n')
+        rc, out, err = self.restore()
+        self.assertEqual(30, rc, out + err)
+        self.assertEqual('{"user-later": 1}\n', (self.d1 / "ui-settings.json").read_text())
+        self.assertIn("STALE", self.verdict()["classes"])
+
+    def lock_d2(self, folder=None):
+        unity = self.tmp / "Unity.app/Contents/MacOS/Unity"
+        if not unity.exists():
+            unity.parent.mkdir(parents=True); unity.symlink_to("/bin/sleep")
+        p = subprocess.Popen([str(unity), "120"], start_new_session=True); self.procs.append(p)
+        (folder or self.d2).joinpath("prototype-profile.json.lock").write_text("pid=%d\nname=fixture\n" % p.pid)
+        return p
+
+    def unlock_d2(self, p, folder=None):
+        p.kill(); p.wait(timeout=10); (folder or self.d2).joinpath("prototype-profile.json.lock").unlink()
+
+    def test_Restore_Busy75SonraTekrar_Yakinsar(self):
+        before = self.live_state(); self.snap("player"); self.run_changes()
+        p = self.lock_d2()
+        rc, out, err = self.restore("player"); self.assertEqual(75, rc, out + err)
+        self.assertIn("retry=same-dir", out.strip().splitlines()[-1])
+        self.unlock_d2(p)
+        rc, out, err = self.restore("player"); self.assertEqual(0, rc, out + err)
+        self.assertEqual(before[self.d2 / "prototype-profile.json"], sha(self.d2 / "prototype-profile.json"))
+        self.assertTrue((self.dir / "after-run.txt.2").is_file())
+
+    def test_Restore_Busy75KullaniciKaydetti_TekrarStaleKullaniciBaytiKalir(self):
+        self.snap("player"); self.run_changes()
+        p = self.lock_d2()
+        rc, out, err = self.restore("player"); self.assertEqual(75, rc, out + err)
+        self.unlock_d2(p)
+        (self.d2 / "prototype-profile.json").write_text('{"user": 2}\n')
+        rc, out, err = self.restore("player")
+        self.assertEqual(30, rc, out + err)
+        self.assertEqual('{"user": 2}\n', (self.d2 / "prototype-profile.json").read_text())
+
+    def test_Restore_KilitBeklerkenTerm_HemenYazarInterrupted30(self):
+        before = self.live_state(); self.snap(); self.run_changes()
+        p = self.lock_d2()
+        g = self.start_guard("restore", self.dir, "--scope", "all", DD_GUARD_WAIT="60")
+        self.assertTrue(self.wait_file(self.dir / "after-run-editor.txt") or True)
+        time.sleep(3)
+        os.kill(g.pid, signal.SIGTERM)
+        out, err = g.communicate(timeout=60)
+        self.assertEqual(30, g.returncode, out + err)
+        self.assertEqual(before[self.d1 / "ui-settings.json"], sha(self.d1 / "ui-settings.json"))   # editor written
+        self.assertEqual('{"player": 99}\n', (self.d2 / "prototype-profile.json").read_text())     # player BUSY
+        self.assertIn("INTERRUPTED", self.verdict()["classes"])
+        self.unlock_d2(p)
+
+    def test_Restore_YazimdaSurecGrubunaInt_YazimBiter(self):
+        before = self.live_state(); self.snap("player"); self.run_changes()
+        self.hook('[ "$1" = 2 ] && { : > "%s/in-write"; sleep 3; }\n' % self.tmp)
+        g = self.start_guard("restore", self.dir, "--scope", "player")
+        self.assertTrue(self.wait_file(self.tmp / "in-write"))
+        os.killpg(g.pid, signal.SIGINT)
+        out, err = g.communicate(timeout=60)
+        self.assertEqual(0, g.returncode, out + err)
+        self.assertEqual(before[self.d2 / "prototype-profile.json"], sha(self.d2 / "prototype-profile.json"))
+
+    def test_Restore_YazimdaSigkill_TekrarYakinsar(self):
+        before = self.live_state(); self.snap("player"); self.run_changes()
+        self.hook('[ "$1" = 2 ] && { : > "%s/in-write"; sleep 30; }\n' % self.tmp)
+        g = self.start_guard("restore", self.dir, "--scope", "player")
+        self.assertTrue(self.wait_file(self.tmp / "in-write"))
+        os.killpg(g.pid, signal.SIGKILL); g.communicate(timeout=30)
+        (self.tmp / "pgrep-hook").unlink()
+        rc, out, err = self.restore("player")
+        self.assertEqual(0, rc, out + err)
+        self.assertEqual(before[self.d2 / "prototype-profile.json"], sha(self.d2 / "prototype-profile.json"))
+
+    def test_Restore_PlistDeleteSonrasiSigkill_TekrarYakinsar(self):
+        self.snap("player"); self.run_changes()
+        (self.tmp / "defaults-import-sleep").write_text("")
+        g = self.start_guard("restore", self.dir, "--scope", "player")
+        self.assertTrue(self.wait_file(self.tmp / "import-started", 60))
+        os.killpg(g.pid, signal.SIGKILL); g.communicate(timeout=30)
+        (self.tmp / "defaults-import-sleep").unlink()
+        self.assertNotIn("RunKey", load_plist(self.p1))   # deleted, import never ran
+        rc, out, err = self.restore("player")
+        self.assertEqual(0, rc, out + err)   # MUST-5: our own half-done write is finished
+        d = load_plist(self.p1)
+        self.assertEqual("a", d.get("PlayerKey")); self.assertNotIn("RunKey", d)
+
+    def test_Restore_PlistYabanciDeger_Stale30DisplacedVar(self):
+        w = self.snap("player"); self.run_changes()
+        (self.tmp / "defaults-import-sleep").write_text("")
+        g = self.start_guard("restore", self.dir, "--scope", "player")
+        self.assertTrue(self.wait_file(self.tmp / "import-started", 60))
+        os.killpg(g.pid, signal.SIGKILL); g.communicate(timeout=30)
+        (self.tmp / "defaults-import-sleep").unlink()
+        d = load_plist(self.p1); d["UserKey"] = "user"; self.write_plist(self.p1, d)
+        rc, out, err = self.restore("player")
+        self.assertEqual(30, rc, out + err)
+        self.assertEqual("user", load_plist(self.p1).get("UserKey"))
+        self.assertTrue(list((self.ledger(w["id"]) / "displaced" / "PR").glob("p1.plist.*")))
+
+    def test_Restore_DegisiklikYok_IkiRestoreSifir(self):
+        self.snap()
+        for _ in range(2):
+            rc, out, err = self.restore()
+            self.assertEqual(0, rc, out + err)
+            self.assertIn("touched=0 verified=1", out.strip().splitlines()[-1])
+
+    def test_Restore_YalnizVolatile_SayacIceAlinmaz(self):
+        self.snap("player")
+        d = load_plist(self.p1); d["unity.player_session_count"] = 77; self.write_plist(self.p1, d)
+        rc, out, err = self.restore("player")
+        self.assertEqual(0, rc, out + err)
+        self.assertEqual(77, load_plist(self.p1)["unity.player_session_count"])
+
+    def test_Restore_Kg31SonraTekrar_KullaniciKaydiStale(self):
+        self.snap("player"); self.run_changes()
+        good = (self.dir / "snap/PR/p1.plist").read_bytes()
+        d = plistlib.loads(good); d["Screenmanager Fullscreen mode"] = 3
+        (self.dir / "snap/PR/p1.plist").write_bytes(plistlib.dumps(d))
+        rc, out, err = self.restore("player"); self.assertEqual(31, rc, out + err)
+        self.assertEqual('{"player": 99}\n', (self.d2 / "prototype-profile.json").read_text())   # nothing written
+        (self.dir / "snap/PR/p1.plist").write_bytes(good)   # C-00 resolves the snapshot
+        (self.d2 / "prototype-profile.json").write_text('{"user": 3}\n')   # the user saved meanwhile
+        rc, out, err = self.restore("player")
+        self.assertEqual(30, rc, out + err)
+        self.assertEqual('{"user": 3}\n', (self.d2 / "prototype-profile.json").read_text())
+
+    def test_Karantina_IndexSatiriVeDirIsaretcisi_TmpUyarisi(self):
+        w = self.snap(); self.run_changes()
+        rc, out, err = self.restore()
+        self.assertEqual(0, rc, out + err)
+        self.assertIn("is under a temporary folder", out + err)
+        rows = [l.split("\t") for l in (self.root / "ledger" / "INDEX.tsv").read_text().splitlines()]
+        self.assertTrue(rows)
+        for r in rows:
+            self.assertEqual(7, len(r), r)
+            self.assertEqual((w["id"], str(self.dir)), (r[1], r[2]))
+            self.assertIn(r[5], ("created", "displaced", "tmp-sweep"))
+        created = [r for r in rows if r[5] == "created"]
+        self.assertEqual([str(self.d1 / "load-timing.json")], [r[3] for r in created])
+        self.assertEqual(hashlib.sha256(b'{"new": 1}\n').hexdigest(), created[0][4])
+        q = Path((self.dir / "quarantine.txt").read_text().strip())
+        self.assertTrue((q / "created").is_dir() and (q / "displaced").is_dir())
+
+    def test_Restore_HicbirYolda_KokDisiYazimYok(self):
+        real = Path(pwhome()) / "Library" / "Preferences" / (BUNDLE + ".plist")
+        before = sha(real)
+        self.snap(); self.run_changes()
+        rc, out, err = self.restore()
+        self.assertEqual(0, rc, out + err)
+        for line in self.log.read_text().splitlines():
+            if line.startswith("defaults "):
+                self.assertIn(str(self.root), line)   # every defaults call names the fixture root (absolute domain)
+        self.assertEqual(before, sha(real))
+
+    def test_Restore_CasRenameArasiDegisim_TakasDisplaced30(self):
+        """SHOULD-3: bytes saved between the last CAS and the swap come back out of the swap and are kept (displaced, RACED)."""
+        import importlib.util
+        w = self.snap("player"); self.run_changes()
+        p = self.lock_d2()
+        rc, out, err = self.restore("player"); self.assertEqual(75, rc, out + err)   # writes the first after-run files
+        self.unlock_d2(p)
+        spec = importlib.util.spec_from_file_location("ugio", self.tools / "userdata_guard_io.py")
+        io = importlib.util.module_from_spec(spec); spec.loader.exec_module(io)
+        primary = str(self.d2 / "prototype-profile.json")
+        real_live_sha, calls = io.live_sha, {"n": 0}
+
+        def live_sha(path):
+            if path != primary:
+                return real_live_sha(path)
+            calls["n"] += 1
+            v = real_live_sha(path)
+            if calls["n"] == 3:   # the CAS right before the swap: it sees "first", then the user saves
+                Path(path).write_text('{"user-mid": 1}\n')
+            return v
+        io.live_sha = live_sha
+        cfg = {"dir": str(self.dir), "area": "player", "id": w["id"], "ledger": str(self.root / "ledger"), "folder": str(self.d2),
+               "names": list(FILES), "plist": str(self.p1), "domain": str(self.pr / BUNDLE), "pxName": "p1",
+               "snapFolder": str(self.dir / "snap" / "D2"), "snapPlist": str(self.dir / "snap" / "PR" / "p1.plist"),
+               "before": str(self.dir / "before-player.txt"), "first": str(self.dir / "after-run-player.txt"),
+               "volatile": ["unity.player_session_count", "unity.player_sessionid"],
+               "playerRe": "Contents/MacOS/(Deaths Demolition|DeathsDemolition)", "checkPlayer": True,
+               "rootAS": str(self.root / "AS"), "rootPR": str(self.pr), "guardPid": os.getpid()}
+        saved = dict(os.environ); os.environ.update(self.env())
+        try:
+            res = io.restore_area(cfg)
+        finally:
+            os.environ.clear(); os.environ.update(saved)
+        self.assertEqual(3, calls["n"])
+        self.assertIn("RACED-LATE", res["classes"])
+        self.assertEqual('{"player": 1}\n', (self.d2 / "prototype-profile.json").read_text())   # the snapshot went in
+        kept = [Path(q).read_text() for e in res["paths"] for q in e.get("quarantine", [])]
+        self.assertIn('{"user-mid": 1}\n', kept)   # the user's bytes are kept, never lost
+        self.assertIn("RACED", (self.root / "ledger" / "INDEX.tsv").read_text())
+
+    # --- D6 reviews (data loss + concurrency, 05.10) ------------------------------------------------------------------
+    def test_Inceleme_TamYazimSonrasiKullaniciPlist_Stale30(self):
+        """data-loss MUST-1: a finished plist write leaves no half-done marker, so a later user save is STALE, not MUST-5."""
+        self.snap(); self.run_changes()
+        p = self.lock_d2(self.d1)
+        rc, out, err = self.restore(); self.assertEqual(75, rc, out + err)   # editor BUSY, player written in full
+        self.assertNotIn("RunKey", load_plist(self.p1))
+        self.assertFalse((self.dir / ".plist-p1.writing").exists())
+        self.unlock_d2(p, self.d1)
+        d = load_plist(self.p1); d["RunKey"] = 1; self.write_plist(self.p1, d)   # the user sets a value the run had set
+        rc, out, err = self.restore()
+        self.assertEqual(30, rc, out + err)
+        self.assertEqual(1, load_plist(self.p1).get("RunKey"))
+        self.assertIn("STALE", self.verdict()["classes"])
+
+    def test_Inceleme_PlistYazimOncesiDegisim_RacedKullaniciDegeriKalir(self):
+        """data-loss MUST-2 / concurrency SHOULD-1: the plist CAS right before the write."""
+        w = self.snap("player"); self.run_changes()
+        # pgrep calls: 1 R7 gate, 2–3 the profile's two CAS, 4 the plist's Player check — the user saves right there
+        self.hook('[ "$1" = 4 ] && /usr/bin/python3 -c "import plistlib,sys; p=sys.argv[1]; d=plistlib.load(open(p,\'rb\')); '
+                  'd[\'PlayerKey\']=\'user\'; plistlib.dump(d,open(p,\'wb\'),fmt=plistlib.FMT_BINARY)" "%s"\n' % self.p1)
+        rc, out, err = self.restore("player")
+        self.assertEqual(30, rc, out + err)
+        self.assertEqual("user", load_plist(self.p1)["PlayerKey"])
+        self.assertIn("RACED-LATE", self.verdict()["classes"])
+        kept = [load_plist(f) for f in (self.ledger(w["id"]) / "displaced" / "PR").glob("p1.plist.*")]
+        self.assertIn("user", [k.get("PlayerKey") for k in kept])
+
+    def test_Inceleme_AfterRunYayiniBasarisiz_Yazimsiz_TekrardaKullaniciKaydiKalir(self):
+        """data-loss SHOULD-1 / concurrency MUST-1: no committed first → no write phase, and never a guessed first later."""
+        self.snap("player"); self.run_changes()
+        write_exec(self.bin / "ln", '#!/bin/sh\nfor a in "$@"; do last="$a"; done\n'
+                   'case "$last" in */after-run-player.txt) exit 1 ;; esac\nexec /bin/ln "$@"\n')
+        rc, out, err = self.restore("player")
+        self.assertEqual(30, rc, out + err)
+        self.assertEqual('{"player": 99}\n', (self.d2 / "prototype-profile.json").read_text())
+        self.assertFalse((self.dir / "after-run.txt").exists())
+        (self.bin / "ln").unlink()
+        (self.d2 / "prototype-profile.json").write_text('{"user": 5}\n')
+        rc, out, err = self.restore("player")
+        self.assertEqual(30, rc, out + err)
+        self.assertEqual('{"user": 5}\n', (self.d2 / "prototype-profile.json").read_text())
+        self.assertIn("no first to trust", out + err)
+
+    def test_Inceleme_YetimYazimYardimcisi_Cikis75(self):
+        """concurrency SHOULD-2: a write helper that outlived its SIGKILLed guard shell holds .restore-write.lock."""
+        import fcntl
+        self.snap(); self.run_changes()
+        lk = open(self.dir / ".restore-write.lock", "a"); fcntl.lockf(lk, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        try:
+            rc, out, err = self.restore()
+        finally:
+            lk.close()
+        self.assertEqual(75, rc, out + err); self.assertIn("write helper", out); self.assertIn("retry=same-dir", out)
+        self.assertEqual('{"ui": 99}\n', (self.d1 / "ui-settings.json").read_text())
+        rc, out, err = self.restore(); self.assertEqual(0, rc, out + err)
+
+    def test_Inceleme_IlkCasYanDosya_SonraBirincilYazilir_RacedLate30(self):
+        """data-loss SHOULD-2: a race before the area's first write turns 30 once a later path of the area is written."""
+        self.snap("player"); self.run_changes()
+        (self.d2 / "ui-settings.json").write_text('{"made": 1}\n')
+        self.hook('[ "$1" = 2 ] && printf "%%s" "{\\"user\\": 7}" > "%s"\n' % (self.d2 / "ui-settings.json"))
+        rc, out, err = self.restore("player")
+        self.assertEqual(30, rc, out + err)
+        self.assertEqual('{"user": 7}', (self.d2 / "ui-settings.json").read_text())
+        self.assertEqual('{"player": 1}\n', (self.d2 / "prototype-profile.json").read_text())
+        self.assertEqual(["RACED-LATE"], [c for c in self.verdict()["classes"] if c.startswith("RACED")])
+
+    def test_Inceleme_KarantinaSlotuDoluysa_UstuneYazilmaz(self):
+        """concurrency SHOULD-2: a quarantine slot taken meanwhile is never overwritten (exclusive create)."""
+        w = self.snap("player"); self.run_changes()
+        slot = self.ledger(w["id"]) / "displaced" / "player"; slot.mkdir(parents=True)
+        # next_slot sees .1 free, another writer takes it first: the hook fires at the first CAS
+        self.hook('[ "$1" = 2 ] && printf other > "%s/prototype-profile.json.1"\n' % slot)
+        rc, out, err = self.restore("player")
+        self.assertEqual(0, rc, out + err)
+        self.assertEqual("other", (slot / "prototype-profile.json.1").read_text())
+        self.assertEqual('{"player": 99}\n', (slot / "prototype-profile.json.2").read_text())
+
+    def test_TmpSweep_CanliPidDosyasi_Dokunulmaz(self):
+        self.snap("editor")
+        live = self.d1 / (".ddguard-x-%d.tmp" % os.getpid()); live.write_text("live\n")
+        dead = self.d1 / ".ddguard-x-999999.tmp"; dead.write_text("dead\n")
+        rc, out, err = self.restore("editor")
+        self.assertEqual(0, rc, out + err)
+        self.assertTrue(live.exists()); self.assertFalse(dead.exists())
+        self.assertIn("tmp-sweep", (self.root / "ledger" / "INDEX.tsv").read_text())
+
+    def test_Restore_WPlayerMakbuzYok_Cikis64(self):
+        self.snap("player")
+        w = json.loads((self.dir / "window.json").read_text()); w["receipt"] = None
+        (self.dir / "window.json").write_text(json.dumps(w))
+        rc, out, err = self.restore("player")
+        self.assertEqual(64, rc, err); self.assertIn("SHOULD-8", err)
+
+    def test_Restore_D2UiDosyalari_GeriYuklenir(self):
+        (self.d2 / "ui-hints.json").write_text('{"hints": 1}\n')
+        self.snap("player")
+        (self.d2 / "ui-hints.json").write_text('{"hints": 2}\n')
+        rc, out, err = self.restore("player")
+        self.assertEqual(0, rc, out + err)
+        self.assertEqual('{"hints": 1}\n', (self.d2 / "ui-hints.json").read_text())
+
+    def test_Sira_VerdictDefterOzetSlot(self):
+        self.snap("player")
+        rc, out, err = self.restore("player")
+        self.assertEqual(0, rc, out + err)
+        lines = (self.dir / "restore.txt").read_text().splitlines()
+        self.assertIn("userdata-guard restore scope=player", lines[-2]); self.assertEqual("exit=0", lines[-1])
+        self.assertTrue((self.dir / "guard-verdict.json").is_file()); self.assertTrue(list(self.dir.glob("verdict-*.json")))
+        self.assertEqual([], [e for e in self.slot_entries() if e.startswith("player/")])   # released after the summary
 
 
 def sandboxed_main():

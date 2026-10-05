@@ -202,7 +202,9 @@ class GuardD6aTests(unittest.TestCase):
             plistlib.dump({"Screenmanager Fullscreen mode": 3}, f)
         rc, text = self.guard("restore", target, "--scope", "player")
         self.assertEqual(rc, 31, text)
-        self.assert_restore_record(target, "player", 31, "REFUSED")
+        # G4 D6 §2.6: the summary line is the LAST line on every restore exit (31 included); the refusal comes before it
+        self.assertIn("REFUSED", text)
+        self.assert_restore_record(target, "player", 31, "verified=0")
         self.assertEqual(self.slot_files("player"), [])
 
     def test_RestoreKaydi_KilitTutuluyor_75KaydedilirTekrarEkler(self):
@@ -217,7 +219,8 @@ class GuardD6aTests(unittest.TestCase):
         lock.write_text(f"pid={h.pid}\nname={holder}\n")
         rc, text = self.guard("restore", target, "--scope", "editor")
         self.assertEqual(rc, 75, text)
-        self.assert_restore_record(target, "editor", 75, "NOT restored")
+        self.assertIn("NOT restored", text)   # G4 D6: the summary line (retry=same-dir) is the last line
+        self.assert_restore_record(target, "editor", 75, "retry=same-dir")
         h.kill(); h.wait(timeout=10); lock.unlink()
         rc, text = self.guard("restore", target, "--scope", "editor")
         self.assertEqual(rc, 0, text)
