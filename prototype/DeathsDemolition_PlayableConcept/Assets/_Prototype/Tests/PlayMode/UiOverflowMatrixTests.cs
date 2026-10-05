@@ -20,7 +20,8 @@ namespace DD.Prototype.Tests.PlayMode
     /// menu at entry and its six panes, the run HUD, the pause screen, the Results.
     ///
     /// A text counts once per combination, screen and object when it is active and non-empty, not under the curtain, and
-    /// TMP reports it truncated or overflowing its rect. Logs [DD-TEST] wp081.overflow combo|screen|path|text and
+    /// TMP reports it truncated or overflowing its rect - or a line of it breaks inside a word (WP-081: the v4 title
+    /// broke as "DEMOLITI / ON" at UI 1.2; a word cut by the wrap is an overflow the player reads). Logs [DD-TEST] wp081.overflow combo|screen|path|text and
     /// [DD-TEST] wp081.u2 …; r2-U2.json through R2Olcum. A temp ui-settings file and a temp load-timing file - the user's
     /// are never touched. Explicit + Diagnostics: a slow walk (six rebuilds of every screen); the acceptance chain runs it
     /// by name. UiTextScaleTests keeps its own 1.25 walk in CI.
@@ -171,7 +172,7 @@ namespace DD.Prototype.Tests.PlayMode
 
                 text.ForceMeshUpdate();
                 checkedTexts++;
-                if (text.isTextTruncated || text.isTextOverflowing)
+                if (text.isTextTruncated || text.isTextOverflowing || BreaksInsideAWord(text))
                 {
                     string line = combo + "|" + screen + "|" + PathOf(text.transform) + "|" + text.GetParsedText().Replace('\n', ' ').Replace('|', '/');
                     if (!found.Contains(line))
@@ -183,6 +184,29 @@ namespace DD.Prototype.Tests.PlayMode
 
             Debug.Log("[DD-TEST] wp081.u2 screen=" + combo + "." + screen + " checked=" + checkedTexts + " active=" + SceneManager.GetActiveScene().name);
             return checkedTexts;
+        }
+
+        /// <summary>A wrapped line that ends inside a word: its last character and the next one are both part of a word.</summary>
+        private static bool BreaksInsideAWord(TMP_Text text)
+        {
+            TMP_TextInfo info = text.textInfo;
+            for (int l = 0; l < info.lineCount - 1; l++)
+            {
+                int last = info.lineInfo[l].lastCharacterIndex;
+                if (last < 0 || last + 1 >= info.characterCount)
+                {
+                    continue;
+                }
+
+                char here = info.characterInfo[last].character;
+                char next = info.characterInfo[last + 1].character;
+                if (char.IsLetterOrDigit(here) && char.IsLetterOrDigit(next))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static string PathOf(Transform t)

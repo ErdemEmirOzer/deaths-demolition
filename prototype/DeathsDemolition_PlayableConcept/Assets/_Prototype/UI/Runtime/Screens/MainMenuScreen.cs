@@ -182,12 +182,14 @@ namespace DD.Prototype.UI
             title.enableWordWrapping = true;
             RectTransform rect = title.rectTransform;
             rect.anchorMin = new Vector2(0f, 1f);
-            rect.anchorMax = new Vector2(0.26f, 1f);
+            rect.anchorMax = new Vector2(0f, 1f);
             rect.pivot = new Vector2(0f, 1f);
-            float width = Content.rect.width * 0.26f;
+            // Words stay whole: the title is the spine's width, or its longest word's where the spine is narrower (UI 1.2
+            // on the Mac host: "DEMOLITION" outruns a 366 px spine - TMP would break it as "DEMOLITI / ON").
+            float width = Mathf.Max(Content.rect.width * 0.26f, LongestWord(title, HeaderTitle) + 2f);
             float line = UiFactory.LineHeight(UiType.Display);
             float height = width > 1f ? Mathf.Max(line, Mathf.Ceil(title.GetPreferredValues(HeaderTitle, width, 0f).y)) : line * 2f;
-            rect.sizeDelta = new Vector2(0f, height);
+            rect.sizeDelta = new Vector2(width, height);
             rect.anchoredPosition = Vector2.zero;
             return height;
         }
@@ -397,7 +399,8 @@ namespace DD.Prototype.UI
 
         private UiButton AddRail(RectTransform column, int index, float pitch, string id, string icon, string nameKey, string fallback, System.Action onClick)
         {
-            UiIconButton item = UiIconControls.Button(column, icon, nameKey, fallback, onClick, RailIcon, null, null, UiIconLabel.Beside);
+            // O1: bare brush glyphs - no plate at rest (Ghost); focus brings the hollow ring and the travelling brackets.
+            UiIconButton item = UiIconControls.Button(column, icon, nameKey, fallback, onClick, RailIcon, null, null, UiIconLabel.Beside, UiButtonVariant.Ghost);
             item.PinObjectName(id);
             var rect = (RectTransform)item.transform;
             rect.anchorMin = new Vector2(0f, 1f);
@@ -440,6 +443,17 @@ namespace DD.Prototype.UI
             rect.anchoredPosition = new Vector2(0f, -top);
         }
 
+        private static float LongestWord(TMP_Text text, string words)
+        {
+            float widest = 0f;
+            foreach (string word in words.Split(' '))
+            {
+                widest = Mathf.Max(widest, text.GetPreferredValues(word).x);
+            }
+
+            return Mathf.Ceil(widest);
+        }
+
         /// <summary>v4 (O1): the profile level top-right, its XP to the next level as a bar under it - a word and a value.</summary>
         private void BuildProgressReadout()
         {
@@ -447,19 +461,20 @@ namespace DD.Prototype.UI
             root.anchorMin = new Vector2(1f, 1f);
             root.anchorMax = new Vector2(1f, 1f);
             root.pivot = new Vector2(1f, 1f);
-            float line = UiFactory.LineHeight(UiType.Label);
-            root.sizeDelta = new Vector2(220f, line + (int)UiSpace.XS + 6f);
+            float line = UiFactory.LineHeight(UiType.BodyStrong);
+            const float BarHeight = 8f;
+            root.sizeDelta = new Vector2(240f, line + (int)UiSpace.S + BarHeight);
             root.anchoredPosition = Vector2.zero;
-            _level = UiFactory.Label("Level", root, string.Empty, UiType.Label, UiColor.TextPrimary, TextAnchor.UpperRight);
+            _level = UiFactory.Label("Level", root, string.Empty, UiType.BodyStrong, UiColor.TextPrimary, TextAnchor.UpperRight);
             Band(_level.rectTransform, 0f, line);
             UiHudInk.Apply(_level);   // over the world: the HUD's ink halo, no panel
-            _xp = UiFactory.Bar("Xp", root, UiColor.BarXp, 6f);
+            _xp = UiFactory.Bar("Xp", root, UiColor.BarXp, BarHeight);
             var bar = (RectTransform)_xp.transform;
             bar.anchorMin = new Vector2(0f, 1f);
             bar.anchorMax = new Vector2(1f, 1f);
             bar.pivot = new Vector2(0.5f, 1f);
-            bar.sizeDelta = new Vector2(0f, 6f);
-            bar.anchoredPosition = new Vector2(0f, -(line + (int)UiSpace.XS));
+            bar.sizeDelta = new Vector2(0f, BarHeight);
+            bar.anchoredPosition = new Vector2(0f, -(line + (int)UiSpace.S));
             RefreshProgressReadout();
         }
 

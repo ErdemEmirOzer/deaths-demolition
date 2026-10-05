@@ -913,6 +913,14 @@ namespace DD.Prototype.UI
                     yield break;
                 }
 
+                if (_screen == "menuv4")
+                {
+                    yield return MenuV4Frames();
+                    Debug.Log("[UiCapture] menuv4 done");
+                    Application.Quit();
+                    yield break;
+                }
+
                 if (_screen == "tree")
                 {
                     yield return TreeFrames();
@@ -2742,6 +2750,29 @@ namespace DD.Prototype.UI
             /// <c>settings-ui1.2-ts1.25.png</c> in <c>-ddUiCaptureOut</c>. The resolutions (1080, 21:9, Mac, 16:10) are the
             /// runner's, one Player launch each; the settings go to this process's own folder, as every capture's do.
             /// </summary>
+            /// <summary>WP-081 menu v4: the arrival (every pane closed), the rail's word moved to SETTINGS, the Profile pane open.</summary>
+            private IEnumerator MenuV4Frames()
+            {
+                string folder = Path.HasExtension(_out) ? (Path.GetDirectoryName(_out) ?? Application.persistentDataPath) : _out;
+                Directory.CreateDirectory(folder);
+                yield return WaitFor(() => FindObjectOfType<MainMenuScreen>() != null && !UiCurtain.IsCovering, 30f);
+                yield return new WaitForSecondsRealtime(_delay);
+                MainMenuScreen menu = FindObjectOfType<MainMenuScreen>();
+                yield return Frame(folder, "menu-arrival");
+                if (menu == null || menu.Rail.Count < 8)
+                {
+                    yield break;
+                }
+
+                UiInput.Focus(menu.Rail[4].Button);
+                yield return new WaitForSecondsRealtime(0.6f);
+                yield return Frame(folder, "menu-focus-settings");
+                menu.ShowPane(UiContext.Profile);
+                UiInput.Focus(menu.Rail[1].Button);
+                yield return new WaitForSecondsRealtime(0.8f);
+                yield return Frame(folder, "menu-pane-profile");
+            }
+
             private IEnumerator MenuMatrix()
             {
                 string folder = Path.HasExtension(_out) ? (Path.GetDirectoryName(_out) ?? Application.persistentDataPath) : _out;

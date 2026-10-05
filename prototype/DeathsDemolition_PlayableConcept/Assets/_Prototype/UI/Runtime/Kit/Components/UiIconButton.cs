@@ -362,9 +362,11 @@ namespace DD.Prototype.UI
         /// (unless <paramref name="shortKey"/> gives a shorter one).
         /// </summary>
         public static UiIconButton Button(Transform parent, string iconKey, string nameKey, string nameFallback, Action onClick,
-            UiIconSize size = UiIconSize.M, string shortKey = null, string shortFallback = null, UiIconLabel label = UiIconLabel.Tooltip)
+            UiIconSize size = UiIconSize.M, string shortKey = null, string shortFallback = null, UiIconLabel label = UiIconLabel.Tooltip,
+            UiButtonVariant variant = UiButtonVariant.Icon)
         {
-            UiButton button = UiFactory.Button(UiStrings.Get(nameKey, nameFallback), parent, string.Empty, UiButtonVariant.Icon, onClick);
+            // Icon: the glyph in a square plate. Ghost (a menu rail, O1): the bare glyph, the plate only as the hover wash.
+            UiButton button = UiFactory.Button(UiStrings.Get(nameKey, nameFallback), parent, string.Empty, variant, onClick);
             UiIconButton icon = button.gameObject.AddComponent<UiIconButton>();
             icon.Bind(button, iconKey, nameKey, nameFallback, shortKey, shortFallback, label == UiIconLabel.Below ? UiIconLabel.Tooltip : label, size, false);
             return icon;

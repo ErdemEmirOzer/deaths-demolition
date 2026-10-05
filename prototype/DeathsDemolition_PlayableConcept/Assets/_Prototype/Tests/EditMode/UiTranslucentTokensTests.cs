@@ -373,11 +373,18 @@ namespace DD.Prototype.Tests.EditMode
             // 0..0.26 from title + XXL to the page's foot): the focused item's word and PLAY's sub-line beside the icons,
             // the build line at the foot - every word inside the spine's scrim (no header block any more).
             float navWidth = width * 0.26f;
-            float titleW = Mathf.Ceil(Width(rootRect, MainMenuScreen.HeaderTitle, UiType.Display));
+            float longest = 0f;
+            foreach (string part in MainMenuScreen.HeaderTitle.Split(' '))
+            {
+                longest = Mathf.Max(longest, Mathf.Ceil(Width(rootRect, part, UiType.Display)));
+            }
+
+            float titleBox = Mathf.Max(navWidth, longest + 2f);   // MainMenuScreen.BuildTitle: words stay whole
+            float titleW = Mathf.Min(titleBox, Mathf.Ceil(Width(rootRect, MainMenuScreen.HeaderTitle, UiType.Display)));
             float titleH = Mathf.Max(UiFactory.LineHeight(UiType.Display),
-                Mathf.Ceil(WrappedHeight(rootRect, MainMenuScreen.HeaderTitle, UiType.Display, navWidth)));
+                Mathf.Ceil(WrappedHeight(rootRect, MainMenuScreen.HeaderTitle, UiType.Display, titleBox)));
             var words = new List<Word>();
-            words.Add(new Word { Name = "title", Rect = new Rect(left, top, Mathf.Min(navWidth, titleW), titleH), Colour = UiColor.TextPrimary });
+            words.Add(new Word { Name = "title", Rect = new Rect(left, top, titleW, titleH), Colour = UiColor.TextPrimary });
             float navTop = top + titleH + (int)UiSpace.XXL;
             float navBottom = canvas.y - (int)UiSpace.Section;
             float wordLeft = left + UiIconTokens.Hit(MainMenuScreen.RailIcon) + (int)MainMenuScreen.RailWordGap;
