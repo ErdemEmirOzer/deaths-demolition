@@ -56,6 +56,16 @@ No owner test: `wp078_accept` writes `r2-P5.json` in stage `r2` from the chain's
 either build (C-00 05.10 decision (a)). R1 sat on the 1.2 s curtain floor in every session, so `floorLimited` tells
 that the ratio only shows an R2 load that grows past it.
 
+## S4 (room tails, v2 — C-00 05.10 decision; S-10 reviews after)
+
+The gate is the **RT60 of the tail**, as the AP-027 spec states it — not the −30 dB energy decay from the dry onset, which
+mixes the dry level in and tops out near RT60 / 2 once the tail dominates (S-08 tools/tail_mix.py). `MekanKuyrugu_EDC_Olcum`
+records each weapon × Open / Corridor / Hall twice on the weapon bus alone: as the game plays it (the source gate: shot-window
+peak ≥ −30 dBFS, and the old `edc30` kept as a report), and tail only (the weapon's Fire and Mechanical silenced for that take;
+tail peak ≥ −50 dBFS or it fails). Tail take: 500–1000 Hz band, Schroeder EDC from the tail onset, T20 (−5 … −25 dB) × 3,
+median of four cues. Thresholds = the spec RT60 ±20 %: open 0.56–1.08 s, corridor 0.88–1.68 s, hall 1.28–2.28 s, and open <
+corridor < hall for every weapon (`orderViolations` 0). Report: `openEdc30MsMin`, `corridorEdc30MsMin`, `hallEdc30MsMin`.
+
 ## Human gates
 
 H5, L6, Z5, S6, U4: one review file `<E>/r2/reviews/<gate id>.json`:

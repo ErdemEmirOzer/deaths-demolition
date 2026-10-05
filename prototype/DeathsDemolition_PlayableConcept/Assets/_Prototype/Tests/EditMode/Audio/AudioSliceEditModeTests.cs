@@ -971,6 +971,27 @@ namespace DD.Prototype.Tests.EditMode.Audio
         }
 
         [Test]
+        public void AtesV4_KatmanKazanci_LoudnessReferansli_UzakEsitEnerji_MekanikSpecOrani()
+        {
+            // WP-085 B5: distance voices meet the fire at equal loudness at the band edge (spec §3.2), the mechanism sits
+            // −10 / −7 / −3 LU under it (spec §3.1) whatever level its stem was delivered at; ±12 dB cap; unknown → the fixed rule.
+            Assert.AreEqual(4f, WeaponAudioIdentity.LoudnessCompDb(-18f, -22f, 0f, 0f), 1e-4f, "uzak ses: eş enerji");
+            Assert.AreEqual(-10f + 0f, WeaponAudioIdentity.LoudnessCompDb(-18f, -18f, -10f, -10f), 1e-4f);
+            Assert.AreEqual(WeaponAudioIdentity.LoudnessCompMaxDb, WeaponAudioIdentity.LoudnessCompDb(-18f, -55f, -10f, -10f), 1e-4f, "sessiz stem tavanla yükselir");
+            Assert.AreEqual(-7f, WeaponAudioIdentity.LoudnessCompDb(float.NaN, -28f, -7f, -7f), 1e-4f, "LUFS yoksa sabit kural");
+
+            AudioCatalogBuilder.BuildCatalog();
+            var lib = new AudioClipLibrary();
+            float fire = lib.LufsOf(AudioSoundId.WeaponSmg1Fire), mid = lib.LufsOf(AudioSoundId.WeaponSmg1DistanceMid), mech = lib.LufsOf(AudioSoundId.WeaponSmg1Mechanical);
+            Assert.IsFalse(float.IsNaN(fire) || float.IsNaN(mid) || float.IsNaN(mech), "katalog LUFS");
+            Assert.AreEqual(fire, mid + WeaponAudioIdentity.LoudnessCompDb(fire, mid, 0f, 0f), 0.01f, "SMG1 DistanceMid sınırda Fire ile aynı ses yüksekliği");
+            Assert.AreEqual(fire - 10f, mech + WeaponAudioIdentity.LoudnessCompDb(fire, mech, -10f, -10f), 0.01f, "SMG1 mekanik üstten −10 LU");
+            Debug.Log("[DD-TEST] wp085.layergain AR1 mech comp " + WeaponAudioIdentity.LoudnessCompDb(lib.LufsOf(AudioSoundId.WeaponAr1Fire), lib.LufsOf(AudioSoundId.WeaponAr1Mechanical), -10f, -10f)
+                      + " dB · SMG1 mid comp " + WeaponAudioIdentity.LoudnessCompDb(fire, mid, 0f, 0f) + " dB");
+            lib.Dispose();
+        }
+
+        [Test]
         public void AtesV4_KatmanYolu_AdlarBantlarOfsetler_AP027GelmedenSessiz()
         {
             // WP-085 B3 (AP-027 spec §3–§5): layer ids resolve by name; none exists before AP-027 → the v016 set plays as before.

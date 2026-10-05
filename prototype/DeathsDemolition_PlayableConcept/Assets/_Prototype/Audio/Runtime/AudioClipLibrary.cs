@@ -90,6 +90,12 @@ namespace DD.Prototype.Audio
             return (_kitOverrides != null && _kitOverrides.ContainsKey(id)) || (_catalog != null && _catalog.TryGet(id, out AudioCatalog.Entry _));
         }
 
+        /// <summary>WP-085 B5: a produced sound's integrated loudness from the catalog (house method, LUFS); NaN when unknown.</summary>
+        public float LufsOf(AudioSoundId id)
+        {
+            return _catalog != null && _catalog.TryGet(id, out AudioCatalog.Entry e) && e.Lufs < 0f ? e.Lufs : float.NaN;
+        }
+
         private Dictionary<AudioSoundId, Entry> _kitOverrides;
 
         /// <summary>

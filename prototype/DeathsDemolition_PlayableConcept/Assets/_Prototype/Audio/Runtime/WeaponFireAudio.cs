@@ -129,6 +129,21 @@ namespace DD.Prototype.Audio
         /// <summary>Spec §3.2: in the Mid band the mechanism sits 12 dB further down; in Far it is off.</summary>
         public const float MechanicalMidDb = -12f;
 
+        /// <summary>WP-085 B5: the most a layer is lifted or cut to meet its loudness reference (a quiet stem is not dragged up whole).</summary>
+        public const float LoudnessCompMaxDb = 12f;
+
+        /// <summary>
+        /// WP-085 B5: the gain that puts <paramref name="layerLufs"/> at <paramref name="targetRelLu"/> against the fire voice's
+        /// loudness (catalog, house method), capped at ±<see cref="LoudnessCompMaxDb"/>; <paramref name="fallbackDb"/> when either is
+        /// unknown. Distance voices: target 0 (spec §3.2 equal energy at the band edge — the band changes the timbre, the rolloff the
+        /// level). Mechanical: target −10 / −7 / −3 (spec §3.1), the delivered stems sit at very different levels (−28 … −55 LUFS).
+        /// </summary>
+        public static float LoudnessCompDb(float fireLufs, float layerLufs, float targetRelLu, float fallbackDb)
+        {
+            if (float.IsNaN(fireLufs) || float.IsNaN(layerLufs)) return fallbackDb;
+            return Mathf.Clamp(fireLufs + targetRelLu - layerLufs, -LoudnessCompMaxDb, LoudnessCompMaxDb);
+        }
+
         private static readonly int LayerCount = System.Enum.GetValues(typeof(WeaponLayer)).Length;
         private static readonly AudioSoundId[] s_layers = BuildLayers();
         private static readonly AudioSoundId[] s_layerOverrides = new AudioSoundId[All.Length * LayerCount];
@@ -318,6 +333,10 @@ namespace DD.Prototype.Audio
 
         /// <summary>WP-085 B3: the mechanical layer played last (None until AP-027 delivers one), its band, the last tail's offset.</summary>
         public AudioSoundId LastMechanical { get; private set; }
+
+        /// <summary>WP-085 B5: the loudness compensation the last distance voice got (0 for Fire) and the mechanism's gain over Fire's.</summary>
+        public float LastVoiceCompDb { get; private set; }
+        public float LastMechanicalDb { get; private set; }
         public WeaponDistanceBand LastBand { get; private set; }
         public float LastTailDelay { get; private set; }
 
@@ -407,7 +426,10 @@ namespace DD.Prototype.Audio
             AudioPlacement p = AudioMixPlan.PlayerWeapon(voice, set.FiresStrings ? StringVoices : AudioMixPlan.PlayerWeaponVoices);
             p.Spatial = cue.Position == Vector3.zero ? 0f : mix.Spatial;
             FireVoices++;
-            if (_play(p, cue.Position, Db(mix.NearFieldDb + set.FireTrimDb), cue.Priority)) LastVoice = voice;
+            float fireLufs = _library.LufsOf(set.Fire);
+            float voiceComp = voice == set.Fire ? 0f : WeaponAudioIdentity.LoudnessCompDb(fireLufs, _library.LufsOf(voice), 0f, 0f);
+            LastVoiceCompDb = voiceComp;
+            if (_play(p, cue.Position, Db(mix.NearFieldDb + set.FireTrimDb + voiceComp), cue.Priority)) LastVoice = voice;
             else FireRefused++;
 
             // Spec §3.1: the short mechanism as its own voice, Mechanical/Body −10 / −7 / −3 dB by perspective; off in Far.
@@ -415,7 +437,9 @@ namespace DD.Prototype.Audio
             if (band == WeaponDistanceBand.Far || mech == AudioSoundId.None || !_library.IsProduced(mech)) return;
             AudioPlacement m = AudioMixPlan.PlayerWeapon(mech, MechanicalVoices);
             m.Spatial = p.Spatial;   // rides the body's place; FP's 0 is spec §3.1's 2D mechanism
-            float db = mix.NearFieldDb + set.FireTrimDb + WeaponAudioIdentity.MechanicalRefDb + mix.MechanicalDb + (band == WeaponDistanceBand.Mid ? WeaponAudioIdentity.MechanicalMidDb : 0f);
+            float rel = WeaponAudioIdentity.MechanicalRefDb + mix.MechanicalDb + (band == WeaponDistanceBand.Mid ? WeaponAudioIdentity.MechanicalMidDb : 0f);
+            float db = mix.NearFieldDb + set.FireTrimDb + WeaponAudioIdentity.LoudnessCompDb(fireLufs, _library.LufsOf(mech), rel, rel);
+            LastMechanicalDb = db - mix.NearFieldDb - set.FireTrimDb;
             if (_play(m, cue.Position, Db(db), cue.Priority)) LastMechanical = mech;
         }
 
@@ -453,14 +477,14 @@ namespace DD.Prototype.Audio
         /// STANDARDS §5 wet level against the dry shot (−14 / −10 / −8 dB), less the 2 LU the tail files
         /// sit under the dry files (tails −20 LUFS-I, shots −18) — the files stay at a Vorbis-safe level.
         /// WP-085 B5 (C-00 05.10 mix decision, user N2-07 "yankılı"): the open court +3 dB over spec (−11 dB wet), corridor
-        /// and hall at spec — the AP-027 tails sit at their BS.1770 −20 LUFS, ~4.5 dB under v016's; R2 S4 wants open ≥ 500 ms.
+        /// at spec, the hall 1 dB under — the AP-027 tails sit at their BS.1770 −20 LUFS, ~4.5 dB under v016's (R2 S4 v2 judges RT60).
         /// </summary>
         public static float WetDb(AcousticSpace space)
         {
             switch (space)
             {
                 case AcousticSpace.Corridor: return -8f;
-                case AcousticSpace.Hall: return -6f;
+                case AcousticSpace.Hall: return -7f;   // C-00 05.10: 1 dB under spec — the AP-027 hall tails ran past the 2000 ms −30 dB EDC
                 default: return -9f;
             }
         }

@@ -1898,19 +1898,23 @@ namespace DD.Prototype.Tests.PlayMode
         }
 
         /// <summary>
-        /// WP-085 · R2 S4 room tails: per weapon (DD_EDC_WEAPONS, default every audioId) × space (Open / Corridor / Hall, forced via
-        /// AcousticSpaces.Resolver) four single cues 2.5 s apart on the weapon bus alone (every other bus at −80 dB), captured
-        /// post-mixer. Per shot: Schroeder backward-integrated energy decay from the onset (first sample within 100 ms of the cue
-        /// frame above 10 % of the window peak) over the next 2.3 s; the time it first falls 30 dB (direct, no extrapolation).
-        /// Median of the four per weapon × space. r2-S4: openMsMin / corridorMsMin / hallMsMin (minimum over weapons), hallMsMax,
-        /// orderViolations (weapons where open + 100 ms ≤ corridor and corridor + 100 ms ≤ hall does not hold).
-        /// What plays is what the game plays: an automatic's single cue is a string of one, its tail rings at the release.
-        /// Needs a quiet machine (the frame clock places the cues). Written under temporaryCachePath/wp085-edc.
+        /// WP-085 · R2 S4 v2 room tails (C-00 05.10 decision — the gate is the tail's RT60, as the spec states it): per weapon
+        /// (DD_EDC_WEAPONS, default every audioId) × space (Open / Corridor / Hall, forced via AcousticSpaces.Resolver), on the
+        /// weapon bus alone (every other bus −80 dB), post-mixer, four single cues 2.5 s apart, twice:
+        /// 1. as the game plays them (shot + tail) — the source gate (shot-window peak ≥ −30 dBFS) and the old −30 dB EDC from the
+        ///    onset, kept as a report (edc30);
+        /// 2. tail only — the weapon's Fire and Mechanical overridden by silence for the take, so no dry peak enters the window:
+        ///    500–1000 Hz band (the spec's RT60 band), Schroeder EDC from the tail onset over 3.0 s (cues 3.5 s apart), T20
+        ///    (−5 … −25 dB) × 3 = RT60;
+        ///    tail peak ≥ −50 dBFS or the take fails (source in the recording).
+        /// Median of four per weapon × space. r2-S4: open / corridor / hall RT60 min and max (s) — spec ±20 %: 0.56–1.08,
+        /// 0.88–1.68, 1.28–2.28 — orderViolations (open < corridor < hall per weapon), report open / corridor / hall edc30 minima.
+        /// Needs a quiet machine. Written under temporaryCachePath/wp085-edc.
         /// </summary>
         [UnityTest]
         [Explicit("WP-085 R2 S4 mekân kuyruğu ölçümü — kanıt, CI dışı")]
         [Category("Diagnostics")]
-        [Timeout(1200000)]
+        [Timeout(2400000)]
         public IEnumerator MekanKuyrugu_EDC_Olcum()
         {
             UnityEngine.Audio.AudioMixer mixer = _d.Bridge.Mixer;
@@ -1927,86 +1931,180 @@ namespace DD.Prototype.Tests.PlayMode
             string[] buslar = AudioMixerBridge.VolumeParams;
             const int PlayerBus = 4;   // the stem mutes every other bus and never touches Master / SFX-Player: the snapshot owns them
             var mekanlar = new[] { AcousticSpace.Open, AcousticSpace.Corridor, AcousticSpace.Hall };
-            var sonuc = new Dictionary<string, float[]>();
-            var csv = new System.Text.StringBuilder("weapon,space,shot,edcMs\n");
+            var rt60 = new Dictionary<string, float[]>();
+            var edc30 = new Dictionary<string, float[]>();
+            var csv = new System.Text.StringBuilder("weapon,space,shot,edc30Ms,rt60S\n");
             System.Func<Vector3, AcousticSpace> onceki = AcousticSpaces.Resolver;
+            AudioClip sessiz = AudioClip.Create("wp085_s4_silence", 480, 1, 48000, false);
             AudioOutputCapture cap = null;
+
+            // Cue spacing: the tail-only take leaves 3.5 s per cue — the hall tails run 2.62 s past a release that can come 0.2 s
+            // after the cue, and the EDC window (3.0 s) must hold all of it (a 2.3 s window cut the hall RT60 to ~1.21 s).
+            IEnumerator Kaydet(string ad, string id, List<long> kareler, float aralik)
+            {
+                cap = AudioOutputCapture.Arm(_d.gameObject, System.IO.Path.Combine(dir, ad + ".wav"));
+                float bas = Time.realtimeSinceStartup;
+                int atis = 0;
+                while (Time.realtimeSinceStartup - bas < 4 * aralik + 0.5f)
+                {
+                    if (atis < 4 && Time.realtimeSinceStartup - bas >= 0.3f + atis * aralik)
+                    {
+                        AudioEvents.RaiseWeapon(CombatAudioEvent.ClassicWeaponFire, id, _s.Rig.transform.position + Vector3.up * 1.3f + Vector3.right * (2f * (atis % 2)), 1f, 50);
+                        kareler.Add(cap.FramesCaptured);
+                        atis++;
+                    }
+
+                    yield return null;
+                }
+
+                UnityEngine.Object.DestroyImmediate(cap);
+                cap = null;
+                foreach (var tap in UnityEngine.Object.FindObjectsOfType<AudioOutputTap>(true)) UnityEngine.Object.DestroyImmediate(tap);
+            }
+
             try
             {
                 for (int i = 0; i < buslar.Length; i++) if (i != PlayerBus && i != 0) mixer.SetFloat(buslar[i], -80f);
                 foreach (string id in silahlar)
                 {
-                    var med = new float[3];
+                    WeaponAudioIdentity.TryGet(id, out WeaponVoiceSet set);
+                    var r = new float[3];
+                    var e = new float[3];
                     for (int m = 0; m < 3; m++)
                     {
                         AcousticSpace mekan = mekanlar[m];
                         AcousticSpaces.Resolver = _ => mekan;
                         yield return new WaitForSecondsRealtime(0.5f);
+
+                        // 1 · as the game plays it: source gate + the edc30 report.
                         string ad = "Edc_" + id + "_" + mekan;
-                        cap = AudioOutputCapture.Arm(_d.gameObject, System.IO.Path.Combine(dir, ad + ".wav"));
                         var kareler = new List<long>();
-                        float bas = Time.realtimeSinceStartup;
-                        int atis = 0;
-                        while (Time.realtimeSinceStartup - bas < 4 * 2.5f + 0.5f)
-                        {
-                            if (atis < 4 && Time.realtimeSinceStartup - bas >= 0.3f + atis * 2.5f)
-                            {
-                                AudioEvents.RaiseWeapon(CombatAudioEvent.ClassicWeaponFire, id, _s.Rig.transform.position + Vector3.up * 1.3f + Vector3.right * (2f * atis), 1f, 50);
-                                kareler.Add(cap.FramesCaptured);
-                                atis++;
-                            }
-
-                            yield return null;
-                        }
-
-                        UnityEngine.Object.DestroyImmediate(cap);
-                        cap = null;
-                        foreach (var tap in UnityEngine.Object.FindObjectsOfType<AudioOutputTap>(true)) UnityEngine.Object.DestroyImmediate(tap);
+                        yield return Kaydet(ad, id, kareler, 2.5f);
                         float duyulur = SilahTepesiDb(System.IO.Path.Combine(dir, ad + ".wav"), kareler);
                         Assert.GreaterOrEqual(duyulur, -30f, ad + ": silah sesi kayıtta yok (" + duyulur.ToString("0.0") + " dBFS)");
-                        float[] edc = EdcMs(System.IO.Path.Combine(dir, ad + ".wav"), kareler, 2.3f);
-                        for (int k = 0; k < edc.Length; k++) csv.Append(id).Append(',').Append(mekan).Append(',').Append(k).Append(',').Append(edc[k].ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)).Append('\n');
-                        Array.Sort(edc);
-                        med[m] = edc.Length == 0 ? 0f : edc.Length % 2 == 1 ? edc[edc.Length / 2] : 0.5f * (edc[edc.Length / 2 - 1] + edc[edc.Length / 2]);
+                        float[] d30 = EdcMs(System.IO.Path.Combine(dir, ad + ".wav"), kareler, 2.3f);
+
+                        // 2 · tail only: the dry voices silenced for this take.
+                        string adK = "Tail_" + id + "_" + mekan;
+                        var kareK = new List<long>();
+                        _d.Library.OverrideForKit(set.Fire, new[] { sessiz });
+                        _d.Library.OverrideForKit(WeaponAudioIdentity.Layer(id, WeaponLayer.Mechanical), new[] { sessiz });
+                        try
+                        {
+                            yield return Kaydet(adK, id, kareK, 3.5f);
+                        }
+                        finally
+                        {
+                            _d.Library.ClearKitOverrides();
+                        }
+
+                        float[] t60 = KuyrukRt60(System.IO.Path.Combine(dir, adK + ".wav"), kareK, out float kuyrukTepe);
+                        Assert.GreaterOrEqual(kuyrukTepe, -50f, adK + ": kuyruk kayıtta yok (" + kuyrukTepe.ToString("0.0") + " dBFS)");
+                        for (int k = 0; k < Math.Min(d30.Length, t60.Length); k++)
+                            csv.Append(id).Append(',').Append(mekan).Append(',').Append(k).Append(',').Append(d30[k].ToString("0.0", System.Globalization.CultureInfo.InvariantCulture))
+                               .Append(',').Append(t60[k].ToString("0.000", System.Globalization.CultureInfo.InvariantCulture)).Append('\n');
+                        e[m] = Medyan(d30);
+                        r[m] = Medyan(t60);
                     }
 
-                    sonuc[id] = med;
+                    rt60[id] = r;
+                    edc30[id] = e;
                 }
             }
             finally
             {
                 AcousticSpaces.Resolver = onceki;
+                _d.Library.ClearKitOverrides();
                 if (cap != null) UnityEngine.Object.DestroyImmediate(cap);
                 for (int i = 0; i < buslar.Length; i++) if (i != PlayerBus && i != 0) mixer.ClearFloat(buslar[i]);
+                UnityEngine.Object.Destroy(sessiz);
             }
 
             System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "edc.csv"), csv.ToString());
-            float openMin = float.MaxValue, corrMin = float.MaxValue, hallMin = float.MaxValue, hallMax = 0f;
+            var min = new[] { float.MaxValue, float.MaxValue, float.MaxValue };
+            var max = new[] { 0f, 0f, 0f };
+            var e30 = new[] { float.MaxValue, float.MaxValue, float.MaxValue };
             int sira = 0;
             var detay = new List<string>();
-            foreach (var kv in sonuc)
+            foreach (var kv in rt60)
             {
-                float o = kv.Value[0], c = kv.Value[1], h = kv.Value[2];
-                openMin = Mathf.Min(openMin, o);
-                corrMin = Mathf.Min(corrMin, c);
-                hallMin = Mathf.Min(hallMin, h);
-                hallMax = Mathf.Max(hallMax, h);
-                if (!(o + 100f <= c && c + 100f <= h)) sira++;
-                detay.Add(kv.Key + " " + o.ToString("0") + "/" + c.ToString("0") + "/" + h.ToString("0"));
+                for (int m = 0; m < 3; m++)
+                {
+                    min[m] = Mathf.Min(min[m], kv.Value[m]);
+                    max[m] = Mathf.Max(max[m], kv.Value[m]);
+                    e30[m] = Mathf.Min(e30[m], edc30[kv.Key][m]);
+                }
+
+                if (!(kv.Value[0] < kv.Value[1] && kv.Value[1] < kv.Value[2])) sira++;
+                detay.Add(kv.Key + " " + kv.Value[0].ToString("0.00") + "/" + kv.Value[1].ToString("0.00") + "/" + kv.Value[2].ToString("0.00") + " s");
             }
 
-            Debug.Log("[DD-TEST] wp085.s4 open/corridor/hall ms (median of 4): " + string.Join(" · ", detay) + " · orderViolations " + sira);
+            Debug.Log("[DD-TEST] wp085.s4 RT60 open/corridor/hall (median of 4, 500–1000 Hz T20): " + string.Join(" · ", detay) + " · orderViolations " + sira
+                      + " · edc30 min ms " + e30[0].ToString("0") + "/" + e30[1].ToString("0") + "/" + e30[2].ToString("0"));
             R2Olcum.Yaz("S4", "DD.Prototype.Tests.PlayMode.AudioSliceTests.MekanKuyrugu_EDC_Olcum", new Dictionary<string, double>
             {
-                { "openMsMin", Math.Round(openMin, 1) }, { "corridorMsMin", Math.Round(corrMin, 1) }, { "hallMsMin", Math.Round(hallMin, 1) },
-                { "hallMsMax", Math.Round(hallMax, 1) }, { "orderViolations", sira }
-            }, sonuc.Count * 12);
-            Assert.IsNotEmpty(sonuc, "Ölçülen silah yok.");
-            Assert.GreaterOrEqual(openMin, 500f, "R2 S4 açık ≥ 500 ms (" + string.Join(" · ", detay) + ")");
-            Assert.GreaterOrEqual(corrMin, 750f, "R2 S4 koridor ≥ 750 ms");
-            Assert.GreaterOrEqual(hallMin, 1100f, "R2 S4 salon ≥ 1100 ms");
-            Assert.LessOrEqual(hallMax, 2000f, "R2 S4 salon ≤ 2000 ms");
-            Assert.AreEqual(0, sira, "R2 S4 sıra açık < koridor < salon (≥ 100 ms adım)");
+                { "openRt60MinS", Math.Round(min[0], 3) }, { "openRt60MaxS", Math.Round(max[0], 3) },
+                { "corridorRt60MinS", Math.Round(min[1], 3) }, { "corridorRt60MaxS", Math.Round(max[1], 3) },
+                { "hallRt60MinS", Math.Round(min[2], 3) }, { "hallRt60MaxS", Math.Round(max[2], 3) },
+                { "orderViolations", sira },
+                { "openEdc30MsMin", Math.Round(e30[0], 1) }, { "corridorEdc30MsMin", Math.Round(e30[1], 1) }, { "hallEdc30MsMin", Math.Round(e30[2], 1) }
+            }, rt60.Count * 24);
+            Assert.IsNotEmpty(rt60, "Ölçülen silah yok.");
+            string ozet = string.Join(" · ", detay);
+            Assert.That(min[0] >= 0.56f && max[0] <= 1.08f, "R2 S4 açık RT60 0,56–1,08 s (" + ozet + ")");
+            Assert.That(min[1] >= 0.88f && max[1] <= 1.68f, "R2 S4 koridor RT60 0,88–1,68 s (" + ozet + ")");
+            Assert.That(min[2] >= 1.28f && max[2] <= 2.28f, "R2 S4 salon RT60 1,28–2,28 s (" + ozet + ")");
+            Assert.AreEqual(0, sira, "R2 S4 sıra açık < koridor < salon");
+        }
+
+        private static float Medyan(float[] v)
+        {
+            if (v.Length == 0) return 0f;
+            var c = (float[])v.Clone();
+            Array.Sort(c);
+            return c.Length % 2 == 1 ? c[c.Length / 2] : 0.5f * (c[c.Length / 2 - 1] + c[c.Length / 2]);
+        }
+
+        /// <summary>
+        /// Per cue of a tail-only take: 500–1000 Hz (4th-order Butterworth HP + LP), onset = first sample within 600 ms of the cue
+        /// frame above 10 % of that window's band peak (a string weapon's tail rings at its release), Schroeder EDC over 3.0 s,
+        /// T20 = time from −5 to −25 dB × 3 = RT60 (s). <paramref name="peakDb"/>: median broadband tail peak (dBFS).
+        /// </summary>
+        private static float[] KuyrukRt60(string wav, List<long> frames, out float peakDb)
+        {
+            float[] x = WavMono(wav, out int rate);
+            float[] b = Biquad(Biquad(Biquad(Biquad(x, rate, 500f, 0.5412f, true), rate, 500f, 1.3066f, true), rate, 1000f, 0.5412f, false), rate, 1000f, 1.3066f, false);
+            var r = new List<float>();
+            var pk = new List<float>();
+            foreach (long f in frames)
+            {
+                int f0 = (int)f, search = (int)(0.4f * rate), n = (int)(3.0f * rate);
+                if (f0 + search + n >= b.Length) continue;
+                float bp = 0f, xp = 0f;
+                for (int i = f0; i < f0 + search + n; i++) { bp = Mathf.Max(bp, Mathf.Abs(b[i])); xp = Mathf.Max(xp, Mathf.Abs(x[i])); }
+                pk.Add(20f * Mathf.Log10(Mathf.Max(1e-6f, xp)));
+                if (bp <= 0f) continue;
+                int on = f0;
+                while (on < f0 + search && Mathf.Abs(b[on]) < 0.1f * bp) on++;
+                double total = 0;
+                for (int i = on; i < on + n; i++) total += (double)b[i] * b[i];
+                if (total <= 0) continue;
+                double rest = total;
+                int t5 = -1, t25 = -1;
+                for (int t = on; t < on + n && t25 < 0; t++)
+                {
+                    rest -= (double)b[t] * b[t];
+                    double db = 10.0 * Math.Log10(Math.Max(rest, 1e-30) / total);
+                    if (t5 < 0 && db <= -5.0) t5 = t;
+                    if (db <= -25.0) t25 = t;
+                }
+
+                if (t5 >= 0 && t25 > t5) r.Add(3f * (t25 - t5) / rate);
+            }
+
+            pk.Sort();
+            peakDb = pk.Count > 0 ? pk[pk.Count / 2] : -120f;
+            return r.ToArray();
         }
 
         /// <summary>

@@ -32,7 +32,8 @@ class ContractTests(unittest.TestCase):
         # a changed threshold must be a reviewed edit of this file: pin the C-00 05.10 values
         pinned = {("H1", "maxCm"): 1.0, ("L1", "avg"): 0.05, ("L1t", "avg"): 0.10, ("L3", "limbDegPerFrameMax"): 20.0,
                   ("Z3", "bonesMax"): 74, ("Z3b", "zombieSetPass"): 14, ("S1", "below400ShareMin"): 0.20,
-                  ("S4", "hallMsMax"): 2000, ("U1", "lettersTotalReduction"): 0.40, ("H4b", "leakDegMax"): 1.0,
+                  ("S4", "hallRt60MaxS"): 2.28, ("S4", "openRt60MinS"): 0.56,   # C-00 05.10 S4 v2: the tail's RT60 (spec ±20 %)
+                  ("U1", "lettersTotalReduction"): 0.40, ("H4b", "leakDegMax"): 1.0,
                   ("H4", "yawRollExcessDegMax"): 1.0, ("H4a", "armOffscreenFrames"): 0, ("H4a", "armInCameraFrames"): 0,
                   ("S5", "poolMax"): 3}   # C-00 05.10: concurrent casing voices (was 8, which mixed in the airborne queue)
         for (gid, key), limit in pinned.items():
