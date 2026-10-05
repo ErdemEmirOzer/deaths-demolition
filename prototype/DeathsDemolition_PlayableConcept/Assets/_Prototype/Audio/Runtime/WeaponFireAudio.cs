@@ -477,14 +477,15 @@ namespace DD.Prototype.Audio
         /// STANDARDS §5 wet level against the dry shot (−14 / −10 / −8 dB), less the 2 LU the tail files
         /// sit under the dry files (tails −20 LUFS-I, shots −18) — the files stay at a Vorbis-safe level.
         /// WP-085 B5 (C-00 05.10 mix decision, user N2-07 "yankılı"): the open court +3 dB over spec (−11 dB wet), corridor
-        /// at spec, the hall 1 dB under — the AP-027 tails sit at their BS.1770 −20 LUFS, ~4.5 dB under v016's (R2 S4 v2 judges RT60).
+        /// and hall at spec by the AP-027 v003f tails' BS.1770 loudness (stereo channel sum; hall RT60 ~1.7 s, corridor ~1.25 s):
+        /// the hall tails play ~1 dB hotter than the 2 LU file offset assumes, so its wet is −7 (R2 S4 v2 judges RT60).
         /// </summary>
         public static float WetDb(AcousticSpace space)
         {
             switch (space)
             {
                 case AcousticSpace.Corridor: return -8f;
-                case AcousticSpace.Hall: return -7f;   // C-00 05.10: 1 dB under spec — the AP-027 hall tails ran past the 2000 ms −30 dB EDC
+                case AcousticSpace.Hall: return -7f;   // v003f hall tails, BS.1770 stereo sum: median −8.4 dB vs Fire (spec −8; −6 gave −7.4, up to −6.6)
                 default: return -9f;
             }
         }

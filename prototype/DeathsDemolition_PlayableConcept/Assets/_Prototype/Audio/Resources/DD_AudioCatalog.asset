@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: DD_AudioCatalog
   m_EditorClassIdentifier: 
   _manifestVersion: ap011-v023+ap027-v002-unity-ar1-ar2-lmg1-lmg2-rl1-sg1-sg2-smg1-smg2-sr1
-  _sourceHash: a38af227b3aaa32582b9c73dcc139ac6e61516c3d0e5f763039374ed84e48937
+  _sourceHash: a38af227b3aaa32582b9c73dcc139ac6e01904c4c27ffc4647382d62d501ee67
   _entries:
   - Sound: 10
     Clips:
@@ -2725,8 +2725,8 @@ MonoBehaviour:
     TruePeakDb: -1.34
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC001, SRC002; source
       recording) \xB7 SHA d76e743eb2e9\u2026 \xB7 AP-027 v003-recut on 4 file(s)
-      \xB7 AP-027 v003-recut on 4 file(s) \xB7 import fade 10 ms + 20 ms silence
-      on 6 file(s) (end within 40 dB of peak / end gate)"
+      \xB7 import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak
+      / end gate)"
     NoiseFloorDb: -41.2
     DcDb: -68.2
     Clipped: 0
@@ -2799,9 +2799,8 @@ MonoBehaviour:
     TruePeakDb: -1.52
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC101, SRC102, SRC127;
       source recording) \xB7 SHA 05b64bd6dd3c\u2026 \xB7 AP-027 v003-recut on 5 file(s)
-      \xB7 AP-027 v003-recut on 5 file(s) \xB7 import fade 10 ms + 20 ms silence
-      on 6 file(s) (end within 40 dB of peak / end gate) \xB7 import 15 Hz high-pass
-      + DC out on Weapon_smg1_Fire_06.wav"
+      \xB7 import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak
+      / end gate) \xB7 import 15 Hz high-pass + DC out on Weapon_smg1_Fire_06.wav"
     NoiseFloorDb: -57.1
     DcDb: -64.2
     Clipped: 0
@@ -2874,8 +2873,8 @@ MonoBehaviour:
     TruePeakDb: -1.06
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC003, SRC013; source
       recording) \xB7 SHA 5d01ff8627b3\u2026 \xB7 AP-027 v003-recut on 1 file(s)
-      \xB7 AP-027 v003-recut on 1 file(s) \xB7 import fade 10 ms + 20 ms silence
-      on 5 file(s) (end within 40 dB of peak / end gate)"
+      \xB7 import fade 10 ms + 20 ms silence on 5 file(s) (end within 40 dB of peak
+      / end gate)"
     NoiseFloorDb: -85.1
     DcDb: -66.7
     Clipped: 0
@@ -5142,9 +5141,8 @@ MonoBehaviour:
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC001, SRC116; source
       recording) \xB7 SHA e48bd80bae9c\u2026 \xB7 AP-027 v003-recut on 1 file(s)
       \xB7 AP-027 v003b-recut on 4 file(s) \xB7 AP-027 v003c-recut on 2 file(s) \xB7
-      AP-027 v003-recut on 1 file(s) \xB7 AP-027 v003b-recut on 4 file(s) \xB7 AP-027
-      v003c-recut on 2 file(s) \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
-      (end within 40 dB of peak / end gate)"
+      import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak /
+      end gate)"
     NoiseFloorDb: -63.9
     DcDb: -82.8
     Clipped: 0
@@ -5181,8 +5179,7 @@ MonoBehaviour:
     TruePeakDb: -8
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC004; source recording)
       \xB7 SHA 78f55dc0b2f5\u2026 \xB7 AP-027 v003-recut on 5 file(s) \xB7 AP-027
-      v003e-recut on 6 file(s) \xB7 AP-027 v003-recut on 5 file(s) \xB7 AP-027 v003e-recut
-      on 6 file(s)"
+      v003e-recut on 6 file(s)"
     NoiseFloorDb: -62
     DcDb: -110
     Clipped: 0
@@ -5200,8 +5197,7 @@ MonoBehaviour:
     Lufs: -48.76
     TruePeakDb: -32
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC002; source recording)
-      \xB7 SHA 609701ab4801\u2026 \xB7 AP-027 v003-recut on 6 file(s) \xB7 AP-027
-      v003-recut on 6 file(s)"
+      \xB7 SHA 609701ab4801\u2026 \xB7 AP-027 v003-recut on 6 file(s)"
     NoiseFloorDb: -59
     DcDb: -144
     Clipped: 0
@@ -5216,13 +5212,12 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 76a66b4ba5bd142edacaaeb777b3eb19, type: 3}
     - {fileID: 8300000, guid: e7cb95bc22d86489ea3177fd5dd69a2a, type: 3}
     Loop: 0
-    Lufs: -26.3
+    Lufs: -25.18
     TruePeakDb: -1.06
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording)
-      \xB7 SHA 225956d6b0bb\u2026 \xB7 import fade 10 ms + 20 ms silence on 4 file(s)
-      (end within 40 dB of peak / end gate)"
-    NoiseFloorDb: -61.9
-    DcDb: -97.1
+      \xB7 SHA 225956d6b0bb\u2026 \xB7 AP-027 v003f-recut on 6 file(s)"
+    NoiseFloorDb: -81.3
+    DcDb: -91.9
     Clipped: 0
     BitDepth: 24
     Layers: "Weapon_ar1_TailCorridor \xB7 stereo"
@@ -5235,13 +5230,12 @@ MonoBehaviour:
     - {fileID: 8300000, guid: ef1734c6a58ae4e3ca11feefeb7dff4f, type: 3}
     - {fileID: 8300000, guid: 0a302cd0d901b47a2a9b3b7c902f549b, type: 3}
     Loop: 0
-    Lufs: -29.76
+    Lufs: -26.84
     TruePeakDb: -1.11
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording)
-      \xB7 SHA 19d0ef390432\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
-      (end within 40 dB of peak / end gate)"
-    NoiseFloorDb: -240
-    DcDb: -93.1
+      \xB7 SHA 19d0ef390432\u2026 \xB7 AP-027 v003f-recut on 6 file(s)"
+    NoiseFloorDb: -72.8
+    DcDb: -89.2
     Clipped: 0
     BitDepth: 24
     Layers: "Weapon_ar1_TailHall \xB7 stereo"
@@ -5258,8 +5252,8 @@ MonoBehaviour:
     TruePeakDb: -5.36
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC001, SRC002; source
       recording) \xB7 SHA 4724e3255ea5\u2026 \xB7 AP-027 v003-recut on 3 file(s)
-      \xB7 AP-027 v003-recut on 3 file(s) \xB7 import fade 10 ms + 20 ms silence
-      on 4 file(s) (end within 40 dB of peak / end gate)"
+      \xB7 import fade 10 ms + 20 ms silence on 4 file(s) (end within 40 dB of peak
+      / end gate)"
     NoiseFloorDb: -46
     DcDb: -98.8
     Clipped: 0
@@ -5311,13 +5305,12 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 7abb9345def1c4891901c526b204a082, type: 3}
     - {fileID: 8300000, guid: 7be5326bd5bd84ee39ed11df66943a78, type: 3}
     Loop: 0
-    Lufs: -26.3
+    Lufs: -25.18
     TruePeakDb: -1.06
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording)
-      \xB7 SHA 225956d6b0bb\u2026 \xB7 import fade 10 ms + 20 ms silence on 4 file(s)
-      (end within 40 dB of peak / end gate)"
-    NoiseFloorDb: -61.9
-    DcDb: -97.1
+      \xB7 SHA 225956d6b0bb\u2026 \xB7 AP-027 v003f-recut on 6 file(s)"
+    NoiseFloorDb: -81.3
+    DcDb: -91.9
     Clipped: 0
     BitDepth: 24
     Layers: "Weapon_ar2_TailCorridor \xB7 stereo"
@@ -5330,13 +5323,12 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 8e5f4ea1ab3a04ac29097ae98643e99f, type: 3}
     - {fileID: 8300000, guid: 87b60bb1f583745e4ac30ec70064430c, type: 3}
     Loop: 0
-    Lufs: -29.76
+    Lufs: -26.84
     TruePeakDb: -1.11
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording)
-      \xB7 SHA 19d0ef390432\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
-      (end within 40 dB of peak / end gate)"
-    NoiseFloorDb: -240
-    DcDb: -93.1
+      \xB7 SHA 19d0ef390432\u2026 \xB7 AP-027 v003f-recut on 6 file(s)"
+    NoiseFloorDb: -72.8
+    DcDb: -89.2
     Clipped: 0
     BitDepth: 24
     Layers: "Weapon_ar2_TailHall \xB7 stereo"
@@ -5423,13 +5415,12 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 4ae705316fe2745579daa1c4fd8013d7, type: 3}
     - {fileID: 8300000, guid: d380d1156cd6f4ca390a40eb5e327c46, type: 3}
     Loop: 0
-    Lufs: -26.3
+    Lufs: -25.21
     TruePeakDb: -1.06
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording)
-      \xB7 SHA 225956d6b0bb\u2026 \xB7 import fade 10 ms + 20 ms silence on 4 file(s)
-      (end within 40 dB of peak / end gate)"
-    NoiseFloorDb: -61.9
-    DcDb: -97.1
+      \xB7 SHA 225956d6b0bb\u2026 \xB7 AP-027 v003f-recut on 6 file(s)"
+    NoiseFloorDb: -76.8
+    DcDb: -93.3
     Clipped: 0
     BitDepth: 24
     Layers: "Weapon_smg1_TailCorridor \xB7 stereo"
@@ -5442,13 +5433,12 @@ MonoBehaviour:
     - {fileID: 8300000, guid: c986113d44f8749d9813f2b0179a99d7, type: 3}
     - {fileID: 8300000, guid: a628eb62724d24f7bab59a7d3649ffce, type: 3}
     Loop: 0
-    Lufs: -29.76
+    Lufs: -26.28
     TruePeakDb: -1.11
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording)
-      \xB7 SHA 19d0ef390432\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
-      (end within 40 dB of peak / end gate)"
-    NoiseFloorDb: -240
-    DcDb: -93.1
+      \xB7 SHA 19d0ef390432\u2026 \xB7 AP-027 v003f-recut on 6 file(s)"
+    NoiseFloorDb: -73.9
+    DcDb: -89.7
     Clipped: 0
     BitDepth: 24
     Layers: "Weapon_smg1_TailHall \xB7 stereo"
@@ -5483,9 +5473,8 @@ MonoBehaviour:
     Lufs: -24
     TruePeakDb: -1.71
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC128; source recording)
-      \xB7 SHA 8b5d483bbc13\u2026 \xB7 AP-027 v003-recut on 4 file(s) \xB7 AP-027
-      v003-recut on 4 file(s) \xB7 import fade 10 ms + 20 ms silence on 4 file(s)
-      (end within 40 dB of peak / end gate)"
+      \xB7 SHA 8b5d483bbc13\u2026 \xB7 AP-027 v003-recut on 4 file(s) \xB7 import
+      fade 10 ms + 20 ms silence on 4 file(s) (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -83.6
     DcDb: -82.8
     Clipped: 0
@@ -5536,13 +5525,12 @@ MonoBehaviour:
     - {fileID: 8300000, guid: ebcfae3a7465c40668e49602937e16c2, type: 3}
     - {fileID: 8300000, guid: d1d09729dbba14325b31f3478498c7c5, type: 3}
     Loop: 0
-    Lufs: -26.3
+    Lufs: -25.21
     TruePeakDb: -1.06
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording)
-      \xB7 SHA 225956d6b0bb\u2026 \xB7 import fade 10 ms + 20 ms silence on 4 file(s)
-      (end within 40 dB of peak / end gate)"
-    NoiseFloorDb: -61.9
-    DcDb: -97.1
+      \xB7 SHA 225956d6b0bb\u2026 \xB7 AP-027 v003f-recut on 6 file(s)"
+    NoiseFloorDb: -76.8
+    DcDb: -93.3
     Clipped: 0
     BitDepth: 24
     Layers: "Weapon_smg2_TailCorridor \xB7 stereo"
@@ -5555,13 +5543,12 @@ MonoBehaviour:
     - {fileID: 8300000, guid: c9eb055680ad64c1fb710836fc35a604, type: 3}
     - {fileID: 8300000, guid: 43eb0b9583d3c4c1bada8ca544a7a7b1, type: 3}
     Loop: 0
-    Lufs: -29.76
+    Lufs: -26.28
     TruePeakDb: -1.11
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording)
-      \xB7 SHA 19d0ef390432\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
-      (end within 40 dB of peak / end gate)"
-    NoiseFloorDb: -240
-    DcDb: -93.1
+      \xB7 SHA 19d0ef390432\u2026 \xB7 AP-027 v003f-recut on 6 file(s)"
+    NoiseFloorDb: -73.9
+    DcDb: -89.7
     Clipped: 0
     BitDepth: 24
     Layers: "Weapon_smg2_TailHall \xB7 stereo"
@@ -5630,13 +5617,12 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 3c730f3f8f88346e29640fb508815f8a, type: 3}
     - {fileID: 8300000, guid: 55b239f34a35a4c89a332a7e54dd0582, type: 3}
     Loop: 0
-    Lufs: -26.94
+    Lufs: -25.12
     TruePeakDb: -1.06
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording)
-      \xB7 SHA 48ba25c36440\u2026 \xB7 import fade 10 ms + 20 ms silence on 5 file(s)
-      (end within 40 dB of peak / end gate)"
-    NoiseFloorDb: -60.2
-    DcDb: -97.2
+      \xB7 SHA 48ba25c36440\u2026 \xB7 AP-027 v003f-recut on 6 file(s)"
+    NoiseFloorDb: -74.2
+    DcDb: -92.8
     Clipped: 0
     BitDepth: 24
     Layers: "Weapon_sg1_TailCorridor \xB7 stereo"
@@ -5649,13 +5635,12 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 60954539194aa44aead9bc58e9d55bd1, type: 3}
     - {fileID: 8300000, guid: 0b6f66d1a29c347b5bef7c5e27cfaf5d, type: 3}
     Loop: 0
-    Lufs: -29.75
+    Lufs: -26.01
     TruePeakDb: -1.11
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording)
-      \xB7 SHA 5497f3dc2992\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
-      (end within 40 dB of peak / end gate)"
-    NoiseFloorDb: -240
-    DcDb: -93.1
+      \xB7 SHA 5497f3dc2992\u2026 \xB7 AP-027 v003f-recut on 6 file(s)"
+    NoiseFloorDb: -76.6
+    DcDb: -89
     Clipped: 0
     BitDepth: 24
     Layers: "Weapon_sg1_TailHall \xB7 stereo"
@@ -5672,8 +5657,8 @@ MonoBehaviour:
     TruePeakDb: -4.08
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC003, SRC013; source
       recording) \xB7 SHA 2c835710bf76\u2026 \xB7 AP-027 v003-recut on 1 file(s)
-      \xB7 AP-027 v003-recut on 1 file(s) \xB7 import fade 10 ms + 20 ms silence
-      on 5 file(s) (end within 40 dB of peak / end gate)"
+      \xB7 import fade 10 ms + 20 ms silence on 5 file(s) (end within 40 dB of peak
+      / end gate)"
     NoiseFloorDb: -106.7
     DcDb: -102.3
     Clipped: 0
@@ -5725,13 +5710,12 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 1383f3e851134438088e5202bd6cd71c, type: 3}
     - {fileID: 8300000, guid: 1f3dadc1014be461ab56c95f25667800, type: 3}
     Loop: 0
-    Lufs: -26.94
+    Lufs: -25.12
     TruePeakDb: -1.06
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording)
-      \xB7 SHA 48ba25c36440\u2026 \xB7 import fade 10 ms + 20 ms silence on 5 file(s)
-      (end within 40 dB of peak / end gate)"
-    NoiseFloorDb: -60.2
-    DcDb: -97.2
+      \xB7 SHA 48ba25c36440\u2026 \xB7 AP-027 v003f-recut on 6 file(s)"
+    NoiseFloorDb: -74.2
+    DcDb: -92.8
     Clipped: 0
     BitDepth: 24
     Layers: "Weapon_sg2_TailCorridor \xB7 stereo"
@@ -5744,13 +5728,12 @@ MonoBehaviour:
     - {fileID: 8300000, guid: f7cd6dbd448c247d29a9502be23be025, type: 3}
     - {fileID: 8300000, guid: 3b4458e9ddfe24ab8bcdbd53d8d16f08, type: 3}
     Loop: 0
-    Lufs: -29.75
+    Lufs: -26.01
     TruePeakDb: -1.11
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording)
-      \xB7 SHA 5497f3dc2992\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
-      (end within 40 dB of peak / end gate)"
-    NoiseFloorDb: -240
-    DcDb: -93.1
+      \xB7 SHA 5497f3dc2992\u2026 \xB7 AP-027 v003f-recut on 6 file(s)"
+    NoiseFloorDb: -76.6
+    DcDb: -89
     Clipped: 0
     BitDepth: 24
     Layers: "Weapon_sg2_TailHall \xB7 stereo"
@@ -5838,13 +5821,12 @@ MonoBehaviour:
     - {fileID: 8300000, guid: e402f964d8edc42c59a0d841951aa905, type: 3}
     - {fileID: 8300000, guid: 37a25182b7b1b4bd4aed95ec97539871, type: 3}
     Loop: 0
-    Lufs: -26.3
+    Lufs: -26.11
     TruePeakDb: -1.06
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording)
-      \xB7 SHA 225956d6b0bb\u2026 \xB7 import fade 10 ms + 20 ms silence on 4 file(s)
-      (end within 40 dB of peak / end gate)"
-    NoiseFloorDb: -61.9
-    DcDb: -97.1
+      \xB7 SHA 225956d6b0bb\u2026 \xB7 AP-027 v003f-recut on 6 file(s)"
+    NoiseFloorDb: -73
+    DcDb: -93.5
     Clipped: 0
     BitDepth: 24
     Layers: "Weapon_lmg1_TailCorridor \xB7 stereo"
@@ -5857,13 +5839,12 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 3aee1b18b5b1240328d2b80319ee5f60, type: 3}
     - {fileID: 8300000, guid: bfcfa35dbbf344084b8c538ef2379943, type: 3}
     Loop: 0
-    Lufs: -29.76
+    Lufs: -25.96
     TruePeakDb: -1.11
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording)
-      \xB7 SHA 19d0ef390432\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
-      (end within 40 dB of peak / end gate)"
-    NoiseFloorDb: -240
-    DcDb: -93.1
+      \xB7 SHA 19d0ef390432\u2026 \xB7 AP-027 v003f-recut on 6 file(s)"
+    NoiseFloorDb: -70.2
+    DcDb: -89.5
     Clipped: 0
     BitDepth: 24
     Layers: "Weapon_lmg1_TailHall \xB7 stereo"
@@ -5952,13 +5933,12 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 50a0397e0252c445aa5cf5569e485de9, type: 3}
     - {fileID: 8300000, guid: 7cbfab40ca2a44b608cc71432e087c90, type: 3}
     Loop: 0
-    Lufs: -26.3
+    Lufs: -26.11
     TruePeakDb: -1.06
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording)
-      \xB7 SHA 225956d6b0bb\u2026 \xB7 import fade 10 ms + 20 ms silence on 4 file(s)
-      (end within 40 dB of peak / end gate)"
-    NoiseFloorDb: -61.9
-    DcDb: -97.1
+      \xB7 SHA 225956d6b0bb\u2026 \xB7 AP-027 v003f-recut on 6 file(s)"
+    NoiseFloorDb: -73
+    DcDb: -93.5
     Clipped: 0
     BitDepth: 24
     Layers: "Weapon_lmg2_TailCorridor \xB7 stereo"
@@ -5971,13 +5951,12 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 81b56ea3d1d884cfab2e8a397702807d, type: 3}
     - {fileID: 8300000, guid: 9b86d33e937544bffaf238cdf6bff58b, type: 3}
     Loop: 0
-    Lufs: -29.76
+    Lufs: -25.96
     TruePeakDb: -1.11
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording)
-      \xB7 SHA 19d0ef390432\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
-      (end within 40 dB of peak / end gate)"
-    NoiseFloorDb: -240
-    DcDb: -93.1
+      \xB7 SHA 19d0ef390432\u2026 \xB7 AP-027 v003f-recut on 6 file(s)"
+    NoiseFloorDb: -70.2
+    DcDb: -89.5
     Clipped: 0
     BitDepth: 24
     Layers: "Weapon_lmg2_TailHall \xB7 stereo"
@@ -6067,13 +6046,12 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 217ff3b2ca8ad430e8fe4308ecd3f5d0, type: 3}
     - {fileID: 8300000, guid: a39d58c5c486e4ef1a92811e6388c9a7, type: 3}
     Loop: 0
-    Lufs: -26.94
+    Lufs: -25.94
     TruePeakDb: -1.06
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording)
-      \xB7 SHA 48ba25c36440\u2026 \xB7 import fade 10 ms + 20 ms silence on 5 file(s)
-      (end within 40 dB of peak / end gate)"
-    NoiseFloorDb: -60.2
-    DcDb: -97.2
+      \xB7 SHA 48ba25c36440\u2026 \xB7 AP-027 v003f-recut on 6 file(s)"
+    NoiseFloorDb: -73.6
+    DcDb: -94.7
     Clipped: 0
     BitDepth: 24
     Layers: "Weapon_sr1_TailCorridor \xB7 stereo"
@@ -6086,13 +6064,12 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 36a55a7b0f41f4c7fa0f2e7f9a1299af, type: 3}
     - {fileID: 8300000, guid: 24ed2397808c8424893d75d657e75249, type: 3}
     Loop: 0
-    Lufs: -29.75
+    Lufs: -26.21
     TruePeakDb: -1.11
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording)
-      \xB7 SHA 5497f3dc2992\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
-      (end within 40 dB of peak / end gate)"
-    NoiseFloorDb: -240
-    DcDb: -93.1
+      \xB7 SHA 5497f3dc2992\u2026 \xB7 AP-027 v003f-recut on 6 file(s)"
+    NoiseFloorDb: -75.4
+    DcDb: -89.4
     Clipped: 0
     BitDepth: 24
     Layers: "Weapon_sr1_TailHall \xB7 stereo"
@@ -6179,13 +6156,12 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 04fd043edb34b4578a35ebc2351a08b0, type: 3}
     - {fileID: 8300000, guid: bccc7fd155d224c5d8f12a4d348ebb0f, type: 3}
     Loop: 0
-    Lufs: -26.3
+    Lufs: -25.29
     TruePeakDb: -1.06
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording)
-      \xB7 SHA 225956d6b0bb\u2026 \xB7 import fade 10 ms + 20 ms silence on 4 file(s)
-      (end within 40 dB of peak / end gate)"
-    NoiseFloorDb: -61.9
-    DcDb: -97.1
+      \xB7 SHA 225956d6b0bb\u2026 \xB7 AP-027 v003f-recut on 6 file(s)"
+    NoiseFloorDb: -79.7
+    DcDb: -93.1
     Clipped: 0
     BitDepth: 24
     Layers: "Weapon_rl1_TailCorridor \xB7 stereo"
@@ -6198,13 +6174,12 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 6882680b784d14267a00e81f5adb223c, type: 3}
     - {fileID: 8300000, guid: c2e800ea908ed482c9998a4e7297cbc1, type: 3}
     Loop: 0
-    Lufs: -29.76
+    Lufs: -25.81
     TruePeakDb: -1.11
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording)
-      \xB7 SHA 19d0ef390432\u2026 \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
-      (end within 40 dB of peak / end gate)"
-    NoiseFloorDb: -240
-    DcDb: -93.1
+      \xB7 SHA 19d0ef390432\u2026 \xB7 AP-027 v003f-recut on 6 file(s)"
+    NoiseFloorDb: -70.7
+    DcDb: -89.9
     Clipped: 0
     BitDepth: 24
     Layers: "Weapon_rl1_TailHall \xB7 stereo"
@@ -6260,9 +6235,8 @@ MonoBehaviour:
     Lufs: -24.48
     TruePeakDb: -1.06
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC011; source recording)
-      \xB7 SHA ce7037131ff7\u2026 \xB7 AP-027 v003-recut on 2 file(s) \xB7 AP-027
-      v003-recut on 2 file(s) \xB7 import fade 10 ms + 20 ms silence on 6 file(s)
-      (end within 40 dB of peak / end gate)"
+      \xB7 SHA ce7037131ff7\u2026 \xB7 AP-027 v003-recut on 2 file(s) \xB7 import
+      fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -61.2
     DcDb: -72.2
     Clipped: 0
@@ -6281,8 +6255,8 @@ MonoBehaviour:
     TruePeakDb: -1.06
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC011, SRC122, SRC123;
       proxy surface/caliber) \xB7 SHA cad67e60d4b8\u2026 \xB7 AP-027 v003-recut on
-      1 file(s) \xB7 AP-027 v003-recut on 1 file(s) \xB7 import fade 10 ms + 20 ms
-      silence on 6 file(s) (end within 40 dB of peak / end gate)"
+      1 file(s) \xB7 import fade 10 ms + 20 ms silence on 6 file(s) (end within 40
+      dB of peak / end gate)"
     NoiseFloorDb: -240
     DcDb: -75.6
     Clipped: 0
@@ -6301,8 +6275,8 @@ MonoBehaviour:
     TruePeakDb: -1.28
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC008, SRC010; source
       recording) \xB7 SHA 28373334871d\u2026 \xB7 AP-027 v003-recut on 1 file(s)
-      \xB7 AP-027 v003-recut on 1 file(s) \xB7 import fade 10 ms + 20 ms silence
-      on 6 file(s) (end within 40 dB of peak / end gate)"
+      \xB7 import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak
+      / end gate)"
     NoiseFloorDb: -39.4
     DcDb: -78
     Clipped: 0
@@ -6340,8 +6314,8 @@ MonoBehaviour:
     TruePeakDb: -1.06
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC011, SRC122, SRC123;
       proxy surface/caliber) \xB7 SHA 49af88b5820b\u2026 \xB7 AP-027 v003-recut on
-      2 file(s) \xB7 AP-027 v003-recut on 2 file(s) \xB7 import fade 10 ms + 20 ms
-      silence on 4 file(s) (end within 40 dB of peak / end gate)"
+      2 file(s) \xB7 import fade 10 ms + 20 ms silence on 4 file(s) (end within 40
+      dB of peak / end gate)"
     NoiseFloorDb: -240
     DcDb: -74.1
     Clipped: 0
@@ -6456,9 +6430,8 @@ MonoBehaviour:
     Lufs: -24
     TruePeakDb: -1.06
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC118; proxy surface/caliber)
-      \xB7 SHA 12065cfb734e\u2026 \xB7 AP-027 v003-recut on 3 file(s) \xB7 AP-027
-      v003-recut on 3 file(s) \xB7 import fade 10 ms + 20 ms silence on 1 file(s)
-      (end within 40 dB of peak / end gate)"
+      \xB7 SHA 12065cfb734e\u2026 \xB7 AP-027 v003-recut on 3 file(s) \xB7 import
+      fade 10 ms + 20 ms silence on 1 file(s) (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -60.6
     DcDb: -79.8
     Clipped: 0
@@ -6477,8 +6450,8 @@ MonoBehaviour:
     TruePeakDb: -1.06
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC118, SRC122, SRC123;
       proxy surface/caliber) \xB7 SHA 09067bf724a7\u2026 \xB7 AP-027 v003-recut on
-      1 file(s) \xB7 AP-027 v003-recut on 1 file(s) \xB7 import fade 10 ms + 20 ms
-      silence on 5 file(s) (end within 40 dB of peak / end gate)"
+      1 file(s) \xB7 import fade 10 ms + 20 ms silence on 5 file(s) (end within 40
+      dB of peak / end gate)"
     NoiseFloorDb: -240
     DcDb: -75.7
     Clipped: 0
@@ -6535,8 +6508,8 @@ MonoBehaviour:
     TruePeakDb: -1.06
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC118, SRC122, SRC123;
       proxy surface/caliber) \xB7 SHA bd059554861e\u2026 \xB7 AP-027 v003-recut on
-      2 file(s) \xB7 AP-027 v003-recut on 2 file(s) \xB7 import fade 10 ms + 20 ms
-      silence on 4 file(s) (end within 40 dB of peak / end gate)"
+      2 file(s) \xB7 import fade 10 ms + 20 ms silence on 4 file(s) (end within 40
+      dB of peak / end gate)"
     NoiseFloorDb: -240
     DcDb: -104.3
     Clipped: 0
@@ -6708,9 +6681,8 @@ MonoBehaviour:
     Lufs: -24
     TruePeakDb: -1.46
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC009, SRC120; proxy surface/caliber)
-      \xB7 SHA 717cc762e089\u2026 \xB7 AP-027 v003-recut on 2 file(s) \xB7 AP-027
-      v003-recut on 2 file(s) \xB7 import fade 10 ms + 20 ms silence on 5 file(s)
-      (end within 40 dB of peak / end gate)"
+      \xB7 SHA 717cc762e089\u2026 \xB7 AP-027 v003-recut on 2 file(s) \xB7 import
+      fade 10 ms + 20 ms silence on 5 file(s) (end within 40 dB of peak / end gate)"
     NoiseFloorDb: -69.5
     DcDb: -88
     Clipped: 0
@@ -6729,8 +6701,8 @@ MonoBehaviour:
     TruePeakDb: -1.06
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC009, SRC122, SRC123;
       proxy surface/caliber) \xB7 SHA 282d4a8c6b05\u2026 \xB7 AP-027 v003-recut on
-      2 file(s) \xB7 AP-027 v003-recut on 2 file(s) \xB7 import fade 10 ms + 20 ms
-      silence on 4 file(s) (end within 40 dB of peak / end gate)"
+      2 file(s) \xB7 import fade 10 ms + 20 ms silence on 4 file(s) (end within 40
+      dB of peak / end gate)"
     NoiseFloorDb: -240
     DcDb: -104.5
     Clipped: 0
