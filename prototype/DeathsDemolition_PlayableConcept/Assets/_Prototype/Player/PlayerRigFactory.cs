@@ -224,7 +224,8 @@ namespace DD.Prototype.PlayerSystem
             Transform socket = skinned.Attach(visual,
                 () => motor != null ? motor.PlanarVelocity : Vector3.zero,
                 () => motor != null && motor.MaxSpeed > 0.01f ? motor.MaxSpeed : 1f,
-                () => aim != null ? aim.AimDirection : visual.forward);
+                () => aim != null ? aim.AimDirection : visual.forward,
+                () => motor != null ? motor.CommandedPlanarVelocity : Vector3.zero);   // WP-083 B3b: the v4 start / stop / pivot heading
             if (animator != null) animator.Skinned = skinned;
             if (socket != null && weaponMount != null)
             {

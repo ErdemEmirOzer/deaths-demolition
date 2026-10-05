@@ -63,6 +63,7 @@ namespace DD.Prototype.Characters
         private static readonly int MoveYId = Animator.StringToHash(CharacterAnimatorContract.MoveY);
         private static readonly int LocoRateId = Animator.StringToHash(CharacterAnimatorContract.LocoRate);
         private static readonly int StillId = Animator.StringToHash(CharacterAnimatorContract.Still);
+        private static readonly int V4ClipId = Animator.StringToHash(LocomotionV4.ClipParam);
         private static readonly int FireId = Animator.StringToHash(CharacterAnimatorContract.Fire);
         private static readonly int HitId = Animator.StringToHash(CharacterAnimatorContract.HitLight);
         private static readonly int DieId = Animator.StringToHash(CharacterAnimatorContract.Die);
@@ -232,6 +233,14 @@ namespace DD.Prototype.Characters
         private readonly float[] _walkSpeed = { 1f, 1f, 1f, 1f };
         private readonly float[] _runSpeed = { 1f, 1f, 1f, 1f };
         private bool _hasStill;
+        // WP-083 B3b: the v4 start / stop / pivot driver — live only while the controller carries the LocomotionV4 sub-state machine
+        private bool _hasV4;
+        private readonly LocomotionV4Events _v4 = new LocomotionV4Events();
+        private Func<Vector3> _commandedVelocity;
+        private readonly float[] _v4GaitSpeeds = new float[4];
+        /// <summary>WP-083 B3b: the v4 event detector (tests) and whether this controller answers it.</summary>
+        public LocomotionV4Events V4Events => _v4;
+        public bool HasLocomotionV4 => _hasV4;
         private float _stillFor;
         private float _mps;
         /// <summary>WP-071 MUST-3 readouts (tests): the walk-ring radius along the current move direction, and whether the breath state is asked for.</summary>
@@ -269,8 +278,9 @@ namespace DD.Prototype.Characters
         /// (no reference into the player module from here). Returns the socket the weapon
         /// mount should be parented to (null when the rig has none).
         /// </summary>
-        public Transform Attach(Transform visual, Func<Vector3> planarVelocity, Func<float> referenceSpeed, Func<Vector3> aimDirection)
+        public Transform Attach(Transform visual, Func<Vector3> planarVelocity, Func<float> referenceSpeed, Func<Vector3> aimDirection, Func<Vector3> commandedVelocity = null)
         {
+            _commandedVelocity = commandedVelocity;   // WP-083 B3b: the motor's command (input × speed) — the v4 start / stop / pivot heading
             transform.SetParent(visual, false);
             transform.localPosition = Vector3.zero;
             transform.localRotation = Quaternion.identity;
@@ -306,9 +316,21 @@ namespace DD.Prototype.Characters
             }
 
             _hasStill = false;
+            _hasV4 = false;
+            _v4.Reset();
+            // WP-083 B3b: the gait bands from the AP-026 forward loops (their no-slide speeds); a missing loop keeps the band ordered
+            for (int g = 0; g < _v4GaitSpeeds.Length; g++)
+            {
+                float s = _animation != null ? _animation.SpeedOf(LocomotionV4.ClipPrefix + LocomotionV4.Gaits[g] + "_fwd") : 0f;
+                _v4GaitSpeeds[g] = s > 0.05f ? s : (g + 1) * 1.6f;
+            }
             if (_animator != null && _animator.runtimeAnimatorController != null)
             {
-                foreach (AnimatorControllerParameter prm in _animator.parameters) if (prm.nameHash == StillId) _hasStill = true;
+                foreach (AnimatorControllerParameter prm in _animator.parameters)
+                {
+                    if (prm.nameHash == StillId) _hasStill = true;
+                    if (prm.nameHash == V4ClipId) _hasV4 = true;
+                }
             }
             _runTimeScale = runSpeed > 0.01f && _animation != null ? RunChildTimeScale(_animation.LocomotionReferenceSpeed, runSpeed) : 1f;
             if (_events == null && _animator != null) _events = _animator.GetComponent<CharacterAnimationEvents>();
@@ -842,6 +864,13 @@ namespace DD.Prototype.Characters
             _stillFor = mps < StillSpeed ? _stillFor + dt : 0f;
             StillRequested = _stillFor >= StillHoldSeconds;
             if (_hasStill) _animator.SetBool(StillId, StillRequested);
+            if (_hasV4)
+            {
+                // one frame per event: the AnyState transition reads it this update, None clears it the next (no trigger left armed)
+                int v4 = _v4.Feed(v, _commandedVelocity != null ? _commandedVelocity() : (Vector3?)null, transform.rotation, _referenceSpeed != null ? _referenceSpeed() : 0f,
+                    _footIk != null && _footIk.IsLocked(0), _v4GaitSpeeds, dt);
+                _animator.SetInteger(V4ClipId, v4);
+            }
             if (dt > 0f)
             {
                 _move = Vector2.MoveTowards(_move, targetMove, dt / MoveSmoothing);

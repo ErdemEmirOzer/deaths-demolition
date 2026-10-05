@@ -187,6 +187,38 @@ namespace DD.Art.Pipeline.EditorTools
             return controller.layers[controller.layers.Length - 1];
         }
 
+        /// <summary>
+        /// WP-083 B3b (C-00 05.10, locomotion v4 skeleton): the LocomotionV4 sub-state machine on the base layer — one state per AP-026
+        /// start / stop / pivot / turn clip present in <paramref name="clips"/>, entered from AnyState when the int
+        /// <see cref="LocomotionV4.ClipParam"/> equals its id (and Alive, when the controller has it), back to Locomotion near its end.
+        /// Adds nothing (not even the parameter) while no such clip exists. Returns the number of states added.
+        /// </summary>
+        public static int AddLocomotionV4(AnimatorController c, AnimatorStateMachine sm, AnimatorState loco, IDictionary<string, AnimationClip> clips)
+        {
+            int n = 0;
+            for (int id = 0; id < LocomotionV4.Count; id++) if (clips.ContainsKey(LocomotionV4.ClipName(id))) n++;
+            if (n == 0) return 0;
+            c.AddParameter(new AnimatorControllerParameter { name = LocomotionV4.ClipParam, type = AnimatorControllerParameterType.Int, defaultInt = LocomotionV4.None });
+            bool alive = false;
+            foreach (AnimatorControllerParameter p in c.parameters) if (p.name == C.Alive) alive = true;
+            AnimatorStateMachine v4 = sm.AddStateMachine(LocomotionV4.StateMachine);
+            for (int id = 0; id < LocomotionV4.Count; id++)
+            {
+                if (!clips.TryGetValue(LocomotionV4.ClipName(id), out AnimationClip clip) || clip == null) continue;
+                AnimatorState s = v4.AddState(LocomotionV4.StateName(id));
+                s.motion = clip;
+                s.writeDefaultValues = true;
+                AnimatorStateTransition into = sm.AddAnyStateTransition(s);
+                into.hasExitTime = false; into.hasFixedDuration = true; into.duration = 0.1f; into.canTransitionToSelf = false;
+                into.AddCondition(AnimatorConditionMode.Equals, id, LocomotionV4.ClipParam);
+                if (alive) into.AddCondition(AnimatorConditionMode.If, 0f, C.Alive);
+                AnimatorStateTransition back = s.AddTransition(loco);
+                back.hasExitTime = true; back.exitTime = 0.85f; back.hasFixedDuration = true; back.duration = 0.15f;
+            }
+
+            return n;
+        }
+
         private static AnimatorState OneShot(AnimatorStateMachine sm, string name, Motion motion, AnimatorState rest, float exitTime = 0.95f, float exitDuration = 0.15f)
         {
             AnimatorState state = sm.AddState(name);
@@ -381,6 +413,8 @@ namespace DD.Art.Pipeline.EditorTools
             AnimatorStateTransition fromBreath = breath.AddTransition(loco);
             fromBreath.hasExitTime = false; fromBreath.hasFixedDuration = true; fromBreath.duration = 0.12f;
             fromBreath.AddCondition(AnimatorConditionMode.IfNot, 0f, C.Still);
+            // WP-083 B3b: the v4 start / stop / pivot sub-state machine — only the AP-026 clips the set carries (none until AP-024/026)
+            AddLocomotionV4(c, sm, loco, clips);
 
             for (int i = 0; i < C.PlayerDeathClips.Length; i++)   // WP-032C: + death_side (2)
             {
