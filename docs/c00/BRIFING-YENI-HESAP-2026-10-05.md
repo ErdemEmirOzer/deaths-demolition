@@ -6,6 +6,24 @@
 
 ---
 
+## 0. Kim, nerede, hangi promptla başlar
+
+| Rol | Nerede | Başlangıç promptu | Durum (05.10 ~19:40) |
+|---|---|---|---|
+| **C-00** (asıl koordinatör, tek entegratör) | İkinci hesap, bu Mac'te **yerel** (Claude Desktop) | `docs/c00/C00-DEVIR-BASLANGIC-PROMPTU.md` | açılacak |
+| **C-00B** (ikinci ekip) | İkinci hesap, **bulut** | `docs/c00/C00B-IKINCI-HESAP-PROMPTU.md` | çalışıyor; B-02 teslim edildi (§14) |
+| Bulut C-00 (yalnız yerel C-00 açılamazsa) | İkinci hesap, bulut | `docs/c00/C00-BULUT-PROMPTU.md` | yedek |
+
+**Okuma sırası:**
+1. Bu belge (önce §14 son durum).
+2. `C00-DEVIR-2026-10-05.md` (SON DURUM EKİ, §0–§9, §12).
+3. `PROJE-SISTEM-PROMPTU-2026-09-29.md`.
+4. `R2-PLAN.md`, `BEKLEYEN-MESAJLAR.md`, `LOCAL-QUEUE.md`, `devir-notlari/`.
+
+KADRO'daki `K/c-00/...` kopyaları ile depodaki `docs/c00/` kopyaları ayrışırsa **main'deki `docs/c00/` geçerlidir**. Son ekler yalnız orada.
+
+---
+
 ## 1. Durum özeti (tek paragraf)
 
 Proje M4 sonrası **R2 revizyon turunda**. Bu tur kullanıcının yedi notunu (N2-01…N2-07) uyguluyor. Bugün yapılanlar:
@@ -124,6 +142,15 @@ R1 devirleri:
 | **S-05** dünya | `K/wp-038m` (`wp-088-shore`, ~29 commit'siz değişiklik, dikkat) | — | Kapalı. | BEKLEYEN §17 (S-03 shader incelemesi) → §16 (menü ışık pişirmesi, önce maliyet) → WP-090. |
 | **S-07** VFX | — | — | Kapalı. | WP-086 (kahraman ve zombi sonrası). BEKLEYEN §5, §9. |
 | **S-10** QA | `K/wp-078` (temiz) | — | Kapalı. | BEKLEYEN §11 (U1 iki ölçüm), §15 (S4 v2) gözden geçir → R2 FINAL (`K/wp-078/R2-KABUL-ZINCIRI.md`) → release → portföy. |
+
+**Devir notlarının depo kopyaları:** `docs/c00/devir-notlari/` altında:
+- S-01 `wp-089-DEVIR-05.10.md`;
+- S-02 `wp-087-DEVIR-05.10.md`;
+- S-06 `wp-083-DEVIR-05.10.md`;
+- S-08 `wp-085-DEVIR-05.10.md`;
+- S-09 `wp-068s9-DEVIR-05.10.md`.
+
+Guard göç notu `docs/c00/GUARD-D8-GOC.md`. **S-03'ün notu yok** (§14).
 
 **Oturum açma kalıbı:** "Sen S-0N'sin (<rol>). `K/c-00/PROJE-SISTEM-PROMPTU-2026-09-29.md`, `K/c-00/R2/R2-PLAN.md`, `docs/c00/BRIFING-YENI-HESAP-2026-10-05.md` §7 senin satırın, `K/c-00/R2/prompts/<WP>.md` ve devir notunu oku. Worktree'n <yol>; WIP commit'in <SHA>; kaldığın yerden devam et. Teslimleri C-00'a dal + SHA ile bildir (SHA `git rev-parse` çıktısından). Her Unity/Player koşusu guard'lı; exit 32'de `tools/qa/oos_rule.py`."
 
@@ -282,3 +309,40 @@ R1 devirleri:
 - **Menü maliyeti:** canlı dünya SetPass 142, plakalı menü 19.
 - **iCloud:** KADRO iCloud'da; dataless izleyici şu an 0. Taşıma penceresi runbook'ta (`K/wp-089/evidence/ICLOUD-TASIMA-RUNBOOK.md`).
 - **Codex:** kota 12.10'da yenilenir; o zamana kadar üretim Claude'da.
+
+## 14. Devirden sonraki son durum (05.10 ~19:40, bulut eki)
+
+Bu bölüm, birinci hesabın limiti dolduktan sonra depodan doğrulanarak eklendi. §1–§13 aynen geçerlidir.
+
+**main**
+- main `3e68bc08` (bu belgenin ilk hâli).
+- `a62d83db`'den sonra main'e yalnız belge commit'leri girdi (`3bb501e7`, `3e68bc08`).
+- Son derleme kontrolü hâlâ `d0783d9b` (PASS). `03c3b06b` ve `a62d83db` derlenmedi. İlk iş: `tools/compile-check.sh main`.
+
+**C-00B (bulut) teslimi**
+- **B-02 BİTTİ:** dal `c00b/B-02-r2-gates-lint`, kod commit'i `b7737f04`, teslim kaydı commit'i `a7cd3bd3`. PR: https://github.com/ErdemEmirOzer/deaths-demolition/pull/1
+- `tools/qa/r2_gates_lint.py` + `tools/qa/tests/test_r2_gates_lint.py`: 23 birim testi, bulutta 23/23.
+- Aracın main `0b3ec358` raporu:
+  - **ERROR 1:** `r2-measure-contract.md`'de `R2Olcum.cs` yolu bayat.
+  - **WARN 14:** H1 `[Explicit]` ama `measuredBy` yok; Z3b'nin zorunlu testi `[Explicit]`; 12 kapının yazıcısı yok.
+- **Yerel C-00 yapar:**
+  1. `git fetch origin c00b/B-02-r2-gates-lint`, sonra dalın checkout'unda `python3 -m unittest tools/qa/tests/test_r2_gates_lint.py`.
+  2. Üç commit'i sırayla al; teslim kaydı satırları birbirine dayandığı için sıra önemli. Gate isterse `--s01` ekle.
+     - `tools/integrate.sh 4edbba5b --tag wp-089-c00b-b02-start-int --allow-paths docs/c00 --no-post --apply`
+     - `tools/integrate.sh b7737f04 --tag wp-091-r2-gates-lint-int --no-post --apply`
+     - `tools/integrate.sh a7cd3bd3 --tag wp-089-c00b-b02-log-int --allow-paths docs/c00 --no-post --apply`
+  3. `git cherry main origin/c00b/B-02-r2-gates-lint` → "+" sayısı 0.
+- ERROR ve WARN listesini S-10'a (kapı sahibi) ya da yeni bir C-00B görevine ver. Sözleşme yolu yalnız belge işi; `[Explicit]` ve yazıcı eksikleri test sahiplerinin işi.
+- B-01, B-03 ve B-04 açık; C-00B sırayla sürdürüyor.
+
+**Eksik devir notu: S-03 (WP-084)**
+- `docs/c00/devir-notlari/` altında S-03 notu yok; §7'de "not bekleniyordu" yazıyor.
+- Yerel C-00, S-03'ü açmadan önce `K/wp-088/worktree-s03` ve `K/wp-084*` altında `DEVIR-05.10.md` arar.
+- Not yoksa durumu kendisi çıkarır ve S-03'ün başlangıç mesajına yazar:
+  - `git -C <worktree> status --short`;
+  - `git log -3`;
+  - `git cherry main wp-084-s03-r2gates` (tip `a42f539b`; `c37991f7` / `cf8346a0` eşdeğerliği).
+
+**Başlangıç promptları güncellendi**
+- `C00-DEVIR-BASLANGIC-PROMPTU.md` artık ikinci hesaptaki yerel C-00 içindir. Önce bu belgeyi ve depodaki `docs/c00/` kopyalarını okutur.
+- `C00B-IKINCI-HESAP-PROMPTU.md` artık asıl C-00'ı birinci hesapta değil, ikinci hesapta yerel olarak gösterir.
