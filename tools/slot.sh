@@ -77,11 +77,13 @@ case "$cmd" in
     done
     start=$(date +%s); ostart=$(pstart "$owner")
     ticket=$(printf '%012d-%06d.%s.%s' "$start" "$owner" "$tag" "$owner")
-    printf '%s %s\nstart=%s\n' "$(date -u +%FT%TZ)" "$tag" "$ostart" > "$BASE/queue/$kind/$ticket"
+    # WP-089 (G4 D5 test): every trap is in place BEFORE the ticket exists — a signal between the write and the traps used to
+    # kill this shell with the ticket left behind, and an alive owner's ticket at the queue head blocks the kind for good.
     trap 'rm -f "$BASE/queue/$kind/$ticket"' EXIT
     # K3: a waiter killed with INT/TERM/HUP drops its ticket at once (the sleep runs as `& wait`, so the trap is not deferred).
     zz=""; drop(){ [ -n "$zz" ] && kill "$zz" 2>/dev/null; rm -f "$BASE/queue/$kind/$ticket"; exit "$1"; }
     trap 'drop 130' INT; trap 'drop 143' TERM; trap 'drop 129' HUP
+    printf '%s %s\nstart=%s\n' "$(date -u +%FT%TZ)" "$tag" "$ostart" > "$BASE/queue/$kind/$ticket"
     while :; do
       clean "$kind"
       [ -e "$BASE/queue/$kind/$ticket" ] || printf '%s %s\nstart=%s\n' "$(date -u +%FT%TZ)" "$tag" "$ostart" > "$BASE/queue/$kind/$ticket"
