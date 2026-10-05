@@ -692,14 +692,18 @@ namespace DD.Prototype.Tests.PlayMode
             // kuralına aykırıdır.) Gerçek gold yetmezse etiketsiz kredi ile tamamlanır (test dikişi).
             WeaponController silah = WeaponRegistry.ActiveController;
             Assert.IsNotNull(silah);
+            // Sevkte düğüm kartları açık (RunTreeNodeCards): teklif keystone / Kese / Ocak da taşıyabilir ve onlar
+            // dal kademesini artırmaz. Bu sözleşme bir DAL KADEMESİ alımını ölçer → yalnız kademe kartı seçilir
+            // (FINAL dab326ab A1 triyajı, S-04 01.10: ilk geçerli kart düğümse "Rank tam bir kez arttı" düşüyordu).
             int kartIndeksi = -1;
             for (int i = 0; i < _run.Shop.Cards.Count; i++)
             {
                 UpgradeCardOffer c = _run.Shop.Cards[i];
-                if (c.IsValid && !c.Purchased) { kartIndeksi = i; break; }
+                bool kademe = !c.IsNode || c.NodeKind == RunTreeNodeKind.Tier;
+                if (c.IsValid && !c.Purchased && kademe) { kartIndeksi = i; break; }
             }
 
-            Assert.GreaterOrEqual(kartIndeksi, 0, "Teklifte geçerli kart yok.");
+            Assert.GreaterOrEqual(kartIndeksi, 0, "Teklifte geçerli kademe kartı yok.");
             Assert.AreEqual(3, _run.Shop.Cards.Count, "WP-008: tam üç kart.");
             UpgradeCardOffer kart = _run.Shop.Cards[kartIndeksi];
             if (_gold.Wallet.Balance < kart.Cost)
