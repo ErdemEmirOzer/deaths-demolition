@@ -17,7 +17,7 @@ One JSON file per gate, written only when the measurement actually ran:
 - File name `r2-<gate id>.json`, in the folder named by the environment variable **`DD_R2_MEASURE_DIR`**. Without
   that variable the test still asserts its threshold but writes nothing (ordinary CI runs).
 - Write it with the shared writer **`R2Olcum.Yaz(gate, source, values, samples)`**
-  (`Assets/_Prototype/Tests/PlayMode/R2Olcum.cs`, S-02) — one writer for every owner, no copies.
+  (`Assets/_Prototype/Tests/Shared/R2Olcum.cs`, S-02; shared by the EditMode and PlayMode test assemblies) — one writer for every owner, no copies.
 - `commit` comes from **`DD_R2_COMMIT`** (the runner sets it to the FINAL SHA). A file with another commit FAILs.
 - `values` carries exactly the keys listed for that gate in `r2-gates.json` (`checks[].key` and `report[]`), as plain
   numbers (no NaN/Infinity, no strings). A missing key is BLOCKED; a value outside its check is FAIL.
