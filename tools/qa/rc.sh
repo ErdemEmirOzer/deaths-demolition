@@ -22,7 +22,8 @@
 #   · release-smoke is NOT wrapped: build.sh --smoke → smoke.sh carries its own inline snapshot/restore (no double guard);
 #     release-library, wp064-closure and log-scan start no Unity and no Player.
 # A snapshot that fails (30 = a Deaths Demolition Player is running, 75 busy, …) BLOCKS the stage — never run unguarded.
-# A restore that fails (30/31/75, or 32 = out-of-scope change once C-00 decides it) — or exits 0 without verified=1 —
+# A restore that fails (30/31/75; 32 = out-of-scope change: always in a player stage, in an editor stage unless the C-00
+# 30.09 rule holds — qa/oos_rule.py, C-00 05.10 decision (b)) — or exits 0 without verified=1 —
 # FAILS the stage and stops the RC even with --diagnostic-continue: "guard restore <code> in stage <name> — tell C-00".
 # INT/TERM/HUP: the running guarded stage is stopped (its whole process tree, Player included), the open snapshot is
 # restored FIRST, then the RC fails (128+signal, or the restore's code). A stage without an RC guard is let finish (its
@@ -129,6 +130,13 @@ guard_close() {
   local ug="$GUARD_DIR" code
   "$DD_GUARD" restore "$ug" --scope "$GUARD_SCOPE" > "${ug:h}/guard-restore.out" 2>&1
   code=$?
+  # C-00 05.10 (b): an editor stage's 32 passes with a warning only when the change is in the player area alone, every
+  # writer is a guarded Player window and that window's restore is verified=1 (qa/oos_rule.py); a player stage's 32 fails
+  if [ "$code" -eq 32 ] && [ "$GUARD_SCOPE" = editor ]; then
+    local why; why=$(python3 "$HERE/oos_rule.py" "$ug" ${RC_OOS_WAIT:+--wait "$RC_OOS_WAIT"} 2>&1)
+    if [ $? -eq 0 ]; then code=0; log "WARNING guard: 32 in $GUARD_STAGE accepted (C-00 30.09 rule) — $why"
+    else log "guard 32 in $GUARD_STAGE NOT accepted — $why"; fi
+  fi
   [ "$code" -eq 0 ] && ! grep -q "restore scope=$GUARD_SCOPE .*verified=1" "${ug:h}/guard-restore.out" && code=31
   GUARD_DIR=""
   if [ "$code" -ne 0 ]; then

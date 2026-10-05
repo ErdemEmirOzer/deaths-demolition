@@ -48,8 +48,14 @@ def main(tool, argv):
         stage = ug.parent.name
         ug.mkdir(parents=True, exist_ok=True)
         code = int(rules.get(cmd + ":" + stage, 0))
-        if cmd == "restore" and code == 0 and not rules.get("unverified:" + stage):
-            print(f"2026-09-30T00:00:00Z userdata-guard restore scope={scope} touched=0 verified=1")
+        oos = rules.get("oos:" + stage)
+        if cmd == "restore" and oos:   # G4 D7 32: the evidence the C-00 30.09 rule reads
+            (ug / "out-of-scope-changed.txt").write_text(oos["rows"])
+            (ug / "attribution.txt").write_text(oos["attribution"])
+            (ug / "players-lineage.tsv").write_text(oos["lineage"])
+        if cmd == "restore" and code in (0, 32) and not rules.get("unverified:" + stage):
+            print(f"2026-09-30T00:00:00Z userdata-guard restore scope={scope} touched=0 verified=1"
+                  + (" retry=none class=OTHER" if code == 32 else ""))
         return code
     sleep_for = rules.get("sleep:" + tool + ":" + (argv[0] if argv else ""))
     if sleep_for:
@@ -234,6 +240,50 @@ class RcStageGuardTests(unittest.TestCase):
                 self.assertEqual(str(code), (out / "stages/window-modes/exit.txt").read_text().strip())
                 agg = [c for c in repo.calls() if c[0] == "rc_aggregate"][-1]
                 self.assertEqual("window-modes", agg[agg.index("--failed-stage") + 1])
+
+    # --- C-00 05.10 decision (b): an editor stage's 32 passes only under the 30.09 rule (qa/oos_rule.py) -------------
+    OOS_REAL = ("tools/qa/rc.sh", "tools/qa/window-modes.sh", "tools/qa/economy-acceptance.sh", "tools/qa/oos_rule.py",
+                "tools/dd_paths.py")
+    START = "Mon Oct  5 15:00:00 2026"
+
+    def oos_rules(self, attributed=True):
+        return {"restore:full-editmode": 32, "oos:full-editmode": {
+            "rows": "player  %s  /x/PR/com.x.plist (launch-counter keys excluded)\n" % ("a" * 64),
+            "attribution": "/x/PR/com.x.plist\tmtime 15:01:00Z\t%s\n" % ("pid 4242 run.log" if attributed else "no Player alive"),
+            "lineage": "2026-10-05T12:01:00Z\t4242\t1\t%s\t0\n" % self.START}}
+
+    def owner_window(self, repo, restore="verified=1"):
+        sys.path.insert(0, str(REPO / "tools")); import dd_paths
+        w = Path(repo.env["HOME"]) / dd_paths.KADRO_REL / "context/projects/deaths-demolition/wp-078/evidence/ugp"
+        w.mkdir(parents=True)
+        (w / "window.json").write_text("{}")
+        (w / "players-lineage.tsv").write_text("2026-10-05T12:01:00Z\t4242\t900\t%s\t1\n" % self.START)
+        (w / "restore.txt").write_text("2026-10-05T12:05:00Z userdata-guard restore scope=player touched=1 %s\nexit=0\n" % restore)
+
+    def test_EditorAsamasi32_UcKosulTutar_UyariylaGecer(self):
+        repo = FakeRepo(self, self.OOS_REAL); self.owner_window(repo)
+        repo, out, result = self.rc(rules=self.oos_rules(), repo=repo)
+        text = result.stdout + result.stderr + (out / "timeline.txt").read_text() if (out / "timeline.txt").exists() else result.stdout + result.stderr
+        self.assertNotIn("guard restore 32 in stage full-editmode", text)
+        self.assertIn("WARNING guard: 32 in full-editmode accepted (C-00 30.09 rule)", text)
+
+    def test_EditorAsamasi32_Atfedilmemis_Durur(self):
+        repo = FakeRepo(self, self.OOS_REAL); self.owner_window(repo)
+        repo, out, result = self.rc(rules=self.oos_rules(attributed=False), repo=repo)
+        self.assertEqual(32, result.returncode, result.stdout + result.stderr)
+        self.assertIn("guard restore 32 in stage full-editmode — tell C-00", result.stderr + result.stdout)
+
+    def test_EditorAsamasi32_SahipVerified0_Durur(self):
+        repo = FakeRepo(self, self.OOS_REAL); self.owner_window(repo, restore="verified=0")
+        repo, out, result = self.rc(rules=self.oos_rules(), repo=repo, env_extra={"RC_OOS_WAIT": "0"})
+        self.assertEqual(32, result.returncode, result.stdout + result.stderr)
+
+    def test_PlayerAsamasi32_HepDurur(self):
+        repo = FakeRepo(self, self.OOS_REAL); self.owner_window(repo)
+        rules = {"restore:window-modes": 32, "oos:window-modes": self.oos_rules()["oos:full-editmode"]}
+        repo, out, result = self.rc(rules=rules, repo=repo)
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("guard restore 32 in stage window-modes — tell C-00", result.stderr + result.stdout)
 
     def test_GuardRestoreHatasi_TaniDevamindaBile_RcDurur(self):
         repo, out, result = self.rc("--diagnostic-continue", rules={"restore:full-editmode": 31})
