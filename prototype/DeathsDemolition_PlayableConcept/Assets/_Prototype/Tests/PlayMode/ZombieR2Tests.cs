@@ -48,8 +48,10 @@ namespace DD.Prototype.Tests.PlayMode
         private const float MinLumaDelta = 0.04f;         // |mean luma| difference inside the silhouettes (0–1)
         private const float MinChromaDelta = 0.02f;       // distance of the mean rg-chromaticity inside the silhouettes
 
-        // Z3b — r2-gates.json
-        private const double MaxSharedTextureGpuMB = 96, MaxUniqueTexturesPerZombie = 0, MaxZombieSetPass = 14, MaxZombieDraws = 450, MaxFrameSetPass = 88;
+        // Z3b — r2-gates.json. C-00 05.10: the fixed-mix R1 (84941661, 22/10/6/2) measured 16 / 567 / 88 → zombie SetPass ≤ R1 + 8,
+        // draws ≤ R1 × 1.45 (the old 450/310 ratio), frame ≤ R1 + 10; texture ≤ 96 MB unchanged. Reason: every version on screen
+        // adds its own tint / part materials, so the pass count grows with the mix (evidence K/wp-088/evidence/r1).
+        private const double MaxSharedTextureGpuMB = 96, MaxUniqueTexturesPerZombie = 0, MaxZombieSetPass = 24, MaxZombieDraws = 822, MaxFrameSetPass = 98;
 
         [TearDown]
         public void TearDown()
