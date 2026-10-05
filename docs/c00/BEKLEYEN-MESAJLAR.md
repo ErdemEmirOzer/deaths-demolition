@@ -86,7 +86,7 @@ Ayrıca açık soru (C-00'da): Z3 oranı R1'e karşı ≤ 1,10 ve tier karışı
 - U1 = oyuncunun varsayılan yolu: v4 açılışı (bütün paneller kapalı) + Seçim; azalma ≥ 0,40. 137637a5'te 0,422.
 - U1b = aynı içerik: Profil açık + Seçim, R1 ile v4 aynı paneller; azalma ≥ 0,40. Bugün 0,131; Seçim ve paneller v4 olunca kapanır.
 - `r2-gates.json`'da U1 alanını ikisinin en küçüğüne bağla (`u1_default`, `u1_same_content`; S-09 testi ikiye ayırıyor).
-- Z3b eşikleri (zombi SetPass ≤ 24, zombi draw ≤ 822, kare SetPass ≤ 98, doku ≤ 96 MB) main'de (f755749e); "kaynak kayıtta var" standardı S-02 (H3/H4/H4b), S-03 (Z3b/Z4) ve S-09 (U1/U2/U3) tarafından uygulandı.
+- Z3b eşikleri (zombi SetPass ≤ 24, zombi draw ≤ 822, kare SetPass ≤ 98, doku ≤ 96 MB) main'de — **06.10 düzeltmesi:** f755749e main'e hiç girmemişti; C-00 güncel main'de `1bca9052` olarak yeniden yazdı, S-03'ün test sabitleri `8f10dddb` + `173890ac`; "kaynak kayıtta var" standardı S-02 (H3/H4/H4b), S-03 (Z3b/Z4) ve S-09 (U1/U2/U3) tarafından uygulandı.
 
 ## 12 · S-02 (05.10) — AP-026-B reload olay sözleşmesi (S-06 ön kontrol → C-00 kararları)
 Marker hizası işinden sonra ya da araya alınabilir; küçük bir iş.

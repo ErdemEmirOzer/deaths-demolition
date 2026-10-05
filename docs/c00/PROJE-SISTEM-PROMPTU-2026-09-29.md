@@ -363,7 +363,7 @@ Bu liste yalnız **şu an geçerli** olanları içerir. Sonradan iptal edilen ya
 - WP-077 Gelişim ağacı v2 (S-04) — koşu içi ağaç + meta YOL, profil v5, Kül.
 - WP-078 R1 kabul planı (S-10) — tier × mod perf matrisi, bot 3 modda.
 - WP-079/079B–D main-ci (S-01), WP-080B slot.sh v4 README.
-- Bulut oturumları (24.09): CLOUD-REVIEW-R1-A (19 bulgu, düzeltildi), CLOUD-BALANCE-AUDIT-R1 + run2 (DEC-097/098/099'a girdi), R1-CONTENT-PACK (483 anahtar en+tr), portfolio README/ARCHITECTURE/SYSTEMS-INDEX (26.09 yenilendi). Main'e alınmayan: `cloud/review-r1-b` (ağaç/Hearth/Purse/reroll-pin HIGH bulguları), `cloud/windows-audit` (2 BLOCKER, 5 HIGH).
+- Bulut oturumları (24.09): CLOUD-REVIEW-R1-A (19 bulgu, düzeltildi), CLOUD-BALANCE-AUDIT-R1 + run2 (DEC-097/098/099'a girdi), R1-CONTENT-PACK (483 anahtar en+tr), portfolio README/ARCHITECTURE/SYSTEMS-INDEX (26.09 yenilendi). Main'e alınmayan (29.09 durumu): `cloud/review-r1-b` ve `cloud/windows-audit`; 06.10 itibarıyla review-r1-b main'de (`38c72bdb`), windows-audit raporu main'de, iki BLOCKER açık (B-08). [C-00 06.10 düzeltmesi]
 - 25.09 C-00: "dünya 30.09'a kadar duruyor" (`86f1e634`); 26.09 FP kolları release için varsayılan KAPALI (`afabd44f`, URGENT).
 
 **Son faz (2026-09-28/29).** Türkçe taşma düzeltmeleri + dinamik dükkân/ağaç metinlerinin yerelleştirilmesi (`2b574fb2`, `19cb757a`), WP-073 `VfxWeaponCaptureAgent` (derlendi, capture koşusu yok), launcher bastırma/pompalı ejeksiyon düzeltmesi, V6 havuz korumaları köprü güvertesinden uzak, AP-023 v013 + kabul edilmiş köprü geometrisi (`78eae80d`), NavMesh köşe dönüşleri/flank hedefleri, QA bot spawn sayımı + `[Progress]` satırı (WP-076, C-00 28.09), WP-078 perf aracı guard kapsamı düzeltmesi, spawn iç kapı kotasının gevşetme geçişlerinde de uygulanması (`030cf3f4`), sabit üç-kapı ölçümü (`69d46a07`), **compile-check ve main-ci'nin "kanonik checkout owner lease" ile serileştirilmesi** (`122cf7d1`), GameFeel test fikstürünün gerçek gövde vuruşu istemesi (`df082391`, `ff06d579`). 28.09 20:00'den itibaren commit'ler kısa, gövdesiz, konvansiyonel önekli (`fix(spawn):`, `test(combat):`) ve WP kimliksiz.
@@ -435,7 +435,7 @@ Bu sıra mevcut kayıtlardan çıkarılmıştır; kesin sırayı kullanıcı/C-0
 - `prototype/DeathsDemolition_PlayableConcept/README.md` (çalıştırma, kontroller, F1 paneli) ve `PROTOTYPE-ONLY.md` (placeholder sayımı).
 - `tools/README.md`, `tools/qa/README.md` — araç referansı.
 - Repo dışı (yalnız kullanıcının Mac'inde): KADRO çalışma alanı, `M4-R1-REVIZYON-TURU.md` (kullanıcı notları N-kodlu, ortak kurallar §4), evidence, `asset-production/`, yedekler.
-- Uzak dallar: `cloud/review-r1-b` ve `cloud/windows-audit` (main'e alınmadı), diğer `cloud/*` main'de.
+- Uzak dallar: `cloud/review-r1-b` main'de (`38c72bdb`); `cloud/windows-audit` raporu 06.10'da `planning/reviews/WINDOWS-PORTABILITY-AUDIT.md` olarak main'e alındı (iki BLOCKER açık, `docs/c00/reviews/B-08-r1-bulut-dallari.md`); diğer `cloud/*` main'de. [C-00 06.10 düzeltmesi]
 
 ---
 
