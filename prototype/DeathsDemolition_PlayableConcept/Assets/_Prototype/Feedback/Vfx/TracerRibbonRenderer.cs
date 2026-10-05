@@ -71,6 +71,30 @@ namespace DD.Prototype.Feedback.Vfx
         private int _live;
         private bool _firstPerson;
         private bool _performance;
+        private float _frameSeconds;
+
+        /// <summary>
+        /// WP-087 (a) (C-00 05.10, marker alignment audit): in top-down a shot's ray runs at the WP-042 hit-parity height (1.39 m over the
+        /// root) while the weapon is drawn at 1.22–1.54 m, so its tracer started 6–17 cm off the visible muzzle. The ribbon (and a pellet
+        /// bar) is drawn shifted by the shot's TracerOrigin − Origin — the muzzle the controller fired from — on its first frame and
+        /// eases onto the ray by its second at the latest. Presentation only: the ray, its hits and their timing are untouched. First and
+        /// third person fire from the muzzle itself, so the shift is zero there.
+        /// </summary>
+        public static Vector3 MuzzleCatchUp(in ProjectileState p, float frameSeconds)
+        {
+            if (!p.Shot.HasTracerOrigin) return Vector3.zero;
+            Vector3 offset = p.Shot.TracerOrigin - p.Origin;
+            return offset.sqrMagnitude < 1e-8f ? Vector3.zero : offset * CatchUpWeight(p.Age, frameSeconds);
+        }
+
+        /// <summary>WP-087 (a): the share of the muzzle offset still drawn at <paramref name="age"/> — 1 on the frame the round is first
+        /// drawn (its age is at most one frame), eased to 0 over the next frame (so on the ray by the second frame at the latest).</summary>
+        public static float CatchUpWeight(float age, float frameSeconds)
+        {
+            if (frameSeconds <= 0f) return age <= 0f ? 1f : 0f;
+            float x = (age - frameSeconds) / frameSeconds;
+            return x <= 0f ? 1f : x >= 1f ? 0f : 1f - Mathf.SmoothStep(0f, 1f, x);
+        }
 
         private static readonly int HeadId = Shader.PropertyToID("_Head");
         private static readonly int TailId = Shader.PropertyToID("_Tail");
@@ -335,6 +359,7 @@ namespace DD.Prototype.Feedback.Vfx
 
             _firstPerson = CameraModeService.Current == CameraMode.FirstPerson;
             _performance = VfxTier.Current == VfxTierLevel.Performance;
+            _frameSeconds = dt;
             DrawnCore = DrawLayer(0);
             DrawnGlow = _performance ? 0 : DrawLayer(1);
             DrawnGlint = _performance ? 0 : DrawLayer(2);
@@ -381,7 +406,8 @@ namespace DD.Prototype.Feedback.Vfx
                 if (fadeIn > 0f) tailD = Mathf.Max(tailD, Mathf.Min(fadeIn, headD));
                 if (headD - tailD < 0.01f) continue;
                 Vector3 dir = p.Direction;
-                Vector3 h = p.Position;
+                Vector3 lift = MuzzleCatchUp(p, _frameSeconds);   // WP-087 (a): from the visible muzzle onto the ray
+                Vector3 h = p.Position + lift;
                 Vector3 t = h - dir * (headD - tailD);
                 bool steel = thirdEye && layer == 1;
                 Write(n, layer, h, t, width, bead, headD, tailD, fadeDistance, fadeIn, steel ? ThirdEyeGlow : profile.HeadColor, steel ? ThirdEyeGlow : profile.TailColor, bar, false);

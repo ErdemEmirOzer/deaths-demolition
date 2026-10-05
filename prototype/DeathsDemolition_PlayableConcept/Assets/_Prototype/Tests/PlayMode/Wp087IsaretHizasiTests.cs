@@ -200,5 +200,80 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsEmpty(bos, "kaynak kayıtta yok\n" + string.Join("\n", bos) + "\n" + string.Join("\n", rows));
             Assert.IsEmpty(wrong, string.Join("\n", wrong) + "\n" + string.Join("\n", rows));
         }
+
+        /// <summary>
+        /// WP-087 (a) (C-00 05.10): the tracer starts at the visible muzzle. In top-down the shot's ray runs at the 1.39 m hit-parity
+        /// height; the ribbon is drawn shifted onto the muzzle on the firing frame (its line ≤ 1 cm from the muzzle) and is on the ray
+        /// by the second frame; first and third person fire from the muzzle and draw no shift. The ray itself is untouched.
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator IzGorseli_NamludanBaslar_IkiKaredeIsina()
+        {
+            _s = new SpecialWeaponSahne();
+            yield return _s.Kur();
+            Transform mount = _s.Rig.GetComponentInChildren<PlayerWeaponBinding>().WeaponMount;
+            var rows = new List<string>();
+            var wrong = new List<string>();
+            foreach (CameraMode mode in new[] { CameraMode.TopDown, CameraMode.ThirdPerson, CameraMode.FirstPerson })
+            {
+                CameraModeService.Request(mode, instant: true);
+                Time.captureDeltaTime = 1f / 60f;
+                yield return SpecialWeaponSahne.Kareler(30);
+                _s.Controller.EquipClassic(ClassicWeaponId.AssaultRifle, _s.Config);
+                yield return SpecialWeaponSahne.Kareler(60);   // the switch-in has played out (game frames)
+                WeaponVisualRig rig = mount.Find("ClassicWeaponRig").GetComponent<WeaponVisualRig>();
+                int id = -1;
+                System.Action<ProjectileSpawnInfo> onSpawn = info => { if (id < 0) id = info.ProjectileId; };
+                ProjectileEvents.Spawned += onSpawn;
+                try
+                {
+                    _s.Girdi.AtesBasti = true; _s.Girdi.AtesBasili = true;
+                    yield return SpecialWeaponSahne.Bekle(() => id >= 0, 2f, mode + " ar_1 ateşlemedi");
+                    _s.Girdi.AtesBasti = false; _s.Girdi.AtesBasili = false;
+                    string row = mode.ToString();
+                    float firstLine = -1f, lift0 = -1f, offset = -1f;
+                    int onRay = -1;
+                    for (int f = 0; f <= 3; f++)
+                    {
+                        if (f > 0) yield return null;
+                        int live = -1;
+                        for (int i = 0; i < ProjectileSystem.LiveCount; i++) if (ProjectileSystem.Get(i).Generation == id) { live = i; break; }
+                        if (live < 0) break;
+                        ProjectileState p = ProjectileSystem.Get(live);
+                        Vector3 lift = TracerRibbonRenderer.MuzzleCatchUp(p, Time.deltaTime);
+                        if (f == 0)
+                        {
+                            // the drawn streak's line (head + lift, along the ray) against the muzzle as drawn this frame
+                            Vector3 head = p.Position + lift, toMuzzle = rig.Muzzle.position - head;
+                            firstLine = (toMuzzle - Vector3.Project(toMuzzle, p.Direction)).magnitude;
+                            lift0 = lift.magnitude;
+                            offset = p.Shot.HasTracerOrigin ? (p.Shot.TracerOrigin - p.Origin).magnitude : 0f;
+                        }
+
+                        if (onRay < 0 && lift.magnitude <= 0.001f) onRay = f;
+                    }
+
+                    row += " | firing frame: drawn line ↔ muzzle " + Cm(firstLine) + " cm, shift " + Cm(lift0) + " cm (muzzle ↔ ray " + Cm(offset) + " cm) | on the ray from frame " + onRay;
+                    rows.Add(row);
+                    if (firstLine < 0f) wrong.Add(mode + ": iz ölçülemedi (mermi bulunamadı)");
+                    else if (firstLine > 0.01f) wrong.Add(mode + ": ilk karede iz çizgisi namludan " + Cm(firstLine) + " cm");
+                    if (onRay < 0 || onRay > 2) wrong.Add(mode + ": iz iki karede ışına yetişmedi (kare " + onRay + ")");
+                    if (mode != CameraMode.TopDown && lift0 > 0.001f) wrong.Add(mode + ": FP/TP'de iz kaydırıldı (" + Cm(lift0) + " cm)");
+                    if (mode == CameraMode.TopDown && offset < 0.02f) wrong.Add("TopDown: namlu ↔ ışın farkı yok (" + Cm(offset) + " cm) — ölçüm boş");
+                }
+                finally
+                {
+                    ProjectileEvents.Spawned -= onSpawn;
+                    _s.Girdi.AtesBasti = false; _s.Girdi.AtesBasili = false;
+                    Time.captureDeltaTime = 0f;
+                }
+
+                yield return new WaitForSeconds(0.5f);
+            }
+
+            Debug.Log("[DD-TEST] wp087.tracerorigin\n" + string.Join("\n", rows));
+            Assert.IsEmpty(wrong, string.Join("\n", wrong) + "\n" + string.Join("\n", rows));
+        }
     }
 }
