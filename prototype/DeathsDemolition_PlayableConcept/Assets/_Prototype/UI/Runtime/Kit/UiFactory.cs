@@ -533,12 +533,11 @@ namespace DD.Prototype.UI
         {
             RectTransform row = NewRect("Heading", parent);
 
-            Image tick = NewImage("Tick", row, UiColor.AccentPrimary, UiSprites.Chip);
+            Image tick = HeadingTick("Tick", row);
             var tickRect = (RectTransform)tick.transform;
             tickRect.anchorMin = new Vector2(0f, 0.5f);
             tickRect.anchorMax = new Vector2(0f, 0.5f);
             tickRect.pivot = new Vector2(0f, 0.5f);
-            tickRect.sizeDelta = new Vector2(UiTokens.HeadingTickWidth, UiTokens.HeadingTickHeight);
             tickRect.anchoredPosition = Vector2.zero;
 
             TMP_Text label = Label("Label", row, text, type, UiColor.TextPrimary, TextAnchor.MiddleLeft);
@@ -546,6 +545,18 @@ namespace DD.Prototype.UI
             labelRect.offsetMin = new Vector2(UiTokens.HeadingTickWidth + (int)UiSpace.M, 0f);
 
             return row;
+        }
+
+        /// <summary>
+        /// The heading tick alone: vermilion (one of its reserved uses, style guide §2.2), the tick's size, unplaced. A screen
+        /// that marks a heading without a label row (menu v4: the open pane's icon on the rail) takes it from here, so the
+        /// reserve stays in the kit.
+        /// </summary>
+        public static Image HeadingTick(string name, Transform parent)
+        {
+            Image tick = NewImage(name, parent, UiColor.AccentPrimary, UiSprites.Chip);
+            ((RectTransform)tick.transform).sizeDelta = new Vector2(UiTokens.HeadingTickWidth, UiTokens.HeadingTickHeight);
+            return tick;
         }
 
         /// <summary>Hairline rule. Decorative, therefore exempt from the 3:1 boundary rule.</summary>

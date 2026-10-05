@@ -373,11 +373,10 @@ namespace DD.Prototype.UI
             Band(_railSub.rectTransform, wordLine, subLine);
 
             // The open pane's mark: the heading tick (the screen's one vermilion detail now PLAY is an icon) left of its icon.
-            _paneMark = UiFactory.NewImage("PaneMark", column, UiColor.AccentPrimary, UiSprites.Solid);
+            _paneMark = UiFactory.HeadingTick("PaneMark", column);
             _paneMark.rectTransform.anchorMin = new Vector2(0f, 1f);
             _paneMark.rectTransform.anchorMax = new Vector2(0f, 1f);
             _paneMark.rectTransform.pivot = new Vector2(1f, 0.5f);
-            _paneMark.rectTransform.sizeDelta = new Vector2(UiTokens.HeadingTickWidth, UiTokens.HeadingTickHeight);
             _paneMark.gameObject.SetActive(false);
 
             MoveRailWord(_rail[0]);
