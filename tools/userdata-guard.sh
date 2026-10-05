@@ -520,7 +520,8 @@ for p in before:
     if p not in after: print("%s  MISSING  %s" % (a, p))' $a
 done)
 OOS="$DIR/out-of-scope-changed.txt"
-publish "$OOS" raw print -rn -- "${OTHER:+$OTHER$'\n'}" && OOS=$REPLY || R8OK=0
+NL=$'\n'   # C-00 05.10 MUST: $'\n' is not expanded inside double quotes — the file ended in a literal $'\n' (since 52b7a00f)
+publish "$OOS" raw print -rn -- "${OTHER:+$OTHER$NL}" && OOS=$REPLY || R8OK=0
 [ "$R8OK" -eq 1 ] && { publish "$DIR/after-run.txt" state state || R8OK=0; }   # the mark, last, only over committed firsts
 if [ "$R8OK" -ne 1 ]; then
   add_class WRITE_FAILED; WRITE_AREAS=()

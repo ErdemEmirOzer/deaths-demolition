@@ -27,6 +27,12 @@ import dd_paths  # noqa: E402
 PRUNE = {"Library", "Temp", ".git", "Logs", "obj", "node_modules", "asset-production", "Packages", "Assets", "snap",
          "ProjectSettings", "ci-worktree", "driver"}
 PID = re.compile(r"\bpid (\d+)\b")
+BAD_NL = "$'\\n'"   # guard 52b7a00f..: the file ended in this literal instead of a newline (C-00 05.10) — read it too
+
+
+def oos_rows(text):
+    """the rows of an out-of-scope-changed file, the literal $'\\n' of the faulty guard read as a line break."""
+    return [r for r in text.replace(BAD_NL, "\n").splitlines() if r.strip()]
 
 
 def latest(path):
@@ -74,7 +80,7 @@ def verified(window):
 
 def decide(ug, roots, wait=600.0, sleep=time.sleep, clock=time.monotonic):
     ug = Path(ug).resolve()
-    rows = [r for r in latest(ug / "out-of-scope-changed.txt").read_text(encoding="utf-8").splitlines() if r.strip()] \
+    rows = oos_rows(latest(ug / "out-of-scope-changed.txt").read_text(encoding="utf-8")) \
         if latest(ug / "out-of-scope-changed.txt").is_file() else []
     if not rows:
         return False, "32 without out-of-scope rows"

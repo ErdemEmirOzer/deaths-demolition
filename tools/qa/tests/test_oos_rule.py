@@ -76,6 +76,26 @@ class OosRuleTests(unittest.TestCase):
         (self.ug / "out-of-scope-changed.txt.2").write_text("editor  MISSING  /root/AS/x/ui-settings.json\n")
         ok, why = self.decide(); self.assertFalse(ok); self.assertIn("condition 1", why)
 
+    def test_EskiGuardSatiri_SonundaLiteralNewline_BireBirKopya_Kabul(self):
+        """C-00 05.10 MUST: K/wp-083/evidence/ug-b2f6-ppm (guard 52b7a00f..) — the row ends in a literal $'\\n' and no
+        newline; the writer pid 62577 is S-09's cine1 window, verified=1. Byte copies of those files."""
+        start = "Mon Oct 5 16:10:46 2026"
+        (self.ug / "window.json").write_text("{}")
+        (self.ug / "out-of-scope-changed.txt").write_text(
+            "player  7659d6828c0a1914bd89c3a7f6af3b9ad06078cffa37bf0cec771c5cb225ca06  /Users/Erdem/Library/Preferences/"
+            "com.Deaths-Demolition.Deaths-Demolition---Playable-Concept.plist (launch-counter keys excluded)$'\\n'")
+        (self.ug / "attribution.txt").write_text(
+            "/Users/Erdem/Library/Preferences/com.Deaths-Demolition.Deaths-Demolition---Playable-Concept.plist\tmtime 13:11:26Z"
+            "\tpid 62577 /Users/Erdem/Desktop/KADRO/context/projects/deaths-demolition/wp-068s9/evidence/wp081/cine1/21x9/cine.log\n")
+        (self.ug / "players-lineage.tsv").write_text("2026-10-05T13:10:51Z\t62577\t62478\t%s\t0\n" % start)
+        (self.owner / "window.json").write_text("{}")
+        (self.owner / "players-lineage.tsv").write_text("2026-10-05T13:10:51Z\t62577\t62478\t%s\t1\n" % start)
+        (self.owner / "restore.txt").write_text("2026-10-05T13:14:00Z userdata-guard restore scope=player touched=1 verified=1 "
+                                                "retry=none class=OK\nexit=0\n")
+        ok, why = self.decide()
+        self.assertTrue(ok, why); self.assertIn("pid 62577", why)
+        self.assertEqual(1, len(oos_rule.oos_rows((self.ug / "out-of-scope-changed.txt").read_text())))
+
     def test_SatirYok_Kalir(self):
         self.window(rows=())
         (self.ug / "out-of-scope-changed.txt").write_text("")

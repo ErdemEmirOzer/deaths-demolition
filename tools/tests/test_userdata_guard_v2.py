@@ -123,10 +123,16 @@ names = [f.strip().rstrip("=") for f in (fields or "pid,command").split(",")]
 if every:
     n = lib.proc_listallpids(None, 0); arr = (ctypes.c_int * (n * 2))(); n = lib.proc_listallpids(arr, ctypes.sizeof(arr))
     pids = [str(p) for p in arr[:n] if p > 0]
+import os, re
+real_player = re.compile(r"Contents/MacOS/(Deaths Demolition|DeathsDemolition)")
 rc = 1
 for pid in pids or []:
     info = bsdinfo(pid)
     if info is None: continue
+    cmd = args(info["pid"]) or info["comm"]
+    # isolation (05.10): a REAL Player of another session on this machine is not part of the fixture — the sampler would
+    # log it as a foreign writer (FOREIGN_WRITER flakes); fixture Players live under SHIM_TMP and stay visible
+    if every and real_player.search(cmd) and os.environ.get("SHIM_TMP", "\0") not in cmd: continue
     print(" ".join(field(info, f) for f in names)); rc = 0
 sys.exit(rc)
 '''
@@ -1101,6 +1107,7 @@ class ClassCodeTests(RestoreBase):
         self.assertIn("verified=1", last); self.assertTrue(last.endswith("class=OTHER"), last)
         self.assertEqual('{"ui": 1}\n', (self.d1 / "ui-settings.json").read_text())   # in scope: restored
         other = (self.dir / "out-of-scope-changed.txt").read_text()
+        self.assertTrue(other.endswith("\n") and "$'" not in other, repr(other[-80:]))   # C-00 05.10 MUST: a real newline
         self.assertIn("player  MISSING  " + str(self.d2 / "prototype-profile.json"), other)
         self.assertIn(str(self.d2 / "ui-settings.json"), other)
         self.assertIn(str(self.p1), other)

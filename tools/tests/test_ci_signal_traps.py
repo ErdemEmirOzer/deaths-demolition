@@ -44,7 +44,12 @@ else
   cp "$dir/before-editor.txt" "$dir/after-run-editor.txt"; echo restore-done >> "{log}/guard-calls.txt"
   if [ "${{FAKE_GUARD_RESTORE_RC:-0}}" = 32 ]; then   # G4 D7: Editor area changed + restored + verified, player area changed
     echo y > "$dir/after-run-editor.txt"
+    if [ -n "${{FAKE_GUARD_OLD_NL:-}}" ]; then   # guard 52b7a00f..: the row ends in the literal dollar-quote newline, plist suffix
+      print -rn -- "player  aaaa  /fixture/PR/com.x.plist (launch-counter keys excluded)\$'\\n'" > "$dir/out-of-scope-changed.txt"
+      print -r -- "/fixture/PR/com.x.plist	mtime 13:11:26Z	pid 62577 /fixture/cine1/cine.log" > "$dir/attribution.txt"
+    else
     print -r -- "player  MISSING  /fixture/bundle/prototype-profile.json" > "$dir/out-of-scope-changed.txt"
+    fi
     echo "restore scope=editor touched=0 verified=1 retry=none class=OTHER"; exit 32
   fi
   echo "restore scope=editor changed=0 verified=1"
@@ -500,6 +505,12 @@ class CiDriverGuardTests(CiFixture):
         self.assertIn("restored to the pre-run snapshot (verified; out-of-scope change → see below)", out + err)
         self.assertIn("player area (bundle profile / player PlayerPrefs) changed during the tests", out + err)
         self.assertNotIn("CI cleanup failed", out + err)
+
+    def test_MainCi_Guard32_EskiSatirLiteralNewline_YazarBulunur(self):
+        """C-00 05.10 MUST: the writer list reads a row with the old literal $'\\n' and the plist suffix."""
+        rc, out, err = self.finish(self.main_ci("pass", playmode=True, FAKE_GUARD_RESTORE_RC="32", FAKE_GUARD_OLD_NL="1"))
+        self.assertEqual(rc, 0, out + err)
+        self.assertIn("writers (WP-066M): /fixture/PR/com.x.plist\tpid 62577 /fixture/cine1/cine.log;", out + err)
 
     def test_MainCi_SatirIciBlok_UzerineYazmazCreatedTasir(self):
         pd = self.home / "Library/Application Support/Deaths Demolition" / PRODUCT
