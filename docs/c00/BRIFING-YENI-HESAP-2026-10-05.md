@@ -10,7 +10,7 @@
 
 | Rol | Nerede | Başlangıç promptu | Durum (05.10 ~19:45) |
 |---|---|---|---|
-| **Bulut C-00** (geçici asıl koordinatör; C-00B görevleri de onda) | İkinci hesap, **tarayıcı / bulut** (claude.ai/code) | `docs/c00/C00-BULUT-DEVRALMA-PROMPTU-2026-10-05.md` (kurallar `C00-BULUT-PROMPTU.md`) | çalışıyor. C-00B olarak B-01…B-04.ü teslim etti (PR #1–#4, §14). main.e yalnız belge, Python ve kapı tanımı alır. |
+| **Bulut C-00** (geçici asıl koordinatör; C-00B görevleri de onda) | İkinci hesap, **tarayıcı / bulut** (claude.ai/code) | `docs/c00/C00-BULUT-DEVRALMA-PROMPTU-2026-10-05.md` (kurallar `C00-BULUT-PROMPTU.md`) | çalışıyor. C-00B olarak B-01…B-04'ü teslim etti (PR #1–#4, §14). main'e yalnız belge, Python ve kapı tanımı alır. |
 | **Yerel C-00** (asıl koordinatör, tek entegratör) | Mac'te yerel: birinci hesap limiti yenilenince (~07.10 11:00 TR, tahmini) ya da ikinci hesap Claude Desktop'ta açılınca | `docs/c00/C00-DEVIR-BASLANGIC-PROMPTU.md` | **şu an yok**. Açıldığı an entegratörlük ona geçer; bulut oturumu `BULUT-DEVIR-<gg.aa>.md` yazar ve C-00B'ye döner. |
 | C-00B (ikinci ekip) | İkinci hesap, bulut | `docs/c00/C00B-IKINCI-HESAP-PROMPTU.md` | yerel C-00 dönünce bulut oturumu bu role geri döner |
 
@@ -370,7 +370,8 @@ Bu bölüm, birinci hesabın limiti dolduktan sonra depodan doğrulanarak eklend
 | 12 | `01f4b163` | `wp-089-c00b-b04-log-int` |
 | 13 | `f8b898fa` (briefing §0/§14 ilk ek) | `wp-089-brifing-tamam-int` |
 | 14 | `825e2d26` (bulut düzeni eki) | `wp-089-brifing-bulut-int` |
-| 15 | `claude/sharp-cray-jsvo9s` ucu (C-00B teslimlerinin kontrolü ve B-05) | `wp-089-brifing-bulut2-int` |
+| 15 | `bd4ceac8` (C-00B teslimlerinin kontrolü ve B-05) | `wp-089-brifing-bulut2-int` |
+| 16 | `claude/sharp-cray-jsvo9s` ucu (§0 yazım düzeltmesi) | `wp-089-brifing-bulut3-int` |
 
 Yöntem: önce `tools/integrate.sh`; gate yalnız bulut ortamı yüzünden düşerse `git cherry-pick` + `git tag -a`, kapı 8 elle. Ayrıntı `C00-BULUT-DEVRALMA-PROMPTU-2026-10-05.md` §4.1.
 

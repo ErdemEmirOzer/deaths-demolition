@@ -27,7 +27,7 @@ Bu mesaj, ikinci hesapta tarayıcıda (claude.ai/code, bulut) çalışan oturum 
   2. B-04: `docs/release/R2-NOTES-draft.md` başlığı ve tablo sütunu "main 0b3ec358" diyor. 13. satır (kovan sesi) da aynı bayat durumu taşıyor.
   3. B-03: inceleme aralığı `84941661..0b3ec358`. Sonradan gelen runtime C# değişikliği `WeaponFoleyAudio.cs` (`a62d83db`, +160/−54) incelenmedi.
 - **main = `3e68bc08`.** Son derleme kontrolü `d0783d9b` PASS. `03c3b06b` ve `a62d83db` derlenmedi; bu iş yerel kuyrukta.
-- **Belge commit'leri:** `claude/sharp-cray-jsvo9s` dalında üç belge commit'i bekliyor (yalnız `docs/c00`): `f8b898fa`, `825e2d26` ve dalın ucu (bu promptu depoya koyan güncelleme).
+- **Belge commit'leri:** `claude/sharp-cray-jsvo9s` dalında dört belge commit'i bekliyor (yalnız `docs/c00`): `f8b898fa`, `825e2d26`, `bd4ceac8` (bu prompt) ve dalın ucu (küçük yazım düzeltmesi).
 
 ## 2. Kullanıcı kararı ve izinler (bu mesajla açıkça verildi)
 
@@ -92,7 +92,8 @@ tools/integrate.sh <sha> --tag <etiket> --no-post
 | 12 | `01f4b163` | `wp-089-c00b-b04-log-int` |
 | 13 | `f8b898fa` | `wp-089-brifing-tamam-int` |
 | 14 | `825e2d26` | `wp-089-brifing-bulut-int` |
-| 15 | `claude/sharp-cray-jsvo9s` ucu (bu prompt) | `wp-089-brifing-bulut2-int` |
+| 15 | `bd4ceac8` (bu prompt) | `wp-089-brifing-bulut2-int` |
+| 16 | `claude/sharp-cray-jsvo9s` ucu (briefing §0 yazım düzeltmesi) | `wp-089-brifing-bulut3-int` |
 
 **Doğrula:**
 ```bash
@@ -101,7 +102,7 @@ git log --oneline -1 main -- docs/c00/C00-BULUT-DEVRALMA-PROMPTU-2026-10-05.md
 python3 -m unittest tools/qa/tests/test_r2_gates_lint.py
 ```
 - `git cherry` çıktısında "+" ile başlayan satır kalmamalı.
-- `git log` satırı 15. commit'i göstermeli. `claude/sharp-cray-jsvo9s` dalındaki kök belgeler (`C-00-*.md`, `DISK-*`, `PROJE-*`) main'e alınmaz; onlar kullanıcının arşivi.
+- `git log` satırı 15. commit'i göstermeli; 16. commit de main'de olmalı (`git cherry -v main origin/claude/sharp-cray-jsvo9s` çıktısında `docs/c00` commit'i kalmamalı). `claude/sharp-cray-jsvo9s` dalındaki kök belgeler (`C-00-*.md`, `DISK-*`, `PROJE-*`) main'e alınmaz; onlar kullanıcının arşivi.
 - Testler 23/23 geçmeli.
 
 **Push:**
