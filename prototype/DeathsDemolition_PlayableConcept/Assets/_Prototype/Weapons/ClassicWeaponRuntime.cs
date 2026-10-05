@@ -7,6 +7,15 @@ using UnityEngine;
 
 namespace DD.Prototype.Weapons
 {
+    /// <summary>§12 (C-00 05.10): the sections of a shell-by-shell reload (S-06's start / shell loop / end clips).</summary>
+    public enum ShellReloadSection
+    {
+        None = 0,
+        Start = 1,
+        Shell = 2,
+        Close = 3
+    }
+
     /// <summary>
     /// The classic weapon in hand, live.
     ///
@@ -494,6 +503,56 @@ namespace DD.Prototype.Weapons
 
         /// <summary>R1-B W7: a shell-by-shell reload is running (sg_1).</summary>
         public bool ShellByShellReload => IsReloading && _shellSeconds > 0f;
+
+        // ---------------------------------------------------------------- §12 · the shell-by-shell reload's schedule
+
+        /// <summary>
+        /// §12 (C-00 05.10, AP-026-B · S-06's start / shell / end loop): the shell-by-shell reload's schedule, for the animator to fit
+        /// its clips to. The ammo keeps its timing — the k-th shell's round lands at start + (k + 1) · shell, the close follows the
+        /// last shell (+ the pump when the reload began empty) — so the total time and the balance are unchanged: the shell clip loops
+        /// once per missing shell, each loop scaled to <see cref="ShellReloadShellSeconds"/>. All zero when no shell-by-shell reload runs.
+        /// </summary>
+        public float ShellReloadStartSeconds => ShellByShellReload ? _shellStartSeconds : 0f;
+
+        /// <summary>§12: one shell's loop (the round lands at its end).</summary>
+        public float ShellReloadShellSeconds => ShellByShellReload ? _shellSeconds : 0f;
+
+        /// <summary>§12: the shells this reload loads (the missing ones the reserve covers) — the shell loop's count.</summary>
+        public int ShellsQueuedThisReload => ShellByShellReload ? _shellsQueued : 0;
+
+        /// <summary>§12: the close after the last shell (the end / end_empty clip).</summary>
+        public float ShellReloadCloseSeconds => ShellByShellReload ? Mathf.Max(0f, ReloadDuration - _shellStartSeconds - _shellsQueued * _shellSeconds) : 0f;
+
+        /// <summary>§12: where the shell-by-shell reload is now — Start, Shell (the loop) or Close; None when none runs.</summary>
+        public ShellReloadSection ShellSection
+        {
+            get
+            {
+                if (!ShellByShellReload) return ShellReloadSection.None;
+                if (_reloadElapsed < _shellStartSeconds) return ShellReloadSection.Start;
+                return _reloadElapsed < _shellStartSeconds + _shellsQueued * _shellSeconds ? ShellReloadSection.Shell : ShellReloadSection.Close;
+            }
+        }
+
+        /// <summary>§12: the shell being loaded (0-based) while <see cref="ShellSection"/> is Shell, else −1.</summary>
+        public int ShellLoopIndex => ShellSection == ShellReloadSection.Shell ? Mathf.Min(_shellsQueued - 1, Mathf.FloorToInt((_reloadElapsed - _shellStartSeconds) / _shellSeconds)) : -1;
+
+        /// <summary>§12: progress 0…1 through the current section — in the loop, through the current shell (its round lands at 1).</summary>
+        public float ShellSectionProgress01
+        {
+            get
+            {
+                switch (ShellSection)
+                {
+                    case ShellReloadSection.Start: return _shellStartSeconds > 0f ? Mathf.Clamp01(_reloadElapsed / _shellStartSeconds) : 1f;
+                    case ShellReloadSection.Shell: return Mathf.Clamp01((_reloadElapsed - _shellStartSeconds - ShellLoopIndex * _shellSeconds) / _shellSeconds);
+                    case ShellReloadSection.Close:
+                        float close = ShellReloadCloseSeconds;
+                        return close > 0f ? Mathf.Clamp01((_reloadElapsed - _shellStartSeconds - _shellsQueued * _shellSeconds) / close) : 1f;
+                    default: return 0f;
+                }
+            }
+        }
 
         /// <summary>WP-069: a burst is in progress (its remaining shots fire whatever the trigger does).</summary>
         public bool BurstActive => _burstLeft > 0;

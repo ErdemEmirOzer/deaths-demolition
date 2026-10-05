@@ -86,7 +86,10 @@ namespace DD.Prototype.Tests.PlayMode
             CollectionAssert.AreEqual(new[] { MagazineOwner.Weapon, MagazineOwner.HandOld, MagazineOwner.HandNew, MagazineOwner.Weapon }, owners, seq);
             Assert.IsFalse(m.Active);
             Assert.AreEqual(MagazineOwner.Weapon, m.Owner, "şarjör silahta bitmeli");
-            Assert.AreEqual(4, (m.FromEvent - event0) + (m.FromTimer - timer0), "dört vuruş tam bir kez");
+            // §12 (C-00 05.10): three shots then reload = a tactical reload — three beats (the timer never invents a bolt release),
+            // four when the clip itself sends bolt_release (AP-022's ar_1 _tac does); each beat once
+            Assert.That((m.FromEvent - event0) + (m.FromTimer - timer0), Is.InRange(m.ExpectedSteps, 4), "vuruşlar tam bir kez");
+            Assert.AreEqual(3, m.ExpectedSteps, "üç atış sonrası reload taktik");
             Assert.AreEqual(early0, m.EndedEarly);
         }
 
@@ -225,7 +228,7 @@ namespace DD.Prototype.Tests.PlayMode
                 probe.End();
                 Assert.IsTrue(_s.Controller.Classic.LastReloadCompleted, key + ": reload tamamlanmadı");
                 int fromClip = m.FromEvent - e0, fromTimer = m.FromTimer - t0;
-                int missing = Mathf.Max(0, WeaponMagazineOwnership.StepCount - fromClip - fromTimer);
+                int missing = Mathf.Max(0, m.ExpectedSteps - fromClip - fromTimer);   // §12: a tactical reload has three beats
                 missingAll += missing;
                 floatingAll += floating;
                 measured++;
@@ -288,6 +291,142 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(MagazineOwner.Weapon, m.Owner);
             Assert.IsFalse(m.Active);
             Assert.IsFalse(_s.Controller.MagazineVisual.InHand, "rl_1: parça ele gitmez (tüp)");
+        }
+
+        /// <summary>
+        /// §12 (C-00 05.10, AP-026-B): a tactical reload (a round chambered) has three beats — MagOut · MagHandAttach · MagIn. The
+        /// timeline never invents a bolt release and the timer never publishes a Chambered (no chamber sound, S-08); a clip that sends
+        /// its own bolt_release is still heard. ar_1's AP-022 _tac sends one, lmg_1's does not.
+        /// </summary>
+        [UnityTest]
+        [Timeout(240000)]
+        public IEnumerator Reload_Taktik_ZamanlayiciBoltReleaseVeChamberUydurmaz()
+        {
+            yield return Kur();
+            WeaponMagazineOwnership m = _s.Controller.Magazine;
+            var report = new List<string>();
+            foreach (ClassicWeaponId id in new[] { ClassicWeaponId.AssaultRifle, ClassicWeaponId.Lmg1 })
+            {
+                _s.Controller.EquipClassic(id, _s.Config);
+                yield return SpecialWeaponSahne.Kareler(30);
+                int timerBolt = 0, timerChamber = 0, beats = 0;
+                System.Action<MagazineStep, bool> stepped = (step, fromEvent) => { beats++; if (step == MagazineStep.BoltRelease && !fromEvent) timerBolt++; };
+                System.Action<WeaponMechanismEvent> mech = e => { if (e.Kind == WeaponMechanismKind.Chambered && !e.FromClipEvent) timerChamber++; };
+                m.Stepped += stepped;
+                WeaponEvents.Mechanism += mech;
+                try
+                {
+                    yield return UcAtisVeReload();
+                    yield return SpecialWeaponSahne.Bekle(() => _s.Controller.Classic.IsReloading, 1f, id + ": reload başlamadı");
+                    Assert.IsFalse(_s.Controller.Classic.ReloadIsEmpty, id + ": üç atış sonrası reload taktik olmalı");
+                    Assert.AreEqual(3, m.ExpectedSteps, id + ": taktik = üç vuruş");
+                    int early0 = m.EndedEarly;
+                    yield return SpecialWeaponSahne.Bekle(() => !_s.Controller.Classic.IsReloading, 10f, id + ": reload bitmedi");
+                    yield return null;
+                    report.Add(id + " beats " + beats + " (timer bolt " + timerBolt + ", timer chamber " + timerChamber + ")");
+                    Assert.IsTrue(_s.Controller.Classic.LastReloadCompleted, id + ": reload tamamlanmadı");
+                    Assert.AreEqual(0, timerBolt, id + ": zamanlayıcı bolt release uydurdu");
+                    Assert.AreEqual(0, timerChamber, id + ": zamanlayıcı Chambered (sürgü sesi) yayınladı");
+                    Assert.GreaterOrEqual(beats, 3, id + ": taktik reload'un üç vuruşu inmedi");
+                    Assert.AreEqual(early0, m.EndedEarly, id + ": taktik reload erken bitmiş sayıldı");
+                }
+                finally
+                {
+                    m.Stepped -= stepped;
+                    WeaponEvents.Mechanism -= mech;
+                }
+
+                yield return new WaitForSeconds(0.3f);
+            }
+
+            Debug.Log("[DD-TEST] wp087.s12.tac " + string.Join(" | ", report));
+        }
+
+        /// <summary>§12: rl_1's clip names its round rocket_in / rocket_seat — they land the tube's Insert / BoltRelease and publish the
+        /// seat and the chamber from the clip (the AP-022 v008 reload_empty carries both; before §12 both came from the timer).</summary>
+        [UnityTest]
+        [Timeout(180000)]
+        public IEnumerator Roketatar_RoketOlaylari_KliptenIner()
+        {
+            yield return Kur();
+            if (!_s.Controller.ClipDrivesMechanism) Assert.Ignore("klip mekanizmayı sürmüyor (prosedürel karakter)");
+            _s.Controller.EquipClassic(ClassicWeaponId.Rl1, _s.Config);
+            yield return SpecialWeaponSahne.Kareler(30);
+            WeaponMagazineOwnership m = _s.Controller.Magazine;
+            var fromClip = new List<MagazineStep>();
+            int seatsFromClip = 0, chamberFromClip = 0;
+            System.Action<MagazineStep, bool> stepped = (step, fromEvent) => { if (fromEvent) fromClip.Add(step); };
+            System.Action<WeaponMechanismEvent> mech = e =>
+            {
+                if (!e.FromClipEvent || e.Weapon != ClassicWeaponId.Rl1) return;
+                if (e.Kind == WeaponMechanismKind.ShellSeated) seatsFromClip++;
+                if (e.Kind == WeaponMechanismKind.Chambered) chamberFromClip++;
+            };
+            m.Stepped += stepped;
+            WeaponEvents.Mechanism += mech;
+            try
+            {
+                _s.Girdi.AtesBasti = true; _s.Girdi.AtesBasili = true;
+                yield return SpecialWeaponSahne.Kareler(4);
+                _s.Girdi.AtesBasti = false; _s.Girdi.AtesBasili = false;
+                yield return SpecialWeaponSahne.Bekle(() => _s.Controller.Classic.IsReloading, 3f, "rl_1 reload başlamadı");
+                yield return SpecialWeaponSahne.Bekle(() => !_s.Controller.Classic.IsReloading, 8f, "rl_1 reload bitmedi");
+                yield return null;
+            }
+            finally
+            {
+                m.Stepped -= stepped;
+                WeaponEvents.Mechanism -= mech;
+            }
+
+            Debug.Log("[DD-TEST] wp087.s12.rl1 from clip [" + string.Join(", ", fromClip) + "] seats " + seatsFromClip + " chamber " + chamberFromClip + " seatsThisReload " + _s.Controller.SeatsFromClipThisReload);
+            CollectionAssert.Contains(fromClip, MagazineStep.Insert, "rocket_in → Insert klipten");
+            CollectionAssert.Contains(fromClip, MagazineStep.BoltRelease, "rocket_seat → BoltRelease klipten");
+            Assert.AreEqual(1, seatsFromClip, "rocket_in bir ShellSeated");
+            Assert.AreEqual(1, chamberFromClip, "rocket_seat bir Chambered");
+            Assert.AreEqual(1, _s.Controller.SeatsFromClipThisReload);
+        }
+
+        /// <summary>§12: sg_1's AP-026-B reload_shell sends mag_insert and shell_in on the same frame — one beat: one event, one seat,
+        /// one sound (WeaponFoleyAudio maps both to the SG1 shell-in); the next frame's shell_in is the next cartridge.</summary>
+        [UnityTest]
+        [Timeout(120000)]
+        public IEnumerator Sg1_AyniKareMagInsertShellIn_TekOlayTekKoltukTekSes()
+        {
+            yield return Kur();
+            if (!_s.Controller.ClipDrivesMechanism) Assert.Ignore("klip mekanizmayı sürmüyor (prosedürel karakter)");
+            _s.Controller.EquipClassic(ClassicWeaponId.CombatShotgun, _s.Config);
+            yield return SpecialWeaponSahne.Kareler(30);
+            var body = _s.Rig.GetComponentInChildren<DD.Prototype.Characters.PlayerSkinnedVisual>(true);
+            var events = body != null ? body.GetComponentInChildren<DD.Prototype.Characters.CharacterAnimationEvents>(true) : null;
+            Assert.IsNotNull(events, "gövdenin olay bileşeni yok");
+            var director = DD.Prototype.Audio.PrototypeAudioDirector.Instance;
+            var heard = new List<DD.Prototype.Characters.CharacterAnimationEvent>();
+            int seats = 0;
+            System.Action<DD.Prototype.Characters.CharacterAnimationEvents, DD.Prototype.Characters.CharacterAnimationEvent> any = (c, e) => { if (c == events) heard.Add(e); };
+            System.Action<WeaponMechanismEvent> mech = e => { if (e.Kind == WeaponMechanismKind.ShellSeated && e.FromClipEvent) seats++; };
+            DD.Prototype.Characters.CharacterAnimationEvents.Any += any;
+            WeaponEvents.Mechanism += mech;
+            try
+            {
+                int foley0 = director != null ? director.Router.FoleyCount : 0;
+                events.mag_insert(0);
+                events.shell_in(1);
+                int foley1 = director != null ? director.Router.FoleyCount : 0;
+                Assert.AreEqual(1, heard.Count, "aynı kare mag_insert + shell_in = tek olay");
+                Assert.AreEqual(1, seats, "tek koltuk (ShellSeated)");
+                if (director != null) Assert.LessOrEqual(foley1 - foley0, 1, "tek ses");
+                yield return null;
+                events.shell_in(2);
+                Assert.AreEqual(2, heard.Count, "sonraki karedeki shell_in ayrı fişek");
+                Assert.AreEqual(2, seats);
+                Debug.Log("[DD-TEST] wp087.s12.sg1 heard " + heard.Count + " seats " + seats + " foley +" + (foley1 - foley0) + " (same frame)");
+            }
+            finally
+            {
+                DD.Prototype.Characters.CharacterAnimationEvents.Any -= any;
+                WeaponEvents.Mechanism -= mech;
+            }
         }
     }
 }

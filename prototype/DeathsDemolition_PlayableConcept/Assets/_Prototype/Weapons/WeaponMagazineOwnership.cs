@@ -39,19 +39,30 @@ namespace DD.Prototype.Weapons
 
         public const int StepCount = 4;
 
-        /// <summary>Clip event names per step: the contract's name first, then the AP-009C alias (empty = none).</summary>
+        /// <summary>
+        /// Clip event names per step: the contract's name first, then the AP-009C alias; rl_1's AP-026-B reload names its round
+        /// <c>rocket_in</c> (→ Insert, the tube's MagIn) and <c>rocket_seat</c> (→ BoltRelease, its Chamber) (C-00 05.10, §12).
+        /// </summary>
         public static readonly string[][] EventNames =
         {
             new[] { "mag_detach", "mag_out" },
             new[] { "mag_hand_attach" },
-            new[] { "mag_insert", "mag_in" },
-            new[] { "bolt_release", "chamber" },
+            new[] { "mag_insert", "mag_in", "rocket_in" },
+            new[] { "bolt_release", "chamber", "rocket_seat" },
         };
 
         public MagazineOwner Owner { get; private set; } = MagazineOwner.Weapon;
 
         /// <summary>The next beat (0…3), or −1 when no reload runs.</summary>
         public int NextStep { get; private set; } = -1;
+
+        /// <summary>The first and the last beat this reload has: a tactical one ends on Insert (the round is chambered — no bolt
+        /// release, so the timeline never lands one, C-00 05.10 §12); an empty tube starts at HandAttach.</summary>
+        public int FirstStep { get; private set; }
+        public int LastStep { get; private set; } = (int)MagazineStep.BoltRelease;
+
+        /// <summary>Beats a complete reload of this kind lands: 4 empty, 3 tactical (MagOut · HandAttach · MagIn), 3 empty tube.</summary>
+        public int ExpectedSteps => LastStep - FirstStep + 1;
 
         public bool Active => NextStep >= 0;
 
@@ -66,13 +77,16 @@ namespace DD.Prototype.Weapons
         /// <summary>
         /// A reload of a magazine weapon starts: the magazine is in the weapon, the first beat is next. <paramref name="emptyTube"/>
         /// (rl_1, S-06 05.10): the tube starts empty — nothing to detach; the round comes to the hand (mag_hand_attach), goes in
-        /// (rocket_in = mag_insert) and seats (rocket_seat = bolt_release).
+        /// (rocket_in = mag_insert) and seats (rocket_seat = bolt_release). <paramref name="tactical"/> (a round still chambered,
+        /// the _tac clip): three beats, the last is Insert — the timeline never lands a bolt release.
         /// </summary>
-        public void Begin(bool emptyTube = false)
+        public void Begin(bool emptyTube = false, bool tactical = false)
         {
             if (Active) End();
             Owner = MagazineOwner.Weapon;
-            NextStep = emptyTube ? (int)MagazineStep.HandAttach : 0;
+            FirstStep = emptyTube ? (int)MagazineStep.HandAttach : 0;
+            LastStep = tactical && !emptyTube ? (int)MagazineStep.Insert : (int)MagazineStep.BoltRelease;
+            NextStep = FirstStep;
         }
 
         /// <summary>The clip sent <paramref name="step"/>: lands it (and any skipped earlier beat first). False when not expected.</summary>
@@ -94,14 +108,14 @@ namespace DD.Prototype.Weapons
             if (!Active) return;
             float[] m = marks ?? MagazineMarks;
             float grace = reloadSeconds > 0f ? DeadlineGraceSeconds / reloadSeconds : 0f;
-            while (Active && progress01 >= m[NextStep] + grace) Land((MagazineStep)NextStep, false);
+            while (Active && NextStep <= LastStep && progress01 >= m[NextStep] + grace) Land((MagazineStep)NextStep, false);
         }
 
         /// <summary>The reload ended (complete, cancelled, switch, Special, death, camera change): the magazine is in the weapon now.</summary>
         public void End()
         {
             if (!Active) return;
-            if (NextStep < StepCount) EndedEarly++;
+            if (NextStep <= LastStep) EndedEarly++;
             NextStep = -1;
             Owner = MagazineOwner.Weapon;
         }
@@ -141,6 +155,8 @@ namespace DD.Prototype.Weapons
             else FromTimer++;
             NextStep = (int)step + 1;
             if (NextStep >= StepCount) NextStep = -1;
+            // a tactical reload is done after Insert; a clip's own bolt_release past it (if one ever sends it) is still accepted
+            else if (NextStep > LastStep) NextStep = StepCount - 1;
             Stepped?.Invoke(step, fromEvent);
         }
     }

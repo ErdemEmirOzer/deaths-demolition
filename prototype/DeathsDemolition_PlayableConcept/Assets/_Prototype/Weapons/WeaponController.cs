@@ -114,6 +114,7 @@ namespace DD.Prototype.Weapons
         private readonly WeaponMagazineVisual _magazineVisual = new WeaponMagazineVisual();   // WP-082 visual: part_mag ↔ socket_mag_l
         private CameraMode _magazineMode;   // the camera mode the reload began in (a change ends the ownership)
         private int _seatsFired;
+        private int _seatsFromClip;   // §12: the clip's seats this reload — one per cartridge / rocket, whichever synonym named it
         private bool _chamberFired;
         private bool _pickupDonePending;
         private float _pickupDoneAt = -1f;
@@ -699,10 +700,12 @@ namespace DD.Prototype.Weapons
                 _reloadInsertFired = false;
                 _magOutFired = false;
                 _seatsFired = 0;
+                _seatsFromClip = 0;
                 _chamberFired = false;
                 if (MagazineReload)
                 {
-                    _magazine.Begin(_equippedId == ClassicWeaponId.Rl1);   // WP-082: the magazine's owner (rl_1: an empty tube)
+                    // WP-082: the magazine's owner (rl_1: an empty tube); §12 (C-00 05.10): a tactical reload has three beats, no bolt release
+                    _magazine.Begin(_equippedId == ClassicWeaponId.Rl1, !_classic.ReloadIsEmpty);
                     _magazineVisual.Bind(_equippedId == ClassicWeaponId.Rl1 || _classicRig == null ? null : _classicRig.transform);
                     _magazineMode = CameraModeService.Current;
                 }
@@ -797,6 +800,9 @@ namespace DD.Prototype.Weapons
 
         /// <summary>WP-082: the classic weapon reloads a magazine (or rl_1's tube) — not shell by shell, not a break-open.</summary>
         private bool MagazineReload => !_timeline.Shells && _timeline.ReloadCasings <= 0;
+
+        /// <summary>§12 readout: seats the clip sent this reload (mag_in / mag_insert / shell_in / rocket_in — one per cartridge; tests, S-08).</summary>
+        public int SeatsFromClipThisReload => _seatsFromClip;
 
         /// <summary>WP-082 readout: who holds the classic weapon's magazine during a reload (tests, S-10 H3 counters).</summary>
         public WeaponMagazineOwnership Magazine => _magazine;
@@ -1671,7 +1677,8 @@ namespace DD.Prototype.Weapons
                 if (!_chamberFired && p >= _timeline.ChamberProgress)
                 {
                     _chamberFired = true;
-                    PublishMechanism(WeaponMechanismKind.Chambered, false);
+                    // §12 (C-00 05.10): a tactical magazine reload keeps its chambered round — the timer never invents a bolt release
+                    if (!(MagazineReload && !_classic.ReloadIsEmpty)) PublishMechanism(WeaponMechanismKind.Chambered, false);
                 }
             }
         }
@@ -1711,8 +1718,14 @@ namespace DD.Prototype.Weapons
                 }
             }
             else if (e == s_magOut) { if (_timeline.ReloadCasings <= 0 || !_magOutFired) { _magOutFired = true; PublishMagOut(true); } }
-            else if (e == s_magIn || e == s_magIn2 || e == s_magIn3) PublishMechanism(WeaponMechanismKind.ShellSeated, true);
-            else if (e == s_chamber) PublishMechanism(WeaponMechanismKind.Chambered, true);
+            // §12 (C-00 05.10, AP-026-B): rl_1's round goes in (rocket_in) / seats (rocket_seat); a shotgun's shell_in is one seat per
+            // cartridge. A synonym on the same frame (sg_1's mag_insert + shell_in) reaches here once — CharacterAnimationEvents collapses it.
+            else if (e == s_magIn || e == s_magIn2 || e == s_magIn3 || e == CharacterAnimationEvent.ShellIn || e == CharacterAnimationEvent.RocketIn)
+            {
+                if (_classic.IsReloading) _seatsFromClip++;
+                PublishMechanism(WeaponMechanismKind.ShellSeated, true);
+            }
+            else if (e == s_chamber || e == CharacterAnimationEvent.RocketSeat) PublishMechanism(WeaponMechanismKind.Chambered, true);
 
             // WP-082: the reload's magazine beats (mag_out / mag_hand_attach / mag_in / chamber); forward only, so the TP body's
             // event and a repeat cannot double a beat. Presentation: the ammo stays on the runtime's timer.

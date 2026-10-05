@@ -177,7 +177,31 @@ namespace DD.Prototype.Characters
         {
             Any = null;
             RaisedCount = 0;
+            CollapsedCount = 0;
         }
+
+        /// <summary>
+        /// §12 (C-00 05.10, AP-026-B · S-02): one reload beat, several names. A clip (sg_1 reload_shell: mag_insert + shell_in on one
+        /// frame) or two cross-fading states can send synonyms of the same beat on the same frame; this character raises the beat
+        /// once — one seat, one sound. The families: out (mag_out / mag_detach) · in (mag_in / mag_insert / shell_in / rocket_in) ·
+        /// seat (chamber / bolt_release / rocket_seat). On later frames each one is a beat of its own (a shell per shell_in).
+        /// </summary>
+        public static int BeatFamily(CharacterAnimationEvent e)
+        {
+            switch (e)
+            {
+                case CharacterAnimationEvent.MagOut: return 1;
+                case CharacterAnimationEvent.MagIn: case CharacterAnimationEvent.ShellIn: case CharacterAnimationEvent.RocketIn: return 2;
+                case CharacterAnimationEvent.Chamber: case CharacterAnimationEvent.RocketSeat: return 3;
+                default: return 0;
+            }
+        }
+
+        /// <summary>Synonyms dropped on their frame since the last reset (tests).</summary>
+        public static int CollapsedCount { get; private set; }
+
+        private int _beatFrame = -1;
+        private int _beatMask;
 
         // ------------------------------------------ AnimationEvent targets (manifest names)
         public void fire() => Raise(CharacterAnimationEvent.Fire);
@@ -272,6 +296,15 @@ namespace DD.Prototype.Characters
 
         private void Raise(CharacterAnimationEvent e, int value)
         {
+            int family = BeatFamily(e);
+            if (family != 0)
+            {
+                int frame = Time.frameCount;
+                if (frame != _beatFrame) { _beatFrame = frame; _beatMask = 0; }
+                if ((_beatMask & (1 << family)) != 0) { CollapsedCount++; return; }   // §12: this beat's synonym already went out
+                _beatMask |= 1 << family;
+            }
+
             LastInt = value;
             Last = e;
             LastTime = Time.time;
