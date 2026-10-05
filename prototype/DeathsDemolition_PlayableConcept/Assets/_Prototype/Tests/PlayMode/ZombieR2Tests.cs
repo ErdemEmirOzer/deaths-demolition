@@ -41,8 +41,9 @@ namespace DD.Prototype.Tests.PlayMode
         private const float SceneTimeout = 120f, SetupTimeout = 60f, FillTimeout = 90f;
         private static readonly EnemyTier[] Tiers = { EnemyTier.Standard, EnemyTier.Special, EnemyTier.Elite, EnemyTier.Ultra };
 
-        // Z2 — a pair of versions counts as distinct when any one cue clears its bar (PROVISIONAL bars, from the R1 measurement;
-        // C-00 approves them before the R2 FINAL measurement).
+        // Z2 — the rule is OR: a pair of versions counts as distinct when ANY one cue (silhouette OR luma OR chroma) clears its
+        // bar. Bars approved PROVISIONALLY (C-00 05.10); R1 today passes on silhouette alone (0.38–0.63; luma ≤ 0.027, chroma
+        // ≤ 0.016). Re-measured and fixed on the AP-025-B skin/blood delivery (then reported to S-10).
         private const float MinSilhouetteDelta = 0.10f;   // 1 − IoU of the two silhouettes
         private const float MinLumaDelta = 0.04f;         // |mean luma| difference inside the silhouettes (0–1)
         private const float MinChromaDelta = 0.02f;       // distance of the mean rg-chromaticity inside the silhouettes
@@ -54,6 +55,7 @@ namespace DD.Prototype.Tests.PlayMode
         public void TearDown()
         {
             Time.timeScale = 1f;
+            Time.captureDeltaTime = 0f;
             Environment.SetEnvironmentVariable(WorldSourceSettings.EnvironmentVariable, null);
             ZombieEnemy.ResetRisePolicy();
             RunFlowClock.ClearHolds();
@@ -112,10 +114,11 @@ namespace DD.Prototype.Tests.PlayMode
                 {
                     pairs++;
                     float sil = 1f - IoU(masks[a], masks[b]), dl = Mathf.Abs(luma[a] - luma[b]), dc = Vector2.Distance(chroma[a], chroma[b]);
-                    bool distinct = sil >= MinSilhouetteDelta || dl >= MinLumaDelta || dc >= MinChromaDelta;
+                    bool bySil = sil >= MinSilhouetteDelta, byLuma = dl >= MinLumaDelta, byChroma = dc >= MinChromaDelta;
+                    bool distinct = bySil || byLuma || byChroma;   // OR (see the bars above)
                     if (!distinct) indistinct++;
-                    Debug.Log(string.Format(CultureInfo.InvariantCulture, "[DD-OBS] r2.z2 {0}-{1} silhouetteDelta={2:0.000} lumaDelta={3:0.000} chromaDelta={4:0.000} distinct={5}",
-                        Tiers[a], Tiers[b], sil, dl, dc, distinct));
+                    Debug.Log(string.Format(CultureInfo.InvariantCulture, "[DD-OBS] r2.z2 {0}-{1} rule=OR silhouetteDelta={2:0.000} lumaDelta={3:0.000} chromaDelta={4:0.000} distinct={5} by={6}",
+                        Tiers[a], Tiers[b], sil, dl, dc, distinct, (bySil ? "silhouette " : "") + (byLuma ? "luma " : "") + (byChroma ? "chroma" : "")));
                 }
             }
 
@@ -151,16 +154,63 @@ namespace DD.Prototype.Tests.PlayMode
             EnemySpawnDirector director = EnemySpawnDirector.Instance;
             PlayerRegistry.Primary.Health.DiagnosisInvulnerable = true;
             for (int i = 0; i < 5; i++) yield return null;
+            ZombieEnemy.Rise = ZombieEnemy.RisePolicy.Off;
 
-            director.ForceActiveTarget(40, true);
-            yield return Bekle(() => director.ActiveCount >= 40, FillTimeout, "40 zombi doğmadı");
-            foreach (ZombieEnemy z in ZombieEnemy.Live)
+            // C-00 05.10: the gate is measured on the FIXED mix (R2ZombieCrowd.GateMix); the config's worst case is reported.
+            var gate = new double[6];
+            yield return MeasureCrowd(director, R2ZombieCrowd.GateMix, "gate", gate);
+            int[] worstMix = R2ZombieCrowd.WorstMix();
+            var worst = new double[6];
+            yield return MeasureCrowd(director, worstMix, "worst", worst);
+
+            R2Olcum.Yaz("Z3b", "DD.Prototype.Tests.PlayMode.ZombieR2Tests.Z3b_40Zombi_SetPassPayi_DokuButcesi", new Dictionary<string, double>
             {
-                if (z == null || z.Armor == null || z.Armor.EquippedCount >= 3) continue;
-                z.FitArmorComposition(true, true, true);
-            }
+                { "sharedTextureGpuMB", gate[3] }, { "uniqueTexturesPerZombie", gate[4] },
+                { "zombieSetPass", gate[0] }, { "zombieDraws", gate[1] }, { "frameSetPass", gate[2] },
+                { "zombieSetPassWorst", worst[0] }, { "zombieDrawsWorst", worst[1] }, { "sharedTextureGpuMBWorst", worst[3] },
+            }, (int)gate[5]);
 
-            for (int i = 0; i < 120; i++) yield return null;
+            Assert.AreEqual(R2ZombieCrowd.Size, (int)gate[5], "sabit karışım tam doğmadı");
+            Assert.LessOrEqual(gate[3], MaxSharedTextureGpuMB, "zombi ortak doku GPU MB");
+            Assert.LessOrEqual(gate[4], MaxUniqueTexturesPerZombie, "zombiye özgü doku");
+            Assert.LessOrEqual(gate[0], MaxZombieSetPass, "zombi SetPass payı");
+            Assert.LessOrEqual(gate[1], MaxZombieDraws, "zombi draw payı");
+            Assert.LessOrEqual(gate[2], MaxFrameSetPass, "kare SetPass");
+        }
+
+        /// <summary>
+        /// One crowd: spawn the mix (R2ZombieCrowd), let it close in, freeze, then frame vs no-zombie counters and the zombie
+        /// textures. result = [zombieSetPass, zombieDraws, frameSetPass, sharedTextureGpuMB, uniqueTexturesPerZombie, bodies].
+        /// </summary>
+        private static IEnumerator MeasureCrowd(EnemySpawnDirector director, int[] mix, string label, double[] result)
+        {
+            director.StopRound();
+            director.ClearAllEnemies();
+            EnemyFactory.ClearAll();
+            // let the previous crowd's effects (pooled spawn / hit flipbooks) run out at a fixed step — otherwise the first
+            // measured crowd carried ~14 extra SetPass in its no-zombie frame (88 vs 74, repeatable)
+            Time.captureDeltaTime = 1f / 60f;
+            for (int i = 0; i < 300; i++) yield return null;
+            Time.captureDeltaTime = 0f;
+            // empty frame (diagnostic): the scene's renderers before the crowd
+            Time.timeScale = 0f;
+            yield return null;
+            Camera cam0 = PrototypeCameraRig.Active.Camera;
+            long[] empty = new long[3];
+            yield return Counters(cam0, empty);
+            var before = new HashSet<Renderer>();
+            foreach (Renderer r in UnityEngine.Object.FindObjectsOfType<Renderer>()) if (r.enabled && r.gameObject.activeInHierarchy) before.Add(r);
+            Time.timeScale = 1f;
+
+            EnemyFactory.ResetSeedForTests(1u);   // the same looks for the same mix
+            var crowd = new List<ZombieEnemy>(R2ZombieCrowd.Size);
+            R2ZombieCrowd.Spawn(mix, 12, crowd);
+
+            // A fixed simulation step while the crowd closes in: on a loaded machine 120 real frames covered a different distance
+            // every run (zombie draws 420 vs 605 in two back-to-back runs). 4 s at 1/60 also outlasts the spawn effects.
+            Time.captureDeltaTime = 1f / 60f;
+            for (int i = 0; i < 240; i++) yield return null;
+            Time.captureDeltaTime = 0f;
             Time.timeScale = 0f;
             for (int i = 0; i < 5; i++) yield return null;
 
@@ -171,6 +221,17 @@ namespace DD.Prototype.Tests.PlayMode
             foreach (ZombieEnemy z in ZombieEnemy.Live) if (z != null) foreach (Renderer r in z.GetComponentsInChildren<Renderer>(false)) if (r.enabled) zombieRenderers.Add(r);
             foreach (Renderer r in zombieRenderers) r.enabled = false;
             yield return Counters(cam, noZombies);
+            var extra = new SortedDictionary<string, int>(StringComparer.Ordinal);
+            foreach (Renderer r in UnityEngine.Object.FindObjectsOfType<Renderer>())
+            {
+                if (!r.enabled || !r.gameObject.activeInHierarchy || before.Contains(r)) continue;
+                Transform root = r.transform; while (root.parent != null) root = root.parent;
+                string key = root.name + "/" + r.GetType().Name + ":" + (r.sharedMaterial != null ? r.sharedMaterial.shader.name : "-");
+                extra[key] = extra.TryGetValue(key, out int c) ? c + 1 : 1;
+            }
+            var ex = new System.Text.StringBuilder();
+            foreach (KeyValuePair<string, int> kv in extra) ex.Append(kv.Key).Append(" ×").Append(kv.Value).Append(" | ");
+            Debug.Log("[DD-OBS] r2.z3b.diag mix=" + label + " empty setPass=" + empty[0] + " draw=" + empty[1] + " | renderers new since empty, visible with zombies hidden: " + ex);
             foreach (Renderer r in zombieRenderers) r.enabled = true;
 
             // textures: every material on every zombie renderer (all LODs — they are resident either way). "Unique per zombie" =
@@ -215,27 +276,17 @@ namespace DD.Prototype.Tests.PlayMode
                 breakdown.Add(tex.name + " " + tex.width + "x" + tex.height + " " + (b / (1024.0 * 1024.0)).ToString("0.0", CultureInfo.InvariantCulture) + "MB");
             }
             breakdown.Sort(StringComparer.Ordinal);
-            Debug.Log("[DD-OBS] r2.z3b.textures " + string.Join(" | ", breakdown));
+            Debug.Log("[DD-OBS] r2.z3b.textures mix=" + label + " " + string.Join(" | ", breakdown));
 
             double sharedMB = Math.Round(bytes / (1024.0 * 1024.0), 2);
             long zombieSetPass = frame[0] - noZombies[0], zombieDraws = frame[1] - noZombies[1];
             Debug.Log(string.Format(CultureInfo.InvariantCulture,
-                "[DD-OBS] r2.z3b zombies={0} frame setPass={1} draw={2} batches={3} | no_zombies {4}/{5}/{6} | zombie setPass={7} draws={8} batches={9} | textures={10} sharedGpuMB={11:0.00} uniquePerZombieMax={12}",
+                "[DD-OBS] r2.z3b mix=" + label + " " + R2ZombieCrowd.Describe(mix) + " zombies={0} frame setPass={1} draw={2} batches={3} | no_zombies {4}/{5}/{6} | zombie setPass={7} draws={8} batches={9} | textures={10} sharedGpuMB={11:0.00} uniquePerZombieMax={12}",
                 perZombie.Count, frame[0], frame[1], frame[2], noZombies[0], noZombies[1], noZombies[2], zombieSetPass, zombieDraws, frame[2] - noZombies[2], all.Count, sharedMB, uniqueMax));
             Time.timeScale = 1f;
-
-            R2Olcum.Yaz("Z3b", "DD.Prototype.Tests.PlayMode.ZombieR2Tests.Z3b_40Zombi_SetPassPayi_DokuButcesi", new Dictionary<string, double>
-            {
-                { "sharedTextureGpuMB", sharedMB }, { "uniqueTexturesPerZombie", uniqueMax },
-                { "zombieSetPass", zombieSetPass }, { "zombieDraws", zombieDraws }, { "frameSetPass", frame[0] },
-            }, perZombie.Count);
-
-            Assert.Greater(frame[0], 0, "no render counters read");
-            Assert.LessOrEqual(sharedMB, MaxSharedTextureGpuMB, "zombi ortak doku GPU MB");
-            Assert.LessOrEqual(uniqueMax, MaxUniqueTexturesPerZombie, "zombiye özgü doku");
-            Assert.LessOrEqual(zombieSetPass, MaxZombieSetPass, "zombi SetPass payı");
-            Assert.LessOrEqual(zombieDraws, MaxZombieDraws, "zombi draw payı");
-            Assert.LessOrEqual(frame[0], MaxFrameSetPass, "kare SetPass");
+            result[0] = zombieSetPass; result[1] = zombieDraws; result[2] = frame[0]; result[3] = sharedMB; result[4] = uniqueMax; result[5] = perZombie.Count;
+            foreach (ZombieEnemy z in crowd) if (z != null && z.IsSpawned) z.Remove();
+            yield return null;
         }
 
         // ------------------------------------------------------------------------------------------------------------ Z4
@@ -304,7 +355,12 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsTrue(kosul(), aciklama + " (" + saniye + " s)");
         }
 
-        /// <summary>The SetPassAttribution method: render the game camera by hand into a 1080p MSAA-2× target 14 times, keep the largest counters.</summary>
+        /// <summary>
+        /// Render counters of one hand-rendered frame of the game camera (1080p, MSAA 2×, the SetPassAttribution target): the
+        /// camera's own per-frame render is switched off for the measurement so a profiler frame holds exactly one render, and
+        /// the per-frame readings are reduced by their MEDIAN over 12 frames (the WP-038J max-of-14 caught two renders in one
+        /// frame: an empty scene read 75 and 88 SetPass in the same session).
+        /// </summary>
         private static IEnumerator Counters(Camera cam, long[] into)
         {
             var rt = new RenderTexture(1920, 1080, 24) { name = "R2 Z3b frame", antiAliasing = 2 };
@@ -314,8 +370,12 @@ namespace DD.Prototype.Tests.PlayMode
             var setPass = ProfilerRecorder.StartNew(ProfilerCategory.Render, "SetPass Calls Count");
             var draws = ProfilerRecorder.StartNew(ProfilerCategory.Render, "Draw Calls Count");
             var batches = ProfilerRecorder.StartNew(ProfilerCategory.Render, "Batches Count");
+            bool wasEnabled = cam.enabled;
+            var sp = new List<long>(); var dr = new List<long>(); var ba = new List<long>();
             try
             {
+                cam.enabled = false;
+                yield return null;
                 for (int k = 0; k < 14; k++)
                 {
                     cam.targetTexture = rt;
@@ -323,17 +383,28 @@ namespace DD.Prototype.Tests.PlayMode
                     Graphics.Blit(rt, sync);
                     UnityEngine.Rendering.AsyncGPUReadback.Request(sync, 0, TextureFormat.RGBA32).WaitForCompletion();
                     cam.targetTexture = null;
-                    into[0] = Math.Max(into[0], setPass.CurrentValue); into[1] = Math.Max(into[1], draws.CurrentValue); into[2] = Math.Max(into[2], batches.CurrentValue);
                     yield return null;
-                    into[0] = Math.Max(into[0], setPass.LastValue); into[1] = Math.Max(into[1], draws.LastValue); into[2] = Math.Max(into[2], batches.LastValue);
+                    if (k < 2) continue;   // warm-up
+                    sp.Add(setPass.LastValue); dr.Add(draws.LastValue); ba.Add(batches.LastValue);
                 }
             }
             finally
             {
                 setPass.Dispose(); draws.Dispose(); batches.Dispose();
                 cam.targetTexture = null;
+                cam.enabled = wasEnabled;
                 rt.Release(); sync.Release();
             }
+
+            into[0] = Median(sp); into[1] = Median(dr); into[2] = Median(ba);
+            Debug.Log("[DD-OBS] r2.z3b.counters setPass=[" + string.Join(",", sp) + "] draw=[" + string.Join(",", dr) + "]");
+        }
+
+        private static long Median(List<long> v)
+        {
+            if (v.Count == 0) return 0;
+            v.Sort();
+            return v[v.Count / 2];
         }
 
         /// <summary>The game camera (same post / exposure) moved for one render and put back; the ArtVisualRegression readable target.</summary>

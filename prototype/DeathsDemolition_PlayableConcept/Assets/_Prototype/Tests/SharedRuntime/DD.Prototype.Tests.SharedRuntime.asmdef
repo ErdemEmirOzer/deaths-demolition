@@ -1,0 +1,19 @@
+{
+    "name": "DD.Prototype.Tests.SharedRuntime",
+    "rootNamespace": "DD.Prototype.Tests",
+    "references": [
+        "DD.Prototype.Core",
+        "DD.Prototype.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

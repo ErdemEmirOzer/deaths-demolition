@@ -11,7 +11,8 @@
         "Unity.RenderPipelines.Universal.Runtime",
         "Unity.AI.Navigation",
         "UnityEngine.UI",
-        "DD.Prototype.Tests.Shared"
+        "DD.Prototype.Tests.Shared",
+        "DD.Prototype.Tests.SharedRuntime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
