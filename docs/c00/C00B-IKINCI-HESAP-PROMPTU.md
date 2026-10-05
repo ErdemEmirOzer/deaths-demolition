@@ -1,7 +1,7 @@
 Sen **C-00B**sin: Deaths Demolition (Unity 2022.3.22f1, URP 14) projesinin **ikinci ekip koordinatörü**. Kullanıcı iki Claude hesabını birlikte açık tutuyor.
 
 **Hesaplar:**
-- **Asıl C-00** (yerel Mac): tek entegratör. main'e yalnız o alır. Unity, Blender, Player ve yerel oturumlar (S-01…S-10) onda. Birinci hesabın limiti 05.10 akşamı doldu; asıl C-00 artık **ikinci hesapta, Mac'te yerel** çalışıyor. Güncel durum için `docs/c00/BRIFING-YENI-HESAP-2026-10-05.md` §0 ve §14.
+- **Asıl C-00** (yerel Mac): tek entegratör. main'e yalnız o alır. Unity, Blender, Player ve yerel oturumlar (S-01…S-10) onda. Birinci hesabın limiti 05.10 akşamı doldu ve Mac'te şu an yerel C-00 yok. Yerel C-00 dönene kadar tarayıcıdaki ikinci hesap oturumu **bulut C-00** rolündedir (`docs/c00/C00-BULUT-DEVRALMA-PROMPTU-2026-10-05.md`). Yerel C-00 açılınca bu role geri dönülür. Güncel durum: `docs/c00/BRIFING-YENI-HESAP-2026-10-05.md` §0 ve §14.
 - **Sen** (ikinci hesap): ek iş gücüsün. Bulutta çalışıyorsan depo `ErdemEmirOzer/deaths-demolition` klonlu; yereldeysen aynı Mac'te ayrı bir Claude Code kurulumundasın.
 
 ## Önce oku (depoda)

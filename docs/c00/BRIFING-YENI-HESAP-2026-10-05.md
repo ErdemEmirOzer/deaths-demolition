@@ -8,14 +8,16 @@
 
 ## 0. Kim, nerede, hangi promptla başlar
 
-| Rol | Nerede | Başlangıç promptu | Durum (05.10 ~19:40) |
+| Rol | Nerede | Başlangıç promptu | Durum (05.10 ~19:45) |
 |---|---|---|---|
-| **C-00** (asıl koordinatör, tek entegratör) | İkinci hesap, bu Mac'te **yerel** (Claude Desktop) | `docs/c00/C00-DEVIR-BASLANGIC-PROMPTU.md` | açılacak |
-| **C-00B** (ikinci ekip) | İkinci hesap, **bulut** | `docs/c00/C00B-IKINCI-HESAP-PROMPTU.md` | çalışıyor; B-02 teslim edildi (§14) |
-| Bulut C-00 (yalnız yerel C-00 açılamazsa) | İkinci hesap, bulut | `docs/c00/C00-BULUT-PROMPTU.md` | yedek |
+| **Bulut C-00** (geçici asıl koordinatör; C-00B görevleri de onda) | İkinci hesap, **tarayıcı / bulut** (claude.ai/code) | `docs/c00/C00-BULUT-DEVRALMA-PROMPTU-2026-10-05.md` (kurallar `C00-BULUT-PROMPTU.md`) | çalışıyor. C-00B olarak B-02, B-01 ve B-03'ü teslim etti (§14). main'e yalnız belge, Python ve kapı tanımı alır. |
+| **Yerel C-00** (asıl koordinatör, tek entegratör) | Mac'te yerel: birinci hesap limiti yenilenince (~07.10 11:00 TR, tahmini) ya da ikinci hesap Claude Desktop'ta açılınca | `docs/c00/C00-DEVIR-BASLANGIC-PROMPTU.md` | **şu an yok**. Açıldığı an entegratörlük ona geçer; bulut oturumu `BULUT-DEVIR-<gg.aa>.md` yazar ve C-00B'ye döner. |
+| C-00B (ikinci ekip) | İkinci hesap, bulut | `docs/c00/C00B-IKINCI-HESAP-PROMPTU.md` | yerel C-00 dönünce bulut oturumu bu role geri döner |
+
+**Önemli:** Mac'te çalışan Claude oturumu yok. S-01…S-10 birinci hesaptaydı ve durdu. Unity, Blender, Player, guard, KADRO ve harici disk işleri yerel C-00 dönene kadar `LOCAL-QUEUE.md`'de bekler. Yerel WIP commit'leri GitHub'da değil; buluttan görünmez.
 
 **Okuma sırası:**
-1. Bu belge (önce §14 son durum).
+1. Bu belge (önce §14 son durum). Yerel C-00 açılınca önce `YEREL-DONUS-PLANI-2026-10-05.md` ve varsa `BULUT-DEVIR-<gg.aa>.md`.
 2. `C00-DEVIR-2026-10-05.md` (SON DURUM EKİ, §0–§9, §12).
 3. `PROJE-SISTEM-PROMPTU-2026-09-29.md`.
 4. `R2-PLAN.md`, `BEKLEYEN-MESAJLAR.md`, `LOCAL-QUEUE.md`, `devir-notlari/`.
@@ -41,6 +43,8 @@ Kahraman ve zombi giysisi üretimi ile silah tutuşu, zombi alımı, ses son aya
 |---|---|---|---|
 | **C-00 (asıl koordinatör, tek entegratör)** | **İkinci hesap, bu Mac'te YEREL** (Claude Desktop ya da `CLAUDE_CONFIG_DIR=~/.claude-hesap2 claude`) | Oturumları (S-01…S-10) açar ve yönetir. `tools/integrate.sh` ile main'e alır. Unity, Blender ve Player koşturur. KADRO'yu ve harici diski yönetir. Alt ajan başlatır. Kullanıcıya görselli rapor verir. | — |
 | **C-00B (ikinci ekip)** | İkinci hesap, **bulut** (claude.ai/code, depo `ErdemEmirOzer/deaths-demolition`) | `c00b/*` dalları ve PR'lar: belge, Python araçları ve testleri, kod incelemesi, Unity'siz C# taslakları. Görevler `docs/c00/C00B-GOREVLER.md`'de. | main'e almak, Unity/Blender/Player, KADRO, harici disk |
+
+**Güncelleme (05.10 ~19:45):** ikinci hesap şu an yalnız tarayıcıda (bulut) çalışıyor. Yukarıdaki tablo yerel C-00 açıldığında geçerli olur. O zamana kadar roller §0'daki gibidir: bulut oturumu geçici bulut C-00'dır.
 
 **Kritik:** Unity'yi çalıştırabilen bir yerel C-00 oturumu **olmadan** derleme, test, zombi alımı, ses ölçümü ve build ilerleyemez. Kullanıcı ikinci hesabı yerelde de açmalı. Bulut oturumu tek başınaysa:
 - yalnız kod, belge ve inceleme yapar;
@@ -319,21 +323,44 @@ Bu bölüm, birinci hesabın limiti dolduktan sonra depodan doğrulanarak eklend
 - `a62d83db`'den sonra main'e yalnız belge commit'leri girdi (`3bb501e7`, `3e68bc08`).
 - Son derleme kontrolü hâlâ `d0783d9b` (PASS). `03c3b06b` ve `a62d83db` derlenmedi. İlk iş: `tools/compile-check.sh main`.
 
-**C-00B (bulut) teslimi**
-- **B-02 BİTTİ:** dal `c00b/B-02-r2-gates-lint`, kod commit'i `b7737f04`, teslim kaydı commit'i `a7cd3bd3`. PR: https://github.com/ErdemEmirOzer/deaths-demolition/pull/1
-- `tools/qa/r2_gates_lint.py` + `tools/qa/tests/test_r2_gates_lint.py`: 23 birim testi, bulutta 23/23.
-- Aracın main `0b3ec358` raporu:
-  - **ERROR 1:** `r2-measure-contract.md`'de `R2Olcum.cs` yolu bayat.
-  - **WARN 14:** H1 `[Explicit]` ama `measuredBy` yok; Z3b'nin zorunlu testi `[Explicit]`; 12 kapının yazıcısı yok.
-- **Yerel C-00 yapar:**
-  1. `git fetch origin c00b/B-02-r2-gates-lint`, sonra dalın checkout'unda `python3 -m unittest tools/qa/tests/test_r2_gates_lint.py`.
-  2. Üç commit'i sırayla al; teslim kaydı satırları birbirine dayandığı için sıra önemli. Gate isterse `--s01` ekle.
-     - `tools/integrate.sh 4edbba5b --tag wp-089-c00b-b02-start-int --allow-paths docs/c00 --no-post --apply`
-     - `tools/integrate.sh b7737f04 --tag wp-091-r2-gates-lint-int --no-post --apply`
-     - `tools/integrate.sh a7cd3bd3 --tag wp-089-c00b-b02-log-int --allow-paths docs/c00 --no-post --apply`
-  3. `git cherry main origin/c00b/B-02-r2-gates-lint` → "+" sayısı 0.
-- ERROR ve WARN listesini S-10'a (kapı sahibi) ya da yeni bir C-00B görevine ver. Sözleşme yolu yalnız belge işi; `[Explicit]` ve yazıcı eksikleri test sahiplerinin işi.
-- B-01, B-03 ve B-04 açık; C-00B sırayla sürdürüyor.
+**C-00B (bulut) teslimleri** (dallar üst üste kurulu: B-01, B-02'nin ucunda; B-03, B-01'in ucunda)
+
+| Görev | Dal | Commit'ler (sırayla) | PR | Durum |
+|---|---|---|---|---|
+| B-02 r2 kapı denetleyicisi | `c00b/B-02-r2-gates-lint` | `4edbba5b` → `b7737f04` (araç + 23 test, bulutta 23/23) → `a7cd3bd3` | #1 | bitti |
+| B-01 sistem belgeleri R2 (`ARCHITECTURE` §3.12–3.17, §4, §8.1; `SYSTEMS-INDEX` M4-R2) | `c00b/B-01-docs-r2` | `ec546e12` → `88da3107` → `c5e0d905` | #2 | bitti |
+| B-03 GC incelemesi (`docs/c00/reviews/B-03-gc-inceleme.md` + LOCAL-QUEUE Profiler satırı) | `c00b/B-03-gc-review` | `ba448fe3` → `1dff988b` → bitiş kaydı | (#3) | rapor bitti |
+| B-04 R2 yayın notu taslağı | — | — | — | açık |
+
+**r2 kapı denetleyicisinin raporu (main `0b3ec358` üzerinde):**
+- **ERROR 1:** `r2-measure-contract.md`'de `R2Olcum.cs` yolu bayat.
+- **WARN 14:** H1 `[Explicit]` ama `measuredBy` yok; Z3b'nin zorunlu testi `[Explicit]`; 12 kapının yazıcısı yok.
+
+**GC incelemesinin bulguları** (tahmin, Profiler ile yerelde doğrulanacak):
+- G1 orta, S-03: zombi materyal anahtarı ve `sharedMaterials` kopyası her doğuşta.
+- G2 orta, S-08: `AudioCatalog` indeksi null ya da yinelenen girişte her çağrıda yeniden kuruluyor.
+- Düşük öncelikli: G3 S-02, G4 S-08, G5 S-06.
+- Yalnız CPU notu: B1 S-02, B2 S-02/S-08.
+
+**main'e alma sırası** (bulut C-00 alır; zorunlu sıra; etiket adları origin'de boş):
+
+| # | SHA | Etiket |
+|---|---|---|
+| 1 | `4edbba5b` | `wp-089-c00b-b02-start-int` |
+| 2 | `b7737f04` | `wp-091-r2-gates-lint-int` |
+| 3 | `a7cd3bd3` | `wp-089-c00b-b02-log-int` |
+| 4 | `ec546e12` | `wp-089-c00b-b01-start-int` |
+| 5 | `88da3107` | `wp-089-r2-system-docs-int` |
+| 6 | `c5e0d905` | `wp-089-c00b-b01-log-int` |
+| 7 | `ba448fe3` | `wp-089-c00b-b03-start-int` |
+| 8 | `1dff988b` | `wp-091-gc-review-int` |
+| 9 | B-03 bitiş kaydı | `wp-089-c00b-b03-log-int` |
+| 10 | `f8b898fa` (briefing §0/§14 ilk ek) | `wp-089-brifing-tamam-int` |
+| 11 | `claude/sharp-cray-jsvo9s` ucu (bulut düzeni eki) | `wp-089-brifing-bulut-int` |
+
+Yöntem: önce `tools/integrate.sh`; gate yalnız bulut ortamı yüzünden düşerse `git cherry-pick` + `git tag -a`, kapı 8 elle. Ayrıntı `C00-BULUT-DEVRALMA-PROMPTU-2026-10-05.md` §4.2.
+
+**Birinci hesap:** oturum bilgisine göre haftalık limit 07.10 ~11:00 (TR) civarında yenilenir; kullanıcı doğrular. S-01…S-10 o zaman ya da ikinci hesap Claude Desktop'ta açılınca devam eder.
 
 **Eksik devir notu: S-03 (WP-084)**
 - `docs/c00/devir-notlari/` altında S-03 notu yok; §7'de "not bekleniyordu" yazıyor.
@@ -344,5 +371,6 @@ Bu bölüm, birinci hesabın limiti dolduktan sonra depodan doğrulanarak eklend
   - `git cherry main wp-084-s03-r2gates` (tip `a42f539b`; `c37991f7` / `cf8346a0` eşdeğerliği).
 
 **Başlangıç promptları güncellendi**
-- `C00-DEVIR-BASLANGIC-PROMPTU.md` artık ikinci hesaptaki yerel C-00 içindir. Önce bu belgeyi ve depodaki `docs/c00/` kopyalarını okutur.
-- `C00B-IKINCI-HESAP-PROMPTU.md` artık asıl C-00'ı birinci hesapta değil, ikinci hesapta yerel olarak gösterir.
+- `C00-BULUT-DEVRALMA-PROMPTU-2026-10-05.md` (yeni): tarayıcıdaki ikinci hesap oturumu, yerel C-00 dönene kadar bulut C-00'dır.
+- `C00-DEVIR-BASLANGIC-PROMPTU.md`: hangi hesapla açılırsa açılsın Mac'teki yerel C-00 içindir. Önce bulut devir notunu ve yerel dönüş planını okutur.
+- `C00B-IKINCI-HESAP-PROMPTU.md`: asıl C-00'ı birinci hesapta değil, yerelde gösterir; bulut düzeni bu bölümdedir.
