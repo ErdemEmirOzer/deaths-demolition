@@ -738,11 +738,12 @@ class RestoreWriteTests(RestoreBase):
 
     def test_Restore_KarantinaYazilamaz_YolYazilmaz(self):
         self.snap(); self.run_changes()
-        (self.root / "ledger").mkdir(); (self.root / "ledger").chmod(0o500)
+        q = self.root / "ledger" / "quarantine"   # G4 D8: ledger/ itself already holds the window record
+        q.mkdir(parents=True, exist_ok=True); q.chmod(0o500)
         try:
             rc, out, err = self.restore("editor")
         finally:
-            (self.root / "ledger").chmod(0o755)
+            q.chmod(0o755)
         self.assertEqual(30, rc, out + err)
         self.assertEqual('{"ui": 99}\n', (self.d1 / "ui-settings.json").read_text())   # no kept copy → not written
 
@@ -1261,6 +1262,206 @@ class ClassCodeTests(RestoreBase):
             self.assertTrue(_re.sub(r"^player  [^ ]*  ", "", row).startswith("/"))
 
 
+class LedgerTests(RestoreBase):
+    """G4 D8 (design v3.1 §3 D8, INV-7, Q4): the window ledger L/windows/<id>.json."""
+
+    def L(self, *parts):
+        return self.root.joinpath("ledger", *parts)
+
+    def records(self, sub="windows"):
+        return [json.loads(p.read_text()) for p in sorted(self.L(sub).glob("*.json"))]
+
+    def foreign_snapshot(self, d, scope="editor", stay=True):
+        """a snapshot whose caller is another process: alive afterwards (stay) or gone at once."""
+        done = self.tmp / ("done-" + d.name)
+        tail = "sleep 120" if stay else "exit $rc"
+        p = subprocess.Popen(["zsh", "-c", 'zsh "$0" snapshot "$1" --scope "$2" > "$3.out" 2>&1; rc=$?; echo $rc > "$3"; ' + tail,
+                              str(self.guard), str(d), scope, str(done)], env=self.env(), start_new_session=True)
+        self.procs.append(p)
+        self.assertTrue(self.wait_file(done, 120))
+        self.assertEqual("0", done.read_text().strip(), Path(str(done) + ".out").read_text())
+        if not stay:
+            p.wait(timeout=30)
+        return p
+
+    def test_Ledger_IkiEditorPenceresiAtaDisi_Ikincisi75(self):
+        self.foreign_snapshot(self.tmp / "ugA")
+        rc, out, err = self.run_guard("snapshot", self.dir, "--scope", "editor", DD_GUARD_SLOT_WAIT="6")
+        self.assertEqual(75, rc, out + err)
+        self.assertIn("a live window of another process overlaps", out + err)
+        self.assertFalse((self.dir / "before.txt").exists())
+        self.assertEqual(1, len(self.records()))
+
+    def test_Ledger_PollSirasinda_FlockTutulmaz(self):
+        import fcntl
+        self.foreign_snapshot(self.tmp / "ugA")
+        g = self.start_guard("snapshot", self.dir, "--scope", "editor", DD_GUARD_SLOT_WAIT="20")
+        time.sleep(4)
+        with open(self.L(".lock"), "a") as f:
+            fcntl.flock(f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)   # raises if the poll held it
+            fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+        out, err = g.communicate(timeout=60)
+        self.assertEqual(75, g.returncode, out + err)
+
+    def test_Ledger_TerkEdilmisOpen_Cikis65MesajAlanlari(self):
+        a = self.tmp / "ugA"
+        self.foreign_snapshot(a, stay=False)
+        rec = self.records()[0]
+        rc, out, err = self.run_guard("snapshot", self.dir, "--scope", "editor")
+        self.assertEqual(65, rc, out + err)
+        for part in ("REFUSED — ledger window %s:" % rec["id"], "DIR=%s" % a.resolve(), "state=open", "owner=%d" % rec["owner"]["pid"],
+                     "alive=0", 'next: "userdata-guard.sh restore %s --scope editor"' % a.resolve()):
+            self.assertIn(part, out + err)
+
+    def test_Ledger_DirtyKayit_Cikis65_TekrarRestoreSonraSifir(self):
+        self.snap("editor")
+        (self.d1 / "ui-settings.json").write_text('{"ui": 99}\n')
+        p = self.lock_d2(self.d1)
+        rc, out, err = self.restore("editor"); self.assertEqual(75, rc, out + err)
+        self.assertEqual("dirty", self.records()[0]["state"])
+        rc, out, err = self.run_guard("snapshot", self.tmp / "ugB", "--scope", "editor")
+        self.assertEqual(65, rc, out + err); self.assertIn("state=dirty", out + err)
+        self.unlock_d2(p, self.d1)
+        rc, out, err = self.restore("editor"); self.assertEqual(0, rc, out + err)
+        self.assertEqual([], self.records()); self.assertEqual(1, len(self.records("closed")))
+        rc, out, err = self.run_guard("snapshot", self.tmp / "ugB", "--scope", "editor")
+        self.assertEqual(0, rc, out + err)
+
+    def test_Ledger_IcIceAtaPenceresi_Cikis0(self):
+        self.snap("editor")
+        rc, out, err = self.run_guard("snapshot", self.tmp / "ugB", "--scope", "editor")
+        self.assertEqual(0, rc, out + err)   # the same owner (the caller itself): nested, LIFO
+        self.assertEqual(2, len(self.records()))
+
+    def test_Ledger_YazimdaSigkill_SonrakiSnapshot65TekrarKapanir(self):
+        before = self.live_state()
+        self.snap("player"); self.player_changes()
+        self.hook('[ "$1" = 2 ] && { : > "%s/in-write"; sleep 30; }\n' % self.tmp)
+        g = self.start_guard("restore", self.dir, "--scope", "player")
+        self.assertTrue(self.wait_file(self.tmp / "in-write"))
+        os.killpg(g.pid, signal.SIGKILL); g.communicate(timeout=30)
+        (self.tmp / "pgrep-hook").unlink()
+        self.assertEqual("restoring", self.records()[0]["state"])
+        rc, out, err = self.run_guard("snapshot", self.tmp / "ugB", "--scope", "player")
+        self.assertEqual(65, rc, out + err); self.assertIn("state=restoring", out + err)
+        rc, out, err = self.restore("player"); self.assertEqual(0, rc, out + err)
+        self.assertEqual(before[self.d2 / "prototype-profile.json"], sha(self.d2 / "prototype-profile.json"))
+        self.assertEqual([], self.records())
+
+    def test_Ledger_StaleKayit_DirtyKalirClosedaGitmez(self):
+        self.snap("editor")
+        (self.d1 / "ui-settings.json").write_text('{"ui": 99}\n')
+        p = self.lock_d2(self.d1)
+        rc, out, err = self.restore("editor"); self.assertEqual(75, rc, out + err)
+        self.unlock_d2(p, self.d1)
+        (self.d1 / "ui-settings.json").write_text('{"user": 1}\n')   # the user saved meanwhile
+        rc, out, err = self.restore("editor"); self.assertEqual(30, rc, out + err)
+        recs = self.records()
+        self.assertEqual(("dirty", "dirty"), (recs[0]["state"], recs[0]["areas"]["editor"]))
+        self.assertEqual([], self.records("closed"))
+
+    def test_Ledger_SnapshotHatasi_KayitKalmaz(self):
+        (self.tmp / "mv-fail-before").write_text("")
+        rc, out, err = self.run_guard("snapshot", self.dir, "--scope", "editor")
+        self.assertEqual(75, rc, out + err)
+        self.assertEqual([], self.records())
+        self.assertEqual(1, len(self.records("aborted")))   # kept, never deleted
+
+    def test_Ledger_KokDdGuardRootAltinda_HomeaYazilmaz(self):
+        w = self.snap("editor")
+        rc, out, err = self.restore("editor"); self.assertEqual(0, rc, out + err)
+        self.assertTrue(self.L("closed", w["id"] + ".json").is_file())
+        self.assertFalse((self.tmp / "home" / ".dd-userdata-guard").exists())
+        self.assertFalse((Path(pwhome()) / ".dd-userdata-guard" / "windows" / (w["id"] + ".json")).exists())
+        self.assertFalse((Path(pwhome()) / ".dd-userdata-guard" / "closed" / (w["id"] + ".json")).exists())
+
+    def test_Ledger_ReleaseAllToPlayer_EditorReleasedKapanir(self):
+        w = self.snap("all"); self.player_changes()
+        rc, out, err = self.restore("player"); self.assertEqual(0, rc, out + err)
+        rec = json.loads(self.L("closed", w["id"] + ".json").read_text())
+        self.assertEqual({"editor": "released", "player": "finalized"}, rec["areas"])
+
+    def test_Ledger_DarRestore_KirliAlaniKapatmaz(self):
+        """D8 review MUST-1: a narrower re-restore (--scope player) never releases a dirty editor area and closes the window."""
+        self.snap("all"); self.player_changes()
+        (self.d1 / "ui-settings.json").write_text('{"ui": 99}\n')
+        p = self.lock_d2(self.d1)
+        try:
+            rc, out, err = self.restore("all"); self.assertEqual(75, rc, out + err)
+            rc, out, err = self.restore("player")
+        finally:
+            self.unlock_d2(p, self.d1)
+        rec = self.records()[0]
+        self.assertEqual(("dirty", "dirty"), (rec["state"], rec["areas"]["editor"]))
+        self.assertEqual([], self.records("closed"))
+        rc, out, err = self.restore("all"); self.assertEqual(0, rc, out + err)   # the real fix: restore it
+        self.assertEqual([], self.records())
+
+    def test_Ledger_KirliKayitBaskaAlan_Cikis0(self):
+        self.snap("editor")
+        (self.d1 / "ui-settings.json").write_text('{"ui": 99}\n')
+        p = self.lock_d2(self.d1)
+        try:
+            rc, out, err = self.restore("editor"); self.assertEqual(75, rc, out + err)
+        finally:
+            self.unlock_d2(p, self.d1)
+        rc, out, err = self.run_guard("snapshot", self.tmp / "ugB", "--scope", "player")
+        self.assertEqual(0, rc, out + err)   # no overlap with the dirty editor window
+
+    def test_Ledger_CanliRestore_Bekler75(self):
+        self.snap("editor")
+        (self.d1 / "ui-settings.json").write_text('{"ui": 99}\n')
+        self.hook("")   # pgrep is not called for the editor area; hold the restore in its write phase via the defaults shim
+        (self.tmp / "defaults-import-sleep").write_text("")
+        d = load_plist(self.p2); d["EditorKey"] = "run"; self.write_plist(self.p2, d)
+        g = self.start_guard("restore", self.dir, "--scope", "editor")
+        self.assertTrue(self.wait_file(self.tmp / "import-started", 60))
+        rc, out, err = self.run_guard("snapshot", self.tmp / "ugB", "--scope", "editor", DD_GUARD_WAIT="6")
+        self.assertEqual(75, rc, out + err); self.assertIn("is being restored by pid", out + err)
+        (self.tmp / "defaults-import-sleep").unlink()
+        os.killpg(g.pid, signal.SIGKILL); g.communicate(timeout=30)
+
+    def test_Ledger_GercekAtaPenceresi_Cikis0(self):
+        """nested: the overlapping window's owner is a GRANDPARENT of the new snapshot's caller."""
+        a, done = self.tmp / "ugA", self.tmp / "inner-done"
+        script = ('zsh "$0" snapshot "$1" --scope editor > "$3.a" 2>&1 || exit 7; '
+                  'zsh -c \'zsh "$0" snapshot "$1" --scope editor; exit $?\' "$0" "$2" > "$3.b" 2>&1; echo $? > "$3"')
+        p = subprocess.Popen(["zsh", "-c", script, str(self.guard), str(a), str(self.dir), str(done)], env=self.env(),
+                             start_new_session=True)
+        self.procs.append(p)
+        self.assertTrue(self.wait_file(done, 120))
+        self.assertEqual("0", done.read_text().strip(), Path(str(done) + ".b").read_text())
+        self.assertEqual(2, len(self.records()))
+
+    def test_Ledger_TerkEdilmisPencereCanliSlotSahibiAltinda_Kardes65(self):
+        """D8 concurrency review SHOULD-1: an abandoned re-entrant window under a LIVE slot holder is not "nested" for the
+        holder's next child — liveness is the window owner's (the dead snapshot caller), not the holder's."""
+        go, done, done2 = self.tmp / "release-h", self.tmp / "c1-done", self.tmp / "c2-done"
+        script = (f'"{self.tools}/slot.sh" acquire player h >/dev/null || exit 9; '
+                  f'zsh -c \'zsh "$0" snapshot "$1" --scope player; exit $?\' "{self.guard}" "{self.dir}" > "{done}.out" 2>&1; echo $? > "{done}"; '
+                  f'zsh -c \'zsh "$0" snapshot "$1" --scope player; exit $?\' "{self.guard}" "{self.tmp / "ugB"}" > "{done2}.out" 2>&1; echo $? > "{done2}"; '
+                  f'while [ ! -f "{go}" ]; do sleep 0.1; done; "{self.tools}/slot.sh" release player h >/dev/null')
+        p = subprocess.Popen(["bash", "-c", script], env=self.env(), start_new_session=True); self.procs.append(p)
+        try:
+            self.assertTrue(self.wait_file(done2, 120))
+            self.assertEqual("0", done.read_text().strip(), Path(str(done) + ".out").read_text())
+            out = Path(str(done2) + ".out").read_text()
+            self.assertEqual("65", done2.read_text().strip(), out)
+            self.assertIn("alive=0", out)
+            rec = self.records()[0]
+            self.assertTrue(rec["slot"]["reentrant"]); self.assertIsNotNone(rec["slot"]["holder"])
+        finally:
+            go.write_text("")
+
+    def test_Ledger_SnapshotMissing_Cikis64KayitDirty(self):
+        w = self.snap("editor")
+        (self.dir / "before.txt").unlink()
+        rc, out, err = self.restore("editor")
+        self.assertEqual(64, rc, err)
+        self.assertIn("SNAPSHOT_MISSING — ledger window %s marked dirty" % w["id"], err)
+        self.assertEqual("dirty", self.records()[0]["state"])
+
+
 def sandboxed_main():
     if os.environ.get(SANDBOX_FLAG) == "1":
         unittest.main(verbosity=2)
@@ -1269,8 +1470,10 @@ def sandboxed_main():
     if not sb:
         print("sandbox-exec missing — the v2 guard tests refuse to run unsandboxed (RED)", file=sys.stderr)
         sys.exit(1)
-    profile = ('(version 1)(allow default)(deny file-write* (subpath "%s/Library") (subpath "/private/tmp/dd-slots"))'
-               '(deny mach-lookup (global-name "com.apple.cfprefsd.daemon") (global-name "com.apple.cfprefsd.agent"))' % pwhome())
+    profile = ('(version 1)(allow default)(deny file-write* (subpath "%s/Library") (subpath "/private/tmp/dd-slots")'
+               ' (subpath "%s/.dd-userdata-guard"))'   # G4 D8 review SHOULD-4: never the real ledger
+               '(deny mach-lookup (global-name "com.apple.cfprefsd.daemon") (global-name "com.apple.cfprefsd.agent"))'
+               % (pwhome(), pwhome()))
     env = dict(os.environ); env[SANDBOX_FLAG] = "1"
     os.execve(sb, [sb, "-p", profile, sys.executable, os.path.abspath(__file__), *sys.argv[1:]], env)
 

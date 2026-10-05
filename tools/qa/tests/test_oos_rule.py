@@ -96,6 +96,18 @@ class OosRuleTests(unittest.TestCase):
         self.assertTrue(ok, why); self.assertIn("pid 62577", why)
         self.assertEqual(1, len(oos_rule.oos_rows((self.ug / "out-of-scope-changed.txt").read_text())))
 
+    def test_DefterKaydi_KokDisindakiSahipPencereyiBulur(self):
+        """G4 D8: the owner window is found through a ledger record (it lies outside every walk root)."""
+        self.window()
+        elsewhere = self.root / "outside"; elsewhere.mkdir()
+        self.owner.rename(elsewhere / "ugp"); self.owner = elsewhere / "ugp"
+        ledger = self.root / "ledger"; (ledger / "closed").mkdir(parents=True)
+        (ledger / "closed" / "w1.json").write_text('{"id": "w1", "dir": "%s"}' % self.owner)
+        ok, why = oos_rule.decide(self.ug, [self.root / "rc"], wait=0, sleep=lambda s: None)
+        self.assertFalse(ok, why)                                      # the walk alone does not see it
+        ok, why = oos_rule.decide(self.ug, [self.root / "rc"], wait=0, sleep=lambda s: None, ledgers=[ledger])
+        self.assertTrue(ok, why)
+
     def test_SatirYok_Kalir(self):
         self.window(rows=())
         (self.ug / "out-of-scope-changed.txt").write_text("")

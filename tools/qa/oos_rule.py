@@ -10,12 +10,16 @@ when all three hold:
   3. each such owning window's restore is verified=1 (the last summary line of its restore.txt). A window still open
      is waited for (≤ --wait s, default 600), then counts as not verified.
 Anything else → FAIL (the caller stops, tell C-00). Player stages never come here: there 32 is a failure.
-Owning windows are found under the roots (default: the KADRO project; heavy folders pruned) by their window.json.
+Owning windows are looked up in the guard's window ledger first (G4 D8: L/windows + L/closed records name their DIR;
+L = $DD_GUARD_ROOT/ledger, else ~/.dd-userdata-guard of the passwd home), then — windows taken before D8 have no record —
+under the roots (default: the KADRO project; heavy folders pruned) by their window.json.
 
-usage: python3 tools/qa/oos_rule.py <ug dir> [--root DIR]… [--wait S]   exit 0 pass (reason on stdout) · 1 fail · 64 usage
+usage: python3 tools/qa/oos_rule.py <ug dir> [--root DIR]… [--ledger L]… [--wait S]   exit 0 pass (reason on stdout) · 1 fail · 64 usage
 """
 import argparse
+import json
 import os
+import pwd
 import re
 import sys
 import time
@@ -54,16 +58,38 @@ def lineage(path):
     return rows
 
 
-def windows(roots, own):
+def ledger_dirs(ledgers):
+    for ledger in ledgers:
+        for sub in ("windows", "closed"):
+            for rec in sorted(Path(ledger, sub).glob("*.json")):
+                try:
+                    d = json.loads(rec.read_text(encoding="utf-8")).get("dir")
+                except (ValueError, OSError):
+                    continue
+                if d and Path(d).is_dir():
+                    yield Path(d)
+
+
+def default_ledgers():
+    root = os.environ.get("DD_GUARD_ROOT")
+    return [Path(root) / "ledger"] if root else [Path(pwd.getpwuid(os.getuid()).pw_dir) / ".dd-userdata-guard"]
+
+
+def windows(roots, own, ledgers=()):
+    seen = set()
+    for d in ledger_dirs(ledgers):
+        if d.resolve() != own and d.resolve() not in seen:
+            seen.add(d.resolve())
+            yield d
     for root in roots:
         for d, dirs, files in os.walk(root):
             dirs[:] = [x for x in dirs if x not in PRUNE and not x.startswith("worktree")]
-            if "window.json" in files and Path(d).resolve() != own:
+            if "window.json" in files and Path(d).resolve() != own and Path(d).resolve() not in seen:
                 yield Path(d)
 
 
-def owner_window(pid, start, roots, own):
-    for w in windows(roots, own):
+def owner_window(pid, start, roots, own, ledgers=()):
+    for w in windows(roots, own, ledgers):
         if any(p == pid and s == start and owned for p, s, owned in lineage(w / "players-lineage.tsv")):
             return w
     return None
@@ -78,7 +104,7 @@ def verified(window):
     return bool(lines) and " verified=1" in lines[-1]
 
 
-def decide(ug, roots, wait=600.0, sleep=time.sleep, clock=time.monotonic):
+def decide(ug, roots, wait=600.0, sleep=time.sleep, clock=time.monotonic, ledgers=()):
     ug = Path(ug).resolve()
     rows = oos_rows(latest(ug / "out-of-scope-changed.txt").read_text(encoding="utf-8")) \
         if latest(ug / "out-of-scope-changed.txt").is_file() else []
@@ -104,7 +130,7 @@ def decide(ug, roots, wait=600.0, sleep=time.sleep, clock=time.monotonic):
         for pid in pids:
             if pid not in starts:
                 return False, "condition 2: pid %s (writer of %s) is not in this window's lineage" % (pid, path)
-            w = owner_window(pid, starts[pid], roots, ug)
+            w = owner_window(pid, starts[pid], roots, ug, ledgers)
             if w is None:
                 return False, "condition 2: pid %s (writer of %s) belongs to no guarded window" % (pid, path)
             owners[w] = pid
@@ -126,6 +152,7 @@ def main(argv=None):
     ap.add_argument("ug")
     ap.add_argument("--root", action="append")
     ap.add_argument("--wait", type=float, default=600.0)
+    ap.add_argument("--ledger", action="append")
     try:
         args = ap.parse_args(argv)
     except SystemExit as e:
@@ -133,7 +160,8 @@ def main(argv=None):
     if not Path(args.ug).is_dir():
         print("no guard window: %s" % args.ug, file=sys.stderr)
         return 64
-    ok, why = decide(args.ug, [Path(r) for r in (args.root or [str(dd_paths.KPROJ)])], args.wait)
+    ok, why = decide(args.ug, [Path(r) for r in (args.root or [str(dd_paths.KPROJ)])], args.wait,
+                     ledgers=[Path(l) for l in args.ledger] if args.ledger else default_ledgers())
     print(why)
     return 0 if ok else 1
 

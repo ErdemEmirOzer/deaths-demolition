@@ -21,6 +21,12 @@
   verify-area                G4 D6 R10: one area's verification — JSON config on stdin, JSON result on stdout (verify_area)
   window-owner <window.json> G4 D7 R4: the receipt's owner (re-entrant: the slot holder) alive with its start time → 0, else 1
   foreign-players <lineage>  G4 D7: owned=0 Players of players-lineage.tsv as JSON; 1 when there is any
+  ledger-begin <L> <po>      G4 D8 S6: record JSON on stdin; under L/.lock: 0 written (state snapshotting) · 65 refused
+                             (a dirty / abandoned overlapping window; the message on stdout) · 75 a live foreign window
+                             overlaps (wait outside the lock and ask again)
+  ledger-update <L> <id>     G4 D8: JSON patch on stdin merged into windows/<id>.json (areas merged); 1 no such record
+  ledger-close <L> <id>      G4 D8 R12: windows/<id>.json → closed/<id>.json · ledger-abort: → aborted/<id>.json
+  ledger-find-dir <L> <dir>  the open record whose dir is <dir> (JSON), 1 none
 Read-only except atomic-write, sample, index-append and restore-area. Exit 2 = usage.
 """
 import hashlib
@@ -83,6 +89,163 @@ def foreign_players(path):
         if len(cols) == 5 and cols[4] == "0":
             rows.setdefault(cols[1], {"pid": int(cols[1]), "ppid": int(cols[2]), "lstart": cols[3], "firstSeen": cols[0]})
     return list(rows.values())
+
+
+# ---- G4 D8 (WP-089, C-00 05.10): the window ledger L/windows/<id>.json ------------------------------------------------
+LEDGER_LIVE = ("snapshotting", "open", "restoring")
+
+
+class LedgerLock:
+    def __init__(self, ledger):
+        self.path = os.path.join(ledger, ".lock")
+
+    def __enter__(self):
+        os.makedirs(os.path.dirname(self.path), exist_ok=True)
+        self.f = open(self.path, "a")
+        deadline = time.monotonic() + 60   # leaf lock, held only for one read-modify-write; bounded (§2.7, D8 review NIT-1)
+        while True:
+            try:
+                fcntl.flock(self.f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                return self
+            except OSError:
+                if time.monotonic() >= deadline:
+                    self.f.close()
+                    raise OSError(errno.ETIMEDOUT, "ledger lock %s busy for 60 s" % self.path)
+                time.sleep(0.2)
+
+    def __exit__(self, *exc):
+        fcntl.flock(self.f.fileno(), fcntl.LOCK_UN)
+        self.f.close()
+
+
+def ledger_write(path, record):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    tmp = "%s.tmp.%d" % (path, os.getpid())
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(record, f, indent=1)
+        f.flush()
+        fullsync(f.fileno())
+    os.rename(tmp, path)
+    fsync_dir(os.path.dirname(path))
+
+
+def ledger_records(ledger):
+    folder = os.path.join(ledger, "windows")
+    out = []
+    for name in sorted(os.listdir(folder)) if os.path.isdir(folder) else []:
+        if name.endswith(".json"):
+            try:
+                with open(os.path.join(folder, name), encoding="utf-8") as f:
+                    out.append(json.load(f))
+            except (ValueError, OSError):
+                out.append({"id": name[:-5], "state": "dirty", "dir": "?", "windowAreas": ["editor", "player"],
+                            "why": "unreadable ledger record"})
+    return out
+
+
+def record_owner(rec):
+    slot = rec.get("slot") or {}
+    return slot.get("holder") or rec.get("owner") or {}
+
+
+def alive(who):
+    return bool(who and who.get("pid") and lstart(who["pid"]) == who.get("lstart"))
+
+
+def ancestors(pid):
+    env = {k: v for k, v in os.environ.items() if k != "TZ"}
+    r = subprocess.run(["ps", "-axo", "pid=,ppid="], capture_output=True, text=True, env=env)
+    parent = dict(line.split()[:2] for line in r.stdout.splitlines() if len(line.split()) >= 2)
+    out, p, steps = set(), str(pid), 0
+    while p and p not in ("0", "1") and steps < 64:
+        out.add(int(p))
+        p, steps = parent.get(p), steps + 1
+    return out
+
+
+def refusal(rec, live):
+    import calendar
+    try:
+        age = (time.time() - calendar.timegm(time.strptime(rec.get("utc", ""), "%Y-%m-%dT%H:%M:%SZ"))) / 60.0
+    except ValueError:
+        age = -1
+    return ('REFUSED — ledger window %s: DIR=%s state=%s owner=%s alive=%d age=%.0fmin next: '
+            '"userdata-guard.sh restore %s --scope %s" — only once the run that opened it has ended (if it does not '
+            'converge: C-00)'
+            % (rec.get("id"), rec.get("dir"), rec.get("state"), (rec.get("owner") or {}).get("pid"), live, age, rec.get("dir"),
+               rec.get("scope", "all")))
+
+
+def ledger_begin(ledger, record, po):
+    # D8 concurrency review SHOULD-1: liveness and nesting are judged by the window's OWNER (the snapshot's caller), never
+    # by the slot holder — an abandoned window under a live holder must not count as nested for the holder's other children
+    """(code, message): 0 written · 65 refused · 75 a live foreign overlapping window (the caller waits outside the lock)."""
+    mine = set(record.get("windowAreas") or [])
+    with LedgerLock(ledger):
+        mine_up = None
+        for rec in ledger_records(ledger):
+            if rec.get("id") == record.get("id") or not mine & set(rec.get("windowAreas") or []):
+                continue
+            who = rec.get("owner") or {}
+            live = alive(who)
+            restorer = rec.get("restorer")
+            if rec.get("state") == "restoring" and restorer and alive(restorer):   # D8 review NIT: being restored → wait
+                return 75, "window %s is being restored by pid %s (DIR=%s)" % (rec.get("id"), restorer.get("pid"), rec.get("dir"))
+            if rec.get("state") == "dirty" or rec.get("state") not in LEDGER_LIVE or not live \
+                    or (rec.get("state") == "restoring" and restorer and not alive(restorer)):
+                return 65, refusal(rec, live)
+            if mine_up is None:
+                mine_up = ancestors(po)
+            if int(who.get("pid", 0)) in mine_up:   # nested inside that window (LIFO): allowed
+                continue
+            return 75, "a live window of another process overlaps: %s (DIR=%s owner=%s state=%s)" % (
+                rec.get("id"), rec.get("dir"), who.get("pid"), rec.get("state"))
+        ledger_write(os.path.join(ledger, "windows", record["id"] + ".json"), record)
+    return 0, "ledger window %s snapshotting" % record["id"]
+
+
+def ledger_update(ledger, wid, patch, locked=False):
+    if not locked:
+        with LedgerLock(ledger):
+            return ledger_update(ledger, wid, patch, locked=True)
+    path = os.path.join(ledger, "windows", wid + ".json")
+    if True:
+        try:
+            with open(path, encoding="utf-8") as f:
+                rec = json.load(f)
+        except FileNotFoundError:
+            return None
+        areas = dict(rec.get("areas") or {})
+        for a, v in (patch.pop("areas", {}) or {}).items():
+            # D8 review MUST-1: an area outside this restore's scope is "released" only while it is still open — a dirty or
+            # finalized one keeps its value (a narrower re-restore never closes a window it did not restore)
+            if v == "released" and areas.get(a) in ("dirty", "finalized"):
+                continue
+            areas[a] = v
+        if patch.get("state") == "auto":   # R12: dirty while any area is dirty, else closed
+            patch["state"] = "dirty" if "dirty" in areas.values() else "closed"
+        rec.update(patch); rec["areas"] = areas; rec["utcUpdated"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        ledger_write(path, rec)
+        return rec
+
+
+def ledger_move(ledger, wid, to):
+    src = os.path.join(ledger, "windows", wid + ".json")
+    with LedgerLock(ledger):
+        if not os.path.exists(src):
+            return False
+        os.makedirs(os.path.join(ledger, to), exist_ok=True)
+        os.rename(src, os.path.join(ledger, to, wid + ".json"))
+        fsync_dir(os.path.join(ledger, to))
+        return True
+
+
+def ledger_find_dir(ledger, directory):
+    real = os.path.realpath(directory)
+    for rec in ledger_records(ledger):
+        if rec.get("dir") == real:
+            return rec
+    return None
 
 
 def atomic_write(dest):
@@ -715,6 +878,35 @@ def main(argv):
         rows = foreign_players(args[0])
         print(json.dumps(rows))
         return 1 if rows else 0
+    if cmd == "ledger-begin" and len(args) == 2:
+        code, msg = ledger_begin(args[0], json.load(sys.stdin), int(args[1]))
+        print(msg)
+        return code
+    if cmd == "ledger-update" and len(args) == 2:
+        rec = ledger_update(args[0], args[1], json.load(sys.stdin))
+        if rec is None:
+            return 1
+        print(rec.get("state"))
+        return 0
+    if cmd == "ledger-mark-missing" and len(args) == 3:
+        # SNAPSHOT_MISSING: the ledger knows this DIR but it cannot be restored → dirty; never a live snapshot in progress
+        with LedgerLock(args[0]):   # find + check + update in ONE locked step (D8 review NIT-3)
+            rec = ledger_find_dir(args[0], args[1])
+            if rec is None:
+                return 1
+            if rec.get("state") == "snapshotting" and alive(rec.get("owner") or {}):
+                return 2
+            ledger_update(args[0], rec["id"], {"state": "dirty", "why": "SNAPSHOT_MISSING: " + args[2]}, locked=True)
+        print(rec["id"])
+        return 0
+    if cmd in ("ledger-close", "ledger-abort") and len(args) == 2:
+        return 0 if ledger_move(args[0], args[1], "closed" if cmd == "ledger-close" else "aborted") else 1
+    if cmd == "ledger-find-dir" and len(args) == 2:
+        rec = ledger_find_dir(args[0], args[1])
+        if rec is None:
+            return 1
+        print(json.dumps(rec))
+        return 0
     if cmd == "atomic-write" and len(args) == 1:
         atomic_write(args[0])
         return 0

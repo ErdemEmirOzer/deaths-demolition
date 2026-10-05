@@ -143,6 +143,8 @@ ROOTKIND=redirected
 python3 "$IO" under "$AS" "$PWHOME/Library" && python3 "$IO" under "$PR" "$PWHOME/Library" && ROOTKIND=real
 KG8=$(print -rn -- "$KNOWN_GOOD" | shasum -a 256 | cut -c1-8)
 GUARDSHA=$(python3 "$IO" sha "${0:A}"); HELPERSHA=$(python3 "$IO" sha "$IO")
+# Ledger root (§2.4): quarantine, INDEX and (G4 D8) the window ledger windows/ closed/ aborted/ — permanent, nothing deletes it
+if [ -n "${DD_GUARD_ROOT:-}" ]; then LEDGER="$DD_GUARD_ROOT/ledger"; else LEDGER="$PWHOME/.dd-userdata-guard"; fi
 M7="root=$ROOTKIND kgSource=$KGSRC kg=$KG8 guardSha=${GUARDSHA[1,12]}"
 UNITY_VOLATILE="unity.player_session_count unity.player_sessionid"
 SNAP="$DIR/snap"
@@ -241,7 +243,7 @@ release_player_slot(){ [ -f "$DIR/player-slot" ] || return 0; local t o; read -r
 
 if [ "$CMD" = snapshot ]; then
   # ---- G4 D5 snapshot (S1…S11); every failure goes through snap_fail -------------------------------------------------
-  GUARD_SIG=0; WAITPID=""; PT=""; PO=$PPID; FAILDIR=""
+  GUARD_SIG=0; WAITPID=""; PT=""; PO=$PPID; FAILDIR=""; LEDGER_REC=0
   TRAPINT()  { GUARD_SIG=2;  [ -n "$WAITPID" ] && kill -TERM "$WAITPID" 2>/dev/null; return 0; }
   TRAPTERM() { GUARD_SIG=15; [ -n "$WAITPID" ] && kill -TERM "$WAITPID" 2>/dev/null; return 0; }
   TRAPHUP()  { GUARD_SIG=1;  [ -n "$WAITPID" ] && kill -TERM "$WAITPID" 2>/dev/null; return 0; }
@@ -259,6 +261,8 @@ if [ "$CMD" = snapshot ]; then
     done
     [ -n "$PT" ] && DD_SLOT_OWNER="$PO" "$DD_SLOT" release player "$PT" >/dev/null 2>&1
     rm -f "$DIR/player-slot"
+    [ "$LEDGER_REC" -eq 1 ] && [ -f "$LEDGER/windows/$ID.json" ] && { python3 "$IO" ledger-abort "$LEDGER" "$ID" \
+      || dd_log "WARNING userdata-guard: ledger record $ID could not be moved to aborted/ — it blocks its areas, tell C-00"; }   # M4
     dd_log "userdata-guard snapshot FAILED exit=$rc${FAILDIR:+ — partial files kept in $FAILDIR} $M7"
     exit "$rc"
   }
@@ -307,7 +311,32 @@ if [ "$CMD" = snapshot ]; then
   UNREAD=$(python3 "$IO" plist-ok "$P1" "$P2") || BAD+="unreadable plist $UNREAD; "
   check_sig   # D5 review NIT-3: a group signal that killed a helper is a signal, not an unreadable plist
   [ -n "$BAD" ] && { dd_log "userdata-guard: REFUSED — protected set: $BAD(65)"; snap_fail 65; }
-  # S6 (D8: the ledger check goes here)
+  # S6 (G4 D8, INV-7): the window ledger. Under L/.lock: an overlapping record that is dirty, or whose owner (or restorer)
+  # is dead → 65 with the next step; a live owner that is our ancestor → nested, allowed; a live foreign one (or a live
+  # restore) → the lock is let go and we poll (≤ DD_GUARD_WAIT, default 300 s, sleep 5 & wait) → 75 — short on purpose:
+  # a caller may hold a unity slot while it waits (D8 review SHOULD-3). Then our record is written: state snapshotting.
+  REC_JSON=$(R_ID="$ID" R_DIR="${DIR:A}" R_AREAS="${AREAS[*]}" R_SCOPE="$SCOPE" R_PO="$PO" R_OL="$OWNER_LSTART" R_PT="$PT"     R_HP="$HOLDER_PID" R_HL="$HOLDER_LSTART" R_GS="$GUARDSHA" R_LINE="$HOLDER_LINE" python3 -c 'import json, os, time
+e = os.environ
+print(json.dumps({"id": e["R_ID"], "dir": e["R_DIR"], "scope": e["R_SCOPE"], "windowAreas": e["R_AREAS"].split(),
+  "owner": {"pid": int(e["R_PO"]), "lstart": e["R_OL"]}, "restorer": None,
+  "slot": {"tag": e["R_PT"], "holder": {"pid": int(e["R_HP"]), "lstart": e["R_HL"]} if e["R_HP"] else None,
+           "reentrant": " reentrant -> " in e["R_LINE"]} if e["R_PT"] else None,
+  "state": "snapshotting", "areas": {a: "open" for a in e["R_AREAS"].split()}, "guardSha": e["R_GS"],
+  "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}))') || snap_fail 75
+  LW0=$SECONDS
+  # D8 review SHOULD-2: armed BEFORE the first attempt — a signal that lands after the helper's rename still sends the
+  # record to aborted/ (ledger-abort is a no-op when there is none)
+  LEDGER_REC=1
+  while :; do
+    LMSG=$(print -r -- "$REC_JSON" | python3 "$IO" ledger-begin "$LEDGER" "$PO"); LRC=$?
+    [ $LRC -eq 0 ] && break
+    check_sig
+    [ $LRC -eq 65 ] && { dd_log "userdata-guard: $LMSG (65)"; snap_fail 65; }
+    [ $LRC -eq 75 ] || { dd_log "userdata-guard: ledger check failed ($LRC): $LMSG"; snap_fail 75; }
+    (( SECONDS - LW0 >= ${DD_GUARD_WAIT:-300} )) && { dd_log "userdata-guard: $LMSG — still after ${DD_GUARD_WAIT:-300}s (75)"; snap_fail 75; }
+    [ $((SECONDS - LW0)) -lt 5 ] && dd_log "userdata-guard: waiting — $LMSG"
+    sleep 5 & WAITPID=$!; bg_wait; check_sig
+  done
   # S7 Codex-audit M-07: the lock wait follows the scope (editor: D1 only)
   if [ "$SCOPE" = editor ]; then wait_unlocked "$D1" || { check_sig; snap_fail 75; }
   else wait_unlocked "$D1" "$D2" || { check_sig; snap_fail 75; }; fi
@@ -370,6 +399,8 @@ print(json.dumps({"version": 2, "id": e["ID"], "scope": e["SCOPE"], "windowAreas
     || { dd_log "userdata-guard: commit failed (a rename or write in $DIR) — snapshot undone"; snap_fail 75; }
   cat "$DIR/before-editor.txt" "$DIR/before-player.txt" | cmp -s - "$DIR/before.txt" && [ -s "$DIR/before.txt" ] \
     || { dd_log "userdata-guard: committed before.txt is not before-editor + before-player — snapshot undone"; snap_fail 75; }
+  print -r -- '{"state": "open"}' | python3 "$IO" ledger-update "$LEDGER" "$ID" \
+    || dd_log "WARNING userdata-guard: ledger record $ID could not be set open (it stays snapshotting)"
   # S11
   dd_log "userdata-guard snapshot → $SNAP $M7 window=$ID"
   exit 0
@@ -384,7 +415,12 @@ restore_exit() { local rc=$?
   { print -r -- "${UG_LAST:-$(date -u +%FT%TZ) userdata-guard restore: no result line}"; print -r -- "exit=$rc"; } >> "$DIR/restore.txt"
 }
 trap 'restore_exit' EXIT
-refuse64() { UG_LAST="$(date -u +%FT%TZ) userdata-guard: $* — refused (64)"; echo "userdata-guard: $* — refused (64)" >&2; exit 64; }
+# G4 D8: a window the ledger knows (by its DIR) that cannot be restored any more is marked dirty — SNAPSHOT_MISSING —
+# so later snapshots of that area stop with 65 until C-00 resolves it
+ledger_dirty() { local id   # never a snapshot still in progress (its owner alive, state snapshotting — D8 review NIT)
+  id=$(python3 "$IO" ledger-mark-missing "$LEDGER" "$DIR" "$1" 2>/dev/null) \
+    && echo "userdata-guard: SNAPSHOT_MISSING — ledger window $id marked dirty (tell C-00)" >&2; return 0; }
+refuse64() { UG_LAST="$(date -u +%FT%TZ) userdata-guard: $* — refused (64)"; ledger_dirty "$*"; echo "userdata-guard: $* — refused (64)" >&2; exit 64; }
 [ -f "$DIR/before.txt" ] || refuse64 "no snapshot in $DIR"
 for f in snapshot-manifest.json sampler.json; do
   [ -e "$DIR/$f" ] && refuse64 "v1 (74f62dd6) snapshot ($f) — restore it with the guard version that took it, tell C-00"
@@ -429,8 +465,6 @@ for a in $W; do
   area_lines $a "$DIR/live-at-snapshot.txt" | cmp -s - "$DIR/before-$a.txt" || refuse64 "the $a area of $DIR was not bound (live-at-snapshot ≠ before-$a.txt)"
 done
 cmp -s "$DIR/live-at-snapshot.txt" "$DIR/before.txt" || dd_log "userdata-guard: info — an area outside the window changed while the snapshot was taken (not restored by this window)"
-# Ledger root (§2.4): quarantine and INDEX are permanent; nothing deletes them.
-if [ -n "${DD_GUARD_ROOT:-}" ]; then LEDGER="$DD_GUARD_ROOT/ledger"; else LEDGER="$PWHOME/.dd-userdata-guard"; fi
 # R1 one restore per DIR at a time (the kernel releases the lock when this shell dies; no takeover race)
 zmodload zsh/system
 : >> "$DIR/.restore.lock"   # zsystem flock does not create the file
@@ -448,6 +482,14 @@ TRAPINT()  { GUARD_SIG=2;  [ -n "$WAITPID" ] && kill -TERM "$WAITPID" 2>/dev/nul
 TRAPTERM() { GUARD_SIG=15; [ -n "$WAITPID" ] && kill -TERM "$WAITPID" 2>/dev/null; return 0; }
 TRAPHUP()  { GUARD_SIG=1;  [ -n "$WAITPID" ] && kill -TERM "$WAITPID" 2>/dev/null; return 0; }
 trap '' PIPE   # D6 review SHOULD-4: a dead reader of stdout must not kill the guard before its summary and slot release
+# G4 D8 R2: the ledger record (a window taken before D8 has none — skipped) is restoring, by this process
+LREC=0
+if [ "$KIND" = v2 ]; then
+  RL=$(python3 "$IO" lstart $$)
+  RP=$$ RL="$RL" python3 -c 'import json, os; print(json.dumps({"state": "restoring", "restorer": {"pid": int(os.environ["RP"]), "lstart": os.environ["RL"]}}))' \
+    | ( trap '' INT TERM HUP; python3 "$IO" ledger-update "$LEDGER" "$WINID" >/dev/null )   # D8 review SHOULD-2
+  [ -f "$LEDGER/windows/$WINID.json" ] && LREC=1   # R12 runs whenever the record exists
+fi
 case "${DIR:A}" in /private/tmp/*|/private/var/folders/*|/tmp/*) dd_log "WARNING userdata-guard: $DIR is under a temporary folder";; esac
 [ -f "$DIR/quarantine.txt" ] || print -r -- "$LEDGER/quarantine/$WINID/" > "$DIR/quarantine.txt"
 # R3 the sampler stops (the dead writers' temp sweep runs in the write phase, only for the areas written — D6 review N3)
@@ -583,7 +625,7 @@ print(json.dumps({"dir": e["A_DIR"], "area": e["A_AREA"], "id": e["A_ID"], "ledg
   "checkPlayer": e["A_CHECK"] == "1", "rootAS": e["A_AS"], "rootPR": e["A_PR"], "guardPid": int(e["A_PID"]),
   "result": e["A_RESULT"], "indexClass": e["A_IC"]}))'
 }
-HELPER_FAILED=()
+HELPER_FAILED=(); VERIFIED_AREAS=()
 for a in $WRITE_AREAS; do
   area_cfg $a | python3 "$IO" restore-area > "$DIR/restore-$a.json.tmp.$$" && mv "$DIR/restore-$a.json.tmp.$$" "$DIR/restore-$a.json" \
     || { HELPER_FAILED+=($a); add_class WRITE_FAILED; dd_log "userdata-guard: the $a write helper failed — $DIR/restore-$a.json"; continue; }
@@ -597,7 +639,7 @@ for a in $AREAS; do
   if ! (( ${WRITE_AREAS[(Ie)$a]} )) || (( ${HELPER_FAILED[(Ie)$a]} )); then OK=0; continue; fi   # no current restore-<a>.json
   V=$(area_cfg $a | python3 "$IO" verify-area) || { OK=0; add_class MISMATCH; continue; }
   print -r -- "$V" > "$DIR/verify-$a.json"
-  python3 -c 'import json, sys; v = json.loads(sys.argv[1]); sys.exit(0 if v["ok"] else 1)' "$V" || { OK=0; add_class MISMATCH; }
+  python3 -c 'import json, sys; v = json.loads(sys.argv[1]); sys.exit(0 if v["ok"] else 1)' "$V" && VERIFIED_AREAS+=($a) || { OK=0; add_class MISMATCH; }
   python3 -c 'import json, sys; v = json.loads(sys.argv[1]); [print(sys.argv[2] + "  " + k) for k in v["extraKeys"]]' "$V" \
     "$( [ $a = player ] && print -r -- "$DOM1" || print -r -- "$DOM2")" >> "$DIR/extra-keys.txt"
 done
@@ -638,7 +680,30 @@ print(json.dumps({"version": 2, "id": e["V_ID"], "kind": e["V_KIND"], "scope": e
 print -r -- "$VERDICT" | python3 "$IO" atomic-write "$DIR/guard-verdict.json"
 VN=1; VU=$(date -u +%Y%m%dT%H%M%SZ); while [ -e "$DIR/verdict-$VU.$VN.json" ]; do VN=$((VN+1)); done
 print -r -- "$VERDICT" | python3 "$IO" atomic-write "$DIR/verdict-$VU.$VN.json"
-# R12 (D8: the ledger record goes here)
+# R12 (G4 D8): per area of the window — restored and verified here → finalized, outside this scope → released, else
+# dirty; nothing dirty → the record moves to closed/, else it stays (state dirty) and blocks that area's next snapshots
+if [ "$LREC" -eq 1 ]; then
+  # finalized = written AND verified in THIS run (VERIFIED_AREAS; never a verify file of an earlier attempt — D8 review
+  # SHOULD-1) with no class in this run's restore-<a>.json; released never overwrites dirty/finalized (MUST-1, io)
+  LPATCH=$(L_W="$W" L_A="${AREAS[*]}" L_V="${VERIFIED_AREAS[*]}" L_DIR="$DIR" python3 -c 'import json, os
+e = os.environ; d = e["L_DIR"]; areas = {}
+def ok(a):
+    if a not in e["L_V"].split():
+        return False
+    try:
+        r = json.load(open(os.path.join(d, "restore-%s.json" % a)))
+    except Exception:
+        return False
+    return not r.get("classes")
+for a in e["L_W"].split():
+    areas[a] = ("finalized" if ok(a) else "dirty") if a in e["L_A"].split() else "released"
+print(json.dumps({"state": "auto", "areas": areas}))')
+  LSTATE=$(print -r -- "$LPATCH" | python3 "$IO" ledger-update "$LEDGER" "$WINID") \
+    || dd_log "WARNING userdata-guard: ledger record $WINID could not be updated at R12 — tell C-00"
+  if [ "$LSTATE" = closed ]; then python3 "$IO" ledger-close "$LEDGER" "$WINID" \
+      || dd_log "WARNING userdata-guard: ledger record $WINID could not be moved to closed/ — tell C-00"
+  else dd_log "userdata-guard: ledger window $WINID stays dirty — its areas block new snapshots until this DIR is restored (or C-00 resolves it)"; fi
+fi
 # R13 summary line (stdout's LAST line); the player slot is released by restore_exit
 dd_log "userdata-guard restore scope=$SCOPE touched=$TOUCHED verified=$OK extraKeys=$(grep -c . "$DIR/extra-keys.txt") outOfScopeChanged=$(grep -c . "$OOS") $M7 window=$WINID snapshotId=$SNAPID retry=$RETRY class=$CLS"
 [ "$OK" -eq 1 ] || { [ ${#CLASSES} -gt 0 ] && print -r -- "userdata-guard: classes ${CLASSES[*]} — $DIR/guard-verdict.json" >&2; cat "$DIR/extra-keys.txt" >&2; }
