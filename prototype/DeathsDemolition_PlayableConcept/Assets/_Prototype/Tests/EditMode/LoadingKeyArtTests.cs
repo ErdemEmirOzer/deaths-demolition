@@ -160,7 +160,10 @@ namespace DD.Prototype.Tests.EditMode
 
         /// <summary>
         /// R2 U3 on fixed seeds: a session of 200 loading screens never shows one art twice in a row, and every 20 in a row
-        /// (the first 20 too) show each art at least twice.
+        /// (the first 20 too) show each art at least three times (r2-gates.json U3: minPerAny20 ≥ 3); also counts
+        /// distinctSha256, the rotation files that differ (red in the gate until AP-028's paintings replace the placeholder
+        /// copies) - this test asserts the rotation only. Its r2-U3.json comes once R2Olcum moves to the shared test
+        /// assembly (C-00 05.10, decision a); until then U3 rests on this test's Passed identity.
         /// </summary>
         [Test]
         public void Rotasyon_ArdisikTekrarYok_YirmiYuklemedeHerSanatEnAzIkiKez()
@@ -170,6 +173,8 @@ namespace DD.Prototype.Tests.EditMode
             const int Window = 20;
             int count = UiCurtain.LoadingKeyArts.Count;
             int fewest = int.MaxValue;
+            int repeats = 0;
+            string firstRepeat = null;
             var shown = new int[Loads];
             var tally = new int[count];
             for (int seed = 0; seed < Seeds; seed++)
@@ -181,7 +186,8 @@ namespace DD.Prototype.Tests.EditMode
                     rotation.Shown(shown[i]);
                     if (i > 0 && shown[i] == shown[i - 1])
                     {
-                        Assert.Fail("seed " + seed + ": load " + i + " shows art " + shown[i] + " again");
+                        repeats++;
+                        firstRepeat = firstRepeat ?? "seed " + seed + ": load " + i + " shows art " + shown[i] + " again";
                     }
                 }
 
@@ -196,15 +202,23 @@ namespace DD.Prototype.Tests.EditMode
                     for (int art = 0; art < count; art++)
                     {
                         fewest = Mathf.Min(fewest, tally[art]);
-                        if (tally[art] < 2)
-                        {
-                            Assert.Fail("seed " + seed + ": loads " + start + "-" + (start + Window - 1) + " show art " + art + " " + tally[art] + "x");
-                        }
                     }
                 }
             }
 
-            Debug.Log("[DD-TEST] wp081.u3 arts=" + count + " seeds=" + Seeds + " loads=" + Loads + " repeats=0 fewestPer" + Window + "=" + fewest);
+            var shas = new HashSet<string>();
+            using (var sha = System.Security.Cryptography.SHA256.Create())
+            {
+                foreach (string art in UiCurtain.LoadingKeyArts)
+                {
+                    shas.Add(System.BitConverter.ToString(sha.ComputeHash(File.ReadAllBytes(FileOf(art)))));
+                }
+            }
+
+            Debug.Log("[DD-TEST] wp081.u3 arts=" + count + " seeds=" + Seeds + " loads=" + Loads + " repeats=" + repeats
+                      + " fewestPer" + Window + "=" + fewest + " distinctSha256=" + shas.Count);
+            Assert.AreEqual(0, repeats, firstRepeat);
+            Assert.GreaterOrEqual(fewest, 3, "every art at least three times in any twenty loads (r2-gates.json U3)");
         }
 
         /// <summary>
