@@ -2802,9 +2802,10 @@ namespace DD.Prototype.Qa
                 }
                 if (!_summary.inputMeasurable)
                 {
-                    // R2 (C-00 01.10): the input never reached the game for part of the run — not a gameplay pass or fail, a rerun
+                    // R2 (C-00 01.10): the input never reached the game for part of the run — not a gameplay pass or fail, a rerun.
+                    // inputMeasurable is the one signal: runMode stays the run KIND (normal / stability / route — S-10's soak,
+                    // rc and wp064 / wp078 gates key on it) and stabilityPass stays as computed (S-10 reads inputMeasurable first).
                     _summary.pass = false;
-                    _summary.runMode = "unmeasurable";
                 }
 
                 _summary.stabilityPass = _stability && !_specialEvidence && !_deathEvidence && string.IsNullOrEmpty(_fail) && _timeoutRound <= 0
