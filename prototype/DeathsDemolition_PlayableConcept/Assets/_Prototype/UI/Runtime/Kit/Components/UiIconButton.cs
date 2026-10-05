@@ -14,11 +14,15 @@ namespace DD.Prototype.UI
         L = 40
     }
 
-    /// <summary>How an icon control shows its word: on lift (hover / focus) as a tooltip, or always, under the glyph (a tab).</summary>
+    /// <summary>
+    /// How an icon control shows its word: on lift (hover / focus) as a tooltip, always under the glyph (a tab), or beside it
+    /// where its screen sets the word (a menu rail: the focused item's word stands next to it - no tooltip).
+    /// </summary>
     public enum UiIconLabel
     {
         Tooltip = 0,
-        Below = 1
+        Below = 1,
+        Beside = 2
     }
 
     /// <summary>
@@ -93,6 +97,7 @@ namespace DD.Prototype.UI
         private UiIconLabel _labelMode;
         private UiIconSize _size;
         private bool _tab;
+        private string _objectName;
 
         public UiButton Button
         {
@@ -229,13 +234,23 @@ namespace DD.Prototype.UI
         /// <summary>Re-read the words (a language change rebuilds screens; a pane that stays can call this).</summary>
         public void RefreshText()
         {
-            gameObject.name = AccessibleName;
+            gameObject.name = _objectName ?? AccessibleName;
             if (_labelMode == UiIconLabel.Below && _button.LabelText != null)
             {
                 _button.SetText(ShortLabel);
             }
 
             Layout();
+        }
+
+        /// <summary>
+        /// Keep a fixed object name (and so the events' name) instead of the reader name - a screen whose tests and cues know
+        /// its controls by id ("Tab.Profile", "Play"). The reader name still comes from the table.
+        /// </summary>
+        public void PinObjectName(string objectName)
+        {
+            _objectName = objectName;
+            gameObject.name = objectName;
         }
 
         /// <summary>Make this tab the choice (or not): fill, outline, bar and glyph tint together.</summary>
@@ -347,11 +362,11 @@ namespace DD.Prototype.UI
         /// (unless <paramref name="shortKey"/> gives a shorter one).
         /// </summary>
         public static UiIconButton Button(Transform parent, string iconKey, string nameKey, string nameFallback, Action onClick,
-            UiIconSize size = UiIconSize.M, string shortKey = null, string shortFallback = null)
+            UiIconSize size = UiIconSize.M, string shortKey = null, string shortFallback = null, UiIconLabel label = UiIconLabel.Tooltip)
         {
             UiButton button = UiFactory.Button(UiStrings.Get(nameKey, nameFallback), parent, string.Empty, UiButtonVariant.Icon, onClick);
             UiIconButton icon = button.gameObject.AddComponent<UiIconButton>();
-            icon.Bind(button, iconKey, nameKey, nameFallback, shortKey, shortFallback, UiIconLabel.Tooltip, size, false);
+            icon.Bind(button, iconKey, nameKey, nameFallback, shortKey, shortFallback, label == UiIconLabel.Below ? UiIconLabel.Tooltip : label, size, false);
             return icon;
         }
 

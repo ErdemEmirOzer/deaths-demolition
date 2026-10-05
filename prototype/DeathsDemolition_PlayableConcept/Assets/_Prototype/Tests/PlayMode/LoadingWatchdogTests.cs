@@ -275,7 +275,7 @@ namespace DD.Prototype.Tests.PlayMode
             UiInput.SimulateCancelNextFrame();
             yield return null;
             yield return null;
-            Assert.AreEqual(UiContext.Profile, UiNavigation.Layer, "Without the modal, Cancel takes the menu's back.");
+            Assert.AreEqual(UiContext.None, UiNavigation.Layer, "Without the modal, Cancel takes the menu's back (WP-081 v4: the open pane closes).");
             Debug.Log("[S09-WATCHDOG] missing scene: modal over MainMenu, cancel ignored under it, primary returned, control cancel reached the menu");
         }
 

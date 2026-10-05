@@ -773,6 +773,7 @@ S-09 (R1-D, 25.09):
 | `menu.eyebrow` | PLAYABLE CONCEPT · PROTOTYPE | OYNANABİLİR KONSEPT · PROTOTİP |
 | `menu.play` | PLAY | OYNA |
 | `menu.play_hint` | Choose a skin and a classic weapon, then fight for the highest round you can reach. | Bir kostüm ve bir klasik silah seç, sonra ulaşabildiğin en yüksek round için savaş. |
+| `menu.play_sub` | CHOOSE SKIN & WEAPON | KOSTÜM VE SİLAH SEÇ |
 | `menu.progress` | PROGRESS | İLERLEME |
 | `menu.quit` | QUIT | ÇIKIŞ |
 | `menu.subtitle` | An old palace, a garden, and a crowd that never stops arriving. | Eski bir saray, bir bahçe ve gelmeyi hiç bırakmayan bir kalabalık. |

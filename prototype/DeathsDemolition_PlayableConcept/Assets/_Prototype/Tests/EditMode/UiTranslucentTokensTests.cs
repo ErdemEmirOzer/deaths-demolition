@@ -369,43 +369,28 @@ namespace DD.Prototype.Tests.EditMode
             float left = Mathf.Round(Mathf.Max(0f, (canvas.x - width) * 0.5f));
             float top = (int)UiSpace.Section;
 
-            // UiScreen.BuildHeader's stack: eyebrow, XS, title, S, subtitle, L, rule.
-            float y = top;
-            float eyebrowH = UiFactory.LineHeight(UiType.Label);
-            float titleH = UiFactory.LineHeight(UiType.Display);
-            float subtitleH = UiFactory.LineHeight(UiType.Body);
-            float titleW = Mathf.Ceil(Width(rootRect, MainMenuScreen.HeaderTitle, UiType.Display));
-            var words = new List<Word>();
-            words.Add(new Word { Name = "eyebrow", Rect = new Rect(left, y, Width(rootRect, MainMenuScreen.HeaderEyebrow, UiType.Label), eyebrowH), Colour = UiColor.TextSecondary, Header = true });
-            y += eyebrowH + (int)UiSpace.XS;
-            words.Add(new Word { Name = "title", Rect = new Rect(left, y, titleW, titleH), Colour = UiColor.TextPrimary, Header = true });
-            y += titleH + (int)UiSpace.S;
-            words.Add(new Word { Name = "subtitle", Rect = new Rect(left, y, Width(rootRect, MainMenuScreen.HeaderSubtitle, UiType.Body), subtitleH), Colour = UiColor.TextSecondary, Header = true });
-            y += subtitleH + (int)UiSpace.L;
-            float ruleBottom = y + UiTokens.StrokeHairline;
-
-            // The spine (Column "Nav" 0..0.26 under the header + XXL, down to the page's foot); its plate captions.
-            float navTop = ruleBottom + (int)UiSpace.XXL;
+            // WP-081 menu v4: the name on as many lines as the spine needs at the top of it, the rail under it (Column "Nav"
+            // 0..0.26 from title + XXL to the page's foot): the focused item's word and PLAY's sub-line beside the icons,
+            // the build line at the foot - every word inside the spine's scrim (no header block any more).
             float navWidth = width * 0.26f;
+            float titleW = Mathf.Ceil(Width(rootRect, MainMenuScreen.HeaderTitle, UiType.Display));
+            float titleH = Mathf.Max(UiFactory.LineHeight(UiType.Display),
+                Mathf.Ceil(WrappedHeight(rootRect, MainMenuScreen.HeaderTitle, UiType.Display, navWidth)));
+            var words = new List<Word>();
+            words.Add(new Word { Name = "title", Rect = new Rect(left, top, Mathf.Min(navWidth, titleW), titleH), Colour = UiColor.TextPrimary });
+            float navTop = top + titleH + (int)UiSpace.XXL;
             float navBottom = canvas.y - (int)UiSpace.Section;
-            float hintW = WrappedWidth(rootRect, MainMenuScreen.PlayHintText, UiType.Caption, navWidth);
+            float wordLeft = left + UiIconTokens.Hit(MainMenuScreen.RailIcon) + (int)MainMenuScreen.RailWordGap;
+            float wordRoom = Mathf.Max(0f, left + navWidth - wordLeft);
             float buildW = WrappedWidth(rootRect, MainMenuScreen.BuildNotePrefix + SampleBuildLabel, UiType.Caption, navWidth);
-            float labelW = Width(rootRect, MainMenuScreen.NavGroupLabel, UiType.Label);
-            foreach (KeyValuePair<string, float> caption in new[]
-                     {
-                         new KeyValuePair<string, float>("playHint", hintW),
-                         new KeyValuePair<string, float>("buildNote", buildW),
-                         new KeyValuePair<string, float>("groupLabel", labelW),
-                     })
-            {
-                words.Add(new Word { Name = caption.Key, Rect = new Rect(left, navTop, Mathf.Min(navWidth, caption.Value), navBottom - navTop), Colour = MainMenuScreen.PlateCaption });
-            }
+            words.Add(new Word { Name = "railWord", Rect = new Rect(wordLeft, navTop, Mathf.Min(wordRoom, Width(rootRect, MainMenuScreen.PlayWord, UiType.H2)), navBottom - navTop), Colour = UiColor.TextPrimary });
+            words.Add(new Word { Name = "railSub", Rect = new Rect(wordLeft, navTop, Mathf.Min(wordRoom, Width(rootRect, MainMenuScreen.PlaySubline, UiType.Caption)), navBottom - navTop), Colour = MainMenuScreen.PlateCaption });
+            words.Add(new Word { Name = "buildNote", Rect = new Rect(left, navTop, Mathf.Min(navWidth, buildW), navBottom - navTop), Colour = MainMenuScreen.PlateCaption });
 
             // The real scrims, placed as MainMenuScreen places them.
             UiBackdrop backdrop = UiBackdrop.Create(rootRect);
             Assert.IsNotNull(backdrop, "MenuPlates/plate_far Resources'ta");
             backdrop.CoverColumn(left + navWidth + UiBackdrop.NearParallax);
-            backdrop.CoverHeader(left + titleW + MainMenuScreen.HeaderBlockMargin + UiBackdrop.NearParallax, ruleBottom + (int)UiSpace.S + UiBackdrop.NearParallax);
             List<Scrim> scrims = Scrims(rootRect);
 
             Rect uv = UiCurtain.CoverUv(canvas.x / canvas.y, plate.Aspect);
@@ -445,6 +430,15 @@ namespace DD.Prototype.Tests.EditMode
             TMP_Text label = UiFactory.Label("Measure", parent, text, type, UiColor.TextPrimary);
             _created.Add(label.gameObject);
             return label.GetPreferredValues(text).x;
+        }
+
+        /// <summary>The height of <paramref name="text"/> wrapped at <paramref name="maxWidth"/> (the v4 title in the spine).</summary>
+        private float WrappedHeight(RectTransform parent, string text, UiType type, float maxWidth)
+        {
+            TMP_Text label = UiFactory.Label("Measure", parent, text, type, UiColor.TextPrimary);
+            _created.Add(label.gameObject);
+            label.enableWordWrapping = true;
+            return label.GetPreferredValues(text, maxWidth, 0f).y;
         }
 
         /// <summary>The widest line of <paramref name="text"/> wrapped at <paramref name="maxWidth"/> (TMP wraps on spaces, greedily).</summary>

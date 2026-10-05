@@ -39,13 +39,17 @@ namespace DD.Prototype.UI
     /// local file read synchronously, so a spinner would be a lie. Error: a save that
     /// could not be read, surfaced as a warning row on the profile pane instead of a
     /// silent reset. Normal and dense: below.
+    ///
+    /// MENU v4 (WP-081, the user's G5 05.10: O1 brush ink, "less text, more icons"). The left third is a calm dark spine:
+    /// the name on two lines, then one vertical rail of icon controls - PLAY, the six panes, QUIT - whose focused item
+    /// shows its word beside it (PLAY adds "CHOOSE SKIN & WEAPON"); every icon carries its reader name from the string
+    /// table. The rest of the page is the world. A pane opens on the right when its icon is chosen and closes on Cancel;
+    /// none is open on arrival (the G5 decision: Profile closed). The profile level stands top-right with its XP bar.
     /// </summary>
     public sealed class MainMenuScreen : UiScreen
     {
         // Element measures. Every one is a multiple of the 8pt base, and every GAP on
         // this screen is a UiSpace member - the two together are the whole spacing spec.
-        private const float NavButtonHeight = 56f;
-        private const float PlayButtonHeight = 72f;
         private const float RowHeight = 40f;
         private const float AchievementRowHeight = 96f;
         private const float ChipColumnWidth = 160f;
@@ -69,16 +73,19 @@ namespace DD.Prototype.UI
         private UiBackdrop _plates;
         public const float HeaderBlockMargin = 96f;   // AD 6ab MUST-2: title right edge + 96
 
-        // The header and spine words that stand on the menu plate (12b · D1: UiTranslucentTokensTests lays them out
-        // and measures each over the brightest plate texel under it).
-        // WP-068 TR: pack words in the chosen language (properties, so a language change reads the new column); the
-        // title is the game's name and is never translated.
-        public static string HeaderEyebrow => UiStrings.Get("menu.eyebrow", "PLAYABLE CONCEPT · PROTOTYPE");
+        // The spine words that stand on the menu plate (12b · D1: UiTranslucentTokensTests lays them out and measures each
+        // over the brightest plate texel under it). WP-068 TR: pack words in the chosen language (properties, so a language
+        // change reads the new column); the title is the game's name and is never translated.
         public const string HeaderTitle = "DEATHS DEMOLITION";
-        public static string HeaderSubtitle => UiStrings.Get("menu.subtitle", "An old palace, a garden, and a crowd that never stops arriving.");
-        public static string PlayHintText => UiStrings.Get("menu.play_hint", "Choose a skin and a classic weapon, then fight for the highest round you can reach.");
-        public static string NavGroupLabel => UiStrings.Get("menu.progress", "PROGRESS");
+        public static string PlayWord => UiStrings.Get("menu.play", "PLAY");
+        public static string PlaySubline => UiStrings.Get("menu.play_sub", "CHOOSE SKIN & WEAPON");
         public static string BuildNotePrefix => UiStrings.Get("menu.build_prefix", "Prototype build · ");
+
+        /// <summary>v4 rail: the glyph size, the pitch between icons (8 px grid), and the air between an icon and its word.</summary>
+        public const UiIconSize RailIcon = UiIconSize.M;
+        public const float RailPitchMax = 72f;
+        public const float RailPitchMin = 48f;
+        public const UiSpace RailWordGap = UiSpace.L;
 
         /// <summary>
         /// 12b · D1 (T10: "TextSecondary ≥ 4.5:1 with the scrim" - the dimmest text the plate carries): the spine's
@@ -86,7 +93,9 @@ namespace DD.Prototype.UI
         /// In linear light TextMuted measured 3.2:1 on S-05's clamped third at the fixed 0.55 scrim (AD §14 MUST-5).
         /// </summary>
         public const UiColor PlateCaption = UiColor.TextSecondary;
-        private UiContext _pane = UiContext.Profile;
+
+        /// <summary>The open pane; <see cref="UiContext.MainMenu"/> = none (v4: the menu opens with every pane closed).</summary>
+        private UiContext _pane = UiContext.MainMenu;
 
         private UiButton _profileTab;
         private UiButton _statisticsTab;
@@ -101,12 +110,44 @@ namespace DD.Prototype.UI
 
         // WP-068 TR: the menu's standing words, relabelled in place when the language changes.
         private UiButton _quitButton;
-        private TMP_Text _playHint;
-        private TMP_Text _navGroup;
         private TMP_Text _buildNote;
+
+        // v4: the rail, the word beside its focused item, the open pane's tick, the pane's card, the level readout.
+        private readonly List<UiIconButton> _rail = new List<UiIconButton>(8);
+        private UiIconButton _railFocus;
+        private RectTransform _railWordRect;
+        private TMP_Text _railWord;
+        private TMP_Text _railSub;
+        private Image _paneMark;
+        private RectTransform _paneCard;
+        private TMP_Text _level;
+        private UiBar _xp;
         private UiStepper _languageRow;
 
-        /// <summary>The pane on screen. Exposed for tests; the source of truth is <see cref="UiNavigation"/>.</summary>
+        /// <summary>The rail's icon controls, top to bottom (tests).</summary>
+        public IReadOnlyList<UiIconButton> Rail
+        {
+            get { return _rail; }
+        }
+
+        /// <summary>The word beside the focused rail item, and its sub-line (PLAY only; empty otherwise).</summary>
+        public TMP_Text RailWord
+        {
+            get { return _railWord; }
+        }
+
+        public TMP_Text RailSub
+        {
+            get { return _railSub; }
+        }
+
+        /// <summary>The pane card is on screen (a pane is open).</summary>
+        public bool PaneOpen
+        {
+            get { return _paneCard != null && _paneCard.gameObject.activeSelf; }
+        }
+
+        /// <summary>The pane on screen (<see cref="UiContext.MainMenu"/> when none). Exposed for tests; the source of truth is <see cref="UiNavigation"/>.</summary>
         public UiContext Pane
         {
             get { return _pane; }
@@ -121,19 +162,34 @@ namespace DD.Prototype.UI
         {
             BuildMenuPlate();
 
-            float headerHeight = BuildHeader(HeaderEyebrow, HeaderTitle, HeaderSubtitle, UiType.Display);
-
-            float top = headerHeight + (int)UiSpace.XXL;
+            float top = BuildTitle() + (int)UiSpace.XXL;
 
             RectTransform nav = Column("Nav", 0f, 0.26f, top);
-            BuildNavigation(nav);
-            CoverColumn(nav);   // 12b · D1: before the header block, which starts its fade at the text-safe edge
-            CoverHeader();
+            BuildRail(nav);
+            CoverColumn(nav);   // 12b · D1: the text-safe scrim reaches the spine's right edge (the title stands in it too)
+            BuildProgressReadout();
             BuildPaneHost(Column("Pane", 0.29f, 1f, top));
 
             ShowPane(_pane);
 
             ProfileService.Changed += OnProfileChanged;
+        }
+
+        /// <summary>v4: the name alone at the top of the spine, on as many lines as the spine's width needs (two at 1080).</summary>
+        private float BuildTitle()
+        {
+            TMP_Text title = UiFactory.Label("Title", Content, HeaderTitle, UiType.Display, UiColor.TextPrimary, TextAnchor.LowerLeft);
+            title.enableWordWrapping = true;
+            RectTransform rect = title.rectTransform;
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(0.26f, 1f);
+            rect.pivot = new Vector2(0f, 1f);
+            float width = Content.rect.width * 0.26f;
+            float line = UiFactory.LineHeight(UiType.Display);
+            float height = width > 1f ? Mathf.Max(line, Mathf.Ceil(title.GetPreferredValues(HeaderTitle, width, 0f).y)) : line * 2f;
+            rect.sizeDelta = new Vector2(0f, height);
+            rect.anchoredPosition = Vector2.zero;
+            return height;
         }
 
         protected override void OnDestroy()
@@ -143,9 +199,8 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>
-        /// Gamepad / keyboard Cancel (WP-022): a pane other than Profile goes back to
-        /// Profile; on Profile the focus returns to PLAY. Nothing destructive is bound to
-        /// Cancel here - QUIT stays a deliberate press.
+        /// Gamepad / keyboard Cancel (WP-022, v4): an open pane closes and focus returns to its icon on the rail; with no pane
+        /// open the focus returns to PLAY. Nothing destructive is bound to Cancel here - QUIT stays a deliberate press.
         /// </summary>
         private void Update()
         {
@@ -154,14 +209,29 @@ namespace DD.Prototype.UI
                 return;
             }
 
-            if (_pane != UiContext.Profile)
+            if (_pane != UiContext.MainMenu)
             {
-                ShowPane(UiContext.Profile);
-                UiInput.Focus(_profileTab);
+                UiButton icon = TabOf(_pane);
+                ShowPane(UiContext.MainMenu);
+                UiInput.Focus(icon != null ? icon : _playButton);
             }
             else
             {
                 UiInput.Focus(_playButton);
+            }
+        }
+
+        private UiButton TabOf(UiContext pane)
+        {
+            switch (pane)
+            {
+                case UiContext.Profile: return _profileTab;
+                case UiContext.Statistics: return _statisticsTab;
+                case UiContext.Achievements: return _achievementsTab;
+                case UiContext.Settings: return _settingsTab;
+                case UiContext.Controls: return _controlsTab;
+                case UiContext.Accessibility: return _accessibilityTab;
+                default: return null;
             }
         }
 
@@ -237,39 +307,10 @@ namespace DD.Prototype.UI
             _plates.CoverColumn(right + UiBackdrop.NearParallax);
         }
 
-        /// <summary>AD 6ab MUST-2: the header block from the left edge to the title's right edge + 96 (+ 12 parallax), down to the rule + 8 (+ 12).</summary>
-        private void CoverHeader()
-        {
-            if (_plates == null)
-            {
-                return;
-            }
-
-            Transform titleTransform = Content.Find("Title");
-            Transform ruleTransform = Content.Find("HeaderRule");
-            TMP_Text title = titleTransform != null ? titleTransform.GetComponent<TMP_Text>() : null;
-            if (title == null || ruleTransform == null)
-            {
-                return;
-            }
-
-            var plateRect = (RectTransform)_plates.transform;
-            var corners = new Vector3[4];
-            title.rectTransform.GetWorldCorners(corners);
-            Vector3 titleTopLeft = plateRect.InverseTransformPoint(corners[1]);
-            ((RectTransform)ruleTransform).GetWorldCorners(corners);
-            Vector3 ruleBottom = plateRect.InverseTransformPoint(corners[0]);
-
-            Rect r = plateRect.rect;
-            float titleWidth = Mathf.Ceil(title.GetPreferredValues(title.text).x);
-            float right = titleTopLeft.x - r.xMin + titleWidth + HeaderBlockMargin + UiBackdrop.NearParallax;
-            float bottom = r.yMax - ruleBottom.y + (int)UiSpace.S + UiBackdrop.NearParallax;
-            _plates.CoverHeader(right, bottom);
-        }
-
         private void OnProfileChanged()
         {
-            if (_paneHost != null)
+            RefreshProgressReadout();
+            if (_paneHost != null && _pane != UiContext.MainMenu)
             {
                 RedrawPane();
             }
@@ -277,160 +318,161 @@ namespace DD.Prototype.UI
 
         // ============================================================== navigation
 
-        /// <summary>E2 spine rhythm for one column height (AD 6ab MUST-4): PLAY height, tab height, gap between tabs, gap before the PROGRESS group.</summary>
-        public struct NavRhythm
-        {
-            public float Play;
-            public float Tab;
-            public float Gap;
-            public float GroupGap;
-
-            public NavRhythm(float play, float tab, float gap, float groupGap)
-            {
-                Play = play;
-                Tab = tab;
-                Gap = gap;
-                GroupGap = groupGap;
-            }
-
-            /// <summary>Column height this rhythm needs around <paramref name="fixedHeight"/> (PLAY's caption, the group label, the foot).</summary>
-            public float Need(float fixedHeight)
-            {
-                return fixedHeight + Play + GroupGap + (int)UiSpace.S + Tabs(NavTabCount) + NavFootClearance;
-            }
-
-            /// <summary>Height of the PROGRESS group's tabs (six of them) with their gaps.</summary>
-            public float Tabs(int count)
-            {
-                return count * Tab + (count - 1) * Gap;
-            }
-        }
-
-        public const int NavTabCount = 6;
-        public const float NavFootClearance = 16f;   // least air between the last tab and QUIT
-
         /// <summary>
-        /// The fullest rhythm that fits <paramref name="available"/> px of column around what
-        /// does not change: PLAY's caption, the group label, the foot (QUIT + the build line).
-        /// Full: PLAY 72, tabs 56 + 8, group gap 32. Then 60 (56 + 4, the AD pitch), then a
-        /// 64 / 56 PLAY with 52 / 48 tabs. Tabs never go under 48 (TargetPreferred) and always
-        /// keep a gap (tabs that touch read as one block).
+        /// v4 (O1): the spine is one rail - PLAY, the six panes, QUIT - of icon controls a grid pitch apart (up to 72, never
+        /// under 48), the build line at the foot. The focused item's word stands beside it, the open pane's icon carries the
+        /// heading tick. Explicit vertical chain, no wrap: Up from PLAY never lands on QUIT.
         /// </summary>
-        public static NavRhythm NavRhythmFor(float available, float fixedHeight)
+        private void BuildRail(RectTransform column)
         {
-            var steps = new[]
-            {
-                new NavRhythm(PlayButtonHeight, NavButtonHeight, (int)UiSpace.S, (int)UiSpace.XL),
-                new NavRhythm(PlayButtonHeight, NavButtonHeight, (int)UiSpace.XS, (int)UiSpace.L),
-                new NavRhythm(64f, 52f, (int)UiSpace.XS, (int)UiSpace.L),
-                new NavRhythm(56f, UiTokens.TargetPreferred, (int)UiSpace.XS, (int)UiSpace.M),
-                new NavRhythm(56f, UiTokens.TargetPreferred, 2f, (int)UiSpace.S),
-            };
-
-            if (available <= 1f)
-            {
-                return steps[0];   // not laid out yet: the full rhythm
-            }
-
-            for (int i = 0; i < steps.Length; i++)
-            {
-                if (steps[i].Need(fixedHeight) <= available)
-                {
-                    return steps[i];
-                }
-            }
-
-            return steps[steps.Length - 1];
-        }
-
-        private void BuildNavigation(RectTransform column)
-        {
-            var stack = new UiStack(column);
-            float width = column.rect.width;
             float captionLine = UiFactory.LineHeight(UiType.Caption);
+            float width = column.rect.width;
 
-            // The PLAY caption at its measured height (≤ 2 lines at the column width; the old
-            // fixed 3-line band pushed the tabs into QUIT at UI scale 1.2 × TextScale 1.25).
-            TMP_Text playHint = UiFactory.Label("PlayHint", column, PlayHintText, UiType.Caption, PlateCaption);
-            _playHint = playHint;
-            float hintHeight = width > 1f
-                ? Mathf.Max(captionLine, Mathf.Ceil(playHint.GetPreferredValues(playHint.text, width, 0f).y))
-                : captionLine * 2f;
-
-            // The foot: QUIT over the build line.
+            // The foot: the build line (WP-025 version stamp, WP-022B binding).
             TMP_Text build = UiFactory.Label(
-                "BuildNote", column,
-                // WP-025 version stamp (WP-022B binding): "wp-022-…-g1234567 · release · 2026-09-16".
-                BuildNotePrefix + DD.Prototype.Core.Build.BuildInfo.Read().Label,
-                UiType.Caption, PlateCaption);
+                "BuildNote", column, BuildNotePrefix + DD.Prototype.Core.Build.BuildInfo.Read().Label, UiType.Caption, PlateCaption);
             _buildNote = build;
             float buildHeight = width > 1f
                 ? Mathf.Max(captionLine, Mathf.Ceil(build.GetPreferredValues(build.text, width, 0f).y))
                 : captionLine;
-            float foot = UiTokens.TargetPreferred + (int)UiSpace.S + buildHeight;
-            float labelHeight = UiFactory.LineHeight(UiType.Label);
-            NavRhythm rhythm = NavRhythmFor(column.rect.height, (int)UiSpace.S + hintHeight + labelHeight + foot);
-
-            UiButton play = UiFactory.Button("Play", column, UiStrings.Get("menu.play", "PLAY"), UiButtonVariant.Primary,
-                PrototypeUiFlow.GoToSelection);
-            stack.Add((RectTransform)play.transform, rhythm.Play);
-            SetInitialFocus(play);
-            _playButton = play;
-            stack.Gap(UiSpace.S);
-            stack.Add((RectTransform)playHint.transform, hintHeight);
-
-            stack.Cursor += rhythm.GroupGap;
-            TMP_Text sectionLabel = UiFactory.Label(
-                "MenuLabel", column, NavGroupLabel, UiType.Label, PlateCaption);
-            _navGroup = sectionLabel;
-            stack.Add((RectTransform)sectionLabel.transform, labelHeight);
-            stack.Gap(UiSpace.S);
-
-            _profileTab = AddTab(ref stack, column, TabLabel(UiContext.Profile), UiContext.Profile, "Menu.Profile", rhythm);
-            _statisticsTab = AddTab(ref stack, column, TabLabel(UiContext.Statistics), UiContext.Statistics, "Menu.Statistics", rhythm);
-            _achievementsTab = AddTab(ref stack, column, TabLabel(UiContext.Achievements), UiContext.Achievements, "Menu.Achievements", rhythm);
-            _settingsTab = AddTab(ref stack, column, TabLabel(UiContext.Settings), UiContext.Settings, "Menu.Settings", rhythm);
-            _controlsTab = AddTab(ref stack, column, TabLabel(UiContext.Controls), UiContext.Controls, "Menu.Controls", rhythm);
-            _accessibilityTab = AddTab(ref stack, column, TabLabel(UiContext.Accessibility), UiContext.Accessibility, "Menu.Accessibility", rhythm); // AD v006 MUST-2 → AP-012 v003 person-in-circle glyph (gamepad stays with CONTROLS)
-
-            // Quit is docked to the foot of the column rather than to the cursor: a
-            // destructive action should not sit adjacent to the reading tabs. The build line
-            // sits under it (AD 6ab MUST-4).
-            UiButton quit = UiFactory.Button("Quit", column, UiStrings.Get("menu.quit", "QUIT"), UiButtonVariant.Secondary,
-                PrototypeUiFlow.Quit);
-            _quitButton = quit;
-            RectTransform quitRect = (RectTransform)quit.transform;
-            quitRect.anchorMin = new Vector2(0f, 0f);
-            quitRect.anchorMax = new Vector2(1f, 0f);
-            quitRect.pivot = new Vector2(0.5f, 0f);
-            quitRect.sizeDelta = new Vector2(0f, UiTokens.TargetPreferred);
-            quitRect.anchoredPosition = new Vector2(0f, buildHeight + (int)UiSpace.S);
-
-            RectTransform buildRect = (RectTransform)build.transform;
+            RectTransform buildRect = build.rectTransform;
             buildRect.anchorMin = new Vector2(0f, 0f);
             buildRect.anchorMax = new Vector2(1f, 0f);
             buildRect.pivot = new Vector2(0.5f, 0f);
             buildRect.sizeDelta = new Vector2(0f, buildHeight);
             buildRect.anchoredPosition = Vector2.zero;
 
-            // Explicit vertical chain (WP-022 gamepad): PLAY -> tabs -> QUIT, no wrap - Up
-            // from PLAY must never land on QUIT. Automatic navigation would also reach the
-            // pane's sliders from a tab, which is what the horizontal axis is for.
-            UiInput.ChainVertical(false, play, _profileTab, _statisticsTab, _achievementsTab, _settingsTab, _controlsTab, _accessibilityTab, quit);
+            float hit = UiIconTokens.Hit(RailIcon);
+            float pitch = RailPitchFor(column.rect.height - buildHeight - (int)UiSpace.L);
+
+            _playButton = AddRail(column, 0, pitch, "Play", "Menu.Play", "menu.play", "PLAY", PrototypeUiFlow.GoToSelection);
+            _profileTab = AddRail(column, 1, pitch, "Tab." + UiContext.Profile, "Menu.Profile", "menu.tab.profile", "PROFILE", () => ShowPane(UiContext.Profile));
+            _statisticsTab = AddRail(column, 2, pitch, "Tab." + UiContext.Statistics, "Menu.Statistics", "menu.tab.statistics", "STATISTICS", () => ShowPane(UiContext.Statistics));
+            _achievementsTab = AddRail(column, 3, pitch, "Tab." + UiContext.Achievements, "Menu.Achievements", "menu.tab.achievements", "ACHIEVEMENTS", () => ShowPane(UiContext.Achievements));
+            _settingsTab = AddRail(column, 4, pitch, "Tab." + UiContext.Settings, "Menu.Settings", "menu.tab.settings", "SETTINGS", () => ShowPane(UiContext.Settings));
+            _controlsTab = AddRail(column, 5, pitch, "Tab." + UiContext.Controls, "Menu.Controls", "menu.tab.controls", "CONTROLS", () => ShowPane(UiContext.Controls));
+            _accessibilityTab = AddRail(column, 6, pitch, "Tab." + UiContext.Accessibility, "Menu.Accessibility", "menu.tab.accessibility", "ACCESSIBILITY", () => ShowPane(UiContext.Accessibility));
+            _quitButton = AddRail(column, 7, pitch, "Quit", "Menu.Quit", "menu.quit", "QUIT", PrototypeUiFlow.Quit);
+            SetInitialFocus(_playButton);
+
+            // The word beside the focused item: Display face (H2), the PLAY sub-line in the plate's caption colour.
+            _railWordRect = UiFactory.NewRect("RailWord", column);
+            _railWordRect.anchorMin = new Vector2(0f, 1f);
+            _railWordRect.anchorMax = new Vector2(1f, 1f);
+            _railWordRect.pivot = new Vector2(0f, 0.5f);
+            _railWord = UiFactory.Label("Word", _railWordRect, string.Empty, UiType.H2, UiColor.TextPrimary, TextAnchor.LowerLeft);
+            _railWord.enableWordWrapping = false;
+            _railSub = UiFactory.Label("Sub", _railWordRect, string.Empty, UiType.Caption, PlateCaption, TextAnchor.UpperLeft);
+            _railSub.enableWordWrapping = false;
+            float wordLine = UiFactory.LineHeight(UiType.H2);
+            float subLine = captionLine;
+            _railWordRect.sizeDelta = new Vector2(-(hit + (int)RailWordGap), wordLine + subLine);
+            Band(_railWord.rectTransform, 0f, wordLine);
+            Band(_railSub.rectTransform, wordLine, subLine);
+
+            // The open pane's mark: the heading tick (the screen's one vermilion detail now PLAY is an icon) left of its icon.
+            _paneMark = UiFactory.NewImage("PaneMark", column, UiColor.AccentPrimary, UiSprites.Solid);
+            _paneMark.rectTransform.anchorMin = new Vector2(0f, 1f);
+            _paneMark.rectTransform.anchorMax = new Vector2(0f, 1f);
+            _paneMark.rectTransform.pivot = new Vector2(1f, 0.5f);
+            _paneMark.rectTransform.sizeDelta = new Vector2(UiTokens.HeadingTickWidth, UiTokens.HeadingTickHeight);
+            _paneMark.gameObject.SetActive(false);
+
+            MoveRailWord(_rail[0]);
+            UiInput.ChainVertical(false, _playButton, _profileTab, _statisticsTab, _achievementsTab, _settingsTab, _controlsTab, _accessibilityTab, _quitButton);
         }
 
-        /// <summary>WP-068 TR: a nav tab's word in the chosen language.</summary>
-        private static string TabLabel(UiContext pane)
+        public const int RailItems = 8;
+
+        /// <summary>The rail's pitch for <paramref name="available"/> px of spine: the grid line that fits eight items, 48-72 (unlaid: 72).</summary>
+        public static float RailPitchFor(float available)
         {
-            switch (pane)
+            if (available <= 1f)
             {
-                case UiContext.Statistics: return UiStrings.Get("menu.tab.statistics", "STATISTICS");
-                case UiContext.Achievements: return UiStrings.Get("menu.tab.achievements", "ACHIEVEMENTS");
-                case UiContext.Settings: return UiStrings.Get("menu.tab.settings", "SETTINGS");
-                case UiContext.Controls: return UiStrings.Get("menu.tab.controls", "CONTROLS");
-                case UiContext.Accessibility: return UiStrings.Get("menu.tab.accessibility", "ACCESSIBILITY");
-                default: return UiStrings.Get("menu.tab.profile", "PROFILE");
+                return RailPitchMax;
             }
+
+            return Mathf.Clamp(Mathf.Floor(available / RailItems / UiIconTokens.Grid) * UiIconTokens.Grid, RailPitchMin, RailPitchMax);
+        }
+
+        private UiButton AddRail(RectTransform column, int index, float pitch, string id, string icon, string nameKey, string fallback, System.Action onClick)
+        {
+            UiIconButton item = UiIconControls.Button(column, icon, nameKey, fallback, onClick, RailIcon, null, null, UiIconLabel.Beside);
+            item.PinObjectName(id);
+            var rect = (RectTransform)item.transform;
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(0f, 1f);
+            rect.pivot = new Vector2(0f, 0.5f);
+            rect.anchoredPosition = new Vector2(0f, -(index * pitch + pitch * 0.5f));
+            item.Button.LiftChanged += lifted =>
+            {
+                if (lifted)
+                {
+                    MoveRailWord(item);
+                }
+            };
+            _rail.Add(item);
+            return item.Button;
+        }
+
+        /// <summary>The focused rail item's word (and PLAY's sub-line) beside its icon.</summary>
+        private void MoveRailWord(UiIconButton item)
+        {
+            if (item == null || _railWordRect == null)
+            {
+                return;
+            }
+
+            _railFocus = item;
+            var icon = (RectTransform)item.transform;
+            float hit = icon.sizeDelta.x;
+            _railWordRect.anchoredPosition = new Vector2(hit + (int)RailWordGap, icon.anchoredPosition.y);
+            _railWord.text = item.ShortLabel;
+            _railSub.text = item.Button == _playButton ? PlaySubline : string.Empty;
+        }
+
+        private static void Band(RectTransform rect, float top, float height)
+        {
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(1f, 1f);
+            rect.pivot = new Vector2(0.5f, 1f);
+            rect.sizeDelta = new Vector2(0f, height);
+            rect.anchoredPosition = new Vector2(0f, -top);
+        }
+
+        /// <summary>v4 (O1): the profile level top-right, its XP to the next level as a bar under it - a word and a value.</summary>
+        private void BuildProgressReadout()
+        {
+            RectTransform root = UiFactory.NewRect("Progress", Content);
+            root.anchorMin = new Vector2(1f, 1f);
+            root.anchorMax = new Vector2(1f, 1f);
+            root.pivot = new Vector2(1f, 1f);
+            float line = UiFactory.LineHeight(UiType.Label);
+            root.sizeDelta = new Vector2(220f, line + (int)UiSpace.XS + 6f);
+            root.anchoredPosition = Vector2.zero;
+            _level = UiFactory.Label("Level", root, string.Empty, UiType.Label, UiColor.TextPrimary, TextAnchor.UpperRight);
+            Band(_level.rectTransform, 0f, line);
+            UiHudInk.Apply(_level);   // over the world: the HUD's ink halo, no panel
+            _xp = UiFactory.Bar("Xp", root, UiColor.BarXp, 6f);
+            var bar = (RectTransform)_xp.transform;
+            bar.anchorMin = new Vector2(0f, 1f);
+            bar.anchorMax = new Vector2(1f, 1f);
+            bar.pivot = new Vector2(0.5f, 1f);
+            bar.sizeDelta = new Vector2(0f, 6f);
+            bar.anchoredPosition = new Vector2(0f, -(line + (int)UiSpace.XS));
+            RefreshProgressReadout();
+        }
+
+        private void RefreshProgressReadout()
+        {
+            if (_level == null)
+            {
+                return;
+            }
+
+            ProfileViewModel model = ProfileViewModel.From(ProfileService.Current, ProfileServiceLookup.Instance);
+            _level.text = model.LevelText;
+            _xp.SetValue(model.Progress01, true);
         }
 
         /// <summary>
@@ -456,19 +498,14 @@ namespace DD.Prototype.UI
 
         private void RelabelMenu()
         {
-            SetLabel(Content != null ? Content.Find("Eyebrow") : null, HeaderEyebrow);
-            SetLabel(Content != null ? Content.Find("Subtitle") : null, HeaderSubtitle);
-            SetLabel(_playHint != null ? _playHint.transform : null, PlayHintText);
-            SetLabel(_navGroup != null ? _navGroup.transform : null, NavGroupLabel);
             SetLabel(_buildNote != null ? _buildNote.transform : null, BuildNotePrefix + DD.Prototype.Core.Build.BuildInfo.Read().Label);
-            Relabel(_playButton, UiStrings.Get("menu.play", "PLAY"));
-            Relabel(_quitButton, UiStrings.Get("menu.quit", "QUIT"));
-            Relabel(_profileTab, TabLabel(UiContext.Profile));
-            Relabel(_statisticsTab, TabLabel(UiContext.Statistics));
-            Relabel(_achievementsTab, TabLabel(UiContext.Achievements));
-            Relabel(_settingsTab, TabLabel(UiContext.Settings));
-            Relabel(_controlsTab, TabLabel(UiContext.Controls));
-            Relabel(_accessibilityTab, TabLabel(UiContext.Accessibility));
+            foreach (UiIconButton item in _rail)
+            {
+                item.RefreshText();
+            }
+
+            MoveRailWord(_railFocus);
+            RefreshProgressReadout();
         }
 
         private static void SetLabel(Transform label, string text)
@@ -480,32 +517,10 @@ namespace DD.Prototype.UI
             }
         }
 
-        private static void Relabel(UiButton button, string text)
-        {
-            if (button != null)
-            {
-                button.SetText(text);
-            }
-        }
-
         private static string[] LanguageNames()
         {
             // Each language names itself: the pack keeps the same word in both columns.
             return new[] { UiStrings.Get("settings.language.en", "ENGLISH"), UiStrings.Get("settings.language.tr", "TURKISH") };
-        }
-
-        private UiButton AddTab(ref UiStack stack, RectTransform column, string label, UiContext pane, string icon, NavRhythm rhythm)
-        {
-            if (pane != UiContext.Profile)
-            {
-                stack.Cursor += rhythm.Gap;
-            }
-
-            UiButton button = UiFactory.Button("Tab." + pane, column, label, UiButtonVariant.Nav,
-                () => ShowPane(pane));
-            stack.Add((RectTransform)button.transform, rhythm.Tab);
-            UiInput.LeadingIcon(button, icon, UiColor.TextSecondary, 24f);
-            return button;
         }
 
         // ==================================================================== panes
@@ -514,6 +529,7 @@ namespace DD.Prototype.UI
         {
             RectTransform card = UiFactory.FramedCard("PaneCard", column, UiColor.BorderHairline, UiColor.SurfacePanel, UiFrame.Card);
             UiFactory.Fill(card);
+            _paneCard = card;
 
             // Clipped, so a pane that grows past the card is cut at the card edge rather
             // than spilling over the navigation column.
@@ -522,10 +538,17 @@ namespace DD.Prototype.UI
 
         /// <summary>
         /// Opens a pane. Idempotent through <see cref="UiNavigation"/>: a second click on
-        /// the tab that is already open changes nothing and rebuilds nothing.
+        /// the tab that is already open changes nothing and rebuilds nothing. v4: <see cref="UiContext.MainMenu"/> closes
+        /// the open pane (the menu's resting state, the world behind the rail).
         /// </summary>
         public void ShowPane(UiContext pane)
         {
+            if (pane == UiContext.MainMenu)
+            {
+                ClosePane();
+                return;
+            }
+
             if (!UiNavigationModel.IsLayer(pane) || UiNavigationModel.BaseOf(pane) != UiContext.MainMenu)
             {
                 return;
@@ -548,8 +571,36 @@ namespace DD.Prototype.UI
             UiEvents.Raise(UiEvent.PaneOpened, pane.ToString());
         }
 
+        /// <summary>v4: no pane - the card goes, the rail's tick goes, the navigation model leaves the layer.</summary>
+        private void ClosePane()
+        {
+            if (_pane != UiContext.MainMenu)
+            {
+                UiNavigation.ExitLayer(_pane);
+            }
+
+            _pane = UiContext.MainMenu;
+            RedrawPane();
+        }
+
         private void RedrawPane()
         {
+            if (_paneCard != null)
+            {
+                _paneCard.gameObject.SetActive(_pane != UiContext.MainMenu);
+            }
+
+            UiButton open = TabOf(_pane);
+            if (_paneMark != null)
+            {
+                _paneMark.gameObject.SetActive(open != null);
+                if (open != null)
+                {
+                    var icon = (RectTransform)open.transform;
+                    _paneMark.rectTransform.anchoredPosition = new Vector2(-(int)UiSpace.XS, icon.anchoredPosition.y);
+                }
+            }
+
             if (_profileTab != null)
             {
                 _profileTab.SetSelectedChoice(_pane == UiContext.Profile);
@@ -571,6 +622,11 @@ namespace DD.Prototype.UI
             ClearRightLink(_settingsTab);
             ClearRightLink(_controlsTab);
             ClearRightLink(_accessibilityTab);
+
+            if (_pane == UiContext.MainMenu)
+            {
+                return;
+            }
 
             ProfileData profile = ProfileService.Current;
 

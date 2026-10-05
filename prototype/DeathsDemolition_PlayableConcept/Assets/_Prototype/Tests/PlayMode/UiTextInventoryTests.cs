@@ -25,8 +25,9 @@ namespace DD.Prototype.Tests.PlayMode
     /// UiIconButton's, or a word of its own or beside it in its row (scrollbars aside); the ones without are logged
     /// ([DD-TEST] wp081.unnamed).
     ///
-    /// R2 U1 (r2-gates.json, tools/qa/r2-measure-contract.md): the gate screens are the main menu at entry and Selection
-    /// in EN, against the R1 baseline below - lettersTotalReduction (both together) ≥ 0.40, lettersPerScreenReductionMin
+    /// R2 U1 (r2-gates.json, tools/qa/r2-measure-contract.md): the gate screens are the main menu and Selection in EN,
+    /// against the R1 baseline below. R1 opened the menu on its Profile pane; v4 opens it with every pane closed (G5,
+    /// C-00 05.10), so the gate compares like with like - the menu with Profile open - and logs the closed arrival too - lettersTotalReduction (both together) ≥ 0.40, lettersPerScreenReductionMin
     /// ≥ 0.25, unnamedSelectables (every measured EN screen) = 0; r2-U1.json under DD_R2_MEASURE_DIR. Explicit: the gate
     /// can only pass with menu v4 (WP-081 B4); the acceptance chain runs it by name.
     /// </summary>
@@ -122,13 +123,18 @@ namespace DD.Prototype.Tests.PlayMode
                 Assert.Greater(total.Value, 0, total.Key + ": the instrument measured nothing");
             }
 
-            int menuLetters = totals["en.mainmenu"];
+            int menuLetters = totals["en.pane.Profile"];   // the R1 arrival state: the menu with its Profile pane open
+            int arrivalLetters = totals["en.mainmenu"];      // v4's arrival: every pane closed
             int selectionLetters = totals["en.selection"];
             Assert.Greater(R1MainMenuLetters, 0, "the R1 baseline is set (EN main menu " + menuLetters + ", Selection " + selectionLetters + " on this build)");
             double totalReduction = 1.0 - (double)(menuLetters + selectionLetters) / (R1MainMenuLetters + R1SelectionLetters);
             double perScreen = System.Math.Min(1.0 - (double)menuLetters / R1MainMenuLetters, 1.0 - (double)selectionLetters / R1SelectionLetters);
             Debug.Log("[DD-TEST] wp081.u1 values lettersTotalReduction=" + totalReduction.ToString("F3") + " lettersPerScreenReductionMin=" + perScreen.ToString("F3")
-                      + " unnamedSelectables=" + unnamedEn + " (R1 " + R1MainMenuLetters + "+" + R1SelectionLetters + " @ " + R1BaselineCommit + ")");
+                      + " unnamedSelectables=" + unnamedEn + " (R1 " + R1MainMenuLetters + "+" + R1SelectionLetters + " @ " + R1BaselineCommit + "; menu with Profile "
+                      + menuLetters + ", Selection " + selectionLetters + ")");
+            Debug.Log("[DD-TEST] wp081.u1 arrival (every pane closed) mainmenu=" + arrivalLetters + " reduction="
+                      + (1.0 - (double)arrivalLetters / R1MainMenuLetters).ToString("F3") + " total="
+                      + (1.0 - (double)(arrivalLetters + selectionLetters) / (R1MainMenuLetters + R1SelectionLetters)).ToString("F3"));
             R2Olcum.Yaz("U1", "DD.Prototype.Tests.PlayMode.UiTextInventoryTests.U1_GorunurHarf_AnaMenuPanellerVeSecim_EnTr",
                 new Dictionary<string, double>
                 {

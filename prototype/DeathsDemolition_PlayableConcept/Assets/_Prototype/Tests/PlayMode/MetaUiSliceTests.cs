@@ -476,7 +476,7 @@ namespace DD.Prototype.Tests.PlayMode
             yield return null;
 
             Assert.AreEqual(UiContext.MainMenu, UiNavigation.Base, "açılış tabanı ana menü");
-            Assert.AreEqual(UiContext.Profile, UiNavigation.Layer, "ana menü Profile pane'i ile açılır");
+            Assert.AreEqual(UiContext.None, UiNavigation.Layer, "WP-081 v4 (G5): ana menü bütün pane'ler kapalı açılır");
             Assert.IsFalse(UiNavigation.GameplayInputAllowed, "menü arkasında oyun girdisi kapalı");
 
             // Play → Selection (seçim ekranı ana menüden tek yol; her koşu öncesi açılır).
@@ -531,7 +531,7 @@ namespace DD.Prototype.Tests.PlayMode
             yield return SahneyiBekle(PrototypeScenes.MainMenu);
             yield return null;
             Assert.AreEqual(UiContext.MainMenu, UiNavigation.Base);
-            Assert.AreEqual(UiContext.Profile, UiNavigation.Layer, "dönüşte ana menü yine Profile ile açılır");
+            Assert.AreEqual(UiContext.None, UiNavigation.Layer, "dönüşte de pane'ler kapalı");
             Assert.AreEqual(1, AktifSayi<MainMenuScreen>());
             Debug.Log("[DD-TEST] wp005.buttonPath=OK");
         }
@@ -979,6 +979,9 @@ namespace DD.Prototype.Tests.PlayMode
             ProfileData profil = ProfileService.Current;
             Assert.AreEqual(1, profil.RunsPlayed);
             Assert.AreEqual(3, profil.TotalKills);
+            Assert.IsFalse(menu.PaneOpen, "WP-081 v4: dönüşte pane'ler kapalı");
+            Buton<MainMenuScreen>("Tab.Profile").OnSubmit(null);
+            yield return null;
             Assert.IsTrue(MetinVar<MainMenuScreen>("1 of " + tanim + " achievements earned", out _) ||
                           MetinVar<MainMenuScreen>("achievements earned", out _), "profil pane başarım özeti");
 

@@ -122,24 +122,23 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(700f, ((RectTransform)backdrop.transform.Find("HeaderFadeDown")).anchoredPosition.x, 0.5f, "bloğun aşağı geçişi metin-güvenli kenardan");
         }
 
+        /// <summary>WP-081 v4: the menu rail's pitch is a grid line between 48 and 72 that fits its eight icons wherever 8 × 48 does.</summary>
         [Test]
-        public void MenuOmurgasi_KisaSutundaSikisir_SekmeAsla48AltinaInmez_AraliklarKalir()
+        public void MenuRayi_AralikIzgarada_48ile72Arasinda_SekizOgeSigar()
         {
-            const float fixedHeight = 8f + 50f + 25f + 48f + 8f + 25f;   // caption gap + PLAY caption + label + QUIT + gap + build line
-            MainMenuScreen.NavRhythm full = MainMenuScreen.NavRhythmFor(900f, fixedHeight);
-            Assert.AreEqual(72f, full.Play, "yeterli sütunda tam ritim");
-            Assert.AreEqual(56f, full.Tab);
-            Assert.AreEqual(8f, full.Gap);
-
-            MainMenuScreen.NavRhythm compact = MainMenuScreen.NavRhythmFor(625f, fixedHeight);   // UI 1.2 × TextScale 1.25 at 1080p
-            Assert.Less(compact.Need(fixedHeight), full.Need(fixedHeight), "kısa sütunda sıkışır");
-            Assert.LessOrEqual(compact.Need(fixedHeight), 625f, "sekmeler QUIT'e değmez (T11)");
-            Assert.Greater(compact.Gap, 0f, "sekmeler birbirine değmez");
-
-            MainMenuScreen.NavRhythm tight = MainMenuScreen.NavRhythmFor(300f, fixedHeight);
-            Assert.GreaterOrEqual(tight.Tab, UiTokens.TargetPreferred, "sekme 48'in altına inmez");
-            Assert.Greater(tight.Gap, 0f);
-            Assert.AreEqual(full.Tab, MainMenuScreen.NavRhythmFor(0f, fixedHeight).Tab, "yerleşmemiş sütun: tam ritim");
+            Assert.AreEqual(MainMenuScreen.RailPitchMax, MainMenuScreen.RailPitchFor(0f), "yerleşmemiş sütun: tam aralık");
+            for (float available = 300f; available <= 1200f; available += 25f)
+            {
+                float pitch = MainMenuScreen.RailPitchFor(available);
+                Assert.AreEqual(0f, pitch % UiIconTokens.Grid, 1e-4f, available + ": 8 px ızgarada");
+                Assert.GreaterOrEqual(pitch, MainMenuScreen.RailPitchMin, available + ": 48'in altına inmez");
+                Assert.LessOrEqual(pitch, MainMenuScreen.RailPitchMax, available + ": 72'yi aşmaz");
+                Assert.GreaterOrEqual(pitch, UiIconTokens.Hit(MainMenuScreen.RailIcon), available + ": isabetler birbirine değmez");
+                if (available >= MainMenuScreen.RailItems * MainMenuScreen.RailPitchMin)
+                {
+                    Assert.LessOrEqual(MainMenuScreen.RailItems * pitch, available, available + ": sekiz öğe sığar");
+                }
+            }
         }
 
         [Test]

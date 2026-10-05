@@ -2579,6 +2579,10 @@
     "en": "Choose a skin and a classic weapon, then fight for the highest round you can reach.",
     "tr": "Bir kostüm ve bir klasik silah seç, sonra ulaşabildiğin en yüksek round için savaş."
   },
+  "menu.play_sub": {
+    "en": "CHOOSE SKIN & WEAPON",
+    "tr": "KOSTÜM VE SİLAH SEÇ"
+  },
   "menu.progress": {
     "en": "PROGRESS",
     "tr": "İLERLEME"
