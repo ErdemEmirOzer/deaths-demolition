@@ -783,6 +783,14 @@ namespace DD.Prototype.Tests.EditMode.Audio
             Assert.AreEqual(AudioSoundId.CasingShellStone, WeaponFoleyV3.CasingOn(WeaponFoleyV3.Casing("SG2"), SurfaceKind.Default));
             Assert.AreEqual(AudioSoundId.None, WeaponFoleyV3.CasingOn(CasingFamily.Rifle, SurfaceKind.Water));
             Assert.AreEqual(CasingFamily.None, WeaponFoleyV3.Casing("RL1"));
+
+            // WP-085 B2: metal rings like stone, paper / tatami lands soft; hard surfaces skip once; the queue holds 900 RPM × 0.6 s.
+            Assert.AreEqual(AudioSoundId.CasingRifleStone, WeaponFoleyV3.CasingOn(CasingFamily.Rifle, SurfaceKind.Metal));
+            Assert.AreEqual(AudioSoundId.CasingPistolDirt, WeaponFoleyV3.CasingOn(CasingFamily.Pistol, SurfaceKind.Paper));
+            Assert.IsTrue(WeaponFoleyV3.CasingBounces(SurfaceKind.Stone) && WeaponFoleyV3.CasingBounces(SurfaceKind.Metal) && WeaponFoleyV3.CasingBounces(SurfaceKind.Wood));
+            Assert.IsFalse(WeaponFoleyV3.CasingBounces(SurfaceKind.Dirt) || WeaponFoleyV3.CasingBounces(SurfaceKind.Water) || WeaponFoleyV3.CasingBounces(SurfaceKind.Foliage));
+            Assert.GreaterOrEqual(CasingAudio.Capacity, Mathf.CeilToInt(900f / 60f * CasingAudio.MaxFall), "900 RPM'de havadaki kovanlar sığmalı");
+            Assert.IsTrue(CasingAudio.MinFall >= 0.25f && CasingAudio.MaxFall < CasingAudio.LatestLanding && CasingAudio.LatestLanding <= 0.7f, "R2 S5: 250–700 ms bandı (aynı kare kademesi dahil)");
             Assert.Less(CasingAudio.PerspectiveDb(DD.Prototype.CameraSystem.CameraMode.TopDown), CasingAudio.PerspectiveDb(DD.Prototype.CameraSystem.CameraMode.FirstPerson));
         }
 

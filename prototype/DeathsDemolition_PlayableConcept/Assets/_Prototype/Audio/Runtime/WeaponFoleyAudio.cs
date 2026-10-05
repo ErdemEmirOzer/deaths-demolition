@@ -182,6 +182,20 @@ namespace DD.Prototype.Audio
             }
         }
 
+        /// <summary>A surface a casing skips off (WP-085 B2: one softer bounce follows the landing).</summary>
+        public static bool CasingBounces(SurfaceKind surface)
+        {
+            switch (surface)
+            {
+                case SurfaceKind.Water:
+                case SurfaceKind.Foliage:
+                case SurfaceKind.Dirt:
+                case SurfaceKind.Paper:
+                case SurfaceKind.Flesh: return false;
+                default: return true;
+            }
+        }
+
         /// <summary>Casing voice for a surface; None where a casing makes no sound (water, foliage).</summary>
         public static AudioSoundId CasingOn(CasingFamily family, SurfaceKind surface)
         {
@@ -192,8 +206,9 @@ namespace DD.Prototype.Audio
                 case SurfaceKind.Water:
                 case SurfaceKind.Foliage: return AudioSoundId.None;
                 case SurfaceKind.Wood: s = 1; break;
-                case SurfaceKind.Dirt: s = 2; break;
-                default: s = 0; break;
+                case SurfaceKind.Dirt:
+                case SurfaceKind.Paper: s = 2; break;   // WP-085 B2: soft ground (tatami, paper) reads as dirt until AP-027
+                default: s = 0; break;                  // stone; metal / armour / default: the hard ring (AP-027 adds a metal set)
             }
 
             return (AudioSoundId)((int)AudioSoundId.CasingRifleStone + (int)family * 3 + s);
@@ -206,11 +221,22 @@ namespace DD.Prototype.Audio
     /// WP-072 B2: the player's casings land. A <see cref="WeaponMechanismKind.CasingEjected"/> slot becomes a drop
     /// under the ejection port, heard after its fall time (0.25–0.6 s, STANDARDS §6) on the surface it lands on;
     /// LMGs add a belt link. Level by camera mode (STANDARDS §4: top-down a whisper, FP near).
+    /// WP-085 B2: a casing on a hard surface skips once (a softer, higher tick 70–130 ms later); casings that leave in the
+    /// same frame (sg_2's two spent shells, M-21) land 50–80 ms apart instead of one retrigger-blocked hit; the queue holds
+    /// 16 (900 RPM × 0.6 s fall = 9 in the air) and a bounce never takes one of the last four slots from a landing.
     /// </summary>
     public sealed class CasingAudio
     {
-        private const int Capacity = 8;
+        public const int Capacity = 16;
+        private const int BounceReserve = 4;
         private const float Gravity = 9.81f;
+
+        /// <summary>Fall time band (s): STANDARDS §6 / R2 S5 (250–700 ms).</summary>
+        public const float MinFall = 0.25f;
+        public const float MaxFall = 0.6f;
+
+        /// <summary>Latest a staggered same-frame casing may land (R2 S5 upper bound).</summary>
+        public const float LatestLanding = 0.7f;
 
         private struct Pending
         {
@@ -219,6 +245,8 @@ namespace DD.Prototype.Audio
             public AudioSoundId Sound;
             public float Pitch;
             public float GainDb;
+            public bool Bounce;
+            public float Fall;
         }
 
         private readonly Pending[] _queue = new Pending[Capacity];
@@ -227,6 +255,9 @@ namespace DD.Prototype.Audio
         private readonly RaycastHit[] _hits = new RaycastHit[4];
         private int _count;
         private bool _subscribed;
+        private int _frame = -1;
+        private int _sameFrame;
+        private SynthRandom _rng = new SynthRandom(0x0CA5E);
 
         public CasingAudio(AudioClipLibrary library, WeaponFireAudio.PlayFunc play)
         {
@@ -236,6 +267,18 @@ namespace DD.Prototype.Audio
 
         /// <summary>Casings heard (test / F1).</summary>
         public int Landed { get; private set; }
+
+        /// <summary>Bounce ticks heard (test / F1).</summary>
+        public int Bounces { get; private set; }
+
+        /// <summary>Casings dropped because the queue was full (test / F1).</summary>
+        public int Dropped { get; private set; }
+
+        /// <summary>Seconds from the ejection to the last landing heard (test / R2 S5).</summary>
+        public float LastFallSeconds { get; private set; }
+
+        /// <summary>Casings in the air right now.</summary>
+        public int InAir => _count;
 
         public AudioSoundId LastSound { get; private set; }
 
@@ -274,14 +317,30 @@ namespace DD.Prototype.Audio
             for (int i = 1; i < n; i++) if (_hits[i].distance < _hits[best].distance) best = i;
             RaycastHit hit = _hits[best];
             SurfaceKind surface = AudioSurfaceHints.Resolve(hit.collider, hit.point);
-            float fall = Mathf.Clamp(Mathf.Sqrt(2f * Mathf.Max(0.05f, from.y - hit.point.y) / Gravity) + 0.08f, 0.25f, 0.6f);
+            float fall = Mathf.Clamp(Mathf.Sqrt(2f * Mathf.Max(0.05f, from.y - hit.point.y) / Gravity) + 0.08f, MinFall, MaxFall);
+
+            // Several casings in one frame (break-open shells): stagger them so each is heard, not merged into one retrigger.
+            if (Time.frameCount == _frame) _sameFrame++;
+            else { _frame = Time.frameCount; _sameFrame = 0; }
+            if (_sameFrame > 0) fall = Mathf.Min(LatestLanding, fall + _sameFrame * (0.05f + 0.03f * _rng.Next01()));
+
             float pitch = WeaponFoleyV3.Pitch(WeaponFoleyV3.CasingSemitones(audioId));
             float db = PerspectiveDb(CameraModeService.Current);
 
-            Enqueue(WeaponFoleyV3.CasingOn(family, surface), hit.point, fall, pitch, db);
+            AudioSoundId sound = WeaponFoleyV3.CasingOn(family, surface);
+            if (!Enqueue(sound, hit.point, fall, pitch, db, false))
+            {
+                return;
+            }
+
+            if (WeaponFoleyV3.CasingBounces(surface) && _count < Capacity - BounceReserve)
+            {
+                Enqueue(sound, hit.point, fall + 0.07f + 0.06f * _rng.Next01(), pitch * 1.06f, db - 9f, true);
+            }
+
             if (audioId.StartsWith("LMG", System.StringComparison.Ordinal) && surface != SurfaceKind.Water && surface != SurfaceKind.Foliage)
             {
-                Enqueue(AudioSoundId.CasingLink, hit.point, fall + 0.03f, pitch, db - 6f);
+                Enqueue(AudioSoundId.CasingLink, hit.point, fall + 0.03f, pitch, db - 6f, false);
             }
         }
 
@@ -296,10 +355,17 @@ namespace DD.Prototype.Audio
             }
         }
 
-        private void Enqueue(AudioSoundId sound, Vector3 point, float delay, float pitch, float db)
+        private bool Enqueue(AudioSoundId sound, Vector3 point, float delay, float pitch, float db, bool bounce)
         {
-            if (sound == AudioSoundId.None || !_library.IsProduced(sound) || _count >= Capacity) return;
-            _queue[_count++] = new Pending { At = Time.time + delay, Point = point, Sound = sound, Pitch = pitch, GainDb = db };
+            if (sound == AudioSoundId.None || !_library.IsProduced(sound)) return false;
+            if (_count >= Capacity)
+            {
+                if (!bounce) Dropped++;
+                return false;
+            }
+
+            _queue[_count++] = new Pending { At = Time.time + delay, Point = point, Sound = sound, Pitch = pitch, GainDb = db, Bounce = bounce, Fall = delay };
+            return true;
         }
 
         public void Tick()
@@ -317,8 +383,15 @@ namespace DD.Prototype.Audio
                 // Level against the fire voice (gain 0.85, −18 LUFS files): casing files sit 4 LU lower (−22), PlayerCasing gain 0.5.
                 if (_play(placement, p.Point, Mathf.Pow(10f, (p.GainDb + 4f) / 20f) * (0.85f / 0.5f), 8))
                 {
+                    if (p.Bounce)
+                    {
+                        Bounces++;
+                        continue;
+                    }
+
                     Landed++;
                     LastSound = p.Sound;
+                    LastFallSeconds = p.Fall;
                 }
             }
         }

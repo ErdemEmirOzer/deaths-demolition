@@ -918,6 +918,48 @@ namespace DD.Prototype.Tests.PlayMode
 
         [UnityTest]
         [Timeout(60000)]
+        public IEnumerator KovanV2_AyniKareIkiKabukAyriDuser_GecikmeBandi_HavuzTavani_SifirAyirma()
+        {
+            if (!_d.Library.IsProduced(AudioSoundId.CasingRifleStone))
+            {
+                Assert.Fail("v017 kovan kimlikleri katalogda değil (AudioCatalogBuilder).");
+            }
+
+            CasingAudio c = _d.Casings;
+            Vector3 port = _s.Rig.transform.position + Vector3.up * 1.3f;
+            var kovan = new DD.Prototype.Weapons.WeaponMechanismEvent(
+                DD.Prototype.Weapons.WeaponMechanismKind.CasingEjected, DD.Prototype.Core.Config.ClassicWeaponId.AssaultRifle, port, _s.Rig.transform.right, false);
+
+            // M-21 (sg_2 kırma): aynı karede iki kabuk → ikisi de duyulur (aynı-ses yeniden tetik kısması tek vuruşa indirmez).
+            int once = c.Landed;
+            DD.Prototype.Weapons.WeaponEvents.PublishMechanism(kovan);
+            DD.Prototype.Weapons.WeaponEvents.PublishMechanism(kovan);
+            yield return new WaitForSeconds(1f);
+            Assert.AreEqual(once + 2, c.Landed, "Aynı karedeki iki kovan ayrı ayrı düşer.");
+            Assert.GreaterOrEqual(c.LastFallSeconds, 0.25f, "R2 S5: atış → düşme ≥ 250 ms.");
+            Assert.LessOrEqual(c.LastFallSeconds, 0.7f, "R2 S5: atış → düşme ≤ 700 ms.");
+
+            // Havuz tavanı: bir karede 30 kovan → kuyruk tavanı aşılmaz, fazlası sayılarak düşer, kuyruk boşalır.
+            int dusen = c.Dropped;
+            for (int i = 0; i < 30; i++) DD.Prototype.Weapons.WeaponEvents.PublishMechanism(kovan);
+            Assert.LessOrEqual(c.InAir, CasingAudio.Capacity);
+            Assert.Greater(c.Dropped, dusen, "Taşan kovan sayılır.");
+            yield return new WaitForSeconds(1f);
+            Assert.AreEqual(0, c.InAir, "Kuyruk boşaldı.");
+
+            // Sıfır ayırma (R2 S5): ısınmış yolda kovan olayı + kuyruk ses yolu GC ayırmaz.
+            DD.Prototype.Weapons.WeaponEvents.PublishMechanism(kovan);
+            yield return new WaitForSeconds(1f);
+            long b0 = System.GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < 5; i++) DD.Prototype.Weapons.WeaponEvents.PublishMechanism(kovan);
+            long b1 = System.GC.GetAllocatedBytesForCurrentThread();
+            Assert.AreEqual(0L, b1 - b0, "Kovan olayı yolu ayırma yapmamalı.");
+            yield return new WaitForSeconds(1f);
+            Debug.Log("[DD-TEST] wp085b2.casing landed=" + c.Landed + " bounces=" + c.Bounces + " dropped=" + c.Dropped + " fall=" + c.LastFallSeconds.ToString("0.000"));
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
         public IEnumerator FoleyV3_KovanYuzeyeDuser_KuruTetikAilesi()
         {
             if (!_d.Library.IsProduced(AudioSoundId.CasingRifleStone))
