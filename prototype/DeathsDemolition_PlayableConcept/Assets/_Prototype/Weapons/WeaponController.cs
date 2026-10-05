@@ -102,6 +102,7 @@ namespace DD.Prototype.Weapons
         private WeaponMechanismTimeline _timeline = WeaponMechanismTimeline.Magazine;
         private float _casingAt = -1f;
         private bool _casingOwed;   // WP-087: a pump shot's shell not yet out (the clip's eject or the deadline pays it, once)
+        private int _casingSerial;  // WP-087: the shot that owes it
         private bool _magOutFired;
 
         /// <summary>
@@ -592,8 +593,13 @@ namespace DD.Prototype.Weapons
             else WeaponEvents.PublishFireStopped(_equippedId);
         }
 
+        /// <summary>WP-087 (C-00 05.10): counts the classic shots fired (one per FireClassicOnce, a burst's each); the mechanism events and
+        /// VFX's CasingEvents.Launched carry it, so the casing sound can find the casing the VFX threw for that shot.</summary>
+        public int ShotSerial { get; private set; }
+
         private void FireClassicOnce()
         {
+            ShotSerial++;
             // WP-042: top-down, the shot leaves at a fixed height above the root (hit-region parity across
             // weapon models / holds); the visual muzzle only feeds the flash. WP-069 (ADR-069-1 §7): in the
             // look modes the projectile leaves the muzzle towards the camera's aim point (parallax corrected).
@@ -677,6 +683,7 @@ namespace DD.Prototype.Weapons
                 {
                     // WP-087: owed until paid — by the clip's eject when it plays (third person), else by the deadline
                     _casingOwed = true;
+                    _casingSerial = ShotSerial;
                     _casingAt = Time.time + _timeline.CasingDelaySeconds + (ClipDrivesMechanism ? PumpCasingGraceSeconds : 0f);
                 }
             }
@@ -770,7 +777,7 @@ namespace DD.Prototype.Weapons
                     if (_equippedId != ClassicWeaponId.Rl1)
                     {
                         Transform hand = _magazineVisual.Socket != null ? _magazineVisual.Socket : MagazineHandSocket();
-                        if (hand != null) WeaponEvents.PublishMechanism(new WeaponMechanismEvent(WeaponMechanismKind.MagazineDropped, _equippedId, hand.position, Vector3.down, fromEvent));
+                        if (hand != null) WeaponEvents.PublishMechanism(new WeaponMechanismEvent(WeaponMechanismKind.MagazineDropped, _equippedId, hand.position, Vector3.down, fromEvent, ShotSerial));
                         else PublishMechanism(WeaponMechanismKind.MagazineDropped, fromEvent);
                     }
 
@@ -1628,7 +1635,7 @@ namespace DD.Prototype.Weapons
                 if (_casingOwed)
                 {
                     _casingOwed = false;
-                    PublishMechanism(WeaponMechanismKind.CasingEjected, false);
+                    PublishMechanism(WeaponMechanismKind.CasingEjected, false, _casingSerial);
                 }
             }
 
@@ -1714,7 +1721,7 @@ namespace DD.Prototype.Weapons
                 {
                     _casingOwed = false;
                     _casingAt = -1f;
-                    PublishMechanism(WeaponMechanismKind.CasingEjected, true);
+                    PublishMechanism(WeaponMechanismKind.CasingEjected, true, _casingSerial);
                 }
             }
             else if (e == s_magOut) { if (_timeline.ReloadCasings <= 0 || !_magOutFired) { _magOutFired = true; PublishMagOut(true); } }
@@ -1746,13 +1753,13 @@ namespace DD.Prototype.Weapons
             for (int i = 0; i < _timeline.ReloadCasings; i++) PublishMechanism(WeaponMechanismKind.CasingEjected, fromClip);
         }
 
-        private void PublishMechanism(WeaponMechanismKind kind, bool fromClip)
+        private void PublishMechanism(WeaponMechanismKind kind, bool fromClip, int shotSerial = -1)
         {
             Transform socket = kind == WeaponMechanismKind.CasingEjected
                 ? (_classicRig != null ? _classicRig.Ejection : Muzzle)
                 : (_classicRig != null ? _classicRig.MagMarker : Muzzle);
             Vector3 direction = kind == WeaponMechanismKind.CasingEjected ? socket.right : Vector3.down;
-            WeaponEvents.PublishMechanism(new WeaponMechanismEvent(kind, _equippedId, socket.position, direction, fromClip));
+            WeaponEvents.PublishMechanism(new WeaponMechanismEvent(kind, _equippedId, socket.position, direction, fromClip, shotSerial >= 0 ? shotSerial : ShotSerial));
         }
     }
 }

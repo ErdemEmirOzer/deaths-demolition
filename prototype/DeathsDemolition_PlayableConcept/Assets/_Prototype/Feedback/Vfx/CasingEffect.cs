@@ -23,6 +23,41 @@ namespace DD.Prototype.Feedback.Vfx
 
         public bool IsResting => _rested;
 
+        private static readonly RaycastHit[] s_predictHits = new RaycastHit[1];
+
+        /// <summary>
+        /// WP-087 (C-00 05.10) · where a casing launched at <paramref name="from"/> with <paramref name="velocity"/> first touches down
+        /// and where it lies — this effect's own rules in closed form: the spawn's floor ray (Default | Environment, 3 m; no hit = 3 m
+        /// down), gravity, a bounce (× 0.35 along, × 0.22 up) while it lands faster than 0.6 m/s, else it rests. The visible casing
+        /// steps the same arc a frame at a time, so it differs by at most a frame's travel. Pair with CasingEvents.Launched.
+        /// </summary>
+        public static void PredictLanding(Vector3 from, Vector3 velocity, out Vector3 touchdown, out float touchdownSeconds, out Vector3 rest, out float restSeconds)
+        {
+            int mask = (1 << 0) | LayerBit("Environment");
+            float floor = from.y - FloorRayMetres;
+            if (Physics.RaycastNonAlloc(from, Vector3.down, s_predictHits, FloorRayMetres, mask, QueryTriggerInteraction.Ignore) > 0) floor = s_predictHits[0].point.y;
+            floor += 0.006f;
+            Vector3 p = from, v = velocity;
+            float t = 0f;
+            touchdown = rest = from;
+            touchdownSeconds = restSeconds = 0f;
+            for (int bounce = 0; bounce < 8; bounce++)
+            {
+                float h = Mathf.Max(0f, p.y - floor);
+                float tau = (v.y + Mathf.Sqrt(Mathf.Max(0f, v.y * v.y + 2f * Gravity * h))) / Gravity;
+                p += new Vector3(v.x, 0f, v.z) * tau;
+                p.y = floor;
+                t += tau;
+                float vy = v.y - Gravity * tau;
+                if (bounce == 0) { touchdown = p; touchdownSeconds = t; }
+                if (vy >= -0.6f) break;
+                v = new Vector3(v.x * 0.35f, -vy * 0.22f, v.z * 0.35f);
+            }
+
+            rest = p;
+            restSeconds = t;
+        }
+
         private void Awake()
         {
             _filter = GetComponent<MeshFilter>();

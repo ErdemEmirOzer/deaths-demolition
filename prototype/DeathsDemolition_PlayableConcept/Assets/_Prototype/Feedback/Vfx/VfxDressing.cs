@@ -280,7 +280,7 @@ namespace DD.Prototype.Feedback.Vfx
         /// AP-013C casing from the rig's Ejection socket. WP-073 B1: the class profile's throw (+X 35° up, 10° back, its
         /// speed) and rest time per tier (3 / 5 / 8 s rifle); without a profile the WP-047E throw and 1.6 s.
         /// </summary>
-        private void EjectCasing(MuzzleVariant variant, Transform muzzle, VfxWeaponProfile profile)
+        private void EjectCasing(MuzzleVariant variant, Transform muzzle, VfxWeaponProfile profile, int shotSerial = -1)
         {
             if (_casings == null || muzzle == null || (profile != null && !profile.HasCasing)) return;
             DD.Prototype.Weapons.WeaponController active = DD.Prototype.Weapons.WeaponRegistry.ActiveController;
@@ -294,9 +294,11 @@ namespace DD.Prototype.Feedback.Vfx
             Vector3 velocity;
             float life = CasingEffect.LifeSeconds;
             MuzzleVariant mesh = variant;
+            float scale = 1f;
             if (profile != null)
             {
-                float speed = profile.CasingSpeed * (0.85f + 0.3f * seed);
+                scale = 0.85f + 0.3f * seed;
+                float speed = profile.CasingSpeed * scale;
                 velocity = (port.right * 0.819f + Vector3.up * 0.574f - port.forward * 0.174f) * speed;
                 life = VfxTier.Pick(profile.RestSeconds.x, profile.RestSeconds.y, profile.RestSeconds.z);
                 mesh = profile.CasingMesh;
@@ -310,6 +312,9 @@ namespace DD.Prototype.Feedback.Vfx
             if (c == null) return;
             c.Play(lib.MeshFor(mesh), lib.Material, velocity, seed, life);
             CasingsEjected++;
+            // WP-087 (C-00 05.10): the throw this casing got, with its shot — the casing sound lands where this casing lands
+            DD.Prototype.Core.Config.ClassicWeaponId weapon = active != null && active.Classic != null ? active.Classic.Id : default;
+            CasingEvents.RaiseLaunched(new CasingLaunchInfo(shotSerial >= 0 ? shotSerial : active != null ? active.ShotSerial : 0, weapon, port.position, velocity, scale));
         }
 
         /// <summary>The weapons whose shells follow the mechanism, never the flash: sg_1 pump (clip or 0.40 s fallback) and
@@ -323,7 +328,7 @@ namespace DD.Prototype.Feedback.Vfx
             if (!_ready || info.Kind != DD.Prototype.Weapons.WeaponMechanismKind.CasingEjected || !MechanismEjects(info.Weapon)) return;
             DD.Prototype.Weapons.WeaponController active = DD.Prototype.Weapons.WeaponRegistry.ActiveController;
             if (active == null || active.SpecialWeaponActive || active.Classic == null || active.Classic.Id != info.Weapon) return;
-            EjectCasing(MuzzleVariant.C, active.Muzzle, VfxWeaponProfiles.For(info.Weapon));
+            EjectCasing(MuzzleVariant.C, active.Muzzle, VfxWeaponProfiles.For(info.Weapon), info.ShotSerial);
         }
 
         private Vector3 BarrelAxis()

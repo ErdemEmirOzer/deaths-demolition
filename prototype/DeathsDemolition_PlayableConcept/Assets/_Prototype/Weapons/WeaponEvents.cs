@@ -93,13 +93,18 @@ namespace DD.Prototype.Weapons
         public readonly Vector3 Direction;
         public readonly bool FromClipEvent;
 
-        public WeaponMechanismEvent(WeaponMechanismKind kind, ClassicWeaponId weapon, Vector3 position, Vector3 direction, bool fromClipEvent)
+        /// <summary>WP-087 (C-00 05.10): the controller's <see cref="WeaponController.ShotSerial"/> of the shot this event belongs to — a
+        /// casing's shot (the pump's / break-open's included), else the last shot; 0 when none. VFX's CasingEvents.Launched carries the same.</summary>
+        public readonly int ShotSerial;
+
+        public WeaponMechanismEvent(WeaponMechanismKind kind, ClassicWeaponId weapon, Vector3 position, Vector3 direction, bool fromClipEvent, int shotSerial = 0)
         {
             Kind = kind;
             Weapon = weapon;
             Position = position;
             Direction = direction;
             FromClipEvent = fromClipEvent;
+            ShotSerial = shotSerial;
         }
     }
 

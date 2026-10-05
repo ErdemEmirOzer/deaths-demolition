@@ -275,5 +275,150 @@ namespace DD.Prototype.Tests.PlayMode
             Debug.Log("[DD-TEST] wp087.tracerorigin\n" + string.Join("\n", rows));
             Assert.IsEmpty(wrong, string.Join("\n", wrong) + "\n" + string.Join("\n", rows));
         }
+
+        private sealed class KovanIzi
+        {
+            public int Serial, Frame;
+            public string Row;
+            public CasingEffect Effect;
+            public Vector3 PredTouch, PredRest, Touch, Rest, Audio;
+            public bool Touched, Rested, HasAudio;
+        }
+
+        /// <summary>
+        /// WP-087 (C-00 05.10): every visible casing announces its throw (CasingEvents.Launched — the per-shot 0.85–1.15 speed jitter
+        /// included, with the shot's serial), and CasingEffect.PredictLanding turns it into where that casing touches down and lies:
+        /// FP / TP / top-down, every classic with a casing, ≥ 10 casings each — prediction ↔ the visible casing ≤ 10 cm (a frame's
+        /// travel), the mechanism event of the same shot carries the same serial. The casing sound's landing (S-08's CasingAudio) is
+        /// logged against the visible touchdown and rest; S-08 moves it onto this event (target ≤ 25 cm).
+        /// </summary>
+        [UnityTest]
+        [Timeout(900000)]
+        public IEnumerator KovanOlayi_TahminGorunenKovanla_SesRapor()
+        {
+            _s = new SpecialWeaponSahne();
+            yield return _s.Kur();
+            FieldInfo floorField = typeof(CasingEffect).GetField("_floorY", BindingFlags.NonPublic | BindingFlags.Instance);
+            var director = DD.Prototype.Audio.PrototypeAudioDirector.Instance;
+            var casingAudio = director != null ? director.Casings : null;
+            var tracks = new List<KovanIzi>();
+            var mechSerials = new HashSet<int>();
+            var rows = new List<string>();
+            var wrong = new List<string>();
+            var bos = new List<string>();
+            string current = "";
+            var assigned = new HashSet<CasingEffect>();
+            System.Action<CasingLaunchInfo> onLaunch = info =>
+            {
+                // the casing that just started at the port — not one already followed (sg_2 throws two from the same port in one frame)
+                CasingEffect c = null;
+                float best = 0.001f;
+                foreach (CasingEffect e in Object.FindObjectsOfType<CasingEffect>())
+                {
+                    if (!e.gameObject.activeInHierarchy || e.IsResting || assigned.Contains(e)) continue;
+                    float d = (e.transform.position - info.Position).magnitude;
+                    if (d < best) { best = d; c = e; }
+                }
+
+                if (c != null) assigned.Add(c);
+                CasingEffect.PredictLanding(info.Position, info.Velocity, out Vector3 touch, out _, out Vector3 rest, out _);
+                tracks.Add(new KovanIzi { Serial = info.ShotSerial, Frame = Time.frameCount, Row = current, Effect = c, PredTouch = touch, PredRest = rest });
+            };
+            System.Action<WeaponMechanismEvent> onMech = e => { if (e.Kind == WeaponMechanismKind.CasingEjected) mechSerials.Add(e.ShotSerial); };
+            CasingEvents.Launched += onLaunch;
+            WeaponEvents.Mechanism += onMech;
+            Time.captureDeltaTime = 1f / 60f;
+            try
+            {
+                foreach (CameraMode mode in new[] { CameraMode.FirstPerson, CameraMode.ThirdPerson, CameraMode.TopDown })
+                {
+                    CameraModeService.Request(mode, instant: true);
+                    yield return SpecialWeaponSahne.Kareler(30);
+                    foreach (ClassicWeaponDefinition d in WeaponRoster.Enabled)
+                    {
+                        if (d.Id == ClassicWeaponId.Rl1) continue;   // no casing
+                        _s.Controller.EquipClassic(d.Id, _s.Config);
+                        yield return SpecialWeaponSahne.Kareler(60);
+                        current = mode + " " + d.RosterKey;
+                        int start = tracks.Count;
+                        for (int f = 0; f < 1500 && tracks.Count - start < 10; f++)
+                        {
+                            if (_s.Controller.Classic.IsReloading) { yield return null; Izle(tracks, floorField, casingAudio, assigned); continue; }
+                            if (_s.Controller.Classic.Ammo <= 0) { _s.Controller.Classic.TryBeginReload(); yield return null; Izle(tracks, floorField, casingAudio, assigned); continue; }
+                            _s.Girdi.AtesBasti = true; _s.Girdi.AtesBasili = true;
+                            yield return null;
+                            Izle(tracks, floorField, casingAudio, assigned);
+                            _s.Girdi.AtesBasti = false; _s.Girdi.AtesBasili = false;
+                            if (d.Id == ClassicWeaponId.Sg2) _s.Controller.Classic.TryBeginReload();   // its shells leave on the break-open
+                            for (int w = 0; w < 14; w++) { yield return null; Izle(tracks, floorField, casingAudio, assigned); }
+                        }
+
+                        for (int w = 0; w < 300 && !TumuDurdu(tracks, start); w++) { yield return null; Izle(tracks, floorField, casingAudio, assigned); }
+                        if (tracks.Count - start < 10) bos.Add(current + ": yalnız " + (tracks.Count - start) + " kovan");
+                    }
+                }
+            }
+            finally
+            {
+                CasingEvents.Launched -= onLaunch;
+                WeaponEvents.Mechanism -= onMech;
+                _s.Girdi.AtesBasti = false; _s.Girdi.AtesBasili = false;
+                Time.captureDeltaTime = 0f;
+            }
+
+            // per row: the prediction against the visible casing; the sound's landing (report)
+            var byRow = new Dictionary<string, List<KovanIzi>>();
+            foreach (KovanIzi k in tracks) { if (!byRow.TryGetValue(k.Row, out var l)) byRow[k.Row] = l = new List<KovanIzi>(); l.Add(k); }
+            foreach (var kv in byRow)
+            {
+                float touchMax = 0f, restMax = 0f, audioTouchMax = -1f, audioRestMax = -1f;
+                int audioN = 0, serialMiss = 0;
+                foreach (KovanIzi k in kv.Value)
+                {
+                    if (k.Effect == null || !k.Rested) { bos.Add(kv.Key + ": kovan izlenemedi (seri " + k.Serial + ")"); continue; }
+                    if (!mechSerials.Contains(k.Serial)) serialMiss++;
+                    touchMax = Mathf.Max(touchMax, Xz(k.PredTouch, k.Touch));
+                    restMax = Mathf.Max(restMax, Xz(k.PredRest, k.Rest));
+                    if (k.HasAudio) { audioN++; audioTouchMax = Mathf.Max(audioTouchMax, Xz(k.Audio, k.Touch)); audioRestMax = Mathf.Max(audioRestMax, Xz(k.Audio, k.Rest)); }
+                }
+
+                rows.Add(kv.Key + " | casings " + kv.Value.Count + " | predicted ↔ visible touchdown max " + Cm(touchMax) + " cm, rest " + Cm(restMax) + " cm | serial ↔ mechanism misses " + serialMiss
+                         + " | sound ↔ visible (n " + audioN + ") touchdown max " + Cm(audioTouchMax) + " cm, rest " + Cm(audioRestMax) + " cm");
+                if (touchMax > 0.1f || restMax > 0.1f) wrong.Add(kv.Key + ": tahmin görünen kovandan uzak (iniş " + Cm(touchMax) + ", duruş " + Cm(restMax) + " cm)");
+                if (serialMiss > 0) wrong.Add(kv.Key + ": " + serialMiss + " kovanın atış serisi mekanizma olayında yok");
+            }
+
+            Debug.Log("[DD-TEST] wp087.casinglaunch\n" + string.Join("\n", rows));
+            Assert.IsEmpty(bos, "kaynak kayıtta yok\n" + string.Join("\n", bos) + "\n" + string.Join("\n", rows));
+            Assert.AreEqual(27, byRow.Count, "3 kamera × 9 kovanlı silah");
+            Assert.IsEmpty(wrong, string.Join("\n", wrong) + "\n" + string.Join("\n", rows));
+        }
+
+        private static float Xz(Vector3 a, Vector3 b) => Vector2.Distance(new Vector2(a.x, a.z), new Vector2(b.x, b.z));
+
+        private static bool TumuDurdu(List<KovanIzi> tracks, int start)
+        {
+            for (int i = start; i < tracks.Count; i++) if (tracks[i].Effect != null && !tracks[i].Rested) return false;
+            return true;
+        }
+
+        /// <summary>One frame of every tracked casing: its first touchdown (it clamps onto its floor), its rest; the sound's landing of a
+        /// frame that threw exactly one casing (CasingAudio.LastLandingPoint, read after the frame's handlers ran).</summary>
+        private static void Izle(List<KovanIzi> tracks, FieldInfo floorField, DD.Prototype.Audio.CasingAudio audio, HashSet<CasingEffect> assigned)
+        {
+            int frame = Time.frameCount, thrown = 0, last = -1;
+            for (int i = 0; i < tracks.Count; i++)
+            {
+                KovanIzi k = tracks[i];
+                if (k.Frame == frame - 1) { thrown++; last = i; }
+                if (k.Effect == null || k.Rested) continue;
+                Vector3 p = k.Effect.transform.position;
+                float floor = floorField != null ? (float)floorField.GetValue(k.Effect) : float.NegativeInfinity;
+                if (!k.Touched && p.y <= floor + 0.0065f) { k.Touched = true; k.Touch = p; }
+                if (k.Effect.IsResting) { k.Rested = true; k.Rest = p; if (!k.Touched) { k.Touched = true; k.Touch = p; } assigned.Remove(k.Effect); }
+            }
+
+            if (thrown == 1 && audio != null) { tracks[last].Audio = audio.LastLandingPoint; tracks[last].HasAudio = true; }
+        }
     }
 }
