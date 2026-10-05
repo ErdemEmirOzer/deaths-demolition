@@ -97,6 +97,16 @@ class MeasuredByTests(unittest.TestCase):
         self.assertEqual("DD.Prototype.Tests.PlayMode.UiOverflowMatrixTests.U2_Tasma_TrEn_Metin1ve125_MacUi12",
                          gate("U2")["measuredBy"]["filter"])
 
+    def test_s03s_zombie_measurements_each_run_in_their_own_full_name_session(self):
+        # [Explicit]: one full name per session — the only selection S-02 verified (05.10)
+        steps = {s["id"]: s for s in r2.measurement_steps(r2.load_contract(CONTRACT), quiet=False)}
+        for gid, name in (("Z2", "Z2_TierCiftleri_Ayrisir"), ("Z3b", "Z3b_40Zombi_SetPassPayi_DokuButcesi"),
+                          ("Z4", "Z4_HerAile_YuzGozDis")):
+            self.assertEqual("DD.Prototype.Tests.PlayMode.ZombieR2Tests." + name, steps["r2-" + gid]["filter"])
+            self.assertEqual([gid], steps["r2-" + gid]["gates"])
+        # C-00 05.10: the gate is the fixed tier mix 22/10/6/2; the round-30 worst mix is reported, never gates
+        self.assertEqual(["zombieSetPassWorst", "zombieDrawsWorst", "sharedTextureGpuMBWorst"], gate("Z3b")["report"])
+
     def test_s5_airborne_queue_is_reported_never_gated(self):
         self.assertEqual(["queueMax"], gate("S5")["report"])
         self.assertNotIn("queueMax", [c["key"] for c in gate("S5")["checks"]])
