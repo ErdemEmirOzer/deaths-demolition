@@ -753,14 +753,29 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(AudioSoundId.SwArcFire, _d.LastPlayed, "Special eldeyken eski HeavyWeaponFire çalmamalı");
 
             // Chain: hop 0..2 in one frame → three crackles, 40 ms apart; the orb's end right after = no fizzle.
-            int played = sp.Played;
-            for (int hop = 0; hop < 3; hop++) Yayinla(raiju, DD.Prototype.Weapons.SpecialUsageKind.Hit, at + Vector3.right * hop, hop);
-            Yayinla(raiju, DD.Prototype.Weapons.SpecialUsageKind.FieldEnded, at, 0);
-            Assert.AreEqual(played, sp.Played, "zincir sıçramaları 40 ms aralıkla gecikmeli");
-            yield return new WaitForSeconds(0.2f);
-            Assert.AreEqual(played + 3, sp.Played, "üç sıçrama, sönüş yok");
-            Assert.AreEqual(AudioSoundId.SwArcChainJump, sp.LastSound);
-            yield return new WaitForSeconds(0.2f);
+            // WP-087 (C-00 05.10, BEKLEYEN §14): a test clock. The hops fall due on game time (Time.time, 40 ms apart) and the voice
+            // pool's same-sound retrigger window is real time (Time.unscaledTime, 20 ms): on a loaded machine one long frame made all
+            // three hops due in one SpecialAudio.Tick and the window kept only the first (1–2 of 3 in the full suite,
+            // K/wp-085/evidence/sp); a fixed capture step does the opposite (game time races real time). At timeScale 0.1 the hops are
+            // 400 ms of real time apart and a frame — even one at the 0.333 s cap — brings at most one due. Mechanism unchanged.
+            float scale0 = Time.timeScale;
+            Time.timeScale = 0.1f;
+            try
+            {
+                int played = sp.Played;
+                for (int hop = 0; hop < 3; hop++) Yayinla(raiju, DD.Prototype.Weapons.SpecialUsageKind.Hit, at + Vector3.right * hop, hop);
+                Yayinla(raiju, DD.Prototype.Weapons.SpecialUsageKind.FieldEnded, at, 0);
+                Assert.AreEqual(played, sp.Played, "zincir sıçramaları 40 ms aralıkla gecikmeli");
+                yield return new WaitForSeconds(0.2f);
+                Assert.AreEqual(played + 3, sp.Played, "üç sıçrama, sönüş yok");
+                Assert.AreEqual(AudioSoundId.SwArcChainJump, sp.LastSound);
+                yield return new WaitForSeconds(0.2f);
+            }
+            finally
+            {
+                Time.timeScale = scale0;
+            }
+
             Yayinla(raiju, DD.Prototype.Weapons.SpecialUsageKind.FieldEnded, at2, 0);
             Assert.AreEqual(AudioSoundId.SwArcShockEnd, _d.LastPlayed, "gövdesiz biten küre söner");
             Yayinla(raiju, DD.Prototype.Weapons.SpecialUsageKind.Deactivated, el, 0);
