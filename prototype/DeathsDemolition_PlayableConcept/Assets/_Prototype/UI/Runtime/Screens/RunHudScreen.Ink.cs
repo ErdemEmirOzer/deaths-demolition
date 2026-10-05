@@ -141,7 +141,8 @@ namespace DD.Prototype.UI
             _enemiesValue = InkText("EnemiesValue", root, "—", UiType.NumericM, UiColor.TextPrimary, TextAnchor.MiddleLeft);
             Place(_enemiesValue.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, 0.5f), new Vector2(26f, 0f), new Vector2(72f, 28f));
 
-            RectTransform calm = InkRoot("RoundCalm", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -24f - seal - 6f), new Vector2(420f, 20f));
+            // WP-081 B4 (R2 U2): the line's own height at the TextScale - a fixed 20 left the 1.25 caption 4 px outside its box.
+            RectTransform calm = InkRoot("RoundCalm", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -24f - seal - 6f), new Vector2(420f, UiFactory.LineHeight(UiType.Caption)));
             _enemiesBreakdown = InkText("EnemiesBreakdown", calm, "—", UiType.Caption, UiColor.TextSecondary, TextAnchor.MiddleCenter);
             UiFactory.Fill(_enemiesBreakdown.rectTransform);
             _calmOnly.Add(UiFactory.Group(calm.gameObject));
@@ -234,7 +235,7 @@ namespace DD.Prototype.UI
 
             // T2 (calm only): the weapon and its build on one line (AD 8-R SHOULD-A1).
             RectTransform calm = UiFactory.NewRect("WeaponCalm", root);
-            Place(calm, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(edge, 118f), new Vector2(340f, 18f));
+            Place(calm, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(edge, 118f), new Vector2(340f, UiFactory.LineHeight(UiType.Caption)));   // WP-081 B4 (U2): the caption's line, not 18 (LayWeaponCluster too)
             _classicName = InkText("Name", calm, "—", UiType.Caption, UiColor.TextSecondary, TextAnchor.MiddleRight);
             UiFactory.Fill(_classicName.rectTransform);
             _calmOnly.Add(UiFactory.Group(calm.gameObject));
@@ -732,7 +733,7 @@ namespace DD.Prototype.UI
             Vector2 row = new Vector2(220f, ReloadPromptSize + 6f);
             Place(_reloadCaption.rectTransform, anchor, new Vector2(0f, 0.5f), new Vector2(wordsLeft, 92f), row);
             Place(_suspendedRect, anchor, new Vector2(0f, 0.5f), new Vector2(wordsLeft, 92f), row);
-            Place(_weaponCalm, anchor, mirrored ? Vector2.zero : new Vector2(1f, 0f), new Vector2(mirrored ? FpCountInset : edge, 118f), new Vector2(340f, 18f));
+            Place(_weaponCalm, anchor, mirrored ? Vector2.zero : new Vector2(1f, 0f), new Vector2(mirrored ? FpCountInset : edge, 118f), new Vector2(340f, UiFactory.LineHeight(UiType.Caption)));
             _classicName.alignment = UiFactory.Align(mirrored ? TextAnchor.MiddleLeft : TextAnchor.MiddleRight);
         }
 

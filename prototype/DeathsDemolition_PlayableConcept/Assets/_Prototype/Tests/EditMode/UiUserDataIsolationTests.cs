@@ -150,5 +150,27 @@ namespace DD.Prototype.Tests.EditMode
             UiLoadTiming.SetPathOverride(timing);
             Assert.AreEqual(1.5f, UiLoadTiming.LastLoadSeconds("Run"), 1e-4f, "ilk ölçüm dosyayı yeniden kurar");
         }
+
+        /// <summary>
+        /// WP-081 (S-10's P5 report): the raw load (LoadSceneAsync to progress 0.9) is kept beside the curtain-bound span in
+        /// RawSeconds; a file from before it keeps its spans and reports the raw load as unmeasured.
+        /// </summary>
+        [Test]
+        public void YuklemeZamanlamasi_HamYukleme_YanindaTutulur_EskiDosyadaOlculmemis()
+        {
+            string timing = Path.Combine(_dir, UiLoadTiming.FileName);
+            File.WriteAllText(timing, "{ \"Version\": 1, \"Scenes\": [\"Run\"], \"Seconds\": [2.0] }");
+            UiLoadTiming.SetPathOverride(timing);
+            Assert.AreEqual(2f, UiLoadTiming.LastLoadSeconds("Run"), 1e-4f, "WP-081 öncesi dosya: süreler okunur");
+            Assert.AreEqual(-1f, UiLoadTiming.LastRawLoadSeconds("Run"), "ham yükleme ölçülmemiş sayılır");
+
+            UiLoadTiming.RecordLoad("Selection", 1.25f, 0.4f);
+            UiLoadTiming.RecordLoad("Run", 2.5f, 1.1f);
+            UiLoadTiming.SetPathOverride(timing);
+            Assert.AreEqual(2.5f, UiLoadTiming.LastLoadSeconds("Run"), 1e-4f);
+            Assert.AreEqual(1.1f, UiLoadTiming.LastRawLoadSeconds("Run"), 1e-4f, "ham yükleme geri okunur");
+            Assert.AreEqual(0.4f, UiLoadTiming.LastRawLoadSeconds("Selection"), 1e-4f);
+            StringAssert.Contains("\"RawSeconds\"", File.ReadAllText(timing), "S-10'un P5 raporunun okuduğu alan");
+        }
     }
 }

@@ -162,8 +162,8 @@ namespace DD.Prototype.Tests.EditMode
         /// R2 U3 on fixed seeds: a session of 200 loading screens never shows one art twice in a row, and every 20 in a row
         /// (the first 20 too) show each art at least three times (r2-gates.json U3: minPerAny20 ≥ 3); also counts
         /// distinctSha256, the rotation files that differ (red in the gate until AP-028's paintings replace the placeholder
-        /// copies) - this test asserts the rotation only. Its r2-U3.json comes once R2Olcum moves to the shared test
-        /// assembly (C-00 05.10, decision a); until then U3 rests on this test's Passed identity.
+        /// copies) - this test asserts the rotation only. r2-U3.json through the shared R2Olcum (C-00 05.10, decision a;
+        /// tools/qa/r2-measure-contract.md).
         /// </summary>
         [Test]
         public void Rotasyon_ArdisikTekrarYok_YirmiYuklemedeHerSanatEnAzIkiKez()
@@ -217,6 +217,14 @@ namespace DD.Prototype.Tests.EditMode
 
             Debug.Log("[DD-TEST] wp081.u3 arts=" + count + " seeds=" + Seeds + " loads=" + Loads + " repeats=" + repeats
                       + " fewestPer" + Window + "=" + fewest + " distinctSha256=" + shas.Count);
+            R2Olcum.Yaz("U3", "DD.Prototype.Tests.EditMode.LoadingKeyArtTests.Rotasyon_ArdisikTekrarYok_YirmiYuklemedeHerSanatEnAzIkiKez",
+                new Dictionary<string, double>
+                {
+                    { "consecutiveRepeats", repeats },
+                    { "minPerAny20", fewest },
+                    { "distinctSha256", shas.Count }
+                },
+                Seeds * Loads);
             Assert.AreEqual(0, repeats, firstRepeat);
             Assert.GreaterOrEqual(fewest, 3, "every art at least three times in any twenty loads (r2-gates.json U3)");
         }

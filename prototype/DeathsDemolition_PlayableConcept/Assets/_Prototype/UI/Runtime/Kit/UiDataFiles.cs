@@ -115,6 +115,12 @@ namespace DD.Prototype.UI
         public int Version = 1;
         public string[] Scenes = new string[0];
         public float[] Seconds = new float[0];
+
+        /// <summary>
+        /// WP-081 (report only, S-10 P5): the raw load per scene - LoadSceneAsync to progress 0.9, before the curtain's
+        /// minimum display and the activation that <see cref="Seconds"/> include; -1 where it was not measured.
+        /// </summary>
+        public float[] RawSeconds = new float[0];
     }
 
     /// <summary>
@@ -159,8 +165,18 @@ namespace DD.Prototype.UI
             return -1f;
         }
 
-        /// <summary>Writes back a completed load's duration (never the profile, never ui-settings.json).</summary>
-        public static void RecordLoad(string scene, float seconds)
+        /// <summary>The last raw load of <paramref name="scene"/> (to progress 0.9) in seconds, or -1 when it has never been measured.</summary>
+        public static float LastRawLoadSeconds(string scene)
+        {
+            EnsureLoaded();
+            int index = Array.IndexOf(s_data.Scenes, scene);
+            return index >= 0 ? s_data.RawSeconds[index] : -1f;
+        }
+
+        /// <summary>
+        /// Writes back a completed load's duration and its raw load (never the profile, never ui-settings.json).
+        /// </summary>
+        public static void RecordLoad(string scene, float seconds, float rawSeconds = -1f)
         {
             EnsureLoaded();
             if (string.IsNullOrEmpty(scene))
@@ -174,10 +190,12 @@ namespace DD.Prototype.UI
                 index = s_data.Scenes.Length;
                 Array.Resize(ref s_data.Scenes, index + 1);
                 Array.Resize(ref s_data.Seconds, index + 1);
+                Array.Resize(ref s_data.RawSeconds, index + 1);
                 s_data.Scenes[index] = scene;
             }
 
             s_data.Seconds[index] = seconds;
+            s_data.RawSeconds[index] = rawSeconds;
             UiDataPaths.Write(FilePath, FileName, s_data);
         }
 
@@ -193,6 +211,15 @@ namespace DD.Prototype.UI
             bool valid = loaded != null && loaded.Scenes != null && loaded.Seconds != null && loaded.Seconds.Length == loaded.Scenes.Length;
             s_data.Scenes = valid ? loaded.Scenes : new string[0];
             s_data.Seconds = valid ? loaded.Seconds : new float[0];
+            bool rawValid = valid && loaded.RawSeconds != null && loaded.RawSeconds.Length == loaded.Scenes.Length;
+            s_data.RawSeconds = rawValid ? loaded.RawSeconds : new float[s_data.Scenes.Length];
+            if (!rawValid)
+            {
+                for (int i = 0; i < s_data.RawSeconds.Length; i++)
+                {
+                    s_data.RawSeconds[i] = -1f;   // a file from before WP-081: the raw load was not measured
+                }
+            }
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]

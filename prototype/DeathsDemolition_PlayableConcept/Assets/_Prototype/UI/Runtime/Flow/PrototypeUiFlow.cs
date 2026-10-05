@@ -336,6 +336,7 @@ namespace DD.Prototype.UI
             yield return null;
 
             float loadStart = Time.unscaledTime;
+            float loadedAt = -1f;   // WP-081: the raw load (progress 0.9), reported beside the curtain-bound span
             AsyncOperation op = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single);
             if (op == null)
             {
@@ -413,6 +414,11 @@ namespace DD.Prototype.UI
                 }
 
                 bool loaded = progress >= LoadedProgress;
+                if (loaded && loadedAt < 0f)
+                {
+                    loadedAt = now;
+                }
+
                 bool shownLongEnough = fast
                     || (groupShownAt >= 0f
                         ? now - groupShownAt >= MinimumDisplaySeconds
@@ -451,7 +457,7 @@ namespace DD.Prototype.UI
             {
                 // Only real loads are measured: FastTransitions (batch, tests) skips the curtain's
                 // timings, and a batch run writes no load-timing.json.
-                UiLoadTiming.RecordLoad(sceneName, Time.unscaledTime - loadStart);
+                UiLoadTiming.RecordLoad(sceneName, Time.unscaledTime - loadStart, loadedAt >= 0f ? loadedAt - loadStart : -1f);
             }
 
             // The new scene renders once behind the closed doors.
