@@ -929,41 +929,61 @@ namespace DD.Prototype.Tests.PlayMode
             try
             {
                 // M4 · rl_1: the rocket is born at the tube mouth on the frame it appears. C-00 01.10 (a): measured at its spawn
-                // point (ProjectileSpawnInfo.Position, the muzzle read in the same call) on a fixed 1/60 step — the projectile
-                // system steps 1/120 and a newborn already flies 2 steps on a 60 fps frame (FINAL dab326ab: 46.2 px; an inherited
-                // short step had shown 0.0). The first frame's flight is the rocket moving, logged, not asserted (R2 AD item).
+                // point (ProjectileSpawnInfo.Position, the muzzle read in the same call) on a fixed step — the projectile system
+                // steps 1/120 and a newborn already flies the spawn frame (2 steps at 60 fps: 79.8 px in FP, 4 at 30 fps).
+                // WP-087 R2 (b) (C-00 05.10): what is DRAWN on the firing frame is at the mouth — RocketVisualSystem eases the visual
+                // from the spawn point onto the flight (≤ 10 px at 1080p), at 60 and at 30 fps; the simulated flight is logged.
                 _s.Controller.EquipClassic(ClassicWeaponId.Rl1, _s.Config);
                 yield return Dinlenme(mount, "rl_1");
                 yield return SpecialWeaponSahne.Kareler(10);
-                float dt0 = Time.captureDeltaTime;
-                Time.captureDeltaTime = 1f / 60f;
-                float spawnGap = -1f;
-                System.Action<ProjectileSpawnInfo> born = info =>
+                DD.Prototype.Feedback.Vfx.RocketVisualSystem rockets = DD.Prototype.Feedback.Vfx.RocketVisualSystem.Instance;
+                Assert.IsNotNull(rockets, "RocketVisualSystem yok");
+                foreach (float step in new[] { 1f / 60f, 1f / 30f })
                 {
-                    if (spawnGap >= 0f || info.WeaponId != ClassicWeaponId.Rl1) return;
-                    spawnGap = (Ekran(camRig.Camera, info.Position) - Ekran(vm, _s.Controller.Muzzle.position)).magnitude;
-                };
-                ProjectileEvents.Spawned += born;
-                try
-                {
-                    int live0 = ProjectileSystem.LiveCount;
-                    _s.Girdi.AtesBasti = true; _s.Girdi.AtesBasili = true;
-                    yield return SpecialWeaponSahne.Bekle(() => ProjectileSystem.LiveCount > live0, 2f, "rl_1 ateşlemedi");
-                    _s.Girdi.AtesBasti = false; _s.Girdi.AtesBasili = false;
-                    Vector2 rocket = Ekran(camRig.Camera, ProjectileSystem.Get(ProjectileSystem.LiveCount - 1).Position);
-                    Vector2 mouth = Ekran(vm, _s.Controller.Muzzle.position);
-                    report.Add("rl_1 firing frame: rocket spawn ↔ tube mouth " + spawnGap.ToString("0.0") + " px, first frame's flight " + (rocket - mouth).magnitude.ToString("0.0") +
-                               " px at dt 1/60 (kick pending " + (_s.Controller.ClassicFeel.KickPending * 100f).ToString("0") + " %)");
-                    if (spawnGap < 0f) wrong.Add("rl_1 doğum olayı (ProjectileEvents.Spawned) gelmedi");
-                    else if (spawnGap > 45f) wrong.Add("rl_1 roket tüp ağzından " + spawnGap.ToString("0.0") + " px uzakta doğdu");
-                }
-                finally
-                {
-                    ProjectileEvents.Spawned -= born;
-                    Time.captureDeltaTime = dt0;
-                }
+                    string fps = Mathf.RoundToInt(1f / step) + " fps";
+                    if (_s.Controller.Classic.Ammo <= 0)
+                    {
+                        _s.Controller.Classic.TryBeginReload();
+                        yield return SpecialWeaponSahne.Bekle(() => _s.Controller.Classic.Ammo > 0 && !_s.Controller.Classic.IsReloading, 10f, "rl_1 yeniden dolmadı");
+                        yield return SpecialWeaponSahne.Kareler(30);
+                    }
 
-                yield return new WaitForSeconds(1.2f);
+                    float dt0 = Time.captureDeltaTime;
+                    Time.captureDeltaTime = step;
+                    float spawnGap = -1f;
+                    System.Action<ProjectileSpawnInfo> born = info =>
+                    {
+                        if (spawnGap >= 0f || info.WeaponId != ClassicWeaponId.Rl1) return;
+                        spawnGap = (Ekran(camRig.Camera, info.Position) - Ekran(vm, _s.Controller.Muzzle.position)).magnitude;
+                    };
+                    ProjectileEvents.Spawned += born;
+                    try
+                    {
+                        int live0 = ProjectileSystem.LiveCount;
+                        _s.Girdi.AtesBasti = true; _s.Girdi.AtesBasili = true;
+                        yield return SpecialWeaponSahne.Bekle(() => ProjectileSystem.LiveCount > live0, 2f, "rl_1 ateşlemedi");
+                        _s.Girdi.AtesBasti = false; _s.Girdi.AtesBasili = false;
+                        int generation = ProjectileSystem.Get(ProjectileSystem.LiveCount - 1).Generation;
+                        Vector3 simulated = ProjectileSystem.Get(ProjectileSystem.LiveCount - 1).Position;
+                        rockets.Present(0f);   // what this frame's LateUpdate draws (Present reads the live state, it never advances it)
+                        Vector2 mouth = Ekran(vm, _s.Controller.Muzzle.position);
+                        float flight = (Ekran(camRig.Camera, simulated) - mouth).magnitude;
+                        float drawn = rockets.TryVisual(generation, out Vector3 drawnAt) ? (Ekran(camRig.Camera, drawnAt) - mouth).magnitude : -1f;
+                        report.Add("rl_1 " + fps + " firing frame: rocket spawn ↔ tube mouth " + spawnGap.ToString("0.0") + " px, simulated flight " + flight.ToString("0.0") +
+                                   " px, DRAWN rocket ↔ mouth " + drawn.ToString("0.0") + " px (kick pending " + (_s.Controller.ClassicFeel.KickPending * 100f).ToString("0") + " %)");
+                        if (spawnGap < 0f) wrong.Add("rl_1 " + fps + ": doğum olayı (ProjectileEvents.Spawned) gelmedi");
+                        else if (spawnGap > 45f) wrong.Add("rl_1 " + fps + ": roket tüp ağzından " + spawnGap.ToString("0.0") + " px uzakta doğdu");
+                        if (drawn < 0f) wrong.Add("rl_1 " + fps + ": çizilen roket yok (RocketVisualSystem uçuşu görmedi)");
+                        else if (drawn > 10f) wrong.Add("rl_1 " + fps + ": ilk karede çizilen roket tüp ağzından " + drawn.ToString("0.0") + " px uzakta (WP-087 b: ≤ 10 px)");
+                    }
+                    finally
+                    {
+                        ProjectileEvents.Spawned -= born;
+                        Time.captureDeltaTime = dt0;
+                    }
+
+                    yield return new WaitForSeconds(1.2f);
+                }
 
                 // M3 · sg_1 / sg_2: the rig's lift within the budget, the flash on screen, shot +1…+45
                 foreach (ClassicWeaponId id in new[] { ClassicWeaponId.CombatShotgun, ClassicWeaponId.Sg2 })
@@ -1022,6 +1042,93 @@ namespace DD.Prototype.Tests.PlayMode
 
             Debug.Log("[DD-TEST] wp069.m3m4 " + string.Join(" | ", report));
             Assert.IsEmpty(wrong, string.Join(" | ", wrong));
+        }
+
+        /// <summary>
+        /// WP-087 R2 rocket first frame (b) (C-00 05.10) · no third person / top-down regression: rl_1 fired in each mode, at 60 fps.
+        /// On the firing frame the drawn rocket is at the weapon's muzzle (≤ 10 px at 1080p, the main camera); every following frame
+        /// it moves forward; within two frames it is drawn exactly where the simulation has it (the catch-up is presentation only —
+        /// Wp073LauncherVfxTests.Wp087_* checks the flight itself is untouched).
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator Roket_IlkKare_TpVeUstten_AgizdaCizilirUcusaYetisir()
+        {
+            yield return Kur();
+            Transform mount = _s.Rig.GetComponentInChildren<PlayerWeaponBinding>().WeaponMount;
+            var camRig = DD.Prototype.CameraSystem.PrototypeCameraRig.Active;
+            DD.Prototype.Feedback.Vfx.RocketVisualSystem rockets = DD.Prototype.Feedback.Vfx.RocketVisualSystem.Instance;
+            Assert.IsNotNull(rockets, "RocketVisualSystem yok");
+            var report = new List<string>();
+            var wrong = new List<string>();
+            float dt0 = Time.captureDeltaTime;
+            camRig.Camera.aspect = KareW / (float)KareH;
+            try
+            {
+                foreach (DD.Prototype.CameraSystem.CameraMode mode in new[] { DD.Prototype.CameraSystem.CameraMode.ThirdPerson, DD.Prototype.CameraSystem.CameraMode.TopDown })
+                {
+                    DD.Prototype.CameraSystem.CameraModeService.Request(mode, instant: true);
+                    yield return SpecialWeaponSahne.Kareler(30);
+                    _s.Controller.EquipClassic(ClassicWeaponId.Rl1, _s.Config);
+                    yield return Dinlenme(mount, "rl_1");
+                    yield return SpecialWeaponSahne.Kareler(10);
+                    if (_s.Controller.Classic.Ammo <= 0)
+                    {
+                        _s.Controller.Classic.TryBeginReload();
+                        yield return SpecialWeaponSahne.Bekle(() => _s.Controller.Classic.Ammo > 0 && !_s.Controller.Classic.IsReloading, 10f, "rl_1 yeniden dolmadı");
+                        yield return SpecialWeaponSahne.Kareler(30);
+                    }
+
+                    Time.captureDeltaTime = 1f / 60f;
+                    int live0 = ProjectileSystem.LiveCount;
+                    _s.Girdi.AtesBasti = true; _s.Girdi.AtesBasili = true;
+                    yield return SpecialWeaponSahne.Bekle(() => ProjectileSystem.LiveCount > live0, 2f, mode + ": rl_1 ateşlemedi");
+                    _s.Girdi.AtesBasti = false; _s.Girdi.AtesBasili = false;
+                    int generation = ProjectileSystem.Get(ProjectileSystem.LiveCount - 1).Generation;
+                    Vector3 origin = ProjectileSystem.Get(ProjectileSystem.LiveCount - 1).Origin;
+                    rockets.Present(0f);
+                    Vector2 muzzle = Ekran(camRig.Camera, _s.Controller.Muzzle.position);
+                    float first = rockets.TryVisual(generation, out Vector3 prev) ? (Ekran(camRig.Camera, prev) - muzzle).magnitude : -1f;
+                    float flown = 0f;
+                    int caught = -1, seen = 0;
+                    bool backwards = false;
+                    for (int f = 1; f <= 6; f++)
+                    {
+                        yield return null;
+                        int live = -1;
+                        for (int i = 0; i < ProjectileSystem.LiveCount; i++) if (ProjectileSystem.Get(i).Generation == generation) { live = i; break; }
+                        if (live < 0) break;
+                        Vector3 sim = ProjectileSystem.Get(live).Position;
+                        Vector3 fwd = (sim - origin).normalized;
+                        rockets.Present(0f);
+                        if (!rockets.TryVisual(generation, out Vector3 at)) break;
+                        seen++;
+                        if (Vector3.Dot(at - prev, fwd) < -1e-4f) backwards = true;
+                        if (caught < 0 && (at - sim).magnitude <= 0.001f) caught = f;
+                        flown = (sim - origin).magnitude;
+                        prev = at;
+                    }
+
+                    report.Add(mode + ": firing frame drawn ↔ muzzle " + first.ToString("0.0") + " px, drawn on the flight from frame " + caught + " (" + seen + " frames seen, " + flown.ToString("0.00") + " m flown)");
+                    if (first < 0f) wrong.Add(mode + ": ateş karesinde çizilen roket yok");
+                    else if (first > 10f) wrong.Add(mode + ": ateş karesinde çizilen roket namludan " + first.ToString("0.0") + " px uzakta");
+                    if (seen < 2) wrong.Add(mode + ": roket iki kare izlenemedi (ölçüm boş)");
+                    if (backwards) wrong.Add(mode + ": çizilen roket geri gitti");
+                    if (caught < 0 || caught > 2) wrong.Add(mode + ": çizilen roket iki karede uçuşa yetişmedi (kare " + caught + ")");
+                    Time.captureDeltaTime = dt0;
+                    yield return new WaitForSeconds(1.2f);
+                }
+            }
+            finally
+            {
+                _s.Girdi.AtesBasti = false; _s.Girdi.AtesBasili = false;
+                Time.captureDeltaTime = dt0;
+                camRig.Camera.ResetAspect();
+                DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.ThirdPerson, instant: true);
+            }
+
+            Debug.Log("[DD-TEST] wp087.rocketframe " + string.Join(" | ", report));
+            Assert.IsEmpty(wrong, string.Join("\n", wrong) + "\n" + string.Join("\n", report));
         }
 
         /// <summary>

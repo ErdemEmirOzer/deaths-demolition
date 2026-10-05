@@ -22,7 +22,21 @@ namespace DD.Prototype.Feedback.Vfx
         public const float SmokeRate = 20f, RocketLength = 0.55f;
         /// <summary>AP-021 (P-07) rl_1 moving part and the LOD used in flight (LOD1 466 tris ≤ direction §1.5's 600; LOD0 is 1,750).</summary>
         public const string RocketPart = "part_rocket", FlightLod = "part_rocket_LOD1";
-        private struct Flight { public int Id; public float Smoke, Ember; public Vector3 Last; }
+        private struct Flight { public int Id; public float Smoke, Ember; public Vector3 Last, CatchOffset; public float CatchAge0; }
+        /// <summary>
+        /// WP-087 R2 rocket first frame, option (b) (C-00 05.10, presentation only): the projectile system steps 1/120 s and a newborn
+        /// rocket already flies the spawn frame (≈ 0.41 m at 60 fps, 0.83 m at 30), so it was first drawn ≈ 80 px ahead of the FP tube
+        /// mouth. Its visual now starts at the spawn point (ProjectileState.Origin, the muzzle) and eases onto the simulated position
+        /// over <see cref="CatchUpSeconds"/> of the rocket's own age — two frames at 60 fps, one at 30. The simulation, the hits and
+        /// their timing are untouched; only what is drawn (mesh, far card, exhaust, smoke, embers, light) rides the visual point, and
+        /// the trail (exhaust card, smoke, embers, light) never starts behind the mouth. A rocket first seen older than <see cref="NewbornSeconds"/> (no free slot at its
+        /// birth) is drawn where it is.
+        /// </summary>
+        public const float CatchUpSeconds = 1f / 30f, NewbornSeconds = 0.05f;
+
+        /// <summary>The share of the spawn-frame lag still drawn <paramref name="sinceFirstSight"/> seconds (rocket age) after the first frame it was drawn: 1 → 0, eased.</summary>
+        public static float CatchUpWeight(float sinceFirstSight) =>
+            sinceFirstSight >= CatchUpSeconds - 1e-5f ? 0f : 1f - Mathf.SmoothStep(0f, 1f, Mathf.Max(0f, sinceFirstSight) / CatchUpSeconds);   // ε: ages are sums of steps
         private readonly Flight[] _flights = new Flight[ProjectileSystem.Capacity];
         private readonly Matrix4x4[] _matrices = new Matrix4x4[ProjectileSystem.Capacity];
         private readonly bool[] _seen = new bool[ProjectileSystem.Capacity];
@@ -184,17 +198,30 @@ namespace DD.Prototype.Feedback.Vfx
                 if (p.Kind != ProjectileKind.Rocket) continue;
                 int slot = -1, free = -1;
                 for (int j = 0; j < _flights.Length; j++) { if (_flights[j].Id == p.Generation) { slot = j; break; } if (free < 0 && _flights[j].Id == 0) free = j; }
-                if (slot < 0) { slot = free; if (slot < 0) continue; _flights[slot] = new Flight { Id = p.Generation, Last = p.Position }; ActiveFlights++; }
+                if (slot < 0)
+                {
+                    slot = free; if (slot < 0) continue;
+                    Vector3 lag = p.Age <= NewbornSeconds ? p.Origin - p.Position : Vector3.zero;   // WP-087 (b): drawn from the mouth
+                    _flights[slot] = new Flight { Id = p.Generation, Last = p.Position + lag, CatchOffset = lag, CatchAge0 = p.Age }; ActiveFlights++;
+                }
                 _seen[slot] = true; ref Flight f = ref _flights[slot];
                 Vector3 dir = p.Direction.sqrMagnitude > 0.0001f ? p.Direction.normalized : Vector3.forward;
                 Quaternion rotation = Quaternion.LookRotation(dir);
+                // WP-087 (b): the drawn point — the simulated one plus what is left of the spawn-frame lag
+                Vector3 at = p.Position;
+                if (f.CatchOffset != Vector3.zero)
+                {
+                    float w = CatchUpWeight(p.Age - f.CatchAge0);
+                    if (w <= 0f) f.CatchOffset = Vector3.zero; else at += f.CatchOffset * w;
+                }
                 // World-only after fire in all modes; no CameraView remapping of actual flight coordinates.
-                bool far = haveEye && (p.Position - eye).sqrMagnitude > beyondSq && slot < _billboardRenderers.Length && _billboardRenderers[slot] != null;
-                if (far) { PlaceBillboard(slot, p.Position - dir * (BodyLength * .5f), dir, eye); BillboardRockets++; }
-                else { HideBillboard(slot); _matrices[drawn++] = Matrix4x4.TRS(p.Position,rotation,Vector3.one) * _meshLocal; }   // nose on the projectile point
+                bool far = haveEye && (at - eye).sqrMagnitude > beyondSq && slot < _billboardRenderers.Length && _billboardRenderers[slot] != null;
+                if (far) { PlaceBillboard(slot, at - dir * (BodyLength * .5f), dir, eye); BillboardRockets++; }
+                else { HideBillboard(slot); _matrices[drawn++] = Matrix4x4.TRS(at,rotation,Vector3.one) * _meshLocal; }   // nose on the drawn point
+                Vector3 tail = OutOfTube(at - dir * BodyLength, p.Origin, dir);
                 if(slot<_exhaustRenderers.Length && _exhaustRenderers[slot]!=null)
                 {
-                    Vector3 nozzle=p.Position-dir*(BodyLength+.225f);
+                    Vector3 nozzle=OutOfTube(at-dir*(BodyLength+.225f), p.Origin, dir);   // WP-087 (b): the flame at the mouth until the nozzle is out
                     Vector3 to=FeedbackCameraRef.TryGetPosition(out Vector3 viewer)?viewer-nozzle:-FeedbackCameraRef.Forward;
                     if(to.sqrMagnitude<.001f)to=Vector3.back;
                     Vector3 projected=Vector3.ProjectOnPlane(dir,to).normalized;
@@ -204,18 +231,18 @@ namespace DD.Prototype.Feedback.Vfx
                     var block=_exhaustBlocks[slot];block.SetFloat(FrameId,Mathf.FloorToInt(p.Age*60f)%8);block.SetFloat(AlphaCapId,GameFeelSettings.FlashScale);_exhaustRenderers[slot].SetPropertyBlock(block);
                     _exhaustRenderers[slot].enabled=true;ExhaustAlive++;
                 }
-                if(dt<=0f) { f.Last=p.Position; continue; }
+                if(dt<=0f) { f.Last=at; continue; }
                 f.Smoke += Mathf.Max(0f,dt) * SmokeRate;
                 int count = Mathf.Min(8, Mathf.FloorToInt(f.Smoke)); f.Smoke -= count;
                 for (int n = 0; n < count; n++)
                 {
-                    Vector3 at = Vector3.Lerp(f.Last,p.Position,(n + 1f)/count) - dir * BodyLength;
-                    B3Particles.Emit(_smoke, at, wind + Vector3.up * 0.3f, 0.9f, SmokeLife, Color.white); SmokeEmitted++;
+                    Vector3 puff = OutOfTube(Vector3.Lerp(f.Last,at,(n + 1f)/count) - dir * BodyLength, p.Origin, dir);
+                    B3Particles.Emit(_smoke, puff, wind + Vector3.up * 0.3f, 0.9f, SmokeLife, Color.white); SmokeEmitted++;
                 }
-                f.Last = p.Position;
+                f.Last = at;
                 f.Ember += Mathf.Max(0f,dt) * 6f;
-                if (f.Ember >= 1f) { f.Ember -= 1f; B3Particles.Emit(_sparks,p.Position-dir*BodyLength,-dir*.4f,.03f,.3f,new Color(1f,.48f,.24f,1f)); }
-                if (VfxTier.Current != VfxTierLevel.Performance) _lights.TrackLight(p.Generation ^ 0x524c0000,p.Position-dir*BodyLength,new Color(1f,0.69f,0.44f),8f,5f);
+                if (f.Ember >= 1f) { f.Ember -= 1f; B3Particles.Emit(_sparks,tail,-dir*.4f,.03f,.3f,new Color(1f,.48f,.24f,1f)); }
+                if (VfxTier.Current != VfxTierLevel.Performance) _lights.TrackLight(p.Generation ^ 0x524c0000,tail,new Color(1f,0.69f,0.44f),8f,5f);
             }
             for (int i = 0; i < _flights.Length; i++) if (_flights[i].Id != 0 && !_seen[i]) { _flights[i] = default; HideExhaust(i); ActiveFlights--; }
             for (int i = 0; i < _duds.Length; i++)
@@ -233,6 +260,10 @@ namespace DD.Prototype.Feedback.Vfx
                     else for(int i=0;i<drawn;i++)Graphics.DrawMesh(_mesh,_matrices[i],m,0,null,s,null,ShadowCastingMode.Off,false,null,LightProbeUsage.Off);
                 }
         }
+        /// <summary>WP-087 (b): a trail point behind the launch point (inside the tube, the first frames) sits on the mouth instead.</summary>
+        private static Vector3 OutOfTube(Vector3 point, Vector3 origin, Vector3 dir) => Vector3.Dot(point - origin, dir) < 0f ? origin : point;
+
+        /// <summary>The rocket's drawn nose point (the simulated position plus the first-frame catch-up, WP-087), as of the last Present.</summary>
         public bool TryVisual(int id, out Vector3 at)
         {
             for (int i = 0; i < _flights.Length; i++) if (_flights[i].Id == id) { at = _flights[i].Last; return true; }

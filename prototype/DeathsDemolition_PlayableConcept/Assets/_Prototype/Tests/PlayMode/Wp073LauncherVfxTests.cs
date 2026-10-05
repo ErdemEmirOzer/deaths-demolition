@@ -45,7 +45,34 @@ namespace DD.Prototype.Tests.PlayMode
         {
             Spawn(70f,.01f,ProjectileKind.Bullet);Spawn();ProjectileSystem.Step(.025f);Assert.AreEqual(1,ProjectileSystem.LiveCount);
             ref readonly ProjectileState p=ref ProjectileSystem.Get(0);int id=p.Generation;Vector3 position=p.Position;
-            _rocket.Present(.05f);Assert.AreEqual(1,_rocket.ActiveFlights);Assert.AreEqual(1,_rocket.DrawnRockets);Assert.IsTrue(_rocket.TryVisual(id,out Vector3 at));Assert.AreEqual(position,at);Assert.Greater(_rocket.SmokeEmitted,0);
+            _rocket.Present(.05f);Assert.AreEqual(1,_rocket.ActiveFlights);Assert.AreEqual(1,_rocket.DrawnRockets);Assert.IsTrue(_rocket.TryVisual(id,out Vector3 at));Assert.Greater(_rocket.SmokeEmitted,0);
+            // WP-087 (b, C-00 05.10): the first drawn frame is the spawn point (the mouth); after the catch-up the drawn point is the simulated one
+            Assert.Less((p.Origin-at).magnitude,1e-4f,"ilk çizilen kare doğum noktasında");Assert.AreEqual(position,p.Position,"Present simülasyonu değiştirmez");
+            ProjectileSystem.Step(RocketVisualSystem.CatchUpSeconds);_rocket.Present(.05f);Assert.IsTrue(_rocket.TryVisual(id,out at));Assert.Less((ProjectileSystem.Get(0).Position-at).magnitude,1e-5f,"yakalama sonrası simülasyon noktasında");
+        }
+        // WP-087 R2 rocket first frame (b) (C-00 05.10): the visual starts at the spawn point, eases forward onto the simulated position
+        // within CatchUpSeconds of the rocket's age (two 60 fps frames), never moves back; Present never writes the flight; a rocket first
+        // seen older than NewbornSeconds is drawn where it is.
+        [Test] public void Wp087_IlkKare_AgizdanCizilir_SimulasyonaYetisir_UcusDegismez()
+        {
+            Spawn();int id=ProjectileSystem.Get(0).Generation;Vector3 origin=ProjectileSystem.Get(0).Origin;Vector3 velocity=ProjectileSystem.Get(0).Velocity;
+            Vector3 fwd=velocity.normalized;float step=1f/60f;Vector3 prev=origin;
+            for(int frame=0;frame<4;frame++)
+            {
+                ProjectileSystem.Step(step);Vector3 sim=ProjectileSystem.Get(0).Position;float age=ProjectileSystem.Get(0).Age;
+                _rocket.Present(step);Assert.AreEqual(sim,ProjectileSystem.Get(0).Position,"Present uçuşu yazmaz");
+                Assert.Less((sim-(origin+velocity*age)).magnitude,1e-3f,"uçuş sabit hızda (ivme 0) — görsel yakalama simülasyona dokunmaz");
+                Assert.IsTrue(_rocket.TryVisual(id,out Vector3 at));
+                if(frame==0)Assert.Less((at-origin).magnitude,1e-4f,"ilk kare ağızda");
+                else Assert.GreaterOrEqual(Vector3.Dot(at-prev,fwd),0f,"görsel geri gitmez (kare "+frame+")");
+                if(frame>=2)Assert.Less((at-sim).magnitude,1e-4f,"iki karede simülasyona yetişti (kare "+frame+")");
+                if(frame==1){Assert.Greater(Vector3.Dot(at-origin,fwd),0f);Assert.Less(Vector3.Dot(at-origin,fwd),Vector3.Dot(sim-origin,fwd));}
+                prev=at;
+            }
+            ProjectileSystem.Clear();_rocket.Present(0f);
+            Spawn();int late=ProjectileSystem.Get(0).Generation;ProjectileSystem.Step(.2f);
+            _rocket.Present(.05f);Assert.IsTrue(_rocket.TryVisual(late,out Vector3 lateAt));Assert.AreEqual(ProjectileSystem.Get(0).Position,lateAt,"geç görülen roket olduğu yerde");
+            Assert.AreEqual(1f,RocketVisualSystem.CatchUpWeight(0f));Assert.AreEqual(0f,RocketVisualSystem.CatchUpWeight(RocketVisualSystem.CatchUpSeconds));
         }
         [Test] public void Clear_StopsFlight_NoBlast_AndNoFurtherEmission()
         {
