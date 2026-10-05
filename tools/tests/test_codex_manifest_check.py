@@ -552,7 +552,7 @@ class ManifestRevisionTests(unittest.TestCase):
         p.items = [it for it in p.items if "LOD2" not in it["path"]]
         (p.dir / "exports" / V / "Hero" / "Hero_Body_LOD2.fbx").unlink()
         rep = self.check(p.write())
-        self.assert_error(rep, "single_first_person name must be <Asset>_<Part> without _LOD<n>")
+        self.assert_error(rep, "single_first_person name must be <Asset>_FP<Part> (a first-person part, no _LOD<n>)")
         self.assert_error(rep, "LOD set incomplete: missing LOD0, LOD2")
 
     def test_FbxTekLod_DigerKurallarGecerli(self):
@@ -563,9 +563,24 @@ class ManifestRevisionTests(unittest.TestCase):
         p.add("Hero/Hero_Up_FPArms.fbx", fbx_bytes(up_axis=2), "fbx", specs=FP)
         rep = self.check(p.write())
         self.assert_error(rep, "need 7400")
-        self.assert_error(rep, "single_first_person name must be <Asset>_<Part>")
+        self.assert_error(rep, "single_first_person name must be <Asset>_FP<Part>")
         self.assert_error(rep, "not a binary FBX")
         self.assertTrue(any("UpAxis=2" in w["message"] for w in rep.warnings), rep.warnings)
+
+    def test_FbxTekLod_BirinciSahisOlmayanVeyaLodAdi_MuafiyetYok(self):
+        """S-01 gt 06.10 N1/N2: the declaration alone does not exempt a mesh — Barrel_Main (not first-person), a lower-case or
+        two-digit LOD name are refused; the exempt part is <Asset>_FP<Part>."""
+        for stem in ("Barrel_Main", "Prop_Body_lod0", "Prop_Body_LOD10", "Hero_FParms", "FPArms"):
+            with self.subTest(stem=stem):
+                p = Pkg(self.root / stem).good()
+                p.add("Prop/%s.fbx" % stem, fbx_bytes(), "fbx", specs=FP)
+                rep = self.check(p.write())
+                self.assert_error(rep, "single_first_person name must be <Asset>_FP<Part>")
+        for stem in ("Hero_v2_FPArms", "Hero_FPWeapon", "Gun_FP2"):
+            with self.subTest(ok=stem):
+                p = Pkg(self.root / ("ok-" + stem)).good()
+                p.add("Hero/%s.fbx" % stem, fbx_bytes(), "fbx", specs=FP)
+                self.assertEqual([], self.check(p.write()).errors)
 
     def test_FbxTekLod_IkinciKopyaIsaretli_MuafiyetYok(self):
         p = Pkg(self.root).good()

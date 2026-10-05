@@ -23,8 +23,8 @@ Checks (E = error, W = warning):
              paths relative to the package or to the file); every item listed with the same hash (E); extra entries W.
   fbx        binary FBX, version 7400 (E); name <Asset>_<Part>_LOD<n> or COL_<…> (E); LOD0/1/2 per <Asset>_<Part> (E);
              GlobalSettings UpAxis = 1 (Y up), else W. C-00 06.10 (AP-024): an fbx item whose specs.lod_policy is
-             "single_first_person" is one mesh by design — name <Asset>_<Part> without _LOD<n> (E), outside the LOD
-             set; every other check on it stays.
+             "single_first_person" is one mesh by design — name <Asset>_FP<Part> (a first-person part: FPArms, FPWeapon;
+             so no _LOD<n>, any case) (E), outside the LOD set; every other check on it stays.
   anim       binary FBX 7400 (E); exports/vNNN/anim-events.json present and valid JSON (E).
   texture    .png (E); suffix _BaseColor|_Normal|_ORM|_Emission|_Mask (E); power-of-two sides ≤ 8192 (E), not 2048/4096 W;
              _BaseColor/_Normal/_ORM colour (RGB/RGBA) not grey (E).
@@ -86,8 +86,9 @@ LEDGER_COLUMNS = {"date": ("tarih", "date"), "model": ("model",), "count": ("ade
                   "credit": ("kredi", "credit", "credits", "credits_actual"),
                   "output": ("çıktı", "cikti", "çıktı yolu", "output", "path", "output_path")}
 SINGLE_LOD_POLICY = "single_first_person"   # C-00 06.10 (AP-024): specs.lod_policy of a one-mesh first-person fbx
-# <Asset>_<Part> without _LOD<n>: the declared mesh is outside the LOD set and may not stand in for a set member
-SINGLE_FBX_NAME = re.compile(r"^(?![A-Za-z0-9_]*_LOD[0-9]$)[A-Za-z0-9]+(?:_[A-Za-z0-9]+)+$")
+# <Asset>_FP<Part>: the declared mesh is outside the LOD set and may not stand in for a set member — its last part is a
+# first-person one (S-01 gt 06.10 N1: a declaration alone exempted any mesh, Barrel_Main too), never _LOD<n> / _lod<nn>
+SINGLE_FBX_NAME = re.compile(r"^[A-Za-z0-9]+(?:_[A-Za-z0-9]+)*_FP[A-Z0-9][A-Za-z0-9]*$")
 
 
 class Report:
@@ -535,7 +536,7 @@ def check_fbx(rep, pkg, files, anim, single_lod=frozenset()):
             continue
         if f in single_lod:   # C-00 06.10: declared single first-person mesh — no LOD suffix, not in a LOD set
             if not SINGLE_FBX_NAME.match(f.stem):
-                rep.error(rel, "%s name must be <Asset>_<Part> without _LOD<n>" % SINGLE_LOD_POLICY)
+                rep.error(rel, "%s name must be <Asset>_FP<Part> (a first-person part, no _LOD<n>)" % SINGLE_LOD_POLICY)
             continue
         mm = FBX_NAME.match(f.stem)
         if not mm:
