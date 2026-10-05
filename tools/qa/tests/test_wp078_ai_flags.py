@@ -16,6 +16,7 @@ Heuristic (source scan, no Unity):
 """
 import importlib.util
 import re
+import subprocess
 import unittest
 from pathlib import Path
 
@@ -33,6 +34,15 @@ NON_AI_FLAGS = {
     "-ddFpArmsCapture": "FirstPersonArmsCaptureAgent: FP arms evidence frames (WP-071 r2), dev builds only, not AI behaviour",
     "-ddTelemetryDir": "FirstPersonArmsCaptureAgent: output root of that capture (shared telemetry flag), not AI behaviour",
 }
+
+
+def tools_only_checkout():
+    """A sparse checkout without prototype/ (a tools-only worktree, e.g. K/wp-089/worktree-d6): the C# scan has nothing to
+    read there. A full checkout without the Assets folder is still a failure (test_sources_present)."""
+    if ASSETS.is_dir():
+        return False
+    r = subprocess.run(["git", "-C", str(REPO), "config", "--get", "core.sparseCheckout"], capture_output=True, text=True)
+    return r.stdout.strip() == "true"
 
 
 def load_report():
@@ -81,6 +91,8 @@ def in_ai_scope(path):
 class AiFlagSourceTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        if tools_only_checkout():   # C-00 05.10: skip with a reason instead of three misleading reds
+            raise unittest.SkipTest("tools-only sparse checkout (no prototype/ C# sources at %s) — run in a full checkout" % ASSETS)
         cls.report = load_report()
         cls.flags = {}          # flag -> [(path, reads argv)]
         for path in runtime_sources():
