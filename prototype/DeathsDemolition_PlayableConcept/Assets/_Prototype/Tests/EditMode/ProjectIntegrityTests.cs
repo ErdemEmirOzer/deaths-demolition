@@ -318,13 +318,15 @@ namespace DD.Prototype.Tests.EditMode
         /// <summary>
         /// WP-031: Unity/URP/package versions change only by user decision. The package manifest and
         /// lock are pinned by hash; a deliberate change updates the two constants here in the same commit.
+        /// Current pins: K2 05.10 kullanıcı onayı, WP-083 B1 133dd007 — com.unity.animation.rigging 1.2.1 (manifest +1 line,
+        /// lock +1 entry; its burst / test-framework dependencies were already locked).
         /// </summary>
         [Test]
         public void Packages_ManifestVeLockSabit()
         {
             string packages = Path.Combine(Path.GetDirectoryName(Application.dataPath), "Packages");
-            Assert.AreEqual("148c69c6995c2713dbf3d0b0863297834e6db75aed6c9257f7aa37501ff2b395", Sha256(Path.Combine(packages, "manifest.json")), "Packages/manifest.json değişti — Unity/URP/paket sürümü kullanıcı kararıdır");
-            Assert.AreEqual("80af9aab2b2abd5fedd42e02afca37f83643c8ad2b8ae77c74f0afb665b92947", Sha256(Path.Combine(packages, "packages-lock.json")), "Packages/packages-lock.json değişti — kullanıcı kararı");
+            Assert.AreEqual("d3c3847bb76238d5218c1ec8cea2f1dee4ce0506a4c1f8b645c4a2106a9b1967", Sha256(Path.Combine(packages, "manifest.json")), "Packages/manifest.json değişti — Unity/URP/paket sürümü kullanıcı kararıdır (son onay: K2 05.10 kullanıcı onayı, WP-083 B1 133dd007)");
+            Assert.AreEqual("bca24555eabd1bf7cc5049b204d4cfe8129d705f6129ee8d6c2826d67f1884c0", Sha256(Path.Combine(packages, "packages-lock.json")), "Packages/packages-lock.json değişti — kullanıcı kararı (son onay: K2 05.10 kullanıcı onayı, WP-083 B1 133dd007)");
         }
 
         private static string PrototypeRoot => Path.Combine(Application.dataPath, "_Prototype");
