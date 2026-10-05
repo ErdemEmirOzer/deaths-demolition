@@ -120,26 +120,23 @@ namespace DD.Prototype.Weapons
             Owner = MagazineOwner.Weapon;
         }
 
-        /// <summary>The step a clip event names, by the contract's names and the aliases; false for any other event.</summary>
+        /// <summary>
+        /// The step a clip event names, by the contract's names and the aliases (<see cref="EventNames"/>); false for any other event.
+        /// B-03 B1 (C-00 05.10): a switch on the enum, not name compares — the contract's spellings mag_detach / mag_insert /
+        /// bolt_release arrive as MagOut / MagIn / Chamber (CharacterAnimationEvents.Synonyms); an EditMode test holds it to the table.
+        /// </summary>
         public static bool TryStepFor(CharacterAnimationEvent e, out MagazineStep step)
         {
-            step = MagazineStep.Detach;
-            if (e == CharacterAnimationEvent.None) return false;
-            string name = (int)e < CharacterAnimationEvents.Names.Length ? CharacterAnimationEvents.Names[(int)e] : null;
-            if (string.IsNullOrEmpty(name)) return false;
-            for (int i = 0; i < EventNames.Length; i++)
+            switch (e)
             {
-                for (int j = 0; j < EventNames[i].Length; j++)
-                {
-                    if (EventNames[i][j] == name)
-                    {
-                        step = (MagazineStep)i;
-                        return true;
-                    }
-                }
+                case CharacterAnimationEvent.MagOut: step = MagazineStep.Detach; return true;
+                case CharacterAnimationEvent.MagHandAttach: step = MagazineStep.HandAttach; return true;
+                case CharacterAnimationEvent.MagIn:
+                case CharacterAnimationEvent.RocketIn: step = MagazineStep.Insert; return true;
+                case CharacterAnimationEvent.Chamber:
+                case CharacterAnimationEvent.RocketSeat: step = MagazineStep.BoltRelease; return true;
+                default: step = MagazineStep.Detach; return false;
             }
-
-            return false;
         }
 
         private void Land(MagazineStep step, bool fromEvent)

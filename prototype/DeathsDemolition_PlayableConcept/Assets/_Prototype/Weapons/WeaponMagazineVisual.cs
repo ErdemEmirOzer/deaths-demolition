@@ -15,6 +15,7 @@ namespace DD.Prototype.Weapons
         public const string PartName = "part_mag";
 
         private Transform _part;
+        private Transform _boundRoot;   // B-03 G3: the root last searched (searched again only for another one, or a swapped model)
         private Transform _home;
         private Vector3 _homePosition;
         private Quaternion _homeRotation;
@@ -32,10 +33,22 @@ namespace DD.Prototype.Weapons
         public int ToHandCount { get; private set; }
         public int HomeCount { get; private set; }
 
-        /// <summary>Find the part under <paramref name="weaponRoot"/> and remember its authored place. Sends a held part home first.</summary>
+        /// <summary>
+        /// Find the part under <paramref name="weaponRoot"/> and remember its authored place. Sends a held part home first. B-03 G3
+        /// (C-00 05.10): a part once found is not searched for again on the next reload (every node's name is a new string) — only for
+        /// another root, or when its home is no longer under the root (the rig's model swapped: SetModel destroys the old one). A model
+        /// without a part (none of the AP-021 set) is searched on each reload.
+        /// </summary>
         public void Bind(Transform weaponRoot)
         {
+            if (weaponRoot != null && weaponRoot == _boundRoot && _part != null && _home != null && _home.IsChildOf(weaponRoot))
+            {
+                Home();
+                return;
+            }
+
             Transform found = weaponRoot != null ? Find(weaponRoot, PartName) : null;
+            _boundRoot = weaponRoot;
             if (found == _part && _part != null) return;
             Home();
             _part = found;
