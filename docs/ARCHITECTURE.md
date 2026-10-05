@@ -11,7 +11,7 @@ This document describes the runtime architecture of the Unity project in `protot
 5. [Allocation and performance rules](#5-allocation-and-performance-rules)
 6. [Save and profile durability](#6-save-and-profile-durability)
 7. [Diagnostics and automation hooks](#7-diagnostics-and-automation-hooks)
-8. [Build, CI and user-data safety](#8-build-ci-and-user-data-safety)
+8. [Build, CI and user-data safety](#8-build-ci-and-user-data-safety) (8.1 [R2 acceptance gates](#81-r2-acceptance-gates-wp-091))
 
 ---
 
@@ -170,6 +170,7 @@ The types live in Core (`P/Core/Camera/CameraModeTypes.cs`) and the service in R
 
   In addition, third-person / first-person pairs must put their **mechanism events** (`fire`, `eject`, `mag_in`, `bolt_back`…) on identical frames. Tests: `A/Tests/EditMode/ArtAnimationEventContractTests.cs`.
 - **Animator parameters** are fixed by `CharacterAnimatorContract` (`P/Characters/CharacterAnimationSet.cs`), and controllers are generated from `CharacterAnimationSet` by `A/Editor/ArtAnimatorBuilder.cs`.
+- **Reload beats (R2):** the magazine contract's events, `MagHandAttach`, `shell_in`, `rocket_in` / `rocket_seat` and the same-frame beat families are in §3.13.
 - **Clip-driven attack timing:** the enemy attack state machine uses the clip's `hit_window_start` / `hit_window_end` events to move from Windup to Active to Recovery, and falls back to timers when there is no clip (`P/Enemies/EnemyAttackState.cs`, `IAttackWindowSink`).
 
 ### 3.6 Death impulse and ragdoll hand-off (WP-076, DEC-096)
@@ -230,6 +231,60 @@ How damage resolves:
 
 - `enum AcousticSpace { Open, Corridor, Hall }` and the static resolver `AcousticSpaces.Resolver` live in `P/Audio/Runtime/WeaponFireAudio.cs`. `AcousticSpaceMap` (`Resources/DD_AcousticSpaces.asset`) is baked from `acoustic-spaces-v6.json` by the audio catalog builder: rooms resolve to Hall and corridors to Corridor, with 1 m hysteresis, and the map answers only while the V6 scene is loaded. Weapon fire picks its wet tail per space.
 
+### 3.12 Weapon-first hold (WP-083 B2c/B2d, R2 N2-05)
+
+`P/Characters/WeaponHoldIk.cs` moves the R1 defect "the weapon sits on the shoulder" out of the third-person hold. The weapon's grip point becomes a pivot that rides the upper chest and looks along the aim; a two-bone solve brings the right hand to it so that `socket_weapon_r` coincides with the pivot in position and rotation (elbow out and down, pole `RightElbowPole`). The clip's hand no longer decides where the weapon is.
+
+- **Order in LateUpdate:** after the Animator, the IK pass and `LocomotionLean`; `WeaponHoldIk` (890) → `WeaponMountAlignment` (900, lets the mount ride the socket while the hold is `Active`) → `WeaponGripIk` (910, the left hand on the placed weapon's `grip_l` / AP-022 hands-in-weapon-frame point).
+- **Hold numbers:** `HipHold` (default `DefaultHipHold = (0.10, -0.12, 0.22)` m in the aim's yaw frame, relative to the upper chest). Per weapon (B2d): the support point's reach ahead of the grip is compared with `ReferenceSupportForward` (0.12 m); a longer reach pulls the pivot back along the aim by the difference, capped at `MaxPullBack` 0.35 m and eased over `PullBackSeconds` 0.15 s (a weapon switch), so the support hand lands at the same reach on every weapon.
+- **Gate:** the owner's gate fades the hold over `BlendSeconds` 0.12 s for reload, switch, lowered and hurt, where the clip moves the weapon. `LastError` (socket ↔ pivot) feeds the R2 H1 measurement.
+- **Why not Animation Rigging:** on the Humanoid bodies a rig works only when built after the Animator's first evaluation with its weights fixed at 1, so it cannot fade (C-00 05.10 decision A, WP-083 evidence b2c4…b2c12).
+- **Default:** `WeaponHoldIk.Enabled = false` on `main`. `PlayerSkinnedVisual.Attach` adds the component only when the switch is on; the R2 tests measure it on with `DD_HOLD_IK=1`. The C-00 decision to ship it on, and the per-weapon rows still open on S-06's branch (`wp-083-b1`: C buttstock row, `sg_2` HoldDelta, `rl_1` hold off — shoulder-fired), land with S-06's B2d/B2e delivery. *Not yet on main.*
+
+### 3.13 Reload magazine contract (WP-082, S-02 magazine contract v1)
+
+- **State:** `P/Weapons/WeaponMagazineOwnership.cs` — who holds the magazine while a magazine weapon reloads: `MagazineOwner { Weapon, HandOld, HandNew }`, four beats `MagazineStep { Detach, HandAttach, Insert, BoltRelease }`. Forward only: a repeated beat is ignored, a later one lands the skipped ones first. A beat the clip does not send lands at its timeline mark (`MagazineMarks` = 12/21/30/40 of a 45-frame reference) plus `DeadlineGraceSeconds` 0.10 s. The end of the reload — complete, cancelled, switch, Special, death, camera change — puts the magazine back in the weapon at once. Presentation only: ammo stays on `ClassicWeaponRuntime`'s timer.
+- **Clip names per beat** (`EventNames`): Detach `mag_detach` / `mag_out`; HandAttach `mag_hand_attach` (`CharacterAnimationEvent.MagHandAttach`, the one new beat); Insert `mag_insert` / `mag_in` / `rocket_in`; BoltRelease `bolt_release` / `chamber` / `rocket_seat`.
+- **Reload kinds:** an empty reload lands 4 beats. A tactical reload (`reload_tac`, a round still chambered) lands 3 (Detach · HandAttach · Insert) and never a bolt release. `rl_1`'s empty tube starts at HandAttach (`rocket_in` = Insert, `rocket_seat` = BoltRelease), also 3.
+- **Visual:** `P/Weapons/WeaponMagazineVisual.cs` moves the AP-021 model's `part_mag` to the left hand's `socket_mag_l` (`P/Characters/MagazineSocket.cs`, S-06 B2b) while a hand owns it, keeping its world rotation and scale, and returns it to its authored place otherwise. `WeaponController` owns both (`_magazine`, `_magazineVisual`).
+- **One beat, several names** (`CharacterAnimationEvents.BeatFamily`, §12 of the AP-026-B contract): families out (`mag_out`), in (`mag_in`, `shell_in`, `rocket_in`) and seat (`chamber`, `rocket_seat`). Synonyms of one family on the **same frame** are raised once (`CollapsedCount` counts the dropped ones), so `sg_1`'s `mag_insert` + `shell_in` on one frame is one seat and one sound; on later frames each is its own beat (a shell per `shell_in`). `Synonyms` maps the contract spellings `mag_detach` / `mag_insert` / `bolt_release` onto the existing events instead of rejecting them like `Aliases`.
+- **R2 gate:** H3 (`WeaponReloadMagazineTests.H3_SarjorluSilahlar_VuruslarTam_HavadaKareYok`): missing beats 0, magazine floating frames 0, hand-contact deviation ≤ 2 frames (S-06 `MagazineContactProbe`).
+
+### 3.14 Locomotion v4 skeleton (WP-083 B3b, R2 N2-06)
+
+`P/Characters/LocomotionV4.cs` fixes one stable id per AP-026 clip (`AP026_tp_` prefix), so the Animator's `LocomotionV4` sub-state machine is driven by one int parameter, `V4Clip` (set for one frame, AnyState → the clip's state; `None = -1`; no trigger is left armed when a clip is missing).
+
+| Ids | Clips | Layout |
+|---|---|---|
+| 0–63 | starts | 4 gaits (walk, jog, run, sprint) × 8 directions (`fwd`, `fwd_r`, `right`, `back_r`, `back`, `back_l`, `left`, `fwd_l`) × lead foot |
+| 64–127 | stops | same layout |
+| 128–139 | pivots | 90 / 135 / 180° × side × lead foot |
+| 140–141 | turn 45 in place | lead foot |
+
+`Count = 142`. `LocomotionV4Events` (zero allocation) turns the motor's commanded velocity (`PlayerMotor.CommandedPlanarVelocity`, else a 0.2 s look-ahead) into a start (from rest, heading ≥ 0.6 m/s), a pivot (heading turns ≥ 67.5° while moving; 0.3 s cooldown) or a stop (heading < 0.3 m/s for 0.05 s); the lead foot is the one not planted. `PlayerSkinnedVisual` feeds it only while the controller carries the sub-state machine (`HasLocomotionV4`). `A/Editor/ArtAnimatorBuilder.cs` creates a state only for clips the set carries — none on `main` today, so the controller is unchanged until the AP-026 v002c hero clips are imported (S-06 WP-083). Gates L1–L6 measure the result (§8.1).
+
+### 3.15 Weapon audio v4 and casings (WP-085, AP-027, R2 N2-07)
+
+- **Every round is the full shot** (`P/Audio/Runtime/WeaponFireAudio.cs`, WP-085 B1): the v3 hybrid (a per-shot transient over an RPM-locked body loop) is gone. Copies of one automatic's shot overlap up to four deep; per-weapon trims bring a held string back to the level of the 8 shots/s kit the mix was chosen by. A string weapon (Auto / Burst) rings its space tail once when the trigger lets go; a single-shot weapon rings it on every shot.
+- **Layers** (`WeaponLayer`): `Mechanical`, `TailOpen`, `TailCorridor`, `TailHall`, `DistanceMid`, `DistanceFar`, resolved by name (`AudioSoundId` "Weapon" + `Ar1` + layer) and silent until AP-027 delivers the id. Mechanical sits −10 dB under Body in top-down and is lifted +3 / +7 dB in TP / FP; in the Mid band it drops 12 dB and in Far it is off. `LoudnessCompMaxDb` caps the per-layer loudness compensation.
+- **Distance bands** (`WeaponDistanceBand`): Near 0–12 m, Mid 12–35 m, Far beyond. The player's own shots are always Near (listener anchored on the player, ADR-021-2).
+- **Space tails:** the space comes from `AcousticSpaces.Resolver` (§3.11). The v4 tail starts at the first reflection, delayed by `WeaponAudioIdentity.EarlyOffsetSeconds` (open 30 ms, corridor 11 ms, hall 21 ms). Wet level against the dry shot (`WeaponFireAudio.WetDb`): open −9 dB (+3 over spec, C-00 05.10 "yankılı"), corridor −8 dB, hall −7 dB (v003f tails). R2 S4 judges the tail's own RT60 (§8.1).
+- **Casings** (`CasingAudio` in `P/Audio/Runtime/WeaponFoleyAudio.cs`): a `CasingEjected` mechanism slot becomes a drop heard after its fall time (250–700 ms, R2 S5) on the surface it lands on (AP-027 surfaces StoneSlate / WetStone / Wood / Dirt / Puddle; foliage and flesh silent). A hard surface adds one softer bounce 70–130 ms later. Casings that leave in the same frame (`sg_2`'s two shells) land 100–130 ms apart. The airborne queue holds 16 and a bounce never takes one of the last four slots from a landing. Level by camera mode: top-down −18, TP −12, FP −8 dB against the fire voice. LMGs add a belt link; `rl_1` has no casing sound.
+- **The casing the player sees** (`P/Feedback/Vfx/CasingEvents.cs`, WP-087): `CasingEvents.Launched` fires once per visible casing, the frame it leaves the port, with a `CasingLaunchInfo` (shot serial, weapon, port position, launch velocity, per-shot speed jitter 0.85–1.15). `CasingEffect.PredictLanding` gives the closed-form touchdown and rest point of that throw (floor ray, gravity, one bounce). `WeaponController`'s `ShotSerial` ties the two to the shot. On `main` the casing sound still places the drop from the nominal throw (worst miss 48–64 cm); S-08's consumer of `Launched` (target ≤ 25 cm) is on its branch. *Not yet on main.*
+
+### 3.16 Zombie look (AP-007 modules on main; v2 in progress, WP-084)
+
+- **On main:** `P/Characters/ZombieModuleLibrary.cs` holds the modular zombie as data (three body fits, clothing modules with colourways, four LOD meshes each, skinned to the shared rig by bone name), and `P/Enemies/ZombieAppearance.cs` dresses each spawn from its look seed. Materials are shared atlas materials (SRP batching, no per-instance material). WP-088 (05.10): every garment draws with its own atlas again — cloth garments on the cloth atlas, the tier tint only on body-atlas sub-meshes, no stale pooled material.
+- **v2, S-03 WP-084 slice 1** (branch `wp-084-s03-zombie-v2`, architecture approved by C-00): a fifth module slot `SlotFace` for the AP-025-C faces (Gaunt / Swollen / Riven, 4 LODs, jaw), the O1 skin atlas + ORM in BC7, the nine masks as a 3×3 flipbook packed into a BC4 `Texture2DArray`, the `DD_TierLit` keyword `_ZOMBIE_MASKS` (`shader_feature_local_fragment`, its own commit, pixel-equal with the keyword off) and RL bits in `ApplyVariation`. *Not yet on main*; this section is updated when it lands. Gates Z2 / Z3 / Z3b / Z4 (§8.1); Z4 writes `familiesMissingFace = null` (BLOCKED) until face modules exist.
+
+### 3.17 Menu v4, icons and loading art (WP-081, R2 N2-01 / N2-02)
+
+- **Menu v4 phase A** (`P/UI/Runtime/Screens/MainMenuScreen.cs`): the left third is a dark spine with the game's name and one vertical rail of icon controls (PLAY, the six panes, QUIT). The focused item shows its word beside it, and every icon carries its reader name from the string table. A pane opens on the right when its icon is chosen and closes on Cancel; none is open on arrival (G5: Profile closed). The profile level and XP bar stand top-right.
+- **Icon control** (`P/UI/Runtime/Kit/Components/UiIconButton.cs`): a glyph from the G1 SDF atlas, glyph ≥ 24 px (U1 legibility floor), 8 px grid, 44 px hit floor; `UiTooltip` shows the word of the one focused control.
+- **Backdrop** (`P/UI/Runtime/Kit/UiBackdrop.cs`): today the Look B plate stack (far / mid / lantern glow / near bands with pointer drift, breathing lanterns, rain, left-third `SurfaceBase` 0.55 scrim).
+- **Menu cinematic** (user note N2-01: a moving camera over the real map behind the menu): the C-00 decision is **B + cushions**, a soft left scrim. It lives on S-09's branch (`wp-081-v4a-r2`: `MenuLook`, scrim, cushions, edge fix, S04 shot adaptation; commits `bcde16dc`, `8ba256ec`). *Not yet on main.* Icon v2 (depth, reflection, motion shader) and Selection + panes v4 (U1b) follow.
+- **Loading art rotation** (`P/UI/Runtime/Flow/KeyArtRotation.cs`, used by `UiCurtain`): a shuffle bag over the five AP-028 key arts. Each art shows once per round in a fresh order, and a round never opens with the art the last one closed on. There is no memory across sessions and nothing is written to player data (gate U3).
+
 ---
 
 ## 4. Event flows
@@ -245,6 +300,8 @@ All buses are static C# events with **struct payloads**. Producers do not know w
 | `QualityTiers` | `P/Core/Quality/QualityTiers.cs` | `Changed` |
 | `CharacterAnimationEvents` | `P/Characters/CharacterAnimationEvents.cs` | `Raised` (per instance), `Any` (static) |
 | `GrabState` | `P/Enemies/AttackStyles.cs` | `Started`, `Ended` |
+| `CasingEvents` | `P/Feedback/Vfx/CasingEvents.cs` | `Launched` (`CasingLaunchInfo`, one per visible casing; WP-087) |
+| `WeaponMagazineOwnership` | `P/Weapons/WeaponMagazineOwnership.cs` | `Stepped` (per controller: `MagazineStep`, from the clip or the deadline; WP-082) |
 
 ### 4.1 Shot → kill → reward
 
@@ -408,3 +465,10 @@ Several agent sessions share one Mac, one Unity install and the real player's pr
 - **Player launches** (`tools/player-run.sh`): every Player — captures, bots, perf probes — goes through the `player` slot, so no two Players share the audio device and focus, and none runs during CI.
 - **Release** (`tools/build.sh release --smoke`): LZ4HC build, footprint against the 5 GB cap (DEC-093), then a flagless smoke run that checks the main menu, the run scene, zero exceptions, the default world line in the log, and that user data came back unchanged.
 
+### 8.1 R2 acceptance gates (WP-091)
+
+- **Contract:** `tools/qa/r2-gates.json` (schema `dd-r2-gates-v1`) holds every R2 gate as data. Areas: H hero, L locomotion, Z zombie, S sound, P perf, U UI. Each gate has an id, a kind (`gate` / `report` / `human`), an owner session, `checks` (key, op `<=` / `>=` / `==`, limit) and `report` keys; optionally `tests` (required NUnit full names) and `measuredBy` (suite, a `test.sh --filter`, quiet window or not, owner env with the one `{KPROJ}` placeholder). The prose rules are in `tools/qa/r2-measure-contract.md`. `tools/qa/tests/test_r2_gates.py` pins the approved thresholds, so an unreviewed change is a red test.
+- **Writer:** a measuring test calls `R2Olcum.Yaz(gate, source, values, samples)` (`P/Tests/Shared/R2Olcum.cs`, shared by EditMode and PlayMode). With `DD_R2_MEASURE_DIR` set it writes `r2-<gate>.json` (`dd-r2-measure-v1`, stamped with `DD_R2_COMMIT`); without it, it writes nothing and the test only asserts. The `double?` overload writes a key that cannot be measured yet as `null` with a note, which makes the gate BLOCKED. Before writing, the test asserts that the thing it measures is in the recording ("the source must be in the recording").
+- **Judge:** `tools/qa/r2_gates.py` validates the contract and judges one gate from the bound artifacts: PASS / FAIL / BLOCKED, or REPORT for report entries, which never fail. Human gates (H5, L6, Z5, S6, U4) take a `dd-r2-review-v1` file; KABUL_DÜZELTMELERLE passes only with every MUST closed. `wp078_report.py` binds it as the `R2` step of an R2 manifest (`wp078_accept.py --round R2`). `measurement_steps` turns `measuredBy` into guarded sessions: stage `r2` after A3 for `quiet: false`, stage `r2q` in the quiet window after A4. `tools/qa/r2_load_time.py` writes P5 (Selection → Run load time against R1) from the chain's own bot sessions.
+- **Consistency lint (C-00B B-02, PR [ErdemEmirOzer/deaths-demolition#1](https://github.com/ErdemEmirOzer/deaths-demolition/pull/1), pending):** `tools/qa/r2_gates_lint.py` reads the JSON, the prose and every `R2Olcum.Yaz` call statically. It names missing or extra keys, gates nobody writes, `measuredBy` filters that run no test or miss the writer, `[Explicit]` tests the chain never runs, and prose that disagrees with the JSON.
+- **H1 elbow:** `elbowMaxDeg` (the support arm's elbow, 180 = straight) is report-only until the hero v2 import, then a check ≤ 165.
