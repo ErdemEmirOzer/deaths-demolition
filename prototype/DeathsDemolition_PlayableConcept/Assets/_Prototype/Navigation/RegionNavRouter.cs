@@ -105,6 +105,21 @@ namespace DD.Prototype.Navigation
             return n;
         }
 
+        /// <summary>
+        /// WP-088 (R2, V6 C8 / Waterfall): whether a detour through <paramref name="volume"/>'s alternative can still help — not when the
+        /// deck is the destination or the start (going round it ends on it anyway), nor once the waypoint is no longer ahead (the body is
+        /// as close to the goal as the waypoint, within <paramref name="margin"/> — RegionNavProfile.AlternativeAheadMargin). Without this a
+        /// body beside the waypoint was sent back to it on every repath (the detour costs only ~2 × its distance, inside the acceptance band)
+        /// and circled it.
+        /// </summary>
+        public static bool AlternativeAhead(NavRegionVolume volume, Vector3 position, Vector3 goal, float margin)
+        {
+            if (volume.Contains(goal) || volume.Contains(position)) return false;
+            float body = Vector2.Distance(new Vector2(position.x, position.z), new Vector2(goal.x, goal.z));
+            float via = Vector2.Distance(new Vector2(volume.alternative.x, volume.alternative.z), new Vector2(goal.x, goal.z));
+            return body > via + margin;
+        }
+
         /// <summary>Decide between the direct corners (already in <paramref name="buffer"/>) and the alternative; rewrites the buffer when the alternative wins. Returns the corner count in use.</summary>
         public static int ChooseRoute(RegionNavProfile profile, Vector3 position, Vector3 goal, Vector3[] buffer, int directCount, float routeRoll, out bool rerouted)
         {
@@ -112,7 +127,7 @@ namespace DD.Prototype.Navigation
             if (profile == null || directCount < 2) return directCount;
             s_watch.Restart();
             float direct = EffectiveCost(profile, buffer, directCount, out NavRegionVolume costly);
-            if (costly == null)
+            if (costly == null || !AlternativeAhead(costly, position, goal, profile.AlternativeAheadMargin))
             {
                 s_watch.Stop(); LastCompareMilliseconds = s_watch.Elapsed.TotalMilliseconds;
                 return directCount;

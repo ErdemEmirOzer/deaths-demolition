@@ -148,6 +148,39 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void RotaSecimi_GuverteHedefYaDaBaslangic_ViaGeride_AlternatifSorulmaz()
+        {
+            // WP-088 (R2, V6 C8 / Waterfall 1 stall): a detour that ends on the deck anyway, or a waypoint the body has already reached,
+            // is never offered — the query (always the cheapest here, so any call would reroute) must not even be asked. The V6 body
+            // beside the C8 waypoint was sent back to it on every 0.35 s repath (detour ≈ 2 × its distance, inside the roll band).
+            NavRegionVolume bridge = _profile.Find(new Vector3(4f, 0f, -28.75f));
+            Assert.IsTrue(bridge != null && bridge.hasAlternative, "kaynak yok: köprü hacmi ve kıyı alternatifi");
+            int calls = 0;
+            Vector3[] kiyi = { new Vector3(4f, 0f, -10f), bridge.alternative, new Vector3(4f, 0f, -44f) };
+            RegionNavRouter.AlternativeQueryOverride = (RegionNavProfile p, NavRegionVolume v, Vector3 a, Vector3 b, Vector3[] buf, out float c) => { calls++; for (int i = 0; i < kiyi.Length; i++) buf[i] = kiyi[i]; c = 0f; return kiyi.Length; };
+            Vector3[] Rota(Vector3 from, Vector3 to) => new[] { from, new Vector3(4f, 0f, -20f), to, Vector3.zero, Vector3.zero, Vector3.zero };
+
+            // positive control: from the north bank to the south bank the waypoint is ahead → asked, rerouted (roll 1)
+            Vector3[] r = Rota(new Vector3(4f, 0f, -10f), new Vector3(4f, 0f, -44f));
+            Assert.AreEqual(kiyi.Length, RegionNavRouter.ChooseRoute(_profile, r[0], r[2], r, 3, 1f, out bool rerouted));
+            Assert.IsTrue(rerouted, "kontrol: kıyıdan kıyıya kıyı rotası seçilir");
+            Assert.AreEqual(1, calls);
+
+            // 1. the goal is on the deck (V6 Waterfall / C8 room) → direct
+            r = Rota(new Vector3(4f, 0f, -10f), new Vector3(4f, 0f, -26.6f));
+            Assert.AreEqual(3, RegionNavRouter.ChooseRoute(_profile, r[0], r[2], r, 3, 1f, out rerouted)); Assert.IsFalse(rerouted, "hedef güvertede → dolambaç yok");
+            // 2. the body is on the deck → direct (going back round would end on the same deck)
+            r = Rota(new Vector3(4f, 0f, -22f), new Vector3(4f, 0f, -44f));
+            Assert.AreEqual(3, RegionNavRouter.ChooseRoute(_profile, r[0], r[2], r, 3, 1f, out rerouted)); Assert.IsFalse(rerouted, "gövde güvertede → dolambaç yok");
+            // 3. the body stands at the waypoint (1 m off it) → not ahead any more → direct
+            Vector3 atVia = bridge.alternative + new Vector3(-1f, 0f, 0f);
+            r = Rota(atVia, new Vector3(4f, 0f, -44f));
+            Assert.AreEqual(3, RegionNavRouter.ChooseRoute(_profile, r[0], r[2], r, 3, 1f, out rerouted)); Assert.IsFalse(rerouted, "via'nın yanında → via artık önde değil");
+            Assert.AreEqual(1, calls, "korunan durumlarda sorgu hiç çağrılmaz");
+            RegionNavRouter.AlternativeQueryOverride = null;
+        }
+
+        [Test]
         public void Bogaz_KutuSayimi_KuyrukKurali_AzamiBekleme()
         {
             var solver = new CrowdSolver();

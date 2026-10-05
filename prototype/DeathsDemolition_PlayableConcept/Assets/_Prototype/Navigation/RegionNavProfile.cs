@@ -86,6 +86,9 @@ namespace DD.Prototype.Navigation
         [PrototypeOnly(PendingDecisions.None, "Route diversification: the member's route roll (0..1 from its spawn seed) widens the alternative's acceptance by this fraction of the direct cost.", true)]
         [Range(0f, 1f)] public float RouteBiasSpread = 0.25f;
 
+        [PrototypeOnly(PendingDecisions.None, "WP-088: metres the alternative's waypoint must lie closer to the goal than the member does to still count as ahead (no detour back to a waypoint already reached).", true)]
+        [Range(0f, 5f)] public float AlternativeAheadMargin = 1f;
+
         [PrototypeOnly(PendingDecisions.None, "Crowd separation radius scale per AP-007 body fit (A slim / B / C broad); the collision capsule is not scaled.", true)]
         public float FitRadiusScaleA = 0.92f, FitRadiusScaleB = 1f, FitRadiusScaleC = 1.12f;
 
