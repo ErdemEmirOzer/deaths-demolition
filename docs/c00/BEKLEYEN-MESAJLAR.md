@@ -168,3 +168,18 @@ Kaynak: `docs/c00/reviews/B-03-gc-inceleme.md` (§3 bulgular, §5 doğrulama, §
 | `a62d83db` eki | — | **S-08** | `WeaponFoleyAudio.cs` | Yeni ayırma bulgusu yok. Yalnız B2 kovan başına yükseldi. S5 `gcBytesPerCasing` 0 korunmalı. |
 
 Doğrulama satırı: `docs/c00/LOCAL-QUEUE.md` (B-03 Profiler satırı).
+
+## 20 · 06.10 (yerel C-00) — kapalı oturumlara iletilecekler
+
+**→ S-07 (açılınca):**
+- S-03, WP-084 dilim 1'de `ZombieSkinFx` şok/jel MPB'sini yüz yuvasına da yazan tek satırı el sıkışma olarak ekliyor. Neden: başsız O1 gövdesinde yüz karanlık kalıyordu. Dosya senin; S-03'ün commit gövdesinde sahip notu olacak. Gözden geçir.
+- WP-086'da zombi kan/ıslaklık VFX'i yeni yüz yuvasını (SlotFace) ve `_ZOMBIE_MASKS` maske bitlerini (RL 16–30) hesaba katmalı.
+
+**→ S-10 (açılınca), S-05'in BEKLEYEN §7 ve "S-10 → S-05" yanıtları (06.10):**
+- Z3 render oranlarını PilotPerfProbe 04-window aşaması ölçer (setPassCallsAvg, batchesAvg, trianglesAvg). Koşul: release-probe build, `-ddPilotStart x,z,yaw` (B9 pozu, sweep kapalı), Sinematik, TP ve TD. Taban: aynı pozda R1 FINAL'' probe build'i.
+- Kamera pozu ve 40 gövde sabit (`achievedCount == 40` kontrol ediliyor). Spawn zarı (tier, sürüm, zırh, konum) sabit DEĞİL. Bu yüzden C-00 05.10 kararı geçerli: ≥ 5 dönüşümlü R2/R1 çifti, medyan oran. İki build'de de `-ddArmor all` (C-00 06.10 onayı).
+- Z3 sessiz makine istemez (sayaç, zaman değil); quiet:false.
+- Yazıcı S-05'in `tools/qa/r2_z3.py` aracı: oran kısmı şimdi, statik anahtarlar AP-025 alımından sonra `z3-static.json`. P3 aynı araçta. Zincire bağlamak S-10'un işi.
+- Z3 tanımları (C-00 06.10): bonesMax = SMR `bones.Length` max · mapsPerAtlasMax = atlas başına PBR haritası (maske dizisi hariç) · materialsPerFamilyMax = tek zombi örneğinin malzeme sayısı (aile toplamı rapor).
+- Z3b zorunlu testi `ZombieR2Tests.Z3b_40Zombi_SetPassPayi_DokuButcesi` olacak (C-00 kaydı, S-05'in Z3/P3 commit'inden sonra).
+- `4c48563e` (wp-091-r2-h1-def) ALINMAYACAK: aa92a85d'nin H1 karar B testini geri alıyor. H1 tanım metni main'den yeni dalda yeniden yazılacak.
