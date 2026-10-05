@@ -71,6 +71,70 @@ def wav_bytes(rate=48000, bits=24, seconds=0.1, peak_db=-6.0, lead_ms=0.0, ch=2)
     return b"RIFF" + struct.pack("<I", 4 + len(data)) + b"WAVE" + data
 
 
+def png_chunk(kind, data):
+    return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data) & 0xffffffff)
+
+
+def png_px(w, h, ctype, pixel, extra=(), filters=(0,)):
+    """PNG whose pixel(x, y) gives the channel tuple; rows use the given filter types in turn (0 None … 4 Paeth)."""
+    bpp = {0: 1, 2: 3, 4: 2, 6: 4}[ctype]
+    rows, prev = [], bytearray(w * bpp)
+    for y in range(h):
+        line = bytearray(b"".join(bytes(pixel(x, y)) for x in range(w)))
+        ft = filters[y % len(filters)]
+        out = bytearray(len(line))
+        for i, v in enumerate(line):
+            a = line[i - bpp] if i >= bpp else 0
+            b = prev[i]
+            c = prev[i - bpp] if i >= bpp else 0
+            if ft == 1:
+                v = v - a
+            elif ft == 2:
+                v = v - b
+            elif ft == 3:
+                v = v - ((a + b) >> 1)
+            elif ft == 4:
+                pa, pb, pc = abs(b - c), abs(a - c), abs(a + b - 2 * c)
+                v = v - (a if pa <= pb and pa <= pc else b if pb <= pc else c)
+            out[i] = v & 255
+        rows.append(bytes([ft]) + bytes(out)); prev = line
+    return (b"\x89PNG\r\n\x1a\n" + png_chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, ctype, 0, 0, 0))
+            + b"".join(png_chunk(k, d) for k, d in extra)
+            + png_chunk(b"IDAT", zlib.compress(b"".join(rows), 1)) + png_chunk(b"IEND", b""))
+
+
+SRGB = ((b"sRGB", b"\x00"),)
+ICC_SRGB = ((b"iCCP", b"ICC Profile\x00\x00" + zlib.compress(b"....desc....sRGB IEC61966-2.1....")),)
+
+
+def mp4_bytes(boxes=("ftyp", "moov", "mdat")):
+    return b"".join(struct.pack(">I4s", 16, k.encode()) + b"\x00" * 8 for k in boxes)
+
+
+def add_new_types(p):
+    """one valid item of every C-00 05.10 type + a motion-frame folder."""
+    p.add("Loading/L01.png", png_bytes_srgb(2560, 1440), "wallpaper_opaque", "loading_master")
+    p.add("Screens/main.png", png_px(16, 8, 2, lambda x, y: (10, 20, 30), SRGB), "preview_opaque", "screen_mockup")
+    p.add("Data/sdf_raw.png", png_px(64, 64, 0, lambda x, y: (x * 4,)), "data_texture", "sdf_raw")
+    p.add("Data/sdf_alpha.png", png_px(64, 64, 6, lambda x, y: (255, 255, 255, (x + y) * 2)), "data_texture", "sdf_alpha_transport")
+    p.add("Data/height.png", png_px(64, 64, 6, lambda x, y: (y, y, y, 255)), "data_texture", "height_map")
+    p.add("Data/normal.png", png_px(64, 64, 2, lambda x, y: (128, 128, 255)), "data_texture", "normal_map")
+    p.add("Docs/spec.md", "# başlık\n".encode("utf-8"), "document", "reference_document")
+    p.add("Docs/atlas.json", b'{"a": 1}', "document", "atlas_mapping")
+    p.add("Motion/S01.mp4", mp4_bytes(), "video", "cinematic_motion_preview")
+    seq = {"fps": 30, "frames": [{"file": "frame_000.png", "t_ms": 0}, {"file": "frame_001.png", "t_ms": 33}]}
+    p.add("Icons/Previews/reload/idle/sequence.json", json.dumps(seq).encode(), "document", "sequence_timing")
+    for n in (0, 1):
+        p.add("Icons/Previews/reload/idle/frame_%03d.png" % n, png_bytes(128, 128, 6), "ui", "icon_motion_frame")
+    return p
+
+
+def png_bytes_srgb(w, h):
+    raw = (b"\x00" + b"\x40" * (w * 3)) * h
+    return (b"\x89PNG\r\n\x1a\n" + png_chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 2, 0, 0, 0)) + png_chunk(*ICC_SRGB[0])
+            + png_chunk(b"IDAT", zlib.compress(raw, 1)) + png_chunk(b"IEND", b""))
+
+
 # --- package builder --------------------------------------------------------------------------------------------------
 class Pkg:
     def __init__(self, root):
@@ -264,6 +328,90 @@ class CodexManifestCheckTests(unittest.TestCase):
         rep = self.run_check(p.write())
         for needle in ("transparent", "need square", "lowercase icon_"):
             self.assert_error(rep, needle)
+
+    # --- C-00 05.10 (AP-028-B, decision A): explicit types ------------------------------------------------------------
+    def test_YeniTurler_IyiPaket_PASS_UyariYok(self):
+        rep = self.run_check(add_new_types(self.pkg()).write())
+        self.assertEqual([], rep.errors)
+        self.assertEqual([], rep.warnings)   # motion frames named by their sequence.json: no icon_ warning
+
+    def test_EskiTurler_DavranisDegismez(self):
+        """regression: the five old types and the unknown-type error read as before."""
+        p = self.pkg()
+        p.add("UI/badge.png", png_bytes(128, 128, 6), "ui")                      # not icon_, no sequence.json
+        p.add("Fonts/a.ttf", b"\x00\x01", "font")
+        rep = self.run_check(p.write())
+        self.assertIn({"path": "exports/%s/UI/badge.png" % V, "message": "UI image not named icon_<function>"}, rep.warnings)
+        self.assert_error(rep, "type 'font' not in fbx|texture|anim|audio|ui|wallpaper_opaque|preview_opaque|data_texture|document|video")
+        self.assertEqual(1, len(rep.errors), rep.errors)
+
+    def test_Wallpaper_AlfaProfilBoyut(self):
+        p = self.pkg()
+        p.add("L/a.png", png_px(16, 9, 6, lambda x, y: (1, 2, 3, 255), SRGB), "wallpaper_opaque")
+        p.add("L/b.png", png_px(16, 9, 2, lambda x, y: (1, 2, 3)), "wallpaper_opaque")
+        rep = self.run_check(p.write())
+        self.assert_error(rep, "must be opaque RGB")
+        self.assert_error(rep, "needs an sRGB colour profile")
+        self.assertTrue(any("loading master is 2560x1440" in w["message"] for w in rep.warnings))
+
+    def test_RuntimeFalse_TurlerOyunaSevkEdilemez(self):
+        p = self.pkg()
+        p.add("S/a.png", png_px(8, 8, 2, lambda x, y: (1, 2, 3)), "preview_opaque", runtime=True)
+        p.add("D/a.json", b"{}", "document", runtime=True)
+        p.add("V/a.mp4", mp4_bytes(), "video", runtime=True)
+        rep = self.run_check(p.write())
+        self.assertEqual(3, sum("runtime=false" in e["message"] for e in rep.errors), rep.errors)
+
+    def test_DataTexture_DogrusalBoyutRolKanalAlfa(self):
+        p = self.pkg()
+        p.add("D/srgb.png", png_px(64, 64, 2, lambda x, y: (1, 2, 3), SRGB), "data_texture", "normal_map")
+        p.add("D/npot.png", png_px(60, 64, 0, lambda x, y: (1,)), "data_texture", "sdf_raw")
+        p.add("D/role.png", png_px(64, 64, 0, lambda x, y: (1,)), "data_texture", "albedo")
+        p.add("D/raw_rgb.png", png_px(64, 64, 2, lambda x, y: (1, 2, 3)), "data_texture", "sdf_raw")
+        p.add("D/flat.png", png_px(64, 64, 6, lambda x, y: (9, 9, 9, 7)), "data_texture", "sdf_alpha_transport")
+        p.add("D/holes.png", png_px(64, 64, 6, lambda x, y: (128, 128, 255, 0 if x == 3 else 255), filters=(1, 2, 3, 4)),
+              "data_texture", "normal_map")
+        rep = self.run_check(p.write())
+        for needle in ("must be linear", "not power-of-two", "role 'albedo'", "sdf_raw must be one grey channel",
+                       "alpha is constant", "normal_map alpha must be fully opaque (alpha 0..255)"):
+            self.assert_error(rep, needle)
+
+    def test_PngAlfaCozucu_BesFiltre(self):
+        for ft in (0, 1, 2, 3, 4):
+            with self.subTest(filter=ft):
+                f = self.root / ("f%d.png" % ft)
+                f.write_bytes(png_px(20, 7, 6, lambda x, y: (x * 9, y * 30, 7, 40 + x * 5 + y * 3), filters=(ft,)))
+                self.assertEqual((40, 40 + 19 * 5 + 6 * 3), cmc.png_alpha_range(f))
+
+    def test_Document_UzantiUtf8Json(self):
+        p = self.pkg()
+        p.add("D/a.docx", b"PK", "document")
+        p.add("D/b.txt", b"\xff\xfe bad", "document")
+        p.add("D/c.json", b"{bad", "document")
+        rep = self.run_check(p.write())
+        for needle in ("document must be one of", "not UTF-8", "not valid JSON"):
+            self.assert_error(rep, needle)
+
+    def test_Video_Mp4Kutulari(self):
+        p = self.pkg()
+        p.add("V/a.mp4", b"not a video at all", "video")
+        p.add("V/b.mp4", mp4_bytes(("moov", "ftyp", "mdat")), "video")
+        p.add("V/c.mov", mp4_bytes(), "video")
+        rep = self.run_check(p.write())
+        self.assertEqual(2, sum("not an MP4" in e["message"] for e in rep.errors), rep.errors)
+        self.assert_error(rep, "video must be .mp4")
+
+    def test_MotionKare_EksikKareVeBozukSira_Hata(self):
+        p = self.pkg()
+        p.add("M/a/sequence.json", b'{"frames": [{"file": "frame_000.png"}, {"file": "frame_009.png"}]}', "document")
+        p.add("M/a/frame_000.png", png_bytes(128, 128, 6), "ui")
+        p.add("M/b/sequence.json", b'{"fps": 30}', "document")
+        p.add("M/b/frame_000.png", png_bytes(128, 128, 6), "ui")
+        rep = self.run_check(p.write())
+        self.assert_error(rep, "frame 'frame_009.png' is not a file in this folder")
+        self.assert_error(rep, "sequence.json must hold frames[].file")
+        self.assertIn({"path": "exports/%s/M/b/frame_000.png" % V, "message": "UI image not named icon_<function>"}, rep.warnings)
+        self.assertNotIn("exports/%s/M/a/frame_000.png" % V, [w["path"] for w in rep.warnings])
 
     # --- licenses / ledger --------------------------------------------------------------------------------------------
     def test_Lisans_YokKolonBelirsiz(self):

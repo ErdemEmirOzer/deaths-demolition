@@ -14,7 +14,8 @@ exit: 0 PASS (warnings listed) · 1 FAIL (errors, or warnings with --strict) · 
 Checks (E = error, W = warning):
   manifest   JSON object; package = folder name (AP-0NN), version = vNNN, date YYYY-MM-DD, producer non-empty
              ("codex/<model>", else W), items non-empty, licenses path. Each item: path relative under exports/vNNN/ and
-             present, sha256 = the file's, type ∈ fbx|texture|anim|audio|ui, role non-empty, specs object (W if absent),
+             present, sha256 = the file's, type ∈ fbx|texture|anim|audio|ui (+ the C-00 05.10 types below), role
+             non-empty, specs object (W if absent),
              source present in the package if named (W). Duplicate paths E. A file under exports/vNNN that no item lists
              is E (except SHA256SUMS, anim-events.json, README*).
   SHA256SUMS manifest/SHA256SUMS-vNNN, manifest/SHA256SUMS or exports/vNNN/SHA256SUMS ("<sha256>  <path>", paths
@@ -26,7 +27,19 @@ Checks (E = error, W = warning):
              _BaseColor/_Normal/_ORM colour (RGB/RGBA) not grey (E).
   audio      .wav PCM (E); 48000 Hz (E); 24-bit (E); name <Category>_<Weapon>_<Layer>_<nn>.wav (E); true peak (4×
              oversampled) ≤ −1.0 dBTP (E); leading / trailing silence (< −60 dBFS) ≤ 5 ms (E); validation/ empty → W.
-  ui         .png with alpha (E) or .svg source; icon_* → lowercase icon_<function>, square 64/128/256 (E); other PNG W.
+  ui         .png with alpha (E) or .svg source; icon_* → lowercase icon_<function>, square 64/128/256 (E); other PNG W —
+             except a motion frame: a PNG listed by the sequence.json in its own folder (that file valid JSON with a
+             frames[].file list whose files all exist, E) is named by the sequence, not icon_*.
+  C-00 05.10 (AP-028-B, decision A) — explicit types; runtime=false types may not be shipped to the game:
+  wallpaper_opaque  .png, RGB without alpha / tRNS (E), sRGB colour profile (sRGB chunk or an iCCP profile naming sRGB,
+             E), 2560×1440 (W otherwise; the loading master size of tools/wallpaper/wallpaper_intake.py).
+  preview_opaque    .png (E); runtime=false (item "runtime": true → E); an alpha channel that is not fully opaque W
+             (decoded up to 512² px; larger RGBA previews → one package-level W).
+  data_texture      .png (E), linear: no sRGB / iCCP chunk (E); power-of-two sides (E); role ∈ sdf_raw (grey, one
+             channel) · sdf_alpha_transport (RGBA, the alpha carries the field: not constant) · height_map (grey or
+             RGB/RGBA, alpha if present fully opaque) · normal_map (RGB/RGBA, alpha if present fully opaque) (E).
+  document   .json/.md/.html/.txt/.csv/.svg (E), UTF-8 (E); .json parses (E); runtime=false.
+  video      .mp4 ISO BMFF: ftyp first, moov and mdat at top level (E); runtime=false.
   licenses   LICENSES.csv present with columns file, source/url, license, date, usage (TR or EN names); every row has a
              license that is not unknown/belirsiz/tbd/? (E).
   ledger     if the package has 03-higgsfield/ or an item names Higgsfield: 03-higgsfield/ledger.csv with columns date,
@@ -43,7 +56,12 @@ import sys
 import zlib
 from pathlib import Path
 
-TYPES = ("fbx", "texture", "anim", "audio", "ui")
+TYPES = ("fbx", "texture", "anim", "audio", "ui", "wallpaper_opaque", "preview_opaque", "data_texture", "document", "video")
+NOT_RUNTIME = ("preview_opaque", "document", "video")   # C-00 05.10: never shipped to the game
+DATA_ROLES = ("sdf_raw", "sdf_alpha_transport", "height_map", "normal_map")
+DOC_SUFFIXES = (".json", ".md", ".html", ".txt", ".csv", ".svg")
+WALLPAPER_SIZE = (2560, 1440)
+ALPHA_DECODE_MAX = 512 * 512   # pixels: alpha is decoded for small images only (data textures, icons)
 UNLISTED_OK = ("SHA256SUMS", "anim-events.json")
 FBX_MAGIC = b"Kaydara FBX Binary  \x00\x1a\x00"
 FBX_VERSION = 7400
@@ -165,6 +183,73 @@ def png_info(path):
             break
         pos += 12 + n
     return w, h, depth, ctype, trns
+
+
+def png_chunks(path):
+    """[(kind, data)] of a PNG file (no CRC check)."""
+    data = Path(path).read_bytes()
+    out, pos = [], 8
+    while pos + 8 <= len(data):
+        n = struct.unpack_from(">I", data, pos)[0]
+        kind = data[pos + 4:pos + 8]
+        out.append((kind, data[pos + 8:pos + 8 + n]))
+        if kind == b"IEND":
+            break
+        pos += 12 + n
+    return out
+
+
+def png_srgb(chunks):
+    """True when the PNG declares sRGB: an sRGB chunk, or an iCCP profile whose name or description says sRGB."""
+    for kind, data in chunks:
+        if kind == b"sRGB":
+            return True
+        if kind == b"iCCP":
+            name, _, rest = data.partition(b"\x00")
+            if b"srgb" in name.lower():
+                return True
+            try:
+                profile = zlib.decompress(rest[1:])
+            except zlib.error:
+                return False
+            if b"sRGB" in profile or b"s\x00R\x00G\x00B" in profile:
+                return True
+    return False
+
+
+def png_alpha_range(path):
+    """(min, max) of the alpha channel of an 8-bit non-interlaced grey+alpha / RGBA PNG, or None when not decodable."""
+    chunks = png_chunks(path)
+    ihdr = next((d for k, d in chunks if k == b"IHDR"), None)
+    if ihdr is None:
+        return None
+    w, h, depth, ctype, _comp, _filt, interlace = struct.unpack(">IIBBBBB", ihdr)
+    if depth != 8 or interlace or ctype not in (4, 6) or w * h > ALPHA_DECODE_MAX:
+        return None
+    bpp = 2 if ctype == 4 else 4
+    try:
+        raw = zlib.decompress(b"".join(d for k, d in chunks if k == b"IDAT"))
+    except zlib.error:
+        return None
+    stride, prev, lo, hi, pos = w * bpp, bytearray(w * bpp), 255, 0, 0
+    for _ in range(h):
+        ftype, line = raw[pos], bytearray(raw[pos + 1:pos + 1 + stride]); pos += 1 + stride
+        for i in range(stride):
+            a = line[i - bpp] if i >= bpp else 0
+            b = prev[i]
+            c = prev[i - bpp] if i >= bpp else 0
+            if ftype == 1:
+                line[i] = (line[i] + a) & 255
+            elif ftype == 2:
+                line[i] = (line[i] + b) & 255
+            elif ftype == 3:
+                line[i] = (line[i] + ((a + b) >> 1)) & 255
+            elif ftype == 4:
+                pa, pb, pc = abs(b - c), abs(a - c), abs(a + b - 2 * c)
+                line[i] = (line[i] + (a if pa <= pb and pa <= pc else b if pb <= pc else c)) & 255
+        alpha = line[bpp - 1::bpp]
+        lo, hi, prev = min(lo, min(alpha)), max(hi, max(alpha)), line
+    return lo, hi
 
 
 def power_of_two(n):
@@ -309,7 +394,7 @@ def check(pkg, version=None, manifest_path=None):
         items = []
 
     # items
-    listed, by_type = {}, {t: [] for t in TYPES}
+    listed, by_type, roles = {}, {t: [] for t in TYPES}, {}
     prefix = "exports/%s/" % version
     for i, it in enumerate(items):
         where = "%s items[%d]" % (mpath.name, i)
@@ -336,6 +421,9 @@ def check(pkg, version=None, manifest_path=None):
             rep.error(rel, "type %r not in %s" % (t, "|".join(TYPES)))
         else:
             by_type[t].append(f)
+            if t in NOT_RUNTIME and it.get("runtime") is True:
+                rep.error(rel, "type %s is runtime=false: it may not be shipped to the game" % t)
+        roles[f] = it.get("role")
         if not isinstance(it.get("role"), str) or not it.get("role").strip():
             rep.error(rel, "role missing")
         if not isinstance(it.get("specs"), dict):
@@ -391,6 +479,11 @@ def check(pkg, version=None, manifest_path=None):
     check_textures(rep, pkg, by_type["texture"])
     check_audio(rep, pkg, by_type["audio"])
     check_ui(rep, pkg, by_type["ui"])
+    check_wallpapers(rep, pkg, by_type["wallpaper_opaque"])
+    check_previews(rep, pkg, by_type["preview_opaque"])
+    check_data_textures(rep, pkg, by_type["data_texture"], roles)
+    check_documents(rep, pkg, by_type["document"])
+    check_videos(rep, pkg, by_type["video"])
     check_licenses(rep, pkg, m.get("licenses"))
     check_ledger(rep, pkg, m)
     return rep, version
@@ -477,7 +570,30 @@ def check_audio(rep, pkg, files):
         rep.warn("validation/", "audio delivered without a measurement table under validation/")
 
 
+def motion_frames(rep, pkg, files):
+    """{frame path} listed by a sequence.json in the frame's own folder; a broken sequence is an error."""
+    frames, seen = set(), set()
+    for folder in sorted({f.parent for f in files}):
+        seq = folder / "sequence.json"
+        if seq in seen or not seq.is_file():
+            continue
+        seen.add(seq)
+        rel = seq.relative_to(pkg).as_posix()
+        try:
+            listed = [fr["file"] for fr in json.loads(seq.read_text(encoding="utf-8"))["frames"]]
+        except (ValueError, KeyError, TypeError) as e:
+            rep.error(rel, "sequence.json must hold frames[].file: %s" % e)
+            continue
+        for name in listed:
+            if not isinstance(name, str) or "/" in name or not (folder / name).is_file():
+                rep.error(rel, "frame %r is not a file in this folder" % (name,))
+            else:
+                frames.add(folder / name)
+    return frames
+
+
 def check_ui(rep, pkg, files):
+    frames = motion_frames(rep, pkg, files)
     for f in files:
         rel = f.relative_to(pkg).as_posix()
         if f.suffix.lower() == ".svg":
@@ -497,8 +613,124 @@ def check_ui(rep, pkg, files):
                 rep.error(rel, "icon name must be lowercase icon_<function>")
             if w != h or w not in ICON_SIZES:
                 rep.error(rel, "icon %dx%d, need square %s px" % (w, h, "/".join(map(str, ICON_SIZES))))
-        else:
+        elif f not in frames:   # C-00 05.10: a motion frame is named by its sequence.json
             rep.warn(rel, "UI image not named icon_<function>")
+
+
+def check_wallpapers(rep, pkg, files):
+    for f in files:
+        rel = f.relative_to(pkg).as_posix()
+        info = png_info(f) if f.suffix.lower() == ".png" else None
+        if info is None:
+            rep.error(rel, "wallpaper_opaque must be a PNG")
+            continue
+        w, h, _depth, ctype, trns = info
+        if ctype != 2 or trns:
+            rep.error(rel, "wallpaper_opaque must be opaque RGB (PNG colour type %d%s; alpha is not allowed)"
+                      % (ctype, ", tRNS" if trns else ""))
+        if not png_srgb(png_chunks(f)):
+            rep.error(rel, "wallpaper_opaque needs an sRGB colour profile (sRGB chunk or iCCP sRGB)")
+        if (w, h) != WALLPAPER_SIZE:
+            rep.warn(rel, "size %dx%d (the loading master is %dx%d)" % ((w, h) + WALLPAPER_SIZE))
+
+
+def check_previews(rep, pkg, files):
+    undecoded = []
+    for f in files:
+        rel = f.relative_to(pkg).as_posix()
+        info = png_info(f) if f.suffix.lower() == ".png" else None
+        if info is None:
+            rep.error(rel, "preview_opaque must be a PNG")
+            continue
+        _w, _h, _depth, ctype, trns = info
+        if ctype in (4, 6) or trns:
+            rng = png_alpha_range(f)
+            if rng is None:
+                undecoded.append(rel)
+            elif rng[0] < 255:
+                rep.warn(rel, "preview_opaque carries alpha %d..%d" % rng)
+    if undecoded:   # one line for the package: runtime=false references, alpha only checked up to 512² px
+        rep.warn("preview_opaque", "%d PNG(s) carry an alpha channel not checked for opacity (> %d px): %s"
+                 % (len(undecoded), ALPHA_DECODE_MAX, ", ".join(undecoded[:3]) + (" …" if len(undecoded) > 3 else "")))
+
+
+def check_data_textures(rep, pkg, files, roles):
+    for f in files:
+        rel = f.relative_to(pkg).as_posix()
+        role = roles.get(f)
+        info = png_info(f) if f.suffix.lower() == ".png" else None
+        if info is None:
+            rep.error(rel, "data_texture must be a PNG")
+            continue
+        w, h, _depth, ctype, trns = info
+        if any(k in (b"sRGB", b"iCCP") for k, _ in png_chunks(f)):
+            rep.error(rel, "data_texture must be linear (no sRGB / iCCP chunk)")
+        if not (power_of_two(w) and power_of_two(h)) or max(w, h) > 8192:
+            rep.error(rel, "size %dx%d is not power-of-two (≤ 8192)" % (w, h))
+        if role not in DATA_ROLES:
+            rep.error(rel, "data_texture role %r not in %s" % (role, "|".join(DATA_ROLES)))
+            continue
+        alpha = ctype in (4, 6)
+        if role == "sdf_raw" and ctype != 0:
+            rep.error(rel, "sdf_raw must be one grey channel (PNG colour type %d)" % ctype)
+        elif role == "sdf_alpha_transport":
+            if ctype != 6:
+                rep.error(rel, "sdf_alpha_transport must be RGBA (the alpha carries the field; colour type %d)" % ctype)
+            else:
+                rng = png_alpha_range(f)
+                if rng is not None and rng[0] == rng[1]:
+                    rep.error(rel, "sdf_alpha_transport alpha is constant (%d): no field" % rng[0])
+        elif role == "normal_map" and ctype not in (2, 6):
+            rep.error(rel, "normal_map must be RGB/RGBA (colour type %d)" % ctype)
+        if role in ("height_map", "normal_map") and (alpha or trns):
+            rng = png_alpha_range(f)
+            if rng is not None and rng[0] < 255:
+                rep.error(rel, "%s alpha must be fully opaque (alpha %d..%d)" % ((role,) + rng))
+
+
+def check_documents(rep, pkg, files):
+    for f in files:
+        rel = f.relative_to(pkg).as_posix()
+        if f.suffix.lower() not in DOC_SUFFIXES:
+            rep.error(rel, "document must be one of " + " ".join(DOC_SUFFIXES))
+            continue
+        try:
+            text = f.read_bytes().decode("utf-8")
+        except UnicodeDecodeError as e:
+            rep.error(rel, "document is not UTF-8: %s" % e)
+            continue
+        if f.suffix.lower() == ".json":
+            try:
+                json.loads(text)
+            except ValueError as e:
+                rep.error(rel, "not valid JSON: %s" % e)
+
+
+def mp4_top_boxes(path):
+    """the top-level ISO BMFF box types, or None when the size fields do not walk the file."""
+    data, kinds, pos = Path(path).read_bytes(), [], 0
+    while pos + 8 <= len(data):
+        size, kind = struct.unpack_from(">I4s", data, pos)
+        if size == 1 and pos + 16 <= len(data):
+            size = struct.unpack_from(">Q", data, pos + 8)[0]
+        elif size == 0:
+            size = len(data) - pos
+        if size < 8:
+            return None
+        kinds.append(kind.decode("latin-1"))
+        pos += size
+    return kinds if pos == len(data) else None
+
+
+def check_videos(rep, pkg, files):
+    for f in files:
+        rel = f.relative_to(pkg).as_posix()
+        if f.suffix.lower() != ".mp4":
+            rep.error(rel, "video must be .mp4")
+            continue
+        boxes = mp4_top_boxes(f)
+        if not boxes or boxes[0] != "ftyp" or "moov" not in boxes or "mdat" not in boxes:
+            rep.error(rel, "not an MP4 (top-level boxes %s; need ftyp first, moov, mdat)" % boxes)
 
 
 def check_licenses(rep, pkg, licenses):
