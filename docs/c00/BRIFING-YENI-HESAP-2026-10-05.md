@@ -10,7 +10,7 @@
 
 | Rol | Nerede | Başlangıç promptu | Durum (05.10 ~19:45) |
 |---|---|---|---|
-| **Bulut C-00** (geçici asıl koordinatör; C-00B görevleri de onda) | İkinci hesap, **tarayıcı / bulut** (claude.ai/code) | `docs/c00/C00-BULUT-DEVRALMA-PROMPTU-2026-10-05.md` (kurallar `C00-BULUT-PROMPTU.md`) | çalışıyor. C-00B olarak B-02, B-01 ve B-03'ü teslim etti (§14). main'e yalnız belge, Python ve kapı tanımı alır. |
+| **Bulut C-00** (geçici asıl koordinatör; C-00B görevleri de onda) | İkinci hesap, **tarayıcı / bulut** (claude.ai/code) | `docs/c00/C00-BULUT-DEVRALMA-PROMPTU-2026-10-05.md` (kurallar `C00-BULUT-PROMPTU.md`) | çalışıyor. C-00B olarak B-01…B-04.ü teslim etti (PR #1–#4, §14). main.e yalnız belge, Python ve kapı tanımı alır. |
 | **Yerel C-00** (asıl koordinatör, tek entegratör) | Mac'te yerel: birinci hesap limiti yenilenince (~07.10 11:00 TR, tahmini) ya da ikinci hesap Claude Desktop'ta açılınca | `docs/c00/C00-DEVIR-BASLANGIC-PROMPTU.md` | **şu an yok**. Açıldığı an entegratörlük ona geçer; bulut oturumu `BULUT-DEVIR-<gg.aa>.md` yazar ve C-00B'ye döner. |
 | C-00B (ikinci ekip) | İkinci hesap, bulut | `docs/c00/C00B-IKINCI-HESAP-PROMPTU.md` | yerel C-00 dönünce bulut oturumu bu role geri döner |
 
@@ -314,7 +314,7 @@ Guard göç notu `docs/c00/GUARD-D8-GOC.md`. **S-03'ün notu yok** (§14).
 - **iCloud:** KADRO iCloud'da; dataless izleyici şu an 0. Taşıma penceresi runbook'ta (`K/wp-089/evidence/ICLOUD-TASIMA-RUNBOOK.md`).
 - **Codex:** kota 12.10'da yenilenir; o zamana kadar üretim Claude'da.
 
-## 14. Devirden sonraki son durum (05.10 ~19:40, bulut eki)
+## 14. Devirden sonraki son durum (05.10 ~20:00, bulut eki)
 
 Bu bölüm, birinci hesabın limiti dolduktan sonra depodan doğrulanarak eklendi. §1–§13 aynen geçerlidir.
 
@@ -323,14 +323,24 @@ Bu bölüm, birinci hesabın limiti dolduktan sonra depodan doğrulanarak eklend
 - `a62d83db`'den sonra main'e yalnız belge commit'leri girdi (`3bb501e7`, `3e68bc08`).
 - Son derleme kontrolü hâlâ `d0783d9b` (PASS). `03c3b06b` ve `a62d83db` derlenmedi. İlk iş: `tools/compile-check.sh main`.
 
-**C-00B (bulut) teslimleri** (dallar üst üste kurulu: B-01, B-02'nin ucunda; B-03, B-01'in ucunda)
+**C-00B (bulut) teslimleri:** dört görev bitti (05.10 19:39); hiçbiri main'de değil. Dallar üst üste kurulu: B-01 B-02'nin ucunda, B-03 B-01'in, B-04 B-03'ün.
 
-| Görev | Dal | Commit'ler (sırayla) | PR | Durum |
-|---|---|---|---|---|
-| B-02 r2 kapı denetleyicisi | `c00b/B-02-r2-gates-lint` | `4edbba5b` → `b7737f04` (araç + 23 test, bulutta 23/23) → `a7cd3bd3` | #1 | bitti |
-| B-01 sistem belgeleri R2 (`ARCHITECTURE` §3.12–3.17, §4, §8.1; `SYSTEMS-INDEX` M4-R2) | `c00b/B-01-docs-r2` | `ec546e12` → `88da3107` → `c5e0d905` | #2 | bitti |
-| B-03 GC incelemesi (`docs/c00/reviews/B-03-gc-inceleme.md` + LOCAL-QUEUE Profiler satırı) | `c00b/B-03-gc-review` | `ba448fe3` → `1dff988b` → bitiş kaydı | (#3) | rapor bitti |
-| B-04 R2 yayın notu taslağı | — | — | — | açık |
+| Görev | Dal | Commit'ler (sırayla) | PR |
+|---|---|---|---|
+| B-02 r2 kapı denetleyicisi (`tools/qa/r2_gates_lint.py` + 23 test) | `c00b/B-02-r2-gates-lint` | `4edbba5b` → `b7737f04` → `a7cd3bd3` | #1 |
+| B-01 sistem belgeleri R2 (`ARCHITECTURE` §3.12–3.17, §4, §8.1; `SYSTEMS-INDEX` M4-R2) | `c00b/B-01-docs-r2` | `ec546e12` → `88da3107` → `c5e0d905` | #2 |
+| B-03 GC incelemesi (`docs/c00/reviews/B-03-gc-inceleme.md` + LOCAL-QUEUE Profiler satırı) | `c00b/B-03-gc-review` | `ba448fe3` → `1dff988b` → `a593c8cf` | #3 |
+| B-04 R2 yayın notu taslağı (`docs/release/R2-NOTES-draft.md`, EN + TR, 14 satır, görsel listesi) | `c00b/B-04-release-notes` | `fc305c2e` → `e289b1a4` → `01f4b163` | #4 |
+
+**Kontrol (bulut, 05.10 ~20:00):**
+- 12 commit kapı 8'e uyuyor ve hepsinde `Test:` satırı var.
+- `test_r2_gates_lint` 23/23.
+- Zincir main `3e68bc08` üzerine çakışmasız uygulanıyor.
+
+**Eski tabandan kalan üç bayat bilgi.** Dallar `0b3ec358` üzerine kuruldu; sonradan main'e `a62d83db` (S-08 kovan sesi `Launched` + `PredictLanding`, 0,3–3,5 cm), `d0783d9b` ve `03c3b06b` girdi. Bunlar B-05'te düzeltilecek:
+1. B-01'in kovan sesi satırı ve paragrafı bunu "dalda / 48–64 cm" diye yazıyor.
+2. B-04'ün "main 0b3ec358" sütunu ve 13. satırı bayat.
+3. B-03, `WeaponFoleyAudio.cs` (`a62d83db`) değişikliğini kapsamıyor.
 
 **r2 kapı denetleyicisinin raporu (main `0b3ec358` üzerinde):**
 - **ERROR 1:** `r2-measure-contract.md`'de `R2Olcum.cs` yolu bayat.
@@ -354,11 +364,15 @@ Bu bölüm, birinci hesabın limiti dolduktan sonra depodan doğrulanarak eklend
 | 6 | `c5e0d905` | `wp-089-c00b-b01-log-int` |
 | 7 | `ba448fe3` | `wp-089-c00b-b03-start-int` |
 | 8 | `1dff988b` | `wp-091-gc-review-int` |
-| 9 | B-03 bitiş kaydı | `wp-089-c00b-b03-log-int` |
-| 10 | `f8b898fa` (briefing §0/§14 ilk ek) | `wp-089-brifing-tamam-int` |
-| 11 | `claude/sharp-cray-jsvo9s` ucu (bulut düzeni eki) | `wp-089-brifing-bulut-int` |
+| 9 | `a593c8cf` | `wp-089-c00b-b03-log-int` |
+| 10 | `fc305c2e` | `wp-089-c00b-b04-start-int` |
+| 11 | `e289b1a4` | `wp-091-r2-release-notes-draft-int` |
+| 12 | `01f4b163` | `wp-089-c00b-b04-log-int` |
+| 13 | `f8b898fa` (briefing §0/§14 ilk ek) | `wp-089-brifing-tamam-int` |
+| 14 | `825e2d26` (bulut düzeni eki) | `wp-089-brifing-bulut-int` |
+| 15 | `claude/sharp-cray-jsvo9s` ucu (C-00B teslimlerinin kontrolü ve B-05) | `wp-089-brifing-bulut2-int` |
 
-Yöntem: önce `tools/integrate.sh`; gate yalnız bulut ortamı yüzünden düşerse `git cherry-pick` + `git tag -a`, kapı 8 elle. Ayrıntı `C00-BULUT-DEVRALMA-PROMPTU-2026-10-05.md` §4.2.
+Yöntem: önce `tools/integrate.sh`; gate yalnız bulut ortamı yüzünden düşerse `git cherry-pick` + `git tag -a`, kapı 8 elle. Ayrıntı `C00-BULUT-DEVRALMA-PROMPTU-2026-10-05.md` §4.1.
 
 **Birinci hesap:** oturum bilgisine göre haftalık limit 07.10 ~11:00 (TR) civarında yenilenir; kullanıcı doğrular. S-01…S-10 o zaman ya da ikinci hesap Claude Desktop'ta açılınca devam eder.
 
