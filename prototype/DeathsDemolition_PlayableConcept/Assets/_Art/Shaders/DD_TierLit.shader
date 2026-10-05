@@ -407,8 +407,8 @@ Shader "DD/Character/Tier Lit"
             #pragma shader_feature_local _NORMALMAP
             #pragma shader_feature_local _PARALLAXMAP
             #pragma shader_feature_local _ _DETAIL_MULX2 _DETAIL_SCALED
-            #pragma shader_feature_local_fragment _TIER_TINT
-            #pragma shader_feature_local_fragment _ZOMBIE_MASKS
+            // WP-084 (S-05 review S1, C-00 06.10): no _TIER_TINT / _ZOMBIE_MASKS here — LitDepthNormalsPass never builds the surface
+            // (no InitializeStandardLitSurfaceData), so they only split this pass into identical variants and SRP batches.
             #pragma shader_feature_local _ALPHATEST_ON
             #pragma shader_feature_local_fragment _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
 
