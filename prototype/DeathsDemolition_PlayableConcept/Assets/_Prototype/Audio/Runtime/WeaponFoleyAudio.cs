@@ -288,7 +288,7 @@ namespace DD.Prototype.Audio
 
         /// <summary>Fall time band (s): STANDARDS §6 / R2 S5 (250–700 ms).</summary>
         public const float MinFall = 0.25f;
-        public const float MaxFall = 0.55f;
+        public const float MaxFall = 0.62f;   // WP-085: the visual throw lands 0.45–0.76 s; capped inside the S5 band
 
         /// <summary>Latest a staggered same-frame casing may land: 20 ms inside the R2 S5 upper bound (700 ms).</summary>
         public const float LatestLanding = 0.68f;
@@ -375,17 +375,22 @@ namespace DD.Prototype.Audio
             CasingFamily family = WeaponFoleyV3.Casing(audioId);
             if (family == CasingFamily.None) return;
 
-            // The casing leaves along the port direction and falls; where it lands is what it sounds like.
-            Vector3 from = m.Position + (m.Direction.sqrMagnitude > 0.01f ? m.Direction.normalized * 0.6f : Vector3.zero);
-            int mask = (1 << PrototypeLayers.Environment) | (1 << PrototypeLayers.CameraOccluder);
-            int n = Physics.RaycastNonAlloc(from + Vector3.up * 0.2f, Vector3.down, _hits, 4f, mask, QueryTriggerInteraction.Ignore);
+            // WP-085 (C-00 05.10, S-02 WP-087 marker-align): the casing is heard where the visible one lands — the same throw
+            // as VfxDressing.EjectCasing (port +X 0.819 / up 0.574 / back 0.174 × the weapon's CasingSpeed; the visual's
+            // 0.85–1.15 jitter is its own, the sound takes the nominal) and the same floor (a 3 m ray down from the port,
+            // Default | Environment, CasingEffect). First impact = the landing, at its time and place; one bounce as the visual's.
+            if (!Ballistic(m, out Vector3 land, out float t1, out Vector3 skip, out float t2)) return;
+            int n = Physics.RaycastNonAlloc(new Vector3(land.x, m.Position.y + 0.2f, land.z), Vector3.down, _hits, 4f, VfxFloorMask, QueryTriggerInteraction.Ignore);
             if (n == 0) return;
 
             int best = 0;
             for (int i = 1; i < n; i++) if (_hits[i].distance < _hits[best].distance) best = i;
             RaycastHit hit = _hits[best];
             SurfaceKind surface = AudioSurfaceHints.Resolve(hit.collider, hit.point);
-            float fall = Mathf.Clamp(Mathf.Sqrt(2f * Mathf.Max(0.05f, from.y - hit.point.y) / Gravity) + 0.08f, MinFall, MaxFall);
+            land.y = hit.point.y;
+            skip.y = hit.point.y;
+            LastLandingPoint = land;
+            float fall = Mathf.Clamp(t1, MinFall, MaxFall);
 
             // Several casings in one frame (break-open shells): stagger them so each is heard, not merged into one retrigger.
             if (Time.frameCount == _frame) _sameFrame++;
@@ -402,23 +407,71 @@ namespace DD.Prototype.Audio
             AudioSoundId sound = isV4 ? v4 : WeaponFoleyV3.CasingOn(family, surface);
             if (isV4) pitch = 1f;   // the v4 set carries each weapon's own calibre; no family pitch on top
             db += isV4 ? V4FileCompDb : V3FileCompDb;
-            if (!Enqueue(sound, hit.point, fall, pitch, db, false))
+            if (!Enqueue(sound, land, fall, pitch, db, false))
             {
                 return;
             }
 
-            if (WeaponFoleyV3.CasingBounces(surface) && _count < Capacity - BounceReserve)
+            if (t2 > 0f && WeaponFoleyV3.CasingBounces(surface) && _count < Capacity - BounceReserve)
             {
-                Enqueue(sound, hit.point, fall + 0.07f + 0.06f * _rng.Next01(), pitch * 1.06f, db - 9f, true);
+                Enqueue(sound, skip, fall + t2, pitch * 1.06f, db - 9f, true);
             }
 
             if (audioId.StartsWith("LMG", System.StringComparison.Ordinal) && surface != SurfaceKind.Foliage)
             {
                 // AP-027 links sit 6 dB under their casing in the file (−30 LUFS): no runtime delta; the v017 link keeps −6 dB.
                 AudioSoundId link = WeaponFoleyV3.CasingV4(audioId, surface, AmbienceDirector.WetLook, true);
-                if (link != AudioSoundId.None && _library.IsProduced(link)) Enqueue(link, hit.point, fall + 0.03f, 1f, db, false);
-                else if (surface != SurfaceKind.Water) Enqueue(AudioSoundId.CasingLink, hit.point, fall + 0.03f, pitch, db - 6f, false);
+                if (link != AudioSoundId.None && _library.IsProduced(link)) Enqueue(link, land, fall + 0.03f, 1f, db, false);
+                else if (surface != SurfaceKind.Water) Enqueue(AudioSoundId.CasingLink, land, fall + 0.03f, pitch, db - 6f, false);
             }
+        }
+
+        /// <summary>CasingEffect's floor ray layers (Default | Environment).</summary>
+        private static readonly int VfxFloorMask = 1 | (1 << PrototypeLayers.Environment);
+
+        /// <summary>Where the last landing was placed (test / WP-087 marker-align readout).</summary>
+        public Vector3 LastLandingPoint { get; private set; }
+
+        /// <summary>
+        /// The visual casing's nominal flight (VfxDressing.EjectCasing + CasingEffect.Tick): first floor impact point and time,
+        /// and — when the impact is hard enough to bounce (vertical speed below −0.6 m/s) — the bounce's landing point and the
+        /// time after the first impact (horizontal × 0.35, vertical × −0.22). False when no floor lies within 3 m of the port.
+        /// </summary>
+        public bool Ballistic(WeaponMechanismEvent m, out Vector3 land, out float t1, out Vector3 skip, out float t2)
+        {
+            land = skip = m.Position;
+            t1 = t2 = 0f;
+            Vector3 right = m.Direction.sqrMagnitude > 0.01f ? m.Direction.normalized : Vector3.right;
+            Vector3 fwd = Vector3.Cross(right, Vector3.up);
+            fwd = fwd.sqrMagnitude > 1e-4f ? fwd.normalized : Vector3.forward;
+            DD.Prototype.Feedback.Vfx.VfxWeaponProfile profile = DD.Prototype.Feedback.Vfx.VfxWeaponProfiles.For(m.Weapon);
+            float speed = profile != null ? profile.CasingSpeed : 3f;
+            Vector3 v = (right * 0.819f + Vector3.up * 0.574f - fwd * 0.174f) * speed;
+            int hits = Physics.RaycastNonAlloc(m.Position, Vector3.down, _hits, DD.Prototype.Feedback.Vfx.CasingEffect.FloorRayMetres, VfxFloorMask, QueryTriggerInteraction.Ignore);
+            if (hits == 0)
+            {
+                return false;
+            }
+
+            float floor = _hits[0].point.y;   // the nearest surface under the port
+            for (int i = 1; i < hits; i++) floor = Mathf.Max(floor, _hits[i].point.y);
+            float g = DD.Prototype.Feedback.Vfx.CasingEffect.Gravity;
+            float h = Mathf.Max(0f, m.Position.y - (floor + 0.006f));
+            t1 = (v.y + Mathf.Sqrt(v.y * v.y + 2f * g * h)) / g;
+            land = m.Position + new Vector3(v.x, 0f, v.z) * t1;
+            float vyImpact = v.y - g * t1;
+            if (vyImpact < -0.6f)
+            {
+                float up = -vyImpact * 0.22f;
+                t2 = 2f * up / g;
+                skip = land + new Vector3(v.x * 0.35f, 0f, v.z * 0.35f) * t2;
+            }
+            else
+            {
+                skip = land;
+            }
+
+            return true;
         }
 
         /// <summary>STANDARDS §4 casing audibility: top-down −18, TP −12, FP −8 dB (against the fire voice).</summary>
