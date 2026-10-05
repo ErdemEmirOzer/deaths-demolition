@@ -770,6 +770,22 @@ namespace DD.Prototype.Tests.PlayMode
                 yield return null;
             }
 
+            // Isınma (WP-087): flipbook havuzunun ilk tükenmesi (RecycleOldest) editörde Mono'nun bir kez derlediği bir yol
+            // (profiler: GC.Alloc 126 B + 112 B, üst işaretçi Mono.JIT, PlayFlipbook altında). Üç pencere havuzu (48) kimi
+            // koşuda tam sınırda doldurur ve ilk geri dönüşüm ölçülen pencereye düşerdi; burada havuz API'siyle bir kez tükenir.
+            var flipbooklar = HitFeedbackDirector.Instance != null && HitFeedbackDirector.Instance.Vfx != null ? HitFeedbackDirector.Instance.Vfx.FlipbookPool : null;
+            Assert.IsNotNull(flipbooklar, "flipbook havuzu yok (VFX giydirme kurulmadı)");
+            var alinan = new List<DD.Prototype.Feedback.Vfx.FlipbookEffect>(flipbooklar.Capacity + 1);
+            for (int i = 0; i <= flipbooklar.Capacity; i++)
+            {
+                alinan.Add(flipbooklar.Get(merkez + Vector3.up * 30f, Quaternion.identity));
+            }
+
+            foreach (var fx in alinan)
+            {
+                flipbooklar.Release(fx);
+            }
+
             // Ölçüm (WP-051C): bu iş parçacığının GC.Alloc kaydedicisi — pencere 0 örnek. Pozitif kontrol kaydedicinin
             // küçük bir ayırmayı gördüğünü kanıtlar; beş pencere beş karede koşar (bütçe her karede yeniden dolar).
             using (sayac)
