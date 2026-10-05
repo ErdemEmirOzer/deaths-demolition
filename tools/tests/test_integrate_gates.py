@@ -81,6 +81,39 @@ class EntegreKapiTestleri(unittest.TestCase):
         return subprocess.run([REAL_GIT, "-C", str(self.repo), "status", "--porcelain"], capture_output=True,
                               text=True, env=self.env).stdout
 
+    # ---------------------------------------------------------------- S-09 / C-00 05.10: default repo = main worktree
+    def linked_worktree_script(self):
+        """integrate.sh + dd-env.sh inside a linked worktree of the fixture repo (untracked → that worktree is dirty)."""
+        wt = self.root / "wt"
+        self.git("worktree", "add", "-q", "--detach", str(wt), "main")
+        for name in ("integrate.sh", "dd-env.sh"):
+            shutil.copy2(TOOLS / name, wt / "tools" / name)
+        return wt / "tools" / "integrate.sh"
+
+    def run_default(self, script):
+        env = {k: v for k, v in self.env.items() if k != "DD_REPO"}
+        return subprocess.run(["zsh", str(script), "feat", "--tag", "fixture-tag", "--no-post", "--verbose"],
+                              capture_output=True, text=True, env=env, cwd=str(self.root))
+
+    def test_VarsayilanRepo_KirliWorktreedenCagri_AnaWorktreeDenetlenir(self):
+        self.source()
+        r = self.run_default(self.linked_worktree_script())
+        self.assertIn("repo: the main worktree %s" % self.repo.resolve(), r.stdout, r.stdout + r.stderr)
+        self.assertIn("main worktree clean", r.stdout)
+        self.assertNotIn("main worktree dirty", r.stdout)
+
+    def test_VarsayilanRepo_AnaKirli_MesajRepoOnerir(self):
+        self.source()
+        (self.repo / "tools" / "a.txt").write_text("local edit\n")
+        r = self.run_default(self.linked_worktree_script())
+        self.assertIn("main worktree dirty: %s (not the main checkout? pass --repo <main checkout>)" % self.repo.resolve(),
+                      r.stdout, r.stdout + r.stderr)
+
+    def test_AcikRepo_Degismez(self):
+        self.source()
+        r = self.run_int("--verbose")
+        self.assertNotIn("repo: the main worktree", r.stdout)
+
     # ---------------------------------------------------------------- M-08 rollback
     def test_Rollback_GercekCatisma_Cikis4TemizAgac(self):
         head = self.source(conflict=True)

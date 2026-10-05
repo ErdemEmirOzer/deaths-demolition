@@ -25,13 +25,14 @@
 #       paths left (main HEAD unchanged, working tree NOT clean — inspect) · 64 usage
 set -u
 setopt nullglob
+REPO_EXPLICIT=${DD_REPO:+1}   # DD_REPO from the caller's environment counts as explicit, like --repo
 source "${0:A:h}/dd-env.sh"
 SRC=""; TAG=""; APPLY=0; ALLOW=""; S01=0; MSG=""; NOPOST=0; VERBOSE=0; COMPILE=0; EXEMPT=""; EXEMPT_SET=0
 say() { [ "$VERBOSE" -eq 1 ] && echo "$@"; return 0; }   # informational lines only with --verbose (HIZLI HAT §7: 3-line output)
 while [ $# -gt 0 ]; do
   case "$1" in
     --tag) TAG="$2"; shift ;; --apply) APPLY=1 ;; --allow-paths) ALLOW="$2"; shift ;; --s01) S01=1 ;;
-    --message) MSG="$2"; shift ;; --repo) DD_REPO="$2"; shift ;; --no-post) NOPOST=1 ;; --compile) COMPILE=1 ;; --verbose|-v) VERBOSE=1 ;;
+    --message) MSG="$2"; shift ;; --repo) DD_REPO="$2"; REPO_EXPLICIT=1; shift ;; --no-post) NOPOST=1 ;; --compile) COMPILE=1 ;; --verbose|-v) VERBOSE=1 ;;
     --subject-exempt) EXEMPT="${2-}"; EXEMPT_SET=1; [ $# -ge 2 ] && shift ;;
     -*) echo "unknown option: $1" >&2; exit 64 ;;
     *) [ -z "$SRC" ] && SRC="$1" || { echo "one source only" >&2; exit 64; } ;;
@@ -41,6 +42,16 @@ done
 [ -n "$SRC" ] && [ -n "$TAG" ] || { echo "usage: integrate.sh <commit|branch> --tag <name> [--apply] [--allow-paths a,b] [--s01] [--message m] [--repo DIR] [--no-post] [--compile] [--subject-exempt reason] [--verbose]" >&2; exit 64; }
 # Codex-audit K-02 (C-00 30.09): the exemption is explicit and carries a reason — an empty one is a usage error.
 [ "$EXEMPT_SET" -eq 0 ] || [[ "$EXEMPT" == *[![:space:]]* ]] || { echo "--subject-exempt needs a non-empty reason" >&2; exit 64; }
+# S-09 / C-00 05.10: without --repo (or DD_REPO) the repository is its MAIN worktree, not the checkout this script runs
+# from — run from a (possibly dirty) linked worktree it used to judge that worktree as "main".
+REPO_DEFAULTED=0
+if [ -z "${REPO_EXPLICIT:-}" ]; then
+  MAINWT=$(git -C "${0:A:h}" worktree list --porcelain 2>/dev/null | sed -n '1s/^worktree //p')
+  if [ -n "$MAINWT" ] && [ "${MAINWT:A}" != "${DD_REPO:A}" ]; then
+    echo "repo: the main worktree $MAINWT (this script runs from ${DD_REPO}; --repo overrides)"
+    DD_REPO="$MAINWT"; REPO_DEFAULTED=1
+  fi
+fi
 G=(git -C "$DD_REPO")
 fail() { echo "GATE FAIL: $*"; FAILS=$((FAILS+1)); }
 # Clean rollback of a failed --no-commit pick without git reset: every path the pick touched goes back
@@ -178,7 +189,7 @@ fi
 
 # --- gate 6: main worktree clean
 if MD=$("${G[@]}" status --porcelain); then
-  [ -z "$MD" ] && say "main worktree clean" || fail "main worktree dirty"
+  [ -z "$MD" ] && say "main worktree clean" || fail "main worktree dirty: $DD_REPO (not the main checkout? pass --repo <main checkout>)"
 else
   fail "cannot read main worktree status"
 fi
@@ -286,7 +297,7 @@ fi
 NEW=$("${G[@]}" rev-parse main)
 "${G[@]}" tag -a "$TAG" -m "${MSG:-$SUBJ}" "$NEW"
 echo "integrated: main=$NEW ($( [ "$FF" -eq 1 ] && echo ff-only || echo cherry-pick )) tag=$TAG tags=$("${G[@]}" tag | wc -l | tr -d ' ')"
-if [ "$NOPOST" -eq 0 ] && [ -x "$DD_TOOLS_DIR/post-integrate.sh" ] && [ "$DD_REPO" = "${DD_TOOLS_DIR:h}" ]; then
+if [ "$NOPOST" -eq 0 ] && [ -x "$DD_TOOLS_DIR/post-integrate.sh" ] && { [ "$DD_REPO" = "${DD_TOOLS_DIR:h}" ] || [ "$REPO_DEFAULTED" -eq 1 ]; }; then
   PI=$(DD_REPO="$DD_REPO" "$DD_TOOLS_DIR/post-integrate.sh" "$TAG" 2>&1); PX=$?
   if [ "$VERBOSE" -eq 1 ]; then echo "$PI" | tail -6; else echo "post-integrate: $(echo "$PI" | grep -E '^(backup exit=|lfs pointers|OK  report=|.*NOT VERIFIED|.*CHECK FAILED)' | tr '\n' ' ' | cut -c1-160)"; fi
   [ "$PX" -eq 0 ] || { echo "post-integrate failed (exit $PX) — run with --verbose"; exit 5; }
