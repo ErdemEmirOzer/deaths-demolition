@@ -1632,7 +1632,10 @@ namespace DD.Prototype.Tests.PlayMode
             string varyantlar = Environment.GetEnvironmentVariable("DD_KIT_VARIANTS");
             if (string.IsNullOrEmpty(varyantlar)) varyantlar = "ABC";
             string ap027 = Environment.GetEnvironmentVariable("DD_AP027_DIR");
-            if (string.IsNullOrEmpty(ap027)) ap027 = System.IO.Path.Combine(Environment.GetEnvironmentVariable("HOME") ?? "", "Desktop/KADRO/context/projects/deaths-demolition/asset-production/AP-027/exports/v001-prototip");
+            // The KADRO export, relative to home exactly as tools/dd_paths.py KADRO_REL ("Desktop/KADRO"); the R2 chain passes
+            // DD_AP027_DIR. C asked for and its folder missing is a red test, never a silent skip (S-10 05.10).
+            if (string.IsNullOrEmpty(ap027)) ap027 = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Desktop/KADRO/context/projects/deaths-demolition/asset-production/AP-027/exports/v001-prototip");
+            if (varyantlar.IndexOf('C') >= 0) Assert.IsTrue(System.IO.Directory.Exists(ap027), "Kit C istendi ama AP-027 klasörü yok: " + ap027 + " (DD_AP027_DIR)");
             var kitKliplar = new List<AudioClip>();
             _s.Rig.Health.DiagnosisInvulnerable = true;
             DD.Prototype.Core.Config.ClassicWeaponId oncekiSecim = DD.Prototype.Weapons.WeaponRegistry.SelectedWeapon;
@@ -1653,9 +1656,10 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             string[] buslar = AudioMixerBridge.VolumeParams;
-            var taban = new float[buslar.Length];
-            for (int i = 0; i < buslar.Length; i++) mixer.GetFloat(buslar[i], out taban[i]);
-            const int PlayerBus = 4;
+            const int PlayerBus = 4;   // the stem mutes every other bus and never touches Master / SFX-Player: the snapshot owns them
+            var basta = new System.Text.StringBuilder("[DD-TEST] wp085.kit buses at start:");
+            foreach (string b in buslar) { mixer.GetFloat(b, out float db); basta.Append(' ').Append(b).Append('=').Append(db.ToString("0.0")); }
+            Debug.Log(basta.ToString());
 
             var csv = new System.Text.StringBuilder("take,weapon,mode,variant,stem,kind,shot,frame,sampleRate\n");
             var ozet = new System.Text.StringBuilder("[");
@@ -1726,7 +1730,14 @@ namespace DD.Prototype.Tests.PlayMode
                             {
                             foreach (bool stem in new[] { false, true })
                             {
-                                for (int i = 0; i < buslar.Length; i++) mixer.SetFloat(buslar[i], stem && i != PlayerBus && i != 0 ? -80f : taban[i]);
+                                // A full-mix take touches no bus. (The first kit wrote a start-of-test baseline back each take — SFX-Player
+                                // read −80 dB mid snapshot transition — and the weapon was missing from every take, C-00 05.10.)
+                                for (int i = 0; i < buslar.Length; i++)
+                                {
+                                    if (i == PlayerBus || i == 0) continue;
+                                    if (stem) mixer.SetFloat(buslar[i], -80f);
+                                    else mixer.ClearFloat(buslar[i]);
+                                }
                                 string ad = (stem ? "Stem_" : "Kit_") + wd.weaponId + "_" + modAd + "_" + v;
                                 yield return new WaitForSecondsRealtime(0.5f);
                                 WeaponFireAudio f = _d.WeaponFire;
@@ -1744,7 +1755,7 @@ namespace DD.Prototype.Tests.PlayMode
                                         Vector3 at = _s.Rig.transform.position + Vector3.up * 1.3f + _s.Rig.transform.forward * 0.3f;
                                         AudioEvents.RaiseWeapon(CombatAudioEvent.ClassicWeaponFire, audioId, at, intensity, 50);
                                         if (casingDelay >= 0f) kovanlar.Add(t + casingDelay);
-                                        long fr = cap.FramesWritten;
+                                        long fr = cap.FramesCaptured;   // the audio thread's position, not the drained file length
                                         csv.Append(ad).Append(',').Append(wd.weaponId).Append(',').Append(modAd).Append(',').Append(v).Append(',').Append(stem ? 1 : 0)
                                            .Append(',').Append(plan[sira].kind).Append(',').Append(sira).Append(',').Append(fr).Append(',').Append(AudioSettings.outputSampleRate).Append('\n');
                                         if (plan[sira].kind == 'h') { heldFrames.Add(fr); heldShots++; }
@@ -1780,6 +1791,12 @@ namespace DD.Prototype.Tests.PlayMode
                                 cap = null;
                                 foreach (var tap in UnityEngine.Object.FindObjectsOfType<AudioOutputTap>(true)) UnityEngine.Object.DestroyImmediate(tap);
                                 if (frames == 0) Assert.Inconclusive("Ses çıkışı yok (batch/aygıt yok).");
+                                if (stem)
+                                {
+                                    float duyulur = SilahTepesiDb(System.IO.Path.Combine(dir, ad + ".wav"), heldFrames.Count > 0 ? heldFrames : new List<long>());
+                                    Assert.GreaterOrEqual(duyulur, -30f, ad + ": silah sesi kayıtta yok (atış penceresi tepe medyanı " + duyulur.ToString("0.0") + " dBFS)");
+                                }
+
                                 int voices = f.FireVoices - ses0, refused = f.FireRefused - red0;
                                 ozet.Append(ozet.Length > 1 ? "," : "").Append("{\"take\":\"").Append(ad).Append("\",\"weapon\":\"").Append(wd.weaponId)
                                     .Append("\",\"audioId\":\"").Append(audioId).Append("\",\"mode\":\"").Append(modAd).Append("\",\"variant\":\"").Append(v)
@@ -1826,7 +1843,7 @@ namespace DD.Prototype.Tests.PlayMode
                 _d.Library.ClearKitOverrides();
                 foreach (AudioClip k in kitKliplar) if (k != null) UnityEngine.Object.Destroy(k);
                 if (cap != null) UnityEngine.Object.DestroyImmediate(cap);
-                for (int i = 0; i < buslar.Length; i++) mixer.ClearFloat(buslar[i]);
+                for (int i = 0; i < buslar.Length; i++) if (i != PlayerBus && i != 0) mixer.ClearFloat(buslar[i]);
                 DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.TopDown, true);
             }
 
@@ -1838,7 +1855,9 @@ namespace DD.Prototype.Tests.PlayMode
             const string kaynak = "DD.Prototype.Tests.PlayMode.AudioSliceTests.SilahKiti_GercekRpm_OyunIci_Kayit";
             if (varyantlar.IndexOf('A') >= 0)
             {
-                R2Olcum.Yaz("S1", kaynak, new Dictionary<string, double> { { "below400ShareMin", Math.Round(s1Min, 4) } }, s1Shots);
+                var s1 = new Dictionary<string, double> { { "below400ShareMin", Math.Round(s1Min, 4) } };
+                if (varyantlar.IndexOf('C') >= 0 && s1MinC < 1f) s1["below400ShareMinV4"] = Math.Round(s1MinC, 4);   // report (S-10 2ccda99b)
+                R2Olcum.Yaz("S1", kaynak, s1, s1Shots);
                 R2Olcum.Yaz("S2", kaynak, new Dictionary<string, double>
                 {
                     { "fireVoiceDeficit", s2Deficit }, { "transients", s2Transients }, { "loopStarts", s2Loops }, { "rejectedNotStolen", s2Refused }
@@ -1846,6 +1865,182 @@ namespace DD.Prototype.Tests.PlayMode
                 Assert.AreEqual(0, s2Deficit + s2Transients + s2Loops + s2Refused, "R2 S2: her atış tam katman, hafif katman / döngü / havuz reddi yok.");
                 Assert.GreaterOrEqual(s1Min, 0.2f, "R2 S1: basılı tutmada 2.–10. atış, ilk 150 ms, 400 Hz altı pay ≥ %20 (" + string.Join(" · ", s1Detay) + ")");
             }
+        }
+
+        /// <summary>
+        /// WP-085 · R2 S4 room tails: per weapon (DD_EDC_WEAPONS, default every audioId) × space (Open / Corridor / Hall, forced via
+        /// AcousticSpaces.Resolver) four single cues 2.5 s apart on the weapon bus alone (every other bus at −80 dB), captured
+        /// post-mixer. Per shot: Schroeder backward-integrated energy decay from the onset (first sample within 100 ms of the cue
+        /// frame above 10 % of the window peak) over the next 2.3 s; the time it first falls 30 dB (direct, no extrapolation).
+        /// Median of the four per weapon × space. r2-S4: openMsMin / corridorMsMin / hallMsMin (minimum over weapons), hallMsMax,
+        /// orderViolations (weapons where open + 100 ms ≤ corridor and corridor + 100 ms ≤ hall does not hold).
+        /// What plays is what the game plays: an automatic's single cue is a string of one, its tail rings at the release.
+        /// Needs a quiet machine (the frame clock places the cues). Written under temporaryCachePath/wp085-edc.
+        /// </summary>
+        [UnityTest]
+        [Explicit("WP-085 R2 S4 mekân kuyruğu ölçümü — kanıt, CI dışı")]
+        [Category("Diagnostics")]
+        [Timeout(1200000)]
+        public IEnumerator MekanKuyrugu_EDC_Olcum()
+        {
+            UnityEngine.Audio.AudioMixer mixer = _d.Bridge.Mixer;
+            string dir = System.IO.Path.Combine(Application.temporaryCachePath, "wp085-edc");
+            System.IO.Directory.CreateDirectory(dir);
+            string istek = Environment.GetEnvironmentVariable("DD_EDC_WEAPONS");
+            var silahlar = new List<string>();
+            foreach (WeaponVoiceSet set in WeaponAudioIdentity.All)
+            {
+                if (string.IsNullOrEmpty(istek) || Array.IndexOf(istek.Split(','), set.AudioId) >= 0) silahlar.Add(set.AudioId);
+            }
+
+            _s.Rig.Health.DiagnosisInvulnerable = true;
+            string[] buslar = AudioMixerBridge.VolumeParams;
+            const int PlayerBus = 4;   // the stem mutes every other bus and never touches Master / SFX-Player: the snapshot owns them
+            var mekanlar = new[] { AcousticSpace.Open, AcousticSpace.Corridor, AcousticSpace.Hall };
+            var sonuc = new Dictionary<string, float[]>();
+            var csv = new System.Text.StringBuilder("weapon,space,shot,edcMs\n");
+            System.Func<Vector3, AcousticSpace> onceki = AcousticSpaces.Resolver;
+            AudioOutputCapture cap = null;
+            try
+            {
+                for (int i = 0; i < buslar.Length; i++) if (i != PlayerBus && i != 0) mixer.SetFloat(buslar[i], -80f);
+                foreach (string id in silahlar)
+                {
+                    var med = new float[3];
+                    for (int m = 0; m < 3; m++)
+                    {
+                        AcousticSpace mekan = mekanlar[m];
+                        AcousticSpaces.Resolver = _ => mekan;
+                        yield return new WaitForSecondsRealtime(0.5f);
+                        string ad = "Edc_" + id + "_" + mekan;
+                        cap = AudioOutputCapture.Arm(_d.gameObject, System.IO.Path.Combine(dir, ad + ".wav"));
+                        var kareler = new List<long>();
+                        float bas = Time.realtimeSinceStartup;
+                        int atis = 0;
+                        while (Time.realtimeSinceStartup - bas < 4 * 2.5f + 0.5f)
+                        {
+                            if (atis < 4 && Time.realtimeSinceStartup - bas >= 0.3f + atis * 2.5f)
+                            {
+                                AudioEvents.RaiseWeapon(CombatAudioEvent.ClassicWeaponFire, id, _s.Rig.transform.position + Vector3.up * 1.3f + Vector3.right * (2f * atis), 1f, 50);
+                                kareler.Add(cap.FramesCaptured);
+                                atis++;
+                            }
+
+                            yield return null;
+                        }
+
+                        UnityEngine.Object.DestroyImmediate(cap);
+                        cap = null;
+                        foreach (var tap in UnityEngine.Object.FindObjectsOfType<AudioOutputTap>(true)) UnityEngine.Object.DestroyImmediate(tap);
+                        float duyulur = SilahTepesiDb(System.IO.Path.Combine(dir, ad + ".wav"), kareler);
+                        Assert.GreaterOrEqual(duyulur, -30f, ad + ": silah sesi kayıtta yok (" + duyulur.ToString("0.0") + " dBFS)");
+                        float[] edc = EdcMs(System.IO.Path.Combine(dir, ad + ".wav"), kareler, 2.3f);
+                        for (int k = 0; k < edc.Length; k++) csv.Append(id).Append(',').Append(mekan).Append(',').Append(k).Append(',').Append(edc[k].ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)).Append('\n');
+                        Array.Sort(edc);
+                        med[m] = edc.Length == 0 ? 0f : edc.Length % 2 == 1 ? edc[edc.Length / 2] : 0.5f * (edc[edc.Length / 2 - 1] + edc[edc.Length / 2]);
+                    }
+
+                    sonuc[id] = med;
+                }
+            }
+            finally
+            {
+                AcousticSpaces.Resolver = onceki;
+                if (cap != null) UnityEngine.Object.DestroyImmediate(cap);
+                for (int i = 0; i < buslar.Length; i++) if (i != PlayerBus && i != 0) mixer.ClearFloat(buslar[i]);
+            }
+
+            System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "edc.csv"), csv.ToString());
+            float openMin = float.MaxValue, corrMin = float.MaxValue, hallMin = float.MaxValue, hallMax = 0f;
+            int sira = 0;
+            var detay = new List<string>();
+            foreach (var kv in sonuc)
+            {
+                float o = kv.Value[0], c = kv.Value[1], h = kv.Value[2];
+                openMin = Mathf.Min(openMin, o);
+                corrMin = Mathf.Min(corrMin, c);
+                hallMin = Mathf.Min(hallMin, h);
+                hallMax = Mathf.Max(hallMax, h);
+                if (!(o + 100f <= c && c + 100f <= h)) sira++;
+                detay.Add(kv.Key + " " + o.ToString("0") + "/" + c.ToString("0") + "/" + h.ToString("0"));
+            }
+
+            Debug.Log("[DD-TEST] wp085.s4 open/corridor/hall ms (median of 4): " + string.Join(" · ", detay) + " · orderViolations " + sira);
+            R2Olcum.Yaz("S4", "DD.Prototype.Tests.PlayMode.AudioSliceTests.MekanKuyrugu_EDC_Olcum", new Dictionary<string, double>
+            {
+                { "openMsMin", Math.Round(openMin, 1) }, { "corridorMsMin", Math.Round(corrMin, 1) }, { "hallMsMin", Math.Round(hallMin, 1) },
+                { "hallMsMax", Math.Round(hallMax, 1) }, { "orderViolations", sira }
+            }, sonuc.Count * 12);
+            Assert.IsNotEmpty(sonuc, "Ölçülen silah yok.");
+            Assert.GreaterOrEqual(openMin, 500f, "R2 S4 açık ≥ 500 ms (" + string.Join(" · ", detay) + ")");
+            Assert.GreaterOrEqual(corrMin, 750f, "R2 S4 koridor ≥ 750 ms");
+            Assert.GreaterOrEqual(hallMin, 1100f, "R2 S4 salon ≥ 1100 ms");
+            Assert.LessOrEqual(hallMax, 2000f, "R2 S4 salon ≤ 2000 ms");
+            Assert.AreEqual(0, sira, "R2 S4 sıra açık < koridor < salon (≥ 100 ms adım)");
+        }
+
+        /// <summary>Median over cues of the capture's peak in the 150 ms after each cue frame (dBFS); −120 with no cue.</summary>
+        private static float SilahTepesiDb(string wav, List<long> frames)
+        {
+            float[] x = WavMono(wav, out int rate);
+            var p = new List<float>();
+            foreach (long f in frames)
+            {
+                int a = (int)f, b = Math.Min(x.Length, a + (int)(0.15f * rate));
+                float pk = 0f;
+                for (int i = a; i < b; i++) pk = Mathf.Max(pk, Mathf.Abs(x[i]));
+                p.Add(20f * Mathf.Log10(Mathf.Max(1e-6f, pk)));
+            }
+
+            if (p.Count == 0) return -120f;
+            p.Sort();
+            return p[p.Count / 2];
+        }
+
+        /// <summary>Per cue: ms from the onset until the Schroeder EDC of the next <paramref name="window"/> s first reaches −30 dB.</summary>
+        private static float[] EdcMs(string wav, List<long> frames, float window)
+        {
+            float[] x = WavMono(wav, out int rate);
+            var r = new List<float>();
+            foreach (long f in frames)
+            {
+                int f0 = (int)f, search = rate / 10, n = (int)(window * rate);
+                if (f0 + search + n >= x.Length) continue;
+                float peak = 0f;
+                for (int i = f0; i < f0 + search + n; i++) peak = Mathf.Max(peak, Mathf.Abs(x[i]));
+                if (peak <= 0f) continue;
+                int on = f0;
+                while (on < f0 + search && Mathf.Abs(x[on]) < 0.1f * peak) on++;
+                double total = 0;
+                for (int i = on; i < on + n; i++) total += (double)x[i] * x[i];
+                if (total <= 0) continue;
+                double rest = total, limit = total * 1e-3;   // −30 dB of the integral
+                int t = on;
+                while (t < on + n && rest > limit) { rest -= (double)x[t] * x[t]; t++; }
+                r.Add(1000f * (t - on) / rate);
+            }
+
+            return r.ToArray();
+        }
+
+        /// <summary>16-bit PCM capture (AudioOutputCapture) → mono floats.</summary>
+        private static float[] WavMono(string wav, out int rate)
+        {
+            byte[] b = System.IO.File.ReadAllBytes(wav);
+            int ch = BitConverter.ToInt16(b, 22);
+            rate = BitConverter.ToInt32(b, 24);
+            int pos = 12;
+            while (pos + 8 <= b.Length && !(b[pos] == 'd' && b[pos + 1] == 'a' && b[pos + 2] == 't' && b[pos + 3] == 'a')) pos += 8 + BitConverter.ToInt32(b, pos + 4);
+            int dataStart = pos + 8, n = (b.Length - dataStart) / (2 * ch);
+            var x = new float[n];
+            for (int i = 0; i < n; i++)
+            {
+                float s = 0f;
+                for (int c = 0; c < ch; c++) s += BitConverter.ToInt16(b, dataStart + (i * ch + c) * 2) / 32768f;
+                x[i] = s / ch;
+            }
+
+            return x;
         }
 
         /// <summary>

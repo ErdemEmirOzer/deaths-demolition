@@ -53,6 +53,13 @@ namespace DD.Prototype.Audio
 
         /// <summary>Total frames written so far (evidence / tests).</summary>
         public long FramesWritten => _framesWritten;
+
+        /// <summary>
+        /// WP-085: frames the audio thread has pushed — the file position of the newest audio, so a cue raised now is heard at
+        /// about this frame plus one output buffer. FramesWritten trails it by whatever the main thread has not drained yet
+        /// (seen up to ~0.9 s under load): event marks for analysis use this one.
+        /// </summary>
+        public long FramesCaptured => _channels > 0 ? Interlocked.Read(ref _write) / _channels : 0;
         public long DroppedSamples => Interlocked.Read(ref _dropped);
         public string Path => _path;
 
