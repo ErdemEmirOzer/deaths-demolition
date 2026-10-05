@@ -33,7 +33,7 @@ class ContractTests(unittest.TestCase):
         pinned = {("H1", "maxCm"): 1.0, ("L1", "avg"): 0.05, ("L1t", "avg"): 0.10, ("L3", "limbDegPerFrameMax"): 20.0,
                   ("Z3", "bonesMax"): 74, ("Z3b", "zombieSetPass"): 24, ("S1", "below400ShareMin"): 0.20,
                   ("S4", "hallRt60MaxS"): 2.28, ("S4", "openRt60MinS"): 0.56,   # C-00 05.10 S4 v2: the tail's RT60 (spec ±20 %)
-                  ("U1", "u1_default"): 0.40, ("U1", "u1_same_content"): 0.40,   # C-00 05.10: two U1 measures, both gate ("H4b", "leakDegMax"): 1.0,
+                  ("U1", "u1_default"): 0.40, ("U1", "u1_same_content"): 0.40, ("H4b", "leakDegMax"): 1.0,   # U1: C-00 05.10, two measures
                   ("H4", "yawRollExcessDegMax"): 1.0, ("H4a", "armOffscreenFrames"): 0, ("H4a", "armInCameraFrames"): 0,
                   ("S5", "poolMax"): 3,   # C-00 05.10: concurrent casing voices (was 8, which mixed in the airborne queue)
                   # C-00 05.10: Z3b from the fixed-mix R1 (16 / 567 / 88): +8, x1.45, +10 — the old 14/450/88 came from the
@@ -139,13 +139,15 @@ class MeasuredByTests(unittest.TestCase):
         self.assertEqual(["u1_default", "u1_same_content", "lettersPerScreenReductionMin", "unnamedSelectables"],
                          [c["key"] for c in gate("U1")["checks"]])
         self.assertEqual(["lettersTotalReduction"], gate("U1")["report"])
-        dec109 = measure("U1", u1_default=0.422, u1_same_content=0.131, lettersTotalReduction=0.131,
-                         lettersPerScreenReductionMin=0.25, unnamedSelectables=0)   # S-09 05.10 u1s values
+        dec109 = measure("U1", u1_default=0.4222, u1_same_content=0.1306, lettersTotalReduction=0.1306,
+                         lettersPerScreenReductionMin=0.0, unnamedSelectables=0)   # S-09's 05.10 r2-U1.json (r2-u1s)
         row = r2.evaluate_gate(gate("U1"), FINAL, measure=dec109)
         self.assertEqual("FAIL", row["status"])
-        self.assertIn("u1_same_content 0.131 >= 0.4 is false", row["reason"])
+        self.assertIn("u1_same_content 0.1306 >= 0.4 is false", row["reason"])
+        self.assertIn("lettersPerScreenReductionMin 0.0 >= 0.25 is false", row["reason"])
         self.assertNotIn("u1_default", row["reason"])
-        both = dict(dec109, values=dict(dec109["values"], u1_same_content=0.41, lettersTotalReduction=0.41))
+        both = dict(dec109, values=dict(dec109["values"], u1_same_content=0.41, lettersTotalReduction=0.41,
+                                        lettersPerScreenReductionMin=0.25))
         self.assertEqual("PASS", r2.evaluate_gate(gate("U1"), FINAL, measure=both)["status"])
         # the single-number artifact main's test wrote before 8ba256ec carries neither measure: BLOCKED by name
         old = measure("U1", lettersTotalReduction=0.131, lettersPerScreenReductionMin=0.0, unnamedSelectables=0)
