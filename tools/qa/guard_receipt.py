@@ -21,6 +21,7 @@ import plistlib
 import re
 import signal
 import subprocess
+import sys
 import threading
 import time
 from pathlib import Path
@@ -50,6 +51,14 @@ def canon_refusal():
         return "DD_GUARD_ROOT is set (guard self-test only)"
     if not (os.path.isfile(GUARD) and os.access(GUARD, os.X_OK)):
         return f"canonical guard {GUARD} missing or not executable"
+    # WP-089 (C-00 05.10): the driver's guard must be main's (tools/guard_freshness.py, shared with dd_guard_canon_check)
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    import guard_freshness
+    state, msg = guard_freshness.freshness(GUARD)
+    if state == "stale":
+        return msg
+    if msg:
+        print("guard: warning: " + msg, file=sys.stderr)
     return None
 
 

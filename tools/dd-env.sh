@@ -16,12 +16,15 @@ DD_PRODUCT="Deaths Demolition - Playable Concept"
 # G4 D4 (C-00 01.10): the ONE user-data guard every guarded caller runs (main-ci, rc.sh, tools/qa wp078_*): the CI driver
 # worktree's copy, which C-00 keeps detached at main (main-ci M-12 refuses any other driver). A fixed path, not an env knob
 # (a worktree's own, possibly older, guard is never used). dd_guard_canon_check: DD_GUARD_ROOT set (guard self-test knob)
-# or the canonical guard missing → one reason line on stderr and 64, before the caller takes anything.
+# or the canonical guard missing → one reason line on stderr and 64, before the caller takes anything. WP-089 (C-00 05.10):
+# then tools/guard_freshness.py — the driver's userdata-guard.sh / userdata_attrib.py ≠ main's → 64 as well (dd-env.sh /
+# slot.sh differences and a driver that is not a git checkout only warn).
 DD_GUARD_CANON="$HOME/Desktop/KADRO/context/projects/deaths-demolition/wp-079/driver/tools/userdata-guard.sh"
 dd_guard_canon_check() {
   [ -z "${DD_GUARD_ROOT:-}" ] || { echo "guard: DD_GUARD_ROOT is set (guard self-test only) — refused, nothing taken (64)" >&2; return 64; }
   [ -f "$DD_GUARD_CANON" ] && [ -x "$DD_GUARD_CANON" ] || { echo "guard: canonical guard $DD_GUARD_CANON missing or not executable — refused, nothing taken (64)" >&2; return 64; }
-  return 0
+  [ -f "$DD_TOOLS_DIR/guard_freshness.py" ] || return 0
+  python3 "$DD_TOOLS_DIR/guard_freshness.py" "$DD_GUARD_CANON" || return 64
 }
 
 dd_utc() { date -u +%Y%m%dT%H%M%SZ; }
