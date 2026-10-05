@@ -57,6 +57,8 @@ namespace DD.Prototype.PlayerSystem
 
         /// <summary>WP-069 (C-00 grip decision B): the hand's mid-grip socket in the weapon frame (the held weapon's definition, set by WeaponController).</summary>
         public Vector3 GripOffset { get; set; } = DD.Prototype.Core.Weapons.WeaponGrip.DefaultOffset;
+        private DD.Prototype.Characters.WeaponHoldIk _hold;
+        private bool _holdLooked;
 
         /// <summary>True on the frames the mount was written (tests).</summary>
         public bool AlignedThisFrame { get; private set; }
@@ -180,6 +182,16 @@ namespace DD.Prototype.PlayerSystem
 
             if (_health != null && _health.IsDead)
             {
+                return;
+            }
+
+            // WP-083 B2c: the weapon-first hold has put the hand so that the socket carries the aimed weapon frame — the mount rides the
+            // socket as authored (no rest reference / deviation; the grip point stays on the hand)
+            if (!_holdLooked) { _hold = GetComponentInParent<DD.Prototype.Characters.WeaponHoldIk>(); _holdLooked = true; }
+            if (_hold != null && _hold.Active)
+            {
+                Transform held = transform.parent;
+                if (held != null) transform.SetPositionAndRotation(held.position - held.rotation * GripOffset, held.rotation);
                 return;
             }
 

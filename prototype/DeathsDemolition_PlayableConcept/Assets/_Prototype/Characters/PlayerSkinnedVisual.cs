@@ -218,6 +218,9 @@ namespace DD.Prototype.Characters
         /// <summary>WP-082 / WP-083 B2b: the left hand's magazine socket (<see cref="Characters.MagazineSocket"/>; S-02 WeaponMagazineOwnership).</summary>
         public Transform MagazineSocket => _magSocket;
         private Transform _magSocket;
+        /// <summary>WP-083 B2c: the weapon-first right-hand hold (null while WeaponHoldIk.Enabled was off at Attach).</summary>
+        public WeaponHoldIk HoldIk => _holdIk;
+        private WeaponHoldIk _holdIk;
         public Transform BackSocket => _backSocket;
         public CharacterAnimationSet AnimationSet => _animation;
         public CharacterAnimationEvents Events => _events;
@@ -342,6 +345,12 @@ namespace DD.Prototype.Characters
             {
                 _gripIk.Configure(_animator, _weaponSocket, () => _authored && !_dying && UpperAtRest());
             }
+
+            // WP-083 B2c: the weapon-first right-hand hold (order 890, before the mount and the left-hand grip; added only while
+            // WeaponHoldIk.Enabled; same gate as the grip IK)
+            if (_holdIk == null && _animator != null) _holdIk = _animator.GetComponent<WeaponHoldIk>();
+            if (_holdIk == null && _animator != null && _animator.isHuman && WeaponHoldIk.Enabled) _holdIk = _animator.gameObject.AddComponent<WeaponHoldIk>();
+            if (_holdIk != null) _holdIk.Configure(_animator, _weaponSocket, aimDirection, () => _authored && !_dying && UpperAtRest());
 
             // WP-082 / WP-083 B2b: the left hand's magazine socket (S-02 WeaponMagazineOwnership; the Hero v2 rig may carry its own)
             if (_magSocket == null && _animator != null) _magSocket = Characters.MagazineSocket.Ensure(_animator);

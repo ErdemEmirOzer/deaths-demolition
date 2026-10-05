@@ -29,7 +29,7 @@ namespace DD.Art.Tests.PlayMode
         private readonly List<GameObject> _temp = new List<GameObject>();
 
         [SetUp]
-        public void SetUp() { LogAssert.ignoreFailingMessages = true; RunFlowClock.ClearHolds(); FootIkAdapter.ResetStatics(); CharacterAnimatorLod.ResetStatics(); LocomotionLean.ResetStatics(); ZombieSkinnedVisual.GaitVariety = 1f; }
+        public void SetUp() { LogAssert.ignoreFailingMessages = true; RunFlowClock.ClearHolds(); FootIkAdapter.ResetStatics(); CharacterAnimatorLod.ResetStatics(); LocomotionLean.ResetStatics(); WeaponHoldIk.ResetStatics(); ZombieSkinnedVisual.GaitVariety = 1f; }
 
         [UnityTearDown]
         public IEnumerator UnityTearDown()
@@ -308,6 +308,133 @@ namespace DD.Art.Tests.PlayMode
             Debug.Log("[DD-TEST] wp083.magsocket local=" + socket.localPosition.ToString("F3") + " toWrist=" + (toWrist * 100f).ToString("F1", CultureInfo.InvariantCulture) + " cm palmErrMax=" + (maxErr * 100f).ToString("F2", CultureInfo.InvariantCulture) + " cm");
             Assert.Less(maxErr, 0.005f, "soket koşuda avuç ortasından ayrıldı (> 5 mm)");
             Assert.That(toWrist, Is.InRange(0.02f, 0.10f), "avuç ortası bilekten 2–10 cm");
+        }
+
+        /// <summary>
+        /// WP-083 B2c (C-00 05.10, decision A): the weapon-first hold. Off (the default) adds nothing to the body. On, the right hand's
+        /// socket_weapon_r sits on the grip pivot (≤ 1 cm, ≤ 2° — H1's limit) and the pivot looks along the aim (≤ 1°), standing and
+        /// walking. The left hand reaches the weapon's grip_l through WeaponGripIk on the placed weapon (≤ 1 cm). Switching the hold off
+        /// fades it to 0 within the blend time and the hand returns to the clip.
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator Oyuncu_SilahTutusu_SoketPivotta_SolElKabzada_NisanYonunde()
+        {
+            yield return Stage();
+            CharacterAssetSet set = CharacterAssetSet.Load();
+            try
+            {
+                WeaponHoldIk.Enabled = false;
+                var offStage = new GameObject("WP083_HoldOff");
+                _temp.Add(offStage);
+                Transform offVisual = new GameObject("Visual").transform;
+                offVisual.SetParent(offStage.transform, false);
+                var offPv = Object.Instantiate(set.PlayerPrefab, offVisual, false).GetComponent<PlayerSkinnedVisual>();
+                offPv.Attach(offVisual, () => Vector3.zero, () => 6.2f, () => Vector3.forward);
+                Assert.IsNull(offPv.HoldIk, "kapalıyken WeaponHoldIk eklenmemeli");
+                Object.Destroy(offStage);
+
+                WeaponHoldIk.Enabled = true;
+                var stage = new GameObject("WP083_Hold");
+                _temp.Add(stage);
+                Transform visual = new GameObject("Visual").transform;
+                visual.SetParent(stage.transform, false);
+                var pv = Object.Instantiate(set.PlayerPrefab, visual, false).GetComponent<PlayerSkinnedVisual>();
+                Vector3 velocity = Vector3.zero;
+                Vector3 aim = new Vector3(0.25f, 0.15f, 1f).normalized;
+                pv.Attach(visual, () => velocity, () => 6.2f, () => aim);
+                pv.Animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+                WeaponHoldIk hold = pv.HoldIk;
+                Assert.IsNotNull(hold, "açıkken WeaponHoldIk eklenmeli");
+                Assert.IsTrue(hold.Ready, "tutuş kemikleri/soketi bulunamadı");
+                Transform socket = pv.WeaponSocket, lHand = pv.Animator.GetBoneTransform(HumanBodyBones.LeftHand);
+                // a weapon's support point: grip_l on the socket (the weapon frame), where a rifle's handguard is
+                Transform grip = new GameObject("grip_l").transform;
+                grip.SetParent(socket, false);
+                grip.localPosition = new Vector3(-0.02f, 0.02f, 0.18f);
+
+                Time.captureDeltaTime = 1f / 60f;
+                float maxR = 0f, maxRot = 0f, maxAim = 0f, maxL = 0f;
+                int measured = 0, leftMeasured = 0;
+                for (int f = 0; f < 120; f++)
+                {
+                    if (f == 40) velocity = Vector3.forward * 3f;
+                    stage.transform.position += velocity * Time.deltaTime;
+                    yield return null;
+                    if (hold.Weight < 1f) continue;
+                    measured++;
+                    maxR = Mathf.Max(maxR, Vector3.Distance(socket.position, hold.PivotPosition));
+                    maxRot = Mathf.Max(maxRot, Quaternion.Angle(socket.rotation, hold.PivotRotation));
+                    maxAim = Mathf.Max(maxAim, Vector3.Angle(hold.PivotRotation * Vector3.forward, aim));
+                    if (pv.GripIk != null && pv.GripIk.Weight >= 1f) { maxL = Mathf.Max(maxL, Vector3.Distance(lHand.position, grip.position)); leftMeasured++; }
+                }
+
+                Debug.Log("[DD-TEST] wp083.hold measured=" + measured + " socketPivotMax=" + (maxR * 100f).ToString("F2", CultureInfo.InvariantCulture) + " cm rotMax=" +
+                          maxRot.ToString("F2", CultureInfo.InvariantCulture) + "° aimMax=" + maxAim.ToString("F2", CultureInfo.InvariantCulture) + "° left(n=" + leftMeasured + ")Max=" +
+                          (maxL * 100f).ToString("F2", CultureInfo.InvariantCulture) + " cm");
+                Assert.GreaterOrEqual(measured, 90, "tutuş ağırlığı 1'e çıkmadı (kapı: dinlenme pozu)");
+                Assert.LessOrEqual(maxR, 0.01f, "socket_weapon_r pivottan > 1 cm");
+                Assert.LessOrEqual(maxRot, 2f, "socket_weapon_r dönüşü pivottan > 2°");
+                Assert.LessOrEqual(maxAim, 1f, "pivot nişan yönünden > 1°");
+                Assert.GreaterOrEqual(leftMeasured, 60, "sol el kabza IK'sı tam ağırlıkta değil");
+                Assert.LessOrEqual(maxL, 0.01f, "sol el kabzadan > 1 cm");
+
+                WeaponHoldIk.Enabled = false;
+                int fade = Mathf.CeilToInt(WeaponHoldIk.BlendSeconds * 60f) + 2;
+                for (int f = 0; f < fade; f++) yield return null;
+                Assert.AreEqual(0f, hold.Weight, "kapatınca ağırlık karışım süresinde 0'a inmeli");
+                Assert.IsFalse(hold.Active);
+                Assert.Greater(Vector3.Distance(socket.position, hold.PivotPosition), 0.02f, "kapalıyken el klibe dönmeli (pivotta kalmamalı)");
+            }
+            finally
+            {
+                WeaponHoldIk.ResetStatics();
+            }
+        }
+
+        /// <summary>WP-083 B2c diagnostics: the hold's reach — arm length, left shoulder → grip_l and both hands' errors for candidate hip holds.</summary>
+        [UnityTest]
+        [Explicit]
+        [Category("Diagnostics")]
+        [Timeout(300000)]
+        public IEnumerator Tani_SilahTutusu_Erisim_AdayTutuslar()
+        {
+            yield return Stage();
+            CharacterAssetSet set = CharacterAssetSet.Load();
+            Vector3[] holds = { new Vector3(0.14f, -0.20f, 0.30f), new Vector3(0.10f, -0.20f, 0.25f), new Vector3(0.08f, -0.22f, 0.22f), new Vector3(0.06f, -0.18f, 0.20f), new Vector3(0.10f, -0.12f, 0.22f), new Vector3(0.04f, -0.22f, 0.26f) };
+            try
+            {
+                WeaponHoldIk.Enabled = true;
+                Time.captureDeltaTime = 1f / 60f;
+                Vector3 aim = new Vector3(0.25f, 0.15f, 1f).normalized;
+                for (int h = 0; h < holds.Length; h++)
+                {
+                    WeaponHoldIk.HipHold = holds[h];
+                    var stage = new GameObject("WP083_Reach" + h);
+                    _temp.Add(stage);
+                    stage.transform.position = new Vector3(h * 3f, 0f, 0f);
+                    Transform visual = new GameObject("Visual").transform;
+                    visual.SetParent(stage.transform, false);
+                    var pv = Object.Instantiate(set.PlayerPrefab, visual, false).GetComponent<PlayerSkinnedVisual>();
+                    pv.Attach(visual, () => Vector3.zero, () => 6.2f, () => aim);
+                    pv.Animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+                    Transform socket = pv.WeaponSocket;
+                    Transform grip = new GameObject("grip_l").transform;
+                    grip.SetParent(socket, false);
+                    grip.localPosition = new Vector3(-0.02f, 0.02f, 0.18f);
+                    for (int f = 0; f < 40; f++) yield return null;
+                    Animator an = pv.Animator;
+                    Transform lu = an.GetBoneTransform(HumanBodyBones.LeftUpperArm), ll = an.GetBoneTransform(HumanBodyBones.LeftLowerArm), lh = an.GetBoneTransform(HumanBodyBones.LeftHand);
+                    float arm = Vector3.Distance(lu.position, ll.position) + Vector3.Distance(ll.position, lh.position);
+                    Debug.Log("[DD-DIAG] wp083.reach hold=" + holds[h].ToString("F2") + " arm=" + (arm * 100f).ToString("F1") + "cm shoulderToGrip=" + (Vector3.Distance(lu.position, grip.position) * 100f).ToString("F1") +
+                              "cm left=" + (Vector3.Distance(lh.position, grip.position) * 100f).ToString("F2") + "cm right=" + (Vector3.Distance(socket.position, pv.HoldIk.PivotPosition) * 100f).ToString("F2") +
+                              "cm gripLocal=" + an.transform.InverseTransformPoint(grip.position).ToString("F2") + " pivotLocal=" + an.transform.InverseTransformPoint(pv.HoldIk.PivotPosition).ToString("F2"));
+                }
+            }
+            finally
+            {
+                WeaponHoldIk.ResetStatics();
+            }
         }
 
         /// <summary>Diagnostics: every foot event the clips fire, with the firing clip and its blend weight.</summary>
