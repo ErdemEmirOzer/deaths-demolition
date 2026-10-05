@@ -924,16 +924,17 @@ namespace DD.Prototype.Tests.EditMode.Audio
         }
 
         [Test]
-        public void AtesV4_AP027Ithal_Dilim1_KatalogdaVeKatmanlarCozuluyor()
+        public void AtesV4_AP027Ithal_OnSilah_KatalogdaVeKatmanlarCozuluyor()
         {
-            // WP-085 B5 slice 1 (G4 = AP-027, C-00 05.10): AR1 / SG1 / SMG1 fire, mechanism, three space tails and two distance
-            // voices come from the AP-027 import — in the catalog, resolved by the B3 layer path; casings per surface likewise.
+            // WP-085 B5 (G4 = AP-027, C-00 05.10): every weapon's fire, mechanism, three space tails and two distance voices come
+            // from the AP-027 import — in the catalog, resolved by the B3 layer path; casings per surface (none for RL1) and the
+            // LMGs' belt links likewise. LMG2 Fire_01 is out of the pool (peak-limited, ~3.5 dB quiet): 5 variants.
             AudioCatalogBuilder.BuildCatalog();
             var katalog = AssetDatabase.LoadAssetAtPath<AudioCatalog>(AudioCatalogBuilder.CatalogPath);
             Assert.IsNotNull(katalog);
             var kayit = new Dictionary<AudioSoundId, AudioCatalog.Entry>();
             foreach (AudioCatalog.Entry e in katalog.Entries) kayit[e.Sound] = e;
-            foreach (string id in new[] { "AR1", "SG1", "SMG1" })
+            foreach (string id in new[] { "AR1", "AR2", "SMG1", "SMG2", "SG1", "SG2", "LMG1", "LMG2", "SR1", "RL1" })
             {
                 Assert.IsTrue(WeaponAudioIdentity.TryGet(id, out WeaponVoiceSet set));
                 var sesler = new List<AudioSoundId> { set.Fire };
@@ -944,16 +945,24 @@ namespace DD.Prototype.Tests.EditMode.Audio
                     sesler.Add(k);
                 }
 
+                string pascal = id[0] + id.Substring(1).ToLowerInvariant();
                 foreach (string yuzey in WeaponFoleyV3.V4Surfaces)
                 {
-                    Assert.IsTrue(Enum.TryParse("Casing" + id[0] + id.Substring(1).ToLowerInvariant() + yuzey, out AudioSoundId kovan), id + " " + yuzey + " kovanı yok");
-                    sesler.Add(kovan);
+                    bool kovanVar = Enum.TryParse("Casing" + pascal + yuzey, out AudioSoundId kovan);
+                    Assert.AreEqual(id != "RL1", kovanVar, id + " " + yuzey + " kovanı");
+                    if (kovanVar) sesler.Add(kovan);
+                    if (id.StartsWith("LMG", StringComparison.Ordinal))
+                    {
+                        Assert.IsTrue(Enum.TryParse("Link" + pascal + yuzey, out AudioSoundId halka), id + " " + yuzey + " şerit halkası");
+                        Assert.AreEqual(halka, WeaponFoleyV3.CasingV4(id, yuzey == "Puddle" ? SurfaceKind.Water : yuzey == "Wood" ? SurfaceKind.Wood : yuzey == "Dirt" ? SurfaceKind.Dirt : SurfaceKind.Stone, yuzey == "WetStone", true));
+                        sesler.Add(halka);
+                    }
                 }
 
                 foreach (AudioSoundId k in sesler)
                 {
                     Assert.IsTrue(kayit.TryGetValue(k, out AudioCatalog.Entry e), k + " katalogda yok");
-                    Assert.AreEqual(6, e.Clips.Length, k + ": 6 varyant");
+                    Assert.AreEqual(k == AudioSoundId.WeaponLmg2Fire ? 5 : 6, e.Clips.Length, k + ": varyant sayısı");
                     StringAssert.Contains("/AP027/", AssetDatabase.GetAssetPath(e.Clips[0]), k + " AP-027'den gelmeli");
                 }
             }
