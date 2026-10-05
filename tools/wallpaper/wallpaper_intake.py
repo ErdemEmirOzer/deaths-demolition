@@ -13,6 +13,13 @@ sRGB profile the master carries), measured against its master before it is writt
                            0.0305); the encoder then dims only the 8×8 blocks that ring over it, in linear light, and
                            encodes again until none does ("ceilingFit": blocks, rounds, smallest scale - recorded).
 
+  text-safe                --text-safe (loading key arts): LoadingKeyArtTests' own measure on the decoded JPEG - on its four
+                           screens at push-in 1.0 / 1.05, the brightest pixel under the ring (cream ≥ 3:1, i.e. luminance
+                           ≤ 0.25), under the label stack (TextSecondary ≥ 4.5:1, ≤ 0.061) and under the tip strip
+                           (TextPrimary ≥ 7:1 on the 0.72 strip). The words sit inside x 0.35-0.65, y 0.30-0.72 (from the
+                           top) - the band to paint dark, never a box. A pre-check for painters and Codex; the Unity test
+                           stays the gate.
+
 and recorded in UI/Art/wallpaper-intake.json (file, bytes, sha256, master sha256, encoder, PSNR, SSIM, max luminance),
 which WallpaperIntakeTests checks against every file in Resources/UI/Wallpapers.
 
@@ -44,6 +51,79 @@ FOLDER = os.path.join(ART, "Resources", "UI", "Wallpapers")
 RECORD = os.path.join(ART, "wallpaper-intake.json")
 SCHEMA = "dd-wallpaper-intake-v1"
 SIZE = (2560, 1440)
+
+# WP-081: the loading screen's words over its key art - the geometry of LoadingKeyArtTests (UiCurtain: ring Ø 240 lifted
+# 40, the label stack under it, the tip strip at the foot), on its four screens and at push-in 1.0 and 1.05.
+SCREENS = (("1080", 1920, 1080, 1.0, 1.0), ("mac", 3024, 1964, 1.2, 1.25), ("16x10", 2560, 1600, 1.0, 1.0),
+           ("21x9", 2560, 1080, 1.0, 1.0))
+RING, RING_LIFT, SPACE_XL, SPACE_S, SPACE_M = 240.0, 40.0, 24.0, 8.0, 12.0
+LABEL_LINE, H2_LINE, BODY_LINE, LABEL_HALF = 24.0, 32.0, 36.0, 180.0   # UiFactory.LineHeight at text 1.0
+TIP_MARGIN, TIP_MAX, TIP_LINES, TIP_STRIP_ALPHA = 96.0, 720.0, 3, 0.72
+TEXT_PRIMARY, TEXT_SECONDARY, SURFACE_BASE = "#F3EEE3", "#B9B2A6", "#1A1816"
+
+
+def _hex_lin(h):
+    return to_linear(np.array([int(h[i:i + 2], 16) for i in (1, 3, 5)], dtype=np.float64))
+
+
+def _ratio(fg_l, bg_l):
+    hi, lo = max(fg_l, bg_l), min(fg_l, bg_l)
+    return (hi + 0.05) / (lo + 0.05)
+
+
+def _brightest(lin, lum, rect, canvas, uv):
+    """The brightest texel under a canvas rect (x, y, w, h from the bottom-left), at both push-ins (linear RGB)."""
+    h, w = lum.shape
+    best, best_rgb = -1.0, None
+    for push in (1.0, 1.05):
+        def to_uv(px, py):
+            lx, ly = 0.5 + (px - 0.5) / push, 0.5 + (py - 0.5) / push
+            return uv[0] + lx * uv[2], uv[1] + ly * uv[3]
+        u0, v0 = to_uv(rect[0] / canvas[0], rect[1] / canvas[1])
+        u1, v1 = to_uv((rect[0] + rect[2]) / canvas[0], (rect[1] + rect[3]) / canvas[1])
+        x0 = min(max(int(np.floor(u0 * w)), 0), w - 1)
+        x1 = min(max(int(np.ceil(u1 * w)), x0 + 1), w)
+        y0 = min(max(int(np.floor(v0 * h)), 0), h - 1)
+        y1 = min(max(int(np.ceil(v1 * h)), y0 + 1), h)
+        block = lum[h - y1:h - y0, x0:x1]   # texture rows count from the bottom
+        i = np.unravel_index(int(block.argmax()), block.shape)
+        if block[i] > best:
+            best, best_rgb = float(block[i]), lin[h - y1 + i[0], x0 + i[1]]
+    return best, best_rgb
+
+
+def text_safe(rgb, tip=True):
+    """Each screen's ring / labels / tip contrast as LoadingKeyArtTests measures it, and whether all pass (3 / 4.5 / 7)."""
+    lin = to_linear(rgb.astype(np.float64))
+    lum = 0.2126 * lin[..., 0] + 0.7152 * lin[..., 1] + 0.0722 * lin[..., 2]
+    art = rgb.shape[1] / rgb.shape[0]
+    tp, ts, base = _hex_lin(TEXT_PRIMARY), _hex_lin(TEXT_SECONDARY), _hex_lin(SURFACE_BASE)
+    lum_of = lambda c: float(0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2])
+    out, ok = {}, True
+    for name, sw, sh, ui, text in SCREENS:
+        ref = (1920.0 / ui, 1080.0 / ui)
+        fit = min(sw / ref[0], sh / ref[1])
+        canvas = (sw / fit, sh / fit)
+        aspect = canvas[0] / canvas[1]
+        uv = (0.0, (1 - art / aspect) / 2, 1.0, art / aspect) if aspect >= art else ((1 - aspect / art) / 2, 0.0, aspect / art, 1.0)
+        cx, cy = canvas[0] * 0.5, canvas[1] * 0.5 + RING_LIFT
+        ring = (cx - RING / 2, cy - RING / 2, RING, RING)
+        top = cy - RING / 2 - SPACE_XL
+        tall = (LABEL_LINE * 2 + SPACE_S + H2_LINE) * text
+        half = LABEL_HALF * text
+        labels = (cx - half, top - tall, half * 2, tall)
+        tip_w = min(TIP_MAX, canvas[0] - TIP_MARGIN * 2)
+        tip_rect = (TIP_MARGIN, TIP_MARGIN, tip_w, TIP_LINES * BODY_LINE * text + SPACE_M * 2)
+        ring_l = _brightest(lin, lum, ring, canvas, uv)[0]
+        label_l = _brightest(lin, lum, labels, canvas, uv)[0]
+        r = {"ring": round(_ratio(lum_of(tp), ring_l), 2), "labels": round(_ratio(lum_of(ts), label_l), 2)}
+        if tip:
+            bg = _brightest(lin, lum, tip_rect, canvas, uv)[1]
+            strip = base * TIP_STRIP_ALPHA + bg * (1 - TIP_STRIP_ALPHA)   # the project blends in linear light
+            r["tip"] = round(_ratio(lum_of(tp), lum_of(strip)), 2)
+        ok = ok and r["ring"] >= 3 and r["labels"] >= 4.5 and (not tip or r["tip"] >= 7)
+        out[name] = r
+    return out, ok
 
 
 def sha256(data):
@@ -132,13 +212,14 @@ def fit_ceiling(rgb, quality, icc, ceiling, rounds=24):
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--src")
-    parser.add_argument("--name", help="the Resources name, without extension (loading_keyart_02)")
+    parser.add_argument("--name", help="the Resources name, without extension (loading_L01)")
     parser.add_argument("--adopt", help="a file name in Resources/UI/Wallpapers to record as it is")
     parser.add_argument("--master-ref", required=True, help="where the master lives (K/asset-production/AP-028/…, or git:<sha>:<path>)")
     parser.add_argument("--quality", type=int, default=90)
     parser.add_argument("--min-psnr", type=float, default=40.0)
     parser.add_argument("--ceiling", type=float, default=None)
     parser.add_argument("--note", default="")
+    parser.add_argument("--text-safe", action="store_true", help="a loading key art: the words' zones under their ceilings")
     parser.add_argument("--dry-run", action="store_true")
     try:
         args = parser.parse_args()
@@ -196,6 +277,7 @@ def main():
         "ssim": round(ssim(a, b), 5),
         "maxLuminance": {"master": round(max_luminance(a), 5), "jpeg": round(max_luminance(b), 5)},
         "ceilingFit": fit,
+        "textSafe": text_safe(b)[0] if args.text_safe else None,
         "date": datetime.date.today().isoformat(),
         "note": args.note,
     }
@@ -206,6 +288,8 @@ def main():
         failures.append("PSNR %.2f < %.2f" % (row["psnr"], args.min_psnr))
     if args.ceiling is not None and row["maxLuminance"]["master"] <= args.ceiling < row["maxLuminance"]["jpeg"]:
         failures.append("the JPEG's brightest pixel %.5f passes the ceiling %.5f the master keeps" % (row["maxLuminance"]["jpeg"], args.ceiling))
+    if args.text_safe and not text_safe(b)[1]:
+        failures.append("not text-safe under the loading words: " + json.dumps(row["textSafe"]))
     if failures:
         print("NOT WRITTEN: " + "; ".join(failures), file=sys.stderr)
         sys.exit(1)
