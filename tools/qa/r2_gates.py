@@ -23,6 +23,10 @@ import re
 
 GATE_KINDS = ("gate", "report", "human")
 ENV_NAME = re.compile(r"[A-Z][A-Z0-9_]*")
+# the one placeholder an env value may carry: the KADRO project root, filled in by the chain from tools/dd_paths.py
+# (never a machine path in the contract: move day changes dd_paths only; a guard's fake HOME cannot misplace it)
+KPROJ_TOKEN = "{KPROJ}"
+PLACEHOLDER = re.compile(r"\{[^}]*\}")
 OPS = ("<=", ">=", "==")
 
 
@@ -75,6 +79,9 @@ def load_contract(text):
             if not (isinstance(env, dict) and all(isinstance(k, str) and ENV_NAME.fullmatch(k) and not k.startswith("DD_R2_")
                                                   and isinstance(v, str) for k, v in env.items())):
                 raise ContractError(f"{gid}: measuredBy env must map UPPER_CASE names (not DD_R2_*) to strings")
+            stray = [v for v in env.values() if set(PLACEHOLDER.findall(v)) - {KPROJ_TOKEN}]
+            if stray:
+                raise ContractError(f"{gid}: measuredBy env knows only the {KPROJ_TOKEN} placeholder: {stray}")
     return data
 
 
@@ -95,6 +102,11 @@ def measurement_steps(contract, quiet):
             steps.append(by_key[key])
         by_key[key]["gates"].append(gate["id"])
     return steps
+
+
+def expand_env(env, kproj):
+    """measuredBy env with {KPROJ} replaced by the KADRO project root (dd_paths.KPROJ)."""
+    return {k: v.replace(KPROJ_TOKEN, str(kproj)) for k, v in env.items()}
 
 
 def _number(value):

@@ -832,7 +832,7 @@ class Chain:
         for step in steps:
             out = measure_dir / step["id"]
             argv = (["/usr/bin/env", f"DD_R2_MEASURE_DIR={measure_dir}", f"DD_R2_COMMIT={self.final}"]
-                    + [f"{k}={v}" for k, v in step.get("env", {}).items()] + [
+                    + [f"{k}={v}" for k, v in r2_gates.expand_env(step.get("env", {}), dd_paths.KPROJ).items()] + [
                     REPO / "tools" / "test.sh", step["suite"], "--out", out, "--filter", step["filter"]])
             if step["suite"] == "playmode":
                 argv += ["--timeout-min", str(ISOLATED_TIMEOUT_MIN * 3)]

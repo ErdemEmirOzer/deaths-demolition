@@ -542,6 +542,14 @@ class R2StageTests(Base):
         self.assertEqual(["DD_KIT_VARIANTS=A", "DD_KIT_WEAPONS=all"], run[3:5])
         self.assertEqual("test.sh", Path(run[5]).name)
 
+    def test_the_kproj_placeholder_becomes_the_dd_paths_root(self):
+        steps = {False: [], True: [{"id": "r2-S1", "suite": "playmode", "filter": "Kit", "quiet": True, "gates": ["S1"],
+                                    "env": {"DD_AP027_DIR": "{KPROJ}/asset-production/AP-027"}}]}
+        with mock.patch.object(acc.r2_gates, "measurement_steps", side_effect=lambda c, quiet: steps[quiet]):
+            chain = self.dry(["r2q"], round_name="R2")
+        run = [argv for s, argv in chain.planned if s == "r2q" and Path(argv[0]).name == "env"][0]
+        self.assertEqual("DD_AP027_DIR=" + str(acc.dd_paths.KPROJ) + "/asset-production/AP-027", run[3])
+
     def test_p5_comes_from_the_chain_bot_sessions_over_the_r1_evidence(self):
         r1 = Path(tempfile.mkdtemp())
         for root, seconds in ((self.evidence, 1.30), (r1, 1.22)):

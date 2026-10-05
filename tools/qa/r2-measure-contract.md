@@ -23,6 +23,11 @@ One JSON file per gate, written only when the measurement actually ran:
   numbers (no NaN/Infinity, no strings). A missing key is BLOCKED; a value outside its check is FAIL.
 - The test itself should also fail on its threshold (so CI catches a regression early); the artifact is what the
   acceptance report re-judges, so both must use the contract numbers.
+- **The source must be in the recording** (S-08 05.10, after S1 0.17 was measured on a weapon stem that held no
+  weapon): before it writes, the test asserts that what it measures is actually there — a sound above a floor in its
+  window (S-08: shot-window peak median >= -30 dBFS), the objects counted on screen, the frames rendered. If it is
+  not, the test FAILS and writes no artifact, so the gate is BLOCKED by name; an empty capture never becomes a
+  plausible number.
 - Tests that measure are `[Explicit]` + `[Category("Diagnostics")]` when they are slow or need a quiet machine (Y6);
   the acceptance chain runs them by name.
 
@@ -36,7 +41,8 @@ name is not in any bound XML the gate is BLOCKED; any other result is FAIL.
 
 `measuredBy` in `r2-gates.json` (`{"suite": "playmode"|"editmode", "filter": "<test.sh --filter regex>", "quiet": bool,
 "env": {"NAME": "value"}}`; `env` optional: the owner's own switches such as `DD_KIT_WEAPONS`, never `DD_R2_*`)
-tells `wp078_accept --round R2` to run that test in its own guarded session: stage `r2` (after A3) for `quiet: false`,
+(an `env` value may use the one placeholder `{KPROJ}`, the KADRO project root the chain fills in from
+`tools/dd_paths.py` — never a machine path in the contract) tells `wp078_accept --round R2` to run that test in its own guarded session: stage `r2` (after A3) for `quiet: false`,
 stage `r2q` (in the quiet window after A4) for `quiet: true`. Gates sharing one filter and env share one session.
 An `[Explicit]` test runs only when the filter names it in full (S-02 05.10): give its full name, never a class regex. A gate without
 `measuredBy` gets its artifact from the owner's own run into `<E>/r2/`. H4 is split (C-00 05.10): H4 = weapon yaw/roll

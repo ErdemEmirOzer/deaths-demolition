@@ -117,7 +117,10 @@ class MeasuredByTests(unittest.TestCase):
         self.assertEqual(1, len(kit))
         self.assertEqual(["S1", "S2"], kit[0]["gates"])
         # A = today's game (the S1/S2 gates), C = the AP-027 v4 prototype (S1 report below400ShareMinV4, C-00 05.10)
-        self.assertEqual({"DD_KIT_VARIANTS": "AC", "DD_KIT_WEAPONS": "all"}, kit[0]["env"])
+        self.assertEqual({"DD_AP027_DIR": "{KPROJ}/asset-production/AP-027/exports/v001-prototip",
+                          "DD_KIT_VARIANTS": "AC", "DD_KIT_WEAPONS": "all"}, kit[0]["env"])
+        self.assertEqual("/k/asset-production/AP-027/exports/v001-prototip",
+                         r2.expand_env(kit[0]["env"], "/k")["DD_AP027_DIR"])
         self.assertEqual(["below400ShareMinV4"], gate("S1")["report"])
         normal = {s["id"]: s for s in r2.measurement_steps(data, quiet=False)}
         self.assertEqual("editmode", normal["r2-U3"]["suite"])
@@ -138,7 +141,8 @@ class MeasuredByTests(unittest.TestCase):
                     {"L1": {"suite": "playmode", "filter": "x", "quiet": "yes"}},  # quiet must be a boolean
                     {"S1": {"suite": "playmode", "filter": "x", "env": {"DD_R2_COMMIT": "0"}}},  # the chain's own variables
                     {"S1": {"suite": "playmode", "filter": "x", "env": {"kit": "all"}}},          # UPPER_CASE names only
-                    {"S1": {"suite": "playmode", "filter": "x", "env": {"DD_KIT_WEAPONS": 1}}}):  # string values only
+                    {"S1": {"suite": "playmode", "filter": "x", "env": {"DD_KIT_WEAPONS": 1}}},  # string values only
+                    {"S1": {"suite": "playmode", "filter": "x", "env": {"DD_AP027_DIR": "{HOME}/x"}}}):  # only {KPROJ}
             with self.subTest(bad=bad):
                 with self.assertRaises(r2.ContractError):
                     r2.load_contract(self.contract(**bad))
