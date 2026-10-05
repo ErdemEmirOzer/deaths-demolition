@@ -48,6 +48,9 @@ namespace DD.Art.Tests.PlayMode
             RunFlowClock.ClearHolds();
             EnemyAttackState.ResetStatics();
             CharacterAnimatorLod.ResetStatics();
+            // C-00 05.10 (main-ci 285b7fe8): every test starts from the default camera mode — PlayerSkinnedVisual mutes the TP fire additive in
+            // first person (1418b443), so a mode left over by an earlier FP test must never reach a TP additive check
+            DD.Prototype.CameraSystem.CameraModeService.ResetForTests();
             ZombieEnemy.RiseOnSpawn = false;
             _director = null;
         }
@@ -1053,6 +1056,10 @@ namespace DD.Art.Tests.PlayMode
             // Fire → additive layer state; Hit → override layer state; both leave the base layer alone.
             // WP-071 MUST-3 (C-00 01.10): standing, the base layer is in Idle_Breath (the idle breath's own state) — "alone" = unchanged
             int baseBefore = an.GetCurrentAnimatorStateInfo(0).shortNameHash;
+            // C-00 05.10 (main-ci 285b7fe8): the one-shot checks count frames — fixed 1/60 s frames, so a loaded CI machine's long frames
+            // cannot play the short recoil / hit through before the state is read (ders: batch frame time)
+            Time.captureDeltaTime = 1f / 60f;
+            Assert.AreEqual(1f, pv.TpAdditiveWeight, "TP ateş additive'i TP'de açık olmalı (FP susturması yalnız birinci şahıs)");
             pv.PlayFire();
             yield return null; yield return null;
             Assert.IsTrue(an.GetCurrentAnimatorStateInfo(add).IsName(C.FireState + "_0") || an.GetNextAnimatorStateInfo(add).IsName(C.FireState + "_0"), "WP-032C: Fire_0 (A rifle recoil) additive katmanda değil");
