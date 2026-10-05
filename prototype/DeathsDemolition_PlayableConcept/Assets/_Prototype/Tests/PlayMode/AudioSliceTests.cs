@@ -1741,63 +1741,70 @@ namespace DD.Prototype.Tests.PlayMode
                                 string ad = (stem ? "Stem_" : "Kit_") + wd.weaponId + "_" + modAd + "_" + v;
                                 yield return new WaitForSecondsRealtime(0.5f);
                                 WeaponFireAudio f = _d.WeaponFire;
-                                int ses0 = f.FireVoices, red0 = f.FireRefused;
-                                cap = AudioOutputCapture.Arm(_d.gameObject, System.IO.Path.Combine(dir, ad + ".wav"));
+                                var takeCsv = new System.Text.StringBuilder();
                                 var heldFrames = new List<long>();
-                                var kovanlar = new List<float>();
-                                int sira = 0, gecici = 0, dongu = 0, heldShots = 0, sonGecici = -1;
-                                float bas = Time.realtimeSinceStartup;
-                                while (Time.realtimeSinceStartup - bas < takeLen)
+                                int gecici = 0, dongu = 0, voices = 0, refused = 0;
+                                string yigilma = null;
+                                // A frame longer than the shot period fires the catch-up cues together — a double shot in the
+                                // recording (C-00 05.10, kit-v2 ar_1 top-down B / C): the take is re-recorded, at most three times.
+                                for (int deneme = 1; deneme <= 3; deneme++)
                                 {
-                                    float t = Time.realtimeSinceStartup - bas;
-                                    while (sira < plan.Count && plan[sira].t <= t)
+                                    takeCsv.Clear();
+                                    heldFrames.Clear();
+                                    int ses0 = f.FireVoices, red0 = f.FireRefused;
+                                    cap = AudioOutputCapture.Arm(_d.gameObject, System.IO.Path.Combine(dir, ad + ".wav"));
+                                    var kovanlar = new List<float>();
+                                    int sira = 0;
+                                    float bas = Time.realtimeSinceStartup;
+                                    while (Time.realtimeSinceStartup - bas < takeLen)
                                     {
-                                        Vector3 at = _s.Rig.transform.position + Vector3.up * 1.3f + _s.Rig.transform.forward * 0.3f;
-                                        AudioEvents.RaiseWeapon(CombatAudioEvent.ClassicWeaponFire, audioId, at, intensity, 50);
-                                        if (casingDelay >= 0f) kovanlar.Add(t + casingDelay);
-                                        long fr = cap.FramesCaptured;   // the audio thread's position, not the drained file length
-                                        csv.Append(ad).Append(',').Append(wd.weaponId).Append(',').Append(modAd).Append(',').Append(v).Append(',').Append(stem ? 1 : 0)
-                                           .Append(',').Append(plan[sira].kind).Append(',').Append(sira).Append(',').Append(fr).Append(',').Append(AudioSettings.outputSampleRate).Append('\n');
-                                        if (plan[sira].kind == 'h') { heldFrames.Add(fr); heldShots++; }
-                                        sira++;
+                                        float t = Time.realtimeSinceStartup - bas;
+                                        while (sira < plan.Count && plan[sira].t <= t)
+                                        {
+                                            Vector3 at = _s.Rig.transform.position + Vector3.up * 1.3f + _s.Rig.transform.forward * 0.3f;
+                                            AudioEvents.RaiseWeapon(CombatAudioEvent.ClassicWeaponFire, audioId, at, intensity, 50);
+                                            if (casingDelay >= 0f) kovanlar.Add(t + casingDelay);
+                                            long fr = cap.FramesCaptured;   // the audio thread's position, not the drained file length
+                                            takeCsv.Append(ad).Append(',').Append(wd.weaponId).Append(',').Append(modAd).Append(',').Append(v).Append(',').Append(stem ? 1 : 0)
+                                               .Append(',').Append(plan[sira].kind).Append(',').Append(sira).Append(',').Append(fr).Append(',').Append(AudioSettings.outputSampleRate).Append('\n');
+                                            if (plan[sira].kind == 'h') heldFrames.Add(fr);
+                                            sira++;
+                                        }
+
+                                        for (int k = kovanlar.Count - 1; k >= 0; k--)
+                                        {
+                                            if (kovanlar[k] > t) continue;
+                                            kovanlar.RemoveAt(k);
+                                            Transform port = _s.Rig.transform;
+                                            DD.Prototype.Weapons.WeaponEvents.PublishMechanism(new DD.Prototype.Weapons.WeaponMechanismEvent(
+                                                DD.Prototype.Weapons.WeaponMechanismKind.CasingEjected, cid, port.position + Vector3.up * 1.3f + port.right * 0.2f, port.right, false));
+                                        }
+
+                                        yield return null;   // no per-frame scene scan: it lengthened frames (S2 counts come from the take's telemetry)
                                     }
 
-                                    for (int k = kovanlar.Count - 1; k >= 0; k--)
-                                    {
-                                        if (kovanlar[k] > t) continue;
-                                        kovanlar.RemoveAt(k);
-                                        Transform port = _s.Rig.transform;
-                                        DD.Prototype.Weapons.WeaponEvents.PublishMechanism(new DD.Prototype.Weapons.WeaponMechanismEvent(
-                                            DD.Prototype.Weapons.WeaponMechanismKind.CasingEjected, cid, port.position + Vector3.up * 1.3f + port.right * 0.2f, port.right, false));
-                                    }
-
-                                    // Structural S2 check: any weapon transient / loop voice starting is counted.
-                                    foreach (AudioSource src in UnityEngine.Object.FindObjectsOfType<AudioSource>())
-                                    {
-                                        if (!src.isPlaying || src.clip == null || src.time > 0.03f) continue;
-                                        string cn = src.clip.name;
-                                        if (!cn.StartsWith("Weapon", StringComparison.Ordinal)) continue;
-                                        int h = src.GetInstanceID() ^ cn.GetHashCode();
-                                        if (h == sonGecici) continue;
-                                        if (cn.Contains("Transient")) { gecici++; sonGecici = h; }
-                                        else if (cn.Contains("Loop")) { dongu++; sonGecici = h; }
-                                    }
-
-                                    yield return null;
+                                    long frames = cap.FramesWritten;
+                                    UnityEngine.Object.DestroyImmediate(cap);
+                                    cap = null;
+                                    foreach (var tap in UnityEngine.Object.FindObjectsOfType<AudioOutputTap>(true)) UnityEngine.Object.DestroyImmediate(tap);
+                                    if (frames == 0) Assert.Inconclusive("Ses çıkışı yok (batch/aygıt yok).");
+                                    voices = f.FireVoices - ses0;
+                                    refused = f.FireRefused - red0;
+                                    TelemetriKatman(System.IO.Path.Combine(dir, ad + ".wav.telemetry.tsv"), out gecici, out dongu);
+                                    yigilma = Yigilma(heldFrames, plan, AudioSettings.outputSampleRate);
+                                    if (yigilma == null) break;
+                                    Debug.Log("[DD-TEST] wp085.kit retake " + ad + " #" + deneme + ": " + yigilma);
+                                    yield return new WaitForSecondsRealtime(1f);
                                 }
 
-                                long frames = cap.FramesWritten;
-                                UnityEngine.Object.DestroyImmediate(cap);
-                                cap = null;
-                                foreach (var tap in UnityEngine.Object.FindObjectsOfType<AudioOutputTap>(true)) UnityEngine.Object.DestroyImmediate(tap);
-                                if (frames == 0) Assert.Inconclusive("Ses çıkışı yok (batch/aygıt yok).");
+                                Assert.IsNull(yigilma, ad + ": basılı atışlar yığıldı (3 denemede) — " + yigilma);
+                                csv.Append(takeCsv);
                                 if (stem)
                                 {
                                     float duyulur = SilahTepesiDb(System.IO.Path.Combine(dir, ad + ".wav"), heldFrames.Count > 0 ? heldFrames : new List<long>());
                                     Assert.GreaterOrEqual(duyulur, -30f, ad + ": silah sesi kayıtta yok (atış penceresi tepe medyanı " + duyulur.ToString("0.0") + " dBFS)");
                                 }
 
-                                int voices = f.FireVoices - ses0, refused = f.FireRefused - red0;
                                 ozet.Append(ozet.Length > 1 ? "," : "").Append("{\"take\":\"").Append(ad).Append("\",\"weapon\":\"").Append(wd.weaponId)
                                     .Append("\",\"audioId\":\"").Append(audioId).Append("\",\"mode\":\"").Append(modAd).Append("\",\"variant\":\"").Append(v)
                                     .Append("\",\"stem\":").Append(stem ? "true" : "false").Append(",\"rpm\":").Append(wd.fire.rpm.ToString(System.Globalization.CultureInfo.InvariantCulture))
@@ -1977,6 +1984,50 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.GreaterOrEqual(hallMin, 1100f, "R2 S4 salon ≥ 1100 ms");
             Assert.LessOrEqual(hallMax, 2000f, "R2 S4 salon ≤ 2000 ms");
             Assert.AreEqual(0, sira, "R2 S4 sıra açık < koridor < salon (≥ 100 ms adım)");
+        }
+
+        /// <summary>
+        /// Held cues bunched in the recording: two at one audio-thread frame, or closer than half the plan's shortest held
+        /// interval (a long game frame fired the catch-up cues together). Null when the take is clean.
+        /// </summary>
+        private static string Yigilma(List<long> frames, List<(float t, char kind)> plan, int rate)
+        {
+            float minGap = float.MaxValue;
+            float onceki = -1f;
+            foreach (var (t, kind) in plan)
+            {
+                if (kind != 'h') continue;
+                if (onceki >= 0f) minGap = Mathf.Min(minGap, t - onceki);
+                onceki = t;
+            }
+
+            if (minGap == float.MaxValue) return null;
+            long esik = (long)(0.5f * minGap * rate);
+            for (int i = 1; i < frames.Count; i++)
+            {
+                long d = frames[i] - frames[i - 1];
+                if (d < esik) return "atış " + (i + 1) + " öncekinden " + (1000.0 * d / rate).ToString("0") + " ms sonra (en az " + (1000.0 * esik / rate).ToString("0") + " ms)";
+            }
+
+            return null;
+        }
+
+        /// <summary>Weapon transient / loop voices started in a take (the capture's telemetry table, column "started").</summary>
+        private static void TelemetriKatman(string tsv, out int transients, out int loops)
+        {
+            transients = 0;
+            loops = 0;
+            if (!System.IO.File.Exists(tsv)) return;
+            bool tablo = false;
+            foreach (string satir in System.IO.File.ReadAllLines(tsv))
+            {
+                if (satir.StartsWith("# sound", StringComparison.Ordinal)) { tablo = true; continue; }
+                if (!tablo || satir.StartsWith("#", StringComparison.Ordinal)) { if (tablo && satir.StartsWith("#", StringComparison.Ordinal)) tablo = false; continue; }
+                string[] c = satir.Split('\t');
+                if (c.Length < 4 || !c[0].StartsWith("Weapon", StringComparison.Ordinal) || !int.TryParse(c[3], out int started)) continue;
+                if (c[0].Contains("Transient")) transients += started;
+                else if (c[0].Contains("Loop")) loops += started;
+            }
         }
 
         /// <summary>Median over cues of the capture's peak in the 150 ms after each cue frame (dBFS); −120 with no cue.</summary>
