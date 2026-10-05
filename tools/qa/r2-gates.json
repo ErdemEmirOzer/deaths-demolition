@@ -86,7 +86,8 @@
 
     {"id": "U1", "area": "ui", "kind": "gate", "owner": "S-09", "title": "fewer letters, every icon named",
      "checks": [{"key": "lettersTotalReduction", "op": ">=", "limit": 0.40}, {"key": "lettersPerScreenReductionMin", "op": ">=", "limit": 0.25},
-                {"key": "unnamedSelectables", "op": "==", "limit": 0}]},
+                {"key": "unnamedSelectables", "op": "==", "limit": 0}],
+     "measuredBy": {"suite": "playmode", "filter": "DD.Prototype.Tests.PlayMode.UiTextInventoryTests.U1_GorunurHarf_AnaMenuPanellerVeSecim_EnTr", "quiet": false}},
     {"id": "U2", "area": "ui", "kind": "gate", "owner": "S-09", "title": "text overflow (TR/EN x 1.0/1.25 + Mac x 1.2)",
      "checks": [{"key": "overflows", "op": "==", "limit": 0}]},
     {"id": "U3", "area": "ui", "kind": "gate", "owner": "S-09", "title": "loading key-art rotation",

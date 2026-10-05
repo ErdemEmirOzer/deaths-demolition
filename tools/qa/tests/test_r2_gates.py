@@ -90,6 +90,8 @@ class MeasuredByTests(unittest.TestCase):
         self.assertEqual({"DD_KIT_VARIANTS": "A", "DD_KIT_WEAPONS": "all"}, kit[0]["env"])
         normal = {s["id"]: s for s in r2.measurement_steps(data, quiet=False)}
         self.assertEqual("editmode", normal["r2-U3"]["suite"])
+        self.assertEqual("DD.Prototype.Tests.PlayMode.UiTextInventoryTests.U1_GorunurHarf_AnaMenuPanellerVeSecim_EnTr",
+                         normal["r2-U1"]["filter"])   # [Explicit]: the full name, never a class regex
         self.assertIn("r2-S5", normal)
 
     def test_the_same_test_under_other_switches_is_another_session(self):
