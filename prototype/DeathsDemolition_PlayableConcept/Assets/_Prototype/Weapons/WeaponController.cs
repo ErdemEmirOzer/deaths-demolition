@@ -101,7 +101,15 @@ namespace DD.Prototype.Weapons
         private ClassicWeaponId _classicModelId = (ClassicWeaponId)(-1);
         private WeaponMechanismTimeline _timeline = WeaponMechanismTimeline.Magazine;
         private float _casingAt = -1f;
+        private bool _casingOwed;   // WP-087: a pump shot's shell not yet out (the clip's eject or the deadline pays it, once)
         private bool _magOutFired;
+
+        /// <summary>
+        /// WP-087 (C-00 05.10, marker alignment audit): a pump shot's shell waits for the character clip's eject event at most this
+        /// long past the timeline's delay, then leaves from the deadline. In first person the third-person fire clip is weighed 0
+        /// (WP-087 H4b, decision B), its eject never arrives, and sg_1 ejected no shell and played no shell sound.
+        /// </summary>
+        public const float PumpCasingGraceSeconds = 0.15f;
         private readonly WeaponMagazineOwnership _magazine = new WeaponMagazineOwnership();   // WP-082 (S-02 contract v1)
         private readonly WeaponMagazineVisual _magazineVisual = new WeaponMagazineVisual();   // WP-082 visual: part_mag ↔ socket_mag_l
         private CameraMode _magazineMode;   // the camera mode the reload began in (a change ends the ownership)
@@ -318,6 +326,7 @@ namespace DD.Prototype.Weapons
             _classic.Equip(settings, _modifiers);
             _timeline = WeaponMechanismTimeline.For(settings);
             _casingAt = -1f;
+            _casingOwed = false;
             EnsureClassicModel();
 
             WeaponRegistry.SelectedWeapon = _equippedId;
@@ -663,7 +672,12 @@ namespace DD.Prototype.Weapons
             if (_timeline.ShotCasings > 0)
             {
                 if (_timeline.CasingDelaySeconds <= 0f) PublishMechanism(WeaponMechanismKind.CasingEjected, false);
-                else if (!ClipDrivesMechanism) _casingAt = Time.time + _timeline.CasingDelaySeconds;
+                else
+                {
+                    // WP-087: owed until paid — by the clip's eject when it plays (third person), else by the deadline
+                    _casingOwed = true;
+                    _casingAt = Time.time + _timeline.CasingDelaySeconds + (ClipDrivesMechanism ? PumpCasingGraceSeconds : 0f);
+                }
             }
         }
 
@@ -1605,7 +1619,11 @@ namespace DD.Prototype.Weapons
             if (_casingAt >= 0f && Time.time >= _casingAt)
             {
                 _casingAt = -1f;
-                PublishMechanism(WeaponMechanismKind.CasingEjected, false);
+                if (_casingOwed)
+                {
+                    _casingOwed = false;
+                    PublishMechanism(WeaponMechanismKind.CasingEjected, false);
+                }
             }
 
             if (_pickupDonePending && Time.time >= _pickupDoneAt)
@@ -1682,7 +1700,16 @@ namespace DD.Prototype.Weapons
                 return;
             }
 
-            if (e == s_eject) { if (_timeline.CasingDelaySeconds > 0f && _timeline.ShotCasings > 0) PublishMechanism(WeaponMechanismKind.CasingEjected, true); }   // pump weapons only (A/B eject at the shot)
+            if (e == s_eject)
+            {
+                // pump weapons only (A/B eject at the shot); WP-087: the owed shell, once — the deadline has not paid it yet
+                if (_timeline.CasingDelaySeconds > 0f && _timeline.ShotCasings > 0 && _casingOwed)
+                {
+                    _casingOwed = false;
+                    _casingAt = -1f;
+                    PublishMechanism(WeaponMechanismKind.CasingEjected, true);
+                }
+            }
             else if (e == s_magOut) { if (_timeline.ReloadCasings <= 0 || !_magOutFired) { _magOutFired = true; PublishMagOut(true); } }
             else if (e == s_magIn || e == s_magIn2 || e == s_magIn3) PublishMechanism(WeaponMechanismKind.ShellSeated, true);
             else if (e == s_chamber) PublishMechanism(WeaponMechanismKind.Chambered, true);
