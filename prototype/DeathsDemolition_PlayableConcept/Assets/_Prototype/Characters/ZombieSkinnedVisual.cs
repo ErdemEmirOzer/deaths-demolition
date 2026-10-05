@@ -65,6 +65,10 @@ namespace DD.Prototype.Characters
         private static readonly int SpeedId = Animator.StringToHash(CharacterAnimationSet.SpeedParameter);
         private ZombieLook _look;
         private int _materialTier = -1;
+        /// <summary>WP-088 · The version's body-atlas material in place of the library atlas (ZombieTierLibrary tint); null = library atlas.</summary>
+        private Material _atlasOverride;
+        private static readonly string[] AtlasOnly = { ZombieModuleLibrary.MaterialAtlas };
+        private static readonly string[] ClothOnly = { ZombieModuleLibrary.MaterialCloth };
         /// <summary>WP-020 · Per module slot (body/top/bottom/head): the bound module's material names in sub-mesh order; null = atlas only.</summary>
         private readonly string[][] _slotMaterials = new string[SlotCount][];
         /// <summary>WP-038C · Per renderer (LOD-major) override when the bound mesh carries its own material list (fewer sub-meshes than the module).</summary>
@@ -202,7 +206,7 @@ namespace DD.Prototype.Characters
             }
 
             // A re-assembled look changes the sub-mesh layout: re-apply the current version's material arrays.
-            if (_materialTier >= 0) ApplyMaterial(library, _materialTier);
+            if (_materialTier >= 0) ApplyMaterial(library, _materialTier, _atlasOverride);
             return ok;
         }
 
@@ -233,28 +237,41 @@ namespace DD.Prototype.Characters
         /// module with two sub-meshes (AP-007 v002 cloth atlas) takes the library's cached [atlas, cloth]
         /// array for the version; single-material slots keep the plain shared material.
         /// </summary>
-        public void ApplyMaterial(ZombieModuleLibrary library, int tierIndex)
+        public void ApplyMaterial(ZombieModuleLibrary library, int tierIndex) => ApplyMaterial(library, tierIndex, null);
+
+        /// <summary>
+        /// WP-088 · As above, with the version's body-atlas material (<paramref name="atlasOverride"/>, the WP-036 tint) standing in
+        /// for the library atlas on the atlas sub-meshes only — cloth sub-meshes keep the version's cloth atlas.
+        /// </summary>
+        public void ApplyMaterial(ZombieModuleLibrary library, int tierIndex, Material atlasOverride)
         {
-            Material m = library != null ? library.MaterialFor(tierIndex) : null;
-            if (m == null) return;
+            Material m = atlasOverride != null ? atlasOverride : library != null ? library.MaterialFor(tierIndex) : null;
+            if (m == null || library == null) return;
             for (int i = 0; i < _slots.Length; i++)
             {
                 SkinnedMeshRenderer r = _slots[i];
                 if (r == null) continue;
-                string[] names = (i < _rendererMaterials.Length ? _rendererMaterials[i] : null) ?? _slotMaterials[i % SlotCount];
+                // WP-088: the asset serialises "no per-LOD list" as an empty array, not null — empty means the module's own list
+                // (with ?? alone every garment fell back to the body atlas and lost its cloth sub-mesh).
+                string[] lodNames = i < _rendererMaterials.Length ? _rendererMaterials[i] : null;
+                string[] names = lodNames != null && lodNames.Length > 0 ? lodNames : _slotMaterials[i % SlotCount];
                 if (names != null && names.Length > 1)
                 {
-                    Material[] set = library.MaterialsFor(names, tierIndex);
+                    Material[] set = library.MaterialsFor(names, tierIndex, atlasOverride);
                     if (!SameMaterials(r, set)) r.sharedMaterials = set;
                 }
                 else
                 {
-                    Material single = names != null && names.Length == 1 && names[0] == ZombieModuleLibrary.MaterialCloth ? library.ClothMaterialFor(tierIndex) : m;
-                    if (r.sharedMaterial != single) r.sharedMaterial = single;
+                    // WP-088: the whole (cached, one-entry) array, not sharedMaterial — a pooled renderer that last carried a
+                    // two-material garment otherwise keeps the stale second material and draws its one sub-mesh twice.
+                    string[] one = names != null && names.Length == 1 && names[0] == ZombieModuleLibrary.MaterialCloth ? ClothOnly : AtlasOnly;
+                    Material[] single = library.MaterialsFor(one, tierIndex, atlasOverride);
+                    if (!SameMaterials(r, single)) r.sharedMaterials = single;
                 }
             }
 
             _materialTier = tierIndex;
+            _atlasOverride = atlasOverride;
         }
 
         private static bool SameMaterials(Renderer r, Material[] set)

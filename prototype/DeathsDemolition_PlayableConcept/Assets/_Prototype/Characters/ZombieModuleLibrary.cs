@@ -143,14 +143,18 @@ namespace DD.Prototype.Characters
         /// WP-020 · The shared-material array of a module's sub-mesh order for one enemy version
         /// (cached per pattern × tier: at most 3 patterns × 4 tiers — no per-spawn allocation after warm-up).
         /// </summary>
-        public Material[] MaterialsFor(string[] materialNames, int tierIndex)
+        public Material[] MaterialsFor(string[] materialNames, int tierIndex) => MaterialsFor(materialNames, tierIndex, null);
+
+        /// <summary>WP-088 · As above, with <paramref name="atlasOverride"/> (the version's body-atlas tint) on the atlas entries; cached per override.</summary>
+        public Material[] MaterialsFor(string[] materialNames, int tierIndex, Material atlasOverride)
         {
             if (materialNames == null || materialNames.Length == 0) materialNames = new[] { MaterialAtlas };
-            string key = string.Join("|", materialNames) + "#" + tierIndex;
+            string key = string.Join("|", materialNames) + "#" + tierIndex + "#" + (atlasOverride != null ? atlasOverride.GetInstanceID() : 0);
             if (_materialSets == null) _materialSets = new Dictionary<string, Material[]>(StringComparer.Ordinal);
             if (_materialSets.TryGetValue(key, out Material[] set)) return set;
+            Material atlas = atlasOverride != null ? atlasOverride : MaterialFor(tierIndex);
             set = new Material[materialNames.Length];
-            for (int i = 0; i < set.Length; i++) set[i] = materialNames[i] == MaterialCloth ? ClothMaterialFor(tierIndex) : MaterialFor(tierIndex);
+            for (int i = 0; i < set.Length; i++) set[i] = materialNames[i] == MaterialCloth ? ClothMaterialFor(tierIndex) : atlas;
             _materialSets[key] = set;
             return set;
         }
