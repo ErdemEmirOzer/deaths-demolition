@@ -142,7 +142,7 @@ Kaynak: `python3 tools/qa/r2_gates_lint.py` (C-00B B-02). Main `3e68bc08` içeri
 | Uyarı | Kapı | Ne demek | Sahip | İstenen |
 |---|---|---|---|---|
 | EXPLICIT-UNRUN | H1 | `R2HeroOlcumTests.H1_ElTutamak_TumKlasikSilahlar_DurusYuruyus` `[Explicit]`, kapıda `measuredBy` yok; zincirin oturumları testi hiç koşmaz | **S-06** (test), **S-10** (zincir) | H1'e `measuredBy {"suite":"playmode","filter":"<tam ad>","quiet":false}` (C-00 kaydı) ya da S-06'nın `<E>/r2/` koşusu. Hangisi olduğu yazılsın. |
-| TEST-EXPLICIT | Z3b | Zorunlu test `DD.Art.Tests.PlayMode.SetPassAttributionTests.SetPass_Kaynaklari_40ZombiTamZirh` fixture düzeyinde `[Explicit]`; onu adıyla koşan bir oturum yok, bu yüzden bağlı XML'de çıkmaz | **S-03** (kapı), **S-10** (zincir) | Zincire adıyla bir adım ya da `tests` satırının gözden geçirilmesi. BEKLEYEN §8–§9'daki ortak sabit karışım işiyle birlikte. |
+| TEST-EXPLICIT | Z3b | Zorunlu test `DD.Art.Tests.PlayMode.SetPassAttributionTests.SetPass_Kaynaklari_40ZombiTamZirh` fixture düzeyinde `[Explicit]`; onu adıyla koşan bir oturum yok, bu yüzden bağlı XML'de çıkmaz | **S-03** (kapı), **S-10** (zincir) | Zincire adıyla bir adım ya da `tests` satırının gözden geçirilmesi. BEKLEYEN §7 ve "S-10 → S-05" bölümündeki ortak sabit karışım (22/10/6/2) işiyle birlikte. |
 | NO-WRITER | H2, H4a | Yazan test yok, `measuredBy` yok | **S-06** | silah omuz/göğüs kesişimi (H2) ve FP kol çerçevesi (H4a) ölçüm testleri |
 | NO-WRITER | L1, L1t, L2, L3, L4, L5 | aynı | **S-06** | WP-083 klip alımından sonra locomotion ölçümleri |
 | NO-WRITER | Z3 | aynı | **S-05** | 40 zombi render/doku bütçesi oranları (R1'e karşı) |
