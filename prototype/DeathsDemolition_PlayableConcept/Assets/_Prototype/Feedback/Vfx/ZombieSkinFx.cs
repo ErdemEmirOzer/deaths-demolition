@@ -229,6 +229,7 @@ namespace DD.Prototype.Feedback.Vfx
             {
                 WriteOne(visual.Slot(lod, ZombieSkinnedVisual.SlotBody), colour, clear);
                 WriteOne(visual.Slot(lod, ZombieSkinnedVisual.SlotBottom), colour, clear);
+                WriteOne(visual.Slot(lod, ZombieSkinnedVisual.SlotFace), colour, clear);   // WP-084: the O1 body is headless — the face glows with it
             }
         }
 

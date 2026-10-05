@@ -1,0 +1,335 @@
+{
+ "schema": "DD.ap025-intake-manifest.v1",
+ "export": "v002",
+ "map": "ap025-intake.json",
+ "builder": {
+  "bodyObject": "Zombie_O1_Body_{fit}_LOD{lod}",
+  "faces": [
+   {
+    "id": "F1_gaunt",
+    "name": "Gaunt",
+    "object": "ZombieFace_Gaunt_LOD{lod}",
+    "fbx": "Faces/ZombieFace_Gaunt_LOD{lod}.fbx"
+   },
+   {
+    "id": "F2_swollen",
+    "name": "Swollen",
+    "object": "ZombieFace_Swollen_LOD{lod}",
+    "fbx": "Faces/ZombieFace_Swollen_LOD{lod}.fbx"
+   },
+   {
+    "id": "F3_riven",
+    "name": "Riven",
+    "object": "ZombieFace_Riven_LOD{lod}",
+    "fbx": "Faces/ZombieFace_Riven_LOD{lod}.fbx"
+   }
+  ],
+  "fitOverrides": {
+   "C": {
+    "modulesFbx": "Modules/C_H2/zombie_{id}_C.fbx",
+    "tierFbx": "Tier/C_H2/{name}_C.fbx"
+   }
+  },
+  "skinAtlasMaterial": {
+   "orm": "Textures/T_zombie_atlas_ORM.png",
+   "maskArray": "Textures/T_zombie_masks_Array.png",
+   "atlasDomain": [
+    0.5,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "clothDomain": [
+    0.5,
+    1.0,
+    0.5,
+    0.0
+   ],
+   "tierClothRectOnSkinAtlas": [
+    0.875,
+    0.125,
+    1.0,
+    0.25
+   ]
+  }
+ },
+ "copied": [
+  {
+   "from": "Bodies/Zombie_O1_Body_A.fbx",
+   "to": "zombie_body_A.fbx",
+   "sha256": "44e65c4865027d115141d1d14a39cf0480df1a412018be10c1e291ee037d385b"
+  },
+  {
+   "from": "Bodies/Zombie_O1_Body_B.fbx",
+   "to": "zombie_body_B.fbx",
+   "sha256": "2f7121838bdcd9f924a1a3725dc82689a30e5017916bcb5af177cf2244469d1e"
+  },
+  {
+   "from": "Bodies/Zombie_O1_Body_C.fbx",
+   "to": "zombie_body_C.fbx",
+   "sha256": "ae05e2e26a55dc2e186c4a0641f1cda530acb442613ee69b237d060dd8ebe252"
+  },
+  {
+   "from": "Heads/ZombieFace_Gaunt_LOD0.fbx",
+   "to": "Faces/ZombieFace_Gaunt_LOD0.fbx",
+   "sha256": "eedad5763355d0e4edd55f3dc57ed12d3103f18e3dcc7d76e643805564edcc1a"
+  },
+  {
+   "from": "Heads/ZombieFace_Gaunt_LOD1.fbx",
+   "to": "Faces/ZombieFace_Gaunt_LOD1.fbx",
+   "sha256": "a569736def85fa1d73540571e2837c7b6e7e150e454c12c3d844b977baedf5b0"
+  },
+  {
+   "from": "Heads/ZombieFace_Gaunt_LOD2.fbx",
+   "to": "Faces/ZombieFace_Gaunt_LOD2.fbx",
+   "sha256": "09d078a1147c4612799369c57cd7b91a26e48f319874d197feb1748b6b44a681"
+  },
+  {
+   "from": "Heads/ZombieFace_Gaunt_LOD3.fbx",
+   "to": "Faces/ZombieFace_Gaunt_LOD3.fbx",
+   "sha256": "5861ee59b798923faab08f7e6e0e3e8aa8b29969ea6fddb3fce3cea698d403d3"
+  },
+  {
+   "from": "Heads/ZombieFace_Riven_LOD0.fbx",
+   "to": "Faces/ZombieFace_Riven_LOD0.fbx",
+   "sha256": "815aa9c84c9d6fb51bea557f931514c8f9ba67b19352cb1ec62371331fdb8458"
+  },
+  {
+   "from": "Heads/ZombieFace_Riven_LOD1.fbx",
+   "to": "Faces/ZombieFace_Riven_LOD1.fbx",
+   "sha256": "979e4c0d1d6f09355b51c0ff598be19c9452925a96d022be28a07ad40a0808c6"
+  },
+  {
+   "from": "Heads/ZombieFace_Riven_LOD2.fbx",
+   "to": "Faces/ZombieFace_Riven_LOD2.fbx",
+   "sha256": "63d77943fb588963aa858729a25657458d37b2bc45c345a52362b83a1a61da82"
+  },
+  {
+   "from": "Heads/ZombieFace_Riven_LOD3.fbx",
+   "to": "Faces/ZombieFace_Riven_LOD3.fbx",
+   "sha256": "2934edaf52b54822927d450de229825fb7979a4a5fcfbaf841e941a4da974b30"
+  },
+  {
+   "from": "Heads/ZombieFace_Swollen_LOD0.fbx",
+   "to": "Faces/ZombieFace_Swollen_LOD0.fbx",
+   "sha256": "edfbe19db11e31eb1d7d7961d3399903c783f613888968deba5e965611009de4"
+  },
+  {
+   "from": "Heads/ZombieFace_Swollen_LOD1.fbx",
+   "to": "Faces/ZombieFace_Swollen_LOD1.fbx",
+   "sha256": "abf6961dbfcafdf08875132780f6dca20ac152274b6c55c00f8e25cd7cad0bab"
+  },
+  {
+   "from": "Heads/ZombieFace_Swollen_LOD2.fbx",
+   "to": "Faces/ZombieFace_Swollen_LOD2.fbx",
+   "sha256": "d28d6e4f7e65ed01ecfec751bc145a3efbea4e8157ac9c8dd9ff0671d44b3ba4"
+  },
+  {
+   "from": "Heads/ZombieFace_Swollen_LOD3.fbx",
+   "to": "Faces/ZombieFace_Swollen_LOD3.fbx",
+   "sha256": "501a76eda050217d13cb1b51dfc4a18870580df10d292f268a2a48665fa16823"
+  },
+  {
+   "from": "Garments_C_H2/zombie_A1_straw_hat_C.fbx",
+   "to": "Modules/C_H2/zombie_A1_straw_hat_C.fbx",
+   "sha256": "4738766dd10ec6545c8fbc73e74469cb2268a2b4f023504d6edddc4ba49cba3a"
+  },
+  {
+   "from": "Garments_C_H2/zombie_A2_face_wrap_C.fbx",
+   "to": "Modules/C_H2/zombie_A2_face_wrap_C.fbx",
+   "sha256": "0a14952c3b21e96a0a7f5a939d995025bb78b1664d99277cee8e9fe5462e50ca"
+  },
+  {
+   "from": "Garments_C_H2/zombie_B1_hakama_wide_C.fbx",
+   "to": "Modules/C_H2/zombie_B1_hakama_wide_C.fbx",
+   "sha256": "34de2810056373076917e518b1fc472e179d49a453bcc01428c4bdcc390cbb34"
+  },
+  {
+   "from": "Garments_C_H2/zombie_B2_momohiki_tight_C.fbx",
+   "to": "Modules/C_H2/zombie_B2_momohiki_tight_C.fbx",
+   "sha256": "0e6066c938ccbf8eb72b57a879b270e75a01e4d74317b146952fb68a6ace7d1b"
+  },
+  {
+   "from": "Garments_C_H2/zombie_B3_koshimaki_wrap_C.fbx",
+   "to": "Modules/C_H2/zombie_B3_koshimaki_wrap_C.fbx",
+   "sha256": "54617aed3a09348bb055201eadab7dd1d80294f8a8612bfb161b9b38a68b8b8b"
+  },
+  {
+   "from": "Garments_C_H2/zombie_B4_tattsuke_hakama_C.fbx",
+   "to": "Modules/C_H2/zombie_B4_tattsuke_hakama_C.fbx",
+   "sha256": "c196726dbc1c3e2f2bbd20f4438c9ec181a57e981665fb54df7c0136a3683c54"
+  },
+  {
+   "from": "Garments_C_H2/zombie_B5_fundoshi_C.fbx",
+   "to": "Modules/C_H2/zombie_B5_fundoshi_C.fbx",
+   "sha256": "7b4f74131b7a7cc9aa1362fa49329ebb386dbc9b4de143d3ed42261b970f969c"
+  },
+  {
+   "from": "Garments_C_H2/zombie_B6_hakama_torn_C.fbx",
+   "to": "Modules/C_H2/zombie_B6_hakama_torn_C.fbx",
+   "sha256": "d3afcaf7c910569f5a464e63e22450cefab2e20258f740f33bcb39a032c355a7"
+  },
+  {
+   "from": "Garments_C_H2/zombie_B7_momohiki_kyahan_C.fbx",
+   "to": "Modules/C_H2/zombie_B7_momohiki_kyahan_C.fbx",
+   "sha256": "2e1560223035112d8876919c9b67c7839d81c93476ba4e2730e0aa6ac92fc669"
+  },
+  {
+   "from": "Garments_C_H2/zombie_H1_hair_crop_C.fbx",
+   "to": "Modules/C_H2/zombie_H1_hair_crop_C.fbx",
+   "sha256": "98b40b3fc8be69a764fb97849f994c309668d79cbce62dc1cbdb2dde203ad4a6"
+  },
+  {
+   "from": "Garments_C_H2/zombie_H2_hair_matted_C.fbx",
+   "to": "Modules/C_H2/zombie_H2_hair_matted_C.fbx",
+   "sha256": "0459d60f635997111895c8e288049bf13cd480ee147f086b7624a725d1fbf1c4"
+  },
+  {
+   "from": "Garments_C_H2/zombie_H3_topknot_broken_C.fbx",
+   "to": "Modules/C_H2/zombie_H3_topknot_broken_C.fbx",
+   "sha256": "20507f6f349cdd6eb1fcd17889fc06a9c00b4a858c702577d82a6620d0e8c0df"
+  },
+  {
+   "from": "Garments_C_H2/zombie_H4_tenugui_wrap_C.fbx",
+   "to": "Modules/C_H2/zombie_H4_tenugui_wrap_C.fbx",
+   "sha256": "013c25545007a0408bf4e3f34d3efda7c1cb43d7f80dc69699b3cb8b0eb3966d"
+  },
+  {
+   "from": "Garments_C_H2/zombie_H5_hachimaki_band_C.fbx",
+   "to": "Modules/C_H2/zombie_H5_hachimaki_band_C.fbx",
+   "sha256": "b9ac7b790c91e19b34d5bb98fbddf7885e96bf73db819de7342af2c0f10041f9"
+  },
+  {
+   "from": "Garments_C_H2/zombie_H6_bandage_wrap_C.fbx",
+   "to": "Modules/C_H2/zombie_H6_bandage_wrap_C.fbx",
+   "sha256": "c548a31b8898f9369a40751d0204b52b5265cbbf79642f2028b7a42852327058"
+  },
+  {
+   "from": "Garments_C_H2/zombie_H7_matted_wound_C.fbx",
+   "to": "Modules/C_H2/zombie_H7_matted_wound_C.fbx",
+   "sha256": "a6829307cf4740cebfe41f84727f27115fb8b6395648df2f22498fc1541b5c94"
+  },
+  {
+   "from": "Garments_C_H2/zombie_T1_kosode_short_C.fbx",
+   "to": "Modules/C_H2/zombie_T1_kosode_short_C.fbx",
+   "sha256": "2df4a783a567eaa7de6f81c7751f6672daaea8962fa2b82aab5ba3ef59ad2c05"
+  },
+  {
+   "from": "Garments_C_H2/zombie_T2_kosode_long_C.fbx",
+   "to": "Modules/C_H2/zombie_T2_kosode_long_C.fbx",
+   "sha256": "da27f445859949425d904c8759f07b8d4b9ce594a359b90d440a863398b743da"
+  },
+  {
+   "from": "Garments_C_H2/zombie_T3_haori_open_C.fbx",
+   "to": "Modules/C_H2/zombie_T3_haori_open_C.fbx",
+   "sha256": "ac658995ea3c948a5b249e73417bce78d57b9f58a9afa8ff9e96a056c34c46f7"
+  },
+  {
+   "from": "Garments_C_H2/zombie_T4_hanten_vest_C.fbx",
+   "to": "Modules/C_H2/zombie_T4_hanten_vest_C.fbx",
+   "sha256": "165d43d1d46ca1aa4e4e0ebbfdc69e171d6611386607084b0de8c11e93ccc6a4"
+  },
+  {
+   "from": "Garments_C_H2/zombie_T5_kosode_torn_C.fbx",
+   "to": "Modules/C_H2/zombie_T5_kosode_torn_C.fbx",
+   "sha256": "f776adcd6ec9872788b08936965b53a5df8028c97acfb6ba72ac83861c4bf2de"
+  },
+  {
+   "from": "Garments_C_H2/zombie_T6_bare_straps_C.fbx",
+   "to": "Modules/C_H2/zombie_T6_bare_straps_C.fbx",
+   "sha256": "2e2a03833f1c4ea1fa68999152327cbe09ac03db671e4602f6c229fe1592176c"
+  },
+  {
+   "from": "Garments_C_H2/zombie_T7_mino_cape_C.fbx",
+   "to": "Modules/C_H2/zombie_T7_mino_cape_C.fbx",
+   "sha256": "fc4de6fecebab4765b4b3d2e5d7ca6eac93aca0b658fe0226a10bd47b516d40e"
+  },
+  {
+   "from": "Garments_C_H2/zombie_T8_kosode_rolled_C.fbx",
+   "to": "Modules/C_H2/zombie_T8_kosode_rolled_C.fbx",
+   "sha256": "bde857f7726eb4cfb7ff72b4034fae97d2e91311f654f9013b6c0a35074019fd"
+  },
+  {
+   "from": "Tiers_C_H2/zombie_tier_elite_backframe_C.fbx",
+   "to": "Tier/C_H2/zombie_tier_elite_backframe_C.fbx",
+   "sha256": "ef22d0b86cc0dadc81041c62640409b75708d06f076a9bf548a3061f2f39c368"
+  },
+  {
+   "from": "Tiers_C_H2/zombie_tier_elite_sode_C.fbx",
+   "to": "Tier/C_H2/zombie_tier_elite_sode_C.fbx",
+   "sha256": "3e754c7fa033d381fdb1e4441da40ce250d4fc8610f5db848bbf9de1f3c483d7"
+  },
+  {
+   "from": "Tiers_C_H2/zombie_tier_special_collar_C.fbx",
+   "to": "Tier/C_H2/zombie_tier_special_collar_C.fbx",
+   "sha256": "d1406d60722c21672bbcfd3937ff34678053ff4dadab41a7e209f7e366b5132c"
+  },
+  {
+   "from": "Tiers_C_H2/zombie_tier_ultra_yoke_C.fbx",
+   "to": "Tier/C_H2/zombie_tier_ultra_yoke_C.fbx",
+   "sha256": "d4683b89ef319598aac9c317069d42ea997bb2569c8913d93da056b60a1f9d5e"
+  },
+  {
+   "from": "Textures/Zombie_O1_BaseColor.png",
+   "to": "Textures/T_zombie_atlas_BaseColor.png",
+   "sha256": "4b3df93203bf3718757cbc47d20ed2baa393f900b5469cf4370e85c112cae48f"
+  },
+  {
+   "from": "Textures/Zombie_O1_Normal.png",
+   "to": "Textures/T_zombie_atlas_Normal.png",
+   "sha256": "e5288067a9ffef528b19a59bc40191a6dc938e177c7d8506b2e1baeeec2bd286"
+  },
+  {
+   "from": "Textures/Zombie_O1_ORM.png",
+   "to": "Textures/T_zombie_atlas_ORM.png",
+   "sha256": "a9fb9cb0e881022abf160c911165fbf14abbe8cfd1ed894eb0a11c2065024214"
+  },
+  {
+   "from": "module-map.json",
+   "to": "AP025-module-map.json",
+   "sha256": "f535737a45d9d1f78218c922055f05642d6e835b0ad7523deadd5fcc9bd8d104"
+  },
+  {
+   "from": "material-contract.json",
+   "to": "AP025-material-contract.json",
+   "sha256": "29a47b1f4e7369dda2a796e3e5fea94c51a98f4cb860b0ebc460b70e2266aa95"
+  }
+ ],
+ "maskArray": {
+  "to": "Textures/T_zombie_masks_Array.png",
+  "grid": [
+   3,
+   3
+  ],
+  "slice": [
+   1024,
+   1024
+  ],
+  "slices": [
+   "Masks/Zombie_O1_Skin_00.png",
+   "Masks/Zombie_O1_Skin_01.png",
+   "Masks/Zombie_O1_Skin_02.png",
+   "Masks/Zombie_O1_Dirt_00.png",
+   "Masks/Zombie_O1_Dirt_01.png",
+   "Masks/Zombie_O1_Dirt_02.png",
+   "Masks/Zombie_O1_Blood_00.png",
+   "Masks/Zombie_O1_Blood_01.png",
+   "Masks/Zombie_O1_Blood_02.png"
+  ],
+  "sha256": "179995de32964471a3f48ffded8b202644cc382aca83559d8b3b858b614acfd5"
+ },
+ "retired": [
+  "Textures/T_zombie_atlas_Packed.png",
+  "Textures/T_zombie_atlas_Packed.png.meta",
+  "Textures/T_zombie_atlas_Mask.png",
+  "Textures/T_zombie_atlas_Mask.png.meta",
+  "Textures/Derived/T_zombie_atlas_MetallicSmoothness.png",
+  "Textures/Derived/T_zombie_atlas_MetallicSmoothness.png.meta",
+  "Textures/Derived/T_zombie_atlas_MetallicSmoothness.provenance.json",
+  "Textures/Derived/T_zombie_atlas_MetallicSmoothness.provenance.json.meta",
+  "Textures/Derived/T_zombie_atlas_DetailMask.png",
+  "Textures/Derived/T_zombie_atlas_DetailMask.png.meta",
+  "Textures/Derived/T_zombie_atlas_DetailMask.provenance.json",
+  "Textures/Derived/T_zombie_atlas_DetailMask.provenance.json.meta"
+ ]
+}

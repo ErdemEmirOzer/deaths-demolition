@@ -60,7 +60,9 @@ namespace DD.Prototype.Tests.PlayMode
             Scene scene = SceneManager.CreateScene("WP084 parity " + Guid.NewGuid().ToString("N"));
             SceneManager.SetActiveScene(scene);
             var materials = new List<Material>();
-            void Add(Material m) { if (m != null && m.shader == shipped && !materials.Contains(m)) materials.Add(m); }
+            // WP-084 slice 1: the AP-025 O1 skin and cloth materials ship with _ZOMBIE_MASKS on — this test is the keyword-OFF parity
+            // (the shader commit's promise), so only the materials that keep it off are compared (armour tint ×4, tier parts ×4).
+            void Add(Material m) { if (m != null && m.shader == shipped && !m.IsKeywordEnabled("_ZOMBIE_MASKS") && !materials.Contains(m)) materials.Add(m); }
             foreach (Material m in tier.bodyMaterials) Add(m);
             foreach (Material m in tier.armorMaterials) Add(m);
             foreach (Material m in tier.partMaterials) Add(m);
@@ -70,7 +72,7 @@ namespace DD.Prototype.Tests.PlayMode
                 foreach (Material m in set.ZombieLibrary.tierMaterials) Add(m);
                 foreach (Material m in set.ZombieLibrary.tierClothMaterials) Add(m);
             }
-            Assert.Greater(materials.Count, 8, "kaynak yok: Tier Lit materyalleri");
+            Assert.GreaterOrEqual(materials.Count, 8, "kaynak yok: anahtarı kapalı Tier Lit materyalleri");
 
             var camGo = new GameObject("parity camera");
             Camera cam = camGo.AddComponent<Camera>();

@@ -115,7 +115,7 @@ MonoBehaviour:
   bodies:
   - fit: A
     lods:
-    - mesh: {fileID: -3527609320987624969, guid: 5d86ff0c59ec8411d8c8aab7aa0422bb, type: 3}
+    - mesh: {fileID: 5925053901665744050, guid: 5d86ff0c59ec8411d8c8aab7aa0422bb, type: 3}
       boneNames:
       - Root
       - Hips
@@ -132,7 +132,6 @@ MonoBehaviour:
       - sec_hachimaki_2
       - sec_bandage_tie_1
       - sec_bandage_tie_2
-      - jaw
       - LeftShoulder
       - LeftUpperArm
       - LeftLowerArm
@@ -192,9 +191,9 @@ MonoBehaviour:
       - RightFoot
       - RightToes
       rootBone: Root
-      triangles: 5798
+      triangles: 4812
       materials: []
-    - mesh: {fileID: 6004727163521317755, guid: 5d86ff0c59ec8411d8c8aab7aa0422bb, type: 3}
+    - mesh: {fileID: -6818353999513440101, guid: 5d86ff0c59ec8411d8c8aab7aa0422bb, type: 3}
       boneNames:
       - Root
       - Hips
@@ -211,7 +210,6 @@ MonoBehaviour:
       - sec_hachimaki_2
       - sec_bandage_tie_1
       - sec_bandage_tie_2
-      - jaw
       - LeftShoulder
       - LeftUpperArm
       - LeftLowerArm
@@ -271,9 +269,9 @@ MonoBehaviour:
       - RightFoot
       - RightToes
       rootBone: Root
-      triangles: 2400
+      triangles: 2170
       materials: []
-    - mesh: {fileID: -5023983146215902199, guid: 5d86ff0c59ec8411d8c8aab7aa0422bb, type: 3}
+    - mesh: {fileID: 3117770798822427111, guid: 5d86ff0c59ec8411d8c8aab7aa0422bb, type: 3}
       boneNames:
       - Root
       - Hips
@@ -290,7 +288,6 @@ MonoBehaviour:
       - sec_hachimaki_2
       - sec_bandage_tie_1
       - sec_bandage_tie_2
-      - jaw
       - LeftShoulder
       - LeftUpperArm
       - LeftLowerArm
@@ -350,9 +347,9 @@ MonoBehaviour:
       - RightFoot
       - RightToes
       rootBone: Root
-      triangles: 850
+      triangles: 814
       materials: []
-    - mesh: {fileID: 8900760412563990261, guid: 5d86ff0c59ec8411d8c8aab7aa0422bb, type: 3}
+    - mesh: {fileID: -6372308329063197344, guid: 5d86ff0c59ec8411d8c8aab7aa0422bb, type: 3}
       boneNames:
       - Root
       - Hips
@@ -369,7 +366,6 @@ MonoBehaviour:
       - sec_hachimaki_2
       - sec_bandage_tie_1
       - sec_bandage_tie_2
-      - jaw
       - LeftShoulder
       - LeftUpperArm
       - LeftLowerArm
@@ -429,11 +425,11 @@ MonoBehaviour:
       - RightFoot
       - RightToes
       rootBone: Root
-      triangles: 278
+      triangles: 328
       materials: []
   - fit: B
     lods:
-    - mesh: {fileID: -3438226631621291880, guid: 6da9fc37cd6114e778d4b39d94fce5cc, type: 3}
+    - mesh: {fileID: 5123420161844578356, guid: 6da9fc37cd6114e778d4b39d94fce5cc, type: 3}
       boneNames:
       - Root
       - Hips
@@ -450,7 +446,6 @@ MonoBehaviour:
       - sec_hachimaki_2
       - sec_bandage_tie_1
       - sec_bandage_tie_2
-      - jaw
       - LeftShoulder
       - LeftUpperArm
       - LeftLowerArm
@@ -510,9 +505,9 @@ MonoBehaviour:
       - RightFoot
       - RightToes
       rootBone: Root
-      triangles: 5798
+      triangles: 5092
       materials: []
-    - mesh: {fileID: -7527015642762977472, guid: 6da9fc37cd6114e778d4b39d94fce5cc, type: 3}
+    - mesh: {fileID: -7525145521593990019, guid: 6da9fc37cd6114e778d4b39d94fce5cc, type: 3}
       boneNames:
       - Root
       - Hips
@@ -529,7 +524,6 @@ MonoBehaviour:
       - sec_hachimaki_2
       - sec_bandage_tie_1
       - sec_bandage_tie_2
-      - jaw
       - LeftShoulder
       - LeftUpperArm
       - LeftLowerArm
@@ -589,9 +583,9 @@ MonoBehaviour:
       - RightFoot
       - RightToes
       rootBone: Root
-      triangles: 2400
+      triangles: 2308
       materials: []
-    - mesh: {fileID: -908867525864009342, guid: 6da9fc37cd6114e778d4b39d94fce5cc, type: 3}
+    - mesh: {fileID: 7358434846617165739, guid: 6da9fc37cd6114e778d4b39d94fce5cc, type: 3}
       boneNames:
       - Root
       - Hips
@@ -608,7 +602,6 @@ MonoBehaviour:
       - sec_hachimaki_2
       - sec_bandage_tie_1
       - sec_bandage_tie_2
-      - jaw
       - LeftShoulder
       - LeftUpperArm
       - LeftLowerArm
@@ -668,9 +661,9 @@ MonoBehaviour:
       - RightFoot
       - RightToes
       rootBone: Root
-      triangles: 850
+      triangles: 884
       materials: []
-    - mesh: {fileID: -1995612154206835113, guid: 6da9fc37cd6114e778d4b39d94fce5cc, type: 3}
+    - mesh: {fileID: -2126407911076540780, guid: 6da9fc37cd6114e778d4b39d94fce5cc, type: 3}
       boneNames:
       - Root
       - Hips
@@ -687,7 +680,6 @@ MonoBehaviour:
       - sec_hachimaki_2
       - sec_bandage_tie_1
       - sec_bandage_tie_2
-      - jaw
       - LeftShoulder
       - LeftUpperArm
       - LeftLowerArm
@@ -747,11 +739,11 @@ MonoBehaviour:
       - RightFoot
       - RightToes
       rootBone: Root
-      triangles: 278
+      triangles: 328
       materials: []
   - fit: C
     lods:
-    - mesh: {fileID: 581372542049310129, guid: ee78a1294151346d0a7ae744ce8b1098, type: 3}
+    - mesh: {fileID: 2722463708580651430, guid: ee78a1294151346d0a7ae744ce8b1098, type: 3}
       boneNames:
       - Root
       - Hips
@@ -768,7 +760,6 @@ MonoBehaviour:
       - sec_hachimaki_2
       - sec_bandage_tie_1
       - sec_bandage_tie_2
-      - jaw
       - LeftShoulder
       - LeftUpperArm
       - LeftLowerArm
@@ -828,9 +819,9 @@ MonoBehaviour:
       - RightFoot
       - RightToes
       rootBone: Root
-      triangles: 5800
+      triangles: 4844
       materials: []
-    - mesh: {fileID: -8348707903672006793, guid: ee78a1294151346d0a7ae744ce8b1098, type: 3}
+    - mesh: {fileID: 1945782160106246762, guid: ee78a1294151346d0a7ae744ce8b1098, type: 3}
       boneNames:
       - Root
       - Hips
@@ -847,7 +838,6 @@ MonoBehaviour:
       - sec_hachimaki_2
       - sec_bandage_tie_1
       - sec_bandage_tie_2
-      - jaw
       - LeftShoulder
       - LeftUpperArm
       - LeftLowerArm
@@ -907,9 +897,9 @@ MonoBehaviour:
       - RightFoot
       - RightToes
       rootBone: Root
-      triangles: 2400
+      triangles: 2186
       materials: []
-    - mesh: {fileID: -2759808150008007833, guid: ee78a1294151346d0a7ae744ce8b1098, type: 3}
+    - mesh: {fileID: 4106740954392350550, guid: ee78a1294151346d0a7ae744ce8b1098, type: 3}
       boneNames:
       - Root
       - Hips
@@ -926,7 +916,6 @@ MonoBehaviour:
       - sec_hachimaki_2
       - sec_bandage_tie_1
       - sec_bandage_tie_2
-      - jaw
       - LeftShoulder
       - LeftUpperArm
       - LeftLowerArm
@@ -986,9 +975,9 @@ MonoBehaviour:
       - RightFoot
       - RightToes
       rootBone: Root
-      triangles: 850
+      triangles: 830
       materials: []
-    - mesh: {fileID: 6107085203723605289, guid: ee78a1294151346d0a7ae744ce8b1098, type: 3}
+    - mesh: {fileID: -6552526687742272234, guid: ee78a1294151346d0a7ae744ce8b1098, type: 3}
       boneNames:
       - Root
       - Hips
@@ -1005,7 +994,6 @@ MonoBehaviour:
       - sec_hachimaki_2
       - sec_bandage_tie_1
       - sec_bandage_tie_2
-      - jaw
       - LeftShoulder
       - LeftUpperArm
       - LeftLowerArm
@@ -1065,7 +1053,7 @@ MonoBehaviour:
       - RightFoot
       - RightToes
       rootBone: Root
-      triangles: 278
+      triangles: 336
       materials: []
   modules:
   - id: A1_straw_hat
@@ -1717,7 +1705,7 @@ MonoBehaviour:
     - colourway: '-'
       fit: C
       lods:
-      - mesh: {fileID: -8471606093273203579, guid: 2765033d25f10484d9fc9864b372a4b4, type: 3}
+      - mesh: {fileID: -8471606093273203579, guid: 8f231e59673d74a93a70871ec1ba1fbf, type: 3}
         boneNames:
         - Root
         - Hips
@@ -1734,7 +1722,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -1796,7 +1783,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 248
         materials: []
-      - mesh: {fileID: 3907733084805188697, guid: 2765033d25f10484d9fc9864b372a4b4, type: 3}
+      - mesh: {fileID: 3907733084805188697, guid: 8f231e59673d74a93a70871ec1ba1fbf, type: 3}
         boneNames:
         - Root
         - Hips
@@ -1813,7 +1800,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -1875,7 +1861,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 84
         materials: []
-      - mesh: {fileID: 3896526284300971436, guid: 2765033d25f10484d9fc9864b372a4b4, type: 3}
+      - mesh: {fileID: 3896526284300971436, guid: 8f231e59673d74a93a70871ec1ba1fbf, type: 3}
         boneNames:
         - Root
         - Hips
@@ -1892,7 +1878,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -1954,7 +1939,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 26
         materials: []
-      - mesh: {fileID: 7214263095058323322, guid: 2765033d25f10484d9fc9864b372a4b4, type: 3}
+      - mesh: {fileID: 7214263095058323322, guid: 8f231e59673d74a93a70871ec1ba1fbf, type: 3}
         boneNames:
         - Root
         - Hips
@@ -1971,7 +1956,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -2685,7 +2669,7 @@ MonoBehaviour:
     - colourway: cw1
       fit: C
       lods:
-      - mesh: {fileID: 5453763607907867044, guid: bad3bb769365f4e269b8e4eea4f2b1c4, type: 3}
+      - mesh: {fileID: 5453763607907867044, guid: 9eaf908c7254e403589004460f345199, type: 3}
         boneNames:
         - Root
         - Hips
@@ -2702,7 +2686,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -2764,7 +2747,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 299
         materials: []
-      - mesh: {fileID: -7476073454971831131, guid: bad3bb769365f4e269b8e4eea4f2b1c4, type: 3}
+      - mesh: {fileID: -7476073454971831131, guid: 9eaf908c7254e403589004460f345199, type: 3}
         boneNames:
         - Root
         - Hips
@@ -2781,7 +2764,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -2843,7 +2825,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 120
         materials: []
-      - mesh: {fileID: 1122457772252503337, guid: bad3bb769365f4e269b8e4eea4f2b1c4, type: 3}
+      - mesh: {fileID: 1122457772252503337, guid: 9eaf908c7254e403589004460f345199, type: 3}
         boneNames:
         - Root
         - Hips
@@ -2860,7 +2842,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -2922,7 +2903,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 50
         materials: []
-      - mesh: {fileID: 2239539393352730894, guid: bad3bb769365f4e269b8e4eea4f2b1c4, type: 3}
+      - mesh: {fileID: 2239539393352730894, guid: 9eaf908c7254e403589004460f345199, type: 3}
         boneNames:
         - Root
         - Hips
@@ -2939,7 +2920,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -3642,7 +3622,7 @@ MonoBehaviour:
     - colourway: cw2
       fit: C
       lods:
-      - mesh: {fileID: -6041848039825259171, guid: bad3bb769365f4e269b8e4eea4f2b1c4, type: 3}
+      - mesh: {fileID: -6041848039825259171, guid: 9eaf908c7254e403589004460f345199, type: 3}
         boneNames:
         - Root
         - Hips
@@ -3659,7 +3639,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -3721,7 +3700,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 299
         materials: []
-      - mesh: {fileID: -2367769521311297578, guid: bad3bb769365f4e269b8e4eea4f2b1c4, type: 3}
+      - mesh: {fileID: -2367769521311297578, guid: 9eaf908c7254e403589004460f345199, type: 3}
         boneNames:
         - Root
         - Hips
@@ -3738,7 +3717,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -3800,7 +3778,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 120
         materials: []
-      - mesh: {fileID: -5090299857604474207, guid: bad3bb769365f4e269b8e4eea4f2b1c4, type: 3}
+      - mesh: {fileID: -5090299857604474207, guid: 9eaf908c7254e403589004460f345199, type: 3}
         boneNames:
         - Root
         - Hips
@@ -3817,7 +3795,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -3879,7 +3856,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 50
         materials: []
-      - mesh: {fileID: 1868383190389752107, guid: bad3bb769365f4e269b8e4eea4f2b1c4, type: 3}
+      - mesh: {fileID: 1868383190389752107, guid: 9eaf908c7254e403589004460f345199, type: 3}
         boneNames:
         - Root
         - Hips
@@ -3896,7 +3873,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -4608,7 +4584,7 @@ MonoBehaviour:
     - colourway: cw1
       fit: C
       lods:
-      - mesh: {fileID: 5277404174036274700, guid: d33fcaabf870744399977bcb36384e4b, type: 3}
+      - mesh: {fileID: 5277404174036274700, guid: c49a241adb69840f7886e0c0ef68ea14, type: 3}
         boneNames:
         - Root
         - Hips
@@ -4625,7 +4601,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -4687,7 +4662,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 1982
         materials: []
-      - mesh: {fileID: -678776090214407566, guid: d33fcaabf870744399977bcb36384e4b, type: 3}
+      - mesh: {fileID: -678776090214407566, guid: c49a241adb69840f7886e0c0ef68ea14, type: 3}
         boneNames:
         - Root
         - Hips
@@ -4704,7 +4679,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -4766,7 +4740,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 809
         materials: []
-      - mesh: {fileID: 3544739789528782870, guid: d33fcaabf870744399977bcb36384e4b, type: 3}
+      - mesh: {fileID: 3544739789528782870, guid: c49a241adb69840f7886e0c0ef68ea14, type: 3}
         boneNames:
         - Root
         - Hips
@@ -4783,7 +4757,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -4845,7 +4818,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 272
         materials: []
-      - mesh: {fileID: 5765664836804934362, guid: d33fcaabf870744399977bcb36384e4b, type: 3}
+      - mesh: {fileID: 5765664836804934362, guid: c49a241adb69840f7886e0c0ef68ea14, type: 3}
         boneNames:
         - Root
         - Hips
@@ -4862,7 +4835,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -5565,7 +5537,7 @@ MonoBehaviour:
     - colourway: cw2
       fit: C
       lods:
-      - mesh: {fileID: 2357530944081829968, guid: d33fcaabf870744399977bcb36384e4b, type: 3}
+      - mesh: {fileID: 2357530944081829968, guid: c49a241adb69840f7886e0c0ef68ea14, type: 3}
         boneNames:
         - Root
         - Hips
@@ -5582,7 +5554,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -5644,7 +5615,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 1982
         materials: []
-      - mesh: {fileID: -2994854345494982626, guid: d33fcaabf870744399977bcb36384e4b, type: 3}
+      - mesh: {fileID: -2994854345494982626, guid: c49a241adb69840f7886e0c0ef68ea14, type: 3}
         boneNames:
         - Root
         - Hips
@@ -5661,7 +5632,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -5723,7 +5693,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 809
         materials: []
-      - mesh: {fileID: 1377676409059214831, guid: d33fcaabf870744399977bcb36384e4b, type: 3}
+      - mesh: {fileID: 1377676409059214831, guid: c49a241adb69840f7886e0c0ef68ea14, type: 3}
         boneNames:
         - Root
         - Hips
@@ -5740,7 +5710,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -5802,7 +5771,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 272
         materials: []
-      - mesh: {fileID: 5109044317052631533, guid: d33fcaabf870744399977bcb36384e4b, type: 3}
+      - mesh: {fileID: 5109044317052631533, guid: c49a241adb69840f7886e0c0ef68ea14, type: 3}
         boneNames:
         - Root
         - Hips
@@ -5819,7 +5788,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -6532,7 +6500,7 @@ MonoBehaviour:
     - colourway: cw1
       fit: C
       lods:
-      - mesh: {fileID: 1773056359169404405, guid: 62deaceccb2a14d56bdc302083d1f7c0, type: 3}
+      - mesh: {fileID: 1773056359169404405, guid: 6fb37580f1baa4d769d20ccd34238944, type: 3}
         boneNames:
         - Root
         - Hips
@@ -6549,7 +6517,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -6611,7 +6578,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 1927
         materials: []
-      - mesh: {fileID: 6680099328580120, guid: 62deaceccb2a14d56bdc302083d1f7c0, type: 3}
+      - mesh: {fileID: 6680099328580120, guid: 6fb37580f1baa4d769d20ccd34238944, type: 3}
         boneNames:
         - Root
         - Hips
@@ -6628,7 +6595,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -6690,7 +6656,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 777
         materials: []
-      - mesh: {fileID: 4534408784306435778, guid: 62deaceccb2a14d56bdc302083d1f7c0, type: 3}
+      - mesh: {fileID: 4534408784306435778, guid: 6fb37580f1baa4d769d20ccd34238944, type: 3}
         boneNames:
         - Root
         - Hips
@@ -6707,7 +6673,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -6769,7 +6734,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 263
         materials: []
-      - mesh: {fileID: -364115190237923998, guid: 62deaceccb2a14d56bdc302083d1f7c0, type: 3}
+      - mesh: {fileID: -364115190237923998, guid: 6fb37580f1baa4d769d20ccd34238944, type: 3}
         boneNames:
         - Root
         - Hips
@@ -6786,7 +6751,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -7489,7 +7453,7 @@ MonoBehaviour:
     - colourway: cw2
       fit: C
       lods:
-      - mesh: {fileID: 1732178758850210428, guid: 62deaceccb2a14d56bdc302083d1f7c0, type: 3}
+      - mesh: {fileID: 1732178758850210428, guid: 6fb37580f1baa4d769d20ccd34238944, type: 3}
         boneNames:
         - Root
         - Hips
@@ -7506,7 +7470,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -7568,7 +7531,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 1927
         materials: []
-      - mesh: {fileID: -3097637851090834970, guid: 62deaceccb2a14d56bdc302083d1f7c0, type: 3}
+      - mesh: {fileID: -3097637851090834970, guid: 6fb37580f1baa4d769d20ccd34238944, type: 3}
         boneNames:
         - Root
         - Hips
@@ -7585,7 +7548,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -7647,7 +7609,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 777
         materials: []
-      - mesh: {fileID: 4061482283707243914, guid: 62deaceccb2a14d56bdc302083d1f7c0, type: 3}
+      - mesh: {fileID: 4061482283707243914, guid: 6fb37580f1baa4d769d20ccd34238944, type: 3}
         boneNames:
         - Root
         - Hips
@@ -7664,7 +7626,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -7726,7 +7687,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 263
         materials: []
-      - mesh: {fileID: -1828260639518623957, guid: 62deaceccb2a14d56bdc302083d1f7c0, type: 3}
+      - mesh: {fileID: -1828260639518623957, guid: 6fb37580f1baa4d769d20ccd34238944, type: 3}
         boneNames:
         - Root
         - Hips
@@ -7743,7 +7704,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -8456,7 +8416,7 @@ MonoBehaviour:
     - colourway: cw1
       fit: C
       lods:
-      - mesh: {fileID: -3845661694877227800, guid: f3baedfaec1c1437ca1b13e81bd300fe, type: 3}
+      - mesh: {fileID: -3845661694877227800, guid: a45fa713b0d0e4942b63e71989237936, type: 3}
         boneNames:
         - Root
         - Hips
@@ -8473,7 +8433,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -8535,7 +8494,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 1254
         materials: []
-      - mesh: {fileID: 2700553301308670166, guid: f3baedfaec1c1437ca1b13e81bd300fe, type: 3}
+      - mesh: {fileID: 2700553301308670166, guid: a45fa713b0d0e4942b63e71989237936, type: 3}
         boneNames:
         - Root
         - Hips
@@ -8552,7 +8511,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -8614,7 +8572,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 595
         materials: []
-      - mesh: {fileID: 1659862719541853885, guid: f3baedfaec1c1437ca1b13e81bd300fe, type: 3}
+      - mesh: {fileID: 1659862719541853885, guid: a45fa713b0d0e4942b63e71989237936, type: 3}
         boneNames:
         - Root
         - Hips
@@ -8631,7 +8589,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -8693,7 +8650,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 208
         materials: []
-      - mesh: {fileID: -6388259012562858052, guid: f3baedfaec1c1437ca1b13e81bd300fe, type: 3}
+      - mesh: {fileID: -6388259012562858052, guid: a45fa713b0d0e4942b63e71989237936, type: 3}
         boneNames:
         - Root
         - Hips
@@ -8710,7 +8667,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -9413,7 +9369,7 @@ MonoBehaviour:
     - colourway: cw2
       fit: C
       lods:
-      - mesh: {fileID: -6770899218220109618, guid: f3baedfaec1c1437ca1b13e81bd300fe, type: 3}
+      - mesh: {fileID: -6770899218220109618, guid: a45fa713b0d0e4942b63e71989237936, type: 3}
         boneNames:
         - Root
         - Hips
@@ -9430,7 +9386,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -9492,7 +9447,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 1254
         materials: []
-      - mesh: {fileID: -5098405560717102427, guid: f3baedfaec1c1437ca1b13e81bd300fe, type: 3}
+      - mesh: {fileID: -5098405560717102427, guid: a45fa713b0d0e4942b63e71989237936, type: 3}
         boneNames:
         - Root
         - Hips
@@ -9509,7 +9464,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -9571,7 +9525,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 595
         materials: []
-      - mesh: {fileID: -8804478996192351616, guid: f3baedfaec1c1437ca1b13e81bd300fe, type: 3}
+      - mesh: {fileID: -8804478996192351616, guid: a45fa713b0d0e4942b63e71989237936, type: 3}
         boneNames:
         - Root
         - Hips
@@ -9588,7 +9542,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -9650,7 +9603,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 208
         materials: []
-      - mesh: {fileID: -7346047993298533448, guid: f3baedfaec1c1437ca1b13e81bd300fe, type: 3}
+      - mesh: {fileID: -7346047993298533448, guid: a45fa713b0d0e4942b63e71989237936, type: 3}
         boneNames:
         - Root
         - Hips
@@ -9667,7 +9620,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -10380,7 +10332,7 @@ MonoBehaviour:
     - colourway: cw1
       fit: C
       lods:
-      - mesh: {fileID: -2810039260417690075, guid: 6d19597a221564c818fcf3ae84bf4418, type: 3}
+      - mesh: {fileID: -2810039260417690075, guid: e97534f6fe22048e48b937d750b89b3e, type: 3}
         boneNames:
         - Root
         - Hips
@@ -10397,7 +10349,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -10459,7 +10410,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 2006
         materials: []
-      - mesh: {fileID: -7226472323145732423, guid: 6d19597a221564c818fcf3ae84bf4418, type: 3}
+      - mesh: {fileID: -7226472323145732423, guid: e97534f6fe22048e48b937d750b89b3e, type: 3}
         boneNames:
         - Root
         - Hips
@@ -10476,7 +10427,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -10538,7 +10488,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 822
         materials: []
-      - mesh: {fileID: 7328995892174768324, guid: 6d19597a221564c818fcf3ae84bf4418, type: 3}
+      - mesh: {fileID: 7328995892174768324, guid: e97534f6fe22048e48b937d750b89b3e, type: 3}
         boneNames:
         - Root
         - Hips
@@ -10555,7 +10505,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -10617,7 +10566,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 274
         materials: []
-      - mesh: {fileID: -4082451001070596727, guid: 6d19597a221564c818fcf3ae84bf4418, type: 3}
+      - mesh: {fileID: -4082451001070596727, guid: e97534f6fe22048e48b937d750b89b3e, type: 3}
         boneNames:
         - Root
         - Hips
@@ -10634,7 +10583,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -11337,7 +11285,7 @@ MonoBehaviour:
     - colourway: cw2
       fit: C
       lods:
-      - mesh: {fileID: -8579681785016971429, guid: 6d19597a221564c818fcf3ae84bf4418, type: 3}
+      - mesh: {fileID: -8579681785016971429, guid: e97534f6fe22048e48b937d750b89b3e, type: 3}
         boneNames:
         - Root
         - Hips
@@ -11354,7 +11302,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -11416,7 +11363,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 2006
         materials: []
-      - mesh: {fileID: -5110480060518970773, guid: 6d19597a221564c818fcf3ae84bf4418, type: 3}
+      - mesh: {fileID: -5110480060518970773, guid: e97534f6fe22048e48b937d750b89b3e, type: 3}
         boneNames:
         - Root
         - Hips
@@ -11433,7 +11380,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -11495,7 +11441,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 822
         materials: []
-      - mesh: {fileID: -2616886073738482585, guid: 6d19597a221564c818fcf3ae84bf4418, type: 3}
+      - mesh: {fileID: -2616886073738482585, guid: e97534f6fe22048e48b937d750b89b3e, type: 3}
         boneNames:
         - Root
         - Hips
@@ -11512,7 +11458,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -11574,7 +11519,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 274
         materials: []
-      - mesh: {fileID: -1881798286714539349, guid: 6d19597a221564c818fcf3ae84bf4418, type: 3}
+      - mesh: {fileID: -1881798286714539349, guid: e97534f6fe22048e48b937d750b89b3e, type: 3}
         boneNames:
         - Root
         - Hips
@@ -11591,7 +11536,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -12303,7 +12247,7 @@ MonoBehaviour:
     - colourway: '-'
       fit: C
       lods:
-      - mesh: {fileID: 7334466758056942031, guid: 54d193bd24a0f4821b001bfe7129cba8, type: 3}
+      - mesh: {fileID: 7334466758056942031, guid: a6a7b74ebe7f445089acce3c427adf86, type: 3}
         boneNames:
         - Root
         - Hips
@@ -12320,7 +12264,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -12382,7 +12325,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 1076
         materials: []
-      - mesh: {fileID: -5406574867860993898, guid: 54d193bd24a0f4821b001bfe7129cba8, type: 3}
+      - mesh: {fileID: -5406574867860993898, guid: a6a7b74ebe7f445089acce3c427adf86, type: 3}
         boneNames:
         - Root
         - Hips
@@ -12399,7 +12342,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -12461,7 +12403,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 999
         materials: []
-      - mesh: {fileID: 522504534474533541, guid: 54d193bd24a0f4821b001bfe7129cba8, type: 3}
+      - mesh: {fileID: 522504534474533541, guid: a6a7b74ebe7f445089acce3c427adf86, type: 3}
         boneNames:
         - Root
         - Hips
@@ -12478,7 +12420,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -12540,7 +12481,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 350
         materials: []
-      - mesh: {fileID: 2561286779337153302, guid: 54d193bd24a0f4821b001bfe7129cba8, type: 3}
+      - mesh: {fileID: 2561286779337153302, guid: a6a7b74ebe7f445089acce3c427adf86, type: 3}
         boneNames:
         - Root
         - Hips
@@ -12557,7 +12498,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -13269,7 +13209,7 @@ MonoBehaviour:
     - colourway: cw1
       fit: C
       lods:
-      - mesh: {fileID: 6250504435869869323, guid: e3abd66e473c945579a2d29b2ad7411f, type: 3}
+      - mesh: {fileID: 6250504435869869323, guid: 799ca53d0b3614bbf846cd2a57f632ba, type: 3}
         boneNames:
         - Root
         - Hips
@@ -13286,7 +13226,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -13348,7 +13287,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 1926
         materials: []
-      - mesh: {fileID: -3330384241523500171, guid: e3abd66e473c945579a2d29b2ad7411f, type: 3}
+      - mesh: {fileID: -3330384241523500171, guid: 799ca53d0b3614bbf846cd2a57f632ba, type: 3}
         boneNames:
         - Root
         - Hips
@@ -13365,7 +13304,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -13427,7 +13365,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 785
         materials: []
-      - mesh: {fileID: 4835176657735444877, guid: e3abd66e473c945579a2d29b2ad7411f, type: 3}
+      - mesh: {fileID: 4835176657735444877, guid: 799ca53d0b3614bbf846cd2a57f632ba, type: 3}
         boneNames:
         - Root
         - Hips
@@ -13444,7 +13382,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -13506,7 +13443,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 269
         materials: []
-      - mesh: {fileID: -4150049362726426349, guid: e3abd66e473c945579a2d29b2ad7411f, type: 3}
+      - mesh: {fileID: -4150049362726426349, guid: 799ca53d0b3614bbf846cd2a57f632ba, type: 3}
         boneNames:
         - Root
         - Hips
@@ -13523,7 +13460,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -14226,7 +14162,7 @@ MonoBehaviour:
     - colourway: cw2
       fit: C
       lods:
-      - mesh: {fileID: 1149630647818283207, guid: e3abd66e473c945579a2d29b2ad7411f, type: 3}
+      - mesh: {fileID: 1149630647818283207, guid: 799ca53d0b3614bbf846cd2a57f632ba, type: 3}
         boneNames:
         - Root
         - Hips
@@ -14243,7 +14179,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -14305,7 +14240,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 1926
         materials: []
-      - mesh: {fileID: -3046669295166546058, guid: e3abd66e473c945579a2d29b2ad7411f, type: 3}
+      - mesh: {fileID: -3046669295166546058, guid: 799ca53d0b3614bbf846cd2a57f632ba, type: 3}
         boneNames:
         - Root
         - Hips
@@ -14322,7 +14257,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -14384,7 +14318,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 785
         materials: []
-      - mesh: {fileID: -3046989879295058565, guid: e3abd66e473c945579a2d29b2ad7411f, type: 3}
+      - mesh: {fileID: -3046989879295058565, guid: 799ca53d0b3614bbf846cd2a57f632ba, type: 3}
         boneNames:
         - Root
         - Hips
@@ -14401,7 +14335,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -14463,7 +14396,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 269
         materials: []
-      - mesh: {fileID: 5304383794362655939, guid: e3abd66e473c945579a2d29b2ad7411f, type: 3}
+      - mesh: {fileID: 5304383794362655939, guid: 799ca53d0b3614bbf846cd2a57f632ba, type: 3}
         boneNames:
         - Root
         - Hips
@@ -14480,7 +14413,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -15193,7 +15125,7 @@ MonoBehaviour:
     - colourway: cw1
       fit: C
       lods:
-      - mesh: {fileID: -4102634086203681153, guid: b0b52c4df46224879b803a96abcbc9f9, type: 3}
+      - mesh: {fileID: -4102634086203681153, guid: 1e13fd30d7fd04b6ba925e71c4eb9f5f, type: 3}
         boneNames:
         - Root
         - Hips
@@ -15210,7 +15142,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -15272,7 +15203,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 1394
         materials: []
-      - mesh: {fileID: 5548670989624343879, guid: b0b52c4df46224879b803a96abcbc9f9, type: 3}
+      - mesh: {fileID: 5548670989624343879, guid: 1e13fd30d7fd04b6ba925e71c4eb9f5f, type: 3}
         boneNames:
         - Root
         - Hips
@@ -15289,7 +15220,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -15351,7 +15281,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 530
         materials: []
-      - mesh: {fileID: 4838643809978386753, guid: b0b52c4df46224879b803a96abcbc9f9, type: 3}
+      - mesh: {fileID: 4838643809978386753, guid: 1e13fd30d7fd04b6ba925e71c4eb9f5f, type: 3}
         boneNames:
         - Root
         - Hips
@@ -15368,7 +15298,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -15430,7 +15359,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 180
         materials: []
-      - mesh: {fileID: 5263356588496835077, guid: b0b52c4df46224879b803a96abcbc9f9, type: 3}
+      - mesh: {fileID: 5263356588496835077, guid: 1e13fd30d7fd04b6ba925e71c4eb9f5f, type: 3}
         boneNames:
         - Root
         - Hips
@@ -15447,7 +15376,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -16150,7 +16078,7 @@ MonoBehaviour:
     - colourway: cw2
       fit: C
       lods:
-      - mesh: {fileID: 1005009710925977511, guid: b0b52c4df46224879b803a96abcbc9f9, type: 3}
+      - mesh: {fileID: 1005009710925977511, guid: 1e13fd30d7fd04b6ba925e71c4eb9f5f, type: 3}
         boneNames:
         - Root
         - Hips
@@ -16167,7 +16095,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -16229,7 +16156,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 1394
         materials: []
-      - mesh: {fileID: 6226371649833696689, guid: b0b52c4df46224879b803a96abcbc9f9, type: 3}
+      - mesh: {fileID: 6226371649833696689, guid: 1e13fd30d7fd04b6ba925e71c4eb9f5f, type: 3}
         boneNames:
         - Root
         - Hips
@@ -16246,7 +16173,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -16308,7 +16234,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 532
         materials: []
-      - mesh: {fileID: 101726923834412752, guid: b0b52c4df46224879b803a96abcbc9f9, type: 3}
+      - mesh: {fileID: 101726923834412752, guid: 1e13fd30d7fd04b6ba925e71c4eb9f5f, type: 3}
         boneNames:
         - Root
         - Hips
@@ -16325,7 +16251,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -16387,7 +16312,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 181
         materials: []
-      - mesh: {fileID: 6310543443973491490, guid: b0b52c4df46224879b803a96abcbc9f9, type: 3}
+      - mesh: {fileID: 6310543443973491490, guid: 1e13fd30d7fd04b6ba925e71c4eb9f5f, type: 3}
         boneNames:
         - Root
         - Hips
@@ -16404,7 +16329,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -17116,7 +17040,7 @@ MonoBehaviour:
     - colourway: '-'
       fit: C
       lods:
-      - mesh: {fileID: -839781532024671699, guid: 53d8eaad4f7714da29fb199f9e24da33, type: 3}
+      - mesh: {fileID: -839781532024671699, guid: e39787d9011a84a24a3610892eb7306c, type: 3}
         boneNames:
         - Root
         - Hips
@@ -17133,7 +17057,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -17195,7 +17118,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 670
         materials: []
-      - mesh: {fileID: -3832543840418865144, guid: 53d8eaad4f7714da29fb199f9e24da33, type: 3}
+      - mesh: {fileID: -3832543840418865144, guid: e39787d9011a84a24a3610892eb7306c, type: 3}
         boneNames:
         - Root
         - Hips
@@ -17212,7 +17135,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -17274,7 +17196,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 379
         materials: []
-      - mesh: {fileID: 1818151210066075121, guid: 53d8eaad4f7714da29fb199f9e24da33, type: 3}
+      - mesh: {fileID: 1818151210066075121, guid: e39787d9011a84a24a3610892eb7306c, type: 3}
         boneNames:
         - Root
         - Hips
@@ -17291,7 +17213,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -17353,7 +17274,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 150
         materials: []
-      - mesh: {fileID: 1392476311923578905, guid: 53d8eaad4f7714da29fb199f9e24da33, type: 3}
+      - mesh: {fileID: 1392476311923578905, guid: e39787d9011a84a24a3610892eb7306c, type: 3}
         boneNames:
         - Root
         - Hips
@@ -17370,7 +17291,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -18081,7 +18001,7 @@ MonoBehaviour:
     - colourway: '-'
       fit: C
       lods:
-      - mesh: {fileID: -4208221211893238822, guid: c6c1c66e60b6445bdbe9900d4212b4b1, type: 3}
+      - mesh: {fileID: -4208221211893238822, guid: 1a09b1caccb304a7d8245087daafb16c, type: 3}
         boneNames:
         - Root
         - Hips
@@ -18098,7 +18018,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -18160,7 +18079,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 856
         materials: []
-      - mesh: {fileID: 8111337982456131419, guid: c6c1c66e60b6445bdbe9900d4212b4b1, type: 3}
+      - mesh: {fileID: 8111337982456131419, guid: 1a09b1caccb304a7d8245087daafb16c, type: 3}
         boneNames:
         - Root
         - Hips
@@ -18177,7 +18096,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -18239,7 +18157,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 380
         materials: []
-      - mesh: {fileID: 4607466913165503052, guid: c6c1c66e60b6445bdbe9900d4212b4b1, type: 3}
+      - mesh: {fileID: 4607466913165503052, guid: 1a09b1caccb304a7d8245087daafb16c, type: 3}
         boneNames:
         - Root
         - Hips
@@ -18256,7 +18174,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -18318,7 +18235,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 150
         materials: []
-      - mesh: {fileID: 6597526264875811957, guid: c6c1c66e60b6445bdbe9900d4212b4b1, type: 3}
+      - mesh: {fileID: 6597526264875811957, guid: 1a09b1caccb304a7d8245087daafb16c, type: 3}
         boneNames:
         - Root
         - Hips
@@ -18335,7 +18252,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -19046,7 +18962,7 @@ MonoBehaviour:
     - colourway: '-'
       fit: C
       lods:
-      - mesh: {fileID: 846686448036403379, guid: 9895fd08a8a2341d4803b67e3aac6ee1, type: 3}
+      - mesh: {fileID: 846686448036403379, guid: 8f5f59219bdac4c08a4eb120d5724888, type: 3}
         boneNames:
         - Root
         - Hips
@@ -19063,7 +18979,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -19125,7 +19040,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 718
         materials: []
-      - mesh: {fileID: 2416786594680214286, guid: 9895fd08a8a2341d4803b67e3aac6ee1, type: 3}
+      - mesh: {fileID: 2416786594680214286, guid: 8f5f59219bdac4c08a4eb120d5724888, type: 3}
         boneNames:
         - Root
         - Hips
@@ -19142,7 +19057,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -19204,7 +19118,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 379
         materials: []
-      - mesh: {fileID: 651803760396646533, guid: 9895fd08a8a2341d4803b67e3aac6ee1, type: 3}
+      - mesh: {fileID: 651803760396646533, guid: 8f5f59219bdac4c08a4eb120d5724888, type: 3}
         boneNames:
         - Root
         - Hips
@@ -19221,7 +19135,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -19283,7 +19196,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 149
         materials: []
-      - mesh: {fileID: -8560213426710388749, guid: 9895fd08a8a2341d4803b67e3aac6ee1, type: 3}
+      - mesh: {fileID: -8560213426710388749, guid: 8f5f59219bdac4c08a4eb120d5724888, type: 3}
         boneNames:
         - Root
         - Hips
@@ -19300,7 +19213,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -20011,7 +19923,7 @@ MonoBehaviour:
     - colourway: '-'
       fit: C
       lods:
-      - mesh: {fileID: 6516811131439568152, guid: 2433f5ea05dd14abc921603cf425f54d, type: 3}
+      - mesh: {fileID: 6516811131439568152, guid: e0f3d804663754f31bfb18d0e719fcee, type: 3}
         boneNames:
         - Root
         - Hips
@@ -20028,7 +19940,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -20090,7 +20001,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 702
         materials: []
-      - mesh: {fileID: -6070359417498505836, guid: 2433f5ea05dd14abc921603cf425f54d, type: 3}
+      - mesh: {fileID: -6070359417498505836, guid: e0f3d804663754f31bfb18d0e719fcee, type: 3}
         boneNames:
         - Root
         - Hips
@@ -20107,7 +20018,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -20169,7 +20079,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 379
         materials: []
-      - mesh: {fileID: -552155415912883658, guid: 2433f5ea05dd14abc921603cf425f54d, type: 3}
+      - mesh: {fileID: -552155415912883658, guid: e0f3d804663754f31bfb18d0e719fcee, type: 3}
         boneNames:
         - Root
         - Hips
@@ -20186,7 +20096,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -20248,7 +20157,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 149
         materials: []
-      - mesh: {fileID: 7726579307836103948, guid: 2433f5ea05dd14abc921603cf425f54d, type: 3}
+      - mesh: {fileID: 7726579307836103948, guid: e0f3d804663754f31bfb18d0e719fcee, type: 3}
         boneNames:
         - Root
         - Hips
@@ -20265,7 +20174,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -20976,7 +20884,7 @@ MonoBehaviour:
     - colourway: '-'
       fit: C
       lods:
-      - mesh: {fileID: -7142975595724750400, guid: 5d126b419034b4bbba6e642f9cc29fe3, type: 3}
+      - mesh: {fileID: -7142975595724750400, guid: 2d43fd0ade9fe4e7482df164defd635d, type: 3}
         boneNames:
         - Root
         - Hips
@@ -20993,7 +20901,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -21055,7 +20962,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 899
         materials: []
-      - mesh: {fileID: -4839356957740258342, guid: 5d126b419034b4bbba6e642f9cc29fe3, type: 3}
+      - mesh: {fileID: -4839356957740258342, guid: 2d43fd0ade9fe4e7482df164defd635d, type: 3}
         boneNames:
         - Root
         - Hips
@@ -21072,7 +20979,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -21134,7 +21040,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 380
         materials: []
-      - mesh: {fileID: 6632393434822066279, guid: 5d126b419034b4bbba6e642f9cc29fe3, type: 3}
+      - mesh: {fileID: 6632393434822066279, guid: 2d43fd0ade9fe4e7482df164defd635d, type: 3}
         boneNames:
         - Root
         - Hips
@@ -21151,7 +21057,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -21213,7 +21118,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 150
         materials: []
-      - mesh: {fileID: 8672333435195913419, guid: 5d126b419034b4bbba6e642f9cc29fe3, type: 3}
+      - mesh: {fileID: 8672333435195913419, guid: 2d43fd0ade9fe4e7482df164defd635d, type: 3}
         boneNames:
         - Root
         - Hips
@@ -21230,7 +21135,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -21941,7 +21845,7 @@ MonoBehaviour:
     - colourway: '-'
       fit: C
       lods:
-      - mesh: {fileID: 7340376383211074784, guid: e748cf989bc4344c182d3d97c99ed903, type: 3}
+      - mesh: {fileID: 7340376383211074784, guid: 84fffbd913bfb4775ba1cf775de58b03, type: 3}
         boneNames:
         - Root
         - Hips
@@ -21958,7 +21862,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -22020,7 +21923,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 549
         materials: []
-      - mesh: {fileID: 6346886695633017252, guid: e748cf989bc4344c182d3d97c99ed903, type: 3}
+      - mesh: {fileID: 6346886695633017252, guid: 84fffbd913bfb4775ba1cf775de58b03, type: 3}
         boneNames:
         - Root
         - Hips
@@ -22037,7 +21940,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -22099,7 +22001,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 221
         materials: []
-      - mesh: {fileID: -1556602620366106008, guid: e748cf989bc4344c182d3d97c99ed903, type: 3}
+      - mesh: {fileID: -1556602620366106008, guid: 84fffbd913bfb4775ba1cf775de58b03, type: 3}
         boneNames:
         - Root
         - Hips
@@ -22116,7 +22018,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -22178,7 +22079,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 88
         materials: []
-      - mesh: {fileID: 6948312701888691496, guid: e748cf989bc4344c182d3d97c99ed903, type: 3}
+      - mesh: {fileID: 6948312701888691496, guid: 84fffbd913bfb4775ba1cf775de58b03, type: 3}
         boneNames:
         - Root
         - Hips
@@ -22195,7 +22096,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -22907,7 +22807,7 @@ MonoBehaviour:
     - colourway: '-'
       fit: C
       lods:
-      - mesh: {fileID: 6885122029557721175, guid: ce848f6707eb54548935dee154671c29, type: 3}
+      - mesh: {fileID: 6885122029557721175, guid: 64f5c1c92281b4bf58b90da3ce21bff8, type: 3}
         boneNames:
         - Root
         - Hips
@@ -22924,7 +22824,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -22986,7 +22885,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 648
         materials: []
-      - mesh: {fileID: 7865578697751158395, guid: ce848f6707eb54548935dee154671c29, type: 3}
+      - mesh: {fileID: 7865578697751158395, guid: 64f5c1c92281b4bf58b90da3ce21bff8, type: 3}
         boneNames:
         - Root
         - Hips
@@ -23003,7 +22902,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -23065,7 +22963,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 269
         materials: []
-      - mesh: {fileID: -3556541052199842744, guid: ce848f6707eb54548935dee154671c29, type: 3}
+      - mesh: {fileID: -3556541052199842744, guid: 64f5c1c92281b4bf58b90da3ce21bff8, type: 3}
         boneNames:
         - Root
         - Hips
@@ -23082,7 +22980,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -23144,7 +23041,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 107
         materials: []
-      - mesh: {fileID: 5783525723262098741, guid: ce848f6707eb54548935dee154671c29, type: 3}
+      - mesh: {fileID: 5783525723262098741, guid: 64f5c1c92281b4bf58b90da3ce21bff8, type: 3}
         boneNames:
         - Root
         - Hips
@@ -23161,7 +23058,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -23874,7 +23770,7 @@ MonoBehaviour:
     - colourway: cw1
       fit: C
       lods:
-      - mesh: {fileID: 4671709361479581501, guid: 9101f8d627c2b4fcb9225ffa3b8c4b4f, type: 3}
+      - mesh: {fileID: 4671709361479581501, guid: d0dd1654ba87c449f8223256b05d46ac, type: 3}
         boneNames:
         - Root
         - Hips
@@ -23891,7 +23787,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -23953,7 +23848,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 2799
         materials: []
-      - mesh: {fileID: 3104808090139778365, guid: 9101f8d627c2b4fcb9225ffa3b8c4b4f, type: 3}
+      - mesh: {fileID: 3104808090139778365, guid: d0dd1654ba87c449f8223256b05d46ac, type: 3}
         boneNames:
         - Root
         - Hips
@@ -23970,7 +23865,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -24032,7 +23926,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 1199
         materials: []
-      - mesh: {fileID: 8232941254662057992, guid: 9101f8d627c2b4fcb9225ffa3b8c4b4f, type: 3}
+      - mesh: {fileID: 8232941254662057992, guid: d0dd1654ba87c449f8223256b05d46ac, type: 3}
         boneNames:
         - Root
         - Hips
@@ -24049,7 +23943,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -24111,7 +24004,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 429
         materials: []
-      - mesh: {fileID: 123606485164932807, guid: 9101f8d627c2b4fcb9225ffa3b8c4b4f, type: 3}
+      - mesh: {fileID: 123606485164932807, guid: d0dd1654ba87c449f8223256b05d46ac, type: 3}
         boneNames:
         - Root
         - Hips
@@ -24128,7 +24021,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -24831,7 +24723,7 @@ MonoBehaviour:
     - colourway: cw2
       fit: C
       lods:
-      - mesh: {fileID: -1066098044053451737, guid: 9101f8d627c2b4fcb9225ffa3b8c4b4f, type: 3}
+      - mesh: {fileID: -1066098044053451737, guid: d0dd1654ba87c449f8223256b05d46ac, type: 3}
         boneNames:
         - Root
         - Hips
@@ -24848,7 +24740,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -24910,7 +24801,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 2799
         materials: []
-      - mesh: {fileID: -5703424222376104, guid: 9101f8d627c2b4fcb9225ffa3b8c4b4f, type: 3}
+      - mesh: {fileID: -5703424222376104, guid: d0dd1654ba87c449f8223256b05d46ac, type: 3}
         boneNames:
         - Root
         - Hips
@@ -24927,7 +24818,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -24989,7 +24879,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 1199
         materials: []
-      - mesh: {fileID: 1296543497684211004, guid: 9101f8d627c2b4fcb9225ffa3b8c4b4f, type: 3}
+      - mesh: {fileID: 1296543497684211004, guid: d0dd1654ba87c449f8223256b05d46ac, type: 3}
         boneNames:
         - Root
         - Hips
@@ -25006,7 +24896,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -25068,7 +24957,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 429
         materials: []
-      - mesh: {fileID: 6010880840876529668, guid: 9101f8d627c2b4fcb9225ffa3b8c4b4f, type: 3}
+      - mesh: {fileID: 6010880840876529668, guid: d0dd1654ba87c449f8223256b05d46ac, type: 3}
         boneNames:
         - Root
         - Hips
@@ -25085,7 +24974,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -25797,7 +25685,7 @@ MonoBehaviour:
     - colourway: cw1
       fit: C
       lods:
-      - mesh: {fileID: 824797063471657421, guid: c2e6ee1d0100443f097441a82b09638d, type: 3}
+      - mesh: {fileID: 824797063471657421, guid: 6e637a6e8476e4e9f8b36f1eb8899c03, type: 3}
         boneNames:
         - Root
         - Hips
@@ -25814,7 +25702,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -25876,7 +25763,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 2797
         materials: []
-      - mesh: {fileID: -8931805346790515109, guid: c2e6ee1d0100443f097441a82b09638d, type: 3}
+      - mesh: {fileID: -8931805346790515109, guid: 6e637a6e8476e4e9f8b36f1eb8899c03, type: 3}
         boneNames:
         - Root
         - Hips
@@ -25893,7 +25780,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -25955,7 +25841,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 1200
         materials: []
-      - mesh: {fileID: -4739148209324239680, guid: c2e6ee1d0100443f097441a82b09638d, type: 3}
+      - mesh: {fileID: -4739148209324239680, guid: 6e637a6e8476e4e9f8b36f1eb8899c03, type: 3}
         boneNames:
         - Root
         - Hips
@@ -25972,7 +25858,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -26034,7 +25919,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 430
         materials: []
-      - mesh: {fileID: -6067305775858390485, guid: c2e6ee1d0100443f097441a82b09638d, type: 3}
+      - mesh: {fileID: -6067305775858390485, guid: 6e637a6e8476e4e9f8b36f1eb8899c03, type: 3}
         boneNames:
         - Root
         - Hips
@@ -26051,7 +25936,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -26754,7 +26638,7 @@ MonoBehaviour:
     - colourway: cw2
       fit: C
       lods:
-      - mesh: {fileID: 1771800689279246607, guid: c2e6ee1d0100443f097441a82b09638d, type: 3}
+      - mesh: {fileID: 1771800689279246607, guid: 6e637a6e8476e4e9f8b36f1eb8899c03, type: 3}
         boneNames:
         - Root
         - Hips
@@ -26771,7 +26655,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -26833,7 +26716,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 2797
         materials: []
-      - mesh: {fileID: 4908242765513631503, guid: c2e6ee1d0100443f097441a82b09638d, type: 3}
+      - mesh: {fileID: 4908242765513631503, guid: 6e637a6e8476e4e9f8b36f1eb8899c03, type: 3}
         boneNames:
         - Root
         - Hips
@@ -26850,7 +26733,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -26912,7 +26794,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 1200
         materials: []
-      - mesh: {fileID: 6191400065145130980, guid: c2e6ee1d0100443f097441a82b09638d, type: 3}
+      - mesh: {fileID: 6191400065145130980, guid: 6e637a6e8476e4e9f8b36f1eb8899c03, type: 3}
         boneNames:
         - Root
         - Hips
@@ -26929,7 +26811,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -26991,7 +26872,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 430
         materials: []
-      - mesh: {fileID: -3320517758071454816, guid: c2e6ee1d0100443f097441a82b09638d, type: 3}
+      - mesh: {fileID: -3320517758071454816, guid: 6e637a6e8476e4e9f8b36f1eb8899c03, type: 3}
         boneNames:
         - Root
         - Hips
@@ -27008,7 +26889,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -27720,7 +27600,7 @@ MonoBehaviour:
     - colourway: cw1
       fit: C
       lods:
-      - mesh: {fileID: -8583490205171302946, guid: 5945cd3eb25e940a8a3978ee09aa3b6d, type: 3}
+      - mesh: {fileID: -8583490205171302946, guid: ca4d033101a034d9d986cec93a1d7abb, type: 3}
         boneNames:
         - Root
         - Hips
@@ -27737,7 +27617,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -27799,7 +27678,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 2797
         materials: []
-      - mesh: {fileID: -316734291305261498, guid: 5945cd3eb25e940a8a3978ee09aa3b6d, type: 3}
+      - mesh: {fileID: -316734291305261498, guid: ca4d033101a034d9d986cec93a1d7abb, type: 3}
         boneNames:
         - Root
         - Hips
@@ -27816,7 +27695,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -27878,7 +27756,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 1198
         materials: []
-      - mesh: {fileID: 1455848847475953344, guid: 5945cd3eb25e940a8a3978ee09aa3b6d, type: 3}
+      - mesh: {fileID: 1455848847475953344, guid: ca4d033101a034d9d986cec93a1d7abb, type: 3}
         boneNames:
         - Root
         - Hips
@@ -27895,7 +27773,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -27957,7 +27834,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 429
         materials: []
-      - mesh: {fileID: -584676375079229770, guid: 5945cd3eb25e940a8a3978ee09aa3b6d, type: 3}
+      - mesh: {fileID: -584676375079229770, guid: ca4d033101a034d9d986cec93a1d7abb, type: 3}
         boneNames:
         - Root
         - Hips
@@ -27974,7 +27851,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -28677,7 +28553,7 @@ MonoBehaviour:
     - colourway: cw2
       fit: C
       lods:
-      - mesh: {fileID: 2410954218067096763, guid: 5945cd3eb25e940a8a3978ee09aa3b6d, type: 3}
+      - mesh: {fileID: 2410954218067096763, guid: ca4d033101a034d9d986cec93a1d7abb, type: 3}
         boneNames:
         - Root
         - Hips
@@ -28694,7 +28570,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -28756,7 +28631,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 2797
         materials: []
-      - mesh: {fileID: 2497664464308682908, guid: 5945cd3eb25e940a8a3978ee09aa3b6d, type: 3}
+      - mesh: {fileID: 2497664464308682908, guid: ca4d033101a034d9d986cec93a1d7abb, type: 3}
         boneNames:
         - Root
         - Hips
@@ -28773,7 +28648,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -28835,7 +28709,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 1198
         materials: []
-      - mesh: {fileID: -8080531135335646617, guid: 5945cd3eb25e940a8a3978ee09aa3b6d, type: 3}
+      - mesh: {fileID: -8080531135335646617, guid: ca4d033101a034d9d986cec93a1d7abb, type: 3}
         boneNames:
         - Root
         - Hips
@@ -28852,7 +28726,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -28914,7 +28787,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 429
         materials: []
-      - mesh: {fileID: -5879387796312557513, guid: 5945cd3eb25e940a8a3978ee09aa3b6d, type: 3}
+      - mesh: {fileID: -5879387796312557513, guid: ca4d033101a034d9d986cec93a1d7abb, type: 3}
         boneNames:
         - Root
         - Hips
@@ -28931,7 +28804,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -29643,7 +29515,7 @@ MonoBehaviour:
     - colourway: cw1
       fit: C
       lods:
-      - mesh: {fileID: -5555270943017930970, guid: 1efc3d77ebb9e446697aefed95824ac2, type: 3}
+      - mesh: {fileID: -5555270943017930970, guid: 9b76038ffd96a4f518260cd7e6e5ae0f, type: 3}
         boneNames:
         - Root
         - Hips
@@ -29660,7 +29532,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -29722,7 +29593,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 2799
         materials: []
-      - mesh: {fileID: -4871100659780184633, guid: 1efc3d77ebb9e446697aefed95824ac2, type: 3}
+      - mesh: {fileID: -4871100659780184633, guid: 9b76038ffd96a4f518260cd7e6e5ae0f, type: 3}
         boneNames:
         - Root
         - Hips
@@ -29739,7 +29610,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -29801,7 +29671,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 1199
         materials: []
-      - mesh: {fileID: 469296407860193582, guid: 1efc3d77ebb9e446697aefed95824ac2, type: 3}
+      - mesh: {fileID: 469296407860193582, guid: 9b76038ffd96a4f518260cd7e6e5ae0f, type: 3}
         boneNames:
         - Root
         - Hips
@@ -29818,7 +29688,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -29880,7 +29749,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 429
         materials: []
-      - mesh: {fileID: -6202215392277050963, guid: 1efc3d77ebb9e446697aefed95824ac2, type: 3}
+      - mesh: {fileID: -6202215392277050963, guid: 9b76038ffd96a4f518260cd7e6e5ae0f, type: 3}
         boneNames:
         - Root
         - Hips
@@ -29897,7 +29766,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -30600,7 +30468,7 @@ MonoBehaviour:
     - colourway: cw2
       fit: C
       lods:
-      - mesh: {fileID: 3074455616404207783, guid: 1efc3d77ebb9e446697aefed95824ac2, type: 3}
+      - mesh: {fileID: 3074455616404207783, guid: 9b76038ffd96a4f518260cd7e6e5ae0f, type: 3}
         boneNames:
         - Root
         - Hips
@@ -30617,7 +30485,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -30679,7 +30546,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 2799
         materials: []
-      - mesh: {fileID: -5439954165544677234, guid: 1efc3d77ebb9e446697aefed95824ac2, type: 3}
+      - mesh: {fileID: -5439954165544677234, guid: 9b76038ffd96a4f518260cd7e6e5ae0f, type: 3}
         boneNames:
         - Root
         - Hips
@@ -30696,7 +30563,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -30758,7 +30624,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 1199
         materials: []
-      - mesh: {fileID: -6678604936545030538, guid: 1efc3d77ebb9e446697aefed95824ac2, type: 3}
+      - mesh: {fileID: -6678604936545030538, guid: 9b76038ffd96a4f518260cd7e6e5ae0f, type: 3}
         boneNames:
         - Root
         - Hips
@@ -30775,7 +30641,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -30837,7 +30702,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 429
         materials: []
-      - mesh: {fileID: -192788230379699495, guid: 1efc3d77ebb9e446697aefed95824ac2, type: 3}
+      - mesh: {fileID: -192788230379699495, guid: 9b76038ffd96a4f518260cd7e6e5ae0f, type: 3}
         boneNames:
         - Root
         - Hips
@@ -30854,7 +30719,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -31566,7 +31430,7 @@ MonoBehaviour:
     - colourway: cw1
       fit: C
       lods:
-      - mesh: {fileID: 5384861020365552365, guid: a34c4fafc6edb4c1883c10f10e9b9bf3, type: 3}
+      - mesh: {fileID: 5384861020365552365, guid: e27d517fd0add4232ac9351e6cca18d1, type: 3}
         boneNames:
         - Root
         - Hips
@@ -31583,7 +31447,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -31645,7 +31508,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 2800
         materials: []
-      - mesh: {fileID: -674873075989523268, guid: a34c4fafc6edb4c1883c10f10e9b9bf3, type: 3}
+      - mesh: {fileID: -674873075989523268, guid: e27d517fd0add4232ac9351e6cca18d1, type: 3}
         boneNames:
         - Root
         - Hips
@@ -31662,7 +31525,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -31724,7 +31586,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 1200
         materials: []
-      - mesh: {fileID: 3219684962447484074, guid: a34c4fafc6edb4c1883c10f10e9b9bf3, type: 3}
+      - mesh: {fileID: 3219684962447484074, guid: e27d517fd0add4232ac9351e6cca18d1, type: 3}
         boneNames:
         - Root
         - Hips
@@ -31741,7 +31603,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -31803,7 +31664,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 430
         materials: []
-      - mesh: {fileID: -3987521397110803377, guid: a34c4fafc6edb4c1883c10f10e9b9bf3, type: 3}
+      - mesh: {fileID: -3987521397110803377, guid: e27d517fd0add4232ac9351e6cca18d1, type: 3}
         boneNames:
         - Root
         - Hips
@@ -31820,7 +31681,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -32523,7 +32383,7 @@ MonoBehaviour:
     - colourway: cw2
       fit: C
       lods:
-      - mesh: {fileID: -4475518399003775540, guid: a34c4fafc6edb4c1883c10f10e9b9bf3, type: 3}
+      - mesh: {fileID: -4475518399003775540, guid: e27d517fd0add4232ac9351e6cca18d1, type: 3}
         boneNames:
         - Root
         - Hips
@@ -32540,7 +32400,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -32602,7 +32461,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 2800
         materials: []
-      - mesh: {fileID: -4382105726991080108, guid: a34c4fafc6edb4c1883c10f10e9b9bf3, type: 3}
+      - mesh: {fileID: -4382105726991080108, guid: e27d517fd0add4232ac9351e6cca18d1, type: 3}
         boneNames:
         - Root
         - Hips
@@ -32619,7 +32478,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -32681,7 +32539,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 1200
         materials: []
-      - mesh: {fileID: -8522765289800722903, guid: a34c4fafc6edb4c1883c10f10e9b9bf3, type: 3}
+      - mesh: {fileID: -8522765289800722903, guid: e27d517fd0add4232ac9351e6cca18d1, type: 3}
         boneNames:
         - Root
         - Hips
@@ -32698,7 +32556,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -32760,7 +32617,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 430
         materials: []
-      - mesh: {fileID: 6852652761152901724, guid: a34c4fafc6edb4c1883c10f10e9b9bf3, type: 3}
+      - mesh: {fileID: 6852652761152901724, guid: e27d517fd0add4232ac9351e6cca18d1, type: 3}
         boneNames:
         - Root
         - Hips
@@ -32777,7 +32634,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -33488,7 +33344,7 @@ MonoBehaviour:
     - colourway: '-'
       fit: C
       lods:
-      - mesh: {fileID: 1023647886453254110, guid: 7f636e99faa1d4c69a7c0fbc4b5f85cb, type: 3}
+      - mesh: {fileID: 1023647886453254110, guid: 015a9aec6a98b4122b66ef31cb447589, type: 3}
         boneNames:
         - Root
         - Hips
@@ -33505,7 +33361,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -33567,7 +33422,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 1408
         materials: []
-      - mesh: {fileID: 7555286105440822512, guid: 7f636e99faa1d4c69a7c0fbc4b5f85cb, type: 3}
+      - mesh: {fileID: 7555286105440822512, guid: 015a9aec6a98b4122b66ef31cb447589, type: 3}
         boneNames:
         - Root
         - Hips
@@ -33584,7 +33439,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -33646,7 +33500,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 806
         materials: []
-      - mesh: {fileID: 4554516588082966856, guid: 7f636e99faa1d4c69a7c0fbc4b5f85cb, type: 3}
+      - mesh: {fileID: 4554516588082966856, guid: 015a9aec6a98b4122b66ef31cb447589, type: 3}
         boneNames:
         - Root
         - Hips
@@ -33663,7 +33517,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -33725,7 +33578,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 276
         materials: []
-      - mesh: {fileID: 479751111256711844, guid: 7f636e99faa1d4c69a7c0fbc4b5f85cb, type: 3}
+      - mesh: {fileID: 479751111256711844, guid: 015a9aec6a98b4122b66ef31cb447589, type: 3}
         boneNames:
         - Root
         - Hips
@@ -33742,7 +33595,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -34454,7 +34306,7 @@ MonoBehaviour:
     - colourway: '-'
       fit: C
       lods:
-      - mesh: {fileID: -4534790839943424658, guid: d6f323d2c39a541f8aa56970daa24a3d, type: 3}
+      - mesh: {fileID: -4534790839943424658, guid: 8d9d41924d20348fba18349246a334f3, type: 3}
         boneNames:
         - Root
         - Hips
@@ -34471,7 +34323,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -34533,7 +34384,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 2797
         materials: []
-      - mesh: {fileID: -4437222192832639111, guid: d6f323d2c39a541f8aa56970daa24a3d, type: 3}
+      - mesh: {fileID: -4437222192832639111, guid: 8d9d41924d20348fba18349246a334f3, type: 3}
         boneNames:
         - Root
         - Hips
@@ -34550,7 +34401,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -34612,7 +34462,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 1200
         materials: []
-      - mesh: {fileID: 925868925314107573, guid: d6f323d2c39a541f8aa56970daa24a3d, type: 3}
+      - mesh: {fileID: 925868925314107573, guid: 8d9d41924d20348fba18349246a334f3, type: 3}
         boneNames:
         - Root
         - Hips
@@ -34629,7 +34479,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -34691,7 +34540,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 430
         materials: []
-      - mesh: {fileID: -5456199685569045407, guid: d6f323d2c39a541f8aa56970daa24a3d, type: 3}
+      - mesh: {fileID: -5456199685569045407, guid: 8d9d41924d20348fba18349246a334f3, type: 3}
         boneNames:
         - Root
         - Hips
@@ -34708,7 +34557,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -35428,7 +35276,7 @@ MonoBehaviour:
     - colourway: cw1
       fit: C
       lods:
-      - mesh: {fileID: -9028163758701312172, guid: ef47615c3e8ed471d85480185a6e3cfc, type: 3}
+      - mesh: {fileID: -9028163758701312172, guid: 6997e9045e08449449d2a74197317f40, type: 3}
         boneNames:
         - Root
         - Hips
@@ -35445,7 +35293,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -35508,7 +35355,7 @@ MonoBehaviour:
         triangles: 2800
         materials:
         - M_Zombie_Cloth
-      - mesh: {fileID: -1342410321930284612, guid: ef47615c3e8ed471d85480185a6e3cfc, type: 3}
+      - mesh: {fileID: -1342410321930284612, guid: 6997e9045e08449449d2a74197317f40, type: 3}
         boneNames:
         - Root
         - Hips
@@ -35525,7 +35372,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -35588,7 +35434,7 @@ MonoBehaviour:
         triangles: 1200
         materials:
         - M_Zombie_Cloth
-      - mesh: {fileID: 5882211266807507155, guid: ef47615c3e8ed471d85480185a6e3cfc, type: 3}
+      - mesh: {fileID: 5882211266807507155, guid: 6997e9045e08449449d2a74197317f40, type: 3}
         boneNames:
         - Root
         - Hips
@@ -35605,7 +35451,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -35668,7 +35513,7 @@ MonoBehaviour:
         triangles: 430
         materials:
         - M_Zombie_Cloth
-      - mesh: {fileID: 3503909039140234854, guid: ef47615c3e8ed471d85480185a6e3cfc, type: 3}
+      - mesh: {fileID: 3503909039140234854, guid: 6997e9045e08449449d2a74197317f40, type: 3}
         boneNames:
         - Root
         - Hips
@@ -35685,7 +35530,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -36389,7 +36233,7 @@ MonoBehaviour:
     - colourway: cw2
       fit: C
       lods:
-      - mesh: {fileID: -5831277956228922576, guid: ef47615c3e8ed471d85480185a6e3cfc, type: 3}
+      - mesh: {fileID: -5831277956228922576, guid: 6997e9045e08449449d2a74197317f40, type: 3}
         boneNames:
         - Root
         - Hips
@@ -36406,7 +36250,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -36468,7 +36311,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 1906
         materials: []
-      - mesh: {fileID: 9103380832519298287, guid: ef47615c3e8ed471d85480185a6e3cfc, type: 3}
+      - mesh: {fileID: 9103380832519298287, guid: 6997e9045e08449449d2a74197317f40, type: 3}
         boneNames:
         - Root
         - Hips
@@ -36485,7 +36328,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -36547,7 +36389,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 834
         materials: []
-      - mesh: {fileID: -8121397572635053334, guid: ef47615c3e8ed471d85480185a6e3cfc, type: 3}
+      - mesh: {fileID: -8121397572635053334, guid: 6997e9045e08449449d2a74197317f40, type: 3}
         boneNames:
         - Root
         - Hips
@@ -36564,7 +36406,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -36626,7 +36467,7 @@ MonoBehaviour:
         rootBone: Root
         triangles: 298
         materials: []
-      - mesh: {fileID: -7015902729864182773, guid: ef47615c3e8ed471d85480185a6e3cfc, type: 3}
+      - mesh: {fileID: -7015902729864182773, guid: 6997e9045e08449449d2a74197317f40, type: 3}
         boneNames:
         - Root
         - Hips
@@ -36643,7 +36484,6 @@ MonoBehaviour:
         - sec_hachimaki_2
         - sec_bandage_tie_1
         - sec_bandage_tie_2
-        - jaw
         - LeftShoulder
         - LeftUpperArm
         - LeftLowerArm
@@ -36708,6 +36548,2865 @@ MonoBehaviour:
     materials:
     - M_Zombie_Atlas
     - M_Zombie_Cloth
+  - id: F1_gaunt
+    kind: face
+    colourways:
+    - '-'
+    occludesHead: 0
+    variants:
+    - colourway: '-'
+      fit: A
+      lods:
+      - mesh: {fileID: -2134778773313854810, guid: f9fdbc4716b064fe1b3fb32c15435104, type: 3}
+        boneNames:
+        - Root
+        - Hips
+        - Spine
+        - Chest
+        - UpperChest
+        - Neck
+        - Head
+        - sec_hair_mass_1
+        - sec_hair_mass_2
+        - sec_queue_1
+        - sec_queue_2
+        - sec_hachimaki_1
+        - sec_hachimaki_2
+        - sec_bandage_tie_1
+        - sec_bandage_tie_2
+        - LeftShoulder
+        - LeftUpperArm
+        - LeftLowerArm
+        - LeftHand
+        - LeftThumb1
+        - LeftThumb2
+        - LeftThumb3
+        - LeftIndex1
+        - LeftIndex2
+        - LeftIndex3
+        - LeftMiddle1
+        - LeftMiddle2
+        - LeftMiddle3
+        - LeftRing1
+        - LeftRing2
+        - LeftRing3
+        - LeftPinky1
+        - LeftPinky2
+        - LeftPinky3
+        - socket_weapon_l
+        - RightShoulder
+        - RightUpperArm
+        - RightLowerArm
+        - RightHand
+        - RightThumb1
+        - RightThumb2
+        - RightThumb3
+        - RightIndex1
+        - RightIndex2
+        - RightIndex3
+        - RightMiddle1
+        - RightMiddle2
+        - RightMiddle3
+        - RightRing1
+        - RightRing2
+        - RightRing3
+        - RightPinky1
+        - RightPinky2
+        - RightPinky3
+        - socket_weapon_r
+        - socket_back
+        - sec_mino_back_1
+        - sec_mino_back_2
+        - sec_mino_back_3
+        - sec_mino_left_1
+        - sec_mino_left_2
+        - sec_mino_left_3
+        - sec_mino_right_1
+        - sec_mino_right_2
+        - sec_mino_right_3
+        - LeftUpperLeg
+        - LeftLowerLeg
+        - LeftFoot
+        - LeftToes
+        - RightUpperLeg
+        - RightLowerLeg
+        - RightFoot
+        - RightToes
+        rootBone: Root
+        triangles: 11888
+        materials: []
+      - mesh: {fileID: 4817822344997389610, guid: 8857afe1843e84849b6065ae95c6a362, type: 3}
+        boneNames:
+        - Root
+        - Hips
+        - Spine
+        - Chest
+        - UpperChest
+        - Neck
+        - Head
+        - sec_hair_mass_1
+        - sec_hair_mass_2
+        - sec_queue_1
+        - sec_queue_2
+        - sec_hachimaki_1
+        - sec_hachimaki_2
+        - sec_bandage_tie_1
+        - sec_bandage_tie_2
+        - LeftShoulder
+        - LeftUpperArm
+        - LeftLowerArm
+        - LeftHand
+        - LeftThumb1
+        - LeftThumb2
+        - LeftThumb3
+        - LeftIndex1
+        - LeftIndex2
+        - LeftIndex3
+        - LeftMiddle1
+        - LeftMiddle2
+        - LeftMiddle3
+        - LeftRing1
+        - LeftRing2
+        - LeftRing3
+        - LeftPinky1
+        - LeftPinky2
+        - LeftPinky3
+        - socket_weapon_l
+        - RightShoulder
+        - RightUpperArm
+        - RightLowerArm
+        - RightHand
+        - RightThumb1
+        - RightThumb2
+        - RightThumb3
+        - RightIndex1
+        - RightIndex2
+        - RightIndex3
+        - RightMiddle1
+        - RightMiddle2
+        - RightMiddle3
+        - RightRing1
+        - RightRing2
+        - RightRing3
+        - RightPinky1
+        - RightPinky2
+        - RightPinky3
+        - socket_weapon_r
+        - socket_back
+        - sec_mino_back_1
+        - sec_mino_back_2
+        - sec_mino_back_3
+        - sec_mino_left_1
+        - sec_mino_left_2
+        - sec_mino_left_3
+        - sec_mino_right_1
+        - sec_mino_right_2
+        - sec_mino_right_3
+        - LeftUpperLeg
+        - LeftLowerLeg
+        - LeftFoot
+        - LeftToes
+        - RightUpperLeg
+        - RightLowerLeg
+        - RightFoot
+        - RightToes
+        rootBone: Root
+        triangles: 5360
+        materials: []
+      - mesh: {fileID: 1276109202805893729, guid: ea197236c1b2d44439cf86bc7d9110ca, type: 3}
+        boneNames:
+        - Root
+        - Hips
+        - Spine
+        - Chest
+        - UpperChest
+        - Neck
+        - Head
+        - sec_hair_mass_1
+        - sec_hair_mass_2
+        - sec_queue_1
+        - sec_queue_2
+        - sec_hachimaki_1
+        - sec_hachimaki_2
+        - sec_bandage_tie_1
+        - sec_bandage_tie_2
+        - LeftShoulder
+        - LeftUpperArm
+        - LeftLowerArm
+        - LeftHand
+        - LeftThumb1
+        - LeftThumb2
+        - LeftThumb3
+        - LeftIndex1
+        - LeftIndex2
+        - LeftIndex3
+        - LeftMiddle1
+        - LeftMiddle2
+        - LeftMiddle3
+        - LeftRing1
+        - LeftRing2
+        - LeftRing3
+        - LeftPinky1
+        - LeftPinky2
+        - LeftPinky3
+        - socket_weapon_l
+        - RightShoulder
+        - RightUpperArm
+        - RightLowerArm
+        - RightHand
+        - RightThumb1
+        - RightThumb2
+        - RightThumb3
+        - RightIndex1
+        - RightIndex2
+        - RightIndex3
+        - RightMiddle1
+        - RightMiddle2
+        - RightMiddle3
+        - RightRing1
+        - RightRing2
+        - RightRing3
+        - RightPinky1
+        - RightPinky2
+        - RightPinky3
+        - socket_weapon_r
+        - socket_back
+        - sec_mino_back_1
+        - sec_mino_back_2
+        - sec_mino_back_3
+        - sec_mino_left_1
+        - sec_mino_left_2
+        - sec_mino_left_3
+        - sec_mino_right_1
+        - sec_mino_right_2
+        - sec_mino_right_3
+        - LeftUpperLeg
+        - LeftLowerLeg
+        - LeftFoot
+        - LeftToes
+        - RightUpperLeg
+        - RightLowerLeg
+        - RightFoot
+        - RightToes
+        rootBone: Root
+        triangles: 2216
+        materials: []
+      - mesh: {fileID: -4774862533113982080, guid: f469b22577e1b41e78aa45728a2fbdb9, type: 3}
+        boneNames:
+        - Root
+        - Hips
+        - Spine
+        - Chest
+        - UpperChest
+        - Neck
+        - Head
+        - sec_hair_mass_1
+        - sec_hair_mass_2
+        - sec_queue_1
+        - sec_queue_2
+        - sec_hachimaki_1
+        - sec_hachimaki_2
+        - sec_bandage_tie_1
+        - sec_bandage_tie_2
+        - LeftShoulder
+        - LeftUpperArm
+        - LeftLowerArm
+        - LeftHand
+        - LeftThumb1
+        - LeftThumb2
+        - LeftThumb3
+        - LeftIndex1
+        - LeftIndex2
+        - LeftIndex3
+        - LeftMiddle1
+        - LeftMiddle2
+        - LeftMiddle3
+        - LeftRing1
+        - LeftRing2
+        - LeftRing3
+        - LeftPinky1
+        - LeftPinky2
+        - LeftPinky3
+        - socket_weapon_l
+        - RightShoulder
+        - RightUpperArm
+        - RightLowerArm
+        - RightHand
+        - RightThumb1
+        - RightThumb2
+        - RightThumb3
+        - RightIndex1
+        - RightIndex2
+        - RightIndex3
+        - RightMiddle1
+        - RightMiddle2
+        - RightMiddle3
+        - RightRing1
+        - RightRing2
+        - RightRing3
+        - RightPinky1
+        - RightPinky2
+        - RightPinky3
+        - socket_weapon_r
+        - socket_back
+        - sec_mino_back_1
+        - sec_mino_back_2
+        - sec_mino_back_3
+        - sec_mino_left_1
+        - sec_mino_left_2
+        - sec_mino_left_3
+        - sec_mino_right_1
+        - sec_mino_right_2
+        - sec_mino_right_3
+        - LeftUpperLeg
+        - LeftLowerLeg
+        - LeftFoot
+        - LeftToes
+        - RightUpperLeg
+        - RightLowerLeg
+        - RightFoot
+        - RightToes
+        rootBone: Root
+        triangles: 752
+        materials: []
+    - colourway: '-'
+      fit: B
+      lods:
+      - mesh: {fileID: -2134778773313854810, guid: f9fdbc4716b064fe1b3fb32c15435104, type: 3}
+        boneNames:
+        - Root
+        - Hips
+        - Spine
+        - Chest
+        - UpperChest
+        - Neck
+        - Head
+        - sec_hair_mass_1
+        - sec_hair_mass_2
+        - sec_queue_1
+        - sec_queue_2
+        - sec_hachimaki_1
+        - sec_hachimaki_2
+        - sec_bandage_tie_1
+        - sec_bandage_tie_2
+        - LeftShoulder
+        - LeftUpperArm
+        - LeftLowerArm
+        - LeftHand
+        - LeftThumb1
+        - LeftThumb2
+        - LeftThumb3
+        - LeftIndex1
+        - LeftIndex2
+        - LeftIndex3
+        - LeftMiddle1
+        - LeftMiddle2
+        - LeftMiddle3
+        - LeftRing1
+        - LeftRing2
+        - LeftRing3
+        - LeftPinky1
+        - LeftPinky2
+        - LeftPinky3
+        - socket_weapon_l
+        - RightShoulder
+        - RightUpperArm
+        - RightLowerArm
+        - RightHand
+        - RightThumb1
+        - RightThumb2
+        - RightThumb3
+        - RightIndex1
+        - RightIndex2
+        - RightIndex3
+        - RightMiddle1
+        - RightMiddle2
+        - RightMiddle3
+        - RightRing1
+        - RightRing2
+        - RightRing3
+        - RightPinky1
+        - RightPinky2
+        - RightPinky3
+        - socket_weapon_r
+        - socket_back
+        - sec_mino_back_1
+        - sec_mino_back_2
+        - sec_mino_back_3
+        - sec_mino_left_1
+        - sec_mino_left_2
+        - sec_mino_left_3
+        - sec_mino_right_1
+        - sec_mino_right_2
+        - sec_mino_right_3
+        - LeftUpperLeg
+        - LeftLowerLeg
+        - LeftFoot
+        - LeftToes
+        - RightUpperLeg
+        - RightLowerLeg
+        - RightFoot
+        - RightToes
+        rootBone: Root
+        triangles: 11888
+        materials: []
+      - mesh: {fileID: 4817822344997389610, guid: 8857afe1843e84849b6065ae95c6a362, type: 3}
+        boneNames:
+        - Root
+        - Hips
+        - Spine
+        - Chest
+        - UpperChest
+        - Neck
+        - Head
+        - sec_hair_mass_1
+        - sec_hair_mass_2
+        - sec_queue_1
+        - sec_queue_2
+        - sec_hachimaki_1
+        - sec_hachimaki_2
+        - sec_bandage_tie_1
+        - sec_bandage_tie_2
+        - LeftShoulder
+        - LeftUpperArm
+        - LeftLowerArm
+        - LeftHand
+        - LeftThumb1
+        - LeftThumb2
+        - LeftThumb3
+        - LeftIndex1
+        - LeftIndex2
+        - LeftIndex3
+        - LeftMiddle1
+        - LeftMiddle2
+        - LeftMiddle3
+        - LeftRing1
+        - LeftRing2
+        - LeftRing3
+        - LeftPinky1
+        - LeftPinky2
+        - LeftPinky3
+        - socket_weapon_l
+        - RightShoulder
+        - RightUpperArm
+        - RightLowerArm
+        - RightHand
+        - RightThumb1
+        - RightThumb2
+        - RightThumb3
+        - RightIndex1
+        - RightIndex2
+        - RightIndex3
+        - RightMiddle1
+        - RightMiddle2
+        - RightMiddle3
+        - RightRing1
+        - RightRing2
+        - RightRing3
+        - RightPinky1
+        - RightPinky2
+        - RightPinky3
+        - socket_weapon_r
+        - socket_back
+        - sec_mino_back_1
+        - sec_mino_back_2
+        - sec_mino_back_3
+        - sec_mino_left_1
+        - sec_mino_left_2
+        - sec_mino_left_3
+        - sec_mino_right_1
+        - sec_mino_right_2
+        - sec_mino_right_3
+        - LeftUpperLeg
+        - LeftLowerLeg
+        - LeftFoot
+        - LeftToes
+        - RightUpperLeg
+        - RightLowerLeg
+        - RightFoot
+        - RightToes
+        rootBone: Root
+        triangles: 5360
+        materials: []
+      - mesh: {fileID: 1276109202805893729, guid: ea197236c1b2d44439cf86bc7d9110ca, type: 3}
+        boneNames:
+        - Root
+        - Hips
+        - Spine
+        - Chest
+        - UpperChest
+        - Neck
+        - Head
+        - sec_hair_mass_1
+        - sec_hair_mass_2
+        - sec_queue_1
+        - sec_queue_2
+        - sec_hachimaki_1
+        - sec_hachimaki_2
+        - sec_bandage_tie_1
+        - sec_bandage_tie_2
+        - LeftShoulder
+        - LeftUpperArm
+        - LeftLowerArm
+        - LeftHand
+        - LeftThumb1
+        - LeftThumb2
+        - LeftThumb3
+        - LeftIndex1
+        - LeftIndex2
+        - LeftIndex3
+        - LeftMiddle1
+        - LeftMiddle2
+        - LeftMiddle3
+        - LeftRing1
+        - LeftRing2
+        - LeftRing3
+        - LeftPinky1
+        - LeftPinky2
+        - LeftPinky3
+        - socket_weapon_l
+        - RightShoulder
+        - RightUpperArm
+        - RightLowerArm
+        - RightHand
+        - RightThumb1
+        - RightThumb2
+        - RightThumb3
+        - RightIndex1
+        - RightIndex2
+        - RightIndex3
+        - RightMiddle1
+        - RightMiddle2
+        - RightMiddle3
+        - RightRing1
+        - RightRing2
+        - RightRing3
+        - RightPinky1
+        - RightPinky2
+        - RightPinky3
+        - socket_weapon_r
+        - socket_back
+        - sec_mino_back_1
+        - sec_mino_back_2
+        - sec_mino_back_3
+        - sec_mino_left_1
+        - sec_mino_left_2
+        - sec_mino_left_3
+        - sec_mino_right_1
+        - sec_mino_right_2
+        - sec_mino_right_3
+        - LeftUpperLeg
+        - LeftLowerLeg
+        - LeftFoot
+        - LeftToes
+        - RightUpperLeg
+        - RightLowerLeg
+        - RightFoot
+        - RightToes
+        rootBone: Root
+        triangles: 2216
+        materials: []
+      - mesh: {fileID: -4774862533113982080, guid: f469b22577e1b41e78aa45728a2fbdb9, type: 3}
+        boneNames:
+        - Root
+        - Hips
+        - Spine
+        - Chest
+        - UpperChest
+        - Neck
+        - Head
+        - sec_hair_mass_1
+        - sec_hair_mass_2
+        - sec_queue_1
+        - sec_queue_2
+        - sec_hachimaki_1
+        - sec_hachimaki_2
+        - sec_bandage_tie_1
+        - sec_bandage_tie_2
+        - LeftShoulder
+        - LeftUpperArm
+        - LeftLowerArm
+        - LeftHand
+        - LeftThumb1
+        - LeftThumb2
+        - LeftThumb3
+        - LeftIndex1
+        - LeftIndex2
+        - LeftIndex3
+        - LeftMiddle1
+        - LeftMiddle2
+        - LeftMiddle3
+        - LeftRing1
+        - LeftRing2
+        - LeftRing3
+        - LeftPinky1
+        - LeftPinky2
+        - LeftPinky3
+        - socket_weapon_l
+        - RightShoulder
+        - RightUpperArm
+        - RightLowerArm
+        - RightHand
+        - RightThumb1
+        - RightThumb2
+        - RightThumb3
+        - RightIndex1
+        - RightIndex2
+        - RightIndex3
+        - RightMiddle1
+        - RightMiddle2
+        - RightMiddle3
+        - RightRing1
+        - RightRing2
+        - RightRing3
+        - RightPinky1
+        - RightPinky2
+        - RightPinky3
+        - socket_weapon_r
+        - socket_back
+        - sec_mino_back_1
+        - sec_mino_back_2
+        - sec_mino_back_3
+        - sec_mino_left_1
+        - sec_mino_left_2
+        - sec_mino_left_3
+        - sec_mino_right_1
+        - sec_mino_right_2
+        - sec_mino_right_3
+        - LeftUpperLeg
+        - LeftLowerLeg
+        - LeftFoot
+        - LeftToes
+        - RightUpperLeg
+        - RightLowerLeg
+        - RightFoot
+        - RightToes
+        rootBone: Root
+        triangles: 752
+        materials: []
+    - colourway: '-'
+      fit: C
+      lods:
+      - mesh: {fileID: -2134778773313854810, guid: f9fdbc4716b064fe1b3fb32c15435104, type: 3}
+        boneNames:
+        - Root
+        - Hips
+        - Spine
+        - Chest
+        - UpperChest
+        - Neck
+        - Head
+        - sec_hair_mass_1
+        - sec_hair_mass_2
+        - sec_queue_1
+        - sec_queue_2
+        - sec_hachimaki_1
+        - sec_hachimaki_2
+        - sec_bandage_tie_1
+        - sec_bandage_tie_2
+        - LeftShoulder
+        - LeftUpperArm
+        - LeftLowerArm
+        - LeftHand
+        - LeftThumb1
+        - LeftThumb2
+        - LeftThumb3
+        - LeftIndex1
+        - LeftIndex2
+        - LeftIndex3
+        - LeftMiddle1
+        - LeftMiddle2
+        - LeftMiddle3
+        - LeftRing1
+        - LeftRing2
+        - LeftRing3
+        - LeftPinky1
+        - LeftPinky2
+        - LeftPinky3
+        - socket_weapon_l
+        - RightShoulder
+        - RightUpperArm
+        - RightLowerArm
+        - RightHand
+        - RightThumb1
+        - RightThumb2
+        - RightThumb3
+        - RightIndex1
+        - RightIndex2
+        - RightIndex3
+        - RightMiddle1
+        - RightMiddle2
+        - RightMiddle3
+        - RightRing1
+        - RightRing2
+        - RightRing3
+        - RightPinky1
+        - RightPinky2
+        - RightPinky3
+        - socket_weapon_r
+        - socket_back
+        - sec_mino_back_1
+        - sec_mino_back_2
+        - sec_mino_back_3
+        - sec_mino_left_1
+        - sec_mino_left_2
+        - sec_mino_left_3
+        - sec_mino_right_1
+        - sec_mino_right_2
+        - sec_mino_right_3
+        - LeftUpperLeg
+        - LeftLowerLeg
+        - LeftFoot
+        - LeftToes
+        - RightUpperLeg
+        - RightLowerLeg
+        - RightFoot
+        - RightToes
+        rootBone: Root
+        triangles: 11888
+        materials: []
+      - mesh: {fileID: 4817822344997389610, guid: 8857afe1843e84849b6065ae95c6a362, type: 3}
+        boneNames:
+        - Root
+        - Hips
+        - Spine
+        - Chest
+        - UpperChest
+        - Neck
+        - Head
+        - sec_hair_mass_1
+        - sec_hair_mass_2
+        - sec_queue_1
+        - sec_queue_2
+        - sec_hachimaki_1
+        - sec_hachimaki_2
+        - sec_bandage_tie_1
+        - sec_bandage_tie_2
+        - LeftShoulder
+        - LeftUpperArm
+        - LeftLowerArm
+        - LeftHand
+        - LeftThumb1
+        - LeftThumb2
+        - LeftThumb3
+        - LeftIndex1
+        - LeftIndex2
+        - LeftIndex3
+        - LeftMiddle1
+        - LeftMiddle2
+        - LeftMiddle3
+        - LeftRing1
+        - LeftRing2
+        - LeftRing3
+        - LeftPinky1
+        - LeftPinky2
+        - LeftPinky3
+        - socket_weapon_l
+        - RightShoulder
+        - RightUpperArm
+        - RightLowerArm
+        - RightHand
+        - RightThumb1
+        - RightThumb2
+        - RightThumb3
+        - RightIndex1
+        - RightIndex2
+        - RightIndex3
+        - RightMiddle1
+        - RightMiddle2
+        - RightMiddle3
+        - RightRing1
+        - RightRing2
+        - RightRing3
+        - RightPinky1
+        - RightPinky2
+        - RightPinky3
+        - socket_weapon_r
+        - socket_back
+        - sec_mino_back_1
+        - sec_mino_back_2
+        - sec_mino_back_3
+        - sec_mino_left_1
+        - sec_mino_left_2
+        - sec_mino_left_3
+        - sec_mino_right_1
+        - sec_mino_right_2
+        - sec_mino_right_3
+        - LeftUpperLeg
+        - LeftLowerLeg
+        - LeftFoot
+        - LeftToes
+        - RightUpperLeg
+        - RightLowerLeg
+        - RightFoot
+        - RightToes
+        rootBone: Root
+        triangles: 5360
+        materials: []
+      - mesh: {fileID: 1276109202805893729, guid: ea197236c1b2d44439cf86bc7d9110ca, type: 3}
+        boneNames:
+        - Root
+        - Hips
+        - Spine
+        - Chest
+        - UpperChest
+        - Neck
+        - Head
+        - sec_hair_mass_1
+        - sec_hair_mass_2
+        - sec_queue_1
+        - sec_queue_2
+        - sec_hachimaki_1
+        - sec_hachimaki_2
+        - sec_bandage_tie_1
+        - sec_bandage_tie_2
+        - LeftShoulder
+        - LeftUpperArm
+        - LeftLowerArm
+        - LeftHand
+        - LeftThumb1
+        - LeftThumb2
+        - LeftThumb3
+        - LeftIndex1
+        - LeftIndex2
+        - LeftIndex3
+        - LeftMiddle1
+        - LeftMiddle2
+        - LeftMiddle3
+        - LeftRing1
+        - LeftRing2
+        - LeftRing3
+        - LeftPinky1
+        - LeftPinky2
+        - LeftPinky3
+        - socket_weapon_l
+        - RightShoulder
+        - RightUpperArm
+        - RightLowerArm
+        - RightHand
+        - RightThumb1
+        - RightThumb2
+        - RightThumb3
+        - RightIndex1
+        - RightIndex2
+        - RightIndex3
+        - RightMiddle1
+        - RightMiddle2
+        - RightMiddle3
+        - RightRing1
+        - RightRing2
+        - RightRing3
+        - RightPinky1
+        - RightPinky2
+        - RightPinky3
+        - socket_weapon_r
+        - socket_back
+        - sec_mino_back_1
+        - sec_mino_back_2
+        - sec_mino_back_3
+        - sec_mino_left_1
+        - sec_mino_left_2
+        - sec_mino_left_3
+        - sec_mino_right_1
+        - sec_mino_right_2
+        - sec_mino_right_3
+        - LeftUpperLeg
+        - LeftLowerLeg
+        - LeftFoot
+        - LeftToes
+        - RightUpperLeg
+        - RightLowerLeg
+        - RightFoot
+        - RightToes
+        rootBone: Root
+        triangles: 2216
+        materials: []
+      - mesh: {fileID: -4774862533113982080, guid: f469b22577e1b41e78aa45728a2fbdb9, type: 3}
+        boneNames:
+        - Root
+        - Hips
+        - Spine
+        - Chest
+        - UpperChest
+        - Neck
+        - Head
+        - sec_hair_mass_1
+        - sec_hair_mass_2
+        - sec_queue_1
+        - sec_queue_2
+        - sec_hachimaki_1
+        - sec_hachimaki_2
+        - sec_bandage_tie_1
+        - sec_bandage_tie_2
+        - LeftShoulder
+        - LeftUpperArm
+        - LeftLowerArm
+        - LeftHand
+        - LeftThumb1
+        - LeftThumb2
+        - LeftThumb3
+        - LeftIndex1
+        - LeftIndex2
+        - LeftIndex3
+        - LeftMiddle1
+        - LeftMiddle2
+        - LeftMiddle3
+        - LeftRing1
+        - LeftRing2
+        - LeftRing3
+        - LeftPinky1
+        - LeftPinky2
+        - LeftPinky3
+        - socket_weapon_l
+        - RightShoulder
+        - RightUpperArm
+        - RightLowerArm
+        - RightHand
+        - RightThumb1
+        - RightThumb2
+        - RightThumb3
+        - RightIndex1
+        - RightIndex2
+        - RightIndex3
+        - RightMiddle1
+        - RightMiddle2
+        - RightMiddle3
+        - RightRing1
+        - RightRing2
+        - RightRing3
+        - RightPinky1
+        - RightPinky2
+        - RightPinky3
+        - socket_weapon_r
+        - socket_back
+        - sec_mino_back_1
+        - sec_mino_back_2
+        - sec_mino_back_3
+        - sec_mino_left_1
+        - sec_mino_left_2
+        - sec_mino_left_3
+        - sec_mino_right_1
+        - sec_mino_right_2
+        - sec_mino_right_3
+        - LeftUpperLeg
+        - LeftLowerLeg
+        - LeftFoot
+        - LeftToes
+        - RightUpperLeg
+        - RightLowerLeg
+        - RightFoot
+        - RightToes
+        rootBone: Root
+        triangles: 752
+        materials: []
+    materials:
+    - M_Zombie_Atlas
+  - id: F2_swollen
+    kind: face
+    colourways:
+    - '-'
+    occludesHead: 0
+    variants:
+    - colourway: '-'
+      fit: A
+      lods:
+      - mesh: {fileID: -1761391861721348623, guid: 2880a5d20bf874323ae205fef088a378, type: 3}
+        boneNames:
+        - Root
+        - Hips
+        - Spine
+        - Chest
+        - UpperChest
+        - Neck
+        - Head
+        - sec_hair_mass_1
+        - sec_hair_mass_2
+        - sec_queue_1
+        - sec_queue_2
+        - sec_hachimaki_1
+        - sec_hachimaki_2
+        - sec_bandage_tie_1
+        - sec_bandage_tie_2
+        - LeftShoulder
+        - LeftUpperArm
+        - LeftLowerArm
+        - LeftHand
+        - LeftThumb1
+        - LeftThumb2
+        - LeftThumb3
+        - LeftIndex1
+        - LeftIndex2
+        - LeftIndex3
+        - LeftMiddle1
+        - LeftMiddle2
+        - LeftMiddle3
+        - LeftRing1
+        - LeftRing2
+        - LeftRing3
+        - LeftPinky1
+        - LeftPinky2
+        - LeftPinky3
+        - socket_weapon_l
+        - RightShoulder
+        - RightUpperArm
+        - RightLowerArm
+        - RightHand
+        - RightThumb1
+        - RightThumb2
+        - RightThumb3
+        - RightIndex1
+        - RightIndex2
+        - RightIndex3
+        - RightMiddle1
+        - RightMiddle2
+        - RightMiddle3
+        - RightRing1
+        - RightRing2
+        - RightRing3
+        - RightPinky1
+        - RightPinky2
+        - RightPinky3
+        - socket_weapon_r
+        - socket_back
+        - sec_mino_back_1
+        - sec_mino_back_2
+        - sec_mino_back_3
+        - sec_mino_left_1
+        - sec_mino_left_2
+        - sec_mino_left_3
+        - sec_mino_right_1
+        - sec_mino_right_2
+        - sec_mino_right_3
+        - LeftUpperLeg
+        - LeftLowerLeg
+        - LeftFoot
+        - LeftToes
+        - RightUpperLeg
+        - RightLowerLeg
+        - RightFoot
+        - RightToes
+        rootBone: Root
+        triangles: 11888
+        materials: []
+      - mesh: {fileID: 6490169783359412722, guid: fdbf5cf82e68e4d55854cdbb660df10a, type: 3}
+        boneNames:
+        - Root
+        - Hips
+        - Spine
+        - Chest
+        - UpperChest
+        - Neck
+        - Head
+        - sec_hair_mass_1
+        - sec_hair_mass_2
+        - sec_queue_1
+        - sec_queue_2
+        - sec_hachimaki_1
+        - sec_hachimaki_2
+        - sec_bandage_tie_1
+        - sec_bandage_tie_2
+        - LeftShoulder
+        - LeftUpperArm
+        - LeftLowerArm
+        - LeftHand
+        - LeftThumb1
+        - LeftThumb2
+        - LeftThumb3
+        - LeftIndex1
+        - LeftIndex2
+        - LeftIndex3
+        - LeftMiddle1
+        - LeftMiddle2
+        - LeftMiddle3
+        - LeftRing1
+        - LeftRing2
+        - LeftRing3
+        - LeftPinky1
+        - LeftPinky2
+        - LeftPinky3
+        - socket_weapon_l
+        - RightShoulder
+        - RightUpperArm
+        - RightLowerArm
+        - RightHand
+        - RightThumb1
+        - RightThumb2
+        - RightThumb3
+        - RightIndex1
+        - RightIndex2
+        - RightIndex3
+        - RightMiddle1
+        - RightMiddle2
+        - RightMiddle3
+        - RightRing1
+        - RightRing2
+        - RightRing3
+        - RightPinky1
+        - RightPinky2
+        - RightPinky3
+        - socket_weapon_r
+        - socket_back
+        - sec_mino_back_1
+        - sec_mino_back_2
+        - sec_mino_back_3
+        - sec_mino_left_1
+        - sec_mino_left_2
+        - sec_mino_left_3
+        - sec_mino_right_1
+        - sec_mino_right_2
+        - sec_mino_right_3
+        - LeftUpperLeg
+        - LeftLowerLeg
+        - LeftFoot
+        - LeftToes
+        - RightUpperLeg
+        - RightLowerLeg
+        - RightFoot
+        - RightToes
+        rootBone: Root
+        triangles: 5360
+        materials: []
+      - mesh: {fileID: 6510954631164929160, guid: e90890715d0e04c618ca421beec4116e, type: 3}
+        boneNames:
+        - Root
+        - Hips
+        - Spine
+        - Chest
+        - UpperChest
+        - Neck
+        - Head
+        - sec_hair_mass_1
+        - sec_hair_mass_2
+        - sec_queue_1
+        - sec_queue_2
+        - sec_hachimaki_1
+        - sec_hachimaki_2
+        - sec_bandage_tie_1
+        - sec_bandage_tie_2
+        - LeftShoulder
+        - LeftUpperArm
+        - LeftLowerArm
+        - LeftHand
+        - LeftThumb1
+        - LeftThumb2
+        - LeftThumb3
+        - LeftIndex1
+        - LeftIndex2
+        - LeftIndex3
+        - LeftMiddle1
+        - LeftMiddle2
+        - LeftMiddle3
+        - LeftRing1
+        - LeftRing2
+        - LeftRing3
+        - LeftPinky1
+        - LeftPinky2
+        - LeftPinky3
+        - socket_weapon_l
+        - RightShoulder
+        - RightUpperArm
+        - RightLowerArm
+        - RightHand
+        - RightThumb1
+        - RightThumb2
+        - RightThumb3
+        - RightIndex1
+        - RightIndex2
+        - RightIndex3
+        - RightMiddle1
+        - RightMiddle2
+        - RightMiddle3
+        - RightRing1
+        - RightRing2
+        - RightRing3
+        - RightPinky1
+        - RightPinky2
+        - RightPinky3
+        - socket_weapon_r
+        - socket_back
+        - sec_mino_back_1
+        - sec_mino_back_2
+        - sec_mino_back_3
+        - sec_mino_left_1
+        - sec_mino_left_2
+        - sec_mino_left_3
+        - sec_mino_right_1
+        - sec_mino_right_2
+        - sec_mino_right_3
+        - LeftUpperLeg
+        - LeftLowerLeg
+        - LeftFoot
+        - LeftToes
+        - RightUpperLeg
+        - RightLowerLeg
+        - RightFoot
+        - RightToes
+        rootBone: Root
+        triangles: 2216
+        materials: []
+      - mesh: {fileID: 5829054720256279785, guid: e67b17b6bf0a74d229dc01f25ef689e0, type: 3}
+        boneNames:
+        - Root
+        - Hips
+        - Spine
+        - Chest
+        - UpperChest
+        - Neck
+        - Head
+        - sec_hair_mass_1
+        - sec_hair_mass_2
+        - sec_queue_1
+        - sec_queue_2
+        - sec_hachimaki_1
+        - sec_hachimaki_2
+        - sec_bandage_tie_1
+        - sec_bandage_tie_2
+        - LeftShoulder
+        - LeftUpperArm
+        - LeftLowerArm
+        - LeftHand
+        - LeftThumb1
+        - LeftThumb2
+        - LeftThumb3
+        - LeftIndex1
+        - LeftIndex2
+        - LeftIndex3
+        - LeftMiddle1
+        - LeftMiddle2
+        - LeftMiddle3
+        - LeftRing1
+        - LeftRing2
+        - LeftRing3
+        - LeftPinky1
+        - LeftPinky2
+        - LeftPinky3
+        - socket_weapon_l
+        - RightShoulder
+        - RightUpperArm
+        - RightLowerArm
+        - RightHand
+        - RightThumb1
+        - RightThumb2
+        - RightThumb3
+        - RightIndex1
+        - RightIndex2
+        - RightIndex3
+        - RightMiddle1
+        - RightMiddle2
+        - RightMiddle3
+        - RightRing1
+        - RightRing2
+        - RightRing3
+        - RightPinky1
+        - RightPinky2
+        - RightPinky3
+        - socket_weapon_r
+        - socket_back
+        - sec_mino_back_1
+        - sec_mino_back_2
+        - sec_mino_back_3
+        - sec_mino_left_1
+        - sec_mino_left_2
+        - sec_mino_left_3
+        - sec_mino_right_1
+        - sec_mino_right_2
+        - sec_mino_right_3
+        - LeftUpperLeg
+        - LeftLowerLeg
+        - LeftFoot
+        - LeftToes
+        - RightUpperLeg
+        - RightLowerLeg
+        - RightFoot
+        - RightToes
+        rootBone: Root
+        triangles: 752
+        materials: []
+    - colourway: '-'
+      fit: B
+      lods:
+      - mesh: {fileID: -1761391861721348623, guid: 2880a5d20bf874323ae205fef088a378, type: 3}
+        boneNames:
+        - Root
+        - Hips
+        - Spine
+        - Chest
+        - UpperChest
+        - Neck
+        - Head
+        - sec_hair_mass_1
+        - sec_hair_mass_2
+        - sec_queue_1
+        - sec_queue_2
+        - sec_hachimaki_1
+        - sec_hachimaki_2
+        - sec_bandage_tie_1
+        - sec_bandage_tie_2
+        - LeftShoulder
+        - LeftUpperArm
+        - LeftLowerArm
+        - LeftHand
+        - LeftThumb1
+        - LeftThumb2
+        - LeftThumb3
+        - LeftIndex1
+        - LeftIndex2
+        - LeftIndex3
+        - LeftMiddle1
+        - LeftMiddle2
+        - LeftMiddle3
+        - LeftRing1
+        - LeftRing2
+        - LeftRing3
+        - LeftPinky1
+        - LeftPinky2
+        - LeftPinky3
+        - socket_weapon_l
+        - RightShoulder
+        - RightUpperArm
+        - RightLowerArm
+        - RightHand
+        - RightThumb1
+        - RightThumb2
+        - RightThumb3
+        - RightIndex1
+        - RightIndex2
+        - RightIndex3
+        - RightMiddle1
+        - RightMiddle2
+        - RightMiddle3
+        - RightRing1
+        - RightRing2
+        - RightRing3
+        - RightPinky1
+        - RightPinky2
+        - RightPinky3
+        - socket_weapon_r
+        - socket_back
+        - sec_mino_back_1
+        - sec_mino_back_2
+        - sec_mino_back_3
+        - sec_mino_left_1
+        - sec_mino_left_2
+        - sec_mino_left_3
+        - sec_mino_right_1
+        - sec_mino_right_2
+        - sec_mino_right_3
+        - LeftUpperLeg
+        - LeftLowerLeg
+        - LeftFoot
+        - LeftToes
+        - RightUpperLeg
+        - RightLowerLeg
+        - RightFoot
+        - RightToes
+        rootBone: Root
+        triangles: 11888
+        materials: []
+      - mesh: {fileID: 6490169783359412722, guid: fdbf5cf82e68e4d55854cdbb660df10a, type: 3}
+        boneNames:
+        - Root
+        - Hips
+        - Spine
+        - Chest
+        - UpperChest
+        - Neck
+        - Head
+        - sec_hair_mass_1
+        - sec_hair_mass_2
+        - sec_queue_1
+        - sec_queue_2
+        - sec_hachimaki_1
+        - sec_hachimaki_2
+        - sec_bandage_tie_1
+        - sec_bandage_tie_2
+        - LeftShoulder
+        - LeftUpperArm
+        - LeftLowerArm
+        - LeftHand
+        - LeftThumb1
+        - LeftThumb2
+        - LeftThumb3
+        - LeftIndex1
+        - LeftIndex2
+        - LeftIndex3
+        - LeftMiddle1
+        - LeftMiddle2
+        - LeftMiddle3
+        - LeftRing1
+        - LeftRing2
+        - LeftRing3
+        - LeftPinky1
+        - LeftPinky2
+        - LeftPinky3
+        - socket_weapon_l
+        - RightShoulder
+        - RightUpperArm
+        - RightLowerArm
+        - RightHand
+        - RightThumb1
+        - RightThumb2
+        - RightThumb3
+        - RightIndex1
+        - RightIndex2
+        - RightIndex3
+        - RightMiddle1
+        - RightMiddle2
+        - RightMiddle3
+        - RightRing1
+        - RightRing2
+        - RightRing3
+        - RightPinky1
+        - RightPinky2
+        - RightPinky3
+        - socket_weapon_r
+        - socket_back
+        - sec_mino_back_1
+        - sec_mino_back_2
+        - sec_mino_back_3
+        - sec_mino_left_1
+        - sec_mino_left_2
+        - sec_mino_left_3
+        - sec_mino_right_1
+        - sec_mino_right_2
+        - sec_mino_right_3
+        - LeftUpperLeg
+        - LeftLowerLeg
+        - LeftFoot
+        - LeftToes
+        - RightUpperLeg
+        - RightLowerLeg
+        - RightFoot
+        - RightToes
+        rootBone: Root
+        triangles: 5360
+        materials: []
+      - mesh: {fileID: 6510954631164929160, guid: e90890715d0e04c618ca421beec4116e, type: 3}
+        boneNames:
+        - Root
+        - Hips
+        - Spine
+        - Chest
+        - UpperChest
+        - Neck
+        - Head
+        - sec_hair_mass_1
+        - sec_hair_mass_2
+        - sec_queue_1
+        - sec_queue_2
+        - sec_hachimaki_1
+        - sec_hachimaki_2
+        - sec_bandage_tie_1
+        - sec_bandage_tie_2
+        - LeftShoulder
+        - LeftUpperArm
+        - LeftLowerArm
+        - LeftHand
+        - LeftThumb1
+        - LeftThumb2
+        - LeftThumb3
+        - LeftIndex1
+        - LeftIndex2
+        - LeftIndex3
+        - LeftMiddle1
+        - LeftMiddle2
+        - LeftMiddle3
+        - LeftRing1
+        - LeftRing2
+        - LeftRing3
+        - LeftPinky1
+        - LeftPinky2
+        - LeftPinky3
+        - socket_weapon_l
+        - RightShoulder
+        - RightUpperArm
+        - RightLowerArm
+        - RightHand
+        - RightThumb1
+        - RightThumb2
+        - RightThumb3
+        - RightIndex1
+        - RightIndex2
+        - RightIndex3
+        - RightMiddle1
+        - RightMiddle2
+        - RightMiddle3
+        - RightRing1
+        - RightRing2
+        - RightRing3
+        - RightPinky1
+        - RightPinky2
+        - RightPinky3
+        - socket_weapon_r
+        - socket_back
+        - sec_mino_back_1
+        - sec_mino_back_2
+        - sec_mino_back_3
+        - sec_mino_left_1
+        - sec_mino_left_2
+        - sec_mino_left_3
+        - sec_mino_right_1
+        - sec_mino_right_2
+        - sec_mino_right_3
+        - LeftUpperLeg
+        - LeftLowerLeg
+        - LeftFoot
+        - LeftToes
+        - RightUpperLeg
+        - RightLowerLeg
+        - RightFoot
+        - RightToes
+        rootBone: Root
+        triangles: 2216
+        materials: []
+      - mesh: {fileID: 5829054720256279785, guid: e67b17b6bf0a74d229dc01f25ef689e0, type: 3}
+        boneNames:
+        - Root
+        - Hips
+        - Spine
+        - Chest
+        - UpperChest
+        - Neck
+        - Head
+        - sec_hair_mass_1
+        - sec_hair_mass_2
+        - sec_queue_1
+        - sec_queue_2
+        - sec_hachimaki_1
+        - sec_hachimaki_2
+        - sec_bandage_tie_1
+        - sec_bandage_tie_2
+        - LeftShoulder
+        - LeftUpperArm
+        - LeftLowerArm
+        - LeftHand
+        - LeftThumb1
+        - LeftThumb2
+        - LeftThumb3
+        - LeftIndex1
+        - LeftIndex2
+        - LeftIndex3
+        - LeftMiddle1
+        - LeftMiddle2
+        - LeftMiddle3
+        - LeftRing1
+        - LeftRing2
+        - LeftRing3
+        - LeftPinky1
+        - LeftPinky2
+        - LeftPinky3
+        - socket_weapon_l
+        - RightShoulder
+        - RightUpperArm
+        - RightLowerArm
+        - RightHand
+        - RightThumb1
+        - RightThumb2
+        - RightThumb3
+        - RightIndex1
+        - RightIndex2
+        - RightIndex3
+        - RightMiddle1
+        - RightMiddle2
+        - RightMiddle3
+        - RightRing1
+        - RightRing2
+        - RightRing3
+        - RightPinky1
+        - RightPinky2
+        - RightPinky3
+        - socket_weapon_r
+        - socket_back
+        - sec_mino_back_1
+        - sec_mino_back_2
+        - sec_mino_back_3
+        - sec_mino_left_1
+        - sec_mino_left_2
+        - sec_mino_left_3
+        - sec_mino_right_1
+        - sec_mino_right_2
+        - sec_mino_right_3
+        - LeftUpperLeg
+        - LeftLowerLeg
+        - LeftFoot
+        - LeftToes
+        - RightUpperLeg
+        - RightLowerLeg
+        - RightFoot
+        - RightToes
+        rootBone: Root
+        triangles: 752
+        materials: []
+    - colourway: '-'
+      fit: C
+      lods:
+      - mesh: {fileID: -1761391861721348623, guid: 2880a5d20bf874323ae205fef088a378, type: 3}
+        boneNames:
+        - Root
+        - Hips
+        - Spine
+        - Chest
+        - UpperChest
+        - Neck
+        - Head
+        - sec_hair_mass_1
+        - sec_hair_mass_2
+        - sec_queue_1
+        - sec_queue_2
+        - sec_hachimaki_1
+        - sec_hachimaki_2
+        - sec_bandage_tie_1
+        - sec_bandage_tie_2
+        - LeftShoulder
+        - LeftUpperArm
+        - LeftLowerArm
+        - LeftHand
+        - LeftThumb1
+        - LeftThumb2
+        - LeftThumb3
+        - LeftIndex1
+        - LeftIndex2
+        - LeftIndex3
+        - LeftMiddle1
+        - LeftMiddle2
+        - LeftMiddle3
+        - LeftRing1
+        - LeftRing2
+        - LeftRing3
+        - LeftPinky1
+        - LeftPinky2
+        - LeftPinky3
+        - socket_weapon_l
+        - RightShoulder
+        - RightUpperArm
+        - RightLowerArm
+        - RightHand
+        - RightThumb1
+        - RightThumb2
+        - RightThumb3
+        - RightIndex1
+        - RightIndex2
+        - RightIndex3
+        - RightMiddle1
+        - RightMiddle2
+        - RightMiddle3
+        - RightRing1
+        - RightRing2
+        - RightRing3
+        - RightPinky1
+        - RightPinky2
+        - RightPinky3
+        - socket_weapon_r
+        - socket_back
+        - sec_mino_back_1
+        - sec_mino_back_2
+        - sec_mino_back_3
+        - sec_mino_left_1
+        - sec_mino_left_2
+        - sec_mino_left_3
+        - sec_mino_right_1
+        - sec_mino_right_2
+        - sec_mino_right_3
+        - LeftUpperLeg
+        - LeftLowerLeg
+        - LeftFoot
+        - LeftToes
+        - RightUpperLeg
+        - RightLowerLeg
+        - RightFoot
+        - RightToes
+        rootBone: Root
+        triangles: 11888
+        materials: []
+      - mesh: {fileID: 6490169783359412722, guid: fdbf5cf82e68e4d55854cdbb660df10a, type: 3}
+        boneNames:
+        - Root
+        - Hips
+        - Spine
+        - Chest
+        - UpperChest
+        - Neck
+        - Head
+        - sec_hair_mass_1
+        - sec_hair_mass_2
+        - sec_queue_1
+        - sec_queue_2
+        - sec_hachimaki_1
+        - sec_hachimaki_2
+        - sec_bandage_tie_1
+        - sec_bandage_tie_2
+        - LeftShoulder
+        - LeftUpperArm
+        - LeftLowerArm
+        - LeftHand
+        - LeftThumb1
+        - LeftThumb2
+        - LeftThumb3
+        - LeftIndex1
+        - LeftIndex2
+        - LeftIndex3
+        - LeftMiddle1
+        - LeftMiddle2
+        - LeftMiddle3
+        - LeftRing1
+        - LeftRing2
+        - LeftRing3
+        - LeftPinky1
+        - LeftPinky2
+        - LeftPinky3
+        - socket_weapon_l
+        - RightShoulder
+        - RightUpperArm
+        - RightLowerArm
+        - RightHand
+        - RightThumb1
+        - RightThumb2
+        - RightThumb3
+        - RightIndex1
+        - RightIndex2
+        - RightIndex3
+        - RightMiddle1
+        - RightMiddle2
+        - RightMiddle3
+        - RightRing1
+        - RightRing2
+        - RightRing3
+        - RightPinky1
+        - RightPinky2
+        - RightPinky3
+        - socket_weapon_r
+        - socket_back
+        - sec_mino_back_1
+        - sec_mino_back_2
+        - sec_mino_back_3
+        - sec_mino_left_1
+        - sec_mino_left_2
+        - sec_mino_left_3
+        - sec_mino_right_1
+        - sec_mino_right_2
+        - sec_mino_right_3
+        - LeftUpperLeg
+        - LeftLowerLeg
+        - LeftFoot
+        - LeftToes
+        - RightUpperLeg
+        - RightLowerLeg
+        - RightFoot
+        - RightToes
+        rootBone: Root
+        triangles: 5360
+        materials: []
+      - mesh: {fileID: 6510954631164929160, guid: e90890715d0e04c618ca421beec4116e, type: 3}
+        boneNames:
+        - Root
+        - Hips
+        - Spine
+        - Chest
+        - UpperChest
+        - Neck
+        - Head
+        - sec_hair_mass_1
+        - sec_hair_mass_2
+        - sec_queue_1
+        - sec_queue_2
+        - sec_hachimaki_1
+        - sec_hachimaki_2
+        - sec_bandage_tie_1
+        - sec_bandage_tie_2
+        - LeftShoulder
+        - LeftUpperArm
+        - LeftLowerArm
+        - LeftHand
+        - LeftThumb1
+        - LeftThumb2
+        - LeftThumb3
+        - LeftIndex1
+        - LeftIndex2
+        - LeftIndex3
+        - LeftMiddle1
+        - LeftMiddle2
+        - LeftMiddle3
+        - LeftRing1
+        - LeftRing2
+        - LeftRing3
+        - LeftPinky1
+        - LeftPinky2
+        - LeftPinky3
+        - socket_weapon_l
+        - RightShoulder
+        - RightUpperArm
+        - RightLowerArm
+        - RightHand
+        - RightThumb1
+        - RightThumb2
+        - RightThumb3
+        - RightIndex1
+        - RightIndex2
+        - RightIndex3
+        - RightMiddle1
+        - RightMiddle2
+        - RightMiddle3
+        - RightRing1
+        - RightRing2
+        - RightRing3
+        - RightPinky1
+        - RightPinky2
+        - RightPinky3
+        - socket_weapon_r
+        - socket_back
+        - sec_mino_back_1
+        - sec_mino_back_2
+        - sec_mino_back_3
+        - sec_mino_left_1
+        - sec_mino_left_2
+        - sec_mino_left_3
+        - sec_mino_right_1
+        - sec_mino_right_2
+        - sec_mino_right_3
+        - LeftUpperLeg
+        - LeftLowerLeg
+        - LeftFoot
+        - LeftToes
+        - RightUpperLeg
+        - RightLowerLeg
+        - RightFoot
+        - RightToes
+        rootBone: Root
+        triangles: 2216
+        materials: []
+      - mesh: {fileID: 5829054720256279785, guid: e67b17b6bf0a74d229dc01f25ef689e0, type: 3}
+        boneNames:
+        - Root
+        - Hips
+        - Spine
+        - Chest
+        - UpperChest
+        - Neck
+        - Head
+        - sec_hair_mass_1
+        - sec_hair_mass_2
+        - sec_queue_1
+        - sec_queue_2
+        - sec_hachimaki_1
+        - sec_hachimaki_2
+        - sec_bandage_tie_1
+        - sec_bandage_tie_2
+        - LeftShoulder
+        - LeftUpperArm
+        - LeftLowerArm
+        - LeftHand
+        - LeftThumb1
+        - LeftThumb2
+        - LeftThumb3
+        - LeftIndex1
+        - LeftIndex2
+        - LeftIndex3
+        - LeftMiddle1
+        - LeftMiddle2
+        - LeftMiddle3
+        - LeftRing1
+        - LeftRing2
+        - LeftRing3
+        - LeftPinky1
+        - LeftPinky2
+        - LeftPinky3
+        - socket_weapon_l
+        - RightShoulder
+        - RightUpperArm
+        - RightLowerArm
+        - RightHand
+        - RightThumb1
+        - RightThumb2
+        - RightThumb3
+        - RightIndex1
+        - RightIndex2
+        - RightIndex3
+        - RightMiddle1
+        - RightMiddle2
+        - RightMiddle3
+        - RightRing1
+        - RightRing2
+        - RightRing3
+        - RightPinky1
+        - RightPinky2
+        - RightPinky3
+        - socket_weapon_r
+        - socket_back
+        - sec_mino_back_1
+        - sec_mino_back_2
+        - sec_mino_back_3
+        - sec_mino_left_1
+        - sec_mino_left_2
+        - sec_mino_left_3
+        - sec_mino_right_1
+        - sec_mino_right_2
+        - sec_mino_right_3
+        - LeftUpperLeg
+        - LeftLowerLeg
+        - LeftFoot
+        - LeftToes
+        - RightUpperLeg
+        - RightLowerLeg
+        - RightFoot
+        - RightToes
+        rootBone: Root
+        triangles: 752
+        materials: []
+    materials:
+    - M_Zombie_Atlas
+  - id: F3_riven
+    kind: face
+    colourways:
+    - '-'
+    occludesHead: 0
+    variants:
+    - colourway: '-'
+      fit: A
+      lods:
+      - mesh: {fileID: -6063834059490677661, guid: 156ab757d9db9469ba541c08840b1314, type: 3}
+        boneNames:
+        - Root
+        - Hips
+        - Spine
+        - Chest
+        - UpperChest
+        - Neck
+        - Head
+        - sec_hair_mass_1
+        - sec_hair_mass_2
+        - sec_queue_1
+        - sec_queue_2
+        - sec_hachimaki_1
+        - sec_hachimaki_2
+        - sec_bandage_tie_1
+        - sec_bandage_tie_2
+        - LeftShoulder
+        - LeftUpperArm
+        - LeftLowerArm
+        - LeftHand
+        - LeftThumb1
+        - LeftThumb2
+        - LeftThumb3
+        - LeftIndex1
+        - LeftIndex2
+        - LeftIndex3
+        - LeftMiddle1
+        - LeftMiddle2
+        - LeftMiddle3
+        - LeftRing1
+        - LeftRing2
+        - LeftRing3
+        - LeftPinky1
+        - LeftPinky2
+        - LeftPinky3
+        - socket_weapon_l
+        - RightShoulder
+        - RightUpperArm
+        - RightLowerArm
+        - RightHand
+        - RightThumb1
+        - RightThumb2
+        - RightThumb3
+        - RightIndex1
+        - RightIndex2
+        - RightIndex3
+        - RightMiddle1
+        - RightMiddle2
+        - RightMiddle3
+        - RightRing1
+        - RightRing2
+        - RightRing3
+        - RightPinky1
+        - RightPinky2
+        - RightPinky3
+        - socket_weapon_r
+        - socket_back
+        - sec_mino_back_1
+        - sec_mino_back_2
+        - sec_mino_back_3
+        - sec_mino_left_1
+        - sec_mino_left_2
+        - sec_mino_left_3
+        - sec_mino_right_1
+        - sec_mino_right_2
+        - sec_mino_right_3
+        - LeftUpperLeg
+        - LeftLowerLeg
+        - LeftFoot
+        - LeftToes
+        - RightUpperLeg
+        - RightLowerLeg
+        - RightFoot
+        - RightToes
+        rootBone: Root
+        triangles: 11888
+        materials: []
+      - mesh: {fileID: 753596742428745114, guid: e296b87ffc6d84b6f9439524ac47332a, type: 3}
+        boneNames:
+        - Root
+        - Hips
+        - Spine
+        - Chest
+        - UpperChest
+        - Neck
+        - Head
+        - sec_hair_mass_1
+        - sec_hair_mass_2
+        - sec_queue_1
+        - sec_queue_2
+        - sec_hachimaki_1
+        - sec_hachimaki_2
+        - sec_bandage_tie_1
+        - sec_bandage_tie_2
+        - LeftShoulder
+        - LeftUpperArm
+        - LeftLowerArm
+        - LeftHand
+        - LeftThumb1
+        - LeftThumb2
+        - LeftThumb3
+        - LeftIndex1
+        - LeftIndex2
+        - LeftIndex3
+        - LeftMiddle1
+        - LeftMiddle2
+        - LeftMiddle3
+        - LeftRing1
+        - LeftRing2
+        - LeftRing3
+        - LeftPinky1
+        - LeftPinky2
+        - LeftPinky3
+        - socket_weapon_l
+        - RightShoulder
+        - RightUpperArm
+        - RightLowerArm
+        - RightHand
+        - RightThumb1
+        - RightThumb2
+        - RightThumb3
+        - RightIndex1
+        - RightIndex2
+        - RightIndex3
+        - RightMiddle1
+        - RightMiddle2
+        - RightMiddle3
+        - RightRing1
+        - RightRing2
+        - RightRing3
+        - RightPinky1
+        - RightPinky2
+        - RightPinky3
+        - socket_weapon_r
+        - socket_back
+        - sec_mino_back_1
+        - sec_mino_back_2
+        - sec_mino_back_3
+        - sec_mino_left_1
+        - sec_mino_left_2
+        - sec_mino_left_3
+        - sec_mino_right_1
+        - sec_mino_right_2
+        - sec_mino_right_3
+        - LeftUpperLeg
+        - LeftLowerLeg
+        - LeftFoot
+        - LeftToes
+        - RightUpperLeg
+        - RightLowerLeg
+        - RightFoot
+        - RightToes
+        rootBone: Root
+        triangles: 5360
+        materials: []
+      - mesh: {fileID: -2590353816673466095, guid: 90404115e3d8845b78e8c3b5c1bf81a8, type: 3}
+        boneNames:
+        - Root
+        - Hips
+        - Spine
+        - Chest
+        - UpperChest
+        - Neck
+        - Head
+        - sec_hair_mass_1
+        - sec_hair_mass_2
+        - sec_queue_1
+        - sec_queue_2
+        - sec_hachimaki_1
+        - sec_hachimaki_2
+        - sec_bandage_tie_1
+        - sec_bandage_tie_2
+        - LeftShoulder
+        - LeftUpperArm
+        - LeftLowerArm
+        - LeftHand
+        - LeftThumb1
+        - LeftThumb2
+        - LeftThumb3
+        - LeftIndex1
+        - LeftIndex2
+        - LeftIndex3
+        - LeftMiddle1
+        - LeftMiddle2
+        - LeftMiddle3
+        - LeftRing1
+        - LeftRing2
+        - LeftRing3
+        - LeftPinky1
+        - LeftPinky2
+        - LeftPinky3
+        - socket_weapon_l
+        - RightShoulder
+        - RightUpperArm
+        - RightLowerArm
+        - RightHand
+        - RightThumb1
+        - RightThumb2
+        - RightThumb3
+        - RightIndex1
+        - RightIndex2
+        - RightIndex3
+        - RightMiddle1
+        - RightMiddle2
+        - RightMiddle3
+        - RightRing1
+        - RightRing2
+        - RightRing3
+        - RightPinky1
+        - RightPinky2
+        - RightPinky3
+        - socket_weapon_r
+        - socket_back
+        - sec_mino_back_1
+        - sec_mino_back_2
+        - sec_mino_back_3
+        - sec_mino_left_1
+        - sec_mino_left_2
+        - sec_mino_left_3
+        - sec_mino_right_1
+        - sec_mino_right_2
+        - sec_mino_right_3
+        - LeftUpperLeg
+        - LeftLowerLeg
+        - LeftFoot
+        - LeftToes
+        - RightUpperLeg
+        - RightLowerLeg
+        - RightFoot
+        - RightToes
+        rootBone: Root
+        triangles: 2216
+        materials: []
+      - mesh: {fileID: 482278532684883980, guid: d3b245273374447daaa278b01617ec78, type: 3}
+        boneNames:
+        - Root
+        - Hips
+        - Spine
+        - Chest
+        - UpperChest
+        - Neck
+        - Head
+        - sec_hair_mass_1
+        - sec_hair_mass_2
+        - sec_queue_1
+        - sec_queue_2
+        - sec_hachimaki_1
+        - sec_hachimaki_2
+        - sec_bandage_tie_1
+        - sec_bandage_tie_2
+        - LeftShoulder
+        - LeftUpperArm
+        - LeftLowerArm
+        - LeftHand
+        - LeftThumb1
+        - LeftThumb2
+        - LeftThumb3
+        - LeftIndex1
+        - LeftIndex2
+        - LeftIndex3
+        - LeftMiddle1
+        - LeftMiddle2
+        - LeftMiddle3
+        - LeftRing1
+        - LeftRing2
+        - LeftRing3
+        - LeftPinky1
+        - LeftPinky2
+        - LeftPinky3
+        - socket_weapon_l
+        - RightShoulder
+        - RightUpperArm
+        - RightLowerArm
+        - RightHand
+        - RightThumb1
+        - RightThumb2
+        - RightThumb3
+        - RightIndex1
+        - RightIndex2
+        - RightIndex3
+        - RightMiddle1
+        - RightMiddle2
+        - RightMiddle3
+        - RightRing1
+        - RightRing2
+        - RightRing3
+        - RightPinky1
+        - RightPinky2
+        - RightPinky3
+        - socket_weapon_r
+        - socket_back
+        - sec_mino_back_1
+        - sec_mino_back_2
+        - sec_mino_back_3
+        - sec_mino_left_1
+        - sec_mino_left_2
+        - sec_mino_left_3
+        - sec_mino_right_1
+        - sec_mino_right_2
+        - sec_mino_right_3
+        - LeftUpperLeg
+        - LeftLowerLeg
+        - LeftFoot
+        - LeftToes
+        - RightUpperLeg
+        - RightLowerLeg
+        - RightFoot
+        - RightToes
+        rootBone: Root
+        triangles: 752
+        materials: []
+    - colourway: '-'
+      fit: B
+      lods:
+      - mesh: {fileID: -6063834059490677661, guid: 156ab757d9db9469ba541c08840b1314, type: 3}
+        boneNames:
+        - Root
+        - Hips
+        - Spine
+        - Chest
+        - UpperChest
+        - Neck
+        - Head
+        - sec_hair_mass_1
+        - sec_hair_mass_2
+        - sec_queue_1
+        - sec_queue_2
+        - sec_hachimaki_1
+        - sec_hachimaki_2
+        - sec_bandage_tie_1
+        - sec_bandage_tie_2
+        - LeftShoulder
+        - LeftUpperArm
+        - LeftLowerArm
+        - LeftHand
+        - LeftThumb1
+        - LeftThumb2
+        - LeftThumb3
+        - LeftIndex1
+        - LeftIndex2
+        - LeftIndex3
+        - LeftMiddle1
+        - LeftMiddle2
+        - LeftMiddle3
+        - LeftRing1
+        - LeftRing2
+        - LeftRing3
+        - LeftPinky1
+        - LeftPinky2
+        - LeftPinky3
+        - socket_weapon_l
+        - RightShoulder
+        - RightUpperArm
+        - RightLowerArm
+        - RightHand
+        - RightThumb1
+        - RightThumb2
+        - RightThumb3
+        - RightIndex1
+        - RightIndex2
+        - RightIndex3
+        - RightMiddle1
+        - RightMiddle2
+        - RightMiddle3
+        - RightRing1
+        - RightRing2
+        - RightRing3
+        - RightPinky1
+        - RightPinky2
+        - RightPinky3
+        - socket_weapon_r
+        - socket_back
+        - sec_mino_back_1
+        - sec_mino_back_2
+        - sec_mino_back_3
+        - sec_mino_left_1
+        - sec_mino_left_2
+        - sec_mino_left_3
+        - sec_mino_right_1
+        - sec_mino_right_2
+        - sec_mino_right_3
+        - LeftUpperLeg
+        - LeftLowerLeg
+        - LeftFoot
+        - LeftToes
+        - RightUpperLeg
+        - RightLowerLeg
+        - RightFoot
+        - RightToes
+        rootBone: Root
+        triangles: 11888
+        materials: []
+      - mesh: {fileID: 753596742428745114, guid: e296b87ffc6d84b6f9439524ac47332a, type: 3}
+        boneNames:
+        - Root
+        - Hips
+        - Spine
+        - Chest
+        - UpperChest
+        - Neck
+        - Head
+        - sec_hair_mass_1
+        - sec_hair_mass_2
+        - sec_queue_1
+        - sec_queue_2
+        - sec_hachimaki_1
+        - sec_hachimaki_2
+        - sec_bandage_tie_1
+        - sec_bandage_tie_2
+        - LeftShoulder
+        - LeftUpperArm
+        - LeftLowerArm
+        - LeftHand
+        - LeftThumb1
+        - LeftThumb2
+        - LeftThumb3
+        - LeftIndex1
+        - LeftIndex2
+        - LeftIndex3
+        - LeftMiddle1
+        - LeftMiddle2
+        - LeftMiddle3
+        - LeftRing1
+        - LeftRing2
+        - LeftRing3
+        - LeftPinky1
+        - LeftPinky2
+        - LeftPinky3
+        - socket_weapon_l
+        - RightShoulder
+        - RightUpperArm
+        - RightLowerArm
+        - RightHand
+        - RightThumb1
+        - RightThumb2
+        - RightThumb3
+        - RightIndex1
+        - RightIndex2
+        - RightIndex3
+        - RightMiddle1
+        - RightMiddle2
+        - RightMiddle3
+        - RightRing1
+        - RightRing2
+        - RightRing3
+        - RightPinky1
+        - RightPinky2
+        - RightPinky3
+        - socket_weapon_r
+        - socket_back
+        - sec_mino_back_1
+        - sec_mino_back_2
+        - sec_mino_back_3
+        - sec_mino_left_1
+        - sec_mino_left_2
+        - sec_mino_left_3
+        - sec_mino_right_1
+        - sec_mino_right_2
+        - sec_mino_right_3
+        - LeftUpperLeg
+        - LeftLowerLeg
+        - LeftFoot
+        - LeftToes
+        - RightUpperLeg
+        - RightLowerLeg
+        - RightFoot
+        - RightToes
+        rootBone: Root
+        triangles: 5360
+        materials: []
+      - mesh: {fileID: -2590353816673466095, guid: 90404115e3d8845b78e8c3b5c1bf81a8, type: 3}
+        boneNames:
+        - Root
+        - Hips
+        - Spine
+        - Chest
+        - UpperChest
+        - Neck
+        - Head
+        - sec_hair_mass_1
+        - sec_hair_mass_2
+        - sec_queue_1
+        - sec_queue_2
+        - sec_hachimaki_1
+        - sec_hachimaki_2
+        - sec_bandage_tie_1
+        - sec_bandage_tie_2
+        - LeftShoulder
+        - LeftUpperArm
+        - LeftLowerArm
+        - LeftHand
+        - LeftThumb1
+        - LeftThumb2
+        - LeftThumb3
+        - LeftIndex1
+        - LeftIndex2
+        - LeftIndex3
+        - LeftMiddle1
+        - LeftMiddle2
+        - LeftMiddle3
+        - LeftRing1
+        - LeftRing2
+        - LeftRing3
+        - LeftPinky1
+        - LeftPinky2
+        - LeftPinky3
+        - socket_weapon_l
+        - RightShoulder
+        - RightUpperArm
+        - RightLowerArm
+        - RightHand
+        - RightThumb1
+        - RightThumb2
+        - RightThumb3
+        - RightIndex1
+        - RightIndex2
+        - RightIndex3
+        - RightMiddle1
+        - RightMiddle2
+        - RightMiddle3
+        - RightRing1
+        - RightRing2
+        - RightRing3
+        - RightPinky1
+        - RightPinky2
+        - RightPinky3
+        - socket_weapon_r
+        - socket_back
+        - sec_mino_back_1
+        - sec_mino_back_2
+        - sec_mino_back_3
+        - sec_mino_left_1
+        - sec_mino_left_2
+        - sec_mino_left_3
+        - sec_mino_right_1
+        - sec_mino_right_2
+        - sec_mino_right_3
+        - LeftUpperLeg
+        - LeftLowerLeg
+        - LeftFoot
+        - LeftToes
+        - RightUpperLeg
+        - RightLowerLeg
+        - RightFoot
+        - RightToes
+        rootBone: Root
+        triangles: 2216
+        materials: []
+      - mesh: {fileID: 482278532684883980, guid: d3b245273374447daaa278b01617ec78, type: 3}
+        boneNames:
+        - Root
+        - Hips
+        - Spine
+        - Chest
+        - UpperChest
+        - Neck
+        - Head
+        - sec_hair_mass_1
+        - sec_hair_mass_2
+        - sec_queue_1
+        - sec_queue_2
+        - sec_hachimaki_1
+        - sec_hachimaki_2
+        - sec_bandage_tie_1
+        - sec_bandage_tie_2
+        - LeftShoulder
+        - LeftUpperArm
+        - LeftLowerArm
+        - LeftHand
+        - LeftThumb1
+        - LeftThumb2
+        - LeftThumb3
+        - LeftIndex1
+        - LeftIndex2
+        - LeftIndex3
+        - LeftMiddle1
+        - LeftMiddle2
+        - LeftMiddle3
+        - LeftRing1
+        - LeftRing2
+        - LeftRing3
+        - LeftPinky1
+        - LeftPinky2
+        - LeftPinky3
+        - socket_weapon_l
+        - RightShoulder
+        - RightUpperArm
+        - RightLowerArm
+        - RightHand
+        - RightThumb1
+        - RightThumb2
+        - RightThumb3
+        - RightIndex1
+        - RightIndex2
+        - RightIndex3
+        - RightMiddle1
+        - RightMiddle2
+        - RightMiddle3
+        - RightRing1
+        - RightRing2
+        - RightRing3
+        - RightPinky1
+        - RightPinky2
+        - RightPinky3
+        - socket_weapon_r
+        - socket_back
+        - sec_mino_back_1
+        - sec_mino_back_2
+        - sec_mino_back_3
+        - sec_mino_left_1
+        - sec_mino_left_2
+        - sec_mino_left_3
+        - sec_mino_right_1
+        - sec_mino_right_2
+        - sec_mino_right_3
+        - LeftUpperLeg
+        - LeftLowerLeg
+        - LeftFoot
+        - LeftToes
+        - RightUpperLeg
+        - RightLowerLeg
+        - RightFoot
+        - RightToes
+        rootBone: Root
+        triangles: 752
+        materials: []
+    - colourway: '-'
+      fit: C
+      lods:
+      - mesh: {fileID: -6063834059490677661, guid: 156ab757d9db9469ba541c08840b1314, type: 3}
+        boneNames:
+        - Root
+        - Hips
+        - Spine
+        - Chest
+        - UpperChest
+        - Neck
+        - Head
+        - sec_hair_mass_1
+        - sec_hair_mass_2
+        - sec_queue_1
+        - sec_queue_2
+        - sec_hachimaki_1
+        - sec_hachimaki_2
+        - sec_bandage_tie_1
+        - sec_bandage_tie_2
+        - LeftShoulder
+        - LeftUpperArm
+        - LeftLowerArm
+        - LeftHand
+        - LeftThumb1
+        - LeftThumb2
+        - LeftThumb3
+        - LeftIndex1
+        - LeftIndex2
+        - LeftIndex3
+        - LeftMiddle1
+        - LeftMiddle2
+        - LeftMiddle3
+        - LeftRing1
+        - LeftRing2
+        - LeftRing3
+        - LeftPinky1
+        - LeftPinky2
+        - LeftPinky3
+        - socket_weapon_l
+        - RightShoulder
+        - RightUpperArm
+        - RightLowerArm
+        - RightHand
+        - RightThumb1
+        - RightThumb2
+        - RightThumb3
+        - RightIndex1
+        - RightIndex2
+        - RightIndex3
+        - RightMiddle1
+        - RightMiddle2
+        - RightMiddle3
+        - RightRing1
+        - RightRing2
+        - RightRing3
+        - RightPinky1
+        - RightPinky2
+        - RightPinky3
+        - socket_weapon_r
+        - socket_back
+        - sec_mino_back_1
+        - sec_mino_back_2
+        - sec_mino_back_3
+        - sec_mino_left_1
+        - sec_mino_left_2
+        - sec_mino_left_3
+        - sec_mino_right_1
+        - sec_mino_right_2
+        - sec_mino_right_3
+        - LeftUpperLeg
+        - LeftLowerLeg
+        - LeftFoot
+        - LeftToes
+        - RightUpperLeg
+        - RightLowerLeg
+        - RightFoot
+        - RightToes
+        rootBone: Root
+        triangles: 11888
+        materials: []
+      - mesh: {fileID: 753596742428745114, guid: e296b87ffc6d84b6f9439524ac47332a, type: 3}
+        boneNames:
+        - Root
+        - Hips
+        - Spine
+        - Chest
+        - UpperChest
+        - Neck
+        - Head
+        - sec_hair_mass_1
+        - sec_hair_mass_2
+        - sec_queue_1
+        - sec_queue_2
+        - sec_hachimaki_1
+        - sec_hachimaki_2
+        - sec_bandage_tie_1
+        - sec_bandage_tie_2
+        - LeftShoulder
+        - LeftUpperArm
+        - LeftLowerArm
+        - LeftHand
+        - LeftThumb1
+        - LeftThumb2
+        - LeftThumb3
+        - LeftIndex1
+        - LeftIndex2
+        - LeftIndex3
+        - LeftMiddle1
+        - LeftMiddle2
+        - LeftMiddle3
+        - LeftRing1
+        - LeftRing2
+        - LeftRing3
+        - LeftPinky1
+        - LeftPinky2
+        - LeftPinky3
+        - socket_weapon_l
+        - RightShoulder
+        - RightUpperArm
+        - RightLowerArm
+        - RightHand
+        - RightThumb1
+        - RightThumb2
+        - RightThumb3
+        - RightIndex1
+        - RightIndex2
+        - RightIndex3
+        - RightMiddle1
+        - RightMiddle2
+        - RightMiddle3
+        - RightRing1
+        - RightRing2
+        - RightRing3
+        - RightPinky1
+        - RightPinky2
+        - RightPinky3
+        - socket_weapon_r
+        - socket_back
+        - sec_mino_back_1
+        - sec_mino_back_2
+        - sec_mino_back_3
+        - sec_mino_left_1
+        - sec_mino_left_2
+        - sec_mino_left_3
+        - sec_mino_right_1
+        - sec_mino_right_2
+        - sec_mino_right_3
+        - LeftUpperLeg
+        - LeftLowerLeg
+        - LeftFoot
+        - LeftToes
+        - RightUpperLeg
+        - RightLowerLeg
+        - RightFoot
+        - RightToes
+        rootBone: Root
+        triangles: 5360
+        materials: []
+      - mesh: {fileID: -2590353816673466095, guid: 90404115e3d8845b78e8c3b5c1bf81a8, type: 3}
+        boneNames:
+        - Root
+        - Hips
+        - Spine
+        - Chest
+        - UpperChest
+        - Neck
+        - Head
+        - sec_hair_mass_1
+        - sec_hair_mass_2
+        - sec_queue_1
+        - sec_queue_2
+        - sec_hachimaki_1
+        - sec_hachimaki_2
+        - sec_bandage_tie_1
+        - sec_bandage_tie_2
+        - LeftShoulder
+        - LeftUpperArm
+        - LeftLowerArm
+        - LeftHand
+        - LeftThumb1
+        - LeftThumb2
+        - LeftThumb3
+        - LeftIndex1
+        - LeftIndex2
+        - LeftIndex3
+        - LeftMiddle1
+        - LeftMiddle2
+        - LeftMiddle3
+        - LeftRing1
+        - LeftRing2
+        - LeftRing3
+        - LeftPinky1
+        - LeftPinky2
+        - LeftPinky3
+        - socket_weapon_l
+        - RightShoulder
+        - RightUpperArm
+        - RightLowerArm
+        - RightHand
+        - RightThumb1
+        - RightThumb2
+        - RightThumb3
+        - RightIndex1
+        - RightIndex2
+        - RightIndex3
+        - RightMiddle1
+        - RightMiddle2
+        - RightMiddle3
+        - RightRing1
+        - RightRing2
+        - RightRing3
+        - RightPinky1
+        - RightPinky2
+        - RightPinky3
+        - socket_weapon_r
+        - socket_back
+        - sec_mino_back_1
+        - sec_mino_back_2
+        - sec_mino_back_3
+        - sec_mino_left_1
+        - sec_mino_left_2
+        - sec_mino_left_3
+        - sec_mino_right_1
+        - sec_mino_right_2
+        - sec_mino_right_3
+        - LeftUpperLeg
+        - LeftLowerLeg
+        - LeftFoot
+        - LeftToes
+        - RightUpperLeg
+        - RightLowerLeg
+        - RightFoot
+        - RightToes
+        rootBone: Root
+        triangles: 2216
+        materials: []
+      - mesh: {fileID: 482278532684883980, guid: d3b245273374447daaa278b01617ec78, type: 3}
+        boneNames:
+        - Root
+        - Hips
+        - Spine
+        - Chest
+        - UpperChest
+        - Neck
+        - Head
+        - sec_hair_mass_1
+        - sec_hair_mass_2
+        - sec_queue_1
+        - sec_queue_2
+        - sec_hachimaki_1
+        - sec_hachimaki_2
+        - sec_bandage_tie_1
+        - sec_bandage_tie_2
+        - LeftShoulder
+        - LeftUpperArm
+        - LeftLowerArm
+        - LeftHand
+        - LeftThumb1
+        - LeftThumb2
+        - LeftThumb3
+        - LeftIndex1
+        - LeftIndex2
+        - LeftIndex3
+        - LeftMiddle1
+        - LeftMiddle2
+        - LeftMiddle3
+        - LeftRing1
+        - LeftRing2
+        - LeftRing3
+        - LeftPinky1
+        - LeftPinky2
+        - LeftPinky3
+        - socket_weapon_l
+        - RightShoulder
+        - RightUpperArm
+        - RightLowerArm
+        - RightHand
+        - RightThumb1
+        - RightThumb2
+        - RightThumb3
+        - RightIndex1
+        - RightIndex2
+        - RightIndex3
+        - RightMiddle1
+        - RightMiddle2
+        - RightMiddle3
+        - RightRing1
+        - RightRing2
+        - RightRing3
+        - RightPinky1
+        - RightPinky2
+        - RightPinky3
+        - socket_weapon_r
+        - socket_back
+        - sec_mino_back_1
+        - sec_mino_back_2
+        - sec_mino_back_3
+        - sec_mino_left_1
+        - sec_mino_left_2
+        - sec_mino_left_3
+        - sec_mino_right_1
+        - sec_mino_right_2
+        - sec_mino_right_3
+        - LeftUpperLeg
+        - LeftLowerLeg
+        - LeftFoot
+        - LeftToes
+        - RightUpperLeg
+        - RightLowerLeg
+        - RightFoot
+        - RightToes
+        rootBone: Root
+        triangles: 752
+        materials: []
+    materials:
+    - M_Zombie_Atlas
   tierMaterials:
   - {fileID: 2100000, guid: 2f370bfd4c81b425296fd158392e1631, type: 2}
   - {fileID: 2100000, guid: dc40ea214e44e4c4f9c1a820213e2b12, type: 2}

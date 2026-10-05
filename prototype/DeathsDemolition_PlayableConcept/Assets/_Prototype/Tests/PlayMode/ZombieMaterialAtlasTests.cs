@@ -20,7 +20,7 @@ namespace DD.Prototype.Tests.PlayMode
     /// <summary>
     /// WP-088 (C-00 05.10, from the Codex AP-025 diagnosis) · every garment slot of a real spawn samples the atlas its mesh is
     /// unwrapped for. Real bodies in the Run scene, every version (Standard / Special / Elite / Ultra) through the factory's
-    /// normal spawn path. Each skinned slot renderer (every LOD × body/top/bottom/head, every sub-mesh) is classified by the
+    /// normal spawn path. Each skinned slot renderer (every LOD × body/top/bottom/head/face (WP-084), every sub-mesh) is classified by the
     /// atlas of its material's base map (body atlas / cloth atlas / armour / tier parts) and compared with the atlas the AP-007
     /// library data names for that mesh — independent of the code under test: the zombie's look → module → variant LOD material
     /// names, or the module's own list when the LOD list is empty (M_Zombie_Atlas → body atlas, M_Zombie_Cloth → cloth atlas;
@@ -174,7 +174,8 @@ namespace DD.Prototype.Tests.PlayMode
         private static string[] Expected(ZombieModuleLibrary library, ZombieLook look, int lod, int slot)
         {
             if (slot == ZombieSkinnedVisual.SlotBody) return new[] { "body" };
-            string id = slot == ZombieSkinnedVisual.SlotTop ? look.top : slot == ZombieSkinnedVisual.SlotBottom ? look.bottom : look.head;
+            // WP-084: the AP-025 face slot is the look's face module (skin atlas)
+            string id = slot == ZombieSkinnedVisual.SlotTop ? look.top : slot == ZombieSkinnedVisual.SlotBottom ? look.bottom : slot == ZombieSkinnedVisual.SlotFace ? look.face : look.head;
             string colourway = slot == ZombieSkinnedVisual.SlotTop ? look.topColourway : slot == ZombieSkinnedVisual.SlotBottom ? look.bottomColourway : ZombieModuleLibrary.NoColourway;
             ZombieModuleLibrary.Module module = library.FindModule(id);
             if (module == null) return new[] { "body" };
@@ -189,7 +190,8 @@ namespace DD.Prototype.Tests.PlayMode
 
         private static string Detail(ZombieModuleLibrary library, ZombieLook look, int lod, int slot, SkinnedMeshRenderer r)
         {
-            string id = slot == ZombieSkinnedVisual.SlotTop ? look.top : slot == ZombieSkinnedVisual.SlotBottom ? look.bottom : slot == ZombieSkinnedVisual.SlotHead ? look.head : "body";
+            string id = slot == ZombieSkinnedVisual.SlotTop ? look.top : slot == ZombieSkinnedVisual.SlotBottom ? look.bottom : slot == ZombieSkinnedVisual.SlotHead ? look.head
+                : slot == ZombieSkinnedVisual.SlotFace ? look.face : "body";
             string cw = slot == ZombieSkinnedVisual.SlotTop ? look.topColourway : slot == ZombieSkinnedVisual.SlotBottom ? look.bottomColourway : ZombieModuleLibrary.NoColourway;
             ZombieModuleLibrary.Module module = slot == ZombieSkinnedVisual.SlotBody ? null : library.FindModule(id);
             ZombieModuleLibrary.Variant variant = module != null ? module.Find(cw, look.fit) : null;

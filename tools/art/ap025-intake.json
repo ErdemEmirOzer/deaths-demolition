@@ -1,0 +1,53 @@
+{
+  "schema": "DD.ap025-intake.v1",
+  "package": "AP-025",
+  "note": "WP-084 (S-03, C-00 05.10): AP-025 export → Assets mapping. Data, not code: a new export version (v003 …) re-runs with --source; the mapping changes here only when the export layout changes. Paths: 'from' is relative to the export folder, 'to' to Assets/_Art/Characters/Zombie.",
+  "copy": [
+    { "from": "Bodies/Zombie_O1_Body_A.fbx", "to": "zombie_body_A.fbx" },
+    { "from": "Bodies/Zombie_O1_Body_B.fbx", "to": "zombie_body_B.fbx" },
+    { "from": "Bodies/Zombie_O1_Body_C.fbx", "to": "zombie_body_C.fbx" },
+    { "glob": "Heads/ZombieFace_*_LOD?.fbx", "toDir": "Faces" },
+    { "glob": "Garments_C_H2/zombie_*_C.fbx", "toDir": "Modules/C_H2" },
+    { "glob": "Tiers_C_H2/zombie_tier_*_C.fbx", "toDir": "Tier/C_H2" },
+    { "from": "Textures/Zombie_O1_BaseColor.png", "to": "Textures/T_zombie_atlas_BaseColor.png" },
+    { "from": "Textures/Zombie_O1_Normal.png", "to": "Textures/T_zombie_atlas_Normal.png" },
+    { "from": "Textures/Zombie_O1_ORM.png", "to": "Textures/T_zombie_atlas_ORM.png" },
+    { "from": "module-map.json", "to": "AP025-module-map.json" },
+    { "from": "material-contract.json", "to": "AP025-material-contract.json" }
+  ],
+  "maskArray": {
+    "to": "Textures/T_zombie_masks_Array.png",
+    "grid": [3, 3],
+    "slices": [
+      "Masks/Zombie_O1_Skin_00.png", "Masks/Zombie_O1_Skin_01.png", "Masks/Zombie_O1_Skin_02.png",
+      "Masks/Zombie_O1_Dirt_00.png", "Masks/Zombie_O1_Dirt_01.png", "Masks/Zombie_O1_Dirt_02.png",
+      "Masks/Zombie_O1_Blood_00.png", "Masks/Zombie_O1_Blood_01.png", "Masks/Zombie_O1_Blood_02.png"
+    ]
+  },
+  "retire": [
+    "Textures/T_zombie_atlas_Packed.png",
+    "Textures/T_zombie_atlas_Mask.png",
+    "Textures/Derived/T_zombie_atlas_MetallicSmoothness.png",
+    "Textures/Derived/T_zombie_atlas_MetallicSmoothness.provenance.json",
+    "Textures/Derived/T_zombie_atlas_DetailMask.png",
+    "Textures/Derived/T_zombie_atlas_DetailMask.provenance.json"
+  ],
+  "builder": {
+    "bodyObject": "Zombie_O1_Body_{fit}_LOD{lod}",
+    "faces": [
+      { "id": "F1_gaunt", "name": "Gaunt", "object": "ZombieFace_Gaunt_LOD{lod}", "fbx": "Faces/ZombieFace_Gaunt_LOD{lod}.fbx" },
+      { "id": "F2_swollen", "name": "Swollen", "object": "ZombieFace_Swollen_LOD{lod}", "fbx": "Faces/ZombieFace_Swollen_LOD{lod}.fbx" },
+      { "id": "F3_riven", "name": "Riven", "object": "ZombieFace_Riven_LOD{lod}", "fbx": "Faces/ZombieFace_Riven_LOD{lod}.fbx" }
+    ],
+    "fitOverrides": {
+      "C": { "modulesFbx": "Modules/C_H2/zombie_{id}_C.fbx", "tierFbx": "Tier/C_H2/{name}_C.fbx" }
+    },
+    "skinAtlasMaterial": {
+      "orm": "Textures/T_zombie_atlas_ORM.png",
+      "maskArray": "Textures/T_zombie_masks_Array.png",
+      "atlasDomain": [0.5, 1.0, 0.0, 0.0],
+      "clothDomain": [0.5, 1.0, 0.5, 0.0],
+      "tierClothRectOnSkinAtlas": [0.875, 0.125, 1.0, 0.25]
+    }
+  }
+}

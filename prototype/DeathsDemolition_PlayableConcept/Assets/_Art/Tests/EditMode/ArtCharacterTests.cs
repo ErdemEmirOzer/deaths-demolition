@@ -44,7 +44,7 @@ namespace DD.Art.Tests.EditMode
         public void HerKarakterFbx_V11Sozlesmesi_Avatar_HumanEslemesiKaynaklaAyni()
         {
             List<string> files = CharacterFbx();
-            Assert.AreEqual(287, files.Count, "287 = 272 + 15 AP-022 v008 locomotion (WP-071 R1-C: player 10 TP loops + zombie 5 tier gaits); 272 = 260 + 12 FP Special; 260 = 258 + 2 lmg_2 reloads; 258 = 248 + AP-022 FP arms v2 model + 9 smg_2 FP (WP-071 r2); 248 = 236 + TP Special family 12; 236 = 203 + 33 WP-071 B4c TP (AP-022 v008); 203 = 197 + 6 AP-022 slice 5b (ar_2 FP set); 197 = 174 + 23 AP-022 slice 5 (FP arms); 174 = 153 + 21 AP-022 slices 4a/4b (AR + SMG TP); 153 = 150 + 3 AP-022 slice 2a (electro loop, arc_electro, gel_slip); 150 = 140 + 10 AP-022 slice 1 (WP-071); 140 = 135 (WP-032G + sw_hold_jewel) + 5 AP-007C v003 modülü (H6/H7/A1/A2/T8, WP-038C) — 134 karakter FBX (oyuncu 1 + 2 klip; zombi 3 gövde + 24 modül + 2 klip; WP-017 zırh 18; WP-032C AP-009D v004 85 klip; WP-036 AP-014 tier parçaları 4):\n" + string.Join("\n", files));
+            Assert.AreEqual(327, files.Count, "327 = 287 + 40 AP-025 v002 (WP-084: 12 faces Faces/, 24 H2 fit-C garments Modules/C_H2, 4 H2 fit-C tier parts Tier/C_H2); 287 = 272 + 15 AP-022 v008 locomotion (WP-071 R1-C: player 10 TP loops + zombie 5 tier gaits); 272 = 260 + 12 FP Special; 260 = 258 + 2 lmg_2 reloads; 258 = 248 + AP-022 FP arms v2 model + 9 smg_2 FP (WP-071 r2); 248 = 236 + TP Special family 12; 236 = 203 + 33 WP-071 B4c TP (AP-022 v008); 203 = 197 + 6 AP-022 slice 5b (ar_2 FP set); 197 = 174 + 23 AP-022 slice 5 (FP arms); 174 = 153 + 21 AP-022 slices 4a/4b (AR + SMG TP); 153 = 150 + 3 AP-022 slice 2a (electro loop, arc_electro, gel_slip); 150 = 140 + 10 AP-022 slice 1 (WP-071); 140 = 135 (WP-032G + sw_hold_jewel) + 5 AP-007C v003 modülü (H6/H7/A1/A2/T8, WP-038C) — 134 karakter FBX (oyuncu 1 + 2 klip; zombi 3 gövde + 24 modül + 2 klip; WP-017 zırh 18; WP-032C AP-009D v004 85 klip; WP-036 AP-014 tier parçaları 4):\n" + string.Join("\n", files));
 
             List<string> playerMap = ArtCharacterContract.HumanMapping(ArtCharacterContract.AvatarOf(ArtCharacterContract.PlayerAvatarSource));
             List<string> zombieMap = ArtCharacterContract.HumanMapping(ArtCharacterContract.AvatarOf(ArtCharacterContract.ZombieAvatarSource));
@@ -109,9 +109,12 @@ namespace DD.Art.Tests.EditMode
                 Dictionary<string, Transform> bones = ArtCharacterContract.Bones(model, ArtCharacterPrefabBuilder.ZombieArmature);
                 int secondary = 0; foreach (string b in bones.Keys) if (b.StartsWith(ArtCharacterContract.SecondaryBonePrefix)) secondary++;
                 Assert.AreEqual(ArtCharacterContract.ZombieSecondaryBones, secondary, fit + ": WP-032F AP-007 v003 sec_* zincir kemikleri (7 zincir / 17)");
-                Assert.AreEqual(ArtCharacterContract.BoneCount + 3 + ArtCharacterContract.ZombieSecondaryBones + ArtCharacterContract.ZombieJawBones, bones.Count, fit + ": ZombieRig altında 56 + 3 ankraj + 17 sec_* + jaw (rig v002)");
-                Assert.AreEqual("Head", bones["jaw"].parent.name, fit + ": jaw Head çocuğu");
-                for (int lod = 0; lod < 4; lod++) Assert.IsNotNull(model.transform.Find("zombie_body_" + fit + "_LOD" + lod), fit + " LOD" + lod);
+                // WP-084 · AP-025 v002 bodies (73-bone ZombieRig, faces bound rigidly to Head): no jaw in the FBX — C-00 05.10 decision (a)
+                // puts an empty jaw transform on the prefab (ZombiPrefabi_…), AP-025D brings the weights.
+                int jaw = ArtAp025Intake.Active ? (bones.ContainsKey("jaw") ? 1 : 0) : ArtCharacterContract.ZombieJawBones;   // AP-025D may bring it
+                Assert.AreEqual(ArtCharacterContract.BoneCount + 3 + ArtCharacterContract.ZombieSecondaryBones + jaw, bones.Count, fit + ": ZombieRig altında 56 + 3 ankraj + 17 sec_* (+ jaw, rig v002 / AP-025D)");
+                if (jaw > 0) Assert.AreEqual("Head", bones["jaw"].parent.name, fit + ": jaw Head çocuğu");
+                for (int lod = 0; lod < 4; lod++) Assert.IsNotNull(model.transform.Find(ArtAp025Intake.BodyObject(fit, lod)), fit + " LOD" + lod);
                 // Anchor origins (AP007-anchors.json, Blender z → Unity y): helmet 1.60, torso 1.17, legs 0.93; parents Head / Chest / Hips.
                 AssertAnchor(bones, ZombieSkinnedVisual.AnchorHelmet, "Head", 1.60f);
                 AssertAnchor(bones, ZombieSkinnedVisual.AnchorTorso, "Chest", 1.17f);
@@ -188,8 +191,29 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual("Chest", visual.TorsoAnchor.parent.name);
             Assert.AreEqual("Hips", visual.LegsAnchor.parent.name);
             Assert.AreEqual(4, visual.LodGroup.GetLODs().Length);
-            Assert.AreEqual(ZombieSkinnedVisual.SlotCount + ZombieSkinnedVisual.ArmorSlotCount * ZombieSkinnedVisual.ArmorPartCount, visual.LodGroup.GetLODs()[0].renderers.Length, "LOD0 dört giysi + altı zırh renderer'ı (WP-017)");
+            Assert.AreEqual(ZombieSkinnedVisual.SlotCount + ZombieSkinnedVisual.ArmorSlotCount * ZombieSkinnedVisual.ArmorPartCount, visual.LodGroup.GetLODs()[0].renderers.Length, "LOD0 beş yuva (WP-084 yüz dâhil) + altı zırh renderer'ı (WP-017)");
             Assert.IsTrue(visual.HasArmorSlots, "WP-017 zırh yuvaları");
+            Assert.AreEqual(5, ZombieSkinnedVisual.SlotCount, "WP-084: gövde, üst, alt, baş, yüz (SlotFace)");
+
+            // WP-084 (C-00 05.10 decision (a)): the empty jaw transform under Head at the rig v002 rest, whatever the body FBX carries.
+            Transform jaw = null;
+            foreach (Transform t in prefab.GetComponentsInChildren<Transform>(true)) if (t.name == "jaw") { Assert.IsNull(jaw, "tek jaw"); jaw = t; }
+            Assert.IsNotNull(jaw, "jaw dönüşümü");
+            Assert.AreEqual("Head", jaw.parent.name, "jaw Head çocuğu");
+            Assert.Less(Vector3.Distance(ArtCharacterPrefabBuilder.JawRestPosition, jaw.localPosition), 1e-4f, "jaw rest konumu");
+            Assert.Less(Quaternion.Angle(ArtCharacterPrefabBuilder.JawRestRotation, jaw.localRotation), 0.01f, "jaw rest dönüşü");
+
+            // WP-084 (unity-specialist + game-developer 06.10): the O1 body is headless — every slot and armour renderer shares one
+            // envelope that reaches the face / hair top, and the LODGroup keeps the R1 head-height size (1.857, AP-007 body with head).
+            Bounds envelope = visual.Slot(0, ZombieSkinnedVisual.SlotBody).localBounds;
+            Transform space = visual.Slot(0, ZombieSkinnedVisual.SlotBody).rootBone;
+            float top = float.MinValue;
+            for (int c = 0; c < 8; c++)
+                top = Mathf.Max(top, space.TransformPoint(new Vector3((c & 1) == 0 ? envelope.min.x : envelope.max.x, (c & 2) == 0 ? envelope.min.y : envelope.max.y, (c & 4) == 0 ? envelope.min.z : envelope.max.z)).y);
+            foreach (SkinnedMeshRenderer r in prefab.GetComponentsInChildren<SkinnedMeshRenderer>(true)) Assert.AreEqual(envelope, r.localBounds, r.name + ": ortak zarf");
+            Debug.Log("[DD-TEST] wp084.prefab.envelope top=" + top.ToString("F3") + " lodGroupSize=" + visual.LodGroup.size.ToString("F3"));
+            Assert.GreaterOrEqual(top, 1.75f, "zarf baş tepesine ulaşmalı (yüz / saç)");
+            Assert.AreEqual(1.857f, visual.LodGroup.size, 1.857f * 0.05f, "LODGroup boyutu R1 baş yüksekliğinde (±%5)");
 
             // WP-038G: every character renderer carries the character rendering layer (fill light); armour plates never cast.
             foreach (SkinnedMeshRenderer r in prefab.GetComponentsInChildren<SkinnedMeshRenderer>(true))
@@ -210,21 +234,23 @@ namespace DD.Art.Tests.EditMode
             Assert.IsNotNull(lib);
             Assert.AreEqual(ZombieModuleLibrary.Schema, lib.schema);
             Assert.AreEqual(3, lib.bodies.Length);
-            Assert.AreEqual(24, lib.modules.Length);   // WP-038C: AP-007C v003 (+H6/H7, A1/A2 accessory, T8)
+            Assert.AreEqual(27, lib.modules.Length);   // WP-038C: AP-007C v003 (+H6/H7, A1/A2 accessory, T8); WP-084: + 3 AP-025 faces
             var hatalar = new List<string>();
-            int[] bodyCeil = { 6000, 2500, 900, 300 };
-            var moduleCeil = new Dictionary<string, int[]> { { "top", new[] { 2800, 1200, 430, 140 } }, { "bottom", new[] { 2400, 1000, 350, 115 } }, { "head", new[] { 900, 380, 150, 55 } }, { "accessory", new[] { 300, 120, 50, 32 } } };   // accessory: AP-007C budget 300/120/50/20; A1 LOD3 32 (rim collapse stall, never on screen — README)
+            // WP-084 · AP-025 O1 bodies are headless (the face is its own slot) with the 32-vertex neck ring: LOD3 328 / 328 / 336 as
+            // delivered (validation/body-fbx-reimport.json). AP-025 budgets the whole actor, not the body — that check is below.
+            int[] bodyCeil = ArtAp025Intake.Active ? new[] { 6000, 2500, 900, 340 } : new[] { 6000, 2500, 900, 300 };
+            var moduleCeil = new Dictionary<string, int[]> { { "top", new[] { 2800, 1200, 430, 140 } }, { "bottom", new[] { 2400, 1000, 350, 115 } }, { "head", new[] { 900, 380, 150, 55 } }, { "accessory", new[] { 300, 120, 50, 32 } }, { "face", new[] { 12600, 5700, 2400, 820 } } };   // face: AP-025 v002 README budget (11888/5360/2216/752)   // accessory: AP-007C budget 300/120/50/20; A1 LOD3 32 (rim collapse stall, never on screen — README)
             foreach (ZombieModuleLibrary.Body b in lib.bodies)
             {
                 for (int lod = 0; lod < 4; lod++) CheckMesh(hatalar, "body " + b.fit + " LOD" + lod, b.lods[lod], bodyCeil[lod]);
             }
 
-            int meshes = 0, tops = 0, bottoms = 0, heads = 0;
+            int meshes = 0, tops = 0, bottoms = 0, heads = 0, faces = 0;
             foreach (ZombieModuleLibrary.Module m in lib.modules)
             {
                 int expectedVariants = (m.HasColourways ? m.colourways.Length : 1) * 3;
                 if (m.variants.Length != expectedVariants) hatalar.Add(m.id + ": " + m.variants.Length + " varyant, beklenen " + expectedVariants);
-                if (m.kind == "top") tops++; else if (m.kind == "bottom") bottoms++; else if (m.kind == "head") heads++; else if (m.kind != "accessory") hatalar.Add(m.id + ": tür " + m.kind);
+                if (m.kind == "top") tops++; else if (m.kind == "bottom") bottoms++; else if (m.kind == "head") heads++; else if (m.kind == ZombieModuleLibrary.KindFace) faces++; else if (m.kind != "accessory") hatalar.Add(m.id + ": tür " + m.kind);
                 foreach (ZombieModuleLibrary.Variant v in m.variants)
                 {
                     for (int lod = 0; lod < 4; lod++)
@@ -237,14 +263,74 @@ namespace DD.Art.Tests.EditMode
             }
 
             Assert.IsEmpty(hatalar, string.Join("\n", hatalar));
+
+            // WP-084 · AP-025 actor budget (validation/production-budget-v001.json, Standard [24000, 12000, 5000, 1500] per LOD): the
+            // heaviest look a fit can draw — body + heaviest face + top + bottom + head + accessory of that fit — stays inside it.
+            if (ArtAp025Intake.Active)
+            {
+                int[] actorCeil = { 24000, 12000, 5000, 1500 };
+                var actor = new List<string>();
+                foreach (ZombieModuleLibrary.Body b in lib.bodies)
+                {
+                    for (int lod = 0; lod < 4; lod++)
+                    {
+                        int total = b.lods[lod].triangles;
+                        foreach (string kind in new[] { ZombieModuleLibrary.KindFace, "top", "bottom", "head", "accessory" })
+                        {
+                            int worst = 0;
+                            foreach (ZombieModuleLibrary.Module m in lib.modules)
+                            {
+                                if (m.kind != kind) continue;
+                                foreach (ZombieModuleLibrary.Variant v in m.variants)
+                                    if (v.fit == b.fit && v.lods[lod] != null) worst = Math.Max(worst, v.lods[lod].triangles);
+                            }
+
+                            total += worst;
+                        }
+
+                        actor.Add(b.fit + " LOD" + lod + " " + total + "/" + actorCeil[lod]);
+                        if (total > actorCeil[lod]) hatalar.Add("aktör " + b.fit + " LOD" + lod + ": " + total + " üçgen > AP-025 Standard bütçesi " + actorCeil[lod]);
+                    }
+                }
+
+                Debug.Log("[DD-TEST] wp084.actor.worst " + string.Join(" | ", actor));
+                Assert.IsEmpty(hatalar, string.Join("\n", hatalar));
+            }
+
             int accessories = lib.Ids("accessory").Count;
             Assert.AreEqual(8, tops); Assert.AreEqual(7, bottoms); Assert.AreEqual(7, heads); Assert.AreEqual(2, accessories, "A1_straw_hat + A2_face_wrap (accessory slot: library only — the renderer slot / selection rule is the S-03 binder follow-up)");
-            Assert.AreEqual(444, meshes, "24 modül × cw × fit × 4 LOD = 444");
+            Assert.AreEqual(3, faces, "WP-084: AP-025 yüzleri Gaunt / Swollen / Riven");
+            Assert.AreEqual(480, meshes, "24 modül × cw × fit × 4 LOD = 444 + 3 yüz × 3 fit × 4 LOD (WP-084) = 480");
             Assert.AreEqual(4, lib.tierMaterials.Length);
             for (int t = 0; t < 4; t++) Assert.IsNotNull(lib.tierMaterials[t], "tier materyali " + t);
             Assert.AreEqual(lib.tierMaterials[0].shader, lib.tierMaterials[1].shader);
-            Assert.IsTrue(lib.tierMaterials[1].IsKeywordEnabled("_DETAIL_MULX2") && lib.tierMaterials[1].GetTexture("_DetailMask") != null, "versiyon tintleri DetailMask ile kumaşa sınırlı");
-            Assert.IsFalse(lib.tierMaterials[0].IsKeywordEnabled("_DETAIL_MULX2"), "Standard tintsiz");
+            bool o1 = ArtAp025Intake.HasO1Atlas;
+            if (o1)
+            {
+                // WP-084 · AP-025 O1 skin atlas: Tier Lit _ZOMBIE_MASKS on every version, the mask array + one ORM bound, the retired
+                // body maps unbound; the version tint rides the tier library (M_zombie_atlas_tint*), not a detail mask.
+                for (int t = 0; t < 4; t++)
+                {
+                    Material m = lib.tierMaterials[t];
+                    Assert.AreEqual(ArtTierBuilder.ShaderName, m.shader.name, m.name);
+                    Assert.IsTrue(m.IsKeywordEnabled("_ZOMBIE_MASKS"), m.name + " _ZOMBIE_MASKS");
+                    Assert.IsNotNull(m.GetTexture("_ZombieMaskArray"), m.name + " maske dizisi");
+                    Assert.IsNotNull(m.GetTexture("_ZombieORM"), m.name + " ORM");
+                    Assert.IsNull(m.GetTexture("_MetallicGlossMap"), m.name + " eski MS haritası bağlı değil");
+                    Assert.IsNull(m.GetTexture("_OcclusionMap"), m.name + " eski AO haritası bağlı değil");
+                    Assert.IsFalse(m.IsKeywordEnabled("_DETAIL_MULX2"), m.name + " detay tint yok (tint tier kütüphanesinde)");
+                    // S-05 §17 S2: the single ORM read replaces the URP metallic / occlusion maps — their keywords off (no dead samples)
+                    Assert.AreEqual(1f, m.GetFloat("_ZombieUseOrm"), m.name + " _ZombieUseOrm");
+                    Assert.IsFalse(m.IsKeywordEnabled("_METALLICSPECGLOSSMAP"), m.name + " _METALLICSPECGLOSSMAP kapalı (ORM)");
+                    Assert.IsFalse(m.IsKeywordEnabled("_OCCLUSIONMAP"), m.name + " _OCCLUSIONMAP kapalı (ORM)");
+                }
+            }
+            else
+            {
+                Assert.IsTrue(lib.tierMaterials[1].IsKeywordEnabled("_DETAIL_MULX2") && lib.tierMaterials[1].GetTexture("_DetailMask") != null, "versiyon tintleri DetailMask ile kumaşa sınırlı");
+                Assert.IsFalse(lib.tierMaterials[0].IsKeywordEnabled("_DETAIL_MULX2"), "Standard tintsiz");
+            }
+
             Assert.AreEqual(Color.black, lib.tierMaterials[1].GetColor("_EmissionColor"), "emissive yok (DEC-067)");
 
             // WP-020 · AP-007 v002 second cloth atlas: material order per module (7 atlas+cloth, 7 cloth only, 5 atlas only), M_zombie_cloth ×4,
@@ -272,17 +358,18 @@ namespace DD.Art.Tests.EditMode
             }
 
             Assert.IsEmpty(hatalar, string.Join("\n", hatalar));
-            Assert.AreEqual(11, both, "atlas + kumaş modülleri (v003: +H6, H7, A1, T8)"); Assert.AreEqual(8, clothOnly, "yalnız kumaş (v003: +A2)"); Assert.AreEqual(5, atlasOnly, "yalnız atlas (baş/saç/straw)");
+            Assert.AreEqual(11, both, "atlas + kumaş modülleri (v003: +H6, H7, A1, T8)"); Assert.AreEqual(8, clothOnly, "yalnız kumaş (v003: +A2)"); Assert.AreEqual(8, atlasOnly, "yalnız atlas (baş/saç/straw + WP-084 3 yüz)");
             Assert.AreEqual(4, lib.tierClothMaterials.Length);
             for (int t = 0; t < 4; t++) Assert.IsNotNull(lib.tierClothMaterials[t], "kumaş tier materyali " + t);
             Assert.AreNotEqual(lib.tierMaterials[0], lib.tierClothMaterials[0]);
             Assert.IsTrue(lib.tierClothMaterials[1].IsKeywordEnabled("_DETAIL_MULX2") && lib.tierClothMaterials[1].GetTexture("_DetailMask") != null, "kumaş atlası versiyon tint'li (DetailMask 4×4 sabit)");
             Assert.AreEqual(4, lib.tierClothMaterials[1].GetTexture("_DetailMask").width, "kumaş DetailMask 4×4 alt doku (2K Mask sevk edilmez)");
             Assert.IsFalse(lib.tierClothMaterials[0].IsKeywordEnabled("_DETAIL_MULX2"));
+            if (o1) for (int t = 0; t < 4; t++) Assert.IsTrue(lib.tierClothMaterials[t].IsKeywordEnabled("_ZOMBIE_MASKS"), "WP-084: kumaşta kir / kan maskeleri " + t);
             Material[] pair = lib.MaterialsFor(new[] { ZombieModuleLibrary.MaterialAtlas, ZombieModuleLibrary.MaterialCloth }, 2);
             Assert.AreSame(pair, lib.MaterialsFor(new[] { ZombieModuleLibrary.MaterialAtlas, ZombieModuleLibrary.MaterialCloth }, 2), "önbellek: aynı dizi");
             Assert.AreEqual(lib.tierMaterials[2], pair[0]); Assert.AreEqual(lib.tierClothMaterials[2], pair[1]);
-            Debug.Log("[DD-TEST] wp016.library bodies=3 modules=19 meshes=" + meshes + " wp020 both=" + both + " cloth=" + clothOnly + " atlas=" + atlasOnly);
+            Debug.Log("[DD-TEST] wp016.library bodies=3 modules=" + lib.modules.Length + " faces=" + faces + " meshes=" + meshes + " wp020 both=" + both + " cloth=" + clothOnly + " atlas=" + atlasOnly);
         }
 
         private static void CheckMesh(List<string> hatalar, string what, ZombieModuleLibrary.MeshRef r, int ceiling)
@@ -343,6 +430,34 @@ namespace DD.Art.Tests.EditMode
             ZombieLook swapped = ZombieLookSelector.WithoutMinoCape(lib, m, minoSeed);
             Assert.AreNotEqual(ZombieModuleLibrary.TopMinoCape, swapped.top);
             Assert.AreEqual(m.fit, swapped.fit); Assert.AreEqual(m.bottom, swapped.bottom); Assert.AreEqual(m.head, swapped.head);
+
+            // WP-084 · AP-025 faces: every look draws one, the three shares stay near a third, and the face is the LAST draw — the same
+            // library without faces gives every look bit-for-bit (earlier keys, pinned seeds and tests unchanged).
+            List<string> faceIds = lib.Ids(ZombieModuleLibrary.KindFace);
+            Assert.AreEqual(3, faceIds.Count, "3 yüz");
+            var noFaces = UnityEngine.Object.Instantiate(lib);
+            try
+            {
+                noFaces.modules = Array.FindAll(lib.modules, x => x.kind != ZombieModuleLibrary.KindFace);
+                var faceCounts = new Dictionary<string, int>(StringComparer.Ordinal);
+                seed = 1u;
+                for (int i = 0; i < n; i++)
+                {
+                    unchecked { seed = seed * 1664525u + 1013904223u; }
+                    ZombieLook withFace = ZombieLookSelector.Select(lib, seed), without = ZombieLookSelector.Select(noFaces, seed);
+                    Assert.IsTrue(withFace.HasFace, withFace.Key + ": yüz yok");
+                    Assert.IsFalse(without.HasFace);
+                    Assert.AreEqual(without.Key + "/" + withFace.face, withFace.Key, "yüz son çekiliş: önceki çekilişler aynı");
+                    faceCounts[withFace.face] = (faceCounts.TryGetValue(withFace.face, out int c) ? c : 0) + 1;
+                }
+
+                foreach (string id in faceIds) Assert.That((float)(faceCounts.TryGetValue(id, out int c) ? c : 0) / n, Is.InRange(0.25f, 0.42f), "yüz payı " + id);
+                Debug.Log("[DD-TEST] wp084.faces n=" + n + " " + string.Join(" ", faceIds.ConvertAll(id => id + "=" + (faceCounts.TryGetValue(id, out int c) ? c : 0))));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(noFaces);
+            }
         }
 
         // ================================================================ animasyon + asset seti
@@ -435,15 +550,17 @@ namespace DD.Art.Tests.EditMode
         [Test]
         public void KarakterDokulari_CharacterSinifi_2048_Streaming_TuretilmisMaskeler()
         {
-            foreach (string p in new[]
+            bool o1 = ArtAp025Intake.HasO1Atlas;   // WP-084: the AP-025 O1 atlas retires the body Mask / DetailMask for one ORM + the mask array
+            var paths = new List<string>
             {
                 ArtCharacterPrefabBuilder.PlayerTextures + "/T_player_skin1_BaseColor.png",
                 ArtCharacterPrefabBuilder.PlayerTextures + "/T_player_Normal.png",
                 ArtCharacterPrefabBuilder.ZombieTextures + "/T_zombie_atlas_BaseColor.png",
-                ArtCharacterPrefabBuilder.ZombieTextures + "/T_zombie_atlas_Mask.png",
-                ArtCharacterPrefabBuilder.ZombieDerived + "/T_zombie_atlas_DetailMask.png",
                 ArtCharacterPrefabBuilder.PlayerDerived + "/T_player_MetallicSmoothness.png"
-            })
+            };
+            if (o1) paths.Add(ArtCharacterPrefabBuilder.ZombieTextures + "/T_zombie_atlas_ORM.png");
+            else paths.AddRange(new[] { ArtCharacterPrefabBuilder.ZombieTextures + "/T_zombie_atlas_Mask.png", ArtCharacterPrefabBuilder.ZombieDerived + "/T_zombie_atlas_DetailMask.png" });
+            foreach (string p in paths)
             {
                 Assert.AreEqual(ArtImportContract.TextureClass.Character, ArtImportContract.ClassOf(p), p);
                 var importer = AssetImporter.GetAtPath(p) as TextureImporter;
@@ -454,10 +571,37 @@ namespace DD.Art.Tests.EditMode
                 Assert.IsEmpty(ArtImportContract.ValidateTexture(importer, ArtImportContract.RoleOf(p)), p);
             }
 
-            var mask = AssetImporter.GetAtPath(ArtCharacterPrefabBuilder.ZombieTextures + "/T_zombie_atlas_Mask.png") as TextureImporter;
-            Assert.IsFalse(mask.sRGBTexture); Assert.AreEqual(TextureImporterAlphaSource.FromInput, mask.alphaSource);
             Assert.IsTrue(File.Exists(ArtCharacterPrefabBuilder.PlayerDerived + "/T_player_MetallicSmoothness.provenance.json"));
-            Assert.IsTrue(File.Exists(ArtCharacterPrefabBuilder.ZombieDerived + "/T_zombie_atlas_DetailMask.provenance.json"));
+            if (!o1)
+            {
+                var mask = AssetImporter.GetAtPath(ArtCharacterPrefabBuilder.ZombieTextures + "/T_zombie_atlas_Mask.png") as TextureImporter;
+                Assert.IsFalse(mask.sRGBTexture); Assert.AreEqual(TextureImporterAlphaSource.FromInput, mask.alphaSource);
+                Assert.IsTrue(File.Exists(ArtCharacterPrefabBuilder.ZombieDerived + "/T_zombie_atlas_DetailMask.provenance.json"));
+                return;
+            }
+
+            // WP-084 · the AP-025 mask array: a 3×3 sheet of 1024² single-channel slices → one Texture2DArray of 9 slices (skin / dirt /
+            // blood × 3), BC4, linear, mipmapped; the ORM linear, ≤ 1024; the retired body maps gone from disk.
+            string arrayPath = ArtCharacterPrefabBuilder.ZombieTextures + "/T_zombie_masks_Array.png";
+            var arrayImporter = AssetImporter.GetAtPath(arrayPath) as TextureImporter;
+            Assert.IsNotNull(arrayImporter, arrayPath);
+            Assert.AreEqual(ArtImportContract.TextureRole.Array, ArtImportContract.RoleOf(arrayPath));
+            Assert.IsEmpty(ArtImportContract.ValidateTexture(arrayImporter, ArtImportContract.TextureRole.Array), arrayPath);
+            Assert.AreEqual(TextureImporterShape.Texture2DArray, arrayImporter.textureShape);
+            Assert.IsFalse(arrayImporter.sRGBTexture, "maske dizisi doğrusal");
+            var array = AssetDatabase.LoadAssetAtPath<Texture2DArray>(arrayPath);
+            Assert.IsNotNull(array, "Texture2DArray");
+            Assert.AreEqual(9, array.depth, "9 dilim");
+            Assert.AreEqual(1024, array.width); Assert.AreEqual(1024, array.height);
+            Assert.AreEqual(TextureFormat.BC4, array.format, "BC4 tek kanal");
+            Assert.Greater(array.mipmapCount, 1, "mip");
+            var orm = AssetImporter.GetAtPath(ArtCharacterPrefabBuilder.ZombieTextures + "/T_zombie_atlas_ORM.png") as TextureImporter;
+            Assert.IsFalse(orm.sRGBTexture, "ORM doğrusal");
+            foreach (string retired in new[] { "/T_zombie_atlas_Packed.png", "/T_zombie_atlas_Mask.png" })
+                Assert.IsFalse(File.Exists(ArtCharacterPrefabBuilder.ZombieTextures + retired), "emekli: " + retired);
+            foreach (string retired in new[] { "/T_zombie_atlas_MetallicSmoothness.png", "/T_zombie_atlas_DetailMask.png" })
+                Assert.IsFalse(File.Exists(ArtCharacterPrefabBuilder.ZombieDerived + retired), "emekli: " + retired);
+            Debug.Log("[DD-TEST] wp084.masks array " + array.width + "x" + array.height + "x" + array.depth + " " + array.format + " mips=" + array.mipmapCount);
         }
 
         private static bool SameList(List<string> a, List<string> b)

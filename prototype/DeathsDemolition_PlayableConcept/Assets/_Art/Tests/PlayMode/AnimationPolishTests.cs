@@ -376,10 +376,46 @@ namespace DD.Art.Tests.PlayMode
             }
 
             float drop = Vector3.Dot(chinPeak - chinIdle, downHead) * head.lossyScale.y;
+            // WP-084 (S-06 approved 06.10, conditions 1–3): the branch is decided by the MEASURED jaw weights of the skin around the
+            // mouth (the bound body and face at LOD0), not by the bone list — and it must agree with the visual's own gate.
+            int jawWeighted = JawWeightedVertices(v.Slot(0, ZombieSkinnedVisual.SlotBody), jaw, out string bodyMesh) + JawWeightedVertices(v.Slot(0, ZombieSkinnedVisual.SlotFace), jaw, out string faceMesh);
+            Assert.AreEqual(jawWeighted > 0, v.JawDriven, "jaw sürücüsü ölçülen jaw ağırlığıyla tutarlı (" + jawWeighted + " köşe)");
+            if (jawWeighted == 0)
+            {
+                // AP-025 v002: no jaw weight on the body or face — the jaw stays at rest so the jaw-weighted A/B garments do not open
+                // away from a still face; AP-025D brings the weights (ZombieR2Tests.Z4b) and this test returns to the driven branch.
+                Debug.Log("[DD-TEST] wp071.jaw driven=false jawWeightedVerts=0 mesh=" + bodyMesh + "+" + faceMesh + " idle=" + idle.ToString("F1", CultureInfo.InvariantCulture)
+                          + "° bitePeak=" + peak.ToString("F1", CultureInfo.InvariantCulture) + "° chinDrop=" + (drop * 100f).ToString("F2", CultureInfo.InvariantCulture)
+                          + " cm — the opening assertions come back with the v003 face jaw weights");
+                Assert.AreEqual(0f, peak, 1e-4f, "jaw sürülmüyorken ısırmada da 0°");
+                Assert.LessOrEqual(Mathf.Abs(drop), 0.002f, "sürülmeyen çene hareketsiz (≤ 0,2 cm)");
+                yield break;
+            }
+
             Debug.Log("[DD-TEST] wp071.jaw idle=" + idle.ToString("F1", CultureInfo.InvariantCulture) + "° bitePeak=" + peak.ToString("F1", CultureInfo.InvariantCulture) + "° chinDrop=" + (drop * 100f).ToString("F1", CultureInfo.InvariantCulture) + " cm");
             Assert.That(idle, Is.InRange(0.5f, ZombieSkinnedVisual.JawIdle + ZombieSkinnedVisual.JawBreath + 0.1f), "boşta az açık");
             Assert.Greater(peak, ZombieSkinnedVisual.JawBite - 2f, "ısırmada geniş açık");
             Assert.Greater(drop, 0.01f, "çene baş uzayında aşağı iner (eksen işareti)");
+        }
+
+        /// <summary>WP-084 · vertices of a renderer's mesh with a weight above 0 on <paramref name="jaw"/> (0 when the renderer does not bind it).</summary>
+        private static int JawWeightedVertices(SkinnedMeshRenderer r, Transform jaw, out string meshName)
+        {
+            meshName = r != null && r.sharedMesh != null ? r.sharedMesh.name : "-";
+            if (r == null || r.sharedMesh == null || jaw == null) return 0;
+            int index = Array.IndexOf(r.bones, jaw);
+            if (index < 0) return 0;
+            var perVertex = r.sharedMesh.GetBonesPerVertex();
+            var weights = r.sharedMesh.GetAllBoneWeights();
+            int count = 0, w = 0;
+            for (int i = 0; i < perVertex.Length; i++)
+            {
+                bool on = false;
+                for (int k = 0; k < perVertex[i]; k++, w++) if (weights[w].boneIndex == index && weights[w].weight > 0f) on = true;
+                if (on) count++;
+            }
+
+            return count;
         }
 
         // ============================================================ telegraph bridge (DEC-029 untouched)

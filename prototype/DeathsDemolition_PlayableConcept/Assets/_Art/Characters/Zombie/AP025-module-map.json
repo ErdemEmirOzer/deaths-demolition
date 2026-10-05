@@ -1,0 +1,238 @@
+{
+ "schema": "AP025.modules.v002",
+ "status": "asset contract v002 (AP025C); Unity import not run",
+ "rig": {
+  "name": "ZombieRig",
+  "bones": 73,
+  "bind_by": "exact AP007 bone name and parent; do not merge by numeric index",
+  "new_bones": [],
+  "jaw_eye_animation": "rigid Head binding; no separate jaw/eye bone"
+ },
+ "bodies": {
+  "A": {
+   "path": "Bodies/Zombie_O1_Body_A.fbx",
+   "lod_objects": [
+    "Zombie_O1_Body_A_LOD0",
+    "Zombie_O1_Body_A_LOD1",
+    "Zombie_O1_Body_A_LOD2",
+    "Zombie_O1_Body_A_LOD3"
+   ],
+   "primary_O1_fit": false,
+   "note": "v001 ile bayt-özdeş kopya (C-00: A/B çeşitlilik için olduğu gibi)"
+  },
+  "B": {
+   "path": "Bodies/Zombie_O1_Body_B.fbx",
+   "lod_objects": [
+    "Zombie_O1_Body_B_LOD0",
+    "Zombie_O1_Body_B_LOD1",
+    "Zombie_O1_Body_B_LOD2",
+    "Zombie_O1_Body_B_LOD3"
+   ],
+   "primary_O1_fit": false,
+   "note": "v001 ile bayt-özdeş kopya"
+  },
+  "C": {
+   "path": "Bodies/Zombie_O1_Body_C.fbx",
+   "lod_objects": [
+    "Zombie_O1_Body_C_LOD0",
+    "Zombie_O1_Body_C_LOD1",
+    "Zombie_O1_Body_C_LOD2",
+    "Zombie_O1_Body_C_LOD3"
+   ],
+   "primary_O1_fit": true,
+   "level": "H2 ağır (suyla şişmiş)",
+   "clothes": "Garments_C_H2/* ve Tiers_C_H2/* ile birlikte kullanılır; AP-007 v003 fit C giysileri bu bedenle KULLANILMAZ (içinden geçer)"
+  }
+ },
+ "faces": {
+  "Gaunt": {
+   "face_index": 0,
+   "fits": [
+    "A",
+    "B",
+    "C"
+   ],
+   "uv_region": [
+    0.505,
+    0.635,
+    0.745,
+    0.995
+   ],
+   "lods": [
+    {
+     "path": "Heads/ZombieFace_Gaunt_LOD0.fbx",
+     "object": "ZombieFace_Gaunt_LOD0"
+    },
+    {
+     "path": "Heads/ZombieFace_Gaunt_LOD1.fbx",
+     "object": "ZombieFace_Gaunt_LOD1"
+    },
+    {
+     "path": "Heads/ZombieFace_Gaunt_LOD2.fbx",
+     "object": "ZombieFace_Gaunt_LOD2"
+    },
+    {
+     "path": "Heads/ZombieFace_Gaunt_LOD3.fbx",
+     "object": "ZombieFace_Gaunt_LOD3"
+    }
+   ]
+  },
+  "Swollen": {
+   "face_index": 1,
+   "fits": [
+    "A",
+    "B",
+    "C"
+   ],
+   "uv_region": [
+    0.755,
+    0.635,
+    0.995,
+    0.995
+   ],
+   "lods": [
+    {
+     "path": "Heads/ZombieFace_Swollen_LOD0.fbx",
+     "object": "ZombieFace_Swollen_LOD0"
+    },
+    {
+     "path": "Heads/ZombieFace_Swollen_LOD1.fbx",
+     "object": "ZombieFace_Swollen_LOD1"
+    },
+    {
+     "path": "Heads/ZombieFace_Swollen_LOD2.fbx",
+     "object": "ZombieFace_Swollen_LOD2"
+    },
+    {
+     "path": "Heads/ZombieFace_Swollen_LOD3.fbx",
+     "object": "ZombieFace_Swollen_LOD3"
+    }
+   ]
+  },
+  "Riven": {
+   "face_index": 2,
+   "fits": [
+    "A",
+    "B",
+    "C"
+   ],
+   "uv_region": [
+    0.505,
+    0.005,
+    0.745,
+    0.495
+   ],
+   "lods": [
+    {
+     "path": "Heads/ZombieFace_Riven_LOD0.fbx",
+     "object": "ZombieFace_Riven_LOD0"
+    },
+    {
+     "path": "Heads/ZombieFace_Riven_LOD1.fbx",
+     "object": "ZombieFace_Riven_LOD1"
+    },
+    {
+     "path": "Heads/ZombieFace_Riven_LOD2.fbx",
+     "object": "ZombieFace_Riven_LOD2"
+    },
+    {
+     "path": "Heads/ZombieFace_Riven_LOD3.fbx",
+     "object": "ZombieFace_Riven_LOD3"
+    }
+   ]
+  }
+ },
+ "existing_slots": [
+  "top",
+  "bottom",
+  "head (hair/headwear H0-H7)",
+  "accessory",
+  "AP014 TierSilhouetteSlot",
+  "armor"
+ ],
+ "materials": {
+  "body": "M_Zombie_Atlas",
+  "face": "M_Zombie_Atlas",
+  "garments": "retain per-submesh M_Zombie_Cloth or M_Zombie_Atlas",
+  "tier": "retain original AP014 materials"
+ },
+ "face_slot": {
+  "kind": "face",
+  "name": "SlotFace",
+  "new_active_renderers_per_actor": 1,
+  "alternative": "merge head/body at import only after exact common seam verification and measured draw comparison",
+  "eyes_and_teeth": "within face mesh, no extra material"
+ },
+ "neck_seam": {
+  "source": "validation/body-neck-seam.json",
+  "vertex_count": 32,
+  "same_for": "all body fits and all head LODs",
+  "shader_displacement": "none"
+ },
+ "executioner_uniform_scale": 1.48,
+ "headwear": {
+  "runtime_H0_share_rule": "unchanged; <=25% rule not tested by proof renders",
+  "render_H0_usage": "proof convenience only",
+  "new_head_source_has_hair": true,
+  "all_H0_H7_helmet_compatibility": "not certified; owner must measure combinations",
+  "note_v002": "v002 başlarında saç tek katı kütle (alfa yok); H1-H7 başlık/saç modülleri ile çakışma ölçülmedi."
+ },
+ "unity_intake_owners": [
+  "S-03",
+  "S-05",
+  "S-06"
+ ],
+ "clothes": "fit D yok; fit C giysi türevleri H2 bedenle birlikte ağırlaştırıldı (Garments_C_H2); ağırlıklar/kemikler değişmedi",
+ "orm": "direct R=AO G=roughness B=metallic, no hidden extra map generation",
+ "source_limits": "See AP025-B-acceptance-boundaries.md",
+ "fbx_material_import": {
+  "automatic_material_creation": false,
+  "automatic_texture_extraction": false,
+  "remap_by_name": {
+   "M_Zombie_Atlas": "single existing shared M_Zombie_Atlas replacement PBR set"
+  },
+  "note": "FBX source bake image links are authoring references; map them explicitly to Textures/Zombie_O1_*; do not import validation/head-atlas patches or AP007 old body textures into resident material."
+ },
+ "garments_C_H2": {
+  "folder": "Garments_C_H2",
+  "files": [
+   "zombie_A1_straw_hat_C.fbx",
+   "zombie_A2_face_wrap_C.fbx",
+   "zombie_B1_hakama_wide_C.fbx",
+   "zombie_B2_momohiki_tight_C.fbx",
+   "zombie_B3_koshimaki_wrap_C.fbx",
+   "zombie_B4_tattsuke_hakama_C.fbx",
+   "zombie_B5_fundoshi_C.fbx",
+   "zombie_B6_hakama_torn_C.fbx",
+   "zombie_B7_momohiki_kyahan_C.fbx",
+   "zombie_H1_hair_crop_C.fbx",
+   "zombie_H2_hair_matted_C.fbx",
+   "zombie_H3_topknot_broken_C.fbx",
+   "zombie_H4_tenugui_wrap_C.fbx",
+   "zombie_H5_hachimaki_band_C.fbx",
+   "zombie_H6_bandage_wrap_C.fbx",
+   "zombie_H7_matted_wound_C.fbx",
+   "zombie_T1_kosode_short_C.fbx",
+   "zombie_T2_kosode_long_C.fbx",
+   "zombie_T3_haori_open_C.fbx",
+   "zombie_T4_hanten_vest_C.fbx",
+   "zombie_T5_kosode_torn_C.fbx",
+   "zombie_T6_bare_straps_C.fbx",
+   "zombie_T7_mino_cape_C.fbx",
+   "zombie_T8_kosode_rolled_C.fbx"
+  ],
+  "object_names": "AP-007 v003 ile aynı (zombie_<modül>_<cw>_C_LOD<n>); yalnız fit C nesneleri, H2 bedenine göre yeniden oturtulmuş. Unity alımında AP-007 fit C giysi ağlarının yerine O1 ağır beden için kullanılır.",
+  "materials": "alt-mesh materyal dizini korunur (M_Zombie_Cloth / M_Zombie_Atlas)"
+ },
+ "tiers_C_H2": {
+  "folder": "Tiers_C_H2",
+  "files": [
+   "zombie_tier_elite_backframe_C.fbx",
+   "zombie_tier_elite_sode_C.fbx",
+   "zombie_tier_special_collar_C.fbx",
+   "zombie_tier_ultra_yoke_C.fbx"
+  ],
+  "materials": "AP-014 materyalleri korunur",
+  "executioner_uniform_scale": 1.48
+ }
+}

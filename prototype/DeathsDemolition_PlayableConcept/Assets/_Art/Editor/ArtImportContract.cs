@@ -157,8 +157,16 @@ namespace DD.Art.Pipeline.EditorTools
             /// <summary>WP-016 · Derived URP detail mask: A = cloth (Mask.G) so a version tint reaches cloth only. Linear, alpha kept.</summary>
             DetailMask = 6,
             /// <summary>WP-037 · AP-014 VFX sheet (flipbook / card / tile): sRGB colour with its alpha kept (<c>alphaIsTransparency</c>). Always the Vfx class.</summary>
-            Sheet = 7
+            Sheet = 7,
+            /// <summary>WP-084 · AP-025 O1 skin atlas ORM (R AO, G roughness, B metallic), read directly by Tier Lit _ZOMBIE_MASKS. Linear, 1024² cap.</summary>
+            Orm = 8,
+            /// <summary>WP-084 · AP-025 mask flipbook (3×3 sheet of 1024² single-channel slices) imported as a Texture2DArray, BC4, linear.</summary>
+            Array = 9
         }
+
+        /// <summary>WP-084 · the AP-025 mask array: a 3×3 flipbook sheet → 9 slices (Skin 0-2, Dirt 3-5, Blood 6-8), 1024² each.</summary>
+        public const int MaskArrayColumns = 3, MaskArrayRows = 3, MaskArraySheetMaxSize = 4096;
+        public const TextureImporterFormat StandaloneArrayFormat = TextureImporterFormat.BC4;
 
         /// <summary>
         /// WP-015 · ADR-015-1 texture policy. Every contract texture belongs to a distance class
@@ -336,6 +344,7 @@ namespace DD.Art.Pipeline.EditorTools
             { "player_fparms_skin3", TextureClass.Character },
             { "zombie_atlas", TextureClass.Character },
             { "zombie_cloth", TextureClass.Character },    // WP-020 · AP-007 v002 second (cloth) atlas
+            { "zombie_masks", TextureClass.Character },    // WP-084 · AP-025 9-slice mask array (T_zombie_masks_Array)
             // WP-017 · AP-008 armour atlas (one 2K set for every family / variant / state).
             { "zombie_armor", TextureClass.Character },
             // WP-036 · AP-014 tier silhouette parts atlas (1K set; S-03, one-line handshake with S-05).
@@ -449,7 +458,7 @@ namespace DD.Art.Pipeline.EditorTools
         /// </summary>
         public static bool IsCappedMaskRole(TextureRole role)
         {
-            return IsDerivedMaskRole(role) || role == TextureRole.Mask;
+            return IsDerivedMaskRole(role) || role == TextureRole.Mask || role == TextureRole.Orm;
         }
 
         /// <summary>
@@ -481,6 +490,7 @@ namespace DD.Art.Pipeline.EditorTools
 
         public static int MaxTextureSizeOf(string assetPath)
         {
+            if (RoleOf(assetPath) == TextureRole.Array) return MaskArraySheetMaxSize;   // WP-084: the 3×3 sheet keeps 1024² slices
             int size = MaxSizeOf(ClassOf(assetPath), RoleOf(assetPath));
             string slug = RoleSlugOf(assetPath);
             if (slug != null && slug.StartsWith("wet_", StringComparison.Ordinal)) size = Mathf.Min(size, WetPackedMaxSize);
@@ -619,6 +629,8 @@ namespace DD.Art.Pipeline.EditorTools
                 case "Mask": return TextureRole.Mask;
                 case "DetailMask": return TextureRole.DetailMask;
                 case "Sheet": return TextureRole.Sheet;
+                case "ORM": return TextureRole.Orm;
+                case "Array": return TextureRole.Array;
                 default: return TextureRole.Unknown;
             }
         }
@@ -627,7 +639,7 @@ namespace DD.Art.Pipeline.EditorTools
         public static bool IsLinearRole(TextureRole role)
         {
             return role == TextureRole.Normal || role == TextureRole.Packed || role == TextureRole.MetallicSmoothness ||
-                   role == TextureRole.Mask || role == TextureRole.DetailMask;
+                   role == TextureRole.Mask || role == TextureRole.DetailMask || role == TextureRole.Orm || role == TextureRole.Array;
         }
 
         /// <summary>Roles whose alpha channel carries data (smoothness; the ID mask's emissive flag; the detail mask's cloth gate; a sheet's coverage).</summary>
@@ -689,7 +701,8 @@ namespace DD.Art.Pipeline.EditorTools
 
         public static TextureImporterFormat FormatOf(TextureRole role)
         {
-            return role == TextureRole.Normal ? StandaloneNormalFormat
+            return role == TextureRole.Array ? StandaloneArrayFormat
+                : role == TextureRole.Normal ? StandaloneNormalFormat
                 : role == TextureRole.BaseColor || role == TextureRole.Unknown || role == TextureRole.Sheet ? StandaloneColorFormat
                 : StandaloneMaskFormat;
         }
@@ -949,6 +962,21 @@ namespace DD.Art.Pipeline.EditorTools
             return changed;
         }
 
+        /// <summary>WP-084 · an Array-role texture imports as a Texture2DArray flipbook (3×3); every other role as a 2D texture.</summary>
+        private static bool ApplyShape(TextureImporter importer, TextureRole role)
+        {
+            var settings = new TextureImporterSettings();
+            importer.ReadTextureSettings(settings);
+            TextureImporterShape shape = role == TextureRole.Array ? TextureImporterShape.Texture2DArray : TextureImporterShape.Texture2D;
+            int cols = role == TextureRole.Array ? MaskArrayColumns : settings.flipbookColumns, rows = role == TextureRole.Array ? MaskArrayRows : settings.flipbookRows;
+            if (settings.textureShape == shape && settings.flipbookColumns == cols && settings.flipbookRows == rows) return false;
+            settings.textureShape = shape;
+            settings.flipbookColumns = cols;
+            settings.flipbookRows = rows;
+            importer.SetTextureSettings(settings);
+            return true;
+        }
+
         /// <summary>Writes the contract into a texture importer for its role. Returns true if anything changed.</summary>
         public static bool Apply(TextureImporter importer, TextureRole role)
         {
@@ -959,6 +987,7 @@ namespace DD.Art.Pipeline.EditorTools
 
             changed |= Set(importer.textureType, type, v => importer.textureType = v);
             changed |= Set(importer.sRGBTexture, !linear, v => importer.sRGBTexture = v);
+            changed |= ApplyShape(importer, role);
             // WP-015 (ADR-015-1): size and streaming come from the role's distance class.
             TextureClass textureClass = ClassOf(importer.assetPath);
             int maxSize = MaxTextureSizeOf(importer.assetPath);
@@ -1052,7 +1081,7 @@ namespace DD.Art.Pipeline.EditorTools
             var v = new List<string>();
             if (role == TextureRole.Unknown)
             {
-                v.Add("name: not a contract texture name (T_<role>_<BaseColor|Normal|Packed|MetallicSmoothness|Mask|DetailMask|Sheet>.png)");
+                v.Add("name: not a contract texture name (T_<role>_<BaseColor|Normal|Packed|MetallicSmoothness|Mask|DetailMask|Sheet|ORM|Array>.png)");
             }
 
             bool linear = IsLinearRole(role);
@@ -1073,6 +1102,7 @@ namespace DD.Art.Pipeline.EditorTools
 
             Check(v, "textureType", importer.textureType, type);
             Check(v, "sRGBTexture", importer.sRGBTexture, !linear);
+            Check(v, "textureShape", importer.textureShape, role == TextureRole.Array ? TextureImporterShape.Texture2DArray : TextureImporterShape.Texture2D);
             Check(v, "mipmapEnabled", importer.mipmapEnabled, TextureMipmaps);
             Check(v, "streamingMipmaps", importer.streamingMipmaps, StreamsMipmaps(textureClass));
             Check(v, "maxTextureSize", importer.maxTextureSize, maxSize);

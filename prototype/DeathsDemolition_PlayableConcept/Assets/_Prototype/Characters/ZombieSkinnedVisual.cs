@@ -10,8 +10,8 @@ namespace DD.Prototype.Characters
     /// WP-016 · The AP-007 zombie on the M1 zombie rig (ADR-016-2). Lives on the
     /// <c>Zombie_AP007</c> prefab root (written by <c>ArtCharacterPrefabBuilder</c>): a model
     /// with the 56-bone skeleton, an Animator (Humanoid avatar, locomotion blend), a LODGroup
-    /// with four LOD levels and, per level, four SkinnedMeshRenderer slots (body, top,
-    /// bottom, head). <see cref="Assemble"/> re-points every slot to the look's meshes by
+    /// with four LOD levels and, per level, five SkinnedMeshRenderer slots (body, top,
+    /// bottom, head, and the WP-084 AP-025 face). <see cref="Assemble"/> re-points every slot to the look's meshes by
     /// bone name — the module FBX files list only the bones they weight, so each mesh
     /// carries its own bone order in the library — and hides empty slots (H0 bald).
     /// One material for the whole crowd; the enemy version selects one of four shared
@@ -41,8 +41,16 @@ namespace DD.Prototype.Characters
         public const string AnchorHelmet = "anchor_helmet";
         public const string AnchorTorso = "anchor_torso";
         public const string AnchorLegs = "anchor_legs";
-        public const int SlotCount = 4;   // body, top, bottom, head
-        public const int SlotBody = 0, SlotTop = 1, SlotBottom = 2, SlotHead = 3;
+        public const int SlotCount = 5;   // body, top, bottom, head (hair / headwear), face (WP-084 · AP-025)
+        public const int SlotBody = 0, SlotTop = 1, SlotBottom = 2, SlotHead = 3, SlotFace = 4;
+
+        /// <summary>
+        /// WP-084 · AP-025 contract v002: the zombie's skin / dirt / blood mask indices ride the renderers' renderingLayerMask —
+        /// bits 16-20 / 21-25 / 26-30 (0..2 each), low 16 bits (light / decal layers) kept, bit 31 reserved 0. The Tier Lit
+        /// _ZOMBIE_MASKS path reads them per draw (SRP Batcher-compatible; no MaterialPropertyBlock, no per-zombie material).
+        /// </summary>
+        public const int VariationShiftSkin = 16, VariationShiftDirt = 21, VariationShiftBlood = 26;
+        public const uint VariationKeepMask = 0x0000FFFFu;
 
         [SerializeField] private Animator _animator;
         [SerializeField] private LODGroup _lodGroup;
@@ -69,7 +77,7 @@ namespace DD.Prototype.Characters
         private Material _atlasOverride;
         private static readonly string[] AtlasOnly = { ZombieModuleLibrary.MaterialAtlas };
         private static readonly string[] ClothOnly = { ZombieModuleLibrary.MaterialCloth };
-        /// <summary>WP-020 · Per module slot (body/top/bottom/head): the bound module's material names in sub-mesh order; null = atlas only.</summary>
+        /// <summary>WP-020 · Per module slot (body/top/bottom/head/face): the bound module's material names in sub-mesh order; null = atlas only.</summary>
         private readonly string[][] _slotMaterials = new string[SlotCount][];
         /// <summary>WP-038C · Per renderer (LOD-major) override when the bound mesh carries its own material list (fewer sub-meshes than the module).</summary>
         private readonly string[][] _rendererMaterials = new string[ZombieModuleLibrary.LodCount * SlotCount][];
@@ -121,6 +129,29 @@ namespace DD.Prototype.Characters
             Bind(r, mesh);
         }
 
+        /// <summary>The packed variation bits last applied (bits 16-30), 0 before the first <see cref="ApplyVariation"/>.</summary>
+        public uint VariationBits { get; private set; }
+
+        /// <summary>
+        /// WP-084 · write the zombie's skin / dirt / blood indices (each clamped to 0..2) into every body-slot and armour
+        /// renderer at every LOD — active or not, so a LOD switch never shows the previous life's indices.
+        /// </summary>
+        public void ApplyVariation(int skin, int dirt, int blood)
+        {
+            uint bits = ((uint)Mathf.Clamp(skin, 0, 2) << VariationShiftSkin) | ((uint)Mathf.Clamp(dirt, 0, 2) << VariationShiftDirt)
+                        | ((uint)Mathf.Clamp(blood, 0, 2) << VariationShiftBlood);
+            VariationBits = bits;
+            if (_slots != null) for (int i = 0; i < _slots.Length; i++) WriteVariation(_slots[i], bits);
+            if (_armorSlots != null) for (int i = 0; i < _armorSlots.Length; i++) WriteVariation(_armorSlots[i], bits);
+        }
+
+        private static void WriteVariation(Renderer r, uint bits)
+        {
+            if (r == null) return;
+            uint mask = (r.renderingLayerMask & VariationKeepMask) | bits;
+            if (r.renderingLayerMask != mask) r.renderingLayerMask = mask;
+        }
+
         /// <summary>The shared armour material on every armour renderer (no instance material).</summary>
         public void ApplyArmorMaterial(Material m)
         {
@@ -168,7 +199,7 @@ namespace DD.Prototype.Characters
         }
 
         /// <summary>
-        /// Re-point the sixteen slots to the look's meshes. Every module mesh is bound by bone
+        /// Re-point the twenty slots (5 × 4 LODs) to the look's meshes. Every module mesh is bound by bone
         /// NAME against this instance's skeleton; a slot whose mesh is missing (H0 head, a
         /// module absent from the library) is disabled. Idempotent per look.
         /// </summary>
@@ -187,11 +218,14 @@ namespace DD.Prototype.Characters
             ZombieModuleLibrary.Variant topV = top != null ? top.Find(look.topColourway, look.fit) : null;
             ZombieModuleLibrary.Variant bottomV = bottom != null ? bottom.Find(look.bottomColourway, look.fit) : null;
             ZombieModuleLibrary.Variant headV = head != null ? head.Find(ZombieModuleLibrary.NoColourway, look.fit) : null;
-            bool ok = body != null && topV != null && bottomV != null;
+            ZombieModuleLibrary.Module face = look.HasFace ? library.FindModule(look.face) : null;   // WP-084
+            ZombieModuleLibrary.Variant faceV = face != null ? face.Find(ZombieModuleLibrary.NoColourway, look.fit) : null;
+            bool ok = body != null && topV != null && bottomV != null && (!look.HasFace || faceV != null);   // WP-084: a face that does not bind is a headless zombie
             _slotMaterials[SlotBody] = null;
             _slotMaterials[SlotTop] = top != null ? top.materials : null;
             _slotMaterials[SlotBottom] = bottom != null ? bottom.materials : null;
             _slotMaterials[SlotHead] = head != null ? head.materials : null;
+            _slotMaterials[SlotFace] = face != null ? face.materials : null;
 
             for (int lod = 0; lod < ZombieModuleLibrary.LodCount; lod++)
             {
@@ -199,15 +233,34 @@ namespace DD.Prototype.Characters
                 Bind(Slot(lod, SlotTop), topV != null ? topV.lods[lod] : null);
                 Bind(Slot(lod, SlotBottom), bottomV != null ? bottomV.lods[lod] : null);
                 Bind(Slot(lod, SlotHead), headV != null ? headV.lods[lod] : null);
+                Bind(Slot(lod, SlotFace), faceV != null ? faceV.lods[lod] : null);
                 _rendererMaterials[lod * SlotCount + SlotBody] = null;
                 _rendererMaterials[lod * SlotCount + SlotTop] = topV != null ? topV.lods[lod].materials : null;
                 _rendererMaterials[lod * SlotCount + SlotBottom] = bottomV != null ? bottomV.lods[lod].materials : null;
                 _rendererMaterials[lod * SlotCount + SlotHead] = headV != null ? headV.lods[lod].materials : null;
+                _rendererMaterials[lod * SlotCount + SlotFace] = faceV != null ? faceV.lods[lod].materials : null;
+            }
+
+            // WP-084: the jaw moves only when the skin around the mouth follows it — the body (AP-007 rig v002 bodies carry the lower
+            // face) or the AP-025 face lists the jaw. The v002 faces are bound to Head / Neck only: a driven jaw would open the
+            // jaw-weighted A/B garments (A2 face wrap, H2 / H6 / H7) away from a still face (~20 mm at 20°, 3d-modeller 06.10).
+            _jawDriven = ListsJaw(body != null ? body.lods[0] : null) || ListsJaw(faceV != null ? faceV.lods[0] : null);
+            if (!_jawDriven && _jaw != null)
+            {
+                _jawDegrees = 0f;
+                _jaw.localRotation = _jawRest;
             }
 
             // A re-assembled look changes the sub-mesh layout: re-apply the current version's material arrays.
             if (_materialTier >= 0) ApplyMaterial(library, _materialTier, _atlasOverride);
             return ok;
+        }
+
+        private static bool ListsJaw(ZombieModuleLibrary.MeshRef mesh)
+        {
+            if (mesh == null || mesh.boneNames == null) return false;
+            for (int i = 0; i < mesh.boneNames.Length; i++) if (mesh.boneNames[i] == "jaw") return true;
+            return false;
         }
 
         private void Bind(SkinnedMeshRenderer renderer, ZombieModuleLibrary.MeshRef mesh)
@@ -600,16 +653,19 @@ namespace DD.Prototype.Characters
         [PrototypeOnly(PendingDecisions.None, "WP-071 zombie jaw (rig v002): open degrees — idle base + breath, attack, bite, dying slack, electro; open / close rate deg/s; the attack hold past hit_window_start (s). Invented / K10.", true)]
         public const float JawIdle = 3f, JawBreath = 2f, JawAttack = 12f, JawBite = 24f, JawDying = 14f, JawElectro = 8f, JawOpenRate = 120f, JawCloseRate = 60f, JawAttackHold = 0.3f;
         private Transform _jaw;
+        private bool _jawDriven = true;
         private Quaternion _jawRest;
         private Vector3 _jawAxis;
         private float _jawDegrees, _jawAttackUntil, _jawAttackDegrees, _jawPhase;
         /// <summary>WP-071: current jaw opening (degrees; 0 = rest). Transform of the rig's jaw, null on a v003 rig.</summary>
         public float JawDegrees => _jawDegrees;
         public Transform Jaw => _jaw;
+        /// <summary>WP-084 · false while the assembled body and face carry no jaw weights (AP-025 v002): the jaw stays at rest.</summary>
+        public bool JawDriven => _jawDriven;
 
         private void JawUpdate()
         {
-            if (_jaw == null || !_authored || (_lod != null && _lod.Far)) return;
+            if (_jaw == null || !_jawDriven || !_authored || (_lod != null && _lod.Far)) return;
             float t = Time.time, dt = Time.deltaTime;
             float target = _dying ? JawDying
                 : _special == ZombieSpecialVisual.Electrocuted ? JawElectro * (0.5f + 0.5f * Mathf.Abs(Mathf.Sin(_spasmClock * SpasmHz * 5.236f)))

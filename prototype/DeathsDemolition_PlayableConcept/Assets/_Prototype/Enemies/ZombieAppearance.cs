@@ -201,6 +201,8 @@ namespace DD.Prototype.Enemies
                 }
 
                 ApplyTierTint(tier);   // WP-036: lerp-mask version tint on the body atlas and the armour atlas (ADR-036-1)
+                int combo = MaskCombo(_lookSeed);   // WP-084 · AP-025: comboId = skin·9 + dirt·3 + blood (0..26), from the look seed
+                _skinned.ApplyVariation(combo / 9, combo / 3 % 3, combo % 3);
                 return;
             }
 
@@ -464,6 +466,21 @@ namespace DD.Prototype.Enemies
             }
 
             return look;
+        }
+
+        /// <summary>
+        /// WP-084 · the AP-025 mask combination of a look seed: a 32-bit integer hash (Wang) of the seed, folded to 0..26 —
+        /// deterministic, independent of the look's other draws (which consume the seed through their own sequence).
+        /// </summary>
+        public static int MaskCombo(uint seed)
+        {
+            uint h = seed;
+            h = (h ^ 61u) ^ (h >> 16);
+            h *= 9u;
+            h ^= h >> 4;
+            h *= 0x27d4eb2du;
+            h ^= h >> 15;
+            return (int)(h % 27u);
         }
 
         /// <summary>

@@ -77,6 +77,14 @@ Material:
         m_Texture: {fileID: 2800000, guid: 6d8953154d9314f91b2493f21a6c20fa, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _ZombieMaskArray:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _ZombieORM:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -125,6 +133,12 @@ Material:
     - _TierTintOn: 1
     - _WorkflowMode: 1
     - _ZWrite: 1
+    - _ZombieBloodRoughness: 0.22
+    - _ZombieDirtRoughness: 0.65
+    - _ZombieMaskMaxLod: 9
+    - _ZombieMasksOn: 0
+    - _ZombieSkinEnable: 1
+    - _ZombieUseOrm: 0
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
@@ -132,4 +146,12 @@ Material:
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _TierClothTint: {r: 0.30588236, g: 0.24313726, b: 0.1882353, a: 1}
     - _TierLacquerTint: {r: 0.41960785, g: 0.31764707, b: 0.2509804, a: 1}
+    - _ZombieBloodColor: {r: 0.39999998, g: 0.078431346, b: 0.094117604, a: 1}
+    - _ZombieDirtColor: {r: 0.47058815, g: 0.44313726, b: 0.37647057, a: 1}
+    - _ZombieMaskDomain: {r: 0.5, g: 1, b: 0, a: 0}
+    - _ZombieSkinRef: {r: 0.5490196, g: 0.572549, b: 0.572549, a: 1}
+    - _ZombieSkinTint0: {r: 0.7098039, g: 0.7137255, b: 0.6784314, a: 1}
+    - _ZombieSkinTint1: {r: 0.5490196, g: 0.572549, b: 0.572549, a: 1}
+    - _ZombieSkinTint2: {r: 0.41176468, g: 0.39999998, b: 0.42745098, a: 1}
+    - _ZombieTierClothRect: {r: 0, g: 0, b: 1, a: 1}
   m_BuildTextureStacks: []

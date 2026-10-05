@@ -308,6 +308,20 @@ namespace DD.Art.Tests.EditMode
 
             Assert.AreEqual(4, tierParca, "AP-014 4 tier parça FBX");
 
+            // WP-084 · AP-025 v002 intake: every FBX the intake manifest copied besides the three bodies (12 faces, 24 H2 fit-C garments,
+            // 4 H2 fit-C tier parts) — the manifest is the table (tools/art/ap025_intake.py writes it with each file's SHA-256).
+            int ap025 = 0;
+            if (ArtAp025Intake.Active)
+            {
+                foreach (object o in ArtJson.AsList(ArtJson.AsObject(ArtJson.Parse(File.ReadAllText(ArtAp025Intake.ManifestPath)), "AP025 intake manifest")["copied"], "copied"))
+                {
+                    string to = ArtJson.AsString(ArtJson.AsObject(o, "copied")["to"]);
+                    if (to.EndsWith(".fbx", StringComparison.Ordinal) && beklenen.Add(ArtCharacterContract.ZombieFolder + "/" + to)) ap025++;
+                }
+
+                Assert.AreEqual(40, ap025, "AP-025 v002: 12 yüz + 24 H2 giysi (fit C) + 4 H2 tier parçası");
+            }
+
             // WP-037B: the AP-014 Special Weapon pickup + hand models (S-02 builder).
             int sw = 0;
             foreach (string f in ArtSpecialWeaponBuilder.ModelFiles()) if (beklenen.Add(f)) sw++;
@@ -517,6 +531,16 @@ namespace DD.Art.Tests.EditMode
             int vfx = 0;
             foreach (string f in ArtVfxManifestPngs()) if (beklenen.Add(f)) vfx++;
             Assert.AreEqual(110, vfx, "AP-010 v004 manifest 109 PNG (v003 109 + fb_armor_break sheet + emissive, WP-047H − ofuda_seal / _burn, WP-073 B6) + AP010C 1 (barrel_heat_distort_tile) = 110.");
+
+            // WP-084 · AP-025 O1 atlas (intake manifest present, ORM staged): the body Packed / Mask and their derived MetallicSmoothness /
+            // DetailMask are retired (tools/art/ap025-intake.json "retire"); one ORM + the 9-slice mask array sheet take their place.
+            if (ArtAp025Intake.HasO1Atlas)
+            {
+                foreach (string f in new[] { zt + "/T_zombie_atlas_Packed.png", zt + "/T_zombie_atlas_Mask.png", zd + "/T_zombie_atlas_MetallicSmoothness.png", zd + "/T_zombie_atlas_DetailMask.png" })
+                    Assert.IsTrue(beklenen.Remove(f), "emekli doku tabloda yoktu: " + f);
+                beklenen.Add(zt + "/T_zombie_atlas_ORM.png");
+                beklenen.Add(zt + "/T_zombie_masks_Array.png");
+            }
 
             var diskte = new HashSet<string>(DiskteUzanti(".png"), StringComparer.Ordinal);
             var eksik = new List<string>();

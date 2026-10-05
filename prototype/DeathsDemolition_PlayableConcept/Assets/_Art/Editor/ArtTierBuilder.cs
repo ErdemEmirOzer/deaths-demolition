@@ -161,7 +161,8 @@ namespace DD.Art.Pipeline.EditorTools
             var partBase = Load<Texture2D>(BaseColorMap); var partNormal = Load<Texture2D>(NormalMap); var partMs = Load<Texture2D>(MetallicSmoothnessMap); var partMask = Load<Texture2D>(MaskMap);
             // body atlas (AP-007): R skin, G cloth → cloth tint only
             var bodyBase = Load<Texture2D>(Textures + "/T_zombie_atlas_BaseColor.png"); var bodyNormal = Load<Texture2D>(Textures + "/T_zombie_atlas_Normal.png");
-            var bodyMs = Load<Texture2D>(Derived + "/T_zombie_atlas_MetallicSmoothness.png"); var bodyMask = Load<Texture2D>(Textures + "/T_zombie_atlas_Mask.png");
+            bool o1 = ArtAp025Intake.HasO1Atlas;   // WP-084: the O1 atlas retires the body Packed / Mask — ORM + masks instead
+            var bodyMs = o1 ? null : Load<Texture2D>(Derived + "/T_zombie_atlas_MetallicSmoothness.png"); var bodyMask = o1 ? null : Load<Texture2D>(Textures + "/T_zombie_atlas_Mask.png");
             // armour atlas (AP-008): R lacquer, G cord → lacquer tint only
             var armBase = Load<Texture2D>(ArtArmorBuilder.BaseColorMap); var armNormal = Load<Texture2D>(ArtArmorBuilder.NormalMap);
             var armMs = Load<Texture2D>(ArtArmorBuilder.MetallicSmoothnessMap); var armMask = Load<Texture2D>(ArtArmorBuilder.MaskMap);
@@ -171,6 +172,7 @@ namespace DD.Art.Pipeline.EditorTools
                 TintRow row = tints[tier];
                 Build(PartMaterialPath(tier), tierLit, partBase, partNormal, partMs, partMask, row, cloth: true, lacquer: true);
                 Build(BodyMaterialPath(tier), tierLit, bodyBase, bodyNormal, bodyMs, bodyMask, row, cloth: true, lacquer: false);
+                if (o1) ArtAp025Intake.ConfigureMasks(Load<Material>(BodyMaterialPath(tier)), true);
                 Build(ArmorMaterialPath(tier), tierLit, armBase, armNormal, armMs, armMask, row, cloth: false, lacquer: true);
             }
 
@@ -223,13 +225,7 @@ namespace DD.Art.Pipeline.EditorTools
             int referenced = 0;
             foreach (ManifestPart p in parts)
             {
-                string fbxPath = TierFolder + "/" + Path.GetFileName(p.fbx);
-                if (!models.TryGetValue(fbxPath, out GameObject model))
-                {
-                    model = AssetDatabase.LoadAssetAtPath<GameObject>(fbxPath);
-                    if (model == null) throw new FileNotFoundException(LogPrefix + "tier FBX missing", fbxPath);
-                    models[fbxPath] = model;
-                }
+                string partFbx = TierFolder + "/" + Path.GetFileName(p.fbx);
 
                 var part = new ZombieTierLibrary.Part
                 {
@@ -240,6 +236,14 @@ namespace DD.Art.Pipeline.EditorTools
                 for (int f = 0; f < Fits.Length; f++)
                 {
                     var fit = new ZombieTierLibrary.Fit { fit = Fits[f] };
+                    string fbxPath = ArtAp025Intake.TierFbx(partFbx, Fits[f]);   // WP-084: fit C from the H2 tier parts
+                    if (!models.TryGetValue(fbxPath, out GameObject model))
+                    {
+                        model = AssetDatabase.LoadAssetAtPath<GameObject>(fbxPath);
+                        if (model == null) throw new FileNotFoundException(LogPrefix + "tier FBX missing", fbxPath);
+                        models[fbxPath] = model;
+                    }
+
                     for (int lod = 0; lod < ZombieTierLibrary.LodCount; lod++)
                     {
                         string name = p.pattern.Replace("<fit>", Fits[f]).Replace("<n>", lod.ToString());

@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using DD.Prototype.CameraSystem;
 using DD.Prototype.Characters;
 using DD.Prototype.Core.Boot;
@@ -30,7 +31,8 @@ namespace DD.Prototype.Tests.PlayMode
     /// Z2 — tier distinction: each version alone in one fixed frame; a pair is distinct by silhouette, luma or chroma.
     /// Z3b — the zombie share of the 40-zombie full-armour frame (the SetPassAttribution scenario, R1 6 SetPass / 310 draws)
     /// and the zombie texture budget.
-    /// Z4 — face, eyes and teeth on every family (AP-025-B face modules; BLOCKED with a note until they are delivered).
+    /// Z4 — face, eyes and teeth on every family (AP-025 face modules on the shared skeleton's Head). The jaw is C-00's 05.10
+    /// decision (a): an empty jaw transform now, the face jaw weights with AP-025D — <see cref="Z4b_YuzCenesi_JawAgirligi"/>.
     /// </summary>
     [TestFixture]
     [Explicit("R2 measurement: run by full name")]
@@ -53,12 +55,16 @@ namespace DD.Prototype.Tests.PlayMode
         // adds its own tint / part materials, so the pass count grows with the mix (evidence K/wp-088/evidence/r1).
         private const double MaxSharedTextureGpuMB = 96, MaxUniqueTexturesPerZombie = 0, MaxZombieSetPass = 24, MaxZombieDraws = 822, MaxFrameSetPass = 98;
 
+        private static int? s_frameRate;
+
         [TearDown]
         public void TearDown()
         {
             Time.timeScale = 1f;
             Time.captureDeltaTime = 0f;
+            if (s_frameRate.HasValue) { Application.targetFrameRate = s_frameRate.Value; s_frameRate = null; }   // Z3b uncaps it
             Environment.SetEnvironmentVariable(WorldSourceSettings.EnvironmentVariable, null);
+            CharacterAssetSet.ResetCache();   // Z3b loads the AP005 set; the next test of the session starts clean
             ZombieEnemy.ResetRisePolicy();
             RunFlowClock.ClearHolds();
             if (PlayerRegistry.Primary != null && PlayerRegistry.Primary.Health != null) PlayerRegistry.Primary.Health.DiagnosisInvulnerable = false;
@@ -98,7 +104,10 @@ namespace DD.Prototype.Tests.PlayMode
                 EnemyFactory.ResetSeedForTests(7u);   // the same look seed for every version: only the version differs
                 ZombieEnemy z = EnemyFactory.Spawn(Tiers[t], 8, spot, Quaternion.LookRotation(-fwd));
                 Assert.IsNotNull(z, Tiers[t] + " spawn");
+                // WP-084 (game-test-engineer 06.10): a fixed step, so the frozen pose is the same animation phase for every version
+                Time.captureDeltaTime = 1f / 60f;
                 for (int i = 0; i < 30; i++) { z.transform.SetPositionAndRotation(spot, Quaternion.LookRotation(-fwd)); yield return null; }
+                Time.captureDeltaTime = 0f;
                 Time.timeScale = 0f;
                 z.transform.SetPositionAndRotation(spot, Quaternion.LookRotation(-fwd));
                 yield return null;
@@ -107,6 +116,30 @@ namespace DD.Prototype.Tests.PlayMode
                 masks[t] = Silhouette(frame, empty, out luma[t], out chroma[t]);
                 z.Remove();
                 yield return null;
+            }
+
+            // control pair: Standard again with the same seed and step — the measurement's own noise must stay under every bar,
+            // otherwise a "distinct" pair could be pose noise (the silhouette alone passes a pair under the OR rule)
+            {
+                EnemyFactory.ResetSeedForTests(7u);
+                ZombieEnemy again = EnemyFactory.Spawn(Tiers[0], 8, spot, Quaternion.LookRotation(-fwd));
+                Assert.IsNotNull(again, "kontrol doğuşu");
+                Time.captureDeltaTime = 1f / 60f;
+                for (int i = 0; i < 30; i++) { again.transform.SetPositionAndRotation(spot, Quaternion.LookRotation(-fwd)); yield return null; }
+                Time.captureDeltaTime = 0f;
+                Time.timeScale = 0f;
+                again.transform.SetPositionAndRotation(spot, Quaternion.LookRotation(-fwd));
+                yield return null;
+                Color32[] repeat = CaptureFrom(game, eye, look, 40f, 640, 480);
+                Time.timeScale = 1f;
+                bool[] control = Silhouette(repeat, empty, out float controlLuma, out Vector2 controlChroma);
+                again.Remove();
+                yield return null;
+                float silNoise = 1f - IoU(masks[0], control), lumaNoise = Mathf.Abs(luma[0] - controlLuma), chromaNoise = Vector2.Distance(chroma[0], controlChroma);
+                Debug.Log(string.Format(CultureInfo.InvariantCulture, "[DD-OBS] r2.z2 control Standard-Standard silhouetteDelta={0:0.000} lumaDelta={1:0.000} chromaDelta={2:0.000}", silNoise, lumaNoise, chromaNoise));
+                Assert.Less(silNoise, 0.02f, "ölçüm gürültüsü: aynı versiyonun iki karesi silüette ayrışıyor (poz sabit değil)");
+                Assert.Less(lumaNoise, MinLumaDelta * 0.5f, "ölçüm gürültüsü: luma");
+                Assert.Less(chromaNoise, MinChromaDelta * 0.5f, "ölçüm gürültüsü: kroma");
             }
 
             int indistinct = 0, pairs = 0;
@@ -136,6 +169,7 @@ namespace DD.Prototype.Tests.PlayMode
         public IEnumerator Z3b_40Zombi_SetPassPayi_DokuButcesi()
         {
             LogAssert.ignoreFailingMessages = true;
+            s_frameRate = Application.targetFrameRate;
             Application.targetFrameRate = -1;
             // The SetPassAttribution scenario (WP-038J; S-10's R1 baseline 84941661): AP005 world through the player's menu flow.
             Environment.SetEnvironmentVariable(WorldSourceSettings.EnvironmentVariable, "AP005");
@@ -159,10 +193,10 @@ namespace DD.Prototype.Tests.PlayMode
             ZombieEnemy.Rise = ZombieEnemy.RisePolicy.Off;
 
             // C-00 05.10: the gate is measured on the FIXED mix (R2ZombieCrowd.GateMix); the config's worst case is reported.
-            var gate = new double[7];
+            var gate = new double[10];
             yield return MeasureCrowd(director, R2ZombieCrowd.GateMix, "gate", gate);
             int[] worstMix = R2ZombieCrowd.WorstMix();
-            var worst = new double[7];
+            var worst = new double[10];
             yield return MeasureCrowd(director, worstMix, "worst", worst);
 
             // R2 standard "the source is in the record" (S-10 d3c15529): no artefact unless the crowd was really there and drawn.
@@ -173,6 +207,11 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.Greater(gate[1], 0, "kaynak yok: zombiler çizilmedi (zombi draw 0)");
             Assert.Greater(worst[1], 0, "kaynak yok: en kötü karışım çizilmedi");
             Assert.Greater(gate[3], 0, "kaynak yok: zombi dokusu okunmadı");
+            // WP-084 (game-test-engineer 06.10): the AP-025 content is what was measured — every body carries a bound face at LOD0,
+            // the masks path is on, and the frame shows a crowd rather than one renderer
+            Assert.AreEqual(R2ZombieCrowd.Size, (int)gate[7], "kaynak yok: LOD0 yüz yuvası bağlı olmayan gövde var");
+            Assert.Greater(gate[8], 0, "kaynak yok: hiçbir zombi malzemesinde _ZOMBIE_MASKS açık değil");
+            Assert.GreaterOrEqual(gate[9], 10, "kaynak yok: kamerada görünür zombi gövdesi 10'dan az");
 
             R2Olcum.Yaz("Z3b", "DD.Prototype.Tests.PlayMode.ZombieR2Tests.Z3b_40Zombi_SetPassPayi_DokuButcesi", new Dictionary<string, double>
             {
@@ -191,7 +230,8 @@ namespace DD.Prototype.Tests.PlayMode
         /// <summary>
         /// One crowd: spawn the mix (R2ZombieCrowd), let it close in, freeze, then frame vs no-zombie counters and the zombie
         /// textures. result = [zombieSetPass, zombieDraws, frameSetPass, sharedTextureGpuMB, uniqueTexturesPerZombie, bodies,
-        /// zombie renderers visible to the game camera].
+        /// zombie renderers visible to the game camera, bodies with a bound LOD0 face, zombie materials with _ZOMBIE_MASKS on,
+        /// bodies visible to the game camera].
         /// </summary>
         private static IEnumerator MeasureCrowd(EnemySpawnDirector director, int[] mix, string label, double[] result)
         {
@@ -228,11 +268,72 @@ namespace DD.Prototype.Tests.PlayMode
             Camera cam = PrototypeCameraRig.Active.Camera;
             long[] frame = new long[3], noZombies = new long[3];
             yield return Counters(cam, frame);
+            // WP-084 (C-00 06.10): the AP-025 face slot's share on its own — the same frozen frame with only the SlotFace renderers off
+            // (reported, not gated: the gate is the whole zombie share below).
+            var faceRenderers = new List<Renderer>();
+            foreach (ZombieEnemy z in ZombieEnemy.Live)
+            {
+                if (z == null || z.Skinned == null) continue;
+                for (int lod = 0; lod < ZombieModuleLibrary.LodCount; lod++)
+                {
+                    Renderer fr = z.Skinned.Slot(lod, ZombieSkinnedVisual.SlotFace);
+                    if (fr != null && fr.enabled && fr.gameObject.activeInHierarchy) faceRenderers.Add(fr);
+                }
+            }
+            long[] noFaces = new long[3];
+            foreach (Renderer r in faceRenderers) r.enabled = false;
+            yield return Counters(cam, noFaces);
+            foreach (Renderer r in faceRenderers) r.enabled = true;
+            int facesLod0 = 0;
+            foreach (ZombieEnemy z in ZombieEnemy.Live)
+            {
+                SkinnedMeshRenderer f0 = z != null && z.Skinned != null ? z.Skinned.Slot(0, ZombieSkinnedVisual.SlotFace) : null;
+                if (f0 != null && f0.enabled && f0.sharedMesh != null && z.Skinned.Look.HasFace) facesLod0++;
+            }
+
+            Debug.Log(string.Format(CultureInfo.InvariantCulture, "[DD-OBS] r2.z3b.face mix={0} bodiesWithFace={1} faceRenderersAllLods={2} faceSetPass={3} faceDraws={4} faceBatches={5}",
+                label, facesLod0, faceRenderers.Count, frame[0] - noFaces[0], frame[1] - noFaces[1], frame[2] - noFaces[2]));
             var zombieRenderers = new List<Renderer>();
             foreach (ZombieEnemy z in ZombieEnemy.Live) if (z != null) foreach (Renderer r in z.GetComponentsInChildren<Renderer>(false)) if (r.enabled) zombieRenderers.Add(r);
             Plane[] frustum = GeometryUtility.CalculateFrustumPlanes(cam);
-            int visible = 0;
+            int visible = 0, visibleBodies = 0;
             foreach (Renderer r in zombieRenderers) if (GeometryUtility.TestPlanesAABB(frustum, r.bounds)) visible++;
+            foreach (ZombieEnemy z in ZombieEnemy.Live)
+            {
+                SkinnedMeshRenderer b0 = z != null && z.Skinned != null ? z.Skinned.Slot(0, ZombieSkinnedVisual.SlotBody) : null;
+                if (b0 != null && GeometryUtility.TestPlanesAABB(frustum, b0.bounds)) visibleBodies++;
+            }
+
+            // S-05 §17 A2 census (C-00 06.10): the crowd draws from shared materials only — distinct materials, (shader, keyword)
+            // sets, property blocks, instanced materials and the distinct mask-index combinations riding renderingLayerMask
+            var materialsSeen = new HashSet<Material>();
+            var keywordSets = new HashSet<string>(StringComparer.Ordinal);
+            var highBits = new HashSet<uint>();
+            int withBlock = 0, instancedMaterials = 0, masksOn = 0;
+            foreach (ZombieEnemy z in ZombieEnemy.Live)
+            {
+                if (z == null) continue;
+                foreach (Renderer r in z.GetComponentsInChildren<Renderer>(true))
+                {
+                    if (r.HasPropertyBlock()) withBlock++;
+                    highBits.Add(r.renderingLayerMask & 0xFFFF0000u);
+                    foreach (Material m in r.sharedMaterials)
+                    {
+                        if (m == null || !materialsSeen.Add(m)) continue;
+                        if (m.name.EndsWith("(Instance)", StringComparison.Ordinal) || m.GetInstanceID() < 0) instancedMaterials++;
+                        if (m.IsKeywordEnabled("_ZOMBIE_MASKS")) masksOn++;
+                        var kw = new List<string>(m.shaderKeywords);
+                        kw.Sort(StringComparer.Ordinal);
+                        keywordSets.Add(m.shader.name + "|" + string.Join(" ", kw));
+                    }
+                }
+            }
+
+            var sets = new List<string>(keywordSets);
+            sets.Sort(StringComparer.Ordinal);
+            Debug.Log("[DD-OBS] r2.z3b.a2 mix=" + label + " materials=" + materialsSeen.Count + " keywordSets=" + keywordSets.Count + " propertyBlocks=" + withBlock
+                      + " instancedMaterials=" + instancedMaterials + " masksOnMaterials=" + masksOn + " maskCombos=" + highBits.Count + " visibleBodies=" + visibleBodies
+                      + " | " + string.Join(" | ", sets));
             foreach (Renderer r in zombieRenderers) r.enabled = false;
             yield return Counters(cam, noZombies);
             var extra = new SortedDictionary<string, int>(StringComparer.Ordinal);
@@ -299,6 +400,7 @@ namespace DD.Prototype.Tests.PlayMode
                 perZombie.Count, frame[0], frame[1], frame[2], noZombies[0], noZombies[1], noZombies[2], zombieSetPass, zombieDraws, frame[2] - noZombies[2], all.Count, sharedMB, uniqueMax));
             Time.timeScale = 1f;
             result[0] = zombieSetPass; result[1] = zombieDraws; result[2] = frame[0]; result[3] = sharedMB; result[4] = uniqueMax; result[5] = perZombie.Count; result[6] = visible;
+            result[7] = facesLod0; result[8] = masksOn; result[9] = visibleBodies;
             foreach (ZombieEnemy z in crowd) if (z != null && z.IsSpawned) z.Remove();
             yield return null;
         }
@@ -313,14 +415,49 @@ namespace DD.Prototype.Tests.PlayMode
             ZombieModuleLibrary library = set != null ? set.ZombieLibrary : null;
             Assert.IsNotNull(library, "zombie module library");
 
-            // AP-025-B (intake note §2/§8): anatomical face modules, kind "face", a variant per body fit, 4 LODs, bound to the
-            // shared skeleton with the jaw (teeth ride the jaw), eyes and teeth inside the face mesh.
+            // AP-025 (intake note §2/§8): anatomical face modules, kind "face", a variant per body fit, 4 LODs, bound to the shared
+            // skeleton's Head, eyes and teeth inside the face mesh. WP-084: the jaw binding is Z4b (C-00 05.10 decision (a)).
             var faces = new List<ZombieModuleLibrary.Module>();
             if (library.modules != null) foreach (ZombieModuleLibrary.Module m in library.modules) if (m != null && m.kind == "face") faces.Add(m);
             // R2 standard "the source is in the record" (S-10 d3c15529): no artefact without the measured thing — the gate is
             // BLOCKED by name until AP-025-B delivers the face modules.
             Assert.IsTrue(library.bodies != null && library.bodies.Length > 0, "kaynak yok: kütüphanede gövde ailesi yok");
             Assert.Greater(faces.Count, 0, "kaynak yok: AP-025-B yüz modülleri henüz yok (kind \"face\") — Z4 BLOCKED");
+
+            // WP-084 (game-test-engineer 06.10): eyes and teeth are measured, not assumed. The AP-025 contract marks every non-skin
+            // vertex (eyes, teeth, mouth, hair, blood) with vertex colour R = 0 and gives each face its own atlas rectangle
+            // (AP025-material-contract.json atlas_uv_layout); a face counts when its LOD0 / LOD1 carry eye / mouth geometry
+            // (≥ 30 non-skin vertices) and ≥ 98 % of its UVs fall in its rectangle or the shared neck strip.
+            string contract = File.Exists(Ap025Contract) ? File.ReadAllText(Ap025Contract) : null;
+            Assert.IsNotNull(contract, "kaynak yok: " + Ap025Contract);
+            var faceOk = new Dictionary<ZombieModuleLibrary.Module, bool>();
+            foreach (ZombieModuleLibrary.Module face in faces)
+            {
+                string name = face.id.Substring(face.id.IndexOf('_') + 1);
+                name = char.ToUpperInvariant(name[0]) + name.Substring(1);
+                Rect rect = ContractRect(contract, "face_" + name), neck = ContractRect(contract, "neck_strip_shared_body_and_head_collar");
+                bool ok = true;
+                foreach (ZombieModuleLibrary.Variant v in face.variants)
+                {
+                    for (int lod = 0; lod < 2; lod++)
+                    {
+                        Mesh m = v.lods[lod] != null ? v.lods[lod].mesh : null;
+                        if (m == null) { ok = false; continue; }
+                        Color32[] colors = m.colors32;
+                        Vector2[] uv = m.uv;
+                        int nonSkin = 0, inside = 0;
+                        foreach (Color32 c in colors) if (c.r < 128) nonSkin++;
+                        foreach (Vector2 t in uv) if (rect.Contains(t) || neck.Contains(t)) inside++;
+                        float share = uv.Length > 0 ? (float)inside / uv.Length : 0f;
+                        if (colors.Length == 0 || nonSkin < 30 || share < 0.98f) ok = false;
+                        if (v == face.variants[0])
+                            Debug.Log(string.Format(CultureInfo.InvariantCulture, "[DD-OBS] r2.z4.face {0} lod{1} vertices={2} colours={3} nonSkin={4} uvInRect={5:0.000}",
+                                face.id, lod, m.vertexCount, colors.Length, nonSkin, share));
+                    }
+                }
+
+                faceOk[face] = ok;
+            }
 
             int missing = 0, families = 0;
             foreach (ZombieModuleLibrary.Body body in library.bodies)
@@ -331,12 +468,12 @@ namespace DD.Prototype.Tests.PlayMode
                 foreach (ZombieModuleLibrary.Module face in faces)
                 {
                     ZombieModuleLibrary.Variant v = face.Find(ZombieModuleLibrary.NoColourway, body.fit);
-                    if (v == null || v.lods == null || v.lods.Length < ZombieModuleLibrary.LodCount) continue;
+                    if (v == null || v.lods == null || v.lods.Length < ZombieModuleLibrary.LodCount || !faceOk[face]) continue;
                     bool lodsOk = true;
                     for (int lod = 0; lod < ZombieModuleLibrary.LodCount; lod++)
                     {
                         ZombieModuleLibrary.MeshRef r = v.lods[lod];
-                        if (r == null || r.mesh == null || r.boneNames == null || Array.IndexOf(r.boneNames, "jaw") < 0) lodsOk = false;
+                        if (r == null || r.mesh == null || r.boneNames == null || Array.IndexOf(r.boneNames, "Head") < 0) lodsOk = false;
                     }
                     if (lodsOk) { ok = true; break; }
                 }
@@ -346,6 +483,78 @@ namespace DD.Prototype.Tests.PlayMode
 
             R2Olcum.Yaz("Z4", source, new Dictionary<string, double> { { "familiesMissingFace", missing } }, families);
             Assert.AreEqual(0, missing, "yüzü olmayan aile");
+            foreach (KeyValuePair<ZombieModuleLibrary.Module, bool> kv in faceOk) Assert.IsTrue(kv.Value, kv.Key.id + ": göz / diş geometrisi ya da atlas bölgesi sözleşmeye uymuyor");
+        }
+
+        private const string Ap025Contract = "Assets/_Art/Characters/Zombie/AP025-material-contract.json";
+
+        /// <summary>An [u0, v0, u1, v1] rectangle of the contract's atlas_uv_layout by key.</summary>
+        private static Rect ContractRect(string json, string key)
+        {
+            System.Text.RegularExpressions.Match m = System.Text.RegularExpressions.Regex.Match(json,
+                "\"" + key + "\"\\s*:\\s*\\[\\s*([-0-9.eE]+)\\s*,\\s*([-0-9.eE]+)\\s*,\\s*([-0-9.eE]+)\\s*,\\s*([-0-9.eE]+)\\s*\\]");
+            Assert.IsTrue(m.Success, "sözleşmede " + key + " yok");
+            float u0 = float.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture), v0 = float.Parse(m.Groups[2].Value, CultureInfo.InvariantCulture);
+            float u1 = float.Parse(m.Groups[3].Value, CultureInfo.InvariantCulture), v1 = float.Parse(m.Groups[4].Value, CultureInfo.InvariantCulture);
+            return Rect.MinMaxRect(u0, v0, u1, v1);
+        }
+
+        /// <summary>
+        /// Z4b — the lower face rides the jaw: every face LOD lists the "jaw" bone (teeth / lower lip weighted to it). C-00 05.10
+        /// decision (a): v002 faces are bound to Head and the prefab carries an empty jaw transform; AP-025D delivers the weights.
+        /// </summary>
+        [Test]
+        [Ignore("AP-025D: face jaw weights not delivered yet (C-00 05.10 decision (a): empty jaw transform now, weights with AP-025D)", Until = "2026-10-20 00:00:00Z")]
+        public void Z4b_YuzCenesi_JawAgirligi()
+        {
+            CharacterAssetSet set = CharacterAssetSet.Load();
+            ZombieModuleLibrary library = set != null ? set.ZombieLibrary : null;
+            Assert.IsNotNull(library, "zombie module library");
+            // 3d-modeller 06.10: Blender lists every deform bone, so "jaw in the bone list" proves nothing — the lower face must be
+            // WEIGHTED to it at every LOD, the shared collar ring (y 1.50) must carry no jaw weight, and the jaw's bind pose must be
+            // the rig v002 rest under Head (0, 0.045, −0.012), the empty jaw the prefab carries today.
+            var rest = new Vector3(0f, 0.045f, -0.012f);
+            var restRotation = new Quaternion(-0.8468003f, 0f, 0f, 0.5319109f);
+            int faces = 0;
+            var bad = new List<string>();
+            if (library.modules != null)
+            {
+                foreach (ZombieModuleLibrary.Module m in library.modules)
+                {
+                    if (m == null || m.kind != ZombieModuleLibrary.KindFace) continue;
+                    faces++;
+                    ZombieModuleLibrary.Variant v = m.variants[0];
+                    for (int lod = 0; lod < ZombieModuleLibrary.LodCount; lod++)
+                    {
+                        ZombieModuleLibrary.MeshRef r = v.lods[lod];
+                        int jaw = r != null && r.boneNames != null ? Array.IndexOf(r.boneNames, "jaw") : -1, head = r != null && r.boneNames != null ? Array.IndexOf(r.boneNames, "Head") : -1;
+                        if (jaw < 0 || head < 0 || r.mesh == null) { bad.Add(m.id + " lod" + lod + ": jaw/Head listede yok"); continue; }
+                        var perVertex = r.mesh.GetBonesPerVertex();
+                        var weights = r.mesh.GetAllBoneWeights();
+                        Vector3[] vertices = r.mesh.vertices;
+                        int weighted = 0, ringJaw = 0, w = 0;
+                        for (int i = 0; i < perVertex.Length; i++)
+                        {
+                            for (int k = 0; k < perVertex[i]; k++, w++)
+                            {
+                                if (weights[w].boneIndex != jaw || weights[w].weight <= 0f) continue;
+                                weighted++;
+                                if (Mathf.Abs(vertices[i].y - 1.5f) < 0.005f) ringJaw++;
+                            }
+                        }
+
+                        Matrix4x4 local = r.mesh.bindposes[head] * r.mesh.bindposes[jaw].inverse;
+                        float posErr = Vector3.Distance(local.GetColumn(3), rest), rotErr = Quaternion.Angle(local.rotation, restRotation);
+                        Debug.Log(string.Format(CultureInfo.InvariantCulture, "[DD-OBS] r2.z4b {0} lod{1} jawWeighted={2} ringJaw={3} bindPosErrMm={4:0.000} bindRotErrDeg={5:0.000}", m.id, lod, weighted, ringJaw, posErr * 1000f, rotErr));
+                        if (weighted == 0) bad.Add(m.id + " lod" + lod + ": jaw ağırlıklı köşe yok");
+                        if (ringJaw > 0) bad.Add(m.id + " lod" + lod + ": boyun halkasında jaw ağırlığı " + ringJaw);
+                        if (posErr > 0.0001f || rotErr > 0.05f) bad.Add(m.id + " lod" + lod + ": jaw bind pozu rig v002 rest'inden farklı");
+                    }
+                }
+            }
+
+            Assert.Greater(faces, 0, "kaynak yok: yüz modülü yok");
+            Assert.IsEmpty(bad, string.Join("\n", bad));
         }
 
         // ------------------------------------------------------------------------------------------------------------ helpers

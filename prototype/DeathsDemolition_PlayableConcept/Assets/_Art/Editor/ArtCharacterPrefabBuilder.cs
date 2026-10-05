@@ -155,10 +155,13 @@ namespace DD.Art.Pipeline.EditorTools
                 PlayerDerived + "/T_player_MetallicSmoothness.provenance.json", ArtTextureRepack.OrmToMetallicSmoothnessAo, ArtTextureRepack.OrmAlgorithm);
             ArtTextureRepack.BuildDerived(PlayerFpArmsPacked, PlayerFpArmsMetallicSmoothness,
                 PlayerDerived + "/T_player_fparms_MetallicSmoothness.provenance.json", ArtTextureRepack.OrmToMetallicSmoothnessAo, ArtTextureRepack.OrmAlgorithm);   // AP-022 FP arms v2
-            ArtTextureRepack.BuildDerived(ZombieTextures + "/T_zombie_atlas_Packed.png", ZombieDerived + "/T_zombie_atlas_MetallicSmoothness.png",
-                ZombieDerived + "/T_zombie_atlas_MetallicSmoothness.provenance.json", ArtTextureRepack.OrmToMetallicSmoothnessAo, ArtTextureRepack.OrmAlgorithm);
-            ArtTextureRepack.BuildDerived(ZombieTextures + "/T_zombie_atlas_Mask.png", ZombieDerived + "/T_zombie_atlas_DetailMask.png",
-                ZombieDerived + "/T_zombie_atlas_DetailMask.provenance.json", ArtTextureRepack.IdMaskToDetailMask, ArtTextureRepack.DetailMaskAlgorithm);
+            if (!ArtAp025Intake.HasO1Atlas)   // WP-084: the AP-025 O1 atlas ships one ORM map; the AP-007 body Packed / Mask are retired
+            {
+                ArtTextureRepack.BuildDerived(ZombieTextures + "/T_zombie_atlas_Packed.png", ZombieDerived + "/T_zombie_atlas_MetallicSmoothness.png",
+                    ZombieDerived + "/T_zombie_atlas_MetallicSmoothness.provenance.json", ArtTextureRepack.OrmToMetallicSmoothnessAo, ArtTextureRepack.OrmAlgorithm);
+                ArtTextureRepack.BuildDerived(ZombieTextures + "/T_zombie_atlas_Mask.png", ZombieDerived + "/T_zombie_atlas_DetailMask.png",
+                    ZombieDerived + "/T_zombie_atlas_DetailMask.provenance.json", ArtTextureRepack.IdMaskToDetailMask, ArtTextureRepack.DetailMaskAlgorithm);
+            }
             if (HasClothAtlas)
             {
                 ArtTextureRepack.BuildDerived(ZombieTextures + "/T_zombie_cloth_Packed.png", ZombieDerived + "/T_zombie_cloth_MetallicSmoothness.png",
@@ -187,18 +190,31 @@ namespace DD.Art.Pipeline.EditorTools
             ApplyCharacterMaps(fpArms, Load<Texture2D>(PlayerFpArmsAlbedos[0]), Load<Texture2D>(PlayerFpArmsNormal), Load<Texture2D>(PlayerFpArmsMetallicSmoothness));
             EditorUtility.SetDirty(fpArms);
 
+            // WP-084 · AP-025 O1: the replacement skin atlas (BaseColor / Normal + one ORM) and the cloth atlas both take the
+            // DD/Character/Tier Lit _ZOMBIE_MASKS path (shared materials; per-zombie indices ride renderingLayerMask).
+            bool o1 = ArtAp025Intake.HasO1Atlas;
+            Shader zombieShader = o1 ? Shader.Find(ArtTierBuilder.ShaderName) : lit;
+            if (zombieShader == null) throw new InvalidOperationException(LogPrefix + "shader missing: " + ArtTierBuilder.ShaderName);
             Texture2D atlas = Load<Texture2D>(ZombieTextures + "/T_zombie_atlas_BaseColor.png");
             Texture2D atlasNormal = Load<Texture2D>(ZombieTextures + "/T_zombie_atlas_Normal.png");
-            Texture2D atlasMask = Load<Texture2D>(ZombieDerived + "/T_zombie_atlas_MetallicSmoothness.png");
-            Texture2D detailMask = Load<Texture2D>(ZombieDerived + "/T_zombie_atlas_DetailMask.png");
+            Texture2D atlasMask = o1 ? null : Load<Texture2D>(ZombieDerived + "/T_zombie_atlas_MetallicSmoothness.png");
+            Texture2D detailMask = o1 ? null : Load<Texture2D>(ZombieDerived + "/T_zombie_atlas_DetailMask.png");
             for (int tier = 0; tier < TierSuffix.Length; tier++)
             {
                 string path = TierMaterialPath(tier);
-                Material m = LoadOrCreateMaterial(path, lit, Path.GetFileNameWithoutExtension(path));
+                Material m = LoadOrCreateMaterial(path, zombieShader, Path.GetFileNameWithoutExtension(path));
                 ArtMaterialBuilder.ApplyCommonPublic(m);
                 ApplyCharacterMaps(m, atlas, atlasNormal, atlasMask);
                 EnableSpecialEmissionSlot(m);   // WP-076: S-07 shock / gel MPB slot (black = unchanged look)
-                if (tier > 0)
+                if (o1)
+                {
+                    // the version tint of the fallback set rides the shipped tier library (M_zombie_atlas_tint*); no detail-mask tint
+                    m.SetTexture("_DetailMask", null);
+                    m.SetTexture("_DetailAlbedoMap", null);
+                    m.DisableKeyword("_DETAIL_MULX2");
+                    ArtAp025Intake.ConfigureMasks(m, true);
+                }
+                else if (tier > 0)
                 {
                     m.SetTexture("_DetailMask", detailMask);
                     m.SetFloat("_DetailAlbedoMapScale", 1f);
@@ -224,10 +240,11 @@ namespace DD.Art.Pipeline.EditorTools
                 for (int tier = 0; tier < TierSuffix.Length; tier++)
                 {
                     string path = ClothMaterialPath(tier);
-                    Material m = LoadOrCreateMaterial(path, lit, Path.GetFileNameWithoutExtension(path));
+                    Material m = LoadOrCreateMaterial(path, zombieShader, Path.GetFileNameWithoutExtension(path));
                     ArtMaterialBuilder.ApplyCommonPublic(m);
                     ApplyCharacterMaps(m, cloth, clothNormal, clothMask);
                     EnableSpecialEmissionSlot(m);   // WP-076: S-07 shock / gel MPB slot
+                    if (o1) ArtAp025Intake.ConfigureMasks(m, false);   // WP-084: dirt / blood on the cloth half of the masks
                     if (tier > 0)
                     {
                         m.SetFloat("_DetailAlbedoMapScale", 1f);
@@ -567,7 +584,7 @@ namespace DD.Art.Pipeline.EditorTools
                 var body = new ZombieModuleLibrary.Body { fit = fit };
                 for (int lod = 0; lod < ZombieModuleLibrary.LodCount; lod++)
                 {
-                    body.lods[lod] = MeshRefOf(path, "zombie_body_" + fit + "_LOD" + lod);
+                    body.lods[lod] = MeshRefOf(path, ArtAp025Intake.BodyObject(fit, lod));   // WP-084: the AP-025 bodies keep their export object names
                 }
 
                 bodies.Add(body);
@@ -611,7 +628,7 @@ namespace DD.Art.Pipeline.EditorTools
                             string meshName = cw == ZombieModuleLibrary.NoColourway
                                 ? "zombie_" + id + "_" + fit + "_LOD" + lod
                                 : "zombie_" + id + "_" + cw + "_" + fit + "_LOD" + lod;
-                            v.lods[lod] = MeshRefOf(fbx, meshName);
+                            v.lods[lod] = MeshRefOf(ArtAp025Intake.ModuleFbx(id, fit, fbx), meshName);   // WP-084: fit C from the H2 garments
                             // WP-038C · AP-007C v003: a colourway / LOD may carry fewer sub-meshes than the module's material list (T8 cw1 is
                             // cloth-only; the A1 hat LOD3 drops the rope cord). The list is atlas-first / cloth-last, so the trailing entries apply.
                             int sub = v.lods[lod].mesh.subMeshCount;
@@ -631,6 +648,27 @@ namespace DD.Art.Pipeline.EditorTools
                 modules.Add(module);
             }
 
+            // WP-084 · AP-025 anatomical faces: kind "face", no colourway, every fit binds the same four LOD meshes (one neck ring on
+            // every body), skin atlas only (eyes / teeth inside the mesh).
+            foreach (ArtAp025Intake.Face f in ArtAp025Intake.Faces())
+            {
+                var face = new ZombieModuleLibrary.Module
+                {
+                    id = f.id, kind = ArtAp025Intake.FaceKind, colourways = new[] { ZombieModuleLibrary.NoColourway },
+                    materials = new[] { ZombieModuleLibrary.MaterialAtlas }
+                };
+                var faceVariants = new List<ZombieModuleLibrary.Variant>();
+                foreach (ZombieModuleLibrary.Body b in library.bodies)
+                {
+                    var v = new ZombieModuleLibrary.Variant { colourway = ZombieModuleLibrary.NoColourway, fit = b.fit };
+                    for (int lod = 0; lod < ZombieModuleLibrary.LodCount; lod++) v.lods[lod] = MeshRefOf(f.Fbx(lod), f.Object(lod));
+                    faceVariants.Add(v);
+                }
+
+                face.variants = faceVariants.ToArray();
+                modules.Add(face);
+            }
+
             library.modules = modules.ToArray();
 
             // Tier materials + their tint sub-textures (4×4 flat colour, stored inside the library asset).
@@ -640,7 +678,7 @@ namespace DD.Art.Pipeline.EditorTools
                 var m = AssetDatabase.LoadAssetAtPath<Material>(TierMaterialPath(tier));
                 if (m == null) throw new InvalidOperationException(LogPrefix + "build materials first: " + TierMaterialPath(tier));
                 library.tierMaterials[tier] = m;
-                if (tier > 0)
+                if (tier > 0 && !ArtAp025Intake.HasO1Atlas)   // WP-084: the O1 fallback set carries no detail tint (see BuildMaterials)
                 {
                     Texture2D tint = TintTexture(library, "T_zombie_tint" + TierSuffix[tier], TierDetailTint[tier]);
                     m.SetTexture("_DetailAlbedoMap", tint);
@@ -707,7 +745,9 @@ namespace DD.Art.Pipeline.EditorTools
         {
             var model = AssetDatabase.LoadAssetAtPath<GameObject>(fbxPath);
             if (model == null) throw new FileNotFoundException(LogPrefix + "character FBX missing", fbxPath);
-            Transform t = FindDeep(model.transform, objectName);
+            // WP-084: a multi-root FBX (rig + one mesh, the AP-025 faces) gets an import root named after the file, which is also the
+            // mesh object's name: the skinned object of that name wins over the bare root.
+            Transform t = FindSkinned(model.transform, objectName) ?? FindDeep(model.transform, objectName);
             if (t == null) throw new InvalidOperationException(LogPrefix + fbxPath + " has no object '" + objectName + "'");
             var smr = t.GetComponent<SkinnedMeshRenderer>();
             if (smr == null || smr.sharedMesh == null) throw new InvalidOperationException(LogPrefix + objectName + " in " + fbxPath + " is not a skinned mesh");
@@ -755,11 +795,12 @@ namespace DD.Art.Pipeline.EditorTools
 
                 // Slots: the imported body renderers become the body slots; top/bottom/head slots are new.
                 var slots = new SkinnedMeshRenderer[ZombieModuleLibrary.LodCount * ZombieSkinnedVisual.SlotCount];
-                string[] slotNames = { "Body", "Top", "Bottom", "Head" };
+                string[] slotNames = { "Body", "Top", "Bottom", "Head", "Face" };   // WP-084: SlotFace (AP-025)
+                EnsureJaw(instance);
                 Material standard = library.MaterialFor(0);
                 for (int lod = 0; lod < ZombieModuleLibrary.LodCount; lod++)
                 {
-                    Transform bodyT = instance.transform.Find("zombie_body_A_LOD" + lod);
+                    Transform bodyT = instance.transform.Find(ArtAp025Intake.BodyObject("A", lod));
                     if (bodyT == null) throw new InvalidOperationException(LogPrefix + "zombie body A has no LOD" + lod);
                     bodyT.name = "LOD" + lod + "_Body";
                     var body = bodyT.GetComponent<SkinnedMeshRenderer>();
@@ -779,6 +820,13 @@ namespace DD.Art.Pipeline.EditorTools
                         slots[lod * ZombieSkinnedVisual.SlotCount + slot] = smr;
                     }
                 }
+
+                // WP-084 · the O1 bodies are headless: face, hair and headwear draw above the body's own bounds (top 1.55 m against
+                // 1.80 m with the AP-007 head). Body, every slot and every armour renderer take one envelope — the body ∪ every face
+                // and head module at LOD0 in the root bone's space — so nothing is culled at the screen or shadow edge and the
+                // LODGroup size (screen-relative LOD and cull) stays at the head-height R1 value.
+                Bounds envelope = HeadEnvelope(slots[0], library, FindDeep(instance.transform, "Head"));
+                for (int i = 0; i < slots.Length; i++) if (slots[i] != null) slots[i].localBounds = envelope;
 
                 // WP-017: three AP-008 armour slots per LOD (helmet / body / leg), two renderers each
                 // (main plate + kote / suneate sub-mesh), driven by ArmorVisualBinder (mesh swap per
@@ -844,6 +892,54 @@ namespace DD.Art.Pipeline.EditorTools
             {
                 UnityEngine.Object.DestroyImmediate(root);
             }
+        }
+
+        /// <summary>
+        /// WP-084 · the body's bounds grown by every face and head module's LOD0 mesh, in the body root bone's space. A module vertex
+        /// sits, at rest, where its Head bind pose puts it (the faces and the hair ride Head; Neck only carries the collar ring).
+        /// </summary>
+        private static Bounds HeadEnvelope(SkinnedMeshRenderer body, ZombieModuleLibrary library, Transform head)
+        {
+            Bounds envelope = body.localBounds;
+            Transform space = body.rootBone != null ? body.rootBone : body.transform;
+            if (library == null || library.modules == null || head == null) return envelope;
+            foreach (ZombieModuleLibrary.Module m in library.modules)
+            {
+                if (m == null || m.variants == null || (m.kind != ZombieModuleLibrary.KindFace && m.kind != "head")) continue;
+                foreach (ZombieModuleLibrary.Variant v in m.variants)
+                {
+                    ZombieModuleLibrary.MeshRef r = v.lods != null && v.lods.Length > 0 ? v.lods[0] : null;
+                    if (r == null || r.mesh == null || r.boneNames == null) continue;
+                    int headIndex = Array.IndexOf(r.boneNames, "Head");
+                    Matrix4x4[] bindposes = r.mesh.bindposes;
+                    if (headIndex < 0 || headIndex >= bindposes.Length) continue;
+                    Matrix4x4 toSpace = space.worldToLocalMatrix * head.localToWorldMatrix * bindposes[headIndex];
+                    Bounds b = r.mesh.bounds;
+                    for (int c = 0; c < 8; c++)
+                        envelope.Encapsulate(toSpace.MultiplyPoint3x4(new Vector3((c & 1) == 0 ? b.min.x : b.max.x, (c & 2) == 0 ? b.min.y : b.max.y, (c & 4) == 0 ? b.min.z : b.max.z)));
+                }
+            }
+
+            return envelope;
+        }
+
+        /// <summary>
+        /// WP-084 (C-00 05.10, decision (a)): the AP-025 v002 rig has no jaw bone (faces are bound rigidly to Head). An empty "jaw"
+        /// transform with the WP-071 rig v002 name and rest goes back under Head so older module bone lists bind and the jaw
+        /// driver keeps a target; AP-025D adds the face jaw weights.
+        /// </summary>
+        public static readonly Vector3 JawRestPosition = new Vector3(0f, 0.045f, -0.012f);
+        public static readonly Quaternion JawRestRotation = new Quaternion(-0.8468003f, 0f, 0f, 0.5319109f);
+
+        private static void EnsureJaw(GameObject instance)
+        {
+            Transform head = FindDeep(instance.transform, "Head");
+            if (head == null || head.Find("jaw") != null) return;
+            var jaw = new GameObject("jaw").transform;
+            jaw.SetParent(head, false);
+            jaw.localPosition = JawRestPosition;
+            jaw.localRotation = JawRestRotation;
+            jaw.localScale = Vector3.one;
         }
 
         // ================================================================ 7 asset set
@@ -1027,6 +1123,16 @@ namespace DD.Art.Pipeline.EditorTools
             foreach (Transform t in root.GetComponentsInChildren<Transform>(true))
             {
                 if (t.name == name) return t;
+            }
+
+            return null;
+        }
+
+        private static Transform FindSkinned(Transform root, string name)
+        {
+            foreach (SkinnedMeshRenderer smr in root.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+            {
+                if (smr.name == name) return smr.transform;
             }
 
             return null;

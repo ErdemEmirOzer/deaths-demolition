@@ -1,0 +1,527 @@
+{
+ "schema": "AP025.material-contract.v002",
+ "package": "AP-025",
+ "status": "asset-side contract v002 (AP025C); engine implementation and performance unmeasured",
+ "palette_srgb": {
+  "skin01": [
+   0.7098039215686275,
+   0.7137254901960784,
+   0.6784313725490196
+  ],
+  "skin02": [
+   0.5490196078431373,
+   0.5725490196078431,
+   0.5725490196078431
+  ],
+  "skin03": [
+   0.4117647058823529,
+   0.4,
+   0.42745098039215684
+  ],
+  "cloth": [
+   0.1843137254901961,
+   0.2235294117647059,
+   0.2823529411764706
+  ],
+  "dirt": [
+   0.47058823529411764,
+   0.44313725490196076,
+   0.3764705882352941
+  ],
+  "blood": [
+   0.4,
+   0.0784313725490196,
+   0.09411764705882353
+  ]
+ },
+ "palette_hex": {
+  "skin01": "#B5B6AD",
+  "skin02": "#8C9292",
+  "skin03": "#69666D",
+  "cloth": "#2F3948",
+  "dirt": "#787160",
+  "blood": "#661418"
+ },
+ "blood_hsv_texture_target": {
+  "hue_degrees_range_wrapped": [
+   355,
+   5
+  ],
+  "saturation": [
+   0.7,
+   0.85
+  ],
+  "value": [
+   0.25,
+   0.45
+  ]
+ },
+ "blood_pigment_hsv": [
+  0.991869918699187,
+  0.803921568627451,
+  0.4
+ ],
+ "texture_import": {
+  "BaseColor": {
+   "size": 2048,
+   "format": "BC7",
+   "srgb": true
+  },
+  "Normal": {
+   "size": 2048,
+   "format": "BC5",
+   "srgb": false,
+   "convention": "tangent OpenGL Y+"
+  },
+  "ORM": {
+   "size": 1024,
+   "format": "BC7",
+   "srgb": false,
+   "channels": {
+    "R": "AO",
+    "G": "roughness",
+    "B": "metallic"
+   }
+  },
+  "gpu_bytes_full_mips_total": 12582992
+ },
+ "masks": {
+  "size": [
+   1024,
+   1024
+  ],
+  "channels": 1,
+  "format": "BC4",
+  "srgb": false,
+  "mipmaps": true,
+  "slice_order": [
+   "Skin_00",
+   "Skin_01",
+   "Skin_02",
+   "Dirt_00",
+   "Dirt_01",
+   "Dirt_02",
+   "Blood_00",
+   "Blood_01",
+   "Blood_02"
+  ],
+  "domains": {
+   "M_Zombie_Atlas": {
+    "scale": [
+     0.5,
+     1
+    ],
+    "offset": [
+     0,
+     0
+    ]
+   },
+   "M_Zombie_Cloth": {
+    "scale": [
+     0.5,
+     1
+    ],
+    "offset": [
+     0.5,
+     0
+    ]
+   }
+  },
+  "wetness": "derived from ORM.G and blood coverage; no fourth atlas map",
+  "runtime_representation": "one 9-slice BC4 Texture2DArray, not 27 material clones",
+  "mip_domain_sampling": {
+   "max_lod": 9,
+   "mip10": "included in memory, not sampled",
+   "algorithm": "clamp UV per half-domain separately at floor/ceil mip half-texel boundaries; then blend mip results"
+  },
+  "gpu_bytes_full_mips": 6291576,
+  "groups": {
+   "skin": [
+    0,
+    1,
+    2
+   ],
+   "dirt": [
+    3,
+    4,
+    5
+   ],
+   "blood": [
+    6,
+    7,
+    8
+   ]
+  },
+  "v002": {
+   "left_half": "yeniden üretildi (yeni baş bölgeleri, H2 beden konumları); Skin=ten uygunluğu (saç/göz/diş/ağız/kan 0), Dirt 0/1/2 artan alt bacak/el/saç çizgisi kiri, Blood 0/1/2: 0 = ek kan yok (taban yaralar albedoda), 1/2 = ağız-çene-göğüs-el sıçrama/bulaşma",
+   "right_half": "v001 cloth yarısı aynen kopyalandı",
+   "stats": {
+    "Skin_00": {
+     "left_mean": 0.4125657081604004,
+     "left_max": 0.9851642847061157,
+     "right_from_v001": true
+    },
+    "Skin_01": {
+     "left_mean": 0.40901321172714233,
+     "left_max": 0.9870791435241699,
+     "right_from_v001": true
+    },
+    "Skin_02": {
+     "left_mean": 0.4095689058303833,
+     "left_max": 0.9823192358016968,
+     "right_from_v001": true
+    },
+    "Dirt_00": {
+     "left_mean": 0.012584161944687366,
+     "left_max": 0.18983674049377441,
+     "right_from_v001": true
+    },
+    "Dirt_01": {
+     "left_mean": 0.03506426513195038,
+     "left_max": 0.6512095928192139,
+     "right_from_v001": true
+    },
+    "Dirt_02": {
+     "left_mean": 0.08817233890295029,
+     "left_max": 0.75,
+     "right_from_v001": true
+    },
+    "Blood_00": {
+     "left_mean": 0.0,
+     "left_max": 0.0,
+     "right_from_v001": true
+    },
+    "Blood_01": {
+     "left_mean": 0.0016781830927357078,
+     "left_max": 0.5544477701187134,
+     "right_from_v001": true
+    },
+    "Blood_02": {
+     "left_mean": 0.026727598160505295,
+     "left_max": 0.6000000238418579,
+     "right_from_v001": true
+    }
+   }
+  }
+ },
+ "shader": {
+  "keyword": "_ZOMBIE_MASKS",
+  "material_property_block": false,
+  "shared_materials": true,
+  "order": [
+   "base_srgb_decode",
+   "skin_tint_linear",
+   "dirt_linear",
+   "blood_linear",
+   "lighting"
+  ],
+  "preserve_low_bits_hex": "0x0000ffff",
+  "reserved_high_bit_hex": "0x80000000",
+  "index_masks": [
+   31,
+   31,
+   31
+  ],
+  "index_shifts": [
+   16,
+   21,
+   26
+  ],
+  "invalid_index_policy": "clamp each index to 0..2",
+  "retain_tier_parts_and_tint": true,
+  "base_texture_replaces": "AP007 body atlas set; never resident alongside old body maps",
+  "legacy_dependencies_to_remove": [
+   "old body BaseColor/Normal/ORM",
+   "old body IDMask/TierMask",
+   "any hidden metallic/occlusion repack duplicates"
+  ]
+ },
+ "variants": [
+  {
+   "id": 0,
+   "skin": 0,
+   "dirt": 0,
+   "blood": 0,
+   "rendering_layer_high_bits_hex": "0x0"
+  },
+  {
+   "id": 1,
+   "skin": 0,
+   "dirt": 0,
+   "blood": 1,
+   "rendering_layer_high_bits_hex": "0x4000000"
+  },
+  {
+   "id": 2,
+   "skin": 0,
+   "dirt": 0,
+   "blood": 2,
+   "rendering_layer_high_bits_hex": "0x8000000"
+  },
+  {
+   "id": 3,
+   "skin": 0,
+   "dirt": 1,
+   "blood": 0,
+   "rendering_layer_high_bits_hex": "0x200000"
+  },
+  {
+   "id": 4,
+   "skin": 0,
+   "dirt": 1,
+   "blood": 1,
+   "rendering_layer_high_bits_hex": "0x4200000"
+  },
+  {
+   "id": 5,
+   "skin": 0,
+   "dirt": 1,
+   "blood": 2,
+   "rendering_layer_high_bits_hex": "0x8200000"
+  },
+  {
+   "id": 6,
+   "skin": 0,
+   "dirt": 2,
+   "blood": 0,
+   "rendering_layer_high_bits_hex": "0x400000"
+  },
+  {
+   "id": 7,
+   "skin": 0,
+   "dirt": 2,
+   "blood": 1,
+   "rendering_layer_high_bits_hex": "0x4400000"
+  },
+  {
+   "id": 8,
+   "skin": 0,
+   "dirt": 2,
+   "blood": 2,
+   "rendering_layer_high_bits_hex": "0x8400000"
+  },
+  {
+   "id": 9,
+   "skin": 1,
+   "dirt": 0,
+   "blood": 0,
+   "rendering_layer_high_bits_hex": "0x10000"
+  },
+  {
+   "id": 10,
+   "skin": 1,
+   "dirt": 0,
+   "blood": 1,
+   "rendering_layer_high_bits_hex": "0x4010000"
+  },
+  {
+   "id": 11,
+   "skin": 1,
+   "dirt": 0,
+   "blood": 2,
+   "rendering_layer_high_bits_hex": "0x8010000"
+  },
+  {
+   "id": 12,
+   "skin": 1,
+   "dirt": 1,
+   "blood": 0,
+   "rendering_layer_high_bits_hex": "0x210000"
+  },
+  {
+   "id": 13,
+   "skin": 1,
+   "dirt": 1,
+   "blood": 1,
+   "rendering_layer_high_bits_hex": "0x4210000"
+  },
+  {
+   "id": 14,
+   "skin": 1,
+   "dirt": 1,
+   "blood": 2,
+   "rendering_layer_high_bits_hex": "0x8210000"
+  },
+  {
+   "id": 15,
+   "skin": 1,
+   "dirt": 2,
+   "blood": 0,
+   "rendering_layer_high_bits_hex": "0x410000"
+  },
+  {
+   "id": 16,
+   "skin": 1,
+   "dirt": 2,
+   "blood": 1,
+   "rendering_layer_high_bits_hex": "0x4410000"
+  },
+  {
+   "id": 17,
+   "skin": 1,
+   "dirt": 2,
+   "blood": 2,
+   "rendering_layer_high_bits_hex": "0x8410000"
+  },
+  {
+   "id": 18,
+   "skin": 2,
+   "dirt": 0,
+   "blood": 0,
+   "rendering_layer_high_bits_hex": "0x20000"
+  },
+  {
+   "id": 19,
+   "skin": 2,
+   "dirt": 0,
+   "blood": 1,
+   "rendering_layer_high_bits_hex": "0x4020000"
+  },
+  {
+   "id": 20,
+   "skin": 2,
+   "dirt": 0,
+   "blood": 2,
+   "rendering_layer_high_bits_hex": "0x8020000"
+  },
+  {
+   "id": 21,
+   "skin": 2,
+   "dirt": 1,
+   "blood": 0,
+   "rendering_layer_high_bits_hex": "0x220000"
+  },
+  {
+   "id": 22,
+   "skin": 2,
+   "dirt": 1,
+   "blood": 1,
+   "rendering_layer_high_bits_hex": "0x4220000"
+  },
+  {
+   "id": 23,
+   "skin": 2,
+   "dirt": 1,
+   "blood": 2,
+   "rendering_layer_high_bits_hex": "0x8220000"
+  },
+  {
+   "id": 24,
+   "skin": 2,
+   "dirt": 2,
+   "blood": 0,
+   "rendering_layer_high_bits_hex": "0x420000"
+  },
+  {
+   "id": 25,
+   "skin": 2,
+   "dirt": 2,
+   "blood": 1,
+   "rendering_layer_high_bits_hex": "0x4420000"
+  },
+  {
+   "id": 26,
+   "skin": 2,
+   "dirt": 2,
+   "blood": 2,
+   "rendering_layer_high_bits_hex": "0x8420000"
+  }
+ ],
+ "skin_reference_srgb_hex": "#8C9292",
+ "skin_reference_srgb": [
+  0.5490196078431373,
+  0.5725490196078431,
+  0.5725490196078431
+ ],
+ "neck_chart": {
+  "uv_rect": [
+   0.635,
+   0.505,
+   0.745,
+   0.625
+  ],
+  "shared_seam_z_metres": 1.5,
+  "source": "validation/body-neck-seam.json"
+ },
+ "atlas_uv_layout": {
+  "body_skin": [
+   0.0,
+   0.0,
+   0.5,
+   1.0
+  ],
+  "neck_strip_shared_body_and_head_collar": [
+   0.635,
+   0.505,
+   0.745,
+   0.625
+  ],
+  "face_Gaunt": [
+   0.505,
+   0.635,
+   0.745,
+   0.995
+  ],
+  "face_Swollen": [
+   0.755,
+   0.635,
+   0.995,
+   0.995
+  ],
+  "face_Riven": [
+   0.505,
+   0.005,
+   0.745,
+   0.495
+  ],
+  "preserved_AP007": {
+   "straw": [
+    0.75,
+    0.0,
+    1.0,
+    0.125
+   ],
+   "hair": [
+    0.75,
+    0.125,
+    0.875,
+    0.25
+   ],
+   "sash_rope": [
+    0.875,
+    0.125,
+    1.0,
+    0.25
+   ],
+   "stain": [
+    0.5,
+    0.5,
+    0.625,
+    0.625
+   ]
+  },
+  "note": "v001 tek ortak yüz bölgesi ve göz/diş \"extras\" bölgesi kaldırıldı; v002 her baş tipi kendi bölgesinde tek UV adası (enlem-boylam ızgarası, ensede dikiş), göz/diş/dişeti aynı adada. Tüm LOD'lar aynı UV düzenini paylaşır."
+ },
+ "skin_authoring": "Baş teni O1 rampasına eşlendi (#4A4552 -> #69666D -> #8C9292 -> #B5B6AD); ortalama ten parlaklığı Tref çevresinde. Kaynak mor benek/damar kroması kısmen korunur. Göz çukuru halkası ve ağız boşluğu 100 px okunurluğu için AO + albedo ile koyulaştırılmıştır.",
+ "eyes": "Katarakt: iris/sklera ayrımı kaynaktan, doygunluk düşük, V<=0.62, emission 0, roughness 0.36.",
+ "blood_layering": "Kan pigmenti iki katman: kurumuş çekirdek (V~0.27-0.31, roughness 0.55) + ıslak kenar (V~0.39-0.43, roughness 0.18). Tüm saf pigment texelleri H355-5 / S0.70-0.85 / V0.25-0.45 bandında (validation/v004/atlas-v002.json).",
+ "blood_hsv_measured_v002": {
+  "pigment_texels": 23973,
+  "in_band": 23973,
+  "fraction": 1.0,
+  "h_range_deg": [
+   -3.4615478515625,
+   3.050847053527832
+  ],
+  "s_range": [
+   0.7236842513084412,
+   0.8266667127609253
+  ],
+  "v_range": [
+   0.27843138575553894,
+   0.4313725531101227
+  ],
+  "band": "H355-5 S0.70-0.85 V0.25-0.45 (8 bit sRGB texel, 1 px aşınmış pigment çekirdeği)"
+ },
+ "vertex_color": "Baş/beden: Color.R = ten bayrağı (1 ten, 0 saç/göz/diş/ağız/kan); kolye = 1."
+}

@@ -27,6 +27,8 @@ namespace DD.Prototype.Characters
         public const string TopMinoCape = "T7_mino_cape";
         public const string TopBareStraps = "T6_bare_straps";
         public const string BottomFundoshi = "B5_fundoshi";
+        /// <summary>WP-084 · AP-025 anatomical face (Gaunt / Swollen / Riven): one per zombie, every fit, own renderer slot (SlotFace).</summary>
+        public const string KindFace = "face";
         public const string KindAccessory = "accessory";          // WP-055B · AP-007C: 0–1 per zombie, Head-bound, worn with any head module
         public const string AccessoryStrawHat = "A1_straw_hat";   // occludes the head module; Standard only; never with a helmet / tier head part / T7
         public const string AccessoryFaceWrap = "A2_face_wrap";
@@ -224,11 +226,14 @@ namespace DD.Prototype.Characters
         /// <summary>WP-055B · AP-007C accessory id, or null / "" = none (a library without the slot never sets it — WP-016/017 keys unchanged).</summary>
         public string accessory;
         public string accessoryColourway;
+        /// <summary>WP-084 · AP-025 face module id, or null / "" = none (a library without faces never sets it — earlier keys unchanged).</summary>
+        public string face;
 
         public bool IsValid => !string.IsNullOrEmpty(fit) && !string.IsNullOrEmpty(top) && !string.IsNullOrEmpty(bottom);
         public bool HasAccessory => !string.IsNullOrEmpty(accessory);
+        public bool HasFace => !string.IsNullOrEmpty(face);
 
-        public string Key => fit + "/" + top + ":" + topColourway + "/" + bottom + ":" + bottomColourway + "/" + head + (HasAccessory ? "/" + accessory + ":" + accessoryColourway : "");
+        public string Key => fit + "/" + top + ":" + topColourway + "/" + bottom + ":" + bottomColourway + "/" + head + (HasAccessory ? "/" + accessory + ":" + accessoryColourway : "") + (HasFace ? "/" + face : "");
 
         public override string ToString() => Key;
     }
@@ -323,7 +328,25 @@ namespace DD.Prototype.Characters
                     : id == ZombieModuleLibrary.AccessoryFaceWrap ? FaceWrapWeight : 0.1f);
                 look.accessoryColourway = look.HasAccessory ? Colourway(library.FindModule(look.accessory), ref state) : null;
             }
+
+            // WP-084 · AP-025 face: last, and from its own hash of the seed rather than the draw sequence — every earlier draw is
+            // unchanged (a library without faces keeps its looks bit-for-bit) and the armour re-draw (other garments under
+            // constraints) keeps the same face; equal shares.
+            List<string> faces = library.Ids(ZombieModuleLibrary.KindFace);
+            if (faces.Count > 0) look.face = faces[(int)(FaceHash(seed) % (uint)faces.Count)];
             return look;
+        }
+
+        /// <summary>WP-084 · the face's own hash of the look seed (Wang, salted apart from ZombieAppearance.MaskCombo's).</summary>
+        public static uint FaceHash(uint seed)
+        {
+            uint h = seed ^ 0xA5F1C3E7u;
+            h = (h ^ 61u) ^ (h >> 16);
+            h *= 9u;
+            h ^= h >> 4;
+            h *= 0x27d4eb2du;
+            h ^= h >> 15;
+            return h;
         }
 
         /// <summary>WP-055B: true when the look's accessory hides the head module (A1) — the assembler skips the head mesh.</summary>

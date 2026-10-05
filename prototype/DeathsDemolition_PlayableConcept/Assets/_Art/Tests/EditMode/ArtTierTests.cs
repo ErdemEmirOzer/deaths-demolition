@@ -126,7 +126,22 @@ namespace DD.Art.Tests.EditMode
                 var tier = (EnemyTier)t;
                 Material part = lib.PartMaterial(tier, 0), body = lib.BodyMaterial(tier), armor = lib.ArmorMaterial(tier);
                 Assert.IsNotNull(part); Assert.IsNotNull(body); Assert.IsNotNull(armor);
-                foreach (Material m in new[] { part, body, armor }) { Assert.AreEqual(tierLit, m.shader, m.name); Assert.IsNotNull(m.GetTexture("_TierMask"), m.name + " _TierMask"); Assert.IsFalse(m.IsKeywordEnabled("_DETAIL_MULX2"), m.name + " çarpımsal detay kapalı"); }
+                foreach (Material m in new[] { part, body, armor })
+                {
+                    Assert.AreEqual(tierLit, m.shader, m.name);
+                    // WP-084 · AP-025 O1: the body (skin atlas) tint coverage is the sash / rope UV rectangle on the mask path — no TierMask
+                    bool o1Body = m == body && ArtAp025Intake.HasO1Atlas;
+                    if (o1Body)
+                    {
+                        Assert.IsNull(m.GetTexture("_TierMask"), m.name + " emekli gövde TierMask bağlı değil");
+                        Assert.IsTrue(m.IsKeywordEnabled("_ZOMBIE_MASKS") && m.GetTexture("_ZombieMaskArray") != null, m.name + " _ZOMBIE_MASKS + maske dizisi");
+                        Assert.AreEqual(new Vector4(0.875f, 0.125f, 1f, 0.25f), m.GetVector("_ZombieTierClothRect"), m.name + " kuşak / ip UV dikdörtgeni");
+                        Assert.AreEqual(1f, m.GetFloat("_ZombieUseOrm"), m.name + " _ZombieUseOrm");
+                        Assert.IsFalse(m.IsKeywordEnabled("_METALLICSPECGLOSSMAP") || m.IsKeywordEnabled("_OCCLUSIONMAP"), m.name + " ORM varken URP MS / AO anahtarları kapalı (S-05 §17 S2)");
+                    }
+                    else Assert.IsNotNull(m.GetTexture("_TierMask"), m.name + " _TierMask");
+                    Assert.IsFalse(m.IsKeywordEnabled("_DETAIL_MULX2"), m.name + " çarpımsal detay kapalı");
+                }
                 bool tinted = t > 0;
                 Assert.AreEqual(tinted, part.IsKeywordEnabled("_TIER_TINT"), part.name + " keyword");
                 // body: cloth only (AP-007 Mask.R = skin!); armour: lacquer only (AP-008 Mask.R)
