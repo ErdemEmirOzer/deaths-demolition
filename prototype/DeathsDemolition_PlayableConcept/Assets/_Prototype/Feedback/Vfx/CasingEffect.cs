@@ -1,3 +1,4 @@
+using DD.Prototype.Core;
 using UnityEngine;
 
 namespace DD.Prototype.Feedback.Vfx
@@ -19,11 +20,24 @@ namespace DD.Prototype.Feedback.Vfx
         private float _floorY;
         private bool _rested;
         private readonly RaycastHit[] _hits = new RaycastHit[1];
-        private int _mask;
 
         public bool IsResting => _rested;
 
         private static readonly RaycastHit[] s_predictHits = new RaycastHit[1];
+
+        /// <summary>
+        /// The floor ray's layers (Default | Environment; no Environment layer = Default only). B-03 B2 (C-00 05.10): no name lookup
+        /// per casing — PredictLanding runs for every visible casing (WeaponFoleyAudio, a62d83db); PrototypeLayers resolves the
+        /// layer once and again on play.
+        /// </summary>
+        public static int FloorMask
+        {
+            get
+            {
+                int environment = PrototypeLayers.Environment;
+                return (1 << 0) | (environment >= 0 ? 1 << environment : 0);
+            }
+        }
 
         /// <summary>
         /// WP-087 (C-00 05.10) · where a casing launched at <paramref name="from"/> with <paramref name="velocity"/> first touches down
@@ -33,7 +47,7 @@ namespace DD.Prototype.Feedback.Vfx
         /// </summary>
         public static void PredictLanding(Vector3 from, Vector3 velocity, out Vector3 touchdown, out float touchdownSeconds, out Vector3 rest, out float restSeconds)
         {
-            int mask = (1 << 0) | LayerBit("Environment");
+            int mask = FloorMask;
             float floor = from.y - FloorRayMetres;
             if (Physics.RaycastNonAlloc(from, Vector3.down, s_predictHits, FloorRayMetres, mask, QueryTriggerInteraction.Ignore) > 0) floor = s_predictHits[0].point.y;
             floor += 0.006f;
@@ -68,13 +82,6 @@ namespace DD.Prototype.Feedback.Vfx
             _renderer.receiveShadows = false;
             _renderer.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
             _renderer.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
-            _mask = (1 << 0) | LayerBit("Environment");
-        }
-
-        private static int LayerBit(string name)
-        {
-            int layer = LayerMask.NameToLayer(name);
-            return layer >= 0 ? 1 << layer : 0;
         }
 
         public void Play(Mesh mesh, Material material, Vector3 velocity, float seed, float life = LifeSeconds)
@@ -87,7 +94,7 @@ namespace DD.Prototype.Feedback.Vfx
             _spin = new Vector3(420f + seed * 300f, 90f * (seed - 0.5f), 760f * (0.5f + seed));
             _rested = false;
             _floorY = transform.position.y - FloorRayMetres;
-            if (Physics.RaycastNonAlloc(transform.position, Vector3.down, _hits, FloorRayMetres, _mask, QueryTriggerInteraction.Ignore) > 0)
+            if (Physics.RaycastNonAlloc(transform.position, Vector3.down, _hits, FloorRayMetres, FloorMask, QueryTriggerInteraction.Ignore) > 0)
             {
                 _floorY = _hits[0].point.y;
             }
