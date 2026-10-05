@@ -225,10 +225,17 @@ dd_log "userdata snapshot → $CI_GUARD_DIR (try $GTRY)"
 # Codex-audit M-10 (C-00 30.09): first unset every env variable the C# of the commit under test reads (dd_scrub_code_env,
 # dd-env.sh; allow-list HOME) — a caller's DD_* diagnostic variable must not change a CI result. git grep fails → 3.
 dd_scrub_code_env "$CI_DIR" || exit 3
-"$CI_DIR/tools/test.sh" editmode --out "$OUT/editmode" --timeout-min "$ETMIN" > "$OUT/editmode.out" 2>&1 & CI_CHILD=$!; wait $CI_CHILD; EX=$?; CI_CHILD=""
+# C-00 05.10: the core EditMode + PlayMode runs exclude [Category("Diagnostics")] — a class regex counts as an explicit
+# selection in Unity, so an [Explicit] diagnostics test inside a selected class ran anyway (285b7fe8: a 30-min kit test).
+# The `alone` steps name one test each and keep no category filter. A commit whose test.sh predates --category runs
+# without it (warned; the old behaviour).
+CI_CATEGORY='!^Diagnostics$'; CARGS=(--category "$CI_CATEGORY")
+grep -qF -e '--category' "$CI_DIR/tools/test.sh" 2>/dev/null \
+  || { CARGS=(); dd_log "WARNING main-ci: $CI_DIR/tools/test.sh has no --category — Diagnostics tests are NOT excluded at this SHA"; }
+"$CI_DIR/tools/test.sh" editmode "${CARGS[@]}" --out "$OUT/editmode" --timeout-min "$ETMIN" > "$OUT/editmode.out" 2>&1 & CI_CHILD=$!; wait $CI_CHILD; EX=$?; CI_CHILD=""
 PX=0; AXS=""
 if [ "$SKIP_PLAY" -eq 0 ]; then
-  "$CI_DIR/tools/test.sh" playmode --filter "$CORE_FILTER" --out "$OUT/playmode" --timeout-min "$PTMIN" > "$OUT/playmode.out" 2>&1 & CI_CHILD=$!; wait $CI_CHILD; PX=$?; CI_CHILD=""
+  "$CI_DIR/tools/test.sh" playmode --filter "$CORE_FILTER" "${CARGS[@]}" --out "$OUT/playmode" --timeout-min "$PTMIN" > "$OUT/playmode.out" 2>&1 & CI_CHILD=$!; wait $CI_CHILD; PX=$?; CI_CHILD=""
   # M-11: each `alone` test in its own Unity session (a fresh session is what an allocation test's frame counters need)
   for step in "${(@f)ALONE_STEPS}"; do
     [ -n "$step" ] || continue

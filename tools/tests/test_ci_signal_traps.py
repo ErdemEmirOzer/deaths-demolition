@@ -47,12 +47,12 @@ fi
 """
 # FAKE_MODE: sleep (dies on TERM) · ignore (ignores TERM) · orphan (dies, but leaves a grandchild that ignores TERM) · pass
 #            · stray (passes, but leaves a detached "Unity" with -projectPath on the CI checkout — not in main-ci's tree)
-# M-11: every call appends "<mode>\t<out>\t<filter>" to test-calls.txt; an alone step (out dir playmode-alone-*) writes the
+# M-11: every call appends "<mode>\t<out>\t<filter>\t<category>" to test-calls.txt; an alone step (out dir playmode-alone-*) writes the
 # alloc test's full name with FAKE_ALONE_RESULT (default Passed).
 FAKE_TEST_SH = """#!/bin/zsh
-mode=$1; shift; out=""; filter=""
-while [ $# -gt 0 ]; do [ "$1" = --out ] && out=$2; [ "$1" = --filter ] && filter=$2; shift; done
-print -r -- "$mode	$out	$filter" >> "{log}/test-calls.txt"
+mode=$1; shift; out=""; filter=""; category=""
+while [ $# -gt 0 ]; do [ "$1" = --out ] && out=$2; [ "$1" = --filter ] && filter=$2; [ "$1" = --category ] && category=$2; shift; done
+print -r -- "$mode	$out	$filter	$category" >> "{log}/test-calls.txt"
 echo $$ > "{log}/child-$mode.pid"; env > "{log}/env-$mode.txt"
 case "$FAKE_MODE" in
   pass|stray) mkdir -p "$out"
@@ -71,8 +71,12 @@ case "$FAKE_MODE" in
   *) exec sleep 60 ;;
 esac
 """
+# a commit whose test.sh predates --category (C-00 05.10): the same fake without the option
+OLD_FAKE_TEST_SH = FAKE_TEST_SH.replace(' [ "$1" = --category ] && category=$2;', '')
+assert "--category" not in OLD_FAKE_TEST_SH
 # FAKE_UNITY_MODE: pass (compiles) · sleep (dies on TERM) · ignore (ignores TERM)
 FAKE_UNITY = """#!/bin/zsh
+print -r -- "$*" >> "{log}/unity-argv.txt"
 log=""; while [ $# -gt 0 ]; do [ "$1" = -logFile ] && log=$2; shift; done
 echo "CompileScripts: fake" > "$log"; echo $$ > "{log}/unity.pid"
 case "$FAKE_UNITY_MODE" in pass) exit 0 ;; ignore) trap '' TERM; exec sleep 60 ;; *) exec sleep 60 ;; esac
@@ -168,7 +172,7 @@ class CiFixture(unittest.TestCase):
             for name in ("test.sh", "dd-env.sh", "test-durations.py"):
                 shutil.copy2(TOOLS / name, tools / name)
         else:
-            write_exec(tools / "test.sh", FAKE_TEST_SH.format(log=self.log))
+            write_exec(tools / "test.sh", getattr(self, "fake_test_sh", FAKE_TEST_SH).format(log=self.log))
         self.git("add", ".")
         self.git("commit", "-q", "-m", "fixture")
         self.sha = self.git("rev-parse", "HEAD")
@@ -656,6 +660,47 @@ class CiIsolatedStepTests(CiFixture):
         self.assertEqual(self.lines("guard-calls.txt"), ["snapshot", "restore", "restore-done"])   # one window for all steps
         self.assertEqual([l.split()[:2] for l in self.lines("slot-calls.txt")], [["acquire", "player"], ["release", "player"]])
         self.assertEqual(self.leases(), [])
+
+    # --- C-00 05.10: the core runs exclude [Category("Diagnostics")]; alone steps and full-name selections do not --------
+    def test_Diag_CekirdekEmPmDiagnosticsDislar_AloneDislamaz(self):
+        rc, out, err = self.finish(self.main_ci("pass", playmode=True))
+        self.assertEqual(rc, 0, out + err)
+        calls = self.calls()
+        self.assertEqual([c[0] for c in calls], ["editmode", "playmode", "playmode"], calls)
+        self.assertEqual(["!^Diagnostics$", "!^Diagnostics$", ""], [c[3] for c in calls])
+        self.assertNotIn("Diagnostics tests are NOT excluded", out + err)
+
+    def test_Diag_EskiTestShKategoriBilmez_UyariVeEskiDavranis(self):
+        self.fake_test_sh = OLD_FAKE_TEST_SH
+        rc, out, err = self.finish(self.main_ci("pass", playmode=True))
+        self.assertEqual(rc, 0, out + err)
+        self.assertEqual(["", "", ""], [c[3] for c in self.calls()])
+        self.assertIn("has no --category — Diagnostics tests are NOT excluded at this SHA", out + err)
+
+    def unity_argv(self):
+        return self.lines("unity-argv.txt")
+
+    def test_Diag_GercekTestSh_UnityyeTestCategoryGider_AloneGitmez(self):
+        rc, out, err = self.finish(self.main_ci(real_test_sh=True, playmode=True, FAKE_UNITY_MODE="pass"))
+        runs = {l.split(" -testResults ")[1].split()[0]: l for l in self.unity_argv() if "-runTests" in l}
+        base = str(self.out / self.sha)
+        self.assertIn("-testCategory !^Diagnostics$", runs[base + "/editmode/editmode.xml"])
+        self.assertIn("-testCategory !^Diagnostics$", runs[base + "/playmode/playmode.xml"])
+        alone = [l for r, l in runs.items() if "/playmode-alone-" in r]
+        self.assertEqual(1, len(alone), runs)
+        self.assertNotIn("-testCategory", alone[0])
+
+    def test_Diag_GercekTestSh_TamAdSecimKategorisiz_S10Etkilenmez(self):
+        self.make_repo(real_test_sh=True)
+        full = "^DD.Prototype.Tests.PlayMode.UiTextInventoryTests.U1_GorunurHarf_AnaMenuPanellerVeSecim_EnTr$"
+        r = subprocess.run(["zsh", str(self.ci / "tools/test.sh"), "playmode", "--filter", full, "--out", str(self.root / "s10")],
+                           env=self.env(FAKE_UNITY_MODE="pass"), capture_output=True, text=True, timeout=120)
+        line = next(l for l in self.unity_argv() if "-runTests" in l)
+        self.assertIn("-testFilter " + full, line, r.stdout + r.stderr)
+        self.assertNotIn("-testCategory", line)
+        r = subprocess.run(["zsh", str(self.ci / "tools/test.sh"), "editmode", "--category"], env=self.env(), capture_output=True,
+                           text=True, timeout=60)
+        self.assertEqual(64, r.returncode, r.stderr)
 
     def test_M11_AloneKirmizi_CekirdekGibiSayilir_Cikis1YeniKirmizi(self):
         rc, out, err = self.finish(self.main_ci("pass", playmode=True, FAKE_ALONE_RESULT="Failed"))
