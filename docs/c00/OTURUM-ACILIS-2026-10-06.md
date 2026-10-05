@@ -27,13 +27,16 @@ Birinci hesabın S-01…S-10 oturumları 05.10 akşamı kullanım limitiyle durd
     - Teslim notunda `KADRO:` satırı: kullanılan uzmanlar + verdict'ler + kanıt yolları.
     - Takımlar (lider önce): S-06 character-animator + animation-specialist, unity-specialist, csharp-developer, game-test-engineer · S-03 unity-specialist, csharp-developer, game-developer, 3d-modeller, game-test-engineer, git-repository-safety · S-08 sound-designer + sound-engineer, unity-specialist, csharp-developer, video-editor, game-test-engineer · S-09 ui-ux-designer, interaction-designer, art-director, video-editor, design-systems-engineer, graphic-designer, ux-writer, unity-specialist, game-test-engineer · S-02 game-developer, character-animator, unity-specialist, csharp-developer, game-test-engineer · S-01 git-repository-safety, backend-architect, test-engineer, technical-writer · S-05 unity-specialist, art-director, game-test-engineer, git-repository-safety · S-10 test-engineer + game-test-engineer, gt, product-analyst, technical-writer · S-07 art-director, unity-specialist, animation-specialist, game-test-engineer.
 
+15. **Kural kitabı (bağlayıcı):** `docs/c00/SABIT-KURALLAR-R2-2026-10-06.md` — bütün sabit kurallar ve geliştirme prensipleri, kaynaklı; §13 C-00 kararları. Her oturum bir kez baştan sona okur, aktif-ajanlar dosyasına "SABİT-KURALLAR okundu" satırı yazar ve uygular. Bu belge ile kitap çelişirse kitap geçerlidir.
+16. **Onay yok (kullanıcı 06.10):** kullanıcıya hiçbir aşamada onay, soru ya da seçim gönderilmez; oturum otomatik izin modunda çalışır. İzin sistemi bir işlemi reddederse dur, başka yoldan deneme, C-00'a yaz.
+
 **Açık oturumlar (06.10):** S-06 `local_e1d35ef1-6503-4d55-859f-2e29e77db585` · S-03 `local_2c903418-0f21-45b4-b830-73d70ef3e99b` · S-08 `local_e537c1da-f2b4-4bba-b9ed-a6ddef8ab516` · S-09 `local_f4449cd1-8d08-4b20-a209-593c114c125d` · S-02 `local_5217854c-6331-4b35-b84d-8cdd0649cb8f` · S-01 `local_7792db0e-bdd5-418b-9377-688144da35b6` · S-05 `local_990c8985-537d-4a39-9849-6564abb3d77e`.
 
 ## 1. Açılış sırası ve mesajlar
 
-Her oturum: Claude Desktop → yeni oturum → klasör = aşağıdaki worktree (uygulamanın "yeni worktree" seçeneği kapalı; klasörün kendisi) → model Opus 5.5 → başlık → ilk mesaj.
+Her oturum: Claude Desktop → yeni oturum → **klasör = ana depo** (`/Users/Erdem/Documents/Deaths Demolition`; KADRO ajanları için, §0.13) → model Opus 5.5 → otomatik izin modu → başlık → ilk mesaj. Aşağıdaki "Worktree" sütunu oturumun **çalışma** alanıdır, oturum klasörü değildir (C-00 06.10 düzeltmesi; kural kitabı Ç12).
 
-| Sıra | Başlık | Klasör | Ne zaman |
+| Sıra | Başlık | Worktree (çalışma alanı) | Ne zaman |
 |---|---|---|---|
 | 1 | `S-06 — animasyon (R2)` | `K/wp-083/worktree/deaths-demolition` | şimdi |
 | 2 | `S-03 — düşman, AI, zombi (R2)` | `K/wp-088/worktree-s03/deaths-demolition` | şimdi |
