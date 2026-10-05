@@ -231,6 +231,12 @@ namespace DD.Prototype.Enemies
             }
 
             PooledBehaviour instance = s_pool.Get(position, rotation);
+            if (instance == null && s_pool.PurgeDestroyed() > 0)
+            {
+                // WP-088: a body destroyed behind the pool's back still held a checked-out slot; the purge gives it back.
+                instance = s_pool.Get(position, rotation);
+            }
+
             if (instance == null)
             {
                 return null;
@@ -268,6 +274,7 @@ namespace DD.Prototype.Enemies
         /// </summary>
         public static int ClearAll()
         {
+            ZombieEnemy.PruneDestroyedFromRoster();   // WP-088: a Unity-null entry can never be removed through Remove()
             IReadOnlyList<ZombieEnemy> live = ZombieEnemy.Live;
             int count = live.Count;
 

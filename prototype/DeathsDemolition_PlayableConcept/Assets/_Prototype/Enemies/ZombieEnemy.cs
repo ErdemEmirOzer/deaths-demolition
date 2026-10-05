@@ -327,6 +327,22 @@ namespace DD.Prototype.Enemies
         /// <summary>Every checked-out zombie, whoever spawned it. Includes corpses mid-reaction.</summary>
         public static IReadOnlyList<ZombieEnemy> Live => s_live;
 
+        /// <summary>WP-088: drop Unity-null roster entries (a destroyed body whose OnDestroy did not run); returns how many.</summary>
+        internal static int PruneDestroyedFromRoster()
+        {
+            int removed = 0;
+            for (int i = s_live.Count - 1; i >= 0; i--)
+            {
+                if (s_live[i] == null)
+                {
+                    s_live.RemoveAt(i);
+                    removed++;
+                }
+            }
+
+            return removed;
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetLiveRoster()
         {
@@ -375,6 +391,16 @@ namespace DD.Prototype.Enemies
         {
             UnregisterHitboxes();
             UnbindClipEvents();   // WP-076
+
+            // WP-088: a body destroyed while checked out (a Destroy outside the pool's release) never runs OnDespawned. It
+            // leaves the roster, the corpse list, the crowd and the damage targets here, or the dead entry counts against the
+            // ceiling (SpawnedCount) and every "clear all" for the rest of the session.
+            if (s_live.Remove(this))
+            {
+                UnregisterCorpse();
+                UnregisterCrowdMembership();
+                DamageTargetRegistry.Unregister(transform);
+            }
         }
 
         /// <summary>
