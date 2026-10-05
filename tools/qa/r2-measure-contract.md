@@ -74,6 +74,18 @@ tail peak ≥ −50 dBFS or it fails). Tail take: 500–1000 Hz band, Schroeder 
 median of four cues. Thresholds = the spec RT60 ±20 %: open 0.56–1.08 s, corridor 0.88–1.68 s, hall 1.28–2.28 s, and open <
 corridor < hall for every weapon (`orderViolations` 0). Report: `openEdc30MsMin`, `corridorEdc30MsMin`, `hallEdc30MsMin`.
 
+## Z1 (DEC-077 readability, C-00 06.10)
+
+`ArmorTests.Okunabilirlik_DEC077_Zirh_DeltaV_AltKumas_KomsuBant_ZeminHalkasi_Siluet` (same pose, 12 armoured figures,
+armour on/off frames) writes `r2-Z1.json`:
+- `silhouetteChange` = (grown + lost silhouette pixels) / unarmoured silhouette pixels; gate ≥ 0.30;
+- `deltaVBandMean` / `deltaVBandMin` = |ΔV| between armour pixels and the 6 px unarmoured neighbour band of the same
+  figure (DEC-077's "brightness band"); gate mean ≥ 0.12, min ≥ 0.08;
+- report only: `deltaVUnderMean`, `deltaVUnderMin` (armour vs the cloth under the same pixels), `deltaVGround` (armour
+  mean V vs the ground ring).
+The test asserts the DEC-077 thresholds as well as writing them (before 06.10 it only reported the band and asserted a
+silhouette change > 0.02). Source in the record: the armour mask is non-empty (> 500 px per figure, ≥ 6 figures).
+
 ## Human gates
 
 H5, L6, Z5, S6, U4: one review file `<E>/r2/reviews/<gate id>.json`:

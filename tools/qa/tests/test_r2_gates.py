@@ -39,7 +39,9 @@ class ContractTests(unittest.TestCase):
                   # C-00 05.10: Z3b from the fixed-mix R1 (16 / 567 / 88): +8, x1.45, +10 — the old 14/450/88 came from the
                   # director-mixed R1 6/310/78
                   ("Z3b", "zombieDraws"): 822, ("Z3b", "frameSetPass"): 98, ("Z3b", "sharedTextureGpuMB"): 96,
-                  ("Z3b", "uniqueTexturesPerZombie"): 0}
+                  ("Z3b", "uniqueTexturesPerZombie"): 0,
+                  # DEC-077 (user 16.09), asserted from C-00 06.10
+                  ("Z1", "silhouetteChange"): 0.30, ("Z1", "deltaVBandMean"): 0.12, ("Z1", "deltaVBandMin"): 0.08}
         for (gid, key), limit in pinned.items():
             check = next(c for c in gate(gid)["checks"] if c["key"] == key)
             self.assertEqual(limit, check["limit"], (gid, key))
@@ -183,11 +185,22 @@ class EvaluateTests(unittest.TestCase):
         self.assertEqual("FAIL", r2.evaluate_gate(gate("L1"), FINAL, measure=measure("L2", avg=0.01, p95=0.02))["status"])
 
     def test_required_test_must_have_passed(self):
-        g = gate("Z1")
+        # a gate judged on its required test alone (Z1 was one until C-00 06.10 gave it the DEC-077 checks)
+        g = {"id": "ZT", "area": "zombie", "kind": "gate", "owner": "S-03", "title": "tests-only", "tests": list(gate("Z1")["tests"])}
         self.assertEqual("BLOCKED", r2.evaluate_gate(g, FINAL, cases=None)["status"])
         self.assertEqual("BLOCKED", r2.evaluate_gate(g, FINAL, cases={})["status"])
         self.assertEqual("FAIL", r2.evaluate_gate(g, FINAL, cases={g["tests"][0]: "Failed"})["status"])
         self.assertEqual("PASS", r2.evaluate_gate(g, FINAL, cases={g["tests"][0]: "Passed"})["status"])
+
+    def test_z1_needs_the_dec077_numbers_and_the_passed_test(self):
+        # C-00 06.10: DEC-077 (user 16.09) is asserted, not only reported; S-03 measured 0.265 / 0.019 / 0.000 on v002
+        g = gate("Z1")
+        ok = {g["tests"][0]: "Passed"}
+        self.assertEqual("BLOCKED", r2.evaluate_gate(g, FINAL, cases=ok)["status"])
+        low = measure("Z1", silhouetteChange=0.265, deltaVBandMean=0.019, deltaVBandMin=0.0)
+        self.assertEqual("FAIL", r2.evaluate_gate(g, FINAL, measure=low, cases=ok)["status"])
+        good = measure("Z1", silhouetteChange=0.31, deltaVBandMean=0.13, deltaVBandMin=0.09)
+        self.assertEqual("PASS", r2.evaluate_gate(g, FINAL, measure=good, cases=ok)["status"])
 
     def test_human_review_verdicts(self):
         g = gate("H5")
