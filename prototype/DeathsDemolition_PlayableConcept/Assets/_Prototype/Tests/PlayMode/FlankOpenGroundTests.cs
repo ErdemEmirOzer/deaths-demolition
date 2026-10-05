@@ -21,10 +21,14 @@ namespace DD.Prototype.Tests.PlayMode
     /// CrowdFeelSettings.FlankStraightRadius, the share with FlankActive true is sampled.
     /// REPORTED ([DD-OBS] wp076.flank): bodies seen, flank-rolled bodies (observed vs expected from FlankShareOf per tier),
     /// far flank-rolled samples and the active share, the plaza's distance to the nearest NavMesh edge.
-    /// ASSERTED: overall active share ≥ <see cref="ProvisionalMinActiveShare"/> — PROVISIONAL, unchanged until the measurement is
-    /// reviewed (C-00 30.09, H5). REPORTED ([DD-OBS] wp076.flank.m25): the overall share decomposed — the share of far flank samples
-    /// whose line to the player is open (ZombieEnemy.FlankLineOpen, the WP-061M rule, which this fix does not change) and, among
-    /// those, the share the new edge check accepts (the part M-25 controls). First run 30.09: overall 0.44 (77/177).
+    /// ASSERTED (WP-088, H5 from the measurement): among far flank samples whose line to the player is open
+    /// (ZombieEnemy.FlankLineOpen, the WP-061M rule), the share the M-25 edge check accepts ≥ <see cref="MinAcceptedGivenOpen"/>,
+    /// over ≥ <see cref="MinOpenSamples"/> open-line samples. REPORTED ([DD-OBS] wp076.flank / .m25), not asserted: the overall
+    /// active share and the open-line share.
+    /// Root cause of the change: the provisional overall-share gate (0.50) mixed the world's geometry (how often the line to the
+    /// player is open on the plaza: 0.28–0.57) with M-25's decision. Measured: overall 0.23–0.54, accepted-given-open 0.79–1.00
+    /// (30.09 0.96, A1 01.10 1.00, WP-088 05.10 standalone 0.84 / 0.88 / 0.79 / 0.78; below 1 when a line opens between two 0.5 s
+    /// flank decisions). Evidence K/wp-088/evidence/s03/fl1–fl3, m1.
     /// </summary>
     [TestFixture]
     [Category("WP076")]
@@ -32,8 +36,9 @@ namespace DD.Prototype.Tests.PlayMode
     {
         private const int Target = 12;
         private const float StationSeconds = 30f, SampleSeconds = 0.5f;   // B9: room for refills (was 20)
-        /// <summary>PROVISIONAL (WP-076 B9 M-25): pending the wp076.flank measurement.</summary>
-        private const float ProvisionalMinActiveShare = 0.5f;
+        /// <summary>WP-088 (H5): the lowest measured accepted-given-open share (0.78) less a margin for the 0.5 s decision cache.</summary>
+        private const float MinAcceptedGivenOpen = 0.70f;
+        private const int MinOpenSamples = 10;
         private const int MinFlankRolled = 3;
         private const float RefillCheckSeconds = 6f;
         /// <summary>Refills only in the first 12 s of the 30 s station, so at least 18 s of far-flank sampling follow the last one.</summary>
@@ -141,17 +146,16 @@ namespace DD.Prototype.Tests.PlayMode
             float rolledShare = bodies > 0 ? (float)rolled / bodies : 0f;
             float expectedShare = bodies > 0 ? expectedRolled / bodies : 0f;
             Debug.Log(string.Format(System.Globalization.CultureInfo.InvariantCulture,
-                "[DD-OBS] wp076.flank at=({0:0.0},{1:0.0},{2:0.0}) edge={3:0.00}m bodies={4} flankRolled={5} rolledShare={6:0.00} expectedRolledShare={7:0.00} farSamples={8} activeSamples={9} activeShare={10:0.00} projectMax={11:0.00}m straight={12:0.0}m (threshold {13:0.00} PROVISIONAL)",
+                "[DD-OBS] wp076.flank at=({0:0.0},{1:0.0},{2:0.0}) edge={3:0.00}m bodies={4} flankRolled={5} rolledShare={6:0.00} expectedRolledShare={7:0.00} farSamples={8} activeSamples={9} activeShare={10:0.00} projectMax={11:0.00}m straight={12:0.0}m (observed; gate acceptedGivenOpen ≥ {13:0.00})",
                 plaza.position.x, plaza.position.y, plaza.position.z, edgeMetres, bodies, rolled, rolledShare, expectedShare,
-                farSamples, activeSamples, activeShare, feel.FlankProjectMaxMetres, straight, ProvisionalMinActiveShare));
+                farSamples, activeSamples, activeShare, feel.FlankProjectMaxMetres, straight, MinAcceptedGivenOpen));
 
             Assert.Greater(bodies, 0, "meydanda hiç gövde doğmadı");
             Assert.GreaterOrEqual(rolled, MinFlankRolled, "yeterli kanat atan gövde yok (tohum dizisi; " + rolled + "/" + bodies + ")");
             Assert.GreaterOrEqual(farSamples, MinFarSamples, "ölçüm için yeterli uzak kanat örneği yok (rolled=" + rolled + ")");
-            // C-00 30.09 (H5): the provisional threshold stays until the measurement is reviewed; the m25 line above decomposes it
-            // (WP-061M line rule vs the M-25 edge check) for that review.
-            Assert.GreaterOrEqual(activeShare, ProvisionalMinActiveShare,
-                "açık alanda kanat payı düşük: " + activeSamples + "/" + farSamples + " (geçici eşik, ölçüm bekleniyor)");
+            Assert.GreaterOrEqual(lineOpenSamples, MinOpenSamples, "ölçüm için yeterli açık hat örneği yok (" + lineOpenSamples + "/" + farSamples + ")");
+            Assert.GreaterOrEqual(acceptedShare, MinAcceptedGivenOpen,
+                "açık hatta M-25 kanat kabulü düşük: " + acceptedSamples + "/" + lineOpenSamples);
         }
 
         private static IEnumerator Bekle(Func<bool> kosul, float saniye, string aciklama)
