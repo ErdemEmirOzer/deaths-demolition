@@ -98,34 +98,38 @@ Her ağır Blender koşusu: `cd "/Users/Erdem/Documents/Deaths Demolition" && to
 
 ## 5. Bulut zinciri: entegrasyon sırası (bulutta alınamadı; yerelde `integrate.sh`)
 
-Her satır için önce dry-run `tools/integrate.sh <sha> --tag <etiket> --no-post --allow-paths docs/`, sonra aynı komut `--apply` ile. `tools/` yalnız olan satırlarda (2, 18) `--allow-paths` gerekmez. Sıra zorunlu: `C00B-TESLIM.md` satırları birbirine dayanır. Etiketlerin hepsi origin'de boş (05.10 ~20:30 kontrol edildi).
+> **ALINDI (yerel C-00, 06.10):** 24/24 satır aşağıdaki sırayla `integrate.sh --apply` ile çakışmasız girdi; main `97a4bd56` (etiket `wp-089-c00b-b05-log-int`), origin'e push edildi. `git cherry` "+" = 0 · lint testleri 44/44 OK · `r2_gates_lint` ERROR 0 / WARN 14 / INFO 14 · `compile-check 97a4bd56` PASS (errorsCS 0; `03c3b06b` ve `a62d83db` ilk kez derlendi). PR 1–5 yorumlanıp kapatıldı. Tablo düzeltildi: eski tabloda 17. satır (`11c532fc`) eksikti ve `tools/` satırları "(2, 18)" yazıyordu; doğrusu (2, 20).
 
-| # | SHA | Etiket | İçerik |
-|---|---|---|---|
-| 1 | `4edbba5b` | `wp-089-c00b-b02-start-int` | B-02 başla satırı |
-| 2 | `b7737f04` | `wp-091-r2-gates-lint-int` | `tools/qa/r2_gates_lint.py` + 23 test |
-| 3 | `a7cd3bd3` | `wp-089-c00b-b02-log-int` | B-02 bitir satırı |
-| 4 | `ec546e12` | `wp-089-c00b-b01-start-int` | B-01 başla |
-| 5 | `88da3107` | `wp-089-r2-system-docs-int` | ARCHITECTURE + SYSTEMS-INDEX R2 |
-| 6 | `c5e0d905` | `wp-089-c00b-b01-log-int` | B-01 bitir |
-| 7 | `ba448fe3` | `wp-089-c00b-b03-start-int` | B-03 başla |
-| 8 | `1dff988b` | `wp-091-gc-review-int` | GC incelemesi + LOCAL-QUEUE satırı |
-| 9 | `a593c8cf` | `wp-089-c00b-b03-log-int` | B-03 bitir |
-| 10 | `fc305c2e` | `wp-089-c00b-b04-start-int` | B-04 başla |
-| 11 | `e289b1a4` | `wp-091-r2-release-notes-draft-int` | yayın notu taslağı |
-| 12 | `01f4b163` | `wp-089-c00b-b04-log-int` | B-04 bitir |
-| 13 | `f8b898fa` | `wp-089-brifing-tamam-int` | brifing §0/§14 ilk ek (dal `claude/sharp-cray-jsvo9s`) |
-| 14 | `825e2d26` | `wp-089-brifing-bulut-int` | bulut düzeni eki |
-| 15 | `bd4ceac8` | `wp-089-brifing-bulut2-int` | C-00B teslimlerinin kontrolü, bulut devralma promptu |
-| 16 | `bede1547` | `wp-089-brifing-bulut3-int` | brifing §0 yazım düzeltmesi (dalın ucu) |
-| 17 | `1c147550` | `wp-089-c00b-b05-start-int` | B-05 görev ve başla satırı (dal `c00b/B-05-r2-docs-sync`) |
-| 18 | `5b2b50d1` | `wp-089-r2-docs-sync-int` | B-05 belge eşitlemesi |
-| 19 | `45be8acc` | `wp-091-r2-contract-path-int` | r2 sözleşmesi `R2Olcum.cs` yolu (lint ERROR 0) |
-| 20 | `4c233054` | `wp-089-bekleyen-18-19-int` | BEKLEYEN §18–§19 |
-| 21 | `3c648a24` | `wp-089-bekleyen-18-ref-int` | §18 bölüm atfı düzeltmesi |
-| 22 | bu belgenin commit'i ve B-05 bitir satırı | `wp-089-yerel-donus-plani-int`, `wp-089-c00b-b05-log-int` | SHA'lar `C00B-TESLIM.md` ve PR 5'te |
+Her satır için önce dry-run `tools/integrate.sh <sha> --tag <etiket> --no-post --allow-paths docs/`, sonra aynı komut `--apply` ile. `tools/` yalnız olan satırlarda (2, 20) `--allow-paths` gerekmez. Sıra zorunlu: `C00B-TESLIM.md` satırları birbirine dayanır.
 
-**Not.** 13–16, `claude/sharp-cray-jsvo9s` dalının yalnız bu dört commit'idir. Daldaki kök belgeler (`C-00-*.md`, `DISK-*`, `PROJE-*`) kullanıcının arşividir; main'e alınmaz.
+| # | SHA | main SHA | Etiket | İçerik |
+|---|---|---|---|---|
+| 1 | `4edbba5b` | `27046e56` | `wp-089-c00b-b02-start-int` | B-02 başla satırı |
+| 2 | `b7737f04` | `8f4af6fd` | `wp-091-r2-gates-lint-int` | `tools/qa/r2_gates_lint.py` + 23 test (tools) |
+| 3 | `a7cd3bd3` | `bc0b4501` | `wp-089-c00b-b02-log-int` | B-02 bitir satırı |
+| 4 | `ec546e12` | `e1c6ed5c` | `wp-089-c00b-b01-start-int` | B-01 başla |
+| 5 | `88da3107` | `68368cd5` | `wp-089-r2-system-docs-int` | ARCHITECTURE + SYSTEMS-INDEX R2 |
+| 6 | `c5e0d905` | `8210b17c` | `wp-089-c00b-b01-log-int` | B-01 bitir |
+| 7 | `ba448fe3` | `9ca96201` | `wp-089-c00b-b03-start-int` | B-03 başla |
+| 8 | `1dff988b` | `b574cc57` | `wp-091-gc-review-int` | GC incelemesi + LOCAL-QUEUE satırı |
+| 9 | `a593c8cf` | `9cfd4cce` | `wp-089-c00b-b03-log-int` | B-03 bitir |
+| 10 | `fc305c2e` | `32e8d3bc` | `wp-089-c00b-b04-start-int` | B-04 başla |
+| 11 | `e289b1a4` | `5b662abb` | `wp-091-r2-release-notes-draft-int` | yayın notu taslağı |
+| 12 | `01f4b163` | `a681fe23` | `wp-089-c00b-b04-log-int` | B-04 bitir |
+| 13 | `f8b898fa` | `dec1d15e` | `wp-089-brifing-tamam-int` | brifing §0/§14 ilk ek (dal `claude/sharp-cray-jsvo9s`) |
+| 14 | `825e2d26` | `382a699e` | `wp-089-brifing-bulut-int` | bulut düzeni eki |
+| 15 | `bd4ceac8` | `fca2febf` | `wp-089-brifing-bulut2-int` | C-00B teslimlerinin kontrolü, bulut devralma promptu |
+| 16 | `bede1547` | `0e8e2fb1` | `wp-089-brifing-bulut3-int` | brifing §0 yazım düzeltmesi |
+| 17 | `11c532fc` | `991429a2` | `wp-089-brifing-bulut4-int` | yerel başlangıç promptu zinciri bu plandan alır (dalın ucu) |
+| 18 | `1c147550` | `69c36cb3` | `wp-089-c00b-b05-start-int` | B-05 görev ve başla satırı (dal `c00b/B-05-r2-docs-sync`) |
+| 19 | `5b2b50d1` | `66f0cd9f` | `wp-089-r2-docs-sync-int` | B-05 belge eşitlemesi |
+| 20 | `45be8acc` | `67043c84` | `wp-091-r2-contract-path-int` | r2 sözleşmesi `R2Olcum.cs` yolu, lint ERROR 0 (tools) |
+| 21 | `4c233054` | `d886d45a` | `wp-089-bekleyen-18-19-int` | BEKLEYEN §18–§19 |
+| 22 | `3c648a24` | `598cdb41` | `wp-089-bekleyen-18-ref-int` | §18 bölüm atfı düzeltmesi |
+| 23 | `0d9627a1` | `21f167d5` | `wp-089-yerel-donus-plani-int` | bu belge |
+| 24 | `7a2bea57` | `97a4bd56` | `wp-089-c00b-b05-log-int` | B-05 bitir satırı |
+
+**Not.** 13–17, `claude/sharp-cray-jsvo9s` dalının yalnız bu beş `docs/c00` commit'idir. Daldaki kök belgeler (`C-00-*.md`, `DISK-*`, `PROJE-*`) kullanıcının arşividir; main'e alınmaz.
 
 **Doğrula:**
 ```bash
@@ -135,7 +139,7 @@ python3 -m unittest tools/qa/tests/test_r2_gates_lint.py tools/qa/tests/test_r2_
 python3 tools/qa/r2_gates_lint.py                      # ERROR 0
 ```
 
-## 6. Açık PR'lar (bulut, 05.10)
+## 6. PR'lar (bulut, 05.10) — 06.10'da hepsi yorumlanıp kapatıldı (içerik cherry-pick ile main'de)
 
 | PR | Dal | İçerik | Taban |
 |---|---|---|---|
