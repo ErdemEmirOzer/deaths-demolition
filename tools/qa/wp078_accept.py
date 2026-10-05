@@ -67,6 +67,10 @@ PROJECT = "prototype/DeathsDemolition_PlayableConcept"
 KADRO_ROOT = dd_paths.KADRO
 KADRO_EVIDENCE = dd_paths.KPROJ / "wp-078" / "evidence"
 STAGE_ORDER = ("a6", "a0", "a1", "a2", "a3", "r2", "a5", "a4", "r2q", "a8")
+# main-ci parity (S-01 96d0bfeb, C-00 05.10): the core EditMode + PlayMode runs exclude [Category("Diagnostics")] — an
+# [Explicit] Diagnostics test picked up by a class regex (AudioSliceTests.SilahKiti_…) left sg_1 selected and turned 4
+# later S-02 tests red. `alone` steps, targeted reruns and the r2/r2q full-name sessions keep no category filter.
+CI_CATEGORY = "!^Diagnostics$"
 PLAYMODE_TIMEOUT_MIN = 90   # A1 full PlayMode watchdog (test.sh default 45 min; main-ci uses 60)
 ISOLATED_TIMEOUT_MIN = 10   # one isolated test in its own session (main-ci --alone-timeout default)
 
@@ -76,6 +80,14 @@ def _ci_isolated():
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def testsh_has_category():
+    """tools/test.sh at this checkout knows --category (S-01 96d0bfeb); main-ci makes the same check."""
+    try:
+        return "--category" in (REPO / "tools" / "test.sh").read_text(encoding="utf-8")
+    except OSError:
+        return False
 
 
 def ci_plan():
@@ -614,6 +626,9 @@ class Chain:
 
     def stage_a1(self):
         results = []
+        category = ["--category", CI_CATEGORY] if testsh_has_category() else []
+        if not category:
+            self.log("WARNING a1: tools/test.sh has no --category at this SHA — Diagnostics tests are NOT excluded (as main-ci)")
         # R2 (C-00 01.10): A1 PlayMode = main-ci parity — the core filter in one session, then every `alone` entry in its
         # own session (FINAL' dab326ab ran all 567 PlayMode tests in one session: 18 contamination reds + 26 non-core).
         # An explicit --playmode-filter (a targeted rerun) replaces the core and runs no alone steps.
@@ -628,6 +643,8 @@ class Chain:
                 argv += ["--timeout-min", str(PLAYMODE_TIMEOUT_MIN), "--filter", playmode_filter]
             elif self.filters[mode]:
                 argv += ["--filter", self.filters[mode]]
+            if not self.filters[mode]:
+                argv += category   # the core / whole suite only: a targeted rerun runs exactly what it names
             result = self.editor_unit(f"a1-{mode}", [argv], out,
                                       lambda out=out, mode=mode: [out / f"{mode}.xml", out / f"{mode}.log", out / "durations.json"],
                                       lambda mode=mode: {"testMode": mode, "filter": self.filters[mode] or None},

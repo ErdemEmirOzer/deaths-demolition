@@ -333,6 +333,29 @@ class DryRunTests(Base):
         self.assertEqual([[sys.executable, str(HERE / "library_provenance.py"), str(acc.REPO),
                            str(self.evidence.resolve() / "a0" / "library-provenance.json")]], argv)
 
+    def test_a1_core_runs_exclude_diagnostics_like_main_ci(self):
+        # S-01 96d0bfeb / C-00 05.10: main-ci's core EditMode + PlayMode pass --category '!^Diagnostics$'
+        with mock.patch.object(acc, "testsh_has_category", return_value=True):
+            chain = self.dry(["a1"])
+        runs = [argv for _, argv in chain.planned if Path(argv[0]).name == "test.sh"]
+        alone = acc.ci_plan()[1]
+        self.assertEqual(["editmode", "playmode"] + ["playmode"] * len(alone), [r[1] for r in runs])
+        self.assertEqual([acc.CI_CATEGORY, acc.CI_CATEGORY], [self.opt(r, "--category") for r in runs[:2]])
+        self.assertTrue(all("--category" not in r for r in runs[2:]))   # alone steps name one test, no category
+
+    def test_a1_targeted_rerun_and_r2_sessions_keep_no_category(self):
+        with mock.patch.object(acc, "testsh_has_category", return_value=True):
+            chain = self.dry(["a1"], editmode_filter="ProjectIntegrityTests", playmode_filter="CoreCombatTests")
+        runs = [argv for _, argv in chain.planned if Path(argv[0]).name == "test.sh"]
+        self.assertTrue(runs and all("--category" not in r for r in runs))
+
+    def test_a1_without_category_support_warns_and_runs_unfiltered(self):
+        with mock.patch.object(acc, "testsh_has_category", return_value=False):
+            chain = self.dry(["a1"])
+        runs = [argv for _, argv in chain.planned if Path(argv[0]).name == "test.sh"]
+        self.assertTrue(all("--category" not in r for r in runs))
+        self.assertIn("Diagnostics tests are NOT excluded", "\n".join(chain.lines))
+
     def test_a1_suites_editmode_scope_editor_playmode_scope_player(self):
         chain = self.dry(["a1"], editmode_filter="ProjectIntegrityTests|ArsenalV3Tests")
         seq = [(Path(a[0]).name, a[1]) for _, a in chain.planned]
