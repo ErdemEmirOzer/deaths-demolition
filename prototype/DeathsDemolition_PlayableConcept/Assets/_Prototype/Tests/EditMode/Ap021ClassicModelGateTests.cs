@@ -84,6 +84,61 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsNotNull(body.GetTexture("_MetallicGlossMap"), "MRA'dan türetilmiş maske");
         }
 
+        /// <summary>
+        /// WP-087 R2 H1 (C-00 05.10, decision B): the hand's grip point — the definition's GripOffset, which WeaponMountAlignment puts on
+        /// socket_weapon_r — lies on the model's grip. The model's marker_grip is its origin (the trigger root, ADR-042-1), so the check
+        /// is the LOD0 grip region instead: the vertices behind / below the trigger root (|x| ≤ 3.5 cm, y −0.5…−16 cm, z 0…−14 cm, the
+        /// region the offsets were measured from); their centroid within 1 cm of GripOffset. Hand-entered offsets, checked against the model.
+        /// </summary>
+        [TestCase(ClassicWeaponId.AssaultRifle)]
+        [TestCase(ClassicWeaponId.AutoSmg)]
+        [TestCase(ClassicWeaponId.CombatShotgun)]
+        [TestCase(ClassicWeaponId.Ar2)]
+        [TestCase(ClassicWeaponId.Smg2)]
+        [TestCase(ClassicWeaponId.Sg2)]
+        [TestCase(ClassicWeaponId.Lmg1)]
+        [TestCase(ClassicWeaponId.Lmg2)]
+        [TestCase(ClassicWeaponId.Sr1)]
+        [TestCase(ClassicWeaponId.Rl1)]
+        public void Ap021Klasik_GripOffset_Lod0TutamakBolgesinde(ClassicWeaponId id)
+        {
+            ClassicWeaponVisualLibrary.Entry e = Library.Find(id);
+            Assert.IsTrue(e != null && e.HasModel, id + ": AP-021 modeli yok");
+            WeaponDefinition def = Arsenal.Get(id);
+            Assert.IsNotNull(def, id + ": silah tanımı yok");
+            Transform root = e.model.transform;
+            var renderers = new System.Collections.Generic.List<Renderer>();
+            LODGroup group = e.model.GetComponentInChildren<LODGroup>(true);
+            if (group != null && group.lodCount > 0) renderers.AddRange(group.GetLODs()[0].renderers);
+            if (renderers.Count == 0)
+                foreach (Renderer r in e.model.GetComponentsInChildren<Renderer>(true))
+                    if (r.name.Contains("LOD0")) renderers.Add(r);
+            Assert.IsNotEmpty(renderers, id + ": LOD0 renderer yok");
+
+            Vector3 sum = Vector3.zero;
+            int inRegion = 0;
+            foreach (Renderer r in renderers)
+            {
+                MeshFilter filter = r != null ? r.GetComponent<MeshFilter>() : null;
+                Mesh mesh = r is SkinnedMeshRenderer skinned ? skinned.sharedMesh : filter != null ? filter.sharedMesh : null;
+                if (mesh == null) continue;
+                foreach (Vector3 v in mesh.vertices)
+                {
+                    Vector3 q = root.InverseTransformPoint(r.transform.TransformPoint(v));
+                    if (Mathf.Abs(q.x) > 0.035f || q.y > -0.005f || q.y < -0.16f || q.z > 0f || q.z < -0.14f) continue;
+                    sum += q;
+                    inRegion++;
+                }
+            }
+
+            // the source is in the capture (S-10): a grip region with no mesh in it is not a measure (b6gu: 152…1 427 vertices)
+            Assert.GreaterOrEqual(inRegion, 50, id + ": tutamak bölgesinde LOD0 köşesi yok denecek kadar az (" + inRegion + ")");
+            Vector3 centroid = sum / inRegion;
+            float cm = (def.GripOffset - centroid).magnitude * 100f;
+            Assert.LessOrEqual(cm, 1.0f, id + ": GripOffset " + (def.GripOffset * 100f).ToString("F1") + " cm, LOD0 tutamak merkezi "
+                + (centroid * 100f).ToString("F1") + " cm — " + cm.ToString("F2") + " cm uzakta (ArsenalAssetBuilder.GripOffsets)");
+        }
+
         [Test]
         public void Ap021Klasik_ElModeli_TekLodGrubu_KabukYok()
         {

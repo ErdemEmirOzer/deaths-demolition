@@ -17,8 +17,9 @@ namespace DD.Prototype.Tests.PlayMode
     /// H1 "hand to grip socket distance": for every enabled classic weapon, in third person, standing then walking, maxCm is the
     /// largest of two distances, in cm:
     /// <list type="bullet">
-    /// <item>right — the hand's socket_weapon_r ↔ the model's marker_grip (or, for a model without one, the definition's grip point,
-    /// which WeaponMountAlignment puts on the socket);</item>
+    /// <item>right — the hand's socket_weapon_r ↔ the definition's grip point (GripOffset in the mount frame), the point WeaponMountAlignment
+    /// puts on the socket (C-00 05.10, H1 decision B: grip decision B of 25.09 stands — the AP-021 marker_grip is the model origin, the
+    /// trigger root; each GripOffset is checked against the LOD0 grip region by Ap021ClassicModelGateTests);</item>
     /// <item>left — the left hand ↔ WeaponGripIk's goal while the grip IK carries full weight.</item>
     /// </list>
     /// Frames of reload / switch, where the clip takes the hands off, are not counted.
@@ -74,7 +75,7 @@ namespace DD.Prototype.Tests.PlayMode
             {
                 _s.Controller.EquipClassic(d.Id, _s.Config);
                 yield return SpecialWeaponSahne.Kareler(60);   // the switch-in has played out
-                Transform marker = WeaponSocketContract.Find(mount, WeaponSocketContract.MarkerGrip);
+                Assert.IsNotNull(alignment, "R2 H1: WeaponMountAlignment yok — tutamak noktası ölçülemez");
                 float right = 0f, left = 0f;
                 int n = 0, nLeft = 0;
                 for (int f = 0; f < 180; f++)
@@ -82,8 +83,7 @@ namespace DD.Prototype.Tests.PlayMode
                     _s.Girdi.Yon = f >= 60 && f < 150 ? Vector2.up : Vector2.zero;   // stand 1 s, walk 1.5 s, stop
                     yield return null;
                     if (_s.Controller.Classic != null && _s.Controller.Classic.IsReloading) continue;
-                    Vector3 grip = marker != null ? marker.position
-                        : mount.TransformPoint(alignment != null ? alignment.GripOffset : WeaponGrip.DefaultOffset);
+                    Vector3 grip = mount.TransformPoint(alignment.GripOffset);
                     right = Mathf.Max(right, Vector3.Distance(socket.position, grip));
                     n++;
                     WeaponGripIk ik = body.GripIk;
@@ -94,7 +94,7 @@ namespace DD.Prototype.Tests.PlayMode
                 maxRight = Mathf.Max(maxRight, right);
                 maxLeft = Mathf.Max(maxLeft, left);
                 samples += n;
-                report.Add(d.RosterKey + " right " + (right * 100f).ToString("F2", CultureInfo.InvariantCulture) + (marker != null ? " (marker_grip)" : " (grip point)") +
+                report.Add(d.RosterKey + " right " + (right * 100f).ToString("F2", CultureInfo.InvariantCulture) + " (grip point)" +
                            " left " + (nLeft > 0 ? (left * 100f).ToString("F2", CultureInfo.InvariantCulture) + " (n " + nLeft + ")" : "n/a") + " cm, frames " + n);
             }
 
