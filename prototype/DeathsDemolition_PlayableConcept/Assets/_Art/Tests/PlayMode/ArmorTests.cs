@@ -11,6 +11,7 @@ using DD.Prototype.Core.Config;
 using DD.Prototype.Damage;
 using DD.Prototype.Enemies;
 using DD.Prototype.PlayerSystem;
+using DD.Prototype.Tests;
 using DD.Prototype.Profile;
 using DD.Prototype.Rounds;
 using DD.Prototype.Spawn;
@@ -268,6 +269,11 @@ namespace DD.Art.Tests.PlayMode
 
         // ================================================================== DEC-077 zırh okunurluğu
 
+        // DEC-077 armour addendum (user 16.09, planning/00) and the R1 baseline it must not fall below (WP-084 Z1, C-00 06.10).
+        private const float Dec077SilhouetteChange = 0.30f, Dec077BandMean = 0.12f, Dec077BandMin = 0.08f;
+        // R1 baseline = the mean of two deterministic runs (0.286 / 0.279, 0.014 / 0.015); tolerance = repeat gap + 0.02 (C-00 06.10).
+        private const float R1SilhouetteChange = 0.2825f, R1SilhouetteTolerance = 0.027f, R1BandMean = 0.0145f, R1BandTolerance = 0.021f;
+
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator Okunabilirlik_DEC077_Zirh_DeltaV_AltKumas_KomsuBant_ZeminHalkasi_Siluet()
@@ -278,6 +284,11 @@ namespace DD.Art.Tests.PlayMode
             Vector3 feet = rig.transform.position;
 
             var zombies = new List<ZombieEnemy>();
+            // WP-084 Z1 (C-00 06.10): the same twelve looks every run — the factory's seed stream otherwise depends on what the
+            // session spawned before (R1 measured 0.299 and 0.264 in two runs of one commit).
+            System.Reflection.MethodInfo resetSeed = typeof(EnemyFactory).GetMethod("ResetSeedForTests", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
+            Assert.IsNotNull(resetSeed, "kaynak yok: EnemyFactory.ResetSeedForTests (internal; DD.Art.Tests has no InternalsVisibleTo)");
+            resetSeed.Invoke(null, new object[] { 77u });
             for (int i = 0; i < 12; i++)
             {
                 float ang = i * Mathf.PI * 2f / 12f;
@@ -291,7 +302,11 @@ namespace DD.Art.Tests.PlayMode
             // Every piece on every figure (worst case for "which region is armoured").
             foreach (ZombieEnemy z in zombies) Assert.AreEqual(3, z.FitArmorComposition(true, true, true), z.name);
 
+            // WP-084 Z1: 30 fixed steps into the stance, then the simulation frozen BEFORE the streaming warm-up — its frame count
+            // varies (5–6) and the crowd walked a different distance every run.
             Time.captureDeltaTime = 1f / 60f;
+            for (int i = 0; i < 30; i++) yield return null;
+            Time.timeScale = 0f;
             string dir = Environment.GetEnvironmentVariable("DD_ART_CAPTURE_DIR");
             if (string.IsNullOrEmpty(dir)) dir = Path.Combine(Application.temporaryCachePath, "wp017-captures");
             Directory.CreateDirectory(dir);
@@ -354,13 +369,15 @@ namespace DD.Art.Tests.PlayMode
 
                 // Shape: the armoured silhouette vs the bare one (all armour off at once).
                 var allArmor = new List<SkinnedMeshRenderer>();
+                var armorBySlot = new List<SkinnedMeshRenderer>[ZombieSkinnedVisual.ArmorSlotCount];
+                for (int s = 0; s < armorBySlot.Length; s++) armorBySlot[s] = new List<SkinnedMeshRenderer>();
                 foreach (ZombieEnemy z in zombies)
                 for (int lod = 0; lod < ZombieModuleLibrary.LodCount; lod++)
                 for (int s = 0; s < ZombieSkinnedVisual.ArmorSlotCount; s++)
                 for (int part = 0; part < ZombieSkinnedVisual.ArmorPartCount; part++)
                 {
                     SkinnedMeshRenderer r = z.Skinned.ArmorRenderer(lod, s, part);
-                    if (r != null && r.enabled) allArmor.Add(r);
+                    if (r != null && r.enabled) { allArmor.Add(r); armorBySlot[s].Add(r); }
                 }
 
                 CharacterTests.SetEnabled(allArmor, false);
@@ -375,17 +392,54 @@ namespace DD.Art.Tests.PlayMode
                 }
 
                 float silhouetteChange = (grown + lost) / (float)Mathf.Max(1, CharacterTests.Count(zombieMaskBare));
+
+                // WP-084 (C-00 06.10, for the AP-008C direction): the silhouette change by armour slot — each slot ALONE on over the bare
+                // crowd (helmet / body = dō + kote / leg): grown = pixels the slot adds, lost = pixels it hides. Reported, not asserted.
+                string[] armorSlotNames = { "helmet", "body", "leg" };
+                var bySlot = new System.Text.StringBuilder();
+                CharacterTests.SetEnabled(allArmor, false);
+                for (int s = 0; s < ZombieSkinnedVisual.ArmorSlotCount; s++)
+                {
+                    CharacterTests.SetEnabled(armorBySlot[s], true);
+                    Color32[] only = CharacterTests.Capture(pose, Path.Combine(dir, "readability-armor-only-" + armorSlotNames[s] + ".png"));
+                    CharacterTests.SetEnabled(armorBySlot[s], false);
+                    bool[] maskOnly = CharacterTests.Diff(only, noZombies);
+                    int slotGrown = 0, slotLost = 0;
+                    for (int i = 0; i < maskOnly.Length; i++)
+                    {
+                        if (maskOnly[i] && !zombieMaskBare[i]) slotGrown++;
+                        if (!maskOnly[i] && zombieMaskBare[i]) slotLost++;
+                    }
+
+                    bySlot.Append(' ').Append(armorSlotNames[s]).Append('=').Append(((slotGrown + slotLost) / (float)Mathf.Max(1, CharacterTests.Count(zombieMaskBare))).ToString("F3", CultureInfo.InvariantCulture))
+                          .Append(" (grown ").Append(slotGrown).Append(" lost ").Append(slotLost).Append(" renderers ").Append(armorBySlot[s].Count).Append(')');
+                }
+
+                CharacterTests.SetEnabled(allArmor, true);
+                Debug.Log("[DD-OBS] wp084.z1.silhouette.bySlot total=" + silhouetteChange.ToString("F3", CultureInfo.InvariantCulture) + " (grown " + grown + " lost " + lost + " bare " + CharacterTests.Count(zombieMaskBare) + ")" + bySlot);
                 float underMean = Mean(deltaUnder), underMin = Min(deltaUnder), bandMean = Mean(deltaBand), bandMin = Min(deltaBand);
                 Debug.Log("[DD-TEST] wp017.armor.readability warm=" + warm + " figures=" + armorMasks.Count + " armorPx=" + CharacterTests.Count(all) + " zombiePx=" + CharacterTests.Count(zombieMaskArmored) +
                           " deltaV_under mean=" + underMean.ToString("F3", CultureInfo.InvariantCulture) + " min=" + underMin.ToString("F3", CultureInfo.InvariantCulture) +
                           " deltaV_band mean=" + bandMean.ToString("F3", CultureInfo.InvariantCulture) + " min=" + bandMin.ToString("F3", CultureInfo.InvariantCulture) +
                           " deltaV_ground=" + deltaGround.ToString("F3", CultureInfo.InvariantCulture) + " armorV=" + armorV.ToString("F3", CultureInfo.InvariantCulture) + " groundV=" + groundV.ToString("F3", CultureInfo.InvariantCulture) +
                           " silhouetteChange=" + silhouetteChange.ToString("F3", CultureInfo.InvariantCulture) + " (grown " + grown + " lost " + lost + ") -> " + dir);
-                // ADR-017-1 records these against the AD proposal (band: min ≥ 0.10 / mean ≥ 0.15, or the shape test);
-                // the rule value is an S-10 / user decision, so it is REPORTED here, not asserted.
-                if (bandMean < 0.15f || bandMin < 0.10f) Debug.LogWarning("[DD-TEST] wp017.armor.readability REPORTED: komşu bant ΔV ort " + bandMean.ToString("F3", CultureInfo.InvariantCulture) + " / min " + bandMin.ToString("F3", CultureInfo.InvariantCulture) + " < AD önerisi 0.15 / 0.10 — biçim testi silhouetteChange=" + silhouetteChange.ToString("F3", CultureInfo.InvariantCulture));
-                Assert.Greater(CharacterTests.Count(all), 500, "zırh piksel maskesi boş");
+                // Z1 (WP-084, C-00 06.10 K3): DEC-077 (user 16.09) — armour silhouette change ≥ 0.30 and the armour / 6 px unarmoured
+                // neighbour band |ΔV| mean ≥ 0.12, min ≥ 0.08 — is ASSERTED (it was only reported against an older AD proposal), plus
+                // no regression against R1 measured with this deterministic test (84941661, worktree-r1 06.10, two runs: silhouette
+                // 0.286 / 0.279, band mean 0.014 / 0.015) — baseline the mean, tolerance the measured repeat gap + 0.02.
+                // The source is in the record first (R2 standard): an armour mask and enough figures, then the R2 artefact.
+                Assert.Greater(CharacterTests.Count(all), 500, "kaynak yok: zırh piksel maskesi boş");
                 Assert.Greater(silhouetteChange, 0.02f, "zırh silüeti değiştirmeli (kask / omuz / tasset)");
+                R2Olcum.Yaz("Z1", "DD.Art.Tests.PlayMode.ArmorTests.Okunabilirlik_DEC077_Zirh_DeltaV_AltKumas_KomsuBant_ZeminHalkasi_Siluet", new Dictionary<string, double>
+                {
+                    { "silhouetteChange", silhouetteChange }, { "deltaVBandMean", bandMean }, { "deltaVBandMin", bandMin },
+                    { "deltaVUnderMean", underMean }, { "deltaVUnderMin", underMin }, { "deltaVGround", deltaGround },
+                }, armorMasks.Count);
+                Assert.GreaterOrEqual(silhouetteChange, R1SilhouetteChange - R1SilhouetteTolerance, "R1'e göre gerileme: siluet değişimi (R1 " + R1SilhouetteChange + ")");
+                Assert.GreaterOrEqual(bandMean, R1BandMean - R1BandTolerance, "R1'e göre gerileme: komşu bant ΔV ort (R1 " + R1BandMean + ")");
+                Assert.GreaterOrEqual(silhouetteChange, Dec077SilhouetteChange, "DEC-077: zırh siluet değişimi ≥ 0,30");
+                Assert.GreaterOrEqual(bandMean, Dec077BandMean, "DEC-077: zırh ↔ komşu bant ΔV ort ≥ 0,12");
+                Assert.GreaterOrEqual(bandMin, Dec077BandMin, "DEC-077: zırh ↔ komşu bant ΔV min ≥ 0,08");
             }
             finally
             {
