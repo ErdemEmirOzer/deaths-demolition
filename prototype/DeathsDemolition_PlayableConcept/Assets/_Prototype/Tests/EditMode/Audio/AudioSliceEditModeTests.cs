@@ -892,6 +892,40 @@ namespace DD.Prototype.Tests.EditMode.Audio
         }
 
         [Test]
+        public void AtesV4_KatmanYolu_AdlarBantlarOfsetler_AP027GelmedenSessiz()
+        {
+            // WP-085 B3 (AP-027 spec §3–§5): layer ids resolve by name; none exists before AP-027 → the v016 set plays as before.
+            Assert.AreEqual("WeaponAr1TailOpen", WeaponAudioIdentity.LayerName("AR1", WeaponLayer.TailOpen));
+            Assert.AreEqual("WeaponSmg1Mechanical", WeaponAudioIdentity.LayerName("SMG1", WeaponLayer.Mechanical));
+            Assert.AreEqual("WeaponLmg2DistanceFar", WeaponAudioIdentity.LayerName("LMG2", WeaponLayer.DistanceFar));
+            foreach (WeaponVoiceSet set in WeaponAudioIdentity.All)
+            {
+                foreach (WeaponLayer l in Enum.GetValues(typeof(WeaponLayer)))
+                {
+                    bool adVar = Enum.TryParse(WeaponAudioIdentity.LayerName(set.AudioId, l), out AudioSoundId _);
+                    Assert.AreEqual(adVar, WeaponAudioIdentity.Layer(set.AudioId, l) != AudioSoundId.None, set.AudioId + " " + l);
+                }
+            }
+
+            Assert.AreEqual(AudioSoundId.None, WeaponAudioIdentity.Layer("YOK", WeaponLayer.Mechanical));
+            Assert.AreEqual(WeaponDistanceBand.Near, WeaponAudioIdentity.Band(11.9f));
+            Assert.AreEqual(WeaponDistanceBand.Mid, WeaponAudioIdentity.Band(12f));
+            Assert.AreEqual(WeaponDistanceBand.Mid, WeaponAudioIdentity.Band(34.9f));
+            Assert.AreEqual(WeaponDistanceBand.Far, WeaponAudioIdentity.Band(35f));
+            Assert.That(WeaponAudioIdentity.EarlyOffsetSeconds(AcousticSpace.Open), Is.InRange(0.025f, 0.035f), "açık avlu 25–35 ms");
+            Assert.That(WeaponAudioIdentity.EarlyOffsetSeconds(AcousticSpace.Corridor), Is.InRange(0.008f, 0.014f), "koridor 8–14 ms");
+            Assert.That(WeaponAudioIdentity.EarlyOffsetSeconds(AcousticSpace.Hall), Is.InRange(0.018f, 0.024f), "salon 18–24 ms");
+            float[] beklenen = { -10f, -7f, -3f };
+            var modlar = new[] { DD.Prototype.CameraSystem.CameraMode.TopDown, DD.Prototype.CameraSystem.CameraMode.ThirdPerson, DD.Prototype.CameraSystem.CameraMode.FirstPerson };
+            for (int i = 0; i < 3; i++)
+            {
+                Assert.AreEqual(beklenen[i], WeaponAudioIdentity.MechanicalRefDb + WeaponPerspectiveMix.For(modlar[i]).MechanicalDb, 1e-4f, "Mechanical/Body " + modlar[i]);
+            }
+
+            Assert.AreEqual(0f, AudioMixPlan.PlayerWeapon(AudioSoundId.WeaponAr1Fire).Delay, "kuru atış gecikmesiz");
+        }
+
+        [Test]
         public void SilahOnde_KullaniciB_FirlaticiAtesi4dBKisik_OtomatiklerRpmKirpmasi()
         {
             // WP-072 B7 (user 01.10, option B): SFX-Player +3 / SFX-World −1; the launcher's explosion keeps +2 dB over its shot.

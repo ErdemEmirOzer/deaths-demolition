@@ -282,12 +282,14 @@ namespace DD.Prototype.Audio
             voice.Bus = placement.Bus;
             voice.Priority = priority;
             voice.BaseVolume = Mathf.Clamp01(placement.Gain * gainScale);
-            voice.Remaining = clip.length / Mathf.Max(0.05f, pitch) + 0.05f;
+            float delay = Mathf.Max(0f, placement.Delay);
+            voice.Remaining = delay + clip.length / Mathf.Max(0.05f, pitch) + 0.05f;
             voice.Age = 0f;
             voice.Active = true;
 
             source.volume = voice.BaseVolume * _mixer.Gain(placement.Bus);
-            source.Play();
+            if (delay > 0f) source.PlayDelayed(delay);
+            else source.Play();
 
 #if DEVELOPMENT_BUILD || UNITY_EDITOR
             AudioPlaybackTelemetry.Record(AudioPlaybackOutcome.Started, _evidencePool, placement.Sound, active: ActiveCount, capacity: _softCapacity);

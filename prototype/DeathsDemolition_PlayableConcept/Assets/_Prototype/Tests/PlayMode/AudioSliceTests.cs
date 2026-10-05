@@ -919,6 +919,53 @@ namespace DD.Prototype.Tests.PlayMode
 
         [UnityTest]
         [Timeout(60000)]
+        public IEnumerator AtesV4_KatmanYolu_Mekanik_SilahKuyruguOfsetli_UzakBant()
+        {
+            // WP-085 B3: AP-027 layers stand in as produced v016 / v017 clips — the mechanism plays with the shot, the weapon's own
+            // tail rings with the space's first-reflection offset, a far source picks its distance voice and drops the mechanism.
+            WeaponFireAudio f = _d.WeaponFire;
+            Assert.IsTrue(_d.Library.IsProduced(AudioSoundId.FoleySmg1Chamber) && _d.Library.IsProduced(AudioSoundId.WeaponTailArHall) && _d.Library.IsProduced(AudioSoundId.WeaponLmg1Fire));
+            System.Func<Vector3, AcousticSpace> onceki = AcousticSpaces.Resolver;
+            Vector3 at = _s.Rig.transform.position + Vector3.up;
+            try
+            {
+                WeaponAudioIdentity.SetLayerForTests("SG1", WeaponLayer.Mechanical, AudioSoundId.FoleySmg1Chamber);
+                WeaponAudioIdentity.SetLayerForTests("SG1", WeaponLayer.TailHall, AudioSoundId.WeaponTailArHall);
+                WeaponAudioIdentity.SetLayerForTests("SG1", WeaponLayer.DistanceFar, AudioSoundId.WeaponLmg1Fire);
+                AcousticSpaces.Resolver = _ => AcousticSpace.Hall;
+
+                AudioEvents.RaiseWeapon(CombatAudioEvent.ClassicWeaponFire, "SG1", at, 1.5f, 50);
+                Assert.AreEqual(WeaponDistanceBand.Near, f.LastBand, "Oyuncunun kendi atışı yakın.");
+                Assert.AreEqual(AudioSoundId.WeaponSg1Fire, f.LastVoice);
+                Assert.AreEqual(AudioSoundId.FoleySmg1Chamber, f.LastMechanical, "Mekanik katman atışla çalar.");
+                Assert.AreEqual(AudioSoundId.WeaponTailArHall, f.LastTail, "Silahın kendi salon kuyruğu.");
+                Assert.AreEqual(WeaponAudioIdentity.EarlyOffsetSeconds(AcousticSpace.Hall), f.LastTailDelay, 1e-5f, "Salon ilk yansıma ofseti.");
+
+                yield return new WaitForSeconds(0.2f);
+                WeaponAudioIdentity.SetLayerForTests("SG1", WeaponLayer.Mechanical, AudioSoundId.FoleySmg2Chamber);
+                AudioEvents.RaiseWeapon(CombatAudioEvent.ClassicWeaponFire, "SG1", at + _s.Rig.transform.right * 60f, 1.5f, 50);
+                Assert.AreEqual(WeaponDistanceBand.Far, f.LastBand, "60 m uzak bant.");
+                Assert.AreEqual(AudioSoundId.WeaponLmg1Fire, f.LastVoice, "Uzak kaynak uzak kaydını çalar.");
+                Assert.AreEqual(AudioSoundId.FoleySmg1Chamber, f.LastMechanical, "Uzakta mekanik kapalı.");
+
+                // Without a v4 tail the class tail rings as rendered (no offset).
+                WeaponAudioIdentity.ClearLayersForTests();
+                yield return new WaitForSeconds(0.2f);
+                AudioEvents.RaiseWeapon(CombatAudioEvent.ClassicWeaponFire, "SG1", at + Vector3.forward * 2f, 1.5f, 50);
+                Assert.AreEqual(AudioSoundId.WeaponTailSgHall, f.LastTail);
+                Assert.AreEqual(0f, f.LastTailDelay, "v016 sınıf kuyruğu kendi zamanlamasıyla.");
+            }
+            finally
+            {
+                WeaponAudioIdentity.ClearLayersForTests();
+                AcousticSpaces.Resolver = onceki;
+            }
+
+            Debug.Log("[DD-TEST] wp085b3.layers band=" + f.LastBand + " voice=" + f.LastVoice + " mech=" + f.LastMechanical + " tail=" + f.LastTail);
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
         public IEnumerator KovanV2_AyniKareIkiKabukAyriDuser_GecikmeBandi_HavuzTavani_SifirAyirma()
         {
             if (!_d.Library.IsProduced(AudioSoundId.CasingRifleStone))

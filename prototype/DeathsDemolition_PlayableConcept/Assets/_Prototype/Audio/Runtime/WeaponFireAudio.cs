@@ -40,6 +40,29 @@ namespace DD.Prototype.Audio
         }
     }
 
+    /// <summary>
+    /// WP-085 B3: the AP-027 v4 layers a weapon may carry beside its dry Fire (CX-AP027 spec §3–§5). Each resolves by name —
+    /// AudioSoundId "Weapon" + Ar1 / Smg1 / … + layer (WeaponAr1Mechanical, WeaponSg1TailOpen, WeaponAr1DistanceMid) — and is
+    /// silent until that id exists and is produced, so the v016 set plays exactly as before.
+    /// </summary>
+    public enum WeaponLayer
+    {
+        Mechanical = 0,
+        TailOpen = 1,
+        TailCorridor = 2,
+        TailHall = 3,
+        DistanceMid = 4,
+        DistanceFar = 5
+    }
+
+    /// <summary>WP-085 B3 (spec §3.2): source-to-listener band. Near 0–12 m, Mid 12–35 m, Far beyond.</summary>
+    public enum WeaponDistanceBand
+    {
+        Near = 0,
+        Mid = 1,
+        Far = 2
+    }
+
     /// <summary>One weapon's fire voice (WP-069 audioId → AP-011 identities).</summary>
     public readonly struct WeaponVoiceSet
     {
@@ -97,6 +120,88 @@ namespace DD.Prototype.Audio
             new WeaponVoiceSet("RL1", AudioSoundId.WeaponRl1Fire, WeaponTailClass.Rl, fireTrimDb: -4f)   // WP-072 B7: explosion keeps +2 dB over the shot
         };
 
+        public const float MidMeters = 12f;
+        public const float FarMeters = 35f;
+
+        /// <summary>Spec §3.1: Mechanical against Body in top-down (TP / FP add the perspective's MechanicalDb: −7 / −3).</summary>
+        public const float MechanicalRefDb = -10f;
+
+        /// <summary>Spec §3.2: in the Mid band the mechanism sits 12 dB further down; in Far it is off.</summary>
+        public const float MechanicalMidDb = -12f;
+
+        private static readonly int LayerCount = System.Enum.GetValues(typeof(WeaponLayer)).Length;
+        private static readonly AudioSoundId[] s_layers = BuildLayers();
+        private static readonly AudioSoundId[] s_layerOverrides = new AudioSoundId[All.Length * LayerCount];
+
+        /// <summary>The AudioSoundId name a layer resolves by: "Weapon" + "Ar1" + "TailOpen".</summary>
+        public static string LayerName(string audioId, WeaponLayer layer)
+        {
+            return "Weapon" + char.ToUpperInvariant(audioId[0]) + audioId.Substring(1).ToLowerInvariant() + layer;
+        }
+
+        /// <summary>The weapon's layer id, None while AP-027 has not delivered it (or a test override).</summary>
+        public static AudioSoundId Layer(string audioId, WeaponLayer layer)
+        {
+            int i = IndexOf(audioId);
+            if (i < 0) return AudioSoundId.None;
+            int k = i * LayerCount + (int)layer;
+            return s_layerOverrides[k] != AudioSoundId.None ? s_layerOverrides[k] : s_layers[k];
+        }
+
+        /// <summary>Tests only: point a weapon's layer at a produced id (None clears it).</summary>
+        public static void SetLayerForTests(string audioId, WeaponLayer layer, AudioSoundId id)
+        {
+            int i = IndexOf(audioId);
+            if (i >= 0) s_layerOverrides[i * LayerCount + (int)layer] = id;
+        }
+
+        public static void ClearLayersForTests() => System.Array.Clear(s_layerOverrides, 0, s_layerOverrides.Length);
+
+        public static WeaponDistanceBand Band(float meters)
+        {
+            return meters >= FarMeters ? WeaponDistanceBand.Far : meters >= MidMeters ? WeaponDistanceBand.Mid : WeaponDistanceBand.Near;
+        }
+
+        /// <summary>
+        /// Spec §5: the first reflection's arrival (open court 25–35, corridor 8–14, hall 18–24 ms). AP-027 tail files start at
+        /// the reflection — the offset is the runtime's — so only the per-weapon v4 tails are delayed; the v016 class tails keep
+        /// the timing they were rendered with.
+        /// </summary>
+        public static float EarlyOffsetSeconds(AcousticSpace space)
+        {
+            switch (space)
+            {
+                case AcousticSpace.Corridor: return 0.011f;
+                case AcousticSpace.Hall: return 0.021f;
+                default: return 0.030f;
+            }
+        }
+
+        public static int IndexOf(string audioId)
+        {
+            if (string.IsNullOrEmpty(audioId)) return -1;
+            for (int i = 0; i < All.Length; i++)
+            {
+                if (string.Equals(All[i].AudioId, audioId, System.StringComparison.Ordinal)) return i;
+            }
+
+            return -1;
+        }
+
+        private static AudioSoundId[] BuildLayers()
+        {
+            var ids = new AudioSoundId[All.Length * LayerCount];
+            for (int i = 0; i < All.Length; i++)
+            {
+                for (int l = 0; l < LayerCount; l++)
+                {
+                    ids[i * LayerCount + l] = System.Enum.TryParse(LayerName(All[i].AudioId, (WeaponLayer)l), false, out AudioSoundId id) ? id : AudioSoundId.None;
+                }
+            }
+
+            return ids;
+        }
+
         public static bool TryGet(string audioId, out WeaponVoiceSet set)
         {
             if (!string.IsNullOrEmpty(audioId))
@@ -137,7 +242,7 @@ namespace DD.Prototype.Audio
     {
         public readonly float Spatial;
         public readonly float NearFieldDb;
-        /// <summary>Mechanical layer lift (STANDARDS §4). WP-085 B1: no separate mechanical voice until the AP-027 v4 set (B5).</summary>
+        /// <summary>Mechanical layer lift by perspective (STANDARDS §4: 0 / +3 / +7 over top-down's −10 dB Mechanical/Body, WP-085 B3).</summary>
         public readonly float MechanicalDb;
         public readonly float TailDb;
 
@@ -178,6 +283,9 @@ namespace DD.Prototype.Audio
         /// <summary>Live copies of one automatic's shot: a 0.26–0.36 s shot at 900 RPM overlaps four deep (WP-085 B1).</summary>
         public const int StringVoices = 4;
 
+        /// <summary>Live copies of a weapon's mechanical layer (spec §4 Faz B budget: Mechanical 2).</summary>
+        public const int MechanicalVoices = 2;
+
         private readonly AudioClipLibrary _library;
         private readonly PlayFunc _play;
 
@@ -207,6 +315,16 @@ namespace DD.Prototype.Audio
 
         /// <summary>The fire voice played last, None before the first.</summary>
         public AudioSoundId LastVoice { get; private set; }
+
+        /// <summary>WP-085 B3: the mechanical layer played last (None until AP-027 delivers one), its band, the last tail's offset.</summary>
+        public AudioSoundId LastMechanical { get; private set; }
+        public WeaponDistanceBand LastBand { get; private set; }
+        public float LastTailDelay { get; private set; }
+
+        private System.Func<Vector3> _listener;
+
+        /// <summary>The player-anchored listener (ADR-021-2): the player's own shots are Near; a far source picks its distance layer.</summary>
+        public void SetListener(System.Func<Vector3> listener) => _listener = listener;
 
         /// <summary>
         /// WP-085 B4 listening kit only (variant B): true → no fire cue is taken here, the director plays the pre-v3 voice
@@ -277,17 +395,45 @@ namespace DD.Prototype.Audio
 
         private void PlayVoice(in WeaponVoiceSet set, in CombatAudioCue cue, in WeaponPerspectiveMix mix)
         {
-            AudioPlacement p = AudioMixPlan.PlayerWeapon(set.Fire, set.FiresStrings ? StringVoices : AudioMixPlan.PlayerWeaponVoices);
+            // Spec §3.2: the band picks the voice at the event (a far source is its distance recording, never a second shot on top).
+            WeaponDistanceBand band = cue.Position == Vector3.zero || _listener == null
+                ? WeaponDistanceBand.Near
+                : WeaponAudioIdentity.Band(Vector3.Distance(cue.Position, _listener()));
+            LastBand = band;
+            AudioSoundId voice = set.Fire;
+            if (band == WeaponDistanceBand.Far) voice = Produced(WeaponAudioIdentity.Layer(set.AudioId, WeaponLayer.DistanceFar), Produced(WeaponAudioIdentity.Layer(set.AudioId, WeaponLayer.DistanceMid), set.Fire));
+            else if (band == WeaponDistanceBand.Mid) voice = Produced(WeaponAudioIdentity.Layer(set.AudioId, WeaponLayer.DistanceMid), set.Fire);
+
+            AudioPlacement p = AudioMixPlan.PlayerWeapon(voice, set.FiresStrings ? StringVoices : AudioMixPlan.PlayerWeaponVoices);
             p.Spatial = cue.Position == Vector3.zero ? 0f : mix.Spatial;
             FireVoices++;
-            if (_play(p, cue.Position, Db(mix.NearFieldDb + set.FireTrimDb), cue.Priority)) LastVoice = set.Fire;
+            if (_play(p, cue.Position, Db(mix.NearFieldDb + set.FireTrimDb), cue.Priority)) LastVoice = voice;
             else FireRefused++;
+
+            // Spec §3.1: the short mechanism as its own voice, Mechanical/Body −10 / −7 / −3 dB by perspective; off in Far.
+            AudioSoundId mech = WeaponAudioIdentity.Layer(set.AudioId, WeaponLayer.Mechanical);
+            if (band == WeaponDistanceBand.Far || mech == AudioSoundId.None || !_library.IsProduced(mech)) return;
+            AudioPlacement m = AudioMixPlan.PlayerWeapon(mech, MechanicalVoices);
+            m.Spatial = p.Spatial;   // rides the body's place; FP's 0 is spec §3.1's 2D mechanism
+            float db = mix.NearFieldDb + set.FireTrimDb + WeaponAudioIdentity.MechanicalRefDb + mix.MechanicalDb + (band == WeaponDistanceBand.Mid ? WeaponAudioIdentity.MechanicalMidDb : 0f);
+            if (_play(m, cue.Position, Db(db), cue.Priority)) LastMechanical = mech;
         }
+
+        private AudioSoundId Produced(AudioSoundId id, AudioSoundId fallback) => id != AudioSoundId.None && _library.IsProduced(id) ? id : fallback;
 
         private void PlayTail(in WeaponVoiceSet set, Vector3 position, in WeaponPerspectiveMix mix)
         {
             AcousticSpace space = AcousticSpaces.At(position);
-            AudioSoundId tail = WeaponAudioIdentity.Tail(set.TailClass, space);
+            // WP-085 B3: the weapon's own AP-027 tail (its excitation, spec §5) when delivered, offset by the space's first
+            // reflection; otherwise the v016 class tail, as rendered.
+            AudioSoundId tail = WeaponAudioIdentity.Layer(set.AudioId, WeaponLayer.TailOpen + (int)space);
+            float delay = WeaponAudioIdentity.EarlyOffsetSeconds(space);
+            if (tail == AudioSoundId.None || !_library.IsProduced(tail))
+            {
+                tail = WeaponAudioIdentity.Tail(set.TailClass, space);
+                delay = 0f;
+            }
+
             if (!_library.IsProduced(tail))
             {
                 return;
@@ -295,7 +441,12 @@ namespace DD.Prototype.Audio
 
             AudioPlacement p = AudioMixPlan.PlayerWeaponTail(tail);
             p.Spatial = position == Vector3.zero ? 0f : mix.Spatial;
-            if (_play(p, position, Db(mix.TailDb + WetDb(space)), 30)) LastTail = tail;
+            p.Delay = delay;
+            if (_play(p, position, Db(mix.TailDb + WetDb(space)), 30))
+            {
+                LastTail = tail;
+                LastTailDelay = delay;
+            }
         }
 
         /// <summary>

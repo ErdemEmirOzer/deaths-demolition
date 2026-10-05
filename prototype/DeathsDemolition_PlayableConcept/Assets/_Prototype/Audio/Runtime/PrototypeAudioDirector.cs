@@ -244,6 +244,7 @@ namespace DD.Prototype.Audio
             _world.SetListener(listenerPosition);
             _ambience.SetListener(listenerPosition);   // WP-072 · DEC-102
             _router.SetListener(listenerPosition);
+            _weaponFire.SetListener(listenerPosition);   // WP-085 B3: distance band
 
             _world.Capacity = _configuredBudget;
             _bridge.Transition(AudioSnapshot.Menu, 0f);

@@ -36,6 +36,9 @@ namespace DD.Prototype.Audio
         /// <summary>Fixed pitch multiplier, applied after the jitter. 1 = as baked.</summary>
         public float Pitch;
 
+        /// <summary>WP-085 B3: seconds after the cue the voice starts (AudioSource.PlayDelayed) — an early-reflection offset. 0 = now.</summary>
+        public float Delay;
+
         /// <summary>How far this sound pulls the ambience down, 1 = not at all.</summary>
         public float DuckAmbience;
 
