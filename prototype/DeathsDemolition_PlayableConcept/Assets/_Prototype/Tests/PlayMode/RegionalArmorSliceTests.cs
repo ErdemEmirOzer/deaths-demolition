@@ -738,6 +738,71 @@ namespace DD.Prototype.Tests.PlayMode
 
         // ============================================================== L26: vuruş yolunda allocation
 
+        /// <summary>
+        /// WP-087 (C-00 05.10, BEKLEYEN §9): the flipbook pool's first exhaustion in a session — its first RecycleOldest — allocates
+        /// nothing in the hit path. The editor's Mono compiled that path once inside the first hit that found the pool full (126 B +
+        /// 112 B under VfxDressing.PlayFlipbook, parent marker Mono.JIT — VurusYolu_SifirAyirma's window, 06bbb9de); FeedbackPoolWarmer
+        /// now runs the recycle at configure time. Meaningful as the session's first exhaustion: the chain runs it on its own.
+        /// </summary>
+        [UnityTest]
+        [Category("WP087")]
+        [Timeout(300000)]
+        public IEnumerator VurusYolu_IlkHavuzTukenmesi_SifirAyirma()
+        {
+            yield return RunSahnesiniHazirla();
+            Vector3 merkez = TestZemini(0f, 8f);
+            var zombiler = new List<ZombieEnemy>();
+            for (int i = 0; i < 4; i++) zombiler.Add(Dogur(merkez + new Vector3((i - 1.5f) * 0.9f, 0f, 0f)));
+            yield return null;
+            foreach (ZombieEnemy z in zombiler)
+            {
+                z.FitArmorComposition(true, true, true);
+                z.Armor.Equip(ArmorSlot.Helmet, 100000f);
+                z.Armor.Equip(ArmorSlot.Body, 100000f);
+                z.Armor.Equip(ArmorSlot.Leg, 100000f);
+            }
+
+            HitFeedbackDirector hfd = HitFeedbackDirector.Instance;
+            var pool = hfd != null && hfd.Vfx != null ? hfd.Vfx.FlipbookPool : null;
+            Assert.IsNotNull(pool, "flipbook havuzu yok (VFX giydirme kurulmadı)");
+
+            // one window (the hit / explosion paths' own first calls), then single hits until the pool is exactly full — no recycle yet
+            Pencere(zombiler, merkez);
+            yield return null;
+            for (int i = 0; pool.CountSpawned < pool.Capacity && i < 4000; i++)
+            {
+                Vur(zombiler[i % 4], (BodyRegion)(i % 3), 1f);
+                if (i % 20 == 19) yield return null;
+            }
+
+            Assert.AreEqual(pool.Capacity, pool.CountSpawned, "havuz tam dolmadı");
+            yield return null;   // a fresh frame: its flipbook budget open, the pool still full
+
+            var rec = UnityEngine.Profiling.Recorder.Get("GC.Alloc");
+            int played0 = hfd.Vfx.Played;
+            var allocating = new List<string>();
+            // frame by frame (each opens the impact budget again) until a flipbook has played into the full pool — the first recycle
+            for (int f = 0; f < 12 && hfd.Vfx.Played == played0; f++)
+            {
+                for (int i = 0; i < 40; i++)
+                {
+                    rec.enabled = false; rec.FilterToCurrentThread(); rec.enabled = true;
+                    Vur(zombiler[i % 4], (BodyRegion)(i % 3), 1f);
+                    rec.enabled = false;
+                    if (rec.sampleBlockCount > 0) allocating.Add("f" + f + " vur#" + i + " n" + rec.sampleBlockCount + " (pool " + pool.CountSpawned + "/" + pool.Capacity + ")");
+                }
+
+                yield return null;
+            }
+
+            int played = hfd.Vfx.Played - played0;
+            Debug.Log("[DD-TEST] wp087.firstexhaust played " + played + " pool " + pool.CountSpawned + "/" + pool.Capacity + " allocating " + allocating.Count + ": " + string.Join(" | ", allocating));
+            // the source: flipbooks played into a full pool — each one recycled the oldest
+            Assert.Greater(played, 0, "ölçülen vuruşlar flipbook oynatmadı — tükenme ölçülmedi");
+            Assert.AreEqual(pool.Capacity, pool.CountSpawned, "havuz doluluğu bozuldu");
+            Assert.IsEmpty(allocating, "ilk havuz tükenmesi ayırdı:\n" + string.Join("\n", allocating));
+        }
+
         [UnityTest]
         [Category("WP006")]
         [Timeout(300000)]

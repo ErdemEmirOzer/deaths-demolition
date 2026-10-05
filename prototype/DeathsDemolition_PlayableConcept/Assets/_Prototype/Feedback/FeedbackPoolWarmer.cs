@@ -34,6 +34,18 @@ namespace DD.Prototype.Feedback
                 s_scratch.Add(instance);
             }
 
+            // WP-087 (C-00 05.10, BEKLEYEN §9): a full RecycleOldest pool's first exhaustion ran a path the editor's Mono compiles once
+            // (126 B + 112 B under VfxDressing.PlayFlipbook, parent marker Mono.JIT) inside the first hit that found the pool full. One
+            // Get past the capacity recycles the oldest here; it comes back as the same instance, so its second Release is a no-op.
+            if (pool.ExhaustedPolicy == PoolExhaustedPolicy.RecycleOldest && s_scratch.Count > 0 && pool.CountTotal >= pool.Capacity)
+            {
+                T recycled = pool.Get(Vector3.zero, Quaternion.identity);
+                if (recycled != null)
+                {
+                    s_scratch.Add(recycled);
+                }
+            }
+
             for (int i = 0; i < s_scratch.Count; i++)
             {
                 pool.Release((T)s_scratch[i]);
