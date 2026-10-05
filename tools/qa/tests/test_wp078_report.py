@@ -720,3 +720,44 @@ class RoundTimeoutMarginTests(unittest.TestCase):
         import wp078_report as report
         row = report.round_timeout_margin({"seed": 26, "rounds": []})
         self.assertIsNone(row["marginSeconds"])
+
+
+class R2RoundTests(Fixture):
+    """WP-091 (C-00 05.10): an R2 manifest also carries the r2-gates.json gates; an R1 manifest has no R2 row."""
+
+    def test_r1_manifest_has_no_r2_row(self):
+        r = self.result()
+        self.assertTrue(r['pass'], r['failures'])
+        self.assertNotIn('R2', r['checklist'])
+
+    def test_r2_manifest_without_artifacts_is_blocked_per_gate_with_owner(self):
+        self.m['round'] = 'R2'
+        r = self.result()
+        self.assertFalse(r['pass'])
+        self.assertEqual('BLOCKED', r['checklist']['R2']['status'])
+        steps = {x['step']: x['owner'] for x in r['failures']}
+        self.assertEqual('S-06', steps['R2.L1'])
+        self.assertEqual('S-08', steps['R2.S1'])
+        self.assertNotIn('R2.P2', steps, 'report entries never fail')
+
+    def test_bound_measurement_closes_its_gate_and_a_bad_one_fails(self):
+        self.m['round'] = 'R2'
+        ok = self.f.put_json({'schema': 'dd-r2-measure-v1', 'gate': 'L1', 'commit': FINAL, 'values': {'avg': 0.03, 'p95': 0.07}}, 'r2-L1.json')
+        bad = self.f.put_json({'schema': 'dd-r2-measure-v1', 'gate': 'S1', 'commit': FINAL, 'values': {'below400ShareMin': 0.12}}, 'r2-S1.json')
+        self.m['checklist']['R2'] = {'gates': {'L1': {'measure': ok}, 'S1': {'measure': bad}}}
+        self.f.anchor(self.m)
+        r = self.result()
+        rows = {g['id']: g for g in r['checklist']['R2']['gates']}
+        self.assertEqual('PASS', rows['L1']['status'])
+        self.assertEqual('FAIL', rows['S1']['status'])
+        self.assertEqual('FAIL', r['checklist']['R2']['status'])
+
+    def test_tampered_measurement_is_refused(self):
+        self.m['round'] = 'R2'
+        ref = self.f.put_json({'schema': 'dd-r2-measure-v1', 'gate': 'L1', 'commit': FINAL, 'values': {'avg': 0.03, 'p95': 0.07}}, 'r2-L1.json')
+        self.m['checklist']['R2'] = {'gates': {'L1': {'measure': ref}}}
+        self.f.anchor(self.m)
+        (self.root / ref['path']).write_text(json.dumps({'schema': 'dd-r2-measure-v1', 'gate': 'L1', 'commit': FINAL, 'values': {'avg': 0.5, 'p95': 0.9}}))
+        r = self.result()
+        self.assertFalse(r['pass'])
+        self.assertNotEqual('PASS', r['checklist']['R2']['status'])

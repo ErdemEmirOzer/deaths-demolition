@@ -1,0 +1,104 @@
+"""WP-091 (C-00 05.10): tools/qa/r2-gates.json + r2_gates.py — the R2 threshold contract and its gate evaluator."""
+import json
+import sys
+import unittest
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import r2_gates as r2  # noqa: E402
+
+CONTRACT = (Path(__file__).resolve().parents[1] / "r2-gates.json").read_text(encoding="utf-8")
+FINAL = "b" * 40
+
+
+def gate(gid):
+    return next(g for g in r2.load_contract(CONTRACT)["gates"] if g["id"] == gid)
+
+
+def measure(gid, **values):
+    return {"schema": "dd-r2-measure-v1", "gate": gid, "commit": FINAL, "values": values}
+
+
+class ContractTests(unittest.TestCase):
+    def test_the_approved_contract_loads_and_covers_every_area(self):
+        data = r2.load_contract(CONTRACT)
+        ids = [g["id"] for g in data["gates"]]
+        self.assertEqual(len(ids), len(set(ids)))
+        self.assertEqual({"hero", "locomotion", "zombie", "sound", "perf", "ui"}, {g["area"] for g in data["gates"]})
+        for gid in ("H1", "H4", "H4b", "L1", "L1t", "L3", "Z3", "Z3b", "S1", "S4", "U1", "U3"):
+            self.assertIn(gid, ids)
+
+    def test_approved_thresholds_are_the_numbers_in_the_draft(self):
+        # a changed threshold must be a reviewed edit of this file: pin the C-00 05.10 values
+        pinned = {("H1", "maxCm"): 1.0, ("L1", "avg"): 0.05, ("L1t", "avg"): 0.10, ("L3", "limbDegPerFrameMax"): 20.0,
+                  ("Z3", "bonesMax"): 74, ("Z3b", "zombieSetPass"): 14, ("S1", "below400ShareMin"): 0.20,
+                  ("S4", "hallMsMax"): 2000, ("U1", "lettersTotalReduction"): 0.40, ("H4b", "leakDegMax"): 1.0}
+        for (gid, key), limit in pinned.items():
+            check = next(c for c in gate(gid)["checks"] if c["key"] == key)
+            self.assertEqual(limit, check["limit"], (gid, key))
+
+    def test_invalid_contracts_are_refused(self):
+        base = json.loads(CONTRACT)
+        cases = []
+        dup = json.loads(CONTRACT); dup["gates"].append(dict(dup["gates"][0])); cases.append(dup)
+        bad_op = json.loads(CONTRACT); bad_op["gates"][0]["checks"][0]["op"] = "<"; cases.append(bad_op)
+        report_with_check = json.loads(CONTRACT)
+        next(g for g in report_with_check["gates"] if g["kind"] == "report")["checks"] = [{"key": "x", "op": "<=", "limit": 1}]
+        cases.append(report_with_check)
+        empty_gate = json.loads(CONTRACT); empty_gate["gates"].append({"id": "X9", "kind": "gate", "owner": "S-10"}); cases.append(empty_gate)
+        for data in cases:
+            with self.assertRaises(r2.ContractError):
+                r2.load_contract(json.dumps(data))
+        self.assertTrue(base["gates"])
+
+
+class EvaluateTests(unittest.TestCase):
+    def test_measured_within_limits_passes(self):
+        row = r2.evaluate_gate(gate("L1"), FINAL, measure=measure("L1", avg=0.031, p95=0.074))
+        self.assertEqual(("PASS", {"avg": 0.031, "p95": 0.074}), (row["status"], row["values"]))
+
+    def test_one_value_over_its_limit_fails_and_says_which(self):
+        row = r2.evaluate_gate(gate("L1"), FINAL, measure=measure("L1", avg=0.031, p95=0.12))
+        self.assertEqual("FAIL", row["status"])
+        self.assertIn("p95 0.12 <= 0.1 is false", row["reason"])
+
+    def test_no_artifact_or_missing_value_is_blocked(self):
+        self.assertEqual("BLOCKED", r2.evaluate_gate(gate("S1"), FINAL)["status"])
+        self.assertEqual("BLOCKED", r2.evaluate_gate(gate("L1"), FINAL, measure=measure("L1", avg=0.03))["status"])
+
+    def test_other_commit_or_wrong_gate_artifact_fails(self):
+        other = dict(measure("L1", avg=0.01, p95=0.02), commit="c" * 40)
+        self.assertEqual("FAIL", r2.evaluate_gate(gate("L1"), FINAL, measure=other)["status"])
+        self.assertEqual("FAIL", r2.evaluate_gate(gate("L1"), FINAL, measure=measure("L2", avg=0.01, p95=0.02))["status"])
+
+    def test_required_test_must_have_passed(self):
+        g = gate("Z1")
+        self.assertEqual("BLOCKED", r2.evaluate_gate(g, FINAL, cases=None)["status"])
+        self.assertEqual("BLOCKED", r2.evaluate_gate(g, FINAL, cases={})["status"])
+        self.assertEqual("FAIL", r2.evaluate_gate(g, FINAL, cases={g["tests"][0]: "Failed"})["status"])
+        self.assertEqual("PASS", r2.evaluate_gate(g, FINAL, cases={g["tests"][0]: "Passed"})["status"])
+
+    def test_human_review_verdicts(self):
+        g = gate("H5")
+        review = {"schema": "dd-r2-review-v1", "gate": "H5", "commit": FINAL, "reviewer": "AD", "verdict": "KABUL", "must": []}
+        self.assertEqual("BLOCKED", r2.evaluate_gate(g, FINAL)["status"])
+        self.assertEqual("PASS", r2.evaluate_gate(g, FINAL, review=review)["status"])
+        self.assertEqual("FAIL", r2.evaluate_gate(g, FINAL, review=dict(review, verdict="RED"))["status"])
+        corrections = dict(review, verdict="KABUL_DÜZELTMELERLE", must=[{"id": "MUST-1", "closed": False}])
+        self.assertEqual("FAIL", r2.evaluate_gate(g, FINAL, review=corrections)["status"])
+        corrections["must"][0]["closed"] = True
+        self.assertEqual("PASS", r2.evaluate_gate(g, FINAL, review=corrections)["status"])
+
+    def test_report_entries_never_fail(self):
+        row = r2.evaluate_gate(gate("P2"), FINAL, measure=measure("P2", flaggedCells=3, worstDeltaMs=4.0, worstDeltaPct=0.3))
+        self.assertEqual("REPORT", row["status"])
+        self.assertEqual("PASS", r2.summarize([row]))
+
+    def test_summary_fail_beats_blocked(self):
+        rows = [r2.evaluate_gate(gate("S1"), FINAL), r2.evaluate_gate(gate("L1"), FINAL, measure=measure("L1", avg=1, p95=1))]
+        self.assertEqual("FAIL", r2.summarize(rows))
+        self.assertEqual("BLOCKED", r2.summarize(rows[:1]))
+
+
+if __name__ == "__main__":
+    unittest.main()

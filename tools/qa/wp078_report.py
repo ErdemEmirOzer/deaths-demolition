@@ -244,6 +244,7 @@ SOAK = _helper("soak_gate")
 SKIPS = _helper("nunit_skips")
 GATE = _helper("wp064_gate")
 STUCK = _helper("stuck_clusters")
+R2 = _helper("r2_gates")
 
 
 def percentile(ordered, fraction):
@@ -1161,6 +1162,31 @@ class Inspector:
         require(step.get("byteEqual") is True, "user data restoration not byte equal")
         self.xml(step.get("integrityXml"), integrity=True)
 
+    def R2(self, step):
+        """WP-091 (C-00 05.10): the R2 gates of tools/qa/r2-gates.json, each from its bound measurement / review
+        artifact and the bound NUnit XMLs (required test identities). Returns the gate rows; never raises on a gate."""
+        contract = R2.load_contract((HERE / "r2-gates.json").read_text(encoding="utf-8"))
+        step = step if isinstance(step, dict) else {}
+        cases = None
+        refs = step.get("xml")
+        if isinstance(refs, list) and refs:
+            cases = {}
+            for ref in refs:
+                _, data = self.file(ref, read=True)
+                root = ET.fromstring(data)
+                for case in root.iter("test-case"):
+                    name = (case.get("fullname") or case.get("name") or "").split("(", 1)[0]
+                    if name:
+                        cases[name] = case.get("result") or "Unknown"
+        bound = step.get("gates") if isinstance(step.get("gates"), dict) else {}
+        rows = []
+        for gate in contract["gates"]:
+            entry = bound.get(gate["id"]) if isinstance(bound.get(gate["id"]), dict) else {}
+            measure = self.obj(entry["measure"])[1] if isinstance(entry.get("measure"), dict) else None
+            review = self.obj(entry["review"])[1] if isinstance(entry.get("review"), dict) else None
+            rows.append(R2.evaluate_gate(gate, self.commit, measure=measure, review=review, cases=cases))
+        return rows
+
 
 def generate_report(manifest, evidence_root, targets=None):
     """Return a fail-closed report. Only complete, verified FINAL evidence passes."""
@@ -1218,6 +1244,19 @@ def generate_report(manifest, evidence_root, targets=None):
             rows["A3"]["status"] = world_status
             rows["A3"]["reason"] = "A3 world " + world["status"] + ": " + world["reason"]
             rows["A3"]["failureOwner"] = world_owner
+    # WP-091: an R2 manifest also carries the R2 gates (tools/qa/r2-gates.json); an R1 manifest has none
+    if manifest.get("round") == "R2":
+        try:
+            r2_rows = inspector.R2(checklist.get("R2"))
+            r2_status = R2.summarize(r2_rows)
+            rows["R2"] = {"owner": "S-10", "status": r2_status, "gates": r2_rows}
+            for gate_row in r2_rows:
+                if gate_row["kind"] != "report" and gate_row["status"] in ("FAIL", "BLOCKED"):
+                    issue("R2." + gate_row["id"], gate_row["owner"], ProofError(gate_row["id"] + " " + gate_row["title"] + ": " + str(gate_row["reason"]), gate_row["status"]))
+        except (ProofError, OSError, ValueError, TypeError, KeyError) as error:
+            proof_error = error if isinstance(error, ProofError) else ProofError("invalid R2 evidence: " + str(error))
+            rows["R2"] = {"owner": "S-10", "status": proof_error.status, "reason": str(proof_error)}
+            issue("R2", "S-10", proof_error)
     try:
         for ref in list(inspector.evidence.values()):
             inspector.file(ref)

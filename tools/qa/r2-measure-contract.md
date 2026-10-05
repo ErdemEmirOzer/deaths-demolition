@@ -1,0 +1,53 @@
+# R2 measurement contract (WP-091, C-00 05.10)
+
+How an owner's R2 measurement test hands its result to the acceptance chain. The thresholds live in
+`tools/qa/r2-gates.json` (approved: `K/wp-078/R2-KABUL-TASLAK.md`); the judge is `tools/qa/r2_gates.py`, bound into
+`wp078_report.py` as the `R2` step of an R2 manifest (`wp078_accept.py --round R2`).
+
+## What the test writes
+
+One JSON file per gate, written only when the measurement actually ran:
+
+```json
+{"schema": "dd-r2-measure-v1", "gate": "L1", "commit": "<40-hex commit under test>",
+ "source": "DD.Art.Tests.PlayMode.AnimationLocomotionR2Tests.Ayak_Kaymasi_8Yon",
+ "values": {"avg": 0.031, "p95": 0.074}, "samples": 412}
+```
+
+- File name `r2-<gate id>.json`, in the folder named by the environment variable **`DD_R2_MEASURE_DIR`**. Without
+  that variable the test still asserts its threshold but writes nothing (ordinary CI runs).
+- `commit` comes from **`DD_R2_COMMIT`** (the runner sets it to the FINAL SHA). A file with another commit FAILs.
+- `values` carries exactly the keys listed for that gate in `r2-gates.json` (`checks[].key` and `report[]`), as plain
+  numbers (no NaN/Infinity, no strings). A missing key is BLOCKED; a value outside its check is FAIL.
+- The test itself should also fail on its threshold (so CI catches a regression early); the artifact is what the
+  acceptance report re-judges, so both must use the contract numbers.
+- Tests that measure are `[Explicit]` + `[Category("Diagnostics")]` when they are slow or need a quiet machine (Y6);
+  the acceptance chain runs them by name.
+
+## Required test identities
+
+Some gates (`tests` in `r2-gates.json`, e.g. Z1, Z3b, H4, H4b, U3) also require a test case by full name to be
+`Passed` in an NUnit XML bound to the run (A1 core/alone, A3 isolated, or the chain's `<E>/r2/` sessions). If the
+name is not in any bound XML the gate is BLOCKED; any other result is FAIL.
+
+## Human gates
+
+H5, L6, Z5, S6, U4: one review file `<E>/r2/reviews/<gate id>.json`:
+
+```json
+{"schema": "dd-r2-review-v1", "gate": "H5", "commit": "<40-hex>", "reviewer": "AD Fable",
+ "verdict": "KABUL_DÜZELTMELERLE", "must": [{"id": "MUST-1", "closed": true}]}
+```
+
+KABUL passes; KABUL_DÜZELTMELERLE passes only with every MUST closed; RED fails. MUST/SHOULD items name the measure
+and the frame they rest on (R1 format).
+
+## Report entries
+
+`kind: "report"` (L4, P2, P3, P5) never fail; their values are shown. P2 flags a perf cell that exceeds +10 % and
++1.0 ms over R1 together, and its owner writes the reason.
+
+## Changing a threshold
+
+Only by editing `r2-gates.json` in a reviewed commit **before** the measurement it applies to, with a C-00 record;
+`tests/test_r2_gates.py` pins the approved values so an unreviewed change is a red test.

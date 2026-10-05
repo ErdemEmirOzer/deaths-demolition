@@ -651,6 +651,26 @@ class ManifestTests(Base):
         self.assertTrue(reports)
         return json.loads(reports[-1].read_text())
 
+    def test_round_r2_binds_measurement_artifacts_into_the_manifest(self):
+        # WP-091: --round R2 adds the r2-gates.json step; a present measurement is bound with its hash, the rest stay absent
+        stages = [s for s in acc.STAGE_ORDER if s != "a8"]
+        self.full_run(stages=stages)
+        put_json(self.evidence / "r2" / "r2-L1.json", {"schema": "dd-r2-measure-v1", "gate": "L1", "commit": FINAL,
+                                                     "values": {"avg": 0.02, "p95": 0.05}})
+        self.assertNotEqual(0, make_chain(self.evidence, ["a8"], tools=FakeTools(), resume=True, round_name="R2").run())
+        manifest = json.loads((self.evidence / "manifest.json").read_text())
+        self.assertEqual("R2", manifest["round"])
+        self.assertEqual(["L1"], list(manifest["checklist"]["R2"]["gates"]))
+        self.assertTrue(manifest["checklist"]["R2"]["xml"])
+        report = self.report()
+        rows = {g["id"]: g["status"] for g in report["checklist"]["R2"]["gates"]}
+        self.assertEqual("PASS", rows["L1"])
+        self.assertEqual("BLOCKED", rows["S1"])
+
+    def test_round_r1_manifest_has_no_r2_step(self):
+        self.full_run()
+        self.assertNotIn("round", json.loads((self.evidence / "manifest.json").read_text()))
+
     def test_r2_isolated_sessions_carry_what_the_core_excludes(self):
         # R2 (C-00 01.10): the core XML no longer holds the DEC-077 readability case; its own `a3` session does, and the
         # report still closes the readability row — through the A3 record, not a fullname list

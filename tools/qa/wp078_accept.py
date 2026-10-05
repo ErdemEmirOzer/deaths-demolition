@@ -58,7 +58,10 @@ import wp078_perf_report  # noqa: E402  (CELL: the perf window directory layout)
 import wp078_report  # noqa: E402  (AI_FLAGS, AREAS, ROUTE_KEYS, SCHEMA)
 
 PROJECT = "prototype/DeathsDemolition_PlayableConcept"
-KADRO_EVIDENCE = Path.home() / "Desktop" / "KADRO" / "context" / "projects" / "deaths-demolition" / "wp-078" / "evidence"
+# C-00 05.10: repo and KADRO are moving off iCloud (~/Dev, symlinks at the old paths) — read the root from DD_KADRO
+# (the KADRO folder itself), never a fixed path; the old location stays the default until the move.
+KADRO_ROOT = Path(os.environ.get("DD_KADRO") or (Path.home() / "Desktop" / "KADRO"))
+KADRO_EVIDENCE = KADRO_ROOT / "context" / "projects" / "deaths-demolition" / "wp-078" / "evidence"
 STAGE_ORDER = ("a6", "a0", "a1", "a2", "a3", "a5", "a4", "a8")
 PLAYMODE_TIMEOUT_MIN = 90   # A1 full PlayMode watchdog (test.sh default 45 min; main-ci uses 60)
 ISOLATED_TIMEOUT_MIN = 10   # one isolated test in its own session (main-ci --alone-timeout default)
@@ -254,7 +257,7 @@ def load_b9_poses(path):
 class Chain:
     def __init__(self, final, evidence, stages, dry_run=False, resume=False, editmode_filter="", playmode_filter="",
                  wait_tries=3, wait_seconds=120.0, git=None, runner=None, guard=None, out=print, python=sys.executable,
-                 b9_poses=None):
+                 b9_poses=None, round_name="R1"):
         self.final, self.evidence = final, Path(evidence).resolve()
         self.stages = [s for s in STAGE_ORDER if s in stages]
         self.dry_run, self.resume = dry_run, resume
@@ -264,6 +267,7 @@ class Chain:
         self.runner = runner or self._spawn
         self.guard = guard or EditorGuard()
         self.out, self.py = out, python
+        self.round_name = round_name   # WP-091: "R2" adds the r2-gates.json step to the manifest
         self.b9_poses = list(b9_poses or [])   # C-00 01.10: S-05 B9 pose windows, after A4 in the same quiet-window run
         self.child, self.terminated = None, False
         self.planned = []          # (stage, argv) — the dry-run command list
@@ -800,7 +804,7 @@ class Chain:
             assets = self.git("rev-parse", f"{self.final}:{PROJECT}/Assets")
         except (subprocess.CalledProcessError, OSError):
             assets = None
-        manifest = assemble_manifest(self.evidence, self.final, assets)
+        manifest = assemble_manifest(self.evidence, self.final, assets, self.round_name)
         if manifest_path.exists():
             self.move_aside(manifest_path, "prev")
         write_json(manifest_path, manifest)
@@ -897,7 +901,27 @@ def _dirs(parent, pattern):
                   key=lambda p: [int(t) if t.isdigit() else t for t in re.split(r"(\d+)", p.name)])
 
 
-def assemble_manifest(evidence, final, assets_tree):
+def r2_section(evidence):
+    """WP-091 (C-00 05.10): the R2 gates' evidence — <E>/r2/r2-<gate id>.json (owner measurement, dd-r2-measure-v1),
+    <E>/r2/reviews/<gate id>.json (human review, dd-r2-review-v1) and every NUnit XML of the run (A1 core + alone, A3
+    isolated, <E>/r2/**/*.xml measurement sessions) for the required test identities. Listed from r2-gates.json, so a
+    gate without an artifact is simply absent here and BLOCKED in the report."""
+    contract = json.loads((HERE / "r2-gates.json").read_text(encoding="utf-8"))
+    gates = {}
+    for gate in contract["gates"]:
+        entry = {"measure": ref(evidence, evidence / "r2" / f"r2-{gate['id']}.json"),
+                 "review": ref(evidence, evidence / "r2" / "reviews" / f"{gate['id']}.json")}
+        if any(entry.values()):
+            gates[gate["id"]] = entry
+    xml_paths = [evidence / "a1" / "editmode" / "editmode.xml", evidence / "a1" / "playmode" / "playmode.xml"]
+    for base in (evidence / "a1", evidence / "a3", evidence / "r2"):
+        if base.is_dir():
+            xml_paths += sorted(p for p in base.rglob("playmode.xml") if p not in xml_paths)
+            xml_paths += sorted(p for p in base.rglob("editmode.xml") if p not in xml_paths)
+    return {"owner": "S-10", "gates": gates, "xml": [r for r in (ref(evidence, p) for p in xml_paths) if r]}
+
+
+def assemble_manifest(evidence, final, assets_tree, round_name=None):
     """The wp078_report manifest from the evidence tree: every path relative to the evidence root, every artifact with
     the sha256 of its bytes. A step or field without real evidence stays absent (the report says BLOCKED)."""
     evidence = Path(evidence).resolve()
@@ -1004,6 +1028,9 @@ def assemble_manifest(evidence, final, assets_tree):
             step.pop("status", None)
         checklist["A7"] = step
 
+    if round_name == "R2":
+        manifest["round"] = "R2"
+        checklist["R2"] = r2_section(evidence)
     manifest["checklist"] = checklist
     return _clean(manifest)
 
@@ -1027,6 +1054,7 @@ def main(argv=None, **seams):
     parser.add_argument("--playmode-filter", default="", help="A1: test.sh --filter for PlayMode (default: the whole suite)")
     parser.add_argument("--wait-tries", type=int, default=3)
     parser.add_argument("--wait-seconds", type=float, default=120.0)
+    parser.add_argument("--round", choices=("R1", "R2"), default="R1", help="WP-091: R2 adds the r2-gates.json gates to the manifest")
     parser.add_argument("--b9-poses", help="C-00 01.10: S-05 B9 pose list (JSON) run after A4 in the same quiet-window run")
     try:
         args = parser.parse_args(argv)
@@ -1053,7 +1081,7 @@ def main(argv=None, **seams):
         return 64
     chain = Chain(args.final, evidence, stages, dry_run=args.dry_run, resume=args.resume,
                   editmode_filter=args.editmode_filter, playmode_filter=args.playmode_filter,
-                  wait_tries=args.wait_tries, wait_seconds=args.wait_seconds, b9_poses=b9_poses, **seams)
+                  wait_tries=args.wait_tries, wait_seconds=args.wait_seconds, b9_poses=b9_poses, round_name=args.round, **seams)
     previous = signal.signal(signal.SIGTERM, chain.on_sigterm)
     try:
         return chain.run()
