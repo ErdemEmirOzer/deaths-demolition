@@ -1237,6 +1237,9 @@ namespace DD.Prototype.Weapons
         /// <summary>How long after a switch the mount's clip motion carries into the FP view model (the switch clips run ≤ 0.6 s).</summary>
         public const float FpClipMotionSeconds = 0.6f;
 
+        /// <summary>WP-087 readout: the switch / reload clip motion's weight on the FP weapon this frame (0 … 1; tests).</summary>
+        public float FpClipMotionWeight => _clipMotionWeight;
+
         /// <summary>WP-069 readout: the classic's FP feel layer (tests).</summary>
         public FpWeaponFeel ClassicFeel => _classicFeel;
 

@@ -724,42 +724,156 @@ namespace DD.Prototype.Tests.PlayMode
             DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.FirstPerson, instant: true);
             yield return SpecialWeaponSahne.Kareler(60);
             var report = new List<string>();
+            float tableDt0 = Time.captureDeltaTime;
+            Time.captureDeltaTime = 1f / 60f;   // WP-087: game frames (45 frames = 0.75 s), not 1–3 ms batch frames
             try
             {
                 foreach (WeaponDefinition d in Arsenal.All)
                 {
                     if (d == null || !d.enabled || d.slot != WeaponSlotKind.Classic) continue;
                     _s.Controller.EquipClassic(d.id, _s.Config);
+                    float equippedAt = Time.time;
                     yield return Dinlenme(mount, d.weaponId);
                     yield return SpecialWeaponSahne.Kareler(20);
                     Transform rig = mount.Find("ClassicWeaponRig");
                     WeaponVisualRig visual = rig != null ? rig.GetComponent<WeaponVisualRig>() : null;
                     if (visual == null || visual.Body == null) { report.Add(d.weaponId + ": no rig"); continue; }
                     Transform anchor = DD.Prototype.CameraSystem.CameraView.ViewmodelAnchor;
+                    Transform cam = Camera.main.transform;
+                    FpWeaponFeel feel = _s.Controller.ClassicFeel;
                     Quaternion bodyRest = visual.Body.localRotation;
                     Vector3 fwdRest = anchor.InverseTransformDirection(visual.Body.forward);
+                    // WP-087 (C-00 05.10): pitch (up +) / yaw / roll of each layer against its rest, in the anchor's frame (the screen)
+                    Vector3 body0 = AnchorEuler(anchor, visual.Body), root0 = AnchorEuler(anchor, rig), mount0 = AnchorEuler(anchor, mount), cam0 = cam.eulerAngles;
+                    Vector3 feel0 = feel != null ? feel.Rotation.eulerAngles : Vector3.zero;
+                    // WP-087: steady state — the shot lands after the switch's clip-motion window (FP_AnahtarPenceresindeAtes covers inside it)
+                    while (Time.time - equippedAt < WeaponController.FpClipMotionSeconds + 0.1f) yield return null;
+                    body0 = AnchorEuler(anchor, visual.Body); root0 = AnchorEuler(anchor, rig); mount0 = AnchorEuler(anchor, mount); cam0 = cam.eulerAngles;
+                    feel0 = feel != null ? feel.Rotation.eulerAngles : Vector3.zero;
+                    bodyRest = visual.Body.localRotation;
+                    fwdRest = anchor.InverseTransformDirection(visual.Body.forward);
+                    float sinceEquip = Time.time - equippedAt;
                     _s.Girdi.AtesBasti = true; _s.Girdi.AtesBasili = true;
                     yield return null;
                     _s.Girdi.AtesBasti = false; _s.Girdi.AtesBasili = false;
                     float rigMax = 0f, totalMax = 0f;
+                    Vector3 bodyPeak = Vector3.zero, feelPeak = Vector3.zero, rootPeak = Vector3.zero, mountPeak = Vector3.zero, camPeak = Vector3.zero;
+                    int pf = 0, yf = 0, rf = 0, armFrames = 0, reloadFrames = 0, firstArm = 0;
                     for (int f = 1; f <= 45; f++)
                     {
                         yield return null;
+                        Transform armSocket = WeaponController.FirstPersonWeaponSocket;
+                        if (armSocket != null && armSocket.gameObject.activeInHierarchy) { armFrames++; if (firstArm == 0) firstArm = f; }
+                        if (_s.Controller.Classic.IsReloading) reloadFrames++;
                         rigMax = Mathf.Max(rigMax, Quaternion.Angle(bodyRest, visual.Body.localRotation));
                         totalMax = Mathf.Max(totalMax, Vector3.Angle(fwdRest, anchor.InverseTransformDirection(visual.Body.forward)));
+                        Vector3 b = EulerDelta(AnchorEuler(anchor, visual.Body), body0);
+                        if (Mathf.Abs(b.x) > Mathf.Abs(bodyPeak.x)) { bodyPeak.x = b.x; pf = f; }
+                        if (Mathf.Abs(b.y) > Mathf.Abs(bodyPeak.y)) { bodyPeak.y = b.y; yf = f; }
+                        if (Mathf.Abs(b.z) > Mathf.Abs(bodyPeak.z)) { bodyPeak.z = b.z; rf = f; }
+                        if (feel != null) feelPeak = PeakOf3(feelPeak, EulerDelta(feel.Rotation.eulerAngles, feel0));
+                        rootPeak = PeakOf3(rootPeak, EulerDelta(AnchorEuler(anchor, rig), root0));
+                        mountPeak = PeakOf3(mountPeak, EulerDelta(AnchorEuler(anchor, mount), mount0));
+                        camPeak = PeakOf3(camPeak, EulerDelta(cam.eulerAngles, cam0));
                     }
 
-                    report.Add(d.weaponId + " rig " + rigMax.ToString("0.0") + "° total " + totalMax.ToString("0.0") + "° (A4.2 pitch " + FpWeaponFeel.KickFor(d.weaponId).PitchDeg.ToString("0.0") + "°)");
+                    FpWeaponFeel.VmKick k = FpWeaponFeel.KickFor(d.weaponId);
+                    report.Add(d.weaponId + " rig " + rigMax.ToString("0.0") + "° total " + totalMax.ToString("0.0") + "° (A4.2 pitch " + k.PitchDeg.ToString("0.0") + "°)"
+                        + " · body p/y/r " + P3(bodyPeak) + " @f" + pf + "/" + yf + "/" + rf + " (A4.2 " + k.PitchDeg.ToString("0.0") + "/" + k.YawDeg.ToString("0.0") + "/" + k.RollDeg.ToString("0.0") + ")"
+                        + " · feel " + P3(feelPeak) + " · root " + P3(rootPeak) + " · mount " + P3(mountPeak) + " · cam " + P3(camPeak)
+                        + " · parent " + (rig.parent != null ? rig.parent.name : "-") + " · arms " + armFrames + "/45 (from f" + firstArm + ") reload " + reloadFrames + "/45 ammo " + _s.Controller.Classic.Ammo
+                        + " · shot " + sinceEquip.ToString("0.00") + " s after equip (clip-motion window " + WeaponController.FpClipMotionSeconds.ToString("0.0") + " s)");
                     yield return new WaitForSeconds(0.8f);
                 }
             }
             finally
             {
                 _s.Girdi.AtesBasti = false; _s.Girdi.AtesBasili = false;
+                Time.captureDeltaTime = tableDt0;
             }
 
             Debug.Log("[DD-TEST] wp069.fptable " + string.Join(" | ", report));
             Assert.IsNotEmpty(report);
+        }
+
+        // WP-087: a transform's rotation in the anchor's frame as Euler angles; deltas as pitch (up +) / yaw / roll, degrees.
+        private static Vector3 AnchorEuler(Transform anchor, Transform t) => (Quaternion.Inverse(anchor.rotation) * t.rotation).eulerAngles;
+
+        private static Vector3 EulerDelta(Vector3 now, Vector3 rest) =>
+            new Vector3(-Mathf.DeltaAngle(rest.x, now.x), Mathf.DeltaAngle(rest.y, now.y), Mathf.DeltaAngle(rest.z, now.z));
+
+        private static Vector3 PeakOf3(Vector3 peak, Vector3 v) =>
+            new Vector3(Mathf.Abs(v.x) > Mathf.Abs(peak.x) ? v.x : peak.x, Mathf.Abs(v.y) > Mathf.Abs(peak.y) ? v.y : peak.y, Mathf.Abs(v.z) > Mathf.Abs(peak.z) ? v.z : peak.z);
+
+        private static string P3(Vector3 v) => v.x.ToString("0.0") + "/" + v.y.ToString("0.0") + "/" + v.z.ToString("0.0") + "°";
+
+        /// <summary>
+        /// WP-087 (C-00 05.10, decision B: S-06 weighs the third-person fire additive 0 in FP): a shot fired inside a weapon
+        /// switch's clip-motion window (0.6 s) — the third-person fire clip turning the mount must not reach the FP weapon. The
+        /// leak is the root's rotation against the pose the feel layer and the fpView pose place it at (anchor · feel · fpView);
+        /// the switch's draw pose may still be settling (it decays), the fire clip shows as a rise: after the shot the leak never
+        /// climbs more than 3° above its lowest value so far. Game frames (1/60). Before the fix (b6g3): ar_2 settled to 1.2° at
+        /// f13, then the fire clip lifted it to 16.4° (f16); smg_1 / sg_2 0° (their clips do not turn the mount).
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator FP_AnahtarPenceresindeAtes_KlipSizintisiYok()
+        {
+            yield return Kur();
+            Transform mount = _s.Rig.GetComponentInChildren<PlayerWeaponBinding>().WeaponMount;
+            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.FirstPerson, instant: true);
+            yield return SpecialWeaponSahne.Kareler(60);
+            var report = new List<string>();
+            var wrong = new List<string>();
+            float dt0 = Time.captureDeltaTime;
+            Time.captureDeltaTime = 1f / 60f;   // game frames: a batch frame is 1–3 ms and 45 of them were 0.1 s, not 0.75 s
+            try
+            {
+                foreach (ClassicWeaponId id in new[] { ClassicWeaponId.AutoSmg, ClassicWeaponId.Ar2, ClassicWeaponId.Sg2 })
+                {
+                    _s.Controller.EquipClassic(id == ClassicWeaponId.AssaultRifle ? ClassicWeaponId.Lmg1 : ClassicWeaponId.AssaultRifle, _s.Config);
+                    yield return new WaitForSeconds(WeaponController.FpClipMotionSeconds + 0.3f);
+                    _s.Controller.EquipClassic(id, _s.Config);   // a switch: the clip-motion window opens
+                    yield return new WaitForSeconds(0.25f);
+                    WeaponDefinition def = _s.Controller.Classic.Definition;
+                    Transform rig = mount.Find("ClassicWeaponRig");
+                    Transform anchor = DD.Prototype.CameraSystem.CameraView.ViewmodelAnchor;
+                    FpWeaponFeel feel = _s.Controller.ClassicFeel;
+                    Assert.IsNotNull(rig, def.weaponId + ": rig yok");
+                    Assert.IsNotNull(anchor, "FP görüntü modeli çapası yok");
+                    float weightAtShot = _s.Controller.FpClipMotionWeight;
+                    _s.Girdi.AtesBasti = true; _s.Girdi.AtesBasili = true;
+                    yield return null;
+                    _s.Girdi.AtesBasti = false; _s.Girdi.AtesBasili = false;
+                    float leakMin = float.MaxValue, rise = 0f;
+                    int riseFrame = 0;
+                    var trace = new System.Text.StringBuilder();
+                    for (int f = 1; f <= 45; f++)
+                    {
+                        yield return null;
+                        Quaternion target = anchor.rotation * feel.Rotation * Quaternion.Euler(def.FpViewPose.euler);
+                        float leak = Quaternion.Angle(target, rig.rotation);
+                        if (f <= 24 || f % 5 == 0) trace.Append(' ').Append(f).Append(':').Append(leak.ToString("0.0")).Append('/').Append(_s.Controller.FpClipMotionWeight.ToString("0.00"));
+                        if (leak - leakMin > rise) { rise = leak - leakMin; riseFrame = f; }
+                        leakMin = Mathf.Min(leakMin, leak);
+                    }
+
+                    Debug.Log("[DD-TEST] wp087.trace " + def.weaponId + " t=" + Time.deltaTime.ToString("0.000") + trace);
+
+                    report.Add(def.weaponId + " clip weight at the shot " + weightAtShot.ToString("0.00") + ", rise " + rise.ToString("0.0") + "° @f" + riseFrame);
+                    if (weightAtShot <= 0f) wrong.Add(def.weaponId + ": atış anahtar penceresine düşmedi (ölçüm boş)");
+                    if (rise > 3f) wrong.Add(def.weaponId + ": TP ateş klibi FP silaha sızdı, yükselme " + rise.ToString("0.0") + "° @f" + riseFrame);
+                    yield return new WaitForSeconds(0.8f);
+                }
+            }
+            finally
+            {
+                _s.Girdi.AtesBasti = false; _s.Girdi.AtesBasili = false;
+                Time.captureDeltaTime = dt0;
+            }
+
+            Debug.Log("[DD-TEST] wp087.switchfire " + string.Join(" | ", report));
+            Assert.IsEmpty(wrong, string.Join("\n", wrong) + "\n" + string.Join("\n", report));
         }
 
         /// <summary>
