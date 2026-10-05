@@ -32,7 +32,26 @@ in the manifest are sliced with its rects; a manifest edit re-slices (source dep
   shape otherwise. No screen depends on the art being imported.
 - Colour never lives in the art: icons are white, frames are cream ink; every image is tinted
   with a `UiColor` token, so `UiTokens`' measured contrast pairs stay the only colour authority.
-- Budget: UI art ≤ 12 MB source, every texture ≤ 1024² (`UiArtThemeTests.DokuSinifi_1024VeButce`).
+- Budget: UI art ≤ 12 MB source, every texture ≤ 1024² (`UiArtThemeTests.DokuSinifi_1024VeButce`); `Wallpapers/`
+  (the loading key arts and the round-end wallpaper) is its own class, ≤ 10 MB source (WP-081, C-00 05.10).
 - Regenerating G1 / A4: `wp-068/tools/g1/build_g1.py <out>` (sources: AP-012 v004 `exports/`, SHA-checked, and the
   retired RGBA atlases snapshotted in `wp-068/g1-src/`) → copy `G1/`, `A4/`, `Cursor/`, `Tiles/` here → run the theme
   builder. Plates and skins: `asset-production/AP-012/tools/build_atlas.py` as before.
+
+## Icon intake (WP-081 B2 · menu v4, AP-028)
+
+Menu v4 trades words for icons (R2 U1). Every new icon goes through G1 so it stays one draw path, one colour authority and one budget:
+
+- **Delivery** (AP-028 / Codex): one single-colour glyph per key, white on transparent, drawn on a 24 px grid
+  (2 px stroke at 24; no detail or gap under 1.5 px at 24 — it has to read at `UiIconSize.S`). SVG, or PNG ≥ 256²,
+  in the AP-012 `exports/` layout; no colour, no shading, no baked outline or glow (the shader does those).
+- **Build**: `build_g1.py` turns it into a 64² signed-distance cell (spread 6 px, 0.5 = edge) on the 1024² G1 page,
+  **Alpha8**, no mips, sliced by the manifest. A key is `Area.Name` (`Menu.Settings`, `Menu.Profile`, …).
+- **Use**: only through `UiIconControls.Button` / `Tab` (`UiIconButton`): a string key for the reader name (never a
+  literal), the word on hover and focus (tooltip) or under the glyph (tab), a 44 px hit, glyph 24 / 32 / 40 px on the
+  8 px grid (`UiIconTokens`). A key the atlas lacks hides the glyph (the name and word stay) and lands in
+  `UiIconButton.MissingIconKeys` — the screen tests require it empty.
+- **Colour**: tinted by token only — TextPrimary for a plain button or the chosen tab, TextSecondary for the others
+  (≥ 3:1 on their fills, WCAG 1.4.11). A state is never hue alone: the chosen tab also gets the raised fill, the cream
+  outline and the bar under its word (colour-blind safe, `UiIconKitTests`).
+- **Budget**: the G1 page counts toward the 12 MB UI source budget above; a second page needs C-00's budget decision.

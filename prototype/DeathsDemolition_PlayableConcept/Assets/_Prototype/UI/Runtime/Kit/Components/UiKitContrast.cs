@@ -171,6 +171,28 @@ namespace DD.Prototype.UI
             },
             { typeof(UiButtons), new UiContrastCase[0] }, // factory for UiButton (declared above)
             {
+                typeof(UiIconButton), new[]
+                {
+                    C("Icon glyph, plain button", UiColor.TextPrimary, UiColor.SurfaceBase, Boundary),
+                    C("Icon glyph, chosen tab", UiColor.TextPrimary, UiColor.SurfaceRaised, Boundary),
+                    C("Icon glyph, other tab", UiColor.TextSecondary, UiColor.SurfaceBase, Boundary),
+                    C("Icon glyph, unavailable", UiColor.TextSecondary, UiColor.SurfaceRaised, Boundary),
+                    C("Tab word, chosen", UiColor.TextPrimary, UiColor.SurfaceRaised, Text),
+                    C("Tab word, other", UiColor.TextSecondary, UiColor.SurfaceBase, Text),
+                    C("Tab word, unavailable", UiColor.TextSecondary, UiColor.SurfaceRaised, Text),
+                    C("Chosen bar under the word", UiColor.TextPrimary, UiColor.SurfaceRaised, Boundary),
+                }
+            },
+            { typeof(UiIconTokens), new UiContrastCase[0] }, // numbers only
+            { typeof(UiIconControls), new UiContrastCase[0] }, // factory for UiIconButton (declared above)
+            {
+                typeof(UiTooltip), new[]
+                {
+                    C("Tooltip word on its plate", UiColor.TextPrimary, UiColor.SurfaceRaised, Text),
+                    C("Tooltip edge on the page", UiColor.BorderStrong, UiColor.SurfaceBase, Boundary),
+                }
+            },
+            {
                 typeof(UiBar), new[]
                 {
                     C("Health fill on the track", UiColor.BarHealth, UiColor.BarTrack, Boundary),

@@ -22,6 +22,10 @@ namespace DD.Prototype.Tests.EditMode
         private const string ArtFolder = "Assets/_Prototype/UI/Art/Resources/UI";
         private const long UiArtBudgetBytes = 12L * 1024 * 1024; // ADR-015-1 UI class, package brief
 
+        /// <summary>WP-081 (C-00 05.10, decision B): the loading key arts and the wallpapers are their own class, outside the UI 12 MB.</summary>
+        private const string WallpaperFolder = ArtFolder + "/Wallpapers";
+        private const long WallpaperBudgetBytes = 10L * 1024 * 1024;
+
         private static readonly string[] HudKeys =
         {
             "Hud.Gold", "Hud.Special", "Hud.Round", "Hud.Health", "Hud.Enemies", "Hud.Timer", "Hud.LowHealth"
@@ -262,7 +266,8 @@ namespace DD.Prototype.Tests.EditMode
         /// <summary>
         /// Texture class: every UI texture ≤ 1024², no mipmaps; the G1 distance field and the A4 frames are Alpha8
         /// (white + alpha, the distance / coverage in .a); the V1 cursors are readable RGBA32 32 / 64 px; the kumiko
-        /// tile repeats. The UI art stays under its source budget.
+        /// tile repeats. The UI art stays under its source budget; the wallpapers (loading key arts, the round-end
+        /// wallpaper) under theirs (WP-081, C-00 05.10: UI 12 MB, Wallpapers 10 MB).
         /// </summary>
         [Test]
         public void DokuSinifi_1024VeButce()
@@ -273,13 +278,27 @@ namespace DD.Prototype.Tests.EditMode
             Assert.Greater(files.Length, 0, "UI görselleri bulunamadı: " + ArtFolder);
 
             long total = 0;
+            long wallpapers = 0;
+            string wallpaperFolder = WallpaperFolder.Replace('/', Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
             foreach (string file in files)
             {
-                total += new FileInfo(file).Length;
+                long size = new FileInfo(file).Length;
+                if (file.Replace('/', Path.DirectorySeparatorChar).StartsWith(wallpaperFolder, System.StringComparison.Ordinal))
+                {
+                    wallpapers += size;
+                }
+                else
+                {
+                    total += size;
+                }
             }
 
+            Debug.Log("[DD-TEST] ui.art.budget ui=" + total + " / " + UiArtBudgetBytes + " wallpapers=" + wallpapers + " / " + WallpaperBudgetBytes);
+            Assert.Greater(wallpapers, 0, "duvar kâğıdı sınıfı boş: " + WallpaperFolder);
             Assert.LessOrEqual(total, UiArtBudgetBytes,
                 "UI sanatı kaynak boyutu bütçeyi aşıyor: " + total + " B (sıkıştırma öncesi üst sınır)");
+            Assert.LessOrEqual(wallpapers, WallpaperBudgetBytes,
+                "duvar kâğıdı sınıfı (yükleme anahtar sanatları + round sonu) kaynak bütçeyi aşıyor: " + wallpapers + " B");
 
             foreach (string folder in new[] { UiTheme.AtlasFolder.TrimEnd('/'), "UI/G1", "UI/A4" })
             {
