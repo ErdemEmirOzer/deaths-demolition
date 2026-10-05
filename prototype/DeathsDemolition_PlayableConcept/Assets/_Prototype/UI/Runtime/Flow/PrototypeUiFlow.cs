@@ -468,7 +468,43 @@ namespace DD.Prototype.UI
                 yield break;
             }
 
+            // WP-081: the main menu's real-time world arrives behind the closed doors (capped; the raw load above is P5's).
+            yield return WaitForMenuWorld();
+            if (generation != s_loadGeneration)
+            {
+                yield break;
+            }
+
             curtain.Open(fast);
+        }
+
+        /// <summary>The doors' extra wait for the menu's world on the last arrival, seconds (0 = none; probes, the R2 report).</summary>
+        public static float LastMenuWorldWaitSeconds { get; private set; }
+
+        /// <summary>
+        /// WP-081 (C-00 05.10, default 1): when the scene that just activated is the main menu and its cinematic world is
+        /// still loading, the doors stay shut until it shows - the world's activation hitch lands behind them, never in the
+        /// menu - for at most <see cref="MenuCinematic.RevealCapSeconds"/>; past that they open on the plates and the world
+        /// fades in when it is ready. Nothing waits in batch or without the world (<see cref="MenuCinematic.Allowed"/>).
+        /// </summary>
+        private static IEnumerator WaitForMenuWorld()
+        {
+            LastMenuWorldWaitSeconds = 0f;
+            if (!MenuCinematic.HoldsReveal)
+            {
+                yield break;
+            }
+
+            float t0 = Time.unscaledTime;
+            while (MenuCinematic.HoldsReveal)
+            {
+                yield return null;
+            }
+
+            LastMenuWorldWaitSeconds = Time.unscaledTime - t0;
+            MenuCinematic current = MenuCinematic.Current;
+            Debug.Log("[UI] Menu world behind the doors: +" + LastMenuWorldWaitSeconds.ToString("F2") + " s"
+                + (current != null && current.Live ? "." : " (cap reached: the doors open on the plates, the world fades in when ready)."));
         }
 
         // ============================================================ boot seal (10b-2)
@@ -632,6 +668,13 @@ namespace DD.Prototype.UI
             s_loading = false;   // not recorded: the seal's hold hides the load time the table wants
             yield return null;
             yield return null;
+            if (generation != s_loadGeneration)
+            {
+                yield break;
+            }
+
+            // WP-081: the first menu's world arrives behind the seal (capped, as after any load).
+            yield return WaitForMenuWorld();
             if (generation != s_loadGeneration)
             {
                 yield break;

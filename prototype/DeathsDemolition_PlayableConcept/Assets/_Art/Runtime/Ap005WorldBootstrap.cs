@@ -83,6 +83,8 @@ namespace DD.Art
             var report = new StringBuilder(1024);
             bool ok = true;
             bool underRun = SceneManager.GetActiveScene().name == PrototypeScenes.Run && gameObject.scene.name != PrototypeScenes.Run;
+            // WP-081: under the main menu as its cinematic backdrop - the look only (atmosphere, sky, layout); none of the run.
+            bool viewer = WorldViewer.Active;
 
             Transform root = transform;
             Transform instances = root.Find(InstancesName);
@@ -102,7 +104,7 @@ namespace DD.Art
             int lodGroups = instances != null ? instances.GetComponentsInChildren<LODGroup>(true).Length : 0;
             int colliders = instances != null ? instances.GetComponentsInChildren<Collider>(true).Length : 0;
             report.Append("[AP005] Content: ").Append(count).Append(" instances, ").Append(renderers.Length).Append(" renderers, ")
-                .Append(lodGroups).Append(" LOD groups, ").Append(colliders).Append(" colliders (").Append(underRun ? "under Run" : "standalone").Append(").\n");
+                .Append(lodGroups).Append(" LOD groups, ").Append(colliders).Append(" colliders (").Append(viewer ? "menu viewer" : underRun ? "under Run" : "standalone").Append(").\n");
 
             // WP-074 B1b: the live layout before the markers register (S-03's SpawnWorldProfile refreshes on WorldLayout.Changed);
             // WP-075 C3: and before the atmosphere, whose skybox follows the layout (v6 → sky v2).
@@ -116,6 +118,29 @@ namespace DD.Art
             }
 
             report.Append("[AP005] Atmosphere: ").Append(_buildAtmosphere ? "sun + volume + wind + " + driftFields + " drift fields" : "off").Append(".\n");
+
+            if (viewer)
+            {
+                // AP-028 v002 menu budget: wet surfaces from the baked probes only - no real-time planar reflection.
+                int planar = 0;
+                foreach (PlanarReflection reflection in FindObjectsOfType<PlanarReflection>(true))
+                {
+                    if (reflection.gameObject.scene == gameObject.scene)
+                    {
+                        reflection.enabled = false;
+                        planar++;
+                    }
+                }
+
+                report.Append("[AP005] Menu viewer: no markers, NavMesh check, run systems or HUD; ").Append(planar).Append(" planar reflection(s) off.\n");
+                s_last = new Result { Ok = ok, Report = report.ToString(), Instances = count, Renderers = renderers.Length, LodGroups = lodGroups, Colliders = colliders, DriftFields = driftFields };
+                if (_logReport)
+                {
+                    Debug.Log("[AP005] World ready (menu viewer).\n" + s_last.Report, this);
+                }
+
+                return s_last;
+            }
 
             WorldMarkers.Build(root, _placement != null ? MarkerSetFrom(_placement) : WorldMarkers.ProceduralSet());
 

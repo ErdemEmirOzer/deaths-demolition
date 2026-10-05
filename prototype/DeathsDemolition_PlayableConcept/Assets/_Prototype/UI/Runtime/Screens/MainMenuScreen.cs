@@ -173,6 +173,36 @@ namespace DD.Prototype.UI
             ShowPane(_pane);
 
             ProfileService.Changed += OnProfileChanged;
+
+            // WP-081 (the user's G5 addition, AP-028's five shots): the real world as the backdrop; the plates until it shows.
+            MenuCinematic.Begin(gameObject, OnWorldLive, () => PaneOpen);
+        }
+
+        /// <summary>
+        /// WP-081: the live world is under the menu (MenuCinematic has moved the screens to overlays) - the base fill goes,
+        /// the plates fade over the blend (at once behind the curtain or with Reduced Motion); the text-safe scrim stays.
+        /// </summary>
+        private void OnWorldLive()
+        {
+            Transform backdrop = ScreenRect.Find("Backdrop");
+            Transform baseFill = backdrop != null ? backdrop.Find("Base") : null;
+            if (baseFill != null)
+            {
+                baseFill.gameObject.SetActive(false);
+            }
+
+            if (_plates != null)
+            {
+                bool cut = UiCurtain.IsCovering || UiMotion.ReducedMotion;
+                _plates.ShowWorld(cut ? 0f : MenuCinematic.Blend, Time.unscaledTime);
+                return;
+            }
+
+            Transform plate = backdrop != null ? backdrop.Find("MenuPlate") : null;
+            if (plate != null)
+            {
+                plate.gameObject.SetActive(false);
+            }
         }
 
         /// <summary>v4: the name alone at the top of the spine, on as many lines as the spine's width needs (two at 1080).</summary>

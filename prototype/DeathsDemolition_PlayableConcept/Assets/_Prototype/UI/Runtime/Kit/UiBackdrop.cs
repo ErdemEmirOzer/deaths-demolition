@@ -317,6 +317,83 @@ namespace DD.Prototype.UI
         private void Update()
         {
             Tick(Time.unscaledDeltaTime, Time.unscaledTime, LookOverride ?? LookTarget());
+            if (_worldFadeAt >= 0f)
+            {
+                StepWorldFade(Time.unscaledTime);
+            }
+        }
+
+        /// <summary>WP-081: the bands that step aside for the live world (the text-safe scrim and its fade stay).</summary>
+        public static readonly string[] WorldBands = { "Far", "Mid", "Lanterns", "Near", "Rain" };
+
+        private readonly System.Collections.Generic.List<CanvasGroup> _worldFade = new System.Collections.Generic.List<CanvasGroup>();
+        private float _worldFadeAt = -1f;
+        private float _worldFadeSeconds;
+
+        /// <summary>True once the live world shows under the menu (MenuCinematic): the plates have stepped aside.</summary>
+        public bool WorldShown { get; private set; }
+
+        /// <summary>
+        /// WP-081: the main menu's real-time world is up - the plate bands and the rain fade out over
+        /// <paramref name="seconds"/> (0 = at once: behind the curtain, Reduced Motion) and then stop drawing. The
+        /// text-safe scrim (α 0.55, C-00 05.10 decision b) and its fade stay over the world.
+        /// </summary>
+        public void ShowWorld(float seconds, float now)
+        {
+            if (!_built || WorldShown)
+            {
+                return;
+            }
+
+            WorldShown = true;
+            foreach (string band in WorldBands)
+            {
+                Transform child = _root.Find(band);
+                if (child == null || !child.gameObject.activeSelf)
+                {
+                    continue;
+                }
+
+                CanvasGroup group = child.GetComponent<CanvasGroup>();
+                if (group == null)
+                {
+                    group = child.gameObject.AddComponent<CanvasGroup>();
+                }
+
+                group.blocksRaycasts = false;
+                group.interactable = false;
+                _worldFade.Add(group);
+            }
+
+            _worldFadeSeconds = seconds;
+            _worldFadeAt = now;
+            StepWorldFade(now);
+        }
+
+        /// <summary>One step of the plates' fade toward the world (smoothstep); at the end the bands go inactive. Tests drive it.</summary>
+        public void StepWorldFade(float now)
+        {
+            float u = _worldFadeSeconds > 0f ? Mathf.Clamp01((now - _worldFadeAt) / _worldFadeSeconds) : 1f;
+            float alpha = 1f - u * u * (3f - 2f * u);
+            for (int i = 0; i < _worldFade.Count; i++)
+            {
+                if (_worldFade[i] == null)
+                {
+                    continue;
+                }
+
+                _worldFade[i].alpha = alpha;
+                if (u >= 1f)
+                {
+                    _worldFade[i].gameObject.SetActive(false);
+                }
+            }
+
+            if (u >= 1f)
+            {
+                _worldFadeAt = -1f;
+                _worldFade.Clear();
+            }
         }
 
         /// <summary>One frame: follow <paramref name="look"/> (−1..1) and breathe. Tests drive it directly.</summary>

@@ -112,6 +112,13 @@ namespace DD.Prototype.UI
             // process-local folder, never the player's ui-settings.json (user-data rule).
             UiDataPaths.UseProcessLocalRoot();
             ApplyCaptureSettings();
+            // WP-081: a still frame needs a still world - the menu's cinematic held at S01's start (or -ddMenuWorldTime s);
+            // the cinematic modes drive the clock themselves.
+            if (!screen.ToLowerInvariant().StartsWith("cinematic", StringComparison.Ordinal))
+            {
+                float worldTime;
+                MenuCinematic.TimeOverride = float.TryParse(Arg("-ddMenuWorldTime"), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out worldTime) ? worldTime : 0f;
+            }
             var carrier = new GameObject("UiCaptureAgent");
             UnityEngine.Object.DontDestroyOnLoad(carrier);
             if (screen.ToLowerInvariant() == "hud")
@@ -910,6 +917,14 @@ namespace DD.Prototype.UI
                 if (_screen == "menumatrix")
                 {
                     yield return MenuMatrix();
+                    yield break;
+                }
+
+                if (_screen == "cinematic" || _screen == "cinematicperf" || _screen == "cinematicmp4")
+                {
+                    yield return _screen == "cinematic" ? CinematicFrames() : _screen == "cinematicperf" ? CinematicPerf() : CinematicMp4();
+                    Debug.Log("[UiCapture] " + _screen + " done");
+                    Application.Quit();
                     yield break;
                 }
 
@@ -2544,6 +2559,377 @@ namespace DD.Prototype.UI
                 RunHudScreen.CaptureSpecialActive = special;
                 yield return new WaitForSecondsRealtime(0.4f); // past the spread follow
                 yield return Frame(folder, name);
+            }
+
+            // ============================================================ WP-081 · the menu's cinematic world
+
+            /// <summary>
+            /// WP-081 (C-00 05.10 item 5) · <c>-ddUiCapture cinematic</c>: for each of the five shots at its start, mid-move,
+            /// end (before the blend) and blend middle - <c>cine-S0n-tLL.L.png</c> (the menu as the player sees it) and
+            /// <c>…-bg.png</c> (the world with the backdrop's scrim, every menu graphic off: the ground the words stand on);
+            /// <c>cine-elements.jsonl</c> - each visible menu graphic's rect (px, origin bottom-left), colour, size and font,
+            /// with the rail focused on each item in turn (the word beside it moves) - for wp-068s9/tools/cine-contrast.py;
+            /// <c>cine-collisions.json</c> - the 0.35 m sphere along every camera path and the line of sight to every target;
+            /// <c>cine-report.json</c> - when the world went live and how long the doors waited for it.
+            /// </summary>
+            private IEnumerator CinematicFrames()
+            {
+                string folder = Path.HasExtension(_out) ? (Path.GetDirectoryName(_out) ?? Application.persistentDataPath) : _out;
+                Directory.CreateDirectory(folder);
+                yield return WaitFor(() => MenuCinematic.Current != null && MenuCinematic.Current.Live && !UiCurtain.IsCovering, 60f);
+                MainMenuScreen menu = FindObjectOfType<MainMenuScreen>();
+                MenuCinematic cinematic = MenuCinematic.Current;
+                WriteCinematicReport(folder, cinematic);
+                if (menu == null || cinematic == null || !cinematic.Live)
+                {
+                    Debug.Log("[UiCapture] cinematic: the world is not live; nothing to measure.");
+                    yield break;
+                }
+
+                yield return new WaitForSecondsRealtime(Mathf.Max(_delay, MenuCinematic.Blend + 0.4f));   // past the plates' fade
+                WriteCollisions(Path.Combine(folder, "cine-collisions.json"));
+
+                var elements = new System.Text.StringBuilder();
+                for (int item = 0; item < menu.Rail.Count; item++)
+                {
+                    UiInput.Focus(menu.Rail[item].Button);
+                    yield return new WaitForSecondsRealtime(0.5f);
+                    AppendMenuElements(elements, menu, item);
+                }
+
+                UiInput.Focus(menu.Rail[0].Button);
+                File.WriteAllText(Path.Combine(folder, "cine-elements.jsonl"), elements.ToString());
+                yield return new WaitForSecondsRealtime(0.5f);
+
+                var ic = System.Globalization.CultureInfo.InvariantCulture;
+                float[] locals = { 0f, 4.8f, 10.79f, 11.4f };
+                for (int shot = 0; shot < MenuCinematic.Shots.Length; shot++)
+                {
+                    foreach (float local in locals)
+                    {
+                        MenuCinematic.TimeOverride = shot * MenuCinematic.Slice + local;
+                        for (int f = 0; f < 4; f++)
+                        {
+                            yield return null;
+                        }
+
+                        string name = MenuCinematic.Shots[shot].id + "-t" + local.ToString("00.00", ic);
+                        yield return Frame(folder, "cine-" + name);
+                        var hidden = new System.Collections.Generic.List<UnityEngine.UI.Graphic>();
+                        foreach (UnityEngine.UI.Graphic g in menu.GetComponentsInChildren<UnityEngine.UI.Graphic>(false))
+                        {
+                            if (g.enabled && !UnderBackdrop(g.transform, menu.transform))
+                            {
+                                g.enabled = false;
+                                hidden.Add(g);
+                            }
+                        }
+
+                        yield return Frame(folder, "cine-" + name + "-bg");
+                        foreach (UnityEngine.UI.Graphic g in hidden)
+                        {
+                            if (g != null)
+                            {
+                                g.enabled = true;
+                            }
+                        }
+                    }
+                }
+
+                MenuCinematic.TimeOverride = 0f;
+            }
+
+            private static bool UnderBackdrop(Transform t, Transform root)
+            {
+                for (; t != null && t != root; t = t.parent)
+                {
+                    if (t.name == "Backdrop")
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            private static void AppendMenuElements(System.Text.StringBuilder lines, MainMenuScreen menu, int focus)
+            {
+                var ic = System.Globalization.CultureInfo.InvariantCulture;
+                var corners = new Vector3[4];
+                foreach (UnityEngine.UI.Graphic g in menu.GetComponentsInChildren<UnityEngine.UI.Graphic>(false))
+                {
+                    float alpha = g.canvasRenderer.GetInheritedAlpha() * g.color.a;
+                    if (!g.enabled || alpha <= 0.01f)
+                    {
+                        continue;
+                    }
+
+                    bool backdrop = UnderBackdrop(g.transform, menu.transform);
+                    if (backdrop && g.name != "TextSafeScrim" && g.name != "TextSafeFade")
+                    {
+                        continue;
+                    }
+
+                    Canvas canvas = g.canvas;
+                    Camera camera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null;
+                    g.rectTransform.GetWorldCorners(corners);
+                    Vector2 a = RectTransformUtility.WorldToScreenPoint(camera, corners[0]);
+                    Vector2 b = RectTransformUtility.WorldToScreenPoint(camera, corners[2]);
+                    var text = g as TMPro.TMP_Text;
+                    if (text != null && string.IsNullOrEmpty(text.text))
+                    {
+                        continue;
+                    }
+
+                    float scale = canvas != null ? canvas.scaleFactor : 1f;
+                    string pathName = g.name;
+                    for (Transform t = g.transform.parent; t != null && t != menu.transform; t = t.parent)
+                    {
+                        pathName = t.name + "/" + pathName;
+                    }
+
+                    Color c = g.color;
+                    lines.Append(string.Format(ic,
+                        "{{\"focus\":{0},\"path\":\"{1}\",\"text\":{2},\"words\":\"{3}\",\"font\":\"{4}\",\"x0\":{5:F1},\"y0\":{6:F1},\"x1\":{7:F1},\"y1\":{8:F1},\"r\":{9:F4},\"g\":{10:F4},\"b\":{11:F4},\"a\":{12:F4},\"sizePx\":{13:F1},\"bold\":{14},\"backdrop\":{15},\"screen\":[{16},{17}]}}\n",
+                        focus, pathName.Replace("\"", "'"), text != null ? "true" : "false",
+                        text != null ? text.text.Replace("\"", "'").Replace("\n", " ") : string.Empty,
+                        text != null && text.font != null ? text.font.name.Replace("\"", "'") : string.Empty,
+                        Mathf.Min(a.x, b.x), Mathf.Min(a.y, b.y), Mathf.Max(a.x, b.x), Mathf.Max(a.y, b.y),
+                        c.r, c.g, c.b, alpha, text != null ? text.fontSize * scale : 0f,
+                        text != null && (text.fontStyle & TMPro.FontStyles.Bold) != 0 ? "true" : "false",
+                        backdrop ? "true" : "false", Screen.width, Screen.height));
+                }
+            }
+
+            private static void WriteCinematicReport(string folder, MenuCinematic cinematic)
+            {
+                var ic = System.Globalization.CultureInfo.InvariantCulture;
+                DD.Prototype.World.WorldSource source = DD.Prototype.World.WorldSourceSettings.Resolve(out string scene);
+                string json = string.Format(ic,
+                    "{{\"live\":{0},\"world\":\"{1}\",\"source\":\"{2}\",\"viewer\":{3},\"overlayScreens\":{4},\"doorsWaitSeconds\":{5:F3},\"shots\":{6},\"periodSeconds\":{7:F1},\"screen\":[{8},{9}],\"reducedMotion\":{10}}}",
+                    cinematic != null && cinematic.Live ? "true" : "false", scene, source, DD.Prototype.World.WorldViewer.Active ? "true" : "false",
+                    UiFactory.OverlayScreens ? "true" : "false", PrototypeUiFlow.LastMenuWorldWaitSeconds, MenuCinematic.Shots.Length,
+                    MenuCinematic.Period, Screen.width, Screen.height, UiMotion.ReducedMotion ? "true" : "false");
+                File.WriteAllText(Path.Combine(folder, "cine-report.json"), json);
+                Debug.Log("[UiCapture] cinematic " + json);
+            }
+
+            /// <summary>
+            /// AP-028 runtime acceptance: the camera's 0.35 m sphere along every path (61 samples, colliders only) and the
+            /// renderers whose bounds hold a sample (foliage and eaves carry no collider - the frames judge those), and the
+            /// line of sight from each pose to its target (the first collider in the way and how far short of the target).
+            /// </summary>
+            private static void WriteCollisions(string path)
+            {
+                var ic = System.Globalization.CultureInfo.InvariantCulture;
+                var json = new System.Text.StringBuilder("{\"radius\":0.35,\"shots\":[");
+                int mask = ~(1 << 5);
+                Renderer[] renderers = FindObjectsOfType<Renderer>();
+                MenuCinematic.Shot[] shots = MenuCinematic.Shots;
+                for (int s = 0; s < shots.Length; s++)
+                {
+                    var hits = new System.Collections.Generic.SortedDictionary<string, int>();
+                    var inside = new System.Collections.Generic.SortedDictionary<string, int>();
+                    for (int k = 0; k <= 60; k++)
+                    {
+                        Vector3 p = Vector3.Lerp(shots[s].Start, shots[s].End, k / 60f);
+                        foreach (Collider c in Physics.OverlapSphere(p, 0.35f, mask, QueryTriggerInteraction.Ignore))
+                        {
+                            string n = c.name.Replace("\"", "'");
+                            hits[n] = hits.TryGetValue(n, out int h) ? h + 1 : 1;
+                        }
+
+                        foreach (Renderer r in renderers)
+                        {
+                            if (r != null && r.enabled && r.bounds.size.magnitude < 12f && r.bounds.SqrDistance(p) < 0.35f * 0.35f)
+                            {
+                                string n = r.name.Replace("\"", "'");
+                                inside[n] = inside.TryGetValue(n, out int h) ? h + 1 : 1;
+                            }
+                        }
+                    }
+
+                    json.Append(s > 0 ? "," : string.Empty).Append("{\"id\":\"").Append(shots[s].id).Append("\",\"colliderHits\":{");
+                    int i = 0;
+                    foreach (var kv in hits)
+                    {
+                        json.Append(i++ > 0 ? "," : string.Empty).Append('"').Append(kv.Key).Append("\":").Append(kv.Value);
+                    }
+
+                    json.Append("},\"nearRenderers\":{");
+                    i = 0;
+                    foreach (var kv in inside)
+                    {
+                        json.Append(i++ > 0 ? "," : string.Empty).Append('"').Append(kv.Key).Append("\":").Append(kv.Value);
+                    }
+
+                    json.Append("},\"sight\":[");
+                    Vector3[] from = { shots[s].Start, shots[s].End };
+                    Vector3[] to = { shots[s].TargetStart, shots[s].TargetEnd };
+                    for (int e = 0; e < 2; e++)
+                    {
+                        Vector3 d = to[e] - from[e];
+                        bool blocked = Physics.Raycast(from[e], d.normalized, out RaycastHit hit, d.magnitude, mask, QueryTriggerInteraction.Ignore);
+                        json.Append(e > 0 ? "," : string.Empty).Append(string.Format(ic, "{{\"end\":\"{0}\",\"distance\":{1:F2},\"blocked\":{2},\"hit\":\"{3}\",\"hitDistance\":{4:F2}}}",
+                            e == 0 ? "start" : "end", d.magnitude, blocked ? "true" : "false", blocked ? hit.collider.name.Replace("\"", "'") : string.Empty, blocked ? hit.distance : 0f));
+                    }
+
+                    json.Append("]}");
+                }
+
+                json.Append("]}");
+                File.WriteAllText(path, json.ToString());
+                Debug.Log("[UiCapture] cinematic collisions " + path);
+            }
+
+            /// <summary>
+            /// WP-081 (C-00 05.10 item 4) · <c>-ddUiCapture cinematicperf</c> [<c>-ddCinePerfSeconds 120</c>]: the menu as it
+            /// runs (two loops by default; with <c>-ddMenuWorld off</c> the plates - the baseline) with the frame cap and
+            /// vsync lifted: frame, CPU main-thread and GPU ms (avg / p50 / p95 / p99 / max), SetPass / batches / draws
+            /// (avg / max), GC bytes per frame, and the worst frame inside the blends against the rest -
+            /// <c>cine-perf.json</c> and one <c>[CinePerf]</c> line.
+            /// </summary>
+            private IEnumerator CinematicPerf()
+            {
+                string folder = Path.HasExtension(_out) ? (Path.GetDirectoryName(_out) ?? Application.persistentDataPath) : _out;
+                Directory.CreateDirectory(folder);
+                yield return WaitFor(() => FindObjectOfType<MainMenuScreen>() != null && !UiCurtain.IsCovering, 60f);
+                yield return WaitFor(() => MenuCinematic.Current == null || MenuCinematic.Current.Live, 30f);
+                MenuCinematic.TimeOverride = null;
+                yield return new WaitForSecondsRealtime(Mathf.Max(_delay, 2f));
+                float seconds;
+                if (!float.TryParse(Arg("-ddCinePerfSeconds"), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out seconds) || seconds <= 0f)
+                {
+                    seconds = 120f;
+                }
+
+                int capBefore = Application.targetFrameRate;
+                int vsyncBefore = QualitySettings.vSyncCount;
+                Application.targetFrameRate = -1;
+                QualitySettings.vSyncCount = 0;
+                ProfilerRecorder setPass = ProfilerRecorder.StartNew(ProfilerCategory.Render, "SetPass Calls Count");
+                ProfilerRecorder batches = ProfilerRecorder.StartNew(ProfilerCategory.Render, "Batches Count");
+                ProfilerRecorder draws = ProfilerRecorder.StartNew(ProfilerCategory.Render, "Draw Calls Count");
+                ProfilerRecorder gc = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame");
+                var timings = new FrameTiming[1];
+                var frame = new System.Collections.Generic.List<float>(16384);
+                var cpu = new System.Collections.Generic.List<float>(16384);
+                var gpu = new System.Collections.Generic.List<float>(16384);
+                double setPassSum = 0d, batchSum = 0d, drawSum = 0d, gcSum = 0d;
+                long setPassMax = 0, batchMax = 0, drawMax = 0;
+                float blendWorst = 0f, restWorst = 0f;
+                int n = 0;
+                yield return null;
+                yield return null;
+                float t0 = Time.realtimeSinceStartup;
+                while (Time.realtimeSinceStartup - t0 < seconds)
+                {
+                    yield return null;
+                    float ms = Time.unscaledDeltaTime * 1000f;
+                    frame.Add(ms);
+                    n++;
+                    MenuCinematic c = MenuCinematic.Current;
+                    bool blend = false;
+                    if (c != null && c.Live)
+                    {
+                        MenuCinematic.SliceAt(c.Clock, out float local);
+                        blend = MenuCinematic.Blending(local) || local < 0.1f;
+                    }
+
+                    if (blend)
+                    {
+                        blendWorst = Mathf.Max(blendWorst, ms);
+                    }
+                    else
+                    {
+                        restWorst = Mathf.Max(restWorst, ms);
+                    }
+
+                    long sp = setPass.Valid ? setPass.LastValue : 0, ba = batches.Valid ? batches.LastValue : 0, dr = draws.Valid ? draws.LastValue : 0;
+                    setPassSum += sp; batchSum += ba; drawSum += dr; gcSum += gc.Valid ? gc.LastValue : 0;
+                    setPassMax = Math.Max(setPassMax, sp); batchMax = Math.Max(batchMax, ba); drawMax = Math.Max(drawMax, dr);
+                    FrameTimingManager.CaptureFrameTimings();
+                    if (FrameTimingManager.GetLatestTimings(1, timings) > 0)
+                    {
+                        if (timings[0].cpuMainThreadFrameTime > 0d)
+                        {
+                            cpu.Add((float)timings[0].cpuMainThreadFrameTime);
+                        }
+
+                        if (timings[0].gpuFrameTime > 0d)
+                        {
+                            gpu.Add((float)timings[0].gpuFrameTime);
+                        }
+                    }
+                }
+
+                Application.targetFrameRate = capBefore;
+                QualitySettings.vSyncCount = vsyncBefore;
+                setPass.Dispose(); batches.Dispose(); draws.Dispose(); gc.Dispose();
+                var ic = System.Globalization.CultureInfo.InvariantCulture;
+                string json = string.Format(ic,
+                    "{{\"mode\":\"{0}\",\"screen\":\"{1}x{2}\",\"seconds\":{3:F1},\"frames\":{4},\"frameMs\":{5},\"cpuMainMs\":{6},\"gpuMs\":{7}," +
+                    "\"setPassAvg\":{8:F1},\"setPassMax\":{9},\"batchesAvg\":{10:F1},\"batchesMax\":{11},\"drawsAvg\":{12:F1},\"drawsMax\":{13},\"gcBytesPerFrame\":{14:F0}," +
+                    "\"blendWorstMs\":{15:F2},\"restWorstMs\":{16:F2},\"doorsWaitSeconds\":{17:F3},\"quality\":\"{18}\"}}",
+                    MenuCinematic.Current != null && MenuCinematic.Current.Live ? "world" : "plates", Screen.width, Screen.height, seconds, n,
+                    Stats(frame), Stats(cpu), Stats(gpu), setPassSum / Math.Max(1, n), setPassMax, batchSum / Math.Max(1, n), batchMax,
+                    drawSum / Math.Max(1, n), drawMax, gcSum / Math.Max(1, n), blendWorst, restWorst, PrototypeUiFlow.LastMenuWorldWaitSeconds,
+                    QualitySettings.names[QualitySettings.GetQualityLevel()]);
+                File.WriteAllText(Path.Combine(folder, "cine-perf.json"), json);
+                Debug.Log("[CinePerf] " + json);
+            }
+
+            private static string Stats(System.Collections.Generic.List<float> values)
+            {
+                if (values.Count == 0)
+                {
+                    return "null";
+                }
+
+                values.Sort();
+                double sum = 0d;
+                foreach (float v in values)
+                {
+                    sum += v;
+                }
+
+                float P(float q) => values[Math.Min(values.Count - 1, (int)(values.Count * q))];
+                return string.Format(System.Globalization.CultureInfo.InvariantCulture, "{{\"n\":{0},\"avg\":{1:F3},\"p50\":{2:F3},\"p95\":{3:F3},\"p99\":{4:F3},\"max\":{5:F3}}}",
+                    values.Count, sum / values.Count, P(0.5f), P(0.95f), P(0.99f), values[values.Count - 1]);
+            }
+
+            /// <summary>
+            /// WP-081 (C-00 05.10: "ilk çalışan sürümde 60 s MP4") · <c>-ddUiCapture cinematicmp4</c>: one loop at 30 fps on a
+            /// fixed clock (Time.captureDeltaTime 1/30 and the loop time per frame), the menu over it, as numbered JPEG
+            /// frames (q 92) in <c>frames/</c> - wp-068s9/tools/frames2mp4 turns them into the MP4.
+            /// </summary>
+            private IEnumerator CinematicMp4()
+            {
+                string folder = Path.Combine(Path.HasExtension(_out) ? (Path.GetDirectoryName(_out) ?? Application.persistentDataPath) : _out, "frames");
+                Directory.CreateDirectory(folder);
+                yield return WaitFor(() => MenuCinematic.Current != null && MenuCinematic.Current.Live && !UiCurtain.IsCovering, 60f);
+                if (MenuCinematic.Current == null || !MenuCinematic.Current.Live)
+                {
+                    Debug.Log("[UiCapture] cinematicmp4: the world is not live.");
+                    yield break;
+                }
+
+                yield return new WaitForSecondsRealtime(Mathf.Max(_delay, MenuCinematic.Blend + 0.4f));
+                const int fps = 30;
+                int count = Mathf.RoundToInt(MenuCinematic.Period * fps);
+                Time.captureDeltaTime = 1f / fps;
+                for (int i = 0; i < count; i++)
+                {
+                    MenuCinematic.TimeOverride = i / (float)fps;
+                    yield return new WaitForEndOfFrame();
+                    Texture2D shot = ScreenCapture.CaptureScreenshotAsTexture();
+                    File.WriteAllBytes(Path.Combine(folder, "frame-" + i.ToString("00000") + ".jpg"), shot.EncodeToJPG(92));
+                    Destroy(shot);
+                }
+
+                Time.captureDeltaTime = 0f;
+                MenuCinematic.TimeOverride = 0f;
+                Debug.Log("[UiCapture] cinematicmp4 " + count + " frames in " + folder);
             }
 
             private static IEnumerator WaitFor(Func<bool> condition, float timeout)

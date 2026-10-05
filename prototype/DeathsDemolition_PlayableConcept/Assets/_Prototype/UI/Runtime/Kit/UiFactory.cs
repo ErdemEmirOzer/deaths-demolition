@@ -207,6 +207,42 @@ namespace DD.Prototype.UI
             return go.GetComponent<EventSystem>();
         }
 
+        public const string UiCameraName = "UI Camera";
+
+        /// <summary>
+        /// WP-081: true while a live world renders under the menu (<see cref="MenuCinematic"/>): the overlay-canvas fault
+        /// described at <see cref="CreateCanvas"/> needs an empty frame, and this one is full, so screens are overlays (as
+        /// the HUD is over the run) and <see cref="EnsureUiCamera"/> hands out no camera. Cleared when the backdrop goes.
+        /// </summary>
+        public static bool OverlayScreens;
+
+        /// <summary>
+        /// WP-081: the world now fills the frame under the menu - every root canvas drawn through the UI camera becomes an
+        /// overlay (no bloom, grain or depth of field on words) and the UI camera stops rendering; its AudioListener stays.
+        /// </summary>
+        public static void MoveScreensToOverlay()
+        {
+            OverlayScreens = true;
+            Canvas[] canvases = UnityEngine.Object.FindObjectsOfType<Canvas>();
+            for (int i = 0; i < canvases.Length; i++)
+            {
+                Canvas canvas = canvases[i];
+                if (canvas == null || !canvas.isRootCanvas || canvas.renderMode != RenderMode.ScreenSpaceCamera)
+                {
+                    continue;
+                }
+
+                Camera camera = canvas.worldCamera;
+                if (camera == null || camera.name != UiCameraName)
+                {
+                    continue;
+                }
+
+                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+                camera.enabled = false;
+            }
+        }
+
         /// <summary>
         /// A menu scene has no gameplay camera, and a scene with no camera at all makes
         /// Unity log "No cameras rendering", which acceptance criterion 27 counts as
@@ -214,6 +250,12 @@ namespace DD.Prototype.UI
         /// </summary>
         public static Camera EnsureUiCamera()
         {
+            // WP-081: a live world renders under the menu (MenuCinematic); screens go over it as overlays.
+            if (OverlayScreens)
+            {
+                return null;
+            }
+
             // WP-068 slice 0 (D5): the screen camera, never an off-screen one. The array
             // order of FindObjectsOfType is unspecified, so the first camera could be a
             // render-texture camera (a Selection turntable, a capture probe) and the menu
@@ -234,7 +276,7 @@ namespace DD.Prototype.UI
                 }
             }
 
-            var go = new GameObject("UI Camera", typeof(Camera));
+            var go = new GameObject(UiCameraName, typeof(Camera));
             var cam = go.GetComponent<Camera>();
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = UiTokens.Get(UiColor.SurfaceBase);

@@ -1,0 +1,243 @@
+{
+  "schema": "dd.menu-cinematic.design/2",
+  "package": "AP-028",
+  "version": "v002",
+  "date": "2026-10-05",
+  "intended_runtime": "World V6 gerçek zamanlı Unity kamera; video playback kullanılmaz",
+  "preview_type": "Higgsfield hedef kareleri üzerinde 2B kadraj ritmi; oyun içi render ve gerçek parallax değildir",
+  "duration_s": 60,
+  "shots": [
+    {
+      "id": "S01",
+      "name": "Doğu köşkü / bahçeye ilk bakış",
+      "landmark": "R2_EastPavilion / S-05 A_dogu_kosk_saagi_e160",
+      "source": "S-05 menu_plates.json: özgün başlangıç pozu. V6 R2 box [30.8,24.8,39.2,31.2]",
+      "position_start": [
+        39.75,
+        1.6,
+        24.34
+      ],
+      "position_end": [
+        39.2,
+        1.65,
+        23.75
+      ],
+      "target_start": [
+        30.25,
+        1.005,
+        9.84
+      ],
+      "target_end": [
+        30.1,
+        1.05,
+        9.8
+      ],
+      "vfov": 44,
+      "motion": "Yavaş dolly; köşk direği solda, sakura sağda",
+      "risk": "S-05 özgün hedefi merkezlemek yerine art-safe kompozisyon ofseti uygulamak gerekir.",
+      "start_s": 0,
+      "duration_s": 12,
+      "end_s": 12,
+      "blend_out_s": 1.2,
+      "screen_target_uv": [
+        0.68,
+        0.48
+      ],
+      "coordinate_units": "metre; Unity X,Y-up,Z",
+      "status": "Kaynağa bağlı TASARIM koordinatları; runtime pose doğrulaması yapılmadı",
+      "style_frame": "Frames/S01_StyleTarget.png",
+      "motion_preview": "Motion/S01_MotionPreview.mp4"
+    },
+    {
+      "id": "S02",
+      "name": "Avlu / Chumon kapısı ve saray yüzü",
+      "landmark": "V6 center, R6_Chumon, R1_MainHall",
+      "source": "regions-v6.json center radius 14; R6 box [-4.8,18,4.8,23]; R1 box [-16.5,39,16.5,49]",
+      "position_start": [
+        8,
+        1.8,
+        -9
+      ],
+      "position_end": [
+        8.8,
+        1.85,
+        -8.3
+      ],
+      "target_start": [
+        0,
+        1.8,
+        20.5
+      ],
+      "target_end": [
+        0.3,
+        1.9,
+        20.5
+      ],
+      "vfov": 42,
+      "motion": "Avlu kenarında yavaş yatay dolly",
+      "risk": "Hedef karedeki yakın sol duvarın bu görüşte gerçekten bulunması ölçülmedi; S-05 rotayı mevcut örtücüye taşımalı.",
+      "start_s": 12,
+      "duration_s": 12,
+      "end_s": 24,
+      "blend_out_s": 1.2,
+      "screen_target_uv": [
+        0.68,
+        0.48
+      ],
+      "coordinate_units": "metre; Unity X,Y-up,Z",
+      "status": "Kaynağa bağlı TASARIM koordinatları; runtime pose doğrulaması yapılmadı",
+      "style_frame": "Frames/S02_StyleTarget.png",
+      "motion_preview": "Motion/S02_MotionPreview.mp4"
+    },
+    {
+      "id": "S03",
+      "name": "Güney / koi suyu ve dar köprü",
+      "landmark": "AP005_i0102 / AP003B_bridge_segment",
+      "source": "AP-005 placement v3 Blender [4,-24.6,0] -> Unity [4,0,-24.6]; V6 south region",
+      "position_start": [
+        13,
+        0.9,
+        -31
+      ],
+      "position_end": [
+        12.3,
+        1.05,
+        -30.7
+      ],
+      "target_start": [
+        4,
+        0.25,
+        -24.6
+      ],
+      "target_end": [
+        4,
+        0.3,
+        -24.6
+      ],
+      "vfov": 48,
+      "motion": "Su kıyısından alçak dolly + 0.15 m yükseliş",
+      "risk": "Köprü AP-005 kaynağında doğrulandı; V6 nihai geometrideki eşleşme/ölçek Unity içinde yeniden doğrulanmalı.",
+      "start_s": 24,
+      "duration_s": 12,
+      "end_s": 36,
+      "blend_out_s": 1.2,
+      "screen_target_uv": [
+        0.68,
+        0.48
+      ],
+      "coordinate_units": "metre; Unity X,Y-up,Z",
+      "status": "Kaynağa bağlı TASARIM koordinatları; runtime pose doğrulaması yapılmadı",
+      "style_frame": "Frames/S03_StyleTarget.png",
+      "motion_preview": "Motion/S03_MotionPreview.mp4"
+    },
+    {
+      "id": "S04",
+      "name": "Ana salon / avluya açılan ışık",
+      "landmark": "V6 R1_MainHall",
+      "source": "regions-v6.json R1 box [-16.5,39,16.5,49], floor 1.2; eye=2.8",
+      "position_start": [
+        -8,
+        2.8,
+        45
+      ],
+      "position_end": [
+        -6.8,
+        2.8,
+        45
+      ],
+      "target_start": [
+        4,
+        2,
+        39
+      ],
+      "target_end": [
+        4.5,
+        2,
+        39
+      ],
+      "vfov": 40,
+      "motion": "Salon duvarı boyunca yavaş pan-dolly",
+      "risk": "Beş çıkışın tek tek portal koordinatı bu kaynaktan çıkarılamadı; hedef kapı ekseni landmark adayıdır.",
+      "start_s": 36,
+      "duration_s": 12,
+      "end_s": 48,
+      "blend_out_s": 1.2,
+      "screen_target_uv": [
+        0.68,
+        0.48
+      ],
+      "coordinate_units": "metre; Unity X,Y-up,Z",
+      "status": "Kaynağa bağlı TASARIM koordinatları; runtime pose doğrulaması yapılmadı",
+      "style_frame": "Frames/S04_StyleTarget.png",
+      "motion_preview": "Motion/S04_MotionPreview.mp4"
+    },
+    {
+      "id": "S05",
+      "name": "Çatı çizgisi / sisli sırt",
+      "landmark": "AP005_i2357 / AP002_palace_roof_bay",
+      "source": "AP-005 placement v3 Blender [-13.5,38.2,7.3] -> Unity [-13.5,7.3,38.2]",
+      "position_start": [
+        24,
+        6.8,
+        31
+      ],
+      "position_end": [
+        24.6,
+        7,
+        31.4
+      ],
+      "target_start": [
+        0,
+        7.3,
+        38.2
+      ],
+      "target_end": [
+        0.2,
+        7.35,
+        38.2
+      ],
+      "vfov": 38,
+      "motion": "0.2 m crane + çok yavaş sağa pan",
+      "risk": "Yakın saçak örtüşmesi/çatı çarpışması ölçülmedi. Yüksek çok katlı kule kullanılmaz.",
+      "start_s": 48,
+      "duration_s": 12,
+      "end_s": 60,
+      "blend_out_s": 1.2,
+      "screen_target_uv": [
+        0.68,
+        0.48
+      ],
+      "coordinate_units": "metre; Unity X,Y-up,Z",
+      "status": "Kaynağa bağlı TASARIM koordinatları; runtime pose doğrulaması yapılmadı",
+      "style_frame": "Frames/S05_StyleTarget.png",
+      "motion_preview": "Motion/S05_MotionPreview.mp4"
+    }
+  ],
+  "loop": {
+    "period_s": 60,
+    "hold_start_s": 1.2,
+    "move_s": 9.6,
+    "hold_end_s": 1.2,
+    "curve": "smoothstep u*u*(3-2*u)",
+    "transition": "Son 1.2 saniyede önceki sabit son kare ile sonraki başlangıç arasında çapraz geçiş; S05 -> S01 dahil",
+    "motion_phase": "u=clamp((local_time-1.2)/9.6,0,1)",
+    "blend_phase": "smoothstep(clamp((local_time-10.8)/1.2,0,1))",
+    "time_source": "unscaledTime modulo 60; gameplay ve UI zamanından bağımsız",
+    "freeze": "Odak kaybı, alt panel, yükleme veya reduce-motion durumunda S01 başlangıç karesinde dur"
+  },
+  "safe_area": {
+    "x0": 0,
+    "x1": 0.3333333333333333,
+    "y0": 0,
+    "y1": 1,
+    "menu_glyph_bounds": [
+      0.035,
+      0.12,
+      0.285,
+      0.89
+    ],
+    "frame_test": "Tam sol üçte bir P95 linear luminance <=0.03 ve >0.10 luminance piksel oranı <=2%; gerçek glif alanında worst-case krem kontrast >=4.5",
+    "text_hex": "#F3EBDD",
+    "scrim": "Tasarım kareleri hamdır. S-09 mevcut menü text-safe clamp/scrim sistemi runtime garantisi için korunur; loading bandı karartması değildir."
+  }
+}
