@@ -2,7 +2,7 @@
 
 > **Ne için:** S-10'un R2 FINAL zincirine girdi. `tools/qa/r2-gates.json`'daki her kapı tek satırda: kimin ölçtüğü, neyle ölçtüğü, son değerin nerede durduğu ve FINAL'i neyin beklettiği.
 > **Hazırlayan:** KADRO test-engineer (C-00B B-07, yerel ajan). Salt okuma derlemesidir; eşik değiştirmez. Eşik yalnız `r2-gates.json`'da, C-00 kaydıyla, ölçümden önce değişir (`tools/qa/r2-measure-contract.md` "Changing a threshold").
-> **Durum anı:** 06.10 ~01:40. main `173890acc821feeb998234a8681858a23d00687e`. Repo çalışma ağacı temiz.
+> **Durum anı:** 06.10 01:20. main `173890acc821feeb998234a8681858a23d00687e`. Repo çalışma ağacı temiz.
 > **Main çalışma sırasında ilerledi.** `18f3d01e`'den sonra C-00 Z3b düzeltmesini aldı. Değişen dosyalar yalnız `ZombieR2Tests.cs`, `r2-gates.json` ve `test_r2_gates.py`:
 > - `1bca9052`: JSON eşikleri 24/822/98, `f755749e`'nin yeniden yazımı;
 > - `8f10dddb`: `c37991f7` eşdeğeri, Z3b/Z4 kaynak kayıtta;
