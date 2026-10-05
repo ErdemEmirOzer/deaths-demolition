@@ -853,11 +853,11 @@ namespace DD.Prototype.Tests.PlayMode
             Debug.Log("[DD-TEST] wp048b.foley weapon=" + weapon + " " + r.Describe() + " · thunder " + _d.Ambience.ThunderCount + " pond " + _d.Ambience.PondPlaying);
         }
 
-        // ================================================================== WP-072 B1 · ateş sesi v3
+        // ================================================================== WP-072 B1 / WP-085 B1 · ateş sesi: her atış tam ses
 
         [UnityTest]
         [Timeout(60000)]
-        public IEnumerator AtesV3_HibritDongu_TekAtis_MekanKuyrugu()
+        public IEnumerator AtesV4_HerAtisTamSes_BirakistaTekKuyruk_MekanKuyrugu()
         {
             WeaponFireAudio f = _d.WeaponFire;
             if (!_d.Library.IsProduced(AudioSoundId.WeaponSmg1Fire))
@@ -866,32 +866,32 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             Vector3 at = _s.Rig.transform.position + Vector3.up;
-            int starts = f.LoopStarts, releases = f.Releases;
+            int sesler = f.FireVoices, releases = f.Releases;
 
-            // SMG1 900 RPM: ilk atış tam ses, sonrakiler transient + gövde döngüsü; bırakınca kuyruk bir kez.
+            // SMG1 kendi hızında (900 RPM, R2 S2): her atış tam SMG1 sesi — hibrit transient/döngü yok; bırakınca kuyruk bir kez.
             // Deterministik (WP-051C kararsızlığı): oyun zamanı kare başına tam 1/60 s — 4 kare = 66,7 ms aralık, duvar
             // saatindeki takılma seriyi bölemez; her atış 2 m ayrı → AudioEvents yinelenen-ipucu kısması (1,6 m / 40 ms) devreye girmez.
             Time.captureDeltaTime = 1f / 60f;
             try
             {
-                for (int i = 0; i < 6; i++)
+                for (int i = 0; i < 10; i++)
                 {
                     AudioEvents.RaiseWeapon(CombatAudioEvent.ClassicWeaponFire, "SMG1", at + Vector3.right * (2f * i), 0.75f, 50);
-                    if (i == 0) Assert.AreEqual(AudioSoundId.WeaponSmg1Fire, f.LastVoice, "İlk atış tam SMG1 sesi.");
+                    Assert.AreEqual(AudioSoundId.WeaponSmg1Fire, f.LastVoice, "Atış " + (i + 1) + ": tam SMG1 sesi.");
+                    // R2 S2: her atış tam katman ister (hafif katman yok). Havuzun 30 ms yeniden tetik penceresi gerçek zamanla sayar;
+                    // sabit oyun zamanında kareler çok hızlı akarsa reddedebilir — oyunda 900 RPM = 66 ms gerçek aralık, gerçek RPM kiti (B4) ölçer.
+                    Assert.AreEqual(sesler + i + 1, f.FireVoices, "Atış " + (i + 1) + ": tam katman istendi.");
                     for (int k = 0; k < 4; k++) yield return null;
                 }
 
-                Assert.AreEqual(AudioSoundId.WeaponSmg1Transient, f.LastVoice, "Seri içinde transient.");
-                Assert.AreEqual(starts + 1, f.LoopStarts, "Seri başına tek döngü başlangıcı.");
-                Assert.IsTrue(f.LoopPlaying, "Tetik basılıyken gövde döngüsü çalar.");
-                for (int k = 0; k < 15; k++) yield return null;   // 0,25 s oyun zamanı: bırakış (107 ms) + 40 ms sönüş
+                Assert.AreEqual(releases, f.Releases, "Tetik basılıyken kuyruk yok.");
+                for (int k = 0; k < 15; k++) yield return null;   // 0,25 s oyun zamanı > bırakış penceresi (107 ms)
             }
             finally
             {
                 Time.captureDeltaTime = 0f;
             }
 
-            Assert.IsFalse(f.LoopPlaying, "Tetik bırakılınca döngü söner.");
             Assert.AreEqual(releases + 1, f.Releases, "Bırakış bir kez.");
             Assert.AreEqual(AudioSoundId.WeaponTailSmgOpen, f.LastTail, "Varsayılan mekân Open.");
 
@@ -903,7 +903,6 @@ namespace DD.Prototype.Tests.PlayMode
                 AudioEvents.RaiseWeapon(CombatAudioEvent.ClassicWeaponFire, "SG1", at, 1.5f, 50);
                 Assert.AreEqual(AudioSoundId.WeaponSg1Fire, f.LastVoice);
                 Assert.AreEqual(AudioSoundId.WeaponTailSgHall, f.LastTail, "Salon kuyruğu.");
-                Assert.IsFalse(f.LoopPlaying, "Tek atış silahı döngü açmaz.");
             }
             finally
             {
@@ -914,7 +913,7 @@ namespace DD.Prototype.Tests.PlayMode
             yield return new WaitForSeconds(0.1f);
             AudioEvents.Raise(CombatAudioEvent.ClassicWeaponFire, at, 1f, 50);
             Assert.AreEqual(AudioSoundId.RifleFire, _d.LastPlayed, "Kimliksiz ateş eski RifleFire.");
-            Debug.Log("[DD-TEST] wp072b1.fire loopStarts=" + f.LoopStarts + " releases=" + f.Releases + " tail=" + f.LastTail);
+            Debug.Log("[DD-TEST] wp085b1.fire voices=" + f.FireVoices + " refused=" + f.FireRefused + " releases=" + f.Releases + " tail=" + f.LastTail);
         }
 
         [UnityTest]

@@ -681,26 +681,37 @@ namespace DD.Prototype.Tests.EditMode.Audio
         }
 
         [Test]
-        public void AtesV3_KimlikTablosu_WP069AudioIdleri_HibritUcSilah_KuyrukMatrisi()
+        public void AtesV4_KimlikTablosu_WP069AudioIdleri_SeriRpmWDIleAyni_KuyrukMatrisi()
         {
-            // WP-069 A4 audioId'leri (S-02 §0): 10 silah, döngü yalnız Auto ∧ RPM ≥ 600 → AR1/SMG1/LMG1.
+            // WP-069 A4 audioId'leri (S-02 §0): 10 silah. WP-085 B1: hibrit yok; seri ateşleyenler (Auto / Burst) kuyruğu
+            // bırakışta çalar ve seri hızı silahın WD ateş bloğuyla aynıdır (Burst: seri içi hız = 60 / burstIntervalSeconds).
             string[] beklenen = { "AR1", "AR2", "SMG1", "SMG2", "SG1", "SG2", "LMG1", "LMG2", "SR1", "RL1" };
             Assert.AreEqual(beklenen.Length, WeaponAudioIdentity.All.Length);
             var sesler = new HashSet<AudioSoundId>();
-            var hibrit = new List<string>();
+            var seri = new List<string>();
             foreach (string id in beklenen)
             {
                 Assert.IsTrue(WeaponAudioIdentity.TryGet(id, out WeaponVoiceSet set), "audioId yok: " + id);
                 Assert.IsTrue(sesler.Add(set.Fire), "Ateş sesi paylaşılıyor: " + id);
-                if (set.IsHybrid)
+                string weaponId = id.Substring(0, id.Length - 1).ToLowerInvariant() + "_" + id.Substring(id.Length - 1);
+                var wd = Resources.Load<DD.Prototype.Core.Weapons.WeaponDefinition>("Arsenal/WD_" + weaponId);
+                Assert.IsNotNull(wd, "Resources/Arsenal/WD_" + weaponId + " yok");
+                float beklenenRpm;
+                switch (wd.fire.fireMode)
                 {
-                    hibrit.Add(id);
-                    Assert.IsTrue(set.LoopRpm >= 600f, id + " döngü RPM'i ≥ 600");
-                    Assert.AreNotEqual(AudioSoundId.None, set.Transient);
+                    case DD.Prototype.Core.Weapons.WeaponFireMode.Auto: beklenenRpm = wd.fire.rpm; break;
+                    case DD.Prototype.Core.Weapons.WeaponFireMode.Burst: beklenenRpm = 60f / wd.fire.burstIntervalSeconds; break;
+                    default: beklenenRpm = 0f; break;
                 }
+
+                Assert.AreEqual(beklenenRpm, set.StringRpm, 0.5f, id + " seri hızı WD ile aynı olmalı");
+                Assert.IsTrue(set.FireTrimDb <= 0f, id + " kırpma yalnız aşağı");
+                if (set.FiresStrings) seri.Add(id);
             }
 
-            CollectionAssert.AreEqual(new[] { "AR1", "SMG1", "LMG1" }, hibrit);
+            CollectionAssert.AreEqual(new[] { "AR1", "AR2", "SMG1", "SMG2", "LMG1", "LMG2" }, seri);
+            Assert.AreEqual(4, AudioMixPlan.PlayerWeapon(AudioSoundId.WeaponSmg1Fire, WeaponFireAudio.StringVoices).MaxInstances, "Otomatik: 4 canlı kopya.");
+            Assert.AreEqual(3, AudioMixPlan.PlayerWeapon(AudioSoundId.WeaponSg1Fire).MaxInstances, "Tek atış: eski tavan 3.");
             Assert.IsFalse(WeaponAudioIdentity.TryGet("SNP", out _), "Eski yuva adı (SNP) kimlik değil.");
             Assert.AreEqual("AR1", WeaponAudioIdentity.ForClassic(DD.Prototype.Core.Config.ClassicWeaponId.AssaultRifle));
             Assert.AreEqual("SMG1", WeaponAudioIdentity.ForClassic(DD.Prototype.Core.Config.ClassicWeaponId.AutoSmg));
@@ -873,12 +884,14 @@ namespace DD.Prototype.Tests.EditMode.Audio
         }
 
         [Test]
-        public void SilahOnde_KullaniciB_FirlaticiAtesi4dBKisik_DigerleriSifir()
+        public void SilahOnde_KullaniciB_FirlaticiAtesi4dBKisik_OtomatiklerRpmKirpmasi()
         {
             // WP-072 B7 (user 01.10, option B): SFX-Player +3 / SFX-World −1; the launcher's explosion keeps +2 dB over its shot.
+            // WP-085 B1: every round the full shot — an automatic's held string at its own RPM comes back to the 8 shots/s kit level.
+            var beklenen = new Dictionary<string, float> { { "RL1", -4f }, { "AR1", -0.9f }, { "SMG1", -2.6f }, { "SMG2", -0.4f }, { "LMG1", -1.6f } };
             foreach (WeaponVoiceSet set in WeaponAudioIdentity.All)
             {
-                Assert.AreEqual(set.AudioId == "RL1" ? -4f : 0f, set.FireTrimDb, set.AudioId + " ateş kırpması");
+                Assert.AreEqual(beklenen.TryGetValue(set.AudioId, out float db) ? db : 0f, set.FireTrimDb, 1e-4f, set.AudioId + " ateş kırpması");
             }
         }
 

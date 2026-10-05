@@ -712,10 +712,16 @@ namespace DD.Prototype.Audio
             return p;
         }
 
-        /// <summary>WP-072 B1: one v016 fire voice (dry shot or hybrid transient) - the legacy classic-fire placement.</summary>
-        public static AudioPlacement PlayerWeapon(AudioSoundId sound)
+        /// <summary>Live copies of one single-shot weapon's fire voice (the legacy classic-fire cap).</summary>
+        public const int PlayerWeaponVoices = 3;
+
+        /// <summary>
+        /// WP-072 B1: one fire voice - the legacy classic-fire placement. WP-085 B1: an automatic passes
+        /// <see cref="WeaponFireAudio.StringVoices"/>, past which the pool recycles its oldest copy.
+        /// </summary>
+        public static AudioPlacement PlayerWeapon(AudioSoundId sound, int maxInstances = PlayerWeaponVoices)
         {
-            return Weapon(sound, 0.85f, 50f, 3, 0.03f);
+            return Weapon(sound, 0.85f, 50f, maxInstances, 0.03f);
         }
 
         /// <summary>WP-072 B1: the wet space tail after a shot / release - lower priority, never piles past two.</summary>

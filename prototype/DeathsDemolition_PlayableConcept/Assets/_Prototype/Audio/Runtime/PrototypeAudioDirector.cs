@@ -226,7 +226,7 @@ namespace DD.Prototype.Audio
             _router = new AudioEventRouter(PlayResolved);
             _router.SetUiVoiceHandlers(StartUiVoice, StopUiVoice);          // WP-068 s11
             _listener = new AudioListenerAnchor(transform);
-            _weaponFire = new WeaponFireAudio(_library, _mixer, _bridge, _loopRoot, PlayResolved);   // WP-072 B1
+            _weaponFire = new WeaponFireAudio(_library, PlayResolved);   // WP-072 B1 / WP-085 B1: every round the full shot
             _casings = new CasingAudio(_library, PlayResolved);                                        // WP-072 B2
             _special = new SpecialAudio(_library, _mixer, _bridge, _loopRoot, PlayResolved);           // WP-072 B4
             _router.SetSpecialVoice(_special);
@@ -397,7 +397,7 @@ namespace DD.Prototype.Audio
             }
 
             TickLoops(dt);
-            if (!_paused) _weaponFire.Tick(dt);   // WP-072 B1: trigger release → body loop fade + tail
+            if (!_paused) _weaponFire.Tick(dt);   // WP-085 B1: a string's trigger release → space tail
             if (!_paused) _casings.Tick();         // WP-072 B2: casings land after their fall
             if (!_paused) _flight.Tick(dt);        // WP-072 B5: rocket / orb / gel loops follow their projectile
             if (!_paused) _rocketBlasts.Tick();    // WP-072 · rl_1: staggered bomblet pops
