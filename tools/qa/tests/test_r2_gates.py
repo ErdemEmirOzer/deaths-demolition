@@ -116,6 +116,8 @@ class MeasuredByTests(unittest.TestCase):
         kit = [s for s in r2.measurement_steps(data, quiet=True) if s["id"] == "r2-S1"]
         self.assertEqual(1, len(kit))
         self.assertEqual(["S1", "S2"], kit[0]["gates"])
+        edc = [s for s in r2.measurement_steps(data, quiet=True) if s["id"] == "r2-S4"]   # S-08 f53062f2, all 10 weapons
+        self.assertEqual(("DD.Prototype.Tests.PlayMode.AudioSliceTests.MekanKuyrugu_EDC_Olcum", {}), (edc[0]["filter"], edc[0]["env"]))
         # A = today's game (the S1/S2 gates), C = the AP-027 v4 prototype (S1 report below400ShareMinV4, C-00 05.10)
         self.assertEqual({"DD_AP027_DIR": "{KPROJ}/asset-production/AP-027/exports/v001-prototip",
                           "DD_KIT_VARIANTS": "AC", "DD_KIT_WEAPONS": "all"}, kit[0]["env"])
