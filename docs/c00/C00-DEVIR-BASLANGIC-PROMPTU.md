@@ -13,11 +13,19 @@ Repo = `/Users/Erdem/Documents/Deaths Demolition` · K = `/Users/Erdem/Desktop/K
 cd "/Users/Erdem/Documents/Deaths Demolition" && git fetch -q origin && git log --oneline -10 origin/main
 ```
 - main'i `origin/main`'e fast-forward et (`git merge --ff-only origin/main`).
-- `git log --oneline -1 origin/main -- docs/c00/C00-BULUT-DEVRALMA-PROMPTU-2026-10-05.md` bir commit gösteriyorsa bulut C-00 briefing eklerini main'e almıştır. Göstermiyorsa `origin/claude/sharp-cray-jsvo9s` dalındaki iki `docs/c00` commit'ini sırayla al:
-  - `f8b898fa` → etiket `wp-089-brifing-tamam-int`;
-  - dalın ucu → etiket `wp-089-brifing-bulut-int`.
-  - Komut: `tools/integrate.sh <sha> --tag <etiket> --allow-paths docs/c00 --no-post --apply`, sonra `GIT_LFS_SKIP_PUSH=1 git push origin main refs/tags/<etiket>`.
-- C-00B dallarından main'e girmemiş olanları `git cherry -v main origin/c00b/<dal>` ile bul ve briefing §14 sırasıyla al.
+- **Entegrasyon zincirinin tek kaynağı yerel dönüş planı §5'tir.** main'e girmemişse onu son `c00b/*` dalından oku:
+  ```bash
+  git branch -r --sort=-committerdate | grep 'origin/c00b/' | head -1
+  git show origin/c00b/<son dal>:docs/c00/YEREL-DONUS-PLANI-2026-10-05.md
+  ```
+- §5'teki satırları sırayla al.
+  - Komut: `tools/integrate.sh <sha> --tag <etiket> [--allow-paths docs/] --no-post --apply`; her etiketten sonra `GIT_LFS_SKIP_PUSH=1 git push origin main refs/tags/<etiket>`.
+  - `claude/sharp-cray-jsvo9s` dalından yalnız §5'te adı geçen `docs/c00` commit'leri alınır. Daldaki kök belgeler (`C-00-*.md`, `DISK-*`, `PROJE-*`) kullanıcının arşivi; main'e girmez.
+- Sonra doğrula:
+  - `git cherry -v main origin/c00b/<son dal>` → "+" kalmamalı.
+  - `python3 -m unittest tools/qa/tests/test_r2_gates_lint.py tools/qa/tests/test_r2_gates.py`.
+  - `python3 tools/qa/r2_gates_lint.py` → ERROR 0.
+- PR'lara "main'e alındı: <SHA>, etiket <etiket>" yaz ve kapat.
 
 **1. Sırayla oku (zorunlu; depodaki kopyalar esas, KADRO kopyalarıyla ayrışırsa depodaki geçerli):**
 1. Varsa `docs/c00/BULUT-DEVIR-<gg.aa>.md` ve `docs/c00/YEREL-DONUS-PLANI-2026-10-05.md`: bulut C-00'ın yaptıkları ve senin sıran.
