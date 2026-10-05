@@ -176,7 +176,8 @@ namespace DD.Prototype.Tests.PlayMode
         /// (missingEvents: a beat that never landed, by the clip or by its deadline, in a completed reload; a beat from the
         /// deadline is not missing — no clip carries mag_hand_attach yet) and the magazine part is never in neither the weapon
         /// nor a hand (floatingMagazineFrames). contactDeviationFramesMax (the hand reaching the socket on the beat, ≤ 2 frames)
-        /// comes with S-06's hand contact (WP-083 B2c): null until then, which S-10 reads as BLOCKED. Game frames (1/60).
+        /// is S-06's MagazineContactProbe (WP-083 B2c): socket_mag_l ↔ the magazine seat on the Detach / Insert beats; the probe's
+        /// no-contact value when the hand never reaches the well (before S-06's contact IK). Null only when no beat was measured. Game frames (1/60).
         /// </summary>
         [UnityTest]
         [Timeout(300000)]
@@ -188,6 +189,8 @@ namespace DD.Prototype.Tests.PlayMode
             int missingAll = 0, floatingAll = 0, measured = 0;
             WeaponMagazineOwnership m = _s.Controller.Magazine;
             WeaponMagazineVisual v = _s.Controller.MagazineVisual;
+            var probe = new MagazineContactProbe();   // WP-083 B2c (S-06): contactDeviationFramesMax
+            DD.Prototype.Characters.PlayerSkinnedVisual body = _s.Rig.GetComponentInChildren<DD.Prototype.Characters.PlayerSkinnedVisual>(true);
             foreach (ClassicWeaponId id in ids)
             {
                 _s.Controller.EquipClassic(id, _s.Config);
@@ -198,11 +201,13 @@ namespace DD.Prototype.Tests.PlayMode
                 int e0 = m.FromEvent, t0 = m.FromTimer;
                 Transform part = v.Part;
                 Transform home = part != null ? part.parent : null;
+                probe.Begin(key, part, body != null ? body.MagazineSocket : null, m);
                 int floating = 0, handFrames = 0;
                 float start = Time.time;
                 while (_s.Controller.Classic.IsReloading && Time.time - start < 12f)
                 {
                     yield return null;
+                    probe.Tick();
                     if (part == null) continue;
                     bool inWeapon = part.parent == home;
                     bool inHand = part.parent != null && part.parent.name == DD.Prototype.Characters.MagazineSocket.Name;
@@ -211,6 +216,7 @@ namespace DD.Prototype.Tests.PlayMode
                 }
 
                 yield return null;
+                probe.End();
                 Assert.IsTrue(_s.Controller.Classic.LastReloadCompleted, key + ": reload tamamlanmadı");
                 int fromClip = m.FromEvent - e0, fromTimer = m.FromTimer - t0;
                 int missing = Mathf.Max(0, WeaponMagazineOwnership.StepCount - fromClip - fromTimer);
@@ -222,10 +228,11 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             Debug.Log("[DD-TEST] wp082.h3 " + string.Join(" | ", report));
+            Debug.Log("[DD-TEST] wp083.h3contact max=" + probe.MaxDeviationFrames + " f, beats " + probe.BeatsMeasured + ", closestMax " + probe.MaxClosestCm.ToString("F1") + " cm :: " + probe.Report);
             Assert.AreEqual(ids.Length, measured);
             R2Olcum.Yaz("H3", "DD.Prototype.Tests.PlayMode.WeaponReloadMagazineTests.H3_SarjorluSilahlar_VuruslarTam_HavadaKareYok",
-                new Dictionary<string, double?> { { "missingEvents", missingAll }, { "floatingMagazineFrames", floatingAll }, { "contactDeviationFramesMax", null } },
-                measured, "contactDeviationFramesMax: el ↔ soket teması S-06 WP-083 B2c ile ölçülecek (o gelene kadar BLOCKED)");
+                new Dictionary<string, double?> { { "missingEvents", missingAll }, { "floatingMagazineFrames", floatingAll }, { "contactDeviationFramesMax", probe.BeatsMeasured > 0 ? probe.MaxDeviationFrames : (double?)null } },
+                measured, "contactDeviationFramesMax: S-06 MagazineContactProbe (socket_mag_l ↔ şarjör yuvası, Detach/Insert vuruşları ±" + MagazineContactProbe.Window + " kare); " + probe.BeatsMeasured + " vuruş");
             Assert.AreEqual(0, missingAll, "R2 H3: inmeyen reload vuruşu\n" + string.Join("\n", report));
             Assert.AreEqual(0, floatingAll, "R2 H3: şarjör havada (ne silahta ne elde)\n" + string.Join("\n", report));
         }
