@@ -134,3 +134,37 @@ Marker hizası işinden sonra ya da araya alınabilir; küçük bir iş.
   - keyword kapalıyken mevcut görünümün değişmemesi;
   - Look B ıslaklık uyumu.
 - Shader ayrı commit'te gelecek.
+
+## 18 · bulut C-00 (05.10 ~20:30) — r2 kapı denetleyicisinin uyarıları, sahiplerine
+
+Kaynak: `python3 tools/qa/r2_gates_lint.py` (C-00B B-02). Main `3e68bc08` içeriği ve sözleşme yolu düzeltmesinden (B-05) sonra sonuç: 15 yazıcı çağrısı · **ERROR 0** · WARN 14 · INFO 14. Testleri ve C#'ı bulut değiştirmez; her satır sahibinin işidir. Bir kapı satırı (`measuredBy`, `tests`) değişecekse C-00 kaydıyla `r2-gates.json`'da yapılır.
+
+| Uyarı | Kapı | Ne demek | Sahip | İstenen |
+|---|---|---|---|---|
+| EXPLICIT-UNRUN | H1 | `R2HeroOlcumTests.H1_ElTutamak_TumKlasikSilahlar_DurusYuruyus` `[Explicit]`, kapıda `measuredBy` yok; zincirin oturumları testi hiç koşmaz | **S-06** (test), **S-10** (zincir) | H1'e `measuredBy {"suite":"playmode","filter":"<tam ad>","quiet":false}` (C-00 kaydı) ya da S-06'nın `<E>/r2/` koşusu. Hangisi olduğu yazılsın. |
+| TEST-EXPLICIT | Z3b | Zorunlu test `DD.Art.Tests.PlayMode.SetPassAttributionTests.SetPass_Kaynaklari_40ZombiTamZirh` fixture düzeyinde `[Explicit]`; onu adıyla koşan bir oturum yok, bu yüzden bağlı XML'de çıkmaz | **S-03** (kapı), **S-10** (zincir) | Zincire adıyla bir adım ya da `tests` satırının gözden geçirilmesi. BEKLEYEN §8–§9'daki ortak sabit karışım işiyle birlikte. |
+| NO-WRITER | H2, H4a | Yazan test yok, `measuredBy` yok | **S-06** | silah omuz/göğüs kesişimi (H2) ve FP kol çerçevesi (H4a) ölçüm testleri |
+| NO-WRITER | L1, L1t, L2, L3, L4, L5 | aynı | **S-06** | WP-083 klip alımından sonra locomotion ölçümleri |
+| NO-WRITER | Z3 | aynı | **S-05** | 40 zombi render/doku bütçesi oranları (R1'e karşı) |
+| NO-WRITER | S3 | aynı | **S-08** | dense-40 loudness/peak (sıradaki S-08 işi) |
+| NO-WRITER | P2 | aynı | **S-10** | R2 − R1 perf hücreleri (R2 FINAL'de) |
+| NO-WRITER | P3 | aynı | **S-05** | B9 pozları raporu |
+
+Yazıcısı olan 14 kapının (H1, H3, H4, H4b, S1, S2, S4, S5, U1, U2, U3, Z2, Z3b, Z4) anahtarları sözleşmeyle birebir uyuşuyor. Yerel C-00, her oturum teslimden önce aracı koşsun: `python3 tools/qa/r2_gates_lint.py` (ERROR 0 şart, WARN listesi teslim notuna).
+
+## 19 · bulut C-00 (05.10 ~20:30) — B-03 GC bulguları, sahiplerine
+
+Kaynak: `docs/c00/reviews/B-03-gc-inceleme.md` (§3 bulgular, §5 doğrulama, §7 `a62d83db` eki). Miktarlar koddan tahmindir; ölçüm yereldedir, guard altında, Profiler ile. Kod bulutta değiştirilmedi; hepsi yerel WIP alanlarında.
+
+| Bulgu | Risk | Sahip | Dosya:satır | İstenen |
+|---|---|---|---|---|
+| G1 | orta | **S-03** | `ZombieModuleLibrary.cs:152`, `ZombieSkinnedVisual.cs:260,268,279` | Referans anahtarlı malzeme önbelleği + `GetSharedMaterials(List)`; doğuş başına `Is.Not.AllocatingGCMemory()` testi. SlotFace (5. yuva) gelmeden önce yapılması iyi olur. |
+| G2 | orta (koşullu) | **S-08** | `AudioCatalog.cs:81` | Sayıya bağlı olmayan bir `_indexBuilt` bayrağı; katalog tekillik testi (null yok, `Sound` tekil); v003g overlay'inde manifest içi yinelemeye bakılsın. |
+| G4 | düşük | **S-08** | `WeaponFireAudio.cs:148`, `WeaponFoleyAudio.cs:188-189` | Statik tabloları ısındır (yönetici kurulumu ya da `FeedbackPoolWarmer`). |
+| B2 | bilgi (CPU, artık kovan başına) | **S-02** (`CasingEffect`), **S-08** (çağıran) | `CasingEffect.cs:36` | `PredictLanding` maskesini statik önbelleğe al (`NameToLayer` kovan başına). |
+| G3 | düşük | **S-02** | `WeaponMagazineVisual.cs:36-38,93` | `_boundRoot` erken çıkışı; aynı silahta reload başına ad taraması olmasın. |
+| B1 | bilgi (CPU) | **S-02** | `WeaponMagazineOwnership.cs:124-134` | `TryStepFor` için enum `switch`. |
+| G5 | düşük (önceden var) | **S-06** | `WeaponGripIk.cs:91,179` | Grip'i equip anında bir kez ara; tutuş varsayılan AÇIK olunca bu yol her karede aktif. |
+| `a62d83db` eki | — | **S-08** | `WeaponFoleyAudio.cs` | Yeni ayırma bulgusu yok. Yalnız B2 kovan başına yükseldi. S5 `gcBytesPerCasing` 0 korunmalı. |
+
+Doğrulama satırı: `docs/c00/LOCAL-QUEUE.md` (B-03 Profiler satırı).
