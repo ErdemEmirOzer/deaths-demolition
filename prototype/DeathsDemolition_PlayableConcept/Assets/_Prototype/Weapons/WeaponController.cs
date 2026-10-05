@@ -103,6 +103,8 @@ namespace DD.Prototype.Weapons
         private float _casingAt = -1f;
         private bool _magOutFired;
         private readonly WeaponMagazineOwnership _magazine = new WeaponMagazineOwnership();   // WP-082 (S-02 contract v1)
+        private readonly WeaponMagazineVisual _magazineVisual = new WeaponMagazineVisual();   // WP-082 visual: part_mag ↔ socket_mag_l
+        private CameraMode _magazineMode;   // the camera mode the reload began in (a change ends the ownership)
         private int _seatsFired;
         private bool _chamberFired;
         private bool _pickupDonePending;
@@ -185,6 +187,7 @@ namespace DD.Prototype.Weapons
         private void Awake()
         {
             if (GetComponent<FpViewPoseDriver>() == null) gameObject.AddComponent<FpViewPoseDriver>().Bind(this);   // WP-069 FP view pose (order 950)
+            _magazine.Stepped += OnMagazineStep;   // WP-082 visual
             if (_aimSourceBehaviour != null)
             {
                 _aimSource = _aimSourceBehaviour as IAimSource;
@@ -683,7 +686,12 @@ namespace DD.Prototype.Weapons
                 _magOutFired = false;
                 _seatsFired = 0;
                 _chamberFired = false;
-                if (MagazineReload) _magazine.Begin(_equippedId == ClassicWeaponId.Rl1);   // WP-082: the magazine's owner (rl_1: an empty tube)
+                if (MagazineReload)
+                {
+                    _magazine.Begin(_equippedId == ClassicWeaponId.Rl1);   // WP-082: the magazine's owner (rl_1: an empty tube)
+                    _magazineVisual.Bind(_equippedId == ClassicWeaponId.Rl1 || _classicRig == null ? null : _classicRig.transform);
+                    _magazineMode = CameraModeService.Current;
+                }
 
                 if (_classicRig != null)
                 {
@@ -699,6 +707,7 @@ namespace DD.Prototype.Weapons
                 bool completed = _classic.LastReloadCompleted;
                 if (completed) _magazine.Tick(1f, _classic.ReloadDuration);   // WP-082: the beats a clip did not send land first
                 _magazine.End();   // complete / cancelled / switched / a Special: the magazine is in the weapon
+                _magazineVisual.Home();
 
                 if (_classicRig != null)
                 {
@@ -717,9 +726,60 @@ namespace DD.Prototype.Weapons
                 AudioEvents.Raise(CombatAudioEvent.ReloadInsert, Muzzle.position, 1f, 40);
             }
 
+            if (reloading && _magazine.Active && CameraModeService.Current != _magazineMode)
+            {
+                // WP-082: a camera change mid-reload ends the ownership — the hand that held the magazine is not the one shown now
+                _magazine.End();
+                _magazineVisual.Home();
+            }
+
             if (reloading) _magazine.Tick(_classic.ReloadProgress01, _classic.ReloadDuration);
             _wasReloading = reloading;
         }
+
+        /// <summary>
+        /// WP-082 visual: a landed beat moves the magazine part. Detach → the hand; hand_attach → the spent magazine leaves the
+        /// hand (MagazineDropped, here at the hand — no longer at mag_out) and the part stays as the fresh one; insert → home.
+        /// rl_1's tube has nothing to drop.
+        /// </summary>
+        private void OnMagazineStep(MagazineStep step, bool fromEvent)
+        {
+            switch (step)
+            {
+                case MagazineStep.Detach:
+                    _magazineVisual.ToHand(MagazineHandSocket());
+                    break;
+                case MagazineStep.HandAttach:
+                    if (_equippedId != ClassicWeaponId.Rl1)
+                    {
+                        Transform hand = _magazineVisual.Socket != null ? _magazineVisual.Socket : MagazineHandSocket();
+                        if (hand != null) WeaponEvents.PublishMechanism(new WeaponMechanismEvent(WeaponMechanismKind.MagazineDropped, _equippedId, hand.position, Vector3.down, fromEvent));
+                        else PublishMechanism(WeaponMechanismKind.MagazineDropped, fromEvent);
+                    }
+
+                    _magazineVisual.ToHand(MagazineHandSocket());
+                    break;
+                case MagazineStep.Insert:
+                    _magazineVisual.Home();
+                    break;
+            }
+        }
+
+        /// <summary>WP-082: the hand that carries the magazine in the camera mode shown — FP arms when they are shown, else the body.</summary>
+        private Transform MagazineHandSocket()
+        {
+            if (CameraModeService.Current == CameraMode.FirstPerson)
+            {
+                FirstPersonArms arms = FirstPersonArms.Shown;
+                return arms != null && arms.Visible ? arms.MagazineSocket : null;   // FP without arms: the magazine stays in the weapon
+            }
+
+            PlayerSkinnedVisual body = SkinnedVisual();
+            return body != null ? body.MagazineSocket : null;
+        }
+
+        /// <summary>WP-082 readout: the magazine part's visual (tests, S-10 H3).</summary>
+        public WeaponMagazineVisual MagazineVisual => _magazineVisual;
 
         /// <summary>WP-082: the classic weapon reloads a magazine (or rl_1's tube) — not shell by shell, not a break-open.</summary>
         private bool MagazineReload => !_timeline.Shells && _timeline.ReloadCasings <= 0;
@@ -1637,7 +1697,9 @@ namespace DD.Prototype.Weapons
         {
             if (_timeline.ReloadCasings <= 0)
             {
-                PublishMechanism(WeaponMechanismKind.MagazineDropped, fromClip);
+                // WP-082: a magazine weapon's drop is the hand_attach beat now (OnMagazineStep) — at mag_out the magazine goes to
+                // the hand. Only a reload the ownership does not track (none today) keeps the old drop here.
+                if (!_magazine.Active) PublishMechanism(WeaponMechanismKind.MagazineDropped, fromClip);
                 return;
             }
 

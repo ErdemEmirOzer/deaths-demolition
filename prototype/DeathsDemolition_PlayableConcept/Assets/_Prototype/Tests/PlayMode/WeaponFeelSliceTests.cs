@@ -231,7 +231,8 @@ namespace DD.Prototype.Tests.PlayMode
             _s.Girdi.DoldurBasti = true;
             yield return null;
             _s.Girdi.DoldurBasti = false;
-            yield return SpecialWeaponSahne.Bekle(() => Count(WeaponMechanismKind.MagazineDropped) == 1, 1.5f, "şarjör düşme (mag_out: klip ya da 0,4 s yedek)");
+            // WP-082 (C-00 05.10): the drop is the hand_attach beat now (the spent magazine leaves the hand) — mag_out puts it in the hand
+            yield return SpecialWeaponSahne.Bekle(() => Count(WeaponMechanismKind.MagazineDropped) == 1, 2.5f, "şarjör düşme (hand_attach: klip ya da 21/45 + 0,10 s yedek)");
             yield return SpecialWeaponSahne.Bekle(() => Count(WeaponMechanismKind.ShellSeated) == 1, 2f, "şarjör takma (mag_in: klip ya da yedek)");
             Debug.Log("[DD-TEST] wp042c.mechanism A clipDriven=" + _s.Controller.ClipDrivesMechanism + " magOutFromClip=" + _mechanism.Find(e => e.Kind == WeaponMechanismKind.MagazineDropped).FromClipEvent);
             Assert.AreEqual(1, Count(WeaponMechanismKind.MagazineDropped), "reload başına tek şarjör");

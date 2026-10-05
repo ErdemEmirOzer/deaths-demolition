@@ -107,7 +107,91 @@ namespace DD.Prototype.Tests.PlayMode
             yield return null;
             Assert.IsFalse(m.Active, "kesilen reload sahipliği kapatmalı");
             Assert.AreEqual(MagazineOwner.Weapon, m.Owner, "şarjör elde kaldı");
+            Assert.IsFalse(_s.Controller.MagazineVisual.InHand, "şarjör parçası el soketinde kaldı");
             Assert.AreEqual(early0 + 1, m.EndedEarly);
+        }
+
+        /// <summary>
+        /// WP-082 visual (S-06 socket_mag_l, AP-021 part_mag): a third-person reload moves the model's magazine part weapon →
+        /// the left hand's socket → weapon; it is never in neither (H3 "no frame in the air"); the one MagazineDropped is the
+        /// hand_attach beat, after the detach, at the hand — no longer at mag_out; the part comes home at its authored local pose.
+        /// </summary>
+        [UnityTest]
+        [Timeout(180000)]
+        public IEnumerator Gorsel_SarjorEleGiderGeriDoner_HavadaKareYok_DusmeElde()
+        {
+            yield return Kur();
+            _s.Controller.EquipClassic(ClassicWeaponId.AssaultRifle, _s.Config);
+            yield return SpecialWeaponSahne.Kareler(30);
+            WeaponMagazineVisual v = _s.Controller.MagazineVisual;
+            WeaponMagazineOwnership m = _s.Controller.Magazine;
+            var drops = new List<WeaponMechanismEvent>();
+            var dropOwner = new List<MagazineOwner>();
+            System.Action<WeaponMechanismEvent> onMech = e => { if (e.Kind == WeaponMechanismKind.MagazineDropped) { drops.Add(e); dropOwner.Add(m.Owner); } };
+            WeaponEvents.Mechanism += onMech;
+            try
+            {
+                yield return UcAtisVeReload();
+                yield return SpecialWeaponSahne.Bekle(() => _s.Controller.Classic.IsReloading, 1f, "reload başlamadı");
+                Transform part = v.Part;
+                Assert.IsNotNull(part, "ar_1 modelinde part_mag yok");
+                Transform home = part.parent;
+                Vector3 homePos = part.localPosition;
+                Quaternion homeRot = part.localRotation;
+                var parents = new List<string> { "weapon" };
+                int hanging = 0, inHandFrames = 0;
+                float maxSocketGap = 0f;
+                float t0 = Time.time;
+                while (_s.Controller.Classic.IsReloading && Time.time - t0 < 6f)
+                {
+                    yield return null;
+                    string where = part.parent == home ? "weapon" : part.parent != null && part.parent.name == DD.Prototype.Characters.MagazineSocket.Name ? "hand" : "neither";
+                    if (where == "neither") hanging++;
+                    if (where == "hand") { inHandFrames++; maxSocketGap = Mathf.Max(maxSocketGap, Vector3.Distance(part.position, part.parent.position)); }
+                    if (parents[parents.Count - 1] != where) parents.Add(where);
+                }
+
+                yield return null;
+                string seq = string.Join(" → ", parents);
+                Vector3 dropPos = drops.Count > 0 ? drops[0].Position : Vector3.zero;
+                Debug.Log("[DD-TEST] wp082.visual ar_1 " + seq + " | hand frames " + inHandFrames + ", neither " + hanging + ", pivot gap " + maxSocketGap.ToString("0.000") +
+                          " m | drops " + drops.Count + (drops.Count > 0 ? " owner " + dropOwner[0] + " at " + dropPos.ToString("F2") : ""));
+                CollectionAssert.AreEqual(new[] { "weapon", "hand", "weapon" }, parents, seq);
+                Assert.AreEqual(0, hanging, "şarjör bir karede ne silahta ne elde (H3: havada)");
+                Assert.Less(maxSocketGap, 0.001f, "şarjör pivotu avuçta değil");
+                Assert.AreEqual(home, part.parent);
+                Assert.Less(Vector3.Distance(homePos, part.localPosition), 1e-4f, "şarjör yuvasına tam dönmedi (konum)");
+                Assert.Less(Quaternion.Angle(homeRot, part.localRotation), 0.01f, "şarjör yuvasına tam dönmedi (dönüş)");
+                Assert.AreEqual(1, drops.Count, "tek şarjör düşmesi");
+                Assert.AreEqual(MagazineOwner.HandNew, dropOwner[0], "düşme hand_attach vuruşunda (eski şarjör elden bırakılır)");
+            }
+            finally
+            {
+                WeaponEvents.Mechanism -= onMech;
+            }
+        }
+
+        /// <summary>WP-082 visual: a camera change mid-reload ends the ownership and the magazine part is home the same frame.</summary>
+        [UnityTest]
+        [Timeout(180000)]
+        public IEnumerator Gorsel_ReloadOrtasindaKameraDegisir_SarjorYuvada()
+        {
+            yield return Kur();
+            _s.Controller.EquipClassic(ClassicWeaponId.AssaultRifle, _s.Config);
+            yield return SpecialWeaponSahne.Kareler(30);
+            WeaponMagazineVisual v = _s.Controller.MagazineVisual;
+            WeaponMagazineOwnership m = _s.Controller.Magazine;
+            yield return UcAtisVeReload();
+            yield return SpecialWeaponSahne.Bekle(() => v.InHand, 3f, "şarjör ele geçmedi");
+            Transform part = v.Part;
+            DD.Prototype.CameraSystem.CameraModeService.Request(
+                DD.Prototype.CameraSystem.CameraModeService.Current == DD.Prototype.CameraSystem.CameraMode.FirstPerson
+                    ? DD.Prototype.CameraSystem.CameraMode.ThirdPerson : DD.Prototype.CameraSystem.CameraMode.FirstPerson, instant: true);
+            yield return null;
+            yield return null;
+            Assert.IsFalse(m.Active, "kamera değişimi sahipliği kapatmalı");
+            Assert.IsFalse(v.InHand, "şarjör elde kaldı");
+            Assert.AreNotEqual(DD.Prototype.Characters.MagazineSocket.Name, part.parent != null ? part.parent.name : "", "şarjör el soketinde");
         }
 
         [UnityTest]
@@ -129,6 +213,7 @@ namespace DD.Prototype.Tests.PlayMode
             yield return null;
             Assert.AreEqual(MagazineOwner.Weapon, m.Owner);
             Assert.IsFalse(m.Active);
+            Assert.IsFalse(_s.Controller.MagazineVisual.InHand, "rl_1: parça ele gitmez (tüp)");
         }
     }
 }
