@@ -168,6 +168,19 @@ No owner test writes `r2-Z3.json`: `tools/qa/r2_z3.py` does, after the chain's z
   tighten 5 / 0.25 m and are written into the artifact; a previous `r2-Z3.json` / `r2-P3.json` in the out-dir is renamed
   `.stale-<utc>` before the run (never deleted), so a FAIL or BLOCKED run cannot leave an older artifact bound.
 
+## U1 (two measures — C-00 05.10)
+
+`UiTextInventoryTests.U1_GorunurHarf_AnaMenuPanellerVeSecim_EnTr` counts the visible letters of the EN main menu and
+Selection against the R1 baseline in two ways, and the gate needs both:
+
+- `u1_default >= 0.40` — the player's default path: v4's real arrival (every pane closed; the test asserts the menu arrived
+  that way before it counts) + Selection;
+- `u1_same_content >= 0.40` (U1b) — like with like: the menu with the Profile pane open, R1's arrival state, + Selection,
+  so no words pass the gate by hiding in a pane.
+
+`lettersTotalReduction` is the smaller of the two, reported for continuity with the earlier single number;
+`lettersPerScreenReductionMin` and `unnamedSelectables` are checks as before. A failing U1 names the measure that failed.
+
 ## Human gates
 
 H5, L6, Z5, S6, U4: one review file `<E>/r2/reviews/<gate id>.json`:

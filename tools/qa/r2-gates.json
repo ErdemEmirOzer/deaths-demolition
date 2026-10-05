@@ -96,9 +96,10 @@
     {"id": "P3", "area": "perf", "kind": "report", "owner": "S-05", "title": "B9 poses: one cell per pose x tier x camera mode, medians of the probe's frame mean / filtered p99, SetPass, batches, triangles, draw calls and bodies on screen (cells = the cell count; the table rides in r2-P3.json). Writer tools/qa/r2_z3.py", "report": ["cells"]},
     {"id": "P5", "area": "perf", "kind": "report", "owner": "S-09", "title": "Selection to Run load time vs R1", "report": ["ratio", "floorLimited", "r2MedianSeconds", "r1MedianSeconds", "r2RawMedianSeconds"]},
 
-    {"id": "U1", "area": "ui", "kind": "gate", "owner": "S-09", "title": "fewer letters, every icon named",
-     "checks": [{"key": "lettersTotalReduction", "op": ">=", "limit": 0.40}, {"key": "lettersPerScreenReductionMin", "op": ">=", "limit": 0.25},
-                {"key": "unnamedSelectables", "op": "==", "limit": 0}],
+    {"id": "U1", "area": "ui", "kind": "gate", "owner": "S-09", "title": "fewer letters, every icon named (C-00 05.10: two measures, both >= 0.40 - u1_default = v4's arrival, every pane closed, + Selection; u1_same_content (U1b) = the menu with Profile open as R1 + Selection; lettersTotalReduction = the smaller, reported)",
+     "checks": [{"key": "u1_default", "op": ">=", "limit": 0.40}, {"key": "u1_same_content", "op": ">=", "limit": 0.40},
+                {"key": "lettersPerScreenReductionMin", "op": ">=", "limit": 0.25}, {"key": "unnamedSelectables", "op": "==", "limit": 0}],
+     "report": ["lettersTotalReduction"],
      "measuredBy": {"suite": "playmode", "filter": "DD.Prototype.Tests.PlayMode.UiTextInventoryTests.U1_GorunurHarf_AnaMenuPanellerVeSecim_EnTr", "quiet": false}},
     {"id": "U2", "area": "ui", "kind": "gate", "owner": "S-09", "title": "text overflow (TR/EN x 1.0/1.25 + Mac x 1.2)",
      "checks": [{"key": "overflows", "op": "==", "limit": 0}],
