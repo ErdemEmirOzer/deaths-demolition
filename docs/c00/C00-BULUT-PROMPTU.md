@@ -53,6 +53,9 @@ Devir belgesi §6'daki roller aynen geçerli:
 - teslimi sana dal + SHA ile bildirir;
 - Unity gerektiren adımını LOCAL-QUEUE'ya yazar.
 
+## MCP bağlantıları
+Devir belgesi §12'deki tabloya bak. Bulutta yalnız claude.ai bağlayıcıları çalışır: Higgsfield (ŞART), Adobe for creativity, Claude Docs. `ToolSearch` ile yükle ve ilk iş olarak bağlantıyı doğrula: Higgsfield'de `balance` ya da `get_preferences` çağrısı. Bağlı değilse kullanıcıya hangi bağlayıcıyı claude.ai → Ayarlar → Bağlayıcılar'dan bağlaması gerektiğini söyle; giriş kullanıcının işi. Blender, computer use, Chrome ve Desktop oturum araçları bulutta yok; bunlara bağlı işler LOCAL-QUEUE'ya.
+
 ## İlk işlerin
 1. Belgeleri oku. `git log --oneline -5 main` ile main'i doğrula (devirde `97705c32` ve üstü).
 2. `docs/c00/LOCAL-QUEUE.md` yoksa oluştur. Devir belgesi §8'deki Unity gerektiren adımları kuyruğa yaz: compile-check, S-06/S-03/S-08/S-09 teslimleri, main-ci, dinleme kiti, D9 rollout.
