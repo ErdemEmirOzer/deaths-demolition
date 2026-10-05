@@ -573,6 +573,9 @@ namespace DD.Art.Tests.PlayMode
                 yield return CharacterTests.Bekle(() => fp.FrameCalibrated, 5f, "FP el → silah çerçevesi dinlenmede kalibre");
                 yield return null;
                 Assert.AreSame(fp.WeaponFrame, DD.Prototype.Weapons.WeaponController.FirstPersonWeaponSocket, "S-02 kancası FP silah çerçevesi");
+                // WP-082 / WP-083 B2b: the FP left hand carries the same magazine socket as the third-person body
+                Assert.IsNotNull(fp.MagazineSocket, "FP socket_mag_l yok");
+                Assert.AreSame(fp.Animator.GetBoneTransform(HumanBodyBones.LeftHand), fp.MagazineSocket.parent, "FP socket_mag_l sol elin çocuğu");
                 for (int i = 0; i < 12; i++) yield return null;   // the hand IK blends in (0.1 s)
                 Camera vmCam = anchor.GetComponentInParent<Camera>();
                 Vector3 rhView = vmCam != null ? vmCam.WorldToViewportPoint(fp.Animator.GetBoneTransform(HumanBodyBones.RightHand).position) : Vector3.zero;

@@ -214,6 +214,9 @@ namespace DD.Prototype.Characters
         public LODGroup LodGroup => _lodGroup;
         public SkinnedMeshRenderer[] Renderers => _renderers;
         public Transform WeaponSocket => _weaponSocket;
+        /// <summary>WP-082 / WP-083 B2b: the left hand's magazine socket (<see cref="Characters.MagazineSocket"/>; S-02 WeaponMagazineOwnership).</summary>
+        public Transform MagazineSocket => _magSocket;
+        private Transform _magSocket;
         public Transform BackSocket => _backSocket;
         public CharacterAnimationSet AnimationSet => _animation;
         public CharacterAnimationEvents Events => _events;
@@ -317,6 +320,9 @@ namespace DD.Prototype.Characters
             {
                 _gripIk.Configure(_animator, _weaponSocket, () => _authored && !_dying && UpperAtRest());
             }
+
+            // WP-082 / WP-083 B2b: the left hand's magazine socket (S-02 WeaponMagazineOwnership; the Hero v2 rig may carry its own)
+            if (_magSocket == null && _animator != null) _magSocket = Characters.MagazineSocket.Ensure(_animator);
             // WP-032: the head looks along the SAME aim the aim layer turns to (single source, S-02); feet on the real ground.
             if (_lookAt == null && _animator != null) _lookAt = _animator.GetComponent<CharacterLookAt>();
             if (_footIk == null && _animator != null) _footIk = _animator.GetComponent<FootIkAdapter>();

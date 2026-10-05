@@ -268,6 +268,48 @@ namespace DD.Art.Tests.PlayMode
             Assert.IsTrue(pv.StillRequested && breath, "dururken Idle_Breath (MUST-3)");
         }
 
+        /// <summary>
+        /// WP-082 / WP-083 B2b (C-00 05.10, S-02 magazine contract v1): the player's left hand carries socket_mag_l at the palm centre
+        /// (wrist → middle-finger base, half-way) and it follows the hand through the animated pose.
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator Oyuncu_SolEl_SarjorSoketi_AvucOrtasinda_EliIzler()
+        {
+            yield return Stage();
+            CharacterAssetSet set = CharacterAssetSet.Load();
+            var stage = new GameObject("WP083_MagSocket");
+            _temp.Add(stage);
+            Transform visual = new GameObject("Visual").transform;
+            visual.SetParent(stage.transform, false);
+            GameObject go = Object.Instantiate(set.PlayerPrefab, visual, false);
+            var pv = go.GetComponent<PlayerSkinnedVisual>();
+            Vector3 velocity = Vector3.zero;
+            pv.Attach(visual, () => velocity, () => 6.2f, () => Vector3.forward);
+            pv.Animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+            Transform socket = pv.MagazineSocket;
+            Transform hand = pv.Animator.GetBoneTransform(HumanBodyBones.LeftHand), middle = pv.Animator.GetBoneTransform(HumanBodyBones.LeftMiddleProximal);
+            Assert.IsNotNull(socket, "socket_mag_l yok");
+            Assert.AreEqual(MagazineSocket.Name, socket.name);
+            Assert.AreSame(hand, socket.parent, "socket_mag_l sol elin çocuğu olmalı");
+            Assert.AreSame(socket, MagazineSocket.Ensure(pv.Animator), "ikinci çağrı aynı soketi döndürmeli (çift soket yok)");
+            Time.captureDeltaTime = 1f / 60f;
+            velocity = Vector3.forward * 3f;
+            float maxErr = 0f;
+            for (int f = 0; f < 60; f++)
+            {
+                stage.transform.position += velocity * Time.deltaTime;
+                yield return null;
+                Vector3 palm = Vector3.Lerp(hand.position, middle.position, MagazineSocket.PalmShare);
+                maxErr = Mathf.Max(maxErr, Vector3.Distance(palm, socket.position));
+            }
+
+            float toWrist = Vector3.Distance(socket.position, hand.position);
+            Debug.Log("[DD-TEST] wp083.magsocket local=" + socket.localPosition.ToString("F3") + " toWrist=" + (toWrist * 100f).ToString("F1", CultureInfo.InvariantCulture) + " cm palmErrMax=" + (maxErr * 100f).ToString("F2", CultureInfo.InvariantCulture) + " cm");
+            Assert.Less(maxErr, 0.005f, "soket koşuda avuç ortasından ayrıldı (> 5 mm)");
+            Assert.That(toWrist, Is.InRange(0.02f, 0.10f), "avuç ortası bilekten 2–10 cm");
+        }
+
         /// <summary>Diagnostics: every foot event the clips fire, with the firing clip and its blend weight.</summary>
         private sealed class FootEventLog : MonoBehaviour
         {

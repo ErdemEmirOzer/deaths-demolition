@@ -52,6 +52,9 @@ namespace DD.Prototype.Characters
         public Animator Animator => _animator;
         public Transform FpCamera => _fpCamera;
         public Transform WeaponFrame => _frame;
+        /// <summary>WP-082 / WP-083 B2b: the FP left hand's magazine socket (same name as the third-person body's).</summary>
+        public Transform MagazineSocket => _magSocket;
+        private Transform _magSocket;
         public bool Visible => _instance != null && _instance.activeSelf;
         /// <summary>Distance fp_camera → anchor after the last placement (m; tests).</summary>
         public float LastAnchorError { get; private set; } = float.NaN;
@@ -260,6 +263,7 @@ namespace DD.Prototype.Characters
                 _rUpper = _animator.GetBoneTransform(HumanBodyBones.RightUpperArm); _rLower = _animator.GetBoneTransform(HumanBodyBones.RightLowerArm);
                 _lUpper = _animator.GetBoneTransform(HumanBodyBones.LeftUpperArm); _lLower = _animator.GetBoneTransform(HumanBodyBones.LeftLowerArm);
                 _lHand = _animator.GetBoneTransform(HumanBodyBones.LeftHand);
+                _magSocket = Characters.MagazineSocket.Ensure(_animator);   // WP-083 B2b
                 _rFingers = FingerBones(_animator, HumanBodyBones.RightThumbProximal);
                 _lFingers = FingerBones(_animator, HumanBodyBones.LeftThumbProximal);
                 Transform socket = FindDeep(_hand, PlayerSkinnedVisual.WeaponSocketName);
