@@ -724,6 +724,8 @@ namespace DD.Prototype.Tests.PlayMode
             DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.FirstPerson, instant: true);
             yield return SpecialWeaponSahne.Kareler(60);
             var report = new List<string>();
+            float yawRollExcessMax = 0f;   // R2 H4 (S-10 contract): the worst |yaw| / |roll| over its A4.2 row
+            int measured = 0;
             float tableDt0 = Time.captureDeltaTime;
             Time.captureDeltaTime = 1f / 60f;   // WP-087: game frames (45 frames = 0.75 s), not 1–3 ms batch frames
             try
@@ -778,6 +780,8 @@ namespace DD.Prototype.Tests.PlayMode
                     }
 
                     FpWeaponFeel.VmKick k = FpWeaponFeel.KickFor(d.weaponId);
+                    yawRollExcessMax = Mathf.Max(yawRollExcessMax, Mathf.Abs(bodyPeak.y) - Mathf.Abs(k.YawDeg), Mathf.Abs(bodyPeak.z) - Mathf.Abs(k.RollDeg));
+                    measured++;
                     report.Add(d.weaponId + " rig " + rigMax.ToString("0.0") + "° total " + totalMax.ToString("0.0") + "° (A4.2 pitch " + k.PitchDeg.ToString("0.0") + "°)"
                         + " · body p/y/r " + P3(bodyPeak) + " @f" + pf + "/" + yf + "/" + rf + " (A4.2 " + k.PitchDeg.ToString("0.0") + "/" + k.YawDeg.ToString("0.0") + "/" + k.RollDeg.ToString("0.0") + ")"
                         + " · feel " + P3(feelPeak) + " · root " + P3(rootPeak) + " · mount " + P3(mountPeak) + " · cam " + P3(camPeak)
@@ -792,8 +796,12 @@ namespace DD.Prototype.Tests.PlayMode
                 Time.captureDeltaTime = tableDt0;
             }
 
-            Debug.Log("[DD-TEST] wp069.fptable " + string.Join(" | ", report));
+            Debug.Log("[DD-TEST] wp069.fptable " + string.Join(" | ", report) + " | yaw/roll excess max " + yawRollExcessMax.ToString("0.00") + "°");
             Assert.IsNotEmpty(report);
+            Assert.AreEqual(10, measured, "on klasik silahın hepsi ölçülmeli");
+            R2Olcum.Yaz("H4", "DD.Prototype.Tests.PlayMode.WeaponModelSliceTests.FP_NamluKalkisi_Tablo_HerSilah",
+                new Dictionary<string, double> { { "yawRollExcessDegMax", System.Math.Round(yawRollExcessMax, 3) } }, measured);
+            Assert.LessOrEqual(yawRollExcessMax, 1.0f, "R2 H4: FP yaw/roll A4.2 satırının 1,0°'den fazla üstünde");
         }
 
         // WP-087: a transform's rotation in the anchor's frame as Euler angles; deltas as pitch (up +) / yaw / roll, degrees.
@@ -812,7 +820,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// switch's clip-motion window (0.6 s) — the third-person fire clip turning the mount must not reach the FP weapon. The
         /// leak is the root's rotation against the pose the feel layer and the fpView pose place it at (anchor · feel · fpView);
         /// the switch's draw pose may still be settling (it decays), the fire clip shows as a rise: after the shot the leak never
-        /// climbs more than 3° above its lowest value so far. Game frames (1/60). Before the fix (b6g3): ar_2 settled to 1.2° at
+        /// climbs more than 1° (R2 H4b, S-10 contract) above its lowest value so far. Game frames (1/60). Before the fix (b6g3): ar_2 settled to 1.2° at
         /// f13, then the fire clip lifted it to 16.4° (f16); smg_1 / sg_2 0° (their clips do not turn the mount).
         /// </summary>
         [UnityTest]
@@ -825,6 +833,7 @@ namespace DD.Prototype.Tests.PlayMode
             yield return SpecialWeaponSahne.Kareler(60);
             var report = new List<string>();
             var wrong = new List<string>();
+            float leakMaxAll = 0f;   // R2 H4b: the largest rise over the three weapons
             float dt0 = Time.captureDeltaTime;
             Time.captureDeltaTime = 1f / 60f;   // game frames: a batch frame is 1–3 ms and 45 of them were 0.1 s, not 0.75 s
             try
@@ -862,7 +871,8 @@ namespace DD.Prototype.Tests.PlayMode
 
                     report.Add(def.weaponId + " clip weight at the shot " + weightAtShot.ToString("0.00") + ", rise " + rise.ToString("0.0") + "° @f" + riseFrame);
                     if (weightAtShot <= 0f) wrong.Add(def.weaponId + ": atış anahtar penceresine düşmedi (ölçüm boş)");
-                    if (rise > 3f) wrong.Add(def.weaponId + ": TP ateş klibi FP silaha sızdı, yükselme " + rise.ToString("0.0") + "° @f" + riseFrame);
+                    leakMaxAll = Mathf.Max(leakMaxAll, rise);
+                    if (rise > 1f) wrong.Add(def.weaponId + ": TP ateş klibi FP silaha sızdı, yükselme " + rise.ToString("0.0") + "° @f" + riseFrame);
                     yield return new WaitForSeconds(0.8f);
                 }
             }
@@ -873,6 +883,8 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             Debug.Log("[DD-TEST] wp087.switchfire " + string.Join(" | ", report));
+            R2Olcum.Yaz("H4b", "DD.Prototype.Tests.PlayMode.WeaponModelSliceTests.FP_AnahtarPenceresindeAtes_KlipSizintisiYok",
+                new Dictionary<string, double> { { "leakDegMax", System.Math.Round(leakMaxAll, 3) } }, report.Count);
             Assert.IsEmpty(wrong, string.Join("\n", wrong) + "\n" + string.Join("\n", report));
         }
 
