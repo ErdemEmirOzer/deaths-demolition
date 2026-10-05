@@ -38,6 +38,21 @@ half _TierClothK;
 half4 _TierLacquerTint;
 half _TierLacquerK;
 half _TierLacquerFloor;
+// WP-084 (AP-025 contract v002): always declared, every variant — the SRP Batcher needs one UnityPerMaterial layout.
+float4 _ZombieMaskDomain;
+float4 _ZombieTierClothRect;
+float4 _ZombieMaskArray_TexelSize;
+half4 _ZombieSkinRef;
+half4 _ZombieSkinTint0;
+half4 _ZombieSkinTint1;
+half4 _ZombieSkinTint2;
+half4 _ZombieDirtColor;
+half4 _ZombieBloodColor;
+half _ZombieUseOrm;
+half _ZombieMaskMaxLod;
+half _ZombieSkinEnable;
+half _ZombieDirtRoughness;
+half _ZombieBloodRoughness;
 CBUFFER_END
 
 // NOTE: Do not ifdef the properties for dots instancing, but ifdef the actual usage.
@@ -129,6 +144,8 @@ TEXTURE2D(_ParallaxMap);        SAMPLER(sampler_ParallaxMap);
 TEXTURE2D(_OcclusionMap);       SAMPLER(sampler_OcclusionMap);
 TEXTURE2D(_DetailMask);         SAMPLER(sampler_DetailMask);
 TEXTURE2D(_TierMask);           SAMPLER(sampler_TierMask);
+TEXTURE2D(_ZombieORM);          SAMPLER(sampler_ZombieORM);
+TEXTURE2D_ARRAY(_ZombieMaskArray); SAMPLER(sampler_ZombieMaskArray);
 TEXTURE2D(_DetailAlbedoMap);    SAMPLER(sampler_DetailAlbedoMap);
 TEXTURE2D(_DetailNormalMap);    SAMPLER(sampler_DetailNormalMap);
 TEXTURE2D(_MetallicGlossMap);   SAMPLER(sampler_MetallicGlossMap);
@@ -256,6 +273,38 @@ half3 ApplyDetailNormal(float2 detailUv, half3 normalTS, half detailMask)
 #endif
 }
 
+#if defined(_ZOMBIE_MASKS)
+// WP-084 · one mask slice sampled inside its own half of the 1024² slice (the left half is the skin atlas' layout, the right
+// half the cloth atlas'): the LOD comes from the domain UV, both bracketing mips are sampled with the UV clamped half a
+// texel inside the domain at that mip, then blended — the halves never bleed into each other, even in the small mips;
+// mip 10 (1×1) is never sampled (contract v002 mip_domain_sampling).
+half ZombieMaskSample(float2 maskUv, float slice)
+{
+    float2 size = _ZombieMaskArray_TexelSize.z > 1.0 ? _ZombieMaskArray_TexelSize.zw : float2(1024.0, 1024.0);   // 1024² slices
+    float2 dx = ddx(maskUv * size), dy = ddy(maskUv * size);
+    float lod = clamp(0.5 * log2(max(max(dot(dx, dx), dot(dy, dy)), 1e-8)), 0.0, (float)_ZombieMaskMaxLod);
+    float l0 = floor(lod), l1 = min(l0 + 1.0, (float)_ZombieMaskMaxLod);
+    float lo = _ZombieMaskDomain.z, hi = _ZombieMaskDomain.z + _ZombieMaskDomain.x;
+    float h0 = 0.5 * exp2(l0) / size.x, h1 = 0.5 * exp2(l1) / size.x;
+    float v0 = 0.5 * exp2(l0) / size.y, v1 = 0.5 * exp2(l1) / size.y;
+    float2 uv0 = float2(clamp(maskUv.x, lo + h0, hi - h0), clamp(maskUv.y, v0, 1.0 - v0));
+    float2 uv1 = float2(clamp(maskUv.x, lo + h1, hi - h1), clamp(maskUv.y, v1, 1.0 - v1));
+    half a = SAMPLE_TEXTURE2D_ARRAY_LOD(_ZombieMaskArray, sampler_ZombieMaskArray, uv0, slice, l0).r;
+    half b = SAMPLE_TEXTURE2D_ARRAY_LOD(_ZombieMaskArray, sampler_ZombieMaskArray, uv1, slice, l1).r;
+    return saturate(lerp(a, b, (half)(lod - l0)));
+}
+
+// Indices from renderingLayerMask (bit reinterpretation, not a numeric cast): 16-20 skin, 21-25 dirt, 26-30 blood; out of
+// range clamps to 0..2 (contract invalid_index_policy).
+void ZombieMaskIndices(out uint skin, out uint dirt, out uint blood)
+{
+    uint bits = GetMeshRenderingLayer();
+    skin = min((bits >> 16) & 31u, 2u);
+    dirt = min((bits >> 21) & 31u, 2u);
+    blood = min((bits >> 26) & 31u, 2u);
+}
+#endif
+
 inline void InitializeStandardLitSurfaceData(float2 uv, out SurfaceData outSurfaceData)
 {
     half4 albedoAlpha = SampleAlbedoAlpha(uv, TEXTURE2D_ARGS(_BaseMap, sampler_BaseMap));
@@ -296,8 +345,26 @@ inline void InitializeStandardLitSurfaceData(float2 uv, out SurfaceData outSurfa
 
     // WP-036 (ADR-036-1): version tint. Mask.R = lacquer, Mask.G = cloth (AP-007 / AP-008 / AP-014 atlases share the channel convention).
     // lerp, not multiply: a multiplicative detail albedo cannot lift a v 0.12 black lacquer to plum / rust (AP-014 measurement).
+    #if defined(_ZOMBIE_MASKS)
+    // WP-084: the replacement O1 atlas has one ORM map (R AO, G roughness, B metallic) — read directly, no repacked copies
+    if (_ZombieUseOrm > 0.5)
+    {
+        half3 orm = SAMPLE_TEXTURE2D(_ZombieORM, sampler_ZombieORM, uv).rgb;
+        outSurfaceData.metallic = orm.b;
+        outSurfaceData.smoothness = half(1.0) - orm.g;
+        outSurfaceData.occlusion = LerpWhiteTo(orm.r, _OcclusionStrength);
+    }
+    #endif
+
     #if defined(_TIER_TINT)
+    #if defined(_ZOMBIE_MASKS)
+    // WP-084: the old body TierMask is not resident with the O1 atlas — the version tint's cloth coverage is the material's
+    // UV rectangle (the sash / rope region on the skin atlas, the whole cloth atlas); no lacquer on these atlases.
+    half inRect = (half)(step(_ZombieTierClothRect.x, uv.x) * step(_ZombieTierClothRect.y, uv.y) * step(uv.x, _ZombieTierClothRect.z) * step(uv.y, _ZombieTierClothRect.w));
+    half4 tierMask = half4(0.0, inRect, 0.0, 0.0);
+    #else
     half4 tierMask = SAMPLE_TEXTURE2D(_TierMask, sampler_TierMask, uv);
+    #endif
     half3 tinted = outSurfaceData.albedo;
     // lacquer floor: under the lacquer mask the base is lifted to at least _TierLacquerFloor (value) so the tint has something to blend with
     half baseV = max(tinted.r, max(tinted.g, tinted.b));
@@ -306,6 +373,26 @@ inline void InitializeStandardLitSurfaceData(float2 uv, out SurfaceData outSurfa
     tinted = lerp(tinted, _TierLacquerTint.rgb, saturate(tierMask.r * _TierLacquerK));
     tinted = lerp(tinted, _TierClothTint.rgb, saturate(tierMask.g * _TierClothK));
     outSurfaceData.albedo = tinted;
+    #endif
+
+    #if defined(_ZOMBIE_MASKS)
+    // WP-084 · AP-025 order (linear): tier tint (above) → skin C·T/Tref → dirt → blood (last albedo layer) → roughness.
+    uint skinIndex, dirtIndex, bloodIndex;
+    ZombieMaskIndices(skinIndex, dirtIndex, bloodIndex);
+    float2 maskUv = uv * _ZombieMaskDomain.xy + _ZombieMaskDomain.zw;
+    half s = ZombieMaskSample(maskUv, (float)skinIndex) * _ZombieSkinEnable;
+    half d = ZombieMaskSample(maskUv, (float)(3u + dirtIndex));
+    half b = ZombieMaskSample(maskUv, (float)(6u + bloodIndex));
+    half3 skinTint = skinIndex == 0u ? _ZombieSkinTint0.rgb : (skinIndex == 1u ? _ZombieSkinTint1.rgb : _ZombieSkinTint2.rgb);
+    half3 c0 = outSurfaceData.albedo;
+    half3 ct = saturate(c0 * skinTint / max(_ZombieSkinRef.rgb, half3(0.001, 0.001, 0.001)));
+    half3 c1 = lerp(c0, ct, s);
+    half3 c2 = lerp(c1, _ZombieDirtColor.rgb, d);
+    outSurfaceData.albedo = lerp(c2, _ZombieBloodColor.rgb, b);
+    half r0 = half(1.0) - outSurfaceData.smoothness;
+    half r1 = lerp(r0, _ZombieDirtRoughness, d);
+    half r2 = lerp(r1, _ZombieBloodRoughness, b);
+    outSurfaceData.smoothness = half(1.0) - saturate(r2);
     #endif
 }
 

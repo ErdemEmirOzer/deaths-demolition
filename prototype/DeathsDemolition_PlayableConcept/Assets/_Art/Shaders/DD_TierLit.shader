@@ -1,6 +1,7 @@
 // WP-036 · DD/Character/Tier Lit — URP 14 Lit (all passes, same keywords, same property names) with the
 // version-tint surface input (DD_TierLitInput.hlsl, ADR-036-1). Generated from the package Lit.shader so the
 // forward / shadow / depth / meta paths are Unity's own; only the surface albedo differs when _TIER_TINT is on.
+// WP-084: _ZOMBIE_MASKS adds the AP-025 skin / dirt / blood layers and the ORM read (DD_TierLitInput.hlsl); off = unchanged.
 Shader "DD/Character/Tier Lit"
 {
     Properties
@@ -51,6 +52,25 @@ Shader "DD/Character/Tier Lit"
         _TierLacquerTint("Lacquer Tint", Color) = (1,1,1,1)
         _TierLacquerK("Lacquer K", Range(0.0, 1.0)) = 0.0
         _TierLacquerFloor("Lacquer Floor (V)", Range(0.0, 1.0)) = 0.0
+
+        // WP-084 (AP-025 material contract v002): per-zombie skin / dirt / blood from a 9-slice mask array; the slice
+        // indices ride the renderer's renderingLayerMask bits 16-20 / 21-25 / 26-30 (no MaterialPropertyBlock).
+        [Toggle(_ZOMBIE_MASKS)] _ZombieMasksOn("Zombie Masks", Float) = 0.0
+        _ZombieMaskArray("Zombie Mask Array (Skin 0-2, Dirt 3-5, Blood 6-8)", 2DArray) = "" {}
+        _ZombieORM("ORM (R AO, G roughness, B metallic)", 2D) = "white" {}
+        _ZombieUseOrm("Use ORM", Float) = 0.0
+        _ZombieMaskDomain("Mask Domain (xy scale, zw offset)", Vector) = (0.5, 1, 0, 0)
+        _ZombieMaskMaxLod("Mask Max LOD", Float) = 9
+        _ZombieSkinEnable("Skin Tint Enable", Float) = 1.0
+        _ZombieSkinRef("Skin Reference (Tref)", Color) = (0.5490196, 0.572549, 0.572549, 1)
+        _ZombieSkinTint0("Skin Tint 0", Color) = (0.7098039, 0.7137255, 0.6784314, 1)
+        _ZombieSkinTint1("Skin Tint 1", Color) = (0.5490196, 0.572549, 0.572549, 1)
+        _ZombieSkinTint2("Skin Tint 2", Color) = (0.4117647, 0.4, 0.427451, 1)
+        _ZombieDirtColor("Dirt Color", Color) = (0.4705882, 0.4431373, 0.3764706, 1)
+        _ZombieBloodColor("Blood Color", Color) = (0.4, 0.07843138, 0.09411765, 1)
+        _ZombieDirtRoughness("Dirt Roughness", Range(0.0, 1.0)) = 0.65
+        _ZombieBloodRoughness("Blood Roughness", Range(0.0, 1.0)) = 0.22
+        _ZombieTierClothRect("Tier Cloth UV Rect (xy min, zw max)", Vector) = (0, 0, 1, 1)
 
         // SRP batching compatibility for Clear Coat (Not used in Lit)
         [HideInInspector] _ClearCoatMask("_ClearCoatMask", Float) = 0.0
@@ -133,6 +153,7 @@ Shader "DD/Character/Tier Lit"
             #pragma shader_feature_local _RECEIVE_SHADOWS_OFF
             #pragma shader_feature_local _ _DETAIL_MULX2 _DETAIL_SCALED
             #pragma shader_feature_local_fragment _TIER_TINT
+            #pragma shader_feature_local_fragment _ZOMBIE_MASKS
             #pragma shader_feature_local_fragment _SURFACE_TYPE_TRANSPARENT
             #pragma shader_feature_local_fragment _ALPHATEST_ON
             #pragma shader_feature_local_fragment _ _ALPHAPREMULTIPLY_ON _ALPHAMODULATE_ON
@@ -274,6 +295,7 @@ Shader "DD/Character/Tier Lit"
             #pragma shader_feature_local _PARALLAXMAP
             #pragma shader_feature_local _ _DETAIL_MULX2 _DETAIL_SCALED
             #pragma shader_feature_local_fragment _TIER_TINT
+            #pragma shader_feature_local_fragment _ZOMBIE_MASKS
 
             #pragma shader_feature_local_fragment _SPECULARHIGHLIGHTS_OFF
             #pragma shader_feature_local_fragment _ENVIRONMENTREFLECTIONS_OFF
@@ -386,6 +408,7 @@ Shader "DD/Character/Tier Lit"
             #pragma shader_feature_local _PARALLAXMAP
             #pragma shader_feature_local _ _DETAIL_MULX2 _DETAIL_SCALED
             #pragma shader_feature_local_fragment _TIER_TINT
+            #pragma shader_feature_local_fragment _ZOMBIE_MASKS
             #pragma shader_feature_local _ALPHATEST_ON
             #pragma shader_feature_local_fragment _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
 
@@ -439,6 +462,7 @@ Shader "DD/Character/Tier Lit"
             #pragma shader_feature_local_fragment _ _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
             #pragma shader_feature_local _ _DETAIL_MULX2 _DETAIL_SCALED
             #pragma shader_feature_local_fragment _TIER_TINT
+            #pragma shader_feature_local_fragment _ZOMBIE_MASKS
             #pragma shader_feature_local_fragment _SPECGLOSSMAP
             #pragma shader_feature EDITOR_VISUALIZATION
 
