@@ -290,7 +290,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// included, with the shot's serial), and CasingEffect.PredictLanding turns it into where that casing touches down and lies:
         /// FP / TP / top-down, every classic with a casing, ≥ 10 casings each — prediction ↔ the visible casing ≤ 10 cm (a frame's
         /// travel), the mechanism event of the same shot carries the same serial. The casing sound's landing (S-08's CasingAudio) is
-        /// logged against the visible touchdown and rest; S-08 moves it onto this event (target ≤ 25 cm).
+        /// placed from this event lands on the visible touchdown ≤ 25 cm (WP-085, frames that threw one casing).
         /// </summary>
         [UnityTest]
         [Timeout(900000)]
@@ -386,6 +386,8 @@ namespace DD.Prototype.Tests.PlayMode
                          + " | sound ↔ visible (n " + audioN + ") touchdown max " + Cm(audioTouchMax) + " cm, rest " + Cm(audioRestMax) + " cm");
                 if (touchMax > 0.1f || restMax > 0.1f) wrong.Add(kv.Key + ": tahmin görünen kovandan uzak (iniş " + Cm(touchMax) + ", duruş " + Cm(restMax) + " cm)");
                 if (serialMiss > 0) wrong.Add(kv.Key + ": " + serialMiss + " kovanın atış serisi mekanizma olayında yok");
+                // WP-085 (C-00 05.10): the casing sound lands on the visible casing's touchdown (≤ 25 cm); its bounce is heard at the rest
+                if (audioN > 0 && audioTouchMax > 0.25f) wrong.Add(kv.Key + ": kovan sesi görünen inişten uzak (" + Cm(audioTouchMax) + " cm > 25)");
             }
 
             Debug.Log("[DD-TEST] wp087.casinglaunch\n" + string.Join("\n", rows));

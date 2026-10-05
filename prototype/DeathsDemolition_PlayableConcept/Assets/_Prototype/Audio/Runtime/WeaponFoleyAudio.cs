@@ -2,6 +2,7 @@ using DD.Prototype.CameraSystem;
 using DD.Prototype.Characters;
 using DD.Prototype.Core;
 using DD.Prototype.Feedback;
+using DD.Prototype.Feedback.Vfx;
 using DD.Prototype.Weapons;
 using UnityEngine;
 
@@ -272,6 +273,10 @@ namespace DD.Prototype.Audio
     /// WP-085 B2: a casing on a hard surface skips once (a softer, higher tick 70–130 ms later); casings that leave in the
     /// same frame (sg_2's two spent shells, M-21) land 100–130 ms apart (clear of the 50 ms same-sound retrigger plus a frame) instead of one retrigger-blocked hit; the queue holds
     /// 16 (900 RPM × 0.55 s fall ≈ 9 in the air) and a bounce never takes one of the last four slots from a landing.
+    /// WP-085 (C-00 05.10, S-02 WP-087 CasingEvents): each visible casing's own throw (<see cref="CasingEvents.Launched"/>, the per-shot
+    /// speed jitter included) places its landing — <see cref="CasingEffect.PredictLanding"/>: touchdown heard at its time and place, the
+    /// bounce where it comes to rest. A CasingEjected slot waits one frame for its casing (sg_1's pump / sg_2's break-open shells
+    /// announce theirs from inside that event); unclaimed (no visible casing: VFX off, pool full) it lands on the nominal throw.
     /// </summary>
     public sealed class CasingAudio
     {
@@ -312,6 +317,23 @@ namespace DD.Prototype.Audio
         private bool _subscribed;
         private int _frame = -1;
         private int _sameFrame;
+
+        /// <summary>CasingEjected slots waiting a frame for their visible casing's <see cref="CasingEvents.Launched"/>.</summary>
+        private struct Deferred
+        {
+            public WeaponMechanismEvent Event;
+            public float Time;
+            public int Frame;
+        }
+
+        private const int DeferredCapacity = 4;
+        private readonly Deferred[] _deferred = new Deferred[DeferredCapacity];
+        private int _deferredCount;
+
+        /// <summary>Recent launches (shot serial, frame): a slot whose shot already threw its visible casing is not heard twice.</summary>
+        private readonly int[] _launchSerial = new int[8];
+        private readonly int[] _launchFrame = new int[8];
+        private int _launchHead;
         private SynthRandom _rng = new SynthRandom(0x0CA5E);
 
         public CasingAudio(AudioClipLibrary library, WeaponFireAudio.PlayFunc play)
@@ -331,6 +353,10 @@ namespace DD.Prototype.Audio
 
         /// <summary>Casings dropped because the queue was full (test / F1).</summary>
         public int Dropped { get; private set; }
+
+        /// <summary>Casings placed from their visible throw (CasingEvents.Launched) / from the nominal throw (no visible casing).</summary>
+        public int FromLaunch { get; private set; }
+        public int FromNominal { get; private set; }
 
         /// <summary>Seconds from the ejection to the last landing heard (test / R2 S5).</summary>
         public float LastFallSeconds { get; private set; }
@@ -354,6 +380,7 @@ namespace DD.Prototype.Audio
         {
             if (_subscribed) return;
             WeaponEvents.Mechanism += OnMechanism;
+            CasingEvents.Launched += OnLaunched;
             _subscribed = true;
         }
 
@@ -361,40 +388,87 @@ namespace DD.Prototype.Audio
         {
             if (!_subscribed) return;
             WeaponEvents.Mechanism -= OnMechanism;
+            CasingEvents.Launched -= OnLaunched;
             _subscribed = false;
             _count = 0;
+            _deferredCount = 0;
         }
 
-        public void Clear() => _count = 0;
+        public void Clear()
+        {
+            _count = 0;
+            _deferredCount = 0;
+        }
 
         private void OnMechanism(WeaponMechanismEvent m)
         {
             if (m.Kind != WeaponMechanismKind.CasingEjected) return;
+            if (WasLaunched(m.ShotSerial, Time.frameCount)) return;   // an A/B weapon's casing announces itself before its slot
+            if (_deferredCount == DeferredCapacity) Resolve(0);
+            _deferred[_deferredCount++] = new Deferred { Event = m, Time = Time.time, Frame = Time.frameCount };
+        }
 
+        private void OnLaunched(CasingLaunchInfo info)
+        {
+            _launchSerial[_launchHead] = info.ShotSerial;
+            _launchFrame[_launchHead] = Time.frameCount;
+            _launchHead = (_launchHead + 1) % _launchSerial.Length;
+            for (int i = _deferredCount - 1; i >= 0; i--)
+            {
+                if (Same(_deferred[i].Event.ShotSerial, _deferred[i].Frame, info.ShotSerial, Time.frameCount)) _deferred[i] = _deferred[--_deferredCount];
+            }
+
+            if (Schedule(info.Position, info.Velocity, Time.time, Time.frameCount)) FromLaunch++;
+        }
+
+        /// <summary>Same shot: equal serials, or — a serial unknown (0) — the same frame.</summary>
+        private static bool Same(int serialA, int frameA, int serialB, int frameB) => serialA != 0 && serialB != 0 ? serialA == serialB : frameA == frameB;
+
+        private bool WasLaunched(int serial, int frame)
+        {
+            for (int i = 0; i < _launchSerial.Length; i++)
+            {
+                if (_launchFrame[i] > 0 && frame - _launchFrame[i] <= 1 && Same(_launchSerial[i], _launchFrame[i], serial, frame)) return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>A slot whose frame passed without its visible casing: the nominal throw places it.</summary>
+        private void Resolve(int index)
+        {
+            Deferred d = _deferred[index];
+            _deferred[index] = _deferred[--_deferredCount];
+            if (WasLaunched(d.Event.ShotSerial, d.Frame)) return;
+            if (Schedule(d.Event.Position, NominalVelocity(d.Event), d.Time, d.Frame)) FromNominal++;
+        }
+
+        /// <summary>
+        /// One casing thrown from <paramref name="from"/> at <paramref name="ejectedAt"/>: CasingEffect's closed-form flight gives the
+        /// touchdown (the landing, at its time) and the rest (the bounce, when it skipped); the surface under the touchdown picks the sound.
+        /// </summary>
+        private bool Schedule(Vector3 from, Vector3 velocity, float ejectedAt, int frame)
+        {
             string audioId = WeaponFoleyV3.Equipped();
             CasingFamily family = WeaponFoleyV3.Casing(audioId);
-            if (family == CasingFamily.None) return;
+            if (family == CasingFamily.None) return false;
 
-            // WP-085 (C-00 05.10, S-02 WP-087 marker-align): the casing is heard where the visible one lands — the same throw
-            // as VfxDressing.EjectCasing (port +X 0.819 / up 0.574 / back 0.174 × the weapon's CasingSpeed; the visual's
-            // 0.85–1.15 jitter is its own, the sound takes the nominal) and the same floor (a 3 m ray down from the port,
-            // Default | Environment, CasingEffect). First impact = the landing, at its time and place; one bounce as the visual's.
-            if (!Ballistic(m, out Vector3 land, out float t1, out Vector3 skip, out float t2)) return;
-            int n = Physics.RaycastNonAlloc(new Vector3(land.x, m.Position.y + 0.2f, land.z), Vector3.down, _hits, 4f, VfxFloorMask, QueryTriggerInteraction.Ignore);
-            if (n == 0) return;
+            CasingEffect.PredictLanding(from, velocity, out Vector3 land, out float t1, out Vector3 rest, out float tRest);
+            int n = Physics.RaycastNonAlloc(new Vector3(land.x, from.y + 0.2f, land.z), Vector3.down, _hits, 4f, VfxFloorMask, QueryTriggerInteraction.Ignore);
+            if (n == 0) return false;
 
             int best = 0;
             for (int i = 1; i < n; i++) if (_hits[i].distance < _hits[best].distance) best = i;
             RaycastHit hit = _hits[best];
             SurfaceKind surface = AudioSurfaceHints.Resolve(hit.collider, hit.point);
             land.y = hit.point.y;
-            skip.y = hit.point.y;
+            rest.y = hit.point.y;
             LastLandingPoint = land;
             float fall = Mathf.Clamp(t1, MinFall, MaxFall);
 
             // Several casings in one frame (break-open shells): stagger them so each is heard, not merged into one retrigger.
-            if (Time.frameCount == _frame) _sameFrame++;
-            else { _frame = Time.frameCount; _sameFrame = 0; }
+            if (frame == _frame) _sameFrame++;
+            else { _frame = frame; _sameFrame = 0; }
             if (_sameFrame > 0) fall = Mathf.Min(LatestLanding, fall + _sameFrame * (0.1f + 0.03f * _rng.Next01()));
 
             float pitch = WeaponFoleyV3.Pitch(WeaponFoleyV3.CasingSemitones(audioId));
@@ -407,23 +481,26 @@ namespace DD.Prototype.Audio
             AudioSoundId sound = isV4 ? v4 : WeaponFoleyV3.CasingOn(family, surface);
             if (isV4) pitch = 1f;   // the v4 set carries each weapon's own calibre; no family pitch on top
             db += isV4 ? V4FileCompDb : V3FileCompDb;
-            if (!Enqueue(sound, land, fall, pitch, db, false))
+            if (!Enqueue(sound, land, ejectedAt, fall, pitch, db, false))
             {
-                return;
+                return false;
             }
 
-            if (t2 > 0f && WeaponFoleyV3.CasingBounces(surface) && _count < Capacity - BounceReserve)
+            float skipped = tRest - t1;
+            if (skipped > 0.001f && WeaponFoleyV3.CasingBounces(surface) && _count < Capacity - BounceReserve)
             {
-                Enqueue(sound, skip, fall + t2, pitch * 1.06f, db - 9f, true);
+                Enqueue(sound, rest, ejectedAt, fall + skipped, pitch * 1.06f, db - 9f, true);
             }
 
             if (audioId.StartsWith("LMG", System.StringComparison.Ordinal) && surface != SurfaceKind.Foliage)
             {
                 // AP-027 links sit 6 dB under their casing in the file (−30 LUFS): no runtime delta; the v017 link keeps −6 dB.
                 AudioSoundId link = WeaponFoleyV3.CasingV4(audioId, surface, AmbienceDirector.WetLook, true);
-                if (link != AudioSoundId.None && _library.IsProduced(link)) Enqueue(link, land, fall + 0.03f, 1f, db, false);
-                else if (surface != SurfaceKind.Water) Enqueue(AudioSoundId.CasingLink, land, fall + 0.03f, pitch, db - 6f, false);
+                if (link != AudioSoundId.None && _library.IsProduced(link)) Enqueue(link, land, ejectedAt, fall + 0.03f, 1f, db, false);
+                else if (surface != SurfaceKind.Water) Enqueue(AudioSoundId.CasingLink, land, ejectedAt, fall + 0.03f, pitch, db - 6f, false);
             }
+
+            return true;
         }
 
         /// <summary>CasingEffect's floor ray layers (Default | Environment).</summary>
@@ -433,45 +510,17 @@ namespace DD.Prototype.Audio
         public Vector3 LastLandingPoint { get; private set; }
 
         /// <summary>
-        /// The visual casing's nominal flight (VfxDressing.EjectCasing + CasingEffect.Tick): first floor impact point and time,
-        /// and — when the impact is hard enough to bounce (vertical speed below −0.6 m/s) — the bounce's landing point and the
-        /// time after the first impact (horizontal × 0.35, vertical × −0.22). False when no floor lies within 3 m of the port.
+        /// VfxDressing.EjectCasing's throw without its per-shot jitter (port +X 0.819 / up 0.574 / back 0.174 × the weapon's
+        /// CasingSpeed): a slot with no visible casing lands where a nominal one would.
         /// </summary>
-        public bool Ballistic(WeaponMechanismEvent m, out Vector3 land, out float t1, out Vector3 skip, out float t2)
+        public static Vector3 NominalVelocity(WeaponMechanismEvent m)
         {
-            land = skip = m.Position;
-            t1 = t2 = 0f;
             Vector3 right = m.Direction.sqrMagnitude > 0.01f ? m.Direction.normalized : Vector3.right;
             Vector3 fwd = Vector3.Cross(right, Vector3.up);
             fwd = fwd.sqrMagnitude > 1e-4f ? fwd.normalized : Vector3.forward;
-            DD.Prototype.Feedback.Vfx.VfxWeaponProfile profile = DD.Prototype.Feedback.Vfx.VfxWeaponProfiles.For(m.Weapon);
+            VfxWeaponProfile profile = VfxWeaponProfiles.For(m.Weapon);
             float speed = profile != null ? profile.CasingSpeed : 3f;
-            Vector3 v = (right * 0.819f + Vector3.up * 0.574f - fwd * 0.174f) * speed;
-            int hits = Physics.RaycastNonAlloc(m.Position, Vector3.down, _hits, DD.Prototype.Feedback.Vfx.CasingEffect.FloorRayMetres, VfxFloorMask, QueryTriggerInteraction.Ignore);
-            if (hits == 0)
-            {
-                return false;
-            }
-
-            float floor = _hits[0].point.y;   // the nearest surface under the port
-            for (int i = 1; i < hits; i++) floor = Mathf.Max(floor, _hits[i].point.y);
-            float g = DD.Prototype.Feedback.Vfx.CasingEffect.Gravity;
-            float h = Mathf.Max(0f, m.Position.y - (floor + 0.006f));
-            t1 = (v.y + Mathf.Sqrt(v.y * v.y + 2f * g * h)) / g;
-            land = m.Position + new Vector3(v.x, 0f, v.z) * t1;
-            float vyImpact = v.y - g * t1;
-            if (vyImpact < -0.6f)
-            {
-                float up = -vyImpact * 0.22f;
-                t2 = 2f * up / g;
-                skip = land + new Vector3(v.x * 0.35f, 0f, v.z * 0.35f) * t2;
-            }
-            else
-            {
-                skip = land;
-            }
-
-            return true;
+            return (right * 0.819f + Vector3.up * 0.574f - fwd * 0.174f) * speed;
         }
 
         /// <summary>STANDARDS §4 casing audibility: top-down −18, TP −12, FP −8 dB (against the fire voice).</summary>
@@ -495,7 +544,7 @@ namespace DD.Prototype.Audio
             return false;
         }
 
-        private bool Enqueue(AudioSoundId sound, Vector3 point, float delay, float pitch, float db, bool bounce)
+        private bool Enqueue(AudioSoundId sound, Vector3 point, float ejectedAt, float delay, float pitch, float db, bool bounce)
         {
             if (sound == AudioSoundId.None || !_library.IsProduced(sound)) return false;
             if (_count >= Capacity)
@@ -504,12 +553,17 @@ namespace DD.Prototype.Audio
                 return false;
             }
 
-            _queue[_count++] = new Pending { At = Time.time + delay, Point = point, Sound = sound, Pitch = pitch, GainDb = db, Bounce = bounce, Fall = delay };
+            _queue[_count++] = new Pending { At = ejectedAt + delay, Point = point, Sound = sound, Pitch = pitch, GainDb = db, Bounce = bounce, Fall = delay };
             return true;
         }
 
         public void Tick()
         {
+            for (int i = _deferredCount - 1; i >= 0; i--)
+            {
+                if (_deferred[i].Frame < Time.frameCount) Resolve(i);
+            }
+
             float now = Time.time;
             for (int i = _count - 1; i >= 0; i--)
             {
