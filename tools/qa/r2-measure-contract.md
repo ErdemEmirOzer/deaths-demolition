@@ -56,6 +56,16 @@ grip IK carries full weight, all weapons. It is reported, never gates, until the
 `elbowMaxDeg <= 165` (a reach margin of ≥ 1 cm). Source: S-02's hero v2 reach pre-study (K/wp-082/evidence/hero-v2-reach/ —
 the hold on, lmg_1 167°, rl_1 161°).
 
+## P3 (B9 poses, report — S-05, C-00 06.10)
+
+No owner test: `tools/qa/r2_z3.py` writes `r2-P3.json` in the same run as Z3, from the chain's B9 windows
+(`<E>/b9/<pose>/perf-<tier>-<mode>-<n>/`, R2 only; the S-05 pose list given to wp078_accept as --b9-poses, and to the tool
+so that every listed cell is required). One cell per pose x tier x camera mode: the medians over its counted windows of the
+probe's frame mean, filtered p99 (the probe's own 33.33 ms stall filter), SetPass, batches, triangles, draw calls and bodies
+on screen. Its one value `cells` is the cell count (values are plain numbers); the table is the artifact's top-level cells
+list, as in P2. The Z3 source rule below holds here too (armour not required): a window that breaks it leaves P3 unwritten
+(BLOCKED by name).
+
 ## P5 (Selection → Run load time)
 
 No owner test: `wp078_accept` writes `r2-P5.json` in stage `r2` from the chain's own A2/A3 bot sessions
@@ -109,6 +119,37 @@ armour on/off frames) writes `r2-Z1.json`:
   mean V vs the ground ring).
 The test asserts the DEC-077 thresholds as well as writing them (before 06.10 it only reported the band and asserted a
 silhouette change > 0.02). Source in the record: the armour mask is non-empty (> 500 px per figure, ≥ 6 figures).
+
+## Z3 (render ratios and character budget — S-05, C-00 06.10)
+
+No owner test writes `r2-Z3.json`: `tools/qa/r2_z3.py` does, after the chain's z3 pose run and its r2 stage
+(python3 tools/qa/r2_z3.py --evidence <E> --commit <FINAL> --r1-commit <R1 FINAL>; the same run writes P3).
+
+- **Render ratios** (counts, not times: quiet false). One fixed pose, z3-plazan (start 0,-4,0, the B9 sin-plazan pose),
+  Sinematik, topdown and tp, 40 zombies with `-ddArmor all` in both builds, 5 windows per cell run alternately R2 / R1 by
+  wp078_perf with `--baseline-bin` on the two release-probe builds: R2 cells in `<E>/z3/perf/`, R1 cells in
+  `<E>/z3/perf-r1/`. The n-th counted R2 window of a cell pairs with the n-th counted R1 window; each pair gives R2/R1 of
+  the probe's 04-window SetPass, batch and triangle averages; a cell's value is the median over its pairs (at least 5, else
+  BLOCKED) and the gate takes the worse mode: `setPassRatio <= 1.10`, `batchRatio <= 1.10`, `trianglesRatio <= 1.15`.
+- **Static budget** (needs Unity: skinned bones, imported texture sizes, material counts). After the AP-025 import an
+  EditMode test, run by name in the chain's r2 stage, writes `<E>/r2/z3-static.json` (schema dd-r2-z3-static-v1, the
+  FINAL commit, exactly the Z3 keys that are not ratios, as numbers); its `measuredBy` lands with that test. Without the
+  file `r2-Z3.json` is not written and Z3 is BLOCKED by name; the ratios still land in `<E>/r2/z3-ratios.json`
+  (diagnostic, never bound).
+- **Definitions (C-00 06.10).** `bonesMax <= 74` is the largest `SkinnedMeshRenderer.bones.Length` among a family's
+  skinned renderers; the armour anchors (`anchor_helmet`, `anchor_torso`, `anchor_legs`) and rig transforms that are not
+  bones are not counted (06.10: 74 on the fit A/B AP-007 rig v002 clothes, 73 on the O1 body and the faces, 74 on face and
+  body once the AP-025D jaw lands). `mapsPerAtlasMax <= 3` counts the PBR maps of one atlas (BaseColor, Normal, ORM); the
+  mask Texture2DArray is not an atlas map, it counts in the texture budget (Z3b, 96 MB). `materialsPerFamilyMax <= 4` is
+  the renderer material count of one zombie instance; the crowd total per body family (8 on 06.10) is the report key
+  `materialsPerFamilyCrowdTotal`. `characterTextureMaxPx <= 2048` (Character class), `atlasesPerFamilyMax <= 2`,
+  `shippedCharacterMB <= 400` (the shipped character row, ADR-015-1 v3 / DEC-093).
+- **The source is in the recording.** Every paired window, both builds: a counted window of its build's commit (one build
+  per side, two different builds), -ddPilotStart and -ddArmor all on its command line, the start pose set and sampled as
+  asked, 40 configured, forced and achieved and held through the window (lowest active count 40), the sweep off, the
+  SetPass, batch, triangle and draw-call averages above zero, at least one body on screen in 06-readability, and one pose
+  (sampled positions within 0.25 m) and one screen size across both builds and both modes. A broken condition FAILS the
+  tool: no `r2-Z3.json`, every condition named on stderr.
 
 ## Human gates
 
