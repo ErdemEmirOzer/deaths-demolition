@@ -106,7 +106,9 @@ class MeasuredByTests(unittest.TestCase):
         kit = [s for s in r2.measurement_steps(data, quiet=True) if s["id"] == "r2-S1"]
         self.assertEqual(1, len(kit))
         self.assertEqual(["S1", "S2"], kit[0]["gates"])
-        self.assertEqual({"DD_KIT_VARIANTS": "A", "DD_KIT_WEAPONS": "all"}, kit[0]["env"])
+        # A = today's game (the S1/S2 gates), C = the AP-027 v4 prototype (S1 report below400ShareMinV4, C-00 05.10)
+        self.assertEqual({"DD_KIT_VARIANTS": "AC", "DD_KIT_WEAPONS": "all"}, kit[0]["env"])
+        self.assertEqual(["below400ShareMinV4"], gate("S1")["report"])
         normal = {s["id"]: s for s in r2.measurement_steps(data, quiet=False)}
         self.assertEqual("editmode", normal["r2-U3"]["suite"])
         self.assertEqual("DD.Prototype.Tests.PlayMode.UiTextInventoryTests.U1_GorunurHarf_AnaMenuPanellerVeSecim_EnTr",
