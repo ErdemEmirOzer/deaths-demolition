@@ -208,8 +208,15 @@ namespace DD.Prototype.Audio
         /// <summary>The fire voice played last, None before the first.</summary>
         public AudioSoundId LastVoice { get; private set; }
 
+        /// <summary>
+        /// WP-085 B4 listening kit only (variant B): true → no fire cue is taken here, the director plays the pre-v3 voice
+        /// (RifleFire / SmgFire / ShotgunFire by intensity, room baked in, no space tail). The kit test sets and clears it.
+        /// </summary>
+        public static bool LegacyVoicesForKit;
+
         public bool TryHandle(in CombatAudioCue cue)
         {
+            if (LegacyVoicesForKit) return false;
             if (!WeaponAudioIdentity.TryGet(cue.WeaponAudioId, out WeaponVoiceSet set) || !_library.IsProduced(set.Fire))
             {
                 return false;

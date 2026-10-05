@@ -277,6 +277,16 @@ namespace DD.Prototype.Audio
         /// <summary>Seconds from the ejection to the last landing heard (test / R2 S5).</summary>
         public float LastFallSeconds { get; private set; }
 
+        /// <summary>Shortest / longest ejection → landing heard since <see cref="ResetStats"/> (R2 S5).</summary>
+        public float FallMinHeard { get; private set; } = float.MaxValue;
+        public float FallMaxHeard { get; private set; }
+
+        public void ResetStats()
+        {
+            FallMinHeard = float.MaxValue;
+            FallMaxHeard = 0f;
+        }
+
         /// <summary>Casings in the air right now.</summary>
         public int InAir => _count;
 
@@ -392,6 +402,8 @@ namespace DD.Prototype.Audio
                     Landed++;
                     LastSound = p.Sound;
                     LastFallSeconds = p.Fall;
+                    if (p.Fall < FallMinHeard) FallMinHeard = p.Fall;
+                    if (p.Fall > FallMaxHeard) FallMaxHeard = p.Fall;
                 }
             }
         }
