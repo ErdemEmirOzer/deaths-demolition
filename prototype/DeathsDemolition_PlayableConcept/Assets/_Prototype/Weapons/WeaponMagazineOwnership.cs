@@ -63,12 +63,16 @@ namespace DD.Prototype.Weapons
         /// <summary>A beat landed: the step and whether the clip sent it (false = the deadline).</summary>
         public event Action<MagazineStep, bool> Stepped;
 
-        /// <summary>A reload of a magazine weapon starts: the magazine is in the weapon, the first beat is next.</summary>
-        public void Begin()
+        /// <summary>
+        /// A reload of a magazine weapon starts: the magazine is in the weapon, the first beat is next. <paramref name="emptyTube"/>
+        /// (rl_1, S-06 05.10): the tube starts empty — nothing to detach; the round comes to the hand (mag_hand_attach), goes in
+        /// (rocket_in = mag_insert) and seats (rocket_seat = bolt_release).
+        /// </summary>
+        public void Begin(bool emptyTube = false)
         {
             if (Active) End();
             Owner = MagazineOwner.Weapon;
-            NextStep = 0;
+            NextStep = emptyTube ? (int)MagazineStep.HandAttach : 0;
         }
 
         /// <summary>The clip sent <paramref name="step"/>: lands it (and any skipped earlier beat first). False when not expected.</summary>

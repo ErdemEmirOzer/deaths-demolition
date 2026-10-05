@@ -108,6 +108,25 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void BosTup_DetachYok_EleGelirTakilirOturur()
+        {
+            // rl_1 (S-06 05.10): the tube starts empty — the round comes to the hand, goes in, seats
+            var o = new WeaponMagazineOwnership();
+            o.Begin(emptyTube: true);
+            Assert.AreEqual(MagazineOwner.Weapon, o.Owner);
+            Assert.AreEqual((int)MagazineStep.HandAttach, o.NextStep);
+            Assert.IsFalse(o.OnEvent(MagazineStep.Detach), "boş tüpte çıkarılacak bir şey yok");
+            float grace = WeaponMagazineOwnership.DeadlineGraceSeconds / Reload;
+            o.Tick(WeaponMagazineOwnership.MagazineMarks[1] + grace + 1e-4f, Reload);
+            Assert.AreEqual(MagazineOwner.HandNew, o.Owner, "roket elde");
+            Assert.IsTrue(o.OnEvent(MagazineStep.Insert));
+            Assert.AreEqual(MagazineOwner.Weapon, o.Owner);
+            Assert.IsTrue(o.OnEvent(MagazineStep.BoltRelease));
+            Assert.IsFalse(o.Active);
+            Assert.AreEqual(0, o.EndedEarly);
+        }
+
+        [Test]
         public void OlayAdlari_SozlesmeVeTakmaAdlar()
         {
             AssertStep("mag_out", MagazineStep.Detach);

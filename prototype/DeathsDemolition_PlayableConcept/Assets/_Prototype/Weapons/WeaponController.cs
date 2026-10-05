@@ -102,6 +102,7 @@ namespace DD.Prototype.Weapons
         private WeaponMechanismTimeline _timeline = WeaponMechanismTimeline.Magazine;
         private float _casingAt = -1f;
         private bool _magOutFired;
+        private readonly WeaponMagazineOwnership _magazine = new WeaponMagazineOwnership();   // WP-082 (S-02 contract v1)
         private int _seatsFired;
         private bool _chamberFired;
         private bool _pickupDonePending;
@@ -682,6 +683,7 @@ namespace DD.Prototype.Weapons
                 _magOutFired = false;
                 _seatsFired = 0;
                 _chamberFired = false;
+                if (MagazineReload) _magazine.Begin(_equippedId == ClassicWeaponId.Rl1);   // WP-082: the magazine's owner (rl_1: an empty tube)
 
                 if (_classicRig != null)
                 {
@@ -695,6 +697,8 @@ namespace DD.Prototype.Weapons
                 // WP-069 B2: a reserve-limited or per-shell reload can run to term without a full
                 // magazine, so the runtime's own flag is the "completed" signal.
                 bool completed = _classic.LastReloadCompleted;
+                if (completed) _magazine.Tick(1f, _classic.ReloadDuration);   // WP-082: the beats a clip did not send land first
+                _magazine.End();   // complete / cancelled / switched / a Special: the magazine is in the weapon
 
                 if (_classicRig != null)
                 {
@@ -713,8 +717,15 @@ namespace DD.Prototype.Weapons
                 AudioEvents.Raise(CombatAudioEvent.ReloadInsert, Muzzle.position, 1f, 40);
             }
 
+            if (reloading) _magazine.Tick(_classic.ReloadProgress01, _classic.ReloadDuration);
             _wasReloading = reloading;
         }
+
+        /// <summary>WP-082: the classic weapon reloads a magazine (or rl_1's tube) — not shell by shell, not a break-open.</summary>
+        private bool MagazineReload => !_timeline.Shells && _timeline.ReloadCasings <= 0;
+
+        /// <summary>WP-082 readout: who holds the classic weapon's magazine during a reload (tests, S-10 H3 counters).</summary>
+        public WeaponMagazineOwnership Magazine => _magazine;
 
         /// <summary>
         /// PROTOTYPE-ONLY: point in the reload at which the magazine-insert layer plays.
@@ -1615,6 +1626,10 @@ namespace DD.Prototype.Weapons
             else if (e == s_magOut) { if (_timeline.ReloadCasings <= 0 || !_magOutFired) { _magOutFired = true; PublishMagOut(true); } }
             else if (e == s_magIn || e == s_magIn2 || e == s_magIn3) PublishMechanism(WeaponMechanismKind.ShellSeated, true);
             else if (e == s_chamber) PublishMechanism(WeaponMechanismKind.Chambered, true);
+
+            // WP-082: the reload's magazine beats (mag_out / mag_hand_attach / mag_in / chamber); forward only, so the TP body's
+            // event and a repeat cannot double a beat. Presentation: the ammo stays on the runtime's timer.
+            if (_magazine.Active && WeaponMagazineOwnership.TryStepFor(e, out MagazineStep step)) _magazine.OnEvent(step);
         }
 
         /// <summary>The mag_out mark: a magazine drops — or, on a break-open (C-00 30.09 M-21), the spent shells fly.</summary>
