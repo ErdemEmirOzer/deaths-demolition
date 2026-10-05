@@ -56,6 +56,7 @@ import guard_receipt  # noqa: E402  (the one guard receipt module; Editor runs u
 import dd_paths  # noqa: E402  (WP-089: the one KADRO root; guard_receipt put tools/ on sys.path)
 import wp078_perf  # noqa: E402  (resolve_binary)
 import wp078_perf_report  # noqa: E402  (CELL: the perf window directory layout)
+import r2_gates  # noqa: E402  (WP-091 R2 measurement sessions)
 import wp078_report  # noqa: E402  (AI_FLAGS, AREAS, ROUTE_KEYS, SCHEMA)
 
 PROJECT = "prototype/DeathsDemolition_PlayableConcept"
@@ -64,7 +65,7 @@ PROJECT = "prototype/DeathsDemolition_PlayableConcept"
 # DD_KADRO cannot split this tool from the shell tools; move day changes dd_paths.KADRO_REL only.
 KADRO_ROOT = dd_paths.KADRO
 KADRO_EVIDENCE = dd_paths.KPROJ / "wp-078" / "evidence"
-STAGE_ORDER = ("a6", "a0", "a1", "a2", "a3", "a5", "a4", "a8")
+STAGE_ORDER = ("a6", "a0", "a1", "a2", "a3", "r2", "a5", "a4", "r2q", "a8")
 PLAYMODE_TIMEOUT_MIN = 90   # A1 full PlayMode watchdog (test.sh default 45 min; main-ci uses 60)
 ISOLATED_TIMEOUT_MIN = 10   # one isolated test in its own session (main-ci --alone-timeout default)
 
@@ -91,7 +92,7 @@ def ci_plan():
             a3.append((f"a3-isolated-{len(a3) + 1}-{(m.group(1)[:60] if m else 'test')}", f"(?:{pattern})"))
     return core, ci.alone_steps(entries), a3
 STAGE_OUTPUTS = {"a6": ("build-dev", "build-release", "build-probe"), "a0": ("a0",), "a1": ("a1",), "a2": ("a2",),
-                 "a3": ("a3",), "a5": ("a5",), "a4": ("a4",), "a8": ()}
+                 "a3": ("a3",), "r2": ("r2",), "a5": ("a5",), "a4": ("a4",), "r2q": (), "a8": ()}   # r2q writes into r2/ too
 BUILDS = {"dev": "dev", "release": "release", "probe": "release-probe"}   # role → tools/build.sh mode (K1)
 MODES = ("topdown", "tp", "fp")
 TIER = "sinematik"                        # DEC-100 default tier, given explicitly (K5)
@@ -788,6 +789,44 @@ class Chain:
                             "files": [root / "wp078-perf-report.json"]})
         if not self.dry_run:
             self.finish("b9", results, guarded=False, verdict="RECORDED", extra={"buildRole": "probe", "source": "S-05 B9 pose list"})
+
+    def stage_r2(self):
+        """WP-091: the owners' R2 measurement tests that need no quiet machine (r2-gates.json measuredBy quiet=false)."""
+        self.r2_measurements(quiet=False)
+
+    def stage_r2q(self):
+        """WP-091: the quiet-machine R2 measurements (sound captures, render ratios) — run inside the window, after A4."""
+        self.r2_measurements(quiet=True)
+
+    def r2_measurements(self, quiet):
+        """Each measurement session runs in its own guarded Editor test run (PlayMode: player scope — lock order) with
+        DD_R2_MEASURE_DIR=<E>/r2 and DD_R2_COMMIT=<FINAL>; the test writes <E>/r2/r2-<gate id>.json. Recorded, not a
+        chain gate: wp078_report judges every R2 gate from those files (a missing one is BLOCKED there)."""
+        stage = "r2q" if quiet else "r2"
+        if self.round_name != "R2":
+            self.log(f"SKIP {stage}: not an R2 round")
+            return
+        contract = r2_gates.load_contract((HERE / "r2-gates.json").read_text(encoding="utf-8"))
+        steps = r2_gates.measurement_steps(contract, quiet)
+        measure_dir = self.evidence / "r2"
+        results = []
+        for step in steps:
+            out = measure_dir / step["id"]
+            argv = ["/usr/bin/env", f"DD_R2_MEASURE_DIR={measure_dir}", f"DD_R2_COMMIT={self.final}",
+                    REPO / "tools" / "test.sh", step["suite"], "--out", out, "--filter", step["filter"]]
+            if step["suite"] == "playmode":
+                argv += ["--timeout-min", str(ISOLATED_TIMEOUT_MIN * 3)]
+            if not self.dry_run:
+                measure_dir.mkdir(parents=True, exist_ok=True)
+            result = self.editor_unit(f"{stage}-{step['id']}", [argv], out,
+                                      lambda out=out, step=step: [out / f"{step['suite']}.xml", out / f"{step['suite']}.log"]
+                                      + [measure_dir / f"r2-{g}.json" for g in step["gates"]],
+                                      lambda step=step: {"r2Gates": step["gates"], "filter": step["filter"], "quiet": step["quiet"]},
+                                      scope="player" if step["suite"] == "playmode" else "editor")
+            if result:
+                results.append(dict(result, gate=False))
+        if not self.dry_run:
+            self.finish(stage, results, verdict="RECORDED", extra={"r2Steps": [s["id"] for s in steps]})
 
     def stage_a8(self):
         manifest_path = self.evidence / "manifest.json"

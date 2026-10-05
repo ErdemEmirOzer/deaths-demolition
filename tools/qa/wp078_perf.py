@@ -22,6 +22,7 @@ deferred (the guard child ignores them) and only then is the signal raised; the 
 import argparse
 import signal
 import json
+import re
 import subprocess
 import sys
 import time
@@ -239,6 +240,9 @@ def main():
     parser.add_argument("--cooldown", type=float, default=60.0)
     parser.add_argument("--player-wait", type=float, default=1800.0, help="seconds to wait for another game Player to close")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--baseline-bin", help="WP-091: the R1 release-probe build, run alternately with --bin in the same window")
+    parser.add_argument("--baseline-out", help="WP-091: the R1 perf root (its own cells and ledger)")
+    parser.add_argument("--baseline-commit", help="WP-091: the R1 commit recorded for the baseline windows")
     parser.add_argument("--extra-arg", action="append", default=[],
                         help="extra probe argument for every window, repeatable; use the --extra-arg=<value> form for values starting with '-'")
     parser.add_argument("--no-quiet", action="store_true", help="do not take the Unity / player slots (smoke only; never for the gate)")
@@ -284,34 +288,64 @@ def main():
 
     note(f"plan {len(runs)} cells × counted windows {[r[2] for r in runs]} · tiers={tiers} modes={modes} commit={args.commit}")
     quiet = None if (args.no_quiet or args.dry_run) else QuietWindow(note, root / ".quiet-hold", args.load_max, args.quiet_minutes, args.quiet_pause)
+    baseline = None
+    if args.baseline_bin:
+        # WP-091: the R1 probe build in its own root, recorded under its own commit
+        if not (args.baseline_out and args.baseline_commit and re.fullmatch(r"[0-9a-f]{40}", args.baseline_commit)):
+            print("--baseline-bin needs --baseline-out and --baseline-commit <40-hex>", file=sys.stderr)
+            return 64
+        baseline_root = Path(args.baseline_out).resolve()
+        baseline_root.mkdir(parents=True, exist_ok=True)
+        baseline_args = argparse.Namespace(**{**vars(args), "commit": args.baseline_commit})
+        baseline = ("r1:", baseline_args, baseline_root, resolve_binary(args.baseline_bin))
+        note(f"baseline (R1) alternating: bin={args.baseline_bin} root={baseline_root} commit={args.baseline_commit}")
     try:
-        return run_all(args, runs, root, binary, seconds, quiet, note)
+        return run_all(args, runs, root, binary, seconds, quiet, note, baseline)
     finally:
         if quiet is not None:
             quiet.release()
 
 
-def run_all(args, runs, root, binary, seconds, quiet, note):
+def run_all(args, runs, root, binary, seconds, quiet, note, baseline=None):
     """C-00 30.09 K8: every cell runs until it has its counted windows; a host-discarded window is re-run at the next
-    free index in the same root (at most --max-discards extra attempts per cell per invocation)."""
+    free index in the same root (at most --max-discards extra attempts per cell per invocation).
+    WP-091 (C-00 05.10): with a baseline (R1 probe build, its own root and commit) the two builds ALTERNATE window by
+    window inside the same quiet window — R2, R1, R2, R1 … per cell — so the machine state weighs on both alike."""
+    sides = [("", args, root, binary)]
+    if baseline is not None:
+        sides.append(baseline)
     first = True
     for name, mode, need in runs:
-        extra = 0
+        extra = {tag: 0 for tag, *_ in sides}
         while True:
-            counted, index = cell_state(root, name, mode)
-            if counted >= need:
-                note(f"perf-{name}-{mode}: {counted}/{need} counted")
+            pending = []
+            for tag, side_args, side_root, _ in sides:
+                counted, _index = cell_state(side_root, name, mode)
+                if counted >= need:
+                    continue
+                if extra[tag] > args.max_discards:
+                    continue
+                pending.append(tag)
+            if not pending:
+                for tag, side_args, side_root, _ in sides:
+                    counted, _index = cell_state(side_root, name, mode)
+                    label = f"{tag}perf-{name}-{mode}"
+                    if counted >= need:
+                        note(f"{label}: {counted}/{need} counted")
+                    else:
+                        note(f"{label}: {counted}/{need} counted after {extra[tag] - 1} re-runs — BLOCKED (host too busy), next cell")
                 break
-            if extra > args.max_discards:
-                note(f"perf-{name}-{mode}: {counted}/{need} counted after {extra - 1} re-runs — BLOCKED (host too busy), next cell")
-                break
-            if not first:
-                time.sleep(args.cooldown if quiet is None else min(args.cooldown, 20.0))
-            first = False
-            code = run_window(args, root, binary, seconds, quiet, note, name, mode, index)
-            if code is not None:
-                return code
-            extra += 1 if cell_state(root, name, mode)[0] == counted else 0
+            for tag, side_args, side_root, side_binary in sides:
+                if tag not in pending:
+                    continue
+                counted, index = cell_state(side_root, name, mode)
+                if not first:
+                    time.sleep(args.cooldown if quiet is None else min(args.cooldown, 20.0))
+                first = False
+                code = run_window(side_args, side_root, side_binary, seconds, quiet, note, name, mode, index)
+                if code is not None:
+                    return code
+                extra[tag] += 1 if cell_state(side_root, name, mode)[0] == counted else 0
             if args.dry_run:
                 break
     note("done")

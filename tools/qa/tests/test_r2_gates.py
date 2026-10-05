@@ -25,14 +25,15 @@ class ContractTests(unittest.TestCase):
         ids = [g["id"] for g in data["gates"]]
         self.assertEqual(len(ids), len(set(ids)))
         self.assertEqual({"hero", "locomotion", "zombie", "sound", "perf", "ui"}, {g["area"] for g in data["gates"]})
-        for gid in ("H1", "H4", "H4b", "L1", "L1t", "L3", "Z3", "Z3b", "S1", "S4", "U1", "U3"):
+        for gid in ("H1", "H4", "H4a", "H4b", "L1", "L1t", "L3", "Z3", "Z3b", "S1", "S4", "U1", "U3"):
             self.assertIn(gid, ids)
 
     def test_approved_thresholds_are_the_numbers_in_the_draft(self):
         # a changed threshold must be a reviewed edit of this file: pin the C-00 05.10 values
         pinned = {("H1", "maxCm"): 1.0, ("L1", "avg"): 0.05, ("L1t", "avg"): 0.10, ("L3", "limbDegPerFrameMax"): 20.0,
                   ("Z3", "bonesMax"): 74, ("Z3b", "zombieSetPass"): 14, ("S1", "below400ShareMin"): 0.20,
-                  ("S4", "hallMsMax"): 2000, ("U1", "lettersTotalReduction"): 0.40, ("H4b", "leakDegMax"): 1.0}
+                  ("S4", "hallMsMax"): 2000, ("U1", "lettersTotalReduction"): 0.40, ("H4b", "leakDegMax"): 1.0,
+                  ("H4", "yawRollExcessDegMax"): 1.0, ("H4a", "armOffscreenFrames"): 0, ("H4a", "armInCameraFrames"): 0}
         for (gid, key), limit in pinned.items():
             check = next(c for c in gate(gid)["checks"] if c["key"] == key)
             self.assertEqual(limit, check["limit"], (gid, key))
@@ -50,6 +51,40 @@ class ContractTests(unittest.TestCase):
             with self.assertRaises(r2.ContractError):
                 r2.load_contract(json.dumps(data))
         self.assertTrue(base["gates"])
+
+
+class MeasuredByTests(unittest.TestCase):
+    def test_the_contract_runs_s02s_h4_and_h4b_sessions_outside_the_quiet_window(self):
+        steps = r2.measurement_steps(r2.load_contract(CONTRACT), quiet=False)
+        self.assertEqual({"r2-H4": ["H4"], "r2-H4b": ["H4b"]}, {s["id"]: s["gates"] for s in steps if s["id"] in ("r2-H4", "r2-H4b")})
+        self.assertEqual("S-06", gate("H4a")["owner"])
+        self.assertNotIn("measuredBy", gate("H4a"))   # S-06 binds its FpKollar measurement when it lands
+
+    def contract(self, **by_gate):
+        data = json.loads(CONTRACT)
+        for g in data["gates"]:
+            g.pop("measuredBy", None)   # synthetic sessions only, independent of what the contract binds today
+            if g["id"] in by_gate:
+                g["measuredBy"] = by_gate[g["id"]]
+        return json.dumps(data)
+
+    def test_steps_group_gates_sharing_one_session_and_split_by_quiet(self):
+        loco = {"suite": "playmode", "filter": "LocomotionR2Tests", "quiet": False}
+        text = self.contract(L1=loco, L1t=loco, L2=loco, S3={"suite": "playmode", "filter": "AudioR2Dense40", "quiet": True})
+        data = r2.load_contract(text)
+        normal, quiet = r2.measurement_steps(data, False), r2.measurement_steps(data, True)
+        self.assertEqual([{"id": "r2-L1", "suite": "playmode", "filter": "LocomotionR2Tests", "quiet": False,
+                           "gates": ["L1", "L1t", "L2"]}], normal)
+        self.assertEqual(["S3"], quiet[0]["gates"])
+
+    def test_measured_by_is_validated(self):
+        for bad in ({"H5": {"suite": "playmode", "filter": "x"}},                 # a human gate is not measured
+                    {"L1": {"suite": "batch", "filter": "x"}},                    # unknown suite
+                    {"L1": {"suite": "playmode", "filter": ""}},                  # empty filter
+                    {"L1": {"suite": "playmode", "filter": "x", "quiet": "yes"}}):  # quiet must be a boolean
+            with self.subTest(bad=bad):
+                with self.assertRaises(r2.ContractError):
+                    r2.load_contract(self.contract(**bad))
 
 
 class EvaluateTests(unittest.TestCase):

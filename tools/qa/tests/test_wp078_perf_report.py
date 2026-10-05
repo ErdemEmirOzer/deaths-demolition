@@ -143,3 +143,31 @@ class PerfTargetsInvariantTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class P2CompareTests(unittest.TestCase):
+    """WP-091 P2 (C-00 05.10, report only): R2 - R1 per cell; flag only when over +10 % AND +1.0 ms together."""
+
+    def both(self, r1_means, r2_means):
+        with tempfile.TemporaryDirectory() as a, tempfile.TemporaryDirectory() as b:
+            r1, r2 = Path(a), Path(b)
+            fill(r1, "yuksek", "Yuksek", "fp", "FirstPerson", r1_means)
+            fill(r2, "yuksek", "Yuksek", "fp", "FirstPerson", r2_means)
+            return report.compare(report.report(r2, TARGETS), report.report(r1, TARGETS))
+
+    def cell(self, result):
+        return next(c for c in result["cells"] if c["tier"] == "yuksek" and c["mode"] == "fp")
+
+    def test_both_thresholds_together_flag_the_cell(self):
+        c = self.cell(self.both([10.0, 10.0, 10.0], [11.5, 11.5, 11.5]))   # +1.5 ms, +15 %
+        self.assertTrue(c["flagged"])
+        self.assertEqual((1.5, 0.15), (c["deltaMs"], c["deltaPct"]))
+
+    def test_percent_alone_or_ms_alone_does_not_flag(self):
+        self.assertFalse(self.cell(self.both([4.0] * 3, [4.8] * 3))["flagged"])     # +20 % but only +0.8 ms
+        self.assertFalse(self.cell(self.both([30.0] * 3, [31.5] * 3))["flagged"])   # +1.5 ms but only +5 %
+
+    def test_a_side_without_counted_windows_is_unmeasured_not_fine(self):
+        result = self.both([10.0] * 3, [])
+        self.assertEqual("unmeasured", self.cell(result)["state"])
+        self.assertGreaterEqual(result["unmeasuredCells"], 1)

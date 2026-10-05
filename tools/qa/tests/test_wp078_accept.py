@@ -18,6 +18,7 @@ import tempfile
 import threading
 import time
 import unittest
+from unittest import mock
 import uuid
 import zlib
 from pathlib import Path
@@ -146,6 +147,13 @@ class FakeTools:
         put_json(Path(argv[3]), dict(schema="dd-wp064-library-provenance-v1", phase="post-build", assetsTree=ASSETS, head=FINAL,
                                      porcelain="", lfsPointersOnDisk=0, lfsMissing=0, library={"artifactDbBytes": 1, "artifactDbMtime": 1.0}))
         return 0
+
+    def tool_env(self, argv, log_path):
+        # WP-091 r2 sessions: /usr/bin/env K=V … tools/test.sh …  → strip the assignments, run the fake test.sh
+        rest = list(argv[1:])
+        while rest and "=" in rest[0] and not rest[0].startswith("/"):
+            rest.pop(0)
+        return self.tool_test_sh(rest, log_path)
 
     def tool_test_sh(self, argv, _):
         mode, out = argv[1], Path(argv[3])
@@ -480,6 +488,39 @@ class B9PoseTests(Base):
                 path.write_text(json.dumps({"poses": bad}))
                 with self.assertRaises(ValueError):
                     acc.load_b9_poses(path)
+
+
+class R2StageTests(Base):
+    """WP-091: the owners' measurement sessions run with DD_R2_MEASURE_DIR / DD_R2_COMMIT; quiet ones only in r2q."""
+    STEPS = {False: [{"id": "r2-L1", "suite": "playmode", "filter": "LocomotionR2Tests", "quiet": False, "gates": ["L1", "L2"]},
+                     {"id": "r2-U1", "suite": "editmode", "filter": "UiTextInventoryR2", "quiet": False, "gates": ["U1"]}],
+             True: [{"id": "r2-S3", "suite": "playmode", "filter": "AudioR2Dense40", "quiet": True, "gates": ["S3"]}]}
+
+    def planned_r2(self, stages, round_name):
+        with mock.patch.object(acc.r2_gates, "measurement_steps", side_effect=lambda c, quiet: self.STEPS[quiet]):
+            chain = self.dry(stages, round_name=round_name)
+        return [argv for s, argv in chain.planned if s in ("r2", "r2q") and Path(argv[0]).name == "env"]
+
+    def test_r2_runs_each_session_with_the_measure_env_and_its_filter(self):
+        runs = self.planned_r2(["r2"], "R2")
+        self.assertEqual(2, len(runs))
+        measure_dir = str(self.evidence.resolve() / "r2")
+        self.assertEqual(["DD_R2_MEASURE_DIR=" + measure_dir, "DD_R2_COMMIT=" + FINAL], runs[0][1:3])
+        self.assertEqual(("playmode", "LocomotionR2Tests"), (runs[0][4], self.opt(runs[0], "--filter")))
+        self.assertEqual(str(self.evidence.resolve() / "r2" / "r2-L1"), self.opt(runs[0], "--out"))
+        self.assertEqual("editmode", runs[1][4])
+
+    def test_quiet_sessions_only_in_r2q(self):
+        self.assertEqual(["AudioR2Dense40"], [self.opt(a, "--filter") for a in self.planned_r2(["r2q"], "R2")])
+
+    def test_an_r1_round_runs_no_measurement_session(self):
+        self.assertEqual([], self.planned_r2(["r2", "r2q"], "R1"))
+
+    def test_playmode_session_is_player_scope_guarded(self):
+        with mock.patch.object(acc.r2_gates, "measurement_steps", side_effect=lambda c, quiet: self.STEPS[quiet]):
+            chain = self.dry(["r2"], round_name="R2")
+        scopes = [argv[-1] for s, argv in chain.planned if s == "r2" and Path(argv[0]).name == "userdata-guard.sh"]
+        self.assertEqual(["player", "player", "editor", "editor"], scopes)
 
 
 class StopTests(Base):

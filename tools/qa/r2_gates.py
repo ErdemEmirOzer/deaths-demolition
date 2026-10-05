@@ -60,7 +60,32 @@ def load_contract(text):
             raise ContractError(f"{gid}: a gate needs checks or required tests")
         if gate["kind"] == "report" and checks:
             raise ContractError(f"{gid}: a report entry carries no checks (it never fails)")
+        measured = gate.get("measuredBy")
+        if measured is not None:
+            if gate["kind"] == "human":
+                raise ContractError(f"{gid}: a human gate is reviewed, not measured")
+            if not (isinstance(measured, dict) and measured.get("suite") in ("playmode", "editmode")
+                    and isinstance(measured.get("filter"), str) and measured["filter"]
+                    and isinstance(measured.get("quiet", False), bool)):
+                raise ContractError(f"{gid}: measuredBy needs suite playmode|editmode, a test filter and quiet true|false")
     return data
+
+
+def measurement_steps(contract, quiet):
+    """The chain's measurement sessions: one per distinct (suite, filter) among the gates whose measuredBy has this
+    quiet flag, in contract order; each step lists the gates it is expected to write. Step id = r2-<first gate id>."""
+    steps, by_key = [], {}
+    for gate in contract["gates"]:
+        measured = gate.get("measuredBy")
+        if not measured or bool(measured.get("quiet", False)) != quiet:
+            continue
+        key = (measured["suite"], measured["filter"])
+        if key not in by_key:
+            by_key[key] = {"id": "r2-" + gate["id"], "suite": measured["suite"], "filter": measured["filter"],
+                           "quiet": quiet, "gates": []}
+            steps.append(by_key[key])
+        by_key[key]["gates"].append(gate["id"])
+    return steps
 
 
 def _number(value):

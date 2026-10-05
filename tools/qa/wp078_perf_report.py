@@ -152,10 +152,45 @@ def report(root, targets):
     return {"schema": "dd-wp078-perf-report-v2", "pass": gate_ok, "targets": targets.get("source"), "cells": rows}
 
 
+P2_FLAG_PCT, P2_FLAG_MS = 0.10, 1.0   # C-00 05.10: R2 report P2 — a cell over BOTH +10 % and +1.0 ms is flagged by name
+
+
+def _cell_mean(cell):
+    means = [w["meanMs"] for w in cell["windows"] if w.get("state") == "counted" and isinstance(w.get("meanMs"), (int, float))]
+    return round(sum(means) / len(means), 4) if means else None
+
+
+def compare(r2_result, r1_result):
+    """WP-091 P2 (report, never a gate): per tier × mode, the mean of the counted windows' frame means, R2 − R1 in ms and
+    %. A cell with no counted window on either side is "unmeasured", never flagged as fine."""
+    r1_cells = {(c["tier"], c["mode"]): c for c in r1_result["cells"]}
+    rows = []
+    for cell in r2_result["cells"]:
+        base = r1_cells.get((cell["tier"], cell["mode"]))
+        r2_mean, r1_mean = _cell_mean(cell), _cell_mean(base) if base else None
+        row = {"tier": cell["tier"], "mode": cell["mode"], "r2MeanMs": r2_mean, "r1MeanMs": r1_mean}
+        if r2_mean is None or r1_mean is None or r1_mean <= 0:
+            row.update(state="unmeasured", flagged=False)
+        else:
+            delta = round(r2_mean - r1_mean, 4)
+            pct = round(delta / r1_mean, 4)
+            row.update(state="measured", deltaMs=delta, deltaPct=pct, flagged=pct > P2_FLAG_PCT and delta > P2_FLAG_MS)
+        rows.append(row)
+    measured = [r for r in rows if r["state"] == "measured"]
+    return {"schema": "dd-wp078-perf-compare-v1", "rule": f"flag when deltaPct > {P2_FLAG_PCT} and deltaMs > {P2_FLAG_MS}",
+            "cells": rows, "flaggedCells": sum(1 for r in rows if r["flagged"]),
+            "unmeasuredCells": sum(1 for r in rows if r["state"] == "unmeasured"),
+            "worstDeltaMs": max((r["deltaMs"] for r in measured), default=None),
+            "worstDeltaPct": max((r["deltaPct"] for r in measured), default=None)}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("root")
     parser.add_argument("--targets", default=str(HERE / "perf-targets.json"))
+    parser.add_argument("--baseline", help="WP-091 P2: the R1 perf root measured in the same window (report only)")
+    parser.add_argument("--r2-measure", help="write the P2 comparison as an R2 measurement artifact (dd-r2-measure-v1) here")
+    parser.add_argument("--commit", help="the FINAL commit recorded in the --r2-measure artifact")
     args = parser.parse_args()
     root = Path(args.root)
     if not root.is_dir():
@@ -171,6 +206,26 @@ def main():
         lines.append(f"{'PASS' if r['pass'] else 'FAIL'} {r['role']:6} {r['tier']:10} {r['mode']:7} windows {r['counted']}/{r['minWindows']}"
                      f" failed {r['failed']} discarded {r['discarded']} worst mean {worst if worst is not None else '-'} ms"
                      f" (limit {r['limitMeanMs']} / p99 {r['limitP99Ms']} @ stall {r['stallMs']})" + (" 🔴 raw p99 over limit" if r["rawP99OverLimit"] else ""))
+    if args.baseline:
+        baseline = Path(args.baseline)
+        if not baseline.is_dir():
+            print(f"no such baseline directory: {baseline}", file=sys.stderr)
+            return 64
+        comparison = compare(result, report(baseline, targets))
+        (root / "wp078-perf-compare.json").write_text(json.dumps(comparison, indent=2) + "\n", encoding="utf-8")
+        lines.append(f"P2 (report) R2 - R1: {comparison['flaggedCells']} flagged, {comparison['unmeasuredCells']} unmeasured, "
+                     f"worst {comparison['worstDeltaMs']} ms / {comparison['worstDeltaPct']}")
+        for c in comparison["cells"]:
+            if c["flagged"]:
+                lines.append(f"  P2 FLAG {c['tier']} {c['mode']}: {c['r1MeanMs']} -> {c['r2MeanMs']} ms (+{c['deltaMs']} ms, +{c['deltaPct']:.1%})")
+        if args.r2_measure:
+            if not (args.commit and len(args.commit) == 40):
+                print("--r2-measure needs --commit <40-hex>", file=sys.stderr)
+                return 64
+            artifact = {"schema": "dd-r2-measure-v1", "gate": "P2", "commit": args.commit, "source": "tools/qa/wp078_perf_report.py --baseline",
+                        "values": {k: comparison[k] for k in ("flaggedCells", "worstDeltaMs", "worstDeltaPct")}, "cells": comparison["cells"]}
+            Path(args.r2_measure).parent.mkdir(parents=True, exist_ok=True)
+            Path(args.r2_measure).write_text(json.dumps(artifact, indent=2) + "\n", encoding="utf-8")
     (root / "wp078-perf-report.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print("\n".join(lines))
     return 0 if result["pass"] else 1

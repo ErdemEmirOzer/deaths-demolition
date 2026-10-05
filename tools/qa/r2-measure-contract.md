@@ -16,6 +16,8 @@ One JSON file per gate, written only when the measurement actually ran:
 
 - File name `r2-<gate id>.json`, in the folder named by the environment variable **`DD_R2_MEASURE_DIR`**. Without
   that variable the test still asserts its threshold but writes nothing (ordinary CI runs).
+- Write it with the shared writer **`R2Olcum.Yaz(gate, source, values, samples)`**
+  (`Assets/_Prototype/Tests/PlayMode/R2Olcum.cs`, S-02) — one writer for every owner, no copies.
 - `commit` comes from **`DD_R2_COMMIT`** (the runner sets it to the FINAL SHA). A file with another commit FAILs.
 - `values` carries exactly the keys listed for that gate in `r2-gates.json` (`checks[].key` and `report[]`), as plain
   numbers (no NaN/Infinity, no strings). A missing key is BLOCKED; a value outside its check is FAIL.
@@ -29,6 +31,14 @@ One JSON file per gate, written only when the measurement actually ran:
 Some gates (`tests` in `r2-gates.json`, e.g. Z1, Z3b, H4, H4b, U3) also require a test case by full name to be
 `Passed` in an NUnit XML bound to the run (A1 core/alone, A3 isolated, or the chain's `<E>/r2/` sessions). If the
 name is not in any bound XML the gate is BLOCKED; any other result is FAIL.
+
+## Which session measures a gate
+
+`measuredBy` in `r2-gates.json` (`{"suite": "playmode"|"editmode", "filter": "<test.sh --filter regex>", "quiet": bool}`)
+tells `wp078_accept --round R2` to run that test in its own guarded session: stage `r2` (after A3) for `quiet: false`,
+stage `r2q` (in the quiet window after A4) for `quiet: true`. Gates sharing one filter share one session. A gate without
+`measuredBy` gets its artifact from the owner's own run into `<E>/r2/`. H4 is split (C-00 05.10): H4 = weapon yaw/roll
+table (S-02), H4a = FP arm keys (S-06), same thresholds.
 
 ## Human gates
 
