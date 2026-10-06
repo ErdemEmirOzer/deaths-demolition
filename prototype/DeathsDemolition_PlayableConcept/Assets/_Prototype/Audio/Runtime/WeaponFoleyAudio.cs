@@ -328,6 +328,7 @@ namespace DD.Prototype.Audio
             public float GainDb;
             public bool Bounce;
             public float Fall;
+            public float DueSeen;   // unscaled time the first Tick found it due (-1: not yet)
         }
 
         private readonly Pending[] _queue = new Pending[Capacity];
@@ -345,8 +346,13 @@ namespace DD.Prototype.Audio
         // first — silent. The sounds played here last, by unscaled time and by their due (game) time: a due landing scheduled a
         // retrigger window or more apart from one of its sound still inside that window stays queued and plays on a later Tick —
         // the spacing a normal frame would have kept. Landings due closer than the window (a flood clamped to LatestLanding)
-        // still merge in the pool as before. Fixed slots, no allocation.
+        // still merge in the pool as before. A landing waits at most MaxHold: after a hitch in sustained fire the due landings
+        // would otherwise queue up at one per retrigger window, as fast as the gun ejects, and play ever later (gt 06.10 B-3);
+        // past MaxHold it goes to the pool and merges as before. Fixed slots, no allocation.
         private const int RecentSlots = 8;
+
+        /// <summary>The longest a due landing waits out the retrigger window (unscaled s): two windows.</summary>
+        public const float MaxHold = 0.1f;
         private readonly AudioSoundId[] _recentSound = new AudioSoundId[RecentSlots];
         private readonly float[] _recentAt = new float[RecentSlots];
         private readonly float[] _recentDue = new float[RecentSlots];
@@ -397,12 +403,16 @@ namespace DD.Prototype.Audio
 
         /// <summary>Shortest / longest ejection → landing heard since <see cref="ResetStats"/> (R2 S5).</summary>
         public float FallMinHeard { get; private set; } = float.MaxValue;
+
+        /// <summary>Longest a heard landing waited after it fell due (unscaled s; the retrigger hold, ≤ MaxHold + a frame).</summary>
+        public float HeldMaxSeconds { get; private set; }
         public float FallMaxHeard { get; private set; }
 
         public void ResetStats()
         {
             FallMinHeard = float.MaxValue;
             FallMaxHeard = 0f;
+            HeldMaxSeconds = 0f;
         }
 
         /// <summary>Casings in the air right now.</summary>
@@ -600,7 +610,7 @@ namespace DD.Prototype.Audio
                 return false;
             }
 
-            _queue[_count++] = new Pending { At = ejectedAt + delay, Point = point, Sound = sound, Pitch = pitch, GainDb = db, Bounce = bounce, Fall = delay };
+            _queue[_count++] = new Pending { At = ejectedAt + delay, Point = point, Sound = sound, Pitch = pitch, GainDb = db, Bounce = bounce, Fall = delay, DueSeen = -1f };
             return true;
         }
 
@@ -616,7 +626,9 @@ namespace DD.Prototype.Audio
             for (int i = _count - 1; i >= 0; i--)
             {
                 if (_queue[i].At > now) continue;
-                if (!_queue[i].Bounce && InsideRetrigger(_queue[i].Sound, unscaledNow, _queue[i].At)) continue;   // a later Tick plays it
+                if (_queue[i].DueSeen < 0f) _queue[i].DueSeen = unscaledNow;
+                if (!_queue[i].Bounce && unscaledNow - _queue[i].DueSeen < MaxHold
+                    && InsideRetrigger(_queue[i].Sound, unscaledNow, _queue[i].At)) continue;   // a later Tick plays it
                 Pending p = _queue[i];
                 _queue[i] = _queue[--_count];
 
@@ -650,6 +662,7 @@ namespace DD.Prototype.Audio
                     LastFallSeconds = p.Fall;
                     if (p.Fall < FallMinHeard) FallMinHeard = p.Fall;
                     if (p.Fall > FallMaxHeard) FallMaxHeard = p.Fall;
+                    if (unscaledNow - p.DueSeen > HeldMaxSeconds) HeldMaxSeconds = unscaledNow - p.DueSeen;
                 }
             }
         }

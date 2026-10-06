@@ -1022,6 +1022,77 @@ namespace DD.Prototype.Tests.PlayMode
             }
         }
 
+        /// <summary>
+        /// gt 06.10 B-3 (C-00 10:55): sustained fire at 900 RPM through one hitch as the casing queue sees it — game time jumps
+        /// 0.333 s in one frame (the Maximum Allowed Timestep) while unscaled time does not, so about five landings fall due in
+        /// one Tick. They may wait out the pool's retrigger window, but none waits longer than CasingAudio.MaxHold (0.1 s) plus
+        /// the run's longest frame; uncapped they queue at one per window, about as fast as the gun ejects, and play ever later
+        /// behind the shots (06.10: 0.677 s on a loaded host with a real 0.4 s sleep). A real sleep is not used: a landing held
+        /// just before it would count the sleep itself as hold.
+        /// </summary>
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator KovanV2_SurekliAtes_TakilmaSonrasi_BekletmeSinirli()
+        {
+            if (!_d.Library.IsProduced(AudioSoundId.CasingRifleStone))
+            {
+                Assert.Fail("v017 kovan kimlikleri katalogda değil (AudioCatalogBuilder).");
+            }
+
+            CasingAudio c = _d.Casings;
+            Vector3 port = _s.Rig.transform.position + Vector3.up * 1.3f;
+            var kovan = new DD.Prototype.Weapons.WeaponMechanismEvent(
+                DD.Prototype.Weapons.WeaponMechanismKind.CasingEjected, DD.Prototype.Core.Config.ClassicWeaponId.AssaultRifle, port, _s.Rig.transform.right, false);
+            float bitis = Time.realtimeSinceStartup + 1.5f;
+            while (c.InAir > 0 && Time.realtimeSinceStartup < bitis) yield return null;   // nothing of an earlier test in the air
+            c.ResetStats();
+            int once = c.Landed, atis = 0;
+            const float aralik = 1f / 15f;   // 900 RPM
+            float sonraki = Time.time, takilma = Time.time + 0.75f, son = Time.time + 1.6f;   // the jump once landings are falling due
+            float oncekiAdim = Time.captureDeltaTime, kareMax = 0f;   // the run's longest frame (unscaled)
+            bool takildi = false;
+            try
+            {
+                while (Time.time < son)
+                {
+                    kareMax = Mathf.Max(kareMax, Time.unscaledDeltaTime);
+                    Time.captureDeltaTime = oncekiAdim;
+                    if (Time.time >= sonraki)
+                    {
+                        DD.Prototype.Weapons.WeaponEvents.PublishMechanism(kovan);
+                        atis++;
+                        sonraki += aralik;
+                    }
+
+                    if (!takildi && Time.time >= takilma)
+                    {
+                        takildi = true;
+                        Time.captureDeltaTime = 1f / 3f;   // the next frame: game time +0.333 s, unscaled time a frame
+                    }
+
+                    yield return null;
+                }
+            }
+            finally
+            {
+                Time.captureDeltaTime = oncekiAdim;
+            }
+
+            bitis = Time.realtimeSinceStartup + 2f;
+            while (c.InAir > 0 && Time.realtimeSinceStartup < bitis)
+            {
+                kareMax = Mathf.Max(kareMax, Time.unscaledDeltaTime);
+                yield return null;
+            }
+
+            float tavan = 0.1f + kareMax + 0.01f;   // MaxHold as a number: an uncapped build must not raise its own bar
+            Debug.Log("[DD-TEST] wp085.kovan-takilma shots=" + atis + " landed=" + (c.Landed - once) + " heldMax=" + c.HeldMaxSeconds.ToString("0.000")
+                + " frameMax=" + kareMax.ToString("0.000") + " bar=" + tavan.ToString("0.000") + " maxHold=" + CasingAudio.MaxHold);
+            Assert.IsTrue(takildi, "Oyun saati sıçraması olmadı.");
+            Assert.LessOrEqual(c.HeldMaxSeconds, tavan, "Sıçrama sonrası bekletilen iniş en çok MaxHold 0,1 s + en uzun kare bekler (atışın gerisinde birikmez).");
+            Assert.AreEqual(0, c.InAir, "Kuyruk boşaldı.");
+        }
+
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator KovanV2_AyniKareIkiKabukAyriDuser_GecikmeBandi_HavuzTavani_SifirAyirma()
