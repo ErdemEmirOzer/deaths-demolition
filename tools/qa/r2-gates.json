@@ -55,7 +55,7 @@
                 {"key": "materialsPerFamilyMax", "op": "<=", "limit": 4}],
      "report": ["materialsPerFamilyCrowdTotal"]},
     {"id": "Z3b", "area": "zombie", "kind": "gate", "owner": "S-03", "title": "zombie share of the 40-zombie frame on the fixed mix 22/10/6/2 (R1_fixed 16 SetPass / 567 draws / frame 88 @ 84941661); worst mix reported",
-     "tests": ["DD.Art.Tests.PlayMode.SetPassAttributionTests.SetPass_Kaynaklari_40ZombiTamZirh"],
+     "tests": ["DD.Prototype.Tests.PlayMode.ZombieR2Tests.Z3b_40Zombi_SetPassPayi_DokuButcesi"],
      "checks": [{"key": "sharedTextureGpuMB", "op": "<=", "limit": 96}, {"key": "uniqueTexturesPerZombie", "op": "==", "limit": 0},
                 {"key": "zombieSetPass", "op": "<=", "limit": 24}, {"key": "zombieDraws", "op": "<=", "limit": 822},
                 {"key": "frameSetPass", "op": "<=", "limit": 98}], "report": ["zombieSetPassWorst", "zombieDrawsWorst", "sharedTextureGpuMBWorst"],
