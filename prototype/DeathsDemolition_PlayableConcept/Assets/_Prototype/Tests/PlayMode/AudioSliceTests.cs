@@ -1594,7 +1594,9 @@ namespace DD.Prototype.Tests.PlayMode
                         if (b != blok)
                         {
                             blok = b;
-                            bloklar.Append(aktifCap != null ? aktifCap.FramesWritten : 0).Append(',').Append("ABCWR"[b % 5]).Append('\n');
+                            // S3 gt 06.10 (N-2): the block start is an event frame — the audio thread's position (FramesCaptured), not the
+                            // drained file length (FramesWritten trails it by ~0.9 s and shifted the W/R burst windows).
+                            bloklar.Append(aktifCap != null ? aktifCap.FramesCaptured : 0).Append(',').Append("ABCWR"[b % 5]).Append('\n');
                         }
 
                         Ates(t);
