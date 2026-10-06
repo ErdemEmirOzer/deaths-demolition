@@ -13,6 +13,7 @@ using DD.Prototype.PlayerSystem;
 using DD.Prototype.Profile;
 using DD.Prototype.Rounds;
 using DD.Prototype.Spawn;
+using DD.Prototype.Tests;
 using DD.Prototype.UI;
 using DD.Prototype.Weapons;
 using DD.Prototype.World;
@@ -658,12 +659,18 @@ namespace DD.Art.Tests.PlayMode
             Assert.IsNull(FirstPersonArms.Shown);
         }
 
+        // R2 H4a (C-00 05.10: split from H4, thresholds unchanged) — the source name the acceptance chain runs this test by.
+        private const string H4aName = "DD.Art.Tests.PlayMode.AnimationTests.FpKollar_Kadraj_KolPayi10_KameraMesafesi15_ElSilahta";
+
         [UnityTest]
         [Timeout(300000)]
         public IEnumerator FpKollar_Kadraj_KolPayi10_KameraMesafesi15_ElSilahta()
         {
             // C-00 25.09 acceptance for the FP arms, per armed weapon at rest: arm pixels ≤ 10 % of 1080p, the arm geometry ≥ 15 cm from
             // the camera, both hands on the weapon ≤ 1 cm, rest on fpView ≤ 0.3 cm; a frame per weapon (FP layer, arms + weapon).
+            // R2 H4a writes two frame counts over those frames: armOffscreenFrames (a hand outside the viewport, or no arm pixel
+            // drawn) and armInCameraFrames (arm geometry inside the 15 cm camera clearance) — gate == 0 each. Measured with the FP
+            // arms on (ArmsForTest), the only mode they show in; the default path keeps them off (C-00 06.10: the gate is the arms-on mode's).
             ArmsForTest(true);
             yield return RunAP005();
             PlayerSkinnedVisual pv = PlayerRegistry.Primary.GetComponentInChildren<PlayerSkinnedVisual>(true);
@@ -672,6 +679,8 @@ namespace DD.Art.Tests.PlayMode
             DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.FirstPerson, instant: true);
             var report = new System.Text.StringBuilder("[DD-TEST] wp071.fpframe");
             var wrong = new List<string>();
+            var noSource = new List<string>();
+            int frames = 0, offscreenFrames = 0, inCameraFrames = 0;
             try
             {
                 foreach (string key in new[] { "ar_1", "ar_2", "smg_1", "smg_2" })
@@ -689,15 +698,17 @@ namespace DD.Art.Tests.PlayMode
                     float rest = Vector3.Distance(anchor.InverseTransformPoint(root), pose.position);
                     // arms-only pixels: a temporary base camera at the overlay camera's pose, FP layer, weapon renderers hidden
                     int armPx = RenderFp(vm, key, fp.Animator.transform, hideWeapon: true, save: false);
-                    RenderFp(vm, key, fp.Animator.transform, hideWeapon: false, save: true);
+                    int fpPx = RenderFp(vm, key, fp.Animator.transform, hideWeapon: false, save: true);
                     // the arm geometry's clearance from the camera (baked skinned vertices)
                     float minDist = float.MaxValue, minFront = float.MaxValue;   // minFront: vertices in front of the lens only
+                    int armVerts = 0;
                     foreach (SkinnedMeshRenderer smr in fp.Animator.GetComponentsInChildren<SkinnedMeshRenderer>())
                     {
                         if (!smr.enabled) continue;
                         var baked = new Mesh();
                         smr.BakeMesh(baked, true);
                         Matrix4x4 m = Matrix4x4.TRS(smr.transform.position, smr.transform.rotation, Vector3.one);
+                        armVerts += baked.vertexCount;
                         foreach (Vector3 v in baked.vertices)
                         {
                             Vector3 cv = vm.transform.InverseTransformPoint(m.MultiplyPoint3x4(v));
@@ -720,11 +731,24 @@ namespace DD.Art.Tests.PlayMode
                                   + (le.x * 1920f).ToString("F0", CultureInfo.InvariantCulture) + "," + ((1f - le.y) * 1080f).ToString("F0", CultureInfo.InvariantCulture) + ") elbowR=(" + (re.x * 1920f).ToString("F0", CultureInfo.InvariantCulture) + "," + ((1f - re.y) * 1080f).ToString("F0", CultureInfo.InvariantCulture) + ")" + (elbowsOff ? "" : " ELBOW-ON-SCREEN");
                     report.Append(" | ").Append(line);
                     if (share > 10f || minDist < 0.15f || fp.LastRightError > 0.01f || fp.LastLeftError > 0.01f || rest > 0.003f || !handsIn || !elbowsOff) wrong.Add(line);
+                    // H4a source (R2 standard): the arms copy shown and skinned, the FP layer frame actually rendered
+                    if (!fp.Visible || !ReferenceEquals(FirstPersonArms.Shown, fp) || armVerts == 0 || fpPx == 0)
+                        noSource.Add(key + " visible=" + fp.Visible + " shown=" + ReferenceEquals(FirstPersonArms.Shown, fp) + " armVerts=" + armVerts + " fpPx=" + fpPx);
+                    frames++;
+                    if (!handsIn || armPx == 0) offscreenFrames++;
+                    if (minDist < 0.15f) inCameraFrames++;
                 }
             }
             finally { DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.ThirdPerson, instant: true); }
 
             Debug.Log(report.ToString());
+            Debug.Log("[DD-TEST] wp083.h4a frames=" + frames + " armOffscreenFrames=" + offscreenFrames + " armInCameraFrames=" + inCameraFrames);
+            // the source is in the record before the artefact (S-10 R2 standard): armed weapons measured, the arms drawn on the FP layer
+            Assert.Greater(frames, 0, "kaynak yok: kollu silahta ölçülen kare yok");
+            Assert.IsEmpty(noSource, "kaynak yok: FP kolları gösterilmiyor / skinned gövde yok / FP katmanı çizilmedi");
+            R2Olcum.Yaz("H4a", H4aName, new Dictionary<string, double> { { "armOffscreenFrames", offscreenFrames }, { "armInCameraFrames", inCameraFrames } }, frames);
+            Assert.AreEqual(0, offscreenFrames, "R2 H4a: FP kolu kadraj dışında (el ekran dışında ya da kol pikseli yok)\n" + report);
+            Assert.AreEqual(0, inCameraFrames, "R2 H4a: FP kol geometrisi kameraya 15 cm'den yakın\n" + report);
             Assert.IsEmpty(wrong, "FP kol kabulü (C-00: kol ≤ %10, kamera ≥ 15 cm, el ≤ 1 cm, dinlenme ≤ 0,3 cm, eller ekranda, dirsekler ekran dışında)");
         }
 
