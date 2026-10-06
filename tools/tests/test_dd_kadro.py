@@ -47,5 +47,26 @@ class DdKadroTests(unittest.TestCase):
         self.assertEqual([], offenders, "KADRO spelled outside dd-env.sh / dd_paths.py / slot.sh")
 
 
+    # -- C-00 06.10 (user: "no iCloud work on this machine"): KADRO and the repo live under ~/Dev; iCloud's Desktop &
+    # Documents may hold only symlinks for a while, or nothing — no tools code may depend on them ---------------------
+    def test_KadroKokuDevAltinda(self):
+        self.assertEqual("Dev/KADRO", dd_paths.KADRO_REL)
+
+    def test_AracKodundaDesktopDocumentsYoluYok(self):
+        path = re.compile(r"(~|\$HOME|\$\{HOME\}|/Users/[^/\s\"']+|home\(\)\s*/?\s*[\"']?)/?(Desktop|Documents)\b"
+                          r"|[\"'](Desktop|Documents)/")
+        offenders = []
+        for f in sorted(TOOLS.rglob("*")):
+            if not f.is_file() or f.suffix not in (".sh", ".py", ".zsh"):
+                continue
+            for n, line in enumerate(f.read_text(errors="replace").splitlines(), 1):
+                code = line.split("#", 1)[0] if f.suffix in (".sh", ".zsh") else line
+                if line.lstrip().startswith(("#", "*")):
+                    continue
+                if path.search(code):
+                    offenders.append("%s:%d %s" % (f.relative_to(TOOLS), n, line.strip()[:120]))
+        self.assertEqual([], offenders, "a Desktop/ or Documents/ path in the tools' code")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

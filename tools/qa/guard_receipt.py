@@ -2,7 +2,7 @@
 """WP-078 (C-00 30.09 M-14, M-17) · the one user-data guard receipt module for the tools/qa Player runners.
 
 Every Player run of wp078_perf / wp078_bot goes: snapshot → run → (finally) restore, with one verdict:
-  * the guard is the canonical CI-driver copy (G4 D4, C-00 01.10): GUARD = ~/Desktop/KADRO/…/wp-079/driver/tools/
+  * the guard is the canonical CI-driver copy (G4 D4, C-00 01.10): GUARD = ~/Dev/KADRO/…/wp-079/driver/tools/
     userdata-guard.sh (dd-env.sh DD_GUARD_CANON), a fixed path — no env override; canon_refusal() names why a caller must
     stop with 64 (DD_GUARD_ROOT set, or GUARD missing) before it takes anything;
   * restore runs with INT/TERM/HUP ignored in the guard child (G4 D2 MUST-1: a Ctrl-C or a group signal cannot cut the

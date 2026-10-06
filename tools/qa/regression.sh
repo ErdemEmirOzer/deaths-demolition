@@ -4,7 +4,7 @@
 # Kullanım: tools/qa/regression.sh <out-dir> [--rounds 8] [--seed 26] [--perf-runs 3] [--window 60] [--skip-build] [--skip-tests] [--quick] [--steps build,bot,…]
 #   --quick  : kısa doğrulama (2 round bot, 1 perf koşusu, okunabilirlik 1 karışım, EditMode simülatörü) — WP-026 §5E
 #   Ortam    : DD_UNITY (Unity ikilisi), DD_PROJECT (proje kökü), DD_BUILD_SH (WP-025 tools/build.sh varsa onu kullanır), DD_PERF_CLEAN (perf-clean kalıbı: Blender < %50, 60 s),
-#              DD_SLOT_SH (C-00 makine slot kilidi ~/Desktop/KADRO/context/projects/deaths-demolition/tools/slot.sh; her Unity batch/Player koşusu acquire/release ile sarılır)
+#              DD_SLOT_SH (C-00 makine slot kilidi ~/Dev/KADRO/context/projects/deaths-demolition/tools/slot.sh; her Unity batch/Player koşusu acquire/release ile sarılır)
 # Adımlar  : 0 makine kuralı (slot.sh: ≤ 2 Unity batch) → 1 dev build (build.sh yoksa LifecycleProbeBuild.BuildDevelopmentPlayer) → 2 EditMode QA (şema, bot eşlemesi, spawn-mix dilimi)
 #            → 2b spawn-mix (WP-027 SpawnMixSimulator, QaSpawnMixCli) → 3 bot koşusu (-ddQaBot) → 4 perf (PilotPerfProbe Run, temiz pencere, N×60 s)
 #            → 5 okunabilirlik (-ddQaReadability, round 1/4/8 gerçek karışım) → 6 DD.Art DEC-077 zırh biçim testi (PlayMode ArmorTests.Okunabilirlik) → 7 aggregate.

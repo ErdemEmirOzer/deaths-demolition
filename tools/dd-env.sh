@@ -7,8 +7,9 @@ DD_PROJECT="$DD_REPO/prototype/DeathsDemolition_PlayableConcept"
 : "${DD_UNITY:=/Applications/Unity/Hub/Editor/2022.3.22f1/Unity.app/Contents/MacOS/Unity}"
 # WP-089 (C-00 05.10, iCloud move A): the KADRO root relative to HOME — the ONE place it is spelled for the shell tools.
 # A constant, never taken from the environment (DD_GUARD_CANON derives from it). Move day: only this value changes
-# (Desktop/KADRO → Dev/KADRO), together with tools/dd_paths.py KADRO_REL and slot.sh's fallback (test_dd_kadro pins all three).
-DD_KADRO_REL="Desktop/KADRO"
+# (moved 06.10: Desktop/KADRO → Dev/KADRO, outside iCloud), together with tools/dd_paths.py KADRO_REL and slot.sh's fallback
+# (test_dd_kadro pins all three and keeps Desktop/ and Documents/ out of the tools' code).
+DD_KADRO_REL="Dev/KADRO"
 DD_KADRO="$HOME/$DD_KADRO_REL"; DD_KPROJ="$DD_KADRO/context/projects/deaths-demolition"
 : "${DD_BUILD_ROOT:=$DD_KPROJ/builds}"
 : "${DD_MAX_UNITY:=2}"          # MAKİNE KURALI: at most two Unity batch processes on this machine

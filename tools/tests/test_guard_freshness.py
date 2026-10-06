@@ -14,7 +14,7 @@ sys.path.insert(0, str(TOOLS)); sys.path.insert(0, str(TOOLS / "qa"))
 import guard_freshness as gf  # noqa: E402
 import guard_receipt as gr  # noqa: E402
 
-CANON_REL = "Desktop/KADRO/context/projects/deaths-demolition/wp-079/driver"
+CANON_REL = "Dev/KADRO/context/projects/deaths-demolition/wp-079/driver"
 
 
 class GuardFreshnessTests(unittest.TestCase):

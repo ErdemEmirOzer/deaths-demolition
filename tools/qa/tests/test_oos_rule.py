@@ -86,7 +86,7 @@ class OosRuleTests(unittest.TestCase):
             "com.Deaths-Demolition.Deaths-Demolition---Playable-Concept.plist (launch-counter keys excluded)$'\\n'")
         (self.ug / "attribution.txt").write_text(
             "/Users/Erdem/Library/Preferences/com.Deaths-Demolition.Deaths-Demolition---Playable-Concept.plist\tmtime 13:11:26Z"
-            "\tpid 62577 /Users/Erdem/Desktop/KADRO/context/projects/deaths-demolition/wp-068s9/evidence/wp081/cine1/21x9/cine.log\n")
+            "\tpid 62577 /Users/Erdem/Dev/KADRO/context/projects/deaths-demolition/wp-068s9/evidence/wp081/cine1/21x9/cine.log\n")
         (self.ug / "players-lineage.tsv").write_text("2026-10-05T13:10:51Z\t62577\t62478\t%s\t0\n" % start)
         (self.owner / "window.json").write_text("{}")
         (self.owner / "players-lineage.tsv").write_text("2026-10-05T13:10:51Z\t62577\t62478\t%s\t1\n" % start)
