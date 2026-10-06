@@ -90,6 +90,9 @@ namespace DD.Prototype.Characters
         [PrototypeOnly(PendingDecisions.None, "WP-083 B2: the hold's largest pitch with the aim (°), up or down. Invented.", true)]
         public const float MaxPitchDegrees = 40f;
 
+        [PrototypeOnly(PendingDecisions.None, "WP-087 B: the stock's distance past StockClearance over which a pulled-back weapon's kick centre moves from the grip to the stock (m) — a stock in the shoulder pocket lifts the muzzle about itself. Council 06.10 (character-animator), not measured.", true)]
+        public const float StockShoulderBlend = 0.05f;
+
 
         private Animator _animator;
         private Transform _socket, _chest, _upper, _lower, _hand, _stock, _muzzle;
@@ -104,6 +107,105 @@ namespace DD.Prototype.Characters
             Vector3 pivot = _chest.position + yaw * (HipHold + _weaponOffset + ShoulderShift * (pull / MaxPullBack)) - aim * pull;
             Vector3 stock = pivot + stockOffset;
             return Vector3.Distance(stock, shoulder) >= StockClearance && Vector3.Distance(stock, _chest.position) >= ChestClearance;
+        }
+
+        // WP-087 B: the arms' share of the held weapon's kick (KickSource), after the row's pivot and the clip's HoldDelta. The muzzle
+        // rises about a centre fixed on the shot's first frame, in the pivot's frame (it rides the hold, not the walk's stock blend —
+        // a centre re-picked every frame shook the pivot by ±1 cm): the grip at the hip; on the shouldered row the tube's shoulder
+        // contact, with no push (the shoulder takes it); on a row pulled to the shoulder the centre moves toward the stock and the
+        // push goes to the shoulder by the same share. A kick that would bring the stock nearer the shoulder or chest than the hold
+        // without it (and inside the clearances) is scaled down, bisected — never a worse hold than no kick.
+        private void ApplyKick(ref Vector3 pivot, ref Quaternion pivotRot, Transform stock, Vector3? support, Quaternion yaw)
+        {
+            LastKickOffset = Vector3.zero;
+            LastKickPivotMove = Vector3.zero;
+            LastKickDegrees = 0f;
+            KickScale = 1f;
+            KickPushShare = 1f;
+            IHeldWeaponKick src = KickSource;
+            // S-02 review MUST (06.10): the source alone decides — ArmsCarryKick is written at 895, after this solve (890), so reading
+            // it here gives last frame's share and drops the kick on the hold's first / last frame; C's controller nulls the source
+            // whenever the arms do not carry (a Special, the hold off, FP)
+            bool carried = src != null;
+            Vector3 push = carried ? src.KickLocalOffset : Vector3.zero;
+            Quaternion rise = carried ? src.KickLocalRotation : Quaternion.identity;
+            if (push.sqrMagnitude < 1e-10f && Quaternion.Angle(Quaternion.identity, rise) < 0.01f)
+            {
+                _kicking = false;
+                LastSupportShortfall = Shortfall(pivot, pivotRot, support);
+                return;
+            }
+
+            bool hasStock = stock != null && !_shouldered;
+            Vector3 stockInSocket = hasStock ? Quaternion.Inverse(_socket.rotation) * (stock.position - _socket.position) : Vector3.zero;
+            if (!_kicking)
+            {
+                Vector3 centre = pivot;
+                float share = 0f;
+                if (_shouldered) { centre = _upper.position + yaw * ShoulderRest; share = 1f; }
+                else if (hasStock)
+                {
+                    Vector3 stockWorld = pivot + pivotRot * stockInSocket;
+                    share = 1f - Mathf.Clamp01((Vector3.Distance(stockWorld, _upper.position) - StockClearance) / StockShoulderBlend);
+                    centre = Vector3.Lerp(pivot, stockWorld, share);
+                }
+
+                _kickCentreInPivot = Quaternion.Inverse(pivotRot) * (centre - pivot);
+                _kickShoulderShare = share;
+                _kicking = true;
+            }
+
+            Vector3 c = pivot + pivotRot * _kickCentreInPivot;
+            push *= 1f - _kickShoulderShare;
+            float s = 1f;
+            if (hasStock)
+            {
+                Vector3 rest = pivot + pivotRot * stockInSocket;
+                float shoulderMin = Mathf.Min(StockClearance, Vector3.Distance(rest, _upper.position)), chestMin = Mathf.Min(ChestClearance, Vector3.Distance(rest, _chest.position));
+                if (!KickStockClear(pivot, pivotRot, c, push, rise, stockInSocket, 1f, shoulderMin, chestMin))
+                {
+                    float lo = 0f, hi = 1f;
+                    for (int i = 0; i < 8; i++)
+                    {
+                        float mid = 0.5f * (lo + hi);
+                        if (KickStockClear(pivot, pivotRot, c, push, rise, stockInSocket, mid, shoulderMin, chestMin)) lo = mid; else hi = mid;
+                    }
+
+                    s = lo;
+                }
+            }
+
+            KickPose(pivot, pivotRot, c, push, rise, s, out Vector3 kicked, out Quaternion kickedRot);
+            KickScale = s;
+            KickPushShare = (1f - _kickShoulderShare) * s;
+            LastKickOffset = push * s;
+            LastKickPivotMove = Quaternion.Inverse(pivotRot) * (kicked - pivot);
+            LastKickDegrees = -Mathf.DeltaAngle(0f, (Quaternion.Inverse(pivotRot) * kickedRot).eulerAngles.x);
+            pivot = kicked;
+            pivotRot = kickedRot;
+            LastSupportShortfall = Shortfall(pivot, pivotRot, support);
+        }
+
+        private static void KickPose(Vector3 pivot, Quaternion pivotRot, Vector3 centre, Vector3 push, Quaternion rise, float s, out Vector3 kicked, out Quaternion kickedRot)
+        {
+            Quaternion r = Quaternion.Slerp(Quaternion.identity, rise, s);
+            kicked = centre + pivotRot * r * Quaternion.Inverse(pivotRot) * (pivot - centre) + pivotRot * (push * s);
+            kickedRot = pivotRot * r;
+        }
+
+        private bool KickStockClear(Vector3 pivot, Quaternion pivotRot, Vector3 centre, Vector3 push, Quaternion rise, Vector3 stockInSocket, float s, float shoulderMin, float chestMin)
+        {
+            KickPose(pivot, pivotRot, centre, push, rise, s, out Vector3 p, out Quaternion r);
+            Vector3 stock = p + r * stockInSocket;
+            return Vector3.Distance(stock, _upper.position) >= shoulderMin - 1e-4f && Vector3.Distance(stock, _chest.position) >= chestMin - 1e-4f;
+        }
+
+        // the support point (WeaponGripIk's goal, read before the solve in the socket frame the weapon rides) against the left arm
+        private float Shortfall(Vector3 pivot, Quaternion pivotRot, Vector3? support)
+        {
+            if (!support.HasValue || _lUpper == null || _leftArmLength <= 0f) return float.NaN;
+            Vector3 inSocket = Quaternion.Inverse(_socket.rotation) * (support.Value - _socket.position);
+            return Vector3.Distance(pivot + pivotRot * inSocket, _lUpper.position) - _leftArmLength;
         }
 
         // the held weapon's stock marker (attach_stock, AP-021 / ADR-042-1) under the socket; searched again while missing. Only an
@@ -212,6 +314,34 @@ namespace DD.Prototype.Characters
         /// <summary>socket_weapon_r ↔ pivot after the last solve at full weight (m; NaN otherwise; tests / H1).</summary>
         public float LastError { get; private set; } = float.NaN;
 
+        /// <summary>
+        /// WP-087 B (C-00 06.10, council K/wp-083/KARAR-HELDKICK-API-06.10.KONSOLIDE.md): the held weapon's kick the arms carry at the
+        /// pivot. S-02's rig publishes it; WeaponController hands over the active weapon's source (never searched in the hierarchy,
+        /// both rigs sit under one mount). Null, or a zero share: no kick on the hold — the rig's body keeps all of it.
+        /// </summary>
+        public IHeldWeaponKick KickSource { get; set; }
+        /// <summary>
+        /// The push applied on the last solve, in the pivot's frame (m): the source's KickLocalOffset × <see cref="KickPushShare"/>
+        /// (tests, WP-087's "the kick reached the hold" gate and its conservation check against the rig's arms channel).
+        /// </summary>
+        public Vector3 LastKickOffset { get; private set; }
+        /// <summary>The share of the source's push the arms applied on the last solve: 1 at the hip, 0 on the shouldered row (the
+        /// shoulder takes it), (1 − stock-on-shoulder share) × <see cref="KickScale"/> on a row pulled to the shoulder.</summary>
+        public float KickPushShare { get; private set; } = 1f;
+        /// <summary>The pivot's whole move from the kick on the last solve, in the pivot's frame before it (m; the rise about a centre off the grip moves it too).</summary>
+        public Vector3 LastKickPivotMove { get; private set; }
+        /// <summary>The muzzle rise applied on the last solve about the pivot's +X, signed (°; + muzzle up, − down).</summary>
+        public float LastKickDegrees { get; private set; }
+        /// <summary>The share of the published kick kept after the stock guard on the last solve (1 = all; the WP-087 feel gate reports it).</summary>
+        public float KickScale { get; private set; } = 1f;
+        /// <summary>The support point after the kick against the left arm's reach (m; &gt; 0 = beyond it; NaN without a support point).</summary>
+        public float LastSupportShortfall { get; private set; } = float.NaN;
+        private bool _kicking;
+        private Vector3 _kickCentreInPivot;
+        private float _kickShoulderShare;
+        private Transform _lUpper;
+        private float _leftArmLength;
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         public static void ResetStatics()
         {
@@ -244,6 +374,11 @@ namespace DD.Prototype.Characters
             _lower = HumanoidBones.Bone(animator, HumanBodyBones.RightLowerArm);
             _hand = HumanoidBones.Bone(animator, HumanBodyBones.RightHand);
             _ready = _socket != null && _chest != null && _upper != null && _lower != null && _hand != null;
+            _lUpper = HumanoidBones.Bone(animator, HumanBodyBones.LeftUpperArm);
+            Transform lLower = HumanoidBones.Bone(animator, HumanBodyBones.LeftLowerArm), lHand = HumanoidBones.Bone(animator, HumanBodyBones.LeftHand);
+            _leftArmLength = _lUpper != null && lLower != null && lHand != null
+                ? Vector3.Distance(_lUpper.position, lLower.position) + Vector3.Distance(lLower.position, lHand.position) : 0f;
+            _kicking = false;
             if (!_ready) return;
             _socketInHand = Quaternion.Inverse(_hand.rotation) * _socket.rotation;
             _socketOffset = Quaternion.Inverse(_hand.rotation) * (_socket.position - _hand.position);
@@ -256,7 +391,7 @@ namespace DD.Prototype.Characters
             // third-person only: in first person this body is not seen (the FP arms / view weapon have their own path)
             bool on = Enabled && (_gate == null || _gate()) && DD.Prototype.CameraSystem.CameraModeService.Current != DD.Prototype.CameraSystem.CameraMode.FirstPerson;
             _weight = Mathf.MoveTowards(_weight, on ? 1f : 0f, dt / BlendSeconds);
-            if (_weight <= 0f) { LastError = float.NaN; return; }
+            if (_weight <= 0f) { LastError = float.NaN; _kicking = false; return; }
 
             Transform body = _animator.transform;
             // the weapon frame: the player's facing (the PlayerRig root's yaw, WeaponMountAlignment's rest frame — the body turns to the
@@ -325,6 +460,8 @@ namespace DD.Prototype.Characters
                 Quaternion kick = mount.HoldDelta(_hand.rotation * _socketInHand, pitch);
                 pivotRot = character * kick * Quaternion.Inverse(character) * pivotRot;
             }
+
+            ApplyKick(ref pivot, ref pivotRot, stock, support, yaw);
 
             Quaternion handRot = pivotRot * Quaternion.Inverse(_socketInHand);
             Vector3 handPos = pivot - handRot * _socketOffset;
