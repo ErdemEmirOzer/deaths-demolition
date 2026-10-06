@@ -71,7 +71,8 @@ class MeasuredByTests(unittest.TestCase):
         steps = r2.measurement_steps(r2.load_contract(CONTRACT), quiet=False)
         self.assertEqual({"r2-H4": ["H4"], "r2-H4b": ["H4b"]}, {s["id"]: s["gates"] for s in steps if s["id"] in ("r2-H4", "r2-H4b")})
         self.assertEqual("S-06", gate("H4a")["owner"])
-        self.assertNotIn("measuredBy", gate("H4a"))   # S-06 binds its FpKollar measurement when it lands
+        self.assertEqual({"suite": "playmode", "filter": "DD.Art.Tests.PlayMode.AnimationTests.FpKollar_Kadraj_KolPayi10_KameraMesafesi15_ElSilahta", "quiet": False},
+                         gate("H4a")["measuredBy"])   # S-06's writer, WP-083 R2 6711f57f (FP arms on)
 
     def contract(self, **by_gate):
         data = json.loads(CONTRACT)

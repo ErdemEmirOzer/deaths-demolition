@@ -67,7 +67,10 @@ own KİRLİ stamp (SABİT-KURALLAR 5.8) is different: `r2_s3.py` writes `r2-S3.K
 is never bound, and the gate stays BLOCKED until a clean run.
 An `[Explicit]` test runs only when the filter names it in full (S-02 05.10): give its full name, never a class regex. A gate without
 `measuredBy` gets its artifact from the owner's own run into `<E>/r2/`. H4 is split (C-00 05.10): H4 = weapon yaw/roll
-table (S-02), H4a = FP arm keys (S-06), same thresholds.
+table (S-02), H4a = FP arm keys (S-06), same thresholds. H4a is measured with the FP arms on (C-00 06.10: the only mode where
+they are visible; on the default path they are off) by `AnimationTests.FpKollar_Kadraj_KolPayi10_KameraMesafesi15_ElSilahta`
+(WP-083 R2 `6711f57f`; not `[Explicit]`, also in CI). It writes `armOffscreenFrames` and `armInCameraFrames` over the armed
+weapons' rest frames; `samples` is the frames measured. The chain runs it by full name in the r2 stage.
 
 ## H1 (hand to grip, decision B; elbow report — C-00 05.10)
 
