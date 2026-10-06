@@ -224,5 +224,288 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsFalse(UiFactory.OverlayScreens);
             Assert.IsNull(MenuCinematic.Current);
         }
+
+        /// <summary>
+        /// S-05 06.10 (S05-MENU-ISIK-MALIYET §16): the world loads additively under the menu and MainMenu stays the active scene;
+        /// LightmapSettings.lightProbes stays null there (b19-b21: Tetrahedralize, sync or async, leaves it so), so every
+        /// probe-lit renderer - no lightmap, probes on (b26c: the ground, the plaza slate, the hall floor, the ponds) - samples
+        /// the menu's ambient SH, not the world's probes. Measured before any fix (S-05: no SetActiveScene - it swaps the
+        /// AD-approved RenderSettings): per shot, the probe-lit renderers in the frustum and the share of the camera's own frame
+        /// they change, rendered with them and without (an upper bound: their shadows count too). Only pixels that hold still
+        /// over three renders of the same pose count (b26c: with post-processing off a frame still moved 1-12 % between two
+        /// renders, S01 and S04 most); the stable share must reach 75 %. Hiding the whole world is the positive control. The
+        /// probe state and the retetrahedralization events are logged for S-05.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator MenuDunyasi_ProbIsikliRendererPayi_BesCekim_Olcum()
+        {
+            int needs = 0, done = 0;
+            System.Action onNeeds = () => needs++;
+            System.Action onDone = () => done++;
+            System.Reflection.EventInfo needsEvent = typeof(LightProbes).GetEvent("needsRetetrahedralization");
+            System.Reflection.EventInfo doneEvent = typeof(LightProbes).GetEvent("tetrahedralizationCompleted");
+            needsEvent?.AddEventHandler(null, onNeeds);
+            doneEvent?.AddEventHandler(null, onDone);
+            RenderTexture rt = null;
+            Texture2D read = null;
+            var hidden = new List<Renderer>();
+            try
+            {
+                yield return BootTanMainMenuye();
+                yield return Bekle(() => MenuCinematic.Current != null && MenuCinematic.Current.Live, 90f, "menü dünyası canlanmadı");
+                yield return Bekle(() => !UiCurtain.IsCovering, 30f, "perde açılmadı");
+                MenuCinematic cinematic = MenuCinematic.Current;
+                WorldSourceSettings.Resolve(out string worldScene);
+                Scene world = SceneManager.GetSceneByName(worldScene);
+                Assert.IsTrue(world.isLoaded);
+                string withWorld = ProbeState();
+
+                var worldRenderers = new List<Renderer>();
+                var probeLit = new List<Renderer>();
+                foreach (GameObject root in world.GetRootGameObjects())
+                {
+                    foreach (Renderer r in root.GetComponentsInChildren<Renderer>(false))
+                    {
+                        if (!r.enabled)
+                        {
+                            continue;
+                        }
+
+                        worldRenderers.Add(r);
+                        bool lightmapped = r.lightmapIndex >= 0 && r.lightmapIndex < 0xFFFE;
+                        if (!lightmapped && r.lightProbeUsage != UnityEngine.Rendering.LightProbeUsage.Off)
+                        {
+                            probeLit.Add(r);
+                        }
+                    }
+                }
+
+                const int W = 960, H = 540;
+                rt = new RenderTexture(W, H, 24, RenderTextureFormat.ARGB32) { antiAliasing = 1 };
+                read = new Texture2D(W, H, TextureFormat.RGBA32, false);
+                Camera cam = cinematic.Camera;
+                var lines = new List<string>();
+                float worst = 0f, control = -1f, noiseMax = 0f;
+                // Coverage, not the grade: post-processing off while measuring (b26: LookV3Post's grain changed 1-16 % of a
+                // frame between two renders of the same pose), back on after; what still moves (b26c) is masked out.
+                bool post = SetPostProcessing(cam, false);
+                for (int i = 0; i < MenuCinematic.Shots.Length; i++)
+                {
+                    // Mid-move of the shot, rendered at once into a 16:9 target (Update cannot move the camera in between).
+                    cam.targetTexture = rt;
+                    MenuCinematic.Place(cam, MenuCinematic.PoseOf(MenuCinematic.Shots[i], MenuCinematic.Hold + MenuCinematic.Move * 0.5f));
+                    Color32[] a = Render(cam, rt, read);
+                    bool[] stable = Stable(a, Render(cam, rt, read), Render(cam, rt, read));
+                    Plane[] planes = GeometryUtility.CalculateFrustumPlanes(cam);
+                    var inView = new List<Renderer>();
+                    foreach (Renderer r in probeLit)
+                    {
+                        if (GeometryUtility.TestPlanesAABB(planes, r.bounds))
+                        {
+                            inView.Add(r);
+                        }
+                    }
+
+                    Hide(probeLit, hidden);
+                    Color32[] without = Render(cam, rt, read);
+                    Show(hidden);
+                    float noise = 1f - Fraction(stable);
+                    float share = Changed(a, without, stable);
+                    if (i == 0)
+                    {
+                        Hide(worldRenderers, hidden);
+                        control = Changed(a, Render(cam, rt, read), stable);
+                        Show(hidden);
+                    }
+
+                    // Each one alone, the largest first: which renderers the share is.
+                    var each = new List<KeyValuePair<float, string>>();
+                    foreach (Renderer r in inView)
+                    {
+                        Hide(new List<Renderer> { r }, hidden);
+                        float own = Changed(a, Render(cam, rt, read), stable);
+                        Show(hidden);
+                        Material m = r.sharedMaterial;
+                        each.Add(new KeyValuePair<float, string>(own, r.name + "[" + (m != null && m.shader != null ? m.shader.name : "-") + "] " + (own * 100f).ToString("F2") + "%"));
+                    }
+
+                    each.Sort((x, y) => y.Key.CompareTo(x.Key));
+                    var top = new List<string>();
+                    for (int k = 0; k < Mathf.Min(5, each.Count); k++)
+                    {
+                        top.Add(each[k].Value);
+                    }
+
+                    cam.targetTexture = null;
+                    worst = Mathf.Max(worst, share);
+                    noiseMax = Mathf.Max(noiseMax, noise);
+                    lines.Add(MenuCinematic.Shots[i].id + " inView=" + inView.Count + " share=" + (share * 100f).ToString("F2") + "% noise=" + (noise * 100f).ToString("F3") + "% top: " + string.Join(", ", top));
+                }
+
+                SetPostProcessing(cam, post);
+                var kinds = new SortedDictionary<string, int>(System.StringComparer.Ordinal);
+                foreach (Renderer r in probeLit)
+                {
+                    Material m = r.sharedMaterial;
+                    string kind = r.GetType().Name + " " + (m != null && m.shader != null ? m.shader.name : "-") + " " + r.lightProbeUsage;
+                    kinds[kind] = kinds.TryGetValue(kind, out int c) ? c + 1 : 1;
+                }
+
+                var kindList = new List<string>();
+                foreach (KeyValuePair<string, int> k in kinds)
+                {
+                    kindList.Add(k.Value + "× " + k.Key);
+                }
+
+                Debug.Log("[DD-TEST] wp081.menuProbes.kinds " + string.Join(" · ", kindList));
+
+                PrototypeUiFlow.GoToSelection();
+                yield return SahneyiBekle(PrototypeScenes.Selection);
+                yield return null;
+                string withoutWorld = ProbeState();
+                Debug.Log("[DD-TEST] wp081.menuProbes world=" + worldScene + " renderers=" + worldRenderers.Count + " probeLit=" + probeLit.Count
+                    + " | probes with world: " + withWorld + " | after it left: " + withoutWorld
+                    + " | events needsRetetrahedralization=" + (needsEvent == null ? "n/a" : needs.ToString())
+                    + " tetrahedralizationCompleted=" + (doneEvent == null ? "n/a" : done.ToString())
+                    + " | control (world hidden) " + (control * 100f).ToString("F1") + "% | " + string.Join(" · ", lines)
+                    + " | worst " + (worst * 100f).ToString("F2") + "%");
+                Assert.Greater(control, 0.3f, "pozitif kontrol: dünya gizlenince karenin çoğu değişir (ölçüm kör değil)");
+                Assert.Less(noiseMax, 0.25f, "aynı poz üç kez: piksellerin en az %75'i kararlı (ölçüm geçerli)");
+            }
+            finally
+            {
+                Show(hidden);
+                needsEvent?.RemoveEventHandler(null, onNeeds);
+                doneEvent?.RemoveEventHandler(null, onDone);
+                if (MenuCinematic.Current != null && MenuCinematic.Current.Camera != null)
+                {
+                    MenuCinematic.Current.Camera.targetTexture = null;
+                }
+
+                if (rt != null)
+                {
+                    rt.Release();
+                    Object.Destroy(rt);
+                }
+
+                if (read != null)
+                {
+                    Object.Destroy(read);
+                }
+            }
+        }
+
+        private static string ProbeState()
+        {
+            LightProbes probes = LightmapSettings.lightProbes;
+            string state = probes == null ? "lightProbes=null" : "lightProbes count=" + probes.count + " cells=" + probes.cellCount;
+            System.Reflection.MethodInfo getCount = typeof(LightProbes).GetMethod("GetCount", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+            if (getCount != null && getCount.GetParameters().Length == 1 && getCount.GetParameters()[0].IsOut)
+            {
+                object[] args = { 0 };
+                getCount.Invoke(null, args);
+                state += " GetCount=" + args[0];
+            }
+
+            return state + " active=" + SceneManager.GetActiveScene().name;
+        }
+
+        /// <summary>URP's per-camera post-processing switch, by reflection (the test assembly does not reference URP). Returns the old value.</summary>
+        private static bool SetPostProcessing(Camera cam, bool on)
+        {
+            foreach (Component c in cam.GetComponents<Component>())
+            {
+                System.Reflection.PropertyInfo p = c != null ? c.GetType().GetProperty("renderPostProcessing") : null;
+                if (p != null && p.PropertyType == typeof(bool) && p.CanWrite)
+                {
+                    bool was = (bool)p.GetValue(c);
+                    p.SetValue(c, on);
+                    return was;
+                }
+            }
+
+            Assert.Fail("UniversalAdditionalCameraData.renderPostProcessing bulunamadı");
+            return on;
+        }
+
+        private static Color32[] Render(Camera cam, RenderTexture rt, Texture2D read)
+        {
+            cam.Render();
+            RenderTexture previous = RenderTexture.active;
+            RenderTexture.active = rt;
+            read.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
+            read.Apply(false);
+            RenderTexture.active = previous;
+            return read.GetPixels32();
+        }
+
+        private static void Hide(List<Renderer> renderers, List<Renderer> hidden)
+        {
+            foreach (Renderer r in renderers)
+            {
+                if (r != null && !r.forceRenderingOff)
+                {
+                    r.forceRenderingOff = true;
+                    hidden.Add(r);
+                }
+            }
+        }
+
+        private static void Show(List<Renderer> hidden)
+        {
+            foreach (Renderer r in hidden)
+            {
+                if (r != null)
+                {
+                    r.forceRenderingOff = false;
+                }
+            }
+
+            hidden.Clear();
+        }
+
+        /// <summary>True where two colours differ by more than 2/255 in any channel.</summary>
+        private static bool Differs(Color32 a, Color32 b)
+        {
+            return Mathf.Abs(a.r - b.r) > 2 || Mathf.Abs(a.g - b.g) > 2 || Mathf.Abs(a.b - b.b) > 2;
+        }
+
+        /// <summary>The pixels that hold still over three renders of the same pose.</summary>
+        private static bool[] Stable(Color32[] a, Color32[] b, Color32[] c)
+        {
+            var stable = new bool[a.Length];
+            for (int i = 0; i < a.Length; i++)
+            {
+                stable[i] = !Differs(a[i], b[i]) && !Differs(a[i], c[i]);
+            }
+
+            return stable;
+        }
+
+        private static float Fraction(bool[] mask)
+        {
+            int n = 0;
+            for (int i = 0; i < mask.Length; i++)
+            {
+                if (mask[i]) n++;
+            }
+
+            return n / (float)mask.Length;
+        }
+
+        /// <summary>The share of the frame's pixels, stable ones only, whose colour moves by more than 2/255 in any channel.</summary>
+        private static float Changed(Color32[] a, Color32[] b, bool[] stable)
+        {
+            int n = 0;
+            for (int i = 0; i < a.Length; i++)
+            {
+                if (stable[i] && Differs(a[i], b[i]))
+                {
+                    n++;
+                }
+            }
+
+            return n / (float)a.Length;
+        }
     }
 }
