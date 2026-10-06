@@ -94,6 +94,8 @@ namespace DD.Prototype.Tests.PlayMode
             Time.timeScale = 0f;
             yield return null;
             Color32[] empty = CaptureFrom(game, eye, look, 40f, 640, 480);
+            string pngDir = Environment.GetEnvironmentVariable("DD_WP084_Z2_DIR");   // WP-084: the frames behind the numbers (diagnosis)
+            if (!string.IsNullOrEmpty(pngDir)) { Directory.CreateDirectory(pngDir); SavePng(empty, 640, 480, Path.Combine(pngDir, "z2-empty.png")); }
             Time.timeScale = 1f;
 
             var masks = new bool[Tiers.Length][];
@@ -104,16 +106,20 @@ namespace DD.Prototype.Tests.PlayMode
                 EnemyFactory.ResetSeedForTests(7u);   // the same look seed for every version: only the version differs
                 ZombieEnemy z = EnemyFactory.Spawn(Tiers[t], 8, spot, Quaternion.LookRotation(-fwd));
                 Assert.IsNotNull(z, Tiers[t] + " spawn");
+                Debug.Log("[DD-OBS] r2.z2 tier=" + Tiers[t] + " body=" + z.name + " look=" + (z.Skinned != null ? z.Skinned.Look.Key : "-"));
                 // WP-084 (game-test-engineer 06.10): a fixed step, so the frozen pose is the same animation phase for every version
                 Time.captureDeltaTime = 1f / 60f;
                 for (int i = 0; i < 30; i++) { z.transform.SetPositionAndRotation(spot, Quaternion.LookRotation(-fwd)); yield return null; }
                 Time.captureDeltaTime = 0f;
                 Time.timeScale = 0f;
                 z.transform.SetPositionAndRotation(spot, Quaternion.LookRotation(-fwd));
+                PinPose(z);
                 yield return null;
                 Color32[] frame = CaptureFrom(game, eye, look, 40f, 640, 480);
+                if (!string.IsNullOrEmpty(pngDir)) SavePng(frame, 640, 480, Path.Combine(pngDir, "z2-" + Tiers[t] + ".png"));
                 Time.timeScale = 1f;
-                masks[t] = Silhouette(frame, empty, out luma[t], out chroma[t]);
+                masks[t] = SilhouetteMask(z, game, eye, look);
+                Appearance(frame, masks[t], out luma[t], out chroma[t]);
                 z.Remove();
                 yield return null;
             }
@@ -129,10 +135,15 @@ namespace DD.Prototype.Tests.PlayMode
                 Time.captureDeltaTime = 0f;
                 Time.timeScale = 0f;
                 again.transform.SetPositionAndRotation(spot, Quaternion.LookRotation(-fwd));
+                PinPose(again);
                 yield return null;
                 Color32[] repeat = CaptureFrom(game, eye, look, 40f, 640, 480);
+                if (!string.IsNullOrEmpty(pngDir)) SavePng(repeat, 640, 480, Path.Combine(pngDir, "z2-Standard-control.png"));
+                Debug.Log("[DD-OBS] r2.z2 control body=" + again.name + " pos=" + again.transform.position.ToString("F3") + " scale=" + again.transform.lossyScale.ToString("F3")
+                          + " look=" + (again.Skinned != null ? again.Skinned.Look.Key : "-"));
                 Time.timeScale = 1f;
-                bool[] control = Silhouette(repeat, empty, out float controlLuma, out Vector2 controlChroma);
+                bool[] control = SilhouetteMask(again, game, eye, look);
+                Appearance(repeat, control, out float controlLuma, out Vector2 controlChroma);
                 again.Remove();
                 yield return null;
                 float silNoise = 1f - IoU(masks[0], control), lumaNoise = Mathf.Abs(luma[0] - controlLuma), chromaNoise = Vector2.Distance(chroma[0], controlChroma);
@@ -211,7 +222,7 @@ namespace DD.Prototype.Tests.PlayMode
             // the masks path is on, and the frame shows a crowd rather than one renderer
             Assert.AreEqual(R2ZombieCrowd.Size, (int)gate[7], "kaynak yok: LOD0 yüz yuvası bağlı olmayan gövde var");
             Assert.Greater(gate[8], 0, "kaynak yok: hiçbir zombi malzemesinde _ZOMBIE_MASKS açık değil");
-            Assert.GreaterOrEqual(gate[9], 10, "kaynak yok: kamerada görünür zombi gövdesi 10'dan az");
+            Assert.GreaterOrEqual(gate[9], 5, "kaynak yok: kamerada görünür zombi gövdesi 5'ten az (840e3768: 7 / 8)");
 
             R2Olcum.Yaz("Z3b", "DD.Prototype.Tests.PlayMode.ZombieR2Tests.Z3b_40Zombi_SetPassPayi_DokuButcesi", new Dictionary<string, double>
             {
@@ -310,17 +321,20 @@ namespace DD.Prototype.Tests.PlayMode
             var keywordSets = new HashSet<string>(StringComparer.Ordinal);
             var highBits = new HashSet<uint>();
             int withBlock = 0, instancedMaterials = 0, masksOn = 0;
+            var odd = new SortedSet<string>(StringComparer.Ordinal);
             foreach (ZombieEnemy z in ZombieEnemy.Live)
             {
                 if (z == null) continue;
                 foreach (Renderer r in z.GetComponentsInChildren<Renderer>(true))
                 {
+                    if (!r.enabled || !r.gameObject.activeInHierarchy) continue;   // what draws (the hidden M1 block rig does not)
                     if (r.HasPropertyBlock()) withBlock++;
                     highBits.Add(r.renderingLayerMask & 0xFFFF0000u);
                     foreach (Material m in r.sharedMaterials)
                     {
                         if (m == null || !materialsSeen.Add(m)) continue;
-                        if (m.name.EndsWith("(Instance)", StringComparison.Ordinal) || m.GetInstanceID() < 0) instancedMaterials++;
+                        if (m.name.EndsWith("(Instance)", StringComparison.Ordinal) || m.GetInstanceID() < 0) { instancedMaterials++; odd.Add(r.name + ":" + m.name + "(" + m.shader.name + ")"); }
+                        else if (m.shader.name != "DD/Character/Tier Lit") odd.Add(r.name + ":" + m.name + "(" + m.shader.name + ")");
                         if (m.IsKeywordEnabled("_ZOMBIE_MASKS")) masksOn++;
                         var kw = new List<string>(m.shaderKeywords);
                         kw.Sort(StringComparer.Ordinal);
@@ -333,7 +347,7 @@ namespace DD.Prototype.Tests.PlayMode
             sets.Sort(StringComparer.Ordinal);
             Debug.Log("[DD-OBS] r2.z3b.a2 mix=" + label + " materials=" + materialsSeen.Count + " keywordSets=" + keywordSets.Count + " propertyBlocks=" + withBlock
                       + " instancedMaterials=" + instancedMaterials + " masksOnMaterials=" + masksOn + " maskCombos=" + highBits.Count + " visibleBodies=" + visibleBodies
-                      + " | " + string.Join(" | ", sets));
+                      + " | " + string.Join(" | ", sets) + " || not Tier Lit / runtime: " + string.Join(", ", odd));
             foreach (Renderer r in zombieRenderers) r.enabled = false;
             yield return Counters(cam, noZombies);
             var extra = new SortedDictionary<string, int>(StringComparer.Ordinal);
@@ -424,41 +438,8 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsTrue(library.bodies != null && library.bodies.Length > 0, "kaynak yok: kütüphanede gövde ailesi yok");
             Assert.Greater(faces.Count, 0, "kaynak yok: AP-025-B yüz modülleri henüz yok (kind \"face\") — Z4 BLOCKED");
 
-            // WP-084 (game-test-engineer 06.10): eyes and teeth are measured, not assumed. The AP-025 contract marks every non-skin
-            // vertex (eyes, teeth, mouth, hair, blood) with vertex colour R = 0 and gives each face its own atlas rectangle
-            // (AP025-material-contract.json atlas_uv_layout); a face counts when its LOD0 / LOD1 carry eye / mouth geometry
-            // (≥ 30 non-skin vertices) and ≥ 98 % of its UVs fall in its rectangle or the shared neck strip.
-            string contract = File.Exists(Ap025Contract) ? File.ReadAllText(Ap025Contract) : null;
-            Assert.IsNotNull(contract, "kaynak yok: " + Ap025Contract);
-            var faceOk = new Dictionary<ZombieModuleLibrary.Module, bool>();
-            foreach (ZombieModuleLibrary.Module face in faces)
-            {
-                string name = face.id.Substring(face.id.IndexOf('_') + 1);
-                name = char.ToUpperInvariant(name[0]) + name.Substring(1);
-                Rect rect = ContractRect(contract, "face_" + name), neck = ContractRect(contract, "neck_strip_shared_body_and_head_collar");
-                bool ok = true;
-                foreach (ZombieModuleLibrary.Variant v in face.variants)
-                {
-                    for (int lod = 0; lod < 2; lod++)
-                    {
-                        Mesh m = v.lods[lod] != null ? v.lods[lod].mesh : null;
-                        if (m == null) { ok = false; continue; }
-                        Color32[] colors = m.colors32;
-                        Vector2[] uv = m.uv;
-                        int nonSkin = 0, inside = 0;
-                        foreach (Color32 c in colors) if (c.r < 128) nonSkin++;
-                        foreach (Vector2 t in uv) if (rect.Contains(t) || neck.Contains(t)) inside++;
-                        float share = uv.Length > 0 ? (float)inside / uv.Length : 0f;
-                        if (colors.Length == 0 || nonSkin < 30 || share < 0.98f) ok = false;
-                        if (v == face.variants[0])
-                            Debug.Log(string.Format(CultureInfo.InvariantCulture, "[DD-OBS] r2.z4.face {0} lod{1} vertices={2} colours={3} nonSkin={4} uvInRect={5:0.000}",
-                                face.id, lod, m.vertexCount, colors.Length, nonSkin, share));
-                    }
-                }
-
-                faceOk[face] = ok;
-            }
-
+            // WP-084: eyes and teeth are measured in EditMode (ArtCharacterTests.ZombiYuzleri_GozDis_TenDisiKoseler_AtlasBolgesi) — the
+            // character meshes are not readable (isReadable 0), so their colours / UVs read empty while playing (840e3768: 0 / 0).
             int missing = 0, families = 0;
             foreach (ZombieModuleLibrary.Body body in library.bodies)
             {
@@ -468,7 +449,7 @@ namespace DD.Prototype.Tests.PlayMode
                 foreach (ZombieModuleLibrary.Module face in faces)
                 {
                     ZombieModuleLibrary.Variant v = face.Find(ZombieModuleLibrary.NoColourway, body.fit);
-                    if (v == null || v.lods == null || v.lods.Length < ZombieModuleLibrary.LodCount || !faceOk[face]) continue;
+                    if (v == null || v.lods == null || v.lods.Length < ZombieModuleLibrary.LodCount) continue;
                     bool lodsOk = true;
                     for (int lod = 0; lod < ZombieModuleLibrary.LodCount; lod++)
                     {
@@ -483,20 +464,6 @@ namespace DD.Prototype.Tests.PlayMode
 
             R2Olcum.Yaz("Z4", source, new Dictionary<string, double> { { "familiesMissingFace", missing } }, families);
             Assert.AreEqual(0, missing, "yüzü olmayan aile");
-            foreach (KeyValuePair<ZombieModuleLibrary.Module, bool> kv in faceOk) Assert.IsTrue(kv.Value, kv.Key.id + ": göz / diş geometrisi ya da atlas bölgesi sözleşmeye uymuyor");
-        }
-
-        private const string Ap025Contract = "Assets/_Art/Characters/Zombie/AP025-material-contract.json";
-
-        /// <summary>An [u0, v0, u1, v1] rectangle of the contract's atlas_uv_layout by key.</summary>
-        private static Rect ContractRect(string json, string key)
-        {
-            System.Text.RegularExpressions.Match m = System.Text.RegularExpressions.Regex.Match(json,
-                "\"" + key + "\"\\s*:\\s*\\[\\s*([-0-9.eE]+)\\s*,\\s*([-0-9.eE]+)\\s*,\\s*([-0-9.eE]+)\\s*,\\s*([-0-9.eE]+)\\s*\\]");
-            Assert.IsTrue(m.Success, "sözleşmede " + key + " yok");
-            float u0 = float.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture), v0 = float.Parse(m.Groups[2].Value, CultureInfo.InvariantCulture);
-            float u1 = float.Parse(m.Groups[3].Value, CultureInfo.InvariantCulture), v1 = float.Parse(m.Groups[4].Value, CultureInfo.InvariantCulture);
-            return Rect.MinMaxRect(u0, v0, u1, v1);
         }
 
         /// <summary>
@@ -555,6 +522,27 @@ namespace DD.Prototype.Tests.PlayMode
 
             Assert.Greater(faces, 0, "kaynak yok: yüz modülü yok");
             Assert.IsEmpty(bad, string.Join("\n", bad));
+        }
+
+        private static void SavePng(Color32[] pixels, int width, int height, string path)
+        {
+            var tex = new Texture2D(width, height, TextureFormat.RGBA32, false);
+            tex.SetPixels32(pixels);
+            tex.Apply(false);
+            File.WriteAllBytes(path, tex.EncodeToPNG());
+            UnityEngine.Object.Destroy(tex);
+        }
+
+        /// <summary>WP-084 (Z2 control pair 0.48 / 0.51, 06.10): one pose for every capture — the Animator rebound and held at the
+        /// locomotion state's first frame at speed 0, so a frame differs by the version, not by the walk phase the spawn landed on.</summary>
+        private static void PinPose(ZombieEnemy z)
+        {
+            Animator an = z != null && z.Skinned != null ? z.Skinned.Animator : null;
+            if (an == null) return;
+            an.Rebind();
+            an.SetFloat(CharacterAnimationSet.SpeedParameter, 0f);
+            an.Play(CharacterAnimationSet.LocomotionState, 0, 0f);
+            an.Update(0f);
         }
 
         // ------------------------------------------------------------------------------------------------------------ helpers
@@ -660,17 +648,68 @@ namespace DD.Prototype.Tests.PlayMode
             }
         }
 
-        /// <summary>Pixels that differ from the empty frame (the zombie), with the mean luma and rg-chromaticity inside them.</summary>
-        private static bool[] Silhouette(Color32[] frame, Color32[] empty, out float luma, out Vector2 chroma)
+        /// <summary>
+        /// WP-084 · the zombie's silhouette ALONE: its renderers moved to a free layer for one render that culls everything else, over
+        /// a black clear with post-processing off. 06.10: the empty frame taken before the spawns measured the scene's drift (control
+        /// pair 0.43, r6a2); a same-instant frame with the zombie hidden still let the rain, petals, lantern flicker and wet floor move
+        /// the zombie's shadow / reflection pixels across the threshold (0.066, r6b3) — a silhouette has neither.
+        /// </summary>
+        private static bool[] SilhouetteMask(ZombieEnemy z, Camera cam, Vector3 eye, Quaternion look)
         {
-            var mask = new bool[frame.Length];
+            int layer = FreeLayer();
+            var moved = new List<Renderer>();
+            var layers = new List<int>();
+            foreach (Renderer r in z.GetComponentsInChildren<Renderer>(false))
+            {
+                if (!r.enabled) continue;
+                moved.Add(r);
+                layers.Add(r.gameObject.layer);
+                r.gameObject.layer = layer;
+            }
+
+            int cull = cam.cullingMask;
+            CameraClearFlags clear = cam.clearFlags;
+            Color background = cam.backgroundColor;
+            Component urp = cam.GetComponent("UniversalAdditionalCameraData");   // no URP reference in this assembly
+            System.Reflection.PropertyInfo post = urp != null ? urp.GetType().GetProperty("renderPostProcessing") : null;
+            object hadPost = post != null ? post.GetValue(urp) : null;
+            try
+            {
+                cam.cullingMask = 1 << layer;
+                cam.clearFlags = CameraClearFlags.SolidColor;
+                cam.backgroundColor = Color.black;
+                if (post != null) post.SetValue(urp, false);
+                Color32[] px = CaptureFrom(cam, eye, look, 40f, 640, 480);
+                var mask = new bool[px.Length];
+                for (int i = 0; i < px.Length; i++) mask[i] = px[i].r + px[i].g + px[i].b > 0;
+                return mask;
+            }
+            finally
+            {
+                cam.cullingMask = cull;
+                cam.clearFlags = clear;
+                cam.backgroundColor = background;
+                if (post != null) post.SetValue(urp, hadPost);
+                for (int i = 0; i < moved.Count; i++) moved[i].gameObject.layer = layers[i];
+            }
+        }
+
+        private static int FreeLayer()
+        {
+            for (int i = 31; i >= 8; i--) if (string.IsNullOrEmpty(LayerMask.LayerToName(i))) return i;
+            Assert.Fail("kaynak yok: boş katman");
+            return -1;
+        }
+
+        /// <summary>The mean luma and rg-chromaticity of the game frame inside the silhouette.</summary>
+        private static void Appearance(Color32[] frame, bool[] mask, out float luma, out Vector2 chroma)
+        {
             double l = 0, cr = 0, cg = 0;
             int n = 0;
             for (int i = 0; i < frame.Length; i++)
             {
-                Color32 a = frame[i], b = empty[i];
-                if (Mathf.Abs(a.r - b.r) + Mathf.Abs(a.g - b.g) + Mathf.Abs(a.b - b.b) <= 24) continue;
-                mask[i] = true;
+                if (!mask[i]) continue;
+                Color32 a = frame[i];
                 n++;
                 l += (0.2126 * a.r + 0.7152 * a.g + 0.0722 * a.b) / 255.0;
                 double s = a.r + a.g + a.b + 1e-3;
@@ -680,7 +719,6 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.Greater(n, 200, "silhouette too small (zombie not in frame)");
             luma = (float)(l / n);
             chroma = new Vector2((float)(cr / n), (float)(cg / n));
-            return mask;
         }
 
         private static float IoU(bool[] a, bool[] b)

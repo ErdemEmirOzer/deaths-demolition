@@ -380,6 +380,83 @@ namespace DD.Art.Tests.EditMode
             if (r.triangles > ceiling) hatalar.Add(what + ": " + r.triangles + " üçgen > tavan " + ceiling);
         }
 
+        /// <summary>
+        /// WP-084 · Z4's eyes / teeth, measured on the library's face meshes in the Editor (the character meshes are not readable while
+        /// playing): the AP-025 contract marks every non-skin vertex (eyes, teeth, mouth, hair, blood) with vertex colour R = 0 and gives
+        /// each face its own atlas rectangle (AP025-material-contract.json atlas_uv_layout; v002 dropped v001's shared "extras" island —
+        /// eyes / teeth / gums sit on the face's own island) plus the shared neck strip. Every face, LOD0 and LOD1: colours imported,
+        /// ≥ 30 non-skin vertices, and every UV inside those regions, edges included (the lat-long grid's pole row lies ON the rectangle's
+        /// max edge — 06.10: 161 / 109 UVs at v = .995 / .495, which Rect.Contains' open max edge had counted as outside; the FBX
+        /// UV arrays read directly: 0 outside with the edges closed and a 0.002 margin — the one vertex past an edge is Swollen LOD0's
+        /// neck vertex at u = .7455 against the strip's .745).
+        /// </summary>
+        [Test]
+        public void ZombiYuzleri_GozDis_TenDisiKoseler_AtlasBolgesi()
+        {
+            var lib = AssetDatabase.LoadAssetAtPath<ZombieModuleLibrary>(ArtCharacterPrefabBuilder.ZombieLibrary);
+            Assert.IsNotNull(lib);
+            string contract = File.ReadAllText(ArtAp025Intake.ContractPath);
+            Rect neck = ContractRect(contract, "neck_strip_shared_body_and_head_collar");
+            var hatalar = new List<string>();
+            int faces = 0;
+            foreach (ZombieModuleLibrary.Module face in lib.modules)
+            {
+                if (face.kind != ZombieModuleLibrary.KindFace) continue;
+                faces++;
+                string name = face.id.Substring(face.id.IndexOf('_') + 1);
+                Rect rect = ContractRect(contract, "face_" + char.ToUpperInvariant(name[0]) + name.Substring(1));
+                for (int lod = 0; lod < 2; lod++)
+                {
+                    Mesh m = face.variants[0].lods[lod].mesh;
+                    var colors = new List<Color32>();
+                    var uv = new List<Vector2>();
+                    m.GetColors(colors);
+                    m.GetUVs(0, uv);
+                    int nonSkin = 0, inRect = 0, inNeck = 0, outside = 0;
+                    var outsideBounds = Rect.MinMaxRect(float.MaxValue, float.MaxValue, float.MinValue, float.MinValue);
+                    foreach (Color32 col in colors) if (col.r < 128) nonSkin++;
+                    foreach (Vector2 p in uv)
+                    {
+                        if (InsideClosed(rect, p)) inRect++;
+                        else if (InsideClosed(neck, p)) inNeck++;
+                        else
+                        {
+                            outside++;
+                            outsideBounds.xMin = Mathf.Min(outsideBounds.xMin, p.x); outsideBounds.yMin = Mathf.Min(outsideBounds.yMin, p.y);
+                            outsideBounds.xMax = Mathf.Max(outsideBounds.xMax, p.x); outsideBounds.yMax = Mathf.Max(outsideBounds.yMax, p.y);
+                        }
+                    }
+
+                    Debug.Log(string.Format(System.Globalization.CultureInfo.InvariantCulture, "[DD-TEST] wp084.face {0} lod{1} vertices={2} colours={3} nonSkin={4} uv={5} inRect={6} inNeck={7} outside={8}{9}",
+                        face.id, lod, m.vertexCount, colors.Count, nonSkin, uv.Count, inRect, inNeck, outside,
+                        outside > 0 ? string.Format(System.Globalization.CultureInfo.InvariantCulture, " outsideU=[{0:0.0000},{1:0.0000}] outsideV=[{2:0.0000},{3:0.0000}]", outsideBounds.xMin, outsideBounds.xMax, outsideBounds.yMin, outsideBounds.yMax) : ""));
+                    if (colors.Count != m.vertexCount) hatalar.Add(face.id + " lod" + lod + ": vertex rengi yok (" + colors.Count + "/" + m.vertexCount + ")");
+                    else if (nonSkin < 30) hatalar.Add(face.id + " lod" + lod + ": ten dışı (göz / diş / ağız) köşe " + nonSkin);
+                    if (uv.Count != m.vertexCount) hatalar.Add(face.id + " lod" + lod + ": UV yok (" + uv.Count + "/" + m.vertexCount + ")");
+                    else if (outside > 0) hatalar.Add(face.id + " lod" + lod + ": " + outside + " UV belgelenmiş bölgelerin dışında");
+                }
+            }
+
+            Assert.AreEqual(3, faces, "kaynak yok: üç yüz");
+            Assert.IsEmpty(hatalar, string.Join("\n", hatalar));
+        }
+
+        /// <summary>Rect.Contains with the max edges closed and an import-precision margin (the contract rectangles are inclusive).</summary>
+        private static bool InsideClosed(Rect r, Vector2 p)
+        {
+            const float eps = 0.002f;
+            return p.x >= r.xMin - eps && p.x <= r.xMax + eps && p.y >= r.yMin - eps && p.y <= r.yMax + eps;
+        }
+
+        private static Rect ContractRect(string json, string key)
+        {
+            System.Text.RegularExpressions.Match m = System.Text.RegularExpressions.Regex.Match(json,
+                "\"" + key + "\"\\s*:\\s*\\[\\s*([-0-9.eE]+)\\s*,\\s*([-0-9.eE]+)\\s*,\\s*([-0-9.eE]+)\\s*,\\s*([-0-9.eE]+)\\s*\\]");
+            Assert.IsTrue(m.Success, "sözleşmede " + key + " yok");
+            System.Globalization.CultureInfo inv = System.Globalization.CultureInfo.InvariantCulture;
+            return Rect.MinMaxRect(float.Parse(m.Groups[1].Value, inv), float.Parse(m.Groups[2].Value, inv), float.Parse(m.Groups[3].Value, inv), float.Parse(m.Groups[4].Value, inv));
+        }
+
         // ================================================================ look seçici
 
         [Test]
