@@ -312,6 +312,9 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(2, bridge.capacity); Assert.AreEqual(1.35f, bridge.costMultiplier, 1e-4f);
             Assert.AreEqual(6, other.Find(v => v.id == "K1_WestKairo").capacity);
             Assert.AreEqual(1, other.Find(v => v.id == "C1_SteppingCauseway").capacity);
+            // WP-088 r4 (C-00 06.10, option A): C1 stays 1.3 — on the live V6 router the deck already takes 10/24 of a north-bank
+            // crowd and the shore 14/24 (V6CrossingShareTests), so the deck cost is pinned rather than lowered
+            Assert.AreEqual(1.3f, other.Find(v => v.id == "C1_SteppingCauseway").costMultiplier, 1e-4f, "WP-088 r4: C1 deck cost 1.3");
             Debug.Log("[DD-TEST] wp074.b1c.regions rooms 7 gates " + gates.Count + " chokepoints without a ≥ 3.5 m alternative within 15 m: " + (noAlt.Count == 0 ? "none" : string.Join(", ", noAlt)));
             Assert.IsEmpty(fails, string.Join("\n", fails));
         }

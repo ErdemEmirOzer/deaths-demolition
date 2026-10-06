@@ -44,6 +44,16 @@ namespace DD.Prototype.Tests.PlayMode
         /// </summary>
         private static readonly HashSet<string> KnownOpen = new HashSet<string>();
         private const float StationSeconds = 25f, ReachMetres = 3.5f, StallSeconds = 6f, StallMove = 0.75f, DiagStallMetres = 2f;
+        /// <summary>
+        /// WP-088 (S-05 test, 06.10): progress stall — the NavMesh path to the player has not shrunk by ProgressMetres in StallSeconds
+        /// while the body is farther than the stall distance. Sees what the displacement rule cannot: a body swinging more than
+        /// StallMove (a re-route loop around a waypoint keeps resetting the anchor). REPORTED; asserted for nothing until three
+        /// guarded runs show 0 at every station (flaky policy), then for the strict Waterfall like the displacement rule.
+        /// The path is sampled per body every ProgressSampleSeconds (S-03 06.10: the test's frame cost stays flat).
+        /// </summary>
+        private const float ProgressMetres = 1f, ProgressSampleSeconds = 0.5f;
+        private static NavMeshPath s_progressPath;
+        private static readonly Vector3[] s_progressCorners = new Vector3[256];
 
         private static readonly (string name, Vector3 at)[] Stations =
         {
@@ -68,7 +78,7 @@ namespace DD.Prototype.Tests.PlayMode
         {
             public readonly StringBuilder Rapor = new StringBuilder("[DD-OBS] wp076.v6ai\n");
             public readonly List<string> NoReach = new List<string>();
-            public int SumRec, SumRem, SumOow, WaterfallStalls;
+            public int SumRec, SumRem, SumOow, WaterfallStalls, WaterfallProgressStalls;
             public bool NearCornerReached;
         }
 
@@ -220,7 +230,9 @@ namespace DD.Prototype.Tests.PlayMode
                     int spawned = 0, reached = 0;
                     Action<EnemySpawnContext> onSpawn = c => spawned++;
                     var stalls = new StringBuilder();
-                    int stallCount = 0;
+                    int stallCount = 0, progressCount = 0;
+                    var progress = new Dictionary<ZombieEnemy, (float best, float since, bool reported, float next)>();
+                    var progressAt = new StringBuilder();
                     ZombieEnemy nearCornerBody = null;
                     if (st.name == "Waterfall")
                     {
@@ -276,6 +288,27 @@ namespace DD.Prototype.Tests.PlayMode
                                         stalls.Append(string.Format("({0:0.0},{1:0.0},{2:0.0} d={3:0.0} {4}) ", zp.x, zp.y, zp.z, d, z.Tier));
                                     }
                                     anchors[z] = a;
+                                    bool seen = progress.TryGetValue(z, out var pr);
+                                    if (!a.reached && d > stallMetres && (!seen || Time.time >= pr.next))
+                                    {
+                                        float left = PathLeft(zp, hit.position);
+                                        float next = Time.time + ProgressSampleSeconds;
+                                        if (!seen || left < pr.best - ProgressMetres) progress[z] = (left, Time.time, pr.reported, next);
+                                        else
+                                        {
+                                            bool report = !pr.reported && Time.time - pr.since >= StallSeconds;
+                                            progress[z] = (pr.best, pr.since, pr.reported || report, next);
+                                            if (report)
+                                            {
+                                                progressCount++;
+                                                progressAt.Append(string.Format("({0:0.0},{1:0.0} left={2:0.0} {3}) ", zp.x, zp.z, left, z.Tier));
+                                            }
+                                        }
+                                    }
+                                    else if (seen && (a.reached || d <= stallMetres))
+                                    {
+                                        progress.Remove(z);   // S-03 06.10: pushed away later, the body starts a fresh record (no stale `since`)
+                                    }
                                 }
                             }
                             yield return null;
@@ -288,14 +321,16 @@ namespace DD.Prototype.Tests.PlayMode
                     }
 
                     int dRec = ZombieEnemy.StuckRecoveries - rec, dRem = ZombieEnemy.StuckRemovals - rem, dOow = ZombieEnemy.OutOfWorldRemovals - oow;
-                    rapor.AppendLine(string.Format("  {0,-12} at=({1:0.0},{2:0.0},{3:0.0}) spawned={4} reached={5} stuckRecover={6} stuckRemove={7} oow={8} innerQuotaRelax={10} noPointTicks={11} innerShare24={12:0.00} innerMass={13} cornerHold={14} cornerTimeout={15} stalls: {9}",
+                    rapor.AppendLine(string.Format("  {0,-12} at=({1:0.0},{2:0.0},{3:0.0}) spawned={4} reached={5} stuckRecover={6} stuckRemove={7} oow={8} innerQuotaRelax={10} noPointTicks={11} innerShare24={12:0.00} innerMass={13} cornerHold={14} cornerTimeout={15} progressStalls={16} stalls: {9}",
                         st.name, hit.position.x, hit.position.y, hit.position.z, spawned, reached, dRec, dRem, dOow, stalls.Length > 0 ? stalls.ToString() : "-",
                         director.InnerQuotaRelaxes - cap0, director.NoPointTicks - noPoint0, SpawnWorldProfile.InnerShare,
                         director.InnerMassSamples > massN0 ? ((director.InnerMassSum - mass0) / (director.InnerMassSamples - massN0)).ToString("0.00") : "-",
-                        NavPathFollower.CornerHoldsStarted - holds0, NavPathFollower.CornerHoldTimeouts - cornerTo0));
+                        NavPathFollower.CornerHoldsStarted - holds0, NavPathFollower.CornerHoldTimeouts - cornerTo0, progressCount));
+                    if (progressCount > 0) rapor.AppendLine("    progress stalls: " + progressAt);
                     if (st.name == "Waterfall")
                     {
                         r.WaterfallStalls = stallCount;
+                        r.WaterfallProgressStalls = progressCount;
                         r.NearCornerReached = anchors.TryGetValue(nearCornerBody, out var nearCornerAnchor) && nearCornerAnchor.reached;
                         rapor.AppendLine("  strict Waterfall stalls=" + r.WaterfallStalls + " nearCornerReached=" + r.NearCornerReached);
                     }
@@ -351,7 +386,18 @@ namespace DD.Prototype.Tests.PlayMode
                 rapor.AppendLine("  oow: " + (oowAt.Count > 0 ? string.Join("; ", oowAt) : "-"));
                 Debug.Log(rapor.ToString());
             }
+        }
 
+        /// <summary>WP-088 progress rule: NavMesh path metres from a body to the station (∞ when off-mesh / no complete path).</summary>
+        private static float PathLeft(Vector3 from, Vector3 to)
+        {
+            if (!NavMesh.SamplePosition(from, out NavMeshHit h, 1f, NavMesh.AllAreas)) return float.PositiveInfinity;
+            if (s_progressPath == null) s_progressPath = new NavMeshPath();
+            if (!NavMesh.CalculatePath(h.position, to, NavMesh.AllAreas, s_progressPath) || s_progressPath.status != NavMeshPathStatus.PathComplete) return float.PositiveInfinity;
+            int n = s_progressPath.GetCornersNonAlloc(s_progressCorners);
+            float left = 0f;
+            for (int i = 1; i < n; i++) left += Vector3.Distance(s_progressCorners[i - 1], s_progressCorners[i]);
+            return left;
         }
 
 #if UNITY_EDITOR
