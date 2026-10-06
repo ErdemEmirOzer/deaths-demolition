@@ -176,7 +176,8 @@ def evaluate_gate(gate, commit, measure=None, review=None, cases=None):
         return stop("FAIL", "measurement has no values")
     # "the source must be in the recording" (C-00 05.10): an owner test that counted nothing must not hand the judge the
     # placeholders it started from (S-10 06.10: an S4 run with no weapon wrote float.MaxValue / 0, which pass every check).
-    # samples is the R2Olcum count; the chain's own artifacts (P2, P5) carry none.
+    # samples is the R2Olcum count; the chain's P2 / P5 count their sound windows / R2 sessions (>= 1 when written);
+    # an artifact without the field is judged as before.
     samples = measure.get("samples")
     if samples is not None and not (_number(samples) and samples > 0):
         return stop("BLOCKED", f"the measurement counted no samples (samples {samples!r}): nothing was measured")

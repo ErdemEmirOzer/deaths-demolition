@@ -266,7 +266,7 @@ class EvaluateTests(unittest.TestCase):
             with self.subTest(samples=samples):
                 art = dict(empty, samples=samples) if samples is not None else {k: v for k, v in empty.items() if k != "samples"}
                 row = r2.evaluate_gate(gate("S4"), FINAL, measure=art)
-                if samples is None:   # the chain's own artifacts (P2, P5) carry no count
+                if samples is None:   # no samples field: judged as before (every writer today sets one)
                     self.assertEqual("PASS", row["status"])
                 else:
                     self.assertEqual("BLOCKED", row["status"])

@@ -29,7 +29,7 @@ One JSON file per gate, written only when the measurement actually ran:
   not, the test FAILS and writes no artifact, so the gate is BLOCKED by name; an empty capture never becomes a
   plausible number. The judge holds the same line: an artifact whose `samples` is 0 or not a positive number is BLOCKED
   ("nothing was measured" — S-10 06.10, after an S4 run with no weapon wrote placeholders that passed every check). The
-  chain's own artifacts (P2, P5) count their windows or carry no `samples`.
+  chain's own P2 and P5 count their sound windows and R2 sessions.
 - Tests that measure are `[Explicit]` + `[Category("Diagnostics")]` when they are slow or need a quiet machine (Y6);
   the acceptance chain runs them by name.
 
