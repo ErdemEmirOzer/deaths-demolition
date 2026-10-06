@@ -61,8 +61,10 @@
 # WP-029: Unity writes LightingData.asset and NavMesh data as BINARY .asset files (not YAML) — the generic
 # "*.asset text eol=lf" rule above would strip CR bytes on commit (WP-029 caught 6 bytes lost). Lightmaps' LightingData
 # goes to LFS with the EXRs; the NavMesh blob stays in git but as binary.
+# C-00 06.10 (S-05 git-safety): `binary` (-text -diff -merge) — "-text" alone kept the generic *.asset diff and
+# merge=unityyamlmerge on a blob that carries NUL bytes.
 **/LightingData.asset filter=lfs diff=lfs merge=lfs -text
-**/NavMesh-*.asset    -text
+**/NavMesh-*.asset    binary
 *.hdr   filter=lfs diff=lfs merge=lfs -text
 *.tif   filter=lfs diff=lfs merge=lfs -text
 *.tiff  filter=lfs diff=lfs merge=lfs -text
