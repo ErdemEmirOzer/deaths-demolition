@@ -226,6 +226,44 @@ class MeasuredByTests(LintTestCase):
         self.assertIn(("NO-WRITER", "L1"), codes(self.fx.run(), "WARN"))
 
 
+class ToolWriterTests(LintTestCase):
+    """WP-085 S3: a gate no C# test writes, whose prose section names the owner's Python writer."""
+
+    def setUp(self):
+        super().setUp()
+        self.fx.gates["gates"].append({"id": "S3", "area": "sound", "kind": "gate", "owner": "S-08", "title": "dense",
+                                       "checks": [{"key": "truePeakDbtp", "op": "<=", "limit": -1.0}]})
+        self.fx.prose = PROSE.replace("## Human gates", "## S3 (dense)\n\nWriter: `tools/qa/s3_tool.py` (S-08), the key "
+                                      "`truePeakDbtp`.\n\n## Human gates")
+
+    def tool(self, text):
+        path = self.fx.root / "tools/qa/s3_tool.py"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+
+    def test_the_named_python_writer_stands_for_the_missing_csharp_writer(self):
+        self.tool('KEYS = ("truePeakDbtp",)\n')
+        findings = self.fx.run()
+        self.assertIn(("TOOL-WRITER", "S3"), codes(findings, "INFO"))
+        self.assertNotIn(("NO-WRITER", "S3"), codes(findings))
+        self.assertEqual([], codes(findings, "ERROR"))
+
+    def test_a_named_writer_that_is_missing_or_never_names_a_key_is_an_error(self):
+        self.assertIn(("TOOL-WRITER", "S3"), codes(self.fx.run(), "ERROR"))   # no such file
+        self.tool('KEYS = ("truePeak",)\n')
+        self.assertIn(("KEY-MISSING", "S3"), codes(self.fx.run(), "ERROR"))
+
+    def test_without_the_writer_line_the_gate_still_warns(self):
+        self.fx.prose = PROSE
+        self.assertIn(("NO-WRITER", "S3"), codes(self.fx.run(), "WARN"))
+
+    def test_measured_by_without_a_csharp_writer_stays_an_error(self):
+        self.tool('KEYS = ("truePeakDbtp",)\n')
+        self.fx.gate("S3")["measuredBy"] = {"suite": "playmode", "filter": "DD.Prototype.Tests.PlayMode.HeroTests.H1_Olc",
+                                            "quiet": True}
+        self.assertIn(("NO-WRITER", "S3"), codes(self.fx.run(), "ERROR"))
+
+
 class RequiredTestTests(LintTestCase):
     def test_a_required_test_missing_from_the_repo_is_an_error(self):
         self.fx.gate("U3")["tests"] = ["DD.Prototype.Tests.EditMode.ArtTests.U3_Yok"]

@@ -5,6 +5,8 @@ Three places describe one R2 gate:
   - tools/qa/r2-gates.json      the thresholds (checks[].key, report[]), owner, kind, measuredBy, required tests;
   - tools/qa/r2-measure-contract.md   the prose: which gates are human / report, owner splits, paths, test names, keys;
   - the C# tests that call R2Olcum.Yaz(gate, source, values, samples): the keys they actually write.
+A gate no test writes may name its owner's Python writer in its prose section ("Writer: `tools/qa/<tool>.py`", WP-085 S3):
+the tool must exist and name every contract key of the gate as a string literal.
 
 r2_gates.py judges an artifact against the JSON at acceptance time, when it is too late: a key the test never writes is a
 BLOCKED gate on the FINAL run, an extra key is silently ignored, a measuredBy filter that names no test runs an empty
@@ -310,7 +312,7 @@ def parse_prose(text):
     """facts the contract prose states: id lists, owner splits, gate sections, backticked paths/names/keys/checks."""
     body = strip_fences(text)
     facts = {"human": None, "report": None, "tests_examples": None, "owners": {}, "sections": {}, "chain_made": set(),
-             "paths": [], "test_names": []}
+             "tool_writers": {}, "paths": [], "test_names": []}
     m = re.search(r"^\s*((?:" + GATE_ID + r",\s*)*" + GATE_ID + r"):\s*one review file", body, re.M)
     if m:
         facts["human"] = re.findall(GATE_ID, m.group(1))
@@ -338,6 +340,9 @@ def parse_prose(text):
         }
         if re.search(r"No owner test", rest):
             facts["chain_made"].add(gid)
+        wm = re.search(r"\bWriter:\s*`(tools/qa/[\w.-]+\.py)`", head + "\n" + rest)
+        if wm:
+            facts["tool_writers"][gid] = wm.group(1)
     for t in re.findall(r"`([^`\s]+)`", body):
         # r2-P5.json and the like are artifact names the chain writes, not repo files
         if re.search(r"\.(cs|py|json|sh|md)$", t) and not t.startswith(("K/", "<", "r2-")) and "<" not in t:
@@ -488,6 +493,8 @@ def lint(contract, prose, files, writes, repo=None):
             elif measured:
                 add("ERROR", "NO-WRITER", gid, f"measuredBy runs {measured['filter']} but no R2Olcum.Yaz writes this "
                     f"gate (owner {g['owner']})")
+            elif gid in prose.get("tool_writers", {}):
+                _tool_writer(add, gid, g, prose["tool_writers"][gid], wanted, repo)
             else:
                 add("WARN", "NO-WRITER", gid, f"no test writes this gate yet and no measuredBy (owner {g['owner']}): "
                     "BLOCKED on the FINAL run unless the owner's own run drops it into <E>/r2/")
@@ -537,6 +544,22 @@ def lint(contract, prose, files, writes, repo=None):
     order = {"ERROR": 0, "WARN": 1, "INFO": 2}
     out.sort(key=lambda f: (order[f.level], f.gate, f.code))
     return out
+
+
+def _tool_writer(add, gid, gate, tool, wanted, repo):
+    """a gate whose artifact the owner's Python tool writes (the prose names it): the tool exists and names every key."""
+    path = _resolve_path(repo, tool) if repo is not None else None
+    if repo is not None and path is None:
+        add("ERROR", "TOOL-WRITER", gid, f"the prose names the writer {tool}, which is not in the repo")
+        return
+    text = path.read_text(encoding="utf-8") if path is not None else ""
+    missing = [k for k in wanted if path is not None and not re.search(r"[\"']" + re.escape(k) + r"[\"']", text)]
+    if missing:
+        add("ERROR", "KEY-MISSING", gid, f"contract key never named by the writer {tool} (BLOCKED at acceptance): "
+            + ", ".join(missing))
+    else:
+        add("INFO", "TOOL-WRITER", gid, f"artifact written by the owner's tool {tool} (owner {gate['owner']}, no C# writer): "
+            "<E>/r2/ gets it from the owner's run")
 
 
 def _filter_regex(text):

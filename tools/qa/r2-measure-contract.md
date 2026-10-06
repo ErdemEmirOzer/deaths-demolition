@@ -64,6 +64,30 @@ No owner test: `wp078_accept` writes `r2-P5.json` in stage `r2` from the chain's
 either build (C-00 05.10 decision (a)). R1 sat on the 1.2 s curtain floor in every session, so `floorLimited` tells
 that the ratio only shows an R2 load that grows past it.
 
+## S3 (Dense-40 loudness and peak, S-08 06.10)
+
+No C# test writes S3: three recordings are measured offline. Writer: `tools/qa/r2_s3.py` (S-08), run by the owner on the
+FINAL commit into `<E>/r2/` (its commit is DD_R2_COMMIT). Each key is the worst over its takes:
+
+- `truePeakDbtp`: Dense-40 Player captures (a dev build stamped with the commit, not dirty; QaRunBot from round 12 with
+  -ddAudioDense40 for 40 s; one or more runs per camera, the worst counts; third-person and first-person required,
+  top-down when recorded), the whole recording, max over channels of the 4x oversampled peak: the higher of a polyphase FIR interpolation and the Catmull-Rom
+  estimate of `audio_capture_report.py` (R1's method, kept as the R1-comparable value).
+- `momentaryMaxLufs`: the same captures, BS.1770 K-weighting, 400 ms windows on a 10 ms hop (R1's 100 ms grid, which can
+  miss up to ~0.4 LU of a peak, is kept next to it).
+- `preLimiterGrDb`: the A9 stack render of `AudioSliceTests.A9_EnYuksekYigin_LimiterOncesiZarf_Olcum` (master limiter
+  opened to 0 dB): max(0, envelope max + 8) with the -8 dBFS limiter's detector (10 ms attack, 90 ms release, linked stereo).
+- `weaponMarginLu`: the W (SFX-Player alone) and R (every other bus) blocks of `AudioSliceTests.DinlemePaketi_AB_Uret`,
+  top-down and first-person takes: 10 log10 of their K-weighted mean power in the burst windows (0.15-1.2 s of each 2 s
+  fire cycle). Today's Run snapshot is R1's mix B, so this is R1's "mix B margin" (+1.57 / +3.18) measured directly.
+
+The source checks run before anything is written; one fails and nothing is written (S3 BLOCKED): capture dropped 0 and
+telemetry overflow 0 in every take, 40 alive and a dense window of at least 35 s, the camera the take claims, weapon shots
+delivered and heard (shot-window peak median >= -30 dBFS), the A9 stack loud in every second and not clipped, W + R within
+1 dB of the full mix, both PlayMode tests Passed in the given NUnit XML. A KİRLİ run (load1 >= 6 in the run's load log, no
+load log, or C-00's mark) writes `r2-S3.KIRLI.json` instead, with the note: ranking only, S3 stays BLOCKED until a
+quiet-window measurement.
+
 ## S4 (room tails, v2 — C-00 05.10 decision; S-10 reviews after)
 
 The gate is the **RT60 of the tail**, as the AP-027 spec states it — not the −30 dB energy decay from the dry onset, which
