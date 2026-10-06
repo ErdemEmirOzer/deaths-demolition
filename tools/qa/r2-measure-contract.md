@@ -115,7 +115,9 @@ Report keys (plain numbers):
 - `thetaSwitchCount` — how often the wrap target changes over one weapon's stance + walk, largest over the weapons. The
   target is 0 at stance and ≤ 1 per walk cycle (co-sign K1); it is a note, not a check.
 
-The worst weapon's name goes to the log, not into the values. B2e AD MUST-2 (S-06).
+The worst weapon's name goes to the log, not into the values. B2e AD MUST-2 (S-06). Writer (WP-083 B2f, e8f3ae19 / 18320dab):
+`R2HeroOlcumTests.H1b_SolEl_Kavrama_TumKlasikSilahlar_DurusYuruyus` (`[Explicit]`, Diagnostics), run by full name in the chain's
+r2 stage (`measuredBy`, playmode, quiet false, no env).
 
 ## H6 (TP weapon visibility — C-00 06.10)
 
@@ -137,8 +139,9 @@ target out of reach reads negative. Today's arm is 29.0 + 25.5 = 54.5 cm (S-02's
 K/wp-082/evidence/hero-v2-reach/); hero v2 may change it. With the IK on its target the two are one geometry: on today's
 arm 165° leaves about 0.5 cm and 1 cm is about 158°, so the reach check binds; the elbow check still catches a pose that
 bends the arm straight short of its target. S-06's own B2f gate is the same (C-00 06.10: its "max(165°, b2f4-off)"
-relaxation is void). C-00 06.10 decision on S-06's t-b2f4-off. S-06 writes it (R2Olcum.Yaz("H1c", …)); its measuredBy
-comes with that test.
+relaxation is void). C-00 06.10 decision on S-06's t-b2f4-off. S-06 writes it (R2Olcum.Yaz("H1c", …)) in
+`R2HeroOlcumTests.H1c_SolKol_Erisim_TumKlasikSilahlar_DurusYuruyus` (WP-083 B2f, `[Explicit]`), run by full name in the chain's r2
+stage (`measuredBy`, playmode, quiet false, no env).
 
 ## P3 (B9 poses, report — S-05, C-00 06.10)
 

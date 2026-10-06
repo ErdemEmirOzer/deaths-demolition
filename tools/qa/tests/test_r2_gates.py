@@ -157,14 +157,17 @@ class MeasuredByTests(unittest.TestCase):
         self.assertEqual("BLOCKED", row["status"])
         self.assertIn("u1_default, u1_same_content", row["reason"])
 
-    def test_h1b_and_h6_wait_for_s06s_writers_and_report_plain_numbers(self):
-        # C-00 06.10: the rows come first; measuredBy lands with S-06's tests (a measuredBy nobody writes is a lint ERROR)
+    def test_h1b_is_measured_by_s06s_writer_and_h6_waits_for_its_own(self):
+        # C-00 06.10: the rows came first; measuredBy lands after S-06's writer (WP-083 B2f) - a measuredBy nobody writes is a
+        # lint ERROR. H6's writer has not come yet.
         # C-00 06.10 H1b record (b): the wrist and wrap keys are report-only; thetaSwitchCount's target is a note
         self.assertEqual(["palmToWeaponMaxDeg", "fingertipGapMaxCm", "palmGapMaxCm"], [c["key"] for c in gate("H1b")["checks"]])
         for gid, report in (("H1b", ["weaponsMeasured", "framesMeasured", "wristClampShare", "wristMaxDeg", "thetaSwitchCount"]),
                             ("H6", ["weaponsMeasured", "secondWorstShare"])):
             self.assertEqual(("S-06", "gate", report), (gate(gid)["owner"], gate(gid)["kind"], gate(gid)["report"]))
-            self.assertNotIn("measuredBy", gate(gid))
+        self.assertEqual({"suite": "playmode", "filter": "DD.Prototype.Tests.PlayMode.R2HeroOlcumTests.H1b_SolEl_Kavrama_"
+                          "TumKlasikSilahlar_DurusYuruyus", "quiet": False}, gate("H1b")["measuredBy"])
+        self.assertNotIn("measuredBy", gate("H6"))
         row = r2.evaluate_gate(gate("H6"), FINAL, measure=measure("H6", visibleShareMin=0.21, muzzleInsideSilhouetteFrames=0,
                                                                   weaponsMeasured=10, secondWorstShare=0.33))
         self.assertEqual("FAIL", row["status"])
@@ -188,7 +191,8 @@ class MeasuredByTests(unittest.TestCase):
         self.assertEqual(["elbowMaxDeg", "holdOn"], gate("H1")["report"])
         self.assertEqual(("S-06", "gate"), (gate("H1c")["owner"], gate("H1c")["kind"]))
         self.assertEqual(["elbowMaxDeg", "reachMarginMinCm"], [c["key"] for c in gate("H1c")["checks"]])
-        self.assertNotIn("measuredBy", gate("H1c"))
+        self.assertEqual({"suite": "playmode", "filter": "DD.Prototype.Tests.PlayMode.R2HeroOlcumTests.H1c_SolKol_Erisim_"
+                          "TumKlasikSilahlar_DurusYuruyus", "quiet": False}, gate("H1c")["measuredBy"])   # WP-083 B2f writer
         # one arm geometry (29.0 + 25.5 cm, S-02's reach pre-study): 161 deg leaves 0.7 cm - the elbow passes, the reach fails
         row = r2.evaluate_gate(gate("H1c"), FINAL, measure=measure("H1c", elbowMaxDeg=161.0, reachMarginMinCm=0.7))
         self.assertEqual("FAIL", row["status"])
