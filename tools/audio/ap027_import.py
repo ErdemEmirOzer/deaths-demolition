@@ -23,11 +23,12 @@ Exit 0 imported (summary on stdout) · 1 SHA mismatch (AssertionError: v002 file
 copied before it stay, the manifest is not written) · 64 usage / no worktree root / no AP-027 manifest.
 Test: python3 tools/qa/tests/test_ap027_import.py (synthetic AP-027 tree, numpy + scipy).
 """
-import argparse, hashlib, json, shutil, sys, wave
+import argparse, hashlib, json, math, shutil, sys, wave
 from collections import defaultdict
 from pathlib import Path
 import numpy as np
 import scipy.signal as ss
+from scipy.ndimage import minimum_filter1d, uniform_filter1d
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import dd_paths  # noqa: E402  (WP-089: the one KADRO root for the Python tools)
@@ -95,12 +96,57 @@ def needs_fade(x, r):
     return rel > -FADE_WITHIN_DB or 20 * np.log10(np.sqrt(np.mean(tail ** 2)) + 1e-12) > -70.0   # the manifest end gate
 
 
+def end_gate_fails(x, r):
+    """The absolute half of needs_fade: the last 10 ms over −70 dBFS RMS (the manifest end gate)."""
+    tail = x[-int(0.010 * r):].mean(1)
+    return 20 * np.log10(np.sqrt(np.mean(tail ** 2)) + 1e-12) > -70.0
+
+
 def faded(x, r):
     """Import-time end fade (WP-085 B5, C-00 05.10): the v002 file stops while still sounding; a 10 ms raised-cosine fade
     removes the click and 10 ms of silence closes it (the shortened body stays — Codex v003 re-cut asked for)."""
     n = int(FADE_MS / 1000 * r); y = x.copy()
     y[-n:] *= (0.5 * (1 + np.cos(np.linspace(0, np.pi, n))))[:, None]
     return np.concatenate([y, np.zeros((int(PAD_MS / 1000 * r), x.shape[1]))])   # + 20 ms of digital silence: the end gate's window past the codec
+
+
+# C-00 06.10 (R2 S3): the Dense-40 mix's true peak sat 0.05–0.09 dB under the −1 dBTP gate; a shot's peak there is the weapon
+# plus the crowd's general sum, and the fire files carried −1.1 … −1.9 dBTP (AP-027's −1 ceiling). Fire files over −2 dBTP get
+# their transient shaved at import — no make-up: the body after the first milliseconds is untouched and the file's
+# K-weighted loudness drops only by what the shaved peak carried (AR1 −0.02 … −0.18 dB, worst sr1 −0.69 dB). A make-up to
+# the source's K-weighted energy was measured and dropped: on a transient-dominated file (sr1) it lifted the body +1 … +5 dB.
+PEAK_CEILING_DB = -2.0
+LIMIT_LOOK_MS, LIMIT_RELEASE_MS = 1.5, 10.0
+# Named exception (gt 06.10 M-1): sr1's house stamp sits on its relative-gate cliff — a 0.7 dB transient shave moves the gated
+# value of the shipped clip by 3.5 LU, past the catalog re-measure's ±2 LU (Katalog_ManifestLufsVeTepe_…). sr1 fires about
+# once a second and is in neither the Dense-40 capture (AR1) nor the listening package (SMG1): it ships unshaved.
+PEAK_EXCLUDE_WEAPONS = ("sr1",)
+
+
+def tp_db_x(x):
+    """True peak (dBTP) of samples x: 4× polyphase oversampling, the largest |sample| over the channels."""
+    return float(20 * np.log10(np.abs(ss.resample_poly(x, 4, 1, axis=0)).max() + 1e-12))
+
+
+def peak_limited(x, r, ceiling_db=PEAK_CEILING_DB):
+    """Import-time true-peak shaver (R2 S3, C-00 06.10): the gain each sample needs to keep its 4× oversampled peak under the
+    threshold, the minimum over ±1.5 ms (lookahead), a 1.5 ms box smooth (no gain step), a 10 ms release; channels linked; no
+    make-up. The threshold steps down until the result's true peak is at or under ceiling_db. Returns the shaved samples."""
+    env = np.abs(ss.resample_poly(x, 4, 1, axis=0)).max(axis=1)[:4 * len(x)].reshape(-1, 4).max(axis=1)
+    look = max(1, int(LIMIT_LOOK_MS / 1000 * r))
+    rel = math.exp(-1.0 / (LIMIT_RELEASE_MS / 1000 * r))
+    thr_db, y = ceiling_db, x
+    for _ in range(16):
+        need = np.minimum(1.0, 10 ** (thr_db / 20) / np.maximum(env, 1e-12))
+        g = uniform_filter1d(minimum_filter1d(need, 2 * look + 1, mode="nearest"), look, mode="nearest")
+        for i in range(1, len(g)):   # release: recover towards 1 no faster than the LIMIT_RELEASE_MS (10 ms) time constant
+            g[i] = min(g[i], 1.0 - (1.0 - g[i - 1]) * rel)
+        y = x * g[:, None]
+        over = tp_db_x(y) - ceiling_db
+        if over <= 0.0:
+            return y
+        thr_db -= over + 0.01
+    return y
 
 
 def has_dc(x):
@@ -130,7 +176,13 @@ def house_lufs(p):
     """The house stamp (AP-011 manifests, Unity LoudnessMeter): BS.1770 K-weighting on the MONO MEAN, 400 ms / 100 ms blocks,
     −70 absolute and −10 relative gates, a clip shorter than 400 ms zero-padded. Codex stamps stereo tails as a channel SUM
     (≈ +6 dB for a decorrelated tail): kept apart as codexLufs."""
-    x, r = pcm(p); m = x.mean(1)
+    x, r = pcm(p)
+    return house_lufs_x(x, r)
+
+
+def house_lufs_x(x, r):
+    """house_lufs on samples (same method)."""
+    m = x.mean(1)
     if len(m) < int(0.4 * r): m = np.concatenate([m, np.zeros(int(0.4 * r) - len(m))])
     b1, a1 = [1.53512485958697, -2.69169618940638, 1.19839281085285], [1.0, -1.69065929318241, 0.73248077421585]
     b2, a2 = [1.0, -2.0, 1.0], [1.0, -1.99004745483398, 0.99007225036621]
@@ -207,7 +259,7 @@ def run(root, weapons, ap=AP, fades_log=None):
     else:
         man = {"version": "", "package": "AP-027", "standard": {}, "entries": []}
     keep = [e for e in man["entries"] if e.get("weapon") not in weapons]
-    new, copied, fades, dcs = [], 0, [], []
+    new, copied, fades, dcs, peaks = [], 0, [], [], []
     for (cat, w, layer), items in sorted(groups.items()):
         items.sort(key=lambda x: x["path"])
         files, lufs, tps, chans, st, silent, hl = [], [], [], set(), [], [], []
@@ -232,16 +284,25 @@ def run(root, weapons, ap=AP, fades_log=None):
             x, r = pcm(p)
             dc = has_dc(x)
             if dc: x = dc_removed(x, r); dcs.append(p.name)
-            if dc or needs_fade(x, r):
-                y = faded(x, r) if needs_fade(x, r) else x
+            lim = cat == "Weapon" and layer == "Fire" and w not in PEAK_EXCLUDE_WEAPONS and tp_db_x(x) > PEAK_CEILING_DB
+            fd = needs_fade(x, r)
+            src_lufs = None
+            if lim:   # the 40 dB rule reads the source's own peak: the limiter must not turn a whole file into a cut one
+                # the house stamp stays the unshaved file's: WeaponFireAudio sets Mechanical / Distance against LufsOf(Fire), and
+                # on a shaved transient the stamp's relative gate moves by up to 3.5 dB (sr1) while the body is untouched
+                src_lufs = house_lufs_x(x, r)
+                x = peak_limited(x, r); peaks.append(p.name)
+                fd = fd or end_gate_fails(x, r)
+            if dc or lim or fd:
+                y = faded(x, r) if fd else x
                 if has_dc(y):   # the fade can move a short clip's mean: take it out of the body, the silence pad stays 0
-                    body = len(y) - (int(PAD_MS / 1000 * r) if needs_fade(x, r) else 0)
+                    body = len(y) - (int(PAD_MS / 1000 * r) if fd else 0)
                     y = y.copy(); y[:body] -= y.mean(axis=0) * len(y) / body
                     if p.name not in dcs: dcs.append(p.name)
                 tmp = dst.with_suffix(".tmp.wav"); write24(tmp, y, r)
                 if not dst.exists() or sha(dst) != sha(tmp): tmp.replace(dst); copied += 1
                 else: tmp.unlink()
-                fades.append((p.name, sha(p)[:12], sha(dst)[:12]))
+                if dc or fd: fades.append((p.name, sha(p)[:12], sha(dst)[:12]))
             elif not dst.exists() or sha(dst) != sha(p):
                 shutil.copyfile(p, dst); copied += 1
             files.append(p.name)
@@ -249,7 +310,7 @@ def run(root, weapons, ap=AP, fades_log=None):
             s = it["specs"]; chans.add(s["channels"])
             lufs.append(stereo_lufs(p)); tps.append(true_peak_db(p))   # measured on what ships (S-08 06.10; were the v002 estimates)
             st.append(stamps(p))
-            hl.append(house_lufs(p))
+            hl.append(src_lufs if src_lufs is not None else house_lufs(p))
         auth = items[0].get("source_authenticity", {})
         new.append({
             "sound": sound_name(cat, w, layer), "weapon": w, "event": EVENT.get(layer, "WeaponMechanism.CasingEjected"),
@@ -264,6 +325,7 @@ def run(root, weapons, ap=AP, fades_log=None):
             "overlay": sorted({f + " " + v for f, v in ov_used if f in files}),
             "importFade": [f for f, *_ in fades if f in files],
             "importDcRemoved": [f for f in dcs if f in files],
+            "importPeakLimit": [f for f in peaks if f in files],
             "provenance": "AP-027 v002 (Codex, Sonniss GDC sources, " + ", ".join(sorted({i for it in items for i in it.get("source_license_ids", [])})) + "; "
                           + ("proxy surface/caliber" if auth.get("caliber_surface_proxy") else "source recording") + ") · SHA " + items[0]["sha256"][:12] + "…",
         })
@@ -280,6 +342,7 @@ def run(root, weapons, ap=AP, fades_log=None):
                 if n: base += " · AP-027 " + v + " on " + str(n) + " file(s)"
         if e.get("importFade"): base += " · import fade 10 ms + 20 ms silence on " + str(len(e["importFade"])) + " file(s) (end within 40 dB of peak / end gate)"
         if e.get("importDcRemoved"): base += " · import 15 Hz high-pass + DC out on " + ", ".join(e["importDcRemoved"])
+        if e.get("importPeakLimit"): base += " · import true-peak shave ≤ " + str(PEAK_CEILING_DB) + " dBTP (1.5 ms lookahead, 10 ms release, no make-up; lufs = the unshaved file's house stamp) on " + str(len(e["importPeakLimit"])) + " file(s)"
         e["provenance"] = base
     with open(man_path, "w", encoding="utf-8") as f:
         json.dump(man, f, indent=1, ensure_ascii=False)
@@ -288,7 +351,7 @@ def run(root, weapons, ap=AP, fades_log=None):
         old = fl.read_text(encoding="utf-8").splitlines() if fl.exists() else ["file\tcodex_sha12\timported_sha12"]
         names = {f for f, *_ in fades}
         fl.write_text("\n".join([old[0]] + [l for l in old[1:] if l.split("\t")[0] not in names] + ["\t".join(t) for t in fades]) + "\n", encoding="utf-8")
-    return {"weapons": weapons, "overlay": {v: sum(1 for _, d in ov_used if d == v) for v in ("v003-recut", "v003b-recut", "v003c-recut", "v003d-recut", "v003e-recut", "v003f-recut", "v003g-recut")}, "faded": len(fades), "dc_removed": dcs, "entries": len(new), "files": sum(len(e["files"]) for e in new), "copied": copied,
+    return {"weapons": weapons, "overlay": {v: sum(1 for _, d in ov_used if d == v) for v in ("v003-recut", "v003b-recut", "v003c-recut", "v003d-recut", "v003e-recut", "v003f-recut", "v003g-recut")}, "faded": len(fades), "dc_removed": dcs, "peak_limited": peaks, "entries": len(new), "files": sum(len(e["files"]) for e in new), "copied": copied,
             "manifest_entries_total": len(man["entries"]), "new": [(e["sound"], len(e["files"]), e["lufs"], e["truePeakDb"]) for e in new]}
 
 

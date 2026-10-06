@@ -6,7 +6,7 @@ into a temp worktree root. Checked: the files and manifest entries it writes, tr
 the shipped files (against an independent BS.1770 written here, and an analytic inter-sample peak), the overlay chain and
 its SHA asserts, idempotence (second run: copied 0, manifest byte-identical), the import fade's length (body + 20 ms of
 digital silence) and its "stops while sounding" rule on its own, the fades log only when asked and nothing written outside
-the worktree root."""
+the worktree root, and the fire-file true-peak shave (≤ −2 dBTP, the body untouched, no make-up; other layers untouched)."""
 import contextlib
 import hashlib
 import io
@@ -341,6 +341,38 @@ class Ap027ImportTests(unittest.TestCase):
         out = read_wav24(self.out / "Casing_ar1_Dirt_01.wav")
         self.assertEqual(len(x) + int(0.020 * RATE), len(out))
         self.assertIn("Casing_ar1_Dirt_01.wav", entry(self.manifest(), "CasingAr1Dirt")["importFade"])
+
+    # (f) the fire-file true-peak limit (R2 S3, C-00 06.10)
+    def test_a_fire_file_over_minus_2_dbtp_has_its_transient_shaved_and_its_body_untouched(self):
+        x = burst(amp=0.95, tau=0.05)   # sample peak ≈ −0.6 dBFS: over the −2 dBTP ceiling
+        self._replace_v002("ar1/Weapon_ar1_Fire_01.wav", x)
+        self.run_import()
+        out = read_wav24(self.out / "Weapon_ar1_Fire_01.wav")
+        src = read_wav24(self.ap / "exports/v002/ar1/Weapon_ar1_Fire_01.wav")
+        tp = 20 * np.log10(np.abs(ss.resample(out, 4 * len(out), axis=0)).max())   # FFT 4x, not the tool's polyphase FIR
+        self.assertLessEqual(tp, -2.0 + 0.05)
+        self.assertEqual(len(x), len(out), "the shave adds no samples (no fade: the burst decays to silence)")
+        body = int(0.06 * RATE)   # past the 1.5 ms lookahead + 10 ms release of the last shaved peak
+        self.assertAlmostEqual(0.0, 10 * np.log10(np.mean(out[body:] ** 2) / np.mean(src[body:] ** 2)), delta=0.02, msg="no make-up: the body is the source's")
+        kpow = lambda y: np.mean(ss.sosfilt(K_SOS, np.atleast_2d(y.T).T.mean(axis=1)) ** 2)
+        dk = 10 * np.log10(kpow(out) / kpow(src))
+        self.assertLess(dk, 0.0)
+        self.assertGreater(dk, -1.6, "the loudness drops only by what the shaved peak carried")
+        fire = entry(self.manifest(), "WeaponAr1Fire")
+        self.assertEqual(["Weapon_ar1_Fire_01.wav"], fire["importPeakLimit"])
+        self.assertNotIn("Weapon_ar1_Fire_01.wav", fire["importFade"])
+        self.assertIn("true-peak shave", fire["provenance"])
+        # the house stamp stays the unshaved file's (WeaponFireAudio sets Mechanical / Distance against the fire's lufs)
+        self.assertAlmostEqual(bs1770(src), fire["lufs"], delta=0.011)
+
+    def test_only_fire_files_are_limited(self):
+        loud = burst(freq=4000.0, amp=0.95, tau=0.05)
+        self.assertGreater(20 * np.log10(np.abs(ss.resample(loud, 4 * len(loud), axis=0)).max()), -2.0, "the fixture must sit over the ceiling")
+        self._replace_v002("ar1/Casing_ar1_Dirt_01.wav", loud)
+        self.run_import()
+        self.assertEqual(sha256(self.ap / "exports/v002/ar1/Casing_ar1_Dirt_01.wav"), sha256(self.out / "Casing_ar1_Dirt_01.wav"))
+        self.assertEqual([], entry(self.manifest(), "CasingAr1Dirt")["importPeakLimit"])
+        self.assertEqual([], entry(self.manifest(), "WeaponAr1Fire")["importPeakLimit"])   # the fixture's fire files sit under −2 dBTP
 
     # the fades record and the write boundary
     def test_nothing_is_written_outside_the_root_without_a_fades_log(self):
