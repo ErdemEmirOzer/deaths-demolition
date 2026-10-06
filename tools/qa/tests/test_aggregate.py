@@ -252,8 +252,7 @@ class CliTests(AggregateTestCase):
         self.assertIsNone(report)
         self.assertFalse(missing.exists())
 
-    @unittest.expectedFailure
-    def test_HATA_PerfKosu0_PerfKanitsizPass(self):
+    def test_HATA_PerfKosu0_PerfKanitsizPass(self):   # AG-2 fixed (S-10 06.10)
         # DEFECT AG-2 (low/medium, fail-open): `--perf-runs 0` (or negative) skips the perf loop, so no perf gate is
         # written at all and the closure PASSes without one perf window. README (WP-044) says steps that did not run
         # appear as `missing`; regression.sh forwards --perf-runs unchecked (only rc.sh rejects < 3 with 64).
@@ -261,6 +260,9 @@ class CliTests(AggregateTestCase):
         proc, report, _ = self.run_agg("--perf-runs", "0")
         self.assertNotEqual(0, proc.returncode)
         self.assertTrue(any(g.startswith("perf.") for g in self.gates(report)))
+        # the cause, not only the outcome (C-00 06.10 N2): the closure names the missing perf window
+        gate = self.assertGate(report, "perf.runs", False, "0")
+        self.assertEqual("--perf-runs below 1: the closure has no perf window", gate["note"])
 
 
 class GreenAndContractTests(AggregateTestCase):
@@ -657,6 +659,26 @@ class PerfTests(AggregateTestCase):
                 gate = self.assertGate(report, "perf.hudCostMs", False, "missing")
                 self.assertEqual("04h-hud.json absent or its measurement failed", gate["note"])
 
+    def test_Hud_TekKosuBasarisiz_OrtalamaGizlemez(self):
+        # S-10 06.10 (C-00's B-09 residual risk): two good runs must not average away the one whose measurement failed
+        for i, ok in ((1, True), (2, False), (3, True)):
+            self.fx.hud(i, ok=ok)
+        proc, report, _ = self.run_agg()
+        self.assertEqual(1, proc.returncode)
+        gate = self.assertGate(report, "perf.hudCostMs", False, "measurement failed in run(s) 2")
+
+    def test_CocukKapi_PassAlaniYoksa_NotluFail(self):
+        report = json.loads((self.fx.green().root / "bot/qa-report.json").read_text(encoding="utf-8"))
+        for value in ("true", 1, None):
+            with self.subTest(value=value):
+                report["gates"][0]["pass"] = value
+                self.fx.json("bot/qa-report.json", report)
+                proc, out, _ = self.run_agg()
+                self.assertEqual(1, proc.returncode)
+                gate = next(g for g in out["gates"] if g["id"] == report["gates"][0]["id"])
+                self.assertIs(False, gate["pass"])
+                self.assertIn("counted as FAIL", gate["note"])
+
     def test_PerfPenceresiYok_ToplamPerfKapisiYazilmaz(self):
         for i in (1, 2, 3):
             self.fx.remove("perf-%d/04-window.json" % i)
@@ -811,25 +833,24 @@ class TextSummaryTests(AggregateTestCase):
         self.assertEqual(220, len(long_line))
         self.assertIn("PASS spawnmix.notes = 0.210 (>= 0.06) — fixture", lines)
 
-    def test_KisiBasinaOkunabilirlik_EskiDeltaVKimlikleri_Katlanir(self):
-        # The folding rule as written: passing readability.r*.playerEnvDeltaV / playerZombieDeltaV lines are hidden,
-        # failing ones and every other readability line stay visible.
+    def test_KisiBasinaOkunabilirlik_Katlanir_BasarisizGorunur(self):
+        # The folding rule on the ids QaReadabilityGate writes (S-10 06.10, AG-3): passing readability.r*.player*Contrast
+        # lines are hidden, failing ones and every other readability line stay visible; the JSON keeps all of them.
         report = {"schema": "dd-qa-report-v1", "driver": "QaReadabilityGate", "pass": False, "gates": [
             child_gate("readability.r1.occlusion"),
-            child_gate("readability.r1.playerEnvDeltaV.skin0"),
-            child_gate("readability.r1.playerZombieDeltaV.skin2"),
-            child_gate("readability.r1.playerZombieDeltaV.skin1", ok=False),
+            child_gate("readability.r1.playerEnvContrast.skin0"),
+            child_gate("readability.r1.playerZombieContrast.skin2"),
+            child_gate("readability.r1.playerZombieContrast.skin1", ok=False),
         ]}
         self.fx.json("readability/qa-report.json", report)
         _, out, text = self.run_agg("--perf-runs", "1")
         self.assertIn("PASS readability.r1.occlusion = 0.210 (>= 0.06) — fixture", text)
-        self.assertIn("FAIL readability.r1.playerZombieDeltaV.skin1 = 0.210 (>= 0.06) — fixture", text)
-        self.assertNotIn("playerEnvDeltaV.skin0", text)
-        self.assertNotIn("playerZombieDeltaV.skin2", text)
-        self.assertIn("readability.r1.playerEnvDeltaV.skin0", self.gates(out))  # folded in the text only, kept in JSON
+        self.assertIn("FAIL readability.r1.playerZombieContrast.skin1 = 0.210 (>= 0.06) — fixture", text)
+        self.assertNotIn("playerEnvContrast.skin0", text)
+        self.assertNotIn("playerZombieContrast.skin2", text)
+        self.assertIn("readability.r1.playerEnvContrast.skin0", self.gates(out))  # folded in the text only, kept in JSON
 
-    @unittest.expectedFailure
-    def test_HATA_KisiBasinaOkunabilirlik_GuncelKimliklerKatlanmaz(self):
+    def test_HATA_KisiBasinaOkunabilirlik_GuncelKimliklerKatlanmaz(self):   # AG-3 fixed (S-10 06.10)
         # DEFECT AG-3 (low, text summary only): the fold matches ".playerEnvDeltaV" / ".playerZombieDeltaV", but
         # QaReadabilityGate.cs now writes "readability.rN.playerEnvContrast.skinS" / ".playerZombieContrast.skinS"
         # (the names rc_aggregate.m3_required also expects). The fold is dead code: passing per-skin lines take the
@@ -888,8 +909,7 @@ class MalformedInputTests(AggregateTestCase):
                 self.assertTrue(report is None or report["pass"] is False)
                 self.assertNotIn("M3 closure PASS", proc.stdout)
 
-    @unittest.expectedFailure
-    def test_HATA_CocukKapiPassMetin_YesilSayilir(self):
+    def test_HATA_CocukKapiPassMetin_YesilSayilir(self):   # AG-1 fixed (S-10 06.10)
         # DEFECT AG-1 (low/medium, fail-open): child gates are copied as-is and judged by truthiness
         # (`all(g["pass"] for g in gates)`), so a child gate whose pass is the string "false" counts as green and
         # regression.sh exits 0. rc_aggregate.contract_items refuses exactly this ("never coerce a purported PASS to
@@ -897,9 +917,14 @@ class MalformedInputTests(AggregateTestCase):
         report = json.loads((self.fx.green().root / "spawn-mix/qa-report.json").read_text(encoding="utf-8"))
         report["gates"][0]["pass"] = "false"
         self.fx.json("spawn-mix/qa-report.json", report)
-        proc, out, _ = self.run_agg()
+        proc, out, text = self.run_agg()
         self.assertEqual(1, proc.returncode)
         self.assertFalse(out["pass"])
+        # the cause (C-00 06.10 N2): that child gate itself is FAIL, with the reason, in JSON and in the text
+        gate = next(g for g in out["gates"] if g["id"] == report["gates"][0]["id"])
+        self.assertIs(False, gate["pass"])
+        self.assertIn("non-boolean pass 'false' counted as FAIL", gate["note"])
+        self.assertIn("FAIL " + gate["id"], text)
 
 
 if __name__ == "__main__":

@@ -18,10 +18,22 @@ import xml.etree.ElementTree as ET
 PERF_MEAN_MAX_MS = 8.0      # ADR-011-3 v3 (DEC-088, kullanıcı 2026-09-17): look pass sonrası ortalama ≤ 8,0; p99 10 aynı
 PERF_P99_MAX_MS = 10.0      # clean (stall-filtered) p99
 HUD_COST_MAX_MS = 0.35      # WP-068 (C-00 24.09): run HUD CPU + GPU per frame, 1080p, 40 bodies (PilotPerfProbe 04h-hud)
+PER_SKIN = (".playerEnvContrast", ".playerZombieContrast")   # the ids QaReadabilityGate has written since dc32ecf1
 
 
 def gate(gid, ok, value, threshold="", note="", source=""):
     return {"id": gid, "pass": bool(ok), "value": str(value), "threshold": threshold, "note": note, "source": source}
+
+
+def child_gate(g, prefix):
+    """A child driver's gate, copied with its source prefixed. Its pass counts only when it is exactly true: a string
+    "false", 1 or a missing field is FAIL with a note (B-09 AG-1; rc_aggregate never coerces a purported PASS either)."""
+    g = dict(g)
+    g["source"] = prefix + (g.get("source") or "qa-report.json")
+    if g.get("pass") is not True and g.get("pass") is not False:
+        g["note"] = ((g.get("note") or "") + " · " if g.get("note") else "") + f"non-boolean pass {g.get('pass')!r} counted as FAIL"
+        g["pass"] = False
+    return g
 
 
 def read_json(path):
@@ -119,9 +131,7 @@ def main():
     sm = read_json(os.path.join(out, "spawn-mix", "qa-report.json"))
     if sm and sm.get("gates"):
         for g in sm["gates"]:
-            g = dict(g)
-            g["source"] = "spawn-mix/" + (g.get("source") or "qa-report.json")
-            gates.append(g)
+            gates.append(child_gate(g, "spawn-mix/"))
         if sm.get("summary"):
             notes.append("spawnmix: " + sm["summary"][:160])
     else:
@@ -132,9 +142,7 @@ def main():
     bot_summary = read_json(os.path.join(out, "bot", "bot-summary.json"))
     if bot and bot.get("gates"):
         for g in bot["gates"]:
-            g = dict(g)
-            g["source"] = "bot/" + (g.get("source") or "qa-report.json")
-            gates.append(g)
+            gates.append(child_gate(g, "bot/"))
     else:
         gates.append(gate("bot.rounds", False, "missing", "", "bot/qa-report.json not written", "bot/"))
     if bot_summary:
@@ -142,6 +150,8 @@ def main():
                      f"spawnHash {bot_summary.get('spawnSequenceHash')} outcomeHash {bot_summary.get('outcomeHash')} meanFrame {bot_summary.get('meanFrameMs', 0):.2f} ms")
 
     # ---- perf (PilotPerfProbe Run window, N runs)
+    if perf_runs < 1:   # B-09 AG-2: no perf window at all is no perf evidence, never a closure without its perf gate
+        gates.append(gate("perf.runs", False, perf_runs, ">= 1", "--perf-runs below 1: the closure has no perf window", ""))
     means, p99s, p99f, stalls, maxes, frames = [], [], [], [], [], []
     draws, tris, texmb, meshmb, rtmb, gcalloc, gen0 = [], [], [], [], [], [], []
     loads = []
@@ -183,9 +193,14 @@ def main():
                           f"each of {perf_runs} runs <= {PERF_P99_MAX_MS:.1f} ms stall-filtered (DEC-088)", "", "perf-*/04-window.json"))
         gates.append(gate("perf.externalPresentContention", True, f"stalls>33.3ms {sum(stalls)} / max {max(maxes):.1f} ms",
                           "report only", "host presentation stalls (WindowServer/other windows); Gfx.WaitForPresent counter not in PilotPerfProbe — proxy = frames > 33.3 ms", "perf-*/04-window.json"))
-        huds = [read_json(os.path.join(out, f"perf-{i}", "04h-hud.json")) for i in range(1, perf_runs + 1)]
-        huds = [h for h in huds if h and h.get("pass")]
-        if huds:
+        runs = [read_json(os.path.join(out, f"perf-{i}", "04h-hud.json")) for i in range(1, perf_runs + 1)]
+        huds = [h for h in runs if h and h.get("pass")]
+        failed = [str(i) for i, h in enumerate(runs, 1) if not (h and h.get("pass"))]
+        if huds and failed:   # S-10 06.10: the average of the runs that worked must not hide the one that did not
+            gates.append(gate("perf.hudCostMs", False, "measurement failed in run(s) " + ", ".join(failed),
+                              f"<= {HUD_COST_MAX_MS:.2f} ms UI CPU + GPU (WP-068 HUD budget)",
+                              "every run's 04h-hud.json must exist and pass; an average over the rest is no measurement", "perf-*/"))
+        elif huds:
             costs = [h.get("hudCostMs", 0.0) for h in huds]
             deltas = [h.get("hudFrameDeltaMs", 0.0) for h in huds]
             cost = sum(costs) / len(costs)
@@ -200,9 +215,7 @@ def main():
     rd = read_json(os.path.join(out, "readability", "qa-report.json"))
     if rd and rd.get("gates"):
         for g in rd["gates"]:
-            g = dict(g)
-            g["source"] = "readability/" + (g.get("source") or "qa-report.json")
-            gates.append(g)
+            gates.append(child_gate(g, "readability/"))
     else:
         gates.append(gate("readability.driver", False, "missing", "", "readability/qa-report.json not written", "readability/"))
 
@@ -247,7 +260,9 @@ def main():
             lines.append(f"… +{len(gates) - shown} gates in qa-report.json")
             break
         # readability per-skin lines are folded: show only failing ones beyond the first two
-        if g["id"].startswith("readability.r") and (".playerEnvDeltaV" in g["id"] or ".playerZombieDeltaV" in g["id"]) and g["pass"]:
+        # B-09 AG-3: the fold looked for *DeltaV ids, which no QaReadabilityGate report ever carried (*Contrast.skinN since
+        # dc32ecf1, the commit that wrote this fold) — it never folded anything
+        if g["id"].startswith("readability.r") and any(k in g["id"] for k in PER_SKIN) and g["pass"]:
             continue
         thr = f" ({g['threshold']})" if g.get("threshold") else ""
         note = f" — {g['note']}" if g.get("note") else ""
