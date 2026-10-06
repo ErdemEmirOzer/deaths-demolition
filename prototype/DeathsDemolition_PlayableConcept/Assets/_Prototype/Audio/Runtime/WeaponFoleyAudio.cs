@@ -475,7 +475,7 @@ namespace DD.Prototype.Audio
             if (family == CasingFamily.None) return false;
 
             CasingEffect.PredictLanding(from, velocity, out Vector3 land, out float t1, out Vector3 rest, out float tRest);
-            int n = Physics.RaycastNonAlloc(new Vector3(land.x, from.y + 0.2f, land.z), Vector3.down, _hits, 4f, VfxFloorMask, QueryTriggerInteraction.Ignore);
+            int n = Physics.RaycastNonAlloc(new Vector3(land.x, from.y + 0.2f, land.z), Vector3.down, _hits, 4f, CasingEffect.FloorMask, QueryTriggerInteraction.Ignore);   // the visible casing's own floor rule (WP-087 B2)
             if (n == 0) return false;
 
             int best = 0;
@@ -522,21 +522,6 @@ namespace DD.Prototype.Audio
             }
 
             return true;
-        }
-
-        /// <summary>
-        /// CasingEffect's floor ray layers (Default | Environment; no Environment layer = Default only). Read per landing:
-        /// PrototypeLayers resolves the layer once and again on play (SubsystemRegistration). The old static readonly kept a
-        /// stale mask with domain reload off and became 1 | 1 &lt;&lt; -1 without the layer (S-02 06.10). Same rule as
-        /// CasingEffect.FloorMask (WP-087 B2, 691680d1) — read that one once B2 is on main.
-        /// </summary>
-        private static int VfxFloorMask
-        {
-            get
-            {
-                int environment = PrototypeLayers.Environment;
-                return 1 | (environment >= 0 ? 1 << environment : 0);
-            }
         }
 
         /// <summary>Where the last landing was placed (test / WP-087 marker-align readout).</summary>
