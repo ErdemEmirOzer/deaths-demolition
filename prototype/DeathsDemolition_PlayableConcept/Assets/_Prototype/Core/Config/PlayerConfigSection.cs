@@ -8,11 +8,13 @@ namespace DD.Prototype.Core.Config
     public sealed class PlayerConfigSection
     {
         /// <summary>
-        /// C-00 01.10 (user decision): running backward — against the way the character faces — is ×0.65 (6.2 → ≈ 4.03 m/s). AP-022's
-        /// run_back carries ≈ 4.3 m/s; at 6.2 the feet slid 30 % (TP budget 20 %, S-06). The one source: PlayerMotor.BackwardScale
+        /// Running backward — against the way the character faces — is ×0.85 (6.2 → ≈ 5.27 m/s). User 06.10 (the movement-feel report
+        /// on the release build; C-00 16:45), in place of the 01.10 ×0.65: at 0.65 a run whose facing follows the cursor dropped 35 %
+        /// of its speed whenever the cursor came round behind it. AP-022's run_back carries ≈ 4.3 m/s; the run ring's child sits at
+        /// this radius and plays at radius × time scale (S-06's StrideEslemesi reads it). The one source: PlayerMotor.BackwardScale
         /// applies it, S-06's StrideEslemesi and the run_back blend radius read it. Strafe is unchanged.
         /// </summary>
-        public const float BackwardSpeedMultiplier = 0.65f;
+        public const float BackwardSpeedMultiplier = 0.85f;
 
         [PrototypeOnly(PendingDecisions.CombatScaling, "Request value: 100")]
         public float MaxHealth = 100f;

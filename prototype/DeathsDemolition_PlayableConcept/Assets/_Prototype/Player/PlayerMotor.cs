@@ -125,7 +125,7 @@ namespace DD.Prototype.PlayerSystem
         /// <summary>
         /// The backward scale of a move <paramref name="desired"/> against the body's <paramref name="facing"/> (both planar):
         /// lerp(1, <see cref="DD.Prototype.Core.Config.PlayerConfigSection.BackwardSpeedMultiplier"/>) by the move's backward share −cos(angle) — side-on and forward 1.0,
-        /// 45° back ≈ 0.75, straight back 0.65. Keyboard and gamepad reach it through the same Move vector (ADR-024).
+        /// 45° back ≈ 0.89, straight back 0.85 (user 06.10; 0.65 before). Keyboard and gamepad reach it through the same Move vector (ADR-024).
         /// </summary>
         public static float BackwardScale(Vector3 desired, Vector3 facing)
         {

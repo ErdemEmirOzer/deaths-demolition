@@ -268,20 +268,21 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         /// <summary>
-        /// C-00 01.10 (user decision): running backward ×0.65 — straight back 0.65 (6.2 → 4.03 m/s, AP-022 run_back), 45° back
-        /// ≈ 0.75, side-on and forward 1.0 (strafe unchanged); the one source is PlayerConfigSection.BackwardSpeedMultiplier.
+        /// User 06.10 (C-00 16:45; the movement-feel report on the release build, in place of 01.10's ×0.65): running backward ×0.85 —
+        /// straight back 0.85 (6.2 → 5.27 m/s), 45° back ≈ 0.89, side-on and forward 1.0 (strafe unchanged); the one source is
+        /// PlayerConfigSection.BackwardSpeedMultiplier.
         /// </summary>
         [Test]
-        public void GeriKosu_Carpan065_CaprazHarmanlanir_YanVeIleriDegismez()
+        public void GeriKosu_Carpan085_CaprazHarmanlanir_YanVeIleriDegismez()
         {
             Vector3 face = Vector3.forward;
-            Assert.AreEqual(0.65f, PlayerConfigSection.BackwardSpeedMultiplier, 1e-6f);
-            Assert.AreEqual(0.65f, DD.Prototype.PlayerSystem.PlayerMotor.BackwardScale(Vector3.back, face), 1e-5f, "tam geri");
+            Assert.AreEqual(0.85f, PlayerConfigSection.BackwardSpeedMultiplier, 1e-6f);
+            Assert.AreEqual(0.85f, DD.Prototype.PlayerSystem.PlayerMotor.BackwardScale(Vector3.back, face), 1e-5f, "tam geri");
             Assert.AreEqual(1f, DD.Prototype.PlayerSystem.PlayerMotor.BackwardScale(Vector3.forward, face), 1e-5f, "ileri");
             Assert.AreEqual(1f, DD.Prototype.PlayerSystem.PlayerMotor.BackwardScale(Vector3.right, face), 1e-5f, "yan (strafe değişmez)");
             Vector3 diag = (Vector3.back + Vector3.right).normalized;
-            Assert.AreEqual(1f - 0.35f * Mathf.Sqrt(0.5f), DD.Prototype.PlayerSystem.PlayerMotor.BackwardScale(diag, face), 1e-4f, "45° geri ≈ 0,75");
-            Assert.AreEqual(4.03f, 6.2f * DD.Prototype.PlayerSystem.PlayerMotor.BackwardScale(Vector3.back * 0.5f, face), 0.01f, "büyüklükten bağımsız, 6,2 → 4,03 m/s");
+            Assert.AreEqual(1f - 0.15f * Mathf.Sqrt(0.5f), DD.Prototype.PlayerSystem.PlayerMotor.BackwardScale(diag, face), 1e-4f, "45° geri ≈ 0,89");
+            Assert.AreEqual(5.27f, 6.2f * DD.Prototype.PlayerSystem.PlayerMotor.BackwardScale(Vector3.back * 0.5f, face), 0.01f, "büyüklükten bağımsız, 6,2 → 5,27 m/s");
             Assert.AreEqual(1f, DD.Prototype.PlayerSystem.PlayerMotor.BackwardScale(Vector3.zero, face), 1e-6f, "girdi yok");
         }
     }
