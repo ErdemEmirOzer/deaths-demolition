@@ -1930,6 +1930,7 @@ namespace DD.Prototype.Tests.PlayMode
             // S-10 06.10 (BEKLEYEN §15 review): the source asserts come before the artifact — an empty match must fail here,
             // not write an r2-S4.json whose float.MaxValue / 0 minima and maxima pass every range check.
             Assert.IsNotEmpty(silahlar, "DD_EDC_WEAPONS hiçbir silahla eşleşmedi: '" + istek + "'");
+            if (!string.IsNullOrEmpty(istek)) Assert.AreEqual(istek.Split(',').Length, silahlar.Count, "DD_EDC_WEAPONS'ta tanınmayan ya da yinelenen silah var: '" + istek + "' (gt 06.10: a subset must not pass for the whole roster)");
 
             _s.Rig.Health.DiagnosisInvulnerable = true;
             string[] buslar = AudioMixerBridge.VolumeParams;
