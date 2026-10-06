@@ -122,13 +122,53 @@ namespace DD.Prototype.Tests.PlayMode
             Debug.Log("[DD-OBS] wp054.corpse standard=" + s1Linger.ToString("0.00") + " ultra=" + u1Linger.ToString("0.00") + " nearCap=" + many[0].LastCorpseLinger.ToString("0.00") + " cap=" + cap);
             EnemyFactory.ClearAll(); yield return null;
 
-            // gate threshold mass: inside N_GateWest the Elite weighs ×1.5, the Standard ×0.6; outside ×1
-            NavRegionVolume gate = RegionNavProfile.Active.Find(new Vector3(-8f, 0f, 34f));
-            Assert.IsNotNull(gate); Assert.AreEqual(NavRegionKind.Gate, gate.kind);
-            _rig.Teleport(Yerde(new Vector3(-8f, 0f, 40f)), Quaternion.identity);   // the player beyond the gate so the bodies path through it
+            // gate threshold mass: inside a Gate volume the Elite weighs ×1.5, the Standard ×0.6; outside ×1. WP-084 (C-00 06.10): the gate is
+            // any Gate volume of the active world with two NavMesh points inside it that read it (Find's first match, as the game's mass rule)
+            // — the v3 N_GateWest at (-8, 34) is not in the v6 world (9f0f39e2 moved the regions to scene volumes; main read null there).
+            // r10d / r10f: the v6 gates are 1.6 m door thresholds whose box centre sits half its 2.4 m height above the floor, so the points
+            // are a 0.4 m grid over the box's floor (centre.y − size.y / 2 + 0.3), each sampled ≤ 0.8 m onto the NavMesh.
+            NavRegionVolume gate = null;
+            Vector3 gateA = Vector3.zero, gateB = Vector3.zero;
+            var candidates = new List<NavRegionVolume>();
+            foreach (NavRegionMarker m in UnityEngine.Object.FindObjectsOfType<NavRegionMarker>()) if (m.Volume != null) candidates.Add(m.Volume);   // V6: scene volumes replace the profile list
+            if (candidates.Count == 0) candidates.AddRange(RegionNavProfile.Active.Volumes);
+            int gates = 0, onMesh = 0;
+            foreach (NavRegionVolume v in candidates)
+            {
+                if (v == null || v.kind != NavRegionKind.Gate) continue;
+                gates++;
+                int hits = 0;
+                for (float dx = -v.size.x * 0.5f + 0.2f; dx <= v.size.x * 0.5f - 0.2f && hits < 2; dx += 0.4f)
+                for (float dz = -v.size.z * 0.5f + 0.2f; dz <= v.size.z * 0.5f - 0.2f && hits < 2; dz += 0.4f)
+                {
+                    Vector3 probe = v.center + new Vector3(dx, -v.size.y * 0.5f + 0.3f, dz);
+                    if (!UnityEngine.AI.NavMesh.SamplePosition(probe, out UnityEngine.AI.NavMeshHit gh, 0.8f, UnityEngine.AI.NavMesh.AllAreas)) continue;
+                    if (!v.Contains(gh.position) || RegionNavProfile.Active.Find(gh.position) != v) continue;
+                    if (hits == 0) gateA = gh.position;
+                    else if (Vector3.Distance(gateA, gh.position) < 0.8f) continue;
+                    else gateB = gh.position;
+                    hits++;
+                }
+
+                if (hits > 0) onMesh++;
+                if (hits >= 2) { gate = v; break; }
+            }
+
+            Assert.IsNotNull(gate, "kaynak yok: NavMesh üstünde iki noktası olan bir Gate hacmi (adaylar " + candidates.Count + ", Gate " + gates + ", NavMesh'te nokta veren " + onMesh + ")");
+            Vector3 outside = Vector3.zero;
+            bool found = false;
+            for (int k = 0; k < 16 && !found; k++)
+            {
+                Vector3 c = Yerde(_rig.transform.position + Quaternion.Euler(0f, k * 22.5f, 0f) * new Vector3(0f, 0f, 5f));
+                NavRegionVolume f = RegionNavProfile.Active.Find(c);
+                if (f == null || f.kind != NavRegionKind.Gate) { outside = c; found = true; }
+            }
+
+            Assert.IsTrue(found, "kaynak yok: Gate dışı bir nokta");
             yield return null;
-            ZombieEnemy elIn = Dogur(EnemyTier.Elite, gate.center); ZombieEnemy stIn = Dogur(EnemyTier.Standard, gate.center + new Vector3(1.2f, 0f, 0f));
-            ZombieEnemy stOut = Dogur(EnemyTier.Standard, new Vector3(0f, 0f, 10f));
+            ZombieEnemy elIn = Dogur(EnemyTier.Elite, gateA); ZombieEnemy stIn = Dogur(EnemyTier.Standard, gateB);
+            ZombieEnemy stOut = Dogur(EnemyTier.Standard, outside);
+            Debug.Log("[DD-OBS] wp084.crowdfeel.gate candidates=" + candidates.Count + " gates=" + gates + " id=" + gate.id + " centre=" + gate.center.ToString("F1") + " a=" + gateA.ToString("F1") + " b=" + gateB.ToString("F1") + " outside=" + outside.ToString("F1"));
             yield return null; yield return null;
             if (gate.Contains(elIn.transform.position) && gate.Contains(stIn.transform.position))
             {
