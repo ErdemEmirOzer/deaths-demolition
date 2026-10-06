@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using DD.Prototype.Core.Config;
 using DD.Prototype.UI;
+using DD.Prototype.UI.EditorTools;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -25,6 +26,8 @@ namespace DD.Prototype.Tests.EditMode
         /// <summary>WP-081 (C-00 05.10, decision B): the loading key arts and the wallpapers are their own class, outside the UI 12 MB.</summary>
         private const string WallpaperFolder = ArtFolder + "/Wallpapers";
         private const long WallpaperBudgetBytes = 10L * 1024 * 1024;
+
+        private const string G1ManifestPath = ArtFolder + "/G1/" + UiArtImporter.ManifestName;
 
         private static readonly string[] HudKeys =
         {
@@ -183,7 +186,8 @@ namespace DD.Prototype.Tests.EditMode
         {
             Sprite[] glyphs = Resources.LoadAll<Sprite>(UiTheme.GlyphAtlas);
             Sprite[] frames = Resources.LoadAll<Sprite>(UiTheme.FrameAtlas);
-            Assert.GreaterOrEqual(glyphs.Length, 148, "G1: 148 glif (53 eski + 3 taşınan + 92 v004)");
+            Assert.AreEqual(UiArtImporter.ManifestSpriteNames(G1ManifestPath).Count, glyphs.Length,
+                "G1: every manifest sprite loads (148 v004, 166 R2, 196 with ikon v2 B5a's 30 O1 keys)");
             Assert.AreEqual(FrameKeys.Length, frames.Length, "A4: 17 çerçeve/kit + 2 tuş kapağı");
 
             var names = new HashSet<string>(StringComparer.Ordinal);
@@ -346,7 +350,7 @@ namespace DD.Prototype.Tests.EditMode
             UiTheme theme = UiTheme.Active;
             string root = Path.Combine(Application.dataPath, "_Prototype", "UI", "Runtime");
             var pattern = new System.Text.RegularExpressions.Regex(
-                "\"((?:Hud|Menu|Status|Threat|Upgrade|Weapon|Special|Sw|Shop|Medal|Reticle|Pad|Mouse|Key|Notice|Empty|Ach|Unlock|Tier|Stat|Tip|Toast|Pip|Petal|Marker|Seal|Ornament|Frame|Ring|Slider|Shadow|Bar|Focus)\\.[A-Za-z0-9]+)\"");
+                "\"((?:Hud|Menu|FireMode|Selection|Profile|Settings|State|Status|Threat|Upgrade|Weapon|Special|Sw|Shop|Medal|Reticle|Pad|Mouse|Key|Notice|Empty|Ach|Unlock|Tier|Stat|Tip|Toast|Pip|Petal|Marker|Seal|Ornament|Frame|Ring|Slider|Shadow|Bar|Focus)\\.[A-Za-z0-9]+)\"");
             var keys = new SortedSet<string>(StringComparer.Ordinal);
             foreach (string file in Directory.GetFiles(root, "*.cs", SearchOption.AllDirectories))
             {
@@ -808,6 +812,143 @@ namespace DD.Prototype.Tests.EditMode
         private static Color Hex(int r, int g, int b)
         {
             return new Color(r / 255f, g / 255f, b / 255f, 1f);
+        }
+
+        /// <summary>
+        /// İkon v2 B5a (design-systems T4): the theme's icons are exactly the G1 manifest's sprites - a merge that skips
+        /// UiThemeBuilder.Build leaves the new keys null at runtime, and nothing else would notice.
+        /// </summary>
+        [Test]
+        public void Tema_G1Manifesti_AyniAdKumesi()
+        {
+            var manifest = new SortedSet<string>(UiArtImporter.ManifestSpriteNames(G1ManifestPath), StringComparer.Ordinal);
+            var theme = new SortedSet<string>(StringComparer.Ordinal);
+            foreach (UiTheme.NamedSprite icon in UiTheme.Active.Icons)
+            {
+                Assert.IsNotNull(icon.Sprite, icon.Name + ": sprite");
+                Assert.IsTrue(theme.Add(icon.Name), "tema adı tekrarlı: " + icon.Name);
+            }
+
+            CollectionAssert.AreEqual(manifest, theme, "UiTheme.asset ↔ G1 manifest (rebuild with UiThemeBuilder.Build)");
+        }
+
+        [Serializable]
+        private sealed class G1Manifest
+        {
+            public G1Atlas[] atlases;
+            public G1Merge[] merges;
+        }
+
+        [Serializable]
+        private sealed class G1Atlas
+        {
+            public string file;
+            public G1Sprite[] sprites;
+        }
+
+        [Serializable]
+        private sealed class G1Sprite
+        {
+            public string name;
+            public int x, y, w, h;
+            public string aliasOf;
+        }
+
+        [Serializable]
+        private sealed class G1Merge
+        {
+            public string slice;
+            public string[] replaced;
+            public string[] added;
+            public float[] familyFrame256;
+            public float ddIconSdAp;
+        }
+
+        /// <summary>
+        /// İkon v2 B5a (WP-081-ICON-V2-DIRECTION §1.2, §1.7): the O1 cells come from the SVG viewBox frame (0..256, the 52² box of
+        /// the 64 cell, DD_ICON_SD_AP = 64/52) - their ink keeps ≥ 4 px from the box's edge (the union frame of the draft put it
+        /// at 0-2 px on 34 of 58 cells and clipped the outline and the glow); an alias is its own cell, byte-equal to its
+        /// target; every name is unique in the JSON itself, not only after the importer's dictionary.
+        /// </summary>
+        [Test]
+        public void IkonV2_O1Birlesimi_KenarPayi_AliasBaytEsit_TekilAd()
+        {
+            G1Manifest manifest = JsonUtility.FromJson<G1Manifest>(File.ReadAllText(G1ManifestPath));
+            Assert.IsNotNull(manifest?.atlases, "G1 manifest");
+            G1Merge merge = null;
+            foreach (G1Merge m in manifest.merges ?? Array.Empty<G1Merge>())
+            {
+                merge = m != null && m.slice == "WP-081 B5a" ? m : merge;
+            }
+
+            Assert.IsNotNull(merge, "the B5a merge record");
+            Assert.AreEqual(new[] { 0f, 256f }, merge.familyFrame256, "the family frame is the SVG viewBox");
+            Assert.AreEqual(64f / 52f, merge.ddIconSdAp, 1e-5f, "DD_ICON_SD_AP");
+            Assert.AreEqual(22, merge.replaced.Length, "replaced in place");
+            Assert.AreEqual(30, merge.added.Length, "added (29 + State.Locked)");
+
+            var byName = new Dictionary<string, G1Sprite>(StringComparer.Ordinal);
+            foreach (G1Atlas atlas in manifest.atlases)
+            {
+                foreach (G1Sprite sprite in atlas.sprites)
+                {
+                    Assert.IsFalse(byName.ContainsKey(sprite.name), "manifest adı tekrarlı: " + sprite.name);
+                    byName.Add(sprite.name, sprite);
+                }
+            }
+
+            var png = new Texture2D(2, 2);
+            try
+            {
+                Assert.IsTrue(png.LoadImage(File.ReadAllBytes(ArtFolder + "/G1/DD_G1_glyphs_sdf_1024.png")), "G1 png");
+                Color32[] px = png.GetPixels32();
+                int width = png.width;
+                var o1 = new List<string>(merge.replaced);
+                o1.AddRange(merge.added);
+                foreach (string name in o1)
+                {
+                    Assert.IsTrue(byName.TryGetValue(name, out G1Sprite cell), name + ": in the manifest");
+                    int margin = int.MaxValue;
+                    for (int y = 0; y < cell.h; y++)
+                    {
+                        for (int x = 0; x < cell.w; x++)
+                        {
+                            if (px[(cell.y + y) * width + cell.x + x].a >= 128)
+                            {
+                                margin = Math.Min(margin, Math.Min(Math.Min(x, cell.w - 1 - x), Math.Min(y, cell.h - 1 - y)));
+                            }
+                        }
+                    }
+
+                    Assert.AreNotEqual(int.MaxValue, margin, name + ": ink");
+                    Assert.GreaterOrEqual(margin, 4, name + ": the ink keeps 4 px from the 52² box");
+                }
+
+                foreach (G1Sprite sprite in byName.Values)
+                {
+                    if (string.IsNullOrEmpty(sprite.aliasOf))
+                    {
+                        continue;
+                    }
+
+                    Assert.IsTrue(byName.TryGetValue(sprite.aliasOf, out G1Sprite target), sprite.name + " → " + sprite.aliasOf);
+                    Assert.IsFalse(sprite.x == target.x && sprite.y == target.y, sprite.name + ": its own cell (a shared rect fails the consumer test)");
+                    Assert.AreEqual(target.w, sprite.w);
+                    Assert.AreEqual(target.h, sprite.h);
+                    for (int y = -6; y < sprite.h + 6; y++)
+                    {
+                        for (int x = -6; x < sprite.w + 6; x++)
+                        {
+                            Assert.AreEqual(px[(target.y + y) * width + target.x + x].a, px[(sprite.y + y) * width + sprite.x + x].a,
+                                sprite.name + " ≠ " + sprite.aliasOf + " at " + x + "," + y);
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(png);
+            }
         }
     }
 }

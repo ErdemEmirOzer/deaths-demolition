@@ -1216,7 +1216,7 @@ namespace DD.Prototype.UI
             Image glyph = null;
             if (!string.IsNullOrEmpty(icon))
             {
-                glyph = UiArt.IconImage("Icon", row, icon, UiColor.TextSecondary, 22f);
+                glyph = UiArt.IconImage("Icon", row, icon, UiColor.TextSecondary, UiIconTokens.GlyphFloor);   // ikon v2 (IK-M9): the 24 floor
                 RectTransform glyphRect = (RectTransform)glyph.transform;
                 glyphRect.anchorMin = new Vector2(0f, 1f);
                 glyphRect.anchorMax = new Vector2(0f, 1f);

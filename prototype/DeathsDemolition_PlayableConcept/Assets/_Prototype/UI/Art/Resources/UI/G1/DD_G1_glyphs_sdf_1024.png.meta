@@ -890,10 +890,10 @@ TextureImporter:
       name: Menu.Accessibility
       rect:
         serializedVersion: 2
-        x: 330
-        y: 842
-        width: 44
-        height: 44
+        x: 326
+        y: 838
+        width: 52
+        height: 52
       alignment: 9
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -911,10 +911,10 @@ TextureImporter:
       name: Menu.Controls
       rect:
         serializedVersion: 2
-        x: 394
-        y: 849
-        width: 44
-        height: 30
+        x: 390
+        y: 838
+        width: 52
+        height: 52
       alignment: 9
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -932,10 +932,10 @@ TextureImporter:
       name: Menu.Palette
       rect:
         serializedVersion: 2
-        x: 458
-        y: 843
-        width: 44
-        height: 42
+        x: 454
+        y: 838
+        width: 52
+        height: 52
       alignment: 9
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -953,10 +953,10 @@ TextureImporter:
       name: Menu.TextScale
       rect:
         serializedVersion: 2
-        x: 522
-        y: 847
-        width: 44
-        height: 34
+        x: 518
+        y: 838
+        width: 52
+        height: 52
       alignment: 9
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1037,10 +1037,10 @@ TextureImporter:
       name: Menu.ReduceFlashes
       rect:
         serializedVersion: 2
-        x: 782
-        y: 842
-        width: 36
-        height: 44
+        x: 774
+        y: 838
+        width: 52
+        height: 52
       alignment: 9
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1961,10 +1961,10 @@ TextureImporter:
       name: Menu.EndRun
       rect:
         serializedVersion: 2
-        x: 522
-        y: 652
-        width: 44
-        height: 40
+        x: 518
+        y: 646
+        width: 52
+        height: 52
       alignment: 9
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1982,10 +1982,10 @@ TextureImporter:
       name: Menu.Play
       rect:
         serializedVersion: 2
-        x: 586
-        y: 652
-        width: 44
-        height: 40
+        x: 582
+        y: 646
+        width: 52
+        height: 52
       alignment: 9
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -2003,10 +2003,10 @@ TextureImporter:
       name: Menu.Quit
       rect:
         serializedVersion: 2
-        x: 650
-        y: 652
-        width: 44
-        height: 41
+        x: 646
+        y: 646
+        width: 52
+        height: 52
       alignment: 9
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -2024,10 +2024,10 @@ TextureImporter:
       name: Menu.Resume
       rect:
         serializedVersion: 2
-        x: 716
-        y: 650
-        width: 40
-        height: 44
+        x: 710
+        y: 646
+        width: 52
+        height: 52
       alignment: 9
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -2171,10 +2171,10 @@ TextureImporter:
       name: Notice.Info
       rect:
         serializedVersion: 2
-        x: 138
-        y: 586
-        width: 44
-        height: 44
+        x: 134
+        y: 582
+        width: 52
+        height: 52
       alignment: 9
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -3116,10 +3116,10 @@ TextureImporter:
       name: Unlock.Badge
       rect:
         serializedVersion: 2
-        x: 970
-        y: 458
-        width: 44
-        height: 44
+        x: 966
+        y: 454
+        width: 52
+        height: 52
       alignment: 9
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -3137,10 +3137,10 @@ TextureImporter:
       name: Unlock.Title
       rect:
         serializedVersion: 2
-        x: 23
-        y: 394
-        width: 18
-        height: 44
+        x: 6
+        y: 390
+        width: 52
+        height: 52
       alignment: 9
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -3595,6 +3595,636 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
+    - serializedVersion: 2
+      name: Settings.Language
+      rect:
+        serializedVersion: 2
+        x: 390
+        y: 326
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00000000000000000800000000000000
+      internalID: 0
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Selection.Weapon
+      rect:
+        serializedVersion: 2
+        x: 454
+        y: 326
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00000000000000000800000000000000
+      internalID: 0
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Menu.Upgrade
+      rect:
+        serializedVersion: 2
+        x: 518
+        y: 326
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00000000000000000800000000000000
+      internalID: 0
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Menu.Pause
+      rect:
+        serializedVersion: 2
+        x: 582
+        y: 326
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00000000000000000800000000000000
+      internalID: 0
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Stat.Damage
+      rect:
+        serializedVersion: 2
+        x: 646
+        y: 326
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00000000000000000800000000000000
+      internalID: 0
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Stat.FireRate
+      rect:
+        serializedVersion: 2
+        x: 710
+        y: 326
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00000000000000000800000000000000
+      internalID: 0
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Stat.Magazine
+      rect:
+        serializedVersion: 2
+        x: 774
+        y: 326
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00000000000000000800000000000000
+      internalID: 0
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Stat.Range
+      rect:
+        serializedVersion: 2
+        x: 838
+        y: 326
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00000000000000000800000000000000
+      internalID: 0
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Selection.Skin
+      rect:
+        serializedVersion: 2
+        x: 902
+        y: 326
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00000000000000000800000000000000
+      internalID: 0
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Menu.Path
+      rect:
+        serializedVersion: 2
+        x: 966
+        y: 326
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00000000000000000800000000000000
+      internalID: 0
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FireMode.Semi
+      rect:
+        serializedVersion: 2
+        x: 6
+        y: 262
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00000000000000000800000000000000
+      internalID: 0
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FireMode.Charge
+      rect:
+        serializedVersion: 2
+        x: 70
+        y: 262
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00000000000000000800000000000000
+      internalID: 0
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FireMode.Lob
+      rect:
+        serializedVersion: 2
+        x: 134
+        y: 262
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00000000000000000800000000000000
+      internalID: 0
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Selection.Selected
+      rect:
+        serializedVersion: 2
+        x: 198
+        y: 262
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00000000000000000800000000000000
+      internalID: 0
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Profile.Level
+      rect:
+        serializedVersion: 2
+        x: 262
+        y: 262
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00000000000000000800000000000000
+      internalID: 0
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Profile.Xp
+      rect:
+        serializedVersion: 2
+        x: 326
+        y: 262
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00000000000000000800000000000000
+      internalID: 0
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Profile.Progress
+      rect:
+        serializedVersion: 2
+        x: 390
+        y: 262
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00000000000000000800000000000000
+      internalID: 0
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: State.Unlocked
+      rect:
+        serializedVersion: 2
+        x: 454
+        y: 262
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00000000000000000800000000000000
+      internalID: 0
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Settings.Data
+      rect:
+        serializedVersion: 2
+        x: 518
+        y: 262
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00000000000000000800000000000000
+      internalID: 0
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Settings.Hints
+      rect:
+        serializedVersion: 2
+        x: 582
+        y: 262
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00000000000000000800000000000000
+      internalID: 0
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Settings.Camera
+      rect:
+        serializedVersion: 2
+        x: 646
+        y: 262
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00000000000000000800000000000000
+      internalID: 0
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Menu.Home
+      rect:
+        serializedVersion: 2
+        x: 710
+        y: 262
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00000000000000000800000000000000
+      internalID: 0
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: State.Locked
+      rect:
+        serializedVersion: 2
+        x: 774
+        y: 262
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00000000000000000800000000000000
+      internalID: 0
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Menu.Next
+      rect:
+        serializedVersion: 2
+        x: 838
+        y: 262
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00000000000000000800000000000000
+      internalID: 0
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Notice.Notification
+      rect:
+        serializedVersion: 2
+        x: 902
+        y: 262
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00000000000000000800000000000000
+      internalID: 0
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Menu.Retry
+      rect:
+        serializedVersion: 2
+        x: 966
+        y: 262
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00000000000000000800000000000000
+      internalID: 0
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Menu.Save
+      rect:
+        serializedVersion: 2
+        x: 6
+        y: 198
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00000000000000000800000000000000
+      internalID: 0
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: FireMode.Auto
+      rect:
+        serializedVersion: 2
+        x: 70
+        y: 198
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00000000000000000800000000000000
+      internalID: 0
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Settings.Display
+      rect:
+        serializedVersion: 2
+        x: 134
+        y: 198
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00000000000000000800000000000000
+      internalID: 0
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Menu.Previous
+      rect:
+        serializedVersion: 2
+        x: 198
+        y: 198
+        width: 52
+        height: 52
+      alignment: 9
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00000000000000000800000000000000
+      internalID: 0
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
     physicsShape: []
     bones: []
@@ -3635,6 +4265,10 @@ TextureImporter:
       Ach.WellEquipped: 1671993588531325484
       Empty.Bowl: -992586482558498609
       Empty.Scroll: -1339195846105084362
+      FireMode.Auto: 0
+      FireMode.Charge: 0
+      FireMode.Lob: 0
+      FireMode.Semi: 0
       Hud.Enemies: -3282825364574764330
       Hud.Gold: 1038824628869400148
       Hud.Health: -5507860616542234780
@@ -3657,16 +4291,24 @@ TextureImporter:
       Menu.EndRun: 967201107043964545
       Menu.Gamepad: -5672638532897503310
       Menu.Graphics: -7285087910145960454
+      Menu.Home: 0
       Menu.Keyboard: -6656520657755220864
+      Menu.Next: 0
       Menu.Palette: 51740241372468016
+      Menu.Path: 0
+      Menu.Pause: 0
       Menu.Play: 2979069145161891476
+      Menu.Previous: 0
       Menu.Profile: 9090467384928607536
       Menu.Quit: 6715027804768094795
       Menu.ReduceFlashes: 8682259112821382147
       Menu.Resume: -4487471870118512751
+      Menu.Retry: 0
+      Menu.Save: 0
       Menu.Settings: -3610623525845512526
       Menu.Statistics: 5405502815919382130
       Menu.TextScale: -7218751633457364648
+      Menu.Upgrade: 0
       Mouse.Left: -3256705143696250330
       Mouse.Middle: 558617927488326469
       Mouse.Move: 2835684068145283990
@@ -3674,6 +4316,7 @@ TextureImporter:
       Mouse.Wheel: 7215036440197122457
       Notice.Error: 2537072289979650211
       Notice.Info: -8435284789547905188
+      Notice.Notification: 0
       Notice.Warning: -8809911085754596053
       Ornament.Divider: 5036965792253432312
       Pad.DDown: -2703148274054277946
@@ -3700,12 +4343,23 @@ TextureImporter:
       Petal.Single: 1036452296535039003
       Pip.Empty: -4519750917407583779
       Pip.Full: -7562042549119908241
+      Profile.Level: 0
+      Profile.Progress: 0
+      Profile.Xp: 0
       Reticle.Hit: -2015147145660372384
       Reticle.Ring: -6287795265612059793
       Reticle.SpreadArc: -5157575889284771541
       Reticle.SpreadDot: 400961068062217584
       Reticle.Ticks: -1121072304887303329
       Seal.Mark: 8910734017265433012
+      Selection.Selected: 0
+      Selection.Skin: 0
+      Selection.Weapon: 0
+      Settings.Camera: 0
+      Settings.Data: 0
+      Settings.Display: 0
+      Settings.Hints: 0
+      Settings.Language: 0
       Shop.Locked: 3773845941653712189
       Shop.MaxTier: -3981245523959247003
       Shop.Picks: 6874426133314298516
@@ -3718,8 +4372,14 @@ TextureImporter:
       Special.Raiju: -4593745475965947551
       Special.Ready: 3260231318279984155
       Special.TideJewel: -3679124154955928802
+      Stat.Damage: 0
+      Stat.FireRate: 0
+      Stat.Magazine: 0
+      Stat.Range: 0
       Stat.TrendDown: 5769668595060684798
       Stat.TrendUp: 2288249448413264776
+      State.Locked: 0
+      State.Unlocked: 0
       Status.Dazed: -5993203429339079311
       Status.DazedOuter: -2436658117841435848
       Status.Downed: -3968506940788237326

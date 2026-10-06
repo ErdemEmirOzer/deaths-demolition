@@ -1320,7 +1320,7 @@ namespace DD.Prototype.UI
 
             UiButton back = UiFactory.Button("Back", footer, UiStrings.Get("selection.back", "BACK"), UiButtonVariant.Secondary, GoBack);
             _backButton = back;
-            UiInput.LeadingIcon(back, "Menu.Back", UiColor.TextSecondary, 22f);
+            UiInput.LeadingIcon(back, "Menu.Back", UiColor.TextSecondary, UiIconTokens.GlyphFloor);   // ikon v2 (IK-M9): no O1 glyph under 24
             UiInput.Prompt(back, UiPromptAction.Cancel);
             RectTransform backRect = (RectTransform)back.transform;
             backRect.anchorMin = new Vector2(0f, 0.5f);

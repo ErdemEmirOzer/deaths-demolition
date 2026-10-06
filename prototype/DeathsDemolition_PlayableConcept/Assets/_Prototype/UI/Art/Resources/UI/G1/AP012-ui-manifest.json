@@ -1,6 +1,6 @@
 {
  "schema": "AP012-ui-manifest-v1",
- "package": "WP-068 \u00a77.1 G1 SDF glyph atlas (S-09 build_g1.py)",
+ "package": "WP-068 \u00a77.1 G1 SDF glyph atlas (S-09 build_g1.py) + WP-081 B5a O1 (AP-028-B, merge_o1_g1_v2a.py)",
  "sdf": {
   "cell": 64,
   "spread_px": 6,
@@ -265,7 +265,8 @@
      "pivot": [
       0.5,
       0.5
-     ]
+     ],
+     "aliasOf": "Menu.Controls"
     },
     {
      "name": "Menu.Keyboard",
@@ -331,7 +332,8 @@
      "pivot": [
       0.5,
       0.5
-     ]
+     ],
+     "aliasOf": "Selection.Selected"
     },
     {
      "name": "Status.Netted",
@@ -423,10 +425,10 @@
     },
     {
      "name": "Menu.Accessibility",
-     "x": 330,
-     "y": 842,
-     "w": 44,
-     "h": 44,
+     "x": 326,
+     "y": 838,
+     "w": 52,
+     "h": 52,
      "pivot": [
       0.5,
       0.5
@@ -434,10 +436,10 @@
     },
     {
      "name": "Menu.Controls",
-     "x": 394,
-     "y": 849,
-     "w": 44,
-     "h": 30,
+     "x": 390,
+     "y": 838,
+     "w": 52,
+     "h": 52,
      "pivot": [
       0.5,
       0.5
@@ -445,10 +447,10 @@
     },
     {
      "name": "Menu.Palette",
-     "x": 458,
-     "y": 843,
-     "w": 44,
-     "h": 42,
+     "x": 454,
+     "y": 838,
+     "w": 52,
+     "h": 52,
      "pivot": [
       0.5,
       0.5
@@ -456,10 +458,10 @@
     },
     {
      "name": "Menu.TextScale",
-     "x": 522,
-     "y": 847,
-     "w": 44,
-     "h": 34,
+     "x": 518,
+     "y": 838,
+     "w": 52,
+     "h": 52,
      "pivot": [
       0.5,
       0.5
@@ -500,10 +502,10 @@
     },
     {
      "name": "Menu.ReduceFlashes",
-     "x": 782,
-     "y": 842,
-     "w": 36,
-     "h": 44,
+     "x": 774,
+     "y": 838,
+     "w": 52,
+     "h": 52,
      "pivot": [
       0.5,
       0.5
@@ -984,10 +986,10 @@
     },
     {
      "name": "Menu.EndRun",
-     "x": 522,
-     "y": 652,
-     "w": 44,
-     "h": 40,
+     "x": 518,
+     "y": 646,
+     "w": 52,
+     "h": 52,
      "pivot": [
       0.5,
       0.5
@@ -995,10 +997,10 @@
     },
     {
      "name": "Menu.Play",
-     "x": 586,
-     "y": 652,
-     "w": 44,
-     "h": 40,
+     "x": 582,
+     "y": 646,
+     "w": 52,
+     "h": 52,
      "pivot": [
       0.5,
       0.5
@@ -1006,10 +1008,10 @@
     },
     {
      "name": "Menu.Quit",
-     "x": 650,
-     "y": 652,
-     "w": 44,
-     "h": 41,
+     "x": 646,
+     "y": 646,
+     "w": 52,
+     "h": 52,
      "pivot": [
       0.5,
       0.5
@@ -1017,14 +1019,15 @@
     },
     {
      "name": "Menu.Resume",
-     "x": 716,
-     "y": 650,
-     "w": 40,
-     "h": 44,
+     "x": 710,
+     "y": 646,
+     "w": 52,
+     "h": 52,
      "pivot": [
       0.5,
       0.5
-     ]
+     ],
+     "aliasOf": "Menu.Play"
     },
     {
      "name": "Mouse.Left",
@@ -1094,10 +1097,10 @@
     },
     {
      "name": "Notice.Info",
-     "x": 138,
-     "y": 586,
-     "w": 44,
-     "h": 44,
+     "x": 134,
+     "y": 582,
+     "w": 52,
+     "h": 52,
      "pivot": [
       0.5,
       0.5
@@ -1589,10 +1592,10 @@
     },
     {
      "name": "Unlock.Badge",
-     "x": 970,
-     "y": 458,
-     "w": 44,
-     "h": 44,
+     "x": 966,
+     "y": 454,
+     "w": 52,
+     "h": 52,
      "pivot": [
       0.5,
       0.5
@@ -1600,10 +1603,10 @@
     },
     {
      "name": "Unlock.Title",
-     "x": 23,
-     "y": 394,
-     "w": 18,
-     "h": 44,
+     "x": 6,
+     "y": 390,
+     "w": 52,
+     "h": 52,
      "pivot": [
       0.5,
       0.5
@@ -1839,6 +1842,339 @@
       0.5,
       0.5
      ]
+    },
+    {
+     "name": "Settings.Language",
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "x": 390,
+     "y": 326,
+     "w": 52,
+     "h": 52
+    },
+    {
+     "name": "Selection.Weapon",
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "x": 454,
+     "y": 326,
+     "w": 52,
+     "h": 52
+    },
+    {
+     "name": "Menu.Upgrade",
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "x": 518,
+     "y": 326,
+     "w": 52,
+     "h": 52
+    },
+    {
+     "name": "Menu.Pause",
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "x": 582,
+     "y": 326,
+     "w": 52,
+     "h": 52
+    },
+    {
+     "name": "Stat.Damage",
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "x": 646,
+     "y": 326,
+     "w": 52,
+     "h": 52
+    },
+    {
+     "name": "Stat.FireRate",
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "x": 710,
+     "y": 326,
+     "w": 52,
+     "h": 52
+    },
+    {
+     "name": "Stat.Magazine",
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "x": 774,
+     "y": 326,
+     "w": 52,
+     "h": 52
+    },
+    {
+     "name": "Stat.Range",
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "x": 838,
+     "y": 326,
+     "w": 52,
+     "h": 52
+    },
+    {
+     "name": "Selection.Skin",
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "x": 902,
+     "y": 326,
+     "w": 52,
+     "h": 52
+    },
+    {
+     "name": "Menu.Path",
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "x": 966,
+     "y": 326,
+     "w": 52,
+     "h": 52
+    },
+    {
+     "name": "FireMode.Semi",
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "x": 6,
+     "y": 262,
+     "w": 52,
+     "h": 52
+    },
+    {
+     "name": "FireMode.Charge",
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "x": 70,
+     "y": 262,
+     "w": 52,
+     "h": 52
+    },
+    {
+     "name": "FireMode.Lob",
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "x": 134,
+     "y": 262,
+     "w": 52,
+     "h": 52
+    },
+    {
+     "name": "Selection.Selected",
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "x": 198,
+     "y": 262,
+     "w": 52,
+     "h": 52
+    },
+    {
+     "name": "Profile.Level",
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "x": 262,
+     "y": 262,
+     "w": 52,
+     "h": 52
+    },
+    {
+     "name": "Profile.Xp",
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "x": 326,
+     "y": 262,
+     "w": 52,
+     "h": 52
+    },
+    {
+     "name": "Profile.Progress",
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "x": 390,
+     "y": 262,
+     "w": 52,
+     "h": 52
+    },
+    {
+     "name": "State.Unlocked",
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "x": 454,
+     "y": 262,
+     "w": 52,
+     "h": 52
+    },
+    {
+     "name": "Settings.Data",
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "x": 518,
+     "y": 262,
+     "w": 52,
+     "h": 52
+    },
+    {
+     "name": "Settings.Hints",
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "x": 582,
+     "y": 262,
+     "w": 52,
+     "h": 52
+    },
+    {
+     "name": "Settings.Camera",
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "x": 646,
+     "y": 262,
+     "w": 52,
+     "h": 52
+    },
+    {
+     "name": "Menu.Home",
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "x": 710,
+     "y": 262,
+     "w": 52,
+     "h": 52
+    },
+    {
+     "name": "State.Locked",
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "x": 774,
+     "y": 262,
+     "w": 52,
+     "h": 52
+    },
+    {
+     "name": "Menu.Next",
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "x": 838,
+     "y": 262,
+     "w": 52,
+     "h": 52
+    },
+    {
+     "name": "Notice.Notification",
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "x": 902,
+     "y": 262,
+     "w": 52,
+     "h": 52
+    },
+    {
+     "name": "Menu.Retry",
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "x": 966,
+     "y": 262,
+     "w": 52,
+     "h": 52
+    },
+    {
+     "name": "Menu.Save",
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "x": 6,
+     "y": 198,
+     "w": 52,
+     "h": 52
+    },
+    {
+     "name": "FireMode.Auto",
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "x": 70,
+     "y": 198,
+     "w": 52,
+     "h": 52,
+     "aliasOf": "Stat.FireRate"
+    },
+    {
+     "name": "Settings.Display",
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "x": 134,
+     "y": 198,
+     "w": 52,
+     "h": 52,
+     "aliasOf": "Menu.Graphics"
+    },
+    {
+     "name": "Menu.Previous",
+     "pivot": [
+      0.5,
+      0.5
+     ],
+     "x": 198,
+     "y": 198,
+     "w": 52,
+     "h": 52,
+     "aliasOf": "Menu.Back"
     }
    ]
   }
@@ -1922,43 +2258,55 @@
   },
   {
    "name": "Menu.Settings",
-   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_settings.svg",
+   "sha256": "8c5735967f76a40a6ea5f11c1bf248fd9ada28afee42d160f0942cc4af5ae30c"
   },
   {
    "name": "Menu.Audio",
-   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_audio.svg",
+   "sha256": "434f79890567b27074ef4dd8450e609f3e5a58d0380bf52b738dae9707e4bd5b"
   },
   {
    "name": "Menu.Graphics",
-   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_graphics.svg",
+   "sha256": "c1489a9f64a50f31daacf28d6383a4ec5b6a557c1e49c6536482cb1823a5195a"
   },
   {
    "name": "Menu.Gamepad",
-   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_gamepad.svg",
+   "sha256": "2faa97c61b40c7131427b6045f5d5592c9655bd8084cf923fa15b186882fc443",
+   "aliasOf": "Menu.Controls"
   },
   {
    "name": "Menu.Keyboard",
-   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_keyboard.svg",
+   "sha256": "dcedbf58aae99a0969efb9b40607e40ce1e7901379b89b555541d85f62aaf97a"
   },
   {
    "name": "Menu.Profile",
-   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_profile.svg",
+   "sha256": "eb7acaae2b5537b84a08999465c539c255aaea5a168e8d21df379fa01f5d85e0"
   },
   {
    "name": "Menu.Statistics",
-   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_statistics.svg",
+   "sha256": "42576fd9fd599795369d8321fac7be2d7760cc6ebe446b4afb93c1635dc48e7a"
   },
   {
    "name": "Menu.Achievements",
-   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_achievements.svg",
+   "sha256": "a522a357b479c0958415f970f2f0aa19888829430ca5490c601f049c7a6f20c4"
   },
   {
    "name": "Menu.Back",
-   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_back.svg",
+   "sha256": "7d17080afa50805b7bc3bb474271bd79cb31e5d8f615e412bd2738ef6c6339c8"
   },
   {
    "name": "Menu.Confirm",
-   "source": "wp-068/g1-src/AP012/AP012_icons_1024x768.png"
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_confirm.svg",
+   "sha256": "858397d2d423b727e6a4528184f6a55d45f7baa8eecf38c3fa133f6244e74053",
+   "aliasOf": "Selection.Selected"
   },
   {
    "name": "Status.Netted",
@@ -1994,19 +2342,23 @@
   },
   {
    "name": "Menu.Accessibility",
-   "source": "wp-068/g1-src/AP012/AP012_status_icons_1024x512.png"
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_accessibility.svg",
+   "sha256": "32e4cf02f9aa2e803cd5d1a1bbff5b57d1660a01a017ede3d00589c4e5429237"
   },
   {
    "name": "Menu.Controls",
-   "source": "wp-068/g1-src/AP012/AP012_status_icons_1024x512.png"
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_controls.svg",
+   "sha256": "74eca4e9954a236574511ce31d0e5cfaf68ebf161c32d2b5b7cdec6a71b7b669"
   },
   {
    "name": "Menu.Palette",
-   "source": "wp-068/g1-src/AP012/AP012_status_icons_1024x512.png"
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_palette.svg",
+   "sha256": "f2dc021406ef07a02083d1cbe03ce190c0062bb13475a2f96ea57e64904e99a9"
   },
   {
    "name": "Menu.TextScale",
-   "source": "wp-068/g1-src/AP012/AP012_status_icons_1024x512.png"
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_text_scale.svg",
+   "sha256": "540b3b68f730a83e9e2be43ae5fca6c4f534a91f560cb0a27333cf8c1e0d7154"
   },
   {
    "name": "Special.KaguraSuzu",
@@ -2022,7 +2374,8 @@
   },
   {
    "name": "Menu.ReduceFlashes",
-   "source": "wp-068/g1-src/AP012/AP012_status_icons_1024x512.png"
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_reduce_flashes.svg",
+   "sha256": "8b5c167e083effd4075da384c70f09d0e7462ff55d195dac9ba0e1e5c4e44b96"
   },
   {
    "name": "Weapon.weapon_rifle",
@@ -2198,19 +2551,24 @@
   },
   {
    "name": "Menu.EndRun",
-   "source": "asset-production/AP-012/v004/exports/masks/Menu.EndRun.png"
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_endrun.svg",
+   "sha256": "fa752478ae99d1b00bb4056f593f21fd038ef8c859c4afe63bba1b7d33b90d73"
   },
   {
    "name": "Menu.Play",
-   "source": "asset-production/AP-012/v004/exports/masks/Menu.Play.png"
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_play.svg",
+   "sha256": "de8ed72609688f602e61684e7aba87d10c281b31ef555a8b372203451ac6b8d9"
   },
   {
    "name": "Menu.Quit",
-   "source": "asset-production/AP-012/v004/exports/masks/Menu.Quit.png"
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_exit.svg",
+   "sha256": "56f7f393df9a904ee33724424255e5d0e9977efec94b988bdc0146a3dd07b38d"
   },
   {
    "name": "Menu.Resume",
-   "source": "asset-production/AP-012/v004/exports/masks/Menu.Resume.png"
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_resume.svg",
+   "sha256": "4f9aabf210ae7b14599b117902c363a6fe6e55dd812f2e4d8bca4666f26443bf",
+   "aliasOf": "Menu.Play"
   },
   {
    "name": "Mouse.Left",
@@ -2238,7 +2596,8 @@
   },
   {
    "name": "Notice.Info",
-   "source": "asset-production/AP-012/v004/exports/masks/Notice.Info.png"
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_info.svg",
+   "sha256": "d43cf2ec1ecd7237a59a4fb68a7539cde2f9a7203abc11ee2a092191432ff951"
   },
   {
    "name": "Notice.Warning",
@@ -2418,11 +2777,13 @@
   },
   {
    "name": "Unlock.Badge",
-   "source": "asset-production/AP-012/v004/exports/masks/Unlock.Badge.png"
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_badge.svg",
+   "sha256": "6405e046c1aa4e0c30ddf76c8333ae934b79216224487db58e3599df71891f94"
   },
   {
    "name": "Unlock.Title",
-   "source": "asset-production/AP-012/v004/exports/masks/Unlock.Title.png"
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_title.svg",
+   "sha256": "80e0fc56e8756fd0ba1281ad2d3ee7d83b5f9c989f8a15c691e52a01da21c7d4"
   },
   {
    "name": "Special.Namekuji",
@@ -2507,6 +2868,251 @@
   {
    "name": "Weapon.Sr1",
    "source": "wp-068/n19-masks/Weapon.Sr1.png"
+  },
+  {
+   "name": "Settings.Language",
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_language.svg",
+   "sha256": "f4253feedd8efc93d51909a65f8bf3f98df11077013e114d02ec5cfaa403ed3a"
+  },
+  {
+   "name": "Selection.Weapon",
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_weapon.svg",
+   "sha256": "e71ca43b5c1ca7b94060cd0f2627d617f27d81198fd7e92e2a26953242a92739"
+  },
+  {
+   "name": "Menu.Upgrade",
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_upgrade.svg",
+   "sha256": "49c3bcd67a1af281907c03fac9e1ed286ac2c836b0e8bd23e2383e518069db39"
+  },
+  {
+   "name": "Menu.Pause",
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_pause.svg",
+   "sha256": "5165152da15b526b2b3824aabcee8771ef7377f52614639baad9a0c710998247"
+  },
+  {
+   "name": "Stat.Damage",
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_stat_damage.svg",
+   "sha256": "7498a00f1bc7510470a8974edbf298175745d67c2d42a7cfd1447405f88e29fa"
+  },
+  {
+   "name": "Stat.FireRate",
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_stat_firerate.svg",
+   "sha256": "3aa8d458b4dadf664362b404034d09b44d6b112d04d6a9cfafebc9f208cc6e36"
+  },
+  {
+   "name": "Stat.Magazine",
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_stat_magazine.svg",
+   "sha256": "758b8aaf4bf0b148b1351b142336efff9dc40709cc4d2ba7ca03198fdccbfa3c"
+  },
+  {
+   "name": "Stat.Range",
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_stat_range.svg",
+   "sha256": "4bc4b2b619690e6c049b2d78deb09b09bb99d715fd9a0c0b03ba1a0dcac095c5"
+  },
+  {
+   "name": "Selection.Skin",
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_skin.svg",
+   "sha256": "c90886a675056def78aede1e3eb1f5cf8759c059ee7db70f70ecc9de27ae3b3c"
+  },
+  {
+   "name": "Menu.Path",
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_path.svg",
+   "sha256": "a0e573633f7fc410d71205645be4869bb22795d167b6d60cd87a1a92791493e2"
+  },
+  {
+   "name": "FireMode.Semi",
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_firemode_semi.svg",
+   "sha256": "b127bc3552722145fc8a8465038621802704864764fbec6034a52d7e615d8eca"
+  },
+  {
+   "name": "FireMode.Charge",
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_firemode_charge.svg",
+   "sha256": "0101fc53bf3fad5527ff764be6006e7667a97adafec4c1978d211f68b49d2522"
+  },
+  {
+   "name": "FireMode.Lob",
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_firemode_lob.svg",
+   "sha256": "e25d2c7ab0365a59450944e0334338ba871e9ba2078f9246efe2db7d1f57d661"
+  },
+  {
+   "name": "Selection.Selected",
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_selected.svg",
+   "sha256": "fce956e76d14a757a57954b37d31a6bb6cb1ca9aac1bc8bfc32716e6b35edaeb"
+  },
+  {
+   "name": "Profile.Level",
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_level.svg",
+   "sha256": "c23b5e29d0d0f0265f6c09f7f9e5a3a8811086c37e0df32f099aee617a331d0f"
+  },
+  {
+   "name": "Profile.Xp",
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_xp.svg",
+   "sha256": "435d5ef8d369b33a267df349c7eb8e06eda1a9ab0076e6cbea13dc8efa4f9899"
+  },
+  {
+   "name": "Profile.Progress",
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_progress.svg",
+   "sha256": "a5de579f1e9a31cac4f7bcc00975983a30a51da30828f274c4df393b62b7aec8"
+  },
+  {
+   "name": "State.Unlocked",
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_unlocked.svg",
+   "sha256": "6e33796b3e8a49f63d2656c609957b74633af391f5b5a8b147bc5b15c0dc25a6"
+  },
+  {
+   "name": "Settings.Data",
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_data.svg",
+   "sha256": "d78df6fcaa77c13fdf033b7f1ea92215c8713c04def9818eb95608650f2df3f0"
+  },
+  {
+   "name": "Settings.Hints",
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_hints.svg",
+   "sha256": "df800af01be0f26a4a8988a53cc4bc233173f8cf487d54e8997a1ac82e67b625"
+  },
+  {
+   "name": "Settings.Camera",
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_camera.svg",
+   "sha256": "f7d5121081ba070c781bdbb0f8da60d334ea5db6c8ac722ae279543164a2843b"
+  },
+  {
+   "name": "Menu.Home",
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_home.svg",
+   "sha256": "ad9e8c92d15cb2eb7ed34f860bdf819d8ee00712458cf7003fe77f313addc05f"
+  },
+  {
+   "name": "State.Locked",
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_locked.svg",
+   "sha256": "8248f8e5a4492004d2b9c01e5e6ee95088a7c1a27d15a67c8634e892d707dfa1"
+  },
+  {
+   "name": "Menu.Next",
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_next.svg",
+   "sha256": "3401b0f5bbfe2536ee184a6ed378cacf0a4a73de81da9e3ee1bb5f2474e87a9a"
+  },
+  {
+   "name": "Notice.Notification",
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_notification.svg",
+   "sha256": "9a13d5cbec000605144bef5c996046a9dca4a6ac26fcea7dd8fc9e88bfaf6f20"
+  },
+  {
+   "name": "Menu.Retry",
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_retry.svg",
+   "sha256": "c26be58c9fbdae531d596d266836b8fc7938690892bd5f5b62a8658a903c9e8a"
+  },
+  {
+   "name": "Menu.Save",
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_save.svg",
+   "sha256": "b640733e71f271b997a69db296bfdc02a41125ecac633ed20510353c285da613"
+  },
+  {
+   "name": "FireMode.Auto",
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_firemode_auto.svg",
+   "sha256": "0140e15e7aa42dded55386fdc2c9ffd16c93321b0da9e0f7daa743f93089b027",
+   "aliasOf": "Stat.FireRate"
+  },
+  {
+   "name": "Settings.Display",
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_display.svg",
+   "sha256": "6d3a5c80bcd4c0a9f50129d2c169698f363e19a1f8f05ba306514643c01a837d",
+   "aliasOf": "Menu.Graphics"
+  },
+  {
+   "name": "Menu.Previous",
+   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_previous.svg",
+   "sha256": "cad2b0422ef23e2ed1f949d3ce9f9e8c81a1472e08dc8421d350e24bce81bdce",
+   "aliasOf": "Menu.Back"
+  }
+ ],
+ "merges": [
+  {
+   "tool": "wp-068s9/tools/merge_o1_g1_v2a.py",
+   "toolSha256": "52abbc2e597be1e887f1fd99c8cb8605591ed57f1ebd3176b2d3e9d77028a0cd",
+   "slice": "WP-081 B5a",
+   "from": "AP-028 v002 Icons",
+   "atlasJsonSha256": "1cdb669de0eefd61721d8bf948d51f339d98a17610edecc09cb67dc510ba7323",
+   "familyFrame256": [
+    0,
+    256
+   ],
+   "source": "svg",
+   "ddIconSdAp": 1.230769,
+   "replaced": [
+    "Menu.Accessibility",
+    "Menu.Achievements",
+    "Menu.Audio",
+    "Menu.Back",
+    "Menu.Confirm",
+    "Menu.Controls",
+    "Menu.EndRun",
+    "Menu.Gamepad",
+    "Menu.Graphics",
+    "Menu.Keyboard",
+    "Menu.Palette",
+    "Menu.Play",
+    "Menu.Profile",
+    "Menu.Quit",
+    "Menu.ReduceFlashes",
+    "Menu.Resume",
+    "Menu.Settings",
+    "Menu.Statistics",
+    "Menu.TextScale",
+    "Notice.Info",
+    "Unlock.Badge",
+    "Unlock.Title"
+   ],
+   "added": [
+    "FireMode.Auto",
+    "FireMode.Charge",
+    "FireMode.Lob",
+    "FireMode.Semi",
+    "Menu.Home",
+    "Menu.Next",
+    "Menu.Path",
+    "Menu.Pause",
+    "Menu.Previous",
+    "Menu.Retry",
+    "Menu.Save",
+    "Menu.Upgrade",
+    "Notice.Notification",
+    "Profile.Level",
+    "Profile.Progress",
+    "Profile.Xp",
+    "Selection.Selected",
+    "Selection.Skin",
+    "Selection.Weapon",
+    "Settings.Camera",
+    "Settings.Data",
+    "Settings.Display",
+    "Settings.Hints",
+    "Settings.Language",
+    "Stat.Damage",
+    "Stat.FireRate",
+    "Stat.Magazine",
+    "Stat.Range",
+    "State.Locked",
+    "State.Unlocked"
+   ],
+   "keyOverrides": {
+    "Medal.Locked": "State.Locked"
+   },
+   "deferred": [
+    "Hud.Enemies",
+    "Hud.Gold",
+    "Hud.Health",
+    "Hud.Round",
+    "Hud.Timer"
+   ],
+   "keptG1": [
+    "Shop.Purchased"
+   ],
+   "aliases": {
+    "FireMode.Auto": "Stat.FireRate",
+    "Settings.Display": "Menu.Graphics",
+    "Menu.Resume": "Menu.Play",
+    "Menu.Confirm": "Selection.Selected",
+    "Menu.Gamepad": "Menu.Controls",
+    "Menu.Previous": "Menu.Back"
+   }
   }
  ]
 }
