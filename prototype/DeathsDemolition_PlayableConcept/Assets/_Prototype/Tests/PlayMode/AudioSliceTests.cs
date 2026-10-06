@@ -984,6 +984,44 @@ namespace DD.Prototype.Tests.PlayMode
             Debug.Log("[DD-TEST] wp085b3.layers band=" + f.LastBand + " voice=" + f.LastVoice + " mech=" + f.LastMechanical + " tail=" + f.LastTail);
         }
 
+        /// <summary>
+        /// C-00 06.10 triage (main-ci d7ecac1b red, KovanV2 "Aynı karedeki iki kovan ayrı ayrı düşer: 3 / 2"): one long frame —
+        /// game time 0.2 s per frame here, a hitch on a loaded host — lets both staggered same-frame shells fall due in one Tick;
+        /// the pool's retrigger gate counts unscaled time, so the second used to be refused 0 s after the first. Both are heard.
+        /// </summary>
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator KovanV2_UzunKare_AyniKareIkiKabuk_IkisiDeDuyulur()
+        {
+            if (!_d.Library.IsProduced(AudioSoundId.CasingRifleStone))
+            {
+                Assert.Fail("v017 kovan kimlikleri katalogda değil (AudioCatalogBuilder).");
+            }
+
+            CasingAudio c = _d.Casings;
+            Vector3 port = _s.Rig.transform.position + Vector3.up * 1.3f;
+            var kovan = new DD.Prototype.Weapons.WeaponMechanismEvent(
+                DD.Prototype.Weapons.WeaponMechanismKind.CasingEjected, DD.Prototype.Core.Config.ClassicWeaponId.AssaultRifle, port, _s.Rig.transform.right, false);
+            float oncekiAdim = Time.captureDeltaTime;
+            float bitis = Time.realtimeSinceStartup + 1.5f;
+            while (c.InAir > 0 && Time.realtimeSinceStartup < bitis) yield return null;   // nothing of an earlier test in the air
+            try
+            {
+                Time.captureDeltaTime = 0.2f;   // every frame: +0.2 s game time (> the 0.10–0.13 s stagger); unscaled time stays real
+                int once = c.Landed;
+                DD.Prototype.Weapons.WeaponEvents.PublishMechanism(kovan);
+                DD.Prototype.Weapons.WeaponEvents.PublishMechanism(kovan);
+                bitis = Time.realtimeSinceStartup + 2f;
+                while (c.Landed < once + 2 && Time.realtimeSinceStartup < bitis) yield return null;
+                Assert.AreEqual(once + 2, c.Landed, "Uzun karede aynı karedeki iki kovan ikisi de duyulur (yeniden tetik kapısı ikinciyi yutmaz).");
+                Debug.Log("[DD-TEST] wp085.kovan-uzun-kare landed=" + (c.Landed - once) + " fall=" + c.LastFallSeconds.ToString("0.000"));
+            }
+            finally
+            {
+                Time.captureDeltaTime = oncekiAdim;
+            }
+        }
+
         [UnityTest]
         [Timeout(60000)]
         public IEnumerator KovanV2_AyniKareIkiKabukAyriDuser_GecikmeBandi_HavuzTavani_SifirAyirma()

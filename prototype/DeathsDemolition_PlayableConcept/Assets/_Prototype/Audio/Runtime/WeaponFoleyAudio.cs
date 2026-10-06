@@ -339,6 +339,19 @@ namespace DD.Prototype.Audio
         private int _frame = -1;
         private int _sameFrame;
 
+        // C-00 06.10 triage (main-ci d7ecac1b, KovanV2 "Aynı karedeki iki kovan"): landings are due by game time, the pool's
+        // same-sound retrigger gate (PlayerCasing MinRetrigger 0.05 s) counts unscaled time. One long frame lets game time jump
+        // past the same-frame stagger (0.10–0.13 s), both shells fall due in one Tick, and the second hit the gate 0 s after the
+        // first — silent. The sounds played here last, by unscaled time and by their due (game) time: a due landing scheduled a
+        // retrigger window or more apart from one of its sound still inside that window stays queued and plays on a later Tick —
+        // the spacing a normal frame would have kept. Landings due closer than the window (a flood clamped to LatestLanding)
+        // still merge in the pool as before. Fixed slots, no allocation.
+        private const int RecentSlots = 8;
+        private readonly AudioSoundId[] _recentSound = new AudioSoundId[RecentSlots];
+        private readonly float[] _recentAt = new float[RecentSlots];
+        private readonly float[] _recentDue = new float[RecentSlots];
+        private int _recentHead;
+
         /// <summary>CasingEjected slots waiting a frame for their visible casing's <see cref="CasingEvents.Launched"/>.</summary>
         private struct Deferred
         {
@@ -440,6 +453,22 @@ namespace DD.Prototype.Audio
             }
 
             if (Schedule(info.Position, info.Velocity, Time.time, Time.frameCount)) FromLaunch++;
+        }
+
+        /// <summary>
+        /// True while <paramref name="sound"/> played here less than its retrigger window ago (unscaled time) for a landing due a
+        /// window or more apart from <paramref name="due"/> (game time): the pool would refuse a landing meant to be heard apart.
+        /// </summary>
+        private bool InsideRetrigger(AudioSoundId sound, float unscaledNow, float due)
+        {
+            float window = AudioMixPlan.PlayerCasing(sound).MinRetrigger;
+            for (int k = 0; k < RecentSlots; k++)
+            {
+                if (_recentSound[k] == sound && sound != AudioSoundId.None && unscaledNow - _recentAt[k] < window
+                    && Mathf.Abs(due - _recentDue[k]) >= window) return true;
+            }
+
+            return false;
         }
 
         /// <summary>Same shot: equal serials, or — a serial unknown (0) — the same frame.</summary>
@@ -583,9 +612,11 @@ namespace DD.Prototype.Audio
             }
 
             float now = Time.time;
+            float unscaledNow = Time.unscaledTime;
             for (int i = _count - 1; i >= 0; i--)
             {
                 if (_queue[i].At > now) continue;
+                if (!_queue[i].Bounce && InsideRetrigger(_queue[i].Sound, unscaledNow, _queue[i].At)) continue;   // a later Tick plays it
                 Pending p = _queue[i];
                 _queue[i] = _queue[--_count];
 
@@ -604,6 +635,10 @@ namespace DD.Prototype.Audio
                 // files −22 LUFS: +4; AP-027 −24: +6), PlayerCasing gain 0.5.
                 if (_play(placement, p.Point, Mathf.Pow(10f, p.GainDb / 20f) * (0.85f / 0.5f), 8))
                 {
+                    _recentSound[_recentHead] = p.Sound;
+                    _recentAt[_recentHead] = unscaledNow;
+                    _recentDue[_recentHead] = p.At;
+                    _recentHead = (_recentHead + 1) % RecentSlots;
                     if (p.Bounce)
                     {
                         Bounces++;
