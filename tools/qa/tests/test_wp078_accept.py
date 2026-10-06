@@ -1016,6 +1016,43 @@ class HostWatchTests(unittest.TestCase):
         self.assertEqual((True, ["no host sample was taken during the session"], 1.0),
                          (record["dirty"], record["dirtyWhy"], record["load1Max"]))
 
+    def test_the_samples_must_cover_the_session(self):
+        # gt 06.10 KP-21: r2_s3's coverage rule (3b0e4327) - first and last within 30 s of the ends, no gap over 30 s
+        free = {"load1": 27.0, "foreignUnity": 0, "foreignPlayer": 0, "foreignBlender": 0, "foreignFfmpeg": 0}
+        step = {"id": "r2-S1", "gates": ["S1"]}
+        at = lambda *ts: [dict(free, t=float(t)) for t in ts]
+        clean = acc.host_record(step, free, True, 0.0, at(*range(0, 65, 5)), 62.0)
+        self.assertEqual((False, 5.0, 62.0), (clean["dirty"], clean["maxGapSeconds"], clean["durationSeconds"]))
+        cases = {"late first": (at(31, 36, 41), 42.0, "the first host sample is 31 s after the session began (over 30 s)"),
+                 "early last": (at(0, 5, 10), 60.0, "the last host sample is 50 s before the session ended (over 30 s)"),
+                 "inner gap": (at(0, 5, 36, 41), 42.0, "a 31 s gap in the host samples (over 30 s)")}
+        for name, (samples, duration, why) in cases.items():
+            with self.subTest(case=name):
+                record = acc.host_record(step, free, True, 0.0, samples, duration)
+                self.assertEqual((True, [why]), (record["dirty"], record["dirtyWhy"]))
+        unknown = acc.host_record(step, free, True, 0.0, at(0, 5), None)   # no duration: no end rule, the gap rule stays
+        self.assertFalse(unknown["dirty"])
+        self.assertEqual(30.0, acc.HOST_GAP_S)
+
+    def test_ps_and_sysctl_never_hang_a_sample(self):
+        # gt 06.10 KP-21: both calls carry a timeout; a ps that times out is an unreadable sample, a sysctl one is load None
+        seen = []
+        me = os.getpid()
+
+        def run(argv, **kw):
+            seen.append((argv[0], kw.get("timeout")))
+            if argv[0] == "ps" and "fail_ps" in run.__dict__:
+                raise subprocess.TimeoutExpired(argv, kw.get("timeout"))
+            if argv[0] == "sysctl":
+                raise subprocess.TimeoutExpired(argv, kw.get("timeout"))
+            return SimpleNamespace(stdout=f"{me} 1 python3", returncode=0)
+        with mock.patch.object(acc.subprocess, "run", side_effect=run):
+            state = acc.HostWatch().sample()
+            self.assertEqual((None, None), (state["load1"], state.get("error")))
+            run.fail_ps = True
+            self.assertIn("TimeoutExpired", acc.HostWatch().sample()["error"])
+        self.assertEqual({("ps", acc.HOST_CALL_TIMEOUT_S), ("sysctl", acc.HOST_CALL_TIMEOUT_S)}, set(seen))
+
     def test_the_sampler_runs_until_stopped(self):
         watch = acc.HostWatch(interval=0.01)
         watch.state = lambda: {"load1": 1.0, "foreignUnity": 0, "foreignPlayer": 0, "foreignBlender": 0, "foreignFfmpeg": 0}
@@ -1023,6 +1060,7 @@ class HostWatchTests(unittest.TestCase):
         time.sleep(0.1)
         samples = watch.stop()
         self.assertGreaterEqual(len(samples), 2)
+        self.assertGreaterEqual(watch.duration, 0.1)   # the session's span for the coverage rule
         self.assertEqual(samples, watch.stop())   # stopping twice is harmless
 
 

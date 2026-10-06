@@ -52,9 +52,12 @@ player slot, so a guarded foreign Player waits for it.
 - Quiet = no foreign Unity, Player, Blender or ffmpeg. The chain's own descendants are not foreign.
 - The load average is reported, never judged. iCloud I/O keeps load1 at 26–27 here with nothing heavy running.
 - Before each quiet session the chain waits at most 30 min for quiet. While the session runs it samples every 5 s.
+- The samples must cover the session, as r2_s3's samples must cover its takes (3b0e4327): the first within 30 s of the
+  session's start, the last within 30 s of its end, no gap over 30 s. A sampler that stalled or died early sees nothing
+  after it. `ps` and `sysctl` run with a 10 s timeout.
 - The record is `<E>/r2/<step>/host.json` plus `host-samples.tsv`, bound with the session and with each gate it measured.
-- A session that did not start quiet, had a foreign heavy process beside it, could not read the host (ps / sysctl), or
-  took no sample still runs, and is recorded `dirty`. The report shows **KİRLİ** on those gates, as a note, never as their
+- A session that did not start quiet, had a foreign heavy process beside it, could not read the host (ps), took no
+  sample, or whose samples do not cover it still runs, and is recorded `dirty`. The report shows **KİRLİ** on those gates, as a note, never as their
   status.
 - The owner's own quality gates decide the value: S1/S2's pile-up check re-takes, then fails the test; S4 has no dropped
   samples at load1 ~105.

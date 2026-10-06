@@ -88,6 +88,7 @@ ISOLATED_TIMEOUT_MIN = 10   # one isolated test in its own session (main-ci --al
 # heavy process (HOST_HEAVY), waits for that at most HOST_WAIT_MAX, and the host is sampled every HOST_INTERVAL s while it
 # runs. The load average is reported, never a criterion: iCloud I/O keeps load1 at 26-27 here with nothing heavy running.
 HOST_WAIT_MAX, HOST_INTERVAL = 1800.0, 5.0
+HOST_GAP_S, HOST_CALL_TIMEOUT_S = 30.0, 10.0   # r2_s3's coverage rule (3b0e4327); a ps / sysctl call never hangs a sample
 HOST_HEAVY = ("foreignUnity", "foreignPlayer", "foreignBlender", "foreignFfmpeg")
 
 
@@ -321,13 +322,13 @@ class HostWatch:
 
     def __init__(self, wait_max=HOST_WAIT_MAX, interval=HOST_INTERVAL, sleep=time.sleep):
         self.wait_max, self.interval, self.sleep = wait_max, interval, sleep
-        self._samples, self._stop, self._thread = [], None, None
+        self._samples, self._stop, self._thread, self._t0, self.duration = [], None, None, None, None
 
     def state(self):
         """{load1, foreignUnity, foreignPlayer, foreignBlender, foreignFfmpeg} now; the chain's own descendants are not
         foreign."""
         rows = []
-        ps = subprocess.run(["ps", "-Ao", "pid=,ppid=,comm="], capture_output=True, text=True)
+        ps = subprocess.run(["ps", "-Ao", "pid=,ppid=,comm="], capture_output=True, text=True, timeout=HOST_CALL_TIMEOUT_S)
         for line in ps.stdout.splitlines():
             parts = line.split(None, 2)
             if len(parts) == 3 and parts[0].isdigit() and parts[1].isdigit():
@@ -346,8 +347,9 @@ class HostWatch:
                     grew = True
         foreign = [comm for pid, _, comm in rows if pid not in ours]
         try:
-            load = float(subprocess.run(["sysctl", "-n", "vm.loadavg"], capture_output=True, text=True).stdout.split()[1])
-        except (OSError, ValueError, IndexError):
+            load = float(subprocess.run(["sysctl", "-n", "vm.loadavg"], capture_output=True, text=True,
+                                        timeout=HOST_CALL_TIMEOUT_S).stdout.split()[1])
+        except (OSError, ValueError, IndexError, subprocess.TimeoutExpired):
             load = None   # reported only (C-00 06.10): an unreadable load average never makes the host dirty (gt Ek 4)
         return {"load1": load, "foreignUnity": sum(c.endswith("/MacOS/Unity") for c in foreign),
                 "foreignPlayer": sum(c.endswith(wp078_perf.PLAYER_EXE) for c in foreign),
@@ -378,10 +380,10 @@ class HostWatch:
 
     def start(self):
         import threading
-        self._samples, self._stop = [], threading.Event()
+        self._samples, self._stop, self._t0, self.duration = [], threading.Event(), time.monotonic(), None
 
         def run():
-            t0 = time.monotonic()
+            t0 = self._t0
             while not self._stop.is_set():
                 self._samples.append(dict(self.sample(), t=round(time.monotonic() - t0, 1)))
                 self._stop.wait(self.interval)
@@ -393,6 +395,7 @@ class HostWatch:
             self._stop.set()
             self._thread.join()
             self._thread = None
+            self.duration = round(time.monotonic() - self._t0, 1)   # the session's span, for host_record's coverage rule
         return list(self._samples)
 
 
@@ -402,9 +405,11 @@ def heavy_text(s):
                                        for i, k in enumerate(HOST_HEAVY))
 
 
-def host_record(step, start, quiet, waited, samples):
+def host_record(step, start, quiet, waited, samples, duration=None):
     """<E>/r2/<step>/host.json — dirty when the session did not start quiet, a foreign Unity / Player / Blender / ffmpeg
-    ran during it, or the host could not be read (gt KP-11: an unknown host is never called quiet). load1 is reported."""
+    ran during it, the host could not be read (gt KP-11: an unknown host is never called quiet), or the samples do not
+    cover the session (gt KP-21, r2_s3's rule since 3b0e4327: the first within HOST_GAP_S of its start, the last within
+    HOST_GAP_S of its end — duration, when known — and no gap over HOST_GAP_S). load1 is reported."""
     def most(key, rows, default):
         values = [s[key] for s in rows if isinstance(s.get(key), (int, float)) and not isinstance(s.get(key), bool)]
         return max(values) if values else default
@@ -419,9 +424,18 @@ def host_record(step, start, quiet, waited, samples):
         why.append(f"host unreadable in {unreadable} of {len(samples)} samples")
     if not samples:
         why.append("no host sample was taken during the session")   # gt KP-8: unwatched is not quiet
+    times = [s["t"] for s in samples if isinstance(s.get("t"), (int, float)) and not isinstance(s.get("t"), bool)]
+    gaps = [b - a for a, b in zip(times, times[1:])]
+    if times and times[0] > HOST_GAP_S:
+        why.append(f"the first host sample is {times[0]:.0f} s after the session began (over {HOST_GAP_S:.0f} s)")
+    if times and duration is not None and times[-1] < duration - HOST_GAP_S:
+        why.append(f"the last host sample is {duration - times[-1]:.0f} s before the session ended (over {HOST_GAP_S:.0f} s)")
+    if gaps and max(gaps) > HOST_GAP_S:
+        why.append(f"a {max(gaps):.0f} s gap in the host samples (over {HOST_GAP_S:.0f} s)")
     return {"schema": "dd-r2-host-v1", "step": step["id"], "gates": step["gates"],
             "criterion": "no foreign Unity / Player / Blender / ffmpeg (C-00 06.10, 8626d147); load1 reported only",
             "waitedSeconds": waited, "quietAtStart": quiet, "start": start, "samples": len(samples),
+            "durationSeconds": duration, "maxGapSeconds": max(gaps) if gaps else None,
             "load1Max": most("load1", samples, start.get("load1")),
             **{k + "Max": v for k, v in peaks.items()},
             "unreadableSamples": unreadable, "dirty": bool(why), "dirtyWhy": why}
@@ -1244,7 +1258,7 @@ class Chain:
             finally:
                 samples = self.host.stop() if watch else None
             if watch:
-                host = host_record(step, start, calm, waited, samples)
+                host = host_record(step, start, calm, waited, samples, getattr(self.host, "duration", None))
                 out.mkdir(parents=True, exist_ok=True)
                 write_json(out / "host.json", host)
                 keys = ("t", "load1") + HOST_HEAVY
