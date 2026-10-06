@@ -154,6 +154,17 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.GreaterOrEqual(chosen, 0);
             TMP_TextCheck(screen, "açılış");
 
+            // U1b MUST-1 (AD + ui-ux, 06.10): the card ends under its content - CORE and the state line follow the bars - and
+            // never above the skins' last card; its foot stays put when focus walks to a locked row (the state line's place
+            // is kept when it is empty).
+            Canvas.ForceUpdateCanvases();
+            RectTransform lastSkin = Named(screen, "Skin." + (PlayerSkin)(PlayerSkins.Count - 1));
+            float cardFoot = Bottom(stageCard);
+            Assert.LessOrEqual(cardFoot, Bottom(lastSkin) + 1f, "sahne kartı son kostüm kartının altına kadar iner");
+            stageCard.GetWorldCorners(s_corners);
+            float cardHeight = s_corners[1].y - s_corners[0].y;
+            Assert.Less(Bottom(Named(screen, "Stat3")) - Bottom(Named(screen, "CoreBranches")), cardHeight * 0.2f, "CORE çubukların hemen altında (boş bant yok)");
+
             // Focus a locked row: the stage follows and names the unlock; a press changes nothing.
             UiButton locked = null;
             foreach (UiButton row in rows)
@@ -175,6 +186,8 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsTrue(lockLine.StartsWith("Reach profile level") || lockLine.Contains("PATH"), "kilit satırı (merdiven ya da PATH): " + lockLine);
             StringAssert.DoesNotContain("{", lockLine, "kilit satırı biçimlendi");
             TMP_TextCheck(screen, "kilitli odak");
+            Canvas.ForceUpdateCanvases();
+            Assert.AreEqual(cardFoot, Bottom(stageCard), 1f, "kilitli satıra odakta kartın ayağı yerinde (±1 px)");
 
             ClassicWeaponId before = PrototypeUiFlow.SelectedWeapon;
             locked.OnSubmit(null);

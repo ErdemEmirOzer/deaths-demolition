@@ -88,6 +88,8 @@ namespace DD.Prototype.UI
         private int _stageIndex = -1;
         private GameObject _lastFocus;
         private RectTransform _stageContent;
+        private RectTransform _stageCard;
+        private static readonly Vector3[] s_stageCorners = new Vector3[4];
         private RectTransform _stageTop;
         private RectTransform _coreRow;
         private RectTransform _stateRow;
@@ -98,6 +100,10 @@ namespace DD.Prototype.UI
         private RectTransform _weaponsColumn;
         private RectTransform _specialsHead;
         private RectTransform _specialsRow;
+        private readonly TMP_Text[] _specialNames = new TMP_Text[2];
+        private readonly TMP_Text[] _specialModes = new TMP_Text[2];
+        private readonly float[] _specialTextLeft = new float[2];
+        private float _specialModeSize;
         private float _weaponsTop;
         private float _rowHeight;
         private float _tileHeight;
@@ -547,9 +553,17 @@ namespace DD.Prototype.UI
                 RectTransform nameRect = UiFactory.Fill((RectTransform)name.transform);
                 nameRect.offsetMin = new Vector2(left, 0f);
                 nameRect.offsetMax = new Vector2(-(int)UiSpace.M, 0f);
+                name.enableWordWrapping = false;
                 TMP_Text mode = UiFactory.Label("Mode", tile, UiStrings.Get("weapon." + ids[i] + ".firemode", string.Empty), UiType.Caption, UiColor.TextSecondary, TextAnchor.MiddleRight);
                 RectTransform modeRect = UiFactory.Fill((RectTransform)mode.transform);
                 modeRect.offsetMax = new Vector2(-(int)UiSpace.M, 0f);
+                mode.enableWordWrapping = false;
+                mode.overflowMode = TextOverflowModes.Ellipsis;
+                // U1b MUST-2 (AD + ui-ux, 06.10): LayoutSpecialTiles keeps the name whole and the mode >= S beside it.
+                _specialNames[i] = name;
+                _specialModes[i] = mode;
+                _specialTextLeft[i] = left;
+                _specialModeSize = mode.fontSize;
             }
         }
 
@@ -559,6 +573,7 @@ namespace DD.Prototype.UI
         {
             UiCard card = UiCard.Create("StageCard", column, Vector2.zero, UiElevation.Elev1, UiColor.SurfacePanel, UiSpace.XL);
             UiFactory.Fill((RectTransform)card.transform);
+            _stageCard = (RectTransform)card.transform;   // LayoutStage fits it to its content (U1b MUST-1)
             RectTransform content = card.Content;
             _stageContent = content;
             _stageText = UiFactory.Group(content.gameObject);
@@ -652,6 +667,25 @@ namespace DD.Prototype.UI
         private const float CoreLabelMinWidth = 52f;
         private const float StageGlyphCompact = 96f;
 
+        /// <summary>U1b MUST-1: the stage card's height - its content, at least down to the skins' last card, at most the column.</summary>
+        private void FitStageCard(RectTransform stageColumn, float contentHeight)
+        {
+            float floor = 0f;
+            if (_skinButtons != null && _skinButtons.Length > 0 && _skinButtons[_skinButtons.Length - 1] != null)
+            {
+                ((RectTransform)_skinButtons[_skinButtons.Length - 1].transform).GetWorldCorners(s_stageCorners);
+                floor = stageColumn.rect.yMax - stageColumn.InverseTransformPoint(s_stageCorners[0]).y;
+            }
+
+            float height = Mathf.Min(stageColumn.rect.height, Mathf.Max(contentHeight, floor));
+            _stageCard.anchorMin = new Vector2(0f, 1f);
+            _stageCard.anchorMax = new Vector2(1f, 1f);
+            _stageCard.pivot = new Vector2(0.5f, 1f);
+            _stageCard.sizeDelta = new Vector2(0f, height);
+            _stageCard.anchoredPosition = Vector2.zero;
+            _stageSize = _stageContent.rect.size;   // the card's own resize is not a new layout trigger
+        }
+
         /// <summary>
         /// Places the stage's blocks from what they hold at the card's real size. Heights come from the texts (the
         /// description's measured lines, up to five). A stat whose label and value do not fit on one line puts the value
@@ -668,7 +702,8 @@ namespace DD.Prototype.UI
 
             Rect area = _stageContent.rect;
             _stageSize = area.size;
-            if (area.height < 1f || area.width < 1f)
+            RectTransform stageColumn = (RectTransform)_stageCard.parent;
+            if (area.height < 1f || area.width < 1f || stageColumn.rect.height < 1f)
             {
                 _stageLayoutPending = true;   // the canvas has not laid out yet: next Update
                 return;
@@ -676,7 +711,10 @@ namespace DD.Prototype.UI
 
             _stageLayoutPending = false;
             float w = area.width;
-            float h = area.height;
+            // U1b MUST-1 (AD + ui-ux, 06.10): the card ends under its content, so the room is the column's, less the card's
+            // own top and bottom padding (the card - content difference holds at any card height).
+            float inset = _stageCard.rect.height - area.height;
+            float h = stageColumn.rect.height - inset;
             // Line heights measured from the texts themselves (their font size already carries the TextScale; the
             // ScaledBand metric would count it twice and plan a Mac stage ~25 % taller than it renders - AD R1-B re-check).
             float bodyLine = LineOf(_stageDescription);
@@ -700,7 +738,6 @@ namespace DD.Prototype.UI
             float rowGap = oneColumn ? (int)UiSpace.S : (int)UiSpace.M;
             float statsH = oneColumn ? cellH * 4f + rowGap * 3f : cellH * 2f + rowGap;
             float coreH = Mathf.Max(CoreGlyphSize + 4f, captionLine);
-            bool stateShown = !string.IsNullOrEmpty(_stateLine.text);
             float stateH = captionLine;
             float compareH = string.IsNullOrEmpty(_compareCaption.text) ? 0f : Mathf.Ceil(_compareCaption.GetPreferredValues(_compareCaption.text, w, 0f).y);
             float flavourH = string.IsNullOrEmpty(_stageFlavour.text) ? 0f : captionLine;
@@ -738,7 +775,7 @@ namespace DD.Prototype.UI
             float Total()
             {
                 return topH + BelowH() + gap + descH + (showFlavour ? (int)UiSpace.XS + flavourH : 0f)
-                       + gap + statsH + (showCompare ? (int)UiSpace.S + compareH : 0f) + gap + coreH + (stateShown ? gap + stateH : 0f);
+                       + gap + statsH + (showCompare ? (int)UiSpace.S + compareH : 0f) + gap + coreH + gap + stateH;   // U1b MUST-1: the state line keeps its place when empty
             }
 
             // Yield order when short (AD R1-B re-check): the flavour line, the bar caption, the gaps, the glyph (96), and only
@@ -827,21 +864,18 @@ namespace DD.Prototype.UI
             {
                 y += (int)UiSpace.S;
                 Dock((RectTransform)_compareCaption.transform, y, compareH);
+                y += compareH;
             }
 
-            // Bottom group, anchored to the card's foot: CORE, then the state line. The slack collects above it in one band
-            // (AD R1-B MUST-2a), not as a hole under the last line.
-            _stateRow.gameObject.SetActive(stateShown);
-            float bottom = h;
-            if (stateShown)
-            {
-                bottom -= stateH;
-                Dock(_stateRow, bottom, stateH);
-                bottom -= gap;
-            }
-
-            bottom -= coreH;
-            Dock(_coreRow, bottom, coreH);
+            // U1b MUST-1 (AD + ui-ux, 06.10): CORE and the state line follow the bars with the section gap - no longer anchored
+            // to the card's foot, where the slack had become an empty band once the paragraph left. The card then ends under
+            // them, never above the skins' last card (AD: the middle column closes on the left column's line).
+            y += gap;
+            Dock(_coreRow, y, coreH);
+            y += coreH + gap;
+            Dock(_stateRow, y, stateH);
+            y += stateH;
+            FitStageCard(stageColumn, y + inset);
 
             // The CORE word gives its width up before any branch name would be cut (T3: nothing truncates).
             float namesW = 0f;
@@ -929,6 +963,41 @@ namespace DD.Prototype.UI
             Dock(_specialsHead, y, headH);
             y += headH + (int)UiSpace.XS;
             Dock(_specialsRow, y, _tileHeight);
+            LayoutSpecialTiles();
+        }
+
+        /// <summary>
+        /// U1b MUST-2 (AD + ui-ux, 06.10): on the Mac canvas in TR the special tile read "NAMEKUJİYAY ATIŞ" - the name and the
+        /// fire mode met. The name takes its own width and never shrinks; the mode stands right-aligned at least S after it,
+        /// stepping down to 80 % of its size when the room is short, then an ellipsis.
+        /// </summary>
+        private void LayoutSpecialTiles()
+        {
+            for (int i = 0; i < _specialNames.Length; i++)
+            {
+                TMP_Text name = _specialNames[i];
+                TMP_Text mode = _specialModes[i];
+                if (name == null || mode == null)
+                {
+                    continue;
+                }
+
+                float tileW = ((RectTransform)name.transform.parent).rect.width;
+                float left = _specialTextLeft[i];
+                float nameW = Mathf.Ceil(name.GetPreferredValues(name.text).x);
+                float nameRight = Mathf.Min(tileW - (int)UiSpace.M, left + nameW);
+                ((RectTransform)name.transform).offsetMax = new Vector2(nameRight - tileW, 0f);
+
+                float modeLeft = nameRight + (int)UiSpace.S;
+                float room = Mathf.Max(0f, tileW - (int)UiSpace.M - modeLeft);
+                ((RectTransform)mode.transform).offsetMin = new Vector2(modeLeft, 0f);
+                mode.fontSize = _specialModeSize;
+                float modeW = Mathf.Ceil(mode.GetPreferredValues(mode.text).x);
+                if (modeW > room && modeW > 0f)
+                {
+                    mode.fontSize = Mathf.Max(_specialModeSize * 0.8f, _specialModeSize * room / modeW);
+                }
+            }
         }
 
         private static float LineOf(TMP_Text text)
