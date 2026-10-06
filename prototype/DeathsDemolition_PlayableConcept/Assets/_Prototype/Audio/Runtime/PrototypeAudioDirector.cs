@@ -262,6 +262,13 @@ namespace DD.Prototype.Audio
 #if DEVELOPMENT_BUILD || UNITY_EDITOR
             AudioOutputCapture.TryArm(gameObject);   // WP-060: -ddAudioCapture <wav> records the Player output for the listening round
 #endif
+
+            // WP-085 G4 (B-03 GC review): the weapon layer and casing tables are type initializers (160 name concatenations and
+            // Enum.TryParse calls) that would otherwise run inside the first shot and the first casing landing. Built here, once
+            // per boot (the director outlives scenes), after the rest of the setup — nothing above needs them. The tables depend
+            // only on the enum, so only the timing moves. Not in FeedbackPoolWarmer: nothing outside Audio references Audio.
+            WeaponAudioIdentity.Warm();
+            WeaponFoleyV3.Warm();
         }
 
         private IEnumerator Start()

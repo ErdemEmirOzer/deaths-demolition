@@ -189,6 +189,27 @@ namespace DD.Prototype.Audio
         private static readonly AudioSoundId[] s_v4Casing = BuildV4("Casing");
         private static readonly AudioSoundId[] s_v4Link = BuildV4("Link");
 
+        /// <summary>
+        /// WP-085 G4 (B-03 GC review): builds the casing / belt-link tables now instead of in the first casing landing's frame — this
+        /// type's initializer, 100 name concatenations and Enum.TryParse calls, run before the first read of a static field here.
+        /// The tables depend only on <see cref="WeaponAudioIdentity.All"/>, <see cref="V4Surfaces"/> and the enum: only the timing
+        /// moves. <see cref="CasingV4"/> is called once too (Mono's JIT compiles it here, not in the first landing). Idempotent,
+        /// allocation-free after the first call. Returns the casing and link ids AP-027 has delivered. <see cref="PrototypeAudioDirector"/>
+        /// calls it in Awake.
+        /// </summary>
+        public static int Warm()
+        {
+            int delivered = 0;
+            for (int k = 0; k < s_v4Casing.Length; k++)
+            {
+                if (s_v4Casing[k] != AudioSoundId.None) delivered++;
+                if (s_v4Link[k] != AudioSoundId.None) delivered++;
+            }
+
+            CasingV4(WeaponAudioIdentity.All[0].AudioId, SurfaceKind.Stone, false);
+            return delivered;
+        }
+
         private static AudioSoundId[] BuildV4(string category)
         {
             var ids = new AudioSoundId[WeaponAudioIdentity.All.Length * V4Surfaces.Length];

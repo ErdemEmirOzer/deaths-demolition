@@ -148,6 +148,28 @@ namespace DD.Prototype.Audio
         private static readonly AudioSoundId[] s_layers = BuildLayers();
         private static readonly AudioSoundId[] s_layerOverrides = new AudioSoundId[All.Length * LayerCount];
 
+        /// <summary>
+        /// WP-085 G4 (B-03 GC review): builds the layer table now instead of in the first shot's frame. The table is this type's
+        /// initializer — 60 <see cref="LayerName"/> concatenations and Enum.TryParse calls (the first also fills Enum's AudioSoundId
+        /// name cache) — and the runtime runs it before the first read of any static field here, so reading the table is the
+        /// warm-up. It depends only on <see cref="All"/> and the enum: built earlier, it is the same table — only the timing moves.
+        /// The lookup is called once too: Mono's JIT (the editor, and this project's Player backend) compiles it here, not in the
+        /// first shot; under IL2CPP the call is only a read.
+        /// Idempotent and allocation-free after the first call. Returns the layer ids AP-027 has delivered (the non-None entries).
+        /// <see cref="PrototypeAudioDirector"/> calls it once, in Awake.
+        /// </summary>
+        public static int Warm()
+        {
+            int delivered = 0;
+            for (int k = 0; k < s_layers.Length; k++)
+            {
+                if (s_layers[k] != AudioSoundId.None) delivered++;
+            }
+
+            Layer(All[0].AudioId, WeaponLayer.Mechanical);
+            return delivered;
+        }
+
         /// <summary>The AudioSoundId name a layer resolves by: "Weapon" + "Ar1" + "TailOpen".</summary>
         public static string LayerName(string audioId, WeaponLayer layer)
         {
