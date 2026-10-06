@@ -188,6 +188,31 @@ namespace DD.Prototype.Audio
                 }
             }
 
+            // R2 FINAL a1 (C-00 06.10, DEC-088 GC 0): every sound the catalog owns is wrapped here as well - a few small
+            // arrays, no synthesis - so a loop first asked for inside a tick (the after-rain grove, the pond bed, a music
+            // phase loop) never builds its entry in the director's Update. The deck still shuffles on the first Next.
+            IReadOnlyList<AudioCatalog.Entry> owned = _catalog != null ? _catalog.Entries : null;
+            for (int i = 0; owned != null && i < owned.Count; i++)
+            {
+                if (owned[i] == null)
+                {
+                    continue;
+                }
+
+                if (!frameWatch.IsRunning)
+                {
+                    frameWatch.Restart();
+                }
+
+                EnsureBaked(owned[i].Sound);
+
+                if (frameWatch.Elapsed.TotalMilliseconds >= PrewarmMillisecondsPerFrame)
+                {
+                    frameWatch.Reset();
+                    yield return null;
+                }
+            }
+
             PrewarmComplete = true;
         }
 

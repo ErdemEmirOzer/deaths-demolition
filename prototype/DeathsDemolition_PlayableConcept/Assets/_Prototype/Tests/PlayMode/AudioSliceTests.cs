@@ -2600,6 +2600,78 @@ namespace DD.Prototype.Tests.PlayMode
             }
         }
 
+        /// <summary>
+        /// R2 FINAL a1 (C-00 06.10): AnimationTests.Kalabalik40_AnimasyonYolu_GcSifir_UzakAdim15Hz saw 292 B in
+        /// PrototypeAudioDirector.Update — a sound first asked for inside a tick (the after-rain grove loop, the pond bed, a
+        /// music phase loop: none in AudioClipLibrary.AllSounds) built its library entry there. After the prewarm every sound
+        /// the catalog owns is wrapped: asking for each of them allocates nothing.
+        /// </summary>
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator Kutuphane_OnIsitmaSonrasi_KatalogSesleri_IlkIstekteAyirmaz()
+        {
+            float bitis = Time.realtimeSinceStartup + 30f;
+            while (!_d.Library.PrewarmComplete && Time.realtimeSinceStartup < bitis) yield return null;
+            Assert.IsTrue(_d.Library.PrewarmComplete, "ön ısıtma bitmedi");
+            AudioCatalog katalog = AudioCatalog.Load();
+            Assert.IsNotNull(katalog);
+            IReadOnlyList<AudioCatalog.Entry> girisler = katalog.Entries;
+            AudioClipLibrary kutuphane = _d.Library;
+            kutuphane.First(girisler[0].Sound);   // the JIT of First / EnsureBaked out of the measured call
+
+            // The measuring method sees an allocation (UTF profiler recorder, as the ambience GC test). The thread counter is
+            // logged for the record: on this runtime it may read 0 for any allocation (06.10: the first version of this test
+            // used it and passed without the fix).
+            byte[] kontrol = null;
+            Assert.That(() => { kontrol = new byte[64 * 1024]; }, UnityEngine.TestTools.Constraints.Is.AllocatingGCMemory(), "Pozitif kontrol: GC ölçümü ayırmayı görmeli.");
+            long a0 = System.GC.GetAllocatedBytesForCurrentThread();
+            kontrol = new byte[1024];
+            long a1 = System.GC.GetAllocatedBytesForCurrentThread();
+            GC.KeepAlive(kontrol);
+
+            // C-00 06.10: the prewarm's cost, measured here (not in the runtime). A fresh library's Prewarm stepped one MoveNext
+            // per frame like the director's coroutine: its work time and frames. And the part this change adds: a second fresh
+            // library asked once for every catalog sound AllSounds does not list (the wrap the prewarm now does up front).
+            var taze = new AudioClipLibrary(katalog);
+            var sure = new System.Diagnostics.Stopwatch();
+            int kare = 0;
+            IEnumerator onIsitma = taze.Prewarm();
+            while (true)
+            {
+                sure.Start();
+                bool devam = onIsitma.MoveNext();
+                sure.Stop();
+                kare++;
+                if (!devam) break;
+                yield return null;
+            }
+
+            taze.Dispose();
+            var listede = new HashSet<AudioSoundId>(AudioClipLibrary.AllSounds);
+            var ikinci = new AudioClipLibrary(katalog);
+            var katalogSure = new System.Diagnostics.Stopwatch();
+            int katalogYeni = 0;
+            for (int i = 0; i < girisler.Count; i++)
+            {
+                if (girisler[i] == null || listede.Contains(girisler[i].Sound)) continue;
+                katalogSure.Start();
+                ikinci.First(girisler[i].Sound);
+                katalogSure.Stop();
+                katalogYeni++;
+            }
+
+            ikinci.Dispose();
+            Debug.Log("[DD-TEST] wp085.prewarm catalog=" + girisler.Count + " threadCounterSaw1024=" + (a1 - a0) + " prewarmMs=" + sure.Elapsed.TotalMilliseconds.ToString("0.00")
+                + " prewarmFrames=" + kare + " catalogOnly=" + katalogYeni + " catalogWrapMs=" + katalogSure.Elapsed.TotalMilliseconds.ToString("0.00"));
+            Assert.That(() =>
+            {
+                for (int i = 0; i < girisler.Count; i++)
+                {
+                    if (girisler[i] != null) kutuphane.First(girisler[i].Sound);
+                }
+            }, UnityEngine.TestTools.Constraints.Is.Not.AllocatingGCMemory(), "Ön ısıtmadan sonra bir katalog sesinin ilk isteği ayırmamalı (DEC-088 GC 0).");
+        }
+
         private static float[] OkuMono(string path, out int rate)
         {
             byte[] raw = System.IO.File.ReadAllBytes(path);
