@@ -509,11 +509,30 @@ namespace DD.Art.Pipeline.EditorTools
         /// </summary>
         public static readonly string[] Ap023GroundSets = { "ap023_slate_flag_v01", "ap023_slate_flag_v02", "ap023_slate_flag_v03", "ap023_path_granite_v01", "ap023_path_granite_v02" };
 
-        /// <summary>WP-038 · Mask-role textures a material actually samples (the AP-015P water data maps, WP-074 the AP-023 ground sets); the AP packs / ID masks stay provenance-only.</summary>
+        /// <summary>
+        /// WP-036 / WP-038H · The version-tint masks DD/Character/Tier Lit samples as <c>_TierMask</c> (R lacquer, G cloth):
+        /// M_zombie_armor_tint* bind T_zombie_armor_Mask, M_zombie_tier* bind T_zombie_tier_Mask. WP-091 Z3 (C-00 06.10): they ship,
+        /// so they count in the shipped character row (until then IsBoundMask left them out as provenance — 2.67 MB short).
+        /// </summary>
+        public static readonly string[] TierMaskRoles = { "zombie_armor", "zombie_tier" };
+
+        /// <summary>WP-038 · Mask-role textures a material actually samples (the AP-015P water data maps, WP-074 the AP-023 ground sets, WP-091 the Tier Lit _TierMask roles); the AP packs / ID masks stay provenance-only.</summary>
         public static bool IsBoundMask(string assetPath)
         {
             string slug = RoleSlugOf(assetPath);
-            return slug != null && (slug.StartsWith("water_", StringComparison.Ordinal) || slug.StartsWith("wet_", StringComparison.Ordinal) || Array.IndexOf(Ap023GroundSets, slug) >= 0);
+            return slug != null && (slug.StartsWith("water_", StringComparison.Ordinal) || slug.StartsWith("wet_", StringComparison.Ordinal) || Array.IndexOf(Ap023GroundSets, slug) >= 0
+                                    || (RoleOf(assetPath) == TextureRole.Mask && Array.IndexOf(TierMaskRoles, slug) >= 0));
+        }
+
+        /// <summary>
+        /// WP-091 Z3 (C-00 06.10) · A contract map the build carries — every map a material binds: all roles except the AP Packed
+        /// maps (provenance, never bound) and the masks no material samples (<see cref="IsBoundMask"/>). The one rule of the
+        /// shipped-bytes lines (ArtAssetGateTests texture policy, Z3CharacterBudgetTests shippedCharacterMB).
+        /// </summary>
+        public static bool IsShippedMap(string assetPath)
+        {
+            TextureRole role = RoleOf(assetPath);
+            return role != TextureRole.Packed && (role != TextureRole.Mask || IsBoundMask(assetPath));
         }
 
         /// <summary>Estimated bytes a texture occupies in the build (BC7/BC5 = 1 byte per texel, full mip chain), capped at the source size.</summary>
@@ -527,10 +546,31 @@ namespace DD.Art.Pipeline.EditorTools
             return EstimatedShippedBytes(sourceWidth, sourceHeight, MaxSizeOf(c, role), mipmaps);
         }
 
-        /// <summary>Per asset: the class / role cap plus the path-specific caps (WP-038E wet packed 512).</summary>
+        /// <summary>Per asset: the class / role cap plus the path-specific caps (WP-038E wet packed 512); the AP-025 mask array as the array it imports to.</summary>
         public static long EstimatedShippedBytes(string assetPath, int sourceWidth, int sourceHeight, bool mipmaps)
         {
+            if (RoleOf(assetPath) == TextureRole.Array) return EstimatedArrayBytes(sourceWidth, sourceHeight, mipmaps);
             return EstimatedShippedBytes(sourceWidth, sourceHeight, MaxTextureSizeOf(assetPath), mipmaps);
+        }
+
+        /// <summary>
+        /// WP-091 Z3 (C-00 06.10) · The AP-025 mask flipbook ships as a Texture2DArray: the sheet (capped at
+        /// <see cref="MaskArraySheetMaxSize"/>) cut into <see cref="MaskArrayColumns"/> × <see cref="MaskArrayRows"/> slices, each with
+        /// its own mip chain, in <see cref="StandaloneArrayFormat"/> BC4 — 8 bytes per 4×4 block, half the 1 byte per texel of the
+        /// BC7 / BC5 maps. The 2D estimate counted the 3072² sheet as one BC7 texture (12.00 MB for 6.00 MB).
+        /// </summary>
+        public static long EstimatedArrayBytes(int sheetWidth, int sheetHeight, bool mipmaps)
+        {
+            int w = sheetWidth, h = sheetHeight;
+            while (Mathf.Max(w, h) > MaskArraySheetMaxSize)
+            {
+                w = Mathf.Max(1, w / 2);
+                h = Mathf.Max(1, h / 2);
+            }
+
+            int sliceW = Mathf.Max(1, w / MaskArrayColumns), sliceH = Mathf.Max(1, h / MaskArrayRows);
+            long blockBytes = EstimatedShippedBytes(sliceW, sliceH, int.MaxValue, mipmaps);   // 1 byte per texel, 4×4 blocks, mip chain
+            return blockBytes * MaskArrayColumns * MaskArrayRows / 2;                         // BC4: half a byte per texel
         }
 
         private static long EstimatedShippedBytes(int sourceWidth, int sourceHeight, int cap, bool mipmaps)

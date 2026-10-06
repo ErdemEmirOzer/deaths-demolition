@@ -20,6 +20,10 @@ CONTRACT = r2_gates.load_contract((Path(__file__).resolve().parents[1] / "r2-gat
 STATIC = {"characterTextureMaxPx": 2048, "atlasesPerFamilyMax": 2, "mapsPerAtlasMax": 3, "shippedCharacterMB": 312.5,
           "bonesMax": 74, "materialsPerFamilyMax": 4, "materialsPerFamilyCrowdTotal": 8,
           "armorTierAtlasesTotal": 2}   # C-00 06.10 13:30 (S-05 scope): armour + tier atlases, a report key
+Z3_TEST = "DD.Art.Tests.EditMode.Z3CharacterBudgetTests.Z3_KarakterButcesi_StatikAnahtarlar_Yazilir"
+Z3_GATE = next(g for g in CONTRACT["gates"] if g["id"] == "Z3")
+# r2-gates.json Z3 "tests": the static EditMode writer (Z3CharacterBudgetTests) must be Passed in a bound NUnit XML
+Z3_CASES = {t: "Passed" for t in Z3_GATE.get("tests", [])}
 MODE_NAMES = {"topdown": "TopDown", "tp": "ThirdPerson", "fp": "FirstPerson"}
 TIER_NAMES = {"sinematik": "Sinematik", "yuksek": "Yuksek", "performans": "Performans"}
 
@@ -116,6 +120,8 @@ class ContractTests(unittest.TestCase):
         self.assertEqual(sorted(STATIC), sorted(static))
         # C-00 06.10: the crowd material total per body family is reported, never gated; thresholds unchanged
         self.assertEqual(["materialsPerFamilyCrowdTotal", "armorTierAtlasesTotal"], gate["report"])
+        # the static writer: Z3's required test is the EditMode test its measuredBy session runs by full name
+        self.assertEqual(([Z3_TEST], {"suite": "editmode", "filter": Z3_TEST, "quiet": False}), (gate.get("tests"), gate.get("measuredBy")))
         limits = {c["key"]: c["limit"] for c in gate["checks"]}
         self.assertEqual({"setPassRatio": 1.10, "batchRatio": 1.10, "trianglesRatio": 1.15, "characterTextureMaxPx": 2048,
                           "atlasesPerFamilyMax": 2, "mapsPerAtlasMax": 3, "shippedCharacterMB": 400, "bonesMax": 74,
@@ -141,8 +147,11 @@ class Z3RatioTests(Base):
         self.assertEqual(10, data["samples"])
         self.assertEqual("r2/z3-static.json", data["static"]["path"])
         self.assertEqual([0.0, -4.0, 0.0], data["pose"]["requested"])
-        row = r2_gates.evaluate_gate(next(g for g in CONTRACT["gates"] if g["id"] == "Z3"), FINAL, measure=data)
+        row = r2_gates.evaluate_gate(Z3_GATE, FINAL, measure=data, cases=Z3_CASES)
         self.assertEqual("PASS", row["status"], row["reason"])
+        if Z3_GATE.get("tests"):   # the static writer's identity: no bound NUnit XML → BLOCKED by name, whatever the values
+            blocked = r2_gates.evaluate_gate(Z3_GATE, FINAL, measure=data)
+            self.assertEqual(("BLOCKED", "no NUnit XML bound for required test " + Z3_GATE["tests"][0]), (blocked["status"], blocked["reason"]))
         self.assertIn("Z3 written", out)
         self.assertEqual("OK", strict(self.evidence / "r2" / "z3-ratios.json")["status"])
 
@@ -165,7 +174,7 @@ class Z3RatioTests(Base):
         data = strict(self.artifact)
         self.assertEqual((1.12, "tp"), (data["values"]["setPassRatio"], data["worstMode"]["setPassRatio"]))
         self.assertEqual({"topdown": 1.02, "tp": 1.12}, {c["mode"]: c["medians"]["setPassRatio"] for c in data["cells"]})
-        row = r2_gates.evaluate_gate(next(g for g in CONTRACT["gates"] if g["id"] == "Z3"), FINAL, measure=data)
+        row = r2_gates.evaluate_gate(Z3_GATE, FINAL, measure=data, cases=Z3_CASES)
         self.assertEqual("FAIL", row["status"])
         self.assertIn("setPassRatio 1.12 <= 1.1 is false", row["reason"])
 
@@ -310,7 +319,7 @@ class StaticTests(Base):
         z3_tree(self.evidence)
         write_static(self.evidence, values=dict(STATIC, bonesMax=75))
         self.assertEqual(0, self.z3_only()[0])
-        row = r2_gates.evaluate_gate(next(g for g in CONTRACT["gates"] if g["id"] == "Z3"), FINAL, measure=strict(self.artifact))
+        row = r2_gates.evaluate_gate(Z3_GATE, FINAL, measure=strict(self.artifact), cases=Z3_CASES)
         self.assertEqual("FAIL", row["status"])
         self.assertIn("bonesMax 75 <= 74 is false", row["reason"])
         self.assertEqual(8, row["values"]["materialsPerFamilyCrowdTotal"])   # the report key rides along
@@ -508,7 +517,10 @@ class LintTests(unittest.TestCase):
         mine = sorted((f.level, f.code, f.gate) for f in findings if f.gate in ("Z3", "P3"))
         self.assertIn(("INFO", "CHAIN-MADE", "Z3"), mine)
         self.assertIn(("INFO", "CHAIN-MADE", "P3"), mine)
-        self.assertEqual([], [m for m in mine if m[0] != "INFO"])          # no NO-WRITER, PROSE-KEY or PROSE-LIMIT
+        # no NO-WRITER, PROSE-KEY or PROSE-LIMIT; with no C# given, the Z3 static writer's test identity (measuredBy / tests) is
+        # not checkable here — test_r2_gates_lint's real-repo run checks it against the C# tree
+        csharp_only = {"MEASUREDBY-NOTEST", "TEST-MISSING"}
+        self.assertEqual([], [m for m in mine if m[0] != "INFO" and not (m[2] == "Z3" and m[1] in csharp_only)])
         self.assertIn("tools/qa/r2_z3.py", prose["paths"])
         self.assertTrue((REPO / "tools/qa/r2_z3.py").is_file())
 

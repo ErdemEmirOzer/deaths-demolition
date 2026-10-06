@@ -337,6 +337,25 @@ namespace DD.Art.Tests.EditMode
         }
 
         [Test]
+        public void SevkBoyutuTahmini_MaskeDizisi_BC4Dilimler_TierMaskeleriSevkte()
+        {
+            // WP-091 Z3 (C-00 06.10): the AP-025 3×3 sheet ships as 9 BC4 slices of 1024² with mips (9 × 1 398 128 / 2 = 6.00 MB),
+            // not as one 3072² BC7 texture (12.00 MB).
+            Assert.AreEqual(9L * 1398128L / 2L, ArtImportContract.EstimatedArrayBytes(3072, 3072, true));
+            Assert.AreEqual(9L * 1048576L / 2L, ArtImportContract.EstimatedArrayBytes(3072, 3072, false));
+            Assert.AreEqual(ArtImportContract.EstimatedArrayBytes(3072, 3072, true), ArtImportContract.EstimatedArrayBytes(6144, 6144, true), "sayfa tavanı aşılırsa önce yarıya iner (6144² → 3072²)");
+            string dizi = ArtCharacterPrefabBuilder.ZombieTextures + "/T_zombie_masks_Array.png";
+            Assert.AreEqual(ArtImportContract.EstimatedArrayBytes(3072, 3072, true), ArtImportContract.EstimatedShippedBytes(dizi, 3072, 3072, true), "yol aşırı yüklemesi diziyi dizi olarak sayar");
+            Assert.IsTrue(ArtImportContract.IsShippedMap(dizi));
+            // the Tier Lit _TierMask masks ship (WP-036 / WP-038H); the AP Packed maps and unbound ID masks stay provenance
+            Assert.IsTrue(ArtImportContract.IsShippedMap(ArtArmorBuilder.MaskMap), "M_zombie_armor_tint* ._TierMask");
+            Assert.IsTrue(ArtImportContract.IsShippedMap(ArtTierBuilder.MaskMap), "M_zombie_tier* ._TierMask");
+            Assert.IsTrue(ArtImportContract.IsShippedMap(ArtArmorBuilder.MetallicSmoothnessMap));
+            Assert.IsFalse(ArtImportContract.IsShippedMap(ArtArmorBuilder.PackedMap), "Packed kaynak-yalnız");
+            Assert.IsFalse(ArtImportContract.IsShippedMap(ArtCharacterPrefabBuilder.ZombieTextures + "/T_zombie_cloth_Mask.png"), "bağlanmayan ID maskesi");
+        }
+
+        [Test]
         public void Doku_BellekteSaptirilanMaxSize_ValidateAdiylaYakalar_ApplyOnarir()
         {
             string yol = ArtPipelinePaths.SourceTexture("plaster", "BaseColor");   // Structure → 2048 (ADR-015-1 v3)

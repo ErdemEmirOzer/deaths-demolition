@@ -628,7 +628,7 @@ namespace DD.Art.Tests.EditMode
                 if (importer.streamingMipmaps != ArtImportContract.StreamsMipmaps(sinif.Value)) ihlaller.Add(yol + ": streamingMipmaps " + importer.streamingMipmaps + " != " + ArtImportContract.StreamsMipmaps(sinif.Value) + " (" + sinif + ")");
 
                 PngBoyut(yol, out int w, out int h);
-                if (rol == ArtImportContract.TextureRole.Packed || (rol == ArtImportContract.TextureRole.Mask && !ArtImportContract.IsBoundMask(yol))) continue;   // provenance only; no material binds them (WP-016: the AP-007 ID mask feeds the derived DetailMask)
+                if (!ArtImportContract.IsShippedMap(yol)) continue;   // provenance only: the AP Packed maps and the masks no material binds (WP-016: the AP-007 ID mask feeds the derived DetailMask); WP-091: one rule with Z3, the _TierMask masks ship
                 long bytes = ArtImportContract.EstimatedShippedBytes(yol, w, h, importer.mipmapEnabled);   // class / role cap + the WP-038E wet 512 cap
                 sevk += bytes;
                 if (ArtImportContract.IsCharacterClass(sinif.Value)) sevkKarakter += bytes;
@@ -651,6 +651,42 @@ namespace DD.Art.Tests.EditMode
             Assert.LessOrEqual(karakterMb, ArtImportContract.ShippedCharacterBudgetMb, "Karakter doku kümesi (oyuncu + zombi + zırh atlası) sevk bütçesini aşıyor (ADR-015-1 v2).");
             Assert.LessOrEqual(silahMb, ArtImportContract.ShippedWeaponBudgetMb, "Silah doku kümesi (AP-014 SW + AP-013 klasik atlas) sevk bütçesini aşıyor (ADR-015-1 v3, WP-042B).");
             Assert.LessOrEqual(sevkMb, ArtImportContract.ShippedTotalBudgetMb, "Sevk edilen doku kümesi toplam bütçeyi aşıyor (ADR-015-1 v2).");
+        }
+
+        /// <summary>
+        /// WP-091 Z3 (C-00 06.10) · The shipped lines count what the build carries: every contract map a material under
+        /// Assets/_Art binds, through a property its shader declares, is a shipped map (<see cref="ArtImportContract.IsShippedMap"/>).
+        /// The Tier Lit _TierMask masks (WP-036 / WP-038H) were bound yet counted as provenance until this check.
+        /// </summary>
+        [Test]
+        public void SevkSatiri_MateryalinBagladigiHerSozlesmeHaritasi_Sayilir()
+        {
+            var sayilmayan = new List<string>();
+            var adlar = new List<string>();
+            int materyal = 0, harita = 0;
+            foreach (string guid in AssetDatabase.FindAssets("t:Material", new[] { ArtRoot }))
+            {
+                var m = AssetDatabase.LoadAssetAtPath<Material>(AssetDatabase.GUIDToAssetPath(guid));
+                if (m == null || m.shader == null) continue;
+                materyal++;
+                adlar.Clear();
+                m.GetTexturePropertyNames(adlar);
+                foreach (string ad in adlar)
+                {
+                    if (m.shader.FindPropertyIndex(ad) < 0) continue;   // a saved property of an earlier shader is never sampled
+                    Texture tex = m.GetTexture(ad);
+                    string yol = tex != null ? AssetDatabase.GetAssetPath(tex) : null;
+                    if (string.IsNullOrEmpty(yol) || !AssetDatabase.IsMainAsset(tex) || !yol.EndsWith(".png", StringComparison.OrdinalIgnoreCase)) continue;
+                    if (ArtImportContract.RoleOf(yol) == ArtImportContract.TextureRole.Unknown) continue;   // not a T_<role>_<Map> contract map
+                    harita++;
+                    if (!ArtImportContract.IsShippedMap(yol)) sayilmayan.Add(AssetDatabase.GetAssetPath(m) + " ." + ad + " → " + yol + " (" + ArtImportContract.RoleOf(yol) + ")");
+                }
+            }
+
+            Debug.Log("[DD-TEST] wp091.shippedBound materials=" + materyal + " boundContractMaps=" + harita + " uncounted=" + sayilmayan.Count);
+            Assert.Greater(materyal, 0, ArtRoot + " altında materyal yok; tarama yalanlanmıştır.");
+            Assert.Greater(harita, 0, "materyallerde sözleşme haritası yok; tarama yalanlanmıştır.");
+            Assert.IsEmpty(sayilmayan, "Materyalin bağladığı harita sevk satırında sayılmıyor (ArtImportContract.IsShippedMap):\n" + string.Join("\n", sayilmayan));
         }
 
         private static void PngBoyut(string yol, out int w, out int h)
