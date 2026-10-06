@@ -175,6 +175,10 @@ class MeasuredByTests(unittest.TestCase):
                           ("L5", "R2LokomotionIkincilTests.L5_Kalabalik_FazSenkronuCiftleri")):
             self.assertEqual({"suite": "playmode", "filter": "DD.Prototype.Tests.PlayMode." + name, "quiet": False},
                              gate(gid)["measuredBy"], gid)
+        # ca1d743d: one locomotion course writes L1, L1t, L2 and L3 - one r2 session for the four
+        course = "DD.Prototype.Tests.PlayMode.R2LokomotionOlcumTests.L1_L3_Lokomotion_8Yon_KalkisDurusDonus"
+        steps = {s["id"]: s for s in r2.measurement_steps(r2.load_contract(CONTRACT), quiet=False)}
+        self.assertEqual((course, ["L1", "L1t", "L2", "L3"]), (steps["r2-L1"]["filter"], steps["r2-L1"]["gates"]))
         row = r2.evaluate_gate(gate("H6"), FINAL, measure=measure("H6", visibleShareMin=0.21, muzzleInsideSilhouetteFrames=0,
                                                                   weaponsMeasured=10, secondWorstShare=0.33))
         self.assertEqual("FAIL", row["status"])

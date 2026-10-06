@@ -78,6 +78,13 @@ Other S-06 writers (WP-083 R2, S-06 06.10; playmode, `[Explicit]`, run by full n
   `settleSeconds` (s). There is no spring layer today, so it measures LocomotionLean, the only procedural body layer.
 - L5 `R2LokomotionIkincilTests.L5_Kalabalik_FazSenkronuCiftleri` (`c001a5e1`): `syncedPairShare`, the worst sampled frame
   over the 40-zombie GateMix crowd.
+- L1, L1t, L2, L3: one course, `R2LokomotionOlcumTests.L1_L3_Lokomotion_8Yon_KalkisDurusDonus` (`ca1d743d`), one r2
+  session writes all four. Hero only; the draft's per-tier zombie L1 is not covered (C-00's call).
+  - L1 / L1t are unitless: foot speed over body speed, with body speed floored at 1 m/s. `samples` = contact foot-frames
+    for L1, transition-window foot-frames for L1t.
+  - L2 measures the planted foot's backward speed; the draft's literal world-space step always equals v. `samples` =
+    steady cycles.
+  - L3's steady peak is floored at 1 deg/frame. `samples` = transition frames.
 
 ## H1 (hand to grip, decision B; elbow report — C-00 05.10)
 
