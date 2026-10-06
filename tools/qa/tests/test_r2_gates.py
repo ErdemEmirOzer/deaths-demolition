@@ -168,7 +168,13 @@ class MeasuredByTests(unittest.TestCase):
             self.assertEqual(("S-06", "gate", report), (gate(gid)["owner"], gate(gid)["kind"], gate(gid)["report"]))
         self.assertEqual({"suite": "playmode", "filter": "DD.Prototype.Tests.PlayMode.R2HeroOlcumTests.H1b_SolEl_Kavrama_"
                           "TumKlasikSilahlar_DurusYuruyus", "quiet": False}, gate("H1b")["measuredBy"])
-        self.assertNotIn("measuredBy", gate("H6"))
+        # S-06's WP-083 R2 writers (f114d24c H2 + H6, c001a5e1 L4 + L5), each run by full name in the r2 stage
+        for gid, name in (("H2", "R2HeroGovdeTests.H2_SilahGovdeGomulmesi_TumKlasikSilahlar_DurusYuruyus"),
+                          ("H6", "R2HeroGovdeTests.H6_TpSilahGorunurlugu_TumKlasikSilahlar_DurusYuruyus"),
+                          ("L4", "R2LokomotionIkincilTests.L4_IkincilHareket_DurusSonrasiOturma"),
+                          ("L5", "R2LokomotionIkincilTests.L5_Kalabalik_FazSenkronuCiftleri")):
+            self.assertEqual({"suite": "playmode", "filter": "DD.Prototype.Tests.PlayMode." + name, "quiet": False},
+                             gate(gid)["measuredBy"], gid)
         row = r2.evaluate_gate(gate("H6"), FINAL, measure=measure("H6", visibleShareMin=0.21, muzzleInsideSilhouetteFrames=0,
                                                                   weaponsMeasured=10, secondWorstShare=0.33))
         self.assertEqual("FAIL", row["status"])

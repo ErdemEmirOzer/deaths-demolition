@@ -71,6 +71,13 @@ table (S-02), H4a = FP arm keys (S-06), same thresholds. H4a is measured with th
 they are visible; on the default path they are off) by `AnimationTests.FpKollar_Kadraj_KolPayi10_KameraMesafesi15_ElSilahta`
 (WP-083 R2 `6711f57f`; not `[Explicit]`, also in CI). It writes `armOffscreenFrames` and `armInCameraFrames` over the armed
 weapons' rest frames; `samples` is the frames measured. The chain runs it by full name in the r2 stage.
+Other S-06 writers (WP-083 R2, S-06 06.10; playmode, `[Explicit]`, run by full name in the r2 stage, quiet false, no env):
+- H2 `R2HeroGovdeTests.H2_SilahGovdeGomulmesi_TumKlasikSilahlar_DurusYuruyus` (`f114d24c`): `clipFrames` (weapon LOD0 more
+  than 0.5 cm inside the chest, shoulders or upper arms); `samples` = the sampled frames.
+- L4 `R2LokomotionIkincilTests.L4_IkincilHareket_DurusSonrasiOturma` (`c001a5e1`, report): `amplitude` (deg),
+  `settleSeconds` (s). There is no spring layer today, so it measures LocomotionLean, the only procedural body layer.
+- L5 `R2LokomotionIkincilTests.L5_Kalabalik_FazSenkronuCiftleri` (`c001a5e1`): `syncedPairShare`, the worst sampled frame
+  over the 40-zombie GateMix crowd.
 
 ## H1 (hand to grip, decision B; elbow report — C-00 05.10)
 
@@ -129,7 +136,10 @@ visible pixels (depth-tested in the scene) over its own unoccluded mask; and `mu
 whose Muzzle socket projects inside the body silhouette. Report `weaponsMeasured` and `secondWorstShare` (the second-worst
 weapon's share, so one weapon stuck alone is told apart). The per-weapon table goes beside the artifact
 (`r2-H6-perweapon.csv`: rosterKey, share, muzzleInsideFrames) and into the log. Rendered with `cam.Render()` into a
-target texture in batch (no WaitForEndOfFrame). B2e AD MUST-3 (S-06).
+target texture in batch (no WaitForEndOfFrame). B2e AD MUST-3 (S-06). Writer: `R2HeroGovdeTests.H6_TpSilahGorunurlugu_
+TumKlasikSilahlar_DurusYuruyus` (WP-083 R2 `f114d24c`, `[Explicit]`), run by full name in the r2 stage. It needs a graphics
+device: `tools/test.sh` runs PlayMode without `-nographics`; under `-nographics` the source check fails and no artifact is
+written. The CSV next to the artifact is never bound (the judge reads `r2-<id>.json` only).
 
 ## H1c (support-arm reach — C-00 06.10)
 
