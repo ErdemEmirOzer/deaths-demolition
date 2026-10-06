@@ -666,7 +666,11 @@ namespace DD.Art.Tests.EditMode
             int materyal = 0, harita = 0;
             foreach (string guid in AssetDatabase.FindAssets("t:Material", new[] { ArtRoot }))
             {
-                var m = AssetDatabase.LoadAssetAtPath<Material>(AssetDatabase.GUIDToAssetPath(guid));
+                string materyalYolu = AssetDatabase.GUIDToAssetPath(guid);
+                // the shader variant pins are not shipped look materials; loading the transparent pin lets URP re-validate it and the
+                // editor rewrites it on exit (gt 06.10: a dirty tree stops the R2 chain's verify_tree) — skipped before loading
+                if (materyalYolu.Contains("/ArtVariantPins/")) continue;
+                var m = AssetDatabase.LoadAssetAtPath<Material>(materyalYolu);
                 if (m == null || m.shader == null) continue;
                 materyal++;
                 adlar.Clear();
