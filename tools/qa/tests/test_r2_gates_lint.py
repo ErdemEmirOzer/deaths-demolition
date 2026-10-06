@@ -335,7 +335,22 @@ class CliTests(LintTestCase):
         self.assertEqual(2, self._main()[0])
 
 
+def tools_only_checkout():
+    """A sparse checkout without the project's C# (a tools-only worktree): the lint has no writer to read there. A full
+    checkout without them is still a failure (C-00 06.10, as test_wp078_ai_flags does)."""
+    import subprocess
+    if any((REPO / lint.PROJECT / "Assets").rglob("*.cs")):
+        return False
+    r = subprocess.run(["git", "-C", str(REPO), "config", "--get", "core.sparseCheckout"], capture_output=True, text=True)
+    return r.stdout.strip() == "true"
+
+
 class RealRepoTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        if tools_only_checkout():
+            raise unittest.SkipTest("tools-only sparse checkout (no C# under %s) — run in a full checkout" % (REPO / lint.PROJECT))
+
     def test_every_writer_on_this_checkout_parses(self):
         # thresholds and coverage change by reviewed commits; what must hold is that the lint can read every call
         findings, writes = lint.run(REPO)
