@@ -130,6 +130,9 @@ for pid in pids or []:
     info = bsdinfo(pid)
     if info is None: continue
     cmd = args(info["pid"]) or info["comm"]
+    # P5 review r2 (06.10): <tmp>/ps-restore-lstart-unknown → a restoring guard's own start time is unknown (-o lstart= -p)
+    if not every and names == ["lstart"] and "userdata-guard.sh restore" in cmd \
+            and os.path.exists(os.environ.get("SHIM_TMP", "\0") + "/ps-restore-lstart-unknown"): continue
     # isolation (05.10): a REAL Player of another session on this machine is not part of the fixture — the sampler would
     # log it as a foreign writer (FOREIGN_WRITER flakes); fixture Players live under SHIM_TMP and stay visible
     if every and real_player.search(cmd) and os.environ.get("SHIM_TMP", "\0") not in cmd: continue
@@ -1366,6 +1369,172 @@ class LedgerTests(RestoreBase):
         rc, out, err = self.run_guard("restore", a, "--scope", "editor"); self.assertEqual(0, rc, out + err)
         self.assertEqual('{"ui": 1}\n', (self.d1 / "ui-settings.json").read_text())
         self.assertTrue(self.wait_file(done_b, 120)); self.assertEqual("0", done_b.read_text().strip(), self.out_of(done_b))
+
+    # -- C-00 06.10 (gt P4/P5): a restore's out-of-scope areas and other live windows ------------------------------------
+    def test_P5_DarRestore_KapsamDisiDegisenAlanDirty_GenisRestoreOrijinal(self):
+        """gt P5: an all-window restored --scope editor left the player area 'released' with the run's bytes in it — the
+        next player window took them as its base and its restore put them back. Now that area is dirty (blocked) until
+        the window's own wider restore brings the user's bytes back."""
+        a, b = self.tmp / "ugA", self.tmp / "ugB"
+        self.foreign_snapshot(a, scope="all")
+        self.run_changes()
+        rc, out, err = self.run_guard("restore", a, "--scope", "editor")
+        self.assertIn(rc, (0, 32), out + err)
+        recs = self.records()
+        self.assertEqual(1, len(recs), "A closed — its player area (the run's bytes) released: %s" % self.records("closed"))
+        rec = recs[0]
+        self.assertEqual(("dirty", "finalized", "dirty"), (rec["state"], rec["areas"]["editor"], rec["areas"]["player"]))
+        self.assertEqual({"player": "changed since the snapshot"}, rec["outOfScopeDirty"])
+        rc, out, err = self.run_guard("snapshot", b, "--scope", "player")
+        self.assertEqual(65, rc, out + err)   # the run's player bytes are nobody's base
+        rc, out, err = self.run_guard("restore", a, "--scope", "all")
+        self.assertEqual(0, rc, out + err)
+        self.assertEqual('{"player": 1}\n', (self.d2 / "prototype-profile.json").read_text())
+        self.assertEqual('{"ui": 1}\n', (self.d1 / "ui-settings.json").read_text())
+        self.assertEqual([], self.records()); self.assertEqual(1, len(self.records("closed")))
+        rc, out, err = self.run_guard("snapshot", b, "--scope", "player")
+        self.assertEqual(0, rc, out + err)
+        self.assertEqual(0, self.run_guard("restore", b, "--scope", "player")[0])
+
+    def test_P5_DarRestore_KapsamDisiDegismeyenAlanReleased_GenisRestoreSifir(self):
+        """an out-of-scope area the run left as it was is released (byte-identical to the snapshot); a later wider restore
+        converges with 0 (D6's re-restore contract)."""
+        a = self.tmp / "ugA"
+        self.foreign_snapshot(a, scope="all")
+        (self.d1 / "ui-settings.json").write_text('{"ui": 99}\n')   # the run changes the editor area only
+        p = self.lock_d2(self.d1)
+        rc, out, err = self.run_guard("restore", a, "--scope", "editor", DD_GUARD_WAIT="2")
+        self.unlock_d2(p, self.d1)
+        self.assertEqual(75, rc, out + err)
+        rec = self.records()[0]
+        self.assertEqual(("dirty", "released"), (rec["areas"]["editor"], rec["areas"]["player"]))
+        rc, out, err = self.run_guard("restore", a, "--scope", "all")
+        self.assertEqual(0, rc, out + err)
+        self.assertEqual('{"ui": 1}\n', (self.d1 / "ui-settings.json").read_text())
+        self.assertEqual('{"player": 1}\n', (self.d2 / "prototype-profile.json").read_text())
+        self.assertEqual([], self.records())
+
+    def test_P5_RetryFinalizedAlanYeniPencerede_DegisiklikYazilmaz_DirtyAlanGeriGelir(self):
+        """B-1 frees a finalized area of a dirty window; B opens there and changes it. The owner's retry restores its dirty
+        area and never overwrites B's change (D6 CAS → STALE, 30) — not a 64: a finalized area is not 'still to restore',
+        and it stays finalized (the window closes). B, opened after A, restores without waiting for A."""
+        a, b = self.tmp / "ugA", self.tmp / "ugB"
+        self.foreign_snapshot(a, scope="all")
+        self.run_changes()
+        p = self.lock_d2()
+        rc, out, err = self.run_guard("restore", a, "--scope", "all", DD_GUARD_WAIT="2")
+        self.unlock_d2(p)
+        self.assertEqual(75, rc, out + err)
+        rec = self.records()[0]
+        self.assertEqual(("finalized", "dirty"), (rec["areas"]["editor"], rec["areas"]["player"]))
+        rc, out, err = self.run_guard("snapshot", b, "--scope", "editor")
+        self.assertEqual(0, rc, out + err)                            # editor is free (finalized)
+        (self.d1 / "ui-settings.json").write_text('{"ui": 77}\n')     # B's run
+        rc, out, err = self.run_guard("restore", a, "--scope", "all")
+        self.assertNotEqual(64, rc, out + err)
+        self.assertEqual('{"ui": 77}\n', (self.d1 / "ui-settings.json").read_text())        # B's change kept
+        self.assertEqual('{"player": 1}\n', (self.d2 / "prototype-profile.json").read_text())  # A's dirty area back
+        self.assertNotIn(str(a.resolve()), [r["dir"] for r in self.records()])   # finalized is final: A closed
+        rc, out, err = self.run_guard("restore", b, "--scope", "editor")
+        self.assertIn(rc, (0, 32), out + err)   # 32: A put its player area back while B's (editor) window was open
+        self.assertEqual('{"ui": 1}\n', (self.d1 / "ui-settings.json").read_text())
+
+    def test_P5_IcIcePencereAcikken_DisRestore64_SiraylaKapanir(self):
+        """a nested window still open over an area the outer restore has to write (the wrong order): its own restore would
+        put the run's bytes back — 64, nothing written; inner first, then outer."""
+        n = self.tmp / "ugN"
+        self.snap("all")                                    # A: owner = this test process
+        (self.d2 / "prototype-profile.json").write_text('{"player": 99}\n')   # A's run, before N's snapshot
+        done_n = self.queued_snapshot(n, scope="player")     # N: a child of this process → nested, granted at once
+        self.assertTrue(self.wait_file(done_n, 120)); self.assertEqual("0", done_n.read_text().strip(), self.out_of(done_n))
+        rc, out, err = self.restore("all")
+        self.assertEqual(64, rc, out + err); self.assertIn("holds the player area now", out + err)
+        self.assertEqual('{"player": 99}\n', (self.d2 / "prototype-profile.json").read_text())   # nothing written
+        self.assertEqual("open", [r for r in self.records() if r["dir"] == str(self.dir.resolve())][0]["state"])
+        self.assertEqual(0, self.run_guard("restore", n, "--scope", "player")[0])
+        rc, out, err = self.restore("all"); self.assertEqual(0, rc, out + err)
+        self.assertEqual('{"player": 1}\n', (self.d2 / "prototype-profile.json").read_text())
+
+    def test_P5_TerkEdilmisIcPencere_DisRestore64_OnceIcSonraDis_Orijinal(self):
+        """P5 review MUST-1: the inner window's owner is gone and its window was never restored. The outer restore must not
+        write first — restored after it, the inner window would put the outer run's bytes back."""
+        n = self.tmp / "ugN"
+        self.snap("all")
+        (self.d2 / "prototype-profile.json").write_text('{"player": 99}\n')   # A's run, before N
+        done_n = self.queued_snapshot(n, scope="player")
+        self.assertTrue(self.wait_file(done_n, 120)); self.assertEqual("0", done_n.read_text().strip(), self.out_of(done_n))
+        os.killpg(self.procs[-1].pid, signal.SIGKILL); self.procs[-1].wait(timeout=30)   # N's owner gone
+        rc, out, err = self.restore("all")
+        self.assertEqual(64, rc, out + err); self.assertIn("abandoned: C-00 restores it first", out + err)
+        self.assertEqual('{"player": 99}\n', (self.d2 / "prototype-profile.json").read_text())   # nothing written
+        rc, out, err = self.run_guard("restore", n, "--scope", "player")
+        self.assertIn(rc, (0, 30), out + err)   # 30: WINDOW_LOST (its owner is gone), restored all the same
+        rc, out, err = self.restore("all"); self.assertEqual(0, rc, out + err)
+        self.assertEqual('{"player": 1}\n', (self.d2 / "prototype-profile.json").read_text())
+
+    def test_P5_IlkDenemeDarRestore_IcPencereAcik64(self):
+        """P5 review S-6: the first attempt records the run's end of EVERY window area (R8) — a narrow first restore of the
+        outer window while the inner one is open would record the inner run's bytes as 'first' and its later wide restore
+        would never converge (STALE). The first attempt checks every window area: 64."""
+        n = self.tmp / "ugN"
+        self.snap("all")
+        (self.d2 / "prototype-profile.json").write_text('{"player": 99}\n')
+        done_n = self.queued_snapshot(n, scope="player")
+        self.assertTrue(self.wait_file(done_n, 120)); self.assertEqual("0", done_n.read_text().strip(), self.out_of(done_n))
+        (self.d2 / "prototype-profile.json").write_text('{"player": 77}\n')   # N's run
+        rc, out, err = self.restore("editor")
+        self.assertEqual(64, rc, out + err); self.assertIn("holds the player area now", out + err)
+        self.assertFalse((self.dir / "after-run.txt").exists())   # no 'first' recorded
+        self.assertEqual(0, self.run_guard("restore", n, "--scope", "player")[0])
+        rc, out, err = self.restore("all"); self.assertEqual(0, rc, out + err)
+        self.assertEqual('{"player": 1}\n', (self.d2 / "prototype-profile.json").read_text())
+
+    def test_P5_FinalizedAlan_OkGecenYol_SonraKosuBayti_Stale30Yazimsiz(self):
+        """P5 review S-1: an OK path is not in written-<a>.txt. Attempt 1 records the run's end (player 99) and ends 75;
+        someone puts the profile back; attempt 2 finds it OK and finalizes the area (closed). A later {"player": 99} —
+        the run's bytes, but someone's later change — is never written over by a third restore: STALE 30."""
+        self.snap("all")
+        (self.d2 / "prototype-profile.json").write_text('{"player": 99}\n')
+        p = self.lock_d2()
+        rc, out, err = self.restore("all", DD_GUARD_WAIT="2")
+        self.unlock_d2(p)
+        self.assertEqual(75, rc, out + err)
+        (self.d2 / "prototype-profile.json").write_text('{"player": 1}\n')
+        rc, out, err = self.restore("all"); self.assertEqual(0, rc, out + err)
+        self.assertEqual([], self.records())
+        (self.d2 / "prototype-profile.json").write_text('{"player": 99}\n')
+        rc, out, err = self.restore("all")
+        self.assertEqual(30, rc, out + err)
+        self.assertEqual('{"player": 99}\n', (self.d2 / "prototype-profile.json").read_text())
+        self.assertIn("never written again", (self.dir / "restore-player.json").read_text())
+
+    def test_P5_KapsamDisiAlanCanliKilitSahibi_DegismeseDeDirty(self):
+        """P5 review S-4: an out-of-scope area the run left as it was but a live lock holder may still write is not
+        released — it is dirty with its reason in the record; a wider restore closes the window."""
+        self.snap("all")
+        (self.d1 / "ui-settings.json").write_text('{"ui": 99}\n')   # the run changes the editor area only
+        p = self.lock_d2()                                          # a live holder on the player folder
+        rc, out, err = self.restore("editor")
+        self.unlock_d2(p)
+        self.assertEqual(0, rc, out + err)
+        rec = self.records()[0]
+        self.assertEqual(("dirty", "finalized", "dirty"), (rec["state"], rec["areas"]["editor"], rec["areas"]["player"]))
+        self.assertEqual({"player": "a live lock holder"}, rec["outOfScopeDirty"])
+        rc, out, err = self.restore("all"); self.assertEqual(0, rc, out + err)
+        self.assertEqual([], self.records())
+
+    def test_P5_RestorecununBaslangicZamaniBilinmez_75HicbirSeyYazilmaz(self):
+        """P5 review r2 S-2: a restore that cannot mark its record restoring (own start time unknown) would leave it open —
+        a nested snapshot could be granted inside the area while it writes. 75, nothing restored; the retry restores."""
+        self.snap("all"); self.run_changes()
+        (self.tmp / "ps-restore-lstart-unknown").write_text("")
+        rc, out, err = self.restore("all")
+        (self.tmp / "ps-restore-lstart-unknown").unlink()
+        self.assertEqual(75, rc, out + err); self.assertIn("own start time unknown", out + err)
+        self.assertNotEqual('{"player": 1}\n', (self.d2 / "prototype-profile.json").read_text())   # nothing written
+        self.assertEqual("open", self.records()[0]["state"])
+        rc, out, err = self.restore("all"); self.assertEqual(0, rc, out + err)
+        self.assertEqual('{"player": 1}\n', (self.d2 / "prototype-profile.json").read_text())
 
     def test_Kuyruk_SayisalOlmayanBekleme_Snapshot64HicbirSeyYok_Restore_UyariVarsayilan(self):
         """06.10 reviews: DD_GUARD_QUEUE_WAIT=1h / DD_GUARD_WAIT=abc made a wait endless (the test never became true)."""

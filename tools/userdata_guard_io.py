@@ -443,6 +443,8 @@ def ledger_begin(ledger, record, po, waiter=None):
             if own:
                 record["queuedUtc"] = own[2].get("utc")   # 06.10 review SHOULD-4: the window's age starts now, not at the queue
             record["utc"] = utc_now()
+            # C-00 06.10 (P5): the grant order — restore_begin lets only a window opened AFTER this one stop its restore
+            record["grantedNs"] = max([time.time_ns()] + [b + 1 for b in map(began, ledger_records(ledger)) if b])
             if waiter:
                 record["guard"] = {"pid": waiter, "lstart": (table.state(waiter) or ("", lstart(waiter)))[1]}
             ledger_write(os.path.join(ledger, "windows", record["id"] + ".json"), record)
@@ -481,6 +483,104 @@ def ledger_begin(ledger, record, po, waiter=None):
     return 75, "queue position %d — ahead: %s — estimate %s%s" % (len(ahead) + 1, first, est, place)
 
 
+def began(rec):
+    """the grant order of a window record (ns): its grantedNs (C-00 06.10, P5), else its grant second (an older guard's
+    record); None when neither can be read."""
+    import calendar
+    try:
+        return int(rec["grantedNs"])
+    except (KeyError, TypeError, ValueError):
+        try:
+            return calendar.timegm(time.strptime(rec.get("utc", ""), "%Y-%m-%dT%H:%M:%SZ")) * 10 ** 9
+        except (TypeError, ValueError, OverflowError):
+            return None
+
+
+def opened_after(rec, other):
+    """True only when `other` was granted after `rec` for certain: both grantedNs → by ns; otherwise (an older guard's
+    record has its grant second only) by whole seconds, the same second unknown (P5 review S-3) — False."""
+    def ns(r):
+        try:
+            return int(r["grantedNs"])
+        except (KeyError, TypeError, ValueError):
+            return None
+    if ns(rec) is not None and ns(other) is not None:
+        return ns(other) > ns(rec)
+    mine, theirs = began(rec), began(other)
+    if mine is None or theirs is None:
+        return False
+    return theirs // 10 ** 9 > mine // 10 ** 9
+
+
+def own_record(ledger, wid):
+    """the window's record: still in windows/, else closed/ (a re-restore of a closed window); None if neither."""
+    for sub in ("windows", "closed"):
+        try:
+            with open(os.path.join(ledger, sub, wid + ".json"), encoding="utf-8") as f:
+                return json.load(f)
+        except (OSError, ValueError):
+            continue
+    return None
+
+
+def _restore_blocker(ledger, own, areas, table):
+    """(other record, hit areas, why it counts) of the first window that stops this restore, or None. A window opened
+    AFTER this one (opened_after) that holds an area of `areas` now and can still be restored — its snapshot committed
+    (before.txt; not a SNAPSHOT_MISSING mark), or a snapshot still being taken by a live guard — whatever its owner
+    (P5 review MUST-1: an abandoned inner window restored after the outer one would put the outer run's bytes back).
+    A window that can never be restored (SNAPSHOT_MISSING, an abandoned snapshotting record) has no base to protect
+    (S-5: else a 64 loop)."""
+    for other in ledger_records(ledger):
+        if other.get("id") == own.get("id") or other.get("state") not in LEDGER_LIVE + ("dirty",):
+            continue
+        if not opened_after(own, other):
+            continue
+        held = set(other.get("windowAreas") or [])
+        if other.get("state") == "dirty" and isinstance(other.get("areas"), dict):
+            held = {a for a, v in other["areas"].items() if v != "finalized"} or held
+        hit = held & set(areas)
+        if not hit or str(other.get("why", "")).startswith("SNAPSHOT_MISSING"):
+            continue
+        if os.path.exists(os.path.join(other.get("dir") or "/nonexistent", "before.txt")):
+            return other, hit, ("open" if alive(other.get("owner") or {}, table) else
+                                "its owner pid %s is gone — abandoned: C-00 restores it first" % (other.get("owner") or {}).get("pid"))
+        if other.get("state") == "snapshotting" and alive(other.get("guard") or other.get("owner") or {}, table):
+            return other, hit, "its snapshot is being taken"
+    return None
+
+
+def restore_begin(ledger, wid, areas, restorer=None):
+    """G4 D8 (C-00 06.10, gt P4/P5): may a restore of window `wid` write `areas` (the areas it still has to restore —
+    the guard leaves out the finalized ones, and after the first attempt the ones the run left as they were)? Under ONE
+    L/.lock hold with the R2 mark (P5 review S-2: no nested grant between the check and `restoring`). (code, reason):
+    64 no — a window opened after this one holds one of them now and can still be restored (_restore_blocker): a nested
+    window still open (the wrong restore order), an abandoned one, one an older guard let open over an area this window
+    left with the run's bytes. Writing would land in its run; its own restore would put the run's bytes back. Nothing
+    written, the record untouched.
+    0 yes — then, with `restorer` ({pid, lstart}), the record (still in windows/) is `restoring` by it. Also 0 when the
+    other window was opened before this one (this one is nested in it: inner first), when the order is unknown (no record
+    of this window: WINDOW_LOST; an older guard's record of the same second), or no window holds them."""
+    with LedgerLock(ledger):
+        own = own_record(ledger, wid)
+        if own is not None and areas:
+            hit = _restore_blocker(ledger, own, areas, ProcTable())
+            if hit:
+                other, areas_hit, how = hit
+                return 64, ("window %s (DIR=%s, owner pid %s, %s; %s), opened after this one, holds the %s area now — "
+                            "this restore would write into it; restore that window first (nested: inner before outer); "
+                            "if it stays dirty or cannot be restored: tell C-00" % (
+                                other.get("id"), other.get("dir"), (other.get("owner") or {}).get("pid"), other.get("state"),
+                                how, " ".join(sorted(areas_hit))))
+        if restorer:
+            ledger_update(ledger, wid, {"state": "restoring", "restorer": restorer}, locked=True)
+        return 0, ""
+
+
+def restore_check(ledger, wid, areas):
+    """restore_begin without the R2 mark (the reason only)."""
+    return restore_begin(ledger, wid, areas)
+
+
 def ledger_dequeue(ledger, wid, reason="left"):
     with LedgerLock(ledger):
         for path, ns, t in queue_tickets(ledger):
@@ -504,6 +604,11 @@ def ledger_update(ledger, wid, patch, locked=False):
             # D8 review MUST-1: an area outside this restore's scope is "released" only while it is still open — a dirty or
             # finalized one keeps its value (a narrower re-restore never closes a window it did not restore)
             if v == "released" and areas.get(a) in ("dirty", "finalized"):
+                continue
+            # C-00 06.10 (P5): finalized is final — a later restore of this window never writes there again (D6: a path
+            # it wrote is STALE once changed), so a STALE there is someone else's change, not this window's run: the
+            # area stays free and the window can still close
+            if areas.get(a) == "finalized":
                 continue
             areas[a] = v
         if patch.get("state") == "auto":   # R12: dirty while any area is dirty, else closed
@@ -979,9 +1084,11 @@ def restore_area(cfg):
                 note(entry, "SNAPCORRUPT"); continue
             if live == exp:
                 note(entry, "OK"); continue
-            if live != first or path in done:
+            if live != first or path in done or cfg.get("final"):
                 if path in done:
                     entry["why"] = "changed after this window restored it"
+                elif cfg.get("final") and live == first:   # P5 review S-1: an OK path is not in written-<a>.txt
+                    entry["why"] = "this window finalized the area in an earlier restore — never written again"
                 note(entry, "STALE"); continue
             ok, why = cas(path, first)
             if not ok:
@@ -1073,6 +1180,8 @@ def restore_area(cfg):
         d = decide(exported, disk)
         if d == "WRITE" and p in done:
             entry["why"] = "changed after this window restored it"; d = "STALE"
+        elif d == "WRITE" and cfg.get("final"):   # P5 review S-1: an OK plist / a left-over MUST-5 marker
+            entry["why"] = "this window finalized the area in an earlier restore — never written again"; d = "STALE"
         if d != "WRITE":
             note(entry, d); return finish()
         h = lock_holder(cfg["folder"], cfg["guardPid"])
@@ -1192,6 +1301,20 @@ def main(argv):
                           locked=True)   # 06.10 review MUST-2: never "restored again" — it cannot be restored
         print(rec["id"])
         return 0
+    if cmd == "ledger-finalized" and len(args) == 2:   # the window's areas an earlier restore finalized (open or closed)
+        rec = own_record(args[0], args[1])
+        if rec is None and any(os.path.exists(os.path.join(args[0], sub, args[1] + ".json")) for sub in ("windows", "closed")):
+            print("the ledger record of %s is unreadable" % args[1])   # P5 review NIT-2: never silently "nothing finalized"
+            return 3
+        amap = (rec or {}).get("areas") or {}
+        print(" ".join(a for a, v in sorted(amap.items()) if v == "finalized"))
+        return 0
+    if cmd == "ledger-restore-begin" and len(args) >= 4:   # L WID <restorer pid> <restorer lstart|""> [areas...]
+        restorer = {"pid": int(args[2]), "lstart": args[3]} if args[3] else None
+        code, why = restore_begin(args[0], args[1], args[4:], restorer)
+        if why:
+            print(why)
+        return code
     if cmd == "ledger-dequeue" and len(args) in (2, 3):
         ledger_dequeue(args[0], args[1], args[2] if len(args) == 3 else "left")
         return 0

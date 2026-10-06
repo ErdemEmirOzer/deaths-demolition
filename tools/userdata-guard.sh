@@ -44,7 +44,8 @@
 # Exit (WP-066N): 30 also = snapshot refused, a Player is running · 31 = restore refused, snapshot deviates from the
 #   known-good player display values.
 # Exit: 0 ok · 75 busy (a live foreign lock holder / live data kept changing) — nothing restored in that area · 30 restore did not reproduce the snapshot or a PlayerPrefs key not in it remains
-# (<dir>/extra-keys.txt) · 64 usage
+# (<dir>/extra-keys.txt) · 64 usage · 64 restore refused, nothing written (G4 D8 P5, C-00 06.10): a window opened after
+#   this one holds an area it still has to write — restore that window first (nested: inner before outer)
 # WP-079G D6a (C-00 30.09): (1) lock order is always player → unity: `snapshot … --scope player|all` refuses with 64
 #   (nothing written, no slot taken) while the calling shell or one of its ancestors holds a `unity` slot (tools/slot.sh
 #   holds; the pid chain from this guard, plus DD_SLOT_OWNER when set) — since C-00 05.10 (G4 D8 queue) for EVERY scope:
@@ -461,6 +462,9 @@ ledger_dirty() { local out rc
     *) ld_log "WARNING userdata-guard: ledger-mark-missing failed (exit $rc) — the ledger window of $DIR was NOT marked dirty, tell C-00: ${${out##*$'\n'}:0:200}" ;;
   esac; return 0; }
 refuse64() { ledger_dirty "$*"; UG_LAST="$(date -u +%FT%TZ) userdata-guard: $* — refused (64)"; echo "userdata-guard: $* — refused (64)" >&2; exit 64; }
+# a refusal that leaves the ledger as it is (the snapshot is there; the record must not become SNAPSHOT_MISSING)
+refuse64_kept() { UG_LAST="$(date -u +%FT%TZ) userdata-guard: $* — refused (64)"; print -r -- "$UG_LAST" >> "$UG_TL"
+  echo "userdata-guard: $* — refused (64)" >&2; exit 64; }
 [ -f "$DIR/before.txt" ] || refuse64 "no snapshot in $DIR"
 for f in snapshot-manifest.json sampler.json; do
   [ -e "$DIR/$f" ] && refuse64 "v1 (74f62dd6) snapshot ($f) — restore it with the guard version that took it, tell C-00"
@@ -522,15 +526,42 @@ TRAPINT()  { GUARD_SIG=2;  [ -n "$WAITPID" ] && kill -TERM "$WAITPID" 2>/dev/nul
 TRAPTERM() { GUARD_SIG=15; [ -n "$WAITPID" ] && kill -TERM "$WAITPID" 2>/dev/null; return 0; }
 TRAPHUP()  { GUARD_SIG=1;  [ -n "$WAITPID" ] && kill -TERM "$WAITPID" 2>/dev/null; return 0; }
 trap '' PIPE   # D6 review SHOULD-4: a dead reader of stdout must not kill the guard before its summary and slot release
-# G4 D8 R2: the ledger record (a window taken before D8 has none — skipped) is restoring, by this process
-LREC=0
+# G4 D8 R2: the ledger record (a window taken before D8 has none — skipped) is restoring, by this process.
+# C-00 06.10 (gt P4/P5; P5 review MUST-1, S-2, S-5, S-6): in the SAME L/.lock hold, before anything is written — an
+# area this restore still has to write that a window opened AFTER this one holds now and that can still be restored
+# (its snapshot committed, its owner alive or not; or a snapshot being taken) is never written: 64, the ledger
+# untouched; restore that window first (an abandoned one: C-00). A window opened before this one never stops it (this
+# one is nested in it: inner first). The areas: on the first attempt every window area (R8 records the run's end of
+# all of them), later the scope's areas the run changed (after-run ≠ before: D6 never writes the others) — finalized
+# ones never (a finalized area is never written again, A_FINAL). A helper failure restores as before (a WARNING).
+LREC=0; FIN=()
 if [ "$KIND" = v2 ]; then
-  # 06.10 review MUST-3: never a restorer without its start time (K3 could not judge it) — the record then stays open
-  # (its live owner keeps waiters waiting) and R12 still closes or dirties it
-  if RL=$(python3 "$IO" lstart $$) && [ -n "$RL" ]; then
-    RP=$$ RL="$RL" python3 -c 'import json, os; print(json.dumps({"state": "restoring", "restorer": {"pid": int(os.environ["RP"]), "lstart": os.environ["RL"]}}))' \
-      | ( trap '' INT TERM HUP; python3 "$IO" ledger-update "$LEDGER" "$WINID" >/dev/null )   # D8 review SHOULD-2
-  else dd_log "WARNING userdata-guard: own start time unknown (ps) — ledger record $WINID not marked restoring"; fi
+  FINO=$(python3 "$IO" ledger-finalized "$LEDGER" "$WINID" 2>&1); FRC=$?
+  if [ $FRC -eq 0 ]; then FIN=(${=FINO})
+  else dd_log "WARNING userdata-guard: ledger-finalized failed (exit $FRC) — no area of $WINID taken as finalized; tell C-00: ${${FINO##*$'\n'}:0:200}"; fi
+  FIRSTRUN=1; { [ -f "$DIR/.after-run-attempt" ] || [ -f "$DIR/after-run.txt" ]; } && FIRSTRUN=0
+  RA=(); for a in $W; do
+    (( ${FIN[(Ie)$a]} )) && continue
+    if [ $FIRSTRUN -eq 0 ]; then
+      (( ${AREAS[(Ie)$a]} )) || continue
+      cmp -s "$DIR/before-$a.txt" "$DIR/after-run-$a.txt" && continue
+    fi
+    RA+=($a)
+  done
+  # 06.10 review MUST-3: never a restorer without its start time (K3 could not judge it); the order check runs all the same
+  RL=$(python3 "$IO" lstart $$) && [ -n "$RL" ] || RL=""
+  RCHK=$( ( trap '' INT TERM HUP; python3 "$IO" ledger-restore-begin "$LEDGER" "$WINID" $$ "$RL" $RA ) 2>&1); RCK=$?   # D8 review SHOULD-2
+  if [ $RCK -eq 64 ]; then refuse64_kept "$RCHK"
+  elif [ $RCK -ne 0 ]; then
+    dd_log "WARNING userdata-guard: ledger-restore-begin failed (exit $RCK) — no order check; restoring as before — tell C-00: ${${RCHK##*$'\n'}:0:200}"
+    [ -n "$RL" ] && RP=$$ RL="$RL" python3 -c 'import json, os; print(json.dumps({"state": "restoring", "restorer": {"pid": int(os.environ["RP"]), "lstart": os.environ["RL"]}}))' \
+      | ( trap '' INT TERM HUP; python3 "$IO" ledger-update "$LEDGER" "$WINID" >/dev/null )   # P5 review r2 N-1: the r1 mark
+  fi
+  # P5 review r2 (S-2): without its start time this restore cannot mark its record restoring — open, a nested snapshot could
+  # be granted inside the area while it writes (that run's restore would put this run's bytes back): nothing restored, 75
+  if [ -z "$RL" ] && [ -f "$LEDGER/windows/$WINID.json" ]; then
+    UG_LAST="$(date -u +%FT%TZ) userdata-guard restore scope=$SCOPE BUSY — own start time unknown (ps): the ledger record $WINID cannot be marked restoring — nothing restored (75) retry=same-dir class=BUSY"; print -r -- "$UG_LAST"; exit 75
+  fi
   [ -f "$LEDGER/windows/$WINID.json" ] && LREC=1   # R12 runs whenever the record exists
 fi
 case "${DIR:A}" in /private/tmp/*|/private/var/folders/*|/tmp/*) dd_log "WARNING userdata-guard: $DIR is under a temporary folder";; esac
@@ -660,13 +691,14 @@ area_cfg() { local a=$1 f
   local first="$DIR/after-run-$a.txt"
   A_DIR="$DIR" A_AREA=$a A_ID="$WINID" A_LEDGER="$LEDGER" A_FOLDER="$folder" A_NAMES="${(j:/:)names}" A_PLIST="$plist" A_DOMAIN="$dom" \
   A_PX=$px A_SF="$sf" A_SP="$sp" A_BEFORE="$DIR/before-$a.txt" A_FIRST="$first" A_VOL="$UNITY_VOLATILE" A_RE="$PLAYER_RE" \
-  A_CHECK=$check A_AS="${AS:A}" A_PR="${PR:A}" A_PID=$$ A_RESULT="$DIR/restore-$a.json" A_IC="$INDEXCLASS" python3 -c 'import json, os
+  A_CHECK=$check A_AS="${AS:A}" A_PR="${PR:A}" A_PID=$$ A_RESULT="$DIR/restore-$a.json" A_IC="$INDEXCLASS" \
+  A_FINAL=$(( ${FIN[(Ie)$a]} ? 1 : 0 )) python3 -c 'import json, os
 e = os.environ
 print(json.dumps({"dir": e["A_DIR"], "area": e["A_AREA"], "id": e["A_ID"], "ledger": e["A_LEDGER"], "folder": e["A_FOLDER"],
   "names": e["A_NAMES"].split("/"), "plist": e["A_PLIST"], "domain": e["A_DOMAIN"], "pxName": e["A_PX"], "snapFolder": e["A_SF"],
   "snapPlist": e["A_SP"], "before": e["A_BEFORE"], "first": e["A_FIRST"], "volatile": e["A_VOL"].split(), "playerRe": e["A_RE"],
   "checkPlayer": e["A_CHECK"] == "1", "rootAS": e["A_AS"], "rootPR": e["A_PR"], "guardPid": int(e["A_PID"]),
-  "result": e["A_RESULT"], "indexClass": e["A_IC"]}))'
+  "result": e["A_RESULT"], "indexClass": e["A_IC"], "final": e.get("A_FINAL") == "1"}))'
 }
 HELPER_FAILED=(); VERIFIED_AREAS=()
 for a in $WRITE_AREAS; do
@@ -730,7 +762,17 @@ if [ "$LREC" -eq 1 ]; then
   # SHOULD-1) with no class in this run's restore-<a>.json; released never overwrites dirty/finalized (MUST-1, io)
   # next slice (C-00 06.10): the record also carries this restore's retry (same-dir: BUSY / LOCKED / INTERRUPTED) — a
   # dirty window of a live owner that will restore again keeps the queue waiting instead of 65 (io ledger_begin)
-  LPATCH=$(L_W="$W" L_A="${AREAS[*]}" L_V="${VERIFIED_AREAS[*]}" L_DIR="$DIR" L_R="$RETRY" L_RC="$RC" python3 -c 'import json, os
+  # C-00 06.10 (gt P5; P5 review S-4): an area of the window OUTSIDE this restore's scope is released only when it is as
+  # it was at the snapshot (before = this attempt's state, cmp; no state → changed) and no live lock holder / Player may
+  # still write it — else dirty: released, its changed bytes would become the next window's base
+  OOSWHY=(); for a in $W; do   # NIT-6: the reason goes to the record (outOfScopeDirty)
+    (( ${AREAS[(Ie)$a]} )) && continue
+    if [ $a = editor ]; then F=$D1; else F=$D2; fi
+    if ! cmp -s "$DIR/before-$a.txt" "${CUR[$a]:-/dev/null}"; then OOSWHY+=("$a=changed since the snapshot")
+    elif [ -n "$(lock_holder "$F")" ]; then OOSWHY+=("$a=a live lock holder")
+    elif [ $a = player ] && [ -n "$(pgrep -fl "$PLAYER_RE" 2>/dev/null)" ]; then OOSWHY+=("$a=a running Player"); fi
+  done
+  LPATCH=$(L_W="$W" L_A="${AREAS[*]}" L_V="${VERIFIED_AREAS[*]}" L_DIR="$DIR" L_R="$RETRY" L_RC="$RC" L_WHY="${(j:;:)OOSWHY}" python3 -c 'import json, os
 e = os.environ; d = e["L_DIR"]; areas = {}
 def ok(a):
     if a not in e["L_V"].split():
@@ -740,9 +782,12 @@ def ok(a):
     except Exception:
         return False
     return not r.get("classes")
+why = dict(x.split("=", 1) for x in e["L_WHY"].split(";") if "=" in x)
+changed = set(why)
 for a in e["L_W"].split():
-    areas[a] = ("finalized" if ok(a) else "dirty") if a in e["L_A"].split() else "released"
-print(json.dumps({"state": "auto", "areas": areas, "retry": e["L_R"], "exit": int(e["L_RC"])}))')
+    areas[a] = ("finalized" if ok(a) else "dirty") if a in e["L_A"].split() else ("dirty" if a in changed else "released")
+print(json.dumps({"state": "auto", "areas": areas, "retry": e["L_R"], "exit": int(e["L_RC"]),
+                  "outOfScopeDirty": {a: r for a, r in why.items() if a in e["L_W"].split()}}))')
   LSTATE=$(print -r -- "$LPATCH" | python3 "$IO" ledger-update "$LEDGER" "$WINID") \
     || dd_log "WARNING userdata-guard: ledger record $WINID could not be updated at R12 — tell C-00"
   if [ "$LSTATE" = closed ]; then python3 "$IO" ledger-close "$LEDGER" "$WINID" \

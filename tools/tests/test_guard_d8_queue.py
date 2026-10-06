@@ -367,5 +367,113 @@ class KuyrukBirimTests(unittest.TestCase):
         self.assertEqual("snapshotting", json.loads((self.L / "windows" / "B.json").read_text())["state"])
 
 
+    # -- C-00 06.10 (gt P4/P5; P5 review): restore_begin — a window opened AFTER this one that holds an area it still has
+    # to write and can still be restored stops it (64); its owner's life does not matter -------------------------------
+    def committed(self, r):
+        """the record's DIR holds before.txt — its snapshot committed, it can be restored."""
+        d = Path(self.tmpd.name) / ("dir-" + r["id"])
+        d.mkdir(exist_ok=True); (d / "before.txt").write_text("")
+        r["dir"] = str(d)
+        return r
+
+    def only(self, *recs):
+        for f in (self.L / "windows").glob("*.json"):
+            f.unlink()
+        for r in recs:
+            self.put_record(r)
+
+    def test_Birim_RestoreCheck_SonraAcilanPencere64_OnceAcilan0(self):
+        self.only(self.committed(self.rec("A", self.me, areas=("editor", "player"), grantedNs=100)),
+                  self.committed(self.rec("N", self.foreign(), areas=("player",), grantedNs=200)))   # nested in A, open
+        code, why = self.io.restore_check(str(self.L), "A", ["editor", "player"])
+        self.assertEqual(64, code); self.assertIn("opened after this one, holds the player area now", why)
+        self.assertEqual(0, self.io.restore_check(str(self.L), "A", ["editor"])[0])   # N does not hold editor
+        self.assertEqual(0, self.io.restore_check(str(self.L), "N", ["player"])[0])   # A opened before N: inner first
+
+    def test_Birim_RestoreCheck_TerkEdilmisPencere64_GeriYuklenemeyen0(self):
+        """review MUST-1: an abandoned (owner gone) window opened after this one still stops it — restored after the outer
+        one it would put the outer run's bytes back. S-5: one that can never be restored does not (no 64 loop)."""
+        a = self.committed(self.rec("A", self.me, areas=("editor", "player"), grantedNs=100))
+        self.only(a, self.committed(self.rec("D", self.dead(), areas=("player",), grantedNs=200)))
+        code, why = self.io.restore_check(str(self.L), "A", ["player"])
+        self.assertEqual(64, code); self.assertIn("is gone — abandoned: C-00 restores it first", why)
+        r = self.committed(self.rec("R", self.dead(), areas=("player",), state="restoring", grantedNs=200))
+        r["restorer"] = self.foreign()
+        self.only(a, r); self.assertEqual(64, self.io.restore_check(str(self.L), "A", ["player"])[0])
+        m = self.committed(self.rec("M", self.foreign(), areas=("player",), state="dirty", grantedNs=200))
+        m["why"] = "SNAPSHOT_MISSING: no snapshot"
+        self.only(a, m); self.assertEqual(0, self.io.restore_check(str(self.L), "A", ["player"])[0])
+        self.only(a, self.rec("U", self.foreign(), areas=("player",), grantedNs=200))   # no before.txt: no base
+        self.assertEqual(0, self.io.restore_check(str(self.L), "A", ["player"])[0])
+        s1 = self.rec("S", self.foreign(), areas=("player",), state="snapshotting", grantedNs=200, guard=self.me)
+        self.only(a, s1)
+        code, why = self.io.restore_check(str(self.L), "A", ["player"])   # being taken by a live guard: it will have a base
+        self.assertEqual(64, code); self.assertIn("its snapshot is being taken", why)
+        self.only(a, self.rec("S", self.foreign(), areas=("player",), state="snapshotting", grantedNs=200, guard=self.dead()))
+        self.assertEqual(0, self.io.restore_check(str(self.L), "A", ["player"])[0])   # abandoned before its commit
+
+    def test_Birim_RestoreCheck_DirtyFinalizedAlan0_DirtyAlan64_SirasiBilinmeyen0(self):
+        f = self.committed(self.rec("F", self.foreign(), areas=("editor", "player"), state="dirty", grantedNs=300))
+        f["areas"] = {"editor": "finalized", "player": "dirty"}
+        self.only(self.committed(self.rec("A", self.me, areas=("editor", "player"), grantedNs=100)), f)
+        self.assertEqual(0, self.io.restore_check(str(self.L), "A", ["editor"])[0])    # F's editor is finalized
+        self.assertEqual(64, self.io.restore_check(str(self.L), "A", ["player"])[0])   # F's player is still dirty
+        self.assertEqual(0, self.io.restore_check(str(self.L), "A", [])[0])
+        self.assertEqual(0, self.io.restore_check(str(self.L), "lost", ["player"])[0])  # no record: order unknown
+
+    def test_Birim_RestoreCheck_KapaliKayit64_EskiKayitSaniye_KarisikAyniSaniyeBilinmez(self):
+        r = self.rec("C", self.me, areas=("editor", "player"), state="closed", grantedNs=100)
+        r["areas"] = {"editor": "finalized", "player": "released"}
+        self.io.ledger_write(str(self.L / "closed" / "C.json"), r)
+        self.only(self.committed(self.rec("X", self.foreign(), areas=("player",), grantedNs=200)))
+        self.assertEqual(64, self.io.restore_check(str(self.L), "C", ["player"])[0])   # a closed window's re-restore too
+        t0 = 1791270000   # 2026-10-06T07:00:00Z
+        old = self.committed(self.rec("O", self.me, areas=("editor",), utc="2026-10-06T07:00:00Z"))   # no grantedNs
+        same = self.committed(self.rec("S", self.foreign(), areas=("editor",), utc="2026-10-06T07:00:00Z"))
+        self.only(old, same)
+        self.assertEqual((0, 0), (self.io.restore_check(str(self.L), "O", ["editor"])[0],
+                                  self.io.restore_check(str(self.L), "S", ["editor"])[0]))   # same second: unknown
+        self.only(old, self.committed(self.rec("T", self.foreign(), areas=("editor",), utc="2026-10-06T07:00:01Z")))
+        self.assertEqual(64, self.io.restore_check(str(self.L), "O", ["editor"])[0])   # a later second: after
+        # review S-3: a new record (grantedNs .7 s into the second) and an older guard's of the same second — unknown
+        new = self.committed(self.rec("N", self.foreign(), areas=("editor",), grantedNs=t0 * 10 ** 9 + 7 * 10 ** 8,
+                                      utc="2026-10-06T07:00:00Z"))
+        self.only(old, new)
+        self.assertEqual((0, 0), (self.io.restore_check(str(self.L), "O", ["editor"])[0],
+                                  self.io.restore_check(str(self.L), "N", ["editor"])[0]))
+
+    def test_Birim_LedgerFinalized_OkunamayanKayit_Cikis3_YoksaBos0(self):
+        """P5 review NIT-2: an unreadable record is never silently 'nothing finalized' (the guard warns)."""
+        (self.L / "windows").mkdir(parents=True, exist_ok=True)
+        (self.L / "windows" / "B.json").write_text("{bozuk")
+        r = subprocess.run([sys.executable, self.io.__file__, "ledger-finalized", str(self.L), "B"], capture_output=True, text=True)
+        self.assertEqual(3, r.returncode); self.assertIn("unreadable", r.stdout)
+        r = subprocess.run([sys.executable, self.io.__file__, "ledger-finalized", str(self.L), "yok"], capture_output=True, text=True)
+        self.assertEqual((0, ""), (r.returncode, r.stdout.strip()))
+
+    def test_Birim_RestoreBegin_TekKilitte_Isaret_64teIsaretYok(self):
+        """review S-2: the order check and the R2 mark in one L/.lock hold — no nested grant between them."""
+        self.only(self.committed(self.rec("A", self.me, areas=("editor", "player"), grantedNs=100)),
+                  self.committed(self.rec("N", self.foreign(), areas=("player",), grantedNs=200)))
+        code, why = self.io.restore_begin(str(self.L), "A", ["player"], self.me)
+        self.assertEqual(64, code)
+        self.assertEqual("open", json.loads((self.L / "windows" / "A.json").read_text())["state"])
+        self.assertEqual(0, self.io.restore_begin(str(self.L), "A", ["editor"], self.me)[0])
+        a = json.loads((self.L / "windows" / "A.json").read_text())
+        self.assertEqual(("restoring", self.me["pid"]), (a["state"], a["restorer"]["pid"]))
+
+    def test_Birim_GrantedNs_ArtanSira_FinalizedKalici(self):
+        self.assertEqual(0, self.begin("A", areas=("editor",))[0])
+        self.assertEqual(0, self.begin("B", areas=("player",))[0])
+        a, b = (json.loads((self.L / "windows" / (w + ".json")).read_text()) for w in ("A", "B"))
+        self.assertLess(a["grantedNs"], b["grantedNs"])
+        self.io.ledger_update(str(self.L), "A", {"state": "auto", "areas": {"editor": "finalized"}})
+        self.assertTrue((self.L / "closed" / "A.json").exists())
+        r = self.rec("D", self.me, areas=("editor", "player"), state="dirty")
+        r["areas"] = {"editor": "finalized", "player": "dirty"}
+        self.put_record(r)
+        rec = self.io.ledger_update(str(self.L), "D", {"state": "auto", "areas": {"editor": "dirty", "player": "finalized"}})
+        self.assertEqual(("closed", "finalized", "finalized"), (rec["state"], rec["areas"]["editor"], rec["areas"]["player"]))
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
