@@ -49,6 +49,11 @@ artifact's takes.host for the reader; the captures' own quality checks above dec
 
 usage: r2_s3.py --dense tp=DIR --dense fp=DIR [--dense tp=DIR2 …] [--dense topdown=DIR] --a9 WAV --listening DIR --xml PM.xml
                 --host FILE [--load FILE …] [--kirli REASON] [--dense-seconds 40] [--commit 40-hex] [--out r2-S3.json] [--dry-run]
+                [--modes tp,fp | topdown]
+--modes: the cameras the gate hears (default tp,fp — R1's closing pair; a topdown take is measured when given). Kullanıcı
+        06.10: "testler de top down için çalışacak sadece" → --modes topdown: only top-down Dense-40 takes are required and
+        measured, only the top-down listening take sets weaponMarginLu; tp / fp takes, if any, are out of scope (not measured,
+        takes.scope says so).
 --host: the window's host samples, one per line: "<utc> CPU usage: … <x>% idle · foreign <n>" (K/wp-085/tools/pencere.sh);
         every line with "foreign <n>" is a sample, the time and CPU idle are read when the line has them (an empty top line
         still counts its foreign processes).
@@ -605,12 +610,17 @@ def measure_take(mode, wav):
 # ---------------------------------------------------------------------------------------------------- the artifact
 
 
-def measure(dense, a9, listening, xmls, commit, dense_seconds):
-    """(values, detail, findings, samples) over every take."""
-    findings, detail = [], {"dense": {}, "a9": None, "listening": {}}
-    for mode in REQUIRED_DENSE:
+def measure(dense, a9, listening, xmls, commit, dense_seconds, modes=REQUIRED_DENSE):
+    """(values, detail, findings, samples) over every take of the given camera modes."""
+    findings, detail = [], {"dense": {}, "a9": None, "listening": {}, "modes": list(modes)}
+    topdown_only = tuple(modes) == ("topdown",)
+    if topdown_only:
+        detail["scope"] = "top-down only (kullanıcı 06.10: testler yalnız top down) — tp / fp out of scope"
+    for mode in modes:
         if mode not in {m for m, _ in dense}:
             findings.append(f"dense {mode}: no capture given (--dense {mode}=DIR)")
+    if topdown_only:
+        dense = [(m, f) for m, f in dense if m == "topdown"]
     seen = {}
     for mode, folder in dense:   # a mode may repeat (several runs): every run counts, the worst wins
         seen[mode] = seen.get(mode, 0) + 1
@@ -631,7 +641,9 @@ def measure(dense, a9, listening, xmls, commit, dense_seconds):
             parts = wav.stem.split("_")
             if len(parts) >= 3 and parts[1] in LISTEN_MODES:
                 takes[LISTEN_MODES[parts[1]]] = wav
-    for mode in LISTEN_MODES.values():
+    if topdown_only:
+        takes = {m: w for m, w in takes.items() if m == "topdown"}
+    for mode in (("topdown",) if topdown_only else LISTEN_MODES.values()):
         if mode not in takes:
             findings.append(f"listening {mode}: no take in {listening} (DinlemePaketi_AB_Uret)")
     for mode, wav in sorted(takes.items()):
@@ -695,7 +707,7 @@ def kirli_path(out):
 
 
 def summary_lines(values, detail):
-    lines = []
+    lines = ["scope " + detail["scope"]] if detail.get("scope") else []
     for mode, d in sorted(detail["dense"].items()):
         r1 = R1_CLOSING["dense"].get(d["mode"], {})
         lines.append(f"dense {mode:7} TP {d['truePeakDbtp']:7.2f} dBTP (FIR {d['truePeakFirDbtp']:.2f}, CR {d['truePeakDbtpR1']:.2f}"
@@ -730,6 +742,7 @@ def main(argv=None):
                         "reported only, not a criterion (C-00 06.10)")
     parser.add_argument("--kirli", help="mark the run KİRLİ with this reason (C-00's call)")
     parser.add_argument("--dense-seconds", type=float, default=40.0, help="the run's -ddAudioDenseSeconds")
+    parser.add_argument("--modes", default="tp,fp", help="cameras the gate hears: tp,fp (default) or topdown (kullanıcı 06.10)")
     parser.add_argument("--commit", default=os.environ.get("DD_R2_COMMIT"), help="40-hex commit under test (DD_R2_COMMIT)")
     parser.add_argument("--out", help="artifact path (default $DD_R2_MEASURE_DIR/r2-S3.json)")
     parser.add_argument("--dry-run", action="store_true", help="measure and print, never write")
@@ -751,7 +764,11 @@ def main(argv=None):
         print("--out (or DD_R2_MEASURE_DIR) is required", file=sys.stderr)
         return 64
 
-    values, detail, findings, samples = measure(dense, args.a9, args.listening, args.xml, commit, args.dense_seconds)
+    modes = tuple(m.strip() for m in args.modes.split(",") if m.strip())
+    if modes not in (REQUIRED_DENSE, ("topdown",)):
+        print(f"--modes wants tp,fp or topdown: {args.modes!r}", file=sys.stderr)
+        return 64
+    values, detail, findings, samples = measure(dense, args.a9, args.listening, args.xml, commit, args.dense_seconds, modes)
     for line in summary_lines(values, detail):
         print(line)
     for finding in findings:

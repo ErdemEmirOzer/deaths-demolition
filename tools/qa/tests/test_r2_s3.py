@@ -373,6 +373,36 @@ class SourceTests(RigTestCase):
         self.assertFalse(self.rig.out.exists())
 
 
+class ModesTests(RigTestCase):
+    """Kullanıcı 06.10: "testler de top down için çalışacak sadece" — --modes topdown."""
+
+    def test_top_down_only_requires_and_hears_only_the_top_down_takes(self):
+        td = dense_take(self.rig.root / "topdown", "topdown")
+        rc, out = self.rig.run("--modes", "topdown", "--dense", f"topdown={td}")
+        self.assertEqual(0, rc, out)
+        data = json.loads(self.rig.out.read_text(encoding="utf-8"))
+        self.assertEqual(["topdown"], data["takes"]["modes"])
+        self.assertIn("tp / fp out of scope", data["takes"]["scope"])
+        self.assertEqual({"topdown"}, set(data["takes"]["dense"]), "the tp / fp takes given are not measured")
+        self.assertEqual({"topdown"}, set(data["takes"]["listening"]))
+        self.assertEqual(data["takes"]["listening"]["topdown"]["weaponMarginLu"], data["values"]["weaponMarginLu"])
+        self.assertEqual(data["takes"]["dense"]["topdown"]["truePeakDbtp"], data["values"]["truePeakDbtp"])
+        self.assertIn("scope top-down only", out)
+
+    def test_top_down_only_without_a_top_down_take_is_a_source_finding(self):
+        rc, out = self.rig.run("--modes", "topdown")
+        self.assertEqual(1, rc, out)
+        self.assertIn("dense topdown: no capture given", out)
+        self.assertFalse(self.rig.out.exists())
+
+    def test_the_default_still_wants_tp_and_fp_and_other_modes_are_usage(self):
+        rc, out = self.rig.run()
+        self.assertEqual(0, rc, out)
+        self.assertEqual(["tp", "fp"], json.loads(self.rig.out.read_text(encoding="utf-8"))["takes"]["modes"])
+        with contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(64, r2_s3.main(self.rig.argv("--modes", "fp")))
+
+
 class KirliTests(RigTestCase):
     """SABİT-KURALLAR 5.8: a dirty run is ranking information — r2-S3.KIRLI.json with the note, never r2-S3.json."""
 
