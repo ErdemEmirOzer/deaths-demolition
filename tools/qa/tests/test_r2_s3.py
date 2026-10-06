@@ -132,20 +132,25 @@ class Rig:
         self.load = self.root / "load.txt"
         self.load.write_text("2026-10-06T01:00:00Z { 2.10 2.40 2.30 }\n2026-10-06T01:00:05Z { 3.05 2.50 2.30 }\n",
                              encoding="utf-8")
+        self.host = self.root / "cpu.txt"
+        self.host.write_text("2026-10-06T01:00:00Z CPU usage: 41.0% user, 30.0% sys, 29.0% idle  · foreign 0\n"
+                             "2026-10-06T01:00:05Z CPU usage: 60.0% user, 38.0% sys, 2.0% idle  · foreign 0\n", encoding="utf-8")
         self.out = self.root / "r2" / "r2-S3.json"
 
-    def argv(self, *extra, load=True):
+    def argv(self, *extra, load=True, host=True):
         args = [a for m, d in self.dense.items() for a in ("--dense", f"{m}={d}")]
         args += ["--a9", str(self.a9), "--listening", str(self.listen), "--xml", str(self.xml), "--dense-seconds", "10",
                  "--commit", COMMIT, "--out", str(self.out)]
         if load:
             args += ["--load", str(self.load)]
+        if host:
+            args += ["--host", str(self.host)]
         return args + list(extra)
 
-    def run(self, *extra, load=True):
+    def run(self, *extra, load=True, host=True):
         buf = io.StringIO()
         with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(io.StringIO()):
-            rc = r2_s3.main(self.argv(*extra, load=load))
+            rc = r2_s3.main(self.argv(*extra, load=load, host=host))
         return rc, buf.getvalue()
 
 
@@ -360,13 +365,27 @@ class KirliTests(RigTestCase):
         self.assertIn(reason, data["note"])
         self.assertEqual(set(r2_s3.KEYS), set(data["values"]))
 
-    def test_a_loaded_machine(self):
-        self.rig.load.write_text("2026-10-06T01:00:00Z { 2.10 2.40 2.30 }\n2026-10-06T01:00:05Z { 7.50 4.0 3.0 }\n",
-                                 encoding="utf-8")
-        self.assert_kirli(*self.rig.run(), "load1 max 7.5 >= 6")
+    def test_a_foreign_heavy_process_during_the_window(self):
+        with self.rig.host.open("a", encoding="utf-8") as f:
+            f.write("2026-10-06T01:00:10Z CPU usage: 50.0% user, 30.0% sys, 20.0% idle  · foreign 1\n")
+        self.assert_kirli(*self.rig.run(), "a foreign Unity / Player / Blender / ffmpeg in 1 of 3 host samples")
 
-    def test_no_load_log_is_not_a_quiet_machine(self):
-        self.assert_kirli(*self.rig.run(load=False), "no load log")
+    def test_no_host_log_is_not_a_quiet_machine(self):
+        self.assert_kirli(*self.rig.run(host=False), "no host log")
+
+    def test_a_high_load_average_or_a_busy_cpu_alone_is_not_kirli_c00(self):
+        # Karar C-00 06.10: the load average counts iCloud I/O waits on this machine; CPU idle is reported only
+        # (pencere-p4: valid captures at idle p10 0.4 %). With no foreign process sampled the run writes the gate file.
+        self.rig.load.write_text("2026-10-06T01:00:00Z { 31.50 30.0 29.0 }\n2026-10-06T01:00:05Z { 54.10 40.0 30.0 }\n",
+                                 encoding="utf-8")
+        rc, out = self.rig.run()
+        self.assertEqual(0, rc, out)
+        data = json.loads(self.rig.out.read_text(encoding="utf-8"))
+        self.assertNotIn("note", data)
+        host = data["takes"]["host"]
+        self.assertEqual((2, 0, 54.1), (host["samples"], host["foreignSamples"], host["load1Max"]))
+        self.assertAlmostEqual(4.7, host["cpuIdleP10"], delta=0.01)
+        self.assertFalse(r2_s3.kirli_path(self.rig.out).exists())
 
     def test_c00_marks_a_run_dirty(self):
         self.assert_kirli(*self.rig.run("--kirli", "Blender rendered during the run"), "Blender rendered during the run")

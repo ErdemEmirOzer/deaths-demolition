@@ -160,9 +160,11 @@ delivered and heard (shot-window peak median >= -30 dBFS; Dense-40 exception to 
 rule's >= 6 dB over the pre-window — C-00 06.10: a continuous Dense-40 mix cannot hold it (R1 +3.8 … +5.5 dB), so the
 source check is ClassicWeaponFire delivered >= 20 + Fire voices started in the dense window >= 10 + that peak median;
 the rise is reported per take in the artifact's takes detail, never asserted), the A9 stack loud in every second and not clipped, W + R within
-1 dB of the full mix, both PlayMode tests Passed in the given NUnit XML. A KİRLİ run (load1 >= 6 in the run's load log, no
-load log, or C-00's mark) writes `r2-S3.KIRLI.json` instead, with the note: ranking only, S3 stays BLOCKED until a
-quiet-window measurement.
+1 dB of the full mix, both PlayMode tests Passed in the given NUnit XML. A KİRLİ run (a foreign Unity, Player, Blender or ffmpeg sampled during the window in the `--host` log, no host log,
+or C-00's mark) writes `r2-S3.KIRLI.json` instead, with the note: ranking only, S3 stays BLOCKED until a clean
+measurement. Karar C-00 06.10: the load average is not a criterion (on this machine it counts iCloud I/O waits, not
+CPU) and neither is CPU idle (the 06.10 window's valid captures ran at idle p10 0.4 %); both are reported in the
+artifact's takes detail.
 
 ## S4 (room tails, v2 — C-00 05.10 decision; S-10 reviews after)
 

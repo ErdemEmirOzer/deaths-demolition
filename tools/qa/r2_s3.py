@@ -34,12 +34,18 @@ and not dirty, the A9 stack loud in every
 second and not clipped, W and R blocks present and adding up to A within 1 dB, the named tests Passed in the given NUnit XML.
 One failed check and nothing is written (exit 1): S3 stays BLOCKED by name in the R2 report.
 
-KİRLİ (SABİT-KURALLAR 5.8: a dirty measurement is ranking information, not a gate value): a load log with load1 >= 6, a
-qa-report load1 >= 6, no load log at all, or --kirli <reason> → the values go to r2-S3.KIRLI.json next to --out with a note,
-the gate file is not written (the chain binds only r2-S3.json, so S3 stays BLOCKED) and the exit is 3.
+KİRLİ (SABİT-KURALLAR 5.8: a dirty measurement is ranking information, not a gate value): a foreign Unity, Player, Blender
+or ffmpeg sampled during the window in a --host log, no host log at all, or --kirli <reason> → the values go to
+r2-S3.KIRLI.json next to --out with a note, the gate file is not written (the chain binds only r2-S3.json, so S3 stays
+BLOCKED) and the exit is 3. Karar C-00 06.10: the load average is not a criterion — on this machine it counts iCloud's
+FileProvider / bird / cloudd I/O waits (26–27 with no heavy process) and does not stand for CPU; CPU idle is reported, not
+a criterion either — in the 06.10 window (pencere-p4) the Dense-40 captures ran at CPU idle p10 0.4 % / median 8.2 % with 0
+dropped samples, so a floor above 0.4 % marks valid captures dirty and one below it marks nothing. Both stay in the
+artifact's takes.host for the reader; the captures' own quality checks above decide validity.
 
 usage: r2_s3.py --dense tp=DIR --dense fp=DIR [--dense tp=DIR2 …] [--dense topdown=DIR] --a9 WAV --listening DIR --xml PM.xml
-                [--load FILE …] [--kirli REASON] [--dense-seconds 40] [--commit 40-hex] [--out r2-S3.json] [--dry-run]
+                --host FILE [--load FILE …] [--kirli REASON] [--dense-seconds 40] [--commit 40-hex] [--out r2-S3.json] [--dry-run]
+--host: the window's host samples, one per line: "<utc> CPU usage: … <x>% idle · foreign <n>" (K/wp-085/tools/pencere.sh).
 --commit defaults to DD_R2_COMMIT, --out to $DD_R2_MEASURE_DIR/r2-S3.json. --dry-run measures and prints, never writes.
 exit: 0 written, every check met · 2 written, a check fails (the judge FAILs S3) · 1 a source check failed, nothing written
       · 3 KİRLİ (r2-S3.KIRLI.json only) · 64 usage
@@ -112,7 +118,9 @@ STEM_MIN_BLOCKS = 2                      # of each of A, W, R (R1: 3)
 ADDITIVITY_DB = 1.0                      # 10 log10(A / (W + R)) within this: the stems split the mix (R1: -0.58 / -0.37)
 MIN_TAKE_SHOTS = 20
 
-LOAD1_QUIET = 6.0                        # SABİT-KURALLAR 5.9 / Ç17: a quiet machine is load1 < 6
+# KİRLİ = a foreign heavy process sampled during the window (C-00 06.10); load average and CPU idle are reported only.
+HOST_IDLE = re.compile(r"([0-9]+(?:\.[0-9]+)?)% idle")
+HOST_FOREIGN = re.compile(r"\bforeign\s+([0-9]+)")
 TESTS = {"a9": "DD.Prototype.Tests.PlayMode.AudioSliceTests.A9_EnYuksekYigin_LimiterOncesiZarf_Olcum",
          "listening": "DD.Prototype.Tests.PlayMode.AudioSliceTests.DinlemePaketi_AB_Uret"}
 
@@ -233,6 +241,41 @@ def load_peak(paths):
             if m and (best is None or float(m.group(1)) > best):
                 best, where = float(m.group(1)), str(path)
     return best, where
+
+
+def host_samples(paths):
+    """the window's host samples over --host logs: [(file, line no, CPU idle %, foreign heavy processes)], lines with both."""
+    out = []
+    for path in paths:
+        try:
+            text = Path(path).read_text(encoding="utf-8")
+        except OSError:
+            continue
+        for no, line in enumerate(text.splitlines(), 1):
+            i, f = HOST_IDLE.search(line), HOST_FOREIGN.search(line)
+            if i and f:
+                out.append((str(path), no, float(i.group(1)), int(f.group(1))))
+    return out
+
+
+def percentile(values, p):
+    v = sorted(values)
+    if not v:
+        return None
+    k = (len(v) - 1) * p / 100.0
+    lo = int(math.floor(k)); hi = min(lo + 1, len(v) - 1)
+    return v[lo] + (v[hi] - v[lo]) * (k - lo)
+
+
+def host_report(hosts, loads):
+    """report-only host facts for takes.host: samples, foreign samples, CPU idle p10 / median, load1 max."""
+    rows = host_samples(hosts)
+    idle = [r[2] for r in rows]
+    load1, _ = load_peak(loads)
+    return {"samples": len(rows), "foreignSamples": sum(1 for r in rows if r[3] > 0),
+            "cpuIdleP10": round(percentile(idle, 10), 2) if idle else None,
+            "cpuIdleMedian": round(percentile(idle, 50), 2) if idle else None,
+            "load1Max": load1, "criterion": "foreign heavy process during the window (C-00 06.10)"}
 
 
 # ---------------------------------------------------------------------------------------------------- measures
@@ -558,21 +601,17 @@ def measure(dense, a9, listening, xmls, commit, dense_seconds):
     return values, detail, findings, samples
 
 
-def kirli_reasons(loads, manual, detail):
+def kirli_reasons(hosts, manual):
     reasons = [manual] if manual else []
-    peak, where = load_peak(loads)
-    if peak is None:
-        reasons.append("no load log (--load): the quiet machine is unproven")
-    elif peak >= LOAD1_QUIET:
-        reasons.append(f"load1 max {peak:g} >= {LOAD1_QUIET:g} ({where})")
-    for mode, d in sorted(detail["dense"].items()):
-        for value in d.get("qaLoad1") or []:
-            try:
-                if value not in (None, "") and float(value) >= LOAD1_QUIET:
-                    reasons.append(f"dense {mode}: qa-report load1 {value} >= {LOAD1_QUIET:g}")
-                    break
-            except (TypeError, ValueError):
-                continue
+    rows = host_samples(hosts)
+    if not rows:
+        reasons.append("no host log (--host): a foreign Unity / Player / Blender / ffmpeg during the window is unproven")
+    else:
+        foreign = [r for r in rows if r[3] > 0]
+        if foreign:
+            first = foreign[0]
+            reasons.append(f"a foreign Unity / Player / Blender / ffmpeg in {len(foreign)} of {len(rows)} host samples "
+                           f"(first {first[0]}:{first[1]})")
     return reasons
 
 
@@ -628,7 +667,10 @@ def main(argv=None):
     parser.add_argument("--a9", help="the A9 stack render WAV (sidecars next to it)")
     parser.add_argument("--listening", help="the DinlemePaketi_AB_Uret folder (*_take.wav + *_blocks.csv + sidecars)")
     parser.add_argument("--xml", action="append", default=[], help="NUnit XML of the A9 / listening PlayMode runs")
-    parser.add_argument("--load", action="append", default=[], help="load log of the run window (sysctl vm.loadavg lines)")
+    parser.add_argument("--host", action="append", default=[], help="host samples of the run window (CPU idle + foreign "
+                        "heavy processes per line): the KİRLİ criterion (C-00 06.10)")
+    parser.add_argument("--load", action="append", default=[], help="load log of the run window (sysctl vm.loadavg lines): "
+                        "reported only, not a criterion (C-00 06.10)")
     parser.add_argument("--kirli", help="mark the run KİRLİ with this reason (C-00's call)")
     parser.add_argument("--dense-seconds", type=float, default=40.0, help="the run's -ddAudioDenseSeconds")
     parser.add_argument("--commit", default=os.environ.get("DD_R2_COMMIT"), help="40-hex commit under test (DD_R2_COMMIT)")
@@ -665,7 +707,8 @@ def main(argv=None):
         sys.stdout.flush()
         print(f"S3: {len(findings)} source finding(s) — nothing written, S3 stays BLOCKED", file=sys.stderr)
         return 1
-    reasons = kirli_reasons(args.load, args.kirli, detail)
+    detail["host"] = host_report(args.host, args.load)
+    reasons = kirli_reasons(args.host, args.kirli)
     data = artifact(values, detail, samples, commit or "0" * 40, reasons)
     row = judge(data)
     print(f"S3 {row['status']}" + (f": {row['reason']}" if row["reason"] else ""))
