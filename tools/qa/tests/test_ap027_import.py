@@ -4,8 +4,9 @@ A small package is built in a temp folder (manifest/AP027-manifest-v002.json, ex
 v003-recut / v003b-recut / v003d-recut overlay folders with their MANIFEST.json and superseded_sha256 chain) and imported
 into a temp worktree root. Checked: the files and manifest entries it writes, truePeakDb / codexLufs / lufs measured on
 the shipped files (against an independent BS.1770 written here, and an analytic inter-sample peak), the overlay chain and
-its SHA asserts, idempotence (second run: copied 0, manifest byte-identical), the fades log only when asked and nothing
-written outside the worktree root."""
+its SHA asserts, idempotence (second run: copied 0, manifest byte-identical), the import fade's length (body + 20 ms of
+digital silence) and its "stops while sounding" rule on its own, the fades log only when asked and nothing written outside
+the worktree root."""
 import contextlib
 import hashlib
 import io
@@ -308,6 +309,38 @@ class Ap027ImportTests(unittest.TestCase):
         self.assertEqual(sg1, entry(man, "WeaponSg1Fire"))
         self.assertNotIn("stale.wav", entry(man, "WeaponAr1Fire")["files"])
         self.assertEqual("ap027-v002-unity-ar1-sg1", man["version"])
+
+    # (e) the import fade (gt B-3): its 20 ms silence pad and its 40 dB rule, each on its own
+    def _replace_v002(self, rel, x):
+        """swap one v002 source for `x` and keep its manifest SHA true."""
+        p = self.ap / "exports" / "v002" / rel
+        write_wav24(p, x)
+        path = self.ap / "manifest" / "AP027-manifest-v002.json"
+        man = json.loads(path.read_text(encoding="utf-8"))
+        next(it for it in man["items"] if it["path"] == "exports/v002/" + rel)["sha256"] = sha256(p)
+        path.write_text(json.dumps(man, indent=1), encoding="utf-8")
+
+    def test_a_faded_file_ships_its_whole_body_and_20_ms_of_digital_silence(self):
+        src = read_wav24(self.ap / "exports/v002/ar1/Weapon_ar1_Fire_03.wav")   # stops while sounding
+        self.run_import()
+        out = read_wav24(self.out / "Weapon_ar1_Fire_03.wav")
+        pad = int(0.020 * RATE)   # Vorbis smears ~10 ms into the pad; the end gate reads the last 10 ms past it
+        self.assertEqual(len(src) + pad, len(out))
+        self.assertFalse(np.any(out[-pad:]), "the pad is digital silence")
+        self.assertTrue(np.any(out[-pad - int(0.012 * RATE):-pad]), "the body ends in its 10 ms fade, not in silence")
+
+    def test_a_quiet_file_that_stops_while_sounding_is_faded_by_the_40_db_rule_alone(self):
+        # peak about -51 dBFS, cut at 90 ms: its last 5 ms sit ~26 dB under the peak (within 40 dB: still sounding) while its
+        # last 10 ms are ~-79 dBFS RMS, under the -70 end gate — only the "stops while sounding" rule can fade it
+        x = burst(amp=0.003, tau=0.03, cut=0.09)
+        tail = x[-int(0.010 * RATE):].mean(1)
+        self.assertLess(20 * np.log10(np.sqrt(np.mean(tail ** 2))), -70.0, "the end gate alone must pass this file")
+        self.assertGreater(20 * np.log10(np.abs(x[-int(0.005 * RATE):]).max() / np.abs(x).max()), -40.0)
+        self._replace_v002("ar1/Casing_ar1_Dirt_01.wav", x)
+        self.run_import()
+        out = read_wav24(self.out / "Casing_ar1_Dirt_01.wav")
+        self.assertEqual(len(x) + int(0.020 * RATE), len(out))
+        self.assertIn("Casing_ar1_Dirt_01.wav", entry(self.manifest(), "CasingAr1Dirt")["importFade"])
 
     # the fades record and the write boundary
     def test_nothing_is_written_outside_the_root_without_a_fades_log(self):

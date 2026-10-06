@@ -3,6 +3,7 @@ import contextlib
 import io
 import json
 import math
+import os
 import sys
 import tempfile
 import unittest
@@ -18,6 +19,8 @@ import r2_s3  # noqa: E402
 RATE = 48000
 COMMIT = "a" * 40
 OFFSET = 3.2   # dsp time - capture seconds
+TAKES_END = 1791248420.0   # 2026-10-06T01:00:20Z: every take ends here (the 40 s listening takes began 00:59:40), its two host
+                           # samples at 01:00:00 / 01:00:05 cover that span within 30 s
 
 
 def write_wav(path, data):
@@ -136,6 +139,15 @@ class Rig:
         self.host.write_text("2026-10-06T01:00:00Z CPU usage: 41.0% user, 30.0% sys, 29.0% idle  · foreign 0\n"
                              "2026-10-06T01:00:05Z CPU usage: 60.0% user, 38.0% sys, 2.0% idle  · foreign 0\n", encoding="utf-8")
         self.out = self.root / "r2" / "r2-S3.json"
+        self.takes_end = TAKES_END
+
+    def end_takes(self, epoch):
+        """every take's WAV written (its capture ended) at `epoch` on the next run — the span the host samples must cover."""
+        self.takes_end = epoch
+
+    def stamp(self):
+        for wav in self.root.rglob("*.wav"):   # takes a test rewrote too: the window's time, not the test's
+            os.utime(wav, (self.takes_end, self.takes_end))
 
     def argv(self, *extra, load=True, host=True):
         args = [a for m, d in self.dense.items() for a in ("--dense", f"{m}={d}")]
@@ -148,6 +160,7 @@ class Rig:
         return args + list(extra)
 
     def run(self, *extra, load=True, host=True):
+        self.stamp()
         buf = io.StringIO()
         with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(io.StringIO()):
             rc = r2_s3.main(self.argv(*extra, load=load, host=host))
@@ -206,6 +219,7 @@ class WritesTests(RigTestCase):
         with contextlib.redirect_stderr(io.StringIO()):
             self.assertEqual(64, r2_s3.main(["--commit", "abc123", "--out", str(self.rig.out)]))
         args = [a for a in self.rig.argv() if a not in ("--commit", COMMIT, "--out", str(self.rig.out))]
+        self.rig.stamp()
         env = {"DD_R2_COMMIT": COMMIT, "DD_R2_MEASURE_DIR": str(self.rig.root / "env-r2")}
         saved = {k: r2_s3.os.environ.get(k) for k in env}
         try:
@@ -369,6 +383,33 @@ class KirliTests(RigTestCase):
         with self.rig.host.open("a", encoding="utf-8") as f:
             f.write("2026-10-06T01:00:10Z CPU usage: 50.0% user, 30.0% sys, 20.0% idle  · foreign 1\n")
         self.assert_kirli(*self.rig.run(), "a foreign Unity / Player / Blender / ffmpeg in 1 of 3 host samples")
+
+    def test_a_foreign_line_without_cpu_idle_still_counts_gt_b2(self):
+        # an empty `top` leaves "<utc>  · foreign 2 · own 1": the criterion is the foreign process, idle is only reported
+        with self.rig.host.open("a", encoding="utf-8") as f:
+            f.write("2026-10-06T01:00:10Z  · foreign 2 · own 1\n")
+        self.assert_kirli(*self.rig.run(), "a foreign Unity / Player / Blender / ffmpeg in 1 of 3 host samples")
+
+    def test_host_samples_that_stop_before_the_takes_end_gt_b1(self):
+        # the sampler died at 01:00:05 and the takes ran on to 01:05:00: a foreign process after it would go unseen
+        self.rig.end_takes(TAKES_END + 280)
+        self.assert_kirli(*self.rig.run(), "the last host sample 2026-10-06T01:00:05Z is 295 s before the last take ended 2026-10-06T01:05:00Z")
+
+    def test_samples_that_start_after_the_takes_began_gt_b1(self):
+        self.rig.end_takes(TAKES_END - 120)   # the takes ran 00:57:40-00:58:20, the sampler started at 01:00:00
+        self.assert_kirli(*self.rig.run(), "the first host sample 2026-10-06T01:00:00Z is 140 s after the first take began")
+
+    def test_a_gap_in_the_host_samples_gt_b1(self):
+        self.rig.end_takes(TAKES_END + 100)   # 01:02:00: samples at 01:00:00, 01:00:05, then 01:02:10
+        with self.rig.host.open("a", encoding="utf-8") as f:
+            f.write("2026-10-06T01:02:10Z CPU usage: 50.0% user, 30.0% sys, 20.0% idle  · foreign 0\n")
+        self.assert_kirli(*self.rig.run(), "a 125 s gap in the host samples after 2026-10-06T01:00:05Z")
+
+    def test_samples_every_few_seconds_cover_the_takes(self):
+        rc, out = self.rig.run()
+        self.assertEqual(0, rc, out)
+        host = json.loads(self.rig.out.read_text(encoding="utf-8"))["takes"]["host"]
+        self.assertEqual(("2026-10-06T01:00:00Z", "2026-10-06T01:00:05Z"), (host["firstSample"], host["lastSample"]))
 
     def test_no_host_log_is_not_a_quiet_machine(self):
         self.assert_kirli(*self.rig.run(host=False), "no host log")

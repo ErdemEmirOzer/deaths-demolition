@@ -35,7 +35,10 @@ second and not clipped, W and R blocks present and adding up to A within 1 dB, t
 One failed check and nothing is written (exit 1): S3 stays BLOCKED by name in the R2 report.
 
 KİRLİ (SABİT-KURALLAR 5.8: a dirty measurement is ranking information, not a gate value): a foreign Unity, Player, Blender
-or ffmpeg sampled during the window in a --host log, no host log at all, or --kirli <reason> → the values go to
+or ffmpeg sampled during the window in a --host log, no host log at all, host samples that do not cover the takes (the
+first more than 30 s after the first take began, the last more than 30 s before the last take ended, or a gap over 30 s
+between them — a sampler that died early sees nothing after it; a take's span is its WAV's mtime less its length), or
+--kirli <reason> → the values go to
 r2-S3.KIRLI.json next to --out with a note, the gate file is not written (the chain binds only r2-S3.json, so S3 stays
 BLOCKED) and the exit is 3. Karar C-00 06.10: the load average is not a criterion — on this machine it counts iCloud's
 FileProvider / bird / cloudd I/O waits (26–27 with no heavy process) and does not stand for CPU; CPU idle is reported, not
@@ -45,7 +48,9 @@ artifact's takes.host for the reader; the captures' own quality checks above dec
 
 usage: r2_s3.py --dense tp=DIR --dense fp=DIR [--dense tp=DIR2 …] [--dense topdown=DIR] --a9 WAV --listening DIR --xml PM.xml
                 --host FILE [--load FILE …] [--kirli REASON] [--dense-seconds 40] [--commit 40-hex] [--out r2-S3.json] [--dry-run]
---host: the window's host samples, one per line: "<utc> CPU usage: … <x>% idle · foreign <n>" (K/wp-085/tools/pencere.sh).
+--host: the window's host samples, one per line: "<utc> CPU usage: … <x>% idle · foreign <n>" (K/wp-085/tools/pencere.sh);
+        every line with "foreign <n>" is a sample, the time and CPU idle are read when the line has them (an empty top line
+        still counts its foreign processes).
 --commit defaults to DD_R2_COMMIT, --out to $DD_R2_MEASURE_DIR/r2-S3.json. --dry-run measures and prints, never writes.
 exit: 0 written, every check met · 2 written, a check fails (the judge FAILs S3) · 1 a source check failed, nothing written
       · 3 KİRLİ (r2-S3.KIRLI.json only) · 64 usage
@@ -60,6 +65,7 @@ import re
 import statistics
 import sys
 import xml.etree.ElementTree as ET
+from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
@@ -121,6 +127,8 @@ MIN_TAKE_SHOTS = 20
 # KİRLİ = a foreign heavy process sampled during the window (C-00 06.10); load average and CPU idle are reported only.
 HOST_IDLE = re.compile(r"([0-9]+(?:\.[0-9]+)?)% idle")
 HOST_FOREIGN = re.compile(r"\bforeign\s+([0-9]+)")
+HOST_TIME = re.compile(r"^\s*([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2})Z")
+HOST_GAP_S = 30.0                        # pencere.sh samples every 5–6 s (pencere-p4: 284 samples, max gap 6.0 s)
 TESTS = {"a9": "DD.Prototype.Tests.PlayMode.AudioSliceTests.A9_EnYuksekYigin_LimiterOncesiZarf_Olcum",
          "listening": "DD.Prototype.Tests.PlayMode.AudioSliceTests.DinlemePaketi_AB_Uret"}
 
@@ -244,7 +252,8 @@ def load_peak(paths):
 
 
 def host_samples(paths):
-    """the window's host samples over --host logs: [(file, line no, CPU idle %, foreign heavy processes)], lines with both."""
+    """the window's host samples over --host logs: [(file, line no, utc epoch s or None, CPU idle % or None, foreign heavy
+    processes)] — every line with "foreign <n>" (the criterion); the time and CPU idle only when the line has them."""
     out = []
     for path in paths:
         try:
@@ -252,10 +261,48 @@ def host_samples(paths):
         except OSError:
             continue
         for no, line in enumerate(text.splitlines(), 1):
-            i, f = HOST_IDLE.search(line), HOST_FOREIGN.search(line)
-            if i and f:
-                out.append((str(path), no, float(i.group(1)), int(f.group(1))))
+            f = HOST_FOREIGN.search(line)
+            if not f:
+                continue
+            i, t = HOST_IDLE.search(line), HOST_TIME.match(line)
+            when = datetime.strptime(t.group(1), "%Y-%m-%dT%H:%M:%S").replace(tzinfo=timezone.utc).timestamp() if t else None
+            out.append((str(path), no, when, float(i.group(1)) if i else None, int(f.group(1))))
     return out
+
+
+def utc(epoch):
+    return datetime.fromtimestamp(epoch, timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def take_span(detail):
+    """(first take's start, last take's end) in epoch s — a take's WAV is written when its capture ends, so its span is
+    the file's mtime less its length — or None when no take file can be read."""
+    takes = list(detail["dense"].values()) + ([detail["a9"]] if detail["a9"] else []) + list(detail["listening"].values())
+    spans = []
+    for take in takes:
+        try:
+            end = Path(take["wav"]).stat().st_mtime
+        except (KeyError, OSError):
+            continue
+        spans.append((end - float(take.get("seconds") or 0.0), end))
+    return (min(s for s, _ in spans), max(e for _, e in spans)) if spans else None
+
+
+def coverage_gap(rows, span):
+    """why the host samples do not cover the takes' span, or None (gt B-1: a sampler that died early sees nothing after)."""
+    times = sorted(r[2] for r in rows if r[2] is not None)
+    if not times:
+        return "no time-stamped host sample"
+    start, end = span
+    if times[0] > start + HOST_GAP_S:
+        return f"the first host sample {utc(times[0])} is {times[0] - start:.0f} s after the first take began {utc(start)}"
+    if times[-1] < end - HOST_GAP_S:
+        return f"the last host sample {utc(times[-1])} is {end - times[-1]:.0f} s before the last take ended {utc(end)}"
+    gaps = [(b - a, a) for a, b in zip(times, times[1:]) if a <= end and b >= start]
+    if gaps and max(gaps)[0] > HOST_GAP_S:
+        gap, at = max(gaps)
+        return f"a {gap:.0f} s gap in the host samples after {utc(at)} (over {HOST_GAP_S:.0f} s)"
+    return None
 
 
 def percentile(values, p):
@@ -270,11 +317,13 @@ def percentile(values, p):
 def host_report(hosts, loads):
     """report-only host facts for takes.host: samples, foreign samples, CPU idle p10 / median, load1 max."""
     rows = host_samples(hosts)
-    idle = [r[2] for r in rows]
+    idle = [r[3] for r in rows if r[3] is not None]
+    times = [r[2] for r in rows if r[2] is not None]
     load1, _ = load_peak(loads)
-    return {"samples": len(rows), "foreignSamples": sum(1 for r in rows if r[3] > 0),
+    return {"samples": len(rows), "foreignSamples": sum(1 for r in rows if r[4] > 0),
             "cpuIdleP10": round(percentile(idle, 10), 2) if idle else None,
             "cpuIdleMedian": round(percentile(idle, 50), 2) if idle else None,
+            "firstSample": utc(min(times)) if times else None, "lastSample": utc(max(times)) if times else None,
             "load1Max": load1, "criterion": "foreign heavy process during the window (C-00 06.10)"}
 
 
@@ -540,7 +589,8 @@ def measure_take(mode, wav):
             findings.append(f"listening {mode}: ClassicWeaponFire delivered {shots} < {MIN_TAKE_SHOTS}")
         if tel["overflow"] != 0:
             findings.append(f"listening {mode}: telemetry ring overflow {tel['overflow']} (must be 0)")
-    detail = {"mode": mode, "wav": str(wav), "wavSha256": sha256(wav), "blocksSha256": sha256(blocks_path),
+    detail = {"mode": mode, "wav": str(wav), "wavSha256": sha256(wav), "seconds": round(data.shape[0] / rate, 3),
+              "blocksSha256": sha256(blocks_path),
               "weaponMarginLu": 10.0 * math.log10(power["W"] / power["R"]),
               "weaponBurstDb": round(10.0 * math.log10(power["W"]), 3), "restBurstDb": round(10.0 * math.log10(power["R"]), 3),
               "additivityDb": round(additivity, 3), "blocks": counts, "wBurstPeakMedianDbfs": round(w_peak_median, 2),
@@ -601,17 +651,20 @@ def measure(dense, a9, listening, xmls, commit, dense_seconds):
     return values, detail, findings, samples
 
 
-def kirli_reasons(hosts, manual):
+def kirli_reasons(hosts, manual, span=None):
     reasons = [manual] if manual else []
     rows = host_samples(hosts)
     if not rows:
         reasons.append("no host log (--host): a foreign Unity / Player / Blender / ffmpeg during the window is unproven")
     else:
-        foreign = [r for r in rows if r[3] > 0]
+        foreign = [r for r in rows if r[4] > 0]
         if foreign:
             first = foreign[0]
             reasons.append(f"a foreign Unity / Player / Blender / ffmpeg in {len(foreign)} of {len(rows)} host samples "
                            f"(first {first[0]}:{first[1]})")
+        gap = coverage_gap(rows, span) if span else None
+        if gap:
+            reasons.append(f"the host samples do not cover the takes: {gap} — a foreign process there is unproven")
     return reasons
 
 
@@ -708,7 +761,7 @@ def main(argv=None):
         print(f"S3: {len(findings)} source finding(s) — nothing written, S3 stays BLOCKED", file=sys.stderr)
         return 1
     detail["host"] = host_report(args.host, args.load)
-    reasons = kirli_reasons(args.host, args.kirli)
+    reasons = kirli_reasons(args.host, args.kirli, take_span(detail))
     data = artifact(values, detail, samples, commit or "0" * 40, reasons)
     row = judge(data)
     print(f"S3 {row['status']}" + (f": {row['reason']}" if row["reason"] else ""))
