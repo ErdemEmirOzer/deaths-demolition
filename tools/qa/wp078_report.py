@@ -1266,8 +1266,8 @@ class Inspector:
             # its status (the owner's own quality gates decide the value); a quiet gate with no host record says so too
             host = self.obj(entry["host"])[1] if isinstance(entry.get("host"), dict) else None
             if isinstance(host, dict):
-                row["host"] = {k: host.get(k) for k in ("quietAtStart", "waitedSeconds", "samples", "load1Max", "foreignPlayerMax",
-                                                        "foreignUnityMax", "dirty")}
+                row["host"] = {k: host.get(k) for k in ("quietAtStart", "waitedSeconds", "samples", "load1Max", "foreignUnityMax",
+                                                        "foreignPlayerMax", "foreignBlenderMax", "foreignFfmpegMax", "dirty")}
                 if host.get("dirty") is not False:
                     row["note"] = "KİRLİ: " + ("; ".join(str(w) for w in host.get("dirtyWhy") or []) or "host record not clean")
             elif measure is not None and (gate.get("measuredBy") or {}).get("quiet") is True:

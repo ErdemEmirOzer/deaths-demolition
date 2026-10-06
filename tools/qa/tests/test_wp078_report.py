@@ -873,6 +873,8 @@ class R2RoundTests(Fixture):
         self.assertEqual(['PASS'] * 3, [rows[n]['status'] for n in ('none', 'dirty', 'clean')])
         self.assertEqual('KİRLİ: start not quiet after 1800 s: load1 12.00', rows['dirty']['note'])
         self.assertEqual((True, 12.0), (rows['dirty']['host']['dirty'], rows['dirty']['host']['load1Max']))
+        self.assertEqual({'foreignUnityMax', 'foreignPlayerMax', 'foreignBlenderMax', 'foreignFfmpegMax'},
+                         {k for k in rows['dirty']['host'] if k.startswith('foreign')})   # all four kinds (gt Ek 4)
         self.assertNotIn('note', rows['clean'])
         self.assertEqual('KİRLİ: no host record bound for this quiet measurement', rows['none']['note'])
         # the text report names it too

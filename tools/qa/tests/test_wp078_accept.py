@@ -907,10 +907,39 @@ class HostWatchTests(unittest.TestCase):
                            (900003, 1, "/Applications/Unity/Hub/Editor/2022.3.22f1/Unity.app/Contents/MacOS/Unity"),
                            (900004, 1, "/x/DD.app/Contents/MacOS/Deaths Demolition - Playable Concept"),
                            (900005, 1, "/Applications/Blender.app/Contents/MacOS/Blender"),
-                           (900006, 1, "/opt/homebrew/bin/ffmpeg"), (900007, 900001, "/opt/homebrew/bin/ffmpeg")]
+                           (900006, 1, "/opt/homebrew/bin/ffmpeg"), (900007, 900001, "/opt/homebrew/bin/ffmpeg"),
+                           (900008, 1, "ffmpeg")]   # gt Ek 4: started from PATH, `ps comm` is the bare name
         with mock.patch.object(acc.subprocess, "run", side_effect=self.ps(rows)):
             state = acc.HostWatch().state()
-        self.assertEqual({"load1": 7.5, "foreignUnity": 1, "foreignPlayer": 1, "foreignBlender": 1, "foreignFfmpeg": 1}, state)
+        self.assertEqual({"load1": 7.5, "foreignUnity": 1, "foreignPlayer": 1, "foreignBlender": 1, "foreignFfmpeg": 2}, state)
+
+    def test_an_unreadable_load_average_is_reported_not_judged(self):
+        # gt Ek 4: ps read, sysctl not - the load is reported only (C-00 06.10), so the host is still quiet
+        rows = lambda me: [(me, 1, "python3")]
+        ps = self.ps(rows)
+
+        def run(argv, **kw):
+            if argv[0] == "sysctl":
+                raise OSError("sysctl: not permitted")
+            return ps(argv, **kw)
+        with mock.patch.object(acc.subprocess, "run", side_effect=run):
+            state = acc.HostWatch().state()
+        self.assertEqual({"load1": None, "foreignUnity": 0, "foreignPlayer": 0, "foreignBlender": 0, "foreignFfmpeg": 0}, state)
+        self.assertTrue(acc.HostWatch.quiet(state))
+
+    def test_any_foreign_heavy_process_during_the_session_makes_it_dirty(self):
+        # gt Ek 4: the core of C-00's criterion - each of the four kinds, alone, during a session that started quiet
+        free = {"load1": 27.0, "foreignUnity": 0, "foreignPlayer": 0, "foreignBlender": 0, "foreignFfmpeg": 0}
+        for key, name in (("foreignUnity", "Unity 1"), ("foreignPlayer", "Player 1"), ("foreignBlender", "Blender 1"),
+                          ("foreignFfmpeg", "ffmpeg 1")):
+            with self.subTest(heavy=key):
+                record = acc.host_record({"id": "r2-S1", "gates": ["S1"]}, free, True, 0.0,
+                                         [dict(free, t=0.0), dict(free, t=5.0, **{key: 1}), dict(free, t=10.0)])
+                self.assertTrue(record["dirty"])
+                self.assertEqual(1, record[key + "Max"])
+                self.assertIn(name, record["dirtyWhy"][0])
+        clean = acc.host_record({"id": "r2-S1", "gates": ["S1"]}, free, True, 0.0, [dict(free, t=0.0, load1=54.0)])
+        self.assertEqual((False, 54.0), (clean["dirty"], clean["load1Max"]))   # load alone never
 
     def test_the_wait_ends_quiet_or_after_wait_max(self):
         free = {"foreignUnity": 0, "foreignPlayer": 0, "foreignBlender": 0, "foreignFfmpeg": 0}

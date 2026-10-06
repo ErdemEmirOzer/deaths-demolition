@@ -339,7 +339,10 @@ class HostWatch:
                     ours.add(pid)
                     grew = True
         foreign = [comm for pid, _, comm in rows if pid not in ours]
-        load = float(subprocess.run(["sysctl", "-n", "vm.loadavg"], capture_output=True, text=True).stdout.split()[1])
+        try:
+            load = float(subprocess.run(["sysctl", "-n", "vm.loadavg"], capture_output=True, text=True).stdout.split()[1])
+        except (OSError, ValueError, IndexError):
+            load = None   # reported only (C-00 06.10): an unreadable load average never makes the host dirty (gt Ek 4)
         return {"load1": load, "foreignUnity": sum(c.endswith("/MacOS/Unity") for c in foreign),
                 "foreignPlayer": sum(c.endswith(wp078_perf.PLAYER_EXE) for c in foreign),
                 "foreignBlender": sum(c.endswith("/MacOS/Blender") for c in foreign),
