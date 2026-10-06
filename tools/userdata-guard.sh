@@ -448,10 +448,19 @@ restore_exit() { local rc=$?
 trap 'restore_exit' EXIT
 # G4 D8: a window the ledger knows (by its DIR) that cannot be restored any more is marked dirty — SNAPSHOT_MISSING —
 # so later snapshots of that area stop with 65 until C-00 resolves it
-ledger_dirty() { local id   # never a snapshot still in progress (its owner alive, state snapshotting — D8 review NIT)
-  id=$(python3 "$IO" ledger-mark-missing "$LEDGER" "$DIR" "$1" 2>/dev/null) \
-    && echo "userdata-guard: SNAPSHOT_MISSING — ledger window $id marked dirty (tell C-00)" >&2; return 0; }
-refuse64() { UG_LAST="$(date -u +%FT%TZ) userdata-guard: $* — refused (64)"; ledger_dirty "$*"; echo "userdata-guard: $* — refused (64)" >&2; exit 64; }
+# never a snapshot still in progress (its owner alive, state snapshotting — D8 review NIT). C-00 06.10: never silent —
+# every outcome but "no record" (a window from before D8) is a timeline line; a helper failure is a WARNING (it crashed
+# unseen on every snapshotting record until 06.10: `alive` was shadowed in userdata_guard_io.main)
+ledger_dirty() { local out rc
+  out=$(python3 "$IO" ledger-mark-missing "$LEDGER" "$DIR" "$1" 2>&1); rc=$?
+  ld_log() { dd_log "$*"; print -r -- "$UG_LAST" >&2; }   # timeline + stdout (dd_log) and stderr, as before
+  case $rc in
+    0) ld_log "userdata-guard: SNAPSHOT_MISSING — ledger window ${out##*$'\n'} marked dirty (tell C-00)" ;;
+    1) ;;
+    2) ld_log "userdata-guard: SNAPSHOT_MISSING not marked — the ledger window of $DIR is still snapshotting under a live owner" ;;
+    *) ld_log "WARNING userdata-guard: ledger-mark-missing failed (exit $rc) — the ledger window of $DIR was NOT marked dirty, tell C-00: ${${out##*$'\n'}:0:200}" ;;
+  esac; return 0; }
+refuse64() { ledger_dirty "$*"; UG_LAST="$(date -u +%FT%TZ) userdata-guard: $* — refused (64)"; echo "userdata-guard: $* — refused (64)" >&2; exit 64; }
 [ -f "$DIR/before.txt" ] || refuse64 "no snapshot in $DIR"
 for f in snapshot-manifest.json sampler.json; do
   [ -e "$DIR/$f" ] && refuse64 "v1 (74f62dd6) snapshot ($f) — restore it with the guard version that took it, tell C-00"

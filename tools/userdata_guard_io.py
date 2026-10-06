@@ -1081,9 +1081,9 @@ def main(argv):
         print(value)
         return 0 if value else 1
     if cmd == "window-owner" and len(args) == 1:
-        alive, why = window_owner(args[0])
+        owner_ok, why = window_owner(args[0])   # not `alive`: the liveness helper mark-missing calls below
         print(why)
-        return 0 if alive else 1
+        return 0 if owner_ok else 1
     if cmd == "foreign-players" and len(args) == 1:
         rows = foreign_players(args[0])
         print(json.dumps(rows))

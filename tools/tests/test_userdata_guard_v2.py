@@ -1843,6 +1843,50 @@ class LedgerTests(RestoreBase):
         self.assertEqual(64, rc, err)
         self.assertIn("SNAPSHOT_MISSING — ledger window %s marked dirty" % w["id"], err)
         self.assertEqual("dirty", self.records()[0]["state"])
+        self.assertIn("SNAPSHOT_MISSING — ledger window %s marked dirty" % w["id"], (self.dir / "timeline.txt").read_text())
+
+    def plant_snapshotting(self, owner_alive):
+        """a record of self.dir still 'snapshotting' (its guard gone without a trace), owner dead or alive; no snapshot."""
+        if owner_alive:
+            p = subprocess.Popen(["sleep", "300"]); self.procs.append(p)
+        else:
+            p = subprocess.Popen(["true"]); p.wait()
+        lst = " ".join(subprocess.run([str(self.bin / "ps"), "-o", "lstart=", "-p", str(p.pid)], capture_output=True,
+                                      text=True, env=self.env()).stdout.split())   # normalised as userdata_guard_io.lstart
+        self.dir.mkdir(parents=True, exist_ok=True)
+        rec = {"id": "planted", "dir": str(self.dir.resolve()), "scope": "editor", "windowAreas": ["editor"],
+               "owner": {"pid": p.pid, "lstart": lst}, "state": "snapshotting", "areas": {"editor": "open"},
+               "utc": "2026-10-06T00:00:00Z"}
+        self.L("windows").mkdir(parents=True, exist_ok=True)
+        self.L("windows", "planted.json").write_text(json.dumps(rec))
+
+    def test_Ledger_MarkMissing_SnapshottingSahipOlu_Restore64KayitDirty(self):
+        """C-00 06.10: `alive` was shadowed in userdata_guard_io.main — mark-missing crashed (UnboundLocalError) on every
+        snapshotting record and the guard swallowed it; a dead owner's record stayed 'snapshotting'. Now: dirty + a line."""
+        self.plant_snapshotting(owner_alive=False)
+        rc, out, err = self.restore("editor")
+        self.assertEqual(64, rc, out + err)
+        self.assertEqual("dirty", self.records()[0]["state"])
+        self.assertIn("SNAPSHOT_MISSING — ledger window planted marked dirty", (self.dir / "timeline.txt").read_text())
+        self.assertTrue((self.dir / "restore.txt").read_text().splitlines()[0].endswith("— refused (64)"))   # the refusal stays last
+
+    def test_Ledger_MarkMissing_SnapshottingSahipCanli_IsaretlenmezSatirYazilir(self):
+        self.plant_snapshotting(owner_alive=True)
+        rc, out, err = self.restore("editor")
+        self.assertEqual(64, rc, out + err)
+        self.assertEqual("snapshotting", self.records()[0]["state"])
+        self.assertIn("SNAPSHOT_MISSING not marked — the ledger window of", (self.dir / "timeline.txt").read_text())
+
+    def test_Ledger_MarkMissing_YardimciCokerse_UyariSatiri_SessizDegil(self):
+        real = shutil.which("python3")
+        (self.bin / "python3").write_text('#!/bin/sh\ncase "$*" in *ledger-mark-missing*) echo "Traceback: boom" >&2; exit 3 ;; esac\n'
+                                          'exec "%s" "$@"\n' % real)
+        (self.bin / "python3").chmod(0o755)
+        self.plant_snapshotting(owner_alive=False)
+        rc, out, err = self.restore("editor")
+        self.assertEqual(64, rc, out + err)
+        tl = (self.dir / "timeline.txt").read_text()
+        self.assertIn("WARNING userdata-guard: ledger-mark-missing failed (exit 3)", tl); self.assertIn("Traceback: boom", tl)
 
 
 class KilitSirasiKuyrukTests(GuardFixture):

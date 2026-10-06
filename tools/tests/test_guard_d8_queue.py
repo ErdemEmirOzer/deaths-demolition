@@ -196,5 +196,21 @@ class KuyrukBirimTests(unittest.TestCase):
         self.assertGreaterEqual(r["utc"], r["queuedUtc"])
 
 
+    def test_Birim_MarkMissing_SnapshottingSahipOlu_DirtyYapilir(self):
+        """C-00 06.10: `alive` was shadowed in main() — UnboundLocalError on every snapshotting record before."""
+        rec = self.rec("B", self.dead(), state="snapshotting")
+        rec["dir"] = os.path.realpath(str(self.L.parent / "ugB"))
+        self.put_record(rec)
+        self.assertEqual(0, self.io.main(["ledger-mark-missing", str(self.L), rec["dir"], "no before.txt"]))
+        self.assertEqual("dirty", json.loads((self.L / "windows" / "B.json").read_text())["state"])
+
+    def test_Birim_MarkMissing_SnapshottingSahipCanli_2(self):
+        rec = self.rec("B", self.foreign(), state="snapshotting")
+        rec["dir"] = os.path.realpath(str(self.L.parent / "ugB"))
+        self.put_record(rec)
+        self.assertEqual(2, self.io.main(["ledger-mark-missing", str(self.L), rec["dir"], "no before.txt"]))
+        self.assertEqual("snapshotting", json.loads((self.L / "windows" / "B.json").read_text())["state"])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
