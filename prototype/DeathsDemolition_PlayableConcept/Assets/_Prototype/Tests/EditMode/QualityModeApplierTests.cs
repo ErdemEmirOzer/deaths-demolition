@@ -33,6 +33,23 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void GolgeMesafesiKarari_VarsayilanProfiller_KademeModTablosu()
+        {
+            // [tier, mode] with the WP-070 default profiles (TD 60 / TP 60 / FP 70 m) under the caps Performans 45, Yüksek 60, Sinematik 120.
+            float[,] expected = { { 45f, 45f, 45f }, { 60f, 60f, 60f }, { 60f, 60f, 70f } };
+            for (int t = 0; t < QualityTiers.LevelCount; t++)
+            {
+                for (int m = 0; m < Modes.Length; m++)
+                {
+                    CameraModeProfile profile = CameraModeProfile.Default(Modes[m]);
+                    float distance = QualityModeApplier.ShadowDistanceFor((QualityTier)t, profile);
+                    Assert.AreEqual(expected[t, m], distance, 1e-4f, (QualityTier)t + " / " + Modes[m]);
+                    Assert.AreEqual(QualityTiers.ShadowDistance((QualityTier)t, profile.ShadowDistance), distance, 1e-4f, "sözleşme formülü");
+                }
+            }
+        }
+
+        [Test]
         public void KaskadKarari_AralikDisiProfil_UrpSinirindaKalir()
         {
             CameraModeProfile profile = CameraModeProfile.Default(CameraMode.FirstPerson);

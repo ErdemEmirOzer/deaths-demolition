@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using DD.Prototype.CameraSystem;
 using DD.Prototype.Core;
+using DD.Prototype.World;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -10,23 +11,32 @@ using UnityEngine.SceneManagement;
 namespace DD.Prototype.Rendering
 {
     /// <summary>
-    /// WP-070 · S-05 quality module (C-00 06.10, bug fix) · Applies the camera-mode profile's shadow cascade count at runtime.
+    /// WP-070 · S-05 quality module (C-00 06.10, bug fix) · Applies the camera-mode profile's shadow cascade count and shadow
+    /// distance at runtime.
     ///
     /// CONTRACT (QualityTiers §3 + the CameraModeProfile single-writer rule): the active URP asset's
     /// <c>shadowCascadeCount</c> = <see cref="QualityTiers.ShadowCascades"/>(tier, <see cref="CameraModeService.CurrentProfile"/>.ShadowCascades)
     /// = min(tier cap, mode), re-applied on <see cref="CameraModeService.Changed"/>, <see cref="CameraModeService.ProfilesChanged"/>
     /// and <see cref="QualityTiers.Changed"/>. Until now nothing called the contract at runtime: every mode rendered the asset's
     /// own count (Performance 2, High 2, Cinematic 4).
+    /// The shadow distance had the same gap (C-00 06.10 decision 3): <c>shadowDistance</c> = <see cref="QualityTiers.ShadowDistance"/>
+    /// (tier, profile.ShadowDistance) = min(tier cap, mode) — Cinematic 120 m → TD 60 / TP 60 / FP 70 m; High and Performance
+    /// already sat at their cap (60 / 45 m).
     ///
-    /// NOT applied here: the profile's shadow distance and LOD bias factor (QualityTiers.ShadowDistance / LodBias) — the visual
-    /// decision is open at C-00 / AD; the assets keep their distance and the QualitySettings level its lodBias.
+    /// NOT applied here: the profile's LOD bias factor (QualityTiers.LodBias; measured equal to the level's lodBias today, a
+    /// later slice with its own measurement).
+    ///
+    /// The menu's cinematic backdrop is not a camera mode (gt Y-2, WP-081 in main 06.10): while <see cref="WorldViewer.Active"/>
+    /// the assets keep their own cascades and distance — the values S-09 tuned the menu under — and the profile applies again
+    /// on the next event once the backdrop has gone (the run never sees the flag set).
     ///
     /// The URP assets are shared project files (book §11.26 / §11.31): the first write to an asset records its serialized count,
     /// and <see cref="RestoreOriginals"/> puts it back on <c>Application.quitting</c> and, in the Editor, on ExitingPlayMode — a play
     /// session never leaves an asset different from the disk. The event path does not allocate (the record grows once, one entry
     /// per quality level's asset; the tier is read through <c>QualitySettings.count</c>, not the allocating <c>names</c>).
     ///
-    /// Static state resets on SubsystemRegistration (domain reload off). Subscriptions are made on AfterSceneLoad and re-armed
+    /// Static state resets on SubsystemRegistration (a safety for a domain-reload-off editor; this project reloads the domain,
+    /// so the restore rests on the two exit hooks — gt Y-1). Subscriptions are made on AfterSceneLoad and re-armed
     /// remove-then-add on every scene load: <c>CameraModeService.ResetForTests</c> clears its events (static-bus rearm lesson).
     /// </summary>
     public static class QualityModeApplier
@@ -35,12 +45,15 @@ namespace DD.Prototype.Rendering
         private const int MinCascades = 1, MaxCascades = 4;
 
         private static readonly Dictionary<UniversalRenderPipelineAsset, int> s_originalCascades = new Dictionary<UniversalRenderPipelineAsset, int>(4);
+        private static readonly Dictionary<UniversalRenderPipelineAsset, float> s_originalDistances = new Dictionary<UniversalRenderPipelineAsset, float>(4);
         private static readonly Action<CameraModeChange> s_onModeChanged = OnModeChanged;
         private static readonly Action s_onProfilesChanged = OnProfilesChanged;
         private static readonly Action<QualityTier> s_onTierChanged = OnTierChanged;
         private static readonly UnityEngine.Events.UnityAction<Scene, LoadSceneMode> s_onSceneLoaded = OnSceneLoaded;
+        private static readonly UnityEngine.Events.UnityAction<Scene> s_onSceneUnloaded = OnSceneUnloaded;
         private static readonly Action s_onQuitting = RestoreOriginals;
         private static bool s_enabled = true;
+        private static bool s_applyShadowDistance = true;
 
         /// <summary>
         /// Measurement / test hook. False stops every write; the assets keep what they hold until <see cref="RestoreOriginals"/>
@@ -52,6 +65,19 @@ namespace DD.Prototype.Rendering
             set { s_enabled = value; }
         }
 
+        /// <summary>
+        /// Measurement hook (the AD's cascades-only frames): false leaves the shadow distance alone (the asset's), cascades still
+        /// apply. Back to true on the next play session.
+        /// </summary>
+        public static bool ApplyShadowDistance
+        {
+            get { return s_applyShadowDistance; }
+            set { s_applyShadowDistance = value; }
+        }
+
+        /// <summary>The shadow distance written last this session (−1: none yet).</summary>
+        public static float LastAppliedShadowDistance { get; private set; } = -1f;
+
         /// <summary>The cascade count written last this session (−1: none yet). Readout for tests and probes.</summary>
         public static int LastAppliedCascades { get; private set; } = -1;
 
@@ -62,6 +88,12 @@ namespace DD.Prototype.Rendering
         public static int CascadesFor(QualityTier tier, CameraModeProfile profile)
         {
             return Mathf.Clamp(QualityTiers.ShadowCascades(tier, profile.ShadowCascades), MinCascades, MaxCascades);
+        }
+
+        /// <summary>The distance decision: the contract's min(tier cap, mode distance), never negative.</summary>
+        public static float ShadowDistanceFor(QualityTier tier, CameraModeProfile profile)
+        {
+            return Mathf.Max(0f, QualityTiers.ShadowDistance(tier, profile.ShadowDistance));
         }
 
         /// <summary>Re-arms the subscriptions (remove-then-add) and applies the current tier × mode now. Play mode only.</summary>
@@ -91,12 +123,27 @@ namespace DD.Prototype.Rendering
             }
 
             s_originalCascades.Clear();
+            foreach (KeyValuePair<UniversalRenderPipelineAsset, float> entry in s_originalDistances)
+            {
+                if (entry.Key != null && !Mathf.Approximately(entry.Key.shadowDistance, entry.Value))
+                {
+                    entry.Key.shadowDistance = entry.Value;
+                }
+            }
+
+            s_originalDistances.Clear();
         }
 
         private static void Apply()
         {
             if (!s_enabled || !Application.isPlaying)
             {
+                return;
+            }
+
+            if (WorldViewer.Active)
+            {
+                RestoreOriginals();   // the menu backdrop renders with the assets' own values
                 return;
             }
 
@@ -120,6 +167,19 @@ namespace DD.Prototype.Rendering
             }
 
             LastAppliedCascades = cascades;
+
+            if (!s_originalDistances.ContainsKey(asset))
+            {
+                s_originalDistances.Add(asset, asset.shadowDistance);
+            }
+
+            float distance = s_applyShadowDistance ? ShadowDistanceFor(tier, CameraModeService.CurrentProfile) : s_originalDistances[asset];
+            if (!Mathf.Approximately(asset.shadowDistance, distance))
+            {
+                asset.shadowDistance = distance;
+            }
+
+            LastAppliedShadowDistance = distance;
         }
 
         private static void Arm()
@@ -138,6 +198,7 @@ namespace DD.Prototype.Rendering
             CameraModeService.ProfilesChanged -= s_onProfilesChanged;
             QualityTiers.Changed -= s_onTierChanged;
             SceneManager.sceneLoaded -= s_onSceneLoaded;
+            SceneManager.sceneUnloaded -= s_onSceneUnloaded;
             Application.quitting -= s_onQuitting;
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
@@ -165,6 +226,12 @@ namespace DD.Prototype.Rendering
             Apply();
         }
 
+        /// <summary>The menu backdrop's world goes after its flag clears: the profile applies again without waiting for an event.</summary>
+        private static void OnSceneUnloaded(Scene scene)
+        {
+            Apply();
+        }
+
 #if UNITY_EDITOR
         private static void OnPlayModeStateChanged(UnityEditor.PlayModeStateChange change)
         {
@@ -187,7 +254,9 @@ namespace DD.Prototype.Rendering
             RestoreOriginals();
             Disarm();
             s_enabled = true;
+            s_applyShadowDistance = true;
             LastAppliedCascades = -1;
+            LastAppliedShadowDistance = -1f;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -195,6 +264,8 @@ namespace DD.Prototype.Rendering
         {
             SceneManager.sceneLoaded -= s_onSceneLoaded;
             SceneManager.sceneLoaded += s_onSceneLoaded;
+            SceneManager.sceneUnloaded -= s_onSceneUnloaded;
+            SceneManager.sceneUnloaded += s_onSceneUnloaded;
             Application.quitting -= s_onQuitting;
             Application.quitting += s_onQuitting;
 #if UNITY_EDITOR

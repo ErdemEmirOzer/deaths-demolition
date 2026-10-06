@@ -6,6 +6,8 @@ using DD.Prototype.CameraSystem;
 using DD.Prototype.Core;
 using DD.Prototype.Core.Boot;
 using DD.Prototype.Rendering;
+using DD.Prototype.UI;
+using DD.Prototype.World;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -21,7 +23,8 @@ namespace DD.Art.Tests.PlayMode
     /// WP-070 · S-05 (C-00 06.10, bug fix) · <see cref="QualityModeApplier"/> in play: after a static-bus clear and a scene load,
     /// every tier × camera mode renders the profile's cascade count (min(tier cap, mode)) through the events alone — the level
     /// change (QualityTiers.Changed), the mode request (CameraModeService.Changed) and a profile edit (ProfilesChanged, 0 B) —
-    /// and <see cref="QualityModeApplier.RestoreOriginals"/> leaves every level's URP asset at the value in its file.
+    /// and <see cref="QualityModeApplier.RestoreOriginals"/> leaves every level's URP asset at the value in its file. Under the
+    /// menu's cinematic backdrop (<see cref="WorldViewer.Active"/>, WP-081) the assets keep their file values (gt Y-2).
     /// </summary>
     [TestFixture]
     [Category("WP070")]
@@ -30,6 +33,7 @@ namespace DD.Art.Tests.PlayMode
         private const float SahneZamanAsimi = 60f;
         private static readonly CameraMode[] Modes = { CameraMode.TopDown, CameraMode.ThirdPerson, CameraMode.FirstPerson };
         private static readonly Regex CascadeLine = new Regex(@"^\s*m_ShadowCascadeCount:\s*(\d+)\s*$", RegexOptions.Multiline);
+        private static readonly Regex DistanceLine = new Regex(@"^\s*m_ShadowDistance:\s*([0-9.]+)\s*$", RegexOptions.Multiline);
 
         [UnityTest]
         [Timeout(180000)]
@@ -43,15 +47,19 @@ namespace DD.Art.Tests.PlayMode
             bool enabledBefore = QualityModeApplier.Enabled;
             var assets = new UniversalRenderPipelineAsset[count];
             var disk = new int[count];
+            var diskDistance = new float[count];
             for (int i = 0; i < count; i++)
             {
                 assets[i] = QualitySettings.GetRenderPipelineAssetAt(i) as UniversalRenderPipelineAsset;
                 Assert.IsNotNull(assets[i], "seviye " + i + " URP varlığı");
                 disk[i] = FileCascades(assets[i]);
+                diskDistance[i] = FileDistance(assets[i]);
             }
 
             // [tier, mode] with the WP-070 default profiles: Performans 2/2/2, Yüksek 2/3/4, Sinematik 2/3/4 (before the fix: the asset's 2 / 2 / 4)
             int[,] expected = { { 2, 2, 2 }, { 2, 3, 4 }, { 2, 3, 4 } };
+            // shadow distance (C-00 06.10 decision 3): min(cap 45 / 60 / 120, profile TD 60 / TP 60 / FP 70)
+            float[,] expectedDistance = { { 45f, 45f, 45f }, { 60f, 60f, 60f }, { 60f, 60f, 70f } };
             try
             {
                 QualityModeApplier.Enabled = true;
@@ -63,6 +71,15 @@ namespace DD.Art.Tests.PlayMode
                 while (!(SceneManager.GetActiveScene().name == PrototypeScenes.MainMenu && SceneManager.GetActiveScene().isLoaded) && Time.realtimeSinceStartup - t0 < SahneZamanAsimi) yield return null;
                 Assert.AreEqual(PrototypeScenes.MainMenu, SceneManager.GetActiveScene().name, "MainMenu yüklenmedi");
                 yield return null;
+                // WP-081: MainMenu starts the cinematic backdrop, under which the assets keep their own values (the test below);
+                // the matrix is the run's path, so the backdrop goes first, as when a run starts
+                if (MenuCinematic.Current != null)
+                {
+                    Object.Destroy(MenuCinematic.Current);
+                    yield return null;
+                }
+
+                Assert.IsFalse(WorldViewer.Active, "menü arka planı gitmedi");
 
                 for (int t = 0; t < count; t++)
                 {
@@ -77,6 +94,7 @@ namespace DD.Art.Tests.PlayMode
                         Assert.AreSame(assets[QualitySettings.GetQualityLevel()], active, "etkin varlık seviyenin varlığı değil");
                         Assert.AreEqual(expected[t, (int)mode], active.shadowCascadeCount, (QualityTier)t + " / " + mode + " (" + active.name + ")");
                         Assert.AreEqual(QualityModeApplier.CascadesFor((QualityTier)t, CameraModeService.CurrentProfile), active.shadowCascadeCount, "karar fonksiyonu");
+                        Assert.AreEqual(expectedDistance[t, (int)mode], active.shadowDistance, 1e-3f, "gölge mesafesi " + (QualityTier)t + " / " + mode);
                     }
                 }
 
@@ -117,9 +135,68 @@ namespace DD.Art.Tests.PlayMode
             }
 
             for (int i = 0; i < count; i++) Assert.AreEqual(disk[i], assets[i].shadowCascadeCount, assets[i].name + ": geri yükleme dosyadaki değere dönmedi");
+            for (int i = 0; i < count; i++) Assert.AreEqual(diskDistance[i], assets[i].shadowDistance, 1e-3f, assets[i].name + ": gölge mesafesi dosyadaki değere dönmedi");
             Assert.AreEqual(0, QualityModeApplier.RecordedAssetCount, "kayıt boşalmadı");
             Assert.AreEqual(levelBefore, QualitySettings.GetQualityLevel(), "kalite seviyesi eski hâline dönmedi");
             Assert.AreEqual(modeBefore, CameraModeService.Current, "kamera modu eski hâline dönmedi");
+        }
+
+        [UnityTest]
+        [Timeout(60000)]
+        public IEnumerator Kaskad_MenuArkaPlani_WorldViewerAktif_VarlikDegerleriKalir()
+        {
+            LogAssert.ignoreFailingMessages = true;
+            int count = QualitySettings.count;
+            int levelBefore = QualitySettings.GetQualityLevel();
+            CameraMode modeBefore = CameraModeService.Current;
+            bool enabledBefore = QualityModeApplier.Enabled;
+            bool viewerBefore = WorldViewer.Active;
+            try
+            {
+                QualityModeApplier.Enabled = true;
+                WorldViewer.Active = false;
+                QualitySettings.SetQualityLevel(QualityTiers.LevelOfTier(QualityTier.Sinematik, count), true);
+                yield return null;
+                CameraModeService.Request(CameraMode.TopDown, instant: true);
+                QualityModeApplier.ApplyNow();   // re-arms: an earlier fixture may have cleared the service's events
+                var asset = GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
+                Assert.IsNotNull(asset, "etkin URP varlığı yok");
+                int fileCascades = FileCascades(asset);
+                float fileDistance = FileDistance(asset);
+                Assert.AreEqual(2, asset.shadowCascadeCount, "oyun yolu: Sinematik TD profil kaskadı");
+                Assert.AreEqual(60f, asset.shadowDistance, 1e-3f, "oyun yolu: Sinematik TD profil mesafesi");
+
+                // the menu backdrop owns the world: the next event leaves the asset at its file values (TP would give 3 / 60 m)
+                WorldViewer.Active = true;
+                CameraModeService.Request(CameraMode.ThirdPerson, instant: true);
+                Assert.AreEqual(fileCascades, asset.shadowCascadeCount, "menü arka planı: kaskad dosya değeri değil");
+                Assert.AreEqual(fileDistance, asset.shadowDistance, 1e-3f, "menü arka planı: mesafe dosya değeri değil");
+                Assert.AreEqual(0, QualityModeApplier.RecordedAssetCount, "menü arka planında kayıt kaldı");
+
+                // the backdrop goes and its world scene unloads: the profile applies again without a mode / tier event
+                WorldViewer.Active = false;
+                Scene probe = SceneManager.CreateScene("S05 applier unload probe");
+                yield return SceneManager.UnloadSceneAsync(probe);
+                Assert.AreEqual(3, asset.shadowCascadeCount, "arka plan gidince TP profili uygulanmadı (sceneUnloaded)");
+                Assert.AreEqual(60f, asset.shadowDistance, 1e-3f, "arka plan gidince TP mesafesi uygulanmadı (sceneUnloaded)");
+            }
+            finally
+            {
+                WorldViewer.Active = viewerBefore;
+                CameraModeService.Request(modeBefore, instant: true);
+                if (QualitySettings.GetQualityLevel() != levelBefore) QualitySettings.SetQualityLevel(levelBefore, true);
+                QualityModeApplier.Enabled = enabledBefore;
+                QualityModeApplier.RestoreOriginals();
+                LogAssert.ignoreFailingMessages = false;
+            }
+        }
+
+        /// <summary>The shadow distance in the asset file on disk.</summary>
+        private static float FileDistance(Object asset)
+        {
+            Match m = DistanceLine.Match(File.ReadAllText(AssetDatabase.GetAssetPath(asset)));
+            Assert.IsTrue(m.Success, asset.name + ": m_ShadowDistance satırı yok");
+            return float.Parse(m.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
         }
 
         /// <summary>The count in the asset file on disk (not the in-memory object the applier writes).</summary>
