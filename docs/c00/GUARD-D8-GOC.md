@@ -372,3 +372,51 @@ Kaydın `utc` alanı pencerenin açıldığı andır. Pencere kuyrukta beklediys
 **Oturumlar deftere dokunmaz.** Defterde dosya silmeyin, taşımayın, düzenlemeyin. Takılan bir pencereyi standart yol çözer: aynı dizinle yeniden restore. Bu yolla çözülmeyen pencereyi yalnız C-00 kapatır: kayda `resolution.json` ekler ve kaydı `closed/`'a taşır. Bunu yapan bir araç yoktur; işlem elle yapılır (kural §2.14, G4 Q4).
 
 **D8 öncesi pencereler.** Rollout'tan önce açılmış bir pencerenin defter kaydı yoktur. Restore'u normal çalışır ve olmayan kaydı atlar.
+
+---
+
+# Ek — sonraki dilim (06.10, C-00 onayı)
+
+> **Geçerli:** main `2cce2418` (mark-missing düzeltmesi, kaynak 43d2bbc8) → `2b7bb620` (dilim, kaynak c005a1dd) → `b6e7aa66` (gt düzeltmeleri, kaynak 0ac00c1d); sürücü `b6e7aa66` (06.10). Aşağıdaki ekler §2, §4 ve §6 içindir; çelişki olursa bu ek geçerlidir.
+> **Kaynak:** S-01, dal `s01-g4-d8-next-r3`; bağımsız inceleme `K/wp-089/evidence/d8-next-review-backend-0610.md`, gt `K/wp-089/evidence/d8-next-GT-RAPOR-0610.md`.
+
+## Ek §2 — çıkış kodları tablosuna ekler
+
+**65, snapshot (dirty pencere):**
+- Dirty bir pencerede yalnız restore edilip doğrulanmış (`finalized`) alanlar serbest kalır. Pencerenin dışında kalan (`released`) alanlar bloklu kalmaya devam eder. Sebebi: sahip dizini daha geniş kapsamla yeniden restore edebilir ve koşunun verisini arada açılmış başka bir pencerenin içine yazabilir (gt B-1).
+- Bir istisna var. Pencerenin restore'u **75** ile bittiyse (BUSY, LOCKED ya da erken RACED; `retry=same-dir`), sahibi hâlâ çalışıyorsa ve sahibi sizin atanız değilse, snapshot'ınız 65 almaz. Kuyruğa girer ve sahibin aynı dizinle yapacağı ikinci restore'u bekler.
+- Bu bekleme `DD_GUARD_DIRTY_GRACE` saniyeyle sınırlıdır (varsayılan 600) ve o restore'dan itibaren sayılır. Süre dolunca 65 döner.
+- SNAPSHOT_MISSING ile dirty işaretlenmiş pencere ve 30 ile biten restore'lar beklenmez.
+
+**65, snapshot (terk edilmiş snapshotting kaydı):**
+- Kayıt hâlâ `snapshotting`, onu yazan guard ölmüş ve dizinde `before.txt` yok: kayıt terk edilmiş sayılır, sahibi yaşıyor olsa bile.
+- `REFUSED` satırında gerekçe görünür, örneğin `(its snapshotting guard pid N is gone)`.
+- Dizinde `before.txt` varsa snapshot commit'lenmiş demektir. Kayıt açık pencere sayılır ve beklenir.
+
+**64, restore (SNAPSHOT_MISSING):**
+- Guard sonucu artık sessiz değildir; her biri `timeline.txt`'ye satır olarak yazılır:
+  - `SNAPSHOT_MISSING — ledger window … marked dirty`;
+  - `… not marked — still snapshotting under a live owner`;
+  - yardımcı hata verirse `WARNING … ledger-mark-missing failed (exit N)`. Bu durumda C-00'a yazın.
+
+**Tam saniye kuralı:** `DD_GUARD_DIRTY_GRACE` de tam saniye olmalıdır. Değilse snapshot 64 döner; restore uyarı verir ve varsayılanı kullanır.
+
+## Ek §4 — iskelete eklenecek kural (restore ve slot)
+
+- **Restore hiçbir slot almaz.** Snapshot'ın aldığı player slotunu bırakır.
+- **Restore denemeleri arasında:**
+  - player ya da unity slotu alınmaz;
+  - iç içe snapshot alınmaz;
+  - torununuz olmayan bir süreç beklenmez.
+
+  Bunlardan biri yapılırsa, sizin dirty pencerenizi bekleyen bir koşuyla karşılıklı bekleme oluşabilir. Bekleme en çok `DD_GUARD_DIRTY_GRACE` sürer, sonra 65 döner.
+- **Restore 75 dönerse:** aynı dizinle hemen yeniden deneyin. Kuyrukta sizi bekleyenler en çok `DD_GUARD_DIRTY_GRACE` (600 s) bekler.
+
+## Ek §6 — davranış özeti eki
+
+- Dirty pencere `finalized` olmayan bütün alanlarını bloklar (`released` dahil).
+- Restore'u 75 ile biten bir pencere `DD_GUARD_DIRTY_GRACE` boyunca beklenir; 65 vermez.
+- `snapshotting` kaydı guard'ı ölmüşse terk edilmiş sayılır (`before.txt` yoksa).
+- Defterin her yoklaması tek bir `ps` tablosuyla yapılır.
+- **integrate.sh kapı 8:** WIP commit'ler reddedilir. Ölçüt: konu etiketinde (ilk `:`'dan önce) "WIP" geçmesi, ya da gövdede "Not for main" / "Test: WIP" ile başlayan bir satır. `--subject-exempt` WIP'i geçirir, ama bir WARNING satırı basar.
+- **Disk kapısı:** swap ≥ 10 GiB olunca `WARNING disk-gate` satırı yazılır. Durdurma eşiği 12 GiB olarak kalır.
