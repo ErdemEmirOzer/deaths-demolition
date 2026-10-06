@@ -68,6 +68,19 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void SinematikIkiKaskadBolmesi_Mesafe60m_C0SiniriMetreKorunur()
+        {
+            // AD MUST-4a (06.10): Cinematic TD renders 2 cascades at the profile's 60 m; the split keeps C0's boundary where
+            // 0.25 x 120 m put it (30 m) — only Cinematic TD reads the two-cascade split (TP 3, FP / menu 4)
+            Object asset = AssetDatabase.LoadMainAssetAtPath("Assets/Settings/DD_URP_Cinematic.asset");
+            Assert.IsNotNull(asset, "DD_URP_Cinematic varlığı yok");
+            float split = new SerializedObject(asset).FindProperty("m_Cascade2Split").floatValue;
+            Assert.AreEqual(0.5f, split, 1e-4f, "Sinematik m_Cascade2Split");
+            float distance = QualityModeApplier.ShadowDistanceFor(QualityTier.Sinematik, CameraModeProfile.Default(CameraMode.TopDown));
+            Assert.AreEqual(0.25f * QualityTiers.ShadowDistanceCap[(int)QualityTier.Sinematik], split * distance, 1e-3f, "C0 sınırı metre olarak korunmadı");
+        }
+
+        [Test]
         public void EditModeda_ApplyNow_UrpVarliginaYazmaz()
         {
             RenderPipelineAssetProbe probe = RenderPipelineAssetProbe.Active();
