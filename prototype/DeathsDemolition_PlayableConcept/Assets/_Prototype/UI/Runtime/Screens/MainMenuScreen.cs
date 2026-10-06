@@ -79,7 +79,7 @@ namespace DD.Prototype.UI
         public const string HeaderTitle = "DEATHS DEMOLITION";
         public static string PlayWord => UiStrings.Get("menu.play", "PLAY");
         public static string PlaySubline => UiStrings.Get("menu.play_sub", "CHOOSE SKIN & WEAPON");
-        public static string BuildNotePrefix => UiStrings.Get("menu.build_prefix", "Prototype build · ");
+        public static string BuildNotePrefix => UiStrings.Get("menu.build_prefix", "Build · ");
 
         /// <summary>v4 rail: the glyph size, the pitch between icons (8 px grid), and the air between an icon and its word.
         /// ikon v2 B5a (AD MUST-2, R3): L - the O1 glyphs sit in the viewBox frame, and at M their ink was 18-25 px (median

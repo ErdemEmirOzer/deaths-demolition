@@ -98,12 +98,10 @@ namespace DD.Prototype.UI
         private RectTransform _weaponsColumn;
         private RectTransform _specialsHead;
         private RectTransform _specialsRow;
-        private TMP_Text _specialsNote;
         private float _weaponsTop;
         private float _rowHeight;
         private float _tileHeight;
         private float _specialsTitleBand;
-        private float _specialsNoteBand;
         private bool _weaponsLayoutPending;
         private Vector2 _weaponsSize;
 
@@ -139,10 +137,9 @@ namespace DD.Prototype.UI
                 PrototypeUiFlow.SelectedWeapon = ProfileService.FirstUnlockedWeapon();
             }
 
-            float headerHeight = BuildHeader(
-                UiStrings.Get("selection.eyebrow", "BEFORE THE RUN"),
-                UiStrings.Get("selection.title", "PREPARE YOUR RUN"),
-                UiStrings.Get("selection.subtitle", "The skin is cosmetic. The classic weapon is carried for the whole run and cannot be swapped."));
+            // WP-081 U1b (R2 U1, fewer letters): the title alone - no eyebrow, no subtitle. What the subtitle said lives on
+            // the screen itself: the skins' swatches only recolour, the weapon row is the run's one choice (its lock line).
+            float headerHeight = BuildHeader(null, UiStrings.Get("selection.title", "PREPARE YOUR RUN"));
 
             float top = headerHeight + (int)UiSpace.XXL;
             float stageFrom = ColumnShare + GutterShare;
@@ -245,15 +242,9 @@ namespace DD.Prototype.UI
         {
             var stack = new UiStack(column);
 
+            // WP-081 U1b: the heading, then the cards - the caption ("all three from the start, none changes a value") and each
+            // card's "Cosmetic only" left with R2 U1; the swatch and the preview show what a skin is.
             stack.Add(UiFactory.Heading(UiStrings.Get("selection.skin.title", "CHARACTER SKIN"), column), UiFactory.LineHeight(UiType.H2));
-            stack.Gap(UiSpace.S);
-
-            TMP_Text caption = UiFactory.Label(
-                "SkinCaption", column,
-                UiStrings.Get("selection.skin.caption", "All three are available from the start and none of them changes a gameplay value."),
-                UiType.Caption, UiColor.TextMuted);
-            stack.Add((RectTransform)caption.transform, UiFactory.LineHeight(UiType.Caption) * 2f);
-
             stack.Gap(UiSpace.L);
 
             int count = PlayerSkins.Count;
@@ -276,26 +267,15 @@ namespace DD.Prototype.UI
                 _skinPreviews[i] = BuildPreview(button, i);
                 BuildSwatch(button, palette);
 
-                // AD G1 MUST-3: "Cosmetic only" on top in its own line box, the name in the band below it, top-aligned and
-                // growing downward - the two-line name at Mac UI 1.2 × TextScale 1.25 never climbs into the caption.
+                // AD G1 MUST-3: the name top-aligned and growing downward. It sits below the SELECTED badge's row (30 px) and
+                // takes the card's full width: at Mac UI 1.2 × TextScale 1.25 the badge reserve clipped "Ivory / Crimson".
                 float textLeft = PreviewSlotWidth + SwatchWidthNow + (int)UiSpace.XL + (int)UiSpace.L;
                 float captionBand = UiFactory.LineHeight(UiType.Caption);
                 RectTransform labelRect = (RectTransform)button.LabelText.transform;
-                // The name band sits under the caption row, below the SELECTED badge (30 px), so it takes the card's full
-                // width: at Mac UI 1.2 × TextScale 1.25 the badge reserve clipped "Ivory / Crimson".
                 labelRect.offsetMin = new Vector2(textLeft, (int)UiSpace.M);
                 labelRect.offsetMax = new Vector2(-(int)UiSpace.L, -((int)UiSpace.M + Mathf.Max(captionBand, 30f) + (int)UiSpace.XS));
                 button.LabelText.fontSize = UiTokens.FontSize(UiType.H3);
                 button.LabelText.alignment = TextAlignmentOptions.TopLeft;
-
-                TMP_Text detail = UiFactory.Label(
-                    "Detail", button.transform, UiStrings.Get("selection.skin.detail", "Cosmetic only"), UiType.Caption, UiColor.TextSecondary,
-                    TextAnchor.UpperLeft);
-                RectTransform detailRect = UiFactory.Fill((RectTransform)detail.transform);
-                detailRect.anchorMin = new Vector2(0f, 1f);
-                detailRect.pivot = new Vector2(0f, 1f);
-                detailRect.offsetMin = new Vector2(textLeft, -((int)UiSpace.M + captionBand));
-                detailRect.offsetMax = new Vector2(-BadgeWidth, -(int)UiSpace.M);
 
                 _skinButtons[i] = button;
                 _skinBadges[i] = BuildBadge(button, UiStrings.Get("selection.selected", "SELECTED"));
@@ -523,19 +503,14 @@ namespace DD.Prototype.UI
         {
             stack.Gap(UiSpace.M);
             float band = UiFactory.LineHeight(UiType.Label);
-            float captionBand = UiFactory.LineHeight(UiType.Caption);
             RectTransform head = UiFactory.NewRect("SpecialsHead", column);
             _specialsHead = head;
             _specialsTitleBand = band;
-            _specialsNoteBand = captionBand;
-            stack.Add(head, band + captionBand);
+            stack.Add(head, band);
+            // WP-081 U1b: the title alone - the note ("found on the field, never chosen here") left with R2 U1; the tiles
+            // carry no button, so nothing on them reads as a choice.
             TMP_Text title = UiFactory.Label("Title", head, UiStrings.Get("selection.specials.title", "SPECIAL WEAPONS"), UiType.Label, UiColor.TextSecondary, TextAnchor.MiddleLeft);
             SetTop(title, 0f, 0f, band);
-            // The note on its own line: side by side they met on the Mac canvas.
-            TMP_Text note = UiFactory.Label("Note", head, UiStrings.Get("selection.specials.caption", "Found on the field, never chosen here."), UiType.Caption, UiColor.TextMuted, TextAnchor.MiddleLeft);
-            SetTop(note, 0f, band, captionBand);
-            note.overflowMode = TextOverflowModes.Ellipsis;
-            _specialsNote = note;
             stack.Gap(UiSpace.XS);
 
             RectTransform row = UiFactory.NewRect("Specials", column);
@@ -634,9 +609,9 @@ namespace DD.Prototype.UI
                 _statBars[s] = bar;
             }
 
-            _compareCaption = UiFactory.Label("CompareCaption", content,
-                UiStrings.Get("selection.stats.caption", "Bars compare with the other classic weapons. Longer is better."),
-                UiType.Caption, UiColor.TextMuted);
+            // WP-081 U1b: no caption under the bars ("compare with the other classic weapons, longer is better") - the
+            // roster bars read on their own; the label stays for LayoutStage, empty, so its band closes.
+            _compareCaption = UiFactory.Label("CompareCaption", content, string.Empty, UiType.Caption, UiColor.TextMuted);
 
             // CORE: the weapon's three round-end branches (WP-034 shop gate).
             _coreRow = UiFactory.NewRect("CoreBranches", content);
@@ -928,16 +903,10 @@ namespace DD.Prototype.UI
             _weaponsLayoutPending = false;
             int n = _weaponButtons.Length;
             float rowH = _rowHeight;
-            bool note = true;
             float Need()
             {
                 return _weaponsTop + n * rowH + Mathf.Max(0, n - 1) * WeaponRowGap + (int)UiSpace.M
-                       + _specialsTitleBand + (note ? _specialsNoteBand : 0f) + (int)UiSpace.XS + _tileHeight;
-            }
-
-            if (Need() > avail)
-            {
-                note = false;
+                       + _specialsTitleBand + (int)UiSpace.XS + _tileHeight;
             }
 
             if (Need() > avail && n > 0)
@@ -956,9 +925,8 @@ namespace DD.Prototype.UI
             }
 
             y += (int)UiSpace.M;
-            float headH = _specialsTitleBand + (note ? _specialsNoteBand : 0f);
+            float headH = _specialsTitleBand;
             Dock(_specialsHead, y, headH);
-            _specialsNote.gameObject.SetActive(note);
             y += headH + (int)UiSpace.XS;
             Dock(_specialsRow, y, _tileHeight);
         }
@@ -1034,8 +1002,10 @@ namespace DD.Prototype.UI
             _stageName.text = UiStrings.Upper(WeaponName(id));
             _stageClass.text = ClassLine(key, def);
             _stageRole.text = UiStrings.Get("weapon." + key + ".role", string.Empty);
-            _stageDescription.text = UiStrings.Get("weapon." + key + ".desc", string.Empty);
-            _stageFlavour.text = UiStrings.Get("weapon." + key + ".flavor", string.Empty);
+            // WP-081 U1b (R2 U1, fewer letters): the class line, the role and the bars say what the weapon is; the paragraph
+            // and the flavour line leave the card (their strings stay in the table, LayoutStage closes their bands when empty).
+            _stageDescription.text = string.Empty;
+            _stageFlavour.text = string.Empty;
 
             WeaponStatReadout.Fill(def, _stats);
             for (int s = 0; s < 4; s++)

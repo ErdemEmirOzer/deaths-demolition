@@ -2564,8 +2564,8 @@
     "tr": "YÜKLENİYOR"
   },
   "menu.build_prefix": {
-    "en": "Prototype build · ",
-    "tr": "Prototip sürüm · "
+    "en": "Build · ",
+    "tr": "Sürüm · "
   },
   "menu.eyebrow": {
     "en": "PLAYABLE CONCEPT · PROTOTYPE",
@@ -2692,8 +2692,8 @@
     "tr": "{value} XP · {next}. seviyeye"
   },
   "profile.rule": {
-    "en": "Persistent progress unlocks content only. It never grants starting damage, health or gold.",
-    "tr": "Kalıcı ilerleme yalnızca içerik açar. Başlangıç hasarı, can ya da altın asla vermez."
+    "en": "Unlocks content only; never grants starting damage, health or gold.",
+    "tr": "Yalnızca içerik açar; başlangıç hasarı, can ya da altın asla vermez."
   },
   "profile.titles_label": {
     "en": "PROFILE TITLE",

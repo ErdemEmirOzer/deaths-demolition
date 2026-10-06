@@ -228,7 +228,7 @@ namespace DD.Prototype.UI
         public static string Title => UiStrings.Get("menu.tab.profile", "PROFILE");
 
         public static string RuleNote =>
-            UiStrings.Get("profile.rule", "Persistent progress unlocks content only. It never grants starting damage, health or gold.");
+            UiStrings.Get("profile.rule", "Unlocks content only; never grants starting damage, health or gold.");
 
         public string LevelText = UiStrings.Format("profile.level", "value", "1", "LEVEL {value}");
         public float Progress01;

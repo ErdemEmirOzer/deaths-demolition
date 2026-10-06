@@ -201,7 +201,8 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsFalse(string.IsNullOrEmpty(texts[0].text), when + ": ad");
             StringAssert.DoesNotContain("{", texts[1].text, when + ": sınıf satırı biçimlendi");
             Assert.IsFalse(string.IsNullOrEmpty(texts[2].text), when + ": rol (paket)");
-            Assert.IsFalse(string.IsNullOrEmpty(texts[3].text), when + ": açıklama (paket)");
+            // WP-081 U1b (R2 U1): the paragraph left the card - the class line, the role and the bars say what the weapon is.
+            Assert.IsEmpty(texts[3].text, when + ": açıklama paragrafı kartta yok (U1b)");
         }
     }
 }
