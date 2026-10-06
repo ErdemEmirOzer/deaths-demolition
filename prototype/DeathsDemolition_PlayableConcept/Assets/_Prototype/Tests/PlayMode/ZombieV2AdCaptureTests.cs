@@ -35,8 +35,10 @@ namespace DD.Prototype.Tests.PlayMode
         private static readonly EnemyTier[] Tiers = { EnemyTier.Standard, EnemyTier.Special, EnemyTier.Elite, EnemyTier.Ultra };
 
         /// <summary>WP-084 (AD delta MD2): the share of the chest–belly plate pixels a top may cover per view — fit A / B measured
-        /// 0.0–2.3 % (r8e 06.10: hem and seam slivers at the plate's edges); fit C 4–78 % (the H2 garments over an armour AP-008D refits).</summary>
-        private const float MaxClothOverPlateShare = 0.03f;
+        /// 0.0–2.9 % (hem and seam slivers at the plate's edges; the worst view, A / D2 / T3 back, 2.33 / 2.36 / 2.90 % over r8e / r8f / r8g,
+        /// a 0.57 pp run-to-run spread); fit C 4–78 % (fronts ≥ 5.3 %, the H2 garments over an armour AP-008D refits). 4 % (C-00 06.10,
+        /// gt 1c B1): the noise margin, not a looser rule — the two groups stay apart.</summary>
+        private const float MaxClothOverPlateShare = 0.04f;
 
         [TearDown]
         public void TearDown()
