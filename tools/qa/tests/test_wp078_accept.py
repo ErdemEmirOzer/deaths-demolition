@@ -1080,7 +1080,9 @@ class ManifestTests(Base):
         self.full_run(round_name="R2", r1_evidence=r1_evidence(self.tmp.name), r1_commit=R1)
         shutil.move(str(self.evidence / "a4" / "perf-r1"), str(Path(self.tmp.name) / "perf-r1-away"))
         manifest = acc.assemble_manifest(self.evidence, FINAL, ASSETS, "R2")
-        self.assertNotIn("r1-baseline", [r["role"] for r in manifest["checklist"]["A4"].get("secondaryRoots", [])])
+        # the A4 baseline is not declared; z3/perf-r1 (also role r1-baseline, from the z3 record) may well be, now that
+        # r2_z3.py is in the tree and the chain runs the z3 stage
+        self.assertNotIn("a4/perf-r1", [r["path"] for r in manifest["checklist"]["A4"].get("secondaryRoots", [])])
 
     def test_r2_round_p2_alternation_reaches_the_report(self):
         self.full_run(round_name="R2", r1_evidence=r1_evidence(self.tmp.name), r1_commit=R1, b9_poses=B9PoseTests.POSES)
