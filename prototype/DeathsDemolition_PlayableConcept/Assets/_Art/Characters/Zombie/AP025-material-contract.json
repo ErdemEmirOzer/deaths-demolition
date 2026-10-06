@@ -1,7 +1,7 @@
 {
- "schema": "AP025.material-contract.v002",
+ "schema": "AP025.material-contract.v003",
  "package": "AP-025",
- "status": "asset-side contract v002 (AP025C); engine implementation and performance unmeasured",
+ "status": "asset-side contract v003 (AP025D); engine implementation and performance unmeasured",
  "palette_srgb": {
   "skin01": [
    0.7098039215686275,
@@ -523,5 +523,103 @@
   ],
   "band": "H355-5 S0.70-0.85 V0.25-0.45 (8 bit sRGB texel, 1 px aşınmış pigment çekirdeği)"
  },
- "vertex_color": "Baş/beden: Color.R = ten bayrağı (1 ten, 0 saç/göz/diş/ağız/kan); kolye = 1."
+ "vertex_color": "Baş/beden: Color.R = ten bayrağı (1 ten, 0 saç/göz/diş/ağız/kan); kolye = 1.",
+ "v003": {
+  "materials": {
+   "M_Zombie_Atlas": {
+    "maps": [
+     "Textures/Zombie_O1_BaseColor.png",
+     "Textures/Zombie_O1_Normal.png",
+     "Textures/Zombie_O1_ORM.png"
+    ],
+    "changes": "bacak/ayak (ten, morluk, çamur çizgisi, parmak olukları), obi/ip/sargı karosu ıslaklık ve lif, boyun bandı ton eşleme, ağız texelleri pürüzlülüğü ≥ 0,62; UV ve bölge sınırları aynı"
+   },
+   "M_Zombie_Cloth": {
+    "maps": [
+     "Textures/Zombie_O1_Cloth_BaseColor.png",
+     "Textures/Zombie_O1_Cloth_Normal.png",
+     "Textures/Zombie_O1_Cloth_ORM.png"
+    ],
+    "replaces": "AP-007 v002 kumaş atlası (AP007_IMG_zombie_cloth_*_v002); UV, çeyrek düzeni (dk1/dk2/fd1/fd2) ve adalar aynı",
+    "changes": "kıvrım normal+AO, ıslak leke (BaseColor), kuruma çizgisi |ΔV| ≤ 0,015, delik/sökük izi, çamur beneği; kumaşta kırmızı texel %0,00; pürüzlülük ortalaması çeyrek başına 0,828–0,838, ıslak p1 ≥ 0,719",
+    "orm_runtime": "S-03 Z3b: 512 (teslim 1024)"
+   }
+  },
+  "masks": {
+   "files": "Masks/Zombie_O1_{Skin,Dirt,Blood}_{00..02}.png",
+   "blood": "sağ yarı (kumaş) yönlü: göğüs/kol ağzı/diz bölgeleri, çekirdek bant içi ≥ %99,3, 1–3 px bileşen 0; sol yarı (ten) bant içi ≥ %98,8"
+  },
+  "K1_vertex_color": {
+   "schema": "AP025D.k1-vertex-color.v1",
+   "decision": "C-00 09:50 K1 EVET (koşullu): giysiye özgü paça çamuru/ıslaklığı köşe rengiyle; gölgelendirici bu pakette DEĞİŞMEDİ (S-03 işi)",
+   "attribute": {
+    "name": "Color",
+    "blender_type": "FLOAT_COLOR",
+    "domain": "CORNER",
+    "fbx_export": "colors_type='LINEAR' (sRGB dönüşümü yok; değerler maske, renk değil)",
+    "unity": "Mesh.colors (COLOR0), doğrusal 0..1"
+   },
+   "channels": {
+    "R": {
+     "meaning": "ayrılmış, 0 (ten bayrağı değildir; giysilerde her zaman 0)",
+     "range": [
+      0.0,
+      0.0
+     ]
+    },
+    "G": {
+     "meaning": "çamur ağırlığı (paça/etek bandı)",
+     "range": [
+      0.0,
+      1.0
+     ],
+     "definition": "1 - smoothstep(d, top-0.05, top); d = köşenin en yakın paça/etek kenar köşesine 3B uzaklığı (m); top = 0.07 + 0.15*n1 + 0.03*(n2-0.5) (düzensiz üst kenar ~6-23 cm; n1 snoise seed 301 ölçek (4,9), n2 seed 303 ölçek (11,23))"
+    },
+    "B": {
+     "meaning": "ıslaklık ağırlığı (çamurun üstüne 15 cm daha çıkan nem)",
+     "range": [
+      0.0,
+      1.0
+     ],
+     "definition": "1 - smoothstep(d, top, top+0.15)"
+    },
+    "A": {
+     "meaning": "1 (kullanılmaz)",
+     "range": [
+      1.0,
+      1.0
+     ]
+    }
+   },
+   "scope": "yalnız alt giysiler (B*) — paça/etek kenarı z ort < 0,45 m olan sınır döngüleri; üst giysiler, başlıklar, aksesuarlar G=B=0; ana gövde dışı (eklenti) parçalarda 0",
+   "shader_contract_proposal_for_S03": {
+    "order": "öneri: kumaş tabanında kir/kandan ÖNCE base = lerp(base, MUD, G*k_mud); ıslaklık: base *= lerp(1, WETMUL, B*k_wet), rough = lerp(rough, 0.55..0.65, B*k_wet) — Look B 'mat figür' kuralı için ıslak pürüzlülük alt sınırı 0,65 önerilir (MUST-4)",
+    "MUD_palette_candidate_sRGB": "#4A443C (Blender öykünümünde kullanılan orta değer; AD ile seçilecek — S-J notu: koyu çeyreklerde orta değer)",
+    "note": "DD_TierLit main'de bugün köşe rengi okumuyor (git show main: DD_TierLit.shader/DD_TierLitInput.hlsl'de COLOR semantiği yok) — kanallar çakışmasız"
+   },
+   "pilot_values": "garments-v003.json modules.B6_hakama_torn.lods[*].k1_vertex_color (LOD0: G>0,5 116 köşe, geçiş 20, bant üstü en çok z 0,329 m, bant yüksekliği en çok 0,188 m)",
+   "emulation": "render_v3 K1 modu (Blender): kumaş albedosu kir/kan katmanlarından SONRA lerp(albedo, #4A443C, G); B (ıslaklık) kanalı yazıldı ama öykünümde KULLANILMADI; pürüzlülük değişmedi. Kareler 06-renders/v003/pilot/*-k1.jpg"
+  },
+  "K2_material_order": {
+   "rule": "[M_Zombie_Atlas, M_Zombie_Cloth]; yüzsüz yuva düşer",
+   "readback_order_groups": {
+    "M_Zombie_Atlas , M_Zombie_Cloth": 201,
+    "M_Zombie_Cloth": 183,
+    "M_Zombie_Atlas": 72
+   },
+   "order_violations": 0,
+   "builder_rule_fail": 0,
+   "dropped_empty_slots": [
+    "zombie_A1_straw_hat_A_LOD3:['M_Zombie_Atlas']",
+    "zombie_A1_straw_hat_B_LOD3:['M_Zombie_Atlas']",
+    "zombie_A1_straw_hat_C_LOD3:['M_Zombie_Atlas']"
+   ]
+  },
+  "jaw": {
+   "bone": "jaw (Head çocuğu, deform; AP-022 rig v002 ile aynı ad/ebeveyn/dinlenme)",
+   "rig_bones": 74,
+   "open": "yerel X +θ",
+   "weighted": "yüzler (alt dudak, kese, çene), A2/H2/H4/H6/H7 (AP-022 kuralı; ağız çizgisi üstü 0)"
+  }
+ }
 }

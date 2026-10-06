@@ -677,6 +677,10 @@ namespace DD.Art.Pipeline.EditorTools
             }
 
             library.modules = modules.ToArray();
+            // WP-084 (C-00 06.10, AP-025D v003): the interim top × bottom exclusions from the intake data
+            List<(string top, string bottom)> pairs = ArtAp025Intake.GarmentPairExcludes();
+            library.excludedPairTops = pairs.ConvertAll(x => x.top).ToArray();
+            library.excludedPairBottoms = pairs.ConvertAll(x => x.bottom).ToArray();
 
             // Tier materials + their tint sub-textures (4×4 flat colour, stored inside the library asset).
             library.tierMaterials = new Material[TierSuffix.Length];

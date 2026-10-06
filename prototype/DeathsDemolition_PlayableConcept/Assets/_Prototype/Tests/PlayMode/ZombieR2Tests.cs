@@ -32,7 +32,7 @@ namespace DD.Prototype.Tests.PlayMode
     /// Z3b — the zombie share of the 40-zombie full-armour frame (the SetPassAttribution scenario, R1 6 SetPass / 310 draws)
     /// and the zombie texture budget.
     /// Z4 — face, eyes and teeth on every family (AP-025 face modules on the shared skeleton's Head). The jaw is C-00's 05.10
-    /// decision (a): an empty jaw transform now, the face jaw weights with AP-025D — <see cref="Z4b_YuzCenesi_JawAgirligi"/>.
+    /// decision (a): an empty jaw transform now, the face jaw weights with AP-025D — Z4b (EditMode ArtCharacterTests.Z4b_YuzCenesi_JawAgirligi_CullBack — the face meshes are not readable in play mode).
     /// </summary>
     [TestFixture]
     [Explicit("R2 measurement: run by full name")]
@@ -464,64 +464,6 @@ namespace DD.Prototype.Tests.PlayMode
 
             R2Olcum.Yaz("Z4", source, new Dictionary<string, double> { { "familiesMissingFace", missing } }, families);
             Assert.AreEqual(0, missing, "yüzü olmayan aile");
-        }
-
-        /// <summary>
-        /// Z4b — the lower face rides the jaw: every face LOD lists the "jaw" bone (teeth / lower lip weighted to it). C-00 05.10
-        /// decision (a): v002 faces are bound to Head and the prefab carries an empty jaw transform; AP-025D delivers the weights.
-        /// </summary>
-        [Test]
-        [Ignore("AP-025D: face jaw weights not delivered yet (C-00 05.10 decision (a): empty jaw transform now, weights with AP-025D)", Until = "2026-10-20 00:00:00Z")]
-        public void Z4b_YuzCenesi_JawAgirligi()
-        {
-            CharacterAssetSet set = CharacterAssetSet.Load();
-            ZombieModuleLibrary library = set != null ? set.ZombieLibrary : null;
-            Assert.IsNotNull(library, "zombie module library");
-            // 3d-modeller 06.10: Blender lists every deform bone, so "jaw in the bone list" proves nothing — the lower face must be
-            // WEIGHTED to it at every LOD, the shared collar ring (y 1.50) must carry no jaw weight, and the jaw's bind pose must be
-            // the rig v002 rest under Head (0, 0.045, −0.012), the empty jaw the prefab carries today.
-            var rest = new Vector3(0f, 0.045f, -0.012f);
-            var restRotation = new Quaternion(-0.8468003f, 0f, 0f, 0.5319109f);
-            int faces = 0;
-            var bad = new List<string>();
-            if (library.modules != null)
-            {
-                foreach (ZombieModuleLibrary.Module m in library.modules)
-                {
-                    if (m == null || m.kind != ZombieModuleLibrary.KindFace) continue;
-                    faces++;
-                    ZombieModuleLibrary.Variant v = m.variants[0];
-                    for (int lod = 0; lod < ZombieModuleLibrary.LodCount; lod++)
-                    {
-                        ZombieModuleLibrary.MeshRef r = v.lods[lod];
-                        int jaw = r != null && r.boneNames != null ? Array.IndexOf(r.boneNames, "jaw") : -1, head = r != null && r.boneNames != null ? Array.IndexOf(r.boneNames, "Head") : -1;
-                        if (jaw < 0 || head < 0 || r.mesh == null) { bad.Add(m.id + " lod" + lod + ": jaw/Head listede yok"); continue; }
-                        var perVertex = r.mesh.GetBonesPerVertex();
-                        var weights = r.mesh.GetAllBoneWeights();
-                        Vector3[] vertices = r.mesh.vertices;
-                        int weighted = 0, ringJaw = 0, w = 0;
-                        for (int i = 0; i < perVertex.Length; i++)
-                        {
-                            for (int k = 0; k < perVertex[i]; k++, w++)
-                            {
-                                if (weights[w].boneIndex != jaw || weights[w].weight <= 0f) continue;
-                                weighted++;
-                                if (Mathf.Abs(vertices[i].y - 1.5f) < 0.005f) ringJaw++;
-                            }
-                        }
-
-                        Matrix4x4 local = r.mesh.bindposes[head] * r.mesh.bindposes[jaw].inverse;
-                        float posErr = Vector3.Distance(local.GetColumn(3), rest), rotErr = Quaternion.Angle(local.rotation, restRotation);
-                        Debug.Log(string.Format(CultureInfo.InvariantCulture, "[DD-OBS] r2.z4b {0} lod{1} jawWeighted={2} ringJaw={3} bindPosErrMm={4:0.000} bindRotErrDeg={5:0.000}", m.id, lod, weighted, ringJaw, posErr * 1000f, rotErr));
-                        if (weighted == 0) bad.Add(m.id + " lod" + lod + ": jaw ağırlıklı köşe yok");
-                        if (ringJaw > 0) bad.Add(m.id + " lod" + lod + ": boyun halkasında jaw ağırlığı " + ringJaw);
-                        if (posErr > 0.0001f || rotErr > 0.05f) bad.Add(m.id + " lod" + lod + ": jaw bind pozu rig v002 rest'inden farklı");
-                    }
-                }
-            }
-
-            Assert.Greater(faces, 0, "kaynak yok: yüz modülü yok");
-            Assert.IsEmpty(bad, string.Join("\n", bad));
         }
 
         private static void SavePng(Color32[] pixels, int width, int height, string path)

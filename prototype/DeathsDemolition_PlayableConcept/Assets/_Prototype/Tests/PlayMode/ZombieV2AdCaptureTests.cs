@@ -271,6 +271,91 @@ namespace DD.Prototype.Tests.PlayMode
         }
 
         /// <summary>
+        /// WP-084 (C-00 06.10, AP-025D v003 AD add-on to MUST-5) · the waist band seen from behind: with the cloth culled Back, the
+        /// band's back faces could read as a skin or ground strip. Three unarmoured Standard bodies in the obi-layered pairs the roster
+        /// keeps (T8 × B6, T1 × B1, T2 × B4), LOD1 forced, walking toward the player (a real step, ~1 s), then one TP 3/4 frame per
+        /// body from behind-left at ~2.7 m on the waist. PNGs to DD_WP084_AD_DIR as {tag}-belt-{i}.png — one look for the AD, no gate.
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator AD_BelBandi_TP34_LOD1_Yuruyus()
+        {
+            LogAssert.ignoreFailingMessages = true;
+            RunFlowClock.ClearHolds();
+            SceneManager.LoadScene(PrototypeScenes.Run, LoadSceneMode.Single);
+            yield return null;
+            float t0 = Time.realtimeSinceStartup;
+            while (!(RunDirector.Instance != null && EnemySpawnDirector.Instance != null && PlayerRegistry.Primary != null && PrototypeCameraRig.Active != null
+                     && RunDirector.Instance.Phase == RunPhase.Fighting) && Time.realtimeSinceStartup - t0 < 40f) yield return null;
+            Assert.IsTrue(RunDirector.Instance != null && RunDirector.Instance.Phase == RunPhase.Fighting, "Run sahnesi / Fighting");
+            PlayerRig rig = PlayerRegistry.Primary;
+            rig.Health.DiagnosisInvulnerable = true;
+            ZombieEnemy.Rise = ZombieEnemy.RisePolicy.Off;
+            EnemySpawnDirector.Instance.StopRound();
+            EnemySpawnDirector.Instance.ClearAllEnemies();
+            EnemyFactory.ClearAll();
+            yield return null;
+            foreach (Renderer r in rig.GetComponentsInChildren<Renderer>(true)) r.enabled = false;   // the player out of every frame
+
+            CharacterAssetSet set = CharacterAssetSet.Load();
+            ZombieModuleLibrary library = set != null ? set.ZombieLibrary : null;
+            Assert.IsNotNull(library, "zombie module library");
+            Camera game = PrototypeCameraRig.Active.Camera;
+            string dir = Environment.GetEnvironmentVariable("DD_WP084_AD_DIR");
+            if (string.IsNullOrEmpty(dir)) dir = Path.Combine(Application.temporaryCachePath, "wp084-ad");
+            string tag = Environment.GetEnvironmentVariable("DD_WP084_AD_TAG") ?? "frame";
+            Directory.CreateDirectory(dir);
+            Vector3 fwd = Vector3.ProjectOnPlane(game.transform.forward, Vector3.up).normalized;
+            Vector3 right = Vector3.Cross(Vector3.up, fwd);
+            string[][] pairs = { new[] { "T8_kosode_rolled", "B6_hakama_torn" }, new[] { "T1_kosode_short", "B1_hakama_wide" }, new[] { "T2_kosode_long", "B4_tattsuke_hakama" } };
+            EnemyFactory.ResetSeedForTests(84u);
+            var bodies = new List<ZombieEnemy>();
+            for (int i = 0; i < pairs.Length; i++)
+            {
+                Vector3 p = NavPathFollower.ClampToNavMesh(rig.transform.position + fwd * 8f + right * ((i - 1) * 3f), 6f);
+                ZombieEnemy z = EnemyFactory.Spawn(EnemyTier.Standard, 8, p, Quaternion.LookRotation(-fwd));
+                Assert.IsNotNull(z, "spawn");
+                var appearance = z.VersionVisual as ZombieAppearance;
+                ArmorVisualBinder binder = appearance != null ? appearance.ArmorBinder : null;
+                if (binder != null && binder.IsReady)
+                    foreach (ArmorSlot slot in new[] { ArmorSlot.Helmet, ArmorSlot.Body, ArmorSlot.Leg }) binder.Apply(slot, ArmorVisualState.Absent);   // the band uncovered
+                ZombieLook look = z.Skinned.Look;
+                ZombieModuleLibrary.Module top = Array.Find(library.modules, x => x.id == pairs[i][0]);
+                ZombieModuleLibrary.Module bottom = Array.Find(library.modules, x => x.id == pairs[i][1]);
+                Assert.IsTrue(top != null && bottom != null, "kaynak yok: " + pairs[i][0] + " / " + pairs[i][1]);
+                Assert.IsFalse(library.ExcludesPair(pairs[i][0], pairs[i][1]), "kadrodan çıkarılmış çift: " + pairs[i][0] + " × " + pairs[i][1]);
+                look.top = top.id; look.topColourway = top.colourways[0];
+                look.bottom = bottom.id; look.bottomColourway = bottom.colourways[0];
+                Reassemble(z, library, look, 1, 1, 1);
+                z.Skinned.LodGroup.ForceLOD(1);
+                bodies.Add(z);
+            }
+
+            var starts = new List<Vector3>();
+            foreach (ZombieEnemy z in bodies) starts.Add(z.transform.position);
+            Time.captureDeltaTime = 1f / 60f;
+            for (int f = 0; f < 60; f++) yield return null;   // ~1 s of the walk toward the player
+            Time.captureDeltaTime = 0f;
+            Time.timeScale = 0f;
+            yield return null;
+            for (int i = 0; i < bodies.Count; i++)
+            {
+                ZombieEnemy z = bodies[i];
+                Vector3 zf = Vector3.ProjectOnPlane(z.transform.forward, Vector3.up).normalized;
+                Vector3 zr = Vector3.Cross(Vector3.up, zf);
+                Vector3 waist = z.transform.position + Vector3.up * 0.95f;
+                Vector3 cam = z.transform.position - zf * 2.2f - zr * 1.5f + Vector3.up * 1.6f;
+                CaptureFrom(game, cam, Quaternion.LookRotation(waist - cam), 45f, Path.Combine(dir, tag + "-belt-" + i + ".png"));
+                Debug.Log("[DD-OBS] wp084.ad.belt i=" + i + " look=" + z.Skinned.Look.Key + " lod=1 walkedM=" + Vector3.Distance(starts[i], z.transform.position).ToString("0.00"));
+            }
+
+            Time.timeScale = 1f;
+            foreach (ZombieEnemy z in bodies) if (z != null) { z.Skinned.LodGroup.ForceLOD(-1); if (z.IsSpawned) z.Remove(); }
+            yield return null;
+            Assert.IsTrue(File.Exists(Path.Combine(dir, tag + "-belt-2.png")), "kareler yazılmadı");
+        }
+
+        /// <summary>
         /// WP-084 (AD delta MD2, C-00 06.10) · top garment over the body armour: every fit (A / B / C) × body-armour variant × top the
         /// game can draw under it (the variant's exclusions — AP-008 + the AP-025 intake's interim armourBodyExcludes — left out;
         /// the faded cw2 colourway an armoured spawn wears, else the only one). One body, the look forced, the dō Present, the pose
@@ -432,6 +517,9 @@ namespace DD.Prototype.Tests.PlayMode
                       + " || knownOpenC (AP-008D refit, C-00 06.10)=" + knownOpenC.Count + " | " + string.Join(", ", knownOpenC.ConvertAll(x => x.key + "=" + x.px)));
             Assert.Greater(combos, 10, "kaynak yok: kombinasyon");
             Assert.IsEmpty(violations, "gövde zırhı üstünde kumaş (fit A/B): " + string.Join(", ", violations.ConvertAll(x => x.key + "=" + x.px + " px")));
+            // WP-084 (C-00 06.10, AP-008D v004 refit of the fit C dō + kote): fit C is a check now, at the same per-view limit (the report
+            // file stays for the per-top trail)
+            Assert.IsEmpty(knownOpenC, "gövde zırhı üstünde kumaş (fit C, AP-008D v004): " + string.Join(", ", knownOpenC.ConvertAll(x => x.key + "=" + x.px + " px")));
         }
 
         /// <summary>

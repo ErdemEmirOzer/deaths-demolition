@@ -67,6 +67,16 @@ namespace DD.Art.Pipeline.EditorTools
             return ArtImportContract.IsContractModel(assetPath) && assetPath.StartsWith(ArtImportContract.CharactersRoot + "/", StringComparison.Ordinal);
         }
 
+        /// <summary>
+        /// WP-084 (C-00 06.10, AP-025D v003) · the AP-025 face FBXs carry a rig fragment (Root … Neck / Head / jaw), not the 52-bone
+        /// body, so no humanoid avatar can be built from them. They never animate on their own — ZombieSkinnedVisual binds their bone
+        /// list by name to the actor skeleton — so they import Generic with no avatar; every other v1.1 rule holds.
+        /// </summary>
+        public static bool IsRigFragment(string assetPath)
+        {
+            return assetPath != null && assetPath.Replace('\\', '/').StartsWith(ZombieFolder + "/Faces/", StringComparison.Ordinal);
+        }
+
         public static bool IsClip(string assetPath)
         {
             string p = assetPath.Replace('\\', '/');
@@ -153,22 +163,23 @@ namespace DD.Art.Pipeline.EditorTools
             bool changed = ArtImportContract.Apply(importer);   // v1 first; the lines below override its animation/blend-shape defaults
             string path = importer.assetPath;
             bool clip = IsClip(path);
+            bool fragment = IsRigFragment(path);   // WP-084: Generic, no avatar
 
-            changed |= Set(importer.animationType, ModelImporterAnimationType.Human, v => importer.animationType = v);
+            changed |= Set(importer.animationType, fragment ? ModelImporterAnimationType.Generic : ModelImporterAnimationType.Human, v => importer.animationType = v);
             changed |= Set(importer.generateSecondaryUV, ArtImportContract.CharacterGenerateSecondaryUV, v => importer.generateSecondaryUV = v);   // WP-029: skinned = probe-lit, no lightmap UVs
             changed |= Set(importer.optimizeGameObjects, false, v => importer.optimizeGameObjects = v);
             changed |= Set(importer.importAnimation, clip, v => importer.importAnimation = v);
             changed |= Set(importer.importBlendShapes, false, v => importer.importBlendShapes = v);
             changed |= Set(importer.importVisibility, false, v => importer.importVisibility = v);
 
-            changed |= Set(importer.avatarSetup, ModelImporterAvatarSetup.CreateFromThisModel, v => importer.avatarSetup = v);
+            changed |= Set(importer.avatarSetup, fragment ? ModelImporterAvatarSetup.NoAvatar : ModelImporterAvatarSetup.CreateFromThisModel, v => importer.avatarSetup = v);
             if (importer.sourceAvatar != null)
             {
                 importer.sourceAvatar = null;
                 changed = true;
             }
 
-            changed |= ApplyHumanDescription(importer);
+            if (!fragment) changed |= ApplyHumanDescription(importer);
 
             if (clip)
             {
@@ -242,13 +253,18 @@ namespace DD.Art.Pipeline.EditorTools
 
             string path = importer.assetPath;
             bool clip = IsClip(path);
-            Check(v, "animationType", importer.animationType, ModelImporterAnimationType.Human);
+            bool fragment = IsRigFragment(path);
+            Check(v, "animationType", importer.animationType, fragment ? ModelImporterAnimationType.Generic : ModelImporterAnimationType.Human);
             Check(v, "optimizeGameObjects", importer.optimizeGameObjects, false);
             Check(v, "importAnimation", importer.importAnimation, clip);
             Check(v, "importBlendShapes", importer.importBlendShapes, false);
-            Check(v, "avatarSetup", importer.avatarSetup, ModelImporterAvatarSetup.CreateFromThisModel);
+            Check(v, "avatarSetup", importer.avatarSetup, fragment ? ModelImporterAvatarSetup.NoAvatar : ModelImporterAvatarSetup.CreateFromThisModel);
             Avatar avatar = AvatarOf(path);
-            if (avatar == null || !avatar.isValid || !avatar.isHuman)
+            if (fragment)
+            {
+                if (avatar != null) v.Add("avatar: present on a rig fragment (WP-084: Generic, no avatar)");
+            }
+            else if (avatar == null || !avatar.isValid || !avatar.isHuman)
             {
                 v.Add("avatar: " + (avatar == null ? "missing" : !avatar.isValid ? "invalid" : "not humanoid"));
             }

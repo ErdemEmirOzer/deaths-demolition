@@ -104,6 +104,19 @@ namespace DD.Prototype.Characters
         public Material[] tierMaterials = new Material[4];
         [Tooltip("WP-020 · AP-007 v002 second atlas (cloth): index = EnemyTier; the whole cloth atlas is version-tintable.")]
         public Material[] tierClothMaterials = new Material[4];
+        /// <summary>WP-084 (C-00 06.10, AP-025D v003) · top × bottom pairs never drawn together (index-matched; the AP-025 intake's interim
+        /// garmentPairExcludes — R3 fixes the intersections). Empty = every pair allowed.</summary>
+        public string[] excludedPairTops = Array.Empty<string>();
+        public string[] excludedPairBottoms = Array.Empty<string>();
+
+        /// <summary>True when <paramref name="top"/> and <paramref name="bottom"/> are an excluded pair. Allocation-free.</summary>
+        public bool ExcludesPair(string top, string bottom)
+        {
+            if (excludedPairTops == null || excludedPairBottoms == null) return false;
+            int n = Math.Min(excludedPairTops.Length, excludedPairBottoms.Length);
+            for (int i = 0; i < n; i++) if (excludedPairTops[i] == top && excludedPairBottoms[i] == bottom) return true;
+            return false;
+        }
         public string[] fits = { "A", "B", "C" };
 
         public const string MaterialAtlas = "M_Zombie_Atlas";
@@ -303,11 +316,15 @@ namespace DD.Prototype.Characters
             List<string> heads = library.Ids("head");
 
             ZombieLookConstraints cc = c;
-            look.top = Pick(tops, ref state, id => cc.ExcludesTop(id) ? 0f : id == ZombieModuleLibrary.TopMinoCape ? (allowMinoCape ? MinoCapeWeight : 0f) : id == ZombieModuleLibrary.TopBareStraps ? BareStrapsWeight : 1f);
+            // WP-084 (AP-025D v003 interim pairs): a top whose every allowed bottom is an excluded pair is never picked — so the pairs
+            // never push the bottom past the armour constraints (e.g. T8 under a haidate leaves only B2 / B5 / B7, all excluded with T8)
+            look.top = Pick(tops, ref state, id => cc.ExcludesTop(id) || !HasAllowedBottom(library, bottoms, id, cc) ? 0f
+                : id == ZombieModuleLibrary.TopMinoCape ? (allowMinoCape ? MinoCapeWeight : 0f) : id == ZombieModuleLibrary.TopBareStraps ? BareStrapsWeight : 1f);
             look.topColourway = Colourway(library.FindModule(look.top), ref state, cc.fadedTop);
 
             bool strapsTop = look.top == ZombieModuleLibrary.TopBareStraps;
-            look.bottom = Pick(bottoms, ref state, id => cc.ExcludesBottom(id) ? 0f : id == ZombieModuleLibrary.BottomFundoshi ? (strapsTop ? 0f : FundoshiWeight) : 1f);
+            string pickedTop = look.top;
+            look.bottom = Pick(bottoms, ref state, id => cc.ExcludesBottom(id) || library.ExcludesPair(pickedTop, id) ? 0f : id == ZombieModuleLibrary.BottomFundoshi ? (strapsTop ? 0f : FundoshiWeight) : 1f);
             look.bottomColourway = Colourway(library.FindModule(look.bottom), ref state, cc.fadedBottom);
 
             // H0 is "no head module"; it is an option alongside the five meshes.
@@ -378,6 +395,23 @@ namespace DD.Prototype.Characters
             if (module == null || !module.HasColourways) return ZombieModuleLibrary.NoColourway;
             bool faded = Next01(ref state) < FadedColourwayChance;   // the draw is consumed either way (sequence parity)
             return faded || forceFaded ? ZombieModuleLibrary.ColourwayFaded : ZombieModuleLibrary.ColourwayDark;
+        }
+
+        /// <summary>WP-084: some bottom has positive weight with <paramref name="top"/> (constraints and the interim pairs; fundoshi counts
+        /// unless the top is the bare straps, as the bottom draw does).</summary>
+        private static bool HasAllowedBottom(ZombieModuleLibrary library, List<string> bottoms, string top, in ZombieLookConstraints cc)
+        {
+            if (library.excludedPairTops == null || library.excludedPairTops.Length == 0) return true;
+            bool straps = top == ZombieModuleLibrary.TopBareStraps;
+            for (int i = 0; i < bottoms.Count; i++)
+            {
+                string b = bottoms[i];
+                if (cc.ExcludesBottom(b) || library.ExcludesPair(top, b)) continue;
+                if (b == ZombieModuleLibrary.BottomFundoshi && straps) continue;
+                return true;
+            }
+
+            return false;
         }
 
         private static string Pick(List<string> ids, ref uint state, Func<string, float> weight)

@@ -8,10 +8,14 @@
     { "from": "Bodies/Zombie_O1_Body_C.fbx", "to": "zombie_body_C.fbx" },
     { "glob": "Heads/ZombieFace_*_LOD?.fbx", "toDir": "Faces" },
     { "glob": "Garments_C_H2/zombie_*_C.fbx", "toDir": "Modules/C_H2" },
+    { "glob": "Garments_AB/zombie_*_AB.fbx", "toDir": "Modules/AB" },
     { "glob": "Tiers_C_H2/zombie_tier_*_C.fbx", "toDir": "Tier/C_H2" },
     { "from": "Textures/Zombie_O1_BaseColor.png", "to": "Textures/T_zombie_atlas_BaseColor.png" },
     { "from": "Textures/Zombie_O1_Normal.png", "to": "Textures/T_zombie_atlas_Normal.png" },
     { "from": "Textures/Zombie_O1_ORM.png", "to": "Textures/T_zombie_atlas_ORM.png" },
+    { "from": "Textures/Zombie_O1_Cloth_BaseColor.png", "to": "Textures/T_zombie_cloth_BaseColor.png" },
+    { "from": "Textures/Zombie_O1_Cloth_Normal.png", "to": "Textures/T_zombie_cloth_Normal.png" },
+    { "from": "Textures/Zombie_O1_Cloth_ORM.png", "to": "Textures/T_zombie_cloth_Packed.png" },
     { "from": "module-map.json", "to": "AP025-module-map.json" },
     { "from": "material-contract.json", "to": "AP025-material-contract.json" }
   ],
@@ -35,6 +39,8 @@
   "builder": {
     "bodyObject": "Zombie_O1_Body_{fit}_LOD{lod}",
     "armourBodyExcludes": ["T8_kosode_rolled"],
+    "garmentPairExcludes": [["T4_hanten_vest", "B1_hakama_wide"], ["T4_hanten_vest", "B4_tattsuke_hakama"], ["T4_hanten_vest", "B6_hakama_torn"], ["T8_kosode_rolled", "B2_momohiki_tight"], ["T8_kosode_rolled", "B3_koshimaki_wrap"], ["T8_kosode_rolled", "B5_fundoshi"], ["T8_kosode_rolled", "B7_momohiki_kyahan"]],
+    "garmentPairExcludesNote": "interim (C-00 06.10, AP-025D v003 intake): these 32-combination top x bottom pairs intersect more than v002 - never drawn together; the fix is AP-025D R3",
     "armourBodyExcludesNote": "interim (C-00 06.10, WP-084 AD turn 1 M3): the C_H2 refit T8 tasuki cords show over the do (AP-008 is not refit to H2) - every body-armour variant excludes T8; remove this key when AP-008D refits the armour",
     "faces": [
       { "id": "F1_gaunt", "name": "Gaunt", "object": "ZombieFace_Gaunt_LOD{lod}", "fbx": "Faces/ZombieFace_Gaunt_LOD{lod}.fbx" },
@@ -42,6 +48,8 @@
       { "id": "F3_riven", "name": "Riven", "object": "ZombieFace_Riven_LOD{lod}", "fbx": "Faces/ZombieFace_Riven_LOD{lod}.fbx" }
     ],
     "fitOverrides": {
+      "A": { "modulesFbx": "Modules/AB/zombie_{id}_AB.fbx" },
+      "B": { "modulesFbx": "Modules/AB/zombie_{id}_AB.fbx" },
       "C": { "modulesFbx": "Modules/C_H2/zombie_{id}_C.fbx", "tierFbx": "Tier/C_H2/{name}_C.fbx" }
     },
     "skinAtlasMaterial": {

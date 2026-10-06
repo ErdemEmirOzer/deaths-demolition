@@ -135,6 +135,22 @@ namespace DD.Art.Pipeline.EditorTools
             return (float)inside / tris.Length;
         }
 
+        /// <summary>WP-084 (C-00 06.10, AP-025D v003) · top × bottom pairs never drawn together (builder.garmentPairExcludes, an interim
+        /// rule kept as data — AP-025D fixes the intersections in R3). Empty without the manifest or the key.</summary>
+        public static List<(string top, string bottom)> GarmentPairExcludes()
+        {
+            var pairs = new List<(string, string)>();
+            Dictionary<string, object> b = Builder;
+            if (b == null || !b.ContainsKey("garmentPairExcludes")) return pairs;
+            foreach (object o in ArtJson.AsList(b["garmentPairExcludes"], "garmentPairExcludes"))
+            {
+                List<object> pr = ArtJson.AsList(o, "garmentPairExcludes[]");
+                pairs.Add((ArtJson.AsString(pr[0]), ArtJson.AsString(pr[1])));
+            }
+
+            return pairs;
+        }
+
         public static List<Face> Faces()
         {
             var faces = new List<Face>();

@@ -308,8 +308,9 @@ namespace DD.Art.Tests.EditMode
 
             Assert.AreEqual(4, tierParca, "AP-014 4 tier parça FBX");
 
-            // WP-084 · AP-025 v002 intake: every FBX the intake manifest copied besides the three bodies (12 faces, 24 H2 fit-C garments,
-            // 4 H2 fit-C tier parts) — the manifest is the table (tools/art/ap025_intake.py writes it with each file's SHA-256).
+            // WP-084 · AP-025 intake: every FBX the intake manifest copied besides the three bodies (12 faces, 24 H2 fit-C garments,
+            // 4 H2 fit-C tier parts; v003 adds the 24 fit A/B garments, Modules/AB) — the manifest is the table (tools/art/ap025_intake.py
+            // writes it with each file's SHA-256).
             int ap025 = 0;
             if (ArtAp025Intake.Active)
             {
@@ -319,7 +320,7 @@ namespace DD.Art.Tests.EditMode
                     if (to.EndsWith(".fbx", StringComparison.Ordinal) && beklenen.Add(ArtCharacterContract.ZombieFolder + "/" + to)) ap025++;
                 }
 
-                Assert.AreEqual(40, ap025, "AP-025 v002: 12 yüz + 24 H2 giysi (fit C) + 4 H2 tier parçası");
+                Assert.AreEqual(64, ap025, "AP-025D v003: 12 yüz + 24 H2 giysi (fit C) + 24 A/B giysi + 4 H2 tier parçası");
             }
 
             // WP-037B: the AP-014 Special Weapon pickup + hand models (S-02 builder).

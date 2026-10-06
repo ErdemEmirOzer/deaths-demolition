@@ -44,7 +44,7 @@ namespace DD.Art.Tests.EditMode
         public void HerKarakterFbx_V11Sozlesmesi_Avatar_HumanEslemesiKaynaklaAyni()
         {
             List<string> files = CharacterFbx();
-            Assert.AreEqual(327, files.Count, "327 = 287 + 40 AP-025 v002 (WP-084: 12 faces Faces/, 24 H2 fit-C garments Modules/C_H2, 4 H2 fit-C tier parts Tier/C_H2); 287 = 272 + 15 AP-022 v008 locomotion (WP-071 R1-C: player 10 TP loops + zombie 5 tier gaits); 272 = 260 + 12 FP Special; 260 = 258 + 2 lmg_2 reloads; 258 = 248 + AP-022 FP arms v2 model + 9 smg_2 FP (WP-071 r2); 248 = 236 + TP Special family 12; 236 = 203 + 33 WP-071 B4c TP (AP-022 v008); 203 = 197 + 6 AP-022 slice 5b (ar_2 FP set); 197 = 174 + 23 AP-022 slice 5 (FP arms); 174 = 153 + 21 AP-022 slices 4a/4b (AR + SMG TP); 153 = 150 + 3 AP-022 slice 2a (electro loop, arc_electro, gel_slip); 150 = 140 + 10 AP-022 slice 1 (WP-071); 140 = 135 (WP-032G + sw_hold_jewel) + 5 AP-007C v003 modülü (H6/H7/A1/A2/T8, WP-038C) — 134 karakter FBX (oyuncu 1 + 2 klip; zombi 3 gövde + 24 modül + 2 klip; WP-017 zırh 18; WP-032C AP-009D v004 85 klip; WP-036 AP-014 tier parçaları 4):\n" + string.Join("\n", files));
+            Assert.AreEqual(351, files.Count, "351 = 327 + 24 AP-025D v003 fit A/B garments (WP-084: Modules/AB); 327 = 287 + 40 AP-025 v002 (WP-084: 12 faces Faces/, 24 H2 fit-C garments Modules/C_H2, 4 H2 fit-C tier parts Tier/C_H2); 287 = 272 + 15 AP-022 v008 locomotion (WP-071 R1-C: player 10 TP loops + zombie 5 tier gaits); 272 = 260 + 12 FP Special; 260 = 258 + 2 lmg_2 reloads; 258 = 248 + AP-022 FP arms v2 model + 9 smg_2 FP (WP-071 r2); 248 = 236 + TP Special family 12; 236 = 203 + 33 WP-071 B4c TP (AP-022 v008); 203 = 197 + 6 AP-022 slice 5b (ar_2 FP set); 197 = 174 + 23 AP-022 slice 5 (FP arms); 174 = 153 + 21 AP-022 slices 4a/4b (AR + SMG TP); 153 = 150 + 3 AP-022 slice 2a (electro loop, arc_electro, gel_slip); 150 = 140 + 10 AP-022 slice 1 (WP-071); 140 = 135 (WP-032G + sw_hold_jewel) + 5 AP-007C v003 modülü (H6/H7/A1/A2/T8, WP-038C) — 134 karakter FBX (oyuncu 1 + 2 klip; zombi 3 gövde + 24 modül + 2 klip; WP-017 zırh 18; WP-032C AP-009D v004 85 klip; WP-036 AP-014 tier parçaları 4):\n" + string.Join("\n", files));
 
             List<string> playerMap = ArtCharacterContract.HumanMapping(ArtCharacterContract.AvatarOf(ArtCharacterContract.PlayerAvatarSource));
             List<string> zombieMap = ArtCharacterContract.HumanMapping(ArtCharacterContract.AvatarOf(ArtCharacterContract.ZombieAvatarSource));
@@ -66,6 +66,7 @@ namespace DD.Art.Tests.EditMode
                 if (importer == null) { ihlaller.Add(path + ": ModelImporter yok"); continue; }
                 List<string> v = ArtCharacterContract.Validate(importer);
                 if (v.Count > 0) ihlaller.Add(path + ": " + string.Join("; ", v));
+                if (ArtCharacterContract.IsRigFragment(path)) continue;   // WP-084: the AP-025D v003 faces — Generic, no avatar, bound by bone name
                 List<string> map = ArtCharacterContract.HumanMapping(ArtCharacterContract.AvatarOf(path));
                 if (!SameList(map, playerMap)) ihlaller.Add(path + ": insan kemiği eşlemesi kaynaktan farklı (" + map.Count + " vs " + playerMap.Count + ")");
             }
@@ -519,6 +520,108 @@ namespace DD.Art.Tests.EditMode
             Debug.Log("[DD-TEST] wp084.md3 subMeshes=" + subMeshes + " multiMaterialMeshes=" + twoMaterial + " mismatches=" + hatalar.Count + " |" + dump);
             Assert.Greater(twoMaterial, 0, "kaynak yok: iki malzemeli modül");
             Assert.IsEmpty(hatalar, string.Join("\n", hatalar.GetRange(0, Math.Min(20, hatalar.Count))));
+        }
+
+        /// <summary>WP-084 (C-00 06.10, AP-025D v003): the interim top × bottom pairs come from the intake data into the library, and the
+        /// look selector never draws one — 3000 seeds × no armour / body / leg / body + leg constraints; the armour constraints still hold.</summary>
+        [Test]
+        public void LookSecici_AraUstAltCiftleri_HicCizilmez_ZirhKisitiKorunur()
+        {
+            var lib = AssetDatabase.LoadAssetAtPath<ZombieModuleLibrary>(ArtCharacterPrefabBuilder.ZombieLibrary);
+            Assert.IsNotNull(lib);
+            List<(string top, string bottom)> pairs = ArtAp025Intake.GarmentPairExcludes();
+            Assert.AreEqual(pairs.Count, lib.excludedPairTops.Length, "kütüphane çiftleri = alım verisi");
+            if (pairs.Count == 0) return;
+            var armor = AssetDatabase.LoadAssetAtPath<ZombieArmorLibrary>(ArtArmorBuilder.LibraryPath);
+            Assert.IsNotNull(armor);
+            var sets = new List<ZombieLookConstraints> { ZombieLookConstraints.None };
+            foreach ((bool h, bool b, bool l) in new[] { (false, true, false), (false, false, true), (true, true, true) })
+                sets.Add(ZombieLookConstraints.Build(armor, new ArmorLook { helmet = "K1_jingasa", body = "D1_lamellar", leg = "L1_haidate_heavy" }, h, b, l));
+            int draws = 0;
+            var hatalar = new List<string>();
+            foreach (ZombieLookConstraints c in sets)
+                for (uint seed = 1; seed <= 3000; seed++)
+                {
+                    ZombieLook look = ZombieLookSelector.Select(lib, seed, c);
+                    draws++;
+                    if (lib.ExcludesPair(look.top, look.bottom)) hatalar.Add(seed + ": " + look.top + " × " + look.bottom);
+                    if (c.ExcludesBottom(look.bottom) || c.ExcludesTop(look.top)) hatalar.Add(seed + ": zırh kısıtı bozuldu " + look.Key);
+                    if (hatalar.Count > 20) break;
+                }
+
+            Debug.Log("[DD-TEST] wp084.pairs draws=" + draws + " pairs=" + pairs.Count + " violations=" + hatalar.Count);
+            Assert.IsEmpty(hatalar, string.Join("\n", hatalar));
+        }
+
+        /// <summary>
+        /// Z4b — the lower face rides the jaw: every face LOD lists the "jaw" bone (teeth / lower lip weighted to it). C-00 05.10
+        /// decision (a): v002 faces are bound to Head and the prefab carries an empty jaw transform; AP-025D delivers the weights.
+        /// WP-084 (C-00 06.10, AP-025D v003 MUST-5): live — the v003 faces carry the jaw weights; the mouth sac was checked back-face
+        /// culled (AP-025D jaw-check2), so every zombie skin / cloth material must draw Cull Back. EditMode (r10c 06.10): the face meshes
+        /// are not readable, which only the editor outside play mode may read.
+        /// </summary>
+        [Test]
+        public void Z4b_YuzCenesi_JawAgirligi_CullBack()
+        {
+            var library = AssetDatabase.LoadAssetAtPath<ZombieModuleLibrary>(ArtCharacterPrefabBuilder.ZombieLibrary);
+            Assert.IsNotNull(library, "zombie module library");
+            // 3d-modeller 06.10: Blender lists every deform bone, so "jaw in the bone list" proves nothing — the lower face must be
+            // WEIGHTED to it at every LOD, the shared collar ring (y 1.50) must carry no jaw weight, and the jaw's bind pose must be
+            // the rig v002 rest under Head (0, 0.045, −0.012), the empty jaw the prefab carries today.
+            var rest = new Vector3(0f, 0.045f, -0.012f);
+            var restRotation = new Quaternion(-0.8468003f, 0f, 0f, 0.5319109f);
+            int faces = 0;
+            var bad = new List<string>();
+            if (library.modules != null)
+            {
+                foreach (ZombieModuleLibrary.Module m in library.modules)
+                {
+                    if (m == null || m.kind != ZombieModuleLibrary.KindFace) continue;
+                    faces++;
+                    ZombieModuleLibrary.Variant v = m.variants[0];
+                    for (int lod = 0; lod < ZombieModuleLibrary.LodCount; lod++)
+                    {
+                        ZombieModuleLibrary.MeshRef r = v.lods[lod];
+                        int jaw = r != null && r.boneNames != null ? Array.IndexOf(r.boneNames, "jaw") : -1, head = r != null && r.boneNames != null ? Array.IndexOf(r.boneNames, "Head") : -1;
+                        if (jaw < 0 || head < 0 || r.mesh == null) { bad.Add(m.id + " lod" + lod + ": jaw/Head listede yok"); continue; }
+                        var perVertex = r.mesh.GetBonesPerVertex();
+                        var weights = r.mesh.GetAllBoneWeights();
+                        Vector3[] vertices = r.mesh.vertices;
+                        int weighted = 0, ringJaw = 0, w = 0;
+                        for (int i = 0; i < perVertex.Length; i++)
+                        {
+                            for (int k = 0; k < perVertex[i]; k++, w++)
+                            {
+                                if (weights[w].boneIndex != jaw || weights[w].weight <= 0f) continue;
+                                weighted++;
+                                if (Mathf.Abs(vertices[i].y - 1.5f) < 0.005f) ringJaw++;
+                            }
+                        }
+
+                        Matrix4x4 local = r.mesh.bindposes[head] * r.mesh.bindposes[jaw].inverse;
+                        float posErr = Vector3.Distance(local.GetColumn(3), rest), rotErr = Quaternion.Angle(local.rotation, restRotation);
+                        Debug.Log(string.Format(System.Globalization.CultureInfo.InvariantCulture, "[DD-OBS] r2.z4b {0} lod{1} jawWeighted={2} ringJaw={3} bindPosErrMm={4:0.000} bindRotErrDeg={5:0.000}", m.id, lod, weighted, ringJaw, posErr * 1000f, rotErr));
+                        if (weighted == 0) bad.Add(m.id + " lod" + lod + ": jaw ağırlıklı köşe yok");
+                        if (ringJaw > 0) bad.Add(m.id + " lod" + lod + ": boyun halkasında jaw ağırlığı " + ringJaw);
+                        if (posErr > 0.0001f || rotErr > 0.05f) bad.Add(m.id + " lod" + lod + ": jaw bind pozu rig v002 rest'inden farklı");
+                    }
+                }
+            }
+
+            // the mouth sac's inner wall is hidden by back-face culling (AP-025D jaw-check2): skin atlas and cloth, every version
+            for (int tier = 0; tier < 4; tier++)
+            {
+                foreach (Material mat in new[] { library.MaterialFor(tier), library.tierClothMaterials != null && tier < library.tierClothMaterials.Length ? library.tierClothMaterials[tier] : null })
+                {
+                    if (mat == null) continue;
+                    float cull = mat.HasProperty("_Cull") ? mat.GetFloat("_Cull") : -1f;
+                    Debug.Log(string.Format(System.Globalization.CultureInfo.InvariantCulture, "[DD-OBS] r2.z4b cull {0} tier{1} _Cull={2}", mat.name, tier, cull));
+                    if (cull != (float)UnityEngine.Rendering.CullMode.Back) bad.Add(mat.name + ": _Cull " + cull + " (Back = 2 bekleniyor)");
+                }
+            }
+
+            Assert.Greater(faces, 0, "kaynak yok: yüz modülü yok");
+            Assert.IsEmpty(bad, string.Join("\n", bad));
         }
 
         // ================================================================ look seçici

@@ -1,12 +1,15 @@
 {
- "schema": "AP025.modules.v002",
- "status": "asset contract v002 (AP025C); Unity import not run",
+ "schema": "AP025.modules.v003",
+ "status": "asset contract v003 (AP025D); Unity import not run",
  "rig": {
   "name": "ZombieRig",
-  "bones": 73,
-  "bind_by": "exact AP007 bone name and parent; do not merge by numeric index",
-  "new_bones": [],
-  "jaw_eye_animation": "rigid Head binding; no separate jaw/eye bone"
+  "bones": 74,
+  "bind_by": "exact bone name and parent; do not merge by numeric index",
+  "new_bones": [
+   "jaw"
+  ],
+  "jaw_eye_animation": "jaw kemiği (Head çocuğu); göz kemiği yok",
+  "heads_fbx_hierarchy": "8 kemik (Root…UpperChest, Neck, Head, jaw), deform Neck/Head/jaw — aktör iskeletine adla bağlanır"
  },
  "bodies": {
   "A": {
@@ -234,5 +237,127 @@
   ],
   "materials": "AP-014 materyalleri korunur",
   "executioner_uniform_scale": 1.48
+ },
+ "garments_ab": {
+  "A1_straw_hat": {
+   "path": "Garments_AB/zombie_A1_straw_hat_AB.fbx",
+   "source": "AP-022 rig v002 zombie-rig-v002.blend fit A/B (geometri/UV/ağırlık aynı)",
+   "changes": "K2 malzeme sırası, ≤4 etki (A2/H2/H7 A fitinde 5 etkili 3–4 köşe), K1 köşe rengi"
+  },
+  "A2_face_wrap": {
+   "path": "Garments_AB/zombie_A2_face_wrap_AB.fbx",
+   "source": "AP-022 rig v002 zombie-rig-v002.blend fit A/B (geometri/UV/ağırlık aynı)",
+   "changes": "K2 malzeme sırası, ≤4 etki (A2/H2/H7 A fitinde 5 etkili 3–4 köşe), K1 köşe rengi"
+  },
+  "B1_hakama_wide": {
+   "path": "Garments_AB/zombie_B1_hakama_wide_AB.fbx",
+   "source": "AP-022 rig v002 zombie-rig-v002.blend fit A/B (geometri/UV/ağırlık aynı)",
+   "changes": "K2 malzeme sırası, ≤4 etki (A2/H2/H7 A fitinde 5 etkili 3–4 köşe), K1 köşe rengi"
+  },
+  "B2_momohiki_tight": {
+   "path": "Garments_AB/zombie_B2_momohiki_tight_AB.fbx",
+   "source": "AP-022 rig v002 zombie-rig-v002.blend fit A/B (geometri/UV/ağırlık aynı)",
+   "changes": "K2 malzeme sırası, ≤4 etki (A2/H2/H7 A fitinde 5 etkili 3–4 köşe), K1 köşe rengi"
+  },
+  "B3_koshimaki_wrap": {
+   "path": "Garments_AB/zombie_B3_koshimaki_wrap_AB.fbx",
+   "source": "AP-022 rig v002 zombie-rig-v002.blend fit A/B (geometri/UV/ağırlık aynı)",
+   "changes": "K2 malzeme sırası, ≤4 etki (A2/H2/H7 A fitinde 5 etkili 3–4 köşe), K1 köşe rengi"
+  },
+  "B4_tattsuke_hakama": {
+   "path": "Garments_AB/zombie_B4_tattsuke_hakama_AB.fbx",
+   "source": "AP-022 rig v002 zombie-rig-v002.blend fit A/B (geometri/UV/ağırlık aynı)",
+   "changes": "K2 malzeme sırası, ≤4 etki (A2/H2/H7 A fitinde 5 etkili 3–4 köşe), K1 köşe rengi"
+  },
+  "B5_fundoshi": {
+   "path": "Garments_AB/zombie_B5_fundoshi_AB.fbx",
+   "source": "AP-022 rig v002 zombie-rig-v002.blend fit A/B (geometri/UV/ağırlık aynı)",
+   "changes": "K2 malzeme sırası, ≤4 etki (A2/H2/H7 A fitinde 5 etkili 3–4 köşe), K1 köşe rengi"
+  },
+  "B6_hakama_torn": {
+   "path": "Garments_AB/zombie_B6_hakama_torn_AB.fbx",
+   "source": "AP-022 rig v002 zombie-rig-v002.blend fit A/B (geometri/UV/ağırlık aynı)",
+   "changes": "K2 malzeme sırası, ≤4 etki (A2/H2/H7 A fitinde 5 etkili 3–4 köşe), K1 köşe rengi"
+  },
+  "B7_momohiki_kyahan": {
+   "path": "Garments_AB/zombie_B7_momohiki_kyahan_AB.fbx",
+   "source": "AP-022 rig v002 zombie-rig-v002.blend fit A/B (geometri/UV/ağırlık aynı)",
+   "changes": "K2 malzeme sırası, ≤4 etki (A2/H2/H7 A fitinde 5 etkili 3–4 köşe), K1 köşe rengi"
+  },
+  "H1_hair_crop": {
+   "path": "Garments_AB/zombie_H1_hair_crop_AB.fbx",
+   "source": "AP-022 rig v002 zombie-rig-v002.blend fit A/B (geometri/UV/ağırlık aynı)",
+   "changes": "K2 malzeme sırası, ≤4 etki (A2/H2/H7 A fitinde 5 etkili 3–4 köşe), K1 köşe rengi"
+  },
+  "H2_hair_matted": {
+   "path": "Garments_AB/zombie_H2_hair_matted_AB.fbx",
+   "source": "AP-022 rig v002 zombie-rig-v002.blend fit A/B (geometri/UV/ağırlık aynı)",
+   "changes": "K2 malzeme sırası, ≤4 etki (A2/H2/H7 A fitinde 5 etkili 3–4 köşe), K1 köşe rengi"
+  },
+  "H3_topknot_broken": {
+   "path": "Garments_AB/zombie_H3_topknot_broken_AB.fbx",
+   "source": "AP-022 rig v002 zombie-rig-v002.blend fit A/B (geometri/UV/ağırlık aynı)",
+   "changes": "K2 malzeme sırası, ≤4 etki (A2/H2/H7 A fitinde 5 etkili 3–4 köşe), K1 köşe rengi"
+  },
+  "H4_tenugui_wrap": {
+   "path": "Garments_AB/zombie_H4_tenugui_wrap_AB.fbx",
+   "source": "AP-022 rig v002 zombie-rig-v002.blend fit A/B (geometri/UV/ağırlık aynı)",
+   "changes": "K2 malzeme sırası, ≤4 etki (A2/H2/H7 A fitinde 5 etkili 3–4 köşe), K1 köşe rengi"
+  },
+  "H5_hachimaki_band": {
+   "path": "Garments_AB/zombie_H5_hachimaki_band_AB.fbx",
+   "source": "AP-022 rig v002 zombie-rig-v002.blend fit A/B (geometri/UV/ağırlık aynı)",
+   "changes": "K2 malzeme sırası, ≤4 etki (A2/H2/H7 A fitinde 5 etkili 3–4 köşe), K1 köşe rengi"
+  },
+  "H6_bandage_wrap": {
+   "path": "Garments_AB/zombie_H6_bandage_wrap_AB.fbx",
+   "source": "AP-022 rig v002 zombie-rig-v002.blend fit A/B (geometri/UV/ağırlık aynı)",
+   "changes": "K2 malzeme sırası, ≤4 etki (A2/H2/H7 A fitinde 5 etkili 3–4 köşe), K1 köşe rengi"
+  },
+  "H7_matted_wound": {
+   "path": "Garments_AB/zombie_H7_matted_wound_AB.fbx",
+   "source": "AP-022 rig v002 zombie-rig-v002.blend fit A/B (geometri/UV/ağırlık aynı)",
+   "changes": "K2 malzeme sırası, ≤4 etki (A2/H2/H7 A fitinde 5 etkili 3–4 köşe), K1 köşe rengi"
+  },
+  "T1_kosode_short": {
+   "path": "Garments_AB/zombie_T1_kosode_short_AB.fbx",
+   "source": "AP-022 rig v002 zombie-rig-v002.blend fit A/B (geometri/UV/ağırlık aynı)",
+   "changes": "K2 malzeme sırası, ≤4 etki (A2/H2/H7 A fitinde 5 etkili 3–4 köşe), K1 köşe rengi"
+  },
+  "T2_kosode_long": {
+   "path": "Garments_AB/zombie_T2_kosode_long_AB.fbx",
+   "source": "AP-022 rig v002 zombie-rig-v002.blend fit A/B (geometri/UV/ağırlık aynı)",
+   "changes": "K2 malzeme sırası, ≤4 etki (A2/H2/H7 A fitinde 5 etkili 3–4 köşe), K1 köşe rengi"
+  },
+  "T3_haori_open": {
+   "path": "Garments_AB/zombie_T3_haori_open_AB.fbx",
+   "source": "AP-022 rig v002 zombie-rig-v002.blend fit A/B (geometri/UV/ağırlık aynı)",
+   "changes": "K2 malzeme sırası, ≤4 etki (A2/H2/H7 A fitinde 5 etkili 3–4 köşe), K1 köşe rengi"
+  },
+  "T4_hanten_vest": {
+   "path": "Garments_AB/zombie_T4_hanten_vest_AB.fbx",
+   "source": "AP-022 rig v002 zombie-rig-v002.blend fit A/B (geometri/UV/ağırlık aynı)",
+   "changes": "K2 malzeme sırası, ≤4 etki (A2/H2/H7 A fitinde 5 etkili 3–4 köşe), K1 köşe rengi"
+  },
+  "T5_kosode_torn": {
+   "path": "Garments_AB/zombie_T5_kosode_torn_AB.fbx",
+   "source": "AP-022 rig v002 zombie-rig-v002.blend fit A/B (geometri/UV/ağırlık aynı)",
+   "changes": "K2 malzeme sırası, ≤4 etki (A2/H2/H7 A fitinde 5 etkili 3–4 köşe), K1 köşe rengi"
+  },
+  "T6_bare_straps": {
+   "path": "Garments_AB/zombie_T6_bare_straps_AB.fbx",
+   "source": "AP-022 rig v002 zombie-rig-v002.blend fit A/B (geometri/UV/ağırlık aynı)",
+   "changes": "K2 malzeme sırası, ≤4 etki (A2/H2/H7 A fitinde 5 etkili 3–4 köşe), K1 köşe rengi"
+  },
+  "T7_mino_cape": {
+   "path": "Garments_AB/zombie_T7_mino_cape_AB.fbx",
+   "source": "AP-022 rig v002 zombie-rig-v002.blend fit A/B (geometri/UV/ağırlık aynı)",
+   "changes": "K2 malzeme sırası, ≤4 etki (A2/H2/H7 A fitinde 5 etkili 3–4 köşe), K1 köşe rengi"
+  },
+  "T8_kosode_rolled": {
+   "path": "Garments_AB/zombie_T8_kosode_rolled_AB.fbx",
+   "source": "AP-022 rig v002 zombie-rig-v002.blend fit A/B (geometri/UV/ağırlık aynı)",
+   "changes": "K2 malzeme sırası, ≤4 etki (A2/H2/H7 A fitinde 5 etkili 3–4 köşe), K1 köşe rengi"
+  }
  }
 }
