@@ -35,6 +35,12 @@ The source must be in the recording (C-00 06.10) — every window that is used, 
   06-readability    enemiesOnScreen > 0;
   across windows    one requested pose, sampled positions within --pose-tolerance metres, one screen size.
 A window that breaks one: FAIL, the gate's artifact is not written (exit 1), every broken condition on stderr.
+A window that did not complete on a clean host (wp078_perf_report.classify "failed": a crash, a timeout, a missing
+artifact) FAILS its cell (C-00 30.09 K8) — only host-only discards are skipped. One attempt counts once (attemptId and
+resolved path unique, index 1..n without leading zeros). --min-pairs / --pose-tolerance may only tighten the C-00 06.10
+values (>= 5 pairs, <= 0.25 m); both are written into the artifact. A stale r2-<gate>.json in the out-dir is renamed
+r2-<gate>.json.stale-<utc> (evidence is never deleted) before the gate runs, so a FAIL / BLOCKED run cannot leave an
+older PASS bound.
 
 usage: r2_z3.py --evidence <E> --commit <FINAL 40-hex> --r1-commit <R1 40-hex> [--static <E>/r2/z3-static.json]
                 [--out-dir <E>/r2] [--gates Z3,P3] [--b9-poses <b9-poses.json>] [--min-pairs 5] [--pose-tolerance 0.25]
@@ -42,7 +48,9 @@ exit: 0 every requested artifact written · 1 one or more not written (stderr sa
       written) · 64 usage
 """
 import argparse
+import datetime
 import hashlib
+import os
 import json
 import math
 import re
@@ -70,6 +78,8 @@ COUNTERS = ("setPassCallsAvg", "batchesAvg", "trianglesAvg", "drawCallsAvg")
 P3_FIELDS = ("frameMeanMs", "frameP99FilteredMs") + COUNTERS
 STATIC_SCHEMA, RATIOS_SCHEMA = "dd-r2-z3-static-v1", "dd-r2-z3-ratios-v1"
 STAGE_FILES = ("01-scene-ready.json", "02-force-40.json", "04-window.json", "06-readability.json")
+INDEX = re.compile(r"[1-9][0-9]*")       # wp078_perf numbers windows 1..n; "01" would be a copy of "1"
+ARMOR_NOTE = re.compile(r"armor all: (?P<n>[0-9]+) pieces fitted")   # PilotPerfProbe stage 02 note
 
 
 def strict_load(path):
@@ -144,6 +154,31 @@ def counted(dirs):
     return [d for d in dirs if perf.classify(strict_load(d / "attempt.json") or {}) == "complete"]
 
 
+def window_problems(dirs, evidence):
+    """C-00 30.09 K8 and one attempt per window: a "failed" attempt (not a host-only discard) fails its cell, and no
+    attempt may be counted twice (a copied or linked folder, an index with a leading zero)."""
+    problems, ids, paths = [], {}, {}
+    for d in dirs:
+        rel = _rel(d, evidence)
+        attempt = strict_load(d / "attempt.json") or {}
+        if perf.classify(attempt) == "failed":
+            problems.append(f"{rel}: attempt did not complete on a clean host (status {attempt.get('status')}, exit "
+                            f"{attempt.get('exitCode')}, hostClean {attempt.get('hostClean')}, timedOut {attempt.get('timedOut')}) "
+                            "— K8: the cell FAILS")
+        if not INDEX.fullmatch(perf.CELL.fullmatch(d.name)["index"]):
+            problems.append(f"{rel}: window index is not 1..n (leading zero: a copy of another window?)")
+        real = os.path.realpath(d)
+        if real in paths:
+            problems.append(f"{rel}: the same folder as {paths[real]} (a link or copy counted twice)")
+        paths.setdefault(real, rel)
+        attempt_id = attempt.get("attemptId")
+        if isinstance(attempt_id, str) and attempt_id:
+            if attempt_id in ids:
+                problems.append(f"{rel}: attemptId {attempt_id} is also {ids[attempt_id]} (one attempt counted twice)")
+            ids.setdefault(attempt_id, rel)
+    return problems
+
+
 def check_window(directory, rel, commit, tier, mode, targets, armor):
     """The source rule for one counted window → (problems, record). The record is what the tool reads from it."""
     problems = []
@@ -190,7 +225,9 @@ def check_window(directory, rel, commit, tier, mode, targets, armor):
         need(s02.get("forceTimedOut") is False and all(v == CEILING and number(v) for v in trio),
              f"02-force-40 configured/forced/achieved {trio[0]}/{trio[1]}/{trio[2]} (timed out {s02.get('forceTimedOut')}), not {CEILING}")
         if armor:
-            need("armor all:" in str(s02.get("note") or ""), "02-force-40 note has no 'armor all:' (the probe fitted no armour)")
+            fitted = ARMOR_NOTE.search(str(s02.get("note") or ""))
+            need(fitted is not None and int(fitted["n"]) > 0,
+                 f"02-force-40 note {s02.get('note')!r}: no 'armor all: N pieces fitted' with N > 0 (the probe fitted no armour)")
         record["achievedCount"] = s02.get("achievedCount")
 
     if need(isinstance(s04, dict), "04-window.json missing or unreadable"):
@@ -264,6 +301,8 @@ def z3_ratios(evidence, commit, r1_commit, targets, min_pairs=MIN_PAIRS, toleran
         return out
     groups = {side: cells(root) for side, root in roots.items()}
     failed, blocked, records, binaries = [], [], [], {"r2": set(), "r1": set()}
+    for side in ("r2", "r1"):
+        failed += window_problems([d for dirs in groups[side].values() for d in dirs], evidence)
     for mode in Z3_MODES:
         key = (Z3_TIER, mode)
         r2c, r1c = counted(groups["r2"].get(key, [])), counted(groups["r1"].get(key, []))
@@ -332,11 +371,11 @@ def load_static(path, commit, static_keys, evidence):
     values = data.get("values")
     if not isinstance(values, dict):
         return None, f"{_rel(path, evidence)} has no values"
-    missing = [k for k in static_keys if not number(values.get(k))]
+    missing = [k for k in static_keys if not (number(values.get(k)) and values[k] > 0)]   # a count / size / MB: -1 is a sentinel, not a value
     extra = sorted(set(values) - set(static_keys))
     if missing or extra:
-        return None, (f"{_rel(path, evidence)} values must be exactly the static Z3 keys as numbers: "
-                      + (("missing/non-numeric " + ", ".join(missing)) if missing else "")
+        return None, (f"{_rel(path, evidence)} values must be exactly the static Z3 keys as numbers > 0: "
+                      + (("missing/non-numeric/<= 0 " + ", ".join(missing)) if missing else "")
                       + ("; " if missing and extra else "") + (("unknown " + ", ".join(extra)) if extra else ""))
     ref = {"path": _rel(path, evidence), "sha256": hashlib.sha256(path.read_bytes()).hexdigest(), "source": data.get("source")}
     return {k: values[k] for k in static_keys}, ref
@@ -348,7 +387,8 @@ def z3_artifact(ratios, static_values, static_ref, ratio_keys, static_keys):
     return {"schema": "dd-r2-measure-v1", "gate": "Z3", "commit": ratios["commit"], "baselineCommit": ratios["baselineCommit"],
             "source": "tools/qa/r2_z3.py (PilotPerfProbe 04-window R2/R1 pairs <E>/z3/perf vs <E>/z3/perf-r1 + <E>/r2/z3-static.json)",
             "values": {k: values[k] for k in list(ratio_keys) + list(static_keys)}, "samples": ratios["samples"],
-            "worstMode": ratios["worstMode"], "pose": ratios["pose"], "cells": ratios["cells"], "static": static_ref}
+            "worstMode": ratios["worstMode"], "minPairs": ratios["minPairs"], "poseToleranceM": ratios["poseToleranceM"],
+            "pose": ratios["pose"], "cells": ratios["cells"], "static": static_ref}
 
 
 # ------------------------------------------------------------------------------------------------ P3
@@ -375,6 +415,7 @@ def p3_cells(evidence, commit, targets, poses=None, tolerance=POSE_TOLERANCE_M):
                 failed.append(f"{label}: tier {tier} is not in perf-targets.json")
                 continue
             seen.add((pose_dir.name, tier, mode))
+            failed += window_problems(dirs, evidence)
             used = counted(dirs)
             if not used:
                 blocked.append(f"{label}: no counted window ({len(dirs)} attempts)")
@@ -410,10 +451,10 @@ def p3_cells(evidence, commit, targets, poses=None, tolerance=POSE_TOLERANCE_M):
     return status, failed + blocked, out, windows
 
 
-def p3_artifact(commit, cell_rows, windows):
+def p3_artifact(commit, cell_rows, windows, tolerance=POSE_TOLERANCE_M):
     return {"schema": "dd-r2-measure-v1", "gate": "P3", "commit": commit,
             "source": "tools/qa/r2_z3.py (PilotPerfProbe 04-window / 06-readability, <E>/b9/<pose>/perf-*)",
-            "values": {"cells": len(cell_rows)}, "samples": windows, "cells": cell_rows}
+            "values": {"cells": len(cell_rows)}, "samples": windows, "poseToleranceM": tolerance, "cells": cell_rows}
 
 
 # ------------------------------------------------------------------------------------------------ CLI
@@ -424,6 +465,17 @@ def write_json(path, data):
     path.write_text(json.dumps(data, indent=2, allow_nan=False) + "\n", encoding="utf-8")
 
 
+def set_aside_stale(out_dir, gate):
+    """A previous r2-<gate>.json is renamed (never deleted: it is evidence) before the gate runs again, so a FAIL /
+    BLOCKED run cannot leave an older artifact bound as this run's result."""
+    path = out_dir / f"r2-{gate}.json"
+    if path.exists():
+        stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        target = path.with_name(f"{path.name}.stale-{stamp}")
+        path.rename(target)
+        print(f"{gate}: the previous {path.name} set aside as {target.name}", file=sys.stderr)
+
+
 def say_problems(gate, verdict, problems):
     print(f"{gate}: {verdict} — nothing written, {gate} stays BLOCKED in the report:", file=sys.stderr)
     for p in problems:
@@ -432,6 +484,7 @@ def say_problems(gate, verdict, problems):
 
 def run_z3(evidence, out_dir, static_path, commit, r1_commit, targets, contract, min_pairs, tolerance):
     ratio_keys, static_keys = z3_keys(contract)
+    set_aside_stale(out_dir, "Z3")
     ratios = z3_ratios(evidence, commit, r1_commit, targets, min_pairs, tolerance)
     write_json(out_dir / "z3-ratios.json", ratios)
     if ratios["status"] != "OK":
@@ -451,11 +504,12 @@ def run_z3(evidence, out_dir, static_path, commit, r1_commit, targets, contract,
 
 
 def run_p3(evidence, out_dir, commit, targets, poses, tolerance):
+    set_aside_stale(out_dir, "P3")
     status, problems, cell_rows, windows = p3_cells(evidence, commit, targets, poses, tolerance)
     if status != "OK":
         say_problems("P3", "FAIL (the source is not in the recording)" if status == "FAIL" else "BLOCKED", problems)
         return False
-    write_json(out_dir / "r2-P3.json", p3_artifact(commit, cell_rows, windows))
+    write_json(out_dir / "r2-P3.json", p3_artifact(commit, cell_rows, windows, tolerance))
     print(f"P3 written: {len(cell_rows)} cells from {windows} windows")
     return True
 
@@ -479,8 +533,11 @@ def main(argv=None):
     if not SHA.fullmatch(args.commit) or ("Z3" in gates and not (args.r1_commit and SHA.fullmatch(args.r1_commit))):
         print("--commit (and for Z3 --r1-commit) must be 40-hex", file=sys.stderr)
         return 64
-    if args.min_pairs < 1 or not (math.isfinite(args.pose_tolerance) and args.pose_tolerance >= 0):
-        print("--min-pairs >= 1 and a finite --pose-tolerance >= 0", file=sys.stderr)
+    if "Z3" in gates and args.r1_commit == args.commit:
+        print("--r1-commit must differ from --commit (R2 over R1 needs two builds)", file=sys.stderr)
+        return 64
+    if args.min_pairs < MIN_PAIRS or not (math.isfinite(args.pose_tolerance) and 0 <= args.pose_tolerance <= POSE_TOLERANCE_M):
+        print(f"--min-pairs >= {MIN_PAIRS} and 0 <= --pose-tolerance <= {POSE_TOLERANCE_M} (C-00 06.10: tighten only)", file=sys.stderr)
         return 64
     evidence = Path(args.evidence).resolve()
     if not evidence.is_dir():

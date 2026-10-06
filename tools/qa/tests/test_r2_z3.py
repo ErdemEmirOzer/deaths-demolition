@@ -210,7 +210,9 @@ class SourceInRecordingTests(Base):
         "batches zero": ({"r2": {("tp", 5): {"batches": 0.0}}}, "batchesAvg 0.0"),
         "triangles recorder": ({"r2": {("topdown", 4): {"triangles": -1.0}}}, "trianglesAvg -1.0"),
         "armour flag R1": ({"r1": {("tp", 2): {"armor": False}}}, "no -ddArmor all"),
-        "armour not fitted": ({"r2": {("tp", 2): {"armor_note": "configured/ledger/forced 40/40/40"}}}, "no 'armor all:'"),
+        "armour not fitted": ({"r2": {("tp", 2): {"armor_note": "configured/ledger/forced 40/40/40"}}}, "no 'armor all: N pieces fitted'"),
+        "no armour piece": ({"r1": {("topdown", 3): {"armor_note": "configured/ledger/forced 40/40/40 | armor all: 0 pieces fitted"}}},
+                            "with N > 0"),
         "sweep": ({"r2": {("tp", 1): {"sweep": True}}}, "cameraSweep is not false"),
         "load dropped": ({"r1": {("topdown", 2): {"active_min": 39}}}, "activeMin 39 < 40"),
         "pose moved in R1": ({"r1": {("tp", 4): {"sampled": (0.6, -4.0)}}}, "0.600 m from"),
@@ -290,7 +292,8 @@ class StaticTests(Base):
         bad = {"another commit": dict(commit=R1), "another schema": dict(schema="dd-r2-measure-v1"),
                "a key missing": dict(values={k: v for k, v in STATIC.items() if k != "bonesMax"}),
                "an unknown key": dict(values=dict(STATIC, bonesTotal=900)),
-               "a boolean": dict(values=dict(STATIC, bonesMax=True)), "a string": dict(values=dict(STATIC, bonesMax="74"))}
+               "a boolean": dict(values=dict(STATIC, bonesMax=True)), "a string": dict(values=dict(STATIC, bonesMax="74")),
+               "a sentinel": dict(values=dict(STATIC, bonesMax=-1)), "a zero": dict(values=dict(STATIC, shippedCharacterMB=0))}
         z3_tree(self.evidence)
         for name, kwargs in bad.items():
             with self.subTest(name):
@@ -379,6 +382,78 @@ class P3Tests(Base):
         code, _, err = self.main(gates="P3")
         self.assertEqual(1, code)
         self.assertIn("no b9/", err)
+
+
+class HardeningTests(Base):
+    """gt 06.10 (K/wp-038m/kadro-0610/gt-z3.md): KB-1 and B-1..B-6."""
+
+    def test_a_crashed_window_fails_its_cell_k8(self):
+        # KB-1: wp078_perf re-runs a crashed window at the next index; the crash must not vanish from the record
+        z3_tree(self.evidence, r2={("tp", 2): {"status": "failed", "exit_code": 1}, ("tp", 4): {"status": "failed", "exit_code": 1}})
+        for i in (6, 7):
+            window(self.evidence / "z3/perf", "sinematik", "tp", i, FINAL, BIN_R2)
+        write_static(self.evidence)
+        code, _, err = self.z3_only()
+        self.assertEqual(1, code)
+        self.assertFalse(self.artifact.exists())
+        self.assertIn("FAIL (the source is not in the recording)", err)
+        for i in (2, 4):
+            self.assertIn(f"z3/perf/perf-sinematik-tp-{i}: attempt did not complete on a clean host", err)
+
+    def test_a_host_only_discard_is_still_skipped(self):
+        z3_tree(self.evidence, r2={("tp", 2): {"status": "preflight-failed", "exit_code": 75}})
+        window(self.evidence / "z3/perf", "sinematik", "tp", 6, FINAL, BIN_R2)
+        write_static(self.evidence)
+        self.assertEqual(0, self.z3_only()[0])
+
+    def test_a_crashed_b9_window_fails_the_report(self):
+        b9_tree(self.evidence, POSES[1:], overrides={("sin-plazan", "tp", 2): {"status": "failed", "exit_code": 1}})
+        code, _, err = self.main(gates="P3")
+        self.assertEqual(1, code)
+        self.assertIn("b9/sin-plazan/perf-sinematik-tp-2: attempt did not complete on a clean host", err)
+
+    def test_one_attempt_counts_once(self):
+        z3_tree(self.evidence)
+        write_static(self.evidence)
+        r2 = self.evidence / "z3/perf"
+        shutil.copytree(r2 / "perf-sinematik-tp-3", r2 / "perf-sinematik-tp-03")
+        code, _, err = self.z3_only()
+        self.assertEqual(1, code)
+        self.assertIn("perf-sinematik-tp-03: window index is not 1..n", err)
+        self.assertIn("ffff-sinematik-tp-3 is also", err)
+        self.assertIn("(one attempt counted twice)", err)
+        shutil.rmtree(r2 / "perf-sinematik-tp-03")
+        (r2 / "perf-sinematik-tp-8").symlink_to(r2 / "perf-sinematik-tp-3", target_is_directory=True)
+        code, _, err = self.z3_only()
+        self.assertEqual(1, code)
+        self.assertIn("perf-sinematik-tp-8: the same folder as z3/perf/perf-sinematik-tp-3", err)
+
+    def test_the_two_builds_need_two_commits(self):
+        with contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(64, z3.main(["--evidence", str(self.evidence), "--commit", FINAL, "--r1-commit", FINAL]))
+
+    def test_thresholds_only_tighten_and_are_recorded(self):
+        z3_tree(self.evidence)
+        write_static(self.evidence)
+        with contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(64, z3.main(["--evidence", str(self.evidence), "--commit", FINAL, "--r1-commit", R1, "--min-pairs", "3"]))
+            self.assertEqual(64, z3.main(["--evidence", str(self.evidence), "--commit", FINAL, "--r1-commit", R1,
+                                          "--pose-tolerance", "0.5"]))
+        self.assertEqual(1, self.z3_only("--min-pairs", "6")[0])          # tighter than the run: BLOCKED, allowed
+        self.assertEqual(0, self.z3_only()[0])
+        data = strict(self.artifact)
+        self.assertEqual((5, 0.25), (data["minPairs"], data["poseToleranceM"]))
+
+    def test_a_stale_artifact_is_set_aside_not_bound(self):
+        z3_tree(self.evidence)
+        static = write_static(self.evidence)
+        self.assertEqual(0, self.z3_only()[0])
+        static.unlink()
+        code, _, err = self.z3_only()
+        self.assertEqual(1, code)
+        self.assertFalse(self.artifact.exists())
+        self.assertEqual(1, len(list((self.evidence / "r2").glob("r2-Z3.json.stale-*"))))
+        self.assertIn("set aside as r2-Z3.json.stale-", err)
 
 
 class CliTests(Base):

@@ -133,7 +133,8 @@ No owner test writes `r2-Z3.json`: `tools/qa/r2_z3.py` does, after the chain's z
   BLOCKED) and the gate takes the worse mode: `setPassRatio <= 1.10`, `batchRatio <= 1.10`, `trianglesRatio <= 1.15`.
 - **Static budget** (needs Unity: skinned bones, imported texture sizes, material counts). After the AP-025 import an
   EditMode test, run by name in the chain's r2 stage, writes `<E>/r2/z3-static.json` (schema dd-r2-z3-static-v1, the
-  FINAL commit, exactly the Z3 keys that are not ratios, as numbers); its `measuredBy` lands with that test. Without the
+  FINAL commit, exactly the Z3 keys that are not ratios, as numbers > 0: a count, size or MB, never a -1 sentinel); its
+  `measuredBy` lands with that test. Without the
   file `r2-Z3.json` is not written and Z3 is BLOCKED by name; the ratios still land in `<E>/r2/z3-ratios.json`
   (diagnostic, never bound).
 - **Definitions (C-00 06.10).** `bonesMax <= 74` is the largest `SkinnedMeshRenderer.bones.Length` among a family's
@@ -145,11 +146,16 @@ No owner test writes `r2-Z3.json`: `tools/qa/r2_z3.py` does, after the chain's z
   `materialsPerFamilyCrowdTotal`. `characterTextureMaxPx <= 2048` (Character class), `atlasesPerFamilyMax <= 2`,
   `shippedCharacterMB <= 400` (the shipped character row, ADR-015-1 v3 / DEC-093).
 - **The source is in the recording.** Every paired window, both builds: a counted window of its build's commit (one build
-  per side, two different builds), -ddPilotStart and -ddArmor all on its command line, the start pose set and sampled as
-  asked, 40 configured, forced and achieved and held through the window (lowest active count 40), the sweep off, the
+  per side, two different builds, `--r1-commit` different from `--commit`), -ddPilotStart 0,-4,0 and -ddArmor all on its
+  command line with the probe's "armor all: N pieces fitted" at N > 0, the start pose set and sampled as asked, 40
+  configured, forced and achieved and held through the window (lowest active count 40), the sweep off, the
   SetPass, batch, triangle and draw-call averages above zero, at least one body on screen in 06-readability, and one pose
-  (sampled positions within 0.25 m) and one screen size across both builds and both modes. A broken condition FAILS the
-  tool: no `r2-Z3.json`, every condition named on stderr.
+  (sampled positions within 0.25 m) and one screen size across both builds and both modes. A window that did not complete
+  on a clean host (wp078_perf_report.classify "failed": a crash, a timeout, a missing artifact) fails its cell as in K8;
+  only host-only discards are skipped. One attempt counts once (attemptId and resolved folder unique, index 1..n). A broken
+  condition FAILS the tool: no `r2-Z3.json`, every condition named on stderr. `--min-pairs` / `--pose-tolerance` may only
+  tighten 5 / 0.25 m and are written into the artifact; a previous `r2-Z3.json` / `r2-P3.json` in the out-dir is renamed
+  `.stale-<utc>` before the run (never deleted), so a FAIL or BLOCKED run cannot leave an older artifact bound.
 
 ## Human gates
 
