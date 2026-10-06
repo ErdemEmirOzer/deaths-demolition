@@ -451,6 +451,27 @@ class KuyrukBirimTests(unittest.TestCase):
         r = subprocess.run([sys.executable, self.io.__file__, "ledger-finalized", str(self.L), "yok"], capture_output=True, text=True)
         self.assertEqual((0, ""), (r.returncode, r.stdout.strip()))
 
+    def test_Birim_RestoreBegin_KontrolVeIsaretTekKilitTutusunda(self):
+        """P5 test review SHOULD-4: the check and the R2 mark are ONE L/.lock hold (counted), not two."""
+        self.only(self.committed(self.rec("A", self.me, areas=("editor", "player"), grantedNs=100)))
+        real, enters = self.io.LedgerLock, []
+
+        class Sayan(real):
+            def __enter__(s):
+                enters.append(1)
+                return real.__enter__(s)
+        with mock.patch.object(self.io, "LedgerLock", Sayan):
+            self.assertEqual(0, self.io.restore_begin(str(self.L), "A", ["player"], self.me)[0])
+        self.assertEqual(1, len(enters))
+        self.assertEqual("restoring", json.loads((self.L / "windows" / "A.json").read_text())["state"])
+
+    def test_Birim_GrantedNs_DefterdekiEnBuyuktenBuyuk(self):
+        """P5 test review (NIT): the grant order stays above every live record's stamp, even one ahead of the clock."""
+        ahead = time.time_ns() + 10 ** 12
+        self.only(self.rec("F", self.foreign(), areas=("player",), grantedNs=ahead))
+        self.assertEqual(0, self.begin("N", areas=("editor",))[0])
+        self.assertGreater(json.loads((self.L / "windows" / "N.json").read_text())["grantedNs"], ahead)
+
     def test_Birim_RestoreBegin_TekKilitte_Isaret_64teIsaretYok(self):
         """review S-2: the order check and the R2 mark in one L/.lock hold — no nested grant between them."""
         self.only(self.committed(self.rec("A", self.me, areas=("editor", "player"), grantedNs=100)),

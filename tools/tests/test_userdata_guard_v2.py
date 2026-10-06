@@ -213,9 +213,11 @@ class GuardFixture(unittest.TestCase):
             p.wait(timeout=10)
         for d in [self.dir] + list(self.tmp.glob("ug*")):
             (d / ".sampling").unlink(missing_ok=True)
-        log = self.log.read_text()
-        self.assertNotIn("FOREIGN", log, "a defaults call left the fixture root")
-        self.tmpobj.cleanup()
+        try:
+            log = self.log.read_text()
+            self.assertNotIn("FOREIGN", log, "a defaults call left the fixture root")
+        finally:   # P5 test review NIT: the temp root goes even when the assert fails
+            self.tmpobj.cleanup()
 
     # -- helpers ------------------------------------------------------------------------------------------------------
     def write_plist(self, path, d):
@@ -597,7 +599,9 @@ class RestoreBase(GuardFixture):
         unity = self.tmp / "Unity.app/Contents/MacOS/Unity"
         if not unity.exists():
             unity.parent.mkdir(parents=True); unity.symlink_to("/bin/sleep")
-        p = subprocess.Popen([str(unity), "120"], start_new_session=True); self.procs.append(p)
+        # P5 test review SHOULD-5: 900 s, not 120 — a holder that must outlive a whole restore under load (unlock_d2 /
+        # tearDown end it)
+        p = subprocess.Popen([str(unity), "900"], start_new_session=True); self.procs.append(p)
         (folder or self.d2).joinpath("prototype-profile.json.lock").write_text("pid=%d\nname=fixture\n" % p.pid)
         return p
 
@@ -1281,7 +1285,8 @@ class LedgerTests(RestoreBase):
         """a snapshot whose caller is another process: alive afterwards (stay) or gone at once."""
         done = self.tmp / ("done-" + d.name)
         tail = "sleep 600" if stay else "exit $rc"   # 06.10: 120 s could end before the restore under load ~70 (→ 65)
-        p = subprocess.Popen(["zsh", "-c", 'zsh "$0" snapshot "$1" --scope "$2" > "$3.out" 2>&1; rc=$?; echo $rc > "$3"; ' + tail,
+        p = subprocess.Popen(["zsh", "-c", 'zsh "$0" snapshot "$1" --scope "$2" > "$3.out" 2>&1; rc=$?; '
+                              'echo $rc > "$3.tmp"; mv "$3.tmp" "$3"; ' + tail,   # P5 test review SHOULD-6: atomic
                               str(self.guard), str(d), scope, str(done)], env=self.env(), start_new_session=True)
         self.procs.append(p)
         self.assertTrue(self.wait_file(done, 120))
@@ -1515,9 +1520,11 @@ class LedgerTests(RestoreBase):
         (self.d1 / "ui-settings.json").write_text('{"ui": 99}\n')   # the run changes the editor area only
         p = self.lock_d2()                                          # a live holder on the player folder
         rc, out, err = self.restore("editor")
+        self.assertIsNone(p.poll(), "the lock holder ended before the restore did")   # test review SHOULD-5
         self.unlock_d2(p)
         self.assertEqual(0, rc, out + err)
-        rec = self.records()[0]
+        recs = self.records(); self.assertEqual(1, len(recs), self.records("closed"))
+        rec = recs[0]
         self.assertEqual(("dirty", "finalized", "dirty"), (rec["state"], rec["areas"]["editor"], rec["areas"]["player"]))
         self.assertEqual({"player": "a live lock holder"}, rec["outOfScopeDirty"])
         rc, out, err = self.restore("all"); self.assertEqual(0, rc, out + err)
@@ -1535,6 +1542,81 @@ class LedgerTests(RestoreBase):
         self.assertEqual("open", self.records()[0]["state"])
         rc, out, err = self.restore("all"); self.assertEqual(0, rc, out + err)
         self.assertEqual('{"player": 1}\n', (self.d2 / "prototype-profile.json").read_text())
+
+    def test_P5_FinalizedAlan_PlistOkYolu_SonraKosuDegeri_Stale30Yazimsiz(self):
+        """P5 test review MUST-1: the plist twin of the file-path test — a finalized area's plist that an OK decision left
+        out of written-<a>.txt is never written again when its live value is the run's again (A_FINAL, decide → STALE)."""
+        self.snap("all")
+        d = load_plist(self.p1); d["RunKey"] = 1; self.write_plist(self.p1, d)    # the run changes the player plist only
+        p = self.lock_d2()
+        rc, out, err = self.restore("all", DD_GUARD_WAIT="2")
+        self.unlock_d2(p)
+        self.assertEqual(75, rc, out + err)                                      # 'first' = RunKey 1 recorded, player BUSY
+        d = load_plist(self.p1); d.pop("RunKey"); self.write_plist(self.p1, d)   # someone puts it back
+        rc, out, err = self.restore("all"); self.assertEqual(0, rc, out + err)
+        self.assertEqual([], self.records())                                     # finalized, closed
+        d = load_plist(self.p1); d["RunKey"] = 1; self.write_plist(self.p1, d)   # a later change: the run's value again
+        rc, out, err = self.restore("all")
+        self.assertEqual(30, rc, out + err)
+        self.assertEqual(1, load_plist(self.p1).get("RunKey"))                   # not written
+        self.assertIn("never written again", (self.dir / "restore-player.json").read_text())
+
+    def test_P5_KapaliDirTekrarRestore_SonraAcilanPencereDegismemisAlanda_D6Stale30_64Degil(self):
+        """P5 test review SHOULD-1 (NIT-5): a closed DIR restored again while a window opened after it holds an area the run
+        left as it was — D6 decides (STALE 30, nothing written), not a 64: that area is never 'still to write'."""
+        a, b = self.tmp / "ugA", self.tmp / "ugB"
+        self.foreign_snapshot(a, scope="all")
+        (self.d1 / "ui-settings.json").write_text('{"ui": 99}\n')                 # the run: the editor area only
+        rc, out, err = self.run_guard("restore", a, "--scope", "editor"); self.assertEqual(0, rc, out + err)
+        self.assertEqual([], self.records())                                     # A closed, player released
+        rc, out, err = self.run_guard("snapshot", b, "--scope", "player"); self.assertEqual(0, rc, out + err)
+        (self.d2 / "prototype-profile.json").write_text('{"player": 77}\n')       # B's run
+        rc, out, err = self.run_guard("restore", a, "--scope", "all")
+        self.assertEqual(30, rc, out + err)
+        self.assertEqual('{"player": 77}\n', (self.d2 / "prototype-profile.json").read_text())
+        self.assertEqual(0, self.run_guard("restore", b, "--scope", "player")[0])
+        self.assertEqual('{"player": 1}\n', (self.d2 / "prototype-profile.json").read_text())
+
+    def test_P5_KapsamDisiAlanCalisanPlayer_Dirty(self):
+        """P5 test review SHOULD-3: an out-of-scope area the run left as it was while a Player runs may still change — dirty,
+        with the reason, not released."""
+        self.snap("all")
+        (self.d1 / "ui-settings.json").write_text('{"ui": 99}\n')
+        (self.tmp / "pgrep-player").write_text("4242 /fixture/Deaths Demolition.app/Contents/MacOS/Deaths Demolition\n")
+        try:
+            rc, out, err = self.restore("editor")
+        finally:
+            (self.tmp / "pgrep-player").unlink()
+        self.assertEqual(0, rc, out + err)
+        recs = self.records(); self.assertEqual(1, len(recs), self.records("closed"))
+        self.assertEqual(("dirty", "dirty"), (recs[0]["state"], recs[0]["areas"]["player"]))
+        self.assertEqual({"player": "a running Player"}, recs[0]["outOfScopeDirty"])
+        rc, out, err = self.restore("all"); self.assertEqual(0, rc, out + err)
+        self.assertEqual([], self.records())
+
+    def fail_helper(self, cmd):
+        real = shutil.which("python3")
+        (self.bin / "python3").write_text('#!/bin/sh\ncase "$*" in *%s*) echo "Traceback: boom" >&2; exit 3 ;; esac\n'
+                                          'exec "%s" "$@"\n' % (cmd, real))
+        (self.bin / "python3").chmod(0o755)
+
+    def test_P5_RestoreBeginYardimcisiCokerse_UyariR1IsaretiEskiDavranis(self):
+        """P5 test review SHOULD-2 (r2 N-1): ledger-restore-begin fails — a WARNING line, the r1 restoring mark, restored as
+        before (fail-open by design: a helper bug never stops a restore)."""
+        self.fail_helper("ledger-restore-begin")
+        self.snap("all"); self.run_changes()
+        rc, out, err = self.restore("all"); self.assertEqual(0, rc, out + err)
+        tl = (self.dir / "timeline.txt").read_text()
+        self.assertIn("WARNING userdata-guard: ledger-restore-begin failed (exit 3)", tl); self.assertIn("Traceback: boom", tl)
+        self.assertTrue((self.records("closed")[0].get("restorer") or {}).get("pid"))   # the r1 mark was written
+        self.assertEqual('{"player": 1}\n', (self.d2 / "prototype-profile.json").read_text())
+
+    def test_P5_LedgerFinalizedCokerse_UyariSatiri(self):
+        """P5 test review (NIT-2): ledger-finalized fails — a WARNING line (never a silent "nothing finalized")."""
+        self.fail_helper("ledger-finalized")
+        self.snap("all"); self.run_changes()
+        rc, out, err = self.restore("all"); self.assertEqual(0, rc, out + err)
+        self.assertIn("WARNING userdata-guard: ledger-finalized failed (exit 3)", (self.dir / "timeline.txt").read_text())
 
     def test_Kuyruk_SayisalOlmayanBekleme_Snapshot64HicbirSeyYok_Restore_UyariVarsayilan(self):
         """06.10 reviews: DD_GUARD_QUEUE_WAIT=1h / DD_GUARD_WAIT=abc made a wait endless (the test never became true)."""
@@ -1739,7 +1821,8 @@ class LedgerTests(RestoreBase):
         self.procs[-1]). 06.10: queue wait 300 s / owner 600 s — 120 s was within reach of a slow FIFO run at load ~75."""
         done = self.tmp / ("done-" + d.name)
         e = dict(DD_GUARD_QUEUE_WAIT="300"); e.update(env)
-        p = subprocess.Popen(["zsh", "-c", 'zsh "$0" snapshot "$1" --scope "$3" > "$2.out" 2>&1; echo $? > "$2"; sleep 600',
+        p = subprocess.Popen(["zsh", "-c", 'zsh "$0" snapshot "$1" --scope "$3" > "$2.out" 2>&1; echo $? > "$2.tmp"; '
+                              'mv "$2.tmp" "$2"; sleep 600',   # P5 test review SHOULD-6: wait_file never reads it half-written
                               str(self.guard), str(d), str(done), scope], env=self.env(**e), start_new_session=True)
         self.procs.append(p)
         return done
