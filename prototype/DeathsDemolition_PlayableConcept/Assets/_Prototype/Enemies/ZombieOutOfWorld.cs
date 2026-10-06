@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Damage;
 using UnityEngine;
@@ -30,6 +31,11 @@ namespace DD.Prototype.Enemies
 
         [PrototypeOnly(PendingDecisions.None, "WP-061L stuck watchdog: seconds without closing on the player, metres of closing that count as progress, metres of own movement below which the body is 'not moving', check cadence, recovery side-step speed.", true)]
         public const float StuckWindowSeconds = 9f, StuckProgressMetres = 1f, StuckMoveMetres = 0.75f, StuckCheckInterval = 0.5f, StuckSideStepSpeed = 2.5f;
+
+        [PrototypeOnly(PendingDecisions.None, "WP-084 (C-00 06.10): a body this close to its target with at least StuckCrowdAhead live bodies nearer the target inside a StuckCrowdConeDegrees cone toward it is waiting in the crowd, never stuck — 24–32 bodies round a standing player lost their back row to the watchdog (S-05 r4: 4–5.6 m; S-03 r9a: 7 removals at 2.8–3.2 m, every one on screen).", true)]
+        public const float StuckCrowdRadius = 6.5f, StuckCrowdConeDegrees = 35f;
+        [PrototypeOnly(PendingDecisions.None, "WP-084: bodies nearer the target inside the cone that make a body 'waiting in the crowd'.", true)]
+        public const int StuckCrowdAhead = 2;
 
         /// <summary>Tests: shorten the stuck window (≤ 0 = the shipped <see cref="StuckWindowSeconds"/>).</summary>
         public static float StuckWindowOverride { get; set; }
@@ -103,7 +109,8 @@ namespace DD.Prototype.Enemies
             bool exempt = target == null || IsRising || _waiting || IsNetted || _animator.IsStaggering || _attack.IsAttacking
                           || _attack.IsGrabbing || BodyState > ZombieBodyState.Staggered   // WP-076 §2.4-4: held grab, slide / downed / shock
                           || (_pathFollower != null && _pathFollower.IsQueued)
-                          || distance <= _attack.Range * 1.6f;
+                          || distance <= _attack.Range * 1.6f
+                          || WaitingInCrowd(p, target.position, distance);   // WP-084: the crowd's back row round a standing target
             if (exempt || _stuckWindowStart < 0f || distance < _stuckBest - StuckProgressMetres)
             {
                 if (!exempt && _stuckWindowStart >= 0f) _stuckRecoveryTried = false;   // real progress after a recovery
@@ -137,6 +144,35 @@ namespace DD.Prototype.Enemies
 
             StuckRemovals++;
             return RemoveOutOfWorld(OutOfWorldReason.Stuck, p);
+        }
+
+        /// <summary>
+        /// WP-084 (C-00 06.10) · within <see cref="StuckCrowdRadius"/> of the target with at least <see cref="StuckCrowdAhead"/> live bodies nearer
+        /// the target inside a <see cref="StuckCrowdConeDegrees"/>° cone toward it: the body is held by the crowd, not stuck. A body stranded
+        /// alone (the S-10 seed 26 island, ≥ 12 m out, nobody ahead) still counts. Allocation-free (one pass over the live list).
+        /// </summary>
+        private bool WaitingInCrowd(Vector3 p, Vector3 target, float distance)
+        {
+            if (distance > StuckCrowdRadius) return false;
+            Vector3 toTarget = target - p; toTarget.y = 0f;
+            if (toTarget.sqrMagnitude < 1e-4f) return false;
+            Vector3 dir = toTarget.normalized;
+            float cos = Mathf.Cos(StuckCrowdConeDegrees * Mathf.Deg2Rad);
+            int ahead = 0;
+            IReadOnlyList<ZombieEnemy> live = Live;
+            for (int i = 0; i < live.Count; i++)
+            {
+                ZombieEnemy o = live[i];
+                if (o == null || o == this || !o.IsAlive) continue;
+                Vector3 op = o.transform.position;
+                if (FlatDistance(op, target) >= distance) continue;
+                Vector3 toO = op - p; toO.y = 0f;
+                float m = toO.magnitude;
+                if (m < 1e-3f || Vector3.Dot(toO / m, dir) < cos) continue;
+                if (++ahead >= StuckCrowdAhead) return true;
+            }
+
+            return false;
         }
 
         private void StartStuckWindow(float now, Vector3 p, float distance)

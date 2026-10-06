@@ -301,6 +301,189 @@ namespace DD.Prototype.Tests.PlayMode
             finally { ZombieEnemy.StuckWindowOverride = 0f; }
         }
 
+        /// <summary>
+        /// WP-084 (C-00 06.10, S-05 r4 finding) · MEASUREMENT before the fix: a stationary, invulnerable player and the real director's crowd
+        /// (round 10, active target 32, the round's own pool) for 60 s with the shipped stuck window (9 s). Every stuck removal is logged:
+        /// the body's distance to the player, bodies within 3 m of the player (the front ring) and in the cone between the body and the
+        /// player, whether it stood in the game camera's view, and its visible pixels in the game camera at that instant (the frame with
+        /// and without the body). Then the director's spawns after the first removal, the alive count and the pool. REPORTED
+        /// ([DD-OBS] wp084.watchdog); no assert — the guard after the fix is a separate test.
+        /// </summary>
+        [UnityTest]
+        [Explicit("WP-084 watchdog measurement: run by full name")]
+        [Category("Diagnostics")]
+        [Category("WP061L")]
+        [Timeout(300000)]
+        public IEnumerator P11_Olcum_SabitOyuncuyaYigilanKalabalik_ArkaSiraKaldirmalari()
+        {
+            yield return RunSahnesiniHazirla();
+            RunFlowClock.ClearHolds();
+            _director.ForceActiveTarget(0, false);
+            _run.BeginRound(10);
+            yield return null;
+            ZombieEnemy.ResetOutOfWorldStatics();
+            _rig.Health.DiagnosisInvulnerable = true;   // the fixture's TearDown clears it
+            _director.ForceActiveTarget(32, false);
+            Camera cam = DD.Prototype.CameraSystem.PrototypeCameraRig.Active.Camera;
+            var rows = new List<string>();
+            int spawnsAfterFirst = 0, visibleRemovals = 0, inView = 0, maxAlive = 0, removals = 0;
+            bool first = false;
+            Action<EnemySpawnContext> onSpawn = c => { if (first) spawnsAfterFirst++; };
+            Action<EnemyTier, Vector3, ZombieEnemy.OutOfWorldReason, DD.Prototype.Damage.ZombieBodyState> onRemove = (tier, where, reason, state) =>
+            {
+                if (reason != ZombieEnemy.OutOfWorldReason.Stuck) return;
+                first = true;
+                removals++;
+                ZombieEnemy body = NearestLive(where);
+                Vector3 player = _rig.transform.position;
+                float d = Flat(where, player);
+                int ring = 0, cone = 0;
+                foreach (ZombieEnemy o in ZombieEnemy.Live)
+                {
+                    if (o == null || o == body || !o.IsAlive) continue;
+                    float od = Flat(o.transform.position, player);
+                    if (od <= 3f) ring++;
+                    Vector3 toO = o.transform.position - where, toP = player - where; toO.y = 0f; toP.y = 0f;
+                    if (od < d && toO.sqrMagnitude > 1e-4f && Vector3.Angle(toO, toP) < 35f) cone++;
+                }
+
+                Vector3 vp = cam.WorldToViewportPoint(where + Vector3.up);
+                bool view = vp.z > 0f && vp.x >= 0f && vp.x <= 1f && vp.y >= 0f && vp.y <= 1f;
+                int px = body != null ? ChangedPixels(cam, body) : -1;
+                if (view) inView++;
+                if (px > 0) visibleRemovals++;
+                rows.Add(string.Format(System.Globalization.CultureInfo.InvariantCulture, "{0} d={1:0.0} ring3m={2} cone={3} inView={4} visiblePx={5} state={6}", tier, d, ring, cone, view, px, state));
+            };
+            _director.EnemySpawned += onSpawn;
+            ZombieEnemy.OutOfWorldRemoved += onRemove;
+            int unspawned0 = 0;
+            try
+            {
+                float t0 = Time.realtimeSinceStartup;
+                while (Time.realtimeSinceStartup - t0 < 60f)
+                {
+                    maxAlive = Math.Max(maxAlive, _director.ActiveCount);
+                    if (!first) unspawned0 = _director.Population.Unspawned;
+                    yield return null;
+                }
+            }
+            finally
+            {
+                _director.EnemySpawned -= onSpawn;
+                ZombieEnemy.OutOfWorldRemoved -= onRemove;
+                _director.ForceActiveTarget(0, false);
+            }
+
+            Debug.Log("[DD-OBS] wp084.watchdog removals=" + removals + " recoveries=" + ZombieEnemy.StuckRecoveries + " inView=" + inView + " visible(px>0)=" + visibleRemovals
+                      + " maxAlive=" + maxAlive + " spawnsAfterFirstRemoval=" + spawnsAfterFirst + " unspawned(before first)=" + unspawned0 + " unspawned(end)=" + _director.Population.Unspawned
+                      + " alive(end)=" + _director.ActiveCount + " | " + string.Join(" | ", rows));
+        }
+
+        /// <summary>
+        /// WP-084 (C-00 06.10) guard: 32 bodies of the real director round a standing, invulnerable player (round 10) with a short stuck window
+        /// (1.5 s) for 20 s — the crowd's back row waits (ZombieEnemy.StuckCrowdRadius / StuckCrowdAhead) and the watchdog removes none.
+        /// Before the exemption (r9a, shipped window): 7 removals at 2.8–3.2 m, every one on screen. P9 keeps the stranded body's removal.
+        /// </summary>
+        [UnityTest]
+        [Category("WP061L")]
+        [Timeout(300000)]
+        public IEnumerator P12_SabitOyuncuyaYigilanKalabalik_ArkaSiraBekler_KaldirmaYok()
+        {
+            yield return RunSahnesiniHazirla();
+            RunFlowClock.ClearHolds();
+            _director.ForceActiveTarget(0, false);
+            _run.BeginRound(10);
+            yield return null;
+            ZombieEnemy.ResetOutOfWorldStatics();
+            ZombieEnemy.StuckWindowOverride = 1.5f;
+            _rig.Health.DiagnosisInvulnerable = true;   // the fixture's TearDown clears it
+            _director.ForceActiveTarget(32, false);
+            int maxAlive = 0, maxRing = 0;
+            try
+            {
+                float t0 = Time.realtimeSinceStartup;
+                while (Time.realtimeSinceStartup - t0 < 20f)
+                {
+                    maxAlive = Math.Max(maxAlive, _director.ActiveCount);
+                    int ring = 0;
+                    foreach (ZombieEnemy z in ZombieEnemy.Live) if (z != null && z.IsAlive && Flat(z.transform.position, _rig.transform.position) <= 6.5f) ring++;
+                    maxRing = Math.Max(maxRing, ring);
+                    yield return null;
+                }
+
+                Debug.Log("[DD-TEST] wp084.watchdog.guard maxAlive=" + maxAlive + " maxWithin6.5m=" + maxRing + " recoveries=" + ZombieEnemy.StuckRecoveries + " removals=" + ZombieEnemy.StuckRemovals);
+                // a back row exists (the front ring round a player holds ~8–10): r9b 06.10 read 19 within 6.5 m in 20 s
+                Assert.GreaterOrEqual(maxRing, 15, "kaynak yok: oyuncunun çevresinde arka sıralı kalabalık oluşmadı");
+                Assert.AreEqual(0, ZombieEnemy.StuckRemovals, "kalabalıkta bekleyen gövde takılma sayılıp kaldırıldı");
+            }
+            finally
+            {
+                ZombieEnemy.StuckWindowOverride = 0f;
+                _director.ForceActiveTarget(0, false);
+            }
+        }
+
+        private static ZombieEnemy NearestLive(Vector3 where)
+        {
+            ZombieEnemy best = null;
+            float bd = float.MaxValue;
+            foreach (ZombieEnemy z in ZombieEnemy.Live)
+            {
+                if (z == null || !z.IsAlive) continue;
+                float d = (z.transform.position - where).sqrMagnitude;
+                if (d < bd) { bd = d; best = z; }
+            }
+
+            return bd < 0.25f ? best : null;
+        }
+
+        private static float Flat(Vector3 a, Vector3 b) { float dx = a.x - b.x, dz = a.z - b.z; return Mathf.Sqrt(dx * dx + dz * dz); }
+
+        /// <summary>Pixels of the game camera's frame (960×540) that change when <paramref name="body"/> is hidden at this instant — what vanishes on screen.</summary>
+        private static int ChangedPixels(Camera cam, ZombieEnemy body)
+        {
+            var hidden = new List<Renderer>();
+            Color32[] with = Frame(cam);
+            foreach (Renderer r in body.GetComponentsInChildren<Renderer>(false)) if (r.enabled) { r.enabled = false; hidden.Add(r); }
+            Color32[] without;
+            try { without = Frame(cam); }
+            finally { foreach (Renderer r in hidden) r.enabled = true; }
+            int n = 0;
+            for (int i = 0; i < with.Length; i++)
+            {
+                Color32 a = with[i], b = without[i];
+                if (Mathf.Abs(a.r - b.r) + Mathf.Abs(a.g - b.g) + Mathf.Abs(a.b - b.b) > 12) n++;
+            }
+
+            return n;
+        }
+
+        private static Color32[] Frame(Camera cam)
+        {
+            var rt = new RenderTexture(960, 540, 24) { name = "WP-084 watchdog frame", antiAliasing = 1 };
+            rt.Create();
+            RenderTexture prev = RenderTexture.active;
+            RenderTexture target = cam.targetTexture;
+            try
+            {
+                cam.targetTexture = rt;
+                cam.Render();
+                RenderTexture.active = rt;
+                var tex = new Texture2D(960, 540, TextureFormat.RGB24, false);
+                tex.ReadPixels(new Rect(0, 0, 960, 540), 0, 0, false);
+                tex.Apply();
+                Color32[] px = tex.GetPixels32();
+                UnityEngine.Object.Destroy(tex);
+                return px;
+            }
+            finally
+            {
+                cam.targetTexture = target;
+                RenderTexture.active = prev;
+                rt.Release();
+            }
+        }
+
         // ============================================================== P1
 
         [UnityTest]
