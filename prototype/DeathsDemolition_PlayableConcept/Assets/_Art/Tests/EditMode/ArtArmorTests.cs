@@ -56,6 +56,30 @@ namespace DD.Art.Tests.EditMode
             return lib;
         }
 
+        // ================================================================ WP-084 ara kural
+
+        /// <summary>WP-084 (C-00 06.10, AD turn 1 M3): with the AP-025 intake, every body-armour variant excludes the intake's
+        /// builder.armourBodyExcludes (the C_H2 T8 tasuki cords over the dō) on top of its AP-008 list; helmets and legs do not.</summary>
+        [Test]
+        public void GovdeZirhi_AP025AraKurali_T8TasukiDislar()
+        {
+            var lib = AssetDatabase.LoadAssetAtPath<ZombieArmorLibrary>(ArtArmorBuilder.LibraryPath);
+            Assert.IsNotNull(lib, "zırh kütüphanesi yok");
+            List<string> extra = ArtAp025Intake.ArmourBodyExcludes();
+            if (!ArtAp025Intake.Active) { Assert.IsEmpty(extra); return; }
+            CollectionAssert.Contains(extra, "T8_kosode_rolled", "ara kural alım verisinde");
+            int bodies = 0;
+            foreach (ZombieArmorLibrary.Variant v in lib.variants)
+            {
+                bool body = v.slot == ArmorSlot.Body;
+                if (body) bodies++;
+                foreach (string id in extra)
+                    Assert.AreEqual(body, Array.IndexOf(v.excludedModules, id) >= 0, v.id + " (" + v.slot + "): " + id);
+            }
+
+            Assert.Greater(bodies, 0, "kaynak yok: gövde zırhı varyantı");
+        }
+
         // ================================================================ sözleşme
 
         [Test]
@@ -201,10 +225,19 @@ namespace DD.Art.Tests.EditMode
             ZombieArmorLibrary lib = Library();
             CollectionAssert.AreEquivalent(new[] { "H2_hair_matted", "H3_topknot_broken", "H4_tenugui_wrap", "H5_hachimaki_band" }, lib.Find("K2_kabuto").excludedModules);
             CollectionAssert.IsEmpty(lib.Find("K1_jingasa").excludedModules, "jingasa her başla");
-            CollectionAssert.AreEquivalent(new[] { "T2_kosode_long", "T6_bare_straps", "T7_mino_cape" }, lib.Find("D1_lamellar").excludedModules);
-            CollectionAssert.AreEquivalent(new[] { "T6_bare_straps", "T7_mino_cape" }, lib.Find("D2_plate").excludedModules);
+            // WP-084 (C-00 06.10, AD turn 1 M3): + the AP-025 intake's interim body-armour exclusions (GovdeZirhi_AP025AraKurali_…)
+            List<string> extra = ArtAp025Intake.ArmourBodyExcludes();
+            CollectionAssert.AreEquivalent(Union(new[] { "T2_kosode_long", "T6_bare_straps", "T7_mino_cape" }, extra), lib.Find("D1_lamellar").excludedModules);
+            CollectionAssert.AreEquivalent(Union(new[] { "T6_bare_straps", "T7_mino_cape" }, extra), lib.Find("D2_plate").excludedModules);
             CollectionAssert.AreEquivalent(new[] { "B1_hakama_wide", "B3_koshimaki_wrap", "B4_tattsuke_hakama", "B6_hakama_torn" }, lib.Find("L1_haidate_heavy").excludedModules);
             CollectionAssert.AreEquivalent(new[] { "B1_hakama_wide", "B3_koshimaki_wrap", "B4_tattsuke_hakama", "B6_hakama_torn" }, lib.Find("L2_suneate_heavy").excludedModules);
+        }
+
+        private static string[] Union(string[] manifest, List<string> extra)
+        {
+            var ids = new List<string>(manifest);
+            foreach (string id in extra) if (!ids.Contains(id)) ids.Add(id);
+            return ids.ToArray();
         }
 
         // ================================================================ seçici ve kurallar

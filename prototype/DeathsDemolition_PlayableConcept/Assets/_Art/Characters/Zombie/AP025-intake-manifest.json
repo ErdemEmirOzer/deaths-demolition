@@ -4,6 +4,10 @@
  "map": "ap025-intake.json",
  "builder": {
   "bodyObject": "Zombie_O1_Body_{fit}_LOD{lod}",
+  "armourBodyExcludes": [
+   "T8_kosode_rolled"
+  ],
+  "armourBodyExcludesNote": "interim (C-00 06.10, WP-084 AD turn 1 M3): the C_H2 refit T8 tasuki cords show over the do (AP-008 is not refit to H2) - every body-armour variant excludes T8; remove this key when AP-008D refits the armour",
   "faces": [
    {
     "id": "F1_gaunt",

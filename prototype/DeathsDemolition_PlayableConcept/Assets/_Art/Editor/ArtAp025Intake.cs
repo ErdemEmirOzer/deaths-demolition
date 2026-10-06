@@ -81,6 +81,20 @@ namespace DD.Art.Pipeline.EditorTools
             return f.ContainsKey(key) ? ArtJson.AsString(f[key]) : null;
         }
 
+        /// <summary>
+        /// WP-084 (C-00 06.10, AD turn 1 M3) · module ids every body-armour variant excludes on top of the AP-008 manifest's own list —
+        /// an interim rule kept as intake data (builder.armourBodyExcludes): the C_H2 refit T8 tasuki cords show over the dō until
+        /// AP-008D refits the armour to the H2 bodies (r6a3 06.10: on fit A the same top stays under the dō). Empty without the manifest or the key.
+        /// </summary>
+        public static List<string> ArmourBodyExcludes()
+        {
+            var ids = new List<string>();
+            Dictionary<string, object> b = Builder;
+            if (b == null || !b.ContainsKey("armourBodyExcludes")) return ids;
+            foreach (object o in ArtJson.AsList(b["armourBodyExcludes"], "armourBodyExcludes")) ids.Add(ArtJson.AsString(o));
+            return ids;
+        }
+
         public static List<Face> Faces()
         {
             var faces = new List<Face>();

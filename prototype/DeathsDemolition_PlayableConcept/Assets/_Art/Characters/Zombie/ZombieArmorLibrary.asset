@@ -4903,6 +4903,7 @@ MonoBehaviour:
     - T2_kosode_long
     - T6_bare_straps
     - T7_mino_cape
+    - T8_kosode_rolled
     fits:
     - fit: A
       present:
@@ -8662,6 +8663,7 @@ MonoBehaviour:
     excludedModules:
     - T6_bare_straps
     - T7_mino_cape
+    - T8_kosode_rolled
     fits:
     - fit: A
       present:

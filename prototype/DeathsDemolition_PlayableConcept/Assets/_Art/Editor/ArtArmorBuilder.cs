@@ -263,7 +263,7 @@ namespace DD.Art.Pipeline.EditorTools
                         family = p.family,
                         slot = ParseSlot(p.slot),
                         anchor = p.anchor,
-                        excludedModules = exclusions.TryGetValue(p.variant, out List<string> ex) ? ex.ToArray() : Array.Empty<string>(),
+                        excludedModules = WithIntakeExcludes(exclusions.TryGetValue(p.variant, out List<string> ex) ? ex : null, ParseSlot(p.slot)),
                         fits = new ZombieArmorLibrary.Fit[Fits.Length]
                     };
                     for (int f = 0; f < Fits.Length; f++) v.fits[f] = new ZombieArmorLibrary.Fit { fit = Fits[f] };
@@ -339,6 +339,15 @@ namespace DD.Art.Pipeline.EditorTools
                 case ZombieArmorLibrary.StateBroken: return ArmorVisualState.Broken;
                 default: return ArmorVisualState.Absent;
             }
+        }
+
+        /// <summary>WP-084 (C-00 06.10, AD turn 1 M3): the manifest's exclusions plus, on body armour, the AP-025 intake's interim
+        /// builder.armourBodyExcludes (ArtAp025Intake.ArmourBodyExcludes; removed when AP-008D refits the armour to the H2 bodies).</summary>
+        private static string[] WithIntakeExcludes(List<string> manifest, ArmorSlot slot)
+        {
+            var ids = manifest != null ? new List<string>(manifest) : new List<string>();
+            if (slot == ArmorSlot.Body) foreach (string id in ArtAp025Intake.ArmourBodyExcludes()) if (!ids.Contains(id)) ids.Add(id);
+            return ids.ToArray();
         }
 
         public static ArmorSlot ParseSlot(string text)
