@@ -99,7 +99,7 @@ namespace DD.Art.Tests.EditMode
                 }
             }
 
-            Assert.AreEqual(6, pieces, "C8 iki kalas açıklığı + C1 dört taş");
+            Assert.AreEqual(WorldV5Dress.BridgePieceCount, pieces, "C8 iki kalas açıklığı + C1 " + WorldV5Dress.C1SlabCount + " taş");
             Assert.Greater(walkable, 0, "yürünür çarpıştırıcı yok; tarama yalanlanmıştır");
         }
 
@@ -316,6 +316,77 @@ namespace DD.Art.Tests.EditMode
             Assert.IsEmpty(fails, string.Join("\n", fails));
         }
 
+        /// <summary>
+        /// WP-088 (R2) · The pond crossings join shore to shore, and each carries a shore alternative S-03's router can send a crowd
+        /// along: both deck ends land on the NavMesh past the rim and the direct path goes over the deck (C1 ended in the water at
+        /// z −33 before); the marker's alternative is on the NavMesh and north end → alternative → south end stays off both decks.
+        /// </summary>
+        [Test]
+        public void Greybox_Gecitler_KiyidanKiyiya_KiyiAlternatifiDestenGecmez()
+        {
+            Open();
+            var volumes = new Dictionary<string, NavRegionVolume>();
+            foreach (NavRegionMarker m in Object.FindObjectsOfType<NavRegionMarker>())
+            {
+                m.Register();
+                volumes[m.Volume.id] = m.Volume;
+                m.Unregister();
+            }
+
+            var decks = new List<GreyboxV6Builder.Crossing>(GreyboxV6Builder.Crossings);
+            var fails = new List<string>();
+            foreach (int index in new[] { GreyboxV6Builder.C8Bridge, GreyboxV6Builder.C1Causeway })
+            {
+                GreyboxV6Builder.Crossing c = GreyboxV6Builder.Crossings[index];
+                if (!NavMesh.SamplePosition(new Vector3(c.Centre.x, 0.2f, c.Max.y + 1.5f), out NavMeshHit north, 0.6f, NavMesh.AllAreas)) { fails.Add(c.Id + ": kuzey ucu karada değil"); continue; }
+                if (!NavMesh.SamplePosition(new Vector3(c.Centre.x, 0.2f, c.Min.y - 1.5f), out NavMeshHit south, 0.6f, NavMesh.AllAreas)) { fails.Add(c.Id + ": güney ucu karada değil"); continue; }
+                float direct = PathLength(north.position, south.position);
+                if (direct < 0f || direct > c.Length + 6f) fails.Add(c.Id + ": doğrudan yol güverteden geçmiyor (" + direct.ToString("F1") + " m, güverte " + c.Length + " m)");
+                if (!volumes.TryGetValue(c.Id, out NavRegionVolume v) || !v.hasAlternative) { fails.Add(c.Id + ": kıyı alternatifi yok"); continue; }
+                if (!NavMesh.SamplePosition(v.alternative, out NavMeshHit alt, 1f, NavMesh.AllAreas)) { fails.Add(c.Id + ": alternatif NavMesh dışı " + v.alternative); continue; }
+                float a = PathLengthOffDecks(north.position, alt.position, decks), b = PathLengthOffDecks(alt.position, south.position, decks);
+                if (a < 0f || b < 0f) fails.Add(c.Id + ": alternatif yolu bir güverteden geçiyor ya da kopuk");
+                else Debug.Log("[DD-TEST] wp088." + c.Id + " direct " + direct.ToString("F1") + " m, shore " + (a + b).ToString("F1") + " m via " + v.alternative);
+
+                // WP-088 r2 (V6 Waterfall stall): the router offers this marker's detour only while it can help — bank to bank yes;
+                // the goal or the body on the deck, or a body 1 m past the waypoint, no (RegionNavRouter.AlternativeAhead).
+                float margin = RegionNavProfile.CreateDefault().AlternativeAheadMargin;
+                Vector3 deck = new Vector3(c.Centre.x, 0.2f, c.Centre.y), pastVia = v.alternative + (deck - v.alternative).normalized;
+                if (!RegionNavRouter.AlternativeAhead(v, north.position, south.position, margin)) fails.Add(c.Id + ": kıyıdan kıyıya kıyı rotası sunulmuyor");
+                if (RegionNavRouter.AlternativeAhead(v, north.position, deck, margin)) fails.Add(c.Id + ": hedef güvertedeyken dolambaç sunuluyor");
+                if (RegionNavRouter.AlternativeAhead(v, deck, south.position, margin)) fails.Add(c.Id + ": gövde güvertedeyken dolambaç sunuluyor");
+                if (RegionNavRouter.AlternativeAhead(v, pastVia, south.position, margin)) fails.Add(c.Id + ": via'ya varmış gövdeye yeniden via sunuluyor");
+            }
+
+            Assert.IsEmpty(fails, string.Join("\n", fails));
+        }
+
+        private static float PathLength(Vector3 from, Vector3 to)
+        {
+            var path = new NavMeshPath();
+            return NavMesh.CalculatePath(from, to, NavMesh.AllAreas, path) && path.status == NavMeshPathStatus.PathComplete ? PathLength(path) : -1f;
+        }
+
+        private static float PathLengthOffDecks(Vector3 from, Vector3 to, List<GreyboxV6Builder.Crossing> decks)
+        {
+            var path = new NavMeshPath();
+            if (!NavMesh.CalculatePath(from, to, NavMesh.AllAreas, path) || path.status != NavMeshPathStatus.PathComplete) return -1f;
+            float length = 0f;
+            for (int i = 1; i < path.corners.Length; i++)
+            {
+                for (int s = 0; s <= 20; s++)
+                {
+                    Vector3 m = Vector3.Lerp(path.corners[i - 1], path.corners[i], s / 20f);
+                    foreach (GreyboxV6Builder.Crossing d in decks)
+                        if (m.x >= d.Min.x && m.x <= d.Max.x && m.z >= d.Min.y && m.z <= d.Max.y) return -1f;
+                }
+
+                length += Vector3.Distance(path.corners[i - 1], path.corners[i]);
+            }
+
+            return length;
+        }
+
         [Test]
         public void Greybox_Catilar_BakeDisi_RoofEtiketli_Veri18Kapi5Bolge()
         {
@@ -502,7 +573,7 @@ namespace DD.Art.Tests.EditMode
             }
 
             Assert.Greater(dress.transform.Find(WorldV5Dress.ShoreGroupName).childCount, 20, "havuz kıyıları");
-            Assert.AreEqual(6, dress.transform.Find(WorldV5Dress.BridgeGroupName).childCount, "2 kalas + 4 levha köprü");
+            Assert.AreEqual(WorldV5Dress.BridgePieceCount, dress.transform.Find(WorldV5Dress.BridgeGroupName).childCount, "2 kalas + " + WorldV5Dress.C1SlabCount + " levha köprü");
             Assert.Greater(dress.transform.Find(WorldV5Dress.GroveGroupName).childCount, 40, "bambu kümeleri + çit");
             // DEC-102 AD E: NE / SE side doors — 4 doors × (void + 3 frame pieces), visual only, on the tsuiji's inner face.
             Transform doors = dress.transform.Find(WorldV5Dress.SideDoorGroupName);

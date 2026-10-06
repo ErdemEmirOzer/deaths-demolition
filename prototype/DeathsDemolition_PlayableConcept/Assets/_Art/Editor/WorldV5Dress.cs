@@ -963,10 +963,16 @@ namespace DD.Art.Pipeline.EditorTools
         public const float LotusAreaPerCluster = 12f;
 
         /// <summary>The kit crossings' own deck width / length (AP-023 plank_bridge V01, slab_bridge V01), which the dress scales to the greybox decks.</summary>
-        public const float KitPlankWidth = 1.6f, KitPlankLength = 10.8f, KitSlabWidth = 2f / 1.72f, KitSlabLength = 3.56f;
+        public const float KitPlankWidth = 1.6f, KitPlankLength = 10.8f, KitSlabWidth = 2f / 1.72f, KitSlabLength = 3.56f, KitSlabStep = 3.25f;   // KitSlabStep: the C1 slab as placed (13 m / 4)
+
+        /// <summary>WP-088: the C1 granite slabs — the slab length holds as the causeway grows (13 m → 4, 17 m → 5).</summary>
+        public static int C1SlabCount => Mathf.Max(1, Mathf.RoundToInt(GreyboxV6Builder.Crossings[GreyboxV6Builder.C1Causeway].Length / KitSlabStep));
+
+        /// <summary>The pieces under <see cref="BridgeGroupName"/>: the two C8 plank spans and the C1 slabs.</summary>
+        public static int BridgePieceCount => 2 + C1SlabCount;
 
         /// <summary>
-        /// The C8 bridge as two plank spans and the C1 causeway as four granite slabs, scaled to the greybox decks
+        /// The C8 bridge as two plank spans and the C1 causeway as <see cref="C1SlabCount"/> granite slabs, scaled to the greybox decks
         /// (<see cref="GreyboxV6Builder.Crossings"/> — WP-074 B9 M-39: one source with the pond-strip exclusions): C8 3 m wide (× 1.875),
         /// C1 2 m (× 1.72). Kit colliders (arched deck ≤ 0.6, landings 0.15).
         /// </summary>
@@ -978,8 +984,9 @@ namespace DD.Art.Pipeline.EditorTools
             float span = c8.Length * 0.5f;
             foreach (float z in new[] { c8.Centre.y + span * 0.5f, c8.Centre.y - span * 0.5f })
                 Place(group, "plank_bridge", 1, Mz(c8.Centre.x, z, 0f, 0f) * Matrix4x4.Scale(new Vector3(c8.Width / KitPlankWidth, span / KitPlankLength, 1f)), Vector3.zero, "structure");
-            float slab = c1.Length / 4f;
-            for (int i = 0; i < 4; i++)
+            int slabs = C1SlabCount;
+            float slab = c1.Length / slabs;
+            for (int i = 0; i < slabs; i++)
                 Place(group, "slab_bridge", 1, Mz(c1.Centre.x, c1.Min.y + slab * 0.5f + slab * i, 0f, 0f) * Matrix4x4.Scale(new Vector3(c1.Width / KitSlabWidth, slab / KitSlabLength, 1f)), Vector3.zero, "structure");
         }
 

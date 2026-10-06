@@ -546,8 +546,8 @@ namespace DD.Art.Pipeline.EditorTools
             }
 
             Crossing c8 = Crossings[C8Bridge], c1 = Crossings[C1Causeway];
-            Marker(group, c8.Id, NavRegionKind.Bridge, new Vector3(c8.Centre.x, 0.25f + 1.2f, c8.Centre.y), new Vector3(c8.Width, 2.4f, c8.Length), 1.35f, 2, null, "");
-            Marker(group, c1.Id, NavRegionKind.Corridor, new Vector3(c1.Centre.x, 0.2f + 1.2f, c1.Centre.y), new Vector3(c1.Width, 2.4f, c1.Length), 1.3f, 1, null, "");
+            Marker(group, c8.Id, NavRegionKind.Bridge, new Vector3(c8.Centre.x, 0.25f + 1.2f, c8.Centre.y), new Vector3(c8.Width, 2.4f, c8.Length), 1.35f, 2, C8ShoreAlternative, "");
+            Marker(group, c1.Id, NavRegionKind.Corridor, new Vector3(c1.Centre.x, 0.2f + 1.2f, c1.Centre.y), new Vector3(c1.Width, 2.4f, c1.Length), 1.3f, 1, C1ShoreAlternative, "");
             Marker(group, "K1_WestKairo", NavRegionKind.Corridor, new Vector3(-33f, KairoFloor + 1.7f, 2f), new Vector3(5.2f, 3.4f, 36f), 1.3f, 6, null, "");
             return n + 3;
         }
@@ -708,14 +708,24 @@ namespace DD.Art.Pipeline.EditorTools
         /// <summary>
         /// WP-074 B9 (M-39) · The crossings — one source for the greybox decks and rails, the C8 / C1 region markers, the pond-strip
         /// exclusions and the AP-023 dress (WorldV5Dress.Bridges): the C8 plank bridge (x 4, 3 m, z −39.5…−18) and the C1 slab
-        /// causeway (x −8, 2 m, z −33…−20) with its 3 m island.
+        /// causeway (x −8, 2 m, z −37…−20) with its 3 m island. WP-088 (R2): C1 ended at z −33, 2.4 m short of Pond1's south rim
+        /// (−35.4) — every path from its south end turned back over it; now it lands 1.6 m onto the south bank like the north end.
         /// </summary>
         public static readonly Crossing[] Crossings =
         {
             new Crossing("C8_Bridge", 4f, -28.75f, 3f, 21.5f),
-            new Crossing("C1_SteppingCauseway", -8f, -26.5f, 2f, 13f),
+            new Crossing("C1_SteppingCauseway", -8f, -28.5f, 2f, 17f),
             new Crossing("C1_Island", -8f, -27f, 3f, 3f),
         };
+
+        /// <summary>
+        /// WP-088 (R2) · The shore alternatives of the two crossings (NavRegionMarker.alternative; S-03's router sends a crowd round
+        /// the pond when the deck is full): measured on the V6 NavMesh as the shortest waypoint whose path north end → waypoint →
+        /// south end stays off both decks. C8: the east shore, 36.4 m against 24.4 m over the bridge (×1.49), 2.25 m from the nearest
+        /// NavMesh edge (open — the V6 stall there was the router sending a body back to it, RegionNavRouter.AlternativeAhead);
+        /// C1 (once it reached the south bank): the west shore at the deck's middle, 23.4 m against 20.0 m (×1.17).
+        /// </summary>
+        public static readonly Vector3 C8ShoreAlternative = new Vector3(16f, 0.1f, -30.8f), C1ShoreAlternative = new Vector3(-13.3f, 0.1f, -28.5f);
 
         /// <summary>The deck footprints the pond NotWalkable strips leave out (world XZ min / max) — the <see cref="Crossings"/>.</summary>
         public static readonly (Vector2 min, Vector2 max)[] PondStripExclusions = Array.ConvertAll(Crossings, c => (c.Min, c.Max));
