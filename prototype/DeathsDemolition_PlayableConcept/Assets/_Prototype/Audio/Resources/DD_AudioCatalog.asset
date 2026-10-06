@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: DD_AudioCatalog
   m_EditorClassIdentifier: 
   _manifestVersion: ap011-v023+ap027-v002-unity-ar1-ar2-lmg1-lmg2-rl1-sg1-sg2-smg1-smg2-sr1
-  _sourceHash: a38af227b3aaa32582b9c73dcc139ac68c235e9d668ebf11369d506c83eaf10c
+  _sourceHash: a38af227b3aaa32582b9c73dcc139ac6783c75b8500636db6836a56ed41ac85c
   _entries:
   - Sound: 10
     Clips:
@@ -2722,7 +2722,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: f45f87a5d9b6c4961962afededaeaf6b, type: 3}
     Loop: 0
     Lufs: -18
-    TruePeakDb: -1.34
+    TruePeakDb: -1.14
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC001, SRC002; source
       recording) \xB7 SHA d76e743eb2e9\u2026 \xB7 AP-027 v003-recut on 4 file(s)
       \xB7 import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak
@@ -2775,7 +2775,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 1fdf1a6b8934f4992a78703b6c6ae54c, type: 3}
     Loop: 0
     Lufs: -19.28
-    TruePeakDb: -1.06
+    TruePeakDb: -1.01
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC106, SRC107; source
       recording) \xB7 SHA 021c8c4f226a\u2026 \xB7 import fade 10 ms + 20 ms silence
       on 6 file(s) (end within 40 dB of peak / end gate) \xB7 import 15 Hz high-pass
@@ -2796,7 +2796,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: c73a85b95f678486f942b85650de7e10, type: 3}
     Loop: 0
     Lufs: -18
-    TruePeakDb: -1.52
+    TruePeakDb: -1.15
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC101, SRC102, SRC127;
       source recording) \xB7 SHA 05b64bd6dd3c\u2026 \xB7 AP-027 v003-recut on 5 file(s)
       \xB7 import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak
@@ -3002,7 +3002,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 35bc142e15c6548fab9aea2993583de9, type: 3}
     Loop: 0
     Lufs: -19.37
-    TruePeakDb: -1.06
+    TruePeakDb: -1.24
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC107, SRC129; source
       recording) \xB7 SHA c66fb9815b0d\u2026 \xB7 AP-027 v003-recut on 6 file(s)
       \xB7 import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak
@@ -5119,7 +5119,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: c1170e912853f41fe9181b35bb242332, type: 3}
     Loop: 0
     Lufs: -25.19
-    TruePeakDb: -2.78
+    TruePeakDb: -3.88
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC001; source recording)
       \xB7 SHA 13defa439759\u2026 \xB7 AP-027 v003g-recut on 6 file(s)"
     NoiseFloorDb: -91.5
@@ -5158,7 +5158,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 305c27d563e35404fa7e1ffe2dee87c0, type: 3}
     Loop: 0
     Lufs: -25.45
-    TruePeakDb: -1.06
+    TruePeakDb: -1.78
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC003, SRC006; source
       recording) \xB7 SHA 48a60fc533c3\u2026 \xB7 AP-027 v003g-recut on 6 file(s)"
     NoiseFloorDb: -73.6
@@ -5176,7 +5176,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: de72bdbedd4cf4451a7ccd73501aa743, type: 3}
     Loop: 0
     Lufs: -24
-    TruePeakDb: -8
+    TruePeakDb: -1.11
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC004; source recording)
       \xB7 SHA 78f55dc0b2f5\u2026 \xB7 AP-027 v003-recut on 5 file(s) \xB7 AP-027
       v003e-recut on 6 file(s)"
@@ -5195,7 +5195,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: c9c66be706e0448ab94e1b0b1b8bc01b, type: 3}
     Loop: 0
     Lufs: -48.76
-    TruePeakDb: -32
+    TruePeakDb: -24.93
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC002; source recording)
       \xB7 SHA 609701ab4801\u2026 \xB7 AP-027 v003-recut on 6 file(s)"
     NoiseFloorDb: -59
@@ -5213,7 +5213,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: e7cb95bc22d86489ea3177fd5dd69a2a, type: 3}
     Loop: 0
     Lufs: -23.62
-    TruePeakDb: -1.06
+    TruePeakDb: -2.81
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording)
       \xB7 SHA 225956d6b0bb\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
       v003g-recut on 6 file(s)"
@@ -5232,7 +5232,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 0a302cd0d901b47a2a9b3b7c902f549b, type: 3}
     Loop: 0
     Lufs: -24.69
-    TruePeakDb: -1.11
+    TruePeakDb: -2.42
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording)
       \xB7 SHA 19d0ef390432\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
       v003g-recut on 6 file(s)"
@@ -5290,7 +5290,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 9673baaa987f74446a1293af8ed311e4, type: 3}
     Loop: 0
     Lufs: -28.17
-    TruePeakDb: -1.06
+    TruePeakDb: -2.87
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC106; source recording)
       \xB7 SHA 26de4641dae6\u2026 \xB7 AP-027 v003g-recut on 6 file(s)"
     NoiseFloorDb: -89.8
@@ -5308,7 +5308,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 7be5326bd5bd84ee39ed11df66943a78, type: 3}
     Loop: 0
     Lufs: -23.62
-    TruePeakDb: -1.06
+    TruePeakDb: -2.81
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording)
       \xB7 SHA 225956d6b0bb\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
       v003g-recut on 6 file(s)"
@@ -5327,7 +5327,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 87b60bb1f583745e4ac30ec70064430c, type: 3}
     Loop: 0
     Lufs: -24.69
-    TruePeakDb: -1.11
+    TruePeakDb: -2.42
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording)
       \xB7 SHA 19d0ef390432\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
       v003g-recut on 6 file(s)"
@@ -5402,7 +5402,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 7ff21abfbe0844b2d9181756cfa58e6b, type: 3}
     Loop: 0
     Lufs: -28.19
-    TruePeakDb: -1.06
+    TruePeakDb: -2.06
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC101; source recording)
       \xB7 SHA e2ec0cd27d2a\u2026 \xB7 AP-027 v003g-recut on 6 file(s)"
     NoiseFloorDb: -82.6
@@ -5420,7 +5420,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: d380d1156cd6f4ca390a40eb5e327c46, type: 3}
     Loop: 0
     Lufs: -23.64
-    TruePeakDb: -1.06
+    TruePeakDb: -3.54
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording)
       \xB7 SHA 225956d6b0bb\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
       v003g-recut on 6 file(s)"
@@ -5439,7 +5439,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: a628eb62724d24f7bab59a7d3649ffce, type: 3}
     Loop: 0
     Lufs: -23.91
-    TruePeakDb: -1.11
+    TruePeakDb: -2.94
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording)
       \xB7 SHA 19d0ef390432\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
       v003g-recut on 6 file(s)"
@@ -5477,7 +5477,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: f14672e65d85844c9913efdc897fe625, type: 3}
     Loop: 0
     Lufs: -24
-    TruePeakDb: -1.71
+    TruePeakDb: -1.31
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC128; source recording)
       \xB7 SHA 8b5d483bbc13\u2026 \xB7 AP-027 v003-recut on 4 file(s) \xB7 import
       fade 10 ms + 20 ms silence on 4 file(s) (end within 40 dB of peak / end gate)"
@@ -5532,7 +5532,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: d1d09729dbba14325b31f3478498c7c5, type: 3}
     Loop: 0
     Lufs: -23.64
-    TruePeakDb: -1.06
+    TruePeakDb: -3.54
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording)
       \xB7 SHA 225956d6b0bb\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
       v003g-recut on 6 file(s)"
@@ -5551,7 +5551,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 43eb0b9583d3c4c1bada8ca544a7a7b1, type: 3}
     Loop: 0
     Lufs: -23.91
-    TruePeakDb: -1.11
+    TruePeakDb: -2.94
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording)
       \xB7 SHA 19d0ef390432\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
       v003g-recut on 6 file(s)"
@@ -5626,7 +5626,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 55b239f34a35a4c89a332a7e54dd0582, type: 3}
     Loop: 0
     Lufs: -23.64
-    TruePeakDb: -1.06
+    TruePeakDb: -2.85
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording)
       \xB7 SHA 48ba25c36440\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
       v003g-recut on 6 file(s)"
@@ -5645,7 +5645,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 0b6f66d1a29c347b5bef7c5e27cfaf5d, type: 3}
     Loop: 0
     Lufs: -24.69
-    TruePeakDb: -1.11
+    TruePeakDb: -2.77
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording)
       \xB7 SHA 5497f3dc2992\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
       v003g-recut on 6 file(s)"
@@ -5664,7 +5664,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 5d38c79752fe5400fbccbdcc227c1121, type: 3}
     Loop: 0
     Lufs: -22
-    TruePeakDb: -4.08
+    TruePeakDb: -4.03
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC003, SRC013; source
       recording) \xB7 SHA 2c835710bf76\u2026 \xB7 AP-027 v003-recut on 1 file(s)
       \xB7 import fade 10 ms + 20 ms silence on 5 file(s) (end within 40 dB of peak
@@ -5703,7 +5703,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: fdd94a71fa1f548d98eef5b813ad832b, type: 3}
     Loop: 0
     Lufs: -22.94
-    TruePeakDb: -1.06
+    TruePeakDb: -2.59
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC003; source recording)
       \xB7 SHA c0b6739c5870\u2026 \xB7 AP-027 v003g-recut on 6 file(s)"
     NoiseFloorDb: -93.3
@@ -5721,7 +5721,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 1f3dadc1014be461ab56c95f25667800, type: 3}
     Loop: 0
     Lufs: -23.64
-    TruePeakDb: -1.06
+    TruePeakDb: -2.85
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording)
       \xB7 SHA 48ba25c36440\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
       v003g-recut on 6 file(s)"
@@ -5740,7 +5740,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 3b4458e9ddfe24ab8bcdbd53d8d16f08, type: 3}
     Loop: 0
     Lufs: -24.69
-    TruePeakDb: -1.11
+    TruePeakDb: -2.77
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording)
       \xB7 SHA 5497f3dc2992\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
       v003g-recut on 6 file(s)"
@@ -5759,7 +5759,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: eaf49319ac4754bd5b022acb6ff00a54, type: 3}
     Loop: 0
     Lufs: -22
-    TruePeakDb: -3.33
+    TruePeakDb: -3.09
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC003, SRC006, SRC007,
       SRC013; source recording) \xB7 SHA a1ad9cfb6198\u2026 \xB7 AP-027 v003-recut
       on 2 file(s) \xB7 import fade 10 ms + 20 ms silence on 5 file(s) (end within
@@ -5779,7 +5779,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: f9015b30e6fb54ed3964cf6e8b33a413, type: 3}
     Loop: 0
     Lufs: -24
-    TruePeakDb: -8
+    TruePeakDb: -1.06
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC004; source recording)
       \xB7 SHA 3a67e0e59a0c\u2026 \xB7 AP-027 v003-recut on 5 file(s) \xB7 AP-027
       v003e-recut on 6 file(s)"
@@ -5816,7 +5816,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: ea5456559fd0c4bbb810f58f686fe1f4, type: 3}
     Loop: 0
     Lufs: -25.37
-    TruePeakDb: -2.78
+    TruePeakDb: -4.1
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC001; source recording)
       \xB7 SHA d335d41be8bd\u2026 \xB7 AP-027 v003g-recut on 6 file(s)"
     NoiseFloorDb: -94.5
@@ -5834,7 +5834,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 37a25182b7b1b4bd4aed95ec97539871, type: 3}
     Loop: 0
     Lufs: -23.63
-    TruePeakDb: -1.06
+    TruePeakDb: -3.65
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording)
       \xB7 SHA 225956d6b0bb\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
       v003g-recut on 6 file(s)"
@@ -5853,7 +5853,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: bfcfa35dbbf344084b8c538ef2379943, type: 3}
     Loop: 0
     Lufs: -24.7
-    TruePeakDb: -1.11
+    TruePeakDb: -2.59
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording)
       \xB7 SHA 19d0ef390432\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
       v003g-recut on 6 file(s)"
@@ -5872,7 +5872,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: c68532e3bd1a44392bb6fcefe1a2b764, type: 3}
     Loop: 0
     Lufs: -22
-    TruePeakDb: -3.99
+    TruePeakDb: -3.87
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC001, SRC109; source
       recording) \xB7 SHA 06107206c1ca\u2026 \xB7 AP-027 v003-recut on 4 file(s)
       \xB7 import fade 10 ms + 20 ms silence on 4 file(s) (end within 40 dB of peak
@@ -5892,7 +5892,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 7219645bd4bec4d8588f56f3894288e0, type: 3}
     Loop: 0
     Lufs: -24
-    TruePeakDb: -2.99
+    TruePeakDb: -3.17
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC116; source recording)
       \xB7 SHA 4e6cb3f84370\u2026 \xB7 AP-027 v003-recut on 2 file(s) \xB7 AP-027
       v003b-recut on 4 file(s) \xB7 AP-027 v003c-recut on 2 file(s) \xB7 import fade
@@ -5930,7 +5930,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 0aa4fa02188754998b258ea1842c5189, type: 3}
     Loop: 0
     Lufs: -30.91
-    TruePeakDb: -1.06
+    TruePeakDb: -2.33
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC108; source recording)
       \xB7 SHA 82a9956d391c\u2026 \xB7 AP-027 v003g-recut on 6 file(s)"
     NoiseFloorDb: -85.2
@@ -5948,7 +5948,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 7cbfab40ca2a44b608cc71432e087c90, type: 3}
     Loop: 0
     Lufs: -23.63
-    TruePeakDb: -1.06
+    TruePeakDb: -3.65
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording)
       \xB7 SHA 225956d6b0bb\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
       v003g-recut on 6 file(s)"
@@ -5967,7 +5967,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 9b86d33e937544bffaf238cdf6bff58b, type: 3}
     Loop: 0
     Lufs: -24.7
-    TruePeakDb: -1.11
+    TruePeakDb: -2.59
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording)
       \xB7 SHA 19d0ef390432\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
       v003g-recut on 6 file(s)"
@@ -5986,7 +5986,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: f6bee780b0e7b4d839f27332732abc38, type: 3}
     Loop: 0
     Lufs: -22
-    TruePeakDb: -3.65
+    TruePeakDb: -3.85
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC108, SRC109; source
       recording) \xB7 SHA 4b049f3190e3\u2026 \xB7 AP-027 v003-recut on 1 file(s)
       \xB7 AP-027 v003b-recut on 1 file(s) \xB7 import fade 10 ms + 20 ms silence
@@ -6045,7 +6045,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: eb7568e4d67bb400387c4692320ae182, type: 3}
     Loop: 0
     Lufs: -27.75
-    TruePeakDb: -1.06
+    TruePeakDb: -1.98
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC101; source recording)
       \xB7 SHA 9bfd9f8376a2\u2026 \xB7 AP-027 v003g-recut on 6 file(s)"
     NoiseFloorDb: -85.1
@@ -6063,7 +6063,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: a39d58c5c486e4ef1a92811e6388c9a7, type: 3}
     Loop: 0
     Lufs: -23.65
-    TruePeakDb: -1.06
+    TruePeakDb: -2.74
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording)
       \xB7 SHA 48ba25c36440\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
       v003g-recut on 6 file(s)"
@@ -6082,7 +6082,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 24ed2397808c8424893d75d657e75249, type: 3}
     Loop: 0
     Lufs: -24.64
-    TruePeakDb: -1.11
+    TruePeakDb: -2.56
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording)
       \xB7 SHA 5497f3dc2992\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
       v003g-recut on 6 file(s)"
@@ -6157,7 +6157,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 7cb32cb91effb4f4b81eac4f3a25efe2, type: 3}
     Loop: 0
     Lufs: -28.18
-    TruePeakDb: -1.06
+    TruePeakDb: -2.03
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC101; source recording)
       \xB7 SHA e2ec0cd27d2a\u2026 \xB7 AP-027 v003g-recut on 6 file(s)"
     NoiseFloorDb: -82.5
@@ -6175,7 +6175,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: bccc7fd155d224c5d8f12a4d348ebb0f, type: 3}
     Loop: 0
     Lufs: -23.6
-    TruePeakDb: -1.06
+    TruePeakDb: -3.26
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC114; source recording)
       \xB7 SHA 225956d6b0bb\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
       v003g-recut on 6 file(s)"
@@ -6194,7 +6194,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: c2e800ea908ed482c9998a4e7297cbc1, type: 3}
     Loop: 0
     Lufs: -24.78
-    TruePeakDb: -1.11
+    TruePeakDb: -2.86
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC115; source recording)
       \xB7 SHA 19d0ef390432\u2026 \xB7 AP-027 v003f-recut on 6 file(s) \xB7 AP-027
       v003g-recut on 6 file(s)"
@@ -6213,7 +6213,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 018476719855f4bcf9c774d364c73b6c, type: 3}
     Loop: 0
     Lufs: -22
-    TruePeakDb: -3.74
+    TruePeakDb: -3.58
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC107, SRC129; source
       recording) \xB7 SHA 7e062c42114c\u2026 \xB7 AP-027 v003-recut on 6 file(s)
       \xB7 import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak
@@ -6233,7 +6233,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: e83c67c889c23449b98ffdc6013e2639, type: 3}
     Loop: 0
     Lufs: -24
-    TruePeakDb: -5.75
+    TruePeakDb: -5.6
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC107, SRC129; source
       recording) \xB7 SHA 6ea5b5792ffb\u2026 \xB7 AP-027 v003-recut on 6 file(s)
       \xB7 import fade 10 ms + 20 ms silence on 6 file(s) (end within 40 dB of peak
@@ -7125,7 +7125,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 7723cd3d8748348e3800af36abc252d5, type: 3}
     Loop: 0
     Lufs: -30
-    TruePeakDb: -7.99
+    TruePeakDb: -8.92
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC126; source recording)
       \xB7 SHA 0195480bf725\u2026 \xB7 AP-027 v003-recut on 6 file(s)"
     NoiseFloorDb: -81.6
@@ -7143,7 +7143,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 3bf5c7f57d8e345bcb793cf210db3739, type: 3}
     Loop: 0
     Lufs: -30
-    TruePeakDb: -7.99
+    TruePeakDb: -8.92
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC126; source recording)
       \xB7 SHA 0195480bf725\u2026 \xB7 AP-027 v003-recut on 6 file(s)"
     NoiseFloorDb: -81.6
@@ -7161,7 +7161,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 5fee8d8cfe39144e68f2699d4b05d8ba, type: 3}
     Loop: 0
     Lufs: -30
-    TruePeakDb: -7.99
+    TruePeakDb: -8.92
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC126; source recording)
       \xB7 SHA 0195480bf725\u2026 \xB7 AP-027 v003-recut on 6 file(s)"
     NoiseFloorDb: -81.6
@@ -7179,7 +7179,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 4edcc210a5f7543898b0c87e9cf0143c, type: 3}
     Loop: 0
     Lufs: -30
-    TruePeakDb: -7.99
+    TruePeakDb: -8.92
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC126; source recording)
       \xB7 SHA 0195480bf725\u2026 \xB7 AP-027 v003-recut on 6 file(s)"
     NoiseFloorDb: -81.6
@@ -7197,7 +7197,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 6def8572696ab4b3b954359602007e68, type: 3}
     Loop: 0
     Lufs: -30
-    TruePeakDb: -7.99
+    TruePeakDb: -8.92
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC126; source recording)
       \xB7 SHA 0195480bf725\u2026 \xB7 AP-027 v003-recut on 6 file(s)"
     NoiseFloorDb: -81.6
@@ -7215,7 +7215,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: ba2420278f0134e81b9e0b24d07a091c, type: 3}
     Loop: 0
     Lufs: -30
-    TruePeakDb: -7.99
+    TruePeakDb: -8.92
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC126; source recording)
       \xB7 SHA 0195480bf725\u2026 \xB7 AP-027 v003-recut on 6 file(s)"
     NoiseFloorDb: -81.6
@@ -7233,7 +7233,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 82d32a23c0bce4170b4cdf1757a8458d, type: 3}
     Loop: 0
     Lufs: -30
-    TruePeakDb: -7.99
+    TruePeakDb: -8.92
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC126; source recording)
       \xB7 SHA 0195480bf725\u2026 \xB7 AP-027 v003-recut on 6 file(s)"
     NoiseFloorDb: -81.6
@@ -7251,7 +7251,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: a1eef4fc3fe394d1589c77405a9ae1cc, type: 3}
     Loop: 0
     Lufs: -30
-    TruePeakDb: -7.99
+    TruePeakDb: -8.92
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC126; source recording)
       \xB7 SHA 0195480bf725\u2026 \xB7 AP-027 v003-recut on 6 file(s)"
     NoiseFloorDb: -81.6
@@ -7269,7 +7269,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: f2966003076694563b5af5fda25a4260, type: 3}
     Loop: 0
     Lufs: -30
-    TruePeakDb: -7.99
+    TruePeakDb: -8.92
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC126; source recording)
       \xB7 SHA 0195480bf725\u2026 \xB7 AP-027 v003-recut on 6 file(s)"
     NoiseFloorDb: -81.6
@@ -7287,7 +7287,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: a26f23e26e0094901baaa39321104635, type: 3}
     Loop: 0
     Lufs: -30
-    TruePeakDb: -7.99
+    TruePeakDb: -8.92
     Provenance: "AP-027 v002 (Codex, Sonniss GDC sources, SRC126; source recording)
       \xB7 SHA 0195480bf725\u2026 \xB7 AP-027 v003-recut on 6 file(s)"
     NoiseFloorDb: -81.6
