@@ -361,6 +361,31 @@ namespace DD.Art.Tests.PlayMode
                 }
 
                 Assert.GreaterOrEqual(armorMasks.Count, 6, "zırh maskesi çıkan figür sayısı");
+
+                // WP-084 (C-00 06.10, AD turn 1 M6): DEC-077's player / environment contrast (Michelson luma, 4–10 px ring outside every
+                // figure — CharacterTests' formula) per zombie: each figure hidden alone gives its mask. Reported as Z1 report keys.
+                var envContrast = new List<float>();
+                foreach (ZombieEnemy z in zombies)
+                {
+                    var figure = new List<SkinnedMeshRenderer>();
+                    foreach (SkinnedMeshRenderer r in z.GetComponentsInChildren<SkinnedMeshRenderer>(true)) if (r.enabled) figure.Add(r);
+                    CharacterTests.SetEnabled(figure, false);
+                    Color32[] without = CharacterTests.Capture(pose, null);
+                    CharacterTests.SetEnabled(figure, true);
+                    bool[] fm = CharacterTests.Diff(armored, without);
+                    if (CharacterTests.Count(fm) < 40) continue;   // off-frame / occluded figure
+                    var others = new bool[fm.Length];
+                    for (int i = 0; i < others.Length; i++) others[i] = (zombieMaskArmored[i] && !fm[i]) || playerMask[i];
+                    bool[] ring = CharacterTests.Ring(fm, others, 4, 10);
+                    float inner = CharacterTests.MeanLuma(armored, fm), around = CharacterTests.MeanLuma(armored, ring);
+                    envContrast.Add(Mathf.Abs(inner - around) / Mathf.Max(inner + around, 1e-3f));
+                }
+
+                envContrast.Sort();
+                float envMin = envContrast.Count > 0 ? envContrast[0] : 0f, envMean = Mean(envContrast);
+                Debug.Log("[DD-OBS] wp084.z1.zombieEnvContrast figures=" + envContrast.Count + " min=" + envMin.ToString("F3", CultureInfo.InvariantCulture)
+                          + " mean=" + envMean.ToString("F3", CultureInfo.InvariantCulture) + " below0.06=" + envContrast.FindAll(c => c < 0.06f).Count
+                          + " all=" + string.Join(",", envContrast.ConvertAll(c => c.ToString("F3", CultureInfo.InvariantCulture))));
                 var all = new bool[armored.Length];
                 foreach (bool[] m in armorMasks) for (int i = 0; i < all.Length; i++) all[i] |= m[i];
                 float armorV = CharacterTests.MeanValue(armored, all);
@@ -434,6 +459,7 @@ namespace DD.Art.Tests.PlayMode
                 {
                     { "silhouetteChange", silhouetteChange }, { "deltaVBandMean", bandMean }, { "deltaVBandMin", bandMin },
                     { "deltaVUnderMean", underMean }, { "deltaVUnderMin", underMin }, { "deltaVGround", deltaGround },
+                    { "zombieEnvContrastMin", envMin }, { "zombieEnvContrastMean", envMean },
                 }, armorMasks.Count);
                 Assert.GreaterOrEqual(silhouetteChange, R1SilhouetteChange - R1SilhouetteTolerance, "R1'e göre gerileme: siluet değişimi (R1 " + R1SilhouetteChange + ")");
                 Assert.GreaterOrEqual(bandMean, R1BandMean - R1BandTolerance, "R1'e göre gerileme: komşu bant ΔV ort (R1 " + R1BandMean + ")");
