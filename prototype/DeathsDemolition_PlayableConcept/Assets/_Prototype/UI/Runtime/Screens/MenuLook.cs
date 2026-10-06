@@ -51,7 +51,7 @@ namespace DD.Prototype.UI
         public bool Pads;
 
         /// <summary>The ground of the words in the top corners (B, S-09 06.10, AD round MUSTs 1-2): each corner's own lift in the
-        /// scrim's language (<see cref="UiBackdrop.SetWorldCorner(bool, Rect, float, float, float)"/>) - the title top-left (S01's rest
+        /// scrim's language (<see cref="UiBackdrop.SetWorldCorner(bool, RectTransform, UiBackdrop.CornerSpec)"/>) - the title top-left (S01's rest
         /// frame - Reduced Motion, an open pane, an unfocused window hold it - put V6's blossoms behind its strokes at 2.3-2.9:1), the
         /// level readout top-right instead of a pad (the pad took the empty XP rail's size and read as a smoked-glass box in the sky).</summary>
         public bool CornerLift;
@@ -291,22 +291,31 @@ namespace DD.Prototype.UI
             }
         }
 
-        /// <summary>The title's corner: α over the title's box (+ <see cref="TitleLiftMargin"/>), 0 by <see cref="CornerFall"/> of the
-        /// width (AD round 06.10 MUST-2, the preferred path: α ≥ 0.85 over the box + 24) - the wordmark itself untouched.</summary>
+        /// <summary>The title's corner (AD round 06.10 MUST-2(b)(1), the preferred path): α ≥ 0.85 over the title's box + 24; the
+        /// horizontal fall ends by 0.40 W, the vertical one 160 below the box; the column's ramp under it is its own and unchanged.
+        /// The wordmark itself untouched (no outline, halo, colour or weight change).</summary>
         public const float TitleLiftAlpha = 0.85f;
         public const float TitleLiftMargin = 24f;
+        public const float TitleLiftEndX = 0.40f;
+        public const float TitleLiftBelow = 160f;
 
-        /// <summary>The level readout's corner: α over the readout's reach (+ <see cref="CornerMargin"/>). 0.88 holds TextPrimary at
-        /// ≥ 4.5:1 on its plain ground, no ink counted, over V6's brightest cloud (luminance ~1.0; the old pad at 0.82 measured 3.9:1
-        /// there at 21:9).</summary>
+        /// <summary>The level readout's corner (AD MUST-1, path A): α over the readout's reach (+ <see cref="CornerMargin"/>), 0 by
+        /// <see cref="CornerFall"/> of the width both ways (AD: ≥ 0.12 W). 0.88 holds TextPrimary at ≥ 4.5:1 on its plain ground, no
+        /// ink counted, over V6's brightest cloud (luminance ~1.0; the old pad at 0.82 measured 3.9:1 there at 21:9).</summary>
         public const float CornerAlpha = 0.88f;
         public const float CornerMargin = 8f;
-
-        /// <summary>Both corners fall to 0 over this much of the width (AD: ≥ 0.12 W).</summary>
         public const float CornerFall = 0.14f;
 
+        public static UiBackdrop.CornerSpec TitleCorner => new UiBackdrop.CornerSpec
+        {
+            Margin = TitleLiftMargin, Alpha = TitleLiftAlpha, EndX = TitleLiftEndX, EndBelow = TitleLiftBelow
+        };
+
+        public static UiBackdrop.CornerSpec ReadoutCorner => new UiBackdrop.CornerSpec { Margin = CornerMargin, Alpha = CornerAlpha, Fall = CornerFall };
+
         /// <summary>The words in the top corners on their lifts (<see cref="CornerLift"/>): the title top-left, the level readout
-        /// top-right. False when this look has none or there is no backdrop - the caller keeps the readout's pad.</summary>
+        /// top-right; the backdrop keeps them on their words when the screen changes size. False when this look has none or there
+        /// is no backdrop - the caller keeps the readout's pad.</summary>
         public bool LiftCorners(RectTransform title, RectTransform readout, UiBackdrop backdrop)
         {
             if (!CornerLift || backdrop == null)
@@ -317,26 +326,15 @@ namespace DD.Prototype.UI
             Canvas.ForceUpdateCanvases();
             if (title != null)
             {
-                backdrop.SetWorldCorner(false, ScreenRect(title), TitleLiftMargin, TitleLiftAlpha, CornerFall);
+                backdrop.SetWorldCorner(false, title, TitleCorner);
             }
 
             if (readout != null)
             {
-                backdrop.SetWorldCorner(true, ScreenRect(readout), CornerMargin, CornerAlpha, CornerFall);
+                backdrop.SetWorldCorner(true, readout, ReadoutCorner);
             }
 
             return readout != null;
-        }
-
-        private static Rect ScreenRect(RectTransform rect)
-        {
-            Canvas canvas = rect.GetComponentInParent<Canvas>();
-            Camera camera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null;
-            var corners = new Vector3[4];
-            rect.GetWorldCorners(corners);
-            Vector2 low = RectTransformUtility.WorldToScreenPoint(camera, corners[0]);
-            Vector2 high = RectTransformUtility.WorldToScreenPoint(camera, corners[2]);
-            return Rect.MinMaxRect(low.x, low.y, high.x, high.y);
         }
 
         /// <summary>A soft ink pad as <paramref name="host"/>'s first child: the host's rect plus the pad's falloff, SurfaceBase α 0.82.</summary>

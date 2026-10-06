@@ -317,11 +317,18 @@ namespace DD.Prototype.UI
                     CoverFit(image);
                 }
             }
+
+            _cornersDirty = _corners[0].Target != null || _corners[1].Target != null;   // the corners follow their words (next Update)
         }
 
         private void Update()
         {
             Tick(Time.unscaledDeltaTime, Time.unscaledTime, LookOverride ?? LookTarget());
+            if (_cornersDirty)
+            {
+                RefreshCorners();
+            }
+
             if (_worldFadeAt >= 0f)
             {
                 StepWorldFade(Time.unscaledTime);
@@ -429,44 +436,103 @@ namespace DD.Prototype.UI
             return _worldColumn * (1f - Smooth((x - _worldColumnAt) / (_worldEnd - _worldColumnAt)));
         }
 
-        /// <summary>A corner's lift over the live world (<see cref="SetWorldCorner(bool, Rect, float, float, float)"/>).</summary>
+        /// <summary>How a top corner's lift reaches out from its words (<see cref="SetWorldCorner(bool, RectTransform, CornerSpec)"/>).</summary>
+        public struct CornerSpec
+        {
+            /// <summary>Root units around the words' box held at <see cref="Alpha"/>.</summary>
+            public float Margin;
+            public float Alpha;
+
+            /// <summary>The fall to 0 in both directions, a fraction of the width (when no end is set for that direction).</summary>
+            public float Fall;
+
+            /// <summary>&gt; 0: the horizontal fall ends here - a fraction of the width, measured from the corner.</summary>
+            public float EndX;
+
+            /// <summary>&gt; 0: the vertical fall ends this many root units below the words' box.</summary>
+            public float EndBelow;
+        }
+
+        /// <summary>No fall is shorter than this (root units) - a bound that leaves less is overrun rather than drawn as a line.</summary>
+        public const float MinCornerFall = 48f;
+
+        /// <summary>
+        /// The geometry of a corner lift, in root units: <paramref name="reach"/> is the words' box measured in from the corner (its
+        /// far edge, its bottom); the held box is that plus the margin; each fall ends at the spec's bound or runs its width share.
+        /// </summary>
+        public static void CornerReach(float rootWidth, Vector2 reach, CornerSpec spec, out Vector2 hold, out Vector2 fall)
+        {
+            hold = reach + new Vector2(spec.Margin, spec.Margin);
+            float both = Mathf.Max(1f, spec.Fall * rootWidth);
+            fall = new Vector2(
+                spec.EndX > 0f ? Mathf.Max(MinCornerFall, spec.EndX * rootWidth - hold.x) : both,
+                spec.EndBelow > 0f ? Mathf.Max(MinCornerFall, reach.y + spec.EndBelow - hold.y) : both);
+        }
+
+        /// <summary>A corner's lift over the live world.</summary>
         private sealed class CornerLift
         {
             public RawImage Image;
-            public Vector2 Hold;
-            public float Alpha, Fall;
+            public Vector2 Hold, Fall;
+            public float Alpha;
+            public RectTransform Target;
+            public CornerSpec Spec;
         }
 
         private readonly CornerLift[] _corners = { new CornerLift(), new CornerLift() };   // 0 the top-left, 1 the top-right
+        private bool _cornersDirty;
 
         /// <summary>
-        /// WP-081 (S-09 06.10, AD round MUSTs 1-2): a top corner's own lift over the live world, in the scrim's language - the
-        /// words that stand there on their ground without a pad (the top-right: the level readout, whose pad took the empty XP
-        /// rail's size and read as a smoked-glass box in the sky; the top-left: the title, which S01's rest frame put on V6's
-        /// blossoms at 2.3-2.9:1). <paramref name="alpha"/> holds from the corner over <paramref name="screenRect"/> (+
-        /// <paramref name="margin"/> root units), then a smoothstep to 0 over <paramref name="fall"/> of the width by the distance
-        /// to that box, the same in every direction, so no edge reads. A backdrop graphic: the evidence's world frames carry it.
+        /// WP-081 (S-09 06.10, AD round MUSTs 1-2): a top corner's own lift over the live world, in the scrim's language - the words
+        /// that stand there on their ground without a pad (the top-right: the level readout, whose pad took the empty XP rail's
+        /// size and read as a smoked-glass box in the sky; the top-left: the title, which S01's rest frame put on V6's blossoms at
+        /// 2.3-2.9:1). The spec's alpha holds from the corner over <paramref name="target"/>'s box (+ margin), then an elliptical
+        /// smoothstep to 0 by the spec's falls, so no edge reads. A backdrop graphic, so the evidence's world frames carry it; it
+        /// follows its words when the screen changes size (a display mode change in the menu).
         /// </summary>
-        public void SetWorldCorner(bool right, Rect screenRect, float margin, float alpha, float fall)
+        public void SetWorldCorner(bool right, RectTransform target, CornerSpec spec)
         {
-            if (!_built || _root == null)
+            CornerLift c = _corners[right ? 1 : 0];
+            c.Target = target;
+            c.Spec = spec;
+            ApplyCorner(right);
+        }
+
+        /// <summary>Re-measures both corners from their words (the root or the layout changed).</summary>
+        public void RefreshCorners()
+        {
+            _cornersDirty = false;
+            Canvas.ForceUpdateCanvases();
+            ApplyCorner(false);
+            ApplyCorner(true);
+        }
+
+        private void ApplyCorner(bool right)
+        {
+            CornerLift c = _corners[right ? 1 : 0];
+            if (!_built || _root == null || c.Target == null)
             {
                 return;
             }
 
-            // The words live on another canvas (the screens go overlay over the world; the Mac's UI scale is theirs): their
-            // screen rect, in this root's units, measured in from the corner.
+            // The words live on another canvas (the screens go overlay over the world; the Mac's UI scale is theirs): their box
+            // through the screen into this root's units, measured in from the corner.
+            Canvas wordsCanvas = c.Target.GetComponentInParent<Canvas>();
+            Camera wordsCamera = wordsCanvas != null && wordsCanvas.renderMode != RenderMode.ScreenSpaceOverlay ? wordsCanvas.worldCamera : null;
+            var corners = new Vector3[4];
+            c.Target.GetWorldCorners(corners);
             Canvas canvas = _root.GetComponentInParent<Canvas>();
             Camera camera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null;
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(_root, screenRect.min, camera, out Vector2 low);
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(_root, screenRect.max, camera, out Vector2 high);
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(_root, RectTransformUtility.WorldToScreenPoint(wordsCamera, corners[0]), camera, out Vector2 low);
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(_root, RectTransformUtility.WorldToScreenPoint(wordsCamera, corners[2]), camera, out Vector2 high);
             Rect r = _root.rect;
-            float inX = right ? r.xMax - low.x : high.x - r.xMin;
-            SetWorldCorner(right, new Vector2(inX + margin, r.yMax - low.y + margin), alpha, fall);
+            var reach = new Vector2(right ? r.xMax - low.x : high.x - r.xMin, r.yMax - low.y);
+            CornerReach(r.width, reach, c.Spec, out Vector2 hold, out Vector2 fall);
+            SetWorldCorner(right, hold, fall, c.Spec.Alpha);
         }
 
-        /// <summary><see cref="SetWorldCorner(bool, Rect, float, float, float)"/> with the held reach given in root units.</summary>
-        public void SetWorldCorner(bool right, Vector2 hold, float alpha, float fall)
+        /// <summary>A corner lift from its held reach and falls in root units (<see cref="CornerReach"/>).</summary>
+        public void SetWorldCorner(bool right, Vector2 hold, Vector2 fall, float alpha)
         {
             if (!_built || _root == null)
             {
@@ -475,8 +541,8 @@ namespace DD.Prototype.UI
 
             CornerLift c = _corners[right ? 1 : 0];
             c.Hold = new Vector2(Mathf.Max(0f, hold.x), Mathf.Max(0f, hold.y));
+            c.Fall = new Vector2(Mathf.Max(1f, fall.x), Mathf.Max(1f, fall.y));
             c.Alpha = Mathf.Clamp01(alpha);
-            c.Fall = Mathf.Max(1f, fall * _root.rect.width);
             if (c.Image == null)
             {
                 var go = new GameObject(right ? "WorldCornerTR" : "WorldCornerTL", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage));
@@ -489,7 +555,7 @@ namespace DD.Prototype.UI
                 }
             }
 
-            Vector2 size = c.Hold + new Vector2(c.Fall, c.Fall);
+            Vector2 size = c.Hold + c.Fall;
             const int Texels = 128;
             int tw = Texels, th = Mathf.Clamp(Mathf.RoundToInt(Texels * size.y / size.x), 16, 256);
             var tex = new Texture2D(tw, th, TextureFormat.RGBA32, false, true) { name = "WorldCornerLift", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear, hideFlags = HideFlags.DontSave };
@@ -510,7 +576,14 @@ namespace DD.Prototype.UI
             tex.Apply(false, true);
             if (c.Image.texture != null)
             {
-                Destroy(c.Image.texture);
+                if (Application.isPlaying)
+                {
+                    Destroy(c.Image.texture);
+                }
+                else
+                {
+                    DestroyImmediate(c.Image.texture);   // EditMode tests re-measure a corner
+                }
             }
 
             c.Image.texture = tex;
@@ -522,8 +595,8 @@ namespace DD.Prototype.UI
             rect.sizeDelta = size;
             c.Image.gameObject.SetActive(true);
             Debug.Log(string.Format(System.Globalization.CultureInfo.InvariantCulture,
-                "[UI] World corner: {0:0.00} over {1:0}×{2:0} from the top-{3}, 0 by +{4:0} ({5:0.000} W; root {6:0}×{7:0}).",
-                c.Alpha, c.Hold.x, c.Hold.y, right ? "right" : "left", c.Fall, c.Fall / _root.rect.width, _root.rect.width, _root.rect.height));
+                "[UI] World corner: {0:0.00} over {1:0}×{2:0} from the top-{3}, 0 by +{4:0} → {5:0.000} W and +{6:0} → {7:0} down (root {8:0}×{9:0}).",
+                c.Alpha, c.Hold.x, c.Hold.y, right ? "right" : "left", c.Fall.x, size.x / _root.rect.width, c.Fall.y, size.y, _root.rect.width, _root.rect.height));
         }
 
         /// <summary>A corner lift's alpha <paramref name="inX"/>/<paramref name="inY"/> root units in from its corner (0 if unset).</summary>
@@ -535,8 +608,8 @@ namespace DD.Prototype.UI
                 return 0f;
             }
 
-            float dx = Mathf.Max(0f, inX - c.Hold.x), dy = Mathf.Max(0f, inY - c.Hold.y);
-            return c.Alpha * (1f - Smooth(Mathf.Sqrt(dx * dx + dy * dy) / c.Fall));
+            float dx = Mathf.Max(0f, inX - c.Hold.x) / c.Fall.x, dy = Mathf.Max(0f, inY - c.Hold.y) / c.Fall.y;
+            return c.Alpha * (1f - Smooth(Mathf.Sqrt(dx * dx + dy * dy)));
         }
 
         public bool HasWorldCorner(bool right)

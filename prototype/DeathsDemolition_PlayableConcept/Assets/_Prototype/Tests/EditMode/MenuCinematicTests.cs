@@ -262,5 +262,72 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsNull(UiFactory.EnsureUiCamera(), "dünya canlıyken yeni ekranlar overlay");
             UiFactory.OverlayScreens = false;
         }
+
+        [Test]
+        public void UstKoseler_AdSinirlari_Baslik040W_Taban160_Seviye012W_BesOranda()
+        {
+            // The title's reach from the top-left (its far edge, its bottom; root units) at the five evidence aspects (b13 logs:
+            // 1920×1080, 1920×1200, 2560×1080, 1440×1080 = root 1920×1440, the Mac host = root 1600×1039).
+            var cases = new[]
+            {
+                (w: 1920f, title: new Vector2(546f, 177f)), (w: 1920f, title: new Vector2(546f, 177f)), (w: 2560f, title: new Vector2(866f, 177f)),
+                (w: 1920f, title: new Vector2(547f, 177f)), (w: 1600f, title: new Vector2(546f, 177f))
+            };
+            foreach (var c in cases)
+            {
+                UiBackdrop.CornerReach(c.w, c.title, MenuLook.TitleCorner, out Vector2 hold, out Vector2 fall);
+                Assert.GreaterOrEqual(hold.x, c.title.x + 24f, c.w + ": α ≥ 0.85 over the box + 24 (AD MUST-2 b1)");
+                Assert.GreaterOrEqual(hold.y, c.title.y + 24f, c.w + ": + 24 below the box too");
+                Assert.LessOrEqual(hold.x + fall.x, 0.40f * c.w + 1e-3f, c.w + ": the horizontal fall ends by 0.40 W");
+                Assert.LessOrEqual(hold.y + fall.y, c.title.y + 160f + 1e-3f, c.w + ": the vertical fall ends 160 below the box");
+                Assert.GreaterOrEqual(Mathf.Min(fall.x, fall.y), UiBackdrop.MinCornerFall, c.w + ": no fall shorter than " + UiBackdrop.MinCornerFall);
+
+                // The level readout (344-8 × 124-8 in from the top-right at every aspect but the Mac's 128): a corner ramp whose fall
+                // runs ≥ 0.12 W both ways (AD MUST-1 a).
+                UiBackdrop.CornerReach(c.w, new Vector2(336f, 116f), MenuLook.ReadoutCorner, out Vector2 rHold, out Vector2 rFall);
+                Assert.GreaterOrEqual(Mathf.Min(rFall.x, rFall.y), 0.12f * c.w - 1e-3f, c.w + ": the readout's corner falls over ≥ 0.12 W");
+                Assert.AreEqual(MenuLook.CornerAlpha, MenuLook.ReadoutCorner.Alpha, 1e-6f);
+            }
+        }
+
+        [Test]
+        public void UstKoseler_EkranBoyutuDegisince_KelimeyiIzler()
+        {
+            var host = new GameObject("Root", typeof(RectTransform));
+            _created.Add(host);
+            var root = (RectTransform)host.transform;
+            root.sizeDelta = new Vector2(1920f, 1080f);
+            UiBackdrop backdrop = UiBackdrop.Create(root);
+            var words = new GameObject("Title", typeof(RectTransform));
+            _created.Add(words);
+            var title = (RectTransform)words.transform;
+            title.SetParent(root, false);
+            title.anchorMin = title.anchorMax = title.pivot = new Vector2(0f, 1f);
+            title.sizeDelta = new Vector2(450f, 112f);
+            title.anchoredPosition = new Vector2(96f, -65f);
+            backdrop.SetWorldCorner(false, title, MenuLook.TitleCorner);
+            Assert.IsTrue(backdrop.HasWorldCorner(false));
+            AssertOnLift(backdrop, (RectTransform)backdrop.transform, title, "16:9");
+
+            // 21:9: the page centres, the title moves 320 right - the lift follows it (a display mode change in the menu).
+            root.sizeDelta = new Vector2(2560f, 1080f);
+            title.anchoredPosition = new Vector2(416f, -65f);
+            backdrop.RefreshCorners();
+            AssertOnLift(backdrop, (RectTransform)backdrop.transform, title, "21:9");
+        }
+
+        private static void AssertOnLift(UiBackdrop backdrop, RectTransform root, RectTransform words, string label)
+        {
+            var corners = new Vector3[4];
+            words.GetWorldCorners(corners);
+            foreach (Vector3 corner in corners)
+            {
+                Vector2 local = root.InverseTransformPoint(corner);
+                float alpha = backdrop.WorldCornerAlphaAt(false, local.x - root.rect.xMin, root.rect.yMax - local.y);
+                Assert.GreaterOrEqual(alpha, MenuLook.TitleLiftAlpha - 1e-3f, label + ": the title's corner " + corner + " on the full lift");
+            }
+
+            Assert.AreEqual(0f, backdrop.WorldCornerAlphaAt(false, 0.40f * root.rect.width + 1f, 0f), 1e-4f, label + ": nothing past 0.40 W");
+        }
     }
 }
