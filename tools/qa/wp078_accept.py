@@ -487,8 +487,8 @@ class Chain:
                 self.check_terminated()
                 if not self.dry_run and not self.verify_tree():
                     raise Stop(2, f"{stage}: repo left FINAL or the tree became dirty")
-                if stage == "a4" and self.resume and not self.dry_run:
-                    self.check_a4_baseline()
+                if stage in ("a4", "r2") and self.resume and not self.dry_run:
+                    self.check_baseline(stage)
                 if stage != "a8" and not self.dry_run and self.resume and self.stage_passed(stage):
                     self.log(f"SKIP {stage}: verified PASS for FINAL {self.final}")
                     self.verdicts[stage] = "PASS"
@@ -598,18 +598,25 @@ class Chain:
             self._r1_proof = proof or False
         return self._r1_proof or None
 
-    def check_a4_baseline(self):
-        """KADRO test-engineer SHOULD-2: a resumed R2 A4 keeps the R1 baseline its record was made with — never two R1
-        baselines in one report (P2 on one, P5 on another), never a skipped A4 that silently leaves P2 out, never a baseline
-        root the manifest would not declare."""
-        record = load_json(self.stage_record("a4"))
-        record = record if isinstance(record, dict) and record.get("executionCommit") == self.final else None
+    def check_baseline(self, stage):
+        """KADRO test-engineer SHOULD-2 + gt 06.10 N-11: a resumed R2 run keeps the R1 baseline its records were made with —
+        P2 (the a4 record) and P5 (the r2 record, when it wrote r2-P5.json) never rest on two baselines in one report, never
+        a skipped A4 that silently leaves P2 out, never a baseline root the manifest would not declare. Checked before a4
+        and before r2 (r2 runs first in the chain, so a resume with another baseline stops before any session)."""
         want = self.r1_commit if self.round_name == "R2" and self.r1_evidence is not None else None
-        had = record.get("baselineCommit") if record else None
-        if record is not None and had != want:
-            raise Stop(64, f"a4 was recorded with R1 baseline {had}, this run gives {want}: P2 would rest on another baseline "
-                           "than the rest of the report — resume with the same --r1-evidence/--r1-commit, or a new --evidence")
-        if record is None and want is None and (self.evidence / R1_ROOT).exists():
+        for other, key, gate in (("a4", "baselineCommit", "P2"), ("r2", "p5BaselineCommit", "P5")):
+            if other == stage == "r2":
+                continue   # this run computes P5 again (the earlier r2-P5.json is retired first)
+            record = load_json(self.stage_record(other))
+            if not (isinstance(record, dict) and record.get("executionCommit") == self.final):
+                continue
+            if other == "r2" and key not in record:
+                continue   # that r2 run wrote no r2-P5.json: nothing of it is bound
+            had = record.get(key)
+            if had != want:
+                raise Stop(64, f"{other} was recorded with R1 baseline {had}, this run gives {want}: {gate} would rest on another "
+                               "baseline than the rest of the report — resume with the same --r1-evidence/--r1-commit, or a new --evidence")
+        if want is None and (self.evidence / R1_ROOT).exists() and not isinstance(load_json(self.stage_record("a4")), dict):
             raise Stop(64, f"{R1_ROOT} exists but this run gives no --r1-evidence/--r1-commit: resume with them, or a new --evidence")
 
     # ---- Editor-guarded unit (builds, suites) -----------------------------------------------------------------------
@@ -937,7 +944,10 @@ class Chain:
         path = Path(path)
         if self.dry_run or not path.is_file():
             return
-        target = path.with_name(f"{path.name}.stale-{time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())}")
+        stamp = time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())
+        target, k = path.with_name(f"{path.name}.stale-{stamp}"), 1
+        while target.exists():   # two retirements in the same second never overwrite each other (gt 06.10 N-11)
+            target, k = path.with_name(f"{path.name}.stale-{stamp}-{k}"), k + 1
         path.rename(target)
         self.log(f"RETIRED {path.relative_to(self.evidence)} → {target.name} (kept)")
 
@@ -1088,12 +1098,16 @@ class Chain:
             extra = {"r2Steps": [s["id"] for s in steps]}
             if p5 is not None:
                 extra["p5"] = p5
+            if p5 == "written":
+                extra["p5BaselineCommit"] = self.r1_commit   # check_baseline: P5 and P2 on one R1 baseline (gt 06.10 N-11)
             self.finish(stage, results, verdict="RECORDED", extra=extra)
 
     def r2_load_time(self, measure_dir):
         """P5 (C-00 05.10 (a)): the Selection → Run load time of this chain's own A2/A3 bot sessions over the R1 FINAL
         evidence's, from each session's ui-data/load-timing.json — no Player of its own. Without --r1-evidence P5 stays
-        BLOCKED in the report (named)."""
+        BLOCKED in the report (named). An earlier r2-P5.json is retired first, with or without a baseline this time, so a
+        re-evaluation never binds the P5 of an earlier one (S-05 06.10, gt N-1 / N-11)."""
+        self.retire(measure_dir / "r2-P5.json")
         if self.r1_evidence is None:
             self.log("P5: no --r1-evidence/--r1-commit — r2-P5.json not written, P5 BLOCKED in the report")
             return "no-baseline"
@@ -1101,7 +1115,6 @@ class Chain:
             self.out(f"DRY r2: P5 from {self.evidence}/{{a2,a3}}/*/ui-data/load-timing.json over {self.r1_evidence} "
                      f"({self.r1_commit}) → {measure_dir}/r2-P5.json")
             return None
-        self.retire(measure_dir / "r2-P5.json")   # never bind the P5 of an earlier evaluation (S-05 06.10, gt N-1)
         data, r2, r1 = r2_load_time.artifact(self.evidence, self.r1_evidence, self.final, self.r1_commit)
         if data is None:
             self.log(f"P5: no samples (R2 {len(r2)}, R1 {len(r1)}) — r2-P5.json not written, P5 BLOCKED in the report")

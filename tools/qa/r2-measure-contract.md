@@ -117,7 +117,9 @@ No owner test: `wp078_accept` writes `r2-P5.json` in stage `r2` from the chain's
 (`<session>/ui-data/load-timing.json`, entry `Run`), median over the R1 FINAL evidence's same files
 (`--r1-evidence <dir> --r1-commit <40-hex>`; tool `tools/qa/r2_load_time.py`). Dev build against dev build, no code in
 either build (C-00 05.10 decision (a)). R1 sat on the 1.2 s curtain floor in every session, so `floorLimited` tells
-that the ratio only shows an R2 load that grows past it.
+that the ratio only shows an R2 load that grows past it. Every `r2` run first renames an earlier `r2-P5.json` to
+`.stale-<utc>`, with or without a baseline this time. A resumed run whose `--r1-commit` differs from the one P2 (the a4
+record) or P5 (the r2 record) was made with stops with 64 before any session: one report, one R1 baseline (gt 06.10 N-11).
 
 ## P2 (R2 − R1 perf per cell, report — C-00 05.10)
 
@@ -135,7 +137,9 @@ probe exits 0 even when its own window failed). A broken window, or a cell short
 on either side, writes no `r2-P2.json`: P2 is BLOCKED by name and the reasons are listed. The A4 gate is judged on FINAL's
 windows only; the R1 root is declared to the report as a secondary perf root whose every window carries the R1 commit
 and build. Without `--r1-evidence`, or when the R1 build does not prove itself, A4 runs FINAL alone and P2 is BLOCKED by
-name.
+name. An R1 build that fails on its own (wp078_perf_report.classify "failed", not a host discard) in three consecutive
+windows stops the R1 side for the rest of the matrix (`wp078_perf.py --baseline-fail-stop`, KADRO test-engineer NOTE-4).
+That saves ~60 empty windows; FINAL's windows go on and P2 is BLOCKED.
 
 ## S3 (Dense-40 loudness and peak, S-08 06.10)
 

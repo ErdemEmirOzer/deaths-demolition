@@ -669,6 +669,66 @@ class P2BaselineTests(Base):
         self.assertEqual(1, len(list((self.evidence / "r2").glob("r2-P5.json.stale-*"))))
         self.assertIn("RETIRED r2/r2-P5.json", (self.evidence / "accept.log").read_text())
 
+    def test_a_rerun_without_a_baseline_retires_the_earlier_p5_too(self):
+        # gt 06.10 N-11: the early return without --r1-evidence used to leave the earlier r2-P5.json for the report to bind
+        put_json(self.evidence / "r2" / "r2-P5.json", {"gate": "P5", "stale": True})
+        with mock.patch.object(acc.r2_gates, "measurement_steps", side_effect=lambda c, quiet: []):
+            make_chain(self.evidence, ["r2"], round_name="R2", resume=True).run()
+        self.assertFalse((self.evidence / "r2" / "r2-P5.json").exists())
+        self.assertEqual(1, len(list((self.evidence / "r2").glob("r2-P5.json.stale-*"))))
+        self.assertIn("P5 BLOCKED", (self.evidence / "accept.log").read_text())
+
+    def test_two_retirements_in_one_second_keep_both(self):
+        # gt 06.10 N-11: the .stale-<utc> name has a one-second resolution
+        chain = make_chain(self.evidence, ["r2"], round_name="R2")
+        r2 = chain.evidence / "r2"
+        with mock.patch.object(acc.time, "strftime", return_value="20261006T080000Z"):
+            for n in (1, 2, 3):
+                put_json(r2 / "r2-P5.json", {"gate": "P5", "n": n})
+                chain.retire(r2 / "r2-P5.json")
+        kept = sorted(p.name for p in r2.glob("r2-P5.json.stale-*"))
+        self.assertEqual(["r2-P5.json.stale-20261006T080000Z", "r2-P5.json.stale-20261006T080000Z-1",
+                          "r2-P5.json.stale-20261006T080000Z-2"], kept)
+        self.assertEqual([1, 2, 3], [json.loads((r2 / k).read_text())["n"] for k in kept])
+
+    def p5_run(self, r1, commit):
+        for root, seconds in ((self.evidence, 1.30), (r1, 1.22)):
+            put_json(Path(root) / "a2" / "gameplay-tp" / "ui-data" / "load-timing.json",
+                     {"Version": 1, "Scenes": ["Selection", "Run"], "Seconds": [1.2, seconds]})
+        with mock.patch.object(acc.r2_gates, "measurement_steps", side_effect=lambda c, quiet: []):
+            make_chain(self.evidence, ["r2"], round_name="R2", r1_evidence=r1, r1_commit=commit).run()
+        self.assertTrue((self.evidence / "r2" / "r2-P5.json").is_file())
+
+    def test_p5_and_p2_never_rest_on_two_baselines(self):
+        # gt 06.10 N-11: the 64 that kept a resumed A4 on its baseline (SHOULD-2) now also binds P5 - both ways
+        r1 = r1_evidence(self.tmp.name)
+        self.p5_run(r1, R1)
+        self.assertEqual(R1, json.loads((self.evidence / "stages" / "r2.json").read_text())["p5BaselineCommit"])
+        other = r1_evidence(Path(self.tmp.name) / "other", commit="e" * 40)
+        for kw in (dict(), dict(r1_evidence=other, r1_commit="e" * 40)):
+            with self.subTest(baseline=kw.get("r1_commit")):
+                self.assertEqual(64, make_chain(self.evidence, ["a4"], resume=True, round_name="R2", **kw).run())
+                self.assertIn("r2 was recorded with R1 baseline " + R1, (self.evidence / "accept.log").read_text())
+                self.assertIn("P5 would rest on another baseline", (self.evidence / "accept.log").read_text())
+        self.assertNotEqual(64, make_chain(self.evidence, ["a6", "a4"], resume=True, round_name="R2", r1_evidence=r1,
+                                           r1_commit=R1).run())   # the same baseline: A4 runs
+        steps = []
+        for kw in (dict(), dict(r1_evidence=other, r1_commit="e" * 40)):
+            with self.subTest(baseline=kw.get("r1_commit"), stage="r2"):
+                with mock.patch.object(acc.r2_gates, "measurement_steps", side_effect=lambda c, quiet: steps.append(1) or []):
+                    self.assertEqual(64, make_chain(self.evidence, ["r2"], resume=True, round_name="R2", **kw).run())
+                self.assertIn("a4 was recorded with R1 baseline " + R1, (self.evidence / "accept.log").read_text())
+        self.assertEqual([], steps)   # stopped before any measurement session
+        self.assertTrue((self.evidence / "r2" / "r2-P5.json").is_file())   # and before P5 was retired
+
+    def test_an_r2_run_that_wrote_no_p5_binds_no_baseline(self):
+        with mock.patch.object(acc.r2_gates, "measurement_steps", side_effect=lambda c, quiet: []):
+            make_chain(self.evidence, ["r2"], round_name="R2", r1_evidence=Path(self.tmp.name), r1_commit="e" * 40).run()
+        self.assertNotIn("p5BaselineCommit", json.loads((self.evidence / "stages" / "r2.json").read_text()))
+        r1 = r1_evidence(self.tmp.name)
+        self.assertNotEqual(64, make_chain(self.evidence, ["a6", "a4"], resume=True, round_name="R2", r1_evidence=r1,
+                                           r1_commit=R1).run())
+
     def test_the_a4_record_binds_both_roots_and_the_r1_build(self):
         tools = FakeTools()
         r1 = r1_evidence(self.tmp.name)
@@ -691,7 +751,8 @@ class P2BaselineTests(Base):
         self.assertTrue(chain.stage_passed("a4"))   # --resume re-verifies every bound file, the R1 binary included
 
 
-FAKE_Z3 = SimpleNamespace(Z3_START="0,-4,0", Z3_TIER="sinematik", Z3_MODES=("topdown", "tp"), MIN_PAIRS=5,
+# Z3_START differs from r2_z3.py's own "0,-4,0", so a start hard-coded in the chain is told apart (gt 06.10 N-5)
+FAKE_Z3 = SimpleNamespace(Z3_START="3,-7,45", Z3_TIER="sinematik", Z3_MODES=("topdown", "tp"), MIN_PAIRS=5,
                           Z3_R2="z3/perf", Z3_R1="z3/perf-r1")
 
 
@@ -714,7 +775,7 @@ class Z3StageTests(Base):
         self.assertEqual((str(e / "z3" / "perf"), str(e / "z3" / "perf-r1"), R1, "sinematik", "topdown,tp", "5"),
                          (self.opt(argv, "--out"), self.opt(argv, "--baseline-out"), self.opt(argv, "--baseline-commit"),
                           self.opt(argv, "--tiers"), self.opt(argv, "--modes"), self.opt(argv, "--windows")))
-        self.assertEqual(["--extra-arg=-ddPilotStart", "--extra-arg=0,-4,0", "--extra-arg=-ddArmor", "--extra-arg=all"], argv[-4:])
+        self.assertEqual(["--extra-arg=-ddPilotStart", "--extra-arg=3,-7,45", "--extra-arg=-ddArmor", "--extra-arg=all"], argv[-4:])
         self.assertEqual([str(e), FINAL, R1, "/k/b9-poses.json"],
                          [self.opt(tool[0], k) for k in ("--evidence", "--commit", "--r1-commit", "--b9-poses")])
 
@@ -746,7 +807,7 @@ class Z3StageTests(Base):
         make_chain(self.evidence, ["a8"], resume=True, round_name="R2").run()
         manifest = json.loads((self.evidence / "manifest.json").read_text())
         roots = {r["path"]: r for r in manifest["checklist"]["A4"]["secondaryRoots"]}
-        self.assertEqual({"role": "z3-pose", "path": "z3/perf", "start": "0,-4,0"}, roots["z3/perf"])
+        self.assertEqual({"role": "z3-pose", "path": "z3/perf", "start": "3,-7,45"}, roots["z3/perf"])
         self.assertEqual(("r1-baseline", R1, sha(b"r1probe")), (roots["z3/perf-r1"]["role"], roots["z3/perf-r1"]["commit"],
                                                                 roots["z3/perf-r1"]["binarySha256"]))
         report = json.loads(sorted(self.evidence.glob("report-*/wp078-report.json"))[-1].read_text())

@@ -34,6 +34,7 @@ PLAYER_EXE = "MacOS/Deaths Demolition - Playable Concept"
 # one window's wall time beyond its measured seconds: preflight ~55 s, launch, warm-up, quit (KADRO game-test-engineer
 # 06.10: ~190-200 s per 60 s window in practice; the old 90 s let a batch overrun its 25 min)
 WINDOW_OVERHEAD_S = 140
+BASELINE_FAIL_STOP = 3   # NOTE-4: consecutive R1 windows failed on the build before the R1 side stops
 
 
 def resolve_binary(path):
@@ -239,6 +240,12 @@ def plan(targets, tiers, modes, windows):
             yield name, mode, windows or int(targets["tiers"][name]["minWindows"])
 
 
+def window_kind(root, name, mode, index):
+    """complete / discarded / failed — wp078_perf_report.classify of the window just run (KADRO test-engineer NOTE-4)."""
+    import wp078_perf_report as report
+    return report.classify(report.load(root / f"perf-{name}-{mode}-{index}" / "attempt.json") or {})
+
+
 def cell_state(root, name, mode):
     """(counted, next free index) for one cell in this root — C-00 30.09 K8: one root and one ledger per FINAL; a
     resumed run continues at the next free index, and only complete ∧ hostClean attempts count."""
@@ -280,6 +287,9 @@ def main():
     parser.add_argument("--quiet-wait-max", type=float, default=1800.0,
                         help="seconds to wait for a quiet host with every slot held before giving them back and retrying")
     parser.add_argument("--max-discards", type=int, default=6, help="K8: host-discarded re-runs allowed per cell per invocation")
+    parser.add_argument("--baseline-fail-stop", type=int, default=BASELINE_FAIL_STOP,
+                        help="WP-091: the R1 side stops for the rest of the matrix after this many consecutive windows that "
+                             "failed on the R1 build, not on the host (P2 then stays BLOCKED)")
     args = parser.parse_args()
     # C-00 30.09 M-14 / G4 D2: TERM and HUP become SystemExit(128+n), so every finally (restore, quiet release) runs
     for signum in (signal.SIGTERM, signal.SIGHUP):
@@ -349,6 +359,10 @@ def run_all(args, runs, root, binary, seconds, quiet, note, baseline=None):
     if baseline is not None:
         sides.append(baseline)
     first = True
+    # KADRO test-engineer NOTE-4: an R1 build that fails on its own (not the host) would run max_discards + 1 windows in
+    # every cell, ~60 empty windows over the matrix; after baseline_fail_stop consecutive ones it stops for the rest of the
+    # matrix. A host discard neither counts nor resets; a counted window resets. FINAL's side is never stopped here.
+    r1_failed, fail_stop = 0, getattr(args, "baseline_fail_stop", BASELINE_FAIL_STOP)
     for cell_index, (name, mode, need) in enumerate(runs):
         extra = {tag: 0 for tag, *_ in sides}
         round_index = 0
@@ -385,6 +399,15 @@ def run_all(args, runs, root, binary, seconds, quiet, note, baseline=None):
                 if code is not None:
                     return code
                 extra[tag] += 1 if cell_state(side_root, name, mode)[0] == counted else 0
+                if baseline is not None and tag == baseline[0] and not args.dry_run:
+                    kind = window_kind(side_root, name, mode, index)
+                    r1_failed = r1_failed + 1 if kind == "failed" else 0 if kind == "complete" else r1_failed
+                    if r1_failed >= fail_stop:
+                        note(f"{tag}perf-{name}-{mode}-{index}: {r1_failed} consecutive R1 windows failed on the build, not the "
+                             f"host — the R1 side stops for the rest of the matrix; FINAL's windows go on (P2 BLOCKED: not "
+                             f"every cell measured on both sides)")
+                        sides = sides[:1]
+                        break
             if args.dry_run:
                 break
     note("done")
