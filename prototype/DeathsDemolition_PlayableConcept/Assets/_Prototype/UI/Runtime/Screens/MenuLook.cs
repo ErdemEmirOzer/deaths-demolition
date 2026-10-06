@@ -50,6 +50,12 @@ namespace DD.Prototype.UI
         /// the focused word with its sub-line, the level readout.</summary>
         public bool Pads;
 
+        /// <summary>The ground of the words in the top corners (B, S-09 06.10, AD round MUSTs 1-2): each corner's own lift in the
+        /// scrim's language (<see cref="UiBackdrop.SetWorldCorner(bool, Rect, float, float, float)"/>) - the title top-left (S01's rest
+        /// frame - Reduced Motion, an open pane, an unfocused window hold it - put V6's blossoms behind its strokes at 2.3-2.9:1), the
+        /// level readout top-right instead of a pad (the pad took the empty XP rail's size and read as a smoked-glass box in the sky).</summary>
+        public bool CornerLift;
+
         public bool LookB;
         public float SunElevation = 14f;
         public float SunYaw = 160f;
@@ -79,7 +85,7 @@ namespace DD.Prototype.UI
             switch ((name ?? string.Empty).ToUpperInvariant())
             {
                 case "A": look.Exposure = -2.3f; break;
-                case "B": look.GradientScrim = true; look.Pads = true; break;
+                case "B": look.GradientScrim = true; look.Pads = true; look.CornerLift = true; break;
                 case "B0": look.ScrimAlpha = 0.92f; break;   // the first B frames: the third at 0.92 with its short fade (the edge read as a line)
                 case "C": look.Halo = MenuHalo.All; break;
                 case "D": look.Exposure = -1f; look.ScrimAlpha = 0.75f; look.Halo = MenuHalo.Small; break;
@@ -138,9 +144,9 @@ namespace DD.Prototype.UI
 
         public override string ToString()
         {
-            return string.Format(CultureInfo.InvariantCulture, "{0} (EV {1:+0.0;-0.0;0}, scrim {2}, halo {3}, pads {4}, LookB {5})",
+            return string.Format(CultureInfo.InvariantCulture, "{0} (EV {1:+0.0;-0.0;0}, scrim {2}, halo {3}, pads {4}, corners {6}, LookB {5})",
                 Name, Exposure, GradientScrim ? string.Format(CultureInfo.InvariantCulture, "{0:0.00}→{1:0.00}→0 @{2:0.00}", ScrimEdge, ScrimColumn, ScrimEnd) : ScrimAlpha.ToString("0.00", CultureInfo.InvariantCulture),
-                Halo, Pads ? "on" : "off", LookB ? SunElevation + "°/" + SunYaw + "° ×" + SunScale : "off");
+                Halo, Pads ? "on" : "off", LookB ? SunElevation + "°/" + SunYaw + "° ×" + SunScale : "off", CornerLift ? "on" : "off");
         }
 
         // ======================================================================== the world (menu scene only)
@@ -283,6 +289,54 @@ namespace DD.Prototype.UI
             {
                 AddPad(readout, readout.Find(ReadoutPadName));
             }
+        }
+
+        /// <summary>The title's corner: α over the title's box (+ <see cref="TitleLiftMargin"/>), 0 by <see cref="CornerFall"/> of the
+        /// width (AD round 06.10 MUST-2, the preferred path: α ≥ 0.85 over the box + 24) - the wordmark itself untouched.</summary>
+        public const float TitleLiftAlpha = 0.85f;
+        public const float TitleLiftMargin = 24f;
+
+        /// <summary>The level readout's corner: α over the readout's reach (+ <see cref="CornerMargin"/>). 0.88 holds TextPrimary at
+        /// ≥ 4.5:1 on its plain ground, no ink counted, over V6's brightest cloud (luminance ~1.0; the old pad at 0.82 measured 3.9:1
+        /// there at 21:9).</summary>
+        public const float CornerAlpha = 0.88f;
+        public const float CornerMargin = 8f;
+
+        /// <summary>Both corners fall to 0 over this much of the width (AD: ≥ 0.12 W).</summary>
+        public const float CornerFall = 0.14f;
+
+        /// <summary>The words in the top corners on their lifts (<see cref="CornerLift"/>): the title top-left, the level readout
+        /// top-right. False when this look has none or there is no backdrop - the caller keeps the readout's pad.</summary>
+        public bool LiftCorners(RectTransform title, RectTransform readout, UiBackdrop backdrop)
+        {
+            if (!CornerLift || backdrop == null)
+            {
+                return false;
+            }
+
+            Canvas.ForceUpdateCanvases();
+            if (title != null)
+            {
+                backdrop.SetWorldCorner(false, ScreenRect(title), TitleLiftMargin, TitleLiftAlpha, CornerFall);
+            }
+
+            if (readout != null)
+            {
+                backdrop.SetWorldCorner(true, ScreenRect(readout), CornerMargin, CornerAlpha, CornerFall);
+            }
+
+            return readout != null;
+        }
+
+        private static Rect ScreenRect(RectTransform rect)
+        {
+            Canvas canvas = rect.GetComponentInParent<Canvas>();
+            Camera camera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null;
+            var corners = new Vector3[4];
+            rect.GetWorldCorners(corners);
+            Vector2 low = RectTransformUtility.WorldToScreenPoint(camera, corners[0]);
+            Vector2 high = RectTransformUtility.WorldToScreenPoint(camera, corners[2]);
+            return Rect.MinMaxRect(low.x, low.y, high.x, high.y);
         }
 
         /// <summary>A soft ink pad as <paramref name="host"/>'s first child: the host's rect plus the pad's falloff, SurfaceBase α 0.82.</summary>

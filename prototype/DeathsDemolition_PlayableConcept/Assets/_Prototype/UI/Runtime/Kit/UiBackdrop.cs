@@ -312,7 +312,7 @@ namespace DD.Prototype.UI
             {
                 // The plates cover-fit; the world scrim is a ramp across its own rect (cover-fit cropped it to a sliver of
                 // its middle on a resize - a flat panel with a hard edge at 4:3 and on the Mac, bfinal2).
-                if (image != _worldScrim)
+                if (image != _worldScrim && !IsCornerLift(image))
                 {
                     CoverFit(image);
                 }
@@ -427,6 +427,127 @@ namespace DD.Prototype.UI
             }
 
             return _worldColumn * (1f - Smooth((x - _worldColumnAt) / (_worldEnd - _worldColumnAt)));
+        }
+
+        /// <summary>A corner's lift over the live world (<see cref="SetWorldCorner(bool, Rect, float, float, float)"/>).</summary>
+        private sealed class CornerLift
+        {
+            public RawImage Image;
+            public Vector2 Hold;
+            public float Alpha, Fall;
+        }
+
+        private readonly CornerLift[] _corners = { new CornerLift(), new CornerLift() };   // 0 the top-left, 1 the top-right
+
+        /// <summary>
+        /// WP-081 (S-09 06.10, AD round MUSTs 1-2): a top corner's own lift over the live world, in the scrim's language - the
+        /// words that stand there on their ground without a pad (the top-right: the level readout, whose pad took the empty XP
+        /// rail's size and read as a smoked-glass box in the sky; the top-left: the title, which S01's rest frame put on V6's
+        /// blossoms at 2.3-2.9:1). <paramref name="alpha"/> holds from the corner over <paramref name="screenRect"/> (+
+        /// <paramref name="margin"/> root units), then a smoothstep to 0 over <paramref name="fall"/> of the width by the distance
+        /// to that box, the same in every direction, so no edge reads. A backdrop graphic: the evidence's world frames carry it.
+        /// </summary>
+        public void SetWorldCorner(bool right, Rect screenRect, float margin, float alpha, float fall)
+        {
+            if (!_built || _root == null)
+            {
+                return;
+            }
+
+            // The words live on another canvas (the screens go overlay over the world; the Mac's UI scale is theirs): their
+            // screen rect, in this root's units, measured in from the corner.
+            Canvas canvas = _root.GetComponentInParent<Canvas>();
+            Camera camera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null;
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(_root, screenRect.min, camera, out Vector2 low);
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(_root, screenRect.max, camera, out Vector2 high);
+            Rect r = _root.rect;
+            float inX = right ? r.xMax - low.x : high.x - r.xMin;
+            SetWorldCorner(right, new Vector2(inX + margin, r.yMax - low.y + margin), alpha, fall);
+        }
+
+        /// <summary><see cref="SetWorldCorner(bool, Rect, float, float, float)"/> with the held reach given in root units.</summary>
+        public void SetWorldCorner(bool right, Vector2 hold, float alpha, float fall)
+        {
+            if (!_built || _root == null)
+            {
+                return;
+            }
+
+            CornerLift c = _corners[right ? 1 : 0];
+            c.Hold = new Vector2(Mathf.Max(0f, hold.x), Mathf.Max(0f, hold.y));
+            c.Alpha = Mathf.Clamp01(alpha);
+            c.Fall = Mathf.Max(1f, fall * _root.rect.width);
+            if (c.Image == null)
+            {
+                var go = new GameObject(right ? "WorldCornerTR" : "WorldCornerTL", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage));
+                go.transform.SetParent(_root, false);
+                c.Image = go.GetComponent<RawImage>();
+                c.Image.raycastTarget = false;
+                if (_worldScrim != null)
+                {
+                    c.Image.transform.SetSiblingIndex(_worldScrim.transform.GetSiblingIndex() + 1);
+                }
+            }
+
+            Vector2 size = c.Hold + new Vector2(c.Fall, c.Fall);
+            const int Texels = 128;
+            int tw = Texels, th = Mathf.Clamp(Mathf.RoundToInt(Texels * size.y / size.x), 16, 256);
+            var tex = new Texture2D(tw, th, TextureFormat.RGBA32, false, true) { name = "WorldCornerLift", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear, hideFlags = HideFlags.DontSave };
+            var pixels = new Color32[tw * th];
+            for (int y = 0; y < th; y++)
+            {
+                for (int x = 0; x < tw; x++)
+                {
+                    // texel (0,0) is the image's bottom-left; its corner is the top-left or the top-right
+                    float u = (x + 0.5f) / tw;
+                    float inX = (right ? 1f - u : u) * size.x;
+                    float inY = (1f - (y + 0.5f) / th) * size.y;
+                    pixels[y * tw + x] = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(255f * WorldCornerAlphaAt(right, inX, inY)));
+                }
+            }
+
+            tex.SetPixels32(pixels);
+            tex.Apply(false, true);
+            if (c.Image.texture != null)
+            {
+                Destroy(c.Image.texture);
+            }
+
+            c.Image.texture = tex;
+            c.Image.uvRect = new Rect(0f, 0f, 1f, 1f);
+            c.Image.color = UiTokens.Get(UiColor.SurfaceBase);
+            RectTransform rect = c.Image.rectTransform;
+            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(right ? 1f : 0f, 1f);
+            rect.anchoredPosition = Vector2.zero;
+            rect.sizeDelta = size;
+            c.Image.gameObject.SetActive(true);
+            Debug.Log(string.Format(System.Globalization.CultureInfo.InvariantCulture,
+                "[UI] World corner: {0:0.00} over {1:0}×{2:0} from the top-{3}, 0 by +{4:0} ({5:0.000} W; root {6:0}×{7:0}).",
+                c.Alpha, c.Hold.x, c.Hold.y, right ? "right" : "left", c.Fall, c.Fall / _root.rect.width, _root.rect.width, _root.rect.height));
+        }
+
+        /// <summary>A corner lift's alpha <paramref name="inX"/>/<paramref name="inY"/> root units in from its corner (0 if unset).</summary>
+        public float WorldCornerAlphaAt(bool right, float inX, float inY)
+        {
+            CornerLift c = _corners[right ? 1 : 0];
+            if (c.Alpha <= 0f)
+            {
+                return 0f;
+            }
+
+            float dx = Mathf.Max(0f, inX - c.Hold.x), dy = Mathf.Max(0f, inY - c.Hold.y);
+            return c.Alpha * (1f - Smooth(Mathf.Sqrt(dx * dx + dy * dy) / c.Fall));
+        }
+
+        public bool HasWorldCorner(bool right)
+        {
+            RawImage image = _corners[right ? 1 : 0].Image;
+            return image != null && image.gameObject.activeSelf;
+        }
+
+        private bool IsCornerLift(RawImage image)
+        {
+            return image != null && (image == _corners[0].Image || image == _corners[1].Image);
         }
 
         /// <summary>The world scrim's column edge (fraction of the width) - where the profile changes from 'over the words' to 'into the world'.</summary>

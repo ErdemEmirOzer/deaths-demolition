@@ -451,7 +451,14 @@ namespace DD.Prototype.UI
 
             if (_held == null)
             {
-                _held = new RenderTexture(width, height, 24, RenderTextureFormat.Default) { name = "MenuCinematicHeld" };
+                // The pipeline's MSAA (URP takes a target texture's own sample count): at 1 the held frame was the only aliased one -
+                // each blend opened with a one-frame sharpness step (video check 06.10: 7-26 %).
+                var pipeline = UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline as UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset;
+                _held = new RenderTexture(width, height, 24, RenderTextureFormat.Default)
+                {
+                    name = "MenuCinematicHeld",
+                    antiAliasing = _camera.allowMSAA && pipeline != null ? Mathf.Max(1, pipeline.msaaSampleCount) : 1
+                };
                 if (_heldImage != null)
                 {
                     _heldImage.texture = _held;

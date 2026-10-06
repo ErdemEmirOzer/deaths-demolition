@@ -6,6 +6,7 @@ using DD.Prototype.Rounds;
 using DD.Prototype.UI;
 using DD.Prototype.World;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -135,7 +136,40 @@ namespace DD.Prototype.Tests.PlayMode
                 }
             }
 
-            Assert.AreEqual(Debug.isDebugBuild ? 3 : 2, padCount, "a pad behind the focused word, one behind the level readout (and one behind the dev build line)");
+            Assert.AreEqual(Debug.isDebugBuild ? 2 : 1, padCount, "a pad behind the focused word (and one behind the dev build line); the level readout stands on the corner lift");
+            Assert.IsTrue(backdrop.HasWorldCorner(true), "AD MUST-1: the top-right corner's lift");
+            Assert.IsTrue(backdrop.HasWorldCorner(false), "AD MUST-2: the top-left corner's lift");
+            RectTransform progress = null;
+            foreach (RectTransform rect in menu.GetComponentsInChildren<RectTransform>(false))
+            {
+                progress = rect.name == "Progress" && rect.parent != null && rect.parent.name == "Page" ? rect : progress;
+            }
+
+            Assert.IsNotNull(progress, "the level readout");
+            Assert.IsNull(progress.Find(MenuLook.ReadoutPadName), "no pad behind the level readout");
+            var corners = new Vector3[4];
+            progress.GetWorldCorners(corners);
+            RectTransform root = (RectTransform)backdrop.transform;
+            foreach (Vector3 corner in corners)
+            {
+                Vector2 local = root.InverseTransformPoint(corner);
+                float alpha = backdrop.WorldCornerAlphaAt(true, root.rect.xMax - local.x, root.rect.yMax - local.y);
+                Assert.GreaterOrEqual(alpha, MenuLook.CornerAlpha - 1e-3f, "the readout's corner " + corner + " stands on the full lift");
+            }
+            TMP_Text title = null;
+            foreach (TMP_Text text in menu.GetComponentsInChildren<TMP_Text>(false))
+            {
+                title = text.name == "Title" ? text : title;
+            }
+
+            Assert.IsNotNull(title, "the menu's title");
+            title.rectTransform.GetWorldCorners(corners);
+            foreach (Vector3 corner in corners)
+            {
+                Vector2 local = root.InverseTransformPoint(corner);
+                float alpha = backdrop.WorldCornerAlphaAt(false, local.x - root.rect.xMin, root.rect.yMax - local.y);
+                Assert.GreaterOrEqual(alpha, MenuLook.TitleLiftAlpha - 1e-3f, "the title's corner " + corner + " stands on the full lift");
+            }
 
             // The clock runs; Reduced Motion and an open pane hold S01's start.
             float before = cinematic.Clock;

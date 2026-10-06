@@ -192,6 +192,10 @@ namespace DD.Prototype.Tests.EditMode
         {
             MenuLook shipped = MenuLook.Shipped();
             Assert.IsTrue(shipped.GradientScrim && shipped.Pads, "C-00 05.10: B + pads ships");
+            Assert.IsTrue(shipped.CornerLift, "S-09 06.10 (AD MUSTs 1-2): the title and the level readout stand on the top corners' lifts");
+            Assert.GreaterOrEqual(MenuLook.TitleLiftAlpha, 0.85f, "AD MUST-2: α ≥ 0.85 over the title's box");
+            Assert.GreaterOrEqual(MenuLook.TitleLiftMargin, 24f, "AD MUST-2: + 24 around the box");
+            Assert.GreaterOrEqual(MenuLook.CornerFall, 0.12f, "AD MUST-1: a corner falls over at least 0.12 W");
             Assert.IsFalse(shipped.LookB, "Look B stays a dev option");
 
             var host = new GameObject("Root", typeof(RectTransform));

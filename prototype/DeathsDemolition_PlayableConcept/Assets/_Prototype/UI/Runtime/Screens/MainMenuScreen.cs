@@ -203,7 +203,10 @@ namespace DD.Prototype.UI
             Transform nav = Content.Find("Nav");
             MenuLook.Current.ApplyUi(nav, _plates);
             MenuLook.Current.ApplyUi(title, null);
-            MenuLook.ApplyReadoutInk(Content.Find("Progress"), MenuLook.Current.Pads);
+            Transform progress = Content.Find("Progress");
+            // The title's and the level readout's ground: the top corners' lifts (else the readout keeps its pad).
+            bool cornerLift = MenuLook.Current.LiftCorners(title as RectTransform, progress as RectTransform, _plates);
+            MenuLook.ApplyReadoutInk(progress, MenuLook.Current.Pads && !cornerLift);
             if (MenuLook.Current.Pads && _railWordRect != null)
             {
                 // The focused word and its sub-line stand on the world past the scrim's darkest part: their own soft pad,

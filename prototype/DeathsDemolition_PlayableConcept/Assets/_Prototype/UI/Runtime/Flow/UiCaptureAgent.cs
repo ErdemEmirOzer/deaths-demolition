@@ -2995,6 +2995,14 @@ namespace DD.Prototype.UI
                 const int fps = 30;
                 int count = Mathf.RoundToInt(MenuCinematic.Period * fps);
                 Time.captureDeltaTime = 1f / fps;
+                // The loop's last frames first, not recorded: frame 0 then follows them as in the game (straight after the jump to
+                // t = 0 it differed from frame 1 4-6× a shot cut - the video check's loop seam, 06.10).
+                for (int w = count - 3; w < count; w++)
+                {
+                    MenuCinematic.TimeOverride = w / (float)fps;
+                    yield return new WaitForEndOfFrame();
+                }
+
                 for (int i = 0; i < count; i++)
                 {
                     MenuCinematic.TimeOverride = i / (float)fps;
