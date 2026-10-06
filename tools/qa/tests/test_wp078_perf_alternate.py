@@ -265,6 +265,10 @@ start=Tue Oct 6 18:30:29 2026
         self.assertTrue(self.ours(self.V4))
         self.assertTrue(self.ours(self.V4.replace("start=Tue Oct 6 18:30:29 2026\n", "")))   # older one-line locks
 
+    def test_a_limit_lowered_under_load_while_our_three_are_held_is_still_ours(self):
+        self.assertTrue(self.ours(self.V4.replace("== unity (3/3)", "== unity (3/2)")))
+        self.assertFalse(self.ours(self.V4.replace("== unity (3/3)", "== unity (2/3)")))   # header and locks disagree
+
     def test_a_foreign_lock_a_free_slot_or_a_queue_is_not_ours(self):
         self.assertFalse(self.ours(self.V4.replace("wp078-quiet-2.94670: 2026-10-06T15:30:50Z wp078-quiet-2",
                                                    "s05-probe.111: 2026-10-06T15:30:50Z s05-probe")))

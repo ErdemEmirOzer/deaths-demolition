@@ -99,7 +99,9 @@ class QuietWindow:
             # "start=<lstart>" (the pid-reuse guard) follows unindented — not a lock (S-10 06.10: R2 FINAL z3 waited on it)
             if re.match(r"^\s+\d+\.\S+: ", line):
                 locks.append(line)
-        return bool(m) and int(m.group(1)) == int(m.group(2)) and len(locks) == int(m.group(1)) \
+        # held >= limit, not ==: slot.sh lowers the limit to 2 under load1 >= 24 / swap >= 10 GB while our three stay
+        # held ("(3/2)") — the iCloud load this run is meant to measure through (gt 06.10 SHOULD-1)
+        return bool(m) and int(m.group(1)) >= int(m.group(2)) and len(locks) == int(m.group(1)) \
             and all("wp078-quiet" in l for l in locks)
 
     def _host_quiet(self):
