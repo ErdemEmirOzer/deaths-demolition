@@ -18,7 +18,8 @@ BIN_R2, BIN_R1 = "2" * 64, "3" * 64
 REPO = Path(__file__).resolve().parents[3]
 CONTRACT = r2_gates.load_contract((Path(__file__).resolve().parents[1] / "r2-gates.json").read_text(encoding="utf-8"))
 STATIC = {"characterTextureMaxPx": 2048, "atlasesPerFamilyMax": 2, "mapsPerAtlasMax": 3, "shippedCharacterMB": 312.5,
-          "bonesMax": 74, "materialsPerFamilyMax": 4, "materialsPerFamilyCrowdTotal": 8}
+          "bonesMax": 74, "materialsPerFamilyMax": 4, "materialsPerFamilyCrowdTotal": 8,
+          "armorTierAtlasesTotal": 2}   # C-00 06.10 13:30 (S-05 scope): armour + tier atlases, a report key
 MODE_NAMES = {"topdown": "TopDown", "tp": "ThirdPerson", "fp": "FirstPerson"}
 TIER_NAMES = {"sinematik": "Sinematik", "yuksek": "Yuksek", "performans": "Performans"}
 
@@ -114,7 +115,7 @@ class ContractTests(unittest.TestCase):
         self.assertEqual(["setPassRatio", "batchRatio", "trianglesRatio"], ratio)
         self.assertEqual(sorted(STATIC), sorted(static))
         # C-00 06.10: the crowd material total per body family is reported, never gated; thresholds unchanged
-        self.assertEqual(["materialsPerFamilyCrowdTotal"], gate["report"])
+        self.assertEqual(["materialsPerFamilyCrowdTotal", "armorTierAtlasesTotal"], gate["report"])
         limits = {c["key"]: c["limit"] for c in gate["checks"]}
         self.assertEqual({"setPassRatio": 1.10, "batchRatio": 1.10, "trianglesRatio": 1.15, "characterTextureMaxPx": 2048,
                           "atlasesPerFamilyMax": 2, "mapsPerAtlasMax": 3, "shippedCharacterMB": 400, "bonesMax": 74,

@@ -253,8 +253,11 @@ No owner test writes `r2-Z3.json`: `tools/qa/r2_z3.py` does, after the chain's z
   bones are not counted (06.10: 74 on the fit A/B AP-007 rig v002 clothes, 73 on the O1 body and the faces, 74 on face and
   body once the AP-025D jaw lands). `mapsPerAtlasMax <= 3` counts the PBR maps of one atlas (BaseColor, Normal, ORM); the
   mask Texture2DArray is not an atlas map, it counts in the texture budget (Z3b, 96 MB). `materialsPerFamilyMax <= 4` is
-  the renderer material count of one zombie instance; the crowd total per body family (8 on 06.10) is the report key
-  `materialsPerFamilyCrowdTotal`. `characterTextureMaxPx <= 2048` (Character class), `atlasesPerFamilyMax <= 2`,
+  the renderer material count of one zombie instance, armour and tier pieces included; the crowd total per body family
+  (8 on 06.10) is the report key `materialsPerFamilyCrowdTotal`. `characterTextureMaxPx <= 2048` (Character class).
+  `atlasesPerFamilyMax <= 2` counts the family's own atlases only (body, face, clothes). The armour and tier atlases are
+  reported in total as `armorTierAtlasesTotal` (C-00 06.10 13:30 scope decision, S-05). Like every static key, it must be
+  in `<E>/r2/z3-static.json` as a number > 0.
   `shippedCharacterMB <= 400` (the shipped character row, ADR-015-1 v3 / DEC-093).
 - **The source is in the recording.** Every paired window, both builds: a counted window of its build's commit (one build
   per side, two different builds, `--r1-commit` different from `--commit`), -ddPilotStart 0,-4,0 and -ddArmor all on its

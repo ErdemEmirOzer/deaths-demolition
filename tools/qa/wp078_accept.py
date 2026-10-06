@@ -1141,7 +1141,9 @@ class Chain:
             return
         out = self.evidence / "r2"
         results.append({"name": "r2-z3", "exit": code, "gate": False,
-                        "files": [out / "r2-Z3.json", out / "r2-P3.json", out / "z3-ratios.json", self.evidence / "z3" / "r2-z3.txt"]})
+                        # z3-static.json: the static half r2-Z3.json rests on (S-05's EditMode test writes it; C-00 06.10 13:30)
+                        "files": [out / "r2-Z3.json", out / "r2-P3.json", out / "z3-ratios.json", out / "z3-static.json",
+                                  self.evidence / "z3" / "r2-z3.txt"]})
         self.log("Z3/P3: " + ", ".join(f"{n} {'written' if (out / n).is_file() else 'NOT written'}" for n in ("r2-Z3.json", "r2-P3.json"))
                  + f" (r2_z3.py exit {code}; reasons in z3/r2-z3.txt)")
         self.finish("z3", results, verdict="RECORDED", extra=extra)

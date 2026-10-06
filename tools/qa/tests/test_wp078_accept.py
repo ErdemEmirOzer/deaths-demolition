@@ -869,6 +869,16 @@ class Z3StageTests(Base):
         chain, perf, tool = self.planned(round_name="R1")
         self.assertEqual(([], []), (perf, tool))
 
+    def test_the_z3_record_binds_the_static_file_r2_z3_read(self):
+        # C-00 06.10 13:30 (S-05): r2-Z3.json rests on <E>/r2/z3-static.json, so the stage record binds it too
+        r1 = r1_evidence(self.tmp.name)
+        with mock.patch.object(acc, "_r2_z3", return_value=FAKE_Z3):
+            make_chain(self.evidence, ["a6", "z3"], round_name="R2", r1_evidence=r1, r1_commit=R1).run()
+            put_json(self.evidence / "r2" / "z3-static.json", {"schema": "dd-r2-z3-static-v1"})
+            make_chain(self.evidence, ["z3"], round_name="R2", resume=True, r1_evidence=r1, r1_commit=R1).run()
+        bound = json.loads((self.evidence / "stages" / "z3.json").read_text())["artifactSha256"]
+        self.assertIn("../r2/z3-static.json", bound)
+
     def test_the_z3_roots_reach_the_report_as_declared_secondary_roots(self):
         with mock.patch.object(acc, "_r2_z3", return_value=FAKE_Z3):
             code = make_chain(self.evidence, [s for s in acc.STAGE_ORDER if s != "a8"], round_name="R2",
