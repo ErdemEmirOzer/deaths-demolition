@@ -95,6 +95,46 @@ namespace DD.Art.Pipeline.EditorTools
             return ids;
         }
 
+        /// <summary>
+        /// WP-084 (AD delta MD3, 06.10) · the AP-007 atlas regions the O1 skin atlas keeps (contract atlas_uv_layout.preserved_AP007:
+        /// straw, hair, sash / rope, stain). A garment sub-mesh whose UVs lie in them is the module's atlas part; any other is cloth.
+        /// Empty without the contract.
+        /// </summary>
+        public static List<Rect> PreservedAtlasRects()
+        {
+            var rects = new List<Rect>();
+            if (!File.Exists(ContractPath)) return rects;
+            Dictionary<string, object> doc = ArtJson.AsObject(ArtJson.Parse(File.ReadAllText(ContractPath, Encoding.UTF8)), "AP025 contract");
+            Dictionary<string, object> layout = ArtJson.AsObject(ArtJson.Require(doc, "atlas_uv_layout"), "atlas_uv_layout");
+            foreach (KeyValuePair<string, object> kv in ArtJson.AsObject(ArtJson.Require(layout, "preserved_AP007"), "preserved_AP007"))
+            {
+                List<object> r = ArtJson.AsList(kv.Value, "preserved_AP007." + kv.Key);
+                rects.Add(Rect.MinMaxRect(ArtJson.AsFloat(r[0]), ArtJson.AsFloat(r[1]), ArtJson.AsFloat(r[2]), ArtJson.AsFloat(r[3])));
+            }
+
+            return rects;
+        }
+
+        /// <summary>WP-084 (MD3) · share of a sub-mesh's UV corners inside <paramref name="rects"/> (closed edges, 0.002 import margin).</summary>
+        public static float ShareInside(Mesh mesh, int subMesh, List<Rect> rects, List<Vector2> uvScratch)
+        {
+            mesh.GetUVs(0, uvScratch);
+            int[] tris = mesh.GetTriangles(subMesh);
+            if (tris.Length == 0 || uvScratch.Count == 0) return 0f;
+            int inside = 0;
+            const float eps = 0.002f;
+            foreach (int i in tris)
+            {
+                Vector2 p = uvScratch[i];
+                foreach (Rect r in rects)
+                {
+                    if (p.x >= r.xMin - eps && p.x <= r.xMax + eps && p.y >= r.yMin - eps && p.y <= r.yMax + eps) { inside++; break; }
+                }
+            }
+
+            return (float)inside / tris.Length;
+        }
+
         public static List<Face> Faces()
         {
             var faces = new List<Face>();

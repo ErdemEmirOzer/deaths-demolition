@@ -597,6 +597,8 @@ namespace DD.Art.Pipeline.EditorTools
             library.bodies = bodies.ToArray();
 
             var modules = new List<ZombieModuleLibrary.Module>();
+            List<Rect> preserved = ArtAp025Intake.Active ? ArtAp025Intake.PreservedAtlasRects() : new List<Rect>();   // WP-084 MD3
+            var uvScratch = new List<Vector2>();
             foreach (object o in ArtJson.AsList(doc["modules"], "modules"))
             {
                 Dictionary<string, object> r = ArtJson.AsObject(o, "module");
@@ -649,6 +651,7 @@ namespace DD.Art.Pipeline.EditorTools
                 }
 
                 module.variants = variants.ToArray();
+                if (preserved.Count > 0) BindSubMeshMaterials(module, preserved, uvScratch);
                 modules.Add(module);
             }
 
@@ -742,6 +745,63 @@ namespace DD.Art.Pipeline.EditorTools
             if (existing == null) AssetDatabase.AddObjectToAsset(tex, owner);
             EditorUtility.SetDirty(tex);
             return tex;
+        }
+
+        /// <summary>
+        /// WP-084 (AD delta MD3, 06.10) · the material of every sub-mesh from where its UVs lie, not from the manifest's list order.
+        /// The AP-007 manifest lists the materials atlas-first, but eight garments (B1–B4, B6, B7, the A1 hat, T8 cw2) carry
+        /// [cloth, atlas] in the FBX (material index 0 = M_Zombie_Cloth; the module FBXs import no materials, so Unity keeps only that
+        /// order): their garment surface sampled the skin atlas and the sash / rope the cloth atlas since WP-020. A sub-mesh with
+        /// ≥ 95 % of its UV corners in the preserved AP-007 regions is the atlas part, one with ≤ 85 % is cloth (06.10, every module
+        /// FBX read directly: atlas sub-meshes ≥ 99.9 %, cloth ≤ 69.4 % — the cloth layout overlaps those rectangles); between, or
+        /// a material the manifest does not list, stops the build. The module list takes the order the full-count LODs agree on;
+        /// a LOD that differs (fewer sub-meshes, T8 cw1) keeps its own list — the same few per-LOD arrays as before (B-03 G1 cache).
+        /// </summary>
+        private static void BindSubMeshMaterials(ZombieModuleLibrary.Module module, List<Rect> preserved, List<Vector2> uvScratch)
+        {
+            var listed = new HashSet<string>(module.materials ?? new[] { ZombieModuleLibrary.MaterialAtlas });
+            var perLod = new List<(ZombieModuleLibrary.MeshRef mesh, string[] order)>();
+            int full = 0;
+            foreach (ZombieModuleLibrary.Variant v in module.variants)
+            {
+                foreach (ZombieModuleLibrary.MeshRef m in v.lods)
+                {
+                    var order = new string[m.mesh.subMeshCount];
+                    for (int sm = 0; sm < order.Length; sm++)
+                    {
+                        float share = ArtAp025Intake.ShareInside(m.mesh, sm, preserved, uvScratch);
+                        if (share >= 0.95f) order[sm] = ZombieModuleLibrary.MaterialAtlas;
+                        else if (share <= 0.85f) order[sm] = ZombieModuleLibrary.MaterialCloth;
+                        else throw new InvalidOperationException(LogPrefix + module.id + " " + m.mesh.name + " sub-mesh " + sm + ": " + (share * 100f).ToString("F1") + " % of its UVs in the preserved atlas regions — neither atlas nor cloth");
+                        if (!listed.Contains(order[sm])) throw new InvalidOperationException(LogPrefix + module.id + " " + m.mesh.name + " sub-mesh " + sm + " reads as " + order[sm] + ", which the manifest does not list");
+                    }
+
+                    full = Math.Max(full, order.Length);
+                    perLod.Add((m, order));
+                }
+            }
+
+            string[] moduleOrder = null;
+            foreach ((ZombieModuleLibrary.MeshRef mesh, string[] order) in perLod)
+            {
+                if (order.Length != full) continue;
+                if (moduleOrder == null) moduleOrder = order;
+                else if (string.Join("|", moduleOrder) != string.Join("|", order)) throw new InvalidOperationException(LogPrefix + module.id + ": full LODs disagree on the sub-mesh order (" + string.Join("|", moduleOrder) + " vs " + string.Join("|", order) + " at " + mesh.mesh.name + ")");
+            }
+
+            if (moduleOrder == null) return;
+            string before = module.materials != null ? string.Join("|", module.materials) : "-";
+            module.materials = moduleOrder;
+            int own = 0;
+            foreach ((ZombieModuleLibrary.MeshRef mesh, string[] order) in perLod)
+            {
+                bool same = order.Length == moduleOrder.Length && string.Join("|", order) == string.Join("|", moduleOrder);
+                mesh.materials = same ? null : order;
+                if (!same) own++;
+            }
+
+            if (before != string.Join("|", moduleOrder) || own > 0)
+                Debug.Log(LogPrefix + "WP-084 MD3 " + module.id + ": sub-mesh order " + string.Join("|", moduleOrder) + " (manifest " + before + "), per-LOD lists " + own);
         }
 
         /// <summary>Mesh + bone-name order of one skinned object inside an imported character FBX.</summary>

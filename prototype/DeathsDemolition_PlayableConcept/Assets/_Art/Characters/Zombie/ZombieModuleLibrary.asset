@@ -111,7 +111,7 @@ MonoBehaviour:
   schema: dd-zombie-modules-v1
   package: AP-007
   version: AP007.modules.v003
-  sourceSha256: 10c8a78b516ab5d3fa38a9e462b4d629766138c9f523f71ee51124476370d2bd
+  sourceSha256: ead38ce536f2c9e01ad46705ef78709bde51a880a422e2228d08835ffadde662
   bodies:
   - fit: A
     lods:
@@ -2019,8 +2019,8 @@ MonoBehaviour:
         materials:
         - M_Zombie_Cloth
     materials:
-    - M_Zombie_Atlas
     - M_Zombie_Cloth
+    - M_Zombie_Atlas
   - id: A2_face_wrap
     kind: accessory
     colourways:
@@ -5850,8 +5850,8 @@ MonoBehaviour:
         triangles: 86
         materials: []
     materials:
-    - M_Zombie_Atlas
     - M_Zombie_Cloth
+    - M_Zombie_Atlas
   - id: B2_momohiki_tight
     kind: bottom
     colourways:
@@ -7766,8 +7766,8 @@ MonoBehaviour:
         triangles: 78
         materials: []
     materials:
-    - M_Zombie_Atlas
     - M_Zombie_Cloth
+    - M_Zombie_Atlas
   - id: B3_koshimaki_wrap
     kind: bottom
     colourways:
@@ -9682,8 +9682,8 @@ MonoBehaviour:
         triangles: 69
         materials: []
     materials:
-    - M_Zombie_Atlas
     - M_Zombie_Cloth
+    - M_Zombie_Atlas
   - id: B4_tattsuke_hakama
     kind: bottom
     colourways:
@@ -11598,8 +11598,8 @@ MonoBehaviour:
         triangles: 85
         materials: []
     materials:
-    - M_Zombie_Atlas
     - M_Zombie_Cloth
+    - M_Zombie_Atlas
   - id: B5_fundoshi
     kind: bottom
     colourways:
@@ -14475,8 +14475,8 @@ MonoBehaviour:
         triangles: 83
         materials: []
     materials:
-    - M_Zombie_Atlas
     - M_Zombie_Cloth
+    - M_Zombie_Atlas
   - id: B7_momohiki_kyahan
     kind: bottom
     colourways:
@@ -16391,8 +16391,8 @@ MonoBehaviour:
         triangles: 46
         materials: []
     materials:
-    - M_Zombie_Atlas
     - M_Zombie_Cloth
+    - M_Zombie_Atlas
   - id: H1_hair_crop
     kind: head
     colourways:
@@ -36546,8 +36546,8 @@ MonoBehaviour:
         triangles: 76
         materials: []
     materials:
-    - M_Zombie_Atlas
     - M_Zombie_Cloth
+    - M_Zombie_Atlas
   - id: F1_gaunt
     kind: face
     colourways:

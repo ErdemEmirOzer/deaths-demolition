@@ -118,8 +118,8 @@
    },
    "meshes": 12,
    "materials": [
-    "M_Zombie_Atlas",
-    "M_Zombie_Cloth"
+    "M_Zombie_Cloth",
+    "M_Zombie_Atlas"
    ]
   },
   {
@@ -242,8 +242,8 @@
    },
    "meshes": 24,
    "materials": [
-    "M_Zombie_Atlas",
-    "M_Zombie_Cloth"
+    "M_Zombie_Cloth",
+    "M_Zombie_Atlas"
    ]
   },
   {
@@ -305,8 +305,8 @@
    },
    "meshes": 24,
    "materials": [
-    "M_Zombie_Atlas",
-    "M_Zombie_Cloth"
+    "M_Zombie_Cloth",
+    "M_Zombie_Atlas"
    ]
   },
   {
@@ -368,8 +368,8 @@
    },
    "meshes": 24,
    "materials": [
-    "M_Zombie_Atlas",
-    "M_Zombie_Cloth"
+    "M_Zombie_Cloth",
+    "M_Zombie_Atlas"
    ]
   },
   {
@@ -431,8 +431,8 @@
    },
    "meshes": 24,
    "materials": [
-    "M_Zombie_Atlas",
-    "M_Zombie_Cloth"
+    "M_Zombie_Cloth",
+    "M_Zombie_Atlas"
    ]
   },
   {
@@ -535,8 +535,8 @@
    },
    "meshes": 24,
    "materials": [
-    "M_Zombie_Atlas",
-    "M_Zombie_Cloth"
+    "M_Zombie_Cloth",
+    "M_Zombie_Atlas"
    ]
   },
   {
@@ -599,8 +599,8 @@
    },
    "meshes": 24,
    "materials": [
-    "M_Zombie_Atlas",
-    "M_Zombie_Cloth"
+    "M_Zombie_Cloth",
+    "M_Zombie_Atlas"
    ]
   },
   {
@@ -1346,8 +1346,8 @@
    },
    "meshes": 24,
    "materials": [
-    "M_Zombie_Atlas",
-    "M_Zombie_Cloth"
+    "M_Zombie_Cloth",
+    "M_Zombie_Atlas"
    ]
   }
  ],

@@ -340,7 +340,9 @@ namespace DD.Art.Tests.EditMode
             {
                 Assert.IsNotNull(m.materials, m.id + ": materyal sırası");
                 string key = string.Join("+", m.materials);
-                if (key == ZombieModuleLibrary.MaterialAtlas + "+" + ZombieModuleLibrary.MaterialCloth) both++;
+                // WP-084 (AD delta MD3): the order is the FBX sub-mesh order the builder measures from the UVs — [atlas, cloth] (H5–H7, T6)
+                // or [cloth, atlas] (B1–B4, B6, B7, A1, T8); ZombiModulleri_AltMeshMalzemesi_UvBolgesiyleUyumlu checks every sub-mesh.
+                if (key == ZombieModuleLibrary.MaterialAtlas + "+" + ZombieModuleLibrary.MaterialCloth || key == ZombieModuleLibrary.MaterialCloth + "+" + ZombieModuleLibrary.MaterialAtlas) both++;
                 else if (key == ZombieModuleLibrary.MaterialCloth) clothOnly++;
                 else if (key == ZombieModuleLibrary.MaterialAtlas) atlasOnly++;
                 else hatalar.Add(m.id + ": materyal sırası " + key);
@@ -348,12 +350,13 @@ namespace DD.Art.Tests.EditMode
                     for (int lod = 0; lod < 4; lod++)
                     {
                         if (v.lods[lod] == null || v.lods[lod].mesh == null) continue;
-                        // WP-038C: a per-LOD override (fewer sub-meshes: T8 cw1 cloth-only, A1 LOD3 without the cord) must match its mesh and end the module list.
+                        // WP-038C: a per-LOD override (fewer sub-meshes: T8 cw1 cloth-only, A1 LOD3 without the cord) must match its mesh; WP-084 MD3:
+                        // shorter than the module list and made of its materials (its order is the mesh's own, no longer the list's tail).
                         string[] eff = v.lods[lod].materials ?? m.materials;
                         if (v.lods[lod].mesh.subMeshCount != eff.Length)
                             hatalar.Add(m.id + " " + v.colourway + "/" + v.fit + " LOD" + lod + ": " + v.lods[lod].mesh.subMeshCount + " alt-mesh ≠ " + eff.Length + " materyal");
-                        if (v.lods[lod].materials != null && (v.lods[lod].materials.Length >= m.materials.Length || v.lods[lod].materials[v.lods[lod].materials.Length - 1] != m.materials[m.materials.Length - 1]))
-                            hatalar.Add(m.id + " " + v.colourway + "/" + v.fit + " LOD" + lod + ": LOD materyal listesi modül listesinin kuyruğu olmalı");
+                        if (v.lods[lod].materials != null && (v.lods[lod].materials.Length >= m.materials.Length || Array.Exists(v.lods[lod].materials, x => Array.IndexOf(m.materials, x) < 0)))
+                            hatalar.Add(m.id + " " + v.colourway + "/" + v.fit + " LOD" + lod + ": LOD materyal listesi modül listesinden kısa ve onun malzemelerinden olmalı");
                     }
             }
 
@@ -471,6 +474,51 @@ namespace DD.Art.Tests.EditMode
             var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
             Assert.IsNotNull(tex, path);
             Assert.LessOrEqual(tex.width, 512, "yüklenen doku");
+        }
+
+        /// <summary>
+        /// WP-084 (AD delta MD3, 06.10) · every garment sub-mesh of the library, every variant and LOD: the material the library binds
+        /// (the LOD's list, else the module's) is the atlas exactly when ≥ 95 % of the sub-mesh's UV corners lie in the AP-025
+        /// contract's preserved AP-007 regions, cloth when ≤ 85 % (FBX 06.10: atlas ≥ 99.9 %, cloth ≤ 69.4 %). Measured from the meshes, not from the manifest (the AP-007 list
+        /// order was wrong for eight garments; ZombieMaterialAtlasTests compares against the same list and could not see it).
+        /// </summary>
+        [Test]
+        public void ZombiModulleri_AltMeshMalzemesi_UvBolgesiyleUyumlu()
+        {
+            var lib = AssetDatabase.LoadAssetAtPath<ZombieModuleLibrary>(ArtCharacterPrefabBuilder.ZombieLibrary);
+            Assert.IsNotNull(lib);
+            List<Rect> preserved = ArtAp025Intake.PreservedAtlasRects();
+            Assert.IsNotEmpty(preserved, "kaynak yok: sözleşmede preserved_AP007");
+            var uv = new List<Vector2>();
+            var hatalar = new List<string>();
+            int subMeshes = 0, twoMaterial = 0;
+            var dump = new System.Text.StringBuilder();
+            foreach (ZombieModuleLibrary.Module m in lib.modules)
+            {
+                if (m.kind == ZombieModuleLibrary.KindFace) continue;
+                foreach (ZombieModuleLibrary.Variant v in m.variants)
+                {
+                    for (int lod = 0; lod < ZombieModuleLibrary.LodCount; lod++)
+                    {
+                        ZombieModuleLibrary.MeshRef r = v.lods[lod];
+                        string[] bound = r.materials != null && r.materials.Length > 0 ? r.materials : m.materials;
+                        if (r.mesh.subMeshCount > 1) twoMaterial++;
+                        for (int sm = 0; sm < r.mesh.subMeshCount; sm++)
+                        {
+                            subMeshes++;
+                            float share = ArtAp025Intake.ShareInside(r.mesh, sm, preserved, uv);
+                            string want = share >= 0.95f ? ZombieModuleLibrary.MaterialAtlas : share <= 0.85f ? ZombieModuleLibrary.MaterialCloth : "?";
+                            string got = bound != null && sm < bound.Length ? bound[sm] : "none";
+                            if (lod == 0 && r.mesh.subMeshCount > 1) dump.Append(' ').Append(r.mesh.name).Append('[').Append(sm).Append("]=").Append(got).Append('(').Append(share.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)).Append(')');
+                            if (want != got) hatalar.Add(r.mesh.name + " alt-mesh " + sm + ": bağlı " + got + ", UV'lerin %" + (share * 100f).ToString("F1") + "'i korunan atlas bölgesinde → " + want);
+                        }
+                    }
+                }
+            }
+
+            Debug.Log("[DD-TEST] wp084.md3 subMeshes=" + subMeshes + " multiMaterialMeshes=" + twoMaterial + " mismatches=" + hatalar.Count + " |" + dump);
+            Assert.Greater(twoMaterial, 0, "kaynak yok: iki malzemeli modül");
+            Assert.IsEmpty(hatalar, string.Join("\n", hatalar.GetRange(0, Math.Min(20, hatalar.Count))));
         }
 
         // ================================================================ look seçici
