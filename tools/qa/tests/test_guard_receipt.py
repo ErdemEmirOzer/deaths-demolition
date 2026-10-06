@@ -295,8 +295,11 @@ class BotInputLostIsAWaitTests(unittest.TestCase):
                 (out / "bot-summary.json").write_text(json.dumps({"inputMeasurable": measurable, "padDisabledFrames": 0,
                                                                   "pointerAfterPadFrames": 1587, "unfocusedFrames": 12, "pass": False}))
                 return 3
+        # S-10 gt N-2 (C-00 06.10): the restore half asks wp078_perf.players() for live game Players — the machine's real
+        # ones without this patch (another session's Player made both tests 65 after a 60 s wait); hermetic: none
         with mock.patch.object(gr, "run_guard", return_value=done(0)), \
                 mock.patch.object(gr, "close", return_value={"code": 0, "why": "touched=0"}), \
+                mock.patch.object(wp078_perf, "players", return_value=[]), \
                 mock.patch.object(wp078_bot, "launch", return_value=Ran()):
             code = wp078_bot.run_guarded(args, out, ["/b/P"], {"status": "starting"})
         return code, json.loads((out / "attempt.json").read_text())
