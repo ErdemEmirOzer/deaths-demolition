@@ -223,22 +223,23 @@ namespace DD.Prototype.UI
             get { return KeyArtVisible ? _keyArt.texture.name : null; }
         }
 
-        /// <summary>The loading key art (Resources paths): the courtyard opens the rotation, the wall is the way to the Results.</summary>
-        public const string LoadingKeyArt = "UI/Wallpapers/loading_keyart";
+        /// <summary>The loading key art (Resources paths): AP-028's L01 opens the rotation, the wall is the way to the Results.</summary>
+        public const string LoadingKeyArt = "UI/Wallpapers/loading_L01";
         public const string ResultsKeyArt = "UI/Wallpapers/loading_keyart_results";
 
         /// <summary>
         /// WP-081 B1 (C-00 05.10): the arts the loading screens rotate through, never the same one twice in a row
-        /// (<see cref="KeyArtRotation"/>). Until AP-028's paintings land, 02-05 are placeholder copies of the courtyard.
+        /// (<see cref="KeyArtRotation"/>). AP-028's five paintings (v002-upscale, C-00 05.10: 5/5 accepted) replace the
+        /// courtyard and its four placeholder copies - five, so any twenty loads show each at least three times (R2 U3).
         /// The Results keep their own art, outside the rotation.
         /// </summary>
         private static readonly string[] s_loadingKeyArts =
         {
             LoadingKeyArt,
-            "UI/Wallpapers/loading_keyart_02",
-            "UI/Wallpapers/loading_keyart_03",
-            "UI/Wallpapers/loading_keyart_04",
-            "UI/Wallpapers/loading_keyart_05"
+            "UI/Wallpapers/loading_L02",
+            "UI/Wallpapers/loading_L04",
+            "UI/Wallpapers/loading_L05",
+            "UI/Wallpapers/loading_L08"
         };
 
         private static KeyArtRotation s_rotation;

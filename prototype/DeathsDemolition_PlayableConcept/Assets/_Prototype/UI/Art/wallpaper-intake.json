@@ -2,101 +2,214 @@
   "schema": "dd-wallpaper-intake-v1",
   "files": [
     {
-      "file": "loading_keyart.jpg",
-      "bytes": 1437489,
-      "sha256": "1fd07f7eae198548b423d27b7d88f8e33eed58256b89d459f04ae90fdfa93fd5",
+      "file": "loading_L01.jpg",
+      "bytes": 991893,
+      "sha256": "f9888594d1a81bb32531c3ce66c07e5fdb111e436309730ab19428cca1275244",
       "master": {
-        "path": "pre-intake: WP-068 R1-D key art (Higgsfield), JPEG as imported 25.09",
-        "sha256": "",
-        "bytes": 0
-      },
-      "encoder": "adopted (pre-intake)",
-      "psnr": 0.0,
-      "ssim": 0.0,
-      "maxLuminance": null,
-      "ceilingFit": null,
-      "date": "2026-10-05",
-      "note": "the courtyard; opens the rotation"
-    },
-    {
-      "file": "loading_keyart_02.jpg",
-      "bytes": 1238817,
-      "sha256": "f420a950b4a98237d780bd645c20b9e59cb91a8778402851656a47971ad18dcb",
-      "master": {
-        "path": "repo:Wallpapers/loading_keyart.jpg",
-        "sha256": "1fd07f7eae198548b423d27b7d88f8e33eed58256b89d459f04ae90fdfa93fd5",
-        "bytes": 1437489
+        "path": "K/asset-production/AP-028/exports/v002-upscale/Loading/AP028_loading_L01_2560x1440.png",
+        "sha256": "fae09924f0d2cfef3b41a284f84043ea11f4889ecf54a19d337d2d4bb44065ed",
+        "bytes": 4822575
       },
       "encoder": "Pillow 11.3.0 JPEG q90 4:4:4 optimize",
-      "psnr": 41.44,
-      "ssim": 0.98501,
+      "psnr": 42.3,
+      "ssim": 0.9832,
       "maxLuminance": {
-        "master": 0.98696,
-        "jpeg": 0.9888
+        "master": 1.0,
+        "jpeg": 1.0
       },
       "ceilingFit": null,
-      "date": "2026-10-05",
-      "note": "placeholder copy of the courtyard until AP-028 (WP-081 B1)"
+      "textSafe": {
+        "1080": {
+          "ring": 3.29,
+          "labels": 6.81,
+          "tip": 7.16
+        },
+        "mac": {
+          "ring": 3.29,
+          "labels": 5.65,
+          "tip": 10.1
+        },
+        "16x10": {
+          "ring": 3.29,
+          "labels": 6.96,
+          "tip": 8.0
+        },
+        "21x9": {
+          "ring": 3.29,
+          "labels": 6.64,
+          "tip": 7.17
+        }
+      },
+      "date": "2026-10-06",
+      "note": "AP-028 v002-upscale (C-00 05.10: 5/5 KABUL)"
     },
     {
-      "file": "loading_keyart_03.jpg",
-      "bytes": 1238817,
-      "sha256": "f420a950b4a98237d780bd645c20b9e59cb91a8778402851656a47971ad18dcb",
+      "file": "loading_L02.jpg",
+      "bytes": 790710,
+      "sha256": "f73951f6d70deb49ed1ba859e438b7d54d48827e09a38a163570968543d91aaa",
       "master": {
-        "path": "repo:Wallpapers/loading_keyart.jpg",
-        "sha256": "1fd07f7eae198548b423d27b7d88f8e33eed58256b89d459f04ae90fdfa93fd5",
-        "bytes": 1437489
+        "path": "K/asset-production/AP-028/exports/v002-upscale/Loading/AP028_loading_L02_2560x1440.png",
+        "sha256": "81d9938dc012c89d906dcd739c3ec3c728cf477d69ec91d909c8164213415eeb",
+        "bytes": 3928335
       },
       "encoder": "Pillow 11.3.0 JPEG q90 4:4:4 optimize",
-      "psnr": 41.44,
-      "ssim": 0.98501,
+      "psnr": 43.7,
+      "ssim": 0.9828,
       "maxLuminance": {
-        "master": 0.98696,
-        "jpeg": 0.9888
+        "master": 0.96923,
+        "jpeg": 0.97635
       },
       "ceilingFit": null,
-      "date": "2026-10-05",
-      "note": "placeholder copy of the courtyard until AP-028 (WP-081 B1)"
+      "textSafe": {
+        "1080": {
+          "ring": 6.82,
+          "labels": 5.36,
+          "tip": 9.64
+        },
+        "mac": {
+          "ring": 6.82,
+          "labels": 5.36,
+          "tip": 9.64
+        },
+        "16x10": {
+          "ring": 6.82,
+          "labels": 5.36,
+          "tip": 9.64
+        },
+        "21x9": {
+          "ring": 6.82,
+          "labels": 5.65,
+          "tip": 7.98
+        }
+      },
+      "date": "2026-10-06",
+      "note": "AP-028 v002-upscale (C-00 05.10: 5/5 KABUL)"
     },
     {
-      "file": "loading_keyart_04.jpg",
-      "bytes": 1238817,
-      "sha256": "f420a950b4a98237d780bd645c20b9e59cb91a8778402851656a47971ad18dcb",
+      "file": "loading_L04.jpg",
+      "bytes": 763162,
+      "sha256": "d72c148a8529755ca47911aec1c59955d73a6bc7cdcbceb029abb5ae42a00627",
       "master": {
-        "path": "repo:Wallpapers/loading_keyart.jpg",
-        "sha256": "1fd07f7eae198548b423d27b7d88f8e33eed58256b89d459f04ae90fdfa93fd5",
-        "bytes": 1437489
+        "path": "K/asset-production/AP-028/exports/v002-upscale/Loading/AP028_loading_L04_2560x1440.png",
+        "sha256": "e27f0248a2a5b12dc5443da8b6f6e653532ee94e2ead51e641bdccbf5ca3c2f7",
+        "bytes": 3691877
       },
       "encoder": "Pillow 11.3.0 JPEG q90 4:4:4 optimize",
-      "psnr": 41.44,
-      "ssim": 0.98501,
+      "psnr": 44.05,
+      "ssim": 0.98679,
       "maxLuminance": {
-        "master": 0.98696,
-        "jpeg": 0.9888
+        "master": 1.0,
+        "jpeg": 0.99683
       },
       "ceilingFit": null,
-      "date": "2026-10-05",
-      "note": "placeholder copy of the courtyard until AP-028 (WP-081 B1)"
+      "textSafe": {
+        "1080": {
+          "ring": 3.31,
+          "labels": 6.39,
+          "tip": 9.19
+        },
+        "mac": {
+          "ring": 3.31,
+          "labels": 6.39,
+          "tip": 9.87
+        },
+        "16x10": {
+          "ring": 3.31,
+          "labels": 6.84,
+          "tip": 9.87
+        },
+        "21x9": {
+          "ring": 3.31,
+          "labels": 6.64,
+          "tip": 8.19
+        }
+      },
+      "date": "2026-10-06",
+      "note": "AP-028 v002-upscale (C-00 05.10: 5/5 KABUL)"
     },
     {
-      "file": "loading_keyart_05.jpg",
-      "bytes": 1238817,
-      "sha256": "f420a950b4a98237d780bd645c20b9e59cb91a8778402851656a47971ad18dcb",
+      "file": "loading_L05.jpg",
+      "bytes": 774861,
+      "sha256": "eed0e04ee436fc366fe90fd117ee89dbbdd20d61964cf6040f3734f85805a88b",
       "master": {
-        "path": "repo:Wallpapers/loading_keyart.jpg",
-        "sha256": "1fd07f7eae198548b423d27b7d88f8e33eed58256b89d459f04ae90fdfa93fd5",
-        "bytes": 1437489
+        "path": "K/asset-production/AP-028/exports/v002-upscale/Loading/AP028_loading_L05_2560x1440.png",
+        "sha256": "bca8ee60b4a2f9041fd3341cdcd3d8a591797fd031c8327950162ea98b33153e",
+        "bytes": 3773032
       },
       "encoder": "Pillow 11.3.0 JPEG q90 4:4:4 optimize",
-      "psnr": 41.44,
-      "ssim": 0.98501,
+      "psnr": 43.98,
+      "ssim": 0.98238,
       "maxLuminance": {
-        "master": 0.98696,
-        "jpeg": 0.9888
+        "master": 1.0,
+        "jpeg": 1.0
       },
       "ceilingFit": null,
-      "date": "2026-10-05",
-      "note": "placeholder copy of the courtyard until AP-028 (WP-081 B1)"
+      "textSafe": {
+        "1080": {
+          "ring": 6.25,
+          "labels": 6.09,
+          "tip": 8.09
+        },
+        "mac": {
+          "ring": 6.25,
+          "labels": 6.09,
+          "tip": 10.02
+        },
+        "16x10": {
+          "ring": 6.25,
+          "labels": 6.09,
+          "tip": 8.54
+        },
+        "21x9": {
+          "ring": 6.25,
+          "labels": 6.09,
+          "tip": 9.0
+        }
+      },
+      "date": "2026-10-06",
+      "note": "AP-028 v002-upscale (C-00 05.10: 5/5 KABUL)"
+    },
+    {
+      "file": "loading_L08.jpg",
+      "bytes": 808958,
+      "sha256": "108cd700a029bb9115dfd1626731d25b0fe57153f68bc2dc912b8d3a021fc76c",
+      "master": {
+        "path": "K/asset-production/AP-028/exports/v002-upscale/Loading/AP028_loading_L08_2560x1440.png",
+        "sha256": "6fe7042ac50a7b351e4ea499d7196b91dc205e9ac1b7a74ab2b6f5e39c334e3d",
+        "bytes": 4049877
+      },
+      "encoder": "Pillow 11.3.0 JPEG q90 4:4:4 optimize",
+      "psnr": 43.38,
+      "ssim": 0.98353,
+      "maxLuminance": {
+        "master": 0.99745,
+        "jpeg": 1.0
+      },
+      "ceilingFit": null,
+      "textSafe": {
+        "1080": {
+          "ring": 7.81,
+          "labels": 6.87,
+          "tip": 11.91
+        },
+        "mac": {
+          "ring": 7.81,
+          "labels": 6.49,
+          "tip": 11.91
+        },
+        "16x10": {
+          "ring": 7.81,
+          "labels": 6.46,
+          "tip": 11.91
+        },
+        "21x9": {
+          "ring": 8.04,
+          "labels": 6.46,
+          "tip": 11.79
+        }
+      },
+      "date": "2026-10-06",
+      "note": "AP-028 v002-upscale (C-00 05.10: 5/5 KABUL)"
     },
     {
       "file": "loading_keyart_results.jpg",

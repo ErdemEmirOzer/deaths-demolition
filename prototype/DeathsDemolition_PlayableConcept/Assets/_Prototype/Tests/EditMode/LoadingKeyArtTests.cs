@@ -161,8 +161,8 @@ namespace DD.Prototype.Tests.EditMode
         /// <summary>
         /// R2 U3 on fixed seeds: a session of 200 loading screens never shows one art twice in a row, and every 20 in a row
         /// (the first 20 too) show each art at least three times (r2-gates.json U3: minPerAny20 ≥ 3); also counts
-        /// distinctSha256, the rotation files that differ (red in the gate until AP-028's paintings replace the placeholder
-        /// copies) - this test asserts the rotation only. r2-U3.json through the shared R2Olcum (C-00 05.10, decision a;
+        /// distinctSha256, the rotation files that differ (AP-028's five paintings since 06.10; the placeholder copies kept the
+        /// gate red before) - this test asserts the rotation only. r2-U3.json through the shared R2Olcum (C-00 05.10, decision a;
         /// tools/qa/r2-measure-contract.md).
         /// </summary>
         [Test]
