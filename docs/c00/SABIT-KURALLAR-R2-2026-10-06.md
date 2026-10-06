@@ -149,16 +149,16 @@
 
 2.21 Gerçek telemetri klasörüne düşen bir dosya koşuya kesin olarak bağlanamıyorsa taşınmaz (kullanıcı oynuyor olabilir). Elle temizlik main-ci koşmuyorken yapılır, çünkü CI guard'ı bunu geri alır. [m:wp-079-durumu dersler]
 
-2.23 **Kalıcı latch dosyası yok (kullanıcı + C-00 06.10):** "GUARD-STOP" benzeri, elle kaldırılan kalıcı kilit dosyası proje standardı değildir (yalnız S-06'nın wp-071/wp-083 betiklerinde vardı). Standart: restore exit 32 → `oos_rule.py` rc 0 → uyarı + devam; gerçek hata (verified≠1, 30/31/7/64/65, STALE, MISMATCH, oos rc≠0) → zincir o adımda durur, sıfırdan farklı çıkışla biter ve C-00'a yazılır. Mevcut bir latch oos_rule rc 0 iken düşerse C-00 onu kullanıcının 06.10 talimatıyla `mv` ile yeniden adlandırır (silmez). Guard'lı pencereler başka oturumların Player'larıyla çakışmasın diye uzun PlayMode zincirleri Player slotunu da tutabilir (sıra: player → unity). [kullanıcı 06.10 "kilidi kaldır", "guard stop tarzı şeyler… bundan emin ol"; m:kural-guard-stop-latch-yok 06.10]
+2.23 **Kalıcı latch dosyası yok (kullanıcı + C-00 06.10):** "GUARD-STOP" benzeri, elle kaldırılan kalıcı kilit dosyası proje standardı değildir (yalnız S-06'nın wp-071/wp-083 betiklerinde vardı). Standart: restore exit 32 → `oos_rule.py` rc 0 → uyarı + devam; gerçek hata (verified≠1, 30/31/7/64/65, STALE, MISMATCH, oos rc≠0) → zincir o adımda durur, sıfırdan farklı çıkışla biter ve C-00'a yazılır. Mevcut bir latch oos_rule rc 0 iken düşerse C-00 onu kullanıcının 06.10 talimatıyla `mv` ile yeniden adlandırır (silmez). Guard'lı pencereler başka oturumların Player'larıyla çakışmasın diye uzun PlayMode zincirleri Player slotunu da tutabilir (sıra: player slotu → guard penceresi → unity; §4.5). [kullanıcı 06.10 "kilidi kaldır", "guard stop tarzı şeyler… bundan emin ol"; m:kural-guard-stop-latch-yok 06.10]
 
-2.22 **D9 rollout'tan SONRA geçerli olacaklar** (rollout'u C-00 ilan eder; o güne kadar hiçbir şey değişmez):
+2.22 **D9 rollout (06.10 07:16, main `a9429acd`) ile GEÇERLİ:**
 - Guard pencere defteri, aynı alanı koruyan iki pencereyi aynı anda açmaz; bekleyenler FIFO kuyruğa girer.
 - `DD_GUARD_QUEUE_WAIT` varsayılanı 3600 s (C-00 06.10 onayı); `DD_GUARD_WAIT` 300 s yalnız profil kilidi/BUSY beklemesi içindir.
-- Kilit sırası tüm kapsamlarda guard → unity olur; unity tutarken snapshot 64 döner. Sarmalayıcılarda unity slotu snapshot'tan SONRA alınır.
+- Kilit sırası tüm kapsamlarda guard → unity'dir; unity tutarken snapshot 64 döner. Sarmalayıcılarda unity slotu snapshot'tan SONRA alınır.
 - Tazeleme: worktree main'e getirilir ve `python3 tools/guard_freshness.py <sürücü guard>` 0 dönmelidir.
 - main-ci de aynı kuyruktadır ve önceliği yoktur.
 
-[D8 §1–§6; OA S-01 mesajı; BRF §10]
+[D8 §1–§6; OA S-01 mesajı; BRF §10; C-00 06.10 D9 duyurusu]
 
 ---
 
@@ -285,14 +285,17 @@
 
 [m:kural-disk-kapisi 30.09; OA §0.7; PSP §10; TR (slot.sh, C-00 01.10); m:wp-074-075-durumu ders]
 
-4.5 **Kilit sırası player → unity:**
-- Player ve kabul pencerelerinde önce guard snapshot (player slotu) alınır, sonra Unity.
+4.5 **Kilit sırası player → guard penceresi → unity (D8):**
+- Makine çapında sıra: player slotu (gerekiyorsa) → guard penceresi (snapshot; FIFO kuyruk, `DD_GUARD_QUEUE_WAIT` 3600 s) → unity slotu. D9 rollout'tan (06.10) beri bütün kapsamlarda geçerlidir (§2.22).
+- Unity slotu tutulurken `--scope editor` ve `--scope all` snapshot her durumda 64 döner. `--scope player`'da tek istisna var: aynı zincirde bir ata player slotunu tutuyorsa sıra doğru sayılır.
+- player ve all kapsamlı snapshot player slotunu kendisi alır ve kuyrukta beklerken tutar. Editor kapsamlı bir pencerenin içinde player slotu alınmaz (`player-run.sh` dahil); uzun PlayMode zinciri player slotunu tutacaksa onu snapshot'tan ÖNCE alır (§2.23).
+- Restore slot almaz ve kilit sırasını denetlemez; yalnız snapshot'ın aldığı player slotunu bırakır.
 - Unity slotu tutarken player slotu asla beklenmez.
 - Build, player oturumundan önce ve ayrı bir adımda yapılır; player oturumu içinde Unity batch başlatılmaz.
 - Smoke slotu guard snapshot'ından SONRA alınır.
-- D9'dan sonra bütün kapsamlarda sıra guard → unity olur (§2.22).
+- Sarmalayıcılarda unity slotu snapshot'tan SONRA alınır; `test.sh` ve `build.sh` unity slotunu kendileri alır.
 
-[m:kural-kilit-sirasi 30.09; m:kural-kilit-sirasi-player-unity 30.09; m:kural-userdata-guard 01.10; BRF §10; OA §0.7]
+[m:kural-kilit-sirasi 30.09; m:kural-kilit-sirasi-player-unity 30.09; m:kural-userdata-guard 01.10; BRF §10; OA §0.7; D8 §2, §4, §6; TR (userdata-guard, G4 D8 queue)]
 
 4.6 Başka oturumun süreci öldürülmez, kilidi silinmez, dosyasına ve worktree'sine dokunulmaz. `pkill -f "Playable Concept"`, `killall Unity` gibi geniş desenler yasaktır; yalnız kendi başlattığın pid (`$!`, slot bileti) sonlandırılır. Emin değilsen C-00'a sor. [PSP §3.4.44, §10; m:kural-baska-oturum-player-kapatma 24.09; M4R1 §4.13, §4.14e; OA §0.8]
 
@@ -785,7 +788,7 @@ Açık / devir: → S-xx: … ; 🔴: … ; kredi: n kr (ledger no)
 | Ç7 | Merge/push/cleanup onayı ve kalıcı silme | PSP §6/§8: merge/push ve temizlik onayı kullanıcıda; TR: `--apply` "user's approval" | m:codex-geri-devri (29.09): rutin işlem (integrate, etiket, cleanup `--apply` dahil) onaysız; 05.10 tam yetki | **Merge, etiket, push: C-00 onaysız yapar.** `cleanup-merged --apply`: BELİRSİZ. | 05.10 istisnası kalıcı silmeyi kullanıcıya bırakıyor; `git worktree remove` ve build klasörü silme Çöp'e gitmeyen kalıcı silmedir. C-00 kararı gerekli (öneri: `--apply` yerine Çöp'e taşıma, ya da kullanıcı onayıyla). |
 | Ç8 | Guard yolu | worktree `tools/userdata-guard.sh` (24.09); yalnız ana repo yolu (30.09) | Kanonik sürücü `K/wp-079/driver/tools/userdata-guard.sh`; repo yolu 64 (01.10) | **Sürücü (`DD_GUARD_CANON`).** OA §0.6'daki "tools/userdata-guard.sh" ifadesi bu kanonik yolu kasteder. | En yeni C-00 kuralı; TR (G4 D4). |
 | Ç9 | PlayMode ve player slotu | m:wp-078-r1-kabul DERS + m:kural-kilit-sirasi-player-unity ilk cümlesi: "PlayMode da player slotunu alır" (30.09) | Aynı gün netleştirme: editor-scope EditMode/PlayMode player slotu ALMAZ, o cümle GEÇERSİZ (m:makine-slot-kurali, m:kural-kilit-sirasi 30.09) | **Günlük EditMode/PlayMode `--scope editor`, player slotsuz; kabul/CI pencereleri player slotlu.** | Aynı günün daha sonraki C-00 teyidi. |
-| Ç10 | Kilit sırası | player → unity (30.09) | D8: tüm kapsamlarda guard → unity, unity tutarken 64 (05.10, rollout bekliyor) | **D9 rollout'a kadar player → unity; sonra guard → unity.** | D8 §0: "rollout günü geçerli olur". |
+| Ç10 | Kilit sırası | player → unity (30.09) | D8: tüm kapsamlarda guard → unity, unity tutarken 64 (05.10, rollout bekliyor) | **D9 rollout'u 06.10 07:16'da yapıldı: o andan beri player slotu → guard penceresi → unity (§4.5, §13 Ç-D8).** Öncesinde player → unity geçerliydi. | D8 §0: "rollout günü geçerli olur". |
 | Ç11 | Worktree'yi main'e getirme | M4R1 §4.3 (24.09) ve m:wp-068-durumu (C-00 24.09): main dala merge edilmez; yeni dal + cherry-pick | D8 §1 (05.10): `git merge --ff-only main`, dal ileride ise `git -C <worktree> merge main` | **BELİRSİZ — C-00 kararı.** | ff-only çelişmez; ikinci yol merge commit üretir ve 24.09 kuralına aykırıdır. Öneri: ff olmuyorsa main'den yeni dal + cherry-pick. |
 | Ç12 | Oturum klasörü | OA §1 tablosu (`25bf74cd`): "klasör = worktree" | OA §0.13 (`18f3d01e`, daha yeni): oturumlar ana depoda açılır, klasör değişmez | **§0.13 (ana depo).** | Daha yeni commit. 06.10'da worktree klasöründe açılmış oturumlar KADRO ajanlarını göremez; yeniden açılıp açılmayacakları BELİRSİZ, C-00 kararı gerekli. |
 | Ç13 | Aktif ajan dosyası biçimi | 30.09: aktif ajan başına satır (`subagent_type · model · görev · başladı`), biten silinir, yoksa "aktif ajan yok — …" | OA §0.3 (06.10): `gg.aa SS:DD · rol · opus-5-5 · görev · dal · durum`, başta/sonda/teslimde | **06.10 biçimi.** | Daha yeni C-00 kuralı. |
@@ -823,7 +826,7 @@ Kullanıcının 06.10 tam yetkisiyle (§1.19) C-00 verdi; kitabın bağlayıcı 
 | Ç2 | KADRO kapıları (konsey notu, görsel dilimde AD turu, ses kapısı, teslim öncesi gt, manuel kit) **bağlayıcıdır.** Dayanak: kullanıcı 06.10 "kadro sistemini efektif kullandığımızdan emin ol", "gerekli hiçbir şeyi atlamadan… hem kadro ajanlarını hem alt ajanları kullanarak". HIZLI HAT / kota modu yalnız C-00 açıkça ilan ederse. |
 | Ç5 | "1 aday (gerekirse 2)" kuralı **düştü** (kredi sınırsız, 05.10). Aday sayısı AD kararının gerektirdiği kadardır; seçenek paketleri çok şıklıdır (§8.12). Ledger ve bakiye/işlem doğrulaması sürer. |
 | Ç7 | `cleanup-merged.sh --apply` **kullanılmaz** (kalıcı siler; kalıcı silme kullanıcınındır). Worktree temizliği: önce `apfs_real_gain.py`, sonra klasör `mv` ile `~/.Trash/`'e ve `git worktree prune` (dal ve commit'ler korunur). Build ve büyük klasörler önce harici arşive (kopyala → SHA256 → Çöp). Çöp'ü kullanıcı boşaltır. `git worktree remove` kullanılmaz. |
-| Ç11 | **main dala merge edilmez.** `git merge --ff-only main` (merge commit üretmez) serbesttir; ff olmuyorsa main'den yeni dal açılır ve kendi commit'leri cherry-pick edilir (rebase yok). D8 göç notundaki `git -C <worktree> merge main` satırı D9 duyurusunda bu kurala göre düzeltilir (S-01). |
+| Ç11 | **main dala merge edilmez.** `git merge --ff-only main` (merge commit üretmez) serbesttir; ff olmuyorsa main'den yeni dal açılır ve kendi commit'leri cherry-pick edilir (rebase yok). D8 göç notundaki `git -C <worktree> merge main` satırı göç notu v2'de (§1) bu kurala göre düzeltildi (S-01; D9 duyurusu 06.10). |
 | Ç12 | Oturumlar **ana depoda** açılır (KADRO ajanları için); OA §1 tablosundaki "Klasör" sütunu çalışma worktree'sidir, oturum klasörü değildir (OA 06.10'da düzeltildi). 06.10'da açılan yedi oturum ana depodadır. |
 | Ç16 | Blender `--threads 4` (makine paylaşımlı). |
 | Ç20 | Tam yetki C-00'a ürün içi sayı ve teknik kararları verir; C-00 karar verir ve görselle bildirir. Ancak: (a) Unity/URP sürümü ve paket ekleme/yükseltme R2'de **yapılmaz** (ihtiyaç doğarsa C-00 karar verir, gerekçeli DEC ile); (b) gerçek kullanıcı verisine yazmak **hiçbir yetkiyle** yapılmaz (§2; yalnız C-00'ın kanıtlı geri yüklemesi); (c) S-06 runner exit-32 değişikliğini S-06'nın izin sistemi reddetti → yapılmadı; yerine §2.23 (latch'i C-00 kaldırır, uzun zincir Player slotunu tutar). |
@@ -832,4 +835,5 @@ Kullanıcının 06.10 tam yetkisiyle (§1.19) C-00 verdi; kitabın bağlayıcı 
 | Ç27 | `--s01` yalnız commit `ProjectIntegrityTests.cs`'e dokunuyorsa verilir (integrate.sh belgesi); S-01'in diğer araç teslimleri `tools/` kapsamındadır. |
 | Ç32 | Konsey notu = lider + eş imza; karar geri dönüşü zor ya da kritikse 1–2 çürütücü (refuter) ajan eklenir (eski "ultracode" kalıbı, Agent aracıyla). Workflow aracı yalnız kullanıcının kendi açık isteğiyle. |
 | Ç33 | R2 paket promptlarının kanonik yeri `docs/c00/prompts/` (depo) + kopyası `K/c-00/R2/prompts/`. Eksik R2 promptları (WP-082, WP-084, WP-086, WP-090, WP-091) C-00 tarafından yazılır. `planning/work-packages/` M4-R1 ve öncesi için geçerli kalır. |
+| Ç-D8 | **(06.10)** D8 + kuyruk geçişi yapıldı (06.10 07:16, main `a9429acd`). 65 adımı: pencere başka oturumunsa önce o oturuma ve C-00'a haber verilir. `L/queue/done` (L = `~/.dd-userdata-guard/`) geçmiş kaydıdır, geri alma ön koşulu dışındadır. |
 | §7.7 | **S-04:** game-designer (lider), product-analyst, game-test-engineer, gt. **Üretim ajanları (AP-xx):** yürütme `general-purpose` (MCP + Bash); inceleme varlık türüne göre: görsel → art-director (AD) + 3d-modeller / blender-specialist / concept-artist; animasyon → character-animator + animation-specialist; ses → sound-designer + sound-engineer; teslim öncesi gt. |
