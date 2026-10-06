@@ -150,10 +150,10 @@ No owner test: `wp078_accept` writes `r2-P5.json` in stage `r2` from the chain's
 (`--r1-evidence <dir> --r1-commit <40-hex>`; tool `tools/qa/r2_load_time.py`). Dev build against dev build, no code in
 either build (C-00 05.10 decision (a)). R1 sat on the 1.2 s curtain floor in every session, so `floorLimited` tells
 that the ratio only shows an R2 load that grows past it. Every `r2` run first renames an earlier `r2-P5.json` to
-`.stale-<utc>`, with or without a baseline this time. A resumed run whose `--r1-commit` differs from the one P2 (the a4
-record) or P5 (the r2 record) was made with stops with 64 at the start of r2 (or of a4), before that stage's sessions —
-earlier stages that have not passed yet still run first. One report, one R1 baseline (gt 06.10 N-11, KP-2). A run without
-`--resume` on existing evidence is refused anyway.
+`.stale-<utc>`, with or without a baseline this time. A run whose `--r1-commit` differs from the one P2 (the a4 record) or
+P5 (the r2 record) was made with stops with 64 at the start of r2 (or of a4), before that stage's sessions. Earlier stages
+that have not passed yet still run first. The check applies with or without `--resume`: the existing-evidence refusal only
+looks at the selected stages' own outputs (gt KP-18). One report, one R1 baseline (gt 06.10 N-11, KP-2).
 
 ## P2 (R2 − R1 perf per cell, report — C-00 05.10)
 

@@ -400,6 +400,8 @@ def host_record(step, start, quiet, waited, samples, load_max):
     unreadable = sum(1 for s in samples if s.get("error"))
     if unreadable:
         why.append(f"host unreadable in {unreadable} of {len(samples)} samples")
+    if not samples:
+        why.append("no host sample was taken during the session")   # gt KP-8: unwatched is not quiet
     return {"schema": "dd-r2-host-v1", "step": step["id"], "gates": step["gates"], "loadMax": load_max,
             "waitedSeconds": waited, "quietAtStart": quiet, "start": start, "samples": len(samples),
             "load1Max": most("load1", samples, start.get("load1")), "foreignUnityMax": most("foreignUnity", samples, 0),
@@ -590,7 +592,7 @@ class Chain:
                 self.check_terminated()
                 if not self.dry_run and not self.verify_tree():
                     raise Stop(2, f"{stage}: repo left FINAL or the tree became dirty")
-                if stage in ("a4", "r2") and self.resume and not self.dry_run:
+                if stage in ("a4", "r2") and not self.dry_run:   # resumed or not: the refusal only sees this run's stages (gt KP-18)
                     self.check_baseline(stage)
                 if stage != "a8" and not self.dry_run and self.resume and self.stage_passed(stage):
                     self.log(f"SKIP {stage}: verified PASS for FINAL {self.final}")
@@ -702,7 +704,7 @@ class Chain:
         return self._r1_proof or None
 
     def check_baseline(self, stage):
-        """KADRO test-engineer SHOULD-2 + gt 06.10 N-11: a resumed R2 run keeps the R1 baseline its records were made with —
+        """KADRO test-engineer SHOULD-2 + gt 06.10 N-11 / KP-18: an R2 run keeps the R1 baseline its records were made with —
         P2 (the a4 record) and P5 (the r2 record, when it wrote r2-P5.json) never rest on two baselines in one report, never
         a skipped A4 that silently leaves P2 out, never a baseline root the manifest would not declare. Checked before a4
         and before r2 (r2 runs first in the chain, so a resume with another baseline stops before any session)."""

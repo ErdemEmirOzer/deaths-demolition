@@ -762,6 +762,16 @@ class P2BaselineTests(Base):
         self.assertTrue((self.evidence / "r2" / "r2-P5.json").is_file())
         self.assertEqual([], list((self.evidence / "r2").glob("r2-P5.json.stale-*")))
 
+    def test_a_run_without_resume_on_a_p5_of_another_baseline_stops_too(self):
+        # gt 06.10 KP-18: the existing-evidence refusal sees only the selected stages' outputs, so `--stages a4` without
+        # --resume used to run A4 on baseline Y next to a P5 made on R1
+        r1 = r1_evidence(self.tmp.name)
+        self.p5_run(r1, R1)
+        other = r1_evidence(Path(self.tmp.name) / "other", commit="e" * 40)
+        self.assertEqual(64, make_chain(self.evidence, ["a4"], round_name="R2", r1_evidence=other, r1_commit="e" * 40).run())
+        self.assertIn("r2 was recorded with R1 baseline " + R1, (self.evidence / "accept.log").read_text())
+        self.assertFalse((self.evidence / "a4").exists())
+
     def test_an_r2_run_that_wrote_no_p5_binds_no_baseline(self):
         with mock.patch.object(acc.r2_gates, "measurement_steps", side_effect=lambda c, quiet: []):
             make_chain(self.evidence, ["r2"], round_name="R2", r1_evidence=Path(self.tmp.name), r1_commit="e" * 40).run()
@@ -917,6 +927,13 @@ class HostWatchTests(unittest.TestCase):
         self.assertEqual((1, 2.0), (record["unreadableSamples"], record["load1Max"]))
         self.assertEqual(["start not quiet after 30 s: OSError: ps: not permitted",
                           f"host unreadable in 1 of {len(samples)} samples"], record["dirtyWhy"])
+
+    def test_a_session_without_a_host_sample_is_not_clean(self):
+        # gt 06.10 KP-8: a quiet start with no sample during the session is unwatched, not quiet
+        start = {"load1": 1.0, "foreignUnity": 0, "foreignPlayer": 0, "foreignBlender": 0}
+        record = acc.host_record({"id": "r2-S1", "gates": ["S1"]}, start, True, 0.0, [], 6.0)
+        self.assertEqual((True, ["no host sample was taken during the session"], 1.0),
+                         (record["dirty"], record["dirtyWhy"], record["load1Max"]))
 
     def test_the_sampler_runs_until_stopped(self):
         watch = acc.HostWatch(interval=0.01)
