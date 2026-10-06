@@ -105,7 +105,8 @@ that the ratio only shows an R2 load that grows past it.
 
 No owner test: in an R2 round `wp078_accept` A4 runs the R1 FINAL's own release-probe build (the `--r1-evidence` root's
 build-probe, proven by that evidence's unit record: complete, built at `--r1-commit`, the same binary sha256) alternately
-with FINAL's — R2, R1, R2, R1 … window by window in every tier × mode cell, inside the same quiet window
+with FINAL's — window by window in every tier × mode cell, ABBA (R2 R1 R1 R2 …, the starting side swapped per cell), each
+pair inside one quiet batch
 (`tools/qa/wp078_perf.py` `--baseline-bin`; R1 root `<E>/a4/perf-r1`, R1 commit). `tools/qa/wp078_perf_report.py`
 `--baseline` compares the mean of each cell's counted windows and writes `r2-P2.json`: `flaggedCells` (over +10 % and
 +1.0 ms together), `worstDeltaMs`, `worstDeltaPct`, and the per-cell rows (window means, SD, the SE of the difference,

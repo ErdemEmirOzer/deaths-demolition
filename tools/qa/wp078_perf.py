@@ -31,6 +31,9 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
 PLAYER_EXE = "MacOS/Deaths Demolition - Playable Concept"
+# one window's wall time beyond its measured seconds: preflight ~55 s, launch, warm-up, quit (KADRO game-test-engineer
+# 06.10: ~190-200 s per 60 s window in practice; the old 90 s let a batch overrun its 25 min)
+WINDOW_OVERHEAD_S = 140
 
 
 def resolve_binary(path):
@@ -68,9 +71,12 @@ class QuietWindow:
     load1 < load_max and no foreign Unity / Player process; a window batch lasts at most max_minutes, then everything is
     released for a pause so the other sessions' queues move (FIFO), and taken again."""
 
-    def __init__(self, note, flag, load_max, max_minutes, pause_seconds):
+    def __init__(self, note, flag, load_max, max_minutes, pause_seconds, wait_max_seconds=1800.0):
         self.note, self.flag, self.load_max = note, flag, load_max
         self.max_seconds, self.pause = max_minutes * 60.0, pause_seconds
+        # KADRO game-test-engineer SHOULD-4 (R1 FINAL'' sat a whole hour on load1 6.9-15.3 with every slot held): a host that
+        # does not go quiet within wait_max gets every slot back, the queues move, and the window is tried again after pause
+        self.wait_max = wait_max_seconds
         self.slot = str(REPO / "tools" / "slot.sh")
         self.holders, self.started = [], None
 
@@ -103,7 +109,7 @@ class QuietWindow:
         foreign = [c for c in comm if c.strip().endswith("/MacOS/Unity") or c.strip().endswith("/MacOS/Blender")]
         return not foreign, f"foreign Unity/Blender {len(foreign)}"
 
-    def acquire(self):
+    def _take_slots(self):
         subprocess.run([self.slot, "acquire", "player", "wp078-perf"], capture_output=True, text=True)
         self.flag.touch()
         for i in (1, 2, 3):
@@ -112,36 +118,57 @@ class QuietWindow:
             self.holders.append(subprocess.Popen(["bash", "-c", script]))
         while not self._unity_all_ours():
             time.sleep(10)
+
+    def _give_back(self):
+        self.flag.unlink(missing_ok=True)
+        for h in self.holders:
+            h.wait()
+        self.holders = []
+        subprocess.run([self.slot, "release", "player", "wp078-perf"], capture_output=True, text=True)
+
+    def _wait_quiet(self):
+        """(True, why) once the host is quiet; (False, why) after wait_max seconds of waiting with the slots held."""
+        waited = 0.0
         while True:
             quiet, why = self._host_quiet()
+            if quiet or waited >= self.wait_max:
+                return quiet, why
+            time.sleep(15)
+            waited += 15
+
+    def acquire(self):
+        while True:
+            self._take_slots()
+            quiet, why = self._wait_quiet()
             if quiet:
                 break
-            time.sleep(15)
+            self._give_back()
+            self.note(f"quiet window: host not quiet after {self.wait_max:.0f} s ({why}) — every slot given back, retry in {self.pause:.0f} s")
+            time.sleep(self.pause)
         self.started = time.monotonic()
         self.note(f"quiet window: all Unity slots + player slot held, {why}")
 
     def release(self):
         if self.started is None:
             return
-        self.flag.unlink(missing_ok=True)
-        for h in self.holders:
-            h.wait()
-        self.holders = []
-        subprocess.run([self.slot, "release", "player", "wp078-perf"], capture_output=True, text=True)
+        self._give_back()
         self.started = None
         self.note("quiet window released")
 
     def before_window(self, estimate_seconds):
-        if self.started is not None and time.monotonic() - self.started + estimate_seconds > self.max_seconds:
+        """estimate 0 = the second window of a pair budgeted at the pair's start: never a batch boundary here (SHOULD-2)."""
+        if self.started is not None and estimate_seconds and time.monotonic() - self.started + estimate_seconds > self.max_seconds:
             self.release()
             time.sleep(self.pause)
-        if self.started is None:
-            self.acquire()
-        quiet, why = self._host_quiet()
-        while not quiet:                     # a Unity batch that was already running when the slots were taken
-            time.sleep(15)
-            quiet, why = self._host_quiet()
-        return why
+        while True:
+            if self.started is None:
+                self.acquire()
+            quiet, why = self._wait_quiet()   # a Unity batch that was already running when the slots were taken
+            if quiet:
+                return why
+            self.release()
+            self.note(f"quiet window: host not quiet after {self.wait_max:.0f} s ({why}) — released, retry in {self.pause:.0f} s")
+            time.sleep(self.pause)
 
 
 def annotate_attempt(cell, receipt):
@@ -249,6 +276,8 @@ def main():
     parser.add_argument("--load-max", type=float, default=6.0, help="C-00 26.09: measure only below this load1")
     parser.add_argument("--quiet-minutes", type=float, default=25.0)
     parser.add_argument("--quiet-pause", type=float, default=180.0)
+    parser.add_argument("--quiet-wait-max", type=float, default=1800.0,
+                        help="seconds to wait for a quiet host with every slot held before giving them back and retrying")
     parser.add_argument("--max-discards", type=int, default=6, help="K8: host-discarded re-runs allowed per cell per invocation")
     args = parser.parse_args()
     # C-00 30.09 M-14 / G4 D2: TERM and HUP become SystemExit(128+n), so every finally (restore, quiet release) runs
@@ -287,7 +316,8 @@ def main():
             handle.write(line + "\n")
 
     note(f"plan {len(runs)} cells × counted windows {[r[2] for r in runs]} · tiers={tiers} modes={modes} commit={args.commit}")
-    quiet = None if (args.no_quiet or args.dry_run) else QuietWindow(note, root / ".quiet-hold", args.load_max, args.quiet_minutes, args.quiet_pause)
+    quiet = None if (args.no_quiet or args.dry_run) else QuietWindow(note, root / ".quiet-hold", args.load_max, args.quiet_minutes,
+                                                                     args.quiet_pause, args.quiet_wait_max)
     baseline = None
     if args.baseline_bin:
         # WP-091: the R1 probe build in its own root, recorded under its own commit
@@ -310,13 +340,17 @@ def run_all(args, runs, root, binary, seconds, quiet, note, baseline=None):
     """C-00 30.09 K8: every cell runs until it has its counted windows; a host-discarded window is re-run at the next
     free index in the same root (at most --max-discards extra attempts per cell per invocation).
     WP-091 (C-00 05.10): with a baseline (R1 probe build, its own root and commit) the two builds ALTERNATE window by
-    window inside the same quiet window — R2, R1, R2, R1 … per cell — so the machine state weighs on both alike."""
+    window inside the same quiet window, so the machine state weighs on both alike — ABBA within a cell and the starting
+    side swapped from one cell to the next (R2 R1 R1 R2 R2 R1 | R1 R2 R2 R1 …: a drift that favours the second slot of a
+    pair cancels; KADRO game-test-engineer SHOULD-1), and a pair is budgeted at its start so a quiet-batch boundary never
+    falls between its two windows (SHOULD-2)."""
     sides = [("", args, root, binary)]
     if baseline is not None:
         sides.append(baseline)
     first = True
-    for name, mode, need in runs:
+    for cell_index, (name, mode, need) in enumerate(runs):
         extra = {tag: 0 for tag, *_ in sides}
+        round_index = 0
         while True:
             pending = []
             for tag, side_args, side_root, _ in sides:
@@ -335,14 +369,18 @@ def run_all(args, runs, root, binary, seconds, quiet, note, baseline=None):
                     else:
                         note(f"{label}: {counted}/{need} counted after {extra[tag] - 1} re-runs — BLOCKED (host too busy), next cell")
                 break
-            for tag, side_args, side_root, side_binary in sides:
-                if tag not in pending:
-                    continue
+            order = sides if (round_index + cell_index) % 2 == 0 else list(reversed(sides))
+            round_index += 1
+            pair = [s for s in order if s[0] in pending]
+            if quiet is not None and len(pair) > 1:
+                quiet.before_window(len(pair) * (seconds + WINDOW_OVERHEAD_S))   # the pair fits in this batch, or a new one
+            for slot, (tag, side_args, side_root, side_binary) in enumerate(pair):
                 counted, index = cell_state(side_root, name, mode)
                 if not first:
                     time.sleep(args.cooldown if quiet is None else min(args.cooldown, 20.0))
                 first = False
-                code = run_window(side_args, side_root, side_binary, seconds, quiet, note, name, mode, index)
+                estimate = 0 if slot > 0 else (seconds + WINDOW_OVERHEAD_S)   # 0: inside a pair already budgeted
+                code = run_window(side_args, side_root, side_binary, seconds, quiet, note, name, mode, index, estimate)
                 if code is not None:
                     return code
                 extra[tag] += 1 if cell_state(side_root, name, mode)[0] == counted else 0
@@ -352,8 +390,9 @@ def run_all(args, runs, root, binary, seconds, quiet, note, baseline=None):
     return 0
 
 
-def run_window(args, root, binary, seconds, quiet, note, name, mode, index):
-    """One guarded window; None to continue, an exit code to stop the whole matrix."""
+def run_window(args, root, binary, seconds, quiet, note, name, mode, index, estimate=None):
+    """One guarded window; None to continue, an exit code to stop the whole matrix. estimate: the wall time the quiet
+    batch must still have (0 = the second window of a pair budgeted at its start)."""
     cell = root / f"perf-{name}-{mode}-{index}"
     command = [sys.executable, str(HERE / "wp064_run.py"), "perf", "--bin", str(binary), "--out", str(cell),
                "--commit", args.commit, "--window", str(seconds), "--load-max", str(args.load_max),
@@ -374,7 +413,7 @@ def run_window(args, root, binary, seconds, quiet, note, name, mode, index):
 
     ug = root / "ug" / ("ug-" + cell.name)   # not "perf-…": wp078_report treats any perf-* folder outside the root as a stray window
     if quiet is not None:
-        note(f"{cell.name}: {quiet.before_window(seconds + 90)}")
+        note(f"{cell.name}: {quiet.before_window(seconds + WINDOW_OVERHEAD_S if estimate is None else estimate)}")
     snap = guard_receipt.run_guard("snapshot", ug)
     code = guard_receipt.snapshot_code(snap.returncode)
     if code:
