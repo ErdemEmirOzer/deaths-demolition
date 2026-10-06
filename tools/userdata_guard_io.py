@@ -148,8 +148,47 @@ def record_owner(rec):
     return slot.get("holder") or rec.get("owner") or {}
 
 
+def proc_state(pid):
+    """(stat, lstart) of a pid from ONE `ps` call, lstart normalised as lstart() gives it; ("", "") when ps answers nothing
+    (3 tries, as lstart())."""
+    env = {k: v for k, v in os.environ.items() if k != "TZ"}
+    env["LC_ALL"] = "C"
+    for attempt in range(3):
+        r = subprocess.run(["ps", "-o", "stat=,lstart=", "-p", str(pid)], capture_output=True, text=True, env=env)
+        parts = r.stdout.split()
+        if len(parts) >= 2:
+            return parts[0], " ".join(parts[1:])
+        if attempt < 2:
+            time.sleep(0.1)
+    return "", ""
+
+
+def gone(who):
+    """K3 (tools/slot.sh, C-00 30.09 M5) for the ledger too (D8 queue reviews 06.10): a process counts as gone only when
+    kill -0 fails, or both start times are known and differ (pid reused), or it is a zombie — exited, not yet reaped by its
+    parent (technical-writer 06.10, scenario 8z: kill -0 still answers for it). An empty `ps` answer (transient, or the
+    recorded start time was never known) never makes a live pid dead — and a dead pid is dead whatever lstart answered."""
+    try:
+        pid = int((who or {}).get("pid") or 0)
+    except (TypeError, ValueError):
+        return True
+    if pid <= 1:
+        return True
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return True
+    except PermissionError:
+        pass
+    then = (who or {}).get("lstart") or ""
+    stat, now = proc_state(pid)
+    if stat.startswith("Z"):
+        return True
+    return bool(now and then and now != then)
+
+
 def alive(who):
-    return bool(who and who.get("pid") and lstart(who["pid"]) == who.get("lstart"))
+    return not gone(who)
 
 
 def ancestors(pid):
@@ -176,32 +215,192 @@ def refusal(rec, live):
                rec.get("scope", "all")))
 
 
-def ledger_begin(ledger, record, po):
-    # D8 concurrency review SHOULD-1: liveness and nesting are judged by the window's OWNER (the snapshot's caller), never
-    # by the slot holder — an abandoned window under a live holder must not count as nested for the holder's other children
-    """(code, message): 0 written · 65 refused · 75 a live foreign overlapping window (the caller waits outside the lock)."""
+TICKET_NAME = r"^(\d+)-(.+)\.json$"   # L/queue/<time_ns>-<window id>.json; anything else in queue/ is not a ticket
+
+
+def queue_tickets(ledger):
+    """[(path, ns, ticket)] of L/queue/<ns>-<id>.json, oldest first. Other names (a note, a writer's *.tmp.<pid>, done/)
+    are skipped; an unreadable ticket is retired to done/ (call under LedgerLock)."""
+    import re
+    folder = os.path.join(ledger, "queue")
+    out = []
+    for name in os.listdir(folder) if os.path.isdir(folder) else []:
+        m = re.match(TICKET_NAME, name)
+        if not m:
+            continue
+        path = os.path.join(folder, name)
+        try:
+            with open(path, encoding="utf-8") as f:
+                out.append((path, int(m.group(1)), json.load(f)))
+        except (ValueError, OSError):
+            retire_ticket(ledger, path, "unreadable")
+    out.sort(key=lambda x: (x[1], os.path.basename(x[0])))
+    return out
+
+
+def retire_ticket(ledger, path, reason):
+    """a ticket leaves the queue by a move to L/queue/done/<name>.<reason>.json — nothing under L is ever deleted (G4 D8
+    review 06.10, git-safety SHOULD-1). reason: granted · refused · left · reaped · unreadable · exit<rc>."""
+    done = os.path.join(ledger, "queue", "done")
+    os.makedirs(done, exist_ok=True)
+    base = os.path.basename(path)[:-len(".json")] + "." + reason
+    dest, n = os.path.join(done, base + ".json"), 1
+    while os.path.exists(dest):
+        n += 1
+        dest = os.path.join(done, "%s.%d.json" % (base, n))
+    try:
+        os.rename(path, dest)
+    except FileNotFoundError:
+        return
+    fsync_dir(done)
+
+
+def typical_minutes(ledger, areas):
+    """median duration (min) of the last 20 closed windows over these areas, or None."""
+    import calendar
+    folder = os.path.join(ledger, "closed")
+    spans = []
+    for name in sorted(os.listdir(folder))[-200:] if os.path.isdir(folder) else []:
+        try:
+            with open(os.path.join(folder, name), encoding="utf-8") as f:
+                rec = json.load(f)
+            if set(rec.get("windowAreas") or []) & areas:
+                t0 = calendar.timegm(time.strptime(rec["utc"], "%Y-%m-%dT%H:%M:%SZ"))
+                t1 = calendar.timegm(time.strptime(rec["utcUpdated"], "%Y-%m-%dT%H:%M:%SZ"))
+                spans.append((t1 - t0) / 60.0)
+        except (ValueError, OSError, KeyError):
+            continue
+    spans = sorted(spans[-20:])
+    return spans[len(spans) // 2] if spans else None
+
+
+def age_minutes(utc):
+    import calendar
+    try:
+        return (time.time() - calendar.timegm(time.strptime(utc, "%Y-%m-%dT%H:%M:%SZ"))) / 60.0
+    except (ValueError, TypeError):
+        return 0.0
+
+
+def utc_now():
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+
+def ledger_begin(ledger, record, po, waiter=None):
+    """G4 D8 S6 + the C-00 05.10 queue. (code, message): 0 the record is written (state snapshotting) · 65 refused (an
+    overlapping dirty / abandoned window, or this snapshot's own caller died while it queued) · 75 wait: a live foreign
+    window overlaps, or an older live ticket of the FIFO queue L/queue/ does — this snapshot holds (or now takes) its own
+    ticket; the caller polls outside the lock. Liveness and nesting are judged by the window's OWNER (the snapshot's
+    caller), never by the slot holder (D8 review); liveness follows K3 (gone()). The estimate is computed after the lock is
+    let go (06.10 reviews: no closed/ scan under L/.lock)."""
     mine = set(record.get("windowAreas") or [])
+    qdir = os.path.join(ledger, "queue")
     with LedgerLock(ledger):
         mine_up = None
+
+        def nested(who):
+            nonlocal mine_up
+            if mine_up is None:
+                mine_up = ancestors(po)
+            return int(who.get("pid", 0)) in mine_up
+
+        tickets, own = [], None
+        for path, ns, t in queue_tickets(ledger):   # dead waiters leave the queue (their own ticket, never a record)
+            if t.get("id") == record.get("id"):
+                own = (path, ns, t)
+            elif not t.get("waiter") or gone(t["waiter"]) or gone(t.get("owner") or {}):
+                # the waiting GUARD, or the caller it waits for, is gone — or the ticket names no waiter at all (no guard
+                # writes one; an owner-only ticket outlives its guard while a long-lived shell lives on)
+                retire_ticket(ledger, path, "reaped")
+            else:
+                tickets.append((path, ns, t))
+
+        def leave_queue(reason):
+            if own:
+                retire_ticket(ledger, own[0], reason)
+
+        # 06.10 reviews (MUST-4): a caller that died while its snapshot waited (here, or in the S2 player-slot wait) gets no
+        # window — one opened for a dead owner would refuse every later snapshot of these areas (65, "abandoned")
+        if gone(record.get("owner") or {}):
+            leave_queue("left")
+            return 65, "the caller pid %s is gone — no window opened for it (DIR=%s); nothing to restore" % (
+                (record.get("owner") or {}).get("pid"), record.get("dir"))
+
+        blocker, held = None, set()
         for rec in ledger_records(ledger):
-            if rec.get("id") == record.get("id") or not mine & set(rec.get("windowAreas") or []):
+            areas = set(rec.get("windowAreas") or [])
+            if rec.get("id") == record.get("id") or not mine & areas:
+                continue
+            if rec.get("state") == "closed":   # 06.10 reviews (MUST-2): finished — only its move to closed/ is pending
                 continue
             who = rec.get("owner") or {}
             live = alive(who)
             restorer = rec.get("restorer")
-            if rec.get("state") == "restoring" and restorer and alive(restorer):   # D8 review NIT: being restored → wait
-                return 75, "window %s is being restored by pid %s (DIR=%s)" % (rec.get("id"), restorer.get("pid"), rec.get("dir"))
+            if rec.get("state") == "restoring" and restorer and alive(restorer):   # being restored → wait
+                blocker = blocker or rec
+                continue
             if rec.get("state") == "dirty" or rec.get("state") not in LEDGER_LIVE or not live \
                     or (rec.get("state") == "restoring" and restorer and not alive(restorer)):
+                leave_queue("refused")
                 return 65, refusal(rec, live)
-            if mine_up is None:
-                mine_up = ancestors(po)
-            if int(who.get("pid", 0)) in mine_up:   # nested inside that window (LIFO): allowed
+            if nested(who):   # nested inside that window (LIFO): allowed
+                held |= areas
                 continue
-            return 75, "a live window of another process overlaps: %s (DIR=%s owner=%s state=%s)" % (
-                rec.get("id"), rec.get("dir"), who.get("pid"), rec.get("state"))
-        ledger_write(os.path.join(ledger, "windows", record["id"] + ".json"), record)
-    return 0, "ledger window %s snapshotting" % record["id"]
+            blocker = blocker or rec
+        # 06.10 reviews (MUST-1): a ticket over an area an ANCESTOR's window holds cannot start before that window closes,
+        # and that window waits for us — it is not ahead of a nested snapshot (else: deadlock until DD_GUARD_QUEUE_WAIT)
+        mine_ns = own[1] if own else None
+        ahead = [(ns, t) for p, ns, t in tickets
+                 if mine & set(t.get("windowAreas") or []) and not held & set(t.get("windowAreas") or [])
+                 and (mine_ns is None or ns < mine_ns) and not nested(t.get("owner") or {})]
+        if blocker is None and not ahead:
+            record = dict(record)
+            if own:
+                record["queuedUtc"] = own[2].get("utc")   # 06.10 review SHOULD-4: the window's age starts now, not at the queue
+            record["utc"] = utc_now()
+            if waiter:
+                record["guard"] = {"pid": waiter, "lstart": lstart(waiter)}
+            ledger_write(os.path.join(ledger, "windows", record["id"] + ".json"), record)
+            leave_queue("granted")
+            return 0, "ledger window %s snapshotting" % record["id"]
+        place = ""
+        if own is None:
+            wl = lstart(waiter) if waiter else ""
+            if not wl:   # 06.10 review MUST-3: a ticket carries the waiter and its start time (K3 can judge it)
+                place = " (no queue place yet: %s — next poll)" % ("the waiter's start time is unknown" if waiter else "no waiter pid")
+            else:
+                ns = max([time.time_ns()] + [n + 1 for _, n, _ in tickets])   # FIFO even if the wall clock steps back
+                os.makedirs(qdir, exist_ok=True)
+                ticket = {"id": record["id"], "dir": record.get("dir"), "owner": record.get("owner"),
+                          "waiter": {"pid": waiter, "lstart": wl},
+                          "windowAreas": sorted(mine), "utc": utc_now()}
+                ledger_write(os.path.join(qdir, "%d-%s.json" % (ns, record["id"])), ticket)
+    # outside L/.lock: the estimate (reads up to 200 closed records)
+    typical = typical_minutes(ledger, mine)
+    unknown = "unknown (no closed window over these areas yet)"
+    if blocker is not None:
+        bw = (blocker.get("restorer") if blocker.get("state") == "restoring" else None) or blocker.get("owner") or {}
+        age = age_minutes(blocker.get("utc"))
+        first = "%s (pid %s, %s, %.0f min)" % (blocker.get("dir"), bw.get("pid"), blocker.get("state"), age)
+        if typical is None:
+            est = unknown
+        elif age > typical:
+            est = "overdue: open %.0f min, typical %.0f min%s" % (
+                age, typical, " — then ~%.0f min for the %d ahead" % (typical * len(ahead), len(ahead)) if ahead else "")
+        else:
+            est = "~%.0f min" % (typical - age + typical * len(ahead))
+    else:
+        t = ahead[0][1]
+        first = "%s (pid %s, queued %.0f min)" % (t.get("dir"), (t.get("owner") or {}).get("pid"), age_minutes(t.get("utc")))
+        est = "~%.0f min" % (typical * len(ahead)) if typical is not None else unknown
+    return 75, "queue position %d — ahead: %s — estimate %s%s" % (len(ahead) + 1, first, est, place)
+
+
+def ledger_dequeue(ledger, wid, reason="left"):
+    with LedgerLock(ledger):
+        for path, ns, t in queue_tickets(ledger):
+            if t.get("id") == wid:
+                retire_ticket(ledger, path, reason)
 
 
 def ledger_update(ledger, wid, patch, locked=False):
@@ -226,18 +425,25 @@ def ledger_update(ledger, wid, patch, locked=False):
             patch["state"] = "dirty" if "dirty" in areas.values() else "closed"
         rec.update(patch); rec["areas"] = areas; rec["utcUpdated"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
         ledger_write(path, rec)
+        if rec.get("state") == "closed":   # 06.10 reviews (MUST-2): closed and moved in ONE locked step — a queued waiter
+            _move_locked(ledger, wid, "closed")   # never meets a closed record in windows/ (ledger-close is then a no-op)
         return rec
 
 
+def _move_locked(ledger, wid, to):
+    src, dest = os.path.join(ledger, "windows", wid + ".json"), os.path.join(ledger, to, wid + ".json")
+    if not os.path.exists(src):
+        return os.path.exists(dest)   # already moved (R12 closes in the same step): done, not a failure
+    os.makedirs(os.path.join(ledger, to), exist_ok=True)
+    os.rename(src, dest)
+    fsync_dir(os.path.join(ledger, to))
+    fsync_dir(os.path.join(ledger, "windows"))
+    return True
+
+
 def ledger_move(ledger, wid, to):
-    src = os.path.join(ledger, "windows", wid + ".json")
     with LedgerLock(ledger):
-        if not os.path.exists(src):
-            return False
-        os.makedirs(os.path.join(ledger, to), exist_ok=True)
-        os.rename(src, os.path.join(ledger, to, wid + ".json"))
-        fsync_dir(os.path.join(ledger, to))
-        return True
+        return _move_locked(ledger, wid, to)
 
 
 def ledger_find_dir(ledger, directory):
@@ -878,8 +1084,8 @@ def main(argv):
         rows = foreign_players(args[0])
         print(json.dumps(rows))
         return 1 if rows else 0
-    if cmd == "ledger-begin" and len(args) == 2:
-        code, msg = ledger_begin(args[0], json.load(sys.stdin), int(args[1]))
+    if cmd == "ledger-begin" and len(args) in (2, 3):
+        code, msg = ledger_begin(args[0], json.load(sys.stdin), int(args[1]), int(args[2]) if len(args) == 3 else None)
         print(msg)
         return code
     if cmd == "ledger-update" and len(args) == 2:
@@ -898,6 +1104,9 @@ def main(argv):
                 return 2
             ledger_update(args[0], rec["id"], {"state": "dirty", "why": "SNAPSHOT_MISSING: " + args[2]}, locked=True)
         print(rec["id"])
+        return 0
+    if cmd == "ledger-dequeue" and len(args) in (2, 3):
+        ledger_dequeue(args[0], args[1], args[2] if len(args) == 3 else "left")
         return 0
     if cmd in ("ledger-close", "ledger-abort") and len(args) == 2:
         return 0 if ledger_move(args[0], args[1], "closed" if cmd == "ledger-close" else "aborted") else 1

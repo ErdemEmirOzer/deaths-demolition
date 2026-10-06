@@ -47,7 +47,10 @@
 # (<dir>/extra-keys.txt) · 64 usage
 # WP-079G D6a (C-00 30.09): (1) lock order is always player → unity: `snapshot … --scope player|all` refuses with 64
 #   (nothing written, no slot taken) while the calling shell or one of its ancestors holds a `unity` slot (tools/slot.sh
-#   holds; the pid chain from this guard, plus DD_SLOT_OWNER when set) — editor scope takes no player slot and is unaffected.
+#   holds; the pid chain from this guard, plus DD_SLOT_OWNER when set) — since C-00 05.10 (G4 D8 queue) for EVERY scope:
+#   the window comes before the unity slot (an editor-scope waiter must not hold a slot the open window's Unity needs);
+#   the "an ancestor holds the player slot" exception is --scope player only (06.10 reviews). Machine-wide order:
+#   player slot → window (snapshot, queue) → unity slot. Waits are whole seconds (snapshot 64; restore: the default).
 #   (2) `restore <dir>` appends its final line (the summary, or the refusal/error line) and `exit=<n>` to <dir>/restore.txt on
 #   every normal exit once <dir> is known (a guard killed by TERM/KILL writes nothing; HUP records exit=1), and every guard
 #   line also goes to <dir>/timeline.txt whatever DD_TIMELINE says.
@@ -84,6 +87,13 @@ PLAYER_RE="Contents/MacOS/(Deaths Demolition|DeathsDemolition)"
 KG_DEFAULT="Screenmanager Fullscreen mode=1;Screenmanager Resolution Width=1920;Screenmanager Resolution Height=1080;Screenmanager Window Position X=0;Screenmanager Window Position Y=0"
 KNOWN_GOOD="${DD_GUARD_KNOWN_GOOD:-$KG_DEFAULT}"; KGSRC=default; [ -n "${DD_GUARD_KNOWN_GOOD:-}" ] && KGSRC=env   # Q3: env only by a written C-00 decision
 [[ "$CMD" == (snapshot|restore) && -n "$DIR" && "$SCOPE" == (all|editor|player) ]] || { echo "usage: userdata-guard.sh snapshot|restore <dir> [--scope all|editor|player]" >&2; exit 64; }
+# G4 D8 queue reviews (06.10): every wait is whole seconds — "1h" or "abc" made a wait endless (its test never became
+# true). A snapshot refuses before anything is written; a restore never stops halfway for it: warning + the default.
+for v in DD_GUARD_WAIT DD_GUARD_QUEUE_WAIT DD_GUARD_SLOT_WAIT; do
+  { [ -z "${(P)v:-}" ] || [[ "${(P)v}" == <-> ]]; } && continue
+  [ "$CMD" = snapshot ] && { echo "userdata-guard: $v=${(P)v} is not whole seconds — refused, nothing written (64)" >&2; exit 64; }
+  echo "userdata-guard: WARNING $v=${(P)v} is not whole seconds — this restore uses the default" >&2; unset $v
+done
 
 # G4 D5 S0/R0 (read-only; nothing is written, no trap, no `defaults` before this passes)
 IO="${0:A:h}/userdata_guard_io.py"
@@ -106,17 +116,21 @@ if [ "$CMD" = snapshot ]; then
 fi
 
 # WP-079G D6a (1): checked before anything is written or acquired.
-if [ "$CMD" = snapshot ] && [ "$SCOPE" != editor ] && [ -x "$DD_SLOT" ]; then
+# C-00 05.10 (D8 queue): the order is window → unity for EVERY scope — an editor-scope caller holding a unity slot while it
+# queues for a window could deadlock against the window's own Unity run (main-ci); it is refused at once.
+if [ "$CMD" = snapshot ] && [ -x "$DD_SLOT" ]; then
   # only slot.sh's own "SLOT … held by …" answer counts (an older slot.sh without `holds` prints something else → not held)
   UH=$("$DD_SLOT" holds unity $$ 2>/dev/null); [[ "$UH" == "SLOT unity held by "* ]] || UH=""
   # D6a review SHOULD-1: the order is already right when an ancestor holds the player slot (re-entrant, e.g. a release
-  # script's own window) — a unity slot below it cannot deadlock against this snapshot.
-  if [ -n "$UH" ] && [[ "$("$DD_SLOT" holds player $$ 2>/dev/null)" == "SLOT player held by "* ]]; then UH=""; fi
+  # script's own window) — a unity slot below it cannot deadlock against this snapshot. G4 D8 queue reviews (06.10): for
+  # --scope player ONLY — an editor/all snapshot also waits for the editor area, which the player slot does not guard (it
+  # would queue behind main-ci's window holding a unity slot main-ci needs).
+  if [ -n "$UH" ] && [ "$SCOPE" = player ] && [[ "$("$DD_SLOT" holds player $$ 2>/dev/null)" == "SLOT player held by "* ]]; then UH=""; fi
   if [ -z "$UH" ] && [ -n "${DD_SLOT_OWNER:-}" ]; then
     UH=$("$DD_SLOT" holds unity "$DD_SLOT_OWNER" 2>/dev/null); [[ "$UH" == "SLOT unity held by "* ]] || UH=""; fi
   if [ -n "$UH" ]; then
-    echo "userdata-guard: lock order — take the guard snapshot (player slot) BEFORE the Unity slot" >&2
-    echo "userdata-guard: $UH — release it, snapshot, then take the Unity slot again (exit 64); an Editor PlayMode run needs only --scope editor" >&2
+    echo "userdata-guard: lock order — take the guard snapshot (the window; player scope: the player slot) BEFORE the Unity slot" >&2
+    echo "userdata-guard: $UH — fix the order: release it, snapshot, then take the Unity slot again (exit 64); see tools/README (G4 D8 migration)" >&2
     exit 64
   fi
 fi
@@ -261,6 +275,7 @@ if [ "$CMD" = snapshot ]; then
     done
     [ -n "$PT" ] && DD_SLOT_OWNER="$PO" "$DD_SLOT" release player "$PT" >/dev/null 2>&1
     rm -f "$DIR/player-slot"
+    [ "$LEDGER_REC" -eq 1 ] && python3 "$IO" ledger-dequeue "$LEDGER" "$ID" "exit$rc" 2>/dev/null   # leave the FIFO queue (→ queue/done/)
     [ "$LEDGER_REC" -eq 1 ] && [ -f "$LEDGER/windows/$ID.json" ] && { python3 "$IO" ledger-abort "$LEDGER" "$ID" \
       || dd_log "WARNING userdata-guard: ledger record $ID could not be moved to aborted/ — it blocks its areas, tell C-00"; }   # M4
     dd_log "userdata-guard snapshot FAILED exit=$rc${FAILDIR:+ — partial files kept in $FAILDIR} $M7"
@@ -313,8 +328,13 @@ if [ "$CMD" = snapshot ]; then
   [ -n "$BAD" ] && { dd_log "userdata-guard: REFUSED — protected set: $BAD(65)"; snap_fail 65; }
   # S6 (G4 D8, INV-7): the window ledger. Under L/.lock: an overlapping record that is dirty, or whose owner (or restorer)
   # is dead → 65 with the next step; a live owner that is our ancestor → nested, allowed; a live foreign one (or a live
-  # restore) → the lock is let go and we poll (≤ DD_GUARD_WAIT, default 300 s, sleep 5 & wait) → 75 — short on purpose:
-  # a caller may hold a unity slot while it waits (D8 review SHOULD-3). Then our record is written: state snapshotting.
+  # restore, or an older waiter) → FIFO queue (C-00 05.10): a ticket in L/queue/, the lock is let go and we poll
+  # (sleep 5 & wait) ≤ DD_GUARD_QUEUE_WAIT (default 3600 s) → 75 class=QUEUE_TIMEOUT, with a "queue position n — ahead: …
+  # — estimate …" line at once and every 60 s. Safe to wait long: no caller holds a unity slot here (the lock-order check
+  # above; its player-slot exception is --scope player only). A player/all snapshot keeps the player slot it took in S2
+  # while it waits — the machine-wide order is player slot → window → unity slot (main-ci takes player before its
+  # window too); never take the player slot inside an editor-scope window. The wait ends when the caller (owner, $PO) is
+  # gone (65) — no window is opened for a dead caller (06.10 reviews MUST-4). Then our record is written: snapshotting.
   REC_JSON=$(R_ID="$ID" R_DIR="${DIR:A}" R_AREAS="${AREAS[*]}" R_SCOPE="$SCOPE" R_PO="$PO" R_OL="$OWNER_LSTART" R_PT="$PT"     R_HP="$HOLDER_PID" R_HL="$HOLDER_LSTART" R_GS="$GUARDSHA" R_LINE="$HOLDER_LINE" python3 -c 'import json, os, time
 e = os.environ
 print(json.dumps({"id": e["R_ID"], "dir": e["R_DIR"], "scope": e["R_SCOPE"], "windowAreas": e["R_AREAS"].split(),
@@ -326,15 +346,23 @@ print(json.dumps({"id": e["R_ID"], "dir": e["R_DIR"], "scope": e["R_SCOPE"], "wi
   LW0=$SECONDS
   # D8 review SHOULD-2: armed BEFORE the first attempt — a signal that lands after the helper's rename still sends the
   # record to aborted/ (ledger-abort is a no-op when there is none)
-  LEDGER_REC=1
+  LEDGER_REC=1; LNEXT=0; LERR=0
   while :; do
-    LMSG=$(print -r -- "$REC_JSON" | python3 "$IO" ledger-begin "$LEDGER" "$PO"); LRC=$?
+    LMSG=$(print -r -- "$REC_JSON" | python3 "$IO" ledger-begin "$LEDGER" "$PO" $$); LRC=$?   # $$: the ticket lives as long as THIS waiter
     [ $LRC -eq 0 ] && break
     check_sig
     [ $LRC -eq 65 ] && { dd_log "userdata-guard: $LMSG (65)"; snap_fail 65; }
-    [ $LRC -eq 75 ] || { dd_log "userdata-guard: ledger check failed ($LRC): $LMSG"; snap_fail 75; }
-    (( SECONDS - LW0 >= ${DD_GUARD_WAIT:-300} )) && { dd_log "userdata-guard: $LMSG — still after ${DD_GUARD_WAIT:-300}s (75)"; snap_fail 75; }
-    [ $((SECONDS - LW0)) -lt 5 ] && dd_log "userdata-guard: waiting — $LMSG"
+    if [ $LRC -ne 75 ]; then   # 06.10 review: one transient helper failure (L/.lock busy 60 s) does not end the wait
+      LERR=$((LERR + 1)); dd_log "userdata-guard: ledger check failed ($LRC, $LERR/3): $LMSG"
+      [ $LERR -ge 3 ] && snap_fail 75
+    else LERR=0; fi
+    # the caller is gone when it no longer answers, or when this guard is no longer its child — an exited caller hands its
+    # children to launchd at once, even while it waits as a zombie for its own parent (kill -0 still answers for that)
+    CPP=$(ps -o ppid= -p $$ 2>/dev/null | tr -d ' ')
+    { kill -0 "$PO" 2>/dev/null && { [ -z "$CPP" ] || [ "$CPP" = "$PO" ]; }; } \
+      || { dd_log "userdata-guard: the caller pid $PO is gone — no window opened for it, queue left (65)"; snap_fail 65; }
+    (( SECONDS - LW0 >= ${DD_GUARD_QUEUE_WAIT:-3600} )) && { dd_log "userdata-guard: $LMSG — still after ${DD_GUARD_QUEUE_WAIT:-3600}s (75) class=QUEUE_TIMEOUT"; snap_fail 75; }
+    [ $LRC -eq 75 ] && (( SECONDS >= LNEXT )) && { dd_log "userdata-guard: waiting in the window queue — $LMSG"; LNEXT=$((SECONDS + 60)); }
     sleep 5 & WAITPID=$!; bg_wait; check_sig
   done
   # S7 Codex-audit M-07: the lock wait follows the scope (editor: D1 only)
@@ -485,9 +513,12 @@ trap '' PIPE   # D6 review SHOULD-4: a dead reader of stdout must not kill the g
 # G4 D8 R2: the ledger record (a window taken before D8 has none — skipped) is restoring, by this process
 LREC=0
 if [ "$KIND" = v2 ]; then
-  RL=$(python3 "$IO" lstart $$)
-  RP=$$ RL="$RL" python3 -c 'import json, os; print(json.dumps({"state": "restoring", "restorer": {"pid": int(os.environ["RP"]), "lstart": os.environ["RL"]}}))' \
-    | ( trap '' INT TERM HUP; python3 "$IO" ledger-update "$LEDGER" "$WINID" >/dev/null )   # D8 review SHOULD-2
+  # 06.10 review MUST-3: never a restorer without its start time (K3 could not judge it) — the record then stays open
+  # (its live owner keeps waiters waiting) and R12 still closes or dirties it
+  if RL=$(python3 "$IO" lstart $$) && [ -n "$RL" ]; then
+    RP=$$ RL="$RL" python3 -c 'import json, os; print(json.dumps({"state": "restoring", "restorer": {"pid": int(os.environ["RP"]), "lstart": os.environ["RL"]}}))' \
+      | ( trap '' INT TERM HUP; python3 "$IO" ledger-update "$LEDGER" "$WINID" >/dev/null )   # D8 review SHOULD-2
+  else dd_log "WARNING userdata-guard: own start time unknown (ps) — ledger record $WINID not marked restoring"; fi
   [ -f "$LEDGER/windows/$WINID.json" ] && LREC=1   # R12 runs whenever the record exists
 fi
 case "${DIR:A}" in /private/tmp/*|/private/var/folders/*|/tmp/*) dd_log "WARNING userdata-guard: $DIR is under a temporary folder";; esac

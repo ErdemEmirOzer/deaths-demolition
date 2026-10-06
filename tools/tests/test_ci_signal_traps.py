@@ -28,15 +28,19 @@ echo "$1 $2 $3" >> "{log}/slot-calls.txt"; echo "SLOT $2#1 -> $3"
 """
 # Like the real guard: one snapshot per directory (64 when <dir>/snap exists). FAKE_GUARD_75_ONCE: the first snapshot
 # leaves a partial <dir>/snap and returns 75 (live data kept changing), later ones succeed; FAKE_GUARD_ALWAYS_75: every one.
+# FAKE_GUARD_QUEUE_TIMEOUT: every snapshot ends like the real guard's window-queue timeout (75 + class=QUEUE_TIMEOUT).
 # G4 D4: main-ci runs the canonical guard ($HOME/…/wp-079/driver/tools/userdata-guard.sh, origin "canon"); the driver
 # worktree's own copy (origin "worktree") must never be called — guard-origin.txt records which one ran.
 FAKE_GUARD = """#!/bin/zsh
 echo "{origin}" >> "{log}/guard-origin.txt"
 cmd=$1 dir=$2; echo "$cmd" >> "{log}/guard-calls.txt"; echo "$cmd $dir" >> "{log}/guard-dirs.txt"
 if [ "$cmd" = snapshot ]; then
+  # G4 D8 kuyruk (06.10): FAKE_GUARD_SNAP_SLOW=<s> — the snapshot waits (the real guard: in the window queue, ≤ 3600 s), then opens
+  [ -n "${{FAKE_GUARD_SNAP_SLOW:-}}" ] && {{ echo $$ > "{log}/guard-snap.pid"; sleep "$FAKE_GUARD_SNAP_SLOW"; }}
   [ -e "$dir/snap" ] && {{ echo "$dir/snap exists — one snapshot per directory" >&2; exit 64; }}
   mkdir -p "$dir/snap"
   [ -n "${{FAKE_GUARD_ALWAYS_75:-}}" ] && {{ echo busy; exit 75; }}
+  [ -n "${{FAKE_GUARD_QUEUE_TIMEOUT:-}}" ] && {{ echo "userdata-guard: queue position 1 — ahead: x — still after 3600s (75) class=QUEUE_TIMEOUT"; exit 75; }}
   if [ -n "${{FAKE_GUARD_75_ONCE:-}}" ] && [ ! -e "{log}/guard-75-done" ]; then : > "{log}/guard-75-done"; echo busy; exit 75; fi
   echo x > "$dir/before-editor.txt"; echo "snapshot scope=editor ok"
 else
@@ -475,6 +479,29 @@ class CiDriverGuardTests(CiFixture):
         self.assertRegex(first, r"/userdata-guard-[0-9]{8}T[0-9]{6}Z$")
         return Path(first)
 
+    # --- G4 D8 kuyruk (S-01 test-engineer 06.10): main-ci as a queued waiter ------------------------------------------
+    def test_MainCi_SnapshotKuyruktaBeklerkenTERM_HemenCikar_PencereAcikKalmaz(self):
+        """MUST (göç) · main-ci's guard snapshot may now wait ≤ DD_GUARD_QUEUE_WAIT (3600 s) in the window queue. It runs in the
+        FOREGROUND, so zsh runs main-ci's TERM trap only after the guard returns (up to an hour), and when the guard then
+        opens the window, CI_GUARD_READY is still 0: cleanup releases slot + lease WITHOUT a restore → an abandoned window
+        (owner = main-ci, dead) that every other session's editor snapshot refuses with 65. Expected: exit 143 at once (the
+        guard is stopped with main-ci, or the window it opened is restored)."""
+        p = self.main_ci("pass", FAKE_GUARD_SNAP_SLOW="30")
+        guard = self.wait_file(self.log / "guard-snap.pid"); time.sleep(0.3)
+        t0 = time.time(); os.kill(p.pid, signal.SIGTERM)
+        rc, out, err = self.finish(p, 90)
+        elapsed = time.time() - t0
+        opened = [d for d in (self.out / self.sha).glob("userdata-guard-*") if (d / "before-editor.txt").exists()]
+        restored = "restore" in self.lines("guard-calls.txt")
+        facts = "elapsed=%.1fs rc=%s guardAlive=%s opened=%d restored=%s" % (elapsed, rc, alive(guard), len(opened), restored)
+        self.assertLess(elapsed, 15, "TERM waited for the queued guard snapshot: " + facts)
+        self.assertEqual(rc, 143, facts + "\n" + out + err)
+        self.assertFalse(alive(guard), "the waiting guard is stopped with main-ci: " + facts)
+        if opened:
+            self.assertTrue(restored, "the window the guard opened must be restored: " + facts)
+        self.assertEqual([l.split()[:2] for l in self.lines("slot-calls.txt")], [["acquire", "player"], ["release", "player"]])
+        self.assertEqual(self.leases(), [])
+
     # --- M-07(b): 75 → retry into a NEW guard directory; the restore uses that directory ------------------------------
     def test_M07_Snapshot75BirKez_YeniDizinleDevam_OnuRestoreEder(self):
         rc, out, err = self.finish(self.main_ci("pass", playmode=True, FAKE_GUARD_75_ONCE="1"))
@@ -492,6 +519,18 @@ class CiDriverGuardTests(CiFixture):
         ug = self.guard_base()
         self.assertEqual(self.lines("guard-dirs.txt"), [f"snapshot {ug}", f"snapshot {ug}.try2", f"snapshot {ug}.try3"])
         self.assertIn("userdata snapshot exit 75 (try 3/3", out)
+        self.assertFalse((self.log / "child-editmode.pid").exists())
+        self.assertEqual([l.split()[:2] for l in self.lines("slot-calls.txt")], [["acquire", "player"], ["release", "player"]])
+        self.assertEqual(self.leases(), [])
+
+    def test_D8Kuyruk_KuyrukZamanAsimi75_YenidenDenenmez_TekDizin75(self):
+        """G4 D8 queue reviews (06.10): the window queue already waited DD_GUARD_QUEUE_WAIT — a retry would be a new ticket at
+        the queue's end while this run holds the player slot and the lease."""
+        rc, out, err = self.finish(self.main_ci("pass", FAKE_GUARD_QUEUE_TIMEOUT="1"))
+        self.assertEqual(rc, 75, out + err)
+        ug = self.guard_base()
+        self.assertEqual(self.lines("guard-dirs.txt"), [f"snapshot {ug}"])
+        self.assertIn("the window queue timed out — not retried", out)
         self.assertFalse((self.log / "child-editmode.pid").exists())
         self.assertEqual([l.split()[:2] for l in self.lines("slot-calls.txt")], [["acquire", "player"], ["release", "player"]])
         self.assertEqual(self.leases(), [])

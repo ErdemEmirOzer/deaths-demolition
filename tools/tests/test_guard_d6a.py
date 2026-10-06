@@ -13,7 +13,7 @@ from pathlib import Path
 TOOLS = Path(__file__).resolve().parents[1]
 BUNDLE = "com.Deaths-Demolition.Deaths-Demolition---Playable-Concept"
 PRODUCT = "Deaths Demolition - Playable Concept"
-LOCK_LINE = "userdata-guard: lock order — take the guard snapshot (player slot) BEFORE the Unity slot"
+LOCK_LINE = "userdata-guard: lock order — take the guard snapshot (the window; player scope: the player slot) BEFORE the Unity slot"
 
 # Holds a real unity slot (owner = this shell) and runs the guard from it: the guard is a child of the slot holder.
 HOLDER = """#!/bin/zsh
@@ -116,19 +116,40 @@ class GuardD6aTests(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.stop_sampler(target)
 
+    def test_KilitSirasi_AtaPlayerCocukUnity_EditorVeAllKapsami_Cikis64(self):
+        # G4 D8 queue reviews (06.10): the ancestor-player exception is --scope player only — an editor/all snapshot also
+        # waits for the editor area (the player slot does not guard it) and would queue holding the unity slot
+        script = self.root / "dd-fixture-player-then-unity-wide.zsh"
+        script.write_text('#!/bin/zsh\n"$DD_SLOT_SH" acquire player dd-fixture-p > /dev/null || exit 91\n'
+                          'zsh -c \'"$DD_SLOT_SH" acquire unity dd-fixture-u > /dev/null || exit 90; '
+                          'zsh "$DD_GUARD_SH" snapshot "$1" --scope "$2"; rc=$?; "$DD_SLOT_SH" release unity dd-fixture-u > /dev/null; exit $rc\' zsh "$1" "$2"\n'
+                          'rc=$?; "$DD_SLOT_SH" release player dd-fixture-p > /dev/null; exit $rc\n')
+        script.chmod(0o755)
+        for scope in ("editor", "all"):
+            with self.subTest(scope=scope):
+                target = self.root / f"ug-wide-{scope}"
+                r = subprocess.run([str(script), str(target), scope], env=self.env(), capture_output=True, text=True, timeout=120)
+                self.assertEqual(r.returncode, 64, r.stdout + r.stderr)
+                self.assertIn(LOCK_LINE, r.stdout + r.stderr)
+                self.assertFalse(target.exists(), "nothing may be written before the refusal")
+        self.assertEqual(self.slot_files("unity"), [], "the fixture released its unity slot")
+        self.assertEqual(self.slot_files("player"), [], "the fixture released its player slot")
+
     def test_KilitSirasi_BosOnceVarOlanDizin_IcindeHicbirSeyOlusmaz(self):
         target = self.root / "ug-pre"; target.mkdir()
         rc, text = self.under_unity(target, "player")
         self.assertEqual(rc, 64, text)
         self.assertEqual(list(target.iterdir()), [])
 
-    def test_KilitSirasi_EditorKapsamiUnityTutulurken_SnapshotDevamEder(self):
+    def test_KilitSirasi_EditorKapsamiUnityTutulurken_Cikis64SirayiDuzelt(self):
+        # C-00 05.10 (G4 D8 queue): window → unity for every scope — an editor-scope snapshot under a unity slot is refused
         target = self.root / "ug-editor"
         rc, text = self.under_unity(target, "editor")
-        self.assertEqual(rc, 0, text)
-        self.assertNotIn("lock order", text)
-        self.assertTrue((target / "snap").is_dir())
-        self.assertEqual(self.slot_files("player"), [], "editor scope takes no player slot")
+        self.assertEqual(rc, 64, text)
+        self.assertIn(LOCK_LINE, text)
+        self.assertIn("fix the order", text)
+        self.assertFalse(target.exists(), "nothing may be written before the refusal")
+        self.assertEqual(self.slot_files("player"), [], "no player slot may be taken")
 
     def test_KilitSirasi_UnitySlotuYok_PlayerSnapshotDevamEder_RestorePlayerSlotunuBirakir(self):
         target = self.root / "ug-free"

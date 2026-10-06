@@ -47,6 +47,10 @@ def main(tool, argv):
         cmd, ug, scope = argv[0], Path(argv[1]), argv[3]
         stage = ug.parent.name
         ug.mkdir(parents=True, exist_ok=True)
+        snap_sleep = rules.get("sleep:guard:" + cmd + ":" + stage)   # G4 D8 queue: a snapshot waiting in the window queue
+        if snap_sleep:
+            Path(os.environ["CALL_LOG"] + ".guard-sleeper").write_text(str(os.getpid()))
+            time.sleep(float(snap_sleep))
         code = int(rules.get(cmd + ":" + stage, 0))
         oos = rules.get("oos:" + stage)
         if cmd == "restore" and oos:   # G4 D7 32: the evidence the C-00 30.09 rule reads
@@ -361,6 +365,29 @@ class RcStageGuardTests(unittest.TestCase):
         agg = [c for c in calls if c[0] == "rc_aggregate"][-1]
         self.assertEqual("full-playmode", agg[agg.index("--failed-stage") + 1])
         self.assertEqual("143", (out / "stages/full-playmode/exit.txt").read_text().strip())
+
+    def test_D8Kuyruk_SnapshotKuyruktaBeklerkenTERM_HemenDurur_AsamaKosmaz(self):
+        """G4 D8 queue (06.10): a stage's guard snapshot can wait ≤ DD_GUARD_QUEUE_WAIT (3600 s) in the window queue; a TERM
+        then stops it at once (it ran in the foreground before: the signal waited for the guard) — no stage, no restore."""
+        repo = FakeRepo(self, self.REAL)
+        out = repo.dir / "out"
+        env = dict(repo.env, FAKE_RULES=json.dumps({"sleep:guard:snapshot:full-editmode": 60}))
+        proc = subprocess.Popen(["/bin/zsh", str(repo.root / "tools/qa/rc.sh"), str(out)], env=env,
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        sleeper = Path(str(repo.log) + ".guard-sleeper")
+        deadline = time.monotonic() + 30
+        while not sleeper.exists() and time.monotonic() < deadline:
+            time.sleep(0.1)
+        self.assertTrue(sleeper.exists(), "the fake guard snapshot never started")
+        t0 = time.monotonic(); proc.send_signal(signal.SIGTERM)
+        stdout, stderr = proc.communicate(timeout=60)
+        self.assertLess(time.monotonic() - t0, 15, "TERM waited for the queued snapshot: " + stdout + stderr)
+        self.assertEqual(143, proc.returncode, stdout + stderr)
+        with self.assertRaises(ProcessLookupError):
+            os.kill(int(sleeper.read_text()), 0)   # the waiting guard was stopped with the RC
+        calls = repo.calls()
+        self.assertFalse(any(c[0] == "test.sh" for c in calls), "no stage after the signal")
+        self.assertEqual([], [c for c in calls if c[:2] == ["userdata-guard.sh", "restore"]], "no window was opened")
 
     def test_M10_DD_XIleBaslatilir_AsamalarGormez_HomeKalir_RaporaVeTimelineaYazilir(self):
         repo = FakeRepo(self, self.REAL)

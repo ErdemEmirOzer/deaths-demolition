@@ -202,8 +202,11 @@ class GuardFixture(unittest.TestCase):
 
     def tearDown(self):
         for p in self.procs:
-            if p.poll() is None:
-                p.kill()   # fixture processes only
+            if p.poll() is None:   # leader alive → its pid (= pgid of a start_new_session group) cannot be reused
+                try:   # D8 kuyruk (test-engineer 06.10): a queued guard dies with its caller shell, no stray poller
+                    os.killpg(p.pid, signal.SIGKILL)   # fixture groups only
+                except (ProcessLookupError, PermissionError):
+                    p.kill()   # not a group leader (shares the test's group): the process alone
             p.wait(timeout=10)
         for d in [self.dir] + list(self.tmp.glob("ug*")):
             (d / ".sampling").unlink(missing_ok=True)
@@ -219,7 +222,7 @@ class GuardFixture(unittest.TestCase):
     def env(self, **extra):
         e = {k: v for k, v in os.environ.items() if not k.startswith(("DD_", "SHIM_"))}
         e.update(HOME=str(self.tmp / "home"), TMPDIR=str(self.tmp), DD_GUARD_ROOT=str(self.root), DD_SLOT_BASE=str(self.tmp / "slots"),
-                 DD_SLOT_POLL="1", DD_GUARD_WAIT="2", DD_GUARD_SLOT_WAIT="5", PATH=f"{self.bin}:{os.environ['PATH']}",
+                 DD_SLOT_POLL="1", DD_GUARD_WAIT="2", DD_GUARD_SLOT_WAIT="5", DD_GUARD_QUEUE_WAIT="30", PATH=f"{self.bin}:{os.environ['PATH']}",
                  SHIM_LOG=str(self.log), SHIM_PR=str(self.pr), SHIM_TMP=str(self.tmp))
         e[SANDBOX_FLAG] = "1"
         e.update(extra)
@@ -1274,7 +1277,7 @@ class LedgerTests(RestoreBase):
     def foreign_snapshot(self, d, scope="editor", stay=True):
         """a snapshot whose caller is another process: alive afterwards (stay) or gone at once."""
         done = self.tmp / ("done-" + d.name)
-        tail = "sleep 120" if stay else "exit $rc"
+        tail = "sleep 600" if stay else "exit $rc"   # 06.10: 120 s could end before the restore under load ~70 (→ 65)
         p = subprocess.Popen(["zsh", "-c", 'zsh "$0" snapshot "$1" --scope "$2" > "$3.out" 2>&1; rc=$?; echo $rc > "$3"; ' + tail,
                               str(self.guard), str(d), scope, str(done)], env=self.env(), start_new_session=True)
         self.procs.append(p)
@@ -1286,20 +1289,82 @@ class LedgerTests(RestoreBase):
 
     def test_Ledger_IkiEditorPenceresiAtaDisi_Ikincisi75(self):
         self.foreign_snapshot(self.tmp / "ugA")
-        rc, out, err = self.run_guard("snapshot", self.dir, "--scope", "editor", DD_GUARD_SLOT_WAIT="6")
+        rc, out, err = self.run_guard("snapshot", self.dir, "--scope", "editor", DD_GUARD_QUEUE_WAIT="6")
         self.assertEqual(75, rc, out + err)
-        self.assertIn("a live window of another process overlaps", out + err)
+        self.assertIn("queue position 1 — ahead: %s (pid " % (self.tmp / "ugA").resolve(), out + err)
+        self.assertEqual([], list(self.L("queue").glob("*.json")))   # a waiter that gives up leaves the queue …
+        self.assertEqual(1, len(list(self.L("queue", "done").glob("*.exit75.json"))))   # … by a move, never a delete
+        self.assertIn("class=QUEUE_TIMEOUT", out + err)
         self.assertFalse((self.dir / "before.txt").exists())
         self.assertEqual(1, len(self.records()))
+
+    def test_Kuyruk_CagiranZombi_Cikis65PencereVeBiletYok(self):
+        """technical-writer 06.10 (8z): the caller exits while its snapshot waits in the queue and its parent (this test) does
+        not reap it — a zombie, kill -0 still answers for it. The guard (now a child of launchd) opens no window: 65, no
+        record, no ticket left in the queue (the fixture ps shim answers nothing for a zombie, so the guard's own
+        parent check decides here; with the real ps, ledger-begin's state Z does too)."""
+        self.foreign_snapshot(self.tmp / "ugA")
+        out, go = self.tmp / "zombie-guard.out", self.tmp / "zombie-go"
+        c = subprocess.Popen(["zsh", "-c", 'zsh "$0" snapshot "$1" --scope editor > "$2" 2>&1 & '
+                              'while [ ! -f "$3" ]; do sleep 0.2; done; exit 0', str(self.guard), str(self.dir), str(out), str(go)],
+                             env=self.env(DD_GUARD_QUEUE_WAIT="300"), start_new_session=True)
+        try:
+            self.assertTrue(self.wait_until(lambda: len(list(self.L("queue").glob("*.json"))) == 1, 120))
+            go.write_text("")   # the caller exits now and stays a zombie (not reaped until the finally below)
+            self.assertTrue(self.wait_until(lambda: out.exists() and "FAILED exit=" in out.read_text(), 120),
+                            out.read_text() if out.exists() else "-")
+            text = out.read_text()
+            self.assertIn("is gone — no window opened", text)
+            self.assertIn("snapshot FAILED exit=65", text)
+            self.assertEqual([str((self.tmp / "ugA").resolve())], [r["dir"] for r in self.records()])
+            self.assertEqual([], list(self.L("queue").glob("*.json")))
+        finally:
+            c.wait(timeout=10)   # reaped only now
+
+    def test_Kuyruk_SayisalOlmayanBekleme_Snapshot64HicbirSeyYok_Restore_UyariVarsayilan(self):
+        """06.10 reviews: DD_GUARD_QUEUE_WAIT=1h / DD_GUARD_WAIT=abc made a wait endless (the test never became true)."""
+        for var, val in (("DD_GUARD_QUEUE_WAIT", "1h"), ("DD_GUARD_WAIT", "abc"), ("DD_GUARD_SLOT_WAIT", "5m")):
+            with self.subTest(var=var):
+                d = self.tmp / ("ug-bad-" + var)
+                rc, out, err = self.run_guard("snapshot", d, "--scope", "editor", **{var: val})
+                self.assertEqual(64, rc, out + err)
+                self.assertIn("%s=%s is not whole seconds — refused, nothing written (64)" % (var, val), out + err)
+                self.assertFalse(d.exists())
+        self.assertFalse(self.L("windows").exists() and any(self.L("windows").iterdir()))
+        w = self.snap("editor")
+        rc, out, err = self.run_guard("restore", self.dir, "--scope", "editor", DD_GUARD_WAIT="abc")
+        self.assertEqual(0, rc, out + err)
+        self.assertIn("WARNING DD_GUARD_WAIT=abc is not whole seconds — this restore uses the default", out + err)
+        self.assertEqual([], self.records())
+
+    def test_Kuyruk_KapanisAraligi_KuyruktakiBekleyen65Almaz(self):
+        """06.10 reviews MUST-2 (process level): the guard's own ledger-close is held for 4 s; the record is already in
+        closed/ (R12 closes and moves in one locked step), so the queued waiter starts (225d0359: 65, state=closed)."""
+        real = shutil.which("python3")
+        (self.bin / "python3").write_text('#!/bin/sh\ncase "$*" in *ledger-close*) sleep 4 ;; esac\nexec "%s" "$@"\n' % real)
+        (self.bin / "python3").chmod(0o755)
+        a, b = self.tmp / "ugA", self.tmp / "ugB"
+        self.foreign_snapshot(a)
+        done_b = self.queued_snapshot(b)
+        self.assertTrue(self.wait_until(lambda: len(list(self.L("queue").glob("*.json"))) == 1))
+        rc, out, err = self.run_guard("restore", a, "--scope", "editor"); self.assertEqual(0, rc, out + err)
+        self.assertTrue(self.wait_file(done_b, 60))
+        self.assertEqual("0", done_b.read_text().strip(), Path(str(done_b) + ".out").read_text())
 
     def test_Ledger_PollSirasinda_FlockTutulmaz(self):
         import fcntl
         self.foreign_snapshot(self.tmp / "ugA")
-        g = self.start_guard("snapshot", self.dir, "--scope", "editor", DD_GUARD_SLOT_WAIT="20")
-        time.sleep(4)
-        with open(self.L(".lock"), "a") as f:
-            fcntl.flock(f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)   # raises if the poll held it
-            fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+        g = self.start_guard("snapshot", self.dir, "--scope", "editor", DD_GUARD_QUEUE_WAIT="20")
+        self.assertTrue(self.wait_until(lambda: len(self.tickets()) == 1))   # 06.10: in the wait (sleep 4 could probe too early)
+        got, end = False, time.time() + 6   # ≥ one 5 s poll: the hold is one read-modify-write (ps shim calls inside)
+        with open(self.L(".lock"), "a") as f:   # free within 2 s: the poll holds it only for one read-modify-write
+            while not got and time.time() < end:
+                try:
+                    fcntl.flock(f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB); got = True
+                    fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+                except BlockingIOError:
+                    time.sleep(0.05)
+        self.assertTrue(got, "the ledger lock was held through the wait")
         out, err = g.communicate(timeout=60)
         self.assertEqual(75, g.returncode, out + err)
 
@@ -1416,8 +1481,8 @@ class LedgerTests(RestoreBase):
         d = load_plist(self.p2); d["EditorKey"] = "run"; self.write_plist(self.p2, d)
         g = self.start_guard("restore", self.dir, "--scope", "editor")
         self.assertTrue(self.wait_file(self.tmp / "import-started", 60))
-        rc, out, err = self.run_guard("snapshot", self.tmp / "ugB", "--scope", "editor", DD_GUARD_WAIT="6")
-        self.assertEqual(75, rc, out + err); self.assertIn("is being restored by pid", out + err)
+        rc, out, err = self.run_guard("snapshot", self.tmp / "ugB", "--scope", "editor", DD_GUARD_QUEUE_WAIT="6")
+        self.assertEqual(75, rc, out + err); self.assertIn("restoring", out + err)
         (self.tmp / "defaults-import-sleep").unlink()
         os.killpg(g.pid, signal.SIGKILL); g.communicate(timeout=30)
 
@@ -1453,6 +1518,300 @@ class LedgerTests(RestoreBase):
         finally:
             go.write_text("")
 
+    def queued_snapshot(self, d, scope="editor", **env):
+        """a correctly ordered caller (no unity slot) whose owner stays alive: snapshot in the background (its group is
+        self.procs[-1]). 06.10: queue wait 300 s / owner 600 s — 120 s was within reach of a slow FIFO run at load ~75."""
+        done = self.tmp / ("done-" + d.name)
+        e = dict(DD_GUARD_QUEUE_WAIT="300"); e.update(env)
+        p = subprocess.Popen(["zsh", "-c", 'zsh "$0" snapshot "$1" --scope "$3" > "$2.out" 2>&1; echo $? > "$2"; sleep 600',
+                              str(self.guard), str(d), str(done), scope], env=self.env(**e), start_new_session=True)
+        self.procs.append(p)
+        return done
+
+    def out_of(self, done):
+        f = Path(str(done) + ".out")
+        return f.read_text() if f.exists() else ""
+
+    def test_Kuyruk_FIFO_IkincisiBirincininRestoreundaBaslar_UcuncuBekler(self):
+        """C-00 05.10: two correctly ordered waiters queue FIFO; the first starts when the open window is restored, the
+        second only when the first's window is restored."""
+        a, b, c = self.tmp / "ugA", self.tmp / "ugB", self.tmp / "ugC"
+        self.foreign_snapshot(a)
+        done_b = self.queued_snapshot(b)
+        self.assertTrue(self.wait_until(lambda: len(list(self.L("queue").glob("*.json"))) == 1))
+        done_c = self.queued_snapshot(c)
+        self.assertTrue(self.wait_until(lambda: len(list(self.L("queue").glob("*.json"))) == 2))
+        rc, out, err = self.run_guard("restore", a, "--scope", "editor"); self.assertEqual(0, rc, out + err)
+        self.assertTrue(self.wait_file(done_b, 60)); self.assertEqual("0", done_b.read_text().strip(), self.out_of(done_b)[-800:])
+        self.assertIn("waiting in the window queue — queue position 1", Path(str(done_b) + ".out").read_text())
+        end = time.time() + 12   # 06.10: ≥ two of C's 5 s polls — a record of C would show at once (done_c only after S11)
+        while time.time() < end:
+            self.assertEqual([str(b.resolve())], [r["dir"] for r in self.records()], "the second waiter must wait for the first's window")
+            self.assertFalse(done_c.exists(), "C ended early (exit %s): %s" % (done_c.read_text().strip() if done_c.exists() else "-",
+                                                                               self.out_of(done_c)[-600:]))
+            time.sleep(0.2)
+        self.assertIn("queue position 2", Path(str(done_c) + ".out").read_text())
+        rc, out, err = self.run_guard("restore", b, "--scope", "editor"); self.assertEqual(0, rc, out + err)
+        self.assertTrue(self.wait_file(done_c, 60)); self.assertEqual("0", done_c.read_text().strip(), self.out_of(done_c)[-800:])
+        self.assertEqual([], list(self.L("queue").glob("*.json")))
+
+    def test_Kuyruk_OlenBekleyicininBileti_SiradakiniTutmaz(self):
+        """a waiting guard killed with SIGKILL (its caller shell lives on) leaves no live ticket: the next waiter proceeds."""
+        a, b, c = self.tmp / "ugA", self.tmp / "ugB", self.tmp / "ugC"
+        self.foreign_snapshot(a)
+        self.queued_snapshot(b)
+        self.assertTrue(self.wait_until(lambda: len(list(self.L("queue").glob("*.json"))) == 1))
+        pids = subprocess.run(["pgrep", "-f", "snapshot %s --scope" % b], capture_output=True, text=True).stdout.split()
+        self.assertTrue(pids)
+        for pid in pids:   # only this fixture's guard (its DIR is unique to this test)
+            try:
+                os.kill(int(pid), signal.SIGKILL)
+            except ProcessLookupError:   # 06.10: pgrep -f also lists the guard's short-lived forks ($(…), print |)
+                pass
+        done_c = self.queued_snapshot(c)
+        self.assertTrue(self.wait_until(lambda: "queue position" in self.out_of(done_c)))
+        self.assertIn("queue position 1 —", self.out_of(done_c))   # the dead waiter's ticket is not ahead
+        rc, out, err = self.run_guard("restore", a, "--scope", "editor"); self.assertEqual(0, rc, out + err)
+        self.assertTrue(self.wait_file(done_c, 60)); self.assertEqual("0", done_c.read_text().strip(), Path(str(done_c) + ".out").read_text())
+
+    def wait_until(self, cond, seconds=60):
+        end = time.time() + seconds
+        while time.time() < end:
+            if cond():
+                return True
+            time.sleep(0.2)
+        return False
+
+    # -- D8 kuyruk boşlukları (S-01 test-engineer 06.10, WP-089 D8 kuyruk regresyon planı) ----------------------------------
+    def tickets(self):
+        return sorted(self.L("queue").glob("*.json"))
+
+    def plant(self, sub, name, rec):
+        p = self.L(sub, name); p.parent.mkdir(parents=True, exist_ok=True); p.write_text(json.dumps(rec)); return p
+
+    def lstart_of(self, pid):
+        """the helper's own lstart text (fixture ps shim on PATH) — what a ticket / record carries."""
+        r = subprocess.run(["python3", str(self.tools / "userdata_guard_io.py"), "lstart", str(pid)], env=self.env(),
+                           capture_output=True, text=True, timeout=60)
+        return r.stdout.strip()
+
+    def lock_free(self, seconds):
+        import fcntl
+        end = time.time() + seconds
+        with open(self.L(".lock"), "a") as f:
+            while time.time() < end:
+                try:
+                    fcntl.flock(f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                except BlockingIOError:
+                    time.sleep(0.05); continue
+                fcntl.flock(f.fileno(), fcntl.LOCK_UN); return True
+        return False
+
+    def test_Kuyruk_BeklerkenIntTerm_Cikis130143BiletKayitYok(self):
+        """MUST · snap_fail on a signal while queued: INT → 130, TERM → 143; the ticket leaves the queue at once (not only when
+        a later waiter finds it dead), no record, no aborted record, no before.txt."""
+        self.foreign_snapshot(self.tmp / "ugA")
+        for sig, code in ((signal.SIGINT, 130), (signal.SIGTERM, 143)):
+            with self.subTest(sig=sig.name):
+                d = self.tmp / ("ugS%d" % code)
+                g = self.start_guard("snapshot", d, "--scope", "editor", DD_GUARD_QUEUE_WAIT="300")
+                self.assertTrue(self.wait_until(lambda: len(self.tickets()) == 1))
+                os.kill(g.pid, sig)
+                out, err = g.communicate(timeout=60)
+                self.assertEqual(code, g.returncode, out + err)
+                self.assertIn("snapshot FAILED exit=%d" % code, out)
+                self.assertEqual([], self.tickets())
+                self.assertEqual(1, len(self.records())); self.assertEqual([], self.records("aborted"))
+                self.assertFalse((d / "before.txt").exists())
+
+    def test_Kuyruk_BeklerkenSahipOlur_Cikis65BiletSilinir_RestoreSonrasiSifir(self):
+        """MUST · göç 'ölü sahip': the open window's owner dies while a waiter polls → the waiter answers 65 with the next step
+        and leaves the queue; that restore closes the window and the next snapshot starts at once."""
+        a = self.tmp / "ugA"
+        owner = self.foreign_snapshot(a)
+        rec = self.records()[0]
+        g = self.start_guard("snapshot", self.dir, "--scope", "editor", DD_GUARD_QUEUE_WAIT="300")
+        self.assertTrue(self.wait_until(lambda: len(self.tickets()) == 1))
+        os.killpg(owner.pid, signal.SIGKILL); owner.wait(timeout=30)   # the fixture caller's own group (start_new_session)
+        out, err = g.communicate(timeout=90)
+        self.assertEqual(65, g.returncode, out + err)
+        for part in ("REFUSED — ledger window %s:" % rec["id"], "alive=0",
+                     'next: "userdata-guard.sh restore %s --scope editor"' % a.resolve()):
+            self.assertIn(part, out + err)
+        self.assertEqual([], self.tickets())
+        self.assertFalse((self.dir / "before.txt").exists())
+        rc, out, err = self.run_guard("restore", a, "--scope", "editor"); self.assertEqual(0, rc, out + err)
+        self.assertEqual([], self.records())
+        rc, out, err = self.run_guard("snapshot", self.tmp / "ugB", "--scope", "editor"); self.assertEqual(0, rc, out + err)
+
+    def test_Kuyruk_IcIcePencereYabanciBekleyiciVarken_Cikis0Beklemez(self):
+        """MUST · nested + queue (deadlock): a foreign waiter C is queued for the outer window A; A's own child snapshot B is
+        nested (LIFO, allowed) and must not queue behind C — C waits for A, A's run waits for B: stuck until
+        DD_GUARD_QUEUE_WAIT. Expected: B starts at once (0, no queue line) and C keeps its place."""
+        a, b, c = self.tmp / "ugA", self.tmp / "ugB", self.tmp / "ugC"
+        go, outer, inner = self.tmp / "go-inner", self.tmp / "outer-done", self.tmp / "inner-done"
+        script = ('zsh "$0" snapshot "$1" --scope editor > "$3.out" 2>&1; echo $? > "$3"; '
+                  'while [ ! -f "$5" ]; do sleep 0.1; done; '
+                  'zsh -c \'zsh "$0" snapshot "$1" --scope editor; exit $?\' "$0" "$2" > "$4.out" 2>&1; echo $? > "$4"; sleep 600')
+        p = subprocess.Popen(["zsh", "-c", script, str(self.guard), str(a), str(b), str(outer), str(inner), str(go)],
+                             env=self.env(DD_GUARD_QUEUE_WAIT="20"), start_new_session=True)
+        self.procs.append(p)
+        self.assertTrue(self.wait_file(outer, 120)); self.assertEqual("0", outer.read_text().strip(), self.out_of(outer))
+        done_c = self.queued_snapshot(c)
+        self.assertTrue(self.wait_until(lambda: len(self.tickets()) == 1))
+        go.write_text("")
+        self.assertTrue(self.wait_file(inner, 120))
+        self.assertEqual("0", inner.read_text().strip(), self.out_of(inner))
+        self.assertNotIn("queue position", self.out_of(inner))
+        self.assertFalse(done_c.exists(), "C still waits for the outer window")
+        self.assertEqual(1, len(self.tickets()))
+
+    def test_Kuyruk_ClosedKayitTasinmadan_YeniSnapshot65Almaz(self):
+        """MUST · R12 closes in two helper calls (ledger-update → state closed, then ledger-close moves it under a second lock):
+        a snapshot polling in between meets a 'closed' record in windows/ and refuses it like an abandoned one (65,
+        'state=closed … alive=1 … next: restore'). Seen live 06.10 at load 75–200: a FIFO repeat (C ended early) and two
+        queued waiters B that got exactly this 65 during A's real restore. Expected: after the R12 ledger-update the
+        record blocks nothing (moved under the same lock, or a closed record is skipped)."""
+        w = self.snap("editor")
+        r = subprocess.run(["python3", str(self.tools / "userdata_guard_io.py"), "ledger-update", str(self.L()), w["id"]],
+                           input='{"state": "auto", "areas": {"editor": "finalized"}}', env=self.env(), capture_output=True,
+                           text=True, timeout=60)
+        self.assertEqual(("closed", 0), (r.stdout.strip(), r.returncode), r.stderr)   # what the guard's R12 gets back
+        rc, out, err = self.run_guard("snapshot", self.tmp / "ugB", "--scope", "editor", DD_GUARD_QUEUE_WAIT="6")
+        self.assertEqual(0, rc, out + err)
+        self.assertNotIn("state=closed", out + err)
+
+    def test_Kuyruk_KismiOrtusme_AllKapaninca_EditorVePlayerBekleyicileriBirlikteBaslar(self):
+        """SHOULD · partial overlap: A (all) is open; B (editor) waits in the window queue, C (player) waits for the player
+        slot A's owner holds (slot.sh's queue, not L/queue). After A's restore both start; C never queues behind B."""
+        a, b, c = self.tmp / "ugA", self.tmp / "ugB", self.tmp / "ugC"
+        self.foreign_snapshot(a, scope="all")
+        done_b = self.queued_snapshot(b)
+        self.assertTrue(self.wait_until(lambda: len(self.tickets()) == 1))
+        done_c = self.queued_snapshot(c, scope="player", DD_GUARD_SLOT_WAIT="300")
+        self.assertTrue(self.wait_until(lambda: [e for e in self.slot_entries() if e.startswith("queue/player/")]))
+        self.assertEqual(1, len(self.tickets()), "C waits for the player slot, not in the window queue")
+        rc, out, err = self.run_guard("restore", a, "--scope", "all"); self.assertEqual(0, rc, out + err)
+        for done in (done_b, done_c):
+            self.assertTrue(self.wait_file(done, 120), done.name)
+            self.assertEqual("0", done.read_text().strip(), self.out_of(done))
+        self.assertNotIn("queue position", self.out_of(done_c))
+        self.assertEqual({("editor",), ("player",)}, {tuple(r["windowAreas"]) for r in self.records()})
+        self.assertEqual([], self.tickets())
+
+    def test_Kuyruk_PencereYokCanliBiletVar_YeniGelenOneGecmez(self):
+        """SHOULD · FIFO without a blocker — the moment between a window's close and its head waiter's next poll: a live ticket
+        of an earlier waiter is ahead of a newcomer even when no window is open → 75 'queue position 2 — ahead: <its DIR>
+        (pid …, queued …)'; once that waiter is gone the newcomer starts. (A planted ticket: stopping a real waiter with
+        SIGSTOP makes its zsh read the stopped $(…) child as exit 19 — 'ledger check failed (19)' — so not that way.)"""
+        sh = subprocess.Popen(["sleep", "600"], start_new_session=True); self.procs.append(sh)
+        who = {"pid": sh.pid, "lstart": self.lstart_of(sh.pid)}; self.assertTrue(who["lstart"])
+        t = self.plant("queue", "%d-onceki.json" % (time.time_ns() - 10 ** 9),
+                       {"id": "onceki", "dir": "/fixture/onceki", "owner": who, "waiter": who, "windowAreas": ["editor"],
+                        "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())})
+        rc, out, err = self.run_guard("snapshot", self.dir, "--scope", "editor", DD_GUARD_QUEUE_WAIT="1")
+        self.assertEqual(75, rc, out + err)
+        self.assertIn("queue position 2 — ahead: /fixture/onceki (pid %d, queued" % sh.pid, out + err)
+        self.assertEqual([], self.records()); self.assertEqual([t], self.tickets())
+        sh.kill(); sh.wait(timeout=10)
+        rc, out, err = self.run_guard("snapshot", self.tmp / "ugB", "--scope", "editor", DD_GUARD_QUEUE_WAIT="6")
+        self.assertEqual(0, rc, out + err); self.assertEqual([], self.tickets())
+
+    def test_Kuyruk_Tahmin_KapaliPencereYokUnknown_VarsaMedyanDakika(self):
+        """SHOULD · the estimate: no closed window over these areas → 'estimate unknown (no closed window over these areas yet)'; with closed
+        windows → their median duration minus the open window's age (a player-only window does not count)."""
+        import re
+        self.foreign_snapshot(self.tmp / "ugA")
+        rc, out, err = self.run_guard("snapshot", self.tmp / "ugB", "--scope", "editor", DD_GUARD_QUEUE_WAIT="1")
+        self.assertEqual(75, rc, out + err)
+        self.assertIn("estimate unknown (no closed window over these areas yet)", out + err)
+        for i, (areas, minutes) in enumerate(((["editor"], 50), (["editor"], 60), (["editor", "player"], 70), (["player"], 500))):
+            self.plant("closed", "20261001T0%d0000Z-fixture.json" % i,
+                       {"id": "c%d" % i, "windowAreas": areas, "utc": "2026-10-01T10:00:00Z",
+                        "utcUpdated": "2026-10-01T%02d:%02d:00Z" % (10 + minutes // 60, minutes % 60)})
+        rc, out, err = self.run_guard("snapshot", self.tmp / "ugC", "--scope", "editor", DD_GUARD_QUEUE_WAIT="1")
+        self.assertEqual(75, rc, out + err)
+        m = re.search(r"estimate ~(\d+) min", out + err)
+        self.assertTrue(m, out + err)
+        self.assertTrue(50 <= int(m.group(1)) <= 60, m.group(0))   # median 60 − A's age (minutes)
+
+    def test_Kuyruk_KayitUtcPencereAcilisi_KuyrukBeklemesiSureyeGirmez(self):
+        """SHOULD · a record's utc is the window's start: the queue time must not count as window time — typical_minutes
+        reads utc → utcUpdated of closed records and the refusal prints age= from it, so every estimate grows by the waits."""
+        import calendar
+        a, b = self.tmp / "ugA", self.tmp / "ugB"
+        self.foreign_snapshot(a)
+        done_b = self.queued_snapshot(b)
+        self.assertTrue(self.wait_until(lambda: len(self.tickets()) == 1))
+        time.sleep(12)   # B queues ≥ 12 s
+        t_restore = time.time()
+        rc, out, err = self.run_guard("restore", a, "--scope", "editor"); self.assertEqual(0, rc, out + err)
+        self.assertTrue(self.wait_file(done_b, 120)); self.assertEqual("0", done_b.read_text().strip(), self.out_of(done_b))
+        rec = [r for r in self.records() if r["dir"] == str(b.resolve())][0]
+        start = calendar.timegm(time.strptime(rec["utc"], "%Y-%m-%dT%H:%M:%SZ"))
+        self.assertGreaterEqual(start, int(t_restore) - 1, "utc %s is the queue entry, not the window start" % rec["utc"])
+
+    def test_Kuyruk_KlasorYokVeBozukBilet_YoksayilirCikis0(self):
+        """SHOULD · no L/queue/ → a free snapshot creates none; a corrupt ticket (half JSON, hand edit) never blocks and is
+        kept — moved to queue/done/<name>.unreadable.json, never deleted (06.10 reviews: nothing under L is deleted)."""
+        rc, out, err = self.run_guard("snapshot", self.tmp / "ugA", "--scope", "editor"); self.assertEqual(0, rc, out + err)
+        self.assertFalse(self.L("queue").exists())
+        rc, out, err = self.run_guard("restore", self.tmp / "ugA", "--scope", "editor"); self.assertEqual(0, rc, out + err)
+        bad = self.L("queue", "1-bozuk.json"); bad.parent.mkdir(parents=True); bad.write_text('{"id": "x", "windowAreas": ["edi')
+        rc, out, err = self.run_guard("snapshot", self.tmp / "ugB", "--scope", "editor", DD_GUARD_QUEUE_WAIT="6")
+        self.assertEqual(0, rc, out + err)
+        self.assertNotIn("queue position", out + err)
+        self.assertFalse(bad.exists())
+        self.assertEqual(1, len(list(self.L("queue", "done").glob("1-bozuk.unreadable*.json"))))
+
+    def test_Kuyruk_EskiBiletWaiterYokSahipOlu_SilinirCikis0(self):
+        """SHOULD · a ticket without 'waiter' (2-argument ledger-begin): liveness falls back to the owner — a dead owner's
+        ticket is removed by the next snapshot, which starts at once."""
+        old = self.plant("queue", "1-eski.json", {"id": "eski", "dir": "/fixture/eski", "windowAreas": ["editor"],
+                                                  "owner": {"pid": 999999, "lstart": "Thu Jan  1 00:00:00 1970"},
+                                                  "utc": "2026-10-05T00:00:00Z"})
+        rc, out, err = self.run_guard("snapshot", self.dir, "--scope", "editor", DD_GUARD_QUEUE_WAIT="6")
+        self.assertEqual(0, rc, out + err)
+        self.assertFalse(old.exists())
+
+    def test_Kuyruk_EskiBiletWaiterYokSahipCanli_SiraTutmaz(self):
+        """SHOULD · a waiter-less ticket whose owner (a long-lived shell) lives on would hold every later waiter of its areas
+        until that shell exits (a guard that gave up without ledger-dequeue leaves it) — S-01 06.10: no guard writes one; it
+        is reaped (queue/done/…reaped.json) and never honoured."""
+        sh = subprocess.Popen(["sleep", "600"], start_new_session=True); self.procs.append(sh)
+        lst = self.lstart_of(sh.pid); self.assertTrue(lst)
+        self.plant("queue", "1-eski.json", {"id": "eski", "dir": "/fixture/eski", "windowAreas": ["editor"],
+                                            "owner": {"pid": sh.pid, "lstart": lst}, "utc": "2026-10-05T00:00:00Z"})
+        rc, out, err = self.run_guard("snapshot", self.dir, "--scope", "editor", DD_GUARD_QUEUE_WAIT="6")
+        self.assertEqual(0, rc, out + err)
+
+    def test_Kuyruk_SayisalOlmayanBiletAdi_BekleyenCokmez(self):
+        """NIT · a live ticket whose name does not start with the ns stamp (copied by hand: 'elle-…json') makes
+        int(name.split('-')[0]) raise in a waiter that holds its own ticket → 'ledger check failed (1)' → 75 at once."""
+        self.foreign_snapshot(self.tmp / "ugA")
+        g = self.start_guard("snapshot", self.dir, "--scope", "editor", DD_GUARD_QUEUE_WAIT="20")
+        self.assertTrue(self.wait_until(lambda: len(self.tickets()) == 1))
+        sh = subprocess.Popen(["sleep", "600"], start_new_session=True); self.procs.append(sh)
+        who = {"pid": sh.pid, "lstart": self.lstart_of(sh.pid)}
+        self.plant("queue", "elle-kopya.json", {"id": "elle", "dir": "/fixture/elle", "owner": who, "waiter": who,
+                                                "windowAreas": ["editor"], "utc": "2026-10-06T00:00:00Z"})
+        out, err = g.communicate(timeout=90)
+        self.assertEqual(75, g.returncode, out + err)
+        self.assertNotIn("ledger check failed", out + err)
+        self.assertIn("still after 20s", out + err)
+
+    def test_Goc_D7PenceresiDefterKaydiYok_YeniGuardRestore0KayitYaratmaz(self):
+        """SHOULD · rollout: a window opened by the D7 guard has no ledger record; the D8 guard restores it (0, R2/R12 skipped)
+        and writes no record, no closed/ entry, no ticket. (The other half — a D7 editor window is INVISIBLE to D8
+        snapshots — is a rollout rule, see d8-queue-testplan-0610.md §3.)"""
+        w = self.snap("editor")
+        self.L("windows", w["id"] + ".json").unlink()   # what a D7 snapshot leaves behind: no ledger record
+        (self.d1 / "ui-settings.json").write_text('{"ui": 99}\n')
+        rc, out, err = self.restore("editor")
+        self.assertEqual(0, rc, out + err)
+        self.assertEqual('{"ui": 1}\n', (self.d1 / "ui-settings.json").read_text())
+        self.assertEqual([], self.records()); self.assertEqual([], self.records("closed")); self.assertFalse(self.L("queue").exists())
+
     def test_Ledger_SnapshotMissing_Cikis64KayitDirty(self):
         w = self.snap("editor")
         (self.dir / "before.txt").unlink()
@@ -1460,6 +1819,56 @@ class LedgerTests(RestoreBase):
         self.assertEqual(64, rc, err)
         self.assertIn("SNAPSHOT_MISSING — ledger window %s marked dirty" % w["id"], err)
         self.assertEqual("dirty", self.records()[0]["state"])
+
+
+class KilitSirasiKuyrukTests(GuardFixture):
+    """C-00 05.10 (G4 D8 kuyruk): window → unity for EVERY scope. test_guard_d6a.py covers the ancestor chain (unsandboxed);
+    these cover DD_SLOT_OWNER, a foreign session's unity slot and the player-ancestor exception — sandboxed (S-01 test-engineer
+    06.10)."""
+    LOCK = "userdata-guard: lock order — take the guard snapshot (the window; player scope: the player slot) BEFORE the Unity slot"
+
+    def test_KilitSirasi_DdSlotOwnerUnityTutar_HerKapsam64HicbirSeyYazilmaz(self):
+        """MUST · a wrapper that takes the window for its caller (DD_SLOT_OWNER) whose caller holds a unity slot → 64, every
+        scope, nothing written (no DIR, no ledger, no player slot)."""
+        go = self.holder("unity", "fx-unity"); owner = self.procs[-1].pid   # the holder shell owns the unity slot
+        try:
+            for scope in ("editor", "player", "all"):
+                with self.subTest(scope=scope):
+                    d = self.tmp / ("ug-own-" + scope)
+                    rc, out, err = self.run_guard("snapshot", d, "--scope", scope, DD_SLOT_OWNER=str(owner))
+                    self.assertEqual(64, rc, out + err)
+                    self.assertIn(self.LOCK, err); self.assertIn("fix the order", err)
+                    self.assertFalse(d.exists(), "nothing may be written before the refusal")
+                    self.assertFalse((self.root / "ledger").exists(), "no ledger record, no queue ticket")
+                    self.assertEqual([], [e for e in self.slot_entries() if e.startswith(("player/", "queue/player/"))])
+        finally:
+            go.write_text("")
+
+    def test_KilitSirasi_YabanciOturumUnityTutar_EditorSnapshot0(self):
+        """MUST · another session's unity slot (not our chain, no DD_SLOT_OWNER) never turns into a 64 — the rollout would
+        otherwise stop every editor run while any Unity batch runs on the machine."""
+        go = self.holder("unity", "fx-other")
+        try:
+            rc, out, err = self.run_guard("snapshot", self.dir, "--scope", "editor")
+            self.assertEqual(0, rc, out + err); self.assertNotIn("lock order", out + err)
+        finally:
+            go.write_text("")
+
+    def test_KilitSirasi_EditorKapsamAtaPlayerCocukUnity_Cikis64(self):
+        """SHOULD · KARAR (C-00): the D6a SHOULD-1 exception (an ancestor holds the player slot → a unity slot below it is fine)
+        was argued for the PLAYER slot; an editor-scope snapshot now also waits in the window queue (≤ 3600 s) with that unity
+        slot held — the deadlock the 'every scope' rule removes. Expected (rule as written): 64."""
+        d = self.tmp / "ug-exc"; done = self.tmp / "exc-done"; slot = self.tools / "slot.sh"
+        script = (f'"{slot}" acquire player fx-p >/dev/null || exit 91; '
+                  f'zsh -c \'"$0" acquire unity fx-u >/dev/null || exit 90; zsh "$1" snapshot "$2" --scope editor; rc=$?; '
+                  f'"$0" release unity fx-u >/dev/null; exit $rc\' "{slot}" "{self.guard}" "{d}" > "{done}.out" 2>&1; echo $? > "{done}"; '
+                  f'"{slot}" release player fx-p >/dev/null')
+        p = subprocess.Popen(["bash", "-c", script], env=self.env(), start_new_session=True); self.procs.append(p)
+        self.assertTrue(self.wait_file(done, 120))
+        text = Path(str(done) + ".out").read_text()
+        self.assertEqual("64", done.read_text().strip(), text)
+        self.assertIn(self.LOCK, text)
+        self.assertFalse((d / "before.txt").exists())
 
 
 def sandboxed_main():

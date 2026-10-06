@@ -113,9 +113,20 @@ guard_open() {
   local name="$1" scope="$2" dir="$OUT/stages/$1"
   mkdir -p "$dir"
   defer_signals
-  # called from this shell (not a subshell): the player-scope snapshot binds the 'player' slot to this RC's pid
-  "$DD_GUARD" snapshot "$dir/ug" --scope "$scope" > "$dir/guard-snapshot.out" 2>&1
-  GUARD_CODE=$?
+  # called from this shell (not a subshell): the player-scope snapshot binds the 'player' slot to this RC's pid. G4 D8
+  # queue (06.10): it can wait ≤ DD_GUARD_QUEUE_WAIT (3600 s) in the window queue, so it runs in the background and a
+  # deferred signal stops it at once (TERM: the guard leaves the queue); a window it opened anyway (exit 0, or before.txt —
+  # written only on success) is kept in GUARD_DIR, and arm_signals then restores it and fails the RC
+  "$DD_GUARD" snapshot "$dir/ug" --scope "$scope" > "$dir/guard-snapshot.out" 2>&1 &
+  local gp=$! c
+  while :; do
+    wait "$gp"; GUARD_CODE=$?
+    kill -0 "$gp" 2>/dev/null || break
+    [ -n "$SIG_PENDING" ] && kill -TERM "$gp" 2>/dev/null
+  done
+  # an interrupted wait (128+n) whose job ended before kill -0: its own status is still there (127 = already taken)
+  if [ "$GUARD_CODE" -gt 128 ] && [ -n "$SIG_PENDING" ]; then wait "$gp" 2>/dev/null; c=$?; [ "$c" -eq 127 ] || GUARD_CODE=$c; fi
+  [ "$GUARD_CODE" -ne 0 ] && [ -f "$dir/ug/before.txt" ] && GUARD_CODE=0
   if [ "$GUARD_CODE" -eq 0 ]; then
     GUARD_DIR="$dir/ug"; GUARD_SCOPE="$scope"; GUARD_STAGE="$name"
     log "GUARD snapshot $name scope=$scope"

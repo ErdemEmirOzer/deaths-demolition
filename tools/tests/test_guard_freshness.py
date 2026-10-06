@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """WP-089 (C-00 05.10) · tools/guard_freshness.py and its two callers (dd_guard_canon_check, guard_receipt.canon_refusal):
-a real git repo whose main carries tools/{userdata-guard.sh, userdata_attrib.py, dd-env.sh, slot.sh} and a real detached
-driver worktree under a fixture HOME at the canonical path. Fresh → 0; guard or attrib differs (edited, or main moved
-ahead) → 64; dd-env/slot differ → warning only; driver not a git checkout → warning only.
+a real git repo whose main carries tools/{userdata-guard.sh, userdata_attrib.py, userdata_guard_io.py, dd-env.sh,
+slot.sh} and a real detached driver worktree under a fixture HOME at the canonical path. Fresh → 0; guard, attrib or
+ledger io differs (edited, or main moved ahead) → 64; dd-env/slot differ → warning only; driver not a git checkout →
+warning only.
 usage: python3 tools/tests/test_guard_freshness.py"""
 import os, subprocess, sys, tempfile, unittest
 from pathlib import Path
@@ -23,7 +24,8 @@ class GuardFreshnessTests(unittest.TestCase):
         self.repo = self.root / "repo"
         (self.repo / "tools").mkdir(parents=True)
         for name, text in (("userdata-guard.sh", "#!/bin/zsh\nexit 0\n"), ("userdata_attrib.py", "# attrib\n"),
-                           ("slot.sh", "#!/bin/bash\nexit 0\n"), ("dd-env.sh", (TOOLS / "dd-env.sh").read_text())):
+                           ("userdata_guard_io.py", "# ledger io\n"), ("slot.sh", "#!/bin/bash\nexit 0\n"),
+                           ("dd-env.sh", (TOOLS / "dd-env.sh").read_text())):
             (self.repo / "tools" / name).write_text(text)
         (self.repo / "tools" / "userdata-guard.sh").chmod(0o755)
         self.git("init", "-q", "-b", "main"); self.git("add", "."); self.git("commit", "-q", "-m", "base")
@@ -61,8 +63,8 @@ class GuardFreshnessTests(unittest.TestCase):
         self.assertIn("checkout -q --detach main", msg)
         self.assertEqual(64, self.cli().returncode)
 
-    def test_MainIlerledi_GuardVeyaAttrib_64(self):
-        for name in ("userdata-guard.sh", "userdata_attrib.py"):
+    def test_MainIlerledi_GuardAttribVeyaDefterIo_64(self):
+        for name in ("userdata-guard.sh", "userdata_attrib.py", "userdata_guard_io.py"):
             with self.subTest(name=name):
                 self.advance_main(name, "# newer %s\n" % name)
                 self.assertEqual("stale", gf.freshness(self.guard)[0])

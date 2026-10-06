@@ -91,6 +91,7 @@ CORE_FILTER=$(python3 "$DD_TOOLS_DIR/ci_isolated.py" core-filter "$DD_TOOLS_DIR/
 # an unresolvable/removed foreign path is skipped + logged instead of failing the check. 0 open · 1 not open · 2 no ps.
 ci_project_open() { dd_project_open "$CI_DIR/prototype/DeathsDemolition_PlayableConcept"; }
 CI_PLAYER_HELD=0; CI_GUARD_READY=0; CI_GUARD_EXIT=0; CI_GUARD_RAW=0; CI_GUARD_DIR=""; CI_CHILD=""; CI_CLEANING=0; CI_SIGNAL=""
+CI_GSNAP=""; GDIR=""   # G4 D8 queue (06.10): the guard snapshot in flight (it can wait ≤ DD_GUARD_QUEUE_WAIT in the window queue)
 # CI_GUARD_DIR = the directory whose snapshot succeeded (Codex-audit M-07: it can be a .tryN retry directory).
 ci_guard_restore() {
   "$DD_GUARD_CANON" restore "$CI_GUARD_DIR" --scope editor > "$CI_GUARD_DIR.out" 2>&1
@@ -126,6 +127,13 @@ ci_guard_restore_safe() {
 ci_cleanup() {
   local original=$1 slot_exit=0 lease_exit=0
   trap - EXIT; CI_CLEANING=1
+  # G4 D8 queue (06.10): a signal while the snapshot ran (it may wait an hour in the window queue) stops it at once — the
+  # guard leaves the queue / aborts its record; if it opened the window anyway (exit 0, or before.txt: the guard writes it
+  # only on success, INV-8), that window is restored below like any other
+  if [ -n "$CI_GSNAP" ]; then
+    kill -TERM "$CI_GSNAP" 2>/dev/null; wait "$CI_GSNAP"; local gs=$?; CI_GSNAP=""
+    { [ "$gs" -eq 0 ] || [ -f "$GDIR/before.txt" ]; } && { CI_GUARD_DIR="$GDIR"; CI_GUARD_READY=1; }
+  fi
   # Codex-audit Y1 / G4 Q10: restoring while the child (or its orphaned Unity) can still write would be a false "verified".
   if [ -n "$CI_CHILD" ] && ! dd_stop_child "$CI_CHILD" "${DD_CI_CHILD_GRACE:-120}"; then
     dd_log "main-ci ${CI_SIGNAL:-exit}: user-data window left open: child $DD_CHILD_ALIVE still alive, tell C-00 — guard ${CI_GUARD_DIR:-(no snapshot)} NOT restored, player slot and lease $DD_CI_LEASE kept" >&2
@@ -217,8 +225,13 @@ for d in "$OUT"/userdata-guard*(N/); do
 done
 while :; do
   GDIR="$UG_BASE"; [ "$GTRY" -gt 1 ] && GDIR="$UG_BASE.try$GTRY"
-  "$DD_GUARD_CANON" snapshot "$GDIR" --scope editor > "$GDIR-snapshot.out" 2>&1; GS=$?
+  # `& wait` like the tests (G4 D8 queue, 06.10): the snapshot can wait ≤ DD_GUARD_QUEUE_WAIT in the window queue — a
+  # foreground call held a TERM until it returned and then left the window it opened unrestored (cleanup above)
+  "$DD_GUARD_CANON" snapshot "$GDIR" --scope editor > "$GDIR-snapshot.out" 2>&1 & CI_GSNAP=$!; wait $CI_GSNAP; GS=$?; CI_GSNAP=""
   [ "$GS" -eq 0 ] && break
+  # G4 D8 queue reviews (06.10): a 75 after the window queue's own wait (DD_GUARD_QUEUE_WAIT, 3600 s — this run holds the
+  # player slot and the lease meanwhile) is not retried: a retry is a new ticket at the queue's end, ≤ 3 h of no Players
+  [ "$GS" -eq 75 ] && grep -q "class=QUEUE_TIMEOUT" "$GDIR-snapshot.out" 2>/dev/null && { dd_log "userdata snapshot75 (try $GTRY, $GDIR): the window queue timed out — not retried; no tests started"; exit 75; }
   [ "$GS" -eq 75 ] && [ "$GTRY" -lt "$CI_GUARD_TRIES" ] || { dd_log "userdata snapshot exit $GS (try $GTRY/$CI_GUARD_TRIES, $GDIR) — no tests started"; exit "$GS"; }
   dd_log "userdata snapshot75 (try $GTRY/$CI_GUARD_TRIES, $GDIR): busy — retrying into a new directory; no tests started"
   GTRY=$((GTRY + 1))

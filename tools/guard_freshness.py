@@ -3,8 +3,9 @@
 
 The canonical guard (DD_GUARD_CANON = K/wp-079/driver/tools/userdata-guard.sh) runs from the CI driver, a detached git
 worktree that C-00 moves to main after integrating. This compares the driver's files with main's blobs:
-  core  userdata-guard.sh, userdata_attrib.py — a difference means a stale (or locally edited) guard: STALE, the caller
-        refuses with 64 before it takes anything (fix: git -C <driver> checkout -q --detach main).
+  core  userdata-guard.sh, userdata_attrib.py, userdata_guard_io.py (the window ledger and its queue live there — G4 D8
+        review 06.10) — a difference means a stale (or locally edited) guard: STALE, the caller refuses with 64 before it
+        takes anything (fix: git -C <driver> checkout -q --detach main).
   aux   dd-env.sh, slot.sh — they change on main often; a difference is only a warning (a run is not blocked by every
         tools commit before the driver is synced).
 A driver that is not a git checkout with a `main` ref cannot be judged: a warning, never a refusal (the real driver
@@ -17,7 +18,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-CORE = ("userdata-guard.sh", "userdata_attrib.py")
+CORE = ("userdata-guard.sh", "userdata_attrib.py", "userdata_guard_io.py")
 AUX = ("dd-env.sh", "slot.sh")
 
 
