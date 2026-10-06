@@ -14,13 +14,17 @@ each window also reports raw p99, p99.9, max, the > 33.33 ms fraction and rawP99
 <root>/wp078-perf-report.json + .txt.
 
 usage: wp078_perf_report.py <root> [--targets perf-targets.json]
-exit: 0 every gate cell passes · 1 a gate cell fails or lacks windows · 64 usage
+       [--baseline <R1 root> [--r2-measure <E>/r2/r2-P2.json --commit <FINAL> --sha256 <FINAL probe binary>
+        --baseline-commit <R1> --baseline-sha256 <R1 probe binary>]]
+exit: 0 every gate cell passes · 1 a gate cell fails or lacks windows · 64 usage (P2 never changes the exit: an r2-P2.json
+      that is not written is named on stderr and in the .txt — P2 is then BLOCKED by name in the R2 report)
 """
 import argparse
 import csv
 import json
 import math
 import re
+import statistics
 import sys
 from pathlib import Path
 
@@ -95,7 +99,8 @@ def judge_window(directory, tier, mode, targets):
     keys = targets["probeKeys"]
     attempt = load(directory / "attempt.json") or {}
     detail = {"dir": directory.name, "status": attempt.get("status"), "exitCode": attempt.get("exitCode"),
-              "hostClean": attempt.get("hostClean"), "timedOut": attempt.get("timedOut")}
+              "hostClean": attempt.get("hostClean"), "timedOut": attempt.get("timedOut"),
+              "startedEpoch": attempt.get("startedEpoch")}
     kind = classify(attempt)
     if kind != "complete":
         detail["reason"] = "host-only discard" if kind == "discarded" else "attempt did not complete on a clean host"
@@ -153,33 +158,118 @@ def report(root, targets):
 
 
 P2_FLAG_PCT, P2_FLAG_MS = 0.10, 1.0   # C-00 05.10: R2 report P2 — a cell over BOTH +10 % and +1.0 ms is flagged by name
+LOAD_FIELDS = ("activeMin", "activeMax", "liveBodiesMin", "liveBodiesMax", "crowdMemberMin", "crowdMemberMax", "loadIntegrityFloor")
 
 
-def _cell_mean(cell):
-    means = [w["meanMs"] for w in cell["windows"] if w.get("state") == "counted" and isinstance(w.get("meanMs"), (int, float))]
-    return round(sum(means) / len(means), 4) if means else None
+def window_integrity(directory, mode, targets, commit=None, binary_sha256=None):
+    """WP-091 P2, "the source is in the recording" (C-00 05.10; KADRO game-test-engineer MUST-1, 06.10): the load and
+    scope wp078_report's A4 gate proves on FINAL's windows, for every window a comparison uses, on both sides — the side's
+    commit and build, the Run scene at the target resolution, exactly activeEnemies forced and held for the whole window,
+    the warm-up and window lengths, the TP/FP sweep, a full CSV. The probe exits 0 even when its own window failed, so a
+    counted attempt alone proves none of this. Returns the broken conditions ([] when sound)."""
+    keys, want = targets["probeKeys"], targets["activeEnemies"]
+    problems = []
+
+    def need(ok, text):
+        if not ok:
+            problems.append(text)
+
+    def number(value):
+        return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+
+    attempt = load(directory / "attempt.json") or {}
+    if commit:
+        need(attempt.get("executionCommit") == commit, f"executionCommit {attempt.get('executionCommit')!r} is not {commit}")
+    if binary_sha256:
+        need(attempt.get("binarySha256") == binary_sha256, f"binarySha256 {attempt.get('binarySha256')!r} is not the side's build")
+    scene = load(directory / "01-scene-ready.json") or {}
+    need(scene.get("scene") == "Run" and [scene.get("screenWidth"), scene.get("screenHeight")] == targets["resolution"],
+         f"01-scene-ready: scene {scene.get('scene')!r} at {scene.get('screenWidth')}x{scene.get('screenHeight')}")
+    force = load(directory / "02-force-40.json") or {}
+    need(force.get("pass") is True and all(type(force.get(k)) is int and force[k] == want
+                                           for k in ("configuredSafetyCeiling", "ceiling", "forcedTarget", "achievedCount")),
+         f"02-force-40: the forced load is not exactly {want}")
+    warm = load(directory / "03-warmup.json") or {}
+    need(warm.get("pass") is True and number(warm.get("warmupSeconds")) and warm["warmupSeconds"] >= targets["warmupSeconds"],
+         "03-warmup: incomplete")
+    window = load(directory / keys["file"]) or {}
+    need(window.get("pass") is True and number(window.get("windowSeconds")) and window["windowSeconds"] >= targets["windowSeconds"],
+         "04-window: the probe's window did not pass or is short")
+    need(all(type(window.get(k)) is int and window[k] == want for k in LOAD_FIELDS) and window.get("loadIntegrityFraction") == 1.0,
+         f"04-window: the load was not exactly {want} for the whole window")
+    if mode != "topdown":
+        need(window.get(keys["sweep"]) is True, "04-window: TP/FP camera sweep missing")
+    values = frame_times(directory / "frame-times-ms.csv")
+    need(values is not None and len(values) == window.get(keys["frames"]) and sum(values) >= targets["windowSeconds"] * 1000 - 100,
+         "frame-times-ms.csv: partial, or disagrees with frameCount")
+    return problems
 
 
-def compare(r2_result, r1_result):
-    """WP-091 P2 (report, never a gate): per tier × mode, the mean of the counted windows' frame means, R2 − R1 in ms and
-    %. A cell with no counted window on either side is "unmeasured", never flagged as fine."""
+def integrity_failures(root, result, targets, commit=None, binary_sha256=None):
+    """{window dir: broken conditions} over the counted windows of one side's report."""
+    failures = {}
+    for cell in result["cells"]:
+        for w in cell["windows"]:
+            if w.get("state") == "counted":
+                problems = window_integrity(Path(root) / w["dir"], cell["mode"], targets, commit, binary_sha256)
+                if problems:
+                    failures[w["dir"]] = problems
+    return failures
+
+
+def _means(cell, invalid):
+    return [(w["dir"], w["meanMs"], w.get("startedEpoch")) for w in (cell["windows"] if cell else [])
+            if w.get("state") == "counted" and isinstance(w.get("meanMs"), (int, float)) and w["dir"] not in invalid]
+
+
+def _index(name):
+    return int(name.rsplit("-", 1)[1])
+
+
+def compare(r2_result, r1_result, invalid=None):
+    """WP-091 P2 (report, never a gate): per tier × mode, the mean of the sound counted windows' frame means, R2 − R1 in ms
+    and %. A cell is measured only with the tier's minWindows sound windows on BOTH sides (else "unmeasured", never
+    flagged as fine). invalid = {"r2": {dir: problems}, "r1": {dir: problems}} (window_integrity) — those windows never
+    count. Each cell also carries the noise and the pairing (KADRO game-test-engineer SHOULD-3): the window means, their
+    SD, the SE of the difference, the n-th R2 window paired with the n-th R1 window (their differences, the median, and the
+    largest start-time gap of a pair)."""
+    invalid = invalid or {}
     r1_cells = {(c["tier"], c["mode"]): c for c in r1_result["cells"]}
     rows = []
     for cell in r2_result["cells"]:
         base = r1_cells.get((cell["tier"], cell["mode"]))
-        r2_mean, r1_mean = _cell_mean(cell), _cell_mean(base) if base else None
-        row = {"tier": cell["tier"], "mode": cell["mode"], "r2MeanMs": r2_mean, "r1MeanMs": r1_mean}
-        if r2_mean is None or r1_mean is None or r1_mean <= 0:
+        need = int(cell.get("minWindows") or 1)
+        r2w = sorted(_means(cell, invalid.get("r2", {})), key=lambda w: _index(w[0]))
+        r1w = sorted(_means(base, invalid.get("r1", {})), key=lambda w: _index(w[0]))
+        row = {"tier": cell["tier"], "mode": cell["mode"], "r2Windows": len(r2w), "r1Windows": len(r1w), "minWindows": need,
+               "r2WindowMeansMs": [m for _, m, _ in r2w], "r1WindowMeansMs": [m for _, m, _ in r1w]}
+        if len(r2w) < need or len(r1w) < need:
             row.update(state="unmeasured", flagged=False)
-        else:
-            delta = round(r2_mean - r1_mean, 4)
-            pct = round(delta / r1_mean, 4)
-            row.update(state="measured", deltaMs=delta, deltaPct=pct, flagged=pct > P2_FLAG_PCT and delta > P2_FLAG_MS)
+            rows.append(row)
+            continue
+        r2_mean = round(statistics.fmean(row["r2WindowMeansMs"]), 4)
+        r1_mean = round(statistics.fmean(row["r1WindowMeansMs"]), 4)
+        if r1_mean <= 0:
+            row.update(state="unmeasured", flagged=False)
+            rows.append(row)
+            continue
+        sd2 = statistics.stdev(row["r2WindowMeansMs"]) if len(r2w) > 1 else 0.0
+        sd1 = statistics.stdev(row["r1WindowMeansMs"]) if len(r1w) > 1 else 0.0
+        pairs = list(zip(r2w, r1w))
+        deltas = [round(a[1] - b[1], 4) for a, b in pairs]
+        gaps = [abs(a[2] - b[2]) for a, b in pairs if isinstance(a[2], (int, float)) and isinstance(b[2], (int, float))]
+        delta = round(r2_mean - r1_mean, 4)
+        pct = round(delta / r1_mean, 4)
+        row.update(state="measured", r2MeanMs=r2_mean, r1MeanMs=r1_mean, deltaMs=delta, deltaPct=pct,
+                   flagged=pct > P2_FLAG_PCT and delta > P2_FLAG_MS, r2SdMs=round(sd2, 4), r1SdMs=round(sd1, 4),
+                   seDeltaMs=round(math.sqrt(sd2 ** 2 / len(r2w) + sd1 ** 2 / len(r1w)), 4), pairDeltasMs=deltas,
+                   pairDeltaMedianMs=round(statistics.median(deltas), 4), pairGapMaxS=round(max(gaps), 1) if gaps else None)
         rows.append(row)
     measured = [r for r in rows if r["state"] == "measured"]
-    return {"schema": "dd-wp078-perf-compare-v1", "rule": f"flag when deltaPct > {P2_FLAG_PCT} and deltaMs > {P2_FLAG_MS}",
+    return {"schema": "dd-wp078-perf-compare-v2", "rule": f"flag when deltaPct > {P2_FLAG_PCT} and deltaMs > {P2_FLAG_MS}",
             "cells": rows, "flaggedCells": sum(1 for r in rows if r["flagged"]),
             "unmeasuredCells": sum(1 for r in rows if r["state"] == "unmeasured"),
+            "invalidWindows": {side: dict(sorted(v.items())) for side, v in sorted(invalid.items()) if v},
             "worstDeltaMs": max((r["deltaMs"] for r in measured), default=None),
             "worstDeltaPct": max((r["deltaPct"] for r in measured), default=None)}
 
@@ -190,7 +280,10 @@ def main():
     parser.add_argument("--targets", default=str(HERE / "perf-targets.json"))
     parser.add_argument("--baseline", help="WP-091 P2: the R1 perf root measured in the same window (report only)")
     parser.add_argument("--r2-measure", help="write the P2 comparison as an R2 measurement artifact (dd-r2-measure-v1) here")
-    parser.add_argument("--commit", help="the FINAL commit recorded in the --r2-measure artifact")
+    parser.add_argument("--commit", help="the FINAL commit recorded in the --r2-measure artifact (and every R2 window's)")
+    parser.add_argument("--sha256", help="P2: the FINAL release-probe binary every R2 window ran")
+    parser.add_argument("--baseline-commit", help="P2: the R1 commit every baseline window ran under")
+    parser.add_argument("--baseline-sha256", help="P2: the R1 release-probe binary every baseline window ran")
     args = parser.parse_args()
     root = Path(args.root)
     if not root.is_dir():
@@ -211,7 +304,12 @@ def main():
         if not baseline.is_dir():
             print(f"no such baseline directory: {baseline}", file=sys.stderr)
             return 64
-        comparison = compare(result, report(baseline, targets))
+        base_result = report(baseline, targets)
+        invalid = {"r2": integrity_failures(root, result, targets, args.commit, args.sha256),
+                   "r1": integrity_failures(baseline, base_result, targets, args.baseline_commit, args.baseline_sha256)}
+        comparison = compare(result, base_result, invalid)
+        comparison.update(commit=args.commit, binarySha256=args.sha256, baselineCommit=args.baseline_commit,
+                          baselineBinarySha256=args.baseline_sha256)
         (root / "wp078-perf-compare.json").write_text(json.dumps(comparison, indent=2) + "\n", encoding="utf-8")
         lines.append(f"P2 (report) R2 - R1: {comparison['flaggedCells']} flagged, {comparison['unmeasuredCells']} unmeasured, "
                      f"worst {comparison['worstDeltaMs']} ms / {comparison['worstDeltaPct']}")
@@ -219,13 +317,29 @@ def main():
             if c["flagged"]:
                 lines.append(f"  P2 FLAG {c['tier']} {c['mode']}: {c['r1MeanMs']} -> {c['r2MeanMs']} ms (+{c['deltaMs']} ms, +{c['deltaPct']:.1%})")
         if args.r2_measure:
-            if not (args.commit and len(args.commit) == 40):
-                print("--r2-measure needs --commit <40-hex>", file=sys.stderr)
+            if not (args.commit and len(args.commit) == 40 and args.baseline_commit and len(args.baseline_commit) == 40):
+                print("--r2-measure needs --commit and --baseline-commit <40-hex>", file=sys.stderr)
                 return 64
-            artifact = {"schema": "dd-r2-measure-v1", "gate": "P2", "commit": args.commit, "source": "tools/qa/wp078_perf_report.py --baseline",
-                        "values": {k: comparison[k] for k in ("flaggedCells", "worstDeltaMs", "worstDeltaPct")}, "cells": comparison["cells"]}
-            Path(args.r2_measure).parent.mkdir(parents=True, exist_ok=True)
-            Path(args.r2_measure).write_text(json.dumps(artifact, indent=2) + "\n", encoding="utf-8")
+            # source in the recording: a broken window on either side, or a cell without its windows, writes nothing
+            blocked = [f"{side} {name}: {'; '.join(problems)}" for side, failures in comparison["invalidWindows"].items()
+                       for name, problems in failures.items()]
+            blocked += [f"unmeasured cell {c['tier']} {c['mode']} (R2 {c['r2Windows']}, R1 {c['r1Windows']} sound windows, "
+                        f"{c['minWindows']} each needed)" for c in comparison["cells"] if c["state"] == "unmeasured"]
+            if blocked:
+                lines.append(f"P2 NOT written ({len(blocked)} problems) — P2 BLOCKED by name in the R2 report:")
+                lines += ["  " + b for b in blocked]
+                for b in blocked:
+                    print("P2: " + b, file=sys.stderr)
+            else:
+                artifact = {"schema": "dd-r2-measure-v1", "gate": "P2", "commit": args.commit,
+                            "source": "tools/qa/wp078_perf_report.py --baseline",
+                            "values": {k: comparison[k] for k in ("flaggedCells", "worstDeltaMs", "worstDeltaPct")},
+                            # the sound windows used, both sides (r2_gates: samples <= 0 is BLOCKED — KADRO test-engineer MUST-1)
+                            "samples": sum(c["r2Windows"] + c["r1Windows"] for c in comparison["cells"]),
+                            "binarySha256": args.sha256, "baselineCommit": args.baseline_commit,
+                            "baselineBinarySha256": args.baseline_sha256, "cells": comparison["cells"]}
+                Path(args.r2_measure).parent.mkdir(parents=True, exist_ok=True)
+                Path(args.r2_measure).write_text(json.dumps(artifact, indent=2) + "\n", encoding="utf-8")
     (root / "wp078-perf-report.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print("\n".join(lines))
     return 0 if result["pass"] else 1

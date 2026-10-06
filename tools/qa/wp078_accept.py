@@ -13,7 +13,9 @@ Every step calls the existing tools as subprocesses — nothing is re-implemente
   a5  soak         wp078_bot.py --kind stability --quiet (no Unity slots held) seeds 61 and 26 × 12 rounds, then
                    soak_gate.py --stability (recorded); real-bot report runs (kind report): 5 topdown, 2 tp, 2 fp
   a4  perf         tools/qa/wp078_perf.py --bin <E>/build-probe --out <E>/a4/perf (release-probe, K1), then
-                   wp078_perf_report.py (cross-check, recorded)
+                   wp078_perf_report.py (cross-check, recorded); in an R2 round with --r1-evidence the R1 FINAL's own
+                   release-probe build alternates with FINAL's window by window (--baseline-bin, root <E>/a4/perf-r1) and the
+                   report writes P2's R2 - R1 comparison as <E>/r2/r2-P2.json (WP-091, C-00 05.10)
   a8  report       assembles <E>/manifest.json from the evidence tree (paths relative to <E>, every artifact with its
                    sha256; a field without real evidence stays absent → the report says BLOCKED) and runs
                    tools/qa/wp078_report.py --manifest … --evidence-root <E> --out <E>/report-<utc>
@@ -90,6 +92,13 @@ def testsh_has_category():
         return False
 
 
+def _app_manifest():
+    spec = importlib.util.spec_from_file_location("_wp078_app_manifest", REPO / "tools" / "app_manifest.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def ci_plan():
     """R2 (C-00 01.10 A1 decision): main-ci's PlayMode definition at this tree — the core -testFilter (tools/ci-suites.txt
     minus every tools/ci-isolated.txt entry), each `alone` entry in its own session (main-ci does the same), and each `a3`
@@ -107,6 +116,8 @@ def ci_plan():
 STAGE_OUTPUTS = {"a6": ("build-dev", "build-release", "build-probe"), "a0": ("a0",), "a1": ("a1",), "a2": ("a2",),
                  "a3": ("a3",), "r2": ("r2",), "a5": ("a5",), "a4": ("a4",), "r2q": (), "a8": ()}   # r2q writes into r2/ too
 BUILDS = {"dev": "dev", "release": "release", "probe": "release-probe"}   # role → tools/build.sh mode (K1)
+R1_ROOT = wp078_report.R1_BASELINE_ROOT   # WP-091 P2: <E>/a4/perf-r1, the R1 probe build's windows (one source: the report's)
+B9_NAME = wp078_report.POSE_NAME           # a B9 pose name = its <E>/b9/<name> folder
 MODES = ("topdown", "tp", "fp")
 TIER = "sinematik"                        # DEC-100 default tier, given explicitly (K5)
 GAMEPLAY_SEED, GAMEPLAY_ROUNDS = 61, 5    # A2: TD/TP/FP × 5 rounds, seed 61
@@ -206,9 +217,52 @@ def aggregate_guard(receipts):
     return {"snapshotExit": 0, "restoreExit": 0, "verified": 1, "outOfScopeChanged": 0, "receipts": len(receipts)}
 
 
+def file_sha256(path):
+    """sha256 of a build's binary; a dry run may plan against a build that is not there yet."""
+    return sha256(path) if Path(path).is_file() else "<sha256 of " + Path(path).name + ">"
+
+
 def binary_of(build_dir):
     path = wp078_perf.resolve_binary(build_dir)
     return path if path.is_file() else None
+
+
+def r1_build_proof(r1_evidence, r1_commit):
+    """WP-091 P2: the R1 FINAL's release-probe build proves itself from its own evidence before any window runs (KADRO
+    test-engineer SHOULD-4): its unit record is complete and built at r1_commit, every file the record hash-bound is
+    unchanged (binary, build-report, report, library provenance, build log), build-report.json is a release-probe stamped
+    at r1_commit, and the WP-079H app manifest re-hashes the whole .app. ({binary, sha256, appManifestSha256}, []) or
+    (None, [the broken conditions])."""
+    build, units = Path(r1_evidence) / "build-probe", Path(r1_evidence) / "stages" / "units"
+    record = load_json(units / "build-probe.json")
+    if not isinstance(record, dict):
+        return None, ["no unit record " + str(units / "build-probe.json")]
+    problems = []
+    binary = binary_of(build)
+    if record.get("status") != "complete":
+        problems.append("unit record status " + repr(record.get("status")))
+    if record.get("executionCommit") != r1_commit:
+        problems.append(f"built at {record.get('executionCommit')}, not {r1_commit}")
+    if binary is None:
+        problems.append("no binary in " + str(build))
+    elif record.get("binarySha256") != sha256(binary):
+        problems.append("the binary is not the one the unit record holds")
+    if not map_verifies(units, record.get("artifactSha256")):
+        problems.append("a file the unit record hash-bound changed or is missing")
+    report = load_json(build / "build-report.json") or {}
+    stamp = report.get("stamp") if isinstance(report.get("stamp"), dict) else {}
+    stamped = str(stamp.get("commit") or "")
+    if report.get("mode") != "release-probe" or len(stamped) < 7 or not str(r1_commit).startswith(stamped):
+        problems.append(f"build-report.json is not a release-probe stamped at {str(r1_commit)[:12]} "
+                        f"(mode {report.get('mode')!r}, stamp {stamped!r})")
+    manifest = build / "app-manifest.sha256"
+    if not manifest.is_file():
+        problems.append("no app-manifest.sha256 (WP-079H) to prove the whole .app")
+    elif _app_manifest().verify(str(build)) != 0:
+        problems.append("app-manifest.sha256 does not verify: a file of the .app changed")
+    if problems:
+        return None, problems
+    return {"binary": binary, "sha256": record["binarySha256"], "appManifestSha256": sha256(manifest)}, []
 
 
 def bot_dir_files(run_dir):
@@ -262,7 +316,7 @@ def load_b9_poses(path):
     for pose in poses:
         if not isinstance(pose, dict) or set(pose) != B9_POSE_KEYS or not all(isinstance(pose[k], str) for k in B9_POSE_KEYS):
             raise ValueError("each pose is exactly {name, start, tiers, modes} strings: " + json.dumps(pose))
-        if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,40}", pose["name"]) or pose["name"] in names:
+        if not re.fullmatch(B9_NAME, pose["name"]) or pose["name"] in names:
             raise ValueError("pose name must be a unique lower-case folder name: " + pose["name"])
         if not re.fullmatch(r"-?\d+(\.\d+)?,-?\d+(\.\d+)?,-?\d+(\.\d+)?", pose["start"]):
             raise ValueError("start must be x,z,yaw: " + pose["start"])
@@ -286,6 +340,7 @@ class Chain:
         self.round_name = round_name   # WP-091: "R2" adds the r2-gates.json step to the manifest
         self.r1_evidence, self.r1_commit = (Path(r1_evidence).resolve() if r1_evidence else None), r1_commit   # P5 baseline
         self.b9_poses = list(b9_poses or [])   # C-00 01.10: S-05 B9 pose windows, after A4 in the same quiet-window run
+        self._r1_proof = None                  # WP-091 P2: the R1 build's proof, taken once before any window (False = failed)
         self.child, self.terminated = None, False
         self.planned = []          # (stage, argv) — the dry-run command list
         self.verdicts = {}
@@ -405,6 +460,8 @@ class Chain:
                 self.check_terminated()
                 if not self.dry_run and not self.verify_tree():
                     raise Stop(2, f"{stage}: repo left FINAL or the tree became dirty")
+                if stage == "a4" and self.resume and not self.dry_run:
+                    self.check_a4_baseline()
                 if stage != "a8" and not self.dry_run and self.resume and self.stage_passed(stage):
                     self.log(f"SKIP {stage}: verified PASS for FINAL {self.final}")
                     self.verdicts[stage] = "PASS"
@@ -473,6 +530,38 @@ class Chain:
                 and record.get("binarySha256") == sha256(binary)):
             return None
         return binary
+
+    def r1_probe(self):
+        """WP-091 P2 (C-00 05.10): in an R2 round, the R1 FINAL's own release-probe build (<--r1-evidence>/build-probe),
+        proven by r1_build_proof once, before any window — a dry run proves it too, since the R1 evidence exists before the
+        chain (KADRO test-engineer SHOULD-5) — runs alternately with FINAL's in A4. None (A4 runs FINAL alone; P2 BLOCKED in
+        the report, the reasons in the log) in an R1 round, without --r1-evidence, or when the build does not prove itself."""
+        if self.round_name != "R2":
+            return None
+        if self.r1_evidence is None:
+            self.log("P2: no --r1-evidence/--r1-commit — A4 runs FINAL alone, r2-P2.json not written, P2 BLOCKED in the report")
+            return None
+        if self._r1_proof is None:
+            proof, problems = r1_build_proof(self.r1_evidence, self.r1_commit)
+            if proof is None:
+                self.log(f"P2: {self.r1_evidence / 'build-probe'} is not the R1 FINAL's proven release-probe build — "
+                         + "; ".join(problems) + " — A4 runs FINAL alone, P2 BLOCKED in the report")
+            self._r1_proof = proof or False
+        return self._r1_proof or None
+
+    def check_a4_baseline(self):
+        """KADRO test-engineer SHOULD-2: a resumed R2 A4 keeps the R1 baseline its record was made with — never two R1
+        baselines in one report (P2 on one, P5 on another), never a skipped A4 that silently leaves P2 out, never a baseline
+        root the manifest would not declare."""
+        record = load_json(self.stage_record("a4"))
+        record = record if isinstance(record, dict) and record.get("executionCommit") == self.final else None
+        want = self.r1_commit if self.round_name == "R2" and self.r1_evidence is not None else None
+        had = record.get("baselineCommit") if record else None
+        if record is not None and had != want:
+            raise Stop(64, f"a4 was recorded with R1 baseline {had}, this run gives {want}: P2 would rest on another baseline "
+                           "than the rest of the report — resume with the same --r1-evidence/--r1-commit, or a new --evidence")
+        if record is None and want is None and (self.evidence / R1_ROOT).exists():
+            raise Stop(64, f"{R1_ROOT} exists but this run gives no --r1-evidence/--r1-commit: resume with them, or a new --evidence")
 
     # ---- Editor-guarded unit (builds, suites) -----------------------------------------------------------------------
     def snapshot_with_wait(self, name, ug, scope="editor"):
@@ -748,12 +837,32 @@ class Chain:
             return
         root = self.evidence / "a4" / "perf"
         argv = [self.py, HERE / "wp078_perf.py", "--bin", self.evidence / "build-probe", "--out", root, "--commit", self.final]
+        report_argv = [self.py, HERE / "wp078_perf_report.py", root]
+        # WP-091 P2 (C-00 05.10): in an R2 round the R1 FINAL probe build alternates with FINAL's, R2, R1, R2, R1 … per cell
+        # in the same quiet window (its own root and commit, so machine state weighs on both alike); the report compares
+        # the two and writes r2-P2.json. The A4 gate itself is judged on FINAL's windows only.
+        proof = self.r1_probe()
+        baseline_root, p2 = self.evidence / R1_ROOT, self.evidence / "r2" / "r2-P2.json"
+        # FINAL's windows already counted before the R1 ones start (a resumed run): the pairs are not interleaved from the
+        # start; recorded, and pairGapMaxS in r2-P2.json shows by how much (KADRO test-engineer SHOULD-2)
+        fresh = not (root.is_dir() and any(wp078_perf_report.CELL.fullmatch(d.name) for d in root.iterdir()))
+        if proof:
+            argv += ["--baseline-bin", self.r1_evidence / "build-probe", "--baseline-out", baseline_root,
+                     "--baseline-commit", self.r1_commit]
+            # both sides' commit and build, so every window P2 uses proves it ran there (KADRO game-test-engineer MUST-1)
+            report_argv += ["--baseline", baseline_root, "--r2-measure", p2, "--commit", self.final,
+                            "--sha256", file_sha256(binary), "--baseline-commit", self.r1_commit, "--baseline-sha256", proof["sha256"]]
+            if not fresh:
+                self.log(f"P2: FINAL windows were in a4/perf before this run — the R1 windows are not interleaved with them from the start")
         code = self.perf_with_wait("wp078-perf", argv)
-        report_code = self.execute("wp078-perf-report", [self.py, HERE / "wp078_perf_report.py", root])
+        report_code = self.execute("wp078-perf-report", report_argv)
         if self.dry_run:
             self.b9_windows()
             return
-        attempts = sorted(p / "attempt.json" for p in root.iterdir() if p.is_dir() and wp078_perf_report.CELL.fullmatch(p.name)) if root.is_dir() else []
+
+        def cells(base):
+            return sorted(p / "attempt.json" for p in base.iterdir() if p.is_dir() and wp078_perf_report.CELL.fullmatch(p.name)) if base.is_dir() else []
+        attempts = cells(root)
         # wp078_perf exits 0 only when every window's restore verdict was ok (it returns 7 / 30 / 75 otherwise), so exit 0
         # proves the four guard fields for the whole matrix; any other exit leaves the step without a guard.
         guard = {"snapshotExit": 0, "restoreExit": 0, "verified": 1, "outOfScopeChanged": 0,
@@ -761,7 +870,17 @@ class Chain:
         results = [{"name": "wp078-perf", "exit": code, "guard": guard, "files": [root / "attempts-ledger.jsonl"] + attempts},
                    {"name": "wp078-perf-report", "exit": report_code, "gate": False,
                     "files": [root / "wp078-perf-report.json", root / "wp078-perf-report.txt"]}]
-        self.finish("a4", results, inputs=[binary], extra={"buildRole": "probe", "perfRoot": "a4/perf"})
+        inputs, extra = [binary], {"buildRole": "probe", "perfRoot": "a4/perf"}
+        if proof:
+            results[0]["files"] += [baseline_root / "attempts-ledger.jsonl"] + cells(baseline_root)
+            results[1]["files"] += [root / "wp078-perf-compare.json", p2]
+            inputs.append(proof["binary"])
+            # the hashes proven before the windows ran, not re-read after them (NOTE-6)
+            extra.update(baselineRoot=R1_ROOT, baselineCommit=self.r1_commit, baselineBinarySha256=proof["sha256"],
+                         baselineAppManifestSha256=proof["appManifestSha256"], baselineInterleavedFromStart=fresh)
+            self.log(f"P2: {'r2-P2.json written' if p2.is_file() else 'r2-P2.json NOT written (report exit ' + str(report_code) + ')'}"
+                     f" — R1 {self.r1_commit[:8]} alternating in {baseline_root.relative_to(self.evidence)}")
+        self.finish("a4", results, inputs=inputs, extra=extra)
         self.b9_windows()
 
     def perf_with_wait(self, name, argv):
@@ -1077,6 +1196,21 @@ def assemble_manifest(evidence, final, assets_tree, round_name=None):
                     ledger=ref(evidence, root / "attempts-ledger.jsonl"), attempts=[a for a in attempts if a] or None)
         if record.get("buildRole") == "probe":
             step["buildRole"] = "probe"
+        # WP-091: the chain's own perf roots beside the gate root (wp078_report.secondary_perf_roots): the R1 baseline of
+        # an R2 round and S-05's B9 poses — declared at their fixed places, never counted for the gate
+        secondary = []
+        if record.get("baselineRoot") == R1_ROOT and (evidence / R1_ROOT).is_dir():
+            secondary.append({"role": "r1-baseline", "path": R1_ROOT, "commit": record.get("baselineCommit"),
+                              "binarySha256": record.get("baselineBinarySha256")})
+        # B9 roots come from the B9 record's poses (the name and the start it ran), never from a folder listing: a full
+        # matrix in a folder nobody recorded stays a stray root (KADRO test-engineer MUST-2)
+        _, b9 = _record(evidence, final, "b9")
+        for unit in (b9 or {}).get("units", []):
+            pose = unit.get("pose") if isinstance(unit, dict) else None
+            if isinstance(pose, dict) and isinstance(pose.get("name"), str) and (evidence / "b9" / pose["name"]).is_dir():
+                secondary.append({"role": "b9-pose", "path": "b9/" + pose["name"], "start": pose.get("start")})
+        if secondary:
+            step["secondaryRoots"] = secondary
         checklist["A4"] = step
 
     path, record = records["a5"]
@@ -1165,6 +1299,10 @@ def main(argv=None, **seams):
     evidence = Path(args.evidence) if args.evidence else KADRO_EVIDENCE / args.final[:8]
     if bool(args.r1_evidence) != bool(args.r1_commit) or (args.r1_commit and not re.fullmatch(r"[0-9a-f]{40}", args.r1_commit)):
         print("--r1-evidence and --r1-commit go together; --r1-commit is a 40-hex SHA", file=sys.stderr)
+        return 64
+    if args.r1_commit and (args.r1_commit == args.final or Path(args.r1_evidence).resolve() == evidence.resolve()):
+        # P2 would compare FINAL with itself and the report would refuse the root hours later (KADRO test-engineer SHOULD-1)
+        print("--r1-evidence/--r1-commit must be the R1 FINAL's, not this FINAL's own", file=sys.stderr)
         return 64
     try:
         b9_poses = load_b9_poses(args.b9_poses) if args.b9_poses else []

@@ -230,6 +230,22 @@ ROUND_TIMEOUT_SECONDS = 420.0
 ROUTE_KEYS = ("courtyard", "corridor", "kairo", "horizon")
 ROUTE_ROOF_KEYS = ("corridor", "kairo")
 ROUTE_TOPDOWN_HORIZON = "topdown-fixed-camera"
+# WP-091 (C-00 05.10): perf roots the chain itself writes beside the single A4 gate root (K8), each at one fixed place and
+# never counted for the gate — the R1 FINAL probe build alternating with FINAL's in an R2 round (P2) and S-05's B9 poses.
+R1_BASELINE_ROOT, B9_ROOT = "a4/perf-r1", "b9"     # wp078_accept writes there (one source: it imports these)
+POSE_NAME = r"[a-z0-9][a-z0-9-]{0,40}"              # a B9 pose name = its <E>/b9/<name> folder
+POSE_START = re.compile(r"-?\d+(\.\d+)?,-?\d+(\.\d+)?,-?\d+(\.\d+)?")
+SECONDARY_PERF_ROOTS = {"r1-baseline": re.compile(re.escape(R1_BASELINE_ROOT)),
+                        "b9-pose": re.compile(re.escape(B9_ROOT) + "/" + POSE_NAME)}
+# a pose or crowd variant makes a probe window another measurement: never an A4 gate window (KADRO test-engineer MUST-2)
+VARIANT_FLAGS = ("-ddPilotStart", "-ddArmor")
+
+
+def _read_json(path):
+    try:
+        return json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
 
 
 def _helper(name):
@@ -873,15 +889,68 @@ class Inspector:
             by_id[row["attemptId"]] = row
         return by_id
 
-    def single_perf_root(self, root):
-        """K8: one root per FINAL — a perf window directory anywhere else under the evidence root is not accepted."""
+    def single_perf_root(self, root, step=None):
+        """K8: one root per FINAL — a perf window directory anywhere else under the evidence root is not accepted, except
+        in a secondary root the manifest declares at its fixed place (secondary_perf_roots)."""
+        allowed = {root} | set(self.secondary_perf_roots(step or {}))
         stray = []
+        builds = {(self.root / ("build-" + role)).resolve() for role in BUILD_MODES}
         for current, directories, _ in os.walk(self.root):
-            directories[:] = [name for name in directories if not name.endswith(".app")]
+            # only the chain's own builds are skipped (<E>/build-<role>/*.app); any other .app is searched like a folder
+            directories[:] = [name for name in directories if not (name.endswith(".app") and Path(current).resolve() in builds)]
             for name in directories:
-                if PERF.CELL.fullmatch(name) and Path(current).resolve() != root:
+                if PERF.CELL.fullmatch(name) and Path(current).resolve() not in allowed:
                     stray.append(str((Path(current) / name).relative_to(self.root)))
         require(not stray, "perf windows outside the single FINAL perf root: " + ", ".join(sorted(stray)[:5]), "BLOCKED")
+
+    def secondary_perf_roots(self, step):
+        """WP-091 (C-00 05.10): the perf roots the chain writes next to the gate root, never counted for the gate — the R1
+        FINAL probe build alternating with FINAL's in an R2 round (P2, role r1-baseline, a4/perf-r1) and S-05's B9 pose
+        windows (role b9-pose, b9/<pose>, declared with the start the B9 record ran). Each sits at its one fixed place and
+        its windows prove what they are: a baseline window ran under the declared R1 commit and build (never FINAL's); a B9
+        window ran FINAL with -ddPilotStart <its pose's start> (one that never started a Player has no argv and must not be
+        complete; an unreadable one is BLOCKED). The other direction — no pose window in the gate root — is A4's own check
+        (VARIANT_FLAGS)."""
+        declared = step.get("secondaryRoots", [])
+        require(isinstance(declared, list), "A4 secondaryRoots is not a list")
+        roots = []
+        for entry in declared:
+            role, relative = (entry.get("role"), entry.get("path")) if isinstance(entry, dict) else (None, None)
+            pattern = SECONDARY_PERF_ROOTS.get(role)
+            require(pattern is not None and isinstance(relative, str) and pattern.fullmatch(relative) is not None,
+                    "secondary perf root is not a known role at its fixed place: " + json.dumps(entry, sort_keys=True))
+            path = self.path(relative)
+            require(path.is_dir(), "missing secondary perf root: " + relative, "BLOCKED")
+            commit = entry.get("commit")
+            binary, start = entry.get("binarySha256"), entry.get("start")
+            if role == "r1-baseline":
+                require(isinstance(commit, str) and SHA.fullmatch(commit) is not None and commit != self.manifest.get("commit"),
+                        "the R1 baseline root needs its own 40-hex commit, never FINAL")
+                require(isinstance(binary, str) and DIGEST.fullmatch(binary) is not None
+                        and binary != self.manifest.get("buildHashes", {}).get(PERF_BUILD_ROLE),
+                        "the R1 baseline root needs its own binary sha256, never FINAL's probe")
+            else:
+                require(isinstance(start, str) and POSE_START.fullmatch(start) is not None,
+                        "a B9 pose root is declared with the start its B9 record ran (x,z,yaw): " + relative)
+            for directory in sorted(p for p in path.iterdir() if p.is_dir() and PERF.CELL.fullmatch(p.name)):
+                where = relative + "/" + directory.name
+                attempt = _read_json(directory / "attempt.json")
+                if role == "r1-baseline":
+                    require(isinstance(attempt, dict) and attempt.get("executionCommit") == commit,
+                            "R1 baseline window not run under the declared R1 commit: " + where)
+                    require(attempt.get("binarySha256") == binary, "R1 baseline window not run on the declared R1 build: " + where)
+                    continue
+                require(isinstance(attempt, dict), "unreadable B9 attempt: " + where, "BLOCKED")
+                require(attempt.get("executionCommit") == self.manifest.get("commit"), "B9 window not run at FINAL: " + where)
+                argv = _read_json(directory / "command.json")
+                if argv is None:
+                    require(attempt.get("status") != "complete", "complete B9 window without its Player argv: " + where)
+                else:
+                    at = argv.index("-ddPilotStart") if isinstance(argv, list) and "-ddPilotStart" in argv else -1
+                    require(at >= 0, "B9 pose window without -ddPilotStart: " + where)
+                    require(at + 1 < len(argv) and argv[at + 1] == start, f"B9 window ran another start than its pose {start}: " + where)
+            roots.append(path)
+        return roots
 
     @staticmethod
     def discard_kind(row):
@@ -902,7 +971,7 @@ class Inspector:
         require(isinstance(probe_hash, str) and DIGEST.fullmatch(probe_hash), "missing buildHashes.probe", "BLOCKED")
         root = self.path(step.get("perfRoot"))
         require(root.is_dir(), "missing perf directory", "BLOCKED")
-        self.single_perf_root(root)
+        self.single_perf_root(root, step)
         ledger = self.ledger_rows(root, step)
         refs = step.get("attempts")
         require(isinstance(refs, list) and refs, "missing immutable perf attempt intake", "BLOCKED")
@@ -960,6 +1029,8 @@ class Inspector:
                 continue
             proof = self.provenance(ref, attempt.get("exitCode"), PERF_BUILD_ROLE)
             require(proof.get("status") == "complete" and proof.get("hostClean") is True, "incomplete perf or dirty host")
+            variant = [flag for flag in VARIANT_FLAGS if flag in self.command_argv(attempt_path, proof)]
+            require(not variant, "a gate perf window carries " + "/".join(variant) + " (a B9/Z3 measurement, never A4): " + directory.name)
             self.guard(proof.get("guard"))
             for field in ("resolution", "activeEnemies", "warmupSeconds", "windowSeconds"):
                 require(proof.get(field) == self.targets[field] and not isinstance(proof.get(field), bool), "perf scope missing or wrong: " + field, "BLOCKED")

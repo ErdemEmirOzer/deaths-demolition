@@ -171,3 +171,79 @@ class P2CompareTests(unittest.TestCase):
         result = self.both([10.0] * 3, [])
         self.assertEqual("unmeasured", self.cell(result)["state"])
         self.assertGreaterEqual(result["unmeasuredCells"], 1)
+
+
+P2_TARGETS = {
+    "source": "test", "resolution": [1920, 1080], "activeEnemies": 40, "warmupSeconds": 10, "windowSeconds": 60,
+    "stallMs": 33.33, "stallFractionMax": 0.01, "modes": ["fp"],
+    "tiers": {"yuksek": {"meanMs": 16.6, "p99FilteredMs": 20.0, "stallMs": 33.33, "role": "gate", "minWindows": 3, "probeValue": "Yuksek"}},
+    "probeKeys": {"file": "04-window.json", "tier": "qualityTier", "mode": "cameraMode", "sweep": "cameraSweep", "mean": "frameMeanMs",
+                  "p99Filtered": "frameP99FilteredMs", "stallsExcluded": "framesExcludedAsStalls", "frames": "frameCount"},
+}
+R2C, R1C, R2SHA, R1SHA = "a" * 40, "b" * 40, "1" * 64, "2" * 64
+
+
+def sound(root, index, mean, commit, sha, epoch, force=40, binary=None):
+    """One window exactly as wp064_run + PilotPerfProbe leave it when everything held (WP-091 P2 integrity)."""
+    d = Path(root) / f"perf-yuksek-fp-{index}"
+    d.mkdir(parents=True)
+    n = -(-60000 // int(mean)) if float(mean).is_integer() else int(60000 / mean) + 1
+    put = lambda name, value: (d / name).write_text(json.dumps(value))
+    put("attempt.json", {"status": "complete", "exitCode": 0, "hostClean": True, "timedOut": False, "missingArtifacts": [],
+                         "executionCommit": commit, "binarySha256": binary or sha, "startedEpoch": epoch})
+    put("01-scene-ready.json", {"scene": "Run", "screenWidth": 1920, "screenHeight": 1080})
+    put("02-force-40.json", {"pass": True, "configuredSafetyCeiling": 40, "ceiling": 40, "forcedTarget": 40, "achievedCount": force})
+    put("03-warmup.json", {"pass": True, "warmupSeconds": 10})
+    window = {"pass": True, "qualityTier": "Yuksek", "cameraMode": "FirstPerson", "cameraSweep": True, "windowSeconds": 60,
+              "frameMeanMs": mean, "frameP99FilteredMs": mean, "framesExcludedAsStalls": 0, "frameCount": n, "loadIntegrityFraction": 1.0}
+    window.update({k: 40 for k in report.LOAD_FIELDS})
+    put("04-window.json", window)
+    (d / "frame-times-ms.csv").write_text("frameMs\n" + "\n".join(f"{mean:.4f}" for _ in range(n)) + "\n")
+
+
+class P2IntegrityTests(unittest.TestCase):
+    """WP-091 P2 (KADRO game-test-engineer MUST-1, 06.10): every window the comparison uses proves its load, scope and build
+    on both sides; a broken window or a cell short of its windows writes no r2-P2.json (P2 BLOCKED by name)."""
+
+    def run_p2(self, r2_means, r1_means, r1_force=None, r2_binary=None):
+        tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(lambda: __import__("shutil").rmtree(tmp, ignore_errors=True))
+        r2, r1, out = tmp / "perf", tmp / "perf-r1", tmp / "r2" / "r2-P2.json"
+        for i, m in enumerate(r2_means, 1):
+            sound(r2, i, m, R2C, R2SHA, 1000.0 + 400 * i, binary=(r2_binary or {}).get(i))
+        for i, m in enumerate(r1_means, 1):
+            sound(r1, i, m, R1C, R1SHA, 1200.0 + 400 * i, force=(r1_force or {}).get(i, 40))
+        (tmp / "targets.json").write_text(json.dumps(P2_TARGETS))
+        import subprocess
+        run = subprocess.run([sys.executable, str(Path(report.__file__)), str(r2), "--targets", str(tmp / "targets.json"),
+                              "--baseline", str(r1), "--r2-measure", str(out), "--commit", R2C, "--sha256", R2SHA,
+                              "--baseline-commit", R1C, "--baseline-sha256", R1SHA], capture_output=True, text=True)
+        compare = json.loads((r2 / "wp078-perf-compare.json").read_text())
+        return (json.loads(out.read_text()) if out.is_file() else None), run, compare
+
+    def test_sound_sides_write_p2_with_its_provenance_and_noise(self):
+        art, run, _ = self.run_p2([10.0, 10.5, 11.0], [10.0, 10.0, 10.0])
+        self.assertIsNotNone(art, run.stderr)
+        self.assertEqual(("P2", R2C, R1C, R1SHA, R2SHA), (art["gate"], art["commit"], art["baselineCommit"],
+                                                         art["baselineBinarySha256"], art["binarySha256"]))
+        self.assertEqual({"flaggedCells": 0, "worstDeltaMs": 0.5, "worstDeltaPct": 0.05}, art["values"])
+        cell = art["cells"][0]
+        self.assertEqual(([0.0, 0.5, 1.0], 0.5, 200.0), (cell["pairDeltasMs"], cell["pairDeltaMedianMs"], cell["pairGapMaxS"]))
+        self.assertEqual(round((0.5 ** 2 / 3) ** 0.5, 4), cell["seDeltaMs"])
+
+    def test_a_baseline_window_under_forty_writes_nothing_and_says_which(self):
+        art, run, compare = self.run_p2([10.0] * 3, [10.0] * 3, r1_force={2: 39})
+        self.assertIsNone(art)
+        self.assertIn("r1 perf-yuksek-fp-2: 02-force-40", run.stderr)
+        self.assertEqual(["perf-yuksek-fp-2"], list(compare["invalidWindows"]["r1"]))
+        self.assertEqual("unmeasured", compare["cells"][0]["state"])   # 2 sound R1 windows < minWindows 3
+
+    def test_a_window_on_another_build_writes_nothing(self):
+        art, run, _ = self.run_p2([10.0] * 3, [10.0] * 3, r2_binary={3: "9" * 64})
+        self.assertIsNone(art)
+        self.assertIn("r2 perf-yuksek-fp-3: binarySha256", run.stderr)
+
+    def test_a_cell_short_of_its_windows_writes_nothing(self):
+        art, run, _ = self.run_p2([10.0] * 3, [10.0] * 2)
+        self.assertIsNone(art)
+        self.assertIn("unmeasured cell yuksek fp (R2 3, R1 2 sound windows, 3 each needed)", run.stderr)

@@ -246,17 +246,30 @@ class FakeTools:
             planned.pop(0)
             put(root / "ug" / "ug-perf-sinematik-tp-1" / guard_receipt.MARKER, "NOT restored\n")
             return 65
-        shutil.copytree(perf_fixture() / "perf", root, dirs_exist_ok=True)
-        for attempt_path in root.glob("perf-*/attempt.json"):
-            data = json.loads(attempt_path.read_text())
-            if not self.perf_guard:
-                data.pop("guard", None)             # what wp064_run really writes: no guard receipt in attempt.json
-            attempt_path.write_text(json.dumps(data))
-            if self.perf_ug_dirs:
-                (root / "ug" / ("ug-" + attempt_path.parent.name)).mkdir(parents=True, exist_ok=True)   # wp078_perf's guard dirs (not perf-*)
+        sides = [(root, None, None)]
+        if "--baseline-out" in argv:   # WP-091 P2: the R1 probe build's windows in their own root, under the R1 commit and build
+            r1_binary = wp078_perf.resolve_binary(argv[argv.index("--baseline-bin") + 1])
+            sides.append((Path(argv[argv.index("--baseline-out") + 1]), argv[argv.index("--baseline-commit") + 1],
+                          sha(r1_binary.read_bytes())))
+        extra = [a.split("=", 1)[1] for a in argv if a.startswith("--extra-arg=")]   # B9: -ddPilotStart x,z,yaw
+        for side_root, commit, binary_sha in sides:
+            shutil.copytree(perf_fixture() / "perf", side_root, dirs_exist_ok=True)
+            for attempt_path in side_root.glob("perf-*/attempt.json"):
+                data = json.loads(attempt_path.read_text())
+                if not self.perf_guard:
+                    data.pop("guard", None)             # what wp064_run really writes: no guard receipt in attempt.json
+                if commit:
+                    data["executionCommit"], data["binarySha256"] = commit, binary_sha
+                attempt_path.write_text(json.dumps(data))
+                if extra:   # the Player's own argv, as wp064_run writes command.json
+                    put_json(attempt_path.parent / "command.json", ["Deaths Demolition", "-ddPilotPerfProbe", "x", *extra])
+                if self.perf_ug_dirs:
+                    (side_root / "ug" / ("ug-" + attempt_path.parent.name)).mkdir(parents=True, exist_ok=True)   # wp078_perf's guard dirs (not perf-*)
         return 0
 
     def tool_wp078_perf_report_py(self, argv, _):
+        if "--baseline" in argv:   # WP-091 P2: the real comparison on the fixture windows writes r2-P2.json
+            return subprocess.run([sys.executable, str(HERE / "wp078_perf_report.py"), *argv[2:]], capture_output=True).returncode
         return 0
 
     def tool_wp078_report_py(self, argv, _):
@@ -511,6 +524,133 @@ class B9PoseTests(Base):
                 path.write_text(json.dumps({"poses": bad}))
                 with self.assertRaises(ValueError):
                     acc.load_b9_poses(path)
+
+
+R1 = "d" * 40
+
+
+def r1_evidence(base, commit=R1, binary=b"r1probe", recorded=None, status="complete", mode="release-probe", tamper=None):
+    """An R1 FINAL evidence root as wp078_accept left it (01.10): build-probe with its build report and WP-079H app
+    manifest, and the unit record that hash-binds the binary and the build report."""
+    root = Path(base) / "r1-evidence"
+    build, units = root / "build-probe", root / "stages" / "units"
+    exe = build / "DeathsDemolition.app" / "Contents" / "MacOS" / EXE
+    data = build / "DeathsDemolition.app" / "Contents" / "Resources" / "data.unity3d"
+    put(exe, binary)
+    put(data, b"r1 content")
+    put_json(build / "build-report.json", {"mode": mode, "result": "Succeeded", "stamp": {"commit": commit[:12], "mode": mode}})
+    acc._app_manifest().write(str(build), "DeathsDemolition.app")
+    put_json(units / "build-probe.json", {"schema": acc.RECORD_SCHEMA, "unit": "build-probe", "executionCommit": commit,
+                                          "status": status, "binarySha256": recorded or sha(binary),
+                                          "artifactSha256": acc.hash_map(units, [exe, build / "build-report.json"])})
+    if tamper == "content":
+        put(data, b"changed after the build")
+    elif tamper == "record":
+        (units / "build-probe.json").unlink()
+    elif tamper == "report":
+        put_json(build / "build-report.json", {"mode": mode, "stamp": {"commit": commit[:12]}, "edited": True})
+    return root
+
+
+class P2BaselineTests(Base):
+    """WP-091 P2 (C-00 05.10): an R2 round's A4 alternates the R1 FINAL probe build with FINAL's and writes r2-P2.json."""
+
+    def planned_a4(self, **kw):
+        chain = self.dry(["a4"], **kw)
+        perf = [a for s, a in chain.planned if s == "a4" and Path(a[1]).name == "wp078_perf.py"]
+        report = [a for s, a in chain.planned if s == "a4" and Path(a[1]).name == "wp078_perf_report.py"]
+        return chain, perf[0], report[0]
+
+    def test_an_r2_round_alternates_the_r1_probe_build_and_writes_p2(self):
+        r1 = r1_evidence(self.tmp.name)
+        _, perf, report = self.planned_a4(round_name="R2", r1_evidence=r1, r1_commit=R1)
+        e = self.evidence.resolve()
+        self.assertEqual(str(e / "a4" / "perf"), self.opt(perf, "--out"))   # the gate root is unchanged
+        self.assertEqual((str(r1.resolve() / "build-probe"), str(e / "a4" / "perf-r1"), R1),
+                         (self.opt(perf, "--baseline-bin"), self.opt(perf, "--baseline-out"), self.opt(perf, "--baseline-commit")))
+        self.assertEqual((str(e / "a4" / "perf"), str(e / "a4" / "perf-r1"), str(e / "r2" / "r2-P2.json"), FINAL, R1, sha(b"r1probe")),
+                         (report[2], self.opt(report, "--baseline"), self.opt(report, "--r2-measure"), self.opt(report, "--commit"),
+                          self.opt(report, "--baseline-commit"), self.opt(report, "--baseline-sha256")))
+
+    def test_an_r1_round_never_alternates(self):
+        _, perf, report = self.planned_a4(round_name="R1", r1_evidence=r1_evidence(self.tmp.name), r1_commit=R1)
+        self.assertNotIn("--baseline-bin", perf)
+        self.assertNotIn("--r2-measure", report)
+
+    def test_without_an_r1_evidence_p2_is_blocked_by_name(self):
+        chain, perf, report = self.planned_a4(round_name="R2")
+        self.assertNotIn("--baseline-bin", perf)
+        self.assertNotIn("--baseline", report)
+        self.assertTrue(any("P2 BLOCKED" in line for line in chain.lines), chain.lines)
+
+    def test_an_r1_build_that_does_not_prove_itself_is_never_planned_even_in_a_dry_run(self):
+        # KADRO test-engineer SHOULD-4/-5 and mutant M1: every condition of the proof, checked before any window
+        cases = {"built at": dict(commit="e" * 40), "not the one the unit record holds": dict(recorded="0" * 64),
+                 "status 'failed'": dict(status="failed"), "no unit record": dict(tamper="record"),
+                 "a file of the .app changed": dict(tamper="content"), "hash-bound changed": dict(tamper="report"),
+                 "not a release-probe": dict(mode="release")}
+        for reason, kw in cases.items():
+            with self.subTest(reason=reason):
+                self.setUp()
+                chain, perf, report = self.planned_a4(round_name="R2", r1_evidence=r1_evidence(self.tmp.name, **kw), r1_commit=R1)
+                self.assertNotIn("--baseline-bin", perf)
+                self.assertNotIn("--r2-measure", report)
+                self.assertTrue(any("not the R1 FINAL's proven" in line and reason in line for line in chain.lines), chain.lines)
+
+    def test_an_unproven_r1_build_never_runs_in_a_real_chain_either(self):
+        tools = FakeTools()
+        make_chain(self.evidence, ["a6", "a4"], tools=tools, round_name="R2",
+                   r1_evidence=r1_evidence(self.tmp.name, tamper="content"), r1_commit=R1).run()
+        perf = [c for c in tools.calls if c[0] == sys.executable and Path(c[1]).name == "wp078_perf.py"]
+        self.assertEqual(1, len(perf))
+        self.assertNotIn("--baseline-bin", perf[0])
+        self.assertIn("a file of the .app changed", (self.evidence / "accept.log").read_text())
+        self.assertFalse((self.evidence / "a4" / "perf-r1").exists())
+        self.assertFalse((self.evidence / "r2" / "r2-P2.json").exists())
+
+    def test_this_finals_own_evidence_or_commit_is_refused_as_r1(self):
+        # KADRO test-engineer SHOULD-1: P2 would compare FINAL with itself, and the report would refuse the root hours later
+        r1 = r1_evidence(self.tmp.name)
+        for args in (["--r1-evidence", str(r1), "--r1-commit", FINAL], ["--r1-evidence", str(self.evidence), "--r1-commit", R1]):
+            with self.subTest(args=args):
+                self.assertEqual(64, acc.main(["--final", FINAL, "--evidence", str(self.evidence), "--round", "R2", "--stages", "a4",
+                                               "--dry-run", *args]))
+
+    def test_a_resumed_a4_keeps_the_baseline_it_was_recorded_with(self):
+        # KADRO test-engineer SHOULD-2: never two R1 baselines in one report, never a baseline root nobody declares
+        r1 = r1_evidence(self.tmp.name)
+        self.assertNotEqual(64, make_chain(self.evidence, ["a6", "a4"], round_name="R2", r1_evidence=r1, r1_commit=R1).run())
+        other = r1_evidence(Path(self.tmp.name) / "other", commit="e" * 40)
+        for kw, reason in ((dict(round_name="R2", r1_evidence=other, r1_commit="e" * 40), "recorded with R1 baseline " + R1),
+                           (dict(round_name="R2"), "recorded with R1 baseline " + R1)):
+            with self.subTest(**{k: str(v) for k, v in kw.items()}):
+                self.assertEqual(64, make_chain(self.evidence, ["a4"], resume=True, **kw).run())
+                self.assertIn(reason, (self.evidence / "accept.log").read_text())
+        self.stage_record = self.evidence / "stages" / "a4.json"
+        self.stage_record.rename(self.stage_record.with_name("a4.json.moved"))   # no record, but the baseline root stays
+        self.assertEqual(64, make_chain(self.evidence, ["a4"], resume=True, round_name="R2").run())
+        self.assertIn("perf-r1 exists but this run gives no --r1-evidence", (self.evidence / "accept.log").read_text())
+
+    def test_the_a4_record_binds_both_roots_and_the_r1_build(self):
+        tools = FakeTools()
+        r1 = r1_evidence(self.tmp.name)
+        chain = make_chain(self.evidence, ["a6", "a4"], tools=tools, round_name="R2", r1_evidence=r1, r1_commit=R1)
+        chain.run()
+        self.assertEqual("PASS", chain.verdicts["a4"])
+        record = json.loads((self.evidence / "stages" / "a4.json").read_text())
+        self.assertEqual(("a4/perf-r1", R1, sha(b"r1probe"), sha((r1 / "build-probe" / "app-manifest.sha256").read_bytes()), True),
+                         (record["baselineRoot"], record["baselineCommit"], record["baselineBinarySha256"],
+                          record["baselineAppManifestSha256"], record["baselineInterleavedFromStart"]))
+        bound = record["artifactSha256"]
+        windows = sum(1 for k in bound if k.startswith("../a4/perf/perf-") and k.endswith("/attempt.json"))
+        self.assertEqual(windows, sum(1 for k in bound if k.startswith("../a4/perf-r1/perf-") and k.endswith("/attempt.json")))
+        self.assertIn("../a4/perf-r1/attempts-ledger.jsonl", bound)
+        self.assertIn("../r2/r2-P2.json", bound)
+        p2 = json.loads((self.evidence / "r2" / "r2-P2.json").read_text())
+        self.assertEqual((2 * windows, R1, sha(b"r1probe")), (p2["samples"], p2["baselineCommit"], p2["baselineBinarySha256"]))
+        self.assertTrue(any(k.endswith("build-probe/DeathsDemolition.app/Contents/MacOS/" + EXE) and "r1-evidence" in k
+                            for k in record["inputs"]), record["inputs"])
+        self.assertTrue(chain.stage_passed("a4"))   # --resume re-verifies every bound file, the R1 binary included
 
 
 class R2StageTests(Base):
@@ -769,6 +909,47 @@ class ManifestTests(Base):
         rows = {g["id"]: g["status"] for g in report["checklist"]["R2"]["gates"]}
         self.assertEqual("PASS", rows["L1"])
         self.assertEqual("BLOCKED", rows["S1"])
+
+    def test_b9_pose_windows_do_not_make_the_a4_root_stray(self):
+        # regression (WP-091): every B9 pose root is a perf root outside <E>/a4/perf, and the A4 report's single-root check
+        # (K8) walked the whole evidence tree — a chain run with --b9-poses BLOCKED its own A4. Now declared, it passes.
+        self.full_run(b9_poses=B9PoseTests.POSES)
+        manifest = json.loads((self.evidence / "manifest.json").read_text())
+        self.assertEqual([{"role": "b9-pose", "path": "b9/" + p["name"], "start": p["start"]} for p in B9PoseTests.POSES],
+                         manifest["checklist"]["A4"]["secondaryRoots"])   # from the B9 record, with the start each pose ran
+        report = self.report()
+        self.assertEqual([], [f for f in report["failures"] if f["step"] == "A4"])
+        self.assertTrue(report["pass"], report["failures"])
+
+    def test_a_b9_folder_the_b9_record_does_not_hold_stays_a_stray_root(self):
+        # KADRO test-engineer MUST-2 (b): declared from stages/b9.json, never from a folder listing
+        self.full_run(b9_poses=B9PoseTests.POSES)
+        shutil.copytree(self.evidence / "b9" / "plaza-n", self.evidence / "b9" / "spawn")
+        self.assertNotEqual(0, make_chain(self.evidence, ["a8"], tools=FakeTools(), resume=True).run())
+        manifest = json.loads((self.evidence / "manifest.json").read_text())
+        self.assertNotIn("b9/spawn", [r["path"] for r in manifest["checklist"]["A4"]["secondaryRoots"]])
+        self.assertTrue(any(f["step"] == "A4" and "b9/spawn" in f["reason"] for f in self.report()["failures"]))
+
+    def test_a_recorded_baseline_root_that_is_gone_is_not_declared(self):
+        # mutant M5: the manifest declares a4/perf-r1 only when it is there
+        self.full_run(round_name="R2", r1_evidence=r1_evidence(self.tmp.name), r1_commit=R1)
+        shutil.move(str(self.evidence / "a4" / "perf-r1"), str(Path(self.tmp.name) / "perf-r1-away"))
+        manifest = acc.assemble_manifest(self.evidence, FINAL, ASSETS, "R2")
+        self.assertNotIn("r1-baseline", [r["role"] for r in manifest["checklist"]["A4"].get("secondaryRoots", [])])
+
+    def test_r2_round_p2_alternation_reaches_the_report(self):
+        self.full_run(round_name="R2", r1_evidence=r1_evidence(self.tmp.name), r1_commit=R1, b9_poses=B9PoseTests.POSES)
+        manifest = json.loads((self.evidence / "manifest.json").read_text())
+        self.assertEqual({"role": "r1-baseline", "path": "a4/perf-r1", "commit": R1, "binarySha256": sha(b"r1probe")},
+                         manifest["checklist"]["A4"]["secondaryRoots"][0])
+        self.assertIn("P2", manifest["checklist"]["R2"]["gates"])
+        report = self.report()
+        self.assertEqual([], [f for f in report["failures"] if f["step"] == "A4"])
+        rows = {g["id"]: g for g in report["checklist"]["R2"]["gates"]}
+        self.assertEqual("REPORT", rows["P2"]["status"])
+        self.assertEqual({"flaggedCells": 0, "worstDeltaMs": 0.0, "worstDeltaPct": 0.0}, rows["P2"]["values"])   # the same fixture both sides
+        p2 = json.loads((self.evidence / "r2" / "r2-P2.json").read_text())
+        self.assertEqual(("dd-r2-measure-v1", "P2", FINAL), (p2["schema"], p2["gate"], p2["commit"]))
 
     def test_round_r1_manifest_has_no_r2_step(self):
         self.full_run()

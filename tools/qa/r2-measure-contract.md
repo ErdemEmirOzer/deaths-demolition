@@ -99,6 +99,23 @@ No owner test: `wp078_accept` writes `r2-P5.json` in stage `r2` from the chain's
 either build (C-00 05.10 decision (a)). R1 sat on the 1.2 s curtain floor in every session, so `floorLimited` tells
 that the ratio only shows an R2 load that grows past it.
 
+## P2 (R2 − R1 perf per cell, report — C-00 05.10)
+
+No owner test: in an R2 round `wp078_accept` A4 runs the R1 FINAL's own release-probe build (the `--r1-evidence` root's
+build-probe, proven by that evidence's unit record: complete, built at `--r1-commit`, the same binary sha256) alternately
+with FINAL's — R2, R1, R2, R1 … window by window in every tier × mode cell, inside the same quiet window
+(`tools/qa/wp078_perf.py` `--baseline-bin`; R1 root `<E>/a4/perf-r1`, R1 commit). `tools/qa/wp078_perf_report.py`
+`--baseline` compares the mean of each cell's counted windows and writes `r2-P2.json`: `flaggedCells` (over +10 % and
++1.0 ms together), `worstDeltaMs`, `worstDeltaPct`, and the per-cell rows (window means, SD, the SE of the difference,
+the n-th R2 window paired with the n-th R1 window, and both sides' commit and binary sha256). The source is in the
+recording on both sides: every window used proves its side's commit and build, the Run scene at the target resolution,
+exactly 40 forced and held for the whole window, the warm-up and window lengths, the TP/FP sweep and a full CSV (the
+probe exits 0 even when its own window failed). A broken window, or a cell short of the tier's minWindows sound windows
+on either side, writes no `r2-P2.json`: P2 is BLOCKED by name and the reasons are listed. The A4 gate is judged on FINAL's
+windows only; the R1 root is declared to the report as a secondary perf root whose every window carries the R1 commit
+and build. Without `--r1-evidence`, or when the R1 build does not prove itself, A4 runs FINAL alone and P2 is BLOCKED by
+name.
+
 ## S3 (Dense-40 loudness and peak, S-08 06.10)
 
 No C# test writes S3: three recordings are measured offline. Writer: `tools/qa/r2_s3.py` (S-08), run by the owner on the

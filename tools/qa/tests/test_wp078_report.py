@@ -151,7 +151,7 @@ class EvidenceFixture:
                         self.put_json(dict(scene='Run',screenWidth=1920,screenHeight=1080),d+'/01-scene-ready.json'),
                         self.put_json(dict(configuredSafetyCeiling=40,ceiling=40,forcedTarget=40,achievedCount=40,**{'pass':True}),d+'/02-force-40.json'),
                         self.put_json(dict(warmupSeconds=10,**{'pass':True}),d+'/03-warmup.json')]
-                    command=self.put_json({'argv':['synthetic']},d+'/command.json')
+                    command=self.put_json(['synthetic','-ddQualityTier',tier,'-ddCameraMode',mode],d+'/command.json')   # wp064_run's argv list
                     self.put_json(dict(attemptId=f'id-{tier}-{mode}-{n}',executionCommit=FINAL,status='complete',exitCode=0,hostClean=True,timedOut=False,missingArtifacts=[],
                         binarySha256=self.binaries['probe']['artifactSha256'],guard=copy.deepcopy(GUARD),
                         resolution=[1920,1080],activeEnemies=40,warmupSeconds=10,windowSeconds=60,
@@ -605,6 +605,99 @@ class K8LedgerTests(Fixture):
     def test_ledger_must_be_root_ledger(self):
         self.m['checklist']['A4']['ledger']=self.f.put('elsewhere/attempts-ledger.jsonl',(self.root/'perf/attempts-ledger.jsonl').read_bytes())
         self.f.anchor(self.m);self.assert_step('A4','BLOCKED','single perf root')
+
+
+class SecondaryPerfRootTests(Fixture):
+    """WP-091 (C-00 05.10): the chain's own perf roots beside the gate root — the R1 baseline of an R2 round (P2) and
+    S-05's B9 poses — are accepted only where declared at their fixed place, and only when no FINAL gate window hides there."""
+    R1BIN='c'*64
+    def copy_cell(self, rel, commit=FINAL, argv=None, status=None, binary=None):
+        import shutil
+        d=self.root/rel/'perf-yuksek-tp-1';shutil.copytree(self.root/'perf/perf-yuksek-tp-1',d)
+        data=json.loads((d/'attempt.json').read_text());data['executionCommit']=commit
+        if binary:data['binarySha256']=binary
+        if status:data['status']=status
+        (d/'attempt.json').write_text(json.dumps(data))
+        if argv is None:(d/'command.json').unlink()
+        else:(d/'command.json').write_text(json.dumps(argv))
+    def declare(self,*entries):
+        self.m['checklist']['A4']['secondaryRoots']=list(entries)
+    def test_declared_r1_baseline_root_is_accepted(self):
+        self.copy_cell('a4/perf-r1',commit=OTHER,argv=['probe','-ddQualityTier','yuksek'],binary=self.R1BIN)
+        self.declare(dict(role='r1-baseline',path='a4/perf-r1',commit=OTHER,binarySha256=self.R1BIN))
+        r=self.result();self.assertTrue(r['pass'],r['failures'])
+    def test_a_baseline_window_on_finals_build_fails(self):
+        self.copy_cell('a4/perf-r1',commit=OTHER,argv=['probe'])   # the R1 commit label, but FINAL's probe binary
+        self.declare(dict(role='r1-baseline',path='a4/perf-r1',commit=OTHER,binarySha256=self.R1BIN))
+        self.assert_step('A4','FAIL','declared R1 build')
+    def test_the_baseline_build_is_never_finals_probe(self):
+        self.copy_cell('a4/perf-r1',commit=OTHER,argv=['probe'])
+        self.declare(dict(role='r1-baseline',path='a4/perf-r1',commit=OTHER,binarySha256=self.f.binaries['probe']['artifactSha256']))
+        self.assert_step('A4','FAIL',"never FINAL's probe")
+    def test_undeclared_r1_baseline_root_is_a_stray_root(self):
+        self.copy_cell('a4/perf-r1',commit=OTHER,argv=['probe'])
+        self.assert_step('A4','BLOCKED','single FINAL perf root')
+    def test_a_final_window_in_the_baseline_root_fails(self):
+        self.copy_cell('a4/perf-r1',commit=FINAL,argv=['probe'],binary=self.R1BIN)
+        self.declare(dict(role='r1-baseline',path='a4/perf-r1',commit=OTHER,binarySha256=self.R1BIN))
+        self.assert_step('A4','FAIL','declared R1 commit')
+    def test_the_baseline_commit_is_never_final(self):
+        self.copy_cell('a4/perf-r1',commit=FINAL,argv=['probe'],binary=self.R1BIN)
+        self.declare(dict(role='r1-baseline',path='a4/perf-r1',commit=FINAL,binarySha256=self.R1BIN))
+        self.assert_step('A4','FAIL','own 40-hex commit, never FINAL')
+    def test_a_secondary_root_off_its_fixed_place_fails(self):
+        self.copy_cell('other',commit=OTHER,argv=['probe'])
+        for entry in (dict(role='r1-baseline',path='other',commit=OTHER),dict(role='spare',path='other'),dict(role='b9-pose',path='b9/../other')):
+            with self.subTest(entry=entry):
+                self.declare(entry);self.assert_step('A4','FAIL','fixed place')
+    START='-48,-48,45'
+    def test_b9_pose_root_needs_its_recorded_start_on_every_window(self):
+        self.copy_cell('b9/sw-corner',argv=['probe','-ddPilotStart',self.START])
+        self.declare(dict(role='b9-pose',path='b9/sw-corner',start=self.START))
+        r=self.result();self.assertTrue(r['pass'],r['failures'])
+        (self.root/'b9/sw-corner/perf-yuksek-tp-1/command.json').write_text(json.dumps(['probe','-ddQualityTier','yuksek']))
+        self.assert_step('A4','FAIL','-ddPilotStart')
+    def test_b9_window_at_another_start_than_its_pose_fails(self):
+        self.copy_cell('b9/sw-corner',argv=['probe','-ddPilotStart','0,-4,0'])
+        self.declare(dict(role='b9-pose',path='b9/sw-corner',start=self.START))
+        self.assert_step('A4','FAIL','another start')
+    def test_b9_root_is_declared_with_its_start(self):
+        self.copy_cell('b9/sw-corner',argv=['probe','-ddPilotStart',self.START])
+        self.declare(dict(role='b9-pose',path='b9/sw-corner'))
+        self.assert_step('A4','FAIL','declared with the start')
+    def test_b9_window_not_run_at_final_fails(self):
+        self.copy_cell('b9/sw-corner',commit=OTHER,argv=['probe','-ddPilotStart',self.START])
+        self.declare(dict(role='b9-pose',path='b9/sw-corner',start=self.START))
+        self.assert_step('A4','FAIL','not run at FINAL')
+    def test_b9_window_that_never_started_a_player_is_accepted_but_a_complete_one_needs_its_argv(self):
+        self.copy_cell('b9/plaza-n',argv=None,status='preflight-failed')
+        self.declare(dict(role='b9-pose',path='b9/plaza-n',start='0,30,180'))
+        r=self.result();self.assertTrue(r['pass'],r['failures'])
+        data=json.loads((self.root/'b9/plaza-n/perf-yuksek-tp-1/attempt.json').read_text());data['status']='complete'
+        (self.root/'b9/plaza-n/perf-yuksek-tp-1/attempt.json').write_text(json.dumps(data))
+        self.assert_step('A4','FAIL','without its Player argv')
+    def test_an_unreadable_b9_attempt_is_blocked(self):
+        self.copy_cell('b9/plaza-n',argv=None,status='preflight-failed')
+        (self.root/'b9/plaza-n/perf-yuksek-tp-1/attempt.json').write_text('{torn')
+        self.declare(dict(role='b9-pose',path='b9/plaza-n',start='0,30,180'))
+        self.assert_step('A4','BLOCKED','unreadable B9 attempt')
+    def test_a_declared_root_that_is_not_there_is_blocked(self):
+        self.declare(dict(role='b9-pose',path='b9/gone',start=self.START))
+        self.assert_step('A4','BLOCKED','missing secondary perf root')
+    def test_a_pose_window_in_the_gate_root_fails(self):
+        # KADRO test-engineer MUST-2: a B9 root moved into the gate root must not pass A4 — the gate reads its hash-bound argv
+        for flag,value in (('-ddPilotStart',self.START),('-ddArmor','all')):
+            with self.subTest(flag=flag):
+                self.setUp()
+                cell=self.root/'perf/perf-yuksek-tp-2'
+                (cell/'command.json').write_text(json.dumps(['probe','-ddQualityTier','yuksek',flag,value]))
+                data=json.loads((cell/'attempt.json').read_text());data['commandSha256']=hashlib.sha256((cell/'command.json').read_bytes()).hexdigest()
+                (cell/'attempt.json').write_text(json.dumps(data));self.rehash_perf()
+                self.assert_step('A4','FAIL',flag)
+    def test_a_window_hidden_in_an_app_folder_outside_the_builds_is_a_stray_root(self):
+        import shutil
+        shutil.copytree(self.root/'perf/perf-yuksek-tp-1',self.root/'hidden.app/perf/perf-yuksek-tp-1')
+        self.assert_step('A4','BLOCKED','single FINAL perf root')
 
 
 class K9StallTests(Fixture):
