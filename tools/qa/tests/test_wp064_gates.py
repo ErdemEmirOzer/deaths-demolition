@@ -323,6 +323,16 @@ def build_report(commit="a1b2c3d4e5f6", describe="wp-064-a1b2c3d", mode="release
             "stamp": {"stamped": True, "commit": commit, "describe": describe, "mode": mode}}
 
 
+class Wp064LogPatternTests(unittest.TestCase):
+    def test_unitys_crash_line_is_a_log_failure(self):
+        # B-09 LS-3 (S-10 06.10): r"\bCrash!!!\b" needed a word character after "!!!" and never matched Unity's own line
+        gate = load_wp064_gate()
+        for line in ("Crash!!!", "Crash!!! ", "  Crash!!!  \n", "Obtained 31 stack frames. Crash!!!"):
+            with self.subTest(line=line):
+                self.assertTrue(any(p.search(line) for p in gate.LOG_FAILURES), line)
+        self.assertFalse(any(p.search("NoCrash!!!") for p in gate.LOG_FAILURES))   # the leading \b still holds
+
+
 class Wp064GateV2Tests(unittest.TestCase):
     """S-10 pre-review findings 1–6 (WP-064 r2)."""
 

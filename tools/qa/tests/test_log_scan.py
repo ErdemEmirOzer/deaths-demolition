@@ -19,7 +19,7 @@ import unittest
 from pathlib import Path
 
 SCRIPT = Path(__file__).resolve().parents[1] / "log_scan.py"
-REPORT_KEYS = {"schema", "utc", "pass", "filesScanned", "matches", "newCrashReports"}
+REPORT_KEYS = {"schema", "utc", "pass", "filesScanned", "unreadable", "matches", "newCrashReports"}   # unreadable: LS-1 (S-10 06.10)
 SUMMARY = re.compile(r"^(PASS|FAIL) logs=(\d+) matches=(\d+) crashes=(\d+)$")
 
 # One realistic line per pattern in log_scan.PATTERNS (Unity Player/Editor, IL2CPP/Mono crash blocks, C# compiler,
@@ -112,7 +112,9 @@ class LogScanTestCase(unittest.TestCase):
         self.assertIs(type(report["pass"]), bool)
         self.assertRegex(report["utc"], r"^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$")
         self.assertIs(type(report["filesScanned"]), int)
-        self.assertEqual(report["pass"], not report["matches"] and not report["newCrashReports"])
+        # S-10 06.10: an unreadable log (LS-1) and an empty root fail too
+        self.assertEqual(report["pass"], not report["matches"] and not report["newCrashReports"]
+                         and not report["unreadable"] and report["filesScanned"] > 0)
         self.assertEqual(0 if report["pass"] else 1, proc.returncode, proc.stdout + proc.stderr)
         for hit in report["matches"]:
             self.assertEqual({"path", "line", "text"}, set(hit))
@@ -120,6 +122,9 @@ class LogScanTestCase(unittest.TestCase):
             self.assertGreaterEqual(hit["line"], 1)
             self.assertFalse(os.path.isabs(hit["path"]), hit)
             self.assertLessEqual(len(hit["text"]), 500)
+        for item in report["unreadable"]:
+            self.assertEqual({"path", "error"}, set(item))
+            self.assertFalse(os.path.isabs(item["path"]), item)
         first = text.splitlines()[0]
         match = SUMMARY.match(first)
         self.assertIsNotNone(match, first)
@@ -189,13 +194,14 @@ class NormalInputTests(LogScanTestCase):
 
 
 class BoundaryTests(LogScanTestCase):
-    def test_BosKok_Pass_SifirDosya(self):
-        # Current contract: a root with no .log/.txt is a vacuous PASS (logs=0). rc.sh always has stage logs under
-        # stages/<name>/stdout.log, so this does not happen there; the report lists it as a residual risk.
+    def test_BosKok_Fail_SifirDosya(self):
+        # S-10 06.10 (C-00's B-09 residual risk): a root with no .log/.txt proves nothing — FAIL, never a vacuous PASS.
+        # rc.sh always has stage logs under stages/<name>/stdout.log, so a real RC root is never empty.
         proc, report, text = self.scan()
-        self.assertEqual(0, proc.returncode)
+        self.assertEqual(1, proc.returncode)
         self.assertEqual(0, report["filesScanned"])
-        self.assertEqual("PASS logs=0 matches=0 crashes=0\n", text)
+        self.assertFalse(report["pass"])
+        self.assertEqual("FAIL logs=0 matches=0 crashes=0\nno log scanned: an empty root proves nothing\n", text)
 
     def test_BosLogDosyasi_SayilirAmaTemiz(self):
         self.write("empty.log", "")
@@ -299,23 +305,25 @@ class MultiFileTests(LogScanTestCase):
     def test_RcReportTxt_Taranmaz(self):
         self.write("rc-report.txt", "FAIL log-scan: NullReferenceException in player.log\n")
         self.write("log-scan.txt", "FAIL logs=1 matches=1 crashes=0\nplayer.log:1: Segmentation fault: 11\n")
+        self.write("stages/x/stdout.log", "clean\n")   # one real log, so the root is not empty (that FAILs on its own)
         proc, report, _ = self.scan()
         self.assertEqual(0, proc.returncode)
-        self.assertEqual(0, report["filesScanned"])
+        self.assertEqual(1, report["filesScanned"])
 
-    @unittest.expectedFailure
-    def test_HATA_UnityCrashSatiri_Yakalanmaz(self):
+    def test_HATA_UnityCrashSatiri_Yakalanmaz(self):   # LS-3 fixed (S-10 06.10): was expectedFailure
         # DEFECT LS-3 (medium): the pattern is r"\bCrash!!!\b". "!" is not a word character, so the trailing \b needs a
         # word character right after "!!!" and the line Unity's crash handler actually writes ("Crash!!!" alone, or
         # "Crash!!!" + space) never matches. Only the DiagnosticReports check can still catch such a crash.
+        # Real format (S-10 06.10): Unity 2022.3.22f1's win64 UnityPlayer.dll holds the string "Crash!!!\n" — the line is
+        # "Crash!!!" alone. The macOS player and editor carry no such string (a macOS native crash prints Mono's "Native
+        # Crash Reporting" and "Obtained %zu stack frames."), so this line is what an R2 win64 build writes.
         # soak_gate.py uses r"Crash!!!" (matches); wp064_gate.py:23 has the same \b defect.
         self.write("m3/perf-2/player.log", "Obtained 31 stack frames.\nCrash!!!\n")
         proc, report, _ = self.scan()
         self.assertEqual(1, proc.returncode)
         self.assertEqual([(os.path.join("m3", "perf-2", "player.log"), 2)], self.hits(report))
 
-    @unittest.expectedFailure
-    def test_HATA_SonekDislamasi_BaskaDosyalariYutar(self):
+    def test_HATA_SonekDislamasi_BaskaDosyalariYutar(self):   # LS-2 fixed (S-10 06.10)
         # DEFECT LS-2 (low): the self-output exclusion is `path.endswith(("log-scan.txt", "rc-report.txt"))`, a suffix
         # test on the whole path, not a basename comparison. Any log whose name merely ends that way
         # ("backlog-scan.txt", "src-report.txt") is skipped, so its errors never reach the gate.
@@ -324,22 +332,55 @@ class MultiFileTests(LogScanTestCase):
         proc, report, _ = self.scan()
         self.assertEqual(1, proc.returncode)
         self.assertEqual(2, len(report["matches"]))
+        # the cause (C-00 06.10 N2): exactly those two look-alike names were scanned, line 1 each
+        self.assertEqual([(os.path.join("stages", "x", "src-report.txt"), 1), (os.path.join("tools", "backlog-scan.txt"), 1)],
+                         sorted(self.hits(report)))
 
-    @unittest.expectedFailure
     @unittest.skipIf(hasattr(os, "geteuid") and os.geteuid() == 0, "root can read a mode-000 file")
-    def test_HATA_OkunamayanLog_SessizceTemizSayilir(self):
+    def test_HATA_OkunamayanLog_SessizceTemizSayilir(self):   # LS-1 fixed (S-10 06.10)
         # DEFECT LS-1 (medium, fail-open): open() errors are swallowed (`except OSError: pass`) after the file was
         # already counted in filesScanned. A log that exists but cannot be read is reported as scanned and clean, so
         # the stage passes without having seen it. Expected: an unreadable log is not a PASS.
         path = self.write("stages/x/stdout.log", "NullReferenceException: unreadable\n")
         path.chmod(0)
         self.addCleanup(path.chmod, 0o600)
-        proc, report, _ = self.scan()
+        proc, report, text = self.scan()
         self.assertNotEqual(0, proc.returncode)
         self.assertFalse(report["pass"])
+        # the cause (C-00 06.10 N2): the log is named unreadable, not counted as scanned, and said so in the text
+        self.assertEqual([os.path.join("stages", "x", "stdout.log")], [u["path"] for u in report["unreadable"]])
+        self.assertEqual(0, report["filesScanned"])
+        self.assertIn("unreadable: " + os.path.join("stages", "x", "stdout.log") + ": ", text)
+
+
+class S10PatternTests(LogScanTestCase):
+    """S-10 06.10 (C-00's B-09 residual risks): the exceptions soak_gate already catches, and the readability writer."""
+
+    def test_ArgumentNull_InvalidOperation_MissingReference_ReadabilityWriteFailed(self):
+        lines = ("ArgumentNullException: Value cannot be null.", "InvalidOperationException: Collection was modified",
+                 "MissingReferenceException: The object of type 'Transform' has been destroyed",
+                 "[QaReadabilityGate] write failed: disk full")
+        for i, line in enumerate(lines):
+            self.write(f"stages/s{i}/stdout.log", "ok\n" + line + "\n")
+        proc, report, _ = self.scan()
+        self.assertEqual(1, proc.returncode)
+        self.assertEqual(4, len(report["matches"]))
+
+    def test_an_unreadable_log_is_listed_and_not_counted_as_scanned(self):
+        if hasattr(os, "geteuid") and os.geteuid() == 0:
+            self.skipTest("root can read a mode-000 file")
+        self.write("stages/a/stdout.log", "clean\n")
+        path = self.write("stages/b/stdout.log", "x\n")
+        path.chmod(0)
+        self.addCleanup(path.chmod, 0o600)
+        proc, report, text = self.scan()
+        self.assertEqual((1, 1), (proc.returncode, report["filesScanned"]))
+        self.assertEqual([os.path.join("stages", "b", "stdout.log")], [u["path"] for u in report["unreadable"]])
+        self.assertIn("unreadable: " + os.path.join("stages", "b", "stdout.log"), text)
 
 
 class CrashReportTests(LogScanTestCase):
+
     def test_YeniDeathsCrashRaporu_Fail(self):
         path = self.crash("Deaths Demolition-2026-10-06-010203.ips", self.since + 30)
         self.write("player.log", "clean\n")
@@ -350,17 +391,20 @@ class CrashReportTests(LogScanTestCase):
         self.assertEqual(["FAIL logs=1 matches=0 crashes=1", "crash: " + str(path)], text.splitlines())
 
     def test_SinceSiniri_EsitZamanSayilir(self):
+        self.write("stages/clean/stdout.log", "clean\n")   # a non-empty root: an empty one FAILs on its own (S-10 06.10)
         path = self.crash("Deaths Demolition-boundary.ips", self.since)
         _, report, _ = self.scan()
         self.assertEqual([str(path)], report["newCrashReports"])
 
     def test_EskiCrashRaporu_YokSayilir(self):
+        self.write("stages/clean/stdout.log", "clean\n")   # a non-empty root: an empty one FAILs on its own (S-10 06.10)
         self.crash("Deaths Demolition-old.ips", self.since - 1)
         proc, report, _ = self.scan()
         self.assertEqual(0, proc.returncode)
         self.assertEqual([], report["newCrashReports"])
 
     def test_BaskaUygulamaCrashRaporu_YokSayilir(self):
+        self.write("stages/clean/stdout.log", "clean\n")   # a non-empty root: an empty one FAILs on its own (S-10 06.10)
         self.crash("Safari-2026-10-06-010203.ips", self.since + 30)
         self.crash("Unity-2026-10-06-010203.ips", self.since + 30)
         proc, report, _ = self.scan()
@@ -368,6 +412,7 @@ class CrashReportTests(LogScanTestCase):
         self.assertEqual([], report["newCrashReports"])
 
     def test_CrashKlasoruYok_Pass(self):
+        self.write("stages/clean/stdout.log", "clean\n")   # a non-empty root: an empty one FAILs on its own (S-10 06.10)
         self.assertFalse(self.crash_dir.exists())
         proc, report, _ = self.scan()
         self.assertEqual(0, proc.returncode)

@@ -20,7 +20,7 @@ LOG_FAILURES = tuple(re.compile(pattern, re.IGNORECASE) for pattern in (
     r"\berror CS\d+\b",
     r"\bUnhandled exception\b",
     r"\bNative Crash Reporting\b",
-    r"\bCrash!!!\b",
+    r"\bCrash!!!",   # no trailing \b: "!" is no word character, so "Crash!!!\b" never matched (B-09 LS-3)
     r"\bSegmentation fault\b",
     r"\bBuildFailedException\b",
     r"\[QaRunBot\] write failed",
