@@ -334,3 +334,44 @@ class EvaluateTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ScopeModeTests(unittest.TestCase):
+    """C-00 06.10 (user: top down only, tests too): a gate names the camera modes it is measured in; a run that covers
+    none of them does not measure it and judges it OUT_OF_SCOPE — never FAIL or BLOCKED, never in the step status."""
+
+    def test_the_contract_names_the_fp_and_tp_gates_and_the_multi_mode_ones(self):
+        data = r2.load_contract(CONTRACT)
+        self.assertEqual({"H1b": ["tp"], "H1c": ["tp"], "H4": ["fp"], "H4a": ["fp"], "H4b": ["fp"], "H6": ["tp"],
+                          "Z3": ["topdown", "tp"], "S3": ["topdown", "tp", "fp"]},
+                         {g["id"]: g["modes"] for g in data["gates"] if "modes" in g})
+
+    def test_modes_must_be_a_non_empty_list_of_distinct_camera_modes(self):
+        for bad in ([], ["td"], ["tp", "tp"], "tp"):
+            data = json.loads(CONTRACT)
+            data["gates"][0]["modes"] = bad
+            with self.subTest(modes=bad), self.assertRaises(r2.ContractError):
+                r2.load_contract(json.dumps(data))
+
+    def test_a_topdown_run_measures_no_fp_or_tp_only_gate(self):
+        contract = r2.load_contract(CONTRACT)
+        every = {g for s in r2.measurement_steps(contract, False) for g in s["gates"]}
+        td = {g for s in r2.measurement_steps(contract, False, ("topdown",)) for g in s["gates"]}
+        self.assertEqual({"H1b", "H1c", "H4", "H4a", "H4b", "H6"}, every - td)
+        self.assertIn("Z3", td)   # multi-mode: its topdown cell still runs
+        self.assertEqual(every, {g for s in r2.measurement_steps(contract, False, ("topdown", "tp", "fp")) for g in s["gates"]})
+
+    def test_an_out_of_scope_gate_is_out_of_scope_whatever_was_bound(self):
+        for artifact in (None, measure("H6", visibleShareMin=0.1, muzzleInsideSilhouetteFrames=9)):
+            row = r2.evaluate_gate(gate("H6"), FINAL, measure=artifact, cases={}, modes=("topdown",))
+            self.assertEqual(r2.OUT_OF_SCOPE, row["status"])
+            self.assertIn(r2.SCOPE_REASON, row["reason"])
+        self.assertEqual("BLOCKED", r2.evaluate_gate(gate("H6"), FINAL)["status"])   # every mode: as before
+
+    def test_a_multi_mode_gate_is_judged_on_its_modes_in_scope(self):
+        row = r2.evaluate_gate(gate("Z3"), FINAL, modes=("topdown",))
+        self.assertEqual((["topdown"], ["tp"], "BLOCKED"), (row["modes"], row["outOfScopeModes"], row["status"]))
+
+    def test_out_of_scope_rows_do_not_count_in_the_step_status(self):
+        rows = [{"kind": "gate", "status": "PASS"}, {"kind": "gate", "status": r2.OUT_OF_SCOPE}]
+        self.assertEqual("PASS", r2.summarize(rows))

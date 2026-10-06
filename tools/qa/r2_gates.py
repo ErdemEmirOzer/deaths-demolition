@@ -28,6 +28,11 @@ ENV_NAME = re.compile(r"[A-Z][A-Z0-9_]*")
 KPROJ_TOKEN = "{KPROJ}"
 PLACEHOLDER = re.compile(r"\{[^}]*\}")
 OPS = ("<=", ">=", "==")
+# C-00 06.10 (user: top down only, tests too): a gate may name the camera modes it is measured in; a run that covers
+# none of them (wp078_accept --modes) does not run it and the report writes OUT_OF_SCOPE, never FAIL or BLOCKED
+SCOPE_MODES = ("topdown", "tp", "fp")
+OUT_OF_SCOPE = "OUT_OF_SCOPE"
+SCOPE_REASON = "kullanıcı 06.10: yalnız TopDown"
 
 
 class ContractError(ValueError):
@@ -66,6 +71,10 @@ def load_contract(text):
             raise ContractError(f"{gid}: a gate needs checks or required tests")
         if gate["kind"] == "report" and checks:
             raise ContractError(f"{gid}: a report entry carries no checks (it never fails)")
+        modes = gate.get("modes")
+        if modes is not None and not (isinstance(modes, list) and modes and len(set(modes)) == len(modes)
+                                      and all(m in SCOPE_MODES for m in modes)):
+            raise ContractError(f"{gid}: modes is a non-empty list of distinct {SCOPE_MODES}")
         measured = gate.get("measuredBy")
         if measured is not None:
             if gate["kind"] == "human":
@@ -85,14 +94,20 @@ def load_contract(text):
     return data
 
 
-def measurement_steps(contract, quiet):
+def out_of_scope(gate, modes):
+    """True when the run covers none of the camera modes the gate is measured in (modes None = every mode)."""
+    return modes is not None and bool(gate.get("modes")) and not set(gate["modes"]) & set(modes)
+
+
+def measurement_steps(contract, quiet, modes=None):
     """The chain's measurement sessions: one per distinct (suite, filter) among the gates whose measuredBy has this
     quiet flag, in contract order; each step lists the gates it is expected to write. Step id = r2-<first gate id>.
-    A session is (suite, filter, env): the same test under other switches is another session."""
+    A session is (suite, filter, env): the same test under other switches is another session. modes (wp078_accept
+    --modes): a gate out of scope for them is not measured."""
     steps, by_key = [], {}
     for gate in contract["gates"]:
         measured = gate.get("measuredBy")
-        if not measured or bool(measured.get("quiet", False)) != quiet:
+        if not measured or bool(measured.get("quiet", False)) != quiet or out_of_scope(gate, modes):
             continue
         env = dict(sorted(measured.get("env", {}).items()))
         key = (measured["suite"], measured["filter"], tuple(env.items()))
@@ -121,16 +136,23 @@ def _check(value, op, limit):
     return value == limit
 
 
-def evaluate_gate(gate, commit, measure=None, review=None, cases=None):
-    """One gate row: {id, kind, owner, status PASS|FAIL|BLOCKED|REPORT, reason, values}.
+def evaluate_gate(gate, commit, measure=None, review=None, cases=None, modes=None):
+    """One gate row: {id, kind, owner, status PASS|FAIL|BLOCKED|REPORT|OUT_OF_SCOPE, reason, values}.
     measure/review: the parsed artifacts bound for this gate (None = not bound); cases: {test full name: result} from
-    every bound NUnit XML (None = no XML bound)."""
+    every bound NUnit XML (None = no XML bound); modes: the run's camera modes (None = every mode)."""
     row = {"id": gate["id"], "area": gate.get("area"), "kind": gate["kind"], "owner": gate["owner"], "title": gate.get("title"),
            "status": "PASS", "reason": None, "values": {}}
 
     def stop(status, reason):
         row["status"], row["reason"] = status, reason
         return row
+
+    if modes is not None and gate.get("modes"):
+        row["modes"] = [m for m in gate["modes"] if m in modes]
+        if not row["modes"]:
+            return stop(OUT_OF_SCOPE, f"{SCOPE_REASON} (measured in {', '.join(gate['modes'])}; this run: {', '.join(modes)})")
+        if len(row["modes"]) < len(gate["modes"]):
+            row["outOfScopeModes"] = [m for m in gate["modes"] if m not in modes]
 
     if gate["kind"] == "human":
         if review is None:
@@ -196,8 +218,9 @@ def evaluate_gate(gate, commit, measure=None, review=None, cases=None):
 
 
 def summarize(rows):
-    """R2 step status: FAIL if any gate/human row FAILs, else BLOCKED if any is BLOCKED, else PASS (reports ignored)."""
-    judged = [r for r in rows if r["kind"] != "report"]
+    """R2 step status: FAIL if any gate/human row FAILs, else BLOCKED if any is BLOCKED, else PASS (reports and
+    OUT_OF_SCOPE rows ignored)."""
+    judged = [r for r in rows if r["kind"] != "report" and r["status"] != OUT_OF_SCOPE]
     if any(r["status"] == "FAIL" for r in judged):
         return "FAIL"
     if any(r["status"] == "BLOCKED" for r in judged):

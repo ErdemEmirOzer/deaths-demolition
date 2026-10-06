@@ -895,3 +895,51 @@ class R2RoundTests(Fixture):
         r = self.result()
         self.assertFalse(r['pass'])
         self.assertNotEqual('PASS', r['checklist']['R2']['status'])
+
+
+class ModesTests(Fixture):
+    """C-00 06.10 (user: top down only, tests too): the manifest's modes (wp078_accept --modes) narrow A2 and the R2
+    gates; the left-out modes and the FP / TP-only gates are OUT_OF_SCOPE, never FAIL or BLOCKED."""
+    OUT = ('H1b', 'H1c', 'H4', 'H4a', 'H4b', 'H6')
+
+    def topdown_only(self):
+        self.m['modes'] = ['topdown']
+        c = self.m['checklist']['A2']
+        c['runs'], c['routeRuns'] = c['runs'][:1], c['routeRuns'][:1]
+
+    def test_a_topdown_run_passes_a2_on_the_two_topdown_runs_and_names_tp_fp(self):
+        self.topdown_only()
+        r = self.result()
+        self.assertEqual('PASS', r['checklist']['A2']['status'], r['failures'])
+        self.assertNotIn('A2', [x['step'] for x in r['failures']])
+        self.assertEqual(['topdown'], r['modes'])
+        out = {'modes': ['tp', 'fp'], 'reason': self.module.R2.SCOPE_REASON}
+        self.assertEqual((out, out), (r['outOfScope'], r['checklist']['A2']['outOfScope']))
+
+    def test_a_topdown_run_with_tp_and_fp_runs_bound_is_not_a_pass(self):
+        self.m['modes'] = ['topdown']
+        self.assert_step('A2', 'BLOCKED', 'normal-bot modes')
+
+    def test_every_mode_is_the_default_and_names_nothing_out_of_scope(self):
+        r = self.result()
+        self.assertTrue(r['pass'], r['failures'])
+        self.assertEqual(['topdown', 'tp', 'fp'], r['modes'])
+        self.assertNotIn('outOfScope', r)
+
+    def test_malformed_modes_close_the_report(self):
+        for bad in (['td'], [], ['tp', 'tp'], 'topdown'):
+            with self.subTest(modes=bad):
+                self.setUp()
+                self.m['modes'] = bad
+                self.assert_step('A8', 'FAIL', 'manifest modes')
+
+    def test_r2_fp_and_tp_only_gates_are_out_of_scope_not_blocked(self):
+        self.topdown_only()
+        self.m['round'] = 'R2'
+        r = self.result()
+        rows = {g['id']: g for g in r['checklist']['R2']['gates']}
+        self.assertEqual({g: 'OUT_OF_SCOPE' for g in self.OUT}, {g: rows[g]['status'] for g in self.OUT})
+        steps = [x['step'] for x in r['failures']]
+        self.assertFalse([s for s in steps if s in ['R2.' + g for g in self.OUT]], steps)
+        self.assertIn('R2.L1', steps)                                   # a TD gate with no artifact is still BLOCKED
+        self.assertEqual((['topdown'], ['tp']), (rows['Z3']['modes'], rows['Z3']['outOfScopeModes']))

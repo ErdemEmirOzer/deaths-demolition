@@ -527,3 +527,37 @@ class LintTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ModesTests(Base):
+    """C-00 06.10 (user: top down only, tests too): wp078_accept --modes reaches r2_z3 --modes; a left-out Z3 mode is
+    outOfScope, not too few pairs, and the worst is taken over the measured cells."""
+
+    def test_a_topdown_run_writes_z3_from_the_topdown_cell_and_names_tp_out_of_scope(self):
+        z3_tree(self.evidence, modes=("topdown",), r2={("topdown", i): {"setpass": 104.0} for i in range(1, 6)})
+        write_static(self.evidence)
+        code, out, err = self.z3_only("--modes", "topdown")
+        self.assertEqual(0, code, err)
+        data = strict(self.artifact)
+        self.assertEqual(["topdown"], [c["mode"] for c in data["cells"]])
+        self.assertEqual({"modes": ["tp"], "reason": r2_gates.SCOPE_REASON}, data["outOfScope"])
+        self.assertEqual(1.04, data["values"]["setPassRatio"])
+        self.assertEqual(5, data["samples"])
+        self.assertIn("worst of topdown;", out)
+        row = r2_gates.evaluate_gate(Z3_GATE, FINAL, measure=data, cases=Z3_CASES, modes=("topdown",))
+        self.assertEqual(("PASS", ["topdown"], ["tp"]), (row["status"], row["modes"], row["outOfScopeModes"]), row["reason"])
+
+    def test_without_modes_the_missing_tp_cell_still_blocks(self):
+        z3_tree(self.evidence, modes=("topdown",))
+        write_static(self.evidence)
+        code, _, err = self.z3_only()
+        self.assertEqual(1, code)
+        self.assertIn("sinematik-tp: 0 pairs", err)
+
+    def test_modes_must_be_z3_modes(self):
+        for bad in ("fp", "topdown,topdown", ""):
+            with self.subTest(modes=bad):
+                self.assertEqual(64, self.z3_only("--modes", bad)[0])
+
+    def test_the_scope_reason_is_the_contracts(self):
+        self.assertEqual(r2_gates.SCOPE_REASON, z3.SCOPE_REASON)

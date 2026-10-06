@@ -381,9 +381,20 @@ def strict_json(data):
     return json.loads(data, parse_constant=reject, object_pairs_hook=pairs)
 
 
+def run_modes(value):
+    """C-00 06.10 (user: top down only): the manifest's camera modes (wp078_accept --modes) as a tuple in R2.SCOPE_MODES
+    order; an absent field is every mode (older manifests), anything malformed is None."""
+    if value is None:
+        return tuple(R2.SCOPE_MODES)
+    if not (isinstance(value, list) and value and len(set(value)) == len(value) and all(m in R2.SCOPE_MODES for m in value)):
+        return None
+    return tuple(m for m in R2.SCOPE_MODES if m in value)
+
+
 class Inspector:
     def __init__(self, manifest, root, targets):
         self.manifest = manifest
+        self.modes = run_modes(manifest.get("modes")) or tuple(R2.SCOPE_MODES)   # generate_report refuses a malformed one
         self.root = Path(root).resolve()
         self.commit = manifest.get("commit")
         self.targets = targets
@@ -792,14 +803,16 @@ class Inspector:
             self.xml(ref)
 
     def A2(self, step):
+        # C-00 06.10: one normal-bot run and one route run per camera mode of this run (manifest modes; default all three)
+        want, n = sorted(self.modes), len(self.modes)
         runs = step.get("runs")
-        require(isinstance(runs, list) and len(runs) == 3, "missing three normal-bot modes", "BLOCKED")
-        require(sorted(self.run(run, step="A2")[0] for run in runs) == ["fp", "topdown", "tp"], "duplicate or missing normal-bot mode")
+        require(isinstance(runs, list) and len(runs) == n, f"missing normal-bot modes ({'/'.join(self.modes)})", "BLOCKED")
+        require(sorted(self.run(run, step="A2")[0] for run in runs) == want, "duplicate or missing normal-bot mode")
         routes = step.get("routeRuns")
-        require(isinstance(routes, list) and len(routes) == 3, "missing three A2 route runs (topdown/tp/fp)", "BLOCKED")
+        require(isinstance(routes, list) and len(routes) == n, f"missing A2 route runs ({'/'.join(self.modes)})", "BLOCKED")
         paths = {str(self.path(run.get("provenance", {}).get("path"))) for run in routes if isinstance(run, dict) and isinstance(run.get("provenance"), dict)}
-        require(len(paths) == 3, "one route execution reused for several camera modes")
-        require(sorted(self.route_run(run) for run in routes) == ["fp", "topdown", "tp"], "duplicate or missing route-run camera mode")
+        require(len(paths) == n, "one route execution reused for several camera modes")
+        require(sorted(self.route_run(run) for run in routes) == want, "duplicate or missing route-run camera mode")
 
     def A3(self, step):
         checks = step.get("checks")
@@ -1261,7 +1274,8 @@ class Inspector:
             entry = bound.get(gate["id"]) if isinstance(bound.get(gate["id"]), dict) else {}
             measure = self.obj(entry["measure"])[1] if isinstance(entry.get("measure"), dict) else None
             review = self.obj(entry["review"])[1] if isinstance(entry.get("review"), dict) else None
-            row = R2.evaluate_gate(gate, self.commit, measure=measure, review=review, cases=cases)
+            row = R2.evaluate_gate(gate, self.commit, measure=measure, review=review, cases=cases,
+                                   modes=None if self.modes == tuple(R2.SCOPE_MODES) else self.modes)
             # KADRO game-test-engineer SHOULD-6 / S-08 06.10: a quiet gate measured on a busy host is KİRLİ — a note, never
             # its status (the owner's own quality gates decide the value); a quiet gate with no host record says so too
             host = self.obj(entry["host"])[1] if isinstance(entry.get("host"), dict) else None
@@ -1289,6 +1303,7 @@ def generate_report(manifest, evidence_root, targets=None):
         require(manifest.get("schema") == SCHEMA, "invalid manifest schema")
         require(isinstance(manifest.get("commit"), str) and SHA.fullmatch(manifest["commit"]), "missing full FINAL commit")
         require(manifest.get("final") is True, "FINAL SHA not assigned", "BLOCKED")
+        require(run_modes(manifest.get("modes")) is not None, "manifest modes must be distinct values from " + "/".join(R2.SCOPE_MODES))
         # Optional test injection may tighten targets but cannot relax live DEC rules.
         canonical = strict_json((HERE / "perf-targets.json").read_bytes())
         require(targets == canonical, "targets differ from current authoritative perf-targets")
@@ -1350,10 +1365,14 @@ def generate_report(manifest, evidence_root, targets=None):
             inspector.file(ref)
     except (ProofError, OSError) as error:
         issue("A8", "S-10", error if isinstance(error, ProofError) else ProofError("evidence changed during inspection: " + str(error)))
+    out_of_scope = [m for m in R2.SCOPE_MODES if m not in inspector.modes]
+    if out_of_scope and isinstance(rows.get("A2"), dict):
+        rows["A2"]["outOfScope"] = {"modes": out_of_scope, "reason": R2.SCOPE_REASON}
     passed = not failures
     status = "PASS" if passed else ("FAIL" if any(row["status"] == "FAIL" for row in failures) else "BLOCKED")
     rows["A8"] = {"owner": "S-10", "status": status, "derived": True}
     return {"schema": SCHEMA, "commit": manifest.get("commit"), "final": manifest.get("final") is True,
+            "modes": list(inspector.modes), **({"outOfScope": {"modes": out_of_scope, "reason": R2.SCOPE_REASON}} if out_of_scope else {}),
             "pass": passed, "status": status, "checklist": rows, "failures": failures,
             "buildHashes": manifest.get("buildHashes", {}), "perf": inspector.perf,
             "soak": inspector.soak, "soakRoundTimeoutMargin": inspector.timeout_margin, "reportRuns": inspector.report_runs, "botRuns": inspector.bot_runs, "routeRuns": inspector.route_runs,
@@ -1406,6 +1425,10 @@ def main(argv=None):
         text += [name + " " + row["status"] + " owner=" + row["owner"] for name, row in result["checklist"].items()]
         r2_rows = (result["checklist"].get("R2") or {}).get("gates") or []
         text += ["R2." + g["id"] + " " + g["note"] for g in r2_rows if isinstance(g, dict) and g.get("note")]
+        if result.get("outOfScope"):
+            text += ["OUT_OF_SCOPE modes " + ",".join(result["outOfScope"]["modes"]) + " (" + result["outOfScope"]["reason"] + ")"]
+        text += ["R2." + g["id"] + " OUT_OF_SCOPE " + str(g.get("reason")) for g in r2_rows
+                 if isinstance(g, dict) and g.get("status") == R2.OUT_OF_SCOPE]
         with (out / "wp078-report.json").open("x", encoding="utf-8") as handle:
             handle.write(json.dumps(result, indent=2, allow_nan=False) + "\n")
         with (out / "wp078-report.txt").open("x", encoding="utf-8") as handle:

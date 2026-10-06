@@ -39,6 +39,14 @@ Some gates (`tests` in `r2-gates.json`, e.g. Z1, Z3b, H4, H4a, H4b, U3) also req
 `Passed` in an NUnit XML bound to the run (A1 core/alone, A3 isolated, or the chain's `<E>/r2/` sessions). If the
 name is not in any bound XML the gate is BLOCKED; any other result is FAIL.
 
+## Camera scope (C-00 06.10: top down only, tests too)
+
+A gate may name the camera modes it is measured in (`modes` in `r2-gates.json`): fp — H4, H4a, H4b; tp — H1b, H1c, H6;
+multi-mode — Z3 (topdown, tp), S3 (topdown, tp, fp). `wp078_accept.py --modes topdown` runs a2 and z3 in top down only,
+does not run the r2 / r2q sessions of a gate no run mode covers, and records the modes in the manifest. The report
+writes such a gate, and every left-out A2 / Z3 mode, OUT_OF_SCOPE ("kullanıcı 06.10: yalnız TopDown"), never FAIL or
+BLOCKED; a multi-mode gate is judged on its modes in scope. Without `--modes` every mode runs as before.
+
 ## Which session measures a gate
 
 `measuredBy` in `r2-gates.json` (`{"suite": "playmode"|"editmode", "filter": "<test.sh --filter regex>", "quiet": bool,

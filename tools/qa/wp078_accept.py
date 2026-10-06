@@ -484,8 +484,13 @@ def load_b9_poses(path):
 class Chain:
     def __init__(self, final, evidence, stages, dry_run=False, resume=False, editmode_filter="", playmode_filter="",
                  wait_tries=3, wait_seconds=120.0, git=None, runner=None, guard=None, out=print, python=sys.executable,
-                 b9_poses=None, round_name="R1", r1_evidence=None, r1_commit=None, b9_poses_path=None, lint=None, host=None):
+                 b9_poses=None, round_name="R1", r1_evidence=None, r1_commit=None, b9_poses_path=None, lint=None, host=None,
+                 modes=MODES):
         self.final, self.evidence = final, Path(evidence).resolve()
+        # C-00 06.10 (user: top down only, tests too): the camera modes this run measures; a2 / z3 / r2 / r2q skip the
+        # rest and the report writes them OUT_OF_SCOPE ("kullanıcı 06.10: yalnız TopDown"), never FAIL or BLOCKED
+        self.modes = tuple(m for m in MODES if m in modes)
+        self.scope = None if self.modes == MODES else self.modes   # r2_gates' modes argument: None = every mode
         self.stages = [s for s in STAGE_ORDER if s in stages]
         self.dry_run, self.resume = dry_run, resume
         self.filters = {"editmode": editmode_filter, "playmode": playmode_filter}
@@ -971,10 +976,12 @@ class Chain:
         if binary is None:
             return
         results = []
-        for mode in MODES:
+        if self.scope:
+            self.log(f"OUT_OF_SCOPE a2: {', '.join(m for m in MODES if m not in self.modes)} ({r2_gates.SCOPE_REASON})")
+        for mode in self.modes:
             out = self.evidence / "a2" / f"gameplay-{mode}"
             results.append(self.bot_unit(out.name, out, self.bot_argv(out, "gameplay", mode, GAMEPLAY_SEED, GAMEPLAY_ROUNDS), "gameplay"))
-        for mode in MODES:
+        for mode in self.modes:
             out = self.evidence / "a2" / f"route-{mode}"
             results.append(self.bot_unit(out.name, out, self.bot_argv(out, "route", mode, GAMEPLAY_SEED, ROUTE_ROUNDS), "route"))
         self.finish("a2", [r for r in results if r], inputs=[binary])
@@ -1125,15 +1132,20 @@ class Chain:
         missing = [n for n in need if not hasattr(z3, n)]
         roots_agree = not missing and (z3.Z3_R2, z3.Z3_R1) == (wp078_report.Z3_ROOT, wp078_report.Z3_R1_ROOT)
         binary, proof = self.dev_binary("probe"), self.r1_probe()
+        z3_modes = [m for m in z3.Z3_MODES if m in self.modes] if not missing else []
+        if self.scope and not missing:
+            self.log(f"OUT_OF_SCOPE z3: {', '.join(m for m in z3.Z3_MODES if m not in self.modes) or '-'} ({r2_gates.SCOPE_REASON})")
         if missing or not roots_agree:
             self.log(f"Z3: r2_z3.py lacks {missing or 'the report roots ' + str((wp078_report.Z3_ROOT, wp078_report.Z3_R1_ROOT))} — no Z3 windows run")
         elif binary is None or not proof:
             self.log("Z3: no complete FINAL probe build or no proven R1 probe build — no Z3 windows run, Z3 BLOCKED in the report")
+        elif not z3_modes:
+            self.log("Z3: none of r2_z3's modes is in --modes — no Z3 windows run, Z3 OUT_OF_SCOPE in the report")
         else:
             root, base = self.evidence / z3.Z3_R2, self.evidence / z3.Z3_R1
             argv = [self.py, HERE / "wp078_perf.py", "--bin", self.evidence / "build-probe", "--out", root, "--commit", self.final,
                     "--baseline-bin", self.r1_evidence / "build-probe", "--baseline-out", base, "--baseline-commit", self.r1_commit,
-                    "--tiers", z3.Z3_TIER, "--modes", ",".join(z3.Z3_MODES), "--windows", str(z3.MIN_PAIRS),
+                    "--tiers", z3.Z3_TIER, "--modes", ",".join(z3_modes), "--windows", str(z3.MIN_PAIRS),
                     "--extra-arg=-ddPilotStart", "--extra-arg=" + z3.Z3_START, "--extra-arg=-ddArmor", "--extra-arg=all"]
             code = self.perf_with_wait("z3-perf", argv)
             if not self.dry_run:
@@ -1150,6 +1162,8 @@ class Chain:
             tool += ["--r1-commit", self.r1_commit]
         if self.b9_poses_path:
             tool += ["--b9-poses", self.b9_poses_path]
+        if self.scope and z3_modes:
+            tool += ["--modes", ",".join(z3_modes)]
         code = self.execute("r2-z3", tool, log_path=self.evidence / "z3" / "r2-z3.txt")
         if self.dry_run:
             return
@@ -1224,7 +1238,11 @@ class Chain:
             self.log(f"SKIP {stage}: not an R2 round")
             return
         contract = r2_gates.load_contract((HERE / "r2-gates.json").read_text(encoding="utf-8"))
-        steps = r2_gates.measurement_steps(contract, quiet)
+        steps = r2_gates.measurement_steps(contract, quiet, self.scope) if self.scope else r2_gates.measurement_steps(contract, quiet)
+        skipped = [g["id"] for g in contract["gates"] if (g.get("measuredBy") or {}).get("quiet", False) == quiet
+                   and g.get("measuredBy") and r2_gates.out_of_scope(g, self.scope)]
+        if skipped:
+            self.log(f"OUT_OF_SCOPE {stage}: {', '.join(skipped)} not measured ({r2_gates.SCOPE_REASON})")
         measure_dir = self.evidence / "r2"
         switches = set(OWNER_SWITCHES) | {k for g in contract["gates"] for k in (g.get("measuredBy") or {}).get("env", {})}
         results = []
@@ -1320,7 +1338,7 @@ class Chain:
             assets = self.git("rev-parse", f"{self.final}:{PROJECT}/Assets")
         except (subprocess.CalledProcessError, OSError):
             assets = None
-        manifest = assemble_manifest(self.evidence, self.final, assets, self.round_name)
+        manifest = assemble_manifest(self.evidence, self.final, assets, self.round_name, self.modes)
         if manifest_path.exists():
             self.move_aside(manifest_path, "prev")
         write_json(manifest_path, manifest)
@@ -1443,11 +1461,13 @@ def r2_section(evidence):
     return {"owner": "S-10", "gates": gates, "xml": [r for r in (ref(evidence, p) for p in xml_paths) if r]}
 
 
-def assemble_manifest(evidence, final, assets_tree, round_name=None):
+def assemble_manifest(evidence, final, assets_tree, round_name=None, modes=MODES):
     """The wp078_report manifest from the evidence tree: every path relative to the evidence root, every artifact with
-    the sha256 of its bytes. A step or field without real evidence stays absent (the report says BLOCKED)."""
+    the sha256 of its bytes. A step or field without real evidence stays absent (the report says BLOCKED). modes: the
+    run's camera modes (--modes); the report judges only those and writes the rest OUT_OF_SCOPE."""
     evidence = Path(evidence).resolve()
-    manifest = {"schema": wp078_report.SCHEMA, "commit": final, "final": True, "producer": "tools/qa/wp078_accept.py"}
+    manifest = {"schema": wp078_report.SCHEMA, "commit": final, "final": True, "producer": "tools/qa/wp078_accept.py",
+                "modes": [m for m in MODES if m in modes]}
     if isinstance(assets_tree, str) and re.fullmatch(r"[0-9a-f]{40}", assets_tree):
         manifest["assetsTree"] = assets_tree
     hashes = {}
@@ -1600,6 +1620,9 @@ def main(argv=None, **seams):
     parser.add_argument("--r1-commit", help="WP-091 P5: the R1 FINAL commit, 40-hex (recorded in r2-P5.json)")
     parser.add_argument("--b9-poses", help="C-00 01.10: S-05 B9 pose list (JSON) for the b9 stage, which runs after a4 "
                                             "(its own stage since WP-091: give it in --stages, e.g. a4,b9)")
+    parser.add_argument("--modes", default=",".join(MODES),
+                        help="C-00 06.10 (user: top down only): camera modes this run measures — a2, z3, r2, r2q skip the "
+                             "rest and the report writes them OUT_OF_SCOPE (default every mode)")
     try:
         args = parser.parse_args(argv)
     except SystemExit as error:
@@ -1625,6 +1648,16 @@ def main(argv=None, **seams):
         # P2 would compare FINAL with itself and the report would refuse the root hours later (KADRO test-engineer SHOULD-1)
         print("--r1-evidence/--r1-commit must be the R1 FINAL's, not this FINAL's own", file=sys.stderr)
         return 64
+    modes = [m.strip() for m in args.modes.split(",") if m.strip()]
+    if not modes or len(set(modes)) != len(modes) or set(modes) - set(MODES):
+        print(f"--modes takes distinct values from {', '.join(MODES)}", file=sys.stderr)
+        return 64
+    narrowed = sorted(set(stages) & {"a4", "a5", "b9"}) if set(modes) != set(MODES) else []
+    if narrowed:
+        # their cells and coverage are per mode and not narrowed yet (R3): refuse rather than report a partial matrix
+        print(f"--modes {args.modes} does not narrow {', '.join(narrowed)} yet — run them without --modes; nothing started",
+              file=sys.stderr)
+        return 64
     try:
         b9_poses = load_b9_poses(args.b9_poses) if args.b9_poses else []
     except ValueError as error:
@@ -1639,7 +1672,7 @@ def main(argv=None, **seams):
                   editmode_filter=args.editmode_filter, playmode_filter=args.playmode_filter,
                   wait_tries=args.wait_tries, wait_seconds=args.wait_seconds, b9_poses=b9_poses, round_name=args.round,
                   b9_poses_path=args.b9_poses,
-                  r1_evidence=args.r1_evidence, r1_commit=args.r1_commit, **seams)
+                  r1_evidence=args.r1_evidence, r1_commit=args.r1_commit, modes=tuple(modes), **seams)
     previous = signal.signal(signal.SIGTERM, chain.on_sigterm)
     try:
         return chain.run()

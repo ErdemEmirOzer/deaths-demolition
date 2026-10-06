@@ -1602,3 +1602,52 @@ class ManifestTests(Base):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ModesTests(Base):
+    """C-00 06.10 (user: top down only, tests too): --modes topdown narrows a2, z3 and the r2 / r2q sessions; the report
+    writes the left-out modes and the FP / TP-only gates OUT_OF_SCOPE (kullanıcı 06.10: yalnız TopDown)."""
+    TD = ("topdown",)
+
+    def test_a2_plans_only_the_topdown_gameplay_and_route_runs(self):
+        chain = self.dry(["a2"], modes=self.TD)
+        bots = [a for s, a in chain.planned if s == "a2" and any(Path(x).name == "wp078_bot.py" for x in a[:2])]
+        self.assertEqual([("gameplay", "topdown"), ("route", "topdown")], [(self.opt(a, "--kind"), self.opt(a, "--mode")) for a in bots])
+        self.assertTrue(any("OUT_OF_SCOPE a2: tp, fp" in line for line in chain.lines), chain.lines)
+
+    def test_z3_runs_only_the_topdown_cell_and_tells_r2_z3(self):
+        with mock.patch.object(acc, "_r2_z3", return_value=FAKE_Z3):
+            chain = self.dry(["z3"], modes=self.TD, round_name="R2", r1_evidence=r1_evidence(self.tmp.name), r1_commit=R1)
+        perf = [a for s, a in chain.planned if s == "z3" and Path(a[1]).name == "wp078_perf.py"]
+        tool = [a for s, a in chain.planned if s == "z3" and Path(a[1]).name == "r2_z3.py"]
+        self.assertEqual(["topdown"], [self.opt(perf[0], "--modes")])
+        self.assertEqual("topdown", self.opt(tool[0], "--modes"))
+
+    def test_every_mode_keeps_the_previous_commands(self):
+        with mock.patch.object(acc, "_r2_z3", return_value=FAKE_Z3):
+            chain = self.dry(["z3"], round_name="R2", r1_evidence=r1_evidence(self.tmp.name), r1_commit=R1)
+        tool = [a for s, a in chain.planned if s == "z3" and Path(a[1]).name == "r2_z3.py"]
+        self.assertNotIn("--modes", tool[0])
+
+    def test_r2_and_r2q_do_not_run_the_fp_or_tp_only_gates(self):
+        def filters(**kw):
+            chain = self.dry(["r2", "r2q"], round_name="R2", **kw)
+            return chain, {self.opt(a, "--filter") for s, a in chain.planned if s in ("r2", "r2q") and "--filter" in a}
+        _, every = filters()
+        chain, td = filters(modes=self.TD)
+        contract = acc.r2_gates.load_contract((acc.HERE / "r2-gates.json").read_text(encoding="utf-8"))
+        gone = {g["measuredBy"]["filter"] for g in contract["gates"] if g["id"] in ("H1b", "H1c", "H4", "H4a", "H4b", "H6")}
+        self.assertEqual(gone, every - td)
+        self.assertTrue(any("OUT_OF_SCOPE r2: H1b, H1c, H4, H4a, H4b, H6 not measured" in line for line in chain.lines))
+
+    def test_main_refuses_unknown_modes_and_the_stages_it_does_not_narrow_yet(self):
+        base = ["--final", FINAL, "--evidence", str(self.evidence), "--dry-run"]
+        for extra in (["--modes", "td"], ["--modes", "topdown,topdown"], ["--modes", "topdown", "--stages", "a4"],
+                      ["--modes", "topdown", "--stages", "a5"], ["--modes", "topdown", "--stages", "a4,b9"]):
+            with self.subTest(extra=extra):
+                self.assertEqual(64, acc.main(base + extra, git=FakeGit(), runner=must_not_run, guard=FakeGuard(), out=lambda _: None))
+
+    def test_the_manifest_carries_the_run_modes(self):
+        self.evidence.mkdir(parents=True)
+        self.assertEqual(["topdown"], acc.assemble_manifest(self.evidence, FINAL, None, "R2", self.TD)["modes"])
+        self.assertEqual(list(acc.MODES), acc.assemble_manifest(self.evidence, FINAL, None, "R2")["modes"])

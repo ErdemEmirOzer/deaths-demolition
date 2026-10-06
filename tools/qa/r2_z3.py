@@ -67,6 +67,7 @@ SHA = re.compile(r"[0-9a-f]{40}")
 CEILING = 40                         # PrototypeConfig.AbsoluteSafetyCeiling; WP-064 / DEC-088: exactly 40 for the whole window
 Z3_R2, Z3_R1 = "z3/perf", "z3/perf-r1"
 Z3_TIER, Z3_MODES = "sinematik", ("topdown", "tp")
+SCOPE_REASON = "kullanıcı 06.10: yalnız TopDown"   # = r2_gates.SCOPE_REASON (a test pins it)
 Z3_START = "0,-4,0"                   # -ddPilotStart of the z3 pose run (z3-plazan = B9 sin-plazan); S-10's chain imports it
 B9_ROOT = "b9"
 MIN_PAIRS = 5                        # C-00 06.10: at least 5 alternating pairs per cell
@@ -286,13 +287,15 @@ def _median(values):
 # ------------------------------------------------------------------------------------------------ Z3
 
 
-def z3_ratios(evidence, commit, r1_commit, targets, min_pairs=MIN_PAIRS, tolerance=POSE_TOLERANCE_M):
+def z3_ratios(evidence, commit, r1_commit, targets, min_pairs=MIN_PAIRS, tolerance=POSE_TOLERANCE_M, modes=Z3_MODES):
     """The dd-r2-z3-ratios-v1 record: status OK | FAIL (source not in the recording) | BLOCKED (no run, too few pairs);
-    values = the three gate ratios only when OK."""
+    values = the three gate ratios only when OK. modes (C-00 06.10, wp078_accept --modes): the Z3 cells this run
+    measures; a Z3 mode left out is listed in outOfScope, never BLOCKED, and the worst is taken over the measured ones."""
     evidence = Path(evidence)
+    modes = tuple(m for m in Z3_MODES if m in modes)
     roots = {"r2": evidence / Z3_R2, "r1": evidence / Z3_R1}
     out = {"schema": RATIOS_SCHEMA, "commit": commit, "baselineCommit": r1_commit, "status": "OK", "problems": [],
-           "tier": Z3_TIER, "modes": list(Z3_MODES), "minPairs": min_pairs, "poseToleranceM": tolerance,
+           "tier": Z3_TIER, "modes": list(modes), "minPairs": min_pairs, "poseToleranceM": tolerance,
            "roots": {side: _rel(root, evidence) for side, root in roots.items()}, "values": None, "worstMode": None,
            "pose": None, "samples": 0, "cells": []}
     absent = [f"no {_rel(root, evidence)}/ (the z3 pose run did not write here)" for root in roots.values() if not root.is_dir()]
@@ -303,7 +306,9 @@ def z3_ratios(evidence, commit, r1_commit, targets, min_pairs=MIN_PAIRS, toleran
     failed, blocked, records, binaries = [], [], [], {"r2": set(), "r1": set()}
     for side in ("r2", "r1"):
         failed += window_problems([d for dirs in groups[side].values() for d in dirs], evidence)
-    for mode in Z3_MODES:
+    if len(modes) < len(Z3_MODES):
+        out["outOfScope"] = {"modes": [m for m in Z3_MODES if m not in modes], "reason": SCOPE_REASON}
+    for mode in modes:
         key = (Z3_TIER, mode)
         r2c, r1c = counted(groups["r2"].get(key, [])), counted(groups["r1"].get(key, []))
         pairs = list(zip(r2c, r1c))
@@ -388,7 +393,8 @@ def z3_artifact(ratios, static_values, static_ref, ratio_keys, static_keys):
             "source": "tools/qa/r2_z3.py (PilotPerfProbe 04-window R2/R1 pairs <E>/z3/perf vs <E>/z3/perf-r1 + <E>/r2/z3-static.json)",
             "values": {k: values[k] for k in list(ratio_keys) + list(static_keys)}, "samples": ratios["samples"],
             "worstMode": ratios["worstMode"], "minPairs": ratios["minPairs"], "poseToleranceM": ratios["poseToleranceM"],
-            "pose": ratios["pose"], "cells": ratios["cells"], "static": static_ref}
+            "pose": ratios["pose"], "cells": ratios["cells"], "static": static_ref,
+            **({"outOfScope": ratios["outOfScope"]} if ratios.get("outOfScope") else {})}
 
 
 # ------------------------------------------------------------------------------------------------ P3
@@ -482,10 +488,10 @@ def say_problems(gate, verdict, problems):
         print("  - " + p, file=sys.stderr)
 
 
-def run_z3(evidence, out_dir, static_path, commit, r1_commit, targets, contract, min_pairs, tolerance):
+def run_z3(evidence, out_dir, static_path, commit, r1_commit, targets, contract, min_pairs, tolerance, modes=Z3_MODES):
     ratio_keys, static_keys = z3_keys(contract)
     set_aside_stale(out_dir, "Z3")
-    ratios = z3_ratios(evidence, commit, r1_commit, targets, min_pairs, tolerance)
+    ratios = z3_ratios(evidence, commit, r1_commit, targets, min_pairs, tolerance, modes)
     write_json(out_dir / "z3-ratios.json", ratios)
     if ratios["status"] != "OK":
         verdict = "FAIL (the source is not in the recording)" if ratios["status"] == "FAIL" else "BLOCKED"
@@ -494,7 +500,7 @@ def run_z3(evidence, out_dir, static_path, commit, r1_commit, targets, contract,
     static_values, ref = load_static(static_path, commit, static_keys, Path(evidence))
     v = ratios["values"]
     line = (f"setPassRatio {v['setPassRatio']} batchRatio {v['batchRatio']} trianglesRatio {v['trianglesRatio']} "
-            f"(worst of {', '.join(Z3_MODES)}; {ratios['samples']} pairs)")
+            f"(worst of {', '.join(ratios['modes'])}; {ratios['samples']} pairs)")
     if static_values is None:
         say_problems("Z3", "BLOCKED (static keys)", [ref, "ratios recorded in z3-ratios.json: " + line])
         return False
@@ -525,7 +531,13 @@ def main(argv=None):
     parser.add_argument("--b9-poses", help="P3: the S-05 B9 pose list (wp078_accept --b9-poses); every listed cell is required")
     parser.add_argument("--min-pairs", type=int, default=MIN_PAIRS)
     parser.add_argument("--pose-tolerance", type=float, default=POSE_TOLERANCE_M, help="metres between sampled poses")
+    parser.add_argument("--modes", default=",".join(Z3_MODES),
+                        help="Z3 cells to measure (C-00 06.10: wp078_accept --modes); the rest are outOfScope, not BLOCKED")
     args = parser.parse_args(argv)
+    modes = [m.strip() for m in args.modes.split(",") if m.strip()]
+    if not modes or len(set(modes)) != len(modes) or set(modes) - set(Z3_MODES):
+        print(f"--modes takes distinct values from {', '.join(Z3_MODES)}", file=sys.stderr)
+        return 64
     gates = [g.strip().upper() for g in args.gates.split(",") if g.strip()]
     if not gates or set(gates) - {"Z3", "P3"}:
         print("--gates takes Z3, P3 or Z3,P3", file=sys.stderr)
@@ -557,7 +569,7 @@ def main(argv=None):
     ok = True
     if "Z3" in gates:
         ok = run_z3(evidence, out_dir, static, args.commit, args.r1_commit, targets, load_contract(),
-                    args.min_pairs, args.pose_tolerance) and ok
+                    args.min_pairs, args.pose_tolerance, tuple(modes)) and ok
     if "P3" in gates:
         ok = run_p3(evidence, out_dir, args.commit, targets, poses, args.pose_tolerance) and ok
     return 0 if ok else 1
