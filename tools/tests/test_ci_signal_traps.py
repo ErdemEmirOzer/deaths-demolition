@@ -20,6 +20,17 @@ import dd_paths  # noqa: E402  (WP-089: the KADRO root; fixtures follow it on mo
 COPY = ["main-ci.sh", "compile-check.sh", "dd-env.sh", "ci_summary.py", "ci-owners.tsv", "ci-signatures.tsv", "ci-suites.txt",
         "ci_isolated.py", "ci-isolated.txt"]
 PRODUCT = "Deaths Demolition - Playable Concept"
+# C-00 06.10: the fixture's ci-isolated.txt is pinned (954581a5's three entries), not the committed file — these tests
+# count main-ci's calls and summary rows, so every test added to the real list (09becb01: a second `alone`) turned them
+# red. The committed file is checked by test_ci_isolated.py (format, filters, the real test names).
+FIXTURE_ISOLATED = (
+    "# pinned fixture (test_ci_signal_traps.py) — the real list is tools/ci-isolated.txt\n"
+    "^DD\\.Art\\.Tests\\.PlayMode\\.ArmorTests\\.Run_AP005v2_40SkinnedZombi_TamZirh_Binder_5Renderer_TekMateryal_KurallarUyumlu$"
+    "\ta3\tcrowd capture (fixture)\n"
+    "^DD\\.Art\\.Tests\\.PlayMode\\.ArmorTests\\.Okunabilirlik_DEC077_Zirh_DeltaV_AltKumas_KomsuBant_ZeminHalkasi_Siluet$"
+    "\ta3\tDEC-077 readability (fixture)\n"
+    "^DD\\.Prototype\\.Tests\\.PlayMode\\.Wp073LauncherVfxTests\\.WarmPresentation_DoesNotAllocateOrConsumeGameplayRandom$"
+    "\talone\tallocation test (fixture)\n")
 
 # WP-079G D6a: `holds` (the guard's lock-order query) = nothing held here.
 FAKE_SLOT = """#!/bin/zsh
@@ -183,6 +194,7 @@ class CiFixture(unittest.TestCase):
         tools = self.repo / "tools"; tools.mkdir()
         for name in COPY:
             shutil.copy2(TOOLS / name, tools / name)
+        (tools / "ci-isolated.txt").write_text(FIXTURE_ISOLATED)
         write_exec(tools / "slot.sh", FAKE_SLOT.format(log=self.log))
         write_exec(tools / "userdata-guard.sh", FAKE_GUARD.format(log=self.log, origin="worktree"))
         write_exec(self.canon_guard(), FAKE_GUARD.format(log=self.log, origin="canon"))
@@ -736,7 +748,8 @@ KEPT = [ARMOR + "ZirhDurumGecisi_HasarYoluyla_Present_Damaged_Broken_OlayAnkrajd
 
 
 class CiIsolatedStepTests(CiFixture):
-    """Codex-audit M-11 (C-00 30.09): the real ci-suites.txt + ci-isolated.txt through main-ci with a recording test.sh."""
+    """Codex-audit M-11 (C-00 30.09): the real ci-suites.txt + the pinned FIXTURE_ISOLATED through main-ci with a recording
+    test.sh."""
     def calls(self):
         return [l.split("\t") for l in self.lines("test-calls.txt")]
 
