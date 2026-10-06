@@ -119,16 +119,22 @@ namespace DD.Prototype.Tests.PlayMode
                     report.Append(m.name).Append('\t').Append(max).Append('\t').Append(pixels).Append('\t').Append(floorMax).Append('\t').Append(floorPixels).Append('\n');
                 }
 
-                // positive control: the keyword path is live (a masks clone with variation bits must change the frame)
+                // positive control: the keyword path is live (a masks clone with variation bits must change the frame). WP-084 slice 1:
+                // the O1 body material ships with _ZOMBIE_MASKS on, so the "off" side is a clone with the keyword off (r7d 06.10: the
+                // shipped material on both sides read 0 px).
                 Material body = tier.bodyMaterials[0];
+                var bare = new Material(body) { name = body.name + " (_ZOMBIE_MASKS off control)" };
+                clones.Add(bare);
+                bare.DisableKeyword("_ZOMBIE_MASKS");
+                bare.SetFloat("_ZombieMasksOn", 0f);
                 var masks = new Material(body) { name = body.name + " (_ZOMBIE_MASKS control)" };
                 clones.Add(masks);
                 masks.EnableKeyword("_ZOMBIE_MASKS");
                 masks.SetFloat("_ZombieMasksOn", 1f);
                 uint oldMask = mr.renderingLayerMask;
                 mr.renderingLayerMask = (oldMask & 0xFFFFu) | (2u << 16) | (2u << 21) | (2u << 26);
-                for (int w = 0; w < 4; w++) { Render(cam, mr, body); Render(cam, mr, masks); }
-                Color32[] off = Render(cam, mr, body), on = Render(cam, mr, masks);
+                for (int w = 0; w < 4; w++) { Render(cam, mr, bare); Render(cam, mr, masks); }
+                Color32[] off = Render(cam, mr, bare), on = Render(cam, mr, masks);
                 mr.renderingLayerMask = oldMask;
                 Diff(off, on, out int ctrlMax, out int ctrlPixels);
                 report.Append("CONTROL _ZOMBIE_MASKS on (bits skin2 dirt2 blood2)\t").Append(ctrlMax).Append('\t').Append(ctrlPixels).Append('\n');
