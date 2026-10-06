@@ -207,7 +207,8 @@ source check is ClassicWeaponFire delivered >= 20 + Fire voices started in the d
 the rise is reported per take in the artifact's takes detail, never asserted), the A9 stack loud in every second and not clipped, W + R within
 1 dB of the full mix, both PlayMode tests Passed in the given NUnit XML. A KİRLİ run (a foreign Unity, Player, Blender or ffmpeg sampled during the window in the `--host` log, no host log,
 host samples that do not cover the takes — none within 30 s of the first take's start or the last take's end, or a
-gap over 30 s between them, a take's span being its WAV's mtime less its length — or C-00's mark) writes `r2-S3.KIRLI.json` instead, with the note: ranking only, S3 stays BLOCKED until a clean
+gap over 30 s between them, a take's span being its WAV's mtime — at or after the capture's end — less its length; run
+on the window's folder or a copy that keeps the mtimes, cp -p or an APFS clone — or C-00's mark) writes `r2-S3.KIRLI.json` instead, with the note: ranking only, S3 stays BLOCKED until a clean
 measurement. Karar C-00 06.10: the load average is not a criterion (on this machine it counts iCloud I/O waits, not
 CPU) and neither is CPU idle (the 06.10 window's valid captures ran at idle p10 0.4 %); both are reported in the
 artifact's takes detail.

@@ -140,14 +140,20 @@ class Rig:
                              "2026-10-06T01:00:05Z CPU usage: 60.0% user, 38.0% sys, 2.0% idle  · foreign 0\n", encoding="utf-8")
         self.out = self.root / "r2" / "r2-S3.json"
         self.takes_end = TAKES_END
+        self.listening_end = None
 
     def end_takes(self, epoch):
         """every take's WAV written (its capture ended) at `epoch` on the next run — the span the host samples must cover."""
         self.takes_end = epoch
 
+    def end_listening(self, epoch):
+        """the listening takes end at `epoch`, the Dense-40 and A9 takes stay at end_takes (a window's later step)."""
+        self.listening_end = epoch
+
     def stamp(self):
         for wav in self.root.rglob("*.wav"):   # takes a test rewrote too: the window's time, not the test's
-            os.utime(wav, (self.takes_end, self.takes_end))
+            end = self.listening_end if self.listening_end is not None and self.listen in wav.parents else self.takes_end
+            os.utime(wav, (end, end))
 
     def argv(self, *extra, load=True, host=True):
         args = [a for m, d in self.dense.items() for a in ("--dense", f"{m}={d}")]
@@ -404,6 +410,18 @@ class KirliTests(RigTestCase):
         with self.rig.host.open("a", encoding="utf-8") as f:
             f.write("2026-10-06T01:02:10Z CPU usage: 50.0% user, 30.0% sys, 20.0% idle  · foreign 0\n")
         self.assert_kirli(*self.rig.run(), "a 125 s gap in the host samples after 2026-10-06T01:00:05Z")
+
+    def test_the_span_ends_with_the_last_take_not_the_first_gt_b3(self):
+        # Dense-40 and A9 inside the samples, the listening takes 2:40 later: the sampler stopped before the window's last step
+        self.rig.end_listening(TAKES_END + 160)
+        self.assert_kirli(*self.rig.run(), "the last host sample 2026-10-06T01:00:05Z is 175 s before the last take ended 2026-10-06T01:03:00Z")
+
+    def test_a_sampler_that_starts_inside_the_window_gt_b3(self):
+        # Dense-40 and A9 1:40 earlier than the listening takes: the first sample (01:00:00) lies between the first take's
+        # start + 30 s and the last take's end — the window's first steps went unsampled
+        self.rig.end_takes(TAKES_END - 100)
+        self.rig.end_listening(TAKES_END)
+        self.assert_kirli(*self.rig.run(), "the first host sample 2026-10-06T01:00:00Z is 92 s after the first take began 2026-10-06T00:58:28Z")   # A9: 12 s
 
     def test_samples_every_few_seconds_cover_the_takes(self):
         rc, out = self.rig.run()

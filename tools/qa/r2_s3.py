@@ -37,8 +37,9 @@ One failed check and nothing is written (exit 1): S3 stays BLOCKED by name in th
 KİRLİ (SABİT-KURALLAR 5.8: a dirty measurement is ranking information, not a gate value): a foreign Unity, Player, Blender
 or ffmpeg sampled during the window in a --host log, no host log at all, host samples that do not cover the takes (the
 first more than 30 s after the first take began, the last more than 30 s before the last take ended, or a gap over 30 s
-between them — a sampler that died early sees nothing after it; a take's span is its WAV's mtime less its length), or
---kirli <reason> → the values go to
+between them — a sampler that died early sees nothing after it; a take's span is its WAV's mtime less its length, the
+mtime at or after the capture's end: pencere.sh copies the A9 and listening takes when their step ends), or --kirli
+<reason> → the values go to
 r2-S3.KIRLI.json next to --out with a note, the gate file is not written (the chain binds only r2-S3.json, so S3 stays
 BLOCKED) and the exit is 3. Karar C-00 06.10: the load average is not a criterion — on this machine it counts iCloud's
 FileProvider / bird / cloudd I/O waits (26–27 with no heavy process) and does not stand for CPU; CPU idle is reported, not
@@ -52,6 +53,8 @@ usage: r2_s3.py --dense tp=DIR --dense fp=DIR [--dense tp=DIR2 …] [--dense top
         every line with "foreign <n>" is a sample, the time and CPU idle are read when the line has them (an empty top line
         still counts its foreign processes).
 --commit defaults to DD_R2_COMMIT, --out to $DD_R2_MEASURE_DIR/r2-S3.json. --dry-run measures and prints, never writes.
+Run it on the window's own folder or a copy that keeps the mtimes (cp -p, an APFS clone cp -c): a plain copy stamps the
+takes with the copy's time and the host samples no longer cover them (KİRLİ).
 exit: 0 written, every check met · 2 written, a check fails (the judge FAILs S3) · 1 a source check failed, nothing written
       · 3 KİRLİ (r2-S3.KIRLI.json only) · 64 usage
 """
@@ -275,8 +278,9 @@ def utc(epoch):
 
 
 def take_span(detail):
-    """(first take's start, last take's end) in epoch s — a take's WAV is written when its capture ends, so its span is
-    the file's mtime less its length — or None when no take file can be read."""
+    """(first take's start, last take's end) in epoch s — a take's span is its WAV's mtime less its length, the mtime at
+    or after its capture's end (pencere.sh copies the A9 and listening takes when their step ends) — or None when no take
+    file can be read. A plain copy of the evidence moves the mtimes: run on the original or a cp -p / cp -c copy."""
     takes = list(detail["dense"].values()) + ([detail["a9"]] if detail["a9"] else []) + list(detail["listening"].values())
     spans = []
     for take in takes:
