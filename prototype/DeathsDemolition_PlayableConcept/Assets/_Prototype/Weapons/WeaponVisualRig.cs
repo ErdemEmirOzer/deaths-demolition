@@ -23,7 +23,7 @@ namespace DD.Prototype.Weapons
     /// without touching this file.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class WeaponVisualRig : MonoBehaviour
+    public sealed class WeaponVisualRig : MonoBehaviour, DD.Prototype.Characters.IHeldWeaponKick
     {
         [Header("Model - leave empty to auto-build a primitive placeholder")]
         [SerializeField] private Transform _body;
@@ -69,9 +69,44 @@ namespace DD.Prototype.Weapons
         /// <summary>The weapon body, for anything that wants to swap materials.</summary>
         public Transform Body => _body;
 
+        /// <summary>
+        /// WP-087 (C-00 06.10, councils K/wp-087/konsey/KARAR-ArmsCarryKick-06.10.md + K/wp-083/KARAR-HELDKICK-API-06.10.KONSOLIDE.md):
+        /// the share of the kick the weapon-first hold's arms carry — the hold's weight IN THIS FRAME, read after its solve (order
+        /// 895, <see cref="WeaponRigCarriedPose"/>), so the arms' share and the body's 1 − share always add up to one (one source;
+        /// a share written in Update is a frame late and the fade's sum drifts ±28 % at 30 fps). The body inside the rig keeps
+        /// 1 − share of its own spring; the hold takes <see cref="KickLocalOffset"/> / <see cref="KickLocalRotation"/> at its pivot.
+        /// 0 = the old path, unchanged (not carried: the hold off, first person, a Special).
+        /// </summary>
+        public float ArmsCarryKick => _appliedShare;
+
+        /// <summary>
+        /// WP-087: the weapon-first hold carrying this rig (WeaponController sets it on the active rig and clears it on the other;
+        /// null = not carried, the old path).
+        /// </summary>
+        public DD.Prototype.Characters.WeaponHoldIk CarriedBy { get; set; }
+
+        private float _appliedShare;   // WP-087: the share applied to the body this frame (895), and by LateUpdate next frame
+        private float _tiltNow;        // the reload tip-out of this frame (°)
+
+        /// <summary>
+        /// WP-087: the arms' kick in the hold pivot's frame — a channel of its own, one way (back / muzzle-up ≥ 0: the body spring's
+        /// overshoot carried the pivot forward and muzzle-down, out of the support hand's reach — lmg_2 ~15.7 cm / 14° in the
+        /// council's simulation) and critically damped; capped by one scale per shot. Not × <see cref="ArmsCarryKick"/>.
+        /// </summary>
+        public Vector3 KickLocalOffset => new Vector3(0f, 0f, -_arms.Back);
+
+        public Quaternion KickLocalRotation => Quaternion.Euler(-_arms.Degrees, 0f, 0f);
+
+        /// <summary>WP-087: the arms channel now — back (m) and muzzle-up (°) (tests).</summary>
+        public float ArmsKickBack => _arms.Back;
+        public float ArmsKickDegrees => _arms.Degrees;
+
+        private HeldKickChannel _arms;   // WP-087: the arms' own channel (one way, critically damped)
+
         private void Awake()
         {
             EnsureModel();
+            if (GetComponent<WeaponRigCarriedPose>() == null) gameObject.AddComponent<WeaponRigCarriedPose>();   // WP-087: the 895 share
 
             if (_body != null)
             {
@@ -109,6 +144,9 @@ namespace DD.Prototype.Weapons
             _activeDamping = feel.damping;
             _activePitchPerKick = feel.pitchDegreesPerMeter;
             _actionTimer = _actionCycleTime;
+            // WP-087: the arms' channel takes the same shot (at once, capped, one way)
+            _arms.Kick(kick, recovery, _activePitchPerKick * _pitchScale, feel.heldKickAccumulation, feel.heldKickMaxMeters,
+                feel.heldKickMaxDegrees, feel.heldKickSettleRecoveries);
         }
 
         /// <summary>WP-002 spring: kick / 0.125 s initial return, stiffness 16 → 0.25 / 0.125².</summary>
@@ -176,7 +214,9 @@ namespace DD.Prototype.Weapons
             // still carry the previous weapon's kick / reload tilt (a model installed mid-kick stayed pitched).
             _kick = 0f;
             _kickVelocity = 0f;
+            _arms.Reset();
             _reloadTilt = 0f;
+            _tiltNow = 0f;
             _body.localPosition = Vector3.zero;
             _body.localRotation = Quaternion.identity;
             _body.localScale = Vector3.one;
@@ -227,6 +267,7 @@ namespace DD.Prototype.Weapons
                 return;
             }
 
+            _arms.Step(dt);
             UpdateKick(dt);
             UpdateAction(dt);
             UpdateSpin(dt);
@@ -265,8 +306,30 @@ namespace DD.Prototype.Weapons
                 tilt = 28f;
             }
 
-            _body.localPosition = _bodyRestPosition - new Vector3(0f, 0f, _kick);
-            _body.localRotation = _bodyRestRotation * Quaternion.Euler(-_kick * _activePitchPerKick * _pitchScale - tilt, 0f, 0f);
+            _tiltNow = tilt;
+            WriteBodyPose();   // WP-087: with last frame's share; WeaponRigCarriedPose rewrites it at 895 with this frame's
+        }
+
+        // WP-087: the body keeps 1 − share of its spring's kick (the hold's arms carry the rest on their own channel), plus the reload tip
+        private void WriteBodyPose()
+        {
+            if (_body == null) return;
+            float bodyKick = _kick * (1f - _appliedShare);
+            _body.localPosition = _bodyRestPosition - new Vector3(0f, 0f, bodyKick);
+            _body.localRotation = _bodyRestRotation * Quaternion.Euler(-bodyKick * _activePitchPerKick * _pitchScale - _tiltNow, 0f, 0f);
+        }
+
+        /// <summary>
+        /// WP-087 (order 895, after WeaponHoldIk's 890, before WeaponMountAlignment 900 / WeaponGripIk 910): the body takes 1 − the
+        /// hold's weight of THIS frame. Not carried and no share left → nothing (the LateUpdate pose stands: the old path).
+        /// </summary>
+        internal void ApplyCarriedShare()
+        {
+            DD.Prototype.Characters.WeaponHoldIk hold = CarriedBy;
+            float share = hold != null && hold.Active ? Mathf.Clamp01(hold.Weight) : 0f;
+            if (share == 0f && _appliedShare == 0f) return;
+            _appliedShare = share;
+            WriteBodyPose();
         }
 
         private void UpdateAction(float dt)

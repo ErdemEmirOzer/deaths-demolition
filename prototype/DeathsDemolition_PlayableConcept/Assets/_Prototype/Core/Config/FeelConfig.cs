@@ -109,6 +109,19 @@ namespace DD.Prototype.Core.Config
         public float pitchDegreesPerMeter = 90f;
         public float springCoefficient = 0.25f;
         public float animatorFullStrengthKickMeters = 0.2f;
+        // WP-087 (C-00 06.10, councils K/wp-087/konsey/KARAR-ArmsCarryKick-06.10.md + K/wp-083/KARAR-HELDKICK-API-06.10.KONSOLIDE.md):
+        // the weapon-first hold's arms channel (WeaponVisualRig / HeldKickChannel) — how far sustained fire builds up (× one shot's
+        // kick), its absolute caps (m back, ° muzzle-up) and its settle time (× the shot's recovery). The caps are provisional and
+        // high (the old AR shot reads 8.4 cm / 7.6°): C-00 06.10 — measure first (left hand ↔ kick size per weapon, the feel gate
+        // ≥ 90 % of the old first shot), then the largest cap that keeps both hands ≤ 1 cm.
+        [PrototypeOnly(PendingDecisions.None, "WP-087 council: sustained fire's build-up on the arms channel, × one shot. Invented.", true)]
+        public float heldKickAccumulation = 1.25f;
+        [PrototypeOnly(PendingDecisions.None, "WP-087: provisional cap, m back on the arms channel — the measured value comes with the C step (C-00 06.10). Invented.", true)]
+        public float heldKickMaxMeters = 0.10f;
+        [PrototypeOnly(PendingDecisions.None, "WP-087: provisional cap, ° muzzle-up on the arms channel — the measured value comes with the C step (C-00 06.10). Invented.", true)]
+        public float heldKickMaxDegrees = 10f;
+        [PrototypeOnly(PendingDecisions.None, "WP-087 council: the arms channel settles (5 % left) in this × the shot's recovery. Invented.", true)]
+        public float heldKickSettleRecoveries = 2f;
     }
 
     [Serializable]
