@@ -327,10 +327,15 @@ class HostWatch:
         """{load1, foreignUnity, foreignPlayer, foreignBlender, foreignFfmpeg} now; the chain's own descendants are not
         foreign."""
         rows = []
-        for line in subprocess.run(["ps", "-Ao", "pid=,ppid=,comm="], capture_output=True, text=True).stdout.splitlines():
+        ps = subprocess.run(["ps", "-Ao", "pid=,ppid=,comm="], capture_output=True, text=True)
+        for line in ps.stdout.splitlines():
             parts = line.split(None, 2)
             if len(parts) == 3 and parts[0].isdigit() and parts[1].isdigit():
                 rows.append((int(parts[0]), int(parts[1]), parts[2].strip()))
+        # gt KP-20: a ps that failed or listed nothing would count four zeros - quiet. It is unreadable instead (sample()
+        # makes it an error sample, never quiet); a listing without this process is not the process table either.
+        if ps.returncode != 0 or os.getpid() not in {pid for pid, _, _ in rows}:
+            raise OSError(f"ps exit {ps.returncode}, {len(rows)} rows, this process {'listed' if rows else 'not listed'}")
         ours, grew = {os.getpid()}, True
         while grew:
             grew = False
