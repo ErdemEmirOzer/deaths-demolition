@@ -37,7 +37,7 @@ marker anywhere under <E> stops it before every guarded unit and every retry —
 "STOP … report to C-00". A failed gameplay / perf / suite result does not stop later independent stages — the report
 shows it. The tree must stay at FINAL and clean before every stage (exit 2 otherwise).
 
-usage: wp078_accept.py --final <40-hex> [--evidence DIR] [--stages a6,a0,a1,a2,a3,a5,a4,a8] [--dry-run] [--resume]
+usage: wp078_accept.py --final <40-hex> [--evidence DIR] [--stages a6,a0,a1,a2,a3,r2,a5,a4,b9,z3,r2q,a8] [--dry-run] [--resume]
                        [--editmode-filter RE] [--playmode-filter RE] [--wait-tries 3] [--wait-seconds 120]
 exit: 0 chain ran and the report PASSes (without a8: every selected stage PASS) · 1 an honest non-PASS · 2 HEAD is not
       FINAL / the tree is dirty · 3 R2 round: r2_gates_lint finds an ERROR at FINAL (nothing started) · 7 guard STOP · 65 a guard window NOT restored (or an unresolved marker under <E>) ·
@@ -887,7 +887,7 @@ class Chain:
         root = self.evidence / "a4" / "perf"
         argv = [self.py, HERE / "wp078_perf.py", "--bin", self.evidence / "build-probe", "--out", root, "--commit", self.final]
         report_argv = [self.py, HERE / "wp078_perf_report.py", root]
-        # WP-091 P2 (C-00 05.10): in an R2 round the R1 FINAL probe build alternates with FINAL's, R2, R1, R2, R1 … per cell
+        # WP-091 P2 (C-00 05.10): in an R2 round the R1 FINAL probe build alternates with FINAL's, ABBA per cell
         # in the same quiet window (its own root and commit, so machine state weighs on both alike); the report compares
         # the two and writes r2-P2.json. The A4 gate itself is judged on FINAL's windows only.
         proof = self.r1_probe()
@@ -899,6 +899,7 @@ class Chain:
             argv += ["--baseline-bin", self.r1_evidence / "build-probe", "--baseline-out", baseline_root,
                      "--baseline-commit", self.r1_commit]
             # both sides' commit and build, so every window P2 uses proves it ran there (KADRO game-test-engineer MUST-1)
+            self.retire(p2)   # an older r2-P2.json of this FINAL must not stand in for this evaluation (gt 06.10 N-1)
             report_argv += ["--baseline", baseline_root, "--r2-measure", p2, "--commit", self.final,
                             "--sha256", file_sha256(binary), "--baseline-commit", self.r1_commit, "--baseline-sha256", proof["sha256"]]
             if not fresh:
@@ -929,6 +930,16 @@ class Chain:
             self.log(f"P2: {'r2-P2.json written' if p2.is_file() else 'r2-P2.json NOT written (report exit ' + str(report_code) + ')'}"
                      f" — R1 {self.r1_commit[:8]} alternating in {baseline_root.relative_to(self.evidence)}")
         self.finish("a4", results, inputs=inputs, extra=extra)
+
+    def retire(self, path):
+        """An earlier chain-written artifact is renamed <name>.stale-<utc> before it is computed again, so a run that
+        writes nothing leaves nothing behind for the report to bind (kept, never deleted)."""
+        path = Path(path)
+        if self.dry_run or not path.is_file():
+            return
+        target = path.with_name(f"{path.name}.stale-{time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())}")
+        path.rename(target)
+        self.log(f"RETIRED {path.relative_to(self.evidence)} → {target.name} (kept)")
 
     def stage_b9(self):
         if self.b9_poses and self.dev_binary("probe") is None:
@@ -1019,7 +1030,7 @@ class Chain:
             return
         results = []
         for pose in self.b9_poses:
-            root = self.evidence / "b9" / pose["name"]
+            root = self.evidence / wp078_report.B9_ROOT / pose["name"]
             argv = [self.py, HERE / "wp078_perf.py", "--bin", self.evidence / "build-probe", "--out", root, "--commit", self.final,
                     "--tiers", pose["tiers"], "--modes", pose["modes"],
                     "--extra-arg=-ddPilotStart", "--extra-arg=" + pose["start"]]
@@ -1090,6 +1101,7 @@ class Chain:
             self.out(f"DRY r2: P5 from {self.evidence}/{{a2,a3}}/*/ui-data/load-timing.json over {self.r1_evidence} "
                      f"({self.r1_commit}) → {measure_dir}/r2-P5.json")
             return None
+        self.retire(measure_dir / "r2-P5.json")   # never bind the P5 of an earlier evaluation (S-05 06.10, gt N-1)
         data, r2, r1 = r2_load_time.artifact(self.evidence, self.r1_evidence, self.final, self.r1_commit)
         if data is None:
             self.log(f"P5: no samples (R2 {len(r2)}, R1 {len(r1)}) — r2-P5.json not written, P5 BLOCKED in the report")
@@ -1319,8 +1331,8 @@ def assemble_manifest(evidence, final, assets_tree, round_name=None):
         _, b9 = _record(evidence, final, "b9")
         for unit in (b9 or {}).get("units", []):
             pose = unit.get("pose") if isinstance(unit, dict) else None
-            if isinstance(pose, dict) and isinstance(pose.get("name"), str) and (evidence / "b9" / pose["name"]).is_dir():
-                secondary.append({"role": "b9-pose", "path": "b9/" + pose["name"], "start": pose.get("start")})
+            if isinstance(pose, dict) and isinstance(pose.get("name"), str) and (evidence / wp078_report.B9_ROOT / pose["name"]).is_dir():
+                secondary.append({"role": "b9-pose", "path": wp078_report.B9_ROOT + "/" + pose["name"], "start": pose.get("start")})
         if secondary:
             step["secondaryRoots"] = secondary
         checklist["A4"] = step
@@ -1390,7 +1402,8 @@ def main(argv=None, **seams):
     parser.add_argument("--round", choices=("R1", "R2"), default="R1", help="WP-091: R2 adds the r2-gates.json gates to the manifest")
     parser.add_argument("--r1-evidence", help="WP-091 P5: the R1 FINAL evidence root (its A2/A3 load-timing.json are the baseline)")
     parser.add_argument("--r1-commit", help="WP-091 P5: the R1 FINAL commit, 40-hex (recorded in r2-P5.json)")
-    parser.add_argument("--b9-poses", help="C-00 01.10: S-05 B9 pose list (JSON) run after A4 in the same quiet-window run")
+    parser.add_argument("--b9-poses", help="C-00 01.10: S-05 B9 pose list (JSON) for the b9 stage, which runs after a4 "
+                                            "(its own stage since WP-091: give it in --stages, e.g. a4,b9)")
     try:
         args = parser.parse_args(argv)
     except SystemExit as error:
@@ -1420,6 +1433,11 @@ def main(argv=None, **seams):
         b9_poses = load_b9_poses(args.b9_poses) if args.b9_poses else []
     except ValueError as error:
         print("--b9-poses: " + str(error), file=sys.stderr)
+        return 64
+    if b9_poses and "b9" not in stages:
+        # gt 06.10 RB-1: B9 left a4 for its own stage; the R1 FINAL'' form (--stages a4 --b9-poses) would run no pose at all
+        print("--b9-poses needs the b9 stage in --stages (B9 is its own stage after a4 since WP-091 7b25a393), e.g. "
+              "--stages a4,b9 — nothing started", file=sys.stderr)
         return 64
     chain = Chain(args.final, evidence, stages, dry_run=args.dry_run, resume=args.resume,
                   editmode_filter=args.editmode_filter, playmode_filter=args.playmode_filter,

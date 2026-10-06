@@ -183,7 +183,7 @@ P2_TARGETS = {
 R2C, R1C, R2SHA, R1SHA = "a" * 40, "b" * 40, "1" * 64, "2" * 64
 
 
-def sound(root, index, mean, commit, sha, epoch, force=40, binary=None):
+def sound(root, index, mean, commit, sha, epoch, force=40, binary=None, sweep=True, short=False):
     """One window exactly as wp064_run + PilotPerfProbe leave it when everything held (WP-091 P2 integrity)."""
     d = Path(root) / f"perf-yuksek-fp-{index}"
     d.mkdir(parents=True)
@@ -194,25 +194,25 @@ def sound(root, index, mean, commit, sha, epoch, force=40, binary=None):
     put("01-scene-ready.json", {"scene": "Run", "screenWidth": 1920, "screenHeight": 1080})
     put("02-force-40.json", {"pass": True, "configuredSafetyCeiling": 40, "ceiling": 40, "forcedTarget": 40, "achievedCount": force})
     put("03-warmup.json", {"pass": True, "warmupSeconds": 10})
-    window = {"pass": True, "qualityTier": "Yuksek", "cameraMode": "FirstPerson", "cameraSweep": True, "windowSeconds": 60,
+    window = {"pass": True, "qualityTier": "Yuksek", "cameraMode": "FirstPerson", "cameraSweep": sweep, "windowSeconds": 60,
               "frameMeanMs": mean, "frameP99FilteredMs": mean, "framesExcludedAsStalls": 0, "frameCount": n, "loadIntegrityFraction": 1.0}
     window.update({k: 40 for k in report.LOAD_FIELDS})
     put("04-window.json", window)
-    (d / "frame-times-ms.csv").write_text("frameMs\n" + "\n".join(f"{mean:.4f}" for _ in range(n)) + "\n")
+    (d / "frame-times-ms.csv").write_text("frameMs\n" + "\n".join(f"{mean:.4f}" for _ in range(n // 2 if short else n)) + "\n")
 
 
 class P2IntegrityTests(unittest.TestCase):
     """WP-091 P2 (KADRO game-test-engineer MUST-1, 06.10): every window the comparison uses proves its load, scope and build
     on both sides; a broken window or a cell short of its windows writes no r2-P2.json (P2 BLOCKED by name)."""
 
-    def run_p2(self, r2_means, r1_means, r1_force=None, r2_binary=None):
+    def run_p2(self, r2_means, r1_means, r1_force=None, r2_binary=None, r1_kw=None):
         tmp = Path(tempfile.mkdtemp())
         self.addCleanup(lambda: __import__("shutil").rmtree(tmp, ignore_errors=True))
         r2, r1, out = tmp / "perf", tmp / "perf-r1", tmp / "r2" / "r2-P2.json"
         for i, m in enumerate(r2_means, 1):
             sound(r2, i, m, R2C, R2SHA, 1000.0 + 400 * i, binary=(r2_binary or {}).get(i))
         for i, m in enumerate(r1_means, 1):
-            sound(r1, i, m, R1C, R1SHA, 1200.0 + 400 * i, force=(r1_force or {}).get(i, 40))
+            sound(r1, i, m, R1C, R1SHA, 1200.0 + 400 * i, force=(r1_force or {}).get(i, 40), **(r1_kw or {}).get(i, {}))
         (tmp / "targets.json").write_text(json.dumps(P2_TARGETS))
         import subprocess
         run = subprocess.run([sys.executable, str(Path(report.__file__)), str(r2), "--targets", str(tmp / "targets.json"),
@@ -242,6 +242,14 @@ class P2IntegrityTests(unittest.TestCase):
         art, run, _ = self.run_p2([10.0] * 3, [10.0] * 3, r2_binary={3: "9" * 64})
         self.assertIsNone(art)
         self.assertIn("r2 perf-yuksek-fp-3: binarySha256", run.stderr)
+
+    def test_a_tp_fp_window_without_its_sweep_or_with_a_partial_csv_writes_nothing(self):   # gt 06.10 N-6
+        for kw, reason in ((dict(sweep=False), "camera sweep missing"), (dict(short=True), "frame-times-ms.csv: partial")):
+            with self.subTest(reason=reason):
+                art, run, _ = self.run_p2([10.0] * 3, [10.0] * 3, r1_kw={2: kw})
+                self.assertIsNone(art)
+                self.assertIn("r1 perf-yuksek-fp-2", run.stderr)
+                self.assertIn(reason, run.stderr)
 
     def test_a_cell_short_of_its_windows_writes_nothing(self):
         art, run, _ = self.run_p2([10.0] * 3, [10.0] * 2)

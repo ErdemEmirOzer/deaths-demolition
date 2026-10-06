@@ -156,7 +156,8 @@ class QuietWindow:
         self.note("quiet window released")
 
     def before_window(self, estimate_seconds):
-        """estimate 0 = the second window of a pair budgeted at the pair's start: never a batch boundary here (SHOULD-2)."""
+        """estimate 0 = the second window of a pair budgeted at the pair's start: never a budget boundary here (SHOULD-2);
+        a host that stays busy past wait_max still gives every slot back, and then the pair is split (gt 06.10 N-4)."""
         if self.started is not None and estimate_seconds and time.monotonic() - self.started + estimate_seconds > self.max_seconds:
             self.release()
             time.sleep(self.pause)
@@ -343,7 +344,7 @@ def run_all(args, runs, root, binary, seconds, quiet, note, baseline=None):
     window inside the same quiet window, so the machine state weighs on both alike — ABBA within a cell and the starting
     side swapped from one cell to the next (R2 R1 R1 R2 R2 R1 | R1 R2 R2 R1 …: a drift that favours the second slot of a
     pair cancels; KADRO game-test-engineer SHOULD-1), and a pair is budgeted at its start so a quiet-batch boundary never
-    falls between its two windows (SHOULD-2)."""
+    falls between its two windows (SHOULD-2; only a host that stays busy past --quiet-wait-max still splits one)."""
     sides = [("", args, root, binary)]
     if baseline is not None:
         sides.append(baseline)

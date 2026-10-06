@@ -179,7 +179,7 @@ def evaluate_gate(gate, commit, measure=None, review=None, cases=None):
     # samples is the R2Olcum count; the chain's P2 / P5 count their sound windows / R2 sessions (>= 1 when written);
     # an artifact without the field is judged as before.
     samples = measure.get("samples")
-    if samples is not None and not (_number(samples) and samples > 0):
+    if "samples" in measure and not (_number(samples) and samples > 0):   # a null count is no count (gt 06.10 N-9)
         return stop("BLOCKED", f"the measurement counted no samples (samples {samples!r}): nothing was measured")
     row["values"] = {key: values.get(key) for key in wanted}
     if gate["kind"] == "report":

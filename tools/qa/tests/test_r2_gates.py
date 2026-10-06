@@ -262,11 +262,11 @@ class EvaluateTests(unittest.TestCase):
                              corridorRt60MaxS=0.0, hallRt60MinS=3.4028234663852886e38, hallRt60MaxS=0.0, orderViolations=0,
                              openEdc30MsMin=0.0, corridorEdc30MsMin=0.0, hallEdc30MsMin=0.0), samples=0)
         self.assertEqual("PASS", r2.evaluate_gate(gate("S4"), FINAL, measure=dict(empty, samples=24))["status"])   # what the judge saw before
-        for samples in (0, -1, None, "24", float("nan"), True):
+        for samples in (0, -1, None, "24", float("nan"), True, "absent"):
             with self.subTest(samples=samples):
-                art = dict(empty, samples=samples) if samples is not None else {k: v for k, v in empty.items() if k != "samples"}
+                art = dict(empty, samples=samples) if samples != "absent" else {k: v for k, v in empty.items() if k != "samples"}
                 row = r2.evaluate_gate(gate("S4"), FINAL, measure=art)
-                if samples is None:   # no samples field: judged as before (every writer today sets one)
+                if samples == "absent":   # no samples field: judged as before (every writer today sets one); null is BLOCKED
                     self.assertEqual("PASS", row["status"])
                 else:
                     self.assertEqual("BLOCKED", row["status"])

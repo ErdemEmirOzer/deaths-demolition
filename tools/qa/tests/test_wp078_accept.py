@@ -4,6 +4,8 @@ Fake git, fake guard and fake tools only — no Unity, no Player, no build, no r
 the files the real ones write (build.sh, library_provenance.py, test.sh, wp078_bot.py, wp078_perf.py), so the manifest
 the chain assembles is checked by the real wp078_report.generate_report."""
 import argparse
+import contextlib
+import io
 import hashlib
 import importlib.util
 import json
@@ -518,7 +520,22 @@ class B9PoseTests(Base):
 
     def test_no_poses_no_b9(self):
         chain = self.dry(["a4", "b9"])
-        self.assertFalse(any("b9" in str(a) for _, argv in chain.planned for a in argv))
+        self.assertEqual([], [argv for stage, argv in chain.planned if stage == "b9"])   # path-independent (gt N-3)
+
+    def test_poses_without_the_b9_stage_are_refused(self):
+        # gt 06.10 RB-1: the R1 FINAL'' form "--stages a4 --b9-poses" ran B9 inside a4; with b9 a stage of its own it
+        # would have run no pose at all, silently
+        path = Path(self.tmp.name) / "poses.json"
+        path.write_text(json.dumps({"poses": self.POSES}))
+        base = ["--final", FINAL, "--evidence", str(self.evidence), "--dry-run", "--b9-poses", str(path)]
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            self.assertEqual(64, acc.main(base + ["--stages", "a4"], git=FakeGit(), guard=FakeGuard(), runner=must_not_run))
+        self.assertIn("needs the b9 stage", err.getvalue())
+        lines = []
+        self.assertEqual(0, acc.main(base + ["--stages", "a4,b9"], git=FakeGit(), guard=FakeGuard(), runner=must_not_run,
+                                     out=lines.append, lint=lambda repo: []))
+        self.assertEqual(len(self.POSES), sum(1 for line in lines if line.startswith("DRY b9:") and "wp078_perf.py" in line))
 
     def test_pose_file_validation(self):
         path = Path(self.tmp.name) / "poses.json"
@@ -636,6 +653,21 @@ class P2BaselineTests(Base):
         self.stage_record.rename(self.stage_record.with_name("a4.json.moved"))   # no record, but the baseline root stays
         self.assertEqual(64, make_chain(self.evidence, ["a4"], resume=True, round_name="R2").run())
         self.assertIn("perf-r1 exists but this run gives no --r1-evidence", (self.evidence / "accept.log").read_text())
+
+    def test_an_earlier_p2_and_p5_are_retired_before_they_are_computed_again(self):
+        # gt 06.10 N-1 / S-05: a re-evaluation that writes nothing must leave nothing behind for the report to bind
+        put_json(self.evidence / "r2" / "r2-P2.json", {"gate": "P2", "stale": True})
+        put_json(self.evidence / "r2" / "r2-P5.json", {"gate": "P5", "stale": True})
+        r1 = r1_evidence(self.tmp.name)
+        chain = make_chain(self.evidence, ["a6", "a4"], round_name="R2", r1_evidence=r1, r1_commit=R1, resume=True)
+        chain.run()
+        self.assertFalse(json.loads((self.evidence / "r2" / "r2-P2.json").read_text()).get("stale"))   # recomputed
+        self.assertEqual(1, len(list((self.evidence / "r2").glob("r2-P2.json.stale-*"))))
+        with mock.patch.object(acc.r2_gates, "measurement_steps", side_effect=lambda c, quiet: []):
+            make_chain(self.evidence, ["r2"], round_name="R2", r1_evidence=r1, r1_commit=R1, resume=True).run()
+        self.assertFalse((self.evidence / "r2" / "r2-P5.json").exists())   # no samples this time: nothing bound
+        self.assertEqual(1, len(list((self.evidence / "r2").glob("r2-P5.json.stale-*"))))
+        self.assertIn("RETIRED r2/r2-P5.json", (self.evidence / "accept.log").read_text())
 
     def test_the_a4_record_binds_both_roots_and_the_r1_build(self):
         tools = FakeTools()
