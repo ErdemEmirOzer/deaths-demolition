@@ -34,6 +34,8 @@ namespace DD.Prototype.Tests.PlayMode
     public sealed class R2HeroOlcumTests
     {
         public const string H1Name = "DD.Prototype.Tests.PlayMode.R2HeroOlcumTests.H1_ElTutamak_TumKlasikSilahlar_DurusYuruyus";
+        public const string H1bName = "DD.Prototype.Tests.PlayMode.R2HeroOlcumTests.H1b_SolEl_Kavrama_TumKlasikSilahlar_DurusYuruyus";
+        public const string H1cName = "DD.Prototype.Tests.PlayMode.R2HeroOlcumTests.H1c_SolKol_Erisim_TumKlasikSilahlar_DurusYuruyus";
         private SpecialWeaponSahne _s;
         private bool _fpArmsBefore;
 
@@ -43,6 +45,8 @@ namespace DD.Prototype.Tests.PlayMode
             // the owner's A/B switch (r2-measure-contract measuredBy.env): DD_HOLD_IK=0 measures with the WP-083 B2c/B2d hold off
             // (it is on by default since C-00 05.10)
             WeaponHoldIk.Enabled = System.Environment.GetEnvironmentVariable("DD_HOLD_IK") != "0";
+            // WP-083 B2f A/B: DD_GRASP=0 measures with the support hand's grasp off (on by default)
+            WeaponGripIk.GraspEnabled = System.Environment.GetEnvironmentVariable("DD_GRASP") != "0";
             // the FP arms are off on the default path (PlayerSkinnedVisual.FirstPersonV3Arms); the FP contact test turns them on
             _fpArmsBefore = PlayerSkinnedVisual.FirstPersonV3Arms;
             if (TestContext.CurrentContext.Test.Name.Contains("FPKollar")) PlayerSkinnedVisual.FirstPersonV3Arms = true;
@@ -57,6 +61,7 @@ namespace DD.Prototype.Tests.PlayMode
             if (_s != null) yield return _s.Bitir();
             _s = null;
             WeaponHoldIk.ResetStatics();
+            WeaponGripIk.ResetStatics();
             PlayerSkinnedVisual.FirstPersonV3Arms = _fpArmsBefore;
         }
 
@@ -132,7 +137,8 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.Greater(weapons, 0, "ölçülen silah yok");
             Assert.Greater(samples, 0, "ölçülen kare yok");
             Assert.Greater(leftSamples, 0, "sol el hiçbir silahta tam ağırlıkta ölçülmedi");
-            R2Olcum.Yaz("H1", H1Name, new Dictionary<string, double> { { "maxCm", maxCm }, { "elbowMaxDeg", System.Math.Round(elbowMax, 1) } }, samples);
+            // holdOn (S-10 06.10): the path the measure was taken on is in the record — 1 the weapon-first hold on (the default), 0 off
+            R2Olcum.Yaz("H1", H1Name, new Dictionary<string, double> { { "maxCm", maxCm }, { "elbowMaxDeg", System.Math.Round(elbowMax, 1) }, { "holdOn", WeaponHoldIk.Enabled ? 1 : 0 } }, samples);
             Assert.LessOrEqual(maxCm, 1.0f, "R2 H1: el ↔ tutamak > 1 cm\n" + string.Join("\n", report));
         }
 
@@ -270,13 +276,11 @@ namespace DD.Prototype.Tests.PlayMode
         /// WeaponVisualRig (S-02) carries the support point past the arm's reach; the fix is S-02's held-kick package, which moves the
         /// kick onto the hold's pivot (WP-087). The rows come off in WP-087 step D, accepted by this test at ≤ 1 cm.
         /// ar_2 (C-00 05.10, decision c + b): accumulated kick, WeaponBody 16.4 cm / 14.8°, left hand 12.63 cm (K/wp-083 b2l-r2).
-        /// C (C-00 06.10): the pump shotgun's kick (WeaponBody 2.5 cm / 2.3°) on a hold at the arm's reach (H1 elbow 173°, its +6 cm
-        /// row for KundakOmuz), left hand 2.68 cm (b2h, b2i, b2l-r2; 0.52 cm before the row, b2g).
+        /// C came off in B2f (06.10): the contact grasp put its arm back in reach (elbow 173° → 132°), its fire 2.68 → 0.00 cm (b2f15).
         /// </summary>
         static readonly Dictionary<string, string> AtisBilinenKirmizi = new Dictionary<string, string>
         {
             { "ar_2", "known red: S-02 WeaponVisualRig accumulated kick, 12.63 cm (b2l-r2), held-kick package WP-087, row off in step D (C-00 05.10)" },
-            { "C", "known red: S-02 WeaponVisualRig kick on a hold at the arm's reach, 2.68 cm (b2l-r2), held-kick package WP-087, row off in step D (C-00 06.10)" },
         };
 
         /// <summary>
@@ -389,6 +393,601 @@ namespace DD.Prototype.Tests.PlayMode
             WeaponHoldIk.ResetStatics();
             Debug.Log("[DD-TEST] wp083.ar2diag " + string.Join(" | ", rows));
             Assert.Greater(rows.Count, 0);
+        }
+
+        /// <summary>
+        /// WP-083 B2f diagnostics (AD 06.10 MUST-2 / MUST-4, measure before the fix): both hands against the held weapon's surface for
+        /// every enabled classic weapon, standing then walking, at full hold weight. The palm point (wrist → middle knuckle, 55 %, 1.2 cm
+        /// out along the palm normal) and the left index / middle fingertips (the distal bone carried one more distal length) against
+        /// the nearest point of the weapon's LOD0 triangles; the left palm normal's angle to the weapon frame's +Y (a handguard held from
+        /// below) and +X (a vertical foregrip held from the left). The palm normal is the hand's axis that points down in the avatar's
+        /// T-pose (the humanoid T-pose's palms face down).
+        /// </summary>
+        [UnityTest]
+        [Explicit]
+        [Category("Diagnostics")]
+        [Timeout(900000)]
+        public IEnumerator Tani_Eller_AvucSilahYuzeyi_TumSilahlar()
+        {
+            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.ThirdPerson, instant: true);
+            Time.captureDeltaTime = 1f / 60f;
+            var body = _s.Rig.GetComponentInChildren<PlayerSkinnedVisual>(true);
+            Assert.IsNotNull(body, "skinned oyuncu yok");
+            Animator a = body.Animator;
+            Vector3 lPalmLocal = PalmNormalLocal(a, HumanBodyBones.LeftHand);
+            int thumbAgree = 0, curlAgree = 0, normals = 0;
+            var verts = new List<Vector3>();
+            var tris = new List<int>();
+            var rows = new List<string>();
+            int weapons = 0;
+            foreach (ClassicWeaponDefinition d in WeaponRoster.Enabled)
+            {
+                _s.Controller.EquipClassic(d.Id, _s.Config);
+                yield return SpecialWeaponSahne.Kareler(60);
+                float rGap = 0f, lGap = 0f, tipGap = 0f, upMax = 0f, sideMax = 0f, gUpMax = 0f, gSideMax = 0f, toAxisMax = 0f;
+                string dir = System.Environment.GetEnvironmentVariable("DD_B2D_COMPARE_DIR");
+                int n = 0;
+                for (int f = 0; f < 180; f++)
+                {
+                    _s.Girdi.Yon = f >= 60 && f < 150 ? Vector2.up : Vector2.zero;
+                    yield return null;
+                    if (f % 5 != 0 || _s.Controller.Classic.IsReloading) continue;
+                    WeaponGripIk ik = body.GripIk;
+                    Transform frame = ik != null ? ik.WeaponFrame : null;
+                    if (frame == null || body.HoldIk == null || body.HoldIk.Weight < 1f || ik.Weight < 1f) continue;
+                    n++;
+                    // the palm point on the geometric palm normal (the same palm WeaponGripIk's grasp places; the T-pose normal is
+                    // reported beside it only)
+                    Quaternion lInv = Quaternion.Inverse(a.GetBoneTransform(HumanBodyBones.LeftHand).rotation), rInv = Quaternion.Inverse(a.GetBoneTransform(HumanBodyBones.RightHand).rotation);
+                    Vector3 rGeo = GeometricPalmNormal(a, false, out _, out _);
+                    rGap = Mathf.Max(rGap, SurfaceGap(PalmPoint(a, HumanBodyBones.RightHand, HumanBodyBones.RightMiddleProximal, rInv * rGeo), frame, verts, tris));
+                    Vector3 lGeo = GeometricPalmNormal(a, true, out _, out _);
+                    lGap = Mathf.Max(lGap, SurfaceGap(PalmPoint(a, HumanBodyBones.LeftHand, HumanBodyBones.LeftMiddleProximal, lInv * lGeo), frame, verts, tris));
+                    tipGap = Mathf.Max(tipGap, Mathf.Min(SurfaceGap(Fingertip(a, HumanBodyBones.LeftIndexIntermediate, HumanBodyBones.LeftIndexDistal), frame, verts, tris),
+                                                         SurfaceGap(Fingertip(a, HumanBodyBones.LeftMiddleIntermediate, HumanBodyBones.LeftMiddleDistal), frame, verts, tris)));
+                    Vector3 palm = a.GetBoneTransform(HumanBodyBones.LeftHand).rotation * lPalmLocal;
+                    upMax = Mathf.Max(upMax, Vector3.Angle(palm, frame.up));
+                    sideMax = Mathf.Max(sideMax, Vector3.Angle(palm, frame.right));
+                    Vector3 geo = GeometricPalmNormal(a, true, out bool byThumb, out bool byCurl);
+                    normals++;
+                    if (byThumb) thumbAgree++;
+                    if (byCurl) curlAgree++;
+                    gUpMax = Mathf.Max(gUpMax, Vector3.Angle(geo, frame.up));
+                    gSideMax = Mathf.Max(gSideMax, Vector3.Angle(geo, frame.right));
+                    // H1b's palm measure: the palm normal against the direction from the palm to the barrel axis (Muzzle along +Z)
+                    Transform muzzle = WeaponSocketContract.Find(frame, WeaponSocketContract.Muzzle);
+                    Vector3 lPalm = PalmPoint(a, HumanBodyBones.LeftHand, HumanBodyBones.LeftMiddleProximal, Quaternion.Inverse(a.GetBoneTransform(HumanBodyBones.LeftHand).rotation) * geo);
+                    Vector3 origin = muzzle != null ? muzzle.position : frame.position;
+                    Vector3 foot = origin + frame.forward * Vector3.Dot(lPalm - origin, frame.forward);
+                    toAxisMax = Mathf.Max(toAxisMax, Vector3.Angle(geo, foot - lPalm));
+                    if ((f == 30 || f == 105) && !string.IsNullOrEmpty(dir))
+                    {
+                        System.IO.Directory.CreateDirectory(dir);
+                        var go = new GameObject("WP083_HandCam");
+                        try
+                        {
+                            Camera cam = go.AddComponent<Camera>();
+                            cam.fieldOfView = 35f;
+                            cam.nearClipPlane = 0.02f;
+                            // outside the weapon in the body's frame: from the character's left, a little ahead and above, looking at the
+                            // left palm; a soft fill light on the hand
+                            Transform bt = a.transform;
+                            go.transform.position = lPalm - bt.right * 0.38f + bt.forward * 0.12f + bt.up * 0.14f;
+                            go.transform.LookAt(lPalm, bt.up);
+                            Light fill = go.AddComponent<Light>();
+                            fill.type = LightType.Point;
+                            fill.range = 0.9f;
+                            fill.intensity = 0.6f;
+                            Shot(dir, d.RosterKey + "_lefthand_" + (f == 30 ? "stand_" : "walk_") + (WeaponGripIk.GraspEnabled ? "B2f_after" : "B2f_before"), cam);
+                        }
+                        finally
+                        {
+                            UnityEngine.Object.Destroy(go);
+                        }
+                    }
+                }
+
+                _s.Girdi.Yon = Vector2.zero;
+                if (n > 0) weapons++;
+                rows.Add(d.RosterKey + " n " + n + " rightPalmGap " + Cm(rGap) + " leftPalmGap " + Cm(lGap) + " leftTipGap " + Cm(tipGap) + " cm leftPalmToUp " +
+                         upMax.ToString("F0", CultureInfo.InvariantCulture) + "° toRight " + sideMax.ToString("F0", CultureInfo.InvariantCulture) + "° | geometric toUp " +
+                         gUpMax.ToString("F0", CultureInfo.InvariantCulture) + "° toRight " + gSideMax.ToString("F0", CultureInfo.InvariantCulture) + "° palmToAxis " +
+                         toAxisMax.ToString("F0", CultureInfo.InvariantCulture) + "°");
+            }
+
+            Debug.Log("[DD-TEST] wp083.handsurface grasp=" + (WeaponGripIk.GraspEnabled ? "on" : "off") + " geometric palm normal: thumb side agrees " + thumbAgree + "/" + normals + ", finger curl agrees " + curlAgree + "/" + normals +
+                      " :: " + string.Join(" | ", rows));
+            Assert.Greater(weapons, 0, "ölçülen silah yok");
+        }
+
+        /// <summary>
+        /// WP-083 B2f (council 06.10 §1): each classic weapon's grasped-element row (WeaponGripIk.ElementOf: axis +Z handguard / +Y
+        /// vertical foregrip, the section centre and radius in the weapon frame) agrees with the LOD0 section at the support station
+        /// within 0.3 cm. The section: the LOD0 triangles cut at the station (the goal's coordinate along the axis), the cut points within
+        /// <see cref="SectionReach"/> of the row's centre (of the goal without a row); centre = their bounds' centre, radius = half the
+        /// bounds' narrower side.
+        /// The measured rows are logged in C# (a missing or drifted row is red).
+        /// </summary>
+        [UnityTest]
+        [Timeout(600000)]
+        public IEnumerator KavramaSatiri_LOD0Kesitiyle_TumSilahlar()
+        {
+            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.ThirdPerson, instant: true);
+            Time.captureDeltaTime = 1f / 60f;
+            var body = _s.Rig.GetComponentInChildren<PlayerSkinnedVisual>(true);
+            Assert.IsNotNull(body, "skinned oyuncu yok");
+            var verts = new List<Vector3>();
+            var rows = new List<string>();
+            var bad = new List<string>();
+            int weapons = 0;
+            foreach (ClassicWeaponDefinition d in WeaponRoster.Enabled)
+            {
+                _s.Controller.EquipClassic(d.Id, _s.Config);
+                yield return SpecialWeaponSahne.Kareler(60);
+                WeaponGripIk ik = body.GripIk;
+                Assert.IsNotNull(ik, "WeaponGripIk yok");
+                Transform frame = ik.WeaponFrame;
+                Assert.IsNotNull(frame, d.RosterKey + ": silah çerçevesi yok");
+                Assert.IsTrue(ik.TryGetSupportGoal(out Vector3 g), d.RosterKey + ": destek noktası yok");
+                // the row's own axis kind; the section is seeded at the row's centre on the goal's station (an off-mesh goal — the v3
+                // sets' palm points on lmg_1 / lmg_2 / sr_1 / smg_2 — has no section about it), at the goal without a row
+                WeaponGripIk.GraspElement row0 = WeaponGripIk.ElementOf(d.Id);
+                bool vertical = row0.Valid ? row0.Vertical : d.Id == ClassicWeaponId.Rl1;
+                Vector3 seed = frame.InverseTransformPoint(g);
+                if (row0.Valid)
+                {
+                    if (vertical) { seed.x = row0.Centre.x; seed.z = row0.Centre.y; }
+                    else { seed.x = row0.Centre.x; seed.y = row0.Centre.y; }
+                }
+
+                string variants = "";
+                WeaponGripIk.GraspElement measured = default;
+                int count = 0;
+                float theta0 = vertical ? WeaponGripIk.WrapVertical : WeaponGripIk.WrapHandguard;
+                // the reach follows the row (its radius + 1 cm, at least 3 cm): a fixed reach took neighbouring parts into B's / lmg_2's cut
+                float rowReach = row0.Valid ? Mathf.Max(0.03f, row0.CurlRadius + 0.01f) : SectionReach;
+                foreach (float reach in new[] { 0.03f, rowReach, 0.05f })
+                {
+                    WeaponGripIk.GraspElement m = Section(frame, seed, vertical, reach, verts, out int n, theta0);
+                    variants += " reach" + (reach * 100f).ToString("F1", CultureInfo.InvariantCulture) + "cm(n " + n + " c " + m.Centre.x.ToString("F4", CultureInfo.InvariantCulture) + "," +
+                                m.Centre.y.ToString("F4", CultureInfo.InvariantCulture) + " r " + m.Radius.ToString("F4", CultureInfo.InvariantCulture) + " curl " + m.CurlRadius.ToString("F4", CultureInfo.InvariantCulture) + ")";
+                    if (Mathf.Approximately(reach, rowReach)) { measured = m; count = n; }
+                }
+
+                weapons++;
+                WeaponGripIk.GraspElement row = WeaponGripIk.ElementOf(d.Id);
+                float dev = row.Valid && row.Vertical == vertical
+                    ? Mathf.Max((row.Centre - measured.Centre).magnitude, Mathf.Max(Mathf.Abs(row.Radius - measured.Radius), Mathf.Abs(row.CurlRadius - measured.CurlRadius)))
+                    : float.PositiveInfinity;
+                Vector3 goalLocal = frame.InverseTransformPoint(g);
+                rows.Add("case ClassicWeaponId." + d.Id + ": return new GraspElement(" + (vertical ? "true" : "false") + ", new Vector2(" +
+                         measured.Centre.x.ToString("F4", CultureInfo.InvariantCulture) + "f, " + measured.Centre.y.ToString("F4", CultureInfo.InvariantCulture) + "f), " +
+                         measured.Radius.ToString("F4", CultureInfo.InvariantCulture) + "f, " + measured.CurlRadius.ToString("F4", CultureInfo.InvariantCulture) + "f);   // " + d.RosterKey + " goal " + goalLocal.ToString("F3") + " n " + count + variants);
+                if (count < 8 || !(dev <= 0.003f)) bad.Add(d.RosterKey + " n " + count + " dev " + (float.IsInfinity(dev) ? "no row" : (dev * 100f).ToString("F2", CultureInfo.InvariantCulture) + " cm"));
+            }
+
+            Debug.Log("[DD-TEST] wp083.graspelement\n" + string.Join("\n", rows));
+            Assert.Greater(weapons, 0, "ölçülen silah yok");
+            Assert.IsEmpty(bad, "kavrama satırı LOD0 kesitinden > 0,3 cm ya da satır yok:\n" + string.Join("\n", bad));
+        }
+
+        /// <summary>
+        /// WP-083 B2f diagnostics: the LOD0 section at each classic weapon's support station as an ASCII map (±10 cm about the weapon
+        /// axis, 0.5 cm cells; '#' section, 'G' the support goal, '+' the weapon axis) — where the support hand meets the weapon, to
+        /// pick the grasped element of a weapon whose goal is off the mesh.
+        /// </summary>
+        [UnityTest]
+        [Explicit]
+        [Category("Diagnostics")]
+        [Timeout(600000)]
+        public IEnumerator Tani_KavramaKesiti_Haritasi_TumSilahlar()
+        {
+            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.ThirdPerson, instant: true);
+            Time.captureDeltaTime = 1f / 60f;
+            var body = _s.Rig.GetComponentInChildren<PlayerSkinnedVisual>(true);
+            var verts = new List<Vector3>();
+            var tris = new List<int>();
+            var maps = new List<string>();
+            foreach (ClassicWeaponDefinition d in WeaponRoster.Enabled)
+            {
+                _s.Controller.EquipClassic(d.Id, _s.Config);
+                yield return SpecialWeaponSahne.Kareler(60);
+                WeaponGripIk ik = body.GripIk;
+                Transform frame = ik != null ? ik.WeaponFrame : null;
+                if (frame == null || !ik.TryGetSupportGoal(out Vector3 g)) continue;
+                bool vertical = d.Id == ClassicWeaponId.Rl1;
+                Vector3 gl = frame.InverseTransformPoint(g);
+                float station = vertical ? gl.y : gl.z;
+                const int N = 41;
+                const float cell = 0.005f;
+                var grid = new char[N, N];
+                for (int i = 0; i < N; i++) for (int j = 0; j < N; j++) grid[i, j] = '.';
+                foreach (MeshFilter mf in frame.GetComponentsInChildren<MeshFilter>(false))
+                {
+                    if (mf.sharedMesh == null || mf.name.Contains("_LOD1") || mf.name.Contains("_LOD2")) continue;
+                    Mesh mesh = Readable(mf.sharedMesh);
+                    mesh.GetVertices(verts);
+                    Matrix4x4 m = frame.worldToLocalMatrix * mf.transform.localToWorldMatrix;
+                    for (int sm = 0; sm < mesh.subMeshCount; sm++)
+                    {
+                        mesh.GetTriangles(tris, sm);
+                        for (int t = 0; t + 2 < tris.Count; t += 3)
+                        {
+                            Vector3 p0 = m.MultiplyPoint3x4(verts[tris[t]]), p1 = m.MultiplyPoint3x4(verts[tris[t + 1]]), p2 = m.MultiplyPoint3x4(verts[tris[t + 2]]);
+                            for (int e = 0; e < 3; e++)
+                            {
+                                Vector3 u = e == 0 ? p0 : e == 1 ? p1 : p2, v = e == 0 ? p1 : e == 1 ? p2 : p0;
+                                float du = (vertical ? u.y : u.z) - station, dv = (vertical ? v.y : v.z) - station;
+                                if ((du > 0f) == (dv > 0f) || du == dv) continue;
+                                Vector3 x = Vector3.Lerp(u, v, du / (du - dv));
+                                int ci = Mathf.RoundToInt(x.x / cell) + N / 2, cj = Mathf.RoundToInt((vertical ? x.z - gl.z : x.y) / cell) + N / 2;
+                                if (ci >= 0 && ci < N && cj >= 0 && cj < N) grid[ci, cj] = '#';
+                            }
+                        }
+                    }
+                }
+
+                int gi = Mathf.RoundToInt(gl.x / cell) + N / 2, gj = Mathf.RoundToInt((vertical ? 0f : gl.y) / cell) + N / 2;
+                if (!vertical) grid[N / 2, N / 2] = '+';
+                if (gi >= 0 && gi < N && gj >= 0 && gj < N) grid[gi, gj] = 'G';
+                var sb = new System.Text.StringBuilder();
+                sb.Append(d.RosterKey).Append(vertical ? " (plane y=" : " (plane z=").Append(station.ToString("F3", CultureInfo.InvariantCulture))
+                  .Append(vertical ? "; rows z from goal, +z up" : "; rows y, +y up").Append("; cols x, +x right; 0.5 cm)\n");
+                for (int j = N - 1; j >= 0; j--)
+                {
+                    for (int i = 0; i < N; i++) sb.Append(grid[i, j]);
+                    sb.Append('\n');
+                }
+
+                maps.Add(sb.ToString());
+            }
+
+            Debug.Log("[DD-TEST] wp083.sectionmap\n" + string.Join("\n", maps));
+            Assert.Greater(maps.Count, 0);
+        }
+
+        private const float SectionReach = 0.04f;
+
+        // the LOD0 section at the station: the LOD0 triangles cut by the plane through the goal across the element's axis (each edge
+        // that crosses it gives a point — long low-poly handguards have no vertex near the station), the points within reach of the goal
+        // in that plane; centre = their bounds' centre, radius = half the bounds' narrower side
+        private static WeaponGripIk.GraspElement Section(Transform frame, Vector3 goalLocal, bool vertical, float reach, List<Vector3> verts, out int n, float theta0 = float.NaN)
+        {
+            n = 0;
+            float minA = float.PositiveInfinity, maxA = float.NegativeInfinity, minB = float.PositiveInfinity, maxB = float.NegativeInfinity;
+            float station = vertical ? goalLocal.y : goalLocal.z, ga = goalLocal.x, gb = vertical ? goalLocal.z : goalLocal.y;
+            var tris = new List<int>();
+            var cut = new List<Vector2>();
+            foreach (MeshFilter mf in frame.GetComponentsInChildren<MeshFilter>(false))
+            {
+                if (mf.sharedMesh == null || mf.name.Contains("_LOD1") || mf.name.Contains("_LOD2")) continue;
+                Mesh mesh = Readable(mf.sharedMesh);
+                mesh.GetVertices(verts);
+                Matrix4x4 m = frame.worldToLocalMatrix * mf.transform.localToWorldMatrix;
+                for (int sm = 0; sm < mesh.subMeshCount; sm++)
+                {
+                    mesh.GetTriangles(tris, sm);
+                    for (int t = 0; t + 2 < tris.Count; t += 3)
+                    {
+                        Vector3 p0 = m.MultiplyPoint3x4(verts[tris[t]]), p1 = m.MultiplyPoint3x4(verts[tris[t + 1]]), p2 = m.MultiplyPoint3x4(verts[tris[t + 2]]);
+                        for (int e = 0; e < 3; e++)
+                        {
+                            Vector3 u = e == 0 ? p0 : e == 1 ? p1 : p2, v = e == 0 ? p1 : e == 1 ? p2 : p0;
+                            float du = (vertical ? u.y : u.z) - station, dv = (vertical ? v.y : v.z) - station;
+                            if ((du > 0f) == (dv > 0f) || du == dv) continue;
+                            Vector3 x = Vector3.Lerp(u, v, du / (du - dv));
+                            float a = x.x, b = vertical ? x.z : x.y;
+                            if ((a - ga) * (a - ga) + (b - gb) * (b - gb) > reach * reach) continue;
+                            n++;
+                            cut.Add(new Vector2(a, b));
+                            minA = Mathf.Min(minA, a); maxA = Mathf.Max(maxA, a);
+                            minB = Mathf.Min(minB, b); maxB = Mathf.Max(maxB, b);
+                        }
+                    }
+                }
+            }
+
+            if (n == 0) return default;
+            var centre = new Vector2(0.5f * (minA + maxA), 0.5f * (minB + maxB));
+            float halfWidth = 0.5f * Mathf.Min(maxA - minA, maxB - minB), radius = halfWidth;
+            if (!float.IsNaN(theta0))
+            {
+                // the contact's radius: the section's outer surface along d(θ0) from the centre (the cut points within ±12° of it) —
+                // where WeaponGripIk puts the palm; an oval or tall section's surface there is not its narrower half-width
+                float rad = theta0 * Mathf.Deg2Rad;
+                var dir = vertical ? new Vector2(-Mathf.Cos(rad), -Mathf.Sin(rad)) : new Vector2(-Mathf.Sin(rad), -Mathf.Cos(rad));
+                float best = 0f;
+                foreach (Vector2 q in cut)
+                {
+                    Vector2 v = q - centre;
+                    if (v.sqrMagnitude < 1e-8f || Vector2.Angle(v, dir) > 12f) continue;
+                    best = Mathf.Max(best, Vector2.Dot(v, dir));
+                }
+
+                if (best > 0f) radius = best;
+            }
+
+            return new WeaponGripIk.GraspElement(vertical, centre, radius, halfWidth);
+        }
+
+        /// <summary>
+        /// R2 H1b "support hand grasps" (C-00 06.10; council K/wp-083/KARAR-B2f-SOLEL-06.10.md): every enabled classic weapon, standing
+        /// then walking, the frames with the grip IK at full weight. palmToWeaponMaxDeg — the left palm normal (the hand's geometry, on
+        /// the thumb's side) against the perpendicular from the palm point to the grasped element's axis (+Z on a handguard, the grip's +Y
+        /// on rl_1) through the LOD0 section centre at the palm's station (measured here, independent of the IK's row);
+        /// fingertipGapMaxCm — the nearer of the index / middle fingertips to the weapon's LOD0 surface; palmGapMaxCm — the palm point to
+        /// that surface. All the worst frame; reports wristClampShare, wristMaxDeg, thetaSwitchCount (per weapon, the largest).
+        /// </summary>
+        [UnityTest]
+        [Explicit]
+        [Category("Diagnostics")]
+        [Timeout(900000)]
+        public IEnumerator H1b_SolEl_Kavrama_TumKlasikSilahlar_DurusYuruyus()
+        {
+            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.ThirdPerson, instant: true);
+            Time.captureDeltaTime = 1f / 60f;
+            var body = _s.Rig.GetComponentInChildren<PlayerSkinnedVisual>(true);
+            Assert.IsNotNull(body, "skinned oyuncu yok");
+            Animator a = body.Animator;
+            var verts = new List<Vector3>();
+            var tris = new List<int>();
+            var report = new List<string>();
+            float palmMax = 0f, tipMax = 0f, palmGapMax = 0f, wristMax = 0f;
+            int weapons = 0, frames = 0, clampedAll = 0, switchesMax = 0;
+            foreach (ClassicWeaponDefinition d in WeaponRoster.Enabled)
+            {
+                _s.Controller.EquipClassic(d.Id, _s.Config);
+                yield return SpecialWeaponSahne.Kareler(60);
+                WeaponGripIk.GraspElement row = WeaponGripIk.ElementOf(d.Id);
+                bool vertical = row.Valid ? row.Vertical : d.Id == ClassicWeaponId.Rl1;
+                float palm = 0f, tip = 0f, palmGap = 0f, wrist = 0f;
+                Vector3 mWantSum = Vector3.zero, mWantMax = Vector3.zero;
+                int n = 0, clamped = 0;
+                for (int f = 0; f < 180; f++)
+                {
+                    _s.Girdi.Yon = f >= 60 && f < 150 ? Vector2.up : Vector2.zero;
+                    yield return null;
+                    if (f % 3 != 0 || _s.Controller.Classic.IsReloading) continue;
+                    WeaponGripIk ik = body.GripIk;
+                    Transform frame = ik != null ? ik.WeaponFrame : null;
+                    if (frame == null || ik.Weight < 1f || !ik.TryGetSupportGoal(out Vector3 goal)) continue;
+                    n++;
+                    // the palm in the hand's own frame, read once in the bind pose (WeaponGripIk.TryGetPalmFrame): the thumb, which the
+                    // clip moves, does not flip it frame to frame
+                    Assert.IsTrue(ik.TryGetPalmFrame(out Vector3 nLocal, out Vector3 pLocal), "el çerçevesi okunmadı");
+                    Transform lh = a.GetBoneTransform(HumanBodyBones.LeftHand);
+                    Vector3 normal = lh.rotation * nLocal, p = lh.position + lh.rotation * pLocal;
+                    // the element's axis through its LOD0 section centre at the palm's station, the section seeded at the row's centre
+                    // (the goal without a row) — the measure stays the LOD0 section's, not the row's
+                    Vector3 gl = frame.InverseTransformPoint(goal), pl = frame.InverseTransformPoint(p);
+                    if (row.Valid) { gl.x = row.Centre.x; if (vertical) gl.z = row.Centre.y; else gl.y = row.Centre.y; }
+                    if (vertical) gl.y = pl.y; else gl.z = pl.z;
+                    WeaponGripIk.GraspElement e = Section(frame, gl, vertical, SectionReach, verts, out int count);
+                    Assert.Greater(count, 0, d.RosterKey + ": avucun istasyonunda LOD0 kesiti yok");
+                    Vector3 cl = vertical ? new Vector3(e.Centre.x, pl.y, e.Centre.y) : new Vector3(e.Centre.x, e.Centre.y, pl.z);
+                    Vector3 foot = frame.TransformPoint(cl);
+                    palm = Mathf.Max(palm, Vector3.Angle(normal, foot - p));
+                    tip = Mathf.Max(tip, Mathf.Min(SurfaceGap(Fingertip(a, HumanBodyBones.LeftIndexIntermediate, HumanBodyBones.LeftIndexDistal), frame, verts, tris),
+                                                   SurfaceGap(Fingertip(a, HumanBodyBones.LeftMiddleIntermediate, HumanBodyBones.LeftMiddleDistal), frame, verts, tris)));
+                    palmGap = Mathf.Max(palmGap, SurfaceGap(p, frame, verts, tris));
+                    wrist = Mathf.Max(wrist, ik.LastWristDegrees);
+                    if (ik.WristClamped) clamped++;
+                    mWantSum += ik.LastMusclesWanted;
+                    mWantMax = Vector3.Max(mWantMax, new Vector3(Mathf.Abs(ik.LastMusclesWanted.x), Mathf.Abs(ik.LastMusclesWanted.y), Mathf.Abs(ik.LastMusclesWanted.z)));
+                }
+
+                _s.Girdi.Yon = Vector2.zero;
+                if (n > 0) weapons++;
+                frames += n;
+                palmMax = Mathf.Max(palmMax, palm);
+                tipMax = Mathf.Max(tipMax, tip);
+                palmGapMax = Mathf.Max(palmGapMax, palmGap);
+                wristMax = Mathf.Max(wristMax, wrist);
+                clampedAll += clamped;
+                WeaponGripIk gik = body.GripIk;
+                if (gik != null) switchesMax = Mathf.Max(switchesMax, gik.ThetaSwitchCount);
+                report.Add(d.RosterKey + " n " + n + " palmToWeapon " + palm.ToString("F0", CultureInfo.InvariantCulture) + "° tipGap " + Cm(tip) + " palmGap " + Cm(palmGap) +
+                           " cm wrist " + wrist.ToString("F0", CultureInfo.InvariantCulture) + "° clamped " + clamped + "/" + n + " thetaSwitches " + (gik != null ? gik.ThetaSwitchCount : -1) +
+                           " muscles(twist,downUp,inOut) wanted mean " + (n > 0 ? (mWantSum / n).ToString("F2") : "-") + " |max| " + mWantMax.ToString("F2"));
+            }
+
+            Debug.Log("[DD-TEST] wp083.h1b grasp=" + (WeaponGripIk.GraspEnabled ? "on" : "off") + " palmToWeaponMaxDeg=" + palmMax.ToString("F1", CultureInfo.InvariantCulture) +
+                      " fingertipGapMaxCm=" + Cm(tipMax) + " :: " + string.Join(" | ", report));
+            // the source is in the record before the artefact (S-10 R2 standard): weapons measured, frames at full weight
+            Assert.Greater(weapons, 0, "ölçülen silah yok");
+            Assert.Greater(frames, 0, "tam ağırlıkta ölçülen kare yok");
+            R2Olcum.Yaz("H1b", H1bName, new Dictionary<string, double>
+            {
+                { "palmToWeaponMaxDeg", System.Math.Round(palmMax, 1) }, { "fingertipGapMaxCm", System.Math.Round(tipMax * 100f, 2) },
+                { "palmGapMaxCm", System.Math.Round(palmGapMax * 100f, 2) }, { "weaponsMeasured", weapons }, { "framesMeasured", frames },
+                // reports: the share of measured frames the wrist gate clamped, the wrist's largest angle (°), the most wrap-target
+                // changes on one weapon's stand + walk (co-sign K1: 0 standing, ≤ 1 a walk cycle)
+                { "wristClampShare", System.Math.Round((double)clampedAll / frames, 3) }, { "wristMaxDeg", System.Math.Round(wristMax, 1) },
+                { "thetaSwitchCount", switchesMax },
+            }, frames);
+        }
+
+        /// <summary>
+        /// R2 H1c "support arm reach" (C-00 06.10): every enabled classic weapon, standing then walking, the frames with the grip IK at
+        /// full weight. elbowMaxDeg — the left elbow's interior angle (180 = straight), the worst frame; reachMarginMinCm — the arm's
+        /// length (upper arm + forearm, read from the live skeleton) minus the straight distance shoulder (LeftUpperArm) → the wrist goal
+        /// the grip IK aims for (the one that puts the palm on its contact; WeaponGripIk.LastWristGoal), the worst frame; negative = out
+        /// of reach.
+        /// </summary>
+        [UnityTest]
+        [Explicit]
+        [Category("Diagnostics")]
+        [Timeout(900000)]
+        public IEnumerator H1c_SolKol_Erisim_TumKlasikSilahlar_DurusYuruyus()
+        {
+            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.ThirdPerson, instant: true);
+            Time.captureDeltaTime = 1f / 60f;
+            var body = _s.Rig.GetComponentInChildren<PlayerSkinnedVisual>(true);
+            Assert.IsNotNull(body, "skinned oyuncu yok");
+            Animator a = body.Animator;
+            Transform u = a.GetBoneTransform(HumanBodyBones.LeftUpperArm), l = a.GetBoneTransform(HumanBodyBones.LeftLowerArm), h = a.GetBoneTransform(HumanBodyBones.LeftHand);
+            Assert.IsTrue(u != null && l != null && h != null, "sol kol kemikleri yok");
+            float length = Vector3.Distance(u.position, l.position) + Vector3.Distance(l.position, h.position);
+            var report = new List<string>();
+            float elbowMax = 0f, marginMin = float.PositiveInfinity;
+            int weapons = 0, frames = 0;
+            foreach (ClassicWeaponDefinition d in WeaponRoster.Enabled)
+            {
+                _s.Controller.EquipClassic(d.Id, _s.Config);
+                yield return SpecialWeaponSahne.Kareler(60);
+                float elbow = 0f, margin = float.PositiveInfinity;
+                int n = 0;
+                for (int f = 0; f < 180; f++)
+                {
+                    _s.Girdi.Yon = f >= 60 && f < 150 ? Vector2.up : Vector2.zero;
+                    yield return null;
+                    if (_s.Controller.Classic.IsReloading) continue;
+                    WeaponGripIk ik = body.GripIk;
+                    if (ik == null || ik.Weight < 1f || float.IsNaN(ik.LastError)) continue;
+                    n++;
+                    elbow = Mathf.Max(elbow, Vector3.Angle(u.position - l.position, h.position - l.position));
+                    margin = Mathf.Min(margin, length - Vector3.Distance(u.position, ik.LastWristGoal));
+                }
+
+                _s.Girdi.Yon = Vector2.zero;
+                if (n > 0) weapons++;
+                frames += n;
+                elbowMax = Mathf.Max(elbowMax, elbow);
+                marginMin = Mathf.Min(marginMin, margin);
+                report.Add(d.RosterKey + " n " + n + " elbow " + elbow.ToString("F0", CultureInfo.InvariantCulture) + "° margin " + Cm(margin) + " cm");
+            }
+
+            Debug.Log("[DD-TEST] wp083.h1c armLength=" + Cm(length) + "cm elbowMaxDeg=" + elbowMax.ToString("F1", CultureInfo.InvariantCulture) + " reachMarginMinCm=" + Cm(marginMin) +
+                      " :: " + string.Join(" | ", report));
+            Assert.Greater(weapons, 0, "ölçülen silah yok");
+            Assert.Greater(frames, 0, "tam ağırlıkta ölçülen kare yok");
+            R2Olcum.Yaz("H1c", H1cName, new Dictionary<string, double>
+            {
+                { "elbowMaxDeg", System.Math.Round(elbowMax, 1) }, { "reachMarginMinCm", System.Math.Round(marginMin * 100f, 2) },
+            }, frames);
+        }
+
+        private static string Cm(float m) => (m * 100f).ToString("F1", CultureInfo.InvariantCulture);
+
+        // the hand's local axis that points down in the avatar's T-pose (the humanoid T-pose: palms down) — the palm normal
+        private static Vector3 PalmNormalLocal(Animator a, HumanBodyBones hand)
+        {
+            Transform h = a.GetBoneTransform(hand);
+            SkeletonBone[] skeleton = a.avatar.humanDescription.skeleton;
+            var chain = new List<Transform>();
+            for (Transform t = h; t != null && t != a.transform; t = t.parent) chain.Add(t);
+            Quaternion world = Quaternion.identity;
+            for (int i = chain.Count - 1; i >= 0; i--)
+            {
+                Quaternion local = chain[i].localRotation;
+                for (int k = 0; k < skeleton.Length; k++) if (skeleton[k].name == chain[i].name) { local = skeleton[k].rotation; break; }
+                world *= local;
+            }
+
+            return (Quaternion.Inverse(world) * Vector3.down).normalized;
+        }
+
+        // the palm normal from the hand's own geometry: the plane through the wrist and the index / little knuckles, turned to the
+        // side the thumb's base lies on (palmar). byCurl: the index fingertip lies on the same side of the knuckle line (a relaxed or
+        // gripping finger curls toward the palm) — the two anchors are reported, not assumed
+        private static Vector3 GeometricPalmNormal(Animator a, bool left, out bool byThumb, out bool byCurl)
+        {
+            Transform h = a.GetBoneTransform(left ? HumanBodyBones.LeftHand : HumanBodyBones.RightHand);
+            Transform ip = a.GetBoneTransform(left ? HumanBodyBones.LeftIndexProximal : HumanBodyBones.RightIndexProximal);
+            Transform lp = a.GetBoneTransform(left ? HumanBodyBones.LeftLittleProximal : HumanBodyBones.RightLittleProximal);
+            Transform tp = a.GetBoneTransform(left ? HumanBodyBones.LeftThumbIntermediate : HumanBodyBones.RightThumbIntermediate);
+            Transform id = a.GetBoneTransform(left ? HumanBodyBones.LeftIndexDistal : HumanBodyBones.RightIndexDistal);
+            Vector3 n = Vector3.Cross(ip.position - h.position, lp.position - h.position).normalized;
+            float thumb = Vector3.Dot(tp.position - h.position, n);
+            if (thumb < 0f) n = -n;
+            byThumb = Mathf.Abs(thumb) > 0.002f;
+            Vector3 knuckles = 0.5f * (ip.position + lp.position);
+            byCurl = Vector3.Dot(id.position - knuckles, n) > 0f;
+            return n;
+        }
+
+        private static Vector3 PalmPoint(Animator a, HumanBodyBones hand, HumanBodyBones middleProximal, Vector3 palmLocal)
+        {
+            Transform h = a.GetBoneTransform(hand), m = a.GetBoneTransform(middleProximal);
+            return Vector3.Lerp(h.position, m.position, 0.55f) + h.rotation * palmLocal * 0.012f;
+        }
+
+        private static Vector3 Fingertip(Animator a, HumanBodyBones intermediate, HumanBodyBones distal)
+        {
+            Transform i = a.GetBoneTransform(intermediate), d = a.GetBoneTransform(distal);
+            return d.position + (d.position - i.position);
+        }
+
+        // the AP-021 weapon meshes are imported without Read/Write: a readable copy through a bone-less SkinnedMeshRenderer's
+        // BakeMesh (no importer change — AnimationDiagnosticTests' pattern), once per mesh for the test
+        private static readonly Dictionary<Mesh, Mesh> s_readable = new Dictionary<Mesh, Mesh>();
+
+        private static Mesh Readable(Mesh m)
+        {
+            if (m.isReadable) return m;
+            if (s_readable.TryGetValue(m, out Mesh copy)) return copy;
+            var go = new GameObject("WP083_Bake");
+            try
+            {
+                var smr = go.AddComponent<SkinnedMeshRenderer>();
+                smr.sharedMesh = m;
+                copy = new Mesh();
+                smr.BakeMesh(copy);
+            }
+            finally
+            {
+                Object.Destroy(go);
+            }
+
+            s_readable[m] = copy;
+            return copy;
+        }
+
+        // the distance from p to the nearest point of the LOD0 triangles under root (active mesh filters; m)
+        private static float SurfaceGap(Vector3 p, Transform root, List<Vector3> verts, List<int> tris)
+        {
+            float best = float.PositiveInfinity;
+            foreach (MeshFilter mf in root.GetComponentsInChildren<MeshFilter>(false))
+            {
+                if (mf.sharedMesh == null || mf.name.Contains("_LOD1") || mf.name.Contains("_LOD2")) continue;
+                Mesh m = Readable(mf.sharedMesh);
+                Assert.Greater(m.vertexCount, 0, mf.name + ": okunabilir kopya boş (BakeMesh)");
+                m.GetVertices(verts);
+                Matrix4x4 w = mf.transform.localToWorldMatrix;
+                for (int s = 0; s < m.subMeshCount; s++)
+                {
+                    m.GetTriangles(tris, s);
+                    for (int t = 0; t + 2 < tris.Count; t += 3)
+                    {
+                        Vector3 c = ClosestOnTriangle(p, w.MultiplyPoint3x4(verts[tris[t]]), w.MultiplyPoint3x4(verts[tris[t + 1]]), w.MultiplyPoint3x4(verts[tris[t + 2]]));
+                        best = Mathf.Min(best, (c - p).sqrMagnitude);
+                    }
+                }
+            }
+
+            return Mathf.Sqrt(best);
+        }
+
+        // Ericson, Real-Time Collision Detection §5.1.5
+        private static Vector3 ClosestOnTriangle(Vector3 p, Vector3 a, Vector3 b, Vector3 c)
+        {
+            Vector3 ab = b - a, ac = c - a, ap = p - a;
+            float d1 = Vector3.Dot(ab, ap), d2 = Vector3.Dot(ac, ap);
+            if (d1 <= 0f && d2 <= 0f) return a;
+            Vector3 bp = p - b;
+            float d3 = Vector3.Dot(ab, bp), d4 = Vector3.Dot(ac, bp);
+            if (d3 >= 0f && d4 <= d3) return b;
+            float vc = d1 * d4 - d3 * d2;
+            if (vc <= 0f && d1 >= 0f && d3 <= 0f) return a + ab * (d1 / (d1 - d3));
+            Vector3 cp = p - c;
+            float d5 = Vector3.Dot(ab, cp), d6 = Vector3.Dot(ac, cp);
+            if (d6 >= 0f && d5 <= d6) return c;
+            float vb = d5 * d2 - d1 * d6;
+            if (vb <= 0f && d2 >= 0f && d6 <= 0f) return a + ac * (d2 / (d2 - d6));
+            float va = d3 * d6 - d5 * d4;
+            if (va <= 0f && d4 - d3 >= 0f && d5 - d6 >= 0f) return b + (c - b) * ((d4 - d3) / ((d4 - d3) + (d5 - d6)));
+            float denom = 1f / (va + vb + vc);
+            return a + ab * (vb * denom) + ac * (vc * denom);
         }
 
         /// <summary>
@@ -683,6 +1282,74 @@ namespace DD.Prototype.Tests.PlayMode
             WeaponHoldIk.Enabled = true;
             Debug.Log("[DD-TEST] wp083.b2dcompare " + written.Count + " frames → " + dir + " :: " + string.Join(", ", written));
             Assert.AreEqual(50, written.Count, "kare sayısı");   // ar_1 2 × 5 (+ top-down), five weapons 2 × 4
+        }
+
+        /// <summary>
+        /// WP-083 B2f / AP-024C2 AD MUST-1 (C-00 06.10): the weapon ↔ body frame set in game — every enabled classic weapon from the
+        /// third-person and the top-down game cameras, aiming, at the recoil's peak (one shot, three frames on) and mid-reload; then one
+        /// Special (the production RNG picks it; its id is logged). The verdict is the frames' (stock under the shoulder plate's edge,
+        /// 0 px out, 0 px mask seam); PNGs to DD_B2D_COMPARE_DIR (the run names it; scratch).
+        /// </summary>
+        [UnityTest]
+        [Explicit]
+        [Category("Diagnostics")]
+        [Timeout(1800000)]
+        public IEnumerator Kare_M1_SilahGovde_TP_TD_NisanTepmeReload()
+        {
+            string dir = System.Environment.GetEnvironmentVariable("DD_B2D_COMPARE_DIR");
+            Assert.IsFalse(string.IsNullOrEmpty(dir), "DD_B2D_COMPARE_DIR yok (kare klasörü; tanı testi)");
+            System.IO.Directory.CreateDirectory(dir);
+            UnityEngine.TestTools.LogAssert.ignoreFailingMessages = true;
+            Time.captureDeltaTime = 1f / 60f;
+            Vector3 spot = _s.Rig.transform.position;
+            var written = new List<string>();
+            foreach (ClassicWeaponDefinition d in WeaponRoster.Enabled)
+            {
+                foreach (DD.Prototype.CameraSystem.CameraMode mode in new[] { DD.Prototype.CameraSystem.CameraMode.ThirdPerson, DD.Prototype.CameraSystem.CameraMode.TopDown })
+                {
+                    string cam = mode == DD.Prototype.CameraSystem.CameraMode.TopDown ? "td" : "tp";
+                    DD.Prototype.CameraSystem.CameraModeService.Request(mode, instant: true);
+                    _s.Controller.EquipClassic(d.Id, _s.Config);
+                    _s.Rig.Motor.Teleport(spot);
+                    _s.Girdi.Yon = Vector2.zero;
+                    yield return SpecialWeaponSahne.Kareler(70);
+                    written.Add(Shot(dir, d.RosterKey + "_m1_" + cam + "_aim"));
+                    _s.Girdi.AtesBasti = true; _s.Girdi.AtesBasili = true;
+                    yield return null;
+                    _s.Girdi.AtesBasti = false; _s.Girdi.AtesBasili = false;
+                    yield return SpecialWeaponSahne.Kareler(3);
+                    written.Add(Shot(dir, d.RosterKey + "_m1_" + cam + "_recoil"));
+                    yield return SpecialWeaponSahne.Kareler(30);
+                    if (_s.Controller.Classic != null && _s.Controller.Classic.TryBeginReload())
+                    {
+                        yield return SpecialWeaponSahne.Kareler(30);
+                        written.Add(Shot(dir, d.RosterKey + "_m1_" + cam + "_reload"));
+                        yield return SpecialWeaponSahne.Bekle(() => !_s.Controller.Classic.IsReloading, 10f, d.RosterKey + " reload bitmedi");
+                    }
+                    else written.Add(d.RosterKey + "_m1_" + cam + "_reload(NO RELOAD)");
+                }
+            }
+
+            // one Special: the production RNG picks it (sw_arc / sw_gel / …); the hold is the classic weapons' only, the Special keeps main's path
+            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.ThirdPerson, instant: true);
+            yield return _s.SpawnEt(0.5f);
+            SpecialWeaponPickup pickup = _s.CanliPickup();
+            string special = "none";
+            if (pickup != null)
+            {
+                _s.PickupaGit(pickup);
+                yield return SpecialWeaponSahne.Kareler(90);
+                special = WeaponEvents.Special.WeaponId.ToString();
+                foreach (DD.Prototype.CameraSystem.CameraMode mode in new[] { DD.Prototype.CameraSystem.CameraMode.ThirdPerson, DD.Prototype.CameraSystem.CameraMode.TopDown })
+                {
+                    DD.Prototype.CameraSystem.CameraModeService.Request(mode, instant: true);
+                    yield return SpecialWeaponSahne.Kareler(40);
+                    written.Add(Shot(dir, "special_" + special + "_m1_" + (mode == DD.Prototype.CameraSystem.CameraMode.TopDown ? "td" : "tp") + "_aim"));
+                }
+            }
+
+            Debug.Log("[DD-TEST] wp083.m1 special=" + special + " " + written.Count + " frames → " + dir + " :: " + string.Join(", ", written));
+            Assert.Greater(written.Count, 0);
         }
 
         /// <summary>A fixed three-quarter view from the body's front right at chest height — the same framing before and after.</summary>

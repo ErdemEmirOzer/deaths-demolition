@@ -94,6 +94,7 @@ namespace DD.Prototype.Characters
         private Animator _animator;
         private Transform _socket, _chest, _upper, _lower, _hand, _stock, _muzzle;
         private float _stockSearch;
+        private bool _hadStock;
         private DD.Prototype.PlayerSystem.WeaponMountAlignment _mount;
         private float _mountSearch;
 
@@ -110,11 +111,15 @@ namespace DD.Prototype.Characters
         private Transform FindStock(float dt)
         {
             if (_stock != null && _stock.gameObject.activeInHierarchy && _stock.IsChildOf(_socket)) return _stock;
+            // the held marker went away (a weapon switch): look again on this frame, then every 0.25 s while none is found (gt 06.10
+            // R-1: a shouldered tube must not spend a search interval on the hip row)
+            if (_hadStock) { _hadStock = false; _stockSearch = 0f; }
             _stockSearch -= dt;
             if (_stockSearch > 0f) return null;
             _stockSearch = 0.25f;
             _stock = FindActive(_socket, "attach_stock");
             _muzzle = _stock != null ? FindActive(_socket, "Muzzle") : null;
+            _hadStock = _stock != null;
             return _stock;
         }
 
@@ -177,6 +182,12 @@ namespace DD.Prototype.Characters
         {
             _weaponOffset = WeaponOffset(id);
             _shouldered = Shouldered(id);
+            // the new weapon's markers are searched on the next frame, not after the last search's 0.25 s wait (gt 06.10 R-1: rl_1's
+            // tube could start one search late at the hip)
+            _stock = null;
+            _muzzle = null;
+            _hadStock = false;
+            _stockSearch = 0f;
         }
 
         private bool _shouldered;

@@ -121,7 +121,7 @@ class MeasuredByTests(unittest.TestCase):
 
     def test_h1_reports_the_support_elbow_until_the_hero_v2_import(self):
         # C-00 05.10 (WP-082 hero v2 reach pre-study): a report key, not a check, until the import makes it <= 165
-        self.assertEqual(["elbowMaxDeg"], gate("H1")["report"])
+        self.assertEqual(["elbowMaxDeg", "holdOn"], gate("H1")["report"])
         self.assertEqual(["maxCm"], [c["key"] for c in gate("H1")["checks"]])
         row = r2.evaluate_gate(gate("H1"), FINAL, measure=measure("H1", maxCm=0.4, elbowMaxDeg=171.0))
         self.assertEqual("PASS", row["status"])
@@ -185,7 +185,7 @@ class MeasuredByTests(unittest.TestCase):
 
     def test_h1c_gates_the_support_arm_reach_and_waits_for_s06s_writer(self):
         # C-00 06.10 (S-06 t-b2f4-off): H1 keeps reporting the elbow, H1c gates it with the reach margin
-        self.assertEqual(["elbowMaxDeg"], gate("H1")["report"])
+        self.assertEqual(["elbowMaxDeg", "holdOn"], gate("H1")["report"])
         self.assertEqual(("S-06", "gate"), (gate("H1c")["owner"], gate("H1c")["kind"]))
         self.assertEqual(["elbowMaxDeg", "reachMarginMinCm"], [c["key"] for c in gate("H1c")["checks"]])
         self.assertNotIn("measuredBy", gate("H1c"))

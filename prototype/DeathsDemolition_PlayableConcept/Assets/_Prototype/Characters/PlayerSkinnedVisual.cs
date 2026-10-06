@@ -581,6 +581,13 @@ namespace DD.Prototype.Characters
             _weaponDef = def;
             _classicId = id;
             if (_holdIk != null) _holdIk.SetWeapon(id);   // WP-083 B2: the per-weapon hold row
+            if (_gripIk != null)
+            {
+                // WP-083 B2f (council 06.10; b2f15): the support hand grasps the weapon's element — not on lmg_2 / rl_1's vertical
+                // foregrips, whose authored grip already wraps them
+                _gripIk.SetGraspElement(WeaponGripIk.ElementOf(id));
+                _gripIk.SetGrasp(WeaponGripIk.GraspOf(id));
+            }
             _specialV3 = false;   // a classic equip ends a v3 Special hold
             _lastShotTime = -1f;   // WP-071 r2: a sustained string never carries over to the next weapon
             if (_animator != null) SetFireHeld(false);
@@ -620,6 +627,7 @@ namespace DD.Prototype.Characters
             int k = key != null && TpV3On(key) && _runtimeOverrides != null ? _setKeys.IndexOf(key) : -1;
             if (k < 0) return false;
             SetSpecialHold(0);
+            if (_gripIk != null) _gripIk.SetGrasp(false);   // WP-083 B2f: the grasp is the classic handguard's
             if (WeaponAnimSet != _setKeys[k]) _runtimeOverrides.ApplyOverrides(_setOverrides[k]);
             WeaponAnimSet = _setKeys[k];
             CharacterAnimationSet.WeaponAnimSet ws = _animation.WeaponSets[_setIndex[k]];
@@ -752,6 +760,7 @@ namespace DD.Prototype.Characters
 
             _swHold = Mathf.Clamp(hold, 0, 2);
             if (_authored) _animator.SetInteger(SwHoldId, _swHold);
+            if (_gripIk != null && !_specialV3) _gripIk.SetGrasp(_swHold == 0 && WeaponGripIk.GraspOf(_classicId));   // WP-083 B2f: the classic weapon's
         }
 
         /// <summary>Damage taken with a v003 read: upper = hurt_A (from the right, override_upper), else hurt_B (base, gut hit with a step). Movement, aim and fire untouched (REQ-044/045).</summary>
