@@ -933,15 +933,32 @@ class RestoreWriteTests(RestoreBase):
         self.assertTrue((q / "created").is_dir() and (q / "displaced").is_dir())
 
     def test_Restore_HicbirYolda_KokDisiYazimYok(self):
-        real = Path(pwhome()) / "Library" / "Preferences" / (BUNDLE + ".plist")
-        before = sha(real)
+        """No write outside the fixture root, proven without the user's real plist (C-00 06.10: comparing it was not
+        hermetic — another session's guarded run may save it meanwhile, a false red on 06.10):
+        (1) the suite's sandbox denies a write under the REAL ~/Library — the guard and its helpers inherit it. Probe: open
+            an always-present real file for writing without O_CREAT and write nothing (unsandboxed it opens and changes
+            nothing; sandboxed: EPERM);
+        (2) a sentinel plist where a $HOME-relative domain would land (the fixture HOME) stays as it was;
+        (3) every `defaults` call names the fixture root (absolute domain)."""
+        probe = Path(pwhome()) / "Library" / "Preferences" / ".GlobalPreferences.plist"
+        if probe.is_file():
+            try:
+                os.close(os.open(str(probe), os.O_WRONLY | os.O_APPEND))   # nothing is written
+            except PermissionError:
+                pass
+            else:
+                self.fail("the sandbox does not deny writes under the real ~/Library — the suite is not isolated")
+        sentinel = Path(self.env()["HOME"]) / "Library" / "Preferences" / (BUNDLE + ".plist")
+        sentinel.parent.mkdir(parents=True, exist_ok=True)
+        sentinel.write_bytes(plistlib.dumps({"sentinel": 1}, fmt=plistlib.FMT_BINARY))
+        before = sha(sentinel)
         self.snap(); self.run_changes()
         rc, out, err = self.restore()
         self.assertEqual(0, rc, out + err)
         for line in self.log.read_text().splitlines():
             if line.startswith("defaults "):
                 self.assertIn(str(self.root), line)   # every defaults call names the fixture root (absolute domain)
-        self.assertEqual(before, sha(real))
+        self.assertEqual(before, sha(sentinel))
 
     def test_Restore_CasRenameArasiDegisim_TakasDisplaced30(self):
         """SHOULD-3: bytes saved between the last CAS and the swap come back out of the swap and are kept (displaced, RACED)."""
