@@ -41,14 +41,18 @@ dd_unity_count() { pgrep -f "Unity.app/Contents/MacOS/Unity.* -batchmode" 2>/dev
 # C-00 06.10: used swap ≥ DD_SWAP_WARN_MB (10 GiB) is an early WARNING line (timeline) — nothing is stopped below 12 GiB.
 DD_DISK_MIN_KIB=15728640; DD_SWAP_MAX_MB=12288; DD_SWAP_WARN_MB=10240
 dd_disk_gate() {
-  local free swap
+  local free swap frac cents
   free=$(df -k "${1:-$DD_REPO}" 2>/dev/null | awk 'NR==2{print $4}')
-  swap=$(sysctl -n vm.swapusage 2>/dev/null | sed -n 's/.*used = \([0-9]*\)[.0-9]*M.*/\1/p')
+  # C-00 06.10 (N-8): the decimals count — "used = 12288.50M" was read as 12288 and passed the 12 GiB stop. The value is
+  # compared in hundredths of a MB (the stop: > 12 GiB, the warning: ≥ 10 GiB) and shown as sysctl gave it.
+  swap=$(sysctl -n vm.swapusage 2>/dev/null | sed -n 's/.*used = \([0-9][0-9]*\(\.[0-9]*\)\{0,1\}\)M.*/\1/p')
+  frac=${${swap#*.}[1,2]}; [[ "$swap" == *.* ]] || frac=""; while (( ${#frac} < 2 )); do frac+=0; done
+  [[ "${swap%%.*}" == <-> && "$frac" == <-> ]] && cents=$(( ${swap%%.*} * 100 + frac ))
   if [[ "$free" != <-> ]] || [ "$free" -lt "$DD_DISK_MIN_KIB" ]; then
     dd_log "disk-gate: free disk ${free:-unknown} KiB < $DD_DISK_MIN_KIB (15 GiB) on ${1:-$DD_REPO} — not started (75)"; return 75; fi
-  if [[ "$swap" != <-> ]] || [ "$swap" -gt "$DD_SWAP_MAX_MB" ]; then
+  if [[ -z "$cents" ]] || (( cents > DD_SWAP_MAX_MB * 100 )); then
     dd_log "disk-gate: used swap ${swap:-unknown} MB > $DD_SWAP_MAX_MB (12 GiB) — not started (75)"; return 75; fi
-  [ "$swap" -ge "$DD_SWAP_WARN_MB" ] && dd_log "WARNING disk-gate: used swap $swap MB ≥ $DD_SWAP_WARN_MB (10 GiB) — near the 12 GiB stop; started anyway"
+  (( cents >= DD_SWAP_WARN_MB * 100 )) && dd_log "WARNING disk-gate: used swap $swap MB ≥ $DD_SWAP_WARN_MB (10 GiB) — near the 12 GiB stop; started anyway"
   dd_log "disk-gate: ok freeKiB=$free swapUsedMB=$swap"; return 0
 }
 # Waits until fewer than DD_MAX_UNITY batch editors run. Returns 75 on timeout (EX_TEMPFAIL).
