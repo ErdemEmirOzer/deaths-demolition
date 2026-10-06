@@ -93,7 +93,10 @@ FINAL commit into `<E>/r2/` (its commit is DD_R2_COMMIT). Each key is the worst 
 
 The source checks run before anything is written; one fails and nothing is written (S3 BLOCKED): capture dropped 0 and
 telemetry overflow 0 in every take, 40 alive and a dense window of at least 35 s, the camera the take claims, weapon shots
-delivered and heard (shot-window peak median >= -30 dBFS), the A9 stack loud in every second and not clipped, W + R within
+delivered and heard (shot-window peak median >= -30 dBFS; Dense-40 exception to the "source must be in the recording"
+rule's >= 6 dB over the pre-window — C-00 06.10: a continuous Dense-40 mix cannot hold it (R1 +3.8 … +5.5 dB), so the
+source check is ClassicWeaponFire delivered >= 20 + Fire voices started in the dense window >= 10 + that peak median;
+the rise is reported per take in the artifact's takes detail, never asserted), the A9 stack loud in every second and not clipped, W + R within
 1 dB of the full mix, both PlayMode tests Passed in the given NUnit XML. A KİRLİ run (load1 >= 6 in the run's load log, no
 load log, or C-00's mark) writes `r2-S3.KIRLI.json` instead, with the note: ranking only, S3 stays BLOCKED until a
 quiet-window measurement.

@@ -52,13 +52,13 @@ def write_telemetry(path, fire_times=(), delivered=None, explosions=0, overflow=
 
 
 def dense_take(folder, mode="tp", seconds=8.0, shot_amp=0.25, alive=40, dropped=0, camera=None, stamped=True,
-               commit=COMMIT, fires=True, complete=True):
+               commit=COMMIT, fires=True, complete=True, bed=0.002):
     """a Dense-40 run folder: a -54 dBFS noise bed with 30 ms 1 kHz shots every 0.5 s from 1.2 s, and its sidecars."""
     folder = Path(folder)
     (folder / "bot").mkdir(parents=True, exist_ok=True)
     rng = np.random.default_rng(7)
     n = int(seconds * RATE)
-    data = rng.normal(0.0, 0.002, (n, 2))   # a bed far under the -30 dBFS shot floor, so an unheard shot reads as one
+    data = rng.normal(0.0, bed, (n, 2))   # default: a bed far under the -30 dBFS shot floor, so an unheard shot reads as one
     times = list(np.arange(1.2, seconds - 0.5, 0.5))
     burst = shot_amp * np.sin(2 * np.pi * 1000 * np.arange(int(0.03 * RATE)) / RATE)
     for t in times:
@@ -285,6 +285,19 @@ class SourceTests(RigTestCase):
     def test_no_weapon_shot_in_the_recording(self):
         dense_take(self.rig.dense["fp"], "fp", fires=False)
         self.assert_blocked("ClassicWeaponFire delivered 0")
+
+    def test_a_dense_mix_without_a_6_db_shot_rise_is_written_c00_exception(self):
+        # C-00 06.10 (S3 gt N-1): a continuous Dense-40 bed keeps the shot under SABİT-KURALLAR 5.3's +6 dB rise; the
+        # source rule is shots delivered + Fire voices started + shot-window peak >= -30 dBFS — the rise is only reported.
+        dense_take(self.rig.dense["tp"], "tp", shot_amp=0.25, bed=0.08)
+        rc, out = self.rig.run()
+        self.assertEqual(0, rc, out)
+        data = json.loads(self.rig.out.read_text(encoding="utf-8"))
+        rise = data["takes"]["dense"]["tp"]["shotRiseDbMedian"]
+        self.assertIsNotNone(rise)
+        self.assertLess(rise, 6.0, "the fixture must sit under the 5.3 rise for this test to mean anything")
+        self.assertGreaterEqual(data["takes"]["dense"]["tp"]["shotPeakMedianDbfs"], r2_s3.SHOT_PEAK_FLOOR_DBFS)
+        self.assertIn("5.3 exception (C-00 06.10)", data["sourceRule"])
 
     def test_shots_that_are_not_heard(self):
         dense_take(self.rig.dense["fp"], "fp", shot_amp=0.0)

@@ -28,7 +28,9 @@ Values (the worst over the takes; checks in r2-gates.json S3, judged by r2_gates
 
 The source must be in the recording (contract, S-08 05.10): every take is checked first — capture dropped 0, telemetry ring
 overflow 0, 40 alive and a dense window of -ddAudioDenseSeconds - 5 s, the camera the take claims, weapon shots delivered and
-heard (shot-window peak median >= -30 dBFS), a dev build stamped with the commit and not dirty, the A9 stack loud in every
+heard (shot-window peak median >= -30 dBFS; the rule's ">= 6 dB over the pre-window" does not apply to a continuous
+Dense-40 mix — C-00 06.10, SOURCE_RULE: the rise is reported per take, not asserted), a dev build stamped with the commit
+and not dirty, the A9 stack loud in every
 second and not clipped, W and R blocks present and adding up to A within 1 dB, the named tests Passed in the given NUnit XML.
 One failed check and nothing is written (exit 1): S3 stays BLOCKED by name in the R2 report.
 
@@ -77,6 +79,14 @@ MIN_SHOTS_DELIVERED = 20                 # combat_event ClassicWeaponFire delive
 MIN_FIRE_STARTS = 10                     # Weapon*Fire voices started inside the dense window (R1: 24-37)
 SHOT_WINDOW_S = 0.25                     # cue → heard: one output buffer (1024 x 4 at 48 kHz = 85 ms) plus the attack
 SHOT_PEAK_FLOOR_DBFS = -30.0             # contract (S-08 05.10): shot-window peak median >= -30 dBFS
+PRE_WINDOW_S = 0.25                      # the window before each cue the shot rise is read against (report only)
+# SABİT-KURALLAR 5.3 asks the shot window to sit >= 6 dB above its pre-window. A continuous Dense-40 mix cannot hold that
+# (R1: +3.8 … +5.5 dB) — C-00 06.10 decision (S3 gt N-1): for Dense-40 the source rule is the three checks above (shots
+# delivered, Fire voices started in the dense window, shot-window peak median); the rise is measured and reported per take
+# (shotRiseDbMedian), never asserted.
+SOURCE_RULE = ("Dense-40: SABİT-KURALLAR 5.3 exception (C-00 06.10) — ClassicWeaponFire delivered >= 20, Fire voices started "
+               "in the dense window >= 10, shot-window peak median >= -30 dBFS; the >= 6 dB rise over the pre-window is "
+               "reported (shotRiseDbMedian), not asserted")
 FIRE_SOUND = re.compile(r"Weapon\w+Fire")
 M_HOP_S = 0.01                           # the gate's momentary hop
 R1_HOP_S = 0.1                           # audio_capture_report's hop (R1's numbers)
@@ -262,6 +272,17 @@ def shot_peaks(data, rate, times):
     return out
 
 
+def shot_rises(data, rate, times):
+    """per cue: shot-window peak minus the peak of the PRE_WINDOW_S before it (dB) — Dense-40 report only (SOURCE_RULE)."""
+    out = []
+    n = data.shape[0]
+    for t in times:
+        p0, a, b = int((t - PRE_WINDOW_S) * rate), int(t * rate), int((t + SHOT_WINDOW_S) * rate)
+        if 0 <= p0 < a < b <= n:
+            out.append(db(float(np.max(np.abs(data[a:b])))) - db(float(np.max(np.abs(data[p0:a])))))
+    return out
+
+
 def measure_dense(mode, folder, commit, dense_seconds, label=None):
     """One Dense-40 capture: (detail, findings); label names it in the findings (tp, tp#2 for a repeat)."""
     label = label or mode
@@ -304,6 +325,7 @@ def measure_dense(mode, folder, commit, dense_seconds, label=None):
     fires_in = [t for t in fires if first is not None and first <= t <= seconds]
     peaks = shot_peaks(data, rate, fires_in)
     peak_median = statistics.median(peaks) if peaks else None
+    rises = shot_rises(data, rate, fires_in)
     if delivered < MIN_SHOTS_DELIVERED:
         findings.append(f"dense {label}: ClassicWeaponFire delivered {delivered} < {MIN_SHOTS_DELIVERED}")
     if len(fires_in) < MIN_FIRE_STARTS:
@@ -334,6 +356,7 @@ def measure_dense(mode, folder, commit, dense_seconds, label=None):
               "maxAlive": max_alive, "denseStart": first, "denseSeconds": round(dense_len, 2),
               "weaponFireDelivered": delivered, "weaponFireStartsDense": len(fires_in),
               "shotPeakMedianDbfs": round(peak_median, 2) if peak_median is not None else None,
+              "shotRiseDbMedian": round(statistics.median(rises), 2) if rises else None,
               "build": {k: info.get(k) for k in ("stamped", "describe", "commit", "mode")},
               "meanFrameMs": bot.get("meanFrameMs"), "qaLoad1": [(qa or {}).get("load1Before"), (qa or {}).get("load1After")]}
     if first is not None and first < seconds - 0.4:
@@ -555,7 +578,8 @@ def kirli_reasons(loads, manual, detail):
 
 def artifact(values, detail, samples, commit, reasons):
     data = {"schema": "dd-r2-measure-v1", "gate": GATE, "commit": commit, "source": SOURCE,
-            "values": {k: values[k] for k in KEYS}, "samples": samples, "takes": detail, "r1Closing": R1_CLOSING}
+            "values": {k: values[k] for k in KEYS}, "samples": samples, "takes": detail, "r1Closing": R1_CLOSING,
+            "sourceRule": SOURCE_RULE}
     if reasons:
         data["note"] = ("KİRLİ: " + "; ".join(reasons) + " — ranking only, not a gate value (SABİT-KURALLAR 5.8); "
                         "re-measure in a quiet window")
