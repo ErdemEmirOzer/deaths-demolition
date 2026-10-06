@@ -524,8 +524,20 @@ namespace DD.Prototype.Audio
             return true;
         }
 
-        /// <summary>CasingEffect's floor ray layers (Default | Environment).</summary>
-        private static readonly int VfxFloorMask = 1 | (1 << PrototypeLayers.Environment);
+        /// <summary>
+        /// CasingEffect's floor ray layers (Default | Environment; no Environment layer = Default only). Read per landing:
+        /// PrototypeLayers resolves the layer once and again on play (SubsystemRegistration). The old static readonly kept a
+        /// stale mask with domain reload off and became 1 | 1 &lt;&lt; -1 without the layer (S-02 06.10). Same rule as
+        /// CasingEffect.FloorMask (WP-087 B2, 691680d1) — read that one once B2 is on main.
+        /// </summary>
+        private static int VfxFloorMask
+        {
+            get
+            {
+                int environment = PrototypeLayers.Environment;
+                return 1 | (environment >= 0 ? 1 << environment : 0);
+            }
+        }
 
         /// <summary>Where the last landing was placed (test / WP-087 marker-align readout).</summary>
         public Vector3 LastLandingPoint { get; private set; }
