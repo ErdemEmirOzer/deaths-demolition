@@ -1927,6 +1927,10 @@ namespace DD.Prototype.Tests.PlayMode
                 if (string.IsNullOrEmpty(istek) || Array.IndexOf(istek.Split(','), set.AudioId) >= 0) silahlar.Add(set.AudioId);
             }
 
+            // S-10 06.10 (BEKLEYEN §15 review): the source asserts come before the artifact — an empty match must fail here,
+            // not write an r2-S4.json whose float.MaxValue / 0 minima and maxima pass every range check.
+            Assert.IsNotEmpty(silahlar, "DD_EDC_WEAPONS hiçbir silahla eşleşmedi: '" + istek + "'");
+
             _s.Rig.Health.DiagnosisInvulnerable = true;
             string[] buslar = AudioMixerBridge.VolumeParams;
             const int PlayerBus = 4;   // the stem mutes every other bus and never touches Master / SFX-Player: the snapshot owns them
@@ -2041,6 +2045,8 @@ namespace DD.Prototype.Tests.PlayMode
 
             Debug.Log("[DD-TEST] wp085.s4 RT60 open/corridor/hall (median of 4, 500–1000 Hz T20): " + string.Join(" · ", detay) + " · orderViolations " + sira
                       + " · edc30 min ms " + e30[0].ToString("0") + "/" + e30[1].ToString("0") + "/" + e30[2].ToString("0"));
+            Assert.IsNotEmpty(rt60, "Ölçülen silah yok.");
+            Assert.AreEqual(silahlar.Count, rt60.Count, "İstenen her silah ölçülmedi.");
             R2Olcum.Yaz("S4", "DD.Prototype.Tests.PlayMode.AudioSliceTests.MekanKuyrugu_EDC_Olcum", new Dictionary<string, double>
             {
                 { "openRt60MinS", Math.Round(min[0], 3) }, { "openRt60MaxS", Math.Round(max[0], 3) },
@@ -2049,7 +2055,6 @@ namespace DD.Prototype.Tests.PlayMode
                 { "orderViolations", sira },
                 { "openEdc30MsMin", Math.Round(e30[0], 1) }, { "corridorEdc30MsMin", Math.Round(e30[1], 1) }, { "hallEdc30MsMin", Math.Round(e30[2], 1) }
             }, rt60.Count * 24);
-            Assert.IsNotEmpty(rt60, "Ölçülen silah yok.");
             string ozet = string.Join(" · ", detay);
             Assert.That(min[0] >= 0.56f && max[0] <= 1.08f, "R2 S4 açık RT60 0,56–1,08 s (" + ozet + ")");
             Assert.That(min[1] >= 0.88f && max[1] <= 1.68f, "R2 S4 koridor RT60 0,88–1,68 s (" + ozet + ")");
