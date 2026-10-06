@@ -35,7 +35,7 @@ One JSON file per gate, written only when the measurement actually ran:
 
 ## Required test identities
 
-Some gates (`tests` in `r2-gates.json`, e.g. Z1, Z3b, H4, H4b, U3) also require a test case by full name to be
+Some gates (`tests` in `r2-gates.json`, e.g. Z1, Z3b, H4, H4a, H4b, U3) also require a test case by full name to be
 `Passed` in an NUnit XML bound to the run (A1 core/alone, A3 isolated, or the chain's `<E>/r2/` sessions). If the
 name is not in any bound XML the gate is BLOCKED; any other result is FAIL.
 
@@ -70,7 +70,9 @@ An `[Explicit]` test runs only when the filter names it in full (S-02 05.10): gi
 table (S-02), H4a = FP arm keys (S-06), same thresholds. H4a is measured with the FP arms on (C-00 06.10: the only mode where
 they are visible; on the default path they are off) by `AnimationTests.FpKollar_Kadraj_KolPayi10_KameraMesafesi15_ElSilahta`
 (WP-083 R2 `6711f57f`; not `[Explicit]`, also in CI). It writes `armOffscreenFrames` and `armInCameraFrames` over the armed
-weapons' rest frames; `samples` is the frames measured. The chain runs it by full name in the r2 stage.
+weapons' rest frames; `samples` is the frames measured. The chain runs it by full name in the r2 stage. H4a also names it
+in `tests` (C-00 06.10), so the test's own acceptance is part of the gate: arm share of the screen <= 10 %, hand <= 1 cm,
+rest <= 0.3 cm, elbows off screen. H4a can FAIL on a failed case while both keys read 0.
 Other S-06 writers (WP-083 R2, S-06 06.10; playmode, `[Explicit]`, run by full name in the r2 stage, quiet false, no env):
 - H2 `R2HeroGovdeTests.H2_SilahGovdeGomulmesi_TumKlasikSilahlar_DurusYuruyus` (`f114d24c`): `clipFrames` (weapon LOD0 more
   than 0.5 cm inside the chest, shoulders or upper arms); `samples` = the sampled frames.
