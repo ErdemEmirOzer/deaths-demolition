@@ -446,8 +446,12 @@ namespace DD.Prototype.UI
             /// <summary>The fall to 0 in both directions, a fraction of the width (when no end is set for that direction).</summary>
             public float Fall;
 
-            /// <summary>&gt; 0: the horizontal fall ends here - a fraction of the width, measured from the corner.</summary>
+            /// <summary>&gt; 0: the horizontal fall ends here - a fraction of the width, measured from the corner - unless that leaves it
+            /// shorter than <see cref="MinFallX"/>.</summary>
             public float EndX;
+
+            /// <summary>The horizontal fall is never shorter than this fraction of the width (a squeezed fall reads as a seam).</summary>
+            public float MinFallX;
 
             /// <summary>&gt; 0: the vertical fall ends this many root units below the words' box.</summary>
             public float EndBelow;
@@ -465,7 +469,7 @@ namespace DD.Prototype.UI
             hold = reach + new Vector2(spec.Margin, spec.Margin);
             float both = Mathf.Max(1f, spec.Fall * rootWidth);
             fall = new Vector2(
-                spec.EndX > 0f ? Mathf.Max(MinCornerFall, spec.EndX * rootWidth - hold.x) : both,
+                spec.EndX > 0f ? Mathf.Max(MinCornerFall, Mathf.Max(spec.MinFallX * rootWidth, spec.EndX * rootWidth - hold.x)) : both,
                 spec.EndBelow > 0f ? Mathf.Max(MinCornerFall, reach.y + spec.EndBelow - hold.y) : both);
         }
 

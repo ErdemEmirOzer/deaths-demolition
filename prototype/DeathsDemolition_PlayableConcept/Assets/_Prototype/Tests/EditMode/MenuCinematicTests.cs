@@ -264,7 +264,7 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
-        public void UstKoseler_AdSinirlari_Baslik040W_Taban160_Seviye012W_BesOranda()
+        public void UstKoseler_AdSinirlari_BaslikSonum010W_En048W_Taban160_Seviye012W_BesOranda()
         {
             // The title's reach from the top-left (its far edge, its bottom; root units) at the five evidence aspects (b13 logs:
             // 1920×1080, 1920×1200, 2560×1080, 1440×1080 = root 1920×1440, the Mac host = root 1600×1039).
@@ -278,7 +278,9 @@ namespace DD.Prototype.Tests.EditMode
                 UiBackdrop.CornerReach(c.w, c.title, MenuLook.TitleCorner, out Vector2 hold, out Vector2 fall);
                 Assert.GreaterOrEqual(hold.x, c.title.x + 24f, c.w + ": α ≥ 0.85 over the box + 24 (AD MUST-2 b1)");
                 Assert.GreaterOrEqual(hold.y, c.title.y + 24f, c.w + ": + 24 below the box too");
-                Assert.LessOrEqual(hold.x + fall.x, 0.40f * c.w + 1e-3f, c.w + ": the horizontal fall ends by 0.40 W");
+                Assert.GreaterOrEqual(fall.x, MenuLook.TitleLiftMinFallX * c.w - 1e-3f, c.w + ": the horizontal fall runs ≥ 0.10 W (AD MUST-2r)");
+                Assert.LessOrEqual(hold.x + fall.x, MenuLook.TitleLiftMaxEndX * c.w + 1e-3f, c.w + ": the horizontal fall ends by 0.48 W (AD MUST-2r)");
+                Assert.LessOrEqual(hold.x + fall.x, Mathf.Max(0.40f * c.w, hold.x + MenuLook.TitleLiftMinFallX * c.w) + 1e-3f, c.w + ": 0.40 W where the box leaves room");
                 Assert.LessOrEqual(hold.y + fall.y, c.title.y + 160f + 1e-3f, c.w + ": the vertical fall ends 160 below the box");
                 Assert.GreaterOrEqual(Mathf.Min(fall.x, fall.y), UiBackdrop.MinCornerFall, c.w + ": no fall shorter than " + UiBackdrop.MinCornerFall);
 
@@ -327,7 +329,7 @@ namespace DD.Prototype.Tests.EditMode
                 Assert.GreaterOrEqual(alpha, MenuLook.TitleLiftAlpha - 1e-3f, label + ": the title's corner " + corner + " on the full lift");
             }
 
-            Assert.AreEqual(0f, backdrop.WorldCornerAlphaAt(false, 0.40f * root.rect.width + 1f, 0f), 1e-4f, label + ": nothing past 0.40 W");
+            Assert.AreEqual(0f, backdrop.WorldCornerAlphaAt(false, MenuLook.TitleLiftMaxEndX * root.rect.width + 1f, 0f), 1e-4f, label + ": nothing past 0.48 W");
         }
     }
 }

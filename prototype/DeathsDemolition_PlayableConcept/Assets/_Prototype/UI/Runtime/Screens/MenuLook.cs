@@ -297,6 +297,12 @@ namespace DD.Prototype.UI
         public const float TitleLiftAlpha = 0.85f;
         public const float TitleLiftMargin = 24f;
         public const float TitleLiftEndX = 0.40f;
+
+        /// <summary>AD r2 (MUST-2r, 06.10): the title's horizontal fall is never shorter than 0.10 W - at the Mac's UI scale and at
+        /// 21:9 the box + 24 already reaches ~0.35 W, and a fall squeezed to 0.044 W read as a seam in the sky; it ends by 0.48 W at
+        /// the evidence aspects (the column ramp's own end), 0.40 W stays where the box leaves room for 0.10 W.</summary>
+        public const float TitleLiftMinFallX = 0.10f;
+        public const float TitleLiftMaxEndX = 0.48f;
         public const float TitleLiftBelow = 160f;
 
         /// <summary>The level readout's corner (AD MUST-1, path A): α over the readout's reach (+ <see cref="CornerMargin"/>), 0 by
@@ -308,7 +314,7 @@ namespace DD.Prototype.UI
 
         public static UiBackdrop.CornerSpec TitleCorner => new UiBackdrop.CornerSpec
         {
-            Margin = TitleLiftMargin, Alpha = TitleLiftAlpha, EndX = TitleLiftEndX, EndBelow = TitleLiftBelow
+            Margin = TitleLiftMargin, Alpha = TitleLiftAlpha, EndX = TitleLiftEndX, MinFallX = TitleLiftMinFallX, EndBelow = TitleLiftBelow
         };
 
         public static UiBackdrop.CornerSpec ReadoutCorner => new UiBackdrop.CornerSpec { Margin = CornerMargin, Alpha = CornerAlpha, Fall = CornerFall };
