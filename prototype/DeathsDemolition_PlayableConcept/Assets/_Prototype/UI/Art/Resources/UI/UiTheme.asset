@@ -72,13 +72,13 @@ MonoBehaviour:
   - Name: Empty.Scroll
     Sprite: {fileID: -1339195846105084362, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: FireMode.Auto
-    Sprite: {fileID: -6687065283409793362, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+    Sprite: {fileID: 6722471237687403102, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: FireMode.Charge
-    Sprite: {fileID: 8803547754683280183, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+    Sprite: {fileID: -6251486914599002891, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: FireMode.Lob
-    Sprite: {fileID: -7492248894714455579, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+    Sprite: {fileID: -5998282996721263153, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: FireMode.Semi
-    Sprite: {fileID: -4071450697677463133, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+    Sprite: {fileID: 6534887277333391521, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Hud.Enemies
     Sprite: {fileID: -3282825364574764330, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Hud.Gold
@@ -124,21 +124,21 @@ MonoBehaviour:
   - Name: Menu.Graphics
     Sprite: {fileID: -7285087910145960454, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Menu.Home
-    Sprite: {fileID: -2431456656931377193, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+    Sprite: {fileID: -6960392207730776338, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Menu.Keyboard
     Sprite: {fileID: -6656520657755220864, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Menu.Next
-    Sprite: {fileID: 2921415456784223089, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+    Sprite: {fileID: 900347786170607289, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Menu.Palette
     Sprite: {fileID: 51740241372468016, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Menu.Path
-    Sprite: {fileID: 4110862276882897877, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+    Sprite: {fileID: -6601387050752504498, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Menu.Pause
-    Sprite: {fileID: 4603409316477275422, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+    Sprite: {fileID: -3995840938307660131, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Menu.Play
     Sprite: {fileID: 2979069145161891476, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Menu.Previous
-    Sprite: {fileID: -5451807812831920040, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+    Sprite: {fileID: -4848798238697862098, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Menu.Profile
     Sprite: {fileID: 9090467384928607536, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Menu.Quit
@@ -148,9 +148,9 @@ MonoBehaviour:
   - Name: Menu.Resume
     Sprite: {fileID: -4487471870118512751, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Menu.Retry
-    Sprite: {fileID: 4777007635138687452, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+    Sprite: {fileID: -2438972199765936558, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Menu.Save
-    Sprite: {fileID: 8033198957692898722, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+    Sprite: {fileID: -9019338923532267225, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Menu.Settings
     Sprite: {fileID: -3610623525845512526, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Menu.Statistics
@@ -158,7 +158,7 @@ MonoBehaviour:
   - Name: Menu.TextScale
     Sprite: {fileID: -7218751633457364648, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Menu.Upgrade
-    Sprite: {fileID: 5793413291724710300, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+    Sprite: {fileID: -2308693618713108538, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Mouse.Left
     Sprite: {fileID: -3256705143696250330, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Mouse.Middle
@@ -174,7 +174,7 @@ MonoBehaviour:
   - Name: Notice.Info
     Sprite: {fileID: -8435284789547905188, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Notice.Notification
-    Sprite: {fileID: 297045096533488063, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+    Sprite: {fileID: -992872697104150108, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Notice.Warning
     Sprite: {fileID: -8809911085754596053, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Ornament.Divider
@@ -228,11 +228,11 @@ MonoBehaviour:
   - Name: Pip.Full
     Sprite: {fileID: -7562042549119908241, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Profile.Level
-    Sprite: {fileID: 1397346929567509951, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+    Sprite: {fileID: 6638106585933490146, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Profile.Progress
-    Sprite: {fileID: -6368223432705716004, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+    Sprite: {fileID: 192206855215574843, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Profile.Xp
-    Sprite: {fileID: 3777044880841078494, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+    Sprite: {fileID: -6167845549710080848, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Reticle.Hit
     Sprite: {fileID: -2015147145660372384, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Reticle.Ring
@@ -246,21 +246,21 @@ MonoBehaviour:
   - Name: Seal.Mark
     Sprite: {fileID: 8910734017265433012, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Selection.Selected
-    Sprite: {fileID: -7410438430631041313, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+    Sprite: {fileID: -4981576222990842249, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Selection.Skin
-    Sprite: {fileID: 5271950713235386739, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+    Sprite: {fileID: -7887415040218683180, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Selection.Weapon
-    Sprite: {fileID: -6733340078039908976, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+    Sprite: {fileID: 6517601908397046847, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Settings.Camera
-    Sprite: {fileID: -5795903561537710033, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+    Sprite: {fileID: -433895621289330796, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Settings.Data
-    Sprite: {fileID: 6299688770724493755, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+    Sprite: {fileID: -4026629127687434435, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Settings.Display
-    Sprite: {fileID: 7573638963321342095, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+    Sprite: {fileID: -7038908489886402935, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Settings.Hints
-    Sprite: {fileID: 8316693500247683788, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+    Sprite: {fileID: 2868479308942039280, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Settings.Language
-    Sprite: {fileID: 0, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+    Sprite: {fileID: 5913551243399973623, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Shop.Locked
     Sprite: {fileID: 3773845941653712189, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Shop.MaxTier
@@ -286,21 +286,21 @@ MonoBehaviour:
   - Name: Special.TideJewel
     Sprite: {fileID: -3679124154955928802, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Stat.Damage
-    Sprite: {fileID: -7243879596365591017, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+    Sprite: {fileID: -8420459742015929003, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Stat.FireRate
-    Sprite: {fileID: 7919891789524806786, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+    Sprite: {fileID: 6474360520635263756, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Stat.Magazine
-    Sprite: {fileID: 6281526344515124496, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+    Sprite: {fileID: -1131422467817541723, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Stat.Range
-    Sprite: {fileID: -4449314205254246987, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+    Sprite: {fileID: -9109484880557513034, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Stat.TrendDown
     Sprite: {fileID: 5769668595060684798, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Stat.TrendUp
     Sprite: {fileID: 2288249448413264776, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: State.Locked
-    Sprite: {fileID: 3057153066213914798, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+    Sprite: {fileID: -9133912338818779500, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: State.Unlocked
-    Sprite: {fileID: 1743017908372427928, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
+    Sprite: {fileID: 2213863903841708025, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Status.Dazed
     Sprite: {fileID: -5993203429339079311, guid: 72870aabc72a2495292e9b307d6e8ab9, type: 3}
   - Name: Status.DazedOuter

@@ -1592,10 +1592,10 @@
     },
     {
      "name": "Unlock.Badge",
-     "x": 966,
-     "y": 454,
-     "w": 52,
-     "h": 52,
+     "x": 970,
+     "y": 458,
+     "w": 44,
+     "h": 44,
      "pivot": [
       0.5,
       0.5
@@ -1603,10 +1603,10 @@
     },
     {
      "name": "Unlock.Title",
-     "x": 6,
-     "y": 390,
-     "w": 52,
-     "h": 52,
+     "x": 23,
+     "y": 394,
+     "w": 18,
+     "h": 44,
      "pivot": [
       0.5,
       0.5
@@ -2777,13 +2777,11 @@
   },
   {
    "name": "Unlock.Badge",
-   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_badge.svg",
-   "sha256": "6405e046c1aa4e0c30ddf76c8333ae934b79216224487db58e3599df71891f94"
+   "source": "asset-production/AP-012/v004/exports/masks/Unlock.Badge.png"
   },
   {
    "name": "Unlock.Title",
-   "source": "asset-production/AP-028/exports/v002/Icons/SVG/icon_title.svg",
-   "sha256": "80e0fc56e8756fd0ba1281ad2d3ee7d83b5f9c989f8a15c691e52a01da21c7d4"
+   "source": "asset-production/AP-012/v004/exports/masks/Unlock.Title.png"
   },
   {
    "name": "Special.Namekuji",
@@ -3026,7 +3024,8 @@
  "merges": [
   {
    "tool": "wp-068s9/tools/merge_o1_g1_v2a.py",
-   "toolSha256": "52abbc2e597be1e887f1fd99c8cb8605591ed57f1ebd3176b2d3e9d77028a0cd",
+   "toolSha256": "c76426965b2bc408214f647efe84a2e833aa092c2675898ef0f625d5fc73cf0e",
+   "toolRevision": "r2",
    "slice": "WP-081 B5a",
    "from": "AP-028 v002 Icons",
    "atlasJsonSha256": "1cdb669de0eefd61721d8bf948d51f339d98a17610edecc09cb67dc510ba7323",
@@ -3056,9 +3055,7 @@
     "Menu.Settings",
     "Menu.Statistics",
     "Menu.TextScale",
-    "Notice.Info",
-    "Unlock.Badge",
-    "Unlock.Title"
+    "Notice.Info"
    ],
    "added": [
     "FireMode.Auto",
@@ -3103,7 +3100,9 @@
     "Hud.Timer"
    ],
    "keptG1": [
-    "Shop.Purchased"
+    "Shop.Purchased",
+    "Unlock.Badge",
+    "Unlock.Title"
    ],
    "aliases": {
     "FireMode.Auto": "Stat.FireRate",

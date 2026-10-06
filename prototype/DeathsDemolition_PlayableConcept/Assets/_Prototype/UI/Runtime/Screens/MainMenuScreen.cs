@@ -81,10 +81,13 @@ namespace DD.Prototype.UI
         public static string PlaySubline => UiStrings.Get("menu.play_sub", "CHOOSE SKIN & WEAPON");
         public static string BuildNotePrefix => UiStrings.Get("menu.build_prefix", "Prototype build · ");
 
-        /// <summary>v4 rail: the glyph size, the pitch between icons (8 px grid), and the air between an icon and its word.</summary>
-        public const UiIconSize RailIcon = UiIconSize.M;
+        /// <summary>v4 rail: the glyph size, the pitch between icons (8 px grid), and the air between an icon and its word.
+        /// ikon v2 B5a (AD MUST-2, R3): L - the O1 glyphs sit in the viewBox frame, and at M their ink was 18-25 px (median
+        /// 22.2, the AP-012 rail ~29-32); at L the ink's long edge is 21.5-30.8 px, median 27.7 (4:3: 20.8 physical). The
+        /// smallest pitch is L's hit (56), so the hits never overlap.</summary>
+        public const UiIconSize RailIcon = UiIconSize.L;
         public const float RailPitchMax = 72f;
-        public const float RailPitchMin = 48f;
+        public const float RailPitchMin = 56f;
         public const UiSpace RailWordGap = UiSpace.L;
 
         /// <summary>
@@ -377,7 +380,7 @@ namespace DD.Prototype.UI
 
         /// <summary>
         /// v4 (O1): the spine is one rail - PLAY, the six panes, QUIT - of icon controls a grid pitch apart (up to 72, never
-        /// under 48), the build line at the foot. The focused item's word stands beside it, the open pane's icon carries the
+        /// under L's hit, 56), the build line at the foot. The focused item's word stands beside it, the open pane's icon carries the
         /// heading tick. Explicit vertical chain, no wrap: Up from PLAY never lands on QUIT.
         /// </summary>
         private void BuildRail(RectTransform column)
@@ -442,7 +445,7 @@ namespace DD.Prototype.UI
 
         public const int RailItems = 8;
 
-        /// <summary>The rail's pitch for <paramref name="available"/> px of spine: the grid line that fits eight items, 48-72 (unlaid: 72).</summary>
+        /// <summary>The rail's pitch for <paramref name="available"/> px of spine: the grid line that fits eight items, 56-72 (unlaid: 72).</summary>
         public static float RailPitchFor(float available)
         {
             if (available <= 1f)

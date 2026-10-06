@@ -832,6 +832,51 @@ namespace DD.Prototype.Tests.EditMode
             CollectionAssert.AreEqual(manifest, theme, "UiTheme.asset ↔ G1 manifest (rebuild with UiThemeBuilder.Build)");
         }
 
+        /// <summary>
+        /// İkon v2 B5a r2: UiArtImporter slices G1 with the legacy spritesheet setter, which carries no IDs - a name missing from
+        /// the meta's nameFileIdTable imports as FileId 0 ("Identifier uniqueness violation"), gets a new fileID on every import
+        /// and UiTheme.asset's reference drifts (9dd5f34b's 30 new cells; 48ce96d7 the N19 ones). Every manifest name has its own
+        /// non-zero ID in the table and in its sprite entry (wp-068s9/tools/g1_meta_ids.py writes them), and the theme points at it.
+        /// </summary>
+        [Test]
+        public void G1Meta_HerSpriteKaliciTekilKimlik_TemaAyniKimligeBakar()
+        {
+            string meta = File.ReadAllText(ArtFolder + "/G1/DD_G1_glyphs_sdf_1024.png.meta").Replace("\r\n", "\n");
+            int table = meta.IndexOf("\n    nameFileIdTable:\n", StringComparison.Ordinal);
+            Assert.Greater(table, 0, "nameFileIdTable");
+            var ids = new Dictionary<string, long>(StringComparer.Ordinal);
+            foreach (string line in meta.Substring(table).Split('\n'))
+            {
+                System.Text.RegularExpressions.Match m = System.Text.RegularExpressions.Regex.Match(line, @"^      (\S+): (-?\d+)$");
+                if (m.Success)
+                {
+                    ids[m.Groups[1].Value] = long.Parse(m.Groups[2].Value);
+                }
+            }
+
+            var seen = new HashSet<long>();
+            foreach (string name in UiArtImporter.ManifestSpriteNames(G1ManifestPath))
+            {
+                Assert.IsTrue(ids.TryGetValue(name, out long id), name + ": nameFileIdTable satırı");
+                Assert.AreNotEqual(0L, id, name + ": FileId 0 (g1_meta_ids.py)");
+                Assert.IsTrue(seen.Add(id), name + ": kimlik tekrarlı " + id);
+            }
+
+            System.Text.RegularExpressions.MatchCollection sprites = System.Text.RegularExpressions.Regex.Matches(
+                meta.Substring(0, table), @"^      internalID: (-?\d+)$", System.Text.RegularExpressions.RegexOptions.Multiline);
+            Assert.AreEqual(ids.Count, sprites.Count, "her sprite girdisinin bir internalID'si var");
+            foreach (System.Text.RegularExpressions.Match m in sprites)
+            {
+                Assert.AreNotEqual("0", m.Groups[1].Value, "sprite girdisinde internalID 0");
+            }
+
+            foreach (UiTheme.NamedSprite icon in UiTheme.Active.Icons)
+            {
+                Assert.IsTrue(UnityEditor.AssetDatabase.TryGetGUIDAndLocalFileIdentifier(icon.Sprite, out string _, out long local), icon.Name);
+                Assert.AreEqual(ids[icon.Name], local, icon.Name + ": tema metadaki kimliğe bakar");
+            }
+        }
+
         [Serializable]
         private sealed class G1Manifest
         {
@@ -884,7 +929,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsNotNull(merge, "the B5a merge record");
             Assert.AreEqual(new[] { 0f, 256f }, merge.familyFrame256, "the family frame is the SVG viewBox");
             Assert.AreEqual(64f / 52f, merge.ddIconSdAp, 1e-5f, "DD_ICON_SD_AP");
-            Assert.AreEqual(22, merge.replaced.Length, "replaced in place");
+            Assert.AreEqual(20, merge.replaced.Length, "replaced in place (AD MUST-1: Unlock.Title/Badge stay AP-012)");
             Assert.AreEqual(30, merge.added.Length, "added (29 + State.Locked)");
 
             var byName = new Dictionary<string, G1Sprite>(StringComparer.Ordinal);
