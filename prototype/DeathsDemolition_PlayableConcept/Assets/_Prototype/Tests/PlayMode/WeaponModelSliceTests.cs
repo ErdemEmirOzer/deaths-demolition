@@ -1747,23 +1747,36 @@ namespace DD.Prototype.Tests.PlayMode
                 }
 
                 yield return SpecialWeaponSahne.Bekle(() => _s.Controller.Classic.Ammo > 0 && !_s.Controller.Classic.IsReloading, 4f, "dolum");
+                yield return null;   // WP-087: the ending frame's Animator events (a reload's last chamber) are delivered before we listen
                 // A casing-less weapon (rl_1: WeaponCasing.None) has no ejection slot to measure; a break-open (sg_2, C-00 30.09
                 // M-21) ejects nothing at the shot — its shells leave when it opens (WeaponFeelSliceTests.Mekanizma_Kirma_sg2_…).
                 bool casing = (Arsenal.Get(d.Id) == null || Arsenal.Get(d.Id).presentation.casing != WeaponCasing.None) &&
                               WeaponMechanismTimeline.For(_s.Config.Weapons.Find(d.Id)).ShotCasings > 0;
+                // WP-087 (C-00 06.10, sr_1 flake "kovan +X'e uçar" -0.50): only THIS shot's casing is measured — a late mechanism event
+                // of the earlier shot or the reload (a chamber, its direction down) used to be events[0] when the frame that ended it ran long
                 var events = new List<WeaponMechanismEvent>();
                 var portAtEvent = new List<Vector3>();
-                System.Action<WeaponMechanismEvent> onMech = e => { events.Add(e); portAtEvent.Add(ejection.position); };
+                var seen = new List<string>();
+                System.Action<WeaponMechanismEvent> onMech = e =>
+                {
+                    seen.Add(e.Kind + "#" + e.ShotSerial);
+                    if (e.Kind != WeaponMechanismKind.CasingEjected) return;
+                    events.Add(e);
+                    portAtEvent.Add(ejection.position);
+                };
                 WeaponEvents.Mechanism += onMech;
                 int ammo0 = _s.Controller.Classic.Ammo;
                 _s.Girdi.AtesBasti = true; _s.Girdi.AtesBasili = true;
                 yield return SpecialWeaponSahne.Bekle(() => _s.Controller.Classic.Ammo < ammo0, 2f, "atış");
                 _s.Girdi.AtesBasti = false; _s.Girdi.AtesBasili = false;
+                int shot = _s.Controller.ShotSerial;
                 if (casing)
                 {
-                    yield return SpecialWeaponSahne.Bekle(() => events.Count > 0, 1.5f, "kovan slotu");
-                    Assert.Less(Vector3.Distance(events[0].Position, portAtEvent[0]), 0.01f, d.RosterKey + ": kovan slotu port konumunda değil (" + Vector3.Distance(events[0].Position, portAtEvent[0]).ToString("0.000") + " m).");
-                    Assert.Greater(Vector3.Dot(mount.InverseTransformDirection(events[0].Direction), Vector3.right), 0.7f, d.RosterKey + ": kovan +X'e uçar.");
+                    yield return SpecialWeaponSahne.Bekle(() => events.Exists(e => e.ShotSerial == shot), 1.5f, "kovan slotu");
+                    int k = events.FindIndex(e => e.ShotSerial == shot);
+                    string trace = " [olaylar " + string.Join(", ", seen) + "; atış #" + shot + "]";
+                    Assert.Less(Vector3.Distance(events[k].Position, portAtEvent[k]), 0.01f, d.RosterKey + ": kovan slotu port konumunda değil (" + Vector3.Distance(events[k].Position, portAtEvent[k]).ToString("0.000") + " m)." + trace);
+                    Assert.Greater(Vector3.Dot(mount.InverseTransformDirection(events[k].Direction), Vector3.right), 0.7f, d.RosterKey + ": kovan +X'e uçar." + trace);
                 }
 
                 WeaponEvents.Mechanism -= onMech;

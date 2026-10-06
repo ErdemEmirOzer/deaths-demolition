@@ -29,10 +29,12 @@ namespace DD.Prototype.Tests.PlayMode
 
         private SpecialWeaponSahne _s;
         private readonly List<WeaponMechanismEvent> _mechanism = new List<WeaponMechanismEvent>(64);
+        private float _dt0 = -1f;   // WP-087: a test that fixes the game clock gives the previous value back in TearDown
 
         [UnityTearDown]
         public IEnumerator Bitir()
         {
+            if (_dt0 >= 0f) { Time.captureDeltaTime = _dt0; _dt0 = -1f; }
             WeaponEvents.Mechanism -= OnMechanism;
             _mechanism.Clear();
             if (_s != null)
@@ -241,6 +243,10 @@ namespace DD.Prototype.Tests.PlayMode
         [UnityTest]
         public IEnumerator Mekanizma_C_KovanPumpta_FisekUcKez_HalkaDeseniGercekAtista()
         {
+            // WP-087 (C-00 06.10): game frames of 1/60 — the clip's chamber and the runtime's reload end are timed against the game
+            // clock, and a real batch frame of up to 333 ms could swallow the 31 ms between them (measured, pumpdiag-1)
+            _dt0 = Time.captureDeltaTime;
+            Time.captureDeltaTime = 1f / 60f;
             yield return Kur();
             _s.Controller.EquipClassic(ClassicWeaponId.CombatShotgun, _s.Config);
             yield return null;
@@ -267,6 +273,10 @@ namespace DD.Prototype.Tests.PlayMode
             float reload = _s.Controller.Classic.ReloadDuration;
             Assert.Greater(reload, 1f);
             yield return SpecialWeaponSahne.Bekle(() => !_s.Controller.Classic.IsReloading, reload + 1f, "reload biter");
+            // WP-087 (C-00 06.10, WeaponFeelSliceTests flake root cause): the reload ends in a frame's Update and this coroutine resumes
+            // right after it, before that frame's Animator events — the clip's chamber can share the frame (it runs 31 ms before
+            // the end); one frame later every event of the ending frame has been delivered
+            yield return null;
             Assert.AreEqual(0, Count(WeaponMechanismKind.MagazineDropped), "C: şarjör düşmez (fişek)");
             // R1-B W7 (C-00 30.09): the clip carries its three mag_in marks; the timer fallback seats the shells actually loaded
             Assert.AreEqual(_s.Controller.ClipDrivesMechanism ? 3 : 1, Count(WeaponMechanismKind.ShellSeated),
