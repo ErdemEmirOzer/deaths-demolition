@@ -298,10 +298,12 @@ namespace DD.Prototype.UI
         public const float TitleLiftMargin = 24f;
         public const float TitleLiftEndX = 0.40f;
 
-        /// <summary>AD r2 (MUST-2r, 06.10): the title's horizontal fall is never shorter than 0.10 W - at the Mac's UI scale and at
-        /// 21:9 the box + 24 already reaches ~0.35 W, and a fall squeezed to 0.044 W read as a seam in the sky; it ends by 0.48 W at
-        /// the evidence aspects (the column ramp's own end), 0.40 W stays where the box leaves room for 0.10 W.</summary>
-        public const float TitleLiftMinFallX = 0.10f;
+        /// <summary>AD r2 (MUST-2r, 06.10): the title's horizontal fall runs ≥ 0.10 W and ends by 0.48 W - at the Mac's UI scale and
+        /// at 21:9 the box + 24 already reaches ~0.35 W, and a fall squeezed to 0.044 W read as a seam in the sky. 0.12: at 0.10 its
+        /// steepest point sat on the column ramp's and the Mac's sky edge measured 1.52 against the old look (gate ≤ 1.5; 0.12 →
+        /// 1.40 simulated on the evidence frames), and 0.12 is the most the 0.48 W end leaves on the Mac (0.356 + 0.12 = 0.476 W).</summary>
+        public const float TitleLiftMinFallX = 0.12f;
+        public const float TitleLiftAdMinFallX = 0.10f;
         public const float TitleLiftMaxEndX = 0.48f;
         public const float TitleLiftBelow = 160f;
 

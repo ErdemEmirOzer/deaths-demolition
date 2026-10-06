@@ -278,7 +278,8 @@ namespace DD.Prototype.Tests.EditMode
                 UiBackdrop.CornerReach(c.w, c.title, MenuLook.TitleCorner, out Vector2 hold, out Vector2 fall);
                 Assert.GreaterOrEqual(hold.x, c.title.x + 24f, c.w + ": α ≥ 0.85 over the box + 24 (AD MUST-2 b1)");
                 Assert.GreaterOrEqual(hold.y, c.title.y + 24f, c.w + ": + 24 below the box too");
-                Assert.GreaterOrEqual(fall.x, MenuLook.TitleLiftMinFallX * c.w - 1e-3f, c.w + ": the horizontal fall runs ≥ 0.10 W (AD MUST-2r)");
+                Assert.GreaterOrEqual(fall.x, MenuLook.TitleLiftAdMinFallX * c.w - 1e-3f, c.w + ": the horizontal fall runs ≥ 0.10 W (AD MUST-2r)");
+                Assert.GreaterOrEqual(fall.x, MenuLook.TitleLiftMinFallX * c.w - 1e-3f, c.w + ": and ≥ the shipped floor (0.12 W: the edge gate)");
                 Assert.LessOrEqual(hold.x + fall.x, MenuLook.TitleLiftMaxEndX * c.w + 1e-3f, c.w + ": the horizontal fall ends by 0.48 W (AD MUST-2r)");
                 Assert.LessOrEqual(hold.x + fall.x, Mathf.Max(0.40f * c.w, hold.x + MenuLook.TitleLiftMinFallX * c.w) + 1e-3f, c.w + ": 0.40 W where the box leaves room");
                 Assert.LessOrEqual(hold.y + fall.y, c.title.y + 160f + 1e-3f, c.w + ": the vertical fall ends 160 below the box");
