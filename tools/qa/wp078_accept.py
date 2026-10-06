@@ -706,10 +706,12 @@ class Chain:
     def check_baseline(self, stage):
         """KADRO test-engineer SHOULD-2 + gt 06.10 N-11 / KP-18: an R2 run keeps the R1 baseline its records were made with —
         P2 (the a4 record) and P5 (the r2 record, when it wrote r2-P5.json) never rest on two baselines in one report, never
-        a skipped A4 that silently leaves P2 out, never a baseline root the manifest would not declare. Checked before a4
-        and before r2 (r2 runs first in the chain, so a resume with another baseline stops before any session)."""
+        a skipped A4 that silently leaves P2 out, never a baseline root the manifest would not declare. Checked at the start
+        of a4 and of r2, before that stage's sessions, with or without --resume. The a4 record's baseline is the one the run
+        asked for (baselineRequested), so an R1 build that did not prove itself — no P2, no baselineCommit — does not read as
+        "no baseline" to a run that gives the same one (gt KP-4); a record older than that key falls back to baselineCommit."""
         want = self.r1_commit if self.round_name == "R2" and self.r1_evidence is not None else None
-        for other, key, gate in (("a4", "baselineCommit", "P2"), ("r2", "p5BaselineCommit", "P5")):
+        for other, key, gate in (("a4", "baselineRequested", "P2"), ("r2", "p5BaselineCommit", "P5")):
             if other == stage == "r2":
                 continue   # this run computes P5 again (the earlier r2-P5.json is retired first)
             record = load_json(self.stage_record(other))
@@ -717,7 +719,7 @@ class Chain:
                 continue
             if other == "r2" and key not in record:
                 continue   # that r2 run wrote no r2-P5.json: nothing of it is bound
-            had = record.get(key)
+            had = record.get(key) if key in record else record.get("baselineCommit")
             if had != want:
                 raise Stop(64, f"{other} was recorded with R1 baseline {had}, this run gives {want}: {gate} would rest on another "
                                "baseline than the rest of the report — resume with the same --r1-evidence/--r1-commit, or a new --evidence")
@@ -1041,6 +1043,8 @@ class Chain:
                    {"name": "wp078-perf-report", "exit": report_code, "gate": False,
                     "files": [root / "wp078-perf-report.json", root / "wp078-perf-report.txt"]}]
         inputs, extra = [binary], {"buildRole": "probe", "perfRoot": "a4/perf"}
+        # the baseline this run asked for, proven or not: check_baseline compares it (gt KP-4)
+        extra["baselineRequested"] = self.r1_commit if self.round_name == "R2" and self.r1_evidence is not None else None
         if proof:
             results[0]["files"] += [baseline_root / "attempts-ledger.jsonl"] + cells(baseline_root)
             results[1]["files"] += [root / "wp078-perf-compare.json", p2]

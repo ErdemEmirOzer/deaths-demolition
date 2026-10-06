@@ -772,6 +772,26 @@ class P2BaselineTests(Base):
         self.assertIn("r2 was recorded with R1 baseline " + R1, (self.evidence / "accept.log").read_text())
         self.assertFalse((self.evidence / "a4").exists())
 
+    def test_an_unproven_r1_build_still_records_the_baseline_the_run_asked_for(self):
+        # gt 06.10 KP-4: A4 on an R1 build that does not prove itself writes no baselineCommit; the same baseline must not
+        # read as "None" to the next run (it used to 64), another one still stops
+        r1 = r1_evidence(self.tmp.name, tamper="content")
+        make_chain(self.evidence, ["a6", "a4"], round_name="R2", r1_evidence=r1, r1_commit=R1).run()
+        record = json.loads((self.evidence / "stages" / "a4.json").read_text())
+        self.assertEqual((R1, None), (record["baselineRequested"], record.get("baselineCommit")))
+        with mock.patch.object(acc.r2_gates, "measurement_steps", side_effect=lambda c, quiet: []):
+            self.assertNotEqual(64, make_chain(self.evidence, ["r2"], round_name="R2", r1_evidence=r1, r1_commit=R1).run())
+            other = r1_evidence(Path(self.tmp.name) / "other", commit="e" * 40)
+            self.assertEqual(64, make_chain(self.evidence, ["r2"], round_name="R2", resume=True, r1_evidence=other,
+                                            r1_commit="e" * 40).run())
+        self.assertIn("a4 was recorded with R1 baseline " + R1, (self.evidence / "accept.log").read_text())
+
+    def test_an_a4_record_older_than_baseline_requested_falls_back_to_baseline_commit(self):
+        put_json(self.evidence / "stages" / "a4.json", {"executionCommit": FINAL, "baselineCommit": R1})
+        with mock.patch.object(acc.r2_gates, "measurement_steps", side_effect=lambda c, quiet: []):
+            self.assertEqual(64, make_chain(self.evidence, ["r2"], resume=True, round_name="R2").run())
+        self.assertIn("a4 was recorded with R1 baseline " + R1, (self.evidence / "accept.log").read_text())
+
     def test_an_r2_run_that_wrote_no_p5_binds_no_baseline(self):
         with mock.patch.object(acc.r2_gates, "measurement_steps", side_effect=lambda c, quiet: []):
             make_chain(self.evidence, ["r2"], round_name="R2", r1_evidence=Path(self.tmp.name), r1_commit="e" * 40).run()
