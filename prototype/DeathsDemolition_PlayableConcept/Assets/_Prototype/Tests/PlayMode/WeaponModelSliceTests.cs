@@ -1752,10 +1752,10 @@ namespace DD.Prototype.Tests.PlayMode
                 // M-21) ejects nothing at the shot — its shells leave when it opens (WeaponFeelSliceTests.Mekanizma_Kirma_sg2_…).
                 bool casing = (Arsenal.Get(d.Id) == null || Arsenal.Get(d.Id).presentation.casing != WeaponCasing.None) &&
                               WeaponMechanismTimeline.For(_s.Config.Weapons.Find(d.Id)).ShotCasings > 0;
-                // WP-087 (C-00 06.10): only THIS shot's casing is measured (ShotSerial). The sr_1 flake ("kovan +X'e uçar" -0.50,
-                // lodfix1) was NOT a stray event (gt 06.10: the port check before it passed — it was the casing): the direction is world at
-                // the event and was read in the mount's frame frames later, after the hold's kick had turned the mount — it is now read in
-                // the mount's frame at the event, like the port position; the message gives both
+                // WP-087 (C-00 06.10): only THIS shot's casing is measured (ShotSerial), and its direction is read in the mount's frame AT
+                // the event, like the port position. The sr_1 flake ("kovan +X'e uçar" -0.50, lodfix1) is NOT explained yet (gt 06.10): the
+                // port check before it passed (it was the casing); a shot-time casing and the old read share the frame, before LateUpdate's
+                // hold / mount. Both readings (event / assertion) are logged on every run to measure it — open, S-02
                 var events = new List<WeaponMechanismEvent>();
                 var portAtEvent = new List<Vector3>();
                 var dirInMountAtEvent = new List<Vector3>();
@@ -1781,6 +1781,7 @@ namespace DD.Prototype.Tests.PlayMode
                     string trace = " [olaylar " + string.Join(", ", seen) + "; atış #" + shot + "]";
                     Assert.Less(Vector3.Distance(events[k].Position, portAtEvent[k]), 0.01f, d.RosterKey + ": kovan slotu port konumunda değil (" + Vector3.Distance(events[k].Position, portAtEvent[k]).ToString("0.000") + " m)." + trace);
                     Vector3 atEvent = dirInMountAtEvent[k], atAssert = mount.InverseTransformDirection(events[k].Direction);
+                    Debug.Log("[DD-TEST] wp087.casingdir " + d.RosterKey + " mount-x at event " + atEvent.x.ToString("0.00") + ", at assertion " + atAssert.x.ToString("0.00") + trace);
                     Assert.Greater(Vector3.Dot(atEvent, Vector3.right), 0.7f, d.RosterKey + ": kovan +X'e uçar (montaj çerçevesinde olay anında x " +
                         atEvent.x.ToString("0.00") + ", iddia anında x " + atAssert.x.ToString("0.00") + ")." + trace);
                 }

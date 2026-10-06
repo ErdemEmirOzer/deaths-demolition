@@ -256,7 +256,8 @@ namespace DD.Prototype.Tests.PlayMode
         public IEnumerator Mekanizma_C_KovanPumpta_FisekUcKez_HalkaDeseniGercekAtista()
         {
             // WP-087 (C-00 06.10): game frames of 1/60 — the clip's chamber and the runtime's reload end are timed against the game
-            // clock, and a real batch frame of up to 333 ms could swallow the 31 ms between them (measured, pumpdiag-1)
+            // clock, and a real batch frame of up to 333 ms could swallow the ~118 ms of game time between them (pumpdiag-1; its
+            // trace rounds it to 31 ms because the frame f138→f139 itself lasted 334 ms)
             _dt0 = Time.captureDeltaTime;
             Time.captureDeltaTime = 1f / 60f;
             yield return Kur();
@@ -286,8 +287,8 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.Greater(reload, 1f);
             yield return BekleOyun(() => !_s.Controller.Classic.IsReloading, reload + 1f, "reload biter");
             // WP-087 (C-00 06.10, WeaponFeelSliceTests flake root cause): the reload ends in a frame's Update and this coroutine resumes
-            // right after it, before that frame's Animator events — the clip's chamber can share the frame (it runs 31 ms before
-            // the end); one frame later every event of the ending frame has been delivered
+            // right after it, before that frame's Animator events — the clip's chamber can share the frame (it runs ~118 ms of
+            // game time before the end); one frame later every event of the ending frame has been delivered
             yield return null;
             Assert.AreEqual(0, Count(WeaponMechanismKind.MagazineDropped), "C: şarjör düşmez (fişek)");
             // R1-B W7 (C-00 30.09): the clip carries its three mag_in marks; the timer fallback seats the shells actually loaded
