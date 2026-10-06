@@ -1261,7 +1261,18 @@ class Inspector:
             entry = bound.get(gate["id"]) if isinstance(bound.get(gate["id"]), dict) else {}
             measure = self.obj(entry["measure"])[1] if isinstance(entry.get("measure"), dict) else None
             review = self.obj(entry["review"])[1] if isinstance(entry.get("review"), dict) else None
-            rows.append(R2.evaluate_gate(gate, self.commit, measure=measure, review=review, cases=cases))
+            row = R2.evaluate_gate(gate, self.commit, measure=measure, review=review, cases=cases)
+            # KADRO game-test-engineer SHOULD-6 / S-08 06.10: a quiet gate measured on a busy host is KİRLİ — a note, never
+            # its status (the owner's own quality gates decide the value); a quiet gate with no host record says so too
+            host = self.obj(entry["host"])[1] if isinstance(entry.get("host"), dict) else None
+            if isinstance(host, dict):
+                row["host"] = {k: host.get(k) for k in ("quietAtStart", "waitedSeconds", "samples", "load1Max", "foreignPlayerMax",
+                                                        "foreignUnityMax", "dirty")}
+                if host.get("dirty") is not False:
+                    row["note"] = "KİRLİ: " + ("; ".join(str(w) for w in host.get("dirtyWhy") or []) or "host record not clean")
+            elif measure is not None and (gate.get("measuredBy") or {}).get("quiet") is True:
+                row["note"] = "KİRLİ: no host record bound for this quiet measurement"
+            rows.append(row)
         return rows
 
 
@@ -1393,6 +1404,8 @@ def main(argv=None):
         result = generate_report(manifest, args.evidence_root)
         text = ["WP-078 " + result["status"] + " " + str(result["commit"])]
         text += [name + " " + row["status"] + " owner=" + row["owner"] for name, row in result["checklist"].items()]
+        r2_rows = (result["checklist"].get("R2") or {}).get("gates") or []
+        text += ["R2." + g["id"] + " " + g["note"] for g in r2_rows if isinstance(g, dict) and g.get("note")]
         with (out / "wp078-report.json").open("x", encoding="utf-8") as handle:
             handle.write(json.dumps(result, indent=2, allow_nan=False) + "\n")
         with (out / "wp078-report.txt").open("x", encoding="utf-8") as handle:

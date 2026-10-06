@@ -45,7 +45,16 @@ name is not in any bound XML the gate is BLOCKED; any other result is FAIL.
 "env": {"NAME": "value"}}`; `env` optional: the owner's own switches such as `DD_KIT_WEAPONS`, never `DD_R2_*`)
 (an `env` value may use the one placeholder `{KPROJ}`, the KADRO project root the chain fills in from
 `tools/dd_paths.py` — never a machine path in the contract) tells `wp078_accept --round R2` to run that test in its own guarded session: stage `r2` (after A3) for `quiet: false`,
-stage `r2q` (in the quiet window after A4) for `quiet: true`. Gates sharing one filter and env share one session.
+stage `r2q` (after A4, B9 and Z3) for `quiet: true`. Gates sharing one filter and env share one session.
+**What `quiet: true` holds in r2q** (KADRO game-test-engineer SHOULD-6; S-08 06.10, measured): r2q cannot take every Unity
+slot, because its own Unity needs one. Its PlayMode guard snapshot already holds the player slot, so a guarded foreign
+Player waits for it. Before each quiet session the chain waits at most 30 min for load1 < 6 with no foreign Player. While
+the session runs, it samples load1 and the foreign Unity / Player / Blender processes every 5 s. The record is
+`<E>/r2/<step>/host.json` plus `host-samples.tsv`, bound with the session and with each gate it measured. A session that
+did not start quiet, or had a foreign Player beside it, still runs and is recorded `dirty`. The report shows **KİRLİ** on
+those gates, as a note, never as their status. The owner's own quality gates decide the value: S1/S2's pile-up check
+re-takes, then fails the test, so load never writes a wrong value; S4 has no dropped samples at load1 ~105. A quiet gate
+measured with no host record says so too.
 An `[Explicit]` test runs only when the filter names it in full (S-02 05.10): give its full name, never a class regex. A gate without
 `measuredBy` gets its artifact from the owner's own run into `<E>/r2/`. H4 is split (C-00 05.10): H4 = weapon yaw/roll
 table (S-02), H4a = FP arm keys (S-06), same thresholds.

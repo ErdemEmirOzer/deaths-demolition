@@ -853,6 +853,37 @@ class R2RoundTests(Fixture):
         self.assertEqual('FAIL', rows['S1']['status'])
         self.assertEqual('FAIL', r['checklist']['R2']['status'])
 
+    def test_a_quiet_gate_on_a_busy_host_keeps_its_status_and_says_kirli(self):
+        # KADRO game-test-engineer SHOULD-6 / S-08 06.10: KİRLİ is a note; the owner's quality gates decide the value
+        self.m['round'] = 'R2'
+        values = {'openRt60MinS': 0.6, 'openRt60MaxS': 1.0, 'corridorRt60MinS': 0.9, 'corridorRt60MaxS': 1.6,
+                  'hallRt60MinS': 1.3, 'hallRt60MaxS': 2.2, 'orderViolations': 0}
+        s4 = self.f.put_json({'schema': 'dd-r2-measure-v1', 'gate': 'S4', 'commit': FINAL, 'values': values}, 'r2-S4.json')
+        dirty = self.f.put_json({'schema': 'dd-r2-host-v1', 'quietAtStart': False, 'samples': 9, 'load1Max': 12.0,
+                                 'foreignPlayerMax': 0, 'dirty': True, 'dirtyWhy': ['start not quiet after 1800 s: load1 12.00']},
+                                'host-dirty.json')
+        clean = self.f.put_json({'schema': 'dd-r2-host-v1', 'quietAtStart': True, 'samples': 9, 'dirty': False, 'dirtyWhy': []},
+                                'host-clean.json')
+        rows = {}
+        for name, entry in (('none', {'measure': s4}), ('dirty', {'measure': s4, 'host': dirty}),
+                            ('clean', {'measure': s4, 'host': clean})):
+            self.m['checklist']['R2'] = {'gates': {'S4': entry}}
+            self.f.anchor(self.m)
+            rows[name] = {g['id']: g for g in self.result()['checklist']['R2']['gates']}['S4']
+        self.assertEqual(['PASS'] * 3, [rows[n]['status'] for n in ('none', 'dirty', 'clean')])
+        self.assertEqual('KİRLİ: start not quiet after 1800 s: load1 12.00', rows['dirty']['note'])
+        self.assertEqual((True, 12.0), (rows['dirty']['host']['dirty'], rows['dirty']['host']['load1Max']))
+        self.assertNotIn('note', rows['clean'])
+        self.assertEqual('KİRLİ: no host record bound for this quiet measurement', rows['none']['note'])
+        # the text report names it too
+        self.m['checklist']['R2'] = {'gates': {'S4': {'measure': s4, 'host': dirty}}}
+        self.f.anchor(self.m)
+        manifest = Path(self.temp.name) / 'manifest-kirli.json'
+        manifest.write_text(json.dumps(self.m))
+        out = Path(self.temp.name) / 'report-kirli'
+        self.module.main(['--manifest', str(manifest), '--evidence-root', str(self.root), '--out', str(out)])
+        self.assertIn('R2.S4 KİRLİ: start not quiet after 1800 s: load1 12.00', (out / 'wp078-report.txt').read_text().splitlines())
+
     def test_tampered_measurement_is_refused(self):
         self.m['round'] = 'R2'
         ref = self.f.put_json({'schema': 'dd-r2-measure-v1', 'gate': 'L1', 'commit': FINAL, 'values': {'avg': 0.03, 'p95': 0.07}}, 'r2-L1.json')

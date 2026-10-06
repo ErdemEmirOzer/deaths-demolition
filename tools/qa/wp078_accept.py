@@ -84,6 +84,9 @@ CI_CATEGORY = "!^Diagnostics$"
 OWNER_SWITCHES = ("DD_HOLD_IK", "DD_EDC_WEAPONS")
 PLAYMODE_TIMEOUT_MIN = 90   # A1 full PlayMode watchdog (test.sh default 45 min; main-ci uses 60)
 ISOLATED_TIMEOUT_MIN = 10   # one isolated test in its own session (main-ci --alone-timeout default)
+# KADRO game-test-engineer SHOULD-6 + S-08 06.10 (measured): a quiet r2q session starts below this load1 with no foreign
+# Player, waits for that at most HOST_WAIT_MAX, and the host is sampled every HOST_INTERVAL seconds while it runs
+HOST_LOAD_MAX, HOST_WAIT_MAX, HOST_INTERVAL = 6.0, 1800.0, 5.0
 
 
 def _ci_isolated():
@@ -305,6 +308,86 @@ def bot_done(run_dir, kind):
             and attempt.get("timedOut") is False and attempt.get("missingArtifacts") == [])
 
 
+class HostWatch:
+    """KADRO game-test-engineer SHOULD-6, S-08 06.10: what "quiet" means for an r2q session, measured, never held.
+    r2q cannot take every Unity slot (its own Unity needs one); its PlayMode guard snapshot already holds the player slot,
+    so a guarded foreign Player waits for it. Before the session: load1 < HOST_LOAD_MAX and no foreign Player, waited for
+    at most HOST_WAIT_MAX; during it: load1 and the foreign Unity / Player / Blender processes (not this chain's own
+    descendants) every HOST_INTERVAL s. A host that was not quiet is recorded (dirty), never a reason to skip — S1/S2's
+    pile-up gate and S4's dropped-sample assert decide the value (S-08: S4 holds at load1 ~105); the report says KİRLİ."""
+
+    def __init__(self, load_max=HOST_LOAD_MAX, wait_max=HOST_WAIT_MAX, interval=HOST_INTERVAL, sleep=time.sleep):
+        self.load_max, self.wait_max, self.interval, self.sleep = load_max, wait_max, interval, sleep
+        self._samples, self._stop, self._thread = [], None, None
+
+    def state(self):
+        """{load1, foreignUnity, foreignPlayer, foreignBlender} now; the chain's own descendants are not foreign."""
+        rows = []
+        for line in subprocess.run(["ps", "-Ao", "pid=,ppid=,comm="], capture_output=True, text=True).stdout.splitlines():
+            parts = line.split(None, 2)
+            if len(parts) == 3 and parts[0].isdigit() and parts[1].isdigit():
+                rows.append((int(parts[0]), int(parts[1]), parts[2].strip()))
+        ours, grew = {os.getpid()}, True
+        while grew:
+            grew = False
+            for pid, ppid, _ in rows:
+                if ppid in ours and pid not in ours:
+                    ours.add(pid)
+                    grew = True
+        foreign = [comm for pid, _, comm in rows if pid not in ours]
+        load = float(subprocess.run(["sysctl", "-n", "vm.loadavg"], capture_output=True, text=True).stdout.split()[1])
+        return {"load1": load, "foreignUnity": sum(c.endswith("/MacOS/Unity") for c in foreign),
+                "foreignPlayer": sum(c.endswith(wp078_perf.PLAYER_EXE) for c in foreign),
+                "foreignBlender": sum(c.endswith("/MacOS/Blender") for c in foreign)}
+
+    def quiet(self, s):
+        return s["load1"] < self.load_max and s["foreignPlayer"] == 0
+
+    def wait_quiet(self):
+        """(start sample, quiet, waited seconds)."""
+        waited = 0.0
+        while True:
+            s = self.state()
+            if self.quiet(s) or waited >= self.wait_max:
+                return s, self.quiet(s), waited
+            self.sleep(15.0)
+            waited += 15.0
+
+    def start(self):
+        import threading
+        self._samples, self._stop = [], threading.Event()
+
+        def run():
+            t0 = time.monotonic()
+            while not self._stop.is_set():
+                self._samples.append(dict(self.state(), t=round(time.monotonic() - t0, 1)))
+                self._stop.wait(self.interval)
+        self._thread = threading.Thread(target=run, daemon=True)
+        self._thread.start()
+
+    def stop(self):
+        if self._thread is not None:
+            self._stop.set()
+            self._thread.join()
+            self._thread = None
+        return list(self._samples)
+
+
+def host_record(step, start, quiet, waited, samples, load_max):
+    """<E>/r2/<step>/host.json — dirty when the session did not start quiet or a foreign Player ran during it."""
+    why = []
+    if not quiet:
+        why.append(f"start not quiet after {waited:.0f} s: load1 {start['load1']:.2f}, foreign Player {start['foreignPlayer']}")
+    players = max([s["foreignPlayer"] for s in samples] or [0])
+    if players:
+        why.append(f"a foreign Player ran during the session (max {players})")
+    return {"schema": "dd-r2-host-v1", "step": step["id"], "gates": step["gates"], "loadMax": load_max,
+            "waitedSeconds": waited, "quietAtStart": quiet, "start": start, "samples": len(samples),
+            "load1Max": max([s["load1"] for s in samples] or [start["load1"]]),
+            "foreignUnityMax": max([s["foreignUnity"] for s in samples] or [0]), "foreignPlayerMax": players,
+            "foreignBlenderMax": max([s["foreignBlender"] for s in samples] or [0]), "dirty": bool(why), "dirtyWhy": why}
+
+
 class EditorGuard:
     """guard_receipt: snapshot → run → (finally) restore + verdict. Scope "editor" by default; a PlayMode unit passes
     "player" so the snapshot holds the player slot before the Unity slot (C-00 30.09 lock order player → unity)."""
@@ -348,7 +431,7 @@ def load_b9_poses(path):
 class Chain:
     def __init__(self, final, evidence, stages, dry_run=False, resume=False, editmode_filter="", playmode_filter="",
                  wait_tries=3, wait_seconds=120.0, git=None, runner=None, guard=None, out=print, python=sys.executable,
-                 b9_poses=None, round_name="R1", r1_evidence=None, r1_commit=None, b9_poses_path=None, lint=None):
+                 b9_poses=None, round_name="R1", r1_evidence=None, r1_commit=None, b9_poses_path=None, lint=None, host=None):
         self.final, self.evidence = final, Path(evidence).resolve()
         self.stages = [s for s in STAGE_ORDER if s in stages]
         self.dry_run, self.resume = dry_run, resume
@@ -364,6 +447,7 @@ class Chain:
         self._r1_proof = None                  # WP-091 P2: the R1 build's proof, taken once before any window (False = failed)
         self.b9_poses_path = b9_poses_path     # the pose list file, for r2_z3.py's P3
         self.lint = lint or (lambda repo: r2_gates_lint.run(repo)[0])   # seam: [r2_gates_lint.Finding]
+        self.host = host or HostWatch()   # seam: the r2q host check (SHOULD-6)
         self.child, self.terminated = None, False
         self.planned = []          # (stage, argv) — the dry-run command list
         self.verdicts = {}
@@ -651,9 +735,8 @@ class Chain:
             self.planned.append((self.stage, [guard, "restore", str(ug), "--scope", scope]))
             return None
         if self.resume:
-            record = load_json(record_path)
-            if (isinstance(record, dict) and record.get("executionCommit") == self.final and record.get("status") == "complete"
-                    and guard_ok(record.get("guard")) and map_verifies(record_path.parent, record.get("artifactSha256"))):
+            record = self.reusable_unit(record_path)
+            if record is not None:
                 self.log(f"SKIP {name}: verified complete unit record")
                 return self.unit_result(name, record_path, record)
             if out_dir.exists():
@@ -681,6 +764,14 @@ class Chain:
         if receipt.get("code") != 0:
             raise Stop(STOP, f"{name}: Editor guard restore/verdict failed ({receipt.get('why')}); user data NOT confirmed restored")
         return self.unit_result(name, record_path, record)
+
+    def reusable_unit(self, record_path):
+        """The unit record a resumed run reuses (verified complete for this FINAL, guard restored), or None."""
+        record = load_json(record_path) if self.resume else None
+        if (isinstance(record, dict) and record.get("executionCommit") == self.final and record.get("status") == "complete"
+                and guard_ok(record.get("guard")) and map_verifies(record_path.parent, record.get("artifactSha256"))):
+            return record
+        return None
 
     def unit_result(self, name, record_path, record):
         files = [record_path] + [record_path.parent / rel for rel in record.get("artifactSha256", {})]
@@ -1086,11 +1177,36 @@ class Chain:
                 argv += ["--timeout-min", str(ISOLATED_TIMEOUT_MIN * 3)]
             if not self.dry_run:
                 measure_dir.mkdir(parents=True, exist_ok=True)
-            result = self.editor_unit(f"{stage}-{step['id']}", [argv], out,
-                                      lambda out=out, step=step: [out / f"{step['suite']}.xml", out / f"{step['suite']}.log"]
-                                      + [measure_dir / f"r2-{g}.json" for g in step["gates"]],
-                                      lambda step=step: {"r2Gates": step["gates"], "filter": step["filter"], "env": step.get("env", {}), "quiet": step["quiet"]},
-                                      scope="player" if step["suite"] == "playmode" else "editor")
+            name = f"{stage}-{step['id']}"
+            # SHOULD-6: a quiet session waits for a quiet host and is sampled while it runs (a reused unit is not run again)
+            watch = quiet and not self.dry_run and self.reusable_unit(self.unit_record(name)) is None
+            if quiet and self.dry_run:
+                self.out(f"DRY r2q: host check before {name} (load1 < {self.host.load_max}, no foreign Player, ≤ "
+                         f"{self.host.wait_max:.0f} s) + a sample every {self.host.interval:.0f} s → {out}/host.json")
+            if watch:
+                start, calm, waited = self.host.wait_quiet()
+                self.log(f"HOST {name}: {'quiet' if calm else 'NOT quiet'} at start after {waited:.0f} s — load1 "
+                         f"{start['load1']:.2f}, foreign Player {start['foreignPlayer']}, foreign Unity {start['foreignUnity']}")
+                self.host.start()
+            try:
+                result = self.editor_unit(name, [argv], out,
+                                          lambda out=out, step=step: [out / f"{step['suite']}.xml", out / f"{step['suite']}.log"]
+                                          + [measure_dir / f"r2-{g}.json" for g in step["gates"]],
+                                          lambda step=step: {"r2Gates": step["gates"], "filter": step["filter"], "env": step.get("env", {}), "quiet": step["quiet"]},
+                                          scope="player" if step["suite"] == "playmode" else "editor")
+            finally:
+                samples = self.host.stop() if watch else None
+            if watch:
+                host = host_record(step, start, calm, waited, samples, self.host.load_max)
+                out.mkdir(parents=True, exist_ok=True)
+                write_json(out / "host.json", host)
+                keys = ("t", "load1", "foreignUnity", "foreignPlayer", "foreignBlender")
+                (out / "host-samples.tsv").write_text("\t".join(keys) + "\n" + "".join(
+                    "\t".join(str(s.get(k)) for k in keys) + "\n" for s in samples), encoding="utf-8")
+                self.log(f"KİRLİ {name}: " + "; ".join(host["dirtyWhy"]) if host["dirty"] else
+                         f"HOST {name}: quiet — {host['samples']} samples, load1 max {host['load1Max']:.2f}")
+            if result and quiet and (out / "host.json").is_file():
+                result = dict(result, files=list(result["files"]) + [out / "host.json", out / "host-samples.tsv"])
             if result:
                 results.append(dict(result, gate=False))
         p5 = self.r2_load_time(measure_dir) if not quiet else None
@@ -1247,10 +1363,16 @@ def r2_section(evidence):
     gate without an artifact is simply absent here and BLOCKED in the report."""
     contract = json.loads((HERE / "r2-gates.json").read_text(encoding="utf-8"))
     gates = {}
+    # SHOULD-6: a quiet session's host record (<E>/r2/<step>/host.json) goes with each gate it measured
+    hosts = {g: evidence / "r2" / step["id"] / "host.json"
+             for step in r2_gates.measurement_steps(r2_gates.load_contract(json.dumps(contract)), True) for g in step["gates"]}
     for gate in contract["gates"]:
         entry = {"measure": ref(evidence, evidence / "r2" / f"r2-{gate['id']}.json"),
                  "review": ref(evidence, evidence / "r2" / "reviews" / f"{gate['id']}.json")}
         if any(entry.values()):
+            host = ref(evidence, hosts[gate["id"]]) if gate["id"] in hosts else None
+            if host:
+                entry["host"] = host
             gates[gate["id"]] = entry
     xml_paths = [evidence / "a1" / "editmode" / "editmode.xml", evidence / "a1" / "playmode" / "playmode.xml"]
     for base in (evidence / "a1", evidence / "a3", evidence / "r2"):

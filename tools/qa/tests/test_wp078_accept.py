@@ -300,8 +300,31 @@ def tearDownModule():
         _PERF["tmp"].cleanup()
 
 
+class FakeHost:
+    """SHOULD-6 seam: the r2q host check without ps / sysctl; quiet unless told otherwise."""
+    load_max, wait_max, interval = 6.0, 1800.0, 5.0
+
+    def __init__(self, start=None, quiet=True, waited=0.0, samples=None):
+        self.start_sample = start or {"load1": 1.5, "foreignUnity": 0, "foreignPlayer": 0, "foreignBlender": 0}
+        self.calm, self.waited = quiet, waited
+        self.samples = samples if samples is not None else [dict(self.start_sample, t=0.0)]
+        self.events = []
+
+    def wait_quiet(self):
+        self.events.append("wait")
+        return self.start_sample, self.calm, self.waited
+
+    def start(self):
+        self.events.append("start")
+
+    def stop(self):
+        self.events.append("stop")
+        return list(self.samples)
+
+
 def make_chain(evidence, stages=acc.STAGE_ORDER, tools=None, guard=None, git=None, **kw):
     kw.setdefault("lint", lambda repo: [])   # hermetic: the R2 lint pre-step reads this tree's own contract otherwise
+    kw.setdefault("host", FakeHost())        # hermetic: the r2q host check reads this machine's load otherwise
     lines = []
     chain = acc.Chain(FINAL, evidence, list(stages), git=git or FakeGit(), runner=tools or FakeTools(), guard=guard or FakeGuard(),
                       out=lines.append, wait_seconds=0, **kw)
@@ -818,6 +841,47 @@ def r2_gates_lint_finding(level, code, gate):
     return acc.r2_gates_lint.Finding(level, code, gate, "test finding")
 
 
+class HostWatchTests(unittest.TestCase):
+    """SHOULD-6: the host state counts only foreign processes; the wait gives up after wait_max (no real ps / sysctl)."""
+
+    def ps(self, rows, load="{ 7.50 6.00 5.00 }"):
+        me = os.getpid()
+        table = "\n".join(f"{pid} {ppid} {comm}" for pid, ppid, comm in rows(me))
+
+        def run(argv, **kw):
+            return SimpleNamespace(stdout=table if argv[0] == "ps" else load, returncode=0)
+        return run
+
+    def test_the_chains_own_unity_is_not_foreign(self):
+        rows = lambda me: [(me, 1, "python3"), (900001, me, "/bin/bash"),
+                           (900002, 900001, "/Applications/Unity/Hub/Editor/2022.3.22f1/Unity.app/Contents/MacOS/Unity"),
+                           (900003, 1, "/Applications/Unity/Hub/Editor/2022.3.22f1/Unity.app/Contents/MacOS/Unity"),
+                           (900004, 1, "/x/DD.app/Contents/MacOS/Deaths Demolition - Playable Concept"),
+                           (900005, 1, "/Applications/Blender.app/Contents/MacOS/Blender")]
+        with mock.patch.object(acc.subprocess, "run", side_effect=self.ps(rows)):
+            state = acc.HostWatch().state()
+        self.assertEqual({"load1": 7.5, "foreignUnity": 1, "foreignPlayer": 1, "foreignBlender": 1}, state)
+
+    def test_the_wait_ends_quiet_or_after_wait_max(self):
+        states = iter([{"load1": 9.0, "foreignPlayer": 0}, {"load1": 5.0, "foreignPlayer": 1}, {"load1": 5.9, "foreignPlayer": 0}])
+        watch = acc.HostWatch(wait_max=1800.0, sleep=lambda s: None)
+        watch.state = lambda: next(states)
+        self.assertEqual(({"load1": 5.9, "foreignPlayer": 0}, True, 30.0), watch.wait_quiet())
+        self.assertFalse(watch.quiet({"load1": 6.0, "foreignPlayer": 0}))   # S-08: load1 below 6, not at it
+        watch = acc.HostWatch(wait_max=30.0, sleep=lambda s: None)
+        watch.state = lambda: {"load1": 9.0, "foreignPlayer": 0}
+        self.assertEqual(({"load1": 9.0, "foreignPlayer": 0}, False, 30.0), watch.wait_quiet())
+
+    def test_the_sampler_runs_until_stopped(self):
+        watch = acc.HostWatch(interval=0.01)
+        watch.state = lambda: {"load1": 1.0, "foreignUnity": 0, "foreignPlayer": 0, "foreignBlender": 0}
+        watch.start()
+        time.sleep(0.1)
+        samples = watch.stop()
+        self.assertGreaterEqual(len(samples), 2)
+        self.assertEqual(samples, watch.stop())   # stopping twice is harmless
+
+
 class R2StageTests(Base):
     """WP-091: the owners' measurement sessions run with DD_R2_MEASURE_DIR / DD_R2_COMMIT; quiet ones only in r2q."""
     STEPS = {False: [{"id": "r2-L1", "suite": "playmode", "filter": "LocomotionR2Tests", "quiet": False, "gates": ["L1", "L2"]},
@@ -920,6 +984,69 @@ class R2StageTests(Base):
 
     def test_quiet_sessions_only_in_r2q(self):
         self.assertEqual(["AudioR2Dense40"], [self.opt(a, "--filter") for a in self.planned_r2(["r2q"], "R2")])
+
+    def quiet_run(self, host, stages=("r2q",), resume=False, tools=None):
+        with mock.patch.object(acc.r2_gates, "measurement_steps", side_effect=lambda c, quiet: self.STEPS[quiet]):
+            chain = make_chain(self.evidence, list(stages), tools=tools or FakeTools(), round_name="R2", host=host, resume=resume)
+            chain.run()
+        return chain
+
+    def test_a_quiet_session_waits_for_a_quiet_host_and_is_sampled_while_it_runs(self):
+        # KADRO game-test-engineer SHOULD-6 / S-08 06.10: r2q's quiet is measured and recorded, not assumed
+        host, tools = FakeHost(), FakeTools()
+        self.quiet_run(host, tools=tools)
+        self.assertEqual(["wait", "start", "stop"], host.events)
+        record = json.loads((self.evidence / "r2" / "r2-S3" / "host.json").read_text())
+        self.assertEqual(("r2-S3", ["S3"], True, False, [], 1, 6.0),
+                         (record["step"], record["gates"], record["quietAtStart"], record["dirty"], record["dirtyWhy"],
+                          record["samples"], record["loadMax"]))
+        self.assertEqual("t\tload1\tforeignUnity\tforeignPlayer\tforeignBlender",
+                         (self.evidence / "r2" / "r2-S3" / "host-samples.tsv").read_text().splitlines()[0])
+        bound = json.loads((self.evidence / "stages" / "r2q.json").read_text())["artifactSha256"]
+        self.assertIn("../r2/r2-S3/host.json", bound)
+        self.assertIn("../r2/r2-S3/host-samples.tsv", bound)
+        self.assertIn("HOST r2q-r2-S3: quiet at start", (self.evidence / "accept.log").read_text())
+
+    def test_a_busy_host_is_recorded_kirli_and_the_session_still_runs(self):
+        busy = {"load1": 12.0, "foreignUnity": 1, "foreignPlayer": 0, "foreignBlender": 0}
+        host = FakeHost(start=busy, quiet=False, waited=1800.0, samples=[dict(busy, t=0.0), dict(busy, foreignPlayer=1, t=5.0)])
+        tools = FakeTools()
+        self.quiet_run(host, tools=tools)
+        self.assertTrue(any("AudioR2Dense40" in map(str, c) for c in tools.calls))   # never skipped: the owner's gates decide
+        record = json.loads((self.evidence / "r2" / "r2-S3" / "host.json").read_text())
+        self.assertEqual((False, True, 1, 12.0), (record["quietAtStart"], record["dirty"], record["foreignPlayerMax"], record["load1Max"]))
+        self.assertEqual(["start not quiet after 1800 s: load1 12.00, foreign Player 0",
+                          "a foreign Player ran during the session (max 1)"], record["dirtyWhy"])
+        self.assertIn("KİRLİ r2q-r2-S3: start not quiet", (self.evidence / "accept.log").read_text())
+
+    def test_the_non_quiet_stage_never_waits(self):
+        host = FakeHost()
+        self.quiet_run(host, stages=("r2",))
+        self.assertEqual([], host.events)
+        self.assertFalse(list((self.evidence / "r2").rglob("host.json")))
+
+    def test_a_dry_run_only_plans_the_host_check(self):
+        with mock.patch.object(acc.r2_gates, "measurement_steps", side_effect=lambda c, quiet: self.STEPS[quiet]):
+            chain = self.dry(["r2q"], round_name="R2")
+        self.assertTrue(any("DRY r2q: host check before r2q-r2-S3 (load1 < 6.0, no foreign Player, ≤ 1800 s)" in line
+                            for line in chain.lines), chain.lines)
+
+    def test_a_reused_session_is_not_watched_again_and_keeps_its_host_record(self):
+        self.quiet_run(FakeHost())
+        again = FakeHost()
+        self.quiet_run(again, resume=True)
+        self.assertEqual([], again.events)
+        bound = json.loads((self.evidence / "stages" / "r2q.json").read_text())["artifactSha256"]
+        self.assertIn("../r2/r2-S3/host.json", bound)
+
+    def test_the_manifest_binds_each_quiet_gates_host_record(self):
+        put_json(self.evidence / "r2" / "r2-S1.json", {"gate": "S1"})
+        put_json(self.evidence / "r2" / "r2-S1" / "host.json", {"dirty": False})
+        put_json(self.evidence / "r2" / "r2-L1.json", {"gate": "L1"})
+        section = acc.r2_section(self.evidence)
+        self.assertEqual("r2/r2-S1/host.json", section["gates"]["S1"]["host"]["path"])
+        self.assertNotIn("host", section["gates"]["L1"])
+        self.assertNotIn("S2", section["gates"])   # a host record alone binds nothing
 
     def test_an_r1_round_runs_no_measurement_session(self):
         self.assertEqual([], self.planned_r2(["r2", "r2q"], "R1"))
