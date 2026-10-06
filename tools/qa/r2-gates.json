@@ -28,6 +28,7 @@
      "checks": [{"key": "yawRollExcessDegMax", "op": "<=", "limit": 1.0}],
      "measuredBy": {"suite": "playmode", "filter": "DD.Prototype.Tests.PlayMode.WeaponModelSliceTests.FP_NamluKalkisi_Tablo_HerSilah", "quiet": false}},
     {"id": "H4a", "area": "hero", "kind": "gate", "owner": "S-06", "title": "FP arms in frame (C-00 05.10: split from H4, thresholds unchanged), measured with the FP arms on (C-00 06.10: the only mode where they are visible; off on the default path) over the armed weapons' rest frames",
+     "tests": ["DD.Art.Tests.PlayMode.AnimationTests.FpKollar_Kadraj_KolPayi10_KameraMesafesi15_ElSilahta"],
      "checks": [{"key": "armOffscreenFrames", "op": "==", "limit": 0}, {"key": "armInCameraFrames", "op": "==", "limit": 0}],
      "measuredBy": {"suite": "playmode", "filter": "DD.Art.Tests.PlayMode.AnimationTests.FpKollar_Kadraj_KolPayi10_KameraMesafesi15_ElSilahta", "quiet": false}},
     {"id": "H4b", "area": "hero", "kind": "gate", "owner": "S-02", "title": "fire leak in the key window after frame 4",

@@ -73,6 +73,8 @@ class MeasuredByTests(unittest.TestCase):
         self.assertEqual("S-06", gate("H4a")["owner"])
         self.assertEqual({"suite": "playmode", "filter": "DD.Art.Tests.PlayMode.AnimationTests.FpKollar_Kadraj_KolPayi10_KameraMesafesi15_ElSilahta", "quiet": False},
                          gate("H4a")["measuredBy"])   # S-06's writer, WP-083 R2 6711f57f (FP arms on)
+        # C-00 06.10: H4a also requires its writer to pass (a failed or missing case is FAIL / BLOCKED, as H4)
+        self.assertEqual([gate("H4a")["measuredBy"]["filter"]], gate("H4a")["tests"])
 
     def contract(self, **by_gate):
         data = json.loads(CONTRACT)
