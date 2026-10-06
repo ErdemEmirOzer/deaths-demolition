@@ -66,8 +66,9 @@ definition's grip point, `mount.TransformPoint(GripOffset)` — the point Weapon
 AP-021's `marker_grip`, which is the model origin (trigger root, ADR-042-1). Grip decision B (25.09) puts the hand behind
 and under the trigger on the measured mid-grip; the offsets are checked against the model by
 `Ap021ClassicModelGateTests.Ap021Klasik_GripOffset_Lod0TutamakBolgesinde` (LOD0 grip region centre <= 1 cm, >= 50
-vertices). The left hand is measured from its palm contact point — not the wrist — to `grip_l` / hands_in_weapon_frame,
-which the weapon authors as that palm contact point (C-00 06.10 definition fix; 1 cm unchanged). The gate is the default player path: an optional switch (e.g.
+vertices). The left hand is measured from its palm contact point — not the wrist — to its target K, on the gripped
+element's surface at the station of `grip_l` / hands_in_weapon_frame, which the weapon authors as that palm contact point
+(`WeaponGripIk.LastError` = |palm − K|; C-00 06.10 definition fix; 1 cm unchanged). The gate is the default player path: an optional switch (e.g.
 `DD_HOLD_IK=1`) is evidence for a fix, not the gate value.
 
 **Elbow** (report): `R2HeroOlcumTests.H1_ElTutamak_TumKlasikSilahlar_DurusYuruyus` writes `elbowMaxDeg` next to `maxCm`: the left (support) arm's
@@ -79,15 +80,32 @@ on 121–153°, rl_1 the largest — the 167° / 161° of its first table were t
 ## H1b (support-hand grasp — C-00 06.10)
 
 Over every classic weapon with a foregrip (rl_1's front grip included), stance and walk, the frames where the grip IK carries
-full weight: `palmToWeaponMaxDeg <= 35` — the worst angle between the left palm normal (from the hand's geometry, its
-sign checked against the thumb) and the direction perpendicular to the axis of the element the hand holds: the barrel
-axis (attach_stock → Muzzle) on a foregrip, the grip's own axis on rl_1's vertical grip; and `fingertipGapMaxCm <= 1.5`
-— the index and middle fingertips to the nearest point of the weapon's LOD0 surface. C-00 06.10 decision on S-06's
-t-b2f3 and t-b2f4-off measurements: the first criterion, palm against the weapon frame's +Y ≤ 30°, read 40° on lmg_2,
-which the AD review calls a good grasp, and meant nothing on rl_1's vertical grip. **35° is provisional:** S-06 derives
-the value from the frames the AD calls good after its fix, and C-00 writes it here. Report
-`weaponsMeasured`, `framesMeasured`; the test writes nothing unless both are above zero (source in the record). The worst
-weapon's name goes to the log, not into the values (plain numbers only). B2e AD MUST-2 (S-06).
+full weight (C-00 06.10 H1b record (a)–(d), on S-06's t-b2f3 and t-b2f4-off measurements):
+
+- `palmToWeaponMaxDeg <= 35` — the worst angle between the left palm normal (from the hand's geometry, its sign checked
+  against the thumb) and the perpendicular from the palm point P to the gripped element's own axis. The axis direction
+  comes from the weapon frame: +Z on a foregrip / handguard, the grip's +Y on rl_1's vertical grip. The axis line runs
+  through the LOD0 section centre at P's station, which the test computes itself, independent of the IK. It is not the
+  barrel line: on C and sg_2 the pump foregrip sits under the barrel, and a barrel line would shift the angle by 20–40°.
+  The first criterion (palm against the weapon frame's +Y ≤ 30°) read 40° on lmg_2, which the AD calls a good grasp, and
+  meant nothing on rl_1.
+- `fingertipGapMaxCm <= 1.5` — the index and middle fingertips to the nearest point of the weapon's LOD0 surface.
+- `palmGapMaxCm <= 1.5` — P to the nearest point of the LOD0 surface (the left-hand counterpart of the right hand's MUST-4).
+
+**The palm threshold is derived, and 35° is provisional:**
+- After S-06's fix, the binding value is the highest palmToWeaponMaxDeg on the frames the AD calls good, + 5°, capped
+  at 30°. C-00 writes it here.
+- If an AD-good frame reads above 30°, or an AD-rejected frame reads below the threshold, C-00 decides.
+- "lmg_2 + margin" was rejected: 45° would pass sg_2 (42°), which the AD rejected.
+
+Report keys (plain numbers):
+- `weaponsMeasured`, `framesMeasured` — the test writes nothing unless both are above zero (source in the record).
+- `wristClampShare` — the share of measured frames the wrist gate clamped, 0–1.
+- `wristMaxDeg` — the largest wrist angle against rest: flexion/extension, deviation or twist.
+- `thetaSwitchCount` — how often the wrap target changes over one weapon's stance + walk, largest over the weapons. The
+  target is 0 at stance and ≤ 1 per walk cycle (co-sign K1); it is a note, not a check.
+
+The worst weapon's name goes to the log, not into the values. B2e AD MUST-2 (S-06).
 
 ## H6 (TP weapon visibility — C-00 06.10)
 
@@ -102,13 +120,15 @@ target texture in batch (no WaitForEndOfFrame). B2e AD MUST-3 (S-06).
 
 Over the frames the grip IK carries full weight, every classic, stance and walk, worst frame: `elbowMaxDeg <= 165` — the
 left elbow's interior angle at LeftLowerArm between the upper arm and the forearm (180 = straight), the measure H1 already
-reports; and `reachMarginMinCm >= 1` — the arm's spare reach: its chain length (upper arm + forearm, 29.0 + 25.5 = 54.5 cm
-on today's skeleton and on hero v2, S-02's reach pre-study K/wp-082/evidence/hero-v2-reach/) minus the straight distance
-from the shoulder (LeftUpperArm) to the wrist position the grip IK aims for — the one that puts the palm contact point on
-`grip_l` (H1) — so a target out of reach reads negative. With the IK on its target the two are one geometry: 165° leaves
-about 0.5 cm and 1 cm is about 158°, so the reach check is the tighter one; the elbow check still catches a pose that bends
-the arm straight short of its target. C-00 06.10 decision on S-06's t-b2f4-off. S-06 writes it (R2Olcum.Yaz("H1c", …));
-its measuredBy comes with that test.
+reports; and `reachMarginMinCm >= 1` — the arm's spare reach. It is the upper arm + forearm (bone lengths read from the
+live skeleton, never a constant) minus the straight distance from the shoulder (LeftUpperArm) to the IK's wrist goal W
+(`WeaponGripIk.LastWristGoal`, after the wrist gate: the wrist that puts the palm contact point on its target, H1). A
+target out of reach reads negative. Today's arm is 29.0 + 25.5 = 54.5 cm (S-02's reach pre-study,
+K/wp-082/evidence/hero-v2-reach/); hero v2 may change it. With the IK on its target the two are one geometry: on today's
+arm 165° leaves about 0.5 cm and 1 cm is about 158°, so the reach check binds; the elbow check still catches a pose that
+bends the arm straight short of its target. S-06's own B2f gate is the same (C-00 06.10: its "max(165°, b2f4-off)"
+relaxation is void). C-00 06.10 decision on S-06's t-b2f4-off. S-06 writes it (R2Olcum.Yaz("H1c", …)); its measuredBy
+comes with that test.
 
 ## P3 (B9 poses, report — S-05, C-00 06.10)
 

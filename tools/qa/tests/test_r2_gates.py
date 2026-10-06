@@ -44,6 +44,7 @@ class ContractTests(unittest.TestCase):
                   ("Z1", "silhouetteChange"): 0.30, ("Z1", "deltaVBandMean"): 0.12, ("Z1", "deltaVBandMin"): 0.08,
                   # C-00 06.10 record (S-06 B2e AD MUST-2 / MUST-3)
                   ("H1b", "palmToWeaponMaxDeg"): 35.0, ("H1b", "fingertipGapMaxCm"): 1.5,   # palm: C-00 06.10, 35 PROVISIONAL
+                  ("H1b", "palmGapMaxCm"): 1.5,   # C-00 06.10 H1b record (a)
                   ("H1c", "elbowMaxDeg"): 165.0, ("H1c", "reachMarginMinCm"): 1.0,   # C-00 06.10 (S-06 t-b2f4-off)
                   ("H6", "visibleShareMin"): 0.25, ("H6", "muzzleInsideSilhouetteFrames"): 0}
         for (gid, key), limit in pinned.items():
@@ -158,13 +159,29 @@ class MeasuredByTests(unittest.TestCase):
 
     def test_h1b_and_h6_wait_for_s06s_writers_and_report_plain_numbers(self):
         # C-00 06.10: the rows come first; measuredBy lands with S-06's tests (a measuredBy nobody writes is a lint ERROR)
-        for gid, report in (("H1b", ["weaponsMeasured", "framesMeasured"]), ("H6", ["weaponsMeasured", "secondWorstShare"])):
+        # C-00 06.10 H1b record (b): the wrist and wrap keys are report-only; thetaSwitchCount's target is a note
+        self.assertEqual(["palmToWeaponMaxDeg", "fingertipGapMaxCm", "palmGapMaxCm"], [c["key"] for c in gate("H1b")["checks"]])
+        for gid, report in (("H1b", ["weaponsMeasured", "framesMeasured", "wristClampShare", "wristMaxDeg", "thetaSwitchCount"]),
+                            ("H6", ["weaponsMeasured", "secondWorstShare"])):
             self.assertEqual(("S-06", "gate", report), (gate(gid)["owner"], gate(gid)["kind"], gate(gid)["report"]))
             self.assertNotIn("measuredBy", gate(gid))
         row = r2.evaluate_gate(gate("H6"), FINAL, measure=measure("H6", visibleShareMin=0.21, muzzleInsideSilhouetteFrames=0,
                                                                   weaponsMeasured=10, secondWorstShare=0.33))
         self.assertEqual("FAIL", row["status"])
         self.assertIn("visibleShareMin 0.21 >= 0.25 is false", row["reason"])
+
+    def test_h1b_judges_each_grasp_check_and_never_its_report_keys(self):
+        # C-00 06.10 H1b record (a)/(b): three checks, each failing on its own; the wrist and wrap keys never fail it
+        good = dict(palmToWeaponMaxDeg=28.0, fingertipGapMaxCm=0.8, palmGapMaxCm=0.9, weaponsMeasured=10, framesMeasured=480,
+                    wristClampShare=0.4, wristMaxDeg=70.0, thetaSwitchCount=6)
+        self.assertEqual("PASS", r2.evaluate_gate(gate("H1b"), FINAL, measure=measure("H1b", **good))["status"])
+        for key, value, reason in (("palmToWeaponMaxDeg", 36.0, "palmToWeaponMaxDeg 36.0 <= 35.0 is false"),
+                                   ("fingertipGapMaxCm", 1.6, "fingertipGapMaxCm 1.6 <= 1.5 is false"),
+                                   ("palmGapMaxCm", 1.6, "palmGapMaxCm 1.6 <= 1.5 is false")):
+            with self.subTest(key=key):
+                row = r2.evaluate_gate(gate("H1b"), FINAL, measure=measure("H1b", **dict(good, **{key: value})))
+                self.assertEqual("FAIL", row["status"])
+                self.assertIn(reason, row["reason"])
 
     def test_h1c_gates_the_support_arm_reach_and_waits_for_s06s_writer(self):
         # C-00 06.10 (S-06 t-b2f4-off): H1 keeps reporting the elbow, H1c gates it with the reach margin
