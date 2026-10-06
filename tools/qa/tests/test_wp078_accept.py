@@ -150,10 +150,11 @@ class FakeTools:
         return 0
 
     def tool_env(self, argv, log_path):
-        # WP-091 r2 sessions: /usr/bin/env K=V … tools/test.sh …  → strip the assignments, run the fake test.sh
+        # WP-091 r2 sessions: /usr/bin/env -u NAME … K=V … tools/test.sh …  → strip both, run the fake test.sh
         rest = list(argv[1:])
-        while rest and "=" in rest[0] and not rest[0].startswith("/"):
-            rest.pop(0)
+        while rest and (rest[0] == "-u" or ("=" in rest[0] and not rest[0].startswith("/"))):
+            rest = rest[2:] if rest[0] == "-u" else rest[1:]
+        assert Path(rest[0]).name == "test.sh", rest[:3]   # the session command, never a switch name
         return self.tool_test_sh(rest, log_path)
 
     def tool_test_sh(self, argv, _):
