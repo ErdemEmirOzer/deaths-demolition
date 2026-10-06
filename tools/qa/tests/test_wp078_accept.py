@@ -18,6 +18,7 @@ import tempfile
 import threading
 import time
 import unittest
+from types import SimpleNamespace
 from unittest import mock
 import uuid
 import zlib
@@ -272,6 +273,9 @@ class FakeTools:
             return subprocess.run([sys.executable, str(HERE / "wp078_perf_report.py"), *argv[2:]], capture_output=True).returncode
         return 0
 
+    def tool_r2_z3_py(self, argv, _):   # S-05's writer: the chain only calls it (its own tests are S-05's)
+        return 0
+
     def tool_wp078_report_py(self, argv, _):
         return wp078_report.main(argv[2:])
 
@@ -500,7 +504,7 @@ class B9PoseTests(Base):
              {"name": "plaza-n", "start": "0,30,180", "tiers": "yuksek", "modes": "tp"}]
 
     def test_poses_follow_a4_with_their_start_flag(self):
-        chain = self.dry(["a4"], b9_poses=self.POSES)
+        chain = self.dry(["a4", "b9"], b9_poses=self.POSES)
         perf = [a for _, a in chain.planned if Path(a[1]).name == "wp078_perf.py"]
         self.assertEqual(3, len(perf))
         self.assertEqual(str(self.evidence.resolve() / "a4" / "perf"), self.opt(perf[0], "--out"))
@@ -511,7 +515,7 @@ class B9PoseTests(Base):
             self.assertEqual(["--extra-arg=-ddPilotStart", "--extra-arg=" + pose["start"]], argv[-2:])
 
     def test_no_poses_no_b9(self):
-        chain = self.dry(["a4"])
+        chain = self.dry(["a4", "b9"])
         self.assertFalse(any("b9" in str(a) for _, argv in chain.planned for a in argv))
 
     def test_pose_file_validation(self):
@@ -651,6 +655,68 @@ class P2BaselineTests(Base):
         self.assertTrue(any(k.endswith("build-probe/DeathsDemolition.app/Contents/MacOS/" + EXE) and "r1-evidence" in k
                             for k in record["inputs"]), record["inputs"])
         self.assertTrue(chain.stage_passed("a4"))   # --resume re-verifies every bound file, the R1 binary included
+
+
+FAKE_Z3 = SimpleNamespace(Z3_START="0,-4,0", Z3_TIER="sinematik", Z3_MODES=("topdown", "tp"), MIN_PAIRS=5,
+                          Z3_R2="z3/perf", Z3_R1="z3/perf-r1")
+
+
+class Z3StageTests(Base):
+    """WP-091 Z3 + P3 (C-00 06.10 §20): the chain runs S-05's fixed-pose matrix from r2_z3.py's own constants and calls it."""
+
+    def planned(self, z3=FAKE_Z3, **kw):
+        with mock.patch.object(acc, "_r2_z3", return_value=z3):
+            chain = self.dry(["z3"], **kw)
+        perf = [a for s, a in chain.planned if s == "z3" and Path(a[1]).name == "wp078_perf.py"]
+        tool = [a for s, a in chain.planned if s == "z3" and Path(a[1]).name == "r2_z3.py"]
+        return chain, perf, tool
+
+    def test_the_fixed_pose_pairs_come_from_r2_z3_and_alternate_with_the_proven_r1_build(self):
+        r1 = r1_evidence(self.tmp.name)
+        _, perf, tool = self.planned(round_name="R2", r1_evidence=r1, r1_commit=R1, b9_poses_path="/k/b9-poses.json")
+        e = self.evidence.resolve()
+        self.assertEqual(1, len(perf))
+        argv = perf[0]
+        self.assertEqual((str(e / "z3" / "perf"), str(e / "z3" / "perf-r1"), R1, "sinematik", "topdown,tp", "5"),
+                         (self.opt(argv, "--out"), self.opt(argv, "--baseline-out"), self.opt(argv, "--baseline-commit"),
+                          self.opt(argv, "--tiers"), self.opt(argv, "--modes"), self.opt(argv, "--windows")))
+        self.assertEqual(["--extra-arg=-ddPilotStart", "--extra-arg=0,-4,0", "--extra-arg=-ddArmor", "--extra-arg=all"], argv[-4:])
+        self.assertEqual([str(e), FINAL, R1, "/k/b9-poses.json"],
+                         [self.opt(tool[0], k) for k in ("--evidence", "--commit", "--r1-commit", "--b9-poses")])
+
+    def test_without_r2_z3_nothing_runs_and_z3_p3_stay_blocked_by_name(self):
+        chain, perf, tool = self.planned(z3=None, round_name="R2", r1_evidence=r1_evidence(self.tmp.name), r1_commit=R1)
+        self.assertEqual(([], []), (perf, tool))
+        self.assertTrue(any("r2_z3.py is not in the FINAL tree" in line for line in chain.lines), chain.lines)
+
+    def test_no_pose_constant_or_no_r1_proof_runs_no_window_but_still_calls_the_writer(self):
+        no_start = SimpleNamespace(**{k: v for k, v in vars(FAKE_Z3).items() if k != "Z3_START"})
+        for z3, kw in ((no_start, dict(r1_evidence=r1_evidence(self.tmp.name), r1_commit=R1)), (FAKE_Z3, {})):
+            with self.subTest(start=hasattr(z3, "Z3_START"), r1=bool(kw)):
+                self.setUp()
+                _, perf, tool = self.planned(z3=z3, round_name="R2", **kw)
+                self.assertEqual([], perf)
+                self.assertEqual(1, len(tool))   # P3 from the B9 windows does not need the R1 build
+
+    def test_an_r1_round_skips_z3(self):
+        chain, perf, tool = self.planned(round_name="R1")
+        self.assertEqual(([], []), (perf, tool))
+
+    def test_the_z3_roots_reach_the_report_as_declared_secondary_roots(self):
+        with mock.patch.object(acc, "_r2_z3", return_value=FAKE_Z3):
+            code = make_chain(self.evidence, [s for s in acc.STAGE_ORDER if s != "a8"], round_name="R2",
+                              r1_evidence=r1_evidence(self.tmp.name), r1_commit=R1).run()
+        self.assertNotIn(code, (2, 7, 64, 65))
+        record = json.loads((self.evidence / "stages" / "z3.json").read_text())
+        self.assertEqual("RECORDED", record["verdict"])
+        make_chain(self.evidence, ["a8"], resume=True, round_name="R2").run()
+        manifest = json.loads((self.evidence / "manifest.json").read_text())
+        roots = {r["path"]: r for r in manifest["checklist"]["A4"]["secondaryRoots"]}
+        self.assertEqual({"role": "z3-pose", "path": "z3/perf", "start": "0,-4,0"}, roots["z3/perf"])
+        self.assertEqual(("r1-baseline", R1, sha(b"r1probe")), (roots["z3/perf-r1"]["role"], roots["z3/perf-r1"]["commit"],
+                                                                roots["z3/perf-r1"]["binarySha256"]))
+        report = json.loads(sorted(self.evidence.glob("report-*/wp078-report.json"))[-1].read_text())
+        self.assertEqual([], [f for f in report["failures"] if f["step"] == "A4"])
 
 
 class R2StageTests(Base):

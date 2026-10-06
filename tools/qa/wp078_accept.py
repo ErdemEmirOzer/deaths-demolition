@@ -16,10 +16,15 @@ Every step calls the existing tools as subprocesses — nothing is re-implemente
                    wp078_perf_report.py (cross-check, recorded); in an R2 round with --r1-evidence the R1 FINAL's own
                    release-probe build alternates with FINAL's window by window (--baseline-bin, root <E>/a4/perf-r1) and the
                    report writes P2's R2 - R1 comparison as <E>/r2/r2-P2.json (WP-091, C-00 05.10)
+  b9  poses        S-05's B9 pose windows on the same release-probe build (--b9-poses), one wp078_perf root per pose
+  z3  Z3 + P3      R2 round: S-05's fixed-pose Z3 matrix, R1 and FINAL probe builds alternating (constants from
+                   tools/qa/r2_z3.py: pose, tier, modes, >= 5 pairs, -ddArmor all), then r2_z3.py writes r2-Z3.json and
+                   r2-P3.json (WP-091, C-00 06.10)
   a8  report       assembles <E>/manifest.json from the evidence tree (paths relative to <E>, every artifact with its
                    sha256; a field without real evidence stays absent → the report says BLOCKED) and runs
                    tools/qa/wp078_report.py --manifest … --evidence-root <E> --out <E>/report-<utc>
-Order (dependency): a6 → a0 → a1 → a2 → a3 → a5 → a4 → a8, whatever order --stages lists them in.
+Order (dependency): a6 → a0 → a1 → a2 → a3 → r2 → a5 → a4 → b9 → z3 → r2q → a8, whatever order --stages lists them in;
+a4, b9 and z3 each take the quiet window themselves, so the quiet phase can run in two sittings (a4, then b9 + z3).
 
 Each stage writes an execution record <E>/stages/<stage>.json (executionCommit, exitCode, guard, artifactSha256 of the
 outputs it produced) — that record is the step provenance the manifest binds. Guarded builds / suites write a unit
@@ -68,7 +73,7 @@ PROJECT = "prototype/DeathsDemolition_PlayableConcept"
 # DD_KADRO cannot split this tool from the shell tools; move day changes dd_paths.KADRO_REL only.
 KADRO_ROOT = dd_paths.KADRO
 KADRO_EVIDENCE = dd_paths.KPROJ / "wp-078" / "evidence"
-STAGE_ORDER = ("a6", "a0", "a1", "a2", "a3", "r2", "a5", "a4", "r2q", "a8")
+STAGE_ORDER = ("a6", "a0", "a1", "a2", "a3", "r2", "a5", "a4", "b9", "z3", "r2q", "a8")
 # main-ci parity (S-01 96d0bfeb, C-00 05.10): the core EditMode + PlayMode runs exclude [Category("Diagnostics")] — an
 # [Explicit] Diagnostics test picked up by a class regex (AudioSliceTests.SilahKiti_…) left sg_1 selected and turned 4
 # later S-02 tests red. `alone` steps, targeted reruns and the r2/r2q full-name sessions keep no category filter.
@@ -90,6 +95,17 @@ def testsh_has_category():
         return "--category" in (REPO / "tools" / "test.sh").read_text(encoding="utf-8")
     except OSError:
         return False
+
+
+def _r2_z3():
+    """S-05's tools/qa/r2_z3.py at this tree (the Z3/P3 writer and the one home of the Z3 pose constants), or None."""
+    path = REPO / "tools" / "qa" / "r2_z3.py"
+    if not path.is_file():
+        return None
+    spec = importlib.util.spec_from_file_location("_wp078_r2_z3", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def _app_manifest():
@@ -114,7 +130,8 @@ def ci_plan():
             a3.append((f"a3-isolated-{len(a3) + 1}-{(m.group(1)[:60] if m else 'test')}", f"(?:{pattern})"))
     return core, ci.alone_steps(entries), a3
 STAGE_OUTPUTS = {"a6": ("build-dev", "build-release", "build-probe"), "a0": ("a0",), "a1": ("a1",), "a2": ("a2",),
-                 "a3": ("a3",), "r2": ("r2",), "a5": ("a5",), "a4": ("a4",), "r2q": (), "a8": ()}   # r2q writes into r2/ too
+                 "a3": ("a3",), "r2": ("r2",), "a5": ("a5",), "a4": ("a4",), "b9": ("b9",), "z3": ("z3",),
+                 "r2q": (), "a8": ()}   # r2q (and z3's r2_z3.py) write into r2/ too
 BUILDS = {"dev": "dev", "release": "release", "probe": "release-probe"}   # role → tools/build.sh mode (K1)
 R1_ROOT = wp078_report.R1_BASELINE_ROOT   # WP-091 P2: <E>/a4/perf-r1, the R1 probe build's windows (one source: the report's)
 B9_NAME = wp078_report.POSE_NAME           # a B9 pose name = its <E>/b9/<name> folder
@@ -327,7 +344,7 @@ def load_b9_poses(path):
 class Chain:
     def __init__(self, final, evidence, stages, dry_run=False, resume=False, editmode_filter="", playmode_filter="",
                  wait_tries=3, wait_seconds=120.0, git=None, runner=None, guard=None, out=print, python=sys.executable,
-                 b9_poses=None, round_name="R1", r1_evidence=None, r1_commit=None):
+                 b9_poses=None, round_name="R1", r1_evidence=None, r1_commit=None, b9_poses_path=None):
         self.final, self.evidence = final, Path(evidence).resolve()
         self.stages = [s for s in STAGE_ORDER if s in stages]
         self.dry_run, self.resume = dry_run, resume
@@ -341,6 +358,7 @@ class Chain:
         self.r1_evidence, self.r1_commit = (Path(r1_evidence).resolve() if r1_evidence else None), r1_commit   # P5 baseline
         self.b9_poses = list(b9_poses or [])   # C-00 01.10: S-05 B9 pose windows, after A4 in the same quiet-window run
         self._r1_proof = None                  # WP-091 P2: the R1 build's proof, taken once before any window (False = failed)
+        self.b9_poses_path = b9_poses_path     # the pose list file, for r2_z3.py's P3
         self.child, self.terminated = None, False
         self.planned = []          # (stage, argv) — the dry-run command list
         self.verdicts = {}
@@ -857,7 +875,6 @@ class Chain:
         code = self.perf_with_wait("wp078-perf", argv)
         report_code = self.execute("wp078-perf-report", report_argv)
         if self.dry_run:
-            self.b9_windows()
             return
 
         def cells(base):
@@ -881,7 +898,65 @@ class Chain:
             self.log(f"P2: {'r2-P2.json written' if p2.is_file() else 'r2-P2.json NOT written (report exit ' + str(report_code) + ')'}"
                      f" — R1 {self.r1_commit[:8]} alternating in {baseline_root.relative_to(self.evidence)}")
         self.finish("a4", results, inputs=inputs, extra=extra)
+
+    def stage_b9(self):
+        if self.b9_poses and self.dev_binary("probe") is None:
+            self.log("BLOCKED b9: no complete same-FINAL release-probe build (build-probe) — not run")
+            return
         self.b9_windows()
+
+    def stage_z3(self):
+        """WP-091 Z3 + P3 (C-00 06.10, BEKLEYEN §20; S-05 r2_z3.py). The fixed-pose matrix: FINAL's and the proven R1 probe
+        builds alternating (ABBA) at r2_z3's pose, tier and modes, >= MIN_PAIRS windows per cell, -ddArmor all on both — the
+        constants come from r2_z3.py, the tool that judges the windows, so they cannot drift apart. Then r2_z3.py writes
+        r2-Z3.json (ratios + <E>/r2/z3-static.json) and r2-P3.json (the B9 windows). Recorded, never a chain gate: the R2
+        report judges Z3 and shows P3; a missing tool, pose constant or R1 proof leaves them BLOCKED by name."""
+        if self.round_name != "R2":
+            self.log("SKIP z3: not an R2 round")
+            return
+        z3 = _r2_z3()
+        if z3 is None:
+            self.log("Z3/P3: tools/qa/r2_z3.py is not in the FINAL tree — r2-Z3.json / r2-P3.json not written, BLOCKED in the report")
+            return
+        results, extra = [], {"source": "tools/qa/r2_z3.py"}
+        need = ("Z3_START", "Z3_TIER", "Z3_MODES", "MIN_PAIRS", "Z3_R2", "Z3_R1")
+        missing = [n for n in need if not hasattr(z3, n)]
+        roots_agree = not missing and (z3.Z3_R2, z3.Z3_R1) == (wp078_report.Z3_ROOT, wp078_report.Z3_R1_ROOT)
+        binary, proof = self.dev_binary("probe"), self.r1_probe()
+        if missing or not roots_agree:
+            self.log(f"Z3: r2_z3.py lacks {missing or 'the report roots ' + str((wp078_report.Z3_ROOT, wp078_report.Z3_R1_ROOT))} — no Z3 windows run")
+        elif binary is None or not proof:
+            self.log("Z3: no complete FINAL probe build or no proven R1 probe build — no Z3 windows run, Z3 BLOCKED in the report")
+        else:
+            root, base = self.evidence / z3.Z3_R2, self.evidence / z3.Z3_R1
+            argv = [self.py, HERE / "wp078_perf.py", "--bin", self.evidence / "build-probe", "--out", root, "--commit", self.final,
+                    "--baseline-bin", self.r1_evidence / "build-probe", "--baseline-out", base, "--baseline-commit", self.r1_commit,
+                    "--tiers", z3.Z3_TIER, "--modes", ",".join(z3.Z3_MODES), "--windows", str(z3.MIN_PAIRS),
+                    "--extra-arg=-ddPilotStart", "--extra-arg=" + z3.Z3_START, "--extra-arg=-ddArmor", "--extra-arg=all"]
+            code = self.perf_with_wait("z3-perf", argv)
+            if not self.dry_run:
+                attempts = [d / "attempt.json" for side in (root, base) if side.is_dir() for d in sorted(side.iterdir())
+                            if d.is_dir() and wp078_perf_report.CELL.fullmatch(d.name)]
+                guard = {"snapshotExit": 0, "restoreExit": 0, "verified": 1, "outOfScopeChanged": 0,
+                         "source": "wp078_perf exit 0 = every window restored and verified"} if code == 0 else None
+                results.append({"name": "z3-perf", "exit": code, "gate": False, "guard": guard,
+                                "files": [root / "attempts-ledger.jsonl", base / "attempts-ledger.jsonl"] + attempts})
+                extra["z3Roots"] = [{"role": "z3-pose", "path": z3.Z3_R2, "start": z3.Z3_START},
+                                    {"role": "r1-baseline", "path": z3.Z3_R1, "commit": self.r1_commit, "binarySha256": proof["sha256"]}]
+        tool = [self.py, HERE / "r2_z3.py", "--evidence", self.evidence, "--commit", self.final]
+        if self.r1_commit:
+            tool += ["--r1-commit", self.r1_commit]
+        if self.b9_poses_path:
+            tool += ["--b9-poses", self.b9_poses_path]
+        code = self.execute("r2-z3", tool, log_path=self.evidence / "z3" / "r2-z3.txt")
+        if self.dry_run:
+            return
+        out = self.evidence / "r2"
+        results.append({"name": "r2-z3", "exit": code, "gate": False,
+                        "files": [out / "r2-Z3.json", out / "r2-P3.json", out / "z3-ratios.json", self.evidence / "z3" / "r2-z3.txt"]})
+        self.log("Z3/P3: " + ", ".join(f"{n} {'written' if (out / n).is_file() else 'NOT written'}" for n in ("r2-Z3.json", "r2-P3.json"))
+                 + f" (r2_z3.py exit {code}; reasons in z3/r2-z3.txt)")
+        self.finish("z3", results, verdict="RECORDED", extra=extra)
 
     def perf_with_wait(self, name, argv):
         """One wp078_perf invocation; waits (6/30/75) resume in the same root, 7 is STOP, 143 ends the chain."""
@@ -1204,6 +1279,10 @@ def assemble_manifest(evidence, final, assets_tree, round_name=None):
                               "binarySha256": record.get("baselineBinarySha256")})
         # B9 roots come from the B9 record's poses (the name and the start it ran), never from a folder listing: a full
         # matrix in a folder nobody recorded stays a stray root (KADRO test-engineer MUST-2)
+        _, z3 = _record(evidence, final, "z3")
+        for entry in (z3 or {}).get("z3Roots", []):   # the Z3 pairs, declared from the z3 record (S-05 r2_z3.py)
+            if isinstance(entry, dict) and isinstance(entry.get("path"), str) and (evidence / entry["path"]).is_dir():
+                secondary.append(dict(entry))
         _, b9 = _record(evidence, final, "b9")
         for unit in (b9 or {}).get("units", []):
             pose = unit.get("pose") if isinstance(unit, dict) else None
@@ -1312,6 +1391,7 @@ def main(argv=None, **seams):
     chain = Chain(args.final, evidence, stages, dry_run=args.dry_run, resume=args.resume,
                   editmode_filter=args.editmode_filter, playmode_filter=args.playmode_filter,
                   wait_tries=args.wait_tries, wait_seconds=args.wait_seconds, b9_poses=b9_poses, round_name=args.round,
+                  b9_poses_path=args.b9_poses,
                   r1_evidence=args.r1_evidence, r1_commit=args.r1_commit, **seams)
     previous = signal.signal(signal.SIGTERM, chain.on_sigterm)
     try:

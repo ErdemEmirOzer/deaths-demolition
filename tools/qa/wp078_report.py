@@ -233,10 +233,12 @@ ROUTE_TOPDOWN_HORIZON = "topdown-fixed-camera"
 # WP-091 (C-00 05.10): perf roots the chain itself writes beside the single A4 gate root (K8), each at one fixed place and
 # never counted for the gate — the R1 FINAL probe build alternating with FINAL's in an R2 round (P2) and S-05's B9 poses.
 R1_BASELINE_ROOT, B9_ROOT = "a4/perf-r1", "b9"     # wp078_accept writes there (one source: it imports these)
+Z3_ROOT, Z3_R1_ROOT = "z3/perf", "z3/perf-r1"       # the Z3 fixed-pose pairs (S-05 r2_z3.py Z3_R2 / Z3_R1 must agree)
 POSE_NAME = r"[a-z0-9][a-z0-9-]{0,40}"              # a B9 pose name = its <E>/b9/<name> folder
 POSE_START = re.compile(r"-?\d+(\.\d+)?,-?\d+(\.\d+)?,-?\d+(\.\d+)?")
-SECONDARY_PERF_ROOTS = {"r1-baseline": re.compile(re.escape(R1_BASELINE_ROOT)),
-                        "b9-pose": re.compile(re.escape(B9_ROOT) + "/" + POSE_NAME)}
+SECONDARY_PERF_ROOTS = {"r1-baseline": re.compile(re.escape(R1_BASELINE_ROOT) + "|" + re.escape(Z3_R1_ROOT)),
+                        "b9-pose": re.compile(re.escape(B9_ROOT) + "/" + POSE_NAME),
+                        "z3-pose": re.compile(re.escape(Z3_ROOT))}
 # a pose or crowd variant makes a probe window another measurement: never an A4 gate window (KADRO test-engineer MUST-2)
 VARIANT_FLAGS = ("-ddPilotStart", "-ddArmor")
 
@@ -931,7 +933,7 @@ class Inspector:
                         "the R1 baseline root needs its own binary sha256, never FINAL's probe")
             else:
                 require(isinstance(start, str) and POSE_START.fullmatch(start) is not None,
-                        "a B9 pose root is declared with the start its B9 record ran (x,z,yaw): " + relative)
+                        "a pose root is declared with the start its record ran (x,z,yaw): " + relative)
             for directory in sorted(p for p in path.iterdir() if p.is_dir() and PERF.CELL.fullmatch(p.name)):
                 where = relative + "/" + directory.name
                 attempt = _read_json(directory / "attempt.json")
@@ -940,7 +942,7 @@ class Inspector:
                             "R1 baseline window not run under the declared R1 commit: " + where)
                     require(attempt.get("binarySha256") == binary, "R1 baseline window not run on the declared R1 build: " + where)
                     continue
-                require(isinstance(attempt, dict), "unreadable B9 attempt: " + where, "BLOCKED")
+                require(isinstance(attempt, dict), "unreadable pose-window attempt: " + where, "BLOCKED")
                 require(attempt.get("executionCommit") == self.manifest.get("commit"), "B9 window not run at FINAL: " + where)
                 argv = _read_json(directory / "command.json")
                 if argv is None:
@@ -949,6 +951,10 @@ class Inspector:
                     at = argv.index("-ddPilotStart") if isinstance(argv, list) and "-ddPilotStart" in argv else -1
                     require(at >= 0, "B9 pose window without -ddPilotStart: " + where)
                     require(at + 1 < len(argv) and argv[at + 1] == start, f"B9 window ran another start than its pose {start}: " + where)
+                    if role == "z3-pose":   # C-00 06.10: both builds measure the full-armour crowd
+                        armor = argv.index("-ddArmor") if "-ddArmor" in argv else -1
+                        require(armor >= 0 and armor + 1 < len(argv) and argv[armor + 1].lower() == "all",
+                                "Z3 window without -ddArmor all: " + where)
             roots.append(path)
         return roots
 

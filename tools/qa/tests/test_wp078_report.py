@@ -680,7 +680,15 @@ class SecondaryPerfRootTests(Fixture):
         self.copy_cell('b9/plaza-n',argv=None,status='preflight-failed')
         (self.root/'b9/plaza-n/perf-yuksek-tp-1/attempt.json').write_text('{torn')
         self.declare(dict(role='b9-pose',path='b9/plaza-n',start='0,30,180'))
-        self.assert_step('A4','BLOCKED','unreadable B9 attempt')
+        self.assert_step('A4','BLOCKED','unreadable pose-window attempt')
+    def test_z3_pose_root_needs_its_start_and_the_full_armour_crowd(self):
+        self.copy_cell('z3/perf',argv=['probe','-ddPilotStart','0,-4,0','-ddArmor','all'])
+        self.copy_cell('z3/perf-r1',commit=OTHER,argv=['probe','-ddPilotStart','0,-4,0','-ddArmor','all'],binary=self.R1BIN)
+        self.declare(dict(role='z3-pose',path='z3/perf',start='0,-4,0'),
+                     dict(role='r1-baseline',path='z3/perf-r1',commit=OTHER,binarySha256=self.R1BIN))
+        r=self.result();self.assertTrue(r['pass'],r['failures'])
+        (self.root/'z3/perf/perf-yuksek-tp-1/command.json').write_text(json.dumps(['probe','-ddPilotStart','0,-4,0']))
+        self.assert_step('A4','FAIL','-ddArmor all')
     def test_a_declared_root_that_is_not_there_is_blocked(self):
         self.declare(dict(role='b9-pose',path='b9/gone',start=self.START))
         self.assert_step('A4','BLOCKED','missing secondary perf root')
