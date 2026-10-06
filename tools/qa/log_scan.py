@@ -16,7 +16,10 @@ PATTERNS = [
     for p in (
         r"\bNullReferenceException\b",
         r"\bArgument(?:OutOfRange|Null)?Exception\b",
-        r"\bInvalidOperationException\b",
+        # no InvalidOperationException: three green EditMode tests throw it on purpose into the event buses, which log it
+        # with Debug.LogException (TierAbilitiesTests "kötü dinleyici", UiEventsTests "abone hatası", UiNavigationModelTests
+        # "test-dinleyici") — 48 lines in 16 of 43 real CI/A1 roots, so the pattern failed every RC (gt RF-1, S-10 06.10).
+        # ArgumentNull / MissingReference: 0 lines in the same 43 roots.
         r"\bMissingReferenceException\b",
         r"\bIndexOutOfRangeException\b",
         r"\bUnhandled exception\b",

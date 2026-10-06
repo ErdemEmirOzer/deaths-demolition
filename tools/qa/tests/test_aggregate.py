@@ -852,7 +852,7 @@ class TextSummaryTests(AggregateTestCase):
 
     def test_HATA_KisiBasinaOkunabilirlik_GuncelKimliklerKatlanmaz(self):   # AG-3 fixed (S-10 06.10)
         # DEFECT AG-3 (low, text summary only): the fold matches ".playerEnvDeltaV" / ".playerZombieDeltaV", but
-        # QaReadabilityGate.cs now writes "readability.rN.playerEnvContrast.skinS" / ".playerZombieContrast.skinS"
+        # QaReadabilityGate.cs has written "readability.rN.playerEnvContrast.skinS" / ".playerZombieContrast.skinS" since dc32ecf1
         # (the names rc_aggregate.m3_required also expects). The fold is dead code: passing per-skin lines take the
         # 16 summary slots. JSON is unaffected.
         self.fx.child("readability", "QaReadabilityGate", readability_ids(rounds=(1,), ultra=False))

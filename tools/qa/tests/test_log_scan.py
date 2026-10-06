@@ -356,15 +356,15 @@ class MultiFileTests(LogScanTestCase):
 class S10PatternTests(LogScanTestCase):
     """S-10 06.10 (C-00's B-09 residual risks): the exceptions soak_gate already catches, and the readability writer."""
 
-    def test_ArgumentNull_InvalidOperation_MissingReference_ReadabilityWriteFailed(self):
-        lines = ("ArgumentNullException: Value cannot be null.", "InvalidOperationException: Collection was modified",
+    def test_ArgumentNull_MissingReference_ReadabilityWriteFailed(self):
+        lines = ("ArgumentNullException: Value cannot be null.",
                  "MissingReferenceException: The object of type 'Transform' has been destroyed",
                  "[QaReadabilityGate] write failed: disk full")
         for i, line in enumerate(lines):
             self.write(f"stages/s{i}/stdout.log", "ok\n" + line + "\n")
         proc, report, _ = self.scan()
         self.assertEqual(1, proc.returncode)
-        self.assertEqual(4, len(report["matches"]))
+        self.assertEqual(3, len(report["matches"]))
 
     def test_an_unreadable_log_is_listed_and_not_counted_as_scanned(self):
         if hasattr(os, "geteuid") and os.geteuid() == 0:
@@ -377,6 +377,32 @@ class S10PatternTests(LogScanTestCase):
         self.assertEqual((1, 1), (proc.returncode, report["filesScanned"]))
         self.assertEqual([os.path.join("stages", "b", "stdout.log")], [u["path"] for u in report["unreadable"]])
         self.assertIn("unreadable: " + os.path.join("stages", "b", "stdout.log"), text)
+
+
+class GreenEditorLogTests(LogScanTestCase):
+    """gt RF-1 (S-10 06.10): a fully green EditMode run logs three exceptions its tests throw on purpose into the event
+    buses (Debug.LogException). Those lines, verbatim from ci/09a21785…/editmode/editmode.log, must not fail the scan."""
+
+    LINES = ("InvalidOperationException: kötü dinleyici\n"
+             "  at DD.Prototype.Tests.EditMode.TierAbilitiesTests+<>c.<OlayYuzeyi_SatirAdlari_Sayaclar_Yalitim>b__8_0 "
+             "(DD.Prototype.Enemies.EnemyCombatEventInfo _) [0x00000] in /x/TierAbilitiesTests.cs:153 \n"
+             "InvalidOperationException: abone hatası\n"
+             "UnityEngine.DebugLogHandler:Internal_LogException(Exception, Object)\n"
+             "InvalidOperationException: test-dinleyici\n"
+             "  at DD.Prototype.UI.UiNavigationModel.Raise () [0x0000c] in /x/UiNavigation.cs:323 \n")
+
+    def test_a_green_editmode_log_with_the_intended_test_exceptions_passes(self):
+        self.write("full-editmode/editmode.log", "Test run passed\n" + self.LINES)
+        proc, report, _ = self.scan()
+        self.assertEqual(0, proc.returncode)
+        self.assertEqual([], report["matches"])
+
+    def test_the_other_added_exceptions_still_fail(self):
+        self.write("stages/x/stdout.log", "ArgumentNullException: Value cannot be null.\n"
+                   "MissingReferenceException: The object of type 'Transform' has been destroyed\n")
+        proc, report, _ = self.scan()
+        self.assertEqual(1, proc.returncode)
+        self.assertEqual(2, len(report["matches"]))
 
 
 class CrashReportTests(LogScanTestCase):
