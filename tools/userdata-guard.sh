@@ -89,7 +89,7 @@ KNOWN_GOOD="${DD_GUARD_KNOWN_GOOD:-$KG_DEFAULT}"; KGSRC=default; [ -n "${DD_GUAR
 [[ "$CMD" == (snapshot|restore) && -n "$DIR" && "$SCOPE" == (all|editor|player) ]] || { echo "usage: userdata-guard.sh snapshot|restore <dir> [--scope all|editor|player]" >&2; exit 64; }
 # G4 D8 queue reviews (06.10): every wait is whole seconds — "1h" or "abc" made a wait endless (its test never became
 # true). A snapshot refuses before anything is written; a restore never stops halfway for it: warning + the default.
-for v in DD_GUARD_WAIT DD_GUARD_QUEUE_WAIT DD_GUARD_SLOT_WAIT; do
+for v in DD_GUARD_WAIT DD_GUARD_QUEUE_WAIT DD_GUARD_SLOT_WAIT DD_GUARD_DIRTY_GRACE; do
   { [ -z "${(P)v:-}" ] || [[ "${(P)v}" == <-> ]]; } && continue
   [ "$CMD" = snapshot ] && { echo "userdata-guard: $v=${(P)v} is not whole seconds — refused, nothing written (64)" >&2; exit 64; }
   echo "userdata-guard: WARNING $v=${(P)v} is not whole seconds — this restore uses the default" >&2; unset $v
@@ -728,7 +728,9 @@ print -r -- "$VERDICT" | python3 "$IO" atomic-write "$DIR/verdict-$VU.$VN.json"
 if [ "$LREC" -eq 1 ]; then
   # finalized = written AND verified in THIS run (VERIFIED_AREAS; never a verify file of an earlier attempt — D8 review
   # SHOULD-1) with no class in this run's restore-<a>.json; released never overwrites dirty/finalized (MUST-1, io)
-  LPATCH=$(L_W="$W" L_A="${AREAS[*]}" L_V="${VERIFIED_AREAS[*]}" L_DIR="$DIR" python3 -c 'import json, os
+  # next slice (C-00 06.10): the record also carries this restore's retry (same-dir: BUSY / LOCKED / INTERRUPTED) — a
+  # dirty window of a live owner that will restore again keeps the queue waiting instead of 65 (io ledger_begin)
+  LPATCH=$(L_W="$W" L_A="${AREAS[*]}" L_V="${VERIFIED_AREAS[*]}" L_DIR="$DIR" L_R="$RETRY" L_RC="$RC" python3 -c 'import json, os
 e = os.environ; d = e["L_DIR"]; areas = {}
 def ok(a):
     if a not in e["L_V"].split():
@@ -740,7 +742,7 @@ def ok(a):
     return not r.get("classes")
 for a in e["L_W"].split():
     areas[a] = ("finalized" if ok(a) else "dirty") if a in e["L_A"].split() else "released"
-print(json.dumps({"state": "auto", "areas": areas}))')
+print(json.dumps({"state": "auto", "areas": areas, "retry": e["L_R"], "exit": int(e["L_RC"])}))')
   LSTATE=$(print -r -- "$LPATCH" | python3 "$IO" ledger-update "$LEDGER" "$WINID") \
     || dd_log "WARNING userdata-guard: ledger record $WINID could not be updated at R12 — tell C-00"
   if [ "$LSTATE" = closed ]; then python3 "$IO" ledger-close "$LEDGER" "$WINID" \

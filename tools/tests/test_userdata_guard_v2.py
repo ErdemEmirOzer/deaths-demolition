@@ -1345,9 +1345,32 @@ class LedgerTests(RestoreBase):
         rc, o2, e2 = self.run_guard("snapshot", self.tmp / "ugNext", "--scope", "editor")
         self.assertEqual(0, rc, o2 + e2)
 
+    def test_Kuyruk_DirtyRetrySameDir_SahipCanli_BekleyenBekler_IkinciRestoreSonrasiBaslar(self):
+        """next slice (C-00 06.10): the open window's restore ends BUSY (75, retry=same-dir: the profile lock is held) — the
+        record is dirty with retry same-dir and its owner lives on. A queued snapshot waits for it (it got 65 before);
+        the second restore of the same DIR closes the window and the waiter starts."""
+        a, b = self.tmp / "ugA", self.tmp / "ugB"
+        self.foreign_snapshot(a)
+        (self.d1 / "ui-settings.json").write_text('{"ui": 99}\n')
+        p = self.lock_d2(self.d1)
+        rc, out, err = self.run_guard("restore", a, "--scope", "editor", DD_GUARD_WAIT="2")
+        self.assertEqual(75, rc, out + err); self.assertIn("retry=same-dir", out.strip().splitlines()[-1])
+        rec = self.records()[0]
+        self.assertEqual(("dirty", "same-dir"), (rec["state"], rec.get("retry")))
+        done_b = self.queued_snapshot(b)
+        self.assertTrue(self.wait_until(lambda: "queue position 1 — ahead: %s" % a.resolve() in self.out_of(done_b), 120),
+                        self.out_of(done_b))
+        time.sleep(6)
+        self.assertFalse(done_b.exists(), "the waiter must wait for the dirty window's second restore: " + self.out_of(done_b))
+        self.unlock_d2(p, self.d1)
+        rc, out, err = self.run_guard("restore", a, "--scope", "editor"); self.assertEqual(0, rc, out + err)
+        self.assertEqual('{"ui": 1}\n', (self.d1 / "ui-settings.json").read_text())
+        self.assertTrue(self.wait_file(done_b, 120)); self.assertEqual("0", done_b.read_text().strip(), self.out_of(done_b))
+
     def test_Kuyruk_SayisalOlmayanBekleme_Snapshot64HicbirSeyYok_Restore_UyariVarsayilan(self):
         """06.10 reviews: DD_GUARD_QUEUE_WAIT=1h / DD_GUARD_WAIT=abc made a wait endless (the test never became true)."""
-        for var, val in (("DD_GUARD_QUEUE_WAIT", "1h"), ("DD_GUARD_WAIT", "abc"), ("DD_GUARD_SLOT_WAIT", "5m")):
+        for var, val in (("DD_GUARD_QUEUE_WAIT", "1h"), ("DD_GUARD_WAIT", "abc"), ("DD_GUARD_SLOT_WAIT", "5m"),
+                         ("DD_GUARD_DIRTY_GRACE", "10m")):
             with self.subTest(var=var):
                 d = self.tmp / ("ug-bad-" + var)
                 rc, out, err = self.run_guard("snapshot", d, "--scope", "editor", **{var: val})

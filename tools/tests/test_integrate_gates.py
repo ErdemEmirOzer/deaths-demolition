@@ -226,6 +226,46 @@ class EntegreKapiTestleri(unittest.TestCase):
         self.assertIn("gate passed", result[0])
         self.assertIn("EXEMPT", result[0]); self.assertIn(reason, result[0])
 
+    # ---------------------------------------------------------------- G4 D8 next slice (C-00 06.10): WIP commits
+    def test_MesajKapisi_WipEtiketliKonu_Cikis3(self):
+        r, out = self.dry(subject="WP-999 WIP: fixture change on top of x (C-00 06.10)")
+        self.assertEqual(r.returncode, 3, out)
+        self.assertIn("GATE FAIL: WIP commit (subject label", out)
+
+    def test_MesajKapisi_WipGovdeNotForMain_Cikis3(self):
+        r, out = self.dry(body="Not for main — loss protection.\n\nTest: unit 3/3\n")
+        self.assertEqual(r.returncode, 3, out)
+        self.assertIn("GATE FAIL: WIP commit (a body line", out)
+
+    def test_MesajKapisi_WipGovdeTestWip_Cikis3(self):
+        r, out = self.dry(body="Did x.\n\nTest: WIP, not verified\n")
+        self.assertEqual(r.returncode, 3, out)
+        self.assertIn("GATE FAIL: WIP commit (a body line", out)
+
+    def test_MesajKapisi_WipKelimesiEtiketDisindaVeCumleIcinde_Gecer(self):
+        """main's own history: 'final WIP table' after the label, '(not for main)' / 'not verified' inside a sentence."""
+        r, out = self.dry(subject="WP-999 C-00 handoff: the final WIP table (C-00 06.10)",
+                          body="Replaces the WIP dee54ffa (not for main).\nOrder not verified: a note.\n\nTest: docs only\n")
+        self.assertEqual(r.returncode, 0, out)
+        self.assertNotIn("WIP commit", out)
+
+    def test_MesajKapisi_KucukHarfWipEtiketi_Cikis3(self):
+        r, out = self.dry(subject="WP-999 wip: fixture change (C-00 06.10)")
+        self.assertEqual(r.returncode, 3, out)
+        self.assertIn("GATE FAIL: WIP commit (subject label", out)
+
+    def test_MesajKapisi_WipBenzeriKelimeler_YanlisAlarmYok(self):
+        """review NIT-1: 'Not for maintenance', 'Not for main-ci', 'Test: wiped …' are no WIP marks."""
+        r, out = self.dry(body="Not for maintenance windows.\nNot for main-ci runs.\n\nTest: wiped the cache, 3/3 green\n")
+        self.assertEqual(r.returncode, 0, out)
+        self.assertNotIn("WIP commit", out)
+
+    def test_MesajKapisi_WipSubjectExempt_Gecer(self):
+        r, out = self.dry("--subject-exempt", "C-00: a WIP taken on purpose", subject="WP-999 WIP: x (C-00 06.10)")
+        self.assertEqual(r.returncode, 0, out)
+        self.assertIn("EXEMPT", [l for l in out.splitlines() if l.startswith("RESULT:")][0])
+        self.assertIn("WARNING: the exempted commit is WIP-labelled", out)   # review NIT-3: never silent
+
     def test_MesajKapisi_SubjectExemptBosGerekce_Cikis64(self):
         r, out = self.dry("--subject-exempt", "  ")
         self.assertEqual(r.returncode, 64, out)

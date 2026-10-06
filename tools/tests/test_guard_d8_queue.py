@@ -6,6 +6,7 @@ is needed, so this file is not run under sandbox-exec like test_userdata_guard_v
 cover the same rules end to end).
 usage: python3 tools/tests/test_guard_d8_queue.py"""
 import json, os, subprocess, sys, tempfile, time, unittest
+from unittest import mock
 from pathlib import Path
 
 TOOLS = Path(__file__).resolve().parents[1]
@@ -194,6 +195,147 @@ class KuyrukBirimTests(unittest.TestCase):
         r = json.loads((self.L / "windows" / "N.json").read_text())
         self.assertIn("queuedUtc", r); self.assertEqual(self.po, r["guard"]["pid"])
         self.assertGreaterEqual(r["utc"], r["queuedUtc"])
+
+
+    # -- next slice (C-00 06.10): dirty + retry, a dead snapshotting guard, one ps table, siblings (gt NIT-5) --------
+    def test_Birim_DirtyRetrySameDir_SahipCanli_Bekler75(self):
+        """a dirty window whose restore ended retry=same-dir (BUSY / LOCKED / INTERRUPTED) and whose owner lives on is
+        restored again with the same DIR: the queue waits for it (75), never 65."""
+        self.put_record(self.rec("B", self.foreign(), state="dirty", retry="same-dir"))
+        code, msg = self.begin("N")
+        self.assertEqual(75, code, msg)
+        self.assertIn("queue position 1 — ahead: /x/B", msg); self.assertIn("dirty", msg)
+
+    def test_Birim_DirtyRetry_SahipOluYaDaRetryYok_65(self):
+        for name, owner, retry in (("olu", None, "same-dir"), ("retry-yok", "live", "none"), ("eski-kayit", "live", None)):
+            with self.subTest(case=name):
+                L = self.L / name
+                rec = self.rec("B", self.foreign() if owner else self.dead(), state="dirty")
+                if retry:
+                    rec["retry"] = retry
+                self.io.ledger_write(str(L / "windows" / "B.json"), rec)
+                code, msg = self.io.ledger_begin(str(L), self.rec("N", self.me, state="snapshotting"), self.po, self.po)
+                self.assertEqual(65, code, msg)
+
+    def test_Birim_DirtyRetrySameDir_IcIce_65(self):
+        """our own ancestor's dirty window: waiting for it would wait for ourselves — still 65."""
+        self.put_record(self.rec("A", self.me, state="dirty", retry="same-dir"))
+        self.assertEqual(65, self.begin("N")[0])
+
+    # -- the next slice's review (backend 06.10, d8-next-review-backend-0610.md) ------------------------------------------
+    def utc_ago(self, seconds):
+        return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time() - seconds))
+
+    def test_Birim_DirtyRetry_GraceDolunca65_EnvIleAyarlanir(self):
+        """MUST-1: the wait for a re-restore is bounded — DD_GUARD_DIRTY_GRACE (600 s) after R12."""
+        self.put_record(self.rec("B", self.foreign(), state="dirty", retry="same-dir", exit=75, utcUpdated=self.utc_ago(900)))
+        self.assertEqual(65, self.begin("N")[0])
+        with mock.patch.dict(os.environ, {"DD_GUARD_DIRTY_GRACE": "1200"}):
+            self.assertEqual(75, self.begin("N2")[0])
+
+    def test_Birim_DirtyRetry_Exit30_Beklenmez_65(self):
+        """SHOULD-3: a 30 (STOP, tell C-00) also carries retry=same-dir when an area stayed BUSY — nobody retries it."""
+        self.put_record(self.rec("B", self.foreign(), state="dirty", retry="same-dir", exit=30, utcUpdated=self.utc_ago(5)))
+        self.assertEqual(65, self.begin("N")[0])
+
+    def test_Birim_MarkMissing_RetryNoneYazar_Bekleyen65(self):
+        """MUST-2: SNAPSHOT_MISSING can never be restored — mark-missing clears retry=same-dir."""
+        rec = self.rec("B", self.foreign(), state="dirty", retry="same-dir", exit=75, utcUpdated=self.utc_ago(5))
+        rec["dir"] = os.path.realpath(str(self.L.parent / "ugB"))
+        self.put_record(rec)
+        self.assertEqual(75, self.begin("N")[0])
+        self.assertEqual(0, self.io.main(["ledger-mark-missing", str(self.L), rec["dir"], "no before.txt"]))
+        self.assertEqual("none", json.loads((self.L / "windows" / "B.json").read_text())["retry"])
+        self.assertEqual(65, self.begin("N")[0])
+
+    def test_Birim_IcIce_AtaDirtyRetryBaskaAlanda_YabanciBilet_OndeSayilmaz(self):
+        """MUST-3: the ancestor's dirty window that will be restored again holds its areas too (N1 for dirty)."""
+        f = self.foreign()
+        r = self.rec("A", self.me, areas=("player",), state="dirty", retry="same-dir", exit=75, utcUpdated=self.utc_ago(5))
+        r["areas"] = {"player": "dirty"}
+        self.put_record(r)
+        self.put_ticket("T", f, f, areas=("editor", "player"))
+        code, msg = self.begin("N", areas=("editor",))
+        self.assertEqual(0, code, msg)
+
+    def test_Birim_SnapshottingGuardOlu_BeforeTxtVar_AcikSayilir_Bekler(self):
+        """SHOULD-1: committed (before.txt) but the 'open' update was lost — the window is open, its run goes on."""
+        d = self.L.parent / "ugB"; d.mkdir(); (d / "before.txt").write_text("x")
+        rec = self.rec("B", self.foreign(), state="snapshotting", guard=self.dead()); rec["dir"] = str(d)
+        self.put_record(rec)
+        self.assertEqual(75, self.begin("N")[0])
+
+    def test_Birim_DirtyYalnizDirtyAlanlariBloklar(self):
+        """SHOULD-2: editor finalized + player dirty — an editor snapshot is not blocked, a player one is (65, no retry)."""
+        r = self.rec("B", self.foreign(), areas=("editor", "player"), state="dirty")
+        r["areas"] = {"editor": "finalized", "player": "dirty"}
+        self.put_record(r)
+        self.assertEqual(0, self.begin("E", areas=("editor",))[0])
+        self.assertEqual(65, self.begin("P", areas=("player",))[0])
+
+    def test_Birim_SnapshottingGuardOlu_SahipCanli_65(self):
+        """backend SHOULD-4: the guard died after the grant (SIGKILL), its owner lives — abandoned, not a wait."""
+        rec = self.rec("B", self.foreign(), state="snapshotting", guard=self.dead())
+        self.put_record(rec)
+        code, msg = self.begin("N")
+        self.assertEqual(65, code, msg)
+        self.assertIn("its snapshotting guard pid %s is gone" % rec["guard"]["pid"], msg)
+
+    def test_Birim_SnapshottingGuardCanli_Bekler75(self):
+        f = self.foreign()
+        self.put_record(self.rec("B", f, state="snapshotting", guard=self.foreign()))
+        self.assertEqual(75, self.begin("N")[0])
+
+    def test_Birim_MarkMissing_SnapshottingGuardOlu_DirtyYapilir(self):
+        rec = self.rec("B", self.foreign(), state="snapshotting", guard=self.dead())
+        rec["dir"] = os.path.realpath(str(self.L.parent / "ugB"))
+        self.put_record(rec)
+        rc = self.io.main(["ledger-mark-missing", str(self.L), rec["dir"], "no before.txt"])
+        self.assertEqual(0, rc)
+        self.assertEqual("dirty", json.loads((self.L / "windows" / "B.json").read_text())["state"])
+
+    def test_Birim_MarkMissing_SnapshottingGuardCanli_Reddedilir(self):
+        rec = self.rec("B", self.foreign(), state="snapshotting", guard=self.foreign())
+        rec["dir"] = os.path.realpath(str(self.L.parent / "ugB"))
+        self.put_record(rec)
+        self.assertEqual(2, self.io.main(["ledger-mark-missing", str(self.L), rec["dir"], "no before.txt"]))
+
+    def test_Birim_TekPsTablosu_BiletVeKayitSayisindanBagimsiz(self):
+        """reviews SHOULD-6: one `ps -axo` per call; the per-pid ps is only for the new ticket's waiter (its start time)."""
+        f = [self.foreign() for _ in range(6)]
+        self.put_record(self.rec("B", f[0]))
+        for i, who in enumerate(f[1:]):
+            self.put_ticket("T%d" % i, who, who)
+        real = subprocess.run
+        calls = []
+
+        def counting(argv, *a, **k):
+            if argv and argv[0] == "ps":
+                calls.append(" ".join(argv[:2]))
+            return real(argv, *a, **k)
+        with mock.patch.object(self.io.subprocess, "run", side_effect=counting):
+            code, _ = self.begin("N")
+        self.assertEqual(75, code)
+        self.assertEqual(1, sum(c.startswith("ps -axo") for c in calls), calls)
+        self.assertLessEqual(len(calls), 2, calls)   # the table + lstart(waiter) for N's ticket
+
+    def test_Birim_KardesBilet_NIT5_IcIceKardesOneGecebilir_KilitlenmeYok(self):
+        """gt NIT-5 (C-00 06.10: a note, tested): A (this process) holds a window; two of its children C1 (older ticket)
+        and C2 snapshot nested. C1's ticket overlaps A's held area, so C2 may pass it (FIFO between siblings is not kept);
+        C1 then waits for C2's window like any foreign one — no deadlock, never two windows over one area at once."""
+        c1, c2 = self.foreign(), self.foreign()   # children of this process: A's descendants
+        self.put_record(self.rec("A", self.me))
+        self.put_record(self.rec("F", self.foreign(), areas=("player",)))   # C1 waits for a foreign player window
+        code1, msg1 = self.io.ledger_begin(str(self.L), self.rec("C1", c1, areas=("editor", "player"), state="snapshotting"),
+                                           c1["pid"], c1["pid"])
+        self.assertEqual(75, code1, msg1)
+        code2, msg2 = self.io.ledger_begin(str(self.L), self.rec("C2", c2, state="snapshotting"), c2["pid"], c2["pid"])
+        self.assertEqual(0, code2, msg2)   # passed C1 (sibling under A): the documented reversal
+        (self.L / "windows" / "F.json").rename(self.L / "F-closed.json")   # F goes away
+        code1, msg1 = self.io.ledger_begin(str(self.L), self.rec("C1", c1, areas=("editor", "player"), state="snapshotting"),
+                                           c1["pid"], c1["pid"])
+        self.assertEqual(75, code1, msg1)   # C1 now waits for C2's window (foreign to C1) — it will close
+        self.assertIn("ahead: /x/C2", msg1)
 
 
     def test_Birim_MarkMissing_SnapshottingSahipOlu_DirtyYapilir(self):

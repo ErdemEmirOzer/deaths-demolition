@@ -25,6 +25,15 @@ class DiskGateTests(unittest.TestCase):
         self.assertEqual(rc, 0, out)
         self.assertIn("disk-gate: ok freeKiB=15728640 swapUsedMB=12288", out)
 
+    def test_DiskKapisi_Swap10GiBUstu12Alti_UyariSatiri_YineBaslar0(self):
+        """C-00 06.10: an early WARNING at ≥ 10 GiB used swap, written by dd_log (stdout + timeline); never a stop below 12."""
+        for swap, warn in (("10239.99M", False), ("10240.00M", True), ("12288.00M", True)):
+            with self.subTest(swap=swap):
+                rc, out = self.gate(99999999, swap)
+                self.assertEqual(rc, 0, out)
+                self.assertEqual(warn, "WARNING disk-gate: used swap %s MB ≥ 10240 (10 GiB)" % swap.split(".")[0] in out, out)
+                self.assertIn("disk-gate: ok freeKiB=99999999", out)
+
     def test_DiskKapisi_15GiBAlti_75TekSatirNeden(self):
         rc, out = self.gate(15728639, "100.00M")
         self.assertEqual(rc, 75, out)

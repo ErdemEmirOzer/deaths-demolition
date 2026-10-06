@@ -163,11 +163,43 @@ def proc_state(pid):
     return "", ""
 
 
-def gone(who):
+class ProcTable:
+    """G4 D8 next slice (C-00 06.10; reviews SHOULD-6): ONE `ps -axo pid=,ppid=,stat=,lstart=` per ledger call — liveness
+    (gone) and ancestry (ancestors) read the same snapshot instead of one ps per ticket and record under L/.lock. A pid the
+    table does not list (started after it, or ps answered nothing) falls back to the per-pid path, so K3 still holds."""
+
+    def __init__(self):
+        env = {k: v for k, v in os.environ.items() if k != "TZ"}
+        env["LC_ALL"] = "C"
+        self.rows = {}
+        try:   # under L/.lock: bounded (06.10 review NIT-4b); no table → every question falls back to the per-pid path
+            r = subprocess.run(["ps", "-axo", "pid=,ppid=,stat=,lstart="], capture_output=True, text=True, env=env, timeout=10)
+        except subprocess.TimeoutExpired:
+            return
+        for line in r.stdout.splitlines():
+            p = line.split()
+            if len(p) >= 4 and p[0].isdigit() and p[1].isdigit():
+                self.rows[int(p[0])] = (int(p[1]), p[2], " ".join(p[3:]))
+
+    def state(self, pid):
+        row = self.rows.get(pid)
+        return (row[1], row[2]) if row else None
+
+    def ancestors(self, pid):
+        out, p, steps = set(), int(pid), 0
+        while p > 1 and steps < 64:
+            out.add(p)
+            row = self.rows.get(p)
+            p, steps = (row[0] if row else 0), steps + 1
+        return out
+
+
+def gone(who, table=None):
     """K3 (tools/slot.sh, C-00 30.09 M5) for the ledger too (D8 queue reviews 06.10): a process counts as gone only when
     kill -0 fails, or both start times are known and differ (pid reused), or it is a zombie — exited, not yet reaped by its
     parent (technical-writer 06.10, scenario 8z: kill -0 still answers for it). An empty `ps` answer (transient, or the
-    recorded start time was never known) never makes a live pid dead — and a dead pid is dead whatever lstart answered."""
+    recorded start time was never known) never makes a live pid dead — and a dead pid is dead whatever lstart answered.
+    table: a ProcTable of this call (one ps for all), else one ps per pid."""
     try:
         pid = int((who or {}).get("pid") or 0)
     except (TypeError, ValueError):
@@ -181,17 +213,20 @@ def gone(who):
     except PermissionError:
         pass
     then = (who or {}).get("lstart") or ""
-    stat, now = proc_state(pid)
+    known = table.state(pid) if table is not None else None
+    stat, now = known if known is not None else proc_state(pid)
     if stat.startswith("Z"):
         return True
     return bool(now and then and now != then)
 
 
-def alive(who):
-    return not gone(who)
+def alive(who, table=None):
+    return not gone(who, table)
 
 
-def ancestors(pid):
+def ancestors(pid, table=None):
+    if table is not None and int(pid) in table.rows:   # 06.10 review NIT-4a: a pid the table does not list → ps again
+        return table.ancestors(pid)
     env = {k: v for k, v in os.environ.items() if k != "TZ"}
     r = subprocess.run(["ps", "-axo", "pid=,ppid="], capture_output=True, text=True, env=env)
     parent = dict(line.split()[:2] for line in r.stdout.splitlines() if len(line.split()) >= 2)
@@ -202,17 +237,17 @@ def ancestors(pid):
     return out
 
 
-def refusal(rec, live):
+def refusal(rec, live, why=""):
     import calendar
     try:
         age = (time.time() - calendar.timegm(time.strptime(rec.get("utc", ""), "%Y-%m-%dT%H:%M:%SZ"))) / 60.0
     except ValueError:
         age = -1
-    return ('REFUSED — ledger window %s: DIR=%s state=%s owner=%s alive=%d age=%.0fmin next: '
+    return ('REFUSED — ledger window %s: DIR=%s state=%s owner=%s alive=%d age=%.0fmin%s next: '
             '"userdata-guard.sh restore %s --scope %s" — only once the run that opened it has ended (if it does not '
             'converge: C-00)'
-            % (rec.get("id"), rec.get("dir"), rec.get("state"), (rec.get("owner") or {}).get("pid"), live, age, rec.get("dir"),
-               rec.get("scope", "all")))
+            % (rec.get("id"), rec.get("dir"), rec.get("state"), (rec.get("owner") or {}).get("pid"), live, age,
+               (" (%s)" % why) if why else "", rec.get("dir"), rec.get("scope", "all")))
 
 
 TICKET_NAME = r"^(\d+)-(.+)\.json$"   # L/queue/<time_ns>-<window id>.json; anything else in queue/ is not a ticket
@@ -286,6 +321,25 @@ def utc_now():
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
 
+def dirty_grace():
+    try:
+        return int(os.environ.get("DD_GUARD_DIRTY_GRACE") or 600)
+    except ValueError:
+        return 600
+
+
+def retrying(rec):
+    """next slice (C-00 06.10): a dirty window its owner restores again with the same DIR — its restore ended 75 (BUSY /
+    LOCKED / early RACED, retry=same-dir), it is not a SNAPSHOT_MISSING mark, and that restore was at most
+    DD_GUARD_DIRTY_GRACE seconds ago (default 600; 06.10 review MUST-1/2/SHOULD-3: never an unbounded wait for an owner
+    that does not retry). Records without "exit" (written before this) count by retry alone."""
+    if rec.get("state") != "dirty" or rec.get("retry") != "same-dir" or str(rec.get("why", "")).startswith("SNAPSHOT_MISSING"):
+        return False
+    if rec.get("exit") is not None and str(rec.get("exit")) != "75":
+        return False
+    return age_minutes(rec.get("utcUpdated") or rec.get("utc")) * 60.0 <= dirty_grace()
+
+
 def ledger_begin(ledger, record, po, waiter=None):
     """G4 D8 S6 + the C-00 05.10 queue. (code, message): 0 the record is written (state snapshotting) · 65 refused (an
     overlapping dirty / abandoned window, or this snapshot's own caller died while it queued) · 75 wait: a live foreign
@@ -297,18 +351,19 @@ def ledger_begin(ledger, record, po, waiter=None):
     qdir = os.path.join(ledger, "queue")
     with LedgerLock(ledger):
         mine_up = None
+        table = ProcTable()   # next slice (06.10): one ps for every liveness / ancestry question of this call
 
         def nested(who):
             nonlocal mine_up
             if mine_up is None:
-                mine_up = ancestors(po)
+                mine_up = ancestors(po, table)
             return int(who.get("pid", 0)) in mine_up
 
         tickets, own = [], None
         for path, ns, t in queue_tickets(ledger):   # dead waiters leave the queue (their own ticket, never a record)
             if t.get("id") == record.get("id"):
                 own = (path, ns, t)
-            elif not t.get("waiter") or gone(t["waiter"]) or gone(t.get("owner") or {}):
+            elif not t.get("waiter") or gone(t["waiter"], table) or gone(t.get("owner") or {}, table):
                 # the waiting GUARD, or the caller it waits for, is gone — or the ticket names no waiter at all (no guard
                 # writes one; an owner-only ticket outlives its guard while a long-lived shell lives on)
                 retire_ticket(ledger, path, "reaped")
@@ -321,7 +376,7 @@ def ledger_begin(ledger, record, po, waiter=None):
 
         # 06.10 reviews (MUST-4): a caller that died while its snapshot waited (here, or in the S2 player-slot wait) gets no
         # window — one opened for a dead owner would refuse every later snapshot of these areas (65, "abandoned")
-        if gone(record.get("owner") or {}):
+        if gone(record.get("owner") or {}, table):
             leave_queue("left")
             return 65, "the caller pid %s is gone — no window opened for it (DIR=%s); nothing to restore" % (
                 (record.get("owner") or {}).get("pid"), record.get("dir"))
@@ -329,22 +384,40 @@ def ledger_begin(ledger, record, po, waiter=None):
         blocker, held = None, set()
         for rec in ledger_records(ledger):
             areas = set(rec.get("windowAreas") or [])
+            if rec.get("state") == "dirty" and isinstance(rec.get("areas"), dict):
+                # 06.10 review SHOULD-2: a dirty window blocks its DIRTY areas — a finalized one is restored and verified, a
+                # released one is no longer the window's; no dirty value (a SNAPSHOT_MISSING mark) → all its areas
+                areas = {a for a, v in rec["areas"].items() if v == "dirty"} or areas
             if rec.get("id") == record.get("id") or rec.get("state") == "closed":   # 06.10 reviews (MUST-2): a closed
                 continue                                                            # record only waits for its move
             who = rec.get("owner") or {}
             if not mine & areas:
                 # gt 06.10 N1: an ANCESTOR's live window over other areas still holds them — a ticket over them waits for
                 # it, and it waits for us; it is not ahead of us either
-                if rec.get("state") in LEDGER_LIVE and nested(who) and alive(who):
-                    held |= areas
+                if (rec.get("state") in LEDGER_LIVE or retrying(rec)) and nested(who) and alive(who, table):
+                    held |= areas   # 06.10 review MUST-3: an ancestor's dirty window that will be restored again too
                 continue
-            live = alive(who)
+            live = alive(who, table)
             restorer = rec.get("restorer")
-            if rec.get("state") == "restoring" and restorer and alive(restorer):   # being restored → wait
+            if rec.get("state") == "restoring" and restorer and alive(restorer, table):   # being restored → wait
                 blocker = blocker or rec
                 continue
+            # next slice (C-00 06.10; reviews NIT-11 / SHOULD-5): a dirty window whose restore ended BUSY / LOCKED /
+            # INTERRUPTED (retry=same-dir) and whose owner lives on is restored again with the same DIR — wait for it
+            # instead of failing the whole queue with 65. Not for a nested one: our own ancestor waits for us.
+            if retrying(rec) and live and not nested(who):
+                blocker = blocker or rec
+                continue
+            # next slice (C-00 06.10; backend SHOULD-4): a record still snapshotting whose guard died (SIGKILL after the
+            # grant) is abandoned even while its owner lives — no guard will ever open or abort it
+            if rec.get("state") == "snapshotting" and rec.get("guard") and gone(rec["guard"], table) \
+                    and not os.path.exists(os.path.join(rec.get("dir") or "/nonexistent", "before.txt")):
+                # 06.10 review SHOULD-1: before.txt is the commit mark (INV-8) — committed, only the "open" update was lost:
+                # the window is open (its run goes on), not abandoned
+                leave_queue("refused")
+                return 65, refusal(rec, live, "its snapshotting guard pid %s is gone" % rec["guard"].get("pid"))
             if rec.get("state") == "dirty" or rec.get("state") not in LEDGER_LIVE or not live \
-                    or (rec.get("state") == "restoring" and restorer and not alive(restorer)):
+                    or (rec.get("state") == "restoring" and restorer and not alive(restorer, table)):
                 leave_queue("refused")
                 return 65, refusal(rec, live)
             if nested(who):   # nested inside that window (LIFO): allowed
@@ -363,13 +436,13 @@ def ledger_begin(ledger, record, po, waiter=None):
                 record["queuedUtc"] = own[2].get("utc")   # 06.10 review SHOULD-4: the window's age starts now, not at the queue
             record["utc"] = utc_now()
             if waiter:
-                record["guard"] = {"pid": waiter, "lstart": lstart(waiter)}
+                record["guard"] = {"pid": waiter, "lstart": (table.state(waiter) or ("", lstart(waiter)))[1]}
             ledger_write(os.path.join(ledger, "windows", record["id"] + ".json"), record)
             leave_queue("granted")
             return 0, "ledger window %s snapshotting" % record["id"]
         place = ""
         if own is None:
-            wl = lstart(waiter) if waiter else ""
+            wl = (table.state(waiter) or ("", lstart(waiter)))[1] if waiter else ""
             if not wl:   # 06.10 review MUST-3: a ticket carries the waiter and its start time (K3 can judge it)
                 place = " (no queue place yet: %s — next poll)" % ("the waiter's start time is unknown" if waiter else "no waiter pid")
             else:
@@ -1104,9 +1177,11 @@ def main(argv):
             rec = ledger_find_dir(args[0], args[1])
             if rec is None:
                 return 1
-            if rec.get("state") == "snapshotting" and alive(rec.get("owner") or {}):
+            if rec.get("state") == "snapshotting" and alive(rec.get("owner") or {}) \
+                    and not (rec.get("guard") and gone(rec["guard"])):   # next slice 06.10: its guard died → abandoned
                 return 2
-            ledger_update(args[0], rec["id"], {"state": "dirty", "why": "SNAPSHOT_MISSING: " + args[2]}, locked=True)
+            ledger_update(args[0], rec["id"], {"state": "dirty", "why": "SNAPSHOT_MISSING: " + args[2], "retry": "none"},
+                          locked=True)   # 06.10 review MUST-2: never "restored again" — it cannot be restored
         print(rec["id"])
         return 0
     if cmd == "ledger-dequeue" and len(args) in (2, 3):

@@ -9,6 +9,8 @@
 #          · tag name free and slash-less · main worktree clean · LFS objects ≥ pointers · commit-message format
 #          (Codex-audit K-02, C-00 30.09): subject `(WP|AP)-NNN…: … (C-00 dd.mm)`, body with a test line (starts
 #          with Test/Tests/Guarded, any case, or mentions EditMode/PlayMode); --subject-exempt "<reason>" skips it
+#          — and a WIP commit fails it ("WIP" in the subject label before the first ':', or a body line starting
+#          "Not for main" / "Test: WIP"; C-00 06.10)
 #          for C-00's own reverts/hotfixes and the reason is printed in the RESULT line (no silent bypass).
 #   Apply: parent == main HEAD → git merge --ff-only; otherwise git cherry-pick --no-commit + automatic
 #          planning resolution (03-ROADMAP: git 3-way merge, then each conflicting single line = base + both sides' character-level insertions in offset order, WP-043B/051C;
@@ -201,12 +203,25 @@ LP=$("${G[@]}" lfs ls-files 2>/dev/null | wc -l | tr -d ' '); LO=$(find "$("${G[
 # --- gate 8: commit-message format (Codex-audit K-02, C-00 30.09). Subject in the house format ending in the
 #     C-00 date stamp; body names how the change was tested. --subject-exempt skips it, loudly (RESULT line).
 SUBJ_RE='^(WP|AP)-[0-9]{3}[^:]*: .+ \(C-00 [0-9]{2}\.[0-9]{2}\)$'
+# G4 D8 next slice (C-00 06.10; git-safety SHOULD-6, review NIT-1/2): WIP = "WIP" (any case) in the subject's label before
+# its first ':' ("WP-087 WIP: …", "wip: …"), or a body line starting "Not for main" / "Test: WIP" as words — a word WIP later
+# in a subject ("final WIP table"), "(not for main)" inside a sentence, "Not for maintenance" or "Test: wiped" are not.
+# A ':' inside the label's own parentheses ends the label early (a known limit, never a false alarm).
+WIP_SUBJ_RE='^([^:]*[^[:alnum:]:])?WIP([^[:alnum:]:][^:]*)?:'
+WIP_BODY_RE='^[[:space:]]*(not for main([^[:alnum:]-]|$)|tests?:[[:space:]]*wip([^[:alnum:]]|$))'
 XNOTE=""
 if [ "$EXEMPT_SET" -eq 1 ]; then
   XNOTE=" — commit-message gate EXEMPT (--subject-exempt): $EXEMPT"
+  { print -r -- "$SUBJ" | grep -qiE "$WIP_SUBJ_RE" || "${G[@]}" log -1 --format=%b "$C" | grep -qiE "$WIP_BODY_RE"; } \
+    && echo "WARNING: the exempted commit is WIP-labelled (review NIT-3) — $SUBJ"
 else
   print -r -- "$SUBJ" | grep -qE "$SUBJ_RE" || fail "commit subject not '(WP|AP)-NNN…: … (C-00 dd.mm)': $SUBJ"
   BODY=$("${G[@]}" log -1 --format=%b "$C")
+  # a WIP commit never reaches main (WIP_SUBJ_RE / WIP_BODY_RE above); --subject-exempt passes it, loudly
+  print -r -- "$SUBJ" | grep -qiE "$WIP_SUBJ_RE" \
+    && fail "WIP commit (subject label '…WIP…:') — WIP commits are not integrated; deliver a new, clean commit"
+  print -r -- "$BODY" | grep -qiE "$WIP_BODY_RE" \
+    && fail "WIP commit (a body line 'Not for main' / 'Test: WIP') — WIP commits are not integrated; deliver a new, clean commit"
   { print -r -- "$BODY" | grep -qiE '^[[:space:]]*(test|guarded)' || print -r -- "$BODY" | grep -qE 'EditMode|PlayMode'; } \
     || fail "commit body has no test line (a line starting with Test/Tests/Guarded, or naming EditMode/PlayMode)"
 fi
