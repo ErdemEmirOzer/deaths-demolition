@@ -28,6 +28,39 @@ namespace DD.Prototype.Tests.EditMode
 
         private static string F(float v) => v.ToString("0.0", CultureInfo.InvariantCulture);
 
+        /// <summary>
+        /// WP-087 (C-00 06.10, main-ci 173890ac: "SetLODs: … greater then or equal to a higher detail LOD level"): an authored model
+        /// built without a screen-height row (this fixture's geometry reads, the EditMode socket gates) or with a bad one gets LOD
+        /// heights that fall strictly from LOD0 down — no SetLODs error (the runner fails any unhandled error log).
+        /// </summary>
+        [Test]
+        public void AuthoredModel_YukseklikSirasiYoksaYaDaBozuksa_LodlarKesinAzalir()
+        {
+            var lib = Resources.Load<ClassicWeaponVisualLibrary>(ClassicWeaponVisualLibrary.ResourcePath);
+            Assert.IsNotNull(lib, "DD_ClassicWeapons");
+            int multiLevel = 0;
+            foreach (ClassicWeaponId id in Ids)
+            {
+                ClassicWeaponVisualLibrary.Entry entry = lib.Find(id);
+                Assert.IsTrue(entry != null && entry.HasModel, id + ": model yok");
+                foreach (float[] row in new[] { null, new[] { 0.05f, 0.05f, 0.05f }, new[] { 0.10f } })
+                {
+                    GameObject go = ClassicWeaponVisualLibrary.Instantiate(entry, lib.material, row);
+                    try
+                    {
+                        LOD[] lods = go.GetComponent<LODGroup>().GetLODs();
+                        if (lods.Length > 1 && row == null) multiLevel++;
+                        for (int i = 1; i < lods.Length; i++)
+                            Assert.Less(lods[i].screenRelativeTransitionHeight, lods[i - 1].screenRelativeTransitionHeight,
+                                id + " LOD" + i + " (sıra " + (row == null ? "yok" : string.Join("/", row)) + ")");
+                    }
+                    finally { Object.DestroyImmediate(go); }
+                }
+            }
+
+            Assert.Greater(multiLevel, 0, "kaynak kayıtta: en az bir modelin birden çok LOD seviyesi var");
+        }
+
         [Test]
         public void IsaretTanim_NamluVeKovan_ModelGeometrisinde()
         {

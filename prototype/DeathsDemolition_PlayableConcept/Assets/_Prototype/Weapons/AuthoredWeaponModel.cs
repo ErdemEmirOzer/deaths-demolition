@@ -21,6 +21,14 @@ namespace DD.Prototype.Weapons
         public const string OwnMaterialPrefix = "M_AP021_";
         public const int LodCount = 3;
 
+        /// <summary>
+        /// WP-087 (C-00 06.10, main-ci 173890ac red): the LOD screen heights for a caller that passes none or too few — the in-hand
+        /// row (WeaponController: LOD0 ≥ 12 % of the screen, LOD1 ≥ 5 %, LOD2 ≥ 1 %). Every level used is also kept strictly below the
+        /// one before it: LODGroup.SetLODs logs an error for a level at or above a higher-detail one (a null row used to give every
+        /// level 0.01).
+        /// </summary>
+        public static readonly float[] DefaultScreenHeights = { 0.12f, 0.05f, 0.01f };
+
         private static readonly List<Renderer>[] s_lodScratch = { new List<Renderer>(16), new List<Renderer>(16), new List<Renderer>(16) };
         private static readonly List<LODGroup> s_groupScratch = new List<LODGroup>(8);
 
@@ -76,7 +84,8 @@ namespace DD.Prototype.Weapons
             for (int i = 0; i < LodCount; i++)
             {
                 if (s_lodScratch[i].Count == 0) continue;
-                float height = screenHeights != null && i < screenHeights.Length ? screenHeights[i] : 0.01f;
+                float height = screenHeights != null && i < screenHeights.Length ? screenHeights[i] : DefaultScreenHeights[i];
+                if (count > 0 && height >= lods[count - 1].screenRelativeTransitionHeight) height = lods[count - 1].screenRelativeTransitionHeight * 0.5f;
                 lods[count++] = new LOD(height, s_lodScratch[i].ToArray());
             }
 
