@@ -916,15 +916,17 @@ class HostWatchTests(unittest.TestCase):
     def test_a_ps_that_fails_or_lists_nothing_is_unreadable_never_quiet(self):
         # gt 06.10 KP-20: a silent ps failure used to give four zeros, a quiet and clean session
         me = f"{os.getpid()} 1 python3"
-        cases = {"exit 1, empty": (1, ""), "exit 1, this process listed": (1, me), "exit 0, empty": (0, ""),
-                 "exit 0, without this process": (0, "1 0 /sbin/launchd")}
-        for name, (code, out) in cases.items():
+        cases = {"exit 1, empty": (1, "", "ps exit 1, 0 rows, this process not listed"),
+                 "exit 1, this process listed": (1, me, "ps exit 1, 1 rows, this process listed"),
+                 "exit 0, empty": (0, "", "ps exit 0, 0 rows, this process not listed"),
+                 "exit 0, without this process": (0, "1 0 /sbin/launchd", "ps exit 0, 1 rows, this process not listed")}
+        for name, (code, out, text) in cases.items():
             with self.subTest(case=name):
                 def run(argv, **kw):
                     return SimpleNamespace(stdout=out if argv[0] == "ps" else "{ 1.0 1.0 1.0 }", returncode=code if argv[0] == "ps" else 0)
                 with mock.patch.object(acc.subprocess, "run", side_effect=run):
                     sample = acc.HostWatch().sample()
-                self.assertIn("OSError: ps exit", sample["error"])
+                self.assertEqual("OSError: " + text, sample["error"])   # gt Ek 6: the text says what was seen
                 self.assertFalse(acc.HostWatch.quiet(sample))
 
     def test_an_unreadable_load_average_is_reported_not_judged(self):

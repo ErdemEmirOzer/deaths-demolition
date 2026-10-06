@@ -334,8 +334,9 @@ class HostWatch:
                 rows.append((int(parts[0]), int(parts[1]), parts[2].strip()))
         # gt KP-20: a ps that failed or listed nothing would count four zeros - quiet. It is unreadable instead (sample()
         # makes it an error sample, never quiet); a listing without this process is not the process table either.
-        if ps.returncode != 0 or os.getpid() not in {pid for pid, _, _ in rows}:
-            raise OSError(f"ps exit {ps.returncode}, {len(rows)} rows, this process {'listed' if rows else 'not listed'}")
+        listed = os.getpid() in {pid for pid, _, _ in rows}
+        if ps.returncode != 0 or not listed:
+            raise OSError(f"ps exit {ps.returncode}, {len(rows)} rows, this process {'listed' if listed else 'not listed'}")
         ours, grew = {os.getpid()}, True
         while grew:
             grew = False
