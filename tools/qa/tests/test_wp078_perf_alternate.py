@@ -239,5 +239,42 @@ class QuietWindowTests(unittest.TestCase):
             self.assertEqual((1, 2), (len(given), len(taken)))
 
 
+
+class SlotStatusTests(unittest.TestCase):
+    """S-10 06.10 (R2 FINAL z3): slot.sh v4 prints each lock file whole, its "start=" line under the lock — the quiet window
+    must still see every Unity slot as its own, or it waits forever with every slot held."""
+    V4 = """== unity (3/3)
+  1.wp078-quiet-1.94669: 2026-10-06T15:30:30Z wp078-quiet-1
+start=Tue Oct 6 18:30:29 2026
+  2.wp078-quiet-2.94670: 2026-10-06T15:30:50Z wp078-quiet-2
+start=Tue Oct 6 18:30:29 2026
+  3.wp078-quiet-3.94671: 2026-10-06T15:31:10Z wp078-quiet-3
+start=Tue Oct 6 18:30:29 2026
+== blender (0/1)
+== player (1/1)
+  1.wp078-perf.94616: 2026-10-06T15:30:29Z wp078-perf
+start=Tue Oct 6 18:30:29 2026
+"""
+
+    def ours(self, status):
+        q = wp078_perf.QuietWindow(lambda _: None, Path(tempfile.mkdtemp()) / ".hold", 6.0, 25.0, 180.0)
+        q._status = lambda: status
+        return q._unity_all_ours()
+
+    def test_v4_lock_files_with_their_start_line_are_ours(self):
+        self.assertTrue(self.ours(self.V4))
+        self.assertTrue(self.ours(self.V4.replace("start=Tue Oct 6 18:30:29 2026\n", "")))   # older one-line locks
+
+    def test_a_foreign_lock_a_free_slot_or_a_queue_is_not_ours(self):
+        self.assertFalse(self.ours(self.V4.replace("wp078-quiet-2.94670: 2026-10-06T15:30:50Z wp078-quiet-2",
+                                                   "s05-probe.111: 2026-10-06T15:30:50Z s05-probe")))
+        two = self.V4.replace("== unity (3/3)", "== unity (2/3)").replace(
+            "  3.wp078-quiet-3.94671: 2026-10-06T15:31:10Z wp078-quiet-3\nstart=Tue Oct 6 18:30:29 2026\n", "")
+        self.assertFalse(self.ours(two))
+        self.assertFalse(self.ours("== blender (0/1)\n"))
+        self.assertFalse(self.ours(self.V4.replace("  1.wp078-quiet-1.94669: 2026-10-06T15:30:30Z wp078-quiet-1",
+                                                   "  1.other-batch.555: 2026-10-06T15:30:30Z other-batch")))
+
+
 if __name__ == "__main__":
     unittest.main()

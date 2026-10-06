@@ -95,8 +95,12 @@ class QuietWindow:
         for line in lines[head + 1:]:
             if line.startswith("==") or line.strip().startswith("kuyruk"):
                 break
-            locks.append(line)
-        return bool(m) and int(m.group(1)) == int(m.group(2)) and locks and all("wp078-quiet" in l for l in locks)
+            # a lock is "  <n>.<tag>.<pid>: <utc> <tag>"; slot.sh v4 prints each lock file whole, so its second line
+            # "start=<lstart>" (the pid-reuse guard) follows unindented — not a lock (S-10 06.10: R2 FINAL z3 waited on it)
+            if re.match(r"^\s+\d+\.\S+: ", line):
+                locks.append(line)
+        return bool(m) and int(m.group(1)) == int(m.group(2)) and len(locks) == int(m.group(1)) \
+            and all("wp078-quiet" in l for l in locks)
 
     def _host_quiet(self):
         comm = subprocess.run(["ps", "-Ao", "comm"], capture_output=True, text=True).stdout.splitlines()
