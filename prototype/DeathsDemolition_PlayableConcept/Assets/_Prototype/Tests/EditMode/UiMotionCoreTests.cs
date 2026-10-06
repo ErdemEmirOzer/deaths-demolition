@@ -238,6 +238,12 @@ namespace DD.Prototype.Tests.EditMode
         {
             // file: { Lerp, unscaledDeltaTime, MoveTowards, new Color(, Update/LateUpdate }
             { "MainMenuScreen.cs", new[] { 0, 0, 0, 1, 1 } },
+            // WP-081 B (main-ci d7ecac1b): the menu's world camera, not a UI tween - its shot clock (unscaled; still on focus
+            // loss / RM / curtain), the per-frame camera pose on the 60 s timeline and the held frame's alpha, which the same
+            // clock blends at each cut. UiMotion plays fixed-length presets; this weight is the timeline's, not a duration.
+            { "MenuCinematic.cs", new[] { 0, 1, 0, 1, 1 } },
+            // WP-081 B: the world grade's three constants (sun, fog, colour filter) - lighting, not UI colour; no motion.
+            { "MenuLook.cs", new[] { 0, 0, 0, 3, 0 } },
             { "PauseScreen.cs", new[] { 0, 0, 0, 0, 1 } },
             { "ResultsScreen.cs", new[] { 0, 0, 0, 0, 1 } },
             { "RunHudScreen.cs", new[] { 3, 0, 0, 0, 2 } },   // WP-068 8c: the banner runs on presets, the marker lives in Kit/UiWorldMarker

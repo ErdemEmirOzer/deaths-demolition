@@ -45,7 +45,9 @@ namespace DD.Prototype.Tests.EditMode
 
         private static readonly Group[] Groups =
         {
-            new Group { Name = "MainMenu", Files = new[] { "Screens/MainMenuScreen.cs" } },
+            // WP-081 B (main-ci d7ecac1b): the cinematic world behind the menu and its look profile are the menu screen's own
+            // files - counted with it, so an ornament added there spends the menu's budget.
+            new Group { Name = "MainMenu", Files = new[] { "Screens/MainMenuScreen.cs", "Screens/MenuCinematic.cs", "Screens/MenuLook.cs" } },
             new Group { Name = "Selection", Files = new[] { "Screens/SelectionScreen.cs" } },
             new Group { Name = "Results", Files = new[] { "Screens/ResultsScreen.cs" } },
             new Group { Name = "Pause", Files = new[] { "Screens/PauseScreen.cs" } },
