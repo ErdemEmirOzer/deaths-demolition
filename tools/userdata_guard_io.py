@@ -154,7 +154,11 @@ def proc_state(pid):
     env = {k: v for k, v in os.environ.items() if k != "TZ"}
     env["LC_ALL"] = "C"
     for attempt in range(3):
-        r = subprocess.run(["ps", "-o", "stat=,lstart=", "-p", str(pid)], capture_output=True, text=True, env=env)
+        try:   # gt N-1: bounded like the table (it runs under L/.lock); no answer → "" (K3: never makes a live pid dead)
+            r = subprocess.run(["ps", "-o", "stat=,lstart=", "-p", str(pid)], capture_output=True, text=True, env=env,
+                               timeout=10)
+        except subprocess.TimeoutExpired:
+            return "", ""
         parts = r.stdout.split()
         if len(parts) >= 2:
             return parts[0], " ".join(parts[1:])
@@ -309,12 +313,12 @@ def typical_minutes(ledger, areas):
     return spans[len(spans) // 2] if spans else None
 
 
-def age_minutes(utc):
+def age_minutes(utc, default=0.0):
     import calendar
     try:
         return (time.time() - calendar.timegm(time.strptime(utc, "%Y-%m-%dT%H:%M:%SZ"))) / 60.0
     except (ValueError, TypeError):
-        return 0.0
+        return default
 
 
 def utc_now():
@@ -329,15 +333,17 @@ def dirty_grace():
 
 
 def retrying(rec):
-    """next slice (C-00 06.10): a dirty window its owner restores again with the same DIR — its restore ended 75 (BUSY /
-    LOCKED / early RACED, retry=same-dir), it is not a SNAPSHOT_MISSING mark, and that restore was at most
-    DD_GUARD_DIRTY_GRACE seconds ago (default 600; 06.10 review MUST-1/2/SHOULD-3: never an unbounded wait for an owner
-    that does not retry). Records without "exit" (written before this) count by retry alone."""
+    """next slice (C-00 06.10): a dirty window its owner restores again with the same DIR — its restore ended 75 (BUSY or
+    early RACED, retry=same-dir; a LOCKED restore never reaches R12), it is not a SNAPSHOT_MISSING mark, and that restore
+    was at most DD_GUARD_DIRTY_GRACE seconds ago (default 600; 06.10 review MUST-1/2/SHOULD-3: never an unbounded wait for
+    an owner that does not retry; an unreadable time stamp is past it). Records without "exit" (written before this) count
+    by retry alone."""
     if rec.get("state") != "dirty" or rec.get("retry") != "same-dir" or str(rec.get("why", "")).startswith("SNAPSHOT_MISSING"):
         return False
     if rec.get("exit") is not None and str(rec.get("exit")) != "75":
         return False
-    return age_minutes(rec.get("utcUpdated") or rec.get("utc")) * 60.0 <= dirty_grace()
+    # gt N-7: an unreadable time stamp is past the grace (never an unbounded wait)
+    return age_minutes(rec.get("utcUpdated") or rec.get("utc"), default=float("inf")) * 60.0 <= dirty_grace()
 
 
 def ledger_begin(ledger, record, po, waiter=None):
@@ -385,9 +391,10 @@ def ledger_begin(ledger, record, po, waiter=None):
         for rec in ledger_records(ledger):
             areas = set(rec.get("windowAreas") or [])
             if rec.get("state") == "dirty" and isinstance(rec.get("areas"), dict):
-                # 06.10 review SHOULD-2: a dirty window blocks its DIRTY areas — a finalized one is restored and verified, a
-                # released one is no longer the window's; no dirty value (a SNAPSHOT_MISSING mark) → all its areas
-                areas = {a for a, v in rec["areas"].items() if v == "dirty"} or areas
+                # 06.10 review SHOULD-2 + gt B-1: a dirty window frees its FINALIZED areas only (restored and verified
+                # here). A released area stays blocked: its owner may restore the DIR again in a wider scope and would
+                # write the run's bytes into another window opened there meanwhile. Nothing finalized → all its areas.
+                areas = {a for a, v in rec["areas"].items() if v != "finalized"} or areas
             if rec.get("id") == record.get("id") or rec.get("state") == "closed":   # 06.10 reviews (MUST-2): a closed
                 continue                                                            # record only waits for its move
             who = rec.get("owner") or {}
@@ -402,9 +409,10 @@ def ledger_begin(ledger, record, po, waiter=None):
             if rec.get("state") == "restoring" and restorer and alive(restorer, table):   # being restored → wait
                 blocker = blocker or rec
                 continue
-            # next slice (C-00 06.10; reviews NIT-11 / SHOULD-5): a dirty window whose restore ended BUSY / LOCKED /
-            # INTERRUPTED (retry=same-dir) and whose owner lives on is restored again with the same DIR — wait for it
-            # instead of failing the whole queue with 65. Not for a nested one: our own ancestor waits for us.
+            # next slice (C-00 06.10; reviews NIT-11 / SHOULD-5): a dirty window whose restore ended 75 (retrying(): BUSY or
+            # early RACED, retry=same-dir, within DD_GUARD_DIRTY_GRACE) and whose owner lives on is restored again with the
+            # same DIR — wait for it instead of failing the whole queue with 65. Not for a nested one: our ancestor waits
+            # for us.
             if retrying(rec) and live and not nested(who):
                 blocker = blocker or rec
                 continue

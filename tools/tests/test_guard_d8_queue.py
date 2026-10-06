@@ -265,6 +265,19 @@ class KuyrukBirimTests(unittest.TestCase):
         self.put_record(rec)
         self.assertEqual(75, self.begin("N")[0])
 
+    def test_Birim_DirtyReleasedAlan_BloklamayaDevamEder_65(self):
+        """gt B-1 (06.10): a RELEASED area of a dirty window stays blocked — its owner may restore the DIR again in a wider
+        scope and would write the run's bytes into a window opened there meanwhile (user data)."""
+        r = self.rec("B", self.foreign(), areas=("editor", "player"), state="dirty")
+        r["areas"] = {"editor": "dirty", "player": "released"}
+        self.put_record(r)
+        self.assertEqual(65, self.begin("P", areas=("player",))[0])
+
+    def test_Birim_DirtyRetry_BozukZamanDamgasi_GraceGecmisSayilir_65(self):
+        """gt N-7: an unreadable time stamp never makes the wait unbounded."""
+        self.put_record(self.rec("B", self.foreign(), state="dirty", retry="same-dir", exit=75, utc="?", utcUpdated="bozuk"))
+        self.assertEqual(65, self.begin("N")[0])
+
     def test_Birim_DirtyYalnizDirtyAlanlariBloklar(self):
         """SHOULD-2: editor finalized + player dirty — an editor snapshot is not blocked, a player one is (65, no retry)."""
         r = self.rec("B", self.foreign(), areas=("editor", "player"), state="dirty")
