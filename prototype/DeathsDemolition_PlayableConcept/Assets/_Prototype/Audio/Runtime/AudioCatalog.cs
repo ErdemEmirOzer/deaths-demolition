@@ -14,9 +14,13 @@ namespace DD.Prototype.Audio
     /// with an entry here plays the produced clips, everything else keeps its recipe. That
     /// is what lets the set grow one family at a time and what keeps a checkout without
     /// LFS content (or a test project) audible.
+    ///
+    /// WP-085 G2: the id → entry index is built once per data set and only rebuilt after an
+    /// explicit invalidation (<see cref="Set"/>, or Unity writing serialized data into the
+    /// instance: load, reimport, undo). It no longer depends on the entry count.
     /// </summary>
     [CreateAssetMenu(fileName = "DD_AudioCatalog", menuName = "DD/Audio/Catalog")]
-    public sealed class AudioCatalog : ScriptableObject
+    public sealed class AudioCatalog : ScriptableObject, ISerializationCallbackReceiver
     {
         public const string ResourcePath = "DD_AudioCatalog";
 
@@ -48,7 +52,13 @@ namespace DD.Prototype.Audio
         [SerializeField] private string _sourceHash = string.Empty;
         [SerializeField] private Entry[] _entries = Array.Empty<Entry>();
 
-        private Dictionary<AudioSoundId, Entry> _index;
+        // WP-085 G2: the index used to be rebuilt whenever _index.Count != _entries.Length. A duplicate Sound
+        // (or a null slot) keeps those two apart forever, so every TryGet (every shot, every casing) allocated a
+        // fresh dictionary. Invalidation is now explicit: Set() and OnAfterDeserialize clear the flag.
+        // [NonSerialized] matters for the bool: the editor's domain-reload backup also serializes private fields,
+        // and a restored "built" flag without its (unserializable) dictionary would be a lie.
+        [NonSerialized] private Dictionary<AudioSoundId, Entry> _index;
+        [NonSerialized] private bool _indexBuilt;
 
         public string ManifestVersion => _manifestVersion;
         public string SourceHash => _sourceHash;
@@ -76,18 +86,12 @@ namespace DD.Prototype.Audio
             s_loaded = clearOnly ? null : catalog;
         }
 
+        /// <summary>Allocation-free after the first call for a data set (the first call builds the index).</summary>
         public bool TryGet(AudioSoundId sound, out Entry entry)
         {
-            if (_index == null || _index.Count != _entries.Length)
+            if (!_indexBuilt || _index == null)
             {
-                _index = new Dictionary<AudioSoundId, Entry>(_entries.Length);
-                for (int i = 0; i < _entries.Length; i++)
-                {
-                    if (_entries[i] != null && !_index.ContainsKey(_entries[i].Sound))
-                    {
-                        _index.Add(_entries[i].Sound, _entries[i]);
-                    }
-                }
+                RebuildIndex();
             }
 
             return _index.TryGetValue(sound, out entry) && entry.Clips != null && entry.Clips.Length > 0;
@@ -101,6 +105,38 @@ namespace DD.Prototype.Audio
             _sourceHash = sourceHash ?? string.Empty;
             _entries = entries.ToArray();
             _index = null;
+            _indexBuilt = false;
+        }
+
+        private void RebuildIndex()
+        {
+            Entry[] entries = _entries ?? Array.Empty<Entry>();
+            var index = new Dictionary<AudioSoundId, Entry>(entries.Length);
+            for (int i = 0; i < entries.Length; i++)
+            {
+                // First entry wins on a duplicate Sound; null slots are skipped. Neither forces a rebuild any more.
+                if (entries[i] != null && !index.ContainsKey(entries[i].Sound))
+                {
+                    index.Add(entries[i].Sound, entries[i]);
+                }
+            }
+
+            _index = index;
+            _indexBuilt = true;
+        }
+
+        void ISerializationCallbackReceiver.OnBeforeSerialize()
+        {
+        }
+
+        /// <summary>
+        /// Unity wrote serialized data into this instance (load, reimport of the asset in place, undo): the index may
+        /// be stale. Can run off the main thread during loading, so only the flag is written here; the dictionary is
+        /// rebuilt by the next <see cref="TryGet"/> on the caller's thread.
+        /// </summary>
+        void ISerializationCallbackReceiver.OnAfterDeserialize()
+        {
+            _indexBuilt = false;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]

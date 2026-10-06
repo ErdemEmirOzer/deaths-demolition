@@ -286,10 +286,7 @@ namespace DD.Prototype.Audio.EditorTools
 
             // WP-085 B5: the AP-027 manifest rides on top — its rows win for the same sound, the rest of AP-011 stays.
             Manifest v4 = File.Exists(Ap027ManifestPath) ? JsonUtility.FromJson<Manifest>(File.ReadAllText(Ap027ManifestPath)) : null;
-            var rows = new List<(ManifestEntry entry, string root)>();
-            var v4Sounds = new HashSet<string>();
-            if (v4 != null) foreach (ManifestEntry e in v4.entries) { rows.Add((e, Ap027AudioRoot)); v4Sounds.Add(e.sound); }
-            foreach (ManifestEntry e in manifest.entries) if (!v4Sounds.Contains(e.sound)) rows.Add((e, AudioRoot));
+            List<(ManifestEntry entry, string root)> rows = MergeRows(manifest, v4);
 
             string hash = v4 != null ? HashOf(ManifestPath).Substring(0, 32) + HashOf(Ap027ManifestPath).Substring(0, 32) : HashOf(ManifestPath);
             string version = v4 != null ? manifest.version + "+" + v4.version : manifest.version;
@@ -300,6 +297,7 @@ namespace DD.Prototype.Audio.EditorTools
             }
 
             var entries = new List<AudioCatalog.Entry>(rows.Count);
+            var ids = new HashSet<AudioSoundId>();
             int missing = 0;
             for (int i = 0; i < rows.Count; i++)
             {
@@ -309,6 +307,12 @@ namespace DD.Prototype.Audio.EditorTools
                 {
                     Debug.LogWarning("[AudioCatalogBuilder] unknown sound id in manifest: " + m.sound);
                     continue;
+                }
+
+                // WP-085 G2: two spellings that parse to one id (a number, a flags list) are still one sound twice.
+                if (!ids.Add(id))
+                {
+                    throw new InvalidOperationException("audio manifest row '" + m.sound + "' resolves to " + id + ", already in the catalog (catalog untouched)");
                 }
 
                 var clips = new List<AudioClip>(m.files.Length);
@@ -356,6 +360,44 @@ namespace DD.Prototype.Audio.EditorTools
             AssetDatabase.SaveAssets();
 
             return "catalog built: " + entries.Count + " entries, " + missing + " missing clips, manifest " + hash.Substring(0, 8);
+        }
+
+        /// <summary>
+        /// WP-085 B5 overlay as a pure step: AP-027 rows win for the same sound, AP-011 keeps the rest (<paramref name="ap027"/>
+        /// may be null). WP-085 G2: a sound listed twice inside ONE manifest is a delivery error — which row is meant cannot be
+        /// decided here, and a duplicate Sound in the catalog used to make AudioCatalog.TryGet rebuild its index on every call —
+        /// so it throws before the catalog is touched.
+        /// </summary>
+        public static List<(ManifestEntry entry, string root)> MergeRows(Manifest ap011, Manifest ap027)
+        {
+            var rows = new List<(ManifestEntry entry, string root)>();
+            var duplicates = new List<string>();
+            var v4Sounds = new HashSet<string>();
+            if (ap027 != null && ap027.entries != null)
+            {
+                foreach (ManifestEntry e in ap027.entries)
+                {
+                    if (v4Sounds.Add(e.sound)) rows.Add((e, Ap027AudioRoot));
+                    else duplicates.Add("AP-027 " + e.sound);
+                }
+            }
+
+            var v1Sounds = new HashSet<string>();
+            if (ap011 != null && ap011.entries != null)
+            {
+                foreach (ManifestEntry e in ap011.entries)
+                {
+                    if (!v1Sounds.Add(e.sound)) duplicates.Add("AP-011 " + e.sound);
+                    else if (!v4Sounds.Contains(e.sound)) rows.Add((e, AudioRoot));
+                }
+            }
+
+            if (duplicates.Count > 0)
+            {
+                throw new InvalidOperationException("audio manifest lists a sound more than once (catalog untouched): " + string.Join(", ", duplicates));
+            }
+
+            return rows;
         }
 
         /// <summary>WP-072: the v016 player-weapon set (fire / transient / body loop / space tail); WP-085 B5: the AP-027 layers

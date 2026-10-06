@@ -9,6 +9,8 @@ using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Audio;
+using UnityEngine.TestTools.Constraints;   // WP-085 G2: Is.Not.AllocatingGCMemory() extension
+using Is = UnityEngine.TestTools.Constraints.Is;   // derives from NUnit's Is: Is.InRange etc. still resolve; no CS0104 ambiguity
 
 namespace DD.Prototype.Tests.EditMode.Audio
 {
@@ -387,6 +389,165 @@ namespace DD.Prototype.Tests.EditMode.Audio
             Assert.AreEqual(6, amb, "DoD: 6 ambiyans bed'i (ortak + 5 bölge)");
             Assert.AreEqual(4, muzik, "DoD: 4 müzik katmanı");
             Debug.Log("[DD-TEST] wp021.catalog entries=" + katalog.Entries.Count + " files=" + dosya + " sfx=" + sfx + " amb=" + amb + " music=" + muzik + " manifest=" + katalog.SourceHash.Substring(0, 8));
+        }
+
+        /// <summary>
+        /// WP-085 G2: the shipped catalog (as committed — not rebuilt here) has no null slot, every Sound once, ≥ 1 non-null
+        /// clip per entry, and TryGet returns exactly that entry. A duplicate used to make TryGet rebuild its index on every call.
+        /// </summary>
+        [Test]
+        public void Katalog_SevkEdilen_NullGirdiYok_SoundTekil_HerGirdideKlipVar()
+        {
+            var katalog = AssetDatabase.LoadAssetAtPath<AudioCatalog>(AudioCatalogBuilder.CatalogPath);
+            Assert.IsNotNull(katalog, "sevk edilen katalog yüklenmedi: " + AudioCatalogBuilder.CatalogPath);
+            Assert.AreSame(katalog, Resources.Load<AudioCatalog>(AudioCatalog.ResourcePath), "oyunun yüklediği (Resources) aynı varlık olmalı");
+            Assert.Greater(katalog.Entries.Count, 0, "katalog boş — ölçülecek girdi yok");
+
+            var gorulen = new HashSet<AudioSoundId>();
+            var hatalar = new List<string>();
+            int klip = 0;
+            for (int i = 0; i < katalog.Entries.Count; i++)
+            {
+                AudioCatalog.Entry e = katalog.Entries[i];
+                if (e == null)
+                {
+                    hatalar.Add("#" + i + ": null girdi");
+                    continue;
+                }
+
+                if (e.Sound == AudioSoundId.None || !Enum.IsDefined(typeof(AudioSoundId), e.Sound)) hatalar.Add("#" + i + ": tanımsız ses " + (int)e.Sound);
+                if (!gorulen.Add(e.Sound)) hatalar.Add("#" + i + ": " + e.Sound + " ikinci kez");
+                if (e.Clips == null || e.Clips.Length == 0)
+                {
+                    hatalar.Add(e.Sound + ": klip yok");
+                    continue;
+                }
+
+                for (int c = 0; c < e.Clips.Length; c++)
+                {
+                    if (e.Clips[c] == null) hatalar.Add(e.Sound + ": klip " + c + " null");
+                    else klip++;
+                }
+
+                if (!katalog.TryGet(e.Sound, out AudioCatalog.Entry bulunan) || !ReferenceEquals(bulunan, e)) hatalar.Add(e.Sound + ": TryGet bu girdiyi döndürmüyor");
+            }
+
+            Assert.IsEmpty(hatalar, "Katalog tekillik ihlali (" + hatalar.Count + "): " + string.Join("; ", hatalar));
+            Assert.AreEqual(katalog.Entries.Count, gorulen.Count, "her girdi ayrı bir ses olmalı");
+            Debug.Log("[DD-TEST] wp085.g2.catalog entries=" + katalog.Entries.Count + " unique=" + gorulen.Count + " clips=" + klip + " version=" + katalog.ManifestVersion);
+        }
+
+        /// <summary>
+        /// WP-085 G2 regression: a catalog with the same Sound twice (3 entries, 2 keys). The old check
+        /// (_index.Count != _entries.Length → 2 != 3, never equal) rebuilt the dictionary on EVERY TryGet; the
+        /// second and later calls must allocate nothing. Statement lambdas on purpose: an expression lambda that
+        /// returns bool binds to ActualValueDelegate and is evaluated outside the GC recorder.
+        /// </summary>
+        [Test]
+        public void Katalog_AyniSoundIkiKez_IkinciTryGetAyirmaz()
+        {
+            AudioClip klip = AudioClip.Create("wp085_g2_dup", 480, 1, 48000, false);
+            var k = ScriptableObject.CreateInstance<AudioCatalog>();
+            try
+            {
+                k.Set("wp085-g2-test", "g2-dup", new List<AudioCatalog.Entry>
+                {
+                    new AudioCatalog.Entry { Sound = AudioSoundId.RifleFire, Clips = new[] { klip } },
+                    new AudioCatalog.Entry { Sound = AudioSoundId.RifleFire, Clips = new[] { klip } },   // aynı ses ikinci kez
+                    new AudioCatalog.Entry { Sound = AudioSoundId.SmgFire, Clips = new[] { klip } }
+                });
+                Assert.AreEqual(3, k.Entries.Count, "yineleme kurulumda durmalı (indeks 2 anahtar, girdi 3)");
+
+                Assert.IsTrue(k.TryGet(AudioSoundId.RifleFire, out AudioCatalog.Entry ilk), "ilk çağrı indeksi kurar ve bulur");
+                Assert.IsTrue(k.TryGet(AudioSoundId.SmgFire, out _));
+                Assert.IsFalse(k.TryGet(AudioSoundId.ShotgunFire, out _), "katalogda olmayan ses");
+
+                object[] yem = null;
+                Assert.That(() => { yem = new object[256]; for (int i = 0; i < yem.Length; i++) yem[i] = new byte[64]; },
+                    Is.AllocatingGCMemory(), "sayaç geçersiz (pozitif kontrol: kayıtçı ayırmayı görmeli)");
+                GC.KeepAlive(yem);
+
+                bool bulundu = false;
+                AudioCatalog.Entry sonra = null;
+                Assert.That(() =>
+                {
+                    for (int i = 0; i < 1000; i++)
+                    {
+                        bulundu = k.TryGet(AudioSoundId.RifleFire, out sonra);
+                        k.TryGet(AudioSoundId.ShotgunFire, out _);
+                    }
+                }, Is.Not.AllocatingGCMemory(), "yineleme varken TryGet indeksi yeniden kurdu (her çağrıda sözlük ayırma)");
+                Assert.IsTrue(bulundu, "ikinci ve sonraki çağrılar da bulmalı");
+                Assert.AreSame(ilk, sonra, "aynı indeks, aynı girdi");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(k);
+                UnityEngine.Object.DestroyImmediate(klip);
+            }
+        }
+
+        /// <summary>
+        /// WP-085 G2: with the count check gone, Set() and OnAfterDeserialize (load / in-place reimport / undo) are the only
+        /// invalidations — both must lead to a rebuild, and only one. Same entry count throughout, which the old check could not see.
+        /// </summary>
+        [Test]
+        public void Katalog_SetVeOnAfterDeserialize_IndeksiYenidenKurar()
+        {
+            AudioClip klip = AudioClip.Create("wp085_g2_inval", 480, 1, 48000, false);
+            var k = ScriptableObject.CreateInstance<AudioCatalog>();
+            try
+            {
+                k.Set("a", "a", new List<AudioCatalog.Entry> { new AudioCatalog.Entry { Sound = AudioSoundId.RifleFire, Clips = new[] { klip } } });
+                Assert.IsTrue(k.TryGet(AudioSoundId.RifleFire, out _));
+                Assert.IsFalse(k.TryGet(AudioSoundId.SmgFire, out _));
+
+                k.Set("b", "b", new List<AudioCatalog.Entry> { new AudioCatalog.Entry { Sound = AudioSoundId.SmgFire, Clips = new[] { klip } } });
+                Assert.IsTrue(k.TryGet(AudioSoundId.SmgFire, out _), "Set sonrası yeni ses bulunmalı");
+                Assert.IsFalse(k.TryGet(AudioSoundId.RifleFire, out _), "Set sonrası eski ses kalmamalı");
+
+                // Serialized data rewritten under the live instance (what an in-place reimport does), then Unity's callback.
+                k.Entries[0].Sound = AudioSoundId.ShotgunFire;
+                ((ISerializationCallbackReceiver)k).OnAfterDeserialize();
+                bool bulundu = false;
+                Assert.That(() => { bulundu = k.TryGet(AudioSoundId.ShotgunFire, out _); }, Is.AllocatingGCMemory(),
+                    "OnAfterDeserialize sonrası ilk TryGet indeksi yeniden kurmalı");
+                Assert.IsTrue(bulundu, "yeni veri indekste");
+                Assert.IsFalse(k.TryGet(AudioSoundId.SmgFire, out _), "eski anahtar indeksten düşmeli");
+                Assert.That(() => { k.TryGet(AudioSoundId.ShotgunFire, out _); }, Is.Not.AllocatingGCMemory(), "yeniden kurulumdan sonra ayırma yok");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(k);
+                UnityEngine.Object.DestroyImmediate(klip);
+            }
+        }
+
+        /// <summary>WP-085 G2: the builder's overlay step — AP-027 wins per sound, AP-011 keeps the rest; a sound twice in one manifest throws.</summary>
+        [Test]
+        public void KatalogDonusturucu_AP027UsteBiner_ManifestteYinelenenSesHataVerir()
+        {
+            AudioCatalogBuilder.ManifestEntry Satir(string ses) => new AudioCatalogBuilder.ManifestEntry { sound = ses, files = new[] { ses + "_01.wav" } };
+            string tufek = nameof(AudioSoundId.RifleFire), smg = nameof(AudioSoundId.SmgFire);
+            var ap011 = new AudioCatalogBuilder.Manifest { version = "t011", entries = new[] { Satir(tufek), Satir(smg) } };
+            var ap027 = new AudioCatalogBuilder.Manifest { version = "t027", entries = new[] { Satir(tufek) } };
+
+            var satirlar = AudioCatalogBuilder.MergeRows(ap011, ap027);
+            Assert.AreEqual(2, satirlar.Count, "RifleFire bir kez (AP-027) + SmgFire (AP-011)");
+            foreach (var s in satirlar)
+            {
+                Assert.AreEqual(s.entry.sound == tufek ? AudioCatalogBuilder.Ap027AudioRoot : AudioCatalogBuilder.AudioRoot, s.root, s.entry.sound + " kökü");
+            }
+
+            Assert.AreEqual(2, AudioCatalogBuilder.MergeRows(ap011, null).Count, "AP-027 yokken AP-011 olduğu gibi");
+
+            var ap027Cift = new AudioCatalogBuilder.Manifest { version = "t027b", entries = new[] { Satir(tufek), Satir(tufek) } };
+            var hata = Assert.Throws<InvalidOperationException>(() => AudioCatalogBuilder.MergeRows(ap011, ap027Cift));
+            StringAssert.Contains("AP-027 " + tufek, hata.Message);
+
+            var ap011Cift = new AudioCatalogBuilder.Manifest { version = "t011b", entries = new[] { Satir(smg), Satir(smg) } };
+            hata = Assert.Throws<InvalidOperationException>(() => AudioCatalogBuilder.MergeRows(ap011Cift, ap027));
+            StringAssert.Contains("AP-011 " + smg, hata.Message);
         }
 
         [Test]
