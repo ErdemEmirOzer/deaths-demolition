@@ -744,6 +744,24 @@ class P2BaselineTests(Base):
         self.assertEqual([], steps)   # stopped before any measurement session
         self.assertTrue((self.evidence / "r2" / "r2-P5.json").is_file())   # and before P5 was retired
 
+    def test_another_finals_a4_record_does_not_hide_a_baseline_root(self):
+        # gt 06.10 KP-3: before 3959a1d5 an a4 record of another FINAL counted as none, so a4/perf-r1 without a baseline 64'd
+        put_json(self.evidence / "stages" / "a4.json", {"executionCommit": "f" * 40, "baselineCommit": R1})
+        (self.evidence / "a4" / "perf-r1").mkdir(parents=True)
+        for stage in ("a4", "r2"):
+            with self.subTest(stage=stage):
+                with mock.patch.object(acc.r2_gates, "measurement_steps", side_effect=lambda c, quiet: []):
+                    self.assertEqual(64, make_chain(self.evidence, [stage], resume=True, round_name="R2").run())
+                self.assertIn("perf-r1 exists but this run gives no --r1-evidence", (self.evidence / "accept.log").read_text())
+
+    def test_a_dry_run_never_retires(self):
+        # gt 06.10 KP-9: P5's retirement now comes before the dry-run return, so retire's own guard is what keeps the file
+        put_json(self.evidence / "r2" / "r2-P5.json", {"gate": "P5"})
+        with mock.patch.object(acc.r2_gates, "measurement_steps", side_effect=lambda c, quiet: []):
+            make_chain(self.evidence, ["r2"], round_name="R2", dry_run=True).run()
+        self.assertTrue((self.evidence / "r2" / "r2-P5.json").is_file())
+        self.assertEqual([], list((self.evidence / "r2").glob("r2-P5.json.stale-*")))
+
     def test_an_r2_run_that_wrote_no_p5_binds_no_baseline(self):
         with mock.patch.object(acc.r2_gates, "measurement_steps", side_effect=lambda c, quiet: []):
             make_chain(self.evidence, ["r2"], round_name="R2", r1_evidence=Path(self.tmp.name), r1_commit="e" * 40).run()
@@ -871,6 +889,34 @@ class HostWatchTests(unittest.TestCase):
         watch = acc.HostWatch(wait_max=30.0, sleep=lambda s: None)
         watch.state = lambda: {"load1": 9.0, "foreignPlayer": 0}
         self.assertEqual(({"load1": 9.0, "foreignPlayer": 0}, False, 30.0), watch.wait_quiet())
+
+    def test_an_unreadable_host_is_recorded_never_quiet_and_never_a_crash(self):
+        # gt 06.10 KP-11: a failing ps / sysctl used to raise out of r2q, or end the sampler thread silently
+        watch = acc.HostWatch(wait_max=30.0, sleep=lambda s: None)
+        with mock.patch.object(acc.subprocess, "run", side_effect=OSError("ps: not permitted")):
+            start, calm, waited = watch.wait_quiet()
+        self.assertEqual((False, 30.0, "OSError: ps: not permitted"), (calm, waited, start["error"]))
+        calls = iter([{"load1": 1.0, "foreignUnity": 0, "foreignPlayer": 0, "foreignBlender": 0}, ValueError("bad loadavg")]
+                     + [{"load1": 2.0, "foreignUnity": 0, "foreignPlayer": 0, "foreignBlender": 0}] * 100)
+
+        def state():
+            value = next(calls)
+            if isinstance(value, Exception):
+                raise value
+            return value
+        watch = acc.HostWatch(interval=0.01)
+        watch.state = state
+        watch.start()
+        time.sleep(0.1)
+        samples = watch.stop()
+        self.assertGreaterEqual(len(samples), 3)   # the sampler went on after the error
+        self.assertEqual("ValueError: bad loadavg", samples[1]["error"])
+        step = {"id": "r2-S3", "gates": ["S3"]}
+        record = acc.host_record(step, start, calm, waited, samples, 6.0)
+        self.assertTrue(record["dirty"])
+        self.assertEqual((1, 2.0), (record["unreadableSamples"], record["load1Max"]))
+        self.assertEqual(["start not quiet after 30 s: OSError: ps: not permitted",
+                          f"host unreadable in 1 of {len(samples)} samples"], record["dirtyWhy"])
 
     def test_the_sampler_runs_until_stopped(self):
         watch = acc.HostWatch(interval=0.01)
@@ -1038,6 +1084,14 @@ class R2StageTests(Base):
         self.assertEqual([], again.events)
         bound = json.loads((self.evidence / "stages" / "r2q.json").read_text())["artifactSha256"]
         self.assertIn("../r2/r2-S3/host.json", bound)
+
+    def test_a_unit_is_reused_only_on_resume(self):
+        # gt 06.10 KP-9: without --resume a complete unit record is never reused (nor its host record left unwatched)
+        self.quiet_run(FakeHost())
+        record = self.evidence / "stages" / "units" / "r2q-r2-S3.json"
+        self.assertTrue(record.is_file())
+        self.assertIsNotNone(make_chain(self.evidence, ["r2q"], round_name="R2", resume=True).reusable_unit(record))
+        self.assertIsNone(make_chain(self.evidence, ["r2q"], round_name="R2").reusable_unit(record))
 
     def test_the_manifest_binds_each_quiet_gates_host_record(self):
         put_json(self.evidence / "r2" / "r2-S1.json", {"gate": "S1"})

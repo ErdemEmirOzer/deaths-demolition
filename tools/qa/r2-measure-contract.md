@@ -54,7 +54,10 @@ the session runs, it samples load1 and the foreign Unity / Player / Blender proc
 did not start quiet, or had a foreign Player beside it, still runs and is recorded `dirty`. The report shows **KİRLİ** on
 those gates, as a note, never as their status. The owner's own quality gates decide the value: S1/S2's pile-up check
 re-takes, then fails the test, so load never writes a wrong value; S4 has no dropped samples at load1 ~105. A quiet gate
-measured with no host record says so too.
+measured with no host record says so too, and a host that cannot be read (ps / sysctl) is recorded dirty, never quiet.
+"KİRLİ" has two uses (gt KP-16). This chain note marks a value that is bound and judged on a busy host. An owner tool's
+own KİRLİ stamp (SABİT-KURALLAR 5.8) is different: `r2_s3.py` writes `r2-S3.KIRLI.json` instead of `r2-S3.json`. That file
+is never bound, and the gate stays BLOCKED until a clean run.
 An `[Explicit]` test runs only when the filter names it in full (S-02 05.10): give its full name, never a class regex. A gate without
 `measuredBy` gets its artifact from the owner's own run into `<E>/r2/`. H4 is split (C-00 05.10): H4 = weapon yaw/roll
 table (S-02), H4a = FP arm keys (S-06), same thresholds.
@@ -148,7 +151,9 @@ No owner test: `wp078_accept` writes `r2-P5.json` in stage `r2` from the chain's
 either build (C-00 05.10 decision (a)). R1 sat on the 1.2 s curtain floor in every session, so `floorLimited` tells
 that the ratio only shows an R2 load that grows past it. Every `r2` run first renames an earlier `r2-P5.json` to
 `.stale-<utc>`, with or without a baseline this time. A resumed run whose `--r1-commit` differs from the one P2 (the a4
-record) or P5 (the r2 record) was made with stops with 64 before any session: one report, one R1 baseline (gt 06.10 N-11).
+record) or P5 (the r2 record) was made with stops with 64 at the start of r2 (or of a4), before that stage's sessions —
+earlier stages that have not passed yet still run first. One report, one R1 baseline (gt 06.10 N-11, KP-2). A run without
+`--resume` on existing evidence is refused anyway.
 
 ## P2 (R2 − R1 perf per cell, report — C-00 05.10)
 

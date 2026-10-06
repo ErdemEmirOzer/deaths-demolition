@@ -340,14 +340,23 @@ class HostWatch:
                 "foreignPlayer": sum(c.endswith(wp078_perf.PLAYER_EXE) for c in foreign),
                 "foreignBlender": sum(c.endswith("/MacOS/Blender") for c in foreign)}
 
+    def sample(self):
+        """state(), or — when ps / sysctl cannot be read — a sample that says so: never quiet, never a crash (gt KP-11)."""
+        try:
+            return self.state()
+        except Exception as error:   # noqa: BLE001 — any failure to read the host is recorded, not raised
+            return {"load1": None, "foreignUnity": None, "foreignPlayer": None, "foreignBlender": None,
+                    "error": f"{type(error).__name__}: {error}"}
+
     def quiet(self, s):
-        return s["load1"] < self.load_max and s["foreignPlayer"] == 0
+        # an unreadable sample has load1 None, so it is never quiet
+        return isinstance(s.get("load1"), (int, float)) and s["load1"] < self.load_max and s.get("foreignPlayer") == 0
 
     def wait_quiet(self):
         """(start sample, quiet, waited seconds)."""
         waited = 0.0
         while True:
-            s = self.state()
+            s = self.sample()
             if self.quiet(s) or waited >= self.wait_max:
                 return s, self.quiet(s), waited
             self.sleep(15.0)
@@ -360,7 +369,7 @@ class HostWatch:
         def run():
             t0 = time.monotonic()
             while not self._stop.is_set():
-                self._samples.append(dict(self.state(), t=round(time.monotonic() - t0, 1)))
+                self._samples.append(dict(self.sample(), t=round(time.monotonic() - t0, 1)))
                 self._stop.wait(self.interval)
         self._thread = threading.Thread(target=run, daemon=True)
         self._thread.start()
@@ -374,18 +383,28 @@ class HostWatch:
 
 
 def host_record(step, start, quiet, waited, samples, load_max):
-    """<E>/r2/<step>/host.json — dirty when the session did not start quiet or a foreign Player ran during it."""
+    """<E>/r2/<step>/host.json — dirty when the session did not start quiet, a foreign Player ran during it, or the host
+    could not be read (gt KP-11: an unknown host is never called quiet)."""
+    def most(key, rows, default):
+        values = [s[key] for s in rows if isinstance(s.get(key), (int, float)) and not isinstance(s.get(key), bool)]
+        return max(values) if values else default
     why = []
     if not quiet:
-        why.append(f"start not quiet after {waited:.0f} s: load1 {start['load1']:.2f}, foreign Player {start['foreignPlayer']}")
-    players = max([s["foreignPlayer"] for s in samples] or [0])
+        load = start.get("load1")
+        state = start.get("error") or (f"load1 {load:.2f}" if isinstance(load, (int, float)) else f"load1 {load}") + \
+            f", foreign Player {start.get('foreignPlayer')}"
+        why.append(f"start not quiet after {waited:.0f} s: {state}")
+    players = most("foreignPlayer", samples, 0)
     if players:
         why.append(f"a foreign Player ran during the session (max {players})")
+    unreadable = sum(1 for s in samples if s.get("error"))
+    if unreadable:
+        why.append(f"host unreadable in {unreadable} of {len(samples)} samples")
     return {"schema": "dd-r2-host-v1", "step": step["id"], "gates": step["gates"], "loadMax": load_max,
             "waitedSeconds": waited, "quietAtStart": quiet, "start": start, "samples": len(samples),
-            "load1Max": max([s["load1"] for s in samples] or [start["load1"]]),
-            "foreignUnityMax": max([s["foreignUnity"] for s in samples] or [0]), "foreignPlayerMax": players,
-            "foreignBlenderMax": max([s["foreignBlender"] for s in samples] or [0]), "dirty": bool(why), "dirtyWhy": why}
+            "load1Max": most("load1", samples, start.get("load1")), "foreignUnityMax": most("foreignUnity", samples, 0),
+            "foreignPlayerMax": players, "foreignBlenderMax": most("foreignBlender", samples, 0),
+            "unreadableSamples": unreadable, "dirty": bool(why), "dirtyWhy": why}
 
 
 class EditorGuard:
@@ -700,7 +719,9 @@ class Chain:
             if had != want:
                 raise Stop(64, f"{other} was recorded with R1 baseline {had}, this run gives {want}: {gate} would rest on another "
                                "baseline than the rest of the report — resume with the same --r1-evidence/--r1-commit, or a new --evidence")
-        if want is None and (self.evidence / R1_ROOT).exists() and not isinstance(load_json(self.stage_record("a4")), dict):
+        a4 = load_json(self.stage_record("a4"))
+        a4_here = isinstance(a4, dict) and a4.get("executionCommit") == self.final   # another FINAL's record is none (gt KP-3)
+        if want is None and (self.evidence / R1_ROOT).exists() and not a4_here:
             raise Stop(64, f"{R1_ROOT} exists but this run gives no --r1-evidence/--r1-commit: resume with them, or a new --evidence")
 
     # ---- Editor-guarded unit (builds, suites) -----------------------------------------------------------------------
@@ -1185,8 +1206,9 @@ class Chain:
                          f"{self.host.wait_max:.0f} s) + a sample every {self.host.interval:.0f} s → {out}/host.json")
             if watch:
                 start, calm, waited = self.host.wait_quiet()
-                self.log(f"HOST {name}: {'quiet' if calm else 'NOT quiet'} at start after {waited:.0f} s — load1 "
-                         f"{start['load1']:.2f}, foreign Player {start['foreignPlayer']}, foreign Unity {start['foreignUnity']}")
+                self.log(f"HOST {name}: {'quiet' if calm else 'NOT quiet'} at start after {waited:.0f} s — "
+                         + (start.get("error") or f"load1 {start.get('load1')}, foreign Player {start.get('foreignPlayer')}, "
+                                                   f"foreign Unity {start.get('foreignUnity')}"))
                 self.host.start()
             try:
                 result = self.editor_unit(name, [argv], out,

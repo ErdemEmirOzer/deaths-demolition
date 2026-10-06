@@ -194,6 +194,18 @@ class MainWiringTests(unittest.TestCase):
         self.assertEqual((4.5, 21.0, 99.0, 777.0), made[0][2:])
 
 
+class FailStopWiringTests(unittest.TestCase):
+    def test_a_fail_stop_below_one_is_refused(self):
+        # gt 06.10 KP-10: 0 would stop the R1 side after its first window, whatever that window was
+        out = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, out, True)
+        argv = ["wp078_perf.py", "--bin", "/nowhere/P", "--out", str(out), "--commit", "a" * 40, "--baseline-fail-stop", "0"]
+        with mock.patch.object(sys, "argv", argv), \
+                mock.patch.object(wp078_perf.guard_receipt, "canon_refusal", return_value=None), \
+                mock.patch.object(wp078_perf, "run_all", side_effect=AssertionError("must not run")):
+            self.assertEqual(64, wp078_perf.main())
+
+
 class QuietWindowTests(unittest.TestCase):
     """KADRO game-test-engineer SHOULD-2/-4: the batch budget and the bounded quiet wait (no slot.sh, no host)."""
 

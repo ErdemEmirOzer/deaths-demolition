@@ -301,6 +301,9 @@ def main():
             print(f"guard refused (G4 D4): {refusal} — nothing started", file=sys.stderr)
             return 64
 
+    if args.baseline_fail_stop < 1:   # gt KP-10: 0 would stop the R1 side after its first window, whatever it was
+        print("--baseline-fail-stop must be at least 1", file=sys.stderr)
+        return 64
     targets = json.loads(Path(args.targets).read_text(encoding="utf-8"))
     tiers = [t for t in args.tiers.split(",") if t] or list(targets["tiers"])
     modes = [m for m in args.modes.split(",") if m] or list(targets["modes"])
