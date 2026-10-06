@@ -3,6 +3,12 @@
 > **Ne için:** S-10'un R2 FINAL zincirine girdi. `tools/qa/r2-gates.json`'daki her kapı tek satırda: kimin ölçtüğü, neyle ölçtüğü, son değerin nerede durduğu ve FINAL'i neyin beklettiği.
 > **Hazırlayan:** KADRO test-engineer (C-00B B-07, yerel ajan). **Güncelleyen:** S-10/technical-writer (06.10 ~03:50, dal `wp-091-s10-r2-gates-r2`). Salt okuma derlemesidir; eşik değiştirmez. Eşik yalnız `r2-gates.json`'da, C-00 kaydıyla, ölçümden önce değişir (`tools/qa/r2-measure-contract.md` "Changing a threshold").
 >
+> **YENİDEN KESİM (S-10, 06.10 ~07:00; C-00 isteği, kural §3.16) — bu blok aşağıdakinin üstüne geçerlidir.**
+> - **Yeni taban: main `c7848efa`.** `86e427a2..c7848efa` arasında `tools/qa`'ya girenler: S-10 parti 3 QA araç düzeltmeleri (`49377ba0`, `77326d50`, `bb42b10e`, `c7848efa`; log_scan / aggregate / wp064_gate / lint sparse koruması), `a4066f92` (S-08 S3 yazıcısı `r2_s3.py`; S3 lint'te TOOL-WRITER), `d6b2543e` + `55844a03` (S-05 `r2_z3.py`; Z3 ve P3 CHAIN-MADE, zincirin `z3` aşaması bunu çağırır), `a7fe1e52` (Z3b `tests[]` = kendi yazıcısı `ZombieR2Tests.Z3b_40Zombi_SetPassPayi_DokuButcesi`; TEST-EXPLICIT kalktı), `a82a5c6c` (B-09 testleri). `tools/qa` dışı: `cfc42f69` (S-06 B2d/B2e — tutuş varsayılan AÇIK; H1'in env'siz oturumu artık tutuş açık ölçer), `283591b8`.
+> - **S-10 dalı `wp-091-s10-r2-gates-r4`** (eski SHA → yeni): `bf177e7f`→`ef618371`, `db2022af`→`f2ae121a`, `6e0b41d1`→`630173a4`, `510c62f9`→`9ce318a2`, `b6f4d355`→`a3f5f42b`, `5e213eb2`→`ecacd33c`, `fa0e9ff1`→`3fff4814`, `61800dc0`→`6074c799`, `69a5755a`→`9f9928d2`, `7b25a393`→`9c2a7bb9`, `d495f245`→`69116d44`, `1e7abcc8`→`9c2ea308`, `d48627ae`→`415d2ce3`, `7a203d74`→`8c4580f6` (gt RB-1 düzeltmesi). Her çiftin +/- satırları ve mesajı birebir aynı; üç sözleşme çakışması iki tarafı da tutarak çözüldü (Z3 sonra U1; H1b/H6 sonra P3; P2 sonra S3); `a7fe1e52` üstündeki ara kesim (`wp-091-s10-r2-gates-r3`) C-00'ın taban düzeltmesiyle (`c7848efa`) yerini bu dala bıraktı, içerik aynı.
+> - **Lint (bu dalın ucu, temiz kopya):** `8ba256ec`'siz ERROR 1 (KEY-MISSING U1) · WARN 11 · INFO 21; **`8ba256ec`'li ERROR 0 · WARN 11 · INFO 21** — WARN: NO-WRITER H1b, H2, H4a, H6, L1, L1t, L2, L3, L4, L5, Z1. S-09 zinciri (`7c85a9da → 4f359358 → bcde16dc → 8ba256ec → fd2bed18 → d966d2d9 → 3234ead7`) bu daldan önce girer (C-00 06:40); `2d566a0b` alınmaz.
+> - **Aşağıdaki satırlardan bu blokla değişenler:** H1 (varsayılan yol tutuş açık, `cfc42f69`), S3 (yazıcı main'de, değer ölçülmedi), Z3 ve P3 (yazıcı main'de; Z3'ün statik anahtarları S-05'in EditMode testi `Z3CharacterBudgetTests…` AP-025 alımıyla gelene kadar BLOCKED — zincire `measuredBy` ile bağlanması önerildi), Z3b (zorunlu test = yazıcı, `measuredBy` oturumu koşar). Hazırlık sayımları (§2) bu bloğa göre YENİDEN HESAPLANMADI; S3, Z3, P3, Z3b satırlarının hazırlık hücreleri eski durumu gösterir.
+
 > **Durum anı: entegrasyon sonrası beklenen ağaç; main'de olmayanlar SHA ile.** Üç parçadan oluşur:
 > - **main `86e427a2`** (S-10 dalının tabanı). `86e427a2..c9dfd891` arasında `tools/qa` farkı yok. Bu aralıktaki commit'ler: `7897f642` (WP-085 B5, AP-027 v003g-recut kuyrukları; S1, S2, S4 ile ilgili), `0e0a7629` ve `4680b537` (codex denetimi), `c9dfd891` (kural kitabı dersleri).
 > - **+ S-10 dalı `wp-091-s10-r2-gates-r2`** (main'de değil, uç `1e7abcc8`):
@@ -33,7 +39,7 @@
 > - Önceki sürümde: @ `18f3d01e` WARN 14 · INFO 14 (15 çağrı); @ `173890ac`, `d95d237a`, `db77df0a` WARN 14 · INFO 13 (14 çağrı).
 >
 > **GT karşı okuması (önceki sürüm, B-07):** GEÇTİ-NOTLU, kırmızı bayrak 0 (`K/c-00/R2/GT-B07-KARSI-OKUMA-06.10.md`). O sürümde düzeltilenler: ŞART B1–B3, NOT B4–B9, BİLGİ B11 ve B12. GT değerleri artefakt düzeyinde yeniden okudu, Unity'de yeniden üretmedi. **Bu güncellemeyi GT okumadı.**
-> **Entegrasyon:** bu sürüm `wp-091-s10-r2-gates-r2` dalında; dalın commit'leriyle birlikte alınır.
+> **Entegrasyon:** bu sürüm `wp-091-s10-r2-gates-r4` dalında (main `c7848efa` üstünde); dalın commit'leriyle birlikte, S-09 zincirinden sonra alınır.
 
 ## Kaynaklar ve kısaltmalar
 
