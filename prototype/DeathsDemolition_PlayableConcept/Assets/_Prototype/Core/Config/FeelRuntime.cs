@@ -71,11 +71,17 @@ namespace DD.Prototype.Core.Config
     {
         public readonly float damping, pitchDegreesPerMeter, springCoefficient, animatorFullStrengthKickMeters;
         public readonly float heldKickAccumulation, heldKickMaxMeters, heldKickMaxDegrees, heldKickSettleRecoveries;
+        public readonly float heldKickBackGainRifle, heldKickBackGainSmg, heldKickBackGainShotgun;
         internal RecoilFeel(RecoilFeelData d)
         {
             damping = d.damping; pitchDegreesPerMeter = d.pitchDegreesPerMeter; springCoefficient = d.springCoefficient; animatorFullStrengthKickMeters = d.animatorFullStrengthKickMeters;
             heldKickAccumulation = d.heldKickAccumulation; heldKickMaxMeters = d.heldKickMaxMeters; heldKickMaxDegrees = d.heldKickMaxDegrees; heldKickSettleRecoveries = d.heldKickSettleRecoveries;
+            heldKickBackGainRifle = d.heldKickBackGainRifle; heldKickBackGainSmg = d.heldKickBackGainSmg; heldKickBackGainShotgun = d.heldKickBackGainShotgun;
         }
+
+        /// <summary>WP-087 C: the arms channel's back gain of a classic feel row (1 for any other row).</summary>
+        public float HeldKickBackGain(WeaponFeelId id) =>
+            id == WeaponFeelId.AutoSmg ? heldKickBackGainSmg : id == WeaponFeelId.CombatShotgun ? heldKickBackGainShotgun : id == WeaponFeelId.AssaultRifle ? heldKickBackGainRifle : 1f;
     }
 
     public readonly struct PlayerDamageFeel
@@ -496,8 +502,9 @@ namespace DD.Prototype.Core.Config
             if (!Range(d.recoil.damping, 0f, 1f) || !Range(d.recoil.pitchDegreesPerMeter, 0f, 90f) ||
                 Mathf.Abs(d.recoil.springCoefficient - .25f) > 1e-6f ||
                 !Range(d.recoil.animatorFullStrengthKickMeters, .05f, .5f) || !Range(d.recoil.heldKickAccumulation, 1f, 3f) ||
-                !Range(d.recoil.heldKickMaxMeters, 0f, .1f) || !Range(d.recoil.heldKickMaxDegrees, 0f, 15f) ||
-                !Range(d.recoil.heldKickSettleRecoveries, .5f, 6f)) return Fail("recoil out of range", out error);
+                !Range(d.recoil.heldKickMaxMeters, 0f, .2f) || !Range(d.recoil.heldKickMaxDegrees, 0f, 20f) ||
+                !Range(d.recoil.heldKickSettleRecoveries, .5f, 6f) || !Range(d.recoil.heldKickBackGainRifle, 1f, 2f) ||
+                !Range(d.recoil.heldKickBackGainSmg, 1f, 2f) || !Range(d.recoil.heldKickBackGainShotgun, 1f, 2f)) return Fail("recoil out of range", out error);
             if (!Range(d.playerDamage.fullReactionDamageFraction, .01f, 1f) || !Range(d.playerDamage.minimumStrength, 0f, 1f) ||
                 !Range(d.playerDamage.flashDecaySeconds, .01f, 1f)) return Fail("playerDamage out of range", out error);
             if (d.weapons == null || d.weapons.Length != 6) return Fail("exactly six weapon rows required", out error);

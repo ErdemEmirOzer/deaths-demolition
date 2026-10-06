@@ -116,12 +116,21 @@ namespace DD.Prototype.Core.Config
         // ≥ 90 % of the old first shot), then the largest cap that keeps both hands ≤ 1 cm.
         [PrototypeOnly(PendingDecisions.None, "WP-087 council: sustained fire's build-up on the arms channel, × one shot. Invented.", true)]
         public float heldKickAccumulation = 1.25f;
-        [PrototypeOnly(PendingDecisions.None, "WP-087: provisional cap, m back on the arms channel — the measured value comes with the C step (C-00 06.10). Invented.", true)]
-        public float heldKickMaxMeters = 0.10f;
-        [PrototypeOnly(PendingDecisions.None, "WP-087: provisional cap, ° muzzle-up on the arms channel — the measured value comes with the C step (C-00 06.10). Invented.", true)]
-        public float heldKickMaxDegrees = 10f;
+        [PrototypeOnly(PendingDecisions.None, "WP-087 C (C-00 06.10; sweeps K/wp-087/TAVAN-TARAMA-06.10.md + KAZANC-TARAMA-06.10.md): the arms channel's cap, m back — the shotgun row's gained shot needs > 0.13 (0.125 held it at 84–87 % of the old path); 0.15 binds no row, the left hand stays <= 1 cm at every cap; measured.", false)]
+        public float heldKickMaxMeters = 0.15f;
+        [PrototypeOnly(PendingDecisions.None, "WP-087 C (C-00 06.10, the sweep): the arms channel's cap, ° muzzle-up — 12.5 does not bind on today's rows; measured.", false)]
+        public float heldKickMaxDegrees = 12.5f;
         [PrototypeOnly(PendingDecisions.None, "WP-087 council: the arms channel settles (5 % left) in this × the shot's recovery. Invented.", true)]
         public float heldKickSettleRecoveries = 2f;
+        // WP-087 C (C-00 06.10): per classic feel row, a gain on the arms channel's BACK push only (the rise stays): the SMG and shotgun
+        // rows' first shot read 59–71 % of the old path's back travel at any cap (the channel's height is the row's own kick) — the
+        // gain is chosen by measurement for the first shot's back and rise >= 90 % of the old path, the left hand <= 1 cm, at most x2
+        [PrototypeOnly(PendingDecisions.None, "WP-087 C: arms channel back gain, assault rifle row (ar_1, ar_2, lmg_1, lmg_2, sr_1, rl_1) — x1: the row reads 94–120 % of the old path's back already; measured.", false)]
+        public float heldKickBackGainRifle = 1f;
+        [PrototypeOnly(PendingDecisions.None, "WP-087 C: arms channel back gain, SMG row (smg_1 B, smg_2) — x1.7: first shot back B 95 % / smg_2 115 % of the old path (x1.6: B 90 %); measured (KAZANC-TARAMA-06.10.md).", false)]
+        public float heldKickBackGainSmg = 1.7f;
+        [PrototypeOnly(PendingDecisions.None, "WP-087 C: arms channel back gain, shotgun row (sg_1 C, sg_2) — x1.6 at the 0.15 m cap: first shot back C 97 % / sg_2 95 % of the old path; measured (KAZANC-TARAMA-06.10.md).", false)]
+        public float heldKickBackGainShotgun = 1.6f;
     }
 
     [Serializable]

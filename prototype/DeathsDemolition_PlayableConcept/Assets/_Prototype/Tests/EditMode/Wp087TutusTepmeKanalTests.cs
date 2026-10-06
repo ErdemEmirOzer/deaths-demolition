@@ -142,7 +142,7 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         /// <summary>
-        /// The packaged DD_FeelConfig asset does not spell the four new recoil fields (no Resources change): Unity gives them the
+        /// The packaged DD_FeelConfig asset does not spell the seven new recoil fields (no Resources change): Unity gives them the
         /// code defaults, and the profile still validates — an invalid packaged profile would silently fall back to CreateDefaults
         /// for EVERY feel number (FeelRuntime).
         /// </summary>
@@ -157,8 +157,33 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(d.heldKickMaxMeters, r.heldKickMaxMeters, "heldKickMaxMeters");
             Assert.AreEqual(d.heldKickMaxDegrees, r.heldKickMaxDegrees, "heldKickMaxDegrees");
             Assert.AreEqual(d.heldKickSettleRecoveries, r.heldKickSettleRecoveries, "heldKickSettleRecoveries");
+            Assert.AreEqual(d.heldKickBackGainRifle, r.heldKickBackGainRifle, "heldKickBackGainRifle");
+            Assert.AreEqual(d.heldKickBackGainSmg, r.heldKickBackGainSmg, "heldKickBackGainSmg");
+            Assert.AreEqual(d.heldKickBackGainShotgun, r.heldKickBackGainShotgun, "heldKickBackGainShotgun");
             Assert.IsTrue(FeelConfigValidator.Validate(config.AuthoredData, out string error), error);
             Assert.IsTrue(FeelConfigValidator.Validate(FeelConfig.CreateDefaults(), out error), error);
+        }
+
+        /// <summary>WP-087 C (C-00 06.10): the validator holds the held kick's cap to [0, 0.20] m / [0, 20]° and each row's back gain to [1, 2].</summary>
+        [Test]
+        public void Dogrulayici_TavanVeKazancAraligi()
+        {
+            void Check(System.Action<RecoilFeelData> set, bool ok, string what)
+            {
+                FeelConfigData d = FeelConfig.CreateDefaults();
+                set(d.recoil);
+                Assert.AreEqual(ok, FeelConfigValidator.Validate(d, out string error), what + " " + error);
+            }
+
+            Check(r => r.heldKickMaxMeters = 0.20f, true, "tavan 0,20 m");
+            Check(r => r.heldKickMaxMeters = 0.21f, false, "tavan 0,21 m");
+            Check(r => r.heldKickMaxDegrees = 20f, true, "tavan 20°");
+            Check(r => r.heldKickMaxDegrees = 20.5f, false, "tavan 20,5°");
+            Check(r => r.heldKickBackGainSmg = 2f, true, "SMG kazanç 2");
+            Check(r => r.heldKickBackGainSmg = 2.01f, false, "SMG kazanç 2,01");
+            Check(r => r.heldKickBackGainShotgun = 0.99f, false, "pompalı kazanç 0,99");
+            Check(r => r.heldKickBackGainRifle = 2.01f, false, "tüfek kazanç 2,01");
+            Assert.AreEqual(1f, FeelRuntime.Current.Recoil.HeldKickBackGain(WeaponFeelId.KaguraBell), "klasik olmayan satırın kazancı 1");
         }
 
         [Test]

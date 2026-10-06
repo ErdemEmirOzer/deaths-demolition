@@ -640,19 +640,29 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.Less(Sapma(), 0.001f, "ADS'den sonra fpView'a dönmedi");
             Assert.AreEqual(hipH, Yatay(), 0.05f, "FOV geri dönmedi");
 
-            // one hip shot: the A4.2 kick, then back on fpView
+            // one hip shot: the A4.2 kick, then back on fpView. WP-087 (06.10): on game frames — 15 batch frames of 1–3 ms are ~40 ms,
+            // short of the kick's ramp (1.24 cm read where a test before it had left 1/60 s and 3.0 cm was read)
             float back = 0f, up = 0f, turn = 0f;
             Color32[] peak = null;
-            _s.Girdi.AtesBasti = true;
-            _s.Girdi.AtesBasili = true;
-            for (int f = 0; f < 15; f++)
+            float shotDt0 = Time.captureDeltaTime;
+            Time.captureDeltaTime = 1f / 60f;
+            try
             {
-                yield return null;
-                if (f == 0) { _s.Girdi.AtesBasti = false; _s.Girdi.AtesBasili = false; }
-                Vector3 d = anchor.InverseTransformPoint(rig.position) - pose.position;
-                if (-d.z > back) { back = -d.z; if (peak == null && back > 0.012f) peak = SahneKare(camRig.Camera); }
-                up = Mathf.Max(up, d.y);
-                turn = Mathf.Max(turn, Aci());
+                _s.Girdi.AtesBasti = true;
+                _s.Girdi.AtesBasili = true;
+                for (int f = 0; f < 15; f++)
+                {
+                    yield return null;
+                    if (f == 0) { _s.Girdi.AtesBasti = false; _s.Girdi.AtesBasili = false; }
+                    Vector3 d = anchor.InverseTransformPoint(rig.position) - pose.position;
+                    if (-d.z > back) { back = -d.z; if (peak == null && back > 0.012f) peak = SahneKare(camRig.Camera); }
+                    up = Mathf.Max(up, d.y);
+                    turn = Mathf.Max(turn, Aci());
+                }
+            }
+            finally
+            {
+                Time.captureDeltaTime = shotDt0;
             }
 
             yield return new WaitForSeconds(0.8f);
@@ -1024,20 +1034,30 @@ namespace DD.Prototype.Tests.PlayMode
                 vm.ResetAspect();
             }
 
-            // C-00 01.10: third person keeps the rig kick — sg_1's rig column (0.07 m, upShare 0.15 → 6.3°)
+            // C-00 01.10: third person keeps the rig kick — sg_1's rig column (0.07 m, upShare 0.15 → 6.3°). WP-087 C: while the
+            // weapon-first hold carries the rig, the rise is the arms' (the hold's applied degrees × its weight) and the rig's body keeps
+            // the rest — the TP lift is their sum
             DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.ThirdPerson, instant: true);
             yield return SpecialWeaponSahne.Kareler(30);
             _s.Controller.EquipClassic(ClassicWeaponId.CombatShotgun, _s.Config);
             yield return Dinlenme(mount, "sg_1");
             yield return SpecialWeaponSahne.Kareler(20);
             WeaponVisualRig tpRig = mount.Find("ClassicWeaponRig").GetComponent<WeaponVisualRig>();
+            var tpSkinned = _s.Rig.GetComponentInChildren<DD.Prototype.Characters.PlayerSkinnedVisual>(true);
+            DD.Prototype.Characters.WeaponHoldIk tpHold = tpSkinned != null ? tpSkinned.HoldIk : null;
             Quaternion tpRest = tpRig.Body.localRotation;
             _s.Girdi.AtesBasti = true; _s.Girdi.AtesBasili = true;
             yield return null;
             _s.Girdi.AtesBasti = false; _s.Girdi.AtesBasili = false;
-            float tpMax = 0f;
-            for (int f = 1; f <= 45; f++) { yield return null; tpMax = Mathf.Max(tpMax, Quaternion.Angle(tpRest, tpRig.Body.localRotation)); }
-            report.Add("sg_1 TP rig lift max " + tpMax.ToString("0.0") + "°");
+            float tpMax = 0f, tpArms = 0f;
+            for (int f = 1; f <= 45; f++)
+            {
+                yield return null;
+                float arms = tpHold != null && tpHold.Active && ReferenceEquals(tpHold.KickSource, tpRig) ? tpHold.Weight * Mathf.Max(0f, tpHold.LastKickDegrees) : 0f;
+                tpArms = Mathf.Max(tpArms, arms);
+                tpMax = Mathf.Max(tpMax, Quaternion.Angle(tpRest, tpRig.Body.localRotation) + arms);
+            }
+            report.Add("sg_1 TP rig lift max " + tpMax.ToString("0.0") + "° (arms " + tpArms.ToString("0.0") + "°)");
             if (tpMax < 3f || tpMax > 6.7f) wrong.Add("sg_1 TP rig kalkışı " + tpMax.ToString("0.0") + "° (beklenen ≈ 6,3°: TP rig tekmesi sürer)");
 
             Debug.Log("[DD-TEST] wp069.m3m4 " + string.Join(" | ", report));

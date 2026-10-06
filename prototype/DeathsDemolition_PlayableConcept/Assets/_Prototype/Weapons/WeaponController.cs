@@ -450,6 +450,17 @@ namespace DD.Prototype.Weapons
                 _mountAlignment.GripOffset = held != null ? held.GripOffset : WeaponGrip.DefaultOffset;
             }
 
+            // WP-087 C (C-00 06.10; councils K/wp-087/konsey/KARAR-ArmsCarryKick-06.10.md + K/wp-083/KARAR-HELDKICK-API-06.10.KONSOLIDE.md):
+            // the weapon-first hold carries the classic rig's kick at its pivot (the arms) and the rig's body keeps 1 − the hold's weight
+            // of the same frame (WeaponRigCarriedPose, 895). The hold runs for the classic weapons only (B2e), so a Special — and no
+            // hold — leaves both rigs on the old path; first person: the hold's weight is 0, the body keeps all of it.
+            PlayerSkinnedVisual skinned = SkinnedVisual();
+            WeaponHoldIk hold = skinned != null ? skinned.HoldIk : null;
+            bool carry = hold != null && _classicRig != null && !_special.IsActive;
+            if (hold != null) hold.KickSource = carry ? _classicRig : null;
+            if (_classicRig != null) _classicRig.CarriedBy = carry ? hold : null;
+            if (_specialRig != null) _specialRig.CarriedBy = null;
+
             float dt = Time.deltaTime;
             IInputSource input = InputSourceRegistry.Current;
 
@@ -611,12 +622,15 @@ namespace DD.Prototype.Weapons
             // Steps 1 and 3: procedural recoil and mechanical movement. Two layers, on
             // purpose - the gun kicks (rig) and the character absorbs it (host). Either
             // one alone reads as half a shot.
-            WeaponFeel feelRow = FeelRuntime.Current.Weapon(WeaponFeelIds.From(_equippedId));
+            WeaponFeelId feelId = WeaponFeelIds.From(_equippedId);
+            WeaponFeel feelRow = FeelRuntime.Current.Weapon(feelId);
             // C-00 01.10: in first person the view-model kick is FpWeaponFeel's A4.2 row alone — the rig's own kick on top of it
             // was a double count (sg_1 16.6° total). Third person / top-down keep the rig kick.
             if (_classicRig != null && CameraModeService.Current != CameraMode.FirstPerson)
             {
-                _classicRig.PlayFireMotion(feelRow.rigKickMeters, feelRow.rigRecoverySeconds, feelRow.rigUpShare);   // M3: the rig column (camera strength below keeps recoilKickMeters)
+                // M3: the rig column (camera strength below keeps recoilKickMeters); WP-087 C: the row's arms back gain (the hold's channel)
+                _classicRig.PlayFireMotion(feelRow.rigKickMeters, feelRow.rigRecoverySeconds, feelRow.rigUpShare,
+                    FeelRuntime.Current.Recoil.HeldKickBackGain(feelId));
             }
 
             _host?.OnWeaponFired(RecoilStrength01(feelRow.recoilKickMeters, _classic.Power), aim);

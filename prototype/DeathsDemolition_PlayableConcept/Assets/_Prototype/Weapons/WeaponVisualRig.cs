@@ -132,7 +132,14 @@ namespace DD.Prototype.Weapons
         /// spring stiffness follows so a long recovery does not oscillate) and
         /// <paramref name="upShare"/> of it reads as muzzle rise (0.15 = the WP-002 look).
         /// </summary>
-        public void PlayFireMotion(float recoilKick, float recoverySeconds, float upShare)
+        public void PlayFireMotion(float recoilKick, float recoverySeconds, float upShare) => PlayFireMotion(recoilKick, recoverySeconds, upShare, 1f);
+
+        /// <summary>
+        /// WP-087 C: as above; <paramref name="armsBackGain"/> (the classic feel row's RecoilFeel.HeldKickBackGain, 1–2) scales the arms
+        /// channel's BACK push only — its muzzle rise stays the row's — so the weapon-first hold's first shot reads like the old path's.
+        /// The body's own spring never takes the gain.
+        /// </summary>
+        public void PlayFireMotion(float recoilKick, float recoverySeconds, float upShare, float armsBackGain)
         {
             RecoilFeel feel = FeelRuntime.Current.Recoil;
             float kick = Mathf.Max(0f, recoilKick);
@@ -145,7 +152,8 @@ namespace DD.Prototype.Weapons
             _activePitchPerKick = feel.pitchDegreesPerMeter;
             _actionTimer = _actionCycleTime;
             // WP-087: the arms' channel takes the same shot (at once, capped, one way)
-            _arms.Kick(kick, recovery, _activePitchPerKick * _pitchScale, feel.heldKickAccumulation, feel.heldKickMaxMeters,
+            float gain = Mathf.Max(1f, armsBackGain);
+            _arms.Kick(kick * gain, recovery, _activePitchPerKick * _pitchScale / gain, feel.heldKickAccumulation, feel.heldKickMaxMeters,
                 feel.heldKickMaxDegrees, feel.heldKickSettleRecoveries);
         }
 
