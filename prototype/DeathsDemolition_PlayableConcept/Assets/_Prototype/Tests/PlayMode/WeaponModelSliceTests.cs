@@ -1752,10 +1752,13 @@ namespace DD.Prototype.Tests.PlayMode
                 // M-21) ejects nothing at the shot — its shells leave when it opens (WeaponFeelSliceTests.Mekanizma_Kirma_sg2_…).
                 bool casing = (Arsenal.Get(d.Id) == null || Arsenal.Get(d.Id).presentation.casing != WeaponCasing.None) &&
                               WeaponMechanismTimeline.For(_s.Config.Weapons.Find(d.Id)).ShotCasings > 0;
-                // WP-087 (C-00 06.10, sr_1 flake "kovan +X'e uçar" -0.50): only THIS shot's casing is measured — a late mechanism event
-                // of the earlier shot or the reload (a chamber, its direction down) used to be events[0] when the frame that ended it ran long
+                // WP-087 (C-00 06.10): only THIS shot's casing is measured (ShotSerial). The sr_1 flake ("kovan +X'e uçar" -0.50,
+                // lodfix1) was NOT a stray event (gt 06.10: the port check before it passed — it was the casing): the direction is world at
+                // the event and was read in the mount's frame frames later, after the hold's kick had turned the mount — it is now read in
+                // the mount's frame at the event, like the port position; the message gives both
                 var events = new List<WeaponMechanismEvent>();
                 var portAtEvent = new List<Vector3>();
+                var dirInMountAtEvent = new List<Vector3>();
                 var seen = new List<string>();
                 System.Action<WeaponMechanismEvent> onMech = e =>
                 {
@@ -1763,6 +1766,7 @@ namespace DD.Prototype.Tests.PlayMode
                     if (e.Kind != WeaponMechanismKind.CasingEjected) return;
                     events.Add(e);
                     portAtEvent.Add(ejection.position);
+                    dirInMountAtEvent.Add(mount.InverseTransformDirection(e.Direction));
                 };
                 WeaponEvents.Mechanism += onMech;
                 int ammo0 = _s.Controller.Classic.Ammo;
@@ -1776,7 +1780,9 @@ namespace DD.Prototype.Tests.PlayMode
                     int k = events.FindIndex(e => e.ShotSerial == shot);
                     string trace = " [olaylar " + string.Join(", ", seen) + "; atış #" + shot + "]";
                     Assert.Less(Vector3.Distance(events[k].Position, portAtEvent[k]), 0.01f, d.RosterKey + ": kovan slotu port konumunda değil (" + Vector3.Distance(events[k].Position, portAtEvent[k]).ToString("0.000") + " m)." + trace);
-                    Assert.Greater(Vector3.Dot(mount.InverseTransformDirection(events[k].Direction), Vector3.right), 0.7f, d.RosterKey + ": kovan +X'e uçar." + trace);
+                    Vector3 atEvent = dirInMountAtEvent[k], atAssert = mount.InverseTransformDirection(events[k].Direction);
+                    Assert.Greater(Vector3.Dot(atEvent, Vector3.right), 0.7f, d.RosterKey + ": kovan +X'e uçar (montaj çerçevesinde olay anında x " +
+                        atEvent.x.ToString("0.00") + ", iddia anında x " + atAssert.x.ToString("0.00") + ")." + trace);
                 }
 
                 WeaponEvents.Mechanism -= onMech;

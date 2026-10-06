@@ -65,6 +65,18 @@ namespace DD.Prototype.Tests.PlayMode
 
         private void OnMechanism(WeaponMechanismEvent e) => _mechanism.Add(e);
 
+        // WP-087 (gt 06.10): a wait on the GAME clock — SpecialWeaponSahne.Bekle times out on real seconds, and with the game clock
+        // fixed at 1/60 a loaded machine's slow frames would run it out before the game reaches the event
+        private static IEnumerator BekleOyun(System.Func<bool> kosul, float oyunSaniye, string aciklama)
+        {
+            float t0 = Time.time;
+            while (!kosul())
+            {
+                if (Time.time - t0 > oyunSaniye) Assert.Fail("ZAMAN AŞIMI (oyun " + oyunSaniye + " sn): " + aciklama);
+                yield return null;
+            }
+        }
+
         private int Count(WeaponMechanismKind kind)
         {
             int n = 0;
@@ -254,14 +266,14 @@ namespace DD.Prototype.Tests.PlayMode
             int ammo0 = _s.Controller.Classic.Ammo;
             _s.Girdi.AtesBasti = true;
             _s.Girdi.AtesBasili = true;
-            yield return SpecialWeaponSahne.Bekle(() => _s.Controller.Classic.Ammo == ammo0 - 1, 2f, "tek atış");
+            yield return BekleOyun(() => _s.Controller.Classic.Ammo == ammo0 - 1, 2f, "tek atış");
             Assert.AreEqual(_s.Controller.Classic.PelletCount, WeaponEvents.Classic.PelletCount, "U12a: pellet sayısı snapshot'ta");
             Assert.AreEqual(_s.Controller.Classic.PelletRingDegrees, WeaponEvents.Classic.PelletRingDegrees, 1e-5f, "U12a: halka yarı açısı snapshot'ta");
             Assert.Greater(WeaponEvents.Classic.PelletRingDegrees, 0f, "C: ikinci halka");
             _s.Girdi.AtesBasti = false;
             _s.Girdi.AtesBasili = false;
             Assert.AreEqual(0, Count(WeaponMechanismKind.CasingEjected), "C: kovan atış anında değil, pump'ta");
-            yield return SpecialWeaponSahne.Bekle(() => Count(WeaponMechanismKind.CasingEjected) == 1, 1.5f, "pump (eject ≈ 0,4 s)");
+            yield return BekleOyun(() => Count(WeaponMechanismKind.CasingEjected) == 1, 1.5f, "pump (eject ≈ 0,4 s)");
 
             // WP-059C: the fire clip's own pump (eject f12, chamber f20 ≈ 0.67 s) may land before or during the
             // reload (the additive fire clip keeps playing under the override reload — v006b) or be cut (v005b):
@@ -272,7 +284,7 @@ namespace DD.Prototype.Tests.PlayMode
             _s.Girdi.DoldurBasti = false;
             float reload = _s.Controller.Classic.ReloadDuration;
             Assert.Greater(reload, 1f);
-            yield return SpecialWeaponSahne.Bekle(() => !_s.Controller.Classic.IsReloading, reload + 1f, "reload biter");
+            yield return BekleOyun(() => !_s.Controller.Classic.IsReloading, reload + 1f, "reload biter");
             // WP-087 (C-00 06.10, WeaponFeelSliceTests flake root cause): the reload ends in a frame's Update and this coroutine resumes
             // right after it, before that frame's Animator events — the clip's chamber can share the frame (it runs 31 ms before
             // the end); one frame later every event of the ending frame has been delivered
