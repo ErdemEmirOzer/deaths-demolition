@@ -329,11 +329,15 @@ def ledger_begin(ledger, record, po, waiter=None):
         blocker, held = None, set()
         for rec in ledger_records(ledger):
             areas = set(rec.get("windowAreas") or [])
-            if rec.get("id") == record.get("id") or not mine & areas:
-                continue
-            if rec.get("state") == "closed":   # 06.10 reviews (MUST-2): finished — only its move to closed/ is pending
-                continue
+            if rec.get("id") == record.get("id") or rec.get("state") == "closed":   # 06.10 reviews (MUST-2): a closed
+                continue                                                            # record only waits for its move
             who = rec.get("owner") or {}
+            if not mine & areas:
+                # gt 06.10 N1: an ANCESTOR's live window over other areas still holds them — a ticket over them waits for
+                # it, and it waits for us; it is not ahead of us either
+                if rec.get("state") in LEDGER_LIVE and nested(who) and alive(who):
+                    held |= areas
+                continue
             live = alive(who)
             restorer = rec.get("restorer")
             if rec.get("state") == "restoring" and restorer and alive(restorer):   # being restored → wait

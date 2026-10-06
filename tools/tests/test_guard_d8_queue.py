@@ -85,6 +85,16 @@ class KuyrukBirimTests(unittest.TestCase):
         self.assertEqual(0, code, msg)
         self.assertEqual(["*"], ["*" for n in self.tickets() if "-Q.json" in n])   # Q keeps its place
 
+    def test_Birim_IcIce_AtaPenceresiBaskaAlanda_OAlandakiYabanciBilet_OndeSayilmaz(self):
+        """gt 06.10 N1: the ancestor holds a PLAYER window, a foreign all-scope ticket waits for it, the nested snapshot wants
+        the editor area only — that ticket waits for our ancestor, which waits for us: not ahead (0, at once)."""
+        f = self.foreign()
+        self.put_record(self.rec("A", self.me, areas=("player",)))
+        self.put_ticket("T", f, f, areas=("editor", "player"))
+        code, msg = self.begin("N", areas=("editor",))
+        self.assertEqual(0, code, msg)
+        self.assertTrue(any(n.endswith("-T.json") for n in self.tickets()))   # T keeps its place
+
     def test_Birim_WindowsIcindeClosedKayit_Atlanir_Cikis0(self):
         """MUST-2: a closed record whose move to closed/ is pending is finished, never a 65."""
         self.put_record(self.rec("C", self.foreign(), state="closed"))

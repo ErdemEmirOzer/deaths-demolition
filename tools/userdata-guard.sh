@@ -282,6 +282,10 @@ if [ "$CMD" = snapshot ]; then
     exit "$rc"
   }
   check_sig() { [ "$GUARD_SIG" -eq 0 ] || snap_fail $((128+GUARD_SIG)); }
+  # 06.10 (reviews MUST-4, technical-writer 8z): the caller is here while it answers AND this guard is still its child — an
+  # exited caller hands its children to launchd at once, even while it waits as a zombie for its own parent
+  caller_here() { local cpp; cpp=$(ps -o ppid= -p $$ 2>/dev/null | tr -d ' ')
+    kill -0 "$PO" 2>/dev/null && { [ -z "$cpp" ] || [ "$cpp" = "$PO" ]; }; }
   case "${DIR:A}" in /private/tmp/*|/private/var/folders/*|/tmp/*) dd_log "WARNING userdata-guard: $DIR is under a temporary folder — the snapshot can be cleaned away by the system";; esac
   SHA10=$(print -rn -- "${DIR:A}" | shasum | cut -c1-10); NONCE=$(od -An -N3 -tx1 /dev/urandom | tr -d ' \n')
   ID="$(date -u +%Y%m%dT%H%M%SZ)-$SHA10-$NONCE"
@@ -356,11 +360,7 @@ print(json.dumps({"id": e["R_ID"], "dir": e["R_DIR"], "scope": e["R_SCOPE"], "wi
       LERR=$((LERR + 1)); dd_log "userdata-guard: ledger check failed ($LRC, $LERR/3): $LMSG"
       [ $LERR -ge 3 ] && snap_fail 75
     else LERR=0; fi
-    # the caller is gone when it no longer answers, or when this guard is no longer its child — an exited caller hands its
-    # children to launchd at once, even while it waits as a zombie for its own parent (kill -0 still answers for that)
-    CPP=$(ps -o ppid= -p $$ 2>/dev/null | tr -d ' ')
-    { kill -0 "$PO" 2>/dev/null && { [ -z "$CPP" ] || [ "$CPP" = "$PO" ]; }; } \
-      || { dd_log "userdata-guard: the caller pid $PO is gone — no window opened for it, queue left (65)"; snap_fail 65; }
+    caller_here || { dd_log "userdata-guard: the caller pid $PO is gone — no window opened for it, queue left (65)"; snap_fail 65; }
     (( SECONDS - LW0 >= ${DD_GUARD_QUEUE_WAIT:-3600} )) && { dd_log "userdata-guard: $LMSG — still after ${DD_GUARD_QUEUE_WAIT:-3600}s (75) class=QUEUE_TIMEOUT"; snap_fail 75; }
     [ $LRC -eq 75 ] && (( SECONDS >= LNEXT )) && { dd_log "userdata-guard: waiting in the window queue — $LMSG"; LNEXT=$((SECONDS + 60)); }
     sleep 5 & WAITPID=$!; bg_wait; check_sig
@@ -419,6 +419,9 @@ print(json.dumps({"version": 2, "id": e["ID"], "scope": e["SCOPE"], "windowAreas
       python3 "$IO" sample "$DIR" "$PLAYER_RE" "$PO" $HOLDER_PID
       sleep 5; n=$((n+1)); done ) < /dev/null > /dev/null 2>&1 &
   check_sig
+  # gt 06.10 N2: a caller that died after its record was written (S7 profile-lock wait ≤ DD_GUARD_WAIT, the copy) gets no
+  # window either — the record goes to aborted/ instead of staying open for a dead owner (65 for every later snapshot)
+  caller_here || { dd_log "userdata-guard: the caller pid $PO is gone — no window opened for it (65)"; snap_fail 65; }
   # S10 commit — signals ignored for these renames; before.txt is the commit mark and comes LAST
   trap '' INT TERM HUP
   COMMITTING=1   # D5 review MUST-1: every rename is checked; any failure undoes the whole commit (snap_fail, 75)

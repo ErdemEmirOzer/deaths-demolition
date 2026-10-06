@@ -1321,6 +1321,30 @@ class LedgerTests(RestoreBase):
         finally:
             c.wait(timeout=10)   # reaped only now
 
+    def test_Kuyruk_S7BeklerkenCagiranOlur_Cikis65KayitAborted_SonrakiSnapshot0(self):
+        """gt 06.10 N2: the record is written (S6), the guard waits for the profile lock (S7, ≤ DD_GUARD_WAIT) and its caller
+        is killed — the guard opens no window for it: 65, the record goes to aborted/, the next snapshot of the area is 0
+        (an open record of a dead owner refused every later snapshot with 65 before)."""
+        unity = self.tmp / "Unity.app/Contents/MacOS/Unity"; unity.parent.mkdir(parents=True); unity.symlink_to("/bin/sleep")
+        lk = subprocess.Popen([str(unity), "120"], start_new_session=True); self.procs.append(lk)
+        lock = self.d1 / "prototype-profile.json.lock"; lock.write_text("pid=%d\nname=fixture\n" % lk.pid)
+        out = self.tmp / "s7.out"
+        c = subprocess.Popen(["zsh", "-c", 'zsh "$0" snapshot "$1" --scope editor > "$2" 2>&1; echo never', str(self.guard),
+                              str(self.dir), str(out)], env=self.env(DD_GUARD_WAIT="60"), start_new_session=True)
+        self.procs.append(c)   # '; echo never': zsh -c would exec a single command — the guard's parent is this shell
+        self.assertTrue(self.wait_until(lambda: out.exists() and "profile lock held by live pid" in out.read_text(), 120),
+                        out.read_text() if out.exists() else "-")
+        self.assertEqual(1, len(self.records()))   # S6 wrote the record
+        os.kill(c.pid, signal.SIGKILL); c.wait(timeout=10)
+        lk.kill(); lk.wait(); lock.unlink()
+        self.assertTrue(self.wait_until(lambda: "FAILED exit=" in out.read_text() or "snapshot → " in out.read_text(), 120), out.read_text())
+        self.assertIn("is gone — no window opened for it (65)", out.read_text())
+        self.assertIn("snapshot FAILED exit=65", out.read_text())
+        self.assertFalse((self.dir / "before.txt").exists())
+        self.assertEqual([], self.records()); self.assertEqual(1, len(self.records("aborted")))
+        rc, o2, e2 = self.run_guard("snapshot", self.tmp / "ugNext", "--scope", "editor")
+        self.assertEqual(0, rc, o2 + e2)
+
     def test_Kuyruk_SayisalOlmayanBekleme_Snapshot64HicbirSeyYok_Restore_UyariVarsayilan(self):
         """06.10 reviews: DD_GUARD_QUEUE_WAIT=1h / DD_GUARD_WAIT=abc made a wait endless (the test never became true)."""
         for var, val in (("DD_GUARD_QUEUE_WAIT", "1h"), ("DD_GUARD_WAIT", "abc"), ("DD_GUARD_SLOT_WAIT", "5m")):
