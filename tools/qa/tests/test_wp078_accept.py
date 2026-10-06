@@ -298,6 +298,7 @@ def tearDownModule():
 
 
 def make_chain(evidence, stages=acc.STAGE_ORDER, tools=None, guard=None, git=None, **kw):
+    kw.setdefault("lint", lambda repo: [])   # hermetic: the R2 lint pre-step reads this tree's own contract otherwise
     lines = []
     chain = acc.Chain(FINAL, evidence, list(stages), git=git or FakeGit(), runner=tools or FakeTools(), guard=guard or FakeGuard(),
                       out=lines.append, wait_seconds=0, **kw)
@@ -719,16 +720,28 @@ class Z3StageTests(Base):
         self.assertEqual([], [f for f in report["failures"] if f["step"] == "A4"])
 
 
+def r2_gates_lint_finding(level, code, gate):
+    return acc.r2_gates_lint.Finding(level, code, gate, "test finding")
+
+
 class R2StageTests(Base):
     """WP-091: the owners' measurement sessions run with DD_R2_MEASURE_DIR / DD_R2_COMMIT; quiet ones only in r2q."""
     STEPS = {False: [{"id": "r2-L1", "suite": "playmode", "filter": "LocomotionR2Tests", "quiet": False, "gates": ["L1", "L2"]},
                      {"id": "r2-U1", "suite": "editmode", "filter": "UiTextInventoryR2", "quiet": False, "gates": ["U1"]}],
              True: [{"id": "r2-S3", "suite": "playmode", "filter": "AudioR2Dense40", "quiet": True, "gates": ["S3"]}]}
 
+    @staticmethod
+    def no_unset(argv):
+        """the session argv without its leading `-u NAME` pairs (owner switches cleared, tested on their own)"""
+        out, i = [argv[0]], 1
+        while i < len(argv) and argv[i] == "-u":
+            i += 2
+        return out + argv[i:]
+
     def planned_r2(self, stages, round_name):
         with mock.patch.object(acc.r2_gates, "measurement_steps", side_effect=lambda c, quiet: self.STEPS[quiet]):
             chain = self.dry(stages, round_name=round_name)
-        return [argv for s, argv in chain.planned if s in ("r2", "r2q") and Path(argv[0]).name == "env"]
+        return [self.no_unset(argv) for s, argv in chain.planned if s in ("r2", "r2q") and Path(argv[0]).name == "env"]
 
     def test_r2_runs_each_session_with_the_measure_env_and_its_filter(self):
         runs = self.planned_r2(["r2"], "R2")
@@ -744,7 +757,7 @@ class R2StageTests(Base):
                                     "env": {"DD_KIT_VARIANTS": "A", "DD_KIT_WEAPONS": "all"}}]}
         with mock.patch.object(acc.r2_gates, "measurement_steps", side_effect=lambda c, quiet: steps[quiet]):
             chain = self.dry(["r2q"], round_name="R2")
-        run = [argv for s, argv in chain.planned if s == "r2q" and Path(argv[0]).name == "env"][0]
+        run = self.no_unset([argv for s, argv in chain.planned if s == "r2q" and Path(argv[0]).name == "env"][0])
         self.assertEqual(["DD_KIT_VARIANTS=A", "DD_KIT_WEAPONS=all"], run[3:5])
         self.assertEqual("test.sh", Path(run[5]).name)
 
@@ -753,8 +766,41 @@ class R2StageTests(Base):
                                     "env": {"DD_AP027_DIR": "{KPROJ}/asset-production/AP-027"}}]}
         with mock.patch.object(acc.r2_gates, "measurement_steps", side_effect=lambda c, quiet: steps[quiet]):
             chain = self.dry(["r2q"], round_name="R2")
-        run = [argv for s, argv in chain.planned if s == "r2q" and Path(argv[0]).name == "env"][0]
+        run = self.no_unset([argv for s, argv in chain.planned if s == "r2q" and Path(argv[0]).name == "env"][0])
         self.assertEqual("DD_AP027_DIR=" + str(acc.dd_paths.KPROJ) + "/asset-production/AP-027", run[3])
+
+    def test_each_session_starts_with_every_other_owner_switch_unset(self):
+        # gt 06.10 B6: an exported DD_HOLD_IK must not reach the H1 session; a session keeps only the switches it declares
+        steps = {False: [{"id": "r2-H1", "suite": "playmode", "filter": "H1", "quiet": False, "gates": ["H1"]}],
+                 True: [{"id": "r2-S1", "suite": "playmode", "filter": "Kit", "quiet": True, "gates": ["S1"],
+                         "env": {"DD_KIT_WEAPONS": "all"}}]}
+        with mock.patch.object(acc.r2_gates, "measurement_steps", side_effect=lambda c, quiet: steps[quiet]):
+            chain = self.dry(["r2", "r2q"], round_name="R2")
+        h1, s1 = [argv for s, argv in chain.planned if Path(argv[0]).name == "env"]
+        unset = lambda argv: {argv[i + 1] for i, a in enumerate(argv) if a == "-u"}
+        self.assertTrue({"DD_HOLD_IK", "DD_EDC_WEAPONS", "DD_KIT_WEAPONS", "DD_KIT_VARIANTS", "DD_AP027_DIR"} <= unset(h1), h1)
+        self.assertNotIn("DD_KIT_WEAPONS", unset(s1))
+        self.assertIn("DD_HOLD_IK", unset(s1))
+        self.assertIn("DD_KIT_WEAPONS=all", s1)
+
+    def test_an_r2_final_with_a_lint_error_starts_nothing(self):
+        tools = FakeTools()
+        error = r2_gates_lint_finding("ERROR", "KEY-MISSING", "U1")
+        chain = make_chain(self.evidence, ["a6"], tools=tools, round_name="R2", lint=lambda repo: [error])
+        self.assertEqual(3, chain.run())
+        self.assertEqual([], tools.calls)
+        self.assertFalse(self.evidence.exists())
+        self.assertTrue(any("r2_gates_lint ERROR 1" in line and "KEY-MISSING U1" in line for line in chain.lines), chain.lines)
+
+    def test_the_lint_warnings_are_kept_beside_the_evidence_and_an_r1_round_skips_the_lint(self):
+        warn = r2_gates_lint_finding("WARN", "NO-WRITER", "L1")
+        make_chain(self.evidence, ["a6"], round_name="R2", lint=lambda repo: [warn]).run()
+        kept = json.loads((self.evidence / "r2-gates-lint.json").read_text())
+        self.assertEqual(({"ERROR": 0, "WARN": 1}, FINAL), (kept["counts"], kept["commit"]))
+        self.assertIn("R2 lint: ERROR 0 · WARN 1: NO-WRITER L1", (self.evidence / "accept.log").read_text())
+        called = []
+        make_chain(Path(self.tmp.name) / "r1-round", ["a6"], round_name="R1", lint=lambda repo: called.append(1) or []).run()
+        self.assertEqual([], called)
 
     def test_p5_comes_from_the_chain_bot_sessions_over_the_r1_evidence(self):
         r1 = Path(tempfile.mkdtemp())

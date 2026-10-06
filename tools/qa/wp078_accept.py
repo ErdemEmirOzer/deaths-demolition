@@ -40,7 +40,7 @@ shows it. The tree must stay at FINAL and clean before every stage (exit 2 other
 usage: wp078_accept.py --final <40-hex> [--evidence DIR] [--stages a6,a0,a1,a2,a3,a5,a4,a8] [--dry-run] [--resume]
                        [--editmode-filter RE] [--playmode-filter RE] [--wait-tries 3] [--wait-seconds 120]
 exit: 0 chain ran and the report PASSes (without a8: every selected stage PASS) · 1 an honest non-PASS · 2 HEAD is not
-      FINAL / the tree is dirty · 7 guard STOP · 65 a guard window NOT restored (or an unresolved marker under <E>) ·
+      FINAL / the tree is dirty · 3 R2 round: r2_gates_lint finds an ERROR at FINAL (nothing started) · 7 guard STOP · 65 a guard window NOT restored (or an unresolved marker under <E>) ·
       6 / 30 / 75 a wait persisted · 64 usage or existing evidence without --resume · 143 SIGTERM (the current child got SIGTERM and was waited for; Editor guard restored)
 """
 import argparse
@@ -66,6 +66,7 @@ import wp078_perf_report  # noqa: E402  (CELL: the perf window directory layout)
 import r2_gates  # noqa: E402  (WP-091 R2 measurement sessions)
 import r2_load_time  # noqa: E402  (WP-091 P5: Selection → Run from the bot sessions' load-timing.json)
 import wp078_report  # noqa: E402  (AI_FLAGS, AREAS, ROUTE_KEYS, SCHEMA)
+import r2_gates_lint  # noqa: E402  (WP-091: the R2 contract, its prose and its C# writers agree before a FINAL starts)
 
 PROJECT = "prototype/DeathsDemolition_PlayableConcept"
 # C-00 05.10: repo and KADRO are moving off iCloud (~/Dev, symlinks at the old paths). WP-089: the root comes from
@@ -78,6 +79,9 @@ STAGE_ORDER = ("a6", "a0", "a1", "a2", "a3", "r2", "a5", "a4", "b9", "z3", "r2q"
 # [Explicit] Diagnostics test picked up by a class regex (AudioSliceTests.SilahKiti_…) left sg_1 selected and turned 4
 # later S-02 tests red. `alone` steps, targeted reruns and the r2/r2q full-name sessions keep no category filter.
 CI_CATEGORY = "!^Diagnostics$"
+# WP-091 (gt 06.10 B6): owner A/B switches a measurement session must never inherit from the shell that runs the chain —
+# with the env names every measuredBy declares, each session starts with all of them unset except its own
+OWNER_SWITCHES = ("DD_HOLD_IK", "DD_EDC_WEAPONS")
 PLAYMODE_TIMEOUT_MIN = 90   # A1 full PlayMode watchdog (test.sh default 45 min; main-ci uses 60)
 ISOLATED_TIMEOUT_MIN = 10   # one isolated test in its own session (main-ci --alone-timeout default)
 
@@ -344,7 +348,7 @@ def load_b9_poses(path):
 class Chain:
     def __init__(self, final, evidence, stages, dry_run=False, resume=False, editmode_filter="", playmode_filter="",
                  wait_tries=3, wait_seconds=120.0, git=None, runner=None, guard=None, out=print, python=sys.executable,
-                 b9_poses=None, round_name="R1", r1_evidence=None, r1_commit=None, b9_poses_path=None):
+                 b9_poses=None, round_name="R1", r1_evidence=None, r1_commit=None, b9_poses_path=None, lint=None):
         self.final, self.evidence = final, Path(evidence).resolve()
         self.stages = [s for s in STAGE_ORDER if s in stages]
         self.dry_run, self.resume = dry_run, resume
@@ -359,6 +363,7 @@ class Chain:
         self.b9_poses = list(b9_poses or [])   # C-00 01.10: S-05 B9 pose windows, after A4 in the same quiet-window run
         self._r1_proof = None                  # WP-091 P2: the R1 build's proof, taken once before any window (False = failed)
         self.b9_poses_path = b9_poses_path     # the pose list file, for r2_z3.py's P3
+        self.lint = lint or (lambda repo: r2_gates_lint.run(repo)[0])   # seam: [r2_gates_lint.Finding]
         self.child, self.terminated = None, False
         self.planned = []          # (stage, argv) — the dry-run command list
         self.verdicts = {}
@@ -470,6 +475,10 @@ class Chain:
             if existing:
                 self.out("REFUSED: evidence already exists (use --resume or a new --evidence): " + ", ".join(existing[:5]))
                 return 64
+        if self.round_name == "R2":
+            refused = self.lint_contract()
+            if refused:
+                return refused
         self.log(f"START final={self.final} evidence={self.evidence} stages={','.join(self.stages)}"
                  f"{' dry-run' if self.dry_run else ''}{' resume' if self.resume else ''}")
         try:
@@ -503,6 +512,28 @@ class Chain:
             code = 0 if all(self.verdicts.get(s) == "PASS" for s in self.stages) else 1
         self.log(f"DONE exit={code} verdicts={json.dumps(self.verdicts, sort_keys=True)}")
         return code
+
+    def lint_contract(self):
+        """WP-091 (OTURUM-ACILIS S-10, C-00 06.10): an R2 FINAL starts only when tools/qa/r2_gates_lint.py finds no ERROR at
+        this tree — an ERROR means the judge would read a key nobody writes, a writer the contract ignores, or a session
+        that runs nothing, hours later. The WARNs (gates still BLOCKED by name) go to the log and to <E>/r2-gates-lint.json."""
+        try:
+            findings = self.lint(REPO)
+        except (OSError, ValueError) as error:
+            self.out(f"REFUSED: r2_gates_lint could not read the contract: {error} — nothing started")
+            return 3
+        errors = [f for f in findings if f.level == "ERROR"]
+        warns = [f for f in findings if f.level == "WARN"]
+        if errors:
+            self.out(f"REFUSED: r2_gates_lint ERROR {len(errors)} at FINAL {self.final} — nothing started: "
+                     + "; ".join(f"{f.code} {f.gate}" for f in errors))
+            return 3
+        if not self.dry_run:
+            write_json(self.evidence / "r2-gates-lint.json", {"schema": "dd-r2-gates-lint-v1", "commit": self.final,
+                                                               "counts": {"ERROR": 0, "WARN": len(warns)},
+                                                               "findings": [f.as_dict() for f in findings]})
+        self.log(f"R2 lint: ERROR 0 · WARN {len(warns)}" + (": " + ", ".join(f"{f.code} {f.gate}" for f in warns) if warns else ""))
+        return None
 
     def stage_passed(self, stage):
         path = self.stage_record(stage)
@@ -1022,10 +1053,12 @@ class Chain:
         contract = r2_gates.load_contract((HERE / "r2-gates.json").read_text(encoding="utf-8"))
         steps = r2_gates.measurement_steps(contract, quiet)
         measure_dir = self.evidence / "r2"
+        switches = set(OWNER_SWITCHES) | {k for g in contract["gates"] for k in (g.get("measuredBy") or {}).get("env", {})}
         results = []
         for step in steps:
             out = measure_dir / step["id"]
-            argv = (["/usr/bin/env", f"DD_R2_MEASURE_DIR={measure_dir}", f"DD_R2_COMMIT={self.final}"]
+            unset = [a for name in sorted(switches - set(step.get("env", {}))) for a in ("-u", name)]
+            argv = (["/usr/bin/env", *unset, f"DD_R2_MEASURE_DIR={measure_dir}", f"DD_R2_COMMIT={self.final}"]
                     + [f"{k}={v}" for k, v in r2_gates.expand_env(step.get("env", {}), dd_paths.KPROJ).items()] + [
                     REPO / "tools" / "test.sh", step["suite"], "--out", out, "--filter", step["filter"]])
             if step["suite"] == "playmode":
