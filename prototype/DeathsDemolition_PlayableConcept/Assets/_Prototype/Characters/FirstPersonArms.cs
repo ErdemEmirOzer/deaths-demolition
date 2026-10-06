@@ -188,7 +188,18 @@ namespace DD.Prototype.Characters
             _animator.SetFloat(ReloadRateId, seconds > 0.05f && clipSeconds > 0.05f ? clipSeconds / seconds : 1f);
             _animator.SetBool(ReloadEmptyId, empty);
             _animator.SetTrigger(ReloadId);
+            if (_contactIk != null) _contactIk.BeginReload(seconds, e != null ? e.clip : null);   // WP-083 B2e
         }
+
+        /// <summary>WP-083 B2e: the reload ended early — the left hand leaves the magazine well to the clip.</summary>
+        public void CancelContact()
+        {
+            if (_contactIk != null) _contactIk.CancelReload();
+        }
+
+        /// <summary>WP-083 B2e: the FP reload's magazine contact (tests).</summary>
+        public MagazineContactIk ContactIk => _contactIk;
+        private MagazineContactIk _contactIk;
 
         private string _forAnimSet;
 
@@ -264,6 +275,9 @@ namespace DD.Prototype.Characters
                 _lUpper = _animator.GetBoneTransform(HumanBodyBones.LeftUpperArm); _lLower = _animator.GetBoneTransform(HumanBodyBones.LeftLowerArm);
                 _lHand = _animator.GetBoneTransform(HumanBodyBones.LeftHand);
                 _magSocket = Characters.MagazineSocket.Ensure(_animator);   // WP-083 B2b
+                // WP-083 B2e: the left hand on the FP weapon's magazine well on the reload beats (after this component's own IK, 945 > 940)
+                _contactIk = _instance.GetComponent<MagazineContactIk>() ?? _instance.AddComponent<MagazineContactIk>();
+                _contactIk.Configure(_animator, _magSocket, PlayerSkinnedVisual.HeldMagazinePart, () => Visible);
                 _rFingers = FingerBones(_animator, HumanBodyBones.RightThumbProximal);
                 _lFingers = FingerBones(_animator, HumanBodyBones.LeftThumbProximal);
                 Transform socket = FindDeep(_hand, PlayerSkinnedVisual.WeaponSocketName);

@@ -59,6 +59,13 @@ namespace DD.Prototype.PlayerSystem
         public Vector3 GripOffset { get; set; } = DD.Prototype.Core.Weapons.WeaponGrip.DefaultOffset;
         private DD.Prototype.Characters.WeaponHoldIk _hold;
         private bool _holdLooked;
+        // WP-083 B2e: the hold's own rest reference — the ANIMATED socket (before the hold's solve), with the aim pitch it was taken at
+        private readonly Quaternion[] _holdReference = new Quaternion[6];
+        private readonly float[] _holdReferencePitch = new float[6];
+        private readonly bool[] _hasHoldReference = new bool[6];
+        private int _holdDeltaFrame = -1;
+        private float _holdDeltaDegrees;
+        private bool _holdDeltaApplied;
 
         /// <summary>True on the frames the mount was written (tests).</summary>
         public bool AlignedThisFrame { get; private set; }
@@ -106,6 +113,7 @@ namespace DD.Prototype.PlayerSystem
             a._additiveLayer = -1;
             a._adsParamController = null;
             for (int i = 0; i < a._hasReference.Length; i++) a._hasReference[i] = false;
+            for (int i = 0; i < a._hasHoldReference.Length; i++) a._hasHoldReference[i] = false;
             return a;
         }
 
@@ -113,6 +121,37 @@ namespace DD.Prototype.PlayerSystem
         public void ResetReferences()
         {
             for (int i = 0; i < _hasReference.Length; i++) _hasReference[i] = false;
+            for (int i = 0; i < _hasHoldReference.Length; i++) _hasHoldReference[i] = false;
+        }
+
+        /// <summary>
+        /// WP-083 B2e · for WeaponHoldIk (before this, order 890): the animated socket's deviation from its rest pose, in character
+        /// space — the fire clip's kick, the hurt flinch — measured BEFORE the hold's solve overwrites the hand. The hold sets the
+        /// aim's pitch itself, so the aim layer's pitch since the reference (<paramref name="pitchDegrees"/> then and now) is taken
+        /// out: a long burst while the aim climbs does not pitch the weapon twice. Identity without a reference.
+        /// </summary>
+        public Quaternion HoldDelta(Quaternion animatedSocket, float pitchDegrees)
+        {
+            _holdDeltaFrame = Time.frameCount;
+            _holdDeltaApplied = false;
+            _holdDeltaDegrees = 0f;
+            Animator animator = _skinned != null ? _skinned.Animator : null;
+            int pose = PoseIndex();
+            if (_rig == null || animator == null || pose < 0) return Quaternion.identity;
+            Quaternion socketLocal = Quaternion.Inverse(_rig.transform.rotation) * animatedSocket;
+            if (AtRest(animator, pose))
+            {
+                _holdReference[pose] = socketLocal;
+                _holdReferencePitch[pose] = pitchDegrees;
+                _hasHoldReference[pose] = true;
+            }
+
+            if (!_hasHoldReference[pose]) return Quaternion.identity;
+            Quaternion rest = Quaternion.Euler(-(pitchDegrees - _holdReferencePitch[pose]), 0f, 0f) * _holdReference[pose];
+            Quaternion delta = socketLocal * Quaternion.Inverse(rest);
+            _holdDeltaApplied = true;
+            _holdDeltaDegrees = Quaternion.Angle(Quaternion.identity, delta);
+            return delta;
         }
 
         private int PoseIndex()
@@ -185,15 +224,8 @@ namespace DD.Prototype.PlayerSystem
                 return;
             }
 
-            // WP-083 B2c: the weapon-first hold has put the hand so that the socket carries the aimed weapon frame — the mount rides the
-            // socket as authored (no rest reference / deviation; the grip point stays on the hand)
+            // WP-083 B2c/B2d: the weapon-first hold (WeaponHoldIk, before this) puts the hand so that the socket carries the rest frame
             if (!_holdLooked) { _hold = GetComponentInParent<DD.Prototype.Characters.WeaponHoldIk>(); _holdLooked = true; }
-            if (_hold != null && _hold.Active)
-            {
-                Transform held = transform.parent;
-                if (held != null) transform.SetPositionAndRotation(held.position - held.rotation * GripOffset, held.rotation);
-                return;
-            }
 
             Vector3 forward = _rig.transform.forward;
             forward.y = 0f;
@@ -235,6 +267,20 @@ namespace DD.Prototype.PlayerSystem
 
             DeltaDegrees = Quaternion.Angle(Quaternion.identity, delta);
             transform.rotation = baseRotation * delta;
+            // WP-083 B2c/B2d: while the hold carries weight the mount turns to the hold's frame (its pivot, where the solve puts the socket),
+            // blended by the hold's weight — its fade in / out after a switch or a reload, when the socket is still part clip; at full
+            // weight the pivot frame is the socket's
+            if (_hold != null && _hold.Active)
+            {
+                transform.rotation = Quaternion.Slerp(transform.rotation, _hold.PivotRotation, _hold.Weight);
+                // the deviation the weapon shows is the hold's (its pivot carries the clip's kick)
+                if (_holdDeltaFrame == Time.frameCount)
+                {
+                    DeltaDegrees = Mathf.Lerp(DeltaDegrees, _holdDeltaDegrees, _hold.Weight);
+                    DeltaApplied |= _holdDeltaApplied;
+                }
+            }
+
             if (socket != null) transform.position = socket.position - transform.rotation * GripOffset;   // the grip point on the hand
             AlignedThisFrame = true;
 #if DEVELOPMENT_BUILD || UNITY_EDITOR

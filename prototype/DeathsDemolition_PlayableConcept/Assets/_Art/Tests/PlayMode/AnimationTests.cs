@@ -489,6 +489,9 @@ namespace DD.Art.Tests.PlayMode
             StringAssert.Contains("ar_2_reload_tac", seen[0], "tac süresi → ar_2 reload_tac (AOC)");
             StringAssert.Contains("ar_2_reload_empty", seen[1], "empty süresi → ar_2 reload_empty (AOC)");
 
+            // WP-083 (05.10): fixed 1/60 s frames — the burst window is counted in game time, and a loaded batch machine's long frame let
+            // a real-time wait run past it (b2f8: 2 fire beats in one burst; ders-batch-kare-suresi)
+            Time.captureDeltaTime = 1f / 60f;
             int f0 = pv.FireTriggers;
             for (int i = 0; i < 3; i++) { pv.PlayFire(); yield return new WaitForSeconds(ar2.fire.burstIntervalSeconds); }
             int burst = pv.FireTriggers - f0;

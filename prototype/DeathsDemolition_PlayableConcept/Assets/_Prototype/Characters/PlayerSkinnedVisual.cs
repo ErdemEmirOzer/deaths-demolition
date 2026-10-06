@@ -218,6 +218,16 @@ namespace DD.Prototype.Characters
         /// <summary>WP-082 / WP-083 B2b: the left hand's magazine socket (<see cref="Characters.MagazineSocket"/>; S-02 WeaponMagazineOwnership).</summary>
         public Transform MagazineSocket => _magSocket;
         private Transform _magSocket;
+        /// <summary>WP-083 B2e: the held classic weapon's magazine part (S-02 WeaponMagazineVisual; null without one).</summary>
+        public static Transform HeldMagazinePart()
+        {
+            DD.Prototype.Weapons.WeaponController c = DD.Prototype.Weapons.WeaponRegistry.ActiveController;
+            return c != null && c.MagazineVisual != null ? c.MagazineVisual.Part : null;
+        }
+
+        /// <summary>WP-083 B2e: the reload's magazine contact (left hand on the well on the beats).</summary>
+        public MagazineContactIk ContactIk => _contactIk;
+        private MagazineContactIk _contactIk;
         /// <summary>WP-083 B2c: the weapon-first right-hand hold (null while WeaponHoldIk.Enabled was off at Attach).</summary>
         public WeaponHoldIk HoldIk => _holdIk;
         private WeaponHoldIk _holdIk;
@@ -347,17 +357,26 @@ namespace DD.Prototype.Characters
             }
 
             // WP-083 B2c: the weapon-first right-hand hold (order 890, before the mount and the left-hand grip; added only while
-            // WeaponHoldIk.Enabled; same gate as the grip IK)
+            // WeaponHoldIk.Enabled; the grip IK's gate, and a classic weapon in the hand — its rows are the classic weapons'; a Special
+            // (SwHold > 0, or its v3 set) keeps main's path until it has a row of its own, C-00 06.10)
             if (_holdIk == null && _animator != null) _holdIk = _animator.GetComponent<WeaponHoldIk>();
             if (_holdIk == null && _animator != null && _animator.isHuman && WeaponHoldIk.Enabled) _holdIk = _animator.gameObject.AddComponent<WeaponHoldIk>();
             if (_holdIk != null)
             {
-                _holdIk.Configure(_animator, _weaponSocket, aimDirection, () => _authored && !_dying && UpperAtRest(),
+                _holdIk.Configure(_animator, _weaponSocket, aimDirection, () => _authored && !_dying && _swHold == 0 && !_specialV3 && UpperAtRest(),
                     () => _gripIk != null && _gripIk.TryGetSupportGoal(out Vector3 g) ? g : (Vector3?)null);
             }
 
             // WP-082 / WP-083 B2b: the left hand's magazine socket (S-02 WeaponMagazineOwnership; the Hero v2 rig may carry its own)
             if (_magSocket == null && _animator != null) _magSocket = Characters.MagazineSocket.Ensure(_animator);
+            // WP-083 B2e: the left hand on the magazine well on the reload's Detach / Insert beats (H3; on by default, C-00 05.10)
+            if (_contactIk == null && _animator != null && _animator.isHuman) _contactIk = _animator.GetComponent<MagazineContactIk>() ?? _animator.gameObject.AddComponent<MagazineContactIk>();
+            if (_contactIk != null)
+            {
+                // third-person views only (in first person this body is not seen; the FP arms carry their own contact)
+                _contactIk.Configure(_animator, _magSocket, HeldMagazinePart,
+                    () => _authored && !_dying && DD.Prototype.CameraSystem.CameraModeService.Current != DD.Prototype.CameraSystem.CameraMode.FirstPerson);
+            }
             // WP-032: the head looks along the SAME aim the aim layer turns to (single source, S-02); feet on the real ground.
             if (_lookAt == null && _animator != null) _lookAt = _animator.GetComponent<CharacterLookAt>();
             if (_footIk == null && _animator != null) _footIk = _animator.GetComponent<FootIkAdapter>();
@@ -561,6 +580,7 @@ namespace DD.Prototype.Characters
         {
             _weaponDef = def;
             _classicId = id;
+            if (_holdIk != null) _holdIk.SetWeapon(id);   // WP-083 B2: the per-weapon hold row
             _specialV3 = false;   // a classic equip ends a v3 Special hold
             _lastShotTime = -1f;   // WP-071 r2: a sustained string never carries over to the next weapon
             if (_animator != null) SetFireHeld(false);
@@ -690,15 +710,19 @@ namespace DD.Prototype.Characters
                 clip = CharacterAnimatorContract.PlayerWeaponClipV3(WeaponAnimSet, empty ? "reload_empty" : "reload_tac");
             }
             else clip = CharacterAnimatorContract.PlayerWeaponClip(_weapon, "reload");
-            float clipSeconds = _animation.Find(clip)?.seconds ?? 0f;
+            CharacterAnimationSet.Entry entry = _animation.Find(clip);
+            float clipSeconds = entry?.seconds ?? 0f;
             _animator.SetFloat(ReloadRateId, seconds > 0.05f && clipSeconds > 0.05f ? clipSeconds / seconds : 1f);
             _animator.SetTrigger(ReloadId);
+            if (_contactIk != null) _contactIk.BeginReload(seconds, entry?.clip);
         }
 
         /// <summary>Reload interrupted (special pickup / death): straight back to the rest pose.</summary>
         public void CancelReload()
         {
             if (!_authored) return;
+            if (_contactIk != null) _contactIk.CancelReload();
+            if (_fpArms != null) _fpArms.CancelContact();
             _animator.ResetTrigger(ReloadId);
             AnimatorStateInfo over = ResolveOverrideLayer() >= 0 ? _animator.GetCurrentAnimatorStateInfo(_overrideLayer) : default;
             if (_overrideLayer >= 0 && (over.IsName(CharacterAnimatorContract.ReloadState + "_" + _weapon) || over.IsName(CharacterAnimatorContract.ReloadTacState) || over.IsName(CharacterAnimatorContract.ReloadEmptyState)))

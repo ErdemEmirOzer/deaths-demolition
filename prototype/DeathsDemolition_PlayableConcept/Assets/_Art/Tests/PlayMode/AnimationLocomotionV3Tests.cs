@@ -312,7 +312,8 @@ namespace DD.Art.Tests.PlayMode
 
         /// <summary>
         /// WP-083 B2c (C-00 05.10, decision A): the weapon-first hold. Off (the default) adds nothing to the body. On, the right hand's
-        /// socket_weapon_r sits on the grip pivot (≤ 1 cm, ≤ 2° — H1's limit) and the pivot looks along the aim (≤ 1°), standing and
+        /// socket_weapon_r sits on the grip pivot (≤ 1 cm, ≤ 2° — H1's limit) and the pivot faces the body's facing pitched by the aim
+        /// (≤ 1°), standing and
         /// walking. The left hand reaches the weapon's grip_l through WeaponGripIk on the placed weapon (≤ 1 cm). Switching the hold off
         /// fades it to 0 within the blend time and the hand returns to the clip.
         /// </summary>
@@ -365,7 +366,9 @@ namespace DD.Art.Tests.PlayMode
                     measured++;
                     maxR = Mathf.Max(maxR, Vector3.Distance(socket.position, hold.PivotPosition));
                     maxRot = Mathf.Max(maxRot, Quaternion.Angle(socket.rotation, hold.PivotRotation));
-                    maxAim = Mathf.Max(maxAim, Vector3.Angle(hold.PivotRotation * Vector3.forward, aim));
+                    // the hold faces the body's facing pitched by the aim's elevation (WeaponMountAlignment's rest frame)
+                    Vector3 expected = Quaternion.LookRotation(Vector3.ProjectOnPlane(pv.Animator.transform.forward, Vector3.up).normalized) * Quaternion.Euler(-Mathf.Asin(aim.y) * Mathf.Rad2Deg, 0f, 0f) * Vector3.forward;
+                    maxAim = Mathf.Max(maxAim, Vector3.Angle(hold.PivotRotation * Vector3.forward, expected));
                     if (pv.GripIk != null && pv.GripIk.Weight >= 1f) { maxL = Mathf.Max(maxL, Vector3.Distance(lHand.position, grip.position)); leftMeasured++; }
                 }
 
@@ -375,7 +378,7 @@ namespace DD.Art.Tests.PlayMode
                 Assert.GreaterOrEqual(measured, 90, "tutuş ağırlığı 1'e çıkmadı (kapı: dinlenme pozu)");
                 Assert.LessOrEqual(maxR, 0.01f, "socket_weapon_r pivottan > 1 cm");
                 Assert.LessOrEqual(maxRot, 2f, "socket_weapon_r dönüşü pivottan > 2°");
-                Assert.LessOrEqual(maxAim, 1f, "pivot nişan yönünden > 1°");
+                Assert.LessOrEqual(maxAim, 1f, "pivot gövde yönü + nişan eğiminden > 1°");
                 Assert.GreaterOrEqual(leftMeasured, 60, "sol el kabza IK'sı tam ağırlıkta değil");
                 Assert.LessOrEqual(maxL, 0.01f, "sol el kabzadan > 1 cm");
 
@@ -385,6 +388,83 @@ namespace DD.Art.Tests.PlayMode
                 Assert.AreEqual(0f, hold.Weight, "kapatınca ağırlık karışım süresinde 0'a inmeli");
                 Assert.IsFalse(hold.Active);
                 Assert.Greater(Vector3.Distance(socket.position, hold.PivotPosition), 0.02f, "kapalıyken el klibe dönmeli (pivotta kalmamalı)");
+            }
+            finally
+            {
+                WeaponHoldIk.ResetStatics();
+            }
+        }
+
+        /// <summary>
+        /// WP-083 B2e (C-00 06.10, council finding): the hold is the classic weapons'. A Special in the hand (SwHold) fades it out and
+        /// back to the clip; the classic weapon back in the hand brings it in again. A hidden weapon's markers under the same socket
+        /// (the classic rig while a Special is out) are never the held weapon's: with an inactive attach_stock / Muzzle under the socket
+        /// and the shouldered row selected, the pivot does not pop to the shoulder (frame-to-frame ≤ 1 cm, standing).
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator Oyuncu_SilahTutusu_SpecialEldeyken_Kapali_GizliSilahIsaretiSayilmaz()
+        {
+            yield return Stage();
+            CharacterAssetSet set = CharacterAssetSet.Load();
+            try
+            {
+                WeaponHoldIk.Enabled = true;
+                var stage = new GameObject("WP083_HoldSpecial");
+                _temp.Add(stage);
+                Transform visual = new GameObject("Visual").transform;
+                visual.SetParent(stage.transform, false);
+                var pv = Object.Instantiate(set.PlayerPrefab, visual, false).GetComponent<PlayerSkinnedVisual>();
+                pv.Attach(visual, () => Vector3.zero, () => 6.2f, () => Vector3.forward);
+                pv.Animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+                WeaponHoldIk hold = pv.HoldIk;
+                Assert.IsNotNull(hold, "açıkken WeaponHoldIk eklenmeli");
+                Transform socket = pv.WeaponSocket;
+                Transform grip = new GameObject("grip_l").transform;
+                grip.SetParent(socket, false);
+                grip.localPosition = new Vector3(-0.02f, 0.02f, 0.18f);
+                // a hidden weapon under the same socket: its stock behind the grip, its muzzle ahead (rl_1-like tube)
+                var hidden = new GameObject("HiddenWeapon");
+                hidden.transform.SetParent(socket, false);
+                new GameObject("attach_stock").transform.SetParent(hidden.transform, false);
+                hidden.transform.GetChild(0).localPosition = new Vector3(0f, 0.05f, -0.45f);
+                Transform muzzle = new GameObject("Muzzle").transform;
+                muzzle.SetParent(hidden.transform, false);
+                muzzle.localPosition = new Vector3(0f, 0.05f, 0.6f);
+                hidden.SetActive(false);
+                hold.SetWeapon(ClassicWeaponId.Rl1);
+
+                Time.captureDeltaTime = 1f / 60f;
+                for (int f = 0; f < 60; f++) yield return null;
+                Assert.AreEqual(1f, hold.Weight, "klasik elde tutuş tam ağırlıkta olmalı");
+                Vector3 last = hold.PivotPosition;
+                float maxJump = 0f;
+                for (int f = 0; f < 60; f++)
+                {
+                    yield return null;
+                    maxJump = Mathf.Max(maxJump, Vector3.Distance(hold.PivotPosition, last));
+                    last = hold.PivotPosition;
+                }
+
+                pv.SetSpecialHold(1);
+                int fade = Mathf.CeilToInt(WeaponHoldIk.BlendSeconds * 60f) + 2;
+                for (int f = 0; f < fade; f++) yield return null;
+                float specialWeight = hold.Weight;
+                bool specialActive = hold.Active;
+                for (int f = 0; f < 30; f++) yield return null;
+                float specialWeightLater = hold.Weight;
+                pv.SetSpecialHold(0);
+                for (int f = 0; f < 60; f++) yield return null;
+                float backWeight = hold.Weight;
+
+                Debug.Log("[DD-TEST] wp083.holdspecial pivotJumpMax=" + (maxJump * 100f).ToString("F2", CultureInfo.InvariantCulture) + " cm specialWeight=" +
+                          specialWeight.ToString("F2", CultureInfo.InvariantCulture) + "/" + specialWeightLater.ToString("F2", CultureInfo.InvariantCulture) +
+                          " backWeight=" + backWeight.ToString("F2", CultureInfo.InvariantCulture));
+                Assert.LessOrEqual(maxJump, 0.01f, "gizli silahın işaretleri tutuşu sıçrattı (pivot kare arası > 1 cm)");
+                Assert.AreEqual(0f, specialWeight, "Special eldeyken tutuş karışım süresinde 0'a inmeli");
+                Assert.IsFalse(specialActive);
+                Assert.AreEqual(0f, specialWeightLater, "Special eldeyken tutuş kapalı kalmalı");
+                Assert.AreEqual(1f, backWeight, "klasiğe dönünce tutuş yeniden tam ağırlıkta olmalı");
             }
             finally
             {

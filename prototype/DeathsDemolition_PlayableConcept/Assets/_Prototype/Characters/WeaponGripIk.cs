@@ -41,6 +41,10 @@ namespace DD.Prototype.Characters
             _handInWeapon = pointInWeaponFrame;
         }
 
+        /// <summary>The set's left-hand point in the weapon frame and whether it is in use (tests).</summary>
+        public Vector3 HandInWeapon => _handInWeapon;
+        public bool HasHandInWeapon => _hasHandInWeapon;
+
         /// <summary>The model root the weapon frame is read from (AP021_&lt;id&gt;; tests).</summary>
         public Transform WeaponFrame => _weaponFrame;
         private float _weight, _searchClock;
@@ -50,6 +54,55 @@ namespace DD.Prototype.Characters
         /// <summary>The owner's gate as last read (tests).</summary>
         public bool GateOpen { get; private set; }
         public Transform Grip => _grip;
+        /// <summary>WP-083: the left upper arm's roll about its own axis against the clip's pose after the last solve (°; tests, ≤ 15).</summary>
+        public float UpperArmRollDegrees { get; private set; }
+
+        /// <summary>
+        /// WP-083 (C-00 05.10, v4 frames: the upper arm rolled out and back, the shoulder cloth behind the body): the two-bone solve
+        /// without roll. The analytic solve swings the chain along the shortest path, and a large swing also turns the upper arm about
+        /// its own axis. This removes that twist (the upper arm keeps the clip's roll; the elbow does not move, the twist axis runs
+        /// through it), then aims the forearm from the elbow at the target along the shortest path. The hand keeps its rotation.
+        /// </summary>
+        public static void SolveNoRoll(Transform a, Transform b, Transform c, Vector3 t)
+        {
+            Quaternion upperAnimated = a.rotation, handRot = c.rotation;
+            Vector3 axis = b.position - a.position;   // the clip's bone direction: q = swing · twist about it, swing carries it onto the new one
+            Solve(a, b, c, t);
+            if (axis.sqrMagnitude > 1e-8f)
+            {
+                Quaternion delta = a.rotation * Quaternion.Inverse(upperAnimated);
+                a.rotation = Swing(delta, axis.normalized) * upperAnimated;
+            }
+
+            Vector3 have = c.position - b.position, want = t - b.position;
+            if (have.sqrMagnitude > 1e-8f && want.sqrMagnitude > 1e-8f) b.rotation = Quaternion.FromToRotation(have, want) * b.rotation;
+            c.rotation = handRot;
+        }
+
+        /// <summary>The swing part of <paramref name="q"/> about the unit <paramref name="axis"/> (swing-twist: q = swing · twist).</summary>
+        public static Quaternion Swing(Quaternion q, Vector3 axis)
+        {
+            Vector3 v = new Vector3(q.x, q.y, q.z);
+            Vector3 p = Vector3.Dot(v, axis) * axis;
+            var twist = new Quaternion(p.x, p.y, p.z, q.w);
+            float m = Mathf.Sqrt(twist.x * twist.x + twist.y * twist.y + twist.z * twist.z + twist.w * twist.w);
+            if (m < 1e-6f) return q;
+            twist = new Quaternion(twist.x / m, twist.y / m, twist.z / m, twist.w / m);
+            return q * Quaternion.Inverse(twist);
+        }
+
+        /// <summary>
+        /// WP-083 (C-00 05.10): how far a solve turned an upper arm about its own axis (shoulder → elbow) against the clip's pose — the
+        /// twist part of the change (swing-twist), in degrees. A solve should swing the arm, not roll it.
+        /// </summary>
+        public static float UpperArmRoll(Quaternion animated, Transform upper, Transform lower)
+        {
+            // the twist about the clip's own bone direction (the bone's local direction carried by the animated rotation)
+            Vector3 local = Quaternion.Inverse(upper.rotation) * (lower.position - upper.position);
+            if (local.sqrMagnitude < 1e-8f) return 0f;
+            return Mathf.Abs(TwistCorrector.TwistAngle(upper.rotation * Quaternion.Inverse(animated), (animated * local).normalized));
+        }
+
         /// <summary>Distance hand → grip after the last solve (m; tests).</summary>
         public float LastError { get; private set; }
 
@@ -92,7 +145,9 @@ namespace DD.Prototype.Characters
                 // the weapon rig's own frame (S-02 contract: +Z barrel, +Y up, +X right) — the AP021_ model node under it carries the FBX
                 // axis conversion (270°, 0, 0) and is NOT the frame hands_in_weapon_frame is expressed in
                 DD.Prototype.Weapons.WeaponVisualRig rig = _searchRoot != null ? _searchRoot.GetComponentInChildren<DD.Prototype.Weapons.WeaponVisualRig>() : null;
-                _weaponFrame = rig != null ? rig.transform : FindFrame(_searchRoot);
+                // WP-083 (C-00 05.10): an authored model's body (its rest pose is the rig's own, identity) carries the shot's kick —
+                // the support goal rides it, so the left hand stays on the handguard through the recoil
+                _weaponFrame = rig != null ? (rig.HasAuthoredModel && rig.Body != null ? rig.Body : rig.transform) : FindFrame(_searchRoot);
             }
 
             GateOpen = _gate == null || _gate();
@@ -101,7 +156,9 @@ namespace DD.Prototype.Characters
             if (_weight <= 0f || _grip == null) { LastError = float.NaN; return; }
             Vector3 goal = _hasHandInWeapon && _weaponFrame != null ? _weaponFrame.TransformPoint(_handInWeapon) : _grip.position;
             Vector3 target = Vector3.Lerp(_hand.position, goal, _weight);
-            Solve(_upper, _lower, _hand, target);
+            Quaternion animatedUpper = _upper.rotation;
+            SolveNoRoll(_upper, _lower, _hand, target);
+            UpperArmRollDegrees = UpperArmRoll(animatedUpper, _upper, _lower);
             LastError = Vector3.Distance(_hand.position, goal);
         }
 
