@@ -584,7 +584,7 @@ namespace DD.Prototype.Characters
             if (_gripIk != null)
             {
                 // WP-083 B2f (council 06.10; b2f15): the support hand grasps the weapon's element — not on lmg_2 / rl_1's vertical
-                // foregrips, whose authored grip already wraps them
+                // foregrips, whose authored grip already wraps them, nor on smg_1 (AD MUST-1: its clip's forearm clamps the wrap)
                 _gripIk.SetGraspElement(WeaponGripIk.ElementOf(id));
                 _gripIk.SetGrasp(WeaponGripIk.GraspOf(id));
             }

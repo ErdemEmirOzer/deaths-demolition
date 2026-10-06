@@ -259,15 +259,19 @@ namespace DD.Prototype.Characters
         {
             _element = element;
             _theta = float.NaN;
+            ThetaSwitchCount = 0;   // a weapon's own count (a weapon without the grasp reads 0, not the last grasped weapon's)
         }
 
         /// <summary>
         /// Whether the contact grasp runs for a classic weapon (b2f15, 06.10): not on the vertical foregrips of lmg_2 / rl_1, whose
         /// authored (P-06, AD-approved) grip wraps the grip already — fingertips 0.1 / 1.8 cm on the clip against 4.4 / 4.4 cm under the
-        /// curl; their rows stay for the section gate and the measures.
+        /// curl; not on smg_1 (B; AD B2f MUST-1, gt GT-1): its clip holds the forearm so far from the handguard's wrap that the twist
+        /// muscle clamps every frame (60/60, wanted 1.95) and the wrap target hunts (24–29 changes in 4 s) — the hand stays the B2e one
+        /// until the hero clip's hold reaches it. Their rows stay for the section gate and the measures.
         /// </summary>
         public static bool GraspOf(DD.Prototype.Core.Config.ClassicWeaponId id) =>
-            id != DD.Prototype.Core.Config.ClassicWeaponId.Lmg2 && id != DD.Prototype.Core.Config.ClassicWeaponId.Rl1;
+            id != DD.Prototype.Core.Config.ClassicWeaponId.Lmg2 && id != DD.Prototype.Core.Config.ClassicWeaponId.Rl1 &&
+            id != DD.Prototype.Core.Config.ClassicWeaponId.AutoSmg;
 
         /// <summary>
         /// The grasped element of each classic weapon's support hand, in its weapon frame (S-06 rows; the LOD0 section at the support

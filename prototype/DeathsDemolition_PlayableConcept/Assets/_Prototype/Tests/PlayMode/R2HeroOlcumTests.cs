@@ -1324,6 +1324,13 @@ namespace DD.Prototype.Tests.PlayMode
                     {
                         yield return SpecialWeaponSahne.Kareler(30);
                         written.Add(Shot(dir, d.RosterKey + "_m1_" + cam + "_reload"));
+                        // AD B2f MUST-2: what drives the support hand on the reload frame — at grip weight 0 WeaponGripIk returns
+                        // before any solve (the B2f grasp never runs), at hold weight 0 WeaponHoldIk leaves the arm to the clip
+                        var bodyM1 = _s.Rig.GetComponentInChildren<PlayerSkinnedVisual>(true);
+                        Debug.Log("[DD-TEST] wp083.m1.reload " + d.RosterKey + " " + cam + " gripWeight=" +
+                                  (bodyM1 != null && bodyM1.GripIk != null ? bodyM1.GripIk.Weight.ToString("F3", CultureInfo.InvariantCulture) : "-") +
+                                  " holdWeight=" + (bodyM1 != null && bodyM1.HoldIk != null ? bodyM1.HoldIk.Weight.ToString("F3", CultureInfo.InvariantCulture) : "-") +
+                                  " reloading=" + _s.Controller.Classic.IsReloading);
                         yield return SpecialWeaponSahne.Bekle(() => !_s.Controller.Classic.IsReloading, 10f, d.RosterKey + " reload bitmedi");
                     }
                     else written.Add(d.RosterKey + "_m1_" + cam + "_reload(NO RELOAD)");
