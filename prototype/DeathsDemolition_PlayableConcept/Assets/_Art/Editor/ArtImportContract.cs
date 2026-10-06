@@ -487,6 +487,8 @@ namespace DD.Art.Pipeline.EditorTools
         /// <summary>Shipped max size for a texture path (its class's size, derived masks capped).</summary>
         /// <summary>WP-038E · every AP-018 <c>wet_*</c> map (wet stone albedo, wet packed maps and their derived masks; the tiles are 512 already) ships at 512² — wet reads through the blend (plate wetness ≤ 0.55), and the world set stays under the 120 MB budget (ADR-015-1 v2).</summary>
         public const int WetPackedMaxSize = 512;
+        /// <summary>WP-084 · the zombie cloth atlas's derived MetallicSmoothness (C-00 06.10: Z3b texture budget).</summary>
+        public const int ZombieClothMetallicSmoothnessMaxSize = 512;
 
         public static int MaxTextureSizeOf(string assetPath)
         {
@@ -494,6 +496,9 @@ namespace DD.Art.Pipeline.EditorTools
             int size = MaxSizeOf(ClassOf(assetPath), RoleOf(assetPath));
             string slug = RoleSlugOf(assetPath);
             if (slug != null && slug.StartsWith("wet_", StringComparison.Ordinal)) size = Mathf.Min(size, WetPackedMaxSize);
+            // WP-084 (C-00 06.10): the 40-zombie texture budget (Z3b ≤ 96 MB) with the AP-025 mask array — the cloth smoothness is the
+            // least visible zombie map (the mask detail is zombie identity and stays); AD before / after in three cameras.
+            if (slug == "zombie_cloth" && RoleOf(assetPath) == TextureRole.MetallicSmoothness) size = Mathf.Min(size, ZombieClothMetallicSmoothnessMaxSize);
             return size;
         }
 

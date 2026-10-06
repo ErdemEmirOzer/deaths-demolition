@@ -457,6 +457,22 @@ namespace DD.Art.Tests.EditMode
             return Rect.MinMaxRect(float.Parse(m.Groups[1].Value, inv), float.Parse(m.Groups[2].Value, inv), float.Parse(m.Groups[3].Value, inv), float.Parse(m.Groups[4].Value, inv));
         }
 
+        /// <summary>WP-084 (C-00 06.10, Z3b texture budget ≤ 96 MB): the zombie cloth's derived MetallicSmoothness ships at 512² — the
+        /// rule, the importer and the loaded texture (the texture-policy tests compare with MaxTextureSizeOf and would follow a removed rule).</summary>
+        [Test]
+        public void ZombiKumas_MetallicSmoothness_512()
+        {
+            string path = ArtCharacterPrefabBuilder.ZombieDerived + "/T_zombie_cloth_MetallicSmoothness.png";
+            Assert.AreEqual(ArtImportContract.ZombieClothMetallicSmoothnessMaxSize, ArtImportContract.MaxTextureSizeOf(path), "sözleşme");
+            Assert.AreEqual(512, ArtImportContract.ZombieClothMetallicSmoothnessMaxSize);
+            var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+            Assert.IsNotNull(importer, "kaynak yok: " + path);
+            Assert.AreEqual(512, importer.maxTextureSize, "import");
+            var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+            Assert.IsNotNull(tex, path);
+            Assert.LessOrEqual(tex.width, 512, "yüklenen doku");
+        }
+
         // ================================================================ look seçici
 
         [Test]

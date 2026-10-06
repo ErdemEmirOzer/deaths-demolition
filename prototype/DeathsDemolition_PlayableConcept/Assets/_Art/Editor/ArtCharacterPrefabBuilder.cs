@@ -166,6 +166,10 @@ namespace DD.Art.Pipeline.EditorTools
             {
                 ArtTextureRepack.BuildDerived(ZombieTextures + "/T_zombie_cloth_Packed.png", ZombieDerived + "/T_zombie_cloth_MetallicSmoothness.png",
                     ZombieDerived + "/T_zombie_cloth_MetallicSmoothness.provenance.json", ArtTextureRepack.OrmToMetallicSmoothnessAo, ArtTextureRepack.OrmAlgorithm);
+                // WP-084 (C-00 06.10): a current derived map is not rewritten, so a contract change (the 512 cap below) needs its own reimport
+                string clothMs = ZombieDerived + "/T_zombie_cloth_MetallicSmoothness.png";
+                if (AssetImporter.GetAtPath(clothMs) is TextureImporter clothMsImporter
+                    && ArtImportContract.Apply(clothMsImporter, ArtImportContract.RoleOf(clothMs))) clothMsImporter.SaveAndReimport();
             }
         }
 
