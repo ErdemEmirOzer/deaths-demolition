@@ -1651,3 +1651,31 @@ class ModesTests(Base):
         self.evidence.mkdir(parents=True)
         self.assertEqual(["topdown"], acc.assemble_manifest(self.evidence, FINAL, None, "R2", self.TD)["modes"])
         self.assertEqual(list(acc.MODES), acc.assemble_manifest(self.evidence, FINAL, None, "R2")["modes"])
+
+
+class PerfLoadMaxTests(Base):
+    """C-00 06.10: --perf-load-max reaches every wp078_perf call as --load-max (load1 counts iCloud I/O, not CPU); the
+    default leaves the commands as before."""
+
+    def z3_perf(self, **kw):
+        with mock.patch.object(acc, "_r2_z3", return_value=FAKE_Z3):
+            chain = self.dry(["z3"], round_name="R2", r1_evidence=r1_evidence(self.tmp.name), r1_commit=R1, **kw)
+        return [a for s, a in chain.planned if s == "z3" and Path(a[1]).name == "wp078_perf.py"][0]
+
+    def test_a_raised_ceiling_reaches_z3_a4_and_b9(self):
+        self.assertEqual("99.0", self.opt(self.z3_perf(perf_load_max=99.0), "--load-max"))
+        self.setUp()
+        chain = self.dry(["a4", "b9"], perf_load_max=99.0, b9_poses=B9PoseTests.POSES)
+        perf = [a for _, a in chain.planned if Path(a[1]).name == "wp078_perf.py"]
+        self.assertTrue(perf)
+        self.assertEqual({"99.0"}, {self.opt(a, "--load-max") for a in perf})
+
+    def test_the_default_adds_nothing(self):
+        self.assertNotIn("--load-max", self.z3_perf())
+
+    def test_main_refuses_a_non_positive_or_non_finite_ceiling(self):
+        base = ["--final", FINAL, "--evidence", str(self.evidence), "--dry-run", "--stages", "z3"]
+        for bad in ("0", "-1", "nan", "inf"):
+            with self.subTest(value=bad):
+                self.assertEqual(64, acc.main(base + ["--perf-load-max", bad], git=FakeGit(), runner=must_not_run,
+                                              guard=FakeGuard(), out=lambda _: None))

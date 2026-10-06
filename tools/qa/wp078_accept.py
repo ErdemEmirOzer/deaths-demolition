@@ -46,6 +46,7 @@ exit: 0 chain ran and the report PASSes (without a8: every selected stage PASS) 
 import argparse
 import hashlib
 import json
+import math
 import os
 import importlib.util
 import re
@@ -146,6 +147,7 @@ BUILDS = {"dev": "dev", "release": "release", "probe": "release-probe"}   # role
 R1_ROOT = wp078_report.R1_BASELINE_ROOT   # WP-091 P2: <E>/a4/perf-r1, the R1 probe build's windows (one source: the report's)
 B9_NAME = wp078_report.POSE_NAME           # a B9 pose name = its <E>/b9/<name> folder
 MODES = ("topdown", "tp", "fp")
+PERF_LOAD_MAX = 6.0                       # wp078_perf --load-max default (C-00 26.09); --perf-load-max overrides it
 TIER = "sinematik"                        # DEC-100 default tier, given explicitly (K5)
 GAMEPLAY_SEED, GAMEPLAY_ROUNDS = 61, 5    # A2: TD/TP/FP × 5 rounds, seed 61
 ROUTE_ROUNDS = 1                          # the route run owns every frame; no rounds are played (R1–R3)
@@ -485,8 +487,11 @@ class Chain:
     def __init__(self, final, evidence, stages, dry_run=False, resume=False, editmode_filter="", playmode_filter="",
                  wait_tries=3, wait_seconds=120.0, git=None, runner=None, guard=None, out=print, python=sys.executable,
                  b9_poses=None, round_name="R1", r1_evidence=None, r1_commit=None, b9_poses_path=None, lint=None, host=None,
-                 modes=MODES):
+                 modes=MODES, perf_load_max=PERF_LOAD_MAX):
         self.final, self.evidence = final, Path(evidence).resolve()
+        # C-00 06.10: load1 counts the iCloud file provider's I/O, not CPU; the quiet rule is "no foreign Unity / Player /
+        # Blender / ffmpeg" and ABBA balances a steady background — FINAL may raise wp078_perf's load ceiling
+        self.perf_load_max = perf_load_max
         # C-00 06.10 (user: top down only, tests too): the camera modes this run measures; a2 / z3 / r2 / r2q skip the
         # rest and the report writes them OUT_OF_SCOPE ("kullanıcı 06.10: yalnız TopDown"), never FAIL or BLOCKED
         self.modes = tuple(m for m in MODES if m in modes)
@@ -1178,6 +1183,8 @@ class Chain:
 
     def perf_with_wait(self, name, argv):
         """One wp078_perf invocation; waits (6/30/75) resume in the same root, 7 is STOP, 143 ends the chain."""
+        if self.perf_load_max != PERF_LOAD_MAX:   # the default leaves every command as before
+            argv = list(argv) + ["--load-max", str(self.perf_load_max)]
         code = None
         for attempt in range(1, self.wait_tries + 1):
             self.check_markers(name)
@@ -1620,6 +1627,9 @@ def main(argv=None, **seams):
     parser.add_argument("--r1-commit", help="WP-091 P5: the R1 FINAL commit, 40-hex (recorded in r2-P5.json)")
     parser.add_argument("--b9-poses", help="C-00 01.10: S-05 B9 pose list (JSON) for the b9 stage, which runs after a4 "
                                             "(its own stage since WP-091: give it in --stages, e.g. a4,b9)")
+    parser.add_argument("--perf-load-max", type=float, default=PERF_LOAD_MAX,
+                        help="C-00 06.10: wp078_perf --load-max for a4 / b9 / z3 (default 6.0; load1 counts iCloud I/O, the quiet "
+                             "rule is no foreign Unity / Player / Blender / ffmpeg)")
     parser.add_argument("--modes", default=",".join(MODES),
                         help="C-00 06.10 (user: top down only): camera modes this run measures — a2, z3, r2, r2q skip the "
                              "rest and the report writes them OUT_OF_SCOPE (default every mode)")
@@ -1648,6 +1658,9 @@ def main(argv=None, **seams):
         # P2 would compare FINAL with itself and the report would refuse the root hours later (KADRO test-engineer SHOULD-1)
         print("--r1-evidence/--r1-commit must be the R1 FINAL's, not this FINAL's own", file=sys.stderr)
         return 64
+    if not (math.isfinite(args.perf_load_max) and args.perf_load_max > 0):
+        print("--perf-load-max must be a finite number > 0", file=sys.stderr)
+        return 64
     modes = [m.strip() for m in args.modes.split(",") if m.strip()]
     if not modes or len(set(modes)) != len(modes) or set(modes) - set(MODES):
         print(f"--modes takes distinct values from {', '.join(MODES)}", file=sys.stderr)
@@ -1672,7 +1685,8 @@ def main(argv=None, **seams):
                   editmode_filter=args.editmode_filter, playmode_filter=args.playmode_filter,
                   wait_tries=args.wait_tries, wait_seconds=args.wait_seconds, b9_poses=b9_poses, round_name=args.round,
                   b9_poses_path=args.b9_poses,
-                  r1_evidence=args.r1_evidence, r1_commit=args.r1_commit, modes=tuple(modes), **seams)
+                  r1_evidence=args.r1_evidence, r1_commit=args.r1_commit, modes=tuple(modes),
+                  perf_load_max=args.perf_load_max, **seams)
     previous = signal.signal(signal.SIGTERM, chain.on_sigterm)
     try:
         return chain.run()
