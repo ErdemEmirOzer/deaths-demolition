@@ -29,10 +29,10 @@ namespace DD.Prototype.Core
         /// <summary>QualitySettings level names by tier (player-facing; the settings screen upper-cases them).</summary>
         public static readonly string[] LevelNames = { "Performance", "High", "Cinematic" };
 
-        /// <summary>Contract §3: LOD bias base, shadow distance cap (m), cascade cap, texture streaming budget (MB, ADR-015-1 v3). Cinematic r2 (DEC-100): 3.0 / 120 m / 4 / 3072.</summary>
+        /// <summary>Contract §3: LOD bias base, shadow distance cap (m), cascade cap, texture streaming budget (MB, ADR-015-1 v3). Cinematic r2 (DEC-100): 3.0 / 120 m / 4 / 3072. High cascade cap 3 (C-00 06.10: High FP 4 -> 3, AD MUST-3 — no visible gain from the 4th, +7 % draws / +33 % casters).</summary>
         public static readonly float[] LodBiasBase = { 1f, 2f, 3f };
         public static readonly float[] ShadowDistanceCap = { 45f, 60f, 120f };
-        public static readonly int[] ShadowCascadeCap = { 2, 4, 4 };
+        public static readonly int[] ShadowCascadeCap = { 2, 3, 4 };
         public static readonly int[] StreamingBudgetMb = { 512, 1024, 3072 };
 
         /// <summary>Raised with the new tier when the active level moves to another tier.</summary>

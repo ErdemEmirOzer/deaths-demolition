@@ -19,7 +19,7 @@ namespace DD.Prototype.Tests.EditMode
         public void KaskadKarari_VarsayilanProfiller_KademeModTablosu()
         {
             // [tier, mode] with the WP-070 default profiles (TD 2 / TP 3 / FP 4) under the caps Performans 2, Yüksek 4, Sinematik 4.
-            int[,] expected = { { 2, 2, 2 }, { 2, 3, 4 }, { 2, 3, 4 } };
+            int[,] expected = { { 2, 2, 2 }, { 2, 3, 3 }, { 2, 3, 4 } };   // High FP 3 (C-00 06.10, cap 3)
             for (int t = 0; t < QualityTiers.LevelCount; t++)
             {
                 for (int m = 0; m < Modes.Length; m++)

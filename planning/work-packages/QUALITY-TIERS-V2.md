@@ -25,7 +25,7 @@ public static class QualityTiers
 
 ## 3 · Mod × kademe birleşim formülü (WP-070 §8/§11 ile ortak)
 - `lodBias = max(1,0; kademe.LodBiasTaban × mod.LodBiasFactor)` — taban Performans 1,0 / Yüksek 2,0 / Sinematik 3,0 (DEC-100; r1 2,5); mod çarpanı **her modda 1,0** (C-00 30.09, WP-070M: TP 0,6 / FP 0,7 önerisi runtime'da hiç uygulanmadı; uygulanırsa Sinematik'te orman LOD'u düşüyor — S-05). Sonuç: lodBias = kademe tabanı (1,0 / 2,0 / 3,0) her modda; 1'den farklı mod çarpanı ölçümlü kare + C-00 kararı ister.
-- `gölgeMesafesi = min(kademe.GölgeTavanı, mod.ShadowDistance)`; `kaskat = min(kademe.KaskatTavanı, mod.ShadowCascades)` — kademe tavanları Performans 45 m / 2 · Yüksek 60 m / 4 · Sinematik 120 m / 4 (DEC-100; r1 80 m); mod değerleri (S-01) Tepeden 60 m / 2 · TP 60 m / 3 · FP 70 m / 4.
+- `gölgeMesafesi = min(kademe.GölgeTavanı, mod.ShadowDistance)`; `kaskat = min(kademe.KaskatTavanı, mod.ShadowCascades)` — kademe tavanları Performans 45 m / 2 · Yüksek 60 m / 3 (C-00 06.10: Yüksek FP 4 → 3, AD MUST-3) · Sinematik 120 m / 4 (DEC-100; r1 80 m); mod değerleri (S-01) Tepeden 60 m / 2 · TP 60 m / 3 · FP 70 m / 4.
 - `farClip` = mod değeri (Tepeden 300 m, TP/FP 450 m — ufuk plakaları r 420 içeride); Performans'ta da 450 m (plakalar ucuz; WP-070'teki 350 m önerisi gerekmez).
 - Sis: Tepeden 52 → 210 m (REQ-104 değişmez); TP/FP 45 → 235 m + yükseklik sisi (Performans'ta yükseklik sisi kapalı) — WP-075 Ek A §5.
 

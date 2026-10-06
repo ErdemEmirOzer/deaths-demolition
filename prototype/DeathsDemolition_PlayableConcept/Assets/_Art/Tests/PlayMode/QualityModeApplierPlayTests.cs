@@ -56,8 +56,8 @@ namespace DD.Art.Tests.PlayMode
                 diskDistance[i] = FileDistance(assets[i]);
             }
 
-            // [tier, mode] with the WP-070 default profiles: Performans 2/2/2, Yüksek 2/3/4, Sinematik 2/3/4 (before the fix: the asset's 2 / 2 / 4)
-            int[,] expected = { { 2, 2, 2 }, { 2, 3, 4 }, { 2, 3, 4 } };
+            // [tier, mode] with the WP-070 default profiles: Performans 2/2/2, Yüksek 2/3/3 (cap 3, C-00 06.10), Sinematik 2/3/4 (before the fix: the asset's 2 / 2 / 4)
+            int[,] expected = { { 2, 2, 2 }, { 2, 3, 3 }, { 2, 3, 4 } };
             // shadow distance (C-00 06.10 decision 3): min(cap 45 / 60 / 120, profile TD 60 / TP 60 / FP 70)
             float[,] expectedDistance = { { 45f, 45f, 45f }, { 60f, 60f, 60f }, { 60f, 60f, 70f } };
             try
