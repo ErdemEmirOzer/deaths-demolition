@@ -329,6 +329,7 @@ namespace DD.Prototype.Tests.PlayMode
             var tsv = new System.Text.StringBuilder("fit\tvariant\ttop\tcolourway\tview\tchestBellyPlatePx\tclothOverPlatePx\tplateVisiblePx\n");
             var violations = new List<(int px, string key)>();
             var knownOpenC = new List<(int px, string key)>();
+            var fitCReport = new SortedDictionary<string, float>(StringComparer.Ordinal);   // C-00 06.10: fit C, per top, front / back covered share
             int combos = 0;
             foreach (string fit in new[] { "A", "B", "C" })
             {
@@ -386,6 +387,12 @@ namespace DD.Prototype.Tests.PlayMode
                             tsv.Append(fit).Append('\t').Append(av.id).Append('\t').Append(top).Append('\t').Append(cw).Append('\t').Append(front ? "front" : "back")
                                .Append('\t').Append(platePx).Append('\t').Append(over).Append('\t').Append(platePx - over).Append('\n');
                             float share = platePx > 0 ? (float)over / platePx : 0f;
+                            if (fit == "C")
+                            {
+                                string reportKey = top + "/" + (front ? "front" : "back");   // the worse of the two dō variants
+                                fitCReport[reportKey] = fitCReport.TryGetValue(reportKey, out float prev) ? Mathf.Max(prev, share) : share;
+                            }
+
                             if (share > MaxClothOverPlateShare)
                             {
                                 if (fit == "C") knownOpenC.Add((over, key + " " + (share * 100f).ToString("F0") + "%"));
@@ -401,6 +408,21 @@ namespace DD.Prototype.Tests.PlayMode
 
             binder.Reset();
             File.WriteAllText(Path.Combine(dir, "md2-zirh-ustu-kumas.tsv"), tsv.ToString());
+            // C-00 06.10 (MD2 decision): fit C is a known open item until AP-008D refits the dō to the H2 bodies — reported per top and
+            // view as report keys (the worse dō variant); after the refit these become checks at MaxClothOverPlateShare like A / B
+            var json = new System.Text.StringBuilder("{\"schema\": \"wp084-md2-fitC-v1\", \"commit\": \"" + (Environment.GetEnvironmentVariable("DD_R2_COMMIT") ?? "")
+                                                     + "\", \"limitLater\": " + MaxClothOverPlateShare.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)
+                                                     + ", \"status\": \"known open - AP-008D refit\", \"coveredShare\": {");
+            bool firstKey = true;
+            foreach (KeyValuePair<string, float> kv in fitCReport)
+            {
+                json.Append(firstKey ? "" : ", ").Append('"').Append(kv.Key).Append("\": ").Append(kv.Value.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture));
+                firstKey = false;
+            }
+
+            json.Append("}}\n");
+            File.WriteAllText(Path.Combine(dir, "md2-fitC-report.json"), json.ToString());
+            Debug.Log("[DD-OBS] wp084.md2.fitC " + string.Join(" ", new List<string>(fitCReport.Keys).ConvertAll(k => k + "=" + fitCReport[k].ToString("0.000", System.Globalization.CultureInfo.InvariantCulture))));
             violations.Sort((x, y) => y.px.CompareTo(x.px));
             knownOpenC.Sort((x, y) => y.px.CompareTo(x.px));
             Debug.Log("[DD-OBS] wp084.md2 combos=" + combos + " views=" + combos * 2 + " maxShare=" + MaxClothOverPlateShare + " violationsAB=" + violations.Count
