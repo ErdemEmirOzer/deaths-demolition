@@ -123,6 +123,28 @@ class KuyrukBirimTests(unittest.TestCase):
         self.assertEqual(75, self.begin("N")[0])
         self.assertTrue(any(n.endswith("-T1.json") for n in self.tickets()))
 
+    # -- C-00 06.10 (gt N-1r): lstart / ancestors run under L/.lock — a ps that hangs is bounded, its answer the safe one --
+    def test_Birim_N1r_LstartPsAsimi_TekDeneme_Bos(self):
+        calls = []
+
+        def run(cmd, **kw):
+            calls.append(kw.get("timeout"))
+            raise subprocess.TimeoutExpired(cmd, kw.get("timeout"))
+        with mock.patch.object(self.io.subprocess, "run", side_effect=run):
+            self.assertEqual("", self.io.lstart(self.po))
+        self.assertEqual([10], calls)   # bounded, and a ps that hangs is not asked again
+
+    def test_Birim_N1r_AncestorsPsAsimi_YalnizKendisi_IcIceSayilmaz(self):
+        calls = []
+
+        def run(cmd, **kw):
+            calls.append(kw.get("timeout"))
+            raise subprocess.TimeoutExpired(cmd, kw.get("timeout"))
+        with mock.patch.object(self.io.subprocess, "run", side_effect=run):
+            self.assertEqual({self.po}, self.io.ancestors(self.po))
+        self.assertEqual([10], calls)
+        self.assertIn(os.getppid(), self.io.ancestors(self.po))   # the real answer still has the ancestors
+
     def test_Birim_KuyruktayikenSahipOldu_65PencereYok_BiletLeft(self):
         """MUST-4: no window is opened for a caller that died while it waited."""
         f = self.foreign()

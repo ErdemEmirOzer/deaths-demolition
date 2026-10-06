@@ -53,7 +53,11 @@ def lstart(pid):
     env = {k: v for k, v in os.environ.items() if k != "TZ"}
     env["LC_ALL"] = "C"
     for attempt in range(3):
-        r = subprocess.run(["ps", "-o", "lstart=", "-p", str(pid)], capture_output=True, text=True, env=env)
+        try:   # C-00 06.10 (gt N-1r): bounded like proc_state — it runs under L/.lock (ledger_begin's waiter); a ps that
+            r = subprocess.run(["ps", "-o", "lstart=", "-p", str(pid)], capture_output=True, text=True, env=env,
+                               timeout=10)   # hangs is not asked again: "" (unknown — every caller takes the safe side)
+        except subprocess.TimeoutExpired:
+            return ""
         value = " ".join(r.stdout.split())
         if value:
             return value
@@ -232,7 +236,10 @@ def ancestors(pid, table=None):
     if table is not None and int(pid) in table.rows:   # 06.10 review NIT-4a: a pid the table does not list → ps again
         return table.ancestors(pid)
     env = {k: v for k, v in os.environ.items() if k != "TZ"}
-    r = subprocess.run(["ps", "-axo", "pid=,ppid="], capture_output=True, text=True, env=env)
+    try:   # C-00 06.10 (gt N-1r): bounded (under L/.lock in ledger_begin); no answer → no known ancestor: never "nested"
+        r = subprocess.run(["ps", "-axo", "pid=,ppid="], capture_output=True, text=True, env=env, timeout=10)
+    except subprocess.TimeoutExpired:   # (a grant into another's window needs a proven ancestor)
+        return {int(pid)}
     parent = dict(line.split()[:2] for line in r.stdout.splitlines() if len(line.split()) >= 2)
     out, p, steps = set(), str(pid), 0
     while p and p not in ("0", "1") and steps < 64:
