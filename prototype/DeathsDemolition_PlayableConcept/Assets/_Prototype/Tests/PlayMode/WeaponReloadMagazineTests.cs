@@ -21,6 +21,7 @@ namespace DD.Prototype.Tests.PlayMode
     {
         private SpecialWeaponSahne _s;
         private float _dt0;
+        private ClassicWeaponId _oncekiSecim;   // EquipClassic writes it process-wide (main-ci 285b7fe8): given back in TearDown
 
         [UnityTearDown]
         public IEnumerator Bitir()
@@ -30,12 +31,14 @@ namespace DD.Prototype.Tests.PlayMode
             {
                 yield return _s.Bitir();
                 _s = null;
+                WeaponRegistry.SelectedWeapon = _oncekiSecim;
             }
         }
 
         private IEnumerator Kur()
         {
             _dt0 = Time.captureDeltaTime;
+            _oncekiSecim = WeaponRegistry.SelectedWeapon;
             Time.captureDeltaTime = 1f / 60f;
             _s = new SpecialWeaponSahne();
             yield return _s.Kur();
@@ -112,6 +115,49 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(MagazineOwner.Weapon, m.Owner, "şarjör elde kaldı");
             Assert.IsFalse(_s.Controller.MagazineVisual.InHand, "şarjör parçası el soketinde kaldı");
             Assert.AreEqual(early0 + 1, m.EndedEarly);
+        }
+
+        /// <summary>
+        /// WP-087 (C-00 06.10, B-03 review finding): a weapon switch while the magazine part is in the left hand — here after the
+        /// controller's Update of that frame, as a QA / debug equip does — sends the part home into its own model before the model is
+        /// replaced: nothing named part_mag is left under the hand's socket, and the new weapon's reload takes its own part to the
+        /// hand and back.
+        /// </summary>
+        [UnityTest]
+        [Timeout(180000)]
+        public IEnumerator ReloadKesilir_SilahDegisimi_EskiParcaElSoketindeKalmaz_YeniSilahReloadEder()
+        {
+            yield return Kur();
+            _s.Controller.EquipClassic(ClassicWeaponId.AssaultRifle, _s.Config);
+            yield return SpecialWeaponSahne.Kareler(30);
+            WeaponMagazineVisual v = _s.Controller.MagazineVisual;
+            yield return UcAtisVeReload();
+            yield return SpecialWeaponSahne.Bekle(() => _s.Controller.Classic.IsReloading, 1f, "reload başlamadı");
+            yield return SpecialWeaponSahne.Bekle(() => v.InHand, 3f, "şarjör parçası ele geçmedi");
+            Transform socket = v.Socket, oldPart = v.Part;
+            Assert.IsNotNull(socket, "el soketi yok");
+            Assert.AreSame(socket, oldPart.parent, "kaynak kayıtta: eski parça el soketinde");
+            _s.Controller.EquipClassic(ClassicWeaponId.AutoSmg, _s.Config);   // after this frame's Update (a QA / debug equip)
+            yield return null;
+            yield return null;
+            int left = 0;
+            foreach (Transform t in socket.GetComponentsInChildren<Transform>(true)) if (t.name == WeaponMagazineVisual.PartName) left++;
+            Debug.Log("[DD-TEST] wp087.equip-mid-reload part_mag under the hand socket " + left + ", old part " + (oldPart == null ? "gone with its model" : "under " + oldPart.parent.name));
+            Assert.AreEqual(0, left, "eski şarjör parçası el soketinde kaldı");
+            Assert.IsFalse(v.InHand);
+
+            // the new weapon reloads with its own part: to the hand and back home
+            yield return SpecialWeaponSahne.Kareler(30);
+            yield return UcAtisVeReload();
+            yield return SpecialWeaponSahne.Bekle(() => _s.Controller.Classic.IsReloading, 1f, "yeni silahta reload başlamadı");
+            yield return SpecialWeaponSahne.Bekle(() => v.InHand, 3f, "yeni silahın parçası ele geçmedi");
+            Transform newPart = v.Part;
+            Assert.IsNotNull(newPart);
+            Assert.AreNotSame(oldPart, newPart, "yeni silahın kendi parçası");
+            yield return SpecialWeaponSahne.Bekle(() => !_s.Controller.Classic.IsReloading, 6f, "yeni silahta reload bitmedi");
+            yield return null;
+            Assert.IsFalse(v.InHand, "yeni parça eve döndü");
+            Assert.IsFalse(newPart.IsChildOf(socket), "yeni parça el soketinde kalmadı");
         }
 
         /// <summary>

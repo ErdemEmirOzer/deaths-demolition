@@ -1306,6 +1306,11 @@ namespace DD.Prototype.Weapons
                 ClassicModelSource = ClassicModelKind.Blockout;
             }
 
+            // WP-087 (C-00 06.10, B-03 review finding): a magazine part a reload left in the left hand goes home into the model it
+            // belongs to BEFORE SetModel destroys that model (a switch mid-reload, a QA / debug equip after this frame's Update) —
+            // otherwise the part outlives its model under the hand's socket and the old magazine rides along in the hand for good
+            _magazine.End();
+            _magazineVisual.Home();
             _classicRig.SetModel(model);
             _classicModelId = _equippedId;
         }

@@ -82,7 +82,11 @@ namespace DD.Prototype.Weapons
             Socket = null;
             if (_home == null)
             {
-                return;   // the weapon model went away (pooled / rebuilt): the part goes with the next Bind
+                // WP-087 (C-00 06.10): the weapon model went away (pooled / rebuilt) while the part was in a hand — it has no home to go
+                // back to and would ride in the hand for good: it goes with its model; the next Bind finds the new one
+                if (_part != null) Object.Destroy(_part.gameObject);
+                _part = null;
+                return;
             }
 
             _part.SetParent(_home, false);
