@@ -1183,6 +1183,16 @@ namespace DD.Prototype.Tests.EditMode.Audio
                 Assert.AreEqual(beklenen[i], WeaponAudioIdentity.MechanicalRefDb + WeaponPerspectiveMix.For(modlar[i]).MechanicalDb, 1e-4f, "Mechanical/Body " + modlar[i]);
             }
 
+            // R2 S3 (C-00 06.10): the weapon's near-field ladder top-down +0.8 / third-person +1 / FP +2 dB, and every mode lifts its
+            // tail by the same amount, so the space's wet/dry ratio (S4, WetDb) is the same in all three.
+            float[] yakin = { 0.8f, 1f, 2f };
+            for (int i = 0; i < 3; i++)
+            {
+                WeaponPerspectiveMix m = WeaponPerspectiveMix.For(modlar[i]);
+                Assert.AreEqual(yakin[i], m.NearFieldDb, 1e-4f, "Silah yakın alan " + modlar[i]);
+                Assert.AreEqual(m.NearFieldDb, m.TailDb, 1e-4f, "Kuyruk silahla aynı kalkar (ıslak/kuru korunur) " + modlar[i]);
+            }
+
             Assert.AreEqual(0f, AudioMixPlan.PlayerWeapon(AudioSoundId.WeaponAr1Fire).Delay, "kuru atış gecikmesiz");
         }
 

@@ -298,7 +298,10 @@ namespace DD.Prototype.Audio
             {
                 case CameraMode.ThirdPerson: return new WeaponPerspectiveMix(0.25f, 1f, 3f, 1f);
                 case CameraMode.FirstPerson: return new WeaponPerspectiveMix(0f, 2f, 7f, 2f);
-                default: return new WeaponPerspectiveMix(0.35f, 0f, 0f, 0f);
+                // R2 S3 (C-00 06.10 decision): top-down weapon +0.8 dB — the weapon sat only +0.40 LU over the rest of the mix
+                // (gate >= +1; FP +2.02) with true-peak / momentary headroom of 1.23 / 1.38; +0.8 leaves both gates headroom.
+                // The tail rises with it (TailDb, as in third-person 1/1 and FP 2/2), so the space's wet/dry stays as S4 tuned it.
+                default: return new WeaponPerspectiveMix(0.35f, 0.8f, 0f, 0.8f);
             }
         }
     }
