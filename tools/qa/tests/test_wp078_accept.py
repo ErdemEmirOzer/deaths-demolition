@@ -302,10 +302,11 @@ def tearDownModule():
 
 class FakeHost:
     """SHOULD-6 seam: the r2q host check without ps / sysctl; quiet unless told otherwise."""
-    load_max, wait_max, interval = 6.0, 1800.0, 5.0
+    wait_max, interval = 1800.0, 5.0
 
     def __init__(self, start=None, quiet=True, waited=0.0, samples=None):
-        self.start_sample = start or {"load1": 1.5, "foreignUnity": 0, "foreignPlayer": 0, "foreignBlender": 0}
+        self.start_sample = start or {"load1": 27.0, "foreignUnity": 0, "foreignPlayer": 0, "foreignBlender": 0,
+                                      "foreignFfmpeg": 0}
         self.calm, self.waited = quiet, waited
         self.samples = samples if samples is not None else [dict(self.start_sample, t=0.0)]
         self.events = []
@@ -905,20 +906,25 @@ class HostWatchTests(unittest.TestCase):
                            (900002, 900001, "/Applications/Unity/Hub/Editor/2022.3.22f1/Unity.app/Contents/MacOS/Unity"),
                            (900003, 1, "/Applications/Unity/Hub/Editor/2022.3.22f1/Unity.app/Contents/MacOS/Unity"),
                            (900004, 1, "/x/DD.app/Contents/MacOS/Deaths Demolition - Playable Concept"),
-                           (900005, 1, "/Applications/Blender.app/Contents/MacOS/Blender")]
+                           (900005, 1, "/Applications/Blender.app/Contents/MacOS/Blender"),
+                           (900006, 1, "/opt/homebrew/bin/ffmpeg"), (900007, 900001, "/opt/homebrew/bin/ffmpeg")]
         with mock.patch.object(acc.subprocess, "run", side_effect=self.ps(rows)):
             state = acc.HostWatch().state()
-        self.assertEqual({"load1": 7.5, "foreignUnity": 1, "foreignPlayer": 1, "foreignBlender": 1}, state)
+        self.assertEqual({"load1": 7.5, "foreignUnity": 1, "foreignPlayer": 1, "foreignBlender": 1, "foreignFfmpeg": 1}, state)
 
     def test_the_wait_ends_quiet_or_after_wait_max(self):
-        states = iter([{"load1": 9.0, "foreignPlayer": 0}, {"load1": 5.0, "foreignPlayer": 1}, {"load1": 5.9, "foreignPlayer": 0}])
+        free = {"foreignUnity": 0, "foreignPlayer": 0, "foreignBlender": 0, "foreignFfmpeg": 0}
+        states = iter([dict(free, load1=2.0, foreignUnity=1), dict(free, load1=2.0, foreignFfmpeg=1), dict(free, load1=54.0)])
         watch = acc.HostWatch(wait_max=1800.0, sleep=lambda s: None)
         watch.state = lambda: next(states)
-        self.assertEqual(({"load1": 5.9, "foreignPlayer": 0}, True, 30.0), watch.wait_quiet())
-        self.assertFalse(watch.quiet({"load1": 6.0, "foreignPlayer": 0}))   # S-08: load1 below 6, not at it
+        self.assertEqual((dict(free, load1=54.0), True, 30.0), watch.wait_quiet())   # C-00 06.10: load1 54 alone is quiet
+        for key in acc.HOST_HEAVY:
+            with self.subTest(heavy=key):
+                self.assertFalse(watch.quiet(dict(free, load1=0.5, **{key: 1})))
+        self.assertFalse(watch.quiet(dict(free, foreignBlender=None)))
         watch = acc.HostWatch(wait_max=30.0, sleep=lambda s: None)
-        watch.state = lambda: {"load1": 9.0, "foreignPlayer": 0}
-        self.assertEqual(({"load1": 9.0, "foreignPlayer": 0}, False, 30.0), watch.wait_quiet())
+        watch.state = lambda: dict(free, load1=1.0, foreignPlayer=1)
+        self.assertEqual((dict(free, load1=1.0, foreignPlayer=1), False, 30.0), watch.wait_quiet())
 
     def test_an_unreadable_host_is_recorded_never_quiet_and_never_a_crash(self):
         # gt 06.10 KP-11: a failing ps / sysctl used to raise out of r2q, or end the sampler thread silently
@@ -926,8 +932,8 @@ class HostWatchTests(unittest.TestCase):
         with mock.patch.object(acc.subprocess, "run", side_effect=OSError("ps: not permitted")):
             start, calm, waited = watch.wait_quiet()
         self.assertEqual((False, 30.0, "OSError: ps: not permitted"), (calm, waited, start["error"]))
-        calls = iter([{"load1": 1.0, "foreignUnity": 0, "foreignPlayer": 0, "foreignBlender": 0}, ValueError("bad loadavg")]
-                     + [{"load1": 2.0, "foreignUnity": 0, "foreignPlayer": 0, "foreignBlender": 0}] * 100)
+        free = {"foreignUnity": 0, "foreignPlayer": 0, "foreignBlender": 0, "foreignFfmpeg": 0}
+        calls = iter([dict(free, load1=1.0), ValueError("bad loadavg")] + [dict(free, load1=2.0)] * 100)
 
         def state():
             value = next(calls)
@@ -942,7 +948,7 @@ class HostWatchTests(unittest.TestCase):
         self.assertGreaterEqual(len(samples), 3)   # the sampler went on after the error
         self.assertEqual("ValueError: bad loadavg", samples[1]["error"])
         step = {"id": "r2-S3", "gates": ["S3"]}
-        record = acc.host_record(step, start, calm, waited, samples, 6.0)
+        record = acc.host_record(step, start, calm, waited, samples)
         self.assertTrue(record["dirty"])
         self.assertEqual((1, 2.0), (record["unreadableSamples"], record["load1Max"]))
         self.assertEqual(["start not quiet after 30 s: OSError: ps: not permitted",
@@ -950,14 +956,14 @@ class HostWatchTests(unittest.TestCase):
 
     def test_a_session_without_a_host_sample_is_not_clean(self):
         # gt 06.10 KP-8: a quiet start with no sample during the session is unwatched, not quiet
-        start = {"load1": 1.0, "foreignUnity": 0, "foreignPlayer": 0, "foreignBlender": 0}
-        record = acc.host_record({"id": "r2-S1", "gates": ["S1"]}, start, True, 0.0, [], 6.0)
+        start = {"load1": 1.0, "foreignUnity": 0, "foreignPlayer": 0, "foreignBlender": 0, "foreignFfmpeg": 0}
+        record = acc.host_record({"id": "r2-S1", "gates": ["S1"]}, start, True, 0.0, [])
         self.assertEqual((True, ["no host sample was taken during the session"], 1.0),
                          (record["dirty"], record["dirtyWhy"], record["load1Max"]))
 
     def test_the_sampler_runs_until_stopped(self):
         watch = acc.HostWatch(interval=0.01)
-        watch.state = lambda: {"load1": 1.0, "foreignUnity": 0, "foreignPlayer": 0, "foreignBlender": 0}
+        watch.state = lambda: {"load1": 1.0, "foreignUnity": 0, "foreignPlayer": 0, "foreignBlender": 0, "foreignFfmpeg": 0}
         watch.start()
         time.sleep(0.1)
         samples = watch.stop()
@@ -1080,10 +1086,10 @@ class R2StageTests(Base):
         self.quiet_run(host, tools=tools)
         self.assertEqual(["wait", "start", "stop"], host.events)
         record = json.loads((self.evidence / "r2" / "r2-S3" / "host.json").read_text())
-        self.assertEqual(("r2-S3", ["S3"], True, False, [], 1, 6.0),
+        self.assertEqual(("r2-S3", ["S3"], True, False, [], 1, 27.0),
                          (record["step"], record["gates"], record["quietAtStart"], record["dirty"], record["dirtyWhy"],
-                          record["samples"], record["loadMax"]))
-        self.assertEqual("t\tload1\tforeignUnity\tforeignPlayer\tforeignBlender",
+                          record["samples"], record["load1Max"]))   # load1 27 is reported, never judged (C-00 06.10)
+        self.assertEqual("t\tload1\tforeignUnity\tforeignPlayer\tforeignBlender\tforeignFfmpeg",
                          (self.evidence / "r2" / "r2-S3" / "host-samples.tsv").read_text().splitlines()[0])
         bound = json.loads((self.evidence / "stages" / "r2q.json").read_text())["artifactSha256"]
         self.assertIn("../r2/r2-S3/host.json", bound)
@@ -1091,15 +1097,16 @@ class R2StageTests(Base):
         self.assertIn("HOST r2q-r2-S3: quiet at start", (self.evidence / "accept.log").read_text())
 
     def test_a_busy_host_is_recorded_kirli_and_the_session_still_runs(self):
-        busy = {"load1": 12.0, "foreignUnity": 1, "foreignPlayer": 0, "foreignBlender": 0}
+        busy = {"load1": 12.0, "foreignUnity": 1, "foreignPlayer": 0, "foreignBlender": 0, "foreignFfmpeg": 0}
         host = FakeHost(start=busy, quiet=False, waited=1800.0, samples=[dict(busy, t=0.0), dict(busy, foreignPlayer=1, t=5.0)])
         tools = FakeTools()
         self.quiet_run(host, tools=tools)
         self.assertTrue(any("AudioR2Dense40" in map(str, c) for c in tools.calls))   # never skipped: the owner's gates decide
         record = json.loads((self.evidence / "r2" / "r2-S3" / "host.json").read_text())
         self.assertEqual((False, True, 1, 12.0), (record["quietAtStart"], record["dirty"], record["foreignPlayerMax"], record["load1Max"]))
-        self.assertEqual(["start not quiet after 1800 s: load1 12.00, foreign Player 0",
-                          "a foreign Player ran during the session (max 1)"], record["dirtyWhy"])
+        self.assertEqual(["start not quiet after 1800 s: foreign Unity 1, Player 0, Blender 0, ffmpeg 0",
+                          "a foreign heavy process ran during the session (max foreign Unity 1, Player 1, Blender 0, ffmpeg 0)"],
+                         record["dirtyWhy"])
         self.assertIn("KİRLİ r2q-r2-S3: start not quiet", (self.evidence / "accept.log").read_text())
 
     def test_the_non_quiet_stage_never_waits(self):
@@ -1111,7 +1118,7 @@ class R2StageTests(Base):
     def test_a_dry_run_only_plans_the_host_check(self):
         with mock.patch.object(acc.r2_gates, "measurement_steps", side_effect=lambda c, quiet: self.STEPS[quiet]):
             chain = self.dry(["r2q"], round_name="R2")
-        self.assertTrue(any("DRY r2q: host check before r2q-r2-S3 (load1 < 6.0, no foreign Player, ≤ 1800 s)" in line
+        self.assertTrue(any("DRY r2q: host check before r2q-r2-S3 (no foreign Unity / Player / Blender / ffmpeg, ≤ 1800 s)" in line
                             for line in chain.lines), chain.lines)
 
     def test_a_reused_session_is_not_watched_again_and_keeps_its_host_record(self):

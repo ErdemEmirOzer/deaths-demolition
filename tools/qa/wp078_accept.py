@@ -84,9 +84,11 @@ CI_CATEGORY = "!^Diagnostics$"
 OWNER_SWITCHES = ("DD_HOLD_IK", "DD_EDC_WEAPONS")
 PLAYMODE_TIMEOUT_MIN = 90   # A1 full PlayMode watchdog (test.sh default 45 min; main-ci uses 60)
 ISOLATED_TIMEOUT_MIN = 10   # one isolated test in its own session (main-ci --alone-timeout default)
-# KADRO game-test-engineer SHOULD-6 + S-08 06.10 (measured): a quiet r2q session starts below this load1 with no foreign
-# Player, waits for that at most HOST_WAIT_MAX, and the host is sampled every HOST_INTERVAL seconds while it runs
-HOST_LOAD_MAX, HOST_WAIT_MAX, HOST_INTERVAL = 6.0, 1800.0, 5.0
+# KADRO game-test-engineer SHOULD-6 + C-00 06.10 (8626d147, r2_s3's criterion): a quiet r2q session starts with no foreign
+# heavy process (HOST_HEAVY), waits for that at most HOST_WAIT_MAX, and the host is sampled every HOST_INTERVAL s while it
+# runs. The load average is reported, never a criterion: iCloud I/O keeps load1 at 26-27 here with nothing heavy running.
+HOST_WAIT_MAX, HOST_INTERVAL = 1800.0, 5.0
+HOST_HEAVY = ("foreignUnity", "foreignPlayer", "foreignBlender", "foreignFfmpeg")
 
 
 def _ci_isolated():
@@ -309,19 +311,21 @@ def bot_done(run_dir, kind):
 
 
 class HostWatch:
-    """KADRO game-test-engineer SHOULD-6, S-08 06.10: what "quiet" means for an r2q session, measured, never held.
-    r2q cannot take every Unity slot (its own Unity needs one); its PlayMode guard snapshot already holds the player slot,
-    so a guarded foreign Player waits for it. Before the session: load1 < HOST_LOAD_MAX and no foreign Player, waited for
-    at most HOST_WAIT_MAX; during it: load1 and the foreign Unity / Player / Blender processes (not this chain's own
-    descendants) every HOST_INTERVAL s. A host that was not quiet is recorded (dirty), never a reason to skip — S1/S2's
-    pile-up gate and S4's dropped-sample assert decide the value (S-08: S4 holds at load1 ~105); the report says KİRLİ."""
+    """KADRO game-test-engineer SHOULD-6, C-00 06.10 (8626d147): what "quiet" means for an r2q session, measured, never
+    held. r2q cannot take every Unity slot (its own Unity needs one); its PlayMode guard snapshot already holds the player
+    slot, so a guarded foreign Player waits for it. Quiet = no foreign Unity, Player, Blender or ffmpeg (not this chain's
+    own descendants), the criterion r2_s3 uses; before the session it is waited for at most HOST_WAIT_MAX, during it the
+    host is sampled every HOST_INTERVAL s. load1 is recorded, never judged (C-00: the load average does not show CPU here).
+    A host that was not quiet is recorded (dirty), never a reason to skip — S1/S2's pile-up gate and S4's dropped-sample
+    assert decide the value; the report says KİRLİ."""
 
-    def __init__(self, load_max=HOST_LOAD_MAX, wait_max=HOST_WAIT_MAX, interval=HOST_INTERVAL, sleep=time.sleep):
-        self.load_max, self.wait_max, self.interval, self.sleep = load_max, wait_max, interval, sleep
+    def __init__(self, wait_max=HOST_WAIT_MAX, interval=HOST_INTERVAL, sleep=time.sleep):
+        self.wait_max, self.interval, self.sleep = wait_max, interval, sleep
         self._samples, self._stop, self._thread = [], None, None
 
     def state(self):
-        """{load1, foreignUnity, foreignPlayer, foreignBlender} now; the chain's own descendants are not foreign."""
+        """{load1, foreignUnity, foreignPlayer, foreignBlender, foreignFfmpeg} now; the chain's own descendants are not
+        foreign."""
         rows = []
         for line in subprocess.run(["ps", "-Ao", "pid=,ppid=,comm="], capture_output=True, text=True).stdout.splitlines():
             parts = line.split(None, 2)
@@ -338,19 +342,20 @@ class HostWatch:
         load = float(subprocess.run(["sysctl", "-n", "vm.loadavg"], capture_output=True, text=True).stdout.split()[1])
         return {"load1": load, "foreignUnity": sum(c.endswith("/MacOS/Unity") for c in foreign),
                 "foreignPlayer": sum(c.endswith(wp078_perf.PLAYER_EXE) for c in foreign),
-                "foreignBlender": sum(c.endswith("/MacOS/Blender") for c in foreign)}
+                "foreignBlender": sum(c.endswith("/MacOS/Blender") for c in foreign),
+                "foreignFfmpeg": sum(Path(c).name == "ffmpeg" for c in foreign)}
 
     def sample(self):
         """state(), or — when ps / sysctl cannot be read — a sample that says so: never quiet, never a crash (gt KP-11)."""
         try:
             return self.state()
         except Exception as error:   # noqa: BLE001 — any failure to read the host is recorded, not raised
-            return {"load1": None, "foreignUnity": None, "foreignPlayer": None, "foreignBlender": None,
-                    "error": f"{type(error).__name__}: {error}"}
+            return dict({k: None for k in HOST_HEAVY}, load1=None, error=f"{type(error).__name__}: {error}")
 
-    def quiet(self, s):
-        # an unreadable sample has load1 None, so it is never quiet
-        return isinstance(s.get("load1"), (int, float)) and s["load1"] < self.load_max and s.get("foreignPlayer") == 0
+    @staticmethod
+    def quiet(s):
+        # every heavy count read and zero; an unreadable sample has them None, so it is never quiet
+        return all(s.get(k) == 0 and not isinstance(s.get(k), bool) for k in HOST_HEAVY)
 
     def wait_quiet(self):
         """(start sample, quiet, waited seconds)."""
@@ -382,30 +387,34 @@ class HostWatch:
         return list(self._samples)
 
 
-def host_record(step, start, quiet, waited, samples, load_max):
-    """<E>/r2/<step>/host.json — dirty when the session did not start quiet, a foreign Player ran during it, or the host
-    could not be read (gt KP-11: an unknown host is never called quiet)."""
+def heavy_text(s):
+    """"foreign Unity 1, Player 0, Blender 0, ffmpeg 0" — or the reason the host could not be read."""
+    return s.get("error") or ", ".join(f"{'foreign ' if i == 0 else ''}{k[7:] if k != 'foreignFfmpeg' else 'ffmpeg'} {s.get(k)}"
+                                       for i, k in enumerate(HOST_HEAVY))
+
+
+def host_record(step, start, quiet, waited, samples):
+    """<E>/r2/<step>/host.json — dirty when the session did not start quiet, a foreign Unity / Player / Blender / ffmpeg
+    ran during it, or the host could not be read (gt KP-11: an unknown host is never called quiet). load1 is reported."""
     def most(key, rows, default):
         values = [s[key] for s in rows if isinstance(s.get(key), (int, float)) and not isinstance(s.get(key), bool)]
         return max(values) if values else default
     why = []
     if not quiet:
-        load = start.get("load1")
-        state = start.get("error") or (f"load1 {load:.2f}" if isinstance(load, (int, float)) else f"load1 {load}") + \
-            f", foreign Player {start.get('foreignPlayer')}"
-        why.append(f"start not quiet after {waited:.0f} s: {state}")
-    players = most("foreignPlayer", samples, 0)
-    if players:
-        why.append(f"a foreign Player ran during the session (max {players})")
+        why.append(f"start not quiet after {waited:.0f} s: {heavy_text(start)}")
+    peaks = {k: most(k, samples, 0) for k in HOST_HEAVY}
+    if any(peaks.values()):
+        why.append("a foreign heavy process ran during the session (max " + heavy_text(peaks) + ")")
     unreadable = sum(1 for s in samples if s.get("error"))
     if unreadable:
         why.append(f"host unreadable in {unreadable} of {len(samples)} samples")
     if not samples:
         why.append("no host sample was taken during the session")   # gt KP-8: unwatched is not quiet
-    return {"schema": "dd-r2-host-v1", "step": step["id"], "gates": step["gates"], "loadMax": load_max,
+    return {"schema": "dd-r2-host-v1", "step": step["id"], "gates": step["gates"],
+            "criterion": "no foreign Unity / Player / Blender / ffmpeg (C-00 06.10, 8626d147); load1 reported only",
             "waitedSeconds": waited, "quietAtStart": quiet, "start": start, "samples": len(samples),
-            "load1Max": most("load1", samples, start.get("load1")), "foreignUnityMax": most("foreignUnity", samples, 0),
-            "foreignPlayerMax": players, "foreignBlenderMax": most("foreignBlender", samples, 0),
+            "load1Max": most("load1", samples, start.get("load1")),
+            **{k + "Max": v for k, v in peaks.items()},
             "unreadableSamples": unreadable, "dirty": bool(why), "dirtyWhy": why}
 
 
@@ -1208,13 +1217,12 @@ class Chain:
             # SHOULD-6: a quiet session waits for a quiet host and is sampled while it runs (a reused unit is not run again)
             watch = quiet and not self.dry_run and self.reusable_unit(self.unit_record(name)) is None
             if quiet and self.dry_run:
-                self.out(f"DRY r2q: host check before {name} (load1 < {self.host.load_max}, no foreign Player, ≤ "
+                self.out(f"DRY r2q: host check before {name} (no foreign Unity / Player / Blender / ffmpeg, ≤ "
                          f"{self.host.wait_max:.0f} s) + a sample every {self.host.interval:.0f} s → {out}/host.json")
             if watch:
                 start, calm, waited = self.host.wait_quiet()
-                self.log(f"HOST {name}: {'quiet' if calm else 'NOT quiet'} at start after {waited:.0f} s — "
-                         + (start.get("error") or f"load1 {start.get('load1')}, foreign Player {start.get('foreignPlayer')}, "
-                                                   f"foreign Unity {start.get('foreignUnity')}"))
+                self.log(f"HOST {name}: {'quiet' if calm else 'NOT quiet'} at start after {waited:.0f} s — {heavy_text(start)}"
+                         f" (load1 {start.get('load1')}, reported only)")
                 self.host.start()
             try:
                 result = self.editor_unit(name, [argv], out,
@@ -1225,14 +1233,14 @@ class Chain:
             finally:
                 samples = self.host.stop() if watch else None
             if watch:
-                host = host_record(step, start, calm, waited, samples, self.host.load_max)
+                host = host_record(step, start, calm, waited, samples)
                 out.mkdir(parents=True, exist_ok=True)
                 write_json(out / "host.json", host)
-                keys = ("t", "load1", "foreignUnity", "foreignPlayer", "foreignBlender")
+                keys = ("t", "load1") + HOST_HEAVY
                 (out / "host-samples.tsv").write_text("\t".join(keys) + "\n" + "".join(
                     "\t".join(str(s.get(k)) for k in keys) + "\n" for s in samples), encoding="utf-8")
                 self.log(f"KİRLİ {name}: " + "; ".join(host["dirtyWhy"]) if host["dirty"] else
-                         f"HOST {name}: quiet — {host['samples']} samples, load1 max {host['load1Max']:.2f}")
+                         f"HOST {name}: quiet — {host['samples']} samples, no foreign heavy process (load1 max {host['load1Max']})")
             if result and quiet and (out / "host.json").is_file():
                 result = dict(result, files=list(result["files"]) + [out / "host.json", out / "host-samples.tsv"])
             if result:

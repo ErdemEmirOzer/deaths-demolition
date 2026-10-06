@@ -46,15 +46,19 @@ name is not in any bound XML the gate is BLOCKED; any other result is FAIL.
 (an `env` value may use the one placeholder `{KPROJ}`, the KADRO project root the chain fills in from
 `tools/dd_paths.py` — never a machine path in the contract) tells `wp078_accept --round R2` to run that test in its own guarded session: stage `r2` (after A3) for `quiet: false`,
 stage `r2q` (after A4, B9 and Z3) for `quiet: true`. Gates sharing one filter and env share one session.
-**What `quiet: true` holds in r2q** (KADRO game-test-engineer SHOULD-6; S-08 06.10, measured): r2q cannot take every Unity
-slot, because its own Unity needs one. Its PlayMode guard snapshot already holds the player slot, so a guarded foreign
-Player waits for it. Before each quiet session the chain waits at most 30 min for load1 < 6 with no foreign Player. While
-the session runs, it samples load1 and the foreign Unity / Player / Blender processes every 5 s. The record is
-`<E>/r2/<step>/host.json` plus `host-samples.tsv`, bound with the session and with each gate it measured. A session that
-did not start quiet, or had a foreign Player beside it, still runs and is recorded `dirty`. The report shows **KİRLİ** on
-those gates, as a note, never as their status. The owner's own quality gates decide the value: S1/S2's pile-up check
-re-takes, then fails the test, so load never writes a wrong value; S4 has no dropped samples at load1 ~105. A quiet gate
-measured with no host record says so too, and a host that cannot be read (ps / sysctl) is recorded dirty, never quiet.
+**What `quiet: true` holds in r2q** (KADRO game-test-engineer SHOULD-6; C-00 06.10 decision in 8626d147, the criterion
+r2_s3 uses): r2q cannot take every Unity slot, because its own Unity needs one. Its PlayMode guard snapshot already holds the
+player slot, so a guarded foreign Player waits for it.
+- Quiet = no foreign Unity, Player, Blender or ffmpeg. The chain's own descendants are not foreign.
+- The load average is reported, never judged. iCloud I/O keeps load1 at 26–27 here with nothing heavy running.
+- Before each quiet session the chain waits at most 30 min for quiet. While the session runs it samples every 5 s.
+- The record is `<E>/r2/<step>/host.json` plus `host-samples.tsv`, bound with the session and with each gate it measured.
+- A session that did not start quiet, had a foreign heavy process beside it, could not read the host (ps / sysctl), or
+  took no sample still runs, and is recorded `dirty`. The report shows **KİRLİ** on those gates, as a note, never as their
+  status.
+- The owner's own quality gates decide the value: S1/S2's pile-up check re-takes, then fails the test; S4 has no dropped
+  samples at load1 ~105.
+- A quiet gate measured with no host record says so too.
 "KİRLİ" has two uses (gt KP-16). This chain note marks a value that is bound and judged on a busy host. An owner tool's
 own KİRLİ stamp (SABİT-KURALLAR 5.8) is different: `r2_s3.py` writes `r2-S3.KIRLI.json` instead of `r2-S3.json`. That file
 is never bound, and the gate stays BLOCKED until a clean run.
