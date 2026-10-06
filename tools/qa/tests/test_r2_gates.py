@@ -43,7 +43,8 @@ class ContractTests(unittest.TestCase):
                   # DEC-077 (user 16.09), asserted from C-00 06.10
                   ("Z1", "silhouetteChange"): 0.30, ("Z1", "deltaVBandMean"): 0.12, ("Z1", "deltaVBandMin"): 0.08,
                   # C-00 06.10 record (S-06 B2e AD MUST-2 / MUST-3)
-                  ("H1b", "palmUpMaxDeg"): 30.0, ("H1b", "fingertipGapMaxCm"): 1.5,
+                  ("H1b", "palmToWeaponMaxDeg"): 35.0, ("H1b", "fingertipGapMaxCm"): 1.5,   # palm: C-00 06.10, 35 PROVISIONAL
+                  ("H1c", "elbowMaxDeg"): 165.0, ("H1c", "reachMarginMinCm"): 1.0,   # C-00 06.10 (S-06 t-b2f4-off)
                   ("H6", "visibleShareMin"): 0.25, ("H6", "muzzleInsideSilhouetteFrames"): 0}
         for (gid, key), limit in pinned.items():
             check = next(c for c in gate(gid)["checks"] if c["key"] == key)
@@ -164,6 +165,20 @@ class MeasuredByTests(unittest.TestCase):
                                                                   weaponsMeasured=10, secondWorstShare=0.33))
         self.assertEqual("FAIL", row["status"])
         self.assertIn("visibleShareMin 0.21 >= 0.25 is false", row["reason"])
+
+    def test_h1c_gates_the_support_arm_reach_and_waits_for_s06s_writer(self):
+        # C-00 06.10 (S-06 t-b2f4-off): H1 keeps reporting the elbow, H1c gates it with the reach margin
+        self.assertEqual(["elbowMaxDeg"], gate("H1")["report"])
+        self.assertEqual(("S-06", "gate"), (gate("H1c")["owner"], gate("H1c")["kind"]))
+        self.assertEqual(["elbowMaxDeg", "reachMarginMinCm"], [c["key"] for c in gate("H1c")["checks"]])
+        self.assertNotIn("measuredBy", gate("H1c"))
+        # one arm geometry (29.0 + 25.5 cm, S-02's reach pre-study): 161 deg leaves 0.7 cm - the elbow passes, the reach fails
+        row = r2.evaluate_gate(gate("H1c"), FINAL, measure=measure("H1c", elbowMaxDeg=161.0, reachMarginMinCm=0.7))
+        self.assertEqual("FAIL", row["status"])
+        self.assertIn("reachMarginMinCm 0.7 >= 1.0 is false", row["reason"])
+        self.assertNotIn("elbowMaxDeg", row["reason"])
+        ok = measure("H1c", elbowMaxDeg=144.0, reachMarginMinCm=2.6)
+        self.assertEqual("PASS", r2.evaluate_gate(gate("H1c"), FINAL, measure=ok)["status"])
 
     def test_s5_airborne_queue_is_reported_never_gated(self):
         self.assertEqual(["queueMax"], gate("S5")["report"])
