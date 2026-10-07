@@ -55,7 +55,7 @@ def write_telemetry(path, fire_times=(), delivered=None, explosions=0, overflow=
 
 
 def dense_take(folder, mode="tp", seconds=8.0, shot_amp=0.25, alive=40, dropped=0, camera=None, stamped=True,
-               commit=COMMIT, fires=True, complete=True, bed=0.002):
+               commit=COMMIT, fires=True, complete=True, bed=0.002, target=40, checkpoint=True):
     """a Dense-40 run folder: a -54 dBFS noise bed with 30 ms 1 kHz shots every 0.5 s from 1.2 s, and its sidecars."""
     folder = Path(folder)
     (folder / "bot").mkdir(parents=True, exist_ok=True)
@@ -76,9 +76,10 @@ def dense_take(folder, mode="tp", seconds=8.0, shot_amp=0.25, alive=40, dropped=
                                                                "load1After": ""}), encoding="utf-8")
     (folder / "bot" / "bot-summary.json").write_text(json.dumps({"cameraMode": camera or r2_s3.CAMERA[mode],
                                                                  "meanFrameMs": 16.6}), encoding="utf-8")
-    log = "[AudioDense40Evidence] dense checkpoint reached\n"
-    (folder / "player.log").write_text(log + ("[AudioDense40Evidence] capture window complete\n" if complete else ""),
-                                       encoding="utf-8")
+    log = f"[AudioDense40Evidence] target={target} round=12\n"   # the driver's own lines (AudioDense40EvidenceDriver)
+    log += "[AudioDense40Evidence] dense checkpoint reached; capture window=40.0s\n" if checkpoint else ""
+    log += "[AudioDense40Evidence] capture window complete\n" if complete else ""
+    (folder / "player.log").write_text(log, encoding="utf-8")
     return folder
 
 
@@ -155,8 +156,9 @@ class Rig:
             end = self.listening_end if self.listening_end is not None and self.listen in wav.parents else self.takes_end
             os.utime(wav, (end, end))
 
-    def argv(self, *extra, load=True, host=True):
-        args = [a for m, d in self.dense.items() for a in ("--dense", f"{m}={d}")]
+    def argv(self, *extra, load=True, host=True, modes="tp,fp"):
+        # the rig is R2's tp / fp pair (both listening modes); R3's default is topdown (ModesTests)
+        args = [a for m, d in self.dense.items() for a in ("--dense", f"{m}={d}")] + (["--modes", modes] if modes else [])
         args += ["--a9", str(self.a9), "--listening", str(self.listen), "--xml", str(self.xml), "--dense-seconds", "10",
                  "--commit", COMMIT, "--out", str(self.out)]
         if load:
@@ -165,11 +167,11 @@ class Rig:
             args += ["--host", str(self.host)]
         return args + list(extra)
 
-    def run(self, *extra, load=True, host=True):
+    def run(self, *extra, load=True, host=True, modes="tp,fp"):
         self.stamp()
         buf = io.StringIO()
         with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(io.StringIO()):
-            rc = r2_s3.main(self.argv(*extra, load=load, host=host))
+            rc = r2_s3.main(self.argv(*extra, load=load, host=host, modes=modes))
         return rc, buf.getvalue()
 
 
@@ -303,9 +305,27 @@ class SourceTests(RigTestCase):
         self.assertFalse(self.rig.out.exists())
         self.assertFalse(r2_s3.kirli_path(self.rig.out).exists())
 
-    def test_fewer_than_40_alive(self):
-        dense_take(self.rig.dense["tp"], "tp", alive=30)
-        self.assert_blocked("max alive 30")
+    def test_the_driver_held_fewer_than_40_active(self):
+        dense_take(self.rig.dense["tp"], "tp", target=30)
+        self.assert_blocked("player.log target 30")
+
+    def test_the_driver_never_reached_its_checkpoint(self):
+        dense_take(self.rig.dense["tp"], "tp", checkpoint=False)
+        self.assert_blocked("no '[AudioDense40Evidence] dense checkpoint reached'")
+
+    def test_a_capture_shorter_than_the_window(self):
+        dense_take(self.rig.dense["tp"], "tp", seconds=4.0)   # --dense-seconds 10: >= 5 s wanted
+        self.assert_blocked("capture 4.0 s shorter than the dense window 10 s - 5 s")
+
+    def test_markers_alive_under_40_with_the_driver_window_complete_is_a_valid_take_r3(self):
+        # FINAL c14f8a10 topdown#2: the driver saw 40 active and ran its window; the markers' alive (rising / dying bodies
+        # left out) sat at 38-39. R3 (C-00 06.10): the driver's window decides, alive is reported.
+        dense_take(self.rig.dense["tp"], "tp", alive=38)
+        rc, out = self.rig.run()
+        self.assertEqual(0, rc, out)
+        tp = json.loads(self.rig.out.read_text(encoding="utf-8"))["takes"]["dense"]["tp"]
+        self.assertEqual((38, 38), (tp["maxAlive"], tp["aliveMedian"]))
+        self.assertEqual(8.0, tp["denseSeconds"])   # the whole 8 s capture: the last --dense-seconds 10 of it
 
     def test_no_weapon_shot_in_the_recording(self):
         dense_take(self.rig.dense["fp"], "fp", fires=False)
@@ -378,7 +398,7 @@ class ModesTests(RigTestCase):
 
     def test_top_down_only_requires_and_hears_only_the_top_down_takes(self):
         td = dense_take(self.rig.root / "topdown", "topdown")
-        rc, out = self.rig.run("--modes", "topdown", "--dense", f"topdown={td}")
+        rc, out = self.rig.run("--dense", f"topdown={td}", modes="topdown")
         self.assertEqual(0, rc, out)
         data = json.loads(self.rig.out.read_text(encoding="utf-8"))
         self.assertEqual(["topdown"], data["takes"]["modes"])
@@ -390,17 +410,51 @@ class ModesTests(RigTestCase):
         self.assertIn("scope top-down only", out)
 
     def test_top_down_only_without_a_top_down_take_is_a_source_finding(self):
-        rc, out = self.rig.run("--modes", "topdown")
+        rc, out = self.rig.run(modes="topdown")
         self.assertEqual(1, rc, out)
         self.assertIn("dense topdown: no capture given", out)
         self.assertFalse(self.rig.out.exists())
 
-    def test_the_default_still_wants_tp_and_fp_and_other_modes_are_usage(self):
-        rc, out = self.rig.run()
+    def test_the_default_is_top_down_tp_fp_is_kept_and_other_modes_are_usage_r3(self):
+        rc, out = self.rig.run(modes=None)   # no --modes: R3's default, top-down
+        self.assertEqual(1, rc, out)
+        self.assertIn("dense topdown: no capture given", out)
+        rc, out = self.rig.run(modes="tp,fp")
         self.assertEqual(0, rc, out)
         self.assertEqual(["tp", "fp"], json.loads(self.rig.out.read_text(encoding="utf-8"))["takes"]["modes"])
         with contextlib.redirect_stderr(io.StringIO()):
-            self.assertEqual(64, r2_s3.main(self.rig.argv("--modes", "fp")))
+            self.assertEqual(64, r2_s3.main(self.rig.argv(modes="fp")))
+
+
+class PooledListeningTests(RigTestCase):
+    """R3 (C-00 06.10, decided before the next measurement — SD K1): AB runs pooled block-weighted per mode."""
+
+    def test_two_ab_runs_are_pooled_block_weighted_not_the_worse_one(self):
+        td = dense_take(self.rig.root / "topdown", "topdown")
+        second = self.rig.root / "listening2"
+        listening_take(second, "1_ustten", w_sigma=0.05, r_sigma=0.05)   # W = R: margin 0
+        rc, out = self.rig.run("--dense", f"topdown={td}", "--listening", str(second), modes="topdown")
+        self.assertEqual(0, rc, out)
+        data = json.loads(self.rig.out.read_text(encoding="utf-8"))
+        t = data["takes"]["listening"]["topdown"]
+        self.assertEqual(2, t["pooledOver"])
+        one, two = (x["weaponMarginLu"] for x in t["takes"])
+        self.assertAlmostEqual(6.02, one, delta=0.3)
+        self.assertAlmostEqual(0.0, two, delta=0.3)
+        # equal block counts: W = (0.1² + 0.05²) / 2, R = 0.05² → 10 log10(2.5) = +3.98 LU, not the worse take's 0
+        self.assertAlmostEqual(3.98, t["weaponMarginLu"], delta=0.3)
+        self.assertEqual(t["weaponMarginLu"], data["values"]["weaponMarginLu"])
+        self.assertEqual({"A": 4, "W": 4, "R": 4}, t["blocks"])   # 2 complete blocks per variant per take
+        self.assertIn("listening topdown pooled×2", out)
+
+    def test_one_ab_run_is_that_take_unchanged(self):
+        td = dense_take(self.rig.root / "topdown", "topdown")
+        rc, out = self.rig.run("--dense", f"topdown={td}", modes="topdown")
+        self.assertEqual(0, rc, out)
+        t = json.loads(self.rig.out.read_text(encoding="utf-8"))["takes"]["listening"]["topdown"]
+        self.assertEqual(1, t["pooledOver"])
+        self.assertNotIn("takes", t)
+        self.assertAlmostEqual(6.02, t["weaponMarginLu"], delta=0.3)
 
 
 class KirliTests(RigTestCase):

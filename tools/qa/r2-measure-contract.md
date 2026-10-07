@@ -221,19 +221,24 @@ No C# test writes S3: three recordings are measured offline. Writer: `tools/qa/r
 FINAL commit into `<E>/r2/` (its commit is DD_R2_COMMIT). Each key is the worst over its takes:
 
 - `truePeakDbtp`: Dense-40 Player captures (a dev build stamped with the commit, not dirty; QaRunBot from round 12 with
-  -ddAudioDense40 for 40 s; one or more runs per camera, the worst counts; third-person and first-person required,
-  top-down when recorded), the whole recording, max over channels of the 4x oversampled peak: the higher of a polyphase FIR interpolation and the Catmull-Rom
+  -ddAudioDense40 for 40 s; one or more runs per camera, the worst counts; R3 (kullanıcı 06.10): top-down by default,
+  `--modes tp,fp` for R2's pair), the whole recording, max over channels of the 4x oversampled peak: the higher of a polyphase FIR interpolation and the Catmull-Rom
   estimate of `audio_capture_report.py` (R1's method, kept as the R1-comparable value).
 - `momentaryMaxLufs`: the same captures, BS.1770 K-weighting, 400 ms windows on a 10 ms hop (R1's 100 ms grid, which can
   miss up to ~0.4 LU of a peak, is kept next to it).
 - `preLimiterGrDb`: the A9 stack render of `AudioSliceTests.A9_EnYuksekYigin_LimiterOncesiZarf_Olcum` (master limiter
   opened to 0 dB): max(0, envelope max + 8) with the -8 dBFS limiter's detector (10 ms attack, 90 ms release, linked stereo).
-- `weaponMarginLu`: the W (SFX-Player alone) and R (every other bus) blocks of `AudioSliceTests.DinlemePaketi_AB_Uret`,
-  top-down and first-person takes: 10 log10 of their K-weighted mean power in the burst windows (0.15-1.2 s of each 2 s
-  fire cycle). Today's Run snapshot is R1's mix B, so this is R1's "mix B margin" (+1.57 / +3.18) measured directly.
+- `weaponMarginLu`: the W (SFX-Player alone) and R (every other bus) blocks of `AudioSliceTests.DinlemePaketi_AB_Uret`
+  (the top-down take; R2 also first-person): 10 log10 of their K-weighted mean power in the burst windows (0.15-1.2 s of
+  each 2 s fire cycle). R3 (C-00 06.10, decided before the next measurement — SD K1, a single take is ±0.2 LU noise): every
+  AB run given (`--listening` repeats) is POOLED block-weighted per mode, the W and R powers averaged over all their blocks;
+  the worse mode counts. Today's Run snapshot is R1's mix B, so this is R1's "mix B margin" (+1.57 / +3.18) measured directly.
 
 The source checks run before anything is written; one fails and nothing is written (S3 BLOCKED): capture dropped 0 and
-telemetry overflow 0 in every take, 40 alive and a dense window of at least 35 s, the camera the take claims, weapon shots
+telemetry overflow 0 in every take, the driver's own dense window (R3, C-00 06.10: player.log `target=` >= 40, "dense
+checkpoint reached" = spawn.ActiveCount >= target, "capture window complete"; the window is the capture's last
+-ddAudioDenseSeconds, at least 35 s; the markers' alive count leaves rising / dying bodies out and is reported only —
+FINAL c14f8a10 read alive 38-39 through a complete window), the camera the take claims, weapon shots
 delivered and heard (shot-window peak median >= -30 dBFS; Dense-40 exception to the "source must be in the recording"
 rule's >= 6 dB over the pre-window — C-00 06.10: a continuous Dense-40 mix cannot hold it (R1 +3.8 … +5.5 dB), so the
 source check is ClassicWeaponFire delivered >= 20 + Fire voices started in the dense window >= 10 + that peak median;

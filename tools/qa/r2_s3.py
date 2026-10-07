@@ -3,8 +3,8 @@
 
 No C# test writes S3: it is measured offline on three kinds of recording the owner's run makes (tools/qa/
 r2-measure-contract.md, S3):
-  dense      Dense-40 Player captures, one or more per camera mode (tp and fp required, topdown when recorded; every run
-             counts, the worst wins): a dev build stamped
+  dense      Dense-40 Player captures, one or more per camera mode of --modes (default topdown; every run counts, the worst
+             wins): a dev build stamped
              with the commit, QaRunBot from round 12 (-ddQaBotStartRound 12 -ddQaBotSeed 26 -ddQaBotInvulnerable 1),
              -ddAudioDense40 -ddAudioDenseRound 12 -ddAudioDenseSeconds 40, -ddCameraMode <mode>, -ddAudioCapture
              <dir>/mix.wav. The folder holds mix.wav with its .markers.txt / .telemetry.tsv sidecars, bot/qa-report.json,
@@ -12,7 +12,8 @@ r2-measure-contract.md, S3):
   a9         the A9 stack render of AudioSliceTests.A9_EnYuksekYigin_LimiterOncesiZarf_Olcum (master limiter opened to
              0 dB), with its sidecars.
   listening  the listening-kit takes of AudioSliceTests.DinlemePaketi_AB_Uret: <no>_<mode>_take.wav, <no>_<mode>_blocks.csv
-             (block start frame, variant A B C W R) and the take's sidecars; 1_ustten = top-down, 2_birinci-sahis = FP.
+             (block start frame, variant A B C W R) and the take's sidecars; 1_ustten = top-down, 2_birinci-sahis = FP (R1/R2;
+             R3 records the top-down take only). --listening repeats: one folder per AB run, their takes pooled per mode.
 
 Values (the worst over the takes; checks in r2-gates.json S3, judged by r2_gates.evaluate_gate):
   truePeakDbtp      the whole Dense-40 recording, max over channels: the higher of a 4x polyphase FIR interpolation (scipy
@@ -23,11 +24,16 @@ Values (the worst over the takes; checks in r2-gates.json S3, judged by r2_gates
   preLimiterGrDb    the A9 render: max(0, envelope max + 8 dB) — the detector of the -8 dBFS master limiter (10 ms attack,
                     90 ms release, linked stereo; AudioMixerBuilder), as K/wp-072/tools/a9_stack.py.
   weaponMarginLu    the listening takes: 10 log10(W / R), the K-weighted mean power of the W stem (SFX-Player alone) over the R
-                    stem (every other bus) in the burst windows 0.15-1.2 s of each 2 s fire cycle (two per 4 s block); the
-                    worse of top-down and FP. Today's Run snapshot is R1's mix B, so this is R1's "mix B margin" directly.
+                    stem (every other bus) in the burst windows 0.15-1.2 s of each 2 s fire cycle (two per 4 s block). R3
+                    (C-00 06.10, decided before the next measurement — SD K1): the takes of a mode are POOLED block-weighted
+                    over every AB run given (the W and R powers averaged over all W and R blocks); the worse mode counts
+                    (topdown only by default). Today's Run snapshot is R1's mix B, so this is R1's "mix B margin" directly.
 
 The source must be in the recording (contract, S-08 05.10): every take is checked first — capture dropped 0, telemetry ring
-overflow 0, 40 alive and a dense window of -ddAudioDenseSeconds - 5 s, the camera the take claims, weapon shots delivered and
+overflow 0, the driver's own dense window (R3, C-00 06.10: player.log "target=" >= 40, "dense checkpoint reached" =
+spawn.ActiveCount >= target, "capture window complete"; the window is the capture's last -ddAudioDenseSeconds, which must be
+>= -ddAudioDenseSeconds - 5 s long; the markers' alive count leaves rising / dying bodies out and is reported only), the
+camera the take claims, weapon shots delivered and
 heard (shot-window peak median >= -30 dBFS; the rule's ">= 6 dB over the pre-window" does not apply to a continuous
 Dense-40 mix — C-00 06.10, SOURCE_RULE: the rise is reported per take, not asserted), a dev build stamped with the commit
 and not dirty, the A9 stack loud in every
@@ -47,13 +53,12 @@ a criterion either — in the 06.10 window (pencere-p4) the Dense-40 captures ra
 dropped samples, so a floor above 0.4 % marks valid captures dirty and one below it marks nothing. Both stay in the
 artifact's takes.host for the reader; the captures' own quality checks above decide validity.
 
-usage: r2_s3.py --dense tp=DIR --dense fp=DIR [--dense tp=DIR2 …] [--dense topdown=DIR] --a9 WAV --listening DIR --xml PM.xml
+usage: r2_s3.py --dense topdown=DIR [--dense topdown=DIR2 …] --a9 WAV --listening DIR [--listening DIR2 …] --xml PM.xml
                 --host FILE [--load FILE …] [--kirli REASON] [--dense-seconds 40] [--commit 40-hex] [--out r2-S3.json] [--dry-run]
-                [--modes tp,fp | topdown]
---modes: the cameras the gate hears (default tp,fp — R1's closing pair; a topdown take is measured when given). Kullanıcı
-        06.10: "testler de top down için çalışacak sadece" → --modes topdown: only top-down Dense-40 takes are required and
-        measured, only the top-down listening take sets weaponMarginLu; tp / fp takes, if any, are out of scope (not measured,
-        takes.scope says so).
+                [--modes topdown | tp,fp]
+--modes: the cameras the gate hears. Default topdown (kullanıcı 06.10: "testler de top down için çalışacak sadece"): only
+        top-down Dense-40 takes are required and measured, only the top-down listening takes set weaponMarginLu; tp / fp takes,
+        if any, are out of scope (not measured, takes.scope says so). tp,fp: R1's closing pair (R2), both listening modes.
 --host: the window's host samples, one per line: "<utc> CPU usage: … <x>% idle · foreign <n>" (K/wp-085/tools/pencere.sh);
         every line with "foreign <n>" is a sample, the time and CPU idle are read when the line has them (an empty top line
         still counts its foreign processes).
@@ -92,7 +97,8 @@ SOURCE = ("tools/qa/r2_s3.py (Dense-40 Player captures + AudioSliceTests.A9_EnYu
 
 # dense: -ddCameraMode value → QaRunBot bot-summary cameraMode
 CAMERA = {"topdown": "TopDown", "tp": "ThirdPerson", "fp": "FirstPerson"}
-REQUIRED_DENSE = ("tp", "fp")            # R1 closing measured these two
+REQUIRED_DENSE = ("tp", "fp")            # R1 closing measured these two (--modes tp,fp)
+DEFAULT_MODES = ("topdown",)             # R3 default (kullanıcı 06.10: testler yalnız top down)
 DENSE_ALIVE = 40                         # the spawner's safety ceiling AudioDense40EvidenceDriver holds
 DENSE_SLACK_S = 5.0                      # the dense window may end this much short of -ddAudioDenseSeconds (quit latency)
 MIN_SHOTS_DELIVERED = 20                 # combat_event ClassicWeaponFire delivered (R1: 80-104)
@@ -286,7 +292,8 @@ def take_span(detail):
     """(first take's start, last take's end) in epoch s — a take's span is its WAV's mtime less its length, the mtime at
     or after its capture's end (pencere.sh copies the A9 and listening takes when their step ends) — or None when no take
     file can be read. A plain copy of the evidence moves the mtimes: run on the original or a cp -p / cp -c copy."""
-    takes = list(detail["dense"].values()) + ([detail["a9"]] if detail["a9"] else []) + list(detail["listening"].values())
+    heard = [x for t in detail["listening"].values() for x in t.get("takes", [t])]
+    takes = list(detail["dense"].values()) + ([detail["a9"]] if detail["a9"] else []) + heard
     spans = []
     for take in takes:
         try:
@@ -411,19 +418,29 @@ def measure_dense(mode, folder, commit, dense_seconds, label=None):
         findings.append(f"dense {label}: telemetry ring overflow {telemetry['overflow']} (must be 0)")
     if bot.get("cameraMode") != CAMERA[mode]:
         findings.append(f"dense {label}: bot-summary cameraMode {bot.get('cameraMode')!r}, the take claims {CAMERA[mode]}")
+    # R3 (C-00 06.10, decided before the next measurement): the dense window is the driver's own. AudioDense40EvidenceDriver
+    # logs its target (the spawner's SafetyCeiling), "dense checkpoint reached" once spawn.ActiveCount >= target, and quits
+    # DenseSeconds later with "capture window complete": the window is the capture's last -ddAudioDenseSeconds. The markers'
+    # alive count leaves the 1-2 bodies rising or dying out (FINAL c14f8a10: alive 38-39 for the whole window, 40 first at
+    # 52.5 s), so it is reported (maxAlive, aliveMedian), not judged.
+    target = re.search(r"\[AudioDense40Evidence\] target=(\d+)", log)
+    if target is None or int(target.group(1)) < DENSE_ALIVE:
+        findings.append(f"dense {label}: player.log target {target.group(1) if target else 'missing'} (the driver must hold "
+                        f"{DENSE_ALIVE} active)")
+    if "[AudioDense40Evidence] dense checkpoint reached" not in log:
+        findings.append(f"dense {label}: player.log has no '[AudioDense40Evidence] dense checkpoint reached' (never {DENSE_ALIVE} active)")
     if "[AudioDense40Evidence] capture window complete" not in log:
         findings.append(f"dense {label}: player.log has no '[AudioDense40Evidence] capture window complete' (no Dense-40 window)")
-    max_alive = max((a for _, a, _ in markers["density"]), default=0)
-    first = next((s for s, a, _ in markers["density"] if a >= DENSE_ALIVE), None)
-    dense_len = seconds - first if first is not None else 0.0
-    if max_alive < DENSE_ALIVE:
-        findings.append(f"dense {label}: max alive {max_alive} < {DENSE_ALIVE}")
-    elif dense_len < dense_seconds - DENSE_SLACK_S:
-        findings.append(f"dense {label}: dense window {dense_len:.1f} s < {dense_seconds - DENSE_SLACK_S:.0f} s")
+    alive_seen = [a for _, a, _ in markers["density"]]
+    max_alive = max(alive_seen, default=0)
+    first = max(0.0, seconds - dense_seconds)
+    dense_len = seconds - first
+    if dense_len < dense_seconds - DENSE_SLACK_S:
+        findings.append(f"dense {label}: capture {seconds:.1f} s shorter than the dense window {dense_seconds:.0f} s - {DENSE_SLACK_S:.0f} s")
     delivered = telemetry["combat"].get("ClassicWeaponFire", 0)
     offset = clock_offset(markers["density"])
     fires = [dsp - offset for dsp, sound in telemetry["starts"] if FIRE_SOUND.fullmatch(sound)] if offset is not None else []
-    fires_in = [t for t in fires if first is not None and first <= t <= seconds]
+    fires_in = [t for t in fires if first <= t <= seconds]
     peaks = shot_peaks(data, rate, fires_in)
     peak_median = statistics.median(peaks) if peaks else None
     rises = shot_rises(data, rate, fires_in)
@@ -454,13 +471,14 @@ def measure_dense(mode, folder, commit, dense_seconds, label=None):
               "seconds": round(seconds, 3), "truePeakDbtp": max(db(sample), db(cr), db(fir)),
               "truePeakFirDbtp": round(db(fir), 3), "truePeakDbtpR1": round(db(cr), 3), "samplePeakDbfs": round(db(sample), 3),
               "momentaryMaxLufs": m_max, "momentaryMaxAt": m_at, "momentaryMaxLufsR1": round(m_r1, 3),
-              "maxAlive": max_alive, "denseStart": first, "denseSeconds": round(dense_len, 2),
+              "maxAlive": max_alive, "aliveMedian": statistics.median(alive_seen) if alive_seen else None,
+              "denseStart": round(first, 3), "denseSeconds": round(dense_len, 2),
               "weaponFireDelivered": delivered, "weaponFireStartsDense": len(fires_in),
               "shotPeakMedianDbfs": round(peak_median, 2) if peak_median is not None else None,
               "shotRiseDbMedian": round(statistics.median(rises), 2) if rises else None,
               "build": {k: info.get(k) for k in ("stamped", "describe", "commit", "mode")},
               "meanFrameMs": bot.get("meanFrameMs"), "qaLoad1": [(qa or {}).get("load1Before"), (qa or {}).get("load1After")]}
-    if first is not None and first < seconds - 0.4:
+    if first < seconds - 0.4:
         a = int(first * rate)
         detail["denseWindow"] = {"truePeakDbtpR1": round(db(acr.true_peak(data[a:])), 3),
                                  "momentaryMaxLufs": round(momentary_max(energy[a:], rate, M_HOP_S, first)[0], 3)}
@@ -610,7 +628,27 @@ def measure_take(mode, wav):
 # ---------------------------------------------------------------------------------------------------- the artifact
 
 
-def measure(dense, a9, listening, xmls, commit, dense_seconds, modes=REQUIRED_DENSE):
+def pooled_take(mode, per):
+    """R3 (C-00 06.10, decided before the next measurement): the listening takes of one mode pooled block-weighted — the W and
+    R burst powers averaged over every take's W and R blocks, weaponMarginLu = 10 log10(W / R) over them all (SD K1: the
+    single-take margin is ±0.2 LU noise). One take: that take, unchanged."""
+    if len(per) == 1:
+        out = dict(per[0])
+        out["pooledOver"] = 1
+        return out
+    nw = [t["blocks"]["W"] for t in per]
+    nr = [t["blocks"]["R"] for t in per]
+    w = sum(10 ** (t["weaponBurstDb"] / 10) * n for t, n in zip(per, nw)) / sum(nw)
+    r = sum(10 ** (t["restBurstDb"] / 10) * n for t, n in zip(per, nr)) / sum(nr)
+    worst_add = max((t["additivityDb"] for t in per), key=abs)
+    return {"mode": mode, "pooledOver": len(per), "weaponMarginLu": 10.0 * math.log10(w / r),
+            "weaponBurstDb": round(10.0 * math.log10(w), 3), "restBurstDb": round(10.0 * math.log10(r), 3),
+            "additivityDb": worst_add, "blocks": {k: sum(t["blocks"][k] for t in per) for k in "AWR"},
+            "wBurstPeakMedianDbfs": min(t["wBurstPeakMedianDbfs"] for t in per),
+            "weaponFireDelivered": sum(t["weaponFireDelivered"] for t in per), "takes": per}
+
+
+def measure(dense, a9, listening, xmls, commit, dense_seconds, modes=DEFAULT_MODES):
     """(values, detail, findings, samples) over every take of the given camera modes."""
     findings, detail = [], {"dense": {}, "a9": None, "listening": {}, "modes": list(modes)}
     topdown_only = tuple(modes) == ("topdown",)
@@ -635,22 +673,27 @@ def measure(dense, a9, listening, xmls, commit, dense_seconds, modes=REQUIRED_DE
         d, f = measure_a9(a9)
         findings += f
         detail["a9"] = d
-    takes = {}
-    if listening is not None:
-        for wav in sorted(Path(listening).glob("*_take.wav")):
+    folders = [listening] if isinstance(listening, (str, Path)) else list(listening or [])
+    takes = {}   # mode -> [wav, …], one per listening folder (AB runs pooled: R3)
+    for folder in folders:
+        for wav in sorted(Path(folder).glob("*_take.wav")):
             parts = wav.stem.split("_")
             if len(parts) >= 3 and parts[1] in LISTEN_MODES:
-                takes[LISTEN_MODES[parts[1]]] = wav
+                takes.setdefault(LISTEN_MODES[parts[1]], []).append(wav)
     if topdown_only:
         takes = {m: w for m, w in takes.items() if m == "topdown"}
     for mode in (("topdown",) if topdown_only else LISTEN_MODES.values()):
         if mode not in takes:
-            findings.append(f"listening {mode}: no take in {listening} (DinlemePaketi_AB_Uret)")
-    for mode, wav in sorted(takes.items()):
-        d, f = measure_take(mode, wav)
-        findings += f
-        if d:
-            detail["listening"][mode] = d
+            findings.append(f"listening {mode}: no take in {', '.join(map(str, folders)) or '-'} (DinlemePaketi_AB_Uret)")
+    for mode, wavs in sorted(takes.items()):
+        per = []
+        for wav in wavs:
+            d, f = measure_take(mode, wav)
+            findings += f
+            if d:
+                per.append(d)
+        if per:
+            detail["listening"][mode] = pooled_take(mode, per)
     results = xml_results(xmls)
     for kind, name in TESTS.items():
         if results.get(name) != "Passed":
@@ -663,7 +706,7 @@ def measure(dense, a9, listening, xmls, commit, dense_seconds, modes=REQUIRED_DE
         values["preLimiterGrDb"] = detail["a9"]["preLimiterGrDb"]
     if detail["listening"]:
         values["weaponMarginLu"] = min(d["weaponMarginLu"] for d in detail["listening"].values())
-    samples = len(detail["dense"]) + (1 if detail["a9"] else 0) + len(detail["listening"])
+    samples = len(detail["dense"]) + (1 if detail["a9"] else 0) + sum(t["pooledOver"] for t in detail["listening"].values())
     return values, detail, findings, samples
 
 
@@ -722,7 +765,10 @@ def summary_lines(values, detail):
                      f"{a['headroomToLimiterDb']:.2f} dB; R1 GR {R1_CLOSING['a9']['preLimiterGrDb']:.2f}, envelope "
                      f"{R1_CLOSING['a9']['envelopeMaxDbfs']:.2f}) · peak {a['uncompressedSamplePeakDbfs']:.2f} dBFS")
     for mode, t in sorted(detail["listening"].items()):
-        lines.append(f"listening {mode:7} W/R margin {t['weaponMarginLu']:+.2f} LU (R1 mix B "
+        for k, one in enumerate(t.get("takes", [])):
+            lines.append(f"listening {mode:7} take {k + 1} W/R margin {one['weaponMarginLu']:+.2f} LU · blocks {one['blocks']}")
+        tag = f"{mode} pooled×{t['pooledOver']}" if t.get("pooledOver", 1) > 1 else mode
+        lines.append(f"listening {tag:7} W/R margin {t['weaponMarginLu']:+.2f} LU (R1 mix B "
                      f"{R1_CLOSING['listening'][mode]['weaponMarginLu']:+.2f}) · additivity {t['additivityDb']:+.2f} dB · "
                      f"blocks {t['blocks']} · W peak med {t['wBurstPeakMedianDbfs']} dBFS")
     lines.append("S3 values " + " · ".join(f"{k} {values[k]:.3f}" if k in values else f"{k} -" for k in KEYS))
@@ -734,7 +780,8 @@ def main(argv=None):
     parser.add_argument("--dense", action="append", default=[], metavar="MODE=DIR",
                         help="Dense-40 run folder (tp, fp, topdown); a mode may repeat, the worst run counts")
     parser.add_argument("--a9", help="the A9 stack render WAV (sidecars next to it)")
-    parser.add_argument("--listening", help="the DinlemePaketi_AB_Uret folder (*_take.wav + *_blocks.csv + sidecars)")
+    parser.add_argument("--listening", action="append", default=[], help="a DinlemePaketi_AB_Uret folder (*_take.wav + *_blocks.csv + "
+                        "sidecars); repeat it for several AB runs — their takes are pooled per mode (R3)")
     parser.add_argument("--xml", action="append", default=[], help="NUnit XML of the A9 / listening PlayMode runs")
     parser.add_argument("--host", action="append", default=[], help="host samples of the run window (CPU idle + foreign "
                         "heavy processes per line): the KİRLİ criterion (C-00 06.10)")
@@ -742,7 +789,7 @@ def main(argv=None):
                         "reported only, not a criterion (C-00 06.10)")
     parser.add_argument("--kirli", help="mark the run KİRLİ with this reason (C-00's call)")
     parser.add_argument("--dense-seconds", type=float, default=40.0, help="the run's -ddAudioDenseSeconds")
-    parser.add_argument("--modes", default="tp,fp", help="cameras the gate hears: tp,fp (default) or topdown (kullanıcı 06.10)")
+    parser.add_argument("--modes", default="topdown", help="cameras the gate hears: topdown (default, kullanıcı 06.10) or tp,fp (R1/R2)")
     parser.add_argument("--commit", default=os.environ.get("DD_R2_COMMIT"), help="40-hex commit under test (DD_R2_COMMIT)")
     parser.add_argument("--out", help="artifact path (default $DD_R2_MEASURE_DIR/r2-S3.json)")
     parser.add_argument("--dry-run", action="store_true", help="measure and print, never write")
@@ -765,8 +812,8 @@ def main(argv=None):
         return 64
 
     modes = tuple(m.strip() for m in args.modes.split(",") if m.strip())
-    if modes not in (REQUIRED_DENSE, ("topdown",)):
-        print(f"--modes wants tp,fp or topdown: {args.modes!r}", file=sys.stderr)
+    if modes not in (REQUIRED_DENSE, DEFAULT_MODES):
+        print(f"--modes wants topdown or tp,fp: {args.modes!r}", file=sys.stderr)
         return 64
     values, detail, findings, samples = measure(dense, args.a9, args.listening, args.xml, commit, args.dense_seconds, modes)
     for line in summary_lines(values, detail):
