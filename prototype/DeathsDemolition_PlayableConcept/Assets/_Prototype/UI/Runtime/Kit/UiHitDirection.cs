@@ -187,10 +187,13 @@ namespace DD.Prototype.UI
     ///
     /// WP-094 HUD v4 (R3, C-00 07.10; HAREKET-HUD D1 MUST, the motion lead's main-branch findings)
     /// -------------------------------------------------------------------------------------------
-    ///   * THE FLASH GATE. A lit edge is 1920 × 150 px - a large flash (≥ 43 000 px²) - so every onset now passes
-    ///     <see cref="UiMotion.FlashOnset"/> (≤ 3 a second across the whole UI) and a per-edge limit (≤ 2 a second). A
-    ///     refused onset MERGES: an edge already lit takes the louder peak on its running clock; a dark edge stays dark (the
-    ///     top-down wedge round the player still says where - it is small, outside the gate). Before, it bypassed the gate.
+    ///   * THE FLASH GATE. A lit edge is 1920 × 150 px - a large flash (≥ 43 000 px²). The limit is PER EDGE (S-09, r3-w1):
+    ///     an edge starts at most <see cref="UiMotionTokens.FlashGateOnsetsPerElement"/> times a second; past that its hit
+    ///     MERGES (the louder peak on its running clock, never queued). The UI-wide <see cref="UiMotion.FlashOnset"/> is
+    ///     consulted ONCE PER FRAME - hits landing in one frame are one onset on screen - and its refusal only merges edges
+    ///     that are already lit: a hit from a new side always lights its own dark edge (REQ-044: two attackers in one frame,
+    ///     two edges). Before WP-094 the layer bypassed every gate; the first WP-094 cut counted the second same-frame hit as a
+    ///     second UI-wide onset and left its edge dark (PlayerHitDirectionHudTests.AyniKaredeIkiYondenHasarIkiKenariDaYakar).
     ///   * NO MESH REBUILD. The edges' colour is set once; the envelope writes CanvasRenderer alpha (no vertex rebuild),
     ///     and only when the 8-bit value moves. Before, it wrote Image.color - a mesh rebuild - every frame of every live
     ///     edge. The layer is its own nested canvas (RunHudScreen), so the decay re-batches only it.
@@ -226,8 +229,12 @@ namespace DD.Prototype.UI
         /// <summary>WP-094 (D1): ≤ 2 onsets a second per edge, next to the global FlashGate.</summary>
         private readonly HudOnsetLimiter _perEdge = new HudOnsetLimiter(EdgeCount, UiMotionTokens.FlashGateOnsetsPerElement);
 
-        /// <summary>Hits whose onset the flash gate refused (merged into what was lit). Test / diagnosis readout.</summary>
+        /// <summary>Edge raises the gates merged into a lit edge's running clock. Test / diagnosis readout.</summary>
         public int MergedOnsets { get; private set; }
+
+        /// <summary>The frame whose UI-wide onset was asked for, and the answer every hit of that frame shares.</summary>
+        private int _onsetFrame = -1;
+        private bool _onsetAllowed;
 
         /// <summary>Hits this layer has drawn since it was created. Diagnosis readout.</summary>
         public int HitCount { get; private set; }
@@ -334,23 +341,23 @@ namespace DD.Prototype.UI
                 return;
             }
 
-            // WP-094 (D1): one onset per hit through the UI's FlashGate; each edge also through its own ≤ 2 / s.
-            bool onset = UiMotion.FlashOnset(true);
+            // WP-094 (D1): the UI-wide FlashGate once per frame (same-frame hits are one onset); the limit itself per edge.
+            if (_onsetFrame != Time.frameCount)
+            {
+                _onsetFrame = Time.frameCount;
+                _onsetAllowed = UiMotion.FlashOnset(true);
+            }
+
             float now = UiFxGlobals.Now;
             bool raised = false;
 
             for (int i = 0; i < EdgeCount; i++)
             {
                 float level = s_weights[i] * strength;
-                if (level > 0f && Raise(i, level, onset && _perEdge.Allow(i, now)))
+                if (level > 0f && Raise(i, level, EdgeOnset(i, now)))
                 {
                     raised = true;
                 }
-            }
-
-            if (!onset)
-            {
-                MergedOnsets++;
             }
 
             if (raised)
@@ -397,7 +404,24 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>
-        /// Raises one edge. Returns false for an edge this hit does not point at, or (WP-094) one the flash gate keeps dark.
+        /// WP-094 (D1): may edge <paramref name="index"/> start a new onset now? A dark edge: its own ≤ 2 / s alone decides (a
+        /// new side is never swallowed by the others). A lit edge: its own limit and this frame's UI-wide FlashGate; refused,
+        /// it merges.
+        /// </summary>
+        private bool EdgeOnset(int index, float now)
+        {
+            bool lit = _amplitude[index] * Envelope(_remaining[index]) > 0f;
+            bool onset = (!lit || _onsetAllowed) && _perEdge.Allow(index, now);
+            if (!onset)
+            {
+                MergedOnsets++;
+            }
+
+            return onset;
+        }
+
+        /// <summary>
+        /// Raises one edge. Returns false for an edge this hit does not point at, or (WP-094) a dark one past its own limit.
         /// <paramref name="onset"/>: the gates allowed a new onset - the louder of what shows and the hit, on a fresh clock.
         /// Refused: an edge already lit takes the louder peak on its running clock (merged, not queued); a dark edge stays dark.
         /// </summary>

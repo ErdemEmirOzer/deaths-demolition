@@ -304,7 +304,8 @@ namespace DD.Prototype.Tests.EditMode
             Assert.LessOrEqual(wallpapers, WallpaperBudgetBytes,
                 "duvar kâğıdı sınıfı (yükleme anahtar sanatları + round sonu) kaynak bütçeyi aşıyor: " + wallpapers + " B");
 
-            foreach (string folder in new[] { UiTheme.AtlasFolder.TrimEnd('/'), "UI/G1", "UI/A4" })
+            // WP-094: AP-032 v001's HUD art (UI/Hud: the koban, the Roman atlases, the smear plates) under the same class rules.
+            foreach (string folder in new[] { UiTheme.AtlasFolder.TrimEnd('/'), "UI/G1", "UI/A4", HudArt.Folder.TrimEnd('/') })
             {
                 Texture2D[] textures = Resources.LoadAll<Texture2D>(folder);
                 Assert.Greater(textures.Length, 0, folder);

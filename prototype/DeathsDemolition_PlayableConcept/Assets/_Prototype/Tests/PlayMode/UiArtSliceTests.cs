@@ -172,7 +172,9 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsTrue(UiArt.HasIcon("Hud.Gold"), "tema HUD ikonlarını vermeli");
             Image coin = Bul<Image>(hud.transform, "Gold", "Coin");
             Assert.IsNotNull(coin.sprite);
-            Assert.AreEqual("Hud.Gold", coin.sprite.name, "gold paneli AP-012 coin glifini çizmeli");
+            // WP-094 AP-032 v001 (S-09 08.10): the full-colour koban replaces the G1 glyph on the HUD when it is in the build.
+            string coinName = HudArt.GoldCoin(RunHudScreen.GoldCoinBody * HudArt.CanvasScale) != null ? "ap032_gold_" : "Hud.Gold";
+            StringAssert.StartsWith(coinName, coin.sprite.name, "gold paneli AP-032 koban'ını (yoksa AP-012 coin glifini) çizmeli");
             Image heart = Bul<Image>(hud.transform, "Health", "Heart");
             Assert.AreEqual("Hud.Health", heart.sprite.name);
             Image weapon = Bul<Image>(hud.transform, "ClassicWeapon", "WeaponIcon");

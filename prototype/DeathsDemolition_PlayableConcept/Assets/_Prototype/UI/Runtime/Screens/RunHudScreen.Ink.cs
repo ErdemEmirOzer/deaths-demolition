@@ -96,6 +96,14 @@ namespace DD.Prototype.UI
         public const float GoldClusterWidth = 170f;
         public const float GoldClusterHeight = 36f;
 
+        /// <summary>
+        /// WP-094 AP-032: the koban's body in ref px. The spec proposes 48 at centre (56, ≈ 165); S-09 08.10 keeps the
+        /// HudGoldTarget point where it is (the coin's centre at x 18 in the cluster, its vertical middle), and 40 is the
+        /// largest body whose ink stays inside the 32 px margin there and within 2 px of the cluster's height. The §1 layer:
+        /// 40 px → the 64 canvas (body 48) at 1080, the 128 one on the Mac.
+        /// </summary>
+        public const float GoldCoinBody = 40f;
+
         /// <summary>The round cluster's least height (the old seal line's); the numeral's line sets it when taller.</summary>
         public const float RoundClusterHeight = 56f;
 
@@ -117,6 +125,9 @@ namespace DD.Prototype.UI
 
         /// <summary>The numeral clip's margin round the letters: the HUD ink's outline and underlay never meet the mask's edge.</summary>
         private const float RoundClipPad = 8f;
+
+        /// <summary>AP-032's smear plate takes the HUD ink at this alpha (§3.3 "kodda ink, α ≤ 0,90"), level (it is laid out, not leaned).</summary>
+        public const float RoundSmearAuthoredAlpha = 0.9f;
 
         /// <summary>The one brush channel the HUD's strokes draw with (the brush census counts this site once).</summary>
         private const UiInkChannel BrushChannel = UiInkChannel.Underline;
@@ -150,6 +161,8 @@ namespace DD.Prototype.UI
         private RectTransform _roundClip;
         private CanvasGroup _roundGroup;
         private RectTransform _roundBox;
+        private bool _roundSmearAuthored;
+        private float _roundRunRight;   // the numeral's end, from the cluster's right edge (the seal and its gap, or the plate's tail too)
         private HudRoundNumeral _roundNumeral;
         private float _roundSealHitAt = -1f;
         private UiTimeline _roundTimeline;
@@ -175,6 +188,9 @@ namespace DD.Prototype.UI
         /// <summary>Unscaled time the round seal's hit is due (the reveal's contact frame; −1 before the first reveal). Tests, captures.</summary>
         public float RoundSealHitAt => _roundSealHitAt;
 
+        /// <summary>WP-094 AP-032: the round stands on AP-032's smear plate (the cluster is the plate; tests, captures).</summary>
+        public bool RoundPlateAuthored => _roundSmearAuthored;
+
         /// <summary>The round transition (R1 → R3) is running (tests, captures).</summary>
         public bool RoundTransitionLive => _roundTimeline.IsAlive;
 
@@ -195,6 +211,12 @@ namespace DD.Prototype.UI
         /// <summary>
         /// WP-094: the gold cluster's bottom edge, canvas px from the bottom - directly above the health cluster (top-down and
         /// third person) or above the first-person weapon cluster that stands there, one UiSpace.S clear, on the 8 px grid.
+        /// The gap is measured from the health cluster's LAID-OUT top (<see cref="HealthClusterHeight"/>, the danger posture's
+        /// scale 1): UiSpace.S plus the grid's remainder, so 8 ≤ gap &lt; 16 px at every text scale. The calm posture draws the
+        /// health cluster at CalmScale (0.94) about its bottom-left corner, so its DRAWN top sits up to 6 % of its height lower
+        /// (≈ 6 px at 1080) - the gold does not follow it: it is the coins' flight target and holds one place on the grid
+        /// (HudGoldTarget.LayoutVersion moves only on a real layout change, never with the posture). r3-w1: HudV4Tests had
+        /// measured the calm-drawn top against the layout bound (17.09 &gt; 16 px); it now measures the laid-out top.
         /// </summary>
         public static float GoldClusterBottom(bool firstPerson)
         {
@@ -214,11 +236,20 @@ namespace DD.Prototype.UI
             RectTransform back = BackPlane(root);
 
             // The one leaf the HUD carries (E12): a small kinpaku disc under the coin; S-07's Leaf glint sweeps it on a gain.
+            // WP-094 AP-032: the full-colour koban carries its own metal - the disc gives way and the glint sweeps the coin.
+            Sprite koban = HudArt.GoldCoin(GoldCoinBody * HudArt.CanvasScale);
             Image disc = UiFactory.NewImage("Leaf", back, UiColor.StateGold, UiSprites.Disc);
             Place(disc.rectTransform, new Vector2(0f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(18f, 0f), new Vector2(36f, 36f));
             Fade(disc, GoldDiscAlpha);
-            _goldLeaf = disc.gameObject.AddComponent<UiFx>();
-            _goldLeaf.Configure(UiFxMode.Leaf, GoldGlintSeconds, new Vector3(1f, 0f, 0f));
+            if (koban == null)
+            {
+                _goldLeaf = disc.gameObject.AddComponent<UiFx>();
+                _goldLeaf.Configure(UiFxMode.Leaf, GoldGlintSeconds, new Vector3(1f, 0f, 0f));
+            }
+            else
+            {
+                disc.enabled = false;
+            }
 
             // WP-094 (HAREKET-HUD G1 under reduced motion: "ölçeksiz parlama"): a twin of the disc that flares the leaf 0.16 → 0.35
             // → 0.16 instead of the punch's scale. Resting at alpha 0, culled.
@@ -237,8 +268,26 @@ namespace DD.Prototype.UI
             _goldCatchFx = _goldCatch.gameObject.AddComponent<UiFx>();
             _goldCatchFx.Configure(UiFxMode.InkReveal, UiDuration.Screen, Vector3.zero, UiInkChannel.Hanko);
 
-            Image coin = InkGlyph("Coin", root, "Hud.Gold", UiColor.StateGold, 24f);
-            Place(coin.rectTransform, new Vector2(0f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(18f, 0f), new Vector2(24f, 24f));
+            Image coin;
+            if (koban != null)
+            {
+                // AP-032 v001 (§3.1, AD ACCEPT 08.10): the koban - its light, rim and sumi edge baked, the 20° tilt baked (the
+                // rect never turns). The §1 layer for its body on this screen (HudArt.GoldCoin); the G1 Hud.Gold glyph stays the
+                // single-colour symbol elsewhere. The Leaf band sweeps the coin itself (HAREKET-HUD G4: over the RGBA coin).
+                coin = UiFactory.NewImage("Coin", root, UiColor.TextPrimary, koban);
+                coin.color = Color.white;   // full-colour art: no tint
+                coin.preserveAspect = true;
+                float canvas = GoldCoinBody / HudArt.GoldBodyShare;
+                Place(coin.rectTransform, new Vector2(0f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(18f, 0f), new Vector2(canvas, canvas));
+                _goldLeaf = coin.gameObject.AddComponent<UiFx>();
+                _goldLeaf.Configure(UiFxMode.Leaf, GoldGlintSeconds, new Vector3(1f, 0f, 0f));
+            }
+            else
+            {
+                coin = InkGlyph("Coin", root, "Hud.Gold", UiColor.StateGold, 24f);
+                Place(coin.rectTransform, new Vector2(0f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(18f, 0f), new Vector2(24f, 24f));
+            }
+
             _goldCoin = coin.rectTransform;
 
             // WP-094: where the coins land - the coin's own rect as a bare sibling, so the arrival punch (which scales the
@@ -281,14 +330,38 @@ namespace DD.Prototype.UI
             root.gameObject.AddComponent<Canvas>();
             RectTransform back = BackPlane(root, SealDrift);
 
-            _roundSmear = UiFactory.NewImage("Smear", back, UiColor.HudInk, BrushSprite());
-            // The smear runs from the seal's edge (under the gap) to RoundSmearOverhang past the first letter.
-            Place(_roundSmear.rectTransform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-RoundSealSize, -2f), new Vector2(RoundSmearOverhang + (int)UiSpace.S, RoundSmearHeight));
-            _roundSmear.rectTransform.localRotation = Quaternion.Euler(0f, 0f, StrokeLean);
-            Fade(_roundSmear, RoundSmearAlpha);
-            // R2: the smear inks in behind the letters (InkReveal over the same brush's time map, Emphasis).
-            _roundSmearFx = _roundSmear.gameObject.AddComponent<UiFx>();
-            _roundSmearFx.Configure(UiFxMode.InkReveal, UiDuration.Emphasis, Vector3.zero, BrushChannel);
+            // WP-094 AP-032 (§3.3): the 3-slice smear plate, centre Tiled at its period, when it is in; the AP-012 brush before.
+            float scale = HudArt.CanvasScale;
+            float plateNative;
+            Sprite plate = HudArt.Smear(RoundGlyphHeight / HudArt.SmearCapRatio * scale, out plateNative);
+            _roundSmearAuthored = plate != null;
+            float sealCentre = RoundSealSize * 0.5f, sealSize = RoundSealSize;
+            _roundRunRight = letters;
+            if (_roundSmearAuthored)
+            {
+                float plateWidth, plateHeight, sealDiameter;
+                HudArt.LaySmear(RoundGlyphHeight, 0f, 0f, out plateWidth, out plateHeight, out _roundRunRight, out sealCentre, out sealDiameter);
+                _roundSmear = UiFactory.NewImage("Smear", back, UiColor.HudInk, plate);
+                _roundSmear.type = Image.Type.Tiled;
+                _roundSmear.pixelsPerUnitMultiplier = plateNative / plateHeight;   // the plate's height maps to its native rows
+                Place(_roundSmear.rectTransform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(0f, -HudArt.SmearCapOffset(plateHeight)), new Vector2(plateWidth, plateHeight));
+                Fade(_roundSmear, RoundSmearAuthoredAlpha);
+                // R2: the plate inks in left to right over its own alpha (wipe), Emphasis.
+                _roundSmearFx = _roundSmear.gameObject.AddComponent<UiFx>();
+                _roundSmearFx.Configure(UiFxMode.InkReveal, UiDuration.Emphasis, new Vector3(0f, 1f, 0f), BrushChannel);
+                sealSize = UiArt.Icon(RoundSealKey) != null ? sealDiameter / HudArt.SealRingShareOfCell : sealDiameter;
+            }
+            else
+            {
+                _roundSmear = UiFactory.NewImage("Smear", back, UiColor.HudInk, BrushSprite());
+                // The smear runs from the seal's edge (under the gap) to RoundSmearOverhang past the first letter.
+                Place(_roundSmear.rectTransform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-RoundSealSize, -2f), new Vector2(RoundSmearOverhang + (int)UiSpace.S, RoundSmearHeight));
+                _roundSmear.rectTransform.localRotation = Quaternion.Euler(0f, 0f, StrokeLean);
+                Fade(_roundSmear, RoundSmearAlpha);
+                // R2: the smear inks in behind the letters (InkReveal over the same brush's time map, Emphasis).
+                _roundSmearFx = _roundSmear.gameObject.AddComponent<UiFx>();
+                _roundSmearFx.Configure(UiFxMode.InkReveal, UiDuration.Emphasis, Vector3.zero, BrushChannel);
+            }
 
             // R1 / R2: the numeral sits in a left-pivoted RectMask2D the brush reveal opens left to right (RomanReveal), its
             // group carrying the old numeral's exit. The clip is RoundClipPad wider than the letters on every side.
@@ -301,33 +374,45 @@ namespace DD.Prototype.UI
             _roundValue = InkText("RoundValue", _roundBox, RunHudViewModel.Placeholder, RoundNumeralType, UiColor.TextPrimary, TextAnchor.MiddleRight);
             UiFactory.Fill(_roundValue.rectTransform);
             _roundNumeral = new HudRoundNumeral(_roundBox, _roundValue, RoundGlyphHeight, UiColor.TextPrimary);
-            _roundNumeral.SetGlyphSprites(RoundGlyphSprites());
+            _roundNumeral.SetGlyphAlternates(RoundGlyphAlternates(RoundGlyphHeight * scale));
 
-            // The seal (S-09 (a): vermilion): the AP-032 cell when the theme has it, the kit's hanko mask until then.
-            Sprite hanko = UiArt.Icon(RoundSealKey) ?? UiFxGlobals.InkMask(UiInkChannel.Hanko);
+            // The seal (S-09 (a): vermilion): the AP-032 cell when the theme has it (a white ring, the whole cell - the ring is
+            // 72 / 256 of it), the kit's hanko mask until then. With the plate it sits 0.55 diameters inside the dense zone's
+            // right end, at the cap's middle (§3.3, AD note 3); its place does not depend on the numeral, so it is laid once.
+            Sprite authoredSeal = UiArt.Icon(RoundSealKey);
+            Sprite hanko = authoredSeal != null ? authoredSeal : UiFxGlobals.InkMask(UiInkChannel.Hanko);
             Image seal = UiFactory.NewImage("Seal", back, UiColor.AccentPrimary, hanko != null ? hanko : UiSprites.Disc);
-            Place(seal.rectTransform, new Vector2(1f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(-RoundSealSize * 0.5f, 0f), new Vector2(RoundSealSize, RoundSealSize));
+            Place(seal.rectTransform, new Vector2(1f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(-sealCentre, 0f), new Vector2(sealSize, sealSize));
             Fade(seal, RoundSealAlpha);
             Depth(seal);
             _roundSeal = seal.rectTransform;
             _roundSealImage = seal;
-            // R3: the ink spreads centre-out through the seal as it stamps (Hanko time map, Screen).
+            // R3: the ink spreads centre-out through the seal as it stamps (Hanko time map, Screen) - over the kit mask's own
+            // mark, or (the AP-032 ring, whose shape is its alpha) as a wipe.
             _roundSealFx = seal.gameObject.AddComponent<UiFx>();
-            _roundSealFx.Configure(UiFxMode.InkReveal, UiDuration.Screen, Vector3.zero, UiInkChannel.Hanko);
+            _roundSealFx.Configure(UiFxMode.InkReveal, UiDuration.Screen, authoredSeal != null ? new Vector3(0f, 1f, 0f) : Vector3.zero, UiInkChannel.Hanko);
 
             LayRound(0);
         }
 
-        /// <summary>The AP-032 letters from the theme (HudRoundNumeral.GlyphKeys); missing ones stay null and keep the text path.</summary>
-        private static Sprite[] RoundGlyphSprites()
+        /// <summary>
+        /// The AP-032 letters with their alternates (HudArt, the §1 atlas for a cap of <paramref name="capPhysicalPx"/>), else the
+        /// theme's one sprite per key (HudRoundNumeral.GlyphKeys); missing ones stay null and keep the text path.
+        /// </summary>
+        private static Sprite[][] RoundGlyphAlternates(float capPhysicalPx)
         {
-            var sprites = new Sprite[HudRoundNumeral.GlyphKeys.Length];
-            for (int i = 0; i < sprites.Length; i++)
+            var alternates = new Sprite[HudRoundNumeral.GlyphKeys.Length][];
+            for (int i = 0; i < alternates.Length; i++)
             {
-                sprites[i] = UiArt.Icon(HudRoundNumeral.GlyphKeys[i]);
+                alternates[i] = HudArt.RomanAlternates(i, capPhysicalPx, null);
+                if (alternates[i] == null)
+                {
+                    Sprite one = UiArt.Icon(HudRoundNumeral.GlyphKeys[i]);
+                    alternates[i] = one != null ? new[] { one } : null;
+                }
             }
 
-            return sprites;
+            return alternates;
         }
 
         /// <summary>
@@ -366,10 +451,22 @@ namespace DD.Prototype.UI
         private float LayRound(int round)
         {
             float width = _roundNumeral.Set(round);
-            float letters = RoundSealSize + (int)UiSpace.S;
-            _roundSmear.rectTransform.sizeDelta = new Vector2(width + RoundSmearOverhang + (int)UiSpace.S, RoundSmearHeight);
-            _roundCluster.sizeDelta = new Vector2(letters + width + RoundSmearOverhang, _roundCluster.sizeDelta.y);
-            _roundClip.anchoredPosition = new Vector2(-(letters + width + RoundClipPad), 0f);
+            if (_roundSmearAuthored)
+            {
+                // AP-032 §3.3: the plate's width rounds to whole periods (the W' rule, spare to the head), its tail's tip on
+                // the margin (AD note 4) - the cluster is the plate.
+                float plateWidth, plateHeight;
+                HudArt.LaySmear(RoundGlyphHeight, width, _roundNumeral.FirstBearingEm, out plateWidth, out plateHeight, out _, out _, out _);
+                _roundSmear.rectTransform.sizeDelta = new Vector2(plateWidth, plateHeight);
+                _roundCluster.sizeDelta = new Vector2(plateWidth, _roundCluster.sizeDelta.y);
+            }
+            else
+            {
+                _roundSmear.rectTransform.sizeDelta = new Vector2(width + RoundSmearOverhang + (int)UiSpace.S, RoundSmearHeight);
+                _roundCluster.sizeDelta = new Vector2(_roundRunRight + width + RoundSmearOverhang, _roundCluster.sizeDelta.y);
+            }
+
+            _roundClip.anchoredPosition = new Vector2(-(_roundRunRight + width + RoundClipPad), 0f);
             _roundClip.sizeDelta = new Vector2(width + 2f * RoundClipPad, _roundClip.sizeDelta.y);
             return width;
         }

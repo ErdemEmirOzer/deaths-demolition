@@ -101,6 +101,11 @@ namespace DD.Prototype.Tests.PlayMode
             // 1 · the point is the coin's centre (overlay: camera null), on screen, above the health cluster in its column.
             Assert.IsTrue(HudGoldTarget.TryGetScreenPoint(out Vector2 point), "a live HUD in a fighting run is a target");
             Image coin = Find<Image>(hud.transform, "Gold", "Coin");
+            // WP-094 AP-032 v001: the koban is bound - the §1 layer for its 40 px body on this screen, full colour (no tint).
+            Sprite koban = HudArt.GoldCoin(RunHudScreen.GoldCoinBody * HudArt.CanvasScale);
+            Assert.IsNotNull(koban, "AP-032's koban is in the build (UI/Hud)");
+            Assert.AreSame(koban, coin.sprite, "the gold symbol is AP-032's koban, not the G1 glyph");
+            Assert.AreEqual(Color.white, coin.color, "full-colour art takes no tint");
             RectTransform coinRect = coin.rectTransform;
             Vector2 coinCentre = RectTransformUtility.WorldToScreenPoint(null, coinRect.TransformPoint(coinRect.rect.center));
             Assert.Less(Vector2.Distance(point, coinCentre), 0.5f, "target " + point + " vs coin centre " + coinCentre);
@@ -277,9 +282,16 @@ namespace DD.Prototype.Tests.PlayMode
             Rect delta = CanvasRectOf(screen, Find<TMP_Text>(hud.transform, "Gold", "Delta").rectTransform);
             string where = frame + " gold " + gold + " health " + health + " round " + round + " weapon " + weapon;
 
-            // The gold: directly above the health, one UiSpace.S or more clear, at most 16 px, on the same left rail.
-            Assert.GreaterOrEqual(gold.yMin, health.yMax + (int)UiSpace.S - 0.5f, where + ": the gold sits above the health, ≥ 8 px clear");
-            Assert.LessOrEqual(gold.yMin, health.yMax + 16f + 0.5f, where + ": directly above (≤ 16 px)");
+            // The gold: directly above the health, one UiSpace.S or more clear, at most 16 px (S + the 8 px grid's remainder),
+            // on the same left rail. Measured from the health cluster's LAID-OUT top: the posture draws the cluster at CalmScale
+            // about its bottom-left corner in calm (r3-w1: 94.91 drawn of 100.97 laid out at 1080), and the gold - the coins'
+            // flight target - keeps its place on the grid rather than follow a draw scale (RunHudScreen.GoldClusterBottom).
+            RectTransform healthCluster = ClusterNamed(hud, "Health");
+            float healthTop = health.yMin + health.height / Mathf.Max(0.01f, healthCluster.localScale.y);
+            Assert.AreEqual(RunHudScreen.HealthClusterHeight(), healthTop - health.yMin, 0.5f, where + ": the laid-out health height");
+            Assert.GreaterOrEqual(gold.yMin, healthTop + (int)UiSpace.S - 0.5f, where + ": the gold sits above the health, ≥ 8 px clear");
+            Assert.LessOrEqual(gold.yMin, healthTop + (int)UiSpace.S + 8f + 0.01f, where + ": directly above (≤ S + the grid's 8 px)");
+            Assert.GreaterOrEqual(gold.yMin, health.yMax + (int)UiSpace.S - 0.5f, where + ": ≥ 8 px clear of the drawn health in either posture");
             Assert.AreEqual(health.xMin, gold.xMin, 0.5f, where + ": one left rail");
             float goldBottom = gold.yMin - canvasRect.yMin;
             Assert.AreEqual(Mathf.Round(goldBottom / 8f) * 8f, goldBottom, 0.01f, where + ": the gold's bottom on the 8 px grid (from the canvas bottom)");
@@ -291,13 +303,38 @@ namespace DD.Prototype.Tests.PlayMode
             // The round: the top-right corner, InkMargin in from both edges; the numeral is the Roman one and fits its box.
             Assert.AreEqual(canvasRect.xMax - 32f, round.xMax, 0.5f, where + ": round's right edge");
             Assert.AreEqual(canvasRect.yMax - 32f, round.yMax, 0.5f, where + ": round's top edge");
-            Assert.Greater(round.xMin, canvasRect.center.x + canvasRect.width * 0.25f, where + ": round in the right quarter");
             Rect seal = CanvasRectOf(screen, hud.RoundSeal);
-            Assert.AreEqual(round.xMax, seal.xMax, 3f, where + ": the seal accent at the corner (≤ 2 px drift)");
+            Rect letters = CanvasRectOf(screen, hud.RoundClip);
+            if (hud.RoundPlateAuthored)
+            {
+                // AP-032 v001 §3.3 (AD notes 3 / 4): the margin is measured from the plate's tail tip (the cluster is the plate);
+                // the seal sits 0.55 diameters inside the dense zone's right end at the cap's middle, the letters end 0.22 em
+                // before it. The readable impression (letters + seal) keeps the right quarter; the plate itself - its spare width
+                // goes to the head by the W' rule, 419 px for XXXVIII - stays in the right half (on the Mac's 1600-wide canvas a
+                // quarter is 400 px).
+                float plateWidth, plateHeight, runRight, sealCentre, sealDiameter;
+                HudArt.LaySmear(RunHudScreen.RoundGlyphHeight, hud.RoundNumeral.Width, hud.RoundNumeral.FirstBearingEm,
+                    out plateWidth, out plateHeight, out runRight, out sealCentre, out sealDiameter);
+                Assert.AreEqual(plateWidth, round.width, 0.5f, where + ": the cluster is the plate (W' rule)");
+                Assert.AreEqual(round.xMax - sealCentre, seal.center.x, 0.5f, where + ": the seal 0.55 diameters inside the dense zone");
+                Assert.AreEqual(round.center.y, seal.center.y, 0.5f, where + ": the seal at the cap's middle");
+                Assert.Greater(letters.xMin, canvasRect.center.x + canvasRect.width * 0.25f, where + ": the numeral in the right quarter");
+                Assert.Less(letters.xMax, seal.xMin, where + ": the letters before the seal");
+                Assert.Greater(round.xMin, canvasRect.center.x, where + ": the plate in the right half");
+            }
+            else
+            {
+                Assert.Greater(round.xMin, canvasRect.center.x + canvasRect.width * 0.25f, where + ": round in the right quarter");
+                Assert.AreEqual(round.xMax, seal.xMax, 3f, where + ": the seal accent at the corner (≤ 2 px drift)");
+            }
+
             Assert.Greater(hud.RoundSealHitAt, 0f, "the reveal scheduled the seal's hit");
+            // WP-094 AP-032 v001: with the atlases in the build the numeral is AP-032's brush cells, the TMP line off.
+            Assert.AreEqual(HudArt.RomanAuthored, hud.RoundNumeral.DrawsGlyphs, frame + ": AP-032's cells draw the numeral when they are in");
             if (hud.RoundNumeral.DrawsGlyphs)
             {
                 Assert.AreEqual(7, hud.RoundNumeral.GlyphCount, "XXXVIII as glyphs");
+                Assert.IsFalse(Find<TMP_Text>(hud.transform, "Round", "RoundValue").enabled, frame + ": no TMP on the glyph path");
             }
             else
             {

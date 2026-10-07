@@ -1,0 +1,2134 @@
+{
+ "schema": "AP032-roman-metrics-v1",
+ "spec": "K/wp-094/AP-032-034-SPEK.md §3.2",
+ "params": "01-design/AP032-glif-params.json",
+ "layers": {
+  "256": {
+   "cell": 256,
+   "capHeight": 160,
+   "baseline": 208,
+   "baseline_from_bottom": 48,
+   "sdf_spread": 16,
+   "atlas": "roman/atlas/ap032_roman_atlas_1024_{base,data}.png"
+  },
+  "128": {
+   "cell": 128,
+   "capHeight": 80,
+   "baseline": 104,
+   "baseline_from_bottom": 24,
+   "sdf_spread": 8,
+   "atlas": "roman/atlas/ap032_roman_atlas_512_{base,data}.png"
+  }
+ },
+ "units": {
+  "em": "büyük harf yüksekliği (capHeight)",
+  "px256": "256 katmanında px (128 katmanı = px256/2)",
+  "baseline": "hücre üstünden px",
+  "rect_top_left": "[x, y, w, h] PNG sol üst",
+  "rect_unity_bottom_left": "[x, y, w, h] Unity Sprite rect (sol alt köken)"
+ },
+ "placement": "glif Image'ı hücre boyutunda; hücrenin sol kenarı = pen − originX (px, katman ölçeğinde); taban çizgisi hücre üstünden baseline px. Sonraki pen = pen + advance + kern(çift).",
+ "alternate_rule": "alt_index = (round + position) % len(alternates[G])  (position = dizide 0'dan sıra)",
+ "numeral_rule": "standart eksiltmeli I V X L C; 400+ toplamalı (CCCC…); D/M yok (SPEK §11)",
+ "glyphs": {
+  "I": {
+   "advance_em": 0.3417,
+   "lsb_em": 0.05,
+   "rsb_em": 0.05,
+   "advance_px256": 54.67,
+   "lsb_px256": 8.0,
+   "rsb_px256": 8.0,
+   "originX_px256": 101.0,
+   "originX_em": 0.6312,
+   "fit": {
+    "xscale": 1.0,
+    "wscale": 1.0666666666666667
+   },
+   "target_ink_width_em": 0.24,
+   "strokes": [
+    {
+     "t": [
+      0.0,
+      1.0
+     ],
+     "tail": true,
+     "kind": "line"
+    }
+   ],
+   "stroke_order": "yukarıdan aşağı [0,1]",
+   "alternates": {
+    "a": {
+     "stem": "ap032_roman_I_a_256",
+     "inkBBox_px256": [
+      109,
+      48,
+      147,
+      208
+     ],
+     "inkBBox_em": [
+      0.05,
+      0.0,
+      0.2875,
+      1.0
+     ],
+     "inkBBox_any_px256": [
+      108,
+      47,
+      148,
+      209
+     ],
+     "inkBBox_any_em": [
+      0.0437,
+      -0.0063,
+      0.2938,
+      1.0063
+     ],
+     "ink_width_em": 0.2375,
+     "class": "K1",
+     "kasure_void_body": 0.0291,
+     "kasure_void_tail": 0.2441,
+     "stroke_primitives": [
+      "h4a_vertical_03"
+     ],
+     "atlas": {
+      "1024": {
+       "rect_px_top_left": [
+        0,
+        0,
+        256,
+        256
+       ],
+       "rect_px_unity_bottom_left": [
+        0,
+        768,
+        256,
+        256
+       ],
+       "uv_rect_bottom_left": [
+        0.0,
+        0.75,
+        0.25,
+        0.25
+       ]
+      },
+      "512": {
+       "rect_px_top_left": [
+        0,
+        0,
+        128,
+        128
+       ],
+       "rect_px_unity_bottom_left": [
+        0,
+        384,
+        128,
+        128
+       ],
+       "uv_rect_bottom_left": [
+        0.0,
+        0.75,
+        0.25,
+        0.25
+       ]
+      }
+     },
+     "calibration": [
+      {
+       "iter": 0,
+       "void_body": 0.0053,
+       "void_tail": 0.2456,
+       "extra": {
+        "0": [
+         0.0,
+         0.0
+        ]
+       }
+      },
+      {
+       "iter": 1,
+       "void_body": 0.0107,
+       "void_tail": 0.2397,
+       "extra": {
+        "0": [
+         0.0447,
+         -0.0144
+        ]
+       }
+      },
+      {
+       "iter": 2,
+       "void_body": 0.0291,
+       "void_tail": 0.2441,
+       "extra": {
+        "0": [
+         0.0846,
+         -0.0247
+        ]
+       }
+      }
+     ],
+     "time": {
+      "ink_share": 0.0798,
+      "time_range": [
+       0.0,
+       0.9804
+      ],
+      "time_p99": 0.9804,
+      "time_model": "çekiş aralığında τ(s) = 0,6·(1−(1−s)^1,8) + 0,4·s + kıl kayması ±0,025 (yalnız v) + 0,10·span·(1−ton)·smoothstep(0,55;1;s); bindirmede en küçük; dışı 255"
+     }
+    },
+    "b": {
+     "stem": "ap032_roman_I_b_256",
+     "inkBBox_px256": [
+      109,
+      48,
+      148,
+      208
+     ],
+     "inkBBox_em": [
+      0.05,
+      0.0,
+      0.2938,
+      1.0
+     ],
+     "inkBBox_any_px256": [
+      108,
+      48,
+      149,
+      209
+     ],
+     "inkBBox_any_em": [
+      0.0437,
+      -0.0063,
+      0.3,
+      1.0
+     ],
+     "ink_width_em": 0.2437,
+     "class": "K0",
+     "kasure_void_body": 0.0101,
+     "kasure_void_tail": 0.0048,
+     "stroke_primitives": [
+      "h4a_vertical_01"
+     ],
+     "atlas": {
+      "1024": {
+       "rect_px_top_left": [
+        256,
+        0,
+        256,
+        256
+       ],
+       "rect_px_unity_bottom_left": [
+        256,
+        768,
+        256,
+        256
+       ],
+       "uv_rect_bottom_left": [
+        0.25,
+        0.75,
+        0.25,
+        0.25
+       ]
+      },
+      "512": {
+       "rect_px_top_left": [
+        128,
+        0,
+        128,
+        128
+       ],
+       "rect_px_unity_bottom_left": [
+        128,
+        384,
+        128,
+        128
+       ],
+       "uv_rect_bottom_left": [
+        0.25,
+        0.75,
+        0.25,
+        0.25
+       ]
+      }
+     },
+     "calibration": [
+      {
+       "iter": 0,
+       "void_body": 0.0101,
+       "void_tail": 0.0038,
+       "extra": {
+        "0": [
+         0.0,
+         0.0
+        ]
+       }
+      },
+      {
+       "iter": 1,
+       "void_body": 0.0101,
+       "void_tail": 0.0038,
+       "extra": {
+        "0": [
+         0.0,
+         0.0398
+        ]
+       }
+      },
+      {
+       "iter": 2,
+       "void_body": 0.0101,
+       "void_tail": 0.0048,
+       "extra": {
+        "0": [
+         0.0,
+         0.0796
+        ]
+       }
+      }
+     ],
+     "time": {
+      "ink_share": 0.0827,
+      "time_range": [
+       0.0,
+       0.9804
+      ],
+      "time_p99": 0.9804,
+      "time_model": "çekiş aralığında τ(s) = 0,6·(1−(1−s)^1,8) + 0,4·s + kıl kayması ±0,025 (yalnız v) + 0,10·span·(1−ton)·smoothstep(0,55;1;s); bindirmede en küçük; dışı 255"
+     }
+    },
+    "c": {
+     "stem": "ap032_roman_I_c_256",
+     "inkBBox_px256": [
+      109,
+      48,
+      148,
+      202
+     ],
+     "inkBBox_em": [
+      0.05,
+      0.0375,
+      0.2938,
+      1.0
+     ],
+     "inkBBox_any_px256": [
+      108,
+      48,
+      149,
+      209
+     ],
+     "inkBBox_any_em": [
+      0.0437,
+      -0.0063,
+      0.3,
+      1.0
+     ],
+     "ink_width_em": 0.2437,
+     "class": "K2",
+     "kasure_void_body": 0.0514,
+     "kasure_void_tail": 0.4464,
+     "stroke_primitives": [
+      "h4a_vertical_06"
+     ],
+     "atlas": {
+      "1024": {
+       "rect_px_top_left": [
+        512,
+        0,
+        256,
+        256
+       ],
+       "rect_px_unity_bottom_left": [
+        512,
+        768,
+        256,
+        256
+       ],
+       "uv_rect_bottom_left": [
+        0.5,
+        0.75,
+        0.25,
+        0.25
+       ]
+      },
+      "512": {
+       "rect_px_top_left": [
+        256,
+        0,
+        128,
+        128
+       ],
+       "rect_px_unity_bottom_left": [
+        256,
+        384,
+        128,
+        128
+       ],
+       "uv_rect_bottom_left": [
+        0.5,
+        0.75,
+        0.25,
+        0.25
+       ]
+      }
+     },
+     "calibration": [
+      {
+       "iter": 0,
+       "void_body": 0.0136,
+       "void_tail": 0.3645,
+       "extra": {
+        "0": [
+         0.0,
+         0.0
+        ]
+       }
+      },
+      {
+       "iter": 1,
+       "void_body": 0.022,
+       "void_tail": 0.422,
+       "extra": {
+        "0": [
+         0.0688,
+         0.0941
+        ]
+       }
+      },
+      {
+       "iter": 2,
+       "void_body": 0.0514,
+       "void_tail": 0.4464,
+       "extra": {
+        "0": [
+         0.13,
+         0.1249
+        ]
+       }
+      }
+     ],
+     "time": {
+      "ink_share": 0.0704,
+      "time_range": [
+       0.0,
+       0.9804
+      ],
+      "time_p99": 0.9804,
+      "time_model": "çekiş aralığında τ(s) = 0,6·(1−(1−s)^1,8) + 0,4·s + kıl kayması ±0,025 (yalnız v) + 0,10·span·(1−ton)·smoothstep(0,55;1;s); bindirmede en küçük; dışı 255"
+     }
+    }
+   }
+  },
+  "V": {
+   "advance_em": 0.7513,
+   "lsb_em": 0.0121,
+   "rsb_em": -0.0201,
+   "advance_px256": 120.21,
+   "lsb_px256": 1.94,
+   "rsb_px256": -3.22,
+   "originX_px256": 65.06,
+   "originX_em": 0.4066,
+   "fit": {
+    "xscale": 1.0655508474576272,
+    "wscale": 1.0
+   },
+   "target_ink_width_em": 0.78,
+   "strokes": [
+    {
+     "t": [
+      0.0,
+      0.56
+     ],
+     "tail": false,
+     "kind": "line"
+    },
+    {
+     "t": [
+      0.56,
+      1.0
+     ],
+     "tail": true,
+     "kind": "line"
+    }
+   ],
+   "stroke_order": "sol üst → tepe → sağ üst tek çekiş: s1 [0;0,56], s2 [0,56;1]",
+   "alternates": {
+    "a": {
+     "stem": "ap032_roman_V_a_256",
+     "inkBBox_px256": [
+      66,
+      42,
+      191,
+      207
+     ],
+     "inkBBox_em": [
+      0.0059,
+      0.0063,
+      0.7871,
+      1.0375
+     ],
+     "inkBBox_any_px256": [
+      65,
+      37,
+      193,
+      209
+     ],
+     "inkBBox_any_em": [
+      -0.0004,
+      -0.0063,
+      0.7996,
+      1.0688
+     ],
+     "ink_width_em": 0.7812,
+     "class": "K1",
+     "kasure_void_body": 0.1144,
+     "kasure_void_tail": 0.3571,
+     "stroke_primitives": [
+      "h4a_vertical_07",
+      "h4b_flick_ur_01"
+     ],
+     "atlas": {
+      "1024": {
+       "rect_px_top_left": [
+        768,
+        0,
+        256,
+        256
+       ],
+       "rect_px_unity_bottom_left": [
+        768,
+        768,
+        256,
+        256
+       ],
+       "uv_rect_bottom_left": [
+        0.75,
+        0.75,
+        0.25,
+        0.25
+       ]
+      },
+      "512": {
+       "rect_px_top_left": [
+        384,
+        0,
+        128,
+        128
+       ],
+       "rect_px_unity_bottom_left": [
+        384,
+        384,
+        128,
+        128
+       ],
+       "uv_rect_bottom_left": [
+        0.75,
+        0.75,
+        0.25,
+        0.25
+       ]
+      }
+     },
+     "calibration": [
+      {
+       "iter": 0,
+       "void_body": 0.1148,
+       "void_tail": 0.3571,
+       "extra": {
+        "0": [
+         0.0,
+         0.0
+        ],
+        "1": [
+         0.0,
+         0.0
+        ]
+       }
+      },
+      {
+       "iter": 1,
+       "void_body": 0.1144,
+       "void_tail": 0.3571,
+       "extra": {
+        "0": [
+         -0.0359,
+         0.0
+        ],
+        "1": [
+         -0.0359,
+         -0.0925
+        ]
+       }
+      },
+      {
+       "iter": 2,
+       "void_body": 0.1144,
+       "void_tail": 0.3571,
+       "extra": {
+        "0": [
+         -0.0715,
+         0.0
+        ],
+        "1": [
+         -0.0715,
+         -0.185
+        ]
+       }
+      }
+     ],
+     "time": {
+      "ink_share": 0.0986,
+      "time_range": [
+       0.0,
+       0.9804
+      ],
+      "time_p99": 0.9804,
+      "time_model": "çekiş aralığında τ(s) = 0,6·(1−(1−s)^1,8) + 0,4·s + kıl kayması ±0,025 (yalnız v) + 0,10·span·(1−ton)·smoothstep(0,55;1;s); bindirmede en küçük; dışı 255"
+     }
+    },
+    "b": {
+     "stem": "ap032_roman_V_b_256",
+     "inkBBox_px256": [
+      68,
+      48,
+      188,
+      206
+     ],
+     "inkBBox_em": [
+      0.0184,
+      0.0125,
+      0.7684,
+      1.0
+     ],
+     "inkBBox_any_px256": [
+      67,
+      39,
+      192,
+      209
+     ],
+     "inkBBox_any_em": [
+      0.0121,
+      -0.0063,
+      0.7934,
+      1.0562
+     ],
+     "ink_width_em": 0.75,
+     "class": "K2",
+     "kasure_void_body": 0.1325,
+     "kasure_void_tail": 0.3333,
+     "stroke_primitives": [
+      "h4a_vertical_06",
+      "h4b_flick_ur_03"
+     ],
+     "atlas": {
+      "1024": {
+       "rect_px_top_left": [
+        0,
+        256,
+        256,
+        256
+       ],
+       "rect_px_unity_bottom_left": [
+        0,
+        512,
+        256,
+        256
+       ],
+       "uv_rect_bottom_left": [
+        0.0,
+        0.5,
+        0.25,
+        0.25
+       ]
+      },
+      "512": {
+       "rect_px_top_left": [
+        0,
+        128,
+        128,
+        128
+       ],
+       "rect_px_unity_bottom_left": [
+        0,
+        256,
+        128,
+        128
+       ],
+       "uv_rect_bottom_left": [
+        0.0,
+        0.5,
+        0.25,
+        0.25
+       ]
+      }
+     },
+     "calibration": [
+      {
+       "iter": 0,
+       "void_body": 0.1575,
+       "void_tail": 0.3333,
+       "extra": {
+        "0": [
+         0.0,
+         0.0
+        ],
+        "1": [
+         0.0,
+         0.0
+        ]
+       }
+      },
+      {
+       "iter": 1,
+       "void_body": 0.1356,
+       "void_tail": 0.3125,
+       "extra": {
+        "0": [
+         -0.0405,
+         0.0
+        ],
+        "1": [
+         -0.0405,
+         0.1283
+        ]
+       }
+      },
+      {
+       "iter": 2,
+       "void_body": 0.1325,
+       "void_tail": 0.3333,
+       "extra": {
+        "0": [
+         -0.0679,
+         0.0
+        ],
+        "1": [
+         -0.0679,
+         0.2796
+        ]
+       }
+      }
+     ],
+     "time": {
+      "ink_share": 0.0962,
+      "time_range": [
+       0.0,
+       0.9804
+      ],
+      "time_p99": 0.9804,
+      "time_model": "çekiş aralığında τ(s) = 0,6·(1−(1−s)^1,8) + 0,4·s + kıl kayması ±0,025 (yalnız v) + 0,10·span·(1−ton)·smoothstep(0,55;1;s); bindirmede en küçük; dışı 255"
+     }
+    }
+   }
+  },
+  "X": {
+   "advance_em": 0.78,
+   "lsb_em": 0.0121,
+   "rsb_em": -0.0258,
+   "advance_px256": 124.8,
+   "lsb_px256": 1.94,
+   "rsb_px256": -4.13,
+   "originX_px256": 63.06,
+   "originX_em": 0.3941,
+   "fit": {
+    "xscale": 1.0945378151260505,
+    "wscale": 1.0
+   },
+   "target_ink_width_em": 0.8,
+   "strokes": [
+    {
+     "t": [
+      0.0,
+      0.55
+     ],
+     "tail": false,
+     "kind": "line"
+    },
+    {
+     "t": [
+      0.6,
+      1.0
+     ],
+     "tail": true,
+     "kind": "line"
+    }
+   ],
+   "stroke_order": "s1 sol üst → sağ alt [0;0,55], kalkış, s2 sağ üst → sol alt [0,60;1]",
+   "alternates": {
+    "a": {
+     "stem": "ap032_roman_X_a_256",
+     "inkBBox_px256": [
+      65,
+      45,
+      192,
+      210
+     ],
+     "inkBBox_em": [
+      0.0121,
+      -0.0125,
+      0.8059,
+      1.0188
+     ],
+     "inkBBox_any_px256": [
+      64,
+      44,
+      193,
+      213
+     ],
+     "inkBBox_any_em": [
+      0.0059,
+      -0.0312,
+      0.8121,
+      1.025
+     ],
+     "ink_width_em": 0.7937,
+     "class": "K1",
+     "kasure_void_body": 0.0565,
+     "kasure_void_tail": 0.6159,
+     "stroke_primitives": [
+      "h4a_diag_dr_thick_01",
+      "h4a_diag_dl_thin_01"
+     ],
+     "atlas": {
+      "1024": {
+       "rect_px_top_left": [
+        256,
+        256,
+        256,
+        256
+       ],
+       "rect_px_unity_bottom_left": [
+        256,
+        512,
+        256,
+        256
+       ],
+       "uv_rect_bottom_left": [
+        0.25,
+        0.5,
+        0.25,
+        0.25
+       ]
+      },
+      "512": {
+       "rect_px_top_left": [
+        128,
+        128,
+        128,
+        128
+       ],
+       "rect_px_unity_bottom_left": [
+        128,
+        256,
+        128,
+        128
+       ],
+       "uv_rect_bottom_left": [
+        0.25,
+        0.5,
+        0.25,
+        0.25
+       ]
+      }
+     },
+     "calibration": [
+      {
+       "iter": 0,
+       "void_body": 0.0565,
+       "void_tail": 0.6313,
+       "extra": {
+        "0": [
+         0.0,
+         0.0
+        ],
+        "1": [
+         0.0,
+         0.0
+        ]
+       }
+      },
+      {
+       "iter": 1,
+       "void_body": 0.0565,
+       "void_tail": 0.6159,
+       "extra": {
+        "0": [
+         -0.0009,
+         0.0
+        ],
+        "1": [
+         -0.0009,
+         -0.2844
+        ]
+       }
+      },
+      {
+       "iter": 2,
+       "void_body": 0.0565,
+       "void_tail": 0.6159,
+       "extra": {
+        "0": [
+         -0.0019,
+         0.0
+        ],
+        "1": [
+         -0.0019,
+         -0.4
+        ]
+       }
+      }
+     ],
+     "time": {
+      "ink_share": 0.125,
+      "time_range": [
+       0.0,
+       0.9804
+      ],
+      "time_p99": 0.9804,
+      "time_model": "çekiş aralığında τ(s) = 0,6·(1−(1−s)^1,8) + 0,4·s + kıl kayması ±0,025 (yalnız v) + 0,10·span·(1−ton)·smoothstep(0,55;1;s); bindirmede en küçük; dışı 255"
+     }
+    },
+    "b": {
+     "stem": "ap032_roman_X_b_256",
+     "inkBBox_px256": [
+      64,
+      44,
+      193,
+      210
+     ],
+     "inkBBox_em": [
+      0.0059,
+      -0.0125,
+      0.8121,
+      1.025
+     ],
+     "inkBBox_any_px256": [
+      63,
+      44,
+      193,
+      213
+     ],
+     "inkBBox_any_em": [
+      -0.0004,
+      -0.0312,
+      0.8121,
+      1.025
+     ],
+     "ink_width_em": 0.8063,
+     "class": "K0",
+     "kasure_void_body": 0.0318,
+     "kasure_void_tail": 0.6337,
+     "stroke_primitives": [
+      "h4a_diag_dr_thick_02",
+      "h4a_diag_dl_thin_02"
+     ],
+     "atlas": {
+      "1024": {
+       "rect_px_top_left": [
+        512,
+        256,
+        256,
+        256
+       ],
+       "rect_px_unity_bottom_left": [
+        512,
+        512,
+        256,
+        256
+       ],
+       "uv_rect_bottom_left": [
+        0.5,
+        0.5,
+        0.25,
+        0.25
+       ]
+      },
+      "512": {
+       "rect_px_top_left": [
+        256,
+        128,
+        128,
+        128
+       ],
+       "rect_px_unity_bottom_left": [
+        256,
+        256,
+        128,
+        128
+       ],
+       "uv_rect_bottom_left": [
+        0.5,
+        0.5,
+        0.25,
+        0.25
+       ]
+      }
+     },
+     "calibration": [
+      {
+       "iter": 0,
+       "void_body": 0.0318,
+       "void_tail": 0.6337,
+       "extra": {
+        "0": [
+         0.0,
+         0.0
+        ],
+        "1": [
+         0.0,
+         0.0
+        ]
+       }
+      },
+      {
+       "iter": 1,
+       "void_body": 0.0318,
+       "void_tail": 0.6337,
+       "extra": {
+        "0": [
+         0.0,
+         0.0
+        ],
+        "1": [
+         0.0,
+         0.0
+        ]
+       }
+      },
+      {
+       "iter": 2,
+       "void_body": 0.0318,
+       "void_tail": 0.6337,
+       "extra": {
+        "0": [
+         0.0,
+         0.0
+        ],
+        "1": [
+         0.0,
+         0.0
+        ]
+       }
+      }
+     ],
+     "time": {
+      "ink_share": 0.1264,
+      "time_range": [
+       0.0,
+       0.9804
+      ],
+      "time_p99": 0.9804,
+      "time_model": "çekiş aralığında τ(s) = 0,6·(1−(1−s)^1,8) + 0,4·s + kıl kayması ±0,025 (yalnız v) + 0,10·span·(1−ton)·smoothstep(0,55;1;s); bindirmede en küçük; dışı 255"
+     }
+    },
+    "c": {
+     "stem": "ap032_roman_X_c_256",
+     "inkBBox_px256": [
+      66,
+      44,
+      191,
+      210
+     ],
+     "inkBBox_em": [
+      0.0184,
+      -0.0125,
+      0.7996,
+      1.025
+     ],
+     "inkBBox_any_px256": [
+      65,
+      43,
+      192,
+      211
+     ],
+     "inkBBox_any_em": [
+      0.0121,
+      -0.0187,
+      0.8059,
+      1.0312
+     ],
+     "ink_width_em": 0.7812,
+     "class": "K2",
+     "kasure_void_body": 0.1074,
+     "kasure_void_tail": 0.6139,
+     "stroke_primitives": [
+      "h4a_diag_dr_thick_03",
+      "h4a_diag_dl_thin_03"
+     ],
+     "atlas": {
+      "1024": {
+       "rect_px_top_left": [
+        768,
+        256,
+        256,
+        256
+       ],
+       "rect_px_unity_bottom_left": [
+        768,
+        512,
+        256,
+        256
+       ],
+       "uv_rect_bottom_left": [
+        0.75,
+        0.5,
+        0.25,
+        0.25
+       ]
+      },
+      "512": {
+       "rect_px_top_left": [
+        384,
+        128,
+        128,
+        128
+       ],
+       "rect_px_unity_bottom_left": [
+        384,
+        256,
+        128,
+        128
+       ],
+       "uv_rect_bottom_left": [
+        0.75,
+        0.5,
+        0.25,
+        0.25
+       ]
+      }
+     },
+     "calibration": [
+      {
+       "iter": 0,
+       "void_body": 0.1165,
+       "void_tail": 0.718,
+       "extra": {
+        "0": [
+         0.0,
+         0.0
+        ],
+        "1": [
+         0.0,
+         0.0
+        ]
+       }
+      },
+      {
+       "iter": 1,
+       "void_body": 0.111,
+       "void_tail": 0.6348,
+       "extra": {
+        "0": [
+         -0.0159,
+         0.0
+        ],
+        "1": [
+         -0.0159,
+         -0.1876
+        ]
+       }
+      },
+      {
+       "iter": 2,
+       "void_body": 0.1074,
+       "void_tail": 0.6139,
+       "extra": {
+        "0": [
+         -0.0285,
+         0.0
+        ],
+        "1": [
+         -0.0285,
+         -0.317
+        ]
+       }
+      }
+     ],
+     "time": {
+      "ink_share": 0.1214,
+      "time_range": [
+       0.0,
+       0.9804
+      ],
+      "time_p99": 0.9804,
+      "time_model": "çekiş aralığında τ(s) = 0,6·(1−(1−s)^1,8) + 0,4·s + kıl kayması ±0,025 (yalnız v) + 0,10·span·(1−ton)·smoothstep(0,55;1;s); bindirmede en küçük; dışı 255"
+     }
+    }
+   }
+  },
+  "L": {
+   "advance_em": 0.6447,
+   "lsb_em": 0.0528,
+   "rsb_em": -0.0331,
+   "advance_px256": 103.15,
+   "lsb_px256": 8.45,
+   "rsb_px256": -5.3,
+   "originX_px256": 70.05,
+   "originX_em": 0.4378,
+   "fit": {
+    "xscale": 1.0091836734693875,
+    "wscale": 1.0
+   },
+   "target_ink_width_em": 0.62,
+   "strokes": [
+    {
+     "t": [
+      0.0,
+      0.6
+     ],
+     "tail": false,
+     "kind": "line"
+    },
+    {
+     "t": [
+      0.6,
+      1.0
+     ],
+     "tail": true,
+     "kind": "poly"
+    }
+   ],
+   "stroke_order": "dikey [0;0,60], köşe 0,60, yatay [0,60;1]",
+   "alternates": {
+    "a": {
+     "stem": "ap032_roman_L_a_256",
+     "inkBBox_px256": [
+      78,
+      48,
+      178,
+      214
+     ],
+     "inkBBox_em": [
+      0.0497,
+      -0.0375,
+      0.6747,
+      1.0
+     ],
+     "inkBBox_any_px256": [
+      78,
+      48,
+      181,
+      215
+     ],
+     "inkBBox_any_em": [
+      0.0497,
+      -0.0437,
+      0.6934,
+      1.0
+     ],
+     "ink_width_em": 0.625,
+     "class": "K1",
+     "kasure_void_body": 0.0556,
+     "kasure_void_tail": 0.5141,
+     "stroke_primitives": [
+      "h4a_vertical_02",
+      "h4b_horizontal_01"
+     ],
+     "atlas": {
+      "1024": {
+       "rect_px_top_left": [
+        0,
+        512,
+        256,
+        256
+       ],
+       "rect_px_unity_bottom_left": [
+        0,
+        256,
+        256,
+        256
+       ],
+       "uv_rect_bottom_left": [
+        0.0,
+        0.25,
+        0.25,
+        0.25
+       ]
+      },
+      "512": {
+       "rect_px_top_left": [
+        0,
+        256,
+        128,
+        128
+       ],
+       "rect_px_unity_bottom_left": [
+        0,
+        128,
+        128,
+        128
+       ],
+       "uv_rect_bottom_left": [
+        0.0,
+        0.25,
+        0.25,
+        0.25
+       ]
+      }
+     },
+     "calibration": [
+      {
+       "iter": 0,
+       "void_body": 0.0393,
+       "void_tail": 0.6691,
+       "extra": {
+        "0": [
+         0.0,
+         0.0
+        ],
+        "1": [
+         0.0,
+         0.0
+        ]
+       }
+      },
+      {
+       "iter": 1,
+       "void_body": 0.0513,
+       "void_tail": 0.5141,
+       "extra": {
+        "0": [
+         0.0141,
+         0.0
+        ],
+        "1": [
+         0.0141,
+         -0.3109
+        ]
+       }
+      },
+      {
+       "iter": 2,
+       "void_body": 0.0556,
+       "void_tail": 0.5141,
+       "extra": {
+        "0": [
+         0.0175,
+         0.0
+        ],
+        "1": [
+         0.0175,
+         -0.4
+        ]
+       }
+      }
+     ],
+     "time": {
+      "ink_share": 0.0913,
+      "time_range": [
+       0.0,
+       0.9804
+      ],
+      "time_p99": 0.9804,
+      "time_model": "çekiş aralığında τ(s) = 0,6·(1−(1−s)^1,8) + 0,4·s + kıl kayması ±0,025 (yalnız v) + 0,10·span·(1−ton)·smoothstep(0,55;1;s); bindirmede en küçük; dışı 255"
+     }
+    },
+    "b": {
+     "stem": "ap032_roman_L_b_256",
+     "inkBBox_px256": [
+      79,
+      48,
+      179,
+      214
+     ],
+     "inkBBox_em": [
+      0.0559,
+      -0.0375,
+      0.6809,
+      1.0
+     ],
+     "inkBBox_any_px256": [
+      78,
+      47,
+      181,
+      215
+     ],
+     "inkBBox_any_em": [
+      0.0497,
+      -0.0437,
+      0.6934,
+      1.0063
+     ],
+     "ink_width_em": 0.625,
+     "class": "K2",
+     "kasure_void_body": 0.0875,
+     "kasure_void_tail": 0.5871,
+     "stroke_primitives": [
+      "h4a_vertical_05",
+      "h4b_horizontal_03"
+     ],
+     "atlas": {
+      "1024": {
+       "rect_px_top_left": [
+        256,
+        512,
+        256,
+        256
+       ],
+       "rect_px_unity_bottom_left": [
+        256,
+        256,
+        256,
+        256
+       ],
+       "uv_rect_bottom_left": [
+        0.25,
+        0.25,
+        0.25,
+        0.25
+       ]
+      },
+      "512": {
+       "rect_px_top_left": [
+        128,
+        256,
+        128,
+        128
+       ],
+       "rect_px_unity_bottom_left": [
+        128,
+        128,
+        128,
+        128
+       ],
+       "uv_rect_bottom_left": [
+        0.25,
+        0.25,
+        0.25,
+        0.25
+       ]
+      }
+     },
+     "calibration": [
+      {
+       "iter": 0,
+       "void_body": 0.0667,
+       "void_tail": 0.7113,
+       "extra": {
+        "0": [
+         0.0,
+         0.0
+        ],
+        "1": [
+         0.0,
+         0.0
+        ]
+       }
+      },
+      {
+       "iter": 1,
+       "void_body": 0.0821,
+       "void_tail": 0.634,
+       "extra": {
+        "0": [
+         0.021,
+         0.0
+        ],
+        "1": [
+         0.021,
+         -0.1829
+        ]
+       }
+      },
+      {
+       "iter": 2,
+       "void_body": 0.0875,
+       "void_tail": 0.5871,
+       "extra": {
+        "0": [
+         0.0281,
+         0.0
+        ],
+        "1": [
+         0.0281,
+         -0.3117
+        ]
+       }
+      }
+     ],
+     "time": {
+      "ink_share": 0.0893,
+      "time_range": [
+       0.0,
+       0.9804
+      ],
+      "time_p99": 0.9804,
+      "time_model": "çekiş aralığında τ(s) = 0,6·(1−(1−s)^1,8) + 0,4·s + kıl kayması ±0,025 (yalnız v) + 0,10·span·(1−ton)·smoothstep(0,55;1;s); bindirmede en küçük; dışı 255"
+     }
+    }
+   }
+  },
+  "C": {
+   "advance_em": 0.7364,
+   "lsb_em": 0.0295,
+   "rsb_em": -0.0025,
+   "advance_px256": 117.82,
+   "lsb_px256": 4.72,
+   "rsb_px256": -0.4,
+   "originX_px256": 66.78,
+   "originX_em": 0.4174,
+   "fit": {
+    "xscale": 1.223037272006344,
+    "wscale": 1.0
+   },
+   "target_ink_width_em": 0.7,
+   "strokes": [
+    {
+     "t": [
+      0.0,
+      1.0
+     ],
+     "tail": true,
+     "kind": "ellipse"
+    }
+   ],
+   "stroke_order": "sağ üstten saat yönünün tersine [0;1]",
+   "alternates": {
+    "a": {
+     "stem": "ap032_roman_C_a_256",
+     "inkBBox_px256": [
+      72,
+      46,
+      185,
+      207
+     ],
+     "inkBBox_em": [
+      0.0326,
+      0.0063,
+      0.7389,
+      1.0125
+     ],
+     "inkBBox_any_px256": [
+      72,
+      45,
+      185,
+      208
+     ],
+     "inkBBox_any_em": [
+      0.0326,
+      0.0,
+      0.7389,
+      1.0188
+     ],
+     "ink_width_em": 0.7063,
+     "class": "K1",
+     "kasure_void_body": 0.0542,
+     "kasure_void_tail": 0.31,
+     "stroke_primitives": [
+      "h4b_arc_ccw_01"
+     ],
+     "atlas": {
+      "1024": {
+       "rect_px_top_left": [
+        512,
+        512,
+        256,
+        256
+       ],
+       "rect_px_unity_bottom_left": [
+        512,
+        256,
+        256,
+        256
+       ],
+       "uv_rect_bottom_left": [
+        0.5,
+        0.25,
+        0.25,
+        0.25
+       ]
+      },
+      "512": {
+       "rect_px_top_left": [
+        256,
+        256,
+        128,
+        128
+       ],
+       "rect_px_unity_bottom_left": [
+        256,
+        128,
+        128,
+        128
+       ],
+       "uv_rect_bottom_left": [
+        0.5,
+        0.25,
+        0.25,
+        0.25
+       ]
+      }
+     },
+     "calibration": [
+      {
+       "iter": 0,
+       "void_body": 0.0137,
+       "void_tail": 0.4149,
+       "extra": {
+        "0": [
+         0.0,
+         0.0
+        ]
+       }
+      },
+      {
+       "iter": 1,
+       "void_body": 0.0615,
+       "void_tail": 0.3132,
+       "extra": {
+        "0": [
+         0.0372,
+         -0.133
+        ]
+       }
+      },
+      {
+       "iter": 2,
+       "void_body": 0.0542,
+       "void_tail": 0.31,
+       "extra": {
+        "0": [
+         0.0333,
+         -0.1947
+        ]
+       }
+      }
+     ],
+     "time": {
+      "ink_share": 0.113,
+      "time_range": [
+       0.0,
+       0.9804
+      ],
+      "time_p99": 0.9804,
+      "time_model": "çekiş aralığında τ(s) = 0,6·(1−(1−s)^1,8) + 0,4·s + kıl kayması ±0,025 (yalnız v) + 0,10·span·(1−ton)·smoothstep(0,55;1;s); bindirmede en küçük; dışı 255"
+     }
+    },
+    "b": {
+     "stem": "ap032_roman_C_b_256",
+     "inkBBox_px256": [
+      71,
+      46,
+      185,
+      207
+     ],
+     "inkBBox_em": [
+      0.0264,
+      0.0063,
+      0.7389,
+      1.0125
+     ],
+     "inkBBox_any_px256": [
+      70,
+      45,
+      186,
+      208
+     ],
+     "inkBBox_any_em": [
+      0.0201,
+      0.0,
+      0.7451,
+      1.0188
+     ],
+     "ink_width_em": 0.7125,
+     "class": "K2",
+     "kasure_void_body": 0.0506,
+     "kasure_void_tail": 0.4947,
+     "stroke_primitives": [
+      "h4b_arc_ccw_03"
+     ],
+     "atlas": {
+      "1024": {
+       "rect_px_top_left": [
+        768,
+        512,
+        256,
+        256
+       ],
+       "rect_px_unity_bottom_left": [
+        768,
+        256,
+        256,
+        256
+       ],
+       "uv_rect_bottom_left": [
+        0.75,
+        0.25,
+        0.25,
+        0.25
+       ]
+      },
+      "512": {
+       "rect_px_top_left": [
+        384,
+        256,
+        128,
+        128
+       ],
+       "rect_px_unity_bottom_left": [
+        384,
+        128,
+        128,
+        128
+       ],
+       "uv_rect_bottom_left": [
+        0.75,
+        0.25,
+        0.25,
+        0.25
+       ]
+      }
+     },
+     "calibration": [
+      {
+       "iter": 0,
+       "void_body": 0.0233,
+       "void_tail": 0.4746,
+       "extra": {
+        "0": [
+         0.0,
+         0.0
+        ]
+       }
+      },
+      {
+       "iter": 1,
+       "void_body": 0.0327,
+       "void_tail": 0.4783,
+       "extra": {
+        "0": [
+         0.0601,
+         -0.0172
+        ]
+       }
+      },
+      {
+       "iter": 2,
+       "void_body": 0.0506,
+       "void_tail": 0.4947,
+       "extra": {
+        "0": [
+         0.1116,
+         -0.037
+        ]
+       }
+      }
+     ],
+     "time": {
+      "ink_share": 0.1153,
+      "time_range": [
+       0.0,
+       0.9804
+      ],
+      "time_p99": 0.9804,
+      "time_model": "çekiş aralığında τ(s) = 0,6·(1−(1−s)^1,8) + 0,4·s + kıl kayması ±0,025 (yalnız v) + 0,10·span·(1−ton)·smoothstep(0,55;1;s); bindirmede en küçük; dışı 255"
+     }
+    }
+   }
+  }
+ },
+ "seal": {
+  "stem": "ap032_roman_seal_256",
+  "shape": "daire halka (kare halka 口 gibi okunabildiği için seçilmedi)",
+  "outer_diam_em": 0.45,
+  "ring_em": 0.1,
+  "interior": "boş (nokta yok)",
+  "source_texture": "h5_seal_block_circle_01",
+  "hf_job": "9b219f9c-346a-493f-92c7-ecc3b42af119",
+  "time_model": "merkezden dışa (Ink.Hanko): 0,60·(r−r_iç)/(r_dış−r_iç) + 0,30·(1−yoğunluk) + N(0;0,01)",
+  "time": {
+   "ink_share": 0.045,
+   "time_range": [
+    0.1059,
+    0.8314
+   ],
+   "time_p99": 0.7529,
+   "time_model": "merkezden dışa (Ink.Hanko): 0,60·(r−r_iç)/(r_dış−r_iç) + 0,30·(1−yoğunluk) + N(0;0,01)"
+  },
+  "inkBBox_px256": [
+   92,
+   93,
+   165,
+   164
+  ],
+  "center_px256": [
+   128,
+   128
+  ],
+  "diam_px256": 72.0,
+  "tint": "#C4362B",
+  "atlas": {
+   "1024": {
+    "rect_px_top_left": [
+     0,
+     768,
+     256,
+     256
+    ],
+    "rect_px_unity_bottom_left": [
+     0,
+     0,
+     256,
+     256
+    ],
+    "uv_rect_bottom_left": [
+     0.0,
+     0.0,
+     0.25,
+     0.25
+    ]
+   },
+   "512": {
+    "rect_px_top_left": [
+     0,
+     384,
+     128,
+     128
+    ],
+    "rect_px_unity_bottom_left": [
+     0,
+     0,
+     128,
+     128
+    ],
+    "uv_rect_bottom_left": [
+     0.0,
+     0.0,
+     0.25,
+     0.25
+    ]
+   }
+  },
+  "placement": "sağ uçta sabit; rakam sola büyür (SPEK §3.3). Önerilen: mühür merkezi taban çizgisinden 0,50 em yukarıda (cap ortası), son glifin advance sonu ile mühür sol kenarı arası 0,22 em; mühür sürtmenin yoğun bölgesinin sağ ucunda (smear.json). Halka tabanda 'o', üstte '°' gibi okunmasın diye cap ortası.",
+  "placement_params": {
+   "center_y_em": 0.5,
+   "gap_after_run_em": 0.22,
+   "why": "taban çizgisinde ~0,45 em halka küçük 'o', üstte '°' gibi okunur; cap ortasında durunca damga/amblem okunur"
+  }
+ },
+ "kerning": {
+  "II": {
+   "kern_initial_em": -0.04,
+   "kern_optical_em": -0.0,
+   "kern_final_em": 0.0,
+   "kern_final_px256": 0.0,
+   "constraint_min_em": -0.0404,
+   "min_core_gap_em": 0.1104,
+   "min_full_gap_em": 0.1104,
+   "optical_gap_em": 0.164,
+   "bound_by": "optik"
+  },
+  "IV": {
+   "kern_initial_em": -0.08,
+   "kern_optical_em": -0.0237,
+   "kern_final_em": 0.01,
+   "kern_final_px256": 1.6,
+   "constraint_min_em": 0.01,
+   "min_core_gap_em": 0.07,
+   "min_full_gap_em": 0.07,
+   "optical_gap_em": 0.2102,
+   "bound_by": "kısıt"
+  },
+  "IX": {
+   "kern_initial_em": -0.08,
+   "kern_optical_em": -0.0338,
+   "kern_final_em": 0.01,
+   "kern_final_px256": 1.6,
+   "constraint_min_em": 0.01,
+   "min_core_gap_em": 0.07,
+   "min_full_gap_em": 0.07,
+   "optical_gap_em": 0.22,
+   "bound_by": "kısıt"
+  },
+  "IL": {
+   "kern_initial_em": 0.0,
+   "kern_optical_em": 0.001,
+   "kern_final_em": 0.0,
+   "kern_final_px256": 0.0,
+   "constraint_min_em": -0.0401,
+   "min_core_gap_em": 0.1101,
+   "min_full_gap_em": 0.1101,
+   "optical_gap_em": 0.1618,
+   "bound_by": "optik"
+  },
+  "IC": {
+   "kern_initial_em": 0.0,
+   "kern_optical_em": -0.0072,
+   "kern_final_em": -0.005,
+   "kern_final_px256": -0.8,
+   "constraint_min_em": -0.023,
+   "min_core_gap_em": 0.088,
+   "min_full_gap_em": 0.088,
+   "optical_gap_em": 0.1749,
+   "bound_by": "optik"
+  },
+  "VI": {
+   "kern_initial_em": -0.02,
+   "kern_optical_em": -0.0246,
+   "kern_final_em": -0.005,
+   "kern_final_px256": -0.8,
+   "constraint_min_em": -0.0068,
+   "min_core_gap_em": 0.0718,
+   "min_full_gap_em": 0.0343,
+   "optical_gap_em": 0.2035,
+   "bound_by": "kısıt"
+  },
+  "VV": {
+   "kern_initial_em": 0.0,
+   "kern_optical_em": -0.0533,
+   "kern_final_em": 0.02,
+   "kern_final_px256": 3.2,
+   "constraint_min_em": 0.0161,
+   "min_core_gap_em": 0.0776,
+   "min_full_gap_em": 0.0339,
+   "optical_gap_em": 0.2312,
+   "bound_by": "kısıt"
+  },
+  "VX": {
+   "kern_initial_em": 0.0,
+   "kern_optical_em": -0.0691,
+   "kern_final_em": 0.03,
+   "kern_final_px256": 4.8,
+   "constraint_min_em": 0.0286,
+   "min_core_gap_em": 0.1001,
+   "min_full_gap_em": 0.0314,
+   "optical_gap_em": 0.2413,
+   "bound_by": "kısıt"
+  },
+  "VL": {
+   "kern_initial_em": 0.0,
+   "kern_optical_em": -0.023,
+   "kern_final_em": -0.01,
+   "kern_final_px256": -1.6,
+   "constraint_min_em": -0.0127,
+   "min_core_gap_em": 0.0727,
+   "min_full_gap_em": 0.0352,
+   "optical_gap_em": 0.1997,
+   "bound_by": "kısıt"
+  },
+  "VC": {
+   "kern_initial_em": 0.0,
+   "kern_optical_em": -0.0241,
+   "kern_final_em": -0.025,
+   "kern_final_px256": -4.0,
+   "constraint_min_em": -0.0394,
+   "min_core_gap_em": 0.0844,
+   "min_full_gap_em": 0.0844,
+   "optical_gap_em": 0.19,
+   "bound_by": "optik"
+  },
+  "XI": {
+   "kern_initial_em": -0.02,
+   "kern_optical_em": -0.0265,
+   "kern_final_em": 0.01,
+   "kern_final_px256": 1.6,
+   "constraint_min_em": 0.0083,
+   "min_core_gap_em": 0.0717,
+   "min_full_gap_em": 0.0342,
+   "optical_gap_em": 0.2131,
+   "bound_by": "kısıt"
+  },
+  "XV": {
+   "kern_initial_em": 0.0,
+   "kern_optical_em": -0.0449,
+   "kern_final_em": 0.05,
+   "kern_final_px256": 8.0,
+   "constraint_min_em": 0.0462,
+   "min_core_gap_em": 0.0738,
+   "min_full_gap_em": 0.0738,
+   "optical_gap_em": 0.227,
+   "bound_by": "kısıt"
+  },
+  "XX": {
+   "kern_initial_em": -0.04,
+   "kern_optical_em": -0.0363,
+   "kern_final_em": 0.065,
+   "kern_final_px256": 10.4,
+   "constraint_min_em": 0.065,
+   "min_core_gap_em": 0.07,
+   "min_full_gap_em": 0.07,
+   "optical_gap_em": 0.226,
+   "bound_by": "kısıt"
+  },
+  "XL": {
+   "kern_initial_em": -0.03,
+   "kern_optical_em": -0.0038,
+   "kern_final_em": 0.04,
+   "kern_final_px256": 6.4,
+   "constraint_min_em": 0.0399,
+   "min_core_gap_em": 0.0701,
+   "min_full_gap_em": 0.0701,
+   "optical_gap_em": 0.1966,
+   "bound_by": "kısıt"
+  },
+  "XC": {
+   "kern_initial_em": -0.06,
+   "kern_optical_em": -0.03,
+   "kern_final_em": -0.03,
+   "kern_final_px256": -4.8,
+   "constraint_min_em": -0.0931,
+   "min_core_gap_em": 0.1331,
+   "min_full_gap_em": 0.1331,
+   "optical_gap_em": 0.2114,
+   "bound_by": "optik"
+  },
+  "LI": {
+   "kern_initial_em": -0.02,
+   "kern_optical_em": -0.118,
+   "kern_final_em": 0.01,
+   "kern_final_px256": 1.6,
+   "constraint_min_em": 0.01,
+   "min_core_gap_em": 0.4675,
+   "min_full_gap_em": 0.03,
+   "optical_gap_em": 0.25,
+   "bound_by": "kısıt"
+  },
+  "LV": {
+   "kern_initial_em": -0.1,
+   "kern_optical_em": -0.1309,
+   "kern_final_em": -0.13,
+   "kern_final_px256": -20.8,
+   "constraint_min_em": -0.2896,
+   "min_core_gap_em": 0.2709,
+   "min_full_gap_em": 0.1896,
+   "optical_gap_em": 0.25,
+   "bound_by": "başlangıç sınırı"
+  },
+  "LX": {
+   "kern_initial_em": -0.1,
+   "kern_optical_em": -0.1427,
+   "kern_final_em": 0.025,
+   "kern_final_px256": 4.0,
+   "constraint_min_em": 0.0229,
+   "min_core_gap_em": 0.1259,
+   "min_full_gap_em": 0.0321,
+   "optical_gap_em": 0.2476,
+   "bound_by": "kısıt"
+  },
+  "LL": {
+   "kern_initial_em": 0.0,
+   "kern_optical_em": -0.0942,
+   "kern_final_em": 0.015,
+   "kern_final_px256": 2.4,
+   "constraint_min_em": 0.0103,
+   "min_core_gap_em": 0.1472,
+   "min_full_gap_em": 0.0347,
+   "optical_gap_em": 0.2408,
+   "bound_by": "kısıt"
+  },
+  "LC": {
+   "kern_initial_em": 0.0,
+   "kern_optical_em": -0.1117,
+   "kern_final_em": -0.03,
+   "kern_final_px256": -4.8,
+   "constraint_min_em": -0.1726,
+   "min_core_gap_em": 0.2476,
+   "min_full_gap_em": 0.1726,
+   "optical_gap_em": 0.25,
+   "bound_by": "başlangıç sınırı"
+  },
+  "CI": {
+   "kern_initial_em": -0.02,
+   "kern_optical_em": -0.0958,
+   "kern_final_em": 0.01,
+   "kern_final_px256": 1.6,
+   "constraint_min_em": 0.01,
+   "min_core_gap_em": 0.07,
+   "min_full_gap_em": 0.07,
+   "optical_gap_em": 0.2267,
+   "bound_by": "kısıt"
+  },
+  "CV": {
+   "kern_initial_em": -0.04,
+   "kern_optical_em": -0.0976,
+   "kern_final_em": 0.065,
+   "kern_final_px256": 10.4,
+   "constraint_min_em": 0.0604,
+   "min_core_gap_em": 0.0746,
+   "min_full_gap_em": 0.0746,
+   "optical_gap_em": 0.2306,
+   "bound_by": "kısıt"
+  },
+  "CX": {
+   "kern_initial_em": -0.04,
+   "kern_optical_em": -0.0962,
+   "kern_final_em": 0.065,
+   "kern_final_px256": 10.4,
+   "constraint_min_em": 0.0604,
+   "min_core_gap_em": 0.0746,
+   "min_full_gap_em": 0.0746,
+   "optical_gap_em": 0.23,
+   "bound_by": "kısıt"
+  },
+  "CL": {
+   "kern_initial_em": -0.04,
+   "kern_optical_em": -0.0828,
+   "kern_final_em": 0.005,
+   "kern_final_px256": 0.8,
+   "constraint_min_em": 0.0041,
+   "min_core_gap_em": 0.0709,
+   "min_full_gap_em": 0.0709,
+   "optical_gap_em": 0.2254,
+   "bound_by": "kısıt"
+  },
+  "CC": {
+   "kern_initial_em": -0.04,
+   "kern_optical_em": -0.1056,
+   "kern_final_em": -0.07,
+   "kern_final_px256": -11.2,
+   "constraint_min_em": -0.1101,
+   "min_core_gap_em": 0.1101,
+   "min_full_gap_em": 0.1101,
+   "optical_gap_em": 0.2368,
+   "bound_by": "başlangıç sınırı"
+  }
+ },
+ "kerning_method": {
+  "desc": "kırpılmış alan optik modeli + kısmi telafi (κs yan boşluk, κk çift) + S-09 başlangıç tablosuna kalibrasyon + çekirdek/kuyruk kısıtları; ayrıntı build_ap032_roman.py metrics_and_kerning ve 01-design/AP032-roman-uretim.md §4",
+  "Dmax_em": 0.25,
+  "sidebearing_I_em": 0.06,
+  "step_em": 0.005,
+  "rows": "y ∈ [0,1] em (256: satır 48..207)",
+  "core": "α ≥ 0,5 + 3 px kapama, kuru kuyruk (kuyruklu çekişte s ≥ 0,80) hariç",
+  "constraints": "çekirdek ≥ 0,07 em (SPEK ≥ 0,06); tam mürekkep (kuyruk dahil) ≥ +0,03 em (SPEK kuru kuyruğa −0,10'a kadar izin verir; okunurluk için sıkı tutuldu)",
+  "kappa_sidebearing": 0.5,
+  "kappa_kern": 0.35,
+  "ref_gap_II_em": 0.1,
+  "_tuning": "κs, κk ve II referans boşluğu 48/24 px okuma sayfalarında göz ile seçildi (P-07); S-09 başlangıç tablosuna en küçük kare uyumu ayrıca raporlanır",
+  "max_tighter_than_initial_em": 0.03,
+  "O_ref_em": 0.164,
+  "rms_vs_initial_em": 0.0582,
+  "lsq_fit_to_initial": {
+   "kappa_sidebearing": 0.05,
+   "kappa_kern": 0.25,
+   "rms_em": 0.0259
+  }
+ },
+ "kerning_table_em": {
+  "II": 0.0,
+  "IV": 0.01,
+  "IX": 0.01,
+  "IL": 0.0,
+  "IC": -0.005,
+  "VI": -0.005,
+  "VV": 0.02,
+  "VX": 0.03,
+  "VL": -0.01,
+  "VC": -0.025,
+  "XI": 0.01,
+  "XV": 0.05,
+  "XX": 0.065,
+  "XL": 0.04,
+  "XC": -0.03,
+  "LI": 0.01,
+  "LV": -0.13,
+  "LX": 0.025,
+  "LL": 0.015,
+  "LC": -0.03,
+  "CI": 0.01,
+  "CV": 0.065,
+  "CX": 0.065,
+  "CL": 0.005,
+  "CC": -0.07
+ }
+}

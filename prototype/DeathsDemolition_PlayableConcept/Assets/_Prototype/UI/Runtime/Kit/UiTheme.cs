@@ -194,7 +194,14 @@ namespace DD.Prototype.UI
             }
 
             Sprite sprite;
-            return key != null && _icons.TryGetValue(key, out sprite) ? sprite : null;
+            if (key != null && _icons.TryGetValue(key, out sprite))
+            {
+                return sprite;
+            }
+
+            // WP-094: AP-032 v001's brush letters and seal ("Roman.I" … "Roman.C", "Roman.Seal") are cut from their atlas at
+            // runtime (HudArt) rather than baked into this asset - the theme keys resolve all the same.
+            return HudArt.Icon(key);
         }
 
         /// <summary>True when the sprite is a G1 distance-field glyph (it must be drawn through DD/UI/Fx SdfGlyph).</summary>

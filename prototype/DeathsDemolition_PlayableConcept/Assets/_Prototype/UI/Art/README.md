@@ -18,6 +18,9 @@ textures and would reject sprite atlases. UI textures have their own contract, A
 | `AP012/AP012_skin{1,2,3}_512.png` | skin card portraits (AP-006 v002 front views, Adobe cutout) | Sprite (Single) |
 | `AP012/AP012_hud_marker_256.png` | AP-010 beacon HUD marker (greyscale, runtime tint) | Sprite (Single) |
 | `AP012/AP012-ui-manifest.json` | sprite rects / pivots / 9-slice borders (schema `AP012-ui-manifest-v1`) | TextAsset; `UiArtImporter` depends on it |
+| `Hud/ap032_gold_{64,128}_base.png` | WP-094 AP-032 v001 (P-07, AD ACCEPT 08.10): the HUD's full-colour koban, body 48 / 96 of the canvas; §1 layer by `HudArt.GoldCoin` | Sprite (Single), sRGB, no mip, Clamp (hand-written metas) |
+| `Hud/ap032_roman_atlas_{512,1024}_base.png` | AP-032 brush Roman letters I×3 V×2 X×3 L×2 C×2 + the seal, 4 × 4 cells (cap 80 / 160); cut at runtime by `HudArt` on the cell rects of `AP032/ap032_roman_metrics.json`, theme keys `Roman.I … Roman.C`, `Roman.Seal` | Sprite (Single), sRGB, no mip, Clamp |
+| `Hud/ap032_smear_{512x128,1024x256}_mask.png` | AP-032 smear plate, 3-slice `[96,0,160,0]` / `[192,0,320,0]`, centre Tiled at its period; white mask tinted HudInk | Sprite (Single) with the border, sRGB, no mip, Clamp |
 
 `UiArtImporter` (AssetPostprocessor, `Assets/_Prototype/UI/Editor/`) applies the contract to
 every PNG under this folder: Sprite, 100 ppu, no mipmaps, clamp, bilinear, sRGB, alpha is

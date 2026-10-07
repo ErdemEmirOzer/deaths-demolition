@@ -382,7 +382,6 @@ namespace DD.Prototype.UI
             HudGoldTarget.Bind(this, _goldTarget, Canvas);
 
             RunEvents.RunStarted += OnRunStarted;
-            RunEvents.RunEnded += OnRunEnded;
             RunEvents.RoundStarted += OnRoundStarted;
             RunEvents.RoundCompleted += OnRoundCompleted;
             RunEvents.RoundPoolExhausted += OnPoolExhausted;
@@ -414,7 +413,6 @@ namespace DD.Prototype.UI
             UiCursor.SetContextVisible(true);
             HudGoldTarget.Unbind(this);
             RunEvents.RunStarted -= OnRunStarted;
-            RunEvents.RunEnded -= OnRunEnded;
             RunEvents.RoundStarted -= OnRoundStarted;
             RunEvents.RoundCompleted -= OnRoundCompleted;
             RunEvents.RoundPoolExhausted -= OnPoolExhausted;
@@ -672,12 +670,6 @@ namespace DD.Prototype.UI
                 UiMotion.TintAlpha(_goldCatch, 0f, UiDuration.Base, UiEase.Exit, UiMotionClass.Decor, UiMotionTokens.Seconds(UiDuration.Screen));
                 _goldCatchFx.Play();
             }
-        }
-
-        /// <summary>The run is over: nothing is still flying to this HUD.</summary>
-        private void OnRunEnded(RunSummary summary)
-        {
-            HudGoldTarget.ResetFlights();
         }
 
         /// <summary>
@@ -1505,9 +1497,16 @@ namespace DD.Prototype.UI
             }
         }
 
-        /// <summary>E22 t0: the health block leaves the dim for 0.6 s and names what ended the run.</summary>
+        /// <summary>
+        /// E22 t0: the health block leaves the dim for 0.6 s and names what ended the run. WP-094: the run is over - nothing is
+        /// still flying to this HUD. RunDirector.EndRun sets the Dead phase before it publishes RunEnded, so the first Dead
+        /// frame the HUD polls IS the run's end; the HUD no longer subscribes to RunEvents.RunEnded (r3-w1: that subscription
+        /// added a run-local RunEnded listener the lifecycle table does not carry). A scene change unbinds the target, which
+        /// empties the ledger too (HudGoldTarget.Unbind).
+        /// </summary>
         private void BeginDeathLine()
         {
+            HudGoldTarget.ResetFlights();
             _deathAt = Time.unscaledTime;
             _deathLineDimmed = false;
             if (_healthPanel == null)
@@ -1592,7 +1591,9 @@ namespace DD.Prototype.UI
                 // WP-094: the round as a Roman numeral (the presenter's RoundText stays the Arabic number for tests and debug).
                 // E13: a new round reveals (the letters stamp in; not on the first round of a run).
                 int round = _model.Round;
-                SetRound(round, _roundShown != int.MinValue && round > _roundShown);
+                // r3-w1: the placeholder (0, before RoundStarted) is not a round - reveal only from a shown round to a later one,
+                // so a run's first round is written at once (MetaUiSliceTests reads "I" on the HUD).
+                SetRound(round, _roundShown > 0 && round > _roundShown);
                 _roundShown = round;
             }
 

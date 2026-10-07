@@ -1,0 +1,135 @@
+{
+ "schema": "AP032-smear-v1",
+ "spec": "SPEK §3.3",
+ "layers": {
+  "256": {
+   "size": [
+    1024,
+    256
+   ],
+   "slices_LBRT": [
+    192,
+    0,
+    320,
+    0
+   ],
+   "center_period": 256,
+   "pixelsPerUnitMultiplier": 2,
+   "mask": "smear/ap032_smear_1024x256_mask.png",
+   "time": "smear/ap032_smear_1024x256_time.png",
+   "ink_share": 0.6112,
+   "time_range": [
+    0.0,
+    0.9558
+   ],
+   "time_p99": 0.8809,
+   "seams_8bit": {
+    "head_tile": 0.08593750000000001,
+    "tile_tile": 0.08593750000000001,
+    "tile_tail": 0.08593750000000001,
+    "typical_adjacent": 1.1873929794520548,
+    "copy_boundary": 0.08593750000000001,
+    "period_cut_to_tail": 0.08593750000000001,
+    "head_to_tail_zero_tiles": 0.08593750000000001
+   },
+   "band_rows_px": [
+    51,
+    168
+   ],
+   "band_alpha_min_dense_zone": 0.9255,
+   "band_alpha_p01_dense_zone": 1.0,
+   "dense_zone_px": [
+    69,
+    753
+   ]
+  },
+  "128": {
+   "size": [
+    512,
+    128
+   ],
+   "slices_LBRT": [
+    96,
+    0,
+    160,
+    0
+   ],
+   "center_period": 128,
+   "pixelsPerUnitMultiplier": 1,
+   "mask": "smear/ap032_smear_512x128_mask.png",
+   "time": "smear/ap032_smear_512x128_time.png",
+   "ink_share": 0.6181,
+   "time_range": [
+    0.0,
+    0.9538
+   ],
+   "time_p99": 0.8834,
+   "seams_8bit": {
+    "head_tile": 0.25781249999999994,
+    "tile_tile": 0.3125000000000001,
+    "tile_tail": 0.3125000000000001,
+    "typical_adjacent": 2.098529411764706,
+    "copy_boundary": 0.3125000000000001,
+    "period_cut_to_tail": 0.3125000000000001,
+    "head_to_tail_zero_tiles": 0.25781249999999994
+   },
+   "band_rows_px": [
+    25,
+    84
+   ],
+   "band_alpha_min_dense_zone": 0.8941,
+   "band_alpha_p01_dense_zone": 1.0,
+   "dense_zone_px": [
+    35,
+    382
+   ]
+  }
+ },
+ "build": {
+  "source": "h5_smear_01",
+  "hf_job": "9b219f9c-346a-493f-92c7-ecc3b42af119",
+  "level_deg": -0.156,
+  "scale_from_src": 0.7471,
+  "src_cols": {
+   "head_start": 71,
+   "dense_start": 104,
+   "tile_from": 480,
+   "tail_from": 1130,
+   "end": 1745
+  },
+  "tail_hzoom": 0.4805,
+  "tile_crossfade_px": 64,
+  "junction_crossfade_px": {
+   "head": 48,
+   "tail": 96
+  },
+  "content_period_px256": 256,
+  "center_region_px256": 512,
+  "copies_in_center": 2
+ },
+ "tint": "kodda ink #12100F, α ≤ 0,90 (mask tepe 1,0)",
+ "glyphBaselineY_from_top_frac": 0.62,
+ "glyphBaselineY_unity_from_bottom_frac": 0.38,
+ "cap_to_height_recommended": 0.375,
+ "time_note": "time doğal sprite genişliğinde soldan sağa. Dilimli/döşenmiş çizimde shader time'ı dikdörtgene normalize u ile örneklemeli (AP-012 R/G kuralı); dikey kenar zarfı doğal genişlikte kalır, gerilen genişlikte 1,0 kalan kenar pikseli için öneri: T = T<0,995 ? T : 0,86·u_rect + 0,10.",
+ "layout_recommendation": {
+  "256": {
+   "dense_zone_px_native": [
+    69,
+    753
+   ],
+   "rule": "glif dizisi + mühür dense_zone (glif bandında α P1 ≥ 0,95 sütunları) içinde; mühür yoğun bölgenin sağ ucunda (merkez = dense_zone sağı − 0,55·mühür çapı), son glifin advance sonu + 0,22 em = mühür solu; ilk glif mürekkebi dense_zone solunda ya da sağında. GENİŞLİK İÇERİK DÖNEMİ KATINA YUVARLANIR (dönem = sprite yüksekliği = 128 / 256 texel): W' = L + R + n·dönem, n = max(0, ceil((gerekli − (L + R − dz0 − (W − dz1))) / dönem)), gerekli = (dizi advance + kern + 0,22 + 1,05·mühür çapı − ilk lsb + 0,02) em × cap_texel; fazlası sola (baş tarafına). Unity Tiled orta bölgeyi (2 × dönem) döşer; dönem katı genişlikte kırpım dönem sınırına düşer, dikiş oluşmaz. Ekranda dönem = sürtme yüksekliği = cap/0,375 → sol boşluk < 2,67 em.",
+   "cap_px_at_native": 96.0,
+   "baseline_px_from_top": 158.7
+  },
+  "128": {
+   "dense_zone_px_native": [
+    35,
+    382
+   ],
+   "rule": "glif dizisi + mühür dense_zone (glif bandında α P1 ≥ 0,95 sütunları) içinde; mühür yoğun bölgenin sağ ucunda (merkez = dense_zone sağı − 0,55·mühür çapı), son glifin advance sonu + 0,22 em = mühür solu; ilk glif mürekkebi dense_zone solunda ya da sağında. GENİŞLİK İÇERİK DÖNEMİ KATINA YUVARLANIR (dönem = sprite yüksekliği = 128 / 256 texel): W' = L + R + n·dönem, n = max(0, ceil((gerekli − (L + R − dz0 − (W − dz1))) / dönem)), gerekli = (dizi advance + kern + 0,22 + 1,05·mühür çapı − ilk lsb + 0,02) em × cap_texel; fazlası sola (baş tarafına). Unity Tiled orta bölgeyi (2 × dönem) döşer; dönem katı genişlikte kırpım dönem sınırına düşer, dikiş oluşmaz. Ekranda dönem = sürtme yüksekliği = cap/0,375 → sol boşluk < 2,67 em.",
+   "cap_px_at_native": 48.0,
+   "baseline_px_from_top": 79.4
+  }
+ }
+}

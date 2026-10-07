@@ -1,0 +1,236 @@
+{
+  "schema": "ap032-gold-v1",
+  "direction": "A_koban",
+  "pivot": [
+    0.5,
+    0.5
+  ],
+  "body_frac": 0.75,
+  "layers": {
+    "256": {
+      "canvas": 256,
+      "body_box": 192,
+      "pad": 32,
+      "content_bbox_px_top_left": [
+        52,
+        32,
+        203,
+        221
+      ],
+      "optical_center_offset_px": [
+        -0.003,
+        0.004
+      ],
+      "sdf_spread_px": 16,
+      "grooves": 6,
+      "files": {
+        "base": "ap032_gold_256_base.png",
+        "sdf": "ap032_gold_256_sdf.png",
+        "normal": "ap032_gold_256_normal.png",
+        "height": "ap032_gold_256_height.png",
+        "sheen": "ap032_gold_256_sheen.png",
+        "glow": "ap032_gold_256_glow.png",
+        "data": "ap032_gold_256_data.png"
+      },
+      "atlas": {
+        "rect_px_top_left": [
+          0,
+          0,
+          256,
+          256
+        ],
+        "rect_unity_bottom_left": [
+          0,
+          0,
+          256,
+          256
+        ],
+        "uv_rect_bottom_left": [
+          0.0,
+          0.0,
+          0.5,
+          1.0
+        ]
+      }
+    },
+    "128": {
+      "canvas": 128,
+      "body_box": 96,
+      "pad": 16,
+      "content_bbox_px_top_left": [
+        26,
+        16,
+        101,
+        111
+      ],
+      "optical_center_offset_px": [
+        0.004,
+        0.004
+      ],
+      "sdf_spread_px": 8,
+      "grooves": 6,
+      "files": {
+        "base": "ap032_gold_128_base.png",
+        "sdf": "ap032_gold_128_sdf.png",
+        "normal": "ap032_gold_128_normal.png",
+        "height": "ap032_gold_128_height.png",
+        "sheen": "ap032_gold_128_sheen.png",
+        "glow": "ap032_gold_128_glow.png",
+        "data": "ap032_gold_128_data.png"
+      },
+      "atlas": {
+        "rect_px_top_left": [
+          256,
+          0,
+          128,
+          128
+        ],
+        "rect_unity_bottom_left": [
+          256,
+          128,
+          128,
+          128
+        ],
+        "uv_rect_bottom_left": [
+          0.5,
+          0.5,
+          0.25,
+          0.5
+        ]
+      }
+    },
+    "64": {
+      "canvas": 64,
+      "body_box": 48,
+      "pad": 8,
+      "content_bbox_px_top_left": [
+        13,
+        9,
+        51,
+        56
+      ],
+      "optical_center_offset_px": [
+        -0.011,
+        0.005
+      ],
+      "sdf_spread_px": 4,
+      "grooves": 3,
+      "files": {
+        "base": "ap032_gold_64_base.png",
+        "sdf": "ap032_gold_64_sdf.png",
+        "normal": "ap032_gold_64_normal.png",
+        "height": "ap032_gold_64_height.png",
+        "sheen": "ap032_gold_64_sheen.png",
+        "glow": "ap032_gold_64_glow.png",
+        "data": "ap032_gold_64_data.png"
+      },
+      "atlas": {
+        "rect_px_top_left": [
+          384,
+          0,
+          64,
+          64
+        ],
+        "rect_unity_bottom_left": [
+          384,
+          192,
+          64,
+          64
+        ],
+        "uv_rect_bottom_left": [
+          0.75,
+          0.75,
+          0.125,
+          0.25
+        ]
+      }
+    }
+  },
+  "atlas": {
+    "size": [
+      512,
+      256
+    ],
+    "pages": {
+      "base": "ap032_gold_atlas_512x256_base.png",
+      "data": "ap032_gold_atlas_512x256_data.png",
+      "normal": "ap032_gold_atlas_512x256_normal.png"
+    },
+    "same_uv": true,
+    "empty": "base: RGB mürekkep #12100F α0 · data: 0 · normal: (128,128,255)"
+  },
+  "channels": {
+    "base": "sRGB, düz α (premultiplied değil), ışık ve mürekkep kenarı pişmiş; α=0 RGB en yakın α≥0.5 rengiyle dolu",
+    "data": "doğrusal RGBA: R sdf, G sheen, B glow, A height (Unity: sRGB kapalı, Alpha Is Transparency kapalı)",
+    "sdf": "doğrusal L8, a = 0.5 + d/(2·spread), d px, içerisi pozitif, kenar 0.5 = dış mürekkep kenarı",
+    "normal": "doğrusal RGB, teğet uzayı OpenGL Y+, |n|=1, gövde dışı (128,128,255)",
+    "height": "doğrusal L8 0..1, rim sırtı 1, kubbe ~0.8, dövme çizgileri gömük, mürekkep ~0.1",
+    "sheen": "doğrusal L8 0..1 cilalı sırtlar (bant shader'da)",
+    "glow": "doğrusal L8 0..1, dış hale + iç sıcak noktalar, kenardan 4 px önce 0"
+  },
+  "normal_strength": 1.0,
+  "light": [
+    -0.5,
+    0.5,
+    0.707
+  ],
+  "runtime": {
+    "glow_tint": "#FFB52E",
+    "glow": {
+      "idle": 0.18,
+      "punch_peak": 0.6,
+      "reduced_motion": 0.18
+    },
+    "tilt": "pişmiş (20° saat yönü, SPEK §3.1); RectTransform dönmez",
+    "layer_rule": "içeriği fiziksel boydan küçük olmayan en küçük katman (SPEK §1)",
+    "counter_digit": "#D9A93C"
+  },
+  "hud": {
+    "ref": [
+      1920,
+      1080
+    ],
+    "margin": 32,
+    "body_px": 48,
+    "layer_at_ui1": 64,
+    "center_from_bl": [
+      56,
+      165
+    ],
+    "health_top_y": 129,
+    "health_rect_bl": [
+      32,
+      32,
+      412,
+      129
+    ],
+    "heart_px": 28,
+    "heart_center_y": 109,
+    "stroke": {
+      "len": 320,
+      "h": 26,
+      "lean_deg": 2.5,
+      "centre_y": 64
+    },
+    "health_hex": "#748F60",
+    "counter_gap_px": 8,
+    "counter_px": 32,
+    "round_box_tr": [
+      200,
+      84
+    ]
+  },
+  "palette": {
+    "top": "#FFF1C2",
+    "mid": "#F2B640",
+    "shadow": "#A8641C",
+    "deep": "#5A2E0E",
+    "rim_light": "#FFF6DE",
+    "ink": "#12100F",
+    "counter_digit": "#D9A93C",
+    "glow_tint_runtime": "#FFB52E",
+    "drop_shadow_runtime": "#293B46",
+    "warm": "#FFD45E"
+  },
+  "source": "procedural:04-tools/build_ap032_gold.py + ap032_gold_core.py; hedef hf:AP032_HF_h1_A3_69cb521b.png"
+}

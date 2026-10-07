@@ -10,12 +10,15 @@ namespace DD.Prototype.UI
     /// out letter by letter so the AP-032 brush set drops in without code.
     ///
     /// TWO DRAW PATHS, ONE BOX
-    /// - Glyphs: once all five letters have a sprite (<see cref="SetGlyphSprites"/>; the HUD looks up <see cref="GlyphKeys"/>
-    ///   in the theme), each letter is one Image placed on the metrics table - an advance per letter and a kerning per pair,
-    ///   both in glyph heights, so the set is spaced by numbers the art can tune. The cell keeps the sprite's aspect, centred
-    ///   on its advance.
-    /// - Text (today, and for a numeral longer than <see cref="Capacity"/>): the HUD's display-face TMP line, the same
-    ///   letters in the same box, sized to the line's preferred width.
+    /// - Glyphs: once all five letters have a sprite (<see cref="SetGlyphAlternates"/> / <see cref="SetGlyphSprites"/>; the HUD
+    ///   looks up <see cref="GlyphKeys"/> - AP-032 v001's brush cells, HudArt), each letter is one Image placed on AP-032's
+    ///   metrics (roman/ap032_roman_metrics.json, 08.10): the cell is 1.6 em square, its left edge at pen − originX, the
+    ///   baseline 0.3 em over its bottom (so the cap sits centred in the box); the pen moves by the letter's advance plus the
+    ///   pair's kerning. The alternates (I×3 V×2 X×3 L×2 C×2) are picked as the metrics say: (round + position) mod n, so III
+    ///   and XXX never repeat a cell side by side and a round always draws the same.
+    /// - Text (no AP-032 set, or a numeral longer than <see cref="Capacity"/>): the HUD's display-face TMP line, the same
+    ///   letters in the same box, sized to the line's preferred width. On the glyph path the (disabled) line still carries
+    ///   the numeral's text, so a reader of the HUD reads the round either way.
     /// The box grows LEFTWARD from its right edge (the caller pivots it at x 1 and anchors it to the right), so the top-right
     /// corner holds whatever the round's length. Layout runs only when the value changes; per frame nothing runs.
     ///
@@ -35,26 +38,32 @@ namespace DD.Prototype.UI
         public const float RevealStagger = 0.04f;
 
         /// <summary>
-        /// The theme keys the AP-032 brush letters are looked up under (I V X L C). Not in the G1 atlas yet: until all five
-        /// resolve, the numeral is the text line. S-09 confirms the names with P-07 before the set lands.
+        /// The theme keys the AP-032 brush letters are looked up under (I V X L C): UiTheme resolves them to AP-032 v001's
+        /// cells (HudArt.Icon; the HUD itself asks HudArt for every alternate).
         /// </summary>
         public static readonly string[] GlyphKeys = { "Roman.I", "Roman.V", "Roman.X", "Roman.L", "Roman.C" };
 
-        /// <summary>Each letter's advance in glyph heights (brush capitals: the I narrow, V and X wide). AP-032 retunes it.</summary>
-        public static readonly float[] Advance = { 0.40f, 0.76f, 0.76f, 0.62f, 0.70f };
+        /// <summary>Each letter's advance in em (cap heights) - AP-032 v001 metrics (`glyphs.&lt;G&gt;.advance_em`).</summary>
+        public static readonly float[] Advance = { 0.3417f, 0.7513f, 0.78f, 0.6447f, 0.7364f };
+
+        /// <summary>Each letter's pen-to-cell offset in em (`originX_em`): the cell's left edge is pen − originX.</summary>
+        public static readonly float[] OriginX = { 0.6312f, 0.4066f, 0.3941f, 0.4378f, 0.4174f };
+
+        /// <summary>Each letter's left side bearing in em (`lsb_em`): where its ink starts past the pen.</summary>
+        public static readonly float[] LeftBearing = { 0.05f, 0.0121f, 0.0121f, 0.0528f, 0.0295f };
 
         /// <summary>
-        /// Pair kerning in glyph heights, [left × 5 + right] in I V X L C order; negative draws the pair together (the
-        /// diagonals of V and X tuck under their neighbours, L's open foot takes the next letter in).
+        /// Pair kerning in em, [left × 5 + right] in I V X L C order - AP-032 v001's `kerning_table_em` (all 25 pairs, P-07's
+        /// optical pass held to its core-gap constraint ≥ 0.07 em: LV takes the foot's room, XX / CV / CX open up).
         /// </summary>
         public static readonly float[] Kerning =
         {
-            //  I       V       X       L       C       (right)
-            0f,     -0.04f, -0.04f, 0f,     0f,      // I
-            -0.04f, 0f,     -0.06f, 0f,     0f,      // V
-            -0.04f, -0.06f, -0.02f, -0.02f, -0.02f,  // X
-            -0.06f, -0.10f, -0.08f, 0f,     -0.02f,  // L
-            0f,     -0.02f, -0.04f, 0f,     0f       // C
+            //  I        V        X        L        C        (right)
+            0f,      0.01f,   0.01f,   0f,      -0.005f,   // I
+            -0.005f, 0.02f,   0.03f,   -0.01f,  -0.025f,   // V
+            0.01f,   0.05f,   0.065f,  0.04f,   -0.03f,    // X
+            0.01f,   -0.13f,  0.025f,  0.015f,  -0.03f,    // L
+            0.01f,   0.065f,  0.065f,  0.005f,  -0.07f     // C
         };
 
         private const float TextPad = 4f;
@@ -64,7 +73,7 @@ namespace DD.Prototype.UI
         private readonly TMP_Text _text;
         private readonly float _height;
         private readonly UiColor _tint;
-        private readonly Sprite[] _sprites = new Sprite[5];
+        private readonly Sprite[][] _alternates = new Sprite[5][];
         private readonly char[] _letters = new char[Capacity];
         private Image[] _glyphs;
         private bool _complete;
@@ -141,17 +150,32 @@ namespace DD.Prototype.UI
             return x;
         }
 
-        /// <summary>
-        /// The AP-032 letters in I V X L C order (null where a letter is missing). The glyph path turns on only when all five
-        /// are present; the Images are built on the first complete set. The shown value is laid out again.
-        /// </summary>
+        /// <summary>One sprite per letter in I V X L C order (no alternates; null where a letter is missing).</summary>
         public void SetGlyphSprites(Sprite[] sprites)
         {
-            bool complete = sprites != null && sprites.Length >= 5;
+            var alternates = new Sprite[5][];
             for (int i = 0; i < 5; i++)
             {
-                _sprites[i] = sprites != null && i < sprites.Length ? sprites[i] : null;
-                complete &= _sprites[i] != null;
+                Sprite sprite = sprites != null && i < sprites.Length ? sprites[i] : null;
+                alternates[i] = sprite != null ? new[] { sprite } : null;
+            }
+
+            SetGlyphAlternates(alternates);
+        }
+
+        /// <summary>
+        /// The AP-032 letters in I V X L C order, each with its alternates (null / empty where a letter is missing). The glyph
+        /// path turns on only when all five have one; the Images are built on the first complete set. The shown value is
+        /// laid out again.
+        /// </summary>
+        public void SetGlyphAlternates(Sprite[][] alternates)
+        {
+            bool complete = alternates != null && alternates.Length >= 5;
+            for (int i = 0; i < 5; i++)
+            {
+                Sprite[] set = alternates != null && i < alternates.Length ? alternates[i] : null;
+                _alternates[i] = set != null && set.Length > 0 && set[0] != null ? set : null;
+                complete &= _alternates[i] != null;
             }
 
             _complete = complete;
@@ -161,7 +185,7 @@ namespace DD.Prototype.UI
                 for (int i = 0; i < Capacity; i++)
                 {
                     Image glyph = UiFactory.NewImage("Glyph." + i, _box, _tint);
-                    glyph.preserveAspect = true;
+                    glyph.preserveAspect = false;   // the cell is square and placed by the metrics
                     RectTransform rect = glyph.rectTransform;
                     rect.anchorMin = new Vector2(0f, 0.5f);
                     rect.anchorMax = new Vector2(0f, 0.5f);
@@ -195,6 +219,7 @@ namespace DD.Prototype.UI
                 _length = RomanNumerals.Write(value, _letters, 0);
                 LayGlyphs();
                 _text.enabled = false;
+                _text.text = RomanNumerals.Cached(value);   // the line stays the numeral's text (readers, the fallback)
                 return Width;
             }
 
@@ -231,9 +256,31 @@ namespace DD.Prototype.UI
             return Mathf.Max(0, _length - 1) * RevealStagger + UiMotionTokens.StampInSeconds;
         }
 
+        /// <summary>The first letter's left side bearing in em (0 on the text path) - the smear's layout starts the ink there.</summary>
+        public float FirstBearingEm
+        {
+            get
+            {
+                if (!_drawsGlyphs || _length == 0)
+                {
+                    return 0f;
+                }
+
+                int kind = KindOf(_letters[0]);
+                return kind >= 0 ? LeftBearing[kind] : 0f;
+            }
+        }
+
+        /// <summary>The alternate a letter at <paramref name="position"/> of round <paramref name="round"/> takes: (round + position) mod n.</summary>
+        public static int AlternateFor(int round, int position, int count)
+        {
+            return count <= 1 ? 0 : (int)((uint)(round + position) % (uint)count);
+        }
+
         private void LayGlyphs()
         {
             float h = _height;
+            float cell = HudArt.RomanCellEm * h;
             float x = 0f;
             int previous = -1;
             for (int i = 0; i < _length; i++)
@@ -244,7 +291,8 @@ namespace DD.Prototype.UI
                     x += Kerning[previous * 5 + kind] * h;
                 }
 
-                Sprite sprite = _sprites[kind];
+                Sprite[] set = _alternates[kind];
+                Sprite sprite = set[AlternateFor(_value, i, set.Length)];
                 Image glyph = _glyphs[i];
                 glyph.sprite = sprite;
                 if (UiArt.IsGlyph(sprite))
@@ -254,13 +302,12 @@ namespace DD.Prototype.UI
 
                 glyph.enabled = true;
                 glyph.canvasRenderer.SetAlpha(1f);
-                float advance = Advance[kind] * h;
-                float cell = sprite.rect.height > 0f ? sprite.rect.width / sprite.rect.height * h : advance;
                 RectTransform rect = glyph.rectTransform;
-                rect.sizeDelta = new Vector2(cell, h);
-                rect.anchoredPosition = new Vector2(x + advance * 0.5f, 0f);
+                rect.sizeDelta = new Vector2(cell, cell);
+                // The cell's left edge at pen − originX; its centre is the cap's centre (baseline 0.3 em over the bottom).
+                rect.anchoredPosition = new Vector2(x - OriginX[kind] * h + cell * 0.5f, 0f);
                 rect.localScale = Vector3.one;
-                x += advance;
+                x += Advance[kind] * h;
                 previous = kind;
             }
 
