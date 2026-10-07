@@ -97,6 +97,20 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(expected.b, actual.b, 1e-3f, what + " b");
         }
 
+        /// <summary>AP-034 Q4 (AD, S-09 08.10): the tooltip is the cloud and the word - Edge, Plate, Word and nothing else; no image wears the pointer.</summary>
+        private static void AssertNoPointer(Transform box, string what)
+        {
+            Assert.AreEqual(3, box.childCount, what + ": ipucu yalnız Edge + Plate + Word (işaretçi yok)");
+            Sprite pointer = UiBrushArt.Get(UiBrushSprite.TooltipPointer);
+            Sprite framePointer = UiArt.Kit("Frame.TooltipPointer");
+            foreach (Image image in box.GetComponentsInChildren<Image>(true))
+            {
+                StringAssert.DoesNotContain("Pointer", image.name, what + ": işaretçi nesnesi yok");
+                Assert.AreNotSame(pointer, image.sprite, what + ": TooltipPointer çizilmez");
+                if (framePointer != null) Assert.AreNotSame(framePointer, image.sprite, what + ": Frame.TooltipPointer çizilmez");
+            }
+        }
+
         private static RectTransform Child(Component owner, string path)
         {
             Transform t = owner.transform.Find(path);
@@ -379,8 +393,12 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(UiBrushTokens.SliderHead + 2f * UiTokens.StrokeControl, Child(slider, "Rail/Bead").sizeDelta.x, 1e-3f, "baş 12 + 2 px mürekkep kenar");
             Assert.IsNull(slider.transform.Find("Rail/Bead/FocusRing"), "v3 halka yok: odak = C7");
             Assert.IsNull(slider.transform.Find("Rail/Tick1"), "fırça kaydırıcısında tik yok");
-            slider.SetStops(0f, 1f, 2f);
-            Assert.IsNull(slider.transform.Find("Rail/Tick1"), "durak da tik çizmez");
+            // SetStops replaces the even step with stop-to-stop travel (V3 and Brush alike): check it on a row of its own.
+            UiSlider stops = UiBrushKit.Slider(_root, "Setting.TEXT SCALE", "access.row.text_scale", "TEXT SCALE", 1f, 1.25f, 1f, 0f, null, null);
+            stops.SetStops(1f, 1.1f, 1.25f);
+            Assert.IsNull(stops.transform.Find("Rail/Tick1"), "durak da tik çizmez");
+            stops.Step(+1);
+            Assert.AreEqual(1.1f, stops.Value, 1e-4f, "duraklı fırça kaydırıcısı duraktan durağa");
             AssertRgb(UiTokens.Get(UiColor.TextPrimary), Child(slider, "Rail/Fill").GetComponent<Image>().color, "dolgu krem (altın değil)");
 
             slider.Step(+1);
@@ -526,6 +544,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(UiBrushTokens.TooltipWash, plate.color.a, 1e-3f, "mürekkep bulutu α 0,95");
             Assert.AreEqual(UiTooltip.WashOverhang, -((RectTransform)plate.transform).offsetMin.x, 1e-3f, "bulut kutunun 16 dışına taşar");
             Assert.AreEqual(UiTokens.FontSize(UiType.MenuSmall), box.GetComponentInChildren<TMP_Text>().fontSize, 1e-3f, "MenuSmall");
+            AssertNoPointer(box, "fırça");
 
             ExecuteEvents.Execute(row.gameObject, new BaseEventData(null), ExecuteEvents.deselectHandler);
             Assert.IsFalse(UiTooltip.Visible, "odak gidince anında kapanır");
@@ -536,6 +555,7 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsTrue(UiTooltip.Visible, "üzerine gelince de açılır");
             Assert.AreEqual(UiControlStyle.V3, UiTooltip.DrawnStyle);
             Assert.IsTrue(box.Find("Edge").GetComponent<Image>().enabled, "V3: kenar geri");
+            AssertNoPointer(box, "v3 (değişmedi)");
             Assert.LessOrEqual(UiTooltip.Bounds.width, UiIconTokens.TooltipMaxWidth + 0.5f, "V3: 320");
             ExecuteEvents.Execute(row.gameObject, new PointerEventData(null), ExecuteEvents.pointerExitHandler);
             Assert.IsFalse(UiTooltip.Visible);

@@ -23,6 +23,8 @@ namespace DD.Prototype.UI
     /// cream, wrapping at <see cref="UiBrushTokens.TooltipMaxWidth"/> (a lock reason may take two lines: <see cref="Show(RectTransform, string, float)"/>),
     /// <see cref="UiBrushTokens.TooltipGap"/> from the control. The settle delay and the placement rules are the same in
     /// both styles. V3 keeps the raised plate (a screen or a capture that needs it sets <see cref="Style"/>).
+    /// No pointer in the Brush style (AP-034 Q4, AD's choice, S-09 08.10): the cloud stands alone under / over its control;
+    /// <see cref="UiBrushSprite.TooltipPointer"/> stays in the art table but this tooltip never draws it.
     /// </summary>
     public sealed class UiTooltip : MonoBehaviour
     {
