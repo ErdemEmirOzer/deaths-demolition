@@ -512,10 +512,14 @@ namespace DD.Prototype.Tests.PlayMode
         /// </summary>
         [UnityTest]
         [Timeout(600000)]
-        public IEnumerator KavramaSatiri_LOD0Kesitiyle_TumSilahlar()
+        public IEnumerator KavramaSatiri_LOD0Kesitiyle_TumSilahlar() => KavramaSatiriOlc(DD.Prototype.CameraSystem.CameraMode.TopDown);
+
+        /// <summary>The grasp rows against the LOD0 section from one game camera (R3, C-00 07.10: the top-down test above; the
+        /// third-person twin, the same lines, in <see cref="R2HeroOlcumFptpTests"/> under FPTP).</summary>
+        internal IEnumerator KavramaSatiriOlc(DD.Prototype.CameraSystem.CameraMode mode)
         {
-            // the rows against the LOD0 section are camera-independent; the top-down game camera (R3: tests run top-down only)
-            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.TopDown, instant: true);
+            // the rows against the LOD0 section are camera-independent
+            DD.Prototype.CameraSystem.CameraModeService.Request(mode, instant: true);
             Time.captureDeltaTime = 1f / 60f;
             var body = _s.Rig.GetComponentInChildren<PlayerSkinnedVisual>(true);
             Assert.IsNotNull(body, "skinned oyuncu yok");
@@ -1299,7 +1303,11 @@ namespace DD.Prototype.Tests.PlayMode
         [Explicit]
         [Category("Diagnostics")]
         [Timeout(1800000)]
-        public IEnumerator Kare_M1_SilahGovde_TD_NisanTepmeReload()
+        public IEnumerator Kare_M1_SilahGovde_TD_NisanTepmeReload() => KareM1(DD.Prototype.CameraSystem.CameraMode.TopDown);
+
+        /// <summary>The M1 frame set from one game camera (R3, C-00 07.10: the top-down test above; the third-person twin, the same
+        /// lines, in <see cref="R2HeroOlcumFptpTests"/> under FPTP).</summary>
+        internal IEnumerator KareM1(DD.Prototype.CameraSystem.CameraMode camera)
         {
             string dir = System.Environment.GetEnvironmentVariable("DD_B2D_COMPARE_DIR");
             Assert.IsFalse(string.IsNullOrEmpty(dir), "DD_B2D_COMPARE_DIR yok (kare klasörü; tanı testi)");
@@ -1310,7 +1318,7 @@ namespace DD.Prototype.Tests.PlayMode
             var written = new List<string>();
             foreach (ClassicWeaponDefinition d in WeaponRoster.Enabled)
             {
-                foreach (DD.Prototype.CameraSystem.CameraMode mode in new[] { DD.Prototype.CameraSystem.CameraMode.TopDown })
+                foreach (DD.Prototype.CameraSystem.CameraMode mode in new[] { camera })
                 {
                     string cam = mode == DD.Prototype.CameraSystem.CameraMode.TopDown ? "td" : "tp";
                     DD.Prototype.CameraSystem.CameraModeService.Request(mode, instant: true);
@@ -1343,7 +1351,7 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             // one Special: the production RNG picks it (sw_arc / sw_gel / …); the hold is the classic weapons' only, the Special keeps main's path
-            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.TopDown, instant: true);
+            DD.Prototype.CameraSystem.CameraModeService.Request(camera, instant: true);
             yield return _s.SpawnEt(0.5f);
             SpecialWeaponPickup pickup = _s.CanliPickup();
             string special = "none";
@@ -1352,7 +1360,7 @@ namespace DD.Prototype.Tests.PlayMode
                 _s.PickupaGit(pickup);
                 yield return SpecialWeaponSahne.Kareler(90);
                 special = WeaponEvents.Special.WeaponId.ToString();
-                foreach (DD.Prototype.CameraSystem.CameraMode mode in new[] { DD.Prototype.CameraSystem.CameraMode.TopDown })
+                foreach (DD.Prototype.CameraSystem.CameraMode mode in new[] { camera })
                 {
                     DD.Prototype.CameraSystem.CameraModeService.Request(mode, instant: true);
                     yield return SpecialWeaponSahne.Kareler(40);
