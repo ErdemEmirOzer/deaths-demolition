@@ -5,6 +5,8 @@
 //   uv2 = mode parameters (x, y, z) + ink channel / particle seed (w)
 //   uv3 = (rect-normalised x, y — the ink-map coordinate; zw = rect size px, or the rect centre for Stamp — its pivot)
 // Particles: every vertex of a quad sits on its emitter point, uv3.xy is the corner (-1..1), uv3.z the burst's start radius; the vertex stage moves it.
+// Icon (WP-081 ikon v2 B5b): uv1 = (8, sheen -1 off | 0..1, glow 0..0.08, spread px24) with no clock, uv2 = (stroke draw,
+// lit 0|1 - 0 when disabled, opacity, -), uv3 as above (the sprite box uv); _DD_IconTier switches it to the flat token.
 Shader "DD/UI/Fx"
 {
     Properties
@@ -158,6 +160,16 @@ Shader "DD/UI/Fx"
                 OUT.color = v.color * _Color;
                 OUT.fx = float4(mode, progress, v.fx.y, DD_IsMode(mode, DD_FX_PARTICLES) ? lifeAlpha : v.fx.w);
                 OUT.prm = v.prm;
+                if (DD_IsMode(mode, DD_FX_ICON))
+                {
+                    // WP-081 Icon: uv1 rides raw (sheen, glow, spread - the CPU writes them, there is no clock). Reduced
+                    // motion rests the light channels at once - sheen off, no glow, no spread, fully drawn - whatever a
+                    // running track left in the vertices (T4); the relief itself is not motion and stays.
+                    bool still = _DD_Motion < 0.5;
+                    OUT.fx = still ? float4(mode, -1.0, 0.0, 0.0) : v.fx;
+                    OUT.prm.x = still ? 1.0 : v.prm.x;
+                }
+
                 OUT.map = v.map;
                 return OUT;
             }
@@ -277,6 +289,13 @@ Shader "DD/UI/Fx"
                 return color;
             }
 
+            // WP-081 ikon v2 B5b · Icon (8): AP-028-B's O1 glyph - the SDF's own light-only relief, never under its tint
+            // (DD_IconShade, DD_UiFx.hlsl). UiIconButton's O1 keys only; every other glyph keeps Sdf() above (IK-M18).
+            half4 Icon(v2f IN, half4 tint)
+            {
+                return DD_IconShade(_MainTex, IN.texcoord, IN.map.xy, tint, IN.fx, IN.prm);
+            }
+
             fixed4 frag(v2f IN) : SV_Target
             {
                 // Round the alpha to 8-bit precision (UI-Default: a CanvasGroup fade must not dither).
@@ -294,6 +313,7 @@ Shader "DD/UI/Fx"
                 else if (DD_IsMode(mode, DD_FX_SEGMENT))   color = SegmentBar(color, IN);
                 else if (DD_IsMode(mode, DD_FX_SDF))       color = Sdf(IN, IN.color);
                 else if (DD_IsMode(mode, DD_FX_PARTICLES)) color = Particle(color, IN);
+                else if (DD_IsMode(mode, DD_FX_ICON))      color = Icon(IN, IN.color);
 
                 #ifdef UNITY_UI_CLIP_RECT
                 half2 m = saturate((_ClipRect.zw - _ClipRect.xy - abs(IN.mask.xy)) * IN.mask.zw);

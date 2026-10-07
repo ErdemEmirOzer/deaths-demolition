@@ -69,6 +69,12 @@ namespace DD.Prototype.UI.EditorTools
             sb.Append("#define DD_UI_GLINT_MAX_BRIGHTNESS ").Append(F(UiMaterialSpec.GlintMaxBrightness)).Append('\n');
             sb.Append("#define DD_UI_SHEEN_FIELD_ALPHA_MAX ").Append(F(UiMaterialSpec.SheenFieldAlphaMax)).Append('\n');
             sb.Append("#define DD_UI_WASHI_ALPHA_MAX ").Append(F(UiMaterialSpec.WashiAlphaMax)).Append('\n');
+            // WP-081 ikon v2 B5b: the icon material's AD-owned numbers (D3 glow, D7 lob: sRGB colour, linear-blend alpha in w).
+            sb.Append("#define DD_UI_ICON_GLOW_ALPHA ").Append(F(UiMaterialSpec.IconGlowAlpha)).Append('\n');
+            sb.Append("#define DD_UI_ICON_GLOW_RADIUS ").Append(F(UiMaterialSpec.IconGlowRadiusAp)).Append('\n');
+            Color lob = UiMaterialSpec.IconLobColour;
+            sb.Append("#define DD_UI_ICON_LOB float4(").Append(F(lob.r)).Append(", ").Append(F(lob.g)).Append(", ").Append(F(lob.b))
+              .Append(", ").Append(F(UiMaterialSpec.IconLobAlpha)).Append(")\n");
             sb.Append("\n#endif // DD_UI_TOKENS_INCLUDED\n");
             return sb.ToString();
         }

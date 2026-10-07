@@ -77,6 +77,8 @@ namespace DD.Prototype.UI
     ///  · Focus, press, hold and the disabled pair are UiButton's own; a tab is a Nav segment (raised fill + cream outline)
     ///    plus a bar under its word.
     /// The glyph is tinted by token: TextPrimary when it is the choice or a plain button, TextSecondary for the other tabs.
+    /// WP-081 ikon v2 B5b: an O1 glyph (<see cref="UiArt.IsO1Glyph"/>) draws through the icon material (DD/UI/Fx Icon) -
+    /// light only ever adds to that token (UiIconMaterialTests T1), and a disabled control shows the flat token.
     ///
     /// USAGE: <see cref="UiIconControls.Button"/>, <see cref="UiIconControls.Tab"/>, <see cref="UiIconControls.Tabs"/>.
     /// DON'T: ship an icon without a string key (no literal names), or a glyph under 24 px.
@@ -88,6 +90,7 @@ namespace DD.Prototype.UI
 
         private UiButton _button;
         private Image _glyph;
+        private UiFx _material;   // the glyph's Icon driver (an O1 key), else null: the glyph stays SdfGlyph
         private Image _bar;
         private string _iconKey;
         private string _nameKey;
@@ -107,6 +110,12 @@ namespace DD.Prototype.UI
         public Image Glyph
         {
             get { return _glyph; }
+        }
+
+        /// <summary>WP-081 ikon v2 B5b · the glyph's DD/UI/Fx Icon driver when its key is O1 (B5c writes its channels), else null.</summary>
+        public UiFx IconMaterial
+        {
+            get { return _material; }
         }
 
         public string IconKey
@@ -210,6 +219,9 @@ namespace DD.Prototype.UI
                 s_missingIcons.Add(iconKey ?? string.Empty);
             }
 
+            // WP-081 ikon v2 B5b: an O1 glyph takes the icon material; any other key keeps SdfGlyph (C-00 06.10).
+            _material = UiArt.ApplyIconMaterial(_glyph, iconKey, true);
+
             if (tab)
             {
                 _bar = UiFactory.NewImage("ChosenBar", button.transform, UiColor.TextPrimary, UiSprites.Solid);
@@ -279,6 +291,11 @@ namespace DD.Prototype.UI
             {
                 UiColor tint = !usable || (_tab && !chosen) ? UiColor.TextSecondary : UiColor.TextPrimary;
                 _glyph.color = UiTokens.Get(tint);
+            }
+
+            if (_material != null)
+            {
+                _material.SetIconLit(usable);   // disabled: the light goes out, the flat token stays (AP-028 render(): disabled = flat)
             }
         }
 

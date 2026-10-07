@@ -1,3 +1,4 @@
+using DD.Prototype.Core;
 using UnityEngine;
 
 namespace DD.Prototype.UI
@@ -10,6 +11,8 @@ namespace DD.Prototype.UI
     /// Slice 4c: the kit is AP-012 v004 (<c>Resources/Fx/</c>) — the A8 RGBA time map (one mark per channel, each in its
     /// own rect: <see cref="InkRects"/>), the kinpaku leaf tile, the washi paper tile and the four <c>Ink.*</c> static
     /// masks (<see cref="InkMask"/>). Missing textures degrade (ink shows at once, flat leaf / paper), never throw.
+    /// WP-081 ikon v2 B5b: <c>_DD_IconTier</c>, the icon material's tier switch, is written once at install and on
+    /// <see cref="QualityTiers.Changed"/> - not per frame (<see cref="WriteIconTier"/>).
     /// </summary>
     public static class UiFxGlobals
     {
@@ -51,6 +54,7 @@ namespace DD.Prototype.UI
         private static readonly int InkTimeMaxId = Shader.PropertyToID("_DD_InkTimeMax");
         private static readonly int LeafTileId = Shader.PropertyToID("_DD_LeafTile");
         private static readonly int PaperTileId = Shader.PropertyToID("_DD_PaperTile");
+        private static readonly int IconTierId = Shader.PropertyToID("_DD_IconTier");
 
         private static Texture s_inkMap, s_leafTile, s_paperTile;
         private static readonly Sprite[] s_masks = new Sprite[4];
@@ -67,6 +71,9 @@ namespace DD.Prototype.UI
         public static bool? MotionOverride;
         public static float? FlashOverride;
 
+        /// <summary>Tests: force the icon tier switch (1 full material, 0 flat token) regardless of the quality tier (null = the tier).</summary>
+        public static float? IconTierOverride;
+
         public static Texture InkMap => s_inkMap;
         public static Texture LeafTile => s_leafTile;
         public static Texture PaperTile => s_paperTile;
@@ -81,6 +88,9 @@ namespace DD.Prototype.UI
             s_installed = true;
             LoadKit();
             Write();
+            QualityTiers.Changed -= OnTierChanged;
+            QualityTiers.Changed += OnTierChanged;
+            WriteIconTier();
             if (Application.isPlaying)
             {
                 var go = new GameObject("[UiFxGlobals]");
@@ -139,6 +149,21 @@ namespace DD.Prototype.UI
             }
         }
 
+        /// <summary>
+        /// WP-081 ikon v2 B5b · the icon material per tier (unity-material §6.1): Cinematic = High = the full material
+        /// (1), Performance = the flat token, today's look (0). Reduced Motion and Reduce Flashes are not tiers - they hold in
+        /// every tier through <c>_DD_Motion</c> / <c>_DD_Flash</c>. Tests call it after setting <see cref="IconTierOverride"/>.
+        /// </summary>
+        public static void WriteIconTier()
+        {
+            Shader.SetGlobalFloat(IconTierId, IconTierOverride ?? QualityTiers.Pick(0f, 1f, 1f));
+        }
+
+        private static void OnTierChanged(QualityTier tier)
+        {
+            Shader.SetGlobalFloat(IconTierId, IconTierOverride ?? QualityTiers.Pick(tier, 0f, 1f, 1f));
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
         {
@@ -146,6 +171,7 @@ namespace DD.Prototype.UI
             MotionOverride = null;
             FlashOverride = null;
             TimeOverride = null;
+            IconTierOverride = null;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]

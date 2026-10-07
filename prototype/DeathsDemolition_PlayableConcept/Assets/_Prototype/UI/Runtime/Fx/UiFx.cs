@@ -20,7 +20,14 @@ namespace DD.Prototype.UI
         /// <summary>Distance-field sprite: outline / glow / erosion from the alpha channel.</summary>
         SdfGlyph = 6,
         /// <summary>Quads built once, moved in the vertex stage (<see cref="UiFxParticles"/>).</summary>
-        Particles = 7
+        Particles = 7,
+        /// <summary>
+        /// WP-081 ikon v2 B5b · AP-028-B's O1 glyph material: the SDF's own light-only relief (warm upper-left key, the
+        /// vertical bevel, the sheen band) never under its tint, the cold lob and the glow outside the ink only. No clock:
+        /// uv1 = (8, sheen −1 off | 0..1, glow 0..0.08, spread px24), uv2 = (stroke draw, lit 0|1, opacity, −)
+        /// (<see cref="UiFx.ConfigureIcon"/>, <see cref="UiFx.SetIcon"/>). UiIconButton's O1 keys only (<see cref="UiArt.IsO1Glyph"/>).
+        /// </summary>
+        Icon = 8
     }
 
     /// <summary>Which ink-kit mark a mode reads (AP-012 v004 A8: one mark per channel, each in its own rect; the static
@@ -60,15 +67,30 @@ namespace DD.Prototype.UI
         [SerializeField] private Vector3 _params;
         [SerializeField] private UiInkChannel _channel = UiInkChannel.Underline;
 
+        // Icon (8): uv1.yzw - sheen (−1 = off), glow, spread. Written by the icon's state, never by a clock.
+        [SerializeField] private Vector3 _iconLight = new Vector3(-1f, 0f, 0f);
+
         // Before the first Play the element shows its end state (start far in the past), so a static layout never
         // renders half-revealed.
         private float _start = -10000f;
 
         private static Material s_material;
 
+        /// <summary>WP-081 ikon v2 B5b · Icon at rest, light channels: sheen off, no glow, no spread (uv1.yzw).</summary>
+        public static readonly Vector3 IconRestLight = new Vector3(-1f, 0f, 0f);
+
+        /// <summary>WP-081 ikon v2 B5b · Icon at rest, parameters: fully drawn, lit, opaque (uv2.xyz).</summary>
+        public static readonly Vector3 IconRestParams = new Vector3(1f, 1f, 1f);
+
         public UiFxMode Mode => _mode;
         public float StartTime => _start;
         public float Duration => _duration;
+
+        /// <summary>The mode parameters (uv2.xyz); Icon: stroke draw, lit, opacity.</summary>
+        public Vector3 Parameters => _params;
+
+        /// <summary>Icon only: sheen (−1 off | 0..1), glow (0..0.08), spread (px24) - uv1.yzw.</summary>
+        public Vector3 IconLight => _iconLight;
 
         /// <summary>The one DD/UI/Fx material (process-long; the shader ships from a Resources folder).</summary>
         public static Material SharedMaterial
@@ -108,6 +130,39 @@ namespace DD.Prototype.UI
             return Configure(mode, UiMotionTokens.Seconds(duration), parameters, channel, loopPeriod);
         }
 
+        /// <summary>
+        /// WP-081 ikon v2 B5b · switch to Icon (8) at rest: sheen off, no glow, no spread; fully drawn, opaque, and lit - or
+        /// the flat token when <paramref name="lit"/> is false (a disabled control). One vertex rebuild.
+        /// </summary>
+        public UiFx ConfigureIcon(bool lit)
+        {
+            _iconLight = IconRestLight;
+            return Configure(UiFxMode.Icon, 1f, new Vector3(IconRestParams.x, lit ? 1f : 0f, IconRestParams.z));
+        }
+
+        /// <summary>
+        /// WP-081 ikon v2 · the Icon channels: <paramref name="light"/> = (sheen −1 off | 0..1, glow 0..0.08, spread px24
+        /// 0..0.4), <paramref name="parameters"/> = (stroke draw 0..1, lit 0..1, opacity 0..1). One vertex rebuild, none when
+        /// nothing changed (B5c's tracks write only while they run; at rest nothing is written). No allocation.
+        /// </summary>
+        public void SetIcon(Vector3 light, Vector3 parameters)
+        {
+            if (light == _iconLight && parameters == _params)
+            {
+                return;
+            }
+
+            _iconLight = light;
+            _params = parameters;
+            Dirty();
+        }
+
+        /// <summary>WP-081 ikon v2 B5b · the light switch alone: lit (1) or the flat token (0, a disabled control).</summary>
+        public void SetIconLit(bool lit)
+        {
+            SetIcon(_iconLight, new Vector3(_params.x, lit ? 1f : 0f, _params.z));
+        }
+
         /// <summary>The §2.5 motion class each mode obeys (the shader applies it: Decor → end state under RM, Flash × FlashScale, Data untouched).</summary>
         public static UiMotionClass ClassOf(UiFxMode mode)
         {
@@ -115,6 +170,7 @@ namespace DD.Prototype.UI
             {
                 case UiFxMode.Leaf:
                 case UiFxMode.Particles:   // one-shot sparks; the looping drift is Decor (frozen under RM)
+                case UiFxMode.Icon:        // sheen and glow peaks × FlashScale; reduced motion rests the light channels (the shader)
                     return UiMotionClass.Flash;
                 case UiFxMode.SegmentBar:
                     return UiMotionClass.Data;
@@ -204,7 +260,10 @@ namespace DD.Prototype.UI
 
             Rect r = graphic.rectTransform.rect;
             float w = Mathf.Max(1e-3f, r.width), h = Mathf.Max(1e-3f, r.height);
-            var fx = new Vector4((float)_mode, _start, _duration, _loopPeriod);
+            // Icon (8) has no clock: uv1.yzw carry its light channels as they are (sheen, glow, spread).
+            var fx = _mode == UiFxMode.Icon
+                ? new Vector4((float)_mode, _iconLight.x, _iconLight.y, _iconLight.z)
+                : new Vector4((float)_mode, _start, _duration, _loopPeriod);
             var prm = new Vector4(_params.x, _params.y, _params.z, (float)_channel);
             UIVertex v = default;
             int n = vh.currentVertCount;

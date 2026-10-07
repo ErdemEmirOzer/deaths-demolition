@@ -232,6 +232,60 @@ namespace DD.Prototype.UI
             }
         }
 
+        // ------------------------------------------------------- O1 icon material
+
+        /// <summary>
+        /// WP-081 ikon v2 B5b · the G1 cells AP-028-B's O1 family drew - the G1 manifest's last merge (B5a r2): 20 replaced in
+        /// place + 30 added. Only these sit in the SVG viewBox frame the icon material's constants assume (DD_ICON_SD_AP =
+        /// 64 / 52); every other G1 cell has its own frame and stays on SdfGlyph. Ordinal order; UiIconMaterialKeysTests
+        /// holds the list to the manifest (a new merge that changes the set fails there first).
+        /// </summary>
+        public static readonly string[] O1IconKeys =
+        {
+            "FireMode.Auto", "FireMode.Charge", "FireMode.Lob", "FireMode.Semi", "Menu.Accessibility",
+            "Menu.Achievements", "Menu.Audio", "Menu.Back", "Menu.Confirm", "Menu.Controls", "Menu.EndRun",
+            "Menu.Gamepad", "Menu.Graphics", "Menu.Home", "Menu.Keyboard", "Menu.Next", "Menu.Palette", "Menu.Path",
+            "Menu.Pause", "Menu.Play", "Menu.Previous", "Menu.Profile", "Menu.Quit", "Menu.ReduceFlashes",
+            "Menu.Resume", "Menu.Retry", "Menu.Save", "Menu.Settings", "Menu.Statistics", "Menu.TextScale",
+            "Menu.Upgrade", "Notice.Info", "Notice.Notification", "Profile.Level", "Profile.Progress", "Profile.Xp",
+            "Selection.Selected", "Selection.Skin", "Selection.Weapon", "Settings.Camera", "Settings.Data",
+            "Settings.Display", "Settings.Hints", "Settings.Language", "Stat.Damage", "Stat.FireRate", "Stat.Magazine",
+            "Stat.Range", "State.Locked", "State.Unlocked"
+        };
+
+        private static readonly System.Collections.Generic.HashSet<string> s_o1IconKeys =
+            new System.Collections.Generic.HashSet<string>(O1IconKeys, System.StringComparer.Ordinal);
+
+        /// <summary>True for an AP-028-B O1 key (<see cref="O1IconKeys"/>).</summary>
+        public static bool IsO1Glyph(string key)
+        {
+            return key != null && s_o1IconKeys.Contains(key);
+        }
+
+        /// <summary>
+        /// WP-081 ikon v2 B5b · an icon control's glyph (UiIconButton only, C-00 06.10): an O1 key draws through DD/UI/Fx
+        /// Icon (8) at rest - the light-only relief, sheen off, no glow, drawn - lit, or flat when <paramref name="lit"/> is
+        /// false (disabled). Any other key, a missing sprite or a non-glyph sprite keeps what <see cref="ApplyGlyph"/> gave
+        /// it; the HUD and every other glyph never come here (IK-M18). Returns the Icon driver, or null.
+        /// </summary>
+        public static UiFx ApplyIconMaterial(Image image, string key, bool lit)
+        {
+            if (image == null || !IsO1Glyph(key) || !IsGlyph(image.sprite))
+            {
+                return null;
+            }
+
+            UiFx fx = image.GetComponent<UiFx>();
+            if (fx == null)
+            {
+                fx = image.gameObject.AddComponent<UiFx>();
+            }
+
+            fx.ConfigureIcon(lit);
+            fx.enabled = true;
+            return fx;
+        }
+
         // ----------------------------------------------------------------- plates
 
         public static Sprite MenuPlate()

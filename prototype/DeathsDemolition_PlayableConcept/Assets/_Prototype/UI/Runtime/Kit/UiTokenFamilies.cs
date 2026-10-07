@@ -87,6 +87,33 @@ namespace DD.Prototype.UI
         /// <summary>Glint: 600 ms, at least 1 s apart per element, ≤ 2 per frame, × FlashScale.</summary>
         public const float GlintMinIntervalSeconds = 1f;
         public const int GlintMaxPerFrame = 2;
+
+        /// <summary>
+        /// WP-081 ikon v2 B5b · D3 (C-00 06.10): the icon glow at its peak, in this pipeline's linear blend. AP-028-B's
+        /// glow 0.08 is an sRGB-space blend (its previews composite with PIL); the α whose LINEAR composite of the cream
+        /// glyph over the #161D21 measuring ground has the same relative luminance is 0.0170 (per channel 0.0145 /
+        /// 0.0175 / 0.0199). The Icon glow channel keeps AP-028's 0..0.08 scale; the shader maps 0.08 onto this. Hover /
+        /// focus drive it (B5c); at rest it is 0.
+        /// </summary>
+        public const float IconGlowAlpha = 0.017f;
+
+        /// <summary>
+        /// D3 radius - AD round (AP-028 never defines it; render() draws no glow): provisionally the widest the direction
+        /// allows without growing the quad (§1.2: E = 0 holds up to ~5 G1 px of outer layer), 5 G1 px = 6.15 AP from the edge.
+        /// </summary>
+        public const float IconGlowRadiusAp = 5f * 64f / 52f;
+
+        /// <summary>
+        /// D7 - AD round: the cold lob's colour, AP-028's #293B46 as given. It is LIGHTER than the #161D21 measuring ground,
+        /// so on a dark ground it lifts instead of shading (C-00 06.10: the AD decides; this line is the change).
+        /// </summary>
+        public static readonly Color IconLobColour = new Color32(0x29, 0x3B, 0x46, 0xFF);
+
+        /// <summary>
+        /// D7: the lob's α in the linear blend - AP-028's 0.12 (sRGB blend) of #293B46 over #161D21 matched by relative
+        /// luminance, 0.083 (per channel 0.090 / 0.083 / 0.080; unity-material §2.5 "≈ 0.08-0.09").
+        /// </summary>
+        public const float IconLobAlpha = 0.083f;
     }
 
     public static class UiRadius

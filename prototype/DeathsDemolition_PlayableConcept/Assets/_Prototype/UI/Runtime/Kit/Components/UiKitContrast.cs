@@ -175,6 +175,9 @@ namespace DD.Prototype.UI
             },
             { typeof(UiButtons), new UiContrastCase[0] }, // factory for UiButton (declared above)
             {
+                // WP-081 ikon v2 B5b: an O1 glyph's material only adds light - max(lit, tint) per channel (UiIconMaterialTests
+                // T1, T3) - so the four flat glyph pairs stay its floor. Its outer layers sit outside the ink: the glow below
+                // (a halo, not a boundary); the cold lob (#293B46, UiMaterialSpec.IconLobColour) is no token yet - AD D7.
                 typeof(UiIconButton), new[]
                 {
                     C("Icon glyph, plain button", UiColor.TextPrimary, UiColor.SurfaceBase, Boundary),
@@ -185,6 +188,8 @@ namespace DD.Prototype.UI
                     C("Tab word, other", UiColor.TextSecondary, UiColor.SurfaceBase, Text),
                     C("Tab word, unavailable", UiColor.TextSecondary, UiColor.SurfaceRaised, Text),
                     C("Chosen bar under the word", UiColor.TextPrimary, UiColor.SurfaceRaised, Boundary),
+                    C("Icon glow at its hover / focus peak (linear α 0.017 = AP-028's sRGB 0.08; a halo - the glyph carries the boundary)",
+                        UiColor.TextPrimary, UiColor.SurfaceBase, Decorative, UiMaterialSpec.IconGlowAlpha),
                 }
             },
             { typeof(UiIconTokens), new UiContrastCase[0] }, // numbers only
