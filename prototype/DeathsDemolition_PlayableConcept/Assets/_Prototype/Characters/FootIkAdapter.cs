@@ -303,7 +303,8 @@ namespace DD.Prototype.Characters
 
         /// <summary>
         /// WP-096 PreserveSwingLift solve: both feet raycast first, the correction that grounds the lower sole is shared by both
-        /// (eased with the weight response), so the swing foot keeps its animated lift and a flight phase is left alone.
+        /// (eased with the weight response) plus each foot's ground height over the lower foot's ground, so the swing foot keeps
+        /// its animated lift, a step still lifts the foot above it, and a flight phase is left alone.
         /// </summary>
         private void SolvePair(float footHeight, float k, out float leftDelta, out float rightDelta)
         {
@@ -317,11 +318,14 @@ namespace DD.Prototype.Characters
             float lower = Mathf.Min(gapL, gapR);
             float want = !hitL && !hitR || lower > SwingFlightGap ? 0f : Mathf.Clamp(-lower, -MaxCorrection, MaxCorrection);
             _commonDelta = Mathf.Lerp(_commonDelta, want, k);
-            ApplyFoot(AvatarIKGoal.LeftFoot, 0, animatedL, hitL, groundL, footHeight, out leftDelta);
-            ApplyFoot(AvatarIKGoal.RightFoot, 1, animatedR, hitR, groundR, footHeight, out rightDelta);
+            // each foot also follows its own ground relative to the lower foot's (a step under one foot lifts that foot by the
+            // step, on the flat the term is 0 and the swing keeps its animated lift)
+            float reference = gapL <= gapR ? groundL.point.y : groundR.point.y;
+            ApplyFoot(AvatarIKGoal.LeftFoot, 0, animatedL, hitL, groundL, footHeight, hitL ? groundL.point.y - reference : 0f, out leftDelta);
+            ApplyFoot(AvatarIKGoal.RightFoot, 1, animatedR, hitR, groundR, footHeight, hitR ? groundR.point.y - reference : 0f, out rightDelta);
         }
 
-        private void ApplyFoot(AvatarIKGoal goal, int foot, Vector3 animated, bool hit, in RaycastHit ground, float footHeight, out float delta)
+        private void ApplyFoot(AvatarIKGoal goal, int foot, Vector3 animated, bool hit, in RaycastHit ground, float footHeight, float terrain, out float delta)
         {
             if (!hit)
             {
@@ -331,7 +335,7 @@ namespace DD.Prototype.Characters
                 return;
             }
 
-            delta = _commonDelta;
+            delta = Mathf.Clamp(_commonDelta + terrain, -MaxCorrection, MaxCorrection);
             Vector3 target = animated;
             target.y = animated.y + delta;
             target = Lock(foot, animated, target, ground.point.y + footHeight);
