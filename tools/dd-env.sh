@@ -151,8 +151,14 @@ dd_unity_watched() {
   local log="$1" limit="$2"; shift 2
   local stall=${DD_STALL_SEC:-$(( ${DD_STALL_MIN:-20} * 60 ))} tick=${DD_STALL_TICK:-15} attempt=1 upid size last quiet t0
   DD_UNITY_OUTCOME=ok
+  # C-00 06.10 (R3; the FINAL's z3 stop): Unity runs in its log's folder when the log path is absolute — a mono crash
+  # writes mono_crash.* into the process's cwd, and the caller's cwd is often the checkout root (26 dumps dirtied the
+  # FINAL tree). `exec` keeps $! = Unity's own pid. A relative log keeps the caller's cwd (its other paths may be relative).
+  local run_dir=""; [[ "$log" == /* ]] && [ -d "${log:h}" ] && run_dir="${log:h}"
   while :; do
-    "$@" >/dev/null 2>&1 &
+    if [ -n "$run_dir" ]; then ( cd "$run_dir" && exec "$@" ) >/dev/null 2>&1 &
+    else "$@" >/dev/null 2>&1 &
+    fi
     upid=$!; DD_UNITY_PID=$upid; t0=$(date +%s); last=-1; quiet=0
     while kill -0 $upid 2>/dev/null; do
       sleep $tick </dev/null >/dev/null 2>&1 & wait $!
