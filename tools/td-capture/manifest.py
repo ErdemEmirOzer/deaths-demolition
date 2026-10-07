@@ -35,24 +35,63 @@ def build_identity(app):
         info = {k: pl.get(k) for k in ("CFBundleShortVersionString", "CFBundleVersion")}
     except (OSError, ValueError):
         pass
-    for cand in (Path(app).parent / "build-info.json", Path(app).parent / "build.json"):
-        data = read_json(cand)
-        if data is not None:
-            info["buildInfo"] = {"file": str(cand), "data": data}
-            break
+    # gt MUST-2 (08.10): tools/build.sh writes the stamp (git describe / commit / branch / UTC) into build-report.json and
+    # its HEAD + app-manifest hash into report.json, next to the .app
+    stamp = (read_json(Path(app).parent / "build-report.json") or {}).get("stamp")
+    report = read_json(Path(app).parent / "report.json") or {}
+    if stamp:
+        info["stamp"] = stamp
+    for k in ("head", "mode", "utc", "appManifestSha256"):
+        if report.get(k) is not None:
+            info[k] = report[k]
     return info
 
 
-MIN_FPS = 24   # below this the gameplay MP4 stutters: the Player itself ran slow (a loaded shared machine) — retake
+MIN_FPS = 24        # below this the gameplay MP4 stutters: the Player itself ran slow (a loaded shared machine) — retake
+MAX_AV_DRIFT = 0.1  # s: beyond this the sound visibly leads / lags the picture somewhere in the MP4 — retake
+
+
+def av_drift(out):
+    """gt MUST-1 (08.10): the audio clock against real time, from video/audio-sync.tsv (one anchor per second:
+    t, wav frames captured): residual(t) = (frames - frames@t0) / rate - t. The MP4 lays the WAV from t0 on, so a
+    residual of -0.5 s means the sound runs 0.5 s ahead of the picture there. (summary.json's driftSeconds is read
+    after the frame drain, not at the stop — misleading, not used.)"""
+    sync = read_json(out / "video" / "sync.json") or {}
+    rate = ((sync.get("audio") or {}).get("sampleRate")) or 48000
+    rows = []
+    try:
+        for line in (out / "video" / "audio-sync.tsv").read_text(encoding="utf-8").splitlines():
+            cols = line.split("\t")
+            if line.startswith("#") or len(cols) < 2:
+                continue
+            try:
+                rows.append((float(cols[0]), int(cols[1])))
+            except ValueError:
+                continue
+    except FileNotFoundError:
+        return None
+    if not rows:
+        return None
+    f0 = rows[0][1] - rows[0][0] * rate
+    res = [((f - f0) / rate - t) for t, f in rows]
+    return {"anchors": len(rows), "atStop": round(res[-1], 4), "maxAbs": round(max(abs(r) for r in res), 4)}
 
 
 def video_quality(out):
-    """effective capture fps against MIN_FPS, plus the machine load each launch saw (logs/load-<name>.txt)."""
+    """effective capture fps against MIN_FPS, the A/V drift against MAX_AV_DRIFT, and the machine load each launch
+    saw (logs/load-<name>.txt). verdict: "ok", or the issues joined by "+" (low-fps, av-drift); None without a video."""
     summary = read_json(out / "video" / "summary.json") or {}
     fps = summary.get("effectiveFps")
+    drift = av_drift(out)
     loads = {p.stem[5:]: p.read_text().strip() for p in sorted((out / "logs").glob("load-*.txt"))}
-    verdict = None if fps is None else ("ok" if fps >= MIN_FPS else "low-fps")
-    return {"effectiveFps": fps, "minFps": MIN_FPS, "verdict": verdict, "loadAtLaunch": loads}
+    issues = []
+    if fps is not None and fps < MIN_FPS:
+        issues.append("low-fps")
+    if drift is not None and drift["maxAbs"] > MAX_AV_DRIFT:
+        issues.append("av-drift")
+    verdict = None if fps is None and drift is None else ("+".join(issues) or "ok")
+    return {"effectiveFps": fps, "minFps": MIN_FPS, "avDrift": drift, "maxAvDrift": MAX_AV_DRIFT, "verdict": verdict,
+            "loadAtLaunch": loads}
 
 
 def main(argv):

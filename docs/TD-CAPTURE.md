@@ -24,7 +24,7 @@ zsh tools/td-capture.sh --app "$K/wp-0NN/builds/dev-<label>/DeathsDemolition.app
 | `stills/poses.json` | per pose: where the player stood, status, banner wait; crowd block (alive / within 15 m / reached) |
 | `video/td-<label>.mp4` | 45 s (10–120 with `--video-seconds`), H.264 + AAC, constant 30 fps, the QA bot playing |
 | `video/probe.json` | codecs, size, fps, both track durations |
-| `capture.json`, `SHA256SUMS` | build identity, seed, pose-file hash, guard result, file hashes (raw frames excluded) |
+| `capture.json`, `SHA256SUMS` | build identity (`build.stamp`: git describe/commit of the build, `build.head`), seed, pose-file hash, guard result, `videoQuality`, file hashes (raw frames excluded) |
 
 The label folder is never overwritten. Pick a new `--label` for a retake.
 
@@ -36,6 +36,13 @@ The label folder is never overwritten. Pick a new `--label` for a retake.
   - A pose with no NavMesh within 2 m is recorded as `navmesh-miss` and the script exits 1.
 - **Audio/video sync:** the video frames are grabbed in real time and timestamped (the game is not slowed). The muxer lays them on a 30 fps grid and aligns the WAV with `sync.json`'s offset.
   - A drift above 0.05 s is printed as a warning.
+- **Video quality:** `capture.json` → `videoQuality.verdict` is `ok`, `low-fps`, `av-drift` or `low-fps+av-drift`. The script prints a warning, and still exits 0.
+  - `low-fps`: effective capture fps is below 24, so the Player ran slow on a loaded machine and the MP4 stutters.
+  - `av-drift`: the audio clock drifted more than 0.1 s from real time. This is measured from `video/audio-sync.tsv`.
+  - Both mean: retake on a quieter machine (`--video-only`, new label), and don't judge sound against picture.
+  - `summary.json`'s `audio.driftSeconds` is read after the frame drain and is misleading; use `videoQuality.avDrift`.
+- **Size:** the window is limited by the screen. On this Mac `--size 1920x1080` gives 1496×842 (Retina logical size); `probe.json` holds the real size.
+- **Watermark:** dev builds draw "Development Build" bottom right. That is expected, the same in before and after.
 - **Tools:** nothing is installed. The two Swift helpers compile with the Command Line Tools' `swiftc` into `$TMPDIR/dd-td-capture/`.
 
 Exit codes: 0 done · 1 launch failed / NavMesh miss / crowd short · 3 not a dev build · 30/31/65/75 guard · 32 restore not accepted by `qa/oos_rule.py` · 64 usage · 128+n signal (the restore still runs).

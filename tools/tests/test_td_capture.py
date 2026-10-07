@@ -64,14 +64,20 @@ if wav:
     w = wave.open(wav, "wb"); w.setnchannels(2); w.setsampwidth(2); w.setframerate(48000)
     w.writeframes(b"".join(struct.pack("<hh", int(5000 * math.sin(n / 20.0)), 0) for n in range(48000 * 3)))
     w.close(); off = 0.5
-(v / "sync.json").write_text(json.dumps({"audio": {"wavOffsetSeconds": off}}))
+(v / "sync.json").write_text(json.dumps({"audio": {"wavOffsetSeconds": off, "sampleRate": 48000}}))
+lag = float(os.environ.get("FAKE_AVDRIFT", "0"))   # the audio clock loses this much by t = 2 s
+(v / "audio-sync.tsv").write_text("# t_seconds\twav_frames_captured\n" + "".join(
+    "%.6f\t%d\n" % (t, 24000 + round((t - lag * t / 2) * 48000)) for t in (0.0, 1.0, 2.0)))
 (v / "summary.json").write_text(json.dumps({"framesWritten": 60, "effectiveFps": float(os.environ.get("FAKE_FPS", "29.5")),
                                          "audio": {"driftSeconds": 0.0}}))
 '''
 
 FAKE_GUARD = r'''#!/bin/zsh
 echo "$1 $2 $4" >> "$FAKE_LOG.guard"
-if [ "$1" = snapshot ]; then mkdir -p "$2"; echo snapshot ok; exit 0; fi
+if [ "$1" = snapshot ]; then
+  [ -n "${FAKE_SNAP_SLEEP:-}" ] && { echo $$ > "$FAKE_LOG.snapping"; sleep "$FAKE_SNAP_SLEEP"; }
+  mkdir -p "$2"; [ -n "${FAKE_SNAP_OPEN_RC:-}" ] && { : > "$2/before.txt"; exit "$FAKE_SNAP_OPEN_RC"; }
+  echo snapshot ok; exit 0; fi
 rc=${FAKE_RESTORE_RC:-0}
 echo "userdata-guard restore scope=$4 touched=0 verified=1"
 exit $rc
@@ -108,6 +114,8 @@ class TdCaptureTests(unittest.TestCase):
         self.write(self.kproj / "wp-079/driver/tools/userdata-guard.sh", FAKE_GUARD)
         self.script = tools / "td-capture.sh"
         self.app = self.root / "builds/dev/DeathsDemolition.app"; (self.app / "Contents").mkdir(parents=True)
+        (self.app.parent / "build-report.json").write_text(json.dumps({"stamp": {"describe": "fixture-abc123", "commit": "abc123"}}))
+        (self.app.parent / "report.json").write_text(json.dumps({"head": "abc123def", "mode": "dev"}))
         self.log = self.root / "calls.jsonl"; self.log.write_text("")
 
     def tearDown(self):
@@ -153,6 +161,8 @@ class TdCaptureTests(unittest.TestCase):
         rec = json.loads((o / "capture.json").read_text())
         self.assertEqual((26, 0, 0), (rec["seed"], rec["guardRestore"], rec["exit"]))
         self.assertEqual("ok", rec["videoQuality"]["verdict"]); self.assertEqual({"stills", "video"}, set(rec["videoQuality"]["loadAtLaunch"]))
+        self.assertEqual((3, 0.0), (rec["videoQuality"]["avDrift"]["anchors"], rec["videoQuality"]["avDrift"]["maxAbs"]))
+        self.assertEqual(("fixture-abc123", "abc123def"), (rec["build"]["stamp"]["describe"], rec["build"]["head"]))   # gt MUST-2
         self.assertNotIn("stutters", r.stderr)
         sums = (o / "SHA256SUMS").read_text()
         self.assertIn("video/td-t1.mp4", sums); self.assertIn("stills/contact.png", sums); self.assertNotIn("frames/", sums)
@@ -199,6 +209,16 @@ class TdCaptureTests(unittest.TestCase):
         self.assertIn("stutters — effective 8.6 fps < 24", r.stderr)
         self.assertEqual("low-fps", json.loads((self.out() / "capture.json").read_text())["videoQuality"]["verdict"])
 
+    def test_AvKaymasi_UyariVeKayit_Cikis0(self):
+        """gt MUST-1 (08.10): the audio clock 0.4 s behind real time by the stop → verdict av-drift, a warning, exit 0."""
+        r = self.run_cap("--video-only", FAKE_AVDRIFT="0.4")
+        self.assertEqual(0, r.returncode, r.stdout + r.stderr)
+        q = json.loads((self.out() / "capture.json").read_text())["videoQuality"]
+        self.assertEqual("av-drift", q["verdict"]); self.assertAlmostEqual(-0.4, q["avDrift"]["atStop"], delta=0.001)
+        self.assertIn("audio clock drifted -0.400 s", r.stderr)
+        r = self.run_cap("--video-only", label="t2", FAKE_AVDRIFT="0.4", FAKE_FPS="8.6")
+        self.assertEqual("low-fps+av-drift", json.loads((self.out("t2") / "capture.json").read_text())["videoQuality"]["verdict"])
+
     def test_DusmanlarAcik_HoldSpawns0(self):
         r = self.run_cap("--stills-only", "--with-enemies")
         self.assertEqual(0, r.returncode, r.stderr)
@@ -222,6 +242,35 @@ class TdCaptureTests(unittest.TestCase):
         out, err = p.communicate(timeout=60)
         self.assertEqual(143, p.returncode, out + err)
         self.assertEqual("restore", self.guard_calls()[-1].split()[0])
+
+    def test_SinyalSnapshotKuyruktayken_HicbirSeyBaslamaz_Cikis143(self):
+        """gt SHOULD-2 (08.10): a TERM while the snapshot waits (the real guard: in the window queue, ≤ 1 h) stops it at
+        once — no launch, no restore (no window opened), exit 143."""
+        p = subprocess.Popen(["zsh", str(self.script), "--app", str(self.app), "--wp", "wp-099", "--label", "t1", "--stills-only"],
+                             env=self.env(FAKE_SNAP_SLEEP="30"), stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        end = time.time() + 30
+        while not Path(str(self.log) + ".snapping").exists() and time.time() < end:
+            time.sleep(0.1)
+        t0 = time.time(); os.kill(p.pid, signal.SIGTERM)
+        out, err = p.communicate(timeout=60)
+        self.assertEqual(143, p.returncode, out + err)
+        self.assertLess(time.time() - t0, 10)   # not after the snapshot's 30 s
+        gpid = int(Path(str(self.log) + ".snapping").read_text())
+        end = time.time() + 10
+        while time.time() < end:
+            try:
+                os.kill(gpid, 0); time.sleep(0.1)
+            except ProcessLookupError:
+                break
+        else:
+            os.kill(gpid, signal.SIGKILL); self.fail("the snapshot was left running — it could open a window nobody restores")
+        self.assertEqual([], self.calls()); self.assertEqual(["snapshot"], [l.split()[0] for l in self.guard_calls()])
+
+    def test_SnapshotHataAmaPencereAcik_RestoreKosar_Cikis1(self):
+        r = self.run_cap("--stills-only", FAKE_SNAP_OPEN_RC="75")
+        self.assertEqual(1, r.returncode, r.stdout + r.stderr)
+        self.assertIn("its window is open (before.txt)", r.stderr)
+        self.assertEqual([], self.calls()); self.assertEqual(["snapshot", "restore"], [l.split()[0] for l in self.guard_calls()])
 
     def test_KotuArguman_Cikis64(self):
         for extra in (["--video-seconds", "5"], ["--size", "big"], ["--seed", "x"], ["--nope"],

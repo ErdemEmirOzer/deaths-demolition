@@ -63,12 +63,25 @@ TDMUX=$(swift_bin tdmux) && MP4PROBE=$(swift_bin mp4probe) || exit 1
 
 # --- guard window (player scope: the Player writes the player area) ---------------------------------------------------
 UG="$OUT/ug"
-"$DD_GUARD_CANON" snapshot "$UG" --scope player > "$OUT/logs/guard-snapshot.out" 2>&1; GS=$?
-[ $GS -eq 0 ] || { cat "$OUT/logs/guard-snapshot.out" >&2; echo "td-capture: guard snapshot exit $GS — nothing launched" >&2; exit $GS; }
 SIG=0; RC=0; PRUN=""
 trap 'SIG=130; [ -n "$PRUN" ] && kill -TERM $PRUN 2>/dev/null' INT
 trap 'SIG=143; [ -n "$PRUN" ] && kill -TERM $PRUN 2>/dev/null' TERM
 trap 'SIG=129; [ -n "$PRUN" ] && kill -TERM $PRUN 2>/dev/null' HUP
+# gt SHOULD-2 (08.10): the snapshot can wait up to an hour in the window queue — `& wait` with the traps already set, so a
+# signal stops it at once (the guard leaves the queue / aborts its record); a window it opened anyway (before.txt, INV-8)
+# is restored below like any other
+"$DD_GUARD_CANON" snapshot "$UG" --scope player > "$OUT/logs/guard-snapshot.out" 2>&1 & PRUN=$!
+wait $PRUN; GS=$?
+[ $SIG -ne 0 ] && { wait $PRUN 2>/dev/null; GS=$?; }
+PRUN=""
+if [ $GS -ne 0 ]; then
+  if [ -f "$UG/before.txt" ]; then
+    echo "td-capture: guard snapshot exit $GS but its window is open (before.txt) — nothing launched, restoring it" >&2; RC=1
+  else
+    cat "$OUT/logs/guard-snapshot.out" >&2; echo "td-capture: guard snapshot exit $GS — nothing launched" >&2
+    [ $SIG -ne 0 ] && exit $SIG; exit $GS
+  fi
+fi
 
 COMMON=(-screen-fullscreen 0 -screen-width "$W" -screen-height "$H" -ddProfilePath "$OUT/sandbox/profile.json"
         -ddUiDataRoot "$OUT/sandbox/ui" -ddTelemetryDir "$OUT/sandbox/telemetry" -ddCameraMode topdown
@@ -87,7 +100,7 @@ launch() { local name=$1 limit=$2 t0=$SECONDS; shift 2
   wait $PRUN 2>/dev/null; local rc=$?; PRUN=""
   dd_log "td-capture: $name exit=$rc ($((SECONDS - t0))s)"; return $rc; }
 
-if [ "$DO_STILLS" -eq 1 ] && [ $SIG -eq 0 ]; then
+if [ "$DO_STILLS" -eq 1 ] && [ $SIG -eq 0 ] && [ $RC -eq 0 ]; then
   launch stills 300 -ddDirectToRun -ddTdCaptureMode stills -ddTdPoses "$POSES" -ddTdHoldSpawns $HOLD -ddTdCrowdWaitSeconds "$CROWD_WAIT"
   n=$(ls "$OUT/stills"/*.png 2>/dev/null | wc -l | tr -d ' ')
   [ -f "$OUT/error.json" ] && { echo "td-capture: the capture agent refused — $(cat "$OUT/error.json")" >&2; RC=1; }
@@ -135,7 +148,9 @@ fi
 python3 "$HERE/td-capture/manifest.py" "$OUT" --app "$APP" --seed "$SEED" --poses "$POSES" --size "$SIZE" --tier "$TIER" \
   --hold "$HOLD" --guard "$GR" --rc "$RC" --signal "$SIG" > "$OUT/logs/manifest.out" 2>&1 || true
 python3 -c 'import json, sys; q = json.load(open(sys.argv[1])).get("videoQuality") or {}
-q.get("verdict") == "low-fps" and print("WARNING td-capture: the MP4 stutters — effective %.1f fps < %d (load at launch %s); retake on a quieter machine" % (q["effectiveFps"], q["minFps"], q.get("loadAtLaunch")), file=sys.stderr)' "$OUT/capture.json" 2>&1 | tee -a "$DD_TIMELINE" >&2
+v = (q.get("verdict") or "").split("+"); d = q.get("avDrift") or {}
+"low-fps" in v and print("WARNING td-capture: the MP4 stutters — effective %.1f fps < %d (load at launch %s); retake on a quieter machine" % (q["effectiveFps"], q["minFps"], q.get("loadAtLaunch")))
+"av-drift" in v and print("WARNING td-capture: the audio clock drifted %+.3f s from real time by the stop (max |%.3f| s > %.2f) — sound and picture are out of step in the MP4; retake on a quieter machine" % (d["atStop"], d["maxAbs"], q["maxAvDrift"]))' "$OUT/capture.json" 2>&1 | tee -a "$DD_TIMELINE" >&2
 [ $SIG -ne 0 ] && exit $SIG
 [ $GR -ne 0 ] && exit $GR
 [ $RC -eq 0 ] && dd_log "td-capture: done — $OUT"
