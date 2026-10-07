@@ -36,6 +36,8 @@ namespace DD.Art.Tests.PlayMode
     /// (<c>center-shadow</c>), three third-person and three first-person frames (<see cref="LookV3Poses"/>, the WP-070 rig's
     /// shoulder / eye heights) — at fixed cookie phases: the sun patch on the centre for every frame but
     /// <c>center-shadow</c>, found from the cookie itself (<see cref="CookiePhases"/>), written to the manifest.
+    /// Top Down only (user 06.10): the nine TD frames are the reference test; the six TP / FP frames are their own
+    /// <c>[Category("FPTP")]</c> test — the same procedure and cookie phases, in a run and crowd of its own.
     /// </summary>
     [TestFixture]
     [Category("WP029")]
@@ -116,7 +118,22 @@ namespace DD.Art.Tests.PlayMode
 
         [UnityTest]
         [Timeout(600000)]
-        public IEnumerator ReferansKareleri_15Kadraj_CookieFazli_HamVePost_1080p()
+        public IEnumerator ReferansKareleri_9Kadraj_CookieFazli_HamVePost_1080p()
+        {
+            return Kareler(false);
+        }
+
+        /// <summary>The six <see cref="LookV3Poses"/> (TP shoulder / FP eye heights): the same procedure and cookie phase, its own run and crowd.</summary>
+        [UnityTest]
+        [Timeout(600000)]
+        [Category("FPTP")]
+        public IEnumerator ReferansKareleri_TPFP_6Kadraj_CookieFazli_HamVePost_1080p()
+        {
+            return Kareler(true);
+        }
+
+        /// <summary>The run with the 40-body crowd, then <paramref name="lookModes"/>: the six TP / FP poses, else the nine TD frames.</summary>
+        private IEnumerator Kareler(bool lookModes)
         {
             Environment.SetEnvironmentVariable(WorldSourceSettings.EnvironmentVariable, "AP005");
             CharacterAssetSet.ResetCache();
@@ -157,13 +174,20 @@ namespace DD.Art.Tests.PlayMode
             Vector3 feet = PlayerRegistry.Primary.transform.position;
             var playerVisual = PlayerRegistry.Primary.GetComponentInChildren<SkinnedMeshRenderer>();
             if (playerVisual != null) { Bounds pb = playerVisual.bounds; feet = new Vector3(pb.center.x, pb.min.y, pb.center.z); }
-            var poses = new List<ArtVisualRegression.CameraPose>(WorldPoses)
+            List<ArtVisualRegression.CameraPose> poses;
+            if (lookModes)
             {
-                CharacterTests.GameplayPose("crowd40"),
-                new ArtVisualRegression.CameraPose("player-closeup", feet + new Vector3(0f, 4.2f, -4.4f), feet + Vector3.up * 1.0f, 30f)
-            };
-            poses.Insert(1, new ArtVisualRegression.CameraPose(CenterShadowPose, WorldPoses[0].position, WorldPoses[0].lookAt, WorldPoses[0].verticalFov));
-            poses.AddRange(LookV3Poses);
+                poses = new List<ArtVisualRegression.CameraPose>(LookV3Poses);
+            }
+            else
+            {
+                poses = new List<ArtVisualRegression.CameraPose>(WorldPoses)
+                {
+                    CharacterTests.GameplayPose("crowd40"),
+                    new ArtVisualRegression.CameraPose("player-closeup", feet + new Vector3(0f, 4.2f, -4.4f), feet + Vector3.up * 1.0f, 30f)
+                };
+                poses.Insert(1, new ArtVisualRegression.CameraPose(CenterShadowPose, WorldPoses[0].position, WorldPoses[0].lookAt, WorldPoses[0].verticalFov));
+            }
 
             CloudShadowDriver cloud = CloudShadowDriver.Active;
             Assert.IsNotNull(cloud, "bulut gölgesi (WP-075 C2) güneşte yok");
@@ -201,9 +225,9 @@ namespace DD.Art.Tests.PlayMode
             }
 
             Time.captureDeltaTime = 0f;
-            File.WriteAllLines(Path.Combine(dir, "look-ref-manifest.csv"), manifest);
+            File.WriteAllLines(Path.Combine(dir, lookModes ? "look-ref-manifest-tpfp.csv" : "look-ref-manifest.csv"), manifest);
             Debug.Log("[DD-TEST] wp029.lookref frames=" + poses.Count + "x2 alive=" + alive + " armored=" + armored + " cookie centre lit " + litValue.ToString("F2") + " @" + litPhase.ToString("F3") + " / shadow " + shadowValue.ToString("F2") + " @" + shadowPhase.ToString("F3") + " -> " + dir);
-            Assert.AreEqual(15, poses.Count);
+            Assert.AreEqual(lookModes ? 6 : 9, poses.Count);
             Assert.GreaterOrEqual(litValue, 0.8f, "merkez güneş yamasında");
             Assert.LessOrEqual(shadowValue, 0.5f, "merkez bulut gölgesinde");
             foreach (ArtVisualRegression.CameraPose pose in poses)

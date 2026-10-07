@@ -687,26 +687,45 @@ namespace DD.Art.Tests.EditMode
             Assert.IsFalse(importer.mipmapEnabled, "LUT mip yok");
         }
 
+        /// <summary>The look modes' screen atmosphere: shafts 20 / 0.22 High, 48 / 0.40 Cinematic, height fog in both, none in
+        /// Performance; Ek A §5.2's fog from eye height.</summary>
+        [Test]
+        [Category("FPTP")]
+        public void Greybox_C4B_C5_EkranAtmosferi_TPFP()
+        {
+            ScreenAtmosphereFeature.Rules cin = ScreenAtmosphereFeature.RulesFor(QualityTier.Sinematik, CameraMode.ThirdPerson);
+            Assert.IsTrue(cin.HeightFog);
+            Assert.AreEqual(48, cin.ShaftSamples);
+            Assert.AreEqual(0.40f, cin.ShaftPeak, 1e-4f);
+            ScreenAtmosphereFeature.Rules high = ScreenAtmosphereFeature.RulesFor(QualityTier.Yuksek, CameraMode.FirstPerson);
+            Assert.AreEqual(20, high.ShaftSamples);
+            Assert.AreEqual(0.22f, high.ShaftPeak, 1e-4f);
+            Assert.AreEqual(0, ScreenAtmosphereFeature.RulesFor(QualityTier.Performans, CameraMode.ThirdPerson).ShaftSamples, "Performans kapalı");
+
+            // Ek A §5.2: ≈ 9 % at 30 m, ≈ 12 % (cap) at 45 m from eye height; never over 12 %.
+            float at30 = ScreenAtmosphereFeature.HeightFogOpacity(1.7f, Vector3.forward, 30f), at45 = ScreenAtmosphereFeature.HeightFogOpacity(1.7f, Vector3.forward, 45f);
+            Assert.That(at30, Is.InRange(0.07f, 0.10f), "30 m");
+            Assert.That(at45, Is.InRange(0.10f, 0.12f), "45 m");
+            Assert.AreEqual(0.12f, ScreenAtmosphereFeature.HeightFogOpacity(1.7f, Vector3.forward, 400f), 1e-4f, "tavan");
+            Assert.Less(ScreenAtmosphereFeature.HeightFogOpacity(20f, Vector3.forward, 30f), at30, "yükseldikçe incelir");
+        }
+
         [Test]
         public void Greybox_C7_PostKurallari_KademeVeKameraModu()
         {
-            // Ek A §7 table: grain by tier, vignette by mode, DoF / camera blur only in Cinematic TP / FP.
+            // Ek A §7 table: grain by tier, vignette by mode, DoF / camera blur only in Cinematic TP / FP — the Top Down rows
+            // (user 06.10); the TP / FP rows are Greybox_C7_PostKurallari_TPFP.
             LookV3Post.Rules td = LookV3Post.RulesFor(QualityTier.Sinematik, CameraMode.TopDown);
             Assert.AreEqual(0.18f, td.Grain, 1e-4f);
             Assert.AreEqual(0.24f, td.VignetteIntensity, 1e-4f);
             Assert.AreEqual(0.40f, td.VignetteSmoothness, 1e-4f);
             Assert.AreEqual(LookV3Post.DepthMode.Off, td.Depth);
             Assert.AreEqual(0f, td.MotionBlur);
-            LookV3Post.Rules tp = LookV3Post.RulesFor(QualityTier.Sinematik, CameraMode.ThirdPerson);
-            Assert.AreEqual(LookV3Post.DepthMode.GaussianFar, tp.Depth);
-            Assert.AreEqual(0.22f, tp.VignetteIntensity, 1e-4f);
-            Assert.AreEqual(0.12f, tp.MotionBlur, 1e-4f);
-            Assert.AreEqual(LookV3Post.DepthMode.BokehAim, LookV3Post.RulesFor(QualityTier.Sinematik, CameraMode.FirstPerson).Depth);
-            LookV3Post.Rules high = LookV3Post.RulesFor(QualityTier.Yuksek, CameraMode.ThirdPerson);
+            LookV3Post.Rules high = LookV3Post.RulesFor(QualityTier.Yuksek, CameraMode.TopDown);
             Assert.AreEqual(0.10f, high.Grain, 1e-4f);
             Assert.AreEqual(LookV3Post.DepthMode.Off, high.Depth);
             Assert.AreEqual(0f, high.MotionBlur);
-            Assert.AreEqual(0f, LookV3Post.RulesFor(QualityTier.Performans, CameraMode.FirstPerson).Grain);
+            Assert.AreEqual(0f, LookV3Post.RulesFor(QualityTier.Performans, CameraMode.TopDown).Grain);
 
             Open();
             Assert.IsNotNull(GameObject.Find(WorldV5Dress.RootName).GetComponent<LookV3Post>(), "dress kökü LookV3Post taşır");
@@ -721,6 +740,23 @@ namespace DD.Art.Tests.EditMode
             Assert.IsTrue(profile.TryGet(out UnityEngine.Rendering.Universal.DepthOfField dof) && !dof.active, "taban tepeden: DoF kapalı");
             foreach (UnityEngine.Rendering.VolumeComponent c in profile.components)
                 Assert.IsTrue(AssetDatabase.Contains(c), c.GetType().Name + " profil alt varlığı");
+        }
+
+        /// <summary>The Ek A §7 rows of the look modes: DoF / camera blur only in Cinematic TP / FP, grain by tier there too.</summary>
+        [Test]
+        [Category("FPTP")]
+        public void Greybox_C7_PostKurallari_TPFP()
+        {
+            LookV3Post.Rules tp = LookV3Post.RulesFor(QualityTier.Sinematik, CameraMode.ThirdPerson);
+            Assert.AreEqual(LookV3Post.DepthMode.GaussianFar, tp.Depth);
+            Assert.AreEqual(0.22f, tp.VignetteIntensity, 1e-4f);
+            Assert.AreEqual(0.12f, tp.MotionBlur, 1e-4f);
+            Assert.AreEqual(LookV3Post.DepthMode.BokehAim, LookV3Post.RulesFor(QualityTier.Sinematik, CameraMode.FirstPerson).Depth);
+            LookV3Post.Rules high = LookV3Post.RulesFor(QualityTier.Yuksek, CameraMode.ThirdPerson);
+            Assert.AreEqual(0.10f, high.Grain, 1e-4f);
+            Assert.AreEqual(LookV3Post.DepthMode.Off, high.Depth);
+            Assert.AreEqual(0f, high.MotionBlur);
+            Assert.AreEqual(0f, LookV3Post.RulesFor(QualityTier.Performans, CameraMode.FirstPerson).Grain);
         }
 
         [Test]
@@ -751,23 +787,14 @@ namespace DD.Art.Tests.EditMode
         [Test]
         public void Greybox_C4B_C5_EkranAtmosferi_KademeModu_YukseklikSisi()
         {
-            // QUALITY-TIERS-V2 r2 §4.2: shafts 20 / 0.22 High, 48 / 0.40 Cinematic; height fog on in both; top-down and Performance: neither.
-            ScreenAtmosphereFeature.Rules cin = ScreenAtmosphereFeature.RulesFor(QualityTier.Sinematik, CameraMode.ThirdPerson);
-            Assert.IsTrue(cin.HeightFog);
-            Assert.AreEqual(48, cin.ShaftSamples);
-            Assert.AreEqual(0.40f, cin.ShaftPeak, 1e-4f);
-            ScreenAtmosphereFeature.Rules high = ScreenAtmosphereFeature.RulesFor(QualityTier.Yuksek, CameraMode.FirstPerson);
-            Assert.AreEqual(20, high.ShaftSamples);
-            Assert.AreEqual(0.22f, high.ShaftPeak, 1e-4f);
-            Assert.IsFalse(ScreenAtmosphereFeature.RulesFor(QualityTier.Sinematik, CameraMode.TopDown).HeightFog, "tepeden kapalı");
-            Assert.AreEqual(0, ScreenAtmosphereFeature.RulesFor(QualityTier.Performans, CameraMode.ThirdPerson).ShaftSamples, "Performans kapalı");
-
-            // Ek A §5.2: ≈ 9 % at 30 m, ≈ 12 % (cap) at 45 m from eye height; never over 12 %.
-            float at30 = ScreenAtmosphereFeature.HeightFogOpacity(1.7f, Vector3.forward, 30f), at45 = ScreenAtmosphereFeature.HeightFogOpacity(1.7f, Vector3.forward, 45f);
-            Assert.That(at30, Is.InRange(0.07f, 0.10f), "30 m");
-            Assert.That(at45, Is.InRange(0.10f, 0.12f), "45 m");
-            Assert.AreEqual(0.12f, ScreenAtmosphereFeature.HeightFogOpacity(1.7f, Vector3.forward, 400f), 1e-4f, "tavan");
-            Assert.Less(ScreenAtmosphereFeature.HeightFogOpacity(20f, Vector3.forward, 30f), at30, "yükseldikçe incelir");
+            // QUALITY-TIERS-V2 r2 §4.2: top-down gets neither shafts nor height fog at any tier — the Top Down rows (user 06.10);
+            // the TP / FP rows and the eye-height fog curve are Greybox_C4B_C5_EkranAtmosferi_TPFP.
+            foreach (QualityTier tier in new[] { QualityTier.Performans, QualityTier.Yuksek, QualityTier.Sinematik })
+            {
+                ScreenAtmosphereFeature.Rules td = ScreenAtmosphereFeature.RulesFor(tier, CameraMode.TopDown);
+                Assert.IsFalse(td.HeightFog, tier + " tepeden: sis kapalı");
+                Assert.AreEqual(0, td.ShaftSamples, tier + " tepeden: ışık huzmesi kapalı");
+            }
 
             // On the High and Cinematic renderers (shader bound for builds), not on Performance's.
             foreach (string path in ScreenAtmosphereSetup.RendererPaths)

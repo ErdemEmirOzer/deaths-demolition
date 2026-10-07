@@ -45,6 +45,8 @@ namespace DD.Art.Tests.PlayMode
     /// shows the boundary under motion. AD MUST-3: High FP close contact — one body at 1.5–3 m, its shadow in the frame, the live
     /// gameplay camera (viewmodel included) at 2 / 3 / 4 cascades.</para>
     /// Rows as [DD-OBS] lines and TSVs under <c>DD_S05_CASCADE_DIR</c>. Diagnostic, run by full name.
+    /// <para>Top Down only (user 06.10): the table and the V6 crowd run on TD; the TP / FP rows with the TP orbit and the FP
+    /// contact are the <c>_TPFP</c> tests (<c>[Category("FPTP")]</c>), their TSVs with a <c>-tpfp</c> suffix.</para>
     /// </summary>
     [Explicit("WP-070 S-05 cascade diagnostic: run by full name")]
     [Category("Diagnostics")]
@@ -54,7 +56,8 @@ namespace DD.Art.Tests.PlayMode
         private const float SahneZamanAsimi = 120f, KurulumZamanAsimi = 60f;
         private const int W = 1920, H = 1080;
 
-        private static readonly CameraMode[] Modes = { CameraMode.TopDown, CameraMode.ThirdPerson, CameraMode.FirstPerson };
+        private static readonly CameraMode[] TdModes = { CameraMode.TopDown };
+        private static readonly CameraMode[] FptpModes = { CameraMode.ThirdPerson, CameraMode.FirstPerson };
         private static readonly QualityTier[] Tiers = { QualityTier.Performans, QualityTier.Yuksek, QualityTier.Sinematik };
 
         /// <summary>The AD's close band: bodies within this ground distance of the player.</summary>
@@ -138,28 +141,41 @@ namespace DD.Art.Tests.PlayMode
         [Timeout(120000)]
         public IEnumerator Kaskad_KademeModTablosu_OlcumYazilir()
         {
+            return TableRun(TdModes, "cascade-table.tsv");
+        }
+
+        [UnityTest]
+        [Timeout(120000)]
+        [Category("FPTP")]
+        public IEnumerator Kaskad_KademeModTablosu_TPFP_OlcumYazilir()
+        {
+            return TableRun(FptpModes, "cascade-table-tpfp.tsv");
+        }
+
+        private static IEnumerator TableRun(CameraMode[] modes, string fileName)
+        {
             var sb = new StringBuilder("pass\ttier\tmode\tlevel\tasset\tcascades\tprofileCascades\tcontractCascades\tshadowDistance\tprofileShadowDistance\tcontractShadowDistance\tlodBias\tcontractLodBias\n");
             int[] rows = { 0 };
 
             // off: every asset back to its file value, nothing writes — what main rendered before the fix
             QualityModeApplier.Enabled = false;
             QualityModeApplier.RestoreOriginals();
-            yield return Table("off", sb, rows);
+            yield return Table("off", sb, rows, modes);
 
             // on: one ApplyNow (re-arm), then the level / mode events alone
             QualityModeApplier.Enabled = true;
             QualityModeApplier.ApplyNow();
-            yield return Table("on", sb, rows);
+            yield return Table("on", sb, rows, modes);
 
-            string path = Path.Combine(OutputDir(), "cascade-table.tsv");
+            string path = Path.Combine(OutputDir(), fileName);
             File.WriteAllText(path, sb.ToString());
             Debug.Log("[DD-OBS] s05.cascade.table rows=" + rows[0] + " -> " + path);
             // the source is in the record: every pass × tier × mode row read a URP asset
-            Assert.AreEqual(2 * Tiers.Length * Modes.Length, rows[0], "kaynak yok: her geçiş × kademe × mod satırı URP varlığı okumadı");
+            Assert.AreEqual(2 * Tiers.Length * modes.Length, rows[0], "kaynak yok: her geçiş × kademe × mod satırı URP varlığı okumadı");
         }
 
         /// <summary>One pass over every tier × mode: switch the level, then the mode (instant), read the active pipeline asset.</summary>
-        private static IEnumerator Table(string pass, StringBuilder sb, int[] rows)
+        private static IEnumerator Table(string pass, StringBuilder sb, int[] rows, CameraMode[] modes)
         {
             int count = QualitySettings.count;
             foreach (QualityTier tier in Tiers)
@@ -168,7 +184,7 @@ namespace DD.Art.Tests.PlayMode
                 if (QualitySettings.GetQualityLevel() != level) QualitySettings.SetQualityLevel(level, true);
                 yield return null;
                 Assert.AreEqual(tier, QualityTiers.Current, "kademe geçişi");
-                foreach (CameraMode mode in Modes)
+                foreach (CameraMode mode in modes)
                 {
                     CameraModeService.Request(mode, instant: true);
                     yield return null;
@@ -197,6 +213,20 @@ namespace DD.Art.Tests.PlayMode
         [UnityTest]
         [Timeout(1800000)]
         public IEnumerator Kaskad_V6_40Zombi_SayaclarVeKareler()
+        {
+            return V6(TdModes, false);
+        }
+
+        /// <summary>The TP / FP rows on the same crowd, then the TP orbit (MUST-2) and the High FP close contact (MUST-3).</summary>
+        [UnityTest]
+        [Timeout(1800000)]
+        [Category("FPTP")]
+        public IEnumerator Kaskad_V6_40Zombi_TPFP_SayaclarVeKareler()
+        {
+            return V6(FptpModes, true);
+        }
+
+        private IEnumerator V6(CameraMode[] modes, bool lookModes)
         {
             // the player's default path: no world override (V6, World_V6_Greybox), menu flow into a run
             Environment.SetEnvironmentVariable(WorldSourceSettings.EnvironmentVariable, null);
@@ -259,7 +289,7 @@ namespace DD.Art.Tests.PlayMode
                 QualitySettings.SetQualityLevel(QualityTiers.LevelOfTier(tier, count), true);
                 for (int i = 0; i < 3; i++) yield return null;
                 Assert.AreEqual(tier, QualityTiers.Current, "kademe geçişi");
-                foreach (CameraMode mode in Modes)
+                foreach (CameraMode mode in modes)
                 {
                     CameraModeService.Request(mode, instant: true);
                     for (int i = 0; i < 5; i++) yield return null;
@@ -304,20 +334,24 @@ namespace DD.Art.Tests.PlayMode
                 }
             }
 
-            string path = Path.Combine(dir, "cascade-v6-counters.tsv");
+            string path = Path.Combine(dir, lookModes ? "cascade-v6-counters-tpfp.tsv" : "cascade-v6-counters.tsv");
             File.WriteAllText(path, sb.ToString());
             Debug.Log("[DD-OBS] s05.cascade.v6 rows=" + rows + " zombies=" + alive + " -> " + path);
             // the source is in the record: the crowd was there and every frame was drawn — and in view, casting (gt Y-6)
-            Assert.AreEqual(27, rows, "satır sayısı");
+            Assert.AreEqual(3 * modes.Length * 3, rows, "satır sayısı (kademe × mod × durum)");
             Assert.Greater(minSetPass, 0, "kaynak yok: SetPass 0 (kare render edilmedi)");
             Assert.Greater(minDraws, 0, "kaynak yok: draw 0");
             Assert.Greater(minVisible, 0, "kaynak yok: kamerada görünür zombi yok");
             if (minCasters != long.MaxValue) Assert.Greater(minCasters, 0, "kaynak yok: gölge döken 0");
 
-            // MUST-2: the boundary under motion
-            yield return Pan(dir, player, count);
-            // MUST-3: High FP close contact at 2 / 3 / 4 cascades
-            yield return Contact(dir, player, count);
+            if (lookModes)
+            {
+                // MUST-2: the boundary under motion
+                yield return Pan(dir, player, count);
+                // MUST-3: High FP close contact at 2 / 3 / 4 cascades
+                yield return Contact(dir, player, count);
+            }
+
             foreach (ZombieEnemy z in crowd) if (z != null && z.IsSpawned) z.Remove();
         }
 
