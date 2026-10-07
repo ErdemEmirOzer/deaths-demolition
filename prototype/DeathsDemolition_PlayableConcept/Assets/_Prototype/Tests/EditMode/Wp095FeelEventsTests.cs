@@ -132,6 +132,59 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        public void MultiKill_SustainedStream_EachTriggerPullsOwnTripleStillSpeaks()
+        {
+            // gt MUST-1 (07.10): kills every 0.1 s keep the chain alive; two separate pulls' triples inside it must each raise
+            // their own same-group T1 (the old streak tier only reset after a 0.6 s gap and swallowed them)
+            var multi = new List<FeelMultiKill>();
+            FeelEvents.MultiKill += m => multi.Add(m);
+            float t = 10f;
+            int life = 1;
+            void Ungrouped(int n) { for (int i = 0; i < n; i++) { FeelEvents.TestClock = t; FeelEvents.OnEnemyDied(Death(lifeId: life++)); t += 0.1f; } }
+            void Triple(int group)
+            {
+                FeelEvents.TestClock = t;
+                int previous = FeelEvents.PushHitGroup(group);
+                for (int i = 0; i < 3; i++) FeelEvents.OnEnemyDied(Death(lifeId: life++));
+                FeelEvents.PopHitGroup(previous);
+                t += 0.1f;
+            }
+
+            Ungrouped(6);
+            Triple(101);
+            Ungrouped(5);
+            Triple(102);
+            Ungrouped(3);
+
+            int own101 = 0, own102 = 0;
+            foreach (FeelMultiKill m in multi)
+            {
+                if (m.SameGroup && m.GroupId == 101 && m.GroupTier == 1) own101++;
+                if (m.SameGroup && m.GroupId == 102 && m.GroupTier == 1) own102++;
+                Assert.GreaterOrEqual(m.Tier, m.GroupTier);
+            }
+
+            Assert.AreEqual(1, own101, "the first pull's triple inside the running chain");
+            Assert.AreEqual(1, own102, "the second pull's triple, still inside the chain");
+            Assert.IsTrue(multi.Exists(m => !m.SameGroup && m.Tier == 1), "the chain itself raised its T1");
+            Assert.LessOrEqual(multi.Count, life - 1, "at most one MultiKill per kill");
+        }
+
+        [Test]
+        public void MultiKill_OneBlastOfFour_IsOneT1()
+        {
+            var multi = new List<FeelMultiKill>();
+            FeelEvents.MultiKill += m => multi.Add(m);
+            int previous = FeelEvents.PushHitGroup(7);
+            for (int i = 0; i < 4; i++) FeelEvents.OnEnemyDied(Death(lifeId: i + 1));
+            FeelEvents.PopHitGroup(previous);
+
+            Assert.AreEqual(1, multi.Count, "the 4th kill reaches the chain minimum but does not exceed what its own pull raised");
+            Assert.AreEqual(1, multi[0].Tier);
+            Assert.AreEqual(1, multi[0].GroupTier);
+        }
+
+        [Test]
         public void MultiKill_GroupIdleLongerThanTheWindow_StartsOver()
         {
             var kills = new List<FeelKill>();
@@ -248,6 +301,26 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(SpecialWeaponId.Namekuji, started[0].SpecialId);
             Assert.AreEqual(1.5f, started[0].DurationSeconds, 1e-6f);
             Assert.IsTrue(ended[0].Completed);
+        }
+
+        [Test]
+        public void SpecialReload_DeactivatedMidReload_RaisesTheCutEdge_Once()
+        {
+            var ended = new List<FeelReload>();
+            FeelEvents.ReloadEnded += r => ended.Add(r);
+            var deactivated = new SpecialUsageEvent(SpecialWeaponId.Raiju, SpecialUsageKind.Deactivated, "fx", Vector3.zero, Vector3.forward, 0f, 0f, 0);
+
+            FeelEvents.OnSpecialUsage(deactivated);
+            Assert.AreEqual(0, ended.Count, "no reload running: nothing to cut");
+
+            FeelEvents.OnSpecialUsage(new SpecialUsageEvent(SpecialWeaponId.Raiju, SpecialUsageKind.ReloadStarted, "fx",
+                Vector3.zero, Vector3.forward, 0f, 2f, 1));
+            FeelEvents.OnSpecialUsage(deactivated);
+            FeelEvents.OnSpecialUsage(deactivated);
+
+            Assert.AreEqual(1, ended.Count, "gt SHOULD-2: the time cap / cancel ends the reload with one cut edge");
+            Assert.IsFalse(ended[0].Completed);
+            Assert.AreEqual(2f, ended[0].DurationSeconds, 1e-6f);
         }
 
         [Test]

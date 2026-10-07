@@ -167,7 +167,8 @@ namespace DD.Prototype.Weapons
                 return;
             }
 
-            Detonate(def, p.WeaponId, p.ContactPoint, p.ContactNormal, RocketBlastKind.Impact, p.ContactTargetId, p.BlastTier, p.ClusterBomblets);
+            Detonate(def, p.WeaponId, p.ContactPoint, p.ContactNormal, RocketBlastKind.Impact, p.ContactTargetId, p.BlastTier, p.ClusterBomblets,
+                p.Shot.PresentationGroupId);
         }
 
         /// <summary>Range or lifetime ran out in the air: burst there (a rocket that never armed just ends).</summary>
@@ -182,7 +183,8 @@ namespace DD.Prototype.Weapons
                 return;
             }
 
-            Detonate(def, p.WeaponId, p.Position, Vector3.up, RocketBlastKind.AirBurst, 0, p.BlastTier, p.ClusterBomblets);
+            Detonate(def, p.WeaponId, p.Position, Vector3.up, RocketBlastKind.AirBurst, 0, p.BlastTier, p.ClusterBomblets,
+                p.Shot.PresentationGroupId);
         }
 
         // ------------------------------------------------------------------ blast
@@ -204,7 +206,23 @@ namespace DD.Prototype.Weapons
         }
 
         private static void Detonate(WeaponDefinition def, ClassicWeaponId weapon, Vector3 origin, Vector3 normal, RocketBlastKind kind, int directTargetId,
-            int blastTier, int bomblets)
+            int blastTier, int bomblets, int shotGroup)
+        {
+            // WP-095 (gt SHOULD-1): FeelEvents sees the blast's kills and the blast itself in the trigger pull's group, like its direct
+            // hit — the router keeps its own blast group (the one-shake-per-group rule is unchanged)
+            int previousFeelGroup = FeelEvents.PushHitGroup(shotGroup != 0 ? shotGroup : FeelEvents.CurrentHitGroup);
+            try
+            {
+                DetonateInGroup(def, weapon, origin, normal, kind, directTargetId, blastTier, bomblets);
+            }
+            finally
+            {
+                FeelEvents.PopHitGroup(previousFeelGroup);
+            }
+        }
+
+        private static void DetonateInGroup(WeaponDefinition def, ClassicWeaponId weapon, Vector3 origin, Vector3 normal, RocketBlastKind kind,
+            int directTargetId, int blastTier, int bomblets)
         {
             WeaponExplosiveBlock e = def.explosive;
             int tier = Mathf.Max(0, blastTier);
@@ -284,7 +302,8 @@ namespace DD.Prototype.Weapons
                     if (share <= 0f) continue;
 
                     DamageHitContext.Set(1f, 1f, true, weapon, null);
-                    int previousGroup = FeelEvents.PushHitGroup(group);   // WP-095: the blast's kills are one group
+                    // WP-095: the blast's kills are one group — the trigger pull's when Detonate pushed it
+                    int previousGroup = FeelEvents.PushHitGroup(FeelEvents.CurrentHitGroup != 0 ? FeelEvents.CurrentHitGroup : group);
                     DamageResult r;
                     try
                     {
