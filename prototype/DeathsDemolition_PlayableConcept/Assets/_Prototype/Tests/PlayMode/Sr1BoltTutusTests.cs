@@ -55,7 +55,17 @@ namespace DD.Prototype.Tests.PlayMode
 
         [UnityTest]
         [Timeout(300000)]
-        public IEnumerator Sr1_BoltDongusu_TutusVeKavramaAcik_NamluKlipYolununEn120si()
+        public IEnumerator Sr1_BoltDongusu_TutusVeKavramaAcik_NamluKlipYolununEn120si() => Olc(false);
+
+        /// <summary>
+        /// WP-083 R3 (gt GT-R3T MUST-1): the same with focus held (RMB / LT; top-down too) — the shot then goes to the focused cycle
+        /// CycleAds_V3 (AdsWeight &gt; 0.5), which is held the same way. The focused cycle must play (its frames are counted).
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator Sr1_OdakliBoltDongusu_TutusVeKavramaAcik_NamluKlipYolununEn120si() => Olc(true);
+
+        private IEnumerator Olc(bool focus)
         {
             CameraModeService.Request(CameraMode.TopDown, instant: true);
             Time.captureDeltaTime = 1f / 60f;
@@ -63,7 +73,8 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsNotNull(body, "skinned oyuncu yok");
             if (WeaponHoldIk.Enabled) Assert.IsNotNull(body.HoldIk, "WeaponHoldIk yok (varsayılan açık olmalı)");
             _s.Controller.EquipClassic(ClassicWeaponId.Sr1, _s.Config);
-            yield return SpecialWeaponSahne.Kareler(90);
+            _s.Girdi.OdakBasili = focus;
+            yield return SpecialWeaponSahne.Kareler(90);   // the switch-in, and with focus the ADS blend (0.4 s) in
             Animator a = body.Animator;
             Transform chest = a.GetBoneTransform(HumanBodyBones.Chest);
             Transform muzzle = Muzzle(body.WeaponSocket);
@@ -71,7 +82,8 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsNotNull(muzzle, "sr_1'de Muzzle soketi yok");
             int layer = body.OverrideLayerIndex;
             Assert.GreaterOrEqual(layer, 0, "override katmanı yok");
-            int cycleHash = Animator.StringToHash(C.CycleV3State);
+            string cycleState = focus ? C.CycleAdsV3State : C.CycleV3State;
+            int cycleHash = Animator.StringToHash(cycleState);
             var report = new List<string>();
             int cycleFrames = 0, openGateMisses = 0, gripMisses = 0;
             float worstTravel = 0f, minCycleWeight = 1f, minGripWeight = 1f, worstGripCm = 0f;
@@ -80,6 +92,7 @@ namespace DD.Prototype.Tests.PlayMode
                 yield return SpecialWeaponSahne.Bekle(() => (!WeaponHoldIk.Enabled || body.HoldIk.Weight >= 1f) && !_s.Controller.Classic.IsReloading, 5f, "sr_1 tutuşu dinlenmede değil");
                 if (!WeaponHoldIk.Enabled) yield return SpecialWeaponSahne.Kareler(30);   // the clip-only path: the previous cycle out
                 Vector3 rest = InChest(chest, muzzle.position);
+                if (shot == 0) Frame(focus, "rest");
                 _s.Girdi.AtesBasti = true; _s.Girdi.AtesBasili = true;
                 yield return null;
                 _s.Girdi.AtesBasti = false; _s.Girdi.AtesBasili = false;
@@ -91,6 +104,7 @@ namespace DD.Prototype.Tests.PlayMode
                     float d = Vector3.Distance(InChest(chest, muzzle.position), rest);
                     travel = Mathf.Max(travel, d);
                     if (f < 12) kick = Mathf.Max(kick, d); else bolt = Mathf.Max(bolt, d);   // the kick window (S-02's 12 frames), then the bolt
+                    if (shot == 0 && (f == 6 || f == 30 || f == 50)) Frame(focus, "f" + f.ToString("00", CultureInfo.InvariantCulture));
                     if (a.GetCurrentAnimatorStateInfo(layer).shortNameHash != cycleHash) continue;
                     inCycle++;
                     float hw = body.HoldIk != null ? body.HoldIk.Weight : 0f;
@@ -107,18 +121,51 @@ namespace DD.Prototype.Tests.PlayMode
                 cycleFrames += inCycle;
                 worstTravel = Mathf.Max(worstTravel, travel);
                 report.Add("shot " + shot + " muzzle travel " + (travel * 100f).ToString("F1", CultureInfo.InvariantCulture) + " cm (kick window " +
-                           (kick * 100f).ToString("F1", CultureInfo.InvariantCulture) + ", after " + (bolt * 100f).ToString("F1", CultureInfo.InvariantCulture) + "), Cycle_V3 frames " + inCycle);
+                           (kick * 100f).ToString("F1", CultureInfo.InvariantCulture) + ", after " + (bolt * 100f).ToString("F1", CultureInfo.InvariantCulture) + "), " + cycleState + " frames " + inCycle);
             }
 
-            Debug.Log("[DD-TEST] wp083.sr1bolt hold=" + (WeaponHoldIk.Enabled ? "on" : "off") + " holdWeightMinInCycle=" + minCycleWeight.ToString("F3", CultureInfo.InvariantCulture) + " gripWeightMinInCycle=" +
+            _s.Girdi.OdakBasili = false;
+            Debug.Log("[DD-TEST] wp083.sr1bolt hold=" + (WeaponHoldIk.Enabled ? "on" : "off") + " focus=" + (focus ? 1 : 0) + " holdWeightMinInCycle=" + minCycleWeight.ToString("F3", CultureInfo.InvariantCulture) + " gripWeightMinInCycle=" +
                       minGripWeight.ToString("F3", CultureInfo.InvariantCulture) + " gripErrMaxCm=" + worstGripCm.ToString("F2", CultureInfo.InvariantCulture) + " muzzleTravelMaxCm=" +
                       (worstTravel * 100f).ToString("F1", CultureInfo.InvariantCulture) + " :: " + string.Join(" | ", report));
             // the source is there: the bolt cycle played
-            Assert.Greater(cycleFrames, 0, "Cycle_V3 hiç oynamadı (sr_1 bolt döngüsü yok)");
-            Assert.AreEqual(0, openGateMisses, "Cycle_V3 karesinde tutuş ağırlığı < 1 (en düşük " + minCycleWeight.ToString("F3", CultureInfo.InvariantCulture) + ")\n" + string.Join("\n", report));
+            Assert.Greater(cycleFrames, 0, cycleState + " hiç oynamadı (sr_1 bolt döngüsü yok)");
+            Assert.AreEqual(0, openGateMisses, cycleState + " karesinde tutuş ağırlığı < 1 (en düşük " + minCycleWeight.ToString("F3", CultureInfo.InvariantCulture) + ")\n" + string.Join("\n", report));
             Assert.LessOrEqual(worstTravel, MuzzleTravelMax, "sr_1 namlusu atış başına göğse göre > 27 cm oynuyor (yalnız klip yolunun 1,2 katı)\n" + string.Join("\n", report));
-            Assert.AreEqual(0, gripMisses, "Cycle_V3 karesinde sol el kavraması bırakıyor (en düşük ağırlık " + minGripWeight.ToString("F3", CultureInfo.InvariantCulture) + ")");
-            Assert.LessOrEqual(worstGripCm, 1f, "Cycle_V3'te sol el kundaktan > 1 cm (H1 eşiği)");
+            Assert.AreEqual(0, gripMisses, cycleState + " karesinde sol el kavraması bırakıyor (en düşük ağırlık " + minGripWeight.ToString("F3", CultureInfo.InvariantCulture) + ")");
+            Assert.LessOrEqual(worstGripCm, 1f, cycleState + " içinde sol el kundaktan > 1 cm (H1 eşiği)");
+        }
+
+        // evidence frames (GT-R3T MUST-2): the game's top-down camera, shot 0, when DD_SR1_FRAME_DIR is set (DD_SR1_FRAME_TAG names the
+        // build: before / after); off otherwise
+        private static void Frame(bool focus, string moment)
+        {
+            string dir = System.Environment.GetEnvironmentVariable("DD_SR1_FRAME_DIR");
+            Camera cam = Camera.main;
+            if (string.IsNullOrEmpty(dir) || cam == null) return;
+            string tag = System.Environment.GetEnvironmentVariable("DD_SR1_FRAME_TAG") ?? "run";
+            const int w = 1600, h = 900;
+            var rt = new RenderTexture(w, h, 24, RenderTextureFormat.ARGB32);
+            var tex = new Texture2D(w, h, TextureFormat.RGBA32, false);
+            RenderTexture prevTarget = cam.targetTexture, prev = RenderTexture.active;
+            try
+            {
+                cam.targetTexture = rt;
+                cam.Render();
+                RenderTexture.active = rt;
+                tex.ReadPixels(new Rect(0, 0, w, h), 0, 0);
+                tex.Apply();
+                System.IO.Directory.CreateDirectory(dir);
+                System.IO.File.WriteAllBytes(System.IO.Path.Combine(dir, "sr1_" + (focus ? "focus" : "hip") + "_" + moment + "_" + tag + ".png"), tex.EncodeToPNG());
+            }
+            finally
+            {
+                cam.targetTexture = prevTarget;
+                RenderTexture.active = prev;
+                Object.Destroy(tex);
+                rt.Release();
+                Object.Destroy(rt);
+            }
         }
 
         // the muzzle in the chest's frame, in metres (the chest's rotation and position only, no scale)
