@@ -1766,9 +1766,9 @@ namespace DD.Prototype.Tests.PlayMode
             string varyantlar = Environment.GetEnvironmentVariable("DD_KIT_VARIANTS");
             if (string.IsNullOrEmpty(varyantlar)) varyantlar = "ABC";
             string ap027 = Environment.GetEnvironmentVariable("DD_AP027_DIR");
-            // The KADRO export, relative to home exactly as tools/dd_paths.py KADRO_REL ("Desktop/KADRO"); the R2 chain passes
+            // The KADRO export, relative to home exactly as tools/dd_paths.py KADRO_REL ("Dev/KADRO" since 06.10); the R2 chain passes
             // DD_AP027_DIR. C asked for and its folder missing is a red test, never a silent skip (S-10 05.10).
-            if (string.IsNullOrEmpty(ap027)) ap027 = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Desktop/KADRO/context/projects/deaths-demolition/asset-production/AP-027/exports/v001-prototip");
+            if (string.IsNullOrEmpty(ap027)) ap027 = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Dev/KADRO/context/projects/deaths-demolition/asset-production/AP-027/exports/v001-prototip");
             if (varyantlar.IndexOf('C') >= 0) Assert.IsTrue(System.IO.Directory.Exists(ap027), "Kit C istendi ama AP-027 klasörü yok: " + ap027 + " (DD_AP027_DIR)");
             var kitKliplar = new List<AudioClip>();
             _s.Rig.Health.DiagnosisInvulnerable = true;

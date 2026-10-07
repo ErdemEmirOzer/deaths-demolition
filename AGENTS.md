@@ -4,8 +4,8 @@ This repository is a Unity 2022.3.22f1 / URP 14 game (`prototype/DeathsDemolitio
 
 ## Before any work, read
 
-1. `/Users/Erdem/Desktop/KADRO/context/projects/deaths-demolition/c-00/codex/CODEX-SISTEM-R2.md`: binding rules, folders, delivery and report format. Written in Turkish; reports are written in Turkish.
-2. `/Users/Erdem/Desktop/KADRO/context/projects/deaths-demolition/c-00/codex/KADRO-CODEX-AJANLARI.md`: the expert roster and how to use sub-agents.
+1. `/Users/Erdem/Dev/KADRO/context/projects/deaths-demolition/c-00/codex/CODEX-SISTEM-R2.md`: binding rules, folders, delivery and report format. Written in Turkish; reports are written in Turkish.
+2. `/Users/Erdem/Dev/KADRO/context/projects/deaths-demolition/c-00/codex/KADRO-CODEX-AJANLARI.md`: the expert roster and how to use sub-agents.
 3. The task file you were given: `…/c-00/codex/prompts/CX-*.md`.
 
 ## Hard rules (summary; the files above are authoritative)
