@@ -35,7 +35,7 @@ FIXTURE_ISOLATED = (
 # WP-079G D6a: `holds` (the guard's lock-order query) = nothing held here.
 FAKE_SLOT = """#!/bin/zsh
 [ "$1" = holds ] && exit 1
-echo "$1 $2 $3" >> "{log}/slot-calls.txt"; echo "SLOT $2#1 -> $3"
+echo "$1 $2 $3" >> "{log}/slot-calls.txt"; echo "slot $1 $2" >> "{log}/order.txt"; echo "SLOT $2#1 -> $3"
 """
 # Like the real guard: one snapshot per directory (64 when <dir>/snap exists). FAKE_GUARD_75_ONCE: the first snapshot
 # leaves a partial <dir>/snap and returns 75 (live data kept changing), later ones succeed; FAKE_GUARD_ALWAYS_75: every one.
@@ -44,7 +44,7 @@ echo "$1 $2 $3" >> "{log}/slot-calls.txt"; echo "SLOT $2#1 -> $3"
 # worktree's own copy (origin "worktree") must never be called — guard-origin.txt records which one ran.
 FAKE_GUARD = """#!/bin/zsh
 echo "{origin}" >> "{log}/guard-origin.txt"
-cmd=$1 dir=$2; echo "$cmd" >> "{log}/guard-calls.txt"; echo "$cmd $dir" >> "{log}/guard-dirs.txt"
+cmd=$1 dir=$2; echo "$cmd" >> "{log}/guard-calls.txt"; echo "$cmd $dir" >> "{log}/guard-dirs.txt"; echo "guard $cmd" >> "{log}/order.txt"
 if [ "$cmd" = snapshot ]; then
   # G4 D8 kuyruk (06.10): FAKE_GUARD_SNAP_SLOW=<s> — the snapshot waits (the real guard: in the window queue, ≤ 3600 s), then opens
   [ -n "${{FAKE_GUARD_SNAP_SLOW:-}}" ] && {{ echo $$ > "{log}/guard-snap.pid"; sleep "$FAKE_GUARD_SNAP_SLOW"; }}
@@ -255,6 +255,18 @@ class CiFixture(unittest.TestCase):
 
 class CiSignalTrapTests(CiFixture):
     # --- main-ci -------------------------------------------------------------------------------------------------------
+
+    def test_MainCi_PlayerSlotPencereVerildiktenSonra_KuyruktaTutulmaz(self):
+        """WP-099 (C-00 08.10, queue starvation): main-ci takes the player slot only once its editor window is granted —
+        while the snapshot waits in the window queue no Player is held off; the slot is released after the restore."""
+        p = self.main_ci("pass", playmode=True, FAKE_GUARD_SNAP_SLOW="2")   # green needs both XMLs
+        self.wait_file(self.log / "guard-snap.pid")
+        self.assertEqual([], self.lines("slot-calls.txt"))   # waiting in the queue: the player slot is free
+        rc, out, err = self.finish(p)
+        self.assertEqual(0, rc, out + err)
+        order = [l for l in self.lines("order.txt") if l.split()[-1] == "player" or l.startswith("guard ")]
+        self.assertEqual(["guard snapshot", "slot acquire player", "guard restore", "slot release player"],
+                         [l for l in order if l != "guard restore-done"])
 
     def assert_main_ci_signal(self, sig, code):
         p = self.main_ci()
@@ -511,7 +523,7 @@ class CiDriverGuardTests(CiFixture):
         self.assertFalse(alive(guard), "the waiting guard is stopped with main-ci: " + facts)
         if opened:
             self.assertTrue(restored, "the window the guard opened must be restored: " + facts)
-        self.assertEqual([l.split()[:2] for l in self.lines("slot-calls.txt")], [["acquire", "player"], ["release", "player"]])
+        self.assertEqual([l.split()[:2] for l in self.lines("slot-calls.txt")], [])   # WP-099 (C-00 08.10): no window → the player slot is never taken
         self.assertEqual(self.leases(), [])
 
     # --- M-07(b): 75 → retry into a NEW guard directory; the restore uses that directory ------------------------------
@@ -532,7 +544,7 @@ class CiDriverGuardTests(CiFixture):
         self.assertEqual(self.lines("guard-dirs.txt"), [f"snapshot {ug}", f"snapshot {ug}.try2", f"snapshot {ug}.try3"])
         self.assertIn("userdata snapshot exit 75 (try 3/3", out)
         self.assertFalse((self.log / "child-editmode.pid").exists())
-        self.assertEqual([l.split()[:2] for l in self.lines("slot-calls.txt")], [["acquire", "player"], ["release", "player"]])
+        self.assertEqual([l.split()[:2] for l in self.lines("slot-calls.txt")], [])   # WP-099 (C-00 08.10): no window → the player slot is never taken
         self.assertEqual(self.leases(), [])
 
     def test_D8Kuyruk_KuyrukZamanAsimi75_YenidenDenenmez_TekDizin75(self):
@@ -544,7 +556,7 @@ class CiDriverGuardTests(CiFixture):
         self.assertEqual(self.lines("guard-dirs.txt"), [f"snapshot {ug}"])
         self.assertIn("the window queue timed out — not retried", out)
         self.assertFalse((self.log / "child-editmode.pid").exists())
-        self.assertEqual([l.split()[:2] for l in self.lines("slot-calls.txt")], [["acquire", "player"], ["release", "player"]])
+        self.assertEqual([l.split()[:2] for l in self.lines("slot-calls.txt")], [])   # WP-099 (C-00 08.10): no window → the player slot is never taken
         self.assertEqual(self.leases(), [])
 
     # --- G4 D7 K1 (M9): main-ci and the guard's codes ----------------------------------------------------------------

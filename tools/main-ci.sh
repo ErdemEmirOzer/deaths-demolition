@@ -164,13 +164,14 @@ trap 'ci_signal INT 130' INT; trap 'ci_signal TERM 143' TERM; trap 'ci_signal HU
 dd_ci_lease_acquire "$CI_DIR" || exit $?
 CI_DIR=$DD_CI_CHECKOUT
 SHA=$(git -C "$DD_REPO" rev-parse --verify "$REF^{commit}" 2>/dev/null) || { echo "unknown commit: $REF" >&2; exit 64; }
-# WP-043D: hold the single 'player' slot for the whole run — Player captures / bots share the audio device and
+# WP-043D: hold the single 'player' slot for the whole TEST run — Player captures / bots share the audio device and
 # focus with the Editor PlayMode tests (a full-screen capture broke the UiV3 audio test); wrapped launches wait.
+# WP-099 (C-00 08.10, queue starvation): the slot is taken AFTER the guard window is granted (section 3), never while
+# the snapshot waits in the window queue (≤ DD_GUARD_QUEUE_WAIT, an hour) — a waiting run held every Player off.
 OUT="$OUT_ROOT/$SHA"; mkdir -p "$OUT" || exit 3; DD_TIMELINE="$OUT/timeline.txt"
 ci_project_open; OPEN=$?
 [ "$OPEN" -eq 1 ] || { dd_log "CI project open or process check unavailable — busy"; exit 75; }
-CI_PLAYER_TAG="$DD_SLOT_TAG"; CI_PLAYER_HELD=1
-dd_slot_acquire player || exit $?
+CI_PLAYER_TAG="$DD_SLOT_TAG"
 export DD_SLOT_TAG="main-ci"
 dd_log "main-ci sha=$SHA ci=$CI_DIR out=$OUT"
 dd_log "main-ci driver=$CI_DRIVER head=$CI_DRIVER_HEAD toolsTree=$CI_TOOLS_TREE (= main:tools)"
@@ -230,7 +231,7 @@ while :; do
   "$DD_GUARD_CANON" snapshot "$GDIR" --scope editor > "$GDIR-snapshot.out" 2>&1 & CI_GSNAP=$!; wait $CI_GSNAP; GS=$?; CI_GSNAP=""
   [ "$GS" -eq 0 ] && break
   # G4 D8 queue reviews (06.10): a 75 after the window queue's own wait (DD_GUARD_QUEUE_WAIT, 3600 s — this run holds the
-  # player slot and the lease meanwhile) is not retried: a retry is a new ticket at the queue's end, ≤ 3 h of no Players
+  # lease meanwhile) is not retried: a retry is a new ticket at the queue's end
   [ "$GS" -eq 75 ] && grep -q "class=QUEUE_TIMEOUT" "$GDIR-snapshot.out" 2>/dev/null && { dd_log "userdata snapshot75 (try $GTRY, $GDIR): the window queue timed out — not retried; no tests started"; exit 75; }
   [ "$GS" -eq 75 ] && [ "$GTRY" -lt "$CI_GUARD_TRIES" ] || { dd_log "userdata snapshot exit $GS (try $GTRY/$CI_GUARD_TRIES, $GDIR) — no tests started"; exit "$GS"; }
   dd_log "userdata snapshot75 (try $GTRY/$CI_GUARD_TRIES, $GDIR): busy — retrying into a new directory; no tests started"
@@ -238,6 +239,12 @@ while :; do
 done
 CI_GUARD_DIR="$GDIR"; CI_GUARD_READY=1
 dd_log "userdata snapshot → $CI_GUARD_DIR (try $GTRY)"
+# WP-099 (C-00 08.10): machine-wide order for an editor-scope run — window → player slot → unity slot. A player-scope
+# caller (player slot → window(player) → unity) never waits for an editor window (disjoint areas), so the two orders
+# cannot close a cycle; `--scope all` (both areas, player slot first) would, and no caller uses it. A Player run holds the
+# slot for minutes, so this wait is short; a 75 here exits through cleanup, which restores the open window.
+DD_SLOT_TAG="$CI_PLAYER_TAG" dd_slot_acquire player || exit $?
+CI_PLAYER_HELD=1
 
 # 4) tests (the CI worktree's own tools: they belong to the commit under test); `& wait` so a signal is handled at once
 # Codex-audit M-10 (C-00 30.09): first unset every env variable the C# of the commit under test reads (dd_scrub_code_env,
