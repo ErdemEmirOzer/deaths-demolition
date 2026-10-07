@@ -147,14 +147,34 @@ dd_stop_child() {
     sleep 1; t=$((t + 1))
   done
 }
+# dd_crash_sweep <project> <dest> <pid> <epoch>: the Editor switches its cwd to the project folder, so a mono crash's
+# mono_crash.* dumps land THERE (gt 07.10: all 26 of the R2 FINAL's H2 dumps were prototype/…/mono_crash.mem.36926.*) —
+# move this attempt's ones (the pid in the name, or written since the attempt began: one Unity per project at a time)
+# next to the run's log. Never fails the run.
+dd_crash_sweep() {
+  local proj="$1" dest="$2" pid="$3" t0="$4" f n=0
+  setopt localoptions nullglob
+  [ -n "$proj" ] && [ -d "$proj" ] || return 0
+  for f in "$proj"/mono_crash.*; do
+    if [[ "${f:t}" == *".$pid."* ]] || [ "$(stat -f %m "$f" 2>/dev/null || echo 0)" -ge "$t0" ]; then
+      mkdir -p "$dest" 2>/dev/null && mv "$f" "$dest/" 2>/dev/null && n=$((n + 1))
+    fi
+  done
+  [ "$n" -gt 0 ] && dd_log "unity: $n mono_crash dump(s) of pid $pid moved from $proj to $dest"
+  return 0
+}
+
 dd_unity_watched() {
   local log="$1" limit="$2"; shift 2
   local stall=${DD_STALL_SEC:-$(( ${DD_STALL_MIN:-20} * 60 ))} tick=${DD_STALL_TICK:-15} attempt=1 upid size last quiet t0
   DD_UNITY_OUTCOME=ok
-  # C-00 06.10 (R3; the FINAL's z3 stop): Unity runs in its log's folder when the log path is absolute — a mono crash
-  # writes mono_crash.* into the process's cwd, and the caller's cwd is often the checkout root (26 dumps dirtied the
-  # FINAL tree). `exec` keeps $! = Unity's own pid. A relative log keeps the caller's cwd (its other paths may be relative).
+  # C-00 06.10 (R3; the FINAL's z3 stop): Unity starts in its log's folder when the log path is absolute, so anything it
+  # writes into its cwd before the Editor switches into the project lands there (`exec`: $! = Unity's own pid; a relative
+  # log keeps the caller's cwd). The Editor's own mono_crash dumps land in the PROJECT folder (gt 07.10) — dd_crash_sweep
+  # moves them next to the log after every attempt.
   local run_dir=""; [[ "$log" == /* ]] && [ -d "${log:h}" ] && run_dir="${log:h}"
+  local proj="" i; for (( i = 1; i < $#; i++ )); do [ "${argv[i]}" = -projectPath ] && proj="${argv[i+1]}"; done
+  local crash="${log:h}/mono-crash"
   while :; do
     if [ -n "$run_dir" ]; then ( cd "$run_dir" && exec "$@" ) >/dev/null 2>&1 &
     else "$@" >/dev/null 2>&1 &
@@ -166,11 +186,13 @@ dd_unity_watched() {
       if [ "$size" != "$last" ]; then last=$size; quiet=0; else quiet=$((quiet + tick)); fi
       if [ "$limit" -gt 0 ] && [ $(( $(date +%s) - t0 )) -ge $(( limit * 60 )) ]; then
         dd_log "WATCHDOG: ${limit} min passed — killing Unity pid $upid"; dd_kill_tree $upid; wait $upid 2>/dev/null; DD_UNITY_PID=""
+        dd_crash_sweep "$proj" "$crash" "$upid" "$t0"
         DD_UNITY_OUTCOME=killed; return 124
       fi
       if [ "$quiet" -ge "$stall" ]; then
         dd_log "WATCHDOG stall: Unity pid $upid wrote nothing to its log for ${quiet}s (attempt $attempt) — stopping that pid only"
         dd_kill_tree $upid; wait $upid 2>/dev/null; DD_UNITY_PID=""
+        dd_crash_sweep "$proj" "$crash" "$upid" "$t0"
         [ -f "$log" ] && mv "$log" "$log.stall$attempt"
         if [ "$attempt" -ge 2 ]; then dd_log "WATCHDOG stall: the retry stalled too — giving up (exit 124)"; DD_UNITY_OUTCOME=stalled; return 124; fi
         attempt=$((attempt + 1)); dd_log "WATCHDOG stall: retrying once"
@@ -178,6 +200,7 @@ dd_unity_watched() {
       fi
     done
     wait $upid; local x=$?; DD_UNITY_PID=""
+    dd_crash_sweep "$proj" "$crash" "$upid" "$t0"
     [ "$attempt" -gt 1 ] && DD_UNITY_OUTCOME=stalled-retried-ok
     return $x
   done
