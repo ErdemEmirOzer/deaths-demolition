@@ -268,7 +268,8 @@ namespace DD.Art.Tests.EditMode
 
             // WP-016 (ADR-016-1): the character files — player base + 2 clips, zombie 3 bodies + 19 modules
             // (AP007-modules.json) + 2 clips; the library test checks their contents.
-            beklenen.Add(ArtCharacterContract.PlayerAvatarSource);
+            for (int lod = 0; lod < ArtCharacterContract.HeroV2LodCount; lod++) beklenen.Add(ArtCharacterContract.HeroV2LodFile(lod));   // WP-082 R3: hero v2 (AP-024D D6, exports/v004 Hero_v2_TD_LOD0..3)
+            beklenen.Add(ArtCharacterContract.LegacyPlayerModel);        // WP-082 R3: the pre-hero body, kept for the FP viewmodel
             beklenen.Add(ArtCharacterPrefabBuilder.PlayerFpArmsModel);   // WP-071 · AP-022 FP arms v2 (P-06)
             // WP-018: the 30 AP-009 clip files listed by the manifest.
             int klip = 0;
@@ -527,6 +528,11 @@ namespace DD.Art.Tests.EditMode
             };
             foreach (string f in fpArmsFiles) if (beklenen.Add(f)) fpArms++;
             Assert.AreEqual(6, fpArms, "AP-022 FP kolları v2: 3 skin albedo + Normal + Packed + türetilmiş MS");
+
+            // WP-082 R3 · AP-024 hero v2 (v003 Textures + D5 skins, SHA in HeroV2-provenance.json): BaseColor + Normal + ORM + derived MetallicSmoothness + skin 2 / 3 BaseColor = 6.
+            int hero = 0;
+            foreach (string f in ArtCharacterPrefabBuilder.HeroV2TextureFiles()) if (beklenen.Add(f)) hero++;
+            Assert.AreEqual(6, hero, "kahraman v2: BaseColor + Normal + ORM + türetilmiş MS + D5 deri 2/3");
 
             // WP-019 (ADR-019-1): every PNG the AP-010 manifest ships (rows + their emissive layers).
             int vfx = 0;

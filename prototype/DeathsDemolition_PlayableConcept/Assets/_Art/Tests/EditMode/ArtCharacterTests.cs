@@ -44,7 +44,7 @@ namespace DD.Art.Tests.EditMode
         public void HerKarakterFbx_V11Sozlesmesi_Avatar_HumanEslemesiKaynaklaAyni()
         {
             List<string> files = CharacterFbx();
-            Assert.AreEqual(351, files.Count, "351 = 327 + 24 AP-025D v003 fit A/B garments (WP-084: Modules/AB); 327 = 287 + 40 AP-025 v002 (WP-084: 12 faces Faces/, 24 H2 fit-C garments Modules/C_H2, 4 H2 fit-C tier parts Tier/C_H2); 287 = 272 + 15 AP-022 v008 locomotion (WP-071 R1-C: player 10 TP loops + zombie 5 tier gaits); 272 = 260 + 12 FP Special; 260 = 258 + 2 lmg_2 reloads; 258 = 248 + AP-022 FP arms v2 model + 9 smg_2 FP (WP-071 r2); 248 = 236 + TP Special family 12; 236 = 203 + 33 WP-071 B4c TP (AP-022 v008); 203 = 197 + 6 AP-022 slice 5b (ar_2 FP set); 197 = 174 + 23 AP-022 slice 5 (FP arms); 174 = 153 + 21 AP-022 slices 4a/4b (AR + SMG TP); 153 = 150 + 3 AP-022 slice 2a (electro loop, arc_electro, gel_slip); 150 = 140 + 10 AP-022 slice 1 (WP-071); 140 = 135 (WP-032G + sw_hold_jewel) + 5 AP-007C v003 modülü (H6/H7/A1/A2/T8, WP-038C) — 134 karakter FBX (oyuncu 1 + 2 klip; zombi 3 gövde + 24 modül + 2 klip; WP-017 zırh 18; WP-032C AP-009D v004 85 klip; WP-036 AP-014 tier parçaları 4):\n" + string.Join("\n", files));
+            Assert.AreEqual(355, files.Count, "355 = 351 + WP-082 R3 hero v2 (HeroV2/Hero_v2_TD_LOD0..3.fbx, AP-024D D6: LOD0 avatar source, LOD1–3 rig fragments); 351 = 327 + 24 AP-025D v003 fit A/B garments (WP-084: Modules/AB); 327 = 287 + 40 AP-025 v002 (WP-084: 12 faces Faces/, 24 H2 fit-C garments Modules/C_H2, 4 H2 fit-C tier parts Tier/C_H2); 287 = 272 + 15 AP-022 v008 locomotion (WP-071 R1-C: player 10 TP loops + zombie 5 tier gaits); 272 = 260 + 12 FP Special; 260 = 258 + 2 lmg_2 reloads; 258 = 248 + AP-022 FP arms v2 model + 9 smg_2 FP (WP-071 r2); 248 = 236 + TP Special family 12; 236 = 203 + 33 WP-071 B4c TP (AP-022 v008); 203 = 197 + 6 AP-022 slice 5b (ar_2 FP set); 197 = 174 + 23 AP-022 slice 5 (FP arms); 174 = 153 + 21 AP-022 slices 4a/4b (AR + SMG TP); 153 = 150 + 3 AP-022 slice 2a (electro loop, arc_electro, gel_slip); 150 = 140 + 10 AP-022 slice 1 (WP-071); 140 = 135 (WP-032G + sw_hold_jewel) + 5 AP-007C v003 modülü (H6/H7/A1/A2/T8, WP-038C) — 134 karakter FBX (oyuncu 1 + 2 klip; zombi 3 gövde + 24 modül + 2 klip; WP-017 zırh 18; WP-032C AP-009D v004 85 klip; WP-036 AP-014 tier parçaları 4):\n" + string.Join("\n", files));
 
             List<string> playerMap = ArtCharacterContract.HumanMapping(ArtCharacterContract.AvatarOf(ArtCharacterContract.PlayerAvatarSource));
             List<string> zombieMap = ArtCharacterContract.HumanMapping(ArtCharacterContract.AvatarOf(ArtCharacterContract.ZombieAvatarSource));
@@ -76,27 +76,38 @@ namespace DD.Art.Tests.EditMode
         }
 
         [Test]
-        public void OyuncuModeli_56Kemik_3Soket_3Lod()
+        public void OyuncuModeli_HeroV2_77Kemik_Soketler_4Lod_FpModeliEski()
         {
+            // WP-082 R3 · hero v2 (AP-024 v003 via the D6 package): 77 PlayerRig bones = 56 (Root + 52 + 3 sockets) + 7 sec_* + 14 (twist ×8,
+            // jaw, fp_camera, socket_mag_l, mag_socket, prop_r, prop_l) — rig v002's ik_hand/ik_foot ×4 are gone, four sockets are new.
             var model = AssetDatabase.LoadAssetAtPath<GameObject>(ArtCharacterContract.PlayerAvatarSource);
-            Assert.IsNotNull(model);
+            Assert.IsNotNull(model, ArtCharacterContract.PlayerAvatarSource);
             Dictionary<string, Transform> bones = ArtCharacterContract.Bones(model, ArtCharacterPrefabBuilder.PlayerArmature);
             int secondary = 0; foreach (string b in bones.Keys) if (b.StartsWith(ArtCharacterContract.SecondaryBonePrefix)) secondary++;
-            Assert.AreEqual(ArtCharacterContract.PlayerSecondaryBones, secondary, "WP-032F: AP-006C sec_* zincir kemikleri (4 zincir / 7)");
-            Assert.AreEqual(ArtCharacterContract.BoneCount + ArtCharacterContract.PlayerSecondaryBones + ArtCharacterContract.PlayerRigV002Bones, bones.Count, "PlayerRig altında 56 transform (Root + 52 + 3 soket) + 7 sec_* + 14 rig v002 (twist ×8, jaw, fp_camera, ik ×4)");
+            Assert.AreEqual(ArtCharacterContract.PlayerSecondaryBones, secondary, "sec_* kemikleri (sash ×3, band ×2, pouch, gourd)");
+            Assert.AreEqual(ArtCharacterContract.HeroV2BoneCount, bones.Count, "PlayerRig altında 77 kemik (AP-024 README)");
+            Assert.AreEqual(ArtCharacterContract.BoneCount + ArtCharacterContract.PlayerSecondaryBones + ArtCharacterContract.PlayerRigV002Bones, ArtCharacterContract.HeroV2BoneCount, "56 + 7 + 14 = 77");
             foreach (string s in ArtCharacterContract.Sockets) Assert.IsTrue(bones.ContainsKey(s), "soket yok: " + s);
             foreach (string t in ArtCharacterContract.PlayerTwistBones) Assert.IsTrue(bones.ContainsKey(t), "twist kemiği yok: " + t);
             Assert.AreEqual("Head", bones["fp_camera"].parent.name, "fp_camera Head çocuğu (S-01)");
-            // WP-071 · AP-022 rig v002: her LOD = gövde + ayrı baş (FP ShadowsOnly)
-            for (int lod = 0; lod < 3; lod++)
+            // D6 = four files: LOD0 (avatar source) + LOD1–3 rig fragments, each PlayerRig + its own Player_Body_LOD<n>
+            for (int lod = 0; lod < ArtCharacterContract.HeroV2LodCount; lod++)
             {
-                Assert.IsNotNull(model.transform.Find("Player_Body_LOD" + lod), "Player_Body_LOD" + lod);
-                Assert.IsNotNull(model.transform.Find("Player_Head_LOD" + lod), "Player_Head_LOD" + lod);
+                var file = AssetDatabase.LoadAssetAtPath<GameObject>(ArtCharacterContract.HeroV2LodFile(lod));
+                Assert.IsNotNull(file, ArtCharacterContract.HeroV2LodFile(lod));
+                Assert.IsNotNull(file.transform.Find("Player_Body_LOD" + lod), "Player_Body_LOD" + lod);
+                Assert.IsNotNull(file.transform.Find(ArtCharacterPrefabBuilder.PlayerArmature), "PlayerRig LOD" + lod);
+                Assert.IsNull(file.transform.Find("Player_Head_LOD" + lod), "kahramanda baş ayrı değil");
+                Assert.AreEqual(lod > 0, ArtCharacterContract.IsRigFragment(ArtCharacterContract.HeroV2LodFile(lod)), "LOD1–3 parça (Generic)");
             }
+            int tris0 = (int)(model.transform.Find("Player_Body_LOD0").GetComponent<SkinnedMeshRenderer>().sharedMesh.GetIndexCount(0) / 3);
+            Assert.LessOrEqual(tris0, 35000, "AP-024 LOD0 bütçesi 35 000");
 
-            Transform body0 = model.transform.Find("Player_Body_LOD0"), head0 = model.transform.Find("Player_Head_LOD0");
-            int tris0 = (int)((body0.GetComponent<SkinnedMeshRenderer>().sharedMesh.GetIndexCount(0) + head0.GetComponent<SkinnedMeshRenderer>().sharedMesh.GetIndexCount(0)) / 3);
-            Assert.LessOrEqual(tris0, 25000, "AP-006 LOD0 tavanı 25 000 (gövde + baş)");
+            // FP (out of the TD scope) keeps the pre-hero model: rig v002, body + head per LOD.
+            var legacy = AssetDatabase.LoadAssetAtPath<GameObject>(ArtCharacterContract.LegacyPlayerModel);
+            Assert.IsNotNull(legacy, ArtCharacterContract.LegacyPlayerModel);
+            for (int lod = 0; lod < 3; lod++) Assert.IsNotNull(legacy.transform.Find("Player_Body_LOD" + lod), "eski model Player_Body_LOD" + lod);
+            Debug.Log("[DD-TEST] wp082.hero.model bones=" + bones.Count + " lod0Tris=" + tris0);
         }
 
         [Test]
@@ -145,9 +156,9 @@ namespace DD.Art.Tests.EditMode
             Assert.IsNotNull(visual.Animator);
             Assert.IsTrue(visual.Animator.avatar != null && visual.Animator.avatar.isHuman, "Humanoid avatar");
             Assert.IsNotNull(visual.Animator.runtimeAnimatorController, "controller");
-            Assert.AreEqual(6, visual.Renderers.Length, "3 LOD × gövde + baş (rig v002)");
-            Assert.AreEqual(3, visual.HeadRenderers.Length, "baş her LOD'da ayrı renderer (S-01 FP)");
-            foreach (LOD l in visual.GetComponentInChildren<LODGroup>().GetLODs()) Assert.AreEqual(2, l.renderers.Length, "LOD = gövde + baş");
+            Assert.AreEqual(4, visual.Renderers.Length, "WP-082 R3: hero v2 4 LOD gövde (baş ayrı değil)");
+            Assert.AreEqual(0, visual.HeadRenderers.Length, "WP-082 R3: kahramanda ayrı baş renderer'ı yok");
+            foreach (LOD l in visual.GetComponentInChildren<LODGroup>().GetLODs()) Assert.AreEqual(1, l.renderers.Length, "LOD = tek gövde");
             var twist = visual.GetComponentInChildren<TwistCorrector>();
             Assert.IsNotNull(twist, "WP-071: TwistCorrector");
             Assert.AreEqual(8, twist.LinkCount, "8 twist kemiği bağlı");
@@ -164,12 +175,12 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual("RightHand", visual.WeaponSocket.parent.name, "silah soketi sağ el kemiğinin çocuğu");
             Assert.IsNotNull(visual.AnimationSet);
             LOD[] lods = visual.LodGroup.GetLODs();
-            Assert.AreEqual(3, lods.Length);
+            Assert.AreEqual(4, lods.Length, "WP-082 R3: 4 LOD (32/52/90/138 m)");
             for (int i = 1; i < lods.Length; i++) Assert.Less(lods[i].screenRelativeTransitionHeight, lods[i - 1].screenRelativeTransitionHeight, "LOD eşikleri azalan");
             Assert.AreEqual(LODFadeMode.CrossFade, visual.LodGroup.fadeMode);
             Assert.IsTrue(material.IsKeywordEnabled("_NORMALMAP") && material.IsKeywordEnabled("_METALLICSPECGLOSSMAP") && material.IsKeywordEnabled("_OCCLUSIONMAP"));
             Assert.IsNotNull(material.GetTexture("_OcclusionMap"), "AO maskenin G kanalından");
-            Debug.Log("[DD-TEST] wp016.player.prefab lods=" + lods.Length + " t=" + lods[0].screenRelativeTransitionHeight.ToString("F3") + "/" + lods[1].screenRelativeTransitionHeight.ToString("F3") + "/" + lods[2].screenRelativeTransitionHeight.ToString("F3"));
+            Debug.Log("[DD-TEST] wp016.player.prefab lods=" + lods.Length + " t=" + lods[0].screenRelativeTransitionHeight.ToString("F3") + "/" + lods[1].screenRelativeTransitionHeight.ToString("F3") + "/" + lods[2].screenRelativeTransitionHeight.ToString("F3") + "/" + lods[3].screenRelativeTransitionHeight.ToString("F3"));
         }
 
         [Test]
@@ -765,9 +776,10 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(CharacterVisualSource.Skinned, set.Source);
             Assert.IsTrue(set.PlayerReady && set.ZombieReady, "referanslar eksik");
             Assert.AreEqual(3, set.PlayerSkinAlbedos.Length);
-            Assert.AreEqual("T_player_skin1_BaseColor", set.PlayerSkinAlbedos[0].name);
-            Assert.AreEqual("T_player_skin2b_BaseColor", set.PlayerSkinAlbedos[1].name, "skin 2 = 2b Steel/Indigo (kullanıcı kararı 2026-09-16 07:50; WP-017 doku takası)");
-            Assert.AreEqual("T_player_skin3_BaseColor", set.PlayerSkinAlbedos[2].name);
+            // WP-082 R3 (plan A5, AP-024D D5): the hero atlas's skins — 1 the v003 BaseColor (D4 kept), 2 Steel/Indigo, 3 olive-moss/cream.
+            Assert.AreEqual("T_hero_v2_BaseColor", set.PlayerSkinAlbedos[0].name);
+            Assert.AreEqual("T_hero_v2_skin2_BaseColor", set.PlayerSkinAlbedos[1].name);
+            Assert.AreEqual("T_hero_v2_skin3_BaseColor", set.PlayerSkinAlbedos[2].name);
             CharacterAssetSet.ResetCache();
             Assert.AreSame(set, CharacterAssetSet.Load(), "Resources.Load aynı varlığı bulmalı");
             CharacterAssetSet.ResetCache();
@@ -802,6 +814,7 @@ namespace DD.Art.Tests.EditMode
                 ArtCharacterPrefabBuilder.ZombieTextures + "/T_zombie_atlas_BaseColor.png",
                 ArtCharacterPrefabBuilder.PlayerDerived + "/T_player_MetallicSmoothness.png"
             };
+            paths.AddRange(ArtCharacterPrefabBuilder.HeroV2TextureFiles());   // WP-082 R3 · hero v2 (BaseColor / Normal 2048, ORM / derived MS ≤ 1024)
             if (o1) paths.Add(ArtCharacterPrefabBuilder.ZombieTextures + "/T_zombie_atlas_ORM.png");
             else paths.AddRange(new[] { ArtCharacterPrefabBuilder.ZombieTextures + "/T_zombie_atlas_Mask.png", ArtCharacterPrefabBuilder.ZombieDerived + "/T_zombie_atlas_DetailMask.png" });
             foreach (string p in paths)
@@ -816,6 +829,7 @@ namespace DD.Art.Tests.EditMode
             }
 
             Assert.IsTrue(File.Exists(ArtCharacterPrefabBuilder.PlayerDerived + "/T_player_MetallicSmoothness.provenance.json"));
+            Assert.IsTrue(File.Exists(ArtCharacterPrefabBuilder.HeroV2Derived + "/T_hero_v2_MetallicSmoothness.provenance.json"));
             if (!o1)
             {
                 var mask = AssetImporter.GetAtPath(ArtCharacterPrefabBuilder.ZombieTextures + "/T_zombie_atlas_Mask.png") as TextureImporter;

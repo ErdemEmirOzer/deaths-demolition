@@ -342,6 +342,11 @@ namespace DD.Art.Pipeline.EditorTools
             { "player_fparms_skin1", TextureClass.Character },
             { "player_fparms_skin2", TextureClass.Character },
             { "player_fparms_skin3", TextureClass.Character },
+            // WP-082 R3 · AP-024 hero v2 "Kırık Mühür" (one 2K atlas: BaseColor sRGB, Normal OpenGL Y+, ORM R AO / G rough / B metal →
+            // derived MetallicSmoothness; the ORM is the derived map's source, capped at 1024 like every mask role).
+            { "hero_v2", TextureClass.Character },
+            { "hero_v2_skin2", TextureClass.Character },   // WP-082 R3 · AP-024D D5 skin 2 (Steel/Indigo), same atlas
+            { "hero_v2_skin3", TextureClass.Character },   // WP-082 R3 · AP-024D D5 skin 3 (olive-moss/cream), same atlas
             { "zombie_atlas", TextureClass.Character },
             { "zombie_cloth", TextureClass.Character },    // WP-020 · AP-007 v002 second (cloth) atlas
             { "zombie_masks", TextureClass.Character },    // WP-084 · AP-025 9-slice mask array (T_zombie_masks_Array)

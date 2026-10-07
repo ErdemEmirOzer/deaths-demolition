@@ -1,0 +1,20 @@
+{
+ "schema": "WP-032F secondary chains (ArtSecondaryChains.Read) · WP-082 R3 hero v2",
+ "source": "AP-024 exports/v003 (manifest AP024-manifest-v005.json) · validation/hero_rig_final_clean_bones.json",
+ "note": "Only the weighted chain. sec_band_1/2, sec_pouch_1 and sec_gourd_1 exist on the rig (77 bones) but carry no geometry (AP-024 README) — no driver. Rest directions come from the FBX rest pose at build time; length = the three bone lengths (0.136 + 0.131 + 0.120 m, Blender head/tail).",
+ "chains": [
+  {
+   "name": "sash",
+   "parent": "Hips",
+   "length": 0.387,
+   "segments": 3,
+   "stiffness": 0.45,
+   "damping": 0.15,
+   "gravity": 9.81,
+   "collision_radius": 0.02,
+   "body_radius": 0.15,
+   "max_angle_deg": 50,
+   "note": "teal sash tails hanging at the front centre (head y -0.115 / z 0.995 → tail z 0.61, Blender); body radius 0.15 keeps the rest particles outside the Hips capsule (0.20 m at sash_2); max angle 50 (front tails between the thighs) — AP006C sash was 70 behind the hip"
+  }
+ ]
+}

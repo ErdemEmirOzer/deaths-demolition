@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Characters/Player/HeroV2/Textures/T_hero_v2_ORM.png",
+    "sourceSha256": "4d71792da7d0775ab28d1ec65350c69fc493379504de4782fbe8f31dc96a3ca7",
+    "algorithm": "MetallicSmoothnessAO v1 (WP-016): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness); 8-bit RGBA PNG, no resampling",
+    "utc": "2026-10-07T12:51:52.9136010Z",
+    "outputSha256": "6405678e074002792d13394700a95b567bc292ba58ae1453d1dc9a3624ada857"
+}

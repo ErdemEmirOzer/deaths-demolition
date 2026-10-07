@@ -38,9 +38,32 @@ namespace DD.Art.Pipeline.EditorTools
         public const string PlayerFolder = ArtImportContract.CharactersRoot + "/Player";
         public const string ZombieFolder = ArtImportContract.CharactersRoot + "/Zombie";
         public const string ClipsFolderName = "Clips";
-        public const string PlayerAvatarSource = PlayerFolder + "/player_base.fbx";
+        /// <summary>
+        /// WP-082 R3 (C-00 07.10) · hero v2 "Kırık Mühür" (AP-024 v003 data, P-06 AP-024D D6 = exports/v004: four FBX
+        /// <c>Hero_v2_TD_LOD0..3</c>, each the armature <c>PlayerRig</c> + its own <c>Player_Body_LOD&lt;n&gt;</c>, 77 bones, no
+        /// separate head) is the player body. LOD0 is the avatar source; LOD1–3 are rig fragments (Generic, no avatar) whose
+        /// renderers the prefab builder re-binds by bone name onto the LOD0 skeleton.
+        /// </summary>
+        public const string HeroV2Folder = PlayerFolder + "/HeroV2";
+        public const int HeroV2LodCount = 4;
+        public static string HeroV2LodFile(int lod) => HeroV2Folder + "/Hero_v2_TD_LOD" + lod + ".fbx";
+        public const string PlayerAvatarSource = HeroV2Folder + "/Hero_v2_TD_LOD0.fbx";
+        /// <summary>
+        /// WP-082 R3 · the AP-022 rig v002 body (pre-hero). Kept ONLY for the first-person viewmodel: FP copies this model and draws
+        /// the AP-022 FP arms on its skeleton, bit-identical to before (FP is out of the R3 TD scope; not re-targeted to the hero).
+        /// Still a character model on the v1.1 contract with its own avatar (the FP Animator needs it).
+        /// </summary>
+        public const string LegacyPlayerModel = PlayerFolder + "/player_base.fbx";
         public const string ZombieAvatarSource = ZombieFolder + "/zombie_body_A.fbx";
         public const int BoneCount = 56;
+        /// <summary>WP-082 R3 · hero v2: the 77 PlayerRig bones under the armature (Root + 52 human + jaw + twist ×8 + fp_camera + 7 sockets + 7 sec_*).</summary>
+        public const int HeroV2BoneCount = 77;
+        /// <summary>WP-082 R3 · hero v2 sockets (AP-024 README): name → parent bone.</summary>
+        public static readonly string[,] HeroV2SocketParents =
+        {
+            { "socket_weapon_r", "RightHand" }, { "socket_weapon_l", "LeftHand" }, { "socket_mag_l", "LeftHand" }, { "mag_socket", "socket_mag_l" },
+            { "prop_r", "RightHand" }, { "prop_l", "LeftHand" }, { "socket_back", "UpperChest" }, { "fp_camera", "Head" }
+        };
         /// <summary>WP-032F (AP-006C): secondary-motion chain bones `sec_&lt;chain&gt;_&lt;i&gt;` — extra transforms outside the human map, never keyed by the clips. Player 7 (sash ×3, pouch, gourd, band ×2), zombie 17 (mino ×9, hair ×2, queue ×2, hachimaki ×2, bandage ×2).</summary>
         public const int PlayerSecondaryBones = 7;
         public const int ZombieSecondaryBones = 17;
@@ -74,7 +97,16 @@ namespace DD.Art.Pipeline.EditorTools
         /// </summary>
         public static bool IsRigFragment(string assetPath)
         {
-            return assetPath != null && assetPath.Replace('\\', '/').StartsWith(ZombieFolder + "/Faces/", StringComparison.Ordinal);
+            if (assetPath == null) return false;
+            string p = assetPath.Replace('\\', '/');
+            return p.StartsWith(ZombieFolder + "/Faces/", StringComparison.Ordinal) || IsHeroV2LodFragment(p);
+        }
+
+        /// <summary>WP-082 R3 · the hero's LOD1–3 files: Generic / no avatar (their meshes are re-bound to the LOD0 skeleton by bone name).</summary>
+        public static bool IsHeroV2LodFragment(string assetPath)
+        {
+            for (int lod = 1; lod < HeroV2LodCount; lod++) if (assetPath == HeroV2LodFile(lod)) return true;
+            return false;
         }
 
         public static bool IsClip(string assetPath)
@@ -85,7 +117,7 @@ namespace DD.Art.Pipeline.EditorTools
 
         public static bool IsAvatarSource(string assetPath)
         {
-            return assetPath == PlayerAvatarSource || assetPath == ZombieAvatarSource;
+            return assetPath == PlayerAvatarSource || assetPath == ZombieAvatarSource || assetPath == LegacyPlayerModel;   // WP-082 R3: the FP model keeps its own avatar
         }
 
         /// <summary>The avatar source file a character FBX copies from (itself for the two sources).</summary>

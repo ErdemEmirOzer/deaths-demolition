@@ -24,7 +24,7 @@ namespace DD.Art.Pipeline.EditorTools
     ///                   M_zombie_atlas + three version variants (cloth-masked detail tint)
     ///   4. animation    CharacterAnimationSet_Player / _Zombie (rig-test idle + walk) and the
     ///                   generated 1-D locomotion controllers
-    ///   5. prefabs      Player_AP006 (LODGroup 3, sockets, skinned visual + bridge),
+    ///   5. prefabs      Player_AP006 (WP-082 R3: hero v2, LODGroup 4, sockets, skinned visual + bridge),
     ///                   Zombie_AP007 (LODGroup 4 × 4 slots, anchors, skinned visual + bridge)
     ///   6. library      ZombieModuleLibrary (3 bodies × 4 LOD, 19 modules × cw × fit × 4 LOD,
     ///                   bone-name orders, tier materials, tint sub-textures)
@@ -56,6 +56,29 @@ namespace DD.Art.Pipeline.EditorTools
         public const string ModulesJson = ZombieFolder + "/AP007-modules.json";
         public const string CharacterAssets = ArtPipelinePaths.ArtRoot + "/Resources/" + CharacterAssetSet.ResourceName + ".asset";
         public const string PlayerModel = ArtCharacterContract.PlayerAvatarSource;
+        /// <summary>WP-082 R3 · the pre-hero AP-022 rig v002 body: the FP viewmodel model and the source of its arms mesh (FP unchanged).</summary>
+        public const string LegacyPlayerModel = ArtCharacterContract.LegacyPlayerModel;
+        public const string HeroV2Folder = ArtCharacterContract.HeroV2Folder;
+        public const string HeroV2Textures = HeroV2Folder + "/Textures";
+        public const string HeroV2Derived = HeroV2Textures + "/Derived";
+        public const string HeroV2BaseColor = HeroV2Textures + "/T_hero_v2_BaseColor.png";
+        public const string HeroV2Normal = HeroV2Textures + "/T_hero_v2_Normal.png";
+        public const string HeroV2Orm = HeroV2Textures + "/T_hero_v2_ORM.png";
+        public const string HeroV2MetallicSmoothness = HeroV2Derived + "/T_hero_v2_MetallicSmoothness.png";
+        /// <summary>WP-082 R3 · AP-024D D5 (manifest v007): skin 2 Steel/Indigo, skin 3 olive-moss/cream — BaseColor only, same atlas / UVs.</summary>
+        public const string HeroV2Skin2BaseColor = HeroV2Textures + "/T_hero_v2_skin2_BaseColor.png";
+        public const string HeroV2Skin3BaseColor = HeroV2Textures + "/T_hero_v2_skin3_BaseColor.png";
+        public const string HeroV2Chains = HeroV2Folder + "/HeroV2-chains.json";
+        public const string HeroV2Provenance = HeroV2Folder + "/HeroV2-provenance.json";
+
+        /// <summary>WP-082 R3 · the hero's shipped maps: three AP-024 v003 sources, the derived MetallicSmoothness, the two D5 skin albedos.</summary>
+        public static string[] HeroV2TextureFiles() => new[] { HeroV2BaseColor, HeroV2Normal, HeroV2Orm, HeroV2MetallicSmoothness, HeroV2Skin2BaseColor, HeroV2Skin3BaseColor };
+
+        /// <summary>
+        /// WP-082 R3 (plan A5, C-00 07.10: AP-024D D5 delivered, D4 keeps the v003 BaseColor): the three PlayerSkin albedos on the hero
+        /// atlas — skin 1 the v003 BaseColor, skin 2 Steel/Indigo, skin 3 olive-moss/cream (the AP-006 albedos do not fit the hero UVs).
+        /// </summary>
+        public static readonly string[] PlayerSkinAlbedoFiles = { HeroV2BaseColor, HeroV2Skin2BaseColor, HeroV2Skin3BaseColor };
         public static readonly string[] ZombieBodyModels = { ZombieFolder + "/zombie_body_A.fbx", ZombieFolder + "/zombie_body_B.fbx", ZombieFolder + "/zombie_body_C.fbx" };
         public const string PlayerIdleClipFile = PlayerFolder + "/Clips/player_rigtest_idle.fbx";
         public const string PlayerWalkClipFile = PlayerFolder + "/Clips/player_rigtest_walk.fbx";
@@ -65,7 +88,7 @@ namespace DD.Art.Pipeline.EditorTools
         public const string ZombieArmature = "ZombieRig";
 
         /// <summary>Intended LOD distances (metres, lodBias 2 → authored = intended / 2; ADR-012-1 logic): player LOD0→1→2→cull, zombie LOD0→1→2→3→cull.</summary>
-        public static readonly float[] PlayerIntendedDistances = { 32f, 52f, 138f };
+        public static readonly float[] PlayerIntendedDistances = { 32f, 52f, 90f, 138f };   // WP-082 R3: hero v2 ships 4 LODs (the zombie table)
         public static readonly float[] ZombieIntendedDistances = { 32f, 52f, 90f, 138f };
 
         /// <summary>
@@ -115,11 +138,27 @@ namespace DD.Art.Pipeline.EditorTools
             AssetDatabase.Refresh();
         }
 
+        /// <summary>
+        /// WP-082 R3 batch entry · hero v2 intake: avatars onto v1.1, the hero's derived mask, M_player, Player_AP006 and the asset set.
+        /// Zombie textures / materials / library and the animation sets / controllers stay as they are on disk.
+        /// </summary>
+        public static void BuildHeroV2Cli()
+        {
+            EnsureAvatars();
+            BuildPlayerTextures();
+            BuildPlayerMaterials();
+            AssetDatabase.SaveAssets();
+            BuildPlayerPrefab();
+            BuildAssetSet();
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+        }
+
         public static int EnsureAvatars()
         {
             int reimported = 0;
             // Sources first, then dependents.
-            foreach (string source in new[] { ArtCharacterContract.PlayerAvatarSource, ArtCharacterContract.ZombieAvatarSource })
+            foreach (string source in new[] { ArtCharacterContract.PlayerAvatarSource, ArtCharacterContract.LegacyPlayerModel, ArtCharacterContract.ZombieAvatarSource })
             {
                 var importer = AssetImporter.GetAtPath(source) as ModelImporter;
                 if (importer == null) throw new FileNotFoundException(LogPrefix + "avatar source missing", source);
@@ -151,10 +190,7 @@ namespace DD.Art.Pipeline.EditorTools
 
         public static void BuildTextures()
         {
-            ArtTextureRepack.BuildDerived(PlayerTextures + "/T_player_Packed.png", PlayerDerived + "/T_player_MetallicSmoothness.png",
-                PlayerDerived + "/T_player_MetallicSmoothness.provenance.json", ArtTextureRepack.OrmToMetallicSmoothnessAo, ArtTextureRepack.OrmAlgorithm);
-            ArtTextureRepack.BuildDerived(PlayerFpArmsPacked, PlayerFpArmsMetallicSmoothness,
-                PlayerDerived + "/T_player_fparms_MetallicSmoothness.provenance.json", ArtTextureRepack.OrmToMetallicSmoothnessAo, ArtTextureRepack.OrmAlgorithm);   // AP-022 FP arms v2
+            BuildPlayerTextures();
             if (!ArtAp025Intake.HasO1Atlas)   // WP-084: the AP-025 O1 atlas ships one ORM map; the AP-007 body Packed / Mask are retired
             {
                 ArtTextureRepack.BuildDerived(ZombieTextures + "/T_zombie_atlas_Packed.png", ZombieDerived + "/T_zombie_atlas_MetallicSmoothness.png",
@@ -173,26 +209,46 @@ namespace DD.Art.Pipeline.EditorTools
             }
         }
 
+        /// <summary>The player's derived masks: the pre-hero body (kept for provenance), the AP-022 FP arms v2, WP-082 R3 the hero v2 ORM.</summary>
+        public static void BuildPlayerTextures()
+        {
+            ArtTextureRepack.BuildDerived(PlayerTextures + "/T_player_Packed.png", PlayerDerived + "/T_player_MetallicSmoothness.png",
+                PlayerDerived + "/T_player_MetallicSmoothness.provenance.json", ArtTextureRepack.OrmToMetallicSmoothnessAo, ArtTextureRepack.OrmAlgorithm);
+            ArtTextureRepack.BuildDerived(PlayerFpArmsPacked, PlayerFpArmsMetallicSmoothness,
+                PlayerDerived + "/T_player_fparms_MetallicSmoothness.provenance.json", ArtTextureRepack.OrmToMetallicSmoothnessAo, ArtTextureRepack.OrmAlgorithm);   // AP-022 FP arms v2
+            // WP-082 R3 · AP-024 hero v2 ORM (R AO, G roughness, B metallic — measured, AP-024 README) → MetallicSmoothness + AO in G
+            ArtTextureRepack.BuildDerived(HeroV2Orm, HeroV2MetallicSmoothness,
+                HeroV2Derived + "/T_hero_v2_MetallicSmoothness.provenance.json", ArtTextureRepack.OrmToMetallicSmoothnessAo, ArtTextureRepack.OrmAlgorithm);
+        }
+
         /// <summary>WP-020 · True once the AP-007 v002 cloth atlas is staged (the v001 world keeps one atlas).</summary>
         public static bool HasClothAtlas => File.Exists(ZombieClothBaseColor);
 
         // ================================================================== 3 materials
 
-        public static void BuildMaterials()
+        /// <summary>
+        /// WP-082 R3 (plan A4) · M_player = the hero v2 atlas on the same project Lit shader (DEC-077 block, ApplyCommon): BaseMap the
+        /// hero BaseColor (sRGB), normal the hero Normal (OpenGL Y+), MetallicGloss + Occlusion the MetallicSmoothness derived from the
+        /// hero ORM. M_player_fparms (AP-022 FP arms v2) is unchanged.
+        /// </summary>
+        public static void BuildPlayerMaterials()
         {
             Shader lit = ArtMaterialBuilder.ResolveLitShader();
             Material player = LoadOrCreateMaterial(PlayerMaterial, lit, "M_player");
             ArtMaterialBuilder.ApplyCommonPublic(player);
-            ApplyCharacterMaps(player,
-                Load<Texture2D>(PlayerTextures + "/T_player_skin1_BaseColor.png"),
-                Load<Texture2D>(PlayerTextures + "/T_player_Normal.png"),
-                Load<Texture2D>(PlayerDerived + "/T_player_MetallicSmoothness.png"));
+            ApplyCharacterMaps(player, Load<Texture2D>(HeroV2BaseColor), Load<Texture2D>(HeroV2Normal), Load<Texture2D>(HeroV2MetallicSmoothness));
             EditorUtility.SetDirty(player);
             // AP-022 FP arms v2 (WP-071): the FP-only arms (own UVs) — skin 1 albedo; FirstPersonArms swaps the albedo per skin
             Material fpArms = LoadOrCreateMaterial(PlayerFpArmsMaterial, lit, "M_player_fparms");
             ArtMaterialBuilder.ApplyCommonPublic(fpArms);
             ApplyCharacterMaps(fpArms, Load<Texture2D>(PlayerFpArmsAlbedos[0]), Load<Texture2D>(PlayerFpArmsNormal), Load<Texture2D>(PlayerFpArmsMetallicSmoothness));
             EditorUtility.SetDirty(fpArms);
+        }
+
+        public static void BuildMaterials()
+        {
+            Shader lit = ArtMaterialBuilder.ResolveLitShader();
+            BuildPlayerMaterials();
 
             // WP-084 · AP-025 O1: the replacement skin atlas (BaseColor / Normal + one ORM) and the cloth atlas both take the
             // DD/Character/Tier Lit _ZOMBIE_MASKS path (shared materials; per-zombie indices ride renderingLayerMask).
@@ -483,14 +539,20 @@ namespace DD.Art.Pipeline.EditorTools
                 playerLook.Configure(animator, 0.6f, 0.05f);
                 FootIkAdapter playerFeet = instance.GetComponent<FootIkAdapter>() ?? instance.AddComponent<FootIkAdapter>();
                 playerFeet.Configure(animator);
-                ArtSecondaryChains.Build(instance, animator, PlayerFolder + "/AP006C-chains.json");   // WP-032F
+                ArtSecondaryChains.Build(instance, animator, HeroV2Chains);   // WP-032F; WP-082 R3: the hero's weighted sash chain only
 
                 // WP-071 · AP-022 rig v002: every LOD is Player_Body_LOD<n> + Player_Head_LOD<n> (the head its own renderer for FP,
-                // S-01); v001 had one Player_LOD<n>. The visual's renderer list = every renderer (skin swap), body LOD0 first.
-                var perLod = new SkinnedMeshRenderer[3];
-                var heads = new SkinnedMeshRenderer[3];
-                var all = new List<SkinnedMeshRenderer>(6);
-                for (int lod = 0; lod < 3; lod++)
+                // S-01); v001 had one Player_LOD<n>. WP-082 R3 · hero v2 (AP-024D D6): four Player_Body_LOD<n>, no separate head — heads stay
+                // empty (HeadRenderers → none). LOD0 comes with the avatar source; LOD1–3 come from their own rig-fragment FBX and are
+                // re-bound by bone name onto this skeleton (RebindLodFromFragment). The visual's renderer list = every renderer (skin
+                // swap), body LOD0 first.
+                int lodCount = PlayerIntendedDistances.Length;
+                Dictionary<string, Transform> skeleton = ArtCharacterContract.Bones(instance, PlayerArmature);
+                for (int lod = 1; lod < ArtCharacterContract.HeroV2LodCount; lod++) RebindLodFromFragment(instance, ArtCharacterContract.HeroV2LodFile(lod), "Player_Body_LOD" + lod, skeleton);
+                var perLod = new SkinnedMeshRenderer[lodCount];
+                var heads = new SkinnedMeshRenderer[lodCount];
+                var all = new List<SkinnedMeshRenderer>(lodCount * 2);
+                for (int lod = 0; lod < lodCount; lod++)
                 {
                     Transform t = instance.transform.Find("Player_Body_LOD" + lod) ?? instance.transform.Find("Player_LOD" + lod);
                     if (t == null) throw new InvalidOperationException(LogPrefix + "player model has no Player_Body_LOD" + lod);
@@ -508,7 +570,10 @@ namespace DD.Art.Pipeline.EditorTools
                 }
 
                 SkinnedMeshRenderer[] renderers = all.ToArray();
-                LODGroup group = instance.GetComponent<LODGroup>() ?? instance.AddComponent<LODGroup>();
+                // WP-082 R3: an explicit null test — the editor's missing-component placeholder of a native component is not C# null, so
+                // `??` never added the group; the AP-022 body imported one (LOD-suffixed meshes), the one-LOD hero LOD0 file does not.
+                LODGroup group = instance.GetComponent<LODGroup>();
+                if (group == null) group = instance.AddComponent<LODGroup>();
                 ApplyLods(group, perLod, PlayerIntendedDistances, r =>
                 {
                     int i = Array.IndexOf(perLod, r);
@@ -525,10 +590,17 @@ namespace DD.Art.Pipeline.EditorTools
 
                 var visual = root.AddComponent<PlayerSkinnedVisual>();
                 visual.Configure(animator, group, renderers, weaponSocket, backSocket, animationSet, events, aimLayer, playerLook, playerFeet);
-                // WP-071 B4b-3: the FP viewmodel arms copy this model; AP-022 FP arms v2: their own mesh / material / per-skin albedo
+                // WP-071 B4b-3: the FP viewmodel arms copy this model; AP-022 FP arms v2: their own mesh / material / per-skin albedo.
+                // WP-082 R3: FP stays on the pre-hero model — its arms mesh is built against THAT model's LOD0 body (bind poses / bone
+                // order), so Player_FPArms.asset and the FP viewmodel are bit-identical to before the hero intake.
+                var legacy = AssetDatabase.LoadAssetAtPath<GameObject>(LegacyPlayerModel);
+                if (legacy == null) throw new FileNotFoundException(LogPrefix + "FP (legacy) player model missing", LegacyPlayerModel);
+                Transform legacyBody = legacy.transform.Find("Player_Body_LOD0");
+                SkinnedMeshRenderer legacyBody0 = legacyBody != null ? legacyBody.GetComponent<SkinnedMeshRenderer>() : null;
+                if (legacyBody0 == null) throw new InvalidOperationException(LogPrefix + "legacy player model has no Player_Body_LOD0");
                 var fpAlbedos = new Texture2D[PlayerFpArmsAlbedos.Length];
                 for (int i = 0; i < fpAlbedos.Length; i++) fpAlbedos[i] = Load<Texture2D>(PlayerFpArmsAlbedos[i]);
-                visual.ConfigureFirstPerson(model, BuildFirstPersonArmsMesh(perLod[0]), Load<Material>(PlayerFpArmsMaterial), fpAlbedos);
+                visual.ConfigureFirstPerson(legacy, BuildFirstPersonArmsMesh(legacyBody0), Load<Material>(PlayerFpArmsMaterial), fpAlbedos);
 
                 EnsureFolder(Path.GetDirectoryName(PlayerPrefab).Replace('\\', '/'));
                 GameObject saved = PrefabUtility.SaveAsPrefabAsset(root, PlayerPrefab);
@@ -1027,10 +1099,9 @@ namespace DD.Art.Pipeline.EditorTools
             so.FindProperty("_source").enumValueIndex = (int)CharacterVisualSource.Skinned;
             so.FindProperty("_playerPrefab").objectReferenceValue = AssetDatabase.LoadAssetAtPath<GameObject>(PlayerPrefab);
             SerializedProperty skins = so.FindProperty("_playerSkinAlbedos");
-            skins.arraySize = 3;
-            skins.GetArrayElementAtIndex(0).objectReferenceValue = Load<Texture2D>(PlayerTextures + "/T_player_skin1_BaseColor.png");
-            skins.GetArrayElementAtIndex(1).objectReferenceValue = Load<Texture2D>(PlayerTextures + "/T_player_skin2b_BaseColor.png");   // WP-017: skin 2 = 2b (user decision 2026-09-16 07:50)
-            skins.GetArrayElementAtIndex(2).objectReferenceValue = Load<Texture2D>(PlayerTextures + "/T_player_skin3_BaseColor.png");
+            skins.arraySize = PlayerSkinAlbedoFiles.Length;
+            // WP-082 R3 (plan A5, D5): the hero atlas's three skin albedos (AP-006 skins do not fit the hero UVs)
+            for (int i = 0; i < PlayerSkinAlbedoFiles.Length; i++) skins.GetArrayElementAtIndex(i).objectReferenceValue = Load<Texture2D>(PlayerSkinAlbedoFiles[i]);
             so.FindProperty("_playerAnimation").objectReferenceValue = AssetDatabase.LoadAssetAtPath<CharacterAnimationSet>(PlayerAnimationSet);
             so.FindProperty("_zombiePrefab").objectReferenceValue = AssetDatabase.LoadAssetAtPath<GameObject>(ZombiePrefab);
             so.FindProperty("_zombieLibrary").objectReferenceValue = AssetDatabase.LoadAssetAtPath<ZombieModuleLibrary>(ZombieLibrary);
@@ -1150,6 +1221,49 @@ namespace DD.Art.Pipeline.EditorTools
             EditorUtility.SetDirty(mesh);
             Debug.Log(LogPrefix + "FP arms mesh (AP-022 v2): " + (src.triangles.Length / 3) + " triangles, " + v.Length + " vertices, rest deviation " + (deviation * 1000f).ToString("F2") + " mm");
             return mesh;
+        }
+
+        /// <summary>
+        /// WP-082 R3 (plan A1, D6 = four files) · copies the skinned renderer <paramref name="objectName"/> of a rig-fragment FBX
+        /// (Generic, no avatar; same PlayerRig names and rest as the avatar source) under <paramref name="instance"/> and points its bone
+        /// array — in the fragment's own order, so the mesh's bone indices and bind poses stay valid — at the instance skeleton by name.
+        /// A bone missing on the skeleton stops the build.
+        /// </summary>
+        public static SkinnedMeshRenderer RebindLodFromFragment(GameObject instance, string fragmentPath, string objectName, Dictionary<string, Transform> skeleton)
+        {
+            var fragment = AssetDatabase.LoadAssetAtPath<GameObject>(fragmentPath);
+            if (fragment == null) throw new FileNotFoundException(LogPrefix + "hero LOD fragment missing", fragmentPath);
+            Transform srcT = FindSkinned(fragment.transform, objectName);
+            SkinnedMeshRenderer src = srcT != null ? srcT.GetComponent<SkinnedMeshRenderer>() : null;
+            if (src == null || src.sharedMesh == null) throw new InvalidOperationException(LogPrefix + fragmentPath + " has no skinned " + objectName);
+            Transform existing = instance.transform.Find(objectName);
+            if (existing != null) UnityEngine.Object.DestroyImmediate(existing.gameObject);
+            var go = new GameObject(objectName);
+            go.transform.SetParent(instance.transform, false);
+            go.transform.localPosition = srcT.localPosition;
+            go.transform.localRotation = srcT.localRotation;
+            go.transform.localScale = srcT.localScale;
+            var smr = go.AddComponent<SkinnedMeshRenderer>();
+            smr.sharedMesh = src.sharedMesh;
+            smr.localBounds = src.localBounds;
+            RebindToSkeleton(smr, src, skeleton, fragmentPath);
+            return smr;
+        }
+
+        /// <summary>The bones of <paramref name="src"/> by name on <paramref name="skeleton"/>, same order; the root bone likewise.</summary>
+        public static void RebindToSkeleton(SkinnedMeshRenderer smr, SkinnedMeshRenderer src, Dictionary<string, Transform> skeleton, string what)
+        {
+            var bones = new Transform[src.bones.Length];
+            for (int i = 0; i < bones.Length; i++)
+            {
+                string name = src.bones[i] != null ? src.bones[i].name : null;
+                if (name == null || !skeleton.TryGetValue(name, out bones[i])) throw new InvalidOperationException(LogPrefix + what + ": bone #" + i + " '" + name + "' not on the skeleton");
+            }
+
+            smr.bones = bones;
+            string root = src.rootBone != null ? src.rootBone.name : "Hips";
+            if (!skeleton.TryGetValue(root, out Transform rootBone)) throw new InvalidOperationException(LogPrefix + what + ": root bone '" + root + "' not on the skeleton");
+            smr.rootBone = rootBone;
         }
 
         /// <summary>LODGroup levels from intended distances (÷ shipped lodBias), cross-fade; the last distance is the cull.</summary>
