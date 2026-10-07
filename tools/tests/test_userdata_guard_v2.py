@@ -1278,22 +1278,26 @@ class ClassCodeTests(RestoreBase):
     # --- WP-099 (C-00 07.10): the window owner's ANCESTORS are never foreign writers --------------------------------
     def window_through(self, outer_cmd_prefix):
         """snapshot → change the player area → hold the window 7 s (≥ 1 sampler round) → restore, all in an inner zsh whose
-        PARENT is `outer` (so the inner zsh is the window owner and `outer` its ancestor). Returns (restore rc, output)."""
+        PARENT is `outer` (so the inner zsh is the window owner and `outer` its ancestor). Returns (restore rc, output,
+        outer pid)."""
         inner = ('zsh "$0" snapshot "$1" --scope player || exit 7; printf "%%s" "{\\"run\\": 1}" > "$2"; sleep 7; '
                  'zsh "$0" restore "$1" --scope player; echo "restore-rc=$?"')
         script = '%s zsh -c \'%s\' "%s" "%s" "%s"' % (outer_cmd_prefix, inner, self.guard, self.dir, self.d2 / "prototype-profile.json")
-        r = subprocess.run(["bash", "-c", script], env=self.env(), capture_output=True, text=True, timeout=180)
-        rc = [l for l in r.stdout.splitlines() if l.startswith("restore-rc=")]
-        return (int(rc[-1].split("=")[1]) if rc else None), r.stdout + r.stderr
+        p = subprocess.Popen(["bash", "-c", script], env=self.env(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        out, err = p.communicate(timeout=180)
+        rc = [l for l in out.splitlines() if l.startswith("restore-rc=")]
+        return (int(rc[-1].split("=")[1]) if rc else None), out + err, p.pid
 
     def test_Ornekleyici_AtaKabukPlayerDeseniTasir_YabanciSayilmaz_Cikis0(self):
         """the grandparent shell's command line carries the Player pattern (as a pgrep in the same command would): before
         WP-099 the sampler logged it owned=0 and the restore exited 30 FOREIGN_WRITER."""
-        rc, out = self.window_through(': "%s/Fake.app/Contents/MacOS/Deaths Demolition";' % self.tmp)
+        rc, out, outer = self.window_through(': "%s/Fake.app/Contents/MacOS/Deaths Demolition";' % self.tmp)
         self.assertEqual(0, rc, out)
         rows = [l.split("\t") for l in (self.dir / "players-lineage.tsv").read_text().splitlines()] \
             if (self.dir / "players-lineage.tsv").exists() else []
-        self.assertEqual([], [r for r in rows if r[4] == "0"], rows)
+        # gt SHOULD-2 (C-00 08.10): only OUR ancestor shell matters — another session's pattern-carrying command on a
+        # shared machine must not turn this test red
+        self.assertEqual([], [r for r in rows if r[1] == str(outer) and r[4] == "0"], rows)
 
     def test_Ornekleyici_GercekYabanciPlayer_YineCikis30(self):
         """positive control: a real process outside the owner's tree (double fork → reparented) still counts as foreign."""
@@ -1302,7 +1306,7 @@ class ClassCodeTests(RestoreBase):
         self.addCleanup(lambda: [os.kill(int(p), signal.SIGTERM) for p in subprocess.run(   # our own fixture only (unique tmp)
             ["pgrep", "-f", fake], capture_output=True, text=True).stdout.split()])
         time.sleep(0.5)
-        rc, out = self.window_through("true;")
+        rc, out, _ = self.window_through("true;")
         self.assertEqual(30, rc, out)
         self.assertIn("FOREIGN_WRITER", out)
 
