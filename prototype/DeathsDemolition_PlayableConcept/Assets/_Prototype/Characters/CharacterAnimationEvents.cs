@@ -178,6 +178,7 @@ namespace DD.Prototype.Characters
             Any = null;
             RaisedCount = 0;
             CollapsedCount = 0;
+            MirroredFootEvents = 0;
         }
 
         /// <summary>
@@ -203,12 +204,46 @@ namespace DD.Prototype.Characters
         private int _beatFrame = -1;
         private int _beatMask;
 
+        // ------------------------------------------ WP-096 AP-033 p1: mirrored locomotion child (limp R)
+        private static readonly int LocomotionStateHash = Animator.StringToHash(CharacterAnimatorContract.LocomotionState);
+        private Animator _mirrorAnimator;
+
+        /// <summary>
+        /// WP-096 (AP-033 p1): the owner's gait child plays its clip MIRRORED (walk_limp_A as limp R, ChildMotion.mirror). Unity fires a
+        /// mirrored child's events unchanged, so while this is set and the base layer is in the Locomotion state, foot_l ↔ foot_r and
+        /// foot_l_off ↔ foot_r_off swap (side payload 0 ↔ 1) — the foot lock lifts the foot that really leaves the ground, the dust
+        /// lands under it. Events of the other states (attacks, deaths: their own clips) pass through. Set by ZombieSkinnedVisual from
+        /// the spawn's Gait index (<see cref="CharacterAnimatorContract.IsGaitMirrored"/>); the player never sets it.
+        /// </summary>
+        public bool MirrorLocomotionFeet { get; set; }
+
+        /// <summary>WP-096: foot events swapped by <see cref="MirrorLocomotionFeet"/> since the last reset (tests).</summary>
+        public static int MirroredFootEvents { get; private set; }
+
+        public static void ResetMirroredFootEvents() => MirroredFootEvents = 0;
+
+        // the Animator is looked up when the body is built (pool warm-up), not on the first mirrored foot event of a live frame
+        private void Awake() => _mirrorAnimator = GetComponent<Animator>();
+
+        private bool FeetMirrored()
+        {
+            if (!MirrorLocomotionFeet) return false;
+            if (_mirrorAnimator == null) _mirrorAnimator = GetComponent<Animator>();
+            if (_mirrorAnimator == null || _mirrorAnimator.runtimeAnimatorController == null) return false;
+            // a struct read, no allocation; only on a foot event (4 per gait cycle), never per frame
+            if (_mirrorAnimator.GetCurrentAnimatorStateInfo(0).shortNameHash != LocomotionStateHash) return false;
+            MirroredFootEvents++;
+            return true;
+        }
+
+        private static int OtherSide(int value) => value == 0 ? 1 : value == 1 ? 0 : value;
+
         // ------------------------------------------ AnimationEvent targets (manifest names)
         public void fire() => Raise(CharacterAnimationEvent.Fire);
         public void hit_window_start() => Raise(CharacterAnimationEvent.HitWindowStart);
         public void hit_window_end() => Raise(CharacterAnimationEvent.HitWindowEnd);
-        public void foot_l() => Raise(CharacterAnimationEvent.FootLeft);
-        public void foot_r() => Raise(CharacterAnimationEvent.FootRight);
+        public void foot_l() => Raise(FeetMirrored() ? CharacterAnimationEvent.FootRight : CharacterAnimationEvent.FootLeft);
+        public void foot_r() => Raise(FeetMirrored() ? CharacterAnimationEvent.FootLeft : CharacterAnimationEvent.FootRight);
         public void death_end() => Raise(CharacterAnimationEvent.DeathEnd);
         public void rise_end() => Raise(CharacterAnimationEvent.RiseEnd);
         public void pickup() => Raise(CharacterAnimationEvent.Pickup);
@@ -233,8 +268,17 @@ namespace DD.Prototype.Characters
         public void spawn_rise() => Raise(CharacterAnimationEvent.SpawnRise);
         public void spawn_land() => Raise(CharacterAnimationEvent.SpawnLand);
         // WP-071 v3 (Unity passes AnimationEvent.intParameter to an int overload; 0 when the clip sets none)
-        public void foot_l_off(int value) => Raise(CharacterAnimationEvent.FootLOff, value);
-        public void foot_r_off(int value) => Raise(CharacterAnimationEvent.FootROff, value);
+        public void foot_l_off(int value)
+        {
+            if (FeetMirrored()) Raise(CharacterAnimationEvent.FootROff, OtherSide(value));   // WP-096 limp R
+            else Raise(CharacterAnimationEvent.FootLOff, value);
+        }
+
+        public void foot_r_off(int value)
+        {
+            if (FeetMirrored()) Raise(CharacterAnimationEvent.FootLOff, OtherSide(value));
+            else Raise(CharacterAnimationEvent.FootROff, value);
+        }
         public void pivot_plant(int value) => Raise(CharacterAnimationEvent.PivotPlant, value);
         public void stop_plant(int value) => Raise(CharacterAnimationEvent.StopPlant, value);
         public void weight_shift(int value) => Raise(CharacterAnimationEvent.WeightShift, value);

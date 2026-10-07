@@ -135,8 +135,21 @@ namespace DD.Art.Tests.PlayMode
                 Assert.AreEqual(speed / (clip * scale), big.GaitRate, 1e-3f, "WP-096 P3: walk_stomp dürüst oranı kırpılmamalı");
                 Assert.IsTrue(big.GaitRateHonest, "WP-096 P3: dürüst oran bayrağı");
             }
+            // WP-096 AP-033 p1: GaitVariety 0 → both bodies on the Executioner's primary walk_stomp_A (native 1.15 = 1.7 / 1.48): rate ≈ 1
+            Assert.AreEqual(big.Gait, unit.Gait, "iki beden aynı klipte (varyete 0 → birincil)");
+            if (C.ZombieGaitClips[big.Gait] == C.ZombieWalkStompAV4)
+            {
+                Assert.AreEqual(1f, big.GaitRate, 0.02f, "WP-096 AP-033: walk_stomp_A ölçekli bedende oran ≈ 1");
+                Assert.IsTrue(big.GaitRateHonest, "WP-096 AP-033: dürüst oran");
+            }
             Assert.LessOrEqual(big.GaitRate, CadenceBand.LockMaxRate, "ölçekli beden ayak kilidi bandında");
-            Assert.Greater(unit.GaitRate, big.GaitRate * 1.3f, "ölçek 1 beden daha hızlı kadans (kontrol)");
+            // control: the scale-1 body's honest cadence is 1.48× the scaled one. WP-096 AP-033: over walk_stomp_A that is ×1.48, past the
+            // band cap 1.2 — the PLAYED rate is capped (the scale-1 Executioner never ships), so the control compares the honest rate
+            float unitClip = unit.AnimationSet.SpeedOf(C.ZombieGaitClips[unit.Gait]);
+            float unitHonest = speed / unitClip;
+            Assert.AreEqual(Mathf.Clamp(unitHonest, unit.GaitRateMin, unit.GaitRateMax), unit.GaitRate, 1e-3f, "ölçek 1 beden: dürüst oran, bantla kırpılmış");
+            Assert.Greater(unitHonest, big.GaitRate * 1.3f, "ölçek 1 beden daha hızlı kadans (kontrol)");
+            Assert.Greater(unit.GaitRate, big.GaitRate, "ölçek 1 beden oynatılan oran da yüksek");
         }
 
         [UnityTest]

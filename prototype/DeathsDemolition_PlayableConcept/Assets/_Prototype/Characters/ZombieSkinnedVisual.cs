@@ -819,7 +819,7 @@ namespace DD.Prototype.Characters
         private static readonly int RiseVariantId = Animator.StringToHash(CharacterAnimatorContract.RiseVariant);
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetGaitStatics() { s_gaitOrdinal = 0; GaitVariety = 1f; }
+        private static void ResetGaitStatics() { s_gaitOrdinal = 0; GaitVariety = 1f; System.Array.Clear(s_gaitPick, 0, s_gaitPick.Length); }
         private static int s_riseOrdinal;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -876,6 +876,9 @@ namespace DD.Prototype.Characters
         /// <summary>WP-071: scales the per-spawn variety (1 = design, 0 = off — tests that measure exact rates). WP-096: the move speed jitter and the cycle phase.</summary>
         public static float GaitVariety = 1f;
         private static int s_gaitOrdinal;
+        /// <summary>WP-096 AP-033 p1: the per-tier gait pool counters (index = (int)EnemyTier), see <see cref="NextGaitPick"/>.</summary>
+        private static readonly int[] s_gaitPick = new int[4];
+        private int _gaitPick;
         private float _speedJitter = 1f;
         private float _lastRate = 1f;
         private float _lastSpeedMps;
@@ -899,7 +902,17 @@ namespace DD.Prototype.Characters
         /// <summary>WP-096 P1: the lateral ground speed handed in with the last SetSpeed (+ = right; readout only).</summary>
         public float LateralSpeed { get; private set; }
         /// <summary>WP-096 (test fixtures): restart the spawn ordinal the phase / speed jitter walk, so a fixture's bodies do not depend on earlier spawns.</summary>
-        public static void ResetGaitOrdinalForTests() => s_gaitOrdinal = 0;
+        public static void ResetGaitOrdinalForTests()
+        {
+            s_gaitOrdinal = 0;
+            ResetGaitPicksForTests();
+        }
+
+        /// <summary>WP-096 AP-033 p1 (test fixtures): the tier pools restart at their primary look (pool entry 0); the phase / jitter ordinal is left alone.</summary>
+        public static void ResetGaitPicksForTests() => System.Array.Clear(s_gaitPick, 0, s_gaitPick.Length);
+
+        /// <summary>WP-096 AP-033 p1: this spawn's tier-pool pick (readout for logs / tests).</summary>
+        public int GaitPick => _gaitPick;
         /// <summary>WP-096: the next spawn ordinal (readout for logs).</summary>
         public static int GaitOrdinal => s_gaitOrdinal;
         public LocomotionLean Lean => _lean;
@@ -997,7 +1010,8 @@ namespace DD.Prototype.Characters
             EnsureRagdollBones();
             RagdollProxyPool.ArmRoundLog();   // WP-078 per-round line
             _topSpeed = Mathf.Max(0.1f, topSpeedMetersPerSecond);
-            _gait = GaitIndexFor(tier, fit, _animation);
+            _gaitPick = NextGaitPick(tier);   // WP-096 AP-033 p1: the tier pool member of this spawn
+            _gait = GaitIndexFor(tier, fit, _animation, _gaitPick);
             RefreshGaitClip();
             _speed01 = 0f;
             _gaitOn = false;
@@ -1077,19 +1091,54 @@ namespace DD.Prototype.Characters
         /// <summary>WP-071 MUST-I1 A/B diagnostics: false = every tier on the AP-009 fallback gait (tests reset it to true).</summary>
         public static bool TierGaits = true;
 
+        /// <summary>The tier's primary gait (pool entry 0) — <see cref="GaitIndexFor(EnemyTier, string, CharacterAnimationSet, int)"/> with pick 0.</summary>
+        public static int GaitIndexFor(EnemyTier tier, string fit, CharacterAnimationSet set) => GaitIndexFor(tier, fit, set, 0);
+
         /// <summary>
-        /// WP-071 MUST-I1 (P-06 AD): the tier's own AP-022 gait — Standard shamble_fast A (fit A / C) or B (fit B), Runner run,
-        /// Guard walk_heavy, Executioner walk_stomp — where the set carries it; else the AP-009 fallback (fit shamble A/B/C, Runner run).
+        /// WP-096 AP-033 p1 (was WP-071 MUST-I1, one AP-022 gait per tier): member <paramref name="pick"/> (mod the members the set
+        /// carries) of the tier's pool <see cref="CharacterAnimatorContract.ZombieGaitPools"/> — Standard lurch_A, limp_A, shamble_fast_A,
+        /// limp_A mirrored, shamble_fast_B; Runner run_feral_A, AP-022 run; Guard walk_heavy; Executioner walk_stomp_A, AP-022 walk_stomp.
+        /// A pool member missing from the set is skipped, so a set without AP-033 walks the AP-022 gaits; no member at all (or
+        /// <see cref="TierGaits"/> off) = the AP-009 fallback (fit shamble A/B/C, Runner run). The look's fit no longer picks the
+        /// shamble: the AP-022 / AP-033 gaits retarget through the muscle space and were never fit-specific (the fit-bound AP-009
+        /// shambles are), and a fit-bound gait tied the walk to the silhouette — the same body always walked the same way.
         /// </summary>
-        public static int GaitIndexFor(EnemyTier tier, string fit, CharacterAnimationSet set)
+        public static int GaitIndexFor(EnemyTier tier, string fit, CharacterAnimationSet set, int pick)
         {
             if (!TierGaits) set = null;
-            int v3 = tier == EnemyTier.Special ? CharacterAnimatorContract.GaitRunV3
-                : tier == EnemyTier.Elite ? CharacterAnimatorContract.GaitWalkHeavyV3
-                : tier == EnemyTier.Ultra ? CharacterAnimatorContract.GaitWalkStompV3
-                : fit == "B" ? CharacterAnimatorContract.GaitShambleFastBV3 : CharacterAnimatorContract.GaitShambleFastAV3;
-            if (set != null && set.Find(CharacterAnimatorContract.ZombieGaitClips[v3]) != null) return v3;
+            int t = (int)tier;
+            if (set != null && t >= 0 && t < CharacterAnimatorContract.ZombieGaitPools.Length)
+            {
+                int[] pool = CharacterAnimatorContract.ZombieGaitPools[t];
+                int carried = 0;
+                for (int i = 0; i < pool.Length; i++) if (set.Find(CharacterAnimatorContract.ZombieGaitClips[pool[i]]) != null) carried++;
+                if (carried > 0)
+                {
+                    int k = pick % carried;
+                    if (k < 0) k += carried;
+                    for (int i = 0; i < pool.Length; i++)
+                    {
+                        if (set.Find(CharacterAnimatorContract.ZombieGaitClips[pool[i]]) == null) continue;
+                        if (k-- == 0) return pool[i];
+                    }
+                }
+            }
+
             return tier == EnemyTier.Special ? 3 : fit == "B" ? 1 : fit == "C" ? 2 : 0;
+        }
+
+        /// <summary>
+        /// WP-096 AP-033 p1: this spawn's pool pick — a round-robin counter PER TIER, so consecutive spawns of a tier always walk
+        /// different pool members and every member comes up within one pool length whatever the other tiers spawn in between. It
+        /// is deliberately not the golden-ratio ordinal the cycle phase walks (phase = frac(g·0.618)): a pick drawn from the same
+        /// sequence would give every body of one clip a phase inside one 1/n band — the same-clip sync R2 L5 counts. 0 (the tier's
+        /// primary look, counter untouched) while <see cref="GaitVariety"/> is 0, the exact-rate tests' switch.
+        /// </summary>
+        public static int NextGaitPick(EnemyTier tier)
+        {
+            int t = (int)tier;
+            if (GaitVariety <= 0f || t < 0 || t >= s_gaitPick.Length) return 0;
+            return s_gaitPick[t]++;
         }
 
         /// <summary>WP-071 MUST-I1 diagnostics / tests: play a given Gait index (before / after frames of the tier binding).</summary>
@@ -1101,23 +1150,27 @@ namespace DD.Prototype.Characters
             _animator.SetFloat(GaitId, _gait);
         }
 
-        /// <summary>Re-read the gait after the look changed (fit A/B/C decides the shamble).</summary>
+        /// <summary>Re-read the gait after the look changed (the spawn's pool pick is kept; the fit only matters for the AP-009 fallback).</summary>
         public void SetFit(string fit, EnemyTier tier)
         {
             if (!_authored) return;
-            _gait = GaitIndexFor(tier, fit, _animation);
+            _gait = GaitIndexFor(tier, fit, _animation, _gaitPick);
             RefreshGaitClip();
             _animator.SetFloat(GaitId, _gait);
         }
 
-        /// <summary>WP-096 P3: the current gait clip's no-slide speed and rate band (its own minRate / maxRate, else CadenceBand).</summary>
+        /// <summary>WP-096 P3: the current gait clip's no-slide speed and rate band (its own minRate / maxRate, else CadenceBand); AP-033: + the mirrored child's foot swap.</summary>
         private void RefreshGaitClip()
         {
             string clip = CharacterAnimatorContract.ZombieGaitClips[_gait];
             _gaitClipSpeed = Mathf.Max(0.1f, _animation.SpeedOf(clip));
             _rateMin = _animation.MinRateOf(clip);
             _rateMax = _animation.MaxRateOf(clip);
+            if (_events != null) _events.MirrorLocomotionFeet = CharacterAnimatorContract.IsGaitMirrored(_gait);
         }
+
+        /// <summary>WP-096 AP-033 p1: the gait tree child plays its clip mirrored (limp R).</summary>
+        public bool GaitMirrored => CharacterAnimatorContract.IsGaitMirrored(_gait);
 
         private void SetLocomotion(float metersPerSecond, float dt)
         {

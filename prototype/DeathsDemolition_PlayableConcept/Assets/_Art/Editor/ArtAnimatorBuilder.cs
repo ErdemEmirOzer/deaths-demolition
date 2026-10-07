@@ -98,6 +98,45 @@ namespace DD.Art.Pipeline.EditorTools
             return report;
         }
 
+        /// <summary>
+        /// WP-096 (AP-033 p1) · the zombie half of <see cref="BuildAll"/> only: the zombie rig calibration, DD_Zombie.controller and
+        /// CharacterAnimationSet_Zombie.asset, rebuilt in place (GUIDs kept; the set keeps its per-clip minRate / maxRate). The player
+        /// controller, its sets, the FP viewmodel and the masks are left as they are on disk (the UpperBody mask is read, built only
+        /// when missing) — a zombie clip intake does not regenerate the player's YAML.
+        /// </summary>
+        public static Report BuildZombieOnly()
+        {
+            Dictionary<string, ArtAnimationClipContract.ClipSpec> manifest = ArtAnimationClipContract.Manifest();
+            if (manifest == null) throw new FileNotFoundException(LogPrefix + "manifest missing", ArtAnimationClipContract.ManifestPath);
+            if (manifest.Count != C.ClipCount) throw new InvalidDataException(LogPrefix + "manifest lists " + manifest.Count + " clips != " + C.ClipCount);
+
+            var clips = new Dictionary<string, AnimationClip>(StringComparer.Ordinal);
+            foreach (ArtAnimationClipContract.ClipSpec spec in manifest.Values)
+            {
+                if (spec.target != "zombie") continue;
+                AnimationClip clip = ArtAnimationClipContract.ClipOf(spec);
+                if (clip == null) throw new InvalidOperationException(LogPrefix + "clip not imported: " + spec.name + " (" + ArtAnimationClipContract.FbxPath(spec) + ")");
+                clips[spec.name] = clip;
+            }
+
+            AvatarMask upper = AssetDatabase.LoadAssetAtPath<AvatarMask>(UpperBodyMask);
+            if (upper == null)
+            {
+                EnsureFolder(MasksFolder);
+                upper = BuildMask(UpperBodyMask, body: true, head: true, arms: true, legs: false, root: false);
+            }
+
+            var report = new Report { clips = clips.Count };
+            Dictionary<string, float> unitySpeeds = Calibrate(manifest, clips, "zombie");
+            AnimatorController zombie = BuildZombie(clips, manifest, upper, out report.zombieStates, out report.zombieLayers);
+            WriteSet(ArtCharacterPrefabBuilder.ZombieAnimationSet, zombie, manifest, clips, unitySpeeds, "zombie", ZombieSource, manifest[C.ZombieShambleA].speedMps,
+                clips[C.ZombieIdleSway], clips[C.ZombieShambleA], manifest[C.ZombieShambleA].speedMps);
+
+            AssetDatabase.SaveAssets();
+            Debug.Log(LogPrefix + "built (zombie only): " + report.clips + " zombie clips, " + report.zombieStates + " states / " + report.zombieLayers + " layers");
+            return report;
+        }
+
         // ================================================================== masks
 
         private static AvatarMask BuildMask(string path, bool body, bool head, bool arms, bool legs, bool root)
@@ -310,11 +349,12 @@ namespace DD.Art.Pipeline.EditorTools
         };
 
         /// <summary>WP-032: measure every locomotion clip on the character's avatar (StrideCalibrator); keyed by clip name.</summary>
-        public static Dictionary<string, float> Calibrate(Dictionary<string, ArtAnimationClipContract.ClipSpec> manifest, Dictionary<string, AnimationClip> clips)
+        public static Dictionary<string, float> Calibrate(Dictionary<string, ArtAnimationClipContract.ClipSpec> manifest, Dictionary<string, AnimationClip> clips, string onlyTarget = null)
         {
             var result = new Dictionary<string, float>(StringComparer.Ordinal);
             foreach (string target in new[] { "player", "zombie" })
             {
+                if (onlyTarget != null && target != onlyTarget) continue;   // WP-096: BuildZombieOnly
                 GameObject rig = InstantiateCalibrationRig(target);
                 if (rig == null) continue;
                 try
@@ -342,6 +382,7 @@ namespace DD.Art.Pipeline.EditorTools
             foreach (KeyValuePair<string, float> o in LiveCalibrationOverrides)
             {
                 if (!manifest.ContainsKey(o.Key)) continue;
+                if (onlyTarget != null && manifest[o.Key].target != onlyTarget) continue;
                 Debug.Log(LogPrefix + "stride " + o.Key + ": live-rig override " + o.Value.ToString("F3") + " m/s (sampled " + (result.TryGetValue(o.Key, out float sampled) ? sampled.ToString("F3") : "-") + ")");
                 result[o.Key] = o.Value;
             }
@@ -650,10 +691,14 @@ namespace DD.Art.Pipeline.EditorTools
             gait.blendParameter = C.Gait;
             gait.useAutomaticThresholds = false;
             // WP-071 MUST-I1: one child per ZombieGaitClips entry at its index (AP-009 0–3, AP-022 tier gaits 4–8 where imported)
+            // WP-096 AP-033 p1: + 9–13; index 11 is walk_limp_A again with the child's mirror on (limp R, no second file)
             var gaitChildren = new List<ChildMotion>();
             for (int g = 0; g < C.ZombieGaitClips.Length; g++)
             {
-                if (clips.ContainsKey(C.ZombieGaitClips[g])) gaitChildren.Add(Child1D(clips[C.ZombieGaitClips[g]], g));
+                if (!clips.ContainsKey(C.ZombieGaitClips[g])) continue;
+                ChildMotion child = Child1D(clips[C.ZombieGaitClips[g]], g);
+                child.mirror = C.IsGaitMirrored(g);
+                gaitChildren.Add(child);
             }
 
             gait.children = gaitChildren.ToArray();

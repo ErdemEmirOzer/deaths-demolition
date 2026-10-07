@@ -8,10 +8,24 @@ namespace DD.Art.Pipeline.EditorTools
     /// WP-071 · event contract v3 (WP-071-ANIMATION-V3-DIRECTION Bölüm I K2, III A8.4): the timing rules P-06's
     /// AP-022 clips must meet. Applies to <c>AP022_</c> clips (the AP-009 set predates it); names must be canonical
     /// (<see cref="CharacterAnimationEvents.Names"/>; a known alias is rejected with its canonical spelling).
+    /// WP-096 (S-03 07.10, P-06 AP-033 contract S4): the AP-033 zombie locomotion clips (<c>AP033_</c>) are held to the same rules
+    /// (P-06's Python validator copy applies them before delivery).
     /// </summary>
     public static class ArtAnimationEventContract
     {
         public const string V3Prefix = "AP022_";
+        /// <summary>WP-096: the AP-033 zombie locomotion clips (same v3 rules; no TP / FP pairs).</summary>
+        public const string Ap033Prefix = "AP033_";
+        /// <summary>WP-096: every clip prefix the v3 rules apply to.</summary>
+        public static readonly string[] V3Prefixes = { V3Prefix, Ap033Prefix };
+
+        /// <summary>WP-096: the clip is held to the v3 event rules (AP022_ / AP033_).</summary>
+        public static bool AppliesTo(string clip)
+        {
+            if (clip == null) return false;
+            for (int i = 0; i < V3Prefixes.Length; i++) if (clip.StartsWith(V3Prefixes[i], StringComparison.Ordinal)) return true;
+            return false;
+        }
 
         /// <summary>Frame-0 events allowed (III A8.4 #76).</summary>
         private static readonly string[] FrameZero = { "fire", "hit", "breath", "spawn_rise", "foot_l", "foot_r", "telegraph_start" };
@@ -112,14 +126,14 @@ namespace DD.Art.Pipeline.EditorTools
             return v;
         }
 
-        /// <summary>The whole manifest: v3 rules on AP022_ clips + every AP022_tp_X / AP022_fp_X pair.</summary>
+        /// <summary>The whole manifest: v3 rules on AP022_ / AP033_ clips (WP-096) + every AP022_tp_X / AP022_fp_X pair.</summary>
         public static List<string> ValidateManifest(Dictionary<string, ArtAnimationClipContract.ClipSpec> manifest)
         {
             var v = new List<string>();
             if (manifest == null) return v;
             foreach (KeyValuePair<string, ArtAnimationClipContract.ClipSpec> kv in manifest)
             {
-                if (!kv.Key.StartsWith(V3Prefix, StringComparison.Ordinal)) continue;
+                if (!AppliesTo(kv.Key)) continue;
                 v.AddRange(Validate(kv.Key, kv.Value.frames, kv.Value.loop, kv.Value.events));
                 const string tpPrefix = V3Prefix + "tp_";
                 if (kv.Key.StartsWith(tpPrefix, StringComparison.Ordinal)

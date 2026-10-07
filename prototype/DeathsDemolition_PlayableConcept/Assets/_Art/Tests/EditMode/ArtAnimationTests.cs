@@ -316,12 +316,18 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(2, tree.children.Length);
             var idle = tree.children[0].motion as BlendTree; var gait = tree.children[1].motion as BlendTree;
             Assert.IsNotNull(idle); Assert.IsNotNull(gait);
-            Assert.AreEqual(2, idle.children.Length); Assert.AreEqual(C.ZombieGaitClips.Length, gait.children.Length, "gait: AP-009 4 + AP-022 tier gaits 5 (MUST-I1)");
+            Assert.AreEqual(2, idle.children.Length); Assert.AreEqual(C.ZombieGaitClips.Length, gait.children.Length, "gait: AP-009 4 + AP-022 tier gaits 5 (MUST-I1) + AP-033 p1 5 (WP-096: lurch, limp, limp R, feral, stomp_A)");
+            int mirrored = 0;
             for (int i = 0; i < C.ZombieGaitClips.Length; i++)
             {
                 Assert.AreEqual(set.Clip(C.ZombieGaitClips[i]), gait.children[i].motion, "gait " + i);
                 Assert.AreEqual((float)i, gait.children[i].threshold, 1e-4f, "gait " + i + " eşiği = Gait indeksi");
+                Assert.AreEqual(C.IsGaitMirrored(i), gait.children[i].mirror, "gait " + i + " aynası (WP-096: yalnız 11 = limp R)");
+                if (gait.children[i].mirror) mirrored++;
             }
+
+            Assert.AreEqual(1, mirrored, "WP-096: tek ayna çocuğu (limp_A → limp R)");
+            Assert.AreEqual(gait.children[C.GaitWalkLimpAV4].motion, gait.children[C.GaitWalkLimpRV4].motion, "limp R = aynı klip, ayna bayrağıyla");
             Assert.IsTrue(loco.speedParameterActive && loco.speedParameter == C.GaitRate);
 
             // WP-071: AP-022 slice 1 — six attack states (+ bite_grab, swipe_L), each on its v3 clip
@@ -392,20 +398,28 @@ namespace DD.Art.Tests.EditMode
         }
 
         /// <summary>
-        /// WP-071 MUST-I1 (P-06 AD): every tier walks its own AP-022 gait — Standard shamble_fast A (fit A / C) / B (fit B), Runner
-        /// run, Guard walk_heavy, Executioner walk_stomp — each in the set with a calibrated speed; without the set, the AP-009 fallback.
+        /// WP-071 MUST-I1 (P-06 AD) → WP-096 AP-033 p1: every tier walks a member of its own pool — Standard lurch_A, limp_A,
+        /// shamble_fast_A, limp R, shamble_fast_B; Runner run_feral_A, run; Guard walk_heavy; Executioner walk_stomp_A, walk_stomp —
+        /// the primary (pick 0) is the AP-033 clip, the fit no longer picks the shamble; every member is in the shipped set with
+        /// its speed; without the set, the AP-009 fallback.
         /// </summary>
         [Test]
         public void Gait_TierBaglama_AP022_MUSTI1()
         {
             var set = AssetDatabase.LoadAssetAtPath<CharacterAnimationSet>(ArtCharacterPrefabBuilder.ZombieAnimationSet);
-            Assert.AreEqual(C.GaitShambleFastAV3, ZombieSkinnedVisual.GaitIndexFor(EnemyTier.Standard, "A", set));
-            Assert.AreEqual(C.GaitShambleFastBV3, ZombieSkinnedVisual.GaitIndexFor(EnemyTier.Standard, "B", set));
-            Assert.AreEqual(C.GaitShambleFastAV3, ZombieSkinnedVisual.GaitIndexFor(EnemyTier.Standard, "C", set));
-            Assert.AreEqual(C.GaitRunV3, ZombieSkinnedVisual.GaitIndexFor(EnemyTier.Special, "A", set));
+            Assert.AreEqual(C.GaitWalkLurchAV4, ZombieSkinnedVisual.GaitIndexFor(EnemyTier.Standard, "A", set));
+            Assert.AreEqual(C.GaitWalkLurchAV4, ZombieSkinnedVisual.GaitIndexFor(EnemyTier.Standard, "B", set), "WP-096: fit seçmez");
+            Assert.AreEqual(C.GaitRunFeralAV4, ZombieSkinnedVisual.GaitIndexFor(EnemyTier.Special, "A", set));
             Assert.AreEqual(C.GaitWalkHeavyV3, ZombieSkinnedVisual.GaitIndexFor(EnemyTier.Elite, "B", set));
-            Assert.AreEqual(C.GaitWalkStompV3, ZombieSkinnedVisual.GaitIndexFor(EnemyTier.Ultra, "C", set));
-            foreach (int g in new[] { C.GaitShambleFastAV3, C.GaitShambleFastBV3, C.GaitRunV3, C.GaitWalkHeavyV3, C.GaitWalkStompV3 })
+            Assert.AreEqual(C.GaitWalkStompAV4, ZombieSkinnedVisual.GaitIndexFor(EnemyTier.Ultra, "C", set));
+            int[] expected = { C.GaitWalkLurchAV4, C.GaitWalkLimpAV4, C.GaitShambleFastAV3, C.GaitWalkLimpRV4, C.GaitShambleFastBV3 };
+            for (int k = 0; k < expected.Length * 2; k++)
+                Assert.AreEqual(expected[k % expected.Length], ZombieSkinnedVisual.GaitIndexFor(EnemyTier.Standard, "A", set, k), "Standard havuzu pick " + k);
+            Assert.AreEqual(C.GaitRunV3, ZombieSkinnedVisual.GaitIndexFor(EnemyTier.Special, "A", set, 1));
+            Assert.AreEqual(C.GaitWalkStompV3, ZombieSkinnedVisual.GaitIndexFor(EnemyTier.Ultra, "A", set, 1));
+            Assert.AreEqual(C.GaitWalkHeavyV3, ZombieSkinnedVisual.GaitIndexFor(EnemyTier.Elite, "A", set, 7), "Guard tek üye (p2'ye kadar)");
+            foreach (int[] pool in C.ZombieGaitPools)
+            foreach (int g in pool)
             {
                 Assert.IsNotNull(set.Find(C.ZombieGaitClips[g]), C.ZombieGaitClips[g] + " sette yok");
                 Assert.Greater(set.SpeedOf(C.ZombieGaitClips[g]), 0.5f, C.ZombieGaitClips[g] + " hız verisi");
@@ -413,6 +427,37 @@ namespace DD.Art.Tests.EditMode
 
             Assert.AreEqual(2, ZombieSkinnedVisual.GaitIndexFor(EnemyTier.Standard, "C", null), "set yok → AP-009 fit shamble");
             Assert.AreEqual(3, ZombieSkinnedVisual.GaitIndexFor(EnemyTier.Special, "A", null), "set yok → AP-009 run");
+        }
+
+        /// <summary>
+        /// WP-096 AP-033 p1: the shipped set carries the four AP-033 gaits at their contact spd (the index's native speed), so the
+        /// honest rate at the tier's world speed over its body scale is ≈ 1 (Standard 2.7 / (2.7 × 1.00), Runner 4.6 / (4.79 × 0.96),
+        /// Executioner 1.7 / (1.15 × 1.48)) — inside the default cadence band, no per-clip band needed.
+        /// </summary>
+        [Test]
+        public void Ap033_SetHizlari_DurustOranBir()
+        {
+            var set = AssetDatabase.LoadAssetAtPath<CharacterAnimationSet>(ArtCharacterPrefabBuilder.ZombieAnimationSet);
+            var m = Manifest();
+            (string clip, float native, float world, float scale)[] rows =
+            {
+                (C.ZombieWalkLurchAV4, 2.7f, 2.7f, 1f), (C.ZombieWalkLimpAV4, 2.7f, 2.7f, 1f),
+                (C.ZombieRunFeralAV4, 4.79f, 4.6f, 0.96f), (C.ZombieWalkStompAV4, 1.15f, 1.7f, 1.48f)
+            };
+            var log = new List<string>();
+            foreach ((string clip, float native, float world, float scale) r in rows)
+            {
+                Assert.IsTrue(m.ContainsKey(r.clip), r.clip + " manifestte yok");
+                Assert.IsTrue(m[r.clip].contactSpeed, r.clip + " spd (temas hızı) yetkili değil");
+                Assert.AreEqual(r.native, set.SpeedOf(r.clip), 1e-3f, r.clip + " set hızı = index native_speed_mps");
+                float rate = ZombieLocomotionMath.HonestRate(r.world, set.SpeedOf(r.clip), r.scale);
+                log.Add(r.clip + " rate=" + rate.ToString("F3", CultureInfo.InvariantCulture));
+                Assert.That(rate, Is.InRange(0.95f, 1.05f), r.clip + " dürüst oran ≈ 1");
+                Assert.That(rate, Is.InRange(set.MinRateOf(r.clip), set.MaxRateOf(r.clip)), r.clip + " bant içinde");
+                Assert.AreEqual(m[r.clip].frames, set.Find(r.clip).frames, r.clip + " kare");
+            }
+
+            Debug.Log("[DD-TEST] wp096.ap033.rates " + string.Join(" · ", log));
         }
 
         [Test]

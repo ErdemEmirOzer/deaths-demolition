@@ -113,6 +113,9 @@ namespace DD.Art.Tests.PlayMode
             var v = go.GetComponent<ZombieSkinnedVisual>();
             v.Assemble(set.ZombieLibrary, ZombieLookSelector.Select(set.ZombieLibrary, seed));
             v.ApplyMaterial(set.ZombieLibrary, 0);
+            // WP-096 AP-033 p1: the Standard gait is a per-spawn pool pick — restart the pools so the stage actor walks the
+            // tier's primary look (walk_lurch_A) whatever spawned before, not a member chosen by test order
+            ZombieSkinnedVisual.ResetGaitPicksForTests();
             v.ResetForSpawn(EnemyTier.Standard, 2.7f, "A", 0, false);
             // Stage actors are off-camera in the menu scene: CullUpdateTransforms would skip the IK pass and the bone
             // write (that is the production rule); the measurement needs the pass, so animate always here.

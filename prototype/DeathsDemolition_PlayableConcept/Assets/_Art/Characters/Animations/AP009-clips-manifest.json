@@ -18509,6 +18509,402 @@
    "result": "PASS",
    "tp_twin": "AP022_tp_sw_switch_out",
    "fp_camera": "viewmodel anchor: still in every FP clip and identical across all of them (W11 0.000 mm / 0.000 deg); weapon keyed in its space"
+  },
+  {
+   "clip": "AP033_zombie_walk_lurch_A",
+   "fbx": "AP033_zombie_walk_lurch_A_v001.fbx",
+   "target": "zombie",
+   "rig": "AP-007 ZombieRig (73 bones = 56 core + 17 sec_*; armature node 'ZombieRig'), AP-033 p1-v001 (P-06)",
+   "frames": 25,
+   "fps": 30,
+   "seconds": 0.8,
+   "loop": true,
+   "events": [
+    {
+     "name": "foot_l",
+     "frame": 0,
+     "value": 0
+    },
+    {
+     "name": "foot_l_off",
+     "frame": 11,
+     "value": 0
+    },
+    {
+     "name": "foot_r",
+     "frame": 12,
+     "value": 1
+    },
+    {
+     "name": "foot_r_off",
+     "frame": 23,
+     "value": 1
+    }
+   ],
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "additive_reference": null,
+   "maps_to": "WP-096 AP-033-SPEC-v1 §2 walk_lurch_A (Standard, p1)",
+   "tier": "Standard",
+   "gait_index": 9,
+   "variant": "lurch-jog (C-00 K2): forward-falling, caught steps, arms reaching forward; 150 spm, step 1.08 m",
+   "mirror_of": null,
+   "mirror_design": null,
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "spd": 2.7,
+   "speed_mps": 2.7,
+   "speed_reference": "AP-033 native_speed_mps = measured stance-foot backward speed of the in-place cycle at rate 1.0 (ap033_measure_v001: 120 Hz, lowest heel / MTP / toe marker, geometric stance mask); contact spd authoritative",
+   "travel_dir_unity_xz": [
+    0.0,
+    1.0
+   ],
+   "gameplay_speed_mps": 2.7,
+   "tier_body_scale": 1.0,
+   "rate_at_gameplay": 1.0,
+   "cadence_spm": 150.0,
+   "step_length_m": 1.08,
+   "validation": {
+    "foot_contact_A": {
+     "left": {
+      "stance_frames": 11
+     },
+     "right": {
+      "stance_frames": 11
+     }
+    },
+    "stance_frames_measured": {
+     "Left": 11.0,
+     "Right": 11.0
+    },
+    "check": "AP033 ap033_measure_v001 (P-06)",
+    "L1_avg": 0.0192,
+    "L1_p95": 0.04944,
+    "L1_max": 0.05388,
+    "L1_event_avg": 0.0192,
+    "L1_event_p95": 0.04944,
+    "events_match_L1_stance": true,
+    "hips_vertical_range_m": 0.0644,
+    "loop_position_mm": 0.0,
+    "loop_rotation_deg": 0.0,
+    "root_drift_m": 0.0,
+    "minimum_sole_marker_height_m": -0.0019,
+    "fbx_roundtrip": true,
+    "L1t_Unity": "ölçülmedi",
+    "result": "PASS"
+   },
+   "source": {
+    "package": "AP-033 p1-v001 (K/asset-production/AP-033/exports/v001/p1)",
+    "fbx_sha256": "db266d8d37f38cbfc258e2354ffc47bda260d0f54cbd1a5fca57d1ff30ecfb47",
+    "source_id": "Mixamo zombie-r3/Zombie Run.fbx (M21 eşi)",
+    "zombie_clip_index_v001_sha256": "933df067d9da0e6d25916024e386bb5c04532edf80a4b16625e480a226f7510e",
+    "anim_events_sha256": "4c3dbc8d6d57d84f265028a68a239598d1434c9563ff3d18cd4ed00a841a5bbe"
+   }
+  },
+  {
+   "clip": "AP033_zombie_walk_limp_A",
+   "fbx": "AP033_zombie_walk_limp_A_v001.fbx",
+   "target": "zombie",
+   "rig": "AP-007 ZombieRig (73 bones = 56 core + 17 sec_*; armature node 'ZombieRig'), AP-033 p1-v001 (P-06)",
+   "frames": 24,
+   "fps": 30,
+   "seconds": 0.767,
+   "loop": true,
+   "events": [
+    {
+     "name": "foot_l",
+     "frame": 1,
+     "value": 0
+    },
+    {
+     "name": "foot_r_off",
+     "frame": 1,
+     "value": 1
+    },
+    {
+     "name": "foot_l_off",
+     "frame": 11,
+     "value": 0
+    },
+    {
+     "name": "foot_r",
+     "frame": 11,
+     "value": 1
+    }
+   ],
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "additive_reference": null,
+   "maps_to": "WP-096 AP-033-SPEC-v1 §2 walk_limp_A (Standard, p1; left limp)",
+   "tier": "Standard",
+   "gait_index": 10,
+   "variant": "lurch-jog limp, one-sided (left), Injured Run timing 44/56; 157 spm, step 1.04 m",
+   "mirror_of": null,
+   "mirror_design": "limp R = Unity humanoid mirror, no file: DD_Zombie Gait child 11 (ChildMotion.mirror) on this clip; the foot events swap at runtime (CharacterAnimationEvents.MirrorLocomotionFeet)",
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "spd": 2.7,
+   "speed_mps": 2.7,
+   "speed_reference": "AP-033 native_speed_mps = measured stance-foot backward speed of the in-place cycle at rate 1.0 (ap033_measure_v001: 120 Hz, lowest heel / MTP / toe marker, geometric stance mask); contact spd authoritative",
+   "travel_dir_unity_xz": [
+    0.0,
+    1.0
+   ],
+   "gameplay_speed_mps": 2.7,
+   "tier_body_scale": 1.0,
+   "rate_at_gameplay": 1.0,
+   "cadence_spm": 156.52,
+   "step_length_m": 1.035,
+   "validation": {
+    "foot_contact_A": {
+     "left": {
+      "stance_frames": 10
+     },
+     "right": {
+      "stance_frames": 13
+     }
+    },
+    "stance_frames_measured": {
+     "Left": 10.25,
+     "Right": 13.0
+    },
+    "check": "AP033 ap033_measure_v001 (P-06)",
+    "L1_avg": 0.02011,
+    "L1_p95": 0.04512,
+    "L1_max": 0.3702,
+    "L1_event_avg": 0.0163,
+    "L1_event_p95": 0.04212,
+    "events_match_L1_stance": true,
+    "hips_vertical_range_m": 0.1079,
+    "loop_position_mm": 0.0,
+    "loop_rotation_deg": 0.0,
+    "root_drift_m": 0.0,
+    "minimum_sole_marker_height_m": -0.00146,
+    "fbx_roundtrip": true,
+    "L1t_Unity": "ölçülmedi",
+    "result": "PASS"
+   },
+   "source": {
+    "package": "AP-033 p1-v001 (K/asset-production/AP-033/exports/v001/p1)",
+    "fbx_sha256": "dc92329559bd576b41ed738956f101f4f195f6e81b245b94255d2a6b5162c80b",
+    "source_id": "Mixamo zombie-r3/Zombie Running.fbx (M21) bacak + Injured Run zamanlama deseni (44/56)",
+    "zombie_clip_index_v001_sha256": "933df067d9da0e6d25916024e386bb5c04532edf80a4b16625e480a226f7510e",
+    "anim_events_sha256": "4c3dbc8d6d57d84f265028a68a239598d1434c9563ff3d18cd4ed00a841a5bbe"
+   }
+  },
+  {
+   "clip": "AP033_zombie_run_feral_A",
+   "fbx": "AP033_zombie_run_feral_A_v001.fbx",
+   "target": "zombie",
+   "rig": "AP-007 ZombieRig (73 bones = 56 core + 17 sec_*; armature node 'ZombieRig'), AP-033 p1-v001 (P-06)",
+   "frames": 17,
+   "fps": 30,
+   "seconds": 0.533,
+   "loop": true,
+   "events": [
+    {
+     "name": "foot_l",
+     "frame": 0,
+     "value": 0
+    },
+    {
+     "name": "foot_l_off",
+     "frame": 5,
+     "value": 0
+    },
+    {
+     "name": "foot_r",
+     "frame": 8,
+     "value": 1
+    },
+    {
+     "name": "foot_r_off",
+     "frame": 14,
+     "value": 1
+    }
+   ],
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "additive_reference": null,
+   "maps_to": "WP-096 AP-033-SPEC-v1 §2 run_feral_A (Runner, p1)",
+   "tier": "Runner",
+   "gait_index": 12,
+   "variant": "feral run: arms forward and reaching, torso forward, hips 6 cm; 225 spm, step 1.28 m",
+   "mirror_of": null,
+   "mirror_design": null,
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "spd": 4.79,
+   "speed_mps": 4.79,
+   "speed_reference": "AP-033 native_speed_mps = measured stance-foot backward speed of the in-place cycle at rate 1.0 (ap033_measure_v001: 120 Hz, lowest heel / MTP / toe marker, geometric stance mask); contact spd authoritative",
+   "travel_dir_unity_xz": [
+    0.0,
+    1.0
+   ],
+   "gameplay_speed_mps": 4.6,
+   "tier_body_scale": 0.96,
+   "rate_at_gameplay": 1.0003,
+   "cadence_spm": 225.0,
+   "step_length_m": 1.2773,
+   "validation": {
+    "foot_contact_A": {
+     "left": {
+      "stance_frames": 5
+     },
+     "right": {
+      "stance_frames": 5
+     }
+    },
+    "stance_frames_measured": {
+     "Left": 5.25,
+     "Right": 5.5
+    },
+    "check": "AP033 ap033_measure_v001 (P-06)",
+    "L1_avg": 0.0273,
+    "L1_p95": 0.05711,
+    "L1_max": 0.154,
+    "L1_event_avg": 0.02614,
+    "L1_event_p95": 0.05682,
+    "events_match_L1_stance": true,
+    "hips_vertical_range_m": 0.0605,
+    "loop_position_mm": 0.0,
+    "loop_rotation_deg": 2e-06,
+    "root_drift_m": 0.0,
+    "minimum_sole_marker_height_m": -0.00242,
+    "fbx_roundtrip": true,
+    "L1t_Unity": "ölçülmedi",
+    "result": "PASS"
+   },
+   "source": {
+    "package": "AP-033 p1-v001 (K/asset-production/AP-033/exports/v001/p1)",
+    "fbx_sha256": "b74d25b8df791d8f8724b97ad80a7d0c17fe8a8ac895d64053242373e3732c4a",
+    "source_id": "Mixamo Fast Run.fbx (M05, 05.10) + zombi üst gövde katmanı",
+    "zombie_clip_index_v001_sha256": "933df067d9da0e6d25916024e386bb5c04532edf80a4b16625e480a226f7510e",
+    "anim_events_sha256": "4c3dbc8d6d57d84f265028a68a239598d1434c9563ff3d18cd4ed00a841a5bbe"
+   }
+  },
+  {
+   "clip": "AP033_zombie_walk_stomp_A",
+   "fbx": "AP033_zombie_walk_stomp_A_v001.fbx",
+   "target": "zombie",
+   "rig": "AP-007 ZombieRig (73 bones = 56 core + 17 sec_*; armature node 'ZombieRig'), AP-033 p1-v001 (P-06)",
+   "frames": 45,
+   "fps": 30,
+   "seconds": 1.467,
+   "loop": true,
+   "events": [
+    {
+     "name": "foot_l",
+     "frame": 0,
+     "value": 0
+    },
+    {
+     "name": "foot_r_off",
+     "frame": 2,
+     "value": 1
+    },
+    {
+     "name": "foot_r",
+     "frame": 22,
+     "value": 1
+    },
+    {
+     "name": "foot_l_off",
+     "frame": 25,
+     "value": 0
+    }
+   ],
+   "layer": "base",
+   "mask": "full",
+   "additive": false,
+   "additive_reference": null,
+   "maps_to": "WP-096 AP-033-SPEC-v1 §2 walk_stomp_A (Executioner, p1; native ~1.15 m/s)",
+   "tier": "Executioner",
+   "gait_index": 13,
+   "variant": "crushing stomp: body drops / rises per step (hips 13 cm); 82 spm, step 0.84 m",
+   "mirror_of": null,
+   "mirror_design": null,
+   "root_motion": {
+    "xz": false,
+    "yaw": false
+   },
+   "root_delta": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "spd": 1.15,
+   "speed_mps": 1.15,
+   "speed_reference": "AP-033 native_speed_mps = measured stance-foot backward speed of the in-place cycle at rate 1.0 (ap033_measure_v001: 120 Hz, lowest heel / MTP / toe marker, geometric stance mask); contact spd authoritative",
+   "travel_dir_unity_xz": [
+    0.0,
+    1.0
+   ],
+   "gameplay_speed_mps": 1.7,
+   "tier_body_scale": 1.48,
+   "rate_at_gameplay": 0.9988,
+   "cadence_spm": 81.82,
+   "step_length_m": 0.8433,
+   "validation": {
+    "foot_contact_A": {
+     "left": {
+      "stance_frames": 25
+     },
+     "right": {
+      "stance_frames": 24
+     }
+    },
+    "stance_frames_measured": {
+     "Left": 25.0,
+     "Right": 24.0
+    },
+    "check": "AP033 ap033_measure_v001 (P-06)",
+    "L1_avg": 0.01364,
+    "L1_p95": 0.03414,
+    "L1_max": 0.06792,
+    "L1_event_avg": 0.01364,
+    "L1_event_p95": 0.03414,
+    "events_match_L1_stance": true,
+    "hips_vertical_range_m": 0.1299,
+    "loop_position_mm": 0.0,
+    "loop_rotation_deg": 0.0,
+    "root_drift_m": 0.0,
+    "minimum_sole_marker_height_m": -4e-05,
+    "fbx_roundtrip": true,
+    "L1t_Unity": "ölçülmedi",
+    "result": "PASS"
+   },
+   "source": {
+    "package": "AP-033 p1-v001 (K/asset-production/AP-033/exports/v001/p1)",
+    "fbx_sha256": "350108e3719656ea9a2c07cb11f7c1a17ab225c18f2f52ee60487faf9bda1b52",
+    "source_id": "Mixamo Walking.fbx (M02, 05.10) + ağır adım katmanı",
+    "zombie_clip_index_v001_sha256": "933df067d9da0e6d25916024e386bb5c04532edf80a4b16625e480a226f7510e",
+    "anim_events_sha256": "4c3dbc8d6d57d84f265028a68a239598d1434c9563ff3d18cd4ed00a841a5bbe"
+   }
   }
  ],
  "v005_changes": {
@@ -18664,5 +19060,6 @@
   "tp_special": "AP-022 TP Special (P-06 28.09, manifest 146 / SHA256SUMS 203): AP022_tp_sw_arc_fire, AP022_tp_sw_arc_reload_empty, AP022_tp_sw_arc_reload_tac, AP022_tp_sw_gel_fire, AP022_tp_sw_gel_idle_aim, AP022_tp_sw_gel_reload_empty, AP022_tp_sw_gel_reload_tac, AP022_tp_sw_gel_switch_in, AP022_tp_sw_gel_switch_out, AP022_tp_sw_idle_aim, AP022_tp_sw_switch_in, AP022_tp_sw_switch_out — 12 clips; TP HOLD — right-grip MUST open: the sw_arc / sw_gel TP sets stay off (TpV3Sets) until the right-grip AD and C-00's decision; PlayerSkinnedVisual.EquipSpecialV3 is the path (WP-071 M-48/M-52)"
  },
  "v008_zombie_locomotion": "WP-071 MUST-I1 (01.10): + AP-022 v008 zombie locomotion 5 (P-06 AP022-clips-manifest-v008.json sha256 3d76e7ad…, AD KABUL_DÜZELTMELERLE): shamble_fast_A / shamble_fast_B (Standard 2.4), run (Runner 5.3), walk_heavy (Guard 2.1), walk_stomp (Executioner 1.7) — Gait 4–8, ZombieSkinnedVisual.GaitIndexFor",
- "v008_player_locomotion": "WP-071 MUST-3/4 (01.10): + AP-022 v008 player locomotion 10 (P-06 AP022-clips-manifest-v008.json sha256 aa1d2170…, SHA256SUMS 246/246, AD KABUL R1): idle 120 f, walk ring fwd 2.6 / back 2.55 / strafes 2.1, walk_slow 1.3 (unbound), run fwd 5.8 / back 3.6 / strafes 4.6 — the contract names (PlayerWalkFwd …) point at them; contact spd authoritative"
+ "v008_player_locomotion": "WP-071 MUST-3/4 (01.10): + AP-022 v008 player locomotion 10 (P-06 AP022-clips-manifest-v008.json sha256 aa1d2170…, SHA256SUMS 246/246, AD KABUL R1): idle 120 f, walk ring fwd 2.6 / back 2.55 / strafes 2.1, walk_slow 1.3 (unbound), run fwd 5.8 / back 3.6 / strafes 4.6 — the contract names (PlayerWalkFwd …) point at them; contact spd authoritative",
+ "v008_zombie_locomotion_ap033": "WP-096 AP-033 p1 (S-03 08.10): + AP-033 p1-v001 zombie locomotion 4 (P-06 manifest sha256 da186bf0…, SHA256SUMS 21/21; 73-bone ZombieRig, in place, 30 fps): walk_lurch_A / walk_limp_A (Standard 2.7), run_feral_A (Runner 4.79), walk_stomp_A (Executioner 1.15) — native speed = world / body scale (rate ≈ 1.0), contact spd authoritative; Gait 9–13 (11 = limp_A mirrored, limp R), per-tier pool pick ZombieSkinnedVisual.GaitIndexFor"
 }

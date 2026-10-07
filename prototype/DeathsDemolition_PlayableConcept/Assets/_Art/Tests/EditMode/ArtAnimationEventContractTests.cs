@@ -98,5 +98,44 @@ namespace DD.Art.Tests.EditMode
         {
             Ok(ArtAnimationEventContract.ValidateManifest(ArtAnimationClipContract.Manifest()));
         }
+
+        /// <summary>
+        /// WP-096 (P-06 AP-033 contract S4, S-03 07.10): the v3 rules cover the AP-033 zombie locomotion clips (AP033_) as well as
+        /// AP022_; the AP-009 set (AP009_) stays outside. The shipped manifest's AP-033 rows are in the gate and pass it.
+        /// </summary>
+        [Test]
+        [Category("WP096")]
+        public void Onek_AP033_KapsanirAP009Disarida()
+        {
+            Assert.IsTrue(ArtAnimationEventContract.AppliesTo("AP022_zombie_run"));
+            Assert.IsTrue(ArtAnimationEventContract.AppliesTo("AP033_zombie_walk_lurch_A"));
+            Assert.IsFalse(ArtAnimationEventContract.AppliesTo("AP009_zombie_run"));
+            Assert.IsFalse(ArtAnimationEventContract.AppliesTo(null));
+
+            // the same broken loop (toe-off 2 frames after the plant) fails under AP033_ / AP022_ and is ignored under AP009_
+            var bad = new Dictionary<string, ArtAnimationClipContract.ClipSpec>();
+            foreach (string name in new[] { "AP033_zombie_walk_x", "AP022_zombie_walk_x", "AP009_zombie_walk_x" })
+            {
+                var s = new ArtAnimationClipContract.ClipSpec { name = name, frames = 25, loop = true };
+                s.events.AddRange(E("foot_l", 0, "foot_l_off", 2, "foot_r", 12, "foot_r_off", 23));
+                bad[name] = s;
+            }
+
+            List<string> v = ArtAnimationEventContract.ValidateManifest(bad);
+            Fails(v, "AP033_zombie_walk_x: foot_l@0 → foot_l_off@2");
+            Fails(v, "AP022_zombie_walk_x: foot_l@0 → foot_l_off@2");
+            Assert.IsFalse(v.Exists(x => x.StartsWith("AP009_", System.StringComparison.Ordinal)), "AP009_ kapsam dışı: " + string.Join(" | ", v));
+
+            // the four p1 loops as delivered (anim-events.json, frames = cycle + 1) pass
+            Ok(ArtAnimationEventContract.Validate("AP033_zombie_walk_lurch_A", 25, true, E("foot_l", 0, "foot_l_off", 11, "foot_r", 12, "foot_r_off", 23)));
+            Ok(ArtAnimationEventContract.Validate("AP033_zombie_walk_limp_A", 24, true, E("foot_l", 1, "foot_r_off", 1, "foot_l_off", 11, "foot_r", 11)));
+            Ok(ArtAnimationEventContract.Validate("AP033_zombie_run_feral_A", 17, true, E("foot_l", 0, "foot_l_off", 5, "foot_r", 8, "foot_r_off", 14)));
+            Ok(ArtAnimationEventContract.Validate("AP033_zombie_walk_stomp_A", 45, true, E("foot_l", 0, "foot_r_off", 2, "foot_r", 22, "foot_l_off", 25)));
+
+            var m = ArtAnimationClipContract.Manifest();
+            int ap033 = 0;
+            foreach (string k in m.Keys) if (k.StartsWith(ArtAnimationEventContract.Ap033Prefix, System.StringComparison.Ordinal)) ap033++;
+            Assert.AreEqual(4, ap033, "manifestte AP-033 p1 4 klip");
+        }
     }
 }
