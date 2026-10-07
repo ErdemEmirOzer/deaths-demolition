@@ -729,12 +729,19 @@ def sample(directory, regex, owner, holder=None):
         parent[pid] = ppid
         rows.append((pid, ppid, start, command))
     roots = {str(owner)} | ({str(holder)} if holder else set())
+    # WP-099 (C-00 07.10): the window owner's own ANCESTORS (the shell that ran the snapshot, a tool or agent shell above
+    # it) are never writers of this window — a command line that merely mentions the Player pattern (e.g. a pgrep in the
+    # same shell) used to be logged owned=0 and turned into a false FOREIGN_WRITER at restore
+    above, p, steps = set(), parent.get(str(owner)), 0
+    while p and p not in ("0", "1") and steps < 64:
+        above.add(p)
+        p, steps = parent.get(p), steps + 1
     now = int(time.time())
     utc = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now))
     pat = re.compile(regex)
     log, lineage = [], []
     for pid, ppid, start, command in rows:
-        if not pat.search(command) or "userdata_guard_io.py" in command:
+        if not pat.search(command) or "userdata_guard_io.py" in command or pid in above:
             continue
         owned, p, steps = 0, pid, 0
         while p and p not in ("0", "1") and steps < 64:
