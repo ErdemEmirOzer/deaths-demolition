@@ -1,4 +1,5 @@
 using DD.Prototype.Core.Weapons;
+using DD.Prototype.Feedback;
 using DD.Prototype.PlayerSystem;
 using DD.Prototype.Rounds;
 using DD.Prototype.Weapons;
@@ -25,7 +26,17 @@ namespace DD.Prototype.UI
     /// (<see cref="HudFeelBudget"/>); nothing allocates per frame or per event (pools built once, SetText with numbers,
     /// struct tweens). The health front plane and the weapon's Content are nested canvases (BuildBrushHealth /
     /// BuildRingWeapon): a shot or a beat re-batches its own cluster, never the main HUD canvas.
-    /// The player-hit source is <see cref="HudFeelSource"/> - the one seam S-02's FeelEvents will replace.
+    /// The player-hit source is <see cref="HudFeelSource"/> (FeelEvents.PlayerDamaged since 08.10).
+    ///
+    /// 08.10 · S-02's FeelEvents and feel contract (K/wp-095/FEELEVENTS-LISTE.md, HIS-SOZLESMESI.md; S-09's HUD rows - where a
+    /// value differs from HAREKET-HUD, the contract wins): the HUD hears these moments from FeelEvents only - DryFire,
+    /// ReloadEnded, EnemyHit (crit), EnemyKilled, MultiKill, LowHealth, RoundStarted, LastZombie, PlayerDamaged (via the seam).
+    /// §4.2 crit: the reticle's crit notch 0.1 s (the number's 1.3 pop is UiWorldNumbers'); §4.3 kill: the reticle pops
+    /// 1.22 → 1 over 0.12 s easeOutBack; §4.4 multi-kill: a brush "×N" by the reticle, 1.3 → 1 over 0.15 s easeOutBack, held
+    /// 0.8 s, gone over 0.3 s; §4.7 low health: the FeelEvents band (≤ 30 % in, ≥ 38 % out), the beat at 70 → 110 bpm (the
+    /// heartbeat clock's curve until FeelEvents.Heartbeat lands - <see cref="HudHeartbeat.External"/> takes it then), one white
+    /// pulse on the way out; §4.8 the reload's landing: the count pops 1.15 → 1 over 0.10 s easeOutBack with a brush wipe; an
+    /// empty trigger: two vermilion pulses × 0.08 s on the ring and the RELOAD / DOLDUR hint.
     /// </summary>
     public sealed partial class RunHudScreen
     {
@@ -45,6 +56,7 @@ namespace DD.Prototype.UI
         private const float RegenGlowShare = 0.05f;
         private const float SwitchGlyphScale = 0.88f;
         private const float CasingDriftPx = 10f;
+        private const float ReloadWipeAlpha = 0.45f;
 
         private readonly HudFeelBudget _feelBudget = new HudFeelBudget();
 
@@ -76,6 +88,7 @@ namespace DD.Prototype.UI
         private float _healthSeen = -1f;
         private bool _regenSeen;
         private int _wetBandPx = int.MinValue;
+        private bool _feelLow;   // the FeelEvents low-health band (§4.7)
 
         /// <summary>H1: chunks falling now (tests).</summary>
         public int HealthChunksLive => _chunkPool.LiveCount(JuiceNow);
@@ -297,6 +310,25 @@ namespace DD.Prototype.UI
             UiPresets.Flare(_healGlow, UiMotionTokens.HealGlowAlpha * UiTokens.FlashScale, UiDuration.Fast, UiMotionTokens.Seconds(UiDuration.Fast), UiDuration.Screen);
         }
 
+        /// <summary>
+        /// §4.7: leaving the low band (not by death) - one white pulse on the bar: the rim flares cream once (Fast in, Screen out;
+        /// light, so it plays under reduced motion too, × FlashScale). The next LOW takes the rim back to coral.
+        /// </summary>
+        private void PlayLowHealthExitPulse()
+        {
+            if (_lowRim == null)
+            {
+                return;
+            }
+
+            LowHealthExitPulses++;
+            _lowRim.color = UiTokens.Get(UiColor.TextPrimary);
+            UiPresets.Flare(_lowRim, UiMotionTokens.BeatRimPeak * UiTokens.FlashScale, UiDuration.Fast, 0f, UiDuration.Screen);
+        }
+
+        /// <summary>§4.7 white pulses played on leaving LOW (tests).</summary>
+        public int LowHealthExitPulses { get; private set; }
+
         /// <summary>H5: LOW began / ended (ApplyHealth, on the flag's change).</summary>
         private void SetHeartbeat(bool low)
         {
@@ -308,6 +340,7 @@ namespace DD.Prototype.UI
             UiMotion.KillTarget(_lowRim, false);
             if (low)
             {
+                _lowRim.color = UiTokens.Get(UiColor.BarHealthLow);   // after a white exit pulse
                 // The cracked heart stamps first (E10); the first lub lands on its hold.
                 _heartbeat.Start(JuiceNow, UiMotionTokens.StampInSeconds + UiMotionTokens.StampHoldSeconds);
                 _lowRim.canvasRenderer.SetAlpha(UiMotion.ReducedMotion ? UiMotionTokens.BeatRimPeak : UiMotionTokens.BeatRimRest);
@@ -423,8 +456,25 @@ namespace DD.Prototype.UI
                 _casings[i] = casing;
             }
 
+            // §4.8: the reload landing's brush wipe across the magazine - a cream stroke over the ladder's ink brush, inked left
+            // to right (InkReveal over its own alpha), resting at 0.
+            _reloadWipe = UiFactory.NewImage("ReloadWipe", (RectTransform)ladder.parent, UiColor.TextPrimary, BrushSprite());
+            RectTransform wipe = _reloadWipe.rectTransform;
+            wipe.anchorMin = ladder.anchorMin;
+            wipe.anchorMax = ladder.anchorMax;
+            wipe.pivot = new Vector2(0f, 0.5f);
+            wipe.anchoredPosition = ladder.anchoredPosition + new Vector2(-8f, LadderHeight * 0.5f + 2f);
+            wipe.sizeDelta = new Vector2(ladder.sizeDelta.x + 16f, 18f);
+            wipe.localRotation = ladder.localRotation;
+            Fade(_reloadWipe, ReloadWipeAlpha);
+            Rest(_reloadWipe);
+            _reloadWipeFx = _reloadWipe.gameObject.AddComponent<UiFx>();
+            _reloadWipeFx.Configure(UiFxMode.InkReveal, UiDuration.Screen, new Vector3(0f, 1f, 0f), BrushChannel);
+            _reloadHintWord = UiStrings.Get("hud.ammo.reload_hint", "RELOAD");
+
             Sprite ringArt = _reloadRing.Ghost != null ? _reloadRing.Ghost.sprite : UiSprites.RingThin;
-            _ringKick = UiFactory.NewImage("RingKick", back, UiColor.StateWarning, ringArt);
+            // §4.8: the empty trigger's two pulses are vermilion (the damage token - the accent proper is the seal's alone).
+            _ringKick = UiFactory.NewImage("RingKick", back, UiColor.DamageEdge, ringArt);
             Rest(_ringKick);
         }
 
@@ -530,19 +580,6 @@ namespace DD.Prototype.UI
                 }
             }
 
-            if (shown == RunHudReloadState.Reloading && reload == RunHudReloadState.Ready && _ladderGroup != null)
-            {
-                // A4: the slide (Decor - at rest under reduced motion); the numeral's stamp is ApplyWeaponFields' (E11).
-                float now = JuiceNow;
-                RectTransform ladder = (RectTransform)_ladderBack.transform.parent;
-                _ladderGroup.alpha = UiMotion.ReducedMotion ? 1f : MagazineDimAlpha;
-                UiMotion.Alpha(_ladderGroup, 1f, UiDuration.Base, UiEase.Settle, UiMotionClass.Decor);
-                UiMotion.MoveSeconds(ladder, _ladderHome - new Vector2(0f, UiMotionTokens.MagSlidePx), _ladderHome,
-                    UiMotionTokens.Seconds(UiDuration.Base), UiEase.Settle, UiMotionClass.Decor);
-                _leaning = false;
-                _feelBudget.Note(now, UiMotionTokens.Seconds(UiDuration.Base));
-            }
-
             if (reload != RunHudReloadState.MagazineEmpty)
             {
                 _emptyStamped = false;
@@ -578,11 +615,64 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>
-        /// A6 · the trigger on an empty magazine (WeaponEvents.DryFire), at most once per 250 ms: the ring and the glyph shake
-        /// ±4 px twice over 160 ms (DeniedNudge, about their homes - never the text), the ring kicks StateWarning for an Instant,
-        /// and the first empty pull stamps EMPTY (≤ 1.06, text-bearing). Reduced motion: the colour beat alone.
+        /// §4.8 · the reload landed (FeelEvents.ReloadEnded, Completed, classic): the count pops 1.15 → 1 over 0.10 s easeOutBack
+        /// (the contract's - E11's stamp gave way), a cream brush wipes across the magazine (InkReveal, left to right), and A4
+        /// slides the ladder up 10 px into full ink. Reduced motion: no pop, no slide (Decor); the wipe shows its end state and fades.
         /// </summary>
-        private void OnDryFire()
+        private void OnFeelReloadEnded(FeelReload reload)
+        {
+            if (reload.Special || !reload.Completed || _ammoValue == null)
+            {
+                return;
+            }
+
+            float now = JuiceNow;
+            ReloadLandings++;
+            UiMotion.PopSeconds(_ammoValue.rectTransform, ReloadPopScale, 1f, ReloadPopSeconds);
+            if (_reloadWipe != null)
+            {
+                UiMotion.KillTarget(_reloadWipe, false);
+                _reloadWipe.canvasRenderer.SetAlpha(1f);
+                _reloadWipeFx.Play();
+                UiMotion.TintAlpha(_reloadWipe, 0f, UiDuration.Base, UiEase.Exit, UiMotionClass.Data, UiMotionTokens.Seconds(UiDuration.Screen));
+            }
+
+            if (_ladderGroup != null && _ladderFill.enabled)
+            {
+                RectTransform ladder = (RectTransform)_ladderBack.transform.parent;
+                _ladderGroup.alpha = UiMotion.ReducedMotion ? 1f : MagazineDimAlpha;
+                UiMotion.Alpha(_ladderGroup, 1f, UiDuration.Base, UiEase.Settle, UiMotionClass.Decor);
+                UiMotion.MoveSeconds(ladder, _ladderHome - new Vector2(0f, UiMotionTokens.MagSlidePx), _ladderHome,
+                    UiMotionTokens.Seconds(UiDuration.Base), UiEase.Settle, UiMotionClass.Decor);
+                _leaning = false;
+            }
+
+            _feelBudget.Note(now, UiMotionTokens.Seconds(UiDuration.Base));
+        }
+
+        /// <summary>§4.8: the count's pop at the reload's landing.</summary>
+        public const float ReloadPopScale = 1.15f;
+        public const float ReloadPopSeconds = 0.10f;
+
+        /// <summary>§4.8: the empty trigger's vermilion pulses - two of 0.08 s, 0.08 s apart.</summary>
+        public const float DryPulseSeconds = 0.08f;
+
+        /// <summary>Reload landings the HUD played (tests).</summary>
+        public int ReloadLandings { get; private set; }
+
+        private Image _reloadWipe;
+        private UiFx _reloadWipeFx;
+        private float _dryPulseAt = -1f;
+        private float _dryPulseShown = -1f;
+        private string _reloadHintWord;
+
+        /// <summary>
+        /// A6 · the trigger on an empty magazine (FeelEvents.DryFire - §4.8 "≤ 4/s"), at most once per 250 ms: the ring and the
+        /// glyph shake ±4 px twice over 160 ms (DeniedNudge, about their homes - never the text), the ring pulses vermilion twice
+        /// × 0.08 s (TickJuice), the caption becomes the RELOAD / DOLDUR hint beside the reload key, and the first empty pull
+        /// stamps it (≤ 1.06, text-bearing). Reduced motion: the pulses and the hint alone.
+        /// </summary>
+        private void OnFeelDryFire(FeelDryFire dry)
         {
             float now = JuiceNow;
             if (_reloadRing == null || _ringKick == null || !_dryFireGate.Try(now))
@@ -591,8 +681,14 @@ namespace DD.Prototype.UI
             }
 
             DryFireShakes++;
-            _ringKick.canvasRenderer.SetAlpha(RingKickAlpha * UiTokens.FlashScale);
-            UiMotion.TintAlpha(_ringKick, 0f, UiDuration.Instant, UiEase.Settle, UiMotionClass.Flash);
+            _dryPulseAt = now;
+            _dryPulseShown = -1f;
+            TickDryPulse(now);
+            if (_model.ReloadState == RunHudReloadState.MagazineEmpty && _reloadCaption != null && _reloadHintWord != null)
+            {
+                _reloadCaption.text = _reloadHintWord;
+            }
+
             if (UiMotion.ReducedMotion)
             {
                 return;
@@ -672,7 +768,139 @@ namespace DD.Prototype.UI
             }
         }
 
+        // ================================================================ the reticle's feel (feel contract §4.2 – §4.4)
+
+        public const float MultiKillPopScale = 1.3f;
+        public const float MultiKillPopSeconds = 0.15f;
+        public const float MultiKillHoldSeconds = 0.8f;
+        public const float MultiKillFadeSeconds = 0.3f;
+        private static readonly Vector2 MultiKillOffset = new Vector2(52f, 36f);
+        private static readonly Vector2 MultiKillHome = new Vector2(0f, 180f);
+
+        private RectTransform _reticleLayer;
+        private RectTransform _multiRoot;
+        private TMPro.TMP_Text _multiText;
+        private Image _multiBrush;
+        private float _multiShownAt = -1f;
+        private int _multiFading;
+        private readonly HudRateGate _killPopGate = new HudRateGate(KillBeatSeconds);
+
+        /// <summary>§4.3 (S-02's rule): kill beats at least this far apart - the pops of a sweep read as a beat.</summary>
+        public const float KillBeatSeconds = 0.12f;
+
+        /// <summary>§4.4: "×N" counters shown (tests), and the last count.</summary>
+        public int MultiKillsShown { get; private set; }
+        public int MultiKillCount { get; private set; }
+
+        /// <summary>§4.4: the counter's root (tests, captures).</summary>
+        public RectTransform MultiKillRoot => _multiRoot;
+
+        /// <summary>
+        /// §4.4: a brush "×N" (only the numeral and the sign - no word) on the reticle's canvas: the HUD ink brush under a cream
+        /// display-face count, resting at alpha 0.
+        /// </summary>
+        private void BuildMultiKill(RectTransform layer)
+        {
+            _multiRoot = UiFactory.NewRect("MultiKill", layer);
+            _multiRoot.sizeDelta = new Vector2(120f, 48f);
+            _multiRoot.anchoredPosition = OffScreen;
+            _multiBrush = UiFactory.NewImage("Brush", _multiRoot, UiColor.HudInk, BrushSprite());
+            UiFactory.Fill(_multiBrush.rectTransform);
+            _multiBrush.rectTransform.localRotation = Quaternion.Euler(0f, 0f, StrokeLean);
+            Fade(_multiBrush, RoundSmearAuthoredAlpha);
+            Rest(_multiBrush);
+            _multiText = InkText("Count", _multiRoot, string.Empty, UiType.H1, UiColor.TextPrimary, TextAnchor.MiddleCenter);
+            UiFactory.Fill(_multiText.rectTransform);
+            Rest(_multiText);
+        }
+
+        /// <summary>
+        /// §4.4 (FeelEvents.MultiKill - one per kill at most, on a tier's promotion): "×N" by the aim, popping 1.3 → 1 over 0.15 s
+        /// easeOutBack, held 0.8 s, gone over 0.3 s. A new tier re-pops it with the new count. Reduced motion: no pop (Decor), it
+        /// stands and goes on the same clock (the fade is light, Data).
+        /// </summary>
+        private void OnFeelMultiKill(FeelMultiKill multi)
+        {
+            if (_multiRoot == null)
+            {
+                return;
+            }
+
+            float now = JuiceNow;
+            MultiKillsShown++;
+            MultiKillCount = multi.Count;
+            _multiRoot.anchoredPosition = _reticleLocal.x > -50000f && !float.IsNaN(_reticleLocal.x) ? _reticleLocal + MultiKillOffset : MultiKillHome;
+            _multiText.SetText("\u00D7{0}", multi.Count);
+            UiMotion.KillTarget(_multiText, false);
+            UiMotion.KillTarget(_multiBrush, false);
+            _multiText.canvasRenderer.SetAlpha(1f);
+            _multiBrush.canvasRenderer.SetAlpha(1f);
+            UiMotion.PopSeconds(_multiRoot, MultiKillPopScale, 1f, MultiKillPopSeconds);
+            _multiShownAt = now;
+            _multiFading = 0;
+            _feelBudget.Note(now, MultiKillPopSeconds);
+        }
+
+        /// <summary>The ×N's hold, then its fade (one tween each graphic, started once).</summary>
+        private void TickMultiKill(float now)
+        {
+            if (_multiShownAt < 0f || _multiFading != 0 || now - _multiShownAt < MultiKillHoldSeconds)
+            {
+                return;
+            }
+
+            _multiFading = 1;
+            _multiShownAt = -1f;
+            UiMotion.TintAlphaSeconds(_multiText, 1f, 0f, MultiKillFadeSeconds, UiEase.Exit, UiMotionClass.Data);
+            UiMotion.TintAlphaSeconds(_multiBrush, 1f, 0f, MultiKillFadeSeconds, UiEase.Exit, UiMotionClass.Data);
+        }
+
+        /// <summary>§4.2 (FeelEvents.EnemyHit): a critical hit shows the reticle's crit notch; ground-fire ticks never do.</summary>
+        private void OnFeelHit(FeelHit hit)
+        {
+            if (!hit.Critical || hit.GroundFire || _reticle == null)
+            {
+                return;
+            }
+
+            _reticle.ShowCritNotch();
+        }
+
+        /// <summary>§4.3 (FeelEvents.EnemyKilled): the reticle pops 1.22 → 1 over 0.12 s easeOutBack - kill beats ≥ 0.12 s apart.</summary>
+        private void OnFeelKill(FeelKill kill)
+        {
+            if (_reticle == null || !_killPopGate.Try(JuiceNow))
+            {
+                return;
+            }
+
+            _reticle.PlayKillPop();
+        }
+
         // ================================================================ per frame (from Update): clocks and returns only
+
+        /// <summary>§4.8: the empty trigger's two vermilion pulses - on 0–0.08 s and 0.16–0.24 s after the pull, × FlashScale.</summary>
+        private void TickDryPulse(float now)
+        {
+            if (_dryPulseAt < 0f)
+            {
+                return;
+            }
+
+            float t = now - _dryPulseAt;
+            bool on = t < DryPulseSeconds || (t >= 2f * DryPulseSeconds && t < 3f * DryPulseSeconds);
+            float alpha = on ? RingKickAlpha * UiTokens.FlashScale : 0f;
+            if (alpha != _dryPulseShown)
+            {
+                _dryPulseShown = alpha;
+                _ringKick.canvasRenderer.SetAlpha(alpha);
+            }
+
+            if (t >= 3f * DryPulseSeconds)
+            {
+                _dryPulseAt = -1f;
+            }
+        }
 
         /// <summary>The heartbeat's clock, the ladder's return from its lean, the weapon swap's stamp. Float compares on a quiet frame.</summary>
         private void TickJuice()
@@ -683,10 +911,18 @@ namespace DD.Prototype.UI
                 _heartbeat.Stop();   // E22: the death line holds the block; the heart does not beat under it
             }
 
+            _heartbeat.SetRate(_model.HealthNormalized);   // §4.7: 70 bpm at 30 % → 110 bpm at 10 %
             HudBeat beat = _heartbeat.Tick(now);
             if (beat != HudBeat.None && _lowRim != null)
             {
                 PlayBeat(beat);
+            }
+
+            TickDryPulse(now);
+            TickMultiKill(now);
+            if (_playerArcs != null)
+            {
+                _playerArcs.Tick(now);   // §4.6: the wedges' envelope
             }
 
             if (_leaning && now - _shotCadence.LastShotAt >= UiMotionTokens.FollowMid && _ladderBack != null)
@@ -717,6 +953,8 @@ namespace DD.Prototype.UI
             _emptyStamped = false;
             _healthSeen = -1f;
             _regenSeen = false;
+            _feelLow = FeelEvents.InLowHealth;
+            _dryPulseAt = -1f;
             _shotCadence.Reset();
             _chunkPool.Clear();
             _casingPool.Clear();

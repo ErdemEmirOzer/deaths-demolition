@@ -249,5 +249,45 @@ namespace DD.Prototype.Tests.EditMode
                 Assert.AreEqual(sealCentre + seal * 0.5f + HudArt.SealGapEm * 44f, runRight, 1e-3f, name + ": 0.22 em to the seal");
             }
         }
+
+        /// <summary>
+        /// 08.10 (S-09, plate fit): the plate is at most <see cref="HudArt.PlateMaxWidth"/> (288, inside S-09's 320 ceiling); a
+        /// numeral that would pass it shrinks the cap in proportion, floor <see cref="HudArt.CapFloor"/> 32. I and XIV keep the
+        /// HUD's cap 40; XXXVIII (the longest under 40) and LXXXVIII (the longest under 100) fit at a smaller cap; no round
+        /// 1…100 lays a plate past the ceiling.
+        /// </summary>
+        [Test]
+        public void Plaka_Sigdirma_EnCok288_UzunRakamCapiKuculur_Taban32()
+        {
+            const float cap = RunHudScreen.RoundGlyphHeight;
+            Assert.AreEqual(40f, cap, "the round's cap 44 → 40 (coverage lever, 08.10)");
+            Assert.LessOrEqual(HudArt.PlateMaxWidth, HudArt.PlateCeiling, "S-09: the plate ≤ 320 ref px");
+            float lsb;
+            float em = HudRoundNumeral.EmWidth(1, out lsb);
+            Assert.AreEqual(cap, HudArt.FitCap(cap, em, lsb), 1e-4f, "I keeps the cap");
+            em = HudRoundNumeral.EmWidth(14, out lsb);
+            Assert.AreEqual(cap, HudArt.FitCap(cap, em, lsb), 1e-4f, "XIV keeps the cap");
+            em = HudRoundNumeral.EmWidth(38, out lsb);
+            float fitted = HudArt.FitCap(cap, em, lsb);
+            Assert.Less(fitted, cap, "XXXVIII shrinks the cap");
+            Assert.GreaterOrEqual(fitted, HudArt.CapFloor, "never under 32 px");
+            Assert.LessOrEqual(fitted, 34f, "XXXVIII: about 33 px");
+            Assert.AreEqual(HudArt.CapFloor, HudArt.FitCap(cap, 40f, 0f), 1e-4f, "an absurd run stops at the floor");
+
+            float worst = 0f;
+            for (int round = 1; round <= 100; round++)
+            {
+                em = HudRoundNumeral.EmWidth(round, out lsb);
+                fitted = HudArt.FitCap(cap, em, lsb);
+                float width, height, runRight, sealCentre, seal;
+                HudArt.LaySmear(fitted, em * fitted, lsb, out width, out height, out runRight, out sealCentre, out seal);
+                Assert.LessOrEqual(width, HudArt.PlateMaxWidth + 0.01f, RomanNumerals.Cached(round) + ": the plate ≤ 288");
+                Assert.AreEqual(fitted / HudArt.SmearCapRatio, height, 1e-3f, RomanNumerals.Cached(round) + ": height follows the cap");
+                worst = Mathf.Max(worst, width);
+            }
+
+            Debug.Log("[DD-TEST] wp094.plateFit worst=" + worst.ToString("F1", CultureInfo.InvariantCulture) + " xxxviiiCap="
+                + HudArt.FitCap(cap, HudRoundNumeral.EmWidth(38, out lsb), lsb).ToString("F2", CultureInfo.InvariantCulture));
+        }
     }
 }

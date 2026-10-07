@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using DD.Prototype.PlayerSystem;
+using DD.Prototype.Feedback;
 using DD.Prototype.UI;
 using NUnit.Framework;
 using UnityEngine;
@@ -98,14 +98,16 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void Belirtecler_HareketKatalogu_AltiKademede_MetinTavaniAsilmaz()
         {
-            Assert.AreEqual(UiMotionTokens.Seconds(UiDuration.Emphasis), UiMotionTokens.PlusMergeWindow, 1e-6f, "G3 PlusMergeWindow = Emphasis");
+            Assert.AreEqual(0.35f, UiMotionTokens.PlusMergeWindow, 1e-6f, "G3 \"+N\" merges in 0.35 s (feel contract §4.9)");
             Assert.AreEqual(UiMotionTokens.Seconds(UiDuration.Emphasis), UiMotionTokens.SealHandoffDelay, 1e-6f, "R2 SealHandoffDelay = Emphasis");
-            Assert.AreEqual(UiMotionTokens.Seconds(UiDuration.Screen), UiMotionTokens.BeatDubDelay, 1e-6f, "H5 dub +280 ms = Screen");
+            Assert.AreEqual(0.18f, UiMotionTokens.BeatDubDelay, 1e-6f, "H5 dub +0.18 s: the heartbeat rumble's double beat (feel contract §4.7)");
             Assert.AreEqual(0.16f, UiMotionTokens.DeniedNudgeSeconds, 1e-6f, "the DeniedNudge kit token");
             Assert.AreEqual(UiMotionTokens.PunchMinInterval, HudGoldTarget.PunchMinSeconds, 1e-6f, "one punch interval: the token");
             Assert.AreEqual(1.18f, UiMotionTokens.PunchPeakGlyph, 1e-6f);
             Assert.AreEqual(UiMotionTokens.PunchPeakGlyph, RunHudScreen.GoldPunchCoin, 1e-6f);
-            Assert.LessOrEqual(RunHudScreen.GoldPunchText, UiMotionTokens.TextPopMaxScale + 1e-6f, "the gold numeral is text: ≤ 1.06");
+            Assert.AreEqual(1.12f, RunHudScreen.GoldPunchText, 1e-6f, "the gold counter pops 1.12 (feel contract §4.9 - past the kit's 1.06, as it names it)");
+            Assert.AreEqual(0.12f, RunHudScreen.GoldCounterPopSeconds, 1e-6f);
+            Assert.AreEqual(0.25f, RunHudScreen.GoldRollSeconds, 1e-6f, "the count 0.25 s easeOutCubic");
             Assert.LessOrEqual(HudShotCadence.PopScale, UiMotionTokens.TextPopMaxScale + 1e-6f, "the ammo numeral is text: ≤ 1.06");
             Assert.LessOrEqual(UiMotionTokens.HealGlowAlpha, 0.45f + 1e-6f);
             Assert.AreEqual(UiMotionTokens.Seconds(UiDuration.Screen), RunHudScreen.SpecialPickupFillSeconds, 1e-6f, "S2: 320 → Screen 280");
@@ -115,7 +117,11 @@ namespace DD.Prototype.Tests.EditMode
         public void Donguler_MaxLoopHzAltinda_SonSaniyeBandiTamPeriyot()
         {
             Assert.LessOrEqual(1f / UiTokens.PulsePeriod, UiMotionTokens.MaxLoopHz + 1e-6f, "PulsePeriod " + UiTokens.PulsePeriod + " s ≤ 1.1 Hz");
-            Assert.GreaterOrEqual(HudHeartbeat.Period, HudHeartbeat.MinExternalPeriod - 1e-6f, "the heartbeat's own clock ≤ 1.1 Hz");
+            // The heartbeat is the contract's clock (§4.7: 70 → 110 bpm) - not a loop, so not under MaxLoopHz - and under WCAG's 3 Hz.
+            Assert.AreEqual(60f / 70f, HudHeartbeat.PeriodFor(0.30f), 1e-4f, "70 bpm at 30 %");
+            Assert.AreEqual(60f / 90f, HudHeartbeat.PeriodFor(0.20f), 1e-4f, "90 bpm at 20 %");
+            Assert.AreEqual(60f / 110f, HudHeartbeat.PeriodFor(0.05f), 1e-4f, "110 bpm at and under 10 %");
+            Assert.Greater(HudHeartbeat.PeriodFor(0f), 1f / 3f, "under 3 flashes a second");
 
             // S4 (the motion lead's main-branch finding): the final-seconds band ran at PulsePeriod × 0.5 = 2.2 Hz. No HUD
             // file halves the pulse period again (source lock, comments stripped).
@@ -198,7 +204,17 @@ namespace DD.Prototype.Tests.EditMode
                 Assert.GreaterOrEqual(lubs[i] - lubs[i - 1], HudHeartbeat.MinExternalPeriod - 0.02f, "lub to lub ≥ 1 / 1.1 Hz");
             }
 
-            Assert.That(lubs.Count, NUnit.Framework.Is.InRange(9, 11), "≈ 9.5 s / 0.92 s");
+            Assert.That(lubs.Count, NUnit.Framework.Is.InRange(10, 12), "≈ 9.5 s / 0.857 s (70 bpm before SetRate)");
+
+            // §4.7: the rate follows health - at 10 % the lubs come 0.545 s apart.
+            beat.SetRate(0.10f);
+            int fast = 0;
+            for (float t = Now + 12f; t < Now + 17.5f; t += 1f / 60f)
+            {
+                fast += beat.Tick(t) == HudBeat.Lub ? 1 : 0;
+            }
+
+            Assert.That(fast, NUnit.Framework.Is.InRange(9, 11), "≈ 5.5 s / 0.545 s at 110 bpm");
 
             // A hitch (a 3 s frame) resumes the rhythm - one lub, not a burst.
             int burst = 0;
@@ -216,10 +232,10 @@ namespace DD.Prototype.Tests.EditMode
             int ext = 0;
             for (int i = 0; i < 10; i++)
             {
-                ext += external.External(Now + i * 0.5f) == HudBeat.Lub ? 1 : 0;   // 2 Hz from outside
+                ext += external.External(Now + i * 0.25f) == HudBeat.Lub ? 1 : 0;   // a double raise every 0.25 s from outside
             }
 
-            Assert.AreEqual(5, ext, "a 2 Hz sound beat drives a ≤ 1.1 Hz visual beat (every second one)");
+            Assert.AreEqual(5, ext, "beats closer than 0.4 s are one beat (150 bpm, past the contract's 110)");
             Assert.AreNotEqual(HudBeat.Lub, external.Tick(Now + 50f), "the own clock plays no lub under an external one (the last dub only)");
             Assert.AreEqual(HudBeat.None, external.Tick(Now + 51f), "nothing more without an external beat");
 
@@ -366,12 +382,12 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
-        public void ArtiN_400msIcindeBirlesir()
+        public void ArtiN_350msIcindeBirlesir()
         {
             var plus = new HudPlusMerge();
             Assert.AreEqual(5, plus.Add(Now, 5));
             Assert.AreEqual(12, plus.Add(Now + 0.2f, 7), "inside the window: one growing +N");
-            Assert.AreEqual(15, plus.Add(Now + 0.55f, 3), "the window restarts on each gain");
+            Assert.AreEqual(15, plus.Add(Now + 0.5f, 3), "the window restarts on each gain");
             Assert.AreEqual(4, plus.Add(Now + 1.5f, 4), "a new +N after a pause");
         }
 
@@ -449,17 +465,113 @@ namespace DD.Prototype.Tests.EditMode
             arcs.Flash(Vector3.right);
             arcs.Flash(Vector3.left);
             Assert.AreEqual(2, arcs.LiveWedges(Now), "two attackers, two wedges (the second no longer turns the first away)");
+            Assert.AreEqual(0f, arcs.DamageWedge(0).canvasRenderer.GetAlpha(), 1e-4f, "§4.6: the wedge rises from 0");
+            arcs.Tick(Now + UiTokens.DamageEdgeRiseSeconds + 0.01f);
             Assert.Greater(arcs.DamageWedge(0).canvasRenderer.GetAlpha(), 0.5f);
             Assert.Greater(arcs.DamageWedge(1).canvasRenderer.GetAlpha(), 0.5f);
             float first = Mathf.DeltaAngle(0f, arcs.DamageWedge(0).rectTransform.localEulerAngles.z);
             float second = Mathf.DeltaAngle(0f, arcs.DamageWedge(1).rectTransform.localEulerAngles.z);
             Assert.Greater(Mathf.Abs(Mathf.DeltaAngle(first, second)), 170f, "they face opposite sides");
 
+            arcs.Tick(Now + HudDamageEnvelope.Life + 0.01f);
+            Assert.AreEqual(0f, arcs.DamageWedge(0).canvasRenderer.GetAlpha(), 1e-4f, "gone after 0.6 s");
             Step(1f);
             Assert.AreEqual(0, arcs.LiveWedges(Now));
             arcs.Flash(Vector3.right);
             arcs.Flash((Vector3.right + Vector3.up * 0.2f).normalized);
             Assert.AreEqual(1, arcs.LiveWedges(Now), "a hit from the same side re-flares that wedge");
+            Assert.Greater(arcs.DamageWedge(0).canvasRenderer.GetAlpha(), 0.5f, "a re-flare starts past its rise - no dip");
+
+            // §4.6: at most four arcs - a fifth side takes the oldest.
+            Step(1f);
+            arcs.Flash(Vector3.right);
+            arcs.Flash(Vector3.left);
+            arcs.Flash(Vector3.up);
+            arcs.Flash(Vector3.down);
+            Assert.AreEqual(HudPlayerArcs.DamageWedges, arcs.LiveWedges(Now), "four sides, four wedges");
+            arcs.Flash((Vector3.right + Vector3.up).normalized);
+            Assert.AreEqual(4, arcs.LiveWedges(Now), "never more than four");
+        }
+
+        [Test]
+        public void HasarZarfi_Giris005_Kalis025_Cikis03InQuad()
+        {
+            Assert.AreEqual(0.05f, UiTokens.DamageEdgeRiseSeconds, 1e-6f);
+            Assert.AreEqual(0.25f, UiTokens.DamageEdgeHoldSeconds, 1e-6f);
+            Assert.AreEqual(0.3f, UiTokens.DamageEdgeDecaySeconds, 1e-6f);
+            Assert.AreEqual(0.6f, HudDamageEnvelope.Life, 1e-5f);
+            Assert.AreEqual(0f, HudDamageEnvelope.At(0f), 1e-6f);
+            Assert.AreEqual(0.5f, HudDamageEnvelope.At(0.025f), 1e-4f, "half way up the rise");
+            Assert.AreEqual(1f, HudDamageEnvelope.At(0.2f), 1e-6f, "held");
+            Assert.AreEqual(1f - 0.25f, HudDamageEnvelope.At(0.3f + 0.15f), 1e-4f, "easeInQuad: a quarter gone half way out");
+            Assert.AreEqual(0f, HudDamageEnvelope.At(0.61f), 1e-6f);
+            Assert.AreEqual(0.05f, HudDamageEnvelope.RestartAge(0.4f), 1e-6f, "a lit edge restarts past its rise");
+        }
+
+        [Test]
+        public void SozlesmePopu_OutBack_AsarVeOturur_RmdeYok()
+        {
+            Assert.AreEqual(0f, UiEaseCurve.OutBack(0f), 1e-5f);
+            Assert.AreEqual(1f, UiEaseCurve.OutBack(1f), 1e-5f);
+            float peak = 0f;
+            for (int i = 1; i < 100; i++)
+            {
+                peak = Mathf.Max(peak, UiEaseCurve.OutBack(i / 100f));
+            }
+
+            Assert.Greater(peak, 1.05f, "easeOutBack passes its end (≈ 1.10)");
+            Assert.Less(peak, 1.12f);
+
+            RectTransform reticle = Rect("Reticle");
+            UiMotion.PopSeconds(reticle, 1.22f, 1f, 0.12f);
+            Step(0f);
+            Assert.AreEqual(1.22f, reticle.localScale.x, 1e-4f, "the pop's peak");
+            Step(0.07f);
+            Assert.Less(reticle.localScale.x, 1f, "easeOutBack dips past the rest on the way back");
+            Step(0.06f);
+            Assert.AreEqual(1f, reticle.localScale.x, 1e-4f, "at rest after 0.12 s");
+
+            UiMotion.ReducedMotion = true;
+            UiMotion.PopSeconds(reticle, 1.3f, 1f, 0.15f);
+            Assert.AreEqual(1f, reticle.localScale.x, 1e-4f, "RM: no pop");
+            UiMotion.ReducedMotion = false;
+
+            // §4.2: a critical number 1.3 → 1 easeOutBack; a plain one 1.15 → 1 Settle.
+            Assert.AreEqual(1.3f, UiWorldNumbers.PopScale(true, 0f), 1e-4f);
+            Assert.Less(UiWorldNumbers.PopScale(true, 0.08f), 1f, "the crit's number passes 1");
+            Assert.AreEqual(1f, UiWorldNumbers.PopScale(true, 0.12f), 1e-4f);
+            Assert.AreEqual(1.15f, UiWorldNumbers.PopScale(false, 0f), 1e-4f);
+            Assert.GreaterOrEqual(UiWorldNumbers.PopScale(false, 0.05f), 1f, "a plain number never passes 1");
+        }
+
+        [Test]
+        public void AfisZarflari_RaundBasi_SonZombi_Varsayilan()
+        {
+            HudBannerEnvelope start = HudBannerEnvelope.RoundStart;
+            Assert.AreEqual(0.35f, start.Wipe, 1e-6f, "§4.10 drawn over 0.35 s");
+            Assert.AreEqual(0.9f, start.Hold, 1e-6f);
+            Assert.AreEqual(0.3f, start.Fade, 1e-6f);
+            Assert.AreEqual(1.55f, start.Total, 1e-5f);
+            HudBannerEnvelope clear = HudBannerEnvelope.RoundClear;
+            Assert.AreEqual(0.15f, clear.Delay, 1e-6f, "§4.11 starts at 0.15 s");
+            Assert.AreEqual(0.35f, clear.Wipe, 1e-6f);
+            Assert.AreEqual(0.8f, clear.Hold, 1e-6f);
+            Assert.AreEqual(0.3f, clear.Fade, 1e-6f);
+            Assert.AreEqual(HudBanner.Seconds, HudBannerEnvelope.Default.Total, 1e-5f, "E13's banners keep their 2.4 s");
+
+            // The envelope on a live banner: nothing during the delay, the words open, the life is the envelope's.
+            RectTransform host = Rect("Host");
+            host.sizeDelta = new Vector2(1920f, 1080f);
+            var banner = new HudBanner(host, 0f, true, "ClearBannerRoot", "ClearBanner");
+            float life = banner.Show("ROUND IV CLEAR", Now, clear);
+            Assert.AreEqual(clear.Total, life, 1e-5f);
+            Assert.AreEqual(0f, banner.Clip.sizeDelta.x, 1e-3f, "closed at the start");
+            Step(0.1f);
+            Assert.AreEqual(0f, banner.Clip.sizeDelta.x, 1e-3f, "still closed in the 0.15 s delay");
+            Step(0.45f);
+            Assert.Greater(banner.Clip.sizeDelta.x, 100f, "open after the wipe");
+            Assert.AreEqual("ClearBanner", banner.Text.name);
+            Assert.AreEqual(new Vector2(0.5f, 0.5f), banner.Root.anchorMin, "centred");
         }
 
         // ------------------------------------------------------------------ the HudFeelSource seam
@@ -467,17 +579,21 @@ namespace DD.Prototype.Tests.EditMode
         [Test]
         public void HisKaynagi_TekAdaptor_TekKopru_SonDinleyicideKalkar()
         {
-            var info = new PlayerDamageInfo(null, 40f, 30f, 100f, 70f, 100f, Vector3.zero, Vector3.left, "Test.WP094", false);
-            HudDamage hud = HudFeelSource.FromPlayerHealth(info);
-            Assert.AreEqual(Vector3.left, hud.HitDirection, "from the attacker towards the player, as PlayerHealth gives it");
+            var info = new FeelPlayerDamage(Vector3.zero, Vector3.left, 30f, 100f, 70f, 100f, false, true);
+            HudDamage hud = HudFeelSource.FromFeel(info);
+            Assert.AreEqual(Vector3.left, hud.HitDirection, "FeelEvents' Direction (attacker → player), never WorldPoint − player");
             Assert.AreEqual(30f, hud.AppliedAmount);
             Assert.AreEqual(1f, hud.NormalizedBefore, 1e-6f);
             Assert.AreEqual(0.7f, hud.NormalizedAfter, 1e-6f);
             Assert.AreEqual(0.3f, hud.Fraction, 1e-6f);
-            Assert.AreEqual(HudDamageKind.Unknown, hud.Kind, "PlayerHealth knows no kind - FeelEvents will");
+            Assert.IsTrue(hud.Heavy, "≥ 25 % of max");
+            Assert.AreEqual(HudDamageKind.Unknown, hud.Kind, "FeelEvents carries no kind yet");
 
-            FieldInfo field = typeof(PlayerHealth).GetField("AnyDamaged", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
-            Assert.IsNotNull(field, "PlayerHealth.AnyDamaged backing field");
+            // 08.10: the bridge sits on FeelEvents.PlayerDamaged - and no longer on PlayerHealth.AnyDamaged (no double trigger).
+            FieldInfo field = typeof(FeelEvents).GetField("PlayerDamaged", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+            Assert.IsNotNull(field, "FeelEvents.PlayerDamaged backing field");
+            FieldInfo legacy = typeof(DD.Prototype.PlayerSystem.PlayerHealth).GetField("AnyDamaged", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+            int legacyBefore = Count(legacy);
             int before = Count(field);
             var heard = new List<HudDamage>();
             Action<HudDamage> a = heard.Add;
@@ -487,7 +603,8 @@ namespace DD.Prototype.Tests.EditMode
             try
             {
                 Assert.AreEqual(before + 1, Count(field), "two HUD listeners, ONE bridge on the source");
-                ((Action<PlayerDamageInfo>)field.GetValue(null)).Invoke(info);
+                Assert.AreEqual(legacyBefore, Count(legacy), "nothing of the HUD's on PlayerHealth.AnyDamaged");
+                ((Action<FeelPlayerDamage>)field.GetValue(null)).Invoke(info);
                 Assert.AreEqual(1, heard.Count, "the hit arrives once, as the HUD's payload");
                 Assert.AreEqual(0.3f, heard[0].Fraction, 1e-6f);
             }

@@ -140,8 +140,12 @@ namespace DD.Prototype.UI
         public const float RoundSmearHeight = 30f;
         public const float RoundSmearOverhang = 16f;
 
-        /// <summary>The AP-032 letters' height on the glyph path (layout px).</summary>
-        public const float RoundGlyphHeight = 44f;
+        /// <summary>
+        /// The AP-032 letters' base cap height on the glyph path (layout px). 08.10 (S-09: "cap 44→40" lever, the 1.5 % coverage
+        /// cap): 40 - below the spec's 44–56 (AP-032 §3.2; the 512 atlas's cap 80 is then 2× down, AD note 5), the plate 9 %
+        /// smaller with it; a long numeral fits the plate (HudArt.FitCap, floor 32).
+        /// </summary>
+        public const float RoundGlyphHeight = 40f;
 
         /// <summary>The fallback numeral's type: the display face (H1, 34) - not text-scaled, like every HUD numeral.</summary>
         private const UiType RoundNumeralType = UiType.H1;
@@ -162,6 +166,8 @@ namespace DD.Prototype.UI
         private CanvasGroup _roundGroup;
         private RectTransform _roundBox;
         private bool _roundSmearAuthored;
+        private bool _roundSealAuthored;
+        private RectTransform _roundSealHost;
         private float _roundRunRight;   // the numeral's end, from the cluster's right edge (the seal and its gap, or the plate's tail too)
         private HudRoundNumeral _roundNumeral;
         private float _roundSealHitAt = -1f;
@@ -190,6 +196,9 @@ namespace DD.Prototype.UI
 
         /// <summary>WP-094 AP-032: the round stands on AP-032's smear plate (the cluster is the plate; tests, captures).</summary>
         public bool RoundPlateAuthored => _roundSmearAuthored;
+
+        /// <summary>The numeral's cap height now: the base, or smaller where the plate fit shrank it (tests, captures).</summary>
+        public float RoundCap => _roundNumeral != null ? _roundNumeral.Height : RoundGlyphHeight;
 
         /// <summary>The round transition (R1 → R3) is running (tests, captures).</summary>
         public bool RoundTransitionLive => _roundTimeline.IsAlive;
@@ -378,13 +387,17 @@ namespace DD.Prototype.UI
 
             // The seal (S-09 (a): vermilion): the AP-032 cell when the theme has it (a white ring, the whole cell - the ring is
             // 72 / 256 of it), the kit's hanko mask until then. With the plate it sits 0.55 diameters inside the dense zone's
-            // right end, at the cap's middle (§3.3, AD note 3); its place does not depend on the numeral, so it is laid once.
+            // right end, at the cap's middle (§3.3, AD note 3); LayRound re-lays it when the plate fit changes the cap.
             Sprite authoredSeal = UiArt.Icon(RoundSealKey);
+            _roundSealAuthored = authoredSeal != null;
             Sprite hanko = authoredSeal != null ? authoredSeal : UiFxGlobals.InkMask(UiInkChannel.Hanko);
-            Image seal = UiFactory.NewImage("Seal", back, UiColor.AccentPrimary, hanko != null ? hanko : UiSprites.Disc);
-            Place(seal.rectTransform, new Vector2(1f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(-sealCentre, 0f), new Vector2(sealSize, sealSize));
+            // The seal and its depth twins stand in one host the plate fit moves and sizes (08.10: the cap may shrink).
+            RectTransform sealHost = Place(UiFactory.NewRect("SealHost", back), new Vector2(1f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(-sealCentre, 0f), new Vector2(sealSize, sealSize));
+            Image seal = UiFactory.NewImage("Seal", sealHost, UiColor.AccentPrimary, hanko != null ? hanko : UiSprites.Disc);
+            UiFactory.Fill(seal.rectTransform);
             Fade(seal, RoundSealAlpha);
             Depth(seal);
+            _roundSealHost = sealHost;
             _roundSeal = seal.rectTransform;
             _roundSealImage = seal;
             // R3: the ink spreads centre-out through the seal as it stamps (Hanko time map, Screen) - over the kit mask's own
@@ -450,15 +463,28 @@ namespace DD.Prototype.UI
         /// </summary>
         private float LayRound(int round)
         {
+            if (_roundSmearAuthored && _roundNumeral.DrawsGlyphsFor(round))
+            {
+                // 08.10 (S-09): a long numeral's cap shrinks so its plate fits (HudArt.FitCap; floor 32).
+                float lsb;
+                float em = HudRoundNumeral.EmWidth(round, out lsb);
+                _roundNumeral.SetHeight(HudArt.FitCap(RoundGlyphHeight, em, lsb));
+            }
+
             float width = _roundNumeral.Set(round);
             if (_roundSmearAuthored)
             {
                 // AP-032 §3.3: the plate's width rounds to whole periods (the W' rule, spare to the head), its tail's tip on
-                // the margin (AD note 4) - the cluster is the plate.
-                float plateWidth, plateHeight;
-                HudArt.LaySmear(RoundGlyphHeight, width, _roundNumeral.FirstBearingEm, out plateWidth, out plateHeight, out _, out _, out _);
+                // the margin (AD note 4) - the cluster is the plate; the seal and the letters' end follow the cap.
+                float cap = _roundNumeral.Height;
+                float plateWidth, plateHeight, sealCentre, sealDiameter;
+                HudArt.LaySmear(cap, width, _roundNumeral.FirstBearingEm, out plateWidth, out plateHeight, out _roundRunRight, out sealCentre, out sealDiameter);
                 _roundSmear.rectTransform.sizeDelta = new Vector2(plateWidth, plateHeight);
+                _roundSmear.rectTransform.anchoredPosition = new Vector2(0f, -HudArt.SmearCapOffset(plateHeight));
                 _roundCluster.sizeDelta = new Vector2(plateWidth, _roundCluster.sizeDelta.y);
+                float sealSize = _roundSealAuthored ? sealDiameter / HudArt.SealRingShareOfCell : sealDiameter;
+                _roundSealHost.anchoredPosition = new Vector2(-sealCentre, 0f);
+                _roundSealHost.sizeDelta = new Vector2(sealSize, sealSize);
             }
             else
             {
@@ -732,7 +758,10 @@ namespace DD.Prototype.UI
             RectTransform captionRow = _reloadCaption.rectTransform;
             Place(captionRow, anchor, new Vector2(0f, 0.5f), new Vector2(captionLeft, 92f), new Vector2(220f, ReloadPromptSize + 6f));
             _reloadPrompt = UiInputGlyphs.Build("ReloadPrompt", captionRow, UiPromptAction.Reload, UiColor.TextPrimary, UiColor.SurfaceInset, ReloadPromptSize);
-            _reloadPromptHome = new Vector2(Mathf.Ceil(_reloadCaption.GetPreferredValues(UiStrings.Get("hud.ammo.empty", "EMPTY")).x) + (int)UiSpace.S, 0f);
+            // WP-094 (feel contract §4.8): the caption reads EMPTY, or RELOAD / DOLDUR after an empty pull - the key sits past the wider.
+            float captionWords = Mathf.Max(_reloadCaption.GetPreferredValues(UiStrings.Get("hud.ammo.empty", "EMPTY")).x,
+                _reloadCaption.GetPreferredValues(UiStrings.Get("hud.ammo.reload_hint", "RELOAD")).x);
+            _reloadPromptHome = new Vector2(Mathf.Ceil(captionWords) + (int)UiSpace.S, 0f);
             Place((RectTransform)_reloadPrompt.transform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), _reloadPromptHome, ((RectTransform)_reloadPrompt.transform).sizeDelta);
             _reloadPromptGroup = UiFactory.Group(_reloadPrompt.gameObject);   // 8c · E23: α + 4 px Fast in, Exit Fast out
             _reloadPrompt.gameObject.SetActive(false);
@@ -926,7 +955,7 @@ namespace DD.Prototype.UI
         private void UpdateInkPosture()
         {
             float now = Time.unscaledTime;
-            bool danger = ThreatChipVisible(0) || ThreatChipVisible(1) || ThreatChipVisible(2) || _model.HealthLow || _model.AmmoLow ||
+            bool danger = ThreatChipVisible(0) || ThreatChipVisible(1) || ThreatChipVisible(2) || _feelLow || _model.AmmoLow ||
                           _model.ReloadState == RunHudReloadState.MagazineEmpty || now - _lastHitAt < HitDangerSeconds ||
                           WeaponEvents.Special.FinalSecondsWarning;   // AD 8-R · A SHOULD-3
             if (danger)

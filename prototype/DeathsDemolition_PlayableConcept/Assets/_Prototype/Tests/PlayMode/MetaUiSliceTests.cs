@@ -684,13 +684,16 @@ namespace DD.Prototype.Tests.PlayMode
             // frame - a batch-only FAIL that looked like 350 B/frame but was one frame
             // (recorder timeline: topFrame 41 = 197 KB, the other 599 frames ≈ 40 B). Wait
             // for the crossing before measuring; the per-frame contract is what this test is for.
+            // WP-094 (08.10, feel contract §4.7): the HUD's LOW follows FeelEvents' band - in at ≤ 30 %, out at ≥ 38 % - so the
+            // crossing that raises HudLowHealthLeft is the band's exit, a little after the presenter's 30 % flag clears.
             float t0 = Time.realtimeSinceStartup;
-            while (vm.HealthLow && Time.realtimeSinceStartup - t0 < 15f)
+            while ((vm.HealthLow || DD.Prototype.Feedback.FeelEvents.InLowHealth) && Time.realtimeSinceStartup - t0 < 15f)
             {
                 yield return null;
             }
 
             Assert.IsFalse(vm.HealthLow, "öncül: can eşiğin üstüne çıkmalı (regen)");
+            Assert.IsFalse(DD.Prototype.Feedback.FeelEvents.InLowHealth, "öncül: FeelEvents düşük can bandından çıkmalı (≥ %38)");
             for (int i = 0; i < 30; i++) yield return null;
 
             yield return SayacPozitifKontrol();

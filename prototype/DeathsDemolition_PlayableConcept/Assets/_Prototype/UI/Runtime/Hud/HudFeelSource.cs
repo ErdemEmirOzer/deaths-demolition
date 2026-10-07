@@ -1,10 +1,10 @@
 using System;
-using DD.Prototype.PlayerSystem;
+using DD.Prototype.Feedback;
 using UnityEngine;
 
 namespace DD.Prototype.UI
 {
-    /// <summary>What kind of blow hit the player (S-02's FeelEvents.PlayerDamaged will carry it; PlayerHealth does not - Unknown).</summary>
+    /// <summary>What kind of blow hit the player (FeelEvents.PlayerDamaged does not carry it yet - Unknown; S-02 adds it on request).</summary>
     public enum HudDamageKind
     {
         Unknown = 0,
@@ -17,8 +17,8 @@ namespace DD.Prototype.UI
     /// <summary>
     /// WP-094 HUD v4 · the player-damage payload the HUD's feel reads (HAREKET-HUD §5 "D1, D2, H1–H3"): the direction the blow
     /// travelled (FROM the attacker TOWARDS the player, horizontal, zero when the attacker gave no position), what it took and
-    /// out of what, and - once S-02's FeelEvents carries them - its kind. The HUD never reads PlayerDamageInfo itself: the one
-    /// adapter (<see cref="HudFeelSource.FromPlayerHealth"/>) does, so the source can change under it in one place.
+    /// out of what, whether it was heavy (≥ 25 % of max), and - when FeelEvents carries it - its kind. The HUD never reads the
+    /// source's payload itself: the one adapter (<see cref="HudFeelSource.FromFeel"/>) does.
     /// </summary>
     public readonly struct HudDamage
     {
@@ -28,10 +28,11 @@ namespace DD.Prototype.UI
         public readonly float HealthAfter;
         public readonly float MaxHealth;
         public readonly bool WasFatal;
+        public readonly bool Heavy;
         public readonly HudDamageKind Kind;
 
         public HudDamage(Vector3 hitDirection, float appliedAmount, float healthBefore, float healthAfter, float maxHealth, bool wasFatal,
-            HudDamageKind kind = HudDamageKind.Unknown)
+            HudDamageKind kind = HudDamageKind.Unknown, bool heavy = false)
         {
             HitDirection = hitDirection;
             AppliedAmount = appliedAmount;
@@ -40,6 +41,7 @@ namespace DD.Prototype.UI
             MaxHealth = maxHealth;
             WasFatal = wasFatal;
             Kind = kind;
+            Heavy = heavy;
         }
 
         /// <summary>Health before the hit, 0..1 of max.</summary>
@@ -62,24 +64,22 @@ namespace DD.Prototype.UI
     }
 
     /// <summary>
-    /// WP-094 HUD v4 (R3, C-00 07.10; S-09 decision: "bind to PlayerHealth.AnyDamaged today through ONE adapter method so
-    /// S-02's upcoming FeelEvents can replace the source in one place") · THE SEAM between the game's feel events and the
-    /// HUD's feel. Every HUD consumer of a player hit - the screen-edge direction (UiHitDirectionLayer, D1), the top-down
-    /// wedges (HudPlayerArcs, D2), the health chunk / knock (H1, H3) - subscribes to <see cref="PlayerDamaged"/>, never to
-    /// PlayerHealth.
+    /// WP-094 HUD v4 (R3, C-00 07.10 / 08.10) · THE SEAM between the game's feel events and the HUD's damage feel. Every HUD
+    /// consumer of a player hit - the screen-edge direction (UiHitDirectionLayer, D1), the top-down wedges (HudPlayerArcs,
+    /// D2), the health chunk / knock (H1, H3) - subscribes to <see cref="PlayerDamaged"/>.
     ///
-    /// TODAY: one bridge subscription on PlayerHealth.AnyDamaged (raised after health is written, for every source - the
-    /// reasons UiHitDirectionLayer chose it in REQ-045 still hold), made when the first HUD listener arrives and dropped when
-    /// the last one leaves, so the menu carries no subscriber (LifecycleHardeningTests: the run adds 1 here, not 2).
-    /// WHEN FeelEvents LANDS (S-02, HAREKET-HUD §5 "tek kaynak"): <see cref="Bind"/> / <see cref="Unbind"/> subscribe to
-    /// FeelEvents.PlayerDamaged instead, and its adapter replaces <see cref="FromPlayerHealth"/> (SourcePosition, Kind,
-    /// AttackerTier fill the payload) - in the same commit, so there is never a double trigger. Nothing else changes.
+    /// SOURCE (08.10, S-02's FeelEvents in main 7151f821; K/wp-095/FEELEVENTS-LISTE.md "R3 his işinde bu anlara yalnız
+    /// FeelEvents'ten abone olun"): one bridge on <see cref="FeelEvents.PlayerDamaged"/> - raised once from PlayerHealth's
+    /// authoritative place, after health is written; invulnerable / second-wind refusals raise nothing - made with the first
+    /// HUD listener and dropped with the last, so the menu carries no subscriber. The 07.10 bridge on PlayerHealth.AnyDamaged
+    /// is gone in the same change (no double trigger). The direction is the event's Direction (attacker → player), never
+    /// WorldPoint − player (always zero - the known CameraFeelDriver bug). <see cref="FromFeel"/> is the one adapter.
     /// No allocation per raise: the payload is a readonly struct, the bridge delegate is cached.
     /// </summary>
     public static class HudFeelSource
     {
         private static Action<HudDamage> s_damaged;
-        private static readonly Action<PlayerDamageInfo> s_bridge = OnPlayerHealthDamaged;
+        private static readonly Action<FeelPlayerDamage> s_bridge = OnFeelPlayerDamaged;
 
         /// <summary>A player hit, as the HUD reads it (D1, D2, H1–H3).</summary>
         public static event Action<HudDamage> PlayerDamaged
@@ -106,37 +106,38 @@ namespace DD.Prototype.UI
             get { return s_damaged != null; }
         }
 
-        /// <summary>THE adapter: today's source (PlayerHealth's damage record) as the HUD's payload. Kind is not known there.</summary>
-        public static HudDamage FromPlayerHealth(in PlayerDamageInfo info)
+        /// <summary>THE adapter: FeelEvents' player-damage record as the HUD's payload (Kind is not carried yet - Unknown).</summary>
+        public static HudDamage FromFeel(in FeelPlayerDamage feel)
         {
-            return new HudDamage(info.HitDirection, info.AppliedAmount, info.HealthBefore, info.HealthAfter, info.MaxHealth, info.WasFatal);
+            return new HudDamage(feel.Direction, feel.Amount, feel.HealthBefore, feel.HealthAfter, feel.MaxHealth, feel.Fatal,
+                HudDamageKind.Unknown, feel.Heavy);
         }
 
         /// <summary>The one subscription on the source. Remove-then-add: never twice, and a statics reset under a live HUD re-binds on the next add.</summary>
         private static void Bind()
         {
-            PlayerHealth.AnyDamaged -= s_bridge;
-            PlayerHealth.AnyDamaged += s_bridge;
+            FeelEvents.PlayerDamaged -= s_bridge;
+            FeelEvents.PlayerDamaged += s_bridge;
         }
 
         private static void Unbind()
         {
-            PlayerHealth.AnyDamaged -= s_bridge;
+            FeelEvents.PlayerDamaged -= s_bridge;
         }
 
-        private static void OnPlayerHealthDamaged(PlayerDamageInfo info)
+        private static void OnFeelPlayerDamaged(FeelPlayerDamage feel)
         {
             Action<HudDamage> handlers = s_damaged;
             if (handlers != null)
             {
-                handlers(FromPlayerHealth(info));
+                handlers(FromFeel(feel));
             }
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
         {
-            s_damaged = null;   // PlayerHealth drops its own listeners (the bridge with them) in the same phase
+            s_damaged = null;   // FeelEvents drops its own listeners (the bridge with them) in the same phase
         }
     }
 }

@@ -610,23 +610,23 @@ namespace DD.Prototype.UI
         public const float LowHealthEdgeStrength = 0.49f;
 
         /// <summary>
-        /// Seconds a damage edge is held at full amplitude before it starts to fall.
-        ///
-        /// 0.06 s is between three and four frames at 60 fps and seven at 120: enough that
-        /// a hit landing on the frame the player blinks is still on screen on the next one,
-        /// short enough that it reads as an impact rather than as a state.
+        /// WP-094 (K/wp-095/HIS-SOZLESMESI.md §4.6, S-02's feel contract, 08.10 - it wins over the 0.06 / 0.42 prototype values):
+        /// the damage direction comes in over 0.05 s, holds 0.25 s at full amplitude, then goes out over 0.3 s on easeInQuad.
+        /// Total on-screen life of one hit is Rise + Hold + Decay = 0.6 s.
         /// </summary>
         [PrototypeOnly(PendingDecisions.None,
-            "Hold time at peak before the damage edge decays. Roughly four frames at 60 fps.", true)]
-        public const float DamageEdgeHoldSeconds = 0.06f;
+            "Rise time of the damage edge to its peak (feel contract 4.6).", true)]
+        public const float DamageEdgeRiseSeconds = 0.05f;
 
-        /// <summary>
-        /// Seconds the damage edge takes to fall from its peak to nothing after the hold.
-        /// Total on-screen life of one hit is Hold + Decay = 0.48 s.
-        /// </summary>
+        /// <summary>Seconds a damage edge is held at full amplitude before it starts to fall (feel contract §4.6).</summary>
         [PrototypeOnly(PendingDecisions.None,
-            "Decay time of the damage edge after the hold. Total life of one hit is 0.48 s.", true)]
-        public const float DamageEdgeDecaySeconds = 0.42f;
+            "Hold time at peak before the damage edge decays (feel contract 4.6).", true)]
+        public const float DamageEdgeHoldSeconds = 0.25f;
+
+        /// <summary>Seconds the damage edge takes to fall from its peak to nothing after the hold, easeInQuad (feel contract §4.6).</summary>
+        [PrototypeOnly(PendingDecisions.None,
+            "Decay time of the damage edge after the hold, easeInQuad. Total life of one hit is 0.6 s.", true)]
+        public const float DamageEdgeDecaySeconds = 0.3f;
 
         /// <summary>
         /// Damage as a fraction of maximum health that produces a full-strength edge.

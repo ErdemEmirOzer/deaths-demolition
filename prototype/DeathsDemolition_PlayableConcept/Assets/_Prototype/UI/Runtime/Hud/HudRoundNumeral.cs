@@ -71,7 +71,7 @@ namespace DD.Prototype.UI
 
         private readonly RectTransform _box;
         private readonly TMP_Text _text;
-        private readonly float _height;
+        private float _height;
         private readonly UiColor _tint;
         private readonly Sprite[][] _alternates = new Sprite[5][];
         private readonly char[] _letters = new char[Capacity];
@@ -107,6 +107,13 @@ namespace DD.Prototype.UI
 
         /// <summary>True when the letters are glyph Images (the AP-032 set is in and the numeral fits <see cref="Capacity"/>).</summary>
         public bool DrawsGlyphs => _drawsGlyphs;
+
+        /// <summary>True when <paramref name="value"/> would draw as glyphs (the set is in and it fits <see cref="Capacity"/>).</summary>
+        public bool DrawsGlyphsFor(int value)
+        {
+            int length = RomanNumerals.Length(value);
+            return _complete && length > 0 && length <= Capacity;
+        }
 
         /// <summary>Glyph Images showing (0 on the text path).</summary>
         public int GlyphCount => _drawsGlyphs ? _length : 0;
@@ -269,6 +276,46 @@ namespace DD.Prototype.UI
                 int kind = KindOf(_letters[0]);
                 return kind >= 0 ? LeftBearing[kind] : 0f;
             }
+        }
+
+        /// <summary>The letters' height now (the plate fit may shrink it for a long numeral).</summary>
+        public float Height => _height;
+
+        /// <summary>
+        /// WP-094 (08.10, the plate fit): a new cap height for the glyph path; the shown value is laid again at it. The text path
+        /// keeps its type size (it has no plate).
+        /// </summary>
+        public void SetHeight(float height)
+        {
+            if (Mathf.Approximately(height, _height))
+            {
+                return;
+            }
+
+            _height = height;
+            int value = _value;
+            _value = int.MinValue;
+            if (value != int.MinValue)
+            {
+                Set(value);
+            }
+        }
+
+        private static readonly char[] s_measure = new char[Capacity];
+
+        /// <summary>The numeral's width in em on the glyph path (advances + kerning); 0 for ≤ 0 or past <see cref="Capacity"/>.</summary>
+        public static float EmWidth(int round, out float firstBearingEm)
+        {
+            firstBearingEm = 0f;
+            int length = RomanNumerals.Length(round);
+            if (length <= 0 || length > Capacity)
+            {
+                return 0f;
+            }
+
+            int n = RomanNumerals.Write(round, s_measure, 0);
+            firstBearingEm = LeftBearing[KindOf(s_measure[0])];
+            return MeasureGlyphs(s_measure, n, 1f);
         }
 
         /// <summary>The alternate a letter at <paramref name="position"/> of round <paramref name="round"/> takes: (round + position) mod n.</summary>

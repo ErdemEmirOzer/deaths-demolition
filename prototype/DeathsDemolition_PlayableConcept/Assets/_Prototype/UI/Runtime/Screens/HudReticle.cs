@@ -13,6 +13,10 @@ namespace DD.Prototype.UI
     /// ReloadProgress01 and the ticks drop to 0.4 so the eye stays on the aim. Empty: the ticks split 6 px outward. A live
     /// Special tints it Gold400. Reduced motion: no follow, the spread quantised to three steps. Never flashes (hits are
     /// HitMarkerLayer's). Writes only on a visible change; lives on the HUD's reticle canvas.
+    /// WP-094 (K/wp-095/HIS-SOZLESMESI.md, S-02's feel contract, 08.10; the HUD rows are S-09's): a critical hit shows the
+    /// crit notch - four short vermilion marks on the diagonals, outside the ticks - for 0.1 s (§4.2; colour, not motion:
+    /// it shows under reduced motion too, × FlashScale); a kill pops the reticle 1.22 → 1 over 0.12 s on easeOutBack (§4.3;
+    /// Decor - at rest under reduced motion). The FeelEvents source is the HUD's (RunHudScreen).
     /// </summary>
     public sealed class HudReticle
     {
@@ -43,6 +47,14 @@ namespace DD.Prototype.UI
         public const float ReloadGap = 6f;
         public const float ReloadTickAlpha = 0.4f;
 
+        /// <summary>WP-094 (feel contract §4.2 / §4.3): the crit notch's life and size, the kill pop's peak and length.</summary>
+        public const float CritNotchSeconds = 0.1f;
+        public const float CritNotchLength = 6f;
+        public const float CritNotchWidth = 2f;
+        public const float CritNotchGap = 5f;
+        public const float KillPopScale = 1.22f;
+        public const float KillPopSeconds = 0.12f;
+
         /// <summary>SDF outline width (distance units) - the ink edge of the ticks.</summary>
         private static readonly Vector3 InkEdge = new Vector3(0.3f, 0f, 0f);
 
@@ -69,6 +81,7 @@ namespace DD.Prototype.UI
         private readonly Image _dotBack;
         private readonly Image _pelletBack;   // AD R1-A SHOULD-4: the pellet ring's Sumi twin (look modes)
         private readonly Image[] _backs = new Image[4];
+        private readonly Image[] _critNotches = new Image[4];
         private float _edge;
         private int _mode = -1;
         private float _minRadius = MinRadius;
@@ -204,6 +217,53 @@ namespace DD.Prototype.UI
                 rect.localRotation = Quaternion.Euler(0f, 0f, -90f * i);   // N, E, S, W
                 _ticks[i] = tick;
             }
+
+            // WP-094 (§4.2): the crit notch - NE, SE, SW, NW, vermilion (the damage token, not the reserved accent), resting at 0.
+            for (int i = 0; i < _critNotches.Length; i++)
+            {
+                Image notch = UiFactory.NewImage("CritNotch." + i, _root, UiColor.DamageEdge, UiSprites.Solid);
+                notch.raycastTarget = false;
+                notch.rectTransform.sizeDelta = new Vector2(CritNotchWidth, CritNotchLength);
+                notch.rectTransform.localRotation = Quaternion.Euler(0f, 0f, -45f - 90f * i);
+                notch.canvasRenderer.cullTransparentMesh = true;
+                notch.canvasRenderer.SetAlpha(0f);
+                _critNotches[i] = notch;
+            }
+        }
+
+        /// <summary>Crit notches shown since the build (tests).</summary>
+        public int CritNotches { get; private set; }
+
+        /// <summary>Kill pops played since the build (tests).</summary>
+        public int KillPops { get; private set; }
+
+        /// <summary>The crit notch's mark <paramref name="index"/> (tests).</summary>
+        public Image CritNotch(int index) => _critNotches[index];
+
+        /// <summary>
+        /// §4.2: a critical hit - the four notches stand just outside the ticks at full alpha for <see cref="CritNotchSeconds"/>,
+        /// then go (a 20 ms cut). Flash class: plays under reduced motion, × FlashScale.
+        /// </summary>
+        public void ShowCritNotch()
+        {
+            CritNotches++;
+            float radius = Mathf.Max(_shownRadius, _minRadius) + TickLength + CritNotchGap;
+            float alpha = Mathf.Clamp01(UiTokens.FlashScale);
+            for (int i = 0; i < _critNotches.Length; i++)
+            {
+                float angle = (45f + 90f * i) * Mathf.Deg2Rad;
+                RectTransform rect = _critNotches[i].rectTransform;
+                rect.anchoredPosition = new Vector2(Mathf.Sin(angle), Mathf.Cos(angle)) * radius;
+                _critNotches[i].canvasRenderer.SetAlpha(alpha);
+                UiMotion.TintAlphaSeconds(_critNotches[i], alpha, 0f, 0.02f, UiEase.Exit, UiMotionClass.Flash, CritNotchSeconds - 0.02f);
+            }
+        }
+
+        /// <summary>§4.3: a kill - the reticle pops 1.22 → 1 over 0.12 s on easeOutBack (Decor: none under reduced motion).</summary>
+        public void PlayKillPop()
+        {
+            KillPops++;
+            UiMotion.PopSeconds(_root, KillPopScale, 1f, KillPopSeconds);
         }
 
         private Image Backing(string name, float rotation)

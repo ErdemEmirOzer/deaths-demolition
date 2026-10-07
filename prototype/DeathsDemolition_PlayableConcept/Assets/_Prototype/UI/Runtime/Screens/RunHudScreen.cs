@@ -311,6 +311,7 @@ namespace DD.Prototype.UI
         private GameObject _warningVignette;
         private GameObject _warningBanner;
         private HudBanner _banner;            // WP-068 8c · E13 banner v3
+        private HudBanner _clearBanner;       // WP-094 · feel contract §4.11, the last zombie's centre stroke
         private TMP_Text _bannerText;         // the banner's words (SpecialWeaponTestKit.HudBanner reads both by name)
         private float _bannerRemaining;
 
@@ -382,13 +383,21 @@ namespace DD.Prototype.UI
             HudGoldTarget.Bind(this, _goldTarget, Canvas);
 
             RunEvents.RunStarted += OnRunStarted;
-            RunEvents.RoundStarted += OnRoundStarted;
+            // WP-094 (08.10, K/wp-095/FEELEVENTS-LISTE.md: the R3 feel listens to FeelEvents only): the round start, the dry
+            // trigger, the reload's landing, kills, crits, multi-kills, the low-health band and the last zombie.
+            FeelEvents.RoundStarted += OnFeelRoundStarted;
+            FeelEvents.DryFire += OnFeelDryFire;
+            FeelEvents.ReloadEnded += OnFeelReloadEnded;
+            FeelEvents.EnemyHit += OnFeelHit;
+            FeelEvents.EnemyKilled += OnFeelKill;
+            FeelEvents.MultiKill += OnFeelMultiKill;
+            FeelEvents.LowHealth += OnFeelLowHealth;
+            FeelEvents.LastZombie += OnFeelLastZombie;
             RunEvents.RoundCompleted += OnRoundCompleted;
             RunEvents.RoundPoolExhausted += OnPoolExhausted;
             RunEvents.GoldChanged += OnGoldChanged;
 
             WeaponEvents.SpecialWeaponSpawned += OnSpecialSpawned;
-            WeaponEvents.DryFire += OnDryFire;
             WeaponEvents.SpecialWeaponPickedUp += OnSpecialPickedUp;
             WeaponEvents.SpecialWeaponFinalSeconds += OnSpecialFinalSeconds;
             WeaponEvents.SpecialWeaponEnded += OnSpecialEnded;
@@ -396,7 +405,7 @@ namespace DD.Prototype.UI
             WeaponEvents.SpecialWeaponGroundExpired += OnSpecialGroundExpired;
 
             PlayerHealth.AnyHealthChanged += ApplyHealth;
-            HudFeelSource.PlayerDamaged += OnPlayerDamaged;   // WP-094: the one seam (PlayerHealth.AnyDamaged today, FeelEvents next)
+            HudFeelSource.PlayerDamaged += OnPlayerDamaged;   // WP-094: the one seam, bridged to FeelEvents.PlayerDamaged (08.10)
             PlayerHealth.AnyPlayerDied += OnPlayerDied;
         }
 
@@ -413,13 +422,19 @@ namespace DD.Prototype.UI
             UiCursor.SetContextVisible(true);
             HudGoldTarget.Unbind(this);
             RunEvents.RunStarted -= OnRunStarted;
-            RunEvents.RoundStarted -= OnRoundStarted;
+            FeelEvents.RoundStarted -= OnFeelRoundStarted;
+            FeelEvents.DryFire -= OnFeelDryFire;
+            FeelEvents.ReloadEnded -= OnFeelReloadEnded;
+            FeelEvents.EnemyHit -= OnFeelHit;
+            FeelEvents.EnemyKilled -= OnFeelKill;
+            FeelEvents.MultiKill -= OnFeelMultiKill;
+            FeelEvents.LowHealth -= OnFeelLowHealth;
+            FeelEvents.LastZombie -= OnFeelLastZombie;
             RunEvents.RoundCompleted -= OnRoundCompleted;
             RunEvents.RoundPoolExhausted -= OnPoolExhausted;
             RunEvents.GoldChanged -= OnGoldChanged;
 
             WeaponEvents.SpecialWeaponSpawned -= OnSpecialSpawned;
-            WeaponEvents.DryFire -= OnDryFire;
             WeaponEvents.SpecialWeaponPickedUp -= OnSpecialPickedUp;
             WeaponEvents.SpecialWeaponFinalSeconds -= OnSpecialFinalSeconds;
             WeaponEvents.SpecialWeaponEnded -= OnSpecialEnded;
@@ -454,6 +469,7 @@ namespace DD.Prototype.UI
             }
 
             _healthBound = true;
+            _feelLow = FeelEvents.InLowHealth;   // WP-094: the band as FeelEvents holds it now
             ApplyHealth(health.Snapshot);
         }
 
@@ -525,7 +541,14 @@ namespace DD.Prototype.UI
         /// 1.06 (text-bearing), and both settle to 1 over Base (220 ms).
         /// </summary>
         public const float GoldPunchCoin = UiMotionTokens.PunchPeakGlyph;
-        public const float GoldPunchText = UiMotionTokens.TextPopMaxScale;
+
+        /// <summary>
+        /// WP-094 (08.10, K/wp-095/HIS-SOZLESMESI.md §4.9 - wins over HAREKET-HUD G1/G2's 1.06 · Base and Reveal 600): the counter
+        /// pops 1.12 → 1 over 0.12 s easeOutBack and counts over 0.25 s easeOutCubic (the Settle curve).
+        /// </summary>
+        public const float GoldPunchText = 1.12f;
+        public const float GoldCounterPopSeconds = 0.12f;
+        public const float GoldRollSeconds = 0.25f;
 
         private readonly HudPlusMerge _goldPlus = new HudPlusMerge();
         private readonly HudRateGate _goldPunchGate = new HudRateGate(UiMotionTokens.PunchMinInterval);
@@ -584,14 +607,14 @@ namespace DD.Prototype.UI
             }
 
             HudGoldCounterAction action = _goldReadout.Resolve(_model.Gold, HudGoldTarget.InFlight, Time.frameCount, Time.unscaledTime,
-                UiMotionTokens.Seconds(UiDuration.Reveal));
+                GoldRollSeconds);
             if (action == HudGoldCounterAction.SetNow)
             {
                 _goldCounter.SetNow(_goldReadout.Shown);
             }
             else if (action == HudGoldCounterAction.RollTo)
             {
-                _goldCounter.RollTo(_goldReadout.Shown);
+                _goldCounter.RollToSeconds(_goldReadout.Shown, GoldRollSeconds);
             }
         }
 
@@ -657,7 +680,8 @@ namespace DD.Prototype.UI
             UiPresets.Punch(_goldCoin, GoldPunchCoin);
             if (!InDangerPosture)
             {
-                UiPresets.Punch(_goldValue.rectTransform, GoldPunchText, true);
+                // Feel contract §4.9 (wins over HAREKET-HUD's 1.06 / Base): the counter pops 1.12 → 1 over 0.12 s easeOutBack.
+                UiMotion.PopSeconds(_goldValue.rectTransform, GoldPunchText, 1f, GoldCounterPopSeconds);
             }
 
             _feelBudget.Note(now, UiMotionTokens.Seconds(UiDuration.Base));
@@ -1026,6 +1050,8 @@ namespace DD.Prototype.UI
             // E15: ticks at the real spread (HudReticle); the root moves with the aim, parked off-screen when hidden.
             _reticle = new HudReticle(layer);
             _reticle.Root.anchoredPosition = OffScreen;
+            _reticleLayer = layer;
+            BuildMultiKill(layer);   // WP-094 (feel contract §4.4): the brush "×N" by the reticle
             _playerArcs = new HudPlayerArcs(layer);
             _playerArcs.Place(OffScreen);
 
@@ -1079,6 +1105,9 @@ namespace DD.Prototype.UI
             // Round / phase banner, just below the warning slot so the two never collide (E13 v3: wipe, brush, exit).
             _banner = new HudBanner(ScreenRect, BannerTop);
             _bannerText = _banner.Text;
+
+            // WP-094 (feel contract §4.11): the last zombie's stroke through the screen's middle - "ROUND N CLEAR".
+            _clearBanner = new HudBanner(ScreenRect, 0f, true, "ClearBannerRoot", "ClearBanner");
         }
 
         private void BuildMarker()
@@ -1104,6 +1133,7 @@ namespace DD.Prototype.UI
             // FIELD" because the marker canvas came after the banner; the banner now follows it (the reticle layer and the
             // threat chips are built after, so they stay on top).
             _banner.Root.SetAsLastSibling();
+            _clearBanner.Root.SetAsLastSibling();   // WP-094 (§4.11): the centre stroke sorts with the banner, above the stamps
         }
 
         /// <summary>The Special's world marker (test readout).</summary>
@@ -1620,39 +1650,8 @@ namespace DD.Prototype.UI
 
             if ((changed & RunHudField.HealthBar) != 0)
             {
-                if (_model.HealthLow != _lowHealthShown)
-                {
-                    _lowHealthShown = _model.HealthLow;
-                    UiEvents.Raise(_lowHealthShown ? UiEvent.HudLowHealthEntered : UiEvent.HudLowHealthLeft);
-                    // E10: LOW word + coral frame + the cracked heart stamps once. WP-094 (H5, the user: "düşük canda nabız"):
-                    // then the heart beats and the coral rim breathes - the word never pulses.
-                    _healthLowWord.gameObject.SetActive(_lowHealthShown);
-                    SetHeartbeat(_lowHealthShown);
-                }
-
                 _healthBar.SetValue(_model.HealthNormalized);
-                _healthBar.SetColor(_model.HealthLow ? UiColor.BarHealthLow : UiColor.BarHealth);
-                _healthValue.color = UiTokens.Get(_model.HealthLow ? UiColor.StateDanger : UiColor.TextPrimary);
-                if (_healthIcon != null)
-                {
-                    _healthIcon.color = UiTokens.Get(_model.HealthLow ? UiColor.BarHealthLow : UiColor.BarHealth);
-                    // WP-022L (AP-012 v003): cracked heart while low; the whole heart otherwise.
-                    // Sprite swap only when the low state flips (HealthBar refreshes every tick).
-                    if (_model.HealthLow != _lowHealthIconShown)
-                    {
-                        _lowHealthIconShown = _model.HealthLow;
-                        Sprite heartSprite = UiArt.Icon(_model.HealthLow ? "Hud.LowHealth" : "Hud.Health");
-                        if (heartSprite != null)
-                        {
-                            UiArt.SetGlyph(_healthIcon, heartSprite);
-                        }
-
-                        if (_model.HealthLow)
-                        {
-                            UiPresets.StampIn(_healthIcon.rectTransform);
-                        }
-                    }
-                }
+                ApplyLowHealthState();
             }
 
             if ((changed & RunHudField.Health) != 0)
@@ -1682,6 +1681,68 @@ namespace DD.Prototype.UI
             if ((changed & (RunHudField.HealthBar | RunHudField.HealthState)) != 0)
             {
                 OnHealthApplied(snapshot);   // WP-094 (H4): the heal glow, the regen's wet band
+            }
+        }
+
+        /// <summary>
+        /// WP-094 (08.10, feel contract §4.7, FeelEvents.LowHealth): the HUD's LOW is the FeelEvents band - in at ≤ 30 %, out at
+        /// ≥ 38 % (hysteresis; it was one 30 % line) - so the word, the coral bar, the cracked heart and the heartbeat agree with
+        /// the vignette, the heart sound and the rumble. Leaving it (not by death) plays one white pulse on the bar.
+        /// </summary>
+        private void OnFeelLowHealth(FeelLowHealth edge)
+        {
+            bool was = _feelLow;
+            _feelLow = edge.Entered;
+            if (_healthBar != null)
+            {
+                ApplyLowHealthState();
+            }
+
+            if (was && !edge.Entered && !edge.Dead)
+            {
+                PlayLowHealthExitPulse();
+            }
+        }
+
+        /// <summary>The low-health state's look (E10 + H5), on a change of the band; the bar's colours follow it every health tick.</summary>
+        private void ApplyLowHealthState()
+        {
+            bool low = _feelLow;
+            if (low != _lowHealthShown)
+            {
+                _lowHealthShown = low;
+                UiEvents.Raise(_lowHealthShown ? UiEvent.HudLowHealthEntered : UiEvent.HudLowHealthLeft);
+                // E10: LOW word + coral frame + the cracked heart stamps once. WP-094 (H5, the user: "düşük canda nabız"):
+                // then the heart beats and the coral rim breathes - the word never pulses.
+                if (_deathAt < 0f)
+                {
+                    _healthLowWord.gameObject.SetActive(_lowHealthShown);
+                }
+
+                SetHeartbeat(_lowHealthShown);
+                _healthValue.color = UiTokens.Get(low ? UiColor.StateDanger : UiColor.TextPrimary);
+            }
+
+            _healthBar.SetColor(low ? UiColor.BarHealthLow : UiColor.BarHealth);
+            if (_healthIcon != null)
+            {
+                // WP-022L (AP-012 v003): cracked heart while low; the whole heart otherwise. Sprite swap only when the low
+                // state flips (HealthBar refreshes every tick); the colour on the flip too (a Graphic.color write rebuilds).
+                if (low != _lowHealthIconShown)
+                {
+                    _lowHealthIconShown = low;
+                    _healthIcon.color = UiTokens.Get(low ? UiColor.BarHealthLow : UiColor.BarHealth);
+                    Sprite heartSprite = UiArt.Icon(low ? "Hud.LowHealth" : "Hud.Health");
+                    if (heartSprite != null)
+                    {
+                        UiArt.SetGlyph(_healthIcon, heartSprite);
+                    }
+
+                    if (low)
+                    {
+                        UiPresets.StampIn(_healthIcon.rectTransform);
+                    }
+                }
             }
         }
 
@@ -1793,11 +1854,7 @@ namespace DD.Prototype.UI
                         _reloadBar.SetValue(1f, true);
                         _reloadCaption.text = low ? _ammoLowWord : string.Empty;   // 12b: "LOW AMMO" (AD FP cluster SHOULD-2)
                         _reloadCaption.color = UiTokens.Get(UiColor.StateWarning);
-                        if (_shownReload == RunHudReloadState.Reloading)
-                        {
-                            UiPresets.StampIn(_ammoValue.rectTransform); // E11: the reload lands - the number stamps
-                        }
-
+                        // E11's landing stamp is the feel contract's pop now (§4.8, FeelEvents.ReloadEnded - RunHudScreen.Juice).
                         break;
                 }
 
@@ -2248,19 +2305,48 @@ namespace DD.Prototype.UI
 
         // ================================================================== banners
 
-        /// <summary>WP-094 (S-09 decision (e)): the banner names the round as the corner does - "ROUND IV" (TR "ROUND IV" too).</summary>
-        private void OnRoundStarted(int round)
+        /// <summary>
+        /// WP-094 (S-09 decision (e)): the banner names the round as the corner does - "ROUND IV" / "RAUND IV". 08.10 (feel
+        /// contract §4.10, FeelEvents.RoundStarted): the brush band is drawn over 0.35 s easeOutCubic, held 0.9 s, gone over 0.3 s.
+        /// </summary>
+        private void OnFeelRoundStarted(FeelRound round)
         {
             UiEvents.Raise(UiEvent.HudRoundStarted);
-            ShowBanner(UiStrings.Format("hud.banner.round", "value", RoundWord(round), "ROUND {value}"));
+            ShowBanner(UiStrings.Format("hud.banner.round", "value", RoundWord(round.Round), "ROUND {value}"), HudBannerEnvelope.RoundStart);
         }
 
+        /// <summary>
+        /// The round is won: S-08's cue and the seal drying (R4). 08.10 (feel contract §4.10): no "ROUND N COMPLETE" banner - the
+        /// round-end summary is S-04's window, and the last zombie's "ROUND N CLEAR" (§4.11) already spoke a frame before.
+        /// </summary>
         private void OnRoundCompleted(int round)
         {
             UiEvents.Raise(UiEvent.HudRoundCompleted);
-            ShowBanner(UiStrings.Format("hud.banner.round_complete", "value", RoundWord(round), "ROUND {value} COMPLETE"));
             DryRoundSeal();   // WP-094 (HAREKET-HUD R4): the seal dries as the round closes
         }
+
+        /// <summary>
+        /// WP-094 (feel contract §4.11, FeelEvents.LastZombie): the horizontal brush stroke through the screen's middle starts
+        /// 0.15 s in, drawn over 0.35 s easeOutCubic - "ROUND N CLEAR" / "RAUND N TEMİZ" - held 0.8 s, gone over 0.3 s (unscaled:
+        /// the slow motion never stretches it). Reduced motion: it appears and goes statically. Not on the player's death (P 100).
+        /// </summary>
+        private void OnFeelLastZombie(FeelLastZombie last)
+        {
+            if (RunEvents.Current.Phase == RunPhase.Dead || _clearBanner == null)
+            {
+                return;
+            }
+
+            RoundClears++;
+            _clearBanner.Show(UiStrings.Format("hud.banner.round_clear", "value", RoundWord(last.Round), "ROUND {value} CLEAR"),
+                Time.unscaledTime, HudBannerEnvelope.RoundClear);
+        }
+
+        /// <summary>"ROUND N CLEAR" strokes played since the build (tests).</summary>
+        public int RoundClears { get; private set; }
+
+        /// <summary>The last zombie's centre banner (tests, captures).</summary>
+        public HudBanner ClearBanner => _clearBanner;
 
         /// <summary>The round's banner word: its Roman numeral (cached strings, RomanNumerals); the number itself for 0 and below.</summary>
         public static string RoundWord(int round)
@@ -2384,6 +2470,11 @@ namespace DD.Prototype.UI
             _bannerRemaining = BannerSeconds;
         }
 
+        private void ShowBanner(string message, in HudBannerEnvelope envelope)
+        {
+            _bannerRemaining = _banner.Show(message, Time.unscaledTime, envelope);
+        }
+
         /// <summary>E13: the envelope runs on presets; this only starts the exit at its time and reports what is left.</summary>
         private void UpdateBanner()
         {
@@ -2393,7 +2484,16 @@ namespace DD.Prototype.UI
                 _banner.Cut();   // a panel is over the HUD (shop / Pause): the banner never reads through its band (12b)
             }
 
+            if (UiFrozenFrame.IsHeld && _clearBanner != null && _clearBanner.Live(now))
+            {
+                _clearBanner.Cut();
+            }
+
             _bannerRemaining = _banner.Tick(now);
+            if (_clearBanner != null)
+            {
+                _clearBanner.Tick(now);
+            }
         }
     }
 }

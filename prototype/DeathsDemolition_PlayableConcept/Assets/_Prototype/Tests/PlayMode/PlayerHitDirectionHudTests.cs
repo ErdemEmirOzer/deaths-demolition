@@ -63,11 +63,13 @@ namespace DD.Prototype.Tests.PlayMode
         private const float VurusOrani = 0.30f;
 
         /// <summary>
-        /// Yanan kenar için alt eşik. Tepe değer 1.0 × UiTokens.DamageEdgePeakAlpha = 0.92;
-        /// bekleme 0.06 sn boyunca hiç düşmez, sonra 0.42 sn'de sıfıra iner. Ölçüm vuruştan
-        /// 1-3 kare sonra yapılır, yani en kötü hâlde 0.48 − 0.05 = 0.43 sn kalır ve zarf
-        /// hâlâ 1.0'dır. 0.60 eşiği tepe değerin altında iki kat pay bırakır ve kusurlu
-        /// hâlde ölçülen 0.00 ile arasında kapanmaz boşluk vardır.
+        /// Yanan kenar için alt eşik. Tepe değer 1.0 × UiTokens.DamageEdgePeakAlpha = 0.92.
+        /// WP-094 (his sözleşmesi §4.6, 08.10): zarf 0.05 sn'de doğrusal yükselir, 0.25 sn
+        /// tepede kalır, 0.3 sn'de easeInQuad ile söner (ömür 0.6 sn). Ölçüm bu yüzden tek
+        /// karede değil, <see cref="ZirveyiOlc"/> ile yükseliş + bekleme penceresi boyunca her
+        /// kenarın en yüksek alfasıdır: bekleme 0.25 sn sürdüğü için hangi saat (gerçek ya da
+        /// 1/60 adım) işlerse işlesin en az bir kare tepeye düşer. 0.60 eşiği tepe değerin
+        /// altında pay bırakır ve kusurlu hâlde ölçülen 0.00 ile arasında kapanmaz boşluk vardır.
         /// </summary>
         private const float YananKenarEsigi = 0.60f;
 
@@ -76,6 +78,9 @@ namespace DD.Prototype.Tests.PlayMode
         /// 0.05 yalnız kayan nokta payıdır, gürültü payı değil.
         /// </summary>
         private const float SonukKenarEsigi = 0.05f;
+
+        /// <summary>Son <see cref="ZirveyiOlc"/> penceresinde her kenarın en yüksek alfası (UiScreenEdge sırası).</summary>
+        private readonly float[] _zirve = new float[4];
 
         private PlayerHealth _can;
         private RunHudScreen _hud;
@@ -146,10 +151,10 @@ namespace DD.Prototype.Tests.PlayMode
             _can.HealToFull();
             Vurdur(ekranSagi);
             Vurdur(-ekranSagi);
-            yield return null;
+            yield return ZirveyiOlc();
 
-            float sag = _katman.EdgeAlpha(UiScreenEdge.Right);
-            float sol = _katman.EdgeAlpha(UiScreenEdge.Left);
+            float sag = Zirve(UiScreenEdge.Right);
+            float sol = Zirve(UiScreenEdge.Left);
 
             // İki AYRI olay tüketildi mi: tek bir olayı iki kez çizmek de aynı iki kenarı
             // yakardı, bu sayaç o ihtimali ayırır.
@@ -223,12 +228,13 @@ namespace DD.Prototype.Tests.PlayMode
 
             _can.HealToFull();
             Vurdur((ekranSagi + ekranUstu).normalized);
-            yield return null;
+            yield return ZirveyiOlc();
 
-            float sag = _katman.EdgeAlpha(UiScreenEdge.Right);
-            float ust = _katman.EdgeAlpha(UiScreenEdge.Top);
-            float sol = _katman.EdgeAlpha(UiScreenEdge.Left);
-            float alt = _katman.EdgeAlpha(UiScreenEdge.Bottom);
+            // İki kenar aynı zarfı yaşar: tepedeki değerleri bekleme penceresinde eşittir, oran zarftan bağımsız kalır.
+            float sag = Zirve(UiScreenEdge.Right);
+            float ust = Zirve(UiScreenEdge.Top);
+            float sol = Zirve(UiScreenEdge.Left);
+            float alt = Zirve(UiScreenEdge.Bottom);
 
             var rapor = new StringBuilder();
             rapor.AppendLine("[DD-TEST] hasar.kosegen (kamera egimi)");
@@ -276,9 +282,9 @@ namespace DD.Prototype.Tests.PlayMode
 
             _can.HealToFull();
             Vurdur(EkranSagi());
-            yield return null;
+            yield return ZirveyiOlc();
 
-            Assert.Greater(_katman.EdgeAlpha(UiScreenEdge.Right), YananKenarEsigi,
+            Assert.Greater(Zirve(UiScreenEdge.Right), YananKenarEsigi,
                 "Olcum gecersiz: gosterge zaten yanmiyor.");
 
             for (int i = 0; i < 4; i++)
@@ -321,10 +327,10 @@ namespace DD.Prototype.Tests.PlayMode
 
             _can.HealToFull();
             Vurdur(saldirganYonu);
-            yield return null;
+            yield return ZirveyiOlc();
 
-            float yanan = _katman.EdgeAlpha(yanmasiGereken);
-            float sonuk = _katman.EdgeAlpha(sonukKalmasiGereken);
+            float yanan = Zirve(yanmasiGereken);
+            float sonuk = Zirve(sonukKalmasiGereken);
 
             rapor.AppendLine("  yon " + saldirganYonu.ToString("F2") + " -> " +
                              yanmasiGereken + "=" + yanan.ToString("F3") + "  " +
@@ -353,16 +359,15 @@ namespace DD.Prototype.Tests.PlayMode
         }
 
         /// <summary>
-        /// Bütün kenarlar sönene kadar bekler. Bir vuruşun ömrü 0.48 sn (gösterge ölçeksiz zamanla söner). S-02 (f2a): 120 KARE
-        /// değil gerçek zaman — batch'te kareler 1–3 ms, 120 kare 0,48 s'ye yetmiyordu (ders-batch-kare-suresi); WP-095 K1'in ağır
-        /// vuruştaki küresel durması (timeScale 0,06) kareleri daha da hızlandırınca görünür oldu.
+        /// Bütün kenarlar sönene kadar bekler. Bir vuruşun ömrü 0.05 + 0.25 + 0.3 = 0.6 sn (WP-094, §4.6); kenar
+        /// katmanı ölçeksiz saatle yaşlanır, o yüzden sınır kare değil gerçek zamandır (3 sn = ömrün beş katı).
         /// </summary>
         private IEnumerator KenarlarSonsun()
         {
-            const float enFazlaSaniye = 2f;
-            float t0 = Time.realtimeSinceStartup;
+            const float enFazlaSaniye = 3f;
+            float basla = Time.realtimeSinceStartup;
 
-            while (_katman.IsShowing && Time.realtimeSinceStartup - t0 < enFazlaSaniye)
+            while (_katman.IsShowing && Time.realtimeSinceStartup - basla < enFazlaSaniye)
             {
                 yield return null;
             }
@@ -370,6 +375,35 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsFalse(_katman.IsShowing,
                 "Gosterge " + enFazlaSaniye + " sn sonunda hala yaniyor; sonum calismiyor " +
                 "ya da olcum penceresine disaridan hasar giriyor.");
+        }
+
+        /// <summary>
+        /// WP-094 (§4.6): vuruştan sonra yükseliş (0.05 sn) ve bekleme (0.25 sn) boyunca her kareyi okur ve her kenarın
+        /// en yüksek alfasını <see cref="_zirve"/>'ye yazar. Pencere gerçek zamanla 0.3 sn ya da kenarlar sönünce biter.
+        /// </summary>
+        private IEnumerator ZirveyiOlc()
+        {
+            for (int i = 0; i < _zirve.Length; i++)
+            {
+                _zirve[i] = _katman.EdgeAlpha((UiScreenEdge)i);
+            }
+
+            float pencere = UiTokens.DamageEdgeRiseSeconds + UiTokens.DamageEdgeHoldSeconds;
+            float basla = Time.realtimeSinceStartup;
+            do
+            {
+                yield return null;
+                for (int i = 0; i < _zirve.Length; i++)
+                {
+                    _zirve[i] = Mathf.Max(_zirve[i], _katman.EdgeAlpha((UiScreenEdge)i));
+                }
+            }
+            while (_katman.IsShowing && Time.realtimeSinceStartup - basla < pencere);
+        }
+
+        private float Zirve(UiScreenEdge kenar)
+        {
+            return _zirve[(int)kenar];
         }
 
         /// <summary>

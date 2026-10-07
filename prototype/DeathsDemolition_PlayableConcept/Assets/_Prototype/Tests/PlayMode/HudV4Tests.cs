@@ -37,11 +37,14 @@ namespace DD.Prototype.Tests.PlayMode
     ///   hand-off and opens, StampLanded "round" rises once on the seal's contact, a newer change lands the running one (cue
     ///   still raised), reduced motion swaps at once and still raises the cue.
     /// - HudV4Juice_Saglik_…: the clusters that change per frame are nested canvases; a hit breaks a chunk off over a snapped
-    ///   fill with the trail held, two simultaneous hits keep two wedges and light two edges, LOW beats ≤ 1.1 Hz with the rim
-    ///   breathing, a heal glows; reduced motion drops the chunk.
+    ///   fill with the trail held, two simultaneous hits keep two wedges and light two edges, LOW beats on the heartbeat clock
+    ///   (70 → 110 bpm, feel contract §4.7) with the rim breathing, a heal out of the band glows and pulses white once;
+    ///   reduced motion drops the chunk.
     /// - HudV4Juice_Sarjor_…: a shot sparks and throws a casing, accents stay ≤ 10 a second, LOW breathes and EMPTY stops it,
     ///   an empty trigger shakes once per 250 ms, the reload previews the rounds and gives way on landing, a weapon change
     ///   swaps the glyph through a stamp.
+    /// - HudV4His_FeelEventsAnlari_…: (08.10, K/wp-095/HIS-SOZLESMESI.md) the HUD hears its moments from FeelEvents - the crit
+    ///   notch (§4.2), the kill pop (§4.3), "×N" (§4.4), the round start band (§4.10) and the last zombie's stroke (§4.11).
     /// </summary>
     [Category("WP094")]
     public sealed class HudV4Tests
@@ -313,7 +316,7 @@ namespace DD.Prototype.Tests.PlayMode
                 // goes to the head by the W' rule, 419 px for XXXVIII - stays in the right half (on the Mac's 1600-wide canvas a
                 // quarter is 400 px).
                 float plateWidth, plateHeight, runRight, sealCentre, sealDiameter;
-                HudArt.LaySmear(RunHudScreen.RoundGlyphHeight, hud.RoundNumeral.Width, hud.RoundNumeral.FirstBearingEm,
+                HudArt.LaySmear(hud.RoundCap, hud.RoundNumeral.Width, hud.RoundNumeral.FirstBearingEm,
                     out plateWidth, out plateHeight, out runRight, out sealCentre, out sealDiameter);
                 Assert.AreEqual(plateWidth, round.width, 0.5f, where + ": the cluster is the plate (W' rule)");
                 Assert.AreEqual(round.xMax - sealCentre, seal.center.x, 0.5f, where + ": the seal 0.55 diameters inside the dense zone");
@@ -527,7 +530,8 @@ namespace DD.Prototype.Tests.PlayMode
                 Assert.IsTrue(health.ApplyDamage(health.Max * 0.1f, at + side * 2f, "Test.WP094"));
                 health.DiagnosisInvulnerable = true;
                 Assert.AreEqual(2, hud.PlayerArcs.LiveWedges(UiFxGlobals.Now), "D2: the second hit no longer turns the first wedge away");
-                yield return null;
+                // §4.6 (feel contract): the edge rises over 0.05 s, then holds 0.25 s - read it on the hold.
+                yield return new WaitForSecondsRealtime(UiTokens.DamageEdgeRiseSeconds + 0.04f);
                 Assert.Greater(hud.DamageEdges.EdgeAlpha(UiScreenEdge.Left), 0.3f, "D1: left edge");
                 Assert.Greater(hud.DamageEdges.EdgeAlpha(UiScreenEdge.Right), 0.3f, "D1: right edge");
 
@@ -539,20 +543,27 @@ namespace DD.Prototype.Tests.PlayMode
                 yield return null;
                 Assert.IsTrue(hud.HeartbeatRunning, "H5: LOW starts the heartbeat");
                 int beats = hud.HeartBeats;
-                yield return new WaitForSecondsRealtime(3f * UiTokens.PulsePeriod + 0.25f);
+                // §4.7 (feel contract): the rhythm follows health - 90 bpm at 20 %.
+                yield return new WaitForSecondsRealtime(3f * HudHeartbeat.PeriodFor(health.Current / health.Max) + 0.25f);
                 beats = hud.HeartBeats - beats;
-                Assert.That(beats, NUnit.Framework.Is.InRange(3, 4), "three periods of 0.92 s: ≤ 1.1 Hz");
+                Assert.That(beats, NUnit.Framework.Is.InRange(3, 4), "three periods of the heartbeat clock (70 → 110 bpm)");
                 Assert.Greater(hud.LowHealthRim.canvasRenderer.GetAlpha(), 0.3f, "the rim breathes between 0.35 and 0.75");
 
                 // H4: a heal of 25 % glows moss over the gained range.
                 int glows = hud.HealGlows;
+                int exits = hud.LowHealthExitPulses;
                 health.Heal(health.Max * 0.25f);
                 yield return new WaitForSecondsRealtime(0.15f);
                 Assert.AreEqual(glows + 1, hud.HealGlows, "H4: one glow");
+                Assert.IsFalse(hud.HeartbeatRunning, "§4.7: 45 % ≥ 38 % - out of the FeelEvents band");
+                Assert.AreEqual(exits + 1, hud.LowHealthExitPulses, "§4.7: one white pulse on the way out");
+                Assert.Greater(hud.LowHealthRim.canvasRenderer.GetAlpha(), 0.05f, "§4.7: the rim flares cream once (Fast in, Screen out)");
                 Assert.Greater(hud.HealGlowGraphic.canvasRenderer.GetAlpha(), 0.2f, "H4: the glow at its peak");
                 health.HealToFull();
                 yield return null;
                 Assert.IsFalse(hud.HeartbeatRunning, "out of LOW: the heartbeat stops");
+                Assert.AreEqual(exits + 1, hud.LowHealthExitPulses, "a heal further out of the band pulses no more");
+                yield return new WaitForSecondsRealtime(0.45f);   // the white pulse: 0.14 in + 0.28 out
                 Assert.AreEqual(0f, hud.LowHealthRim.canvasRenderer.GetAlpha(), 1e-3f);
 
                 // Reduced motion: no chunk - the trail alone carries the loss.
@@ -642,8 +653,10 @@ namespace DD.Prototype.Tests.PlayMode
                 yield return new WaitForSecondsRealtime(0.3f);
                 Assert.IsFalse(hud.AmmoPulsing, "EMPTY stops the LOW pulse");
                 int shakes = hud.DryFireShakes;
-                WeaponEvents.PublishDryFire();
-                WeaponEvents.PublishDryFire();
+                // The HUD hears the empty trigger from FeelEvents (08.10) - raised as WeaponController raises it.
+                var dry = new DD.Prototype.Feedback.FeelDryFire(classic.Id, PlayerRegistry.Primary.transform.position);
+                DD.Prototype.Feedback.FeelEvents.RaiseDryFire(dry);
+                DD.Prototype.Feedback.FeelEvents.RaiseDryFire(dry);
                 Assert.AreEqual(shakes + 1, hud.DryFireShakes, "A6: ≤ 1 shake per 250 ms");
 
                 // A3 / A4: the reload previews the rounds coming in, and gives way to them on landing.
@@ -683,6 +696,122 @@ namespace DD.Prototype.Tests.PlayMode
 
             PrototypeUiFlow.AbortRunToMainMenu();
             yield return SahneyiBekle(PrototypeScenes.MainMenu);
+        }
+
+        /// <summary>
+        /// WP-094 · feel contract (K/wp-095/HIS-SOZLESMESI.md) §4.2 / §4.3 / §4.4 / §4.10 / §4.11: the HUD hears its moments from
+        /// FeelEvents alone (08.10). Each moment is raised the way the bridge raises it (the event's backing field - the bridge's
+        /// sources need a live zombie) and read back off the HUD: a crit notches the reticle, a kill pops it, a multi-kill writes
+        /// "×N" (the numeral only), the round start draws "ROUND IV" over the RoundStart envelope, the last zombie strokes
+        /// "ROUND N CLEAR" through the middle. Top-down only.
+        /// </summary>
+        [UnityTest]
+        [Timeout(180000)]
+        public IEnumerator HudV4His_FeelEventsAnlari_Notch_Pop_CokluOldurme_RaundAfisleri()
+        {
+            LogAssert.ignoreFailingMessages = true;
+            yield return KosuyaGir();
+            RunHudScreen hud = Object.FindObjectOfType<RunHudScreen>();
+            Assert.IsNotNull(hud, "HUD");
+            Assert.AreEqual(CameraMode.TopDown, CameraModeService.Current, "R3: top-down only");
+            Vector3 at = PlayerRegistry.Primary.transform.position + Vector3.forward * 3f;
+            bool reduced = UiMotion.ReducedMotion;
+            UiMotion.ReducedMotion = false;
+            try
+            {
+                yield return new WaitForSecondsRealtime(0.3f);
+
+                // §4.2: a crit notches the TD reticle; a ground-fire tick never does.
+                int notches = hud.Reticle.CritNotches;
+                FeelRaise("EnemyHit", FeelHitAt(at, true, false));
+                Assert.AreEqual(notches + 1, hud.Reticle.CritNotches, "§4.2: the crit notch");
+                FeelRaise("EnemyHit", FeelHitAt(at, true, true));
+                FeelRaise("EnemyHit", FeelHitAt(at, false, false));
+                Assert.AreEqual(notches + 1, hud.Reticle.CritNotches, "§4.2: ground fire and plain hits leave the reticle be");
+
+                // §4.3: a kill pops the reticle (kill beats ≥ 0.12 s apart).
+                int pops = hud.Reticle.KillPops;
+                FeelRaise("EnemyKilled", Kill(at));
+                FeelRaise("EnemyKilled", Kill(at));
+                Assert.AreEqual(pops + 1, hud.Reticle.KillPops, "§4.3: one pop per kill beat");
+                yield return new WaitForSecondsRealtime(0.15f);
+                FeelRaise("EnemyKilled", Kill(at));
+                Assert.AreEqual(pops + 2, hud.Reticle.KillPops, "§4.3: the next beat pops again");
+
+                // §4.4: "×N" - the numeral only, popped 1.3 → 1, held 0.8 s, gone over 0.3 s.
+                int shown = hud.MultiKillsShown;
+                FeelRaise("MultiKill", new DD.Prototype.Feedback.FeelMultiKill(2, 5, true, 1, 2, at));
+                Assert.AreEqual(shown + 1, hud.MultiKillsShown, "§4.4: the multi-kill shows");
+                Assert.AreEqual(5, hud.MultiKillCount);
+                TMP_Text multi = hud.MultiKillRoot.GetComponentInChildren<TMP_Text>(true);
+                Assert.IsNotNull(multi, "the ×N numeral");
+                multi.ForceMeshUpdate();
+                Assert.AreEqual("\u00D75", multi.GetParsedText(), "§4.4: \"×N\", no word");
+                yield return null;
+                Assert.Greater(Mathf.Abs(hud.MultiKillRoot.localScale.x - 1f), 1e-4f, "§4.4: the 1.3 → 1 pop is under way");
+                yield return new WaitForSecondsRealtime(0.6f);
+                Assert.AreEqual(1f, hud.MultiKillRoot.localScale.x, 1e-3f, "settled at 1");
+                Assert.AreEqual(1f, multi.canvasRenderer.GetAlpha(), 1e-3f, "§4.4: still held at 0.6 s");
+                yield return new WaitForSecondsRealtime(0.8f);
+                Assert.AreEqual(0f, multi.canvasRenderer.GetAlpha(), 1e-3f, "§4.4: gone after 0.8 + 0.3 s");
+
+                // §4.10: the round start's brush band names the round in Roman numerals.
+                FeelRaise("RoundStarted", new DD.Prototype.Feedback.FeelRound(4));
+                HudBanner banner = TopBanner(hud);
+                Assert.IsTrue(banner.Live(Time.unscaledTime), "§4.10: the round banner is up");
+                StringAssert.EndsWith(" IV", banner.Text.text, "§4.10: ROUND IV / RAUND IV");
+                Assert.AreEqual(HudBannerEnvelope.RoundStart.Total, 0.35f + 0.9f + 0.3f, 1e-3f, "§4.10: draw 0.35 + hold 0.9 + fade 0.3");
+                yield return new WaitForSecondsRealtime(HudBannerEnvelope.RoundStart.Total + 0.2f);
+                Assert.IsFalse(banner.Live(Time.unscaledTime), "§4.10: the band is gone");
+
+                // §4.11: the last zombie - the centre stroke, "ROUND N CLEAR" / "RAUND N TEMİZ".
+                int clears = hud.RoundClears;
+                FeelRaise("LastZombie", new DD.Prototype.Feedback.FeelLastZombie(at, 4, EnemyTier.Standard, null));
+                Assert.AreEqual(clears + 1, hud.RoundClears, "§4.11: the clear stroke");
+                Assert.IsTrue(hud.ClearBanner.Live(Time.unscaledTime));
+                StringAssert.Contains(" IV ", hud.ClearBanner.Text.text, "§4.11: the round's numeral");
+                yield return new WaitForSecondsRealtime(HudBannerEnvelope.RoundClear.Total + 0.2f);
+                Assert.IsFalse(hud.ClearBanner.Live(Time.unscaledTime), "§4.11: held 0.8 s, gone over 0.3 s");
+                Debug.Log("[DD-TEST] wp094.feel notches=" + hud.Reticle.CritNotches + " pops=" + hud.Reticle.KillPops + " multi="
+                    + hud.MultiKillsShown + " clears=" + hud.RoundClears);
+            }
+            finally
+            {
+                UiMotion.ReducedMotion = reduced;
+            }
+
+            PrototypeUiFlow.AbortRunToMainMenu();
+            yield return SahneyiBekle(PrototypeScenes.MainMenu);
+        }
+
+        /// <summary>Raises one FeelEvents moment through its backing field, as the bridge's Emit does.</summary>
+        private static void FeelRaise<T>(string name, T payload)
+        {
+            FieldInfo field = typeof(DD.Prototype.Feedback.FeelEvents).GetField(name, BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.IsNotNull(field, "FeelEvents." + name);
+            ((Action<T>)field.GetValue(null))?.Invoke(payload);
+        }
+
+        private static DD.Prototype.Feedback.FeelHit FeelHitAt(Vector3 at, bool critical, bool groundFire)
+        {
+            return new DD.Prototype.Feedback.FeelHit(null, EnemyTier.Standard, 1, at, Vector3.forward, 10f, 0f, false, false, critical,
+                DD.Prototype.Damage.BodyRegion.Head, DD.Prototype.Damage.DamageSourceKind.Bullet, 1f, 0.5f, false, groundFire, 1, true,
+                ClassicWeaponId.AssaultRifle, false, SpecialWeaponId.Raiju);
+        }
+
+        private static DD.Prototype.Feedback.FeelKill Kill(Vector3 at)
+        {
+            return new DD.Prototype.Feedback.FeelKill(null, EnemyTier.Standard, 1, at, Vector3.forward, DD.Prototype.Damage.BodyRegion.UpperBody,
+                DD.Prototype.Damage.DamageSourceKind.Bullet, false, false, 0f, 0, 1, 1, true, ClassicWeaponId.AssaultRifle, false,
+                SpecialWeaponId.Raiju, 1, 1, false);
+        }
+
+        /// <summary>The HUD's top banner (the one the round start writes).</summary>
+        private static HudBanner TopBanner(RunHudScreen hud)
+        {
+            FieldInfo field = typeof(RunHudScreen).GetField("_banner", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.IsNotNull(field, "RunHudScreen._banner");
+            return (HudBanner)field.GetValue(hud);
         }
 
         /// <summary>Boot → selection → a fighting top-down run with a quiet field.</summary>

@@ -5,6 +5,41 @@ using UnityEngine.UI;
 namespace DD.Prototype.UI
 {
     /// <summary>
+    /// WP-094 · one banner's timing: an optional delay, the words' wipe (Settle = CSS easeOutCubic), the brush's ink, the hold
+    /// after the wipe and the fade. <see cref="Default"/> is E13's (wipe 220, brush 400, out at 2.12 s over 280 ms - 2.4 s);
+    /// <see cref="RoundStart"/> and <see cref="RoundClear"/> are S-02's feel contract (K/wp-095/HIS-SOZLESMESI.md §4.10 / §4.11).
+    /// </summary>
+    public readonly struct HudBannerEnvelope
+    {
+        public readonly float Delay;
+        public readonly float Wipe;
+        public readonly float Brush;
+        public readonly float Hold;
+        public readonly float Fade;
+
+        public HudBannerEnvelope(float delay, float wipe, float brush, float hold, float fade)
+        {
+            Delay = delay;
+            Wipe = wipe;
+            Brush = brush;
+            Hold = hold;
+            Fade = fade;
+        }
+
+        /// <summary>The whole life, delay included.</summary>
+        public float Total => Delay + Wipe + Hold + Fade;
+
+        /// <summary>E13: wipe Base, brush Emphasis, hold to 2.12 s, out over Screen - 2.4 s.</summary>
+        public static HudBannerEnvelope Default => new HudBannerEnvelope(0f, 0.22f, 0.4f, HudBanner.Seconds - 0.22f - 0.28f, 0.28f);
+
+        /// <summary>§4.10 round start: the brush "ROUND N" band drawn over 0.35 s easeOutCubic, held 0.9 s, gone over 0.3 s.</summary>
+        public static HudBannerEnvelope RoundStart => new HudBannerEnvelope(0f, 0.35f, 0.35f, 0.9f, 0.3f);
+
+        /// <summary>§4.11 the last zombie: the centre stroke starts 0.15 s in, drawn over 0.35 s easeOutCubic, held 0.8 s, gone over 0.3 s.</summary>
+        public static HudBannerEnvelope RoundClear => new HudBannerEnvelope(0.15f, 0.35f, 0.35f, 0.8f, 0.3f);
+    }
+
+    /// <summary>
     /// WP-068 slice 8c · E13 the banner v3 (round / phase / Special news) in the top third, once per event.
     /// The envelope is <see cref="Seconds"/> (2.4 s):
     /// - The words wipe in left → right inside a RectMask2D whose width runs 0 → full over 220 ms Settle (the Size
@@ -14,7 +49,9 @@ namespace DD.Prototype.UI
     /// Banner 48 on the Display face, with a 1.5 px InkStroke outside the letters.
     /// Reduced motion: every step is Decor, so it appears and disappears statically.
     /// A new banner restarts the envelope; a retitle (the Special's name arriving) swaps the words in place, without a
-    /// second wipe. Per frame there is one time compare (<see cref="Tick"/>).
+    /// second wipe. Per frame there is one time compare (<see cref="Tick"/>). WP-094: a banner may take its own
+    /// <see cref="HudBannerEnvelope"/> (S-02's feel contract: the round start, the last zombie's "ROUND N CLEAR"), and a second
+    /// banner can stand at the screen's centre (the horizontal stroke through the middle, §4.11).
     /// WP-068 12b (AD R1-B SHOULD-2; N19 §1.1, E14 "glif Stamp"): the "&lt;SW&gt; ONLINE" line carries the Special's glyph,
     /// <see cref="GlyphSize"/> px in its identity tint, <see cref="GlyphGap"/> px of clear ground between its ink and the words'; glyph and words are
     /// centred as one line, the glyph stamps in as the name lands and every other banner hides it.
@@ -63,6 +100,7 @@ namespace DD.Prototype.UI
         private readonly float _height;
         private float _exitAt = -1f;
         private float _endsAt = -1f;
+        private float _fade = 0.28f;
         private float _width = Width;   // the words' width this banner (≥ Width): a long line never clips at the mask
 
         public TMP_Text Text
@@ -104,12 +142,21 @@ namespace DD.Prototype.UI
         }
 
         public HudBanner(RectTransform parent, float topOffset)
+            : this(parent, topOffset, false, "BannerRoot", "Banner")
+        {
+        }
+
+        /// <param name="centred">WP-094: stand at the parent's centre (<paramref name="topOffset"/> then offsets it downward) - the last zombie's stroke.</param>
+        /// <param name="rootName">The root's name ("BannerRoot" for the HUD's banner: tests find it so).</param>
+        /// <param name="textName">The words' name ("Banner" for the HUD's banner: tests find it so).</param>
+        public HudBanner(RectTransform parent, float topOffset, bool centred, string rootName, string textName)
         {
             _height = UiFactory.LineHeight(UiType.Banner);
-            _root = UiFactory.NewRect("BannerRoot", parent);
-            _root.anchorMin = new Vector2(0.5f, 1f);
-            _root.anchorMax = new Vector2(0.5f, 1f);
-            _root.pivot = new Vector2(0.5f, 1f);
+            _root = UiFactory.NewRect(rootName, parent);
+            float anchorY = centred ? 0.5f : 1f;
+            _root.anchorMin = new Vector2(0.5f, anchorY);
+            _root.anchorMax = new Vector2(0.5f, anchorY);
+            _root.pivot = new Vector2(0.5f, anchorY);
             _root.sizeDelta = new Vector2(Width, Mathf.Max(_height, BrushHeight));
             _home = new Vector2(0f, -topOffset);
             _root.anchoredPosition = _home;
@@ -142,7 +189,7 @@ namespace DD.Prototype.UI
             UiFactory.ClipContent(_clip);
 
             // Named "Banner": the WP-022J tests find the banner text by name.
-            _text = UiFactory.Label("Banner", _clip, string.Empty, UiType.Banner, UiColor.TextPrimary, TextAnchor.MiddleCenter);
+            _text = UiFactory.Label(textName, _clip, string.Empty, UiType.Banner, UiColor.TextPrimary, TextAnchor.MiddleCenter);
             _text.enableWordWrapping = false;
             _text.overflowMode = TextOverflowModes.Overflow;
             var textRect = (RectTransform)_text.transform;
@@ -173,6 +220,16 @@ namespace DD.Prototype.UI
         /// <summary>A new banner: the envelope restarts from the wipe.</summary>
         public void Show(string message, float now)
         {
+            Show(message, now, HudBannerEnvelope.Default);
+        }
+
+        /// <summary>
+        /// WP-094: a new banner on <paramref name="envelope"/>'s timing - nothing shows during its delay, the words wipe in over
+        /// its wipe (Settle = easeOutCubic) as the brush inks in, it holds, then fades over its fade with the 8 px drop. Every
+        /// step is Decor: under reduced motion it appears and disappears statically, on the same clock. Returns the life.
+        /// </summary>
+        public float Show(string message, float now, in HudBannerEnvelope envelope)
+        {
             UiMotion.KillTarget(_group, false);
             UiMotion.KillTarget(_root, false);
             UiMotion.KillTarget(_clip, false);
@@ -182,14 +239,17 @@ namespace DD.Prototype.UI
             _group.alpha = 1f;
             _root.anchoredPosition = _home;
             _clip.sizeDelta = new Vector2(0f, _height);
-            UiMotion.Resize(_clip, new Vector2(_width, _height), UiDuration.Base, UiEase.Settle, UiMotionClass.Decor);
+            UiMotion.ResizeSeconds(_clip, new Vector2(_width, _height), envelope.Wipe, UiEase.Settle, UiMotionClass.Decor, envelope.Delay);
             if (_brush.enabled)
             {
-                _brushFx.Play();
+                _brushFx.SetDuration(envelope.Brush);
+                _brushFx.PlayDelayed(envelope.Delay);
             }
 
-            _endsAt = now + Seconds;
-            _exitAt = _endsAt - UiMotionTokens.Seconds(UiDuration.Screen);
+            _fade = envelope.Fade;
+            _endsAt = now + envelope.Total;
+            _exitAt = _endsAt - envelope.Fade;
+            return envelope.Total;
         }
 
         /// <summary>The words change in place (no second wipe); the brush follows their width. No glyph.</summary>
@@ -251,8 +311,8 @@ namespace DD.Prototype.UI
             if (_exitAt > 0f && now >= _exitAt)
             {
                 _exitAt = -1f;
-                UiMotion.Alpha(_group, 0f, UiDuration.Screen, UiEase.Exit, UiMotionClass.Decor);
-                UiMotion.Move(_root, _home + new Vector2(0f, -ExitDrop), UiDuration.Screen, UiEase.Exit, UiMotionClass.Decor);
+                UiMotion.AlphaSeconds(_group, 0f, _fade, UiEase.Exit, UiMotionClass.Decor);
+                UiMotion.MoveSeconds(_root, _home, _home + new Vector2(0f, -ExitDrop), _fade, UiEase.Exit, UiMotionClass.Decor);
             }
 
             return Mathf.Max(0f, _endsAt - now);

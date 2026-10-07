@@ -197,8 +197,8 @@ namespace DD.Prototype.UI
     ///   * NO MESH REBUILD. The edges' colour is set once; the envelope writes CanvasRenderer alpha (no vertex rebuild),
     ///     and only when the 8-bit value moves. Before, it wrote Image.color - a mesh rebuild - every frame of every live
     ///     edge. The layer is its own nested canvas (RunHudScreen), so the decay re-batches only it.
-    ///   * THE SOURCE. It listens to <see cref="HudFeelSource.PlayerDamaged"/> - PlayerHealth.AnyDamaged today, behind the
-    ///     one seam S-02's FeelEvents will replace.
+    ///   * THE SOURCE. It listens to <see cref="HudFeelSource.PlayerDamaged"/> - since 08.10 bridged to S-02's
+    ///     FeelEvents.PlayerDamaged (the one game-feel source; its direction is the hit's, feel contract §4.6).
     ///
     /// WHAT THIS CLASS CANNOT DO
     /// -------------------------
@@ -218,8 +218,11 @@ namespace DD.Prototype.UI
         /// <summary>Peak this edge was raised to, 0..1 before the peak-alpha scale.</summary>
         private readonly float[] _amplitude = new float[EdgeCount];
 
-        /// <summary>Seconds of life left on this edge: hold first, then decay.</summary>
-        private readonly float[] _remaining = new float[EdgeCount];
+        /// <summary>
+        /// WP-094 (feel contract §4.6): seconds since this edge's onset, −1 while it is dark - the envelope
+        /// (<see cref="HudDamageEnvelope.At"/>: in 0.05 s, hold 0.25 s, out 0.3 s easeInQuad) reads it.
+        /// </summary>
+        private readonly float[] _age = { -1f, -1f, -1f, -1f };
 
         private int _liveEdges;
 
@@ -314,7 +317,7 @@ namespace DD.Prototype.UI
 
         private void OnEnable()
         {
-            HudFeelSource.PlayerDamaged += OnDamaged;   // WP-094: the one seam (PlayerHealth.AnyDamaged today)
+            HudFeelSource.PlayerDamaged += OnDamaged;   // WP-094: the one seam (FeelEvents.PlayerDamaged, 08.10)
         }
 
         private void OnDisable()
@@ -410,7 +413,7 @@ namespace DD.Prototype.UI
         /// </summary>
         private bool EdgeOnset(int index, float now)
         {
-            bool lit = _amplitude[index] * Envelope(_remaining[index]) > 0f;
+            bool lit = Visible(index) > 0f;
             bool onset = (!lit || _onsetAllowed) && _perEdge.Allow(index, now);
             if (!onset)
             {
@@ -432,7 +435,7 @@ namespace DD.Prototype.UI
                 return false;
             }
 
-            float visible = _amplitude[index] * Envelope(_remaining[index]);
+            float visible = Visible(index);
             if (!onset)
             {
                 if (visible <= 0f)
@@ -441,15 +444,26 @@ namespace DD.Prototype.UI
                 }
 
                 _amplitude[index] = Mathf.Clamp01(Mathf.Max(_amplitude[index], level));
-                Draw(index, _amplitude[index] * Envelope(_remaining[index]));
+                Draw(index, _amplitude[index] * HudDamageEnvelope.At(_age[index]));
                 return true;
             }
 
             _amplitude[index] = Mathf.Clamp01(Mathf.Max(visible, level));
-            _remaining[index] = UiTokens.DamageEdgeHoldSeconds + UiTokens.DamageEdgeDecaySeconds;
+            if (_age[index] < 0f)
+            {
+                _liveEdges++;
+            }
 
-            Draw(index, _amplitude[index]);
+            // A dark edge rises over 0.05 s; a lit one re-starts past its rise (it is showing - it never dips back to 0).
+            _age[index] = HudDamageEnvelope.RestartAge(visible);
+            Draw(index, _amplitude[index] * HudDamageEnvelope.At(_age[index]));
             return true;
+        }
+
+        /// <summary>The share of the peak edge <paramref name="index"/> shows now (0 when dark).</summary>
+        private float Visible(int index)
+        {
+            return _age[index] >= 0f ? _amplitude[index] * HudDamageEnvelope.At(_age[index]) : 0f;
         }
 
         private void Update()
@@ -468,33 +482,26 @@ namespace DD.Prototype.UI
                 return;
             }
 
+            float life = HudDamageEnvelope.Life;
             for (int i = 0; i < EdgeCount; i++)
             {
-                if (_remaining[i] <= 0f)
+                if (_age[i] < 0f)
                 {
                     continue;
                 }
 
-                _remaining[i] -= dt;
-                Draw(i, _amplitude[i] * Envelope(_remaining[i]));
-            }
-        }
+                _age[i] += dt;
+                if (_age[i] >= life)
+                {
+                    _age[i] = -1f;
+                    _amplitude[i] = 0f;
+                    _liveEdges--;
+                    Draw(i, 0f);
+                    continue;
+                }
 
-        /// <summary>
-        /// Flat while the hold lasts, then a straight fall to nothing. Linear rather than
-        /// eased: the fall is what carries "this is over", and an ease-out spends its last
-        /// frames near zero where they say nothing and cost overdraw.
-        /// </summary>
-        private static float Envelope(float remaining)
-        {
-            if (remaining <= 0f)
-            {
-                return 0f;
+                Draw(i, _amplitude[i] * HudDamageEnvelope.At(_age[i]));
             }
-
-            return remaining >= UiTokens.DamageEdgeDecaySeconds
-                ? 1f
-                : remaining / UiTokens.DamageEdgeDecaySeconds;
         }
 
         private void Draw(int index, float level)
@@ -514,15 +521,12 @@ namespace DD.Prototype.UI
             if (image.enabled != on)
             {
                 image.enabled = on;
-                _liveEdges += on ? 1 : -1;
                 _shown[index] = -1f;   // a re-enabled graphic takes its alpha afresh
             }
 
             if (!on)
             {
-                _amplitude[index] = 0f;
-                _remaining[index] = 0f;
-                return;
+                return;   // the edge's life is its age (Update ends it), not its alpha - the rise starts at 0
             }
 
             // WP-094 (D1): the renderer's alpha, never Image.color - no vertex rebuild; and only when the 8-bit value moves.

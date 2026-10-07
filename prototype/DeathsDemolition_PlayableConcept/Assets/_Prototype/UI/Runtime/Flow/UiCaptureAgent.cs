@@ -1693,7 +1693,8 @@ namespace DD.Prototype.UI
             /// <summary>
             /// WP-094 HUD v4 (<c>-ddUiCapture hudv4</c>, 1920 × 1080 top-down; the acceptance frames of K/c-00/R3/prompts/WP-094-098A.md
             /// "Kabul"): the juice staged on a live run with REAL events only - wallet credits, PlayerHealth damage and heals,
-            /// ConsumeShot / TryBeginReload, WeaponEvents.PublishDryFire, WeaponController.EquipClassic, the round transition
+            /// ConsumeShot / TryBeginReload, FeelEvents.RaiseDryFire (the HUD hears the empty trigger from FeelEvents),
+            /// WeaponController.EquipClassic, the round transition
             /// through RunHudScreen.CaptureRound - so every motion in a frame is the production path's (HAREKET-HUD §7 "Çekim").
             /// Frames (<c>v4-*.png</c> in the capture folder): idle; gold-punch (mid-punch) / gold-rest; health-full /
             /// health-damaged (the chunk falling, the trail held) / health-two-hits (two wedges, two edges) / health-low (on a lub)
@@ -1806,7 +1807,7 @@ namespace DD.Prototype.UI
                     yield return null;
                     yield return null;
                     yield return new WaitForSecondsRealtime(0.3f);
-                    WeaponEvents.PublishDryFire();
+                    HudV4DryFire();
                     yield return new WaitForSecondsRealtime(0.05f);
                     yield return HudV4Frame(folder, "v4-mag-empty", hud);
                     classic.TryBeginReload();
@@ -1827,6 +1828,15 @@ namespace DD.Prototype.UI
                 }
 
                 Debug.Log("[UiCapture] hudv4 done · framebuffer " + Screen.width + "x" + Screen.height + " rm=" + UiMotion.ReducedMotion);
+            }
+
+            /// <summary>A real empty pull as the weapon raises it (FeelEvents.DryFire - the one source the HUD hears since 08.10).</summary>
+            private static void HudV4DryFire()
+            {
+                WeaponController weapon = WeaponRegistry.ActiveController;
+                PlayerRig rig = PlayerRegistry.Primary;
+                DD.Prototype.Feedback.FeelEvents.RaiseDryFire(new DD.Prototype.Feedback.FeelDryFire(
+                    weapon != null ? weapon.Classic.Id : ClassicWeaponId.AssaultRifle, rig != null ? rig.transform.position : Vector3.zero));
             }
 
             /// <summary>The rounds the acceptance asks for (I / IV / IX / XIV / XXIII).</summary>
@@ -1874,9 +1884,9 @@ namespace DD.Prototype.UI
 
                 Debug.Log("[UiCapture] hudv4demo empty pulls");
                 yield return new WaitForSecondsRealtime(0.3f);
-                WeaponEvents.PublishDryFire();
+                HudV4DryFire();
                 yield return new WaitForSecondsRealtime(0.4f);
-                WeaponEvents.PublishDryFire();
+                HudV4DryFire();
                 yield return new WaitForSecondsRealtime(0.3f);
                 classic.TryBeginReload();
                 yield return WaitFor(() => !classic.IsReloading, 6f);

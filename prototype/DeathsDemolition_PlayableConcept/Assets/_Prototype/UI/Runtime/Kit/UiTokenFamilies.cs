@@ -229,8 +229,10 @@ namespace DD.Prototype.UI
         /// <summary>G1: at most one gold punch per this many seconds; arrivals in between gather into the next one.</summary>
         public const float PunchMinInterval = 0.12f;
 
-        /// <summary>G3: gains inside this window read as one "+N" (= Emphasis).</summary>
-        public const float PlusMergeWindow = 0.4f;
+        /// <summary>
+        /// G3: gains inside this window read as one "+N". WP-095 feel contract §4.9 (wins over HAREKET-HUD's Emphasis 400): 0.35 s.
+        /// </summary>
+        public const float PlusMergeWindow = 0.35f;
 
         /// <summary>A1: shot accents (spark, casing, lean) at most 10 a second - a faster weapon accents every second shot.</summary>
         public const float ShotAccentMinInterval = 0.1f;
@@ -275,8 +277,11 @@ namespace DD.Prototype.UI
         public const float BeatCriticalGain = 1.3f;
         public const float BeatCriticalFraction = 0.15f;
 
-        /// <summary>H5: the dub follows the lub by this much (= Screen).</summary>
-        public const float BeatDubDelay = 0.28f;
+        /// <summary>
+        /// H5: the dub follows the lub by this much. 08.10 (K/wp-095/HIS-SOZLESMESI.md §4.7 - the heartbeat rumble's double beat
+        /// is "+0,18 s"; one clock, so the HUD's beat lands with it): 0.18 s (HAREKET-HUD had 0.28).
+        /// </summary>
+        public const float BeatDubDelay = 0.18f;
 
         /// <summary>H5: the stroke rim's alpha between beats and at a beat (the difference × FlashScale).</summary>
         public const float BeatRimRest = 0.35f;
@@ -381,6 +386,28 @@ namespace DD.Prototype.UI
         {
             float v = 1f - u;
             return 3f * v * v * p1 + 6f * v * u * (p2 - p1) + 3f * u * u * (1f - p2);
+        }
+
+        /// <summary>The standard easeOutBack overshoot (Penner's 1.70158): about 10 % past the end at t ≈ 0.6.</summary>
+        public const float BackOvershoot = 1.70158f;
+
+        /// <summary>
+        /// WP-094 (K/wp-095/HIS-SOZLESMESI.md, S-02's feel contract): easeOutBack - 1 + (s + 1)(t − 1)³ + s(t − 1)² - for the
+        /// contract's pops only (UiMotion.PopSeconds). It overshoots by design, so it is NOT a <see cref="UiEase"/> member (the
+        /// named curves stay monotone and inside [0, 1] - UiTokensV3Tests). Allocation-free.
+        /// </summary>
+        public static float OutBack(float t, float overshoot = BackOvershoot)
+        {
+            t = Mathf.Clamp01(t);
+            float u = t - 1f;
+            return 1f + (overshoot + 1f) * u * u * u + overshoot * u * u;
+        }
+
+        /// <summary>easeInQuad (t²): the damage-direction exit (HIS-SOZLESMESI §4.6).</summary>
+        public static float InQuad(float t)
+        {
+            t = Mathf.Clamp01(t);
+            return t * t;
         }
 
         /// <summary>Stamp scale at time since contact start: 1.12 → 1.00 InCubic over 90 ms, then 1.00. Never below 1.</summary>

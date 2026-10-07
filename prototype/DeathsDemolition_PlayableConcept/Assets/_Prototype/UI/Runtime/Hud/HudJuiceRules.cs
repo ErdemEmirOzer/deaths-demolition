@@ -113,26 +113,47 @@ namespace DD.Prototype.UI
     }
 
     /// <summary>
-    /// WP-094 (HAREKET-HUD H5; the user: "düşük canda nabız") · the low-health heartbeat's clock: a lub every
-    /// <see cref="UiTokens.PulsePeriod"/> (0.92 s = 1.087 Hz, under <see cref="UiMotionTokens.MaxLoopHz"/>) and its dub
-    /// <see cref="UiMotionTokens.BeatDubDelay"/> later - event-driven beats (one Scale tween each), not a looping tween.
-    /// S-08's FeelEvents.HeartBeat can drive it instead (<see cref="External"/>): the HUD's own clock stops and the visual beat
-    /// stays at or under 1.1 Hz however fast the sound beats. One beat per <see cref="Tick"/>: a long frame drops a missed lub
-    /// rather than playing two at once. No allocation.
+    /// WP-094 (HAREKET-HUD H5; the user: "düşük canda nabız") · the low-health heartbeat's clock: event-driven lubs (one Scale
+    /// tween each, not a looping tween) and their dub <see cref="UiMotionTokens.BeatDubDelay"/> later. One beat per
+    /// <see cref="Tick"/>: a long frame drops a missed lub rather than playing two at once. No allocation.
+    /// 08.10 (K/wp-095/HIS-SOZLESMESI.md §4.7, S-02's feel contract - it wins over HAREKET-HUD's 0.92 s / ≤ 1.1 Hz): the rhythm
+    /// is the heartbeat clock's, 70 bpm at 30 % health → 110 bpm at 10 % (<see cref="SetRate"/>; up to 1.83 Hz - a small coral
+    /// rim and a glyph, under WCAG's 3 a second). FeelEvents.Heartbeat (S-02, Faz 2) drives it through <see cref="External"/>
+    /// when it lands; the own clock is its stand-in until then.
     /// </summary>
     public sealed class HudHeartbeat
     {
+        /// <summary>§4.7: the heartbeat's rate at the band's entry (30 %) and at its floor (10 % and under).</summary>
+        public const float BpmAtEnter = 70f;
+        public const float BpmAtFloor = 110f;
+        public const float EnterRatio = 0.30f;
+        public const float FloorRatio = 0.10f;
+
         private bool _on;
         private bool _external;
+        private float _period = 60f / BpmAtEnter;
         private float _nextLub;
         private float _dubAt = -1f;
         private float _lastLub = float.NegativeInfinity;
 
-        /// <summary>The lub-to-lub period (s): the attention pulse's.</summary>
-        public static float Period => UiTokens.PulsePeriod;
+        /// <summary>§4.7: the lub-to-lub period (s) at <paramref name="healthRatio"/> - 60 / bpm, the bpm linear from 70 (≥ 30 %) to 110 (≤ 10 %).</summary>
+        public static float PeriodFor(float healthRatio)
+        {
+            float k = Mathf.Clamp01((EnterRatio - healthRatio) / (EnterRatio - FloorRatio));
+            return 60f / (BpmAtEnter + (BpmAtFloor - BpmAtEnter) * k);
+        }
 
-        /// <summary>The shortest lub-to-lub an external source may drive (1 / MaxLoopHz).</summary>
-        public static float MinExternalPeriod => 1f / UiMotionTokens.MaxLoopHz;
+        /// <summary>The lub-to-lub period now (s).</summary>
+        public float Period => _period;
+
+        /// <summary>The rhythm follows health (each frame; a change takes effect from the next lub).</summary>
+        public void SetRate(float healthRatio)
+        {
+            _period = PeriodFor(healthRatio);
+        }
+
+        /// <summary>An external clock's beats closer than this are one beat (a double raise); 150 bpm, past the contract's 110.</summary>
+        public static float MinExternalPeriod => 0.4f;
 
         public bool Running => _on;
 
@@ -259,6 +280,48 @@ namespace DD.Prototype.UI
         public static float ContactSeconds(int glyphCount)
         {
             return SealSeconds(glyphCount) + UiMotionTokens.StampInSeconds;
+        }
+    }
+
+    /// <summary>
+    /// WP-094 · the damage-direction envelope (K/wp-095/HIS-SOZLESMESI.md §4.6, S-02's feel contract, 08.10): in over
+    /// <see cref="UiTokens.DamageEdgeRiseSeconds"/> (linear), held <see cref="UiTokens.DamageEdgeHoldSeconds"/>, out over
+    /// <see cref="UiTokens.DamageEdgeDecaySeconds"/> on easeInQuad (1 − u²) - the screen edges (UiHitDirectionLayer) and the
+    /// top-down wedges (HudPlayerArcs) both read it, so the two never disagree about how long a hit lasts. Pure, 0 B.
+    /// </summary>
+    public static class HudDamageEnvelope
+    {
+        /// <summary>One hit's whole life (0.6 s).</summary>
+        public static float Life => UiTokens.DamageEdgeRiseSeconds + UiTokens.DamageEdgeHoldSeconds + UiTokens.DamageEdgeDecaySeconds;
+
+        /// <summary>The share of the peak shown <paramref name="age"/> seconds after the onset (0 before and after).</summary>
+        public static float At(float age)
+        {
+            if (age < 0f)
+            {
+                return 0f;
+            }
+
+            float rise = UiTokens.DamageEdgeRiseSeconds;
+            if (age < rise)
+            {
+                return age / rise;
+            }
+
+            float held = rise + UiTokens.DamageEdgeHoldSeconds;
+            if (age < held)
+            {
+                return 1f;
+            }
+
+            float u = (age - held) / UiTokens.DamageEdgeDecaySeconds;
+            return u >= 1f ? 0f : 1f - UiEaseCurve.InQuad(u);
+        }
+
+        /// <summary>The age at which a lit edge re-starts on a new hit: past the rise (it is already showing - no dip to 0).</summary>
+        public static float RestartAge(float visible)
+        {
+            return visible > 0f ? UiTokens.DamageEdgeRiseSeconds : 0f;
         }
     }
 

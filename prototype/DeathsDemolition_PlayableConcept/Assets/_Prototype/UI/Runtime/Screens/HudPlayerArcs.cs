@@ -12,9 +12,12 @@ namespace DD.Prototype.UI
     /// - Damage arc (E17): on a hit, a soft brush wedge (UiSprites.ArcSoft60, "Arc.Soft") on r 48–64, DamageEdge at the edge
     ///   band's peak × FlashScale, 60 ms hold then a 400 ms fade. 12 px clear of the hairline: a rear attack landing reads
     ///   as the wedge inside the hairline, a hit from elsewhere as a wedge alone.
-    /// WP-094 HUD v4 (R3, C-00 07.10; HAREKET-HUD D2, the motion lead's main-branch finding): TWO wedges. A second hit in the
-    /// same moment used to turn the one wedge away from the first attacker; now a hit from within <see cref="SameSideDegrees"/>
-    /// of a live wedge re-flares that wedge, any other takes the free (or the older) one - two attackers, two wedges.
+    /// WP-094 HUD v4 (R3, C-00 07.10; HAREKET-HUD D2, the motion lead's main-branch finding): a POOL of wedges. A second hit in
+    /// the same moment used to turn the one wedge away from the first attacker; now a hit from within
+    /// <see cref="SameSideDegrees"/> of a live wedge re-flares that wedge, any other takes the free (or the oldest) one.
+    /// 08.10 (K/wp-095/HIS-SOZLESMESI.md §4.6, S-02's feel contract - it wins over HAREKET-HUD's 2 and 60 + 400 ms): at most
+    /// <see cref="DamageWedges"/> (4) arcs, each on the contract's envelope (HudDamageEnvelope: in 0.05 s, hold 0.25 s, out 0.3 s
+    /// easeInQuad) driven by <see cref="Tick"/> from the HUD's frame - one renderer alpha a live wedge, written on a change.
     /// </summary>
     public sealed class HudPlayerArcs
     {
@@ -23,8 +26,8 @@ namespace DD.Prototype.UI
         public const float RearAlpha = 0.6f;
         public const float DamageHoldSeconds = 0.06f;
 
-        /// <summary>WP-094 (D2): the wedges in the pool, and the bearing gap under which a hit re-flares a live wedge.</summary>
-        public const int DamageWedges = 2;
+        /// <summary>WP-094 (D2; feel contract §4.6 "≤ 4 yay"): the wedges in the pool, and the bearing gap under which a hit re-flares a live wedge.</summary>
+        public const int DamageWedges = 4;
         public const float SameSideDegrees = 30f;
 
         private readonly RectTransform _root;
@@ -33,6 +36,7 @@ namespace DD.Prototype.UI
         private readonly Image[] _wedges = new Image[DamageWedges];
         private readonly float[] _wedgeAngle = new float[DamageWedges];
         private readonly HudSlotPool _wedgePool = new HudSlotPool(DamageWedges);
+        private readonly float[] _wedgeShown = { -1f, -1f, -1f, -1f };
         private bool _rearShown;
         private float _rearAngle = float.NaN;
         private Vector2 _shownAt = new Vector2(float.NaN, float.NaN);
@@ -138,9 +142,9 @@ namespace DD.Prototype.UI
                 return; // no direction: the screen edges already say "everywhere"
             }
 
-            // WP-094 (D2): the live wedge on this side re-flares; otherwise the free one, or the older of the two.
+            // WP-094 (D2): the live wedge on this side re-flares (past its rise - no dip); otherwise the free one, or the oldest.
             float now = UiFxGlobals.Now;
-            float life = DamageHoldSeconds + UiMotionTokens.Seconds(UiDuration.Emphasis);
+            float life = HudDamageEnvelope.Life;
             int slot = -1;
             for (int i = 0; i < DamageWedges; i++)
             {
@@ -157,15 +161,30 @@ namespace DD.Prototype.UI
             }
             else
             {
-                _wedgePool.Restart(slot, now, life);
+                float start = now - HudDamageEnvelope.RestartAge(1f);
+                _wedgePool.Restart(slot, start, life);
             }
 
             Image wedge = _wedges[slot];
             _wedgeAngle[slot] = angle;
             wedge.rectTransform.localRotation = Quaternion.Euler(0f, 0f, angle);
             UiMotion.KillTarget(wedge, false);
-            wedge.canvasRenderer.SetAlpha(UiTokens.DamageEdgePeakAlpha * UiTokens.FlashScale);
-            UiMotion.TintAlpha(wedge, 0f, UiDuration.Emphasis, UiEase.Exit, UiMotionClass.Flash, DamageHoldSeconds);
+            Tick(now);
+        }
+
+        /// <summary>The live wedges' alpha on the contract envelope at <paramref name="now"/> (unscaled); written only on a visible change.</summary>
+        public void Tick(float now)
+        {
+            float peak = UiTokens.DamageEdgePeakAlpha * UiTokens.FlashScale;
+            for (int i = 0; i < DamageWedges; i++)
+            {
+                float alpha = _wedgePool.Live(i, now) ? peak * HudDamageEnvelope.At(now - _wedgePool.StartedAt(i)) : 0f;
+                if (_wedgeShown[i] < 0f || Mathf.Abs(alpha - _wedgeShown[i]) >= 1f / 255f || (alpha == 0f && _wedgeShown[i] != 0f))
+                {
+                    _wedgeShown[i] = alpha;
+                    _wedges[i].canvasRenderer.SetAlpha(alpha);
+                }
+            }
         }
 
         /// <summary>Screen direction → the z rotation that turns the 12 o'clock arc to face it; NaN for no direction.</summary>

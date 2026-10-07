@@ -185,6 +185,29 @@ namespace DD.Prototype.UI
             _shown = _target;
         }
 
+        /// <summary>
+        /// WP-094 (K/wp-095/HIS-SOZLESMESI.md §4.9): a roll over a contract length - the HUD gold's 0.25 s easeOutCubic (the Settle
+        /// curve is CSS easeOutCubic). Delta, as <see cref="RollTo"/>: the final value at once under reduced motion; a retarget
+        /// continues from the digit on screen.
+        /// </summary>
+        public void RollToSeconds(int value, float seconds)
+        {
+            if (value == _target)
+            {
+                return;
+            }
+
+            _target = value;
+            if (_style == UiCounterStyle.Timer)
+            {
+                SetNow(value);
+                return;
+            }
+
+            UiMotion.CountSeconds(_value, _shown, _target, seconds, UiEase.Settle, UiMotionClass.Delta);
+            _shown = _target;
+        }
+
         public void SetMax(int max)
         {
             if (_max == null)

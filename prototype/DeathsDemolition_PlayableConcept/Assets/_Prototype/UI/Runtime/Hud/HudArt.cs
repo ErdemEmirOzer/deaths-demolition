@@ -68,10 +68,21 @@ namespace DD.Prototype.UI
 
         /// <summary>
         /// Cap height / plate height. P-07 proposes 0.375 (the plate ≈ 2.7 × cap); the AD allows up to 0.42 "if the top right
-        /// reads heavy" (AP032-v001-AD.md S-09 note 2). The HUD takes 0.42: XXXVIII's plate then stays clear of the threat
-        /// chips at the Mac's 1600-wide canvas. Legibility does not change with it (the band, not the plate, carries the cap).
+        /// reads heavy" (AP032-v001-AD.md S-09 note 2). 08.10 (S-09: "plaka yüksekliği" lever, the 1.5 % coverage cap with
+        /// XIV / XXXVIII - HudCoverageTests): 0.46 - the largest ratio at which the plate's dense band (rows 25–84 of 128,
+        /// 0.461 of its height) still holds the whole cap, so the letters never leave the band (legibility unchanged); the plate
+        /// is 9 % shorter than at 0.42. AD to confirm at delivery.
         /// </summary>
-        public const float SmearCapRatio = 0.42f;
+        public const float SmearCapRatio = 0.46f;
+
+        /// <summary>
+        /// 08.10 (S-09): the plate is at most this wide (ref px) - inside S-09's 320 ceiling, at 288 so XXXVIII (two centre
+        /// periods) keeps the coverage cap (estimate 1.39 % against 1.54 % at 320); a longer numeral's cap shrinks to fit it,
+        /// down to <see cref="CapFloor"/> (past the floor the plate may run longer - LXXXVIII and up).
+        /// </summary>
+        public const float PlateMaxWidth = 288f;
+        public const float PlateCeiling = 320f;
+        public const float CapFloor = 32f;
 
         /// <summary>The seal: 0.45 em, its left edge 0.22 em after the last glyph's advance, its centre 0.55 diameters left of the dense zone's right end.</summary>
         public const float SealEm = 0.45f;
@@ -289,6 +300,23 @@ namespace DD.Prototype.UI
             float tail = (SmearNativeWidth - SmearDenseRight) * texel;
             sealCentre = tail + SealFromDenseRight * sealDiameter;
             runRight = sealCentre + sealDiameter * 0.5f + SealGapEm * cap;
+        }
+
+        /// <summary>
+        /// The cap a numeral of <paramref name="runEm"/> (advances + kerning, em) takes on the plate: <paramref name="baseCap"/>
+        /// unless the plate would pass <see cref="PlateMaxWidth"/>, then smaller in proportion (the plate's width is linear in the
+        /// cap - its period count depends on em only), never under <see cref="CapFloor"/>.
+        /// </summary>
+        public static float FitCap(float baseCap, float runEm, float firstLsbEm)
+        {
+            float width, height, runRight, sealCentre, seal;
+            LaySmear(baseCap, runEm * baseCap, firstLsbEm, out width, out height, out runRight, out sealCentre, out seal);
+            if (width <= PlateMaxWidth + 0.01f)
+            {
+                return baseCap;
+            }
+
+            return Mathf.Max(CapFloor, baseCap * PlateMaxWidth / width);
         }
 
         /// <summary>The glyph's cap centre below the plate's centre (the baseline at 0.62 of the height, the cap above it), px.</summary>

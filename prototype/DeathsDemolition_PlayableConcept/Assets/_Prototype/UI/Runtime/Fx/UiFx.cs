@@ -130,6 +130,21 @@ namespace DD.Prototype.UI
             Dirty();
         }
 
+        /// <summary>WP-094: the one-shot starts <paramref name="delay"/> s from now (a banner drawn after a beat; nothing inked before).</summary>
+        public void PlayDelayed(float delay)
+        {
+            _start = UiFxGlobals.Now + Mathf.Max(0f, delay);
+            Dirty();
+        }
+
+        /// <summary>WP-094: a new length for the next play, mode / parameters / channel kept (one vertex rebuild).</summary>
+        public UiFx SetDuration(float seconds)
+        {
+            _duration = Mathf.Max(0.01f, seconds);
+            Dirty();
+            return this;
+        }
+
         /// <summary>Show the start state (nothing inked yet) until <see cref="Play"/>.</summary>
         public void Hold()
         {

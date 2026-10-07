@@ -75,6 +75,14 @@ namespace DD.Prototype.UI
         public const float FadeSeconds = 0.2f;
         public const float PopFrom = 1.15f;
         public const float PopSeconds = 0.1f;
+
+        /// <summary>
+        /// WP-094 (K/wp-095/HIS-SOZLESMESI.md §4.2, S-02's feel contract; the HUD row is S-09's): a critical number (the
+        /// starburst style) pops 1.3 → 1 over 0.12 s on easeOutBack - it passes 1 a little and settles - instead of the
+        /// plain number's 1.15 → 1 Settle. Text past the kit's 1.06 text pop, as the contract names it; none under reduced motion.
+        /// </summary>
+        public const float CritPopFrom = 1.3f;
+        public const float CritPopSeconds = 0.12f;
         public const float FlushSeconds = 0.2f;
         public const float RestSeconds = 0.5f;
         public const float BurstScale = 2.3f;
@@ -489,6 +497,17 @@ namespace DD.Prototype.UI
             }
         }
 
+        /// <summary>The number's pop scale <paramref name="age"/> s into its pop: a crit's 1.3 → 1 easeOutBack (§4.2), else 1.15 → 1 Settle.</summary>
+        public static float PopScale(bool critical, float age)
+        {
+            if (critical)
+            {
+                return Mathf.LerpUnclamped(CritPopFrom, 1f, UiEaseCurve.OutBack(age / CritPopSeconds));
+            }
+
+            return Mathf.Lerp(PopFrom, 1f, UiEaseCurve.Evaluate(UiEase.Settle, age / PopSeconds));
+        }
+
         private void Place(ref Slot s)
         {
             Camera cam = CameraOverride != null ? CameraOverride : FeedbackCameraRef.Current;
@@ -519,7 +538,7 @@ namespace DD.Prototype.UI
 
             Vector2 at = new Vector2(local.x, local.y + rise);
             s.TextRect.anchoredPosition = at;
-            float pop = rm || s.State == SlotState.Flushing ? 1f : Mathf.Lerp(PopFrom, 1f, UiEaseCurve.Evaluate(UiEase.Settle, s.PopAge / PopSeconds));
+            float pop = rm || s.State == SlotState.Flushing ? 1f : PopScale(s.Style.Burst, s.PopAge);
             s.TextRect.localScale = new Vector3(pop, pop, 1f);
             if (s.Burst.enabled)
             {

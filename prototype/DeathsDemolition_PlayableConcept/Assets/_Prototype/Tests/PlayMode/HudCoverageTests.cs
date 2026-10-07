@@ -17,10 +17,17 @@ namespace DD.Prototype.Tests.PlayMode
     /// - it renders once over black and once over white;
     /// - a pixel is covered when either render differs from its background by more than 3 % in any channel.
     /// That counts translucent ink over white and pale strokes over black alike.
+    /// WP-094 (S-09, 08.10): the round's brush plate grows with its numeral, so the cap holds at three rounds - I (the
+    /// shortest), XIV (a mid plate) and XXXVIII (the longest under 40, its cap shrunk to fit the 288 px plate - HudArt.FitCap).
+    /// The levers that keep XIV / XXXVIII under the cap are the cap 44 → 40 and the plate's height (cap / 0.46); the plate's
+    /// alpha is no lever (its mask is near-binary: a covered pixel stays covered at any α the AD accepts).
     /// </summary>
     public sealed class HudCoverageTests
     {
         public const float PersistentCapPercent = 1.5f;
+
+        /// <summary>WP-094 (S-09, 08.10): the rounds the cap is held at - the shortest, a mid and the longest plate under 40.</summary>
+        private static readonly int[] Rounds = { 1, 14, 38 };
         private const int Width = 1920;
         private const int Height = 1080;
         private const int Tolerance = 8;   // 3 % of 255
@@ -45,12 +52,29 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.IsNotNull(canvas, "HUD canvas'ı yok");
 
             var result = new float[1];
-            yield return Measure(canvas, result);
-            Debug.Log("[DD-TEST] wp068.8r.coverage=" + result[0].ToString("0.00") + "%");
-            Assert.Greater(result[0], 0.2f, "ölçüm HUD'ı görmedi (pozitif kontrol: dört küme en az %0,2)");
-            Assert.LessOrEqual(result[0], PersistentCapPercent,
-                "kalıcı HUD 1080p ekranın %" + PersistentCapPercent + "'ini geçmemeli (UI ölçeği 1,0, metin ölçeği 1,0; kullanıcı kararı 24.09;" +
-                " paneller %10,48 idi). Mac 1,2 × 1,25 değeri yalnız bilgi - yakalama ölçeri raporlar.");
+            foreach (int round in Rounds)
+            {
+                // The numeral through the production path (the capture seam), then past its transition and the seal's ink.
+                hud.CaptureRound(round);
+                float until = Time.realtimeSinceStartup + 5f;
+                while (hud.RoundTransitionLive && Time.realtimeSinceStartup < until)
+                {
+                    yield return null;
+                }
+
+                Assert.IsFalse(hud.RoundTransitionLive, "raund geçişi 5 sn'de bitmedi (" + round + ")");
+                yield return new WaitForSecondsRealtime(0.6f);
+                Assert.AreEqual(round, hud.RoundNumeral.Value, "HUD raundu göstermiyor");
+
+                yield return Measure(canvas, result);
+                string name = RomanNumerals.Cached(round);
+                Debug.Log("[DD-TEST] wp068.8r.coverage." + name + "=" + result[0].ToString("0.00") + "% cap="
+                    + hud.RoundCap.ToString("0.0") + " numeral=" + hud.RoundNumeral.Width.ToString("0.0"));
+                Assert.Greater(result[0], 0.2f, "ölçüm HUD'ı görmedi (pozitif kontrol: dört küme en az %0,2)");
+                Assert.LessOrEqual(result[0], PersistentCapPercent,
+                    name + ": kalıcı HUD 1080p ekranın %" + PersistentCapPercent + "'ini geçmemeli (UI ölçeği 1,0, metin ölçeği 1,0; kullanıcı" +
+                    " kararı 24.09; paneller %10,48 idi). Mac 1,2 × 1,25 değeri yalnız bilgi - yakalama ölçeri raporlar.");
+            }
 
             PrototypeUiFlow.AbortRunToMainMenu();
             yield return SahneyiBekle(PrototypeScenes.MainMenu);

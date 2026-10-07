@@ -74,6 +74,17 @@ namespace DD.Prototype.Tests.PlayMode
             (typeof(DD.Prototype.Weapons.SpecialWeaponRoundBridge), "RoundEnded"),
             (typeof(DD.Prototype.Weapons.SpecialWeaponRoundBridge), "RunStarted"),
             (typeof(DD.Prototype.Weapons.SpecialWeaponRoundBridge), "RunEnded"),
+            // WP-094 (08.10, K/wp-095/FEELEVENTS-LISTE.md): the R3 feel layers listen to FeelEvents only. The bridge itself is
+            // process-long (its sources above); the HUD's listeners are scene-local and must leave with the Run scene.
+            (typeof(DD.Prototype.Feedback.FeelEvents), "PlayerDamaged"),
+            (typeof(DD.Prototype.Feedback.FeelEvents), "RoundStarted"),
+            (typeof(DD.Prototype.Feedback.FeelEvents), "DryFire"),
+            (typeof(DD.Prototype.Feedback.FeelEvents), "ReloadEnded"),
+            (typeof(DD.Prototype.Feedback.FeelEvents), "EnemyHit"),
+            (typeof(DD.Prototype.Feedback.FeelEvents), "EnemyKilled"),
+            (typeof(DD.Prototype.Feedback.FeelEvents), "MultiKill"),
+            (typeof(DD.Prototype.Feedback.FeelEvents), "LowHealth"),
+            (typeof(DD.Prototype.Feedback.FeelEvents), "LastZombie"),
         };
 
         public static int AboneSayisi(Type tip, string eventAdi)

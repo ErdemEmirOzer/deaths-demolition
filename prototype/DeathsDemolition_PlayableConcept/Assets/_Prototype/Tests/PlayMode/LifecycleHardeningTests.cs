@@ -191,7 +191,9 @@ namespace DD.Prototype.Tests.PlayMode
             // karede gold sayacı) olaylarına da abone — ikisi de sahne-yerel, OnDestroy'da çıkar.
             var beklenenFark = new Dictionary<string, int>
             {
-                { "RunEvents.RunStarted", 1 }, { "RunEvents.RoundStarted", 2 },   // WP-069 B2 (4e448f41): WeaponController refills the reserve per round (OnEnable/OnDisable, scene-local)
+                // WP-069 B2 (4e448f41): WeaponController refills the reserve per round (OnEnable/OnDisable, scene-local).
+                // WP-094 (08.10): RunHudScreen's round banner moved to FeelEvents.RoundStarted (2 → 1).
+                { "RunEvents.RunStarted", 1 }, { "RunEvents.RoundStarted", 1 },
                 { "RunEvents.RoundCompleted", 3 },   // WP-078: the camera rig (scene-local, OnDisable removes) logs its inside-collider counter; WP-071: the ragdoll round log (armed at spawn, leaves on scene change)
                 { "RunEvents.RoundPoolExhausted", 1 }, { "RunEvents.GoldChanged", 1 }, { "RunEvents.PhaseChanged", 0 },
                 { "RunEvents.CountdownTick", 0 }, { "RunEvents.RunEnded", 0 }, { "RunFlowClock.FrozenChanged", 0 },
@@ -201,8 +203,9 @@ namespace DD.Prototype.Tests.PlayMode
                 // WP-068 8b: RunHudScreen also takes AnyDamaged (the player-bound damage arc, E17).
                 // DEC-113 RunDirector, scene-local, paired unsubscribe: AnyDamaged → the Round Report's health lost (+1).
                 // WP-094 (C-00 07.10): the HUD's two listeners (RunHudScreen, UiHitDirectionLayer) now hear the hit through
-                // HudFeelSource - ONE bridge on AnyDamaged, made with the first HUD listener and dropped with the last (3 → 2).
-                { "PlayerHealth.AnyHealthChanged", 1 }, { "PlayerHealth.AnyDamaged", 2 },
+                // HudFeelSource - ONE bridge, made with the first HUD listener and dropped with the last (3 → 2). 08.10: the
+                // bridge sits on FeelEvents.PlayerDamaged, not AnyDamaged (2 → 1; the FeelEvents row below takes the +1).
+                { "PlayerHealth.AnyHealthChanged", 1 }, { "PlayerHealth.AnyDamaged", 1 },
                 // WP-006: hasar olay busu izlenir. Run-yerel aboneler: EnemyDied ← RunDirector (kill/gold
                 // istatistiği) + GoldService (paket); ArmorBroken ← RunDirector (kırılma sayacı). EnemyDamaged /
                 // PlayerAttacked / EnemyHitDressed'a Run'da kalıcı abone yok (feedback tek sahibi çekmez, iter).
@@ -214,7 +217,8 @@ namespace DD.Prototype.Tests.PlayMode
                 // bridge subscriptions. Every one is scene-local and must disappear again in MainMenu.
                 { "WeaponEvents.WeaponEquipped", 1 }, { "WeaponEvents.AmmoChanged", 0 }, { "WeaponEvents.ReloadStarted", 1 },
                 { "WeaponEvents.ReloadCompleted", 0 }, { "WeaponEvents.ReloadInterrupted", 1 },
-                { "WeaponEvents.DryFire", 1 },   // WP-068 8a: RunHudScreen's ladder kick on an empty trigger (E11)
+                // WP-068 8a: RunHudScreen's ladder kick on an empty trigger (E11) - WP-094 (08.10) hears it from FeelEvents.DryFire (1 → 0).
+                { "WeaponEvents.DryFire", 0 },
                 { "WeaponEvents.ClassicChanged", 0 },
                 { "WeaponEvents.SpecialWeaponSpawned", 1 }, { "WeaponEvents.SpecialWeaponGroundExpired", 1 },
                 // WP-018/WP-032C: PlayerSkinnedVisual follows the player life and unsubscribes with the rig.
@@ -225,6 +229,12 @@ namespace DD.Prototype.Tests.PlayMode
                 { "WeaponEvents.SpecialWeaponCleared", 1 },
                 { "SpecialWeaponRoundBridge.RoundStarted", 1 }, { "SpecialWeaponRoundBridge.RoundEnded", 1 },
                 { "SpecialWeaponRoundBridge.RunStarted", 1 }, { "SpecialWeaponRoundBridge.RunEnded", 1 },
+                // WP-094 (08.10, K/wp-095/FEELEVENTS-LISTE.md): the FeelEvents bridge is process-long (0 in this difference);
+                // the HUD's listeners are scene-local and paired in OnDestroy - HudFeelSource's one PlayerDamaged bridge (made
+                // with the first HUD listener, dropped with the last) and RunHudScreen's eight moments, one each.
+                { "FeelEvents.PlayerDamaged", 1 }, { "FeelEvents.RoundStarted", 1 }, { "FeelEvents.DryFire", 1 },
+                { "FeelEvents.ReloadEnded", 1 }, { "FeelEvents.EnemyHit", 1 }, { "FeelEvents.EnemyKilled", 1 },
+                { "FeelEvents.MultiKill", 1 }, { "FeelEvents.LowHealth", 1 }, { "FeelEvents.LastZombie", 1 },
             };
             // Tamlık nöbetçisi (WP-007): tabloya girmeyen izlenen olay sessizce geçemez.
             Assert.AreEqual(IzlenenEventler.Length, beklenenFark.Count,

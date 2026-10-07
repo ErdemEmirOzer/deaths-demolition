@@ -2291,6 +2291,10 @@
     "en": "EMPTY",
     "tr": "BOŞ"
   },
+  "hud.ammo.reload_hint": {
+    "en": "RELOAD",
+    "tr": "DOLDUR"
+  },
   "hud.banner.classic_restored": {
     "en": "CLASSIC WEAPON RESTORED",
     "tr": "KLASİK SİLAH GERİ DÖNDÜ"
@@ -2301,7 +2305,11 @@
   },
   "hud.banner.round": {
     "en": "ROUND {value}",
-    "tr": "ROUND {value}"
+    "tr": "RAUND {value}"
+  },
+  "hud.banner.round_clear": {
+    "en": "ROUND {value} CLEAR",
+    "tr": "RAUND {value} TEMİZ"
   },
   "hud.banner.round_complete": {
     "en": "ROUND {value} COMPLETE",

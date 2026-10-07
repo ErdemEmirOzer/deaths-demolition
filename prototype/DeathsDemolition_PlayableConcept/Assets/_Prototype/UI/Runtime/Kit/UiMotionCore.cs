@@ -94,6 +94,7 @@ namespace DD.Prototype.UI
             public float Duration;
             public int Owner;
             public int LastCount;
+            public float Overshoot;  // WP-094: > 0 → the progress runs through UiEaseCurve.OutBack (a contract pop), not Ease
         }
 
         private struct Cue
@@ -252,6 +253,48 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>WP-094: CanvasRenderer alpha from an explicit start (a flare's fall, which starts after its rise has ended).</summary>
+        /// <summary>
+        /// WP-094 (K/wp-095/HIS-SOZLESMESI.md §4.2 – §4.10, S-02's feel contract): a pop - the scale jumps to <paramref name="from"/>
+        /// and comes back to <paramref name="to"/> over <paramref name="seconds"/> on easeOutBack (it passes the rest a little and
+        /// settles: <see cref="UiEaseCurve.OutBack"/>). The one overshooting motion in the kit, and only where the contract names
+        /// it (crit numbers 1.3, kill reticle 1.22, ×N 1.3, ammo 1.15, gold 1.12); the named UiEase curves stay overshoot-free.
+        /// Decor: at rest under reduced motion. Same Scale channel, so it retargets any running scale on the rect.
+        /// </summary>
+        public static UiTweenHandle PopSeconds(RectTransform rect, float from, float to, float seconds, UiMotionClass motionClass = UiMotionClass.Decor,
+            float delay = 0f, int owner = 0, float overshoot = UiEaseCurve.BackOvershoot)
+        {
+            if (rect == null) return default(UiTweenHandle);
+            UiTweenHandle handle = Play(rect, UiChannel.Scale, new Vector4(from, 0f, 0f, 0f), new Vector4(to, 0f, 0f, 0f), seconds, UiEase.Linear, motionClass, delay, UiClock.Unscaled, owner, false);
+            if (IsAlive(handle))
+            {
+                s_tweens[handle.Index].Overshoot = Mathf.Max(0.01f, overshoot);
+            }
+
+            return handle;
+        }
+
+        /// <summary>WP-094 (HIS-SOZLESMESI §4.10 / §4.11): a CanvasGroup fade over a contract length (a banner's 0.3 s).</summary>
+        public static UiTweenHandle AlphaSeconds(CanvasGroup group, float to, float seconds, UiEase ease, UiMotionClass motionClass, float delay = 0f, int owner = 0)
+        {
+            if (group == null) return default(UiTweenHandle);
+            return Play(group, UiChannel.Alpha, new Vector4(group.alpha, 0f, 0f, 0f), new Vector4(to, 0f, 0f, 0f), seconds, ease, motionClass, delay, UiClock.Unscaled, owner, false);
+        }
+
+        /// <summary>WP-094 (HIS-SOZLESMESI §4.10 / §4.11): sizeDelta over a contract length (a banner's 0.35 s wipe), from where it stands.</summary>
+        public static UiTweenHandle ResizeSeconds(RectTransform rect, Vector2 to, float seconds, UiEase ease, UiMotionClass motionClass, float delay = 0f, int owner = 0)
+        {
+            if (rect == null) return default(UiTweenHandle);
+            Vector2 from = rect.sizeDelta;
+            return Play(rect, UiChannel.Size, new Vector4(from.x, from.y, 0f, 0f), new Vector4(to.x, to.y, 0f, 0f), seconds, ease, motionClass, delay, UiClock.Unscaled, owner, false);
+        }
+
+        /// <summary>WP-094 (HIS-SOZLESMESI §4.9): a count-up over a contract length (the gold's 0.25 s), not one of the six steps.</summary>
+        public static UiTweenHandle CountSeconds(TMP_Text text, int from, int to, float seconds, UiEase ease, UiMotionClass motionClass, float delay = 0f, int owner = 0)
+        {
+            if (text == null) return default(UiTweenHandle);
+            return Play(text, UiChannel.Count, new Vector4(from, 0f, 0f, 0f), new Vector4(to, 0f, 0f, 0f), seconds, ease, motionClass, delay, UiClock.Unscaled, owner, false);
+        }
+
         internal static UiTweenHandle TintAlphaSeconds(Graphic graphic, float from, float to, float seconds, UiEase ease, UiMotionClass motionClass, float delay = 0f, int owner = 0)
         {
             if (graphic == null) return default(UiTweenHandle);
@@ -374,7 +417,7 @@ namespace DD.Prototype.UI
                     continue;
                 }
 
-                Apply(ref tween, UiEaseCurve.Evaluate(tween.Ease, t));
+                Apply(ref tween, tween.Overshoot > 0f ? UiEaseCurve.OutBack(t, tween.Overshoot) : UiEaseCurve.Evaluate(tween.Ease, t));
             }
 
             TickTimelines();
@@ -619,6 +662,7 @@ namespace DD.Prototype.UI
             tween.Duration = Mathf.Max(0f, duration);
             tween.Owner = owner;
             tween.LastCount = lastCount;
+            tween.Overshoot = 0f;
 
             if (tween.Duration <= 0f && tween.Delay <= 0f && !loop)
             {
