@@ -226,54 +226,143 @@ namespace DD.Prototype.Tests.PlayMode
         }
 
         /// <summary>
-        /// R3 (C-00 07.10, option F): every shot's end is drawn once while the menu world loads - the cut only swaps the held
-        /// image's texture (b31: an 85 ms frame at each cut when it rendered there). They go with the menu: none during a run
-        /// (0 MB), and a menu → run → menu loop draws one new set without leaving the first behind.
+        /// R3 (C-00 07.10; gt MUST-1 07.10): the cut's held frame is the cut frame itself - for one frame the camera stays on the
+        /// slice's end (where it came to rest, the world settled around it) and draws into the held target, which covers the
+        /// screen at full weight; the frame after, the camera draws the screen again at the next shot's start under it. One world
+        /// render per frame across the cut (b31: 85 ms at each cut when the end was rendered a second time there), the held
+        /// target opaque (URP 14's post writes alpha 1: nothing under it shows), and it goes with the menu (none during a run).
         /// </summary>
         [UnityTest]
-        public IEnumerator AnaMenu_KesimKareleri_YuklemedeCizilir_KosudaSifir_DongudeSizintiYok()
+        public IEnumerator AnaMenu_Kesim_KendiKaresiniTutar_KareBasinaTekRender_KosudaSifir()
         {
             yield return BootTanMainMenuye();
             yield return Bekle(() => MenuCinematic.Current != null && MenuCinematic.Current.Live, 90f, "menü dünyası canlanmadı");
-            int shots = MenuCinematic.Shots.Length;
-            Assert.Greater(shots, 0, "çekim listesi");
-            Assert.AreEqual(shots, MenuCinematic.Current.PrewarmedSliceEnds, "her çekimin sonu yüklemede çizildi");
-            Assert.AreEqual(shots, LiveSliceEnds(), "bellekte çekim sayısı kadar kesim karesi");
+            yield return Bekle(() => !UiCurtain.IsCovering, 30f, "perde açılmadı");
+            MenuCinematic cinematic = MenuCinematic.Current;
+            Camera cam = cinematic.Camera;
+            var renders = new Dictionary<int, int>();
+            var targets = new Dictionary<int, RenderTexture>();
+            var positions = new Dictionary<int, Vector3>();
+            System.Action<UnityEngine.Rendering.ScriptableRenderContext, Camera> count = (context, c) =>
+            {
+                if (c != cam)
+                {
+                    return;
+                }
 
+                int f = Time.frameCount;
+                renders[f] = renders.TryGetValue(f, out int n) ? n + 1 : 1;
+                targets[f] = c.targetTexture;
+                positions[f] = c.transform.position;
+            };
+            UnityEngine.Rendering.RenderPipelineManager.beginCameraRendering += count;
+            var lines = new List<string>();
+            try
+            {
+                for (int s = 0; s < 2; s++)   // two cuts: S01 → S02 and S02 → S03
+                {
+                    float cut = (s + 1) * MenuCinematic.Slice - MenuCinematic.Blend;
+                    MenuCinematic.TimeOverride = cut - 0.5f;   // the move's tail: the camera comes to rest on the end
+                    for (int i = 0; i < 3; i++)
+                    {
+                        yield return null;
+                    }
+
+                    int captures = cinematic.CutCaptures;
+                    MenuCinematic.TimeOverride = cut + 0.001f;   // the cut
+                    yield return null;                            // this frame's Update has set the capture up; it renders next
+                    int cutFrame = Time.frameCount;
+                    Assert.AreEqual(captures + 1, cinematic.CutCaptures, "kesim kendi karesini tuttu (" + s + ")");
+                    RenderTexture held = cam.targetTexture;
+                    Assert.IsNotNull(held, "kesim karesinde kamera tutulan hedefe çiziyor");
+                    Assert.AreSame(held, cinematic.HeldTexture, "ekrandaki tutulan kare, kameranın bu kare çizdiği hedef");
+                    Assert.AreEqual(1f, cinematic.HeldWeightNow, 1e-4f, "kesim karesinde tutulan kare tam ağırlıkta ekranı kaplar");
+
+                    MenuCinematic.TimeOverride = cut + 0.02f;
+                    yield return null;                            // the cut frame has rendered; this Update gave the camera back
+                    Assert.IsNull(cam.targetTexture, "kesimden sonraki kare kamera ekrana çiziyor");
+                    Assert.AreSame(held, cinematic.HeldTexture, "geçiş başında aynı tutulan kare");
+                    Assert.Greater(cinematic.HeldWeightNow, 0.95f, "geçiş başında tutulan kare neredeyse tam");
+                    yield return null;
+                    yield return null;
+
+                    Assert.IsTrue(renders.TryGetValue(cutFrame, out int atCut), "kesim karesinde render yok");
+                    Assert.AreEqual(1, atCut, "kesim karesinde tek dünya render'ı");
+                    Assert.AreSame(held, targets[cutFrame], "kesim karesinin render'ı tutulan hedefe");
+                    Vector3 end = MenuCinematic.PoseOf(MenuCinematic.Shots[s], MenuCinematic.Slice).Position;
+                    Assert.Less(Vector3.Distance(end, positions[cutFrame]), 1e-3f, "kesim karesi çekimin son pozunda");
+                    float alphaMin = AlphaMin(held);
+                    Assert.GreaterOrEqual(alphaMin, 0.99f, "tutulan kare opak: altında bir şey görünmez");
+                    lines.Add(MenuCinematic.Shots[s].id + " cutFrame=" + cutFrame + " renders=" + atCut + " alphaMin=" + alphaMin.ToString("F3"));
+                }
+
+                foreach (KeyValuePair<int, int> r in renders)
+                {
+                    Assert.LessOrEqual(r.Value, 1, "karede birden fazla dünya render'ı (kare " + r.Key + ")");
+                }
+            }
+            finally
+            {
+                UnityEngine.Rendering.RenderPipelineManager.beginCameraRendering -= count;
+                MenuCinematic.TimeOverride = null;
+            }
+
+            Debug.Log("[DD-TEST] wp081.cutCapture frames=" + renders.Count + " heldTargets=" + LiveHeldTargets() + " · " + string.Join(" · ", lines));
             PrototypeUiFlow.GoToSelection();
             yield return SahneyiBekle(PrototypeScenes.Selection);
             PrototypeUiFlow.StartRun();
             yield return SahneyiBekle(PrototypeScenes.Run);
             yield return KosuHazirOlsun();
             yield return null;
-            Assert.AreEqual(0, LiveSliceEnds(), "koşuda kesim karesi yok (0 MB)");
-
-            PrototypeUiFlow.GoToMainMenu();
-            yield return SahneyiBekle(PrototypeScenes.MainMenu);
-            yield return Bekle(() => MenuCinematic.Current != null && MenuCinematic.Current.Live, 90f, "menü dünyası ikinci kez canlanmadı");
-            Assert.AreEqual(shots, LiveSliceEnds(), "ikinci menü: yalnız yeni set (sızıntı yok)");
-            Debug.Log("[DD-TEST] wp081.sliceEnds shots=" + shots + " menu=" + shots + " run=0 menu2=" + LiveSliceEnds()
-                + " doorsWait=" + PrototypeUiFlow.LastMenuWorldWaitSeconds.ToString("F3") + " s");
-
-            PrototypeUiFlow.GoToSelection();
-            yield return SahneyiBekle(PrototypeScenes.Selection);
-            yield return null;
-            Assert.AreEqual(0, LiveSliceEnds(), "menüden çıkınca serbest");
+            Assert.AreEqual(0, LiveHeldTargets(), "koşuda tutulan kare hedefi yok (0 MB)");
         }
 
-        /// <summary>The pre-drawn shot ends alive right now (MenuCinematic.SliceEndName).</summary>
-        private static int LiveSliceEnds()
+        /// <summary>The held frame targets alive right now (<see cref="MenuCinematic.HeldName"/>).</summary>
+        private static int LiveHeldTargets()
         {
             int n = 0;
             foreach (RenderTexture rt in Resources.FindObjectsOfTypeAll<RenderTexture>())
             {
-                if (rt != null && rt.name.StartsWith(MenuCinematic.SliceEndName, System.StringComparison.Ordinal))
+                if (rt != null && rt.name == MenuCinematic.HeldName)
                 {
                     n++;
                 }
             }
 
             return n;
+        }
+
+        /// <summary>The lowest alpha over a 32 px grid of <paramref name="source"/> (MSAA resolved through a plain copy).</summary>
+        private static float AlphaMin(RenderTexture source)
+        {
+            var copy = RenderTexture.GetTemporary(source.width, source.height, 0, RenderTextureFormat.ARGB32);
+            var read = new Texture2D(source.width, source.height, TextureFormat.RGBA32, false);
+            try
+            {
+                Graphics.Blit(source, copy);
+                RenderTexture previous = RenderTexture.active;
+                RenderTexture.active = copy;
+                read.ReadPixels(new Rect(0, 0, copy.width, copy.height), 0, 0);
+                read.Apply(false);
+                RenderTexture.active = previous;
+                Color32[] pixels = read.GetPixels32();
+                byte least = 255;
+                for (int y = 0; y < copy.height; y += 32)
+                {
+                    for (int x = 0; x < copy.width; x += 32)
+                    {
+                        byte a = pixels[y * copy.width + x].a;
+                        least = a < least ? a : least;
+                    }
+                }
+
+                return least / 255f;
+            }
+            finally
+            {
+                RenderTexture.ReleaseTemporary(copy);
+                Object.Destroy(read);
+            }
         }
 
         /// <summary>
@@ -340,8 +429,18 @@ namespace DD.Prototype.Tests.PlayMode
                 // Coverage, not the grade: post-processing off while measuring (b26: LookV3Post's grain changed 1-16 % of a
                 // frame between two renders of the same pose), back on after; what still moves (b26c) is masked out.
                 bool post = SetPostProcessing(cam, false);
+                var settled = new List<string>();
                 for (int i = 0; i < MenuCinematic.Shots.Length; i++)
                 {
+                    // gt MUST-2 (07.10): settle on the pose first. The cinematic parks there (TimeOverride), the world streams
+                    // its mips (>= 2 frames, then no load pending - ArtVisualRegression's rule) and the LOD cross-fades finish;
+                    // the first renders after a jump were what moved between the three (S04 41 %).
+                    MenuCinematic.TimeOverride = i * MenuCinematic.Slice + MenuCinematic.Hold + MenuCinematic.Move * 0.5f;
+                    float settleFrom = Time.unscaledTime;
+                    int settleFrames = Time.frameCount;
+                    yield return Settle();
+                    settled.Add(MenuCinematic.Shots[i].id + " " + (Time.frameCount - settleFrames) + "f/" + (Time.unscaledTime - settleFrom).ToString("F2") + "s");
+
                     // Mid-move of the shot, rendered at once into a 16:9 target (Update cannot move the camera in between).
                     cam.targetTexture = rt;
                     MenuCinematic.Place(cam, MenuCinematic.PoseOf(MenuCinematic.Shots[i], MenuCinematic.Hold + MenuCinematic.Move * 0.5f));
@@ -394,6 +493,8 @@ namespace DD.Prototype.Tests.PlayMode
                 }
 
                 SetPostProcessing(cam, post);
+                MenuCinematic.TimeOverride = null;
+                Debug.Log("[DD-TEST] wp081.menuProbes.settle " + string.Join(" · ", settled));
                 var kinds = new SortedDictionary<string, int>(System.StringComparer.Ordinal);
                 foreach (Renderer r in probeLit)
                 {
@@ -477,6 +578,28 @@ namespace DD.Prototype.Tests.PlayMode
 
             Assert.Fail("UniversalAdditionalCameraData.renderPostProcessing bulunamadı");
             return on;
+        }
+
+        /// <summary>
+        /// gt MUST-2 (07.10): >= 2 frames, then until no mip load is pending, and at least the LOD cross-fade's length + 0.1 s in
+        /// both clocks (the batch runner may step game time at a fixed rate); at most 10 s.
+        /// </summary>
+        private static IEnumerator Settle()
+        {
+            float started = Time.unscaledTime;
+            float least = LODGroup.crossFadeAnimationDuration + 0.1f;
+            int minFrames = Mathf.Max(2, Mathf.CeilToInt(least * 60f));
+            int frames = 0;
+            while (Time.unscaledTime - started < 10f)
+            {
+                yield return null;
+                frames++;
+                if (frames >= minFrames && Time.unscaledTime - started >= least &&
+                    Texture.streamingTexturePendingLoadCount == 0 && Texture.streamingTextureLoadingCount == 0)
+                {
+                    yield break;
+                }
+            }
         }
 
         private static Color32[] Render(Camera cam, RenderTexture rt, Texture2D read)
