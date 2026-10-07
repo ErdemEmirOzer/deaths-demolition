@@ -11,6 +11,14 @@ sys.path.insert(0, str(TOOLS))
 import dd_paths  # noqa: E402
 
 ALLOWED = {"dd-env.sh", "dd_paths.py", "slot.sh", "README.md"}
+# C-00 06.10 (user: no iCloud work on this machine) + gt 06.10 SHOULD: Desktop / Documents as a PATH component — after a
+# quote or a slash, or as a join() / joinpath() argument — and the iCloud Drive folders themselves
+OLD_PLACE = re.compile(r"""(["'/]\s*|(?:join|joinpath)\([^)]*?["'])(Desktop|Documents)\b(?!\s*&)|Mobile Documents|CloudDocs""")
+
+
+def strip_comment(line, suffix):
+    """a shell comment starts at a # that opens the line or follows a blank — `$#` and `${#x}` are code."""
+    return re.sub(r"(^|\s)#.*$", "", line) if suffix in (".sh", ".zsh") else line
 
 
 class DdKadroTests(unittest.TestCase):
@@ -52,21 +60,31 @@ class DdKadroTests(unittest.TestCase):
     def test_KadroKokuDevAltinda(self):
         self.assertEqual("Dev/KADRO", dd_paths.KADRO_REL)
 
+    def test_YolDeseni_OrneklerdeDogru(self):
+        """gt 06.10 (9a12a6f3, SHOULD): the scan must see every way a tool could spell the old place."""
+        hits = ['KADRO_REL = "Desktop/KADRO"', 'DD_ENV="$HOME/Desktop/KADRO/x"', 'x="$HOME"/Desktop/KADRO',
+                "os.path.join(HOME, 'Documents', 'Deaths Demolition')", 'Path.home() / "Desktop" / "KADRO"',
+                'p = home.joinpath("Desktop")', "p = HOME + '/Documents/x'", 'cd ~/Documents/x',
+                "/Users/Erdem/Desktop/KADRO", 'r = "Library/Mobile Documents/com~apple~CloudDocs"',
+                'echo "$#"; ls ~/Desktop']
+        misses = ['DD_KADRO_REL="Dev/KADRO"', 'echo "the Desktop & Documents folders are off"', 'n=$#',
+                  'log "a Desktop app"', 'x = "MyDocumentsTool"']
+        for line in hits:
+            self.assertTrue(OLD_PLACE.search(strip_comment(line, ".sh")), line)
+        for line in misses:
+            self.assertFalse(OLD_PLACE.search(strip_comment(line, ".sh")), line)
+
     def test_AracKodundaDesktopDocumentsYoluYok(self):
-        path = re.compile(r"(~|\$HOME|\$\{HOME\}|/Users/[^/\s\"']+|home\(\)\s*/?\s*[\"']?)/?(Desktop|Documents)\b"
-                          r"|[\"'](Desktop|Documents)/")
         offenders = []
         for f in sorted(TOOLS.rglob("*")):
-            if not f.is_file() or f.suffix not in (".sh", ".py", ".zsh"):
-                continue
+            if not f.is_file() or f.suffix not in (".sh", ".py", ".zsh") or f.resolve() == Path(__file__).resolve():
+                continue   # (this file spells the old place on purpose: the pattern and its samples)
             for n, line in enumerate(f.read_text(errors="replace").splitlines(), 1):
-                code = line.split("#", 1)[0] if f.suffix in (".sh", ".zsh") else line
                 if line.lstrip().startswith(("#", "*")):
                     continue
-                if path.search(code):
+                if OLD_PLACE.search(strip_comment(line, f.suffix)):
                     offenders.append("%s:%d %s" % (f.relative_to(TOOLS), n, line.strip()[:120]))
-        self.assertEqual([], offenders, "a Desktop/ or Documents/ path in the tools' code")
-
+        self.assertEqual([], offenders, "a Desktop/ or Documents/ path (or iCloud Drive) in the tools' code")
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
