@@ -94,13 +94,12 @@ def a9_render(path, level_dbfs=-8.5, seconds=12.0, dropped=0, fires=19, explosio
     return path
 
 
-def listening_take(folder, name, w_sigma=0.1, r_sigma=0.05, shots=300):
+def listening_take(folder, name, w_sigma=0.1, r_sigma=0.05, shots=300, order="ABCWRABCWR"):
     """A B C W R x2 in 4 s blocks: W and R independent noises, A = their sum (the stems split the mix exactly)."""
     folder = Path(folder)
     folder.mkdir(parents=True, exist_ok=True)
     rng = np.random.default_rng(11)
     block = int(4.0 * RATE)
-    order = "ABCWRABCWR"
     parts, rows = [], ["frame,variant"]
     for i, v in enumerate(order):
         w = rng.normal(0.0, w_sigma, (block, 2)) if w_sigma else np.zeros((block, 2))
@@ -142,6 +141,7 @@ class Rig:
         self.out = self.root / "r2" / "r2-S3.json"
         self.takes_end = TAKES_END
         self.listening_end = None
+        self.late = []   # (folder, epoch): takes written later than the rest (stamped after them)
 
     def end_takes(self, epoch):
         """every take's WAV written (its capture ended) at `epoch` on the next run — the span the host samples must cover."""
@@ -155,6 +155,9 @@ class Rig:
         for wav in self.root.rglob("*.wav"):   # takes a test rewrote too: the window's time, not the test's
             end = self.listening_end if self.listening_end is not None and self.listen in wav.parents else self.takes_end
             os.utime(wav, (end, end))
+        for folder, epoch in self.late:
+            for wav in Path(folder).rglob("*.wav"):
+                os.utime(wav, (epoch, epoch))
 
     def argv(self, *extra, load=True, host=True, modes="tp,fp"):
         # the rig is R2's tp / fp pair (both listening modes); R3's default is topdown (ModesTests)
@@ -446,6 +449,49 @@ class PooledListeningTests(RigTestCase):
         self.assertEqual(t["weaponMarginLu"], data["values"]["weaponMarginLu"])
         self.assertEqual({"A": 4, "W": 4, "R": 4}, t["blocks"])   # 2 complete blocks per variant per take
         self.assertIn("listening topdown pooled×2", out)
+
+    def test_the_blocks_weight_the_pool(self):
+        # take 1: 2 blocks each, W 0.1 / R 0.05; take 2: 3 blocks each, W = R = 0.05. Weighted: W = (0.01·2 + 0.0025·3) / 5,
+        # R = 0.0025 → 10 log10(2.2) = +3.42 LU; an unweighted mean of the two takes would read +3.98 (gt 07.10 S-2).
+        td = dense_take(self.rig.root / "topdown", "topdown")
+        second = self.rig.root / "listening2"
+        listening_take(second, "1_ustten", w_sigma=0.05, r_sigma=0.05, order="ABCWRABCWRABCWR")
+        self.rig.late.append((second, TAKES_END + 12))   # its 60 s span 00:59:32-01:00:32 stays inside the samples' 30 s reach
+        rc, out = self.rig.run("--dense", f"topdown={td}", "--listening", str(second), modes="topdown")
+        self.assertEqual(0, rc, out)
+        data = json.loads(self.rig.out.read_text(encoding="utf-8"))
+        t = data["takes"]["listening"]["topdown"]
+        self.assertEqual({"A": 5, "W": 5, "R": 5}, t["blocks"])
+        self.assertAlmostEqual(3.42, t["weaponMarginLu"], delta=0.25)
+        self.assertEqual(4, data["samples"], "1 Dense-40 + A9 + 2 pooled takes")
+
+    def test_a_failed_ab_run_is_not_hidden_by_a_passing_one(self):
+        td = dense_take(self.rig.root / "topdown", "topdown")
+        second = self.rig.root / "listening2"
+        listening_take(second, "1_ustten")
+        failed = nunit(self.rig.root / "pm-ab1.xml", a9=None, listening="Failed")
+        passed = nunit(self.rig.root / "pm-ab2.xml", a9=None, listening="Passed")
+        rc, out = self.rig.run("--dense", f"topdown={td}", "--listening", str(second), "--xml", str(failed), "--xml", str(passed),
+                               modes="topdown")
+        self.assertEqual(1, rc, out)
+        self.assertIn("is Failed (must be Passed)", out)
+
+    def test_an_ab_run_without_a_top_down_take_is_a_finding(self):
+        td = dense_take(self.rig.root / "topdown", "topdown")
+        second = self.rig.root / "listening2"
+        listening_take(second, "2_birinci-sahis")   # an FP-only folder: the pool would quietly be the first run alone
+        rc, out = self.rig.run("--dense", f"topdown={td}", "--listening", str(second), modes="topdown")
+        self.assertEqual(1, rc, out)
+        self.assertIn(f"listening topdown: no take in {second}", out)
+
+    def test_a_pooled_take_written_after_the_host_samples_is_kirli(self):
+        td = dense_take(self.rig.root / "topdown", "topdown")
+        second = self.rig.root / "listening2"
+        listening_take(second, "1_ustten")
+        self.rig.late.append((second, TAKES_END + 280))   # the second AB run ended at 01:05:00, the sampler stopped 01:00:05
+        rc, out = self.rig.run("--dense", f"topdown={td}", "--listening", str(second), modes="topdown")
+        self.assertEqual(3, rc, out)
+        self.assertIn("is 295 s before the last take ended", out)
 
     def test_one_ab_run_is_that_take_unchanged(self):
         td = dense_take(self.rig.root / "topdown", "topdown")

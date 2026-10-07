@@ -237,7 +237,8 @@ def build_info(qa_report):
 
 
 def xml_results(paths):
-    """{test full name: result} over every NUnit XML given."""
+    """{test full name: result} over every NUnit XML given. A test in several XMLs (one per AB run, R3) keeps the first result
+    that is not Passed, so one failed run is never hidden by a later passing one (gt 07.10 S-1)."""
     results = {}
     for path in paths:
         try:
@@ -245,8 +246,9 @@ def xml_results(paths):
         except (OSError, ET.ParseError):
             continue
         for case in root.iter("test-case"):
-            if case.get("fullname"):
-                results[case.get("fullname")] = case.get("result")
+            name = case.get("fullname")
+            if name and results.get(name, "Passed") == "Passed":
+                results[name] = case.get("result")
     return results
 
 
@@ -645,7 +647,7 @@ def pooled_take(mode, per):
             "weaponBurstDb": round(10.0 * math.log10(w), 3), "restBurstDb": round(10.0 * math.log10(r), 3),
             "additivityDb": worst_add, "blocks": {k: sum(t["blocks"][k] for t in per) for k in "AWR"},
             "wBurstPeakMedianDbfs": min(t["wBurstPeakMedianDbfs"] for t in per),
-            "weaponFireDelivered": sum(t["weaponFireDelivered"] for t in per), "takes": per}
+            "weaponFireDelivered": sum(t.get("weaponFireDelivered") or 0 for t in per), "takes": per}
 
 
 def measure(dense, a9, listening, xmls, commit, dense_seconds, modes=DEFAULT_MODES):
@@ -682,9 +684,15 @@ def measure(dense, a9, listening, xmls, commit, dense_seconds, modes=DEFAULT_MOD
                 takes.setdefault(LISTEN_MODES[parts[1]], []).append(wav)
     if topdown_only:
         takes = {m: w for m, w in takes.items() if m == "topdown"}
-    for mode in (("topdown",) if topdown_only else LISTEN_MODES.values()):
+    wanted = ("topdown",) if topdown_only else tuple(LISTEN_MODES.values())
+    for mode in wanted:
         if mode not in takes:
             findings.append(f"listening {mode}: no take in {', '.join(map(str, folders)) or '-'} (DinlemePaketi_AB_Uret)")
+    for folder in folders:   # every AB run given must hold every wanted take: a pooled margin never quietly falls to one run
+        have = {LISTEN_MODES.get(w.stem.split("_")[1]) for w in Path(folder).glob("*_take.wav") if len(w.stem.split("_")) >= 3}
+        for mode in wanted:
+            if mode in takes and mode not in have:
+                findings.append(f"listening {mode}: no take in {folder} (each --listening run must hold it)")
     for mode, wavs in sorted(takes.items()):
         per = []
         for wav in wavs:
