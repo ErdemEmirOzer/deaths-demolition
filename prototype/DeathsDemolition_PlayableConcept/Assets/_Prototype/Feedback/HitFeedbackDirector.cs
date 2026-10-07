@@ -609,6 +609,7 @@ namespace DD.Prototype.Feedback
                 presentationGroupId != 0 ? presentationGroupId : FeelEventRouter.NextGroupId(), origin, away);
             // WP-019: no hit-stop on an explosion (only armour break and death, ADR-019-2).
             AudioEvents.RaiseCritical(CombatAudioEvent.Explosion, origin, 1f, 70);
+            FeelEvents.RaiseExplosion(origin, radius, presentationGroupId, source);   // WP-095: before the blast's damage lands
         }
 
         /// <summary>Chain / ricochet connection. The "readable thin link" of the request.</summary>

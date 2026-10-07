@@ -644,7 +644,16 @@ namespace DD.Prototype.Weapons
                 float falloff = radius > 0.001f ? Mathf.Clamp01(1f - distance / radius) : 1f;
                 float amount = totalDamage * Mathf.Lerp(ExplosionRimDamageFraction, 1f, falloff);
 
-                DamageResult r = target.Explosive.ApplyExplosion(amount, origin);
+                int previousGroup = FeelEvents.PushHitGroup(group);   // WP-095: the blast's kills are one group
+                DamageResult r;
+                try
+                {
+                    r = target.Explosive.ApplyExplosion(amount, origin);
+                }
+                finally
+                {
+                    FeelEvents.PopHitGroup(previousGroup);
+                }
 
                 if (DamageResults.IsEmpty(in r))
                 {
@@ -894,7 +903,17 @@ namespace DD.Prototype.Weapons
                 Source = source
             };
 
-            DamageResult result = target.Receiver.ApplyHit(hit);
+            // WP-095: the hit / kill this raises carry the trigger pull's group (FeelEvents multi-kill, one-per-pull feel)
+            int previousGroup = FeelEvents.PushHitGroup(presentationGroupId);
+            DamageResult result;
+            try
+            {
+                result = target.Receiver.ApplyHit(hit);
+            }
+            finally
+            {
+                FeelEvents.PopHitGroup(previousGroup);
+            }
 
             if (DamageResults.IsEmpty(in result))
             {

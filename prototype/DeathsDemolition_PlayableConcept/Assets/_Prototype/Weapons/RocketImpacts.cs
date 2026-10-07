@@ -284,6 +284,7 @@ namespace DD.Prototype.Weapons
                     if (share <= 0f) continue;
 
                     DamageHitContext.Set(1f, 1f, true, weapon, null);
+                    int previousGroup = FeelEvents.PushHitGroup(group);   // WP-095: the blast's kills are one group
                     DamageResult r;
                     try
                     {
@@ -291,6 +292,7 @@ namespace DD.Prototype.Weapons
                     }
                     finally
                     {
+                        FeelEvents.PopHitGroup(previousGroup);
                         DamageHitContext.Clear();
                     }
 
