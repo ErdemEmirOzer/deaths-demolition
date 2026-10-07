@@ -79,7 +79,9 @@ STAGE_ORDER = ("a6", "a0", "a1", "a2", "a3", "r2", "a5", "a4", "b9", "z3", "r2q"
 # main-ci parity (S-01 96d0bfeb, C-00 05.10): the core EditMode + PlayMode runs exclude [Category("Diagnostics")] — an
 # [Explicit] Diagnostics test picked up by a class regex (AudioSliceTests.SilahKiti_…) left sg_1 selected and turned 4
 # later S-02 tests red. `alone` steps, targeted reruns and the r2/r2q full-name sessions keep no category filter.
-CI_CATEGORY = "!^Diagnostics$"
+# + C-00 06.10 (user: "the tests run for Top Down only"): FPTP too — the same expression as main-ci.sh CI_CATEGORY
+# (tests/test_wp078_accept.py pins the two together)
+CI_CATEGORY = "!^Diagnostics$;!^FPTP$"
 # WP-091 (gt 06.10 B6): owner A/B switches a measurement session must never inherit from the shell that runs the chain —
 # with the env names every measuredBy declares, each session starts with all of them unset except its own
 OWNER_SWITCHES = ("DD_HOLD_IK", "DD_EDC_WEAPONS")
@@ -653,9 +655,13 @@ class Chain:
                 self.check_terminated()
                 if not self.dry_run and not self.verify_tree():
                     head, lines = self.tree_detail()   # the whole list next to the evidence, the first lines in STOP
-                    (self.evidence / "stop-tree.txt").write_text("HEAD %s\nFINAL %s\n%s\n" % (head, self.final, "\n".join(lines)))
+                    try:   # gt 07.10 SHOULD: a failed write never costs the STOP line
+                        (self.evidence / "stop-tree.txt").write_text("HEAD %s\nFINAL %s\n%s\n" % (head, self.final, "\n".join(lines)))
+                        where = "all of it: stop-tree.txt"
+                    except OSError as e:
+                        where = "stop-tree.txt not written: %s" % e
                     raise Stop(2, f"{stage}: repo left FINAL or the tree became dirty — {self.tree_summary(head, lines)} "
-                                  f"(all of it: stop-tree.txt)")
+                                  f"({where})")
                 if stage in ("a4", "r2") and not self.dry_run:   # resumed or not: the refusal only sees this run's stages (gt KP-18)
                     self.check_baseline(stage)
                 if stage != "a8" and not self.dry_run and self.resume and self.stage_passed(stage):

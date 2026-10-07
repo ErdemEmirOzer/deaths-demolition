@@ -388,6 +388,13 @@ class DryRunTests(Base):
         self.assertEqual([acc.CI_CATEGORY, acc.CI_CATEGORY], [self.opt(r, "--category") for r in runs[:2]])
         self.assertTrue(all("--category" not in r for r in runs[2:]))   # alone steps name one test, no category
 
+    def test_a1_category_is_main_ci_s(self):
+        """gt 07.10 (SHOULD): "main-ci parity" holds by test — the FINAL's core category expression is main-ci's."""
+        import re
+        main_ci = (Path(acc.__file__).resolve().parents[1] / "main-ci.sh").read_text()
+        self.assertEqual(re.search(r"^CI_CATEGORY='([^']*)'", main_ci, re.M).group(1), acc.CI_CATEGORY)
+        self.assertIn("!^FPTP$", acc.CI_CATEGORY)
+
     def test_a1_targeted_rerun_and_r2_sessions_keep_no_category(self):
         with mock.patch.object(acc, "testsh_has_category", return_value=True):
             chain = self.dry(["a1"], editmode_filter="ProjectIntegrityTests", playmode_filter="CoreCombatTests")
@@ -538,9 +545,22 @@ class RefusalTests(Base):
         self.assertEqual(2, chain.run())
         stop = [line for line in chain.lines if "STOP" in line]
         self.assertTrue(stop and "7 porcelain line(s): ?? mono_crash.mem.0.1.blob" in stop[0] and "…(+2)" in stop[0], stop)
-        self.assertIn("stop-tree.txt", stop[0])
+        self.assertIn("all of it: stop-tree.txt", stop[0])
         listed = (self.evidence / "stop-tree.txt").read_text()
         self.assertEqual(dirt, [line for line in listed.splitlines() if line.startswith("??")])
+
+    def test_stop_tree_unwritable_still_stops_with_the_line(self):
+        """gt 07.10 (SHOULD): stop-tree.txt that cannot be written never costs the STOP line (exit 2, not 1)."""
+        state = {"n": 0}
+
+        def porcelain():
+            state["n"] += 1
+            return "" if state["n"] <= 2 else "?? mono_crash.mem.1.1.blob"
+        chain = make_chain(self.evidence, ["a6", "a0"], git=FakeGit(porcelain=porcelain))
+        (self.evidence / "stop-tree.txt").mkdir(parents=True)   # a directory: write_text fails
+        self.assertEqual(2, chain.run())
+        stop = [line for line in chain.lines if "STOP" in line]
+        self.assertTrue(stop and "1 porcelain line(s): ?? mono_crash.mem.1.1.blob" in stop[0] and "stop-tree.txt not written" in stop[0], stop)
 
     def test_refused_at_start_names_head_and_dirt(self):
         chain = make_chain(self.evidence, ["a6"], git=FakeGit(head="0" * 40, porcelain=" M tools/qa/x.py"))
