@@ -7,7 +7,7 @@
 # starts the editor, and kills it when --timeout-min passes (default: editmode 20, playmode 45), then
 # prints the per-test duration table (tools/test-durations.py) from the XML.
 # Output: <out>/<mode>.xml, <out>/<mode>.log, <out>/durations.json. Default <out> = $DD_BUILD_ROOT/tests-<mode>-<utc>.
-# --category <expr> → Unity -testCategory (`;`-separated regexes, `!` excludes; main-ci core: '!^Diagnostics$'). Without it
+# --category <expr> → Unity -testCategory (`;`-separated regexes, `!` excludes; main-ci core: '!^Diagnostics$;!^FPTP$'). Without it
 # no category filter: a test named in full by --filter still runs, [Explicit]/Diagnostics or not (S-10 r2 steps).
 # Exit: 0 all passed · 1 failures (see table) · 2 no XML produced · 124 killed by the watchdog · 64 usage · 75 busy (--no-wait)
 set -u

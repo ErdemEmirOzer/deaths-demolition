@@ -792,15 +792,15 @@ class CiIsolatedStepTests(CiFixture):
         self.assertEqual(rc, 0, out + err)
         calls = self.calls()
         self.assertEqual([c[0] for c in calls], ["editmode", "playmode", "playmode"], calls)
-        self.assertEqual(["!^Diagnostics$", "!^Diagnostics$", ""], [c[3] for c in calls])
-        self.assertNotIn("Diagnostics tests are NOT excluded", out + err)
+        self.assertEqual(["!^Diagnostics$;!^FPTP$", "!^Diagnostics$;!^FPTP$", ""], [c[3] for c in calls])   # + FPTP (C-00 06.10)
+        self.assertNotIn("tests are NOT excluded", out + err)
 
     def test_Diag_EskiTestShKategoriBilmez_UyariVeEskiDavranis(self):
         self.fake_test_sh = OLD_FAKE_TEST_SH
         rc, out, err = self.finish(self.main_ci("pass", playmode=True))
         self.assertEqual(rc, 0, out + err)
         self.assertEqual(["", "", ""], [c[3] for c in self.calls()])
-        self.assertIn("has no --category — Diagnostics tests are NOT excluded at this SHA", out + err)
+        self.assertIn("has no --category — Diagnostics and FPTP tests are NOT excluded at this SHA", out + err)
 
     def unity_argv(self):
         return self.lines("unity-argv.txt")
@@ -809,8 +809,8 @@ class CiIsolatedStepTests(CiFixture):
         rc, out, err = self.finish(self.main_ci(real_test_sh=True, playmode=True, FAKE_UNITY_MODE="pass"))
         runs = {l.split(" -testResults ")[1].split()[0]: l for l in self.unity_argv() if "-runTests" in l}
         base = str(self.out / self.sha)
-        self.assertIn("-testCategory !^Diagnostics$", runs[base + "/editmode/editmode.xml"])
-        self.assertIn("-testCategory !^Diagnostics$", runs[base + "/playmode/playmode.xml"])
+        self.assertIn("-testCategory !^Diagnostics$;!^FPTP$", runs[base + "/editmode/editmode.xml"])
+        self.assertIn("-testCategory !^Diagnostics$;!^FPTP$", runs[base + "/playmode/playmode.xml"])
         alone = [l for r, l in runs.items() if "/playmode-alone-" in r]
         self.assertEqual(1, len(alone), runs)
         self.assertNotIn("-testCategory", alone[0])

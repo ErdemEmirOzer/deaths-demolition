@@ -247,9 +247,11 @@ dd_scrub_code_env "$CI_DIR" || exit 3
 # selection in Unity, so an [Explicit] diagnostics test inside a selected class ran anyway (285b7fe8: a 30-min kit test).
 # The `alone` steps name one test each and keep no category filter. A commit whose test.sh predates --category runs
 # without it (warned; the old behaviour).
-CI_CATEGORY='!^Diagnostics$'; CARGS=(--category "$CI_CATEGORY")
+# C-00 06.10 (user: "the tests run for Top Down only"): the core also excludes [Category("FPTP")] — the first-person /
+# third-person tests stay in the code base (R3 tags them), out of the CI core.
+CI_CATEGORY='!^Diagnostics$;!^FPTP$'; CARGS=(--category "$CI_CATEGORY")
 grep -qF -e '--category' "$CI_DIR/tools/test.sh" 2>/dev/null \
-  || { CARGS=(); dd_log "WARNING main-ci: $CI_DIR/tools/test.sh has no --category — Diagnostics tests are NOT excluded at this SHA"; }
+  || { CARGS=(); dd_log "WARNING main-ci: $CI_DIR/tools/test.sh has no --category — Diagnostics and FPTP tests are NOT excluded at this SHA"; }
 "$CI_DIR/tools/test.sh" editmode "${CARGS[@]}" --out "$OUT/editmode" --timeout-min "$ETMIN" > "$OUT/editmode.out" 2>&1 & CI_CHILD=$!; wait $CI_CHILD; EX=$?; CI_CHILD=""
 PX=0; AXS=""
 if [ "$SKIP_PLAY" -eq 0 ]; then
