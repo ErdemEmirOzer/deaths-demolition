@@ -97,6 +97,8 @@ namespace DD.Prototype.UI
         private Camera _camera;
         private GameObject _lookVolume;
         private RenderTexture _held;
+        private RenderTexture[] _sliceEnds;   // R3 (C-00 07.10, F): each shot's end, drawn once on load; the cut only swaps textures
+        private Vector2Int _sliceEndsSize;
         private RawImage _heldImage;
         private Canvas _heldCanvas;
         private float _clock;
@@ -182,6 +184,27 @@ namespace DD.Prototype.UI
         public float Clock => _clock;
         public Camera Camera => _camera;
         public bool Still => _wasStill;
+
+        /// <summary>The shot ends drawn on load (tests, logs): one per shot, or 0 when they were never drawn or let go.</summary>
+        public int PrewarmedSliceEnds
+        {
+            get
+            {
+                int n = 0;
+                if (_sliceEnds != null)
+                {
+                    foreach (RenderTexture rt in _sliceEnds)
+                    {
+                        n += rt != null ? 1 : 0;
+                    }
+                }
+
+                return n;
+            }
+        }
+
+        /// <summary>The name every pre-drawn shot end carries (tests count the live ones: none outside the menu).</summary>
+        public const string SliceEndName = "MenuCinematicSliceEnd";
 
         private static string Arg(string flag)
         {
@@ -339,6 +362,8 @@ namespace DD.Prototype.UI
 
             BuildCamera();
             _lookVolume = MenuLook.Current.ApplyWorld();   // the menu's grade / light over the world (C-00 05.10 options)
+            yield return null;                              // the world's Start has run: the shot ends see it as the live view will
+            PrewarmSliceEnds();
             _clock = 0f;
             Apply(0f, true);
             UiFactory.MoveScreensToOverlay();   // the frame is full now: the menu goes over it as an overlay
@@ -409,7 +434,13 @@ namespace DD.Prototype.UI
             bool blending = Blending(local);
             if (blending && _heldSlice != slice)
             {
-                HoldFrame(PoseOf(Shots[slice], Slice));   // the slice's end, rendered once as the blend begins
+                // R3 (C-00 07.10, F): the slice's end was drawn on load, the cut swaps the texture - no second world render in
+                // the cut's frame (b31: 85 ms there). A screen that changed size since falls back to rendering it now.
+                if (!ShowSliceEnd(slice))
+                {
+                    HoldFrame(PoseOf(Shots[slice], Slice));
+                }
+
                 _heldSlice = slice;
                 _freezeFadeAt = -1f;
             }
@@ -440,6 +471,14 @@ namespace DD.Prototype.UI
         /// <summary>Renders a pose (null = where the camera stands now) once into the held frame shown over the live camera.</summary>
         private void HoldFrame(Pose? pose)
         {
+            RenderInto(pose);
+            EnsureHeldImage();
+            _heldImage.texture = _held;
+        }
+
+        /// <summary>Renders a pose (null = where the camera stands now) into <see cref="_held"/>, the screen-sized MSAA target.</summary>
+        private void RenderInto(Pose? pose)
+        {
             int width = Mathf.Max(1, Screen.width);
             int height = Mathf.Max(1, Screen.height);
             if (_held != null && (_held.width != width || _held.height != height))
@@ -459,23 +498,6 @@ namespace DD.Prototype.UI
                     name = "MenuCinematicHeld",
                     antiAliasing = _camera.allowMSAA && pipeline != null ? Mathf.Max(1, pipeline.msaaSampleCount) : 1
                 };
-                if (_heldImage != null)
-                {
-                    _heldImage.texture = _held;
-                }
-            }
-
-            if (_heldImage == null)
-            {
-                var go = new GameObject("MenuCinematicHeld", typeof(RectTransform), typeof(Canvas), typeof(RawImage));
-                _heldCanvas = go.GetComponent<Canvas>();
-                _heldCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
-                _heldCanvas.sortingOrder = UiTokens.SortingScreen - 1;   // over the world, under the menu
-                _heldImage = go.GetComponent<RawImage>();
-                _heldImage.texture = _held;
-                _heldImage.raycastTarget = false;
-                _heldImage.enabled = false;
-                UiFactory.Fill(_heldImage.rectTransform);
             }
 
             if (pose.HasValue)
@@ -486,6 +508,94 @@ namespace DD.Prototype.UI
             _camera.targetTexture = _held;
             _camera.Render();
             _camera.targetTexture = null;
+        }
+
+        private void EnsureHeldImage()
+        {
+            if (_heldImage != null)
+            {
+                return;
+            }
+
+            var go = new GameObject("MenuCinematicHeld", typeof(RectTransform), typeof(Canvas), typeof(RawImage));
+            _heldCanvas = go.GetComponent<Canvas>();
+            _heldCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            _heldCanvas.sortingOrder = UiTokens.SortingScreen - 1;   // over the world, under the menu
+            _heldImage = go.GetComponent<RawImage>();
+            _heldImage.raycastTarget = false;
+            _heldImage.enabled = false;
+            UiFactory.Fill(_heldImage.rectTransform);
+        }
+
+        /// <summary>
+        /// R3 (C-00 07.10, option F): every shot's end, drawn once while the doors are still closed - into the MSAA target, then
+        /// resolved into its own colour-only texture (1080p 5 × 8.3 MB, the Mac's 3024 × 1964 5 × 23.8 MB). They live while the
+        /// menu does (OnDestroy lets them go: none during a run).
+        /// </summary>
+        private void PrewarmSliceEnds()
+        {
+            Shot[] shots = Shots;
+            if (shots.Length == 0 || _camera == null)
+            {
+                return;
+            }
+
+            float started = Time.realtimeSinceStartup;
+            ReleaseSliceEnds();
+            int width = Mathf.Max(1, Screen.width);
+            int height = Mathf.Max(1, Screen.height);
+            _sliceEnds = new RenderTexture[shots.Length];
+            for (int i = 0; i < shots.Length; i++)
+            {
+                RenderInto(PoseOf(shots[i], Slice));
+                _sliceEnds[i] = new RenderTexture(width, height, 0, RenderTextureFormat.Default) { name = SliceEndName + i };
+                Graphics.Blit(_held, _sliceEnds[i]);   // resolves the MSAA target into the shot's own texture
+            }
+
+            _sliceEndsSize = new Vector2Int(width, height);
+            Debug.Log(string.Format(System.Globalization.CultureInfo.InvariantCulture,
+                "[UI] Menu cinematic: {0} shot ends drawn on load ({1}x{2}, {3:F1} MB, {4:F0} ms).",
+                shots.Length, width, height, shots.Length * (double)width * height * 4.0 / (1024.0 * 1024.0),
+                (Time.realtimeSinceStartup - started) * 1000f));
+        }
+
+        /// <summary>Shows the pre-drawn end of <paramref name="slice"/>; false when there is none for this screen size.</summary>
+        private bool ShowSliceEnd(int slice)
+        {
+            if (_sliceEnds == null || slice < 0 || slice >= _sliceEnds.Length || _sliceEnds[slice] == null)
+            {
+                return false;
+            }
+
+            if (_sliceEndsSize.x != Screen.width || _sliceEndsSize.y != Screen.height)
+            {
+                Debug.Log("[UI] Menu cinematic: the screen changed size since the shot ends were drawn - the cut renders its frame.");
+                ReleaseSliceEnds();
+                return false;
+            }
+
+            EnsureHeldImage();
+            _heldImage.texture = _sliceEnds[slice];
+            return true;
+        }
+
+        private void ReleaseSliceEnds()
+        {
+            if (_sliceEnds == null)
+            {
+                return;
+            }
+
+            foreach (RenderTexture rt in _sliceEnds)
+            {
+                if (rt != null)
+                {
+                    rt.Release();
+                    Destroy(rt);
+                }
+            }
+
+            _sliceEnds = null;
         }
 
         private void OnDestroy()
@@ -503,6 +613,7 @@ namespace DD.Prototype.UI
                 Destroy(_held);
             }
 
+            ReleaseSliceEnds();   // R3 F: the shot ends go with the menu - 0 MB during a run
             if (_heldCanvas != null)
             {
                 Destroy(_heldCanvas.gameObject);

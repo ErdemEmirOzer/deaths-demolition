@@ -226,6 +226,57 @@ namespace DD.Prototype.Tests.PlayMode
         }
 
         /// <summary>
+        /// R3 (C-00 07.10, option F): every shot's end is drawn once while the menu world loads - the cut only swaps the held
+        /// image's texture (b31: an 85 ms frame at each cut when it rendered there). They go with the menu: none during a run
+        /// (0 MB), and a menu → run → menu loop draws one new set without leaving the first behind.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator AnaMenu_KesimKareleri_YuklemedeCizilir_KosudaSifir_DongudeSizintiYok()
+        {
+            yield return BootTanMainMenuye();
+            yield return Bekle(() => MenuCinematic.Current != null && MenuCinematic.Current.Live, 90f, "menü dünyası canlanmadı");
+            int shots = MenuCinematic.Shots.Length;
+            Assert.Greater(shots, 0, "çekim listesi");
+            Assert.AreEqual(shots, MenuCinematic.Current.PrewarmedSliceEnds, "her çekimin sonu yüklemede çizildi");
+            Assert.AreEqual(shots, LiveSliceEnds(), "bellekte çekim sayısı kadar kesim karesi");
+
+            PrototypeUiFlow.GoToSelection();
+            yield return SahneyiBekle(PrototypeScenes.Selection);
+            PrototypeUiFlow.StartRun();
+            yield return SahneyiBekle(PrototypeScenes.Run);
+            yield return KosuHazirOlsun();
+            yield return null;
+            Assert.AreEqual(0, LiveSliceEnds(), "koşuda kesim karesi yok (0 MB)");
+
+            PrototypeUiFlow.GoToMainMenu();
+            yield return SahneyiBekle(PrototypeScenes.MainMenu);
+            yield return Bekle(() => MenuCinematic.Current != null && MenuCinematic.Current.Live, 90f, "menü dünyası ikinci kez canlanmadı");
+            Assert.AreEqual(shots, LiveSliceEnds(), "ikinci menü: yalnız yeni set (sızıntı yok)");
+            Debug.Log("[DD-TEST] wp081.sliceEnds shots=" + shots + " menu=" + shots + " run=0 menu2=" + LiveSliceEnds()
+                + " doorsWait=" + PrototypeUiFlow.LastMenuWorldWaitSeconds.ToString("F3") + " s");
+
+            PrototypeUiFlow.GoToSelection();
+            yield return SahneyiBekle(PrototypeScenes.Selection);
+            yield return null;
+            Assert.AreEqual(0, LiveSliceEnds(), "menüden çıkınca serbest");
+        }
+
+        /// <summary>The pre-drawn shot ends alive right now (MenuCinematic.SliceEndName).</summary>
+        private static int LiveSliceEnds()
+        {
+            int n = 0;
+            foreach (RenderTexture rt in Resources.FindObjectsOfTypeAll<RenderTexture>())
+            {
+                if (rt != null && rt.name.StartsWith(MenuCinematic.SliceEndName, System.StringComparison.Ordinal))
+                {
+                    n++;
+                }
+            }
+
+            return n;
+        }
+
+        /// <summary>
         /// S-05 06.10 (S05-MENU-ISIK-MALIYET §16): the world loads additively under the menu and MainMenu stays the active scene;
         /// LightmapSettings.lightProbes stays null there (b19-b21: Tetrahedralize, sync or async, leaves it so), so every
         /// probe-lit renderer - no lightmap, probes on (b26c: the ground, the plaza slate, the hall floor, the ponds) - samples
