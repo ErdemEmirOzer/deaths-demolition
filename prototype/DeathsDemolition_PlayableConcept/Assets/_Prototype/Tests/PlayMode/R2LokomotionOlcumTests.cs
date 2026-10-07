@@ -9,6 +9,7 @@ using DD.Prototype.Core;
 using DD.Prototype.PlayerSystem;
 using DD.Prototype.Rounds;
 using NUnit.Framework;
+using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.TestTools;
 using C = DD.Prototype.Characters.CharacterAnimatorContract;
@@ -17,45 +18,59 @@ using Object = UnityEngine.Object;
 namespace DD.Prototype.Tests.PlayMode
 {
     /// <summary>
-    /// WP-083 R2 locomotion gates L1, L1t, L2, L3 (S-06; tools/qa/r2-gates.json, definitions K/wp-078/R2-KABUL-TASLAK.md §2,
-    /// S-06 / C-00 05.10). One course on the default player path: the real Run scene's player, its motor, camera and animator,
-    /// driven by stick input (third person, the body faces the view, so the eight stick directions are the eight strafe
-    /// directions), sampled once per frame at a fixed 60 fps (Time.captureDeltaTime = 1/60) AFTER the animator, its IK passes and
-    /// every LateUpdate solver (sampler order 32000), on a flat Environment-layer floor so that walls and slopes stay out of it.
+    /// WP-083 R2 locomotion gates L1, L1t, L2, L3 (S-06; tools/qa/r2-gates.json, definitions K/wp-078/R2-KABUL-TASLAK.md §2),
+    /// TOP-DOWN since WP-082 R3 (C-00 07.10: tests run top-down only). One course on the default player path: the real Run scene's
+    /// player, its motor, camera and animator, driven by stick input, sampled once per frame at a fixed 60 fps
+    /// (Time.captureDeltaTime = 1/60) AFTER the animator, its IK passes and every LateUpdate solver (sampler order 32000), on a flat
+    /// Environment-layer floor so that walls and slopes stay out of it. In top-down the body turns to the AIM, not to the view: the
+    /// aim is held on one world direction (the camera's planar forward, pointer input), so the eight stick directions are the eight
+    /// strafe directions in the body's space.
     /// <list type="bullet">
-    /// <item>Course A, steady gait: 8 directions × walk / run. Walk = the stick tilt that gives walk_fwd's no-slide speed; run = full
-    /// tilt. Each segment: 1 s warm-up (excluded), then until both feet show ≥ 6 cycles (and ≥ 3 s), bounded at 12 s (walk) / 10 s (run).</item>
+    /// <item>Course A, steady gait: 8 directions × walk / run. Walk = the stick tilt that puts the motor on the walk ring's own speed in
+    /// that direction (no run-ring weight); run = full tilt. Each segment: 1 s warm-up (excluded), then until both feet show ≥ 6 cycles
+    /// (and ≥ 3 s), bounded at 12 s (walk) / 10 s (run).</item>
+    /// <item>Course K, the writer's positive controls (WP-082 R3 PLAN §5.1): run_fwd and walk_fwd with the foot IK off, run_fwd with the
+    /// Animator's LocoRate forced to ×0.5 (a known slide of ≈ 0.5).</item>
+    /// <item>Course S: run forward with the aim swung ±100° (PLAN §4.3; L1 / L3 reported, not gated).</item>
     /// <item>Course B, transitions × 5: start (still → run), stop (run → still), pivot 180° (run → run reversed), 90° cut
     /// (run → run ±90°). Base directions fwd, right, back, left, fwd_r; the cut alternates right / left.</item>
     /// </list>
-    /// Contact (L1, L1t): the sole (foot bone − Animator.left/rightFeetBottomHeight, the convention FootIkAdapter uses) within 3 cm of
-    /// the ground ray AND the foot's vertical speed ≤ 0.15 m/s. Slide ratio = the foot's horizontal world speed ÷ the body's horizontal
-    /// speed, the body's speed floored at <see cref="GovdeHizTabani"/> (near standstill — a stop's last frames — the ratio is undefined;
-    /// the floor reads it as m/s instead of hiding it).
+    /// Contact (L1, L1t, L2) — WP-082 R3. The R2 classifier (the SHOWN sole within 3 cm of the ground and vertical speed ≤ 0.15 m/s) read
+    /// every frame of both feet as contact: FootIkAdapter drops BOTH feet onto the ground every frame (its target height is hit +
+    /// feetBottomHeight whatever the clip's lift, clamped at 0.35 m), so L1 measured the foot's whole-cycle mean speed ≈ the body speed
+    /// (≈ 1.00 in R2). The animated (pre-IK) sole does not separate stance either (e3-once1: with the foot IK off the walk's sole sits
+    /// 13.6 cm up at its median, the height rule kept 0–3 % of the frames). Contact is therefore the clip's own PHASE: the base layer's
+    /// clips (GetCurrentAnimatorClipInfo, and the next state's during a transition, by the transition weight) at their normalized time,
+    /// each clip's foot_x → foot_x_off window on its loop, Σ weight ≥ 0.5 (a clip without foot events — the stand — counts as both feet
+    /// down). It is checked against the pose in the same run (control (a2)): the animated sole lower in stance than in swing and the
+    /// stance foot travelling backward under the body. The pose classifier (animated sole within 3 cm of its segment floor) and the R2
+    /// classifier are reported beside it. Slide ratio = the shown foot's horizontal world speed ÷ the body's horizontal speed, floored
+    /// at <see cref="GovdeHizTabani"/>.
     /// <list type="bullet">
     /// <item>L1 avg / p95 — every contact foot-frame of course A after the warm-up.</item>
     /// <item>L1t avg (p95 reported) — every contact foot-frame in the 0.3 s after each course B input change.</item>
-    /// <item>L2 deviationMax — per steady segment |cadence × step − v| / v, the largest. Cadence = 2 / T steps/s, T = the median
-    /// interval between consecutive same-foot plant events (foot_l / foot_r; the contact onsets if the clips raise no events).
-    /// Step = u × T / 2: the distance the body travels per step if the planted foot held, u = the planted foot's backward speed
-    /// under the body along the travel direction (mean over contact frames). The draft's literal "same-foot contact point to
-    /// contact point / 2" taken in world space is D / T ≡ v for any periodic gait (a tautology at runtime), so it is logged only.</item>
-    /// <item>L3 — every bone's rotation in the character root's space, the angle between consecutive frames (°/frame at 60 fps).
-    /// limbDegPerFrameMax over Upper/LowerLeg, Foot, UpperArm, LowerArm, Hand (L+R); torsoDegPerFrameMax over Hips, Spine, Chest,
-    /// UpperChest, Neck, Head; in the 1 s after each course B input change. transitionToSteadyRatioMax = a bone's transition peak ÷
-    /// the same bone's steady run peak in the direction(s) the transition joins (floor <see cref="KararliTepeTabani"/> °/frame).</item>
+    /// <item>L2 deviationMax — per steady segment |cadence × step − v| / v, the largest (cadence from the plant events, step from the
+    /// planted foot's backward speed under the body).</item>
+    /// <item>L3 — every bone's rotation in the character root's space, the angle between consecutive frames (°/frame at 60 fps), in the
+    /// 1 s after each course B input change; the source of each peak (hand / arm, a foot-lock release, the foot IK's pin) is logged.</item>
     /// </list>
-    /// [Explicit]: the R2 chain runs it by full name; each gate whose source is in the recording is written through R2Olcum, a gate
-    /// whose source is missing is not written (BLOCKED by name) and the test fails naming it, after every other gate was written.
+    /// Positive controls (same run; a control that fails keeps the gates that depend on it unwritten): (a) every steady segment's
+    /// contact share per foot within ±10 points of the clip events' stance share (foot_x → foot_x_off) AND the pose agreeing with the
+    /// phase (a2) — gates L1, L1t, L2;
+    /// (b) the ×0.5 LocoRate segment reads L1 0.5 ± 0.1 — gates L1; (c) StrideEslemesi on the pure run directions: the stride-match slide
+    /// (CadenceBand.SlideFraction at the measured speed and the clip rate LocoRate × child time scale) within 0.03 of the segment's
+    /// L1 avg — gates L1. [Explicit]: the R2 chain runs it by full name; each gate whose source is in the recording is written through
+    /// R2Olcum, a gate whose source or control is missing is not written (BLOCKED by name) and the test fails naming it.
     /// </summary>
     [TestFixture]
     [Category("WP083")]
     public sealed class R2LokomotionOlcumTests
     {
         public const string TestName = "DD.Prototype.Tests.PlayMode.R2LokomotionOlcumTests.L1_L3_Lokomotion_8Yon_KalkisDurusDonus";
+        public const string GcTestName = "DD.Prototype.Tests.PlayMode.R2LokomotionOlcumTests.GC_TdSprint_YonCevirme_600Kare";
 
         // ---- the contract's definitions (R2-KABUL-TASLAK §2)
-        public const float TemasYukseklik = 0.03f;      // sole ↔ ground ray, m
+        public const float TemasYukseklik = 0.03f;      // sole ↔ its floor, m
         public const float TemasDikeyHiz = 0.15f;       // foot vertical speed, m/s
         public const int Fps = 60;
         public const int L1tPencere = 18;               // 0.3 s at 60 fps
@@ -63,7 +78,7 @@ namespace DD.Prototype.Tests.PlayMode
         public const int Isinma = 60;                   // 1 s warm-up excluded from the steady segments (L2: "ilk 1 s ısınma hariç")
         public const int MinDongu = 6;                  // L2: ≥ 6 cycles per direction
         public const int Tekrar = 5;                    // L3 / L1t: each scenario × 5
-        // ---- this test's choices (reported; S-06 / C-00 to confirm on the first run)
+        // ---- this test's choices (reported)
         public const float GovdeHizTabani = 1.0f;       // m/s — slide ratio denominator floor
         public const float KararliTepeTabani = 1.0f;    // °/frame — L3 ratio denominator floor
         public const int OlayAyrimKare = 12;            // 0.2 s: a second same-foot plant inside it is the same beat
@@ -71,6 +86,22 @@ namespace DD.Prototype.Tests.PlayMode
         public const float ZeminYariGenislik = 200f;    // its half extent, m
         public const float MerkezYaricap = 90f;         // re-centre (teleport, standing) beyond this, m
         public const double KararliTolerans = 0.20;     // a steady segment's body speed within ±20 % of the motor's command
+        public const float NisanMesafe = 10f;           // the pointer's world point ahead of the body, m
+        public const float NisanHataSiniri = 10f;       // ° — steady frames' body facing vs the held aim (else the direction labels are wrong)
+        public const float NisanSalinimDerece = 100f;   // course S: ±100° (PLAN §4.3)
+        public const int NisanSalinimPeriyot = 120;     // frames (2 s)
+        public const float TabanYuzdelik = 0.02f;       // the animated sole's floor per foot: its 2nd percentile over course A
+        // ---- WP-082 R3 PLAN §5.1 positive controls
+        public const double TemasPayiTolerans = 0.10;   // (a1) ±10 points
+        public const float PozAyrim = 0.02f;            // (a2) animated sole: swing median − stance median ≥ 2 cm
+        public const float KontrolRate = 0.5f;          // (b) LocoRate ×0.5
+        public const double KontrolKayma = 0.5, KontrolKaymaTolerans = 0.1;
+        public const double StrideFarkSiniri = 0.03;    // (c)
+        // ---- GC (PLAN §5.2 (4))
+        public const int GcKare = 600;
+        public const int GcYonKare = 40;                // a direction change every 40 frames
+        public const int GcKontrolKare = 30;
+        public const int GcKontrolBayt = 1024;
 
         // ---- the gates' thresholds (r2-gates.json)
         private const double L1Avg = 0.05, L1P95 = 0.10, L1tAvg = 0.10, L2Dev = 0.08, L3Limb = 20.0, L3Torso = 10.0, L3Ratio = 1.5;
@@ -88,7 +119,7 @@ namespace DD.Prototype.Tests.PlayMode
         internal const int UzuvSayisi = 12;
         private static readonly string[] YonAd = LocomotionV4.Directions;   // fwd, fwd_r, right, back_r, back, back_l, left, fwd_l
 
-        private enum Tur { Kararli, Kalkis, Durus, Pivot180, Kesme90 }
+        private enum Tur { Kararli, Kontrol, NisanSalinim, Kalkis, Durus, Pivot180, Kesme90 }
 
         private sealed class Parca
         {
@@ -100,11 +131,45 @@ namespace DD.Prototype.Tests.PlayMode
             public double KomutHizToplam;
             public int KomutHizN;
             public int Kare;
+            public float Cubuk;   // stick tilt
+            public float NisanHataMax;
+            public Vector3 Bas, Son;   // position at the segment's start / end relative to the floor centre
+        }
+
+        /// <summary>Per-segment readout (the olcum table's row).</summary>
+        private sealed class Istat
+        {
+            public int N;
+            public double V, VYon, Komut;
+            public double T = double.NaN, U = double.NaN;
+            public string Kaynak = "SHORT";
+            public int Dongu;
+            public List<double> Kayma = new List<double>();
+            public double L1Avg = double.NaN, L1P95 = double.NaN;
+            public double PayL = double.NaN, PayR = double.NaN, PayEskiL = double.NaN, PayEskiR = double.NaN;
+            public double Rate = double.NaN;
+            public int Kabul, BirakS, BirakG, BirakL, BirakP, KilitliKare;
+            public double PostGapMed = double.NaN, AnimGapMed = double.NaN, PimMed = double.NaN;
+            public int RayDiger;
+            public double SalinimAnimMed = double.NaN, SalinimPostMed = double.NaN;   // phase-swing frames: animated / shown sole height (median)
+            public double SalinimYerdePay = double.NaN;                                // phase-swing frames shown within 1 cm of the ground
+            public double PayPozL = double.NaN, PayPozR = double.NaN;                  // the pose classifier (animated sole near its segment floor)
+            public double Uyum = double.NaN;                                           // frame agreement phase vs pose classifier
+            public readonly double[] DurusMed = { double.NaN, double.NaN }, SalinimMed = { double.NaN, double.NaN };   // animated sole per foot, phase stance / swing
+            public readonly double[] UDurus = { double.NaN, double.NaN }, USalinim = { double.NaN, double.NaN };       // foot speed backward under the body (m/s)
+            public double PelvisMed = double.NaN;
         }
 
         private SpecialWeaponSahne _s;
         private GameObject _zemin;
         private LokomotionKaydedici _kayit;
+        private LocoRateCarpani _carpan;
+        private Vector3 _nisan = Vector3.forward;       // the held aim (world, planar)
+        private Vector3 _nisanAnlik = Vector3.forward;  // this frame's aim (course S swings it)
+        private Vector3 _ileri = Vector3.forward, _sag = Vector3.right;   // the motor's movement basis (camera planar)
+        private int _gecisBasi;
+        private bool _profilerOnce;
+        private int _fpsOnce = int.MinValue;
 
         [UnitySetUp]
         public IEnumerator SetUp()
@@ -121,12 +186,15 @@ namespace DD.Prototype.Tests.PlayMode
         public IEnumerator TearDown()
         {
             Time.captureDeltaTime = 0f;
+            if (_fpsOnce != int.MinValue) { Application.targetFrameRate = _fpsOnce; UnityEngine.Profiling.Profiler.enabled = _profilerOnce; }
+            _fpsOnce = int.MinValue;
             if (_kayit != null) { _kayit.Birak(); Object.Destroy(_kayit.gameObject); }
             _kayit = null;
+            if (_carpan != null) Object.Destroy(_carpan.gameObject);
+            _carpan = null;
             if (_zemin != null) Object.Destroy(_zemin);
             _zemin = null;
-            // R3 (C-00 07.10, S-01 inventory): the next test starts in the process default — TopDown (user 06.10: tests run top-down only);
-            // a ThirdPerson left here ran the PlayMode tests after this fixture in TP (R2FiksturKameraTests)
+            // R3 (C-00 07.10, S-01 inventory): the next test starts in the process default — TopDown (user 06.10: tests run top-down only)
             CameraModeService.Request(CameraMode.TopDown, instant: true);
             if (_s != null) yield return _s.Bitir();
             _s = null;
@@ -140,6 +208,8 @@ namespace DD.Prototype.Tests.PlayMode
             float a = (k & 7) * 45f * Mathf.Deg2Rad;
             return new Vector2(Mathf.Sin(a), Mathf.Cos(a)) * m;
         }
+
+        private Vector3 Dunya(Vector2 stick) => _sag * stick.x + _ileri * stick.y;
 
         private string _iptal;
 
@@ -156,12 +226,25 @@ namespace DD.Prototype.Tests.PlayMode
             return true;
         }
 
+        /// <summary>The pointer on the world point <see cref="NisanMesafe"/> ahead of the body along this frame's aim, on the aim plane.</summary>
+        private void Nisanla()
+        {
+            PrototypeCameraRig rig = PrototypeCameraRig.Active;
+            Camera cam = rig != null ? rig.Camera : Camera.main;
+            if (cam == null || _s == null || _s.Rig == null) return;
+            Vector3 p = _s.Rig.transform.position + _nisanAnlik * NisanMesafe;
+            p.y = _s.Rig.Aim.AimPlaneY;
+            Vector3 sp = cam.WorldToScreenPoint(p);
+            _s.Girdi.Imlec = new Vector2(sp.x, sp.y);
+        }
+
         /// <summary>n frames with the stick at <paramref name="yon"/>, recorded under <paramref name="etiket"/> (−1 = not measured).</summary>
         private IEnumerator Sur(int n, Vector2 yon, int etiket, Parca p)
         {
             for (int i = 0; i < n; i++)
             {
                 if (!Canli()) yield break;
+                Nisanla();
                 _s.Girdi.Yon = yon;
                 _kayit.Etiket = etiket;
                 yield return null;
@@ -177,26 +260,40 @@ namespace DD.Prototype.Tests.PlayMode
             if (!zorla && d.magnitude < MerkezYaricap) yield break;
             yield return Sur(30, Vector2.zero, -1, null);
             if (!Canli()) yield break;
-            _s.Rig.Teleport(merkez + Vector3.up * 0.05f, _s.Rig.transform.rotation);
+            _s.Rig.Teleport(merkez + Vector3.up * 0.05f, Quaternion.LookRotation(_nisan, Vector3.up));
             yield return Sur(45, Vector2.zero, -1, null);
         }
 
-        [UnityTest]
-        [Explicit]
-        [Category("Diagnostics")]
-        [Timeout(900000)]
-        public IEnumerator L1_L3_Lokomotion_8Yon_KalkisDurusDonus()
+        /// <summary>A steady segment: warm-up, then until both feet show MinDongu + 1 beats (≥ 3 s), at most <paramref name="cap"/> frames.</summary>
+        private IEnumerator Kararli(Vector3 merkez, Parca p, int idx, Vector2 stick, int cap)
         {
-            CameraModeService.Request(CameraMode.ThirdPerson, instant: true);
-            Time.captureDeltaTime = 1f / Fps;
-            var body = _s.Rig.GetComponentInChildren<PlayerSkinnedVisual>(true);
-            Assert.IsNotNull(body, "skinned oyuncu yok");
-            Assert.IsNotNull(body.Animator, "oyuncu Animator'ı yok");
-            Assert.IsTrue(body.Authored, "oyuncu animasyon seti yazılmış değil (primitive yol) — lokomotion ölçülemez");
-            Assert.IsTrue(body.Animator.isHuman, "oyuncu Animator'ı Humanoid değil");
-            CharacterAnimationSet anim = body.AnimationSet;
-            Assert.IsNotNull(anim, "CharacterAnimationSet yok");
+            // every steady segment from the centre (e3-once1: walk_fwd_l and run_fwd drifted out and stood against world geometry that
+            // reaches the y + 150 m floor — body 0 m/s under a 2.35 / 6.2 m/s command, the gap ray on another collider)
+            yield return Merkezle(merkez, true);
+            if (_s != null && _s.Rig != null) p.Bas = _s.Rig.transform.position - merkez;
+            for (int f = 0; f < cap; f++)
+            {
+                if (!Canli()) break;
+                Nisanla();
+                _s.Girdi.Yon = stick;
+                _kayit.Etiket = idx;
+                yield return null;
+                p.Kare++;
+                if (_kayit.Since >= Isinma)
+                {
+                    p.KomutHizToplam += _s.Rig.Motor.CommandedPlanarVelocity.magnitude;
+                    p.KomutHizN++;
+                    p.NisanHataMax = Mathf.Max(p.NisanHataMax, Vector3.Angle(Yatay(_s.Rig.transform.forward), _nisan));
+                }
 
+                if (_kayit.Since >= Isinma + 180 && _kayit.DonguYeter(MinDongu + 1)) break;
+            }
+
+            if (_s != null && _s.Rig != null) p.Son = _s.Rig.transform.position - merkez;
+        }
+
+        private Vector3 ZeminKur()
+        {
             // the flat floor: Environment layer (the foot IK's and the motor's ground), above the spawn, away from the world
             Vector3 merkez = _s.Rig.transform.position + Vector3.up * ZeminYukseklik;
             _zemin = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -204,63 +301,132 @@ namespace DD.Prototype.Tests.PlayMode
             _zemin.layer = PrototypeLayers.Environment;
             _zemin.transform.localScale = new Vector3(ZeminYariGenislik * 2f, 1f, ZeminYariGenislik * 2f);
             _zemin.transform.position = merkez - Vector3.up * 0.5f;
+            return merkez;
+        }
+
+        private void TemelYonler()
+        {
+            PrototypeCameraRig rig = PrototypeCameraRig.Active;
+            _ileri = rig != null ? Yatay(rig.PlanarForward).normalized : Vector3.forward;
+            _sag = rig != null ? Yatay(rig.PlanarRight).normalized : Vector3.right;
+            if (_ileri.sqrMagnitude < 0.5f) _ileri = Vector3.forward;
+            if (_sag.sqrMagnitude < 0.5f) _sag = Vector3.right;
+            _nisan = _ileri;   // the aim held on the camera's planar forward: stick up = toward the aim
+            _nisanAnlik = _nisan;
+        }
+
+        // --------------------------------------------------------------------------------------------------- the course
+
+        [UnityTest]
+        [Explicit]
+        [Category("Diagnostics")]
+        [Timeout(1500000)]
+        public IEnumerator L1_L3_Lokomotion_8Yon_KalkisDurusDonus()
+        {
+            CameraModeService.Request(CameraMode.TopDown, instant: true);
+            Time.captureDeltaTime = 1f / Fps;
+            var body = _s.Rig.GetComponentInChildren<PlayerSkinnedVisual>(true);
+            Assert.IsNotNull(body, "skinned oyuncu yok");
+            Assert.IsNotNull(body.Animator, "oyuncu Animator'ı yok");
+            Assert.IsTrue(body.Authored, "oyuncu animasyon seti yazılmış değil (primitive yol) — lokomotion ölçülemez");
+            Assert.IsTrue(body.Animator.isHuman, "oyuncu Animator'ı Humanoid değil");
+            Assert.AreEqual(CameraMode.TopDown, CameraModeService.Current, "TopDown isteği uygulanmadı");
+            CharacterAnimationSet anim = body.AnimationSet;
+            Assert.IsNotNull(anim, "CharacterAnimationSet yok");
+            FootIkAdapter ik = body.FootIk;
+            Assert.IsNotNull(ik, "FootIkAdapter yok — animasyon pozunun taban yüksekliği okunamaz");
+
+            Vector3 merkez = ZeminKur();
+            yield return null;
+            TemelYonler();
 
             var go = new GameObject("R2Loko_Kaydedici");
             _kayit = go.AddComponent<LokomotionKaydedici>();
-            _kayit.Bagla(body.Animator, body.transform);
+            _kayit.Bagla(body.Animator, body.transform, ik, _zemin.GetComponent<Collider>(), anim);
+            _carpan = new GameObject("R2Loko_LocoRateCarpani").AddComponent<LocoRateCarpani>();
+            _carpan.Bagla(body.Animator);
 
-            // course definition: steady segments first (index = gait × 8 + direction), then the transitions
+            // course definition: steady segments first (index = gait × 8 + direction), the controls, the aim swing, then the transitions
             var parcalar = new List<Parca>();
             for (int g = 0; g < 2; g++)
                 for (int k = 0; k < 8; k++)
                     parcalar.Add(new Parca { Ad = (g == 0 ? "walk_" : "run_") + YonAd[k], Tur = Tur.Kararli, Yuruyus = g, Yon = k });
+            const int iIkOffRun = 16, iIkOffWalk = 17, iRate = 18, iSalinim = 19;
+            parcalar.Add(new Parca { Ad = "K_ikOff_run_fwd", Tur = Tur.Kontrol, Yuruyus = 1, Yon = 0 });
+            parcalar.Add(new Parca { Ad = "K_ikOff_walk_fwd", Tur = Tur.Kontrol, Yuruyus = 0, Yon = 0 });
+            parcalar.Add(new Parca { Ad = "K_rate05_run_fwd", Tur = Tur.Kontrol, Yuruyus = 1, Yon = 0 });
+            parcalar.Add(new Parca { Ad = "S_aimSwing100_run_fwd", Tur = Tur.NisanSalinim, Yuruyus = 1, Yon = 0 });
+            _gecisBasi = parcalar.Count;
             int[] tabanlar = { 0, 2, 4, 6, 1 };
 
             float maxSpeed = _s.Rig.Motor.MaxSpeed;
-            float walkClip = anim.SpeedOf(C.PlayerWalkFwd);
-            float walkStick = maxSpeed > 0.1f && walkClip > 0.1f ? Mathf.Clamp(walkClip / maxSpeed, 0.15f, 0.7f) : 0.42f;
+            float reference = anim.LocomotionReferenceSpeed;
+            float[] walkSpeeds = { anim.SpeedOf(C.PlayerWalkFwd), anim.SpeedOf(C.PlayerWalkBack), anim.SpeedOf(C.PlayerStrafeLeft), anim.SpeedOf(C.PlayerStrafeRight) };
             int[] sira = { 0, 4, 2, 6, 1, 5, 3, 7 };   // opposite pairs keep the course near the centre
+            var cubuk = new float[2, 8];
+            for (int k = 0; k < 8; k++)
+            {
+                Vector2 d = Yon8(k, 1f);
+                float ring = HalkaHizi(d, walkSpeeds);
+                float bs = PlayerMotor.BackwardScale(Dunya(d), _nisan);
+                cubuk[0, k] = maxSpeed > 0.1f && ring > 0.1f ? Mathf.Clamp(ring / (maxSpeed * Mathf.Max(0.1f, bs)), 0.1f, 0.95f) : 0.42f;
+                cubuk[1, k] = 1f;
+                parcalar[k].Cubuk = cubuk[0, k];
+                parcalar[8 + k].Cubuk = 1f;
+            }
 
             yield return Merkezle(merkez, true);
             yield return Sur(60, Vector2.zero, -1, null);
             bool zeminde = _s.Rig.Motor.IsGrounded && Mathf.Abs(_s.Rig.transform.position.y - merkez.y) < 0.25f;
-            Debug.Log("[DD-TEST] wp083.loco setup floor=" + zeminde + " y=" + _s.Rig.transform.position.y.ToString("F2", CultureInfo.InvariantCulture) +
-                      " floorY=" + merkez.y.ToString("F2", CultureInfo.InvariantCulture) + " v4=" + body.HasLocomotionV4 + " footIk=" + (body.FootIk != null) +
-                      " maxSpeed=" + maxSpeed.ToString("F2", CultureInfo.InvariantCulture) + " walkClip=" + walkClip.ToString("F2", CultureInfo.InvariantCulture) +
-                      " walkStick=" + walkStick.ToString("F3", CultureInfo.InvariantCulture) + " ref=" + anim.LocomotionReferenceSpeed.ToString("F2", CultureInfo.InvariantCulture) +
-                      " bones=" + _kayit.BulunanKemikler() + " camera=" + CameraModeService.Current);
+            Debug.Log("[DD-TEST] wp083.loco setup floor=" + zeminde + " y=" + F2(_s.Rig.transform.position.y) + " floorY=" + F2(merkez.y) + " v4=" + body.HasLocomotionV4 +
+                      " footIk=" + (body.FootIk != null) + " maxSpeed=" + F2(maxSpeed) + " ref=" + F2(reference) + " walkSpeeds(f/b/l/r)=" + F2(walkSpeeds[0]) + "/" + F2(walkSpeeds[1]) + "/" +
+                      F2(walkSpeeds[2]) + "/" + F2(walkSpeeds[3]) + " walkSticks=" + string.Join(",", Sticks(cubuk)) + " bones=" + _kayit.BulunanKemikler() + " camera=" + CameraModeService.Current +
+                      " aim=" + V(_nisan) + " basisFwd=" + V(_ileri) + " basisRight=" + V(_sag) + " feetBottomL/R=" + F(body.Animator.leftFeetBottomHeight) + "/" + F(body.Animator.rightFeetBottomHeight) +
+                      " humanScale=" + F(body.Animator.humanScale) + " legLength=" + F(ik.LegLength));
             Assert.IsTrue(zeminde, "oyuncu test zeminine oturmadı (y " + _s.Rig.transform.position.y + " / zemin " + merkez.y + ")");
 
-            // ---- course A: steady gait (the body faces the view while moving, so the stick directions are strafe directions)
-            float yuzHata = 0f;
+            // ---- course A: steady gait (the aim held on one world direction, the stick in eight)
             for (int g = 0; g < 2 && _iptal == null; g++)
             {
-                float m = g == 0 ? walkStick : 1f;
                 int cap = Isinma + (g == 0 ? 720 : 600);
                 for (int j = 0; j < sira.Length && _iptal == null; j++)
                 {
                     int k = sira[j];
                     int idx = g * 8 + k;
-                    Parca p = parcalar[idx];
-                    yield return Merkezle(merkez, false);
-                    for (int f = 0; f < cap; f++)
-                    {
-                        if (!Canli()) break;
-                        _s.Girdi.Yon = Yon8(k, m);
-                        _kayit.Etiket = idx;
-                        yield return null;
-                        p.Kare++;
-                        if (_kayit.Since >= Isinma)
-                        {
-                            p.KomutHizToplam += _s.Rig.Motor.CommandedPlanarVelocity.magnitude;
-                            p.KomutHizN++;
-                            PrototypeCameraRig cam = PrototypeCameraRig.Active;
-                            if (cam != null) yuzHata = Mathf.Max(yuzHata, Vector3.Angle(Yatay(_s.Rig.transform.forward), Yatay(cam.PlanarForward)));
-                        }
-
-                        if (_kayit.Since >= Isinma + 180 && _kayit.DonguYeter(MinDongu + 1)) break;
-                    }
+                    yield return Kararli(merkez, parcalar[idx], idx, Yon8(k, cubuk[g, k]), cap);
                 }
+            }
+
+            // ---- course K: the positive controls (foot IK off ×2, LocoRate ×0.5)
+            if (_iptal == null)
+            {
+                FootIkAdapter.Force = 0;
+                yield return Kararli(merkez, parcalar[iIkOffRun], iIkOffRun, Yon8(0, 1f), Isinma + 600);
+                yield return Kararli(merkez, parcalar[iIkOffWalk], iIkOffWalk, Yon8(0, cubuk[0, 0]), Isinma + 720);
+                FootIkAdapter.Force = -1;
+                _carpan.Carpan = KontrolRate;
+                yield return Kararli(merkez, parcalar[iRate], iRate, Yon8(0, 1f), Isinma + 600);
+                _carpan.Carpan = 1f;
+            }
+
+            // ---- course S: run forward, the aim swung ±100° (2 s period)
+            if (_iptal == null)
+            {
+                Parca ps = parcalar[iSalinim];
+                yield return Merkezle(merkez, false);
+                for (int f = 0; f < Isinma + 4 * NisanSalinimPeriyot && Canli(); f++)
+                {
+                    float a = NisanSalinimDerece * Mathf.Sin(2f * Mathf.PI * f / NisanSalinimPeriyot);
+                    _nisanAnlik = Quaternion.AngleAxis(a, Vector3.up) * _nisan;
+                    Nisanla();
+                    _s.Girdi.Yon = Yon8(0, 1f);
+                    _kayit.Etiket = iSalinim;
+                    yield return null;
+                    ps.Kare++;
+                    if (_kayit.Since >= Isinma) { ps.KomutHizToplam += _s.Rig.Motor.CommandedPlanarVelocity.magnitude; ps.KomutHizN++; }
+                }
+
+                _nisanAnlik = _nisan;
             }
 
             // ---- course B: transitions × 5
@@ -288,18 +454,41 @@ namespace DD.Prototype.Tests.PlayMode
             _s.Girdi.Yon = Vector2.zero;
             _kayit.Etiket = -1;
             _kayit.Birak();
-            Debug.Log("[DD-TEST] wp083.loco course frames=" + _kayit.Kareler.Count + " plantEvents=" + _kayit.OlaySayisi + " aborted=" + (_iptal ?? "no") + " facingVsViewMaxDeg=" + yuzHata.ToString("F1", CultureInfo.InvariantCulture) +
-                      " footIk served=" + (body.FootIk != null && body.FootIk.Served) + " plants=" + (body.FootIk != null ? body.FootIk.PlantsAccepted : -1));
+            FootIkAdapter.Force = -1;
+            _carpan.Carpan = 1f;
 
-            // ---- analysis: every gate on its own; a gate without its source is named, not written
+            // ---- the classifier: the animated sole's floor per foot over course A, then every frame's contact
+            _kayit.TabanHesapla(16, Isinma, TabanYuzdelik, out float tabanL, out float tabanR);
+            _kayit.Siniflandir(Isinma, TabanYuzdelik);
+            Dok(parcalar, iIkOffRun, iIkOffWalk, iRate);
+            float nisanHata = 0f;
+            for (int i = 0; i < 16; i++) nisanHata = Mathf.Max(nisanHata, parcalar[i].NisanHataMax);
+            Debug.Log("[DD-TEST] wp083.loco course frames=" + _kayit.Kareler.Count + " plantEvents=" + _kayit.OlaySayisi + " aborted=" + (_iptal ?? "no") +
+                      " facingVsAimMaxDeg=" + F2(nisanHata) + " animSoleFloorL/R(course A p" + (TabanYuzdelik * 100f).ToString("F0", CultureInfo.InvariantCulture) + ")=" + F(tabanL) + "/" + F(tabanR) + " m" +
+                      " phaseClips=" + _kayit.FazKlipSayisi + " rayOtherFirst=" + (_kayit.RayDigerAd ?? "-") +
+                      " rayHitOther=" + _kayit.RayDigerSayisi + " footIk served=" + ik.Served + " plants=" + ik.PlantsAccepted + " debounced=" + ik.PlantsDebounced +
+                      " released S/G/L/P=" + ik.ReleasedByStretch + "/" + ik.ReleasedByGate + "/" + ik.ReleasedByLift + "/" + ik.ReleasedByPlant);
+
+            var ist = new Istat[parcalar.Count];
+            for (int i = 0; i < _gecisBasi; i++) ist[i] = Hesapla(i, Isinma, int.MaxValue);
+            for (int i = _gecisBasi; i < parcalar.Count; i++) ist[i] = Hesapla(i, 1, L1tPencere);
+
+            // ---- analysis: every gate on its own; a gate without its source (or its control) is named, not written
             var hatalar = new List<string>();
             if (_iptal != null) hatalar.Add("kurs yarıda kaldı: " + _iptal);
-            var yazilacak = new List<KeyValuePair<string, KeyValuePair<Dictionary<string, double>, int>>>();
+            if (nisanHata > NisanHataSiniri) hatalar.Add("gövde nişana dönmedi: kararlı karelerde en çok " + F2(nisanHata) + "° > " + NisanHataSiniri + "° (yön etiketleri geçersiz)");
+            bool kontrolA = KontrolA(anim, parcalar, ist, hatalar);
+            bool kontrolB = KontrolB(ist, iRate, hatalar);
+            bool kontrolC = KontrolC(anim, reference, ist, hatalar);
+            bool yonGecerli = nisanHata <= NisanHataSiniri;
+            KaynakKaniti(anim, parcalar, ist, iIkOffRun, iIkOffWalk);
 
-            Olc("L1", hatalar, yazilacak, () => L1Hesapla(parcalar));
-            Olc("L1t", hatalar, yazilacak, () => L1tHesapla(parcalar));
-            Olc("L2", hatalar, yazilacak, () => L2Hesapla(parcalar));
-            Olc("L3", hatalar, yazilacak, () => L3Hesapla(parcalar));
+            var yazilacak = new List<KeyValuePair<string, KeyValuePair<Dictionary<string, double>, int>>>();
+            Olc("L1", hatalar, yazilacak, () => L1Hesapla(parcalar, ist), Engel(("(a) temas payı", kontrolA), ("(b) bilinen kayma", kontrolB), ("(c) StrideEslemesi", kontrolC), ("nişan yönü", yonGecerli)));
+            Olc("L1t", hatalar, yazilacak, () => L1tHesapla(parcalar, ist), Engel(("(a) temas payı", kontrolA)));
+            Olc("L2", hatalar, yazilacak, () => L2Hesapla(parcalar, ist), Engel(("(a) temas payı", kontrolA), ("nişan yönü", yonGecerli)));
+            Olc("L3", hatalar, yazilacak, () => L3Hesapla(parcalar), null);
+            Tablo(anim, parcalar, ist, iIkOffRun, iIkOffWalk, iRate, iSalinim);
 
             // writes first (every red value recorded), the thresholds after; one literal call per gate (r2_gates_lint reads the gate
             // id and the keys at the call)
@@ -350,7 +539,36 @@ namespace DD.Prototype.Tests.PlayMode
                 }
             }
 
+            Debug.Log("[DD-TEST] wp083.loco written=" + string.Join(",", Anahtarlar(yazilacak)) + " controls a/b/c=" + kontrolA + "/" + kontrolB + "/" + kontrolC);
             if (hatalar.Count > 0) Assert.Fail(string.Join("\n", hatalar));
+        }
+
+        private static IEnumerable<string> Anahtarlar(List<KeyValuePair<string, KeyValuePair<Dictionary<string, double>, int>>> l)
+        {
+            foreach (var kv in l) yield return kv.Key;
+        }
+
+        private static IEnumerable<string> Sticks(float[,] c)
+        {
+            for (int k = 0; k < 8; k++) yield return YonAd[k] + ":" + c[0, k].ToString("F3", CultureInfo.InvariantCulture);
+        }
+
+        /// <summary>The walk ring's contact speed along a body-space direction (PlayerSkinnedVisual.RingAlong's rule: fwd / back by |y|, the side by |x|).</summary>
+        private static float HalkaHizi(Vector2 move, float[] speeds)
+        {
+            float ax = Mathf.Abs(move.x), ay = Mathf.Abs(move.y);
+            if (ax + ay < 1e-4f) return speeds[0];
+            float fb = move.y >= 0f ? speeds[0] : speeds[1];
+            float side = move.x < 0f ? speeds[2] : speeds[3];
+            return (ax * side + ay * fb) / (ax + ay);
+        }
+
+        private static string Engel(params (string ad, bool gecti)[] kosullar)
+        {
+            string e = null;
+            foreach ((string ad, bool gecti) k in kosullar)
+                if (!k.gecti) e = (e == null ? "" : e + ", ") + k.ad;
+            return e == null ? null : "pozitif kontrol / ön koşul tutmadı: " + e;
         }
 
         private struct Sonuc
@@ -360,7 +578,7 @@ namespace DD.Prototype.Tests.PlayMode
             public string Eksik;   // the source is not in the recording (gate not written)
         }
 
-        private static void Olc(string gate, List<string> hatalar, List<KeyValuePair<string, KeyValuePair<Dictionary<string, double>, int>>> yazilacak, Func<Sonuc> hesap)
+        private static void Olc(string gate, List<string> hatalar, List<KeyValuePair<string, KeyValuePair<Dictionary<string, double>, int>>> yazilacak, Func<Sonuc> hesap, string engel)
         {
             Sonuc s;
             try { s = hesap(); }
@@ -378,9 +596,10 @@ namespace DD.Prototype.Tests.PlayMode
                 if (s.Ornek <= 0) s.Eksik = "örnek yok";
             }
 
+            if (s.Eksik == null && engel != null) s.Eksik = engel;
             if (s.Eksik != null)
             {
-                hatalar.Add("R2 " + gate + ": kaynak kayıtta yok, yazılmadı (BLOCKED) — " + s.Eksik);
+                hatalar.Add("R2 " + gate + ": kaynak kayıtta yok ya da doğrulanmadı, yazılmadı (BLOCKED) — " + s.Eksik);
                 return;
             }
 
@@ -389,13 +608,17 @@ namespace DD.Prototype.Tests.PlayMode
 
         private static string F(double v) => v.ToString("F4", CultureInfo.InvariantCulture);
         private static string F2(double v) => v.ToString("F2", CultureInfo.InvariantCulture);
+        private static string F3(double v) => v.ToString("F3", CultureInfo.InvariantCulture);
+        private static string V(Vector3 v) => "(" + F2(v.x) + "," + F2(v.y) + "," + F2(v.z) + ")";
 
-        private static double P95(List<double> xs)
+        private static double P95(List<double> xs) => Yuzdelik(xs, 0.95);
+
+        private static double Yuzdelik(List<double> xs, double q)
         {
             if (xs.Count == 0) return double.NaN;
             var c = new List<double>(xs);
             c.Sort();
-            int i = Mathf.Clamp((int)Math.Ceiling(0.95 * c.Count) - 1, 0, c.Count - 1);
+            int i = Mathf.Clamp((int)Math.Ceiling(q * c.Count) - 1, 0, c.Count - 1);
             return c[i];
         }
 
@@ -423,19 +646,291 @@ namespace DD.Prototype.Tests.PlayMode
             return footV.magnitude / Math.Max(bodyV.magnitude, GovdeHizTabani);
         }
 
-        private void Kaymalar(Parca p, int idx, int sinceMin, int sinceMax, List<double> into)
+        private static Vector3 Yatay(Vector3 v) { v.y = 0f; return v; }
+
+        // --------------------------------------------------------------------------------------------------- per segment
+
+        private Istat Hesapla(int idx, int sinceMin, int sinceMax)
         {
+            var s = new Istat();
             List<LokomotionKaydedici.Kare> ks = _kayit.Kareler;
+            Vector3 sum = Vector3.zero;
+            double vs = 0, rate = 0;
+            int nL = 0, nR = 0, nEL = 0, nER = 0, first = -1, last = -1;
+            var post = new List<double>(); var animG = new List<double>(); var pin = new List<double>(); var swA = new List<double>(); var swP = new List<double>();
+            var stM = new[] { new List<double>(), new List<double>() }; var swM = new[] { new List<double>(), new List<double>() };
+            var uSt = new[] { new List<double>(), new List<double>() }; var uSw = new[] { new List<double>(), new List<double>() };
+            var pelvis = new List<double>();
+            int nPL = 0, nPR = 0, uyum = 0, swYer = 0;
+            Vector3 dirAll = Vector3.zero;
+            for (int i = 0; i < ks.Count; i++)
+                if (ks[i].Etiket == idx && ks[i].Since >= sinceMin && ks[i].Since <= sinceMax && ks[i].Gecerli) dirAll += ks[i].BodyV;
+            dirAll = dirAll.sqrMagnitude > 1e-8f ? dirAll.normalized : Vector3.zero;
             for (int i = 0; i < ks.Count; i++)
             {
                 LokomotionKaydedici.Kare k = ks[i];
-                if (k.Etiket != idx || !k.Gecerli || k.Since < sinceMin || k.Since > sinceMax) continue;
-                if (k.TemasL) into.Add(Oran(k.FootVL, k.BodyV));
-                if (k.TemasR) into.Add(Oran(k.FootVR, k.BodyV));
+                if (k.Etiket != idx || k.Since < sinceMin || k.Since > sinceMax) continue;
+                if (first < 0) first = i;
+                last = i;
+                if (!k.Gecerli) continue;
+                s.N++;
+                sum += k.BodyV;
+                vs += k.BodyV.magnitude;
+                rate += k.Rate;
+                if (k.TemasL) { nL++; s.Kayma.Add(Oran(k.FootVL, k.BodyV)); }
+                if (k.TemasR) { nR++; s.Kayma.Add(Oran(k.FootVR, k.BodyV)); }
+                if (k.TemasEskiL) nEL++;
+                if (k.TemasEskiR) nER++;
+                if (k.Locked > 0) s.KilitliKare++;
+                if (k.RayDigerL || k.RayDigerR) s.RayDiger++;
+                post.Add(k.GapL); post.Add(k.GapR);
+                animG.Add(k.AnimGapL); animG.Add(k.AnimGapR);
+                pin.Add(k.AnimGapL - k.GapL); pin.Add(k.AnimGapR - k.GapR);
+                pelvis.Add(k.Pelvis);
+                if (k.TemasPozL) nPL++;
+                if (k.TemasPozR) nPR++;
+                if (k.TemasPozL == k.TemasL) uyum++;
+                if (k.TemasPozR == k.TemasR) uyum++;
+                for (int f = 0; f < 2; f++)
+                {
+                    bool st = f == 0 ? k.TemasL : k.TemasR;
+                    float ag = f == 0 ? k.AnimGapL : k.AnimGapR, sg = f == 0 ? k.GapL : k.GapR;
+                    double u = -Vector3.Dot(Yatay((f == 0 ? k.FootVL : k.FootVR) - k.BodyV), dirAll);
+                    (st ? stM[f] : swM[f]).Add(ag);
+                    (st ? uSt[f] : uSw[f]).Add(u);
+                    if (!st) { swA.Add(ag); swP.Add(sg); if (sg <= 0.01f) swYer++; }
+                }
+            }
+
+            if (s.N > 0)
+            {
+                s.V = vs / s.N;
+                Vector3 dir = sum.sqrMagnitude > 1e-8f ? sum.normalized : Vector3.zero;
+                s.VYon = Vector3.Dot(sum / s.N, dir);
+                s.Rate = rate / s.N;
+                s.PayL = (double)nL / s.N; s.PayR = (double)nR / s.N;
+                s.PayEskiL = (double)nEL / s.N; s.PayEskiR = (double)nER / s.N;
+                s.L1Avg = Ort(s.Kayma); s.L1P95 = P95(s.Kayma);
+                s.PostGapMed = Medyan(post); s.AnimGapMed = Medyan(animG); s.PimMed = Medyan(pin);
+                s.SalinimAnimMed = Medyan(swA); s.SalinimPostMed = Medyan(swP);
+                s.SalinimYerdePay = swA.Count > 0 ? (double)swYer / swA.Count : double.NaN;
+                s.PayPozL = (double)nPL / s.N; s.PayPozR = (double)nPR / s.N;
+                s.Uyum = uyum / (2.0 * s.N);
+                for (int f = 0; f < 2; f++) { s.DurusMed[f] = Medyan(stM[f]); s.SalinimMed[f] = Medyan(swM[f]); s.UDurus[f] = Ort(uSt[f]); s.USalinim[f] = Ort(uSw[f]); }
+                s.PelvisMed = Medyan(pelvis);
+            }
+
+            if (first >= 0)
+            {
+                LokomotionKaydedici.Kare a = ks[Math.Max(0, first - 1)], b = ks[last];
+                s.Kabul = b.Acc - a.Acc; s.BirakS = b.RelS - a.RelS; s.BirakG = b.RelG - a.RelG; s.BirakL = b.RelL - a.RelL; s.BirakP = b.RelP - a.RelP;
+            }
+
+            // cadence (plant events, else contact onsets) and the planted foot's backward speed under the body
+            if (s.N > 0 && sinceMax == int.MaxValue)
+            {
+                Vector3 dir = sum.normalized;
+                double uSum = 0;
+                int uN = 0;
+                var evL = new List<double>(); var evR = new List<double>(); var onL = new List<double>(); var onR = new List<double>();
+                for (int i = 0; i < ks.Count; i++)
+                {
+                    LokomotionKaydedici.Kare k = ks[i];
+                    if (k.Etiket != idx || k.Since < sinceMin) continue;
+                    if (k.OlayL) evL.Add(k.Zaman);
+                    if (k.OlayR) evR.Add(k.Zaman);
+                    if (k.BaslangicL) onL.Add(k.Zaman);
+                    if (k.BaslangicR) onR.Add(k.Zaman);
+                    if (!k.Gecerli) continue;
+                    if (k.TemasL) { uSum += -Vector3.Dot(Yatay(k.FootVL - k.BodyV), dir); uN++; }
+                    if (k.TemasR) { uSum += -Vector3.Dot(Yatay(k.FootVR - k.BodyV), dir); uN++; }
+                }
+
+                bool olay = evL.Count - 1 >= MinDongu && evR.Count - 1 >= MinDongu;
+                bool temas = onL.Count - 1 >= MinDongu && onR.Count - 1 >= MinDongu;
+                List<double> a = olay ? evL : onL, bb = olay ? evR : onR;
+                var araliklar = new List<double>();
+                for (int i = 1; i < a.Count; i++) araliklar.Add(a[i] - a[i - 1]);
+                for (int i = 1; i < bb.Count; i++) araliklar.Add(bb[i] - bb[i - 1]);
+                s.Kaynak = olay ? "events" : temas ? "contacts" : "SHORT";
+                s.Dongu = Math.Max(0, Math.Min(a.Count, bb.Count) - 1);
+                s.T = Medyan(araliklar);
+                s.U = uN > 0 ? uSum / uN : double.NaN;
+            }
+
+            return s;
+        }
+
+        // --------------------------------------------------------------------------------------------------- positive controls
+
+        private static readonly string[][] YonKlipleri =
+        {
+            // body-space direction → the 4-way ring children it blends (the AP-022 v008 loco; diagonals sit between two)
+            new[] { "F" }, new[] { "F", "R" }, new[] { "R" }, new[] { "B", "R" }, new[] { "B" }, new[] { "B", "L" }, new[] { "L" }, new[] { "F", "L" },
+        };
+
+        private static string KlipAdi(int gait, string yon)
+        {
+            switch (yon)
+            {
+                case "F": return gait == 0 ? C.PlayerWalkFwd : C.PlayerRunFwd;
+                case "B": return gait == 0 ? C.PlayerWalkBack : C.PlayerRunBack;
+                case "L": return gait == 0 ? C.PlayerStrafeLeft : C.PlayerRunStrafeLeft;
+                default: return gait == 0 ? C.PlayerStrafeRight : C.PlayerRunStrafeRight;
             }
         }
 
-        private Sonuc L1Hesapla(List<Parca> parcalar)
+        /// <summary>One clip's stance share per foot from its events (foot_x → foot_x_off over the loop period); the manifest stance frames for the record.</summary>
+        private static bool OlayPayi(CharacterAnimationSet anim, string clip, out double l, out double r, out double stance, out int period)
+        {
+            l = r = stance = double.NaN;
+            period = 0;
+            CharacterAnimationSet.Entry e = anim.Find(clip);
+            if (e == null || string.IsNullOrEmpty(e.events)) return false;
+            period = Mathf.RoundToInt(e.seconds * 30f);
+            if (period <= 0) period = Math.Max(1, e.frames - 1);
+            int pl = -1, pr = -1, ofl = -1, ofr = -1;
+            foreach (string part in e.events.Split(';'))
+            {
+                string[] kv = part.Split('=');
+                if (kv.Length != 2 || !int.TryParse(kv[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out int f)) continue;
+                switch (kv[0].Trim())
+                {
+                    case "foot_l": pl = f; break;
+                    case "foot_r": pr = f; break;
+                    case "foot_l_off": ofl = f; break;
+                    case "foot_r_off": ofr = f; break;
+                }
+            }
+
+            if (e.stanceFrames > 0) stance = (double)e.stanceFrames / period;
+            if (pl < 0 || pr < 0 || ofl < 0 || ofr < 0) return false;
+            l = (double)(((ofl - pl) % period + period) % period) / period;
+            r = (double)(((ofr - pr) % period + period) % period) / period;
+            return true;
+        }
+
+        private static bool Beklenen(CharacterAnimationSet anim, int gait, int yon, out double l, out double r, out double stance, out string klipler)
+        {
+            l = r = stance = 0;
+            klipler = "";
+            string[] ys = YonKlipleri[yon & 7];
+            foreach (string y in ys)
+            {
+                string c = KlipAdi(gait, y);
+                klipler += (klipler.Length > 0 ? "+" : "") + c;
+                if (!OlayPayi(anim, c, out double cl, out double cr, out double st, out _)) { l = r = stance = double.NaN; return false; }
+                l += cl / ys.Length; r += cr / ys.Length; stance += st / ys.Length;
+            }
+
+            return true;
+        }
+
+        /// <summary>(a) every steady segment's contact share per foot within ±10 points of the clip events' stance share.</summary>
+        private bool KontrolA(CharacterAnimationSet anim, List<Parca> parcalar, Istat[] ist, List<string> hatalar)
+        {
+            bool ok = true;
+            var rows = new List<string>();
+            for (int i = 0; i < 16; i++)
+            {
+                Parca p = parcalar[i];
+                Istat s = ist[i];
+                bool varmi = Beklenen(anim, p.Yuruyus, p.Yon, out double el, out double er, out double st, out string kl);
+                bool a1 = varmi && s.N > 0 && Math.Abs(s.PayL - el) <= TemasPayiTolerans && Math.Abs(s.PayR - er) <= TemasPayiTolerans;
+                // (a2) the pose agrees with the phase: per foot the animated sole lower in stance than in swing by ≥ 2 cm, and the stance
+                // foot travelling backward under the body while the swing foot travels forward
+                bool a2 = true;
+                for (int f = 0; f < 2; f++)
+                    a2 &= s.SalinimMed[f] - s.DurusMed[f] >= PozAyrim && s.UDurus[f] > 0 && s.USalinim[f] < 0;
+                bool satir = a1 && a2;
+                ok &= satir;
+                rows.Add(p.Ad + " exp L/R " + F3(el) + "/" + F3(er) + " (stanceFrames " + F3(st) + ") phase L/R " + F3(s.PayL) + "/" + F3(s.PayR) + " pose L/R " + F3(s.PayPozL) + "/" + F3(s.PayPozR) +
+                         " agree " + F3(s.Uyum) + " R2-classifier L/R " + F3(s.PayEskiL) + "/" + F3(s.PayEskiR) + " · animSole stance/swing L " + F3(s.DurusMed[0]) + "/" + F3(s.SalinimMed[0]) +
+                         " R " + F3(s.DurusMed[1]) + "/" + F3(s.SalinimMed[1]) + " m · u stance/swing L " + F2(s.UDurus[0]) + "/" + F2(s.USalinim[0]) + " R " + F2(s.UDurus[1]) + "/" + F2(s.USalinim[1]) +
+                         " m/s n " + s.N + (a1 ? "" : " a1-OUT") + (a2 ? "" : " a2-OUT") + " [" + kl + "]");
+            }
+
+            Debug.Log("[DD-TEST] wp082.controlA contactShare tol=±" + TemasPayiTolerans + " pass=" + ok + " :: " + string.Join(" | ", rows));
+            if (!ok) hatalar.Add("pozitif kontrol (a) temas payı FAIL: en az bir kararlı segment klip olaylarının ±" + TemasPayiTolerans + " dışında ya da poz faza uymuyor (wp082.controlA satırı)");
+            return ok;
+        }
+
+        /// <summary>(b) LocoRate forced ×0.5 on run_fwd: L1 there reads 0.5 ± 0.1.</summary>
+        private bool KontrolB(Istat[] ist, int iRate, List<string> hatalar)
+        {
+            Istat s = ist[iRate], b = ist[8];
+            bool ok = s.Kayma.Count > 0 && Math.Abs(s.L1Avg - KontrolKayma) <= KontrolKaymaTolerans;
+            Debug.Log("[DD-TEST] wp082.controlB knownSlide rate×" + KontrolRate + " L1 avg " + F(s.L1Avg) + " p95 " + F(s.L1P95) + " n " + s.Kayma.Count + " (expected " + KontrolKayma + " ± " + KontrolKaymaTolerans +
+                      ") LocoRate " + F3(s.Rate) + " v " + F2(s.V) + " — base run_fwd L1 " + F(b.L1Avg) + " LocoRate " + F3(b.Rate) + " pass=" + ok);
+            if (!ok) hatalar.Add("pozitif kontrol (b) bilinen kayma FAIL: L1 " + F(s.L1Avg) + " (beklenen " + KontrolKayma + " ± " + KontrolKaymaTolerans + ")");
+            return ok;
+        }
+
+        /// <summary>(c) StrideEslemesi on the pure run directions: the stride-match slide at the measured speed and clip rate vs the segment's L1 avg.</summary>
+        private bool KontrolC(CharacterAnimationSet anim, float reference, Istat[] ist, List<string> hatalar)
+        {
+            bool ok = true;
+            var rows = new List<string>();
+            (int idx, string clip, float radius)[] dirs =
+            {
+                (8, C.PlayerRunFwd, 1f), (12, C.PlayerRunBack, DD.Prototype.Core.Config.PlayerConfigSection.BackwardSpeedMultiplier),
+                (10, C.PlayerRunStrafeRight, 1f), (14, C.PlayerRunStrafeLeft, 1f),
+            };
+            foreach ((int idx, string clip, float radius) d in dirs)
+            {
+                Istat s = ist[d.idx];
+                float speed = anim.SpeedOf(d.clip);
+                float scale = d.radius < 0.999f ? PlayerSkinnedVisual.RunChildTimeScale(reference, speed, d.radius) : PlayerSkinnedVisual.RunChildTimeScale(reference, speed);
+                double clipRate = s.Rate * scale;
+                double slide = CadenceBand.SlideFraction((float)s.VYon, speed, (float)clipRate);
+                CharacterAnimationSet.Entry e = anim.Find(d.clip);
+                double cadRate = e != null && !double.IsNaN(s.T) && s.T > 0 ? e.seconds / s.T : double.NaN;
+                double diff = Math.Abs(s.L1Avg - slide);
+                bool satir = s.Kayma.Count > 0 && diff <= StrideFarkSiniri;
+                ok &= satir;
+                rows.Add(YonAd[d.idx - 8] + " L1 " + F(s.L1Avg) + " strideSlide " + F(slide) + " diff " + F(diff) + (satir ? " ok" : " OUT") + " (v " + F2(s.VYon) + " clip " + F2(speed) + " m/s, rate LocoRate " + F3(s.Rate) +
+                         " × scale " + F3(scale) + " = " + F3(clipRate) + ", cadence-rate " + F3(cadRate) + ")");
+            }
+
+            Debug.Log("[DD-TEST] wp082.controlC strideMatch tol=" + StrideFarkSiniri + " pass=" + ok + " :: " + string.Join(" | ", rows));
+            if (!ok) hatalar.Add("pozitif kontrol (c) StrideEslemesi FAIL: L1 ile adım eşlemesi kayması arasında fark > " + StrideFarkSiniri + " (wp082.controlC satırı)");
+            return ok;
+        }
+
+        /// <summary>The R2 writer's error, from the recording: the shown vs animated sole height, the R2 classifier's share with and without the foot IK.</summary>
+        private void KaynakKaniti(CharacterAnimationSet anim, List<Parca> parcalar, Istat[] ist, int iIkOffRun, int iIkOffWalk)
+        {
+            var rows = new List<string>();
+            foreach (int i in new[] { 0, 8, iIkOffWalk, iIkOffRun })
+            {
+                Istat s = ist[i];
+                Beklenen(anim, parcalar[i].Yuruyus, 0, out double el, out double er, out _, out _);
+                rows.Add(parcalar[i].Ad + " swingSole animated/shown med " + F3(s.SalinimAnimMed) + "/" + F3(s.SalinimPostMed) + " m (swing shown ≤1 cm " + F2(s.SalinimYerdePay) + ") · pelvis med " + F3(s.PelvisMed) +
+                         " m · sole med animated/shown " + F3(s.AnimGapMed) + "/" + F3(s.PostGapMed) +
+                         " · IK pin med " + F3(s.PimMed) + " m · share R2-classifier L/R " + F3(s.PayEskiL) + "/" + F3(s.PayEskiR) + " new L/R " + F3(s.PayL) + "/" + F3(s.PayR) + " exp " + F3(el) + "/" + F3(er) +
+                         " · R2-classifier L1 would read " + F(R2SiniflayiciL1(i)) + " · rayHitOther " + s.RayDiger);
+            }
+
+            Debug.Log("[DD-TEST] wp082.cause :: " + string.Join(" | ", rows));
+        }
+
+        /// <summary>L1 of one segment with the R2 classifier (the shown pose), for the cause record.</summary>
+        private double R2SiniflayiciL1(int idx)
+        {
+            var l = new List<double>();
+            foreach (LokomotionKaydedici.Kare k in _kayit.Kareler)
+            {
+                if (k.Etiket != idx || !k.Gecerli || k.Since < Isinma) continue;
+                if (k.TemasEskiL) l.Add(Oran(k.FootVL, k.BodyV));
+                if (k.TemasEskiR) l.Add(Oran(k.FootVR, k.BodyV));
+            }
+
+            return Ort(l);
+        }
+
+        // --------------------------------------------------------------------------------------------------- gates
+
+        private Sonuc L1Hesapla(List<Parca> parcalar, Istat[] ist)
         {
             var all = new List<double>();
             var rows = new List<string>();
@@ -443,16 +938,15 @@ namespace DD.Prototype.Tests.PlayMode
             for (int idx = 0; idx < 16; idx++)
             {
                 Parca p = parcalar[idx];
-                var seg = new List<double>();
-                Kaymalar(p, idx, Isinma, int.MaxValue, seg);
-                all.AddRange(seg);
-                double v = _kayit.OrtalamaGovdeHizi(idx, Isinma);
+                Istat s = ist[idx];
+                all.AddRange(s.Kayma);
                 double cmd = p.KomutHizN > 0 ? p.KomutHizToplam / p.KomutHizN : double.NaN;
-                bool kararli = !double.IsNaN(cmd) && cmd > 0.1 && Math.Abs(v - cmd) / cmd <= KararliTolerans;
-                rows.Add(p.Ad + " avg " + F(Ort(seg)) + " p95 " + F(P95(seg)) + " n " + seg.Count + " v " + F2(v) + "/" + F2(cmd) + " m/s" +
-                         " gap " + _kayit.TabanOzeti(idx, Isinma) + (kararli ? "" : " NOT-STEADY"));
-                if (seg.Count == 0) eksik = (eksik == null ? "" : eksik + "; ") + p.Ad + ": temas karesi yok";
-                else if (!kararli) eksik = (eksik == null ? "" : eksik + "; ") + p.Ad + ": kararlı yürüyüş yok (v " + F2(v) + " / komut " + F2(cmd) + ")";
+                bool kararli = !double.IsNaN(cmd) && cmd > 0.1 && Math.Abs(s.V - cmd) / cmd <= KararliTolerans;
+                rows.Add(p.Ad + " avg " + F(s.L1Avg) + " p95 " + F(s.L1P95) + " n " + s.Kayma.Count + " v " + F2(s.V) + "/" + F2(cmd) + " m/s share L/R " + F3(s.PayL) + "/" + F3(s.PayR) +
+                         " pos " + V(p.Bas) + ">" + V(p.Son) + " rayOther " + s.RayDiger +
+                         (kararli ? "" : " NOT-STEADY"));
+                if (s.Kayma.Count == 0) eksik = (eksik == null ? "" : eksik + "; ") + p.Ad + ": temas karesi yok";
+                else if (!kararli) eksik = (eksik == null ? "" : eksik + "; ") + p.Ad + ": kararlı yürüyüş yok (v " + F2(s.V) + " / komut " + F2(cmd) + ")";
             }
 
             double avg = Ort(all), p95 = P95(all);
@@ -460,19 +954,17 @@ namespace DD.Prototype.Tests.PlayMode
             return new Sonuc { Degerler = new Dictionary<string, double> { { "avg", avg }, { "p95", p95 } }, Ornek = all.Count, Eksik = eksik };
         }
 
-        private Sonuc L1tHesapla(List<Parca> parcalar)
+        private Sonuc L1tHesapla(List<Parca> parcalar, Istat[] ist)
         {
             var all = new List<double>();
             var byKind = new Dictionary<Tur, List<double>>();
             int pencereli = 0;
-            for (int idx = 16; idx < parcalar.Count; idx++)
+            for (int idx = _gecisBasi; idx < parcalar.Count; idx++)
             {
                 Parca p = parcalar[idx];
                 if (!byKind.TryGetValue(p.Tur, out List<double> list)) byKind[p.Tur] = list = new List<double>();
-                var seg = new List<double>();
-                Kaymalar(p, idx, 1, L1tPencere, seg);
-                list.AddRange(seg);
-                all.AddRange(seg);
+                list.AddRange(ist[idx].Kayma);
+                all.AddRange(ist[idx].Kayma);
                 if (_kayit.PencereKareSayisi(idx, 1, L1tPencere) >= L1tPencere) pencereli++;
             }
 
@@ -491,106 +983,58 @@ namespace DD.Prototype.Tests.PlayMode
             return new Sonuc { Degerler = new Dictionary<string, double> { { "avg", avg }, { "p95", p95 } }, Ornek = all.Count, Eksik = eksik };
         }
 
-        private Sonuc L2Hesapla(List<Parca> parcalar)
+        private Sonuc L2Hesapla(List<Parca> parcalar, Istat[] ist)
         {
             double devMax = 0;
             int toplamDongu = 0;
             var rows = new List<string>();
             string eksik = null;
-            List<LokomotionKaydedici.Kare> ks = _kayit.Kareler;
             for (int idx = 0; idx < 16; idx++)
             {
                 Parca p = parcalar[idx];
-                // the travel direction and the body speed along it
-                Vector3 sum = Vector3.zero;
-                int n = 0;
-                for (int i = 0; i < ks.Count; i++)
-                {
-                    LokomotionKaydedici.Kare k = ks[i];
-                    if (k.Etiket != idx || !k.Gecerli || k.Since < Isinma) continue;
-                    sum += k.BodyV;
-                    n++;
-                }
-
-                if (n == 0 || sum.sqrMagnitude < 1e-8f) { eksik = (eksik == null ? "" : eksik + "; ") + p.Ad + ": gövde hareketi yok"; rows.Add(p.Ad + " n/a"); continue; }
-                Vector3 dir = sum.normalized;
-                double v = Vector3.Dot(sum / n, dir);
-
-                // the planted foot's backward speed under the body along the travel direction (contact frames)
-                double uSum = 0;
-                int uN = 0;
-                // plant intervals (s) per foot: events, else contact onsets
-                var evL = new List<double>(); var evR = new List<double>(); var onL = new List<double>(); var onR = new List<double>();
-                var posEvL = new List<Vector3>(); var posEvR = new List<Vector3>();
-                for (int i = 0; i < ks.Count; i++)
-                {
-                    LokomotionKaydedici.Kare k = ks[i];
-                    if (k.Etiket != idx || k.Since < Isinma) continue;
-                    if (k.OlayL) { evL.Add(k.Zaman); posEvL.Add(k.PosL); }
-                    if (k.OlayR) { evR.Add(k.Zaman); posEvR.Add(k.PosR); }
-                    if (k.BaslangicL) onL.Add(k.Zaman);
-                    if (k.BaslangicR) onR.Add(k.Zaman);
-                    if (!k.Gecerli) continue;
-                    if (k.TemasL) { uSum += -Vector3.Dot(Yatay(k.FootVL - k.BodyV), dir); uN++; }
-                    if (k.TemasR) { uSum += -Vector3.Dot(Yatay(k.FootVR - k.BodyV), dir); uN++; }
-                }
-
-                bool olay = evL.Count - 1 >= MinDongu && evR.Count - 1 >= MinDongu;
-                bool temas = onL.Count - 1 >= MinDongu && onR.Count - 1 >= MinDongu;
-                List<double> a = olay ? evL : onL, bb = olay ? evR : onR;
-                var araliklar = new List<double>();
-                for (int i = 1; i < a.Count; i++) araliklar.Add(a[i] - a[i - 1]);
-                for (int i = 1; i < bb.Count; i++) araliklar.Add(bb[i] - bb[i - 1]);
-                int dongu = Math.Min(a.Count, bb.Count) - 1;
-                double T = Medyan(araliklar);
-                double u = uN > 0 ? uSum / uN : double.NaN;
-                double kadans = 2.0 / T;                 // steps / s
-                double adim = u * T / 2.0;               // m per step, planted-foot implied
-                double dev = Math.Abs(kadans * adim - v) / v;
-                // the draft's literal reading (world contact point → next contact point of the same foot / 2), for the record
-                double literal = double.NaN;
-                if (posEvL.Count >= 2 && evL.Count >= 2)
-                {
-                    Vector3 d = Yatay(posEvL[posEvL.Count - 1] - posEvL[0]);
-                    literal = Math.Abs(d.magnitude / (evL[evL.Count - 1] - evL[0]) - v) / v;
-                }
-
-                rows.Add(p.Ad + " src " + (olay ? "events" : temas ? "contacts" : "SHORT") + " cycles " + dongu + " T " + F(T) + " s cadence " + F2(kadans * 60) + " spm step " + F(adim) +
-                         " m v " + F2(v) + " u " + F2(u) + " dev " + F(dev) + " literal " + F(literal));
-                if (!olay && !temas) { eksik = (eksik == null ? "" : eksik + "; ") + p.Ad + ": < " + MinDongu + " döngü (olay L/R " + Math.Max(0, evL.Count - 1) + "/" + Math.Max(0, evR.Count - 1) + ", temas " + Math.Max(0, onL.Count - 1) + "/" + Math.Max(0, onR.Count - 1) + ")"; continue; }
-                if (uN == 0 || double.IsNaN(dev)) { eksik = (eksik == null ? "" : eksik + "; ") + p.Ad + ": temas karesi yok"; continue; }
+                Istat s = ist[idx];
+                if (s.N == 0 || s.VYon < 1e-3) { eksik = (eksik == null ? "" : eksik + "; ") + p.Ad + ": gövde hareketi yok"; rows.Add(p.Ad + " n/a"); continue; }
+                double kadans = 2.0 / s.T;            // steps / s
+                double adim = s.U * s.T / 2.0;         // m per step, planted-foot implied
+                double dev = Math.Abs(kadans * adim - s.VYon) / s.VYon;
+                rows.Add(p.Ad + " src " + s.Kaynak + " cycles " + s.Dongu + " T " + F(s.T) + " s cadence " + F2(kadans * 60) + " spm step(u) " + F(adim) + " m step(v) " + F(s.VYon * s.T / 2.0) +
+                         " m v " + F2(s.VYon) + " u " + F2(s.U) + " dev " + F(dev));
+                if (s.Kaynak == "SHORT") { eksik = (eksik == null ? "" : eksik + "; ") + p.Ad + ": < " + MinDongu + " döngü"; continue; }
+                if (double.IsNaN(dev)) { eksik = (eksik == null ? "" : eksik + "; ") + p.Ad + ": temas karesi yok"; continue; }
                 devMax = Math.Max(devMax, dev);
-                toplamDongu += dongu;
+                toplamDongu += s.Dongu;
             }
 
             Debug.Log("[DD-TEST] wp083.l2 deviationMax=" + F(devMax) + " cycles=" + toplamDongu + " :: " + string.Join(" | ", rows));
             return new Sonuc { Degerler = new Dictionary<string, double> { { "deviationMax", devMax } }, Ornek = toplamDongu, Eksik = eksik };
         }
 
-        private static Vector3 Yatay(Vector3 v) { v.y = 0f; return v; }
+        private bool L3Olcer(Parca p, LokomotionKaydedici.Kare k) =>
+            p.Tur == Tur.Kararli || p.Tur == Tur.Kontrol || p.Tur == Tur.NisanSalinim ? k.Since >= Isinma : k.Since >= 1 && k.Since <= L3Pencere;
 
         private Sonuc L3Hesapla(List<Parca> parcalar)
         {
             int nb = Kemikler.Length;
             List<LokomotionKaydedici.Kare> ks = _kayit.Kareler;
             List<float> deg = _kayit.Derece;
-            // steady run peaks per segment per bone
+            // peaks per segment per bone (steady: after the warm-up; transitions: the 1 s window)
             var tepe = new double[parcalar.Count, nb];
             var tepeKare = new int[parcalar.Count, nb];
             var pencereKare = new int[parcalar.Count];
+            var buyuk = new List<KeyValuePair<float, int>>();   // (°/frame, i * nb + b) of limb frames over the limb limit
             for (int i = 0; i < ks.Count; i++)
             {
                 LokomotionKaydedici.Kare k = ks[i];
                 if (k.Etiket < 0 || !k.Gecerli) continue;
                 Parca p = parcalar[k.Etiket];
-                bool olc = p.Tur == Tur.Kararli ? k.Since >= Isinma : k.Since >= 1 && k.Since <= L3Pencere;
-                if (!olc) continue;
+                if (!L3Olcer(p, k)) continue;
                 pencereKare[k.Etiket]++;
                 for (int b = 0; b < nb; b++)
                 {
                     float d = deg[i * nb + b];
                     if (float.IsNaN(d)) continue;
                     if (d > tepe[k.Etiket, b]) { tepe[k.Etiket, b] = d; tepeKare[k.Etiket, b] = k.Since; }
+                    if (b < UzuvSayisi && d > L3Limb) buyuk.Add(new KeyValuePair<float, int>(d, i * nb + b));
                 }
             }
 
@@ -599,7 +1043,7 @@ namespace DD.Prototype.Tests.PlayMode
             int ornek = 0, gecis = 0;
             var rows = new List<string>();
             string eksik = null;
-            for (int t = 16; t < parcalar.Count; t++)
+            for (int t = _gecisBasi; t < parcalar.Count; t++)
             {
                 Parca p = parcalar[t];
                 if (pencereKare[t] == 0) { eksik = (eksik == null ? "" : eksik + "; ") + p.Ad + ": pencerede kare yok"; continue; }
@@ -629,16 +1073,17 @@ namespace DD.Prototype.Tests.PlayMode
             if (!_kayit.KemikVar(0) || !_kayit.KemikVar(12)) eksik = (eksik == null ? "" : eksik + "; ") + "uzuv/gövde kemiği yok: " + _kayit.BulunanKemikler();
 
             var steady = new StringBuilder();
-            for (int r = 0; r < 16; r++)
+            for (int r = 0; r < _gecisBasi; r++)
             {
                 double sl = 0, st = 0;
                 for (int b = 0; b < nb; b++) { if (b < UzuvSayisi) sl = Math.Max(sl, tepe[r, b]); else st = Math.Max(st, tepe[r, b]); }
-                steady.Append(parcalar[r].Ad).Append(' ').Append(F2(sl)).Append('/').Append(F2(st)).Append(r < 15 ? ", " : "");
+                steady.Append(parcalar[r].Ad).Append(' ').Append(F2(sl)).Append('/').Append(F2(st)).Append(r < _gecisBasi - 1 ? ", " : "");
             }
 
             Debug.Log("[DD-TEST] wp083.l3 limbDegPerFrameMax=" + F2(limb) + " (" + limbAt + ") torsoDegPerFrameMax=" + F2(torso) + " (" + torsoAt + ") transitionToSteadyRatioMax=" + F2(ratio) +
                       " (" + ratioAt + ") transitions=" + gecis + " frames=" + ornek + " window=" + L3Pencere + " floor=" + KararliTepeTabani + "°/frame :: steady limb/torso " + steady +
                       " :: " + string.Join(" | ", rows));
+            L3Kaynak(parcalar, tepe, buyuk);
             return new Sonuc
             {
                 Degerler = new Dictionary<string, double> { { "limbDegPerFrameMax", limb }, { "torsoDegPerFrameMax", torso }, { "transitionToSteadyRatioMax", ratio } },
@@ -646,42 +1091,303 @@ namespace DD.Prototype.Tests.PlayMode
                 Eksik = eksik,
             };
         }
+
+        /// <summary>
+        /// L3's source (PLAN §5.1 (4)): every limb frame over 20°/frame classified — a hand / arm bone (the hold and grip IK, WeaponGripIk θ),
+        /// a leg bone within ±2 frames of a foot-lock release, a leg bone where the foot IK's pin (animated − shown sole) jumped ≥ 5 cm
+        /// within ±1 frame, other leg; the bone-by-bone peak table and the top 12 frames with their context.
+        /// </summary>
+        private void L3Kaynak(List<Parca> parcalar, double[,] tepe, List<KeyValuePair<float, int>> buyuk)
+        {
+            int nb = Kemikler.Length;
+            List<LokomotionKaydedici.Kare> ks = _kayit.Kareler;
+            int el = 0, kilit = 0, pim = 0, pelvis = 0, diger = 0;
+            foreach (KeyValuePair<float, int> x in buyuk)
+            {
+                int i = x.Value / nb, b = x.Value % nb;
+                if (b >= 6) { el++; continue; }
+                if (BirakmaYakin(i, 2)) { kilit++; continue; }
+                if (ks[i].Pelvis <= -0.10f) { pelvis++; continue; }
+                if (PimSicrama(i, b, 1) >= 0.05f) { pim++; continue; }
+                diger++;
+            }
+
+            var kemik = new StringBuilder();
+            for (int b = 0; b < nb; b++)
+            {
+                double gs = 0, gt = 0;
+                for (int r = 0; r < parcalar.Count; r++) { if (r < _gecisBasi) gs = Math.Max(gs, tepe[r, b]); else gt = Math.Max(gt, tepe[r, b]); }
+                kemik.Append(Kemikler[b]).Append(' ').Append(F2(gs)).Append('/').Append(F2(gt)).Append(b < nb - 1 ? ", " : "");
+            }
+
+            buyuk.Sort((a, c) => c.Key.CompareTo(a.Key));
+            var top = new List<string>();
+            for (int t = 0; t < Math.Min(12, buyuk.Count); t++)
+            {
+                int i = buyuk[t].Value / nb, b = buyuk[t].Value % nb;
+                LokomotionKaydedici.Kare k = ks[i];
+                top.Add(parcalar[k.Etiket].Ad + " @" + k.Since + " " + Kemikler[b] + " " + F2(buyuk[t].Key) + "° release±2 " + BirakmaYakin(i, 2) + " pinJump±1 " + F3(PimSicrama(i, b, 1)) +
+                        " locked " + k.Locked + " soleAnim L/R " + F3(k.AnimGapL) + "/" + F3(k.AnimGapR) + " pelvis " + F3(k.Pelvis) + " rate " + F2(k.Rate));
+            }
+
+            Debug.Log("[DD-TEST] wp082.l3source limbFrames>" + L3Limb + "°=" + buyuk.Count + " hand/arm " + el + " · leg+lockRelease " + kilit + " · leg+pelvisDrop≥10cm " + pelvis + " · leg+IKpinJump≥5cm " + pim + " · leg other " + diger +
+                      " :: bone peak steady/transition " + kemik + " :: top " + string.Join(" | ", top));
+        }
+
+        private bool BirakmaYakin(int i, int w)
+        {
+            List<LokomotionKaydedici.Kare> ks = _kayit.Kareler;
+            int a = Math.Max(1, i - w), b = Math.Min(ks.Count - 1, i + w);
+            for (int j = a; j <= b; j++)
+            {
+                LokomotionKaydedici.Kare k = ks[j], o = ks[j - 1];
+                if (k.RelS + k.RelG + k.RelL + k.RelP != o.RelS + o.RelG + o.RelL + o.RelP) return true;
+            }
+
+            return false;
+        }
+
+        private float PimSicrama(int i, int b, int w)
+        {
+            List<LokomotionKaydedici.Kare> ks = _kayit.Kareler;
+            bool sol = (b & 1) == 0;
+            float m = 0f;
+            int a = Math.Max(1, i - w), e = Math.Min(ks.Count - 1, i + w);
+            for (int j = a; j <= e; j++)
+            {
+                float p0 = sol ? ks[j - 1].AnimGapL - ks[j - 1].GapL : ks[j - 1].AnimGapR - ks[j - 1].GapR;
+                float p1 = sol ? ks[j].AnimGapL - ks[j].GapL : ks[j].AnimGapR - ks[j].GapR;
+                if (!float.IsNaN(p0) && !float.IsNaN(p1)) m = Mathf.Max(m, Mathf.Abs(p1 - p0));
+            }
+
+            return m;
+        }
+
+        /// <summary>Per-frame CSV of the cause / control segments (walk_fwd, run_fwd, run_back and the course K controls) when DD_LOKO_DUMP_DIR is set.</summary>
+        private void Dok(List<Parca> parcalar, int iIkOffRun, int iIkOffWalk, int iRate)
+        {
+            string dir = Environment.GetEnvironmentVariable("DD_LOKO_DUMP_DIR");
+            if (string.IsNullOrEmpty(dir)) return;
+            var sec = new HashSet<int> { 0, 8, 12, iIkOffRun, iIkOffWalk, iRate };
+            var sb = new StringBuilder("label,since,frame,valid,phaseL,phaseR,contactL,contactR,poseL,poseR,r2L,r2R,animSoleL,animSoleR,shownSoleL,shownSoleR,animVyL,animVyR," +
+                                       "footVxzL,footVxzR,bodyVxz,pelvis,locked,rate,plantL,plantR,offL,offR,ikServed\n");
+            foreach (LokomotionKaydedici.Kare k in _kayit.Kareler)
+            {
+                if (!sec.Contains(k.Etiket)) continue;
+                sb.Append(parcalar[k.Etiket].Ad).Append(',').Append(k.Since).Append(',').Append(k.Frame).Append(',').Append(k.Gecerli ? 1 : 0).Append(',')
+                  .Append(F3(k.FazL)).Append(',').Append(F3(k.FazR)).Append(',').Append(k.TemasL ? 1 : 0).Append(',').Append(k.TemasR ? 1 : 0).Append(',')
+                  .Append(k.TemasPozL ? 1 : 0).Append(',').Append(k.TemasPozR ? 1 : 0).Append(',').Append(k.TemasEskiL ? 1 : 0).Append(',').Append(k.TemasEskiR ? 1 : 0).Append(',')
+                  .Append(F(k.AnimGapL)).Append(',').Append(F(k.AnimGapR)).Append(',').Append(F(k.GapL)).Append(',').Append(F(k.GapR)).Append(',')
+                  .Append(F3(k.AnimVyL)).Append(',').Append(F3(k.AnimVyR)).Append(',').Append(F3(Yatay(k.FootVL).magnitude)).Append(',').Append(F3(Yatay(k.FootVR).magnitude)).Append(',')
+                  .Append(F3(k.BodyV.magnitude)).Append(',').Append(F(k.Pelvis)).Append(',').Append(k.Locked).Append(',').Append(F3(k.Rate)).Append(',')
+                  .Append(k.OlayL ? 1 : 0).Append(',').Append(k.OlayR ? 1 : 0).Append(',').Append(k.OffL ? 1 : 0).Append(',').Append(k.OffR ? 1 : 0).Append(',').Append(k.IkServed ? 1 : 0).Append('\n');
+            }
+
+            System.IO.Directory.CreateDirectory(dir);
+            string path = System.IO.Path.Combine(dir, "loko-frames.csv");
+            System.IO.File.WriteAllText(path, sb.ToString());
+            Debug.Log("[DD-TEST] wp082.dump " + path + " rows " + sb.Length);
+        }
+
+        // --------------------------------------------------------------------------------------------------- the "önce / sonra" table
+
+        /// <summary>K/wp-082/evidence/olcum.md rows (PLAN §5.2): one log line per row, markdown, prefixed "[DD-TEST] wp082.olcum|".</summary>
+        private void Tablo(CharacterAnimationSet anim, List<Parca> parcalar, Istat[] ist, int iIkOffRun, int iIkOffWalk, int iRate, int iSalinim)
+        {
+            Debug.Log("[DD-TEST] wp082.olcum| satır | v (m/s) | komut v | kadans (adım/dk) | adım (m) | L1 avg | L1 p95 | temas payı beklenen L/R | ölçülen L/R | LocoRate | kilit kabul / bırakma S·G·L·P | kilitli kare | n |");
+            for (int i = 0; i < _gecisBasi; i++)
+            {
+                Parca p = parcalar[i];
+                Istat s = ist[i];
+                double cmd = p.KomutHizN > 0 ? p.KomutHizToplam / p.KomutHizN : double.NaN;
+                string exp = "—";
+                if (p.Tur == Tur.Kararli || p.Tur == Tur.Kontrol)
+                    exp = Beklenen(anim, p.Yuruyus, p.Yon, out double el, out double er, out _, out _) ? F2(el) + " / " + F2(er) : "n/a";
+                Debug.Log("[DD-TEST] wp082.olcum| " + p.Ad + " | " + F2(s.VYon) + " | " + F2(cmd) + " | " + F2(120.0 / s.T) + " | " + F3(s.VYon * s.T / 2.0) + " | " + F3(s.L1Avg) + " | " + F3(s.L1P95) +
+                          " | " + exp + " | " + F2(s.PayL) + " / " + F2(s.PayR) + " | " + F3(s.Rate) + " | " + s.Kabul + " / " + s.BirakS + "·" + s.BirakG + "·" + s.BirakL + "·" + s.BirakP + " | " +
+                          F2(s.N > 0 ? (double)s.KilitliKare / s.N : double.NaN) + " | " + s.N + " |");
+            }
+
+            foreach (Tur t in new[] { Tur.Kalkis, Tur.Durus, Tur.Pivot180, Tur.Kesme90 })
+            {
+                var l = new List<double>();
+                double rate = 0, v = 0, pl = 0, pr = 0;
+                int n = 0, kab = 0, bs = 0, bg = 0, bl = 0, bp = 0, kil = 0, seg = 0;
+                for (int i = _gecisBasi; i < parcalar.Count; i++)
+                {
+                    if (parcalar[i].Tur != t) continue;
+                    Istat s = ist[i];
+                    seg++;
+                    l.AddRange(s.Kayma);
+                    if (s.N > 0) { rate += s.Rate * s.N; v += s.V * s.N; pl += s.PayL * s.N; pr += s.PayR * s.N; n += s.N; kil += s.KilitliKare; }
+                    kab += s.Kabul; bs += s.BirakS; bg += s.BirakG; bl += s.BirakL; bp += s.BirakP;
+                }
+
+                Debug.Log("[DD-TEST] wp082.olcum| " + t + " ×" + seg + " (0,3 s) | " + F2(n > 0 ? v / n : double.NaN) + " | — | — | — | " + F3(Ort(l)) + " | " + F3(P95(l)) + " | — | " + F2(n > 0 ? pl / n : double.NaN) + " / " +
+                          F2(n > 0 ? pr / n : double.NaN) + " | " + F3(n > 0 ? rate / n : double.NaN) + " | " + kab + " / " + bs + "·" + bg + "·" + bl + "·" + bp + " | " + F2(n > 0 ? (double)kil / n : double.NaN) + " | " + n + " |");
+            }
+        }
+
+        // --------------------------------------------------------------------------------------------------- GC (PLAN §5.2 (4))
+
+        /// <summary>
+        /// GC per frame on the top-down sprint path: 600 frames of full-tilt running with a direction change every 40 frames (8 directions,
+        /// aim held), "GC Allocated In Frame" read every frame through ProfilerRecorder (Profiler on, frame rate uncapped — with the cap the
+        /// frame counters read 0, VfxHotPathBisectTests). Positive control in the same run: 30 frames each allocating a 1 KB array must read
+        /// ≥ 1024 B. GC.GetAllocatedBytesForCurrentThread is not used (always 0 on Unity Mono). Reported, not gated (the "önce" number).
+        /// </summary>
+        [UnityTest]
+        [Explicit]
+        [Category("Diagnostics")]
+        [Timeout(300000)]
+        public IEnumerator GC_TdSprint_YonCevirme_600Kare()
+        {
+            CameraModeService.Request(CameraMode.TopDown, instant: true);
+            Time.captureDeltaTime = 1f / Fps;
+            Assert.AreEqual(CameraMode.TopDown, CameraModeService.Current, "TopDown isteği uygulanmadı");
+            Vector3 merkez = ZeminKur();
+            yield return null;
+            TemelYonler();
+            _s.Rig.Teleport(merkez + Vector3.up * 0.05f, Quaternion.LookRotation(_nisan, Vector3.up));
+            _profilerOnce = UnityEngine.Profiling.Profiler.enabled;
+            _fpsOnce = Application.targetFrameRate;
+            UnityEngine.Profiling.Profiler.enabled = true;
+            Application.targetFrameRate = -1;
+            int[] sira = { 0, 4, 2, 6, 1, 5, 3, 7 };
+            for (int f = 0; f < 120 && Canli(); f++) { Nisanla(); _s.Girdi.Yon = Yon8(sira[(f / GcYonKare) & 7], 1f); yield return null; }   // warm-up (not measured)
+
+            var oyun = new long[GcKare];
+            var adet = new long[GcKare];
+            var kontrol = new long[GcKontrolKare];
+            int okunan = 0, kontrolOkunan = 0;
+            bool gecerli;
+            using (var bytes = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame"))
+            using (var count = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocation In Frame Count"))
+            {
+                gecerli = bytes.Valid && count.Valid;
+                yield return null;
+                yield return null;
+                for (int f = 0; f < GcKare && Canli(); f++)
+                {
+                    Nisanla();
+                    _s.Girdi.Yon = Yon8(sira[(f / GcYonKare) & 7], 1f);
+                    yield return null;
+                    oyun[okunan] = bytes.LastValue;   // the frame the input above ran in
+                    adet[okunan] = count.LastValue;
+                    okunan++;
+                    if (Vector3.Distance(Yatay(_s.Rig.transform.position), Yatay(merkez)) > MerkezYaricap) break;
+                }
+
+                _s.Girdi.Yon = Vector2.zero;
+                for (int f = 0; f < 20; f++) yield return null;
+                for (int f = 0; f < GcKontrolKare; f++)
+                {
+                    s_gcYem = new byte[GcKontrolBayt];
+                    yield return null;
+                    kontrol[kontrolOkunan++] = bytes.LastValue;
+                }
+            }
+
+            long oyunMax = 0, oyunSum = 0, kontrolMin = long.MaxValue, adetSum = 0;
+            int sifirOlmayan = 0;
+            for (int i = 0; i < okunan; i++) { oyunMax = Math.Max(oyunMax, oyun[i]); oyunSum += oyun[i]; adetSum += adet[i]; if (oyun[i] > 0) sifirOlmayan++; }
+            for (int i = 0; i < kontrolOkunan; i++) kontrolMin = Math.Min(kontrolMin, kontrol[i]);
+            var ornek = new StringBuilder();
+            for (int i = 0; i < Math.Min(okunan, 40); i++) ornek.Append(oyun[i]).Append(i < 39 ? "," : "");
+            bool kontrolOk = gecerli && kontrolOkunan == GcKontrolKare && kontrolMin >= GcKontrolBayt;
+            Debug.Log("[DD-TEST] wp082.gc recorderValid=" + gecerli + " frames=" + okunan + " bytes/frame mean=" + F2(okunan > 0 ? (double)oyunSum / okunan : double.NaN) + " max=" + oyunMax +
+                      " nonZeroFrames=" + sifirOlmayan + " allocs/frame mean=" + F2(okunan > 0 ? (double)adetSum / okunan : double.NaN) + " :: control " + GcKontrolBayt + " B × " + kontrolOkunan +
+                      " frames min=" + (kontrolOkunan > 0 ? kontrolMin : -1) + " pass=" + kontrolOk + " aborted=" + (_iptal ?? "no") + " :: first frames " + ornek);
+            GC.KeepAlive(s_gcYem);
+            Assert.IsTrue(gecerli, "ProfilerRecorder 'GC Allocated In Frame' geçersiz — GC ölçülemedi");
+            Assert.IsTrue(kontrolOk, "GC pozitif kontrolü: " + GcKontrolBayt + " B'lık bilinçli ayırma kayıtta yok (en az " + kontrolMin + " B) — ölçüm geçersiz");
+            Assert.AreEqual(GcKare, okunan, "TD sprint " + GcKare + " karenin hepsi kaydedilmedi (" + (_iptal ?? "merkezden uzaklaştı") + ")");
+        }
+
+        private static byte[] s_gcYem;
+    }
+
+    /// <summary>
+    /// WP-082 R3 positive control (b): forces the Animator's LocoRate to <see cref="Carpan"/> × what PlayerSkinnedVisual wrote this frame
+    /// (order 31000: after its Update, before the Animator evaluates).
+    /// </summary>
+    [DefaultExecutionOrder(31000)]
+    internal sealed class LocoRateCarpani : MonoBehaviour
+    {
+        private static readonly int RateId = Animator.StringToHash(C.LocoRate);
+        public float Carpan = 1f;
+        private Animator _anim;
+
+        public void Bagla(Animator anim) => _anim = anim;
+
+        private void Update()
+        {
+            if (_anim == null || Mathf.Approximately(Carpan, 1f)) return;
+            _anim.SetFloat(RateId, _anim.GetFloat(RateId) * Carpan);
+        }
     }
 
     /// <summary>
     /// The R2 locomotion sampler: one record per frame AFTER the animator, OnAnimatorIK and every LateUpdate solver of the player
-    /// (order 32000 > WeaponHoldIk 890 · WeaponGripIk 910 · TwistCorrector 920 · MagazineContactIk 945) — the pose the frame shows.
+    /// (order 32000 > WeaponHoldIk 890 · WeaponGripIk 910 · TwistCorrector 920 · MagazineContactIk 945) — the pose the frame shows —
+    /// plus the animated (pre-foot-IK) sole height FootIkAdapter read for this frame.
     /// </summary>
     [DefaultExecutionOrder(32000)]
     internal sealed class LokomotionKaydedici : MonoBehaviour
     {
         internal struct Kare
         {
-            public int Etiket, Since;
+            public int Etiket, Since, Frame;
             public float Zaman, Dt;
             public bool Gecerli;                  // a previous frame, no teleport, dt > 0
             public Vector3 BodyV;                 // horizontal, m/s
-            public Vector3 FootVL, FootVR;        // m/s
+            public Vector3 FootVL, FootVR;        // shown pose, m/s
             public Vector3 PosL, PosR;            // foot bone, world
-            public float GapL, GapR;              // sole above the ground ray, m (NaN = no ground)
-            public bool TemasL, TemasR;
+            public float GapL, GapR;              // shown sole above the ground ray, m (NaN = no ground)
+            public float AnimGapL, AnimGapR;      // animated sole (before the foot IK), m
+            public float AnimVyL, AnimVyR;        // its vertical speed, m/s
+            public bool IkServed;
+            public float Rate;                    // the Animator's LocoRate this frame
+            public byte Locked;                   // FootIkAdapter.LockedFeet
+            public int Acc, RelS, RelG, RelL, RelP;   // FootIkAdapter counters (cumulative)
+            public bool RayDigerL, RayDigerR;     // the gap ray hit a collider other than the test floor
+            public bool TemasL, TemasR;           // contact (animated pose)
+            public bool TemasEskiL, TemasEskiR;   // the R2 classifier (shown pose) — the cause record
+            public bool TemasPozL, TemasPozR;     // the pose classifier (animated sole within 3 cm of its segment floor, vertical speed ≤ 0.15)
+            public float FazL, FazR;              // phase stance weight 0..1 (the base layer's clips × their own foot_x → foot_x_off windows)
+            public float Pelvis;                  // FootIkAdapter.PelvisOffset (m, < 0 = lowered)
+            public bool OffL, OffR;               // foot_x_off events this frame
             public bool OlayL, OlayR;             // plant events (collapsed)
             public bool BaslangicL, BaslangicR;   // contact onsets
         }
 
-        public readonly List<Kare> Kareler = new List<Kare>(12000);
-        public readonly List<float> Derece = new List<float>(12000 * 18);   // per frame × bone, °/frame at 60 fps (NaN = n/a)
+        private static readonly int RateId = Animator.StringToHash(C.LocoRate);
+        public readonly List<Kare> Kareler = new List<Kare>(16000);
+        public readonly List<float> Derece = new List<float>(16000 * 18);   // per frame × bone, °/frame at 60 fps (NaN = n/a)
         public int Etiket = -1;
         public int Since { get; private set; }
         public int OlaySayisi { get; private set; }
+        public int RayDigerSayisi { get; private set; }
+        public float TabanL { get; private set; }
+        public float TabanR { get; private set; }
+        public string RayDigerAd { get; private set; }
+        public int FazKlipSayisi => _faz.Count;
+
+        /// <summary>A clip's stance windows on its own loop (frames at 30 fps of its period): plant → off per foot; null = no foot events (both feet down).</summary>
+        private sealed class FazKlip { public float P; public int PL, OL, PR, OR; public bool Ayakta; }
+        private readonly Dictionary<AnimationClip, FazKlip> _faz = new Dictionary<AnimationClip, FazKlip>();
+        private readonly List<AnimatorClipInfo> _ci = new List<AnimatorClipInfo>(16);
 
         private Animator _anim;
         private Transform _govde;
+        private FootIkAdapter _ik;
+        private Collider _zemin;
         private Transform _footL, _footR;
         private Transform[] _bones;
         private Quaternion[] _prevRot;
         private bool _hasPrev;
         private Vector3 _prevRoot, _prevL, _prevR;
+        private float _prevAnimL, _prevAnimR;
         private bool _prevTemasL, _prevTemasR;
         private int _lastEvL = -1000, _lastEvR = -1000, _lastOnL = -1000, _lastOnR = -1000;
         private int _pending;
@@ -690,10 +1396,21 @@ namespace DD.Prototype.Tests.PlayMode
         private int _evL, _evR, _onL, _onR;   // counted in the current label after the warm-up
         private bool _bagli;
 
-        public void Bagla(Animator anim, Transform govde)
+        public void Bagla(Animator anim, Transform govde, FootIkAdapter ik, Collider zemin, CharacterAnimationSet set)
         {
+            if (set != null)
+            {
+                foreach (CharacterAnimationSet.Entry e in set.Clips)
+                {
+                    if (e == null || e.clip == null || _faz.ContainsKey(e.clip)) continue;
+                    _faz[e.clip] = FazOku(e);
+                }
+            }
+
             _anim = anim;
             _govde = govde;
+            _ik = ik;
+            _zemin = zemin;
             _footL = anim.GetBoneTransform(HumanBodyBones.LeftFoot);
             _footR = anim.GetBoneTransform(HumanBodyBones.RightFoot);
             _bones = new Transform[R2LokomotionOlcumTests.Kemikler.Length];
@@ -731,6 +1448,77 @@ namespace DD.Prototype.Tests.PlayMode
             if (c == null || _govde == null || !c.transform.IsChildOf(_govde) && !_govde.IsChildOf(c.transform)) return;
             if (e == CharacterAnimationEvent.FootLeft) _pending |= 1;
             else if (e == CharacterAnimationEvent.FootRight) _pending |= 2;
+            else if (e == CharacterAnimationEvent.FootLOff) _pending |= 4;
+            else if (e == CharacterAnimationEvent.FootROff) _pending |= 8;
+        }
+
+        private static FazKlip FazOku(CharacterAnimationSet.Entry e)
+        {
+            var f = new FazKlip { P = Mathf.Max(1f, Mathf.Round(e.seconds * 30f)), PL = -1, OL = -1, PR = -1, OR = -1 };
+            if (!string.IsNullOrEmpty(e.events))
+            {
+                foreach (string part in e.events.Split(';'))
+                {
+                    string[] kv = part.Split('=');
+                    if (kv.Length != 2 || !int.TryParse(kv[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out int fr)) continue;
+                    switch (kv[0].Trim())
+                    {
+                        case "foot_l": f.PL = fr; break;
+                        case "foot_r": f.PR = fr; break;
+                        case "foot_l_off": f.OL = fr; break;
+                        case "foot_r_off": f.OR = fr; break;
+                    }
+                }
+            }
+
+            // no plant events: a stand / idle (both feet down); a plant without its off: the manifest stance frames
+            f.Ayakta = f.PL < 0 || f.PR < 0;
+            if (!f.Ayakta && f.OL < 0) f.OL = f.PL + Math.Max(1, e.stanceFrames);
+            if (!f.Ayakta && f.OR < 0) f.OR = f.PR + Math.Max(1, e.stanceFrames);
+            return f;
+        }
+
+        private static bool Pencerede(float fr, int a, int b, float p)
+        {
+            float len = ((b - a) % p + p) % p;
+            float d = ((fr - a) % p + p) % p;
+            return d < len;
+        }
+
+        /// <summary>Σ weight × stance over the clips of one state at its normalized time; clips without a table count as both feet down.</summary>
+        private void FazTopla(float phase, float scale, ref float l, ref float r, ref float w)
+        {
+            for (int i = 0; i < _ci.Count; i++)
+            {
+                AnimatorClipInfo c = _ci[i];
+                float cw = c.weight * scale;
+                if (cw <= 0f) continue;
+                w += cw;
+                if (c.clip == null || !_faz.TryGetValue(c.clip, out FazKlip f) || f.Ayakta) { l += cw; r += cw; continue; }
+                float fr = phase * f.P;
+                if (Pencerede(fr, f.PL, f.OL, f.P)) l += cw;
+                if (Pencerede(fr, f.PR, f.OR, f.P)) r += cw;
+            }
+        }
+
+        private void FazOlc(out float l, out float r)
+        {
+            l = r = 0f;
+            float w = 0f;
+            AnimatorStateInfo cur = _anim.GetCurrentAnimatorStateInfo(0);
+            bool tr = _anim.IsInTransition(0);
+            float t = tr ? Mathf.Clamp01(_anim.GetAnimatorTransitionInfo(0).normalizedTime) : 0f;
+            _anim.GetCurrentAnimatorClipInfo(0, _ci);
+            FazTopla(cur.normalizedTime - Mathf.Floor(cur.normalizedTime), 1f - t, ref l, ref r, ref w);
+            if (tr)
+            {
+                AnimatorStateInfo next = _anim.GetNextAnimatorStateInfo(0);
+                _anim.GetNextAnimatorClipInfo(0, _ci);
+                FazTopla(next.normalizedTime - Mathf.Floor(next.normalizedTime), t, ref l, ref r, ref w);
+            }
+
+            if (w > 1e-5f) { l /= w; r /= w; }
+            else { l = r = 1f; }
         }
 
         /// <summary>Valid frames of a label with since in [sinceMin, sinceMax].</summary>
@@ -741,41 +1529,86 @@ namespace DD.Prototype.Tests.PlayMode
             return n;
         }
 
-        public double OrtalamaGovdeHizi(int etiket, int sinceMin)
+        /// <summary>The animated sole's floor per foot: its <paramref name="q"/> percentile over labels [0, <paramref name="etiketSon"/>) after the warm-up.</summary>
+        public void TabanHesapla(int etiketSon, int sinceMin, float q, out float l, out float r)
         {
-            double s = 0;
-            int n = 0;
+            var gl = new List<float>(); var gr = new List<float>();
             foreach (Kare k in Kareler)
             {
-                if (k.Etiket != etiket || !k.Gecerli || k.Since < sinceMin) continue;
-                s += k.BodyV.magnitude;
-                n++;
+                if (k.Etiket < 0 || k.Etiket >= etiketSon || k.Since < sinceMin || !k.Gecerli) continue;
+                if (!float.IsNaN(k.AnimGapL)) gl.Add(k.AnimGapL);
+                if (!float.IsNaN(k.AnimGapR)) gr.Add(k.AnimGapR);
             }
 
-            return n > 0 ? s / n : double.NaN;
+            l = Yuzde(gl, q);
+            r = Yuzde(gr, q);
         }
 
-        /// <summary>The sole gap (min / median, cm) over a label — the contact definition's input, for the first run's check.</summary>
-        public string TabanOzeti(int etiket, int sinceMin)
+        private static float Yuzde(List<float> xs, float q)
         {
-            var g = new List<float>();
+            if (xs.Count == 0) return 0f;
+            xs.Sort();
+            return xs[Mathf.Clamp(Mathf.CeilToInt(q * xs.Count) - 1, 0, xs.Count - 1)];
+        }
+
+        /// <summary>
+        /// Contact of every frame: the PHASE classifier (stance weight ≥ 0.5) — the gates' contact; the POSE classifier (animated sole
+        /// within 3 cm of its label's floor, the <paramref name="q"/> percentile per foot after <paramref name="sinceMin"/>, and vertical
+        /// speed ≤ 0.15 m/s) — reported beside it. Contact onsets are rebuilt from the phase contact with the same 0.2 s spacing.
+        /// </summary>
+        public void Siniflandir(int sinceMin, float q)
+        {
+            var tabanlar = new Dictionary<int, float[]>();
+            var gl = new Dictionary<int, List<float>[]>();
             foreach (Kare k in Kareler)
             {
-                if (k.Etiket != etiket || k.Since < sinceMin) continue;
-                if (!float.IsNaN(k.GapL)) g.Add(k.GapL);
-                if (!float.IsNaN(k.GapR)) g.Add(k.GapR);
+                if (!k.Gecerli) continue;
+                if (!gl.TryGetValue(k.Etiket, out List<float>[] g)) gl[k.Etiket] = g = new[] { new List<float>(), new List<float>(), new List<float>(), new List<float>() };
+                int o = k.Since >= sinceMin ? 0 : 2;   // warm-up frames feed the floor only when the label has no later frame (transitions)
+                if (!float.IsNaN(k.AnimGapL)) g[o].Add(k.AnimGapL);
+                if (!float.IsNaN(k.AnimGapR)) g[o + 1].Add(k.AnimGapR);
             }
 
-            if (g.Count == 0) return "n/a";
-            g.Sort();
-            return (g[0] * 100f).ToString("F1", CultureInfo.InvariantCulture) + "/" + (g[g.Count / 2] * 100f).ToString("F1", CultureInfo.InvariantCulture) + "cm";
+            foreach (KeyValuePair<int, List<float>[]> kv in gl)
+            {
+                List<float> a = kv.Value[0].Count > 0 ? kv.Value[0] : kv.Value[2], b = kv.Value[1].Count > 0 ? kv.Value[1] : kv.Value[3];
+                tabanlar[kv.Key] = new[] { Yuzde(a, q), Yuzde(b, q) };
+            }
+
+            int lastOnL = -1000, lastOnR = -1000;
+            bool prevL = false, prevR = false;
+            for (int i = 0; i < Kareler.Count; i++)
+            {
+                Kare k = Kareler[i];
+                float[] t = tabanlar.TryGetValue(k.Etiket, out float[] tt) ? tt : new[] { 0f, 0f };
+                k.TemasPozL = k.Gecerli && Temas(k.AnimGapL - t[0], k.AnimVyL);
+                k.TemasPozR = k.Gecerli && Temas(k.AnimGapR - t[1], k.AnimVyR);
+                k.TemasL = k.Gecerli && k.FazL >= 0.5f;
+                k.TemasR = k.Gecerli && k.FazR >= 0.5f;
+                k.BaslangicL = k.TemasL && !prevL && k.Frame - lastOnL >= R2LokomotionOlcumTests.OlayAyrimKare;
+                k.BaslangicR = k.TemasR && !prevR && k.Frame - lastOnR >= R2LokomotionOlcumTests.OlayAyrimKare;
+                if (k.BaslangicL) lastOnL = k.Frame;
+                if (k.BaslangicR) lastOnR = k.Frame;
+                prevL = k.TemasL;
+                prevR = k.TemasR;
+                Kareler[i] = k;
+            }
         }
 
-        private float Gap(Transform foot, float bottom)
+        private static bool Temas(float gap, float vy) =>
+            !float.IsNaN(gap) && gap <= R2LokomotionOlcumTests.TemasYukseklik && Mathf.Abs(vy) <= R2LokomotionOlcumTests.TemasDikeyHiz;
+
+        private float Gap(Transform foot, float bottom, out bool diger)
         {
+            diger = false;
             Vector3 p = foot.position;
             if (Physics.Raycast(p + Vector3.up * 0.5f, Vector3.down, out RaycastHit hit, 1.5f, PrototypeLayers.AimBlockMask, QueryTriggerInteraction.Ignore))
+            {
+                diger = _zemin != null && hit.collider != _zemin;
+                if (diger && RayDigerAd == null) RayDigerAd = hit.collider.name + " (layer " + LayerMask.LayerToName(hit.collider.gameObject.layer) + ", y " + hit.point.y.ToString("F2", CultureInfo.InvariantCulture) + ")";
                 return p.y - bottom - hit.point.y;
+            }
+
             return float.NaN;
         }
 
@@ -790,9 +1623,25 @@ namespace DD.Prototype.Tests.PlayMode
             Transform root = _anim.transform;
             Vector3 rootPos = root.position, l = _footL.position, r = _footR.position;
             Quaternion inv = Quaternion.Inverse(root.rotation);
-            var k = new Kare { Etiket = Etiket, Since = Since, Zaman = Time.time, Dt = dt, PosL = l, PosR = r };
-            k.GapL = Gap(_footL, _anim.leftFeetBottomHeight);
-            k.GapR = Gap(_footR, _anim.rightFeetBottomHeight);
+            var k = new Kare { Etiket = Etiket, Since = Since, Frame = _frame, Zaman = Time.time, Dt = dt, PosL = l, PosR = r };
+            k.GapL = Gap(_footL, _anim.leftFeetBottomHeight, out k.RayDigerL);
+            k.GapR = Gap(_footR, _anim.rightFeetBottomHeight, out k.RayDigerR);
+            if (k.RayDigerL || k.RayDigerR) RayDigerSayisi++;
+            FazOlc(out k.FazL, out k.FazR);
+            // the animated sole = the shown sole − the height the foot IK added this frame (weight × LeftLift / RightLift). Holds for the
+            // per-foot drop (shown ≈ hit + feetBottomHeight → animated = −delta) and for S-03's PreserveSwingLift common correction
+            // (WP-096 c1a2a8a4, where Lift is the shared delta + the foot's ground step); no served IK → the shown pose
+            k.IkServed = _ik != null && _ik.Served && _ik.Weight > 0.001f;
+            k.AnimGapL = k.IkServed ? k.GapL - _ik.Weight * _ik.LeftLift : k.GapL;
+            k.AnimGapR = k.IkServed ? k.GapR - _ik.Weight * _ik.RightLift : k.GapR;
+            k.Rate = _anim.GetFloat(RateId);
+            if (_ik != null)
+            {
+                k.Locked = (byte)_ik.LockedFeet;
+                k.Pelvis = _ik.Served ? _ik.PelvisOffset : 0f;
+                k.Acc = _ik.PlantsAccepted; k.RelS = _ik.ReleasedByStretch; k.RelG = _ik.ReleasedByGate; k.RelL = _ik.ReleasedByLift; k.RelP = _ik.ReleasedByPlant;
+            }
+
             Vector3 jump = rootPos - _prevRoot;
             k.Gecerli = _hasPrev && dt > 1e-6f && new Vector2(jump.x, jump.z).magnitude < 1f && Mathf.Abs(jump.y) < 0.5f;
             if (k.Gecerli)
@@ -802,13 +1651,19 @@ namespace DD.Prototype.Tests.PlayMode
                 k.BodyV = bv;
                 k.FootVL = (l - _prevL) / dt;
                 k.FootVR = (r - _prevR) / dt;
-                k.TemasL = !float.IsNaN(k.GapL) && k.GapL <= R2LokomotionOlcumTests.TemasYukseklik && Mathf.Abs(k.FootVL.y) <= R2LokomotionOlcumTests.TemasDikeyHiz;
-                k.TemasR = !float.IsNaN(k.GapR) && k.GapR <= R2LokomotionOlcumTests.TemasYukseklik && Mathf.Abs(k.FootVR.y) <= R2LokomotionOlcumTests.TemasDikeyHiz;
+                k.AnimVyL = (k.AnimGapL - _prevAnimL) / dt;
+                k.AnimVyR = (k.AnimGapR - _prevAnimR) / dt;
+                k.TemasL = k.FazL >= 0.5f;   // online: the loop's cycle count only; Siniflandir rebuilds it
+                k.TemasR = k.FazR >= 0.5f;
+                k.TemasEskiL = !float.IsNaN(k.GapL) && k.GapL <= R2LokomotionOlcumTests.TemasYukseklik && Mathf.Abs(k.FootVL.y) <= R2LokomotionOlcumTests.TemasDikeyHiz;
+                k.TemasEskiR = !float.IsNaN(k.GapR) && k.GapR <= R2LokomotionOlcumTests.TemasYukseklik && Mathf.Abs(k.FootVR.y) <= R2LokomotionOlcumTests.TemasDikeyHiz;
             }
 
             // plant events (collapsed per foot inside OlayAyrimKare) and contact onsets
             if ((_pending & 1) != 0 && _frame - _lastEvL >= R2LokomotionOlcumTests.OlayAyrimKare) { k.OlayL = true; _lastEvL = _frame; OlaySayisi++; }
             if ((_pending & 2) != 0 && _frame - _lastEvR >= R2LokomotionOlcumTests.OlayAyrimKare) { k.OlayR = true; _lastEvR = _frame; OlaySayisi++; }
+            k.OffL = (_pending & 4) != 0;
+            k.OffR = (_pending & 8) != 0;
             _pending = 0;
             if (k.TemasL && !_prevTemasL && _frame - _lastOnL >= R2LokomotionOlcumTests.OlayAyrimKare) { k.BaslangicL = true; _lastOnL = _frame; }
             if (k.TemasR && !_prevTemasR && _frame - _lastOnR >= R2LokomotionOlcumTests.OlayAyrimKare) { k.BaslangicR = true; _lastOnR = _frame; }
@@ -835,6 +1690,8 @@ namespace DD.Prototype.Tests.PlayMode
             _prevRoot = rootPos;
             _prevL = l;
             _prevR = r;
+            _prevAnimL = k.AnimGapL;
+            _prevAnimR = k.AnimGapR;
             _prevTemasL = k.TemasL;
             _prevTemasR = k.TemasR;
             _hasPrev = true;
