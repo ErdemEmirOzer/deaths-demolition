@@ -590,6 +590,17 @@ class RestoreBase(GuardFixture):
     def hook(self, script):
         write_exec(self.tmp / "pgrep-hook", "#!/bin/sh\n" + script)
 
+    def kill_group(self, p, timeout=30):
+        """SIGKILL a fixture guard's group (start_new_session). macOS answers EPERM when every member has already exited
+        (zombies, not reaped yet), ESRCH once reaped — the guard ended on its own: no error, it is reaped. A leader still
+        alive after that answer is a real error (C-00 07.10: test_Ledger_CanliRestore_Bekler75 went red under the full
+        suite's load — the defaults shim's hold is cut by io's 10 s DEFAULTS_TIMEOUT, the restore had ended)."""
+        try:
+            os.killpg(p.pid, signal.SIGKILL)
+        except (ProcessLookupError, PermissionError):
+            p.wait(timeout=5)   # still running after the answer → TimeoutExpired: a real error
+        return p.communicate(timeout=timeout)
+
     def player_changes(self):
         """only the player area changes (a player-scope restore then has no OTHER)."""
         (self.d2 / "prototype-profile.json").write_text('{"player": 99}\n')
@@ -1830,38 +1841,41 @@ class LedgerTests(RestoreBase):
         rc, out, err = self.run_guard("snapshot", self.tmp / "ugB", "--scope", "editor", DD_GUARD_QUEUE_WAIT="6")
         self.assertEqual(75, rc, out + err); self.assertIn("restoring", out + err)
         (self.tmp / "defaults-import-sleep").unlink()
-        os.killpg(g.pid, signal.SIGKILL); g.communicate(timeout=30)
+        self.kill_group(g)   # cleanup: the held import may already have hit the 10 s DEFAULTS_TIMEOUT and ended
 
     def test_P5_IcPencereCanliRestoreEdiliyor_Dis75Yazimsiz_RestorerOlunce64_SonraIkisi0(self):
         """P5 gt N-4 (C-00 07.10, option A): the outer window's restore while the nested window is being restored by a live
         guard — 75 BUSY retry=same-dir, nothing written, the outer record still open. With that restorer dead (SIGKILL in
-        its write phase) the old 64 ('restore that window first'); the inner restored, the outer restores with 0."""
+        its write phase) the old 64 ('restore that window first'); the inner restored, the outer restores with 0.
+        07.10 (C-00): B is held by the pgrep hook in its player write phase until the test releases it — no timeout cuts
+        that hold (the defaults shim's is cut by io's 10 s DEFAULTS_TIMEOUT), so the 75 and the kill never race B's end."""
         before = self.live_state()
-        self.snap("editor")                                                   # A, the outer window
-        (self.d1 / "ui-settings.json").write_text('{"ui": 50}\n')            # A's run: B's base differs from A's
+        self.snap("player")                                                   # A, the outer window
+        (self.d2 / "prototype-profile.json").write_text('{"player": 50}\n')    # A's run: B's base differs from A's
         b = self.tmp / "ugB"
-        rc, out, err = self.run_guard("snapshot", b, "--scope", "editor"); self.assertEqual(0, rc, out + err)   # nested
-        (self.d1 / "ui-settings.json").write_text('{"ui": 99}\n')
-        d = load_plist(self.p2); d["EditorKey"] = "run"; self.write_plist(self.p2, d)
-        self.hook("")
-        (self.tmp / "defaults-import-sleep").write_text("")                   # hold B's restore in its write phase
-        g = self.start_guard("restore", b, "--scope", "editor")
-        self.assertTrue(self.wait_file(self.tmp / "import-started", 60))
-        rc, out, err = self.restore("editor")
+        rc, out, err = self.run_guard("snapshot", b, "--scope", "player"); self.assertEqual(0, rc, out + err)   # nested
+        (self.d2 / "prototype-profile.json").write_text('{"player": 99}\n')    # B's run
+        hold = self.tmp / "hold"; hold.write_text("")
+        (self.tmp / "pgrep-count").unlink(missing_ok=True)
+        self.hook('[ "$1" = 2 ] && { : > "%s/in-write"; n=0; while [ -f "%s" ] && [ $n -lt 900 ]; do sleep 0.1; '
+                  'n=$((n+1)); done; }\n' % (self.tmp, hold))
+        g = self.start_guard("restore", b, "--scope", "player")
+        self.assertTrue(self.wait_file(self.tmp / "in-write"))
+        rc, out, err = self.restore("player")
         self.assertEqual(75, rc, out + err)
         self.assertIn("is being restored now by pid", out + err)
         last = out.strip().splitlines()[-1]
         self.assertTrue(last.endswith("(75) retry=same-dir class=BUSY"), last)
-        self.assertNotEqual(before[self.d1 / "ui-settings.json"], sha(self.d1 / "ui-settings.json"))   # A wrote nothing
-        self.assertIn((self.d1 / "ui-settings.json").read_text(), ('{"ui": 50}\n', '{"ui": 99}\n'))   # B's base or B's run
+        self.assertIn((self.d2 / "prototype-profile.json").read_text(), ('{"player": 50}\n', '{"player": 99}\n'))   # never A's base
         self.assertEqual(["open", "restoring"], sorted(r["state"] for r in self.records()))   # A open, B restoring
-        os.killpg(g.pid, signal.SIGKILL); g.communicate(timeout=30)
-        (self.tmp / "defaults-import-sleep").unlink()
-        rc, out, err = self.restore("editor")                                 # B's restorer is dead now
+        self.assertIsNone(g.poll())                                           # B still held: its restorer is alive
+        os.killpg(g.pid, signal.SIGKILL); g.communicate(timeout=30)           # B's restorer dies mid-write
+        hold.unlink(); (self.tmp / "pgrep-hook").unlink()
+        rc, out, err = self.restore("player")                                 # B's restorer is dead now
         self.assertEqual(64, rc, out + err); self.assertIn("restore that window first", out + err)
-        rc, out, err = self.run_guard("restore", b, "--scope", "editor"); self.assertEqual(0, rc, out + err)
-        rc, out, err = self.restore("editor"); self.assertEqual(0, rc, out + err)
-        self.assertEqual(before[self.d1 / "ui-settings.json"], sha(self.d1 / "ui-settings.json"))
+        rc, out, err = self.run_guard("restore", b, "--scope", "player"); self.assertEqual(0, rc, out + err)
+        rc, out, err = self.restore("player"); self.assertEqual(0, rc, out + err)
+        self.assertEqual(before[self.d2 / "prototype-profile.json"], sha(self.d2 / "prototype-profile.json"))
         self.assertEqual([], self.records())
 
     def test_Ledger_GercekAtaPenceresi_Cikis0(self):
