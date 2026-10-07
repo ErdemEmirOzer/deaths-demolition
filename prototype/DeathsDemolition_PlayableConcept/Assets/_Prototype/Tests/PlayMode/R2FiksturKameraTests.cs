@@ -45,6 +45,7 @@ namespace DD.Prototype.Tests.PlayMode
                 ("R2HeroGovdeTests", () => new R2HeroGovdeTests().TearDown()),
                 ("R2LokomotionOlcumTests", () => new R2LokomotionOlcumTests().TearDown()),
                 ("R2LokomotionIkincilTests", () => new R2LokomotionIkincilTests().TearDown()),
+                ("R2HeroOlcumFptpTests", () => new R2HeroOlcumFptpTests().TearDown()),   // the FP / TP twins (R3 split)
             };
             var leaked = new List<string>();
             foreach ((string name, Func<IEnumerator> tearDown) in fixtures)
