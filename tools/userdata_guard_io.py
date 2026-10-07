@@ -68,8 +68,8 @@ def lstart(pid):
 
 def window_owner(path):
     """G4 D7 R4 (WINDOW_LOST): the window's real owner — the slot holder of a re-entrant snapshot, else the snapshot's
-    caller — still alive with the start time recorded in the receipt. lstart() already asks ps 3 times; an empty answer
-    counts as lost (the safe direction). Returns (alive: bool, why)."""
+    caller — still alive with the start time recorded in the receipt. lstart() asks ps up to 3 times on an empty answer
+    and not again after a 10 s timeout (gt N-1r); no answer counts as lost (the safe direction). Returns (alive, why)."""
     with open(path, encoding="utf-8") as f:
         w = json.load(f)
     r = w.get("receipt") or {}
@@ -78,7 +78,7 @@ def window_owner(path):
         return False, "the receipt names no owner"
     now = lstart(who["pid"])
     if not now:
-        return False, "owner pid %s is gone (or ps gave no answer 3 times)" % who["pid"]
+        return False, "owner pid %s is gone (or ps gave no answer: 3 empty answers or a 10 s timeout)" % who["pid"]
     if now != who.get("lstart"):
         return False, "owner pid %s was reused (started %s, the receipt says %s)" % (who["pid"], now, who.get("lstart"))
     return True, "owner pid %s alive" % who["pid"]
@@ -566,7 +566,7 @@ def restore_begin(ledger, wid, areas, restorer=None):
     written, the record untouched.
     0 yes — then, with `restorer` ({pid, lstart}), the record (still in windows/) is `restoring` by it. Also 0 when the
     other window was opened before this one (this one is nested in it: inner first), when the order is unknown (no record
-    of this window: WINDOW_LOST; an older guard's record of the same second), or no window holds them."""
+    of this window — one taken before D8; an older guard's record of the same second), or no window holds them."""
     with LedgerLock(ledger):
         own = own_record(ledger, wid)
         if own is not None and areas:
