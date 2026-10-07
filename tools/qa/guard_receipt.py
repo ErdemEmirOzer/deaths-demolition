@@ -12,11 +12,12 @@ Every Player run of wp078_perf / wp078_bot goes: snapshot → run → (finally) 
     restore 75 (lock held) is retried a bounded number of times, then 7 and "VERİ GERİ YÜKLENMEDİ" is written;
     any other restore error → 7;
   * verdict (C-00 25.09): verified=1, no out-of-scope change, and touched = 0 — or touched = 1 where the one changed
-    file is the player PlayerPrefs plist and every changed key is one the engine writes itself: the window state
+    file is the player PlayerPrefs plist (the guard's own before-player.txt / after-run-player.txt rows: touched is a
+    per-area flag, not a count; gt 07.10) and every changed key is one the engine writes itself: the window state
     (Screenmanager* / UnitySelectMonitor) or the quality level (UnityGraphicsQuality — the Player saves it on every
-    QualitySettings.SetQualityLevel, e.g. a -ddQualityTier probe; C-00 07.10). touched ≥ 1 with no such key change
-    means another file changed → STOP. This is the only copy of the rule (the KADRO player-run.sh / prefs-diff.py
-    copy is retired).
+    QualitySettings.SetQualityLevel, e.g. a -ddQualityTier probe; C-00 07.10). Any other changed player file, missing
+    state rows, or any other changed key → STOP. This is the only copy of the rule (the KADRO player-run.sh /
+    prefs-diff.py copy is retired).
 """
 import os
 import plistlib
@@ -229,9 +230,34 @@ def verdict(ug, restore_text, after_plist):
         return True, "touched=0"
     keys = changed_prefs(ug / "snap" / "PR" / "p1.plist", after_plist)
     (ug / "prefs-diff.txt").write_text("\n".join(keys) + ("\n" if keys else ""), encoding="utf-8")
-    if touched == "1" and keys and all(is_engine_key(k) for k in keys):
-        return True, "touched=1 engine window keys only"
-    return False, f"touched={touched} keys={keys}" + (" (a non-plist file changed)" if not keys else "")
+    # gt 07.10 MUST-1: touched is the guard's per-area flag (any change → 1), not a file count — WHICH files changed comes
+    # from the guard's own state rows of the player area (the out-of-scope check above covers the editor area)
+    rows = changed_rows(ug, "player")
+    if rows is None:
+        return False, f"touched={touched} but the guard's player state rows are missing or unreadable"
+    files = [r for r in rows if not r.endswith(PLIST_ROW_SUFFIX)]
+    if files:
+        return False, f"touched={touched} files={files} keys={keys}"
+    if not rows:
+        return False, f"touched={touched} but no player state row changed"
+    if keys and all(is_engine_key(k) for k in keys):
+        return True, f"touched={touched} engine keys only"
+    return False, f"touched={touched} keys={keys}" + (" (the plist row changed, no key differs)" if not keys else "")
+
+
+PLIST_ROW_SUFFIX = " (launch-counter keys excluded)"   # userdata-guard.sh state_of: the area's PlayerPrefs plist row
+
+
+def changed_rows(ug, area):
+    """The guard's state rows ("<digest>  <path>", the plist row ending in PLIST_ROW_SUFFIX) of <area> that differ between
+    before-<area>.txt and the run's FIRST after-run-<area>.txt (the pair the guard's touched flag compares) — the row's
+    path part, sorted; None when either file is missing or unreadable."""
+    try:
+        before = set((Path(ug) / f"before-{area}.txt").read_text(encoding="utf-8").splitlines())
+        after = set((Path(ug) / f"after-run-{area}.txt").read_text(encoding="utf-8").splitlines())
+    except (OSError, UnicodeDecodeError):
+        return None
+    return sorted({row.split("  ", 1)[-1] for row in before ^ after})
 
 
 OUT_OF_SCOPE = 32   # userdata-guard restore (G4 D7): verified in scope, another area changed

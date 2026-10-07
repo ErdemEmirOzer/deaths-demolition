@@ -20,6 +20,10 @@ def done(code, out=""):
 
 
 GAME_KEY = "DD.Prototype.DirectToRun"   # a key the game itself writes (PrototypeBootFlags) — never an engine key
+D2 = "/Users/u/Library/Application Support/com.Deaths-Demolition.Deaths-Demolition---Playable-Concept"
+PROFILE, LOAD_TIMING = D2 + "/profile.json", D2 + "/load-timing.json"
+PLIST_SUFFIX = " (launch-counter keys excluded)"   # userdata-guard.sh state_of's plist row (pinned below)
+PLIST = "/Users/u/Library/Preferences/com.Deaths-Demolition.Deaths-Demolition---Playable-Concept.plist" + PLIST_SUFFIX
 
 
 class VerdictTests(unittest.TestCase):
@@ -28,6 +32,16 @@ class VerdictTests(unittest.TestCase):
         (self.ug / "snap" / "PR").mkdir(parents=True)
         self.before({"Screenmanager Fullscreen mode": 1, "UnityGraphicsQuality": 2, GAME_KEY: 0, "unity.player_session_count": 3})
         self.after = self.ug / "after.plist"
+        self.state_rows(changed=[PLIST])
+
+    def state_rows(self, changed=(), created=(), removed=(), only=None):
+        """before-player.txt / after-run-player.txt in the guard's state_of format; <changed> rows get a new digest."""
+        rows = [PROFILE, LOAD_TIMING, PLIST]
+        before = [f"{'a' * 64}  {r}" for r in rows + list(removed)]
+        after = [f"{('b' if r in changed else 'a') * 64}  {r}" for r in rows + list(created)]
+        for name, lines in (("before-player.txt", before), ("after-run-player.txt", after)):
+            if only is None or only == name:
+                (self.ug / name).write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     def before(self, values):
         with open(self.ug / "snap" / "PR" / "p1.plist", "wb") as h:
@@ -51,7 +65,7 @@ class VerdictTests(unittest.TestCase):
         """C-00 07.10 (S-05 Yüksek TD probe): -ddQualityTier yuksek → the Player saved UnityGraphicsQuality 2 → 1; the guard
         restored it (verified=1) — the window is accepted, not STOP 7."""
         self.after_keys({"Screenmanager Fullscreen mode": 1, "UnityGraphicsQuality": 1, GAME_KEY: 0})
-        self.assertEqual((True, "touched=1 engine window keys only"), gr.verdict(self.ug, "restore touched=1 verified=1", self.after))
+        self.assertEqual((True, "touched=1 engine keys only"), gr.verdict(self.ug, "restore touched=1 verified=1", self.after))
         self.assertEqual("UnityGraphicsQuality\n", (self.ug / "prefs-diff.txt").read_text(encoding="utf-8"))
 
     def test_quality_level_added_by_the_run_is_an_engine_key(self):
@@ -78,11 +92,61 @@ class VerdictTests(unittest.TestCase):
             self.assertTrue(gr.is_engine_key(key), key)
 
     def test_touched_without_a_plist_change_stops(self):
-        # the one behaviour for an empty key list (M-17): a file other than the plist changed → STOP
+        # M-17: a file other than the plist changed and no key differs → STOP, the file named
+        self.state_rows(changed=[LOAD_TIMING])
         self.after_keys({"Screenmanager Fullscreen mode": 1, "UnityGraphicsQuality": 2, GAME_KEY: 0})
         ok, why = gr.verdict(self.ug, "restore touched=1 verified=1", self.after)
         self.assertFalse(ok)
-        self.assertIn("non-plist", why)
+        self.assertIn(LOAD_TIMING, why)
+
+    def test_quality_level_with_another_player_file_stops(self):
+        """gt 07.10 MUST-1: touched is the guard's per-area FLAG (1 for any number of changed files) — the probe's
+        UnityGraphicsQuality 2 → 1 next to a real load-timing.json rewrite (QaRunBot C1b) must still stop."""
+        self.state_rows(changed=[PLIST, LOAD_TIMING])
+        self.after_keys({"Screenmanager Fullscreen mode": 1, "UnityGraphicsQuality": 1, GAME_KEY: 0})
+        ok, why = gr.verdict(self.ug, "restore touched=1 verified=1", self.after)
+        self.assertFalse(ok)
+        self.assertIn(LOAD_TIMING, why)
+
+    def test_window_keys_with_a_changed_profile_stop(self):
+        self.state_rows(changed=[PLIST, PROFILE])
+        self.after_keys({"Screenmanager Fullscreen mode": 3, "UnityGraphicsQuality": 2, GAME_KEY: 0})
+        ok, why = gr.verdict(self.ug, "restore touched=1 verified=1", self.after)
+        self.assertFalse(ok)
+        self.assertIn(PROFILE, why)
+
+    def test_a_file_created_or_removed_by_the_run_stops(self):
+        for kind in ("created", "removed"):
+            extra = D2 + "/new-" + kind + ".json"
+            self.state_rows(changed=[PLIST], **{kind: [extra]})
+            self.after_keys({"Screenmanager Fullscreen mode": 3, "UnityGraphicsQuality": 2, GAME_KEY: 0})
+            ok, why = gr.verdict(self.ug, "restore touched=1 verified=1", self.after)
+            self.assertFalse(ok, kind)
+            self.assertIn(extra, why, kind)
+
+    def test_missing_state_rows_stop(self):
+        for name in ("before-player.txt", "after-run-player.txt"):
+            for f in ("before-player.txt", "after-run-player.txt"):
+                (self.ug / f).unlink(missing_ok=True)   # the test's own temp folder
+            self.state_rows(changed=[PLIST], only=name)   # only one of the pair written
+            self.after_keys({"Screenmanager Fullscreen mode": 3, "UnityGraphicsQuality": 2, GAME_KEY: 0})
+            ok, why = gr.verdict(self.ug, "restore touched=1 verified=1", self.after)
+            self.assertFalse(ok, name)
+            self.assertIn("state rows are missing", why)
+
+    def test_touched_with_no_changed_row_stops(self):
+        self.state_rows(changed=[])
+        self.after_keys({"Screenmanager Fullscreen mode": 3, "UnityGraphicsQuality": 2, GAME_KEY: 0})
+        ok, why = gr.verdict(self.ug, "restore touched=1 verified=1", self.after)
+        self.assertFalse(ok)
+        self.assertIn("no player state row changed", why)
+
+    def test_plist_row_suffix_is_the_guards(self):
+        # the guard's state_of writes the player plist row as "<digest>  $P1 (launch-counter keys excluded)"
+        guard = (Path(__file__).resolve().parents[2] / "userdata-guard.sh").read_text(encoding="utf-8")
+        self.assertEqual(PLIST_SUFFIX, gr.PLIST_ROW_SUFFIX)
+        self.assertIn('  $P1' + PLIST_SUFFIX + '"', guard)
+        self.assertIn("TOUCHED=0; for a in $AREAS; do cmp -s \"$DIR/before-$a.txt\" \"$DIR/after-run-$a.txt\" || TOUCHED=1; done", guard)
 
     def test_unverified_and_out_of_scope_stop(self):
         self.assertFalse(gr.verdict(self.ug, "restore touched=0 verified=0", self.after)[0])
@@ -210,9 +274,6 @@ class BotRestoreOnEveryPathTests(unittest.TestCase):
                 wp078_bot.run_guarded(args, out, ["/b/P"], {"status": "starting"})
         self.assertEqual(1, len(closed))
 
-
-if __name__ == "__main__":
-    unittest.main()
 
 
 class PerfAttemptAnnotationTests(unittest.TestCase):
@@ -348,3 +409,8 @@ class BotInputLostIsAWaitTests(unittest.TestCase):
     def test_measurable_bad_run_stays_a_failure(self):
         code, attempt = self.run_bot(True)
         self.assertEqual((1, "failed"), (code, attempt["status"]))
+
+
+# gt 07.10 NOTE-6: at the END — mid-file it ran only the classes above it when the file was run directly
+if __name__ == "__main__":
+    unittest.main()
