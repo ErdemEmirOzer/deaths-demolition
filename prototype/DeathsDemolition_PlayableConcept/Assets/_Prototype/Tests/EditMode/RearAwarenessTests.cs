@@ -9,7 +9,8 @@ namespace DD.Prototype.Tests.EditMode
     /// <summary>
     /// WP-076 B7 · §6 the pure rear model per camera mode (fallback angle, no rig): FP Aware ≤ 7 / Warn ≤ 4 / Alert ≤ 2.2,
     /// the 0.45 s FP hold, TP's pair rule, top-down never Aware, a mode change clears the level; §5.1 the rear spawn
-    /// share window (8) and its penalty by mode.
+    /// share window (8) and its penalty by mode. WP-089 R3 (user 06.10: only TopDown): the TopDown rows stand alone; the TP / FP
+    /// rows carry [Category("FPTP")].
     /// </summary>
     [Category("WP076")]
     public sealed class RearAwarenessTests
@@ -30,6 +31,7 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
+        [Category("FPTP")]
         public void FP_Aware_Warn_Alert_Tutma()
         {
             var st = new ThreatState();
@@ -45,29 +47,43 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
-        public void TP_Cift_TepedenAsla_ModDegisimiSifirlar()
+        public void Tepeden_ArkaSeviyeAsla_OnUyariYok()
+        {
+            var st = new ThreatState();
+            Assert.AreEqual(ThreatRearLevel.None, Eval(0, ref st, 0.1f, 3f).RearLevel, "tepeden: Aware yok");
+            Assert.AreEqual(0f, _s.RearWarnLeadSeconds[0], "tepeden ön uyarı süresi 0");
+        }
+
+        [Test]
+        [Category("FPTP")]
+        public void TP_Cift_ModDegisimiSifirlar()
         {
             var st = new ThreatState();
             Assert.AreEqual(ThreatRearLevel.Warn, Eval(1, ref st, 0.1f, 4.5f, 4.6f).RearLevel, "TP: ≥ 2 beden ≤ 5 m");
             st = new ThreatState();
             Assert.AreEqual(ThreatRearLevel.Aware, Eval(1, ref st, 0.1f, 4.5f).RearLevel, "TP tek beden ≤ 6 m");
-            Assert.AreEqual(ThreatRearLevel.None, Eval(0, ref st, 0.1f, 3f).RearLevel, "tepeden: Aware yok, mod değişimi sıfırlar");
-            st = new ThreatState();
-            Assert.AreEqual(ThreatRearLevel.None, Eval(0, ref st, 0.1f, 3f).RearLevel);
+            Assert.AreEqual(ThreatRearLevel.None, Eval(0, ref st, 0.1f, 3f).RearLevel, "mod değişimi sıfırlar");
             CollectionAssert.AreEqual(new[] { 0f, 0.5f, 0.8f }, _s.RearWarnLeadSeconds, "ön uyarı süresi");
         }
 
         [Test]
-        public void ArkaDogusPayi_Pencere8_ModaGore()
+        public void ArkaDogusPayi_Pencere8_TepedenTavanYok()
         {
             for (int i = 0; i < 8; i++) RearSpawnShare.Record(i < 3);
             Assert.AreEqual(3f / 8f, RearSpawnShare.Share(8), 1e-6f);
-            Assert.AreEqual(1f, RearSpawnShare.Penalty(2, true), 1e-6f, "FP %37,5 ≥ %35 → arka ×0");
-            Assert.AreEqual(0.75f, RearSpawnShare.Penalty(2, false), 1e-6f, "başka yol-hazır nokta yok → ×0,25");
-            Assert.AreEqual(0.3f, RearSpawnShare.Penalty(1, true), 1e-6f, "TP %45 altında → ×0,7");
             Assert.AreEqual(0f, RearSpawnShare.Penalty(0, true), "tepeden tavan yok");
             for (int i = 0; i < 8; i++) RearSpawnShare.Record(false);
             Assert.AreEqual(0f, RearSpawnShare.Share(8), "kayan pencere");
+        }
+
+        [Test]
+        [Category("FPTP")]
+        public void ArkaDogusPayi_TP_FP_Ceza()
+        {
+            for (int i = 0; i < 8; i++) RearSpawnShare.Record(i < 3);
+            Assert.AreEqual(1f, RearSpawnShare.Penalty(2, true), 1e-6f, "FP %37,5 ≥ %35 → arka ×0");
+            Assert.AreEqual(0.75f, RearSpawnShare.Penalty(2, false), 1e-6f, "başka yol-hazır nokta yok → ×0,25");
+            Assert.AreEqual(0.3f, RearSpawnShare.Penalty(1, true), 1e-6f, "TP %45 altında → ×0,7");
         }
     }
 }

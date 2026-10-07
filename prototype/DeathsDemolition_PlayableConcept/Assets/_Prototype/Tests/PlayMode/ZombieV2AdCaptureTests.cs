@@ -218,7 +218,21 @@ namespace DD.Prototype.Tests.PlayMode
         /// </summary>
         [UnityTest]
         [Timeout(300000)]
-        public IEnumerator AD_UcKamera_TD15_TP3_FP_Kareler()
+        public IEnumerator AD_TD15_Kare()
+        {
+            yield return UcKamera(true, false);
+        }
+
+        /// <summary>WP-089 R3 (user 06.10: only TopDown): the third-person 3 m and first-person frames of the same group — FPTP.</summary>
+        [UnityTest]
+        [Category("FPTP")]
+        [Timeout(300000)]
+        public IEnumerator AD_TP3_FP_Kareler()
+        {
+            yield return UcKamera(false, true);
+        }
+
+        private IEnumerator UcKamera(bool topDown, bool tpFp)
         {
             LogAssert.ignoreFailingMessages = true;
             RunFlowClock.ClearHolds();
@@ -257,17 +271,21 @@ namespace DD.Prototype.Tests.PlayMode
 
             yield return Settle(group, fwd);
             Vector3 td = centre + Vector3.up * 15f - fwd * 2f;
-            CaptureFrom(game, td, Quaternion.LookRotation(centre - td), 45f, Path.Combine(dir, tag + "-td15.png"));
-            Vector3 tp = centre - fwd * 3.6f + Vector3.up * 2.4f;
-            CaptureFrom(game, tp, Quaternion.LookRotation(centre + Vector3.up * 1.0f - tp), 55f, Path.Combine(dir, tag + "-tp3.png"));
-            ZombieEnemy front = group[0];
-            Vector3 fp = front.transform.position - fwd * 1.6f + Vector3.up * 1.65f;
-            CaptureFrom(game, fp, Quaternion.LookRotation(front.transform.position + Vector3.up * 1.45f - fp), 60f, Path.Combine(dir, tag + "-fp.png"));
+            if (topDown) CaptureFrom(game, td, Quaternion.LookRotation(centre - td), 45f, Path.Combine(dir, tag + "-td15.png"));
+            if (tpFp)
+            {
+                Vector3 tp = centre - fwd * 3.6f + Vector3.up * 2.4f;
+                CaptureFrom(game, tp, Quaternion.LookRotation(centre + Vector3.up * 1.0f - tp), 55f, Path.Combine(dir, tag + "-tp3.png"));
+                ZombieEnemy front = group[0];
+                Vector3 fp = front.transform.position - fwd * 1.6f + Vector3.up * 1.65f;
+                CaptureFrom(game, fp, Quaternion.LookRotation(front.transform.position + Vector3.up * 1.45f - fp), 60f, Path.Combine(dir, tag + "-fp.png"));
+            }
+
             Time.timeScale = 1f;
             foreach (ZombieEnemy z in group) if (z != null && z.IsSpawned) z.Remove();
             yield return null;
             Debug.Log("[DD-OBS] wp084.ad3cam tag=" + tag + " dir=" + dir);
-            Assert.IsTrue(File.Exists(Path.Combine(dir, tag + "-fp.png")), "kareler yazılmadı");
+            Assert.IsTrue(File.Exists(Path.Combine(dir, tag + (topDown ? "-td15.png" : "-fp.png"))), "kareler yazılmadı");
         }
 
         /// <summary>
@@ -277,6 +295,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// body from behind-left at ~2.7 m on the waist. PNGs to DD_WP084_AD_DIR as {tag}-belt-{i}.png — one look for the AD, no gate.
         /// </summary>
         [UnityTest]
+        [Category("FPTP")]   // WP-089 R3: a third-person 3/4 look (user 06.10: only TopDown)
         [Timeout(300000)]
         public IEnumerator AD_BelBandi_TP34_LOD1_Yuruyus()
         {
