@@ -70,6 +70,11 @@ namespace DD.Prototype.Characters
         private static int s_locked;
         /// <summary>WP-071: feet currently held by the lock (tests / probes).</summary>
         public int LockedFeet => (_locked[0] ? 1 : 0) + (_locked[1] ? 1 : 0);
+        /// <summary>
+        /// Diagnostics only. WP-082 R3 (S-06 B3, LOCO-SOZLESME §10): not a lead-foot source — the lock is closed at rest (the owner's
+        /// gate), so a start would always read "left"; the v4 lead foot comes from <see cref="LocomotionV4.StartLeadLeft"/> and the
+        /// stop's phase table (<see cref="LocomotionV4Tables.PickStop"/>).
+        /// </summary>
         public bool IsLocked(int foot) => _locked[foot];
         /// <summary>WP-071 lock readouts of the last solve (tests): gate open, left-foot height over its ground contact, moving back in body space.</summary>
         public bool LockGateOpen => _lockThisFrame;

@@ -35,16 +35,47 @@ namespace DD.Prototype.Characters
         }
 
         /// <summary>
-        /// The direction the PLANTED foot travels in model space for a clip (opposite to the body's travel):
-        /// walk_back → +Z, strafe_left → +X (body goes −X), strafe_right → −X, everything else → −Z.
+        /// The direction the PLANTED foot travels in model space for a clip (opposite to the body's travel). WP-082 R3 (S-06 B1):
+        /// the body travels at <see cref="TravelDirection8"/> × 45° clockwise from +Z (0 fwd +Z, 2 right +X, 4 back −Z, 6 left −X —
+        /// LOCO-SOZLESME §2.2: the AP-026 left clips travel along Unity −X), so walk_back / run_back / sprint_back → +Z, a left
+        /// strafe → +X, a right strafe → −X, the diagonals on their 45° axes; a clip without a direction name → −Z.
         /// </summary>
         public static Vector3 FootTravelDirection(string clipName)
         {
-            if (clipName.Contains("walk_back")) return Vector3.forward;
-            if (clipName.Contains("strafe_left")) return Vector3.right;
-            if (clipName.Contains("strafe_right")) return Vector3.left;
-            return Vector3.back;
+            int dir = TravelDirection8(clipName);
+            if (dir < 0) return Vector3.back;
+            float r = dir * 45f * Mathf.Deg2Rad;
+            return new Vector3(-Mathf.Sin(r), 0f, -Mathf.Cos(r));
         }
+
+        /// <summary>
+        /// WP-082 R3 (S-06 B1): a locomotion clip's travel direction in <see cref="LocomotionV4.Directions"/> order (0 fwd … 7 fwd_l),
+        /// -1 without a direction name. AP-026: the name's direction suffix (<c>_fwd_r</c>, <c>_back_l</c>, <c>_right</c> …; a v4
+        /// start / stop's trailing lead foot <c>_l</c> / <c>_r</c> is dropped first); AP-009 / AP-022: <c>walk_back</c> / <c>run_back</c>,
+        /// <c>strafe_left</c> / <c>strafe_l</c>, <c>strafe_right</c> / <c>strafe_r</c>. Editor-time (calibration), not a hot path.
+        /// </summary>
+        public static int TravelDirection8(string clipName)
+        {
+            if (string.IsNullOrEmpty(clipName)) return -1;
+            string n = clipName;
+            if ((n.IndexOf("_start_", System.StringComparison.Ordinal) >= 0 || n.IndexOf("_stop_", System.StringComparison.Ordinal) >= 0)
+                && (n.EndsWith("_l", System.StringComparison.Ordinal) || n.EndsWith("_r", System.StringComparison.Ordinal)))
+                n = n.Substring(0, n.Length - 2);
+            if (Ends(n, "_strafe_left") || Ends(n, "_strafe_l")) return 6;
+            if (Ends(n, "_strafe_right") || Ends(n, "_strafe_r")) return 2;
+            // longest suffix first: _fwd_r before _r-less names, _back_l before _left
+            if (Ends(n, "_fwd_r")) return 1;
+            if (Ends(n, "_back_r")) return 3;
+            if (Ends(n, "_back_l")) return 5;
+            if (Ends(n, "_fwd_l")) return 7;
+            if (Ends(n, "_right")) return 2;
+            if (Ends(n, "_left")) return 6;
+            if (Ends(n, "_back")) return 4;
+            if (Ends(n, "_fwd")) return 0;
+            return -1;
+        }
+
+        private static bool Ends(string s, string suffix) => s.EndsWith(suffix, System.StringComparison.Ordinal);
 
         public static Result Measure(GameObject root, Animator animator, AnimationClip clip, int frames, int fps, string eventsText, Vector3 footTravel)
         {
