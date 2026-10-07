@@ -144,20 +144,26 @@ namespace DD.Prototype.Feedback
         public readonly bool LastOfRound;
     }
 
-    /// <summary>A multi-kill reached a new tier (raised on each promotion only: T1, then T2, then T3).</summary>
+    /// <summary>
+    /// A multi-kill reached a new tier — at most one per kill. A trigger pull's own tier promotes per pull (T1 → T2 → T3 of that
+    /// pull); the chain over the sliding window promotes per chain and starts over when the window holds fewer than 4 kills.
+    /// </summary>
     public readonly struct FeelMultiKill
     {
-        public FeelMultiKill(int tier, int count, bool sameGroup, int groupId, Vector3 position)
+        public FeelMultiKill(int tier, int count, bool sameGroup, int groupId, int groupTier, Vector3 position)
         {
-            Tier = tier; Count = count; SameGroup = sameGroup; GroupId = groupId; Position = position;
+            Tier = tier; Count = count; SameGroup = sameGroup; GroupId = groupId; GroupTier = groupTier; Position = position;
         }
 
-        /// <summary>1..3 (his sözleşmesi §4.4: T1 3–4, T2 5–7, T3 8+).</summary>
+        /// <summary>1..3 (his sözleşmesi §4.4: T1 3–4, T2 5–7, T3 8+) — the higher of the pull's and the chain's (HUD, audio).</summary>
         public readonly int Tier;
+        /// <summary>The kills behind <see cref="Tier"/> (the pull's or the chain's).</summary>
         public readonly int Count;
-        /// <summary>True when one trigger pull / blast made it (a hit-stop may run); false for a chain over the window (none).</summary>
+        /// <summary>This kill promoted its own trigger pull (one shot / blast): <see cref="GroupTier"/> is that pull's new tier.</summary>
         public readonly bool SameGroup;
         public readonly int GroupId;
+        /// <summary>The pull's own tier when <see cref="SameGroup"/>, else 0 — the hit-stop reads this (a chain never stops).</summary>
+        public readonly int GroupTier;
         public readonly Vector3 Position;
     }
 
@@ -356,8 +362,9 @@ namespace DD.Prototype.Feedback
 
         public static void RaiseDryFire(in FeelDryFire dry) => Emit(DryFire, dry, FeelEventKind.DryFire);
 
+        /// <summary>The blast's group is the trigger pull's when the weapon pushed it (a rocket's blast and its direct hit are one pull).</summary>
         public static void RaiseExplosion(Vector3 origin, float radius, int groupId, ExplosionSource source) =>
-            Emit(Explosion, new FeelExplosion(origin, radius, groupId, source), FeelEventKind.Explosion);
+            Emit(Explosion, new FeelExplosion(origin, radius, s_hitGroup != 0 ? s_hitGroup : groupId, source), FeelEventKind.Explosion);
 
         // ------------------------------------------------------------------ the shot group of the damage being applied
 
@@ -460,14 +467,14 @@ namespace DD.Prototype.Feedback
             BindWallet();
             float now = Now();
             int group = s_hitGroup;
-            int groupKills = CountGroupKill(group, now);
+            int groupKills = CountGroupKill(group, now, out int groupSlot);
             int chainKills = CountChainKill(now);
             bool last = IsLastOfRound();
             Emit(EnemyKilled, new FeelKill(info.Owner, info.Tier, info.LifeId, info.Position, info.KillDirection, info.KillRegion,
                 info.KillSource, info.WasCritical, info.WasHeavyDeath, info.Overkill, info.GoldReward, info.SpawnRound, group,
                 DamageHitContext.FromClassicWeapon, DamageHitContext.Weapon, DamageHitContext.FromSpecialWeapon,
                 DamageHitContext.Special, groupKills, chainKills, last), FeelEventKind.EnemyKilled);
-            EvaluateMultiKill(group, groupKills, chainKills, info.Position, now);
+            EvaluateMultiKill(group, groupSlot, groupKills, chainKills, info.Position);
             if (last) Emit(LastZombie, new FeelLastZombie(info.Position, info.SpawnRound, info.Tier, info.Owner), FeelEventKind.LastZombie);
         }
 
@@ -520,12 +527,38 @@ namespace DD.Prototype.Feedback
 
         private static void OnRoundCompleted(int round) => Emit(RoundEnded, new FeelRound(round), FeelEventKind.RoundEnded);
 
+        private static bool s_specialReloading;
+        private static float s_specialReloadSeconds;
+
         internal static void OnSpecialUsage(SpecialUsageEvent e)
         {
             if (e.Kind == SpecialUsageKind.ReloadStarted)
-                Emit(ReloadStarted, new FeelReload(true, default, e.Id, e.Seconds, e.Count <= 0, false, e.Origin), FeelEventKind.ReloadStarted);
+            {
+                s_specialReloading = true;
+                s_specialReloadSeconds = e.Seconds;
+                Emit(ReloadStarted, new FeelReload(true, default, e.Id, e.Seconds, e.Count <= 0, false, SpecialPosition(e.Origin)),
+                    FeelEventKind.ReloadStarted);
+            }
             else if (e.Kind == SpecialUsageKind.ReloadEnded)
-                Emit(ReloadEnded, new FeelReload(true, default, e.Id, e.Seconds, false, true, e.Origin), FeelEventKind.ReloadEnded);
+            {
+                s_specialReloading = false;
+                Emit(ReloadEnded, new FeelReload(true, default, e.Id, e.Seconds, false, true, SpecialPosition(e.Origin)), FeelEventKind.ReloadEnded);
+            }
+            else if (e.Kind == SpecialUsageKind.Deactivated && s_specialReloading)
+            {
+                // gt SHOULD-2: the Special's time cap / cancel clears its reload silently — the cut edge, so nothing hangs on it
+                s_specialReloading = false;
+                Emit(ReloadEnded, new FeelReload(true, default, e.Id, s_specialReloadSeconds, false, false, SpecialPosition(e.Origin)),
+                    FeelEventKind.ReloadEnded);
+            }
+        }
+
+        /// <summary>gt SHOULD-3: the Special publishes its reload at the world origin — the held weapon's muzzle instead.</summary>
+        private static Vector3 SpecialPosition(Vector3 published)
+        {
+            if (published != Vector3.zero) return published;
+            WeaponController controller = WeaponRegistry.ActiveController;
+            return controller != null ? controller.Muzzle.position : published;
         }
 
         private static float s_lastGoldTime = float.NegativeInfinity;
@@ -545,29 +578,38 @@ namespace DD.Prototype.Feedback
         private static readonly int[] s_groupId = new int[GroupSlots];
         private static readonly int[] s_groupKills = new int[GroupSlots];
         private static readonly float[] s_groupTime = new float[GroupSlots];
+        // gt MUST-1 (07.10): the highest tier already raised for this trigger pull — a promotion is per group, so a later
+        // pull's own triple speaks even while an earlier streak is still running.
+        private static readonly int[] s_groupTier = new int[GroupSlots];
         private static int s_groupNext;
 
         private const int ChainSlots = 32;
         private static readonly float[] s_chainTime = new float[ChainSlots];
         private static int s_chainNext;
 
-        private static int s_streakTier;
-        private static float s_streakTime = float.NegativeInfinity;
+        // The highest chain tier raised in the running chain; it starts over once the window holds fewer than MultiKillChainMin.
+        private static int s_chainTier;
+
+        static FeelEvents() => ClearKillWindows();
 
         /// <summary>Kills of <paramref name="group"/> so far, this one included; a group idle for the chain window starts over.</summary>
-        private static int CountGroupKill(int group, float now)
+        private static int CountGroupKill(int group, float now, out int slot)
         {
+            slot = -1;
             if (group == 0) return 1;
             float window = Thresholds.MultiKillChainWindowSeconds;
             for (int i = 0; i < GroupSlots; i++)
             {
                 if (s_groupId[i] != group) continue;
-                s_groupKills[i] = now - s_groupTime[i] <= window ? s_groupKills[i] + 1 : 1;
+                if (now - s_groupTime[i] <= window) s_groupKills[i]++;
+                else { s_groupKills[i] = 1; s_groupTier[i] = 0; }
                 s_groupTime[i] = now;
+                slot = i;
                 return s_groupKills[i];
             }
 
-            s_groupId[s_groupNext] = group; s_groupKills[s_groupNext] = 1; s_groupTime[s_groupNext] = now;
+            slot = s_groupNext;
+            s_groupId[slot] = group; s_groupKills[slot] = 1; s_groupTime[slot] = now; s_groupTier[slot] = 0;
             s_groupNext = (s_groupNext + 1) % GroupSlots;
             return 1;
         }
@@ -591,25 +633,40 @@ namespace DD.Prototype.Feedback
             return count >= Thresholds.MultiKillTier2 ? 2 : 1;
         }
 
-        private static void EvaluateMultiKill(int group, int groupKills, int chainKills, Vector3 position, float now)
+        /// <summary>
+        /// At most one MultiKill per kill: raised when this kill promotes its trigger pull, or when it promotes the chain above what
+        /// its pull already raised (one blast of 4 is one T1, not two). The tier is the higher of the two promotions.
+        /// </summary>
+        private static void EvaluateMultiKill(int group, int groupSlot, int groupKills, int chainKills, Vector3 position)
         {
-            if (now - s_streakTime > Thresholds.MultiKillChainWindowSeconds) s_streakTier = 0;
-            s_streakTime = now;
-            int groupTier = group != 0 ? TierOf(groupKills, Thresholds.MultiKillGroupMin) : 0;
             int chainTier = TierOf(chainKills, Thresholds.MultiKillChainMin);
-            int tier = Mathf.Max(groupTier, chainTier);
-            if (tier <= s_streakTier) return;
-            s_streakTier = tier;
-            bool sameGroup = groupTier >= chainTier && groupTier > 0;
-            Emit(MultiKill, new FeelMultiKill(tier, sameGroup ? groupKills : chainKills, sameGroup, sameGroup ? group : 0, position),
-                FeelEventKind.MultiKill);
+            if (chainTier == 0) s_chainTier = 0;
+            bool chainPromotes = chainTier > s_chainTier;
+            if (chainPromotes) s_chainTier = chainTier;
+
+            int groupTier = 0;
+            bool groupPromotes = false;
+            if (groupSlot >= 0)
+            {
+                groupTier = TierOf(groupKills, Thresholds.MultiKillGroupMin);
+                groupPromotes = groupTier > s_groupTier[groupSlot];
+                if (groupPromotes) s_groupTier[groupSlot] = groupTier;
+            }
+
+            int groupRaised = groupSlot >= 0 ? s_groupTier[groupSlot] : 0;
+            int chainPart = chainPromotes && chainTier > groupRaised ? chainTier : 0;
+            int groupPart = groupPromotes ? groupTier : 0;
+            if (chainPart == 0 && groupPart == 0) return;
+            bool chainLeads = chainPart > groupPart;
+            Emit(MultiKill, new FeelMultiKill(chainLeads ? chainPart : groupPart, chainLeads ? chainKills : groupKills, groupPromotes,
+                groupPromotes ? group : 0, groupPart, position), FeelEventKind.MultiKill);
         }
 
         private static void ClearKillWindows()
         {
-            for (int i = 0; i < GroupSlots; i++) { s_groupId[i] = 0; s_groupKills[i] = 0; s_groupTime[i] = 0f; }
+            for (int i = 0; i < GroupSlots; i++) { s_groupId[i] = 0; s_groupKills[i] = 0; s_groupTime[i] = 0f; s_groupTier[i] = 0; }
             for (int i = 0; i < ChainSlots; i++) s_chainTime[i] = float.NegativeInfinity;
-            s_groupNext = 0; s_chainNext = 0; s_streakTier = 0; s_streakTime = float.NegativeInfinity;
+            s_groupNext = 0; s_chainNext = 0; s_chainTier = 0;
         }
 
         // ------------------------------------------------------------------ shared
@@ -656,6 +713,7 @@ namespace DD.Prototype.Feedback
             s_hitGroup = 0;
             s_wallet = null;
             s_lastGoldTime = float.NegativeInfinity; s_goldChain = 0;
+            s_specialReloading = false; s_specialReloadSeconds = 0f;
             TestClock = -1f; TestLastOfRound = -1;
             ClearKillWindows();
             // s_installed stays: the scene-change hook is a static subscription that survives; Install re-arms the sources.
