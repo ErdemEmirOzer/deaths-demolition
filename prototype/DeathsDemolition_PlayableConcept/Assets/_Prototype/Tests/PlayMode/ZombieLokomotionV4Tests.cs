@@ -60,6 +60,8 @@ namespace DD.Prototype.Tests.PlayMode
         public const string Fixture = "DD.Prototype.Tests.PlayMode.ZombieLokomotionV4Tests";
         public const string ZorlaDegiskeni = "DD_WP096_ENFORCE";
         public const string KayitDegiskeni = "DD_WP096_CAPTURE_DIR";
+        /// <summary>Optional: the "before" (main) run's DD_R2_MEASURE_DIR — ZL6 then also reports its increase relative to main.</summary>
+        public const string TabanDegiskeni = "DD_WP096_BASELINE_DIR";
 
         /// <summary>true = the target checks assert (the "after" run) without the environment variable.</summary>
         private static readonly bool ZorlaSabit = false;
@@ -176,6 +178,9 @@ namespace DD.Prototype.Tests.PlayMode
         private const double TemasPayAlt = 0.15, TemasPayUst = 0.85;   // a walking foot is down 30–75 % of the time; outside = saturated
         private const double PkDurusPayi = 0.8, PkDurusHiz = 0.05;     // idle control: ≥ 80 % foot-frames in contact, mean foot speed < 0.05 m/s
         private const int PkAdimMin = 3;                                // step control: ≥ 3 onsets per foot per body in the 7 s IK-off walk
+        // düzeltme-2 07.10 (before2 / ara2): one group failing its own checks is named and left out; the test needs ≥ 6 of 8 valid
+        // groups (game pose and IK-off control each), so one odd clip does not hide the other seven and a broken detector still fails.
+        private const int MinGecerliGrup = 6;
 
         [UnityTest]
         [Explicit]
@@ -195,9 +200,11 @@ namespace DD.Prototype.Tests.PlayMode
             var r = new Rapor("zl1");
             var eksik = new List<string>();
             var satirlar = new List<string>();
-            DedektorKontrolu(ikKapali, eksik, satirlar, out double pkPay, out double pkHiz, out int pkAdim);
+            DedektorKontrolu(ikKapali, eksik, satirlar, out double pkPay, out double pkHiz, out int pkAdim, out int pkGecerli, out double yuruTaban);
 
             var hepsi = new List<double>();
+            var engelli = new List<string>();
+            int gecerli = 0;
             double enKotuOrt = double.NaN, enKotuP95 = double.NaN, payMin = double.NaN, payMax = double.NaN;
             string enKotuOrtAd = "-", enKotuP95Ad = "-";
             var kademeKayma = new Dictionary<EnemyTier, List<double>>();
@@ -206,6 +213,10 @@ namespace DD.Prototype.Tests.PlayMode
             var salinimBosluk = new List<double>();
             foreach (Grup g in oyun)
             {
+                satirlar.Add(GrupSatiri(g));
+                GrupKaynagi(g);
+                if (GrupEngelli(g, "zl1", engelli)) continue;
+                gecerli++;
                 double o = Ort(g.Kayma), p = Yuzdelik(g.Kayma, 0.95), pay = g.TemasPayi;
                 hepsi.AddRange(g.Kayma);
                 if (!kademeKayma.TryGetValue(g.Kademe, out List<double> kl)) kademeKayma[g.Kademe] = kl = new List<double>();
@@ -215,13 +226,11 @@ namespace DD.Prototype.Tests.PlayMode
                 salinimYerde += g.SalinimYerde;
                 salinimBosluk.AddRange(g.SalinimBosluk);
                 if (!double.IsNaN(pay)) { payMin = double.IsNaN(payMin) ? pay : Math.Min(payMin, pay); payMax = double.IsNaN(payMax) ? pay : Math.Max(payMax, pay); }
-                satirlar.Add(GrupSatiri(g));
-                GrupKaynagi(g, eksik);
                 if (!double.IsNaN(o) && (double.IsNaN(enKotuOrt) || o > enKotuOrt)) { enKotuOrt = o; enKotuOrtAd = g.Ad; }
                 if (!double.IsNaN(p) && (double.IsNaN(enKotuP95) || p > enKotuP95)) { enKotuP95 = p; enKotuP95Ad = g.Ad; }
             }
 
-            if (oyun.Count < Kademeler.Length * Fitler.Length) eksik.Add("grup " + oyun.Count + "/" + Kademeler.Length * Fitler.Length);
+            if (gecerli < MinGecerliGrup) eksik.Add("geçerli oyun grubu " + gecerli + "/" + oyun.Count + " < " + MinGecerliGrup + ": " + string.Join("; ", engelli));
             var kontrolHepsi = new List<double>();
             foreach (Grup g in kontrol) { kontrolHepsi.AddRange(g.Kayma); satirlar.Add("KONTROL " + GrupSatiri(g)); }
             double ikOrt = double.NaN, ikP95 = double.NaN;
@@ -229,6 +238,8 @@ namespace DD.Prototype.Tests.PlayMode
             var ikBosluk = new List<double>();
             foreach (Grup g in ikKapali)
             {
+                satirlar.Add("IK-KAPALI " + GrupSatiri(g));
+                if (g.Engel.Count > 0) continue;   // named in DedektorKontrolu
                 double o = Ort(g.Kayma), p = Yuzdelik(g.Kayma, 0.95);
                 if (!double.IsNaN(o) && (double.IsNaN(ikOrt) || o > ikOrt)) ikOrt = o;
                 if (!double.IsNaN(p) && (double.IsNaN(ikP95) || p > ikP95)) ikP95 = p;
@@ -237,7 +248,6 @@ namespace DD.Prototype.Tests.PlayMode
                 ikBosluk.AddRange(g.SalinimBosluk);
                 uyumN += g.UyumN;
                 uyumOk += g.UyumOk;
-                satirlar.Add("IK-KAPALI " + GrupSatiri(g));
             }
 
             Debug.Log("[DD-TEST] wp096.zl1.gruplar taban=" + F(GovdeHizTabani, 2) + "m/s (kalça) surucu=" + kayit.Surucu + " not=" + kayit.Not + " :: " + string.Join(" | ", satirlar));
@@ -248,7 +258,9 @@ namespace DD.Prototype.Tests.PlayMode
             r.Bilgi("slideP95", Yuzdelik(hepsi, 0.95));
             foreach (EnemyTier t in Kademeler)
                 r.Bilgi("slideAvg" + t, kademeKayma.TryGetValue(t, out List<double> x) ? Ort(x) : double.NaN);
-            r.Bilgi("eventContactGroups", olayGrup, "/" + oyun.Count + " grup klip olaylarıyla");
+            r.Bilgi("validGroups", gecerli, "/" + oyun.Count + " (en az " + MinGecerliGrup + ")" + (engelli.Count > 0 ? " BLOCKED: " + string.Join("; ", engelli) : ""));
+            r.Bilgi("blockedGroups", engelli.Count);
+            r.Bilgi("eventContactGroups", olayGrup, "/" + gecerli + " geçerli grup klip olaylarıyla");
             r.Bilgi("contactShareMin", payMin, "temas ayak-karesi payı, beklenen " + F(TemasPayAlt, 2) + "–" + F(TemasPayUst, 2));
             r.Bilgi("contactShareMax", payMax);
             r.Bilgi("swingGroundedShare", salinim > 0 ? (double)salinimYerde / salinim : double.NaN,
@@ -259,15 +271,18 @@ namespace DD.Prototype.Tests.PlayMode
             r.Bilgi("ikOffSwingGroundedShare", ikSalinim > 0 ? (double)ikSalinimYerde / ikSalinim : double.NaN);
             r.Bilgi("ikOffSwingLiftMedianCm", Medyan(ikBosluk) * 100.0);
             r.Bilgi("ikOffEventHeightAgreement", uyumN > 0 ? (double)uyumOk / uyumN : double.NaN, "olay durusu ile yükseklik temasının aynı dediği ayak-kare payı");
-            r.Bilgi("controlIdleContactShareMin", pkPay, "pozitif kontrol ≥ " + F(PkDurusPayi, 2));
-            r.Bilgi("controlIdleFootSpeedMax", pkHiz, "pozitif kontrol < " + F(PkDurusHiz, 2) + " m/s");
+            r.Bilgi("controlValidGroups", pkGecerli, "/" + ikKapali.Count + " IK kapalı grup pozitif kontrolden geçti (en az " + MinGecerliGrup + ")");
+            r.Bilgi("controlIdleContactShareMin", pkPay, "basan ayak, pozitif kontrol ≥ " + F(PkDurusPayi, 2));
+            r.Bilgi("controlIdleFootSpeedMax", pkHiz, "basan ayak, pozitif kontrol < " + F(PkDurusHiz, 2) + " m/s");
             r.Bilgi("controlStepOnsetsMin", pkAdim, "pozitif kontrol ≥ " + PkAdimMin + " / ayak / gövde");
+            r.Bilgi("ikOffWalkSoleFloatCmMax", yuruTaban * 100.0, "IK kapalı yürüyüşte tabanın %5'lik yüksekliği, en kötü ayak (klip ayağı havada yürüyor mu)");
             r.Bilgi("controlSlideAvg", kayit.KontrolVar ? Ort(kontrolHepsi) : double.NaN, "GaitVariety 0");
             r.Bilgi("controlSlideP95", kayit.KontrolVar ? Yuzdelik(kontrolHepsi, 0.95) : double.NaN, "GaitVariety 0");
             r.Bilgi("gaitOrdinalStart", kayit.SiraBaslangic);
             r.Bilgi("gaitOrdinalEnd", kayit.SiraBitis);
             r.Kaynak(eksik);
-            r.Yazdir("ZL1_AyakKaymasi_KademeYuruyus", hepsi.Count, "seeds 1,2,3 + GaitVariety-0 control + IK-off control; stance = clip events; ordinal " + kayit.SiraBaslangic + "; " + kayit.Not);
+            r.Yazdir("ZL1_AyakKaymasi_KademeYuruyus", hepsi.Count, "seeds 1,2,3 + GaitVariety-0 control + IK-off control; stance = clip events; valid groups " + gecerli + "/" + oyun.Count
+                     + (engelli.Count > 0 ? " (blocked: " + string.Join("; ", engelli) + ")" : "") + "; ordinal " + kayit.SiraBaslangic + "; " + kayit.Not);
         }
 
         [UnityTest]
@@ -288,7 +303,9 @@ namespace DD.Prototype.Tests.PlayMode
             var r = new Rapor("zl2");
             var eksik = new List<string>();
             var satirlar = new List<string>();
-            DedektorKontrolu(ikKapali, eksik, satirlar, out double _, out double _, out int _);
+            DedektorKontrolu(ikKapali, eksik, satirlar, out double _, out double _, out int _, out int _, out double _);
+            var engelli = new List<string>();
+            int gecerli = 0;
             double sapmaMax = double.NaN, kontrolMax = double.NaN, ikMax = double.NaN, analitikMax = double.NaN;
             string sapmaAd = "-";
             int kirpilan = 0, dongu = 0;
@@ -297,9 +314,11 @@ namespace DD.Prototype.Tests.PlayMode
             {
                 double dev = Sapma(g, out string satir);
                 satirlar.Add(satir);
-                GrupKaynagi(g, eksik);
-                if (g.Araliklar.Count < 2 * (MinBaslangic - 1)) eksik.Add(g.Ad + ": aynı ayak aralığı " + g.Araliklar.Count);
-                if (double.IsNaN(dev)) { eksik.Add(g.Ad + ": sapma hesaplanamadı (temas / hız yok)"); continue; }
+                GrupKaynagi(g);
+                if (g.Araliklar.Count < 2 * (MinBaslangic - 1)) g.Engel.Add("aynı ayak aralığı " + g.Araliklar.Count);
+                if (double.IsNaN(dev)) g.Engel.Add("sapma hesaplanamadı (temas / hız yok)");
+                if (GrupEngelli(g, "zl2", engelli)) continue;
+                gecerli++;
                 dongu += g.Araliklar.Count / 2;
                 if (double.IsNaN(sapmaMax) || dev > sapmaMax) { sapmaMax = dev; sapmaAd = g.Ad; }
                 kademeSapma[g.Kademe] = kademeSapma.TryGetValue(g.Kademe, out double eski) ? Math.Max(eski, dev) : dev;
@@ -317,15 +336,18 @@ namespace DD.Prototype.Tests.PlayMode
                 if (!double.IsNaN(dev) && (double.IsNaN(kontrolMax) || dev > kontrolMax)) kontrolMax = dev;
             }
 
+            if (gecerli < MinGecerliGrup) eksik.Add("geçerli oyun grubu " + gecerli + "/" + gruplar.Count + " < " + MinGecerliGrup + ": " + string.Join("; ", engelli));
             foreach (Grup g in ikKapali)
             {
                 double dev = Sapma(g, out string satir);
                 satirlar.Add("IK-KAPALI " + satir);
-                if (!double.IsNaN(dev) && (double.IsNaN(ikMax) || dev > ikMax)) ikMax = dev;
+                if (g.Engel.Count == 0 && !double.IsNaN(dev) && (double.IsNaN(ikMax) || dev > ikMax)) ikMax = dev;
             }
 
             Debug.Log("[DD-TEST] wp096.zl2.gruplar yöntem=L2 (T = aynı ayak basma olayları medyanı, adım = u·T/2, u = durustaki ayağın gövdeye göre geri hızı) :: " + string.Join(" | ", satirlar));
             r.Hedef("deviationMax", sapmaMax, false, HedefSapma, sapmaAd);
+            r.Bilgi("validGroups", gecerli, "/" + gruplar.Count + (engelli.Count > 0 ? " BLOCKED: " + string.Join("; ", engelli) : ""));
+            r.Bilgi("blockedGroups", engelli.Count);
             foreach (EnemyTier t in Kademeler) r.Bilgi("deviation" + t, kademeSapma.TryGetValue(t, out double d) ? d : double.NaN);
             r.Bilgi("controlDeviationMax", kayit.KontrolVar ? kontrolMax : double.NaN, "GaitVariety 0");
             r.Bilgi("ikOffDeviationMax", ikMax, "IK kapalı, yükseklik kuralı");
@@ -333,7 +355,8 @@ namespace DD.Prototype.Tests.PlayMode
             r.Bilgi("clampedBodies", kirpilan, "GaitRate bandın ucunda");
             r.Bilgi("gaitOrdinalStart", kayit.SiraBaslangic);
             r.Kaynak(eksik);
-            r.Yazdir("ZL2_HizEslesmesi_AdimXKadans", dongu, "seeds 1,2,3; stance = clip events; ordinal " + kayit.SiraBaslangic);
+            r.Yazdir("ZL2_HizEslesmesi_AdimXKadans", dongu, "seeds 1,2,3; stance = clip events; valid groups " + gecerli + "/" + gruplar.Count
+                     + (engelli.Count > 0 ? " (blocked: " + string.Join("; ", engelli) + ")" : "") + "; ordinal " + kayit.SiraBaslangic);
         }
 
         // ---------------------------------------------------------------------------------------------- the shared recording
@@ -519,6 +542,8 @@ namespace DD.Prototype.Tests.PlayMode
             public readonly List<double> Kayma = new List<double>(), KaymaKok = new List<double>(), Araliklar = new List<double>(), SalinimBosluk = new List<double>();
             public int BasL, BasR, TemasKare, AyakKare, OlcumKare, LokoKare, UN, VN;
             public long SalinimKare, SalinimYerde, UyumN, UyumOk;
+            public double YuruTaban = double.NaN;                       // IK-off: worst foot's 5th-percentile sole height while walking, m
+            public readonly List<string> Engel = new List<string>();   // why this group is left out (empty = valid)
             public double USum, VSum;
             public double TemasPayi => AyakKare > 0 ? (double)TemasKare / AyakKare : double.NaN;
         }
@@ -543,28 +568,43 @@ namespace DD.Prototype.Tests.PlayMode
                     foreach (Govde b in govdeler) if (b.Tur == tur && b.Kademe == t && b.Fit == fit && b.Kareler != null) g.Govdeler.Add(b);
                     if (g.Govdeler.Count == 0) continue;
                     int olL = 0, olR = 0, sl = 0, sr = 0;
-                    bool durusTutar = true;
+                    bool durusTutar = true, adimTutar = true;
                     foreach (Govde b in g.Govdeler)
                     {
                         b.Olay = OlayDuruslari(b.Kareler, null);
                         b.Yukseklik = Temaslar(b.Kareler, false);
                         olL += b.OlayL;
                         olR += b.OlayR;
+                        int bl = 0, br = 0;
                         for (int i = 0; i < b.Kareler.Count; i++)
                         {
                             if (!Olculen(b.Kareler[i])) continue;
-                            if (b.Yukseklik.BasL[i]) sl++;
-                            if (b.Yukseklik.BasR[i]) sr++;
+                            if (b.Yukseklik.BasL[i]) bl++;
+                            if (b.Yukseklik.BasR[i]) br++;
                         }
 
-                        DurusOlc(b.Kareler, b.Yukseklik, out double pay, out double _);
+                        sl += bl;
+                        sr += br;
+                        if (bl < PkAdimMin || br < PkAdimMin) adimTutar = false;
+                        DurusOlc(b.Kareler, b.Yukseklik, out double pay, out double _, out double _);
                         if (!(pay >= PkDurusPayi)) durusTutar = false;
+                        double taban = Math.Max(AltYuzdelik(b.Kareler, true, Olculen), AltYuzdelik(b.Kareler, false, Olculen));
+                        g.YuruTaban = double.IsNaN(g.YuruTaban) ? taban : Math.Max(g.YuruTaban, taban);
                     }
 
                     if (tur != TurIkKapali && olL >= MinBaslangic && olR >= MinBaslangic)
                     {
                         g.Kaynak = "olay";
                         foreach (Govde b in g.Govdeler) b.Secilen = b.Olay;
+                    }
+                    else if (tur == TurIkKapali && durusTutar && !adimTutar)
+                    {
+                        // before2 / ara2: shamble_fast_A's sole never comes within 3 cm while walking with the IK off (walk gap min 6.1 /
+                        // median 9.1 cm, idle 0): the clip walks with its feet in the air. The standing sole reads right, so the walk is
+                        // read against the walk's own 5th-percentile sole height (reported as ikOffWalkSoleFloatCmMax).
+                        g.Uyarlamali = true;
+                        g.Kaynak = "yukseklik-yuruyus-tabani";
+                        foreach (Govde b in g.Govdeler) b.Secilen = TemaslarRef(b.Kareler, AltYuzdelik(b.Kareler, true, Olculen), AltYuzdelik(b.Kareler, false, Olculen));
                     }
                     else
                     {
@@ -636,41 +676,57 @@ namespace DD.Prototype.Tests.PlayMode
             }
         }
 
-        /// <summary>The idle control frames of one body under a contact rule: foot-frame contact share and mean foot ground speed.</summary>
-        private static void DurusOlc(List<ZombiKaydedici.Kare> ks, TemasSonuc s, out double pay, out double hiz)
+        /// <summary>
+        /// The idle control frames of one body under a contact rule. <paramref name="pay"/> / <paramref name="hiz"/> = the PLANTED foot's
+        /// contact share and mean ground speed (the foot with the higher share): a standing body stands on at least one foot, while the
+        /// idle may lift or tap the other (before2: the Executioner's idle reads 0.50 over both feet). <paramref name="payIki"/> = both feet.
+        /// </summary>
+        private static void DurusOlc(List<ZombiKaydedici.Kare> ks, TemasSonuc s, out double pay, out double hiz, out double payIki)
         {
-            int n = 0, temas = 0;
-            double v = 0;
+            int n = 0, tL = 0, tR = 0;
+            double vL = 0, vR = 0;
             for (int i = 0; i < ks.Count; i++)
             {
                 ZombiKaydedici.Kare k = ks[i];
                 if (!DurusKontrolKaresi(k)) continue;
-                n += 2;
-                if (s.L[i]) temas++;
-                if (s.R[i]) temas++;
-                v += Yatay(k.AyakVL).magnitude + Yatay(k.AyakVR).magnitude;
+                n++;
+                if (s.L[i]) tL++;
+                if (s.R[i]) tR++;
+                vL += Yatay(k.AyakVL).magnitude;
+                vR += Yatay(k.AyakVR).magnitude;
             }
 
-            pay = n > 0 ? (double)temas / n : double.NaN;
-            hiz = n > 0 ? v / n : double.NaN;
+            if (n == 0) { pay = hiz = payIki = double.NaN; return; }
+            bool sol = tL > tR || (tL == tR && vL <= vR);
+            pay = (double)(sol ? tL : tR) / n;
+            hiz = (sol ? vL : vR) / n;
+            payIki = (double)(tL + tR) / (2 * n);
         }
 
         /// <summary>
-        /// The detector's positive controls on the IK-off pass (the clip's own feet): (a) standing still, the chosen height rule calls
-        /// ≥ 80 % of the foot-frames contact and the feet do not move; (b) walking, every body shows ≥ 3 onsets per foot and a
-        /// contact share inside 0.15–0.85. A broken sole / ground reference or a saturated rule fails here, by name.
+        /// The detector's positive controls on the IK-off pass (the clip's own feet), per group: (a) standing still, the planted foot reads
+        /// contact (≥ 80 % of its frames) and does not move (the sole / ground reference); (b) walking, every body shows ≥ 3 onsets per
+        /// foot and the group's contact share is inside 0.15–0.85 (the rule sees steps, it is not saturated). A failing group is named
+        /// and left out; fewer than <see cref="MinGecerliGrup"/> valid groups blocks the test (a broken detector fails everywhere).
         /// </summary>
-        private static void DedektorKontrolu(List<Grup> ikKapali, List<string> eksik, List<string> satirlar, out double payMin, out double hizMax, out int adimMin)
+        private static void DedektorKontrolu(List<Grup> ikKapali, List<string> eksik, List<string> satirlar, out double payMin, out double hizMax, out int adimMin,
+                                             out int gecerli, out double yuruTaban)
         {
             payMin = double.NaN;
             hizMax = double.NaN;
             adimMin = int.MaxValue;
+            gecerli = 0;
+            yuruTaban = double.NaN;
             if (ikKapali.Count == 0) { eksik.Add("dedektör pozitif kontrolü: IK kapalı geçiş yok"); adimMin = 0; return; }
+            var engelli = new List<string>();
             foreach (Grup g in ikKapali)
             {
+                if (!double.IsNaN(g.YuruTaban)) yuruTaban = double.IsNaN(yuruTaban) ? g.YuruTaban : Math.Max(yuruTaban, g.YuruTaban);
+                double gPay = double.NaN, gHiz = double.NaN;
+                int gAdim = int.MaxValue;
                 foreach (Govde b in g.Govdeler)
                 {
-                    DurusOlc(b.Kareler, b.Secilen, out double pay, out double hiz);
+                    DurusOlc(b.Kareler, b.Secilen, out double pay, out double hiz, out double payIki);
                     int bl = 0, br = 0;
                     for (int i = 0; i < b.Kareler.Count; i++)
                     {
@@ -679,30 +735,47 @@ namespace DD.Prototype.Tests.PlayMode
                         if (b.Secilen.BasR[i]) br++;
                     }
 
-                    payMin = double.IsNaN(payMin) ? pay : Math.Min(payMin, pay);
-                    hizMax = double.IsNaN(hizMax) ? hiz : Math.Max(hizMax, hiz);
-                    adimMin = Math.Min(adimMin, Math.Min(bl, br));
-                    satirlar.Add("PK " + b.Ad + " " + g.Kaynak + " idleShare " + F(pay, 2) + " idleFootV " + F(hiz, 3) + " onsets " + bl + "/" + br);
-                    if (!(pay >= PkDurusPayi)) eksik.Add("dedektör pozitif kontrolü: " + b.Ad + " dururken temas payı " + F(pay, 2) + " < " + F(PkDurusPayi, 2) + " (" + g.Kaynak + ")");
-                    if (!(hiz < PkDurusHiz)) eksik.Add("dedektör pozitif kontrolü: " + b.Ad + " dururken ayak hızı " + F(hiz, 3) + " m/s");
-                    if (bl < PkAdimMin || br < PkAdimMin) eksik.Add("dedektör pozitif kontrolü: " + b.Ad + " IK kapalı yürüyüşte adım başlangıcı " + bl + "/" + br + " < " + PkAdimMin);
+                    gPay = double.IsNaN(gPay) ? pay : Math.Min(gPay, pay);
+                    gHiz = double.IsNaN(gHiz) ? hiz : Math.Max(gHiz, hiz);
+                    gAdim = Math.Min(gAdim, Math.Min(bl, br));
+                    satirlar.Add("PK " + b.Ad + " " + g.Kaynak + " idleShare(planted) " + F(pay, 2) + " idleShare(both) " + F(payIki, 2) + " idleFootV " + F(hiz, 3)
+                                 + " onsets " + bl + "/" + br + " walkSole5pct " + F(g.YuruTaban * 100.0, 1) + "cm");
+                    if (!(pay >= PkDurusPayi)) g.Engel.Add("PK dururken basan ayak temas payı " + F(pay, 2) + " < " + F(PkDurusPayi, 2));
+                    if (!(hiz < PkDurusHiz)) g.Engel.Add("PK dururken basan ayak hızı " + F(hiz, 3) + " m/s");
+                    if (bl < PkAdimMin || br < PkAdimMin) g.Engel.Add("PK yürüyüşte adım başlangıcı " + bl + "/" + br + " < " + PkAdimMin);
                 }
 
                 double gp = g.TemasPayi;
-                if (!(gp >= TemasPayAlt && gp <= TemasPayUst)) eksik.Add("dedektör pozitif kontrolü: " + g.Ad + " IK kapalı temas payı " + F(gp, 2) + " (doymuş)");
+                if (!(gp >= TemasPayAlt && gp <= TemasPayUst)) g.Engel.Add("PK temas payı " + F(gp, 2) + " (doymuş)");
+                if (GrupEngelli(g, "pk", engelli)) continue;
+                gecerli++;
+                payMin = double.IsNaN(payMin) ? gPay : Math.Min(payMin, gPay);
+                hizMax = double.IsNaN(hizMax) ? gHiz : Math.Max(hizMax, gHiz);
+                adimMin = Math.Min(adimMin, gAdim);
             }
 
+            if (gecerli < MinGecerliGrup) eksik.Add("dedektör pozitif kontrolü: geçerli IK kapalı grup " + gecerli + "/" + ikKapali.Count + " < " + MinGecerliGrup + ": " + string.Join("; ", engelli));
             if (adimMin == int.MaxValue) adimMin = 0;
         }
 
-        private static void GrupKaynagi(Grup g, List<string> eksik)
+        /// <summary>A group with reasons in <see cref="Grup.Engel"/> is logged BLOCKED by name and left out (true).</summary>
+        private static bool GrupEngelli(Grup g, string test, List<string> engelli)
         {
-            if (g.BasL < MinBaslangic || g.BasR < MinBaslangic) eksik.Add(g.Ad + ": temas başlangıcı L/R " + g.BasL + "/" + g.BasR + " < " + MinBaslangic + " (" + g.Kaynak + ")");
-            if (g.Kayma.Count == 0) eksik.Add(g.Ad + ": temas karesi yok");
+            if (g.Engel.Count == 0) return false;
+            string ad = g.Ad + (g.Tur == TurIkKapali ? "/ik-kapali" : "") + " [" + g.Kaynak + "]: " + string.Join(", ", g.Engel);
+            engelli.Add(ad);
+            Debug.Log("wp096-blocked." + test + ".grup " + ad);
+            return true;
+        }
+
+        private static void GrupKaynagi(Grup g)
+        {
+            if (g.BasL < MinBaslangic || g.BasR < MinBaslangic) g.Engel.Add("temas başlangıcı L/R " + g.BasL + "/" + g.BasR + " < " + MinBaslangic);
+            if (g.Kayma.Count == 0) g.Engel.Add("temas karesi yok");
             double pay = g.TemasPayi;
-            if (!(pay >= TemasPayAlt && pay <= TemasPayUst)) eksik.Add(g.Ad + ": temas ayrımı yok — ayak-kare payı " + F(pay, 2) + " (" + g.Kaynak + "; dedektör doymuş)");
+            if (!(pay >= TemasPayAlt && pay <= TemasPayUst)) g.Engel.Add("temas ayrımı yok — ayak-kare payı " + F(pay, 2) + " (dedektör doymuş)");
             double loko = g.OlcumKare > 0 ? (double)g.LokoKare / g.OlcumKare : 0;
-            if (loko < LokoPayiAlt) eksik.Add(g.Ad + ": Locomotion durumu payı " + F(loko, 2) + " < " + F(LokoPayiAlt, 2));
+            if (loko < LokoPayiAlt) g.Engel.Add("Locomotion durumu payı " + F(loko, 2) + " < " + F(LokoPayiAlt, 2));
         }
 
         /// <summary>L2's method on one group: |cadence × step − v| / v (cadence = 2 / T, step = u × T / 2).</summary>
@@ -1479,8 +1552,34 @@ namespace DD.Prototype.Tests.PlayMode
             r.Bilgi("aliveBodies", canli);
             r.Bilgi("farLodMax", uzakMax);
             r.Bilgi("gaitOrdinalStart", sira);
+            MainGoreArtis(r, kalNMed - bosNMed, kalMed - bosMed, ustte);
             r.Kaynak(eksik);
             r.Yazdir("ZL6_Kalabalik40_GcSifir", GcKare, "ProfilerRecorder GC Allocated In Frame / Count, 240 idle vs 240 crowd frames, GateMix seed 1, TopDown");
+        }
+
+        /// <summary>
+        /// ZL6 against the "before" run (DD_WP096_BASELINE_DIR = its DD_R2_MEASURE_DIR): this run's same-run increases minus main's.
+        /// The gate stays the same-run one (crowd vs empty scene); this line says how much of it main already had.
+        /// </summary>
+        private static void MainGoreArtis(Rapor r, long sayiArtis, long baytArtis, int ustte)
+        {
+            string dir = Environment.GetEnvironmentVariable(TabanDegiskeni);
+            if (string.IsNullOrEmpty(dir)) return;
+            string yol = Path.Combine(dir, "r2-wp096-zl6.json");
+            if (!File.Exists(yol)) { Debug.Log("wp096.zl6.mainGoreArtis=yok (" + yol + " yok)"); return; }
+            string json = File.ReadAllText(yol);
+            double? tSayi = JsonSayi(json, "gcMedianCountIncrease"), tBayt = JsonSayi(json, "gcMedianIncreaseBytes"), tUst = JsonSayi(json, "gcFramesAboveIdleMax");
+            Match c = Regex.Match(json, "\"commit\":\\s*\"([^\"]*)\"");
+            string taban = "main " + (c.Success && c.Groups[1].Value.Length > 0 ? c.Groups[1].Value : "?");
+            r.Bilgi("vsMainMedianCountIncrease", tSayi.HasValue ? sayiArtis - tSayi.Value : double.NaN, "artış main'e göre (" + taban + ")");
+            r.Bilgi("vsMainMedianIncreaseBytes", tBayt.HasValue ? baytArtis - tBayt.Value : double.NaN, "artış main'e göre");
+            r.Bilgi("vsMainFramesAboveIdleMax", tUst.HasValue ? ustte - tUst.Value : double.NaN, "artış main'e göre");
+        }
+
+        private static double? JsonSayi(string json, string anahtar)
+        {
+            Match m = Regex.Match(json, "\"" + Regex.Escape(anahtar) + "\":\\s*(-?[0-9][0-9.eE+-]*)");
+            return m.Success && double.TryParse(m.Groups[1].Value, NumberStyles.Float, Inv, out double d) ? d : (double?)null;
         }
 
         /// <summary>The n heaviest frames of a window: "#index@frameCount bytesB/countN".</summary>
@@ -1925,9 +2024,14 @@ namespace DD.Prototype.Tests.PlayMode
         /// </summary>
         private static TemasSonuc Temaslar(List<ZombiKaydedici.Kare> ks, bool uyarlamali)
         {
+            return TemaslarRef(ks, uyarlamali ? AltYuzdelik(ks, true, null) : 0f, uyarlamali ? AltYuzdelik(ks, false, null) : 0f);
+        }
+
+        /// <summary>The height rule against a given sole reference per foot (0 = the strict L1 rule).</summary>
+        private static TemasSonuc TemaslarRef(List<ZombiKaydedici.Kare> ks, float refL, float refR)
+        {
             int n = ks.Count;
-            var s = new TemasSonuc { L = new bool[n], R = new bool[n], BasL = new bool[n], BasR = new bool[n], Uyarlamali = uyarlamali };
-            float refL = uyarlamali ? AltYuzdelik(ks, true) : 0f, refR = uyarlamali ? AltYuzdelik(ks, false) : 0f;
+            var s = new TemasSonuc { L = new bool[n], R = new bool[n], BasL = new bool[n], BasR = new bool[n] };
             int sonL = -1000, sonR = -1000;
             bool oncL = false, oncR = false;
             for (int i = 0; i < n; i++)
@@ -1946,12 +2050,13 @@ namespace DD.Prototype.Tests.PlayMode
             return s;
         }
 
-        private static float AltYuzdelik(List<ZombiKaydedici.Kare> ks, bool sol)
+        /// <summary>The 5th-percentile sole height of one foot over the valid frames <paramref name="secim"/> keeps (null = all).</summary>
+        private static float AltYuzdelik(List<ZombiKaydedici.Kare> ks, bool sol, Func<ZombiKaydedici.Kare, bool> secim)
         {
             var g = new List<float>(ks.Count);
             foreach (ZombiKaydedici.Kare k in ks)
             {
-                if (!k.Gecerli) continue;
+                if (!k.Gecerli || (secim != null && !secim(k))) continue;
                 float x = sol ? k.BoslukL : k.BoslukR;
                 if (!float.IsNaN(x)) g.Add(x);
             }
