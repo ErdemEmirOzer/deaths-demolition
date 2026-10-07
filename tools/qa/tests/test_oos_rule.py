@@ -109,7 +109,8 @@ class OosRuleTests(unittest.TestCase):
         self.assertTrue(ok, why)
 
     # --- 2b (WP-099, C-00 08.10): no Player alive at the change, its mtime inside another player window's span ----------
-    def span_case(self, mtime="12:05:00", other_scope="player", other_restore="verified=1", other_end="12:05:01"):
+    def span_case(self, mtime="12:05:00", other_scope="player", other_restore="verified=1", other_end="12:05:01",
+                  other_start="12:03:00"):
         """own editor window 12:00 → 12:10; another window (other_scope) 12:03 → other_end; the plist changed at mtime with
         no Player alive (C-00 08.10: S-03 before4 — S-01's player window restored the plist inside it, 21:10:08Z)."""
         import json as _json
@@ -119,7 +120,7 @@ class OosRuleTests(unittest.TestCase):
         (self.ug / "players-lineage.tsv").write_text("")
         (self.ug / "restore.txt").write_text("2026-10-05T12:10:00Z userdata-guard restore scope=editor touched=0 verified=1\nexit=32\n")
         (self.owner / "window.json").write_text(_json.dumps({"scope": other_scope, "windowAreas": [other_scope],
-                                                              "utc": "2026-10-05T12:03:00Z"}))
+                                                              "utc": "2026-10-05T%sZ" % other_start}))
         (self.owner / "restore.txt").write_text(
             "2026-10-05T%sZ userdata-guard restore scope=%s touched=1 %s extraKeys=0\nexit=0\n" % (other_end, other_scope, other_restore))
 
@@ -141,8 +142,14 @@ class OosRuleTests(unittest.TestCase):
         ok, why = self.decide(); self.assertFalse(ok, why); self.assertIn("lies in no other guarded player window", why)
 
     def test_2b_MtimeKendiPenceresiDisinda_Kalir(self):
-        self.span_case(mtime="11:50:00")   # before this window opened — not this window's change at all
+        # gt S-1 (08.10): the other window DOES hold 11:50 (11:40 → 11:55) — only this window's own span (12:00 →) refuses
+        self.span_case(mtime="11:50:00", other_start="11:40:00", other_end="11:55:00")
         ok, why = self.decide(); self.assertFalse(ok, why)
+
+    def test_2b_MtimeDigerPencereAcilmadanOnce_Kalir(self):
+        # gt S-1 (08.10): the other window opened at 12:06, after the change at 12:05 — its start bound refuses
+        self.span_case(mtime="12:05:00", other_start="12:06:00", other_end="12:08:00")
+        ok, why = self.decide(); self.assertFalse(ok, why); self.assertIn("lies in no other guarded player window", why)
 
     def test_SatirYok_Kalir(self):
         self.window(rows=())
