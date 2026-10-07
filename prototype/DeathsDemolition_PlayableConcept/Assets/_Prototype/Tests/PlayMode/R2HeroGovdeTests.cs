@@ -75,7 +75,9 @@ namespace DD.Prototype.Tests.PlayMode
         [UnityTearDown]
         public IEnumerator TearDown()
         {
-            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.ThirdPerson, instant: true);
+            // R3 (C-00 07.10, S-01 inventory): the next test starts in the process default — TopDown (user 06.10: tests run top-down only);
+            // a ThirdPerson left here ran the PlayMode tests after this fixture in TP (R2FiksturKameraTests)
+            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.TopDown, instant: true);
             if (_s != null) yield return _s.Bitir();
             _s = null;
             WeaponHoldIk.ResetStatics();
