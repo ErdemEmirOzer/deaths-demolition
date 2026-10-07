@@ -23,7 +23,8 @@ namespace DD.Prototype.Tests.EditMode
     /// timeline's silent swap and seal cues, StampLanded "round" on the contact - also when skipped), the pools (chunk 3 with
     /// the newest widened, casing 6, wedge 2 with a same-side re-flare), the per-edge onset limit, the feel budget, the "+N"
     /// merge, the new kit API (Rotate, Flare, Punch, RomanReveal, Eject) and its reduced-motion variants, the
-    /// HudFeelSource seam (one adapter, one bridge), and 0 allocations for all of it.
+    /// HudFeelSource seam (one adapter, one bridge), the reduce-flashes variants (C-00 08.10: a steady low-health glow, the
+    /// soft exit instead of the white pulse, one soft tint instead of the dry trigger's two pulses), and 0 allocations for all of it.
     /// </summary>
     [TestFixture]
     [Category("WP094")]
@@ -626,6 +627,137 @@ namespace DD.Prototype.Tests.EditMode
 
         // ------------------------------------------------------------------ 0 B
 
+        // ------------------------------------------------------------------ reduce flashes (C-00 08.10)
+
+        /// <summary>
+        /// "Reduce flashes" (UiSettings.ReduceFlashes; feel contract §6): the low-health rim never breathes - a steady glow at the
+        /// breath's mean α 0.55, faded in (no step of light), under reduced motion too; reduced motion alone keeps its held peak.
+        /// </summary>
+        [Test]
+        public void FlasAzalt_DusukCan_NabizYok_SabitIsimaOrtalamaAlfada_YumusakGiris()
+        {
+            Assert.AreEqual(0.55f, HudHeartbeat.SteadyRim, 1e-6f, "the breath's mean: (0.35 + 0.75) / 2");
+            Assert.AreEqual(0.5f * (UiMotionTokens.BeatRimRest + UiMotionTokens.BeatRimPeak), HudHeartbeat.SteadyRim, 1e-6f);
+            Assert.IsTrue(HudHeartbeat.RimBreathes(false, false), "RF off, RM off: the rim breathes per lub");
+            Assert.IsFalse(HudHeartbeat.RimBreathes(true, false), "RF: no breath");
+            Assert.IsFalse(HudHeartbeat.RimBreathes(false, true), "RM: held");
+            Assert.IsFalse(HudHeartbeat.RimBreathes(true, true));
+            Assert.AreEqual(HudHeartbeat.SteadyRim, HudHeartbeat.HeldRim(true, false), 1e-6f, "RF: the steady mean");
+            Assert.AreEqual(HudHeartbeat.SteadyRim, HudHeartbeat.HeldRim(true, true), 1e-6f, "RF + RM: light wins - still the mean");
+            Assert.AreEqual(UiMotionTokens.BeatRimPeak, HudHeartbeat.HeldRim(false, true), 1e-6f, "RM alone: the peak held (unchanged)");
+            Assert.AreEqual(UiMotionTokens.BeatRimRest, HudHeartbeat.HeldRim(false, false), 1e-6f, "the breath starts from rest");
+
+            // The HUD's RF entry, as SetHeartbeat plays it: 0 → 0.55 over 0.4 s (Settle, Flash class) - rising only, ≤ 0.1 a frame.
+            foreach (bool reduced in new[] { false, true })
+            {
+                UiMotion.ReducedMotion = reduced;
+                Image rim = Img("Rim");
+                rim.canvasRenderer.SetAlpha(0f);
+                UiMotion.TintAlphaSeconds(rim, 0f, HudHeartbeat.HeldRim(true, reduced), HudHeartbeat.SoftEnterSeconds, UiEase.Settle, UiMotionClass.Flash);
+                float last = 0f, step = 0f;
+                for (int f = 0; f < 36; f++)
+                {
+                    Step(1f / 60f);
+                    float a = rim.canvasRenderer.GetAlpha();
+                    Assert.GreaterOrEqual(a, last - 1e-5f, "the glow only rises (RM " + reduced + ")");
+                    step = Mathf.Max(step, a - last);
+                    last = a;
+                }
+
+                Assert.AreEqual(HudHeartbeat.SteadyRim, last, 1e-3f, "settled on the mean, then steady (RM " + reduced + ")");
+                Assert.Less(step, 0.1f, "no step of light: ≤ 0.1 α a frame at 60 fps (RM " + reduced + ")");
+            }
+        }
+
+        /// <summary>
+        /// RF: the low band's exit is no white pulse but one soft transition - the rim turns cream at the steady coral glow's own
+        /// light (equal luminance, linear), then fades out over 0.6 s in-out: the light only falls, gently, under RM too.
+        /// </summary>
+        [Test]
+        public void FlasAzalt_CikisBeyazNabziYerine_TekYumusakGecis_IsikHicArtmaz()
+        {
+            Color coral = UiTokens.Get(UiColor.BarHealthLow);
+            Color cream = UiTokens.Get(UiColor.TextPrimary);
+            float light = HudHeartbeat.SoftExitAlpha(coral, cream);
+            Assert.Greater(light, 0f);
+            Assert.LessOrEqual(light, HudHeartbeat.SteadyRim, "never above the steady glow's α");
+            float glowLight = HudHeartbeat.Luminance(coral.linear) * HudHeartbeat.SteadyRim;
+            Assert.AreEqual(glowLight, HudHeartbeat.Luminance(cream.linear) * light, 1e-4f, "cream at the coral glow's light: a hue change, not a light change");
+            Assert.AreEqual(0.6f, HudHeartbeat.SoftExitFadeSeconds, 1e-6f);
+
+            foreach (bool reduced in new[] { false, true })
+            {
+                UiMotion.ReducedMotion = reduced;
+                Image rim = Img("Rim");
+                rim.color = cream;
+                rim.canvasRenderer.SetAlpha(light);
+                UiMotion.TintAlphaSeconds(rim, light, 0f, HudHeartbeat.SoftExitFadeSeconds, UiEase.Move, UiMotionClass.Flash);
+                float last = light, step = 0f;
+                Step(0.1f);
+                Assert.Greater(rim.canvasRenderer.GetAlpha(), 0.5f * light, "a fade, not a cut (RM " + reduced + ")");
+                last = rim.canvasRenderer.GetAlpha();
+                for (int f = 0; f < 40; f++)
+                {
+                    Step(1f / 60f);
+                    float a = rim.canvasRenderer.GetAlpha();
+                    Assert.LessOrEqual(a, last + 1e-5f, "the light only falls (RM " + reduced + ")");
+                    step = Mathf.Max(step, last - a);
+                    last = a;
+                }
+
+                Assert.AreEqual(0f, last, 1e-3f, "gone after 0.6 s (RM " + reduced + ")");
+                Assert.Less(step, 0.25f * light, "gentle: under a quarter of the glow a frame (RM " + reduced + ")");
+            }
+        }
+
+        /// <summary>
+        /// §4.8 under RF: the empty trigger's two vermilion pulses (on 0–0.08 s, 0.16–0.24 s) become ONE soft tint - a
+        /// raised-cosine hump over 0.3 s, 0 at both ends, one peak, no frame switching it on or off; × FlashScale by the caller.
+        /// </summary>
+        [Test]
+        public void FlasAzalt_BosTetik_IkiNabizYerineTekYumusakTint()
+        {
+            const float peak = 0.9f * UiSettings.ReducedFlashScale;   // RingKickAlpha × FlashScale under RF
+            Assert.AreEqual(0.08f, RunHudScreen.DryPulseSeconds, 1e-6f);
+
+            // Off: two square pulses of 0.08 s, 0.08 s apart.
+            Assert.AreEqual(3f * HudDryPulse.PulseSeconds, HudDryPulse.Length(false), 1e-6f);
+            Assert.AreEqual(peak, HudDryPulse.Alpha(0.04f, false, peak), 1e-6f, "first pulse");
+            Assert.AreEqual(0f, HudDryPulse.Alpha(0.12f, false, peak), 1e-6f, "the gap");
+            Assert.AreEqual(peak, HudDryPulse.Alpha(0.20f, false, peak), 1e-6f, "second pulse");
+            Assert.AreEqual(0f, HudDryPulse.Alpha(0.25f, false, peak), 1e-6f, "done");
+
+            // RF: one hump, sampled at 60 fps - rises to one peak at the middle, falls, never switches.
+            Assert.AreEqual(HudDryPulse.SoftSeconds, HudDryPulse.Length(true), 1e-6f);
+            Assert.AreEqual(0.3f, HudDryPulse.SoftSeconds, 1e-6f);
+            Assert.AreEqual(0f, HudDryPulse.Alpha(0f, true, peak), 1e-6f, "starts from nothing");
+            Assert.AreEqual(peak, HudDryPulse.Alpha(0.15f, true, peak), 1e-4f, "one peak at the middle");
+            Assert.AreEqual(0f, HudDryPulse.Alpha(0.3f, true, peak), 1e-6f, "ends in nothing");
+            int turns = 0;
+            float last = 0f, step = 0f;
+            bool rising = true;
+            for (int f = 1; f <= 19; f++)
+            {
+                float a = HudDryPulse.Alpha(f / 60f, true, peak);
+                Assert.LessOrEqual(a, peak + 1e-5f);
+                if (rising && a < last - 1e-6f)
+                {
+                    rising = false;
+                    turns++;
+                }
+                else if (!rising && a > last + 1e-6f)
+                {
+                    turns++;
+                }
+
+                step = Mathf.Max(step, Mathf.Abs(a - last));
+                last = a;
+            }
+
+            Assert.AreEqual(1, turns, "one tint: a single rise and fall (the two pulses had four edges)");
+            Assert.Less(step, 0.2f * peak, "soft: under a fifth of its peak a frame (the pulses jumped 0 → peak)");
+        }
+
         [Test]
         public void SifirAyirma_Kurallar_Havuzlar_ZamanCizelgesi_Presetler()
         {
@@ -645,6 +777,9 @@ namespace DD.Prototype.Tests.EditMode
             Image glow = Img("Glow");
             body.rectTransform.SetParent(arc, false);
             beat.Start(Now, 0f);
+            Color coral = UiTokens.Get(UiColor.BarHealthLow);
+            Color cream = UiTokens.Get(UiColor.TextPrimary);
+            float sink = 0f;
 
             Action cycle = () =>
             {
@@ -659,6 +794,8 @@ namespace DD.Prototype.Tests.EditMode
                 budget.Note(t, 0.2f);
                 budget.OrnamentAllowed(t, false);
                 plus.Add(t, 3);
+                // Reduce flashes (08.10): the steady rim, the soft exit's light, the dry trigger's one tint.
+                sink += HudHeartbeat.HeldRim(true, false) + HudHeartbeat.SoftExitAlpha(coral, cream) + HudDryPulse.Alpha(0.1f, true, 0.36f);
                 HudRoundTransition.ContactSeconds(RomanNumerals.Length(23));
                 UiTimeline tl = UiMotion.Timeline(9, log);
                 tl.Call(0.01f, 1).Cue(UiEvent.StampLanded, RunHudScreen.RoundSealCueDetail, 0.02f, 3);
@@ -681,7 +818,7 @@ namespace DD.Prototype.Tests.EditMode
             {
                 for (int n = 0; n < 40; n++) cycle();
             }, Is.Not.AllocatingGCMemory(), "the juice's rules, pools, timeline cues and presets allocate nothing");
-            Debug.Log("[DD-TEST] wp094.juiceAlloc threadAlloc=none (40 cycles) control=" + (bait != null ? bait.Length : 0) + " B");
+            Debug.Log("[DD-TEST] wp094.juiceAlloc threadAlloc=none (40 cycles) control=" + (bait != null ? bait.Length : 0) + " B rf=" + (sink > 0f));
         }
     }
 }

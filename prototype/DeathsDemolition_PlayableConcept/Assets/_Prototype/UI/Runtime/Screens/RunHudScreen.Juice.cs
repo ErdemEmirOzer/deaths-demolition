@@ -313,6 +313,8 @@ namespace DD.Prototype.UI
         /// <summary>
         /// §4.7: leaving the low band (not by death) - one white pulse on the bar: the rim flares cream once (Fast in, Screen out;
         /// light, so it plays under reduced motion too, × FlashScale). The next LOW takes the rim back to coral.
+        /// Reduce flashes (C-00 08.10): no pulse - one soft transition: the rim turns cream at the steady coral glow's own light
+        /// (HudHeartbeat.SoftExitAlpha - a change of hue, not of light), then fades out over 0.6 s (in-out). The light only falls.
         /// </summary>
         private void PlayLowHealthExitPulse()
         {
@@ -322,9 +324,22 @@ namespace DD.Prototype.UI
             }
 
             LowHealthExitPulses++;
-            _lowRim.color = UiTokens.Get(UiColor.TextPrimary);
+            Color cream = UiTokens.Get(UiColor.TextPrimary);
+            _lowRim.color = cream;
+            if (UiSettings.ReduceFlashes)
+            {
+                LowHealthSoftExits++;
+                float light = HudHeartbeat.SoftExitAlpha(UiTokens.Get(UiColor.BarHealthLow), cream);
+                _lowRim.canvasRenderer.SetAlpha(light);   // this frame already: no dark frame between the glow and its fade
+                UiMotion.TintAlphaSeconds(_lowRim, light, 0f, HudHeartbeat.SoftExitFadeSeconds, UiEase.Move, UiMotionClass.Flash);
+                return;
+            }
+
             UiPresets.Flare(_lowRim, UiMotionTokens.BeatRimPeak * UiTokens.FlashScale, UiDuration.Fast, 0f, UiDuration.Screen);
         }
+
+        /// <summary>Reduce-flashes exits played as the soft transition instead of the white pulse (tests).</summary>
+        public int LowHealthSoftExits { get; private set; }
 
         /// <summary>§4.7 white pulses played on leaving LOW (tests).</summary>
         public int LowHealthExitPulses { get; private set; }
@@ -343,7 +358,17 @@ namespace DD.Prototype.UI
                 _lowRim.color = UiTokens.Get(UiColor.BarHealthLow);   // after a white exit pulse
                 // The cracked heart stamps first (E10); the first lub lands on its hold.
                 _heartbeat.Start(JuiceNow, UiMotionTokens.StampInSeconds + UiMotionTokens.StampHoldSeconds);
-                _lowRim.canvasRenderer.SetAlpha(UiMotion.ReducedMotion ? UiMotionTokens.BeatRimPeak : UiMotionTokens.BeatRimRest);
+                bool reduceFlashes = UiSettings.ReduceFlashes;
+                float held = HudHeartbeat.HeldRim(reduceFlashes, UiMotion.ReducedMotion);
+                if (reduceFlashes)
+                {
+                    // RF: the steady glow fades in (light: Flash class, so reduced motion keeps the fade) - no step of light.
+                    _lowRim.canvasRenderer.SetAlpha(0f);
+                    UiMotion.TintAlphaSeconds(_lowRim, 0f, held, HudHeartbeat.SoftEnterSeconds, UiEase.Settle, UiMotionClass.Flash);
+                    return;
+                }
+
+                _lowRim.canvasRenderer.SetAlpha(held);
                 return;
             }
 
@@ -354,7 +379,8 @@ namespace DD.Prototype.UI
         /// <summary>
         /// One beat on the heart glyph (lub 1.10 over Base, dub 1.05 over Fast; × 1.3 under 15 % unless the damage edges show)
         /// and, on the lub, the rim's breath (0.35 → 0.75 × FlashScale → 0.35 over Emphasis). Reduced motion (Attention): the
-        /// heart rests at 1, the rim holds at 0.75. The words never pulse.
+        /// heart rests at 1, the rim holds at 0.75. The words never pulse. Reduce flashes (C-00 08.10): the rim never breathes -
+        /// it holds HudHeartbeat.SteadyRim (0.55, the breath's mean); the heart's lub / dub (motion, not light) stays.
         /// </summary>
         private void PlayBeat(HudBeat beat)
         {
@@ -363,9 +389,14 @@ namespace DD.Prototype.UI
                 HeartBeats++;
             }
 
+            bool reduceFlashes = UiSettings.ReduceFlashes;
             if (UiMotion.ReducedMotion)
             {
-                _lowRim.canvasRenderer.SetAlpha(UiMotionTokens.BeatRimPeak);
+                if (!reduceFlashes)
+                {
+                    _lowRim.canvasRenderer.SetAlpha(UiMotionTokens.BeatRimPeak);
+                }
+
                 return;
             }
 
@@ -374,6 +405,19 @@ namespace DD.Prototype.UI
             {
                 UiMotion.ScaleSeconds(_healthIcon.rectTransform, HudHeartbeat.Peak(beat, gain), 1f,
                     UiMotionTokens.Seconds(beat == HudBeat.Lub ? UiDuration.Base : UiDuration.Fast), UiEase.Settle, UiMotionClass.Decor);
+            }
+
+            if (beat == HudBeat.Lub && reduceFlashes)
+            {
+                // RF (C-00 08.10): no breath - the rim holds the steady mean; a switch made mid-breath eases back to it.
+                // (A restart from where it stands is continuous: the entry's fade-in simply lands a little later.)
+                float rim = _lowRim.canvasRenderer.GetAlpha();
+                if (Mathf.Abs(rim - HudHeartbeat.SteadyRim) > 0.005f)
+                {
+                    UiMotion.TintAlphaSeconds(_lowRim, rim, HudHeartbeat.SteadyRim, HudHeartbeat.SoftEnterSeconds, UiEase.Settle, UiMotionClass.Flash);
+                }
+
+                return;
             }
 
             if (beat == HudBeat.Lub)
@@ -412,6 +456,9 @@ namespace DD.Prototype.UI
         public int ShotAccents { get; private set; }
         public int CasingsLive => _casingPool.LiveCount(JuiceNow);
         public int DryFireShakes { get; private set; }
+
+        /// <summary>Empty pulls answered with reduce flashes' one soft tint instead of the two pulses (tests).</summary>
+        public int DrySoftTints { get; private set; }
         public int WeaponSwaps { get; private set; }
 
         /// <summary>A3: the reload preview's rounds (−1 when hidden); A5: the LOW pulse runs (tests).</summary>
@@ -654,8 +701,8 @@ namespace DD.Prototype.UI
         public const float ReloadPopScale = 1.15f;
         public const float ReloadPopSeconds = 0.10f;
 
-        /// <summary>§4.8: the empty trigger's vermilion pulses - two of 0.08 s, 0.08 s apart.</summary>
-        public const float DryPulseSeconds = 0.08f;
+        /// <summary>§4.8: the empty trigger's vermilion pulses - two of 0.08 s, 0.08 s apart (HudDryPulse; reduce flashes: one soft tint).</summary>
+        public const float DryPulseSeconds = HudDryPulse.PulseSeconds;
 
         /// <summary>Reload landings the HUD played (tests).</summary>
         public int ReloadLandings { get; private set; }
@@ -664,6 +711,7 @@ namespace DD.Prototype.UI
         private UiFx _reloadWipeFx;
         private float _dryPulseAt = -1f;
         private float _dryPulseShown = -1f;
+        private bool _dryPulseSoft;   // reduce flashes at the pull: the one soft tint (a toggle mid-tint never switches curves)
         private string _reloadHintWord;
 
         /// <summary>
@@ -683,6 +731,12 @@ namespace DD.Prototype.UI
             DryFireShakes++;
             _dryPulseAt = now;
             _dryPulseShown = -1f;
+            _dryPulseSoft = UiSettings.ReduceFlashes;
+            if (_dryPulseSoft)
+            {
+                DrySoftTints++;
+            }
+
             TickDryPulse(now);
             if (_model.ReloadState == RunHudReloadState.MagazineEmpty && _reloadCaption != null && _reloadHintWord != null)
             {
@@ -879,7 +933,10 @@ namespace DD.Prototype.UI
 
         // ================================================================ per frame (from Update): clocks and returns only
 
-        /// <summary>§4.8: the empty trigger's two vermilion pulses - on 0–0.08 s and 0.16–0.24 s after the pull, × FlashScale.</summary>
+        /// <summary>
+        /// §4.8: the empty trigger's two vermilion pulses - on 0–0.08 s and 0.16–0.24 s after the pull, × FlashScale; under reduce
+        /// flashes one soft tint over 0.3 s (HudDryPulse). Written only when the α changes.
+        /// </summary>
         private void TickDryPulse(float now)
         {
             if (_dryPulseAt < 0f)
@@ -888,15 +945,14 @@ namespace DD.Prototype.UI
             }
 
             float t = now - _dryPulseAt;
-            bool on = t < DryPulseSeconds || (t >= 2f * DryPulseSeconds && t < 3f * DryPulseSeconds);
-            float alpha = on ? RingKickAlpha * UiTokens.FlashScale : 0f;
+            float alpha = HudDryPulse.Alpha(t, _dryPulseSoft, RingKickAlpha * UiTokens.FlashScale);
             if (alpha != _dryPulseShown)
             {
                 _dryPulseShown = alpha;
                 _ringKick.canvasRenderer.SetAlpha(alpha);
             }
 
-            if (t >= 3f * DryPulseSeconds)
+            if (t >= HudDryPulse.Length(_dryPulseSoft))
             {
                 _dryPulseAt = -1f;
             }

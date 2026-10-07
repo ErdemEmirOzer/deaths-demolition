@@ -155,6 +155,62 @@ namespace DD.Prototype.UI
         /// <summary>An external clock's beats closer than this are one beat (a double raise); 150 bpm, past the contract's 110.</summary>
         public static float MinExternalPeriod => 0.4f;
 
+        // ---- "Reduce flashes" (UiSettings.ReduceFlashes; feel contract §6 "Flaş azalt"; C-00 08.10)
+
+        /// <summary>
+        /// RF: the coral rim does not breathe - a steady glow at the beat's mean α, (rest 0.35 + peak 0.75) / 2 = 0.55, the same
+        /// mean light as the breathing rim without its swing. The heart glyph's lub / dub is motion, not light: it stays (reduced
+        /// motion stills it).
+        /// </summary>
+        public static float SteadyRim => 0.5f * (UiMotionTokens.BeatRimRest + UiMotionTokens.BeatRimPeak);
+
+        /// <summary>The rim breathes per lub only with both reduce flashes and reduced motion off.</summary>
+        public static bool RimBreathes(bool reduceFlashes, bool reducedMotion)
+        {
+            return !reduceFlashes && !reducedMotion;
+        }
+
+        /// <summary>
+        /// The rim's α where it does not breathe: RF → <see cref="SteadyRim"/> (light wins over motion: RF with reduced motion is
+        /// still the steady mean); reduced motion alone → the peak 0.75 held (Attention, unchanged); otherwise the rest 0.35 the
+        /// first lub breathes from.
+        /// </summary>
+        public static float HeldRim(bool reduceFlashes, bool reducedMotion)
+        {
+            if (reduceFlashes)
+            {
+                return SteadyRim;
+            }
+
+            return reducedMotion ? UiMotionTokens.BeatRimPeak : UiMotionTokens.BeatRimRest;
+        }
+
+        /// <summary>RF: the steady glow fades in over this (Emphasis 400, Settle) - the band's entry is no step of light.</summary>
+        public const float SoftEnterSeconds = 0.4f;
+
+        /// <summary>
+        /// RF exit: the white pulse becomes one soft transition - the rim turns cream at the light the steady coral glow had
+        /// (<see cref="SoftExitAlpha"/>: same luminance, so the swap is a change of hue, not of light), then fades to nothing over
+        /// this (Reveal 600, in-out). The light only ever falls.
+        /// </summary>
+        public const float SoftExitFadeSeconds = 0.6f;
+
+        /// <summary>
+        /// RF exit: the cream rim's α that carries the steady coral glow's light (relative luminance of the linear colours ×
+        /// α; alpha blends in linear light), never above <see cref="SteadyRim"/>.
+        /// </summary>
+        public static float SoftExitAlpha(Color coral, Color cream)
+        {
+            float creamLight = Luminance(cream.linear);
+            return creamLight > 0f ? Mathf.Min(SteadyRim, SteadyRim * Luminance(coral.linear) / creamLight) : 0f;
+        }
+
+        /// <summary>Relative luminance of a linear colour (Rec. 709 weights).</summary>
+        public static float Luminance(Color linear)
+        {
+            return 0.2126f * linear.r + 0.7152f * linear.g + 0.0722f * linear.b;
+        }
+
         public bool Running => _on;
 
         /// <summary>When the last lub played (−∞ before the first).</summary>
@@ -248,6 +304,41 @@ namespace DD.Prototype.UI
         {
             float lift = (UiMotionTokens.BeatRimPeak - UiMotionTokens.BeatRimRest) * Mathf.Clamp01(flashScale) * Mathf.Max(0f, gain);
             return Mathf.Min(1f, UiMotionTokens.BeatRimRest + lift);
+        }
+    }
+
+    /// <summary>
+    /// WP-094 · the empty trigger's vermilion on the ammo ring (feel contract §4.8): two pulses of <see cref="PulseSeconds"/>
+    /// (on 0–0.08 s, off, on 0.16–0.24 s). "Reduce flashes" (C-00 08.10): ONE soft tint instead - a raised-cosine hump over
+    /// <see cref="SoftSeconds"/>, 0 → peak → 0 with no edge (its slope is 0 at both ends), so nothing switches on or off in a
+    /// frame. The caller passes the peak (RingKickAlpha × FlashScale) and samples it per frame; no allocation.
+    /// </summary>
+    public static class HudDryPulse
+    {
+        public const float PulseSeconds = 0.08f;
+        public const float SoftSeconds = 0.3f;
+
+        /// <summary>How long the treatment lasts from the pull.</summary>
+        public static float Length(bool reduceFlashes)
+        {
+            return reduceFlashes ? SoftSeconds : 3f * PulseSeconds;
+        }
+
+        /// <summary>The ring's vermilion α at <paramref name="t"/> s after the pull (0 outside the treatment).</summary>
+        public static float Alpha(float t, bool reduceFlashes, float peak)
+        {
+            if (t < 0f || t >= Length(reduceFlashes))
+            {
+                return 0f;
+            }
+
+            if (reduceFlashes)
+            {
+                return peak * 0.5f * (1f - Mathf.Cos(2f * Mathf.PI * t / SoftSeconds));
+            }
+
+            bool on = t < PulseSeconds || (t >= 2f * PulseSeconds && t < 3f * PulseSeconds);
+            return on ? peak : 0f;
         }
     }
 
