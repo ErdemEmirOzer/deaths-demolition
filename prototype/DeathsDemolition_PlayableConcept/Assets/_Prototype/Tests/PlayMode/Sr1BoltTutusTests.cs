@@ -17,7 +17,8 @@ namespace DD.Prototype.Tests.PlayMode
     /// rides on the hold (WeaponMountAlignment.HoldDelta), the weapon stays at the hold pivot. Before, both gates closed for the
     /// cycle and the weapon swung to the clip's pose (~91 cm at the muzzle against the chest, top-down, S-02 r3td1). Top-down camera.
     /// Acceptance (C-00): hold weight 1 on every frame in Cycle_V3; the muzzle's travel against the chest per shot ≤ 16 cm (the old
-    /// path's clip alone moved it 14–16 cm). The frames' weight and state are logged.
+    /// path's clip alone moved it 14–16 cm); and the support hand on the handguard through it (grip weight 1, ≤ 1 cm — the clip's
+    /// lh_release is not taken in the cycle). The frames' weights are logged.
     /// </summary>
     [TestFixture]
     [Category("WP083")]
@@ -66,8 +67,8 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.GreaterOrEqual(layer, 0, "override katmanı yok");
             int cycleHash = Animator.StringToHash(C.CycleV3State);
             var report = new List<string>();
-            int cycleFrames = 0, openGateMisses = 0;
-            float worstTravel = 0f, minCycleWeight = 1f;
+            int cycleFrames = 0, openGateMisses = 0, gripMisses = 0;
+            float worstTravel = 0f, minCycleWeight = 1f, minGripWeight = 1f, worstGripCm = 0f;
             for (int shot = 0; shot < 3; shot++)
             {
                 yield return SpecialWeaponSahne.Bekle(() => body.HoldIk.Weight >= 1f && !_s.Controller.Classic.IsReloading, 5f, "sr_1 tutuşu dinlenmede değil");
@@ -85,6 +86,12 @@ namespace DD.Prototype.Tests.PlayMode
                     inCycle++;
                     minCycleWeight = Mathf.Min(minCycleWeight, body.HoldIk.Weight);
                     if (body.HoldIk.Weight < 0.999f) openGateMisses++;
+                    // the support hand stays on the handguard through the cycle (lh_release is not taken there)
+                    WeaponGripIk grip = body.GripIk;
+                    float gw = grip != null ? grip.Weight : 0f;
+                    minGripWeight = Mathf.Min(minGripWeight, gw);
+                    if (gw < 0.999f) gripMisses++;
+                    else if (!float.IsNaN(grip.LastError)) worstGripCm = Mathf.Max(worstGripCm, grip.LastError * 100f);
                 }
 
                 cycleFrames += inCycle;
@@ -92,12 +99,15 @@ namespace DD.Prototype.Tests.PlayMode
                 report.Add("shot " + shot + " muzzle travel " + (travel * 100f).ToString("F1", CultureInfo.InvariantCulture) + " cm, Cycle_V3 frames " + inCycle);
             }
 
-            Debug.Log("[DD-TEST] wp083.sr1bolt holdWeightMinInCycle=" + minCycleWeight.ToString("F3", CultureInfo.InvariantCulture) + " muzzleTravelMaxCm=" +
+            Debug.Log("[DD-TEST] wp083.sr1bolt holdWeightMinInCycle=" + minCycleWeight.ToString("F3", CultureInfo.InvariantCulture) + " gripWeightMinInCycle=" +
+                      minGripWeight.ToString("F3", CultureInfo.InvariantCulture) + " gripErrMaxCm=" + worstGripCm.ToString("F2", CultureInfo.InvariantCulture) + " muzzleTravelMaxCm=" +
                       (worstTravel * 100f).ToString("F1", CultureInfo.InvariantCulture) + " :: " + string.Join(" | ", report));
             // the source is there: the bolt cycle played
             Assert.Greater(cycleFrames, 0, "Cycle_V3 hiç oynamadı (sr_1 bolt döngüsü yok)");
             Assert.AreEqual(0, openGateMisses, "Cycle_V3 karesinde tutuş ağırlığı < 1 (en düşük " + minCycleWeight.ToString("F3", CultureInfo.InvariantCulture) + ")\n" + string.Join("\n", report));
             Assert.LessOrEqual(worstTravel, MuzzleTravelMax, "sr_1 namlusu atış başına göğse göre > 16 cm oynuyor\n" + string.Join("\n", report));
+            Assert.AreEqual(0, gripMisses, "Cycle_V3 karesinde sol el kavraması bırakıyor (en düşük ağırlık " + minGripWeight.ToString("F3", CultureInfo.InvariantCulture) + ")");
+            Assert.LessOrEqual(worstGripCm, 1f, "Cycle_V3'te sol el kundaktan > 1 cm (H1 eşiği)");
         }
 
         // the muzzle in the chest's frame, in metres (the chest's rotation and position only, no scale)

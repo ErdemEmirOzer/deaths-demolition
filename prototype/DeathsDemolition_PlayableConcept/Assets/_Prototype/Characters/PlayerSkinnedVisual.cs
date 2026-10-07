@@ -206,6 +206,16 @@ namespace DD.Prototype.Characters
         /// <summary>WP-071 (C-00 05.10): the TP fire additive's weight this visual last set (tests).</summary>
         public float TpAdditiveWeight => _additiveWeight;
 
+        private static readonly int s_cycleHash = Animator.StringToHash(CharacterAnimatorContract.CycleV3State);
+
+        /// <summary>WP-083 R3: the override layer is in (or entering) the v3 bolt cycle.</summary>
+        private bool UpperInCycle()
+        {
+            if (ResolveOverrideLayer() < 0) return false;
+            int h = _animator.IsInTransition(_overrideLayer) ? _animator.GetNextAnimatorStateInfo(_overrideLayer).shortNameHash : _animator.GetCurrentAnimatorStateInfo(_overrideLayer).shortNameHash;
+            return h == s_cycleHash;
+        }
+
         private bool UpperAtRest()
         {
             if (ResolveOverrideLayer() < 0) return true;
@@ -454,7 +464,9 @@ namespace DD.Prototype.Characters
         private void OnAnimationEvent(CharacterAnimationEvent e)
         {
             if (e == CharacterAnimationEvent.DeathEnd && _dying) _deathEnded = true;
-            else if (e == CharacterAnimationEvent.LeftHandRelease) { if (_gripIk != null) _gripIk.SetReleased(true); }   // WP-071 B4 (AP-022)
+            // WP-071 B4 (AP-022); WP-083 R3 (C-00 07.10): not on sr_1's bolt cycle — the hold keeps the weapon at its pivot there, and a
+            // support hand following the clip's bolt stroke would work it in the air beside the held weapon; it stays on the handguard
+            else if (e == CharacterAnimationEvent.LeftHandRelease) { if (_gripIk != null && !UpperInCycle()) _gripIk.SetReleased(true); }
             else if (e == CharacterAnimationEvent.LeftHandGrab) { if (_gripIk != null) _gripIk.SetReleased(false); }
             else if (_footIk != null) FootLockEvent(_footIk, e);   // WP-071 B2
         }
