@@ -75,11 +75,13 @@ def load_contract(text):
         if modes is not None and not (isinstance(modes, list) and modes and len(set(modes)) == len(modes)
                                       and all(m in SCOPE_MODES for m in modes)):
             raise ContractError(f"{gid}: modes is a non-empty list of distinct {SCOPE_MODES}")
-        min_samples = gate.get("minSamples")
-        if min_samples is not None:
-            # C-00 07.10: a gate judged on a worst value or a count reads as a PASS on too few samples — the coverage floor
-            if gate["kind"] == "human" or not (isinstance(min_samples, int) and not isinstance(min_samples, bool) and min_samples > 0):
-                raise ContractError(f"{gid}: minSamples is a whole number > 0 on a measured gate")
+        if "minSamples" in gate:
+            # C-00 07.10: a gate judged on a worst value or a count reads as a PASS on too few samples — the coverage floor.
+            # evaluate_gate applies it to a gate's checks only, so a report entry, a tests-only gate or null is refused
+            min_samples = gate["minSamples"]
+            if gate["kind"] != "gate" or not gate.get("checks") or not (
+                    isinstance(min_samples, int) and not isinstance(min_samples, bool) and min_samples > 0):
+                raise ContractError(f"{gid}: minSamples is a whole number > 0 on a gate with checks")
         measured = gate.get("measuredBy")
         if measured is not None:
             if gate["kind"] == "human":

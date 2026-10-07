@@ -41,7 +41,8 @@ name is not in any bound XML the gate is BLOCKED; any other result is FAIL.
 
 ## Coverage floor (C-00 07.10)
 
-A gate judged on a worst value or a count reads better on fewer samples, so it may name `minSamples` in `r2-gates.json`.
+A gate judged on a worst value or a count reads better on fewer samples, so it may name `minSamples` in `r2-gates.json`
+(a whole number > 0, only on a `kind: "gate"` entry with checks — the floor is applied to the checks).
 A measurement with fewer samples than that is BLOCKED ("kapsama eksik"), and one without a `samples` count is BLOCKED too
 ("kapsama bilinmiyor"). A failing check still FAILs: more samples can only lower a minimum or raise a count.
 Values are for top down and the ten classics:

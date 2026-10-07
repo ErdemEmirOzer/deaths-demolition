@@ -384,12 +384,19 @@ class MinSamplesTests(unittest.TestCase):
     def test_the_contract_pins_the_sound_floors(self):
         self.assertEqual((66, 151), (gate("S1")["minSamples"], gate("S2")["minSamples"]))
 
-    def test_min_samples_is_a_whole_number_above_zero_on_a_measured_gate(self):
-        for gid, bad in (("S1", 0), ("S1", 6.5), ("S1", True), ("S1", "66"), ("H5", 3)):
+    def test_min_samples_is_a_whole_number_above_zero_on_a_gate_with_checks(self):
+        # gt SHOULD-1 on 27a16ab4: the judge applies the floor to checks only — a report entry (L4), a tests-only gate and
+        # null were accepted and never applied
+        tests_only = {"checks": [], "report": [], "tests": ["DD.Prototype.Tests.PlayMode.AudioSliceTests.SilahKiti_GercekRpm_OyunIci_Kayit"]}
+        for gid, bad, edit in (("S1", 0, {}), ("S1", -1, {}), ("S1", 6.5, {}), ("S1", True, {}), ("S1", "66", {}),
+                               ("S1", None, {}), ("H5", 3, {}), ("L4", 1000, {}), ("S1", 66, tests_only)):
             data = json.loads(CONTRACT)
-            next(g for g in data["gates"] if g["id"] == gid)["minSamples"] = bad
-            with self.subTest(gate=gid, value=bad), self.assertRaises(r2.ContractError):
+            g = next(g for g in data["gates"] if g["id"] == gid)
+            g.update(edit)
+            g["minSamples"] = bad
+            with self.subTest(gate=gid, value=bad, edit=sorted(edit)), self.assertRaises(r2.ContractError) as cm:
                 r2.load_contract(json.dumps(data))
+            self.assertIn("minSamples", str(cm.exception))
 
     def test_below_the_floor_is_blocked_at_or_above_it_is_judged(self):
         s1 = gate("S1")
