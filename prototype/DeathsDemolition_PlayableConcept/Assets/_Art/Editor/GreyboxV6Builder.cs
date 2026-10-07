@@ -211,13 +211,18 @@ namespace DD.Art.Pipeline.EditorTools
         public static void BuildCli()
         {
             string[] args = System.Environment.GetCommandLineArgs();
-            string report = Build(Array.IndexOf(args, "-ddGreyboxOnly") < 0, Array.IndexOf(args, "-ddBake") >= 0);
+            string report = Build(Array.IndexOf(args, "-ddGreyboxOnly") < 0, Array.IndexOf(args, "-ddBake") >= 0,
+                Array.IndexOf(args, WorldFptpSplit.NoSplitFlag) < 0, Array.IndexOf(args, WorldFptpSplit.ForceFlag) >= 0);
             Debug.Log("[GreyboxV6] " + report);
         }
 
         /// <param name="dress">WP-074 B5b-1: dress the layout with the AP-023 kit (<see cref="WorldV5Dress"/>) before the bake.</param>
-        /// <param name="bake">WP-074 B8: bake the scene's lighting after the build (WorldV5Lighting; needs a graphics device — the GPU lightmapper).</param>
-        public static string Build(bool dress = true, bool bake = false)
+        /// <param name="bake">WP-074 B8: bake the scene's lighting after the build (WorldV5Lighting; needs a graphics device — the GPU lightmapper).
+        /// WP-092 A: with World_FPTPOnly open next to the world, the one bake lights both scenes together.</param>
+        /// <param name="fptpSplit">WP-092 A: move the top-down-invisible visuals the committed list names into World_FPTPOnly
+        /// (WorldFptpSplit; only while the list's content hash matches this build — <c>-ddNoFptpSplit</c> builds the world whole).</param>
+        /// <param name="fptpForce">Apply a stale list entry by entry (<c>-ddFptpForce</c>; audit again instead whenever possible).</param>
+        public static string Build(bool dress = true, bool bake = false, bool fptpSplit = true, bool fptpForce = false)
         {
             EnsureFolder(DataFolder);
             EnsureFolder(DataFolder + "/Materials");
@@ -280,11 +285,13 @@ namespace DD.Art.Pipeline.EditorTools
             int links = NavMeshIslandLinker.LinkIslands(root.transform, seed);
 
             EditorSceneManager.SaveScene(scene, ScenePath);
+            // WP-092 A · after the NavMesh and the colliders are final: the never-top-down-visible visuals → World_FPTPOnly (stays open for the bake)
+            WorldFptpSplit.Report split = WorldFptpSplit.ApplyAfterBuild(scene, root.transform, fptpSplit, fptpForce);
             RegisterDevScene();
             WriteJson(rooms);
             AssetDatabase.SaveAssets();
             string baked = bake ? ", " + WorldV5Lighting.Bake(scene, root.transform) : "";
-            return boxes + " boxes" + (dressed != null ? " (" + dressed + ")" : "") + (laid != null ? ", " + laid : "") + ", " + probeOff + " renderers off the probes, " + probeBlend + " blending them, NavMesh " + triangles + " triangles, " + links + " island links, placement " + placement.spawnPoints.Count + " spawns / " + placement.weaponPoints.Count + " weapons -> " + ScenePath + baked;
+            return boxes + " boxes" + (dressed != null ? " (" + dressed + ")" : "") + (laid != null ? ", " + laid : "") + ", " + probeOff + " renderers off the probes, " + probeBlend + " blending them, NavMesh " + triangles + " triangles, " + links + " island links, placement " + placement.spawnPoints.Count + " spawns / " + placement.weaponPoints.Count + " weapons -> " + ScenePath + ", " + split + baked;
         }
 
         // ---------------------------------------------------------------- pieces
@@ -1044,13 +1051,14 @@ namespace DD.Art.Pipeline.EditorTools
         }
 
         /// <summary>C-00 25.09: World v5 is the default world — a release entry right after World_AP005 (the release list stays contiguous:
-        /// Boot … Results, World_AP005, World_V6_Greybox, then the dev-only pilot and showcase), and DD_WorldSource on V6.</summary>
+        /// Boot … Results, World_AP005, World_V6_Greybox, World_FPTPOnly (WP-092 A), then the dev-only pilot and showcase), and DD_WorldSource on V6.</summary>
         private static void RegisterDevScene()
         {
             var scenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
             scenes.RemoveAll(s => s.path == ScenePath);
             int at = scenes.FindIndex(s => s.path == ArtLibraryPaths.Ap005WorldScene);
             scenes.Insert(at >= 0 ? at + 1 : scenes.Count, new EditorBuildSettingsScene(ScenePath, true));
+            WorldFptpSplit.Register(scenes);   // WP-092 A: World_FPTPOnly right after the world (release; loaded only in TP / FP)
             EditorBuildSettings.scenes = scenes.ToArray();
             PlacementImporter.EnsureWorldSourceAsset(WorldSource.V6);
         }

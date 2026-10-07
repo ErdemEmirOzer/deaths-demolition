@@ -183,16 +183,17 @@ namespace DD.Art.Pipeline.EditorTools
 
                 LightingSettings settings = ArtLightingBake.EnsureLightingSettings(SettingsPath, "DD_World_v5", LightmapResolution);
                 Lightmapping.lightingSettings = settings;
-                EditorSceneManager.MarkSceneDirty(scene);
-                EditorSceneManager.SaveScene(scene);
+                SaveLoaded();
 
+                // WP-092 A: every loaded scene bakes together — the world (active: its settings) and World_FPTPOnly next to it — so the
+                // FP / TP-only content keeps its bounce and shadows on the world and the world's lightmaps stay one bake.
                 var sw = Stopwatch.StartNew();
                 Lightmapping.Clear();
                 bool ok = Lightmapping.Bake();
                 sw.Stop();
                 (LightProbes baked, string probeSource) = ok ? WriteProbeReference(root) : (null, "none");
-                EditorSceneManager.MarkSceneDirty(scene);
-                EditorSceneManager.SaveScene(scene);
+                SaveLoaded();
+                Debug.Log("[WorldV5Lighting] scenes baked together: " + LoadedScenes() + "; other scenes' ContributeGI renderers lightmapped " + OtherScenesLightmapped(scene));
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();
 
@@ -224,6 +225,43 @@ namespace DD.Art.Pipeline.EditorTools
             {
                 WorldLayout.SetCurrent(previous);
             }
+        }
+
+        private static void SaveLoaded()
+        {
+            for (int i = 0; i < SceneManager.sceneCount; i++)
+            {
+                Scene s = SceneManager.GetSceneAt(i);
+                if (!s.isLoaded || string.IsNullOrEmpty(s.path)) continue;
+                EditorSceneManager.MarkSceneDirty(s);
+                EditorSceneManager.SaveScene(s);
+            }
+        }
+
+        private static string LoadedScenes()
+        {
+            var names = new List<string>();
+            for (int i = 0; i < SceneManager.sceneCount; i++) if (SceneManager.GetSceneAt(i).isLoaded) names.Add(SceneManager.GetSceneAt(i).name);
+            return string.Join(" + ", names);
+        }
+
+        private static string OtherScenesLightmapped(Scene world)
+        {
+            int gi = 0, mapped = 0;
+            for (int i = 0; i < SceneManager.sceneCount; i++)
+            {
+                Scene s = SceneManager.GetSceneAt(i);
+                if (!s.isLoaded || s == world) continue;
+                foreach (GameObject go in s.GetRootGameObjects())
+                foreach (MeshRenderer r in go.GetComponentsInChildren<MeshRenderer>(true))
+                {
+                    if (!r.enabled || (GameObjectUtility.GetStaticEditorFlags(r.gameObject) & StaticEditorFlags.ContributeGI) == 0 || r.receiveGI != ReceiveGI.Lightmaps) continue;
+                    gi++;
+                    if (r.lightmapIndex >= 0 && r.lightmapIndex < 0xFFFE) mapped++;
+                }
+            }
+
+            return mapped + "/" + gi;
         }
 
         /// <summary>

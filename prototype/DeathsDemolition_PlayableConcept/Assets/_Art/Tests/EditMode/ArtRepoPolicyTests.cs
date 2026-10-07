@@ -244,7 +244,7 @@ namespace DD.Art.Tests.EditMode
                 yollar.Add((s.enabled ? "" : "[kapalı] ") + s.path);
             }
 
-            Assert.AreEqual(9, sahneler.Length, "Build Settings'te tam 9 giriş olmalı (5 prototip + AP-005 dünyası + World v5 (V6) etkin; pilot + vitrin kapalı); " + sahneler.Length + " var:\n" + string.Join("\n", yollar));
+            Assert.AreEqual(10, sahneler.Length, "Build Settings'te tam 10 giriş olmalı (5 prototip + AP-005 dünyası + World v5 (V6) + World_FPTPOnly etkin; pilot + vitrin kapalı); " + sahneler.Length + " var:\n" + string.Join("\n", yollar));
 
             for (int i = 0; i < ilkBes.Length; i++)
             {
@@ -264,14 +264,19 @@ namespace DD.Art.Tests.EditMode
             Assert.IsTrue(sahneler[6].enabled, "World v5 release listesinde etkin olmalı (varsayılan dünya, C-00 25.09).");
             Assert.IsTrue(File.Exists(sahneler[6].path), "World v5 sahnesi diskte yok: " + sahneler[6].path);
 
-            Assert.AreEqual(ArtPipelinePaths.PilotScene, sahneler[7].path, "8. giriş pilot olmalı (dev-only).");
-            Assert.IsFalse(sahneler[7].enabled, "Pilot sahne release listesinde olmamalı (ADR-015-2: yalnız dev build).");
-            Assert.IsTrue(File.Exists(sahneler[7].path), "Pilot sahne diskte yok: " + sahneler[7].path);
-            Assert.AreEqual(ArtPipelinePaths.PilotSceneName, Path.GetFileNameWithoutExtension(sahneler[7].path), "Pilot sahne adı sözleşmeyle aynı olmalı.");
+            // WP-092 A: World v5's TP / FP-only visuals (WorldFptpSplit) right after the world, a release entry loaded only in TP / FP.
+            Assert.AreEqual(WorldFptpSplit.ScenePath, sahneler[7].path, "8. giriş World_FPTPOnly olmalı (WP-092 A).");
+            Assert.IsTrue(sahneler[7].enabled, "World_FPTPOnly release listesinde etkin olmalı (TP / FP'de yüklenir).");
+            Assert.IsTrue(File.Exists(sahneler[7].path), "World_FPTPOnly diskte yok: " + sahneler[7].path);
 
-            Assert.AreEqual(ArtLibraryPaths.ShowcaseScene, sahneler[8].path, "9. giriş vitrin olmalı (dev-only).");
-            Assert.IsFalse(sahneler[8].enabled, "Vitrin release listesinde olmamalı (ADR-015-2: yalnız dev build).");
-            Assert.IsTrue(File.Exists(sahneler[8].path), "Vitrin sahnesi diskte yok: " + sahneler[8].path);
+            Assert.AreEqual(ArtPipelinePaths.PilotScene, sahneler[8].path, "9. giriş pilot olmalı (dev-only).");
+            Assert.IsFalse(sahneler[8].enabled, "Pilot sahne release listesinde olmamalı (ADR-015-2: yalnız dev build).");
+            Assert.IsTrue(File.Exists(sahneler[8].path), "Pilot sahne diskte yok: " + sahneler[8].path);
+            Assert.AreEqual(ArtPipelinePaths.PilotSceneName, Path.GetFileNameWithoutExtension(sahneler[8].path), "Pilot sahne adı sözleşmeyle aynı olmalı.");
+
+            Assert.AreEqual(ArtLibraryPaths.ShowcaseScene, sahneler[9].path, "10. giriş vitrin olmalı (dev-only).");
+            Assert.IsFalse(sahneler[9].enabled, "Vitrin release listesinde olmamalı (ADR-015-2: yalnız dev build).");
+            Assert.IsTrue(File.Exists(sahneler[9].path), "Vitrin sahnesi diskte yok: " + sahneler[9].path);
 
             // Release list contiguous: no enabled entry after a disabled one.
             bool disabledSeen = false;
@@ -284,13 +289,14 @@ namespace DD.Art.Tests.EditMode
 
             // The development build carries release + dev-only, in that order (pure function).
             string[] dev = DD.Prototype.Core.EditorTools.LifecycleProbeBuild.DevelopmentScenes(sahneler);
-            Assert.AreEqual(9, dev.Length);
+            Assert.AreEqual(10, dev.Length);
             Assert.AreEqual(ilkBes[0], dev[0], "dev build giriş sahnesi Boot");
             Assert.AreEqual(ArtLibraryPaths.Ap005WorldScene, dev[5]);
             Assert.AreEqual(ArtLibraryPaths.GreyboxV6Scene, dev[6], "World v5 (V6) release listesinde, dev build'de de");
-            Assert.AreEqual(ArtPipelinePaths.PilotScene, dev[7]);
-            Assert.AreEqual(ArtLibraryPaths.ShowcaseScene, dev[8]);
-            Debug.Log("[DD-TEST] wp015.buildlist release=7 devOnly=2");
+            Assert.AreEqual(WorldFptpSplit.ScenePath, dev[7], "World_FPTPOnly release listesinde, dev build'de de");
+            Assert.AreEqual(ArtPipelinePaths.PilotScene, dev[8]);
+            Assert.AreEqual(ArtLibraryPaths.ShowcaseScene, dev[9]);
+            Debug.Log("[DD-TEST] wp015.buildlist release=8 devOnly=2");
         }
 
         /// <summary>WP-015 (ADR-015-1) → WP-075 C1 (ADR-015-1 v3): mipmap streaming is on at every quality level with its tier's budget (512 / 1024 / 2048 MB; Standalone default High).</summary>

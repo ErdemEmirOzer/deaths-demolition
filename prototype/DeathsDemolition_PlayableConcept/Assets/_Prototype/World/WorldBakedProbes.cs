@@ -92,6 +92,16 @@ namespace DD.Prototype.World
             }
         }
 
+        /// <summary>
+        /// WP-092 A · Re-asserts this world's probes after another scene was loaded additively next to it (World_FPTPOnly, TP / FP):
+        /// an additive scene with lighting data may leave Unity's probe binding pointing elsewhere.
+        /// </summary>
+        public void Rebind()
+        {
+            if (_bound && _probes != null && LightmapSettings.lightProbes != _probes) LightmapSettings.lightProbes = _probes;
+            else if (!_bound) Apply();
+        }
+
         private void Unbind()
         {
             if (!_bound) return;

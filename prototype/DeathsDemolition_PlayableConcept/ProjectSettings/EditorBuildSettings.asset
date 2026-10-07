@@ -26,6 +26,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/_Art/Scenes/World_V6_Greybox.unity
     guid: 2afaebde573d0428c96966afda288bb6
+  - enabled: 1
+    path: Assets/_Art/Scenes/World_FPTPOnly.unity
+    guid: 72539a19e800f4e5c825467058c41e5e
   - enabled: 0
     path: Assets/_Art/Scenes/Pilot/AP001_GoldenSlice.unity
     guid: eb051461970544542bf14347fa241352

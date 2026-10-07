@@ -24,7 +24,8 @@ namespace DD.Art.Tests.EditMode
     {
         private static WorldPlacementAsset Open()
         {
-            EditorSceneManager.OpenScene(GreyboxV6Builder.ScenePath, OpenSceneMode.Single);
+            // WP-092 A: the world as the builder made it — World_FPTPOnly's units folded back in place (WorldFptpSplit.OpenMerged)
+            WorldFptpSplit.OpenMerged();
             Physics.SyncTransforms();
             var placement = AssetDatabase.LoadAssetAtPath<WorldPlacementAsset>(GreyboxV6Builder.PlacementPath);
             Assert.IsNotNull(placement, "greybox placement");
