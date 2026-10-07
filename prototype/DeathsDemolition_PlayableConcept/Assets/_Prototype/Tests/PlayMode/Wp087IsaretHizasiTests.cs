@@ -38,9 +38,18 @@ namespace DD.Prototype.Tests.PlayMode
         private static string Cm(float metres) => (metres * 100f).ToString("0.0", CultureInfo.InvariantCulture);
         private static string Deg(float d) => d.ToString("0.0", CultureInfo.InvariantCulture);
 
+        // User 06.10 / 07.10 (C-00 (A)): tests run top-down only and FP / TP stay as they are — IsaretHizasi_NamluKovan_FpTpUstten_Ustten is the top-down run;
+        // IsaretHizasi_NamluKovan_FpTpUstten keeps its original rows under FPTP (main-ci leaves that category out).
         [UnityTest]
         [Timeout(900000)]
-        public IEnumerator IsaretHizasi_NamluKovan_FpTpUstten()
+        public IEnumerator IsaretHizasi_NamluKovan_FpTpUstten_Ustten() => IsaretHizasi_NamluKovan_FpTpUsttenCore(new[] { CameraMode.TopDown });
+
+        [UnityTest]
+        [Timeout(900000)]
+        [Category("FPTP")]
+        public IEnumerator IsaretHizasi_NamluKovan_FpTpUstten() => IsaretHizasi_NamluKovan_FpTpUsttenCore(new[] { CameraMode.FirstPerson, CameraMode.ThirdPerson, CameraMode.TopDown });
+
+        private IEnumerator IsaretHizasi_NamluKovan_FpTpUsttenCore(CameraMode[] modes)
         {
             _s = new SpecialWeaponSahne();
             yield return _s.Kur();
@@ -54,7 +63,7 @@ namespace DD.Prototype.Tests.PlayMode
             FieldInfo queueField = casingAudio != null ? casingAudio.GetType().GetField("_queue", BindingFlags.NonPublic | BindingFlags.Instance) : null;
             FieldInfo countField = casingAudio != null ? casingAudio.GetType().GetField("_count", BindingFlags.NonPublic | BindingFlags.Instance) : null;
 
-            foreach (CameraMode mode in new[] { CameraMode.FirstPerson, CameraMode.ThirdPerson, CameraMode.TopDown })
+            foreach (CameraMode mode in modes)
             {
                 CameraModeService.Request(mode, instant: true);
                 yield return SpecialWeaponSahne.Kareler(30);
@@ -206,16 +215,25 @@ namespace DD.Prototype.Tests.PlayMode
         /// height; the ribbon is drawn shifted onto the muzzle on the firing frame (its line ≤ 1 cm from the muzzle) and is on the ray
         /// by the second frame; first and third person fire from the muzzle and draw no shift. The ray itself is untouched.
         /// </summary>
+        // User 06.10 / 07.10 (C-00 (A)): tests run top-down only and FP / TP stay as they are — IzGorseli_NamludanBaslar_IkiKaredeIsina_Ustten is the top-down run;
+        // IzGorseli_NamludanBaslar_IkiKaredeIsina keeps its original rows under FPTP (main-ci leaves that category out).
         [UnityTest]
         [Timeout(300000)]
-        public IEnumerator IzGorseli_NamludanBaslar_IkiKaredeIsina()
+        public IEnumerator IzGorseli_NamludanBaslar_IkiKaredeIsina_Ustten() => IzGorseli_NamludanBaslar_IkiKaredeIsinaCore(new[] { CameraMode.TopDown });
+
+        [UnityTest]
+        [Timeout(300000)]
+        [Category("FPTP")]
+        public IEnumerator IzGorseli_NamludanBaslar_IkiKaredeIsina() => IzGorseli_NamludanBaslar_IkiKaredeIsinaCore(new[] { CameraMode.TopDown, CameraMode.ThirdPerson, CameraMode.FirstPerson });
+
+        private IEnumerator IzGorseli_NamludanBaslar_IkiKaredeIsinaCore(CameraMode[] modes)
         {
             _s = new SpecialWeaponSahne();
             yield return _s.Kur();
             Transform mount = _s.Rig.GetComponentInChildren<PlayerWeaponBinding>().WeaponMount;
             var rows = new List<string>();
             var wrong = new List<string>();
-            foreach (CameraMode mode in new[] { CameraMode.TopDown, CameraMode.ThirdPerson, CameraMode.FirstPerson })
+            foreach (CameraMode mode in modes)
             {
                 CameraModeService.Request(mode, instant: true);
                 Time.captureDeltaTime = 1f / 60f;
@@ -292,9 +310,18 @@ namespace DD.Prototype.Tests.PlayMode
         /// travel), the mechanism event of the same shot carries the same serial. The casing sound's landing (S-08's CasingAudio) is
         /// placed from this event lands on the visible touchdown ≤ 25 cm (WP-085, frames that threw one casing).
         /// </summary>
+        // User 06.10 / 07.10 (C-00 (A)): tests run top-down only and FP / TP stay as they are — KovanOlayi_TahminGorunenKovanla_SesRapor_Ustten is the top-down run;
+        // KovanOlayi_TahminGorunenKovanla_SesRapor keeps its original rows under FPTP (main-ci leaves that category out).
         [UnityTest]
         [Timeout(900000)]
-        public IEnumerator KovanOlayi_TahminGorunenKovanla_SesRapor()
+        public IEnumerator KovanOlayi_TahminGorunenKovanla_SesRapor_Ustten() => KovanOlayi_TahminGorunenKovanla_SesRaporCore(new[] { CameraMode.TopDown });
+
+        [UnityTest]
+        [Timeout(900000)]
+        [Category("FPTP")]
+        public IEnumerator KovanOlayi_TahminGorunenKovanla_SesRapor() => KovanOlayi_TahminGorunenKovanla_SesRaporCore(new[] { CameraMode.FirstPerson, CameraMode.ThirdPerson, CameraMode.TopDown });
+
+        private IEnumerator KovanOlayi_TahminGorunenKovanla_SesRaporCore(CameraMode[] modes)
         {
             _s = new SpecialWeaponSahne();
             yield return _s.Kur();
@@ -330,7 +357,7 @@ namespace DD.Prototype.Tests.PlayMode
             Time.captureDeltaTime = 1f / 60f;
             try
             {
-                foreach (CameraMode mode in new[] { CameraMode.FirstPerson, CameraMode.ThirdPerson, CameraMode.TopDown })
+                foreach (CameraMode mode in modes)
                 {
                     CameraModeService.Request(mode, instant: true);
                     yield return SpecialWeaponSahne.Kareler(30);
@@ -392,7 +419,7 @@ namespace DD.Prototype.Tests.PlayMode
 
             Debug.Log("[DD-TEST] wp087.casinglaunch\n" + string.Join("\n", rows));
             Assert.IsEmpty(bos, "kaynak kayıtta yok\n" + string.Join("\n", bos) + "\n" + string.Join("\n", rows));
-            Assert.AreEqual(27, byRow.Count, "3 kamera × 9 kovanlı silah");
+            Assert.AreEqual(modes.Length * 9, byRow.Count, modes.Length + " kamera × 9 kovanlı silah");
             Assert.IsEmpty(wrong, string.Join("\n", wrong) + "\n" + string.Join("\n", rows));
         }
 

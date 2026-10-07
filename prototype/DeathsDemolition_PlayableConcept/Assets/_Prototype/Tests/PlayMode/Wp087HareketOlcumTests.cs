@@ -45,10 +45,20 @@ namespace DD.Prototype.Tests.PlayMode
 
         private static Vector3 Planar(Vector3 v) { v.y = 0f; return v; }
 
+        // User 06.10 / 07.10 (C-00 (A)): tests run top-down only and FP / TP stay as they are — Hareket_WASD_Gecikme_Yon_Kayma_UcKamera_60ve20Fps_Ustten is the top-down run;
+        // Hareket_WASD_Gecikme_Yon_Kayma_UcKamera_60ve20Fps keeps its original rows under FPTP (main-ci leaves that category out).
         [UnityTest]
         [Explicit]
         [Timeout(1800000)]
-        public IEnumerator Hareket_WASD_Gecikme_Yon_Kayma_UcKamera_60ve20Fps()
+        public IEnumerator Hareket_WASD_Gecikme_Yon_Kayma_UcKamera_60ve20Fps_Ustten() => Hareket_WASD_Gecikme_Yon_Kayma_UcKamera_60ve20FpsCore(new[] { CameraMode.TopDown });
+
+        [UnityTest]
+        [Explicit]
+        [Timeout(1800000)]
+        [Category("FPTP")]
+        public IEnumerator Hareket_WASD_Gecikme_Yon_Kayma_UcKamera_60ve20Fps() => Hareket_WASD_Gecikme_Yon_Kayma_UcKamera_60ve20FpsCore(new[] { CameraMode.TopDown, CameraMode.ThirdPerson, CameraMode.FirstPerson });
+
+        private IEnumerator Hareket_WASD_Gecikme_Yon_Kayma_UcKamera_60ve20FpsCore(CameraMode[] modes)
         {
             _s = new SpecialWeaponSahne();
             yield return _s.Kur();
@@ -62,7 +72,7 @@ namespace DD.Prototype.Tests.PlayMode
             var dirs = new[] { new Vector2(0, 1), new Vector2(1, 1).normalized, new Vector2(1, 0), new Vector2(1, -1).normalized, new Vector2(0, -1), new Vector2(-1, -1).normalized, new Vector2(-1, 0), new Vector2(-1, 1).normalized };
             var names = new[] { "W", "WD", "D", "SD", "S", "SA", "A", "WA" };
 
-            foreach (CameraMode mode in new[] { CameraMode.TopDown, CameraMode.ThirdPerson, CameraMode.FirstPerson })
+            foreach (CameraMode mode in modes)
             foreach (float dt in new[] { 1f / 60f, 1f / 20f })
             {
                 CameraModeService.Request(mode, instant: true);

@@ -24,7 +24,7 @@ namespace DD.Art.Tests.PlayMode
 {
     /// <summary>
     /// WP-071 (C-00 01.10, S-07 AD r4 M3) diagnostic: after one shot, per frame for 0.75 s — the muzzle's pitch against the
-    /// camera (FP) / the round (TP), its viewport point, the weapon rig root's pitch, the body's socket_weapon_r and right hand
+    /// camera (FP) / the round (TP, top-down), its viewport point, the weapon rig root's pitch, the body's socket_weapon_r and right hand
     /// pitch against the body, and the clips playing (FP arms / TP body, every layer with weight). sg_1 / sg_2, ar_1 as the
     /// control. Tells a clip-driven lift (the socket / hand turns) from a runtime one (the rig turns on a still socket).
     /// </summary>
@@ -66,9 +66,18 @@ namespace DD.Art.Tests.PlayMode
             _spawn = info;
         }
 
+        // User 06.10: the game and its tests are top-down only — the top-down side runs uncategorised, the FP / TP side keeps its rows
+        // under FPTP (main-ci leaves that category out); both stay Explicit diagnostics like the fixture.
         [UnityTest]
         [Timeout(900000)]
-        public IEnumerator Tani_Pompali_NamluAcisi_AtesSonrasi()
+        public IEnumerator Tani_Pompali_NamluAcisi_AtesSonrasi_Ustten() => Calis(new[] { CameraMode.TopDown });
+
+        [UnityTest]
+        [Timeout(900000)]
+        [Category("FPTP")]
+        public IEnumerator Tani_Pompali_NamluAcisi_AtesSonrasi() => Calis(new[] { CameraMode.FirstPerson, CameraMode.ThirdPerson });
+
+        private IEnumerator Calis(CameraMode[] modes)
         {
             SceneManager.LoadScene(PrototypeScenes.Boot, LoadSceneMode.Single);
             yield return null;
@@ -87,7 +96,7 @@ namespace DD.Art.Tests.PlayMode
             rig.Aim.SetInputSource(null);
             var summary = new List<string>();
 
-            foreach (CameraMode mode in new[] { CameraMode.FirstPerson, CameraMode.ThirdPerson })
+            foreach (CameraMode mode in modes)
             {
                 CameraModeService.Request(mode, instant: true);
                 yield return CharacterTests.Bekle(() => CameraModeService.Current == mode, 5f, mode + " kamera");
@@ -99,7 +108,7 @@ namespace DD.Art.Tests.PlayMode
                     float settle = Time.time + 1.2f;
                     while (Time.time < settle) yield return null;
                     WeaponDefinition def = Arsenal.Get(id);
-                    string key = (mode == CameraMode.FirstPerson ? "fp-" : "tp-") + (def != null ? def.weaponId : id.ToString());
+                    string key = (mode == CameraMode.FirstPerson ? "fp-" : mode == CameraMode.ThirdPerson ? "tp-" : "td-") + (def != null ? def.weaponId : id.ToString());
                     _watch = id;
                     _spawned = false;
                     Time.captureDeltaTime = 1f / 60f;

@@ -1070,9 +1070,18 @@ namespace DD.Prototype.Tests.PlayMode
         /// it moves forward; within two frames it is drawn exactly where the simulation has it (the catch-up is presentation only —
         /// Wp073LauncherVfxTests.Wp087_* checks the flight itself is untouched).
         /// </summary>
+        // User 06.10 / 07.10 (C-00 (A)): tests run top-down only and FP / TP stay as they are — Roket_IlkKare_TpVeUstten_AgizdaCizilirUcusaYetisir_Ustten is the top-down run;
+        // Roket_IlkKare_TpVeUstten_AgizdaCizilirUcusaYetisir keeps its original rows under FPTP (main-ci leaves that category out).
         [UnityTest]
         [Timeout(300000)]
-        public IEnumerator Roket_IlkKare_TpVeUstten_AgizdaCizilirUcusaYetisir()
+        public IEnumerator Roket_IlkKare_TpVeUstten_AgizdaCizilirUcusaYetisir_Ustten() => Roket_IlkKare_TpVeUstten_AgizdaCizilirUcusaYetisirCore(new[] { DD.Prototype.CameraSystem.CameraMode.TopDown });
+
+        [UnityTest]
+        [Timeout(300000)]
+        [Category("FPTP")]
+        public IEnumerator Roket_IlkKare_TpVeUstten_AgizdaCizilirUcusaYetisir() => Roket_IlkKare_TpVeUstten_AgizdaCizilirUcusaYetisirCore(new[] { DD.Prototype.CameraSystem.CameraMode.ThirdPerson, DD.Prototype.CameraSystem.CameraMode.TopDown });
+
+        private IEnumerator Roket_IlkKare_TpVeUstten_AgizdaCizilirUcusaYetisirCore(DD.Prototype.CameraSystem.CameraMode[] modes)
         {
             yield return Kur();
             Transform mount = _s.Rig.GetComponentInChildren<PlayerWeaponBinding>().WeaponMount;
@@ -1085,7 +1094,7 @@ namespace DD.Prototype.Tests.PlayMode
             camRig.Camera.aspect = KareW / (float)KareH;
             try
             {
-                foreach (DD.Prototype.CameraSystem.CameraMode mode in new[] { DD.Prototype.CameraSystem.CameraMode.ThirdPerson, DD.Prototype.CameraSystem.CameraMode.TopDown })
+                foreach (DD.Prototype.CameraSystem.CameraMode mode in modes)
                 {
                     DD.Prototype.CameraSystem.CameraModeService.Request(mode, instant: true);
                     yield return SpecialWeaponSahne.Kareler(30);
@@ -1446,9 +1455,18 @@ namespace DD.Prototype.Tests.PlayMode
         /// the start weapon in hand in every camera mode: top-down, third person, first person → back to third person, the mount is
         /// aligned this frame, rests on its aim pose (deviation &lt; 0.75°) and the muzzle points where the character faces.
         /// </summary>
+        // User 06.10 / 07.10 (C-00 (A)): tests run top-down only and FP / TP stay as they are — TP_BaslangicSilahi_HerKameraModunda_Elde_Ustten is the top-down run;
+        // TP_BaslangicSilahi_HerKameraModunda_Elde keeps its original rows under FPTP (main-ci leaves that category out).
         [UnityTest]
         [Timeout(120000)]
-        public IEnumerator TP_BaslangicSilahi_HerKameraModunda_Elde()
+        public IEnumerator TP_BaslangicSilahi_HerKameraModunda_Elde_Ustten() => TP_BaslangicSilahi_HerKameraModunda_EldeCore(new[] { DD.Prototype.CameraSystem.CameraMode.TopDown });
+
+        [UnityTest]
+        [Timeout(120000)]
+        [Category("FPTP")]
+        public IEnumerator TP_BaslangicSilahi_HerKameraModunda_Elde() => TP_BaslangicSilahi_HerKameraModunda_EldeCore(new[] { DD.Prototype.CameraSystem.CameraMode.TopDown, DD.Prototype.CameraSystem.CameraMode.ThirdPerson, DD.Prototype.CameraSystem.CameraMode.FirstPerson, DD.Prototype.CameraSystem.CameraMode.ThirdPerson });
+
+        private IEnumerator TP_BaslangicSilahi_HerKameraModunda_EldeCore(DD.Prototype.CameraSystem.CameraMode[] modes)
         {
             yield return Kur();
             Transform mount = _s.Rig.GetComponentInChildren<PlayerWeaponBinding>().WeaponMount;
@@ -1456,8 +1474,7 @@ namespace DD.Prototype.Tests.PlayMode
             var skinned = _s.Rig.GetComponentInChildren<PlayerSkinnedVisual>();
             var report = new List<string>();
             var wrong = new List<string>();
-            foreach (DD.Prototype.CameraSystem.CameraMode mode in new[] { DD.Prototype.CameraSystem.CameraMode.TopDown, DD.Prototype.CameraSystem.CameraMode.ThirdPerson,
-                         DD.Prototype.CameraSystem.CameraMode.FirstPerson, DD.Prototype.CameraSystem.CameraMode.ThirdPerson })
+            foreach (DD.Prototype.CameraSystem.CameraMode mode in modes)
             {
                 DD.Prototype.CameraSystem.CameraModeService.Request(mode, instant: true);
                 yield return new WaitForSeconds(2f);

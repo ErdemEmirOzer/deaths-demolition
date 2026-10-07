@@ -15,7 +15,8 @@ namespace DD.Prototype.Tests.PlayMode
     /// <summary>
     /// WP-087 (C-00 06.10; councils K/wp-087/konsey/KARAR-ArmsCarryKick-06.10.md + K/wp-083/KARAR-HELDKICK-API-06.10.KONSOLIDE.md,
     /// order A → B → C → D; test review K/wp-087/gte-test-inceleme.md) · the held weapon's kick carried by the weapon-first hold's
-    /// arms. The hold off keeps the old path (the body's spring). C: third person, every classic — the autos / bursts ten shots, the singles
+    /// arms. The hold off keeps the old path (the body's spring). C: top-down (*_Ustten; user 06.10) and third person (FPTP, kept as it was),
+    /// every classic — the autos / bursts ten shots, the singles
     /// min(10, magazine) (rl_1 one round, C-00 06.10), then 30 recovery frames; on every frame at full hold + support weight both hands
     /// ≤ 1 cm (the left from its bone, after every LateUpdate); the hold carries THIS rig (KickSource) and applies exactly the channel's
     /// value (conservation); the visible socket moves back by what was applied and never forward / muzzle-down (observed, not the
@@ -48,12 +49,15 @@ namespace DD.Prototype.Tests.PlayMode
         private static string Cm(float m) => (m * 100f).ToString("0.00", CultureInfo.InvariantCulture);
         private static string Deg(float d) => d.ToString("0.0", CultureInfo.InvariantCulture);
 
-        private IEnumerator Kur(bool holdOn)
+        private IEnumerator Kur(bool holdOn, DD.Prototype.CameraSystem.CameraMode mode)
         {
             WeaponHoldIk.Enabled = holdOn;
             _s = new SpecialWeaponSahne();
             yield return _s.Kur();
-            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.ThirdPerson, instant: true);
+            DD.Prototype.CameraSystem.CameraModeService.Request(mode, instant: true);
+            // top-down aims at the cursor's ground point: held north of the player, not on it (at the screen centre the aim is degenerate
+            // and the facing — the hold's frame — would wander); third person keeps its original setup
+            if (mode == DD.Prototype.CameraSystem.CameraMode.TopDown) _s.Girdi.Imlec = new Vector2(Screen.width * 0.5f, Screen.height * 0.85f);
             Time.captureDeltaTime = 1f / 60f;
         }
 
@@ -136,11 +140,20 @@ namespace DD.Prototype.Tests.PlayMode
             }
         }
 
+        // User 06.10 / 07.10 (C-00 (A)): tests run top-down only and FP / TP stay as they are — TutusAcik_TumKlasikler_IkiElTutamakta_TepmeKollarda_TekYon_Ustten is the top-down run;
+        // TutusAcik_TumKlasikler_IkiElTutamakta_TepmeKollarda_TekYon keeps its original rows under FPTP (main-ci leaves that category out).
         [UnityTest]
         [Timeout(1200000)]
-        public IEnumerator TutusAcik_TumKlasikler_IkiElTutamakta_TepmeKollarda_TekYon()
+        public IEnumerator TutusAcik_TumKlasikler_IkiElTutamakta_TepmeKollarda_TekYon_Ustten() => TutusAcik_TumKlasikler_IkiElTutamakta_TepmeKollarda_TekYonCore(DD.Prototype.CameraSystem.CameraMode.TopDown);
+
+        [UnityTest]
+        [Timeout(1200000)]
+        [Category("FPTP")]
+        public IEnumerator TutusAcik_TumKlasikler_IkiElTutamakta_TepmeKollarda_TekYon() => TutusAcik_TumKlasikler_IkiElTutamakta_TepmeKollarda_TekYonCore(DD.Prototype.CameraSystem.CameraMode.ThirdPerson);
+
+        private IEnumerator TutusAcik_TumKlasikler_IkiElTutamakta_TepmeKollarda_TekYonCore(DD.Prototype.CameraSystem.CameraMode mode)
         {
-            yield return Kur(true);
+            yield return Kur(true, mode);
             var body = _s.Rig.GetComponentInChildren<PlayerSkinnedVisual>(true);
             Assert.IsNotNull(body, "skinned oyuncu yok");
             Transform mount = _s.Rig.GetComponentInChildren<PlayerWeaponBinding>().WeaponMount;
@@ -276,13 +289,22 @@ namespace DD.Prototype.Tests.PlayMode
         /// row (its translation is 0 by rule: rise only). sr_1 is reported, not gated: C-00 06.10 (c) — a known deviation, S-06 / S-02's
         /// joint triage (the hold does not apply the kick on it: UpperAtRest).
         /// </summary>
+        // User 06.10 / 07.10 (C-00 (A)): tests run top-down only and FP / TP stay as they are — His_IlkAtis_EskiYolun90i_GeriVeKalkis_Ustten is the top-down run;
+        // His_IlkAtis_EskiYolun90i_GeriVeKalkis keeps its original rows under FPTP (main-ci leaves that category out).
         [UnityTest]
         [Timeout(900000)]
-        public IEnumerator His_IlkAtis_EskiYolun90i_GeriVeKalkis()
+        public IEnumerator His_IlkAtis_EskiYolun90i_GeriVeKalkis_Ustten() => His_IlkAtis_EskiYolun90i_GeriVeKalkisCore(DD.Prototype.CameraSystem.CameraMode.TopDown);
+
+        [UnityTest]
+        [Timeout(900000)]
+        [Category("FPTP")]
+        public IEnumerator His_IlkAtis_EskiYolun90i_GeriVeKalkis() => His_IlkAtis_EskiYolun90i_GeriVeKalkisCore(DD.Prototype.CameraSystem.CameraMode.ThirdPerson);
+
+        private IEnumerator His_IlkAtis_EskiYolun90i_GeriVeKalkisCore(DD.Prototype.CameraSystem.CameraMode mode)
         {
             // the scene is built with the hold on (a hold off at build time is never configured, so switching it on later would leave
             // both passes on the old path — c1run 06.10 read 100 % everywhere); the old path is the hold switched off at run time
-            yield return Kur(true);
+            yield return Kur(true, mode);
             var body = _s.Rig.GetComponentInChildren<PlayerSkinnedVisual>(true);
             Assert.IsNotNull(body, "skinned oyuncu yok");
             Assert.IsNotNull(body.HoldIk, "tutuş IK yok");
@@ -336,11 +358,20 @@ namespace DD.Prototype.Tests.PlayMode
         /// spring). The visible k's |Δ²| is reported: right after a shot it is the kick's own fast return (ω²·dt²·x ≈ 2–3 cm at 60 fps on
         /// ar_1, c1run 06.10), not a fade jump — the earlier 1 cm bound on it measured that, not the fade.
         /// </summary>
+        // User 06.10 / 07.10 (C-00 (A)): tests run top-down only and FP / TP stay as they are — Solma_SarjorBitiminde_VeAtisOrtasindaReload_TepmeSicramaz_Ustten is the top-down run;
+        // Solma_SarjorBitiminde_VeAtisOrtasindaReload_TepmeSicramaz keeps its original rows under FPTP (main-ci leaves that category out).
         [UnityTest]
         [Timeout(600000)]
-        public IEnumerator Solma_SarjorBitiminde_VeAtisOrtasindaReload_TepmeSicramaz()
+        public IEnumerator Solma_SarjorBitiminde_VeAtisOrtasindaReload_TepmeSicramaz_Ustten() => Solma_SarjorBitiminde_VeAtisOrtasindaReload_TepmeSicramazCore(DD.Prototype.CameraSystem.CameraMode.TopDown);
+
+        [UnityTest]
+        [Timeout(600000)]
+        [Category("FPTP")]
+        public IEnumerator Solma_SarjorBitiminde_VeAtisOrtasindaReload_TepmeSicramaz() => Solma_SarjorBitiminde_VeAtisOrtasindaReload_TepmeSicramazCore(DD.Prototype.CameraSystem.CameraMode.ThirdPerson);
+
+        private IEnumerator Solma_SarjorBitiminde_VeAtisOrtasindaReload_TepmeSicramazCore(DD.Prototype.CameraSystem.CameraMode mode)
         {
-            yield return Kur(true);
+            yield return Kur(true, mode);
             var body = _s.Rig.GetComponentInChildren<PlayerSkinnedVisual>(true);
             Transform mount = _s.Rig.GetComponentInChildren<PlayerWeaponBinding>().WeaponMount;
             var rows = new List<string>();
@@ -403,11 +434,20 @@ namespace DD.Prototype.Tests.PlayMode
         }
 
         /// <summary>WP-087 (N2, C-00 06.10): a second reload of the same weapon takes the same magazine part to the hand again (G3: bound once).</summary>
+        // User 06.10 / 07.10 (C-00 (A)): tests run top-down only and FP / TP stay as they are — AyniSilahIkinciReload_AyniParcaEleGider_Ustten is the top-down run;
+        // AyniSilahIkinciReload_AyniParcaEleGider keeps its original rows under FPTP (main-ci leaves that category out).
         [UnityTest]
         [Timeout(300000)]
-        public IEnumerator AyniSilahIkinciReload_AyniParcaEleGider()
+        public IEnumerator AyniSilahIkinciReload_AyniParcaEleGider_Ustten() => AyniSilahIkinciReload_AyniParcaEleGiderCore(DD.Prototype.CameraSystem.CameraMode.TopDown);
+
+        [UnityTest]
+        [Timeout(300000)]
+        [Category("FPTP")]
+        public IEnumerator AyniSilahIkinciReload_AyniParcaEleGider() => AyniSilahIkinciReload_AyniParcaEleGiderCore(DD.Prototype.CameraSystem.CameraMode.ThirdPerson);
+
+        private IEnumerator AyniSilahIkinciReload_AyniParcaEleGiderCore(DD.Prototype.CameraSystem.CameraMode mode)
         {
-            yield return Kur(true);
+            yield return Kur(true, mode);
             _s.Controller.EquipClassic(ClassicWeaponId.AssaultRifle, _s.Config);
             yield return SpecialWeaponSahne.Kareler(30);
             WeaponMagazineVisual v = _s.Controller.MagazineVisual;
@@ -437,11 +477,20 @@ namespace DD.Prototype.Tests.PlayMode
         }
 
         /// <summary>WP-087: with the hold off nothing changes — the body inside the rig kicks back as before and the arms carry none (K6).</summary>
+        // User 06.10 / 07.10 (C-00 (A)): tests run top-down only and FP / TP stay as they are — TutusKapali_GovdeEskiTepmede_Ustten is the top-down run;
+        // TutusKapali_GovdeEskiTepmede keeps its original rows under FPTP (main-ci leaves that category out).
         [UnityTest]
         [Timeout(180000)]
-        public IEnumerator TutusKapali_GovdeEskiTepmede()
+        public IEnumerator TutusKapali_GovdeEskiTepmede_Ustten() => TutusKapali_GovdeEskiTepmedeCore(DD.Prototype.CameraSystem.CameraMode.TopDown);
+
+        [UnityTest]
+        [Timeout(180000)]
+        [Category("FPTP")]
+        public IEnumerator TutusKapali_GovdeEskiTepmede() => TutusKapali_GovdeEskiTepmedeCore(DD.Prototype.CameraSystem.CameraMode.ThirdPerson);
+
+        private IEnumerator TutusKapali_GovdeEskiTepmedeCore(DD.Prototype.CameraSystem.CameraMode mode)
         {
-            yield return Kur(false);
+            yield return Kur(false, mode);
             Transform mount = _s.Rig.GetComponentInChildren<PlayerWeaponBinding>().WeaponMount;
             _s.Controller.EquipClassic(ClassicWeaponId.AssaultRifle, _s.Config);
             yield return SpecialWeaponSahne.Kareler(60);
