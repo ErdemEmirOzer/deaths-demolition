@@ -30,6 +30,12 @@ namespace DD.Prototype.UI
     /// ACCESSIBILITY: text only ever sits on the opaque card (never on the scrim or a blur);
     /// the destructive action is a Danger button with its word; EnterModal is Decor
     /// (Reduced Motion shows it at rest).
+    /// WP-098A (KIT-API §3, §4 "Confirm"; KIT-KILAVUZU C31): <see cref="UiControlStyle.Brush"/> - no card, no shadow, no frame:
+    /// the Confirm ink (<see cref="UiBrushTokens.ScrimConfirm"/> 0.985, TextPrimary 13.3:1 on a white world in linear light)
+    /// carries the words; a transparent "Card" rect <see cref="UiBrushTokens.ConfirmMeasure"/> wide holds the C5 title, a
+    /// MenuBody TextPrimary body measured to its height, and two C11 actions - the safe one first (left), 64 apart. The
+    /// destructive action is said with its word and glyph (<see cref="SetActionIcons"/>), never a colour. Focus trap, safe
+    /// default, Cancel = safe, focus return and EnterModal are the same as v3.
     /// </summary>
     public sealed class UiModal : MonoBehaviour
     {
@@ -41,6 +47,9 @@ namespace DD.Prototype.UI
         private UiButton _secondary;
         private Action _onSecondary;
         private GameObject _returnFocus;
+        private UiControlStyle _style;
+        private UiBrushTitle _brushTitle;
+        private Image _scrimImage;
 
         public UiButton Primary
         {
@@ -55,6 +64,24 @@ namespace DD.Prototype.UI
         public bool IsOpen
         {
             get { return gameObject.activeSelf; }
+        }
+
+        /// <summary>WP-098A · the dialect the modal is drawn in.</summary>
+        public UiControlStyle Style
+        {
+            get { return _style; }
+        }
+
+        /// <summary>WP-098A · the control <see cref="Open"/> focuses: the safe (secondary) action when the modal has one and safe is the default.</summary>
+        public Selectable DefaultFocus
+        {
+            get { return _safeIsDefault && _secondary != null ? (Selectable)_secondary : _primary; }
+        }
+
+        /// <summary>WP-098A · the scrim image (v3: ScrimOverlay at the dialog α; Brush: the Confirm ink) - tests read its α.</summary>
+        public Image ScrimImage
+        {
+            get { return _scrimImage; }
         }
 
         public static Vector2 SizeOf(UiModalSize size)
@@ -86,8 +113,20 @@ namespace DD.Prototype.UI
         /// (AD 5a SHOULD-3). Destructive by default: Danger action, safe focus.
         /// </summary>
         public static UiModal Confirm(string name, RectTransform parent, string title, string body,
-            string confirmLabel, Action onConfirm, string cancelLabel, Action onCancel, bool destructive = true)
+            string confirmLabel, Action onConfirm, string cancelLabel, Action onCancel, bool destructive = true,
+            UiControlStyle style = UiControlStyle.V3)
         {
+            if (style == UiControlStyle.Brush)
+            {
+                // WP-098A: destructive is worded (the caller's copy and glyph), never coloured - both actions are C11.
+                RectTransform root = UiFactory.NewRect(name, parent);
+                UiFactory.Fill(root);
+                var modal = root.gameObject.AddComponent<UiModal>();
+                modal.BuildBrush(root, title, body, confirmLabel, onConfirm, cancelLabel, onCancel);
+                root.gameObject.SetActive(false);
+                return modal;
+            }
+
             return Create(name, parent, UiModalSize.S, title, body, confirmLabel, destructive ? UiButtonVariant.Danger : UiButtonVariant.Primary,
                 onConfirm, cancelLabel, onCancel, true, true);
         }
@@ -122,6 +161,11 @@ namespace DD.Prototype.UI
         /// <summary>The card's shadow: the card's size plus the Elev2 reach on every side.</summary>
         private void FitShadow()
         {
+            if (_shadowRect == null)
+            {
+                return;   // WP-098A: a Brush confirm has no card, so no shadow
+            }
+
             float reach = UiElevationSpec.ShadowRadius(UiElevation.Elev2);
             _shadowRect.sizeDelta = _cardRect.sizeDelta + new Vector2(reach * 2f, reach * 2f);
         }
@@ -155,6 +199,7 @@ namespace DD.Prototype.UI
             scrim.color = scrimColour;
             scrim.raycastTarget = true; // nothing underneath takes a click while open
             _scrim = UiFactory.Group(scrim.gameObject);
+            _scrimImage = scrim;
 
             // WP-081 (R1 AD SHOULD-9): the kit's one soft shadow at Elev2 under the card. The scrim alone left about 12 % of
             // a cream row legible at the edge of a small dialog ("ARAYÜZ ÖLÇEĞİ" cut by its top edge); now the rows behind
@@ -216,6 +261,136 @@ namespace DD.Prototype.UI
             }
         }
 
+        /// <summary>WP-098A · the Brush build: the Confirm ink, a transparent measure, the C5 title, the MenuBody body, two C11.</summary>
+        private void BuildBrush(RectTransform root, string title, string body, string primaryLabel, Action onPrimary,
+            string secondaryLabel, Action onSecondary)
+        {
+            _style = UiControlStyle.Brush;
+            _onSecondary = onSecondary;
+            _safeIsDefault = true;
+
+            _scrimImage = UiFactory.NewImage("Scrim", root, UiColor.SurfaceInset, UiSprites.Solid);
+            UiFactory.Fill(_scrimImage.rectTransform);
+            Color ink = _scrimImage.color;
+            ink.a = UiBrushTokens.ScrimConfirm;
+            _scrimImage.color = ink;
+            _scrimImage.raycastTarget = true; // nothing underneath takes a click while open
+            _scrim = UiFactory.Group(_scrimImage.gameObject);
+
+            _cardRect = UiFactory.NewRect("Card", root);   // no surface: the ink carries the words
+            _cardRect.anchorMin = new Vector2(0.5f, 0.5f);
+            _cardRect.anchorMax = new Vector2(0.5f, 0.5f);
+            _cardRect.pivot = new Vector2(0.5f, 0.5f);
+            float measure = UiBrushTokens.ConfirmMeasure;
+            _cardRect.sizeDelta = new Vector2(measure, UiBrushTokens.ControlHeight);
+            _card = UiFactory.Group(_cardRect.gameObject);
+
+            _brushTitle = UiBrushKit.TitleText(_cardRect, title, null);
+
+            // The body ("Card/Body"): measured to its height; none at all when there is nothing to say (QUIT asks in its title).
+            _bodyHeight = 0f;
+            if (!string.IsNullOrEmpty(body))
+            {
+                TMP_Text bodyText = UiFactory.Label("Body", _cardRect, body, UiType.MenuBody, UiColor.TextPrimary, TextAnchor.UpperLeft);
+                _bodyHeight = Mathf.Max(UiFactory.LineHeight(UiType.MenuBody), Mathf.Ceil(bodyText.GetPreferredValues(body, measure, 0f).y));
+                RectTransform bodyRect = bodyText.rectTransform;
+                bodyRect.anchorMin = new Vector2(0f, 1f);
+                bodyRect.anchorMax = new Vector2(1f, 1f);
+                bodyRect.pivot = new Vector2(0.5f, 1f);
+                bodyRect.sizeDelta = new Vector2(0f, _bodyHeight);
+                bodyRect.anchoredPosition = new Vector2(0f, -(_brushTitle.Height + (int)UiSpace.XL));
+            }
+
+            if (!string.IsNullOrEmpty(secondaryLabel))
+            {
+                _secondary = UiBrushKit.BrushButton(_cardRect, "Secondary", secondaryLabel, null, () => Act(onSecondary));
+            }
+
+            _primary = UiBrushKit.BrushButton(_cardRect, "Primary", primaryLabel, null, () => Act(onPrimary));
+            LayoutBrushActions();
+
+            // The measure's height from its content: title band + XL + (body + XL) + the actions.
+            float height = _brushTitle.Height + (int)UiSpace.XL + (_bodyHeight > 0f ? _bodyHeight + (int)UiSpace.XL : 0f) + UiBrushTokens.ControlHeight;
+            _cardRect.sizeDelta = new Vector2(measure, Mathf.Ceil(height));
+
+            // Focus trap: the actions only lead to each other.
+            if (_secondary != null)
+            {
+                UiInput.LinkHorizontal(_secondary, _primary, _primary);
+                UiInput.LinkHorizontal(_primary, _secondary, _secondary);
+            }
+            else
+            {
+                UiInput.LinkHorizontal(_primary, _primary, _primary);
+            }
+        }
+
+        /// <summary>WP-098A · Brush actions on the measure's foot: the safe one first from the left, <see cref="UiBrushTokens.ConfirmActionGap"/> apart, each as wide as its word.</summary>
+        private void LayoutBrushActions()
+        {
+            float x = 0f;
+            if (_secondary != null)
+            {
+                float width = ((RectTransform)_secondary.transform).sizeDelta.x;
+                PlaceAction((RectTransform)_secondary.transform, x, width, UiBrushTokens.ControlHeight);
+                x += width + UiBrushTokens.ConfirmActionGap;
+            }
+
+            if (_primary != null)
+            {
+                PlaceAction((RectTransform)_primary.transform, x, ((RectTransform)_primary.transform).sizeDelta.x, UiBrushTokens.ControlHeight);
+            }
+        }
+
+        /// <summary>
+        /// WP-098A (KIT-API §3) · leading 40 px glyphs on the two actions (Brush: Menu.EndRun / Menu.Resume …); null keeps a
+        /// word-only action. Brush re-measures the actions and re-lays them; v3 puts the glyph at the button's leading edge.
+        /// Build time, once per action.
+        /// </summary>
+        public void SetActionIcons(string primaryIconKey, string secondaryIconKey)
+        {
+            if (_style == UiControlStyle.Brush)
+            {
+                if (_primary != null && !string.IsNullOrEmpty(primaryIconKey))
+                {
+                    UiBrushKit.SetLeadingGlyph(_primary, primaryIconKey);
+                    UiBrushKit.FitWidth(_primary);
+                }
+
+                if (_secondary != null && !string.IsNullOrEmpty(secondaryIconKey))
+                {
+                    UiBrushKit.SetLeadingGlyph(_secondary, secondaryIconKey);
+                    UiBrushKit.FitWidth(_secondary);
+                }
+
+                LayoutBrushActions();
+                return;
+            }
+
+            V3Icon(_primary, primaryIconKey);
+            V3Icon(_secondary, secondaryIconKey);
+        }
+
+        private static void V3Icon(UiButton button, string iconKey)
+        {
+            if (button == null || string.IsNullOrEmpty(iconKey) || button.transform.Find("Icon") != null)
+            {
+                return;
+            }
+
+            bool onAccent = button.Variant == UiButtonVariant.Primary || button.Variant == UiButtonVariant.Danger;
+            UiInput.LeadingIcon(button, iconKey, onAccent ? UiColor.TextOnAccent : UiColor.TextPrimary, UiBrushKit.ControlGlyph);
+        }
+
+        private static void PlaceAction(RectTransform rect, float x, float width, float height)
+        {
+            rect.anchorMin = new Vector2(0f, 0f);
+            rect.anchorMax = new Vector2(0f, 0f);
+            rect.pivot = new Vector2(0f, 0f);
+            rect.sizeDelta = new Vector2(width, height);
+            rect.anchoredPosition = new Vector2(x, 0f);
+        }
+
         private static void PlaceAction(RectTransform rect, float x, float width)
         {
             rect.anchorMin = new Vector2(0f, 0f);
@@ -243,8 +418,13 @@ namespace DD.Prototype.UI
             gameObject.SetActive(true);
             transform.SetAsLastSibling();
             UiPresets.EnterModal(_scrim, _card, _cardRect);
+            if (_brushTitle.Stroke != null)
+            {
+                _brushTitle.Stroke.Draw(UiBrushTokens.Open);   // WP-098A: the C5 stroke inks in with the confirm (Decor)
+            }
+
             UiEvents.Raise(UiEvent.DialogOpened, name);
-            UiInput.Focus(_safeIsDefault && _secondary != null ? (Selectable)_secondary : _primary);
+            UiInput.Focus(DefaultFocus);
         }
 
         /// <summary>Close and return focus to where it was.</summary>

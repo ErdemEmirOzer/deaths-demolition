@@ -21,6 +21,13 @@ namespace DD.Prototype.UI
     /// with a margin when selected. The rail's grip is a pointer target (16 px hit) and stays
     /// out of the focus chain, so the pad never lands on it. Reduced Motion lands the
     /// scroll at once.
+    ///
+    /// WP-098A P0b (C-00 07.10) · C35 Brush style (<see cref="UiControlStyle.Brush"/>, KILAVUZ §4.1, KIT-API §4 "Scroll"):
+    /// the frameless pane's scroller - the edge ramps fade into the ink ground (SurfaceInset, <see cref="BrushEdgeColor"/>),
+    /// the rail is a 1 px line in the line colour (only while something is hidden, as before), the grip a 4 px cream
+    /// brush (AP-034's ScrollThumb, else Chip) never shorter than <see cref="UiBrushTokens.ScrollGripMin"/>: the slide area
+    /// is inset by half that at each end and the grip overhangs its handle by the same, so it reaches both ends of the
+    /// rail without an Update. Its 16 px hit and the focus behaviour are V3's. V3 (the default) is unchanged.
     /// </summary>
     public sealed class UiScrollView : MonoBehaviour
     {
@@ -41,6 +48,17 @@ namespace DD.Prototype.UI
 
         /// <summary>The ground the scroller sits on (the pane card's fill); the edge ramps fade into it.</summary>
         public const UiColor EdgeColor = UiColor.SurfacePanel;
+
+        /// <summary>WP-098A: a Brush scroller's ground - the frameless pane's ink (C1 + C2), not a card fill.</summary>
+        public const UiColor BrushEdgeColor = UiColor.SurfaceInset;
+
+        private UiControlStyle _style;
+
+        /// <summary>WP-098A: the dialect this scroller is drawn in.</summary>
+        public UiControlStyle Style
+        {
+            get { return _style; }
+        }
 
         private ScrollRect _scroll;
         private RectTransform _viewport;
@@ -77,12 +95,13 @@ namespace DD.Prototype.UI
             get { return _bar != null && _bar.gameObject.activeSelf; }
         }
 
-        /// <summary>A scroller filling <paramref name="parent"/>.</summary>
-        public static UiScrollView Create(string name, RectTransform parent)
+        /// <summary>A scroller filling <paramref name="parent"/>. WP-098A: <paramref name="style"/> Brush draws C35 (<see cref="UiBrushKit.Scroll"/>).</summary>
+        public static UiScrollView Create(string name, RectTransform parent, UiControlStyle style = UiControlStyle.V3)
         {
             RectTransform root = UiFactory.NewRect(name, parent);
             UiFactory.Fill(root);
             var view = root.gameObject.AddComponent<UiScrollView>();
+            view._style = style;
             view.Build(root);
             return view;
         }
@@ -107,10 +126,11 @@ namespace DD.Prototype.UI
             // A row cut by the edge reads as scrolling, not as a clipped label (AD 6ab SHOULD-2,
             // revised: RectMask2D softness does not reach TMP 3.0.6 text, a ground-coloured ramp
             // over the content does). Each ramp shows only while there is content beyond its edge.
-            _fadeTop = EdgeFade("FadeTop", root, UiSprites.FadeDown, 1f);
-            _fadeBottom = EdgeFade("FadeBottom", root, UiSprites.FadeUp, 0f);
+            UiColor ground = _style == UiControlStyle.Brush ? BrushEdgeColor : EdgeColor;
+            _fadeTop = EdgeFade("FadeTop", root, UiSprites.FadeDown, 1f, ground);
+            _fadeBottom = EdgeFade("FadeBottom", root, UiSprites.FadeUp, 0f, ground);
 
-            _bar = BuildRail(root);
+            _bar = BuildRail(root, _style);
 
             _scroll = root.gameObject.AddComponent<ScrollRect>();
             _scroll.viewport = _viewport;
@@ -126,9 +146,9 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>A <see cref="ClipSoftness"/> px ramp in the pane's ground colour on one edge of the viewport, drawn over the content.</summary>
-        private static Image EdgeFade(string name, RectTransform root, Sprite ramp, float edge)
+        private static Image EdgeFade(string name, RectTransform root, Sprite ramp, float edge, UiColor ground)
         {
-            Image fade = UiFactory.NewImage(name, root, EdgeColor, ramp);
+            Image fade = UiFactory.NewImage(name, root, ground, ramp);
             var rect = (RectTransform)fade.transform;
             rect.anchorMin = new Vector2(0f, edge);
             rect.anchorMax = new Vector2(1f, edge);
@@ -148,9 +168,10 @@ namespace DD.Prototype.UI
             _fadeBottom.enabled = offset < MaxOffset - 0.5f;
         }
 
-        /// <summary>The 4 px rail + grip; a Scrollbar for pointer drag, kept out of navigation.</summary>
-        private static Scrollbar BuildRail(RectTransform root)
+        /// <summary>The 4 px rail + grip; a Scrollbar for pointer drag, kept out of navigation. WP-098A Brush: 1 px line rail, 4 px cream grip ≥ 40.</summary>
+        private static Scrollbar BuildRail(RectTransform root, UiControlStyle style)
         {
+            bool brush = style == UiControlStyle.Brush;
             RectTransform railRoot = UiFactory.NewRect("Rail", root);
             railRoot.anchorMin = new Vector2(1f, 0f);
             railRoot.anchorMax = new Vector2(1f, 1f);
@@ -158,25 +179,36 @@ namespace DD.Prototype.UI
             railRoot.sizeDelta = new Vector2(RailHit, 0f);
             railRoot.anchoredPosition = Vector2.zero;
 
-            Image track = UiFactory.NewImage("Track", railRoot, UiColor.SurfaceInset, UiSprites.Chip);
+            Image track = UiFactory.NewImage("Track", railRoot, UiColor.SurfaceInset, brush ? UiSprites.Solid : UiSprites.Chip);
             RectTransform trackRect = (RectTransform)track.transform;
             trackRect.anchorMin = new Vector2(0.5f, 0f);
             trackRect.anchorMax = new Vector2(0.5f, 1f);
-            trackRect.sizeDelta = new Vector2(RailWidth, 0f);
+            trackRect.sizeDelta = new Vector2(brush ? UiTokens.StrokeHairline : RailWidth, 0f);
             track.raycastTarget = false;
+            if (brush)
+            {
+                track.color = UiBrushTokens.LineColour();
+            }
 
+            // Brush: the handle travels a slide area inset by half the grip floor at each end, and the drawn grip overhangs
+            // the handle by that half at each end - so the grip is never under ScrollGripMin and still meets both rail ends.
+            float overhang = brush ? UiBrushTokens.ScrollGripMin * 0.5f : 0f;
             RectTransform slideArea = UiFactory.NewRect("SlideArea", railRoot);
             UiFactory.Fill(slideArea);
+            slideArea.offsetMin = new Vector2(0f, overhang);
+            slideArea.offsetMax = new Vector2(0f, -overhang);
 
             // The grip: a transparent 16 px hit rect the Scrollbar resizes, a 4 px pill inside it.
             Image hit = UiFactory.NewImage("Grip", slideArea, UiColor.Transparent, UiSprites.Solid);
             hit.raycastTarget = true;
             RectTransform gripRect = (RectTransform)hit.transform;
-            Image pill = UiFactory.NewImage("Pill", gripRect, UiColor.BorderStrong, UiSprites.Chip);
+            Image pill = brush
+                ? UiFactory.NewImage("Pill", gripRect, UiColor.TextPrimary, UiBrushArt.Get(UiBrushSprite.ScrollThumb))   // cream (G15), never gold
+                : UiFactory.NewImage("Pill", gripRect, UiColor.BorderStrong, UiSprites.Chip);
             RectTransform pillRect = (RectTransform)pill.transform;
             pillRect.anchorMin = new Vector2(0.5f, 0f);
             pillRect.anchorMax = new Vector2(0.5f, 1f);
-            pillRect.sizeDelta = new Vector2(RailWidth, 0f);
+            pillRect.sizeDelta = new Vector2(brush ? UiBrushTokens.ScrollGrip : RailWidth, 2f * overhang);
             pill.raycastTarget = false;
 
             var bar = railRoot.gameObject.AddComponent<Scrollbar>();

@@ -201,6 +201,18 @@ namespace DD.Prototype.UI
             return this;
         }
 
+        /// <summary>
+        /// WP-098A (KIT-API §3) · start the one-shot <paramref name="delay"/> s from now on the unscaled clock (one vertex
+        /// rebuild): a pane's marks ink in after its scrim without a timer of their own. Until then the shader shows the start
+        /// state (nothing inked; Reduced Motion: the end state). A negative delay starts it in the past - −<see cref="Duration"/>
+        /// lands it drawn at once (a cut), with no wet front.
+        /// </summary>
+        public void Play(float delay)
+        {
+            _start = UiFxGlobals.Now + delay;
+            Dirty();
+        }
+
         /// <summary>Show the start state (nothing inked yet) until <see cref="Play"/>.</summary>
         public void Hold()
         {

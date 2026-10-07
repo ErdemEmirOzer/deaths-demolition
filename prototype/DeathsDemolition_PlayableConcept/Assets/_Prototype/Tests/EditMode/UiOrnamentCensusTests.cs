@@ -29,14 +29,20 @@ namespace DD.Prototype.Tests.EditMode
     /// any second vermilion seal fails) and TWO ceremony kinds (the leaf glint on the gold and the Special, and the round
     /// seal's stamp at the round change; CeremonyLock 2 - an ink bleed on the HUD would still fail).
     /// A new screen file must be placed in a group, or the census fails.
+    /// WP-098A (KIT-KILAVUZU §1 / §7, C-00 07.10 "iz, yüzey değil"): the brush kit's per-window trace budget joins the census -
+    /// brush ≤ 3 (title 1 + C8 2; <c>UiBrushKit.Title / Tabs / Segments / SelectionMark</c> sites count with the ink-channel
+    /// sites), divider ≤ 2, edge ≤ 1, wash ≤ 2, all traces ≤ 6; the C8's vermilion counts too (<c>Tabs / Segments /
+    /// SelectionMark</c>, and <c>UiFactory.HeadingTick</c>, which the old pattern missed). A brush trace drawn in a screen file
+    /// outside the HUD / curtain groups (the ink channels, InkMask, BrushRibbon, EnsoBrush) fails: traces come from the kit.
     /// </summary>
     [TestFixture]
     [Category("WP068")]
     public sealed class UiOrnamentCensusTests
     {
         public const int MaxVermilion = 2;
-        public const int MaxBrush = 1;
+        public const int MaxBrush = 3;       // WP-098A: title 1 + C8 2 (was the one H1 underline)
         public const int MaxCeremony = 1;
+        public const int MaxDivider = 2, MaxEdge = 1, MaxWash = 2, MaxTraces = 6;   // = UiBrushTokens.Max*
 
         private sealed class Group
         {
@@ -82,8 +88,13 @@ namespace DD.Prototype.Tests.EditMode
 
         private static readonly Regex Heading = new Regex(@"UiFactory\.Heading\(");
         private static readonly Regex VermilionImage = new Regex(@"^.*(NewImage\(|FramedCard\(|\.SetColor\(|Tint\().*UiColor\.AccentPrimary\b.*$", RegexOptions.Multiline);
+        private static readonly Regex VermilionKit = new Regex(@"UiBrushKit\.(Tabs|Segments|SelectionMark)\(|UiFactory\.HeadingTick\(");
         private static readonly Regex Seal = new Regex(@"seal", RegexOptions.IgnoreCase);
-        private static readonly Regex Brush = new Regex(@"UiInkChannel\.Underline|Ink\.BrushUnderline");
+        private static readonly Regex Brush = new Regex(@"UiInkChannel\.Underline|Ink\.BrushUnderline|UiBrushKit\.(Title|Tabs|Segments|SelectionMark)\(");
+        private static readonly Regex Divider = new Regex(@"UiBrushKit\.Divider\(");
+        private static readonly Regex Edge = new Regex(@"UiBrushKit\.EdgeTrace\(");
+        private static readonly Regex Wash = new Regex(@"UiBrushWash\.Column|UiBrushKit\.Wash\(");
+        private static readonly Regex KitOnlyTrace = new Regex(@"UiInkChannel\.|InkMask\(|UiSprites\.(BrushRibbon|EnsoBrush)");
         private static readonly Regex SealStamp = new Regex(@"StampIn\([^;]*[Ss]eal");
         private static readonly Regex LeafGlint = new Regex(@"UiFxMode\.Leaf\b");
         private static readonly Regex InkBleed = new Regex(@"UiInkChannel\.Blot\b");
@@ -193,13 +204,13 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         [Test]
-        public void OrnamentSayimi_EkranBasina_Vermilyon2_Firca1_Toren1()
+        public void OrnamentSayimi_EkranBasina_Vermilyon2_Firca3_Toren1()
         {
             var failures = new List<string>();
-            var table = new StringBuilder("[DD-TEST] wp068.ornamentCensus (vermilion / brush / ceremony kinds)");
+            var table = new StringBuilder("[DD-TEST] wp068.ornamentCensus (vermilion / brush / ceremony kinds / divider / edge / wash)");
             foreach (Group group in Groups)
             {
-                int vermilion = 0, brush = 0, seals = 0;
+                int vermilion = 0, brush = 0, seals = 0, dividers = 0, edges = 0, washes = 0;
                 bool stamp = false, leaf = false, bleed = false;
                 bool tick = false;
                 foreach (string file in group.Files)
@@ -212,7 +223,11 @@ namespace DD.Prototype.Tests.EditMode
                         if (Seal.IsMatch(m.Value)) seals++;
                     }
 
+                    vermilion += VermilionKit.Matches(code).Count;
                     brush += Brush.Matches(code).Count;
+                    dividers += Divider.Matches(code).Count;
+                    edges += Edge.Matches(code).Count;
+                    washes += Wash.Matches(code).Count;
                     stamp |= SealStamp.IsMatch(code);
                     leaf |= LeafGlint.IsMatch(code);
                     bleed |= InkBleed.IsMatch(code);
@@ -222,7 +237,8 @@ namespace DD.Prototype.Tests.EditMode
                 int ceremony = (stamp ? 1 : 0) + (leaf ? 1 : 0) + (bleed ? 1 : 0);
                 table.Append('\n').Append(group.Name).Append(": ").Append(vermilion).Append(" / ").Append(brush).Append(" / ").Append(ceremony)
                      .Append(tick ? " (tick)" : string.Empty).Append(stamp ? " (seal stamp)" : string.Empty)
-                     .Append(leaf ? " (leaf glint)" : string.Empty).Append(bleed ? " (ink bleed)" : string.Empty);
+                     .Append(leaf ? " (leaf glint)" : string.Empty).Append(bleed ? " (ink bleed)" : string.Empty)
+                     .Append(" / ").Append(dividers).Append(" / ").Append(edges).Append(" / ").Append(washes);
 
                 if (vermilion > MaxVermilion) failures.Add(group.Name + ": vermilion ornaments " + vermilion + " > " + MaxVermilion);
                 int sealLimit = group.SealAllowed ? int.MaxValue : Math.Max(0, group.SealLock);
@@ -233,10 +249,42 @@ namespace DD.Prototype.Tests.EditMode
 
                 int ceremonyLimit = group.CeremonyLock >= 0 ? group.CeremonyLock : MaxCeremony;
                 if (ceremony > ceremonyLimit) failures.Add(group.Name + ": ceremony kinds " + ceremony + " > " + ceremonyLimit);
+
+                if (dividers > MaxDivider) failures.Add(group.Name + ": brush dividers " + dividers + " > " + MaxDivider);
+                if (edges > MaxEdge) failures.Add(group.Name + ": edge traces " + edges + " > " + MaxEdge);
+                if (washes > MaxWash) failures.Add(group.Name + ": sumi washes " + washes + " > " + MaxWash);
+                int traces = brush + dividers + edges + washes;
+                if (traces > MaxTraces) failures.Add(group.Name + ": brush traces " + traces + " > " + MaxTraces);
             }
 
             Debug.Log(table.ToString());
             Assert.IsEmpty(failures, "ornament sayımı (AD §14 MUST-4):\n" + string.Join("\n", failures));
+        }
+
+        [Test]
+        public void FircaIzleri_YalnizKittenGelir()
+        {
+            // WP-098A (KIT-KILAVUZU §6 "Yapma"): outside the HUD and curtain groups (their counted exceptions), a screen draws
+            // no brush trace itself - every one comes through UiBrushKit, where the budget and the census can see it.
+            var exempt = new HashSet<string>(StringComparer.Ordinal);
+            foreach (Group group in Groups)
+            {
+                if (group.BrushLock >= 0 || group.CeremonyLock >= 0)
+                {
+                    foreach (string file in group.Files) exempt.Add(Path.GetFileName(file));
+                }
+            }
+
+            var failures = new List<string>();
+            foreach (string file in Directory.GetFiles(Path.Combine(Root, "Screens"), "*.cs"))
+            {
+                string name = Path.GetFileName(file);
+                if (exempt.Contains(name)) continue;
+                int count = KitOnlyTrace.Matches(StripComments(File.ReadAllText(file))).Count;
+                if (count > 0) failures.Add(name + ": " + count + " brush trace site(s) outside the kit");
+            }
+
+            Assert.IsEmpty(failures, "fırça izi kit dışında (UiBrushKit kullan):\n" + string.Join("\n", failures));
         }
     }
 }

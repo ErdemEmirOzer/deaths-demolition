@@ -56,6 +56,30 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>
+        /// WP-098A (KIT-KILAVUZU §1 C7) · the cream focus brackets: four corner arms <see cref="UiBrushTokens.BracketArm"/> (10)
+        /// long and <see cref="UiBrushTokens.BracketStroke"/> (3) thick, 9-sliced so the arms keep their length on any rect.
+        /// Tinted TextPrimary over <see cref="FocusBracketsHalo"/>.
+        /// </summary>
+        public static Sprite FocusBracketsInk
+        {
+            get { return GetOrCreate("focusBracketsInk", () => CreateBrackets(UiBrushTokens.BracketArm, UiBrushTokens.BracketStroke)); }
+        }
+
+        /// <summary>
+        /// WP-098A · the brackets' ink halo: <see cref="FocusBracketsInk"/> grown by <see cref="UiBrushTokens.BracketHalo"/> (2) on
+        /// every side - drawn in a rect <see cref="UiBrushTokens.BracketHalo"/> px larger than the arms', so the halo rims the
+        /// cream inside, outside and past each tip (16.40:1 on any world).
+        /// </summary>
+        public static Sprite FocusBracketsHalo
+        {
+            get
+            {
+                const int halo = UiBrushTokens.BracketHalo;
+                return GetOrCreate("focusBracketsHalo", () => CreateBrackets(UiBrushTokens.BracketArm + halo * 2, UiBrushTokens.BracketStroke + halo * 2));
+            }
+        }
+
+        /// <summary>
         /// WP-068 slice 5: the one soft shadow (direction §2: a 9-slice Gaussian - uGUI Shadow is
         /// banned). The falloff is <see cref="SoftShadowReach"/> px at pixelsPerUnitMultiplier 1;
         /// Elev1 (8 px) draws it at multiplier 3.

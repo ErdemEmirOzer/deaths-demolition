@@ -336,6 +336,11 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreSame(a.transform, UiFocusBrackets.Target);
             Assert.AreEqual(100f, brackets.anchoredPosition.y, 0.5f, "ilk görünüş kesme (uçuş yok)");
             Assert.AreEqual(400f + UiFocusBrackets.Outset * 2f, brackets.sizeDelta.x, 0.5f);
+            // WP-098A (KILAVUZ §1 C7, §7): cream arms on an ink halo, fully opaque on the cut frame - no fade-in.
+            Assert.AreEqual(1f, UiFocusBrackets.Arms.canvasRenderer.GetAlpha(), 1e-4f, "kesmede krem kollar α 1 (ilk kare)");
+            Assert.AreEqual(1f, UiFocusBrackets.Halo.canvasRenderer.GetAlpha(), 1e-4f, "kesmede mürekkep halesi α 1");
+            Assert.AreEqual(UiTokens.Get(UiColor.TextPrimary), UiFocusBrackets.Arms.color, "kollar krem (TextPrimary), BorderFocus değil");
+            Assert.AreEqual(UiTokens.Get(UiColor.BorderFocusHalo), UiFocusBrackets.Halo.color, "hale mürekkep (BorderFocusHalo)");
 
             UiFocusBrackets.Follow((RectTransform)b.transform);
             Step(0.07f);

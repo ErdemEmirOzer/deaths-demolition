@@ -23,6 +23,13 @@ namespace DD.Prototype.UI
     /// ACCESSIBILITY: the value is always written; ← / → step, ↑ / ↓ leave the row; the focus
     /// ring sits on the bead (Focus400 + halo) and the row gets the travelling brackets;
     /// Reduced Motion lands a step at once (Decor).
+    ///
+    /// WP-098A P0b (C-00 07.10) · C14 Brush style (<see cref="UiControlStyle.Brush"/>, KILAVUZ §4.1 / KIT-API §4 "Ayar
+    /// satırları"): the frameless row - MenuBody label in the label column, then a 1 px rail in the line colour, a 3 px
+    /// cream fill (AP-034's SelectLong mask when authored, else Solid) and a 12 px cream head with a 2 px ink edge, and the
+    /// value in NumericL at the right. No ticks, no bead ring: focus is the row's brackets (C7). Disabled: fill, label and
+    /// value TextSecondary, no head. The row is <see cref="UiBrushTokens.RowHeight"/>(MenuBody, RowHit) high - measured
+    /// from the text, so it grows at TextScale 1.25. V3 (the default) is unchanged.
     /// </summary>
     public sealed class UiSlider : Selectable, IPointerDownHandler, IDragHandler, IInitializePotentialDragHandler
     {
@@ -64,6 +71,36 @@ namespace DD.Prototype.UI
         private float _lastRaise = -1f;
         private bool _built;
 
+        // WP-098A P0b · Brush style only (V3 leaves them null / 0).
+        private UiControlStyle _style;
+        private TMP_Text _caption;
+        private Image _fillImage;
+        private float _fillHeight;   // 0 = the fill stretches over the rail's height (V3); Brush: SliderFill over a 1 px rail
+
+        /// <summary>WP-098A: the dialect this row is drawn in.</summary>
+        public UiControlStyle Style
+        {
+            get { return _style; }
+        }
+
+        /// <summary>WP-098A: the row's label (tests: T3 / U2 measurement at TextScale 1.25).</summary>
+        public TMP_Text Label
+        {
+            get { return _caption; }
+        }
+
+        /// <summary>WP-098A: the value label (tests: the widest value fits its box).</summary>
+        public TMP_Text ValueLabel
+        {
+            get { return _value; }
+        }
+
+        /// <summary>WP-098A Brush: the head shows (false while the row is disabled - KILAVUZ §4.1 C14).</summary>
+        public bool HeadVisible
+        {
+            get { return _bead != null && _bead.gameObject.activeSelf; }
+        }
+
         public float Value
         {
             get { return _current; }
@@ -88,19 +125,29 @@ namespace DD.Prototype.UI
         /// <summary>
         /// Build a slider row. <paramref name="step"/> 0 = continuous (keyboard steps 1/20 of
         /// the range); <paramref name="format"/> writes the value text (default: whole percent).
+        /// WP-098A: <paramref name="style"/> Brush draws the C14 row (<see cref="UiBrushKit.Slider"/> is its entry point;
+        /// <paramref name="labelWidth"/> is then the label column); V3 is today's row.
         /// </summary>
         public static UiSlider Create(string name, Transform parent, string label, float min, float max, float value, float step,
-            Func<float, string> format, Action<float> changed, float width = 640f, float labelWidth = 240f)
+            Func<float, string> format, Action<float> changed, float width = 640f, float labelWidth = 240f,
+            UiControlStyle style = UiControlStyle.V3)
         {
             RectTransform root = UiFactory.NewRect(name, parent);
-            root.sizeDelta = new Vector2(width, RowHeight);
+            root.sizeDelta = new Vector2(width, style == UiControlStyle.Brush ? BrushRowHeight() : RowHeight);
             Image hit = UiFactory.NewImage("Hit", root, UiColor.Transparent, UiSprites.Solid);
             UiFactory.Fill((RectTransform)hit.transform);
             hit.raycastTarget = true;
 
             var slider = root.gameObject.AddComponent<UiSlider>();
+            slider._style = style;
             slider.Build(root, hit, label, min, max, value, step, format, changed, labelWidth);
             return slider;
+        }
+
+        /// <summary>WP-098A: a C13 row's height at the current text scale (KILAVUZ §2.3: measured from MenuBody, never under RowHit).</summary>
+        public static float BrushRowHeight()
+        {
+            return UiBrushTokens.RowHeight(UiType.MenuBody, UiBrushTokens.RowHit);
         }
 
         private void Build(RectTransform root, Image hit, string label, float min, float max, float value, float step,
@@ -114,7 +161,17 @@ namespace DD.Prototype.UI
             transition = Transition.None;
             targetGraphic = hit;
 
+            if (_style == UiControlStyle.Brush)
+            {
+                BuildBrush(root, label, labelWidth);
+                _built = true;
+                SetValue(value, false, false);
+                ApplyBrushState();
+                return;
+            }
+
             TMP_Text caption = UiFactory.Label("Label", root, label, UiType.Body, UiColor.TextPrimary, TextAnchor.MiddleLeft);
+            _caption = caption;
             RectTransform captionRect = caption.rectTransform;
             captionRect.anchorMin = new Vector2(0f, 0f);
             captionRect.anchorMax = new Vector2(0f, 1f);
@@ -188,6 +245,97 @@ namespace DD.Prototype.UI
             SetValue(value, false, false);
         }
 
+        /// <summary>
+        /// WP-098A P0b · the C14 row (KIT-API §4 "Ayar satırları"): label column | rail · fill · head | value. The value box
+        /// is as wide as the widest of the range's two ends written by <see cref="_format"/> (never under
+        /// <see cref="ValueWidth"/>, so stacked rows keep one rail end); the rail takes the rest of the value column.
+        /// </summary>
+        private void BuildBrush(RectTransform root, string label, float labelWidth)
+        {
+            _caption = UiFactory.Label("Label", root, label, UiType.MenuBody, UiColor.TextPrimary, TextAnchor.MiddleLeft);
+            _caption.enableWordWrapping = false;
+            RectTransform captionRect = _caption.rectTransform;
+            captionRect.anchorMin = new Vector2(0f, 0f);
+            captionRect.anchorMax = new Vector2(0f, 1f);
+            captionRect.pivot = new Vector2(0f, 0.5f);
+            captionRect.sizeDelta = new Vector2(labelWidth, 0f);
+            captionRect.anchoredPosition = Vector2.zero;   // frameless: the label stands on the row's own edge
+
+            _value = UiFactory.Numeric("Value", root, string.Empty, UiType.NumericL, UiColor.TextPrimary, TextAnchor.MiddleRight, false);
+            float valueWidth = Mathf.Max(ValueWidth, Mathf.Ceil(Mathf.Max(_value.GetPreferredValues(Format(_min)).x, _value.GetPreferredValues(Format(_max)).x)));
+            RectTransform valueRect = _value.rectTransform;
+            valueRect.anchorMin = new Vector2(1f, 0f);
+            valueRect.anchorMax = new Vector2(1f, 1f);
+            valueRect.pivot = new Vector2(1f, 0.5f);
+            valueRect.sizeDelta = new Vector2(valueWidth, 0f);
+            valueRect.anchoredPosition = Vector2.zero;
+
+            // The rail spans the value column up to the value box, inset by half a head so the head never overhangs.
+            float head = UiBrushTokens.SliderHead + 2f * UiTokens.StrokeControl;
+            float left = labelWidth + UiBrushKit.ValueColumnGap + head * 0.5f;
+            float right = valueWidth + (int)UiSpace.L + head * 0.5f;
+            Image rail = UiFactory.NewImage("Rail", root, UiColor.TextMuted, UiSprites.Solid);
+            rail.color = UiBrushTokens.LineColour();
+            _rail = (RectTransform)rail.transform;
+            _rail.anchorMin = new Vector2(0f, 0.5f);
+            _rail.anchorMax = new Vector2(1f, 0.5f);
+            _rail.pivot = new Vector2(0f, 0.5f);
+            _rail.offsetMin = new Vector2(left, -UiBrushTokens.SliderRail * 0.5f);
+            _rail.offsetMax = new Vector2(-right, UiBrushTokens.SliderRail * 0.5f);
+
+            // Fill: cream (G15 - never gold, never vermilion), 3 px centred on the 1 px rail; its WIDTH follows the value.
+            Sprite fillSprite = UiBrushArt.IsAuthored(UiBrushSprite.SelectLong) ? UiBrushArt.Get(UiBrushSprite.SelectLong) : UiSprites.Solid;
+            _fillImage = UiFactory.NewImage("Fill", _rail, UiColor.TextPrimary, fillSprite);
+            _fill = (RectTransform)_fillImage.transform;
+            _fill.anchorMin = new Vector2(0f, 0.5f);
+            _fill.anchorMax = new Vector2(0f, 0.5f);
+            _fill.pivot = new Vector2(0f, 0.5f);
+            _fill.anchoredPosition = Vector2.zero;
+            _fillHeight = UiBrushTokens.SliderFill;
+
+            // Head: a 2 px ink edge round a 12 px cream core (KIT-API §4) - the cream reads on any ground, the edge on the fill.
+            Sprite headSprite = UiBrushArt.Get(UiBrushSprite.SliderHead);
+            Image edge = UiFactory.NewImage("Bead", _rail, UiColor.SurfaceInset, headSprite);
+            _bead = (RectTransform)edge.transform;
+            _bead.anchorMin = new Vector2(0f, 0.5f);
+            _bead.anchorMax = new Vector2(0f, 0.5f);
+            _bead.pivot = new Vector2(0.5f, 0.5f);
+            _bead.sizeDelta = new Vector2(head, head);
+            Image core = UiFactory.NewImage("Core", _bead, UiColor.TextPrimary, headSprite);
+            UiFactory.Fill((RectTransform)core.transform, UiTokens.StrokeControl);
+        }
+
+        /// <summary>The value as <see cref="_format"/> writes it (build-time measuring only).</summary>
+        private string Format(float v)
+        {
+            return _format != null ? _format(v) : UiStrings.Percent(Mathf.RoundToInt(Normalised(v) * 100f));
+        }
+
+        /// <summary>
+        /// WP-098A Brush · the disabled pair (KILAVUZ §4.1 C14): label, fill and value TextSecondary, the head hidden. Runs on
+        /// a state change only (DoStateTransition), never per frame; a colour is written only when it changes.
+        /// </summary>
+        private void ApplyBrushState()
+        {
+            if (!_built || _style != UiControlStyle.Brush)
+            {
+                return;
+            }
+
+            bool usable = IsInteractable();
+            Color ink = UiTokens.Get(usable ? UiColor.TextPrimary : UiColor.TextSecondary);
+            if (_caption.color != ink) _caption.color = ink;
+            if (_value.color != ink) _value.color = ink;
+            if (_fillImage.color != ink) _fillImage.color = ink;
+            if (_bead.gameObject.activeSelf != usable) _bead.gameObject.SetActive(usable);
+        }
+
+        protected override void DoStateTransition(SelectionState state, bool instant)
+        {
+            base.DoStateTransition(state, instant);   // Transition.None: nothing of its own
+            ApplyBrushState();
+        }
+
         /// <summary>True when <paramref name="value"/> is a whole multiple of <see cref="MajorTickEvery"/> steps (a ruler's strong tick).</summary>
         public static bool IsMajorUnit(float value, float step)
         {
@@ -202,6 +350,11 @@ namespace DD.Prototype.UI
         /// <summary>BorderStrong tick above the rail's rim at rail position <paramref name="t"/>, 2 px (AD 5b MUST-3) or a ruler's 1 px unit (AD R1-A SHOULD-7).</summary>
         private void AddTick(int index, float t, float width = MajorTickWidth)
         {
+            if (_style == UiControlStyle.Brush)
+            {
+                return;   // C14 has no detent ticks: the value is written, the rail stays one quiet line
+            }
+
             Image tick = UiFactory.NewImage("Tick" + index, _rail, UiColor.BorderStrong, UiSprites.Solid);
             var tickRect = (RectTransform)tick.transform;
             tickRect.anchorMin = new Vector2(t, 0.5f);
@@ -262,21 +415,21 @@ namespace DD.Prototype.UI
             float v = Quantise(Mathf.Clamp(value, _min, _max));
             bool changed = !Mathf.Approximately(v, _current) || !_built;
             _current = v;
-            _value.text = _format != null ? _format(v) : UiStrings.Percent(Mathf.RoundToInt(Normalised(v) * 100f));
+            _value.text = Format(v);
 
             float t = Normalised(v);
             float x = t * Mathf.Max(1f, RailWidthOrLayout());
             if (animate)
             {
                 UiMotion.Move(_bead, new Vector2(x, 0f), UiDuration.Fast, UiEase.Move, UiMotionClass.Decor);
-                UiMotion.Resize(_fill, new Vector2(x, 0f), UiDuration.Fast, UiEase.Move, UiMotionClass.Decor);
+                UiMotion.Resize(_fill, new Vector2(x, _fillHeight), UiDuration.Fast, UiEase.Move, UiMotionClass.Decor);
             }
             else
             {
                 UiMotion.KillTarget(_bead, false);
                 UiMotion.KillTarget(_fill, false);
                 _bead.anchoredPosition = new Vector2(x, 0f);
-                _fill.sizeDelta = new Vector2(x, 0f);
+                _fill.sizeDelta = new Vector2(x, _fillHeight);
             }
 
             if (notify && changed)
@@ -419,7 +572,7 @@ namespace DD.Prototype.UI
                 UiMotion.KillTarget(_fill, false);
                 float x = Normalised(_current) * Mathf.Max(1f, RailWidthOrLayout());
                 _bead.anchoredPosition = new Vector2(x, 0f);
-                _fill.sizeDelta = new Vector2(x, 0f);
+                _fill.sizeDelta = new Vector2(x, _fillHeight);
             }
         }
 

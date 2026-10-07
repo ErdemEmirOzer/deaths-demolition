@@ -16,18 +16,34 @@ namespace DD.Prototype.UI
     /// the long text belongs to the pane the control opens.
     /// ACCESSIBILITY: TextPrimary on SurfaceRaised (UiTokenContrast pair); wraps at <see cref="UiIconTokens.TooltipMaxWidth"/>
     /// instead of clipping (U2); never takes a raycast.
+    ///
+    /// WP-098A P0b (C-00 07.10) · C27 Brush style, the default from WP-098A (<see cref="Style"/>; KILAVUZ §4.1 C27, §8 S4):
+    /// no box and no edge - an ink cloud (AP-034's TooltipWash, else UiSprites.SoftShadow) in SurfaceInset at
+    /// <see cref="UiBrushTokens.TooltipWash"/> reaching <see cref="WashOverhang"/> past the text box, the word in MenuSmall
+    /// cream, wrapping at <see cref="UiBrushTokens.TooltipMaxWidth"/> (a lock reason may take two lines: <see cref="Show(RectTransform, string, float)"/>),
+    /// <see cref="UiBrushTokens.TooltipGap"/> from the control. The settle delay and the placement rules are the same in
+    /// both styles. V3 keeps the raised plate (a screen or a capture that needs it sets <see cref="Style"/>).
     /// </summary>
     public sealed class UiTooltip : MonoBehaviour
     {
         private static UiTooltip s_instance;
         private static readonly Vector3[] s_corners = new Vector3[4];
 
+        /// <summary>The tooltip's dialect: Brush (ink cloud, MenuSmall, ≤ 384) from WP-098A; V3 keeps the raised plate.</summary>
+        public static UiControlStyle Style = UiControlStyle.Brush;
+
+        /// <summary>WP-098A Brush: how far the ink cloud reaches past the text box (its soft edge; the box itself is <see cref="Bounds"/>).</summary>
+        public const float WashOverhang = (int)UiSpace.L;
+
         private RectTransform _rect;
         private CanvasGroup _group;
+        private Image _edge;
         private Image _plate;
         private TMP_Text _text;
         private RectTransform _target;
         private UiTweenHandle _show;
+        private bool _styled;
+        private UiControlStyle _drawn;
 
         /// <summary>The control the tooltip belongs to; null when none.</summary>
         public static RectTransform Target
@@ -63,8 +79,20 @@ namespace DD.Prototype.UI
             }
         }
 
-        /// <summary>Show <paramref name="text"/> for <paramref name="target"/> after the settle delay.</summary>
+        /// <summary>The style the tooltip is drawn in now (tests: the default and a switch back to V3).</summary>
+        public static UiControlStyle DrawnStyle
+        {
+            get { return s_instance != null && s_instance._styled ? s_instance._drawn : Style; }
+        }
+
+        /// <summary>Show <paramref name="text"/> for <paramref name="target"/> after the settle delay, wrapping at the style's widest line.</summary>
         public static void Show(RectTransform target, string text)
+        {
+            Show(target, text, Style == UiControlStyle.Brush ? UiBrushTokens.TooltipMaxWidth : UiIconTokens.TooltipMaxWidth);
+        }
+
+        /// <summary>As <see cref="Show(RectTransform, string)"/>, wrapping at <paramref name="maxWidth"/> (a lock reason may take two lines).</summary>
+        public static void Show(RectTransform target, string text, float maxWidth)
         {
             if (target == null || string.IsNullOrEmpty(text))
             {
@@ -87,7 +115,7 @@ namespace DD.Prototype.UI
                 s_instance.transform.SetParent(root, false);   // another canvas (a modal, the pause overlay): a cut
             }
 
-            s_instance.Present(root, target, text);
+            s_instance.Present(root, target, text, maxWidth);
         }
 
         /// <summary>Drop the tooltip if it belongs to <paramref name="target"/>.</summary>
@@ -117,6 +145,7 @@ namespace DD.Prototype.UI
 
             Image edge = UiFactory.NewImage("Edge", rect, UiColor.BorderStrong, UiSprites.Control);
             UiFactory.Fill((RectTransform)edge.transform);
+            tip._edge = edge;
             tip._plate = UiFactory.NewImage("Plate", rect, UiColor.SurfaceRaised, UiSprites.Control);
             UiFactory.Fill((RectTransform)tip._plate.transform, UiTokens.StrokeControl);
 
@@ -127,17 +156,60 @@ namespace DD.Prototype.UI
             return tip;
         }
 
-        private void Present(RectTransform root, RectTransform target, string text)
+        /// <summary>
+        /// WP-098A · dress the one tooltip for <see cref="Style"/> when it changed since the last show (a build-time cost:
+        /// sprite, colour, face). V3 is exactly what <see cref="Build"/> made.
+        /// </summary>
+        private void ApplyStyle()
+        {
+            UiControlStyle style = Style;
+            if (_styled && _drawn == style)
+            {
+                return;
+            }
+
+            _styled = true;
+            _drawn = style;
+            bool brush = style == UiControlStyle.Brush;
+            _edge.enabled = !brush;
+            Sprite plate = brush ? UiBrushArt.Get(UiBrushSprite.TooltipWash) : UiSprites.Control;
+            _plate.sprite = plate;
+            if (plate != null && plate.border != Vector4.zero)
+            {
+                _plate.type = Image.Type.Sliced;
+                _plate.pixelsPerUnitMultiplier = 1f;
+            }
+
+            Color fill = UiTokens.Get(brush ? UiColor.SurfaceInset : UiColor.SurfaceRaised);
+            if (brush)
+            {
+                fill.a = UiBrushTokens.TooltipWash;
+            }
+
+            _plate.color = fill;
+            UiFactory.Fill((RectTransform)_plate.transform, brush ? -WashOverhang : UiTokens.StrokeControl);
+            UiBrushKit.RestyleText(_text, brush ? UiType.MenuSmall : UiType.Label);
+        }
+
+        private void Present(RectTransform root, RectTransform target, string text, float maxWidth)
         {
             _target = target;
             gameObject.SetActive(true);
             transform.SetAsLastSibling();
+            ApplyStyle();
+            bool brush = _drawn == UiControlStyle.Brush;
+            UiType type = brush ? UiType.MenuSmall : UiType.Label;
+            if (brush)
+            {
+                _text.fontSize = UiTokens.FontSize(type);   // MenuSmall follows the text scale at every show (a 1.25 switch mid-session)
+            }
+
             _text.text = text;
 
-            float padX = (int)UiIconTokens.TooltipPadX;
-            float padY = (int)UiIconTokens.TooltipPadY;
-            float textWidth = Mathf.Min(UiIconTokens.TooltipMaxWidth - 2f * padX, _text.GetPreferredValues(text).x);
-            float textHeight = Mathf.Max(UiFactory.LineHeight(UiType.Label), _text.GetPreferredValues(text, textWidth, 0f).y);
+            float padX = brush ? UiBrushTokens.TooltipPadX : (int)UiIconTokens.TooltipPadX;
+            float padY = brush ? UiBrushTokens.TooltipPadY : (int)UiIconTokens.TooltipPadY;
+            float textWidth = Mathf.Min(maxWidth - 2f * padX, _text.GetPreferredValues(text).x);
+            float textHeight = Mathf.Max(UiFactory.LineHeight(type), _text.GetPreferredValues(text, textWidth, 0f).y);
             Vector2 size = new Vector2(Mathf.Ceil(textWidth + 2f * padX), Mathf.Ceil(textHeight + 2f * padY));
             _rect.sizeDelta = size;
             var textRect = (RectTransform)_text.transform;
@@ -146,7 +218,7 @@ namespace DD.Prototype.UI
             textRect.offsetMin = new Vector2(padX, padY);
             textRect.offsetMax = new Vector2(-padX, -padY);
 
-            _rect.anchoredPosition = Place(root, target, size);
+            _rect.anchoredPosition = Place(root, target, size, brush ? UiBrushTokens.TooltipGap : (int)UiIconTokens.TooltipGap);
 
             UiMotion.Kill(_show, false);
             _group.alpha = 0f;
@@ -154,14 +226,13 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>Centre of the tooltip in the root's space: under the target, else above; clamped inside the safe inset.</summary>
-        private static Vector2 Place(RectTransform root, RectTransform target, Vector2 size)
+        private static Vector2 Place(RectTransform root, RectTransform target, Vector2 size, float gap)
         {
             target.GetWorldCorners(s_corners);
             Vector2 min = root.InverseTransformPoint(s_corners[0]);
             Vector2 max = root.InverseTransformPoint(s_corners[2]);
             Rect area = root.rect;
             float inset = (int)UiTokens.SafeInset;
-            float gap = (int)UiIconTokens.TooltipGap;
 
             float y = min.y - gap - size.y * 0.5f;
             if (y - size.y * 0.5f < area.yMin + inset)

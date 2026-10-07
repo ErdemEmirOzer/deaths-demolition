@@ -121,7 +121,8 @@ namespace DD.Prototype.UI
         private RectTransform _railWordRect;
         private TMP_Text _railWord;
         private TMP_Text _railSub;
-        private Image _paneMark;
+        private UiBrushMark _paneMark;   // WP-098A (S-09 S4): the open pane's C8 under its rail icon (was the vermilion heading tick)
+        private UiButton _paneMarkOn;     // the rail item the C8 sits under (a redraw of the same pane lands it, no new stroke)
         private Image _railPad;
         private RectTransform _paneCard;
         private TMP_Text _level;
@@ -432,12 +433,10 @@ namespace DD.Prototype.UI
             Band(_railWord.rectTransform, 0f, wordLine);
             Band(_railSub.rectTransform, wordLine, subLine);
 
-            // The open pane's mark: the heading tick (the screen's one vermilion detail now PLAY is an icon) left of its icon.
-            _paneMark = UiFactory.HeadingTick("PaneMark", column);
-            _paneMark.rectTransform.anchorMin = new Vector2(0f, 1f);
-            _paneMark.rectTransform.anchorMax = new Vector2(0f, 1f);
-            _paneMark.rectTransform.pivot = new Vector2(1f, 0.5f);
-            _paneMark.gameObject.SetActive(false);
+            // The open pane's mark: WP-098A (S-09 07.10 S4) the kit's C8 under its icon - the rail's one selection trace and
+            // the screen's vermilion (the heading tick it replaces counted the same). Hidden until a pane opens.
+            _paneMark = UiBrushKit.SelectionMark(column);
+            _paneMark.gameObject.name = "PaneMark";
 
             MoveRailWord(_rail[0]);
             UiInput.ChainVertical(false, _playButton, _profileTab, _statisticsTab, _achievementsTab, _settingsTab, _controlsTab, _accessibilityTab, _quitButton);
@@ -686,12 +685,17 @@ namespace DD.Prototype.UI
             UiButton open = TabOf(_pane);
             if (_paneMark != null)
             {
-                _paneMark.gameObject.SetActive(open != null);
                 if (open != null)
                 {
-                    var icon = (RectTransform)open.transform;
-                    _paneMark.rectTransform.anchoredPosition = new Vector2(-(int)UiSpace.XS, icon.anchoredPosition.y);
+                    // Inks in under a newly opened pane's icon (Reselect; a cut under RM); a redraw of the same pane lands it.
+                    _paneMark.Under((RectTransform)open.transform, open != _paneMarkOn);
                 }
+                else
+                {
+                    _paneMark.Hide(true);
+                }
+
+                _paneMarkOn = open;
             }
 
             if (_profileTab != null)

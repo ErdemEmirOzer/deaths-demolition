@@ -105,6 +105,7 @@ namespace DD.Prototype.UI
             public bool Silent;     // WP-094: a listener-only cue (UiTimeline.Call) - no UiEvent is raised
             public int Id;
             public bool Fired;
+            public bool Silent;   // WP-098A: UiTimeline.Callback - the listener's OnCue only, no UiEvent
         }
 
         private struct TimelineData
@@ -482,6 +483,12 @@ namespace DD.Prototype.UI
         internal static void TimelineCue(UiTimeline timeline, UiEvent uiEvent, int cueId, float seconds)
         {
             TimelineCue(timeline, uiEvent, null, false, cueId, seconds);
+        }
+
+        /// <summary>WP-098A: a silent listener callback using the shared detailed cue path.</summary>
+        internal static void TimelineCallback(UiTimeline timeline, int cueId, float seconds)
+        {
+            TimelineCue(timeline, default(UiEvent), null, true, cueId, seconds);
         }
 
         /// <summary>WP-094: a cue with a raise detail, or a silent one (the listener alone hears it - <see cref="UiTimeline.Call"/>).</summary>
@@ -892,6 +899,13 @@ namespace DD.Prototype.UI
         public UiTimeline Call(float seconds, int cueId)
         {
             UiMotion.TimelineCue(this, default(UiEvent), null, true, cueId, seconds);
+            return this;
+        }
+
+        /// <summary>WP-098A: a silent callback; shares the allocation-free timeline cue path.</summary>
+        public UiTimeline Callback(float seconds, int cueId)
+        {
+            UiMotion.TimelineCallback(this, cueId, seconds);
             return this;
         }
 

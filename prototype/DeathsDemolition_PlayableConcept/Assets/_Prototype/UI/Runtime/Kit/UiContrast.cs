@@ -23,8 +23,14 @@ namespace DD.Prototype.UI
         /// <summary>Extra alpha applied to the foreground before measuring, e.g. a dimmed state.</summary>
         public readonly float ForegroundAlpha;
 
+        /// <summary>
+        /// WP-098A: extra alpha on the <see cref="CompositeOver"/> layer (its token α × this) - a brush scrim or wash is an
+        /// opaque token (SurfaceInset) laid at a kit α (UiBrushTokens), so the pair is measured as drawn. 1 = the token as is.
+        /// </summary>
+        public readonly float CompositeAlpha;
+
         public UiContrastCase(string description, UiColor foreground, UiColor background, float required,
-            UiColor? compositeOver = null, float foregroundAlpha = 1f)
+            UiColor? compositeOver = null, float foregroundAlpha = 1f, float compositeAlpha = 1f)
         {
             Description = description;
             Foreground = foreground;
@@ -32,6 +38,7 @@ namespace DD.Prototype.UI
             Required = required;
             CompositeOver = compositeOver;
             ForegroundAlpha = foregroundAlpha;
+            CompositeAlpha = compositeAlpha;
         }
     }
 
@@ -115,7 +122,9 @@ namespace DD.Prototype.UI
 
             if (c.CompositeOver.HasValue)
             {
-                background = Composite(UiTokens.Get(c.CompositeOver.Value), background);
+                Color layer = UiTokens.Get(c.CompositeOver.Value);
+                layer.a *= Mathf.Clamp01(c.CompositeAlpha);
+                background = Composite(layer, background);
             }
             else
             {

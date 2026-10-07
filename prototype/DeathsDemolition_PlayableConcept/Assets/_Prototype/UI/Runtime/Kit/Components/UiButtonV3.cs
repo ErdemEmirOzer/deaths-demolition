@@ -367,7 +367,9 @@ namespace DD.Prototype.UI
                 }
             }
 
-            if (pressed && _bevel == null)
+            // WP-098A: a Brush control's press is its depth (UiButtonBrush.cs), never the bevel.
+            bool bevel = pressed && _variant != UiButtonVariant.Brush;
+            if (bevel && _bevel == null)
             {
                 _bevel = UiFactory.NewImage("Bevel", transform, UiColor.ShadowKey, UiSprites.Solid);
                 var rect = (RectTransform)_bevel.transform;
@@ -388,9 +390,9 @@ namespace DD.Prototype.UI
                 }
             }
 
-            if (_bevel != null && _bevel.gameObject.activeSelf != pressed)
+            if (_bevel != null && _bevel.gameObject.activeSelf != bevel)
             {
-                _bevel.gameObject.SetActive(pressed); // PressDepth: Instant, no scale
+                _bevel.gameObject.SetActive(bevel); // PressDepth: Instant, no scale
             }
 
             if (_reason != null)

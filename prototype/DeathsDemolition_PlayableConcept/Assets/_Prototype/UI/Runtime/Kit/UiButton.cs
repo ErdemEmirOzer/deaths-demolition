@@ -109,6 +109,11 @@ namespace DD.Prototype.UI
 
             _label.transform.SetAsLastSibling();
 
+            if (variant == UiButtonVariant.Brush)
+            {
+                ConfigureBrush();   // WP-098A: fill, border and wash stay off (UiButtonBrush.cs)
+            }
+
             _configured = true;
 
             // Refresh(true), not ApplyImmediate(): the targets have to be resolved before
@@ -203,6 +208,11 @@ namespace DD.Prototype.UI
 
         public void OnSubmit(BaseEventData eventData)
         {
+            if (_variant == UiButtonVariant.Brush && !IsHoldButton && IsActive() && IsInteractable())
+            {
+                BrushSubmitDepth();   // WP-098A: a key / pad press dips the control too (80 ms, then release)
+            }
+
             if (IsHoldButton)
             {
                 BeginHold(true);
@@ -407,7 +417,13 @@ namespace DD.Prototype.UI
                 _marker.gameObject.SetActive(showMarker);
             }
 
-            if (instant)
+            if (_variant == UiButtonVariant.Brush)
+            {
+                // WP-098A: no surface to tint - the word's tone, the press depth and the disabled hairline (UiButtonBrush.cs).
+                SetLabelColour();
+                RefreshBrush(enabledControl, pressed);
+            }
+            else if (instant)
             {
                 ApplyImmediate();
             }
@@ -464,6 +480,14 @@ namespace DD.Prototype.UI
                         label = UiColor.TextPrimary;
                         break;
 
+                    case UiButtonVariant.Brush:
+                        // WP-098A (KIT-KILAVUZU §4.1 C11 / C17): no surface at all; in a choice row the word / glyph tone
+                        // carries the choice with the C8 (TextPrimary chosen, TextSecondary the others), elsewhere TextPrimary.
+                        fill = UiColor.SurfaceBase;
+                        border = UiColor.BorderHairline;
+                        label = _segment && !_selectedChoice ? UiColor.TextSecondary : UiColor.TextPrimary;
+                        break;
+
                     case UiButtonVariant.Ghost:
                         // WP-068 slice 5: no fill and no border - the word in TextPrimary
                         // (TextSecondary is the disabled label of filled buttons: AD 5b MUST-1);
@@ -492,6 +516,13 @@ namespace DD.Prototype.UI
                     : hovered
                         ? UiTokens.OpacityHoverWash
                         : 0f;
+
+            if (_variant == UiButtonVariant.Brush)
+            {
+                _fillTarget.a = 0f;
+                _borderTarget.a = 0f;
+                _washTarget = 0f;
+            }
 
             if (_variant == UiButtonVariant.Ghost)
             {

@@ -76,7 +76,16 @@ namespace DD.Prototype.UI
         Banner,
 
         /// <summary>WP-068 token v3: 16, Numeric face. Small numerals (pips, stat strips).</summary>
-        NumericS
+        NumericS,
+
+        /// <summary>WP-098A (KIT-KILAVUZU §2.3, T3): 26 regular, Text face, × TextScale - the brush windows' body (AP-028 'body': row names and values, button words, a confirm's body).</summary>
+        MenuBody,
+
+        /// <summary>WP-098A: 22 regular, Text face, × TextScale - dense rows, hints, legends, the brush tooltip (AP-028 'small').</summary>
+        MenuSmall,
+
+        /// <summary>WP-098A: 56, Numeric face - the C21 hero number (AP-028 'big').</summary>
+        NumericHero
     }
 
     /// <summary>
@@ -408,6 +417,8 @@ namespace DD.Prototype.UI
                 case UiType.BodyStrong:
                 case UiType.Label:
                 case UiType.Caption:
+                case UiType.MenuBody:    // WP-098A: the brush dialect's reading sizes scale with the text too (T3: 26 → 33 at 1.25)
+                case UiType.MenuSmall:
                     return Mathf.RoundToInt(size * Mathf.Clamp(TextScale, 1f, 1.25f));
                 default:
                     return size;
@@ -431,6 +442,9 @@ namespace DD.Prototype.UI
                 case UiType.NumericM: return 22;
                 case UiType.Banner: return 48;
                 case UiType.NumericS: return 16;
+                case UiType.MenuBody: return 26;
+                case UiType.MenuSmall: return 22;
+                case UiType.NumericHero: return 56;
                 default: return 18;
             }
         }
@@ -441,6 +455,8 @@ namespace DD.Prototype.UI
             {
                 case UiType.Body:
                 case UiType.Caption:
+                case UiType.MenuBody:
+                case UiType.MenuSmall:
                     return FontStyle.Normal;
                 default:
                     return FontStyle.Bold;
@@ -458,11 +474,14 @@ namespace DD.Prototype.UI
                 case UiType.Body:
                 case UiType.BodyStrong:
                 case UiType.Caption:
+                case UiType.MenuBody:    // WP-098A: the brush dialect's Body and Caption keep their reading air
+                case UiType.MenuSmall:
                     return 1.35f;
                 case UiType.NumericXL:
                 case UiType.NumericL:
                 case UiType.NumericM:
                 case UiType.NumericS:
+                case UiType.NumericHero:
                 case UiType.Display:
                 case UiType.Banner:
                     return 1f;

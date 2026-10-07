@@ -80,6 +80,12 @@ namespace DD.Prototype.UI
     /// WP-081 ikon v2 B5b: an O1 glyph (<see cref="UiArt.IsO1Glyph"/>) draws through the icon material (DD/UI/Fx Icon) -
     /// light only ever adds to that token (UiIconMaterialTests T1), and a disabled control shows the flat token.
     ///
+    /// WP-098A P0b (C-00 07.10) · C12 Brush tab (<see cref="UiControlStyle.Brush"/>, KILAVUZ §4.1 C12, KIT-API §4 "Choice
+    /// group"): a frameless <see cref="UiButtonVariant.Brush"/> control - no Nav segment fill, no ChosenBar; a 40 px glyph,
+    /// TextSecondary until it is the choice (TextPrimary), the choice's C8 drawn by its <see cref="UiBrushChoiceGroup"/>.
+    /// <see cref="UiBrushTokens.TabWidth"/>×<see cref="UiBrushTokens.ControlHeight"/> with the word as the tooltip; with
+    /// the word under the glyph (G2 interim, S-09 07.10 §8 S1: <c>showWords</c>) as wide and as tall as the word needs.
+    ///
     /// USAGE: <see cref="UiIconControls.Button"/>, <see cref="UiIconControls.Tab"/>, <see cref="UiIconControls.Tabs"/>.
     /// DON'T: ship an icon without a string key (no literal names), or a glyph under 24 px.
     /// ACCESSIBILITY: a name in every language, a word on focus, a 44 px hit; the choice is shape + luminance, not hue.
@@ -101,6 +107,13 @@ namespace DD.Prototype.UI
         private UiIconSize _size;
         private bool _tab;
         private string _objectName;
+        private UiControlStyle _style;
+
+        /// <summary>WP-098A: the dialect this control is drawn in.</summary>
+        public UiControlStyle Style
+        {
+            get { return _style; }
+        }
 
         public UiButton Button
         {
@@ -201,8 +214,10 @@ namespace DD.Prototype.UI
             get { return s_missingIcons; }
         }
 
-        internal void Bind(UiButton button, string iconKey, string nameKey, string nameFallback, string shortKey, string shortFallback, UiIconLabel labelMode, UiIconSize size, bool tab)
+        internal void Bind(UiButton button, string iconKey, string nameKey, string nameFallback, string shortKey, string shortFallback, UiIconLabel labelMode, UiIconSize size, bool tab,
+            UiControlStyle style = UiControlStyle.V3)
         {
+            _style = style;
             _button = button;
             _iconKey = iconKey;
             _nameKey = nameKey;
@@ -222,7 +237,7 @@ namespace DD.Prototype.UI
             // WP-081 ikon v2 B5b: an O1 glyph takes the icon material; any other key keeps SdfGlyph (C-00 06.10).
             _material = UiArt.ApplyIconMaterial(_glyph, iconKey, true);
 
-            if (tab)
+            if (tab && style == UiControlStyle.V3)   // WP-098A: a Brush tab's choice is the group's one C8, not a bar
             {
                 _bar = UiFactory.NewImage("ChosenBar", button.transform, UiColor.TextPrimary, UiSprites.Solid);
                 var barRect = (RectTransform)_bar.transform;
@@ -303,7 +318,11 @@ namespace DD.Prototype.UI
         {
             var rect = (RectTransform)_button.transform;
             var glyphRect = (RectTransform)_glyph.transform;
-            if (_labelMode == UiIconLabel.Below)
+            if (_style == UiControlStyle.Brush && _tab)
+            {
+                LayoutBrushTab(rect, glyphRect);
+            }
+            else if (_labelMode == UiIconLabel.Below)
             {
                 TMP_Text label = _button.LabelText;
                 label.fontSize = UiTokens.FontSize(UiType.Label);   // the tab's word: Label 15 (bold, upper case), not the button's Body
@@ -330,13 +349,57 @@ namespace DD.Prototype.UI
             else
             {
                 float hit = UiIconTokens.Hit(_size);
-                rect.sizeDelta = new Vector2(hit, hit);
+                // WP-098A (C10): a Brush icon button keeps the kit's 72×64 through every relayout (RefreshText), not the V3 hit square.
+                rect.sizeDelta = _style == UiControlStyle.Brush ? new Vector2(UiBrushTokens.IconButtonWidth, UiBrushTokens.ControlHeight) : new Vector2(hit, hit);
                 glyphRect.anchorMin = new Vector2(0.5f, 0.5f);
                 glyphRect.anchorMax = new Vector2(0.5f, 0.5f);
                 glyphRect.pivot = new Vector2(0.5f, 0.5f);
                 glyphRect.anchoredPosition = Vector2.zero;
             }
 
+            _glyph.transform.SetAsLastSibling();
+        }
+
+        /// <summary>
+        /// WP-098A P0b · a C12 tab: 72×64 with the glyph centred (the word is the tooltip), or - with the word under the glyph
+        /// (G2 interim) - at least 72 wide, as wide as the word plus a grid unit each side, as tall as glyph + word measured
+        /// at the current text scale (U2: from the text, never from a character count).
+        /// </summary>
+        private void LayoutBrushTab(RectTransform rect, RectTransform glyphRect)
+        {
+            if (_labelMode != UiIconLabel.Below)
+            {
+                rect.sizeDelta = new Vector2(UiBrushTokens.TabWidth, UiBrushTokens.ControlHeight);
+                glyphRect.anchorMin = new Vector2(0.5f, 0.5f);
+                glyphRect.anchorMax = new Vector2(0.5f, 0.5f);
+                glyphRect.pivot = new Vector2(0.5f, 0.5f);
+                glyphRect.anchoredPosition = Vector2.zero;
+                _glyph.transform.SetAsLastSibling();
+                return;
+            }
+
+            TMP_Text label = _button.LabelText;
+            UiBrushKit.RestyleText(label, UiType.Label);   // the tab's word: Label 15 (KILAVUZ §4.1 C12)
+            label.enableWordWrapping = false;
+            label.text = ShortLabel;
+            float line = UiFactory.LineHeight(UiType.Label);
+            float pad = (int)UiSpace.S;
+            float width = Mathf.Max(UiBrushTokens.TabWidth, UiIconTokens.Snap(label.GetPreferredValues(ShortLabel).x + 2f * pad));
+            float height = Mathf.Max(UiBrushTokens.ControlHeight, UiIconTokens.Snap(pad + (int)_size + (int)UiIconTokens.TabLabelGap + line + pad));
+            rect.sizeDelta = new Vector2(width, height);
+
+            glyphRect.anchorMin = new Vector2(0.5f, 1f);
+            glyphRect.anchorMax = new Vector2(0.5f, 1f);
+            glyphRect.pivot = new Vector2(0.5f, 1f);
+            glyphRect.anchoredPosition = new Vector2(0f, -pad);
+
+            var labelRect = (RectTransform)label.transform;
+            labelRect.anchorMin = new Vector2(0f, 0f);
+            labelRect.anchorMax = new Vector2(1f, 0f);
+            labelRect.pivot = new Vector2(0.5f, 0f);
+            labelRect.offsetMin = new Vector2(0f, pad);
+            labelRect.offsetMax = new Vector2(0f, pad + line);
+            label.alignment = TextAlignmentOptions.Center;
             _glyph.transform.SetAsLastSibling();
         }
 
@@ -389,14 +452,31 @@ namespace DD.Prototype.UI
             return icon;
         }
 
-        /// <summary>A tab: glyph over its short word, a Nav segment; <see cref="UiIconButton.SetSelected"/> marks the choice.</summary>
+        /// <summary>
+        /// A tab: glyph over its short word, a Nav segment; <see cref="UiIconButton.SetSelected"/> marks the choice.
+        /// WP-098A: <paramref name="style"/> Brush is the C12 tab (frameless, 40 px glyph, the word under it - the G2 interim;
+        /// <see cref="UiBrushKit.Tabs"/> builds the strip and its one C8, and drops the word with <c>showWords: false</c>).
+        /// </summary>
         public static UiIconButton Tab(Transform parent, string iconKey, string nameKey, string nameFallback, Action onClick,
-            string shortKey = null, string shortFallback = null)
+            string shortKey = null, string shortFallback = null, UiControlStyle style = UiControlStyle.V3)
         {
-            UiButton button = UiFactory.Button(UiStrings.Get(nameKey, nameFallback), parent, string.Empty, UiButtonVariant.Nav, onClick);
-            button.SetSegment(true);
+            return Tab(parent, iconKey, nameKey, nameFallback, onClick, shortKey, shortFallback, style, UiIconLabel.Below);
+        }
+
+        /// <summary>WP-098A: a tab whose word is <paramref name="label"/> (Below, or Tooltip once the glyph speaks for itself - G2).</summary>
+        internal static UiIconButton Tab(Transform parent, string iconKey, string nameKey, string nameFallback, Action onClick,
+            string shortKey, string shortFallback, UiControlStyle style, UiIconLabel label)
+        {
+            bool brush = style == UiControlStyle.Brush;
+            UiButton button = UiFactory.Button(UiStrings.Get(nameKey, nameFallback), parent, string.Empty, brush ? UiButtonVariant.Brush : UiButtonVariant.Nav, onClick);
+            if (!brush)
+            {
+                button.SetSegment(true);
+            }
+
             UiIconButton icon = button.gameObject.AddComponent<UiIconButton>();
-            icon.Bind(button, iconKey, nameKey, nameFallback, shortKey, shortFallback, UiIconLabel.Below, UiIconSize.M, true);
+            icon.Bind(button, iconKey, nameKey, nameFallback, shortKey, shortFallback, brush ? label : UiIconLabel.Below,
+                brush ? UiIconSize.L : UiIconSize.M, true, style);
             return icon;
         }
 
@@ -406,8 +486,13 @@ namespace DD.Prototype.UI
         /// </summary>
         public static float Tabs(IList<UiIconButton> tabs, Vector2 start)
         {
+            return Tabs(tabs, start, (int)UiTokens.TargetGap);
+        }
+
+        /// <summary>WP-098A: as <see cref="Tabs(IList{UiIconButton}, Vector2)"/>, with an explicit gap between tabs (Brush: TabStep − TabWidth = 16).</summary>
+        public static float Tabs(IList<UiIconButton> tabs, Vector2 start, float gap)
+        {
             float x = start.x;
-            float gap = (int)UiTokens.TargetGap;
             for (int i = 0; i < tabs.Count; i++)
             {
                 var rect = (RectTransform)tabs[i].transform;

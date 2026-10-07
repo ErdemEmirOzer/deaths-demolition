@@ -55,6 +55,7 @@ namespace DD.Prototype.UI
                 case UiType.NumericL:
                 case UiType.NumericM:
                 case UiType.NumericS:
+                case UiType.NumericHero:   // WP-098A: the C21 hero number
                     return UiFontRole.Numeric;
                 default:
                     return UiFontRole.Text;

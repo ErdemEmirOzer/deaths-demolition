@@ -28,7 +28,14 @@ namespace DD.Prototype.UI
         Ghost,
 
         /// <summary>WP-068 slice 5: a 44² glyph button (<see cref="UiButtons.Icon"/>); secondary treatment, the name is its accessible label.</summary>
-        Icon
+        Icon,
+
+        /// <summary>
+        /// WP-098A (KIT-API §3): frameless - no fill, border, wash, sheen or ring; focus = the cream brackets
+        /// (<see cref="UiFocusBrackets"/>), press = <see cref="UiPresets.PressDepth"/>, disabled = flat glyph + TextSecondary
+        /// + a hairline. The brush kit's C10 / C11 / C17 (<see cref="UiBrushKit"/>).
+        /// </summary>
+        Brush
     }
 
     /// <summary>
@@ -699,13 +706,19 @@ namespace DD.Prototype.UI
             UiButtonVariant variant,
             Action onClick)
         {
+            // WP-098A: Brush is frameless - no halo, ring, sheen or AP-012 frame; fill / border / wash are built (one state
+            // shape) and switched off in UiButton.Configure. Its word is MenuBody (26, regular), its height the kit's 64.
+            bool brush = variant == UiButtonVariant.Brush;
+
             var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(UiButton));
             var rt = (RectTransform)go.transform;
             rt.SetParent(parent, false);
             rt.anchorMin = new Vector2(0.5f, 0.5f);
             rt.anchorMax = new Vector2(0.5f, 0.5f);
             rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.sizeDelta = new Vector2(320f, UiTokens.TargetPreferred);
+            rt.sizeDelta = brush
+                ? new Vector2(UiBrushTokens.LabelButtonMin, UiBrushTokens.ControlHeight)
+                : new Vector2(320f, UiTokens.TargetPreferred);
             rt.anchoredPosition = Vector2.zero;
 
             // Invisible but raycastTarget: the hit area is the whole control rect, so O3
@@ -717,11 +730,16 @@ namespace DD.Prototype.UI
 
             Sprite shape = variant == UiButtonVariant.Card ? UiSprites.Card : UiSprites.Control;
 
-            Image halo = NewImage("FocusHalo", rt, UiColor.BorderFocusHalo, shape);
-            Outset((RectTransform)halo.transform, UiTokens.StrokeFocusRing + UiTokens.StrokeFocusHalo);
+            Image halo = null;
+            Image ring = null;
+            if (!brush)
+            {
+                halo = NewImage("FocusHalo", rt, UiColor.BorderFocusHalo, shape);
+                Outset((RectTransform)halo.transform, UiTokens.StrokeFocusRing + UiTokens.StrokeFocusHalo);
 
-            Image ring = NewImage("FocusRing", rt, UiColor.BorderFocus, shape);
-            Outset((RectTransform)ring.transform, UiTokens.StrokeFocusRing);
+                ring = NewImage("FocusRing", rt, UiColor.BorderFocus, shape);
+                Outset((RectTransform)ring.transform, UiTokens.StrokeFocusRing);
+            }
 
             if (variant == UiButtonVariant.Ghost)
             {
@@ -754,7 +772,7 @@ namespace DD.Prototype.UI
             // (line only, drawn over the fill); the colour logic in UiButton is untouched,
             // it still tints the same "Border" graphic per state.
             UiFrame frameKind = variant == UiButtonVariant.Card ? UiFrame.Card : UiFrame.Button;
-            if (UiArt.HasFrame(frameKind))
+            if (!brush && UiArt.HasFrame(frameKind))
             {
                 border.sprite = UiArt.Frame(frameKind);
                 border.type = Image.Type.Sliced;
@@ -768,7 +786,7 @@ namespace DD.Prototype.UI
                 ? TextAnchor.MiddleLeft
                 : TextAnchor.MiddleCenter;
 
-            TMP_Text label = Label("Label", rt, content, UiType.BodyStrong, UiColor.TextPrimary, anchor);
+            TMP_Text label = Label("Label", rt, content, brush ? UiType.MenuBody : UiType.BodyStrong, UiColor.TextPrimary, anchor);
             RectTransform labelRect = Fill((RectTransform)label.transform);
             labelRect.offsetMin = new Vector2((int)UiSpace.L, 0f);
             labelRect.offsetMax = new Vector2(-(int)UiSpace.L, 0f);

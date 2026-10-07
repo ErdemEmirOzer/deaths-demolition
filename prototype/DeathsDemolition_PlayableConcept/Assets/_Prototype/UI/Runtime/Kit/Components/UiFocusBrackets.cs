@@ -6,11 +6,15 @@ namespace DD.Prototype.UI
 {
     /// <summary>
     /// WP-068 slice 5 · component #2 FocusRing - the travelling half (direction §4): one set
-    /// of focus brackets (four 2 px corner arms, <see cref="UiSprites.FocusBrackets"/>) that
-    /// moves from the control that lost focus to the one that gained it (Move 140 for the
-    /// position and the size together). The per-control ring and halo stay where they are
-    /// and appear on frame 1 - the brackets are the motion that says WHERE focus went, the
-    /// ring is the proof that it arrived.
+    /// of focus brackets that moves from the control that lost focus to the one that gained it
+    /// (Move 140 for the position and the size together). The v3 controls' own ring and halo
+    /// stay where they are and appear on frame 1.
+    /// WP-098A (KIT-KILAVUZU §1 C7, S-09 S4 - global): the brackets are cream arms
+    /// (<see cref="UiBrushTokens.BracketArm"/> 10 × <see cref="UiBrushTokens.BracketStroke"/> 3, TextPrimary,
+    /// <see cref="UiSprites.FocusBracketsInk"/>) on a 2 px ink halo (BorderFocusHalo, <see cref="UiSprites.FocusBracketsHalo"/>,
+    /// drawn in a rect 2 px larger so it rims the arms on every side), <see cref="Outset"/> (8) off the control - and they
+    /// show fully opaque on the cut (the first frame): for a Brush control, which has no ring, they ARE the proof of focus.
+    /// The root carries no image of its own: halo, then arms, as children.
     ///
     /// Driven by the controls' own select / deselect (UiButton calls <see cref="Follow"/> and
     /// <see cref="Release"/>): no per-frame polling. The brackets live under the focused
@@ -20,8 +24,9 @@ namespace DD.Prototype.UI
     /// USAGE: automatic for every UiButton (rows, switches, steppers, cards, modal actions).
     /// DON'T: parent anything to the brackets, or call Follow for a control that is not
     /// focused (the brackets mean "this has focus").
-    /// ACCESSIBILITY: the ring is the guarantee (3 px Focus400 + 3 px halo, frame 1); the
-    /// brackets are Decor - Reduced Motion lands them at the destination with no flight.
+    /// ACCESSIBILITY: cream on its ink halo is 16.40:1 on any world; on the cut (first focus, a
+    /// new canvas) the arms are at α 1 in that frame - only the flight is Decor (Reduced Motion
+    /// lands them at the destination); v3 controls keep their ring as well.
     /// </summary>
     public sealed class UiFocusBrackets : MonoBehaviour
     {
@@ -32,7 +37,8 @@ namespace DD.Prototype.UI
         private static readonly Vector3[] s_corners = new Vector3[4];
 
         private RectTransform _rect;
-        private Image _image;
+        private Image _halo;
+        private Image _arms;
         private RectTransform _target;
         private int _generation;
 
@@ -46,6 +52,18 @@ namespace DD.Prototype.UI
         public static RectTransform Rect
         {
             get { return s_instance != null ? s_instance._rect : null; }
+        }
+
+        /// <summary>WP-098A · the cream arms (their ink halo sits under them); tests read their alpha on the cut frame (= 1).</summary>
+        public static Image Arms
+        {
+            get { return s_instance != null ? s_instance._arms : null; }
+        }
+
+        /// <summary>WP-098A · the arms' 2 px ink halo.</summary>
+        public static Image Halo
+        {
+            get { return s_instance != null ? s_instance._halo : null; }
         }
 
         /// <summary>Bring the brackets to <paramref name="target"/>: a flight from the previous control on the same canvas, a cut otherwise.</summary>
@@ -82,19 +100,27 @@ namespace DD.Prototype.UI
 
             Vector2 centre, size;
             Measure(space, target, out centre, out size);
+
+            // WP-098A: opaque at once on the cut and during a flight - no fade-in (KILAVUZ §1: the brackets show on frame 1).
+            brackets.Opaque();
             if (cut)
             {
                 UiMotion.KillTarget(brackets._rect, false);
                 brackets._rect.anchoredPosition = centre;
                 brackets._rect.sizeDelta = size;
-                brackets._image.canvasRenderer.SetAlpha(0f);
-                UiMotion.TintAlpha(brackets._image, 1f, UiDuration.Fast, UiEase.Settle, UiMotionClass.Decor);
                 return;
             }
 
             UiPresets.FocusTravel(brackets._rect, centre);
             UiMotion.Resize(brackets._rect, size, UiDuration.Fast, UiEase.Move, UiMotionClass.Decor);
-            UiMotion.TintAlpha(brackets._image, 1f, UiDuration.Fast, UiEase.Settle, UiMotionClass.Decor);
+        }
+
+        private void Opaque()
+        {
+            UiMotion.KillTarget(_halo, false);
+            UiMotion.KillTarget(_arms, false);
+            _halo.canvasRenderer.SetAlpha(1f);
+            _arms.canvasRenderer.SetAlpha(1f);
         }
 
         /// <summary>
@@ -146,14 +172,17 @@ namespace DD.Prototype.UI
 
         private static UiFocusBrackets Create(RectTransform space)
         {
-            Image image = UiFactory.NewImage("FocusBrackets", space, UiColor.BorderFocus, UiSprites.FocusBrackets);
-            image.raycastTarget = false;
-            var brackets = image.gameObject.AddComponent<UiFocusBrackets>();
-            brackets._image = image;
-            brackets._rect = (RectTransform)image.transform;
-            brackets._rect.anchorMin = new Vector2(0.5f, 0.5f);
-            brackets._rect.anchorMax = new Vector2(0.5f, 0.5f);
-            brackets._rect.pivot = new Vector2(0.5f, 0.5f);
+            RectTransform root = UiFactory.NewRect("FocusBrackets", space);
+            var brackets = root.gameObject.AddComponent<UiFocusBrackets>();
+            brackets._rect = root;
+
+            // The halo first (under), 2 px larger than the arms' rect, so its sprite rims the arms inside, outside and past the tips.
+            brackets._halo = UiFactory.NewImage("Halo", root, UiColor.BorderFocusHalo, UiSprites.FocusBracketsHalo);
+            UiFactory.Outset(brackets._halo.rectTransform, UiBrushTokens.BracketHalo);
+            brackets._arms = UiFactory.NewImage("Arms", root, UiColor.TextPrimary, UiSprites.FocusBracketsInk);
+            UiFactory.Fill(brackets._arms.rectTransform);
+            brackets._halo.raycastTarget = false;
+            brackets._arms.raycastTarget = false;
             s_instance = brackets;
             return brackets;
         }

@@ -248,8 +248,9 @@ namespace DD.Prototype.Tests.EditMode
             // capture-only Fx sample page (gold-leaf chips, sparks). WP-068 8b / 8-R / 8c: the HUD's own parts - HudReticle
             // (E15: Gold400 while a Special is live), RunHudScreen.Ink.cs (the ink HUD's gold readout) and UiWorldMarker
             // (E14 / E21: the drop's marker). WP-068 R1-C: UpgradeTree.cs - the shop's price and its OFFER ring / chip (what
-            // this offer sells for gold); PauseScreen.cs - the run-so-far strip's gold counter.
-            { "StateGold", new[] { "UpgradeTree.cs", "PauseScreen.cs", "RunHudScreen.cs", "RunHudScreen.Ink.cs", "HudReticle.cs", "UiWorldMarker.cs", "UpgradeScreen.cs", "ResultsViewModel.cs", "UiTokens.cs", "UiContrast.cs", "UiKitSheet.cs", "UiKitContrast.cs", "UiFxGlobals.cs", "UiFxCaptureAgent.cs" } },
+            // this offer sells for gold); PauseScreen.cs - the run-so-far strip's gold counter. WP-098A: the brush kit's C21
+            // counter picks its currency colour in the kit (UiBrushKit.BigCounter - the P0b half, UiBrushKit.Controls.cs).
+            { "StateGold", new[] { "UpgradeTree.cs", "PauseScreen.cs", "RunHudScreen.cs", "RunHudScreen.Ink.cs", "HudReticle.cs", "UiWorldMarker.cs", "UpgradeScreen.cs", "ResultsViewModel.cs", "UiTokens.cs", "UiContrast.cs", "UiKitSheet.cs", "UiKitContrast.cs", "UiFxGlobals.cs", "UiFxCaptureAgent.cs", "UiBrushKit.Controls.cs" } },
             { "BarSpecial", new[] { "RunHudScreen.cs", "UiTokens.cs", "UiContrast.cs", "UiKitSheet.cs", "UiKitContrast.cs" } },
             { "GoldLeaf", new[] { "UiTokens.cs" } },
             // Vermilion = one primary CTA per screen/modal, heading tick, BUY pill, seal.
@@ -258,7 +259,7 @@ namespace DD.Prototype.Tests.EditMode
             // UiCurtain (10b-2): the boot logo seal - the one vermilion at boot, ink before loading (§15.3).
             // WP-094 (S-09 decision (a), C-00 07.10; the user's note 3: "kırmızı mühür aksanı"): RunHudScreen.Ink.cs - the
             // HUD round's one seal accent (AP-032 tints its seal cell #C4362B; UiOrnamentCensusTests names it).
-            { "AccentPrimary", new[] { "UiButton.cs", "UiFactory.cs", "UpgradeScreen.cs", "PauseScreen.cs", "UiTokens.cs", "UiContrast.cs", "UiFxCaptureAgent.cs", "UiCurtain.cs", "RunHudScreen.Ink.cs" } },
+            { "AccentPrimary", new[] { "UiButton.cs", "UiFactory.cs", "UpgradeScreen.cs", "PauseScreen.cs", "UiTokens.cs", "UiContrast.cs", "UiFxCaptureAgent.cs", "UiCurtain.cs", "RunHudScreen.Ink.cs", "UiBrushMark.cs", "UiKitContrast.cs" } },
             // M4-R1 N19: the glyph identity tints are named in one place; every consumer asks UiGlyphTints.
             { "GlyphIwa", new[] { "UiTokens.cs", "UiGlyphTints.cs" } },
             { "GlyphNami", new[] { "UiTokens.cs", "UiGlyphTints.cs" } },
