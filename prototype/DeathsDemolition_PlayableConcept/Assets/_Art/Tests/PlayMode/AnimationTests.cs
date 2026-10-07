@@ -85,6 +85,9 @@ namespace DD.Art.Tests.PlayMode
         public void TearDown()
         {
             LogAssert.ignoreFailingMessages = false;
+            // R3 (C-00 07.10): the next test starts in the process default, TopDown (user 06.10: tests run top-down only) — the FP
+            // tests below leave first or third person in their finally blocks
+            DD.Prototype.CameraSystem.CameraModeService.Request(DD.Prototype.CameraSystem.CameraMode.TopDown, instant: true);
         }
 
         // WP-071 (C-00 26.09): the FP arms tests set the switch for their own run and restore it — the shipped default is one commit either way.
@@ -522,6 +525,7 @@ namespace DD.Art.Tests.PlayMode
         }
 
         [UnityTest]
+        [Category("FPTP")]   // R3 (C-00 07.10): first person only — out of scope (user 06.10: top-down only); main-ci runs !FPTP
         [Timeout(300000)]
         public IEnumerator FpKollar_Kapaliyken_FpdeGizli_SilahFpViewda()
         {
@@ -544,6 +548,7 @@ namespace DD.Art.Tests.PlayMode
         }
 
         [UnityTest]
+        [Category("FPTP")]   // R3 (C-00 07.10): first person only — out of scope (user 06.10: top-down only); main-ci runs !FPTP
         [Timeout(300000)]
         public IEnumerator FpKollar_Viewmodel_fpCameraCapada_AtesReloadGecis_TPyeDonuste_Gizli()
         {
@@ -663,6 +668,7 @@ namespace DD.Art.Tests.PlayMode
         private const string H4aName = "DD.Art.Tests.PlayMode.AnimationTests.FpKollar_Kadraj_KolPayi10_KameraMesafesi15_ElSilahta";
 
         [UnityTest]
+        [Category("FPTP")]   // R3 (C-00 07.10): first person only — out of scope (user 06.10: top-down only); main-ci runs !FPTP
         [Timeout(300000)]
         public IEnumerator FpKollar_Kadraj_KolPayi10_KameraMesafesi15_ElSilahta()
         {
@@ -753,6 +759,7 @@ namespace DD.Art.Tests.PlayMode
         }
 
         [UnityTest]
+        [Category("FPTP")]   // R3 (C-00 07.10): first person only — out of scope (user 06.10: top-down only); main-ci runs !FPTP
         [Timeout(300000)]
         public IEnumerator FpKollar_V6Kareleri_4Silah()
         {
