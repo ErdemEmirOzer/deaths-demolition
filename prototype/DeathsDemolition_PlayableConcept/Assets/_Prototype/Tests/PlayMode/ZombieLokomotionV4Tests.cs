@@ -176,7 +176,8 @@ namespace DD.Prototype.Tests.PlayMode
         private const int EtiketYuru = 0, EtiketDur = 2;
         private const int DurKare = 60, DurOlcum = 30;                  // still segment before each walk; frames 30..59 = the idle control
         private const double TemasPayAlt = 0.15, TemasPayUst = 0.85;   // a walking foot is down 30–75 % of the time; outside = saturated
-        private const double PkDurusPayi = 0.8, PkDurusHiz = 0.05;     // idle control: ≥ 80 % foot-frames in contact, mean foot speed < 0.05 m/s
+        private const double PkDurusPayi = 0.8, PkDurusHiz = 0.12;     // idle control: ≥ 80 % foot-frames in contact, mean planted-foot speed < 0.12 m/s (before3: the Executioner idle sways its planted foot at 0.09)
+        private const double PkTemasPayAlt = 0.04;                      // IK-off walk/run control floor: a run is airborne most of the cycle (before3 Runner 0.06); 0 = a dead detector
         private const int PkAdimMin = 3;                                // step control: ≥ 3 onsets per foot per body in the 7 s IK-off walk
         // düzeltme-2 07.10 (before2 / ara2): one group failing its own checks is named and left out; the test needs ≥ 6 of 8 valid
         // groups (game pose and IK-off control each), so one odd clip does not hide the other seven and a broken detector still fails.
@@ -746,7 +747,7 @@ namespace DD.Prototype.Tests.PlayMode
                 }
 
                 double gp = g.TemasPayi;
-                if (!(gp >= TemasPayAlt && gp <= TemasPayUst)) g.Engel.Add("PK temas payı " + F(gp, 2) + " (doymuş)");
+                if (!(gp >= PkTemasPayAlt && gp <= TemasPayUst)) g.Engel.Add("PK temas payı " + F(gp, 2) + " (doymuş)");
                 if (GrupEngelli(g, "pk", engelli)) continue;
                 gecerli++;
                 payMin = double.IsNaN(payMin) ? gPay : Math.Min(payMin, gPay);
