@@ -10,6 +10,8 @@ guard + helpers copied to <tmp>/tools, HOME=<tmp>/home, DD_SLOT_BASE=<tmp>/slots
   cp        pass-through; <tmp>/cp-slow → the first copy sleeps (and touches <tmp>/cp-started); <tmp>/cp-mutate → after
             copying ui-settings.json the live file changes (a save landing mid-copy)
   df/sysctl plenty of disk / no swap for slot.sh's disk gate
+  sleep     pass-through; only in a process whose env names SHIM_SLEEP_GATE: `sleep 1` (the guard's R10 verification step,
+            after the writes, record still "restoring") touches <tmp>/sleep-held and waits while that gate file exists (≤ 90 s)
 No Unity, no Player, no fixture process carries the real Player name (a lock holder is <tmp>/Unity.app/…/Unity → sleep)."""
 import hashlib, json, os, plistlib, shutil, signal, subprocess, sys, tempfile, time, unittest
 from pathlib import Path
@@ -72,6 +74,13 @@ for a in "$@"; do case "$a" in *"Contents/MacOS/(Deaths Demolition"*)
   [ -x "$SHIM_TMP/pgrep-hook" ] && "$SHIM_TMP/pgrep-hook" "$n"
   [ -f "$SHIM_TMP/pgrep-player" ] && { cat "$SHIM_TMP/pgrep-player"; exit 0; }; exit 1 ;; esac; done
 exec /usr/bin/pgrep "$@"
+'''
+# WP-099 (gt MUST-1, 08.10): a hold no timeout cuts — the defaults shim's import hold is cut by io's 10 s DEFAULTS_TIMEOUT
+SLEEP_SHIM = r'''#!/bin/sh
+if [ "$1" = 1 ] && [ -n "${SHIM_SLEEP_GATE:-}" ] && [ -f "$SHIM_SLEEP_GATE" ]; then
+  : > "$SHIM_TMP/sleep-held"; n=0; while [ -f "$SHIM_SLEEP_GATE" ] && [ $n -lt 900 ]; do /bin/sleep 0.1; n=$((n+1)); done
+fi
+exec /bin/sleep "$@"
 '''
 CP_SHIM = r'''#!/bin/sh
 if [ -f "$SHIM_TMP/cp-slow" ] && [ ! -f "$SHIM_TMP/cp-started" ]; then : > "$SHIM_TMP/cp-started"; sleep "$(cat "$SHIM_TMP/cp-slow")"; fi
@@ -196,6 +205,7 @@ class GuardFixture(unittest.TestCase):
         write_exec(self.bin / "mv", MV_SHIM)
         write_exec(self.bin / "df", DF_SHIM)
         write_exec(self.bin / "sysctl", SYSCTL_SHIM)
+        write_exec(self.bin / "sleep", SLEEP_SHIM)
         (self.tmp / "home").mkdir(); (self.tmp / "slots").mkdir()
         self.log = self.tmp / "shim.log"; self.log.write_text("")
         self.dir = self.tmp / "ug"
@@ -1831,17 +1841,22 @@ class LedgerTests(RestoreBase):
         self.assertEqual(0, rc, out + err)   # no overlap with the dirty editor window
 
     def test_Ledger_CanliRestore_Bekler75(self):
+        """a snapshot over a window that a LIVE guard is restoring waits in the queue → 75 'restoring'. WP-099 (gt MUST-1,
+        08.10): the restore is held after its writes, in R10's `sleep 1` (the sleep shim, gated for this guard's env only) —
+        no timeout cuts that hold. The old hold sat in the defaults shim's import, which io's 10 s DEFAULTS_TIMEOUT cut under
+        load: the restore ended WRITE_FAILED, the record went dirty and the snapshot got 65 (1 in 9 runs at load ~100)."""
         self.snap("editor")
         (self.d1 / "ui-settings.json").write_text('{"ui": 99}\n')
-        self.hook("")   # pgrep is not called for the editor area; hold the restore in its write phase via the defaults shim
-        (self.tmp / "defaults-import-sleep").write_text("")
         d = load_plist(self.p2); d["EditorKey"] = "run"; self.write_plist(self.p2, d)
-        g = self.start_guard("restore", self.dir, "--scope", "editor")
-        self.assertTrue(self.wait_file(self.tmp / "import-started", 60))
+        gate = self.tmp / "sleep-gate"; gate.write_text("")
+        g = self.start_guard("restore", self.dir, "--scope", "editor", SHIM_SLEEP_GATE=str(gate))
+        self.assertTrue(self.wait_file(self.tmp / "sleep-held", 120))
         rc, out, err = self.run_guard("snapshot", self.tmp / "ugB", "--scope", "editor", DD_GUARD_QUEUE_WAIT="6")
         self.assertEqual(75, rc, out + err); self.assertIn("restoring", out + err)
-        (self.tmp / "defaults-import-sleep").unlink()
-        self.kill_group(g)   # cleanup: the held import may already have hit the 10 s DEFAULTS_TIMEOUT and ended
+        self.assertIsNone(g.poll())   # the restorer was held, alive, the whole time
+        gate.unlink()
+        gout, gerr = g.communicate(timeout=120)
+        self.assertEqual(0, g.returncode, gout + gerr)   # let go, it verifies and ends clean
 
     def test_P5_IcPencereCanliRestoreEdiliyor_Dis75Yazimsiz_RestorerOlunce64_SonraIkisi0(self):
         """P5 gt N-4 (C-00 07.10, option A): the outer window's restore while the nested window is being restored by a live
