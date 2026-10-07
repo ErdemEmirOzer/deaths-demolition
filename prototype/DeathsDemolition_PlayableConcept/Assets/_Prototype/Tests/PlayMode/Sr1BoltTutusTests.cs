@@ -16,15 +16,19 @@ namespace DD.Prototype.Tests.PlayMode
     /// counts as the upper body's rest, so the weapon-first hold and the support grip stay on through it — the clip's own rotation
     /// rides on the hold (WeaponMountAlignment.HoldDelta), the weapon stays at the hold pivot. Before, both gates closed for the
     /// cycle and the weapon swung to the clip's pose (~91 cm at the muzzle against the chest, top-down, S-02 r3td1). Top-down camera.
-    /// Acceptance (C-00): hold weight 1 on every frame in Cycle_V3; the muzzle's travel against the chest per shot ≤ 16 cm (the old
-    /// path's clip alone moved it 14–16 cm); and the support hand on the handguard through it (grip weight 1, ≤ 1 cm — the clip's
-    /// lh_release is not taken in the cycle). The frames' weights are logged.
+    /// Acceptance (C-00 07.10): hold weight 1 on every frame in Cycle_V3; the support hand on the handguard through it (grip weight 1,
+    /// ≤ 1 cm — the clip's lh_release is not taken in the cycle); the muzzle's travel against the chest per shot (the shot and the
+    /// whole bolt cycle, 2 s) ≤ 1.2 × the clip-only path's on the same metric — a regression guard: DD_HOLD_IK=0 measured 22.6 cm
+    /// (r3e), the hold 25.5 cm (r3c; the difference is WP-087 C's kick the arms now carry), the gates closing ~91 cm. The frames'
+    /// weights and the kick-window / after split are logged.
     /// </summary>
     [TestFixture]
     [Category("WP083")]
     public sealed class Sr1BoltTutusTests
     {
-        private const float MuzzleTravelMax = 0.16f;
+        // 1.2 × the clip-only path's 22.6 cm on this metric (r3e, 07.10). The 16 cm first proposed came from S-02's feel window (12
+        // frames, back only) — another metric (C-00 07.10)
+        private const float MuzzleTravelMax = 0.27f;
         private SpecialWeaponSahne _s;
 
         [UnitySetUp]
@@ -32,6 +36,8 @@ namespace DD.Prototype.Tests.PlayMode
         {
             WeaponHoldIk.ResetStatics();
             WeaponGripIk.ResetStatics();
+            // the owner's A/B switch, as R2HeroOlcumTests (r2-measure-contract measuredBy.env): DD_HOLD_IK=0 measures the clip-only path
+            WeaponHoldIk.Enabled = System.Environment.GetEnvironmentVariable("DD_HOLD_IK") != "0";
             _s = new SpecialWeaponSahne();
             yield return _s.Kur();
         }
@@ -49,13 +55,13 @@ namespace DD.Prototype.Tests.PlayMode
 
         [UnityTest]
         [Timeout(300000)]
-        public IEnumerator Sr1_BoltDongusu_TutusAcik_NamluGogseGore16cmAltinda()
+        public IEnumerator Sr1_BoltDongusu_TutusVeKavramaAcik_NamluKlipYolununEn120si()
         {
             CameraModeService.Request(CameraMode.TopDown, instant: true);
             Time.captureDeltaTime = 1f / 60f;
             var body = _s.Rig.GetComponentInChildren<PlayerSkinnedVisual>(true);
             Assert.IsNotNull(body, "skinned oyuncu yok");
-            Assert.IsNotNull(body.HoldIk, "WeaponHoldIk yok (varsayılan açık olmalı)");
+            if (WeaponHoldIk.Enabled) Assert.IsNotNull(body.HoldIk, "WeaponHoldIk yok (varsayılan açık olmalı)");
             _s.Controller.EquipClassic(ClassicWeaponId.Sr1, _s.Config);
             yield return SpecialWeaponSahne.Kareler(90);
             Animator a = body.Animator;
@@ -71,21 +77,25 @@ namespace DD.Prototype.Tests.PlayMode
             float worstTravel = 0f, minCycleWeight = 1f, minGripWeight = 1f, worstGripCm = 0f;
             for (int shot = 0; shot < 3; shot++)
             {
-                yield return SpecialWeaponSahne.Bekle(() => body.HoldIk.Weight >= 1f && !_s.Controller.Classic.IsReloading, 5f, "sr_1 tutuşu dinlenmede değil");
+                yield return SpecialWeaponSahne.Bekle(() => (!WeaponHoldIk.Enabled || body.HoldIk.Weight >= 1f) && !_s.Controller.Classic.IsReloading, 5f, "sr_1 tutuşu dinlenmede değil");
+                if (!WeaponHoldIk.Enabled) yield return SpecialWeaponSahne.Kareler(30);   // the clip-only path: the previous cycle out
                 Vector3 rest = InChest(chest, muzzle.position);
                 _s.Girdi.AtesBasti = true; _s.Girdi.AtesBasili = true;
                 yield return null;
                 _s.Girdi.AtesBasti = false; _s.Girdi.AtesBasili = false;
-                float travel = 0f;
+                float travel = 0f, kick = 0f, bolt = 0f;
                 int inCycle = 0;
                 for (int f = 0; f < 120; f++)   // 2 s: the shot, the bolt cycle and its exit
                 {
                     yield return null;
-                    travel = Mathf.Max(travel, Vector3.Distance(InChest(chest, muzzle.position), rest));
+                    float d = Vector3.Distance(InChest(chest, muzzle.position), rest);
+                    travel = Mathf.Max(travel, d);
+                    if (f < 12) kick = Mathf.Max(kick, d); else bolt = Mathf.Max(bolt, d);   // the kick window (S-02's 12 frames), then the bolt
                     if (a.GetCurrentAnimatorStateInfo(layer).shortNameHash != cycleHash) continue;
                     inCycle++;
-                    minCycleWeight = Mathf.Min(minCycleWeight, body.HoldIk.Weight);
-                    if (body.HoldIk.Weight < 0.999f) openGateMisses++;
+                    float hw = body.HoldIk != null ? body.HoldIk.Weight : 0f;
+                    minCycleWeight = Mathf.Min(minCycleWeight, hw);
+                    if (WeaponHoldIk.Enabled && hw < 0.999f) openGateMisses++;
                     // the support hand stays on the handguard through the cycle (lh_release is not taken there)
                     WeaponGripIk grip = body.GripIk;
                     float gw = grip != null ? grip.Weight : 0f;
@@ -96,16 +106,17 @@ namespace DD.Prototype.Tests.PlayMode
 
                 cycleFrames += inCycle;
                 worstTravel = Mathf.Max(worstTravel, travel);
-                report.Add("shot " + shot + " muzzle travel " + (travel * 100f).ToString("F1", CultureInfo.InvariantCulture) + " cm, Cycle_V3 frames " + inCycle);
+                report.Add("shot " + shot + " muzzle travel " + (travel * 100f).ToString("F1", CultureInfo.InvariantCulture) + " cm (kick window " +
+                           (kick * 100f).ToString("F1", CultureInfo.InvariantCulture) + ", after " + (bolt * 100f).ToString("F1", CultureInfo.InvariantCulture) + "), Cycle_V3 frames " + inCycle);
             }
 
-            Debug.Log("[DD-TEST] wp083.sr1bolt holdWeightMinInCycle=" + minCycleWeight.ToString("F3", CultureInfo.InvariantCulture) + " gripWeightMinInCycle=" +
+            Debug.Log("[DD-TEST] wp083.sr1bolt hold=" + (WeaponHoldIk.Enabled ? "on" : "off") + " holdWeightMinInCycle=" + minCycleWeight.ToString("F3", CultureInfo.InvariantCulture) + " gripWeightMinInCycle=" +
                       minGripWeight.ToString("F3", CultureInfo.InvariantCulture) + " gripErrMaxCm=" + worstGripCm.ToString("F2", CultureInfo.InvariantCulture) + " muzzleTravelMaxCm=" +
                       (worstTravel * 100f).ToString("F1", CultureInfo.InvariantCulture) + " :: " + string.Join(" | ", report));
             // the source is there: the bolt cycle played
             Assert.Greater(cycleFrames, 0, "Cycle_V3 hiç oynamadı (sr_1 bolt döngüsü yok)");
             Assert.AreEqual(0, openGateMisses, "Cycle_V3 karesinde tutuş ağırlığı < 1 (en düşük " + minCycleWeight.ToString("F3", CultureInfo.InvariantCulture) + ")\n" + string.Join("\n", report));
-            Assert.LessOrEqual(worstTravel, MuzzleTravelMax, "sr_1 namlusu atış başına göğse göre > 16 cm oynuyor\n" + string.Join("\n", report));
+            Assert.LessOrEqual(worstTravel, MuzzleTravelMax, "sr_1 namlusu atış başına göğse göre > 27 cm oynuyor (yalnız klip yolunun 1,2 katı)\n" + string.Join("\n", report));
             Assert.AreEqual(0, gripMisses, "Cycle_V3 karesinde sol el kavraması bırakıyor (en düşük ağırlık " + minGripWeight.ToString("F3", CultureInfo.InvariantCulture) + ")");
             Assert.LessOrEqual(worstGripCm, 1f, "Cycle_V3'te sol el kundaktan > 1 cm (H1 eşiği)");
         }
