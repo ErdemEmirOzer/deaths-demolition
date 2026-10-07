@@ -670,6 +670,119 @@ namespace DD.Art.Tests.EditMode
             Debug.Log("[DD-TEST] wp074.b8.bake " + report.lightmapCount + " lightmaps " + report.shippedBytes / 1048576 + " MB imported (" + report.bytes / 1048576 + " MB EXR), probes " + report.probes + ", reflection " + report.reflectionProbes + ", " + report.bakeSeconds.ToString("F0") + " s");
         }
 
+        /// <summary>
+        /// R3 #1 (C-00 07.10 decision B) · The bake writes its probes into the root's <see cref="WorldBakedProbes"/> (the runtime binds
+        /// them: the world is loaded additively and Unity never does): the same count the bake laid out, from the scene's own lighting
+        /// data (or the standalone copy). AD 07.10 M1: the ground, plaza slate, rock-garden gravel and every pond's water stay off the
+        /// probes (the runtime ambient, the approved Look B tone); the bamboo grove stays probe-lit.
+        /// </summary>
+        [Test]
+        [Category("R3")]
+        public void Greybox_R3_PisimisProblar_KokteReferans_ZeminVeSuProbDisi()
+        {
+            Open();
+            var report = JsonUtility.FromJson<WorldV5Lighting.Report>(File.ReadAllText(WorldV5Lighting.ReportPath));
+            var holder = GameObject.Find(Ap005WorldBootstrap.RootName).GetComponent<WorldBakedProbes>();
+            Assert.IsNotNull(holder, "kökte WorldBakedProbes yok (bake sonrası WriteProbeReference)");
+            Assert.IsNotNull(holder.Probes, "pişmiş prob referansı boş");
+            Assert.AreEqual(report.probes, holder.Probes.count, "referanstaki prob sayısı bake'in yerleştirdiği değil");
+            Assert.AreEqual(holder.Probes.count, holder.BakedCount, "BakedCount");
+            Assert.AreEqual(report.probeRefCount, holder.Probes.count, "rapordaki probeRefCount");
+            Assert.AreEqual(report.probeSource, holder.Source, "rapordaki probeSource");
+            string path = AssetDatabase.GetAssetPath(holder.Probes);
+            if (holder.Source == "lightingData")
+                StringAssert.EndsWith("/LightingData.asset", path, "kaynak sahnenin kendi ışık verisi olmalı");
+            else
+                Assert.AreEqual(WorldV5Lighting.StandaloneProbesPath, path, "bağımsız kopya yolu");
+
+            int off = 0, ponds = 0;
+            foreach (MeshRenderer r in GameObject.Find(Ap005WorldBootstrap.RootName).GetComponentsInChildren<MeshRenderer>(true))
+            {
+                if (!WorldV5Lighting.IsProbeOff(r.name)) continue;
+                Assert.AreEqual(UnityEngine.Rendering.LightProbeUsage.Off, r.lightProbeUsage, r.name + ": zemin/su prob dışı kalmalı (AD M1)");
+                off++;
+                if (r.name.StartsWith("Pond", System.StringComparison.Ordinal)) ponds++;
+            }
+
+            Assert.GreaterOrEqual(ponds, 3, "havuz suları");
+            Assert.GreaterOrEqual(off, 6, "Ground + Plaza_Slate + Karesansui_Gravel + havuzlar");
+            int groveProbe = 0;
+            foreach (MeshRenderer r in GameObject.Find(WorldV5Dress.GroveGroupName).GetComponentsInChildren<MeshRenderer>(true))
+                if (r.lightProbeUsage == UnityEngine.Rendering.LightProbeUsage.BlendProbes) groveProbe++;
+            Assert.Greater(groveProbe, 0, "bambu korusu probla aydınlanmalı");
+            Debug.Log("[DD-TEST] r3.probes.ref " + holder.Probes.count + " (" + holder.Source + ") off=" + off + " groveProbe=" + groveProbe);
+        }
+
+        /// <summary>
+        /// N3 (WP-081 B, menu-n2-n4 RAPOR §N3) · Each pond's water is the builder's ellipse disc (<see cref="GreyboxV6Builder.PondWaterSegments"/>
+        /// rim vertices, depth ramp in R, foam band in G) instead of the 20-sided Cylinder, and the waterfall pond keeps its shore: at
+        /// least six strips outside the falls' clearing, the strips and curves covering ≥ 60 % of its rim, the two curved pieces on the
+        /// rim (not out on the grass).
+        /// </summary>
+        [Test]
+        [Category("R3")]
+        public void Greybox_N3_HavuzSuyu_ElipsAg_SelaleHavuzununKiyisi()
+        {
+            Open();
+            Transform greybox = GameObject.Find(GreyboxV6Builder.GreyboxRootName).transform;
+            Transform falls = null;
+            var waters = new List<Transform>();
+            foreach (Transform w in greybox)
+            {
+                if (!w.name.StartsWith("Pond", System.StringComparison.Ordinal) || !w.name.EndsWith("_Water", System.StringComparison.Ordinal)) continue;
+                waters.Add(w);
+                Mesh mesh = w.GetComponent<MeshFilter>().sharedMesh;
+                int index = int.Parse(w.name.Substring(4, w.name.Length - 4 - "_Water".Length));
+                Assert.AreEqual(GreyboxV6Builder.PondWaterMeshPath(index), AssetDatabase.GetAssetPath(mesh), w.name + ": su ağı builder'ın elipsi değil");
+                int seg = GreyboxV6Builder.PondWaterSegments;
+                Assert.GreaterOrEqual(seg, 96, "kenar");
+                Assert.AreEqual(seg * GreyboxV6Builder.PondRingInsets.Length + 1, mesh.vertexCount, w.name + ": köşe sayısı");
+                Color[] colors = mesh.colors;
+                Assert.AreEqual(mesh.vertexCount, colors.Length, w.name + ": vertex rengi yok");
+                for (int i = 0; i < seg; i++)
+                {
+                    Assert.AreEqual(0f, colors[i].r, 1e-4f, w.name + ": kıyıda derinlik 0");
+                    Assert.AreEqual(1f, colors[i].g, 1e-4f, w.name + ": kıyıda köpük bandı");
+                }
+
+                Assert.AreEqual(1f, colors[mesh.vertexCount - 1].r, 1e-4f, w.name + ": merkez derin");
+                Assert.IsNull(w.GetComponent<Collider>(), w.name + ": su ağının çarpıştırıcısı yok");
+                if (falls == null || w.localScale.x * w.localScale.z > falls.localScale.x * falls.localScale.z) falls = w;
+            }
+
+            Assert.GreaterOrEqual(waters.Count, 3, "havuzlar");
+            Transform shores = GameObject.Find(WorldV5Dress.ShoreGroupName).transform;
+            int strips = 0, curves = 0;
+            float covered = 0f;
+            foreach (Transform t in shores)
+            {
+                bool strip = t.name.StartsWith("SM_pond_shore_moss", System.StringComparison.Ordinal) || t.name.StartsWith("SM_pond_shore_pebble", System.StringComparison.Ordinal);
+                bool curve = t.name.StartsWith("SM_pond_shore_curve", System.StringComparison.Ordinal);
+                if (!strip && !curve) continue;
+                // each piece belongs to the pond whose rim it sits closest to (Pond1's east rim lies inside Pond0's 0.8–1.2 band)
+                Transform owner = null;
+                float best = float.MaxValue;
+                foreach (Transform w in waters)
+                {
+                    Vector3 local = w.InverseTransformPoint(t.position);
+                    float off = Mathf.Abs(2f * new Vector2(local.x, local.z).magnitude - 1f);   // 0 = on the rim of the unit disc (radius 0.5)
+                    if (off < best) { best = off; owner = w; }
+                }
+
+                if (owner != falls || best > 0.2f) continue;
+                if (strip) strips++; else curves++;
+                Bounds b = new Bounds(t.position, Vector3.zero);
+                foreach (Renderer rr in t.GetComponentsInChildren<Renderer>(true)) b.Encapsulate(rr.bounds);
+                covered += Mathf.Max(b.size.x, b.size.z);
+            }
+
+            float perimeter = Mathf.PI * (falls.localScale.x + falls.localScale.z) * 0.5f;
+            Debug.Log("[DD-TEST] n3.shore " + falls.name + " strips=" + strips + " curves=" + curves + " covered=" + covered.ToString("F1") + " / perimeter " + perimeter.ToString("F1"));
+            Assert.GreaterOrEqual(strips, 6, falls.name + ": şelale havuzunda kıyı şeridi");
+            Assert.AreEqual(2, curves, falls.name + ": iki kavisli parça kıyıda (elipsin 0,8–1,2 bandında)");
+            Assert.GreaterOrEqual(covered / perimeter, 0.6f, falls.name + ": kıyı modülleri / çevre");
+        }
+
         /// <summary>WP-075 C6 · The v6 look: the bootstrap's profile is DD_Look_v5 with the colour lookup on LUT v2 at full contribution; the recipe's ΔE gate passed.</summary>
         [Test]
         public void Greybox_C6_LutV2_ProfilBagli_DeltaEKapisi()

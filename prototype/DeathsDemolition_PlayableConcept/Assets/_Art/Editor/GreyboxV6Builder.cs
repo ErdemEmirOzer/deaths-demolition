@@ -234,6 +234,8 @@ namespace DD.Art.Pipeline.EditorTools
             boxes += BuildSouth(g, basins);
             boxes += BuildBamboo(g);
             WorldV5Dress.Report dressed = dress ? WorldV5Dress.Apply(g, root.transform) : null;
+            // R3 #1 (AD 07.10 M1): the ground and the water keep the runtime ambient (the approved Look B tone), not the baked probes
+            int probeOff = WorldV5Lighting.ApplyProbeUsage(root.transform);
 
             // WP-074 B1c · S-03 WP-076 B6 §5.2 region volumes (rooms, room exits, chokepoints).
             BuildRegionVolumes(root.transform);
@@ -259,7 +261,7 @@ namespace DD.Art.Pipeline.EditorTools
             WriteJson();
             AssetDatabase.SaveAssets();
             string baked = bake ? ", " + WorldV5Lighting.Bake(scene, root.transform) : "";
-            return boxes + " boxes" + (dressed != null ? " (" + dressed + ")" : "") + ", NavMesh " + triangles + " triangles, " + links + " island links, placement " + placement.spawnPoints.Count + " spawns / " + placement.weaponPoints.Count + " weapons -> " + ScenePath + baked;
+            return boxes + " boxes" + (dressed != null ? " (" + dressed + ")" : "") + ", " + probeOff + " renderers off the probes, NavMesh " + triangles + " triangles, " + links + " island links, placement " + placement.spawnPoints.Count + " spawns / " + placement.weaponPoints.Count + " weapons -> " + ScenePath + baked;
         }
 
         // ---------------------------------------------------------------- pieces
@@ -632,14 +634,16 @@ namespace DD.Art.Pipeline.EditorTools
         {
             int n = 0;
             float grow = 0.5f, a = b.semi.x + grow, c = b.semi.y + grow;
-            var water = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            water.name = "Pond" + index + "_Water";
+            // N3 (WP-081 B, menu-n2-n4 RAPOR §N3 b): the builder's own ellipse disc in place of the 20-sided Cylinder — the same local
+            // contract (unit disc of radius 0.5 at local y 1, the transform's scale is the ellipse), so the shore, the lotus, the
+            // atmosphere sheets and the NotWalkable rims read it as before; vertex colour R = depth ramp, G = foam band (DD_Water_v2).
+            var water = new GameObject("Pond" + index + "_Water");   // the Default layer, as the Cylinder primitive had
             water.transform.SetParent(g, false);
             water.transform.position = new Vector3(b.centre.x, 0.02f, b.centre.y);
             water.transform.rotation = Quaternion.Euler(0f, -b.yaw, 0f);
             water.transform.localScale = new Vector3(b.semi.x * 2f, 0.01f, b.semi.y * 2f);
-            UnityEngine.Object.DestroyImmediate(water.GetComponent<Collider>());
-            water.GetComponent<MeshRenderer>().sharedMaterial = Mat("water");
+            water.AddComponent<MeshFilter>().sharedMesh = PondWaterMesh(index, b.semi);
+            water.AddComponent<MeshRenderer>().sharedMaterial = Mat("water");
             n++;
             // NotWalkable strips along the ellipse's local x (1 m), local height −1…0.1 m so bridge/causeway tops stay walkable.
             // WP-075 (C-00 28.09, zombies held at the C1 slab joint and the C8 plank ends): the AP-023 decks top out at 0.15–0.16 m, a
@@ -729,6 +733,78 @@ namespace DD.Art.Pipeline.EditorTools
 
         /// <summary>The deck footprints the pond NotWalkable strips leave out (world XZ min / max) — the <see cref="Crossings"/>.</summary>
         public static readonly (Vector2 min, Vector2 max)[] PondStripExclusions = Array.ConvertAll(Crossings, c => (c.Min, c.Max));
+
+        /// <summary>N3 · pond water disc: <see cref="PondWaterSegments"/> rim vertices.</summary>
+        public const int PondWaterSegments = 128;
+
+        /// <summary>N3 · metric insets of the disc's rings from the shore; the depth ramp reaches 1 at <see cref="PondDepthRamp"/>, the foam band is <see cref="PondFoamBand"/> wide.</summary>
+        public static readonly float[] PondRingInsets = { 0f, 0.15f, 0.3f, 0.6f, 1.2f, 2.4f };
+        public const float PondDepthRamp = 1.2f, PondFoamBand = 0.3f;
+
+        public static string PondWaterMeshPath(int index) => DataFolder + "/V6_Pond" + index + "_Water.asset";
+
+        /// <summary>
+        /// N3 · the pond's water as a unit disc (radius 0.5, local y 1 = the old Cylinder's top face) for the transform's ellipse scale
+        /// (2 × <paramref name="semi"/>): rings at <see cref="PondRingInsets"/> metres in from the shore measured on the ellipse, a centre
+        /// vertex; colour R = clamp01(inset / <see cref="PondDepthRamp"/>), G = 1 within <see cref="PondFoamBand"/> of the shore. Saved
+        /// (or rewritten in place) at <see cref="PondWaterMeshPath"/>.
+        /// </summary>
+        public static Mesh PondWaterMesh(int index, Vector2 semi)
+        {
+            int seg = PondWaterSegments, rings = PondRingInsets.Length;
+            var verts = new List<Vector3>(seg * rings + 1);
+            var colors = new List<Color>(seg * rings + 1);
+            var uvs = new List<Vector2>(seg * rings + 1);
+            for (int k = 0; k < rings; k++)
+            {
+                float inset = PondRingInsets[k];
+                for (int i = 0; i < seg; i++)
+                {
+                    float t = i * Mathf.PI * 2f / seg, cos = Mathf.Cos(t), sin = Mathf.Sin(t);
+                    float radius = Mathf.Sqrt(semi.x * cos * semi.x * cos + semi.y * sin * semi.y * sin);   // metres to the rim along this ray
+                    float r = Mathf.Clamp01(1f - inset / Mathf.Max(0.01f, radius));
+                    var v = new Vector3(0.5f * r * cos, 1f, 0.5f * r * sin);
+                    verts.Add(v);
+                    uvs.Add(new Vector2(v.x + 0.5f, v.z + 0.5f));
+                    colors.Add(new Color(Mathf.Clamp01(inset / PondDepthRamp), inset <= PondFoamBand + 1e-4f ? 1f : 0f, 0f, 1f));
+                }
+            }
+
+            int centre = verts.Count;
+            verts.Add(new Vector3(0f, 1f, 0f));
+            uvs.Add(new Vector2(0.5f, 0.5f));
+            colors.Add(new Color(1f, 0f, 0f, 1f));
+            var tris = new List<int>(seg * rings * 6);
+            for (int k = 0; k + 1 < rings; k++)
+            {
+                for (int i = 0; i < seg; i++)
+                {
+                    int a = k * seg + i, b = k * seg + (i + 1) % seg, c = (k + 1) * seg + i, d = (k + 1) * seg + (i + 1) % seg;
+                    tris.AddRange(new[] { a, c, b, b, c, d });   // clockwise from above: the face looks up
+                }
+            }
+
+            int last = (rings - 1) * seg;
+            for (int i = 0; i < seg; i++) tris.AddRange(new[] { last + i, centre, last + (i + 1) % seg });
+
+            string path = PondWaterMeshPath(index);
+            Mesh mesh = AssetDatabase.LoadAssetAtPath<Mesh>(path);
+            bool created = mesh == null;
+            if (created) mesh = new Mesh { name = "V6_Pond" + index + "_Water" };
+            mesh.Clear();
+            mesh.SetVertices(verts);
+            mesh.SetUVs(0, uvs);
+            mesh.SetColors(colors);
+            mesh.SetTriangles(tris, 0);
+            var normals = new Vector3[verts.Count];
+            for (int i = 0; i < normals.Length; i++) normals[i] = Vector3.up;
+            mesh.normals = normals;
+            mesh.RecalculateTangents();
+            mesh.RecalculateBounds();
+            if (created) AssetDatabase.CreateAsset(mesh, path);
+            else EditorUtility.SetDirty(mesh);
+            return mesh;
+        }
 
         public static bool InPondStripExclusion(Vector2 p)
         {

@@ -876,7 +876,10 @@ namespace DD.Art.Pipeline.EditorTools
                     double pick = rng.NextDouble();
                     int shoreVariation = 1 + rng.Next(3);
                     // v007-B: the falls' own curved shore replaces the strips near it (Waterfall); the rng draws stay, so the rest is as before.
-                    bool keep = w != falls || Vector3.Distance(p, fallsAt) >= WaterfallClearing;
+                    // N3 (menu-n2-n4 RAPOR §N3 a): the clearing is the curved pieces' own reach (WaterfallShoreOffset) — at 9 m it took
+                    // every strip of Pond0 (its rim is ≤ 7.8 m from the north point); a piece whose point falls on a crossing deck stays out.
+                    bool keep = (w != falls || Vector3.Distance(p, fallsAt) >= WaterfallClearing)
+                                && !GreyboxV6Builder.InPondStripExclusion(new Vector2(p.x, p.z));
                     if (keep) Visual(Place(group, pick < 0.6 ? "pond_shore_moss" : "pond_shore_pebble", shoreVariation, Mz(p.x, p.z, 0f, deg), Vector3.zero, "dressing"));
                     if (pick < 0.25)
                     {
@@ -900,10 +903,20 @@ namespace DD.Art.Pipeline.EditorTools
             if (falls != null) Waterfall(group, falls);
         }
 
-        public const float WaterfallClearing = 9f, WaterfallInset = 1.2f, WaterfallShoreOffset = 5.5f;
+        public const float WaterfallShoreOffset = 5.5f, WaterfallClearing = WaterfallShoreOffset, WaterfallInset = 1.2f;
         public const string WaterfallName = "Waterfall";
 
         private static Vector3 RimPoint(Transform water, float t) => water.TransformPoint(new Vector3(Mathf.Cos(t) * 0.5f, 0f, Mathf.Sin(t) * 0.5f));
+
+        /// <summary>N3 · the ellipse parameter whose rim point lies <paramref name="metres"/> (straight line) from the rim point at
+        /// <paramref name="t"/>, walking the rim in the direction of <paramref name="side"/>.</summary>
+        public static float RimParameterAt(Transform water, float t, float side, float metres)
+        {
+            Vector3 from = RimPoint(water, t);
+            float tp = t;
+            for (int i = 0; i < 3600 && Vector3.Distance(RimPoint(water, tp), from) < metres; i++) tp += side * 0.001f;
+            return tp;
+        }
 
         /// <summary>The ellipse parameter of the pond's northernmost rim point (sampled; the disc may be rotated).</summary>
         private static float NorthRimAngle(Transform water)
@@ -925,17 +938,19 @@ namespace DD.Art.Pipeline.EditorTools
         private static void Waterfall(Transform group, Transform water)
         {
             float t = NorthRimAngle(water);
-            Vector3 rim = RimPoint(water, t), next = RimPoint(water, t + 0.01f);
+            Vector3 rim = RimPoint(water, t);
             Vector3 inward = water.position - rim; inward.y = 0f; inward.Normalize();
             Vector3 at = rim + inward * WaterfallInset;
             GameObject rock = Place(group, "waterfall_rock", 2, Mz(at.x, at.z, 0f, Mathf.Atan2(inward.x, -inward.z) * Mathf.Rad2Deg), Vector3.zero, "dressing");
             rock.name = WaterfallName;
             Visual(rock);
-            Vector3 tangent = next - rim; tangent.y = 0f; tangent.Normalize();
-            float deg = Mathf.Atan2(tangent.z, tangent.x) * Mathf.Rad2Deg;
             foreach ((float side, int variation) in new[] { (-1f, 3), (1f, 6) })
             {
-                Vector3 p = rim + tangent * (side * WaterfallShoreOffset);
+                // N3: on the rim itself (the ellipse point WaterfallShoreOffset away along the shore), tangent-aligned there — the
+                // straight tangent put both pieces ≈ 2.5 m out on the grass
+                float tp = RimParameterAt(water, t, side, WaterfallShoreOffset);
+                Vector3 p = RimPoint(water, tp), q = RimPoint(water, tp + 0.01f);
+                float deg = Mathf.Atan2(q.z - p.z, q.x - p.x) * Mathf.Rad2Deg;
                 Visual(Place(group, "pond_shore_curve", variation, Mz(p.x, p.z, 0f, deg), Vector3.zero, "dressing"));
             }
         }
