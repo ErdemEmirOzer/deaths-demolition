@@ -1853,6 +1853,8 @@ namespace DD.Prototype.Tests.PlayMode
             var ozet = new System.Text.StringBuilder("[");
             float s1Min = 1f, s1MinC = 1f;
             int s1Shots = 0, s2Deficit = 0, s2Transients = 0, s2Loops = 0, s2Refused = 0, s2Shots = 0;
+            // C-00 07.10 (S-10 proposal): S1 / S2 coverage — the weapons with a variant-A top-down stem against the enabled roster.
+            var olculenSilahlar = new HashSet<string>();
             var s1Detay = new List<string>();
 
             AudioOutputCapture cap = null;
@@ -2009,8 +2011,9 @@ namespace DD.Prototype.Tests.PlayMode
 
                                 if (v == 'A' && stem)
                                 {
+                                    if (camMode == DD.Prototype.CameraSystem.CameraMode.TopDown) olculenSilahlar.Add(wd.weaponId);
                                     s2Shots += plan.Count;
-                                    s2Deficit += plan.Count - voices;
+                                    s2Deficit += Mathf.Max(0, plan.Count - voices);   // per take (S-10 07.10): a take's extra voices never cancel another's missing ones
                                     s2Transients += gecici;
                                     s2Loops += dongu;
                                     s2Refused += refused;
@@ -2051,14 +2054,23 @@ namespace DD.Prototype.Tests.PlayMode
             // R3: the S1 / S2 rows are the top-down test's (source above); the FPTP twin's FP takes never write them.
             if (varyantlar.IndexOf('A') >= 0 && kameralar[0].camMode == DD.Prototype.CameraSystem.CameraMode.TopDown)
             {
-                var s1 = new Dictionary<string, double> { { "below400ShareMin", Math.Round(s1Min, 4) } };
+                // weaponsMissing (check == 0): an enabled weapon without a measured take, also one the Arsenal cannot build;
+                // weaponsMeasured / rosterEnabled are reported. DD_KIT_WEAPONS narrower than "all" fails it on purpose.
+                int roster = DD.Prototype.Core.Weapons.WeaponRoster.Enabled.Count, eksik = Mathf.Max(0, roster - olculenSilahlar.Count);
+                var s1 = new Dictionary<string, double>
+                {
+                    { "below400ShareMin", Math.Round(s1Min, 4) }, { "weaponsMissing", eksik }, { "weaponsMeasured", olculenSilahlar.Count }, { "rosterEnabled", roster }
+                };
                 if (varyantlar.IndexOf('C') >= 0 && s1MinC < 1f) s1["below400ShareMinV4"] = Math.Round(s1MinC, 4);   // report (S-10 2ccda99b)
                 R2Olcum.Yaz("S1", kaynak, s1, s1Shots);
                 R2Olcum.Yaz("S2", kaynak, new Dictionary<string, double>
                 {
-                    { "fireVoiceDeficit", s2Deficit }, { "transients", s2Transients }, { "loopStarts", s2Loops }, { "rejectedNotStolen", s2Refused }
+                    { "fireVoiceDeficit", s2Deficit }, { "transients", s2Transients }, { "loopStarts", s2Loops }, { "rejectedNotStolen", s2Refused },
+                    { "weaponsMissing", eksik }, { "weaponsMeasured", olculenSilahlar.Count }, { "rosterEnabled", roster }
                 }, s2Shots);
                 Assert.AreEqual(0, s2Deficit + s2Transients + s2Loops + s2Refused, "R2 S2: her atış tam katman, hafif katman / döngü / havuz reddi yok.");
+                if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DD_R2_MEASURE_DIR")))   // a gate run measures the whole roster
+                    Assert.AreEqual(0, eksik, "R2 S1/S2: kadrodaki " + roster + " silahın " + olculenSilahlar.Count + "'i ölçüldü (DD_KIT_WEAPONS=all).");
                 Assert.GreaterOrEqual(s1Min, 0.2f, "R2 S1: basılı tutmada 2.–10. atış, ilk 150 ms, 400 Hz altı pay ≥ %20 (" + string.Join(" · ", s1Detay) + ")");
             }
         }

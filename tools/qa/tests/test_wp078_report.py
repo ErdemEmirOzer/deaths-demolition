@@ -844,7 +844,9 @@ class R2RoundTests(Fixture):
     def test_bound_measurement_closes_its_gate_and_a_bad_one_fails(self):
         self.m['round'] = 'R2'
         ok = self.f.put_json({'schema': 'dd-r2-measure-v1', 'gate': 'L1', 'commit': FINAL, 'values': {'avg': 0.03, 'p95': 0.07}}, 'r2-L1.json')
-        bad = self.f.put_json({'schema': 'dd-r2-measure-v1', 'gate': 'S1', 'commit': FINAL, 'values': {'below400ShareMin': 0.12}}, 'r2-S1.json')
+        # C-00 07.10: S1 carries the kit's coverage (weaponsMissing check, weaponsMeasured / rosterEnabled report)
+        bad = self.f.put_json({'schema': 'dd-r2-measure-v1', 'gate': 'S1', 'commit': FINAL, 'values': {
+            'below400ShareMin': 0.12, 'weaponsMissing': 0, 'weaponsMeasured': 10, 'rosterEnabled': 10}}, 'r2-S1.json')
         self.m['checklist']['R2'] = {'gates': {'L1': {'measure': ok}, 'S1': {'measure': bad}}}
         self.f.anchor(self.m)
         r = self.result()
