@@ -1,0 +1,36 @@
+# WP-099 (S-01 td-capture) · the shared "before" set: 8 TopDown still poses on the V6 map (World v5, World_V6_Greybox, ±55 m ring).
+# Format (TdPoseFile): one "key x z [crowd40]" per line, whitespace-separated; '#' starts a comment; keys [a-z0-9_-]+, unique.
+# crowd40 (optional 4th column) releases the spawn hold and forces the 40-body safety-ceiling crowd around the player
+# (PilotPerfProbe stage 02 path); crowd poses must come LAST (the parser rejects a plain pose after one).
+# The agent stands the player on the NavMesh within 2 m of (x, z) (PilotPerfProbe -ddPilotStart rule; a miss is
+# recorded as "navmesh-miss" in poses.json and exits 3). TopDown only: the camera yaw is fixed, so no yaw column.
+# Axes (WorldLayout REQ-106): +Z north, +X east, origin at the courtyard.
+# C-00 07.10 coverage: open plaza (1), lamps (2, 3), gate (3), interior (4), water (5), road/path (6), grass (7), 40-crowd (8).
+
+# 1 open plaza / spawn - WorldLayout.PlayerStart (0, 0.1, -3); QaRunBot route point "courtyard" (0, -3); the slate
+#   plaza r 14 with the four planters at (+-9, +-9) (GreyboxV6Builder.BuildArena, WorldV5Dress.Planters).
+spawn_courtyard     0      -3
+# 2 lamps - between the axis kasuga lantern pairs at x +-3, z 8 and z 14 (GreyboxV6Builder.BuildArena "Lantern_",
+#   WorldV5Dress.Lanterns "AxisLanterns"; lit by LanternFlames). These six are the ONLY lamps on V6.
+lantern_axis        0      11
+# 3 gate (roofed) + lamps - R6 chumon on the N axis, room x -4.8..4.8, z 18..23, 6 m axis opening
+#   (GreyboxV6Builder.Rooms R6_Chumon, WorldV5Dress.Chumon); the z 14 lantern pair is in frame; QaRunBot "corridor" (0, 19).
+chumon_gate         0      19
+# 4 interior - R1 main hall, between the shoji screens (x +-6, z 42..46) in front of the dais (z 46..49), floor 1.28 m
+#   (GreyboxV6Builder.Rooms R1_MainHall x -16.5..16.5, z 39..49; WorldV5Dress.Hall). The hall roof is ONE CameraOccluder
+#   box (HallRoofName), so the whole roof fades in top-down - unlike kairo_west (K1), whose per-bay roof only fades the bay
+#   on the camera line and left the frame roof-dark (smoke-stills-1 04). No V6 interior has a lamp (only the 6 axis lanterns).
+hall_interior       0      44
+# 5 water / bridge edge - C8 bridge deck centre over the pond, x 4, z -18..-39.5, 3 m wide
+#   (GreyboxV6Builder.Crossings "C8_Bridge" (4, -28.75), WorldV5Dress.Bridges plank_bridge).
+bridge_c8           4     -28.75
+# 6 road / path - garden path east of the plaza toward the R7 W gate, line (13, 1) -> (27, 1) (GreyboxV6Builder.GardenPaths[0],
+#   gravel core 1.2 m + soil shoulder in WorldV5Moss's path mask). No canopy over it: every garden tree is at x >= 27.27
+#   (WorldV5Dress.GardenPins) and the great sakura (36, 1) crown ends near x 31.5. Replaces corner_sw (under canopy).
+garden_path_east   20       1
+# 7 grass - R7 great sakura court lawn (walls x 27..45, z -8..10), on the W gate axis z 1, 5 m west of the great sakura
+#   island (GreyboxV6Builder.GreatSakura (36, 1)).
+sakura_court       31       1
+# 8 40-zombie crowd on the open plaza - same spot as pose 1, so the crowd reads against the known empty frame
+#   (spawns come from the director's own gates, e.g. I_PlazaSouthWest (-14, -18); GreyboxV6Builder.Gates).
+crowd_plaza         0      -3     crowd40
