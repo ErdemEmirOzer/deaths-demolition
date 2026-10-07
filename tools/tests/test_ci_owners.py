@@ -28,7 +28,12 @@ class CiOwnersTests(unittest.TestCase):
         expected = {"NodeCardTests": "S-04", "RunTreePinActionRegressionTests": "S-09", "RunTreeTests": "S-04",
                     "Wp073FireVfxTests": "S-07", "QualityTiersTests": "S-05", "V6AiRoundTests": "S-03",
                     "CameraModeServiceTests": "S-01", "BootFirstSceneHandOffTests": "S-01", "EnemyDamagesPlayerTests": "S-02",
-                    "AnimationTests": "S-06", "AudioSliceEditModeTests": "S-08", "QaRunBotTests": "S-10"}
+                    "AnimationTests": "S-06", "AudioSliceEditModeTests": "S-08", "QaRunBotTests": "S-10",
+                    # C-00 07.10: the fixtures that fell to the catch-all after R2 / R3 day 0
+                    "MenuCinematicWorldTests": "S-09", "WallpaperIntakeTests": "S-09", "QualityModeApplierPlayTests": "S-05",
+                    "ShadowCascadeModeDiagTests": "S-05", "V6CrossingShareTests": "S-05", "ShotgunMuzzleDiagTests": "S-02",
+                    "ZombieR2Tests": "S-03", "ZombieGaitFramesTests": "S-03", "ZombieEmissionSlotTests": "S-03",
+                    "Z3CharacterBudgetTests": "S-03"}
         for name, own in expected.items():
             self.assertEqual(owner(name, rs), own, name)
 
