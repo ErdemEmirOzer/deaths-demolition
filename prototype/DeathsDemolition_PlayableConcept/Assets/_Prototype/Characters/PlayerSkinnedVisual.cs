@@ -132,7 +132,11 @@ namespace DD.Prototype.Characters
             Animator.StringToHash(CharacterAnimatorContract.AimState + "_0"), Animator.StringToHash(CharacterAnimatorContract.AimState + "_1"),
             Animator.StringToHash(CharacterAnimatorContract.AimState + "_2"), Animator.StringToHash(CharacterAnimatorContract.SwHoldState + "_1"),
             Animator.StringToHash(CharacterAnimatorContract.SwHoldState + "_2"), Animator.StringToHash(CharacterAnimatorContract.SwHoldState + "_3"),
-            Animator.StringToHash(CharacterAnimatorContract.AimV3State)
+            Animator.StringToHash(CharacterAnimatorContract.AimV3State),
+            // WP-083 R3 (S-02 triage, C-00 07.10 option a): sr_1's bolt cycle keeps the hold and the support grip on — the clip's own
+            // rotation rides on the hold (WeaponMountAlignment.HoldDelta) instead of the gates closing and the weapon swinging to the
+            // clip's pose (~91 cm at the muzzle); the right hand's bolt stroke is not shown (top-down, accepted)
+            Animator.StringToHash(CharacterAnimatorContract.CycleV3State)
         };
         private static readonly SkinnedMeshRenderer[] s_noRenderers = new SkinnedMeshRenderer[0];
         private SkinnedMeshRenderer[] _headRenderers;
