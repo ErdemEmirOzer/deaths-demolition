@@ -347,6 +347,12 @@ namespace DD.Prototype.Characters
             public string events;
             /// <summary>WP-032C: manifest stance frames per foot (contact length of a locomotion cycle; 0 = not given). The calibrator and the slip tests measure over exactly these frames.</summary>
             public int stanceFrames;
+            /// <summary>
+            /// WP-096 P3: this clip's playback-rate band — floor (applied while the body cruises) and cap; 0 = the
+            /// <see cref="CadenceBand"/> default (Min / Max). Authored on the set asset (ArtAnimatorBuilder keeps it on a rebuild).
+            /// </summary>
+            public float minRate;
+            public float maxRate;
         }
 
         [SerializeField] private AnimationClip _idle;
@@ -451,6 +457,20 @@ namespace DD.Prototype.Characters
             Entry e = Find(clipName);
             if (e == null) return 0f;
             return e.unitySpeedMps > 0.01f ? e.unitySpeedMps : Mathf.Max(0f, e.speedMps);
+        }
+
+        /// <summary>WP-096 P3: the clip's playback-rate floor (its own <c>minRate</c>, else <see cref="CadenceBand.Min"/>).</summary>
+        public float MinRateOf(string clipName)
+        {
+            Entry e = Find(clipName);
+            return e != null && e.minRate > 0f ? e.minRate : CadenceBand.Min;
+        }
+
+        /// <summary>WP-096 P3: the clip's playback-rate cap (its own <c>maxRate</c>, else <see cref="CadenceBand.Max"/>).</summary>
+        public float MaxRateOf(string clipName)
+        {
+            Entry e = Find(clipName);
+            return e != null && e.maxRate > 0f ? e.maxRate : CadenceBand.Max;
         }
 
         /// <summary>The manifest (Blender) speed, for the calibration report.</summary>

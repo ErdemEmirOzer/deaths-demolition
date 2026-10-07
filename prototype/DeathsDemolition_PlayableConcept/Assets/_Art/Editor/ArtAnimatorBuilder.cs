@@ -1278,6 +1278,16 @@ namespace DD.Art.Pipeline.EditorTools
                 AssetDatabase.CreateAsset(set, setPath);
             }
 
+            // WP-096 P3: the per-clip rate band (minRate / maxRate) is authored on the set, not in the manifest — a rebuild keeps it.
+            var bands = new Dictionary<string, Vector2>();
+            if (!created && set.Clips != null)
+            {
+                foreach (CharacterAnimationSet.Entry old in set.Clips)
+                {
+                    if (old != null && old.name != null && (old.minRate > 0f || old.maxRate > 0f)) bands[old.name] = new Vector2(old.minRate, old.maxRate);
+                }
+            }
+
             var table = new List<CharacterAnimationSet.Entry>();
             var names = new List<string>(manifest.Keys);
             names.Sort(StringComparer.Ordinal);
@@ -1285,11 +1295,13 @@ namespace DD.Art.Pipeline.EditorTools
             {
                 ArtAnimationClipContract.ClipSpec s = manifest[name];
                 if (s.target != target) continue;
+                bands.TryGetValue(s.name, out Vector2 band);
                 table.Add(new CharacterAnimationSet.Entry
                 {
                     name = s.name, clip = clips[s.name], loop = s.loop, seconds = s.seconds, speedMps = s.speedMps,
                     unitySpeedMps = unitySpeeds != null && unitySpeeds.TryGetValue(s.name, out float u) ? u : 0f,
-                    layer = s.layer, additive = s.additive, frames = s.frames, events = s.EventsText(), stanceFrames = s.stanceFrames
+                    layer = s.layer, additive = s.additive, frames = s.frames, events = s.EventsText(), stanceFrames = s.stanceFrames,
+                    minRate = band.x, maxRate = band.y
                 });
             }
 

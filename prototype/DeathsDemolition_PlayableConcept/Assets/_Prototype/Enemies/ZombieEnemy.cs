@@ -528,6 +528,8 @@ namespace DD.Prototype.Enemies
             bool rise = ShouldRise(Rise, SpawnVisibilityClass);   // WP-040 (DEC-081): hybrid — only an off-screen spawn rises
             RoseOnSpawn = rise;
             _animator.ResetDriven(_tier, _skinned != null && _skinned.Look.IsValid ? _skinned.Look.fit : "A", rise, ref _random);
+            // WP-096 P2: the driven body picked this spawn's move speed jitter from its spawn ordinal — walk at it (block body: 1)
+            ApplySpeedJitter(_skinned != null && _animator.Driven ? _skinned.SpeedJitter : 1f);
 
             // WP-008 (DEC-043): the reward is decided HERE, once, from the version and the
             // plates just fitted. Die() reads this record and nothing else, so what the
@@ -625,6 +627,7 @@ namespace DD.Prototype.Enemies
             _plannedVelocity = Vector3.zero;
             _verticalVelocity = 0f;
             _currentSpeed = 0f;
+            ResetLocomotionV4();       // WP-096: speed jitter, ramp, heading rate and measured ground speed start fresh
             ResetSpecialReactions();   // WP-055: no net / transaction memory crosses a life
             _hasTargetSample = false; _targetSpeed = 0f;   // WP-076
             ResetHitResponse();        // WP-076 B3
@@ -733,7 +736,8 @@ namespace DD.Prototype.Enemies
             EnemyTierSettings settings = config.Enemies.Find(_tier);
             if (settings != null)
             {
-                _moveSpeed = _stats.MoveSpeed;
+                _baseMoveSpeed = _stats.MoveSpeed;
+                _moveSpeed = _baseMoveSpeed * _speedJitter;   // WP-096 P2: the life's jitter survives a live config edit
                 _bodyRadius = _stats.BodyRadius;
                 _separationMass = _stats.SeparationMass;
 
@@ -1041,7 +1045,10 @@ namespace DD.Prototype.Enemies
             // OWN locomotion first: follow the NavMesh path towards the target. The crowd
             // layer only ever contributes a CORRECTION on top of this, so a lone zombie on
             // an empty map still walks.
-            Vector3 ownVelocity = Vector3.zero;
+            // WP-096 P6 / P7: the path heading and the asked speed are the INTENT (commanded); the own velocity is that intent
+            // after the tier acceleration and, with VelocityFollowsFacing, along the body's facing.
+            Vector3 walkHeading = Vector3.zero;
+            float walkSpeed = 0f;
 
             bool canWalk = !staggering && _attack.Phase != ZombieAttackPhase.Recovery;
             if (canWalk && target != null && TickNavigation(selfPosition, CrowdFeelGoal(target.position), out Vector3 heading))   // WP-054: flank goal while far
@@ -1059,17 +1066,26 @@ namespace DD.Prototype.Enemies
                     speed *= ClosedInSpeedScale;
                 }
 
-                ownVelocity = heading * speed;
+                walkHeading = heading;
+                walkSpeed = speed;
             }
+
+            Vector3 ownVelocity = SteerOwnVelocity(canWalk, IsRooted || IsElectrocuted || gelHolds, walkHeading, walkSpeed, dt);
+            Vector3 commanded = walkHeading * walkSpeed;
 
             // The Runner's lunge adds committed forward speed during its active window.
             float impulse = _attack.ForwardImpulse;
             if (impulse > 0f)
             {
-                ownVelocity += transform.forward * (impulse * SpecialSlowFactor);   // WP-055: a netted Runner's lunge is held by the same net
+                Vector3 lunge = transform.forward * (impulse * SpecialSlowFactor);   // WP-055: a netted Runner's lunge is held by the same net
+                ownVelocity += lunge;
+                commanded += lunge;
             }
 
-            ownVelocity += QueueShuffle(dt);   // WP-054: a queued light body sways a little so the queue reads alive
+            Vector3 shuffle = QueueShuffle(dt);   // WP-054: a queued light body sways a little so the queue reads alive
+            ownVelocity += shuffle;
+            commanded += shuffle;
+            _commandedVelocity = commanded;
             _plannedVelocity = ownVelocity;
 
             // ICrowdMember contract: final = own locomotion + correction.
@@ -1103,6 +1119,7 @@ namespace DD.Prototype.Enemies
                 DiagnosticMoveObserved(observation);
             }
 #endif
+            Vector3 beforeMove = transform.position;   // WP-096 P1: the real ground motion is measured from here
             CollisionFlags moveFlags = _controller.Move(motion * dt);
             NoteWallContact(moveFlags);   // WP-055E (M3 K1): side-contact flag instead of the allocating OnControllerColliderHit message
 #if UNITY_EDITOR
@@ -1131,7 +1148,9 @@ namespace DD.Prototype.Enemies
             // ------------------------------------------------------------------ facing
             // Faces its OWN intent, not the crowd correction: a zombie being shouldered
             // aside should keep looking where it is going instead of pirouetting.
-            Vector3 facing = ownVelocity;
+            // WP-096: the intent before acceleration (the path heading) — with VelocityFollowsFacing the own velocity follows the
+            // facing, so facing the own velocity would chase its own tail.
+            Vector3 facing = commanded;
             facing.y = 0f;
 
             // While winding up or striking, face the target rather than the movement, so
@@ -1143,21 +1162,28 @@ namespace DD.Prototype.Enemies
 
             if (facing.sqrMagnitude > 0.0004f)
             {
-                Quaternion want = Quaternion.LookRotation(facing.normalized, Vector3.up);
-                transform.rotation = Quaternion.RotateTowards(transform.rotation, want, _turnSpeedDegrees * dt);
+                TurnTowards(facing, dt);   // WP-096 P7: angular velocity capped at the tier turn rate, angular acceleration limited
+            }
+            else
+            {
+                _yawRate = 0f;
             }
 
             // ---------------------------------------------------------------- animation
+            // _currentSpeed stays the REQUESTED planar speed (own + correction + pushes): the pose / stagger bonus, the gel slide
+            // entry, the queue stall test and the death impulse read it (gameplay, unchanged). WP-096 P1: the driven gait reads
+            // the REAL forward ground speed instead (MeasureGroundMotion) — pushes never reach the cadence.
             Vector3 planar = velocity;
             planar.y = 0f;
             _currentSpeed = planar.magnitude;
             _animator.SetLocomotion(_moveSpeed > 0f ? _currentSpeed / _moveSpeed : 0f, _currentSpeed);
+            MeasureGroundMotion(beforeMove, ownVelocity, dt);
             if (_skinned != null)
             {
-                _skinned.SetSpeed(_currentSpeed, dt);
+                _skinned.SetSpeed(_groundForward, _groundLateral, dt);
             }
 
-            UpdateWaiting(ownVelocity, distance, dt);   // WP-050: WP-032 queue / idle-in-crowd wait state
+            UpdateWaiting(commanded, distance, dt);   // WP-050: WP-032 queue / idle-in-crowd wait state (the intent, as before WP-096)
         }
 
         // ------------------------------------------------------------ WP-050 · waiting (WP-032 SetWaiting)
@@ -1465,7 +1491,11 @@ namespace DD.Prototype.Enemies
                     _animator.BeginStagger(direction, reaction.StaggerIntensity, reaction.StaggerDuration, transform);
                     // WP-052 · Special B: the REQ-124 stagger reads as the Runner's stumble (v003 hit_special_stumble, base layer;
                     // S-06's PlayStumble hook — the block rig ignores it, the stagger timer is unchanged).
-                    if (_tier == EnemyTier.Special) _animator.PlayStumble();
+                    if (_tier == EnemyTier.Special)
+                    {
+                        _animator.PlayStumble();
+                        BeginStumbleBrake();   // WP-096 P6: the stumble keeps the Runner's momentum instead of a one-frame stop
+                    }
                     _attack.Cancel();
                     RaiseBeat(EnemyCombatEventKind.Stagger, point, direction, ArmorSlot.None, _animator.Driven, reaction.StaggerDuration);   // WP-040
                     DD.Prototype.Rounds.RunTreeHooks.AfterTreeStagger(this);   // WP-077 seal.smg_2: a staggered Runner falls

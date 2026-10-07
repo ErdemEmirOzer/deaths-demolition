@@ -424,7 +424,7 @@ namespace DD.Prototype.Characters
             if (_footIk != null)
             {
                 _footIk.Bind(() => _authored && !_dying && !_rising, () => _lod == null || !_lod.Far,
-                    () => _speed01 > 0.2f && _lastRate <= CadenceBand.LockMaxRate);   // WP-071: foot lock only where the cadence is honest
+                    () => _speed01 > 0.2f && _rateHonest && _lastRate <= FootLockMaxRate);   // WP-071: foot lock only where the cadence is honest (WP-096: the rate itself, not a fixed 1.05)
             }
 
             // WP-071 AP-022 zombie rig v002: the jaw (Head child, not in the human map, never keyed) — rest captured once
@@ -756,8 +756,17 @@ namespace DD.Prototype.Characters
         }
 
         /// <summary>Drive the locomotion blend from the enemy's ground speed (called by ZombieEnemy each tick).</summary>
-        public void SetSpeed(float metersPerSecond, float dt)
+        public void SetSpeed(float metersPerSecond, float dt) => SetSpeed(metersPerSecond, 0f, dt);
+
+        /// <summary>
+        /// WP-096 P1: <paramref name="forwardMps"/> = the body's real forward ground speed (ZombieEnemy measures it after the move,
+        /// capped at its own walk intent, smoothed) — the cadence follows it; <paramref name="lateralMps"/> (+ = right) is kept as
+        /// a readout for a later side-step / shoulder additive and never reaches the rate (P8).
+        /// </summary>
+        public void SetSpeed(float forwardMps, float lateralMps, float dt)
         {
+            LateralSpeed = lateralMps;
+            float metersPerSecond = forwardMps;
             if (_animator == null || _animation == null) return;
             if (_authored)
             {
@@ -836,31 +845,62 @@ namespace DD.Prototype.Characters
         private bool _waiting;
 
         [PrototypeOnly(PendingDecisions.None,
-            "Speed fraction (of the version's top speed) at which the gait blend is fully on. The " +
-            "idle↔gait crossfade starts at ZombieAnimator.IdlePoseSpeedThreshold; this is where the " +
-            "walk cycle owns the pose. Invented.", true)]
-        private const float GaitFullSpeed01 = 0.35f;
+            "WP-096 P5: seconds of the idle ↔ gait crossfade (Speed01 0 ↔ 1). The switch itself is absolute ground speed " +
+            "(ZombieLocomotionMath.GaitOnSpeed / GaitOffSpeed), so the 1-D blend only mixes the two clips during this fade and " +
+            "never holds a mid weight that bends the cadence (the old GaitFullSpeed01 0.35 share did). Invented.", true)]
+        public const float GaitCrossfadeSeconds = 0.2f;
 
         [PrototypeOnly(PendingDecisions.None,
-            "Lowest playback rate of the gait clip. WP-071 K3: the cadence band (CadenceBand.Min).", true)]
+            "WP-096 P3: the zombie foot lock engages while the gait rate is honest (not clamped by the clip band) and at or under " +
+            "this rate — covers the Standard's honest 1.02–1.2 over shamble_fast (CadenceBand.LockMaxRate 1.05 shut it for most " +
+            "of the crowd). Invented, tune.", true)]
+        public const float FootLockMaxRate = 1.25f;
+
+        [PrototypeOnly(PendingDecisions.None, "WP-096 P3: a gait rate within this share of the honest rate counts as honest (the foot-lock gate; the ≤ 5 % slide target). Invented.", true)]
+        public const float HonestRateTolerance = 0.05f;
+
+        [PrototypeOnly(PendingDecisions.None, "WP-096 P7: the Runner's side lean cap, degrees (LocomotionLean.MaxSide 9° for the other tiers). Invented, tune.", true)]
+        public const float RunnerLeanSideCap = 12f;
+
+        [PrototypeOnly(PendingDecisions.None,
+            "Lowest playback rate of the gait clip. WP-071 K3: the cadence band (CadenceBand.Min). WP-096 P3: the default — a clip's own minRate wins, applied only while cruising.", true)]
         public const float MinGaitRate = CadenceBand.Min;
 
         [PrototypeOnly(PendingDecisions.None,
-            "Highest playback rate of a gait clip. WP-071 K3 (N5): the cadence band (CadenceBand.Max) — faster travel slides (Standard 2.7 m/s over shamble_A is ×1.2 + slide until AP-022 shamble_fast).", true)]
+            "Highest playback rate of a gait clip. WP-071 K3 (N5): the cadence band (CadenceBand.Max) — faster travel slides (Standard 2.7 m/s over shamble_A is ×1.2 + slide until AP-022 shamble_fast). WP-096 P3: the default — a clip's own maxRate wins.", true)]
         public const float MaxGaitRate = CadenceBand.Max;
 
-        [PrototypeOnly(PendingDecisions.None, "WP-071 III A2.5 per-spawn cadence spread (± fraction) so a crowd does not march in step. Invented.", true)]
-        public const float GaitSpread = 0.08f;
-        /// <summary>WP-071: scales the per-spawn gait spread (1 = design, 0 = off — tests that measure exact rates).</summary>
+        [PrototypeOnly(PendingDecisions.None, "WP-071 III A2.5 per-spawn cadence spread (± fraction). WP-096 P2: retired (0) — a cadence multiplier slid the feet by design; the variety is the move speed jitter (ZombieLocomotionMath.SpeedSpread) the honest rate follows, plus the golden-ratio phase.", true)]
+        public const float GaitSpread = 0f;
+        /// <summary>WP-071: scales the per-spawn variety (1 = design, 0 = off — tests that measure exact rates). WP-096: the move speed jitter and the cycle phase.</summary>
         public static float GaitVariety = 1f;
         private static int s_gaitOrdinal;
-        private float _gaitMul = 1f;
+        private float _speedJitter = 1f;
         private float _lastRate = 1f;
         private float _lastSpeedMps;
+        private bool _gaitOn;
+        private bool _rateHonest;
+        private float _rateMin = CadenceBand.Min, _rateMax = CadenceBand.Max;
         private LocomotionLean _lean;
-        /// <summary>WP-071: this spawn's cadence multiplier (gait profile) and the gait clip rate last set (tests).</summary>
-        public float GaitMultiplier => _gaitMul;
+        /// <summary>WP-071 readout kept for callers: the cadence multiplier is retired (WP-096 P2) — always 1.</summary>
+        public float GaitMultiplier => 1f;
+        /// <summary>WP-096 P2: this spawn's move speed multiplier (ZombieEnemy applies it to the walk speed; 1 when GaitVariety is 0).</summary>
+        public float SpeedJitter => _speedJitter;
+        /// <summary>The gait clip rate last set (tests).</summary>
         public float GaitRate => _lastRate;
+        /// <summary>WP-096 P3: the current gait clip's rate band (its own minRate / maxRate or the CadenceBand defaults).</summary>
+        public float GaitRateMin => _rateMin;
+        public float GaitRateMax => _rateMax;
+        /// <summary>WP-096: the last gait rate was the honest one (not clamped by the band beyond HonestRateTolerance).</summary>
+        public bool GaitRateHonest => _rateHonest;
+        /// <summary>WP-096 P5: the gait clip owns the pose (absolute speed switch with hysteresis).</summary>
+        public bool GaitOn => _gaitOn;
+        /// <summary>WP-096 P1: the lateral ground speed handed in with the last SetSpeed (+ = right; readout only).</summary>
+        public float LateralSpeed { get; private set; }
+        /// <summary>WP-096 (test fixtures): restart the spawn ordinal the phase / speed jitter walk, so a fixture's bodies do not depend on earlier spawns.</summary>
+        public static void ResetGaitOrdinalForTests() => s_gaitOrdinal = 0;
+        /// <summary>WP-096: the next spawn ordinal (readout for logs).</summary>
+        public static int GaitOrdinal => s_gaitOrdinal;
         public LocomotionLean Lean => _lean;
         /// <summary>WP-071 MUST-I2: the body's world scale the gait clip speed was scaled by in the last locomotion update (tests).</summary>
         public float GaitBodyScale { get; private set; } = 1f;
@@ -957,8 +997,11 @@ namespace DD.Prototype.Characters
             RagdollProxyPool.ArmRoundLog();   // WP-078 per-round line
             _topSpeed = Mathf.Max(0.1f, topSpeedMetersPerSecond);
             _gait = GaitIndexFor(tier, fit, _animation);
-            _gaitClipSpeed = Mathf.Max(0.1f, _animation.SpeedOf(CharacterAnimatorContract.ZombieGaitClips[_gait]));
+            RefreshGaitClip();
             _speed01 = 0f;
+            _gaitOn = false;
+            _rateHonest = false;
+            LateralSpeed = 0f;
             _dying = false;
             _deathEnded = false;
             _windowOpen = false;
@@ -1005,15 +1048,22 @@ namespace DD.Prototype.Characters
             _animator.SetFloat(GaitRateId, 1f);
             // A pooled body comes back with whatever state it died in: restart the base layer and
             // write the pose NOW, so the bone-mounted gameplay nodes are valid on the spawn frame.
-            // WP-071 III A2.5 gait profile: a deterministic per-spawn cadence spread and cycle phase (the crowd is out of step)
+            // WP-071 III A2.5 gait profile: a deterministic per-spawn cycle phase (the crowd is out of step); WP-096: + the speed jitter
             int g = s_gaitOrdinal++;
             _jawPhase = g * 2.39996f;
             _jawAttackUntil = 0f;
             _jawDegrees = 0f;
             if (_jaw != null) _jaw.localRotation = _jawRest;
-            _gaitMul = 1f + GaitVariety * GaitSpread * (Mathf.Repeat(g * 0.381966f, 1f) * 2f - 1f);
+            // WP-096 P2: no cadence multiplier — the variety is this spawn's MOVE SPEED (ZombieEnemy reads SpeedJitter and walks
+            // at it, so the honest rate follows); the top speed the cruise test compares against carries it too
+            _speedJitter = ZombieLocomotionMath.SpeedJitter(g, GaitVariety);
+            _topSpeed *= _speedJitter;
             _lastRate = 1f;
-            if (_lean != null) _lean.ResetLean();
+            if (_lean != null)
+            {
+                _lean.ResetLean();
+                _lean.SideCapDegrees = tier == EnemyTier.Special ? RunnerLeanSideCap : LocomotionLean.MaxSide;   // WP-096 P7
+            }
             _animator.Play(CharacterAnimatorContract.LocomotionState, CharacterAnimatorContract.BaseLayer, GaitVariety > 0f ? Mathf.Repeat(g * 0.618034f, 1f) : 0f);
             _animator.Update(0f);
             if (rise)
@@ -1046,7 +1096,7 @@ namespace DD.Prototype.Characters
         {
             if (!_authored) return;
             _gait = Mathf.Clamp(gait, 0, CharacterAnimatorContract.ZombieGaitClips.Length - 1);
-            _gaitClipSpeed = Mathf.Max(0.1f, _animation.SpeedOf(CharacterAnimatorContract.ZombieGaitClips[_gait]));
+            RefreshGaitClip();
             _animator.SetFloat(GaitId, _gait);
         }
 
@@ -1055,27 +1105,44 @@ namespace DD.Prototype.Characters
         {
             if (!_authored) return;
             _gait = GaitIndexFor(tier, fit, _animation);
-            _gaitClipSpeed = Mathf.Max(0.1f, _animation.SpeedOf(CharacterAnimatorContract.ZombieGaitClips[_gait]));
+            RefreshGaitClip();
             _animator.SetFloat(GaitId, _gait);
+        }
+
+        /// <summary>WP-096 P3: the current gait clip's no-slide speed and rate band (its own minRate / maxRate, else CadenceBand).</summary>
+        private void RefreshGaitClip()
+        {
+            string clip = CharacterAnimatorContract.ZombieGaitClips[_gait];
+            _gaitClipSpeed = Mathf.Max(0.1f, _animation.SpeedOf(clip));
+            _rateMin = _animation.MinRateOf(clip);
+            _rateMax = _animation.MaxRateOf(clip);
         }
 
         private void SetLocomotion(float metersPerSecond, float dt)
         {
-            float target = Mathf.Clamp01(metersPerSecond / _topSpeed / GaitFullSpeed01);
-            _speed01 = dt > 0f ? Mathf.MoveTowards(_speed01, target, dt / SpeedSmoothing) : target;
+            // WP-096 P5: the gait owns the pose from an ABSOLUTE ground speed (hysteresis), not a share of the top speed; the 1-D
+            // Idle↔Gait blend is 0 or 1 except during the GaitCrossfadeSeconds fade, so its duration sync never bends the cadence.
+            _gaitOn = ZombieLocomotionMath.GaitOn(_gaitOn, metersPerSecond);
+            float target = _gaitOn ? 1f : 0f;
+            _speed01 = dt > 0f ? Mathf.MoveTowards(_speed01, target, dt / GaitCrossfadeSeconds) : target;
             _animator.SetFloat(Speed01Id, _speed01);
             // The rate multiplies the whole Locomotion tree (idle included): ease it back to 1 as
-            // the body stops so the idle sway does not crawl at MinGaitRate.
-            // WP-071 K3: the cadence stays in the band (slide covers the rest), spread per spawn (gait profile)
-            // WP-071 MUST-I2 (P-06 AD): the calibrated clip speed is for a scale-1 body; a scaled body's stride scales with it
-            // (Executioner 1.48 at 1.7 m/s: ×1.08 unscaled — over the lock band — ≈ ×0.75 honest scaled).
+            // the body stops so the idle sway does not crawl at the gait's rate.
+            // WP-071 MUST-I2 (P-06 AD): the calibrated clip speed is for a scale-1 body; a scaled body's stride scales with it.
+            // WP-096 P2/P3: no per-spawn cadence multiplier; honest rate inside the clip's own band — the floor only while cruising
+            // (Executioner 1.48 at 1.7 m/s over walk_stomp: honest ×0.61–0.72, floor 0.6 → not clamped).
             float body = Mathf.Clamp(_animator.transform.lossyScale.y, MinGaitBodyScale, MaxGaitBodyScale);
             GaitBodyScale = body;
-            float rate = Mathf.Clamp(metersPerSecond / (_gaitClipSpeed * body) * _gaitMul, MinGaitRate, MaxGaitRate);
+            bool cruising = metersPerSecond >= ZombieLocomotionMath.CruiseSpeedShare * _topSpeed;
+            float honest = ZombieLocomotionMath.HonestRate(metersPerSecond, _gaitClipSpeed, body);
+            float rate = ZombieLocomotionMath.GaitRate(metersPerSecond, _gaitClipSpeed, body, _rateMin, _rateMax, cruising);
+            _rateHonest = honest > 0.01f && Mathf.Abs(rate - honest) <= HonestRateTolerance * honest;
             _lastRate = rate;
             _lastSpeedMps = metersPerSecond;
             _animator.SetFloat(GaitRateId, Mathf.Lerp(1f, rate, _speed01));
-            if (_lean != null) _lean.Feed(transform.forward * metersPerSecond + _kbVelocity);   // B5: + the knockback shove
+            // B5: + the knockback shove. WP-096 P7: the speed is the real forward one, and the forward vector turns at the smoothed
+            // yaw rate ω — d(forward·v)/dt carries ω·v sideways, so the roll leans into the turn by yaw rate × forward speed (Runner cap 12°)
+            if (_lean != null) _lean.Feed(transform.forward * metersPerSecond + _kbVelocity);
         }
 
         /// <summary>

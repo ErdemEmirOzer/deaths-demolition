@@ -701,6 +701,8 @@ MonoBehaviour:
     frames: 33
     events: foot_l=0;foot_r_off=4;foot_r=16;foot_l_off=20
     stanceFrames: 18
+    minRate: 0.6
+    maxRate: 0
   _manifestSchema: AP009.clips-manifest.v008
   _locomotionReferenceSpeed: 1.485
   _weaponSets: []
