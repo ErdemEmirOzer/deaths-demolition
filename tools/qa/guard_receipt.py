@@ -12,9 +12,11 @@ Every Player run of wp078_perf / wp078_bot goes: snapshot → run → (finally) 
     restore 75 (lock held) is retried a bounded number of times, then 7 and "VERİ GERİ YÜKLENMEDİ" is written;
     any other restore error → 7;
   * verdict (C-00 25.09): verified=1, no out-of-scope change, and touched = 0 — or touched = 1 where the one changed
-    file is the player PlayerPrefs plist and every changed key is Unity's own window state (Screenmanager* /
-    UnitySelectMonitor). touched ≥ 1 with no such key change means another file changed → STOP. This is the only
-    copy of the rule (the KADRO player-run.sh / prefs-diff.py copy is retired).
+    file is the player PlayerPrefs plist and every changed key is one the engine writes itself: the window state
+    (Screenmanager* / UnitySelectMonitor) or the quality level (UnityGraphicsQuality — the Player saves it on every
+    QualitySettings.SetQualityLevel, e.g. a -ddQualityTier probe; C-00 07.10). touched ≥ 1 with no such key change
+    means another file changed → STOP. This is the only copy of the rule (the KADRO player-run.sh / prefs-diff.py
+    copy is retired).
 """
 import os
 import plistlib
@@ -33,7 +35,9 @@ import dd_paths  # noqa: E402  (WP-089: the one KADRO root for the Python tools)
 GUARD = str(dd_paths.KPROJ / "wp-079/driver/tools/userdata-guard.sh")
 PLAYER_PREFS_DOMAIN = "com.Deaths-Demolition.Deaths-Demolition---Playable-Concept"
 ENGINE_KEY_PREFIX = "Screenmanager"
-ENGINE_KEYS_EXACT = ("UnitySelectMonitor",)
+# C-00 07.10: UnityGraphicsQuality is written by the Player itself (QualityTiers.ApplyOverride → SetQualityLevel); the
+# guard restores it like the window keys (exact per domain, verified=1 still required) — not a reason to STOP
+ENGINE_KEYS_EXACT = ("UnitySelectMonitor", "UnityGraphicsQuality")
 IGNORED_KEYS = ("unity.player_session_count", "unity.player_sessionid")
 STOP = 7
 NOT_RESTORED = 65   # G4 D2 review MUST-1: never a wait code (6/30/75 are retried) — STOP, C-00 resolves

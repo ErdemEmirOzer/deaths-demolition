@@ -19,31 +19,67 @@ def done(code, out=""):
     return subprocess.CompletedProcess([], code, out, "")
 
 
+GAME_KEY = "DD.Prototype.DirectToRun"   # a key the game itself writes (PrototypeBootFlags) — never an engine key
+
+
 class VerdictTests(unittest.TestCase):
     def setUp(self):
         self.ug = Path(tempfile.mkdtemp())
         (self.ug / "snap" / "PR").mkdir(parents=True)
-        with open(self.ug / "snap" / "PR" / "p1.plist", "wb") as h:
-            plistlib.dump({"Screenmanager Fullscreen mode": 1, "UnityGraphicsQuality": 2, "unity.player_session_count": 3}, h)
+        self.before({"Screenmanager Fullscreen mode": 1, "UnityGraphicsQuality": 2, GAME_KEY: 0, "unity.player_session_count": 3})
         self.after = self.ug / "after.plist"
+
+    def before(self, values):
+        with open(self.ug / "snap" / "PR" / "p1.plist", "wb") as h:
+            plistlib.dump(values, h)
 
     def after_keys(self, values):
         with open(self.after, "wb") as h:
             plistlib.dump(values, h)
 
     def test_window_keys_only_is_accepted(self):
-        self.after_keys({"Screenmanager Fullscreen mode": 3, "UnityGraphicsQuality": 2, "unity.player_session_count": 4})
+        self.after_keys({"Screenmanager Fullscreen mode": 3, "UnityGraphicsQuality": 2, GAME_KEY: 0, "unity.player_session_count": 4})
         self.assertTrue(gr.verdict(self.ug, "restore touched=1 verified=1", self.after)[0])
 
     def test_any_other_key_stops(self):
-        self.after_keys({"Screenmanager Fullscreen mode": 3, "UnityGraphicsQuality": 0})
+        self.after_keys({"Screenmanager Fullscreen mode": 3, "UnityGraphicsQuality": 2, GAME_KEY: 1})
         ok, why = gr.verdict(self.ug, "restore touched=1 verified=1", self.after)
         self.assertFalse(ok)
-        self.assertIn("UnityGraphicsQuality", why)
+        self.assertIn(GAME_KEY, why)
+
+    def test_quality_level_of_a_tier_probe_is_an_engine_key(self):
+        """C-00 07.10 (S-05 Yüksek TD probe): -ddQualityTier yuksek → the Player saved UnityGraphicsQuality 2 → 1; the guard
+        restored it (verified=1) — the window is accepted, not STOP 7."""
+        self.after_keys({"Screenmanager Fullscreen mode": 1, "UnityGraphicsQuality": 1, GAME_KEY: 0})
+        self.assertEqual((True, "touched=1 engine window keys only"), gr.verdict(self.ug, "restore touched=1 verified=1", self.after))
+        self.assertEqual("UnityGraphicsQuality\n", (self.ug / "prefs-diff.txt").read_text(encoding="utf-8"))
+
+    def test_quality_level_added_by_the_run_is_an_engine_key(self):
+        # a profile that never had the key: the run adds it (the guard's exact restore deletes it again, WP-066J)
+        self.before({"Screenmanager Fullscreen mode": 1, GAME_KEY: 0})
+        self.after_keys({"Screenmanager Fullscreen mode": 1, "UnityGraphicsQuality": 1, GAME_KEY: 0})
+        self.assertTrue(gr.verdict(self.ug, "restore touched=1 verified=1", self.after)[0])
+
+    def test_quality_level_with_a_game_key_still_stops(self):
+        self.after_keys({"Screenmanager Fullscreen mode": 3, "UnityGraphicsQuality": 1, GAME_KEY: 1})
+        ok, why = gr.verdict(self.ug, "restore touched=1 verified=1", self.after)
+        self.assertFalse(ok)
+        self.assertIn(GAME_KEY, why)
+
+    def test_quality_level_needs_a_verified_restore(self):
+        self.after_keys({"Screenmanager Fullscreen mode": 1, "UnityGraphicsQuality": 1, GAME_KEY: 0})
+        self.assertEqual((False, "guard verified!=1"), gr.verdict(self.ug, "restore touched=1 verified=0", self.after))
+
+    def test_engine_keys_are_matched_exactly(self):
+        # only the engine's own spellings: a game key that merely contains the name is not one
+        for key in ("UnityGraphicsQuality.dd", "DD.UnityGraphicsQuality", "unitygraphicsquality", "UnitySelectMonitor2"):
+            self.assertFalse(gr.is_engine_key(key), key)
+        for key in ("UnityGraphicsQuality", "UnitySelectMonitor", "Screenmanager Resolution Width"):
+            self.assertTrue(gr.is_engine_key(key), key)
 
     def test_touched_without_a_plist_change_stops(self):
         # the one behaviour for an empty key list (M-17): a file other than the plist changed → STOP
-        self.after_keys({"Screenmanager Fullscreen mode": 1, "UnityGraphicsQuality": 2})
+        self.after_keys({"Screenmanager Fullscreen mode": 1, "UnityGraphicsQuality": 2, GAME_KEY: 0})
         ok, why = gr.verdict(self.ug, "restore touched=1 verified=1", self.after)
         self.assertFalse(ok)
         self.assertIn("non-plist", why)
