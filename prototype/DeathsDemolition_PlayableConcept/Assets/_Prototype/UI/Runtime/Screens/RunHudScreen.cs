@@ -17,8 +17,8 @@ namespace DD.Prototype.UI
     /// centre channel.
     ///
     /// WHERE EACH OF THE TEN LIVES, AND WHY THERE
-    ///   top left      Round, Enemies Remaining      - pressure. Read between fights.
-    ///   top right     Gold                          - a number that only ever grows.
+    ///   top right     Round (WP-094: a Roman numeral; the enemies count is no longer shown)
+    ///   bottom left   Gold (WP-094), directly above Health - the coins fly to it.
     ///   bottom left   Health                        - read under fire, so it is on the
     ///                                                 same side as the movement hand
     ///                                                 and it is the largest bar.
@@ -82,8 +82,14 @@ namespace DD.Prototype.UI
     /// RunStarted the model is reset, so a HUD that survived into a second run cannot
     /// show the first run's last numbers. The player is found through PlayerRegistry,
     /// never by searching the scene.
+    ///
+    /// WP-094 HUD v4 (R3, C-00 07.10; the user's note on the HUD): the gold sits directly above the health stroke and is
+    /// the target S-04's coins fly to (<see cref="HudGoldTarget"/>: the counter shows balance minus the gold in flight and
+    /// counts up as each coin lands - punch, leaf glint, "+N"); the round moved to the top right as a Roman numeral over an
+    /// ink smear with a seal accent (<see cref="HudRoundNumeral"/>); the enemies count left the player's view (the
+    /// presenter still feeds it for debug).
     /// </summary>
-    public sealed partial class RunHudScreen : UiScreen
+    public sealed partial class RunHudScreen : UiScreen, IHudGoldView
     {
         private const float SpecialBlockWidth = 220f;
         private const float SpecialBlockHeight = 260f;   // AD R1-B MUST-2b: the usage row has its own line under the time strip
@@ -125,10 +131,8 @@ namespace DD.Prototype.UI
             get { return false; }
         }
 
-        // ---- round / enemies
+        // ---- round (WP-094: top right, Roman; the enemies count is the presenter's alone - debug, never drawn)
         private TMP_Text _roundValue;
-        private TMP_Text _enemiesValue;
-        private TMP_Text _enemiesBreakdown;
 
         // ---- gold
         private TMP_Text _goldValue;
@@ -151,7 +155,7 @@ namespace DD.Prototype.UI
         private Vector2 _goldDeltaHome;
         private UiFx _goldLeaf;
         private float _goldGlintAt = -10f;
-        private int _goldSeen = int.MinValue;
+        private readonly HudGoldReadout _goldReadout = new HudGoldReadout();   // WP-094: balance − in flight, the punch slot
         private TMP_Text _healthLowWord;
         private UiCounter _ammoCounter;
         private Image _ladderBack;
@@ -361,7 +365,11 @@ namespace DD.Prototype.UI
             BuildReticle();
             BuildInkThreatChips();
 
+            // WP-094: this HUD is where the coins fly (its build empties the ledger - nothing in flight survives a rebuild).
+            HudGoldTarget.Bind(this, _goldTarget, Canvas);
+
             RunEvents.RunStarted += OnRunStarted;
+            RunEvents.RunEnded += OnRunEnded;
             RunEvents.RoundStarted += OnRoundStarted;
             RunEvents.RoundCompleted += OnRoundCompleted;
             RunEvents.RoundPoolExhausted += OnPoolExhausted;
@@ -391,7 +399,9 @@ namespace DD.Prototype.UI
             BottomCentreTop = 0f;
             base.OnDestroy();
             UiCursor.SetContextVisible(true);
+            HudGoldTarget.Unbind(this);
             RunEvents.RunStarted -= OnRunStarted;
+            RunEvents.RunEnded -= OnRunEnded;
             RunEvents.RoundStarted -= OnRoundStarted;
             RunEvents.RoundCompleted -= OnRoundCompleted;
             RunEvents.RoundPoolExhausted -= OnPoolExhausted;
@@ -465,9 +475,17 @@ namespace DD.Prototype.UI
             _goldDelta.canvasRenderer.SetAlpha(1f);
             UiMotion.Move(deltaRect, _goldDeltaHome + new Vector2(0f, 16f), UiDuration.Emphasis, UiEase.Settle, UiMotionClass.Decor);
             UiMotion.TintAlpha(_goldDelta, 0f, UiDuration.Base, UiEase.Exit, UiMotionClass.Data, UiMotionTokens.Seconds(UiDuration.Screen));
+            GlintGold(delta);
+        }
 
+        /// <summary>
+        /// E12: the kinpaku leaf's sweep - at most once a second, never under Reduce Flashes. WP-094 (HAREKET-HUD G4): a gain
+        /// of <see cref="GoldGlintBigGain"/> or more sweeps whatever the last sweep's age (the shader retargets its band).
+        /// </summary>
+        private void GlintGold(int gain = 0)
+        {
             float now = Time.unscaledTime;
-            if (!UiSettings.ReduceFlashes && now - _goldGlintAt >= GoldGlintMinInterval)
+            if (!UiSettings.ReduceFlashes && (gain >= GoldGlintBigGain || now - _goldGlintAt >= GoldGlintMinInterval))
             {
                 // The glint layer takes the leaf alpha for the sweep only, then goes back to nothing.
                 _goldGlintAt = now;
@@ -476,6 +494,127 @@ namespace DD.Prototype.UI
                     _goldLeaf.Play();
                 }
             }
+        }
+
+        // ================================================================== WP-094 · the gold target
+
+        /// <summary>
+        /// WP-094 (HAREKET-HUD G1): the coin's punch on an arrival - the glyph jumps to 1.18 (PunchPeakGlyph), the numeral to
+        /// 1.06 (text-bearing), and both settle to 1 over Base (220 ms).
+        /// </summary>
+        public const float GoldPunchCoin = 1.18f;
+        public const float GoldPunchText = 1.06f;
+
+        /// <summary>WP-094 (HAREKET-HUD G4): a gain this large glints the leaf even inside the once-a-second limit.</summary>
+        public const int GoldGlintBigGain = 10;
+
+        private RectTransform _goldTarget;
+        private RectTransform _goldCoin;
+
+        /// <summary>The gold symbol's flight target - the coin's rect, never scaled by the punch (tests; HudGoldTarget reads it).</summary>
+        public RectTransform GoldTarget => _goldTarget;
+
+        /// <summary>The counter's arithmetic (tests: what it shows, what gain waits for the punch slot).</summary>
+        public HudGoldReadout GoldReadout => _goldReadout;
+
+        /// <summary>Punches played since the build (tests; a rate-limited sweep plays fewer than it lands).</summary>
+        public int GoldPunches { get; private set; }
+
+        bool IHudGoldView.GoldTargetVisible
+        {
+            get { return isActiveAndEnabled && RunEvents.Current.Phase != RunPhase.Dead && !UiFrozenFrame.IsHeld; }
+        }
+
+        void IHudGoldView.GoldFlightsChanged()
+        {
+            // The counter is frozen while the player is down (the wallet wipe at run end - see UpdateRun): a stale release
+            // or the run-end reset must not move it either.
+            if (RunEvents.Current.Phase != RunPhase.Dead)
+            {
+                ResolveGold();
+            }
+        }
+
+        void IHudGoldView.GoldArrived(int amount)
+        {
+            if (RunEvents.Current.Phase == RunPhase.Dead)
+            {
+                return;
+            }
+
+            ResolveGold();
+            _goldReadout.NoteArrival();
+        }
+
+        /// <summary>
+        /// The counter for the balance minus the gold still flying (HudGoldReadout's rules: a flight holds the number, a
+        /// same-frame credit and departure cancel unseen, the first value of a run is set). The run's own path
+        /// (ApplyRunFields) keeps its guards upstream, as before WP-094; the flight callbacks guard the death beat themselves.
+        /// </summary>
+        private void ResolveGold()
+        {
+            if (_goldCounter == null)
+            {
+                return;
+            }
+
+            HudGoldCounterAction action = _goldReadout.Resolve(_model.Gold, HudGoldTarget.InFlight, Time.frameCount, Time.unscaledTime,
+                UiMotionTokens.Seconds(UiDuration.Reveal));
+            if (action == HudGoldCounterAction.SetNow)
+            {
+                _goldCounter.SetNow(_goldReadout.Shown);
+            }
+            else if (action == HudGoldCounterAction.RollTo)
+            {
+                _goldCounter.RollTo(_goldReadout.Shown);
+            }
+        }
+
+        /// <summary>
+        /// Once a frame (LateUpdate): the feedback the readout has due - an arrival's punch with the "+N" gathered since the
+        /// last one (≤ 1 per HudGoldTarget.PunchMinSeconds), or a plain gain's "+N" on the frame it happened. Nothing on a
+        /// quiet frame.
+        /// </summary>
+        private void FlushGoldFeedback()
+        {
+            int gain;
+            bool punch;
+            if (_goldDelta == null || !_goldReadout.TakeFeedback(Time.unscaledTime, out gain, out punch))
+            {
+                return;
+            }
+
+            if (punch)
+            {
+                PunchGold();
+            }
+
+            if (gain > 0)
+            {
+                ShowGoldGain(gain);
+            }
+            else if (punch)
+            {
+                GlintGold();   // an arrival with nothing held back (no Depart): the punch and the glint alone
+            }
+        }
+
+        /// <summary>
+        /// The arrival punch: the coin and the numeral kick and settle (Decor - reduced motion leaves them at rest, the glint
+        /// that follows still plays: "RM'de yumruk ölçeksiz parlama"). The flight target is a sibling, never scaled.
+        /// </summary>
+        private void PunchGold()
+        {
+            GoldPunches++;
+            float seconds = UiMotionTokens.Seconds(UiDuration.Base);
+            UiMotion.ScaleSeconds(_goldCoin, GoldPunchCoin, 1f, seconds, UiEase.Settle, UiMotionClass.Decor);
+            UiMotion.ScaleSeconds(_goldValue.rectTransform, GoldPunchText, 1f, seconds, UiEase.Settle, UiMotionClass.Decor);
+        }
+
+        /// <summary>The run is over: nothing is still flying to this HUD.</summary>
+        private void OnRunEnded(RunSummary summary)
+        {
+            HudGoldTarget.ResetFlights();
         }
 
         /// <summary>
@@ -1075,6 +1214,7 @@ namespace DD.Prototype.UI
                 }
             }
 
+            UpdateGoldTarget();   // WP-094: re-arm after a statics reset, release stale flights (before the run's gold)
             UpdateRun();
             UpdateClassicWeapon();
             UpdateSpecialWeapon();
@@ -1082,6 +1222,7 @@ namespace DD.Prototype.UI
             UpdateBanner();
             UpdateThreat();
             UpdateInkPosture();   // 8-R: calm / danger
+            UpdateRoundSeal();    // WP-094: the seal's contact cue (S-08)
         }
 
         private void LateUpdate()
@@ -1089,6 +1230,28 @@ namespace DD.Prototype.UI
             UpdateMarker();
             UpdateReticle();
             UpdateInkParallax();   // 8-R: the back planes drift against the camera
+            FlushGoldFeedback();   // WP-094: the punch / "+N" due this frame (after every credit and flight of the frame)
+            if (HudGoldTarget.IsBoundTo(this))
+            {
+                HudGoldTarget.TrackLayout();   // after the layout settled: LayoutVersion moves only on a real move
+            }
+        }
+
+        /// <summary>
+        /// WP-094: a test or a domain reset may clear HudGoldTarget's statics under a live HUD - the HUD binds again when no
+        /// HUD holds the target (never steals it from another). The bound HUD's clock releases stale flights.
+        /// </summary>
+        private void UpdateGoldTarget()
+        {
+            if (!HudGoldTarget.IsBound && _goldTarget != null)
+            {
+                HudGoldTarget.Bind(this, _goldTarget, Canvas);
+            }
+
+            if (HudGoldTarget.IsBoundTo(this))
+            {
+                HudGoldTarget.Tick(Time.unscaledTime);
+            }
         }
 
         /// <summary>
@@ -1348,10 +1511,11 @@ namespace DD.Prototype.UI
         /// </summary>
         private void OnRunStarted(int startRound)
         {
+            HudGoldTarget.ResetFlights();   // WP-094: before the resets - its re-read lands on the old run, the first value below sets the counter
             _model.Reset();
             _healthMaxShown = int.MinValue;
             ResetDeathLine();
-            _goldSeen = int.MinValue;
+            _goldReadout.Reset();
             _roundShown = int.MinValue;
             _healthBound = false;
             ApplyRunFields(_model.ApplyRun(RunEvents.Current));
@@ -1364,43 +1528,23 @@ namespace DD.Prototype.UI
         {
             if ((changed & RunHudField.Round) != 0)
             {
-                _roundValue.text = _model.RoundText;
-                // E13: the new round's digit stamps (Stamp 1.12 → 1, not on the first round of a run).
-                int round = RunEvents.Current.Round;
-                if (_roundShown != int.MinValue && round > _roundShown)
-                {
-                    UiPresets.StampIn(_roundValue.rectTransform);
-                }
-
+                // WP-094: the round as a Roman numeral (the presenter's RoundText stays the Arabic number for tests and debug).
+                // E13: a new round reveals (the letters stamp in; not on the first round of a run).
+                int round = _model.Round;
+                SetRound(round, _roundShown != int.MinValue && round > _roundShown);
                 _roundShown = round;
             }
 
             if ((changed & RunHudField.Gold) != 0)
             {
                 // E12: roll to the balance; a gain rises "+N" and glints the leaf. The first value of a run lands at once.
-                int gold = _model.Gold;
-                if (_goldSeen == int.MinValue)
-                {
-                    _goldCounter.SetNow(gold);
-                }
-                else
-                {
-                    if (gold > _goldSeen)
-                    {
-                        ShowGoldGain(gold - _goldSeen);
-                    }
-
-                    _goldCounter.RollTo(gold);
-                }
-
-                _goldSeen = gold;
+                // WP-094: the balance minus the gold still flying to the symbol (HudGoldTarget); the "+N" plays in LateUpdate
+                // of the same frame, or with the arrival's punch.
+                ResolveGold();
             }
 
-            if ((changed & RunHudField.Enemies) != 0)
-            {
-                _enemiesValue.text = _model.EnemiesText;
-                _enemiesBreakdown.text = _model.EnemiesBreakdown;
-            }
+            // WP-094 (the user: "mapteki zombi sayısı gösterilmesin"): RunHudField.Enemies is no longer drawn - the presenter
+            // keeps the count for debug (F1 / tests), formatted only when read.
         }
 
         private void ApplyHealth(PlayerHealthSnapshot snapshot)

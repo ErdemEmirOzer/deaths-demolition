@@ -69,10 +69,52 @@ namespace DD.Prototype.UI
         private int _poolRemaining = int.MinValue;
         private int _alive = int.MinValue;
         private bool _poolExhausted;
+        private string _enemiesText = Placeholder;
+        private string _enemiesBreakdown;
+        private bool _enemiesTextDirty;
+        private bool _enemiesBreakdownDirty = true;
 
         public string RoundText { get; private set; } = Placeholder;
-        public string EnemiesText { get; private set; } = Placeholder;
-        public string EnemiesBreakdown { get; private set; } = UiStrings.Get("hud.enemies.waiting", "waiting for the round to start");
+
+        /// <summary>WP-094: the round as a number for the Roman numeral (0 before the run publishes one).</summary>
+        public int Round
+        {
+            get { return _round > 0 ? _round : 0; }
+        }
+
+        /// <summary>
+        /// The enemies left this round (pool + alive), "—" before round 1. WP-094 (the user 07.10: "mapteki zombi sayısı
+        /// gösterilmesin"): no HUD surface draws it any more - it stays for debug and its tests, so it is formatted when READ,
+        /// never on the kill that changed it (the HUD hot path no longer pays a string per death).
+        /// </summary>
+        public string EnemiesText
+        {
+            get
+            {
+                if (_enemiesTextDirty)
+                {
+                    _enemiesTextDirty = false;
+                    _enemiesText = _round > 0 ? _enemiesRemaining.ToString() : Placeholder;
+                }
+
+                return _enemiesText;
+            }
+        }
+
+        /// <summary>The pool / on-the-map breakdown (WP-094: debug only, formatted when read - see <see cref="EnemiesText"/>).</summary>
+        public string EnemiesBreakdown
+        {
+            get
+            {
+                if (_enemiesBreakdownDirty)
+                {
+                    _enemiesBreakdownDirty = false;
+                    _enemiesBreakdown = FormatBreakdown();
+                }
+
+                return _enemiesBreakdown;
+            }
+        }
 
         // ---- gold
         private int _gold = int.MinValue;
@@ -261,7 +303,7 @@ namespace DD.Prototype.UI
             if (state.EnemiesRemaining != _enemiesRemaining || (changed & RunHudField.Round) != 0)
             {
                 _enemiesRemaining = state.EnemiesRemaining;
-                EnemiesText = _round > 0 ? _enemiesRemaining.ToString() : Placeholder;
+                _enemiesTextDirty = true;
                 changed |= RunHudField.Enemies;
             }
 
@@ -270,28 +312,31 @@ namespace DD.Prototype.UI
                 _poolRemaining = state.PoolRemaining;
                 _alive = state.AliveEnemies;
                 _poolExhausted = state.PoolExhausted;
-
-                if (_round <= 0)
-                {
-                    // The run has not published a state yet: the HUD says so instead of
-                    // showing a confident zero.
-                    EnemiesBreakdown = UiStrings.Get("hud.enemies.waiting", "waiting for the round to start");
-                }
-                else if (_poolExhausted)
-                {
-                    EnemiesBreakdown = UiStrings.Format("hud.enemies.pool_empty", "value", _alive.ToString(), "pool empty  ·  {value} still on the map");
-                }
-                else
-                {
-                    EnemiesBreakdown = UiStrings.Format("hud.enemies.breakdown", "value", _poolRemaining.ToString(), "alive", _alive.ToString(),
-                        "{value} left to arrive  ·  {alive} on the map");
-                }
-
+                _enemiesBreakdownDirty = true;
                 changed |= RunHudField.Enemies;
             }
 
             changed |= ApplyGold(state.Gold);
             return changed;
+        }
+
+        /// <summary>The breakdown line for the numbers last applied (WP-094: only when read).</summary>
+        private string FormatBreakdown()
+        {
+            if (_round <= 0)
+            {
+                // The run has not published a state yet: the line says so instead of
+                // showing a confident zero.
+                return UiStrings.Get("hud.enemies.waiting", "waiting for the round to start");
+            }
+
+            if (_poolExhausted)
+            {
+                return UiStrings.Format("hud.enemies.pool_empty", "value", _alive.ToString(), "pool empty  ·  {value} still on the map");
+            }
+
+            return UiStrings.Format("hud.enemies.breakdown", "value", _poolRemaining.ToString(), "alive", _alive.ToString(),
+                "{value} left to arrive  ·  {alive} on the map");
         }
 
         /// <summary>
@@ -528,8 +573,9 @@ namespace DD.Prototype.UI
             _alive = int.MinValue;
             _poolExhausted = false;
             RoundText = Placeholder;
-            EnemiesText = Placeholder;
-            EnemiesBreakdown = UiStrings.Get("hud.enemies.waiting", "waiting for the round to start");
+            _enemiesText = Placeholder;
+            _enemiesTextDirty = false;
+            _enemiesBreakdownDirty = true;
 
             _gold = int.MinValue;
             GoldText = "0";

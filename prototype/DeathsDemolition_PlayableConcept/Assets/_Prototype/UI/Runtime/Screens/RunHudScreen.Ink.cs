@@ -10,9 +10,11 @@ namespace DD.Prototype.UI
     /// WP-068 slice 8-R · the HUD as ink objects: concept A "Mühür ve Fırça", chosen by the user on 24.09
     /// (council/8r, ad-slice8r). The user's verdict on the panels was "too big, all rectangles, amateur, covers the
     /// screen → minimalist, with depth", so no panel, box or label word is left. The corners keep their posts:
-    /// - Gold (top-left): the coin on a small kinpaku disc, the numeral, "+N".
-    /// - Round (top-centre): a hanko seal holding the round number, then the enemies glyph and count. The breakdown shows
-    ///   in calm; the threat chips sit under it.
+    /// - Gold (WP-094: bottom-left, directly above the health cluster - the coins fly to it): the coin on a small kinpaku
+    ///   disc, the numeral, "+N"; the coin's flight target rect beside it (HudGoldTarget).
+    /// - Round (WP-094: top-right): the round as a Roman numeral (HudRoundNumeral) over an ink smear, a small seal
+    ///   accent at the corner. The enemies count and its calm breakdown are gone from the player's view (the user 07.10);
+    ///   the threat chips keep their row at the top centre.
     /// - Health (bottom-left): heart, value, "/ max" in calm, LOW, and a segmented brush stroke that leans toward the
     ///   centre; "recovery in" under it.
     /// - Weapon (bottom-right): a lacquer ring (Ø 60) round the weapon glyph, the count ("24 / 30"), and the ladder on an
@@ -82,18 +84,97 @@ namespace DD.Prototype.UI
         private void BuildInkClusters()
         {
             BuildInkGold();
-            BuildSealRound();
+            BuildInkRound();
             BuildBrushHealth();
             BuildRingWeapon();
             BuildInkSpecial();
             BuildInkSlick();
         }
 
-        // ---- top-left gold: kinpaku disc, coin, numeral, "+N"
+        // ---- WP-094 HUD v4 (R3, C-00 07.10): the gold over the health stroke, the round at the top right
+
+        public const float GoldClusterWidth = 170f;
+        public const float GoldClusterHeight = 36f;
+
+        /// <summary>The round cluster's least height (the old seal line's); the numeral's line sets it when taller.</summary>
+        public const float RoundClusterHeight = 56f;
+
+        /// <summary>
+        /// The round's seal accent at the corner: the hanko mask, ink-toned with the cream rim light until the colour is
+        /// decided. The user asked for "ince altın ya da kırmızı mühür aksanı"; AP-032 §3.2 tints its seal cell vermilion
+        /// (#C4362B) and keeps gold for money and the Special (HAREKET-HUD: no kinpaku on the round). Neither lands without a
+        /// call: vermilion on the HUD is a seal outside boot / logo (UiOrnamentCensusTests) and AccentPrimary is reserved
+        /// (UiTokensV3Tests); gold is the currency reserve (style guide §2.2). One line here when the AD decides.
+        /// </summary>
+        public const float RoundSealSize = 32f;
+        public const float RoundSealAlpha = 0.9f;
+        private const UiColor RoundSealColour = UiColor.HudInk;
+
+        /// <summary>The S-08 cue at the seal's contact frame (HAREKET-HUD R3): UiEvent.StampLanded with this detail - no new UiEvent.</summary>
+        public const string RoundSealCueDetail = "round";
+
+        /// <summary>The ink smear under the numeral: HudInk at this alpha, this tall, reaching this far past the first letter (and to the seal's edge on the right).</summary>
+        public const float RoundSmearAlpha = 0.6f;
+        public const float RoundSmearHeight = 30f;
+        public const float RoundSmearOverhang = 16f;
+
+        /// <summary>The AP-032 letters' height on the glyph path (layout px).</summary>
+        public const float RoundGlyphHeight = 44f;
+
+        /// <summary>The fallback numeral's type: the display face (H1, 34) - not text-scaled, like every HUD numeral.</summary>
+        private const UiType RoundNumeralType = UiType.H1;
+
+        private const float HealthStrokeLength = 320f;
+        private const float HealthStrokeHeight = 26f;
+        private const float HealthStrokeCentre = 32f;
+
+        private RectTransform _goldCluster;
+        private RectTransform _roundCluster;
+        private Image _roundSmear;
+        private RectTransform _roundSeal;
+        private HudRoundNumeral _roundNumeral;
+        private float _roundSealHitAt = -1f;
+        private bool _roundSealCuePending;
+
+        /// <summary>The round numeral (tests, captures).</summary>
+        public HudRoundNumeral RoundNumeral => _roundNumeral;
+
+        /// <summary>The round's seal accent (tests).</summary>
+        public RectTransform RoundSeal => _roundSeal;
+
+        /// <summary>Unscaled time the round seal's hit is due (the reveal's contact frame; −1 before the first reveal). Tests, captures.</summary>
+        public float RoundSealHitAt => _roundSealHitAt;
+
+        /// <summary>
+        /// The health cluster's height (layout px) at the current text scale: the leaning stroke's highest point, the value row
+        /// centred a NumericL band above it, half a band and 4 px over the row. BuildBrushHealth lays out from the same numbers.
+        /// </summary>
+        public static float HealthClusterHeight()
+        {
+            float strokeTop = HealthStrokeCentre + HealthStrokeHeight * 0.5f + HealthStrokeLength * Mathf.Tan(HealthLean * Mathf.Deg2Rad);
+            float band = UiFactory.LineHeight(UiType.NumericL);
+            return strokeTop + 2f + band + 4f;
+        }
+
+        /// <summary>
+        /// WP-094: the gold cluster's bottom edge, canvas px from the bottom - directly above the health cluster (top-down and
+        /// third person) or above the first-person weapon cluster that stands there, one UiSpace.S clear, on the 8 px grid.
+        /// </summary>
+        public static float GoldClusterBottom(bool firstPerson)
+        {
+            float under = firstPerson ? FpWeaponClusterBottom + WeaponClusterHeight : InkMargin + HealthClusterHeight();
+            return Mathf.Ceil((under + (int)UiSpace.S) / 8f) * 8f;
+        }
+
+        // ---- bottom-left gold, above the health: kinpaku disc, coin, numeral, "+N", the flight target
 
         private void BuildInkGold()
         {
-            RectTransform root = Cluster("Gold", new Vector2(0f, 1f), new Vector2(InkMargin, -InkMargin), new Vector2(170f, 36f), false);
+            RectTransform root = Cluster("Gold", Vector2.zero, new Vector2(InkMargin, GoldClusterBottom(false)), new Vector2(GoldClusterWidth, GoldClusterHeight), false);
+            _goldCluster = root;
+            // WP-094 (HAREKET-HUD "ada kuralı"): the counter rolls and the coin punches frame by frame - its own nested canvas
+            // re-batches only the gold, never the main HUD canvas.
+            root.gameObject.AddComponent<Canvas>();
             RectTransform back = BackPlane(root);
 
             // The one leaf the HUD carries (E12): a small kinpaku disc under the coin; S-07's Leaf glint sweeps it on a gain.
@@ -105,6 +186,11 @@ namespace DD.Prototype.UI
 
             Image coin = InkGlyph("Coin", root, "Hud.Gold", UiColor.StateGold, 24f);
             Place(coin.rectTransform, new Vector2(0f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(18f, 0f), new Vector2(24f, 24f));
+            _goldCoin = coin.rectTransform;
+
+            // WP-094: where the coins land - the coin's own rect as a bare sibling, so the arrival punch (which scales the
+            // coin) never moves the point HudGoldTarget reports.
+            _goldTarget = Place(UiFactory.NewRect("FlightTarget", root), new Vector2(0f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(18f, 0f), new Vector2(24f, 24f));
 
             _goldCounter = UiCounter.Create("Value", root, UiCounterStyle.Currency, 0, UiType.NumericM, UiColor.StateGold);
             RectTransform valueRect = UiFactory.Fill((RectTransform)_goldCounter.transform);
@@ -120,32 +206,122 @@ namespace DD.Prototype.UI
             _goldDelta.canvasRenderer.SetAlpha(0f);
         }
 
-        // ---- top-centre: the hanko seal with the round, the enemies count, the calm breakdown
+        // ---- top-right: the round as a Roman numeral over an ink smear, the seal accent at the corner
 
-        private void BuildSealRound()
+        /// <summary>
+        /// WP-094 (the user 07.10: "round sayısı üst ortada değil sağ üstte ... fırça darbesi tasarım diliyle romen
+        /// rakamlarıyla"): anchored top-right, InkMargin in from both edges, growing leftward with the numeral. Right to left:
+        /// the seal accent (the hanko mask, <see cref="RoundSealColour"/>), UiSpace.S, the numeral (HudRoundNumeral: AP-032 brush letters when the set
+        /// is in, the display-face line today) over an HudInk smear from the seal's edge to RoundSmearOverhang past the first
+        /// letter, leaning toward the centre like every HUD stroke. Smear, letters and seal are one impression: they ride one back plane
+        /// at the stamped drift (AD 8-R · A MUST-1). The seal is drawn last, over the smear's tail.
+        /// </summary>
+        private void BuildInkRound()
         {
-            const float seal = 56f;
-            RectTransform root = Cluster("Round", new Vector2(0.5f, 1f), new Vector2(0f, -24f), new Vector2(240f, seal), false);
+            float height = Mathf.Max(RoundClusterHeight, UiFactory.LineHeight(RoundNumeralType));
+            float letters = RoundSealSize + (int)UiSpace.S;   // the numeral's right edge, in from the cluster's
+            RectTransform root = Cluster("Round", Vector2.one, new Vector2(-InkMargin, -InkMargin), new Vector2(letters + RoundSmearOverhang, height), false);
+            _roundCluster = root;
             RectTransform back = BackPlane(root, SealDrift);
+
+            _roundSmear = UiFactory.NewImage("Smear", back, UiColor.HudInk, BrushSprite());
+            // The smear runs from the seal's edge (under the gap) to RoundSmearOverhang past the first letter.
+            Place(_roundSmear.rectTransform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-RoundSealSize, -2f), new Vector2(RoundSmearOverhang + (int)UiSpace.S, RoundSmearHeight));
+            _roundSmear.rectTransform.localRotation = Quaternion.Euler(0f, 0f, StrokeLean);
+            Fade(_roundSmear, RoundSmearAlpha);
+
+            RectTransform numeral = UiFactory.NewRect("Numeral", back);
+            Place(numeral, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-letters, 0f), new Vector2(0f, height));
+            _roundValue = InkText("RoundValue", numeral, RunHudViewModel.Placeholder, RoundNumeralType, UiColor.TextPrimary, TextAnchor.MiddleRight);
+            UiFactory.Fill(_roundValue.rectTransform);
+            _roundNumeral = new HudRoundNumeral(numeral, _roundValue, RoundGlyphHeight, UiColor.TextPrimary);
+            _roundNumeral.SetGlyphSprites(RoundGlyphSprites());
+
             Sprite hanko = UiFxGlobals.InkMask(UiInkChannel.Hanko);
-            Image stamp = UiFactory.NewImage("Seal", back, UiColor.HudInk, hanko != null ? hanko : UiSprites.Disc);
-            Place(stamp.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(-36f, 0f), new Vector2(seal, seal));
-            Depth(stamp);
+            Image seal = UiFactory.NewImage("Seal", back, RoundSealColour, hanko != null ? hanko : UiSprites.Disc);
+            Place(seal.rectTransform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), Vector2.zero, new Vector2(RoundSealSize, RoundSealSize));
+            Fade(seal, RoundSealAlpha);
+            Depth(seal);
+            _roundSeal = seal.rectTransform;
 
-            // The digit is part of the impression: it rides the seal's plane (AD 8-R · A MUST-1), unlike the count beside it.
-            _roundValue = InkText("RoundValue", back, "—", UiType.NumericM, UiColor.TextPrimary, TextAnchor.MiddleCenter);
-            Place(_roundValue.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(-36f, 0f), new Vector2(seal, seal));
+            SetRound(0, false);
+        }
 
-            Image enemies = InkGlyph("Enemies", root, "Hud.Enemies", UiColor.TextSecondary, 20f);
-            Place(enemies.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, 0.5f), Vector2.zero, new Vector2(20f, 20f));
-            _enemiesValue = InkText("EnemiesValue", root, "—", UiType.NumericM, UiColor.TextPrimary, TextAnchor.MiddleLeft);
-            Place(_enemiesValue.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, 0.5f), new Vector2(26f, 0f), new Vector2(72f, 28f));
+        /// <summary>The AP-032 letters from the theme (HudRoundNumeral.GlyphKeys); missing ones stay null and keep the text path.</summary>
+        private static Sprite[] RoundGlyphSprites()
+        {
+            var sprites = new Sprite[HudRoundNumeral.GlyphKeys.Length];
+            for (int i = 0; i < sprites.Length; i++)
+            {
+                sprites[i] = UiArt.Icon(HudRoundNumeral.GlyphKeys[i]);
+            }
 
-            // WP-081 B4 (R2 U2): the line's own height at the TextScale - a fixed 20 left the 1.25 caption 4 px outside its box.
-            RectTransform calm = InkRoot("RoundCalm", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -24f - seal - 6f), new Vector2(420f, UiFactory.LineHeight(UiType.Caption)));
-            _enemiesBreakdown = InkText("EnemiesBreakdown", calm, "—", UiType.Caption, UiColor.TextSecondary, TextAnchor.MiddleCenter);
-            UiFactory.Fill(_enemiesBreakdown.rectTransform);
-            _calmOnly.Add(UiFactory.Group(calm.gameObject));
+            return sprites;
+        }
+
+        /// <summary>
+        /// Shows <paramref name="round"/> (≤ 0: the placeholder): the numeral, the smear under it and the cluster's width follow
+        /// (once per round change, never per frame); <paramref name="reveal"/> plays the round change's reveal.
+        /// </summary>
+        private void SetRound(int round, bool reveal)
+        {
+            if (_roundNumeral == null)
+            {
+                return;
+            }
+
+            float width = _roundNumeral.Set(round);
+            float letters = RoundSealSize + (int)UiSpace.S;
+            _roundSmear.rectTransform.sizeDelta = new Vector2(width + RoundSmearOverhang + (int)UiSpace.S, RoundSmearHeight);
+            _roundCluster.sizeDelta = new Vector2(letters + width + RoundSmearOverhang, _roundCluster.sizeDelta.y);
+            if (reveal)
+            {
+                PlayRoundReveal();
+            }
+        }
+
+        /// <summary>
+        /// WP-094 · the round change's hook (not on a run's first round): the letters stamp in (HudRoundNumeral.PlayReveal),
+        /// the smear inks in under them, and the seal's hit is due at the letters' contact frame.
+        /// S-08: the banner's UiEvent.HudRoundStarted still marks the change (OnRoundStarted); the seal's contact raises
+        /// UiEvent.StampLanded with <see cref="RoundSealCueDetail"/> (HAREKET-HUD R3: an existing event and a detail, no new
+        /// UiEvent, no new sound asset). The HAREKET-HUD R1 → R3 timeline (old numeral out, R2 wipe 400 ms after the banner,
+        /// the seal's stamp at R2's end) replaces this immediate reveal in the juice pass; the hook points stay.
+        /// </summary>
+        private void PlayRoundReveal()
+        {
+            float contact = _roundNumeral.PlayReveal();
+            _roundSmear.canvasRenderer.SetAlpha(UiMotion.ReducedMotion ? 1f : 0f);
+            UiMotion.TintAlpha(_roundSmear, 1f, UiDuration.Base, UiEase.Settle, UiMotionClass.Decor);
+            PlayRoundSealHit(contact);
+        }
+
+        /// <summary>
+        /// WP-094 · STUB: the seal accent's hit at the letters' contact frame (<paramref name="delay"/> s from now). Today the
+        /// time is recorded and S-08's cue fires on it (<see cref="UpdateRoundSeal"/>); the seal itself does not move yet: a
+        /// seal stamp on the HUD is a second ceremony kind next to the leaf glint, over the HUD's lock of 1 in
+        /// UiOrnamentCensusTests (AD §14 MUST-4), so its motion waits for the AD's call on that lock.
+        /// </summary>
+        private void PlayRoundSealHit(float delay)
+        {
+            _roundSealHitAt = Time.unscaledTime + delay;
+            _roundSealCuePending = true;
+        }
+
+        /// <summary>Once a frame (Update): the seal's contact frame has come - one StampLanded "round" cue. A bool compare otherwise.</summary>
+        private void UpdateRoundSeal()
+        {
+            if (_roundSealCuePending && Time.unscaledTime >= _roundSealHitAt)
+            {
+                _roundSealCuePending = false;
+                UiEvents.Raise(UiEvent.StampLanded, RoundSealCueDetail);
+            }
+        }
+
+        /// <summary>Capture seam (-ddUiCapture hudstates, WP-094 acceptance frames I / IV / IX / XIV / XXIII): shows a round and plays its reveal.</summary>
+        public void CaptureRound(int round)
+        {
+            SetRound(round, true);
         }
 
         // ---- bottom-left health: heart, value, the brush stroke
@@ -153,11 +329,11 @@ namespace DD.Prototype.UI
         private void BuildBrushHealth()
         {
             // Bands from the metrics at the TextScale (D6): the value row sits clear of the leaning stroke's highest point.
-            const float strokeLength = 320f, strokeHeight = 26f, strokeCentre = 32f;
+            const float strokeLength = HealthStrokeLength, strokeHeight = HealthStrokeHeight, strokeCentre = HealthStrokeCentre;
             float strokeTop = strokeCentre + strokeHeight * 0.5f + strokeLength * Mathf.Tan(HealthLean * Mathf.Deg2Rad);
             float band = UiFactory.LineHeight(UiType.NumericL);
             float row = strokeTop + 2f + band * 0.5f;
-            RectTransform root = Cluster("Health", Vector2.zero, new Vector2(InkMargin, InkMargin), new Vector2(380f, row + band * 0.5f + 4f), true);
+            RectTransform root = Cluster("Health", Vector2.zero, new Vector2(InkMargin, InkMargin), new Vector2(380f, HealthClusterHeight()), true);
             _healthPanel = root;   // 8c · E22: the cluster that holds α 1 through the death dim
             RectTransform back = BackPlane(root);
 
@@ -756,15 +932,26 @@ namespace DD.Prototype.UI
             bool first = _layoutMode >= 0;
             _layoutMode = mode;
             _layoutSize = size;
-            LayWeaponCluster(mode == (int)DD.Prototype.CameraSystem.CameraMode.FirstPerson);   // 12b: FP mirrors the internals
-            Vector2 at = WeaponClusterPosition(_weaponHome, mode == (int)DD.Prototype.CameraSystem.CameraMode.FirstPerson, size);
+            bool firstPerson = mode == (int)DD.Prototype.CameraSystem.CameraMode.FirstPerson;
+            LayWeaponCluster(firstPerson);   // 12b: FP mirrors the internals
+            Vector2 at = WeaponClusterPosition(_weaponHome, firstPerson, size);
+            // WP-094: the gold keeps to the top of the bottom-left column - over the health, or over the FP weapon cluster.
+            var goldAt = new Vector2(InkMargin, GoldClusterBottom(firstPerson));
             if (first)
             {
                 UiMotion.Move(_weaponCluster, at, UiDuration.Base, UiEase.Settle, UiMotionClass.Decor);
+                if (_goldCluster != null && _goldCluster.anchoredPosition != goldAt)
+                {
+                    UiMotion.Move(_goldCluster, goldAt, UiDuration.Base, UiEase.Settle, UiMotionClass.Decor);
+                }
             }
             else
             {
                 _weaponCluster.anchoredPosition = at;
+                if (_goldCluster != null)
+                {
+                    _goldCluster.anchoredPosition = goldAt;
+                }
             }
         }
 

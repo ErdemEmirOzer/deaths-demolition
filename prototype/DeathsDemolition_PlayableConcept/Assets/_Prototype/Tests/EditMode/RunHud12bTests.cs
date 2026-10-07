@@ -60,10 +60,16 @@ namespace DD.Prototype.Tests.EditMode
                 float hw = c.W * 0.5f, hh = c.H * 0.5f;
                 foreach (string variant in variants)
                 {
+                    // WP-094 HUD v4 (R3): the gold sits directly above the health (8 px clear; in first person above the weapon
+                    // cluster that stands there), the round moved from the top centre to the top-right corner (InkMargin 32,
+                    // ≤ 240 wide with XXXVIII).
+                    float goldBottom = variant.StartsWith("fp")
+                        ? -hh + RunHudScreen.FpWeaponClusterBottom + 140f * c.Tall + 8f
+                        : -hh + 32f + 110f * c.Tall + 8f;
                     var rects = new List<Rect>
                     {
-                        Rect.MinMaxRect(-hw + 32f, hh - 32f - 36f, -hw + 32f + 170f, hh - 32f),                  // gold
-                        Rect.MinMaxRect(-120f, hh - 24f - 56f, 120f, hh - 24f),                                    // seal
+                        Rect.MinMaxRect(-hw + 32f, goldBottom, -hw + 32f + 170f, goldBottom + 36f),               // gold
+                        Rect.MinMaxRect(hw - 32f - 240f, hh - 32f - 56f, hw - 32f, hh - 32f),                    // round
                         Rect.MinMaxRect(-hw + 32f, -hh + 32f, -hw + 32f + 380f, -hh + 32f + 110f * c.Tall),       // health
                         variant.StartsWith("fp")
                             ? Rect.MinMaxRect(-hw + 32f, -hh + RunHudScreen.FpWeaponClusterBottom, -hw + 432f, -hh + RunHudScreen.FpWeaponClusterBottom + 140f * c.Tall)

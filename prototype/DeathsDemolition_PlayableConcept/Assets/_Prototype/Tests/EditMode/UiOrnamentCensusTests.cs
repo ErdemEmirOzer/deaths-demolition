@@ -58,7 +58,9 @@ namespace DD.Prototype.Tests.EditMode
                 Files = new[]
                 {
                     "Screens/RunHudScreen.cs", "Screens/RunHudScreen.Ink.cs", "Screens/HudBanner.cs", "Screens/HudReticle.cs",
-                    "Screens/HudPlayerArcs.cs", "Screens/HudRearEdge.cs", "Kit/UiEnemyStatusMarkers.cs", "Kit/UiWorldMarker.cs"
+                    "Screens/HudPlayerArcs.cs", "Screens/HudRearEdge.cs", "Kit/UiEnemyStatusMarkers.cs", "Kit/UiWorldMarker.cs",
+                    // WP-094 HUD v4 (R3): the round numeral and the gold target are the HUD's own files - counted with it.
+                    "Hud/HudRoundNumeral.cs", "Hud/HudGoldTarget.cs", "Hud/HudGoldReadout.cs", "Hud/RomanNumerals.cs"
                 },
                 BrushLock = 3,
             },

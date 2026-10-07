@@ -626,7 +626,8 @@ namespace DD.Prototype.Tests.PlayMode
             WeaponController silah = WeaponRegistry.ActiveController;
 
             Assert.AreEqual("1", vm.RoundText, "HUD Round 1");
-            Assert.AreEqual("1", HudMetni(hud, "Round", "RoundValue").text);
+            // WP-094 HUD v4 (R3): the round is drawn as a Roman numeral (the presenter keeps the Arabic text).
+            Assert.AreEqual("I", HudMetni(hud, "Round", "RoundValue").text);
 
             int max = Mathf.RoundToInt(rig.Health.Max);
             Assert.AreEqual(max + " / " + max, vm.HealthText, "sağlık snapshot'ı");
