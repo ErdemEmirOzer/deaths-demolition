@@ -917,6 +917,14 @@ namespace DD.Prototype.Tests.EditMode.Audio
             Assert.AreEqual(AcousticSpace.Open, AcousticSpaces.At(Vector3.zero), "Çözücü yokken Open.");
             Assert.Less(WeaponFireAudio.WetDb(AcousticSpace.Open), WeaponFireAudio.WetDb(AcousticSpace.Corridor));
             Assert.Less(WeaponFireAudio.WetDb(AcousticSpace.Corridor), WeaponFireAudio.WetDb(AcousticSpace.Hall));
+            // R3 (kullanıcı 06.10: testler yalnız top down): the FP weapon's 2D check is AtesV4_KimlikTablosu_FpSilah2D_TPFP.
+        }
+
+        /// <summary>R3 FPTP half of AtesV4_KimlikTablosu (C-00 07.10: mixed tests split): the FP player weapon is 2D.</summary>
+        [Test]
+        [Category("FPTP")]
+        public void AtesV4_KimlikTablosu_FpSilah2D_TPFP()
+        {
             Assert.AreEqual(0f, WeaponPerspectiveMix.For(DD.Prototype.CameraSystem.CameraMode.FirstPerson).Spatial, "FP: oyuncu silahı 2D.");
         }
 
@@ -984,6 +992,16 @@ namespace DD.Prototype.Tests.EditMode.Audio
             Assert.AreEqual(AudioSoundId.None, WeaponFoleyV3.CasingV4("RL1", SurfaceKind.Stone, false), "roketatarın kovanı yok");
             Assert.AreEqual(CasingAudio.V4FileCompDb - CasingAudio.V3FileCompDb, 2f, 1e-4f, "AP-027 kovan dosyası −24 LUFS: +6 telafi");
             Assert.IsTrue(CasingAudio.MinFall >= 0.25f && CasingAudio.MaxFall < CasingAudio.LatestLanding && CasingAudio.LatestLanding <= 0.7f, "R2 S5: 250–700 ms bandı (aynı kare kademesi dahil)");
+            // R3 (kullanıcı 06.10: testler yalnız top down): the casing's top-down level itself; its order against FP is
+            // FoleyV3_KovanPerspektifSirasi_TPFP.
+            Assert.AreEqual(-18f, CasingAudio.PerspectiveDb(DD.Prototype.CameraSystem.CameraMode.TopDown), 1e-4f, "STANDARDS §4: tepeden kovan −18 dB (ateşe göre)");
+        }
+
+        /// <summary>R3 FPTP half of FoleyV3_SilahBasinaMekanizmaSeti (C-00 07.10): the top-down casing sits under the FP one.</summary>
+        [Test]
+        [Category("FPTP")]
+        public void FoleyV3_KovanPerspektifSirasi_TPFP()
+        {
             Assert.Less(CasingAudio.PerspectiveDb(DD.Prototype.CameraSystem.CameraMode.TopDown), CasingAudio.PerspectiveDb(DD.Prototype.CameraSystem.CameraMode.FirstPerson));
         }
 
@@ -1016,10 +1034,18 @@ namespace DD.Prototype.Tests.EditMode.Audio
             Assert.AreEqual(AudioSoundId.SwGelFlightLoop, ProjectileFlightAudio.LoopFor(DD.Prototype.Core.Weapons.ProjectileKind.Gel));
             Assert.AreEqual(AudioSoundId.None, ProjectileFlightAudio.LoopFor(DD.Prototype.Core.Weapons.ProjectileKind.Bullet), "mermide döngü yok");
             Assert.AreEqual(1f, ProjectileFlightAudio.PitchFor(40f, DD.Prototype.CameraSystem.CameraMode.TopDown), 1e-5f, "tepeden pitch rampası yok");
-            Assert.AreEqual(Mathf.Pow(2f, -2f / 12f), ProjectileFlightAudio.PitchFor(60f, DD.Prototype.CameraSystem.CameraMode.FirstPerson), 1e-4f, "45 m+ → −2 st");
+            Assert.AreEqual(1f, ProjectileFlightAudio.PitchFor(60f, DD.Prototype.CameraSystem.CameraMode.TopDown), 1e-5f, "tepeden 45 m+ da rampa yok (R3: FP rampası Firlatici_PitchRampasi_TPFP)");
             Assert.AreEqual(AudioSoundId.ExplosionNear, PrototypeAudioDirector.ExplosionLayer(12f));
             Assert.AreEqual(AudioSoundId.ExplosionMid, PrototypeAudioDirector.ExplosionLayer(12.1f));
             Assert.AreEqual(AudioSoundId.ExplosionFar, PrototypeAudioDirector.ExplosionLayer(35.1f));
+        }
+
+        /// <summary>R3 FPTP half of Firlatici_UcusDongusuEslemi (C-00 07.10): the FP flight loop drops 2 st past 45 m.</summary>
+        [Test]
+        [Category("FPTP")]
+        public void Firlatici_PitchRampasi_TPFP()
+        {
+            Assert.AreEqual(Mathf.Pow(2f, -2f / 12f), ProjectileFlightAudio.PitchFor(60f, DD.Prototype.CameraSystem.CameraMode.FirstPerson), 1e-4f, "45 m+ → −2 st");
         }
 
         [Test]
@@ -1176,6 +1202,22 @@ namespace DD.Prototype.Tests.EditMode.Audio
             Assert.That(WeaponAudioIdentity.EarlyOffsetSeconds(AcousticSpace.Open), Is.InRange(0.025f, 0.035f), "açık avlu 25–35 ms");
             Assert.That(WeaponAudioIdentity.EarlyOffsetSeconds(AcousticSpace.Corridor), Is.InRange(0.008f, 0.014f), "koridor 8–14 ms");
             Assert.That(WeaponAudioIdentity.EarlyOffsetSeconds(AcousticSpace.Hall), Is.InRange(0.018f, 0.024f), "salon 18–24 ms");
+            // R3 (kullanıcı 06.10: testler yalnız top down): the top-down row of the perspective ladder (the three-mode ladder is
+            // AtesV4_KatmanYolu_PerspektifMerdiveni_TPFP). R2 S3 (C-00 06.10): top-down weapon +0.8 dB nearer, its tail lifted the same, so the space's wet/dry (S4,
+            // WetDb) stays as tuned; Mechanical/Body −10 dB.
+            WeaponPerspectiveMix td = WeaponPerspectiveMix.For(DD.Prototype.CameraSystem.CameraMode.TopDown);
+            Assert.AreEqual(-10f, WeaponAudioIdentity.MechanicalRefDb + td.MechanicalDb, 1e-4f, "Mechanical/Body TopDown");
+            Assert.AreEqual(0.8f, td.NearFieldDb, 1e-4f, "Silah yakın alan TopDown");
+            Assert.AreEqual(td.NearFieldDb, td.TailDb, 1e-4f, "Kuyruk silahla aynı kalkar (ıslak/kuru korunur) TopDown");
+
+            Assert.AreEqual(0f, AudioMixPlan.PlayerWeapon(AudioSoundId.WeaponAr1Fire).Delay, "kuru atış gecikmesiz");
+        }
+
+        /// <summary>R3 FPTP half of AtesV4_KatmanYolu (C-00 07.10): the Mechanical/Body and near-field ladder over all three modes.</summary>
+        [Test]
+        [Category("FPTP")]
+        public void AtesV4_KatmanYolu_PerspektifMerdiveni_TPFP()
+        {
             float[] beklenen = { -10f, -7f, -3f };
             var modlar = new[] { DD.Prototype.CameraSystem.CameraMode.TopDown, DD.Prototype.CameraSystem.CameraMode.ThirdPerson, DD.Prototype.CameraSystem.CameraMode.FirstPerson };
             for (int i = 0; i < 3; i++)
@@ -1192,8 +1234,6 @@ namespace DD.Prototype.Tests.EditMode.Audio
                 Assert.AreEqual(yakin[i], m.NearFieldDb, 1e-4f, "Silah yakın alan " + modlar[i]);
                 Assert.AreEqual(m.NearFieldDb, m.TailDb, 1e-4f, "Kuyruk silahla aynı kalkar (ıslak/kuru korunur) " + modlar[i]);
             }
-
-            Assert.AreEqual(0f, AudioMixPlan.PlayerWeapon(AudioSoundId.WeaponAr1Fire).Delay, "kuru atış gecikmesiz");
         }
 
         [Test]

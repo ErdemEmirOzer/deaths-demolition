@@ -1512,7 +1512,19 @@ namespace DD.Prototype.Tests.PlayMode
         [Explicit("WP-072 V6 mix ölçümü — kanıt, CI dışı")]
         [Category("Diagnostics")]
         [Timeout(400000)]
-        public IEnumerator MixV6_UcKameraModu_BusSeviyeleri_Olcum()
+        public IEnumerator MixV6_UcKameraModu_BusSeviyeleri_Olcum() => MixV6Olcum(new[] { DD.Prototype.CameraSystem.CameraMode.TopDown });
+
+        /// <summary>R3 FPTP half of MixV6_UcKameraModu_BusSeviyeleri_Olcum (C-00 07.10: mixed tests split): the TP / FP rows
+        /// (named so the top-down name is not its prefix: tools/test.sh --filter is a regex, so the top-down filter never selects this one).</summary>
+        [UnityTest]
+        [Explicit("WP-072 V6 mix ölçümü — kanıt, CI dışı")]
+        [Category("Diagnostics")]
+        [Category("FPTP")]
+        [Timeout(400000)]
+        public IEnumerator MixV6_TPFP_UcKameraModu_BusSeviyeleri_Olcum() => MixV6Olcum(new[] { DD.Prototype.CameraSystem.CameraMode.ThirdPerson, DD.Prototype.CameraSystem.CameraMode.FirstPerson });
+
+        // R3 (kullanıcı 06.10: testler yalnız top down): the top-down test measures TopDown; the TP / FP rows are MixV6_TPFP_UcKameraModu_BusSeviyeleri_Olcum.
+        IEnumerator MixV6Olcum(DD.Prototype.CameraSystem.CameraMode[] modlar)
         {
             UnityEngine.Audio.AudioMixer mixer = _d.Bridge.Mixer;
             string path = System.IO.Path.Combine(Application.temporaryCachePath, "wp072-mix.wav");
@@ -1523,7 +1535,6 @@ namespace DD.Prototype.Tests.PlayMode
                 _s.Dogur(_s.Zemin(Mathf.Cos(a) * 9f, Mathf.Sin(a) * 9f));
             }
 
-            var modlar = new[] { DD.Prototype.CameraSystem.CameraMode.TopDown, DD.Prototype.CameraSystem.CameraMode.ThirdPerson, DD.Prototype.CameraSystem.CameraMode.FirstPerson };
             var dallar = new[] { ("full", 0), ("music", 1), ("ambience", 2), ("world", 3), ("player", 4) };
             var rapor = new System.Text.StringBuilder("[DD-TEST] wp072.mix v6 (LUFS-I / PLR dB / LRA400 LU)");
             try
@@ -1586,7 +1597,8 @@ namespace DD.Prototype.Tests.PlayMode
 
         /// <summary>
         /// WP-072 · user listening package (C-00 28.09): three A/B pairs from the game's real output on the default world (V6) —
-        /// 1 top-down fight and 2 first-person fight — WP-072 B7 mix panel (C-00 01.10): one 60 s take per mode, 4 s blocks rotated
+        /// 1 top-down fight (R3, kullanıcı 06.10: tests run top-down only — the 2 first-person take is DinlemePaketi_TPFP_AB_Uret)
+        /// — WP-072 B7 mix panel (C-00 01.10): one 60 s take per mode, 4 s blocks rotated
         /// A B C W R ×3 (A = today, B = SfxPlayer +3 / SfxWorld −1 dB = the Run snapshot proposal +1 / −3, C = SfxPlayer +2 and SfxWorld
         /// ducked −3 dB under player fire; W = the weapon alone, R = everything but the weapon — stems for the margin, since the SMG room
         /// tail rings through any "gap" window); block starts (capture frames) go to a CSV and wp-072/tools/kit_splice.py splices,
@@ -1597,7 +1609,20 @@ namespace DD.Prototype.Tests.PlayMode
         [Explicit("WP-072 dinleme paketi — kanıt, CI dışı")]
         [Category("Diagnostics")]
         [Timeout(300000)]
-        public IEnumerator DinlemePaketi_AB_Uret()
+        public IEnumerator DinlemePaketi_AB_Uret() => DinlemePaketi(new[] { (DD.Prototype.CameraSystem.CameraMode.TopDown, "1", "ustten") });
+
+        /// <summary>R3 FPTP half of DinlemePaketi_AB_Uret (C-00 07.10: mixed tests split): the 2 first-person take
+        /// (2_birinci-sahis_*); the courtyard pair 3 does not depend on the camera and is recorded by both
+        /// (named so the top-down name is not its prefix: tools/test.sh --filter is a regex, so the top-down filter never selects this one).</summary>
+        [UnityTest]
+        [Explicit("WP-072 dinleme paketi — kanıt, CI dışı")]
+        [Category("Diagnostics")]
+        [Category("FPTP")]
+        [Timeout(300000)]
+        public IEnumerator DinlemePaketi_TPFP_AB_Uret() => DinlemePaketi(new[] { (DD.Prototype.CameraSystem.CameraMode.FirstPerson, "2", "birinci-sahis") });
+
+        // R3 (kullanıcı 06.10: testler yalnız top down): the top-down test records 1_ustten_*; the first-person take is DinlemePaketi_TPFP_AB_Uret.
+        IEnumerator DinlemePaketi((DD.Prototype.CameraSystem.CameraMode mod, string no, string ad)[] modlar)
         {
             UnityEngine.Audio.AudioMixer mixer = _d.Bridge.Mixer;
             MusicDirector m = _d.Music;
@@ -1685,7 +1710,6 @@ namespace DD.Prototype.Tests.PlayMode
                 mixer.GetFloat(worldParam, out float tabanWorldDb);
                 mixer.GetFloat(AudioMixerBridge.VolumeParams[1], out float tabanMusicDb);
                 mixer.GetFloat(AudioMixerBridge.VolumeParams[2], out float tabanAmbDb);
-                var modlar = new[] { (DD.Prototype.CameraSystem.CameraMode.TopDown, "1", "ustten"), (DD.Prototype.CameraSystem.CameraMode.FirstPerson, "2", "birinci-sahis") };
                 foreach (var (mod, no, ad) in modlar)
                 {
                     DD.Prototype.CameraSystem.CameraModeService.Request(mod, true);
@@ -1756,7 +1780,19 @@ namespace DD.Prototype.Tests.PlayMode
         [Explicit("WP-085 B4 gerçek RPM silah kiti — kanıt, CI dışı")]
         [Category("Diagnostics")]
         [Timeout(1800000)]
-        public IEnumerator SilahKiti_GercekRpm_OyunIci_Kayit()
+        public IEnumerator SilahKiti_GercekRpm_OyunIci_Kayit() => SilahKiti(new[] { (DD.Prototype.CameraSystem.CameraMode.TopDown, "TopDown") });
+
+        /// <summary>R3 FPTP half of SilahKiti_GercekRpm_OyunIci_Kayit (C-00 07.10: mixed tests split): the first-person takes
+        /// (Kit_/Stem_*_FP_*) (named so the top-down name is not its prefix: tools/test.sh --filter is a regex, so the top-down filter never selects this one).</summary>
+        [UnityTest]
+        [Explicit("WP-085 B4 gerçek RPM silah kiti — kanıt, CI dışı")]
+        [Category("Diagnostics")]
+        [Category("FPTP")]
+        [Timeout(1800000)]
+        public IEnumerator SilahKiti_TPFP_GercekRpm_OyunIci_Kayit() => SilahKiti(new[] { (DD.Prototype.CameraSystem.CameraMode.FirstPerson, "FP") });
+
+        // R3 (kullanıcı 06.10: testler yalnız top down): the top-down test records the TopDown takes; the FP takes are SilahKiti_TPFP_GercekRpm_OyunIci_Kayit.
+        IEnumerator SilahKiti((DD.Prototype.CameraSystem.CameraMode camMode, string modAd)[] kameralar)
         {
             UnityEngine.Audio.AudioMixer mixer = _d.Bridge.Mixer;
             string dir = System.IO.Path.Combine(Application.temporaryCachePath, "wp085-kit");
@@ -1851,7 +1887,7 @@ namespace DD.Prototype.Tests.PlayMode
 
                     float takeLen = heldEnd + 2.1f + 1f;
 
-                    foreach (var (camMode, modAd) in new[] { (DD.Prototype.CameraSystem.CameraMode.TopDown, "TopDown"), (DD.Prototype.CameraSystem.CameraMode.FirstPerson, "FP") })
+                    foreach (var (camMode, modAd) in kameralar)
                     {
                         DD.Prototype.CameraSystem.CameraModeService.Request(camMode, true);
                         yield return new WaitForSecondsRealtime(2f);
