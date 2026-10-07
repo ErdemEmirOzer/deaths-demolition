@@ -256,17 +256,17 @@ class CiFixture(unittest.TestCase):
 class CiSignalTrapTests(CiFixture):
     # --- main-ci -------------------------------------------------------------------------------------------------------
 
-    def test_MainCi_PlayerSlotPencereVerildiktenSonra_KuyruktaTutulmaz(self):
-        """WP-099 (C-00 08.10, queue starvation): main-ci takes the player slot only once its editor window is granted —
-        while the snapshot waits in the window queue no Player is held off; the slot is released after the restore."""
+    def test_MainCi_PlayerSlotHicAlmaz_KuyruktaVeKosarken(self):
+        """WP-099 (C-00 08.10, queue starvation; gt MUST-1): main-ci never takes the player slot — not while its snapshot
+        waits in the window queue (it held every Player off for up to an hour) and not after the window opened (that
+        order closed a cycle with callers that hold the player slot and wait for an editor-area window)."""
         p = self.main_ci("pass", playmode=True, FAKE_GUARD_SNAP_SLOW="2")   # green needs both XMLs
         self.wait_file(self.log / "guard-snap.pid")
         self.assertEqual([], self.lines("slot-calls.txt"))   # waiting in the queue: the player slot is free
         rc, out, err = self.finish(p)
         self.assertEqual(0, rc, out + err)
-        order = [l for l in self.lines("order.txt") if l.split()[-1] == "player" or l.startswith("guard ")]
-        self.assertEqual(["guard snapshot", "slot acquire player", "guard restore", "slot release player"],
-                         [l for l in order if l != "guard restore-done"])
+        self.assertEqual(["guard snapshot", "guard restore"], [l for l in self.lines("order.txt") if l.startswith("guard ") and l != "guard restore-done"])
+        self.assertEqual([], [l for l in self.lines("order.txt") if l.endswith(" player")])
 
     def assert_main_ci_signal(self, sig, code):
         p = self.main_ci()
@@ -275,7 +275,7 @@ class CiSignalTrapTests(CiFixture):
         rc, out, err = self.finish(p)
         self.assertEqual(rc, code, out + err)
         self.assertEqual(self.lines("guard-calls.txt"), ["snapshot", "restore", "restore-done"])
-        self.assertEqual([l.split()[:2] for l in self.lines("slot-calls.txt")], [["acquire", "player"], ["release", "player"]])
+        self.assertEqual([l.split()[:2] for l in self.lines("slot-calls.txt")], [])   # WP-099 (C-00 08.10): main-ci takes no player slot
         self.assertEqual(self.leases(), [])
         self.assertFalse(alive(child))
         self.assertIn(f"SIG{signal.Signals(sig).name[3:]} — exit {code} through cleanup", err)
@@ -301,7 +301,7 @@ class CiSignalTrapTests(CiFixture):
         self.assertIn(f"live {survivor}", marker)
         self.assertIn("only C-00 writes userdata-NOT-RESTORED.resolved", marker)
         self.assertEqual(self.lines("guard-calls.txt"), ["snapshot"])  # restore NOT called
-        self.assertEqual([l.split()[0] for l in self.lines("slot-calls.txt")], ["acquire"])  # player slot not released
+        self.assertEqual([l.split()[0] for l in self.lines("slot-calls.txt")], [])   # WP-099 (C-00 08.10): main-ci takes no player slot
         self.assertEqual(len(self.leases()), 1)  # lease kept: the survivor still uses the checkout
         self.assertTrue(alive(survivor))
 
@@ -320,7 +320,7 @@ class CiSignalTrapTests(CiFixture):
         self.assertFalse(alive(unity))
         self.assertEqual(self.lines("guard-calls.txt"), ["snapshot", "restore", "restore-done"])
         calls = [l.split()[:2] for l in self.lines("slot-calls.txt")]
-        self.assertEqual(sorted(calls), sorted([["acquire", "player"], ["acquire", "unity"], ["release", "unity"], ["release", "player"]]))
+        self.assertEqual(sorted(calls), sorted([["acquire", "unity"], ["release", "unity"]]))   # WP-099 (C-00 08.10): main-ci takes no player slot
         self.assertEqual(self.leases(), [])
 
     def test_MainCi_RestoreSirasindaIkinciSinyal_GuardKesilmez_RestoreTamamlanir(self):
@@ -347,7 +347,7 @@ class CiSignalTrapTests(CiFixture):
         self.assertIn("a Unity still has", out + err)
         self.assertIn("a Unity has the CI checkout open", (self.out / self.sha / "userdata-NOT-RESTORED.txt").read_text())
         self.assertEqual(self.lines("guard-calls.txt"), ["snapshot"])
-        self.assertEqual([l.split()[:2] for l in self.lines("slot-calls.txt")], [["acquire", "player"]])
+        self.assertEqual([l.split()[:2] for l in self.lines("slot-calls.txt")], [])   # WP-099 (C-00 08.10): main-ci takes no player slot
         self.assertEqual(len(self.leases()), 1)
 
     def test_MainCi_CozulmemisIsaret_Cikis65HicbirSeyAlinmaz_ResolvedSonraKosar(self):
@@ -387,7 +387,7 @@ class CiSignalTrapTests(CiFixture):
         self.assertEqual(summary["toolsTree"], self.git("rev-parse", "main:tools"))
         self.assertIn(summary["toolsTree"], (self.out / self.sha / "summary.md").read_text())
         self.assertEqual(self.lines("guard-calls.txt"), ["snapshot", "restore", "restore-done"])
-        self.assertEqual([l.split()[:2] for l in self.lines("slot-calls.txt")], [["acquire", "player"], ["release", "player"]])
+        self.assertEqual([l.split()[:2] for l in self.lines("slot-calls.txt")], [])   # WP-099 (C-00 08.10): main-ci takes no player slot
         self.assertEqual(self.leases(), [])
         self.assertNotIn("through cleanup", err)
 
@@ -430,7 +430,7 @@ class CiSignalTrapTests(CiFixture):
         self.assertIn("env-scrub: git grep failed in", err)
         self.assertFalse((self.log / "child-editmode.pid").exists())   # never run unscrubbed
         self.assertEqual(self.lines("guard-calls.txt"), ["snapshot", "restore", "restore-done"])
-        self.assertEqual([l.split()[:2] for l in self.lines("slot-calls.txt")], [["acquire", "player"], ["release", "player"]])
+        self.assertEqual([l.split()[:2] for l in self.lines("slot-calls.txt")], [])   # WP-099 (C-00 08.10): main-ci takes no player slot
         self.assertEqual(self.leases(), [])
 
     # --- compile-check -------------------------------------------------------------------------------------------------
@@ -534,7 +534,7 @@ class CiDriverGuardTests(CiFixture):
         self.assertEqual(self.lines("guard-dirs.txt"), [f"snapshot {ug}", f"snapshot {ug}.try2", f"restore {ug}.try2"])
         self.assertIn("snapshot75 (try 1/3", out)
         self.assertTrue((Path(f"{ug}.try2") / "after-run-editor.txt").exists())
-        self.assertEqual([l.split()[:2] for l in self.lines("slot-calls.txt")], [["acquire", "player"], ["release", "player"]])
+        self.assertEqual([l.split()[:2] for l in self.lines("slot-calls.txt")], [])   # WP-099 (C-00 08.10): main-ci takes no player slot
         self.assertEqual(self.leases(), [])
 
     def test_M07_Snapshot75Surer_UcDenemeUcDizin_75TestYokRestoreYok(self):
@@ -795,7 +795,7 @@ class CiIsolatedStepTests(CiFixture):
             self.assertIn("`" + name + "`", line)
         self.assertIn(f"alone: {sid}=0", (self.out / self.sha / "timeline.txt").read_text())
         self.assertEqual(self.lines("guard-calls.txt"), ["snapshot", "restore", "restore-done"])   # one window for all steps
-        self.assertEqual([l.split()[:2] for l in self.lines("slot-calls.txt")], [["acquire", "player"], ["release", "player"]])
+        self.assertEqual([l.split()[:2] for l in self.lines("slot-calls.txt")], [])   # WP-099 (C-00 08.10): main-ci takes no player slot
         self.assertEqual(self.leases(), [])
 
     # --- C-00 05.10: the core runs exclude [Category("Diagnostics")]; alone steps and full-name selections do not --------
