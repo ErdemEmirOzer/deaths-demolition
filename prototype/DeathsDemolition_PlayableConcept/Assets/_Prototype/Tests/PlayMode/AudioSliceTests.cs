@@ -1512,7 +1512,10 @@ namespace DD.Prototype.Tests.PlayMode
         [Explicit("WP-072 V6 mix ölçümü — kanıt, CI dışı")]
         [Category("Diagnostics")]
         [Timeout(400000)]
-        public IEnumerator MixV6_UcKameraModu_BusSeviyeleri_Olcum() => MixV6Olcum(new[] { DD.Prototype.CameraSystem.CameraMode.TopDown });
+        public IEnumerator MixV6_UcKameraModu_BusSeviyeleri_Olcum()
+        {
+            return MixV6Olcum(new[] { DD.Prototype.CameraSystem.CameraMode.TopDown });
+        }
 
         /// <summary>R3 FPTP half of MixV6_UcKameraModu_BusSeviyeleri_Olcum (C-00 07.10: mixed tests split): the TP / FP rows
         /// (named so the top-down name is not its prefix: tools/test.sh --filter is a regex, so the top-down filter never selects this one).</summary>
@@ -1521,10 +1524,13 @@ namespace DD.Prototype.Tests.PlayMode
         [Category("Diagnostics")]
         [Category("FPTP")]
         [Timeout(400000)]
-        public IEnumerator MixV6_TPFP_UcKameraModu_BusSeviyeleri_Olcum() => MixV6Olcum(new[] { DD.Prototype.CameraSystem.CameraMode.ThirdPerson, DD.Prototype.CameraSystem.CameraMode.FirstPerson });
+        public IEnumerator MixV6_TPFP_UcKameraModu_BusSeviyeleri_Olcum()
+        {
+            return MixV6Olcum(new[] { DD.Prototype.CameraSystem.CameraMode.ThirdPerson, DD.Prototype.CameraSystem.CameraMode.FirstPerson });
+        }
 
         // R3 (kullanıcı 06.10: testler yalnız top down): the top-down test measures TopDown; the TP / FP rows are MixV6_TPFP_UcKameraModu_BusSeviyeleri_Olcum.
-        IEnumerator MixV6Olcum(DD.Prototype.CameraSystem.CameraMode[] modlar)
+        private IEnumerator MixV6Olcum(DD.Prototype.CameraSystem.CameraMode[] modlar)
         {
             UnityEngine.Audio.AudioMixer mixer = _d.Bridge.Mixer;
             string path = System.IO.Path.Combine(Application.temporaryCachePath, "wp072-mix.wav");
@@ -1609,7 +1615,10 @@ namespace DD.Prototype.Tests.PlayMode
         [Explicit("WP-072 dinleme paketi — kanıt, CI dışı")]
         [Category("Diagnostics")]
         [Timeout(300000)]
-        public IEnumerator DinlemePaketi_AB_Uret() => DinlemePaketi(new[] { (DD.Prototype.CameraSystem.CameraMode.TopDown, "1", "ustten") });
+        public IEnumerator DinlemePaketi_AB_Uret()
+        {
+            return DinlemePaketi(new[] { (DD.Prototype.CameraSystem.CameraMode.TopDown, "1", "ustten") });
+        }
 
         /// <summary>R3 FPTP half of DinlemePaketi_AB_Uret (C-00 07.10: mixed tests split): the 2 first-person take
         /// (2_birinci-sahis_*); the courtyard pair 3 does not depend on the camera and is recorded by both
@@ -1619,10 +1628,13 @@ namespace DD.Prototype.Tests.PlayMode
         [Category("Diagnostics")]
         [Category("FPTP")]
         [Timeout(300000)]
-        public IEnumerator DinlemePaketi_TPFP_AB_Uret() => DinlemePaketi(new[] { (DD.Prototype.CameraSystem.CameraMode.FirstPerson, "2", "birinci-sahis") });
+        public IEnumerator DinlemePaketi_TPFP_AB_Uret()
+        {
+            return DinlemePaketi(new[] { (DD.Prototype.CameraSystem.CameraMode.FirstPerson, "2", "birinci-sahis") });
+        }
 
         // R3 (kullanıcı 06.10: testler yalnız top down): the top-down test records 1_ustten_*; the first-person take is DinlemePaketi_TPFP_AB_Uret.
-        IEnumerator DinlemePaketi((DD.Prototype.CameraSystem.CameraMode mod, string no, string ad)[] modlar)
+        private IEnumerator DinlemePaketi((DD.Prototype.CameraSystem.CameraMode mod, string no, string ad)[] modlar)
         {
             UnityEngine.Audio.AudioMixer mixer = _d.Bridge.Mixer;
             MusicDirector m = _d.Music;
@@ -1780,7 +1792,10 @@ namespace DD.Prototype.Tests.PlayMode
         [Explicit("WP-085 B4 gerçek RPM silah kiti — kanıt, CI dışı")]
         [Category("Diagnostics")]
         [Timeout(1800000)]
-        public IEnumerator SilahKiti_GercekRpm_OyunIci_Kayit() => SilahKiti(new[] { (DD.Prototype.CameraSystem.CameraMode.TopDown, "TopDown") });
+        public IEnumerator SilahKiti_GercekRpm_OyunIci_Kayit()
+        {
+            return SilahKiti(new[] { (DD.Prototype.CameraSystem.CameraMode.TopDown, "TopDown") });
+        }
 
         /// <summary>R3 FPTP half of SilahKiti_GercekRpm_OyunIci_Kayit (C-00 07.10: mixed tests split): the first-person takes
         /// (Kit_/Stem_*_FP_*) (named so the top-down name is not its prefix: tools/test.sh --filter is a regex, so the top-down filter never selects this one).</summary>
@@ -1789,10 +1804,13 @@ namespace DD.Prototype.Tests.PlayMode
         [Category("Diagnostics")]
         [Category("FPTP")]
         [Timeout(1800000)]
-        public IEnumerator SilahKiti_TPFP_GercekRpm_OyunIci_Kayit() => SilahKiti(new[] { (DD.Prototype.CameraSystem.CameraMode.FirstPerson, "FP") });
+        public IEnumerator SilahKiti_TPFP_GercekRpm_OyunIci_Kayit()
+        {
+            return SilahKiti(new[] { (DD.Prototype.CameraSystem.CameraMode.FirstPerson, "FP") });
+        }
 
         // R3 (kullanıcı 06.10: testler yalnız top down): the top-down test records the TopDown takes; the FP takes are SilahKiti_TPFP_GercekRpm_OyunIci_Kayit.
-        IEnumerator SilahKiti((DD.Prototype.CameraSystem.CameraMode camMode, string modAd)[] kameralar)
+        private IEnumerator SilahKiti((DD.Prototype.CameraSystem.CameraMode camMode, string modAd)[] kameralar)
         {
             UnityEngine.Audio.AudioMixer mixer = _d.Bridge.Mixer;
             string dir = System.IO.Path.Combine(Application.temporaryCachePath, "wp085-kit");
@@ -2030,7 +2048,8 @@ namespace DD.Prototype.Tests.PlayMode
                       + " loops=" + s2Loops + " refused=" + s2Refused + (varyantlar.IndexOf('C') >= 0 ? " · C below400Min=" + s1MinC.ToString("0.000") : "") + " · files " + System.IO.Directory.GetFiles(dir, "*.wav").Length);
 
             const string kaynak = "DD.Prototype.Tests.PlayMode.AudioSliceTests.SilahKiti_GercekRpm_OyunIci_Kayit";
-            if (varyantlar.IndexOf('A') >= 0)
+            // R3: the S1 / S2 rows are the top-down test's (source above); the FPTP twin's FP takes never write them.
+            if (varyantlar.IndexOf('A') >= 0 && kameralar[0].camMode == DD.Prototype.CameraSystem.CameraMode.TopDown)
             {
                 var s1 = new Dictionary<string, double> { { "below400ShareMin", Math.Round(s1Min, 4) } };
                 if (varyantlar.IndexOf('C') >= 0 && s1MinC < 1f) s1["below400ShareMinV4"] = Math.Round(s1MinC, 4);   // report (S-10 2ccda99b)
