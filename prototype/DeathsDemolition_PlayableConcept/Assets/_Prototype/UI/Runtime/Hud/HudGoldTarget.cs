@@ -44,8 +44,8 @@ namespace DD.Prototype.UI
         /// <summary>A flight that has not arrived after this long (unscaled seconds) is released by itself.</summary>
         public const float StaleSeconds = 2f;
 
-        /// <summary>The HUD's punch rate limit: at most one punch per this many seconds, the gain accumulating between.</summary>
-        public const float PunchMinSeconds = 0.12f;
+        /// <summary>The HUD's punch rate limit: at most one punch per this many seconds, the gain accumulating between (the motion token).</summary>
+        public const float PunchMinSeconds = UiMotionTokens.PunchMinInterval;
 
         /// <summary>Flights tracked one by one (a round-end sweep is ≤ one per packet; the pool is sized per round).</summary>
         public const int FlightCapacity = 256;

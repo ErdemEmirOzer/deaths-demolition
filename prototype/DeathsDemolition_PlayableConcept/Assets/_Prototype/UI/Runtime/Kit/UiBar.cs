@@ -195,6 +195,36 @@ namespace DD.Prototype.UI
             }
         }
 
+        /// <summary>
+        /// WP-094 (HAREKET-HUD H1 / H2): a piece BROKE OFF - the fill snaps to <paramref name="value01"/> at once (the chunk the
+        /// HUD drops carries the lost range away), and the ghost holds the old value 350 ms, then falls (BarGhost, as for an
+        /// eased drop; Max(previous, ghost) as ever). A later SetValue of the same value changes nothing.
+        /// </summary>
+        public void Break(float value01)
+        {
+            float target = Mathf.Clamp01(value01);
+            float previous = _target;
+            _target = target;
+            if (_fill == null)
+            {
+                return;
+            }
+
+            if (_ghost != null && target < previous)
+            {
+                UiPresets.BarGhost(_ghost, Mathf.Max(previous, _ghost.fillAmount), target);
+            }
+
+            UiMotion.KillTarget(_fill, false);
+            _fill.fillAmount = target;
+        }
+
+        /// <summary>WP-094: the fill image (the HUD's chunk / glow cut their slice from its sprite and colour).</summary>
+        public Image FillImage
+        {
+            get { return _fill; }
+        }
+
         /// <summary>Swaps the fill token, e.g. health dropping into the low-health colour.</summary>
         public void SetColor(UiColor token)
         {

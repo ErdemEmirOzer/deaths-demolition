@@ -1,5 +1,4 @@
 using DD.Prototype.CameraSystem;
-using DD.Prototype.PlayerSystem;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -186,6 +185,18 @@ namespace DD.Prototype.UI
     /// what is currently visible and what the new hit is worth, and restarts that edge's
     /// clock - so being surrounded holds the ring up instead of strobing it.
     ///
+    /// WP-094 HUD v4 (R3, C-00 07.10; HAREKET-HUD D1 MUST, the motion lead's main-branch findings)
+    /// -------------------------------------------------------------------------------------------
+    ///   * THE FLASH GATE. A lit edge is 1920 × 150 px - a large flash (≥ 43 000 px²) - so every onset now passes
+    ///     <see cref="UiMotion.FlashOnset"/> (≤ 3 a second across the whole UI) and a per-edge limit (≤ 2 a second). A
+    ///     refused onset MERGES: an edge already lit takes the louder peak on its running clock; a dark edge stays dark (the
+    ///     top-down wedge round the player still says where - it is small, outside the gate). Before, it bypassed the gate.
+    ///   * NO MESH REBUILD. The edges' colour is set once; the envelope writes CanvasRenderer alpha (no vertex rebuild),
+    ///     and only when the 8-bit value moves. Before, it wrote Image.color - a mesh rebuild - every frame of every live
+    ///     edge. The layer is its own nested canvas (RunHudScreen), so the decay re-batches only it.
+    ///   * THE SOURCE. It listens to <see cref="HudFeelSource.PlayerDamaged"/> - PlayerHealth.AnyDamaged today, behind the
+    ///     one seam S-02's FeelEvents will replace.
+    ///
     /// WHAT THIS CLASS CANNOT DO
     /// -------------------------
     /// It has no reference to input, to the motor, to the aim or to Time.timeScale, and
@@ -209,6 +220,15 @@ namespace DD.Prototype.UI
 
         private int _liveEdges;
 
+        /// <summary>The alpha each edge's CanvasRenderer was last given (−1: not yet).</summary>
+        private readonly float[] _shown = { -1f, -1f, -1f, -1f };
+
+        /// <summary>WP-094 (D1): ≤ 2 onsets a second per edge, next to the global FlashGate.</summary>
+        private readonly HudOnsetLimiter _perEdge = new HudOnsetLimiter(EdgeCount, UiMotionTokens.FlashGateOnsetsPerElement);
+
+        /// <summary>Hits whose onset the flash gate refused (merged into what was lit). Test / diagnosis readout.</summary>
+        public int MergedOnsets { get; private set; }
+
         /// <summary>Hits this layer has drawn since it was created. Diagnosis readout.</summary>
         public int HitCount { get; private set; }
 
@@ -230,7 +250,7 @@ namespace DD.Prototype.UI
                 return 0f;
             }
 
-            return image.color.a;
+            return image.canvasRenderer.GetAlpha();   // WP-094: the envelope lives on the renderer; the colour is fixed
         }
 
         /// <summary>The graphic for one edge. Exposed so a test can check it takes no input.</summary>
@@ -287,15 +307,15 @@ namespace DD.Prototype.UI
 
         private void OnEnable()
         {
-            PlayerHealth.AnyDamaged += OnDamaged;
+            HudFeelSource.PlayerDamaged += OnDamaged;   // WP-094: the one seam (PlayerHealth.AnyDamaged today)
         }
 
         private void OnDisable()
         {
-            PlayerHealth.AnyDamaged -= OnDamaged;
+            HudFeelSource.PlayerDamaged -= OnDamaged;
         }
 
-        private void OnDamaged(PlayerDamageInfo info)
+        private void OnDamaged(HudDamage info)
         {
             // HitDirection travels FROM the attacker TOWARDS the player, so the attacker
             // is in the opposite direction, and that is the edge to light.
@@ -303,14 +323,34 @@ namespace DD.Prototype.UI
             UiHitDirection.EdgeWeights(screen, s_weights);
 
             float strength = StrengthOf(info);
+            bool any = false;
+            for (int i = 0; i < EdgeCount; i++)
+            {
+                any |= s_weights[i] * strength > 0f;
+            }
+
+            if (!any)
+            {
+                return;
+            }
+
+            // WP-094 (D1): one onset per hit through the UI's FlashGate; each edge also through its own ≤ 2 / s.
+            bool onset = UiMotion.FlashOnset(true);
+            float now = UiFxGlobals.Now;
             bool raised = false;
 
             for (int i = 0; i < EdgeCount; i++)
             {
-                if (Raise(i, s_weights[i] * strength))
+                float level = s_weights[i] * strength;
+                if (level > 0f && Raise(i, level, onset && _perEdge.Allow(i, now)))
                 {
                     raised = true;
                 }
+            }
+
+            if (!onset)
+            {
+                MergedOnsets++;
             }
 
             if (raised)
@@ -336,7 +376,7 @@ namespace DD.Prototype.UI
         /// family. Modulating the existing transient instead of adding a new permanent one
         /// is what keeps the two from colliding.
         /// </summary>
-        private static float StrengthOf(in PlayerDamageInfo info)
+        private static float StrengthOf(in HudDamage info)
         {
             float fraction = info.MaxHealth > 0f ? info.AppliedAmount / info.MaxHealth : 0f;
             // Mathf.Max here is a division guard against a zeroed token, nothing more.
@@ -356,8 +396,12 @@ namespace DD.Prototype.UI
             return strength;
         }
 
-        /// <summary>Raises one edge. Returns false for an edge this hit does not point at.</summary>
-        private bool Raise(int index, float level)
+        /// <summary>
+        /// Raises one edge. Returns false for an edge this hit does not point at, or (WP-094) one the flash gate keeps dark.
+        /// <paramref name="onset"/>: the gates allowed a new onset - the louder of what shows and the hit, on a fresh clock.
+        /// Refused: an edge already lit takes the louder peak on its running clock (merged, not queued); a dark edge stays dark.
+        /// </summary>
+        private bool Raise(int index, float level, bool onset)
         {
             if (level <= 0f)
             {
@@ -365,6 +409,17 @@ namespace DD.Prototype.UI
             }
 
             float visible = _amplitude[index] * Envelope(_remaining[index]);
+            if (!onset)
+            {
+                if (visible <= 0f)
+                {
+                    return false;
+                }
+
+                _amplitude[index] = Mathf.Clamp01(Mathf.Max(_amplitude[index], level));
+                Draw(index, _amplitude[index] * Envelope(_remaining[index]));
+                return true;
+            }
 
             _amplitude[index] = Mathf.Clamp01(Mathf.Max(visible, level));
             _remaining[index] = UiTokens.DamageEdgeHoldSeconds + UiTokens.DamageEdgeDecaySeconds;
@@ -436,6 +491,7 @@ namespace DD.Prototype.UI
             {
                 image.enabled = on;
                 _liveEdges += on ? 1 : -1;
+                _shown[index] = -1f;   // a re-enabled graphic takes its alpha afresh
             }
 
             if (!on)
@@ -445,9 +501,12 @@ namespace DD.Prototype.UI
                 return;
             }
 
-            Color c = UiTokens.Get(UiColor.DamageEdge);
-            c.a = alpha;
-            image.color = c;
+            // WP-094 (D1): the renderer's alpha, never Image.color - no vertex rebuild; and only when the 8-bit value moves.
+            if (_shown[index] < 0f || Mathf.Abs(alpha - _shown[index]) >= 1f / 255f)
+            {
+                _shown[index] = alpha;
+                image.canvasRenderer.SetAlpha(alpha);
+            }
         }
     }
 }

@@ -24,6 +24,10 @@ namespace DD.Prototype.Tests.EditMode
     /// the HUD's brush sites (the 8-R ink HUD draws its banner ribbon, cluster strokes and status stamps with the
     /// brush mask - L0 material, not an H1 underline) and the curtain file's two ceremony kinds (boot: blot + seal
     /// stamp as one sequence, 10b-2; the loading ink bleed is a different screen in the same file).
+    /// WP-094 HUD v4 (R3, S-09 decisions (a) and (b), C-00 07.10; the AD confirms at delivery): the HUD holds two NAMED
+    /// exceptions - ONE vermilion seal (the round's seal accent, "WP-094 user note 3: kırmızı mühür aksanı"; SealLock 1,
+    /// any second vermilion seal fails) and TWO ceremony kinds (the leaf glint on the gold and the Special, and the round
+    /// seal's stamp at the round change; CeremonyLock 2 - an ink bleed on the HUD would still fail).
     /// A new screen file must be placed in a group, or the census fails.
     /// </summary>
     [TestFixture]
@@ -41,6 +45,7 @@ namespace DD.Prototype.Tests.EditMode
             public int BrushLock = -1;      // ≥ 0: a counted exception locked at this count
             public int CeremonyLock = -1;
             public bool SealAllowed;
+            public int SealLock = -1;       // ≥ 0: vermilion seals allowed outside boot / logo - a named exception at this count
         }
 
         private static readonly Group[] Groups =
@@ -60,9 +65,15 @@ namespace DD.Prototype.Tests.EditMode
                     "Screens/RunHudScreen.cs", "Screens/RunHudScreen.Ink.cs", "Screens/HudBanner.cs", "Screens/HudReticle.cs",
                     "Screens/HudPlayerArcs.cs", "Screens/HudRearEdge.cs", "Kit/UiEnemyStatusMarkers.cs", "Kit/UiWorldMarker.cs",
                     // WP-094 HUD v4 (R3): the round numeral and the gold target are the HUD's own files - counted with it.
-                    "Hud/HudRoundNumeral.cs", "Hud/HudGoldTarget.cs", "Hud/HudGoldReadout.cs", "Hud/RomanNumerals.cs"
+                    "Hud/HudRoundNumeral.cs", "Hud/HudGoldTarget.cs", "Hud/HudGoldReadout.cs", "Hud/RomanNumerals.cs",
+                    // WP-094 juice: the HUD's juice partial, its rules and its feel-event seam.
+                    "Screens/RunHudScreen.Juice.cs", "Hud/HudJuiceRules.cs", "Hud/HudFeelSource.cs"
                 },
                 BrushLock = 3,
+                // WP-094 (S-09 decision (b)): the leaf glint (gold / Special) + the round seal's stamp (R3) - 1 → 2.
+                CeremonyLock = 2,
+                // WP-094 user note 3: kırmızı mühür aksanı - the round's one vermilion seal (S-09 decision (a)).
+                SealLock = 1,
             },
             new Group { Name = "Curtain (boot / loading / ink)", Files = new[] { "Flow/UiCurtain.cs" }, CeremonyLock = 2, SealAllowed = true },
         };
@@ -212,7 +223,8 @@ namespace DD.Prototype.Tests.EditMode
                      .Append(leaf ? " (leaf glint)" : string.Empty).Append(bleed ? " (ink bleed)" : string.Empty);
 
                 if (vermilion > MaxVermilion) failures.Add(group.Name + ": vermilion ornaments " + vermilion + " > " + MaxVermilion);
-                if (seals > 0 && !group.SealAllowed) failures.Add(group.Name + ": a vermilion seal outside boot / logo");
+                int sealLimit = group.SealAllowed ? int.MaxValue : Math.Max(0, group.SealLock);
+                if (seals > sealLimit) failures.Add(group.Name + ": a vermilion seal outside boot / logo (" + seals + " > " + sealLimit + " named)");
 
                 int brushLimit = group.BrushLock >= 0 ? group.BrushLock : MaxBrush;
                 if (brush > brushLimit) failures.Add(group.Name + ": brush underline sites " + brush + " > " + brushLimit);

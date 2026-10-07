@@ -914,6 +914,13 @@ namespace DD.Prototype.UI
                     yield break;
                 }
 
+                if (_screen == "hudv4" || _screen == "hudv4demo")
+                {
+                    yield return _screen == "hudv4" ? HudV4Frames() : HudV4Demo();
+                    Application.Quit();
+                    yield break;
+                }
+
                 if (_screen == "menumatrix")
                 {
                     yield return MenuMatrix();
@@ -1681,6 +1688,263 @@ namespace DD.Prototype.UI
                 yield return Frame(folder, "ink-results");
                 Debug.Log("[UiCapture] ink done · framebuffer " + Screen.width + "x" + Screen.height);
                 Application.Quit();
+            }
+
+            /// <summary>
+            /// WP-094 HUD v4 (<c>-ddUiCapture hudv4</c>, 1920 × 1080 top-down; the acceptance frames of K/c-00/R3/prompts/WP-094-098A.md
+            /// "Kabul"): the juice staged on a live run with REAL events only - wallet credits, PlayerHealth damage and heals,
+            /// ConsumeShot / TryBeginReload, WeaponEvents.PublishDryFire, WeaponController.EquipClassic, the round transition
+            /// through RunHudScreen.CaptureRound - so every motion in a frame is the production path's (HAREKET-HUD §7 "Çekim").
+            /// Frames (<c>v4-*.png</c> in the capture folder): idle; gold-punch (mid-punch) / gold-rest; health-full /
+            /// health-damaged (the chunk falling, the trail held) / health-two-hits (two wedges, two edges) / health-low (on a lub)
+            /// / health-heal (the moss glow); round-I / IV / IX / XIV / XXIII (each landed) and round-reveal-XIV (mid-brush);
+            /// mag-full / mag-shot (spark, casing, lean) / mag-low (the LOW pulse) / mag-empty (after an empty trigger) /
+            /// mag-reloading (the preview) / mag-reloaded (the slide) / mag-switch (mid-swap) / mag-switched. Add
+            /// <c>-ddUiReducedMotion 1</c> for the reduced-motion set, <c>-ddUiReduceFlashes 1</c> for the flash-reduced one.
+            /// Each frame logs one <c>[UiCapture] hudv4</c> line with the HUD's juice counters.
+            /// </summary>
+            private IEnumerator HudV4Frames()
+            {
+                string folder = Path.HasExtension(_out) ? (Path.GetDirectoryName(_out) ?? Application.persistentDataPath) : _out;
+                Directory.CreateDirectory(folder);
+                yield return HudV4Run();
+                RunHudScreen hud = FindObjectOfType<RunHudScreen>();
+                PlayerRig rig = PlayerRegistry.Primary;
+                if (hud == null || rig == null || rig.Health == null)
+                {
+                    Debug.LogWarning("[UiCapture] hudv4: no HUD / player");
+                    yield break;
+                }
+
+                PlayerHealth health = rig.Health;
+                Vector3 at = rig.transform.position;
+                yield return new WaitForSecondsRealtime(1.5f);
+                yield return HudV4Frame(folder, "v4-idle", hud);
+
+                // Gold (G1 – G5): one credit, the punch at 50 ms, then the rest.
+                if (GoldService.Instance != null)
+                {
+                    GoldService.Instance.Wallet.Credit(25, at);
+                    yield return new WaitForSecondsRealtime(0.05f);
+                    yield return HudV4Frame(folder, "v4-gold-punch", hud);
+                    yield return new WaitForSecondsRealtime(0.8f);
+                    yield return HudV4Frame(folder, "v4-gold-rest", hud);
+                }
+
+                // Health (H1 – H5, D1 / D2).
+                health.HealToFull();
+                yield return new WaitForSecondsRealtime(1.2f);
+                yield return HudV4Frame(folder, "v4-health-full", hud);
+                yield return HudV4Hit(health, at, Vector3.right, 0.3f);
+                yield return new WaitForSecondsRealtime(0.08f);
+                yield return HudV4Frame(folder, "v4-health-damaged", hud);
+                yield return new WaitForSecondsRealtime(1.2f);
+                health.HealToFull();
+                yield return new WaitForSecondsRealtime(1.2f);
+                health.DiagnosisInvulnerable = false;
+                health.ApplyDamage(health.Max * 0.15f, at + Vector3.left * 2f, "ui-capture");
+                health.ApplyDamage(health.Max * 0.15f, at + Vector3.forward * 2f, "ui-capture");
+                health.DiagnosisInvulnerable = true;
+                yield return new WaitForSecondsRealtime(0.05f);
+                yield return HudV4Frame(folder, "v4-health-two-hits", hud);
+                yield return new WaitForSecondsRealtime(0.6f);
+                yield return HudV4Hit(health, at, Vector3.back, 0.5f);
+                int beats = hud.HeartBeats;
+                yield return WaitFor(() => hud.HeartBeats > beats, 3f);
+                yield return new WaitForSecondsRealtime(0.04f);
+                yield return HudV4Frame(folder, "v4-health-low", hud);
+                health.Heal(health.Max * 0.25f);
+                yield return new WaitForSecondsRealtime(0.15f);
+                yield return HudV4Frame(folder, "v4-health-heal", hud);
+                health.HealToFull();
+                yield return new WaitForSecondsRealtime(1.2f);
+
+                // Rounds (R1 – R3): each numeral landed after its transition, and one caught mid-brush.
+                foreach (int round in HudV4Rounds)
+                {
+                    hud.CaptureRound(round);
+                    yield return WaitFor(() => !hud.RoundTransitionLive, 4f);
+                    yield return new WaitForSecondsRealtime(0.3f);
+                    yield return HudV4Frame(folder, "v4-round-" + RomanNumerals.Cached(round), hud);
+                }
+
+                hud.CaptureRound(14);
+                yield return new WaitForSecondsRealtime(HudRoundTransition.HandoffSeconds + 0.14f);
+                yield return HudV4Frame(folder, "v4-round-reveal-XIV", hud);
+                yield return WaitFor(() => !hud.RoundTransitionLive, 4f);
+
+                // Magazine (A1 – A8).
+                WeaponController weapon = WeaponRegistry.ActiveController;
+                ClassicWeaponRuntime classic = weapon != null ? weapon.Classic : null;
+                if (classic != null)
+                {
+                    if (classic.Ammo < classic.MagazineSize && classic.TryBeginReload())
+                    {
+                        yield return WaitFor(() => !classic.IsReloading, 6f);
+                    }
+
+                    yield return new WaitForSecondsRealtime(0.5f);
+                    yield return HudV4Frame(folder, "v4-mag-full", hud);
+                    classic.ConsumeShot();
+                    yield return null;
+                    yield return null;
+                    yield return new WaitForSecondsRealtime(0.03f);
+                    yield return HudV4Frame(folder, "v4-mag-shot", hud);
+                    int low = Mathf.Max(1, Mathf.FloorToInt(classic.MagazineSize * RunHudViewModel.LowAmmoFraction));
+                    while (classic.Ammo > low)
+                    {
+                        classic.ConsumeShot();
+                    }
+
+                    yield return new WaitForSecondsRealtime(0.5f);
+                    yield return HudV4Frame(folder, "v4-mag-low", hud);
+                    while (classic.Ammo > 0)
+                    {
+                        classic.ConsumeShot();
+                    }
+
+                    yield return null;
+                    yield return null;
+                    yield return new WaitForSecondsRealtime(0.3f);
+                    WeaponEvents.PublishDryFire();
+                    yield return new WaitForSecondsRealtime(0.05f);
+                    yield return HudV4Frame(folder, "v4-mag-empty", hud);
+                    classic.TryBeginReload();
+                    yield return WaitFor(() => classic.ReloadProgress01 >= 0.5f, 6f);
+                    yield return HudV4Frame(folder, "v4-mag-reloading", hud);
+                    yield return WaitFor(() => !classic.IsReloading, 6f);
+                    yield return new WaitForSecondsRealtime(0.08f);
+                    yield return HudV4Frame(folder, "v4-mag-reloaded", hud);
+
+                    ClassicWeaponId home = classic.Id;
+                    ClassicWeaponId other = home == ClassicWeaponId.CombatShotgun ? ClassicWeaponId.AssaultRifle : ClassicWeaponId.CombatShotgun;
+                    weapon.EquipClassic(other);
+                    yield return new WaitForSecondsRealtime(0.12f);
+                    yield return HudV4Frame(folder, "v4-mag-switch", hud);
+                    yield return new WaitForSecondsRealtime(0.6f);
+                    yield return HudV4Frame(folder, "v4-mag-switched", hud);
+                    weapon.EquipClassic(home);
+                }
+
+                Debug.Log("[UiCapture] hudv4 done · framebuffer " + Screen.width + "x" + Screen.height + " rm=" + UiMotion.ReducedMotion);
+            }
+
+            /// <summary>The rounds the acceptance asks for (I / IV / IX / XIV / XXIII).</summary>
+            private static readonly int[] HudV4Rounds = { 1, 4, 9, 14, 23 };
+
+            /// <summary>
+            /// WP-094 (<c>-ddUiCapture hudv4demo</c>): HAREKET-HUD §7's 30 s top-down scenario on a live run with real events and
+            /// no frames written - for the acceptance MP4, recorded from outside (tools/player-run.sh + guard): ~10/s bursts to 8
+            /// rounds, two empty pulls, a reload, a big hit from the left and a small one 0.6 s later from the upper right, LOW
+            /// and a heal, four coin credits 0.1–0.3 s apart, a round change through its transition. Logs a line per beat.
+            /// </summary>
+            private IEnumerator HudV4Demo()
+            {
+                yield return HudV4Run();
+                RunHudScreen hud = FindObjectOfType<RunHudScreen>();
+                PlayerRig rig = PlayerRegistry.Primary;
+                WeaponController weapon = WeaponRegistry.ActiveController;
+                ClassicWeaponRuntime classic = weapon != null ? weapon.Classic : null;
+                if (hud == null || rig == null || rig.Health == null || classic == null)
+                {
+                    Debug.LogWarning("[UiCapture] hudv4demo: no HUD / player / weapon");
+                    yield break;
+                }
+
+                PlayerHealth health = rig.Health;
+                Vector3 at = rig.transform.position;
+                Debug.Log("[UiCapture] hudv4demo t=0 calm");
+                yield return new WaitForSecondsRealtime(2.5f);
+                for (int burst = 0; burst < 3; burst++)
+                {
+                    for (int shot = 0; shot < 7 && classic.Ammo > 8; shot++)
+                    {
+                        classic.ConsumeShot();
+                        yield return new WaitForSecondsRealtime(0.1f);
+                    }
+
+                    yield return new WaitForSecondsRealtime(0.5f);
+                }
+
+                while (classic.Ammo > 0)
+                {
+                    classic.ConsumeShot();
+                    yield return new WaitForSecondsRealtime(0.1f);
+                }
+
+                Debug.Log("[UiCapture] hudv4demo empty pulls");
+                yield return new WaitForSecondsRealtime(0.3f);
+                WeaponEvents.PublishDryFire();
+                yield return new WaitForSecondsRealtime(0.4f);
+                WeaponEvents.PublishDryFire();
+                yield return new WaitForSecondsRealtime(0.3f);
+                classic.TryBeginReload();
+                yield return WaitFor(() => !classic.IsReloading, 6f);
+                yield return new WaitForSecondsRealtime(0.4f);
+
+                Debug.Log("[UiCapture] hudv4demo hits");
+                yield return HudV4Hit(health, at, Vector3.left, 0.3f);
+                yield return new WaitForSecondsRealtime(0.6f);
+                yield return HudV4Hit(health, at, (Vector3.right + Vector3.forward).normalized, 0.08f);
+                yield return new WaitForSecondsRealtime(1.8f);
+                yield return HudV4Hit(health, at, Vector3.back, 0.4f);
+                yield return new WaitForSecondsRealtime(1.5f);
+                health.Heal(health.Max * 0.2f);
+                yield return new WaitForSecondsRealtime(2f);
+
+                Debug.Log("[UiCapture] hudv4demo gold");
+                if (GoldService.Instance != null)
+                {
+                    foreach (float gap in HudV4CoinGaps)
+                    {
+                        GoldService.Instance.Wallet.Credit(5, at);
+                        yield return new WaitForSecondsRealtime(gap);
+                    }
+                }
+
+                yield return new WaitForSecondsRealtime(2f);
+                Debug.Log("[UiCapture] hudv4demo round");
+                RunDirector director = RunDirector.Instance;
+                hud.CaptureRound(director != null ? director.Round + 1 : 4);
+                yield return new WaitForSecondsRealtime(3.5f);
+                health.HealToFull();
+                Debug.Log("[UiCapture] hudv4demo done · rm=" + UiMotion.ReducedMotion);
+            }
+
+            private static readonly float[] HudV4CoinGaps = { 0.1f, 0.3f, 0.2f, 0.15f };
+
+            /// <summary>Selection → run (the capture weapon flag honoured), live, the player invulnerable between staged hits.</summary>
+            private IEnumerator HudV4Run()
+            {
+                PrototypeUiFlow.GoToSelection();
+                yield return UiCaptureAgent.WaitScene(PrototypeScenes.Selection, 20f);
+                yield return WaitFor(() => !UiCurtain.IsCovering, 10f);
+                ApplyCaptureWeapon();
+                PrototypeUiFlow.StartRun();
+                yield return UiCaptureAgent.WaitScene(PrototypeScenes.Run, 30f);
+                yield return UiCaptureAgent.WaitRunLive(20f);
+                PlayerRig rig = PlayerRegistry.Primary;
+                if (rig != null && rig.Health != null)
+                {
+                    rig.Health.DiagnosisInvulnerable = true;
+                }
+            }
+
+            /// <summary>One real hit of <paramref name="share"/> of max health from <paramref name="towards"/> (the attacker's side).</summary>
+            private static IEnumerator HudV4Hit(PlayerHealth health, Vector3 at, Vector3 towards, float share)
+            {
+                health.DiagnosisInvulnerable = false;
+                health.ApplyDamage(health.Max * share, at + towards * 2f, "ui-capture");
+                health.DiagnosisInvulnerable = true;
+                yield return null;
+            }
+
+            private static IEnumerator HudV4Frame(string folder, string name, RunHudScreen hud)
+            {
+                yield return Frame(folder, name);
+                Debug.Log("[UiCapture] hudv4 " + name + " chunks=" + hud.HealthChunksLive + " beats=" + hud.HeartBeats + " glows=" + hud.HealGlows +
+                          " accents=" + hud.ShotAccents + " casings=" + hud.CasingsLive + " shakes=" + hud.DryFireShakes + " swaps=" + hud.WeaponSwaps +
+                          " punches=" + hud.GoldPunches + " round=" + hud.RoundNumeral.Value + " danger=" + hud.InDangerPosture);
             }
 
             /// <summary>

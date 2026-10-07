@@ -88,17 +88,24 @@ namespace DD.Prototype.UI
     /// counts up as each coin lands - punch, leaf glint, "+N"); the round moved to the top right as a Roman numeral over an
     /// ink smear with a seal accent (<see cref="HudRoundNumeral"/>); the enemies count left the player's view (the
     /// presenter still feeds it for debug).
+    ///
+    /// WP-094 juice (K/wp-094/HAREKET-HUD.md; RunHudScreen.Juice.cs): the gold punches on every gain (≤ 1 per 120 ms), the
+    /// round changes through the R1 → R3 transition (old numeral out, brush reveal, the vermilion seal's stamp and S-08's
+    /// StampLanded "round"), health breaks / trails / glows / beats, the magazine sparks, throws casings, previews its reload,
+    /// slides, breathes at LOW and shakes on an empty trigger; the screen edges pass the FlashGate and draw without rebuilding
+    /// their mesh; two simultaneous hits keep two wedges. Every player hit comes through <see cref="HudFeelSource"/>.
     /// </summary>
-    public sealed partial class RunHudScreen : UiScreen, IHudGoldView
+    public sealed partial class RunHudScreen : UiScreen, IHudGoldView, IUiMotionListener
     {
         private const float SpecialBlockWidth = 220f;
         private const float SpecialBlockHeight = 260f;   // AD R1-B MUST-2b: the usage row has its own line under the time strip
 
         /// <summary>
-        /// WP-068 8-R: the top-centre stack, from the screen top - the seal line (24 + 56), the calm breakdown (to 106),
-        /// the threat chips (110 + 30); the final-seconds line and the banner sit under it.
+        /// WP-068 8-R: the top-centre stack, from the screen top. WP-094 (S-09 decision (d)): the round left the top centre for
+        /// the top-right corner and the calm breakdown left the HUD, so the threat chips moved up into the freed slot at
+        /// InkMargin (32 + 30); the final-seconds line and the banner keep their places under it.
         /// </summary>
-        private const float ThreatRowTop = 110f;
+        private const float ThreatRowTop = InkMargin;
         private const float WarningTop = 150f;
         private const float BannerTop = 196f;
 
@@ -226,7 +233,7 @@ namespace DD.Prototype.UI
         // WP-068 slice 8c · E14 the Special ring: A4 Ring.Progress132, a tick a second while active, the pickup fill,
         // one kinpaku glint on the fill's own shape, the ready sparks.
         public const float SpecialRingGhost = 0.25f;   // 8-R: no panel behind the ring - the ghost carries the track
-        public const float SpecialPickupFillSeconds = 0.32f;
+        public const float SpecialPickupFillSeconds = 0.28f;   // WP-094 (HAREKET-HUD S2, O1): 320 → Screen 280 (on the scale)
         private const float SpecialTickLength = 12f;
         private const float SpecialTickWidth = 1f;          // AD 8c SHOULD-1: 1 px a second, every 5th 2 px (the health strong-tick rule)
         private const float SpecialTickStrongWidth = 2f;
@@ -335,6 +342,12 @@ namespace DD.Prototype.UI
             get { return _reticle; }
         }
 
+        /// <summary>WP-094: the player-bound arcs - the rear hairline and the two damage wedges (tests, captures).</summary>
+        public HudPlayerArcs PlayerArcs
+        {
+            get { return _playerArcs; }
+        }
+
         private RunHudViewModel _model;
 
         /// <summary>The presenter initialized in Awake. Exposed so a test can read what is shown.</summary>
@@ -384,7 +397,7 @@ namespace DD.Prototype.UI
             WeaponEvents.SpecialWeaponGroundExpired += OnSpecialGroundExpired;
 
             PlayerHealth.AnyHealthChanged += ApplyHealth;
-            PlayerHealth.AnyDamaged += OnPlayerDamaged;
+            HudFeelSource.PlayerDamaged += OnPlayerDamaged;   // WP-094: the one seam (PlayerHealth.AnyDamaged today, FeelEvents next)
             PlayerHealth.AnyPlayerDied += OnPlayerDied;
         }
 
@@ -416,7 +429,7 @@ namespace DD.Prototype.UI
             WeaponEvents.SpecialWeaponGroundExpired -= OnSpecialGroundExpired;
 
             PlayerHealth.AnyHealthChanged -= ApplyHealth;
-            PlayerHealth.AnyDamaged -= OnPlayerDamaged;
+            HudFeelSource.PlayerDamaged -= OnPlayerDamaged;
             PlayerHealth.AnyPlayerDied -= OnPlayerDied;
         }
 
@@ -464,16 +477,25 @@ namespace DD.Prototype.UI
         private const float WeaponIconSize = 64f;
         private const float SpecialRingSize = 132f;
 
-        /// <summary>E12: a gain - "+N" rises 16 px and fades; the leaf glints (≤ 1 / s, never under Reduce Flashes).</summary>
+        /// <summary>
+        /// E12: a gain - "+N" rises 16 px and fades; the leaf glints (≤ 1 / s, never under Reduce Flashes). WP-094 (HAREKET-HUD
+        /// G3): gains within PlusMergeWindow (400 ms) read as one growing "+N"; under reduced motion it appears in place and
+        /// fades the same way (it carries the amount - it stays in the danger posture too).
+        /// </summary>
         private void ShowGoldGain(int delta)
         {
+            int shown = _goldPlus.Add(JuiceNow, delta);
             RectTransform deltaRect = _goldDelta.rectTransform;
             UiMotion.KillTarget(deltaRect, false);
             UiMotion.KillTarget(_goldDelta, false);
-            _goldDelta.SetText("+{0}", delta);
+            _goldDelta.SetText("+{0}", shown);
             deltaRect.anchoredPosition = _goldDeltaHome;
             _goldDelta.canvasRenderer.SetAlpha(1f);
-            UiMotion.Move(deltaRect, _goldDeltaHome + new Vector2(0f, 16f), UiDuration.Emphasis, UiEase.Settle, UiMotionClass.Decor);
+            if (!UiMotion.ReducedMotion)
+            {
+                UiMotion.Move(deltaRect, _goldDeltaHome + new Vector2(0f, 16f), UiDuration.Emphasis, UiEase.Settle, UiMotionClass.Decor);
+            }
+
             UiMotion.TintAlpha(_goldDelta, 0f, UiDuration.Base, UiEase.Exit, UiMotionClass.Data, UiMotionTokens.Seconds(UiDuration.Screen));
             GlintGold(delta);
         }
@@ -485,7 +507,9 @@ namespace DD.Prototype.UI
         private void GlintGold(int gain = 0)
         {
             float now = Time.unscaledTime;
-            if (!UiSettings.ReduceFlashes && (gain >= GoldGlintBigGain || now - _goldGlintAt >= GoldGlintMinInterval))
+            // WP-094 (G4 is an ornament, P4): skipped - never queued - in the danger posture and over the feel budget.
+            if (!UiSettings.ReduceFlashes && (gain >= GoldGlintBigGain || now - _goldGlintAt >= GoldGlintMinInterval) &&
+                _feelBudget.OrnamentAllowed(JuiceNow, InDangerPosture))
             {
                 // The glint layer takes the leaf alpha for the sweep only, then goes back to nothing.
                 _goldGlintAt = now;
@@ -502,8 +526,11 @@ namespace DD.Prototype.UI
         /// WP-094 (HAREKET-HUD G1): the coin's punch on an arrival - the glyph jumps to 1.18 (PunchPeakGlyph), the numeral to
         /// 1.06 (text-bearing), and both settle to 1 over Base (220 ms).
         /// </summary>
-        public const float GoldPunchCoin = 1.18f;
-        public const float GoldPunchText = 1.06f;
+        public const float GoldPunchCoin = UiMotionTokens.PunchPeakGlyph;
+        public const float GoldPunchText = UiMotionTokens.TextPopMaxScale;
+
+        private readonly HudPlusMerge _goldPlus = new HudPlusMerge();
+        private readonly HudRateGate _goldPunchGate = new HudRateGate(UiMotionTokens.PunchMinInterval);
 
         /// <summary>WP-094 (HAREKET-HUD G4): a gain this large glints the leaf even inside the once-a-second limit.</summary>
         public const int GoldGlintBigGain = 10;
@@ -584,8 +611,17 @@ namespace DD.Prototype.UI
                 return;
             }
 
+            // WP-094 (G1: "Depart'sız kazanımda OnGoldChanged artışı"): a gain with no flight punches too - through the same
+            // 120 ms slot, so a burst of orbs is a beat, not a buzz (the "+N" merges either way).
+            float now = JuiceNow;
+            if (!punch && gain > 0 && _goldPunchGate.Ready(now))
+            {
+                punch = true;
+            }
+
             if (punch)
             {
+                _goldPunchGate.Try(now);
                 PunchGold();
             }
 
@@ -600,15 +636,42 @@ namespace DD.Prototype.UI
         }
 
         /// <summary>
-        /// The arrival punch: the coin and the numeral kick and settle (Decor - reduced motion leaves them at rest, the glint
-        /// that follows still plays: "RM'de yumruk ölçeksiz parlama"). The flight target is a sibling, never scaled.
+        /// The arrival punch (G1): the coin and the numeral kick and settle (Punch preset, Base). The flight target is a sibling,
+        /// never scaled. In the danger posture the coin alone (no numeral pop, HAREKET-HUD §4 P2). Reduced motion: no scale - the
+        /// leaf flares 0.16 → 0.35 → 0.16 instead (G1's "ölçeksiz parlama", light: × FlashScale). G5: the catch ring inks out
+        /// under the disc (an ornament - not in danger, not over budget, not under reduced motion).
         /// </summary>
         private void PunchGold()
         {
             GoldPunches++;
-            float seconds = UiMotionTokens.Seconds(UiDuration.Base);
-            UiMotion.ScaleSeconds(_goldCoin, GoldPunchCoin, 1f, seconds, UiEase.Settle, UiMotionClass.Decor);
-            UiMotion.ScaleSeconds(_goldValue.rectTransform, GoldPunchText, 1f, seconds, UiEase.Settle, UiMotionClass.Decor);
+            float now = JuiceNow;
+            if (UiMotion.ReducedMotion)
+            {
+                if (_goldFlare != null)
+                {
+                    _goldFlare.canvasRenderer.SetAlpha(UiTokens.FlashScale);
+                    UiMotion.TintAlpha(_goldFlare, 0f, UiDuration.Base, UiEase.Settle, UiMotionClass.Flash);
+                }
+
+                return;
+            }
+
+            UiPresets.Punch(_goldCoin, GoldPunchCoin);
+            if (!InDangerPosture)
+            {
+                UiPresets.Punch(_goldValue.rectTransform, GoldPunchText, true);
+            }
+
+            _feelBudget.Note(now, UiMotionTokens.Seconds(UiDuration.Base));
+            if (_goldCatch != null && _feelBudget.OrnamentAllowed(now, InDangerPosture))
+            {
+                RectTransform ring = _goldCatch.rectTransform;
+                ring.sizeDelta = new Vector2(GoldCatchFrom, GoldCatchFrom);
+                UiMotion.Resize(ring, new Vector2(GoldCatchTo, GoldCatchTo), UiDuration.Screen, UiEase.Brush, UiMotionClass.Decor);
+                _goldCatch.canvasRenderer.SetAlpha(1f);
+                UiMotion.TintAlpha(_goldCatch, 0f, UiDuration.Base, UiEase.Exit, UiMotionClass.Decor, UiMotionTokens.Seconds(UiDuration.Screen));
+                _goldCatchFx.Play();
+            }
         }
 
         /// <summary>The run is over: nothing is still flying to this HUD.</summary>
@@ -865,29 +928,16 @@ namespace DD.Prototype.UI
         /// <summary>E23: how far a prompt rises as it enters.</summary>
         public const float PromptRise = 4f;
 
-        /// <summary>
-        /// E11: the trigger on an empty magazine - the ladder kicks 4 px outward and settles (Decor: none under reduced motion).
-        /// WP-068 12b: it settles on its laid-out home (the 8-R ladder is not at x 0 - it used to land there, past the cluster's
-        /// edge), and the kick mirrors with the first-person layout.
-        /// </summary>
-        private void OnDryFire()
-        {
-            RectTransform ladder = _ladderBack != null ? (RectTransform)_ladderBack.transform.parent : null;
-            if (ladder == null || UiMotion.ReducedMotion)
-            {
-                return;
-            }
-
-            UiMotion.KillTarget(ladder, false);
-            ladder.anchoredPosition = _ladderHome + new Vector2(WeaponClusterMirrored ? -4f : 4f, 0f);
-            UiMotion.Move(ladder, _ladderHome, UiDuration.Fast, UiEase.Settle, UiMotionClass.Decor);
-        }
-
         private void FillLadder(int rounds)
         {
             if (!_ladderFill.enabled || rounds == _ladderShown)
             {
                 return;
+            }
+
+            if (_ladderSweep.IsAlive)
+            {
+                UiMotion.Kill(_ladderSweep, false);   // WP-094 (A7): a shot during the swap's sweep - the data wins
             }
 
             _ladderShown = rounds;
@@ -944,14 +994,19 @@ namespace DD.Prototype.UI
             CaptureParallax = null;
         }
 
-        /// <summary>E17: the player-bound arc faces the attacker (HitDirection runs from the attacker towards the player).</summary>
-        private void OnPlayerDamaged(PlayerDamageInfo info)
+        /// <summary>
+        /// E17: the player-bound arc faces the attacker (HitDirection runs from the attacker towards the player). WP-094: the hit
+        /// comes through HudFeelSource (the seam S-02's FeelEvents replaces); D2 keeps two wedges, H1 / H3 break the health brush.
+        /// </summary>
+        private void OnPlayerDamaged(HudDamage info)
         {
             _lastHitAt = Time.unscaledTime;   // 8-R posture: a hit keeps the HUD forward for 3 s
             if (_playerArcs != null)
             {
                 _playerArcs.Flash(-info.HitDirection);
             }
+
+            OnHealthHit(info);
         }
 
         private void BuildDamageEdges()
@@ -959,6 +1014,8 @@ namespace DD.Prototype.UI
             RectTransform layer = UiFactory.NewRect("DamageEdges", ScreenRect);
             UiFactory.Fill(layer);
             layer.SetAsFirstSibling();
+            // WP-094 (HAREKET-HUD "ada kuralı": the edge layer): its decay re-batches only this canvas.
+            layer.gameObject.AddComponent<Canvas>();
 
             _damageEdges = layer.gameObject.AddComponent<UiHitDirectionLayer>();
         }
@@ -1016,8 +1073,10 @@ namespace DD.Prototype.UI
 
             // WP-022G: the final-seconds pulse band scales with the flash-reduction setting
             // (built per screen; the setting applies to the next run's HUD).
+            // WP-094 (HAREKET-HUD S4, the motion lead's main-branch finding): one cycle per PulsePeriod (0.92 s, under MaxLoopHz
+            // 1.1) - it was PulsePeriod × 0.5, 2.2 Hz over two 1920 × 194 px coral bands.
             vignette.gameObject.AddComponent<UiPulse>().Configure(
-                new Graphic[] { top, bottom }, 0.10f * UiTokens.FlashScale, 0.30f * UiTokens.FlashScale, UiTokens.PulsePeriod * 0.5f);
+                new Graphic[] { top, bottom }, 0.10f * UiTokens.FlashScale, 0.30f * UiTokens.FlashScale, UiTokens.PulsePeriod);
 
             _warningVignette.SetActive(false);
 
@@ -1222,7 +1281,7 @@ namespace DD.Prototype.UI
             UpdateBanner();
             UpdateThreat();
             UpdateInkPosture();   // 8-R: calm / danger
-            UpdateRoundSeal();    // WP-094: the seal's contact cue (S-08)
+            TickJuice();          // WP-094: the heartbeat's clock, the ladder's return, the weapon swap's stamp
         }
 
         private void LateUpdate()
@@ -1516,6 +1575,8 @@ namespace DD.Prototype.UI
             _healthMaxShown = int.MinValue;
             ResetDeathLine();
             _goldReadout.Reset();
+            _goldPlus.Reset();
+            ResetJuice();   // WP-094: nothing of the last run's feel carries over
             _roundShown = int.MinValue;
             _healthBound = false;
             ApplyRunFields(_model.ApplyRun(RunEvents.Current));
@@ -1562,8 +1623,10 @@ namespace DD.Prototype.UI
                 {
                     _lowHealthShown = _model.HealthLow;
                     UiEvents.Raise(_lowHealthShown ? UiEvent.HudLowHealthEntered : UiEvent.HudLowHealthLeft);
-                    // E10: LOW word + coral frame + the cracked heart stamps once; no pulse.
+                    // E10: LOW word + coral frame + the cracked heart stamps once. WP-094 (H5, the user: "düşük canda nabız"):
+                    // then the heart beats and the coral rim breathes - the word never pulses.
                     _healthLowWord.gameObject.SetActive(_lowHealthShown);
+                    SetHeartbeat(_lowHealthShown);
                 }
 
                 _healthBar.SetValue(_model.HealthNormalized);
@@ -1614,6 +1677,11 @@ namespace DD.Prototype.UI
                 _healthState.text = _model.HealthStateText;
                 _healthState.color = UiTokens.Get(ToneColor(_model.HealthStateTone));
             }
+
+            if ((changed & (RunHudField.HealthBar | RunHudField.HealthState)) != 0)
+            {
+                OnHealthApplied(snapshot);   // WP-094 (H4): the heal glow, the regen's wet band
+            }
         }
 
         private static UiColor ToneColor(RunHudTone tone)
@@ -1650,9 +1718,15 @@ namespace DD.Prototype.UI
 
         private void ApplyWeaponFields(RunHudField changed)
         {
+            bool swapped = false;
             if ((changed & RunHudField.WeaponName) != 0)
             {
-                ApplyWeaponIcon();
+                // WP-094 (A7): a weapon change swaps the glyph through a stamp (TickJuice) - the run's first name lays it at once.
+                swapped = _weaponNamed;
+                if (!BeginWeaponSwap())
+                {
+                    ApplyWeaponIcon();
+                }
             }
 
             if ((changed & (RunHudField.WeaponName | RunHudField.Build)) != 0)
@@ -1664,7 +1738,8 @@ namespace DD.Prototype.UI
             if ((changed & RunHudField.Ammo) != 0)
             {
                 // E11: set, never rolled (a Data readout read mid-fight).
-                if (_model.Magazine != _ladderMagazine || _model.PelletCount != _ladderPellets)
+                bool relaid = _model.Magazine != _ladderMagazine || _model.PelletCount != _ladderPellets;
+                if (relaid)
                 {
                     _ammoCounter.SetMax(_model.Magazine);
                     LayLadder(_model.Magazine, _model.PelletCount);
@@ -1672,6 +1747,8 @@ namespace DD.Prototype.UI
 
                 _ammoCounter.SetNow(_model.Ammo);
                 FillLadder(_model.Ammo);
+                SweepLadderIfPending(relaid || swapped);     // WP-094 (A7): the swap's ladder sweeps its rounds in
+                NoteAmmo(_model.Ammo, !relaid && !swapped);   // WP-094 (A1 / A2): a drop on the same weapon is a shot
             }
 
             bool low = _model.AmmoLow;
@@ -1723,6 +1800,7 @@ namespace DD.Prototype.UI
                         break;
                 }
 
+                NoteReload(reload, _shownReload, low);   // WP-094: A3 preview, A4 slide, A5 LOW pulse
                 _shownReload = reload;
                 _ammoLowShown = low;
                 TintWeaponIcon();
@@ -1744,6 +1822,8 @@ namespace DD.Prototype.UI
                 {
                     _reloadCaptionGroup.alpha = suspended ? 0f : 1f;   // 8-R: SUSPENDED owns the caption slot
                 }
+
+                NoteSuspended(suspended);   // WP-094 (A8): the cluster steps down 6 px; the glyph stamps on the return
             }
         }
 
@@ -2167,16 +2247,24 @@ namespace DD.Prototype.UI
 
         // ================================================================== banners
 
+        /// <summary>WP-094 (S-09 decision (e)): the banner names the round as the corner does - "ROUND IV" (TR "ROUND IV" too).</summary>
         private void OnRoundStarted(int round)
         {
             UiEvents.Raise(UiEvent.HudRoundStarted);
-            ShowBanner(UiStrings.Format("hud.banner.round", "value", round.ToString(), "ROUND {value}"));
+            ShowBanner(UiStrings.Format("hud.banner.round", "value", RoundWord(round), "ROUND {value}"));
         }
 
         private void OnRoundCompleted(int round)
         {
             UiEvents.Raise(UiEvent.HudRoundCompleted);
-            ShowBanner(UiStrings.Format("hud.banner.round_complete", "value", round.ToString(), "ROUND {value} COMPLETE"));
+            ShowBanner(UiStrings.Format("hud.banner.round_complete", "value", RoundWord(round), "ROUND {value} COMPLETE"));
+            DryRoundSeal();   // WP-094 (HAREKET-HUD R4): the seal dries as the round closes
+        }
+
+        /// <summary>The round's banner word: its Roman numeral (cached strings, RomanNumerals); the number itself for 0 and below.</summary>
+        public static string RoundWord(int round)
+        {
+            return round > 0 ? RomanNumerals.Cached(round) : round.ToString(System.Globalization.CultureInfo.InvariantCulture);
         }
 
         private void OnPoolExhausted(int round)

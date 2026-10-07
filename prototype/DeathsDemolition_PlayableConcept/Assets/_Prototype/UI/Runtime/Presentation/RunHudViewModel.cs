@@ -173,7 +173,27 @@ namespace DD.Prototype.UI
 
         public string WeaponName { get; private set; } = Placeholder;
         public string BuildText { get; private set; } = UiStrings.Get("pause.run.build_none", "no upgrades");
-        public string AmmoText { get; private set; } = Placeholder;
+        /// <summary>
+        /// "24 / 30" ("—" without a magazine). WP-094 (HAREKET-HUD A1, "60 fps, GC 0"): the HUD draws the count with TMP SetText
+        /// (UiCounter) and the ladder, never this string - so it is formatted when READ, not on every shot (it was a string per
+        /// shot, up to ten a second).
+        /// </summary>
+        public string AmmoText
+        {
+            get
+            {
+                if (_ammoTextDirty)
+                {
+                    _ammoTextDirty = false;
+                    _ammoText = _magazine > 0 ? _ammo + " / " + _magazine : Placeholder;
+                }
+
+                return _ammoText;
+            }
+        }
+
+        private string _ammoText = Placeholder;
+        private bool _ammoTextDirty;
         public RunHudReloadState ReloadState { get; private set; } = RunHudReloadState.Ready;
         public float ReloadProgress01 { get; private set; } = 1f;
         public bool Suspended { get { return _suspended; } }
@@ -505,7 +525,7 @@ namespace DD.Prototype.UI
                 _ammo = state.AmmoInMagazine;
                 _magazine = state.MagazineSize;
                 PelletCount = state.PelletCount;
-                AmmoText = _magazine > 0 ? _ammo + " / " + _magazine : Placeholder;
+                _ammoTextDirty = true;
                 changed |= RunHudField.Ammo;
             }
 
@@ -600,7 +620,8 @@ namespace DD.Prototype.UI
             _suspended = false;
             WeaponName = Placeholder;
             BuildText = UiStrings.Get("pause.run.build_none", "no upgrades");
-            AmmoText = Placeholder;
+            _ammoText = Placeholder;
+            _ammoTextDirty = false;
             PelletCount = 0;
             ReloadState = RunHudReloadState.Ready;
             ReloadProgress01 = 1f;

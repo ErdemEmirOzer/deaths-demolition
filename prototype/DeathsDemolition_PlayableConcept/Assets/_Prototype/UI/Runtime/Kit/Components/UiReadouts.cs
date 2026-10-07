@@ -237,6 +237,12 @@ namespace DD.Prototype.UI
             get { return _fill != null ? _fill.fillAmount : 0f; }
         }
 
+        /// <summary>WP-094: the track (the HUD's LOW pulse breathes its renderer alpha; its colour stays SetGhost's).</summary>
+        public Image Ghost
+        {
+            get { return _ghost; }
+        }
+
         public static UiRing Create(string name, Transform parent, float size, UiColor colour, float ghostAlpha = 0.12f, Sprite ringSprite = null)
         {
             RectTransform root = UiFactory.NewRect(name, parent);

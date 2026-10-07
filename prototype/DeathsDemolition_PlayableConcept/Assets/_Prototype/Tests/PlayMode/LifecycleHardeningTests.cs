@@ -200,7 +200,9 @@ namespace DD.Prototype.Tests.PlayMode
                 { "PlayerHealth.AnyPlayerDied", 2 },   // WP-068 8c: RunHudScreen names the killing blow (E22 death line)
                 // WP-068 8b: RunHudScreen also takes AnyDamaged (the player-bound damage arc, E17).
                 // DEC-113 RunDirector, scene-local, paired unsubscribe: AnyDamaged → the Round Report's health lost (+1).
-                { "PlayerHealth.AnyHealthChanged", 1 }, { "PlayerHealth.AnyDamaged", 3 },
+                // WP-094 (C-00 07.10): the HUD's two listeners (RunHudScreen, UiHitDirectionLayer) now hear the hit through
+                // HudFeelSource - ONE bridge on AnyDamaged, made with the first HUD listener and dropped with the last (3 → 2).
+                { "PlayerHealth.AnyHealthChanged", 1 }, { "PlayerHealth.AnyDamaged", 2 },
                 // WP-006: hasar olay busu izlenir. Run-yerel aboneler: EnemyDied ← RunDirector (kill/gold
                 // istatistiği) + GoldService (paket); ArmorBroken ← RunDirector (kırılma sayacı). EnemyDamaged /
                 // PlayerAttacked / EnemyHitDressed'a Run'da kalıcı abone yok (feedback tek sahibi çekmez, iter).

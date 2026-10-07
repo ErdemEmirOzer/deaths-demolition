@@ -60,7 +60,7 @@ Sütunlar: olay adı · ne zaman · SFX (AP-011 ses olayı adı; S-08 doldurur, 
 | SettingsChanged | Herhangi bir ayar kaydedildi | n/a (Slider/Toggle olayı taşır) | — | `UiSettings.Persist` |
 | CardDealt | Kart dağıtıldı (detay "0/1/2", "last") | `UiCardDealt` (v015; +0/+2/+4 %) | CardDeal stagger 60 | `UpgradeScreen` (S-09) |
 | CardFlipped | Değişen kart döndü (reroll) | `UiCardFlipped` (v015) | CardWipe | `UpgradeScreen` (S-09) |
-| StampLanded | Hanko temas karesi (detay rare/epic) | `UiStampLanded` / Rare / Epic (v015) | StampIn | Shop / Results / Profile / Achievements (S-09) |
+| StampLanded | Hanko temas karesi (detay rare/epic; WP-094: detay "round" = HUD raund mührünün temas karesi, HAREKET-HUD R3) | `UiStampLanded` / Rare / Epic (v015); "round" S-08 ses noktası | StampIn | Shop / Results / Profile / Achievements (S-09); HUD raund geçişi (S-09, WP-094) |
 | CounterRolling | Sayaç rulosu başladı | `UiCounterRoll` (v015; ≤ 0,6 s) | CounterRoll | `UiCounter` (S-09) |
 | CounterSettled | Sayaç yerleşti | `UiCounterSettled` (v015) | Stamp Base | `UiCounter` (S-09) |
 | RerollHoldStarted | Hold-to-confirm başladı (U5) | `UiHoldRub` (v015; Confirm/Back biter) | HoldFill | `UpgradeScreen` / Controls (S-09) |

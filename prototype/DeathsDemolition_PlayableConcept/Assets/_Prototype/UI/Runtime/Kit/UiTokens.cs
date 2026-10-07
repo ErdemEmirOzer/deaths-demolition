@@ -515,8 +515,12 @@ namespace DD.Prototype.UI
         public const float MotionBase = 0.22f;
         public const float MotionScreen = 0.28f;
 
-        /// <summary>Period of the attention pulse used by warnings. Slow enough not to nag.</summary>
-        public const float PulsePeriod = 0.9f;
+        /// <summary>
+        /// Period of the attention pulse used by warnings. Slow enough not to nag. WP-094 (HAREKET-HUD §8 S2, C-00 07.10):
+        /// 0.9 s was 1.11 Hz, over <see cref="UiMotionTokens.MaxLoopHz"/> (1.1); 0.92 s is 1.087 Hz - every loop, the HUD's
+        /// heartbeat and low-ammo pulse included, stays under the loop ceiling.
+        /// </summary>
+        public const float PulsePeriod = 0.92f;
 
         // ================================================================== opacity
 

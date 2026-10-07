@@ -12,6 +12,9 @@ namespace DD.Prototype.UI
     /// - Damage arc (E17): on a hit, a soft brush wedge (UiSprites.ArcSoft60, "Arc.Soft") on r 48–64, DamageEdge at the edge
     ///   band's peak × FlashScale, 60 ms hold then a 400 ms fade. 12 px clear of the hairline: a rear attack landing reads
     ///   as the wedge inside the hairline, a hit from elsewhere as a wedge alone.
+    /// WP-094 HUD v4 (R3, C-00 07.10; HAREKET-HUD D2, the motion lead's main-branch finding): TWO wedges. A second hit in the
+    /// same moment used to turn the one wedge away from the first attacker; now a hit from within <see cref="SameSideDegrees"/>
+    /// of a live wedge re-flares that wedge, any other takes the free (or the older) one - two attackers, two wedges.
     /// </summary>
     public sealed class HudPlayerArcs
     {
@@ -20,9 +23,16 @@ namespace DD.Prototype.UI
         public const float RearAlpha = 0.6f;
         public const float DamageHoldSeconds = 0.06f;
 
+        /// <summary>WP-094 (D2): the wedges in the pool, and the bearing gap under which a hit re-flares a live wedge.</summary>
+        public const int DamageWedges = 2;
+        public const float SameSideDegrees = 30f;
+
         private readonly RectTransform _root;
         private readonly Image _rear;
         private readonly Image _damage;
+        private readonly Image[] _wedges = new Image[DamageWedges];
+        private readonly float[] _wedgeAngle = new float[DamageWedges];
+        private readonly HudSlotPool _wedgePool = new HudSlotPool(DamageWedges);
         private bool _rearShown;
         private float _rearAngle = float.NaN;
         private Vector2 _shownAt = new Vector2(float.NaN, float.NaN);
@@ -43,6 +53,18 @@ namespace DD.Prototype.UI
             get { return _damage; }
         }
 
+        /// <summary>WP-094 (D2): wedge <paramref name="index"/> of <see cref="DamageWedges"/> (tests, captures).</summary>
+        public Image DamageWedge(int index)
+        {
+            return _wedges[index];
+        }
+
+        /// <summary>WP-094 (D2): wedges flaring at <paramref name="now"/> (unscaled; tests).</summary>
+        public int LiveWedges(float now)
+        {
+            return _wedgePool.LiveCount(now);
+        }
+
         public HudPlayerArcs(RectTransform layer)
         {
             _root = UiFactory.NewRect("PlayerArcs", layer);
@@ -52,6 +74,17 @@ namespace DD.Prototype.UI
             _rear.canvasRenderer.SetAlpha(0f);
             _damage = Arc("DamageArc", DamageRadius, UiColor.DamageEdge, UiSprites.ArcSoft60);
             _damage.canvasRenderer.SetAlpha(0f);
+            _wedges[0] = _damage;
+            for (int i = 1; i < DamageWedges; i++)
+            {
+                _wedges[i] = Arc("DamageArc." + i, DamageRadius, UiColor.DamageEdge, UiSprites.ArcSoft60);
+                _wedges[i].canvasRenderer.SetAlpha(0f);
+            }
+
+            for (int i = 0; i < DamageWedges; i++)
+            {
+                _wedges[i].canvasRenderer.cullTransparentMesh = true;   // a resting wedge costs no overdraw
+            }
         }
 
         private Image Arc(string name, float radius, UiColor colour, Sprite sprite)
@@ -105,10 +138,34 @@ namespace DD.Prototype.UI
                 return; // no direction: the screen edges already say "everywhere"
             }
 
-            _damage.rectTransform.localRotation = Quaternion.Euler(0f, 0f, angle);
-            UiMotion.KillTarget(_damage, false);
-            _damage.canvasRenderer.SetAlpha(UiTokens.DamageEdgePeakAlpha * UiTokens.FlashScale);
-            UiMotion.TintAlpha(_damage, 0f, UiDuration.Emphasis, UiEase.Exit, UiMotionClass.Flash, DamageHoldSeconds);
+            // WP-094 (D2): the live wedge on this side re-flares; otherwise the free one, or the older of the two.
+            float now = UiFxGlobals.Now;
+            float life = DamageHoldSeconds + UiMotionTokens.Seconds(UiDuration.Emphasis);
+            int slot = -1;
+            for (int i = 0; i < DamageWedges; i++)
+            {
+                if (_wedgePool.Live(i, now) && Mathf.Abs(Mathf.DeltaAngle(angle, _wedgeAngle[i])) < SameSideDegrees)
+                {
+                    slot = i;
+                    break;
+                }
+            }
+
+            if (slot < 0)
+            {
+                slot = _wedgePool.Take(now, life);
+            }
+            else
+            {
+                _wedgePool.Restart(slot, now, life);
+            }
+
+            Image wedge = _wedges[slot];
+            _wedgeAngle[slot] = angle;
+            wedge.rectTransform.localRotation = Quaternion.Euler(0f, 0f, angle);
+            UiMotion.KillTarget(wedge, false);
+            wedge.canvasRenderer.SetAlpha(UiTokens.DamageEdgePeakAlpha * UiTokens.FlashScale);
+            UiMotion.TintAlpha(wedge, 0f, UiDuration.Emphasis, UiEase.Exit, UiMotionClass.Flash, DamageHoldSeconds);
         }
 
         /// <summary>Screen direction → the z rotation that turns the 12 o'clock arc to face it; NaN for no direction.</summary>

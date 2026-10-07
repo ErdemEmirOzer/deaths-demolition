@@ -5,11 +5,13 @@ using System.IO;
 using System.Reflection;
 using DD.Prototype.CameraSystem;
 using DD.Prototype.Core.Boot;
+using DD.Prototype.Core.Config;
 using DD.Prototype.Economy;
 using DD.Prototype.PlayerSystem;
 using DD.Prototype.Rounds;
 using DD.Prototype.Spawn;
 using DD.Prototype.UI;
+using DD.Prototype.Weapons;
 using NUnit.Framework;
 using TMPro;
 using UnityEngine;
@@ -26,9 +28,20 @@ namespace DD.Prototype.Tests.PlayMode
     ///   health cluster; a flight holds the counter until it lands (then one punch, one Arrived), a lost flight frees itself
     ///   after 2 s; the menu has no target.
     /// - HudV4Yerlesim_…: the gold sits directly above the health on its left rail, the round (XXXVIII) at the top-right
-    ///   corner, and no cluster, row, banner, Special block or "+N" meets another - at 1920 × 1080 (UI 1.0, text 1.0) and the
-    ///   Mac 3024 × 1964 (UI 1.2, text 1.25), each a standalone HUD drawn into a target of that size with the scaler's Expand
-    ///   by hand (UiControlsProfileResultsTests). A temp ui-settings file - the user's is never touched.
+    ///   corner, the threat chips at InkMargin in the freed top-centre slot (S-09 decision (d)), and no cluster, row, banner,
+    ///   Special block or "+N" meets another - at 1920 × 1080 (UI 1.0, text 1.0) and the Mac 3024 × 1964 (UI 1.2, text
+    ///   1.25), each a standalone HUD drawn into a target of that size with the scaler's Expand by hand
+    ///   (UiControlsProfileResultsTests). A temp ui-settings file - the user's is never touched.
+    /// WP-094 juice (K/wp-094/HAREKET-HUD.md, top-down only; the FP / TP layouts are untouched and untested):
+    /// - HudV4Raund_…: the R1 → R3 round transition is one timeline - the old numeral leaves, the new one is laid at the
+    ///   hand-off and opens, StampLanded "round" rises once on the seal's contact, a newer change lands the running one (cue
+    ///   still raised), reduced motion swaps at once and still raises the cue.
+    /// - HudV4Juice_Saglik_…: the clusters that change per frame are nested canvases; a hit breaks a chunk off over a snapped
+    ///   fill with the trail held, two simultaneous hits keep two wedges and light two edges, LOW beats ≤ 1.1 Hz with the rim
+    ///   breathing, a heal glows; reduced motion drops the chunk.
+    /// - HudV4Juice_Sarjor_…: a shot sparks and throws a casing, accents stay ≤ 10 a second, LOW breathes and EMPTY stops it,
+    ///   an empty trigger shakes once per 250 ms, the reload previews the rounds and gives way on landing, a weapon change
+    ///   swaps the glyph through a stamp.
     /// </summary>
     [Category("WP094")]
     public sealed class HudV4Tests
@@ -229,16 +242,24 @@ namespace DD.Prototype.Tests.PlayMode
                 }
             };
             UiEvents.Raised += listen;
+            bool reduced = UiMotion.ReducedMotion;
+            UiMotion.ReducedMotion = false;
             try
             {
+                // WP-094 (R1 → R3): the seal's contact comes after the hand-off (0.4 s) and XXXVIII's reveal (7 letters: 600 ms).
                 hud.CaptureRound(38);
                 Assert.AreEqual(0, cues, "the cue waits for the contact frame");
-                yield return new WaitForSecondsRealtime(0.3f);
+                Assert.IsTrue(hud.RoundTransitionLive, "R1 → R3 runs as one timeline");
+                float contact = HudRoundTransition.ContactSeconds(RomanNumerals.Length(38));
+                yield return new WaitForSecondsRealtime(contact - 0.15f);
+                Assert.AreEqual(0, cues, "not before the seal's contact (" + contact + " s)");
+                yield return new WaitForSecondsRealtime(0.45f);
                 Assert.AreEqual(1, cues, "one StampLanded \"round\" at the seal's contact");
             }
             finally
             {
                 UiEvents.Raised -= listen;
+                UiMotion.ReducedMotion = reduced;
             }
 
             Rect banner = hud.CaptureBanner("ROUND 38");
@@ -262,6 +283,10 @@ namespace DD.Prototype.Tests.PlayMode
             Assert.AreEqual(health.xMin, gold.xMin, 0.5f, where + ": one left rail");
             float goldBottom = gold.yMin - canvasRect.yMin;
             Assert.AreEqual(Mathf.Round(goldBottom / 8f) * 8f, goldBottom, 0.01f, where + ": the gold's bottom on the 8 px grid (from the canvas bottom)");
+
+            // WP-094 (S-09 decision (d)): the threat chips moved up into the freed top-centre slot at InkMargin.
+            Assert.AreEqual(canvasRect.yMax - 32f, threats.yMax, 0.5f, where + ": the threat chips' top at InkMargin " + threats);
+            Assert.AreEqual(canvasRect.center.x, threats.center.x, 1f, where + ": the chip row centred");
 
             // The round: the top-right corner, InkMargin in from both edges; the numeral is the Roman one and fits its box.
             Assert.AreEqual(canvasRect.xMax - 32f, round.xMax, 0.5f, where + ": round's right edge");
@@ -338,6 +363,318 @@ namespace DD.Prototype.Tests.PlayMode
                       " banner=" + banner + " delta=" + delta);
             Object.Destroy(root);
             yield return null;
+        }
+
+        // ================================================================== WP-094 juice: the round transition
+
+        [UnityTest]
+        [Timeout(120000)]
+        public IEnumerator HudV4Raund_R1R3_TekCizelge_RmAnindaDegisirSesKalir()
+        {
+            LogAssert.ignoreFailingMessages = true;
+            Assert.AreEqual(CameraMode.TopDown, CameraModeService.Current, "R3: top-down only");
+            var root = new GameObject("HudV4.Round");
+            _owned.Add(root);
+            RunHudScreen hud = root.AddComponent<RunHudScreen>();
+            yield return null;
+            yield return null;
+            TMP_Text numeral = Find<TMP_Text>(hud.transform, "Round", "RoundValue");
+            CanvasGroup group = hud.RoundClip.GetComponent<CanvasGroup>();
+            int cues = 0;
+            Action<UiEvent, string> listen = (e, detail) =>
+            {
+                if (e == UiEvent.StampLanded && detail == RunHudScreen.RoundSealCueDetail)
+                {
+                    cues++;
+                }
+            };
+            bool reduced = UiMotion.ReducedMotion;
+            UiMotion.ReducedMotion = false;
+            UiEvents.Raised += listen;
+            try
+            {
+                hud.CaptureRound(4);
+                yield return new WaitForSecondsRealtime(HudRoundTransition.ContactSeconds(2) + 0.2f);
+                Assert.AreEqual("IV", numeral.text);
+                Assert.AreEqual(1, cues);
+
+                // R1: the old numeral leaves first; the banner reads before the corner is written.
+                hud.CaptureRound(9);
+                yield return null;
+                Assert.IsTrue(hud.RoundTransitionLive, "one timeline");
+                yield return new WaitForSecondsRealtime(HudRoundTransition.HandoffSeconds * 0.6f);
+                Assert.AreEqual("IV", numeral.text, "no swap before the hand-off (0.4 s)");
+                Assert.Less(group.alpha, 0.5f, "R1: the old numeral faded out");
+
+                // R2: laid at the hand-off, the clip opening left to right.
+                yield return new WaitForSecondsRealtime(HudRoundTransition.HandoffSeconds * 0.4f + 0.06f);
+                Assert.AreEqual("IX", numeral.text, "R2: the new numeral is laid at the hand-off");
+                Assert.AreEqual(1f, group.alpha, 1e-3f);
+                float opening = hud.RoundClip.sizeDelta.x;
+
+                // R3: the seal's stamp and the S-08 cue on its contact.
+                yield return new WaitForSecondsRealtime(HudRoundTransition.ContactSeconds(2) - HudRoundTransition.HandoffSeconds + 0.2f);
+                Assert.AreEqual(2, cues, "R3: StampLanded \"round\" once on the contact");
+                Assert.IsFalse(hud.RoundTransitionLive);
+                Assert.Less(opening, hud.RoundClip.sizeDelta.x - 0.5f, "the clip was still opening at the hand-off");
+                Assert.AreEqual(1f, hud.RoundSeal.localScale.x, 1e-3f, "the seal at rest after its stamp");
+
+                // A newer change lands the running transition - its cue still raised - and starts its own.
+                hud.CaptureRound(14);
+                yield return null;
+                hud.CaptureRound(23);
+                Assert.AreEqual(3, cues, "a skipped transition still raises its cue (the sound is not motion)");
+                Assert.AreEqual("XIV", numeral.text, "the skipped one landed");
+                yield return new WaitForSecondsRealtime(HudRoundTransition.ContactSeconds(5) + 0.2f);
+                Assert.AreEqual("XXIII", numeral.text);
+                Assert.AreEqual(4, cues);
+
+                // Reduced motion: the swap at once, the cue at once.
+                UiMotion.ReducedMotion = true;
+                hud.CaptureRound(24);
+                Assert.AreEqual("XXIV", numeral.text, "RM: the numeral swaps at once");
+                Assert.AreEqual(5, cues, "RM: the sound still plays");
+                Assert.IsFalse(hud.RoundTransitionLive);
+                Debug.Log("[DD-TEST] wp094.roundTransition cues=" + cues + " opening=" + opening + " full=" + hud.RoundClip.sizeDelta.x);
+            }
+            finally
+            {
+                UiEvents.Raised -= listen;
+                UiMotion.ReducedMotion = reduced;
+            }
+        }
+
+        // ================================================================== WP-094 juice: health, damage direction
+
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator HudV4Juice_Saglik_ParcaIzIsimaNabiz_IkiKama_Adalar()
+        {
+            LogAssert.ignoreFailingMessages = true;
+            yield return KosuyaGir();
+            RunHudScreen hud = Object.FindObjectOfType<RunHudScreen>();
+            Assert.IsNotNull(hud, "HUD");
+            Assert.AreEqual(CameraMode.TopDown, CameraModeService.Current, "R3: top-down only");
+            PlayerRig rig = PlayerRegistry.Primary;
+            PlayerHealth health = rig.Health;
+            Vector3 at = rig.transform.position;
+            Vector3 side = ScreenRightOnGround();
+            bool reduced = UiMotion.ReducedMotion;
+            UiMotion.ReducedMotion = false;
+            try
+            {
+                // "Ada kuralı": the clusters that change frame by frame are their own canvases (a shot, a beat, an edge's decay
+                // never re-batch the main HUD canvas).
+                Assert.IsNotNull(ClusterNamed(hud, "Health").GetComponent<Canvas>(), "the health front plane is a nested canvas");
+                Assert.IsNotNull(ClusterNamed(hud, "ClassicWeapon").Find("Content").GetComponent<Canvas>(), "the weapon's Content is a nested canvas");
+                Assert.IsNotNull(ClusterNamed(hud, "Round").GetComponent<Canvas>(), "the round's impression is a nested canvas");
+                Assert.IsNotNull(hud.DamageEdges.GetComponent<Canvas>(), "the edge layer is a nested canvas");
+
+                // H1 / H2: a 30 % hit - a chunk breaks off over a snapped fill, the trail holds, then falls.
+                health.HealToFull();
+                yield return new WaitForSecondsRealtime(1.1f);
+                UiBar bar = ClusterNamed(hud, "Health").GetComponentInChildren<UiBar>();
+                Hit(health, at, side, 0.3f);
+                Assert.GreaterOrEqual(hud.HealthChunksLive, 1, "H1: a chunk broke off");
+                Assert.AreEqual(0.7f, bar.FillImage.fillAmount, 0.02f, "H1: the fill snapped under the chunk");
+                Assert.Greater(bar.GhostValue, 0.95f, "H2: the trail holds the old value");
+                yield return new WaitForSecondsRealtime(0.7f);
+                Assert.AreEqual(0, hud.HealthChunksLive, "the chunk has fallen (Screen)");
+                Assert.AreEqual(0.7f, bar.GhostValue, 0.02f, "H2: the trail fell to the value");
+
+                // D2 / D1: two hits from opposite sides in one frame - two wedges, two edges.
+                health.HealToFull();
+                yield return new WaitForSecondsRealtime(1.1f);
+                health.DiagnosisInvulnerable = false;
+                Assert.IsTrue(health.ApplyDamage(health.Max * 0.1f, at - side * 2f, "Test.WP094"));
+                Assert.IsTrue(health.ApplyDamage(health.Max * 0.1f, at + side * 2f, "Test.WP094"));
+                health.DiagnosisInvulnerable = true;
+                Assert.AreEqual(2, hud.PlayerArcs.LiveWedges(UiFxGlobals.Now), "D2: the second hit no longer turns the first wedge away");
+                yield return null;
+                Assert.Greater(hud.DamageEdges.EdgeAlpha(UiScreenEdge.Left), 0.3f, "D1: left edge");
+                Assert.Greater(hud.DamageEdges.EdgeAlpha(UiScreenEdge.Right), 0.3f, "D1: right edge");
+
+                // H5: LOW - the heart beats ≤ 1.1 Hz and the coral rim breathes; the words never pulse.
+                yield return new WaitForSecondsRealtime(0.6f);
+                health.HealToFull();
+                yield return new WaitForSecondsRealtime(1.1f);
+                Hit(health, at, -side, 0.8f);
+                yield return null;
+                Assert.IsTrue(hud.HeartbeatRunning, "H5: LOW starts the heartbeat");
+                int beats = hud.HeartBeats;
+                yield return new WaitForSecondsRealtime(3f * UiTokens.PulsePeriod + 0.25f);
+                beats = hud.HeartBeats - beats;
+                Assert.That(beats, NUnit.Framework.Is.InRange(3, 4), "three periods of 0.92 s: ≤ 1.1 Hz");
+                Assert.Greater(hud.LowHealthRim.canvasRenderer.GetAlpha(), 0.3f, "the rim breathes between 0.35 and 0.75");
+
+                // H4: a heal of 25 % glows moss over the gained range.
+                int glows = hud.HealGlows;
+                health.Heal(health.Max * 0.25f);
+                yield return new WaitForSecondsRealtime(0.15f);
+                Assert.AreEqual(glows + 1, hud.HealGlows, "H4: one glow");
+                Assert.Greater(hud.HealGlowGraphic.canvasRenderer.GetAlpha(), 0.2f, "H4: the glow at its peak");
+                health.HealToFull();
+                yield return null;
+                Assert.IsFalse(hud.HeartbeatRunning, "out of LOW: the heartbeat stops");
+                Assert.AreEqual(0f, hud.LowHealthRim.canvasRenderer.GetAlpha(), 1e-3f);
+
+                // Reduced motion: no chunk - the trail alone carries the loss.
+                UiMotion.ReducedMotion = true;
+                yield return new WaitForSecondsRealtime(1.1f);
+                Hit(health, at, side, 0.3f);
+                Assert.AreEqual(0, hud.HealthChunksLive, "RM: no chunk");
+                Debug.Log("[DD-TEST] wp094.healthJuice beats=" + beats + " glows=" + hud.HealGlows + " knocks=" + hud.HealthKnocks);
+            }
+            finally
+            {
+                UiMotion.ReducedMotion = reduced;
+                health.DiagnosisInvulnerable = true;
+            }
+
+            PrototypeUiFlow.AbortRunToMainMenu();
+            yield return SahneyiBekle(PrototypeScenes.MainMenu);
+        }
+
+        // ================================================================== WP-094 juice: magazine and ammo
+
+        [UnityTest]
+        [Timeout(300000)]
+        public IEnumerator HudV4Juice_Sarjor_KivilcimKovan_Nabiz_Bos_Onizleme_Degisim()
+        {
+            LogAssert.ignoreFailingMessages = true;
+            yield return KosuyaGir();
+            RunHudScreen hud = Object.FindObjectOfType<RunHudScreen>();
+            Assert.IsNotNull(hud, "HUD");
+            Assert.AreEqual(CameraMode.TopDown, CameraModeService.Current, "R3: top-down only");
+            WeaponController weapon = WeaponRegistry.ActiveController;
+            Assert.IsNotNull(weapon, "weapon controller");
+            ClassicWeaponRuntime classic = weapon.Classic;
+            ClassicWeaponId selected = WeaponRegistry.SelectedWeapon;
+            ClassicWeaponId home = classic.Id;
+            bool reduced = UiMotion.ReducedMotion;
+            UiMotion.ReducedMotion = false;
+            try
+            {
+                if (classic.Ammo < classic.MagazineSize && classic.TryBeginReload())
+                {
+                    yield return Bekle(() => !classic.IsReloading, 8f, "a full magazine");
+                }
+
+                yield return new WaitForSecondsRealtime(0.3f);
+
+                // A1 / A2: a shot - the spark at the emptied slot, a casing thrown.
+                int accents = hud.ShotAccents;
+                classic.ConsumeShot();
+                yield return null;
+                yield return null;
+                Assert.AreEqual(accents + 1, hud.ShotAccents, "A1: the shot accents");
+                Assert.GreaterOrEqual(hud.CasingsLive, 1, "A2: a casing in flight");
+                Assert.Greater(hud.LadderSpark.canvasRenderer.GetAlpha(), 0f, "A1: the spark");
+
+                // ≤ 10 accents a second, however fast the rounds go.
+                yield return new WaitForSecondsRealtime(0.15f);
+                accents = hud.ShotAccents;
+                float t0 = Time.realtimeSinceStartup;
+                for (int i = 0; i < 5 && classic.Ammo > 2; i++)
+                {
+                    classic.ConsumeShot();
+                    yield return null;
+                }
+
+                yield return null;
+                float spent = Time.realtimeSinceStartup - t0;
+                Assert.LessOrEqual(hud.ShotAccents - accents, 1 + Mathf.FloorToInt(spent / UiMotionTokens.ShotAccentMinInterval), "≤ 10 accents a second (" + spent + " s)");
+
+                // A5: LOW breathes; A6: EMPTY stops it and an empty trigger shakes at most once per 250 ms.
+                int low = Mathf.Max(1, Mathf.FloorToInt(classic.MagazineSize * RunHudViewModel.LowAmmoFraction));
+                while (classic.Ammo > low)
+                {
+                    classic.ConsumeShot();
+                }
+
+                yield return null;
+                yield return null;
+                Assert.IsTrue(hud.AmmoPulsing, "A5: the ring's track and the rounds breathe at LOW");
+                while (classic.Ammo > 0)
+                {
+                    classic.ConsumeShot();
+                }
+
+                yield return null;
+                yield return null;
+                yield return new WaitForSecondsRealtime(0.3f);
+                Assert.IsFalse(hud.AmmoPulsing, "EMPTY stops the LOW pulse");
+                int shakes = hud.DryFireShakes;
+                WeaponEvents.PublishDryFire();
+                WeaponEvents.PublishDryFire();
+                Assert.AreEqual(shakes + 1, hud.DryFireShakes, "A6: ≤ 1 shake per 250 ms");
+
+                // A3 / A4: the reload previews the rounds coming in, and gives way to them on landing.
+                Assert.IsTrue(classic.TryBeginReload(), "reload");
+                yield return Bekle(() => classic.ReloadProgress01 >= 0.5f, 8f, "half the reload");
+                yield return null;
+                yield return null;
+                Assert.Greater(hud.ReloadPreviewRounds, 0, "A3: the empty slots preview the reload");
+                yield return Bekle(() => !classic.IsReloading, 8f, "the reload lands");
+                yield return null;
+                yield return null;
+                Assert.AreEqual(-1, hud.ReloadPreviewRounds, "A4: landed - the preview gave way to the rounds");
+
+                // A7: another weapon - the glyph swaps through a stamp.
+                int swaps = hud.WeaponSwaps;
+                ClassicWeaponId other = home == ClassicWeaponId.CombatShotgun ? ClassicWeaponId.AssaultRifle : ClassicWeaponId.CombatShotgun;
+                weapon.EquipClassic(other);
+                yield return null;
+                yield return null;
+                Assert.AreEqual(swaps + 1, hud.WeaponSwaps, "A7: the weapon change swaps through a stamp");
+                yield return new WaitForSecondsRealtime(0.4f);
+                Image glyph = Find<Image>(hud.transform, "ClassicWeapon", "WeaponIcon");
+                Assert.AreEqual(1f, glyph.canvasRenderer.GetAlpha(), 1e-3f, "the new glyph stands");
+                Assert.AreEqual(1f, glyph.rectTransform.localScale.x, 1e-3f);
+                Debug.Log("[DD-TEST] wp094.ammoJuice accents=" + hud.ShotAccents + " shakes=" + hud.DryFireShakes + " swaps=" + hud.WeaponSwaps);
+            }
+            finally
+            {
+                if (classic.Id != home)
+                {
+                    weapon.EquipClassic(home);
+                }
+
+                WeaponRegistry.SelectedWeapon = selected;   // the selection-leak lesson: a test gives the weapon back
+                UiMotion.ReducedMotion = reduced;
+            }
+
+            PrototypeUiFlow.AbortRunToMainMenu();
+            yield return SahneyiBekle(PrototypeScenes.MainMenu);
+        }
+
+        /// <summary>Boot → selection → a fighting top-down run with a quiet field.</summary>
+        private static IEnumerator KosuyaGir()
+        {
+            yield return BootTanMainMenuye();
+            PrototypeUiFlow.GoToSelection();
+            yield return SahneyiBekle(PrototypeScenes.Selection);
+            PrototypeUiFlow.StartRun();
+            yield return SahneyiBekle(PrototypeScenes.Run);
+            yield return KosuHazirOlsun();
+            yield return QuietField();
+        }
+
+        /// <summary>One real hit of <paramref name="share"/> of max health from <paramref name="towards"/> (the attacker's side).</summary>
+        private static void Hit(PlayerHealth health, Vector3 at, Vector3 towards, float share)
+        {
+            health.DiagnosisInvulnerable = false;
+            Assert.IsTrue(health.ApplyDamage(health.Max * share, at + towards * 2f, "Test.WP094"), "the hit landed");
+            health.DiagnosisInvulnerable = true;
+        }
+
+        /// <summary>The screen's right on the ground (the rig's shake-free right, flattened): a hit from it lights the right edge.</summary>
+        private static Vector3 ScreenRightOnGround()
+        {
+            PrototypeCameraRig cameraRig = PrototypeCameraRig.Active;
+            Vector3 right = cameraRig != null ? cameraRig.StableRotation * Vector3.right : Vector3.right;
+            right.y = 0f;
+            return right.sqrMagnitude > 1e-4f ? right.normalized : Vector3.right;
         }
 
         // ================================================================== helpers

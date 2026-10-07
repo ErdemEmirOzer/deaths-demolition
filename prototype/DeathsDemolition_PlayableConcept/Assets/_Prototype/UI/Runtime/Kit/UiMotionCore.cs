@@ -100,6 +100,8 @@ namespace DD.Prototype.UI
         {
             public float Time;
             public UiEvent Event;
+            public string Detail;   // WP-094: the raise's detail (an existing string - "round" for the HUD seal)
+            public bool Silent;     // WP-094: a listener-only cue (UiTimeline.Call) - no UiEvent is raised
             public int Id;
             public bool Fired;
         }
@@ -192,6 +194,17 @@ namespace DD.Prototype.UI
             return Play(rect, UiChannel.Scale, new Vector4(rect.localScale.x, 0f, 0f, 0f), new Vector4(to, 0f, 0f, 0f), Seconds(duration), ease, motionClass, delay, clock, owner, false);
         }
 
+        /// <summary>
+        /// WP-094 (HAREKET-HUD §6 API): the RotationZ channel's entry - the z angle from where it stands (read as −180 … 180, so
+        /// a rect at −3° does not spin through 357°) to <paramref name="degrees"/>. The HUD's falling health chunk turns on it.
+        /// </summary>
+        public static UiTweenHandle Rotate(RectTransform rect, float degrees, UiDuration duration, UiEase ease, UiMotionClass motionClass, float delay = 0f, UiClock clock = UiClock.Unscaled, int owner = 0)
+        {
+            if (rect == null) return default(UiTweenHandle);
+            float from = Mathf.DeltaAngle(0f, rect.localEulerAngles.z);
+            return Play(rect, UiChannel.RotationZ, new Vector4(from, 0f, 0f, 0f), new Vector4(degrees, 0f, 0f, 0f), Seconds(duration), ease, motionClass, delay, clock, owner, false);
+        }
+
         public static UiTweenHandle Fill(Image image, float to, UiDuration duration, UiEase ease, UiMotionClass motionClass, float delay = 0f, UiClock clock = UiClock.Unscaled, int owner = 0)
         {
             if (image == null) return default(UiTweenHandle);
@@ -236,6 +249,20 @@ namespace DD.Prototype.UI
         {
             if (rect == null) return default(UiTweenHandle);
             return Play(rect, UiChannel.ShakeX, new Vector4(rest.x, rest.y, 0f, 0f), new Vector4(amplitude, cycles, 0f, 0f), seconds, UiEase.Linear, motionClass, 0f, UiClock.Unscaled, owner, false);
+        }
+
+        /// <summary>WP-094: CanvasRenderer alpha from an explicit start (a flare's fall, which starts after its rise has ended).</summary>
+        internal static UiTweenHandle TintAlphaSeconds(Graphic graphic, float from, float to, float seconds, UiEase ease, UiMotionClass motionClass, float delay = 0f, int owner = 0)
+        {
+            if (graphic == null) return default(UiTweenHandle);
+            return Play(graphic, UiChannel.TintAlpha, new Vector4(from, 0f, 0f, 0f), new Vector4(to, 0f, 0f, 0f), seconds, ease, motionClass, delay, UiClock.Unscaled, owner, false);
+        }
+
+        /// <summary>WP-094: the RotationZ channel from an explicit start (a reused casing turns from 0 again).</summary>
+        internal static UiTweenHandle RotateSeconds(RectTransform rect, float from, float to, float seconds, UiEase ease, UiMotionClass motionClass, float delay = 0f, int owner = 0)
+        {
+            if (rect == null) return default(UiTweenHandle);
+            return Play(rect, UiChannel.RotationZ, new Vector4(from, 0f, 0f, 0f), new Vector4(to, 0f, 0f, 0f), seconds, ease, motionClass, delay, UiClock.Unscaled, owner, false);
         }
 
         public static bool IsAlive(UiTweenHandle handle)
@@ -411,6 +438,12 @@ namespace DD.Prototype.UI
 
         internal static void TimelineCue(UiTimeline timeline, UiEvent uiEvent, int cueId, float seconds)
         {
+            TimelineCue(timeline, uiEvent, null, false, cueId, seconds);
+        }
+
+        /// <summary>WP-094: a cue with a raise detail, or a silent one (the listener alone hears it - <see cref="UiTimeline.Call"/>).</summary>
+        internal static void TimelineCue(UiTimeline timeline, UiEvent uiEvent, string detail, bool silent, int cueId, float seconds)
+        {
             if (!TimelineAlive(timeline)) return;
             ref TimelineData tl = ref s_timelines[timeline.Index];
             if (tl.CueCount >= TimelineCues) return;
@@ -422,7 +455,7 @@ namespace DD.Prototype.UI
                 at--;
             }
 
-            tl.Cues[at] = new Cue { Time = seconds, Event = uiEvent, Id = cueId, Fired = false };
+            tl.Cues[at] = new Cue { Time = seconds, Event = uiEvent, Detail = detail, Silent = silent, Id = cueId, Fired = false };
             tl.CueCount++;
         }
 
@@ -493,7 +526,11 @@ namespace DD.Prototype.UI
         private static void FireCue(ref TimelineData tl, int index)
         {
             tl.Cues[index].Fired = true;
-            UiEvents.Raise(tl.Cues[index].Event);
+            if (!tl.Cues[index].Silent)
+            {
+                UiEvents.Raise(tl.Cues[index].Event, tl.Cues[index].Detail);
+            }
+
             if (tl.Listener != null)
             {
                 tl.Listener.OnCue(tl.Cues[index].Id);
@@ -789,6 +826,28 @@ namespace DD.Prototype.UI
         public UiTimeline Cue(UiEvent uiEvent, float seconds, int cueId = 0)
         {
             UiMotion.TimelineCue(this, uiEvent, cueId, seconds);
+            return this;
+        }
+
+        /// <summary>
+        /// WP-094: as <see cref="Cue(UiEvent, float, int)"/>, the raise carrying <paramref name="detail"/> (an existing string,
+        /// never formatted per raise) - the HUD's round seal raises StampLanded "round" at its contact frame.
+        /// </summary>
+        public UiTimeline Cue(UiEvent uiEvent, string detail, float seconds, int cueId = 0)
+        {
+            UiMotion.TimelineCue(this, uiEvent, detail, false, cueId, seconds);
+            return this;
+        }
+
+        /// <summary>
+        /// WP-094: a silent cue - at <paramref name="seconds"/> the listener gets <paramref name="cueId"/> and no UiEvent is
+        /// raised (a step that needs the state of its moment, e.g. the round numeral's swap at the brush hand-off). Skipping
+        /// collapses to the last cue as for every cue, so the last cue of a timeline that must land its state is the one that
+        /// lands it.
+        /// </summary>
+        public UiTimeline Call(float seconds, int cueId)
+        {
+            UiMotion.TimelineCue(this, default(UiEvent), null, true, cueId, seconds);
             return this;
         }
 

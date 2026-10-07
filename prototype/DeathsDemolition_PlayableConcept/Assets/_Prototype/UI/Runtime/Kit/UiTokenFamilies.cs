@@ -216,6 +216,74 @@ namespace DD.Prototype.UI
 
         /// <summary>DeniedNudge: ±4 px, 2 cycles, 160 ms; off under RM; never in the HUD play band.</summary>
         public const float DeniedNudgePx = 4f;
+
+        /// <summary>WP-094 (HAREKET-HUD §6 O1 exceptions): the DeniedNudge's length, a kit token - the preset no longer writes 0.16 itself.</summary>
+        public const float DeniedNudgeSeconds = 0.16f;
+
+        // ---- WP-094 HUD v4 juice (K/wp-094/HAREKET-HUD.md §6, interaction-designer 07.10; C-00 07.10). Lengths stay on the
+        //      six steps (no off-scale duration); the px / scale / rate values below are the catalogue's, in one place.
+
+        /// <summary>G1: the coin glyph's punch peak (a non-text glyph; the numeral keeps <see cref="TextPopMaxScale"/>).</summary>
+        public const float PunchPeakGlyph = 1.18f;
+
+        /// <summary>G1: at most one gold punch per this many seconds; arrivals in between gather into the next one.</summary>
+        public const float PunchMinInterval = 0.12f;
+
+        /// <summary>G3: gains inside this window read as one "+N" (= Emphasis).</summary>
+        public const float PlusMergeWindow = 0.4f;
+
+        /// <summary>A1: shot accents (spark, casing, lean) at most 10 a second - a faster weapon accents every second shot.</summary>
+        public const float ShotAccentMinInterval = 0.1f;
+
+        /// <summary>A1: the ammo numeral pops only on a single-fire weapon whose shots are at least this far apart.</summary>
+        public const float SlowShotInterval = 0.25f;
+
+        /// <summary>A6: an empty trigger shakes the ring at most once per this many seconds.</summary>
+        public const float DryFireMinInterval = 0.25f;
+
+        /// <summary>A1: the ladder leans this far outward while the weapon fires.</summary>
+        public const float LadderLeanPx = 2f;
+
+        /// <summary>A4: the refilled magazine slides up this far into place.</summary>
+        public const float MagSlidePx = 10f;
+
+        /// <summary>A8: the classic cluster steps down this far while a Special holds it.</summary>
+        public const float SuspendSlidePx = 6f;
+
+        /// <summary>H1: the broken-off health chunk falls this far, drifts this far along the fill and turns this much.</summary>
+        public const float ChunkDropPx = 14f;
+        public const float ChunkDriftPx = 6f;
+        public const float ChunkSpinDeg = 8f;
+
+        /// <summary>H1: a lost range narrower than this (px on the stroke) leaves only the trail - no chunk.</summary>
+        public const float ChunkMinPx = 4f;
+
+        /// <summary>H3: a hit of at least <see cref="HitKnockMinFraction"/> of max health knocks the health brush this far back (≤ 1 per Fast).</summary>
+        public const float HitKnockPx = 3f;
+        public const float HitKnockMinFraction = 0.05f;
+
+        /// <summary>H4: one step of at least this share of max health glows (≤ 1 a second), at this peak alpha × FlashScale.</summary>
+        public const float HealGlowMinFraction = 0.05f;
+        public const float HealGlowAlpha = 0.45f;
+
+        /// <summary>H4: the wet band at the fill's tip while health regenerates (px; data, no loop).</summary>
+        public const float HealWetBandPx = 6f;
+
+        /// <summary>H5: the heart's two beats (lub at once, dub <see cref="BeatDubDelay"/> later), × <see cref="BeatCriticalGain"/> under <see cref="BeatCriticalFraction"/>.</summary>
+        public const float BeatLub = 1.10f;
+        public const float BeatDub = 1.05f;
+        public const float BeatCriticalGain = 1.3f;
+        public const float BeatCriticalFraction = 0.15f;
+
+        /// <summary>H5: the dub follows the lub by this much (= Screen).</summary>
+        public const float BeatDubDelay = 0.28f;
+
+        /// <summary>H5: the stroke rim's alpha between beats and at a beat (the difference × FlashScale).</summary>
+        public const float BeatRimRest = 0.35f;
+        public const float BeatRimPeak = 0.75f;
+
+        /// <summary>R2: the round's brush reveal waits this long after the banner starts (= Emphasis) - the banner reads first.</summary>
+        public const float SealHandoffDelay = 0.4f;
     }
 
     /// <summary>
