@@ -54,8 +54,8 @@ class Finding:
 
 
 def blank_code(text):
-    """text with comments and string/char literal contents replaced by spaces (same length, newlines kept), so braces,
-    parentheses and commas can be matched on it while offsets still index the original."""
+    """text with comments, preprocessor lines (#if, #region …) and string/char literal contents replaced by spaces (same
+    length, newlines kept), so braces, parentheses and commas can be matched on it while offsets still index the original."""
     out = list(text)
     i, n = 0, len(text)
 
@@ -77,8 +77,14 @@ def blank_code(text):
             j = n if j < 0 else j + 2
             wipe(i, j)
             i = j
-        elif c == "@" and nxt == '"':
-            j = i + 2
+        elif c == "#" and not text[text.rfind("\n", 0, i) + 1:i].strip():
+            j = text.find("\n", i)   # "#region Kit (A" holds a bracket that never closes
+            j = n if j < 0 else j
+            wipe(i, j)
+            i = j
+        elif c == "@" and (nxt == '"' or (nxt == "$" and text[i + 2:i + 3] == '"')):
+            first = i + (2 if nxt == '"' else 3)   # @"…" and @$"…" ($@"…" reaches here at its '@')
+            j = first
             while j < n:
                 if text[j] == '"' and j + 1 < n and text[j + 1] == '"':
                     j += 2
@@ -86,7 +92,7 @@ def blank_code(text):
                 if text[j] == '"':
                     break
                 j += 1
-            wipe(i + 2, j)
+            wipe(first, j)
             i = j + 1
         elif c == '"' or c == "'":
             j = i + 1
@@ -146,6 +152,25 @@ TYPE_KEYWORD = re.compile(r"\b(?:class|struct|interface|enum|record|delegate)\b"
 MEMBER_NAME = re.compile(r"([A-Za-z_]\w*)\s*(?:<[^()]*>)?\s*$")
 NOT_A_METHOD = {"if", "for", "foreach", "while", "switch", "using", "return", "new", "lock", "catch", "fixed",
                 "nameof", "typeof", "sizeof", "default", "checked", "unchecked", "operator", "this", "base"}
+MODIFIERS = {"public", "private", "protected", "internal", "static", "async", "override", "virtual", "abstract",
+             "sealed", "extern", "unsafe", "new", "readonly", "partial", "ref", "volatile"}
+OPERATOR = re.compile(r"\boperator\b")
+
+
+def _param_paren(sig):
+    """(index, name match) of a member signature's parameter list: the first top-level '(' right after a name that is not
+    a modifier, so the tuple in "private (int a, int b) Foo(…)" is a return type; (-1, None) when there is none."""
+    depth = 0
+    for q, ch in enumerate(sig):
+        if ch == "(":
+            if depth == 0:
+                m = MEMBER_NAME.search(sig[:q])
+                if m and m.group(1) not in MODIFIERS:
+                    return q, m
+            depth += 1
+        elif ch == ")":
+            depth = max(0, depth - 1)
+    return -1, None
 
 
 def _skip_to(code, k, end, stops):
@@ -166,9 +191,9 @@ def _skip_to(code, k, end, stops):
 
 
 def _header_parts(header):
-    """(attribute text, signature text) of one member header: leading [..] blocks, then the rest; # lines dropped."""
-    lines = [ln for ln in header.split("\n") if not ln.strip().startswith("#")]
-    h = "\n".join(lines)
+    """(attribute text, signature text, the signature's offset in header) of one blanked member header: leading [..]
+    blocks, then the rest (blank_code has already emptied the # lines)."""
+    h = header
     attrs, i, n = [], 0, len(h)
     while i < n:
         if h[i].isspace():
@@ -188,14 +213,16 @@ def _header_parts(header):
             i = j + 1
             continue
         break
-    return " ".join(attrs), h[i:]
+    return " ".join(attrs), h[i:], i
 
 
 def _class_members(code, brace, end):
-    """the methods declared directly in the class body code[brace] … code[end]: dicts name, start, body_start,
-    body_end, attrs, expression. A member header runs from the previous member's end to its first top-level '{', '=>'
-    or ';'. A method's signature has a name and a '(' with no '=' before it (a field initialiser is not a method);
-    a header with a type keyword opens a nested type, whose members its own class entry reads."""
+    """(methods, aborted) for the class body code[brace] … code[end]. methods: the ones declared directly in it, dicts
+    name, start, body_start, body_end, attrs, expression. A member header runs from the previous member's end to its
+    first top-level '{', '=>' or ';'. A method's signature has a name and a '(' with no '=' before it (a field
+    initialiser is not a method); a header with a type keyword opens a nested type, whose members its own class entry
+    reads. aborted: the offset of a header with none of '{', '=>', ';' before the class closes (the members from there on
+    are not read; None when the scan reached the end)."""
     out, k = [], brace + 1
     while k < end:
         while k < end and code[k] in " \t\r\n;":
@@ -210,7 +237,7 @@ def _class_members(code, brace, end):
             if ch in "([":
                 depth += 1
             elif ch in ")]":
-                depth -= 1
+                depth = max(0, depth - 1)
             elif depth == 0 and ch == "{":
                 stop = "{"
                 break
@@ -222,9 +249,9 @@ def _class_members(code, brace, end):
                 break
             j += 1
         if stop is None:
-            break
+            return out, start
         header = code[start:j]
-        attrs, sig = _header_parts(header)
+        attrs, sig, sig_off = _header_parts(header)
         if stop == "{":
             close = match_close(code, j, "{", "}")
             close = end if close < 0 else close
@@ -238,28 +265,16 @@ def _class_members(code, brace, end):
         k = nxt
         if body_start is None:
             continue
-        paren = sig.find("(")
+        paren, m = _param_paren(sig)
         if TYPE_KEYWORD.search(sig[:paren] if paren >= 0 else sig):
             continue   # a nested type ("where T : class" after a method's parameters is not one)
-        if paren < 0 or "=" in sig[:paren]:
-            continue   # a property, an indexer, an event or a field initialiser
-        m = MEMBER_NAME.search(sig[:paren])
-        if not m or m.group(1) in NOT_A_METHOD:
+        if paren < 0 or "=" in sig[:paren] or OPERATOR.search(sig[:paren]):
+            continue   # a property, an indexer, an event, a field initialiser or an operator
+        if m.group(1) in NOT_A_METHOD:
             continue
-        # the declaration's position: the name right before the header's first '(' outside its [..] attributes
-        depth, hp = 0, -1
-        for q, ch in enumerate(header):
-            if ch == "[":
-                depth += 1
-            elif ch == "]":
-                depth -= 1
-            elif ch == "(" and depth == 0:
-                hp = q
-                break
-        name_pos = start + max(0, header.rfind(m.group(1), 0, hp if hp >= 0 else len(header)))
-        out.append({"name": m.group(1), "start": name_pos, "body_start": body_start, "body_end": body_end,
-                    "attrs": attrs, "expression": stop == "=>"})
-    return out
+        out.append({"name": m.group(1), "start": start + sig_off + m.start(1), "body_start": body_start,
+                    "body_end": body_end, "attrs": attrs, "expression": stop == "=>"})
+    return out, None
 
 
 class CsFile:
@@ -275,11 +290,15 @@ class CsFile:
             attrs = _attributes_before(self.code, cm.start())
             self.classes.append((cm.group(1), brace, end if end > 0 else len(self.code), bool(EXPLICIT_ATTR.search(attrs))))
         self.methods = []    # dicts: name, start, body_start, body_end, test, explicit, full
+        self.aborted = []    # (line, class name): a class body whose member scan stopped early
         # C-00 07.10 (S-08 1467f986: five false ERRORs): methods are read member by member inside each class body — any
         # access modifier or none, a block body or an expression body (=> …;); local functions, lambdas and nested types
         # are not members of the class whose body holds them
         for name, brace, end, _ in self.classes:
-            for mem in _class_members(self.code, brace, end):
+            members, aborted = _class_members(self.code, brace, end)
+            if aborted is not None:
+                self.aborted.append((self.line(aborted), name))
+            for mem in members:
                 chain = self.class_chain(mem["start"])
                 attrs = mem["attrs"]
                 is_test = bool(TEST_ATTR.search(attrs)) and bool(chain)
@@ -291,6 +310,10 @@ class CsFile:
 
     def class_chain(self, pos):
         return [c for c in self.classes if c[1] < pos < c[2]]
+
+    def class_of(self, meth):
+        chain = self.class_chain(meth["start"])
+        return chain[-1][0] if chain else None
 
     def enclosing_method(self, pos):
         inside = [m for m in self.methods if m["body_start"] < pos < m["body_end"]]
@@ -345,9 +368,38 @@ def _resolve_string(ident, cs, all_files):
     return None
 
 
+def _test_callers(files, cs, meth):
+    """the tests that reach meth through calls, directly or through other helpers: a call is the method's name and '('
+    inside a method body — the bare name in meth's own file, ClassName.Name( in the others. Over-reads rather than
+    under-reads (an other.Name( in the same file counts too)."""
+    found, seen, frontier = set(), {(cs.rel, meth["full"])}, [(cs, meth)]
+    while frontier:
+        nxt = []
+        for tcs, tm in frontier:
+            name = re.escape(tm["name"]) + r"\s*(?:<[^<>()]*>)?\s*\("
+            local = re.compile(r"\b" + name)
+            cls = tcs.class_of(tm)
+            qualified = re.compile(r"\b" + re.escape(cls) + r"\s*\.\s*" + name) if cls else None
+            for f in files:
+                pat = local if f is tcs else qualified
+                if pat is None or not pat.search(f.code):
+                    continue
+                for m in f.methods:
+                    if m is tm or not pat.search(f.code, m["body_start"], m["body_end"]):
+                        continue
+                    if m["test"]:
+                        found.add(m["full"])
+                    elif (f.rel, m["full"]) not in seen:
+                        seen.add((f.rel, m["full"]))
+                        nxt.append((f, m))
+        frontier = nxt
+    return sorted(found)
+
+
 def scan_writes(files):
-    """every R2Olcum.Yaz call: gate, source, unconditional keys, conditional keys, nullable keys, enclosing test."""
-    writes = []
+    """every R2Olcum.Yaz call: gate, source, unconditional keys, conditional keys, nullable keys, enclosing test — or,
+    for a call in a helper, the helper and the tests that call it."""
+    writes, callers = [], {}
     for cs in files:
         for m in re.finditer(r"\bR2Olcum\s*\.\s*Yaz\s*\(", cs.code):
             paren = m.end() - 1
@@ -360,7 +412,7 @@ def scan_writes(files):
             arg = [text_args[a:b].strip() for a, b in spans]
             w = {"file": cs.rel, "line": cs.line(m.start()), "gate": None, "source": None, "source_expr": None,
                  "keys": [], "conditional": [], "nullable": [], "values_expr": None, "test": None, "explicit": False,
-                 "helper": None}
+                 "helper": None, "callers": []}
             if len(arg) < 4:
                 w["problem"] = "R2Olcum.Yaz with fewer than four arguments"
                 writes.append(w)
@@ -398,6 +450,10 @@ def scan_writes(files):
                     w["test"], w["explicit"] = encl["full"], encl["explicit"]
                 else:
                     w["helper"] = encl["full"]
+                    key = (cs.rel, encl["full"])
+                    if key not in callers:
+                        callers[key] = _test_callers(files, cs, encl)
+                    w["callers"] = callers[key]
             writes.append(w)
     return writes
 
@@ -489,6 +545,9 @@ def lint(contract, prose, files, writes, repo=None):
         for meth in cs.methods:
             if meth["test"]:
                 tests.setdefault(meth["full"], (cs.rel, meth["line"], meth["explicit"]))
+        for line, cls in getattr(cs, "aborted", []):
+            add("WARN", "MEMBER-SCAN", "-", f"the member scan of class {cls} stopped at line {line} (no '{{', '=>' or ';' "
+                "before the class closes): the members below it are not read", f"{cs.rel}:{line}")
     by_gate = {}
     for w in writes:
         where = f"{w['file']}:{w['line']}"
@@ -552,6 +611,15 @@ def lint(contract, prose, files, writes, repo=None):
                 add("ERROR", "SOURCE-MISMATCH", gid, f"source {w['source']} but the call sits in {w['test']}", wh)
             elif w["helper"] and w["source"] not in tests:
                 add("ERROR", "SOURCE-MISMATCH", gid, f"source {w['source']} (written from helper {w['helper']}) is not a test", wh)
+            # C-00 07.10 (gt MUST-1 on 8410a24d): a helper's write is the write of every test that calls it
+            elif w["helper"] and w["source"] not in w["callers"]:
+                add("ERROR", "HELPER-SOURCE", gid, f"source {w['source']} never calls helper {w['helper']}, which is reached "
+                    f"from {', '.join(w['callers']) or 'no test'}: the artifact names a test that does not write it", wh)
+            elif w["helper"] and len(w["callers"]) > 1:
+                others = ", ".join(c for c in w["callers"] if c != w["source"])
+                add("WARN", "HELPER-CALLERS", gid, f"helper {w['helper']} writes source {w['source']} and is also called "
+                    f"from {others}: those runs write the same artifact unless a guard in the helper stops them (the lint "
+                    "does not read guards)", wh)
         sources = sorted({w["source"] for w in ws if w["source"]})
         if len(sources) > 1:
             add("WARN", "SOURCE-MANY", gid, "several tests write this gate (last one wins): " + ", ".join(sources), where)
@@ -564,8 +632,10 @@ def lint(contract, prose, files, writes, repo=None):
                         f"writer {s}", where)
         else:
             for w in ws:
-                if w["explicit"]:
-                    add("WARN", "EXPLICIT-UNRUN", gid, f"the writer {w['test']} is [Explicit] and the gate has no "
+                writer = w["test"] or (w["source"] if w["helper"] else None)
+                explicit = w["explicit"] if w["test"] else bool(writer in tests and tests[writer][2])
+                if explicit:
+                    add("WARN", "EXPLICIT-UNRUN", gid, f"the writer {writer} is [Explicit] and the gate has no "
                         "measuredBy: the chain's sessions never run it, so <E>/r2/ gets the artifact only from a hand run",
                         f"{w['file']}:{w['line']}")
 

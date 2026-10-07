@@ -357,11 +357,8 @@ class RealRepoTests(unittest.TestCase):
         self.assertTrue(writes, "no R2Olcum.Yaz call found")
         unreadable = [f for f in findings if f.code in ("WRITER-UNPARSED", "WRITER-KEYS", "SOURCE-UNRESOLVED")]
         self.assertEqual([], unreadable)
-        self.assertTrue(all(w["test"] for w in writes), [w for w in writes if not w["test"]])
+        self.assertTrue(all(w["test"] or w["callers"] for w in writes), [w for w in writes if not (w["test"] or w["callers"])])
 
-
-if __name__ == "__main__":
-    unittest.main()
 
 
 class MemberScanTests(unittest.TestCase):
@@ -426,3 +423,92 @@ namespace DD.Prototype.Tests.PlayMode
     def test_the_declaration_line_is_the_name_not_the_attribute(self):
         m = next(m for m in self.scan().methods if m["name"] == "Kit_Olc")
         self.assertIn("Kit_Olc()", self.SRC.splitlines()[m["line"] - 1])
+
+    def test_a_helper_write_lists_the_tests_that_call_it(self):
+        helper = next(w for w in lint.scan_writes([self.scan()]) if w["helper"])
+        self.assertEqual(["DD.Prototype.Tests.PlayMode.KitTests.Kit_Olc"], helper["callers"])
+
+    def test_directives_verbatim_interpolation_and_tuple_returns_do_not_derail_the_scan(self):
+        # gt SHOULD-1/2 on 8410a24d: an unbalanced bracket in a #region line or an @$"…" string, a tuple return type
+        src = self.SRC.replace("        static T Pick<T>", '#region Kit (A\n        string Note() => @$"{1} ( [ {{";\n'
+                               "        private (int a, string b) Pair(int x) { return (x, \"\"); }\n#endregion\n"
+                               "        static T Pick<T>")
+        cs = lint.CsFile(Path("Kit.cs"), "Kit.cs", src)
+        names = {m["name"] for m in cs.methods}
+        self.assertTrue({"Note", "Pair", "Pick", "Kit", "Helper"} <= names, names)
+        self.assertNotIn("private", names)
+        self.assertEqual([], cs.aborted)
+
+    def test_a_member_scan_that_stops_early_is_reported(self):
+        src = self.SRC.replace("            void Helper() { }\n        }\n", "            void Helper() { }\n        }\n        public int Broken\n")
+        cs = lint.CsFile(Path("Kit.cs"), "Kit.cs", src)
+        self.assertEqual(["KitTests"], [cls for _, cls in cs.aborted])
+
+
+HERO_KIT = """using System.Collections;
+using System.Collections.Generic;
+namespace DD.Prototype.Tests.PlayMode
+{
+    public sealed class HeroTests
+    {
+        public const string H1Name = "DD.Prototype.Tests.PlayMode.HeroTests.H1_Olc";
+        [UnityTest] [Explicit] public IEnumerator H1_Olc() => TOPDOWN;
+        [UnityTest] [Explicit] [Category("FPTP")] public IEnumerator H1_TPFP_Olc() => FPTP;
+        IEnumerator Other() { yield return null; }
+        IEnumerator Outer(bool td) => Kit(td);
+        IEnumerator Kit(bool td)
+        {
+            yield return null;
+            if (td) R2Olcum.Yaz("H1", H1Name, new Dictionary<string, double> { { "maxCm", 0.5 }, { "elbowMaxDeg", 150 } }, 3);
+        }
+    }
+}
+"""
+
+
+class HelperCallerTests(LintTestCase):
+    """C-00 07.10 (gt MUST-1 on 8410a24d; the false PASS of S-08 1467f986): a helper's R2Olcum.Yaz is the write of every
+    test that reaches the helper — the source must be one of them (ERROR), and other callers are named (WARN)."""
+
+    def run_with(self, topdown, fptp, extra=None):
+        self.fx.cs[PLAY + "/HeroTests.cs"] = HERO_KIT.replace("TOPDOWN", topdown).replace("FPTP", fptp)
+        if extra:
+            self.fx.cs.update(extra)
+        return self.fx.run()
+
+    def test_the_source_test_alone_calls_the_helper_through_another_helper(self):
+        findings = self.run_with("Outer(true)", "Other()")
+        self.assertEqual([], codes(findings, "ERROR"))
+        self.assertEqual([], codes(findings, "WARN"))
+
+    def test_a_second_caller_is_a_warning(self):
+        findings = self.run_with("Kit(true)", "Kit(false)")
+        self.assertEqual([], codes(findings, "ERROR"))
+        self.assertEqual([("HELPER-CALLERS", "H1")], codes(findings, "WARN"))
+        warn = next(f for f in findings if f.code == "HELPER-CALLERS")
+        self.assertIn("HeroTests.H1_TPFP_Olc", warn.message)
+
+    def test_a_source_that_does_not_call_the_helper_is_an_error(self):
+        findings = self.run_with("Other()", "Outer(false)")
+        self.assertEqual([("HELPER-SOURCE", "H1")], codes(findings, "ERROR"))
+        self.assertIn("HeroTests.H1_TPFP_Olc", next(f for f in findings if f.code == "HELPER-SOURCE").message)
+
+    def test_a_helper_no_test_calls_is_an_error(self):
+        findings = self.run_with("Other()", "Other()")
+        self.assertEqual([("HELPER-SOURCE", "H1")], codes(findings, "ERROR"))
+        self.assertIn("no test", next(f for f in findings if f.code == "HELPER-SOURCE").message)
+
+    def test_a_qualified_call_from_another_file_counts(self):
+        kit = HERO_KIT.replace("public sealed class HeroTests", "public static class HeroKit").replace(
+            "IEnumerator Kit(bool td)", "public static IEnumerator Kit(bool td)")
+        kit = kit.replace("H1Name, new", "HeroTests.H1Name, new")
+        hero = HERO_KIT.split("        IEnumerator Outer")[0] + "    }\n}\n"
+        self.fx.cs[PLAY + "/HeroKit.cs"] = kit.replace("TOPDOWN", "null").replace("FPTP", "null")
+        self.fx.cs[PLAY + "/HeroTests.cs"] = hero.replace("TOPDOWN", "HeroKit.Kit(true)").replace("FPTP", "Other()")
+        findings = self.fx.run()
+        self.assertEqual([], codes(findings, "ERROR"))
+        self.assertEqual([], codes(findings, "WARN"))
+
+
+if __name__ == "__main__":
+    unittest.main()
