@@ -1,0 +1,7 @@
+{
+    "source": "Assets/_Art/Textures/Source/T_ap030_interior_Packed.png",
+    "sourceSha256": "eab71918c3df33b8491a6f7891071940c07ec98a473e04121d404221581cda93",
+    "algorithm": "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling",
+    "utc": "2026-10-07T21:35:01.5588770Z",
+    "outputSha256": "2f11b15748028a5c0d3937fa53fa3e2560ac52405ebb06c095a97726d12dc75c"
+}

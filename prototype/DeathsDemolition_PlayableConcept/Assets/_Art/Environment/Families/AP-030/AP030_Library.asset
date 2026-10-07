@@ -1,0 +1,82 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eb632164257994c5d995c181af152695, type: 3}
+  m_Name: AP030_Library
+  m_EditorClassIdentifier: 
+  ap: AP-030
+  items:
+  - family: andon
+    variation: V01
+    prefab: {fileID: 2875733774342785827, guid: a22a28f25b6f24140b149afadd72b58f, type: 3}
+  - family: andon
+    variation: V02
+    prefab: {fileID: 3140716499905962351, guid: 1dedb35b4626745cf892fad19caba772, type: 3}
+  - family: byobu
+    variation: V01
+    prefab: {fileID: 6368620457370164703, guid: b9262a4874cd84a869f9c63b2e560c21, type: 3}
+  - family: byobu
+    variation: V02
+    prefab: {fileID: 5956889563815221441, guid: 4f49b75c751764b579bedafef344e243, type: 3}
+  - family: chabudai
+    variation: V01
+    prefab: {fileID: 2752435326944016050, guid: ccc52f098c0d34871aabce12d2ecba11, type: 3}
+  - family: chabudai
+    variation: V02
+    prefab: {fileID: 1927175839779497540, guid: e017469c6c1a04e80971a0746c7c50bc, type: 3}
+  - family: chabudai
+    variation: V03
+    prefab: {fileID: 5719142736643817382, guid: 7729e52a4adce42ada5c3ef26febcc36, type: 3}
+  - family: clutter_set
+    variation: V01
+    prefab: {fileID: 7548235757410509157, guid: eb5baba664dea4ea2afbfac794aa5a58, type: 3}
+  - family: clutter_set
+    variation: V02
+    prefab: {fileID: 4094909828804725574, guid: 29c9759af54314bbf999ec7f97833b39, type: 3}
+  - family: hibachi
+    variation: V01
+    prefab: {fileID: 1276724149449878071, guid: 3bfbea367bb084324a9b13b504843b34, type: 3}
+  - family: kerosene_lamp
+    variation: V01
+    prefab: {fileID: 4118709543958717265, guid: 33b89c9e6f568444eb4b171e5be670bf, type: 3}
+  - family: kerosene_lamp
+    variation: V02
+    prefab: {fileID: 734590711964289173, guid: 886214c2cc1bf40cca68bf372460e4dc, type: 3}
+  - family: tana_shelf
+    variation: V01
+    prefab: {fileID: 84959361399075812, guid: c0ceeb6b1e6c140018e4c47e0bb2a017, type: 3}
+  - family: tansu
+    variation: V01
+    prefab: {fileID: 8448038494726773259, guid: 1291abc0cd6354de09ac03e285b49ea4, type: 3}
+  - family: tansu
+    variation: V02
+    prefab: {fileID: 472394605286850168, guid: ef026c2bf9d024577b11edd08a82a0eb, type: 3}
+  - family: tatami
+    variation: V01
+    prefab: {fileID: 4144241707865884343, guid: d1cf158ebd9514ae69a6ddecb0a6bd04, type: 3}
+  - family: tatami
+    variation: V02
+    prefab: {fileID: 2391662397109150544, guid: be73d1e16971848b8b6b4a6b74666743, type: 3}
+  - family: tatami
+    variation: V03
+    prefab: {fileID: 4718817263180314360, guid: 7d7601f09b58a4870b7d1ed1d3328058, type: 3}
+  - family: wall_sconce
+    variation: V01
+    prefab: {fileID: 6868526498519440659, guid: bf9f6113376c54843807b012a5734c7e, type: 3}
+  - family: wall_sconce
+    variation: V02
+    prefab: {fileID: 6129417189949209300, guid: 4a7acb13e480b4aebb88fe7b866d672e, type: 3}
+  - family: zabuton
+    variation: V01
+    prefab: {fileID: 8288259092190573163, guid: 7c3174a3d731c405a9f0572cc43d4f91, type: 3}
+  - family: zabuton
+    variation: V02
+    prefab: {fileID: 3962066745853794775, guid: bacdd62f6488e49d3971bfe7480dbf9d, type: 3}

@@ -92,6 +92,8 @@ namespace DD.Art.Tests.EditMode
             Assert.AreEqual(50, Manifest("AP-017").VariationCount, "AP-017 50 varyasyon (38 + 6 Faz 2 + 6 Faz 2b)");
             Assert.AreEqual(59, Manifest("AP-023").families.Count, "AP-023 59 aile (WP-074 B5, manifest v004 44 + B5b-2 v005 7 + v007 8)");
             Assert.AreEqual(192, Manifest("AP-023").VariationCount, "AP-023 192 varyasyon (v004 148 + v005 18 + v007 26)");
+            Assert.AreEqual(11, Manifest("AP-030").families.Count, "AP-030 11 aile (WP-092 C, v001 P1: lambalar + hibachi + iç mekân)");
+            Assert.AreEqual(22, Manifest("AP-030").VariationCount, "AP-030 22 varyasyon (v001 P1)");
 
             var hatalar = new List<string>();
             foreach ((string ap, ArtLibraryManifest.Family f, ArtLibraryManifest.Variation v) in Varyasyonlar())
@@ -150,7 +152,7 @@ namespace DD.Art.Tests.EditMode
                 }
             }
 
-            Assert.AreEqual(403, fbx, "143 + 12 (AP-005) + 6 (AP-005B, WP-017) + 38 (AP-017, WP-038B) + 6 (AP-017 Faz 2, WP-038I) + 6 (Faz 2b, WP-038L) + 192 (AP-023 v007) = 403 kütüphane FBX");
+            Assert.AreEqual(425, fbx, "143 + 12 (AP-005) + 6 (AP-005B, WP-017) + 38 (AP-017, WP-038B) + 6 (AP-017 Faz 2, WP-038I) + 6 (Faz 2b, WP-038L) + 192 (AP-023 v007) + 22 (AP-030 v001, WP-092 C) = 425 kütüphane FBX");
             Assert.IsEmpty(hatalar, "İhlal (" + hatalar.Count + "):\n" + string.Join("\n", hatalar));
             Debug.Log("[DD-TEST] wp012.gate.fbx contract=ok fbx=" + fbx + " meshRefs=" + mesh);
         }
@@ -315,7 +317,7 @@ namespace DD.Art.Tests.EditMode
                 }
             }
 
-            Assert.AreEqual(367, prefabSayisi, "12 + 42 + 53 + 12 (AP-005) + 6 (AP-005B) + 50 (AP-017, Faz 1+2+2b) + 192 (AP-023 v007) = 367 varyasyon prefabı");
+            Assert.AreEqual(389, prefabSayisi, "12 + 42 + 53 + 12 (AP-005) + 6 (AP-005B) + 50 (AP-017, Faz 1+2+2b) + 192 (AP-023 v007) + 22 (AP-030 v001, WP-092 C) = 389 varyasyon prefabı");
             Assert.IsEmpty(hatalar, "İhlal (" + hatalar.Count + "):\n" + string.Join("\n", hatalar));
             Debug.Log("[DD-TEST] wp012.gate.prefab count=" + prefabSayisi + " renderers=" + renderer);
         }
@@ -396,7 +398,7 @@ namespace DD.Art.Tests.EditMode
                 if (sapma > SinirToleransMetre) hatalar.Add(ap + " " + v.prefab + ": sapma " + (sapma * 1000f).ToString("0.0") + " mm (ölçüm " + olcum.min + ".." + olcum.max + ", manifest " + beklenen.min + ".." + beklenen.max + ")");
             }
 
-            Assert.AreEqual(367, sayi);   // WP-038I: + 6 AP-017 Phase 2 variations; WP-038L: + 6 Phase 2b; WP-074 B5: + 148 AP-023; B5b-2: + 18 v005; v007: + 26
+            Assert.AreEqual(389, sayi);   // WP-038I: + 6 AP-017 Phase 2 variations; WP-038L: + 6 Phase 2b; WP-074 B5: + 148 AP-023; B5b-2: + 18 v005; v007: + 26; WP-092 C: + 22 AP-030
             Assert.IsEmpty(hatalar, "Eksen sözleşmesi ihlali (" + hatalar.Count + "):\n" + string.Join("\n", hatalar));
             Debug.Log("[DD-TEST] wp012.gate.aabb variations=" + sayi + " maxDeviationMm=" + (enBuyuk * 1000f).ToString("0.00"));
         }
@@ -552,7 +554,7 @@ namespace DD.Art.Tests.EditMode
                 toplam++;
             }
 
-            Assert.AreEqual(367, toplam);   // WP-038I: + 6 AP-017 Phase 2 variations; WP-038L: + 6 Phase 2b; WP-074 B5: + 148 AP-023; B5b-2: + 18 v005; v007: + 26
+            Assert.AreEqual(389, toplam);   // WP-038I: + 6 AP-017 Phase 2 variations; WP-038L: + 6 Phase 2b; WP-074 B5: + 148 AP-023; B5b-2: + 18 v005; v007: + 26; WP-092 C: + 22 AP-030
         }
 
         [Test]

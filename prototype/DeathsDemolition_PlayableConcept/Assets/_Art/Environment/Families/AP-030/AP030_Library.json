@@ -1,0 +1,3568 @@
+{
+ "ap": "AP-030",
+ "version": "v001 (11 families / 22 FBX)",
+ "derived": "wp-092/tools/stage-ap030.py: source FBX used directly (embed off, path STRIP, -Z/Y-up); roles ap030_<atlas>, ap030_<family>_glow; sloped / rotated box shells carry obb; LOD0 bounds from the geometry, receipt-checked; sockets = FBX Null nodes in Blender space",
+ "sources": [
+  {
+   "path": "asset-production/AP-030/exports/v001/fbx/AP030_andon_V01.fbx",
+   "sha256": "f885f01ce338af144c989e4eadc97065e50ede48938bd4452013f0047a477a23"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v001/fbx/AP030_andon_V02.fbx",
+   "sha256": "3be9a6291d3b5c2d8bb69a20e6683d3a13cac53529ec38e9390665c3254c2137"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v001/fbx/AP030_byobu_V01.fbx",
+   "sha256": "97731a2034ea15902465daebf62ff5bbd405d66b21bdba7a0b58e87fe3967320"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v001/fbx/AP030_byobu_V02.fbx",
+   "sha256": "2782acc79cd63da65c3cd9d023c4d4fee0e85b55271c76c71628d08a9732016f"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v001/fbx/AP030_chabudai_V01.fbx",
+   "sha256": "13778dd3ca96f44a05e91f3dc11205534f1398033e14683e30b4eab465ba69a5"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v001/fbx/AP030_chabudai_V02.fbx",
+   "sha256": "c2ae8cb192b01dd0d300b083949e31b739ca53b16a2287f730f0e4a26b85e3ab"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v001/fbx/AP030_chabudai_V03.fbx",
+   "sha256": "740df714edb1c21ad969ceb7402c902073366bc27541259bc1b97b2f7ebf72c4"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v001/fbx/AP030_clutter_set_V01.fbx",
+   "sha256": "5deb8950d44a02982076ea2db7057d5f7d5eff52c9ae271b941588bc9f735171"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v001/fbx/AP030_clutter_set_V02.fbx",
+   "sha256": "b16f8d6b84cf14e2503225e6cbce7bf83dd33d0ccf316c6eafc3ff646c6a5b58"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v001/fbx/AP030_hibachi_V01.fbx",
+   "sha256": "7dd30816c19b5fd7d64e1557cb41ac769e0c0d4954a407991e2b0fd72b5b78e6"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v001/fbx/AP030_kerosene_lamp_V01.fbx",
+   "sha256": "3675698081e90e7dcc3609d43a7ded55a392280781e4d5c3996ab024bbb48b89"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v001/fbx/AP030_kerosene_lamp_V02.fbx",
+   "sha256": "26685c6be3dd40e5e79705414d24aa8e9cb543c7b56bd54a61b8f88c1badde4d"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v001/fbx/AP030_tana_shelf_V01.fbx",
+   "sha256": "ebaebeb4fc23def5b693bfb42c02231b9319965402e57bea2a6501ab335f602e"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v001/fbx/AP030_tansu_V01.fbx",
+   "sha256": "334af88e88bdbae6d8a3f74658a4b3ac7f8164653d67ae522afce73afe8ac831"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v001/fbx/AP030_tansu_V02.fbx",
+   "sha256": "769345b6a766b47d59ced72ce5ae33bdd6449913fa3c49643ebc6bb2e0670f11"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v001/fbx/AP030_tatami_V01.fbx",
+   "sha256": "ec0280806e269ad1ca7c127a60de2d20e6f26e3410334432a6c2d42363f1f5a8"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v001/fbx/AP030_tatami_V02.fbx",
+   "sha256": "c0efe402c4a46067d7b181e5932828226167261cb9eb17b15ca46fa1075e747d"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v001/fbx/AP030_tatami_V03.fbx",
+   "sha256": "d202129c0c1e5947953e3b0fb4f1899a050ad8a9c155dbe289fd9f2390f193d4"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v001/fbx/AP030_wall_sconce_V01.fbx",
+   "sha256": "12080aeca71208b118ca5f6533780f3d6b4fe53a238a007ef404b0c593692368"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v001/fbx/AP030_wall_sconce_V02.fbx",
+   "sha256": "417c9705b791e073200a4542b613b607a70adc05273a07d9899b970913974eac"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v001/fbx/AP030_zabuton_V01.fbx",
+   "sha256": "8f80d2eafba34b9b2a41f3ee1d043d0b0a07a3a6a0ec9ef31ae2dbf4e77cba37"
+  },
+  {
+   "path": "asset-production/AP-030/exports/v001/fbx/AP030_zabuton_V02.fbx",
+   "sha256": "85824f9e05698863e0f039db4fe47328b6e0734fe1d63dcc7f3506d91b1508bf"
+  }
+ ],
+ "families": [
+  {
+   "family": "andon",
+   "occluder": false,
+   "kind": "",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_andon_V01",
+     "boundsMin": [
+      -0.15,
+      -0.15,
+      0.0
+     ],
+     "boundsMax": [
+      0.15,
+      0.15,
+      0.75
+     ],
+     "parts": [
+      {
+       "name": "body",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_andon_V01.fbx",
+         "object": "AP030_andon_V01_body_LOD0",
+         "materials": [
+          "ap030_lamp"
+         ],
+         "facesPerSlot": [
+          924
+         ],
+         "triangles": 924,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_andon_V01.fbx",
+         "object": "AP030_andon_V01_body_LOD1",
+         "materials": [
+          "ap030_lamp"
+         ],
+         "facesPerSlot": [
+          276
+         ],
+         "triangles": 276,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_andon_V01.fbx",
+         "object": "AP030_andon_V01_body_LOD2",
+         "materials": [
+          "ap030_lamp"
+         ],
+         "facesPerSlot": [
+          120
+         ],
+         "triangles": 120,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "glow",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_andon_V01.fbx",
+         "object": "AP030_andon_V01_glow_LOD0",
+         "materials": [
+          "ap030_andon_glow"
+         ],
+         "facesPerSlot": [
+          48
+         ],
+         "triangles": 48,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_andon_V01.fbx",
+         "object": "AP030_andon_V01_glow_LOD1",
+         "materials": [
+          "ap030_andon_glow"
+         ],
+         "facesPerSlot": [
+          48
+         ],
+         "triangles": 48,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_andon_V01.fbx",
+         "object": "AP030_andon_V01_glow_LOD2",
+         "materials": [
+          "ap030_andon_glow"
+         ],
+         "facesPerSlot": [
+          12
+         ],
+         "triangles": 12,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_andon_V01.fbx",
+       "object": "AP030_andon_V01_body_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.15,
+          -0.15,
+          0.0
+         ],
+         "max": [
+          0.15,
+          0.15,
+          0.75
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "body",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ],
+     "sockets": [
+      {
+       "name": "SOCKET_Flame",
+       "position": [
+        0.034,
+        -0.0,
+        0.302
+       ]
+      },
+      {
+       "name": "SOCKET_Light",
+       "position": [
+        0.0,
+        -0.0,
+        0.399
+       ]
+      }
+     ],
+     "deliveredIn": "v001",
+     "emission": {
+      "hex": "#FFC078",
+      "kelvin": 2440,
+      "strength": 2.0,
+      "cells": "washi_old",
+      "material": "AP030_M_andon_glow_v001",
+      "unity": "_EmissionColor = white x 2.0, _EmissionMap = T_ap030_lamp_Emission.png (sRGB)"
+     }
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_andon_V02",
+     "boundsMin": [
+      -0.15,
+      -0.15,
+      0.0
+     ],
+     "boundsMax": [
+      0.15,
+      0.15,
+      0.74693
+     ],
+     "parts": [
+      {
+       "name": "body",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_andon_V02.fbx",
+         "object": "AP030_andon_V02_body_LOD0",
+         "materials": [
+          "ap030_lamp"
+         ],
+         "facesPerSlot": [
+          1664
+         ],
+         "triangles": 1664,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_andon_V02.fbx",
+         "object": "AP030_andon_V02_body_LOD1",
+         "materials": [
+          "ap030_lamp"
+         ],
+         "facesPerSlot": [
+          700
+         ],
+         "triangles": 700,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_andon_V02.fbx",
+         "object": "AP030_andon_V02_body_LOD2",
+         "materials": [
+          "ap030_lamp"
+         ],
+         "facesPerSlot": [
+          196
+         ],
+         "triangles": 196,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "glow",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_andon_V02.fbx",
+         "object": "AP030_andon_V02_glow_LOD0",
+         "materials": [
+          "ap030_andon_glow"
+         ],
+         "facesPerSlot": [
+          192
+         ],
+         "triangles": 192,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_andon_V02.fbx",
+         "object": "AP030_andon_V02_glow_LOD1",
+         "materials": [
+          "ap030_andon_glow"
+         ],
+         "facesPerSlot": [
+          128
+         ],
+         "triangles": 128,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_andon_V02.fbx",
+         "object": "AP030_andon_V02_glow_LOD2",
+         "materials": [
+          "ap030_andon_glow"
+         ],
+         "facesPerSlot": [
+          64
+         ],
+         "triangles": 64,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_andon_V02.fbx",
+       "object": "AP030_andon_V02_body_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.15,
+          -0.15,
+          0.0
+         ],
+         "max": [
+          0.15,
+          0.15,
+          0.74693
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "body",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ],
+     "sockets": [
+      {
+       "name": "SOCKET_Flame",
+       "position": [
+        0.032,
+        -0.0,
+        0.267
+       ]
+      },
+      {
+       "name": "SOCKET_Light",
+       "position": [
+        0.0,
+        -0.0,
+        0.355
+       ]
+      }
+     ],
+     "deliveredIn": "v001",
+     "emission": {
+      "hex": "#FFC078",
+      "kelvin": 2440,
+      "strength": 2.0,
+      "cells": "washi_motif",
+      "material": "AP030_M_andon_glow_v001",
+      "unity": "_EmissionColor = white x 2.0, _EmissionMap = T_ap030_lamp_Emission.png (sRGB)"
+     }
+    }
+   ]
+  },
+  {
+   "family": "byobu",
+   "occluder": false,
+   "kind": "",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_byobu_V01",
+     "boundsMin": [
+      -1.1491,
+      -0.12697,
+      0.0
+     ],
+     "boundsMax": [
+      1.1491,
+      0.12697,
+      1.7
+     ],
+     "parts": [
+      {
+       "name": "screen",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_byobu_V01.fbx",
+         "object": "AP030_byobu_V01_screen_LOD0",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          1080
+         ],
+         "triangles": 1080,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_byobu_V01.fbx",
+         "object": "AP030_byobu_V01_screen_LOD1",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          312
+         ],
+         "triangles": 312,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_byobu_V01.fbx",
+         "object": "AP030_byobu_V01_screen_LOD2",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          72
+         ],
+         "triangles": 72,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_byobu_V01.fbx",
+       "object": "AP030_byobu_V01_panel0_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -1.15069,
+          -0.12856,
+          0.0
+         ],
+         "max": [
+          -0.75741,
+          0.12856,
+          1.7
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           -0.954053,
+           0.0,
+           0.85
+          ],
+          "axisX": [
+           0.5295903,
+           -0.8482536,
+           0.0
+          ],
+          "axisY": [
+           0.8480507,
+           0.529915,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "size": [
+           0.021998,
+           0.449997,
+           1.7
+          ]
+         }
+        }
+       ],
+       "part": "panel0",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP030_byobu_V01.fbx",
+       "object": "AP030_byobu_V01_panel1_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.76907,
+          -0.12856,
+          0.0
+         ],
+         "max": [
+          -0.37579,
+          0.12856,
+          1.7
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           -0.57243,
+           0.0,
+           0.85
+          ],
+          "axisX": [
+           0.5299172,
+           0.8480494,
+           0.0
+          ],
+          "axisY": [
+           0.8480507,
+           -0.529915,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "size": [
+           0.022003,
+           0.449997,
+           1.7
+          ]
+         }
+        }
+       ],
+       "part": "panel1",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP030_byobu_V01.fbx",
+       "object": "AP030_byobu_V01_panel2_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.38745,
+          -0.12856,
+          0.0
+         ],
+         "max": [
+          0.00583,
+          0.12856,
+          1.7
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           -0.19081,
+           0.0,
+           0.85
+          ],
+          "axisX": [
+           0.5299172,
+           -0.8480494,
+           0.0
+          ],
+          "axisY": [
+           0.8480507,
+           0.529915,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "size": [
+           0.022003,
+           0.449997,
+           1.7
+          ]
+         }
+        }
+       ],
+       "part": "panel2",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP030_byobu_V01.fbx",
+       "object": "AP030_byobu_V01_panel3_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.00583,
+          -0.12856,
+          0.0
+         ],
+         "max": [
+          0.38745,
+          0.12856,
+          1.7
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.19081,
+           0.0,
+           0.85
+          ],
+          "axisX": [
+           0.5299172,
+           0.8480494,
+           0.0
+          ],
+          "axisY": [
+           0.8480507,
+           -0.529915,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "size": [
+           0.022003,
+           0.449997,
+           1.7
+          ]
+         }
+        }
+       ],
+       "part": "panel3",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP030_byobu_V01.fbx",
+       "object": "AP030_byobu_V01_panel4_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.37579,
+          -0.12856,
+          0.0
+         ],
+         "max": [
+          0.76907,
+          0.12856,
+          1.7
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.57243,
+           0.0,
+           0.85
+          ],
+          "axisX": [
+           0.5299172,
+           -0.8480494,
+           0.0
+          ],
+          "axisY": [
+           0.8480507,
+           0.529915,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "size": [
+           0.022003,
+           0.449997,
+           1.7
+          ]
+         }
+        }
+       ],
+       "part": "panel4",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP030_byobu_V01.fbx",
+       "object": "AP030_byobu_V01_panel5_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.75741,
+          -0.12856,
+          0.0
+         ],
+         "max": [
+          1.15069,
+          0.12856,
+          1.7
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.954052,
+           0.0,
+           0.85
+          ],
+          "axisX": [
+           0.5299172,
+           0.8480494,
+           0.0
+          ],
+          "axisY": [
+           0.848057,
+           -0.5299051,
+           0.0
+          ],
+          "axisZ": [
+           0.0,
+           0.0,
+           1.0
+          ],
+          "size": [
+           0.022003,
+           0.450005,
+           1.7
+          ]
+         }
+        }
+       ],
+       "part": "panel5",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ],
+     "sockets": [],
+     "deliveredIn": "v001"
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_byobu_V02",
+     "boundsMin": [
+      -0.89796,
+      -0.88,
+      0.0
+     ],
+     "boundsMax": [
+      0.89796,
+      0.88,
+      0.20178
+     ],
+     "parts": [
+      {
+       "name": "screen",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_byobu_V02.fbx",
+         "object": "AP030_byobu_V02_screen_LOD0",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          1080
+         ],
+         "triangles": 1080,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_byobu_V02.fbx",
+         "object": "AP030_byobu_V02_screen_LOD1",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          312
+         ],
+         "triangles": 312,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_byobu_V02.fbx",
+         "object": "AP030_byobu_V02_screen_LOD2",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          72
+         ],
+         "triangles": 72,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_byobu_V02.fbx",
+       "object": "AP030_byobu_V02_flat_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.89796,
+          -0.88,
+          0.0
+         ],
+         "max": [
+          0.88675,
+          0.82,
+          0.08358
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "flat",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP030_byobu_V02.fbx",
+       "object": "AP030_byobu_V02_fold_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.45732,
+          -0.82,
+          0.0218
+         ],
+         "max": [
+          0.89889,
+          0.88,
+          0.2027
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.678105,
+           0.03,
+           0.112253
+          ],
+          "axisX": [
+           0.3091272,
+           0.0,
+           0.9510207
+          ],
+          "axisY": [
+           0.9510538,
+           0.0,
+           -0.3090253
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.043995,
+           0.449996,
+           1.7
+          ]
+         }
+        }
+       ],
+       "part": "fold",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ],
+     "sockets": [],
+     "deliveredIn": "v001"
+    }
+   ]
+  },
+  {
+   "family": "chabudai",
+   "occluder": false,
+   "kind": "",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_chabudai_V01",
+     "boundsMin": [
+      -0.4,
+      -0.4,
+      0.0
+     ],
+     "boundsMax": [
+      0.4,
+      0.4,
+      0.32
+     ],
+     "parts": [
+      {
+       "name": "table",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_chabudai_V01.fbx",
+         "object": "AP030_chabudai_V01_table_LOD0",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          848
+         ],
+         "triangles": 848,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_chabudai_V01.fbx",
+         "object": "AP030_chabudai_V01_table_LOD1",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          384
+         ],
+         "triangles": 384,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_chabudai_V01.fbx",
+         "object": "AP030_chabudai_V01_table_LOD2",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          120
+         ],
+         "triangles": 120,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_chabudai_V01.fbx",
+       "object": "AP030_chabudai_V01_table_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.4,
+          -0.4,
+          0.0
+         ],
+         "max": [
+          0.4,
+          0.4,
+          0.5
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "table",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ],
+     "sockets": [],
+     "deliveredIn": "v001"
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_chabudai_V02",
+     "boundsMin": [
+      -0.6,
+      -0.3,
+      0.0
+     ],
+     "boundsMax": [
+      0.6,
+      0.3,
+      0.32
+     ],
+     "parts": [
+      {
+       "name": "table",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_chabudai_V02.fbx",
+         "object": "AP030_chabudai_V02_table_LOD0",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          380
+         ],
+         "triangles": 380,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_chabudai_V02.fbx",
+         "object": "AP030_chabudai_V02_table_LOD1",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          156
+         ],
+         "triangles": 156,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_chabudai_V02.fbx",
+         "object": "AP030_chabudai_V02_table_LOD2",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          84
+         ],
+         "triangles": 84,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_chabudai_V02.fbx",
+       "object": "AP030_chabudai_V02_table_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.6,
+          -0.3,
+          0.0
+         ],
+         "max": [
+          0.6,
+          0.3,
+          0.5
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "table",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ],
+     "sockets": [],
+     "deliveredIn": "v001"
+    },
+    {
+     "id": "V03",
+     "prefab": "SM_chabudai_V03",
+     "boundsMin": [
+      -0.22206,
+      -0.4,
+      0.0
+     ],
+     "boundsMax": [
+      0.22206,
+      0.4,
+      0.6938
+     ],
+     "parts": [
+      {
+       "name": "table",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_chabudai_V03.fbx",
+         "object": "AP030_chabudai_V03_table_LOD0",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          848
+         ],
+         "triangles": 848,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_chabudai_V03.fbx",
+         "object": "AP030_chabudai_V03_table_LOD1",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          384
+         ],
+         "triangles": 384,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_chabudai_V03.fbx",
+         "object": "AP030_chabudai_V03_table_LOD2",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          120
+         ],
+         "triangles": 120,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_chabudai_V03.fbx",
+       "object": "AP030_chabudai_V03_table_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.22517,
+          -0.4,
+          -0.15303
+         ],
+         "max": [
+          0.46341,
+          0.4,
+          0.69691
+         ],
+         "positions": 8,
+         "obb": {
+          "center": [
+           0.11912,
+           0.0,
+           0.27194
+          ],
+          "axisX": [
+           0.8549291,
+           0.0,
+           -0.5187449
+          ],
+          "axisY": [
+           0.5187504,
+           0.0,
+           0.8549257
+          ],
+          "axisZ": [
+           0.0,
+           1.0,
+           0.0
+          ],
+          "size": [
+           0.320003,
+           0.799999,
+           0.8
+          ]
+         }
+        }
+       ],
+       "part": "table",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ],
+     "sockets": [],
+     "deliveredIn": "v001"
+    }
+   ]
+  },
+  {
+   "family": "clutter_set",
+   "occluder": false,
+   "kind": "",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_clutter_set_V01",
+     "boundsMin": [
+      -0.76816,
+      -0.44059,
+      0.0
+     ],
+     "boundsMax": [
+      0.76816,
+      0.44059,
+      0.11974
+     ],
+     "parts": [
+      {
+       "name": "bowls",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_clutter_set_V01.fbx",
+         "object": "AP030_clutter_set_V01_bowls_LOD0",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          360
+         ],
+         "triangles": 360,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_clutter_set_V01.fbx",
+         "object": "AP030_clutter_set_V01_bowls_LOD1",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          156
+         ],
+         "triangles": 156,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_clutter_set_V01.fbx",
+         "object": "AP030_clutter_set_V01_bowls_LOD2",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          80
+         ],
+         "triangles": 80,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "paper",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_clutter_set_V01.fbx",
+         "object": "AP030_clutter_set_V01_paper_LOD0",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          240
+         ],
+         "triangles": 240,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_clutter_set_V01.fbx",
+         "object": "AP030_clutter_set_V01_paper_LOD1",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          96
+         ],
+         "triangles": 96,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_clutter_set_V01.fbx",
+         "object": "AP030_clutter_set_V01_paper_LOD2",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          32
+         ],
+         "triangles": 32,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "pottery",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_clutter_set_V01.fbx",
+         "object": "AP030_clutter_set_V01_pottery_LOD0",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          408
+         ],
+         "triangles": 408,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_clutter_set_V01.fbx",
+         "object": "AP030_clutter_set_V01_pottery_LOD1",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          156
+         ],
+         "triangles": 156,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_clutter_set_V01.fbx",
+         "object": "AP030_clutter_set_V01_pottery_LOD2",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          66
+         ],
+         "triangles": 66,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "sandals",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_clutter_set_V01.fbx",
+         "object": "AP030_clutter_set_V01_sandals_LOD0",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          124
+         ],
+         "triangles": 124,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_clutter_set_V01.fbx",
+         "object": "AP030_clutter_set_V01_sandals_LOD1",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          92
+         ],
+         "triangles": 92,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_clutter_set_V01.fbx",
+         "object": "AP030_clutter_set_V01_sandals_LOD2",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          40
+         ],
+         "triangles": 40,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "tokkuri",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_clutter_set_V01.fbx",
+         "object": "AP030_clutter_set_V01_tokkuri_LOD0",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          240
+         ],
+         "triangles": 240,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_clutter_set_V01.fbx",
+         "object": "AP030_clutter_set_V01_tokkuri_LOD1",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          96
+         ],
+         "triangles": 96,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_clutter_set_V01.fbx",
+         "object": "AP030_clutter_set_V01_tokkuri_LOD2",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          50
+         ],
+         "triangles": 50,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_clutter_set_V01.fbx",
+       "object": "AP030_clutter_set_V01_bowls_COL",
+       "class": "none",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.41701,
+          0.10272,
+          0.0
+         ],
+         "max": [
+          -0.04509,
+          0.44059,
+          0.11974
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "bowls",
+       "broken": false,
+       "navmesh": "ignore"
+      },
+      {
+       "fbx": "AP030_clutter_set_V01.fbx",
+       "object": "AP030_clutter_set_V01_paper_COL",
+       "class": "none",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.76816,
+          -0.44059,
+          0.00568
+         ],
+         "max": [
+          -0.00713,
+          0.14496,
+          0.09406
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "paper",
+       "broken": false,
+       "navmesh": "ignore"
+      },
+      {
+       "fbx": "AP030_clutter_set_V01.fbx",
+       "object": "AP030_clutter_set_V01_pottery_COL",
+       "class": "none",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.0426,
+          -0.35912,
+          0.0
+         ],
+         "max": [
+          0.5247,
+          0.15377,
+          0.09543
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "pottery",
+       "broken": false,
+       "navmesh": "ignore"
+      },
+      {
+       "fbx": "AP030_clutter_set_V01.fbx",
+       "object": "AP030_clutter_set_V01_sandals_COL",
+       "class": "none",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.39098,
+          0.01614,
+          0.0
+         ],
+         "max": [
+          0.76816,
+          0.43036,
+          0.03747
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "sandals",
+       "broken": false,
+       "navmesh": "ignore"
+      },
+      {
+       "fbx": "AP030_clutter_set_V01.fbx",
+       "object": "AP030_clutter_set_V01_tokkuri_COL",
+       "class": "none",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.10534,
+          -0.11861,
+          0.00145
+         ],
+         "max": [
+          0.03752,
+          0.0743,
+          0.10482
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "tokkuri",
+       "broken": false,
+       "navmesh": "ignore"
+      }
+     ],
+     "sockets": [],
+     "deliveredIn": "v001"
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_clutter_set_V02",
+     "boundsMin": [
+      -0.61955,
+      -0.47197,
+      0.0
+     ],
+     "boundsMax": [
+      0.61955,
+      0.47197,
+      0.1655
+     ],
+     "parts": [
+      {
+       "name": "bowls",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_clutter_set_V02.fbx",
+         "object": "AP030_clutter_set_V02_bowls_LOD0",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          480
+         ],
+         "triangles": 480,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_clutter_set_V02.fbx",
+         "object": "AP030_clutter_set_V02_bowls_LOD1",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          192
+         ],
+         "triangles": 192,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_clutter_set_V02.fbx",
+         "object": "AP030_clutter_set_V02_bowls_LOD2",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          80
+         ],
+         "triangles": 80,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "paper",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_clutter_set_V02.fbx",
+         "object": "AP030_clutter_set_V02_paper_LOD0",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          120
+         ],
+         "triangles": 120,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_clutter_set_V02.fbx",
+         "object": "AP030_clutter_set_V02_paper_LOD1",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          48
+         ],
+         "triangles": 48,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_clutter_set_V02.fbx",
+         "object": "AP030_clutter_set_V02_paper_LOD2",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          16
+         ],
+         "triangles": 16,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "pottery",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_clutter_set_V02.fbx",
+         "object": "AP030_clutter_set_V02_pottery_LOD0",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          484
+         ],
+         "triangles": 484,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_clutter_set_V02.fbx",
+         "object": "AP030_clutter_set_V02_pottery_LOD1",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          188
+         ],
+         "triangles": 188,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_clutter_set_V02.fbx",
+         "object": "AP030_clutter_set_V02_pottery_LOD2",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          78
+         ],
+         "triangles": 78,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "sandals",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_clutter_set_V02.fbx",
+         "object": "AP030_clutter_set_V02_sandals_LOD0",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          44
+         ],
+         "triangles": 44,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_clutter_set_V02.fbx",
+         "object": "AP030_clutter_set_V02_sandals_LOD1",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          28
+         ],
+         "triangles": 28,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_clutter_set_V02.fbx",
+         "object": "AP030_clutter_set_V02_sandals_LOD2",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          20
+         ],
+         "triangles": 20,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "tokkuri",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_clutter_set_V02.fbx",
+         "object": "AP030_clutter_set_V02_tokkuri_LOD0",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          240
+         ],
+         "triangles": 240,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_clutter_set_V02.fbx",
+         "object": "AP030_clutter_set_V02_tokkuri_LOD1",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          96
+         ],
+         "triangles": 96,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_clutter_set_V02.fbx",
+         "object": "AP030_clutter_set_V02_tokkuri_LOD2",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          50
+         ],
+         "triangles": 50,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_clutter_set_V02.fbx",
+       "object": "AP030_clutter_set_V02_bowls_COL",
+       "class": "none",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.61955,
+          -0.18828,
+          0.0
+         ],
+         "max": [
+          -0.2921,
+          0.20926,
+          0.10178
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "bowls",
+       "broken": false,
+       "navmesh": "ignore"
+      },
+      {
+       "fbx": "AP030_clutter_set_V02.fbx",
+       "object": "AP030_clutter_set_V02_paper_COL",
+       "class": "none",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.32484,
+          -0.47197,
+          0.00652
+         ],
+         "max": [
+          0.00464,
+          -0.07885,
+          0.05951
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "paper",
+       "broken": false,
+       "navmesh": "ignore"
+      },
+      {
+       "fbx": "AP030_clutter_set_V02.fbx",
+       "object": "AP030_clutter_set_V02_pottery_COL",
+       "class": "none",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.07093,
+          -0.2697,
+          0.0
+         ],
+         "max": [
+          0.61955,
+          0.23468,
+          0.1655
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "pottery",
+       "broken": false,
+       "navmesh": "ignore"
+      },
+      {
+       "fbx": "AP030_clutter_set_V02.fbx",
+       "object": "AP030_clutter_set_V02_sandals_COL",
+       "class": "none",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.20373,
+          0.25801,
+          0.0
+         ],
+         "max": [
+          0.3537,
+          0.47197,
+          0.018
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "sandals",
+       "broken": false,
+       "navmesh": "ignore"
+      },
+      {
+       "fbx": "AP030_clutter_set_V02.fbx",
+       "object": "AP030_clutter_set_V02_tokkuri_COL",
+       "class": "none",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.02708,
+          0.1768,
+          0.00145
+         ],
+         "max": [
+          0.22919,
+          0.28269,
+          0.10482
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "tokkuri",
+       "broken": false,
+       "navmesh": "ignore"
+      }
+     ],
+     "sockets": [],
+     "deliveredIn": "v001"
+    }
+   ]
+  },
+  {
+   "family": "hibachi",
+   "occluder": false,
+   "kind": "",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_hibachi_V01",
+     "boundsMin": [
+      -0.225,
+      -0.225,
+      0.0
+     ],
+     "boundsMax": [
+      0.225,
+      0.225,
+      0.35
+     ],
+     "parts": [
+      {
+       "name": "body",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_hibachi_V01.fbx",
+         "object": "AP030_hibachi_V01_body_LOD0",
+         "materials": [
+          "ap030_lamp"
+         ],
+         "facesPerSlot": [
+          1672
+         ],
+         "triangles": 1672,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_hibachi_V01.fbx",
+         "object": "AP030_hibachi_V01_body_LOD1",
+         "materials": [
+          "ap030_lamp"
+         ],
+         "facesPerSlot": [
+          668
+         ],
+         "triangles": 668,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_hibachi_V01.fbx",
+         "object": "AP030_hibachi_V01_body_LOD2",
+         "materials": [
+          "ap030_lamp"
+         ],
+         "facesPerSlot": [
+          160
+         ],
+         "triangles": 160,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "glow",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_hibachi_V01.fbx",
+         "object": "AP030_hibachi_V01_glow_LOD0",
+         "materials": [
+          "ap030_hibachi_glow"
+         ],
+         "facesPerSlot": [
+          180
+         ],
+         "triangles": 180,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_hibachi_V01.fbx",
+         "object": "AP030_hibachi_V01_glow_LOD1",
+         "materials": [
+          "ap030_hibachi_glow"
+         ],
+         "facesPerSlot": [
+          144
+         ],
+         "triangles": 144,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_hibachi_V01.fbx",
+         "object": "AP030_hibachi_V01_glow_LOD2",
+         "materials": [
+          "ap030_hibachi_glow"
+         ],
+         "facesPerSlot": [
+          36
+         ],
+         "triangles": 36,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_hibachi_V01.fbx",
+       "object": "AP030_hibachi_V01_body_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.225,
+          -0.225,
+          0.0
+         ],
+         "max": [
+          0.225,
+          0.225,
+          0.5
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "body",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ],
+     "sockets": [
+      {
+       "name": "SOCKET_Flame",
+       "position": [
+        0.0,
+        -0.0,
+        0.315
+       ]
+      },
+      {
+       "name": "SOCKET_Light",
+       "position": [
+        0.0,
+        -0.0,
+        0.3
+       ]
+      }
+     ],
+     "deliveredIn": "v001",
+     "emission": {
+      "hex": "#FFB46B",
+      "kelvin": 2200,
+      "strength": 1.0,
+      "cells": "ember",
+      "material": "AP030_M_hibachi_glow_v001",
+      "unity": "_EmissionColor = white x 1.0, _EmissionMap = T_ap030_lamp_Emission.png (sRGB)"
+     }
+    }
+   ]
+  },
+  {
+   "family": "kerosene_lamp",
+   "occluder": false,
+   "kind": "",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_kerosene_lamp_V01",
+     "boundsMin": [
+      -0.09,
+      -0.09,
+      0.0
+     ],
+     "boundsMax": [
+      0.09,
+      0.09,
+      0.45
+     ],
+     "parts": [
+      {
+       "name": "body",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_kerosene_lamp_V01.fbx",
+         "object": "AP030_kerosene_lamp_V01_body_LOD0",
+         "materials": [
+          "ap030_lamp"
+         ],
+         "facesPerSlot": [
+          1312
+         ],
+         "triangles": 1312,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_kerosene_lamp_V01.fbx",
+         "object": "AP030_kerosene_lamp_V01_body_LOD1",
+         "materials": [
+          "ap030_lamp"
+         ],
+         "facesPerSlot": [
+          448
+         ],
+         "triangles": 448,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_kerosene_lamp_V01.fbx",
+         "object": "AP030_kerosene_lamp_V01_body_LOD2",
+         "materials": [
+          "ap030_lamp"
+         ],
+         "facesPerSlot": [
+          160
+         ],
+         "triangles": 160,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "glow",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_kerosene_lamp_V01.fbx",
+         "object": "AP030_kerosene_lamp_V01_glow_LOD0",
+         "materials": [
+          "ap030_kerosene_lamp_glow"
+         ],
+         "facesPerSlot": [
+          1248
+         ],
+         "triangles": 1248,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_kerosene_lamp_V01.fbx",
+         "object": "AP030_kerosene_lamp_V01_glow_LOD1",
+         "materials": [
+          "ap030_kerosene_lamp_glow"
+         ],
+         "facesPerSlot": [
+          576
+         ],
+         "triangles": 576,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_kerosene_lamp_V01.fbx",
+         "object": "AP030_kerosene_lamp_V01_glow_LOD2",
+         "materials": [
+          "ap030_kerosene_lamp_glow"
+         ],
+         "facesPerSlot": [
+          128
+         ],
+         "triangles": 128,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_kerosene_lamp_V01.fbx",
+       "object": "AP030_kerosene_lamp_V01_body_COL",
+       "class": "none",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.09,
+          -0.09,
+          0.0
+         ],
+         "max": [
+          0.09,
+          0.09,
+          0.5
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "body",
+       "broken": false,
+       "navmesh": "ignore"
+      }
+     ],
+     "sockets": [
+      {
+       "name": "SOCKET_Flame",
+       "position": [
+        0.0,
+        -0.0,
+        0.252
+       ]
+      },
+      {
+       "name": "SOCKET_Light",
+       "position": [
+        0.0,
+        -0.0,
+        0.344
+       ]
+      }
+     ],
+     "deliveredIn": "v001",
+     "emission": {
+      "hex": "#FFB46B",
+      "kelvin": 2200,
+      "strength": 3.0,
+      "cells": "glass + milk_glass",
+      "material": "AP030_M_kerosene_lamp_glow_v001",
+      "unity": "_EmissionColor = white x 3.0, _EmissionMap = T_ap030_lamp_Emission.png (sRGB)"
+     }
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_kerosene_lamp_V02",
+     "boundsMin": [
+      -0.092,
+      -0.092,
+      -1.059
+     ],
+     "boundsMax": [
+      0.092,
+      0.10305,
+      0.0
+     ],
+     "parts": [
+      {
+       "name": "body",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_kerosene_lamp_V02.fbx",
+         "object": "AP030_kerosene_lamp_V02_body_LOD0",
+         "materials": [
+          "ap030_lamp"
+         ],
+         "facesPerSlot": [
+          2396
+         ],
+         "triangles": 2396,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_kerosene_lamp_V02.fbx",
+         "object": "AP030_kerosene_lamp_V02_body_LOD1",
+         "materials": [
+          "ap030_lamp"
+         ],
+         "facesPerSlot": [
+          1082
+         ],
+         "triangles": 1082,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_kerosene_lamp_V02.fbx",
+         "object": "AP030_kerosene_lamp_V02_body_LOD2",
+         "materials": [
+          "ap030_lamp"
+         ],
+         "facesPerSlot": [
+          336
+         ],
+         "triangles": 336,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "glow",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_kerosene_lamp_V02.fbx",
+         "object": "AP030_kerosene_lamp_V02_glow_LOD0",
+         "materials": [
+          "ap030_kerosene_lamp_glow"
+         ],
+         "facesPerSlot": [
+          768
+         ],
+         "triangles": 768,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_kerosene_lamp_V02.fbx",
+         "object": "AP030_kerosene_lamp_V02_glow_LOD1",
+         "materials": [
+          "ap030_kerosene_lamp_glow"
+         ],
+         "facesPerSlot": [
+          384
+         ],
+         "triangles": 384,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_kerosene_lamp_V02.fbx",
+         "object": "AP030_kerosene_lamp_V02_glow_LOD2",
+         "materials": [
+          "ap030_kerosene_lamp_glow"
+         ],
+         "facesPerSlot": [
+          64
+         ],
+         "triangles": 64,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [],
+     "sockets": [
+      {
+       "name": "SOCKET_Flame",
+       "position": [
+        0.0,
+        -0.0,
+        -0.867
+       ]
+      },
+      {
+       "name": "SOCKET_Light",
+       "position": [
+        0.0,
+        -0.0,
+        -0.795
+       ]
+      }
+     ],
+     "deliveredIn": "v001",
+     "emission": {
+      "hex": "#FFB46B",
+      "kelvin": 2200,
+      "strength": 3.0,
+      "cells": "glass",
+      "material": "AP030_M_kerosene_lamp_glow_v001",
+      "unity": "_EmissionColor = white x 3.0, _EmissionMap = T_ap030_lamp_Emission.png (sRGB)"
+     }
+    }
+   ]
+  },
+  {
+   "family": "tana_shelf",
+   "occluder": false,
+   "kind": "",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_tana_shelf_V01",
+     "boundsMin": [
+      -0.6,
+      -0.15,
+      0.0
+     ],
+     "boundsMax": [
+      0.6,
+      0.15,
+      1.005
+     ],
+     "parts": [
+      {
+       "name": "shelf",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_tana_shelf_V01.fbx",
+         "object": "AP030_tana_shelf_V01_shelf_LOD0",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          2328
+         ],
+         "triangles": 2328,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_tana_shelf_V01.fbx",
+         "object": "AP030_tana_shelf_V01_shelf_LOD1",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          888
+         ],
+         "triangles": 888,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_tana_shelf_V01.fbx",
+         "object": "AP030_tana_shelf_V01_shelf_LOD2",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          336
+         ],
+         "triangles": 336,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_tana_shelf_V01.fbx",
+       "object": "AP030_tana_shelf_V01_shelf_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.6,
+          -0.15,
+          0.0
+         ],
+         "max": [
+          0.6,
+          0.15,
+          1.005
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "shelf",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ],
+     "sockets": [],
+     "deliveredIn": "v001"
+    }
+   ]
+  },
+  {
+   "family": "tansu",
+   "occluder": false,
+   "kind": "",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_tansu_V01",
+     "boundsMin": [
+      -0.472,
+      -0.228,
+      0.0
+     ],
+     "boundsMax": [
+      0.472,
+      0.247,
+      0.603
+     ],
+     "parts": [
+      {
+       "name": "body",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_tansu_V01.fbx",
+         "object": "AP030_tansu_V01_body_LOD0",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          700
+         ],
+         "triangles": 700,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_tansu_V01.fbx",
+         "object": "AP030_tansu_V01_body_LOD1",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          252
+         ],
+         "triangles": 252,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_tansu_V01.fbx",
+         "object": "AP030_tansu_V01_body_LOD2",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          84
+         ],
+         "triangles": 84,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_tansu_V01.fbx",
+       "object": "AP030_tansu_V01_body_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.453,
+          -0.228,
+          0.0
+         ],
+         "max": [
+          0.453,
+          0.231,
+          0.603
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "body",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ],
+     "sockets": [],
+     "deliveredIn": "v001"
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_tansu_V02",
+     "boundsMin": [
+      -0.603,
+      -0.228,
+      0.0
+     ],
+     "boundsMax": [
+      0.603,
+      0.247,
+      1.203
+     ],
+     "parts": [
+      {
+       "name": "body",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_tansu_V02.fbx",
+         "object": "AP030_tansu_V02_body_LOD0",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          808
+         ],
+         "triangles": 808,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_tansu_V02.fbx",
+         "object": "AP030_tansu_V02_body_LOD1",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          348
+         ],
+         "triangles": 348,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_tansu_V02.fbx",
+         "object": "AP030_tansu_V02_body_LOD2",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          180
+         ],
+         "triangles": 180,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_tansu_V02.fbx",
+       "object": "AP030_tansu_V02_step0_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.6,
+          -0.228,
+          0.0
+         ],
+         "max": [
+          -0.3,
+          0.236,
+          1.203
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "step0",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP030_tansu_V02.fbx",
+       "object": "AP030_tansu_V02_step1_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.3,
+          -0.228,
+          0.0
+         ],
+         "max": [
+          0.0,
+          0.236,
+          0.903
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "step1",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP030_tansu_V02.fbx",
+       "object": "AP030_tansu_V02_step2_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.0,
+          -0.228,
+          0.0
+         ],
+         "max": [
+          0.3,
+          0.236,
+          0.603
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "step2",
+       "broken": false,
+       "navmesh": "obstacle"
+      },
+      {
+       "fbx": "AP030_tansu_V02.fbx",
+       "object": "AP030_tansu_V02_step3_COL",
+       "class": "blocking",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          0.3,
+          -0.228,
+          0.0
+         ],
+         "max": [
+          0.6,
+          0.236,
+          0.3
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "step3",
+       "broken": false,
+       "navmesh": "obstacle"
+      }
+     ],
+     "sockets": [],
+     "deliveredIn": "v001"
+    }
+   ]
+  },
+  {
+   "family": "tatami",
+   "occluder": false,
+   "kind": "",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_tatami_V01",
+     "boundsMin": [
+      -0.45,
+      -0.9,
+      0.0
+     ],
+     "boundsMax": [
+      0.45,
+      0.9,
+      0.055
+     ],
+     "parts": [
+      {
+       "name": "mat",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_tatami_V01.fbx",
+         "object": "AP030_tatami_V01_mat_LOD0",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          18
+         ],
+         "triangles": 18,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_tatami_V01.fbx",
+         "object": "AP030_tatami_V01_mat_LOD1",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          10
+         ],
+         "triangles": 10,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_tatami_V01.fbx",
+         "object": "AP030_tatami_V01_mat_LOD2",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          10
+         ],
+         "triangles": 10,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_tatami_V01.fbx",
+       "object": "AP030_tatami_V01_mat_COL_WALK",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.45,
+          -0.9,
+          0.0
+         ],
+         "max": [
+          0.45,
+          0.9,
+          0.055
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "mat",
+       "broken": false,
+       "navmesh": "walkable"
+      }
+     ],
+     "sockets": [],
+     "deliveredIn": "v001"
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_tatami_V02",
+     "boundsMin": [
+      -0.45,
+      -0.9,
+      0.0
+     ],
+     "boundsMax": [
+      0.45,
+      0.9,
+      0.055
+     ],
+     "parts": [
+      {
+       "name": "mat",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_tatami_V02.fbx",
+         "object": "AP030_tatami_V02_mat_LOD0",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          18
+         ],
+         "triangles": 18,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_tatami_V02.fbx",
+         "object": "AP030_tatami_V02_mat_LOD1",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          10
+         ],
+         "triangles": 10,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_tatami_V02.fbx",
+         "object": "AP030_tatami_V02_mat_LOD2",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          10
+         ],
+         "triangles": 10,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_tatami_V02.fbx",
+       "object": "AP030_tatami_V02_mat_COL_WALK",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.45,
+          -0.9,
+          0.0
+         ],
+         "max": [
+          0.45,
+          0.9,
+          0.055
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "mat",
+       "broken": false,
+       "navmesh": "walkable"
+      }
+     ],
+     "sockets": [],
+     "deliveredIn": "v001"
+    },
+    {
+     "id": "V03",
+     "prefab": "SM_tatami_V03",
+     "boundsMin": [
+      -0.45,
+      -0.45,
+      0.0
+     ],
+     "boundsMax": [
+      0.45,
+      0.45,
+      0.055
+     ],
+     "parts": [
+      {
+       "name": "mat",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_tatami_V03.fbx",
+         "object": "AP030_tatami_V03_mat_LOD0",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          18
+         ],
+         "triangles": 18,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_tatami_V03.fbx",
+         "object": "AP030_tatami_V03_mat_LOD1",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          10
+         ],
+         "triangles": 10,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_tatami_V03.fbx",
+         "object": "AP030_tatami_V03_mat_LOD2",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          10
+         ],
+         "triangles": 10,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_tatami_V03.fbx",
+       "object": "AP030_tatami_V03_mat_COL_WALK",
+       "class": "walkable",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.45,
+          -0.45,
+          0.0
+         ],
+         "max": [
+          0.45,
+          0.45,
+          0.055
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "mat",
+       "broken": false,
+       "navmesh": "walkable"
+      }
+     ],
+     "sockets": [],
+     "deliveredIn": "v001"
+    }
+   ]
+  },
+  {
+   "family": "wall_sconce",
+   "occluder": false,
+   "kind": "",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_wall_sconce_V01",
+     "boundsMin": [
+      -0.125,
+      0.0,
+      -0.215
+     ],
+     "boundsMax": [
+      0.125,
+      0.2061,
+      0.215
+     ],
+     "parts": [
+      {
+       "name": "body",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_wall_sconce_V01.fbx",
+         "object": "AP030_wall_sconce_V01_body_LOD0",
+         "materials": [
+          "ap030_lamp"
+         ],
+         "facesPerSlot": [
+          660
+         ],
+         "triangles": 660,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_wall_sconce_V01.fbx",
+         "object": "AP030_wall_sconce_V01_body_LOD1",
+         "materials": [
+          "ap030_lamp"
+         ],
+         "facesPerSlot": [
+          240
+         ],
+         "triangles": 240,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_wall_sconce_V01.fbx",
+         "object": "AP030_wall_sconce_V01_body_LOD2",
+         "materials": [
+          "ap030_lamp"
+         ],
+         "facesPerSlot": [
+          60
+         ],
+         "triangles": 60,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "glow",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_wall_sconce_V01.fbx",
+         "object": "AP030_wall_sconce_V01_glow_LOD0",
+         "materials": [
+          "ap030_wall_sconce_glow"
+         ],
+         "facesPerSlot": [
+          36
+         ],
+         "triangles": 36,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_wall_sconce_V01.fbx",
+         "object": "AP030_wall_sconce_V01_glow_LOD1",
+         "materials": [
+          "ap030_wall_sconce_glow"
+         ],
+         "facesPerSlot": [
+          36
+         ],
+         "triangles": 36,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_wall_sconce_V01.fbx",
+         "object": "AP030_wall_sconce_V01_glow_LOD2",
+         "materials": [
+          "ap030_wall_sconce_glow"
+         ],
+         "facesPerSlot": [
+          12
+         ],
+         "triangles": 12,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [],
+     "sockets": [
+      {
+       "name": "SOCKET_Flame",
+       "position": [
+        0.016,
+        0.105,
+        -0.114
+       ]
+      },
+      {
+       "name": "SOCKET_Light",
+       "position": [
+        0.0,
+        0.107,
+        0.0
+       ]
+      }
+     ],
+     "deliveredIn": "v001",
+     "emission": {
+      "hex": "#FFC078",
+      "kelvin": 2440,
+      "strength": 2.5,
+      "cells": "washi",
+      "material": "AP030_M_wall_sconce_glow_v001",
+      "unity": "_EmissionColor = white x 2.5, _EmissionMap = T_ap030_lamp_Emission.png (sRGB)"
+     }
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_wall_sconce_V02",
+     "boundsMin": [
+      -0.125,
+      -0.0,
+      -0.215
+     ],
+     "boundsMax": [
+      0.125,
+      0.194,
+      0.215
+     ],
+     "parts": [
+      {
+       "name": "body",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_wall_sconce_V02.fbx",
+         "object": "AP030_wall_sconce_V02_body_LOD0",
+         "materials": [
+          "ap030_lamp"
+         ],
+         "facesPerSlot": [
+          844
+         ],
+         "triangles": 844,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_wall_sconce_V02.fbx",
+         "object": "AP030_wall_sconce_V02_body_LOD1",
+         "materials": [
+          "ap030_lamp"
+         ],
+         "facesPerSlot": [
+          376
+         ],
+         "triangles": 376,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_wall_sconce_V02.fbx",
+         "object": "AP030_wall_sconce_V02_body_LOD2",
+         "materials": [
+          "ap030_lamp"
+         ],
+         "facesPerSlot": [
+          132
+         ],
+         "triangles": 132,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      },
+      {
+       "name": "glow",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_wall_sconce_V02.fbx",
+         "object": "AP030_wall_sconce_V02_glow_LOD0",
+         "materials": [
+          "ap030_wall_sconce_glow"
+         ],
+         "facesPerSlot": [
+          512
+         ],
+         "triangles": 512,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_wall_sconce_V02.fbx",
+         "object": "AP030_wall_sconce_V02_glow_LOD1",
+         "materials": [
+          "ap030_wall_sconce_glow"
+         ],
+         "facesPerSlot": [
+          288
+         ],
+         "triangles": 288,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_wall_sconce_V02.fbx",
+         "object": "AP030_wall_sconce_V02_glow_LOD2",
+         "materials": [
+          "ap030_wall_sconce_glow"
+         ],
+         "facesPerSlot": [
+          64
+         ],
+         "triangles": 64,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [],
+     "sockets": [
+      {
+       "name": "SOCKET_Flame",
+       "position": [
+        0.0,
+        0.135,
+        -0.048
+       ]
+      },
+      {
+       "name": "SOCKET_Light",
+       "position": [
+        0.0,
+        0.135,
+        0.077
+       ]
+      }
+     ],
+     "deliveredIn": "v001",
+     "emission": {
+      "hex": "#FFB46B",
+      "kelvin": 2200,
+      "strength": 2.5,
+      "cells": "glass",
+      "material": "AP030_M_wall_sconce_glow_v001",
+      "unity": "_EmissionColor = white x 2.5, _EmissionMap = T_ap030_lamp_Emission.png (sRGB)"
+     }
+    }
+   ]
+  },
+  {
+   "family": "zabuton",
+   "occluder": false,
+   "kind": "",
+   "variations": [
+    {
+     "id": "V01",
+     "prefab": "SM_zabuton_V01",
+     "boundsMin": [
+      -0.3164,
+      -0.34337,
+      4e-05
+     ],
+     "boundsMax": [
+      0.3164,
+      0.34337,
+      0.07975
+     ],
+     "parts": [
+      {
+       "name": "cushion",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_zabuton_V01.fbx",
+         "object": "AP030_zabuton_V01_cushion_LOD0",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          372
+         ],
+         "triangles": 372,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_zabuton_V01.fbx",
+         "object": "AP030_zabuton_V01_cushion_LOD1",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          192
+         ],
+         "triangles": 192,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_zabuton_V01.fbx",
+         "object": "AP030_zabuton_V01_cushion_LOD2",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          64
+         ],
+         "triangles": 64,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_zabuton_V01.fbx",
+       "object": "AP030_zabuton_V01_cushion_COL",
+       "class": "none",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.275,
+          -0.3,
+          0.0
+         ],
+         "max": [
+          0.275,
+          0.3,
+          0.08
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "cushion",
+       "broken": false,
+       "navmesh": "ignore"
+      }
+     ],
+     "sockets": [],
+     "deliveredIn": "v001"
+    },
+    {
+     "id": "V02",
+     "prefab": "SM_zabuton_V02",
+     "boundsMin": [
+      -0.70174,
+      -0.6904,
+      0.0
+     ],
+     "boundsMax": [
+      0.70174,
+      0.6904,
+      0.11051
+     ],
+     "parts": [
+      {
+       "name": "cushions",
+       "role": "lod",
+       "wind": false,
+       "lods": [
+        {
+         "fbx": "AP030_zabuton_V02.fbx",
+         "object": "AP030_zabuton_V02_cushions_LOD0",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          1116
+         ],
+         "triangles": 1116,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_zabuton_V02.fbx",
+         "object": "AP030_zabuton_V02_cushions_LOD1",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          576
+         ],
+         "triangles": 576,
+         "colourLayers": [],
+         "windExpected": false
+        },
+        {
+         "fbx": "AP030_zabuton_V02.fbx",
+         "object": "AP030_zabuton_V02_cushions_LOD2",
+         "materials": [
+          "ap030_interior"
+         ],
+         "facesPerSlot": [
+          192
+         ],
+         "triangles": 192,
+         "colourLayers": [],
+         "windExpected": false
+        }
+       ]
+      }
+     ],
+     "colliders": [
+      {
+       "fbx": "AP030_zabuton_V02.fbx",
+       "object": "AP030_zabuton_V02_cushions_COL",
+       "class": "none",
+       "shells": 1,
+       "shellBoxes": [
+        {
+         "min": [
+          -0.70174,
+          -0.6904,
+          0.0
+         ],
+         "max": [
+          0.70174,
+          0.6904,
+          0.11051
+         ],
+         "positions": 8
+        }
+       ],
+       "part": "cushions",
+       "broken": false,
+       "navmesh": "ignore"
+      }
+     ],
+     "sockets": [],
+     "deliveredIn": "v001"
+    }
+   ]
+  }
+ ]
+}

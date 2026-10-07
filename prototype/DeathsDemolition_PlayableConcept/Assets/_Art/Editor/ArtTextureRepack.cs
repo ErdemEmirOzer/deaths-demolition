@@ -38,10 +38,10 @@ namespace DD.Art.Pipeline.EditorTools
             "MetallicSmoothnessAO v2 (WP-020, prop_* roles): out.R = src.B (metallic), out.G = src.R (occlusion, URP _OcclusionMap G), out.B = 0, " +
             "out.A = 255 - src.G (smoothness = 1 - roughness); 16-bit source channels rounded to 8-bit; 8-bit RGBA PNG, no resampling";
 
-        /// <summary>Roles whose derived mask carries occlusion in G (<see cref="PropAlgorithm"/>): the prop roles and the AP-023 kit (WP-074 B5 — its ORM carries baked AO in R).</summary>
+        /// <summary>Roles whose derived mask carries occlusion in G (<see cref="PropAlgorithm"/>): the prop roles and the AP-023 kit (WP-074 B5 — its ORM carries baked AO in R); WP-092 C: the AP-030 kit (same ORM).</summary>
         public static bool CarriesOcclusion(string role)
         {
-            return role.StartsWith("prop_", StringComparison.Ordinal) || role.StartsWith("ap023_", StringComparison.Ordinal);
+            return role.StartsWith("prop_", StringComparison.Ordinal) || role.StartsWith("ap023_", StringComparison.Ordinal) || role.StartsWith(ArtLibraryMaterialRoles.Ap030RolePrefix, StringComparison.Ordinal);
         }
 
         [Serializable]
