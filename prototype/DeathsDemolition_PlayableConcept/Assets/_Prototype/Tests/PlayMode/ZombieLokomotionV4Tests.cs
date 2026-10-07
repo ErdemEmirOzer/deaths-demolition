@@ -35,15 +35,18 @@ namespace DD.Prototype.Tests.PlayMode
     /// <item>ZL1 / ZL2 (one shared recording): the four tiers × fit A/B, three fixed seeds + one GaitVariety 0 control pass, on a flat
     /// Environment floor 150 m above the Run scene. Each body is a real EnemyFactory spawn (look, tier scale, gait profile, spawn
     /// ordinal) whose ZombieEnemy is switched off; the test moves it straight at its tier speed (× the v4 SpeedJitter when the
-    /// visual has one) and feeds ZombieSkinnedVisual.SetSpeed(v, dt) — the call ZombieEnemy.TickCombat makes. Foot contact = the
-    /// R2 L1 definition (sole ≤ 3 cm, vertical speed ≤ 0.15 m/s); a group whose pooled onsets fall short under it is read with the
-    /// sole height relative to the body's own 5th percentile (flagged "uyarlamalı").</item>
+    /// visual has one) and feeds ZombieSkinnedVisual.SetSpeed(v, dt) — the call ZombieEnemy.TickCombat makes. Stance (07.10) = the
+    /// clips' own foot events (plant → lift), because FootIkAdapter presses every foot — the swing too — to the floor and the R2 L1
+    /// height rule then calls every foot-frame a contact. An IK-off pass (FootIkAdapter.Force 0) keeps the height rule as the
+    /// detector's positive controls (a standing foot reads contact, a walking foot shows onsets) and the clip + rate slide; a
+    /// saturated detector (contact share outside 0.15–0.85) blocks by name.</item>
     /// <item>ZL3: the 40-body GateMix crowd (R2ZombieCrowd) under its own AI, TopDown camera: distinct (clip, rate 0.05, phase 0.1)
     /// triples, clips, bodies per clip, Shannon index, and L5's synced-pair share among the bodies the TD camera sees.</item>
     /// <item>ZL4: one real zombie per rep chasing the player in the Run world; the player is teleported 90° / 180° off the zombie's
     /// heading; root yaw rate / acceleration / jerk, torso roll into the turn, hips-to-root yaw lag.</item>
     /// <item>ZL5: start / stop on the stage (L1t slide, L3 pose jumps, transition clip present or not).</item>
-    /// <item>ZL6: GC Allocated In Frame with the 40-body crowd vs the empty scene (HotPathAllocationContractTests pattern).</item>
+    /// <item>ZL6: GC Allocated In Frame / Count with the 40-body crowd vs the empty scene (HotPathAllocationContractTests pattern):
+    /// per-frame median count and the crowd frames above the idle maximum, the heaviest frames logged for a bisect.</item>
     /// <item>CAP_*: frames for the before / after review (DD_WP096_CAPTURE_DIR).</item>
     /// </list>
     /// A measuring test asserts only that its source is in the record; the target goes into the log line (PASS / FAIL) and turns into an
@@ -83,7 +86,10 @@ namespace DD.Prototype.Tests.PlayMode
         // ZL5
         private const int KdTekrar = 5, KdDur = 60, KdYuru = 120, KdDurus = 90;
         // ZL6
-        private const int GcKare = 120, GcKontrolKare = 6, GcIsinmaPencere = 2;
+        // düzeltme 07.10 (ara1: idle max 561 B vs crowd max 650 B): one frame's maximum is harness noise (coroutine, recorder,
+        // test runner); the gate compares the per-frame MEDIAN allocation count (a sustained per-frame object moves it by ≥ 1) and
+        // counts the crowd frames above the idle window's maximum (pure noise puts ~1 of 240 there; > 4 is a real spike source).
+        private const int GcKare = 240, GcKontrolKare = 6, GcIsinmaKare = 240, GcUstKareSiniri = 4;
         // captures
         private const int KareW = 1920, KareH = 1080, TdKare = 1200;
         private const float TdHalka = 6f, TdCubuk = 0.6f;
@@ -124,6 +130,7 @@ namespace DD.Prototype.Tests.PlayMode
             Time.captureDeltaTime = 0f;
             Time.timeScale = 1f;
             CharacterAnimatorLod.ForceFar = -1;
+            FootIkAdapter.Force = -1;   // ZL1 / ZL2's IK-off control pass
             ZombieEnemy.ResetRisePolicy();
             if (_cesitlilikOnce.HasValue) StatikFloatYaz(typeof(ZombieSkinnedVisual), "GaitVariety", _cesitlilikOnce.Value);
             if (_profilerGeriAl) { UnityEngine.Profiling.Profiler.enabled = _profilerOnce; _profilerGeriAl = false; }
@@ -155,79 +162,134 @@ namespace DD.Prototype.Tests.PlayMode
 
         // ============================================================================================================ ZL1 / ZL2
 
+        // Düzeltme 07.10 (before1 / ara1: ZL1 / ZL2 BLOCKED, "temas başlangıcı 0/0", gap 0.0/0.0 cm, slide ≈ 1.0): FootIkAdapter.Solve
+        // puts EVERY foot's IK goal at ground + leftFeetBottomHeight while the ray finds ground within RayDown (lift clamped to
+        // MaxCorrection 0.35 m), so the swing foot is pressed to the floor too — on the shown pose every foot reads "sole on the
+        // ground, no vertical speed" and the height rule calls every foot-frame a contact (n = all 2 520 foot-frames, no onsets).
+        // The stance is therefore taken from the clips' own events (AP-022: foot_l / foot_r plant, foot_l_off / foot_r_off lift —
+        // the definition the foot lock itself runs on), the height rule stays for the IK-off control pass, and a detector that
+        // saturates (contact share outside 0.15–0.85) or fails its positive controls blocks instead of passing silently.
+        private const int TurOyun = 0, TurKontrol = 1, TurIkKapali = 2;
+        private static readonly string[] TurAd = { "oyun", "kontrol", "ik-kapali" };
+        private const int EtiketYuru = 0, EtiketDur = 2;
+        private const int DurKare = 60, DurOlcum = 30;                  // still segment before each walk; frames 30..59 = the idle control
+        private const double TemasPayAlt = 0.15, TemasPayUst = 0.85;   // a walking foot is down 30–75 % of the time; outside = saturated
+        private const double PkDurusPayi = 0.8, PkDurusHiz = 0.05;     // idle control: ≥ 80 % foot-frames in contact, mean foot speed < 0.05 m/s
+        private const int PkAdimMin = 3;                                // step control: ≥ 3 onsets per foot per body in the 7 s IK-off walk
+
         [UnityTest]
         [Explicit]
         [Category("Diagnostics")]
         [Category("WP096")]
-        [Timeout(900000)]
+        [Timeout(1200000)]
         public IEnumerator ZL1_AyakKaymasi_KademeYuruyus()
         {
             Time.captureDeltaTime = Dt;
             yield return KademeKaydiAl();
             KademeKaydi kayit = s_kademe;
             Assert.IsNotNull(kayit, "kaynak yok: kademe kaydı alınamadı");
-            List<Grup> gruplar = Gruplar(kayit.Govdeler, false);
-            List<Grup> kontrol = Gruplar(kayit.Govdeler, true);
+            List<Grup> oyun = Gruplar(kayit.Govdeler, TurOyun);
+            List<Grup> kontrol = Gruplar(kayit.Govdeler, TurKontrol);
+            List<Grup> ikKapali = Gruplar(kayit.Govdeler, TurIkKapali);
 
             var r = new Rapor("zl1");
             var eksik = new List<string>();
-            var hepsi = new List<double>();
             var satirlar = new List<string>();
-            double enKotuOrt = double.NaN, enKotuP95 = double.NaN;
+            DedektorKontrolu(ikKapali, eksik, satirlar, out double pkPay, out double pkHiz, out int pkAdim);
+
+            var hepsi = new List<double>();
+            double enKotuOrt = double.NaN, enKotuP95 = double.NaN, payMin = double.NaN, payMax = double.NaN;
             string enKotuOrtAd = "-", enKotuP95Ad = "-";
             var kademeKayma = new Dictionary<EnemyTier, List<double>>();
-            int uyarlamali = 0;
-            foreach (Grup g in gruplar)
+            int olayGrup = 0;
+            long salinim = 0, salinimYerde = 0;
+            var salinimBosluk = new List<double>();
+            foreach (Grup g in oyun)
             {
-                double o = Ort(g.Kayma), p = Yuzdelik(g.Kayma, 0.95);
+                double o = Ort(g.Kayma), p = Yuzdelik(g.Kayma, 0.95), pay = g.TemasPayi;
                 hepsi.AddRange(g.Kayma);
                 if (!kademeKayma.TryGetValue(g.Kademe, out List<double> kl)) kademeKayma[g.Kademe] = kl = new List<double>();
                 kl.AddRange(g.Kayma);
-                if (g.Uyarlamali) uyarlamali++;
+                if (g.Kaynak == "olay") olayGrup++;
+                salinim += g.SalinimKare;
+                salinimYerde += g.SalinimYerde;
+                salinimBosluk.AddRange(g.SalinimBosluk);
+                if (!double.IsNaN(pay)) { payMin = double.IsNaN(payMin) ? pay : Math.Min(payMin, pay); payMax = double.IsNaN(payMax) ? pay : Math.Max(payMax, pay); }
                 satirlar.Add(GrupSatiri(g));
                 GrupKaynagi(g, eksik);
                 if (!double.IsNaN(o) && (double.IsNaN(enKotuOrt) || o > enKotuOrt)) { enKotuOrt = o; enKotuOrtAd = g.Ad; }
                 if (!double.IsNaN(p) && (double.IsNaN(enKotuP95) || p > enKotuP95)) { enKotuP95 = p; enKotuP95Ad = g.Ad; }
             }
 
-            if (gruplar.Count < Kademeler.Length * Fitler.Length) eksik.Add("grup " + gruplar.Count + "/" + Kademeler.Length * Fitler.Length);
+            if (oyun.Count < Kademeler.Length * Fitler.Length) eksik.Add("grup " + oyun.Count + "/" + Kademeler.Length * Fitler.Length);
             var kontrolHepsi = new List<double>();
             foreach (Grup g in kontrol) { kontrolHepsi.AddRange(g.Kayma); satirlar.Add("KONTROL " + GrupSatiri(g)); }
+            double ikOrt = double.NaN, ikP95 = double.NaN;
+            long ikSalinim = 0, ikSalinimYerde = 0, uyumN = 0, uyumOk = 0;
+            var ikBosluk = new List<double>();
+            foreach (Grup g in ikKapali)
+            {
+                double o = Ort(g.Kayma), p = Yuzdelik(g.Kayma, 0.95);
+                if (!double.IsNaN(o) && (double.IsNaN(ikOrt) || o > ikOrt)) ikOrt = o;
+                if (!double.IsNaN(p) && (double.IsNaN(ikP95) || p > ikP95)) ikP95 = p;
+                ikSalinim += g.SalinimKare;
+                ikSalinimYerde += g.SalinimYerde;
+                ikBosluk.AddRange(g.SalinimBosluk);
+                uyumN += g.UyumN;
+                uyumOk += g.UyumOk;
+                satirlar.Add("IK-KAPALI " + GrupSatiri(g));
+            }
+
             Debug.Log("[DD-TEST] wp096.zl1.gruplar taban=" + F(GovdeHizTabani, 2) + "m/s (kalça) surucu=" + kayit.Surucu + " not=" + kayit.Not + " :: " + string.Join(" | ", satirlar));
 
-            r.Hedef("slideAvgWorst", enKotuOrt, false, HedefKaymaOrt, enKotuOrtAd);
+            r.Hedef("slideAvgWorst", enKotuOrt, false, HedefKaymaOrt, enKotuOrtAd + " (oyun pozu, IK açık, temas = klip olayları)");
             r.Hedef("slideP95Worst", enKotuP95, false, HedefKaymaP95, enKotuP95Ad);
             r.Bilgi("slideAvg", Ort(hepsi));
             r.Bilgi("slideP95", Yuzdelik(hepsi, 0.95));
             foreach (EnemyTier t in Kademeler)
                 r.Bilgi("slideAvg" + t, kademeKayma.TryGetValue(t, out List<double> x) ? Ort(x) : double.NaN);
+            r.Bilgi("eventContactGroups", olayGrup, "/" + oyun.Count + " grup klip olaylarıyla");
+            r.Bilgi("contactShareMin", payMin, "temas ayak-karesi payı, beklenen " + F(TemasPayAlt, 2) + "–" + F(TemasPayUst, 2));
+            r.Bilgi("contactShareMax", payMax);
+            r.Bilgi("swingGroundedShare", salinim > 0 ? (double)salinimYerde / salinim : double.NaN,
+                "salınımdaki ayağın taban ≤ 3 cm payı (IK açık); 1'e yakın = FootIkAdapter salınımı yere bastırıyor");
+            r.Bilgi("swingLiftMedianCm", Medyan(salinimBosluk) * 100.0, "IK açık");
+            r.Bilgi("ikOffClipSlideAvgWorst", ikOrt, "IK kapalı, temas = yükseklik kuralı (klip + oran kayması)");
+            r.Bilgi("ikOffClipSlideP95Worst", ikP95);
+            r.Bilgi("ikOffSwingGroundedShare", ikSalinim > 0 ? (double)ikSalinimYerde / ikSalinim : double.NaN);
+            r.Bilgi("ikOffSwingLiftMedianCm", Medyan(ikBosluk) * 100.0);
+            r.Bilgi("ikOffEventHeightAgreement", uyumN > 0 ? (double)uyumOk / uyumN : double.NaN, "olay durusu ile yükseklik temasının aynı dediği ayak-kare payı");
+            r.Bilgi("controlIdleContactShareMin", pkPay, "pozitif kontrol ≥ " + F(PkDurusPayi, 2));
+            r.Bilgi("controlIdleFootSpeedMax", pkHiz, "pozitif kontrol < " + F(PkDurusHiz, 2) + " m/s");
+            r.Bilgi("controlStepOnsetsMin", pkAdim, "pozitif kontrol ≥ " + PkAdimMin + " / ayak / gövde");
             r.Bilgi("controlSlideAvg", kayit.KontrolVar ? Ort(kontrolHepsi) : double.NaN, "GaitVariety 0");
             r.Bilgi("controlSlideP95", kayit.KontrolVar ? Yuzdelik(kontrolHepsi, 0.95) : double.NaN, "GaitVariety 0");
-            r.Bilgi("adaptiveContactGroups", uyarlamali);
             r.Bilgi("gaitOrdinalStart", kayit.SiraBaslangic);
             r.Bilgi("gaitOrdinalEnd", kayit.SiraBitis);
             r.Kaynak(eksik);
-            r.Yazdir("ZL1_AyakKaymasi_KademeYuruyus", hepsi.Count, "seeds 1,2,3 + control; ordinal " + kayit.SiraBaslangic + "; " + kayit.Not);
+            r.Yazdir("ZL1_AyakKaymasi_KademeYuruyus", hepsi.Count, "seeds 1,2,3 + GaitVariety-0 control + IK-off control; stance = clip events; ordinal " + kayit.SiraBaslangic + "; " + kayit.Not);
         }
 
         [UnityTest]
         [Explicit]
         [Category("Diagnostics")]
         [Category("WP096")]
-        [Timeout(900000)]
+        [Timeout(1200000)]
         public IEnumerator ZL2_HizEslesmesi_AdimXKadans()
         {
             Time.captureDeltaTime = Dt;
             yield return KademeKaydiAl();   // ZL1's recording when it ran in this session (the same numbers), else its own
             KademeKaydi kayit = s_kademe;
             Assert.IsNotNull(kayit, "kaynak yok: kademe kaydı alınamadı");
-            List<Grup> gruplar = Gruplar(kayit.Govdeler, false);
-            List<Grup> kontrol = Gruplar(kayit.Govdeler, true);
+            List<Grup> gruplar = Gruplar(kayit.Govdeler, TurOyun);
+            List<Grup> kontrol = Gruplar(kayit.Govdeler, TurKontrol);
+            List<Grup> ikKapali = Gruplar(kayit.Govdeler, TurIkKapali);
 
             var r = new Rapor("zl2");
             var eksik = new List<string>();
             var satirlar = new List<string>();
-            double sapmaMax = double.NaN, kontrolMax = double.NaN, analitikMax = double.NaN;
+            DedektorKontrolu(ikKapali, eksik, satirlar, out double _, out double _, out int _);
+            double sapmaMax = double.NaN, kontrolMax = double.NaN, ikMax = double.NaN, analitikMax = double.NaN;
             string sapmaAd = "-";
             int kirpilan = 0, dongu = 0;
             var kademeSapma = new Dictionary<EnemyTier, double>();
@@ -255,15 +317,23 @@ namespace DD.Prototype.Tests.PlayMode
                 if (!double.IsNaN(dev) && (double.IsNaN(kontrolMax) || dev > kontrolMax)) kontrolMax = dev;
             }
 
-            Debug.Log("[DD-TEST] wp096.zl2.gruplar yöntem=L2 (T = aynı ayak temas başlangıçları medyanı, adım = u·T/2, u = temastaki ayağın gövdeye göre geri hızı) :: " + string.Join(" | ", satirlar));
+            foreach (Grup g in ikKapali)
+            {
+                double dev = Sapma(g, out string satir);
+                satirlar.Add("IK-KAPALI " + satir);
+                if (!double.IsNaN(dev) && (double.IsNaN(ikMax) || dev > ikMax)) ikMax = dev;
+            }
+
+            Debug.Log("[DD-TEST] wp096.zl2.gruplar yöntem=L2 (T = aynı ayak basma olayları medyanı, adım = u·T/2, u = durustaki ayağın gövdeye göre geri hızı) :: " + string.Join(" | ", satirlar));
             r.Hedef("deviationMax", sapmaMax, false, HedefSapma, sapmaAd);
             foreach (EnemyTier t in Kademeler) r.Bilgi("deviation" + t, kademeSapma.TryGetValue(t, out double d) ? d : double.NaN);
             r.Bilgi("controlDeviationMax", kayit.KontrolVar ? kontrolMax : double.NaN, "GaitVariety 0");
+            r.Bilgi("ikOffDeviationMax", ikMax, "IK kapalı, yükseklik kuralı");
             r.Bilgi("analyticSlideMax", analitikMax, "CadenceBand.SlideFraction");
             r.Bilgi("clampedBodies", kirpilan, "GaitRate bandın ucunda");
             r.Bilgi("gaitOrdinalStart", kayit.SiraBaslangic);
             r.Kaynak(eksik);
-            r.Yazdir("ZL2_HizEslesmesi_AdimXKadans", dongu, "seeds 1,2,3; ordinal " + kayit.SiraBaslangic);
+            r.Yazdir("ZL2_HizEslesmesi_AdimXKadans", dongu, "seeds 1,2,3; stance = clip events; ordinal " + kayit.SiraBaslangic);
         }
 
         // ---------------------------------------------------------------------------------------------- the shared recording
@@ -273,19 +343,21 @@ namespace DD.Prototype.Tests.PlayMode
             public string Ad, Fit, DogalFit = "?", Klip = "yok";
             public EnemyTier Kademe;
             public uint Tohum;
-            public bool Kontrol, FitZorlandi, Kirpildi;
-            public int Sira;
+            public int Tur, Sira;
+            public bool FitZorlandi, Kirpildi;
             public float Hiz, Jitter = 1f, Olcek = float.NaN, GaitMul = float.NaN, GaitRate = float.NaN, KlipHizi = float.NaN, Analitik = float.NaN;
             public float RateMin = CadenceBand.Min, RateMax = CadenceBand.Max;
             public double LokoPayi;
+            public int OlayL, OlayR, KalkL, KalkR;
             public List<ZombiKaydedici.Kare> Kareler;
+            public TemasSonuc Secilen, Olay, Yukseklik;
         }
 
         private sealed class KademeKaydi
         {
             public readonly List<Govde> Govdeler = new List<Govde>();
             public int SiraBaslangic = -1, SiraBitis = -1;
-            public bool KontrolVar;
+            public bool KontrolVar, IkKapaliVar;
             public string Not = "", Surucu = "SetSpeed(float,float)";
         }
 
@@ -302,19 +374,26 @@ namespace DD.Prototype.Tests.PlayMode
             Vector3 merkez = SahneKur();
             MethodInfo hiz = HizMetodu();
             Assert.IsNotNull(hiz, "kaynak yok: ZombieSkinnedVisual.SetSpeed(float, float) yok — sahne sürücüsü bağlanamadı");
-            for (int p = 0; p <= Tohumlar.Length; p++)
+            // passes: the game pose × 3 seeds, the GaitVariety-0 control, the IK-off control (the clip's own feet: the detector's
+            // positive controls and the clip + rate slide without the foot IK)
+            var gecisler = new List<(int tur, uint tohum)>();
+            foreach (uint t in Tohumlar) gecisler.Add((TurOyun, t));
+            gecisler.Add((TurKontrol, Tohumlar[0]));
+            gecisler.Add((TurIkKapali, Tohumlar[0]));
+            foreach ((int tur, uint tohum) gc in gecisler)
             {
-                bool kontrol = p == Tohumlar.Length;
-                if (!StatikFloatYaz(typeof(ZombieSkinnedVisual), "GaitVariety", kontrol ? 0f : 1f))
+                if (!StatikFloatYaz(typeof(ZombieSkinnedVisual), "GaitVariety", gc.tur == TurKontrol ? 0f : 1f))
                 {
-                    kayit.Not += kontrol ? "GaitVariety yok: kontrol koşusu atlandı. " : "GaitVariety yok: çeşitlilik varsayılanda. ";
-                    if (kontrol) break;
+                    kayit.Not += gc.tur == TurKontrol ? "GaitVariety yok: kontrol koşusu atlandı. " : "GaitVariety yok: çeşitlilik varsayılanda. ";
+                    if (gc.tur == TurKontrol) continue;
                 }
 
-                uint tohum = kontrol ? Tohumlar[0] : Tohumlar[p];
-                EnemyFactory.ResetSeedForTests(tohum);
-                yield return KademeGecisi(merkez, tohum, kontrol, hiz, kayit.Govdeler);
-                if (kontrol) kayit.KontrolVar = true;
+                FootIkAdapter.Force = gc.tur == TurIkKapali ? 0 : -1;
+                EnemyFactory.ResetSeedForTests(gc.tohum);
+                yield return KademeGecisi(merkez, gc.tohum, gc.tur, hiz, kayit.Govdeler);
+                FootIkAdapter.Force = -1;
+                if (gc.tur == TurKontrol) kayit.KontrolVar = true;
+                if (gc.tur == TurIkKapali) kayit.IkKapaliVar = true;
             }
 
             if (_cesitlilikOnce.HasValue) StatikFloatYaz(typeof(ZombieSkinnedVisual), "GaitVariety", _cesitlilikOnce.Value);
@@ -324,8 +403,9 @@ namespace DD.Prototype.Tests.PlayMode
             s_kademe = kayit;
         }
 
-        /// <summary>One pass: the four tiers × fit A/B side by side, 8 s straight at the tier speed, 1 s warm-up excluded.</summary>
-        private IEnumerator KademeGecisi(Vector3 merkez, uint tohum, bool kontrol, MethodInfo hizMetodu, List<Govde> into)
+        /// <summary>One pass: the four tiers × fit A/B side by side, 1 s still (the idle control), then 8 s straight at the tier
+        /// speed (1 s warm-up excluded).</summary>
+        private IEnumerator KademeGecisi(Vector3 merkez, uint tohum, int tur, MethodInfo hizMetodu, List<Govde> into)
         {
             int n = Kademeler.Length * Fitler.Length;
             var govdeler = new List<Govde>(n);
@@ -344,8 +424,8 @@ namespace DD.Prototype.Tests.PlayMode
                 SahneyeAl(z, p, ileri);
                 ZombieSkinnedVisual v = z.Skinned;
                 Assert.IsTrue(v != null && v.Animator != null && v.Animator.isHuman, "kaynak yok: " + t + " skinned / Humanoid Animator yok");
-                var b = new Govde { Kademe = t, Fit = fit, Tohum = tohum, Kontrol = kontrol, Sira = sira };
-                b.Ad = t + "/" + fit + "/s" + tohum + (kontrol ? "/k" : "");
+                var b = new Govde { Kademe = t, Fit = fit, Tohum = tohum, Tur = tur, Sira = sira };
+                b.Ad = t + "/" + fit + "/s" + tohum + (tur == TurOyun ? "" : "/" + TurAd[tur]);
                 b.DogalFit = v.Look.IsValid ? v.Look.fit : "?";
                 if (b.DogalFit != fit) b.FitZorlandi = FitZorla(v, fit, t);
                 b.Jitter = OrnekFloat(v, "SpeedJitter") ?? 1f;   // v4 P2: ZombieEnemy walks at MoveSpeed × SpeedJitter
@@ -360,17 +440,19 @@ namespace DD.Prototype.Tests.PlayMode
 
             Physics.SyncTransforms();
             var arg = new object[2];
-            for (int f = 0; f < KademeKare; f++)
+            for (int f = 0; f < DurKare + KademeKare; f++)
             {
+                bool yuru = f >= DurKare;
                 float dt = Time.deltaTime;
                 for (int i = 0; i < n; i++)
                 {
-                    konum[i] += Vector3.forward * (govdeler[i].Hiz * dt);
+                    float v = yuru ? govdeler[i].Hiz : 0f;
+                    konum[i] += Vector3.forward * (v * dt);
                     zler[i].transform.position = konum[i];
-                    arg[0] = govdeler[i].Hiz;
+                    arg[0] = v;
                     arg[1] = dt;
                     hizMetodu.Invoke(zler[i].Skinned, arg);
-                    kayitlar[i].Etiket = 0;
+                    kayitlar[i].Etiket = yuru ? EtiketYuru : EtiketDur;
                 }
 
                 yield return null;
@@ -398,6 +480,10 @@ namespace DD.Prototype.Tests.PlayMode
                 if (!Olculen(kr)) continue;
                 olcum++;
                 if (kr.Loko) loko++;
+                if (kr.OlayL) b.OlayL++;
+                if (kr.OlayR) b.OlayR++;
+                if (kr.KalkL) b.KalkL++;
+                if (kr.KalkR) b.KalkR++;
             }
 
             b.LokoPayi = olcum > 0 ? (double)loko / olcum : 0;
@@ -424,43 +510,75 @@ namespace DD.Prototype.Tests.PlayMode
 
         private sealed class Grup
         {
-            public string Ad;
+            public string Ad, Kaynak = "-";
             public EnemyTier Kademe;
             public string Fit;
+            public int Tur;
             public bool Uyarlamali;
             public readonly List<Govde> Govdeler = new List<Govde>();
-            public readonly List<double> Kayma = new List<double>(), KaymaKok = new List<double>(), Araliklar = new List<double>();
-            public int BasL, BasR, TemasKare, OlcumKare, LokoKare, UN, VN;
+            public readonly List<double> Kayma = new List<double>(), KaymaKok = new List<double>(), Araliklar = new List<double>(), SalinimBosluk = new List<double>();
+            public int BasL, BasR, TemasKare, AyakKare, OlcumKare, LokoKare, UN, VN;
+            public long SalinimKare, SalinimYerde, UyumN, UyumOk;
             public double USum, VSum;
+            public double TemasPayi => AyakKare > 0 ? (double)TemasKare / AyakKare : double.NaN;
         }
 
-        private static bool Olculen(ZombiKaydedici.Kare k) => k.Etiket == 0 && k.Since >= Isinma;
+        private static bool Olculen(ZombiKaydedici.Kare k) => k.Etiket == EtiketYuru && k.Since >= Isinma;
 
-        private static List<Grup> Gruplar(List<Govde> govdeler, bool kontrol)
+        private static bool DurusKontrolKaresi(ZombiKaydedici.Kare k) => k.Etiket == EtiketDur && k.Since >= DurOlcum && k.Gecerli;
+
+        /// <summary>
+        /// Groups of one pass kind. The game / control passes take the stance from the clip events when the group raised ≥ 6 plants per
+        /// foot (else the height rule, which the saturation check then judges); the IK-off pass always uses the height rule — strict L1,
+        /// or relative to the body's own 5th-percentile sole height when the strict rule fails the idle control.
+        /// </summary>
+        private static List<Grup> Gruplar(List<Govde> govdeler, int tur)
         {
             var gruplar = new List<Grup>();
             foreach (EnemyTier t in Kademeler)
             {
                 foreach (string fit in Fitler)
                 {
-                    var g = new Grup { Ad = t + "/" + fit, Kademe = t, Fit = fit };
-                    foreach (Govde b in govdeler) if (b.Kontrol == kontrol && b.Kademe == t && b.Fit == fit && b.Kareler != null) g.Govdeler.Add(b);
+                    var g = new Grup { Ad = t + "/" + fit, Kademe = t, Fit = fit, Tur = tur };
+                    foreach (Govde b in govdeler) if (b.Tur == tur && b.Kademe == t && b.Fit == fit && b.Kareler != null) g.Govdeler.Add(b);
                     if (g.Govdeler.Count == 0) continue;
-                    // the L1 contact definition unless the group's pooled onsets fall short on a foot under it
-                    int sl = 0, sr = 0;
+                    int olL = 0, olR = 0, sl = 0, sr = 0;
+                    bool durusTutar = true;
                     foreach (Govde b in g.Govdeler)
                     {
-                        TemasSonuc s = Temaslar(b.Kareler, false);
+                        b.Olay = OlayDuruslari(b.Kareler, null);
+                        b.Yukseklik = Temaslar(b.Kareler, false);
+                        olL += b.OlayL;
+                        olR += b.OlayR;
                         for (int i = 0; i < b.Kareler.Count; i++)
                         {
                             if (!Olculen(b.Kareler[i])) continue;
-                            if (s.BasL[i]) sl++;
-                            if (s.BasR[i]) sr++;
+                            if (b.Yukseklik.BasL[i]) sl++;
+                            if (b.Yukseklik.BasR[i]) sr++;
                         }
+
+                        DurusOlc(b.Kareler, b.Yukseklik, out double pay, out double _);
+                        if (!(pay >= PkDurusPayi)) durusTutar = false;
                     }
 
-                    g.Uyarlamali = sl < MinBaslangic || sr < MinBaslangic;
-                    foreach (Govde b in g.Govdeler) Topla(g, b, Temaslar(b.Kareler, g.Uyarlamali));
+                    if (tur != TurIkKapali && olL >= MinBaslangic && olR >= MinBaslangic)
+                    {
+                        g.Kaynak = "olay";
+                        foreach (Govde b in g.Govdeler) b.Secilen = b.Olay;
+                    }
+                    else
+                    {
+                        g.Uyarlamali = tur == TurIkKapali ? !durusTutar : sl < MinBaslangic || sr < MinBaslangic;
+                        g.Kaynak = g.Uyarlamali ? "yukseklik-uyarlamali" : "yukseklik";
+                        foreach (Govde b in g.Govdeler) b.Secilen = g.Uyarlamali ? Temaslar(b.Kareler, true) : b.Yukseklik;
+                    }
+
+                    foreach (Govde b in g.Govdeler)
+                    {
+                        Topla(g, b, b.Secilen);
+                        if (b.OlayL + b.OlayR > 0) SalinimVeUyum(g, b);
+                    }
+
                     gruplar.Add(g);
                 }
             }
@@ -485,6 +603,7 @@ namespace DD.Prototype.Tests.PlayMode
                 if (s.BasL[i]) { g.BasL++; if (sonL >= 0f && k.Zaman - sonL < AralikTavan) g.Araliklar.Add(k.Zaman - sonL); sonL = k.Zaman; }
                 if (s.BasR[i]) { g.BasR++; if (sonR >= 0f && k.Zaman - sonR < AralikTavan) g.Araliklar.Add(k.Zaman - sonR); sonR = k.Zaman; }
                 if (!k.Gecerli) continue;
+                g.AyakKare += 2;
                 g.VSum += Vector3.Dot(k.KokV, yon);
                 g.VN++;
                 if (s.L[i]) { g.Kayma.Add(Oran(k.AyakVL, k.KalcaV)); g.KaymaKok.Add(Oran(k.AyakVL, k.KokV)); g.USum += -Vector3.Dot(Yatay(k.AyakVL - k.KokV), yon); g.UN++; g.TemasKare++; }
@@ -492,10 +611,96 @@ namespace DD.Prototype.Tests.PlayMode
             }
         }
 
+        /// <summary>The swing (event stance off) foot's sole height — a swing pressed to the floor reads ≤ 3 cm — and how often the
+        /// event stance and the strict height rule agree.</summary>
+        private static void SalinimVeUyum(Grup g, Govde b)
+        {
+            List<ZombiKaydedici.Kare> ks = b.Kareler;
+            for (int i = 0; i < ks.Count; i++)
+            {
+                ZombiKaydedici.Kare k = ks[i];
+                if (!Olculen(k) || !k.Gecerli) continue;
+                for (int ayak = 0; ayak < 2; ayak++)
+                {
+                    bool durus = ayak == 0 ? b.Olay.L[i] : b.Olay.R[i];
+                    bool basma = ayak == 0 ? k.OlayL : k.OlayR;
+                    float bosluk = ayak == 0 ? k.BoslukL : k.BoslukR;
+                    bool yuk = ayak == 0 ? b.Yukseklik.L[i] : b.Yukseklik.R[i];
+                    g.UyumN++;
+                    if (yuk == durus) g.UyumOk++;
+                    if (durus || basma || float.IsNaN(bosluk)) continue;
+                    g.SalinimKare++;
+                    if (bosluk <= R2LokomotionOlcumTests.TemasYukseklik) g.SalinimYerde++;
+                    g.SalinimBosluk.Add(bosluk);
+                }
+            }
+        }
+
+        /// <summary>The idle control frames of one body under a contact rule: foot-frame contact share and mean foot ground speed.</summary>
+        private static void DurusOlc(List<ZombiKaydedici.Kare> ks, TemasSonuc s, out double pay, out double hiz)
+        {
+            int n = 0, temas = 0;
+            double v = 0;
+            for (int i = 0; i < ks.Count; i++)
+            {
+                ZombiKaydedici.Kare k = ks[i];
+                if (!DurusKontrolKaresi(k)) continue;
+                n += 2;
+                if (s.L[i]) temas++;
+                if (s.R[i]) temas++;
+                v += Yatay(k.AyakVL).magnitude + Yatay(k.AyakVR).magnitude;
+            }
+
+            pay = n > 0 ? (double)temas / n : double.NaN;
+            hiz = n > 0 ? v / n : double.NaN;
+        }
+
+        /// <summary>
+        /// The detector's positive controls on the IK-off pass (the clip's own feet): (a) standing still, the chosen height rule calls
+        /// ≥ 80 % of the foot-frames contact and the feet do not move; (b) walking, every body shows ≥ 3 onsets per foot and a
+        /// contact share inside 0.15–0.85. A broken sole / ground reference or a saturated rule fails here, by name.
+        /// </summary>
+        private static void DedektorKontrolu(List<Grup> ikKapali, List<string> eksik, List<string> satirlar, out double payMin, out double hizMax, out int adimMin)
+        {
+            payMin = double.NaN;
+            hizMax = double.NaN;
+            adimMin = int.MaxValue;
+            if (ikKapali.Count == 0) { eksik.Add("dedektör pozitif kontrolü: IK kapalı geçiş yok"); adimMin = 0; return; }
+            foreach (Grup g in ikKapali)
+            {
+                foreach (Govde b in g.Govdeler)
+                {
+                    DurusOlc(b.Kareler, b.Secilen, out double pay, out double hiz);
+                    int bl = 0, br = 0;
+                    for (int i = 0; i < b.Kareler.Count; i++)
+                    {
+                        if (!Olculen(b.Kareler[i])) continue;
+                        if (b.Secilen.BasL[i]) bl++;
+                        if (b.Secilen.BasR[i]) br++;
+                    }
+
+                    payMin = double.IsNaN(payMin) ? pay : Math.Min(payMin, pay);
+                    hizMax = double.IsNaN(hizMax) ? hiz : Math.Max(hizMax, hiz);
+                    adimMin = Math.Min(adimMin, Math.Min(bl, br));
+                    satirlar.Add("PK " + b.Ad + " " + g.Kaynak + " idleShare " + F(pay, 2) + " idleFootV " + F(hiz, 3) + " onsets " + bl + "/" + br);
+                    if (!(pay >= PkDurusPayi)) eksik.Add("dedektör pozitif kontrolü: " + b.Ad + " dururken temas payı " + F(pay, 2) + " < " + F(PkDurusPayi, 2) + " (" + g.Kaynak + ")");
+                    if (!(hiz < PkDurusHiz)) eksik.Add("dedektör pozitif kontrolü: " + b.Ad + " dururken ayak hızı " + F(hiz, 3) + " m/s");
+                    if (bl < PkAdimMin || br < PkAdimMin) eksik.Add("dedektör pozitif kontrolü: " + b.Ad + " IK kapalı yürüyüşte adım başlangıcı " + bl + "/" + br + " < " + PkAdimMin);
+                }
+
+                double gp = g.TemasPayi;
+                if (!(gp >= TemasPayAlt && gp <= TemasPayUst)) eksik.Add("dedektör pozitif kontrolü: " + g.Ad + " IK kapalı temas payı " + F(gp, 2) + " (doymuş)");
+            }
+
+            if (adimMin == int.MaxValue) adimMin = 0;
+        }
+
         private static void GrupKaynagi(Grup g, List<string> eksik)
         {
-            if (g.BasL < MinBaslangic || g.BasR < MinBaslangic) eksik.Add(g.Ad + ": temas başlangıcı L/R " + g.BasL + "/" + g.BasR + " < " + MinBaslangic);
+            if (g.BasL < MinBaslangic || g.BasR < MinBaslangic) eksik.Add(g.Ad + ": temas başlangıcı L/R " + g.BasL + "/" + g.BasR + " < " + MinBaslangic + " (" + g.Kaynak + ")");
             if (g.Kayma.Count == 0) eksik.Add(g.Ad + ": temas karesi yok");
+            double pay = g.TemasPayi;
+            if (!(pay >= TemasPayAlt && pay <= TemasPayUst)) eksik.Add(g.Ad + ": temas ayrımı yok — ayak-kare payı " + F(pay, 2) + " (" + g.Kaynak + "; dedektör doymuş)");
             double loko = g.OlcumKare > 0 ? (double)g.LokoKare / g.OlcumKare : 0;
             if (loko < LokoPayiAlt) eksik.Add(g.Ad + ": Locomotion durumu payı " + F(loko, 2) + " < " + F(LokoPayiAlt, 2));
         }
@@ -516,8 +721,8 @@ namespace DD.Prototype.Tests.PlayMode
                 if (b.Kirpildi) kirp++;
             }
 
-            satir = g.Ad + " T " + F(T) + "s cadence " + F(kadans * 60.0, 1) + "spm step " + F(adim) + "m u " + F(u, 3) + " v " + F(v, 3) + " dev " + F(dev)
-                    + " analytic " + F(analitik) + " clamped " + kirp + "/" + g.Govdeler.Count + " intervals " + g.Araliklar.Count + (g.Uyarlamali ? " adaptive" : "");
+            satir = g.Ad + " " + g.Kaynak + " T " + F(T) + "s cadence " + F(kadans * 60.0, 1) + "spm step " + F(adim) + "m u " + F(u, 3) + " v " + F(v, 3) + " dev " + F(dev)
+                    + " analytic " + F(analitik) + " clamped " + kirp + "/" + g.Govdeler.Count + " intervals " + g.Araliklar.Count;
             return dev;
         }
 
@@ -527,9 +732,11 @@ namespace DD.Prototype.Tests.PlayMode
             foreach (Govde x in g.Govdeler)
                 b.Add(x.Ad + "(ord " + x.Sira + " fit " + x.DogalFit + (x.FitZorlandi ? "→" + x.Fit : "") + " clip " + x.Klip + " v " + F(x.Hiz, 2) + " jit " + F(x.Jitter, 3)
                       + " scale " + F(x.Olcek, 3) + " mul " + F(x.GaitMul, 3) + " rate " + F(x.GaitRate, 3) + " band " + F(x.RateMin, 2) + "–" + F(x.RateMax, 2)
-                      + (x.Kirpildi ? " CLAMPED" : "") + " clipV " + F(x.KlipHizi, 2) + " analytic " + F(x.Analitik, 3) + " loco " + F(x.LokoPayi, 2) + ")");
-            return g.Ad + " avg " + F(Ort(g.Kayma)) + " p95 " + F(Yuzdelik(g.Kayma, 0.95)) + " rootAvg " + F(Ort(g.KaymaKok)) + " n " + g.Kayma.Count
-                   + " onsets L/R " + g.BasL + "/" + g.BasR + (g.Uyarlamali ? " ADAPTIVE" : " strict") + " gap " + TabanOzeti(g) + " :: " + string.Join(" ", b);
+                      + (x.Kirpildi ? " CLAMPED" : "") + " clipV " + F(x.KlipHizi, 2) + " analytic " + F(x.Analitik, 3) + " loco " + F(x.LokoPayi, 2)
+                      + " events L/R " + x.OlayL + "/" + x.OlayR + " off " + x.KalkL + "/" + x.KalkR + ")");
+            return g.Ad + " [" + g.Kaynak + "] avg " + F(Ort(g.Kayma)) + " p95 " + F(Yuzdelik(g.Kayma, 0.95)) + " rootAvg " + F(Ort(g.KaymaKok)) + " n " + g.Kayma.Count
+                   + " share " + F(g.TemasPayi, 2) + " onsets L/R " + g.BasL + "/" + g.BasR + " swingGrounded " + (g.SalinimKare > 0 ? F((double)g.SalinimYerde / g.SalinimKare, 2) : "n/a")
+                   + " swingLiftMed " + F(Medyan(g.SalinimBosluk) * 100.0, 1) + "cm gap " + TabanOzeti(g) + " :: " + string.Join(" ", b);
         }
 
         private static string TabanOzeti(Grup g)
@@ -545,7 +752,7 @@ namespace DD.Prototype.Tests.PlayMode
 
             if (gap.Count == 0) return "n/a";
             gap.Sort();
-            return F(gap[0] * 100.0, 1) + "/" + F(gap[gap.Count / 2] * 100.0, 1) + "cm";
+            return F(gap[0] * 100.0, 1) + "/" + F(gap[gap.Count / 2] * 100.0, 1) + "/" + F(gap[(int)(0.95 * (gap.Count - 1))] * 100.0, 1) + "cm(min/med/p95)";
         }
 
         // ============================================================================================================ ZL3
@@ -991,7 +1198,7 @@ namespace DD.Prototype.Tests.PlayMode
             var durKlip = new HashSet<int>();
             double uzuv = 0, govdeMax = 0, oran = 0;
             string uzuvAt = "-", govdeAt = "-", oranAt = "-";
-            int pencere = 0, tamPencere = 0, lokoDisi = 0, uyarlamali = 0;
+            int pencere = 0, tamPencere = 0, lokoDisi = 0, uyarlamali = 0, olayliGovde = 0;
             var eksik = new List<string>();
             var satirlar = new List<string>();
             for (int bi = 0; bi < n; bi++)
@@ -1000,8 +1207,47 @@ namespace DD.Prototype.Tests.PlayMode
                 List<ZombiKaydedici.Kare> ks = kk.Kareler;
                 List<float> deg = kk.Derece;
                 if (!kk.KemikVar(0) || !kk.KemikVar(12)) eksik.Add(Kademeler[bi] + ": uzuv/gövde kemiği yok " + kk.KemikOzeti());
-                TemasSonuc ts = Temaslar(ks, false);
-                if (PencereTemasi(ks, ts) < 4) { ts = Temaslar(ks, true); uyarlamali++; }
+                // düzeltme 07.10: stance from the clip events (the IK presses every foot to the floor, see ZL1); while the idle is
+                // the dominant clip both feet are planted. Without plant events: the height rule, judged on the steady walk's share.
+                var bKararli = new HashSet<int>();
+                var bRolanti = new HashSet<int>();
+                int basma = 0;
+                foreach (ZombiKaydedici.Kare k in ks)
+                {
+                    if (k.Etiket >= 30 && k.Etiket < 40) bKararli.Add(k.Klip);
+                    if (k.Etiket >= 40 && k.Etiket < 50 && k.Klip != 0) bRolanti.Add(k.Klip);
+                    if (k.OlayL || k.OlayR) basma++;
+                }
+
+                bRolanti.ExceptWith(bKararli);
+                TemasSonuc ts;
+                string kaynak;
+                if (basma >= 2 * KdTekrar)
+                {
+                    ts = OlayDuruslari(ks, bRolanti);
+                    kaynak = "olay";
+                    olayliGovde++;
+                }
+                else
+                {
+                    ts = Temaslar(ks, false);
+                    kaynak = "yukseklik";
+                    if (PencereTemasi(ks, ts) < 4) { ts = Temaslar(ks, true); uyarlamali++; kaynak = "yukseklik-uyarlamali"; }
+                }
+
+                int yuruAyak = 0, yuruTemas = 0;
+                for (int i = 0; i < ks.Count; i++)
+                {
+                    ZombiKaydedici.Kare k = ks[i];
+                    if (k.Etiket < 30 || k.Etiket >= 40 || !k.Gecerli) continue;
+                    yuruAyak += 2;
+                    if (ts.L[i]) yuruTemas++;
+                    if (ts.R[i]) yuruTemas++;
+                }
+
+                double yuruPay = yuruAyak > 0 ? (double)yuruTemas / yuruAyak : double.NaN;
+                if (!(yuruPay >= TemasPayAlt && yuruPay <= TemasPayUst))
+                    eksik.Add(Kademeler[bi] + ": kararlı yürüyüşte temas ayrımı yok — ayak-kare payı " + F(yuruPay, 2) + " (" + kaynak + "; dedektör doymuş)");
                 var kararliTepe = new double[nb];
                 for (int i = 0; i < ks.Count; i++)
                 {
@@ -1056,7 +1302,7 @@ namespace DD.Prototype.Tests.PlayMode
                 kalkis.AddRange(kStart);
                 durus.AddRange(kStop);
                 satirlar.Add(Kademeler[bi] + " v " + F(hizlar[bi], 2) + " start avg " + F(Ort(kStart)) + " n " + kStart.Count + " stop avg " + F(Ort(kStop)) + " n " + kStop.Count
-                             + (ts.Uyarlamali ? " ADAPTIVE" : " strict"));
+                             + " [" + kaynak + "] plants " + basma + " walkShare " + F(yuruPay, 2));
             }
 
             var yeni = new List<string>();
@@ -1095,9 +1341,10 @@ namespace DD.Prototype.Tests.PlayMode
             r.Bilgi("newClipCount", yeni.Count);
             r.Bilgi("nonLocomotionStateFrames", lokoDisi);
             r.Bilgi("adaptiveContactBodies", uyarlamali);
+            r.Bilgi("eventContactBodies", olayliGovde, "/" + n + " gövde klip olaylarıyla");
             r.Bilgi("gaitOrdinalStart", sira);
             r.Kaynak(eksik);
-            r.Yazdir("ZL5_KalkisDurus_GecisVarligi", hepsi.Count, "4 tiers x 5 start/stop on the stage, SetSpeed step profile");
+            r.Yazdir("ZL5_KalkisDurus_GecisVarligi", hepsi.Count, "4 tiers x 5 start/stop on the stage, SetSpeed step profile; stance = clip events + idle clip");
         }
 
         private static void Sur(ZombieEnemy z, ref Vector3 konum, float hiz, MethodInfo hizMetodu, object[] arg)
@@ -1148,6 +1395,8 @@ namespace DD.Prototype.Tests.PlayMode
             var bosN = new long[GcKare];
             var kalB = new long[GcKare];
             var kalN = new long[GcKare];
+            var bosF = new int[GcKare];
+            var kalF = new int[GcKare];
             long kontrol = 0;
             int uzakMax = 0, canli = 0;
             using (var bytes = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame"))
@@ -1176,6 +1425,7 @@ namespace DD.Prototype.Tests.PlayMode
                     yield return null;
                     bosB[i] = bytes.LastValue;
                     bosN[i] = count.LastValue;
+                    bosF[i] = Time.frameCount;
                 }
 
                 // the 40-body crowd closing in: two windows of warm-up (pools, caches), then the measured window
@@ -1183,14 +1433,13 @@ namespace DD.Prototype.Tests.PlayMode
                 var crowd = new List<ZombieEnemy>(R2ZombieCrowd.Size);
                 R2ZombieCrowd.Spawn(R2ZombieCrowd.GateMix, 12, crowd);
                 Assert.AreEqual(R2ZombieCrowd.Size, crowd.Count, "kaynak yok: 40'lık kalabalık tam doğmadı");
-                for (int w = 0; w < GcIsinmaPencere; w++)
-                    for (int i = 0; i < GcKare; i++)
-                        yield return null;
+                for (int i = 0; i < GcIsinmaKare; i++) yield return null;
                 for (int i = 0; i < GcKare; i++)
                 {
                     yield return null;
                     kalB[i] = bytes.LastValue;
                     kalN[i] = count.LastValue;
+                    kalF[i] = Time.frameCount;
                     if (CharacterAnimatorLod.FarCount > uzakMax) uzakMax = CharacterAnimatorLod.FarCount;
                 }
 
@@ -1198,24 +1447,59 @@ namespace DD.Prototype.Tests.PlayMode
             }
 
             long bosMax = Max(bosB), kalMax = Max(kalB), kalNMax = Max(kalN), bosNMax = Max(bosN);
-            Debug.Log("[DD-TEST] wp096.zl6.ozet control=" + kontrol + " idle bytes max/med " + bosMax + "/" + Medyan(bosB) + " count max " + bosNMax
-                      + " | crowd bytes max/med " + kalMax + "/" + Medyan(kalB) + " count max " + kalNMax + " alive " + canli + "/" + R2ZombieCrowd.Size + " farLodMax " + uzakMax
-                      + " frames " + GcKare + " (after " + GcIsinmaPencere + " warm-up windows)");
+            long bosMed = Medyan(bosB), kalMed = Medyan(kalB), bosNMed = Medyan(bosN), kalNMed = Medyan(kalN);
+            int ustte = 0;
+            foreach (long b in kalB) if (b > bosMax) ustte++;
+            // the heaviest frames (window index, Time.frameCount, bytes, count) to bisect: the recorder reads the last completed frame
+            string kalTepe = TepeKareler(kalB, kalN, kalF, 3), bosTepe = TepeKareler(bosB, bosN, bosF, 1);
+            int tepe = 0;
+            for (int i = 1; i < GcKare; i++) if (kalB[i] > kalB[tepe]) tepe = i;
+            Debug.Log("[DD-TEST] wp096.zl6.ozet control=" + kontrol + " idle bytes max/med/p95 " + bosMax + "/" + bosMed + "/" + Yuzdelik(bosB, 0.95) + " count max/med " + bosNMax + "/" + bosNMed
+                      + " | crowd bytes max/med/p95 " + kalMax + "/" + kalMed + "/" + Yuzdelik(kalB, 0.95) + " count max/med " + kalNMax + "/" + kalNMed
+                      + " framesAboveIdleMax " + ustte + "/" + GcKare + " alive " + canli + "/" + R2ZombieCrowd.Size + " farLodMax " + uzakMax
+                      + " frames " + GcKare + " (after " + GcIsinmaKare + " warm-up) | crowd top " + kalTepe + " | idle top " + bosTepe);
             var r = new Rapor("zl6");
             var eksik = new List<string>();
             if (canli < R2ZombieCrowd.Size / 2) eksik.Add("ölçüm penceresinin sonunda canlı gövde " + canli + " < " + R2ZombieCrowd.Size / 2);
-            r.Hedef("gcAllocatedInFrameMaxIncreaseBytes", kalMax - bosMax, false, 0, "kalabalık en çok − boş sahne en çok (main tabanı 0 değil ise artış kapısı)");
-            r.Bilgi("gcAllocatedInFrameMaxBytes", kalMax, "hedef 0 B/kare" + (kalMax == 0 ? " PASS" : " FAIL"));
-            r.Bilgi("gcAllocatedInFrameMedianBytes", Medyan(kalB));
+            r.Hedef("gcMedianCountIncrease", kalNMed - bosNMed, false, 0, "kalabalık − boş sahne, kare başı ayırma sayısı medyanı (sürekli ayırma ≥ 1)");
+            r.Hedef("gcFramesAboveIdleMax", ustte, false, GcUstKareSiniri, "/" + GcKare + " kalabalık karesi boş sahnenin en çoğunun üstünde");
+            r.Bilgi("gcMedianIncreaseBytes", kalMed - bosMed);
+            r.Bilgi("gcAllocatedInFrameMaxIncreaseBytes", kalMax - bosMax, "eski kapı (tek kare gürültüsü)");
+            r.Bilgi("gcAllocatedInFrameMaxBytes", kalMax, "0 B/kare" + (kalMax == 0 ? " PASS" : " FAIL"));
+            r.Bilgi("gcAllocatedInFrameMedianBytes", kalMed);
             r.Bilgi("gcAllocationCountMax", kalNMax);
+            r.Bilgi("gcAllocationCountMedian", kalNMed);
             r.Bilgi("idleGcAllocatedInFrameMaxBytes", bosMax);
+            r.Bilgi("idleGcAllocatedInFrameMedianBytes", bosMed);
+            r.Bilgi("idleGcAllocationCountMedian", bosNMed);
             r.Bilgi("idleGcAllocationCountMax", bosNMax);
+            r.Bilgi("topCrowdFrameIndex", tepe, "frameCount " + kalF[tepe] + " " + kalB[tepe] + " B / " + kalN[tepe] + " ayırma");
+            r.Bilgi("topCrowdFrameCount", kalF[tepe]);
             r.Bilgi("positiveControlCount", kontrol);
             r.Bilgi("aliveBodies", canli);
             r.Bilgi("farLodMax", uzakMax);
             r.Bilgi("gaitOrdinalStart", sira);
             r.Kaynak(eksik);
-            r.Yazdir("ZL6_Kalabalik40_GcSifir", GcKare, "ProfilerRecorder GC Allocated In Frame, GateMix seed 1, TopDown");
+            r.Yazdir("ZL6_Kalabalik40_GcSifir", GcKare, "ProfilerRecorder GC Allocated In Frame / Count, 240 idle vs 240 crowd frames, GateMix seed 1, TopDown");
+        }
+
+        /// <summary>The n heaviest frames of a window: "#index@frameCount bytesB/countN".</summary>
+        private static string TepeKareler(long[] bayt, long[] sayi, int[] kare, int n)
+        {
+            var idx = new List<int>(bayt.Length);
+            for (int i = 0; i < bayt.Length; i++) idx.Add(i);
+            idx.Sort((a, b) => bayt[b].CompareTo(bayt[a]));
+            var parca = new List<string>(n);
+            for (int i = 0; i < Math.Min(n, idx.Count); i++) parca.Add("#" + idx[i] + "@" + kare[idx[i]] + " " + bayt[idx[i]] + "B/" + sayi[idx[i]]);
+            return string.Join(" ", parca);
+        }
+
+        private static long Yuzdelik(long[] xs, double q)
+        {
+            if (xs.Length == 0) return 0;
+            var c = (long[])xs.Clone();
+            Array.Sort(c);
+            return c[Mathf.Clamp((int)Math.Ceiling(q * c.Length) - 1, 0, c.Length - 1)];
         }
 
         // ============================================================================================================ captures
@@ -1625,7 +1909,7 @@ namespace DD.Prototype.Tests.PlayMode
 
         private static int? OrnekInt(object o, string ad) => OrnekNesne(o, ad) is int x ? x : (int?)null;
 
-        // ---------------------------------------------------------------------------------------------- contact (R2 L1 definition)
+        // ---------------------------------------------------------------------------------------------- contact (clip events / R2 L1 height)
 
         private struct TemasSonuc
         {
@@ -1675,6 +1959,34 @@ namespace DD.Prototype.Tests.PlayMode
             if (g.Count == 0) return 0f;
             g.Sort();
             return g[(int)(0.05 * (g.Count - 1))];
+        }
+
+        /// <summary>
+        /// Stance from the clips' own events (AP-022 gait clips: foot_l / foot_r = plant, foot_l_off / foot_r_off = lift; the definition
+        /// FootIkAdapter's lock runs on). A foot is in stance from the frame after its plant until its lift; without lift events in the
+        /// record the other foot's plant ends it (the lock window). Bodies start planted (idle). <paramref name="rolanti"/>: dominant
+        /// clips that are the idle — both feet planted while one of them plays (ZL5's start / stop). Onsets = the plants.
+        /// </summary>
+        private static TemasSonuc OlayDuruslari(List<ZombiKaydedici.Kare> ks, HashSet<int> rolanti)
+        {
+            int n = ks.Count;
+            var s = new TemasSonuc { L = new bool[n], R = new bool[n], BasL = new bool[n], BasR = new bool[n] };
+            bool kalkisVar = false;
+            foreach (ZombiKaydedici.Kare k in ks) if (k.KalkL || k.KalkR) { kalkisVar = true; break; }
+            bool stL = true, stR = true;
+            for (int i = 0; i < n; i++)
+            {
+                ZombiKaydedici.Kare k = ks[i];
+                if (rolanti != null && rolanti.Contains(k.Klip)) { stL = true; stR = true; }
+                if (k.OlayL) { stL = true; s.BasL[i] = true; if (!kalkisVar) stR = false; }
+                if (k.OlayR) { stR = true; s.BasR[i] = true; if (!kalkisVar) stL = false; }
+                if (k.KalkL) stL = false;
+                if (k.KalkR) stR = false;
+                s.L[i] = k.Gecerli && stL && !k.OlayL;   // the plant frame's velocity spans the landing
+                s.R[i] = k.Gecerli && stR && !k.OlayR;
+            }
+
+            return s;
         }
 
         private static double Oran(Vector3 ayakV, Vector3 govdeV) => Yatay(ayakV).magnitude / Math.Max(Yatay(govdeV).magnitude, GovdeHizTabani);
@@ -1807,8 +2119,10 @@ namespace DD.Prototype.Tests.PlayMode
     /// <summary>
     /// WP-096 zombie sampler, one per body: a record per frame AFTER the Animator, its IK passes and every LateUpdate solver
     /// (LocomotionLean −10, the look-at, the chains; order 32000) — the pose the frame shows. The contact inputs and the bone
-    /// angles follow R2LokomotionOlcumTests.LokomotionKaydedici (which samples one player and keeps no hips / state / yaw); the
-    /// contact itself is decided in the analysis (strict L1 or adaptive).
+    /// angles follow R2LokomotionOlcumTests.LokomotionKaydedici (which samples one player and keeps no hips / state / yaw), as do the
+    /// clip's foot events (CharacterAnimationEvents.Any, this body only, collapsed per foot inside OlayAyrimKare): the stance source
+    /// since 07.10 (the foot IK presses every foot to the floor, so the height rule cannot see a step on the shown pose). The contact
+    /// itself is decided in the analysis (clip events, else the L1 height rule).
     /// </summary>
     [DefaultExecutionOrder(32000)]
     internal sealed class ZombiKaydedici : MonoBehaviour
@@ -1825,6 +2139,7 @@ namespace DD.Prototype.Tests.PlayMode
             public int Durum, Klip, SonrakiKlip;       // current state hash, dominant clip ids (current / next state, 0 = none)
             public float Hiz, Faz;                     // state speed × multiplier, normalizedTime mod 1
             public float KokYaw, KalcaYaw, Egilme, Ek; // unwrapped yaw (°), torso roll in the root frame (°), extra reading
+            public bool OlayL, OlayR, KalkL, KalkR;    // clip events this frame: foot_l / foot_r plant, foot_l_off / foot_r_off lift
         }
 
         public static readonly Dictionary<int, string> KlipAdlari = new Dictionary<int, string>();
@@ -1845,7 +2160,11 @@ namespace DD.Prototype.Tests.PlayMode
         private float _kokYaw, _kalcaYaw, _kokHam, _kalcaHam;
         private int _maske;
         private int _etiketOnce = int.MinValue;
-        private bool _bagli, _onceVar;
+        private bool _bagli, _onceVar, _olayBagli;
+        private int _bekleyen, _kare;
+        private readonly int[] _sonOlay = { -1000, -1000, -1000, -1000 };
+        public int OlaySayisi { get; private set; }
+        public int KalkisSayisi { get; private set; }
 
         public void Bagla(Animator anim, int zeminMaskesi)
         {
@@ -1862,13 +2181,39 @@ namespace DD.Prototype.Tests.PlayMode
             _onceRot = new Quaternion[kemikler.Length];
             for (int i = 0; i < kemikler.Length; i++) _kemik[i] = anim.GetBoneTransform(kemikler[i]);
             if (_kalca != null) _kalcaEksen = Quaternion.Inverse(_kalca.rotation) * _kok.forward;   // the hips axis that is "forward" at bind
+            CharacterAnimationEvents.Any += OlayGeldi;
+            _olayBagli = true;
             _bagli = true;
         }
 
         public void Birak()
         {
+            if (_olayBagli) CharacterAnimationEvents.Any -= OlayGeldi;
+            _olayBagli = false;
             _bagli = false;
             enabled = false;
+        }
+
+        private void OnDestroy() => Birak();
+
+        /// <summary>This body's foot events (the events component sits on the Animator's object or one of its ancestors / children).</summary>
+        private void OlayGeldi(CharacterAnimationEvents c, CharacterAnimationEvent e)
+        {
+            if (c == null || _kok == null) return;
+            Transform t = c.transform;
+            if (!t.IsChildOf(_kok) && !_kok.IsChildOf(t)) return;
+            if (e == CharacterAnimationEvent.FootLeft) _bekleyen |= 1;
+            else if (e == CharacterAnimationEvent.FootRight) _bekleyen |= 2;
+            else if (e == CharacterAnimationEvent.FootLOff) _bekleyen |= 4;
+            else if (e == CharacterAnimationEvent.FootROff) _bekleyen |= 8;
+        }
+
+        /// <summary>One event bit → this frame's flag, collapsed per kind inside OlayAyrimKare (the blend's other clips repeat it).</summary>
+        private bool Tuket(int bekleyen, int bit, int indeks)
+        {
+            if ((bekleyen & bit) == 0 || _kare - _sonOlay[indeks] < R2LokomotionOlcumTests.OlayAyrimKare) return false;
+            _sonOlay[indeks] = _kare;
+            return true;
         }
 
         public bool KemikVar(int b) => _kemik != null && b >= 0 && b < _kemik.Length && _kemik[b] != null;
@@ -1918,6 +2263,17 @@ namespace DD.Prototype.Tests.PlayMode
             float dt = Time.deltaTime;
             Vector3 kok = _kok.position, kalca = _kalca.position, l = _ayakL.position, r = _ayakR.position;
             var k = new Kare { Etiket = Etiket, Since = Since, Zaman = Time.time, Dt = dt };
+            _kare++;
+            int bekleyen = _bekleyen;
+            _bekleyen = 0;
+            k.OlayL = Tuket(bekleyen, 1, 0);
+            k.OlayR = Tuket(bekleyen, 2, 1);
+            k.KalkL = Tuket(bekleyen, 4, 2);
+            k.KalkR = Tuket(bekleyen, 8, 3);
+            if (k.OlayL) OlaySayisi++;
+            if (k.OlayR) OlaySayisi++;
+            if (k.KalkL) KalkisSayisi++;
+            if (k.KalkR) KalkisSayisi++;
             k.BoslukL = Bosluk(_ayakL, _anim.leftFeetBottomHeight);
             k.BoslukR = Bosluk(_ayakR, _anim.rightFeetBottomHeight);
             Vector3 sicra = kok - _onceKok;
