@@ -601,6 +601,24 @@ class Chain:
         except (subprocess.CalledProcessError, OSError):
             return False
 
+    def tree_detail(self):
+        """C-00 06.10 (the R2 FINAL's z3 stop: 26 untracked mono_crash dumps, found by hand): what made verify_tree()
+        false — (HEAD, porcelain lines); never raises."""
+        try:
+            head = self.git("rev-parse", "HEAD")
+        except (subprocess.CalledProcessError, OSError) as e:
+            head = "unknown (%s)" % e
+        try:
+            lines = [line for line in self.git("status", "--porcelain").splitlines() if line.strip()]
+        except (subprocess.CalledProcessError, OSError) as e:
+            lines = ["git status failed: %s" % e]
+        return head, lines
+
+    def tree_summary(self, head, lines):
+        where = "HEAD %s" % head[:12] + ("" if head == self.final else " (FINAL %s)" % self.final[:12])
+        shown = "; ".join(lines[:5]) + (" …(+%d)" % (len(lines) - 5) if len(lines) > 5 else "")
+        return "%s, %d porcelain line(s)%s" % (where, len(lines), (": " + shown) if lines else "")
+
     def stage_record(self, stage):
         return self.evidence / "stages" / f"{stage}.json"
 
@@ -610,7 +628,8 @@ class Chain:
     # ---- the chain --------------------------------------------------------------------------------------------------
     def run(self):
         if not self.verify_tree():
-            self.out(f"REFUSED: repo HEAD is not FINAL {self.final} or the tree is dirty — no evidence touched")
+            self.out(f"REFUSED: repo HEAD is not FINAL {self.final} or the tree is dirty — no evidence touched; "
+                     f"{self.tree_summary(*self.tree_detail())}")
             return 2
         if self.evidence.resolve().is_relative_to(REPO.resolve()):
             self.out(f"REFUSED: evidence root {self.evidence} is inside the repo (it would dirty the tree)")
@@ -633,7 +652,10 @@ class Chain:
                 self.stage = stage
                 self.check_terminated()
                 if not self.dry_run and not self.verify_tree():
-                    raise Stop(2, f"{stage}: repo left FINAL or the tree became dirty")
+                    head, lines = self.tree_detail()   # the whole list next to the evidence, the first lines in STOP
+                    (self.evidence / "stop-tree.txt").write_text("HEAD %s\nFINAL %s\n%s\n" % (head, self.final, "\n".join(lines)))
+                    raise Stop(2, f"{stage}: repo left FINAL or the tree became dirty — {self.tree_summary(head, lines)} "
+                                  f"(all of it: stop-tree.txt)")
                 if stage in ("a4", "r2") and not self.dry_run:   # resumed or not: the refusal only sees this run's stages (gt KP-18)
                     self.check_baseline(stage)
                 if stage != "a8" and not self.dry_run and self.resume and self.stage_passed(stage):

@@ -525,6 +525,30 @@ class RefusalTests(Base):
         self.assertEqual(2, chain.run())
         self.assertTrue(any("STOP" in line and "report to C-00" in line for line in chain.lines))
 
+    def test_tree_changing_mid_chain_stop_names_the_dirt(self):
+        """C-00 06.10 (the R2 FINAL's z3 stop): STOP names HEAD and the first porcelain lines; the whole list is in
+        stop-tree.txt next to the evidence."""
+        state = {"n": 0}
+        dirt = ["?? mono_crash.mem.%d.1.blob" % i for i in range(7)]
+
+        def porcelain():
+            state["n"] += 1
+            return "" if state["n"] <= 2 else "\n".join(dirt)
+        chain = make_chain(self.evidence, ["a6", "a0"], git=FakeGit(porcelain=porcelain))
+        self.assertEqual(2, chain.run())
+        stop = [line for line in chain.lines if "STOP" in line]
+        self.assertTrue(stop and "7 porcelain line(s): ?? mono_crash.mem.0.1.blob" in stop[0] and "…(+2)" in stop[0], stop)
+        self.assertIn("stop-tree.txt", stop[0])
+        listed = (self.evidence / "stop-tree.txt").read_text()
+        self.assertEqual(dirt, [line for line in listed.splitlines() if line.startswith("??")])
+
+    def test_refused_at_start_names_head_and_dirt(self):
+        chain = make_chain(self.evidence, ["a6"], git=FakeGit(head="0" * 40, porcelain=" M tools/qa/x.py"))
+        self.assertEqual(2, chain.run())
+        refused = [line for line in chain.lines if "REFUSED" in line]
+        self.assertTrue(refused and "HEAD 000000000000 (FINAL" in refused[0] and "1 porcelain line(s):  M tools/qa/x.py" in refused[0], refused)
+        self.assertFalse((self.evidence / "stop-tree.txt").exists())   # no evidence touched
+
 
 class B9PoseTests(Base):
     """C-00 01.10: S-05 B9 pose windows run after A4 on the same probe build, one root per pose, never gating."""
