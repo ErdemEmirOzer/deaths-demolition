@@ -456,6 +456,29 @@ class KuyrukBirimTests(unittest.TestCase):
         self.only(a, self.committed(self.rec("N", self.foreign(), areas=("player",), grantedNs=200)))   # open, nested
         self.assertEqual(64, self.io.restore_check(str(self.L), "A", ["player"])[0])
 
+    def test_Birim_RestoreBegin_CanliRestoreYanindaBaskaEngel_HerDosyaSirasinda64(self):
+        """core gt SHOULD-1 (07.10): a live restore next to a 64 blocker (open, abandoned, snapshot being taken) — 64,
+        whichever record the ledger reads first (ids sort the files: both orders); only the live restore alone is 75."""
+        a = self.committed(self.rec("A", self.me, areas=("editor", "player"), grantedNs=100))
+
+        def live(wid):
+            r = self.committed(self.rec(wid, self.foreign(), areas=("player",), state="restoring", grantedNs=200))
+            r["restorer"] = self.foreign()
+            return r
+        blockers = {"open": lambda wid: self.committed(self.rec(wid, self.foreign(), areas=("player",), grantedNs=300)),
+                    "abandoned": lambda wid: self.committed(self.rec(wid, self.dead(), areas=("player",), grantedNs=300)),
+                    "snapshotting": lambda wid: self.rec(wid, self.foreign(), areas=("player",), state="snapshotting",
+                                                         grantedNs=300, guard=self.foreign())}
+        for kind, make in blockers.items():
+            for live_id, other_id in (("B", "C"), ("C", "B")):
+                self.only(a, live(live_id), make(other_id))
+                code, why = self.io.restore_begin(str(self.L), "A", ["player"], self.me)
+                self.assertEqual(64, code, "%s, live restore %s first" % (kind, "sorted" if live_id < other_id else "not"))
+                self.assertIn("window %s " % other_id, why)
+                self.assertEqual("open", json.loads((self.L / "windows" / "A.json").read_text())["state"])
+        self.only(a, live("B"))
+        self.assertEqual(75, self.io.restore_check(str(self.L), "A", ["player"])[0])
+
     def test_Birim_RestoreCheck_DirtyFinalizedAlan0_DirtyAlan64_SirasiBilinmeyen0(self):
         f = self.committed(self.rec("F", self.foreign(), areas=("editor", "player"), state="dirty", grantedNs=300))
         f["areas"] = {"editor": "finalized", "player": "dirty"}

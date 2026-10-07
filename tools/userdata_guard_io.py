@@ -539,7 +539,9 @@ def _restore_blocker(ledger, own, areas, table):
     (before.txt; not a SNAPSHOT_MISSING mark), or a snapshot still being taken by a live guard — whatever its owner
     (P5 review MUST-1: an abandoned inner window restored after the outer one would put the outer run's bytes back).
     A window that can never be restored (SNAPSHOT_MISSING, an abandoned snapshotting record) has no base to protect
-    (S-5: else a 64 loop). One being restored right now by a live restorer is BEING_RESTORED (P5 gt N-4: wait, not 64)."""
+    (S-5: else a 64 loop). One being restored right now by a live restorer is BEING_RESTORED (P5 gt N-4: wait, not 64)
+    — but only when no other window blocks: a 64 blocker wins whatever the ledger's file order (core gt SHOULD-1)."""
+    waiting = None
     for other in ledger_records(ledger):
         if other.get("id") == own.get("id") or other.get("state") not in LEDGER_LIVE + ("dirty",):
             continue
@@ -553,12 +555,13 @@ def _restore_blocker(ledger, own, areas, table):
             continue
         if os.path.exists(os.path.join(other.get("dir") or "/nonexistent", "before.txt")):
             if other.get("state") == "restoring" and alive(other.get("restorer") or {}, table):
-                return other, hit, BEING_RESTORED
+                waiting = waiting or (other, hit, BEING_RESTORED)
+                continue
             return other, hit, ("open" if alive(other.get("owner") or {}, table) else
                                 "its owner pid %s is gone — abandoned: C-00 restores it first" % (other.get("owner") or {}).get("pid"))
         if other.get("state") == "snapshotting" and alive(other.get("guard") or other.get("owner") or {}, table):
             return other, hit, "its snapshot is being taken"
-    return None
+    return waiting
 
 
 def restore_begin(ledger, wid, areas, restorer=None):
@@ -573,7 +576,8 @@ def restore_begin(ledger, wid, areas, restorer=None):
     a wrong order): nothing written, the record untouched; the caller retries with the same DIR once it has finished.
     0 yes — then, with `restorer` ({pid, lstart}), the record (still in windows/) is `restoring` by it. Also 0 when the
     other window was opened before this one (this one is nested in it: inner first), when the order is unknown (no record
-    of this window — one taken before D8; an older guard's record of the same second), or no window holds them."""
+    of this window — one taken before D8, or an unreadable one: the guard then WARNs; an older guard's record of the same
+    second), or no window holds them."""
     with LedgerLock(ledger):
         own = own_record(ledger, wid)
         if own is not None and areas:
