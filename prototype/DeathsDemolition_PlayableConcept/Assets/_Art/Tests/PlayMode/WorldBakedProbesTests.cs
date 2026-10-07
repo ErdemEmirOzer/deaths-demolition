@@ -286,6 +286,58 @@ namespace DD.Art.Tests.PlayMode
             foreach (ZombieEnemy z in crowd) if (z != null && z.IsSpawned) z.Remove();
         }
 
+        /// <summary>
+        /// R3 #1 / N2 menu frames (C-00 07.10: the menu S05 frame in the window): the menu backdrop live (the same world, bound by
+        /// <see cref="WorldBakedProbes"/>), each shot of the shot list at t 4.80 s (MenuCinematic.PoseOf / RotationOf at 16:9),
+        /// probes off and on, post on — PNGs under <c>DD_ART_CAPTURE_DIR/probe-ab/menu/</c> for the AD and for N2's seam measure
+        /// (menu_n2_n4_olc.py n2 on the S05 frames). An editor capture of the world camera only; the shipped menu (UI, held frame,
+        /// five aspects, MP4) stays S-09's Player capture.
+        /// </summary>
+        [UnityTest]
+        [Timeout(600000)]
+        [Explicit("R3 #1 / N2 menu frames: run by full name")]
+        [Category("Diagnostics")]
+        [Category("R3")]
+        public IEnumerator Menu_BesCekim_t480_ProbOnceSonra_N2Gok()
+        {
+            MenuCinematic.ResetForTests();
+            MenuCinematic.ForceInBatch = true;
+            Environment.SetEnvironmentVariable(WorldSourceSettings.EnvironmentVariable, null);
+            CharacterAssetSet.ResetCache();
+            SceneManager.LoadScene(PrototypeScenes.Boot, LoadSceneMode.Single);
+            yield return null;
+            yield return Bekle(() => SceneManager.GetActiveScene().name == PrototypeScenes.MainMenu && SceneManager.GetActiveScene().isLoaded, SahneZamanAsimi, "MainMenu");
+            yield return Bekle(() => MenuCinematic.Current != null && MenuCinematic.Current.Live, SahneZamanAsimi, "menü dünyası canlanmadı");
+            Assert.IsNotNull(WorldBakedProbes.Current, "menü dünyasında WorldBakedProbes yok");
+            string dir = Path.Combine(OutputDir(), "menu");
+            Directory.CreateDirectory(dir);
+            MenuCinematic.Shot[] shots = MenuCinematic.Shots;
+            Assert.AreEqual(5, shots.Length, "çekim listesi");
+            const float At = 4.8f;
+            float aspect = (float)W / H;
+            int frames = 0;
+            foreach (string state in new[] { "off", "on" })
+            {
+                WorldBakedProbes.Enabled = state == "on";
+                yield return null;
+                foreach (MenuCinematic.Shot shot in shots)
+                {
+                    MenuCinematic.Pose pose = MenuCinematic.PoseOf(shot, At);
+                    Quaternion rotation = MenuCinematic.RotationOf(pose, aspect);
+                    var capture = new ArtVisualRegression.CameraPose(shot.id, pose.Position, pose.Position + rotation * Vector3.forward * 20f, pose.VerticalFov);
+                    if (frames < shots.Length) yield return ArtVisualRegression.WarmStreaming(capture, W, H, 120, null);
+                    string file = Path.Combine(dir, "cine-" + shot.id + "-t04.80-" + state + ".png");
+                    ArtVisualRegression.CaptureToPng(capture, W, H, file, true);
+                    Assert.IsTrue(File.Exists(file), "kare yazılmadı: " + file);
+                    frames++;
+                }
+            }
+
+            WorldBakedProbes.Enabled = true;
+            Debug.Log("[DD-OBS] r3.probes.menu frames=" + frames + " -> " + dir);
+            Assert.AreEqual(10, frames, "kare sayısı (5 çekim × 2 durum)");
+        }
+
         public static string OutputDir()
         {
             string dir = Environment.GetEnvironmentVariable(DirVariable);

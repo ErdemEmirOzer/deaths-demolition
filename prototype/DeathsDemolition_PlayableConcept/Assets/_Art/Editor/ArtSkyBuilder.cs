@@ -118,12 +118,26 @@ namespace DD.Art.Pipeline.EditorTools
         public const string SkyDec102SourcePath = ArtPipelinePaths.TexturesSource + "/T_sky_dec102_BaseColor.png";
         public const string SkyV3MaterialPath = ArtPipelinePaths.ArtRoot + "/Resources/DD_Sky_v3.mat";
 
+        /// <summary>
+        /// WP-081 B · N2 (C-00 06.10, (a)): DD_Sky_v3's shader. Skybox/Panoramic's lat-long u wraps 1 → 0 on world −X (compass 270°) and its
+        /// tex2D takes the coarsest mip in the 2×2 quads across the wrap: a 2 px line in the menu (S05, S03) and in every west-facing V6
+        /// camera. DD/SkyPanorama is the built-in's 360° path with seamless derivatives (Tarini 2012); same mapping (+Z at u 0.25), rotation
+        /// and colour, the texture and its import contract unchanged (mips stay on). v1 / v2 keep <see cref="SkyShaderName"/>.
+        /// </summary>
+        public const string SkyV3ShaderName = "DD/SkyPanorama";
+
+        /// <summary>DD_Sky_v3's look (DEC-102 r2), carried over from its Skybox/Panoramic material unchanged: neutral tint 0.5 (× the
+        /// shader's unity_ColorSpaceDouble ≈ 0.983 linear), exposure 1, rotation 0.</summary>
+        public static readonly Color SkyV3Tint = new Color(0.5f, 0.5f, 0.5f, 0.5f);
+        public const float SkyV3Exposure = 1f;
+        public const float SkyV3Rotation = 0f;
+
         public static Material BuildV3()
         {
             var skyTex = AssetDatabase.LoadAssetAtPath<Texture2D>(SkyDec102SourcePath);
             if (skyTex == null) throw new System.InvalidOperationException("[ArtPipeline] sky v3 panorama missing: " + SkyDec102SourcePath);
-            Shader shader = Shader.Find(SkyShaderName);
-            if (shader == null) throw new System.InvalidOperationException("[ArtPipeline] Shader '" + SkyShaderName + "' not found.");
+            Shader shader = Shader.Find(SkyV3ShaderName);
+            if (shader == null) throw new System.InvalidOperationException("[ArtPipeline] Shader '" + SkyV3ShaderName + "' not found.");
             var mat = AssetDatabase.LoadAssetAtPath<Material>(SkyV3MaterialPath);
             if (mat == null)
             {
@@ -131,17 +145,53 @@ namespace DD.Art.Pipeline.EditorTools
                 AssetDatabase.CreateAsset(mat, SkyV3MaterialPath);
             }
 
+            // Rebuilt in place (same file, same GUID: World_V6_Greybox's RenderSettings and WorldAtmosphere's Resources.Load keep it).
             mat.shader = shader;
             mat.SetTexture("_MainTex", skyTex);
-            mat.SetFloat("_Mapping", 1f);      // latitude-longitude layout
-            mat.SetFloat("_ImageType", 0f);    // 360°
-            mat.SetFloat("_Layout", 0f);
-            mat.SetFloat("_Exposure", 1f);
-            mat.SetFloat("_Rotation", 0f);
-            mat.SetColor("_Tint", new Color(0.5f, 0.5f, 0.5f, 0.5f));
-            mat.DisableKeyword("_MAPPING_6_FRAMES_LAYOUT");
+            mat.SetFloat("_Exposure", SkyV3Exposure);
+            mat.SetFloat("_Rotation", SkyV3Rotation);   // DD/SunDisc reads it back (WorldV5Sky.SunDiscMaterial)
+            mat.SetColor("_Tint", SkyV3Tint);
+            DropStaleProperties(mat);
             EditorUtility.SetDirty(mat);
             return mat;
+        }
+
+        /// <summary>WP-081 B · N2: DD_Sky_v3 alone, saved — no V6 rebuild, no bake (WorldV5Sky.Build calls <see cref="BuildV3"/> too).
+        /// Batch: <c>-executeMethod DD.Art.Pipeline.EditorTools.ArtSkyBuilder.RebuildV3</c>.</summary>
+        [MenuItem("DD/Art/Rebuild Sky v3 (WP-081 N2)", priority = 333)]
+        public static void RebuildV3()
+        {
+            Material mat = BuildV3();
+            AssetDatabase.SaveAssets();
+            Debug.Log("[ArtPipeline] Sky v3 rebuilt: " + SkyV3MaterialPath + " (" + mat.shader.name + ", " + AssetDatabase.GetAssetPath(mat.GetTexture("_MainTex")) + ")");
+        }
+
+        /// <summary>
+        /// The asset keeps what its shader declares, nothing else: a material keeps the saved values of its previous shader's properties
+        /// (here Skybox/Panoramic's _Mapping, _ImageType, _Layout, _MirrorOnBack) and the keywords its shader does not declare
+        /// (_MAPPING_LATITUDE_LONGITUDE_LAYOUT) across a shader change; they go, so the .mat depends on this builder only. An entry whose
+        /// name cannot be read is kept.
+        /// </summary>
+        private static void DropStaleProperties(Material mat)
+        {
+            var so = new SerializedObject(mat);
+            foreach (string list in new[] { "m_SavedProperties.m_TexEnvs", "m_SavedProperties.m_Ints", "m_SavedProperties.m_Floats", "m_SavedProperties.m_Colors" })
+            {
+                SerializedProperty entries = so.FindProperty(list);
+                if (entries == null || !entries.isArray) continue;
+                for (int i = entries.arraySize - 1; i >= 0; i--)
+                {
+                    SerializedProperty first = entries.GetArrayElementAtIndex(i).FindPropertyRelative("first");
+                    string name = first == null ? null
+                        : first.propertyType == SerializedPropertyType.String ? first.stringValue
+                        : first.FindPropertyRelative("name")?.stringValue;
+                    if (!string.IsNullOrEmpty(name) && !mat.HasProperty(name)) entries.DeleteArrayElementAtIndex(i);
+                }
+            }
+
+            SerializedProperty invalid = so.FindProperty("m_InvalidKeywords");
+            if (invalid != null && invalid.isArray) invalid.ClearArray();
+            so.ApplyModifiedPropertiesWithoutUndo();
         }
 
         private static Material Build(string bandPath, string texturePath, string materialPath)
