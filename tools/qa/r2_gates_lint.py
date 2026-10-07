@@ -142,6 +142,126 @@ def _attributes_before(code, pos):
     return " ".join(block) + " " + head
 
 
+TYPE_KEYWORD = re.compile(r"\b(?:class|struct|interface|enum|record|delegate)\b")
+MEMBER_NAME = re.compile(r"([A-Za-z_]\w*)\s*(?:<[^()]*>)?\s*$")
+NOT_A_METHOD = {"if", "for", "foreach", "while", "switch", "using", "return", "new", "lock", "catch", "fixed",
+                "nameof", "typeof", "sizeof", "default", "checked", "unchecked", "operator", "this", "base"}
+
+
+def _skip_to(code, k, end, stops):
+    """index of the first char in stops at nesting depth 0 of (), [], {} from k (end if none)."""
+    depth = 0
+    while k < end:
+        ch = code[k]
+        if ch in "([{":
+            depth += 1
+        elif ch in ")]}":
+            if depth == 0:
+                return k
+            depth -= 1
+        elif depth == 0 and ch in stops:
+            return k
+        k += 1
+    return end
+
+
+def _header_parts(header):
+    """(attribute text, signature text) of one member header: leading [..] blocks, then the rest; # lines dropped."""
+    lines = [ln for ln in header.split("\n") if not ln.strip().startswith("#")]
+    h = "\n".join(lines)
+    attrs, i, n = [], 0, len(h)
+    while i < n:
+        if h[i].isspace():
+            i += 1
+            continue
+        if h[i] == "[":
+            depth, j = 0, i
+            while j < n:
+                if h[j] == "[":
+                    depth += 1
+                elif h[j] == "]":
+                    depth -= 1
+                    if depth == 0:
+                        break
+                j += 1
+            attrs.append(h[i:j + 1])
+            i = j + 1
+            continue
+        break
+    return " ".join(attrs), h[i:]
+
+
+def _class_members(code, brace, end):
+    """the methods declared directly in the class body code[brace] … code[end]: dicts name, start, body_start,
+    body_end, attrs, expression. A member header runs from the previous member's end to its first top-level '{', '=>'
+    or ';'. A method's signature has a name and a '(' with no '=' before it (a field initialiser is not a method);
+    a header with a type keyword opens a nested type, whose members its own class entry reads."""
+    out, k = [], brace + 1
+    while k < end:
+        while k < end and code[k] in " \t\r\n;":
+            k += 1
+        if k >= end:
+            break
+        start = k
+        stop, j = None, k
+        depth = 0
+        while j < end:
+            ch = code[j]
+            if ch in "([":
+                depth += 1
+            elif ch in ")]":
+                depth -= 1
+            elif depth == 0 and ch == "{":
+                stop = "{"
+                break
+            elif depth == 0 and ch == ";":
+                stop = ";"
+                break
+            elif depth == 0 and ch == "=" and j + 1 < end and code[j + 1] == ">":
+                stop = "=>"
+                break
+            j += 1
+        if stop is None:
+            break
+        header = code[start:j]
+        attrs, sig = _header_parts(header)
+        if stop == "{":
+            close = match_close(code, j, "{", "}")
+            close = end if close < 0 else close
+            body_start, body_end, nxt = j, close, close + 1
+        elif stop == "=>":
+            semi = _skip_to(code, j + 2, end, ";")
+            body_start, body_end, nxt = j, semi, semi + 1
+        else:
+            body_start = body_end = None
+            nxt = j + 1
+        k = nxt
+        if body_start is None:
+            continue
+        paren = sig.find("(")
+        if TYPE_KEYWORD.search(sig[:paren] if paren >= 0 else sig):
+            continue   # a nested type ("where T : class" after a method's parameters is not one)
+        if paren < 0 or "=" in sig[:paren]:
+            continue   # a property, an indexer, an event or a field initialiser
+        m = MEMBER_NAME.search(sig[:paren])
+        if not m or m.group(1) in NOT_A_METHOD:
+            continue
+        # the declaration's position: the name right before the header's first '(' outside its [..] attributes
+        depth, hp = 0, -1
+        for q, ch in enumerate(header):
+            if ch == "[":
+                depth += 1
+            elif ch == "]":
+                depth -= 1
+            elif ch == "(" and depth == 0:
+                hp = q
+                break
+        name_pos = start + max(0, header.rfind(m.group(1), 0, hp if hp >= 0 else len(header)))
+        out.append({"name": m.group(1), "start": name_pos, "body_start": body_start, "body_end": body_end,
+                    "attrs": attrs, "expression": stop == "=>"})
+    return out
+
+
 class CsFile:
     def __init__(self, path, rel, text):
         self.path, self.rel, self.text = path, rel, text
@@ -155,26 +275,19 @@ class CsFile:
             attrs = _attributes_before(self.code, cm.start())
             self.classes.append((cm.group(1), brace, end if end > 0 else len(self.code), bool(EXPLICIT_ATTR.search(attrs))))
         self.methods = []    # dicts: name, start, body_start, body_end, test, explicit, full
-        for mm in METHOD_DECL.finditer(self.code):
-            if mm.group(1) in ("if", "for", "foreach", "while", "switch", "using", "return", "new"):
-                continue
-            paren = mm.end() - 1
-            close = match_close(self.code, paren, "(", ")")
-            if close < 0:
-                continue
-            rest = self.code[close + 1:close + 200].lstrip()
-            if not rest.startswith("{"):
-                continue   # an abstract/extern declaration or an expression-bodied member
-            body = close + 1 + (len(self.code[close + 1:close + 200]) - len(rest))
-            end = match_close(self.code, body, "{", "}")
-            attrs = _attributes_before(self.code, mm.start())
-            chain = self.class_chain(mm.start())
-            is_test = bool(TEST_ATTR.search(attrs)) and bool(chain)
-            explicit = bool(EXPLICIT_ATTR.search(attrs)) or any(c[3] for c in chain)
-            full = ".".join(filter(None, [self.namespace, "+".join(c[0] for c in chain), mm.group(1)]))
-            self.methods.append({"name": mm.group(1), "start": mm.start(), "body_start": body,
-                                 "body_end": end if end > 0 else len(self.code), "test": is_test, "explicit": explicit,
-                                 "full": full, "line": self.line(mm.start())})
+        # C-00 07.10 (S-08 1467f986: five false ERRORs): methods are read member by member inside each class body — any
+        # access modifier or none, a block body or an expression body (=> …;); local functions, lambdas and nested types
+        # are not members of the class whose body holds them
+        for name, brace, end, _ in self.classes:
+            for mem in _class_members(self.code, brace, end):
+                chain = self.class_chain(mem["start"])
+                attrs = mem["attrs"]
+                is_test = bool(TEST_ATTR.search(attrs)) and bool(chain)
+                explicit = bool(EXPLICIT_ATTR.search(attrs)) or any(c[3] for c in chain)
+                full = ".".join(filter(None, [self.namespace, "+".join(c[0] for c in chain), mem["name"]]))
+                self.methods.append({"name": mem["name"], "start": mem["start"], "body_start": mem["body_start"],
+                                     "body_end": mem["body_end"], "test": is_test, "explicit": explicit,
+                                     "full": full, "line": self.line(mem["start"]), "expression": mem["expression"]})
 
     def class_chain(self, pos):
         return [c for c in self.classes if c[1] < pos < c[2]]

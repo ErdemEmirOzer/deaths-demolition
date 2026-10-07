@@ -362,3 +362,67 @@ class RealRepoTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class MemberScanTests(unittest.TestCase):
+    """C-00 07.10 (S-08 1467f986: five false ERRORs): the C# scan reads class members, not a regex over the file —
+    expression-bodied tests, helpers with no access modifier, attributes with arguments; local functions, lambdas,
+    field initialisers, properties and nested types are not methods of the class around them."""
+    SRC = """using System.Collections;
+namespace DD.Prototype.Tests.PlayMode
+{
+    public sealed class KitTests
+    {
+        static readonly System.Func<int> Factory = () => 1;          // a field initialiser, not a method
+        int Count => 3;                                               // a property, not a method
+        public string this[int i] => "x";                             // an indexer
+        [UnityTest]
+        [Explicit("kanıt (1)")]
+        [Timeout(1800000)]
+        public IEnumerator Kit_Olc() => Kit(new[] { (1, "a") });
+        [Test] public void Inline_Olc() { int Local() => 2; R2Olcum.Yaz("H1", "DD.Prototype.Tests.PlayMode.KitTests.Inline_Olc", new Dictionary<string, double> { { "maxCm", Local() } }, 1); }
+        IEnumerator Kit((int, string)[] modes)
+        {
+            var s1 = new Dictionary<string, double> { { "maxCm", 0.1 } };
+            R2Olcum.Yaz("H1", "DD.Prototype.Tests.PlayMode.KitTests.Kit_Olc", s1, 1);
+            yield return null;
+        }
+        static T Pick<T>(T a) where T : class { return a; }
+#if UNITY_EDITOR
+        [UnityTest] public IEnumerator Editor_Only() { yield return null; }
+#endif
+        public sealed class Inner
+        {
+            [Test] public void Nested_Olc() => Helper();
+            void Helper() { }
+        }
+    }
+}
+"""
+
+    def scan(self):
+        return lint.CsFile(Path("Kit.cs"), "Kit.cs", self.SRC)
+
+    def test_expression_bodied_and_attributed_tests_are_found(self):
+        cs = self.scan()
+        tests = {m["full"]: m for m in cs.methods if m["test"]}
+        ns = "DD.Prototype.Tests.PlayMode.KitTests"
+        self.assertEqual({ns + ".Kit_Olc", ns + ".Inline_Olc", ns + ".Editor_Only", ns + "+Inner.Nested_Olc"}, set(tests))
+        self.assertTrue(tests[ns + ".Kit_Olc"]["explicit"] and tests[ns + ".Kit_Olc"]["expression"])
+        self.assertFalse(tests[ns + ".Inline_Olc"]["explicit"])
+
+    def test_helpers_without_modifiers_count_and_non_methods_do_not(self):
+        names = {m["name"] for m in self.scan().methods}
+        self.assertTrue({"Kit", "Pick", "Helper"} <= names)
+        self.assertFalse({"Factory", "Count", "this", "Local", "Inner", "KitTests"} & names)
+
+    def test_a_write_in_a_helper_or_a_local_function_belongs_to_the_right_member(self):
+        writes = {w["line"]: w for w in lint.scan_writes([self.scan()])}
+        helper = next(w for w in writes.values() if w["helper"])
+        self.assertEqual(("DD.Prototype.Tests.PlayMode.KitTests.Kit", ["maxCm"]), (helper["helper"], helper["keys"]))
+        inline = next(w for w in writes.values() if w["test"])
+        self.assertEqual("DD.Prototype.Tests.PlayMode.KitTests.Inline_Olc", inline["test"])   # not the local function
+
+    def test_the_declaration_line_is_the_name_not_the_attribute(self):
+        m = next(m for m in self.scan().methods if m["name"] == "Kit_Olc")
+        self.assertIn("Kit_Olc()", self.SRC.splitlines()[m["line"] - 1])
