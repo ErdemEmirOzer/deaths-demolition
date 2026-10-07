@@ -549,6 +549,21 @@ class RefusalTests(Base):
         listed = (self.evidence / "stop-tree.txt").read_text()
         self.assertEqual(dirt, [line for line in listed.splitlines() if line.startswith("??")])
 
+    def test_a_second_stop_keeps_the_first_stop_tree(self):
+        """gt 07.10 NIT: a --resume that stops again moves the earlier stop-tree.txt aside (.prev-1), never over it."""
+        state = {"n": 0}
+
+        def porcelain():
+            state["n"] += 1
+            return "" if state["n"] <= 2 else "?? mono_crash.mem.2.1.blob"
+        chain = make_chain(self.evidence, ["a6", "a0"], git=FakeGit(porcelain=porcelain))
+        self.evidence.mkdir(parents=True, exist_ok=True)
+        (self.evidence / "stop-tree.txt").write_text("HEAD x\nFINAL y\n?? mono_crash.mem.1.1.blob\n")   # the first stop's list
+        self.assertEqual(2, chain.run())
+        self.assertIn("?? mono_crash.mem.1.1.blob", (self.evidence / "stop-tree.txt.prev-1").read_text())
+        self.assertIn("?? mono_crash.mem.2.1.blob", (self.evidence / "stop-tree.txt").read_text())
+        self.assertTrue(any("MOVED stop-tree.txt → stop-tree.txt.prev-1" in line for line in chain.lines), chain.lines)
+
     def test_stop_tree_unwritable_still_stops_with_the_line(self):
         """gt 07.10 (SHOULD): stop-tree.txt that cannot be written never costs the STOP line (exit 2, not 1)."""
         state = {"n": 0}
