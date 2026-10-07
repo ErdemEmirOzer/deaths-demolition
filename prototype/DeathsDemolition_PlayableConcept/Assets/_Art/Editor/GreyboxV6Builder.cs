@@ -57,7 +57,27 @@ namespace DD.Art.Pipeline.EditorTools
             public float X0, X1, Z0, Z1, Floor, Height;
             public Door[] Doors;
             public bool Walls = true, RoofOnly;
+            /// <summary>WP-092: a layout room's capacity (the v6 rooms take theirs from <see cref="RoomCapacity"/>).</summary>
+            public int Capacity;
         }
+
+        /// <summary>WP-092 · The v6 rooms and, when the world is dressed, the layout plan's buildings (WorldV5Layout) — the rooms the region
+        /// volumes and the acoustic spaces list. The greybox boxes and the garden's tree clearances keep <see cref="Rooms"/> alone.</summary>
+        public static List<Room> AllRooms(bool dress = true)
+        {
+            var rooms = new List<Room>(Rooms);
+            if (dress) rooms.AddRange(WorldV5Layout.Rooms(WorldV5Layout.Load()));
+            return rooms;
+        }
+
+        public static int CapacityOf(Room room) => room.Capacity > 0 ? room.Capacity : RoomCapacity[room.Id];
+
+        /// <summary>WP-097 roof coverage (S-08): a roofed place that is neither a room nor a corridor still needs its sound space — the karamon's
+        /// open gate roof (8 × 3.2 m over the south axis) reads like the azumaya, a roof-only Corridor.</summary>
+        public static readonly (string id, string enclosure, float x0, float z0, float x1, float z1, float ceiling)[] AcousticExtras =
+        {
+            ("G_Karamon", "Corridor", -4f, -17.6f, 4f, -14.4f, 6f),
+        };
 
         public sealed class Corridor
         {
@@ -234,11 +254,14 @@ namespace DD.Art.Pipeline.EditorTools
             boxes += BuildSouth(g, basins);
             boxes += BuildBamboo(g);
             WorldV5Dress.Report dressed = dress ? WorldV5Dress.Apply(g, root.transform) : null;
+            WorldV5Layout.Report laid = dress ? WorldV5Layout.Apply(root.transform, WorldV5Layout.Load()) : null;   // WP-092: buildings, clusters, lamps
+            List<Room> rooms = AllRooms(dress);
             // R3 #1 (AD 07.10 M1): the ground and the water keep the runtime ambient (the approved Look B tone), not the baked probes
             int probeOff = WorldV5Lighting.ApplyProbeUsage(root.transform);
+            int probeBlend = WorldV5Lighting.CountProbeBlending(root.transform);   // WP-092: the rest of the world blends the baked probes
 
             // WP-074 B1c · S-03 WP-076 B6 §5.2 region volumes (rooms, room exits, chokepoints).
-            BuildRegionVolumes(root.transform);
+            BuildRegionVolumes(root.transform, rooms);
 
             WorldPlacementAsset placement = WritePlacement(apPlacement);
             var bootstrap = root.AddComponent<Ap005WorldBootstrap>();
@@ -258,10 +281,10 @@ namespace DD.Art.Pipeline.EditorTools
 
             EditorSceneManager.SaveScene(scene, ScenePath);
             RegisterDevScene();
-            WriteJson();
+            WriteJson(rooms);
             AssetDatabase.SaveAssets();
             string baked = bake ? ", " + WorldV5Lighting.Bake(scene, root.transform) : "";
-            return boxes + " boxes" + (dressed != null ? " (" + dressed + ")" : "") + ", " + probeOff + " renderers off the probes, NavMesh " + triangles + " triangles, " + links + " island links, placement " + placement.spawnPoints.Count + " spawns / " + placement.weaponPoints.Count + " weapons -> " + ScenePath + baked;
+            return boxes + " boxes" + (dressed != null ? " (" + dressed + ")" : "") + (laid != null ? ", " + laid : "") + ", " + probeOff + " renderers off the probes, " + probeBlend + " blending them, NavMesh " + triangles + " triangles, " + links + " island links, placement " + placement.spawnPoints.Count + " spawns / " + placement.weaponPoints.Count + " weapons -> " + ScenePath + baked;
         }
 
         // ---------------------------------------------------------------- pieces
@@ -481,6 +504,12 @@ namespace DD.Art.Pipeline.EditorTools
         };
 
         public const string R7Id = "R7_SakuraCourt", RegionGroupName = "Region Volumes";
+
+        /// <summary>WP-092 (S-03 08.10 (c)) · Gates of a corridor's side doors (roomId = the corridor): K1's west door on the kit bay's wall line.</summary>
+        public static readonly (string id, string corridor, Vector3 centre, float width, char side)[] CorridorGates =
+        {
+            ("K1_W0", "K1_WestKairo", new Vector3(-33f - 2.235f, KairoFloor, 0f), 2.0f, 'W'),
+        };
         /// <summary>A door no wider than this is a chokepoint (Ek B §3.3: clear width ≤ 2.5 m).</summary>
         public const float ChokepointWidth = 2.5f;
 
@@ -491,12 +520,14 @@ namespace DD.Art.Pipeline.EditorTools
         /// wider door is an exit only (capacity 0, cost 1.0); the C8 bridge (Bridge, 2, 1.35), the C1 stepping causeway (Corridor, 1,
         /// 1.3) and the closed K1 kairō (Corridor, 6, 1.3). World-axis boxes; the markers register themselves in play.
         /// </summary>
-        public static int BuildRegionVolumes(Transform root)
+        public static int BuildRegionVolumes(Transform root) => BuildRegionVolumes(root, AllRooms());
+
+        public static int BuildRegionVolumes(Transform root, List<Room> rooms)
         {
             var group = new GameObject(RegionGroupName).transform;
             group.SetParent(root, false);
             var openings = new List<(string room, string id, Vector3 centre, float width, char side, float floor)>();
-            foreach (Room r in Rooms)
+            foreach (Room r in rooms)
             {
                 if (r.Doors == null) continue;
                 var perSide = new Dictionary<char, int>();
@@ -516,12 +547,15 @@ namespace DD.Art.Pipeline.EditorTools
             openings.Add((R7Id, R7Id + "_N0", new Vector3(36f, 0f, 10f), 4f, 'N', 0f));
             openings.Add((R7Id, R7Id + "_S0", new Vector3(36f, 0f, -8f), 4f, 'S', 0f));
 
+            // WP-092 (S-03 08.10 (c)): K1's west door, now the kit door (2.0 m clear) — a chokepoint gate of the K1 corridor.
+            foreach ((string id, string corridor, Vector3 centre, float width, char side) in CorridorGates) openings.Add((corridor, id, centre, width, side, KairoFloor));
+
             int n = 0;
-            foreach (Room r in Rooms)
+            foreach (Room r in rooms)
             {
                 float h = r.Height;
                 Marker(group, r.Id, NavRegionKind.Room, new Vector3((r.X0 + r.X1) * 0.5f, r.Floor + h * 0.5f, (r.Z0 + r.Z1) * 0.5f), new Vector3(r.X1 - r.X0, h, r.Z1 - r.Z0),
-                    1f, RoomCapacity[r.Id], null, "");
+                    1f, CapacityOf(r), null, "");
                 n++;
             }
 
@@ -1021,7 +1055,7 @@ namespace DD.Art.Pipeline.EditorTools
             PlacementImporter.EnsureWorldSourceAsset(WorldSource.V6);
         }
 
-        private static void WriteJson()
+        private static void WriteJson(List<Room> rooms)
         {
             var sb = new StringBuilder();
             sb.Append("{\n  \"schema\": \"dd.spawn-gates/v6\",\n  \"source\": \"WP-074 B1 greybox (Ek B §3.4); proposal to S-03 WP-076\",\n  \"halfExtent\": 55,\n  \"playerStart\": [0, -3],\n  \"gates\": [\n");
@@ -1044,20 +1078,20 @@ namespace DD.Art.Pipeline.EditorTools
             for (int r = 0; r < RegionIds.Length; r++)
                 sb.Append("    { \"id\": \"").Append(RegionIds[r]).Append("\", \"polygonXZ\": [").Append(string.Join(", ", Array.ConvertAll(RegionPolygons[r], F))).Append("] }").Append(r + 1 < RegionIds.Length ? ",\n" : "\n");
             sb.Append("  ],\n  \"rooms\": [\n");
-            for (int i = 0; i < Rooms.Length; i++)
+            for (int i = 0; i < rooms.Count; i++)
             {
-                Room room = Rooms[i];
+                Room room = rooms[i];
                 sb.Append("    { \"id\": \"").Append(room.Id).Append("\", \"box\": [").Append(F(room.X0)).Append(", ").Append(F(room.Z0)).Append(", ").Append(F(room.X1)).Append(", ").Append(F(room.Z1))
-                  .Append("], \"floor\": ").Append(F(room.Floor)).Append(", \"exits\": ").Append(room.Doors != null ? room.Doors.Length : 4).Append(" }").Append(i + 1 < Rooms.Length ? ",\n" : "\n");
+                  .Append("], \"floor\": ").Append(F(room.Floor)).Append(", \"exits\": ").Append(room.Doors != null ? room.Doors.Length : 4).Append(" }").Append(i + 1 < rooms.Count ? ",\n" : "\n");
             }
 
             sb.Append("  ]\n}\n");
             File.WriteAllText(RegionsJson, sb.ToString());
 
             sb.Clear();
-            sb.Append("{\n  \"schema\": \"dd.acoustic-spaces/v6\",\n  \"note\": \"WP-074 §3 / Ek B §4; Enclosure Open | Corridor | Hall; outside every space = Open\",\n  \"spaces\": [\n");
+            sb.Append("{\n  \"schema\": \"dd.acoustic-spaces/v6\",\n  \"note\": \"WP-074 §3 / Ek B §4; Enclosure Open | Corridor | Hall | Room (WP-097: closed, 20–90 m², ceiling ≤ 4 m); outside every space = Open\",\n  \"spaces\": [\n");
             var spaces = new List<string>();
-            foreach (Room room in Rooms)
+            foreach (Room room in rooms)
             {
                 var thresholds = new List<string>();
                 if (room.Doors != null)
@@ -1066,7 +1100,7 @@ namespace DD.Art.Pipeline.EditorTools
                         Vector2 p = d.Side == 'N' ? new Vector2(d.At, room.Z1) : d.Side == 'S' ? new Vector2(d.At, room.Z0) : d.Side == 'E' ? new Vector2(room.X1, d.At) : new Vector2(room.X0, d.At);
                         thresholds.Add("[" + F(p.x) + ", " + F(p.y) + ", " + F(d.Width) + "]");
                     }
-                spaces.Add("    { \"id\": \"" + room.Id + "\", \"enclosure\": \"" + room.Acoustic + "\", \"polygonXZ\": [" + F(room.X0) + ", " + F(room.Z0) + ", " + F(room.X1) + ", " + F(room.Z0) + ", " + F(room.X1) + ", " + F(room.Z1) + ", " + F(room.X0) + ", " + F(room.Z1)
+                spaces.Add("    { \"id\": \"" + room.Id + "\", \"enclosure\": \"" + AcousticClassOf(room) + "\", \"polygonXZ\": [" + F(room.X0) + ", " + F(room.Z0) + ", " + F(room.X1) + ", " + F(room.Z0) + ", " + F(room.X1) + ", " + F(room.Z1) + ", " + F(room.X0) + ", " + F(room.Z1)
                            + "], \"floor\": " + F(room.Floor) + ", \"ceiling\": " + F(room.Floor + room.Height) + ", \"areaM2\": " + F((room.X1 - room.X0) * (room.Z1 - room.Z0)) + ", \"thresholds\": [" + string.Join(", ", thresholds) + "] }");
             }
 
@@ -1082,11 +1116,30 @@ namespace DD.Art.Pipeline.EditorTools
                 spaces.Add("    { \"id\": \"" + c.Id + "\", \"enclosure\": \"Corridor\", \"closed\": " + (c.Closed ? "true" : "false") + ", \"segmentsXZ\": [" + string.Join(", ", poly) + "], \"ceiling\": " + F(KairoFloor + c.Height) + " }");
             }
 
+            foreach ((string id, string enclosure, float x0, float z0, float x1, float z1, float ceiling) in AcousticExtras)
+                spaces.Add("    { \"id\": \"" + id + "\", \"enclosure\": \"" + enclosure + "\", \"polygonXZ\": [" + F(x0) + ", " + F(z0) + ", " + F(x1) + ", " + F(z0) + ", " + F(x1) + ", " + F(z1) + ", " + F(x0) + ", " + F(z1)
+                           + "], \"floor\": 0, \"ceiling\": " + F(ceiling) + ", \"areaM2\": " + F((x1 - x0) * (z1 - z0)) + ", \"thresholds\": [] }");
+
             sb.Append(string.Join(",\n", spaces)).Append("\n  ]\n}\n");
             File.WriteAllText(AcousticJson, sb.ToString());
             AssetDatabase.ImportAsset(SpawnGatesJson);
             AssetDatabase.ImportAsset(RegionsJson);
             AssetDatabase.ImportAsset(AcousticJson);
+        }
+
+        /// <summary>
+        /// WP-097 / WP-092 (S-08 K3, C-00 07.10) · The acoustic class of a room: a closed room of 20–90 m² under a ceiling of
+        /// ≤ 4 m is a "Room" (the tea house, the east pavilion and the kura rang 1.6–1.8 s as halls; a small room wants
+        /// 0.35–0.65 s). Otherwise the authored class stays (the chūmon is a Corridor at 5 m); a room authored without one takes
+        /// the full rule: narrowest side &lt; 3.5 m → Corridor, else Hall.
+        /// </summary>
+        public static string AcousticClassOf(Room room)
+        {
+            float w = room.X1 - room.X0, d = room.Z1 - room.Z0, area = w * d;
+            bool closed = room.Walls && !room.RoofOnly;
+            if (closed && area >= 20f && area <= 90f && room.Height <= 4f + 1e-3f) return "Room";
+            if (!string.IsNullOrEmpty(room.Acoustic)) return room.Acoustic;
+            return Mathf.Min(w, d) < 3.5f ? "Corridor" : "Hall";
         }
 
         // ---------------------------------------------------------------- helpers

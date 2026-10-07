@@ -35,6 +35,8 @@ namespace DD.Art.Pipeline.EditorTools
         public const string ProbeGroupName = "Light Probes (B8)", ReflectionGroupName = "Reflection Probes (B8)";
         public const float LightmapResolution = 16f, ProbeGridHalf = 54f, ProbeGridStep = 6f;
         public static readonly float[] ProbeHeights = { 0.6f, 2.0f, 4.5f };
+        public const float InteriorProbeStep = 1.5f;
+        public static readonly float[] InteriorProbeHeights = { 0.5f, 1.6f, 2.6f };
         public const int ReflectionResolution = 512, BudgetMb = 96;
 
         /// <summary>R3 #1: the standalone copy of the baked probes, used only when the lighting data's own LightProbes cannot be loaded.</summary>
@@ -48,17 +50,42 @@ namespace DD.Art.Pipeline.EditorTools
                    || (rendererName.StartsWith("Pond", StringComparison.Ordinal) && rendererName.EndsWith("_Water", StringComparison.Ordinal));
         }
 
-        /// <summary>R3 #1 · sets <see cref="IsProbeOff"/>'s renderers to LightProbeUsage.Off; returns how many (the builder runs it after the dress).</summary>
+        /// <summary>Unlit cards and sky that never sample probes (left as they are).</summary>
+        public static readonly string[] ProbeIgnoredShaders = { "DD/FogSheet", "DD/ShaftCard", "DD/SkyPlate", "DD/SkyPanorama", "DD/UnderstorySkirt", "DD/SunDisc" };
+
+        /// <summary>
+        /// R3 #1 · sets <see cref="IsProbeOff"/>'s renderers to LightProbeUsage.Off; returns how many (the builder runs it after the dress).
+        /// WP-092 (R3): every other world renderer now BLENDS the baked light probes and reflection probes. The kit prefabs are
+        /// built with both Off (ArtLibraryPrefabBuilder, WP-012 — there were no baked probes then), so the dress's LOD1/2, its
+        /// dressing and its vegetation took the runtime ambient SH and ignored the bake's probes and the lamp-lit interiors.
+        /// Lightmapped LOD0 pieces keep their lightmap; the probes only feed what the lightmap does not cover.
+        /// </summary>
         public static int ApplyProbeUsage(Transform root)
         {
             int n = 0;
             foreach (MeshRenderer r in root.GetComponentsInChildren<MeshRenderer>(true))
             {
-                if (!IsProbeOff(r.name)) continue;
-                r.lightProbeUsage = LightProbeUsage.Off;
-                n++;
+                if (IsProbeOff(r.name))
+                {
+                    r.lightProbeUsage = LightProbeUsage.Off;
+                    n++;
+                    continue;
+                }
+
+                if (r.sharedMaterial != null && Array.IndexOf(ProbeIgnoredShaders, r.sharedMaterial.shader.name) >= 0) continue;
+                r.lightProbeUsage = LightProbeUsage.BlendProbes;
+                r.reflectionProbeUsage = ReflectionProbeUsage.BlendProbes;
             }
 
+            return n;
+        }
+
+        /// <summary>WP-092 · how many world renderers blend the baked probes after <see cref="ApplyProbeUsage"/> (evidence line).</summary>
+        public static int CountProbeBlending(Transform root)
+        {
+            int n = 0;
+            foreach (MeshRenderer r in root.GetComponentsInChildren<MeshRenderer>(true))
+                if (r.lightProbeUsage == LightProbeUsage.BlendProbes) n++;
             return n;
         }
 
@@ -321,6 +348,12 @@ namespace DD.Art.Pipeline.EditorTools
                 Add(new Vector3(x, 2.2f, z));
                 Add(new Vector3(x, 3.8f, z));
             }
+
+            // WP-092: the interiors' lamp pools on the furniture (probe-lit dressing) — a 1.5 m grid inside every layout building, three heights.
+            foreach (Bounds room in WorldV5Layout.InteriorVolumes(WorldV5Layout.Load()))
+            for (float x = room.min.x + 0.75f; x <= room.max.x - 0.5f; x += InteriorProbeStep)
+            for (float z = room.min.z + 0.75f; z <= room.max.z - 0.5f; z += InteriorProbeStep)
+                foreach (float h in InteriorProbeHeights) Add(new Vector3(x, room.min.y + h, z));
 
             return list.ToArray();
         }

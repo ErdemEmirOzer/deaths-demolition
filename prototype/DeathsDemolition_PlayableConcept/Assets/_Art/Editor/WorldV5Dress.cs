@@ -243,8 +243,8 @@ namespace DD.Art.Pipeline.EditorTools
             ("K5_SouthShore", new[] { new Vector2(-22f, -46f), new Vector2(0f, -46f) }, false),
         };
 
-        /// <summary>Kit pieces under the kairō group: every interior vertex a kairo_angle corner, and each segment — less the corners' arms —
-        /// its length over 2.4 m in bays, rounded (≥ 1; none where two corners' arms meet).</summary>
+        /// <summary>Kit pieces under the kairō group: every interior vertex a kairo_angle corner, every <see cref="KairoDoorPieces"/> door, and
+        /// each run of a segment — less the corners' arms and the doors — its length over 2.4 m in bays, rounded (≥ 1; none where arms meet).</summary>
         public static int BayCount()
         {
             int n = 0;
@@ -253,13 +253,72 @@ namespace DD.Art.Pipeline.EditorTools
                 n += Mathf.Max(0, path.Length - 2);
                 for (int i = 0; i + 1 < path.Length; i++)
                 {
-                    float len = Vector2.Distance(path[i], path[i + 1]) - (i > 0 ? KairoAngleArm : 0f) - (i + 2 < path.Length ? KairoAngleArm : 0f);
-                    if (len >= MinBayLength) n += Mathf.Max(1, Mathf.RoundToInt(len / KairoBay));
+                    Vector2 d = (path[i + 1] - path[i]).normalized;
+                    Vector2 a = path[i] + d * (i > 0 ? KairoAngleArm : 0f), b = path[i + 1] - d * (i + 2 < path.Length ? KairoAngleArm : 0f);
+                    foreach ((float from, float to, bool door) in KairoRuns(id, a, b))
+                        n += door ? 1 : to - from >= MinBayLength ? Mathf.Max(1, Mathf.RoundToInt((to - from) / KairoBay)) : 0;
                 }
             }
 
             return n;
         }
+
+        /// <summary>
+        /// WP-092 (S-03 08.10 (c)) · Kit doors on a kairō side: K1's west door (z 0) is AP-023 kairo_door V01 (3.6 m, 2.0 m clear on its −Y
+        /// side). The half-open V03 bay it replaces left two 1.06 m slots, which the NavMesh closed although the player could walk through them.
+        /// </summary>
+        public static readonly (string corridor, Vector2 at, char side)[] KairoDoorPieces = { ("K1_WestKairo", new Vector2(-33f, 0f), 'W') };
+
+        public const float KairoDoorLength = 3.6f;
+        public const string KairoDoorFamily = "kairo_door";
+
+        /// <summary>A segment a → b of corridor <paramref name="id"/> as runs along it (distances from a): bay runs, and the door pieces cut into them.</summary>
+        public static List<(float from, float to, bool door)> KairoRuns(string id, Vector2 a, Vector2 b)
+        {
+            float len = Vector2.Distance(a, b);
+            Vector2 d = (b - a) / Mathf.Max(len, 1e-6f);
+            var doors = new List<float>();
+            foreach ((string corridor, Vector2 at, char side) in KairoDoorPieces)
+            {
+                if (corridor != id) continue;
+                float u = Vector2.Dot(at - a, d);
+                if (u > KairoDoorLength * 0.5f && u < len - KairoDoorLength * 0.5f && Vector2.Distance(a + d * u, at) < 0.5f) doors.Add(u);
+            }
+
+            doors.Sort();
+            var runs = new List<(float, float, bool)>();
+            float cursor = 0f;
+            foreach (float u in doors)
+            {
+                runs.Add((cursor, u - KairoDoorLength * 0.5f, false));
+                runs.Add((u - KairoDoorLength * 0.5f, u + KairoDoorLength * 0.5f, true));
+                cursor = u + KairoDoorLength * 0.5f;
+            }
+
+            runs.Add((cursor, len, false));
+            return runs;
+        }
+
+        /// <summary>
+        /// WP-092 (S-03 08.10 (b)4) · The kit door's kamoi (lintel) block starts 2.45 m over its 0.25 floor, under the Executioner's 2.66 m body:
+        /// its collider goes (the beam stays in sight), so the door's physical head is the eave beam's. Returns the colliders switched off.
+        /// </summary>
+        internal static int LintelPass(GameObject door)
+        {
+            Physics.SyncTransforms();
+            float y = door.transform.position.y;
+            int n = 0;
+            foreach (Collider c in door.GetComponentsInChildren<Collider>(true))
+            {
+                Bounds b = c.bounds;
+                if (b.min.y - y > LintelBottomMin && b.min.y - y < LintelBottomMax && b.max.y - y < 4.2f) { c.enabled = false; n++; }
+            }
+
+            return n;
+        }
+
+        /// <summary>The kamoi collider's bottom over the piece's base (0.25 floor + 2.45 clear = 2.70) lies in this band.</summary>
+        public const float LintelBottomMin = 2.55f, LintelBottomMax = 2.85f;
 
         public const float KairoBay = 2.4f;
         public const string OpenBayFamily = "kairo_open";
@@ -606,12 +665,32 @@ namespace DD.Art.Pipeline.EditorTools
                 {
                     // v007-B: an interior vertex is a kairo_angle corner — its arms take KairoAngleArm of each segment it joins.
                     Vector2 d = (path[seg + 1] - path[seg]).normalized;
-                    Vector2 a = path[seg] + d * (seg > 0 ? KairoAngleArm : 0f), b = path[seg + 1] - d * (seg + 2 < path.Length ? KairoAngleArm : 0f);
-                    float len = Vector2.Dot(b - a, d);
+                    Vector2 segA = path[seg] + d * (seg > 0 ? KairoAngleArm : 0f), segB = path[seg + 1] - d * (seg + 2 < path.Length ? KairoAngleArm : 0f);
+                    float deg = Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg;
+                    foreach ((float from, float to, bool isDoor) in KairoRuns(id, segA, segB))
+                    {
+                    if (isDoor)
+                    {
+                        // WP-092: the kit door, its −Y side (the opening) toward the door's side of the corridor.
+                        Vector2 at = segA + d * ((from + to) * 0.5f);
+                        char doorSide = 'W';
+                        foreach ((string corridor, Vector2 p, char side) in KairoDoorPieces) if (corridor == id && Vector2.Distance(p, at) < 0.5f) doorSide = side;
+                        Vector2 want = doorSide == 'W' ? Vector2.left : doorSide == 'E' ? Vector2.right : doorSide == 'N' ? Vector2.up : Vector2.down;
+                        float a0 = deg * Mathf.Deg2Rad;
+                        float doorYaw = Vector2.Dot(new Vector2(Mathf.Sin(a0), -Mathf.Cos(a0)), want) > 0f ? deg : deg + 180f;   // kit −Y = (sin, −cos)
+                        GameObject door = Place(group, KairoDoorFamily, 1, Mz(at.x, at.y, 0f, doorYaw), Vector3.zero, "structure");
+                        door.name = id + "_Door_" + (index++).ToString("00");
+                        LintelPass(door);
+                        Transform doorRoof = door.transform.Find(ArtLibraryPrefabBuilder.RoofName);
+                        if (doorRoof != null) RoofOccluder(door.transform, doorRoof);
+                        continue;
+                    }
+
+                    Vector2 a = segA + d * from, b = segA + d * to;
+                    float len = to - from;
                     if (len < MinBayLength) continue;   // the corners' arms meet: no straight bay between them
                     int n = Mathf.Max(1, Mathf.RoundToInt(len / KairoBay));
                     float s = len / (n * KairoBay);
-                    float deg = Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg;
                     for (int i = 0; i < n; i++)
                     {
                         Vector2 c = a + d * ((i + 0.5f) * len / n);
@@ -638,6 +717,7 @@ namespace DD.Art.Pipeline.EditorTools
                         if (!open) RailsOff(bay);
                         Transform roof = bay.transform.Find(ArtLibraryPrefabBuilder.RoofName);
                         if (roof != null) RoofOccluder(bay.transform, roof);
+                    }
                     }
                 }
             }
@@ -1116,7 +1196,7 @@ namespace DD.Art.Pipeline.EditorTools
         }
 
         /// <summary>An instance made visual only: its colliders off (the greybox collision or the NavMesh boundary rules there).</summary>
-        private static void Visual(GameObject go)
+        internal static void Visual(GameObject go)
         {
             foreach (Collider c in go.GetComponentsInChildren<Collider>(true)) c.gameObject.SetActive(false);
         }
@@ -1141,12 +1221,18 @@ namespace DD.Art.Pipeline.EditorTools
         /// <summary>One library prefab at a Blender-space matrix (+ a Blender-space offset); static and lightmap policy as PlacementImporter.</summary>
         private static GameObject Place(Transform parent, string family, int variation, Matrix4x4 blender, Vector3 blenderOffset, string role)
         {
+            return Place(parent, Ap, family, variation, blender, blenderOffset, role);
+        }
+
+        /// <summary>WP-092 · <see cref="Place(Transform, string, int, Matrix4x4, Vector3, string)"/> from any library package (AP-023, AP-030).</summary>
+        internal static GameObject Place(Transform parent, string ap, string family, int variation, Matrix4x4 blender, Vector3 blenderOffset, string role)
+        {
             string name = "SM_" + family + "_V" + variation.ToString("00");
-            if (!s_prefabs.TryGetValue(name, out GameObject prefab))
+            if (!s_prefabs.TryGetValue(ap + "/" + name, out GameObject prefab))
             {
-                prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ArtLibraryPaths.Prefab(Ap, family, name));
-                if (prefab == null) throw new InvalidOperationException("AP-023 prefab missing: " + name);
-                s_prefabs[name] = prefab;
+                prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ArtLibraryPaths.Prefab(ap, family, name));
+                if (prefab == null) throw new InvalidOperationException(ap + " prefab missing: " + name);
+                s_prefabs[ap + "/" + name] = prefab;
             }
 
             var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab, parent.gameObject.scene);
@@ -1174,7 +1260,7 @@ namespace DD.Art.Pipeline.EditorTools
         }
 
         /// <summary>A box collider on the prefab's Roof child (layer CameraOccluder, Roof class, out of the bake) so the top-down fade finds it.</summary>
-        private static void RoofOccluder(Transform instance, Transform roof)
+        internal static void RoofOccluder(Transform instance, Transform roof)
         {
             var bounds = new Bounds();
             bool any = false;
