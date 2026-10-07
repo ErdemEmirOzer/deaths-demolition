@@ -2308,6 +2308,24 @@ class KilitSirasiKuyrukTests(GuardFixture):
         self.assertFalse((d / "before.txt").exists())
 
 
+DISCOVERY_REASON = ("guard v2 suite: run it as a file — python3 tools/tests/test_userdata_guard_v2.py — it re-executes "
+                    "itself under sandbox-exec (no write to the real ~/Library, ledger or slots); never imported unsandboxed")
+
+
+def load_tests(loader, tests, pattern):
+    """C-00 07.10: `python3 -m unittest …` / discover IMPORTS this module — unsandboxed every test would fail its SANDBOX_FLAG
+    check (139 × "run this file directly"), read as a red suite. Imported without the flag the module hands over ONE skipped
+    placeholder that says how to run it; run as a file (sandboxed_main → SANDBOX_FLAG=1) every test loads as before. A test
+    named explicitly (module.Class.test) is not routed through here and still stops at its setUp assertion."""
+    if os.environ.get(SANDBOX_FLAG) == "1":
+        return tests
+
+    class GuardV2RunsOnlyAsAFile(unittest.TestCase):
+        def test_run_this_file_directly(self):
+            self.skipTest(DISCOVERY_REASON)
+    return loader.loadTestsFromTestCase(GuardV2RunsOnlyAsAFile)
+
+
 def sandboxed_main():
     if os.environ.get(SANDBOX_FLAG) == "1":
         unittest.main(verbosity=2)
