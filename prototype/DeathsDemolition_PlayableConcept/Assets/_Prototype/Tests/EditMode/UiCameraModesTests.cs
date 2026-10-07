@@ -259,16 +259,27 @@ namespace DD.Prototype.Tests.EditMode
             }
         }
 
+        /// <summary>R3 (the user 06.10: top-down only - its tests run alone): the weapon cluster stands in the corner in top-down.</summary>
         [Test]
-        public void SilahKumesi_HerModdaKosede_Parite()
+        public void SilahKumesi_Tepeden_Kosede()
         {
-            // C-00 (25.09): S-02's FP viewmodel v2 owns the bottom right (x 1074–1918, y 502–1078 at 1080), so in first person
-            // the cluster stands above the health block; top-down and third person keep the corner.
             var home = new Vector2(-32f, 32f);
             var canvas = new Vector2(1920f, 1080f);
-            Assert.AreEqual(home, RunHudScreen.WeaponClusterPosition(home, false, canvas), "TD / TP: köşe");
+            Assert.AreEqual(home, RunHudScreen.WeaponClusterPosition(home, false, canvas), "TD: köşe");
+            Assert.AreEqual(new Rect(1488f, 908f, 400f, 140f), RunHudScreen.WeaponClusterRect(false, canvas), "köşe rect (üst-sol köken)");
+            Assert.AreEqual(RunHudScreen.WeaponClusterRect(false, canvas), RunHudScreen.WeaponClusterRect(DD.Prototype.CameraSystem.CameraMode.TopDown, canvas), "TD köşe");
+        }
+
+        /// <summary>The first-person / third-person half (out of scope since 06.10, kept under FPTP).</summary>
+        [Test]
+        [Category("FPTP")]
+        public void SilahKumesi_FpTp_Parite()
+        {
+            // C-00 (25.09): S-02's FP viewmodel v2 owns the bottom right (x 1074–1918, y 502–1078 at 1080), so in first person
+            // the cluster stands above the health block; third person keeps the corner.
+            var home = new Vector2(-32f, 32f);
+            var canvas = new Vector2(1920f, 1080f);
             Assert.AreEqual(new Vector2(-1488f, 120f), RunHudScreen.WeaponClusterPosition(home, true, canvas), "FP: sol alt, can bloğunun üstü");
-            Assert.AreEqual(new Rect(1488f, 908f, 400f, 140f), RunHudScreen.WeaponClusterRect(false, canvas), "TP rect (üst-sol köken)");
             Rect fp = RunHudScreen.WeaponClusterRect(true, canvas);
             Assert.AreEqual(new Rect(32f, 820f, 400f, 140f), fp, "FP rect (üst-sol köken)");
             var viewmodel = Rect.MinMaxRect(1074f, 502f, 1918f, 1078f);   // S-02 v2 (235d167a): the ten weapons' union
@@ -277,11 +288,11 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsFalse(fp.Overlaps(health), "FP kümesi can bloğunun üstünde");
             Assert.AreEqual(fp, RunHudScreen.WeaponClusterRect(DD.Prototype.CameraSystem.CameraMode.FirstPerson), "mod imzası = FP (referans tuval)");
             Assert.AreEqual(RunHudScreen.WeaponClusterRect(false, canvas), RunHudScreen.WeaponClusterRect(DD.Prototype.CameraSystem.CameraMode.ThirdPerson, canvas), "TP köşe");
-            Assert.AreEqual(RunHudScreen.WeaponClusterRect(false, canvas), RunHudScreen.WeaponClusterRect(DD.Prototype.CameraSystem.CameraMode.TopDown, canvas), "TD köşe");
         }
 
+        /// <summary>R3 (top-down only): the top-down reticle - the minimum ring, no dot, no Sumi twin.</summary>
         [Test]
-        public void Nisangah_ModStili_TP14NoktaIle_FP80_TepedenEski()
+        public void Nisangah_Tepeden_HalkaNoktasizIkizsiz()
         {
             var host = new GameObject("ReticleHost", typeof(RectTransform));
             try
@@ -291,7 +302,22 @@ namespace DD.Prototype.Tests.EditMode
                 Assert.AreEqual(HudReticle.MinRadius, reticle.MinimumRadius, 0.001f);
                 Assert.IsFalse(reticle.DotShown, "tepeden: nokta yok");
                 Assert.IsFalse(reticle.BackingShown, "tepeden: Sumi ikiz yok (bugünkü nişangâh)");
+            }
+            finally
+            {
+                Object.DestroyImmediate(host);
+            }
+        }
 
+        /// <summary>The third-person / first-person reticle styles (out of scope since 06.10, kept under FPTP).</summary>
+        [Test]
+        [Category("FPTP")]
+        public void Nisangah_ModStili_TP14NoktaIle_FP80()
+        {
+            var host = new GameObject("ReticleHost", typeof(RectTransform));
+            try
+            {
+                var reticle = new HudReticle((RectTransform)host.transform);
                 reticle.SetMode(CameraMode.ThirdPerson);
                 Assert.AreEqual(14f, reticle.MinimumRadius, 0.001f, "WP-070 §4.5: halka en az 14 px");
                 Assert.IsTrue(reticle.DotShown, "TP: merkez nokta");

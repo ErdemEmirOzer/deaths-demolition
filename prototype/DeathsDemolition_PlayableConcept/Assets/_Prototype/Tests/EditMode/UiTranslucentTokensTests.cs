@@ -701,26 +701,19 @@ namespace DD.Prototype.Tests.EditMode
 
         // ================================================================== D2 · HUD lines (lane 2's files: measured, gaps logged)
 
+        /// <summary>
+        /// R3 (the user 06.10: top-down only - its tests run alone): the top-down rear arc and the damage wedge in linear light;
+        /// the first / third-person rows (HudRearEdge FP / TP, the reticle's Sumi twin) stand in the FPTP twin below.
+        /// </summary>
         [Test]
-        public void D2_ArkaKilCizgi_HasarKamasi_NisangahIkizi_DogrusalIsikta()
+        public void D2_ArkaKilCizgi_HasarKamasi_DogrusalIsikta()
         {
             var failures = new List<string>();
             Color white = Opaque(UiColor.TextPrimary);   // the cream-white world, as UiContrast's HUD cases
             Color black = Opaque(UiColor.SurfaceInset);  // the darkest world
 
-            // The rear hairline: StateDanger at the FP / TD 0.6 and TP 0.45 against the world it lies on.
-            foreach (KeyValuePair<string, float> arc in new[]
-                     {
-                         new KeyValuePair<string, float>("HudRearEdge FP", HudRearEdge.FirstPersonAlpha),
-                         new KeyValuePair<string, float>("HudRearEdge TP", HudRearEdge.ThirdPersonAlpha),
-                         new KeyValuePair<string, float>("HudPlayerArcs rear (TD)", HudPlayerArcs.RearAlpha),
-                     })
-            {
-                float onBlack = Log("d2.rear " + arc.Key + " /black", Ratio(UiContrast.Composite(Layer(UiColor.StateDanger, arc.Value), black), black), Boundary);
-                float onWhite = Log("d2.rear " + arc.Key + " /white", Ratio(UiContrast.Composite(Layer(UiColor.StateDanger, arc.Value), white), white), Boundary);
-                if (onBlack < Boundary) failures.Add(arc.Key + " over black " + onBlack.ToString("F2"));
-                if (onWhite < Boundary) Debug.LogWarning("[DD-TEST] d2.gap " + arc.Key + " over a cream-white world " + onWhite.ToString("F2") + ":1 - coral cannot reach 3:1 on cream by α (α 1 = 2.5:1); a Sumi twin as the reticle's would (lane 2)");
-            }
+            // The rear hairline: StateDanger at the top-down 0.6 against the world it lies on.
+            D2RearArcs(failures, black, white, new KeyValuePair<string, float>("HudPlayerArcs rear (TD)", HudPlayerArcs.RearAlpha));
 
             // The damage wedge: DamageEdge at its peak × FlashScale.
             float peak = UiTokens.DamageEdgePeakAlpha;
@@ -731,6 +724,24 @@ namespace DD.Prototype.Tests.EditMode
                 float reduced = Ratio(UiContrast.Composite(Layer(UiColor.DamageEdge, peak * UiSettings.ReducedFlashScale), world.Value), world.Value);
                 Debug.Log("[DD-TEST] d2.wedge reduceFlashes /" + world.Key + " " + reduced.ToString("F2") + " (by design: Reduce Flashes trades the edge's contrast for flash safety)");
             }
+
+            Assert.IsEmpty(failures, "D2 eşik altı:\n" + string.Join("\n", failures));
+        }
+
+        /// <summary>
+        /// D2 on the first / third-person HUD lines: the rear-edge arc at FP 0.6 / TP 0.45, and the reticle's Sumi twin (only
+        /// those modes draw it). Out of scope since 06.10, kept under FPTP.
+        /// </summary>
+        [Test]
+        [Category("FPTP")]
+        public void D2_ArkaKilCizgi_NisangahIkizi_FpTp_DogrusalIsikta()
+        {
+            var failures = new List<string>();
+            Color white = Opaque(UiColor.TextPrimary);
+            Color black = Opaque(UiColor.SurfaceInset);
+            D2RearArcs(failures, black, white,
+                new KeyValuePair<string, float>("HudRearEdge FP", HudRearEdge.FirstPersonAlpha),
+                new KeyValuePair<string, float>("HudRearEdge TP", HudRearEdge.ThirdPersonAlpha));
 
             // The reticle's Sumi twin (HudReticle.Backing: HudInk at α 1, BackingEdgePx wider): the cream / gold core on
             // it, and the twin against a cream-white world.
@@ -743,6 +754,18 @@ namespace DD.Prototype.Tests.EditMode
             Debug.Log("[DD-TEST] d2.reticle reload ticks (α " + HudReticle.ReloadTickAlpha + ") over white " + reload.ToString("F2") + " (by design: the Focus400 reload ring carries the state)");
 
             Assert.IsEmpty(failures, "D2 eşik altı:\n" + string.Join("\n", failures));
+        }
+
+        /// <summary>The rear hairline: StateDanger at each arc's α against the black and the cream-white world (a gap on cream is logged).</summary>
+        private static void D2RearArcs(List<string> failures, Color black, Color white, params KeyValuePair<string, float>[] arcs)
+        {
+            foreach (KeyValuePair<string, float> arc in arcs)
+            {
+                float onBlack = Log("d2.rear " + arc.Key + " /black", Ratio(UiContrast.Composite(Layer(UiColor.StateDanger, arc.Value), black), black), Boundary);
+                float onWhite = Log("d2.rear " + arc.Key + " /white", Ratio(UiContrast.Composite(Layer(UiColor.StateDanger, arc.Value), white), white), Boundary);
+                if (onBlack < Boundary) failures.Add(arc.Key + " over black " + onBlack.ToString("F2"));
+                if (onWhite < Boundary) Debug.LogWarning("[DD-TEST] d2.gap " + arc.Key + " over a cream-white world " + onWhite.ToString("F2") + ":1 - coral cannot reach 3:1 on cream by α (α 1 = 2.5:1); a Sumi twin as the reticle's would (lane 2)");
+            }
         }
     }
 }
