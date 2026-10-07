@@ -39,6 +39,16 @@ Some gates (`tests` in `r2-gates.json`, e.g. Z1, Z3b, H4, H4a, H4b, U3) also req
 `Passed` in an NUnit XML bound to the run (A1 core/alone, A3 isolated, or the chain's `<E>/r2/` sessions). If the
 name is not in any bound XML the gate is BLOCKED; any other result is FAIL.
 
+## Coverage floor (C-00 07.10)
+
+A gate judged on a worst value or a count reads better on fewer samples, so it may name `minSamples` in `r2-gates.json`.
+A measurement with fewer samples than that is BLOCKED ("kapsama eksik"), and one without a `samples` count is BLOCKED too
+("kapsama bilinmiyor"). A failing check still FAILs: more samples can only lower a minimum or raise a count.
+Values are for top down and the ten classics:
+- S1 66: shots 2–10 held, 6 automatics × 9 + rl_1 / sg_1 / sg_2 / sr_1 × 3.
+- S2 151: planned shots.
+Both are deterministic per roster and fire data (S-08 07.10).
+
 ## Camera scope (C-00 06.10: top down only, tests too)
 
 A gate may name the camera modes it is measured in (`modes` in `r2-gates.json`): fp — H4, H4a, H4b; tp — H1b, H1c, H6;

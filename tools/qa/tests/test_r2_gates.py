@@ -375,3 +375,32 @@ class ScopeModeTests(unittest.TestCase):
     def test_out_of_scope_rows_do_not_count_in_the_step_status(self):
         rows = [{"kind": "gate", "status": "PASS"}, {"kind": "gate", "status": r2.OUT_OF_SCOPE}]
         self.assertEqual("PASS", r2.summarize(rows))
+
+
+class MinSamplesTests(unittest.TestCase):
+    """C-00 07.10: a coverage floor for gates judged on a worst value or a count (S1 min share, S2 counts) — top down,
+    ten classics: S1 66 shots (6 automatics × shots 2–10, rl_1 / sg_1 / sg_2 / sr_1 × 3), S2 151 planned shots."""
+
+    def test_the_contract_pins_the_sound_floors(self):
+        self.assertEqual((66, 151), (gate("S1")["minSamples"], gate("S2")["minSamples"]))
+
+    def test_min_samples_is_a_whole_number_above_zero_on_a_measured_gate(self):
+        for gid, bad in (("S1", 0), ("S1", 6.5), ("S1", True), ("S1", "66"), ("H5", 3)):
+            data = json.loads(CONTRACT)
+            next(g for g in data["gates"] if g["id"] == gid)["minSamples"] = bad
+            with self.subTest(gate=gid, value=bad), self.assertRaises(r2.ContractError):
+                r2.load_contract(json.dumps(data))
+
+    def test_below_the_floor_is_blocked_at_or_above_it_is_judged(self):
+        s1 = gate("S1")
+        art = dict(measure("S1", below400ShareMin=0.25, below400ShareMinV4=0.3))
+        for samples, status in ((65, "BLOCKED"), (66, "PASS"), (132, "PASS")):
+            with self.subTest(samples=samples):
+                row = r2.evaluate_gate(s1, FINAL, measure=dict(art, samples=samples), cases={t: "Passed" for t in s1.get("tests", [])})
+                self.assertEqual(status, row["status"], row["reason"])
+                if status == "BLOCKED":
+                    self.assertIn("kapsama eksik", row["reason"])
+        self.assertIn("kapsama bilinmiyor", r2.evaluate_gate(s1, FINAL, measure=art, cases={t: "Passed" for t in s1.get("tests", [])})["reason"])
+        failing = dict(measure("S1", below400ShareMin=0.1, below400ShareMinV4=0.3), samples=10)
+        low = r2.evaluate_gate(s1, FINAL, measure=failing, cases={t: "Passed" for t in s1.get("tests", [])})
+        self.assertEqual("FAIL", low["status"])   # more samples only lower a minimum: a fail on few samples stands
