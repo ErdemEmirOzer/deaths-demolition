@@ -420,7 +420,7 @@ class KuyrukBirimTests(unittest.TestCase):
         code, why = self.io.restore_check(str(self.L), "A", ["player"])
         self.assertEqual(64, code); self.assertIn("is gone — abandoned: C-00 restores it first", why)
         r = self.committed(self.rec("R", self.dead(), areas=("player",), state="restoring", grantedNs=200))
-        r["restorer"] = self.foreign()
+        r["restorer"] = self.dead()   # its restorer died too: abandoned (a live restorer: 75, the next test)
         self.only(a, r); self.assertEqual(64, self.io.restore_check(str(self.L), "A", ["player"])[0])
         m = self.committed(self.rec("M", self.foreign(), areas=("player",), state="dirty", grantedNs=200))
         m["why"] = "SNAPSHOT_MISSING: no snapshot"
@@ -433,6 +433,28 @@ class KuyrukBirimTests(unittest.TestCase):
         self.assertEqual(64, code); self.assertIn("its snapshot is being taken", why)
         self.only(a, self.rec("S", self.foreign(), areas=("player",), state="snapshotting", grantedNs=200, guard=self.dead()))
         self.assertEqual(0, self.io.restore_check(str(self.L), "A", ["player"])[0])   # abandoned before its commit
+
+    def test_Birim_RestoreBegin_CanliRestorer75_OluRestorer64_AcikIcPencere64(self):
+        """P5 gt N-4 (C-00 07.10, option A): a window opened after this one that a LIVE restorer is restoring right now is a
+        transient state — 75 (wait, retry the same DIR), nothing written, this record untouched; every other blocker
+        stays 64."""
+        a = self.committed(self.rec("A", self.me, areas=("editor", "player"), grantedNs=100))
+        live = self.committed(self.rec("R", self.foreign(), areas=("player",), state="restoring", grantedNs=200))
+        live["restorer"] = restorer = self.foreign()
+        self.only(a, live)
+        code, why = self.io.restore_begin(str(self.L), "A", ["player"], self.me)
+        self.assertEqual(75, code)
+        self.assertIn("is being restored now by pid %s" % restorer["pid"], why)
+        self.assertIn("retry with the same DIR", why)
+        self.assertEqual("open", json.loads((self.L / "windows" / "A.json").read_text())["state"])   # not marked restoring
+        self.assertEqual(0, self.io.restore_check(str(self.L), "A", ["editor"])[0])   # R does not hold editor
+        gone = self.committed(self.rec("R", self.foreign(), areas=("player",), state="restoring", grantedNs=200))
+        gone["restorer"] = self.dead()   # the restorer died mid-write: the old 64 (its owner lives: open)
+        self.only(a, gone)
+        code, why = self.io.restore_check(str(self.L), "A", ["player"])
+        self.assertEqual(64, code); self.assertIn("restore that window first", why)
+        self.only(a, self.committed(self.rec("N", self.foreign(), areas=("player",), grantedNs=200)))   # open, nested
+        self.assertEqual(64, self.io.restore_check(str(self.L), "A", ["player"])[0])
 
     def test_Birim_RestoreCheck_DirtyFinalizedAlan0_DirtyAlan64_SirasiBilinmeyen0(self):
         f = self.committed(self.rec("F", self.foreign(), areas=("editor", "player"), state="dirty", grantedNs=300))

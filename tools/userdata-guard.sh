@@ -45,7 +45,8 @@
 #   known-good player display values.
 # Exit: 0 ok · 75 busy (a live foreign lock holder / live data kept changing) — nothing restored in that area · 30 restore did not reproduce the snapshot or a PlayerPrefs key not in it remains
 # (<dir>/extra-keys.txt) · 64 usage · 64 restore refused, nothing written (G4 D8 P5, C-00 06.10): a window opened after
-#   this one holds an area it still has to write — restore that window first (nested: inner before outer)
+#   this one holds an area it still has to write — restore that window first (nested: inner before outer) · 75 busy
+#   retry=same-dir too when that window is being restored right now by a live restorer (P5 gt N-4, C-00 07.10)
 # WP-079G D6a (C-00 30.09): (1) lock order is always player → unity: `snapshot … --scope player|all` refuses with 64
 #   (nothing written, no slot taken) while the calling shell or one of its ancestors holds a `unity` slot (tools/slot.sh
 #   holds; the pid chain from this guard, plus DD_SLOT_OWNER when set) — since C-00 05.10 (G4 D8 queue) for EVERY scope:
@@ -530,7 +531,8 @@ trap '' PIPE   # D6 review SHOULD-4: a dead reader of stdout must not kill the g
 # C-00 06.10 (gt P4/P5; P5 review MUST-1, S-2, S-5, S-6): in the SAME L/.lock hold, before anything is written — an
 # area this restore still has to write that a window opened AFTER this one holds now and that can still be restored
 # (its snapshot committed, its owner alive or not; or a snapshot being taken) is never written: 64, the ledger
-# untouched; restore that window first (an abandoned one: C-00). A window opened before this one never stops it (this
+# untouched; restore that window first (an abandoned one: C-00) — or, while a live restorer is restoring it right now,
+# 75 BUSY retry=same-dir (P5 gt N-4, C-00 07.10: wait, nothing written). A window opened before this one never stops it (this
 # one is nested in it: inner first). The areas: on the first attempt every window area (R8 records the run's end of
 # all of them), later the scope's areas the run changed (after-run ≠ before: D6 never writes the others) — finalized
 # ones never (a finalized area is never written again, A_FINAL). A helper failure restores as before (a WARNING).
@@ -552,6 +554,8 @@ if [ "$KIND" = v2 ]; then
   RL=$(python3 "$IO" lstart $$) && [ -n "$RL" ] || RL=""
   RCHK=$( ( trap '' INT TERM HUP; python3 "$IO" ledger-restore-begin "$LEDGER" "$WINID" $$ "$RL" $RA ) 2>&1); RCK=$?   # D8 review SHOULD-2
   if [ $RCK -eq 64 ]; then refuse64_kept "$RCHK"
+  elif [ $RCK -eq 75 ]; then   # P5 gt N-4: never the "restoring as before" branch below — that would write
+    UG_LAST="$(date -u +%FT%TZ) userdata-guard restore scope=$SCOPE BUSY — ${${RCHK##*$'\n'}:0:300} (75) retry=same-dir class=BUSY"; print -r -- "$UG_LAST"; exit 75
   elif [ $RCK -ne 0 ]; then
     dd_log "WARNING userdata-guard: ledger-restore-begin failed (exit $RCK) — no order check; restoring as before — tell C-00: ${${RCHK##*$'\n'}:0:200}"
     [ -n "$RL" ] && RP=$$ RL="$RL" python3 -c 'import json, os; print(json.dumps({"state": "restoring", "restorer": {"pid": int(os.environ["RP"]), "lstart": os.environ["RL"]}}))' \

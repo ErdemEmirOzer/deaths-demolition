@@ -1801,6 +1801,38 @@ class LedgerTests(RestoreBase):
         (self.tmp / "defaults-import-sleep").unlink()
         os.killpg(g.pid, signal.SIGKILL); g.communicate(timeout=30)
 
+    def test_P5_IcPencereCanliRestoreEdiliyor_Dis75Yazimsiz_RestorerOlunce64_SonraIkisi0(self):
+        """P5 gt N-4 (C-00 07.10, option A): the outer window's restore while the nested window is being restored by a live
+        guard — 75 BUSY retry=same-dir, nothing written, the outer record still open. With that restorer dead (SIGKILL in
+        its write phase) the old 64 ('restore that window first'); the inner restored, the outer restores with 0."""
+        before = self.live_state()
+        self.snap("editor")                                                   # A, the outer window
+        (self.d1 / "ui-settings.json").write_text('{"ui": 50}\n')            # A's run: B's base differs from A's
+        b = self.tmp / "ugB"
+        rc, out, err = self.run_guard("snapshot", b, "--scope", "editor"); self.assertEqual(0, rc, out + err)   # nested
+        (self.d1 / "ui-settings.json").write_text('{"ui": 99}\n')
+        d = load_plist(self.p2); d["EditorKey"] = "run"; self.write_plist(self.p2, d)
+        self.hook("")
+        (self.tmp / "defaults-import-sleep").write_text("")                   # hold B's restore in its write phase
+        g = self.start_guard("restore", b, "--scope", "editor")
+        self.assertTrue(self.wait_file(self.tmp / "import-started", 60))
+        rc, out, err = self.restore("editor")
+        self.assertEqual(75, rc, out + err)
+        self.assertIn("is being restored now by pid", out + err)
+        last = out.strip().splitlines()[-1]
+        self.assertTrue(last.endswith("(75) retry=same-dir class=BUSY"), last)
+        self.assertNotEqual(before[self.d1 / "ui-settings.json"], sha(self.d1 / "ui-settings.json"))   # A wrote nothing
+        self.assertIn((self.d1 / "ui-settings.json").read_text(), ('{"ui": 50}\n', '{"ui": 99}\n'))   # B's base or B's run
+        self.assertEqual(["open", "restoring"], sorted(r["state"] for r in self.records()))   # A open, B restoring
+        os.killpg(g.pid, signal.SIGKILL); g.communicate(timeout=30)
+        (self.tmp / "defaults-import-sleep").unlink()
+        rc, out, err = self.restore("editor")                                 # B's restorer is dead now
+        self.assertEqual(64, rc, out + err); self.assertIn("restore that window first", out + err)
+        rc, out, err = self.run_guard("restore", b, "--scope", "editor"); self.assertEqual(0, rc, out + err)
+        rc, out, err = self.restore("editor"); self.assertEqual(0, rc, out + err)
+        self.assertEqual(before[self.d1 / "ui-settings.json"], sha(self.d1 / "ui-settings.json"))
+        self.assertEqual([], self.records())
+
     def test_Ledger_GercekAtaPenceresi_Cikis0(self):
         """nested: the overlapping window's owner is a GRANDPARENT of the new snapshot's caller."""
         a, done = self.tmp / "ugA", self.tmp / "inner-done"

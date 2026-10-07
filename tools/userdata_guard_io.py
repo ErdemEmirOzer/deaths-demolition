@@ -530,13 +530,16 @@ def own_record(ledger, wid):
     return None
 
 
+BEING_RESTORED = "being restored now"   # _restore_blocker's verdict for a live restorer: transient — restore_begin → 75
+
+
 def _restore_blocker(ledger, own, areas, table):
     """(other record, hit areas, why it counts) of the first window that stops this restore, or None. A window opened
     AFTER this one (opened_after) that holds an area of `areas` now and can still be restored — its snapshot committed
     (before.txt; not a SNAPSHOT_MISSING mark), or a snapshot still being taken by a live guard — whatever its owner
     (P5 review MUST-1: an abandoned inner window restored after the outer one would put the outer run's bytes back).
     A window that can never be restored (SNAPSHOT_MISSING, an abandoned snapshotting record) has no base to protect
-    (S-5: else a 64 loop)."""
+    (S-5: else a 64 loop). One being restored right now by a live restorer is BEING_RESTORED (P5 gt N-4: wait, not 64)."""
     for other in ledger_records(ledger):
         if other.get("id") == own.get("id") or other.get("state") not in LEDGER_LIVE + ("dirty",):
             continue
@@ -549,6 +552,8 @@ def _restore_blocker(ledger, own, areas, table):
         if not hit or str(other.get("why", "")).startswith("SNAPSHOT_MISSING"):
             continue
         if os.path.exists(os.path.join(other.get("dir") or "/nonexistent", "before.txt")):
+            if other.get("state") == "restoring" and alive(other.get("restorer") or {}, table):
+                return other, hit, BEING_RESTORED
             return other, hit, ("open" if alive(other.get("owner") or {}, table) else
                                 "its owner pid %s is gone — abandoned: C-00 restores it first" % (other.get("owner") or {}).get("pid"))
         if other.get("state") == "snapshotting" and alive(other.get("guard") or other.get("owner") or {}, table):
@@ -564,6 +569,8 @@ def restore_begin(ledger, wid, areas, restorer=None):
     window still open (the wrong restore order), an abandoned one, one an older guard let open over an area this window
     left with the run's bytes. Writing would land in its run; its own restore would put the run's bytes back. Nothing
     written, the record untouched.
+    75 wait — that window is being restored right now by a live restorer (P5 gt N-4, C-00 07.10: a transient state, not
+    a wrong order): nothing written, the record untouched; the caller retries with the same DIR once it has finished.
     0 yes — then, with `restorer` ({pid, lstart}), the record (still in windows/) is `restoring` by it. Also 0 when the
     other window was opened before this one (this one is nested in it: inner first), when the order is unknown (no record
     of this window — one taken before D8; an older guard's record of the same second), or no window holds them."""
@@ -573,6 +580,11 @@ def restore_begin(ledger, wid, areas, restorer=None):
             hit = _restore_blocker(ledger, own, areas, ProcTable())
             if hit:
                 other, areas_hit, how = hit
+                if how == BEING_RESTORED:
+                    return 75, ("window %s (DIR=%s), opened after this one, holds the %s area and is being restored now by "
+                                "pid %s — nothing restored; retry with the same DIR when that restore has finished" % (
+                                    other.get("id"), other.get("dir"), " ".join(sorted(areas_hit)),
+                                    (other.get("restorer") or {}).get("pid")))
                 return 64, ("window %s (DIR=%s, owner pid %s, %s; %s), opened after this one, holds the %s area now — "
                             "this restore would write into it; restore that window first (nested: inner before outer); "
                             "if it stays dirty or cannot be restored: tell C-00" % (
