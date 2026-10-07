@@ -100,6 +100,22 @@ namespace DD.Prototype.Characters
         public static bool ProbeAllocPerServe;
         private static byte[] s_probeSink;
 
+        [PrototypeOnly(PendingDecisions.None,
+            "WP-096 (PreserveSwingLift): the lower animated sole further than this above its ground is a flight phase (a run) — the " +
+            "common correction eases to 0 instead of pulling the body's feet down. Invented, tune.", true)]
+        public const float SwingFlightGap = 0.10f;
+
+        /// <summary>
+        /// WP-096 (S-03, zombie owner sets it): one common height correction for both feet — the one that puts the LOWER animated
+        /// sole on its ground — instead of dropping each foot onto its own ground hit. The per-foot drop flattened the swinging foot
+        /// onto the floor whenever it was within <see cref="MaxCorrection"/> of it (every stride: the feet shuffled, and every frame
+        /// read as contact). The player keeps the per-foot solve (S-06's adapter; false by default).
+        /// </summary>
+        public bool PreserveSwingLift;
+        private float _commonDelta;
+        /// <summary>WP-096 readout: the common correction of the last PreserveSwingLift solve (metres).</summary>
+        public float CommonDelta => _commonDelta;
+
         public void Configure(Animator animator)
         {
             _animator = animator;
@@ -141,6 +157,7 @@ namespace DD.Prototype.Characters
         {
             _weight = 0f;
             _pelvisOffset = 0f;
+            _commonDelta = 0f;
             ClearLock();
         }
 
@@ -198,8 +215,16 @@ namespace DD.Prototype.Characters
             }
 
             float footHeight = _animator.leftFeetBottomHeight;
-            Solve(AvatarIKGoal.LeftFoot, footHeight, out float leftDelta);
-            Solve(AvatarIKGoal.RightFoot, footHeight, out float rightDelta);
+            float leftDelta, rightDelta;
+            if (PreserveSwingLift)
+            {
+                SolvePair(footHeight, k, out leftDelta, out rightDelta);
+            }
+            else
+            {
+                Solve(AvatarIKGoal.LeftFoot, footHeight, out leftDelta);
+                Solve(AvatarIKGoal.RightFoot, footHeight, out rightDelta);
+            }
             _leftLift = leftDelta;
             _rightLift = rightDelta;
 
@@ -275,6 +300,47 @@ namespace DD.Prototype.Characters
 
         /// <summary>WP-071: foot_l_off / foot_r_off (AP-022) — free that foot now (0 left, 1 right).</summary>
         public void NotifyLift(int foot) => _releasePending[foot] = true;
+
+        /// <summary>
+        /// WP-096 PreserveSwingLift solve: both feet raycast first, the correction that grounds the lower sole is shared by both
+        /// (eased with the weight response), so the swing foot keeps its animated lift and a flight phase is left alone.
+        /// </summary>
+        private void SolvePair(float footHeight, float k, out float leftDelta, out float rightDelta)
+        {
+            Vector3 animatedL = _animator.GetIKPosition(AvatarIKGoal.LeftFoot);
+            Vector3 animatedR = _animator.GetIKPosition(AvatarIKGoal.RightFoot);
+            s_raycasts += 2;
+            bool hitL = Physics.Raycast(animatedL + Vector3.up * RayUp, Vector3.down, out RaycastHit groundL, RayUp + RayDown, PrototypeLayers.AimBlockMask, QueryTriggerInteraction.Ignore);
+            bool hitR = Physics.Raycast(animatedR + Vector3.up * RayUp, Vector3.down, out RaycastHit groundR, RayUp + RayDown, PrototypeLayers.AimBlockMask, QueryTriggerInteraction.Ignore);
+            float gapL = hitL ? animatedL.y - (groundL.point.y + footHeight) : float.MaxValue;
+            float gapR = hitR ? animatedR.y - (groundR.point.y + footHeight) : float.MaxValue;
+            float lower = Mathf.Min(gapL, gapR);
+            float want = !hitL && !hitR || lower > SwingFlightGap ? 0f : Mathf.Clamp(-lower, -MaxCorrection, MaxCorrection);
+            _commonDelta = Mathf.Lerp(_commonDelta, want, k);
+            ApplyFoot(AvatarIKGoal.LeftFoot, 0, animatedL, hitL, groundL, footHeight, out leftDelta);
+            ApplyFoot(AvatarIKGoal.RightFoot, 1, animatedR, hitR, groundR, footHeight, out rightDelta);
+        }
+
+        private void ApplyFoot(AvatarIKGoal goal, int foot, Vector3 animated, bool hit, in RaycastHit ground, float footHeight, out float delta)
+        {
+            if (!hit)
+            {
+                delta = 0f;
+                _animator.SetIKPositionWeight(goal, 0f);
+                _animator.SetIKRotationWeight(goal, 0f);
+                return;
+            }
+
+            delta = _commonDelta;
+            Vector3 target = animated;
+            target.y = animated.y + delta;
+            target = Lock(foot, animated, target, ground.point.y + footHeight);
+            _animator.SetIKPositionWeight(goal, _weight);
+            _animator.SetIKPosition(goal, target);
+            Quaternion tilt = Quaternion.FromToRotation(Vector3.up, ground.normal);
+            _animator.SetIKRotationWeight(goal, _weight * _rotationWeight);
+            _animator.SetIKRotation(goal, tilt * _animator.GetIKRotation(goal));
+        }
 
         private void Solve(AvatarIKGoal goal, float footHeight, out float delta)
         {

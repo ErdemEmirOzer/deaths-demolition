@@ -37,6 +37,11 @@ namespace DD.Prototype.Enemies
         private static void ResetLocomotionV4Statics() => VelocityFollowsFacing = DefaultVelocityFollowsFacing;
 
         [PrototypeOnly(PendingDecisions.None,
+            "WP-096 P7: inside this distance to the target (metres, flat) the walk follows the path heading at full speed — the " +
+            "facing rule and its turn slow-down apply only on the approach (P12 crowd press round a standing player). Invented, tune.", true)]
+        public const float FacingRuleMinDistance = 8f;
+
+        [PrototypeOnly(PendingDecisions.None,
             "WP-096 P1: critically damped smoothing time of the measured forward / lateral ground speed the cadence reads, seconds " +
             "(absorbs the 3-frame NavMesh re-seat and contact jitter). Invented, tune.", true)]
         public const float GroundSpeedSmoothing = 0.1f;
@@ -98,7 +103,7 @@ namespace DD.Prototype.Enemies
         /// <paramref name="desiredSpeed"/> the speed the gameplay asks for (tier × queue × wall × slow × suppression × approach stop).
         /// <paramref name="hardHold"/>: a root / shock / gel hold, which stops even a stumbling Runner at once.
         /// </summary>
-        private Vector3 SteerOwnVelocity(bool canWalk, bool hardHold, Vector3 heading, float desiredSpeed, float dt)
+        private Vector3 SteerOwnVelocity(bool canWalk, bool hardHold, Vector3 heading, float desiredSpeed, float distanceToTarget, float dt)
         {
             Vector3 forward = FlatForward(transform);
             if (!canWalk)
@@ -125,7 +130,10 @@ namespace DD.Prototype.Enemies
 
             Vector3 direction = heading;
             float share = 1f;
-            if (VelocityFollowsFacing)
+            // Near the target the crowd shoulders the body round constantly (large heading errors every frame): there the walk keeps
+            // the WP-003 path heading at full speed so the press on a standing player is unchanged (P12: 13 < 15 within 6.5 m in 20 s
+            // with the facing rule everywhere, 17–19 before).
+            if (VelocityFollowsFacing && distanceToTarget > FacingRuleMinDistance)
             {
                 float error = Vector3.Angle(forward, heading);
                 share = ZombieLocomotionMath.HeadingSpeedShare(error);

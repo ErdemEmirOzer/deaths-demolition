@@ -1070,7 +1070,7 @@ namespace DD.Prototype.Enemies
                 walkSpeed = speed;
             }
 
-            Vector3 ownVelocity = SteerOwnVelocity(canWalk, IsRooted || IsElectrocuted || gelHolds, walkHeading, walkSpeed, dt);
+            Vector3 ownVelocity = SteerOwnVelocity(canWalk, IsRooted || IsElectrocuted || gelHolds, walkHeading, walkSpeed, distance, dt);
             Vector3 commanded = walkHeading * walkSpeed;
 
             // The Runner's lunge adds committed forward speed during its active window.

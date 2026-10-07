@@ -421,6 +421,7 @@ namespace DD.Prototype.Characters
                     () => _authored && !_dying && !_rising && !_waiting && _special == ZombieSpecialVisual.None && (_lod == null || !_lod.Far));
             }
 
+            if (_footIk != null) _footIk.PreserveSwingLift = true;   // WP-096: the swing foot keeps its lift (one common correction)
             if (_footIk != null)
             {
                 _footIk.Bind(() => _authored && !_dying && !_rising, () => _lod == null || !_lod.Far,
