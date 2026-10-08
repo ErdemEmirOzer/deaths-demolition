@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using DD.Prototype.Core.Config;
 using DD.Prototype.Weapons;
 using UnityEngine;
+using DD.Prototype.Feedback;
 
 namespace DD.Prototype.Characters
 {
@@ -442,7 +443,7 @@ namespace DD.Prototype.Characters
             if (_contactIk != null)
             {
                 // third-person views only (in first person this body is not seen; the FP arms carry their own contact)
-                _contactIk.Configure(_animator, _magSocket, HeldMagazinePart,
+                _contactIk.Configure(_animator, _magSocket, () => _specialReload ? _specialMagazineVisual.Part : HeldMagazinePart(),
                     () => _authored && !_dying && DD.Prototype.CameraSystem.CameraModeService.Current != DD.Prototype.CameraSystem.CameraMode.FirstPerson);
             }
             // WP-032: the head looks along the SAME aim the aim layer turns to (single source, S-02); feet on the real ground.
@@ -481,6 +482,7 @@ namespace DD.Prototype.Characters
                 SpecialWeaponUsageEvents.Usage += OnSpecialUsage;   // WP-032E · S-02 WP-056 (ADR-056-1): Activated → hold pose, Fired → swing beat, Deactivated → classic Aim
                 _subscribed = true;
             }
+            SubscribeFeelReload();
 
             if (_authored)
             {
@@ -501,8 +503,30 @@ namespace DD.Prototype.Characters
             return _weaponSocket;
         }
 
+        private void OnEnable() { if (_subscribed) SubscribeFeelReload(); }
+        private void OnDisable()
+        {
+            UnsubscribeFeelReload();
+            CancelReload();
+        }
+        private void SubscribeFeelReload()
+        {
+            if (_feelSubscribed) return;
+            FeelEvents.ReloadStarted += OnFeelReloadStarted;
+            FeelEvents.ReloadEnded += OnFeelReloadEnded;
+            _feelSubscribed = true;
+        }
+        private void UnsubscribeFeelReload()
+        {
+            if (!_feelSubscribed) return;
+            FeelEvents.ReloadStarted -= OnFeelReloadStarted;
+            FeelEvents.ReloadEnded -= OnFeelReloadEnded;
+            _feelSubscribed = false;
+        }
         private void OnDestroy()
         {
+            UnsubscribeFeelReload();
+            EndSpecialReload();
             if (_subscribed)
             {
                 if (_events != null) _events.Raised -= OnAnimationEvent;
@@ -520,6 +544,8 @@ namespace DD.Prototype.Characters
 
         private void OnAnimationEvent(CharacterAnimationEvent e)
         {
+            if (_specialReload && ReloadPartCalibration.TryStep(e, out MagazineStep partStep))
+                _specialMagazine.OnEvent(partStep);
             if (e == CharacterAnimationEvent.DeathEnd && _dying) _deathEnded = true;
             // WP-071 B4 (AP-022); WP-083 R3 (C-00 07.10): not on sr_1's bolt cycle — the hold keeps the weapon at its pivot there, and a
             // support hand following the clip's bolt stroke would work it in the air beside the held weapon; it stays on the handguard
@@ -651,6 +677,7 @@ namespace DD.Prototype.Characters
         /// <summary>Equip: the v3 set when the weapon's AnimSet has one, else the legacy class pose.</summary>
         public void EquipWeapon(DD.Prototype.Core.Weapons.WeaponDefinition def, ClassicWeaponId id)
         {
+            CancelReload();
             _weaponDef = def;
             _classicId = id;
             if (_holdIk != null) _holdIk.SetWeapon(id);   // WP-083 B2: the per-weapon hold row
@@ -684,6 +711,14 @@ namespace DD.Prototype.Characters
 
         private ClassicWeaponId _classicId;
         private bool _specialV3;
+        private bool _feelSubscribed, _specialReload;
+        private SpecialWeaponId _specialReloadId;
+        private readonly WeaponMagazineOwnership _specialMagazine = new WeaponMagazineOwnership();
+        private readonly WeaponMagazineVisual _specialMagazineVisual = new WeaponMagazineVisual();
+        private readonly float[] _specialMarks = new float[WeaponMagazineOwnership.StepCount];
+        public bool SpecialReloadPresentationActive => _specialReload;
+        public WeaponMagazineOwnership SpecialMagazine => _specialMagazine;
+        public WeaponMagazineVisual SpecialMagazineVisual => _specialMagazineVisual;
 
         /// <summary>True while a Special plays through its TP v3 set (<see cref="EquipSpecialV3"/>).</summary>
         public bool SpecialV3Active => _specialV3;
@@ -718,7 +753,66 @@ namespace DD.Prototype.Characters
         }
         private void OnReloadStarted(float duration) => PlayReload(duration, WeaponEvents.LastReloadEmpty);   // S-02 d3f3b52e: written just before the event
         private void OnReloadInterrupted() => CancelReload();
-        private void OnSpecialEnded() => SetSpecialHold(0);
+        private void OnSpecialEnded() { CancelReload(); SetSpecialHold(0); }
+
+        private void OnFeelReloadStarted(FeelReload e)
+        {
+            if (!e.Special || !_authored || _dying || !isActiveAndEnabled) return;
+            WeaponController controller = WeaponRegistry.ActiveController;
+            if (controller == null || !controller.SpecialWeaponActive || controller.Special.Id != e.SpecialId) return;
+            string key = DD.Prototype.Core.Weapons.SpecialWeaponKeys.Of(e.SpecialId);
+            if (key != "sw_arc" && key != "sw_gel") return;
+            if ((!_specialV3 || WeaponAnimSet != key) && !EquipSpecialV3(e.SpecialId)) return;
+            CancelReload();
+            _specialReload = true;
+            _specialReloadId = e.SpecialId;
+            _specialMagazineVisual.Bind(controller.SpecialRigBody, key);
+            _specialMagazine.Begin(tactical: !e.Empty);
+            _specialMagazine.Stepped += OnSpecialMagazineStep;
+            CharacterAnimationSet.Entry entry = _animation.Find(CharacterAnimatorContract.PlayerWeaponClipV3(key, e.Empty ? "reload_empty" : "reload_tac"));
+            for (int i = 0; i < _specialMarks.Length; i++) _specialMarks[i] = WeaponMagazineOwnership.MagazineMarks[i];
+            if (entry?.clip != null && entry.clip.length > 0f)
+                foreach (AnimationEvent beat in entry.clip.events)
+                    if (ReloadPartCalibration.TryStep(CharacterAnimationEvents.Parse(beat.functionName), out MagazineStep step))
+                        _specialMarks[(int)step] = beat.time / entry.clip.length;
+            // mag_hand_attach is omitted in v009: keep it BETWEEN detach and insert, not before the authored detach.
+            _specialMarks[(int)MagazineStep.HandAttach] = Mathf.Lerp(_specialMarks[0], _specialMarks[2], 0.5f);
+            PlayReload(e.DurationSeconds, e.Empty);
+        }
+        private void OnFeelReloadEnded(FeelReload e)
+        {
+            if (e.Special && _specialReload && e.SpecialId == _specialReloadId) CancelReload();
+        }
+        private void OnSpecialMagazineStep(MagazineStep step, bool fromEvent)
+        {
+            if (step == MagazineStep.Detach || step == MagazineStep.HandAttach)
+            {
+                // The FP Special has no arm/part calibration. Keep its model complete in FP.
+                if (DD.Prototype.CameraSystem.CameraModeService.Current != DD.Prototype.CameraSystem.CameraMode.FirstPerson)
+                    _specialMagazineVisual.ToHand(_magSocket);
+            }
+            else _specialMagazineVisual.Home();
+        }
+        private void EndSpecialReload()
+        {
+            _specialReload = false;
+            _specialMagazine.Stepped -= OnSpecialMagazineStep;
+            _specialMagazine.End();
+            _specialMagazineVisual.Home();
+        }
+        private void TickSpecialReload()
+        {
+            if (!_specialReload) return;
+            WeaponController c = WeaponRegistry.ActiveController;
+            if (_dying || c == null || !c.SpecialWeaponActive || c.Special.Id != _specialReloadId || !c.Special.IsReloading)
+            {
+                CancelReload();
+                return;
+            }
+            if (DD.Prototype.CameraSystem.CameraModeService.Current == DD.Prototype.CameraSystem.CameraMode.FirstPerson)
+                _specialMagazineVisual.Home();
+            _specialMagazine.Tick(c.Special.ReloadProgress01, c.Special.ReloadDuration, _specialMarks);
+        }
 
         /// <summary>WP-032E: the usage bus is the authoritative Special beat surface (WP-056); the HUD-state path above stays as the fallback for a Special without usage events.</summary>
         private void OnSpecialUsage(SpecialUsageEvent e)
@@ -728,7 +822,7 @@ namespace DD.Prototype.Characters
                 case SpecialUsageKind.Activated: if (!EquipSpecialV3(e.Id)) SetSpecialHold(HoldIndexOf(e.Id)); break;
                 // Fired: the swing is already fired through IWeaponHost.OnWeaponFired → PlayerProceduralAnimator.PlayFireRecoil → PlayFire()
                 // (WeaponController.FireSpecialOnce keeps that call); a second trigger here would only re-arm the same beat.
-                case SpecialUsageKind.Deactivated: SetSpecialHold(0); break;
+                case SpecialUsageKind.Deactivated: CancelReload(); SetSpecialHold(0); break;
             }
         }
 
@@ -782,7 +876,8 @@ namespace DD.Prototype.Characters
         public void PlayReload(float seconds, bool empty)
         {
             if (!_authored || _dying) return;
-            if (_fpArms != null) _fpArms.Reload(seconds, empty);   // the FP arms' own set, whatever the TP path
+            ReloadPartCalibration.ConfigureSocket(_magSocket, WeaponAnimSet);
+            if (!_specialV3 && _fpArms != null) _fpArms.Reload(seconds, empty);   // the FP arms' own set, whatever the TP path
             if (_weapon == 3) return;
             string clip;
             if (_weapon == CharacterAnimatorContract.WeaponPoseV3)
@@ -795,12 +890,14 @@ namespace DD.Prototype.Characters
             float clipSeconds = entry?.seconds ?? 0f;
             _animator.SetFloat(ReloadRateId, seconds > 0.05f && clipSeconds > 0.05f ? clipSeconds / seconds : 1f);
             _animator.SetTrigger(ReloadId);
-            if (_contactIk != null) _contactIk.BeginReload(seconds, entry?.clip);
+            Matrix4x4? partMatrix = ReloadPartCalibration.TryGet(WeaponAnimSet, out Matrix4x4 m) ? m : (Matrix4x4?)null;
+            if (_contactIk != null) _contactIk.BeginReload(seconds, entry?.clip, partMatrix, _specialReload ? _specialMagazine : null);
         }
 
         /// <summary>Reload interrupted (special pickup / death): straight back to the rest pose.</summary>
         public void CancelReload()
         {
+            EndSpecialReload();
             if (!_authored) return;
             if (_contactIk != null) _contactIk.CancelReload();
             if (_fpArms != null) _fpArms.CancelContact();
@@ -898,6 +995,7 @@ namespace DD.Prototype.Characters
         public void PlayDeath(Vector3 localHitDirection, bool coin)
         {
             if (!_authored || _dying) return;
+            CancelReload();
             _dying = true;
             _deathEnded = false;
             SetFireHeld(false);   // WP-071 r2: a dying body never keeps the LMG fire loop
@@ -947,6 +1045,7 @@ namespace DD.Prototype.Characters
 
         private void Update()
         {
+            TickSpecialReload();
             if (_animator == null || _animation == null) return;
             float dt = Time.deltaTime;
             Vector3 v = _planarVelocity != null ? _planarVelocity() : Vector3.zero;
