@@ -43,7 +43,7 @@ namespace DD.Art.Pipeline.EditorTools
         {
             RenderPipelineManager.beginCameraRendering -= BeforeCamera;
             RenderPipelineManager.endCameraRendering -= AfterCamera;
-            try { WriteJson("diagnostic-frames.json", new FrameRecords { frames = _frames.ToArray(), verifiedReplayRestores = _replayRestores, verifiedPoseRestores = _poseRestores }); }
+            try { WriteJson("diagnostic-frames.json", new FrameRecords { frames = _frames.ToArray(), verifiedReplayCpuStateRestores = _replayRestores, verifiedPoseCpuStateRestores = _poseRestores }); }
             finally { _previewScope.Dispose(); }
         }
 
@@ -80,7 +80,8 @@ namespace DD.Art.Pipeline.EditorTools
             public float realtime, noiseOffsetX, noiseOffsetY;
             public Vector4 shaderTime, shaderTimeParameters, wind, vegWave;
             public bool materialInitialized, materialPersistent, bindingInitialized;
-            public int materialInstanceId;
+            public int materialInstanceId, pixelWidth, pixelHeight, noiseArrayIdentity, selectedNoiseTextureId, selectedNoiseWidth, selectedNoiseHeight;
+            public Vector4 expectedBlueNoiseParams;
         }
         [Serializable] private sealed class FrameRecord
         {
@@ -91,7 +92,9 @@ namespace DD.Art.Pipeline.EditorTools
         {
             public string randomHashLimit = "Opaque Random.State GetHashCode is a diagnostic fingerprint; restoration uses full State.Equals.";
             public FrameRecord[] frames;
-            public int verifiedReplayRestores, verifiedPoseRestores;
+            public int verifiedReplayCpuStateRestores, verifiedPoseCpuStateRestores;
+            public string gpuMaterialPropertyReadback = "NOT_SUPPORTED: shader has no texture Properties; no Material.GetTexture/GetVector used";
+            public string gpuRestoreWrite = "RECONSTRUCTED_WRITE from END actual render pixelWidth/Height + typed pass array/index/offsets; not GPU readback verified";
         }
 
         private FrameState FrameStateNow() => new FrameState
@@ -102,6 +105,11 @@ namespace DD.Art.Pipeline.EditorTools
             noiseOffsetY = _entropyBinding?.OffsetY ?? 0f, materialInitialized = _entropyBinding?.MaterialReady ?? false,
             materialPersistent = _entropyBinding?.MaterialPersistent ?? false, materialInstanceId = _entropyBinding?.MaterialInstanceId ?? 0,
             bindingInitialized = _entropyBinding != null,
+            pixelWidth = _observedCamera.pixelWidth, pixelHeight = _observedCamera.pixelHeight,
+            noiseArrayIdentity = _entropyBinding?.NoiseArrayIdentity ?? 0,
+            selectedNoiseTextureId = _entropyBinding?.Noise.GetInstanceID() ?? 0,
+            selectedNoiseWidth = _entropyBinding?.Noise.width ?? 0, selectedNoiseHeight = _entropyBinding?.Noise.height ?? 0,
+            expectedBlueNoiseParams = _entropyBinding != null ? _entropyBinding.ExpectedParams(_observedCamera.pixelWidth, _observedCamera.pixelHeight) : Vector4.zero,
             shaderTime = Shader.GetGlobalVector("_Time"), shaderTimeParameters = Shader.GetGlobalVector("_TimeParameters"),
             wind = Shader.GetGlobalVector("_DD_WindVector"), vegWave = Shader.GetGlobalVector("_DD_VegWaveW"),
         };
@@ -118,6 +126,7 @@ namespace DD.Art.Pipeline.EditorTools
             ScriptableRenderer renderer = camera.GetUniversalAdditionalCameraData().scriptableRenderer;
             if (_entropyBinding == null) _entropyBinding = new SsaoEntropyBinding(renderer);
             _entropyBinding.AssertCurrent(renderer);
+            _entropyBinding.RecordRenderDimensions(camera.pixelWidth, camera.pixelHeight);
             _pendingFrame.after = FrameStateNow();
             _frames.Add(_pendingFrame);
             _pendingFrame = null;
@@ -130,7 +139,17 @@ namespace DD.Art.Pipeline.EditorTools
             private readonly ScriptableRenderer _renderer;
             private readonly FieldInfo _activePass;
             private readonly object _pass;
-            private readonly FieldInfo _index, _x, _y, _passMaterial, _featureMaterial;
+            private readonly FieldInfo _index, _x, _y, _passMaterial, _featureMaterial, _passTextures, _featureTextures;
+            private readonly Texture2D[] _textures, _originalTextures;
+            private int _lastPixelWidth, _lastPixelHeight;
+            public int NoiseArrayIdentity => System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(_textures);
+            public Texture2D Noise => _textures[Index];
+            public Vector4 ExpectedParams(int width, int height) => new Vector4(width / (float)Noise.width, height / (float)Noise.height, OffsetX, OffsetY);
+            public void RecordRenderDimensions(int width, int height)
+            {
+                if (width <= 0 || height <= 0) throw new InvalidOperationException("UNKNOWN: actual SSAO render dimensions invalid");
+                _lastPixelWidth = width; _lastPixelHeight = height;
+            }
             public int Index => (int)_index.GetValue(_pass);
             public float OffsetX => (float)_x.GetValue(_pass);
             public float OffsetY => (float)_y.GetValue(_pass);
@@ -168,6 +187,12 @@ namespace DD.Art.Pipeline.EditorTools
                 _y = ExactField(passType, "m_BlurRandomOffsetY", typeof(float));
                 _passMaterial = ExactField(passType, "m_Material", typeof(Material));
                 _featureMaterial = ExactField(featureType, "m_Material", typeof(Material));
+                _passTextures = ExactField(passType, "m_BlueNoiseTextures", typeof(Texture2D[]));
+                _featureTextures = ExactField(featureType, "m_BlueNoise256Textures", typeof(Texture2D[]));
+                _textures = _passTextures.GetValue(_pass) as Texture2D[];
+                if (_textures == null || _textures.Length == 0) throw new InvalidOperationException("UNKNOWN: actual SSAO noise array missing");
+                _originalTextures = (Texture2D[])_textures.Clone();
+                AssertCurrent(renderer);
             }
 
             private static FieldInfo ExactField(Type type, string name, Type expected)
@@ -184,6 +209,13 @@ namespace DD.Art.Pipeline.EditorTools
                     throw new InvalidOperationException("UNKNOWN: actual renderer identity changed since SSAO binding");
                 if (!_feature.isActive || !ReferenceEquals(_activePass.GetValue(_feature), _pass))
                     throw new InvalidOperationException("UNKNOWN: actual SSAO pass identity changed since binding");
+                if (!ReferenceEquals(_passTextures.GetValue(_pass), _textures) || !ReferenceEquals(_featureTextures.GetValue(_feature), _textures))
+                    throw new InvalidOperationException("UNKNOWN: actual SSAO noise array identity changed");
+                for (int i = 0; i < _textures.Length; i++)
+                    if (_textures[i] == null || !ReferenceEquals(_textures[i], _originalTextures[i]) || _textures[i].width <= 0 || _textures[i].height <= 0)
+                        throw new InvalidOperationException("UNKNOWN: actual SSAO noise texture identity/size invalid");
+                if (Index < 0 || Index >= _textures.Length || float.IsNaN(OffsetX) || float.IsInfinity(OffsetX) || float.IsNaN(OffsetY) || float.IsInfinity(OffsetY))
+                    throw new InvalidOperationException("UNKNOWN: actual SSAO typed index/offset state invalid");
             }
 
             private Material RuntimeMaterial()
@@ -208,28 +240,30 @@ namespace DD.Art.Pipeline.EditorTools
             public SsaoEntropy Snapshot()
             {
                 Material material = RuntimeMaterial();
-                Texture noise = material.GetTexture("_BlueNoiseTexture");
-                if (!(noise is Texture2D))
-                    throw new InvalidOperationException("UNKNOWN: actual SSAO BlueNoise property is not Texture2D");
+                if (_lastPixelWidth <= 0 || _lastPixelHeight <= 0)
+                    throw new InvalidOperationException("UNKNOWN: last actual SSAO render dimensions unavailable");
                 return new SsaoEntropy(this, UnityEngine.Random.state, Index, OffsetX, OffsetY, material,
-                    noise, material.GetVector("_SSAOBlueNoiseParams"));
+                    Noise, _lastPixelWidth, _lastPixelHeight, ExpectedParams(_lastPixelWidth, _lastPixelHeight));
             }
 
             public void Restore(SsaoEntropy state)
             {
                 Material material = RuntimeMaterial();
-                if (material != state.Material) throw new InvalidOperationException("UNKNOWN: SSAO runtime material identity changed");
+                if (material != state.Material || state.Noise != _textures[state.Index])
+                    throw new InvalidOperationException("UNKNOWN: SSAO runtime material/noise identity changed");
                 _index.SetValue(_pass, state.Index);
                 _x.SetValue(_pass, state.X);
                 _y.SetValue(_pass, state.Y);
-                material.SetTexture("_BlueNoiseTexture", state.Noise);
-                material.SetVector("_SSAOBlueNoiseParams", state.Parameters);
                 UnityEngine.Random.state = state.Random;
+                // The pinned OnCameraSetup overwrites both on the NEXT existing render. These setters reconstruct the
+                // previous END state using that actual target size; unsupported GPU getters are never verification.
+                material.SetTexture("_BlueNoiseTexture", state.Noise);
+                material.SetVector("_SSAOBlueNoiseParams", state.ExpectedParameters);
+                RecordRenderDimensions(state.PixelWidth, state.PixelHeight);
+                AssertCurrent(_renderer);
                 if (Index != state.Index || OffsetX != state.X || OffsetY != state.Y ||
-                    material.GetTexture("_BlueNoiseTexture") != state.Noise ||
-                    !material.GetVector("_SSAOBlueNoiseParams").Equals(state.Parameters) ||
                     !UnityEngine.Random.state.Equals(state.Random) || UnityEditor.AssetDatabase.Contains(material))
-                    throw new InvalidOperationException("UNKNOWN: SSAO/RNG entropy restoration failed");
+                    throw new InvalidOperationException("UNKNOWN: SSAO/RNG typed CPU state restoration failed");
             }
         }
 
@@ -237,14 +271,17 @@ namespace DD.Art.Pipeline.EditorTools
         {
             private readonly SsaoEntropyBinding _binding;
             public readonly UnityEngine.Random.State Random;
-            public readonly int Index;
+            public readonly int Index, PixelWidth, PixelHeight;
             public readonly float X, Y;
             public readonly Material Material;
-            public readonly Texture Noise;
-            public readonly Vector4 Parameters;
+            public readonly Texture2D Noise;
+            public readonly Vector4 ExpectedParameters;
             public SsaoEntropy(SsaoEntropyBinding binding, UnityEngine.Random.State random, int index,
-                float x, float y, Material material, Texture noise, Vector4 parameters)
-            { _binding = binding; Random = random; Index = index; X = x; Y = y; Material = material; Noise = noise; Parameters = parameters; }
+                float x, float y, Material material, Texture2D noise, int width, int height, Vector4 expectedParameters)
+            {
+                _binding = binding; Random = random; Index = index; X = x; Y = y; Material = material; Noise = noise;
+                PixelWidth = width; PixelHeight = height; ExpectedParameters = expectedParameters;
+            }
             public void Restore() => _binding.Restore(this);
         }
 
@@ -461,7 +498,7 @@ namespace DD.Art.Pipeline.EditorTools
             public string sourceDepth;
             public int fullRgbChanged, bareRgbChanged, bareMaskMembershipChanged;
             public bool runtimeEntropyReplayed;
-            public string entropyRestoreEvidence = "Per-render finally restore is verified; outer restore failure throws UNKNOWN. diagnostic-frames.json records all requested camera renders.";
+            public string entropyRestoreEvidence = "Typed CPU index/offset/array identity/full RNG state restored+verified; GPU material property readback NOT_SUPPORTED. Material setters are RECONSTRUCTED_WRITE from actual END target dimensions. diagnostic-frames.json records all renders.";
             public ProbeRecord feetGridProbe;
             public RendererRecord[] renderers;
             public HitRecord[] groundRayHits;
