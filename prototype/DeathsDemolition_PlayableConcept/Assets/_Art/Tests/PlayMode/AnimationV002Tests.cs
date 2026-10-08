@@ -632,6 +632,145 @@ namespace DD.Art.Tests.PlayMode
             Assert.IsTrue(trace != null && trace.DiagnosticArtifactWritten, "raw one-cycle artifact was not written; diagnosis unavailable");
         }
 
+        // Separate one-factor scratch-controller diagnosis. Baseline and quality acceptance remain unchanged.
+        [UnityTest, Explicit("C00 separate variant grant; scratch Locomotion FootIK off; not production baseline"), Category("Diagnostics")]
+        public IEnumerator RunnerRetarget_LocomotionFootIkOffVariant_OneCycle_RawLocalTrs()
+        {
+            if (Environment.GetEnvironmentVariable("DD_WP096_RUNNER_CONTROLLER_VARIANT") != "locomotion-footik-off-v1")
+                throw new InvalidOperationException("scratch controller variant requires its own explicit opt-in");
+            string directory = Environment.GetEnvironmentVariable("DD_WP096_TRACE_DIR");
+            if (Environment.GetEnvironmentVariable("DD_WP096_RETARGET_LOCAL_TRS") != "1"
+                || string.IsNullOrEmpty(directory) || !System.IO.Path.IsPathRooted(directory))
+                throw new InvalidOperationException("one-cycle diagnosis requires extra local TRS opt-in and absolute fresh trace directory");
+            // Match the existing Runner production setup and 60-frame warm clock exactly.
+            SceneManager.LoadScene(PrototypeScenes.Boot, LoadSceneMode.Single);
+            yield return null;
+            yield return CharacterTests.Bekle(() => SceneManager.GetActiveScene().name == PrototypeScenes.MainMenu && SceneManager.GetActiveScene().isLoaded, 60f, "MainMenu");
+            yield return null;
+            var ground = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            _temp.Add(ground);
+            ground.transform.localScale = new Vector3(80f, 0.2f, 80f); ground.transform.position = new Vector3(0f, -0.1f, 0f); ground.layer = PrototypeLayers.Environment;
+            FootIkAdapter.Force = 0;
+            CharacterAssetSet set = CharacterAssetSet.Load();
+            var root = new GameObject("WP032B_Runner");
+            _temp.Add(root);
+            root.transform.SetPositionAndRotation(new Vector3(-20f, 0f, 0f), Quaternion.LookRotation(Vector3.right));
+            GameObject go = UnityEngine.Object.Instantiate(set.ZombiePrefab, root.transform, false);
+            var v = go.GetComponent<ZombieSkinnedVisual>();
+            v.Assemble(set.ZombieLibrary, ZombieLookSelector.Select(set.ZombieLibrary, 11u));
+            v.ApplyMaterial(set.ZombieLibrary, 1);
+            RuntimeAnimatorController variantController = LoadOneCycleFootIkOffController();
+            v.Animator.runtimeAnimatorController = variantController; // scratch asset only, no mutation of its state graph
+            v.ResetForSpawn(EnemyTier.Special, 4.6f, "A", 0, false);
+            v.Animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+            Avatar avatar = v.Animator.avatar;
+            bool avatarReady = avatar != null && avatar.isHuman && avatar.isValid;
+            Transform lf = avatarReady ? v.Animator.GetBoneTransform(HumanBodyBones.LeftFoot) : null;
+            Transform rf = avatarReady ? v.Animator.GetBoneTransform(HumanBodyBones.RightFoot) : null;
+            const float speed = 4.6f;
+            Time.captureDeltaTime = 1f / 60f;
+            bool[] plant = new bool[2], lift = new bool[2], stance = new bool[2];
+            var paths = new RunnerStancePath[2];
+            RunnerTrace trace = null;
+            bool subscribed = false, began = false, complete = false;
+            int firstFrame = -1, lastFrame = -1, captured = 0, closedLeft = 0, closedRight = 0;
+            string stop = "bounded-frame-limit";
+            Action<CharacterAnimationEvent> onEvent = e =>
+            {
+                if (e == CharacterAnimationEvent.FootLeft) plant[0] = true;
+                else if (e == CharacterAnimationEvent.FootRight) plant[1] = true;
+                else if (e == CharacterAnimationEvent.FootLOff) lift[0] = true;
+                else if (e == CharacterAnimationEvent.FootROff) lift[1] = true;
+            };
+            try
+            {
+                for (int i = 0; i < 60; i++) { v.SetSpeed(speed, Time.deltaTime); yield return null; }
+                trace = RunnerTrace.Create(v);
+                trace.SetDiagnosticControllerVariant("locomotion-footik-off-v1", "045afb3dd2c24eeaaf8354e341897565", "Assets/_Art/Tests/PlayMode/DD_Zombie_OneCycleFootIkOff_DIAGNOSTIC.controller",
+                    "3e6a36868ff252ddbaad2ca2ae9437c9f63a011b", "73fbb6c979bfb88dc9da6e20e5e15d69bc06ba10fb54cbc98e78c0d5e49bdf28", "3239fb558c7eb93ad852a5f759627748dee63c4ce96b51df6e659d5338155261");
+                if (v.Animator.runtimeAnimatorController != variantController) { stop = "scratch-controller-not-active"; throw new InvalidOperationException(stop); }
+                if (!trace.DiagnosticInputsAvailable) { stop = "missing-bone-or-invalid-avatar"; throw new InvalidOperationException(stop); }
+                v.Events.Raised += onEvent;
+                subscribed = true;
+                // At most 64 seek + 64 capture frames; no manual Animator/Playable clock and no retry.
+                for (int step = 0; step < 128; step++)
+                {
+                    root.transform.position += Vector3.right * speed * Time.deltaTime;
+                    v.SetSpeed(speed, Time.deltaTime);
+                    yield return null;
+                    if (!began)
+                    {
+                        if (!plant[0])
+                        {
+                            plant[0] = plant[1] = lift[0] = lift[1] = false;
+                            if (step == 63) { stop = "left-anchor-not-observed"; break; }
+                            continue;
+                        }
+                        began = true;
+                        firstFrame = Time.frameCount;
+                    }
+                    bool boundary = captured > 0 && plant[0];
+                    trace.Capture(root.transform, v, lf.position, rf.position, plant, lift);
+                    lastFrame = Time.frameCount;
+                    captured++;
+                    // Same fixed ankle and original plant->lift bookkeeping; no acceptance threshold here.
+                    for (int foot = 0; foot < 2; foot++)
+                    {
+                        Vector3 ankle = foot == 0 ? lf.position : rf.position;
+                        if (lift[foot])
+                        {
+                            if (stance[foot] && paths[foot].Samples > 0)
+                            {
+                                trace.Close(foot, paths[foot].Path, paths[foot].Samples);
+                                if (foot == 0) closedLeft++; else closedRight++;
+                            }
+                            stance[foot] = false;
+                        }
+                        if (plant[foot] && !boundary)
+                        {
+                            stance[foot] = true;
+                            paths[foot].Begin(ankle);
+                            trace.Begin(foot);
+                        }
+                        else if (stance[foot]) paths[foot].Sample(ankle);
+                    }
+                    plant[0] = plant[1] = lift[0] = lift[1] = false;
+                    if (boundary)
+                    {
+                        complete = closedLeft == 1 && closedRight == 1;
+                        stop = complete ? "next-left-plant-one-cycle" : "cycle-boundary-incomplete-stances";
+                        break;
+                    }
+                    if (captured == 64) { stop = "capture-frame-limit"; break; }
+                }
+            }
+            finally
+            {
+                if (subscribed) v.Events.Raised -= onEvent;
+                Time.captureDeltaTime = 0f;
+                FootIkAdapter.Force = -1;
+                trace?.SetDiagnosticCycleBounds(firstFrame, lastFrame, closedLeft, closedRight, stop);
+                trace?.Write(complete);
+            }
+            Assert.IsTrue(complete, "raw one-cycle capture incomplete: " + stop + "; this is not a locomotion acceptance verdict");
+            Assert.IsTrue(trace != null && trace.DiagnosticArtifactWritten, "raw one-cycle artifact was not written; diagnosis unavailable");
+        }
+
+        private static RuntimeAnimatorController LoadOneCycleFootIkOffController()
+        {
+#if UNITY_EDITOR
+            const string path = "Assets/_Art/Tests/PlayMode/DD_Zombie_OneCycleFootIkOff_DIAGNOSTIC.controller";
+            const string guid = "045afb3dd2c24eeaaf8354e341897565";
+            if (UnityEditor.AssetDatabase.AssetPathToGUID(path) != guid)
+                throw new InvalidOperationException("scratch controller GUID mismatch; variant unavailable");
+            RuntimeAnimatorController controller = UnityEditor.AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(path);
+            if (controller == null) throw new InvalidOperationException("scratch controller asset unavailable");
+            return controller;
+#else
+            throw new InvalidOperationException("scratch controller diagnosis is Editor-only");
+#endif
+        }
+
         // Optional evidence only: no classifier, metric or Animator mutation. Fixed buffers; I/O after sampling.
         private sealed class RunnerTrace
         {
@@ -674,6 +813,8 @@ namespace DD.Art.Tests.PlayMode
                 public int cycleFirstUnityFrame, cycleLastUnityFrame, cycleClosedLeft, cycleClosedRight, cycleMissingBoneMask;
                 public int localFrameCount, droppedLocalFrames;
                 public string avatarName, controllerName, activeClipNameAtSetup;
+                public string controllerVariant, controllerVariantGuid, controllerVariantAssetPath;
+                public string baselineSourcePin, productionControllerSha256, variantControllerSha256;
                 public int avatarInstanceId, controllerInstanceId, activeClipInstanceIdAtSetup;
                 public float activeClipLengthAtSetup;
                 public bool avatarHuman, avatarValid;
@@ -782,10 +923,18 @@ namespace DD.Art.Tests.PlayMode
             public bool DiagnosticInputsAvailable => _data.localTrsRequested && _data.avatarHuman && _data.avatarValid && MissingLocalBoneMask == 0;
             public void SetDiagnosticCycleBounds(int first, int last, int left, int right, string stop)
             {
-                _data.diagnosticScope = "raw production-controller one-cycle local TRS only; never Runner acceptance";
+                _data.diagnosticScope = string.IsNullOrEmpty(_data.controllerVariant)
+                    ? "raw production-controller one-cycle local TRS only; never Runner acceptance"
+                    : "raw scratch-controller Locomotion FootIK-off one-cycle variant; never production baseline or Runner acceptance";
                 _data.cycleFirstUnityFrame = first; _data.cycleLastUnityFrame = last;
                 _data.cycleClosedLeft = left; _data.cycleClosedRight = right; _data.cycleStopReason = stop;
                 _data.cycleMissingBoneMask = MissingLocalBoneMask;
+            }
+            public void SetDiagnosticControllerVariant(string variant, string guid, string path, string baseline, string productionSha, string variantSha)
+            {
+                _data.schema = "wp096-runner-trace-v3-controller-variant";
+                _data.controllerVariant = variant; _data.controllerVariantGuid = guid; _data.controllerVariantAssetPath = path;
+                _data.baselineSourcePin = baseline; _data.productionControllerSha256 = productionSha; _data.variantControllerSha256 = variantSha;
             }
             public void Begin(int foot) => _start[foot] = _index;
             public void Close(int foot, float path, int samples)
