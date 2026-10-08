@@ -60,7 +60,7 @@ namespace DD.Art.Pipeline.EditorTools
         {
             if (_observedCamera != null) throw new InvalidOperationException("UNKNOWN: diagnostic observer already bound");
             // Camera.Render may create the pipeline and dispose pre-existing renderers.
-            // Bind inside its first beginCameraRendering, after pipeline creation, never in Observe.
+            // Bind after the first existing beauty render, never in Observe or before bootstrap.
             _observedCamera = camera;
             RenderPipelineManager.beginCameraRendering += BeforeCamera;
             RenderPipelineManager.endCameraRendering += AfterCamera;
@@ -79,7 +79,7 @@ namespace DD.Art.Pipeline.EditorTools
             public int frame, randomStateHash, noiseIndex;
             public float realtime, noiseOffsetX, noiseOffsetY;
             public Vector4 shaderTime, shaderTimeParameters, wind, vegWave;
-            public bool materialInitialized, materialPersistent;
+            public bool materialInitialized, materialPersistent, bindingInitialized;
             public int materialInstanceId;
         }
         [Serializable] private sealed class FrameRecord
@@ -98,23 +98,26 @@ namespace DD.Art.Pipeline.EditorTools
         {
             frame = Time.frameCount, realtime = Time.realtimeSinceStartup,
             randomStateHash = UnityEngine.Random.state.GetHashCode(),
-            noiseIndex = _entropyBinding.Index, noiseOffsetX = _entropyBinding.OffsetX,
-            noiseOffsetY = _entropyBinding.OffsetY, materialInitialized = _entropyBinding.MaterialReady,
-            materialPersistent = _entropyBinding.MaterialPersistent, materialInstanceId = _entropyBinding.MaterialInstanceId,
+            noiseIndex = _entropyBinding?.Index ?? -1, noiseOffsetX = _entropyBinding?.OffsetX ?? 0f,
+            noiseOffsetY = _entropyBinding?.OffsetY ?? 0f, materialInitialized = _entropyBinding?.MaterialReady ?? false,
+            materialPersistent = _entropyBinding?.MaterialPersistent ?? false, materialInstanceId = _entropyBinding?.MaterialInstanceId ?? 0,
+            bindingInitialized = _entropyBinding != null,
             shaderTime = Shader.GetGlobalVector("_Time"), shaderTimeParameters = Shader.GetGlobalVector("_TimeParameters"),
             wind = Shader.GetGlobalVector("_DD_WindVector"), vegWave = Shader.GetGlobalVector("_DD_VegWaveW"),
         };
         private void BeforeCamera(ScriptableRenderContext context, Camera camera)
         {
             if (camera != _observedCamera) return;
-            ScriptableRenderer renderer = camera.GetUniversalAdditionalCameraData().scriptableRenderer;
-            if (_entropyBinding == null) _entropyBinding = new SsaoEntropyBinding(renderer);
-            _entropyBinding.AssertCurrent(renderer);
+            if (_entropyBinding != null)
+                _entropyBinding.AssertCurrent(camera.GetUniversalAdditionalCameraData().scriptableRenderer);
             _pendingFrame = new FrameRecord { label = _renderLabel, before = FrameStateNow() };
         }
         private void AfterCamera(ScriptableRenderContext context, Camera camera)
         {
             if (camera != _observedCamera || _pendingFrame == null) return;
+            ScriptableRenderer renderer = camera.GetUniversalAdditionalCameraData().scriptableRenderer;
+            if (_entropyBinding == null) _entropyBinding = new SsaoEntropyBinding(renderer);
+            _entropyBinding.AssertCurrent(renderer);
             _pendingFrame.after = FrameStateNow();
             _frames.Add(_pendingFrame);
             _pendingFrame = null;
