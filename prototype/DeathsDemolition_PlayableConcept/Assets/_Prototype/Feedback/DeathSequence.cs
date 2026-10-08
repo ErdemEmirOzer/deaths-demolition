@@ -94,6 +94,10 @@ namespace DD.Prototype.Feedback
         /// </summary>
         public static bool Begin(float scale, float inSeconds, float holdSeconds, float outSeconds)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.DeathSequence);
+            if (feelCostScope.Skip) return false;
+#endif
             if (IsActive)
             {
                 return false;
@@ -140,6 +144,10 @@ namespace DD.Prototype.Feedback
         /// <summary>Advance with unscaled time. Called by the runner; tests may drive it directly.</summary>
         public static void Tick(float unscaledDeltaTime)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.DeathSequence);
+            if (feelCostScope.Skip) return;
+#endif
             if (!IsActive)
             {
                 return;
@@ -183,6 +191,10 @@ namespace DD.Prototype.Feedback
         /// <summary>The time scale the beat wants at <paramref name="t"/> unscaled seconds (pure; tests).</summary>
         public static float ScaleAt(float t)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.DeathSequence);
+            if (feelCostScope.Skip) return 1f;
+#endif
             if (t < _inSeconds)
             {
                 return Mathf.Lerp(_restoreScale, _scale, _inSeconds > 0f ? Mathf.SmoothStep(0f, 1f, t / _inSeconds) : 1f);

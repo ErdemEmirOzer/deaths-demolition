@@ -161,6 +161,10 @@ namespace DD.Prototype.Feedback
 
         private void Update()
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.CameraDriver);
+            if (feelCostScope.Skip) { return; }
+#endif
             if (_pendingRow != null && Time.frameCount >= _pendingFrame)
             {
                 if (CameraModeService.Current == CameraMode.FirstPerson)
@@ -190,6 +194,10 @@ namespace DD.Prototype.Feedback
 
         private void KillBeat()
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.CameraDriver);
+            if (feelCostScope.Skip) { return; }
+#endif
             CameraMode mode = CameraModeService.Current;
             float minInterval = mode == CameraMode.TopDown ? FeelProfileTD.Active.killBeatMinInterval : CameraModesFeel.KillMinInterval;
             if (Time.time - _killLastBeat < minInterval)
@@ -327,6 +335,10 @@ namespace DD.Prototype.Feedback
         /// <summary>K1 / K3 / K4 of one trigger pull from the TD profile's weapon row; a Special (no fire edges) leans once.</summary>
         private void OnShotTD(FeelShot shot)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.CameraDriver);
+            if (feelCostScope.Skip) { return; }
+#endif
             TopDownFeelCamera td = TopDownChannels;
             if (td == null) return;
             FeelProfileTD profile = td.Profile;
@@ -336,18 +348,43 @@ namespace DD.Prototype.Feedback
 
         private void OnFireStartTD(DD.Prototype.Core.Config.ClassicWeaponId id)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.CameraDriver);
+            if (feelCostScope.Skip) { return; }
+#endif
             TopDownFeelCamera td = TopDownChannels;
             if (td != null) td.FireHeld(true);
         }
 
         /// <summary>K4 lets go on release — in any mode, so a release never strands a lean.</summary>
-        private void OnFireStopTD(DD.Prototype.Core.Config.ClassicWeaponId id) => ReleaseLean();
+        private void OnFireStopTD(DD.Prototype.Core.Config.ClassicWeaponId id)
+        {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.CameraDriver);
+            if (feelCostScope.Skip) { return; }
+#endif
+            ReleaseLean();
+        }
 
         /// <summary>§4.8: a reload start lets the lean go.</summary>
-        private void OnReloadStartTD(FeelReload reload) => ReleaseLean();
+        private void OnReloadStartTD(FeelReload reload)
+        {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.CameraDriver);
+            if (feelCostScope.Skip) { return; }
+#endif
+            ReleaseLean();
+        }
 
         /// <summary>§4.10: the round's end lets the lean go (K5 runs out on its own envelope).</summary>
-        private void OnRoundEndTD(FeelRound round) => ReleaseLean();
+        private void OnRoundEndTD(FeelRound round)
+        {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.CameraDriver);
+            if (feelCostScope.Skip) { return; }
+#endif
+            ReleaseLean();
+        }
 
         private static void ReleaseLean()
         {
@@ -358,6 +395,10 @@ namespace DD.Prototype.Feedback
         /// <summary>§4.0: an armour break → its row (K2 + K3 along the hit); a non-lethal crit → the Crit row's K3. Ground fire never.</summary>
         private void OnHitTD(FeelHit hit)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.CameraDriver);
+            if (feelCostScope.Skip) { return; }
+#endif
             TopDownFeelCamera td = TopDownChannels;
             if (td == null || hit.GroundFire) return;
             if (hit.ArmorBroke) td.Event(FeelEventId.ArmorBreak, hit.Direction);
@@ -367,6 +408,10 @@ namespace DD.Prototype.Feedback
         /// <summary>A kill joins the merged beat (its row's K3 along the shot); a heavy death adds its K2 / K5 now.</summary>
         private void OnKillTD(FeelKill kill)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.CameraDriver);
+            if (feelCostScope.Skip) { return; }
+#endif
             TopDownFeelCamera td = TopDownChannels;
             if (td == null) return;
             FeelEventId id = !kill.Heavy ? FeelEventId.Kill
@@ -383,6 +428,10 @@ namespace DD.Prototype.Feedback
         /// <summary>§4.4: the tier row's K2 / K5 now; its K3 rides the pending kill beat (no second push).</summary>
         private void OnMultiTD(FeelMultiKill multi)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.CameraDriver);
+            if (feelCostScope.Skip) { return; }
+#endif
             TopDownFeelCamera td = TopDownChannels;
             if (td == null) return;
             FeelEventId id = multi.Tier >= 3 ? FeelEventId.MultiKill_T3 : multi.Tier == 2 ? FeelEventId.MultiKill_T2 : FeelEventId.MultiKill_T1;
@@ -393,6 +442,10 @@ namespace DD.Prototype.Feedback
         /// <summary>§4.11: the last zombie's K2 and K5 (the slow-motion envelope); its K3 rides the kill beat it follows.</summary>
         private void OnLastTD(FeelLastZombie last)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.CameraDriver);
+            if (feelCostScope.Skip) { return; }
+#endif
             TopDownFeelCamera td = TopDownChannels;
             if (td == null) return;
             td.LastZombie();
@@ -425,6 +478,10 @@ namespace DD.Prototype.Feedback
         /// <summary>§4.5: the Explosion row × A(d), away from the blast.</summary>
         private void OnExplosionTD(FeelExplosion blast)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.CameraDriver);
+            if (feelCostScope.Skip) { return; }
+#endif
             TopDownFeelCamera td = TopDownChannels;
             if (td != null) td.Explosion(blast.Origin, PlayerPosition());
         }
@@ -432,6 +489,10 @@ namespace DD.Prototype.Feedback
         /// <summary>§4.0: K2 Light → Heavy with the damage fraction, K3 away from the attacker.</summary>
         private void OnHurtTD(FeelPlayerDamage damage)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.CameraDriver);
+            if (feelCostScope.Skip) { return; }
+#endif
             TopDownFeelCamera td = TopDownChannels;
             if (td == null || damage.Amount <= 0f) return;
             td.PlayerDamaged(damage.Fraction, damage.Heavy, damage.Direction);
@@ -440,6 +501,10 @@ namespace DD.Prototype.Feedback
         /// <summary>§4.10: the round-start breath, skipped while a living zombie is within 8 m of the player.</summary>
         private void OnRoundStartTD(FeelRound round)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.CameraDriver);
+            if (feelCostScope.Skip) { return; }
+#endif
             TopDownFeelCamera td = TopDownChannels;
             if (td == null) return;
             td.RoundStart(ZombieWithin(PlayerPosition(), TopDownFeelCamera.RoundStartClearRadiusMeters));
@@ -468,6 +533,21 @@ namespace DD.Prototype.Feedback
 
             return false;
         }
+
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+        // Called between QA windows, before sampling; pending beats must not leak into the next pair.
+        public static void ResetFeelCostState()
+        {
+            if (!IsTopDown || s_instance == null) return;
+            s_instance._pendingRow = null;
+            s_instance._pendingFrame = -1;
+            s_instance._killCount = 0;
+            s_instance._killHead = false;
+            s_instance._killKick = 0f;
+            s_instance._killDir = Vector3.zero;
+            s_instance._killFirst = s_instance._killLastBeat = -10f;
+        }
+#endif
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()

@@ -82,7 +82,15 @@ namespace DD.Prototype.Rounds
             // real one, not the 0.06 / 0.25 / 0.5 on screen. Top-down, a pause SUSPENDS the arbiter: it hands
             // back its base (1) and re-applies what is left on the next frame after the release. First / third
             // person, the round end and the results END it as before (the local VFX hit-stop always ends).
-            float arbiterBase = FeelTimeScale.Suspend(id);
+            float arbiterBase;
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using (var feelCostScope = FeelCostMeasurement.Enter(FeelCostPath.RunFlow))
+            {
+                arbiterBase = feelCostScope.Skip ? -1f : FeelTimeScale.Suspend(id);
+            }
+#else
+            arbiterBase = FeelTimeScale.Suspend(id);
+#endif
 
             s_restoreScale = arbiterBase > 0.01f ? arbiterBase : (Time.timeScale > 0.01f ? Time.timeScale : 1f);
             Time.timeScale = 0f;

@@ -614,6 +614,10 @@ namespace DD.Prototype.Feedback
         /// <summary>Once per frame (FeelEventsRunner): the beats due by <paramref name="now"/> (unscaled), none while frozen.</summary>
         internal static void TickHeartbeat(float now, bool frozen)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = FeelCostMeasurement.Enter(FeelCostPath.Events);
+            if (FeelCostMeasurement.Armed && FeelCostMeasurement.GateActive && !FeelCostMeasurement.LayersOn) return;
+#endif
             if (!InLowHealth || frozen) return;
             if (now < s_nextBeat) return;
             float bpm = HeartbeatBpm(s_lowRatio);
@@ -719,6 +723,44 @@ namespace DD.Prototype.Feedback
             s_groupNext = 0; s_chainNext = 0; s_chainTier = 0;
         }
 
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+        /// <summary>Cost-only deterministic synthetic ingress; never applies damage, kills or mutates the round ledger.</summary>
+        internal static void ReplayCostStep(int step, Transform target, Vector3 origin)
+        {
+            Vector3 point = origin + Vector3.forward * 4f;
+            int group = step + 10000;
+            if (step == 0) { Emit(RoundStarted, new FeelRound(1), FeelEventKind.RoundStarted); WeaponEvents.PublishFireStarted(ClassicWeaponId.AssaultRifle); }
+            if (step % 6 == 0)
+                RaiseShot(new FeelShot(false, ClassicWeaponId.AssaultRifle, default, default, origin, Vector3.forward, 1, group, step + 1, 1f, 10, 30));
+            if (step % 30 == 0)
+            {
+                bool critical = step % 60 == 0;
+                Emit(EnemyHit, new FeelHit(target, EnemyTier.Standard, 1, point, Vector3.forward, 10f, 10f, step % 120 == 30, false,
+                    critical, critical ? BodyRegion.Head : BodyRegion.UpperBody, DamageSourceKind.Bullet, 1f, .5f, true, false,
+                    group, true, ClassicWeaponId.AssaultRifle, false, default), FeelEventKind.EnemyHit);
+                if (critical) FeelCostMeasurement.Critical();
+            }
+            if (step % 90 == 0)
+                Emit(EnemyKilled, new FeelKill(target, EnemyTier.Standard, 1, point, Vector3.forward, BodyRegion.UpperBody,
+                    DamageSourceKind.Bullet, step % 180 == 0, step % 270 == 0, 0f, 1, 1, step % 360 == 0 ? 0 : group, true, ClassicWeaponId.AssaultRifle, false, default, 1, 1, false), FeelEventKind.EnemyKilled);
+            if (step % 360 == 50)
+            { int tier = (step / 360) % 3 + 1; Emit(MultiKill, new FeelMultiKill(tier, tier == 1 ? 3 : tier == 2 ? 5 : 8, true, group, tier, point), FeelEventKind.MultiKill); }
+            if (step % 360 == 70) Emit(DryFire, new FeelDryFire(ClassicWeaponId.AssaultRifle, origin), FeelEventKind.DryFire);
+            if (step % 360 == 80) Emit(GoldCollected, new FeelGold(1, 100, origin, step / 360), FeelEventKind.GoldCollected);
+            if (step % 180 == 0) RaiseExplosion(point, 3f, group, ExplosionSource.Rocket);
+            if (step % 360 == 100) RaiseReloadStarted(new FeelReload(false, ClassicWeaponId.AssaultRifle, default, .8f, false, false, origin));
+            if (step % 360 == 148) RaiseReloadEnded(new FeelReload(false, ClassicWeaponId.AssaultRifle, default, .8f, false, true, origin));
+            if (step % 360 == 200) Emit(LowHealth, new FeelLowHealth(true, .2f, false), FeelEventKind.LowHealth);
+            if (step % 360 == 210) WeaponEvents.PublishFireStopped(ClassicWeaponId.AssaultRifle);
+            if (step % 360 == 240) WeaponEvents.PublishFireStarted(ClassicWeaponId.AssaultRifle);
+            if (step % 360 == 220) Emit(Heartbeat, new FeelHeartbeat(step + 1, 100f, .2f), FeelEventKind.Heartbeat);
+            if (step % 360 == 250) Emit(LowHealth, new FeelLowHealth(false, 1f, false), FeelEventKind.LowHealth);
+            if (step % 360 == 280) Emit(PlayerDamaged, new FeelPlayerDamage(origin, Vector3.back, 30f, 100f, 70f, 100f, false, step % 720 == 280), FeelEventKind.PlayerDamaged);
+            if (step % 360 == 300) Emit(LastZombie, new FeelLastZombie(point, 1, EnemyTier.Standard, target), FeelEventKind.LastZombie);
+            if (step == 3599) { WeaponEvents.PublishFireStopped(ClassicWeaponId.AssaultRifle); Emit(RoundEnded, new FeelRound(1), FeelEventKind.RoundEnded); }
+        }
+#endif
+
         // ------------------------------------------------------------------ shared
 
         /// <summary>Test seam: ≥ 0 replaces the unscaled clock the windows use (EditMode time does not advance inside a test).</summary>
@@ -739,6 +781,10 @@ namespace DD.Prototype.Feedback
 
         private static void Emit<T>(Action<T> handler, in T payload, FeelEventKind kind)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = FeelCostMeasurement.Enter(FeelCostPath.Events);
+            FeelCostMeasurement.Ingress(kind);
+#endif
             s_counts[(int)kind]++;
             if (handler == null) return;
             try
@@ -747,6 +793,9 @@ namespace DD.Prototype.Feedback
             }
             catch (Exception e)
             {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+                FeelCostMeasurement.Fault();
+#endif
                 Debug.LogException(e);
             }
         }

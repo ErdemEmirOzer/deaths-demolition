@@ -649,13 +649,42 @@ namespace DD.Prototype.CameraSystem
             // WP-095 K4 (C-00 K7 08.10): the fire lean joins AFTER the SmoothDamps, in its own clamp |look-ahead + lean| ≤
             // lookAheadTotalCapMeters (3 m); the 2.5 m look-ahead cap above stays. K4 / K5 envelopes run on unscaled time and stop
             // while RunFlowClock is frozen; reduced motion → 0.
-            _tdFeel.TickEnvelopes(RunFlowClock.IsFrozen ? 0f : Time.unscaledDeltaTime, _lookAheadSmoothTime);
-            Vector3 lean = TopDownFeelCamera.ClampLean(_lookAhead, _tdFeel.LeanOffset(CameraModeService.Settings.ReducedMotion),
-                _tdFeel.Profile.lookAheadTotalCapMeters);
+            Vector3 lean = ComputeTopDownFeelLean();
             position = _focus + _lookAhead + lean + _offsetFromFocus * (1f - pushIn);
             rotation = _fixedRotation;
             fov = _fieldOfView;
         }
+
+        // Only WP-095 K4 work is gated; stable follow, look-ahead and aim remain active in both QA windows.
+        private Vector3 ComputeTopDownFeelLean()
+        {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.CameraRig);
+            if (feelCostScope.Skip) { return Vector3.zero; }
+#endif
+            _tdFeel.TickEnvelopes(RunFlowClock.IsFrozen ? 0f : Time.unscaledDeltaTime, _lookAheadSmoothTime);
+            return TopDownFeelCamera.ClampLean(_lookAhead, _tdFeel.LeanOffset(CameraModeService.Settings.ReducedMotion),
+                _tdFeel.Profile.lookAheadTotalCapMeters);
+        }
+
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+        // QA window transition only, excluded from samples by the caller.
+        public void ResetFeelCostState()
+        {
+            if (CameraModeService.Current != CameraMode.TopDown) return;
+            CameraReactions.Drain(out _, out _, out _, out _, out _);
+            _tdFeel.Reset();
+            _recoil = _recoilVelocity = Vector2.zero;
+            _kickOffset = _kickVelocity = Vector3.zero;
+            _kickRoll = _kickRollVelocity = 0f;
+            _fovPunch = _fovPunchVelocity = _fovRiseTarget = _fovRiseLeft = 0f;
+            if (_shakeNode != null)
+            {
+                _shakeNode.localPosition = Vector3.zero;
+                _shakeNode.localRotation = Quaternion.identity;
+            }
+        }
+#endif
 
         // ------------------------------------------------------------ WP-070 modes
 
@@ -1250,6 +1279,10 @@ namespace DD.Prototype.CameraSystem
         /// </summary>
         private void ConsumeReactions(CameraMode mode, float dt)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.CameraRig);
+            if (feelCostScope.Skip) { return; }
+#endif
             CameraModeSettings settings = CameraModeService.Settings;
             Vector2 recoil;
             Vector3 kick;
@@ -1475,6 +1508,10 @@ namespace DD.Prototype.CameraSystem
         /// </summary>
         private void ApplyTopDownShake(float dt)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.CameraRig);
+            if (feelCostScope.Skip) { return; }
+#endif
             FeelProfileTD profile = _tdFeel.Profile;
             float modeScale = Mathf.Max(0f, CameraModeService.CurrentProfile.ShakeScale);
             Vector3 legacy;

@@ -68,6 +68,10 @@ namespace DD.Prototype.Feedback
 
         public static void Enqueue(ImpactFeelId kind, int groupId, Vector3 point, Vector3 direction, float amplitudeScale = 1f)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.Router);
+            if (feelCostScope.Skip) return;
+#endif
             FeelSnapshot snapshot = FeelRuntime.Current;
             s_sequence++;
             int resolvedGroup = groupId != 0 ? groupId : unchecked((int)(s_sequence & 0x7fffffff));
@@ -83,6 +87,10 @@ namespace DD.Prototype.Feedback
 
         public static void Flush()
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.Router);
+            if (feelCostScope.Skip) { s_count = 0; return; }
+#endif
             if (s_count == 0) return;
             FeelSnapshot snapshot = FeelRuntime.Current;
             int groups = 0;
@@ -159,6 +167,10 @@ namespace DD.Prototype.Feedback
         /// </summary>
         public static float ModeHitStop(ImpactFeelId kind, float authored)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.Router);
+            if (feelCostScope.Skip) return 0f;
+#endif
             if (authored <= 0f) return 0f;
             CameraMode mode = CameraModeService.Current;
             if (mode == CameraMode.TopDown) return authored;
@@ -184,6 +196,10 @@ namespace DD.Prototype.Feedback
         /// </summary>
         public static void AdvanceLateFrame(float unscaledDeltaTime)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.Router);
+            if (feelCostScope.Skip) return;
+#endif
             HitStopService.Tick(unscaledDeltaTime);
             Flush();
             FeelTimeScale.AdvanceLateFrame(unscaledDeltaTime);

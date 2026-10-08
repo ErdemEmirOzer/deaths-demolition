@@ -170,10 +170,34 @@ namespace DD.Prototype.Feedback.Vfx
         /// <summary>WP-095: the TD profile's muzzle-light switch × the held classic's row scale (1 for a weapon without a row).</summary>
         private static float TopDownLightScale()
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.Muzzle);
+            if (feelCostScope.Skip) return 1f; // WP073 baseline: no WP095 profile multiplier.
+#endif
             DD.Prototype.Feedback.FeelProfileTD profile = DD.Prototype.Feedback.FeelProfileTD.Active;
             if (!profile.muzzleLight) return 0f;
             DD.Prototype.Feedback.WeaponFeelTD row = profile.Weapon(DD.Prototype.Weapons.WeaponRegistry.SelectedWeapon);
             return row.label != null ? row.muzzleLightScale : 1f;
+        }
+
+        // Only the WP095 profile additions belong to the feel-cost A/B scope. The pre-existing
+        // WP073 light pool / smoke / LateUpdate rendering remain running in both windows.
+        private static float TopDownLightRange(bool topDown, VfxWeaponProfile profile)
+        {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.Muzzle);
+            if (feelCostScope.Skip) return profile.LightRange;
+#endif
+            return topDown && profile.Sustained ? Mathf.Min(profile.LightRange, DD.Prototype.Feedback.FeelProfileTD.Active.autoLightRangeCapMeters) : profile.LightRange;
+        }
+
+        private static float TopDownFlickerFloor()
+        {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.Muzzle);
+            if (feelCostScope.Skip) return 0.6f;
+#endif
+            return CameraModeService.Current == CameraMode.TopDown ? DD.Prototype.Feedback.FeelProfileTD.Active.sustainedFlickerFloor : 0.6f;
         }
 
         /// <summary>One shot's light and smoke.</summary>
@@ -232,7 +256,7 @@ namespace DD.Prototype.Feedback.Vfx
                     Light l = m.Light;
                     l.color = p.LightColor;
                     // WP-095 §3: an automatic's light reaches ≤ 6 m top-down — the aim point (6–12 m out) stays unlit
-                    l.range = topDown && p.Sustained ? Mathf.Min(p.LightRange, DD.Prototype.Feedback.FeelProfileTD.Active.autoLightRangeCapMeters) : p.LightRange;
+                    l.range = TopDownLightRange(topDown, p);
                     l.shadows = LightShadows.None;   // C-00 30.09: muzzle lights never cast shadows (perf); only the Cinematic explosion light does
                     l.intensity = m.Intensity;
                     l.transform.position = MuzzlePoint(muzzle, firstPerson);
@@ -392,7 +416,7 @@ namespace DD.Prototype.Feedback.Vfx
             float now = Time.time;
             bool reduceFlashes = GameFeelSettings.FlashScale < 0.99f;
             // WP-095 §3: top-down sustained fire flickers 0.75–1.0 (less strobe); first / third person keep 0.6–1.0
-            float floor = CameraModeService.Current == CameraMode.TopDown ? DD.Prototype.Feedback.FeelProfileTD.Active.sustainedFlickerFloor : 0.6f;
+            float floor = TopDownFlickerFloor();
             for (int i = 0; i < _lights.Length; i++)
             {
                 ref MuzzleLight m = ref _lights[i];

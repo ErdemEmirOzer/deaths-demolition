@@ -28,6 +28,10 @@ namespace DD.Prototype.Inputs
         /// <summary>A one-shot pulse; the stronger of the running and the new one plays, a weaker request is dropped.</summary>
         public void Event(float low, float high, float seconds, float now)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.RumbleMixer);
+            if (feelCostScope.Skip) { return; }
+#endif
             if (seconds <= 0f || (low <= 0f && high <= 0f)) return;
             bool running = now < _eventUntil;
             if (running && Mathf.Max(low, high) < Mathf.Max(_eventLow, _eventHigh)) return;
@@ -39,6 +43,10 @@ namespace DD.Prototype.Inputs
         /// <summary>The heartbeat's second beat (or any follow-up) <paramref name="delay"/> seconds from now; one slot.</summary>
         public void Schedule(float delay, float low, float high, float seconds, float now)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.RumbleMixer);
+            if (feelCostScope.Skip) { return; }
+#endif
             _pendingAt = now + delay;
             _pendingLow = low;
             _pendingHigh = high;
@@ -48,6 +56,10 @@ namespace DD.Prototype.Inputs
         /// <summary>Sustained fire on: the level holds until <see cref="SustainOff"/>.</summary>
         public void SustainOn(float low, float high)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.RumbleMixer);
+            if (feelCostScope.Skip) { return; }
+#endif
             _sustainLow = low;
             _sustainHigh = high;
             _sustainFadeFrom = float.PositiveInfinity;
@@ -56,6 +68,10 @@ namespace DD.Prototype.Inputs
         /// <summary>Trigger released: the level fades to 0 over <paramref name="fadeSeconds"/>.</summary>
         public void SustainOff(float fadeSeconds, float now)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.RumbleMixer);
+            if (feelCostScope.Skip) { return; }
+#endif
             if (_sustainLow <= 0f && _sustainHigh <= 0f) return;
             if (!float.IsPositiveInfinity(_sustainFadeFrom)) return;
             _sustainFadeFrom = now;
@@ -74,6 +90,10 @@ namespace DD.Prototype.Inputs
         /// <summary>The motor speeds now, before the player's scale; both 0 when nothing plays.</summary>
         public void Sample(float now, float eventOverSustained, float ceiling, out float low, out float high)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.RumbleMixer);
+            if (feelCostScope.Skip) { low = high = 0f; return; }
+#endif
             if (now >= _pendingAt)
             {
                 _pendingAt = float.PositiveInfinity;
@@ -186,6 +206,19 @@ namespace DD.Prototype.Inputs
             if (_tdWritten) LastIntensity = Mathf.Max(low, high);
         }
 
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+        // Motor/mixer reset belongs to the unmeasured window transition, never to the measured off path.
+        public void ResetFeelCostState()
+        {
+            if (!IsTopDown) return;
+            _td.Clear();
+            _firingHeld = false;
+            _lastGoldPulse = float.NegativeInfinity;
+            StopTopDownMotors();
+            StopMotors();
+        }
+#endif
+
         private void StopTopDownMotors()
         {
             if (!_tdWritten) return;
@@ -199,6 +232,10 @@ namespace DD.Prototype.Inputs
 
         private void Row(FeelEventId id, float scale = 1f)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.Rumble);
+            if (feelCostScope.Skip) { return; }
+#endif
             if (!IsTopDown) return;
             EventFeelTD row = FeelProfileTD.Active.Event(id);
             Pulse(row.rumbleLow * scale, row.rumbleHigh * scale, row.rumbleSeconds);
@@ -206,6 +243,10 @@ namespace DD.Prototype.Inputs
 
         private void Pulse(float low, float high, float seconds)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.Rumble);
+            if (feelCostScope.Skip) { return; }
+#endif
             if (seconds <= 0f || (low <= 0f && high <= 0f)) return;
             PulseCount++;
             _td.Event(low, high, Mathf.Min(seconds, FeelProfileTD.Active.rumbleMaxSeconds), Now);
@@ -213,6 +254,10 @@ namespace DD.Prototype.Inputs
 
         private void OnShotTD(FeelShot shot)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.Rumble);
+            if (feelCostScope.Skip) { return; }
+#endif
             if (!IsTopDown) return;
             FeelProfileTD profile = FeelProfileTD.Active;
             WeaponFeelTD w = shot.Special ? profile.Weapon(shot.SpecialId) : profile.Weapon(shot.Classic);
@@ -227,10 +272,21 @@ namespace DD.Prototype.Inputs
             Pulse(w.rumbleLow, w.rumbleHigh, w.rumbleSeconds);
         }
 
-        private void OnFireStartTD(ClassicWeaponId id) => _firingHeld = true;
+        private void OnFireStartTD(ClassicWeaponId id)
+        {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.Rumble);
+            if (feelCostScope.Skip) { return; }
+#endif
+            _firingHeld = true;
+        }
 
         private void OnFireStopTD(ClassicWeaponId id)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.Rumble);
+            if (feelCostScope.Skip) { return; }
+#endif
             _firingHeld = false;
             if (!IsTopDown) return;
             _td.SustainOff(FeelProfileTD.Active.Weapon(id).rumbleSeconds, Now);   // §4.1: fades 0.06 s after the trigger lets go
@@ -238,21 +294,39 @@ namespace DD.Prototype.Inputs
 
         private void OnHitTD(FeelHit hit)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.Rumble);
+            if (feelCostScope.Skip) { return; }
+#endif
             if (hit.ArmorBroke) Row(FeelEventId.ArmorBreak);
             else if (hit.Critical && !hit.Killed) Row(FeelEventId.Crit);
         }
 
         private void OnKillTD(FeelKill kill)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.Rumble);
+            if (feelCostScope.Skip) { return; }
+#endif
             if (kill.Heavy) Row(kill.Tier == EnemyTier.Ultra ? FeelEventId.HeavyDeath_Ultra : FeelEventId.HeavyDeath_Elite);
             else Row(FeelEventId.Kill);
         }
 
-        private void OnMultiTD(FeelMultiKill m) =>
+        private void OnMultiTD(FeelMultiKill m)
+        {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.Rumble);
+            if (feelCostScope.Skip) { return; }
+#endif
             Row(m.Tier >= 3 ? FeelEventId.MultiKill_T3 : m.Tier == 2 ? FeelEventId.MultiKill_T2 : FeelEventId.MultiKill_T1);
+        }
 
         private void OnExplosionTD(FeelExplosion e)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.Rumble);
+            if (feelCostScope.Skip) { return; }
+#endif
             if (!IsTopDown) return;
             PlayerRig player = PlayerRegistry.Primary;
             float a = player != null ? CameraModesFeel.ExplosionFalloff(Vector3.Distance(player.transform.position, e.Origin)) : 1f;
@@ -274,6 +348,10 @@ namespace DD.Prototype.Inputs
 
         private void OnHurtTD(FeelPlayerDamage d)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.Rumble);
+            if (feelCostScope.Skip) { return; }
+#endif
             if (!IsTopDown) return;
             FeelProfileTD profile = FeelProfileTD.Active;
             if (d.Heavy) { Row(FeelEventId.PlayerDamaged_Heavy); return; }
@@ -284,29 +362,69 @@ namespace DD.Prototype.Inputs
                 Mathf.Lerp(light.rumbleSeconds, heavy.rumbleSeconds, t));
         }
 
-        private void OnReloadStartTD(FeelReload r) => Row(FeelEventId.ReloadStart);
+        private void OnReloadStartTD(FeelReload r)
+        {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.Rumble);
+            if (feelCostScope.Skip) { return; }
+#endif
+            Row(FeelEventId.ReloadStart);
+        }
 
         private void OnReloadEndTD(FeelReload r)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.Rumble);
+            if (feelCostScope.Skip) { return; }
+#endif
             if (r.Completed) Row(FeelEventId.ReloadEnd);
         }
 
-        private void OnDryTD(FeelDryFire d) => Row(FeelEventId.DryFire);
+        private void OnDryTD(FeelDryFire d)
+        {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.Rumble);
+            if (feelCostScope.Skip) { return; }
+#endif
+            Row(FeelEventId.DryFire);
+        }
 
         private void OnGoldTD(FeelGold g)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.Rumble);
+            if (feelCostScope.Skip) { return; }
+#endif
             if (!IsTopDown || Now - _lastGoldPulse < FeelProfileTD.Active.goldRumbleMinInterval) return;   // §4.0: ≤ 1 per 0.1 s
             _lastGoldPulse = Now;
             Row(FeelEventId.GoldPickup);
         }
 
-        private void OnRoundTD(FeelRound r) => Row(FeelEventId.RoundStart);
+        private void OnRoundTD(FeelRound r)
+        {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.Rumble);
+            if (feelCostScope.Skip) { return; }
+#endif
+            Row(FeelEventId.RoundStart);
+        }
 
-        private void OnLastTD(FeelLastZombie z) => Row(FeelEventId.LastZombie);
+        private void OnLastTD(FeelLastZombie z)
+        {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.Rumble);
+            if (feelCostScope.Skip) { return; }
+#endif
+            Row(FeelEventId.LastZombie);
+        }
 
         /// <summary>§4.7: .18 low for 0.05 s, then .12 low 0.18 s later; suppressed while firing; its own profile switch.</summary>
         private void OnBeatTD(FeelHeartbeat beat)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.Rumble);
+            if (feelCostScope.Skip) { return; }
+#endif
             if (!IsTopDown || _firingHeld) return;
             FeelProfileTD profile = FeelProfileTD.Active;
             if (!profile.lowHealthHeartbeatRumble) return;

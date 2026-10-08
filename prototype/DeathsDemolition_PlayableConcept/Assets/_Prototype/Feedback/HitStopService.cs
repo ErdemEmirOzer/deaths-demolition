@@ -75,11 +75,19 @@ namespace DD.Prototype.Feedback
         /// </summary>
         public static void Request(float duration, float minInterval)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.LegacyHitStop);
+            if (feelCostScope.Skip) return;
+#endif
             RequestForGroup(0, duration, minInterval, StopTimeScale);
         }
 
         public static bool RequestForGroup(int groupId, float duration, float minInterval, float presentationScale)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.LegacyHitStop);
+            if (feelCostScope.Skip) return false;
+#endif
             if (duration <= 0f)
             {
                 return false;
@@ -122,6 +130,10 @@ namespace DD.Prototype.Feedback
         /// <summary>Exact overlap prevents a 35 ms token becoming two 30 fps frames.</summary>
         public static float VisualDelta(int groupId, float scaledDelta, float unscaledDelta)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.LegacyHitStop);
+            if (feelCostScope.Skip) return scaledDelta;
+#endif
             if (!IsActive || groupId == 0 || groupId != _groupId || unscaledDelta <= 0f) return scaledDelta;
             if (FeelTimeScale.GlobalStopApplied) return scaledDelta;   // WP-095 K1: the world is already stopped (TD) — not twice
             float overlap = Mathf.Min(unscaledDelta, Mathf.Max(0f, _remaining));
@@ -131,6 +143,10 @@ namespace DD.Prototype.Feedback
         /// <summary>Ticked by the feedback director with unscaled time.</summary>
         public static void Tick(float unscaledDeltaTime)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.LegacyHitStop);
+            if (feelCostScope.Skip) return;
+#endif
             if (!IsActive)
             {
                 return;

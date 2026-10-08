@@ -166,6 +166,10 @@ namespace DD.Prototype.Feedback
         /// </summary>
         public static int FramesFor(int baseFrames, float hitStopScale, int maxFrames)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.TimeScale);
+            if (feelCostScope.Skip) return 0;
+#endif
             if (baseFrames <= 0) return 0;
             float scale = hitStopScale > 0f ? hitStopScale : 1f;
             int cap = Mathf.Clamp(maxFrames, 1, MaxStopFrames);
@@ -175,6 +179,10 @@ namespace DD.Prototype.Feedback
         /// <summary>A group of its own for an ungrouped moment (player damage, an ungrouped kill): negative, never a trigger pull's.</summary>
         public static int NewAnonymousGroup()
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.TimeScale);
+            if (feelCostScope.Skip) return 0;
+#endif
             s_anonymousGroup--;
             if (s_anonymousGroup >= 0) s_anonymousGroup = -1;
             return s_anonymousGroup;
@@ -189,6 +197,10 @@ namespace DD.Prototype.Feedback
         /// </summary>
         public static bool RequestStop(int groupId, int frames, FeelEventId kind)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.TimeScale);
+            if (feelCostScope.Skip) return false;
+#endif
             if (frames <= 0 || !IsTopDown) return false;
             FeelProfileTD profile = FeelProfileTD.Active;
             if (!profile.hitStopGlobal) return false;
@@ -258,6 +270,10 @@ namespace DD.Prototype.Feedback
         /// </summary>
         public static bool BeginLastZombie(Vector3 position)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.TimeScale);
+            if (feelCostScope.Skip) return false;
+#endif
             if (!IsTopDown) return false;
             FeelProfileTD profile = FeelProfileTD.Active;
             if (!profile.lastZombieSlowMo) return false;
@@ -283,6 +299,10 @@ namespace DD.Prototype.Feedback
         /// <summary>The slow motion's scale at <paramref name="t"/> real seconds (from 1, the arbiter takes min with its base).</summary>
         public static float LastZombieScaleAt(float t)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.TimeScale);
+            if (feelCostScope.Skip) return 1f;
+#endif
             if (t < s_lzIn)
             {
                 float u = s_lzIn > 0f ? t / s_lzIn : 1f;
@@ -306,6 +326,10 @@ namespace DD.Prototype.Feedback
         /// <summary>Production: once a frame (the router's late frame, else the runner) — a second call in the same frame is a no-op.</summary>
         public static void AdvanceLateFrame(float unscaledDeltaTime)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.TimeScale);
+            if (feelCostScope.Skip) return;
+#endif
             int frame = Time.frameCount;
             if (frame == s_lastAdvanceFrame) return;
             s_lastAdvanceFrame = frame;
@@ -319,6 +343,10 @@ namespace DD.Prototype.Feedback
         /// </summary>
         public static void Advance(float unscaledDeltaTime)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.TimeScale);
+            if (feelCostScope.Skip) return;
+#endif
             if (RunFlowClock.IsFrozen) return;   // the pause owns the clock; the envelopes wait where they are
             if ((s_stopActive || s_lzActive) && !IsTopDown) ClearTopDownSlots();   // the mode left top-down mid-moment
 
@@ -366,6 +394,10 @@ namespace DD.Prototype.Feedback
         /// </summary>
         public static void Refresh()
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.TimeScale);
+            if (feelCostScope.Skip) return;
+#endif
             bool death = DeathSequence.IsActive;
             if (!s_stopActive && !s_lzActive && !death)
             {
@@ -416,6 +448,10 @@ namespace DD.Prototype.Feedback
         /// </summary>
         public static float Suspend(string holdId)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.TimeScale);
+            if (feelCostScope.Skip) return -1f;
+#endif
             HitStopService.Cancel();
             bool pauseLike = holdId != RunFlowClock.RoundEndHold && holdId != RunFlowClock.ResultsHold;
             bool any = s_stopActive || s_lzActive || DeathSequence.IsActive;
@@ -443,6 +479,9 @@ namespace DD.Prototype.Feedback
         /// <summary>Every envelope ends now (the top-down slots and the death beat); the clock goes back if it is still ours.</summary>
         public static void Cancel()
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.TimeScale);
+#endif
             ClearTopDownSlots();
             if (DeathSequence.IsActive) DeathSequence.Cancel();   // → Refresh → GiveBack
             GiveBack();
@@ -454,6 +493,10 @@ namespace DD.Prototype.Feedback
         /// <summary>A scene change ends the top-down moment (it belongs to the scene); the death beat keeps its pre-K1 behaviour.</summary>
         internal static void OnSceneChanged()
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.TimeScale);
+            if (feelCostScope.Skip) return;
+#endif
             if (!s_stopActive && !s_lzActive) return;
             ClearTopDownSlots();
             Refresh();

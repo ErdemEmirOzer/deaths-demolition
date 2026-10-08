@@ -119,6 +119,10 @@ namespace DD.Prototype.CameraSystem
         /// </summary>
         public void Shot(in WeaponFeelTD row, Vector3 aimDirection, bool pulse)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.CameraModel);
+            if (feelCostScope.Skip) { return; }
+#endif
             FeelProfileTD p = Profile;
             Vector3 aim = Planar(aimDirection);
             if (aim.sqrMagnitude > 0f) _fireAim = aim;
@@ -139,6 +143,10 @@ namespace DD.Prototype.CameraSystem
         /// <summary>K4 fire edges (WeaponEvents.FireStarted / FireStopped; a reload start and the round's end let go too).</summary>
         public void FireHeld(bool held)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.CameraModel);
+            if (feelCostScope.Skip) { return; }
+#endif
             if (held) Press();
             else Release();
         }
@@ -146,6 +154,10 @@ namespace DD.Prototype.CameraSystem
         /// <summary>K2: <c>T ← max(T, min(T + add, 1))</c>.</summary>
         public void World(float add)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.CameraModel);
+            if (feelCostScope.Skip) { return; }
+#endif
             if (add <= 0f || !Profile.worldTrauma) return;
             _worldTrauma = AddTrauma(_worldTrauma, add, 1f);
             WorldEvents++;
@@ -154,6 +166,10 @@ namespace DD.Prototype.CameraSystem
         /// <summary>K3: one event's kick along the planar <paramref name="worldDirection"/>, ≤ <see cref="SingleEventKickCapMeters"/>.</summary>
         public void Kick(Vector3 worldDirection, float meters)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.CameraModel);
+            if (feelCostScope.Skip) { return; }
+#endif
             if (meters <= 0f || !Profile.kick) return;
             Vector3 d = Planar(worldDirection);
             if (d.sqrMagnitude <= 0f) return;
@@ -164,6 +180,10 @@ namespace DD.Prototype.CameraSystem
         /// <summary>An event row's K2, K3 (along <paramref name="kickDirection"/>) and K5, each × <paramref name="scale"/>.</summary>
         public void Event(FeelEventId id, Vector3 kickDirection, float scale = 1f)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.CameraModel);
+            if (feelCostScope.Skip) { return; }
+#endif
             EventFeelTD row = Profile.Event(id);
             World(row.worldTraumaAdd * scale);
             Kick(kickDirection, row.kickMeters * scale);
@@ -173,6 +193,10 @@ namespace DD.Prototype.CameraSystem
         /// <summary>An event row's K2 and K5 only — its K3 joins the merged kill beat (CameraFeelDriver).</summary>
         public void EventWithoutKick(FeelEventId id)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.CameraModel);
+            if (feelCostScope.Skip) { return; }
+#endif
             EventFeelTD row = Profile.Event(id);
             World(row.worldTraumaAdd);
             Zoom(row.zoomPunch);
@@ -181,6 +205,10 @@ namespace DD.Prototype.CameraSystem
         /// <summary>§4.5: the Explosion row × A(d) (CameraModesFeel.ExplosionFalloff, d = player ↔ blast), kick away from the blast.</summary>
         public void Explosion(Vector3 origin, Vector3 player)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.CameraModel);
+            if (feelCostScope.Skip) { return; }
+#endif
             Vector3 away = player - origin;
             away.y = 0f;
             float a = CameraModesFeel.ExplosionFalloff(away.magnitude);
@@ -194,6 +222,10 @@ namespace DD.Prototype.CameraSystem
         /// </summary>
         public void PlayerDamaged(float fraction, bool heavy, Vector3 awayFromSource)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.CameraModel);
+            if (feelCostScope.Skip) { return; }
+#endif
             FeelProfileTD p = Profile;
             EventFeelTD light = p.Event(FeelEventId.PlayerDamaged_Light), hurt = p.Event(FeelEventId.PlayerDamaged_Heavy);
             float t = heavy ? 1f : Mathf.Clamp01(fraction / Mathf.Max(0.01f, FeelEvents.Thresholds.HeavyPlayerHitFraction));
@@ -205,6 +237,10 @@ namespace DD.Prototype.CameraSystem
         /// <summary>§4.11: K2 and K5 of the last zombie; K5 rides the slow-motion envelope (in, hold, out) when that layer is on.</summary>
         public void LastZombie()
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.CameraModel);
+            if (feelCostScope.Skip) { return; }
+#endif
             FeelProfileTD p = Profile;
             EventFeelTD row = p.Event(FeelEventId.LastZombie);
             World(row.worldTraumaAdd);
@@ -222,6 +258,10 @@ namespace DD.Prototype.CameraSystem
         /// <summary>§4.10: the round-start breath (0 → +4 % eased in, → 0 easeInOutSine); skipped while a zombie is near. True when it plays.</summary>
         public bool RoundStart(bool zombieNear)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.CameraModel);
+            if (feelCostScope.Skip) { return false; }
+#endif
             if (zombieNear) return false;
             float fraction = Profile.Event(FeelEventId.RoundStart).zoomPunch;
             if (fraction == 0f) return false;
@@ -231,6 +271,10 @@ namespace DD.Prototype.CameraSystem
         /// <summary>K5 with the profile's punch envelope (in easeOutQuad, out easeOutSine).</summary>
         public bool Zoom(float fraction)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.CameraModel, "Zoom.Default");
+            if (feelCostScope.Skip) { return false; }
+#endif
             FeelProfileTD p = Profile;
             return Zoom(fraction, p.zoomInSeconds, TopDownFeelEase.OutQuad, 0f, p.zoomOutSeconds, TopDownFeelEase.OutSine);
         }
@@ -241,6 +285,10 @@ namespace DD.Prototype.CameraSystem
         /// </summary>
         public bool Zoom(float fraction, float inSeconds, TopDownFeelEase inEase, float holdSeconds, float outSeconds, TopDownFeelEase outEase)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.CameraModel, "Zoom.Envelope");
+            if (feelCostScope.Skip) { return false; }
+#endif
             if (fraction == 0f || !Profile.zoomPunch) return false;
             fraction = Mathf.Clamp(fraction, -ZoomCapFraction, ZoomCapFraction);
             float running = _zoomPhase == ZoomPhase.In || _zoomPhase == ZoomPhase.Hold ? Mathf.Max(Mathf.Abs(_zoomPeak), Mathf.Abs(_zoom)) : Mathf.Abs(_zoom);
@@ -273,6 +321,10 @@ namespace DD.Prototype.CameraSystem
         /// <summary>K4 / K5 envelopes on unscaled time (the rig passes 0 while RunFlowClock is frozen).</summary>
         public void TickEnvelopes(float unscaledDt, float aimSmoothSeconds)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.CameraModel);
+            if (feelCostScope.Skip) { return; }
+#endif
             if (unscaledDt <= 0f) return;
             TickLean(unscaledDt, Profile, aimSmoothSeconds);
             TickZoom(unscaledDt);
@@ -281,6 +333,10 @@ namespace DD.Prototype.CameraSystem
         /// <summary>K4: the lean in world metres (0 in reduced motion or with the switch off), before the look-ahead clamp.</summary>
         public Vector3 LeanOffset(bool reducedMotion)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.CameraModel);
+            if (feelCostScope.Skip) { return Vector3.zero; }
+#endif
             FeelProfileTD p = Profile;
             Vector3 lean = reducedMotion || !p.fireLean || _lean01 <= 0f ? Vector3.zero : _leanDir * (_leanMeters * _lean01);
             Last.LeanMeters = lean.magnitude;
@@ -290,6 +346,10 @@ namespace DD.Prototype.CameraSystem
         /// <summary>C-00 K7 (08.10): |look-ahead + lean| ≤ <paramref name="totalCap"/>; the look-ahead's own 2.5 m cap is untouched.</summary>
         public static Vector3 ClampLean(Vector3 lookAhead, Vector3 lean, float totalCap)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.CameraModel);
+            if (feelCostScope.Skip) { return Vector3.zero; }
+#endif
             if (lean.sqrMagnitude <= 0f) return lean;
             return Vector3.ClampMagnitude(lookAhead + lean, Mathf.Max(0f, totalCap)) - lookAhead;
         }
@@ -300,6 +360,10 @@ namespace DD.Prototype.CameraSystem
         /// </summary>
         public void ApplyKicks(ref Vector3 kickOffsetLocal, Quaternion rigRotation)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.CameraModel);
+            if (feelCostScope.Skip) { return; }
+#endif
             if (_pendingFireKick.sqrMagnitude <= 0f && _pendingEventKick.sqrMagnitude <= 0f) return;
             Quaternion inverse = Quaternion.Inverse(rigRotation);
             if (_pendingFireKick.sqrMagnitude > 0f)
@@ -326,6 +390,10 @@ namespace DD.Prototype.CameraSystem
         public void Compose(Quaternion rigRotation, Vector3 legacyLocal, float legacyRoll, Vector3 kickLocal, float kickRoll,
             float playerScale, bool reducedMotion, float cameraDistance, out Vector3 nodeLocal, out float nodeRoll)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.CameraModel);
+            if (feelCostScope.Skip) { nodeLocal = Vector3.zero; nodeRoll = 0f; Last = default; return; }
+#endif
             FeelProfileTD p = Profile;
             float player = Mathf.Clamp01(playerScale);
             float scale = player * (reducedMotion ? CameraModesFeel.ReducedShakeScale : 1f);
@@ -367,11 +435,22 @@ namespace DD.Prototype.CameraSystem
         /// §4.11: the last zombie's focus shift for this frame, camera-local (the rig converts the world offset — lastZombieFocusBlend
         /// of the way from the focus to the kill point, on the slow motion's envelope). Zero when no moment runs.
         /// </summary>
-        public void SetFocusShift(Vector3 cameraLocal) => _focusShift = cameraLocal;
+        public void SetFocusShift(Vector3 cameraLocal)
+        {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.CameraModel);
+            if (feelCostScope.Skip) { return; }
+#endif
+            _focusShift = cameraLocal;
+        }
 
         /// <summary>K1 / K2 decay and the noise clock on SCALED time (a hit-stop freezes the frame, slow motion slows it).</summary>
         public void AdvanceTrauma(float dt)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.CameraModel);
+            if (feelCostScope.Skip) { return; }
+#endif
             if (dt <= 0f) return;
             FeelProfileTD p = Profile;
             _fireTrauma = Mathf.Max(0f, _fireTrauma - p.fireDecayPerSecond * dt);

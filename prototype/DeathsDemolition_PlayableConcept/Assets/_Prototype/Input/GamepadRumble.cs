@@ -147,6 +147,10 @@ namespace DD.Prototype.Inputs
             if (_feelRevision != FeelRuntime.Current.Revision) RefreshClassicProfile();
             if (IsTopDown)
             {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+                using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.Rumble);
+                if (feelCostScope.Skip) return;
+#endif
                 TickTopDown();
                 return;
             }

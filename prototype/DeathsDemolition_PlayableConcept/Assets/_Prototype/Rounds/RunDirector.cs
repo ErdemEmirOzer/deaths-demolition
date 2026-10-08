@@ -593,26 +593,7 @@ namespace DD.Prototype.Rounds
 
         private void TickRoundCompleteBeat()
         {
-            // WP-095 K5 (C-00 08.10): the hold is deferred while the last zombie's slow motion plays — taken when it ends or
-            // after roundEndHoldSafetySeconds (≤ 1.0 s) of real running time (a pause does not count), whichever is first.
-            // The 1.1 s beat starts with the hold.
-            if (_roundEndHoldDeferred)
-            {
-                if (!RunFlowClock.IsFrozen)
-                {
-                    _roundEndHoldWaited += Time.unscaledDeltaTime;
-                }
-
-                if (Feedback.FeelTimeScale.LastZombieActive && _roundEndHoldWaited < Feedback.FeelTimeScale.RoundEndHoldSafetySeconds)
-                {
-                    return;
-                }
-
-                _roundEndHoldDeferred = false;
-                _phaseTimer = 0f;
-                RunFlowClock.AddHold(RunFlowClock.RoundEndHold);
-                return;
-            }
+            if (TickFeelRoundEndDeferral()) return;
 
             // Unscaled, because this phase is the freeze. Scaled time is zero here.
             _phaseTimer += Time.unscaledDeltaTime;
@@ -630,6 +611,40 @@ namespace DD.Prototype.Rounds
             {
                 CloseUpgradeScreen();
             }
+        }
+
+        // Measure only WP095's extra last-zombie hold work; the round timer, shop and
+        // ledger remain normal gameplay in both windows.
+        private bool TickFeelRoundEndDeferral()
+        {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = Feedback.FeelCostMeasurement.Enter(Feedback.FeelCostPath.RunFlow);
+            if (feelCostScope.Skip)
+            {
+                if (!_roundEndHoldDeferred) return false;
+                _roundEndHoldDeferred = false;
+                _phaseTimer = 0f;
+                RunFlowClock.AddHold(RunFlowClock.RoundEndHold);
+                return true;
+            }
+#endif
+            if (!_roundEndHoldDeferred) return false;
+            if (!RunFlowClock.IsFrozen) _roundEndHoldWaited += Time.unscaledDeltaTime;
+            if (Feedback.FeelTimeScale.LastZombieActive && _roundEndHoldWaited < Feedback.FeelTimeScale.RoundEndHoldSafetySeconds)
+                return true;
+            _roundEndHoldDeferred = false;
+            _phaseTimer = 0f;
+            RunFlowClock.AddHold(RunFlowClock.RoundEndHold);
+            return true;
+        }
+
+        private static bool ShouldDeferFeelRoundEndHold()
+        {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = Feedback.FeelCostMeasurement.Enter(Feedback.FeelCostPath.RunFlow);
+            if (feelCostScope.Skip) return false;
+#endif
+            return Feedback.FeelTimeScale.ShouldDeferRoundEndHold;
         }
 
         private void TickCountdown()
@@ -685,7 +700,7 @@ namespace DD.Prototype.Rounds
             // WP-095 K5 (C-00 08.10): top-down with the last zombie's slow motion running, the hold waits for the moment
             // (TickRoundCompleteBeat, ≤ 1.0 s); the sweep and the events below stay HERE, in this frame. First / third
             // person, or the slow motion off: the hold is taken now, as before.
-            if (Feedback.FeelTimeScale.ShouldDeferRoundEndHold)
+            if (ShouldDeferFeelRoundEndHold())
             {
                 _roundEndHoldDeferred = true;
                 _roundEndHoldWaited = 0f;

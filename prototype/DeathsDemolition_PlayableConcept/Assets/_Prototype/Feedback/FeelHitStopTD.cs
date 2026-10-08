@@ -95,6 +95,10 @@ namespace DD.Prototype.Feedback
 
         internal static void OnHit(FeelHit hit)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.HitStop);
+            if (feelCostScope.Skip) return;
+#endif
             if (!hit.ArmorBroke || hit.GroundFire || !IsTopDown) return;
             Request(FeelEventId.ArmorBreak, FeelProfileTD.Active.Event(FeelEventId.ArmorBreak).globalStopFrames, hit.GroupId,
                 WeaponScale(hit.FromClassic, hit.Classic, hit.FromSpecial, hit.SpecialId), false);
@@ -102,6 +106,10 @@ namespace DD.Prototype.Feedback
 
         internal static void OnKill(FeelKill kill)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.HitStop);
+            if (feelCostScope.Skip) return;
+#endif
             if (!IsTopDown) return;
             float scale = WeaponScale(kill.FromClassic, kill.Classic, kill.FromSpecial, kill.SpecialId);
             int group = kill.GroupId != 0 ? kill.GroupId : FeelTimeScale.NewAnonymousGroup();
@@ -123,6 +131,10 @@ namespace DD.Prototype.Feedback
 
         internal static void OnMultiKill(FeelMultiKill multi)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.HitStop);
+            if (feelCostScope.Skip) return;
+#endif
             if (!multi.SameGroup || multi.GroupTier < 2 || !IsTopDown) return;   // a chain never stops, T1 never stops
             FeelEventId id = multi.GroupTier >= 3 ? FeelEventId.MultiKill_T3 : FeelEventId.MultiKill_T2;
             Request(id, FeelProfileTD.Active.Event(id).globalStopFrames, multi.GroupId != 0 ? multi.GroupId : s_lastKillGroup,
@@ -131,6 +143,10 @@ namespace DD.Prototype.Feedback
 
         internal static void OnPlayerDamaged(FeelPlayerDamage damage)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.HitStop);
+            if (feelCostScope.Skip) return;
+#endif
             if (!damage.Heavy || damage.Fatal || !IsTopDown) return;   // a fatal hit is the death beat's
             Request(FeelEventId.PlayerDamaged_Heavy, FeelProfileTD.Active.Event(FeelEventId.PlayerDamaged_Heavy).globalStopFrames,
                 0, 1f, true);
@@ -138,19 +154,43 @@ namespace DD.Prototype.Feedback
 
         internal static void OnLastZombie(FeelLastZombie last)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.HitStop);
+            if (feelCostScope.Skip) return;
+#endif
             if (!IsTopDown || PlayerDown()) return;   // §4.11: the player's death (P 100) wins
             Request(FeelEventId.LastZombie, FeelProfileTD.Active.Event(FeelEventId.LastZombie).globalStopFrames, s_lastKillGroup,
                 s_lastKillScale, false);
             FeelTimeScale.BeginLastZombie(last.Position);
         }
 
-        internal static void OnFireStarted(ClassicWeaponId id) => NotifyTrigger(true, ActiveRpm());
+        internal static void OnFireStarted(ClassicWeaponId id)
+        {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = FeelCostMeasurement.Enter(FeelCostPath.HitStop);
+            FeelCostMeasurement.Trigger(true);
+            if (feelCostScope.Skip) return;
+#endif
+            NotifyTrigger(true, ActiveRpm());
+        }
 
-        internal static void OnFireStopped(ClassicWeaponId id) => NotifyTrigger(false, 0f);
+        internal static void OnFireStopped(ClassicWeaponId id)
+        {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = FeelCostMeasurement.Enter(FeelCostPath.HitStop);
+            FeelCostMeasurement.Trigger(false);
+            if (feelCostScope.Skip) return;
+#endif
+            NotifyTrigger(false, 0f);
+        }
 
         /// <summary>The trigger edge with the weapon's rate (rounds per minute); tests drive it directly.</summary>
         internal static void NotifyTrigger(bool producing, float roundsPerMinute)
         {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            using var feelCostScope = DD.Prototype.Feedback.FeelCostMeasurement.Enter(DD.Prototype.Feedback.FeelCostPath.HitStop);
+            if (feelCostScope.Skip) return;
+#endif
             if (producing && !s_triggerHeld) s_heldSince = FeelTimeScale.Clock;
             s_triggerHeld = producing;
             s_heldRpm = producing ? roundsPerMinute : 0f;
