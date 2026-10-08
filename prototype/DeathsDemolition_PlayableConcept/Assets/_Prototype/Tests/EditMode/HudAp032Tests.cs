@@ -245,7 +245,7 @@ namespace DD.Prototype.Tests.EditMode
                 float inkStart = width - runRight - run + lsb * 44f;
                 Assert.GreaterOrEqual(inkStart, HudArt.SmearDenseLeft * texel - 0.01f, name + ": the first ink inside the dense zone");
                 Assert.AreEqual((HudArt.SmearNativeWidth - HudArt.SmearDenseRight) * texel + HudArt.SealFromDenseRight * seal, sealCentre, 1e-3f, name + ": the seal's place");
-                Assert.AreEqual(HudArt.SealEm * 44f, seal, 1e-3f, name + ": the seal 0.55 em (AD MUST-2)");
+                Assert.AreEqual(HudArt.SealEm * 44f, seal, 1e-3f, name + ": the seal 0.60 em (AD MUST-2, S-09 08.10)");
                 Assert.AreEqual(sealCentre + seal * 0.5f + HudArt.SealGap(44f), runRight, 1e-3f, name + ": 0.22 em to the seal");
                 Assert.AreEqual(HudArt.SealGapEm * 44f, HudArt.SealGap(44f), 1e-4f, name + ": at cap 44 the 0.22 em rules (9.68 ≥ 9 px)");
             }
@@ -316,15 +316,15 @@ namespace DD.Prototype.Tests.EditMode
         }
 
         /// <summary>
-        /// AD MUST-2 (08.10): the seal reads as a hanko, not an "o" - 0.55 em across (22 ref px at cap 40), its ring ≥ 0.08 em
+        /// AD MUST-2 (08.10): the seal reads as a hanko, not an "o" - 0.60 em across (24 ref px at cap 40; S-09 08.10: 0.55 left the ring under its floor), its ring ≥ 0.08 em
         /// thick. The ring is AP-032's own (the atlas' seal cell, measured here): its outer diameter is SealRingShareOfCell of the
-        /// cell and its stroke, at its chipped thinnest over 24 rays, keeps the floor at 0.55 em; the plate still fits ≤ 288
+        /// cell and its stroke, at its chipped thinnest over 24 rays, keeps the floor at 0.60 em; the plate still fits ≤ 288
         /// with cap 40 kept through XXIII.
         /// </summary>
         [Test]
-        public void Muhur_055em_HalkaKalinligi008emUstu_AtlastanOlculur_Plaka288()
+        public void Muhur_060em_HalkaKalinligi008emUstu_AtlastanOlculur_Plaka288()
         {
-            Assert.AreEqual(0.55f, HudArt.SealEm, 1e-6f, "MUST-2: 0.55 em");
+            Assert.AreEqual(0.60f, HudArt.SealEm, 1e-6f, "MUST-2: 0.60 em (S-09 08.10: the 0.08 em ring floor wins over 0.55)");
             Texture2D atlas = LoadAtlas1024();
             try
             {
@@ -362,7 +362,7 @@ namespace DD.Prototype.Tests.EditMode
                 float thinEm = thinnest / outer * HudArt.SealEm, meanEm = sum / 24f / outer * HudArt.SealEm;
                 Assert.GreaterOrEqual(thinEm, 0.08f, "MUST-2: the ring ≥ 0.08 em at its thinnest (" + thinnest + " of " + outer + " px)");
                 Assert.GreaterOrEqual(meanEm * RunHudScreen.RoundGlyphHeight, 3f, "≥ 3 px at 1080 (cap 40)");
-                Assert.AreEqual(22f, HudArt.SealEm * RunHudScreen.RoundGlyphHeight, 1e-3f, "22 ref px at cap 40");
+                Assert.AreEqual(24f, HudArt.SealEm * RunHudScreen.RoundGlyphHeight, 1e-3f, "24 ref px at cap 40");
 
                 var letters = new char[16];
                 foreach (int round in new[] { 1, 4, 9, 14, 23, 38, 88 })

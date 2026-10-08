@@ -86,11 +86,12 @@ namespace DD.Prototype.UI
 
         /// <summary>
         /// The seal: its ring's outer diameter, its left edge the gap after the last glyph's advance, its centre 0.55 diameters
-        /// left of the dense zone's right end. 08.10 (AD MUST-2, P-07 AD note 3's fallback): 0.45 → 0.55 em - at 0.45 the ring
-        /// read as a typographic "o" (XIV°); 22 ref px at cap 40, its stroke (AP-032's ring, 15.5 of 72 cell px - ≥ 11.25 at its
-        /// chipped thinnest) then ≥ 0.086 em, over the 0.08 em floor (HudAp032Tests measures the atlas).
+        /// left of the dense zone's right end. 08.10 (AD MUST-2, P-07 AD note 3's fallback): 0.45 → 0.60 em - at 0.45 the ring
+        /// read as a typographic "o" (XIV°). The AD asked 0.55 em AND a ring >= 0.08 em; Unity's atlas read (hud-v4-final, alpha
+        /// > 0.5 over 24 rays) puts AP-032's ring at 9.75 of 72 cell px at its chipped thinnest - 0.0745 em at 0.55, so the
+        /// floor wins (S-09 08.10): 0.60 em, 24 ref px at cap 40, the ring 0.081 em (HudAp032Tests measures the atlas).
         /// </summary>
-        public const float SealEm = 0.55f;
+        public const float SealEm = 0.60f;
         public const float SealGapEm = 0.22f;
         public const float SealFromDenseRight = 0.55f;
 
