@@ -297,7 +297,8 @@ namespace DD.Art.Tests.PlayMode
             // for the shamble is 5 cm/step, the run cycles keep 2 cm on their contact frames (AnimationV002Tests).
             // WP-071 K3 (N5): the Standard's 2.7 m/s is past the shamble's cadence band — the clip plays at ≤ ×1.2 and the body
             // slides the rest by design (≈ 30–43 % until AP-022's shamble_fast); the gate is the band, the slip is reported.
-            Assert.LessOrEqual(v.Animator.GetFloat(C.GaitRate), CadenceBand.Max + 1e-3f, "shamble kadans bandını aştı");
+            // WP-096: the clip's own band (an AP-033 gait may carry an automatic maxRate from the Unity-rig calibration)
+            Assert.LessOrEqual(v.Animator.GetFloat(C.GaitRate), v.GaitRateMax + 1e-3f, "yürüyüş kadans bandını aştı");
             Assert.GreaterOrEqual(v.GaitRate, CadenceBand.Min - 1e-3f);
         }
 

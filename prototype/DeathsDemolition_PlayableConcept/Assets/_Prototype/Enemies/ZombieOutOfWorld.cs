@@ -133,6 +133,7 @@ namespace DD.Prototype.Enemies
             {
                 _stuckRecoveryTried = true;
                 StuckRecoveries++;
+                LogStuck("recover", p, target.position, distance, noPath, notMoving);
                 _pathFollower?.Invalidate();
                 Vector3 to = target.position - p; to.y = 0f;
                 Vector3 side = to.sqrMagnitude > 1e-4f ? Vector3.Cross(Vector3.up, to.normalized) : transform.right;
@@ -143,7 +144,43 @@ namespace DD.Prototype.Enemies
             }
 
             StuckRemovals++;
+            LogStuck("remove", p, target.position, distance, noPath, notMoving);
             return RemoveOutOfWorld(OutOfWorldReason.Stuck, p);
+        }
+
+        /// <summary>
+        /// WP-096 (P12 diagnosis, S-03 08.10): one line per stuck recovery / removal — rare events, so the string is fine — with what
+        /// the exemptions saw: the wait state and its inputs, the crowd-ahead count, the real ground speed against the requested and
+        /// own (ramped) speeds, the heading error. Editor and development builds only.
+        /// </summary>
+        [System.Diagnostics.Conditional("UNITY_EDITOR"), System.Diagnostics.Conditional("DEVELOPMENT_BUILD")]
+        private void LogStuck(string what, Vector3 p, Vector3 target, float distance, bool noPath, bool notMoving)
+        {
+            Vector3 toTarget = target - p; toTarget.y = 0f;
+            int ahead = 0;
+            if (toTarget.sqrMagnitude > 1e-4f)
+            {
+                Vector3 dir = toTarget.normalized;
+                float cos = Mathf.Cos(StuckCrowdConeDegrees * Mathf.Deg2Rad);
+                IReadOnlyList<ZombieEnemy> live = Live;
+                for (int i = 0; i < live.Count; i++)
+                {
+                    ZombieEnemy o = live[i];
+                    if (o == null || o == this || !o.IsAlive) continue;
+                    Vector3 op = o.transform.position;
+                    if (FlatDistance(op, target) >= distance) continue;
+                    Vector3 toO = op - p; toO.y = 0f;
+                    float m = toO.magnitude;
+                    if (m > 1e-3f && Vector3.Dot(toO / m, dir) >= cos) ahead++;
+                }
+            }
+
+            Vector3 fwd = transform.forward; fwd.y = 0f;
+            float headingError = _commandedVelocity.sqrMagnitude > 1e-4f && fwd.sqrMagnitude > 1e-4f ? Vector3.Angle(fwd, _commandedVelocity) : -1f;
+            Debug.Log("[OutOfWorld] stuck." + what + " tier=" + _tier + " dist=" + distance.ToString("F2") + " noPath=" + noPath + " notMoving=" + notMoving
+                      + " moved=" + FlatDistance(p, _stuckAnchor).ToString("F2") + " waiting=" + _waiting + " stall=" + _stallSeconds.ToString("F2") + "/" + _waitStallSeconds.ToString("F2")
+                      + " crowdAhead=" + ahead + " requested=" + _currentSpeed.ToString("F2") + " real=" + RealGroundSpeed.ToString("F2") + " own=" + _steerSpeed.ToString("F2")
+                      + " commanded=" + _commandedVelocity.magnitude.ToString("F2") + " headingErr=" + headingError.ToString("F0") + " queued=" + (_pathFollower != null && _pathFollower.IsQueued));
         }
 
         /// <summary>

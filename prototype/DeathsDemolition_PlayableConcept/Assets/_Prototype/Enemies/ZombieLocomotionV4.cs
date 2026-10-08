@@ -68,6 +68,8 @@ namespace DD.Prototype.Enemies
         public float GroundForwardSpeed => _groundForward;
         /// <summary>WP-096 P1: the smoothed real lateral ground speed (+ = the body's right), readout only.</summary>
         public float GroundLateralSpeed => _groundLateral;
+        /// <summary>WP-096 (P12): the smoothed real planar ground speed (forward part as the cadence reads it + lateral), m/s.</summary>
+        public float RealGroundSpeed => Mathf.Sqrt(_groundForward * _groundForward + _groundLateral * _groundLateral);
         /// <summary>WP-096 P1: the unsmoothed, uncapped forward ground speed of the last tick (diagnostics).</summary>
         public float GroundForwardSpeedRaw => _groundForwardRaw;
         /// <summary>WP-096 P6: the accelerated own walk speed (m/s).</summary>

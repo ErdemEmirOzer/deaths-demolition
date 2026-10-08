@@ -830,7 +830,7 @@ MonoBehaviour:
     loop: 1
     seconds: 0.533
     speedMps: 4.79
-    unitySpeedMps: 4.79
+    unitySpeedMps: 5.0041866
     layer: base
     additive: 0
     frames: 17
@@ -838,12 +838,90 @@ MonoBehaviour:
     stanceFrames: 5
     minRate: 0
     maxRate: 0
+  - name: AP033_zombie_run_feral_B
+    clip: {fileID: -953311083967790214, guid: e9ec35a46b4246bb908107444f7eb509, type: 3}
+    loop: 1
+    seconds: 0.6
+    speedMps: 4.79
+    unitySpeedMps: 4.903009
+    layer: base
+    additive: 0
+    frames: 19
+    events: foot_l=0;foot_l_off=5;foot_r=9;foot_r_off=14
+    stanceFrames: 4
+    minRate: 0
+    maxRate: 0
+  - name: AP033_zombie_run_stumble_A
+    clip: {fileID: -6158570207446618145, guid: f8ba2362285a46b6b7eaf86fcfdc0967, type: 3}
+    loop: 1
+    seconds: 0.567
+    speedMps: 4.79
+    unitySpeedMps: 4.975577
+    layer: base
+    additive: 0
+    frames: 18
+    events: foot_l=0;foot_l_off=4;foot_r=7;foot_r_off=13
+    stanceFrames: 4
+    minRate: 0
+    maxRate: 0
+  - name: AP033_zombie_walk_drag_A
+    clip: {fileID: -6804665582139097031, guid: f10f791851d148d7bac73e6763e105ec, type: 3}
+    loop: 1
+    seconds: 0.9
+    speedMps: 2.7
+    unitySpeedMps: 2.7925239
+    layer: base
+    additive: 0
+    frames: 28
+    events: foot_l=0;foot_l_off=11;foot_r=15;foot_r_off=24
+    stanceFrames: 9
+    minRate: 0
+    maxRate: 0
+  - name: AP033_zombie_walk_drag_B
+    clip: {fileID: 6105545343445381180, guid: b5ed41349cd341b5be291440be39c10e, type: 3}
+    loop: 1
+    seconds: 0.833
+    speedMps: 2.7
+    unitySpeedMps: 2.7172427
+    layer: base
+    additive: 0
+    frames: 26
+    events: foot_l=0;foot_l_off=8;foot_r=12;foot_r_off=21
+    stanceFrames: 8
+    minRate: 0
+    maxRate: 0
+  - name: AP033_zombie_walk_heavy_A
+    clip: {fileID: -5115839419651468302, guid: bcdcb9c6227045e6b2be3c6161f2a575, type: 3}
+    loop: 1
+    seconds: 0.967
+    speedMps: 1.9
+    unitySpeedMps: 1.857295
+    layer: base
+    additive: 0
+    frames: 30
+    events: foot_l=1;foot_r_off=1;foot_r=15;foot_l_off=16
+    stanceFrames: 15
+    minRate: 0
+    maxRate: 0
+  - name: AP033_zombie_walk_heavy_B
+    clip: {fileID: -6634674815262521649, guid: 6e9c688c41174f09aaab04450fb046ea, type: 3}
+    loop: 1
+    seconds: 0.967
+    speedMps: 1.9
+    unitySpeedMps: 1.9622927
+    layer: base
+    additive: 0
+    frames: 30
+    events: foot_l=1;foot_r_off=1;foot_r=13;foot_l_off=14
+    stanceFrames: 13
+    minRate: 0
+    maxRate: 0
   - name: AP033_zombie_walk_limp_A
     clip: {fileID: 1440684473011858560, guid: edd3cb542604448d98a6b709f8dd2a9c, type: 3}
     loop: 1
     seconds: 0.767
     speedMps: 2.7
-    unitySpeedMps: 2.7
+    unitySpeedMps: 2.5817893
     layer: base
     additive: 0
     frames: 24
@@ -856,7 +934,7 @@ MonoBehaviour:
     loop: 1
     seconds: 0.8
     speedMps: 2.7
-    unitySpeedMps: 2.7
+    unitySpeedMps: 2.6545992
     layer: base
     additive: 0
     frames: 25
@@ -864,17 +942,43 @@ MonoBehaviour:
     stanceFrames: 11
     minRate: 0
     maxRate: 0
+  - name: AP033_zombie_walk_lurch_B
+    clip: {fileID: -556224096333144913, guid: cc161cea9c874f79a48565b3081f1177, type: 3}
+    loop: 1
+    seconds: 0.867
+    speedMps: 2.7
+    unitySpeedMps: 2.6235027
+    layer: base
+    additive: 0
+    frames: 27
+    events: foot_l=0;foot_l_off=8;foot_r=13;foot_r_off=23
+    stanceFrames: 8
+    minRate: 0
+    maxRate: 0
   - name: AP033_zombie_walk_stomp_A
     clip: {fileID: -1156983150224223269, guid: fcd6f395b2924213ab901a921227c5b0, type: 3}
     loop: 1
     seconds: 1.467
     speedMps: 1.15
-    unitySpeedMps: 1.15
+    unitySpeedMps: 1.1145351
     layer: base
     additive: 0
     frames: 45
     events: foot_l=0;foot_r_off=2;foot_r=22;foot_l_off=25
     stanceFrames: 24
+    minRate: 0
+    maxRate: 0
+  - name: AP033_zombie_walk_stomp_B
+    clip: {fileID: 6520252785113181307, guid: f0e40e908a0f4a7ebdbdf5b24d876741, type: 3}
+    loop: 1
+    seconds: 1.4
+    speedMps: 1.15
+    unitySpeedMps: 1.152956
+    layer: base
+    additive: 0
+    frames: 43
+    events: foot_l=0;foot_r_off=2;foot_r=21;foot_l_off=25
+    stanceFrames: 23
     minRate: 0
     maxRate: 0
   _manifestSchema: AP009.clips-manifest.v008

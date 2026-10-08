@@ -32,7 +32,7 @@ namespace DD.Prototype.Tests.PlayMode
     /// §3–§4). The same file runs on main 77f46216 ("before") and on the WP-096 branch ("after"): it compiles against main's API
     /// only; anything v4 may add (or retire) is read by reflection and reported "yok" when absent.
     /// <list type="bullet">
-    /// <item>ZL1 / ZL2 (one shared recording): the four tiers × fit A/B, three fixed seeds + one GaitVariety 0 control pass, on a flat
+    /// <item>ZL1 / ZL2 (one shared recording): one lane per clip of every tier gait pool (WP-096 p2; main: the four tiers × fit A/B), three fixed seeds + one GaitVariety 0 control pass, on a flat
     /// Environment floor 150 m above the Run scene. Each body is a real EnemyFactory spawn (look, tier scale, gait profile, spawn
     /// ordinal) whose ZombieEnemy is switched off; the test moves it straight at its tier speed (× the v4 SpeedJitter when the
     /// visual has one) and feeds ZombieSkinnedVisual.SetSpeed(v, dt) — the call ZombieEnemy.TickCombat makes. Stance (07.10) = the
@@ -181,7 +181,11 @@ namespace DD.Prototype.Tests.PlayMode
         private const int PkAdimMin = 3;                                // step control: ≥ 3 onsets per foot per body in the 7 s IK-off walk
         // düzeltme-2 07.10 (before2 / ara2): one group failing its own checks is named and left out; the test needs ≥ 6 of 8 valid
         // groups (game pose and IK-off control each), so one odd clip does not hide the other seven and a broken detector still fails.
-        private const int MinGecerliGrup = 6;
+        // WP-096 p2 (C-00 08.10): the groups are per CLIP now (one lane per tier-pool member), so the rule is the same share — valid
+        // ≥ 75 % of the groups (6 / 8 before).
+        private const double MinGecerliPay = 0.75;
+
+        private static int MinGecerli(int gruplar) => Math.Max(1, (int)Math.Ceiling(MinGecerliPay * gruplar - 1e-9));
 
         [UnityTest]
         [Explicit]
@@ -231,7 +235,7 @@ namespace DD.Prototype.Tests.PlayMode
                 if (!double.IsNaN(p) && (double.IsNaN(enKotuP95) || p > enKotuP95)) { enKotuP95 = p; enKotuP95Ad = g.Ad; }
             }
 
-            if (gecerli < MinGecerliGrup) eksik.Add("geçerli oyun grubu " + gecerli + "/" + oyun.Count + " < " + MinGecerliGrup + ": " + string.Join("; ", engelli));
+            if (gecerli < MinGecerli(oyun.Count)) eksik.Add("geçerli oyun grubu " + gecerli + "/" + oyun.Count + " < " + MinGecerli(oyun.Count) + " (%75): " + string.Join("; ", engelli));
             var kontrolHepsi = new List<double>();
             foreach (Grup g in kontrol) { kontrolHepsi.AddRange(g.Kayma); satirlar.Add("KONTROL " + GrupSatiri(g)); }
             double ikOrt = double.NaN, ikP95 = double.NaN;
@@ -259,7 +263,7 @@ namespace DD.Prototype.Tests.PlayMode
             r.Bilgi("slideP95", Yuzdelik(hepsi, 0.95));
             foreach (EnemyTier t in Kademeler)
                 r.Bilgi("slideAvg" + t, kademeKayma.TryGetValue(t, out List<double> x) ? Ort(x) : double.NaN);
-            r.Bilgi("validGroups", gecerli, "/" + oyun.Count + " (en az " + MinGecerliGrup + ")" + (engelli.Count > 0 ? " BLOCKED: " + string.Join("; ", engelli) : ""));
+            r.Bilgi("validGroups", gecerli, "/" + oyun.Count + " (en az " + MinGecerli(oyun.Count) + " = %75)" + (engelli.Count > 0 ? " BLOCKED: " + string.Join("; ", engelli) : ""));
             r.Bilgi("blockedGroups", engelli.Count);
             r.Bilgi("eventContactGroups", olayGrup, "/" + gecerli + " geçerli grup klip olaylarıyla");
             r.Bilgi("contactShareMin", payMin, "temas ayak-karesi payı, beklenen " + F(TemasPayAlt, 2) + "–" + F(TemasPayUst, 2));
@@ -272,7 +276,7 @@ namespace DD.Prototype.Tests.PlayMode
             r.Bilgi("ikOffSwingGroundedShare", ikSalinim > 0 ? (double)ikSalinimYerde / ikSalinim : double.NaN);
             r.Bilgi("ikOffSwingLiftMedianCm", Medyan(ikBosluk) * 100.0);
             r.Bilgi("ikOffEventHeightAgreement", uyumN > 0 ? (double)uyumOk / uyumN : double.NaN, "olay durusu ile yükseklik temasının aynı dediği ayak-kare payı");
-            r.Bilgi("controlValidGroups", pkGecerli, "/" + ikKapali.Count + " IK kapalı grup pozitif kontrolden geçti (en az " + MinGecerliGrup + ")");
+            r.Bilgi("controlValidGroups", pkGecerli, "/" + ikKapali.Count + " IK kapalı grup pozitif kontrolden geçti (en az " + MinGecerli(ikKapali.Count) + " = %75)");
             r.Bilgi("controlIdleContactShareMin", pkPay, "basan ayak, pozitif kontrol ≥ " + F(PkDurusPayi, 2));
             r.Bilgi("controlIdleFootSpeedMax", pkHiz, "basan ayak, pozitif kontrol < " + F(PkDurusHiz, 2) + " m/s");
             r.Bilgi("controlStepOnsetsMin", pkAdim, "pozitif kontrol ≥ " + PkAdimMin + " / ayak / gövde");
@@ -337,7 +341,7 @@ namespace DD.Prototype.Tests.PlayMode
                 if (!double.IsNaN(dev) && (double.IsNaN(kontrolMax) || dev > kontrolMax)) kontrolMax = dev;
             }
 
-            if (gecerli < MinGecerliGrup) eksik.Add("geçerli oyun grubu " + gecerli + "/" + gruplar.Count + " < " + MinGecerliGrup + ": " + string.Join("; ", engelli));
+            if (gecerli < MinGecerli(gruplar.Count)) eksik.Add("geçerli oyun grubu " + gecerli + "/" + gruplar.Count + " < " + MinGecerli(gruplar.Count) + " (%75): " + string.Join("; ", engelli));
             foreach (Grup g in ikKapali)
             {
                 double dev = Sapma(g, out string satir);
@@ -427,11 +431,45 @@ namespace DD.Prototype.Tests.PlayMode
             s_kademe = kayit;
         }
 
-        /// <summary>One pass: the four tiers × fit A/B side by side, 1 s still (the idle control), then 8 s straight at the tier
-        /// speed (1 s warm-up excluded).</summary>
+        /// <summary>
+        /// WP-096 p2 (C-00 08.10): one lane per CLIP — every member of each tier's gait pool (CharacterAnimatorContract.ZombieGaitPools,
+        /// read by reflection; the mirrored limp gets its own lane "~R"), the gait forced with ForceGaitForTest, the body at its tier
+        /// speed (× its SpeedJitter); the group key is the clip. Without the pools (main) the old four tiers × fit A/B lanes (gait -1).
+        /// </summary>
+        private static List<(EnemyTier tier, string key, int gait)> Seritler()
+        {
+            var seritler = new List<(EnemyTier, string, int)>();
+            int[][] havuzlar = typeof(CharacterAnimatorContract).GetField("ZombieGaitPools", Statik)?.GetValue(null) as int[][];
+            string[] gaitler = typeof(CharacterAnimatorContract).GetField("ZombieGaitClips", Statik)?.GetValue(null) as string[];
+            MethodInfo zorla = Metot(typeof(ZombieSkinnedVisual), "ForceGaitForTest", typeof(int));
+            MethodInfo ayna = Metot(typeof(CharacterAnimatorContract), "IsGaitMirrored", typeof(int));
+            if (havuzlar != null && gaitler != null && zorla != null && havuzlar.Length >= Kademeler.Length)
+            {
+                foreach (EnemyTier t in Kademeler)
+                foreach (int g in havuzlar[(int)t])
+                {
+                    if (g < 0 || g >= gaitler.Length) continue;
+                    string ad = gaitler[g].Replace("AP033_zombie_", "").Replace("AP022_zombie_", "v3_");
+                    bool aynali = ayna != null && (bool)ayna.Invoke(null, new object[] { g });
+                    seritler.Add((t, ad + (aynali ? "~R" : ""), g));
+                }
+
+                return seritler;
+            }
+
+            foreach (string fit in Fitler)
+            foreach (EnemyTier t in Kademeler)
+                seritler.Add((t, fit, -1));
+            return seritler;
+        }
+
+        /// <summary>One pass: one lane per clip of every tier pool (<see cref="Seritler"/>) side by side, 1 s still (the idle control), then
+        /// 8 s straight at the tier speed (1 s warm-up excluded).</summary>
         private IEnumerator KademeGecisi(Vector3 merkez, uint tohum, int tur, MethodInfo hizMetodu, List<Govde> into)
         {
-            int n = Kademeler.Length * Fitler.Length;
+            List<(EnemyTier tier, string key, int gait)> seritler = Seritler();
+            MethodInfo zorla = Metot(typeof(ZombieSkinnedVisual), "ForceGaitForTest", typeof(int));
+            int n = seritler.Count;
             var govdeler = new List<Govde>(n);
             var zler = new List<ZombieEnemy>(n);
             var kayitlar = new List<ZombiKaydedici>(n);
@@ -439,8 +477,9 @@ namespace DD.Prototype.Tests.PlayMode
             Quaternion ileri = Quaternion.LookRotation(Vector3.forward);
             for (int i = 0; i < n; i++)
             {
-                EnemyTier t = Kademeler[i % Kademeler.Length];
-                string fit = Fitler[i / Kademeler.Length];
+                EnemyTier t = seritler[i].tier;
+                string fit = seritler[i].key;   // the group key: the clip (per-clip lanes) or the fit (main's lanes)
+                int gait = seritler[i].gait;
                 Vector3 p = merkez + Vector3.right * ((i - (n - 1) * 0.5f) * SeritAraligi) + Vector3.back * BaslangicGeri;
                 int sira = SiraOku();
                 ZombieEnemy z = EnemyFactory.Spawn(t, 12, p, ileri);
@@ -451,7 +490,8 @@ namespace DD.Prototype.Tests.PlayMode
                 var b = new Govde { Kademe = t, Fit = fit, Tohum = tohum, Tur = tur, Sira = sira };
                 b.Ad = t + "/" + fit + "/s" + tohum + (tur == TurOyun ? "" : "/" + TurAd[tur]);
                 b.DogalFit = v.Look.IsValid ? v.Look.fit : "?";
-                if (b.DogalFit != fit) b.FitZorlandi = FitZorla(v, fit, t);
+                if (gait >= 0) zorla.Invoke(v, new object[] { gait });   // per-clip lane: the fit does not pick the clip any more
+                else if (b.DogalFit != fit) b.FitZorlandi = FitZorla(v, fit, t);
                 b.Jitter = OrnekFloat(v, "SpeedJitter") ?? 1f;   // v4 P2: ZombieEnemy walks at MoveSpeed × SpeedJitter
                 b.Hiz = z.Stats.MoveSpeed * b.Jitter;
                 v.Animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
@@ -563,7 +603,10 @@ namespace DD.Prototype.Tests.PlayMode
             var gruplar = new List<Grup>();
             foreach (EnemyTier t in Kademeler)
             {
-                foreach (string fit in Fitler)
+                // WP-096 p2: the group keys in lane order (the clip per lane, or main's fit A / B)
+                var anahtarlar = new List<string>();
+                foreach (Govde b0 in govdeler) if (b0.Tur == tur && b0.Kademe == t && !anahtarlar.Contains(b0.Fit)) anahtarlar.Add(b0.Fit);
+                foreach (string fit in anahtarlar)
                 {
                     var g = new Grup { Ad = t + "/" + fit, Kademe = t, Fit = fit, Tur = tur };
                     foreach (Govde b in govdeler) if (b.Tur == tur && b.Kademe == t && b.Fit == fit && b.Kareler != null) g.Govdeler.Add(b);
@@ -708,7 +751,7 @@ namespace DD.Prototype.Tests.PlayMode
         /// The detector's positive controls on the IK-off pass (the clip's own feet), per group: (a) standing still, the planted foot reads
         /// contact (≥ 80 % of its frames) and does not move (the sole / ground reference); (b) walking, every body shows ≥ 3 onsets per
         /// foot and the group's contact share is inside 0.15–0.85 (the rule sees steps, it is not saturated). A failing group is named
-        /// and left out; fewer than <see cref="MinGecerliGrup"/> valid groups blocks the test (a broken detector fails everywhere).
+        /// and left out; fewer than <see cref="MinGecerliPay"/> of the groups valid blocks the test (a broken detector fails everywhere).
         /// </summary>
         private static void DedektorKontrolu(List<Grup> ikKapali, List<string> eksik, List<string> satirlar, out double payMin, out double hizMax, out int adimMin,
                                              out int gecerli, out double yuruTaban)
@@ -755,7 +798,7 @@ namespace DD.Prototype.Tests.PlayMode
                 adimMin = Math.Min(adimMin, gAdim);
             }
 
-            if (gecerli < MinGecerliGrup) eksik.Add("dedektör pozitif kontrolü: geçerli IK kapalı grup " + gecerli + "/" + ikKapali.Count + " < " + MinGecerliGrup + ": " + string.Join("; ", engelli));
+            if (gecerli < MinGecerli(ikKapali.Count)) eksik.Add("dedektör pozitif kontrolü: geçerli IK kapalı grup " + gecerli + "/" + ikKapali.Count + " < " + MinGecerli(ikKapali.Count) + " (%75): " + string.Join("; ", engelli));
             if (adimMin == int.MaxValue) adimMin = 0;
         }
 

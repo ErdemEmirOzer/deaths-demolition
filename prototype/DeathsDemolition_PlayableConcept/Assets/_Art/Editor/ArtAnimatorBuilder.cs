@@ -61,6 +61,9 @@ namespace DD.Art.Pipeline.EditorTools
             return File.Exists(Path.Combine(Directory.GetCurrentDirectory(), ArtAnimationClipContract.ManifestPath));
         }
 
+        /// <summary>WP-096: the last zombie stride calibration (ArtZombieStrideCalibration) of a build, for the intake line.</summary>
+        public static string ZombieCalibrationSummary = "calibration=not run";
+
         public static Report BuildAll(float playerReferenceSpeed)
         {
             Dictionary<string, ArtAnimationClipContract.ClipSpec> manifest = ArtAnimationClipContract.Manifest();
@@ -91,6 +94,8 @@ namespace DD.Art.Pipeline.EditorTools
             WriteFirstPerson(ArtCharacterPrefabBuilder.PlayerAnimationSet, clips, manifest);
             WriteSet(ArtCharacterPrefabBuilder.ZombieAnimationSet, zombie, manifest, clips, unitySpeeds, "zombie", ZombieSource, manifest[C.ZombieShambleA].speedMps,
                 clips[C.ZombieIdleSway], clips[C.ZombieShambleA], manifest[C.ZombieShambleA].speedMps);
+            // WP-096: the AP-033 gaits' runtime speed = their stride measured on the shipped zombie rig with this controller
+            ArtZombieStrideCalibration.Apply(AssetDatabase.LoadAssetAtPath<CharacterAnimationSet>(ArtCharacterPrefabBuilder.ZombieAnimationSet), zombie, manifest, out ZombieCalibrationSummary);
 
             AssetDatabase.SaveAssets();
             Debug.Log(LogPrefix + "built: " + report.clips + " clips, player " + report.playerStates + " states / " + report.playerLayers + " layers, zombie "
@@ -131,6 +136,8 @@ namespace DD.Art.Pipeline.EditorTools
             AnimatorController zombie = BuildZombie(clips, manifest, upper, out report.zombieStates, out report.zombieLayers);
             WriteSet(ArtCharacterPrefabBuilder.ZombieAnimationSet, zombie, manifest, clips, unitySpeeds, "zombie", ZombieSource, manifest[C.ZombieShambleA].speedMps,
                 clips[C.ZombieIdleSway], clips[C.ZombieShambleA], manifest[C.ZombieShambleA].speedMps);
+            // WP-096: the AP-033 gaits' runtime speed = their stride measured on the shipped zombie rig with this controller
+            ArtZombieStrideCalibration.Apply(AssetDatabase.LoadAssetAtPath<CharacterAnimationSet>(ArtCharacterPrefabBuilder.ZombieAnimationSet), zombie, manifest, out ZombieCalibrationSummary);
 
             AssetDatabase.SaveAssets();
             Debug.Log(LogPrefix + "built (zombie only): " + report.clips + " zombie clips, " + report.zombieStates + " states / " + report.zombieLayers + " layers");

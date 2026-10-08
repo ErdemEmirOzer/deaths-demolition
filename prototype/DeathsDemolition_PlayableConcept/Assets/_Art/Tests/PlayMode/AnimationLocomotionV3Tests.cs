@@ -139,10 +139,12 @@ namespace DD.Art.Tests.PlayMode
             Assert.AreEqual(big.Gait, unit.Gait, "iki beden aynı klipte (varyete 0 → birincil)");
             if (C.ZombieGaitClips[big.Gait] == C.ZombieWalkStompAV4)
             {
-                Assert.AreEqual(1f, big.GaitRate, 0.02f, "WP-096 AP-033: walk_stomp_A ölçekli bedende oran ≈ 1");
+                // WP-096 p2 window: the set speed is the intake's Unity-rig measurement (no longer the Blender 1.15), so the rate is ≈ 1 ± the retarget share
+                Assert.That(big.GaitRate, Is.InRange(0.85f, 1.25f), "WP-096 AP-033: walk_stomp_A ölçekli bedende oran ≈ 1");
                 Assert.IsTrue(big.GaitRateHonest, "WP-096 AP-033: dürüst oran");
             }
-            Assert.LessOrEqual(big.GaitRate, CadenceBand.LockMaxRate, "ölçekli beden ayak kilidi bandında");
+            // the zombie foot lock's own gate (ZombieSkinnedVisual.FootLockMaxRate 1.25, WP-096 P3), not the player's CadenceBand.LockMaxRate
+            Assert.LessOrEqual(big.GaitRate, ZombieSkinnedVisual.FootLockMaxRate, "ölçekli beden ayak kilidi bandında");
             // control: the scale-1 body's honest cadence is 1.48× the scaled one. WP-096 AP-033: over walk_stomp_A that is ×1.48, past the
             // band cap 1.2 — the PLAYED rate is capped (the scale-1 Executioner never ships), so the control compares the honest rate
             float unitClip = unit.AnimationSet.SpeedOf(C.ZombieGaitClips[unit.Gait]);

@@ -131,11 +131,20 @@ namespace DD.Art.Tests.EditMode
             Ok(ArtAnimationEventContract.Validate("AP033_zombie_walk_limp_A", 24, true, E("foot_l", 1, "foot_r_off", 1, "foot_l_off", 11, "foot_r", 11)));
             Ok(ArtAnimationEventContract.Validate("AP033_zombie_run_feral_A", 17, true, E("foot_l", 0, "foot_l_off", 5, "foot_r", 8, "foot_r_off", 14)));
             Ok(ArtAnimationEventContract.Validate("AP033_zombie_walk_stomp_A", 45, true, E("foot_l", 0, "foot_r_off", 2, "foot_r", 22, "foot_l_off", 25)));
+            // p2 (anim-events.json p2-v001)
+            Ok(ArtAnimationEventContract.Validate("AP033_zombie_walk_lurch_B", 27, true, E("foot_l", 0, "foot_l_off", 8, "foot_r", 13, "foot_r_off", 23)));
+            Ok(ArtAnimationEventContract.Validate("AP033_zombie_walk_drag_A", 28, true, E("foot_l", 0, "foot_l_off", 11, "foot_r", 15, "foot_r_off", 24)));
+            Ok(ArtAnimationEventContract.Validate("AP033_zombie_walk_drag_B", 26, true, E("foot_l", 0, "foot_l_off", 8, "foot_r", 12, "foot_r_off", 21)));
+            Ok(ArtAnimationEventContract.Validate("AP033_zombie_run_feral_B", 19, true, E("foot_l", 0, "foot_l_off", 5, "foot_r", 9, "foot_r_off", 14)));
+            Ok(ArtAnimationEventContract.Validate("AP033_zombie_run_stumble_A", 18, true, E("foot_l", 0, "foot_l_off", 4, "foot_r", 7, "foot_r_off", 13)));
+            Ok(ArtAnimationEventContract.Validate("AP033_zombie_walk_heavy_A", 30, true, E("foot_l", 1, "foot_r_off", 1, "foot_r", 15, "foot_l_off", 16)));
+            Ok(ArtAnimationEventContract.Validate("AP033_zombie_walk_heavy_B", 30, true, E("foot_l", 1, "foot_r_off", 1, "foot_r", 13, "foot_l_off", 14)));
+            Ok(ArtAnimationEventContract.Validate("AP033_zombie_walk_stomp_B", 43, true, E("foot_l", 0, "foot_r_off", 2, "foot_r", 21, "foot_l_off", 25)));
 
             var m = ArtAnimationClipContract.Manifest();
             int ap033 = 0;
             foreach (string k in m.Keys) if (k.StartsWith(ArtAnimationEventContract.Ap033Prefix, System.StringComparison.Ordinal)) ap033++;
-            Assert.AreEqual(4, ap033, "manifestte AP-033 p1 4 klip");
+            Assert.AreEqual(12, ap033, "manifestte AP-033 p1 4 + p2 8 klip");
         }
     }
 }

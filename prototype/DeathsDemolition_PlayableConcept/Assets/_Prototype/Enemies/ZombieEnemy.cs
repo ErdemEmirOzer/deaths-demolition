@@ -1235,11 +1235,17 @@ namespace DD.Prototype.Enemies
             bool queued = _pathFollower != null && _pathFollower.IsQueued;
             bool wants = ownVelocity.sqrMagnitude >= (_moveSpeed * WaitWantsSpeedShare) * (_moveSpeed * WaitWantsSpeedShare);
             bool engaging = distanceToTarget <= _attack.Range * WaitEngageRangeFactor;   // blocked by the player at the front line ≠ queued behind others
-            bool stalled = wants && !engaging && _currentSpeed < WaitStalledSpeed;
+            // WP-096 (P12, S-03 08.10): "going nowhere" is read from the REAL ground motion (P1's measurement) as well as the requested
+            // speed. _currentSpeed is the requested planar speed (own + crowd correction + pushes): a body jammed in the back row keeps
+            // asking ≥ 0.15 m/s while the CharacterController moves it nowhere, so it never counted as stalled — never waiting, and the
+            // stuck watchdog (TickStuck: _waiting exempts) could remove it. Since v4 the own walk ramps and slows on heading error, which
+            // makes the requested speed in a jam noisier still. min(requested, real): every body that was stalled before still is.
+            float movingSpeed = Mathf.Min(_currentSpeed, RealGroundSpeed);
+            bool stalled = wants && !engaging && movingSpeed < WaitStalledSpeed;
             bool busy = _attack.IsAttacking || _animator.IsStaggering || IsRising || engaging;
 
             if (stalled && !busy) { _stallSeconds += dt; _moveSeconds = 0f; }
-            else if (_currentSpeed >= WaitStalledSpeed || busy) { _moveSeconds += dt; if (_moveSeconds >= WaitClearSeconds) _stallSeconds = 0f; }
+            else if (movingSpeed >= WaitStalledSpeed || busy) { _moveSeconds += dt; if (_moveSeconds >= WaitClearSeconds) _stallSeconds = 0f; }
 
             bool waiting = !busy && (queued || _stallSeconds >= _waitStallSeconds);
             if (waiting != _waiting)

@@ -1095,12 +1095,13 @@ namespace DD.Prototype.Characters
         public static int GaitIndexFor(EnemyTier tier, string fit, CharacterAnimationSet set) => GaitIndexFor(tier, fit, set, 0);
 
         /// <summary>
-        /// WP-096 AP-033 p1 (was WP-071 MUST-I1, one AP-022 gait per tier): member <paramref name="pick"/> (mod the members the set
-        /// carries) of the tier's pool <see cref="CharacterAnimatorContract.ZombieGaitPools"/> — Standard lurch_A, limp_A, shamble_fast_A,
-        /// limp_A mirrored, shamble_fast_B; Runner run_feral_A, AP-022 run; Guard walk_heavy; Executioner walk_stomp_A, AP-022 walk_stomp.
-        /// A pool member missing from the set is skipped, so a set without AP-033 walks the AP-022 gaits; no member at all (or
-        /// <see cref="TierGaits"/> off) = the AP-009 fallback (fit shamble A/B/C, Runner run). The look's fit no longer picks the
-        /// shamble: the AP-022 / AP-033 gaits retarget through the muscle space and were never fit-specific (the fit-bound AP-009
+        /// WP-096 AP-033 (was WP-071 MUST-I1, one AP-022 gait per tier): member <paramref name="pick"/> (mod the members the set
+        /// carries) of the tier's pool <see cref="CharacterAnimatorContract.ZombieGaitPools"/> — Standard lurch_A, limp_A, drag_A,
+        /// lurch_B, limp_A mirrored, drag_B; Runner run_feral_A, run_stumble_A, run_feral_B; Guard walk_heavy_A, walk_heavy_B, AP-022
+        /// walk_heavy; Executioner walk_stomp_A, walk_stomp_B. A pool member missing from the set is skipped; a set with no pool member
+        /// walks the tier's AP-022 gaits (<see cref="CharacterAnimatorContract.ZombieGaitFallbacks"/>, same pick rule); none of those
+        /// either (or <see cref="TierGaits"/> off) = the AP-009 fallback (fit shamble A/B/C, Runner run). The look's fit no longer picks
+        /// the clip: the AP-022 / AP-033 gaits retarget through the muscle space and were never fit-specific (the fit-bound AP-009
         /// shambles are), and a fit-bound gait tied the walk to the silhouette — the same body always walked the same way.
         /// </summary>
         public static int GaitIndexFor(EnemyTier tier, string fit, CharacterAnimationSet set, int pick)
@@ -1109,22 +1110,29 @@ namespace DD.Prototype.Characters
             int t = (int)tier;
             if (set != null && t >= 0 && t < CharacterAnimatorContract.ZombieGaitPools.Length)
             {
-                int[] pool = CharacterAnimatorContract.ZombieGaitPools[t];
-                int carried = 0;
-                for (int i = 0; i < pool.Length; i++) if (set.Find(CharacterAnimatorContract.ZombieGaitClips[pool[i]]) != null) carried++;
-                if (carried > 0)
-                {
-                    int k = pick % carried;
-                    if (k < 0) k += carried;
-                    for (int i = 0; i < pool.Length; i++)
-                    {
-                        if (set.Find(CharacterAnimatorContract.ZombieGaitClips[pool[i]]) == null) continue;
-                        if (k-- == 0) return pool[i];
-                    }
-                }
+                if (PickCarried(CharacterAnimatorContract.ZombieGaitPools[t], set, pick, out int g)) return g;
+                if (t < CharacterAnimatorContract.ZombieGaitFallbacks.Length && PickCarried(CharacterAnimatorContract.ZombieGaitFallbacks[t], set, pick, out g)) return g;
             }
 
             return tier == EnemyTier.Special ? 3 : fit == "B" ? 1 : fit == "C" ? 2 : 0;
+        }
+
+        /// <summary>Member <paramref name="pick"/> (mod the carried count) of the pool members the set carries; false when it carries none.</summary>
+        private static bool PickCarried(int[] pool, CharacterAnimationSet set, int pick, out int gait)
+        {
+            gait = -1;
+            int carried = 0;
+            for (int i = 0; i < pool.Length; i++) if (set.Find(CharacterAnimatorContract.ZombieGaitClips[pool[i]]) != null) carried++;
+            if (carried == 0) return false;
+            int k = pick % carried;
+            if (k < 0) k += carried;
+            for (int i = 0; i < pool.Length; i++)
+            {
+                if (set.Find(CharacterAnimatorContract.ZombieGaitClips[pool[i]]) == null) continue;
+                if (k-- == 0) { gait = pool[i]; return true; }
+            }
+
+            return false;
         }
 
         /// <summary>

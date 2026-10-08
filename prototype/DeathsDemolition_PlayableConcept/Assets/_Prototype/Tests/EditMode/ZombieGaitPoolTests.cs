@@ -87,11 +87,28 @@ namespace DD.Prototype.Tests.EditMode
                 owner[g] = t;
             }
 
-            Assert.AreEqual(5, C.ZombieGaitPools[(int)EnemyTier.Standard].Length, "Standard ≥ 5 görünüm (SPEC §2)");
+            Assert.GreaterOrEqual(C.ZombieGaitPools[(int)EnemyTier.Standard].Length, 5, "Standard ≥ 5 görünüm (SPEC §2)");
             Assert.AreEqual(C.GaitWalkLurchAV4, C.ZombieGaitPools[(int)EnemyTier.Standard][0]);
             Assert.AreEqual(C.GaitRunFeralAV4, C.ZombieGaitPools[(int)EnemyTier.Special][0]);
-            Assert.AreEqual(C.GaitWalkHeavyV3, C.ZombieGaitPools[(int)EnemyTier.Elite][0]);
+            Assert.AreEqual(C.GaitWalkHeavyAV4, C.ZombieGaitPools[(int)EnemyTier.Elite][0], "p2: Guard birincil heavy_A");
             Assert.AreEqual(C.GaitWalkStompAV4, C.ZombieGaitPools[(int)EnemyTier.Ultra][0]);
+            // p2 (S-03 08.10): the AP-022 shamble_fast / run / walk_stomp leave the pools (kept as fallbacks); walk_heavy stays the third Guard look
+            foreach (int dropped in new[] { C.GaitShambleFastAV3, C.GaitShambleFastBV3, C.GaitRunV3, C.GaitWalkStompV3 })
+                Assert.IsFalse(owner.ContainsKey(dropped), "Gait " + dropped + " p2'de havuzdan çıktı");
+            Assert.AreEqual((int)EnemyTier.Elite, owner[C.GaitWalkHeavyV3], "AP-022 walk_heavy Guard havuzunda");
+            // the Standard pool never puts two looks of one family (lurch / limp / drag) side by side, the wrap included
+            int[] std = C.ZombieGaitPools[(int)EnemyTier.Standard];
+            for (int i = 0; i < std.Length; i++)
+            {
+                string x = Family(C.ZombieGaitClips[std[i]]), y = Family(C.ZombieGaitClips[std[(i + 1) % std.Length]]);
+                Assert.AreNotEqual(x, y, "Standard havuzunda yan yana aynı aile: " + x);
+            }
+        }
+
+        private static string Family(string clip)
+        {
+            foreach (string f in new[] { "lurch", "limp", "drag", "shamble" }) if (clip.Contains(f)) return f;
+            return clip;
         }
 
         [Test]
@@ -99,7 +116,10 @@ namespace DD.Prototype.Tests.EditMode
         {
             string[] old = { C.ZombieShambleA, C.ZombieShambleB, C.ZombieShambleC, C.ZombieRun, C.ZombieShambleFastAV3, C.ZombieShambleFastBV3, C.ZombieRunV3, C.ZombieWalkHeavyV3, C.ZombieWalkStompV3 };
             for (int i = 0; i < old.Length; i++) Assert.AreEqual(old[i], C.ZombieGaitClips[i], "Gait " + i + " yeniden numaralandı");
-            Assert.AreEqual(14, C.ZombieGaitClips.Length);
+            Assert.AreEqual(22, C.ZombieGaitClips.Length, "AP-009 4 + AP-022 5 + AP-033 p1 5 (limp R dahil) + p2 8");
+            string[] p2 = { C.ZombieWalkLurchBV4, C.ZombieWalkDragAV4, C.ZombieWalkDragBV4, C.ZombieRunFeralBV4, C.ZombieRunStumbleAV4, C.ZombieWalkHeavyAV4, C.ZombieWalkHeavyBV4, C.ZombieWalkStompBV4 };
+            for (int i = 0; i < p2.Length; i++) Assert.AreEqual(p2[i], C.ZombieGaitClips[C.GaitWalkLurchBV4 + i], "p2 Gait " + (C.GaitWalkLurchBV4 + i));
+            Assert.AreEqual(21, C.GaitWalkStompBV4);
             Assert.AreEqual(C.ZombieWalkLurchAV4, C.ZombieGaitClips[C.GaitWalkLurchAV4]);
             Assert.AreEqual(C.ZombieWalkLimpAV4, C.ZombieGaitClips[C.GaitWalkLimpAV4]);
             Assert.AreEqual(C.ZombieWalkLimpAV4, C.ZombieGaitClips[C.GaitWalkLimpRV4], "limp R = aynı klip");
@@ -111,12 +131,14 @@ namespace DD.Prototype.Tests.EditMode
             Assert.Contains(C.GaitWalkLimpRV4, C.ZombieGaitPools[(int)EnemyTier.Standard], "limp R Standard havuzunda");
             foreach (string clip in new[] { C.ZombieWalkLurchAV4, C.ZombieWalkLimpAV4, C.ZombieRunFeralAV4, C.ZombieWalkStompAV4 })
                 Assert.Contains(clip, C.ZombieClips, clip + " ZombieClips listesinde");
+            foreach (string clip in p2) Assert.Contains(clip, C.ZombieClips, clip + " ZombieClips listesinde");
+            Assert.AreEqual(C.ZombieGaitPools.Length, C.ZombieGaitFallbacks.Length, "kademe başına bir yedek havuz");
         }
 
         [Test]
         public void Havuz_EksikUyeAtlanir_SetYokAP009()
         {
-            // a set without AP-033 (the pre-WP-096 table): the pools fall back to their AP-022 members only
+            // a set without AP-033 (the pre-WP-096 table): no pool member carried (Guard: walk_heavy is one) → the AP-022 fallbacks
             CharacterAnimationSet ap022 = Set(new[] { C.ZombieShambleA, C.ZombieShambleB, C.ZombieShambleC, C.ZombieRun, C.ZombieShambleFastAV3, C.ZombieShambleFastBV3, C.ZombieRunV3, C.ZombieWalkHeavyV3, C.ZombieWalkStompV3 });
             for (int k = 0; k < 6; k++)
             {
