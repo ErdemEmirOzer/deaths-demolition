@@ -61,8 +61,18 @@ namespace DD.Prototype.Tests.PlayMode
                     int layer = body.Animator.GetLayerIndex(CharacterAnimatorContract.OverrideUpperLayer);
                     Assert.GreaterOrEqual(layer, 0);
                     string expected = CharacterAnimatorContract.PlayerWeaponClipV3(body.WeaponAnimSet, "reload_tac");
-                    Assert.IsTrue(System.Array.Exists(body.Animator.GetCurrentAnimatorClipInfo(layer), c => c.clip != null && c.clip.name == expected),
-                        "part timer fallback must not hide a missing v009 reload clip: " + expected);
+                    AnimatorClipInfo[] clips = body.Animator.GetCurrentAnimatorClipInfo(layer);
+                    AnimatorClipInfo[] nextClips = body.Animator.GetNextAnimatorClipInfo(layer);
+                    string observed = string.Join(",", System.Array.ConvertAll(clips, c => c.clip != null ? c.clip.name + "@" + c.weight : "null"));
+                    string next = string.Join(",", System.Array.ConvertAll(nextClips, c => c.clip != null ? c.clip.name + "@" + c.weight : "null"));
+                    Assert.IsTrue(System.Array.Exists(clips, c => c.clip != null && c.clip.name == expected),
+                        "part timer fallback must not hide a missing v009 reload clip: " + expected +
+                        " current=[" + observed + "] next=[" + next + "] state=" + body.Animator.GetCurrentAnimatorStateInfo(layer).fullPathHash +
+                        " normalized=" + body.Animator.GetCurrentAnimatorStateInfo(layer).normalizedTime +
+                        " transition=" + body.Animator.IsInTransition(layer) + " set=" + body.WeaponAnimSet + " v3=" + body.SpecialV3Active +
+                        " Weapon=" + body.Animator.GetInteger(CharacterAnimatorContract.Weapon) + " SwHold=" + body.Animator.GetInteger(CharacterAnimatorContract.SwHold) +
+                        " Alive=" + body.Animator.GetBool(CharacterAnimatorContract.Alive) + " empty=" + body.Animator.GetBool(CharacterAnimatorContract.ReloadEmpty) +
+                        " reloadProgress=" + runtime.ReloadProgress01 + " duration=" + runtime.ReloadDuration + " ammo=" + runtime.Ammo);
                     if (exit == 0)
                     {
                         while (runtime.IsReloading && Time.time - t0 < 12f) yield return null;
