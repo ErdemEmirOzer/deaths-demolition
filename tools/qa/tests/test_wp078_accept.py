@@ -1281,6 +1281,23 @@ class R2StageTests(Base):
         bound = json.loads((self.evidence / "stages" / "r2q.json").read_text())["artifactSha256"]
         self.assertIn("../r2/r2-S3/host.json", bound)
 
+    def test_player_rerun_of_editor_oos_record_gets_fresh_host_watch(self):
+        receipt = dict(OK_GUARD, restoreExit=32, outOfScopeChanged=True, scope="editor",
+                       oosRule={"rule": "oos_rule", "accepted": True, "why": "guarded writer"})
+        out = self.evidence / "r2" / "r2-S3"
+        seed = make_chain(self.evidence, ["r2q"], round_name="R2", guard=FakeGuard(close=receipt))
+        seed.editor_unit("r2q-r2-S3", [], out, lambda: [])
+        put_json(out / "host.json", {"stale": True})
+        host = FakeHost()
+        chain = self.quiet_run(host, resume=True)
+        self.assertEqual(["wait", "start", "stop"], host.events)
+        fresh = json.loads((out / "host.json").read_text())
+        self.assertNotIn("stale", fresh)
+        self.assertFalse(fresh["dirty"])
+        self.assertIn(("snapshot", "r2q-r2-S3", "player"), chain.guard.scopes)
+        bound = json.loads(chain.stage_record("r2q").read_text())["artifactSha256"]
+        self.assertEqual(sha((out / "host.json").read_bytes()), bound["../r2/r2-S3/host.json"])
+
     def test_a_unit_is_reused_only_on_resume(self):
         # gt 06.10 KP-9: without --resume a complete unit record is never reused (nor its host record left unwatched)
         self.quiet_run(FakeHost())
@@ -1309,6 +1326,65 @@ class R2StageTests(Base):
 
 
 class StopTests(Base):
+    def test_editor_oos_decision_survives_record_resume_aggregate_and_report(self):
+        receipt = dict(OK_GUARD, restoreExit=32, outOfScopeChanged=True, scope="editor",
+                       why="WARNING accepted editor change", oosRule={"rule": "oos_rule", "accepted": True, "why": "guarded writer"})
+        chain = make_chain(self.evidence, ["a1"], guard=FakeGuard(close=receipt))
+        result = chain.editor_unit("y4", [], self.evidence / "y4", lambda: [])
+        recorded = json.loads(Path(result["record"]).read_text())
+        guard = recorded["guard"]
+        self.assertEqual((32, True, "editor", receipt["oosRule"]),
+                         (guard["restoreExit"], guard["outOfScopeChanged"], guard["scope"], guard["oosRule"]))
+        resumed = make_chain(self.evidence, ["a1"], resume=True)
+        self.assertIsNotNone(resumed.reusable_unit(Path(result["record"])))
+        aggregate = acc.aggregate_guard([dict(OK_GUARD, snapshotExit=0), guard])
+        self.assertEqual((32, True, 2), (aggregate["restoreExit"], aggregate["outOfScopeChanged"], aggregate["receipts"]))
+        inspector = wp078_report.Inspector({"commit": FINAL}, self.evidence, {})
+        inspector.guard(aggregate)
+        for changes in ({"scope": "player"}, {"verified": False}, {"snapshotExit": 75}, {"restoreExit": 31},
+                        {"code": 7}, {"oosRule": None}, {"oosRule": {"rule": "oos_rule", "accepted": False, "why": "refused"}},
+                        {"oosRule": {"rule": "oos_rule", "accepted": True, "why": ""}}):
+            with self.subTest(changes=changes):
+                bad = dict(guard, **changes)
+                self.assertFalse(acc.guard_ok(bad))
+                self.assertFalse(acc.guard_ok(acc.aggregate_guard([guard, bad])))
+                with self.assertRaises(wp078_report.ProofError):
+                    inspector.guard(bad)
+        with self.assertRaises(wp078_report.ProofError):
+            inspector.bot_guard({}, {"guard": guard}, ("gameplay",))
+
+    def test_editor_unit_keeps_oos_decision_but_player_scope_cannot_resume_it(self):
+        receipt = dict(OK_GUARD, restoreExit=32, outOfScopeChanged=True, scope="editor",
+                       oosRule={"rule": "oos_rule", "accepted": True, "why": "guarded writer"})
+        chain = make_chain(self.evidence, ["a1"], guard=FakeGuard(close=receipt))
+        with self.assertRaises(acc.Stop) as caught:
+            chain.editor_unit("player-y4", [], self.evidence / "y4", lambda: [], scope="player")
+        self.assertEqual(7, caught.exception.code)
+        guard = json.loads(chain.unit_record("player-y4").read_text())["guard"]
+        self.assertEqual("player", guard["scope"])
+        self.assertFalse(acc.guard_ok(guard))
+
+    def test_editor_exception_cannot_be_resumed_in_player_scope(self):
+        receipt = dict(OK_GUARD, restoreExit=32, outOfScopeChanged=True, scope="editor",
+                       oosRule={"rule": "oos_rule", "accepted": True, "why": "guarded writer"})
+        chain = make_chain(self.evidence, ["a1"], guard=FakeGuard(close=receipt))
+        result = chain.editor_unit("y4-resume", [], self.evidence / "y4-resume", lambda: [])
+        resumed = make_chain(self.evidence, ["a1"], resume=True, guard=FakeGuard(close=receipt))
+        self.assertIsNone(resumed.reusable_unit(Path(result["record"]), scope="player"))
+        with self.assertRaises(acc.Stop) as caught:
+            resumed.editor_unit("y4-resume", [], self.evidence / "y4-resume", lambda: [], scope="player")
+        self.assertEqual(7, caught.exception.code)
+        self.assertIn(("snapshot", "y4-resume", "player"), resumed.guard.scopes)
+
+    def test_clean_fields_cannot_hide_a_failed_guard_verdict(self):
+        guard = dict(OK_GUARD, snapshotExit=0, code=7, why="touched data refused")
+        aggregate = acc.aggregate_guard([guard])
+        self.assertEqual(7, aggregate["code"])
+        self.assertFalse(acc.guard_ok(aggregate))
+        inspector = wp078_report.Inspector({"commit": FINAL}, self.evidence, {})
+        with self.assertRaises(wp078_report.ProofError):
+            inspector.guard(aggregate)
+
     def prepared(self, stages=("a6", "a0", "a1")):
         tools = FakeTools()
         self.assertEqual(0, make_chain(self.evidence, stages, tools=tools).run())
@@ -1561,6 +1637,24 @@ class ManifestTests(Base):
         report = json.loads(reports[-1].read_text())
         self.assertFalse(report["pass"])
         self.assertTrue(any(f["step"] == "A1" for f in report["failures"]), report["failures"])
+
+    def test_full_chain_preserves_editor_oos_in_manifest_and_report(self):
+        class EditorOosGuard(FakeGuard):
+            def close(self, ug, scope="editor"):
+                receipt = super().close(ug, scope)
+                if scope == "editor":
+                    receipt.update(restoreExit=32, outOfScopeChanged=True, scope="editor",
+                                   oosRule={"rule": "oos_rule", "accepted": True, "why": "guarded writer"})
+                return receipt
+        code, _ = self.full_run(guard=EditorOosGuard())
+        report = self.report()
+        self.assertEqual(0, code, report["failures"])
+        self.assertTrue(report["pass"], report["failures"])
+        manifest = json.loads((self.evidence / "manifest.json").read_text())
+        for stage in ("A1", "A6", "A7"):
+            guard = manifest["checklist"][stage]["guard"]
+            self.assertEqual((32, True, "editor"), (guard["restoreExit"], guard["outOfScopeChanged"], guard["scope"]))
+        self.assertTrue(manifest["checklist"]["A7"]["byteEqual"])
 
     def test_full_chain_manifest_is_accepted_by_the_report(self):
         code, _ = self.full_run()

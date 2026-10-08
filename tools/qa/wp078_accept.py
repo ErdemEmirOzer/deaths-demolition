@@ -227,13 +227,8 @@ def map_verifies(base, mapping):
 
 
 def guard_ok(g):
-    """The report's rule: snapshot/restore exit 0, verified 1 (or true), no out-of-scope change (0 or false)."""
-    if not isinstance(g, dict):
-        return False
-    exits = all(type(g.get(k)) is int and g[k] == 0 for k in ("snapshotExit", "restoreExit"))
-    verified = g.get("verified") is True or (type(g.get("verified")) is int and g["verified"] == 1)
-    oos = g.get("outOfScopeChanged") is False or (type(g.get("outOfScopeChanged")) is int and g["outOfScopeChanged"] == 0)
-    return exits and verified and oos
+    """The report's rule, including the recorded editor-only oos_rule exception (Y4)."""
+    return guard_receipt.receipt_ok(g)
 
 
 def aggregate_guard(receipts):
@@ -244,7 +239,11 @@ def aggregate_guard(receipts):
         return None
     bad = [r for r in receipts if not guard_ok(r)]
     if bad:
-        return dict({k: bad[0].get(k) for k in GUARD_FIELDS}, receipts=len(receipts))
+        return dict(bad[0], receipts=len(receipts))
+    exceptions = [r for r in receipts if guard_receipt.accepted_editor_oos(r)]
+    if exceptions:
+        # Keep the raw 32/true and the warning; do not manufacture a clean restore receipt for the report.
+        return dict(exceptions[0], receipts=len(receipts))
     return {"snapshotExit": 0, "restoreExit": 0, "verified": 1, "outOfScopeChanged": 0, "receipts": len(receipts)}
 
 
@@ -833,7 +832,7 @@ class Chain:
             self.planned.append((self.stage, [guard, "restore", str(ug), "--scope", scope]))
             return None
         if self.resume:
-            record = self.reusable_unit(record_path)
+            record = self.reusable_unit(record_path, scope=scope)
             if record is not None:
                 self.log(f"SKIP {name}: verified complete unit record")
                 return self.unit_result(name, record_path, record)
@@ -852,22 +851,25 @@ class Chain:
             self.log(f"GUARD {name}: restore exit {receipt.get('restoreExit')} verdict {receipt.get('why')} code {receipt.get('code')}")
         guard = dict({k: receipt.get(k) for k in ("restoreExit", "verified", "touched", "outOfScopeChanged")},
                      snapshotExit=0, code=receipt.get("code"), why=receipt.get("why"))
+        if "oosRule" in receipt:
+            guard.update(scope=scope, oosRule=receipt["oosRule"])
         exit_code = next((e["exit"] for e in exits if e["exit"] != 0), 0)
-        ok = exit_code == 0 and receipt.get("code") == 0 and len(exits) == len(commands)
+        ok = exit_code == 0 and receipt.get("code") == 0 and guard_ok(guard) and len(exits) == len(commands)
         record = {"schema": RECORD_SCHEMA, "unit": name, "executionCommit": self.final, "exitCode": exit_code,
                   "status": "complete" if ok else "failed", "guard": guard, "commands": exits, "completedUtc": utc(),
                   "artifactSha256": hash_map(record_path.parent, outputs())}
         record.update(extra())
         write_json(record_path, record)
-        if receipt.get("code") != 0:
+        if receipt.get("code") != 0 or not guard_ok(guard):
             raise Stop(STOP, f"{name}: Editor guard restore/verdict failed ({receipt.get('why')}); user data NOT confirmed restored")
         return self.unit_result(name, record_path, record)
 
-    def reusable_unit(self, record_path):
+    def reusable_unit(self, record_path, scope=None):
         """The unit record a resumed run reuses (verified complete for this FINAL, guard restored), or None."""
         record = load_json(record_path) if self.resume else None
         if (isinstance(record, dict) and record.get("executionCommit") == self.final and record.get("status") == "complete"
-                and guard_ok(record.get("guard")) and map_verifies(record_path.parent, record.get("artifactSha256"))):
+                and guard_receipt.receipt_ok(record.get("guard"), allow_editor_oos=scope != "player")
+                and map_verifies(record_path.parent, record.get("artifactSha256"))):
             return record
         return None
 
@@ -1296,7 +1298,8 @@ class Chain:
                 measure_dir.mkdir(parents=True, exist_ok=True)
             name = f"{stage}-{step['id']}"
             # SHOULD-6: a quiet session waits for a quiet host and is sampled while it runs (a reused unit is not run again)
-            watch = quiet and not self.dry_run and self.reusable_unit(self.unit_record(name)) is None
+            unit_scope = "player" if step["suite"] == "playmode" else "editor"
+            watch = quiet and not self.dry_run and self.reusable_unit(self.unit_record(name), scope=unit_scope) is None
             if quiet and self.dry_run:
                 self.out(f"DRY r2q: host check before {name} (no foreign Unity / Player / Blender / ffmpeg, ≤ "
                          f"{self.host.wait_max:.0f} s) + a sample every {self.host.interval:.0f} s → {out}/host.json")
@@ -1310,7 +1313,7 @@ class Chain:
                                           lambda out=out, step=step: [out / f"{step['suite']}.xml", out / f"{step['suite']}.log"]
                                           + [measure_dir / f"r2-{g}.json" for g in step["gates"]],
                                           lambda step=step: {"r2Gates": step["gates"], "filter": step["filter"], "env": step.get("env", {}), "quiet": step["quiet"]},
-                                          scope="player" if step["suite"] == "playmode" else "editor")
+                                          scope=unit_scope)
             finally:
                 samples = self.host.stop() if watch else None
             if watch:
