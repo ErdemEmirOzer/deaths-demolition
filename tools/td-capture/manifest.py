@@ -70,6 +70,7 @@ def av_drift(out):
                 continue
     except FileNotFoundError:
         return None
+    rows = [(t, f) for t, f in rows if f > 0]   # 08.10: rows before the WAV's first sample (boot: 0 frames) are no clock
     if not rows:
         return None
     f0 = rows[0][1] - rows[0][0] * rate
@@ -83,14 +84,19 @@ def video_quality(out):
     summary = read_json(out / "video" / "summary.json") or {}
     fps = summary.get("effectiveFps")
     drift = av_drift(out)
+    align = read_json(out / "video" / "align.json")   # align_audio.py: the WAV laid per 1 s anchor (the MP4's sound)
     loads = {p.stem[5:]: p.read_text().strip() for p in sorted((out / "logs").glob("load-*.txt"))}
     issues = []
     if fps is not None and fps < MIN_FPS:
         issues.append("low-fps")
-    if drift is not None and drift["maxAbs"] > MAX_AV_DRIFT:
+    # aligned: the MP4 is exact at every anchor, off by at most maxSecondErr inside a second; else the one-offset WAV
+    # drifts with the audio clock
+    av_err = align["maxSecondErr"] if align else (drift["maxAbs"] if drift else None)
+    if av_err is not None and av_err > MAX_AV_DRIFT:
         issues.append("av-drift")
     verdict = None if fps is None and drift is None else ("+".join(issues) or "ok")
-    return {"effectiveFps": fps, "minFps": MIN_FPS, "avDrift": drift, "maxAvDrift": MAX_AV_DRIFT, "verdict": verdict,
+    return {"effectiveFps": fps, "minFps": MIN_FPS, "avDrift": drift, "avAlign": align, "avError": av_err,
+            "maxAvDrift": MAX_AV_DRIFT, "verdict": verdict,
             "loadAtLaunch": loads}
 
 
@@ -111,7 +117,9 @@ def main(argv):
         "poses": {"file": a.poses, "sha256": sha(a.poses) if Path(a.poses).is_file() else None},
         "stills": read_json(out / "stills" / "poses.json"),
         "video": {"summary": read_json(out / "video" / "summary.json"), "probe": read_json(out / "video" / "probe.json"),
-                  "sync": read_json(out / "video" / "sync.json"), "rawFrames": len(frames)},
+                  "sync": read_json(out / "video" / "sync.json"), "rawFrames": len(frames),
+                  # C-00 08.10 (boot video): loadingStart / loadingEnd / menu / fighting, real s from t0 (null: not seen)
+                  "phases": (read_json(out / "video" / "sync.json") or {}).get("phases")},
         "videoQuality": video_quality(out),
         "guardRestore": int(a.guard), "exit": int(a.rc), "signal": int(a.signal),
         "files": {str(p.relative_to(out)): sha(p) for p in files},

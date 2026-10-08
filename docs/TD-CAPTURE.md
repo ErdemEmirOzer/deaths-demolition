@@ -34,15 +34,23 @@ The label folder is never overwritten. Pick a new `--label` for a retake.
   - If fewer than 38 zombies arrive within 15 m, the script exits 1 (`crowdShort`) but keeps the frames. Retake with a longer `--crowd-wait` (default 45 s; 20 s filled 22 of 40 on the plaza in smoke-2).
 - **Pose file:** one `key x z [crowd40]` per line, in TopDown map coordinates (+Z north). Crowd poses go last.
   - A pose with no NavMesh within 2 m is recorded as `navmesh-miss` and the script exits 1.
-- **Audio/video sync:** the video frames are grabbed in real time and timestamped (the game is not slowed). The muxer lays them on a 30 fps grid and aligns the WAV with `sync.json`'s offset.
-  - A drift above 0.05 s is printed as a warning.
+- **Audio/video sync:** the video frames are grabbed in real time and timestamped (the game is not slowed). The muxer lays them on a 30 fps grid.
+  - `td-capture/align_audio.py` lays the WAV second by second on the anchors in `video/audio-sync.tsv`, so the sound is exact at every anchor. It writes `video/audio-aligned.wav` and `align.json`.
+  - The game's audio clock drifts from real time even on a quiet machine (−0.23 s over 60 s), and the WAV has gaps while no audio listener mixes (scene swaps). With a single offset the sound would slide for the rest of the clip.
+  - Without anchors (an older agent), the single `sync.json` offset is used and the timeline says so.
 - **Video quality:** `capture.json` → `videoQuality.verdict` is `ok`, `low-fps`, `av-drift` or `low-fps+av-drift`. The script prints a warning, and still exits 0.
   - `low-fps`: effective capture fps is below 24, so the Player ran slow on a loaded machine and the MP4 stutters.
-  - `av-drift`: the audio clock drifted more than 0.1 s from real time. This is measured from `video/audio-sync.tsv`.
+  - `av-drift`: sound and picture are more than 0.1 s apart somewhere in the MP4 (`videoQuality.avError` = `align.json` `maxSecondErr`, the worst second). The raw audio clock is in `videoQuality.avDrift`.
+  - A boot clip usually reads `low-fps+av-drift`. Loading hitches drop frames, and a scene swap leaves a silent second that gets padded. Judge its sound from the menu on.
   - Both mean: retake on a quieter machine (`--video-only`, new label), and don't judge sound against picture.
   - `summary.json`'s `audio.driftSeconds` is read after the frame drain and is misleading; use `videoQuality.avDrift`.
+- **HUD-less frames:** `--hud off` hides the in-run HUD in stills and video (for TopDown background plates). The dev watermark stays.
+- **Loading screen / menu clip:** `--video-only --video-from boot --video-seconds 30` records from Player start: the loading screen (intro → loop → exit), the main menu logo intro, then the first seconds of the run.
+  - `capture.json` → `video.phases` holds `loadingStart`, `loadingEnd`, `menu`, `fighting` (real seconds from the MP4's t0; null when not seen).
+  - S-09's still mode `-ddUiCapture loading` is separate.
+- **Sound is required:** an MP4 without an AAC track (the WAV did not arm) exits 1. The file is kept so you can look at it.
 - **Size:** the window is limited by the screen. On this Mac `--size 1920x1080` gives 1496×842 (Retina logical size); `probe.json` holds the real size.
 - **Watermark:** dev builds draw "Development Build" bottom right. That is expected, the same in before and after.
 - **Tools:** nothing is installed. The two Swift helpers compile with the Command Line Tools' `swiftc` into `$TMPDIR/dd-td-capture/`.
 
-Exit codes: 0 done · 1 launch failed / NavMesh miss / crowd short · 3 not a dev build · 30/31/65/75 guard · 32 restore not accepted by `qa/oos_rule.py` · 64 usage · 128+n signal (the restore still runs).
+Exit codes: 0 done · 1 launch failed / NavMesh miss / crowd short / MP4 without sound · 3 not a dev build · 30/31/65/75 guard · 32 restore not accepted by `qa/oos_rule.py` · 64 usage · 128+n signal (the restore still runs).

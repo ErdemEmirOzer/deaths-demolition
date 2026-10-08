@@ -93,6 +93,8 @@ namespace DD.Prototype.Tests.EditMode
             Assert.AreEqual(1920, o.VideoMaxWidth);
             Assert.AreEqual(-1, o.VideoFlip);
             Assert.IsFalse(o.HasSeed);
+            Assert.IsFalse(o.HudOff, "the HUD is on unless -ddTdHud off");
+            Assert.AreEqual(4f, o.BootMenuSeconds);
 
             Assert.AreEqual(10, Parse("-ddTdVideoSeconds", "10").VideoSeconds);
             Assert.AreEqual(120, Parse("-ddTdVideoSeconds", "120").VideoSeconds);
@@ -126,6 +128,11 @@ namespace DD.Prototype.Tests.EditMode
         [TestCase("-ddTdResolution", "1920")]
         [TestCase("-ddTdResolution", "100x100")]
         [TestCase("-ddTdIntroSeconds", "61")]
+        [TestCase("-ddTdHud", "0")]
+        [TestCase("-ddTdHud", "OFF")]
+        [TestCase("-ddTdHud", "hidden")]
+        [TestCase("-ddTdBootMenuSeconds", "-1")]
+        [TestCase("-ddTdBootMenuSeconds", "61")]
         [TestCase("-ddTdCrowdWaitSeconds", "0")]
         [TestCase("-ddTdCrowdWaitSeconds", "121")]
         public void Options_MalformedValue_IsAnError(string flag, string value)
@@ -134,6 +141,59 @@ namespace DD.Prototype.Tests.EditMode
             Assert.IsNull(o);
             Assert.IsNotNull(error);
             StringAssert.Contains(flag, error);
+        }
+
+        [Test]
+        public void Options_HudValues()
+        {
+            Assert.IsTrue(Parse("-ddTdHud", "off").HudOff);
+            Assert.IsFalse(Parse("-ddTdHud", "on").HudOff);
+            TdCaptureOptions stills = TdCaptureOptions.Parse(Argv("-ddTdCapture", "/tmp/td", "-ddTdCaptureMode", "stills", "-ddTdPoses", "/tmp/p.txt", "-ddTdHud", "off"), out string error);
+            Assert.IsNull(error);
+            Assert.IsTrue(stills.HudOff, "stills take -ddTdHud off (S-09 / P-07 HUD-less backgrounds)");
+        }
+
+        [Test]
+        public void Options_BootMode()
+        {
+            TdCaptureOptions o = TdCaptureOptions.Parse(Argv("-ddTdCapture", "/tmp/td", "-ddTdCaptureMode", "boot", "-ddTdVideoSeconds", "60", "-ddTdBootMenuSeconds", "6.5"), out string error);
+            Assert.IsNull(error);
+            Assert.AreEqual(TdCaptureMode.Boot, o.Mode);
+            Assert.AreEqual(60, o.VideoSeconds);
+            Assert.AreEqual(6.5f, o.BootMenuSeconds);
+            Assert.IsFalse(o.HoldSpawns, "boot plays the real spawns by default");
+            Assert.IsNull(o.PosesPath, "boot needs no pose file");
+            Assert.IsNull(TdCaptureOptions.Parse(Argv("-ddTdCapture", "/tmp/td", "-ddTdCaptureMode", "boot", "-ddTdVideoSeconds", "9"), out error));
+            StringAssert.Contains("-ddTdVideoSeconds", error);
+        }
+
+        [Test]
+        public void Sandbox_AllThreeFlagsRequired()
+        {
+            string[] full = Argv("-ddTdCapture", "/tmp/td", "-ddProfilePath", "/tmp/s/profile.json", "-ddUiDataRoot", "/tmp/s/ui", "-ddTelemetryDir", "/tmp/s/tel");
+            Assert.IsTrue(TdCaptureOptions.CheckSandbox(full, out string error), error);
+            Assert.IsNull(error);
+
+            string[][] twoOfThree =
+            {
+                Argv("-ddTdCapture", "/tmp/td", "-ddUiDataRoot", "/tmp/s/ui", "-ddTelemetryDir", "/tmp/s/tel"),
+                Argv("-ddTdCapture", "/tmp/td", "-ddProfilePath", "/tmp/s/profile.json", "-ddTelemetryDir", "/tmp/s/tel"),
+                Argv("-ddTdCapture", "/tmp/td", "-ddProfilePath", "/tmp/s/profile.json", "-ddUiDataRoot", "/tmp/s/ui"),
+            };
+            string[] missing = { "-ddProfilePath", "-ddUiDataRoot", "-ddTelemetryDir" };
+            for (int i = 0; i < twoOfThree.Length; i++)
+            {
+                Assert.IsFalse(TdCaptureOptions.CheckSandbox(twoOfThree[i], out error), "two of three must be refused (gt SHOULD-1: AND, not OR)");
+                StringAssert.Contains(missing[i], error);
+            }
+
+            Assert.IsFalse(TdCaptureOptions.CheckSandbox(Argv("-ddTdCapture", "/tmp/td", "-ddProfilePath", "/tmp/s/profile.json"), out error), "one of three");
+            Assert.IsFalse(TdCaptureOptions.CheckSandbox(Argv("-ddTdCapture", "/tmp/td"), out error), "none");
+            Assert.IsFalse(TdCaptureOptions.CheckSandbox(Argv("-ddProfilePath", "-ddUiDataRoot", "/tmp/s/ui", "-ddTelemetryDir", "/tmp/s/tel"), out error),
+                "a flag followed by another flag has no value");
+            StringAssert.Contains("-ddProfilePath", error);
+            Assert.IsFalse(TdCaptureOptions.CheckSandbox(Argv("-ddTdCapture", "/tmp/td", "-ddProfilePath", "/tmp/p", "-ddUiDataRoot", "/tmp/u", "-ddTelemetryDir"), out error),
+                "a dangling last flag has no value");
         }
 
         [Test]

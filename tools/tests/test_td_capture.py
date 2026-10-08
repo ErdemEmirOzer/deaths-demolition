@@ -60,13 +60,16 @@ for i in range(60):
 (v / "frames.tsv").write_text("\n".join(rows) + "\n")
 wav = flag("-ddAudioCapture")
 off = None
-if wav:
+if wav and os.environ.get("FAKE_NOWAV"):   # the WAV never armed, but sync.json still names an offset → a silent MP4
+    off = 0.5
+elif wav:
     w = wave.open(wav, "wb"); w.setnchannels(2); w.setsampwidth(2); w.setframerate(48000)
     w.writeframes(b"".join(struct.pack("<hh", int(5000 * math.sin(n / 20.0)), 0) for n in range(48000 * 3)))
     w.close(); off = 0.5
-(v / "sync.json").write_text(json.dumps({"audio": {"wavOffsetSeconds": off, "sampleRate": 48000}}))
+phases = {"loadingStart": 0.4, "loadingEnd": 3.1, "menu": 3.3, "fighting": 8.0} if flag("-ddTdCaptureMode") == "boot" else None
+(v / "sync.json").write_text(json.dumps({"audio": {"wavOffsetSeconds": off, "sampleRate": 48000}, "phases": phases}))
 lag = float(os.environ.get("FAKE_AVDRIFT", "0"))   # the audio clock loses this much by t = 2 s
-(v / "audio-sync.tsv").write_text("# t_seconds\twav_frames_captured\n" + "".join(
+os.environ.get("FAKE_NOANCHORS") or (v / "audio-sync.tsv").write_text("# t_seconds\twav_frames_captured\n" + "".join(
     "%.6f\t%d\n" % (t, 24000 + round((t - lag * t / 2) * 48000)) for t in (0.0, 1.0, 2.0)))
 (v / "summary.json").write_text(json.dumps({"framesWritten": 60, "effectiveFps": float(os.environ.get("FAKE_FPS", "29.5")),
                                          "audio": {"driftSeconds": 0.0}}))
@@ -165,6 +168,7 @@ class TdCaptureTests(unittest.TestCase):
         self.assertEqual(("fixture-abc123", "abc123def"), (rec["build"]["stamp"]["describe"], rec["build"]["head"]))   # gt MUST-2
         self.assertNotIn("stutters", r.stderr)
         sums = (o / "SHA256SUMS").read_text()
+        self.assertEqual(0.0, rec["videoQuality"]["avAlign"]["maxSecondErr"]); self.assertIn("video/audio-aligned.wav", sums)
         self.assertIn("video/td-t1.mp4", sums); self.assertIn("stills/contact.png", sums); self.assertNotIn("frames/", sums)
         stills, video = self.calls()
         for flag in ("-ddDirectToRun", "-ddTdPoses", "-ddProfilePath", "-ddUiDataRoot", "-ddTelemetryDir"):
@@ -215,7 +219,9 @@ class TdCaptureTests(unittest.TestCase):
         self.assertEqual(0, r.returncode, r.stdout + r.stderr)
         q = json.loads((self.out() / "capture.json").read_text())["videoQuality"]
         self.assertEqual("av-drift", q["verdict"]); self.assertAlmostEqual(-0.4, q["avDrift"]["atStop"], delta=0.001)
-        self.assertIn("audio clock drifted -0.400 s", r.stderr)
+        # aligned per anchor: each 1 s stretch is 0.2 s short → at most 0.2 s off inside it, exact at every anchor
+        self.assertAlmostEqual(0.2, q["avAlign"]["maxSecondErr"], delta=0.001); self.assertAlmostEqual(0.2, q["avError"], delta=0.001)
+        self.assertIn("sound and picture are up to 0.200 s apart", r.stderr)
         r = self.run_cap("--video-only", label="t2", FAKE_AVDRIFT="0.4", FAKE_FPS="8.6")
         self.assertEqual("low-fps+av-drift", json.loads((self.out("t2") / "capture.json").read_text())["videoQuality"]["verdict"])
 
@@ -272,9 +278,43 @@ class TdCaptureTests(unittest.TestCase):
         self.assertIn("its window is open (before.txt)", r.stderr)
         self.assertEqual([], self.calls()); self.assertEqual(["snapshot", "restore"], [l.split()[0] for l in self.guard_calls()])
 
+    def test_HudKapali_IkiLansmanaIletilir_VarsayilanAcik(self):
+        r = self.run_cap("--hud", "off")
+        self.assertEqual(0, r.returncode, r.stdout + r.stderr)
+        stills, video = self.calls()
+        self.assertEqual(("off", "off"), (stills[stills.index("-ddTdHud") + 1], video[video.index("-ddTdHud") + 1]))
+        r = self.run_cap("--stills-only", label="t2")
+        self.assertEqual("on", self.calls()[-1][self.calls()[-1].index("-ddTdHud") + 1])
+
+    def test_VideoBoot_ModBoot_AsamalarCaptureJsonda(self):
+        """C-00 08.10 (S-10 08.10-2): the loading screen / menu logo clip — mode boot, phases into capture.json."""
+        self.assertEqual(64, self.run_cap("--video-only", "--video-from", "boot", "--video-seconds", "20").returncode)
+        r = self.run_cap("--video-only", "--video-from", "boot", "--video-seconds", "30")
+        self.assertEqual(0, r.returncode, r.stdout + r.stderr)
+        video = self.calls()[0]
+        self.assertEqual("boot", video[video.index("-ddTdCaptureMode") + 1])
+        self.assertNotIn("-ddQaBot", video); self.assertNotIn("-ddDirectToRun", video)   # the agent drives menu → run
+        rec = json.loads((self.out() / "capture.json").read_text())
+        self.assertEqual({"loadingStart": 0.4, "loadingEnd": 3.1, "menu": 3.3, "fighting": 8.0}, rec["video"]["phases"])
+
+    def test_AnkrajYok_TekOfsetleSesYineVar(self):
+        """no audio-sync.tsv (an older agent): align_audio exits 2 → the single wavOffsetSeconds, still with sound."""
+        r = self.run_cap("--video-only", FAKE_NOANCHORS="1")
+        self.assertEqual(0, r.returncode, r.stdout + r.stderr)
+        rec = json.loads((self.out() / "capture.json").read_text())
+        self.assertIsNone(rec["videoQuality"]["avAlign"]); self.assertEqual("aac", rec["video"]["probe"]["audio"]["codec"])
+        self.assertIn("audio not aligned per anchor", (self.out() / "logs" / "timeline.txt").read_text())
+
+    def test_SessizMp4_Cikis1(self):
+        """C-00 08.10: the MP4 must carry the game sound — no AAC track → exit 1 (the MP4 is kept for a look)."""
+        r = self.run_cap("--video-only", FAKE_NOWAV="1")
+        self.assertEqual(1, r.returncode, r.stdout + r.stderr)
+        self.assertIn("the MP4 has no audio track", r.stderr)
+        self.assertIsNone(json.loads((self.out() / "video" / "probe.json").read_text())["audio"])
+
     def test_KotuArguman_Cikis64(self):
         for extra in (["--video-seconds", "5"], ["--size", "big"], ["--seed", "x"], ["--nope"],
-                      ["--crowd-wait", "0"], ["--crowd-wait", "121"]):
+                      ["--crowd-wait", "0"], ["--crowd-wait", "121"], ["--hud", "none"], ["--video-from", "menu"]):
             with self.subTest(extra=extra):
                 self.assertEqual(64, self.run_cap(*extra).returncode)
 

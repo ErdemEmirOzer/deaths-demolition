@@ -11,7 +11,9 @@ namespace DD.Prototype.Diagnostics
     public enum TdCaptureMode
     {
         Stills = 0,
-        Video = 1
+        Video = 1,
+        /// <summary>Round 3 (C-00 08.10): real-time video from the first frame — loading screen, main menu (logo intro), into Fighting.</summary>
+        Boot = 2
     }
 
     /// <summary>
@@ -40,10 +42,17 @@ namespace DD.Prototype.Diagnostics
         public const string IntroFlag = "-ddTdIntroSeconds";
         /// <summary>Stills: the bounded wait for a <c>crowd40</c> pose's bodies to arrive (≥ ceiling − 2 alive within 15 m). Default 20.</summary>
         public const string CrowdWaitFlag = "-ddTdCrowdWaitSeconds";
+        /// <summary>Round 3: <c>on|off</c> (default on) — off disables every UI canvas in the Run scene for the capture (stills / video / boot's run part).</summary>
+        public const string HudFlag = "-ddTdHud";
+        /// <summary>Round 3, boot mode: seconds the main menu is shown (logo intro) before the agent goes Selection → Run. Default 4.</summary>
+        public const string BootMenuFlag = "-ddTdBootMenuSeconds";
+
+        /// <summary>Round 3 (gt SHOULD-1): ALL of these must carry a value, otherwise the agent refuses (error.json, exit 2).</summary>
+        public static readonly string[] SandboxFlags = { "-ddProfilePath", "-ddUiDataRoot", "-ddTelemetryDir" };
 
         public const int MinVideoSeconds = 10, MaxVideoSeconds = 120, DefaultVideoSeconds = 45;
         public const int MinVideoFps = 1, MaxVideoFps = 60, DefaultVideoFps = 30;
-        public const float DefaultSettleSeconds = 2f, DefaultWarmupSeconds = 3f, DefaultIntroSeconds = 5f, DefaultCrowdWaitSeconds = 20f;
+        public const float DefaultSettleSeconds = 2f, DefaultWarmupSeconds = 3f, DefaultIntroSeconds = 5f, DefaultCrowdWaitSeconds = 20f, DefaultBootMenuSeconds = 4f;
         public const int DefaultVideoMaxWidth = 1920;
 
         public string OutDir;
@@ -58,6 +67,8 @@ namespace DD.Prototype.Diagnostics
         public float WarmupSeconds = DefaultWarmupSeconds;
         public float IntroSeconds = DefaultIntroSeconds;
         public float CrowdWaitSeconds = DefaultCrowdWaitSeconds;
+        public float BootMenuSeconds = DefaultBootMenuSeconds;
+        public bool HudOff;
         public int VideoMaxWidth = DefaultVideoMaxWidth;
         /// <summary>-1 auto (measured), 0 never, 1 always.</summary>
         public int VideoFlip = -1;
@@ -105,6 +116,26 @@ namespace DD.Prototype.Diagnostics
         }
 
         /// <summary>
+        /// Round 3 (gt SHOULD-1): the sandbox rule is AND — <c>-ddProfilePath</c>, <c>-ddUiDataRoot</c> and <c>-ddTelemetryDir</c>
+        /// must all be present with a value (not another flag). One or two of them is a refusal: a capture run plays a run, and a
+        /// single redirected store still lets the others write into the player's own data.
+        /// </summary>
+        public static bool CheckSandbox(string[] args, out string error)
+        {
+            error = null;
+            var missing = new List<string>(3);
+            foreach (string flag in SandboxFlags)
+            {
+                string v = Arg(args, flag);
+                if (string.IsNullOrEmpty(v) || v.StartsWith("-", StringComparison.Ordinal)) missing.Add(flag);
+            }
+
+            if (missing.Count == 0) return true;
+            error = "refused: no full sandbox — missing " + string.Join(", ", missing) + " (all of " + string.Join(", ", SandboxFlags) + " are required)";
+            return false;
+        }
+
+        /// <summary>
         /// Null + null error: not requested (inactive). Null + error: requested but malformed (the agent writes error.json and
         /// quits 2). Otherwise the options, with mode defaults applied (HoldSpawns: stills 1, video 0).
         /// </summary>
@@ -123,9 +154,10 @@ namespace DD.Prototype.Diagnostics
             string mode = Arg(args, ModeFlag);
             if (mode == "stills") o.Mode = TdCaptureMode.Stills;
             else if (mode == "video") o.Mode = TdCaptureMode.Video;
+            else if (mode == "boot") o.Mode = TdCaptureMode.Boot;
             else
             {
-                error = ModeFlag + " must be 'stills' or 'video' (got " + (mode == null ? "nothing" : "'" + mode + "'") + ")";
+                error = ModeFlag + " must be 'stills', 'video' or 'boot' (got " + (mode == null ? "nothing" : "'" + mode + "'") + ")";
                 return null;
             }
 
@@ -154,6 +186,15 @@ namespace DD.Prototype.Diagnostics
             if (!TryFloat(args, WarmupFlag, 0f, 600f, ref o.WarmupSeconds, out error)) return null;
             if (!TryFloat(args, IntroFlag, 0f, 60f, ref o.IntroSeconds, out error)) return null;
             if (!TryFloat(args, CrowdWaitFlag, 1f, 120f, ref o.CrowdWaitSeconds, out error)) return null;
+            if (!TryFloat(args, BootMenuFlag, 0f, 60f, ref o.BootMenuSeconds, out error)) return null;
+
+            string hud = Arg(args, HudFlag);
+            if (hud != null)
+            {
+                if (hud == "off") o.HudOff = true;
+                else if (hud == "on") o.HudOff = false;
+                else { error = HudFlag + " must be on or off (got '" + hud + "')"; return null; }
+            }
             if (!TryInt(args, VideoSecondsFlag, MinVideoSeconds, MaxVideoSeconds, ref o.VideoSeconds, out error)) return null;
             if (!TryInt(args, VideoFpsFlag, MinVideoFps, MaxVideoFps, ref o.VideoFps, out error)) return null;
             if (!TryInt(args, VideoMaxWidthFlag, 0, 8192, ref o.VideoMaxWidth, out error)) return null;

@@ -9,6 +9,7 @@ using System.Threading;
 using DD.Prototype.Audio;
 using DD.Prototype.CameraSystem;
 using DD.Prototype.Core.Boot;
+using DD.Prototype.Core.Config;
 using DD.Prototype.Core.InputAbstraction;
 using DD.Prototype.Enemies;
 using DD.Prototype.PlayerSystem;
@@ -32,17 +33,20 @@ namespace DD.Prototype.Diagnostics
     ///
     /// Command line (parsed by <see cref="TdCaptureOptions"/>; a malformed value writes &lt;outdir&gt;/error.json and quits 2):
     ///   -ddTdCapture &lt;abs dir&gt;   arm; artefacts go under it
-    ///   -ddTdCaptureMode stills|video
+    ///   -ddTdCaptureMode stills|video|boot
+    ///   -ddTdHud on|off           round 3: off disables every UI canvas while the Run scene is active (default on)
     ///   -ddTdSeed &lt;int&gt;          UnityEngine.Random.InitState at BeforeSceneLoad (recorded; the QA bot reseeds with its own -ddQaBotSeed)
     ///   -ddTdResolution WxH       optional windowed Screen.SetResolution first
     ///   stills: -ddTdPoses &lt;file&gt; ('key x z [crowd40]' lines, see <see cref="TdPoseFile"/>), -ddTdHoldSpawns 0|1 (default 1),
     ///           -ddTdSettleSeconds f (default 2), -ddTdIntroSeconds f (default 5), -ddTdCrowdWaitSeconds f (default 20)
     ///   video:  -ddTdVideoSeconds 10..120 (45), -ddTdVideoFps 1..60 (30), -ddTdWarmupSeconds f (3),
     ///           -ddTdVideoMaxWidth px (1920; 0 = native backbuffer), -ddTdVideoFlip auto|0|1 (auto)
+    ///   boot:   the video flags (no warm-up) + -ddTdBootMenuSeconds f (4; 0..60)
     ///
     /// Both modes wait for the Run scene in Fighting with the player rig and the camera rig present, and refuse anything but
-    /// the TopDown camera (exit 2). Like the other capture agents it starts only inside a sandbox (-ddProfilePath or a
-    /// process-local UI data root); the user-data guard around the Player is the script's job.
+    /// the TopDown camera (exit 2). Like the other capture agents it starts only inside a sandbox — round 3 (gt SHOULD-1): ALL of
+    /// -ddProfilePath, -ddUiDataRoot and -ddTelemetryDir (<see cref="TdCaptureOptions.CheckSandbox"/>), and on the first frame the
+    /// live redirect (ProfileStore / UiDataPaths) is re-checked; the user-data guard around the Player is the script's job.
     ///
     /// STILLS → &lt;outdir&gt;/stills/nn-key.png + poses.json. Per pose: spawns held (default), the player is teleported onto the
     /// NavMesh within 2 m of (x, z) exactly as PilotPerfProbe -ddPilotStart does (sampled from the rig's own height), facing the
@@ -68,7 +72,17 @@ namespace DD.Prototype.Diagnostics
     ///
     /// A/V: video t → WAV frame = F0 + t·R, F0 = AudioOutputCapture.FramesCaptured at t0 (sync.json audio.framesCapturedAtT0),
     /// R = AudioSettings.outputSampleRate; tdmux --wav-offset = F0 / R (sync.json audio.wavOffsetSeconds). summary.json
-    /// audio.driftSeconds checks that the WAV ran gap-free over the window.
+    /// audio.driftSeconds checks that the WAV ran gap-free over the window. General form (round 3, needed by boot mode where
+    /// the WAV has no samples yet at t0): the first observation (ta, Fa) with FramesCaptured &gt; 0 is the anchor and
+    /// wavOffsetSeconds = Fa / R − ta (negative = the WAV starts after video t0); with audio flowing at t0 it is F0 / R as before.
+    ///
+    /// BOOT (round 3, C-00 08.10) → &lt;outdir&gt;/video/ exactly as VIDEO, recorded from the first rendered frame: the agent is
+    /// created at BeforeSceneLoad (DontDestroyOnLoad) and arms AudioOutputCapture on itself there (-ddAudioCapture), so the
+    /// boot seal / loading screen, the main menu with its logo intro and the first seconds of Fighting are all in the take.
+    /// No -ddDirectToRun and no -ddQaBot (the bot drives the menu away in one frame): the agent itself calls the flow's own
+    /// GoToSelection -ddTdBootMenuSeconds after the menu is revealed, then StartRun 1 s after Selection is revealed (the
+    /// QaRunBot boot-flow calls, with its re-seed). sync.json "phases" stamps loadingStart / loadingEnd / menu / fighting
+    /// (+ selectionRequested / selection / runRequested) in real seconds from t0, null when never seen.
     /// </summary>
     public sealed class TdCaptureAgent : MonoBehaviour
     {
@@ -80,9 +94,19 @@ namespace DD.Prototype.Diagnostics
         private const float CalibrationTimeoutSeconds = 5f;
         private const float BannerWaitMaxSeconds = 6f;
         private const float CrowdRadiusMetres = 15f;
+        private const float BootSelectionHoldSeconds = 1f;
+        private const float BootVerifyAfterMenuSeconds = 1.5f;
+        private const float HudRefreshSeconds = 0.25f;
 
         private static bool s_seedApplied;
         private static int s_seed;
+        private static bool s_started;   // round 3: boot mode starts at BeforeSceneLoad; AfterSceneLoad must not start a second agent
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics()
+        {
+            s_started = false;
+        }
 
         private TdCaptureOptions _o;
         private List<TdPose> _poses;
@@ -105,9 +129,21 @@ namespace DD.Prototype.Diagnostics
             }
         }
 
+        /// <summary>Round 3: boot mode starts here, before the first scene loads, so the first rendered frame is already recorded.</summary>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void BootEarly()
+        {
+            string[] args = Environment.GetCommandLineArgs();
+            if (TdCaptureOptions.IsRequested(args) && TdCaptureOptions.Arg(args, TdCaptureOptions.ModeFlag) == "boot")
+            {
+                TryStart(args);
+            }
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Boot()
         {
+            if (s_started) return;
             TryStart(Environment.GetCommandLineArgs());
         }
 
@@ -122,6 +158,7 @@ namespace DD.Prototype.Diagnostics
                 return false;
             }
 
+            s_started = true;
             string error;
             TdCaptureOptions o = TdCaptureOptions.Parse(args, out error);
             if (o == null)
@@ -158,10 +195,11 @@ namespace DD.Prototype.Diagnostics
                 }
             }
 
-            // M-55 (C-00 30.09): a capture run plays a run, so it only starts inside a sandbox (VfxWeaponCaptureAgent rule).
-            if (!Application.isEditor && !ProfileStore.HasPathOverride && !UiDataPaths.IsProcessLocal)
+            // M-55 (C-00 30.09) + gt SHOULD-1 (C-00 08.10): a capture run plays a run, so it only starts inside a FULL sandbox —
+            // all three of -ddProfilePath, -ddUiDataRoot, -ddTelemetryDir (AND, not OR). The live redirect is re-checked in Start.
+            if (!Application.isEditor && !TdCaptureOptions.CheckSandbox(args, out error))
             {
-                WriteErrorFile(o.OutDir, "sandbox", "refused: no sandbox (pass -ddProfilePath and -ddUiDataRoot)", 2);
+                WriteErrorFile(o.OutDir, "sandbox", error, 2);
                 Quit(2);
                 return true;
             }
@@ -171,6 +209,12 @@ namespace DD.Prototype.Diagnostics
             TdCaptureAgent agent = go.AddComponent<TdCaptureAgent>();
             agent._o = o;
             agent._poses = poses;
+            if (o.Mode == TdCaptureMode.Boot)
+            {
+                // The WAV must exist from the first frame as well: arm the recorder on this DDOL host now (PrototypeAudioDirector's own
+                // TryArm later returns this instance). Without -ddAudioCapture TryArm does nothing.
+                AudioOutputCapture.TryArm(go);
+            }
             Debug.Log("[TdCapture] armed mode=" + o.Mode + " out=" + o.OutDir + (o.HasSeed ? " seed=" + o.Seed : "") + " holdSpawns=" + o.HoldSpawns);
             return true;
         }
@@ -187,6 +231,15 @@ namespace DD.Prototype.Diagnostics
                 yield break;
             }
 
+            // The live redirect, not just the flags (FirstPersonArmsCaptureAgent rule): by the first frame every BeforeSceneLoad
+            // sandbox hook (ProfileSandboxFlag, QaUiDataSandbox) has run.
+            if (!Application.isEditor && (!ProfileStore.HasPathOverride || !UiDataPaths.IsProcessLocal))
+            {
+                Fail("sandbox", "refused: the profile / UI data are not redirected (ProfileStore.HasPathOverride=" + ProfileStore.HasPathOverride +
+                                ", UiDataPaths.IsProcessLocal=" + UiDataPaths.IsProcessLocal + ")", 2);
+                yield break;
+            }
+
             if (_o.ResolutionWidth > 0)
             {
                 Screen.SetResolution(_o.ResolutionWidth, _o.ResolutionHeight, FullScreenMode.Windowed);
@@ -194,6 +247,12 @@ namespace DD.Prototype.Diagnostics
                 yield return null;
                 yield return new WaitForSecondsRealtime(1f);   // SetResolution lands on a later frame (PrototypeCaptureAgent)
                 Debug.Log("[TdCapture] resolution requested " + _o.ResolutionWidth + "x" + _o.ResolutionHeight + " -> screen " + Screen.width + "x" + Screen.height);
+            }
+
+            if (_o.Mode == TdCaptureMode.Boot)
+            {
+                yield return BootVideo();
+                yield break;
             }
 
             float deadline = Time.realtimeSinceStartup + SceneTimeoutSeconds;
@@ -333,6 +392,7 @@ namespace DD.Prototype.Diagnostics
                 }
 
                 bool bannerLive = hud != null && hud.BannerSecondsLeftDev > 0f;
+                if (_o.HudOff) HideHud(true);   // a canvas built this frame must not reach the still
                 yield return new WaitForEndOfFrame();
 
                 string file = TdPoseFile.StillFileName(i, p.Key);
@@ -360,6 +420,7 @@ namespace DD.Prototype.Diagnostics
             sb.Append("  \"wp\": \"WP-099\",\n  \"mode\": \"stills\",\n");
             AppendSeed(sb);
             sb.Append("  \"holdSpawns\": ").Append(TdJson.Bool(_o.HoldSpawns)).Append(",\n");
+            sb.Append("  ").Append(HudJson()).Append(", \"hudNote\": \"the Development Build watermark is engine-drawn and stays\",\n");
             sb.Append("  \"settleSeconds\": ").Append(TdJson.Num(_o.SettleSeconds, 2)).Append(",\n");
             sb.Append("  \"posesFile\": ").Append(TdJson.Str(_o.PosesPath)).Append(",\n");
             sb.Append("  \"navMeshSampleMetres\": ").Append(TdJson.Num(NavMeshSampleMetres, 1)).Append(",\n");
@@ -533,15 +594,7 @@ namespace DD.Prototype.Diagnostics
 
         private IEnumerator Video()
         {
-            _videoDir = Path.Combine(_o.OutDir, "video");
-            _framesDir = Path.Combine(_videoDir, "frames");
-            Directory.CreateDirectory(_framesDir);
-            if (!SystemInfo.supportsAsyncGPUReadback)
-            {
-                Fail("video", "AsyncGPUReadback is not supported on " + SystemInfo.graphicsDeviceType, 3);
-                yield break;
-            }
-
+            if (!PrepareVideo()) yield break;
             RunEvents.RunEnded += OnRunEnded;
             Application.quitting += OnQuitting;
 
@@ -555,19 +608,200 @@ namespace DD.Prototype.Diagnostics
             yield return Calibrate();
             if (_finished) yield break;
 
+            yield return null;
+            yield return new WaitForEndOfFrame();
+            BeginRecording();
+
+            // The first slot (t ≈ 0) is grabbed in this same end-of-frame.
+            while (true)
+            {
+                double t = Time.realtimeSinceStartupAsDouble - _t0Realtime;
+                if (t >= _o.VideoSeconds) { _stopReason = "duration"; _stopT = t; break; }
+                if (_runEnded) { _stopReason = "run-ended"; _stopT = t; break; }
+                if (RecordFrame(t) && _o.HoldSpawns) HoldSpawns();
+                yield return null;
+                yield return new WaitForEndOfFrame();
+            }
+
+            yield return EndRecording();
+        }
+
+        // ---------------------------------------------------------------- boot (round 3)
+
+        private readonly string[] _phaseNames = { "loadingStart", "loadingEnd", "menu", "selectionRequested", "selection", "runRequested", "fighting" };
+        private readonly double[] _phaseT = { -1d, -1d, -1d, -1d, -1d, -1d, -1d };
+        private const int PhLoadingStart = 0, PhLoadingEnd = 1, PhMenu = 2, PhSelectionRequested = 3, PhSelection = 4, PhRunRequested = 5, PhFighting = 6;
+        private string _cameraModeAtFighting;
+        private bool _verifyRequested, _verifyDone;
+        private byte[] _verify;
+        private float[] _verifyRefBands;
+        private int _verifyMeasured = -2;   // -2 not run, -1 ambiguous, 0 straight, 1 flipped
+        private double _verifyErrStraight, _verifyErrFlipped;
+
+        /// <summary>
+        /// Boot mode: the recording runs from the first rendered frame through the loading screen and the main menu into Fighting
+        /// for -ddTdVideoSeconds of real time; the agent walks the menu → Selection → Run itself (see the class summary).
+        /// </summary>
+        private IEnumerator BootVideo()
+        {
+            if (!PrepareVideo()) yield break;
+            Application.quitting += OnQuitting;
+
+            // The first frames are usually black (boot seal not yet in): the orientation is decided now (measured if the frame has
+            // structure, else graphicsUVStartsAtTop — measured equal on Metal in smoke-3 / once-bc901614) and VERIFIED on the menu.
+            yield return Calibrate();
+            if (_finished) yield break;
+
+            yield return null;
+            yield return new WaitForEndOfFrame();
+            BeginRecording();
+
+            double selectionSeenAt = -1d;
+            while (true)
+            {
+                double t = Time.realtimeSinceStartupAsDouble - _t0Realtime;
+                TrackPhases(t);
+                if (t >= _o.VideoSeconds) { _stopReason = "duration"; _stopT = t; break; }
+
+                // menu → Selection → Run, through the flow's own calls (QaRunBot's boot flow), after the menu has been SEEN
+                if (_phaseT[PhMenu] >= 0d && _phaseT[PhSelectionRequested] < 0d && t - _phaseT[PhMenu] >= _o.BootMenuSeconds && !PrototypeUiFlow.IsLoading)
+                {
+                    PrototypeUiFlow.GoToSelection();
+                    Stamp(PhSelectionRequested, t);
+                }
+
+                if (_phaseT[PhSelection] >= 0d && _phaseT[PhRunRequested] < 0d)
+                {
+                    if (selectionSeenAt < 0d) selectionSeenAt = t;
+                    if (t - selectionSeenAt >= BootSelectionHoldSeconds && !PrototypeUiFlow.IsLoading)
+                    {
+                        PrototypeUiFlow.SelectedWeapon = ClassicWeaponId.AssaultRifle;
+                        if (_o.HasSeed) UnityEngine.Random.InitState(_o.Seed);   // the run's first draw happens after StartRun (QaRunBot)
+                        PrototypeUiFlow.StartRun();
+                        Stamp(PhRunRequested, t);
+                    }
+                }
+
+                if (!_verifyRequested && _phaseT[PhMenu] >= 0d && t - _phaseT[PhMenu] >= BootVerifyAfterMenuSeconds)
+                {
+                    StartVerify();
+                }
+
+                if (_verifyDone && _verifyMeasured == -2) FinishVerify();
+                if (RecordFrame(t) && _o.HoldSpawns && _phaseT[PhFighting] >= 0d) HoldSpawns();
+                yield return null;
+                yield return new WaitForEndOfFrame();
+            }
+
+            yield return EndRecording();
+        }
+
+        /// <summary>
+        /// Phase hooks, polled once per recorded frame (no instance is created): loading = UiCurtain.IsCovering (boot seal and
+        /// every loading curtain, set from the doors closing until they are half open again) or PrototypeUiFlow.IsLoading or the
+        /// Boot scene; the first loading stretch gives loadingStart / loadingEnd. menu = MainMenu active and revealed;
+        /// selection likewise; fighting = RunDirector in RunPhase.Fighting.
+        /// </summary>
+        private void TrackPhases(double t)
+        {
+            Scene scene = SceneManager.GetActiveScene();
+            bool covering = UiCurtain.IsCovering;
+            bool loading = covering || PrototypeUiFlow.IsLoading || scene.name == PrototypeScenes.Boot;
+            if (loading && _phaseT[PhLoadingStart] < 0d) Stamp(PhLoadingStart, t);
+            if (!loading && _phaseT[PhLoadingStart] >= 0d && _phaseT[PhLoadingEnd] < 0d) Stamp(PhLoadingEnd, t);
+            if (!covering && scene.isLoaded && scene.name == PrototypeScenes.MainMenu && _phaseT[PhMenu] < 0d) Stamp(PhMenu, t);
+            if (!covering && !PrototypeUiFlow.IsLoading && scene.isLoaded && scene.name == PrototypeScenes.Selection && _phaseT[PhSelection] < 0d) Stamp(PhSelection, t);
+            if (_phaseT[PhFighting] < 0d && RunDirector.Instance != null && RunDirector.Instance.Phase == RunPhase.Fighting)
+            {
+                Stamp(PhFighting, t);
+                _cameraModeAtFighting = CameraModeService.Current.ToString();
+                PlayerRig rig = PlayerRegistry.Primary;
+                if (rig != null && rig.Health != null) rig.Health.DiagnosisInvulnerable = true;   // no human plays: the take must not end in a death
+            }
+        }
+
+        private void Stamp(int phase, double t)
+        {
+            _phaseT[phase] = t;
+            Debug.Log("[TdCapture] phase " + _phaseNames[phase] + " at " + t.ToString("F3", CultureInfo.InvariantCulture) + " s (scene " + SceneManager.GetActiveScene().name + ")");
+            WriteSyncJson();   // stamps survive a killed Player
+        }
+
+        private void AppendPhases(StringBuilder sb)
+        {
+            sb.Append("{");
+            for (int i = 0; i < _phaseNames.Length; i++)
+            {
+                if (i > 0) sb.Append(", ");
+                sb.Append('"').Append(_phaseNames[i]).Append("\": ").Append(_phaseT[i] >= 0d ? TdJson.Num(_phaseT[i], 3) : "null");
+            }
+
+            sb.Append("}");
+        }
+
+        /// <summary>One CaptureScreenshotAsTexture (a one-frame stall) on the revealed menu, against a readback of the same frame:
+        /// the orientation decided on the (usually black) first frame is checked, never changed mid-take.</summary>
+        private void StartVerify()
+        {
+            _verifyRequested = true;
+            Texture2D reference = ScreenCapture.CaptureScreenshotAsTexture();
+            Color32[] px = reference.GetPixels32();
+            var bytes = new byte[px.Length * 4];
+            for (int i = 0, o = 0; i < px.Length; i++) { bytes[o++] = px[i].r; bytes[o++] = px[i].g; bytes[o++] = px[i].b; bytes[o++] = px[i].a; }
+            _verifyRefBands = TdOrientation.BandLuma(bytes, reference.width, reference.height, TdOrientation.Bands);
+            Destroy(reference);
+            ScreenCapture.CaptureScreenshotIntoRenderTexture(_full);
+            RenderTexture src = Downscale();
+            AsyncGPUReadback.Request(src, 0, TextureFormat.RGBA32, req =>
+            {
+                _verifyDone = true;
+                if (req.hasError) return;
+                var data = req.GetData<byte>();
+                _verify = new byte[data.Length];
+                data.CopyTo(_verify);
+            });
+        }
+
+        private void FinishVerify()
+        {
+            _verifyMeasured = -1;
+            if (_verify == null || _verifyRefBands == null) return;
+            _verifyMeasured = TdOrientation.ChooseFlip(_verifyRefBands, TdOrientation.BandLuma(_verify, _outW, _outH, TdOrientation.Bands), out _verifyErrStraight, out _verifyErrFlipped);
+            Debug.Log("[TdCapture] orientation verify on the menu: measured " + _verifyMeasured + " (flip in use " + _flip + ")" +
+                      (_verifyMeasured >= 0 && (_verifyMeasured == 1) != _flip ? " MISMATCH - every frame of this take is upside down" : ""));
+        }
+
+        // ---------------------------------------------------------------- recording core (video + boot)
+
+        private bool PrepareVideo()
+        {
+            _videoDir = Path.Combine(_o.OutDir, "video");
+            _framesDir = Path.Combine(_videoDir, "frames");
+            Directory.CreateDirectory(_framesDir);
+            if (!SystemInfo.supportsAsyncGPUReadback)
+            {
+                Fail("video", "AsyncGPUReadback is not supported on " + SystemInfo.graphicsDeviceType, 3);
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>t0: opens frames.tsv / audio-sync.tsv, takes the clock and audio anchors, writes sync.json. Called at end of frame.</summary>
+        private void BeginRecording()
+        {
             _tsv = new StreamWriter(Path.Combine(_videoDir, "frames.tsv"), false, new UTF8Encoding(false)) { NewLine = "\n" };
             _audioTsv = new StreamWriter(Path.Combine(_videoDir, "audio-sync.tsv"), false, new UTF8Encoding(false)) { NewLine = "\n" };
             _audioTsv.WriteLine("# t_seconds\twav_frames_captured\tdsp_time\trealtime\tdropped_samples");
             _schedule = new TdFrameSchedule(_o.VideoFps);
 
-            yield return null;
-            yield return new WaitForEndOfFrame();
             _t0Realtime = Time.realtimeSinceStartupAsDouble;
             _t0Dsp = AudioSettings.dspTime;
             _t0Unscaled = Time.unscaledTime;
             _t0Frame = Time.frameCount;
             AudioOutputCapture audio = AudioOutputCapture.Armed;
             _audioArmed = audio != null;
+            _audioArmedAtT0 = audio != null;
             _audioRate = AudioSettings.outputSampleRate;
             if (audio != null)
             {
@@ -576,37 +810,62 @@ namespace DD.Prototype.Diagnostics
                 _audioDropped0 = audio.DroppedSamples;
             }
 
+            TryAnchorAudio(0d);
             WriteSyncJson();
             WriteAudioSync(0d);
             _nextAudioSync = 1d;
             _recording = true;
-            Debug.Log("[TdCapture] video t0 realtime=" + _t0Realtime.ToString("F3", CultureInfo.InvariantCulture) + " dsp=" + _t0Dsp.ToString("F6", CultureInfo.InvariantCulture) +
+            Debug.Log("[TdCapture] " + _o.Mode + " t0 realtime=" + _t0Realtime.ToString("F3", CultureInfo.InvariantCulture) + " dsp=" + _t0Dsp.ToString("F6", CultureInfo.InvariantCulture) +
                       " out=" + _outW + "x" + _outH + " flip=" + _flip + " (" + _flipMethod + ") audio=" + (_audioArmed ? "F0 " + _audioF0 : "not armed"));
+        }
 
-            // The first slot (t ≈ 0) is grabbed in this same end-of-frame.
-            while (true)
+        /// <summary>One end-of-frame: grab if a slot is due, keep the audio anchors. True once per second (the caller's 1 Hz chores).</summary>
+        private bool RecordFrame(double t)
+        {
+            if (!_audioAnchored && TryAnchorAudio(t)) WriteSyncJson();
+            long slot;
+            if (_schedule.TryTake(t, Volatile.Read(ref _inFlight) >= MaxInFlight, out slot))
             {
-                double t = Time.realtimeSinceStartupAsDouble - _t0Realtime;
-                if (t >= _o.VideoSeconds) { _stopReason = "duration"; _stopT = t; break; }
-                if (_runEnded) { _stopReason = "run-ended"; _stopT = t; break; }
-
-                long slot;
-                if (_schedule.TryTake(t, Volatile.Read(ref _inFlight) >= MaxInFlight, out slot))
-                {
-                    Grab(t);
-                }
-
-                if (t >= _nextAudioSync)
-                {
-                    WriteAudioSync(t);
-                    _nextAudioSync = Math.Floor(t) + 1d;
-                    if (_o.HoldSpawns) HoldSpawns();
-                }
-
-                yield return null;
-                yield return new WaitForEndOfFrame();
+                Grab(t);
             }
 
+            if (t < _nextAudioSync) return false;
+            WriteAudioSync(t);
+            _nextAudioSync = Math.Floor(t) + 1d;
+            return true;
+        }
+
+        private bool _audioAnchored, _audioArmedAtT0;
+        private double _audioAnchorT;
+        private long _audioAnchorF;
+
+        /// <summary>
+        /// The A/V anchor: the first (t, FramesCaptured) with samples in the WAV. With audio flowing at t0 that is (0, F0) and the
+        /// offset is F0 / R exactly as before; in boot mode the recorder is armed before any listener exists, so the anchor is the
+        /// first frame after the first mixed buffer and the offset Fa / R − ta may be negative (the WAV starts after video t0).
+        /// </summary>
+        private bool TryAnchorAudio(double t)
+        {
+            AudioOutputCapture audio = AudioOutputCapture.Armed;
+            if (audio == null) return false;
+            if (!_audioArmed)
+            {
+                _audioArmed = true;   // armed after t0 (the director arms it in its Awake)
+                _audioPath = audio.Path;
+            }
+
+            long f = audio.FramesCaptured;
+            if (f <= 0) return false;
+            _audioAnchored = true;
+            _audioAnchorT = t;
+            _audioAnchorF = f;
+            return true;
+        }
+
+        private double WavOffsetSeconds => _audioAnchored && _audioRate > 0 ? _audioAnchorF / (double)_audioRate - _audioAnchorT : double.NaN;
+
+        private IEnumerator EndRecording()
+        {
             _recording = false;
             WriteAudioSync(_stopT);
             float drainEnd = Time.realtimeSinceStartup + DrainTimeoutSeconds;
@@ -620,6 +879,46 @@ namespace DD.Prototype.Diagnostics
             Quit(0);
         }
 
+        // ---------------------------------------------------------------- HUD off (round 3)
+
+        private readonly HashSet<int> _hudHidden = new HashSet<int>();
+        private Canvas[] _canvases;
+        private float _hudRefreshAt;
+
+        /// <summary>
+        /// -ddTdHud off: while the Run scene is active every Canvas (screen-space HUD, toasts, banner, reticle, hit markers, damage
+        /// vignette, world-space markers) is disabled — Canvas.enabled only: no gameplay state, no saved setting, the UI scripts keep
+        /// running. Re-asserted every frame, the list refreshed every 0.25 s (and right before a still). The "Development Build"
+        /// watermark is drawn by the engine, not a Canvas, and stays.
+        /// </summary>
+        private void LateUpdate()
+        {
+            // not while a curtain covers: the loading screen's own exit over the Run scene stays in the take
+            if (_o != null && _o.HudOff && !UiCurtain.IsCovering && SceneManager.GetActiveScene().name == PrototypeScenes.Run) HideHud(false);
+        }
+
+        private void HideHud(bool refresh)
+        {
+            if (refresh || _canvases == null || Time.unscaledTime >= _hudRefreshAt)
+            {
+                _canvases = FindObjectsOfType<Canvas>(true);
+                _hudRefreshAt = Time.unscaledTime + HudRefreshSeconds;
+            }
+
+            for (int i = 0; i < _canvases.Length; i++)
+            {
+                Canvas c = _canvases[i];
+                if (c == null || !c.enabled) continue;
+                c.enabled = false;
+                _hudHidden.Add(c.GetInstanceID());
+            }
+        }
+
+        private string HudJson()
+        {
+            return "\"hud\": " + TdJson.Str(_o.HudOff ? "off" : "on") + ", \"hudCanvasesHidden\": " + _hudHidden.Count;
+        }
+
         private void OnRunEnded(RunSummary s)
         {
             _runEnded = true;
@@ -628,7 +927,7 @@ namespace DD.Prototype.Diagnostics
         /// <summary>The app is quitting under the recording (the QA bot finished, or the Player was closed): drain what can be drained, write the summary.</summary>
         private void OnQuitting()
         {
-            if (_finished || _o == null || _o.Mode != TdCaptureMode.Video) return;
+            if (_finished || _o == null || _o.Mode == TdCaptureMode.Stills) return;
             if (_stopT < 0d)
             {
                 _stopT = _recording ? Time.realtimeSinceStartupAsDouble - _t0Realtime : 0d;
@@ -886,10 +1185,19 @@ namespace DD.Prototype.Diagnostics
             sb.Append("  \"audio\": {\"armed\": ").Append(TdJson.Bool(_audioArmed))
               .Append(", \"wav\": ").Append(TdJson.Str(_audioPath))
               .Append(", \"sampleRate\": ").Append(_audioRate)
-              .Append(", \"framesCapturedAtT0\": ").Append(_audioArmed ? _audioF0.ToString(CultureInfo.InvariantCulture) : "null")
-              .Append(", \"droppedSamplesAtT0\": ").Append(_audioArmed ? _audioDropped0.ToString(CultureInfo.InvariantCulture) : "null")
-              .Append(", \"wavOffsetSeconds\": ").Append(_audioArmed && _audioRate > 0 ? TdJson.Num(_audioF0 / (double)_audioRate, 6) : "null")
-              .Append(",\n    \"formula\": \"wavFrame(t) = framesCapturedAtT0 + t * sampleRate; tdmux --wav-offset = framesCapturedAtT0 / sampleRate (audio-sync.tsv: one anchor per second for a drift / gap check)\"},\n");
+              .Append(", \"framesCapturedAtT0\": ").Append(_audioArmedAtT0 ? _audioF0.ToString(CultureInfo.InvariantCulture) : "null")
+              .Append(", \"droppedSamplesAtT0\": ").Append(_audioArmedAtT0 ? _audioDropped0.ToString(CultureInfo.InvariantCulture) : "null")
+              .Append(", \"armedAtT0\": ").Append(TdJson.Bool(_audioArmedAtT0))
+              .Append(", \"anchorT\": ").Append(_audioAnchored ? TdJson.Num(_audioAnchorT, 6) : "null")
+              .Append(", \"anchorFrames\": ").Append(_audioAnchored ? _audioAnchorF.ToString(CultureInfo.InvariantCulture) : "null")
+              .Append(", \"wavOffsetSeconds\": ").Append(TdJson.Num(WavOffsetSeconds, 6))
+              .Append(",\n    \"formula\": \"wavFrame(t) = anchorFrames + (t - anchorT) * sampleRate, i.e. tdmux --wav-offset = anchorFrames / sampleRate - anchorT (= framesCapturedAtT0 / sampleRate when audio flows at t0; negative = the WAV starts after video t0); audio-sync.tsv: one anchor per second for a drift / gap check\"},\n");
+            if (_o.Mode == TdCaptureMode.Boot)
+            {
+                sb.Append("  \"phases\": ");
+                AppendPhases(sb);
+                sb.Append(",\n  \"bootMenuSeconds\": ").Append(TdJson.Num(_o.BootMenuSeconds, 2)).Append(",\n");
+            }
             sb.Append("  \"orientation\": {\"flip\": ").Append(TdJson.Bool(_flip)).Append(", \"method\": ").Append(TdJson.Str(_flipMethod)).Append("},\n");
             sb.Append("  \"backbuffer\": [").Append(_backW).Append(", ").Append(_backH).Append("], \"screen\": [").Append(_screenW0).Append(", ").Append(_screenH0)
               .Append("], \"output\": [").Append(_outW).Append(", ").Append(_outH).Append("]\n}\n");
@@ -904,7 +1212,7 @@ namespace DD.Prototype.Diagnostics
             long f1 = audio != null ? audio.FramesCaptured : 0;
             long dropped1 = audio != null ? audio.DroppedSamples : 0;
             double stopRealtime = _t0Realtime + Math.Max(0d, _stopT);
-            double drift = _audioArmed && audio != null && _audioRate > 0 ? (f1 - _audioF0) / (double)_audioRate - _stopT : double.NaN;
+            double drift = _audioAnchored && audio != null && _audioRate > 0 ? (f1 - _audioAnchorF) / (double)_audioRate - (_stopT - _audioAnchorT) : double.NaN;
             int written = Volatile.Read(ref _framesWritten);
 
             try
@@ -918,8 +1226,18 @@ namespace DD.Prototype.Diagnostics
             }
 
             var sb = new StringBuilder();
-            sb.Append("{\n  \"wp\": \"WP-099\",\n  \"mode\": \"video\",\n");
+            sb.Append("{\n  \"wp\": \"WP-099\",\n  \"mode\": ").Append(TdJson.Str(_o.Mode == TdCaptureMode.Boot ? "boot" : "video")).Append(",\n");
             AppendSeed(sb);
+            sb.Append("  ").Append(HudJson()).Append(",\n");
+            if (_o.Mode == TdCaptureMode.Boot)
+            {
+                sb.Append("  \"phases\": ");
+                AppendPhases(sb);
+                sb.Append(",\n  \"cameraModeAtFighting\": ").Append(TdJson.Str(_cameraModeAtFighting))
+                  .Append(", \"orientationVerify\": {\"measured\": ").Append(_verifyMeasured).Append(", \"errStraight\": ").Append(TdJson.Num(_verifyErrStraight, 3))
+                  .Append(", \"errFlipped\": ").Append(TdJson.Num(_verifyErrFlipped, 3))
+                  .Append(", \"mismatch\": ").Append(TdJson.Bool(_verifyMeasured >= 0 && (_verifyMeasured == 1) != _flip)).Append("},\n");
+            }
             sb.Append("  \"stopReason\": ").Append(TdJson.Str(_stopReason ?? "not-started")).Append(",\n");
             sb.Append("  \"fpsTarget\": ").Append(_o.VideoFps).Append(", \"secondsTarget\": ").Append(_o.VideoSeconds)
               .Append(", \"warmupSeconds\": ").Append(TdJson.Num(_o.WarmupSeconds, 2)).Append(", \"holdSpawns\": ").Append(TdJson.Bool(_o.HoldSpawns)).Append(",\n");
@@ -943,9 +1261,11 @@ namespace DD.Prototype.Diagnostics
             sb.Append("  \"start\": {\"realtime\": ").Append(TdJson.Num(_t0Realtime, 6)).Append(", \"dspTime\": ").Append(TdJson.Num(_t0Dsp, 6)).Append("},\n");
             sb.Append("  \"stop\": {\"realtime\": ").Append(TdJson.Num(stopRealtime, 6)).Append(", \"dspTime\": ").Append(TdJson.Num(AudioSettings.dspTime, 6)).Append("},\n");
             sb.Append("  \"audio\": {\"armed\": ").Append(TdJson.Bool(_audioArmed)).Append(", \"wav\": ").Append(TdJson.Str(_audioPath)).Append(", \"sampleRate\": ").Append(_audioRate)
-              .Append(", \"framesCapturedAtT0\": ").Append(_audioArmed ? _audioF0.ToString(CultureInfo.InvariantCulture) : "null")
+              .Append(", \"framesCapturedAtT0\": ").Append(_audioArmedAtT0 ? _audioF0.ToString(CultureInfo.InvariantCulture) : "null")
               .Append(", \"framesCapturedAtStop\": ").Append(_audioArmed && audio != null ? f1.ToString(CultureInfo.InvariantCulture) : "null")
-              .Append(", \"wavOffsetSeconds\": ").Append(_audioArmed && _audioRate > 0 ? TdJson.Num(_audioF0 / (double)_audioRate, 6) : "null")
+              .Append(", \"anchorT\": ").Append(_audioAnchored ? TdJson.Num(_audioAnchorT, 6) : "null")
+              .Append(", \"anchorFrames\": ").Append(_audioAnchored ? _audioAnchorF.ToString(CultureInfo.InvariantCulture) : "null")
+              .Append(", \"wavOffsetSeconds\": ").Append(TdJson.Num(WavOffsetSeconds, 6))
               .Append(", \"driftSeconds\": ").Append(TdJson.Num(drift, 4))
               .Append(", \"droppedSamplesInWindow\": ").Append(_audioArmed && audio != null ? (dropped1 - _audioDropped0).ToString(CultureInfo.InvariantCulture) : "null").Append("}\n}\n");
             try
